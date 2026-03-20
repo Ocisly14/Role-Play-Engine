@@ -78,6 +78,19 @@ export async function importModule(params: {
     });
   }
 
+  // 4.5. Import npc_injection_policy.json
+  const injectionPolicyPath = path.join(moduleDir, "npc_injection_policy.json");
+  if (fs.existsSync(injectionPolicyPath)) {
+    const data = JSON.parse(fs.readFileSync(injectionPolicyPath, "utf8"));
+    await prisma.moduleScene.upsert({
+      where: {
+        moduleId_entryId: { moduleId, entryId: "__npc_injection_policy__" },
+      },
+      create: { moduleId, entryId: "__npc_injection_policy__", data },
+      update: { data },
+    });
+  }
+
   // 5. Import scene/junction/road files
   const scenarioDirs = fs.readdirSync(moduleDir).filter((d) => {
     const full = path.join(moduleDir, d);

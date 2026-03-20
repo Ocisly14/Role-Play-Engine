@@ -21,8 +21,8 @@ export function PhaserContainer({
     const game = new Phaser.Game({
       type: Phaser.AUTO,
       parent: containerRef.current,
-      width: containerRef.current.clientWidth,
-      height: containerRef.current.clientHeight,
+      width: containerRef.current.clientWidth || window.innerWidth,
+      height: containerRef.current.clientHeight || window.innerHeight,
       backgroundColor: "#111118",
       scene: [TownScene, InteriorScene],
       scale: {
@@ -41,7 +41,7 @@ export function PhaserContainer({
     });
 
     gameRef.current = game;
-    onGameReady(game);
+    game.events.once("ready", () => onGameReady(game));
 
     return () => {
       game.destroy(true);
@@ -52,8 +52,7 @@ export function PhaserContainer({
   return (
     <div
       ref={containerRef}
-      className="w-full h-full"
-      style={{}}
+      style={{ position: "fixed", top: 0, left: 0, width: "100%", height: "100%" }}
     />
   );
 }

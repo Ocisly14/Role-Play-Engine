@@ -5,15 +5,15 @@
   "parentLocationId": "OUTDOOR",
   "endpointA": "JUNC_4",
   "endpointB": "JUNC_5",
-  "travelTimeMinutes": 8,
+  "travelTimeMinutes": 3,
   "alongConnections": [
     {
       "sceneId": "SCN_4_SUB_1",
-      "position": 0.3
+      "position": 0
     },
     {
       "sceneId": "SCN_5_SUB_1",
-      "position": 0.7
+      "position": 0.47
     }
   ],
   "items": [

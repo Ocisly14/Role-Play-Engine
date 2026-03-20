@@ -1,5 +1,5 @@
 import type Phaser from "phaser";
-import { useCallback, useEffect, useRef } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { SidebarToggleButton } from "../components/layout/SidebarToggleButton";
 import { ControlPanel } from "../components/simulation/ControlPanel";
@@ -12,13 +12,21 @@ import { useSimulationWebSocket } from "../hooks/useSimulationWebSocket";
 
 const MAPS_BASE = "/api/maps";
 
+interface SceneConfig {
+  background: string;
+  npcAreas: Array<{ x: number; y: number; width: number; height: number }>;
+}
+
 export default function SimulationPage() {
   const { sessionId } = useParams<{ sessionId: string }>();
   const navigate = useNavigate();
-  const { isMobile, isSidebarOpen, toggleSidebar, closeSidebar } =
+  const { isSidebarOpen, toggleSidebar, closeSidebar } =
     useMobileSidebar();
   const gameRef = useRef<Phaser.Game | null>(null);
   const mapsPrefixRef = useRef<string | null>(null);
+
+  // Scene image popup state
+  const [sceneConfigs, setSceneConfigs] = useState<Record<string, SceneConfig> | null>(null);
 
   const {
     state,
@@ -37,23 +45,22 @@ export default function SimulationPage() {
     onConnected: resync,
   });
 
+  // Fetch map_config to get scene image URLs
   useEffect(() => {
     mapsPrefixRef.current = state.mapsPrefix;
+    if (!state.mapsPrefix) return;
+    fetch(`${MAPS_BASE}/${state.mapsPrefix}/map_config.json`)
+      .then((res) => res.json())
+      .then((config: { scenes?: Record<string, SceneConfig> }) => {
+        if (config.scenes) setSceneConfigs(config.scenes);
+      })
+      .catch(() => {});
   }, [state.mapsPrefix]);
 
-  // Enter a building scene from side panel or town node click
+  // Enter a building scene — just update React state, no Phaser scene switch
   const handleEnterScene = useCallback(
     (scenarioId: string, subSceneId: string) => {
       enterBuilding(scenarioId, subSceneId);
-      const mapsPrefix = mapsPrefixRef.current;
-      if (gameRef.current && mapsPrefix) {
-        gameRef.current.scene.getScene("TownScene").scene.switch("InteriorScene");
-        gameRef.current.events.emit("load-interior", {
-          sceneId: subSceneId,
-          configUrl: `${MAPS_BASE}/${mapsPrefix}/map_config.json`,
-          baseUrl: `${MAPS_BASE}/${mapsPrefix}/`,
-        });
-      }
     },
     [enterBuilding]
   );
@@ -63,7 +70,6 @@ export default function SimulationPage() {
       gameRef.current = game;
 
       game.events.on("npc-clicked", (npcId: string) => setSelectedNpc(npcId));
-      game.events.on("building-exited", () => exitBuilding());
       game.events.on("zoom-level-changed", (level: number) =>
         setCurrentLevel(level as 1 | 2)
       );
@@ -75,27 +81,9 @@ export default function SimulationPage() {
           }
         }
       );
-
-      // Pre-launch the interior scene once so it can receive global events
-      // before the first switch from the town map.
-      game.scene.getScene("TownScene").scene.launch("InteriorScene");
     },
-    [setSelectedNpc, exitBuilding, setCurrentLevel, handleEnterScene]
+    [setSelectedNpc, setCurrentLevel, handleEnterScene]
   );
-
-  // Forward NPC positions to interior scene
-  useEffect(() => {
-    if (!gameRef.current) return;
-    for (const [npcId, position] of Object.entries(state.npcPositions)) {
-      if (position.type !== "scene") continue;
-      const npc = state.npcStatuses.find((n) => n.npcId === npcId);
-      gameRef.current.events.emit("npc-position-update-interior", {
-        npcId,
-        name: npc?.name ?? npcId,
-        sceneId: position.sceneId,
-      });
-    }
-  }, [state.npcPositions, state.npcStatuses]);
 
   // Forward NPC positions to town scene
   useEffect(() => {
@@ -128,7 +116,6 @@ export default function SimulationPage() {
   const handleZoomToNpc = useCallback(
     (npcId: string) => {
       setSelectedNpc(npcId);
-      // If NPC is in a scene, navigate to that scene
       const pos = state.npcPositions[npcId];
       if (pos?.type === "scene") {
         const scene = state.topology?.scenes.find((s) => s.id === pos.sceneId);
@@ -143,51 +130,25 @@ export default function SimulationPage() {
   const handleSwitchSubScene = useCallback(
     (subSceneId: string) => {
       switchSubScene(subSceneId);
-      const mapsPrefix = mapsPrefixRef.current;
-      if (gameRef.current && mapsPrefix) {
-        gameRef.current.events.emit("switch-sub-scene", {
-          subSceneId,
-          configUrl: `${MAPS_BASE}/${mapsPrefix}/map_config.json`,
-          baseUrl: `${MAPS_BASE}/${mapsPrefix}/`,
-        });
-      }
     },
     [switchSubScene]
   );
 
-  // ESC key handler for closing drawer
+  // ESC key handler
   useEffect(() => {
-    if (!isMobile) return;
-
     const handleEscape = (e: KeyboardEvent) => {
-      if (e.key === "Escape" && isSidebarOpen) {
-        closeSidebar();
+      if (e.key === "Escape") {
+        if (state.focusedBuildingId) {
+          exitBuilding();
+        } else if (isSidebarOpen) {
+          closeSidebar();
+        }
       }
     };
 
     document.addEventListener("keydown", handleEscape);
     return () => document.removeEventListener("keydown", handleEscape);
-  }, [isMobile, isSidebarOpen, closeSidebar]);
-
-  if (state.isLoading) {
-    return (
-      <div className="game-container" style={{ maxWidth: "none" }}>
-        <div className="flex items-center justify-center flex-1 text-slate-500">
-          Loading simulation...
-        </div>
-      </div>
-    );
-  }
-
-  if (state.error) {
-    return (
-      <div className="game-container" style={{ maxWidth: "none" }}>
-        <div className="flex items-center justify-center flex-1 text-red-500">
-          Error: {state.error}
-        </div>
-      </div>
-    );
-  }
+  }, [isSidebarOpen, closeSidebar, state.focusedBuildingId, exitBuilding]);
 
   const buildingSubScenes = state.focusedBuildingId
     ? (state.topology?.scenes
@@ -195,82 +156,143 @@ export default function SimulationPage() {
         .map((s) => ({ id: s.id, name: s.name })) ?? [])
     : [];
 
+  // Resolve scene image URL
+  const sceneImageUrl =
+    state.focusedSubSceneId && sceneConfigs && state.mapsPrefix
+      ? sceneConfigs[state.focusedSubSceneId]?.background
+        ? `${MAPS_BASE}/${state.mapsPrefix}/${sceneConfigs[state.focusedSubSceneId].background}`
+        : null
+      : null;
+
+  // Resolve scene name
+  const focusedSceneName = state.focusedSubSceneId
+    ? state.topology?.scenes.find((s) => s.id === state.focusedSubSceneId)?.name ?? null
+    : null;
+
+  // Resolve building (scenario) name
+  const focusedBuildingName = state.focusedBuildingId
+    ? state.topology?.scenarioOutlines?.find((o) => o.id === state.focusedBuildingId)?.name ?? null
+    : null;
+
   return (
-    <div className="game-container" style={{ maxWidth: "none" }}>
-      <div className="game-header backdrop-blur-sm bg-white/50 border border-slate-200 shadow-md rounded-lg">
-        {isMobile ? (
-          <button
-            onClick={() => navigate("/simulation/select")}
-            className="back-button backdrop-blur-md bg-white/50 border border-slate-200 shadow-md rounded-xl hover:bg-white/70 hover:border-slate-300 hover:-translate-y-0.5 transition-all"
-            style={{ padding: "8px 12px" }}
-            aria-label="Back to selection"
-          >
-            ←
-          </button>
-        ) : (
-          <div style={{ width: "52px" }} aria-hidden="true" />
-        )}
-
-        <h1>NPC Simulation</h1>
-
-        {isMobile && !isSidebarOpen && (
-          <SidebarToggleButton onClick={toggleSidebar} />
-        )}
-        {!isMobile && (
-          <button
-            onClick={() => navigate("/simulation/select")}
-            className="back-button backdrop-blur-md bg-white/50 border border-slate-200 shadow-md rounded-xl hover:bg-white/70 hover:border-slate-300 hover:-translate-y-0.5 transition-all"
-            style={{ padding: "8px 12px" }}
-            aria-label="Back to selection"
-          >
-            ←
-          </button>
-        )}
-      </div>
-
-      <div className="game-main-layout">
-        <div className="game-chat-container backdrop-blur-sm border border-slate-200 shadow-md rounded-lg relative overflow-hidden">
-          <PhaserContainer
-            onGameReady={handleGameReady}
-            sessionKey={sessionId ?? ""}
-          />
-
-          {state.currentLevel === 3 && (
-            <SubSceneTabs
-              subScenes={buildingSubScenes}
-              activeSubSceneId={state.focusedSubSceneId}
-              onSelect={handleSwitchSubScene}
-              onBack={exitBuilding}
-            />
-          )}
-
-          {sessionId && state.eventLog.length > 0 && (
-            <ControlPanel
-              sessionId={sessionId}
-              simulationState={state.simulationState}
-            />
-          )}
-        </div>
-
-        {isMobile && isSidebarOpen && (
-          <div className="sidebar-backdrop" onClick={closeSidebar} />
-        )}
-
-        <SidePanel
-          sessionId={sessionId ?? ""}
-          gameDay={state.gameDay}
-          timeOfDay={state.timeOfDay}
-          simulationState={state.simulationState}
-          npcStatuses={state.npcStatuses}
-          selectedNpcId={state.selectedNpcId}
-          eventLog={state.eventLog}
-          onSelectNpc={setSelectedNpc}
-          onZoomToNpc={handleZoomToNpc}
-          isMobile={isMobile}
-          isOpen={isSidebarOpen}
-          onClose={closeSidebar}
+    <div className={`sim-page${state.focusedBuildingId ? " sim-page--has-popup" : ""}`}>
+      {/* Full-viewport Phaser canvas — the interactive game area */}
+      <div className="sim-canvas-layer">
+        <PhaserContainer
+          onGameReady={handleGameReady}
+          sessionKey={sessionId ?? ""}
         />
       </div>
+
+      {/* Loading / Error overlays */}
+      {state.isLoading && (
+        <div className="sim-overlay">
+          <span className="text-white/80 text-lg">Loading simulation...</span>
+        </div>
+      )}
+      {state.error && (
+        <div className="sim-overlay">
+          <span className="text-red-300 text-lg">Error: {state.error}</span>
+        </div>
+      )}
+
+      {/* Floating header */}
+      <div className="sim-header backdrop-blur-sm bg-white/50 border border-slate-200 shadow-md rounded-lg">
+        <button
+          onClick={() => navigate("/simulation/select")}
+          className="back-button backdrop-blur-md bg-white/50 border border-slate-200 shadow-md rounded-xl hover:bg-white/70 hover:border-slate-300 hover:-translate-y-0.5 transition-all"
+          style={{ padding: "8px 12px" }}
+          aria-label="Back to selection"
+        >
+          ←
+        </button>
+
+        <h1>Town Simulation</h1>
+
+        {!isSidebarOpen && (
+          <SidebarToggleButton onClick={toggleSidebar} />
+        )}
+        {isSidebarOpen && <div style={{ width: "52px" }} aria-hidden="true" />}
+      </div>
+
+      {/* Click map to close popup — only covers canvas, below all UI */}
+      {state.focusedBuildingId && (
+        <div className="sim-popup-backdrop" onClick={exitBuilding} />
+      )}
+
+      {/* Scene image popup */}
+      {state.focusedBuildingId && (
+        <div className={`sim-scene-popup ${isSidebarOpen ? "sim-scene-popup-shifted" : ""}`}>
+          <div className="sim-scene-popup-content backdrop-blur-sm bg-white/50 border border-slate-200 shadow-lg rounded-lg overflow-hidden">
+            {/* Header — scenario name + sub-scene tabs */}
+            {buildingSubScenes.length > 1 && (
+              <div className="flex items-center gap-1.5 p-2 border-b border-slate-200/60 flex-wrap">
+                <span
+                  onClick={() => handleSwitchSubScene(buildingSubScenes[0].id)}
+                  className="text-xs px-3 py-1.5 rounded-lg cursor-pointer text-slate-500 hover:bg-white/50 hover:text-slate-700 transition-all font-bold"
+                >
+                  {focusedBuildingName ?? state.focusedBuildingId}
+                </span>
+                <div className="w-px h-5 bg-slate-200/60" />
+                {buildingSubScenes.map((scene) => (
+                  <button
+                    key={scene.id}
+                    onClick={() => handleSwitchSubScene(scene.id)}
+                    className={`text-xs px-3 py-1.5 rounded-lg transition-all ${
+                      scene.id === state.focusedSubSceneId
+                        ? "bg-amber-600 text-white"
+                        : "bg-white/50 text-slate-600 border border-slate-200 hover:bg-white/70"
+                    }`}
+                  >
+                    {scene.name}
+                  </button>
+                ))}
+              </div>
+            )}
+
+            {/* Scene image */}
+            <div className="flex-1 overflow-hidden flex items-center justify-center">
+              {sceneImageUrl ? (
+                <img
+                  src={sceneImageUrl}
+                  alt={focusedSceneName ?? ""}
+                  className="w-full max-h-full object-cover"
+                />
+              ) : (
+                <div className="text-slate-400 text-sm p-6">No image available</div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Simulation control panel */}
+      {sessionId && state.eventLog.length > 0 && (
+        <ControlPanel
+          sessionId={sessionId}
+          simulationState={state.simulationState}
+        />
+      )}
+
+      {/* Sidebar */}
+      {isSidebarOpen && (
+        <div className="sim-sidebar-backdrop" onClick={closeSidebar} />
+      )}
+
+      <SidePanel
+        sessionId={sessionId ?? ""}
+        gameDay={state.gameDay}
+        timeOfDay={state.timeOfDay}
+        simulationState={state.simulationState}
+        npcStatuses={state.npcStatuses}
+        selectedNpcId={state.selectedNpcId}
+        eventLog={state.eventLog}
+        onSelectNpc={setSelectedNpc}
+        onZoomToNpc={handleZoomToNpc}
+        isMobile={false}
+        isOpen={isSidebarOpen}
+        onClose={closeSidebar}
+      />
     </div>
   );
 }

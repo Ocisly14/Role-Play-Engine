@@ -316,6 +316,22 @@ export interface ModuleSetup {
   [key: string]: unknown;
 }
 
+export interface NpcInjectionPolicyTiers {
+  daily_sim?: string[];
+  investigator_sim?: string[];
+  limited_sim?: string[];
+  scene_only?: string[];
+  cosmic_not_sim?: string[];
+  [key: string]: string[] | undefined;
+}
+
+export interface NpcInjectionPolicy {
+  moduleId?: string;
+  moduleStartDate?: string;
+  description?: string;
+  tiers?: NpcInjectionPolicyTiers;
+}
+
 /**
  * Structured Story Elements - Extracted from user creative prompt
  */

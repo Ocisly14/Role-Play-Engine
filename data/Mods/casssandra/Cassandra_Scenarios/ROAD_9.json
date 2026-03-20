@@ -5,7 +5,7 @@
   "parentLocationId": "OUTDOOR",
   "endpointA": "JUNC_5",
   "endpointB": "JUNC_10",
-  "travelTimeMinutes": 5,
+  "travelTimeMinutes": 4,
   "alongConnections": [],
   "items": [
     {

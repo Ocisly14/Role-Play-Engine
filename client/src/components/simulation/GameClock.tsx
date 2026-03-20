@@ -10,7 +10,7 @@ export function GameClock({
   simulationState,
 }: GameClockProps) {
   return (
-    <div className="p-3 border-b border-slate-200/60 flex items-center justify-between">
+    <div className="p-3 pr-14 border-b border-slate-200/60 flex items-center justify-between">
       <div>
         <span className="text-lg font-bold text-amber-700">Day {gameDay}</span>
         <span className="ml-3 text-lg text-slate-600">{timeOfDay}</span>

@@ -42,7 +42,7 @@ export function ControlPanel({
   }
 
   return (
-    <div className="absolute bottom-4 left-4 z-10 backdrop-blur-xl bg-white/50 border border-white/30 rounded-2xl px-4 py-2 flex items-center gap-3 shadow-lg">
+    <div className="fixed bottom-4 left-4 z-10 backdrop-blur-xl bg-white/50 border border-white/30 rounded-2xl px-4 py-2 flex items-center gap-3 shadow-lg">
       <button
         onClick={handlePlayPause}
         className="text-xl text-slate-600 hover:text-amber-600 transition-colors"

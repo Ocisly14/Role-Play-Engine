@@ -59,25 +59,19 @@ export function SidePanel({
 
   const isPreparing = simulationState === "paused" && eventLog.length === 0;
 
-  const drawerClass = isMobile
-    ? isOpen
-      ? "sidebar-drawer-open"
-      : "sidebar-drawer-closed"
-    : "";
+  const drawerClass = isOpen ? "sim-sidebar-open" : "sim-sidebar-closed";
 
   return (
     <div
-      className={`game-sidebar backdrop-blur-sm border border-slate-200 shadow-md rounded-lg flex flex-col ${drawerClass}`}
+      className={`sim-sidebar backdrop-blur-sm bg-white/50 border border-slate-200 shadow-lg rounded-lg flex flex-col ${drawerClass}`}
     >
-      {isMobile && (
-        <button
-          className="sidebar-close-btn"
-          onClick={onClose}
-          aria-label="Close sidebar"
-        >
-          ×
-        </button>
-      )}
+      <button
+        className="sim-sidebar-close"
+        onClick={onClose}
+        aria-label="Close sidebar"
+      >
+        ×
+      </button>
 
       <GameClock
         gameDay={gameDay}

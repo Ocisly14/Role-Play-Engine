@@ -5,11 +5,11 @@
   "parentLocationId": "OUTDOOR",
   "endpointA": "JUNC_1",
   "endpointB": "JUNC_2",
-  "travelTimeMinutes": 8,
+  "travelTimeMinutes": 6,
   "alongConnections": [
     {
       "sceneId": "SCN_1_SUB_1",
-      "position": 0.5
+      "position": 0.75
     }
   ],
   "items": [

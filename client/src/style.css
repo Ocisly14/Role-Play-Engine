@@ -2391,6 +2391,203 @@ textarea {
   }
 }
 
+/* ──────────────────────────────────────
+   Simulation Page — Full-viewport game
+────────────────────────────────────── */
+.sim-page {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  z-index: 0;
+}
+
+.sim-canvas-layer {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 0;
+}
+
+.sim-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(4px);
+}
+
+.sim-header {
+  position: absolute;
+  top: 16px;
+  left: 16px;
+  right: 16px;
+  z-index: 10;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 16px;
+}
+
+.sim-header h1 {
+  font-size: 1.5rem;
+  color: var(--title);
+  margin: 0;
+  font-family: var(--serif);
+  font-weight: 700;
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  white-space: nowrap;
+}
+
+/* Sidebar — floating glass panel */
+.sim-sidebar {
+  position: fixed;
+  top: 120px;
+  right: 16px;
+  bottom: 40px;
+  width: 340px;
+  z-index: 20;
+  overflow-y: auto;
+  transition: transform 0.3s ease-in-out, right 0.3s ease-in-out;
+}
+
+.sim-sidebar.sim-sidebar-open {
+  transform: translateX(0);
+}
+
+.sim-sidebar.sim-sidebar-closed {
+  transform: translateX(calc(100% + 32px));
+}
+
+.sim-sidebar-close {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: 32px;
+  height: 32px;
+  backdrop-filter: blur(4px);
+  background: rgba(255, 255, 255, 0.5);
+  border: 1px solid rgba(226, 232, 240, 0.8);
+  border-radius: 0.5rem;
+  font-size: 20px;
+  line-height: 1;
+  color: var(--title);
+  cursor: pointer;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+}
+
+.sim-sidebar-close:hover {
+  background: rgba(255, 255, 255, 0.7);
+  transform: scale(1.05);
+}
+
+.sim-sidebar-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 15;
+}
+
+.sim-popup-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.7);
+  z-index: 2;
+}
+
+/* When popup is open, reposition sidebar to center the pair with 20px gap */
+.sim-page--has-popup .sim-sidebar.sim-sidebar-open {
+  right: max(16px, 14vw - 180px, 50vw - 660px);
+}
+
+/* Scene image popup — gamechat-style glass panel */
+.sim-scene-popup {
+  position: fixed;
+  top: 120px;
+  bottom: 40px;
+  left: 16px;
+  right: 16px;
+  z-index: 30;
+  width: min(72%, 960px);
+  margin-left: auto;
+  margin-right: auto;
+  animation: simPopupIn 0.25s ease-out;
+  transition: right 0.3s ease-in-out, width 0.3s ease-in-out;
+}
+
+.sim-scene-popup.sim-scene-popup-shifted {
+  right: 376px; /* 16px margin + 340px sidebar + 20px gap */
+  width: min(72%, 960px, calc(100vw - 392px));
+}
+
+.sim-scene-popup-content {
+  display: flex;
+  flex-direction: column;
+  max-height: 100%;
+}
+
+.sim-scene-popup-content img {
+  max-height: 100%;
+}
+
+@keyframes simPopupIn {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (max-width: 768px) {
+  .sim-header {
+    top: 10px;
+    left: 10px;
+    right: 10px;
+    padding: 10px 12px;
+  }
+
+  .sim-header h1 {
+    font-size: 1rem;
+  }
+
+  .sim-sidebar {
+    width: 85vw;
+    max-width: 400px;
+    top: 10px;
+    right: 10px;
+    bottom: 10px;
+  }
+
+  .sim-scene-popup {
+    width: 90%;
+    top: 60px;
+  }
+
+  .sim-scene-popup.sim-scene-popup-shifted {
+    right: 16px;
+    width: 90%;
+  }
+
+  .sim-page--has-popup .sim-sidebar.sim-sidebar-open {
+    right: 10px;
+  }
+}
+
 /* Responsive adjustments for smaller screens (desktop) */
 @media (max-width: 1200px) and (min-width: 769px) {
   .game-main-layout {

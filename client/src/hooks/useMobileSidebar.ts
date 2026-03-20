@@ -2,16 +2,18 @@ import { useEffect, useState } from "react";
 
 export const useMobileSidebar = () => {
   const [isMobile, setIsMobile] = useState(false);
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(() => {
+    return !window.matchMedia("(max-width: 768px)").matches;
+  });
 
   useEffect(() => {
     const mediaQuery = window.matchMedia("(max-width: 768px)");
 
     const handleChange = (e: MediaQueryListEvent | MediaQueryList) => {
       setIsMobile(e.matches);
-      // Auto-close sidebar when switching to desktop
+      // Auto-open sidebar when switching to desktop
       if (!e.matches) {
-        setIsSidebarOpen(false);
+        setIsSidebarOpen(true);
       }
     };
 

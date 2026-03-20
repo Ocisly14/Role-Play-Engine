@@ -6,9 +6,14 @@ interface ScenarioConfig {
   thumbnail?: string;
 }
 
+interface RoadConfig {
+  points: [number, number][];
+}
+
 interface MapConfig {
   town?: { background?: string };
   scenarios?: Record<string, ScenarioConfig>;
+  roads?: Record<string, RoadConfig>;
 }
 
 interface ScenarioOutlineData {
@@ -60,12 +65,13 @@ const NPC_COLORS = [
   0x6c5ce7,
 ];
 
-const NODE_WIDTH = 120;
-const NODE_HEIGHT = 80;
-const EDGE_COLOR = 0x888888;
-const EDGE_WIDTH = 2;
-const NPC_DOT_RADIUS = 6;
-const NPC_JITTER = 30;
+const NODE_WIDTH = 360;
+const NODE_HEIGHT = 240;
+const NPC_DOT_RADIUS = 8;
+const NPC_JITTER = 40;
+const ROAD_COLOR = 0xd4a843;
+const ROAD_ALPHA = 0.35;
+const ROAD_WIDTH = 4;
 
 export class TownScene extends Phaser.Scene {
   private scenarioOutlines: ScenarioOutlineData[] = [];
@@ -75,11 +81,13 @@ export class TownScene extends Phaser.Scene {
   private nodePositions: Map<string, { x: number; y: number }> = new Map();
   private nodeContainers: Map<string, Phaser.GameObjects.Container> = new Map();
   private npcDots: Map<string, NpcDotData> = new Map();
-  private edgeGraphics: Phaser.GameObjects.Graphics | null = null;
   private colorIndex = 0;
   private configCache: MapConfig | null = null;
   private baseUrl = "";
   private isBuilt = false;
+  private mapWidth = 0;
+  private mapHeight = 0;
+  private minZoom = 0.15;
 
   constructor() {
     super({ key: "TownScene" });
@@ -96,7 +104,6 @@ export class TownScene extends Phaser.Scene {
   }
 
   create() {
-    // Scroll zoom
     this.input.on(
       "wheel",
       (
@@ -107,12 +114,11 @@ export class TownScene extends Phaser.Scene {
       ) => {
         const cam = this.cameras.main;
         cam.setZoom(
-          Phaser.Math.Clamp(cam.zoom + (deltaY > 0 ? -0.1 : 0.1), 0.3, 3)
+          Phaser.Math.Clamp(cam.zoom + (deltaY > 0 ? -0.05 : 0.05), this.minZoom, 10)
         );
       }
     );
 
-    // Drag pan
     this.input.on("pointermove", (pointer: Phaser.Input.Pointer) => {
       if (pointer.isDown) {
         const cam = this.cameras.main;
@@ -163,7 +169,6 @@ export class TownScene extends Phaser.Scene {
       }
     }
 
-    // Auto-layout for scenarios without config
     const unpositioned = this.scenarioOutlines.filter(
       (o) => !this.nodePositions.has(o.id)
     );
@@ -173,8 +178,7 @@ export class TownScene extends Phaser.Scene {
       const radius = Math.max(150, unpositioned.length * 40);
       const startAngle = -Math.PI / 2;
       unpositioned.forEach((o, i) => {
-        const angle =
-          startAngle + (2 * Math.PI * i) / unpositioned.length;
+        const angle = startAngle + (2 * Math.PI * i) / unpositioned.length;
         this.nodePositions.set(o.id, {
           x: cx + Math.cos(angle) * radius,
           y: cy + Math.sin(angle) * radius,
@@ -242,89 +246,161 @@ export class TownScene extends Phaser.Scene {
       });
   }
 
+  // ── Build ──────────────────────────────────────────────────────
+
   private buildGraph() {
     if (this.isBuilt) return;
     this.isBuilt = true;
 
-    // Optional background
+    // Background map image
     if (this.textures.exists("town_bg")) {
-      this.add.image(0, 0, "town_bg").setOrigin(0, 0).setDepth(-1);
+      const bg = this.add.image(0, 0, "town_bg").setOrigin(0, 0).setDepth(-1);
+      this.mapWidth = bg.width;
+      this.mapHeight = bg.height;
     }
 
-    // Draw edges
-    this.edgeGraphics = this.add.graphics().setDepth(0);
-    this.edgeGraphics.lineStyle(EDGE_WIDTH, EDGE_COLOR, 0.6);
+    this.drawRoads();
+    this.drawNodes();
+    this.fitCamera();
+  }
 
-    for (const edge of this.transportEdges) {
-      const fromPos = this.nodePositions.get(edge.fromLocationId);
-      const toPos = this.nodePositions.get(edge.toLocationId);
-      if (fromPos && toPos) {
-        this.edgeGraphics.beginPath();
-        this.edgeGraphics.moveTo(fromPos.x, fromPos.y);
-        this.edgeGraphics.lineTo(toPos.x, toPos.y);
-        this.edgeGraphics.strokePath();
+  private drawRoads() {
+    const roads = this.configCache?.roads;
+    if (!roads) return;
+
+    const gfx = this.add.graphics().setDepth(0);
+
+    for (const road of Object.values(roads)) {
+      const pts = road.points;
+      if (pts.length < 2) continue;
+
+      // Glow pass
+      gfx.lineStyle(ROAD_WIDTH + 4, ROAD_COLOR, ROAD_ALPHA * 0.4);
+      gfx.beginPath();
+      gfx.moveTo(pts[0][0], pts[0][1]);
+      for (let i = 1; i < pts.length; i++) {
+        gfx.lineTo(pts[i][0], pts[i][1]);
       }
-    }
+      gfx.strokePath();
 
-    // Draw nodes
+      // Core line
+      gfx.lineStyle(ROAD_WIDTH, ROAD_COLOR, ROAD_ALPHA);
+      gfx.beginPath();
+      gfx.moveTo(pts[0][0], pts[0][1]);
+      for (let i = 1; i < pts.length; i++) {
+        gfx.lineTo(pts[i][0], pts[i][1]);
+      }
+      gfx.strokePath();
+    }
+  }
+
+  private drawNodes() {
     for (const outline of this.scenarioOutlines) {
       const pos = this.nodePositions.get(outline.id);
       if (!pos) continue;
 
       const container = this.add.container(pos.x, pos.y).setDepth(1);
       const thumbKey = `thumb_${outline.id}`;
+      const halfW = NODE_WIDTH / 2;
+      const halfH = NODE_HEIGHT / 2;
 
-      // Background rect
-      const bg = this.add
-        .rectangle(0, 0, NODE_WIDTH, NODE_HEIGHT, 0x2a2a3e)
-        .setStrokeStyle(2, 0x5566aa);
-      container.add(bg);
+      // Shadow
+      const shadow = this.add.graphics();
+      shadow.fillStyle(0x000000, 0.4);
+      shadow.fillRoundedRect(-halfW + 6, -halfH + 6, NODE_WIDTH, NODE_HEIGHT, 16);
+      container.add(shadow);
 
-      // Thumbnail image
+      // Card background
+      const cardBg = this.add.graphics();
+      cardBg.fillStyle(0x1a1a2e, 0.9);
+      cardBg.fillRoundedRect(-halfW, -halfH, NODE_WIDTH, NODE_HEIGHT, 16);
+      container.add(cardBg);
+
+      // Thumbnail
       if (this.textures.exists(thumbKey)) {
         const thumb = this.add.image(0, 0, thumbKey);
-        const scale = Math.min(
+        const scale = Math.max(
           NODE_WIDTH / thumb.width,
           NODE_HEIGHT / thumb.height
         );
         thumb.setScale(scale);
+
+        // Mask to rounded rect
+        const maskGfx = this.make.graphics({ x: 0, y: 0 });
+        maskGfx.fillStyle(0xffffff);
+        maskGfx.fillRoundedRect(
+          pos.x - halfW,
+          pos.y - halfH,
+          NODE_WIDTH,
+          NODE_HEIGHT,
+          16
+        );
+        thumb.setMask(maskGfx.createGeometryMask());
+
         container.add(thumb);
       }
 
+      // Border
+      const border = this.add.graphics();
+      border.lineStyle(3, 0x6a6a8a, 0.8);
+      border.strokeRoundedRect(-halfW, -halfH, NODE_WIDTH, NODE_HEIGHT, 16);
+      container.add(border);
+
+      // Hover glow (hidden)
+      const hoverGlow = this.add.graphics();
+      hoverGlow.lineStyle(5, 0xd4a843, 0.9);
+      hoverGlow.strokeRoundedRect(-halfW - 2, -halfH - 2, NODE_WIDTH + 4, NODE_HEIGHT + 4, 18);
+      hoverGlow.setAlpha(0);
+      container.add(hoverGlow);
+
       // Label
       const label = this.add
-        .text(0, NODE_HEIGHT / 2 + 8, outline.name, {
-          fontSize: "11px",
-          color: "#ddd",
-          fontFamily: "Arial",
+        .text(0, halfH + 12, outline.name, {
+          fontSize: "32px",
+          color: "#e8dcc8",
+          fontFamily: "serif",
           align: "center",
-          backgroundColor: "rgba(0,0,0,0.6)",
-          padding: { x: 4, y: 2 },
+          stroke: "#111118",
+          strokeThickness: 6,
         })
         .setOrigin(0.5, 0);
       container.add(label);
 
-      // Make interactive
-      bg.setInteractive({ useHandCursor: true });
-      bg.on("pointerover", () => {
+      // Interactive
+      const hitZone = this.add
+        .zone(0, 0, NODE_WIDTH, NODE_HEIGHT)
+        .setInteractive({ useHandCursor: true });
+      container.add(hitZone);
+
+      hitZone.on("pointerover", () => {
         this.tweens.add({
           targets: container,
-          scaleX: 1.1,
-          scaleY: 1.1,
-          duration: 150,
-          ease: "Power2",
+          scaleX: 1.12,
+          scaleY: 1.12,
+          duration: 200,
+          ease: "Back.easeOut",
+        });
+        this.tweens.add({
+          targets: hoverGlow,
+          alpha: 1,
+          duration: 200,
         });
       });
-      bg.on("pointerout", () => {
+      hitZone.on("pointerout", () => {
         this.tweens.add({
           targets: container,
           scaleX: 1.0,
           scaleY: 1.0,
-          duration: 150,
-          ease: "Power2",
+          duration: 200,
+          ease: "Sine.easeOut",
+        });
+        this.tweens.add({
+          targets: hoverGlow,
+          alpha: 0,
+          duration: 200,
         });
       });
-      bg.on("pointerdown", () => {
+      hitZone.on("pointerdown", () => {
         this.game.events.emit("building-clicked", {
           scenarioId: outline.id,
           entrySceneId: outline.entrySceneId,
@@ -333,31 +409,37 @@ export class TownScene extends Phaser.Scene {
 
       this.nodeContainers.set(outline.id, container);
     }
-
-    // Set camera bounds
-    this.fitCamera();
   }
 
   private fitCamera() {
-    if (this.nodePositions.size === 0) return;
-    const margin = 150;
-    let minX = Infinity;
-    let minY = Infinity;
-    let maxX = -Infinity;
-    let maxY = -Infinity;
-    for (const pos of this.nodePositions.values()) {
-      minX = Math.min(minX, pos.x);
-      minY = Math.min(minY, pos.y);
-      maxX = Math.max(maxX, pos.x);
-      maxY = Math.max(maxY, pos.y);
-    }
-    const w = maxX - minX + margin * 2;
-    const h = maxY - minY + margin * 2;
     const cam = this.cameras.main;
-    cam.setBounds(minX - margin, minY - margin, w, h);
-    cam.centerOn((minX + maxX) / 2, (minY + maxY) / 2);
-    cam.setZoom(Math.min(cam.width / w, cam.height / h, 1));
+    if (this.mapWidth > 0 && this.mapHeight > 0) {
+      // Use background image bounds
+      cam.setBounds(0, 0, this.mapWidth, this.mapHeight);
+      cam.centerOn(this.mapWidth / 2, this.mapHeight / 2);
+      // minZoom = cover (map always fills viewport, no black edges)
+      this.minZoom = Math.max(cam.width / this.mapWidth, cam.height / this.mapHeight);
+      // Default zoom = 300% of cover
+      cam.setZoom(this.minZoom * 3);
+    } else if (this.nodePositions.size > 0) {
+      // Fallback to node bounds
+      const margin = 150;
+      let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+      for (const pos of this.nodePositions.values()) {
+        minX = Math.min(minX, pos.x);
+        minY = Math.min(minY, pos.y);
+        maxX = Math.max(maxX, pos.x);
+        maxY = Math.max(maxY, pos.y);
+      }
+      const w = maxX - minX + margin * 2;
+      const h = maxY - minY + margin * 2;
+      cam.setBounds(minX - margin, minY - margin, w, h);
+      cam.centerOn((minX + maxX) / 2, (minY + maxY) / 2);
+      cam.setZoom(Math.min(cam.width / w, cam.height / h, 1));
+    }
   }
+
+  // ── NPC positions ──────────────────────────────────────────────
 
   private handleNpcPositionUpdate(data: {
     positions: Record<string, CharacterPosition>;
@@ -366,29 +448,19 @@ export class TownScene extends Phaser.Scene {
     junctions: JunctionData[];
     transportEdges: TransportEdgeData[];
   }) {
-    // Build lookup maps
     const sceneToParent = new Map<string, string>();
-    for (const s of data.scenes) {
-      sceneToParent.set(s.id, s.parentLocationId);
-    }
+    for (const s of data.scenes) sceneToParent.set(s.id, s.parentLocationId);
 
     const junctionMap = new Map<string, JunctionData>();
-    for (const j of data.junctions) {
-      junctionMap.set(j.id, j);
-    }
+    for (const j of data.junctions) junctionMap.set(j.id, j);
 
-    // Build roadId → transportEdge lookup (by streetSceneId matching roadId pattern)
     const roadToEdge = new Map<string, TransportEdgeData>();
-    for (const edge of data.transportEdges) {
+    for (const edge of data.transportEdges)
       roadToEdge.set(edge.streetSceneId, edge);
-    }
 
     const npcNameMap = new Map<string, string>();
-    for (const npc of data.npcStatuses) {
-      npcNameMap.set(npc.npcId, npc.name);
-    }
+    for (const npc of data.npcStatuses) npcNameMap.set(npc.npcId, npc.name);
 
-    // Track which NPCs are still present
     const activeNpcIds = new Set<string>();
 
     for (const [npcId, position] of Object.entries(data.positions)) {
@@ -404,37 +476,42 @@ export class TownScene extends Phaser.Scene {
 
       const existing = this.npcDots.get(npcId);
       if (existing) {
-        // Animate to new position
         if (
           Math.abs(existing.currentX - target.x) > 1 ||
           Math.abs(existing.currentY - target.y) > 1
         ) {
           this.tweens.add({
-            targets: [existing.dot, existing.label],
-            x: (current: number, _key: string, _target: unknown, targetObj: Phaser.GameObjects.Arc | Phaser.GameObjects.Text) =>
-              targetObj === existing.dot ? target.x : target.x,
-            y: (current: number, _key: string, _target: unknown, targetObj: Phaser.GameObjects.Arc | Phaser.GameObjects.Text) =>
-              targetObj === existing.dot ? target.y : target.y + NPC_DOT_RADIUS + 4,
-            duration: 300,
-            ease: "Power2",
+            targets: existing.dot,
+            x: target.x,
+            y: target.y,
+            duration: 400,
+            ease: "Sine.easeInOut",
+          });
+          this.tweens.add({
+            targets: existing.label,
+            x: target.x,
+            y: target.y + NPC_DOT_RADIUS + 4,
+            duration: 400,
+            ease: "Sine.easeInOut",
           });
           existing.currentX = target.x;
           existing.currentY = target.y;
         }
       } else {
-        // Create new NPC dot
         const color = NPC_COLORS[this.colorIndex % NPC_COLORS.length];
         this.colorIndex++;
 
         const dot = this.add
-          .circle(target.x, target.y, NPC_DOT_RADIUS, color)
+          .circle(target.x, target.y, NPC_DOT_RADIUS, color, 0.9)
+          .setStrokeStyle(2, 0xffffff, 0.6)
           .setDepth(10);
         const label = this.add
           .text(target.x, target.y + NPC_DOT_RADIUS + 4, name, {
-            fontSize: "9px",
+            fontSize: "11px",
             color: "#fff",
-            backgroundColor: "rgba(0,0,0,0.6)",
-            padding: { x: 2, y: 1 },
+            fontFamily: "serif",
+            stroke: "#000",
+            strokeThickness: 3,
           })
           .setOrigin(0.5, 0)
           .setDepth(11);
@@ -448,7 +525,6 @@ export class TownScene extends Phaser.Scene {
       }
     }
 
-    // Remove dots for NPCs no longer present
     for (const [npcId, npcData] of this.npcDots) {
       if (!activeNpcIds.has(npcId)) {
         npcData.dot.destroy();
@@ -476,7 +552,6 @@ export class TownScene extends Phaser.Scene {
         };
       }
       case "road": {
-        // Find transportEdge whose streetSceneId matches roadId
         const edge = roadToEdge.get(position.roadId);
         if (edge) {
           const fromPos = this.nodePositions.get(edge.fromLocationId);
