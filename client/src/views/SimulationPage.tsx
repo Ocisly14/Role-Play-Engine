@@ -11,6 +11,11 @@ import { useMobileSidebar } from "../hooks/useMobileSidebar";
 import { useSimulationState } from "../hooks/useSimulationState";
 import { useSimulationWebSocket } from "../hooks/useSimulationWebSocket";
 
+const NPC_DOT_COLORS = [
+  "#ff6b6b", "#4ecdc4", "#ffe66d", "#a29bfe",
+  "#fd79a8", "#00b894", "#e17055", "#6c5ce7",
+];
+
 const MAPS_BASE = "/api/maps";
 
 interface SceneConfig {
@@ -94,6 +99,12 @@ export default function SimulationPage() {
     [setSelectedNpc, setCurrentLevel, handleEnterScene]
   );
 
+  // Disable Phaser input while popup is open
+  useEffect(() => {
+    if (!gameRef.current) return;
+    gameRef.current.events.emit("set-input-enabled", !state.focusedBuildingId);
+  }, [state.focusedBuildingId]);
+
   // Forward NPC positions to town scene
   useEffect(() => {
     if (!gameRef.current || !state.topology) return;
@@ -158,6 +169,32 @@ export default function SimulationPage() {
     document.addEventListener("keydown", handleEscape);
     return () => document.removeEventListener("keydown", handleEscape);
   }, [isSidebarOpen, closeSidebar, state.focusedBuildingId, exitBuilding]);
+
+  // NPCs currently inside the focused building (or sub-scene)
+  const buildingNpcs = (() => {
+    if (!state.focusedBuildingId || !state.topology) return [];
+    const subSceneIds = new Set(
+      state.topology.scenes
+        .filter((s) => s.parentLocationId === state.focusedBuildingId)
+        .map((s) => s.id)
+    );
+    // Filter: if a sub-scene is focused, only show NPCs in that sub-scene
+    const matchScene = (sceneId: string) =>
+      state.focusedSubSceneId
+        ? sceneId === state.focusedSubSceneId
+        : subSceneIds.has(sceneId);
+
+    return state.npcStatuses
+      .filter((npc) => {
+        const pos = state.npcPositions[npc.npcId];
+        return pos?.type === "scene" && matchScene(pos.sceneId);
+      })
+      .map((npc, i) => ({
+        npcId: npc.npcId,
+        name: npc.name,
+        color: NPC_DOT_COLORS[i % NPC_DOT_COLORS.length],
+      }));
+  })();
 
   const buildingSubScenes = state.focusedBuildingId
     ? (state.topology?.scenes
@@ -283,6 +320,25 @@ export default function SimulationPage() {
                 <div className="text-slate-400 text-sm p-6">No image available</div>
               )}
             </div>
+
+            {/* NPC dots */}
+            {buildingNpcs.length > 0 && (
+              <div className="flex items-center gap-3 px-3 py-2 border-t border-slate-200/60 flex-wrap">
+                {buildingNpcs.map((npc) => (
+                  <div
+                    key={npc.npcId}
+                    className="flex items-center gap-1.5 cursor-pointer hover:opacity-80 transition-opacity"
+                    onClick={() => setSelectedNpc(npc.npcId)}
+                  >
+                    <span
+                      className="inline-block w-3 h-3 rounded-full border border-white/60 shrink-0"
+                      style={{ backgroundColor: npc.color }}
+                    />
+                    <span className="text-xs text-slate-600">{npc.name}</span>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         </div>
       )}

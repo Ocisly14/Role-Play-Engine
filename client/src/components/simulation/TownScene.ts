@@ -7,6 +7,7 @@ interface ScenarioConfig {
 }
 
 interface RoadConfig {
+  roadId?: string;
   points: [number, number][];
 }
 
@@ -56,8 +57,11 @@ interface NpcStatusEntry {
 interface NpcDotData {
   dot: Phaser.GameObjects.Arc;
   label: Phaser.GameObjects.Text;
+  /** Local x/y offset relative to parent container (or world coords for road NPCs). */
   currentX: number;
   currentY: number;
+  /** Which building container this dot belongs to, or null for road NPCs. */
+  buildingId: string | null;
 }
 
 const NPC_COLORS = [
@@ -68,11 +72,9 @@ const NPC_COLORS = [
 const NODE_WIDTH = 360;
 const NODE_HEIGHT = 240;
 const NPC_DOT_RADIUS = 8;
-const NPC_JITTER = 40;
 const ROAD_COLOR = 0xd4a843;
 const ROAD_ALPHA = 0.35;
 const ROAD_WIDTH = 4;
-
 export class TownScene extends Phaser.Scene {
   private scenarioOutlines: ScenarioOutlineData[] = [];
   private transportEdges: TransportEdgeData[] = [];
@@ -83,11 +85,16 @@ export class TownScene extends Phaser.Scene {
   private npcDots: Map<string, NpcDotData> = new Map();
   private colorIndex = 0;
   private configCache: MapConfig | null = null;
+  private roadPolylines: Map<string, [number, number][]> = new Map();
   private baseUrl = "";
   private isBuilt = false;
   private mapWidth = 0;
   private mapHeight = 0;
   private minZoom = 0.15;
+  private referenceZoom = 1;
+  private lastPinchDist = 0;
+  private lastPinchMidX = 0;
+  private lastPinchMidY = 0;
 
   constructor() {
     super({ key: "TownScene" });
@@ -101,6 +108,9 @@ export class TownScene extends Phaser.Scene {
       this
     );
     this.game.events.on("zoom-to", this.handleZoomTo, this);
+    this.game.events.on("set-input-enabled", (enabled: boolean) => {
+      this.input.enabled = enabled;
+    });
   }
 
   /** Returns true when a pointer event originated outside the Phaser canvas (i.e. on a UI overlay). */
@@ -126,24 +136,70 @@ export class TownScene extends Phaser.Scene {
       (
         pointer: Phaser.Input.Pointer,
         _gameObjects: Phaser.GameObjects.GameObject[],
-        _deltaX: number,
+        deltaX: number,
         deltaY: number
       ) => {
         if (this.isOverUI(pointer)) return;
         const cam = this.cameras.main;
-        cam.setZoom(
-          Phaser.Math.Clamp(cam.zoom + (deltaY > 0 ? -0.05 : 0.05), this.minZoom, 10)
-        );
+        const domEvent = pointer.event as WheelEvent | undefined;
+        if (domEvent?.ctrlKey) {
+          // Trackpad pinch or Ctrl+scroll → zoom
+          cam.setZoom(
+            Phaser.Math.Clamp(cam.zoom * (1 - deltaY * 0.01), this.minZoom, 10)
+          );
+        } else {
+          // Trackpad two-finger scroll or mouse wheel → pan
+          cam.scrollX += deltaX / cam.zoom;
+          cam.scrollY += deltaY / cam.zoom;
+        }
       }
     );
 
     this.input.on("pointermove", (pointer: Phaser.Input.Pointer) => {
       if (this.isOverUI(pointer)) return;
+      // Skip single-pointer drag when two fingers are active (pinch gesture)
+      if (this.input.pointer1.isDown && this.input.pointer2.isDown) return;
       if (pointer.isDown) {
         const cam = this.cameras.main;
         cam.scrollX -= (pointer.x - pointer.prevPosition.x) / cam.zoom;
         cam.scrollY -= (pointer.y - pointer.prevPosition.y) / cam.zoom;
       }
+    });
+
+    // Touch: pinch-to-zoom + two-finger pan
+    this.input.addPointer(1); // enable 2nd pointer
+    this.input.on("pointerdown", (_pointer: Phaser.Input.Pointer) => {
+      const p1 = this.input.pointer1;
+      const p2 = this.input.pointer2;
+      if (p1.isDown && p2.isDown) {
+        this.lastPinchDist = Phaser.Math.Distance.Between(p1.x, p1.y, p2.x, p2.y);
+        this.lastPinchMidX = (p1.x + p2.x) / 2;
+        this.lastPinchMidY = (p1.y + p2.y) / 2;
+      }
+    });
+    this.input.on("pointermove", (_pointer: Phaser.Input.Pointer) => {
+      const p1 = this.input.pointer1;
+      const p2 = this.input.pointer2;
+      if (!p1.isDown || !p2.isDown) return;
+
+      const cam = this.cameras.main;
+      const dist = Phaser.Math.Distance.Between(p1.x, p1.y, p2.x, p2.y);
+      const midX = (p1.x + p2.x) / 2;
+      const midY = (p1.y + p2.y) / 2;
+
+      // Pinch zoom
+      if (this.lastPinchDist > 0) {
+        const scale = dist / this.lastPinchDist;
+        cam.setZoom(Phaser.Math.Clamp(cam.zoom * scale, this.minZoom, 10));
+      }
+
+      // Two-finger pan
+      cam.scrollX -= (midX - this.lastPinchMidX) / cam.zoom;
+      cam.scrollY -= (midY - this.lastPinchMidY) / cam.zoom;
+
+      this.lastPinchDist = dist;
+      this.lastPinchMidX = midX;
+      this.lastPinchMidY = midY;
     });
   }
 
@@ -278,9 +334,64 @@ export class TownScene extends Phaser.Scene {
       this.mapHeight = bg.height;
     }
 
+    this.buildRoadPolylines();
     this.drawRoads();
     this.drawNodes();
     this.fitCamera();
+  }
+
+  private buildRoadPolylines() {
+    const roads = this.configCache?.roads;
+    if (!roads) return;
+    for (const road of Object.values(roads)) {
+      if (road.roadId && road.points.length >= 2) {
+        this.roadPolylines.set(road.roadId, road.points);
+      }
+    }
+  }
+
+  /**
+   * Interpolate along a polyline given t in [0, 1].
+   * Returns the [x, y] position at fraction t of the polyline's total length.
+   */
+  private interpolatePolyline(
+    points: [number, number][],
+    t: number
+  ): { x: number; y: number } {
+    if (points.length < 2) return { x: points[0][0], y: points[0][1] };
+    const clampedT = Phaser.Math.Clamp(t, 0, 1);
+
+    // Compute cumulative segment lengths
+    const segLengths: number[] = [];
+    let totalLength = 0;
+    for (let i = 1; i < points.length; i++) {
+      const dx = points[i][0] - points[i - 1][0];
+      const dy = points[i][1] - points[i - 1][1];
+      const len = Math.sqrt(dx * dx + dy * dy);
+      segLengths.push(len);
+      totalLength += len;
+    }
+
+    if (totalLength === 0) return { x: points[0][0], y: points[0][1] };
+
+    const targetDist = clampedT * totalLength;
+    let accumulated = 0;
+
+    for (let i = 0; i < segLengths.length; i++) {
+      const segLen = segLengths[i];
+      if (accumulated + segLen >= targetDist) {
+        const segT = segLen > 0 ? (targetDist - accumulated) / segLen : 0;
+        return {
+          x: Phaser.Math.Linear(points[i][0], points[i + 1][0], segT),
+          y: Phaser.Math.Linear(points[i][1], points[i + 1][1], segT),
+        };
+      }
+      accumulated += segLen;
+    }
+
+    // Fallback: return last point
+    const last = points[points.length - 1];
+    return { x: last[0], y: last[1] };
   }
 
   private drawRoads() {
@@ -390,13 +501,19 @@ export class TownScene extends Phaser.Scene {
       hitZone.on("pointerover", () => {
         container.setDepth(9999);
         // Dynamically set label resolution based on camera zoom so text stays crisp
-        const zoom = this.cameras.main.zoom;
-        label.setResolution(Math.max(3, Math.ceil(1 / zoom) * 3));
+        const cam = this.cameras.main;
+        label.setResolution(Math.max(3, Math.ceil(1 / cam.zoom) * 3));
+        // Adaptive hover: consistent visual enlargement regardless of zoom level
+        const hoverScale = Phaser.Math.Clamp(
+          1.2 * this.referenceZoom / cam.zoom,
+          1.1,
+          3.0
+        );
         const targets = maskGfx ? [container, maskGfx] : [container];
         this.tweens.add({
           targets,
-          scaleX: 1.5,
-          scaleY: 1.5,
+          scaleX: hoverScale,
+          scaleY: hoverScale,
           duration: 200,
           ease: "Back.easeOut",
         });
@@ -459,6 +576,7 @@ export class TownScene extends Phaser.Scene {
       cam.centerOn((minX + maxX) / 2, (minY + maxY) / 2);
       cam.setZoom(Math.min(cam.width / w, cam.height / h, 1));
     }
+    this.referenceZoom = cam.zoom;
   }
 
   // ── NPC positions ──────────────────────────────────────────────
@@ -483,70 +601,69 @@ export class TownScene extends Phaser.Scene {
     const npcNameMap = new Map<string, string>();
     for (const npc of data.npcStatuses) npcNameMap.set(npc.npcId, npc.name);
 
+    // Group NPCs by their parent building so we can lay them out horizontally
+    const buildingNpcs = new Map<string, string[]>(); // buildingId → npcId[]
+    const npcBuildingMap = new Map<string, string>(); // npcId → buildingId
+
     const activeNpcIds = new Set<string>();
 
     for (const [npcId, position] of Object.entries(data.positions)) {
       activeNpcIds.add(npcId);
-      const name = npcNameMap.get(npcId) ?? npcId;
-      const target = this.resolveNpcPosition(
-        position,
-        sceneToParent,
-        junctionMap,
-        roadToEdge
-      );
-      if (!target) continue;
-
-      const existing = this.npcDots.get(npcId);
-      if (existing) {
-        if (
-          Math.abs(existing.currentX - target.x) > 1 ||
-          Math.abs(existing.currentY - target.y) > 1
-        ) {
-          this.tweens.add({
-            targets: existing.dot,
-            x: target.x,
-            y: target.y,
-            duration: 400,
-            ease: "Sine.easeInOut",
-          });
-          this.tweens.add({
-            targets: existing.label,
-            x: target.x,
-            y: target.y + NPC_DOT_RADIUS + 4,
-            duration: 400,
-            ease: "Sine.easeInOut",
-          });
-          existing.currentX = target.x;
-          existing.currentY = target.y;
-        }
-      } else {
-        const color = NPC_COLORS[this.colorIndex % NPC_COLORS.length];
-        this.colorIndex++;
-
-        const dot = this.add
-          .circle(target.x, target.y, NPC_DOT_RADIUS, color, 0.9)
-          .setStrokeStyle(2, 0xffffff, 0.6)
-          .setDepth(10);
-        const label = this.add
-          .text(target.x, target.y + NPC_DOT_RADIUS + 4, name, {
-            fontSize: "11px",
-            color: "#fff",
-            fontFamily: "serif",
-            stroke: "#000",
-            strokeThickness: 3,
-          })
-          .setOrigin(0.5, 0)
-          .setDepth(11);
-
-        this.npcDots.set(npcId, {
-          dot,
-          label,
-          currentX: target.x,
-          currentY: target.y,
-        });
+      const buildingId = this.resolveParentBuilding(position, sceneToParent, junctionMap, roadToEdge);
+      if (buildingId) {
+        npcBuildingMap.set(npcId, buildingId);
+        const list = buildingNpcs.get(buildingId);
+        if (list) list.push(npcId);
+        else buildingNpcs.set(buildingId, [npcId]);
       }
     }
 
+    // Compute final positions: evenly divide the thumbnail width (local coords)
+    const DOT_Y_OFFSET = NODE_HEIGHT / 2 + 16;
+
+    for (const [buildingId, npcIds] of buildingNpcs) {
+      if (!this.nodeContainers.has(buildingId)) continue;
+
+      const count = npcIds.length;
+
+      for (let i = 0; i < count; i++) {
+        const npcId = npcIds[i];
+        const name = npcNameMap.get(npcId) ?? npcId;
+        // Local coords relative to container center
+        const localX = -NODE_WIDTH / 2 + (NODE_WIDTH * (i + 1)) / (count + 1);
+        const localY = DOT_Y_OFFSET;
+
+        this.upsertNpcDot(npcId, name, localX, localY, buildingId);
+      }
+    }
+
+    // Handle road NPCs (not inside a building — place along road polyline)
+    for (const [npcId, position] of Object.entries(data.positions)) {
+      if (npcBuildingMap.has(npcId)) continue;
+      if (position.type !== "road") continue;
+
+      const name = npcNameMap.get(npcId) ?? npcId;
+
+      // Try polyline interpolation first
+      const polyline = this.roadPolylines.get(position.roadId);
+      if (polyline) {
+        const { x: tx, y: ty } = this.interpolatePolyline(polyline, position.position);
+        this.upsertNpcDot(npcId, name, tx, ty, null);
+        continue;
+      }
+
+      // Fallback: straight line between building endpoints
+      const edge = roadToEdge.get(position.roadId);
+      if (!edge) continue;
+      const fromPos = this.nodePositions.get(edge.fromLocationId);
+      const toPos = this.nodePositions.get(edge.toLocationId);
+      if (!fromPos || !toPos) continue;
+      const tx = Phaser.Math.Linear(fromPos.x, toPos.x, position.position);
+      const ty = Phaser.Math.Linear(fromPos.y, toPos.y, position.position);
+      this.upsertNpcDot(npcId, name, tx, ty, null);
+    }
+
+    // Remove NPCs that are no longer active
     for (const [npcId, npcData] of this.npcDots) {
       if (!activeNpcIds.has(npcId)) {
         npcData.dot.destroy();
@@ -556,55 +673,107 @@ export class TownScene extends Phaser.Scene {
     }
   }
 
-  private resolveNpcPosition(
+  /** Resolve which building (scenario) an NPC belongs to, or null for road NPCs. */
+  private resolveParentBuilding(
     position: CharacterPosition,
     sceneToParent: Map<string, string>,
     junctionMap: Map<string, JunctionData>,
-    roadToEdge: Map<string, TransportEdgeData>
-  ): { x: number; y: number } | null {
+    _roadToEdge: Map<string, TransportEdgeData>
+  ): string | null {
     switch (position.type) {
       case "scene": {
-        const parentId = sceneToParent.get(position.sceneId);
-        if (!parentId) return null;
-        const nodePos = this.nodePositions.get(parentId);
-        if (!nodePos) return null;
-        return {
-          x: nodePos.x + (Math.random() - 0.5) * NPC_JITTER,
-          y: nodePos.y + (Math.random() - 0.5) * NPC_JITTER,
-        };
-      }
-      case "road": {
-        const edge = roadToEdge.get(position.roadId);
-        if (edge) {
-          const fromPos = this.nodePositions.get(edge.fromLocationId);
-          const toPos = this.nodePositions.get(edge.toLocationId);
-          if (fromPos && toPos) {
-            return {
-              x: Phaser.Math.Linear(fromPos.x, toPos.x, position.position),
-              y: Phaser.Math.Linear(fromPos.y, toPos.y, position.position),
-            };
-          }
-        }
-        return null;
+        return sceneToParent.get(position.sceneId) ?? null;
       }
       case "junction": {
         const junction = junctionMap.get(position.junctionId);
         if (!junction || junction.connectedSceneIds.length === 0) return null;
-        const firstSceneId = junction.connectedSceneIds[0];
-        const parentId = sceneToParent.get(firstSceneId);
-        if (!parentId) return null;
-        const nodePos = this.nodePositions.get(parentId);
-        if (!nodePos) return null;
-        return {
-          x: nodePos.x + (Math.random() - 0.5) * NPC_JITTER,
-          y: nodePos.y + (Math.random() - 0.5) * NPC_JITTER,
-        };
+        return sceneToParent.get(junction.connectedSceneIds[0]) ?? null;
       }
+      case "road":
+        return null;
+    }
+  }
+
+  /**
+   * Create or update an NPC dot + label.
+   * @param tx x position (local to container if buildingId set, otherwise world)
+   * @param ty y position (local to container if buildingId set, otherwise world)
+   * @param buildingId attach to this building's container, or null for world-level
+   */
+  private upsertNpcDot(npcId: string, name: string, tx: number, ty: number, buildingId: string | null = null) {
+    const existing = this.npcDots.get(npcId);
+
+    // If the NPC moved to a different building, remove old dot and recreate
+    if (existing && existing.buildingId !== buildingId) {
+      existing.dot.destroy();
+      existing.label.destroy();
+      this.npcDots.delete(npcId);
+      this.upsertNpcDot(npcId, name, tx, ty, buildingId);
+      return;
+    }
+
+    if (existing) {
+      if (
+        Math.abs(existing.currentX - tx) > 1 ||
+        Math.abs(existing.currentY - ty) > 1
+      ) {
+        this.tweens.add({
+          targets: existing.dot,
+          x: tx,
+          y: ty,
+          duration: 400,
+          ease: "Sine.easeInOut",
+        });
+        this.tweens.add({
+          targets: existing.label,
+          x: tx,
+          y: ty + NPC_DOT_RADIUS + 6,
+          duration: 400,
+          ease: "Sine.easeInOut",
+        });
+        existing.currentX = tx;
+        existing.currentY = ty;
+      }
+    } else {
+      const color = NPC_COLORS[this.colorIndex % NPC_COLORS.length];
+      this.colorIndex++;
+
+      const dot = this.add
+        .circle(tx, ty, NPC_DOT_RADIUS, color, 0.9)
+        .setStrokeStyle(2, 0xffffff, 0.6);
+      const label = this.add
+        .text(tx, ty + NPC_DOT_RADIUS + 6, name, {
+          fontSize: "28px",
+          color: "#fff",
+          fontFamily: "serif",
+          stroke: "#000",
+          strokeThickness: 6,
+        })
+        .setOrigin(0.5, 0)
+        .setResolution(3);
+
+      // Add to building container so they scale together on hover
+      const container = buildingId ? this.nodeContainers.get(buildingId) : null;
+      if (container) {
+        container.add([dot, label]);
+      } else {
+        dot.setDepth(10);
+        label.setDepth(11);
+      }
+
+      this.npcDots.set(npcId, {
+        dot,
+        label,
+        currentX: tx,
+        currentY: ty,
+        buildingId,
+      });
     }
   }
 
   private handleZoomTo(data: { x: number; y: number; zoom: number }) {
-    this.cameras.main.pan(data.x, data.y, 500, "Power2");
-    this.cameras.main.zoomTo(data.zoom, 500);
+    const cam = this.cameras.main;
+    cam.pan(data.x, data.y, 500, "Power2");
+    cam.zoomTo(data.zoom, 500);
   }
 }
