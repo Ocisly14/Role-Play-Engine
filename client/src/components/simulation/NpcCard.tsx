@@ -16,17 +16,23 @@ export function NpcCard({ npc, isSelected, onClick }: NpcCardProps) {
     >
       <div className="flex items-center justify-between">
         <span
-          className={`font-medium ${npc.isAlive ? "text-slate-700" : "text-red-500 line-through"}`}
+          className={`font-medium ${npc.isAlive ? "text-slate-900" : "text-red-600 line-through"}`}
         >
           {npc.name}
         </span>
-        <span className="text-xs text-slate-400">{npc.location}</span>
+        <span className="text-xs text-slate-700">{npc.location}</span>
       </div>
       {npc.isAlive && (
-        <div className="text-xs text-slate-500 mt-1">
-          HP: {npc.hp}/{npc.maxHp} SAN: {npc.sanity}/{npc.maxSanity}
+        <div className="text-xs text-slate-800 mt-1">
+          <span className="text-rose-500">
+            HP: {npc.hp}/{npc.maxHp}
+          </span>
+          {" "}
+          <span className="text-sky-500">
+            SAN: {npc.sanity}/{npc.maxSanity}
+          </span>
           {npc.currentAction && (
-            <div className="text-slate-400 mt-0.5 truncate">
+            <div className="text-slate-900 mt-0.5 truncate">
               正在进行中: {npc.currentAction}
             </div>
           )}

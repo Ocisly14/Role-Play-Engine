@@ -16,31 +16,31 @@ export function NpcDetail({ npc, onBack, onZoomTo }: NpcDetailProps) {
         &larr; Back to list
       </button>
       <h3 className="text-lg font-bold text-amber-700 mb-2">{npc.name}</h3>
-      <div className="space-y-2 text-sm">
-        <div className="flex justify-between text-slate-600">
+      <div className="space-y-2 text-sm text-slate-900">
+        <div className="flex justify-between text-slate-800">
           <span>HP</span>
           <span>
             {npc.hp} / {npc.maxHp}
           </span>
         </div>
-        <div className="flex justify-between text-slate-600">
+        <div className="flex justify-between text-slate-800">
           <span>SAN</span>
           <span>
             {npc.sanity} / {npc.maxSanity}
           </span>
         </div>
-        <div className="text-slate-500">
-          <span className="text-slate-400">Location:</span> {npc.location}
+        <div className="text-slate-900">
+          <span className="text-slate-700">Location:</span> {npc.location}
         </div>
         {npc.currentAction && (
-          <div className="text-slate-500">
-            <span className="text-slate-400">正在进行中:</span> {npc.currentAction}
+          <div className="text-slate-900">
+            <span className="text-slate-700">正在进行中:</span> {npc.currentAction}
           </div>
         )}
         {npc.inventory.length > 0 && (
           <div>
-            <span className="text-slate-400 text-xs">Inventory:</span>
-            <ul className="text-xs text-slate-500 mt-1">
+            <span className="text-slate-700 text-xs">Inventory:</span>
+            <ul className="text-xs text-slate-900 mt-1">
               {npc.inventory.map((item) => (
                 <li key={item.id}>{item.name}</li>
               ))}

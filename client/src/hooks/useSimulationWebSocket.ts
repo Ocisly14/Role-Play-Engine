@@ -30,11 +30,12 @@ export function useSimulationWebSocket({
   const wsRef = useRef<WebSocket | null>(null);
   const reconnectTimeoutRef = useRef<ReturnType<typeof setTimeout>>();
   const reconnectDelayRef = useRef(1000);
+  const shouldReconnectRef = useRef(true);
   const onEventRef = useRef(onEvent);
   onEventRef.current = onEvent;
 
   const connect = useCallback(() => {
-    if (!sessionId) return;
+    if (!sessionId || !shouldReconnectRef.current) return;
 
     const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
     const host = window.location.host;
@@ -61,6 +62,9 @@ export function useSimulationWebSocket({
 
     ws.onclose = () => {
       onDisconnected?.();
+      if (!shouldReconnectRef.current) {
+        return;
+      }
       reconnectTimeoutRef.current = setTimeout(() => {
         reconnectDelayRef.current = Math.min(
           reconnectDelayRef.current * 2,
@@ -72,8 +76,10 @@ export function useSimulationWebSocket({
   }, [sessionId, onConnected, onDisconnected]);
 
   useEffect(() => {
+    shouldReconnectRef.current = true;
     connect();
     return () => {
+      shouldReconnectRef.current = false;
       if (reconnectTimeoutRef.current)
         clearTimeout(reconnectTimeoutRef.current);
       wsRef.current?.close();

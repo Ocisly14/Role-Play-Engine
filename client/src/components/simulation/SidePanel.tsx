@@ -87,6 +87,17 @@ function buildEventFilters(
   return next;
 }
 
+function dedupeEventsById(events: SimulationEvent[]): SimulationEvent[] {
+  const seenIds = new Set<string>();
+  const deduped: SimulationEvent[] = [];
+  for (const event of events) {
+    if (seenIds.has(event.id)) continue;
+    seenIds.add(event.id);
+    deduped.push(event);
+  }
+  return deduped;
+}
+
 function matchesFilters(
   event: SimulationEvent,
   filters: SimulationEventFilters,
@@ -201,18 +212,18 @@ export function SidePanel({
           maxTick: displayTick,
         });
         hasLoadedEventsRef.current = true;
-        const historyEvents = [...events]
+        const historyEvents = dedupeEventsById([...events]
           .filter((event) => !HIDDEN_EVENT_TYPES.has(event.type))
-          .reverse();
+          .reverse());
         const seenIds = new Set(historyEvents.map((event) => event.id));
         const incoming = eventLog.filter(
           (event) =>
             !seenIds.has(event.id) &&
             matchesFilters(event, filters, locationParentById)
         );
-        setDisplayedEvents(
+        setDisplayedEvents(dedupeEventsById(
           incoming.length > 0 ? [...incoming, ...historyEvents] : historyEvents
-        );
+        ));
       } catch (error) {
         setEventsError(
           error instanceof Error ? error.message : "Failed to load events"
@@ -254,7 +265,7 @@ export function SidePanel({
           matchesFilters(event, activeFilters, locationParentById)
       );
 
-      return incoming.length > 0 ? [...incoming, ...prev] : prev;
+      return incoming.length > 0 ? dedupeEventsById([...incoming, ...prev]) : prev;
     });
   }, [activeFilters, activeTab, eventLog, locationParentById]);
 

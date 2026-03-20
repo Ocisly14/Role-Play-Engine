@@ -116,7 +116,10 @@ export function useSimulationState(sessionId: string | null) {
         "playback_buffering",
         "playback_resumed",
       ]);
-      if (!skipLogTypes.has(event.type)) {
+      if (
+        !skipLogTypes.has(event.type) &&
+        !prev.eventLog.some((existingEvent) => existingEvent.id === event.id)
+      ) {
         newState.eventLog = [event, ...prev.eventLog].slice(0, MAX_EVENT_LOG);
       }
 
