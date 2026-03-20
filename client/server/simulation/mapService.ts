@@ -29,11 +29,13 @@ export async function getTopology(sessionId: string): Promise<TopologyResponse |
   const junctions = Array.from(topology.junctions.values()).map((j) => ({
     id: j.id,
     name: j.name,
+    parentLocationId: j.parentLocationId,
     connectedSceneIds: j.connectedSceneIds,
   }));
   const roads = Array.from(topology.roads.values()).map((r) => ({
     id: r.id,
     name: r.name,
+    parentLocationId: r.parentLocationId,
     endpointA: r.endpointA,
     endpointB: r.endpointB,
     travelTimeMinutes: r.travelTimeMinutes,
@@ -99,6 +101,7 @@ export async function getNpcStatuses(sessionId: string): Promise<NpcStatusInfo[]
   if (!runner) return null;
   const dgsm = runner.getDgsm();
   const state = dgsm.getState();
+  const currentActions = await runner.getCurrentNpcActions();
   const statuses: NpcStatusInfo[] = [];
 
   for (const npc of state.npcCharacters ?? []) {
@@ -115,7 +118,7 @@ export async function getNpcStatuses(sessionId: string): Promise<NpcStatusInfo[]
       maxHp: npc.status?.maxHp ?? 0,
       sanity: stats?.san ?? 0,
       maxSanity: npc.status?.maxSanity ?? 0,
-      currentAction: null,
+      currentAction: currentActions[npc.id] ?? null,
       location: locationName,
       inventory,
       isAlive: (stats?.hp ?? 0) > 0,

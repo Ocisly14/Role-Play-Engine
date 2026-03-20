@@ -20,15 +20,16 @@ const WEATHER_OPTIONS = [
 
 interface ConfigPanelProps {
   sessionId: string;
+  onStarted?: () => Promise<void> | void;
 }
 
-export function ConfigPanel({ sessionId }: ConfigPanelProps) {
+export function ConfigPanel({ sessionId, onStarted }: ConfigPanelProps) {
   const [expanded, setExpanded] = useState(true);
   const [tickSpeed, setTickSpeed] = useState(60000);
   const [maxDays, setMaxDays] = useState(7);
   const [weather, setWeather] = useState("clear");
   const [syncRealTime, setSyncRealTime] = useState(false);
-  const [bufferMinutes, setBufferMinutes] = useState(5);
+  const [bufferMinutes, setBufferMinutes] = useState(0);
   const [starting, setStarting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -46,6 +47,8 @@ export function ConfigPanel({ sessionId }: ConfigPanelProps) {
         await simApi.updateSyncRealTime(sessionId, true, bufferMinutes);
       }
       await simApi.startSimulation(sessionId);
+      await onStarted?.();
+      setStarting(false);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to start");
       setStarting(false);
@@ -100,10 +103,10 @@ export function ConfigPanel({ sessionId }: ConfigPanelProps) {
           <label className="text-xs text-slate-500 whitespace-nowrap">Buffer</label>
           <input
             type="number"
-            min={3}
+            min={0}
             max={10}
             value={bufferMinutes}
-            onChange={(e) => setBufferMinutes(Math.max(3, Math.min(10, Number(e.target.value))))}
+            onChange={(e) => setBufferMinutes(Math.max(0, Math.min(10, Number(e.target.value))))}
             className="w-10 py-1 px-1 rounded-lg bg-white/50 text-slate-700 border border-slate-200 text-xs text-center"
           />
           <span className="text-xs text-slate-400">min</span>

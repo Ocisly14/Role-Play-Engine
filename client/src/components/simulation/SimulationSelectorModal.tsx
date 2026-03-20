@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { type SimulationListItem, listSimulations } from "../../services/simulationApi";
+import { type SimulationListItem, deleteSimulation, listSimulations } from "../../services/simulationApi";
 
 interface SimulationSelectorModalProps {
   open: boolean;
@@ -18,15 +18,31 @@ export function SimulationSelectorModal({ open, onClose }: SimulationSelectorMod
   const navigate = useNavigate();
   const [simulations, setSimulations] = useState<SimulationListItem[]>([]);
   const [loading, setLoading] = useState(false);
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
     if (!open) return;
     setLoading(true);
+    setConfirmDeleteId(null);
     listSimulations()
       .then(setSimulations)
       .catch((err) => console.error("Failed to load simulations:", err))
       .finally(() => setLoading(false));
   }, [open]);
+
+  async function handleDelete(sessionId: string) {
+    setDeleting(true);
+    try {
+      await deleteSimulation(sessionId);
+      setSimulations((prev) => prev.filter((s) => s.sessionId !== sessionId));
+    } catch (err) {
+      console.error("Failed to delete simulation:", err);
+    } finally {
+      setDeleting(false);
+      setConfirmDeleteId(null);
+    }
+  }
 
   if (!open) return null;
 
@@ -55,27 +71,64 @@ export function SimulationSelectorModal({ open, onClose }: SimulationSelectorMod
         ) : (
           <div className="space-y-3">
             {simulations.map((sim) => (
-              <button
-                type="button"
+              <div
                 key={sim.sessionId}
-                onClick={() => {
-                  onClose();
-                  navigate(`/simulation/${sim.sessionId}`);
-                }}
-                className="w-full text-left p-4 rounded-xl border border-gray-200 bg-white/50 hover:bg-white/80 hover:border-gray-300 transition-all"
+                className="flex items-center gap-2 rounded-xl border border-gray-200 bg-white/50 hover:bg-white/80 hover:border-gray-300 transition-all"
               >
-                <div className="flex justify-between items-center">
-                  <span className="font-medium" style={{ color: "var(--title, #3d2f1f)" }}>
-                    {sim.moduleName ?? "Unknown Module"}
-                  </span>
-                  <span className={`text-xs px-2 py-1 rounded-full border ${STATUS_COLORS[sim.state] ?? ""}`}>
-                    {sim.state}
-                  </span>
-                </div>
-                <div className="text-sm text-gray-500 mt-1">
-                  Day {sim.currentDay} &middot; {sim.currentTime} &middot; {sim.ticksExecuted} ticks
-                </div>
-              </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    onClose();
+                    navigate(`/simulation/${sim.sessionId}`);
+                  }}
+                  className="flex-1 text-left p-4"
+                >
+                  <div className="flex justify-between items-center">
+                    <span className="font-medium" style={{ color: "var(--title, #3d2f1f)" }}>
+                      {sim.moduleName ?? "Unknown Module"}
+                    </span>
+                    <span className={`text-xs px-2 py-1 rounded-full border ${STATUS_COLORS[sim.state] ?? ""}`}>
+                      {sim.state}
+                    </span>
+                  </div>
+                  <div className="text-sm text-gray-500 mt-1">
+                    Day {sim.currentDay} &middot; {sim.currentTime} &middot; {sim.ticksExecuted} ticks
+                  </div>
+                </button>
+
+                {confirmDeleteId === sim.sessionId ? (
+                  <div className="flex items-center gap-1 pr-3">
+                    <button
+                      type="button"
+                      disabled={deleting}
+                      onClick={() => handleDelete(sim.sessionId)}
+                      className="text-xs px-2 py-1 rounded-lg bg-red-500 text-white hover:bg-red-600 transition-colors disabled:opacity-50"
+                    >
+                      {deleting ? "..." : "Confirm"}
+                    </button>
+                    <button
+                      type="button"
+                      disabled={deleting}
+                      onClick={() => setConfirmDeleteId(null)}
+                      className="text-xs px-2 py-1 rounded-lg bg-gray-200 text-gray-600 hover:bg-gray-300 transition-colors"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => setConfirmDeleteId(sim.sessionId)}
+                    className="pr-4 pl-2 py-4 text-gray-300 hover:text-red-400 transition-colors"
+                    title="Delete simulation"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <polyline points="3 6 5 6 21 6" />
+                      <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                    </svg>
+                  </button>
+                )}
+              </div>
             ))}
           </div>
         )}

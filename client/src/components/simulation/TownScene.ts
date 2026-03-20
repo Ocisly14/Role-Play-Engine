@@ -52,6 +52,7 @@ type CharacterPosition =
 interface NpcStatusEntry {
   npcId: string;
   name: string;
+  currentAction?: string | null;
 }
 
 interface NpcDotData {
@@ -62,6 +63,9 @@ interface NpcDotData {
   currentY: number;
   /** Which building container this dot belongs to, or null for road NPCs. */
   buildingId: string | null;
+  /** Action bubble — dark tooltip showing current action. */
+  bubbleBg: Phaser.GameObjects.Graphics | null;
+  bubbleText: Phaser.GameObjects.Text | null;
 }
 
 const NPC_COLORS = [
@@ -75,6 +79,8 @@ const NPC_DOT_RADIUS = 8;
 const ROAD_COLOR = 0xd4a843;
 const ROAD_ALPHA = 0.35;
 const ROAD_WIDTH = 4;
+const BUBBLE_ARROW_H = 8;
+const BUBBLE_LABEL_GAP = 32;
 export class TownScene extends Phaser.Scene {
   private scenarioOutlines: ScenarioOutlineData[] = [];
   private transportEdges: TransportEdgeData[] = [];
@@ -116,6 +122,7 @@ export class TownScene extends Phaser.Scene {
       this
     );
     this.game.events.on("zoom-to", this.handleZoomTo, this);
+    this.game.events.on("npc-action-update", this.handleNpcActionUpdate, this);
     this.game.events.on("set-input-enabled", (enabled: boolean) => {
       this.input.enabled = enabled;
     });
@@ -167,7 +174,11 @@ export class TownScene extends Phaser.Scene {
       if (this.isOverUI(pointer)) return;
       // Skip single-pointer drag when two fingers are active (pinch gesture)
       if (this.input.pointer1.isDown && this.input.pointer2.isDown) return;
-      if (pointer.isDown) {
+      // Cross-check Phaser state with actual DOM button state to prevent
+      // "stuck drag" when pointerup fires on a DOM overlay instead of canvas.
+      const domEvent = pointer.event as PointerEvent | MouseEvent | undefined;
+      const buttonsPressed = domEvent?.buttons ?? 0;
+      if (pointer.isDown && buttonsPressed > 0) {
         const cam = this.cameras.main;
         cam.scrollX -= (pointer.x - pointer.prevPosition.x) / cam.zoom;
         cam.scrollY -= (pointer.y - pointer.prevPosition.y) / cam.zoom;
@@ -615,7 +626,11 @@ export class TownScene extends Phaser.Scene {
       roadToEdge.set(edge.streetSceneId, edge);
 
     const npcNameMap = new Map<string, string>();
-    for (const npc of data.npcStatuses) npcNameMap.set(npc.npcId, npc.name);
+    const npcActionMap = new Map<string, string | null>();
+    for (const npc of data.npcStatuses) {
+      npcNameMap.set(npc.npcId, npc.name);
+      npcActionMap.set(npc.npcId, npc.currentAction ?? null);
+    }
 
     // Group NPCs by their parent building so we can lay them out horizontally
     const buildingNpcs = new Map<string, string[]>(); // buildingId → npcId[]
@@ -698,6 +713,17 @@ export class TownScene extends Phaser.Scene {
       }
     }
 
+    for (const npcId of activeNpcIds) {
+      const npcData = this.npcDots.get(npcId);
+      if (!npcData) continue;
+      const currentAction = npcActionMap.get(npcId) ?? null;
+      if (currentAction) {
+        this.upsertBubble(npcId, npcData, currentAction);
+      } else {
+        this.clearBubble(npcData);
+      }
+    }
+
     // Clean up animation targets for NPCs that moved into buildings
     for (const [npcId] of npcBuildingMap) {
       this.npcAnimTargets.delete(npcId);
@@ -708,6 +734,8 @@ export class TownScene extends Phaser.Scene {
       if (!activeNpcIds.has(npcId)) {
         npcData.dot.destroy();
         npcData.label.destroy();
+        npcData.bubbleBg?.destroy();
+        npcData.bubbleText?.destroy();
         this.npcDots.delete(npcId);
         this.npcAnimTargets.delete(npcId);
       }
@@ -748,6 +776,8 @@ export class TownScene extends Phaser.Scene {
     if (existing && existing.buildingId !== buildingId) {
       existing.dot.destroy();
       existing.label.destroy();
+      existing.bubbleBg?.destroy();
+      existing.bubbleText?.destroy();
       this.npcDots.delete(npcId);
       this.upsertNpcDot(npcId, name, tx, ty, buildingId);
       return;
@@ -774,6 +804,18 @@ export class TownScene extends Phaser.Scene {
             duration: 400,
             ease: "Sine.easeInOut",
           });
+          // Move bubble with dot
+          if (existing.bubbleText) {
+            const bubbleY = ty - NPC_DOT_RADIUS - BUBBLE_LABEL_GAP - BUBBLE_ARROW_H;
+            this.tweens.add({
+              targets: existing.bubbleText,
+              x: tx,
+              y: bubbleY,
+              duration: 400,
+              ease: "Sine.easeInOut",
+              onUpdate: () => this.redrawBubbleBg(existing),
+            });
+          }
           existing.currentX = tx;
           existing.currentY = ty;
         }
@@ -812,6 +854,8 @@ export class TownScene extends Phaser.Scene {
         currentX: tx,
         currentY: ty,
         buildingId,
+        bubbleBg: null,
+        bubbleText: null,
       });
     }
   }
@@ -835,9 +879,123 @@ export class TownScene extends Phaser.Scene {
 
       npcData.dot.setPosition(newX, newY);
       npcData.label.setPosition(newX, newY + NPC_DOT_RADIUS + 6);
+      // Move bubble with road NPC
+      if (npcData.bubbleText && npcData.bubbleBg) {
+        const bubbleY = newY - NPC_DOT_RADIUS - BUBBLE_LABEL_GAP - BUBBLE_ARROW_H;
+        this.positionBubble(npcData, newX, bubbleY);
+      }
       npcData.currentX = newX;
       npcData.currentY = newY;
     }
+  }
+
+  // ── NPC action bubbles ──────────────────────────────────────────
+
+  private handleNpcActionUpdate(data: { npcId: string; action: string }) {
+    const npcData = this.npcDots.get(data.npcId);
+    if (!npcData) return;
+    this.upsertBubble(data.npcId, npcData, data.action);
+  }
+
+  private clearBubble(npcData: NpcDotData) {
+    npcData.bubbleBg?.destroy();
+    npcData.bubbleText?.destroy();
+    npcData.bubbleBg = null;
+    npcData.bubbleText = null;
+  }
+
+  private upsertBubble(npcId: string, npcData: NpcDotData, action: string) {
+    const truncated = action.length > 30 ? action.slice(0, 28) + "…" : action;
+
+    if (npcData.bubbleText) {
+      // Update existing bubble
+      npcData.bubbleText.setText(truncated);
+      this.redrawBubbleBg(npcData);
+      return;
+    }
+
+    // Create new bubble
+    const bubbleText = this.add
+      .text(0, 0, truncated, {
+        fontSize: "20px",
+        color: "#ffffff",
+        fontFamily: "sans-serif",
+      })
+      .setOrigin(0.5, 1)
+      .setResolution(3);
+
+    const bubbleBg = this.add.graphics();
+
+    npcData.bubbleText = bubbleText;
+    npcData.bubbleBg = bubbleBg;
+
+    // Add to container if building NPC
+    const container = npcData.buildingId
+      ? this.nodeContainers.get(npcData.buildingId)
+      : null;
+    if (container) {
+      container.add([bubbleBg, bubbleText]);
+    } else {
+      bubbleBg.setDepth(12);
+      bubbleText.setDepth(13);
+    }
+
+    // Position and draw background
+    const bubbleY =
+      npcData.currentY - NPC_DOT_RADIUS - BUBBLE_LABEL_GAP - BUBBLE_ARROW_H;
+    this.positionBubble(npcData, npcData.currentX, bubbleY);
+
+    // Fade in
+    bubbleBg.setAlpha(0);
+    bubbleText.setAlpha(0);
+    this.tweens.add({
+      targets: [bubbleBg, bubbleText],
+      alpha: 1,
+      duration: 200,
+    });
+  }
+
+  private positionBubble(
+    npcData: NpcDotData,
+    cx: number,
+    bottomY: number
+  ) {
+    const text = npcData.bubbleText!;
+    const bg = npcData.bubbleBg!;
+
+    text.setPosition(cx, bottomY);
+
+    // Redraw background around text
+    this.redrawBubbleBg(npcData);
+  }
+
+  private redrawBubbleBg(npcData: NpcDotData) {
+    const text = npcData.bubbleText!;
+    const bg = npcData.bubbleBg!;
+
+    const padX = 8;
+    const padY = 5;
+    const w = text.width + padX * 2;
+    const h = text.height + padY * 2;
+    const cx = text.x;
+    const bottomY = text.y;
+    const topY = bottomY - text.height;
+    const rectX = cx - w / 2;
+    const rectY = topY - padY;
+
+    bg.clear();
+    bg.fillStyle(0x000000, 0.75);
+    bg.fillRoundedRect(rectX, rectY, w, h, 8);
+    // Arrow pointing down
+    const arrowHalfW = 6;
+    bg.fillTriangle(
+      cx - arrowHalfW,
+      rectY + h,
+      cx + arrowHalfW,
+      rectY + h,
+      cx,
+      rectY + h + BUBBLE_ARROW_H
+    );
   }
 
   private handleZoomTo(data: { x: number; y: number; zoom: number }) {

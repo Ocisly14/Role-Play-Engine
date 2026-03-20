@@ -9,9 +9,8 @@ const IMMEDIATE_EVENT_TYPES: ReadonlySet<SimulationEventType> = new Set([
 /**
  * Decouples simulation speed from display speed.
  *
- * Events produced by the (fast) simulation loop are enqueued per tick.
- * Once `minBufferTicks` ticks have accumulated the scheduler starts
- * releasing one tick's worth of events every `displayIntervalMs`.
+ * Events produced by the (fast) simulation loop are enqueued per tick and
+ * released at the configured display rhythm. The default is zero pre-buffer.
  */
 export class PlaybackScheduler {
   // --- Config ---
@@ -24,6 +23,8 @@ export class PlaybackScheduler {
   private readonly eventBuffer: Map<number, SimulationEvent[]> = new Map();
   private nextDisplayTick = 1;
   private highestBufferedTick = 0;
+  private lastReleasedGameDay: number | null = null;
+  private lastReleasedGameTime: string | null = null;
   private displayTimerId: ReturnType<typeof setInterval> | null = null;
   private isPlaybackStarted = false;
   private broadcastCallback: ((events: SimulationEvent[]) => void) | null =
@@ -40,7 +41,7 @@ export class PlaybackScheduler {
     displayStartTime?: number;
   }) {
     this.displayIntervalMs = opts?.displayIntervalMs ?? 60_000;
-    this.minBufferTicks = opts?.minBufferTicks ?? 5;
+    this.minBufferTicks = opts?.minBufferTicks ?? 0;
     this.displayStartTime = opts?.displayStartTime;
   }
 
@@ -182,6 +183,8 @@ export class PlaybackScheduler {
     isPlaying: boolean;
     displayStartTime?: number;
     timeUntilStart?: number;
+    displayGameDay?: number;
+    displayGameTime?: string;
   } {
     const now = Date.now();
     const timeUntilStart =
@@ -195,6 +198,8 @@ export class PlaybackScheduler {
       isPlaying: this.displayTimerId !== null,
       displayStartTime: this.displayStartTime,
       timeUntilStart,
+      displayGameDay: this.lastReleasedGameDay ?? undefined,
+      displayGameTime: this.lastReleasedGameTime ?? undefined,
     };
   }
 
@@ -209,6 +214,8 @@ export class PlaybackScheduler {
     this.isPlaybackStarted = false;
     this.highestBufferedTick = 0;
     this.nextDisplayTick = 1;
+    this.lastReleasedGameDay = null;
+    this.lastReleasedGameTime = null;
   }
 
   // ── Private ───────────────────────────────────────────────────
@@ -234,6 +241,9 @@ export class PlaybackScheduler {
   private releaseNextTick(): void {
     const events = this.eventBuffer.get(this.nextDisplayTick);
     if (events) {
+      const lastEvent = events[events.length - 1];
+      this.lastReleasedGameDay = lastEvent?.gameDay ?? this.lastReleasedGameDay;
+      this.lastReleasedGameTime = lastEvent?.gameTime ?? this.lastReleasedGameTime;
       this.broadcastCallback?.(events);
       this.eventBuffer.delete(this.nextDisplayTick);
       this.nextDisplayTick++;

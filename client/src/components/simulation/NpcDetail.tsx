@@ -34,7 +34,7 @@ export function NpcDetail({ npc, onBack, onZoomTo }: NpcDetailProps) {
         </div>
         {npc.currentAction && (
           <div className="text-slate-500">
-            <span className="text-slate-400">Action:</span> {npc.currentAction}
+            <span className="text-slate-400">正在进行中:</span> {npc.currentAction}
           </div>
         )}
         {npc.inventory.length > 0 && (

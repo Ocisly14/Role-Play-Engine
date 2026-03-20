@@ -42,17 +42,17 @@ export interface SimulationConfig {
   tickIntervalMs?: number;
   maxDays?: number;
   stopEvents?: string[];
-  /** Display rhythm in ms — how fast events are released to frontend (default 60000 = 1x) */
+  /** Deprecated: old playback release interval. Retained for runtime compatibility only. */
   displayIntervalMs?: number;
-  /** Minimum buffered ticks before playback starts (default 5) */
+  /** Deprecated: old playback buffer size. Retained for runtime compatibility only. */
   minBufferTicks?: number;
-  /** Minimum delay between simulation ticks in ms (default 50, yields event loop) */
+  /** Deprecated: old fast-sim loop delay. Retained for runtime compatibility only. */
   simulationDelayMs?: number;
   /** Sync game time to real wall-clock time */
   syncRealTime?: boolean;
-  /** Buffer minutes ahead of real time (default 5). Game starts at now + this value */
+  /** Buffer minutes ahead of real time (default 0). */
   realTimeBufferMinutes?: number;
-  /** Wall-clock timestamp (ms) when playback should begin releasing events */
+  /** Authoritative wall-clock timestamp (ms) when real-time mode begins running. */
   displayStartTime?: number;
 }
 
@@ -100,8 +100,10 @@ export interface PlaybackStatus {
   displayTick: number;
   simulationTick: number;
   isPlaying: boolean;
-  /** Wall-clock timestamp (ms) when playback starts releasing events */
+  /** Wall-clock timestamp (ms) when real-time mode is scheduled to begin. */
   displayStartTime?: number;
-  /** Milliseconds until playback starts (0 = already started) */
+  /** Milliseconds until the scheduled real-time start (0 = already started). */
   timeUntilStart?: number;
+  displayGameDay?: number;
+  displayGameTime?: string;
 }

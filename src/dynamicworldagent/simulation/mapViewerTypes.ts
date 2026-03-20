@@ -21,11 +21,13 @@ export interface TopologyResponse {
   junctions: Array<{
     id: string;
     name: string;
+    parentLocationId: string;
     connectedSceneIds: string[];
   }>;
   roads: Array<{
     id: string;
     name: string;
+    parentLocationId: string;
     endpointA: string;
     endpointB: string;
     travelTimeMinutes: number;

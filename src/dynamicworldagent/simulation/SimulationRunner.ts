@@ -14,21 +14,39 @@ import {
   resolveEntryScene,
   upsertIntent,
 } from "./characterInjection.js";
-import { PlaybackScheduler } from "./PlaybackScheduler.js";
+import {
+  DEFAULT_TICK_INTERVAL_MS,
+  type PlaybackStatus,
+  type SimulationConfig,
+  type SimulationEvent,
+  type SimulationState,
+  type SimulationStatus,
+  type StopReason,
+} from "./types.js";
 import {
   persistSimulationEvents,
   persistSimulationRuntime,
 } from "./runtimePersistence.js";
-import type {
-  SimulationConfig,
-  SimulationEvent,
-  SimulationState,
-  SimulationStatus,
-  StopReason,
-} from "./types.js";
+
+const ONE_MINUTE_MS = 60_000;
+
+function alignToMinuteBoundary(timestampMs: number): number {
+  const remainder = timestampMs % ONE_MINUTE_MS;
+  return remainder === 0 ? timestampMs : timestampMs + (ONE_MINUTE_MS - remainder);
+}
+
+function buildRealTimeStart(timestampMs: number, bufferMinutes: number): number {
+  return alignToMinuteBoundary(timestampMs) + Math.max(0, bufferMinutes) * ONE_MINUTE_MS;
+}
+
+function formatGameTime(timestampMs: number): string {
+  const date = new Date(timestampMs);
+  const hh = String(date.getHours()).padStart(2, "0");
+  const mm = String(date.getMinutes()).padStart(2, "0");
+  return `${hh}:${mm}`;
+}
 
 export class SimulationRunner {
-  // --- Core dependencies ---
   private readonly sessionId: string;
   private readonly config: SimulationConfig;
   private readonly dgsm: DynamicGameStateManager;
@@ -39,10 +57,8 @@ export class SimulationRunner {
   private readonly memoryManager?: NpcMemoryManager;
   private readonly prisma: PrismaClient;
 
-  // --- Module metadata ---
   private moduleName = "";
 
-  // --- State tracking ---
   private state: SimulationState = "paused";
   private ticksExecuted = 0;
   private stopReason?: StopReason;
@@ -51,16 +67,12 @@ export class SimulationRunner {
   private shouldStop = false;
   private shouldPause = false;
 
-  // --- NPC tracking ---
   private readonly deadNpcIds: Set<string> = new Set();
   private readonly modifiedCharacterIds: Set<string> = new Set();
 
-  // --- Events ---
   readonly events: SimulationEventEmitter;
   private readonly collectedEvents: SimulationEvent[] = [];
-
-  // --- Playback ---
-  private playbackScheduler: PlaybackScheduler;
+  private broadcastCallback: ((events: SimulationEvent[]) => void) | null = null;
 
   constructor(params: {
     config: SimulationConfig;
@@ -83,22 +95,12 @@ export class SimulationRunner {
     this.prisma = params.prisma;
 
     this.events = new SimulationEventEmitter(this.sessionId);
-    this.playbackScheduler = new PlaybackScheduler({
-      displayIntervalMs: params.config.displayIntervalMs ?? params.config.tickIntervalMs ?? 60_000,
-      minBufferTicks: params.config.minBufferTicks ?? 5,
-      displayStartTime: params.config.displayStartTime,
-    });
 
-    // Wire emitter into execution context so handlers can emit npc_moved events
     this.ctx.simulationEmitter = this.events;
-
-    // Wire runtime, language, and memoryManager into execution context for LLM-based handlers
     this.ctx.runtime = this.npcPlanningAgent.getRuntime();
     this.ctx.language = this.language;
     this.ctx.memoryManager = this.memoryManager;
   }
-
-  // ===== Public lifecycle =====
 
   getStatus(): SimulationStatus {
     const gameState = this.dgsm.getState();
@@ -109,6 +111,35 @@ export class SimulationRunner {
       ticksExecuted: this.ticksExecuted,
       stopReason: this.stopReason,
     };
+  }
+
+  getPlaybackStatus(): PlaybackStatus {
+    const gameState = this.dgsm.getState();
+    const displayStartTime = this.getPendingDisplayStartTime();
+    const timeUntilStart =
+      typeof displayStartTime === "number"
+        ? Math.max(0, displayStartTime - Date.now())
+        : 0;
+
+    return {
+      buffered: 0,
+      displayTick: this.ticksExecuted,
+      simulationTick: this.ticksExecuted,
+      isPlaying: this.state === "running" && timeUntilStart === 0,
+      displayStartTime,
+      timeUntilStart,
+      displayGameDay: gameState.gameDay,
+      displayGameTime: gameState.timeOfDay,
+    };
+  }
+
+  async getCurrentNpcActions(): Promise<Record<string, string | null>> {
+    const gameState = this.dgsm.getState();
+    return this.npcPlanningAgent.getCurrentNpcActions(
+      this.sessionId,
+      gameState.gameDay,
+      gameState.timeOfDay
+    );
   }
 
   getDgsm(): DynamicGameStateManager {
@@ -128,52 +159,38 @@ export class SimulationRunner {
     return path.join(process.cwd(), "data", "Mods", this.moduleName);
   }
 
-  updateTickInterval(ms: number): void {
-    (this.config as { tickIntervalMs?: number }).tickIntervalMs = ms;
-    this.playbackScheduler.updateDisplayInterval(ms);
+  setBroadcastCallback(cb: (events: SimulationEvent[]) => void): void {
+    this.broadcastCallback = cb;
   }
 
-  /**
-   * Enable real-time sync mode: override game time to wall-clock + buffer,
-   * and recreate the playback scheduler with a displayStartTime gate.
-   * Only callable when paused (before start).
-   */
-  enableRealTimeSync(bufferMinutes = 5): { displayStartTime: number; gameTime: string } {
-    const startWall = Date.now() + bufferMinutes * 60_000;
-    const startDate = new Date(startWall);
-    const hh = String(startDate.getHours()).padStart(2, "0");
-    const mm = String(startDate.getMinutes()).padStart(2, "0");
-    const gameTime = `${hh}:${mm}`;
+  updateTickInterval(ms: number): void {
+    this.config.tickIntervalMs = ms;
 
-    // Update game state
-    const gameState = this.dgsm.getState();
-    gameState.timeOfDay = gameTime;
+    if (!this.config.syncRealTime && this.state === "running" && !this.tickInProgress) {
+      this.clearScheduledTick();
+      this.scheduleNextTick();
+    }
+  }
 
-    // Update config
-    const cfg = this.config as Record<string, unknown>;
-    cfg.syncRealTime = true;
-    cfg.realTimeBufferMinutes = bufferMinutes;
-    cfg.displayStartTime = startWall;
-    cfg.displayIntervalMs = 60_000; // Force 1:1 speed
+  enableRealTimeSync(bufferMinutes = 0): {
+    displayStartTime: number;
+    gameTime: string;
+  } {
+    const startWall = buildRealTimeStart(Date.now(), bufferMinutes);
+    const gameTime = formatGameTime(startWall);
+    this.dgsm.setGameClock({ timeOfDay: gameTime });
 
-    // Recreate playback scheduler with new displayStartTime
-    // Preserve broadcast callback from the old scheduler
-    const oldScheduler = this.playbackScheduler;
-    this.playbackScheduler = new PlaybackScheduler({
-      displayIntervalMs: 60_000,
-      minBufferTicks: this.config.minBufferTicks ?? 5,
-      displayStartTime: startWall,
-    });
-    // Re-wire the broadcast callback (set externally via wireEventListener)
-    const cb = oldScheduler.getBroadcastCallback();
-    if (cb) this.playbackScheduler.setBroadcastCallback(cb);
-    oldScheduler.destroy();
+    this.config.syncRealTime = true;
+    this.config.realTimeBufferMinutes = Math.max(0, bufferMinutes);
+    this.config.displayStartTime = startWall;
+    this.config.tickIntervalMs = ONE_MINUTE_MS;
+
+    if (this.state === "running" && !this.tickInProgress) {
+      this.clearScheduledTick();
+      this.scheduleNextTick();
+    }
 
     return { displayStartTime: startWall, gameTime };
-  }
-
-  getPlaybackScheduler(): PlaybackScheduler {
-    return this.playbackScheduler;
   }
 
   hydrateFromRuntime(params: {
@@ -211,31 +228,35 @@ export class SimulationRunner {
     this.state = "running";
     this.shouldStop = false;
     this.shouldPause = false;
-    await this.persistEvents([this.emitStateChange()]);
+    const event = this.emitStateChange();
+    await this.persistAndBroadcastEvents([event]);
     await this.saveRuntime();
 
-    this.scheduleNextTick();
+    if (typeof this.getPendingDisplayStartTime() === "number") {
+      this.scheduleNextTick();
+      return;
+    }
+
+    await this.executeTick();
+    await this.handlePostTickTransition();
   }
 
   async pause(): Promise<void> {
     if (this.state !== "running") return;
     this.shouldPause = true;
-    this.playbackScheduler.pausePlayback();
 
-    // If no tick is in progress, transition immediately
     if (!this.tickInProgress) {
       this.clearScheduledTick();
       this.state = "paused";
-      await this.persistEvents([this.emitStateChange()]);
+      const event = this.emitStateChange();
+      await this.persistAndBroadcastEvents([event]);
       await this.saveRuntime();
     }
-    // Otherwise, the current tick will observe shouldPause after completing
   }
 
   async resume(): Promise<void> {
     if (this.state !== "paused") return;
 
-    // Drain modifiedCharacterIds — revise schedule for each
     if (this.modifiedCharacterIds.size > 0) {
       for (const charId of this.modifiedCharacterIds) {
         await this.npcPlanningAgent.reviseSchedule(
@@ -252,14 +273,9 @@ export class SimulationRunner {
     return this.start();
   }
 
-  /**
-   * Execute a fixed number of ticks synchronously (step mode).
-   * Only callable when paused.
-   */
   async step(ticks = 1): Promise<void> {
     if (this.state !== "paused") return;
 
-    // Drain modifiedCharacterIds before stepping
     if (this.modifiedCharacterIds.size > 0) {
       for (const charId of this.modifiedCharacterIds) {
         await this.npcPlanningAgent.reviseSchedule(
@@ -273,15 +289,9 @@ export class SimulationRunner {
       this.modifiedCharacterIds.clear();
     }
 
-    // Step mode: bypass playback buffer, deliver events immediately
-    this.playbackScheduler.setImmediateMode(true);
-    try {
-      for (let i = 0; i < ticks; i++) {
-        if (this.isTerminal()) break;
-        await this.executeTick();
-      }
-    } finally {
-      this.playbackScheduler.setImmediateMode(false);
+    for (let i = 0; i < ticks; i++) {
+      if (this.isTerminal()) break;
+      await this.executeTick();
     }
   }
 
@@ -291,26 +301,15 @@ export class SimulationRunner {
     if (!this.tickInProgress) {
       await this.finalize("manual");
     }
-    // Otherwise, the current tick will observe shouldStop after completing
   }
 
-  // ===== Character injection =====
-
-  /**
-   * Inject a player-created character into the simulation.
-   * Only callable when state is "paused" (or before start).
-   */
-  async injectCharacter(
-    profile: DynamicNPCProfile,
-    intent: string
-  ): Promise<void> {
+  async injectCharacter(profile: DynamicNPCProfile, intent: string): Promise<void> {
     if (this.state !== "paused") {
       throw new Error(
         `Cannot inject character while simulation is ${this.state}. Pause first.`
       );
     }
 
-    // Resolve entry scene from residence (macro location ID)
     const entrySceneId = profile.residence
       ? resolveEntryScene(this.dgsm, profile.residence)
       : null;
@@ -320,10 +319,8 @@ export class SimulationRunner {
       );
     }
 
-    // 1. Inject into game state (npcCharacters, npcStats, characterPositions, etc.)
     injectCharacterIntoState(this.dgsm, profile, entrySceneId);
 
-    // 2. Upsert long-term intent (deterministic ID, no LLM call)
     await upsertIntent(
       this.prisma,
       this.sessionId,
@@ -333,7 +330,6 @@ export class SimulationRunner {
       intent
     );
 
-    // 3. Generate day-1 schedule (one LLM call)
     const gameState = this.dgsm.getState();
     await this.npcPlanningAgent.generateSingleNpcSchedule(
       this.dgsm,
@@ -346,10 +342,6 @@ export class SimulationRunner {
     await this.saveRuntime();
   }
 
-  /**
-   * Remove a player-injected character from the simulation.
-   * Only callable when paused.
-   */
   async removeCharacter(characterId: string): Promise<void> {
     if (this.state !== "paused") {
       throw new Error(
@@ -366,10 +358,6 @@ export class SimulationRunner {
     await this.saveRuntime();
   }
 
-  /**
-   * Update the long-term intent for a character.
-   * Only callable when paused. Schedule revision happens on resume().
-   */
   async updateIntent(characterId: string, intent: string): Promise<void> {
     if (this.state !== "paused") {
       throw new Error(
@@ -392,52 +380,43 @@ export class SimulationRunner {
       intent
     );
 
-    // Mark for schedule revision on resume
     this.modifiedCharacterIds.add(characterId);
     await this.saveRuntime();
   }
 
-  /**
-   * Return all player-injected characters currently in the simulation.
-   */
   getInjectedCharacters(): DynamicNPCProfile[] {
     const gameState = this.dgsm.getState();
-    return gameState.npcCharacters.filter(
-      (npc) => npc.isPlayerInjected === true
-    );
+    return gameState.npcCharacters.filter((npc) => npc.isPlayerInjected === true);
   }
 
-  // ===== Private helpers =====
-
-  /** Check whether the simulation has reached a terminal state. */
   private isTerminal(): boolean {
     return this.state === "stopped" || this.state === "completed";
   }
 
-  // ===== Private tick execution =====
-
   private scheduleNextTick(): void {
     if (this.state !== "running") return;
 
-    // Fast tick: use simulationDelayMs (default 50ms) to yield the event loop,
-    // instead of the old tickIntervalMs which matched real-time pace.
-    const delay = this.config.simulationDelayMs ?? 50;
+    const delay = this.getNextTickDelayMs();
     this.intervalId = setTimeout(async () => {
+      this.intervalId = null;
       await this.executeTick();
-
-      // After tick, check if we should pause/stop or schedule the next tick
-      if (this.shouldStop) {
-        await this.finalize("manual");
-      } else if (this.shouldPause) {
-        this.shouldPause = false;
-        this.state = "paused";
-        this.playbackScheduler.pausePlayback();
-        await this.persistEvents([this.emitStateChange()]);
-        await this.saveRuntime();
-      } else if (this.state === "running") {
-        this.scheduleNextTick();
-      }
+      await this.handlePostTickTransition();
     }, delay);
+  }
+
+  private getNextTickDelayMs(): number {
+    if (!this.config.syncRealTime) {
+      return Math.max(1, this.config.tickIntervalMs ?? DEFAULT_TICK_INTERVAL_MS);
+    }
+
+    const now = Date.now();
+    const displayStartTime = this.getPendingDisplayStartTime();
+    if (typeof displayStartTime === "number") {
+      return Math.max(1, displayStartTime - now);
+    }
+
+    const remainder = now % ONE_MINUTE_MS;
+    return remainder === 0 ? ONE_MINUTE_MS : ONE_MINUTE_MS - remainder;
   }
 
   private clearScheduledTick(): void {
@@ -447,9 +426,36 @@ export class SimulationRunner {
     }
   }
 
+  private async handlePostTickTransition(): Promise<void> {
+    if (this.shouldStop) {
+      await this.finalize("manual");
+      return;
+    }
+
+    if (this.shouldPause) {
+      this.shouldPause = false;
+      this.state = "paused";
+      const event = this.emitStateChange();
+      await this.persistAndBroadcastEvents([event]);
+      await this.saveRuntime();
+      return;
+    }
+
+    if (this.state === "running") {
+      this.scheduleNextTick();
+    }
+  }
+
   private async executeTick(): Promise<void> {
     if (this.tickInProgress) return;
     this.tickInProgress = true;
+
+    const emittedEvents: SimulationEvent[] = [];
+    const collectTickEvent = (event: SimulationEvent): void => {
+      emittedEvents.push(event);
+    };
+    let isCollecting = true;
+    this.events.on("simulation_event", collectTickEvent);
 
     try {
       this.ticksExecuted++;
@@ -458,7 +464,6 @@ export class SimulationRunner {
       const gameState = this.dgsm.getState();
       const dayBefore = gameState.gameDay;
 
-      // Run a single simulation tick
       const tickResult = await runSimulationTick({
         dgsm: this.dgsm,
         npcPlanningAgent: this.npcPlanningAgent,
@@ -470,15 +475,11 @@ export class SimulationRunner {
         memoryManager: this.memoryManager,
       });
 
-      // Convert actions to simulation events
-      const events = this.events.actionsToEvents(tickResult.actions, dayBefore);
-      this.collectedEvents.push(...events);
-      const pendingEvents = [...events];
+      this.events.actionsToEvents(tickResult.actions, dayBefore);
 
-      // Handle day transition
       if (tickResult.dayChanged) {
         const stateAfter = this.dgsm.getState();
-        const dayEvent = this.events.emitSimulationEvent(
+        this.events.emitSimulationEvent(
           "day_transition",
           "system",
           "global",
@@ -489,10 +490,7 @@ export class SimulationRunner {
             newDay: stateAfter.gameDay,
           }
         );
-        pendingEvents.push(dayEvent);
-        this.collectedEvents.push(dayEvent);
 
-        // Let the planning agent handle new-day procedures
         await this.npcPlanningAgent.onNewDay(
           this.dgsm,
           this.sessionId,
@@ -503,14 +501,15 @@ export class SimulationRunner {
         );
       }
 
-      // Check derived events (NPC deaths, all clues discovered)
-      const derivedEvents = this.checkDerivedEvents();
-      this.collectedEvents.push(...derivedEvents);
-      pendingEvents.push(...derivedEvents);
+      this.checkDerivedEvents();
 
-      // Emit NPC position snapshot (every tick)
       const stateAfterTick = this.dgsm.getState();
-      const snapshotEvent = this.events.emitSimulationEvent(
+      const currentActions = await this.npcPlanningAgent.getCurrentNpcActions(
+        this.sessionId,
+        stateAfterTick.gameDay,
+        stateAfterTick.timeOfDay
+      );
+      this.events.emitSimulationEvent(
         "npc_position_snapshot",
         "system",
         "global",
@@ -518,33 +517,37 @@ export class SimulationRunner {
         stateAfterTick.timeOfDay,
         {
           positions: { ...stateAfterTick.characterPositions },
-          displayIntervalMs: this.config.displayIntervalMs ?? this.config.tickIntervalMs ?? 60_000,
+          currentActions,
+          displayIntervalMs: this.getEffectiveTickIntervalMs(),
         }
       );
-      pendingEvents.push(snapshotEvent);
 
-      // Check end conditions
-      const stopEvent = this.shouldStopAfterTick();
-      if (stopEvent) {
-        pendingEvents.push(stopEvent);
+      this.shouldStopAfterTick(emittedEvents);
+      this.collectedEvents.push(...emittedEvents);
+
+      if (isCollecting) {
+        this.events.off("simulation_event", collectTickEvent);
+        isCollecting = false;
       }
 
-      await this.persistEvents(pendingEvents);
-
-      // Enqueue events into playback scheduler for rate-limited broadcast
-      this.playbackScheduler.enqueue(pendingEvents, this.ticksExecuted);
-
+      await this.persistAndBroadcastEvents(emittedEvents);
       await this.saveRuntime();
     } catch (error) {
       console.error(
         `[SimulationRunner] Error during tick ${this.ticksExecuted}:`,
         error
       );
-      // Auto-pause on error
+
+      if (isCollecting) {
+        this.events.off("simulation_event", collectTickEvent);
+        isCollecting = false;
+      }
+
       this.clearScheduledTick();
       this.state = "paused";
       try {
-        await this.persistEvents([this.emitStateChange()]);
+        const event = this.emitStateChange();
+        await this.persistAndBroadcastEvents([event]);
         await this.saveRuntime();
       } catch (persistError) {
         console.error(
@@ -553,20 +556,16 @@ export class SimulationRunner {
         );
       }
     } finally {
+      if (isCollecting) {
+        this.events.off("simulation_event", collectTickEvent);
+      }
       this.tickInProgress = false;
     }
   }
 
-  /**
-   * Check for derived events that emerge from state changes:
-   * - NPC deaths (hp <= 0)
-   * - All knowledge discovered
-   */
-  private checkDerivedEvents(): SimulationEvent[] {
+  private checkDerivedEvents(): void {
     const gameState = this.dgsm.getState();
-    const derivedEvents: SimulationEvent[] = [];
 
-    // --- NPC Deaths ---
     for (const npc of gameState.npcCharacters) {
       if (this.deadNpcIds.has(npc.id)) continue;
 
@@ -575,16 +574,17 @@ export class SimulationRunner {
         this.deadNpcIds.add(npc.id);
 
         const location = (() => {
-          const p = gameState.characterPositions[npc.id];
-          return p
-            ? p.type === "scene"
-              ? p.sceneId
-              : p.type === "junction"
-                ? p.junctionId
-                : p.roadId
+          const position = gameState.characterPositions[npc.id];
+          return position
+            ? position.type === "scene"
+              ? position.sceneId
+              : position.type === "junction"
+                ? position.junctionId
+                : position.roadId
             : "unknown";
         })();
-        const event = this.events.emitSimulationEvent(
+
+        this.events.emitSimulationEvent(
           "npc_death",
           npc.id,
           location,
@@ -595,60 +595,43 @@ export class SimulationRunner {
             hp: stats.hp,
           }
         );
-        derivedEvents.push(event);
       }
     }
-
-    return derivedEvents;
   }
 
-  /**
-   * Check if the simulation should stop based on configured end conditions.
-   * Returns true if stop was triggered (finalize is called internally).
-   */
-  private shouldStopAfterTick(): SimulationEvent | null {
+  private shouldStopAfterTick(currentTickEvents: SimulationEvent[]): void {
     const gameState = this.dgsm.getState();
 
-    // Check maxDays
-    if (
-      this.config.maxDays !== undefined &&
-      gameState.gameDay > this.config.maxDays
-    ) {
-      return this.transitionToTerminalState("max_days");
+    if (this.config.maxDays !== undefined && gameState.gameDay > this.config.maxDays) {
+      this.transitionToTerminalState("max_days");
+      return;
     }
 
-    // Check stop events
     if (this.config.stopEvents && this.config.stopEvents.length > 0) {
-      const recentTypes = this.collectedEvents
-        .slice(-100) // Check the most recent events for performance
-        .map((e) => e.type);
-      const triggered = this.config.stopEvents.some((ev) =>
-        recentTypes.includes(ev as any)
+      const recentTypes = [
+        ...this.collectedEvents.slice(-100).map((event) => event.type),
+        ...currentTickEvents.map((event) => event.type),
+      ];
+      const triggered = this.config.stopEvents.some((eventType) =>
+        recentTypes.includes(eventType as SimulationEvent["type"])
       );
       if (triggered) {
-        return this.transitionToTerminalState("event_triggered");
+        this.transitionToTerminalState("event_triggered");
       }
     }
-
-    return null;
   }
 
-  /**
-   * Finalize the simulation — set terminal state and clean up.
-   */
   private async finalize(reason: StopReason): Promise<void> {
     this.clearScheduledTick();
-    this.playbackScheduler.destroy();
     const event = this.transitionToTerminalState(reason);
-    await this.persistEvents([event]);
+    await this.persistAndBroadcastEvents([event]);
     await this.saveRuntime();
   }
 
-  /**
-   * Emit a state change event.
-   */
   private emitStateChange(): SimulationEvent {
     const gameState = this.dgsm.getState();
+    const playbackStatus = this.getPlaybackStatus();
+
     return this.events.emitSimulationEvent(
       "simulation_state_changed",
       "system",
@@ -659,6 +642,8 @@ export class SimulationRunner {
         state: this.state,
         ticksExecuted: this.ticksExecuted,
         stopReason: this.stopReason,
+        displayStartTime: playbackStatus.displayStartTime,
+        timeUntilStart: playbackStatus.timeUntilStart,
       }
     );
   }
@@ -670,6 +655,25 @@ export class SimulationRunner {
   }
 
   private async persistEvents(events: SimulationEvent[]): Promise<void> {
+    if (events.length === 0) return;
     await persistSimulationEvents(this.prisma, events);
+  }
+
+  private async persistAndBroadcastEvents(events: SimulationEvent[]): Promise<void> {
+    if (events.length === 0) return;
+    await this.persistEvents(events);
+    this.broadcastCallback?.(events);
+  }
+
+  private getEffectiveTickIntervalMs(): number {
+    return this.config.syncRealTime
+      ? ONE_MINUTE_MS
+      : this.config.tickIntervalMs ?? DEFAULT_TICK_INTERVAL_MS;
+  }
+
+  private getPendingDisplayStartTime(): number | undefined {
+    const displayStartTime = this.config.syncRealTime ? this.config.displayStartTime : undefined;
+    if (typeof displayStartTime !== "number") return undefined;
+    return displayStartTime > Date.now() ? displayStartTime : undefined;
   }
 }

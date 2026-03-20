@@ -22,6 +22,7 @@ export interface SimulationViewState {
   moduleName: string | null;
   mapsPrefix: string | null;
   eventLog: SimulationEvent[];
+  displayTick: number;
   displayIntervalMs: number;
   /** Wall-clock timestamp (ms) when playback starts (real-time sync mode) */
   displayStartTime: number | null;
@@ -46,6 +47,7 @@ export function useSimulationState(sessionId: string | null) {
     moduleName: null,
     mapsPrefix: null,
     eventLog: [],
+    displayTick: 0,
     displayIntervalMs: 60_000,
     displayStartTime: null,
     isLoading: true,
@@ -64,9 +66,11 @@ export function useSimulationState(sessionId: string | null) {
           simApi.fetchStatus(sessionId),
           simApi.fetchPlaybackStatus(sessionId).catch(() => null),
         ]);
-        // Restore displayStartTime if still in countdown phase
         const displayStartTime =
-          playback?.displayStartTime && playback.timeUntilStart && playback.timeUntilStart > 0
+          status.state === "running" &&
+          playback?.displayStartTime &&
+          playback.timeUntilStart &&
+          playback.timeUntilStart > 0
             ? playback.displayStartTime
             : null;
         setState((prev) => ({
@@ -79,6 +83,7 @@ export function useSimulationState(sessionId: string | null) {
           simulationState: status.state,
           moduleName: status.moduleName ?? null,
           mapsPrefix: status.mapsPrefix ?? null,
+          displayTick: status.ticksExecuted,
           displayStartTime,
           isLoading: false,
         }));
@@ -101,6 +106,9 @@ export function useSimulationState(sessionId: string | null) {
       // Update game time from all events (except transient meta events)
       if (event.gameDay) newState.gameDay = event.gameDay;
       if (event.gameTime) newState.timeOfDay = event.gameTime;
+      if (typeof event.tick === "number") {
+        newState.displayTick = Math.max(prev.displayTick, event.tick);
+      }
 
       // Don't add high-frequency or meta events to the event log
       const skipLogTypes = new Set([
@@ -116,9 +124,16 @@ export function useSimulationState(sessionId: string | null) {
         case "npc_position_snapshot": {
           const data = event.data as {
             positions: Record<string, CharacterPosition>;
+            currentActions?: Record<string, string | null>;
             displayIntervalMs?: number;
           };
           newState.npcPositions = data.positions;
+          if (data.currentActions) {
+            newState.npcStatuses = prev.npcStatuses.map((npc) => ({
+              ...npc,
+              currentAction: data.currentActions?.[npc.npcId] ?? null,
+            }));
+          }
           if (data.displayIntervalMs) {
             newState.displayIntervalMs = data.displayIntervalMs;
           }
@@ -136,20 +151,23 @@ export function useSimulationState(sessionId: string | null) {
           break;
         }
         case "simulation_state_changed": {
-          const data = event.data as { state: SimulationStatus["state"] };
+          const data = event.data as {
+            state: SimulationStatus["state"];
+            displayStartTime?: number;
+            timeUntilStart?: number;
+            ticksExecuted?: number;
+          };
           newState.simulationState = data.state;
-          break;
-        }
-        case "playback_buffering": {
-          const data = event.data as { displayStartTime?: number };
-          if (data.displayStartTime) {
-            newState.displayStartTime = data.displayStartTime;
+          if (typeof data.ticksExecuted === "number") {
+            newState.displayTick = Math.max(newState.displayTick, data.ticksExecuted);
           }
-          break;
-        }
-        case "playback_resumed": {
-          // Playback has started — clear countdown
-          newState.displayStartTime = null;
+          newState.displayStartTime =
+            data.state === "running" &&
+            data.displayStartTime &&
+            data.timeUntilStart &&
+            data.timeUntilStart > 0
+              ? data.displayStartTime
+              : null;
           break;
         }
         case "npc_death": {
@@ -213,11 +231,19 @@ export function useSimulationState(sessionId: string | null) {
   const resync = useCallback(async () => {
     if (!sessionId) return;
     try {
-      const [positions, statuses, status] = await Promise.all([
+      const [positions, statuses, status, playback] = await Promise.all([
         simApi.fetchPositions(sessionId),
         simApi.fetchNpcStatuses(sessionId),
         simApi.fetchStatus(sessionId),
+        simApi.fetchPlaybackStatus(sessionId).catch(() => null),
       ]);
+      const displayStartTime =
+        status.state === "running" &&
+        playback?.displayStartTime &&
+        playback.timeUntilStart &&
+        playback.timeUntilStart > 0
+          ? playback.displayStartTime
+          : null;
       setState((prev) => ({
         ...prev,
         npcPositions: positions,
@@ -225,6 +251,8 @@ export function useSimulationState(sessionId: string | null) {
         gameDay: status.currentDay,
         timeOfDay: status.currentTime,
         simulationState: status.state,
+        displayTick: status.ticksExecuted,
+        displayStartTime,
       }));
     } catch {
       /* ignore re-sync errors */

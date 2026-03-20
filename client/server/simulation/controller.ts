@@ -5,6 +5,12 @@ import { getPrismaClient } from "../../../src/shared/agents/memory/database/pris
 import { findMapsDirectory, findSceneDirectory } from "./mapService.js";
 import * as simulationService from "./service.js";
 
+function parseOptionalInt(value: unknown): number | undefined {
+  if (typeof value !== "string" || value.trim() === "") return undefined;
+  const parsed = Number.parseInt(value, 10);
+  return Number.isNaN(parsed) ? undefined : parsed;
+}
+
 export async function createSimulation(req: Request, res: Response) {
   try {
     const { moduleName, language, config } = req.body;
@@ -131,9 +137,13 @@ export async function getEvents(req: Request, res: Response) {
       {
         type: req.query.type as string | undefined,
         npcId: req.query.npcId as string | undefined,
-        day: req.query.day
-          ? Number.parseInt(req.query.day as string)
-          : undefined,
+        day: parseOptionalInt(req.query.day),
+        startDay: parseOptionalInt(req.query.startDay),
+        startTime: req.query.startTime as string | undefined,
+        endDay: parseOptionalInt(req.query.endDay),
+        endTime: req.query.endTime as string | undefined,
+        maxTick: parseOptionalInt(req.query.maxTick),
+        parentLocationId: req.query.parentLocationId as string | undefined,
       }
     );
     return res.json({ events });
@@ -150,6 +160,18 @@ export async function listSimulations(_req: Request, res: Response) {
   return res.json({ simulations });
 }
 
+export async function deleteSimulation(req: Request, res: Response) {
+  try {
+    const prisma = getPrismaClient();
+    await simulationService.deleteSimulation(prisma, req.params.id);
+    return res.json({ success: true });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Unknown error";
+    const status = message.includes("not found") ? 404 : 500;
+    return res.status(status).json({ error: message });
+  }
+}
+
 export async function getPlaybackStatus(req: Request, res: Response) {
   try {
     const prisma = getPrismaClient();
@@ -157,7 +179,7 @@ export async function getPlaybackStatus(req: Request, res: Response) {
     if (!runner) {
       return res.status(404).json({ error: `Simulation ${req.params.id} not found` });
     }
-    return res.json(runner.getPlaybackScheduler().getBufferStatus());
+    return res.json(runner.getPlaybackStatus());
   } catch (error) {
     return res.status(500).json({
       error: error instanceof Error ? error.message : "Unknown error",

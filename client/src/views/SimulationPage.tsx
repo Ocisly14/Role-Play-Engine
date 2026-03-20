@@ -52,9 +52,27 @@ export default function SimulationPage() {
     resync,
   } = useSimulationState(sessionId ?? null);
 
+  // Wrap handleEvent to also forward action events to Phaser as bubbles
+  const handleEventWithBubble = useCallback(
+    (event: Parameters<typeof handleEvent>[0]) => {
+      handleEvent(event);
+      if (
+        (event.type === "action_executed" || event.type === "action_failed") &&
+        event.data.action &&
+        gameRef.current
+      ) {
+        gameRef.current.events.emit("npc-action-update", {
+          npcId: event.actorNpcId,
+          action: event.data.action as string,
+        });
+      }
+    },
+    [handleEvent]
+  );
+
   useSimulationWebSocket({
     sessionId: sessionId ?? null,
-    onEvent: handleEvent,
+    onEvent: handleEventWithBubble,
     onConnected: resync,
   });
 
@@ -113,6 +131,7 @@ export default function SimulationPage() {
       npcStatuses: state.npcStatuses.map((n) => ({
         npcId: n.npcId,
         name: n.name,
+        currentAction: n.currentAction,
       })),
       scenes: state.topology.scenes ?? [],
       junctions: state.topology.junctions ?? [],
@@ -193,6 +212,7 @@ export default function SimulationPage() {
       .map((npc, i) => ({
         npcId: npc.npcId,
         name: npc.name,
+        currentAction: npc.currentAction,
         color: NPC_DOT_COLORS[i % NPC_DOT_COLORS.length],
       }));
   })();
@@ -227,6 +247,55 @@ export default function SimulationPage() {
     ? state.topology?.scenarioOutlines?.find((o) => o.id === state.focusedBuildingId)?.name ?? null
     : null;
 
+  const eventLocationOptions = useMemo(() => {
+    if (!state.topology) return [];
+
+    const labelById = new Map<string, string>();
+    for (const outline of state.topology.scenarioOutlines ?? []) {
+      labelById.set(outline.id, outline.name);
+    }
+
+    const parentIds = new Set<string>();
+    for (const scene of state.topology.scenes ?? []) {
+      parentIds.add(scene.parentLocationId);
+    }
+    for (const road of state.topology.roads ?? []) {
+      parentIds.add(road.parentLocationId);
+    }
+    for (const junction of state.topology.junctions ?? []) {
+      parentIds.add(junction.parentLocationId);
+    }
+
+    return Array.from(parentIds)
+      .filter((id) => id && id !== "global")
+      .map((id) => ({
+        id,
+        name: id === "OUTDOOR" ? "Outdoor" : (labelById.get(id) ?? id),
+      }))
+      .sort((a, b) => a.name.localeCompare(b.name));
+  }, [state.topology]);
+
+  const eventLocationParentById = useMemo(() => {
+    if (!state.topology) return {};
+
+    const parentById: Record<string, string> = {};
+    for (const scene of state.topology.scenes ?? []) {
+      parentById[scene.id] = scene.parentLocationId;
+    }
+    for (const road of state.topology.roads ?? []) {
+      parentById[road.id] = road.parentLocationId;
+    }
+    for (const junction of state.topology.junctions ?? []) {
+      parentById[junction.id] = junction.parentLocationId;
+    }
+    for (const outline of state.topology.scenarioOutlines ?? []) {
+      parentById[outline.id] = outline.id;
+    }
+    parentById.OUTDOOR = "OUTDOOR";
+
+    return parentById;
+  }, [state.topology]);
+
   // Real-time sync countdown
   const [countdownNow, setCountdownNow] = useState(Date.now());
   useEffect(() => {
@@ -242,6 +311,15 @@ export default function SimulationPage() {
     const secs = Math.floor((remaining % 60_000) / 1000);
     return { mins, secs, remaining };
   }, [state.displayStartTime, countdownNow]);
+
+  const showConfigPanel =
+    Boolean(sessionId) &&
+    state.simulationState === "paused" &&
+    state.displayTick === 0 &&
+    state.eventLog.length === 0;
+
+  const showControlPanel =
+    Boolean(sessionId) && !showConfigPanel && !countdown;
 
   return (
     <div className={`sim-page${state.focusedBuildingId ? " sim-page--has-popup" : ""}`}>
@@ -326,7 +404,7 @@ export default function SimulationPage() {
             </div>
 
             {/* Scene image */}
-            <div className="flex-1 overflow-hidden flex items-center justify-center">
+            <div className="relative flex-1 overflow-hidden flex items-center justify-center">
               {sceneImageUrl ? (
                 <img
                   src={sceneImageUrl}
@@ -334,35 +412,45 @@ export default function SimulationPage() {
                   className="w-full max-h-full object-cover"
                 />
               ) : (
-                <div className="text-slate-400 text-sm p-6">No image available</div>
+                  <div className="text-slate-400 text-sm p-6">No image available</div>
+                )}
+              {buildingNpcs.length > 0 && (
+                <div className="pointer-events-none absolute inset-x-0 bottom-0 p-3">
+                  <div className="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-black/30 via-black/10 to-transparent" />
+                  <div className="relative flex items-end gap-3 flex-wrap">
+                    {buildingNpcs.map((npc) => (
+                      <div
+                        key={npc.npcId}
+                        className="pointer-events-auto flex flex-col items-start gap-1 cursor-pointer hover:opacity-80 transition-opacity max-w-[240px]"
+                        onClick={() => setSelectedNpc(npc.npcId)}
+                      >
+                        {npc.currentAction && (
+                          <div className="rounded-2xl border border-white/70 bg-white/30 px-3 py-2 text-[11px] leading-4 text-slate-900 shadow-lg backdrop-blur-xl">
+                            {npc.currentAction}
+                          </div>
+                        )}
+                        <div className="flex items-center gap-1.5 rounded-full border border-white/70 bg-white/30 px-2.5 py-1 text-xs text-slate-800 shadow-md backdrop-blur-xl">
+                          <span
+                            className="inline-block w-3 h-3 rounded-full border border-white/60 shrink-0"
+                            style={{ backgroundColor: npc.color }}
+                          />
+                          <span className="drop-shadow-[0_1px_1px_rgba(255,255,255,0.35)]">
+                            {npc.name}
+                          </span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
               )}
             </div>
-
-            {/* NPC dots */}
-            {buildingNpcs.length > 0 && (
-              <div className="flex items-center gap-3 px-3 py-2 border-t border-slate-200/60 flex-wrap">
-                {buildingNpcs.map((npc) => (
-                  <div
-                    key={npc.npcId}
-                    className="flex items-center gap-1.5 cursor-pointer hover:opacity-80 transition-opacity"
-                    onClick={() => setSelectedNpc(npc.npcId)}
-                  >
-                    <span
-                      className="inline-block w-3 h-3 rounded-full border border-white/60 shrink-0"
-                      style={{ backgroundColor: npc.color }}
-                    />
-                    <span className="text-xs text-slate-600">{npc.name}</span>
-                  </div>
-                ))}
-              </div>
-            )}
           </div>
         </div>
       )}
 
       {/* Config panel (pre-start) */}
-      {sessionId && state.eventLog.length === 0 && state.simulationState === "paused" && (
-        <ConfigPanel sessionId={sessionId} />
+      {showConfigPanel && sessionId && (
+        <ConfigPanel sessionId={sessionId} onStarted={resync} />
       )}
 
       {/* Real-time sync countdown */}
@@ -376,10 +464,11 @@ export default function SimulationPage() {
       )}
 
       {/* Simulation control panel */}
-      {sessionId && state.eventLog.length > 0 && !countdown && (
+      {showControlPanel && sessionId && (
         <ControlPanel
           sessionId={sessionId}
           simulationState={state.simulationState}
+          onStateChange={resync}
         />
       )}
 
@@ -389,10 +478,14 @@ export default function SimulationPage() {
       )}
 
       <SidePanel
+        sessionId={sessionId ?? null}
         gameDay={state.gameDay}
         timeOfDay={state.timeOfDay}
         simulationState={state.simulationState}
         npcStatuses={state.npcStatuses}
+        displayTick={state.displayTick}
+        locationOptions={eventLocationOptions}
+        locationParentById={eventLocationParentById}
         selectedNpcId={state.selectedNpcId}
         eventLog={state.eventLog}
         onSelectNpc={setSelectedNpc}

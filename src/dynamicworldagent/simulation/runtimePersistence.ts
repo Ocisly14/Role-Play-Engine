@@ -8,6 +8,12 @@ import type {
   StopReason,
 } from "./types.js";
 
+const SKIP_PERSIST_TYPES = new Set([
+  "npc_position_snapshot",
+  "playback_buffering",
+  "playback_resumed",
+]);
+
 export async function persistSimulationRuntime(params: {
   prisma: PrismaClient;
   sessionId: string;
@@ -47,10 +53,11 @@ export async function persistSimulationEvents(
   prisma: PrismaClient,
   events: SimulationEvent[]
 ): Promise<void> {
-  if (events.length === 0) return;
+  const persistedEvents = events.filter((event) => !SKIP_PERSIST_TYPES.has(event.type));
+  if (persistedEvents.length === 0) return;
 
   await prisma.simulationEvent.createMany({
-    data: events.map((event) => ({
+    data: persistedEvents.map((event) => ({
       id: event.id,
       sessionId: event.sessionId,
       tick: event.tick,
@@ -105,6 +112,16 @@ export async function listSimulationRuntimeRecords(
     config: row.config as SimulationConfig,
     gameState: row.gameState as Record<string, unknown>,
   }));
+}
+
+export async function deleteSimulationRuntime(
+  prisma: PrismaClient,
+  sessionId: string
+): Promise<void> {
+  // Cascade: Session → SimulationRuntime, NpcDailyPlan, NpcLongTermIntent, NpcMemory, SimulationEvent
+  await (prisma as any).session.delete({
+    where: { sessionId },
+  });
 }
 
 export function runtimeToStatus(

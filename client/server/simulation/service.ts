@@ -9,13 +9,13 @@ import {
 import { NpcMemoryManager } from "../../../src/dynamicworldagent/memory/NpcMemoryManager.js";
 import { SimulationRunner } from "../../../src/dynamicworldagent/simulation/SimulationRunner.js";
 import {
+  deleteSimulationRuntime,
   listSimulationRuntimeRecords,
   loadSimulationRuntime,
   runtimeToStatus,
 } from "../../../src/dynamicworldagent/simulation/runtimePersistence.js";
 import type {
   SimulationConfig,
-  SimulationEvent,
   SimulationStatus,
 } from "../../../src/dynamicworldagent/simulation/types.js";
 import {
@@ -32,59 +32,64 @@ import {
   getWeatherLabel,
   computeSkillPenalties,
 } from "../../../src/dynamicworldagent/engine/features/weatherFeature.js";
+import type { TownTopology } from "../../../src/dynamicworldagent/state/topologyTypes.js";
 import { DatabaseManager } from "../core/DatabaseManager.js";
 import { WebSocketManager } from "../websocket/WebSocketManager.js";
 
 const runners = new Map<string, SimulationRunner>();
 
-/** Event types that should NOT be persisted to DB (transient display-only). */
-const SKIP_PERSIST_TYPES = new Set([
-  "npc_position_snapshot",
-  "playback_buffering",
-  "playback_resumed",
-]);
+function timeToMinutes(hhmm: string): number | null {
+  const [hoursPart, minutesPart] = hhmm.split(":");
+  const hours = Number.parseInt(hoursPart ?? "", 10);
+  const minutes = Number.parseInt(minutesPart ?? "", 10);
+  if (
+    Number.isNaN(hours) ||
+    Number.isNaN(minutes) ||
+    hours < 0 ||
+    hours > 23 ||
+    minutes < 0 ||
+    minutes > 59
+  ) {
+    return null;
+  }
+  return hours * 60 + minutes;
+}
+
+function buildTimeKey(gameDay: number, gameTime: string): number | null {
+  const minutes = timeToMinutes(gameTime);
+  if (minutes === null) return null;
+  return gameDay * 1440 + minutes;
+}
+
+function resolveTopLevelLocationId(
+  locationId: string,
+  topology: TownTopology | null,
+  dgsm: DynamicGameStateManager
+): string | null {
+  const scene = dgsm.getState().scenes.get(locationId);
+  if (scene?.parentLocationId) return scene.parentLocationId;
+
+  const junction = topology?.junctions.get(locationId);
+  if (junction?.parentLocationId) return junction.parentLocationId;
+
+  const road = topology?.roads.get(locationId);
+  if (road?.parentLocationId) return road.parentLocationId;
+
+  const outline = dgsm
+    .getState()
+    .scenarioOutlines.find((candidate) => candidate.id === locationId);
+  if (outline?.id) return outline.id;
+
+  if (locationId === "OUTDOOR") return locationId;
+  return null;
+}
 
 /**
- * Wire event listener on a runner: persist each simulation event to DB and
- * set up playback scheduler to broadcast via WebSocket at display rhythm.
+ * Wire WebSocket broadcast on a runner.
+ * Events are persisted directly by SimulationRunner.
  */
-function wireEventListener(
-  prisma: PrismaClient,
-  runner: SimulationRunner,
-  sessionId: string
-): void {
-  // DB persistence (immediate — events written as soon as produced)
-  runner.events.on("simulation_event", async (event: SimulationEvent) => {
-    if (SKIP_PERSIST_TYPES.has(event.type)) return;
-    try {
-      await prisma.simulationEvent.createMany({
-        data: [
-          {
-            id: event.id,
-            sessionId: event.sessionId,
-            tick: event.tick,
-            gameDay: event.gameDay,
-            gameTime: event.gameTime,
-            type: event.type,
-            actorNpcId: event.actorNpcId,
-            targetNpcId: event.targetNpcId ?? null,
-            location: event.location,
-            data: event.data as any,
-            timestamp: event.timestamp,
-          },
-        ],
-        skipDuplicates: true,
-      });
-    } catch (err) {
-      console.error(
-        `[SimulationService] Failed to persist simulation event ${event.id}:`,
-        err
-      );
-    }
-  });
-
-  // WebSocket broadcast (rate-limited via PlaybackScheduler)
-  runner.getPlaybackScheduler().setBroadcastCallback((events) => {
+function wireEventListener(runner: SimulationRunner, sessionId: string): void {
+  runner.setBroadcastCallback((events) => {
     const wsManager = WebSocketManager.getInstance();
     if (!wsManager) return;
     const clients = wsManager.getSimulationClients(sessionId);
@@ -174,7 +179,7 @@ export async function getRunner(
   if (runtime.simulationState === "running") {
     await runner.saveRuntime();
   }
-  wireEventListener(prisma, runner, sessionId);
+  wireEventListener(runner, sessionId);
   runners.set(sessionId, runner);
   return runner;
 }
@@ -253,18 +258,6 @@ export async function createSimulation(
     );
   }
 
-  // Real-time sync: override game start time to wall-clock + buffer
-  let displayStartTime: number | undefined;
-  if (config?.syncRealTime) {
-    const bufferMin = config.realTimeBufferMinutes ?? 5;
-    const startWall = Date.now() + bufferMin * 60_000;
-    const startDate = new Date(startWall);
-    const hh = String(startDate.getHours()).padStart(2, "0");
-    const mm = String(startDate.getMinutes()).padStart(2, "0");
-    gameState.timeOfDay = `${hh}:${mm}`;
-    displayStartTime = startWall;
-  }
-
   const { runner, dgsm, npcPlanningAgent } = buildSimulationBundle({
     prisma,
     gameState,
@@ -277,9 +270,6 @@ export async function createSimulation(
       stopEvents: config?.stopEvents,
       syncRealTime: config?.syncRealTime,
       realTimeBufferMinutes: config?.realTimeBufferMinutes,
-      displayStartTime,
-      // Force 1:1 display speed for real-time sync
-      ...(config?.syncRealTime ? { displayIntervalMs: 60_000 } : {}),
     },
     language,
   });
@@ -290,10 +280,13 @@ export async function createSimulation(
   }
 
   await npcPlanningAgent.seedLongTermIntents(dgsm, sessionId, moduleId);
+  if (config?.syncRealTime) {
+    runner.enableRealTimeSync(config.realTimeBufferMinutes ?? 0);
+  }
   runner.setModuleName(moduleName);
   await runner.saveRuntime();
 
-  wireEventListener(prisma, runner, sessionId);
+  wireEventListener(runner, sessionId);
   runners.set(sessionId, runner);
 
   return { sessionId, status: runner.getStatus() };
@@ -350,6 +343,24 @@ export async function stopSimulation(
   runners.delete(sessionId);
 }
 
+export async function deleteSimulation(
+  prisma: PrismaClient,
+  sessionId: string
+): Promise<void> {
+  // Stop the runner if it's active in memory
+  const runner = runners.get(sessionId);
+  if (runner) {
+    try {
+      await runner.stop();
+    } catch {
+      // Ignore stop errors — we're deleting anyway
+    }
+    runners.delete(sessionId);
+  }
+  // Delete session record (cascades to all related tables)
+  await deleteSimulationRuntime(prisma, sessionId);
+}
+
 export async function getSimulationStatus(
   prisma: PrismaClient,
   sessionId: string
@@ -365,17 +376,72 @@ export async function getSimulationEvents(
     type?: string;
     npcId?: string;
     day?: number;
+    startDay?: number;
+    startTime?: string;
+    endDay?: number;
+    endTime?: string;
+    maxTick?: number;
+    parentLocationId?: string;
   }
 ): Promise<SimulationEvent[]> {
   const where: Record<string, unknown> = { sessionId };
   if (filters?.type) where.type = filters.type;
   if (filters?.npcId) where.actorNpcId = filters.npcId;
-  if (filters?.day) where.gameDay = filters.day;
+  if (typeof filters?.maxTick === "number") {
+    where.tick = { lte: filters.maxTick };
+  }
+  if (filters?.day) {
+    where.gameDay = filters.day;
+  } else if (
+    typeof filters?.startDay === "number" ||
+    typeof filters?.endDay === "number"
+  ) {
+    const gameDayRange: Record<string, number> = {};
+    if (typeof filters?.startDay === "number") gameDayRange.gte = filters.startDay;
+    if (typeof filters?.endDay === "number") gameDayRange.lte = filters.endDay;
+    where.gameDay = gameDayRange;
+  }
 
   const rows = await prisma.simulationEvent.findMany({
     where,
     orderBy: [{ tick: "asc" }, { timestamp: "asc" }],
   });
 
-  return rows as unknown as SimulationEvent[];
+  let filteredRows = rows;
+
+  const startKey =
+    typeof filters?.startDay === "number"
+      ? buildTimeKey(filters.startDay, filters.startTime ?? "00:00")
+      : null;
+  const endKey =
+    typeof filters?.endDay === "number"
+      ? buildTimeKey(filters.endDay, filters.endTime ?? "23:59")
+      : null;
+
+  if (startKey !== null || endKey !== null) {
+    filteredRows = filteredRows.filter((row) => {
+      const rowKey = buildTimeKey(row.gameDay, row.gameTime);
+      if (rowKey === null) return false;
+      if (startKey !== null && rowKey < startKey) return false;
+      if (endKey !== null && rowKey > endKey) return false;
+      return true;
+    });
+  }
+
+  if (filters?.parentLocationId) {
+    const runner = await requireRunner(prisma, sessionId);
+    const dgsm = runner.getDgsm();
+    const topology = dgsm.getTopology();
+
+    filteredRows = filteredRows.filter((row) => {
+      const parentLocationId = resolveTopLevelLocationId(
+        row.location,
+        topology,
+        dgsm
+      );
+      return parentLocationId === filters.parentLocationId;
+    });
+  }
+
+  return filteredRows as unknown as SimulationEvent[];
 }

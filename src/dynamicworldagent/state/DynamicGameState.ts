@@ -660,6 +660,18 @@ export class DynamicGameStateManager {
     return { dayChanged: this.state.gameDay !== previousDay, previousDay };
   }
 
+  /**
+   * Set the in-game clock directly.
+   * Used by simulation bootstrap paths such as real-time sync alignment.
+   */
+  setGameClock(params: { gameDay?: number; timeOfDay: string }): void {
+    if (typeof params.gameDay === "number" && params.gameDay > 0) {
+      this.state.gameDay = params.gameDay;
+    }
+    this.state.timeOfDay = params.timeOfDay;
+    this.state.lastUpdated = new Date();
+  }
+
   // === NPC Planning System Helpers ===
 
   getNpcStats(npcId: string): { hp: number; san: number } | undefined {

@@ -13,6 +13,15 @@ const SYSTEM_EVENT_TYPES = new Set([
 
 const ACTION_EVENT_TYPES = new Set(["action_executed", "action_failed"]);
 
+function sanitizeOutcomeForDisplay(outcome: string | undefined): string | undefined {
+  if (!outcome) return outcome;
+
+  return outcome
+    .replace(/\s*\[arrived at [^\]]+\]\s*/gi, " ")
+    .replace(/\s{2,}/g, " ")
+    .trim();
+}
+
 export function EventLog({ events }: EventLogProps) {
   const bottomRef = useRef<HTMLDivElement>(null);
 
@@ -45,8 +54,9 @@ function ActionMessage({ event }: { event: SimulationEvent }) {
   const isFailed = event.type === "action_failed";
   const name =
     (event.data.characterName as string) || event.actorNpcId || "Unknown";
-  const action = (event.data.action as string) || event.type;
-  const outcome = event.data.outcome as string | undefined;
+  const outcome = sanitizeOutcomeForDisplay(
+    event.data.outcome as string | undefined
+  );
 
   return (
     <div
@@ -58,10 +68,9 @@ function ActionMessage({ event }: { event: SimulationEvent }) {
           {event.gameTime}
         </span>
       </div>
-      <div className="text-slate-600 leading-relaxed">{action}</div>
       {outcome && (
         <div
-          className={`mt-1 text-[11px] ${isFailed ? "text-red-500" : "text-emerald-600"}`}
+          className={`text-[11px] leading-relaxed ${isFailed ? "text-red-500" : "text-emerald-600"}`}
         >
           {isFailed ? "✗" : "✓"} {outcome}
         </div>

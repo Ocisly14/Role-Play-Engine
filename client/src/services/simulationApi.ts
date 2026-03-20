@@ -1,4 +1,5 @@
 import { api } from "./api.js";
+import type { SimulationEvent } from "../hooks/useSimulationWebSocket.js";
 
 // Local type definition — mirrors backend CharacterPosition union.
 // Do NOT import from src/ — that breaks Vite bundling.
@@ -11,11 +12,13 @@ export interface TopologyResponse {
   junctions: Array<{
     id: string;
     name: string;
+    parentLocationId: string;
     connectedSceneIds: string[];
   }>;
   roads: Array<{
     id: string;
     name: string;
+    parentLocationId: string;
     endpointA: string;
     endpointB: string;
     travelTimeMinutes: number;
@@ -95,6 +98,10 @@ export async function listSimulations(): Promise<SimulationListItem[]> {
   return data.simulations;
 }
 
+export async function deleteSimulation(sessionId: string): Promise<void> {
+  await api.delete(`/simulation/${sessionId}`);
+}
+
 // Map viewer API calls
 export async function fetchTopology(
   sessionId: string
@@ -168,6 +175,8 @@ export interface PlaybackStatus {
   isPlaying: boolean;
   displayStartTime?: number;
   timeUntilStart?: number;
+  displayGameDay?: number;
+  displayGameTime?: string;
 }
 
 export async function fetchPlaybackStatus(
@@ -175,4 +184,24 @@ export async function fetchPlaybackStatus(
 ): Promise<PlaybackStatus> {
   const { data } = await api.get(`/simulation/${sessionId}/playback-status`);
   return data;
+}
+
+export interface SimulationEventFilters {
+  npcId?: string;
+  startDay?: number;
+  startTime?: string;
+  endDay?: number;
+  endTime?: string;
+  maxTick?: number;
+  parentLocationId?: string;
+}
+
+export async function fetchEvents(
+  sessionId: string,
+  filters?: SimulationEventFilters
+): Promise<SimulationEvent[]> {
+  const { data } = await api.get(`/simulation/${sessionId}/events`, {
+    params: filters,
+  });
+  return data.events;
 }

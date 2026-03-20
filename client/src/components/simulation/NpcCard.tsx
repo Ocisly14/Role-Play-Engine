@@ -27,7 +27,7 @@ export function NpcCard({ npc, isSelected, onClick }: NpcCardProps) {
           HP: {npc.hp}/{npc.maxHp} SAN: {npc.sanity}/{npc.maxSanity}
           {npc.currentAction && (
             <div className="text-slate-400 mt-0.5 truncate">
-              {npc.currentAction}
+              正在进行中: {npc.currentAction}
             </div>
           )}
         </div>

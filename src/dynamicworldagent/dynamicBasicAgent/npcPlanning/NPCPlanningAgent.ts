@@ -48,6 +48,30 @@ function minutesToTimeLabel(minutes: number): string {
   return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
 }
 
+function resolveCurrentNode(
+  nodes: PlanNode[],
+  currentTime: string
+): PlanNode | null {
+  const inProgressNode =
+    nodes
+      .filter((node) => node.status === "in_progress")
+      .sort((a, b) => timeToMinutes(a.startTime) - timeToMinutes(b.startTime))[0] ??
+    null;
+  if (inProgressNode) return inProgressNode;
+
+  const duePendingNode =
+    nodes
+      .filter(
+        (node) =>
+          node.status === "pending" &&
+          timeToMinutes(node.startTime) <= timeToMinutes(currentTime)
+      )
+      .sort((a, b) => timeToMinutes(a.startTime) - timeToMinutes(b.startTime))[0] ??
+    null;
+
+  return duePendingNode;
+}
+
 function getDefaultNodeDurationMinutes(type: string): number {
   switch (type) {
     case "scene_interaction":
@@ -1095,6 +1119,24 @@ export class NPCPlanningAgent {
       }
     }
     return activeNodes;
+  }
+
+  async getCurrentNpcActions(
+    sessionId: string,
+    gameDay: number,
+    currentTime: string
+  ): Promise<Record<string, string | null>> {
+    const plans = await this.prisma.npcDailyPlan.findMany({
+      where: { sessionId, gameDay },
+    });
+
+    const actions: Record<string, string | null> = {};
+    for (const plan of plans) {
+      const nodes = plan.nodes as unknown as PlanNode[];
+      const currentNode = resolveCurrentNode(nodes, currentTime);
+      actions[plan.npcId] = currentNode?.action ?? null;
+    }
+    return actions;
   }
 
   async updateNode(

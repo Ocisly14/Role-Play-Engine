@@ -40,7 +40,7 @@ export function updateConfig(req: Request, res: Response) {
     }
     if (syncRealTime === true) {
       const result = runner.enableRealTimeSync(
-        typeof realTimeBufferMinutes === "number" ? realTimeBufferMinutes : 5
+        typeof realTimeBufferMinutes === "number" ? realTimeBufferMinutes : 0
       );
       return res.json({ success: true, status: runner.getStatus(), ...result });
     }
