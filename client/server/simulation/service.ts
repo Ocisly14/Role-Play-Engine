@@ -1,3 +1,5 @@
+import fs from "node:fs";
+import path from "node:path";
 import { randomUUID } from "crypto";
 import type { PrismaClient } from "@prisma/client";
 import { WebSocket } from "ws";
@@ -23,6 +25,7 @@ import {
   DynamicGameStateManager,
 } from "../../../src/dynamicworldagent/state/DynamicGameState.js";
 import { initializeCompleteDynamicGameState } from "../../../src/dynamicworldagent/state/DynamicGameStateLoader.js";
+import { importModule } from "../../../src/dynamicworldagent/state/moduleImporter.js";
 import { ModelProviderName } from "../../../src/models/types.js";
 import { EmbeddingClient } from "../../../src/rag/embedding.js";
 import { resolveModuleIdByName } from "../../../src/shared/agents/memory/database/moduleScope.js";
@@ -37,6 +40,31 @@ import { DatabaseManager } from "../core/DatabaseManager.js";
 import { WebSocketManager } from "../websocket/WebSocketManager.js";
 
 const runners = new Map<string, SimulationRunner>();
+
+async function ensureModuleIdForSimulation(
+  prisma: PrismaClient,
+  moduleName: string,
+  emailId?: string
+): Promise<string | null> {
+  const existingModuleId = await resolveModuleIdByName(moduleName, emailId);
+  if (existingModuleId) {
+    return existingModuleId;
+  }
+
+  const moduleDir = path.join(process.cwd(), "data", "Mods", moduleName);
+  if (!fs.existsSync(moduleDir)) {
+    return null;
+  }
+
+  await importModule({
+    prisma,
+    moduleDir,
+    moduleName,
+    emailId,
+  });
+
+  return resolveModuleIdByName(moduleName, emailId);
+}
 
 function timeToMinutes(hhmm: string): number | null {
   const [hoursPart, minutesPart] = hhmm.split(":");
@@ -243,7 +271,11 @@ export async function createSimulation(
   const sessionId = randomUUID();
   const db = DatabaseManager.getInstance().getDatabase();
   const emailId = resolveEmailId();
-  const moduleId = await resolveModuleIdByName(moduleName, emailId);
+  const moduleId = await ensureModuleIdForSimulation(
+    prisma,
+    moduleName,
+    emailId
+  );
   if (!moduleId) {
     throw new Error(`Module "${moduleName}" not found`);
   }
