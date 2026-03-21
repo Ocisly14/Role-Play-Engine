@@ -157,6 +157,13 @@ export async function updateSpeed(
   await api.put(`/simulation/${sessionId}/config`, { tickIntervalMs });
 }
 
+export async function updateMaxDays(
+  sessionId: string,
+  maxDays: number
+): Promise<void> {
+  await api.put(`/simulation/${sessionId}/config`, { maxDays });
+}
+
 export async function updateSyncRealTime(
   sessionId: string,
   syncRealTime: boolean,

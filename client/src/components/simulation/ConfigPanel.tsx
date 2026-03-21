@@ -43,6 +43,7 @@ export function ConfigPanel({ sessionId, onStarted }: ConfigPanelProps) {
       // When syncRealTime is on, force 1x speed (60s per tick)
       const effectiveSpeed = syncRealTime ? 60000 : tickSpeed;
       await simApi.updateSpeed(sessionId, effectiveSpeed);
+      await simApi.updateMaxDays(sessionId, Math.max(1, Math.floor(maxDays)));
       if (syncRealTime) {
         await simApi.updateSyncRealTime(sessionId, true, bufferMinutes);
       }

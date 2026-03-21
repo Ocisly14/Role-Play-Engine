@@ -172,6 +172,10 @@ export class SimulationRunner {
     }
   }
 
+  updateMaxDays(maxDays: number): void {
+    this.config.maxDays = Math.max(1, Math.floor(maxDays));
+  }
+
   enableRealTimeSync(bufferMinutes = 0): {
     displayStartTime: number;
     gameTime: string;

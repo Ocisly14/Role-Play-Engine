@@ -36,15 +36,26 @@ export async function updateConfig(req: Request, res: Response) {
     const runner = mapService.getRunnerById(req.params.id);
     if (!runner) return res.status(404).json({ error: "Simulation not found" });
 
-    const { tickIntervalMs, syncRealTime, realTimeBufferMinutes } = req.body;
+    const { tickIntervalMs, maxDays, syncRealTime, realTimeBufferMinutes } =
+      req.body;
+    let didUpdate = false;
     if (typeof tickIntervalMs === "number" && tickIntervalMs > 0) {
       runner.updateTickInterval(tickIntervalMs);
+      didUpdate = true;
+    }
+    if (typeof maxDays === "number" && maxDays > 0) {
+      runner.updateMaxDays(maxDays);
+      didUpdate = true;
     }
     if (syncRealTime === true) {
       const result = runner.enableRealTimeSync(
         typeof realTimeBufferMinutes === "number" ? realTimeBufferMinutes : 0
       );
+      await runner.saveRuntime();
       return res.json({ success: true, status: runner.getStatus(), ...result });
+    }
+    if (didUpdate) {
+      await runner.saveRuntime();
     }
     return res.json({ success: true, status: runner.getStatus() });
   } catch (error) {
