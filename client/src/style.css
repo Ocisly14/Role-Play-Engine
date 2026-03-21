@@ -1681,11 +1681,6 @@ textarea {
   font-family: var(--serif);
 }
 
-/* Input Area */
-.chat-input-area {
-  /* Changed to fixed positioning with independent rounded rectangle, styles handled by Tailwind classes */
-}
-
 .action-input {
   padding: 12px 16px;
   /* background, border, border-radius handled by Tailwind classes */
@@ -2434,6 +2429,8 @@ textarea {
   justify-content: space-between;
   align-items: center;
   padding: 12px 16px;
+  min-height: 58px;
+  box-sizing: border-box;
 }
 
 .sim-header h1 {
@@ -2446,6 +2443,23 @@ textarea {
   left: 50%;
   transform: translateX(-50%);
   white-space: nowrap;
+}
+
+.sim-header-spacer {
+  display: block;
+  flex: 0 0 auto;
+}
+
+.sim-header-spacer--back {
+  width: 42px;
+  min-width: 42px;
+  height: 40px;
+}
+
+.sim-header-spacer--menu {
+  width: 86px;
+  min-width: 86px;
+  height: 40px;
 }
 
 /* Sidebar — floating glass panel */
@@ -2559,10 +2573,23 @@ textarea {
     left: 10px;
     right: 10px;
     padding: 10px 12px;
+    min-height: 52px;
   }
 
   .sim-header h1 {
     font-size: 1rem;
+  }
+
+  .sim-header-spacer--back {
+    width: 36px;
+    min-width: 36px;
+    height: 32px;
+  }
+
+  .sim-header-spacer--menu {
+    width: 42px;
+    min-width: 42px;
+    height: 32px;
   }
 
   .sim-sidebar {

@@ -1,5 +1,6 @@
 import type React from "react";
 import { createContext, useContext, useEffect, useState } from "react";
+import { useLocation } from "react-router-dom";
 import { api } from "../services/api";
 
 interface User {
@@ -31,15 +32,25 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
+  const location = useLocation();
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const isPublicSimulationRoute = location.pathname.startsWith(
+    "/simulation/public/"
+  );
 
   // Check login status on init
   useEffect(() => {
+    if (isPublicSimulationRoute) {
+      setLoading(false);
+      return;
+    }
+
     refreshAuth();
-  }, []);
+  }, [isPublicSimulationRoute]);
 
   const refreshAuth = async () => {
+    setLoading(true);
     const accessToken = localStorage.getItem("accessToken");
     const refreshToken = localStorage.getItem("refreshToken");
 

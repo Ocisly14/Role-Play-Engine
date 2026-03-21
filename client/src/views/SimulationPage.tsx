@@ -17,6 +17,8 @@ const NPC_DOT_COLORS = [
 ];
 
 const MAPS_BASE = "/api/maps";
+const UUID_SESSION_ID_PATTERN =
+  /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
 
 interface SceneConfig {
   background: string;
@@ -33,12 +35,23 @@ interface SimulationPageProps {
   mode?: "owner" | "public";
 }
 
+function normalizeSessionId(rawSessionId: string | undefined): string | null {
+  const trimmed = rawSessionId?.trim();
+  if (!trimmed) return null;
+  const matchedUuid = trimmed.match(UUID_SESSION_ID_PATTERN)?.[0];
+  return matchedUuid ?? trimmed;
+}
+
 export default function SimulationPage({
   mode = "owner",
 }: SimulationPageProps) {
-  const { sessionId } = useParams<{ sessionId: string }>();
+  const { sessionId: routeSessionId } = useParams<{ sessionId: string }>();
   const navigate = useNavigate();
   const isPublicMode = mode === "public";
+  const sessionId = useMemo(
+    () => normalizeSessionId(routeSessionId),
+    [routeSessionId]
+  );
   const { isSidebarOpen, toggleSidebar, closeSidebar } =
     useMobileSidebar();
   const gameRef = useRef<Phaser.Game | null>(null);
@@ -83,6 +96,14 @@ export default function SimulationPage({
     onEvent: handleEventWithBubble,
     onConnected: resync,
   });
+
+  useEffect(() => {
+    if (!routeSessionId || !sessionId || routeSessionId === sessionId) return;
+    const targetPath = isPublicMode
+      ? `/simulation/public/${sessionId}`
+      : `/simulation/${sessionId}`;
+    navigate(targetPath, { replace: true });
+  }, [isPublicMode, navigate, routeSessionId, sessionId]);
 
   // Fetch map_config to get scene image URLs
   useEffect(() => {
@@ -347,11 +368,9 @@ export default function SimulationPage({
     try {
       if (navigator.share) {
         await navigator.share({
-          title: "Town Simulation",
-          text: "View the live simulation",
           url: publicUrl,
         });
-        setShareFeedback("Shared");
+        setShareFeedback("Public link shared");
         return;
       }
     } catch (error) {
@@ -362,7 +381,7 @@ export default function SimulationPage({
 
     try {
       await navigator.clipboard.writeText(publicUrl);
-      setShareFeedback("Link copied");
+      setShareFeedback("Public link copied");
     } catch {
       setShareFeedback("Copy failed");
     }
@@ -393,7 +412,7 @@ export default function SimulationPage({
       {/* Floating header */}
       <div className="sim-header backdrop-blur-sm bg-white/50 border border-slate-200 shadow-md rounded-lg" onPointerDown={(e) => e.stopPropagation()}>
         {isPublicMode ? (
-          <div style={{ width: "42px" }} aria-hidden="true" />
+          <div className="sim-header-spacer sim-header-spacer--back" aria-hidden="true" />
         ) : (
           <button
             onClick={() => navigate("/simulation/select")}
@@ -410,7 +429,9 @@ export default function SimulationPage({
         {!isSidebarOpen && (
           <SidebarToggleButton onClick={toggleSidebar} />
         )}
-        {isSidebarOpen && <div style={{ width: "52px" }} aria-hidden="true" />}
+        {isSidebarOpen && (
+          <div className="sim-header-spacer sim-header-spacer--menu" aria-hidden="true" />
+        )}
       </div>
 
       {/* Click map to close popup — only covers canvas, below all UI */}
@@ -530,7 +551,7 @@ export default function SimulationPage({
           className="fixed bottom-4 right-4 z-10 backdrop-blur-xl bg-white/50 border border-white/30 rounded-2xl px-4 py-2 shadow-lg flex items-center gap-2 text-sm font-medium text-slate-700 hover:bg-white/70 transition-all"
           onPointerDown={(e) => e.stopPropagation()}
         >
-          <span>Share</span>
+          <span>Copy Public Link</span>
           {shareFeedback && (
             <span className="text-xs text-amber-700">{shareFeedback}</span>
           )}
