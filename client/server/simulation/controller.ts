@@ -3,6 +3,7 @@ import * as path from "node:path";
 import type { Request, Response } from "express";
 import { getPrismaClient } from "../../../src/shared/agents/memory/database/prismaClient.js";
 import { findMapsDirectory, findSceneDirectory } from "./mapService.js";
+import { requireSimulationOwnership } from "./ownership.js";
 import * as simulationService from "./service.js";
 
 function parseOptionalInt(value: unknown): number | undefined {
@@ -36,6 +37,7 @@ export async function createSimulation(req: Request, res: Response) {
 
 export async function startSimulation(req: Request, res: Response) {
   try {
+    if (!(await requireSimulationOwnership(req, res))) return;
     const prisma = getPrismaClient();
     await simulationService.startSimulation(prisma, req.params.id);
     return res.json({ success: true });
@@ -48,6 +50,7 @@ export async function startSimulation(req: Request, res: Response) {
 
 export async function pauseSimulation(req: Request, res: Response) {
   try {
+    if (!(await requireSimulationOwnership(req, res))) return;
     const prisma = getPrismaClient();
     await simulationService.pauseSimulation(prisma, req.params.id);
     return res.json({ success: true });
@@ -60,6 +63,7 @@ export async function pauseSimulation(req: Request, res: Response) {
 
 export async function resumeSimulation(req: Request, res: Response) {
   try {
+    if (!(await requireSimulationOwnership(req, res))) return;
     const prisma = getPrismaClient();
     await simulationService.resumeSimulation(prisma, req.params.id);
     return res.json({ success: true });
@@ -72,6 +76,7 @@ export async function resumeSimulation(req: Request, res: Response) {
 
 export async function stepSimulation(req: Request, res: Response) {
   try {
+    if (!(await requireSimulationOwnership(req, res))) return;
     const ticks = req.body?.ticks ?? 1;
     const prisma = getPrismaClient();
     await simulationService.stepSimulation(prisma, req.params.id, ticks);
@@ -85,6 +90,7 @@ export async function stepSimulation(req: Request, res: Response) {
 
 export async function stopSimulation(req: Request, res: Response) {
   try {
+    if (!(await requireSimulationOwnership(req, res))) return;
     const prisma = getPrismaClient();
     await simulationService.stopSimulation(prisma, req.params.id);
     return res.json({ success: true });
@@ -154,14 +160,19 @@ export async function getEvents(req: Request, res: Response) {
   }
 }
 
-export async function listSimulations(_req: Request, res: Response) {
+export async function listSimulations(req: Request, res: Response) {
   const prisma = getPrismaClient();
-  const simulations = await simulationService.listSimulations(prisma);
+  const email = req.user?.email;
+  if (!email) {
+    return res.status(401).json({ error: "Authentication required" });
+  }
+  const simulations = await simulationService.listSimulations(prisma, email);
   return res.json({ simulations });
 }
 
 export async function deleteSimulation(req: Request, res: Response) {
   try {
+    if (!(await requireSimulationOwnership(req, res))) return;
     const prisma = getPrismaClient();
     await simulationService.deleteSimulation(prisma, req.params.id);
     return res.json({ success: true });

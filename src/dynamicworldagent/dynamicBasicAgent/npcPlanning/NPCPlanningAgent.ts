@@ -120,6 +120,36 @@ function normalizeNodeTimeRange(
   };
 }
 
+/**
+ * Build a summary of sibling sub-scenes in the same building.
+ * Returns name + description for each room the NPC is NOT currently in,
+ * or empty string if the NPC is outdoors or the building has only one room.
+ */
+function buildBuildingContext(
+  dgsm: DynamicGameStateManager,
+  currentSceneId: string
+): string {
+  const state = dgsm.getState();
+  const currentScene = state.scenes.get(currentSceneId);
+  if (!currentScene) return "";
+
+  const parentId = currentScene.parentLocationId;
+  if (!parentId || parentId === "OUTDOOR") return "";
+
+  const siblings: { name: string; description: string }[] = [];
+  for (const [id, scene] of state.scenes) {
+    if (id === currentSceneId) continue;
+    if (scene.parentLocationId === parentId) {
+      siblings.push({ name: scene.name, description: scene.description });
+    }
+  }
+
+  if (siblings.length === 0) return "";
+  return siblings
+    .map((s) => `- **${s.name}**: ${s.description}`)
+    .join("\n");
+}
+
 function normalizePlanNode(
   rawNode: Record<string, unknown>,
   params: {
@@ -485,10 +515,12 @@ export class NPCPlanningAgent {
     const currentLocationId = currentPos
       ? dgsm.resolveLocationId(currentPos)
       : "";
-    const currentLocationName = resolveLocationName(dgsm, currentLocationId);
     const currentScene = currentLocationId
       ? (state.scenes.get(currentLocationId) ?? null)
       : null;
+    // Show sub-scene name (e.g. "私人书房") so the LLM knows exactly which room
+    const currentLocationName = currentScene?.name
+      ?? resolveLocationName(dgsm, currentLocationId);
     const sceneDescription = currentScene?.description ?? "";
     const sceneItems = formatSceneItems(currentScene);
     const sceneConditions = currentScene
@@ -524,6 +556,9 @@ export class NPCPlanningAgent {
       .join("\n");
 
     const npcInventory = formatItemList(dgsm.getNpcInventory(npcId));
+    const buildingContext = currentLocationId
+      ? buildBuildingContext(dgsm, currentLocationId)
+      : "";
 
     const { systemPrompt, userPrompt } = buildDetailedNodesPrompt({
       npcName: npc.name,
@@ -538,6 +573,7 @@ export class NPCPlanningAgent {
       sceneItems,
       sceneNpcs: npcsAtLocation,
       sceneConditions,
+      buildingContext,
       worldStatePrompt,
       npcInventory,
       currentTime: state.timeOfDay,
@@ -783,11 +819,12 @@ export class NPCPlanningAgent {
     const currentLocationId = revisePos
       ? dgsm.resolveLocationId(revisePos)
       : "";
-    const currentLocationName = resolveLocationName(dgsm, currentLocationId);
     const currentPositionDetail = describePrecisePosition(revisePos, dgsm);
     const currentScene = currentLocationId
       ? (state.scenes.get(currentLocationId) ?? null)
       : null;
+    const currentLocationName = currentScene?.name
+      ?? resolveLocationName(dgsm, currentLocationId);
     const plan = await this.getDailyPlan(sessionId, npcId, state.gameDay);
     const schedule = (plan?.schedule as unknown as ScheduleEntry[]) ?? [];
     const existingNodes = (plan?.nodes as unknown as PlanNode[]) ?? [];
@@ -814,6 +851,10 @@ export class NPCPlanningAgent {
       (n) => n.status === "in_progress"
     );
 
+    const buildingContext = currentLocationId
+      ? buildBuildingContext(dgsm, currentLocationId)
+      : "";
+
     const { systemPrompt, userPrompt } = buildRevisePlansPrompt({
       npcName: npc.name,
       npcId: npc.id,
@@ -838,6 +879,7 @@ export class NPCPlanningAgent {
             .map((c) => `- ${c.description}`)
             .join("\n")
         : "",
+      buildingContext,
       worldStatePrompt: this.buildNpcWorldStatePrompt(
         dgsm,
         npcId,

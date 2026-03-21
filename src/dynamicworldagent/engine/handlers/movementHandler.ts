@@ -100,7 +100,8 @@ export const movementHandler: NodeHandler = {
         currentPos,
         targetPos,
         topology,
-        state.blockedConnections
+        state.blockedConnections,
+        dgsm
       );
 
       if (!topologyPath) {

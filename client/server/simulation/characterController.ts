@@ -2,10 +2,12 @@
 import type { Request, Response } from "express";
 import { buildInjectedProfile } from "../../../src/dynamicworldagent/simulation/characterInjection.js";
 import { getPrismaClient } from "../../../src/shared/agents/memory/database/prismaClient.js";
+import { requireSimulationOwnership } from "./ownership.js";
 import * as simulationService from "./service.js";
 
 export async function injectCharacter(req: Request, res: Response) {
   try {
+    if (!(await requireSimulationOwnership(req, res))) return;
     const prisma = getPrismaClient();
     const runner = await simulationService.getRunner(prisma, req.params.id);
     if (!runner) return res.status(404).json({ error: "Simulation not found" });
@@ -56,6 +58,7 @@ export async function injectCharacter(req: Request, res: Response) {
 
 export async function listInjectedCharacters(req: Request, res: Response) {
   try {
+    if (!(await requireSimulationOwnership(req, res))) return;
     const prisma = getPrismaClient();
     const runner = await simulationService.getRunner(prisma, req.params.id);
     if (!runner) return res.status(404).json({ error: "Simulation not found" });
@@ -69,6 +72,7 @@ export async function listInjectedCharacters(req: Request, res: Response) {
 
 export async function updateIntent(req: Request, res: Response) {
   try {
+    if (!(await requireSimulationOwnership(req, res))) return;
     const prisma = getPrismaClient();
     const runner = await simulationService.getRunner(prisma, req.params.id);
     if (!runner) return res.status(404).json({ error: "Simulation not found" });
@@ -90,6 +94,7 @@ export async function updateIntent(req: Request, res: Response) {
 
 export async function removeCharacter(req: Request, res: Response) {
   try {
+    if (!(await requireSimulationOwnership(req, res))) return;
     const prisma = getPrismaClient();
     const runner = await simulationService.getRunner(prisma, req.params.id);
     if (!runner) return res.status(404).json({ error: "Simulation not found" });

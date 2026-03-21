@@ -185,9 +185,10 @@ export async function getRunner(
 }
 
 export async function listSimulations(
-  prisma: PrismaClient
+  prisma: PrismaClient,
+  emailId?: string
 ): Promise<(SimulationStatus & { sessionId: string; moduleName?: string })[]> {
-  const runtimes = await listSimulationRuntimeRecords(prisma);
+  const runtimes = await listSimulationRuntimeRecords(prisma, emailId);
 
   return runtimes.map((runtime) => {
     const liveRunner = runners.get(runtime.sessionId);

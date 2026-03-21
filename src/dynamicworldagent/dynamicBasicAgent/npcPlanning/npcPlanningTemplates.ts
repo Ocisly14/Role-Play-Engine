@@ -175,6 +175,8 @@ export interface DetailedNodesParams {
   sceneItems: string;
   sceneNpcs: string;
   sceneConditions: string;
+  /** Formatted overview of other rooms in the same building (name + description only) */
+  buildingContext?: string;
   /** Filtered world state: weather, fire, fatigue, sanity etc. */
   worldStatePrompt: string;
   npcInventory: string;
@@ -190,7 +192,8 @@ const TWENTY_FOUR_HOUR_TIME_GUIDANCE = `## Time Semantics
 - All times use a 24-hour clock in \`HH:MM\` format.`;
 
 const DEFAULT_NODE_GUARDRAILS_PROMPT = `## Planning Guardrails
-- For every node's \`location\`, copy only the exact location name. Never include helper text such as topology notes, resident lists, or formatting labels.
+- You can only interact with items, characters, and the environment in your **current scene**. To act in a different scene (including other scenes in the same building), emit a movement node to that scene first, then your action node.
+- For \`location\`, use the exact scene or place name. If you are inside a building, use the specific scene name (from "Your Current Location" or "Other Rooms In This Building"), not the building name.
 - For object interactions, you may only target items that already appear in \`Items You Can See\` or \`What You're Carrying\`.
 - Do not invent new documents, copies, notes, printouts, receipts, witness copies, or memo variants unless they already exist in the scene, inventory, or prior action history.`;
 
@@ -319,7 +322,7 @@ ${params.memoryLog || "Nothing recorded yet."}
 ## Your Current Location
 ${params.currentLocation || "Unknown"}
 
-## Where You Are
+${params.buildingContext ? `## Other Rooms In This Building\n${params.buildingContext}\n` : ""}## Where You Are
 ${params.sceneDescription || "No description available."}
 
 ## Conditions Here
@@ -442,6 +445,7 @@ export interface RevisePlansParams {
   sceneItems: string;
   sceneNpcs: string;
   sceneConditions: string;
+  buildingContext?: string;
   worldStatePrompt: string;
   npcInventory: string;
   currentTime: string;
@@ -562,7 +566,7 @@ ${params.currentLocation || "Unknown"}
 ## Your Exact Position
 ${params.currentPositionDetail || "Unknown."}
 
-## Where You Are
+${params.buildingContext ? `## Other Rooms In This Building\n${params.buildingContext}\n` : ""}## Where You Are
 ${params.sceneDescription || "No description available."}
 
 ## Conditions Here

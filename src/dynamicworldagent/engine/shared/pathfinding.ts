@@ -1,12 +1,36 @@
 import type {
   MovementStep,
 } from "../../dynamicBasicAgent/npcPlanning/types.js";
+import type { DynamicGameStateManager } from "../../state/DynamicGameState.js";
 import type {
   CharacterPosition,
   RoadNode,
   TownTopology,
 } from "../../state/topologyTypes.js";
 import { hasBlockedConnection } from "../../state/blockedConnections.js";
+
+/**
+ * If a scene is not in sceneToParent (interior sub-scene),
+ * find its building's entry scene which IS in the topology.
+ */
+function resolveToEntryScene(
+  sceneId: string,
+  topology: TownTopology,
+  dgsm?: DynamicGameStateManager
+): string | null {
+  if (topology.sceneToParent.has(sceneId)) return sceneId;
+  if (!dgsm) return null;
+  const state = dgsm.getState();
+  const scene = state.scenes.get(sceneId);
+  if (!scene) return null;
+  const outline = (state.scenarioOutlines ?? []).find(
+    (o) => o.id === scene.parentLocationId
+  );
+  if (outline?.entrySceneId && topology.sceneToParent.has(outline.entrySceneId)) {
+    return outline.entrySceneId;
+  }
+  return null;
+}
 
 // ===== Topology-aware pathfinding (Junction-Road graph) =====
 
@@ -47,15 +71,16 @@ export function findTopologyPath(
   from: CharacterPosition,
   to: CharacterPosition,
   topology: TownTopology,
-  blockedConnections: Map<string, string>
+  blockedConnections: Map<string, string>,
+  dgsm?: DynamicGameStateManager
 ): TopologyPath | null {
   // Same location check
   if (positionsEqual(from, to)) {
     return { steps: [], totalMinutes: 0 };
   }
 
-  const startInfo = resolveToJunctions(from, topology, blockedConnections);
-  const endInfo = resolveToJunctions(to, topology, blockedConnections);
+  const startInfo = resolveToJunctions(from, topology, blockedConnections, dgsm);
+  const endInfo = resolveToJunctions(to, topology, blockedConnections, dgsm);
 
   if (!startInfo || !endInfo) return null;
 
@@ -128,13 +153,14 @@ export function findTopologyPath(
 export function buildMovementRouteIgnoringBlocks(
   from: CharacterPosition,
   to: CharacterPosition,
-  topology: TownTopology
+  topology: TownTopology,
+  dgsm?: DynamicGameStateManager
 ): { steps: MovementStep[]; totalMinutes: number } | null {
   if (positionsEqual(from, to)) {
     return { steps: [], totalMinutes: 0 };
   }
 
-  const startEntries = resolveToRouteJunctions(from, topology);
+  const startEntries = resolveToRouteJunctions(from, topology, dgsm);
   const endEntries = resolveToRouteJunctionsFromTarget(to, topology);
   if (!startEntries || !endEntries) return null;
 
@@ -197,7 +223,8 @@ export function buildMovementRouteIgnoringBlocks(
 function resolveToJunctions(
   pos: CharacterPosition,
   topology: TownTopology,
-  blockedConnections: Map<string, string>
+  blockedConnections: Map<string, string>,
+  dgsm?: DynamicGameStateManager
 ): JunctionEntry[] | null {
   switch (pos.type) {
     case "junction":
@@ -254,14 +281,22 @@ function resolveToJunctions(
     }
 
     case "scene": {
-      const parent = topology.sceneToParent.get(pos.sceneId);
-      if (!parent) return null;
+      let sceneId = pos.sceneId;
+      let parent = topology.sceneToParent.get(sceneId);
+      // Interior sub-scene → resolve to building entry scene
+      if (!parent) {
+        const entryId = resolveToEntryScene(pos.sceneId, topology, dgsm);
+        if (!entryId) return null;
+        sceneId = entryId;
+        parent = topology.sceneToParent.get(sceneId);
+        if (!parent) return null;
+      }
 
       if (parent.type === "junction") {
         if (
           hasBlockedConnection(
             blockedConnections,
-            { type: "scene", id: pos.sceneId },
+            { type: "scene", id: sceneId },
             { type: "junction", id: parent.junctionId }
           )
         ) {
@@ -271,9 +306,9 @@ function resolveToJunctions(
         return [
           {
             junctionId: parent.junctionId,
-            initialSteps: [{ type: "exit_scene", id: pos.sceneId, minutes: 1 }],
+            initialSteps: [{ type: "exit_scene", id: sceneId, minutes: 1 }],
             initialMinutes: 1,
-            finalSteps: [{ type: "enter_scene", id: pos.sceneId, minutes: 1 }],
+            finalSteps: [{ type: "enter_scene", id: sceneId, minutes: 1 }],
             finalMinutes: 1,
           },
         ];
@@ -285,7 +320,7 @@ function resolveToJunctions(
       if (
         hasBlockedConnection(
           blockedConnections,
-          { type: "scene", id: pos.sceneId },
+          { type: "scene", id: sceneId },
           { type: "road", id: road.id }
         )
       ) {
@@ -306,13 +341,13 @@ function resolveToJunctions(
         entries.push({
           junctionId: road.endpointA,
           initialSteps: [
-            { type: "exit_scene", id: pos.sceneId, minutes: 1 },
+            { type: "exit_scene", id: sceneId, minutes: 1 },
             { type: "road", id: road.id, minutes: toA },
           ],
           initialMinutes: 1 + toA,
           finalSteps: [
             { type: "road", id: road.id, minutes: toA },
-            { type: "enter_scene", id: pos.sceneId, minutes: 1 },
+            { type: "enter_scene", id: sceneId, minutes: 1 },
           ],
           finalMinutes: 1 + toA,
         });
@@ -328,13 +363,13 @@ function resolveToJunctions(
         entries.push({
           junctionId: road.endpointB,
           initialSteps: [
-            { type: "exit_scene", id: pos.sceneId, minutes: 1 },
+            { type: "exit_scene", id: sceneId, minutes: 1 },
             { type: "road", id: road.id, minutes: toB },
           ],
           initialMinutes: 1 + toB,
           finalSteps: [
             { type: "road", id: road.id, minutes: toB },
-            { type: "enter_scene", id: pos.sceneId, minutes: 1 },
+            { type: "enter_scene", id: sceneId, minutes: 1 },
           ],
           finalMinutes: 1 + toB,
         });
@@ -362,7 +397,8 @@ function positionsEqual(a: CharacterPosition, b: CharacterPosition): boolean {
 
 function resolveToRouteJunctions(
   pos: CharacterPosition,
-  topology: TownTopology
+  topology: TownTopology,
+  dgsm?: DynamicGameStateManager
 ): RouteJunctionEntry[] | null {
   switch (pos.type) {
     case "junction":
@@ -390,8 +426,16 @@ function resolveToRouteJunctions(
       ];
     }
     case "scene": {
-      const parent = topology.sceneToParent.get(pos.sceneId);
-      if (!parent) return null;
+      let sceneId = pos.sceneId;
+      let parent = topology.sceneToParent.get(sceneId);
+      if (!parent) {
+        const entryId = resolveToEntryScene(pos.sceneId, topology, dgsm);
+        if (!entryId) return null;
+        sceneId = entryId;
+        parent = topology.sceneToParent.get(sceneId);
+        if (!parent) return null;
+      }
+      const effectivePos: CharacterPosition = { type: "scene", sceneId };
       if (parent.type === "junction") {
         return [
           {
@@ -399,11 +443,11 @@ function resolveToRouteJunctions(
             transitionSteps: [
               {
                 kind: "to_junction",
-                from: pos,
+                from: effectivePos,
                 to: { type: "junction", junctionId: parent.junctionId },
                 durationMinutes: 1,
                 blockCheck: {
-                  fromId: pos.sceneId,
+                  fromId: sceneId,
                   toId: parent.junctionId,
                 },
               },
@@ -426,12 +470,12 @@ function resolveToRouteJunctions(
           transitionSteps: [
             {
               kind: "along_road",
-              from: pos,
+              from: effectivePos,
               to: roadPos,
               roadId: road.id,
               durationMinutes: 1,
               blockCheck: {
-                fromId: pos.sceneId,
+                fromId: sceneId,
                 toId: road.id,
               },
             },
@@ -444,12 +488,12 @@ function resolveToRouteJunctions(
           transitionSteps: [
             {
               kind: "along_road",
-              from: pos,
+              from: effectivePos,
               to: roadPos,
               roadId: road.id,
               durationMinutes: 1,
               blockCheck: {
-                fromId: pos.sceneId,
+                fromId: sceneId,
                 toId: road.id,
               },
             },

@@ -77,7 +77,7 @@ app.use("/api", memoRoutes); // /api/memos
 app.use("/api", skillRoutes); // /api/skills/*
 app.use("/api", analyticsRoutes); // /api/analytics/*
 app.use("/api", ragRoutes); // /api/rag/*
-app.use("/api", simulationMapRoutes); // /api/simulation/:id/topology, positions, npc-statuses, map-layout (no auth)
+app.use("/api", simulationMapRoutes); // /api/simulation/:id/* public viewer reads (no auth)
 app.use("/api", simulationRoutes); // /api/simulation*, /api/simulations
 
 // SPA fallback (must be after API routes)

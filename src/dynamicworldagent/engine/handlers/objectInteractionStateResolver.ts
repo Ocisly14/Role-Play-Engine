@@ -17,8 +17,10 @@ import type {
 } from "../../dynamicBasicAgent/npcPlanning/types.js";
 import type { NpcMemoryManager } from "../../memory/NpcMemoryManager.js";
 import type { DynamicGameStateManager } from "../../state/DynamicGameState.js";
+import type { GameEngineRegistry } from "../registry.js";
 import type { Item } from "../../state/types.js";
 import { deepMergeItem } from "../shared/deepMerge.js";
+import { buildWorldStateBlock } from "../shared/worldStateBlock.js";
 
 // ─── Helpers ──────────────────────────────────────────────────────────
 
@@ -223,6 +225,7 @@ function buildUserPrompt(
   witnesses: Array<{ id: string; name: string }>,
   skillRollResult: { successLevel: SuccessLevel; detail: string } | null,
   relatedMemories: string[],
+  worldStateBlock: string,
 ): string {
   // Section 1: Object Interaction Node
   const nodeSection = JSON.stringify(
@@ -308,6 +311,7 @@ function buildUserPrompt(
     "",
     witnessSection,
     ...(memorySection ? ["", memorySection] : []),
+    ...(worldStateBlock ? ["", worldStateBlock] : []),
   ].join("\n");
 }
 
@@ -333,6 +337,7 @@ export async function resolveObjectInteractionState(
   language: string,
   memoryManager?: NpcMemoryManager,
   sessionId?: string,
+  registry?: GameEngineRegistry,
 ): Promise<ObjectStateDelta> {
   const state = dgsm.getState();
 
@@ -393,6 +398,9 @@ export async function resolveObjectInteractionState(
     }
   }
 
+  // Build world state block (weather, fire, stamina, sanity)
+  const worldStateBlock = buildWorldStateBlock(dgsm, node.characterId, node.location, registry);
+
   // Build prompts
   const systemPrompt = buildSystemPrompt(language);
   const userPrompt = buildUserPrompt(
@@ -405,6 +413,7 @@ export async function resolveObjectInteractionState(
     witnesses,
     skillRollResult,
     relatedMemories,
+    worldStateBlock,
   );
 
   try {

@@ -27,6 +27,22 @@ const SimulationPage = lazy(() => import("./views/SimulationPage"));
 const SimulationSelectPage = lazy(() => import("./views/SimulationSelectPage"));
 const MapEditorPage = lazy(() => import("./views/MapEditorPage"));
 
+function renderSimulationPage(mode: "owner" | "public") {
+  return (
+    <Suspense
+      fallback={
+        <div className="game-container">
+          <div className="flex items-center justify-center flex-1 text-slate-500">
+            Loading...
+          </div>
+        </div>
+      }
+    >
+      <SimulationPage mode={mode} />
+    </Suspense>
+  );
+}
+
 // Background manager component - handles dynamic backgrounds based on game state
 const BackgroundManager: React.FC = () => {
   // Initialize default background on mount
@@ -58,22 +74,10 @@ const AppRoutes: React.FC = () => {
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/reset-password" element={<ResetPassword />} />
 
-        {/* Simulation map viewer (outside ProtectedRoute) */}
+        {/* Public simulation viewer */}
         <Route
-          path="/simulation/:sessionId"
-          element={
-            <Suspense
-              fallback={
-                <div className="game-container">
-                  <div className="flex items-center justify-center flex-1 text-slate-500">
-                    Loading...
-                  </div>
-                </div>
-              }
-            >
-              <SimulationPage />
-            </Suspense>
-          }
+          path="/simulation/public/:sessionId"
+          element={renderSimulationPage("public")}
         />
 
         {/* Map editor (outside ProtectedRoute) */}
@@ -100,6 +104,14 @@ const AppRoutes: React.FC = () => {
         />
 
         {/* Protected app routes */}
+        <Route
+          path="/simulation/:sessionId"
+          element={
+            <ProtectedRoute>
+              {renderSimulationPage("owner")}
+            </ProtectedRoute>
+          }
+        />
         <Route
           element={
             <ProtectedRoute>

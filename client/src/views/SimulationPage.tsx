@@ -29,9 +29,16 @@ interface ScenarioConfig {
   thumbnail: string;
 }
 
-export default function SimulationPage() {
+interface SimulationPageProps {
+  mode?: "owner" | "public";
+}
+
+export default function SimulationPage({
+  mode = "owner",
+}: SimulationPageProps) {
   const { sessionId } = useParams<{ sessionId: string }>();
   const navigate = useNavigate();
+  const isPublicMode = mode === "public";
   const { isSidebarOpen, toggleSidebar, closeSidebar } =
     useMobileSidebar();
   const gameRef = useRef<Phaser.Game | null>(null);
@@ -40,6 +47,7 @@ export default function SimulationPage() {
   // Scene image popup state
   const [sceneConfigs, setSceneConfigs] = useState<Record<string, SceneConfig> | null>(null);
   const [scenarioConfigs, setScenarioConfigs] = useState<Record<string, ScenarioConfig> | null>(null);
+  const [shareFeedback, setShareFeedback] = useState<string | null>(null);
 
   const {
     state,
@@ -313,13 +321,52 @@ export default function SimulationPage() {
   }, [state.displayStartTime, countdownNow]);
 
   const showConfigPanel =
+    !isPublicMode &&
     Boolean(sessionId) &&
     state.simulationState === "paused" &&
     state.displayTick === 0 &&
     state.eventLog.length === 0;
 
   const showControlPanel =
-    Boolean(sessionId) && !showConfigPanel && !countdown;
+    !isPublicMode && Boolean(sessionId) && !showConfigPanel && !countdown;
+
+  useEffect(() => {
+    if (!shareFeedback) return;
+    const timeoutId = window.setTimeout(() => setShareFeedback(null), 2500);
+    return () => window.clearTimeout(timeoutId);
+  }, [shareFeedback]);
+
+  const handleShare = useCallback(async () => {
+    if (!sessionId) return;
+
+    const publicUrl = new URL(
+      `/simulation/public/${sessionId}`,
+      window.location.origin
+    ).toString();
+
+    try {
+      if (navigator.share) {
+        await navigator.share({
+          title: "Town Simulation",
+          text: "View the live simulation",
+          url: publicUrl,
+        });
+        setShareFeedback("Shared");
+        return;
+      }
+    } catch (error) {
+      if (error instanceof DOMException && error.name === "AbortError") {
+        return;
+      }
+    }
+
+    try {
+      await navigator.clipboard.writeText(publicUrl);
+      setShareFeedback("Link copied");
+    } catch {
+      setShareFeedback("Copy failed");
+    }
+  }, [sessionId]);
 
   return (
     <div className={`sim-page${state.focusedBuildingId ? " sim-page--has-popup" : ""}`}>
@@ -345,14 +392,18 @@ export default function SimulationPage() {
 
       {/* Floating header */}
       <div className="sim-header backdrop-blur-sm bg-white/50 border border-slate-200 shadow-md rounded-lg" onPointerDown={(e) => e.stopPropagation()}>
-        <button
-          onClick={() => navigate("/simulation/select")}
-          className="back-button backdrop-blur-md bg-white/50 border border-slate-200 shadow-md rounded-xl hover:bg-white/70 hover:border-slate-300 hover:-translate-y-0.5 transition-all"
-          style={{ padding: "8px 12px" }}
-          aria-label="Back to selection"
-        >
-          ←
-        </button>
+        {isPublicMode ? (
+          <div style={{ width: "42px" }} aria-hidden="true" />
+        ) : (
+          <button
+            onClick={() => navigate("/simulation/select")}
+            className="back-button backdrop-blur-md bg-white/50 border border-slate-200 shadow-md rounded-xl hover:bg-white/70 hover:border-slate-300 hover:-translate-y-0.5 transition-all"
+            style={{ padding: "8px 12px" }}
+            aria-label="Back to selection"
+          >
+            ←
+          </button>
+        )}
 
         <h1>Town Simulation</h1>
 
@@ -470,6 +521,20 @@ export default function SimulationPage() {
           simulationState={state.simulationState}
           onStateChange={resync}
         />
+      )}
+
+      {!isPublicMode && sessionId && (
+        <button
+          type="button"
+          onClick={() => void handleShare()}
+          className="fixed bottom-4 right-4 z-10 backdrop-blur-xl bg-white/50 border border-white/30 rounded-2xl px-4 py-2 shadow-lg flex items-center gap-2 text-sm font-medium text-slate-700 hover:bg-white/70 transition-all"
+          onPointerDown={(e) => e.stopPropagation()}
+        >
+          <span>Share</span>
+          {shareFeedback && (
+            <span className="text-xs text-amber-700">{shareFeedback}</span>
+          )}
+        </button>
       )}
 
       {/* Sidebar */}

@@ -35,18 +35,10 @@ export function buildLocationNameMap(
     }
   }
 
-  // Individual scenes — interior sub-scenes resolve to their building's entry scene
+  // Individual scenes — each sub-scene resolves to its own ID
   for (const [id, scene] of state.scenes) {
     if (map.has(scene.name)) continue; // outline/junction name takes priority
-    const outline = (state.scenarioOutlines ?? []).find(
-      (o) => o.id === scene.parentLocationId
-    );
-    if (outline?.entrySceneId && id !== outline.entrySceneId) {
-      // Interior sub-scene → resolve to building entry
-      map.set(scene.name, outline.entrySceneId);
-    } else {
-      map.set(scene.name, id);
-    }
+    map.set(scene.name, id);
   }
 
   return map;

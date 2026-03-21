@@ -96,9 +96,17 @@ export async function loadSimulationRuntime(
 }
 
 export async function listSimulationRuntimeRecords(
-  prisma: PrismaClient
+  prisma: PrismaClient,
+  emailId?: string
 ): Promise<SimulationRuntimeRecord[]> {
   const rows = await (prisma as any).simulationRuntime.findMany({
+    where: emailId
+      ? {
+          session: {
+            emailId,
+          },
+        }
+      : undefined,
     orderBy: { updatedAt: "desc" },
   });
 

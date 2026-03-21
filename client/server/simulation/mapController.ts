@@ -1,5 +1,6 @@
 import type { Request, Response } from "express";
 import * as mapService from "./mapService.js";
+import { requireSimulationOwnership } from "./ownership.js";
 
 export async function getTopology(req: Request, res: Response) {
   const topology = await mapService.getTopology(req.params.id);
@@ -29,8 +30,9 @@ export async function getNpcStatuses(req: Request, res: Response) {
   return res.json({ statuses });
 }
 
-export function updateConfig(req: Request, res: Response) {
+export async function updateConfig(req: Request, res: Response) {
   try {
+    if (!(await requireSimulationOwnership(req, res))) return;
     const runner = mapService.getRunnerById(req.params.id);
     if (!runner) return res.status(404).json({ error: "Simulation not found" });
 

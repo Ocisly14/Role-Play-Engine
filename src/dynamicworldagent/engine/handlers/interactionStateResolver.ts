@@ -17,8 +17,10 @@ import type {
 } from "../../dynamicBasicAgent/npcPlanning/types.js";
 import type { NpcMemoryManager } from "../../memory/NpcMemoryManager.js";
 import type { DynamicGameStateManager } from "../../state/DynamicGameState.js";
+import type { GameEngineRegistry } from "../registry.js";
 import { resolveTargetPosition } from "./movementHandler.js";
 import { findTopologyPath } from "../shared/pathfinding.js";
+import { buildWorldStateBlock } from "../shared/worldStateBlock.js";
 
 // ─── Helpers ──────────────────────────────────────────────────────────
 
@@ -221,6 +223,7 @@ function buildUserPrompt(
   targets: CharacterPromptData[],
   relationships: { targetId: string; score: number; note: string }[],
   sceneBlock: string,
+  worldStateBlock: string,
   skillRollResult: SkillRollInput | null,
   availableKnowledge: DiscoveryEntry[]
 ): string {
@@ -320,6 +323,7 @@ function buildUserPrompt(
     targetSections,
     "",
     sceneBlock,
+    ...(worldStateBlock ? ["", worldStateBlock] : []),
   ].join("\n");
 }
 
@@ -374,7 +378,8 @@ export async function resolveInteractionState(
   runtime: any,
   skillRollResult: SkillRollInput | null,
   availableKnowledge: DiscoveryEntry[],
-  language: string
+  language: string,
+  registry?: GameEngineRegistry
 ): Promise<InteractionStateDelta> {
   const targets = resolveTargets(node);
 
@@ -395,6 +400,9 @@ export async function resolveInteractionState(
   // Build scene block
   const sceneBlock = buildSceneBlock(node, dgsm);
 
+  // Build world state block (weather, fire, stamina, sanity)
+  const worldStateBlock = buildWorldStateBlock(dgsm, node.characterId, node.location, registry);
+
   // Build prompts
   const systemPrompt = buildSystemPrompt(language);
   const userPrompt = buildUserPrompt(
@@ -403,6 +411,7 @@ export async function resolveInteractionState(
     targetDataList,
     relationships,
     sceneBlock,
+    worldStateBlock,
     skillRollResult,
     availableKnowledge
   );
@@ -571,7 +580,8 @@ export async function applyCharacterDelta(
         currentPos,
         targetPos,
         topology,
-        state.blockedConnections
+        state.blockedConnections,
+        dgsm
       );
 
       if (path) {

@@ -7,7 +7,6 @@ import type { GameEngineRegistry } from "../../engine/registry.js";
 import { findAffectedCharacters } from "../../engine/shared/impactPropagation.js";
 import {
   arePositionsCoLocated,
-  isCharacterAtLocation,
 } from "../../engine/shared/locationPresence.js";
 import { buildMovementRouteIgnoringBlocks } from "../../engine/shared/pathfinding.js";
 import type {
@@ -294,10 +293,65 @@ function initializeMovementNode(
   dgsm: DynamicGameStateManager,
   currentTime: string
 ): PlanNode {
-  const topology = dgsm.getTopology();
   const currentPosition = dgsm.getCharacterPosition(node.characterId);
+  if (!currentPosition) {
+    return {
+      ...startNode(node, currentTime),
+      status: "failed",
+      executionMeta: {
+        ...node.executionMeta,
+        startedAt: currentTime,
+        failedAt: currentTime,
+        remainingMinutes: 0,
+      },
+      outcome: `${node.action} [no path available in topology] failed`,
+    };
+  }
+
+  // Intra-building movement: same building, different sub-scene
+  if (currentPosition.type === "scene") {
+    const state = dgsm.getState();
+    const currentScene = state.scenes.get(currentPosition.sceneId);
+    const targetScene = state.scenes.get(node.location);
+    if (
+      currentScene && targetScene &&
+      currentScene.parentLocationId === targetScene.parentLocationId &&
+      currentScene.parentLocationId !== "OUTDOOR" &&
+      currentPosition.sceneId !== node.location
+    ) {
+      const targetPos: CharacterPosition = { type: "scene", sceneId: node.location };
+      const moveDuration = Math.max(1, node.executionMeta.remainingMinutes);
+      return {
+        ...startNode(node, currentTime),
+        executionMeta: {
+          ...node.executionMeta,
+          startedAt: currentTime,
+          remainingMinutes: moveDuration,
+          movement: {
+            routeSnapshot: [{
+              kind: "to_scene",
+              from: currentPosition,
+              to: targetPos,
+              durationMinutes: moveDuration,
+              blockCheck: {
+                fromId: currentPosition.sceneId,
+                toId: node.location,
+              },
+            }],
+            currentStepIndex: 0,
+            minutesIntoStep: 0,
+            lastReachablePosition: currentPosition,
+            targetPosition: targetPos,
+          },
+        },
+      };
+    }
+  }
+
+  // Topology-based movement
+  const topology = dgsm.getTopology();
   const targetPosition = resolveTargetPosition(node.location, topology, dgsm);
-  if (!currentPosition || !targetPosition) {
+  if (!targetPosition) {
     return {
       ...startNode(node, currentTime),
       status: "failed",
@@ -314,7 +368,8 @@ function initializeMovementNode(
   const route = buildMovementRouteIgnoringBlocks(
     currentPosition,
     targetPosition,
-    topology
+    topology,
+    dgsm
   );
   if (!route) {
     return {
@@ -1100,61 +1155,6 @@ async function executeSingleTick(
 
   // 2. Execute nodes that reach their final minute in this tick
   for (const node of nodesReadyToExecute) {
-    const actorPosition = dgsm.getCharacterPosition(node.characterId);
-    if (node.type !== "movement" && !isCharacterAtLocation(actorPosition, node.location)) {
-      const targetPosition = resolveTargetPosition(node.location, dgsm.getTopology(), dgsm);
-      const route =
-        actorPosition && targetPosition
-          ? buildMovementRouteIgnoringBlocks(
-              actorPosition,
-              targetPosition,
-              dgsm.getTopology()
-            )
-          : null;
-
-      if (route) {
-        const fromLocation = actorPosition
-          ? dgsm.resolveLocationId(actorPosition)
-          : "unknown";
-        const { movementNode, resumedNode } = buildAutoMovementReplacement(node, {
-          currentTime: tickStartTime,
-          fromLocation,
-          travelMinutes: route.totalMinutes,
-        });
-
-        await npcPlanningAgent.replaceNodeWithNodes(
-          sessionId,
-          node.characterId,
-          gameDay,
-          node.nodeId,
-          [movementNode, resumedNode]
-        );
-
-        const advancedMovement = advanceMovementNodeOneMinute(
-          initializeMovementNode(movementNode, dgsm, tickStartTime),
-          dgsm,
-          tickStartTime
-        );
-        await npcPlanningAgent.updateNode(
-          sessionId,
-          node.characterId,
-          gameDay,
-          advancedMovement.node
-        );
-        if (advancedMovement.moved) {
-          movedNpcIds.add(node.characterId);
-        }
-        if (advancedMovement.action) {
-          movementFinalizations.push({
-            node: advancedMovement.node,
-            action: advancedMovement.action,
-          });
-          executedNodes.push(advancedMovement.node);
-        }
-        continue;
-      }
-    }
-
     // Dispatch to registry handler
     const handler = registry.getHandler(node.type);
     if (!handler) {
@@ -1196,7 +1196,8 @@ async function executeSingleTick(
         ctx.runtime,
         skillRollResult,
         npcKnowledge,
-        language
+        language,
+        registry
       );
 
       // Apply actor state changes
@@ -1255,7 +1256,8 @@ async function executeSingleTick(
         objSkillRollResult,
         language,
         memoryManager,
-        sessionId
+        sessionId,
+        registry
       );
 
       applyObjectDelta(dgsm, node.characterId, objDelta, node.location);
