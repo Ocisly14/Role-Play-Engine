@@ -15,10 +15,7 @@ export class CoCDatabaseAdapter {
   private operations: DatabaseOperations;
   private turnCache = new Map<string, any>();
   private sessionTurnIds = new Map<string, string[]>();
-  private checkpointCache = new Map<string, any>();
-  private sessionCheckpointIds = new Map<string, string[]>();
   private hydratedTurnSessions = new Set<string>();
-  private hydratedCheckpointSessions = new Set<string>();
 
   constructor() {
     this.prisma = getPrismaClient();
@@ -54,17 +51,6 @@ export class CoCDatabaseAdapter {
       );
   }
 
-  private trackSessionCheckpoint(
-    sessionId: string,
-    checkpointId: string
-  ): void {
-    const ids = this.sessionCheckpointIds.get(sessionId) ?? [];
-    if (!ids.includes(checkpointId)) {
-      ids.push(checkpointId);
-      this.sessionCheckpointIds.set(sessionId, ids);
-    }
-  }
-
   private toCachedTurn(turn: any): any {
     return {
       turnId: turn.turnId,
@@ -97,10 +83,7 @@ export class CoCDatabaseAdapter {
    * after process restart.
    */
   async preloadSessionData(sessionId: string): Promise<void> {
-    await Promise.all([
-      this.preloadSessionTurns(sessionId),
-      this.preloadSessionCheckpoints(sessionId),
-    ]);
+    await this.preloadSessionTurns(sessionId);
   }
 
   async preloadSessionTurns(sessionId: string): Promise<void> {
@@ -121,40 +104,6 @@ export class CoCDatabaseAdapter {
     }
 
     this.hydratedTurnSessions.add(sessionId);
-  }
-
-  async preloadSessionCheckpoints(sessionId: string): Promise<void> {
-    if (!sessionId || this.hydratedCheckpointSessions.has(sessionId)) {
-      return;
-    }
-
-    const checkpoints = await this.prisma.gameCheckpoint.findMany({
-      where: { sessionId },
-      orderBy: { createdAt: "desc" },
-    });
-
-    for (const cp of checkpoints) {
-      if (!this.checkpointCache.has(cp.checkpointId)) {
-        const gameState = cp.gameState as any;
-        this.checkpointCache.set(cp.checkpointId, {
-          checkpointId: cp.checkpointId,
-          sessionId: cp.sessionId,
-          turnNumber: cp.turnNumber,
-          checkpointName: cp.checkpointName,
-          gameState: cp.gameState,
-          currentSceneName: cp.currentSceneName,
-          isAutoCheckpoint: cp.isAutoCheckpoint,
-          createdAt: cp.createdAt.toISOString(),
-          metadata: {
-            gameDay: gameState?.gameDay ?? null,
-            gameTime: gameState?.timeOfDay ?? gameState?.gameTime ?? null,
-          },
-        });
-      }
-      this.trackSessionCheckpoint(sessionId, cp.checkpointId);
-    }
-
-    this.hydratedCheckpointSessions.add(sessionId);
   }
 
   /**
@@ -453,95 +402,6 @@ export class CoCDatabaseAdapter {
     return this.getSessionTurns(sessionId).filter(
       (turn) => turn.status === "processing"
     );
-  }
-
-  // =====================================================
-  // CHECKPOINT MANAGEMENT
-  // =====================================================
-
-  saveCheckpoint(params: {
-    checkpointId: string;
-    sessionId: string;
-    turnNumber: number;
-    checkpointName?: string;
-    gameState: any;
-    currentSceneName?: string;
-    isAutoCheckpoint?: boolean;
-  }): void {
-    const createdAt = new Date().toISOString();
-    const cached = {
-      checkpointId: params.checkpointId,
-      sessionId: params.sessionId,
-      turnNumber: params.turnNumber,
-      checkpointName: params.checkpointName || null,
-      gameState: params.gameState,
-      currentSceneName: params.currentSceneName || null,
-      isAutoCheckpoint: params.isAutoCheckpoint || false,
-      createdAt,
-      metadata: {
-        gameDay: params.gameState?.gameDay ?? null,
-        gameTime:
-          params.gameState?.timeOfDay ?? params.gameState?.gameTime ?? null,
-      },
-    };
-    this.checkpointCache.set(params.checkpointId, cached);
-    this.trackSessionCheckpoint(params.sessionId, params.checkpointId);
-
-    this.operations.saveCheckpoint(params).catch((error) => {
-      console.error(`Failed to save checkpoint ${params.checkpointId}:`, error);
-    });
-  }
-
-  loadCheckpoint(checkpointId: string): any | null {
-    return this.checkpointCache.get(checkpointId) ?? null;
-  }
-
-  listCheckpoints(sessionId: string, limit = 50): any[] {
-    const ids = this.sessionCheckpointIds.get(sessionId) ?? [];
-    return ids
-      .map((id) => this.checkpointCache.get(id))
-      .filter((row): row is any => Boolean(row))
-      .sort((a, b) => Date.parse(b.createdAt) - Date.parse(a.createdAt))
-      .slice(0, limit);
-  }
-
-  deleteCheckpoint(checkpointId: string): void {
-    const cached = this.checkpointCache.get(checkpointId);
-    if (cached?.sessionId) {
-      const ids = this.sessionCheckpointIds.get(cached.sessionId) ?? [];
-      this.sessionCheckpointIds.set(
-        cached.sessionId,
-        ids.filter((id) => id !== checkpointId)
-      );
-    }
-    this.checkpointCache.delete(checkpointId);
-
-    this.operations.deleteCheckpoint(checkpointId).catch((error) => {
-      console.error(`Failed to delete checkpoint ${checkpointId}:`, error);
-    });
-  }
-
-  cleanupAutoCheckpoints(sessionId: string, keepCount = 10): void {
-    const checkpoints = this.listCheckpoints(
-      sessionId,
-      Number.MAX_SAFE_INTEGER
-    );
-    const auto = checkpoints.filter((cp) => cp.isAutoCheckpoint);
-    if (auto.length > keepCount) {
-      const toDelete = auto.slice(keepCount);
-      for (const cp of toDelete) {
-        this.deleteCheckpoint(cp.checkpointId);
-      }
-    }
-
-    this.operations
-      .cleanupAutoCheckpoints(sessionId, keepCount)
-      .catch((error) => {
-        console.error(
-          `Failed to cleanup auto checkpoints for ${sessionId}:`,
-          error
-        );
-      });
   }
 
   // =====================================================

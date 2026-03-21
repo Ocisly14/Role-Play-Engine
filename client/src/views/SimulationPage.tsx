@@ -10,6 +10,7 @@ import { SubSceneTabs } from "../components/simulation/SubSceneTabs";
 import { useMobileSidebar } from "../hooks/useMobileSidebar";
 import { useSimulationState } from "../hooks/useSimulationState";
 import { useSimulationWebSocket } from "../hooks/useSimulationWebSocket";
+import { api } from "../services/api";
 
 const NPC_DOT_COLORS = [
   "#ff6b6b", "#4ecdc4", "#ffe66d", "#a29bfe",
@@ -17,6 +18,7 @@ const NPC_DOT_COLORS = [
 ];
 
 const MAPS_BASE = "/api/maps";
+const AUTH_KEEPALIVE_INTERVAL_MS = 5 * 60 * 1000;
 const UUID_SESSION_ID_PATTERN =
   /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
 
@@ -96,6 +98,30 @@ export default function SimulationPage({
     onEvent: handleEventWithBubble,
     onConnected: resync,
   });
+
+  useEffect(() => {
+    if (isPublicMode || !sessionId) return;
+
+    let cancelled = false;
+    const keepAuthAlive = async () => {
+      try {
+        await api.get("/auth/me");
+      } catch {
+        if (cancelled) return;
+      }
+    };
+
+    void keepAuthAlive();
+    const intervalId = window.setInterval(
+      keepAuthAlive,
+      AUTH_KEEPALIVE_INTERVAL_MS
+    );
+
+    return () => {
+      cancelled = true;
+      window.clearInterval(intervalId);
+    };
+  }, [isPublicMode, sessionId]);
 
   useEffect(() => {
     if (!routeSessionId || !sessionId || routeSessionId === sessionId) return;

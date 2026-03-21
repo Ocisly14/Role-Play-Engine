@@ -233,77 +233,6 @@ async function clearUserModuleDeleted(
   });
 }
 
-async function deleteDynamicCheckpointsForModule(
-  email: string,
-  moduleId: string | null,
-  modName: string
-): Promise<void> {
-  const prisma = getPrismaClient();
-
-  const characters = await prisma.character.findMany({
-    where: { emailId: email },
-    select: { characterId: true },
-  });
-  const characterIds = characters.map((c) => c.characterId);
-
-  const sessions = await prisma.session.findMany({
-    where: {
-      OR: [
-        { emailId: email },
-        ...(characterIds.length > 0
-          ? [{ characterId: { in: characterIds } }]
-          : []),
-      ],
-    },
-    select: { sessionId: true, moduleId: true },
-  });
-  if (sessions.length === 0) return;
-
-  let targetSessionIds = sessions.map((s) => s.sessionId);
-  if (moduleId) {
-    const moduleScoped = sessions
-      .filter((s) => s.moduleId === moduleId)
-      .map((s) => s.sessionId);
-    if (moduleScoped.length > 0) {
-      targetSessionIds = moduleScoped;
-    }
-  }
-
-  const checkpoints = await prisma.gameCheckpoint.findMany({
-    where: { sessionId: { in: targetSessionIds } },
-    select: { checkpointId: true, gameState: true, moduleId: true },
-  });
-
-  const target = normalizeModuleNameKey(modName);
-  const toDelete: string[] = [];
-  for (const row of checkpoints) {
-    if (moduleId && row.moduleId === moduleId) {
-      toDelete.push(row.checkpointId);
-      continue;
-    }
-    try {
-      const state =
-        typeof row.gameState === "string"
-          ? JSON.parse(row.gameState)
-          : row.gameState;
-      const checkpointModuleName =
-        typeof state?.moduleName === "string"
-          ? normalizeModuleNameKey(state.moduleName)
-          : "";
-      if (checkpointModuleName && checkpointModuleName === target) {
-        toDelete.push(row.checkpointId);
-      }
-    } catch {
-      // ignore malformed payloads
-    }
-  }
-
-  if (toDelete.length === 0) return;
-  await prisma.gameCheckpoint.deleteMany({
-    where: { checkpointId: { in: toDelete } },
-  });
-}
-
 async function cleanModuleDataForOwner(
   ownerEmail: string,
   modName: string,
@@ -756,7 +685,6 @@ export async function removeModuleFromLibrary(
       where: { moduleId: owned.moduleId, emailId: { not: email } },
     });
     await markUserModuleDeleted(email, owned.moduleId);
-    await deleteDynamicCheckpointsForModule(email, owned.moduleId, normalized);
     return { trashed: true };
   }
 
@@ -782,11 +710,6 @@ export async function removeModuleFromLibrary(
     },
   });
   await markUserModuleDeleted(email, accessible.moduleId);
-  await deleteDynamicCheckpointsForModule(
-    email,
-    accessible.moduleId,
-    normalized
-  );
   return { trashed: false };
 }
 

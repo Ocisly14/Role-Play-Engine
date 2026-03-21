@@ -672,15 +672,6 @@ export const TutorialPage: React.FC = () => {
                 </span>
                 <span className="character-value">大熊</span>
               </div>
-              <div className="save-checkpoint-section">
-                <button
-                  type="button"
-                  className="save-checkpoint-btn backdrop-blur-md bg-white/50 border border-slate-200 shadow-md rounded-xl px-3 py-1.5 text-sm hover:bg-white/70 hover:border-slate-300 hover:-translate-y-0.5 transition-all h-9"
-                >
-                  <span className="save-btn-icon">💾</span>
-                  <span className="save-btn-text">{t("session.save")}</span>
-                </button>
-              </div>
             </div>
 
             <div

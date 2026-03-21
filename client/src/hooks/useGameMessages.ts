@@ -10,7 +10,6 @@ export interface UseGameMessagesParams {
   sessionId: string;
   apiBaseUrl: string;
   initialMessages?: Message[];
-  updateLastSavedTurnNumber: (messages: Message[]) => void;
 }
 
 export interface UseGameMessagesResult {
@@ -27,7 +26,6 @@ export function useGameMessages({
   sessionId,
   apiBaseUrl,
   initialMessages,
-  updateLastSavedTurnNumber,
 }: UseGameMessagesParams): UseGameMessagesResult {
   const [messages, setMessages] = useState<Message[]>(initialMessages || []);
   const [streamingTurnId, setStreamingTurnId] = useState<string | null>(null);
@@ -43,7 +41,6 @@ export function useGameMessages({
 
       if (data.success && data.conversation) {
         setMessages(data.conversation);
-        updateLastSavedTurnNumber(data.conversation);
         // Mark all existing turnNumbers as processed
         const existingTurnNumbers = new Set(
           data.conversation.map((msg: Message) => msg.turnNumber)
@@ -75,14 +72,13 @@ export function useGameMessages({
       processedTurnIdsRef.current = new Set(
         Array.from(existingTurnNumbers).map((n) => `turn-${n}`)
       );
-      updateLastSavedTurnNumber(initialMessages);
     } else if (sessionId) {
       loadConversationHistory();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sessionId]);
 
-  // Update messages when initialMessages prop changes (e.g., when loading checkpoint)
+  // Update messages when initialMessages prop changes.
   useEffect(() => {
     if (initialMessages && initialMessages.length > 0) {
       setMessages(initialMessages);
@@ -93,7 +89,6 @@ export function useGameMessages({
       processedTurnIdsRef.current = new Set(
         Array.from(existingTurnNumbers).map((n) => `turn-${n}`)
       );
-      updateLastSavedTurnNumber(initialMessages);
     } else if (!initialMessages && sessionId) {
       // If initialMessages is cleared, reload from API
       loadConversationHistory();

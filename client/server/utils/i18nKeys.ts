@@ -44,17 +44,6 @@ export const I18N_KEYS = {
   GAME_ACTION_FAILED: "game.errors.actionFailed",
   GAME_INVALID_ACTION: "game.errors.invalidAction",
 
-  // Checkpoint
-  CHECKPOINT_SAVED: "checkpoint.success.created",
-  CHECKPOINT_LOADED: "checkpoint.success.loaded",
-  CHECKPOINT_DELETED: "checkpoint.success.deleted",
-  CHECKPOINT_BATCH_DELETED: "checkpoint.success.batchDeleted",
-  CHECKPOINT_NOT_FOUND: "checkpoint.errors.notFound",
-  CHECKPOINT_CREATE_FAILED: "checkpoint.errors.createFailed",
-  CHECKPOINT_LOAD_FAILED: "checkpoint.errors.loadFailed",
-  CHECKPOINT_DELETE_FAILED: "checkpoint.errors.deleteFailed",
-  CHECKPOINT_CORRUPTED: "checkpoint.errors.corrupted",
-
   // Character
   CHARACTER_CREATED: "character.form.success",
   CHARACTER_UPDATED: "character.form.updateSuccess",

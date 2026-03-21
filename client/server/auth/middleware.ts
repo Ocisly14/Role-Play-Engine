@@ -38,7 +38,7 @@ export async function authenticate(
     // Sliding session: touch refresh token if provided
     const refreshTokenHeader = req.headers["x-refresh-token"];
     if (typeof refreshTokenHeader === "string" && refreshTokenHeader) {
-      await authDbService.touchRefreshToken(refreshTokenHeader, payload.email);
+      await authDbService.touchRefreshToken(refreshTokenHeader, user.id);
     }
 
     // Issue a fresh access token for sliding expiration

@@ -7,7 +7,6 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { useAutoSave } from "../hooks/useAutoSave";
 import { useDiceAnimation } from "../hooks/useDiceAnimation";
 import { useGameMessages } from "../hooks/useGameMessages";
 import { useInputCollapse } from "../hooks/useInputCollapse";
@@ -37,8 +36,6 @@ export function GameChat({
   // Local component state
   const [inputValue, setInputValue] = useState("");
   const [isSending, setIsSending] = useState(false);
-  const [isSaving, setIsSaving] = useState(false);
-  const [saveMessage, setSaveMessage] = useState<string | null>(null);
   const [isGameEnded, setIsGameEnded] = useState(false);
   const [currentGameState, setCurrentGameState] = useState<{
     gameDay?: number;
@@ -87,12 +84,6 @@ export function GameChat({
     clearSceneChanging,
   } = useSceneTransition();
 
-  const { updateLastSavedTurnNumber, triggerAutoSave } = useAutoSave({
-    apiBaseUrl,
-    sessionId,
-    messagesRef,
-  });
-
   const {
     messages,
     setMessages,
@@ -104,7 +95,6 @@ export function GameChat({
     sessionId,
     apiBaseUrl,
     initialMessages,
-    updateLastSavedTurnNumber,
   });
 
   const {
@@ -652,43 +642,6 @@ export function GameChat({
       Number(restCustomHours) > 24
     : restSelectedHours === null;
 
-  const handleSaveCheckpoint = useCallback(async () => {
-    if (isSaving) return;
-
-    setIsSaving(true);
-    setSaveMessage(null);
-
-    try {
-      const response = await authFetch(`${apiBaseUrl}/checkpoints/save`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-      });
-
-      const data = await response.json();
-
-      if (!data.success) {
-        throw new Error(data.error || "Failed to save checkpoint");
-      }
-
-      setSaveMessage("✓ Checkpoint saved successfully");
-      updateLastSavedTurnNumber(messagesRef.current);
-
-      setTimeout(() => {
-        setSaveMessage(null);
-      }, 3000);
-    } catch (err) {
-      console.error("Failed to save checkpoint:", err);
-      setSaveMessage(
-        "Failed to save: " +
-          (err instanceof Error ? err.message : "Unknown error")
-      );
-    } finally {
-      setIsSaving(false);
-    }
-  }, [isSaving, apiBaseUrl, updateLastSavedTurnNumber, messagesRef]);
-
   const handleSkillSelectionConfirm = useCallback(async () => {
     if (!pendingTurnForSkillSelection || !selectedSkill) return;
 
@@ -770,12 +723,7 @@ export function GameChat({
         </div>
       )}
 
-      <SessionInfoBar
-        characterName={characterName}
-        isSaving={isSaving}
-        saveMessage={saveMessage}
-        onSaveCheckpoint={handleSaveCheckpoint}
-      />
+      <SessionInfoBar characterName={characterName} />
 
       <MessageList
         messages={messages}

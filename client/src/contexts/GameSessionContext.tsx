@@ -24,12 +24,6 @@ interface ModuleIntroduction {
   moduleNotes: string;
 }
 
-interface LoadCheckpointResult {
-  success: boolean;
-  notice?: string;
-  error?: string;
-}
-
 interface GameSessionContextType {
   // Session data
   sessionId: string;
@@ -51,10 +45,6 @@ interface GameSessionContextType {
     modName: string,
     language: string
   ) => Promise<void>;
-  loadCheckpoint: (
-    checkpointId: string,
-    language: string
-  ) => Promise<LoadCheckpointResult>;
   restoreLatestSession: () => Promise<boolean>;
   clearSession: () => void;
 
@@ -73,7 +63,7 @@ const GameSessionContext = createContext<GameSessionContextType | undefined>(
 export const GameSessionProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
-  const { t } = useTranslation(["game", "checkpoint", "common"]);
+  const { t } = useTranslation(["game", "common"]);
   const navigate = useNavigate();
   const [sessionId, setSessionId] = useState<string>("");
   const [characterName, setCharacterName] = useState<string>(
@@ -140,75 +130,6 @@ export const GameSessionProvider: React.FC<{ children: React.ReactNode }> = ({
     [navigate, t]
   );
 
-  // Load from checkpoint
-  const loadCheckpoint = useCallback(
-    async (
-      checkpointId: string,
-      language: string
-    ): Promise<LoadCheckpointResult> => {
-      try {
-        const response = await authFetch("/api/checkpoints/load", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ checkpointId }),
-        });
-
-        const data = await response.json();
-
-        if (response.ok && data.success) {
-          // Restore game state
-          setSessionId(data.sessionId || `session-${Date.now()}`);
-
-          // Extract character name from game state
-          if (data.gameState?.playerCharacter?.name) {
-            setCharacterName(data.gameState.playerCharacter.name);
-          }
-
-          // Extract module name from game state
-          if (data.gameState?.moduleName) {
-            setCurrentModuleName(data.gameState.moduleName);
-          }
-
-          // Load conversation history
-          if (
-            data.conversationHistory &&
-            Array.isArray(data.conversationHistory)
-          ) {
-            setConversationHistory(data.conversationHistory);
-          } else {
-            setConversationHistory(null);
-          }
-
-          // Don't show module introduction when loading checkpoint
-          setModuleIntroduction(null);
-
-          const languageLabel =
-            language === "zh"
-              ? t("game:session.language.chinese")
-              : t("game:session.language.english");
-          return {
-            success: true,
-            notice: `${t("checkpoint:success.loaded")}\n${t("game:session.languageRestored", { language: languageLabel })}`,
-          };
-        } else {
-          return {
-            success: false,
-            error: `${t("checkpoint:errors.loadFailed")}: ${
-              data.error || t("common:error.generic")
-            }`,
-          };
-        }
-      } catch (error) {
-        console.error("Error loading checkpoint:", error);
-        return {
-          success: false,
-          error: t("common:error.network"),
-        };
-      }
-    },
-    [t]
-  );
-
   // Restore latest session on mount
   const restoreLatestSession = useCallback(async (): Promise<boolean> => {
     if (hasInitialized.current) {
@@ -235,9 +156,6 @@ export const GameSessionProvider: React.FC<{ children: React.ReactNode }> = ({
         if (data.session.characterName) {
           setCharacterName(data.session.characterName);
         }
-
-        // Note: /api/sessions/latest doesn't return gameState or conversationHistory
-        // Those are only available from /api/checkpoints/load
 
         setIsRestoringSession(false);
         return true;
@@ -266,7 +184,6 @@ export const GameSessionProvider: React.FC<{ children: React.ReactNode }> = ({
     moduleIntroduction,
     setModuleIntroduction,
     startNewGame,
-    loadCheckpoint,
     restoreLatestSession,
     clearSession,
     sidebarRefreshTrigger,

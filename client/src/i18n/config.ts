@@ -4,7 +4,6 @@ import { initReactI18next } from "react-i18next";
 
 import enAuth from "./locales/en/auth.json";
 import enCharacter from "./locales/en/character.json";
-import enCheckpoint from "./locales/en/checkpoint.json";
 // Import translation resources
 import enCommon from "./locales/en/common.json";
 import enGame from "./locales/en/game.json";
@@ -13,7 +12,6 @@ import enModule from "./locales/en/module.json";
 
 import zhAuth from "./locales/zh/auth.json";
 import zhCharacter from "./locales/zh/character.json";
-import zhCheckpoint from "./locales/zh/checkpoint.json";
 import zhCommon from "./locales/zh/common.json";
 import zhGame from "./locales/zh/game.json";
 import zhHome from "./locales/zh/home.json";
@@ -30,7 +28,6 @@ i18n
         home: enHome,
         game: enGame,
         character: enCharacter,
-        checkpoint: enCheckpoint,
         module: enModule,
       },
       zh: {
@@ -39,7 +36,6 @@ i18n
         home: zhHome,
         game: zhGame,
         character: zhCharacter,
-        checkpoint: zhCheckpoint,
         module: zhModule,
       },
     },
