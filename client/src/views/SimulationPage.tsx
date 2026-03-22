@@ -8,6 +8,7 @@ import { ControlPanel } from "../components/simulation/ControlPanel";
 import { PhaserContainer } from "../components/simulation/PhaserContainer";
 import { SidePanel } from "../components/simulation/SidePanel";
 import { SubSceneTabs } from "../components/simulation/SubSceneTabs";
+import { WeatherOverlay } from "../components/simulation/WeatherOverlay";
 import { useMobileSidebar } from "../hooks/useMobileSidebar";
 import { useSimulationState } from "../hooks/useSimulationState";
 import { useSimulationWebSocket } from "../hooks/useSimulationWebSocket";
@@ -58,6 +59,7 @@ export default function SimulationPage({
   );
   const { isSidebarOpen, toggleSidebar, closeSidebar } =
     useMobileSidebar();
+  const [previewWeather, setPreviewWeather] = useState<string | null>(null);
   const gameRef = useRef<Phaser.Game | null>(null);
   const mapsPrefixRef = useRef<string | null>(null);
 
@@ -379,6 +381,7 @@ export default function SimulationPage({
   const showControlPanel =
     !isPublicMode && Boolean(sessionId) && !showConfigPanel && !countdown;
 
+
   useEffect(() => {
     if (!shareFeedback) return;
     const timeoutId = window.setTimeout(() => setShareFeedback(null), 2500);
@@ -424,6 +427,9 @@ export default function SimulationPage({
           sessionKey={sessionId ?? ""}
         />
       </div>
+
+      {/* Weather animation overlay */}
+      <WeatherOverlay weather={previewWeather ?? state.weather} />
 
       {/* Loading / Error overlays */}
       {state.isLoading && (
@@ -557,7 +563,7 @@ export default function SimulationPage({
 
       {/* Config panel (pre-start) */}
       {showConfigPanel && sessionId && (
-        <ConfigPanel sessionId={sessionId} onStarted={resync} />
+        <ConfigPanel sessionId={sessionId} onStarted={resync} onWeatherChange={setPreviewWeather} />
       )}
 
       {/* Real-time sync countdown */}

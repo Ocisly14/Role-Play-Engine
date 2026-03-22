@@ -22,9 +22,10 @@ const WEATHER_KEYS = [
 interface ConfigPanelProps {
   sessionId: string;
   onStarted?: () => Promise<void> | void;
+  onWeatherChange?: (weather: string) => void;
 }
 
-export function ConfigPanel({ sessionId, onStarted }: ConfigPanelProps) {
+export function ConfigPanel({ sessionId, onStarted, onWeatherChange }: ConfigPanelProps) {
   const { t } = useTranslation("simulation");
   const [expanded, setExpanded] = useState(true);
   const [tickSpeed, setTickSpeed] = useState(60000);
@@ -155,7 +156,10 @@ export function ConfigPanel({ sessionId, onStarted }: ConfigPanelProps) {
 
       <select
         value={weather}
-        onChange={(e) => setWeather(e.target.value)}
+        onChange={(e) => {
+          setWeather(e.target.value);
+          onWeatherChange?.(e.target.value);
+        }}
         className="py-1 px-1.5 rounded-lg bg-white/50 text-slate-700 border border-slate-200 text-xs"
       >
         {WEATHER_KEYS.map((key) => (
