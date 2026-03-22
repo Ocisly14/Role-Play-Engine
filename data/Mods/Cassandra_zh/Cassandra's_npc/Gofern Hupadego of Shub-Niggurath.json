@@ -1,0 +1,28 @@
+{
+  "id": "Gofern Hupadego of Shub-Niggurath",
+  "name": "Gofern Hupadego of Shub-Niggurath",
+  "occupation": "变异的邪教生物（前人类商人）",
+  "age": 45,
+  "gender": "N/A",
+  "appearance": "一个由人类肉体和舒卜-尼古拉斯的影响力诞生的怪诞混合生物。它的身体展现出扭曲的类人特征与兽性特征的混合，如爪子、蹄子、角或獠牙。",
+  "personality": "兽性、掠食性、受本能驱动。保留了人类狡猾的碎片，但被饥饿、攻击性和对舒卜-尼古拉斯的服从所主导。",
+  "background": "曾经是一个富有的商人，参与了献给舒卜-尼古拉斯的禁忌仪式。在一次失败或过度的仪式中，他被变异为一个怪物般的仆从，注定在潮湿的森林和沼泽中作为黑暗之母的造物生活。",
+  "residence": "SCN_20",
+  "currentLocation": "SCN_20",
+  "longTermIntent": "进食、生存，并从沼泽边缘继续侍奉舒卜-尼古拉斯，直到猎物或饥饿最终摧毁这具身体。",
+  "attributes": {"STR": 55, "CON": 85, "DEX": 55, "APP": 10, "POW": 85, "SIZ": 65, "INT": 50, "EDU": 40},
+  "status": {"hp": 12, "maxHp": 12, "sanity": 0, "maxSanity": 0, "luck": 60, "mp": 17, "conditions": ["再生"]},
+  "skills": {"Fighting (Claw)": 30, "Fighting (Bite)": 40, "Head Butt": 20, "Stealth": 70, "Hide": 90},
+  "inventory": [],
+  "relationships": [
+    {"targetId": "Shub-Niggurath", "targetName": "Shub-Niggurath", "relationshipType": "ally", "attitude": 100, "description": "对黑暗之母的绝对忠诚。", "history": "在献给舒卜-尼古拉斯的仪式中发生了变异。"}
+  ],
+  "memory": [
+    {"type": "information", "content": "我曾经是人类，仍然记得足够多的东西来辨认他人身上的贪婪、恐惧和仪式般的饥渴。", "metadata": {"knowledgeId": "k_gofern_origin", "difficulty": "automatic"}},
+    {"type": "information", "content": "沼泽和森林是我隐藏的最安全之处，因为它们让我可以在不引起注意的情况下进食。", "metadata": {"knowledgeId": "k_gofern_territory", "difficulty": "regular"}},
+    {"type": "information", "content": "我仍然记得人类交易是如何运作的，我用那些旧知识来选择不会太拼命反抗的猎物。", "metadata": {"knowledgeId": "k_gofern_human_memory", "difficulty": "regular"}},
+    {"type": "secret", "content": "除非被彻底摧毁，我会不自然地再生。伤口只是延迟，不是终结。", "metadata": {"knowledgeId": "s_gofern_regeneration"}},
+    {"type": "secret", "content": "我待在沼泽里是因为猎人、道路和明亮的灯光让我更难隐藏自己已经变成的样子。", "metadata": {"knowledgeId": "s_gofern_hunters"}},
+    {"type": "belief", "content": "对我来说，饥饿是最清晰的祈祷。舒卜-尼古拉斯通过进食后幸存之物来回应。", "metadata": {"confidence": 0.9, "reasoningChain": "进食的身体就是继续存在的身体。"}}
+  ]
+}

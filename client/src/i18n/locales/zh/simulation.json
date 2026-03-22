@@ -1,0 +1,106 @@
+{
+  "npc": {
+    "backToList": "返回列表",
+    "profile": "档案",
+    "hp": "HP",
+    "san": "SAN",
+    "location": "位置",
+    "currentAction": "正在进行中",
+    "inventory": "物品栏",
+    "zoomToLocation": "定位到地图",
+    "noProfileInfo": "暂无档案信息"
+  },
+  "profile": {
+    "occupation": "职业",
+    "age": "年龄",
+    "gender": "性别",
+    "appearance": "外貌",
+    "personality": "性格",
+    "background": "背景",
+    "backstory": "故事",
+    "residence": "住所",
+    "longTermIntent": "长期意图"
+  },
+  "clock": {
+    "day": "第 {{day}} 天"
+  },
+  "control": {
+    "stepOneTick": "推进一步",
+    "collapse": "收起",
+    "realTime": "实时同步",
+    "buffer": "缓冲",
+    "bufferUnit": "分钟",
+    "days": "天数",
+    "start": "开始",
+    "starting": "启动中..."
+  },
+  "config": {
+    "title": "配置模拟",
+    "tickSpeed": "推进速度",
+    "maxDays": "最大天数",
+    "weather": "天气",
+    "back": "返回",
+    "startSimulation": "开始模拟",
+    "creating": "创建中...",
+    "initializingSimulation": "正在初始化模拟..."
+  },
+  "weather": {
+    "clear": "晴天",
+    "rain": "雨天",
+    "fog": "雾天",
+    "storm": "暴风雨",
+    "snow": "雪天",
+    "extreme_heat": "酷热",
+    "extreme_cold": "极寒"
+  },
+  "sidebar": {
+    "npcs": "NPC列表",
+    "events": "事件日志",
+    "filters": "筛选",
+    "filtersActive": "已启用筛选",
+    "show": "展开",
+    "hide": "收起",
+    "startDay": "起始日",
+    "startTime": "起始时间",
+    "endDay": "结束日",
+    "endTime": "结束时间",
+    "character": "角色",
+    "allCharacters": "所有角色",
+    "locationFilter": "地点",
+    "allLocations": "所有地点",
+    "apply": "应用",
+    "clear": "清除",
+    "loading": "加载中…",
+    "closeSidebar": "关闭侧栏"
+  },
+  "events": {
+    "noEvents": "暂无事件",
+    "day": "第 {{day}} 天",
+    "died": "{{name}} 已死亡",
+    "movedTo": "{{name}} 移动至 {{location}}",
+    "relationshipChanged": "{{name}} — 关系变化",
+    "clueDiscovered": "{{name}} 发现了线索",
+    "encounter": "{{name}} — 遭遇事件",
+    "unknown": "未知"
+  },
+  "page": {
+    "loadingSimulation": "加载模拟中...",
+    "error": "错误: {{message}}",
+    "title": "小镇模拟",
+    "backToSelection": "返回选择",
+    "noImage": "暂无图片",
+    "preparing": "准备中...",
+    "copyPublicLink": "复制公开链接"
+  },
+  "selector": {
+    "continueSimulation": "继续模拟",
+    "loading": "加载中...",
+    "noSimulations": "暂无模拟存档",
+    "confirm": "确认",
+    "cancel": "取消",
+    "deleteSimulation": "删除模拟",
+    "day": "第 {{day}} 天",
+    "ticks": "{{count}} 步",
+    "unknownModule": "未知模组"
+  }
+}

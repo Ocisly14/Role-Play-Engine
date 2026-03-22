@@ -1,0 +1,36 @@
+{
+  "id": "Constantine Frollo",
+  "name": "Constantine Frollo",
+  "occupation": "天主教神父",
+  "age": 30,
+  "gender": "male",
+  "appearance": "一个表情严厉的男人，面部轮廓锐利，通常穿着神父服装。体态僵硬，目光常常凌厉，给人一种压迫感和不安感。",
+  "personality": "冷漠、控制欲强、自以为是、善于操纵。表面上虔诚自律，内心却狂热并坚信自己的道德优越性。",
+  "background": "原名迈克尔·帕克，康斯坦丁出生在美国。六岁时随养父母搬到法国，在那里长大，成为文化上的法国人。后来他进入神职，最终以神父身份来到卡森德拉。在宗教角色之下，他与神秘信仰和禁忌力量深深纠缠，相信自己被选中执行一个神圣计划。",
+  "residence": "SCN_17",
+  "currentLocation": "SCN_17",
+  "longTermIntent": "控制教堂及其隐藏的蛛网，推进他认为将证实其信仰的仪式，并维持对卡森德拉惶恐民众的掌控。",
+  "attributes": {"STR": 45, "CON": 50, "DEX": 40, "APP": 55, "POW": 75, "SIZ": 50, "INT": 70, "EDU": 80},
+  "status": {"hp": 10, "maxHp": 10, "sanity": 45, "maxSanity": 75, "luck": 60, "mp": 15, "conditions": []},
+  "skills": {"Occult": 75, "Psychology": 60, "Persuade": 65, "Intimidate": 55, "Religion": 80, "Cthulhu Mythos": 20},
+  "inventory": [
+    {"name": "银十字架", "quantity": 1, "properties": {"note": "作为其神父身份一部分佩戴的纯银十字架。"}},
+    {"name": "黑色神父袍", "quantity": 1, "properties": {"note": "他在卡森德拉出现时总是穿着这件袍子。"}},
+    {"name": "教堂暗门通道", "properties": {"note": "了解通往教堂地下室和其下方蛛网的隐秘路线。"}}
+  ],
+  "relationships": [
+    {"targetId": "Patrizio von Samsa", "targetName": "Patrizio von Samsa", "relationshipType": "ally", "attitude": 70, "description": "一个朝着共同神秘目标努力的同谋。", "history": "他们结成联盟，利用卡森德拉作为禁忌召唤的舞台。"},
+    {"targetId": "Bruno Galilei", "targetName": "Bruno Galilei", "relationshipType": "enemy", "attitude": -80, "description": "一个差点揭开真相的危险调查者。", "history": "布鲁诺被警告永远不要信任康斯坦丁，并成为其计划的直接威胁。"},
+    {"targetId": "Vincent Galenus", "targetName": "Vincent Galenus", "relationshipType": "ally", "attitude": 45, "description": "一位当地医生，康斯坦丁太了解他的忏悔和妥协。", "history": "他们的关系建立在秘密、互利以及处理被感染镇民的基础上。"}
+  ],
+  "memory": [
+    {"type": "information", "content": "我在这座教堂中侍奉，并将它同时用作庇护所和门槛。教众看到的是祈祷；我知道暗门后面等待着什么。", "metadata": {"knowledgeId": "k_constantine_church", "difficulty": "automatic"}},
+    {"type": "information", "content": "我曾经叫迈克尔，那个从琼斯镇活下来的孩子，因为蜘蛛之神选择不让我死去。之后的一切都是层层叠叠的服从。", "metadata": {"knowledgeId": "k_constantine_origin", "difficulty": "hard"}},
+    {"type": "information", "content": "文森特在醉酒和悲痛中忏悔了足够多的事情，让我得知了他和帕特里齐奥做过什么。从那以后他帮我处理感染者和其他不该公之于众的事情。", "metadata": {"knowledgeId": "k_constantine_vincent", "difficulty": "regular"}},
+    {"type": "secret", "content": "我的仪式并非纯粹的天主教。当我侍奉那个从童年起就跟随我的声音时，祈祷、蛛网和巫术混为一体。", "metadata": {"knowledgeId": "s_constantine_rites"}},
+    {"type": "secret", "content": "教堂下方是阿特拉克-纳克亚的蛛网和一座通往幻梦境的不稳定桥梁。冷蜘蛛能穿过它，因为是我允许这条通道保持开放的。", "metadata": {"knowledgeId": "s_constantine_web"}},
+    {"type": "secret", "content": "帕特里齐奥和我维持着一种务实的和平。我帮忙隐藏蜘蛛案件，在对双方都合适的时候清除麻烦人物，作为回报他不动我的教堂和工作。", "metadata": {"knowledgeId": "s_constantine_patrizio"}},
+    {"type": "secret", "content": "如果蜘蛛之神仍然接受我作为祭司，蜘蛛人就服从我，一些被茧化的受害者可以被留下，甚至变异的女儿们也不会把我误认为普通猎物。", "metadata": {"knowledgeId": "s_constantine_priesthood"}},
+    {"type": "belief", "content": "如果我的神降临并在同一刻毁灭我，那仍然是服从的圆满。", "metadata": {"confidence": 0.9, "reasoningChain": "意义存在于服从和仪式中，而非寻常人类的安适。"}}
+  ]
+}

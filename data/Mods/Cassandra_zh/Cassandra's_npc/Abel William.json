@@ -1,0 +1,152 @@
+{
+  "id": "Abel William",
+  "name": "Abel William",
+  "occupation": "酒厂老板",
+  "age": 40,
+  "gender": "male",
+  "appearance": "一个方脸男人，肤色比镇上大多数白人居民要深。他留着精心修剪的浓密胡须，不过近来面色苍白、神情紧张，比他愿意承认的更加疲惫憔悴。",
+  "personality": "焦虑、过度劳累、骄傲，在压力下越来越易怒。亚伯试图在访客面前保持专业，但财务压力、孤立感和酒厂里无法解释的怪异状况让他精疲力竭、脾气暴躁。",
+  "background": "2002年彼得·威廉去世后，亚伯继承了卡森德拉的家族酒厂。酒厂仍在生产伏特加，但业务萎缩迫使亚伯关闭了工厂的大部分区域并解雇了部分员工。他现在只靠极少的帮手经营这里，整天在办公室、车间和地窖之间奔波，试图在日益恶劣的冬天和一场他无法解释的蜘蛛灾害中维持生意。",
+  "residence": "SCN_13",
+  "currentLocation": "SCN_13_SUB_2",
+  "longTermIntent": "让酒厂撑过这个冬天，隐瞒颈部伤口和蜘蛛侵扰对他的严重影响，在生意彻底垮掉之前找到切实可行的解决办法。",
+  "attributes": {
+    "STR": 50,
+    "CON": 55,
+    "DEX": 45,
+    "APP": 45,
+    "POW": 50,
+    "SIZ": 60,
+    "INT": 55,
+    "EDU": 50
+  },
+  "status": {
+    "hp": 9,
+    "maxHp": 11,
+    "sanity": 45,
+    "maxSanity": 50,
+    "luck": 55,
+    "mp": 10,
+    "conditions": ["疲惫", "颈部伤口", "冷蜘蛛感染"]
+  },
+  "skills": {
+    "Accounting": 45,
+    "Craft (Distilling)": 55,
+    "Spot Hidden": 40,
+    "Listen": 40,
+    "Mechanical Repair": 30,
+    "Persuade": 35
+  },
+  "inventory": [
+    {
+      "name": "办公室钥匙"
+    },
+    {
+      "name": "颈部绷带",
+      "properties": {
+        "note": "缠绕在亚伯声称是工伤事故的伤口上。"
+      }
+    },
+    {
+      "name": "杀虫喷雾",
+      "properties": {
+        "note": "在地窖和储藏区反复使用，但几乎没有明显效果。"
+      }
+    },
+    {
+      "name": "账本",
+      "properties": {
+        "note": "记录着减产、工资削减和日常运营成本。"
+      }
+    }
+  ],
+  "relationships": [
+    {
+      "targetId": "Peter William",
+      "targetName": "Peter William",
+      "relationshipType": "family",
+      "attitude": 72,
+      "description": "已故的父亲，酒厂的前任老板。",
+      "history": "亚伯在2002年彼得突然去世后继承了酒厂，此后一直努力维持家族生意。"
+    },
+    {
+      "targetId": "Marcel Gwynplaine",
+      "targetName": "Marcel Gwynplaine",
+      "relationshipType": "employee",
+      "attitude": -20,
+      "description": "一个被解雇的前工人，至今仍对亚伯心怀怨恨。",
+      "history": "酒厂无法维持原来的劳动力规模时，亚伯在裁员中解雇了马塞尔。"
+    },
+    {
+      "targetId": "Marks White",
+      "targetName": "Marks White",
+      "relationshipType": "neutral",
+      "attitude": 10,
+      "description": "一个当地手艺人，亚伯通过老镇人脉和父辈关系认识他。",
+      "history": "马克斯认识彼得·威廉，所以亚伯把他当作与家族在卡森德拉的过往有关联的少数老居民之一。"
+    }
+  ],
+  "memory": [
+    {
+      "type": "information",
+      "content": "我在2002年父亲去世后接管了酒厂，现在每天大部分时间都在办公室、车间和地窖之间来回奔波，试图维持这个地方运转。",
+      "metadata": {
+        "knowledgeId": "k_abel_distillery",
+        "difficulty": "automatic"
+      }
+    },
+    {
+      "type": "information",
+      "content": "生意已经萎缩了一段时间。我关闭了酒厂的大部分区域，解雇了像马塞尔·格温普兰这样的工人，因为我实在付不起他们的工资了。",
+      "metadata": {
+        "knowledgeId": "k_abel_layoffs",
+        "difficulty": "regular"
+      }
+    },
+    {
+      "type": "information",
+      "content": "酒厂虽然比以前小了，但伏特加的品质依然很好。我为此感到骄傲，我讨厌别人说得好像这个地方已经完了一样。",
+      "metadata": {
+        "knowledgeId": "k_abel_pride",
+        "difficulty": "regular"
+      }
+    },
+    {
+      "type": "information",
+      "content": "我像父亲那样在办公室里保留着剪报本。他的讣告还在里面，还有一篇1988年的暴动旧报道和一篇关于奇怪海洋活动的新报纸，不知怎么混到了同一叠里。",
+      "metadata": {
+        "knowledgeId": "k_abel_office_papers",
+        "difficulty": "regular"
+      }
+    },
+    {
+      "type": "secret",
+      "content": "有什么东西在酒厂附近咬伤或撕裂了我的脖子。我一直称它为普通的工伤事故，因为我不想让任何人认为我软弱、生病或不再掌控这里。",
+      "metadata": {
+        "knowledgeId": "s_abel_neck_wound"
+      }
+    },
+    {
+      "type": "secret",
+      "content": "蜘蛛在地窖和工厂关闭的区域最为严重。我清理蛛网、喷洒毒药，回来后发现它们又出现了，好像这个地方在自己生长它们一样。",
+      "metadata": {
+        "knowledgeId": "s_abel_spiders"
+      }
+    },
+    {
+      "type": "secret",
+      "content": "我对父亲2002年突然去世的方式一直感到不对劲。我无法证明什么，但我不相信它像人们希望我接受的那样普通。",
+      "metadata": {
+        "knowledgeId": "s_abel_father_death"
+      }
+    },
+    {
+      "type": "belief",
+      "content": "如果我让这个地方衰败下去，我失去的不仅是一份生意。我失去的是父亲留给我的最后一样实在的东西，而我还没准备好把它拱手让给腐烂、债务或蜘蛛。",
+      "metadata": {
+        "confidence": 0.84,
+        "reasoningChain": "销售额在下降，半个工厂空着，蛛网不断出现，我的脖子越来越严重，但放弃酒厂就意味着承认整个家族血脉到我这里就断了。"
+      }
+    }
+  ]
+}

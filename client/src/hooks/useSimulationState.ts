@@ -18,6 +18,7 @@ export interface SimulationViewState {
   selectedNpcId: string | null;
   gameDay: number;
   timeOfDay: string;
+  weather: string;
   simulationState: SimulationStatus["state"];
   moduleName: string | null;
   mapsPrefix: string | null;
@@ -43,6 +44,7 @@ export function useSimulationState(sessionId: string | null) {
     selectedNpcId: null,
     gameDay: 1,
     timeOfDay: "08:00",
+    weather: "clear",
     simulationState: "paused",
     moduleName: null,
     mapsPrefix: null,
@@ -80,6 +82,7 @@ export function useSimulationState(sessionId: string | null) {
           npcStatuses: statuses,
           gameDay: status.currentDay,
           timeOfDay: status.currentTime,
+          weather: status.weather ?? "clear",
           simulationState: status.state,
           moduleName: status.moduleName ?? null,
           mapsPrefix: status.mapsPrefix ?? null,
@@ -129,6 +132,7 @@ export function useSimulationState(sessionId: string | null) {
             positions: Record<string, CharacterPosition>;
             currentActions?: Record<string, string | null>;
             displayIntervalMs?: number;
+            weather?: string;
           };
           newState.npcPositions = data.positions;
           if (data.currentActions) {
@@ -139,6 +143,9 @@ export function useSimulationState(sessionId: string | null) {
           }
           if (data.displayIntervalMs) {
             newState.displayIntervalMs = data.displayIntervalMs;
+          }
+          if (data.weather) {
+            newState.weather = data.weather;
           }
           break;
         }
@@ -253,6 +260,7 @@ export function useSimulationState(sessionId: string | null) {
         npcStatuses: statuses,
         gameDay: status.currentDay,
         timeOfDay: status.currentTime,
+        weather: status.weather ?? "clear",
         simulationState: status.state,
         displayTick: status.ticksExecuted,
         displayStartTime,

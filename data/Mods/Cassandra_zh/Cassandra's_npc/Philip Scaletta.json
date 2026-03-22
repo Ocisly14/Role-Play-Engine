@@ -1,0 +1,127 @@
+{
+  "id": "Philip Scaletta",
+  "name": "Philip Scaletta",
+  "occupation": "街头混混 / 小偷",
+  "age": 28,
+  "gender": "male",
+  "appearance": "一个精瘦的年轻人，表情警惕，穿着廉价衣服，有着习惯了提防麻烦的人那种躁动的姿态。他看起来像是能在人群中溜走，在别人注意到他拿了什么之前消失。",
+  "personality": "多疑、投机取巧、油滑、善于找借口。菲利普没有勇敢到成为英雄的地步，但他足够精明，知道何时蛰伏、何时开口、何时先下手为强。",
+  "background": "菲利普靠小偷小摸、快手和能在别人利用信息对付他之前先利用信息来求生。他在试图赚点小钱、避免被卷入比自己更大的事件时卷入了驯鹿酒吧事件。他从不该拿的地方顺东西的习惯和不愿正面回答问题的态度让他看起来比实际更有嫌疑，这通常正是他所偏好的。",
+  "residence": "SCN_8",
+  "currentLocation": "SCN_8_SUB_1",
+  "longTermIntent": "赚够钱来躲避麻烦，避免坐牢，如果有更好的机会就带着完整的皮肤离开卡森德拉。",
+  "attributes": {
+    "STR": 45,
+    "CON": 50,
+    "DEX": 70,
+    "APP": 45,
+    "POW": 40,
+    "SIZ": 50,
+    "INT": 60,
+    "EDU": 45
+  },
+  "status": {
+    "hp": 10,
+    "maxHp": 10,
+    "sanity": 40,
+    "maxSanity": 40,
+    "luck": 35,
+    "mp": 8,
+    "conditions": []
+  },
+  "skills": {
+    "Stealth": 65,
+    "Sleight of Hand": 70,
+    "Fast Talk": 55,
+    "Dodge": 60,
+    "Brawl": 45,
+    "Spot Hidden": 45
+  },
+  "inventory": [
+    {
+      "name": "改装夹克",
+      "properties": {
+        "note": "一件旧夹克，衬里缝了暗袋用来藏赃物。"
+      }
+    },
+    {
+      "name": "折叠刀",
+      "properties": {
+        "note": "他随身携带用来威慑和自卫的小刀。"
+      }
+    },
+    {
+      "name": "偷来的小玩意",
+      "properties": {
+        "note": "零钱、廉价首饰和一些菲利普还没卖掉的东西。"
+      }
+    }
+  ],
+  "relationships": [
+    {
+      "targetId": "Helen",
+      "targetName": "Helen",
+      "relationshipType": "neutral",
+      "attitude": 5,
+      "description": "他在酒吧调戏过并惹恼了的女人。",
+      "history": "菲利普记得海伦是他试图逗引注意的人。情况变糟后他退缩了。"
+    },
+    {
+      "targetId": "Lux Lynch",
+      "targetName": "Lux Lynch",
+      "relationshipType": "rival",
+      "attitude": -20,
+      "description": "一个菲利普不信任的警察联系人。",
+      "history": "菲利普知道警察是坏消息，并假设勒克斯总会先顾自己。"
+    }
+  ],
+  "memory": [
+    {
+      "type": "information",
+      "content": "我靠小偷小摸、快手和假装自己看到的比实际少来生活。",
+      "metadata": {
+        "knowledgeId": "k_philip_hustle",
+        "difficulty": "automatic"
+      }
+    },
+    {
+      "type": "information",
+      "content": "驯鹿酒吧事件不管我喜不喜欢都与我有关，因为我在场而且我知道足以让人起疑的事。",
+      "metadata": {
+        "knowledgeId": "k_philip_bar_incident",
+        "difficulty": "regular"
+      }
+    },
+    {
+      "type": "secret",
+      "content": "我从不该拿的地方拿了不属于我的东西，我宁愿人们把注意力集中在别人身上，尤其是马塞尔，而不是仔细盯着我看。",
+      "metadata": {
+        "knowledgeId": "s_philip_stolen_goods"
+      }
+    },
+    {
+      "type": "belief",
+      "content": "如果我把故事说得小小的、把嘴巴闭紧，卡森德拉会在吃掉我之前先吃掉别人。",
+      "metadata": {
+        "confidence": 0.78,
+        "reasoningChain": "看起来无害的人在保持模糊时活得更久。我给出的细节越少，别人找上我的理由就越少。"
+      }
+    },
+    {
+      "type": "information",
+      "content": "驯鹿酒吧事件教会我，一个顺错了的口袋如果我在房间里待太久就能变成永久的问题。",
+      "metadata": {
+        "knowledgeId": "k_philip_bar_problem",
+        "difficulty": "regular"
+      }
+    },
+    {
+      "type": "information",
+      "content": "我学会了如果人们记得我是个蠢货，他们通常就不再找那只真正拿了东西的手了。",
+      "metadata": {
+        "knowledgeId": "k_philip_playing_fool",
+        "difficulty": "regular"
+      }
+    }
+  ]
+}

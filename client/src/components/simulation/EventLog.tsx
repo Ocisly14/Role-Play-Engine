@@ -1,4 +1,5 @@
 import { useEffect, useRef } from "react";
+import { useTranslation } from "react-i18next";
 import type { SimulationEvent } from "../../hooks/useSimulationWebSocket";
 
 interface EventLogProps {
@@ -23,6 +24,7 @@ function sanitizeOutcomeForDisplay(outcome: string | undefined): string | undefi
 }
 
 export function EventLog({ events }: EventLogProps) {
+  const { t } = useTranslation("simulation");
   const bottomRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -33,7 +35,7 @@ export function EventLog({ events }: EventLogProps) {
     <div className="flex-1 overflow-y-auto px-2 py-2 space-y-1.5">
       {events.length === 0 && (
         <div className="px-3 py-4 text-xs text-slate-400 text-center">
-          No events yet
+          {t("events.noEvents")}
         </div>
       )}
       {events.map((event) => {
@@ -51,9 +53,10 @@ export function EventLog({ events }: EventLogProps) {
 }
 
 function ActionMessage({ event }: { event: SimulationEvent }) {
+  const { t } = useTranslation("simulation");
   const isFailed = event.type === "action_failed";
   const name =
-    (event.data.characterName as string) || event.actorNpcId || "Unknown";
+    (event.data.characterName as string) || event.actorNpcId || t("events.unknown");
   const outcome = sanitizeOutcomeForDisplay(
     event.data.outcome as string | undefined
   );
@@ -80,13 +83,16 @@ function ActionMessage({ event }: { event: SimulationEvent }) {
 }
 
 function SystemMessage({ event }: { event: SimulationEvent }) {
+  const { t } = useTranslation("simulation");
   let text: string;
   switch (event.type) {
     case "day_transition":
-      text = `Day ${event.gameDay}`;
+      text = t("events.day", { day: event.gameDay });
       break;
     case "npc_death":
-      text = `${(event.data.npcName as string) || event.actorNpcId} died`;
+      text = t("events.died", {
+        name: (event.data.npcName as string) || event.actorNpcId,
+      });
       break;
     default:
       text = event.type.replace(/_/g, " ");
@@ -117,11 +123,11 @@ function formatCompactText(event: SimulationEvent): string {
     (event.data.characterName as string) || event.actorNpcId || "";
   switch (event.type) {
     case "npc_moved":
-      return `${name} moved to ${event.location}`;
+      return `${name} → ${event.location}`;
     case "relationship_changed":
-      return `${name} — relationship changed`;
+      return `${name} — relationship`;
     case "clue_discovered":
-      return `${name} discovered a clue`;
+      return `${name} — clue`;
     case "encounter":
       return `${name} — encounter`;
     default:

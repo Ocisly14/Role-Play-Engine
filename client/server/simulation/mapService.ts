@@ -122,9 +122,33 @@ export async function getNpcStatuses(sessionId: string): Promise<NpcStatusInfo[]
       location: locationName,
       inventory,
       isAlive: (stats?.hp ?? 0) > 0,
+      occupation: npc.occupation,
+      age: npc.age,
+      gender: npc.gender,
+      appearance: npc.appearance,
+      personality: npc.personality,
+      background: npc.background,
+      backstory: npc.backstory,
+      residence: resolveResidenceName(npc.residence, dgsm),
+      longTermIntent: npc.longTermIntent,
     });
   }
   return statuses;
+}
+
+function resolveResidenceName(
+  residenceId: string | undefined,
+  dgsm: DynamicGameStateManager
+): string | undefined {
+  if (!residenceId) return undefined;
+  const state = dgsm.getState();
+  // Check scenarioOutlines first (macro locations like buildings)
+  const outline = (state.scenarioOutlines ?? []).find((o) => o.id === residenceId);
+  if (outline) return outline.name;
+  // Check scenes
+  const scene = state.scenes.get(residenceId);
+  if (scene) return scene.name;
+  return residenceId;
 }
 
 function resolveLocationName(

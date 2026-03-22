@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import type { SimulationEvent } from "../../hooks/useSimulationWebSocket";
 import type {
   NpcStatusInfo,
@@ -178,6 +179,7 @@ export function SidePanel({
   isOpen,
   onClose,
 }: SidePanelProps) {
+  const { t } = useTranslation("simulation");
   const [activeTab, setActiveTab] = useState<SimTabType>("npcs");
   const [isFilterPanelOpen, setIsFilterPanelOpen] = useState(false);
   const [filterDraft, setFilterDraft] = useState<EventFilterDraft>(
@@ -299,7 +301,7 @@ export function SidePanel({
       <button
         className="sim-sidebar-close"
         onClick={onClose}
-        aria-label="Close sidebar"
+        aria-label={t("sidebar.closeSidebar")}
       >
         ×
       </button>
@@ -323,13 +325,13 @@ export function SidePanel({
               className={`sidebar-tab backdrop-blur-sm bg-white/50 border border-slate-200 shadow-md rounded-lg hover:bg-white/70 transition-all ${activeTab === "npcs" ? "active" : ""}`}
               onClick={() => setActiveTab("npcs")}
             >
-              NPCs
+              {t("sidebar.npcs")}
             </button>
             <button
               className={`sidebar-tab backdrop-blur-sm bg-white/50 border border-slate-200 shadow-md rounded-lg hover:bg-white/70 transition-all ${activeTab === "events" ? "active" : ""}`}
               onClick={() => setActiveTab("events")}
             >
-              Events
+              {t("sidebar.events")}
             </button>
           </div>
 
@@ -352,14 +354,14 @@ export function SidePanel({
                   onClick={() => setIsFilterPanelOpen((prev) => !prev)}
                   className="w-full flex items-center justify-between rounded-md border border-slate-200 bg-white/60 px-3 py-2 text-xs text-slate-600 transition-colors hover:bg-white/80"
                 >
-                  <span className="font-medium">Filters</span>
+                  <span className="font-medium">{t("sidebar.filters")}</span>
                   <span className="flex items-center gap-2">
                     {hasActiveFilters && (
                       <span className="text-[11px] text-amber-600">
-                        Filters active
+                        {t("sidebar.filtersActive")}
                       </span>
                     )}
-                    <span>{isFilterPanelOpen ? "Hide" : "Show"}</span>
+                    <span>{isFilterPanelOpen ? t("sidebar.hide") : t("sidebar.show")}</span>
                   </span>
                 </button>
 
@@ -367,7 +369,7 @@ export function SidePanel({
                   <>
                     <div className="grid grid-cols-2 gap-2 mt-2">
                       <label className="flex flex-col gap-1 text-[11px] text-slate-500">
-                        <span>Start Day</span>
+                        <span>{t("sidebar.startDay")}</span>
                         <input
                           type="number"
                           min="1"
@@ -379,7 +381,7 @@ export function SidePanel({
                         />
                       </label>
                       <label className="flex flex-col gap-1 text-[11px] text-slate-500">
-                        <span>Start Time</span>
+                        <span>{t("sidebar.startTime")}</span>
                         <input
                           type="time"
                           value={filterDraft.startTime}
@@ -390,7 +392,7 @@ export function SidePanel({
                         />
                       </label>
                       <label className="flex flex-col gap-1 text-[11px] text-slate-500">
-                        <span>End Day</span>
+                        <span>{t("sidebar.endDay")}</span>
                         <input
                           type="number"
                           min="1"
@@ -402,7 +404,7 @@ export function SidePanel({
                         />
                       </label>
                       <label className="flex flex-col gap-1 text-[11px] text-slate-500">
-                        <span>End Time</span>
+                        <span>{t("sidebar.endTime")}</span>
                         <input
                           type="time"
                           value={filterDraft.endTime}
@@ -416,7 +418,7 @@ export function SidePanel({
 
                     <div className="grid grid-cols-2 gap-2 mt-2">
                       <label className="flex flex-col gap-1 text-[11px] text-slate-500">
-                        <span>Character</span>
+                        <span>{t("sidebar.character")}</span>
                         <select
                           value={filterDraft.npcId}
                           onChange={(event) =>
@@ -424,7 +426,7 @@ export function SidePanel({
                           }
                           className="rounded-md border border-slate-200 bg-white/70 px-2 py-1 text-xs text-slate-700 outline-none focus:border-amber-400"
                         >
-                          <option value="">All characters</option>
+                          <option value="">{t("sidebar.allCharacters")}</option>
                           {npcStatuses.map((npc) => (
                             <option key={npc.npcId} value={npc.npcId}>
                               {npc.name}
@@ -434,7 +436,7 @@ export function SidePanel({
                       </label>
 
                       <label className="flex flex-col gap-1 text-[11px] text-slate-500">
-                        <span>Location</span>
+                        <span>{t("sidebar.locationFilter")}</span>
                         <select
                           value={filterDraft.parentLocationId}
                           onChange={(event) =>
@@ -442,7 +444,7 @@ export function SidePanel({
                           }
                           className="rounded-md border border-slate-200 bg-white/70 px-2 py-1 text-xs text-slate-700 outline-none focus:border-amber-400"
                         >
-                          <option value="">All locations</option>
+                          <option value="">{t("sidebar.allLocations")}</option>
                           {locationOptions.map((location) => (
                             <option key={location.id} value={location.id}>
                               {location.name}
@@ -459,7 +461,7 @@ export function SidePanel({
                         disabled={!sessionId || isEventsLoading}
                         className="rounded-md bg-amber-600 px-3 py-1.5 text-xs font-medium text-white transition-colors hover:bg-amber-700 disabled:cursor-not-allowed disabled:bg-slate-300"
                       >
-                        Apply
+                        {t("sidebar.apply")}
                       </button>
                       <button
                         type="button"
@@ -467,10 +469,10 @@ export function SidePanel({
                         disabled={!sessionId || isEventsLoading}
                         className="rounded-md border border-slate-200 bg-white/70 px-3 py-1.5 text-xs text-slate-600 transition-colors hover:bg-white disabled:cursor-not-allowed disabled:text-slate-300"
                       >
-                        Clear
+                        {t("sidebar.clear")}
                       </button>
                       {isEventsLoading && (
-                        <span className="text-[11px] text-slate-400">Loading…</span>
+                        <span className="text-[11px] text-slate-400">{t("sidebar.loading")}</span>
                       )}
                     </div>
                   </>

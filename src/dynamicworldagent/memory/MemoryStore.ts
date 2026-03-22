@@ -186,18 +186,18 @@ export class MemoryStore {
     );
   }
 
-  async deletePostCheckpoint(
+  async deleteAfterTime(
     sessionId: string,
-    checkpointCreatedAt: Date
+    cutoffCreatedAt: Date
   ): Promise<void> {
     await this.prisma.npcMemory.deleteMany({
-      where: { sessionId, createdAt: { gt: checkpointCreatedAt } },
+      where: { sessionId, createdAt: { gt: cutoffCreatedAt } },
     });
     await this.prisma.npcMemory.deleteMany({
       where: {
         sessionId,
-        createdAt: { lte: checkpointCreatedAt },
-        updatedAt: { gt: checkpointCreatedAt },
+        createdAt: { lte: cutoffCreatedAt },
+        updatedAt: { gt: cutoffCreatedAt },
       },
     });
   }

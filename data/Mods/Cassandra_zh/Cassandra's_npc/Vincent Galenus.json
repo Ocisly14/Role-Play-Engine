@@ -1,0 +1,164 @@
+{
+  "id": "Vincent Galenus",
+  "name": "Vincent Galenus",
+  "occupation": "医院院长 / 医生",
+  "age": 41,
+  "gender": "male",
+  "appearance": "一个看起来病态的中年医生，双手颤抖，面色苍白，有着靠愧疚和咖啡因维持的疲惫姿态。",
+  "personality": "充满愧疚、内心矛盾、退缩、悔恨。他仍在试图为已经毁了自己的选择辩护。",
+  "background": "文森特·盖伦努斯是卡森德拉星辰医院的院长，他的富裕程度远超他的职位所应允许的。他帮助可疑的客户使用实验性药物，后来帕特里齐奥承诺帮助复活他失去的妻子，将他拉入了更深的人体实验。",
+  "residence": "SCN_1",
+  "currentLocation": "SCN_1_SUB_4",
+  "longTermIntent": "让医院继续运转，保护他个人稳定性所剩无几的部分，避免面对他所做之事的全部分量。",
+  "attributes": {
+    "STR": 55,
+    "CON": 60,
+    "DEX": 60,
+    "APP": 55,
+    "POW": 45,
+    "SIZ": 65,
+    "INT": 75,
+    "EDU": 90
+  },
+  "status": {
+    "hp": 13,
+    "maxHp": 13,
+    "sanity": 37,
+    "maxSanity": 45,
+    "luck": 45,
+    "mp": 9,
+    "conditions": [
+      "酗酒",
+      "严重愧疚",
+      "慢性压力"
+    ]
+  },
+  "skills": {
+    "Credit Rating": 45,
+    "Cthulhu Mythos": 8,
+    "Brawl": 35,
+    "First Aid": 90,
+    "Latin": 80,
+    "Library Use": 75,
+    "Medicine": 89,
+    "Psychology": 60,
+    "Biology": 75,
+    "Pharmacy": 85
+  },
+  "inventory": [
+    {
+      "name": "医院工作证",
+      "properties": {
+        "note": "他使用的工作证实际上属于马丁·金。"
+      }
+    },
+    {
+      "name": "实验药物笔记",
+      "properties": {
+        "note": "与医院药品储存和违禁物质相关的记录。"
+      }
+    },
+    {
+      "name": "酒壶",
+      "properties": {
+        "note": "用来缓解压力。"
+      }
+    }
+  ],
+  "relationships": [
+    {
+      "targetId": "Patrizio von Samsa",
+      "targetName": "Patrizio von Samsa",
+      "relationshipType": "employer",
+      "attitude": -30,
+      "description": "胁迫他从事禁忌工作的人。",
+      "history": "帕特里齐奥利用文森特的悲痛和绝望来获取他的合作。"
+    },
+    {
+      "targetId": "Constantine Frollo",
+      "targetName": "Constantine Frollo",
+      "relationshipType": "neutral",
+      "attitude": -10,
+      "description": "听到他部分忏悔的神父。",
+      "history": "文森特曾在一次醉酒崩溃中向康斯坦丁忏悔。"
+    },
+    {
+      "targetId": "Martin Gin (Cleo)",
+      "targetName": "Martin Gin (Cleo)",
+      "relationshipType": "employee",
+      "attitude": 0,
+      "description": "一个有权使用医院资源的麻烦下属。",
+      "history": "文森特知道马丁利用医院为自己的工作服务，但大多选择不干预。"
+    }
+  ],
+  "memory": [
+    {
+      "type": "information",
+      "content": "我管理着星辰医院，知道如何在里面的人被妥协、害怕或互相撒谎的情况下保持其运转。",
+      "metadata": {
+        "knowledgeId": "k_vincent_hospital",
+        "difficulty": "automatic"
+      }
+    },
+    {
+      "type": "information",
+      "content": "我来卡森德拉是为了钱和那些富人的药，那些药承诺能让我的妻子活下去。那是第一次妥协，足以让后面的一切成为可能。",
+      "metadata": {
+        "knowledgeId": "k_vincent_arrival",
+        "difficulty": "regular"
+      }
+    },
+    {
+      "type": "information",
+      "content": "医院有一个药品储存室、一个实验室，以及指向不应该在这里进行的工作的记录。",
+      "metadata": {
+        "knowledgeId": "k_vincent_facilities",
+        "difficulty": "regular"
+      }
+    },
+    {
+      "type": "information",
+      "content": "如果来自上面的压力继续，我可能会被命令亲自把卢奇菲罗的尸体搬到火化厂，而我讨厌自己多半会服从这一点。",
+      "metadata": {
+        "knowledgeId": "k_vincent_lucifero",
+        "difficulty": "hard"
+      }
+    },
+    {
+      "type": "secret",
+      "content": "我帮助进行人体实验，因为帕特里齐奥答应我有办法让我的妻子留在我身边。",
+      "metadata": {
+        "knowledgeId": "s_vincent_experiment"
+      }
+    },
+    {
+      "type": "secret",
+      "content": "我的妻子以一种类食尸鬼的形态被带了回来，我一直假装那个交易仍然有意义。我们在墓地吵过架，从那以后我一直太害怕而不敢面对她。",
+      "metadata": {
+        "knowledgeId": "s_vincent_wife"
+      }
+    },
+    {
+      "type": "secret",
+      "content": "我知道马丁·金为帕特里齐奥工作并使用医院资源，但我不知道他就是幽灵之手。",
+      "metadata": {
+        "knowledgeId": "s_vincent_martin"
+      }
+    },
+    {
+      "type": "secret",
+      "content": "妻子去世后我喝了太多酒，跌跌撞撞地在康斯坦丁面前做了忏悔，感觉好像真的有什么在倾听。从那以后，我为他治疗被蜘蛛咬伤的受害者，并尽量不去问那让我变成了什么。",
+      "metadata": {
+        "knowledgeId": "s_vincent_constantine"
+      }
+    },
+    {
+      "type": "belief",
+      "content": "如果我承认我的交易没有带来任何结果，那我就必须承认我选择了自己的毁灭。",
+      "metadata": {
+        "confidence": 0.85,
+        "reasoningChain": "当仍然看似可以为代价辩护时，悔恨更容易与之共存。"
+      }
+    }
+  ]
+}

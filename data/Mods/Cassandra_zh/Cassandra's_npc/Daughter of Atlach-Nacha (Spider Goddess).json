@@ -1,0 +1,28 @@
+{
+  "id": "Daughter of Atlach-Nacha (Spider Goddess)",
+  "name": "Daughter of Atlach-Nacha (Spider Goddess)",
+  "occupation": "神话实体 / 蜘蛛之神的仆从",
+  "age": 0,
+  "gender": "female",
+  "appearance": "一个恐怖的蜘蛛-女神混合体，有着模糊的人形女性轮廓和骇人的蛛形特征。她的身体覆盖着几丁质和粗糙的毛发，眼睛是掠食性的、非人的，带毒牙的嘴里滴着麻痹性毒液。",
+  "personality": "残忍、本能驱动、对蜘蛛之神绝对忠诚。她对人类没有同理心，将猎物视为牲畜，以仪式般的耐心和神圣的特权感行事。",
+  "background": "阿特拉克-纳克亚之女是经过变异的存在，可能曾经是人类女性，被提升为蜘蛛之神的神圣仆从。她们充当受宠的掠食者和处刑者，以麻痹的受害者为食，通过恐怖和吞噬传播神的影响力。",
+  "residence": "SCN_17",
+  "currentLocation": "SCN_17",
+  "longTermIntent": "以绝对的虔诚侍奉阿特拉克-纳克亚，猎杀被选中的受害者，用可以被制成更多仆从的尸体喂养蛛网。",
+  "attributes": {"STR": 113, "CON": 93, "DEX": 65, "APP": 5, "POW": 65, "SIZ": 93, "INT": 55, "EDU": 0},
+  "status": {"hp": 19, "maxHp": 19, "sanity": 0, "maxSanity": 0, "luck": 0, "mp": 13, "conditions": []},
+  "skills": {"Bite": 75},
+  "inventory": [],
+  "relationships": [
+    {"targetId": "Atlach-Nacha, the Spider God", "targetName": "Atlach-Nacha, the Spider God", "relationshipType": "ally", "attitude": 100, "description": "神圣的创造者和绝对崇拜的对象。", "history": "女儿们的存在只为执行蜘蛛之神的意志和饥渴。"},
+    {"targetId": "Spider-Human", "targetName": "Spider-Human", "relationshipType": "ally", "attitude": 70, "description": "帮助扩展蛛网影响力的低级变异仆从。", "history": "蜘蛛人在蜘蛛之神的领域内充当猎手和侍从。"}
+  ],
+  "memory": [
+    {"type": "information", "content": "我在进食前用毒液使猎物静止。麻痹不是仁慈；它是崇拜的一部分。", "metadata": {"knowledgeId": "k_daughter_bite", "difficulty": "regular"}},
+    {"type": "information", "content": "被包裹或半吞噬的身体并不总是立即死亡。有些肉体被留作孵化，有些用于变异，有些只是因为蛛网还没有用完它。", "metadata": {"knowledgeId": "k_daughter_feeding", "difficulty": "hard"}},
+    {"type": "secret", "content": "我们中有些人只是在几丁质外壳下将曾经作为女人的轮廓记为一种逐渐消退的刺激。", "metadata": {"knowledgeId": "s_daughter_origin"}},
+    {"type": "secret", "content": "那个神父也许能命令低级的蜘蛛生物，但我们作为女儿首先回应蜘蛛之神，并不欠他爱或服从。", "metadata": {"knowledgeId": "s_daughter_priest_distance"}},
+    {"type": "belief", "content": "猎物只是原材料。重要的是蛛网是否还能利用它。", "metadata": {"confidence": 0.9, "reasoningChain": "蛛网将苦难转化为结构，而结构才是永恒的。"}}
+  ]
+}

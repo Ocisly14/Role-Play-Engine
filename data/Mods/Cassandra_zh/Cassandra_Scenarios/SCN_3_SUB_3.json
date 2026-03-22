@@ -1,0 +1,78 @@
+{
+  "id": "SCN_3_SUB_3",
+  "name": "档案室",
+  "description": "档案室位于警察局一楼的侧翼，没有窗户，只靠头顶两排老旧的日光灯照明，其中一根灯管已经坏了，剩下的灯光把房间染成一种昏黄偏绿的色调。密密麻麻的铁皮档案柜从地板一直顶到天花板，排成四列狭窄的通道，柜身上贴着手写的年份标签，有些标签已经卷角脱落。空气里浮动着纸张老化特有的酸涩气味，混合着铁锈与灰尘的干燥味道，深吸一口气甚至能感觉到鼻腔里细微的颗粒感。脚下的水泥地面没有铺任何覆盖物，走动时鞋底会沾上一层薄薄的灰。档案柜的抽屉参差不齐地半开着，里面塞满了牛皮纸文件袋和各种厚薄不一的卷宗，有些卷宗被塞歪了，纸页从文件夹边缘探出来。通道尽头的角落堆着几只纸箱，箱口敞着，露出里面杂乱叠放的文件。整个房间安静得只听得见灯管发出的微弱嗡声和偶尔从通风管道传来的一阵轻响。",
+  "parentLocationId": "SCN_3",
+  "items": [
+    {
+      "id": "ITEM_SCN3_4",
+      "name": "卷宗档案柜",
+      "description": "按年份排列的大量卷宗档案柜挤满了房间，抽屉边缘都贴着褪色卷曲的标签。",
+      "type": "container",
+      "containerStats": {
+        "capacity": 40,
+        "locked": false,
+        "contents": []
+      }
+    },
+    {
+      "id": "ITEM_SCN3_8",
+      "name": "敞口纸箱",
+      "description": "几只敞口纸箱，里面塞满尚未来得及归档的文件袋与零散卷宗。",
+      "type": "container",
+      "containerStats": {
+        "capacity": 10,
+        "locked": false,
+        "contents": []
+      }
+    },
+    {
+      "id": "ITEM_SCN3_9",
+      "name": "半坏的荧光灯管",
+      "description": "头顶那根老旧荧光灯管时亮时暗，把狭窄通道切成一段段忽明忽暗的光影。",
+      "type": "lighting",
+      "damaged": true,
+      "isLightSource": true,
+      "lightLevel": 2
+    },
+    {
+      "id": "ITEM_SCN3_10",
+      "name": "索引卡抽屉",
+      "description": "靠门的小抽屉柜里塞满了手写索引卡，用来按年份和案件名检索纸质档案。",
+      "type": "container",
+      "containerStats": {
+        "capacity": 20,
+        "locked": false,
+        "contents": []
+      }
+    }
+  ],
+  "conditions": [
+    {
+      "description": "档案室光线不足，高大的档案柜投下大片阴影",
+      "mechanicalEffect": {
+        "skillPenalty": [
+          {
+            "skill": "Perception",
+            "delta": -20
+          }
+        ]
+      }
+    },
+    {
+      "description": "卷宗数量庞大且摆放不够整齐，详细搜寻需要花费大量时间",
+      "mechanicalEffect": {
+        "skillPenalty": [
+          {
+            "skill": "Perception",
+            "delta": -10
+          }
+        ]
+      }
+    }
+  ],
+  "connections": ["SCN_3_SUB_1"],
+  "itemContexts": {
+    "ITEM_SCN3_8": "角落里堆着几只敞口纸箱，里面塞满了尚未来得及归档的文件袋与零散卷宗。"
+  }
+}

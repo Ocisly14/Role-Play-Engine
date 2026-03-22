@@ -1,0 +1,126 @@
+{
+  "id": "Lux Lynch",
+  "name": "Lux Lynch",
+  "occupation": "警察（腐败）",
+  "age": 27,
+  "gender": "male",
+  "appearance": "一个相貌平平的男人，很容易融入背景，通常穿着便衣警察的装扮，带着谨慎、有些紧张的举止。",
+  "personality": "务实、恐惧、道德沦丧、内心深处充满矛盾。曾经理想主义，现在愤世嫉俗，屈从于权威，带着有负罪感的良心痕迹。",
+  "background": "勒克斯·林奇曾是一个充满激情和理想的年轻人。年轻时，他和同学们揭露了涉及伪造账目和在海外使用童工的企业欺诈。举报毁了他们的职业生涯，几乎让他们陷入法律麻烦。幻想破灭后，勒克斯回到家乡当了警察，靠讨好上级来生存。他逐渐变成了一个腐败的警察，收受贿赂来处理一些小违法事务。虽然他避免犯下真正恶劣的罪行，但现在他被恐惧和依赖所困。",
+  "residence": "SCN_3",
+  "currentLocation": "SCN_3_SUB_1",
+  "longTermIntent": "保护自己不被曝光和报复，维持在警队的位置，防止上级反噬他。",
+  "attributes": {
+    "STR": 55,
+    "CON": 60,
+    "DEX": 55,
+    "APP": 50,
+    "POW": 45,
+    "SIZ": 60,
+    "INT": 60,
+    "EDU": 70
+  },
+  "status": {
+    "hp": 12,
+    "maxHp": 12,
+    "sanity": 45,
+    "maxSanity": 99,
+    "luck": 55,
+    "mp": 9,
+    "conditions": []
+  },
+  "skills": {
+    "Law": 60,
+    "Spot Hidden": 55,
+    "Psychology": 40,
+    "Intimidate": 50,
+    "Firearms (Handgun)": 45,
+    "Stealth": 40
+  },
+  "inventory": [
+    {
+      "name": "警徽和证件",
+      "properties": {
+        "note": "官方警察证件。"
+      }
+    },
+    {
+      "name": "记录非法人情的笔记本",
+      "properties": {
+        "note": "一个小本子，记录着他帮忙掩盖小问题的人。"
+      }
+    },
+    {
+      "name": "制式手枪",
+      "properties": {
+        "note": "标准警用配枪。"
+      }
+    }
+  ],
+  "relationships": [
+    {
+      "targetId": "Patrizio von Samsa",
+      "targetName": "Patrizio von Samsa",
+      "relationshipType": "employer",
+      "attitude": -40,
+      "description": "勒克斯的上级，也是他恐惧和腐败的根源。",
+      "history": "勒克斯通过向帕特里齐奥靠拢获得了晋升，后者后来将他拉入了越来越危险的事务中。"
+    },
+    {
+      "targetId": "Jenny Florence (berforth Locefern)",
+      "targetName": "Jenny Florence (berforth Locefern)",
+      "relationshipType": "enemy",
+      "attitude": -20,
+      "description": "一个黑客，她的死压在勒克斯的良心上。",
+      "history": "勒克斯间接参与了导致她被谋杀的事件链，因为他奉命释放了她的凶手。"
+    }
+  ],
+  "memory": [
+    {
+      "type": "information",
+      "content": "我收受过贿赂，并记录了那些我帮忙掩盖小问题的人。",
+      "metadata": {
+        "knowledgeId": "k_lux_corruption",
+        "difficulty": "automatic"
+      }
+    },
+    {
+      "type": "secret",
+      "content": "我奉命释放了马丁·金，间接让珍妮·弗洛伦斯的凶手逃脱了。",
+      "metadata": {
+        "knowledgeId": "s_lux_martin_release"
+      }
+    },
+    {
+      "type": "secret",
+      "content": "我奉命将折叠刀栽赃到卢奇菲罗的尸体上，并转运了她的尸体。",
+      "metadata": {
+        "knowledgeId": "s_lux_knife_body"
+      }
+    },
+    {
+      "type": "belief",
+      "content": "帕特里齐奥足够危险，以至于保持服从感觉比试图脱身更安全。",
+      "metadata": {
+        "confidence": 0.9,
+        "reasoningChain": "我已经走得太远了，无法假装自己可以干净地抽身。"
+      }
+    },
+    {
+      "type": "information",
+      "content": "帕特里齐奥期望我平息投诉、让文件消失、阻止逮捕变成人们反复谈论的故事。",
+      "metadata": {
+        "knowledgeId": "k_lux_patrol_duties",
+        "difficulty": "regular"
+      }
+    },
+    {
+      "type": "information",
+      "content": "我能活到现在，靠的是让上面的人觉得可靠，让其他所有人觉得我不起眼。",
+      "metadata": {
+        "knowledgeId": "k_lux_survival_pattern",
+        "difficulty": "regular"
+      }
+    }
+  ]
+}

@@ -1,0 +1,130 @@
+{
+  "id": "Kovind",
+  "name": "Kovind",
+  "occupation": "帮派打手 / 赌徒",
+  "age": 39,
+  "gender": "male",
+  "appearance": "一个体格健壮的男人，带着强硬的街头智慧气质；行动自信，时刻警惕周围环境。",
+  "personality": "好斗、令人生畏、务实、善于算计。他享受向他人施压和冒险，但并不粗心大意。",
+  "background": "科文德活跃在当地的地下世界，习惯了暴力、赌博和恐吓。需要时他充当打手，熟练使用枪械。他与塔林一起在教堂地下的秘密赌场工作，以脾气暴躁、喜欢掌握把柄以及愿意让人深陷债务而闻名。",
+  "residence": "SCN_17",
+  "currentLocation": "SCN_17_SUB_4",
+  "longTermIntent": "维持他在赌博世界的影响力，控制欠债者，从地下赌场中获利而不丢面子。",
+  "attributes": {
+    "STR": 45,
+    "CON": 55,
+    "DEX": 55,
+    "APP": 60,
+    "POW": 50,
+    "SIZ": 60,
+    "INT": 65,
+    "EDU": 75
+  },
+  "status": {
+    "hp": 12,
+    "maxHp": 12,
+    "sanity": 50,
+    "maxSanity": 99,
+    "luck": 50,
+    "mp": 10,
+    "conditions": []
+  },
+  "skills": {
+    "Brawl": 65,
+    "Handgun": 65,
+    "Shotgun": 65,
+    "Credit Rating": 30,
+    "Spot Hidden": 60,
+    "Stealth": 60,
+    "Listen": 60,
+    "Intimidate": 60,
+    "Track": 50,
+    "Gambling": 70
+  },
+  "inventory": [
+    {
+      "name": "手枪",
+      "properties": {
+        "note": "随身携带的隐蔽手枪用于防身。"
+      }
+    },
+    {
+      "name": "赌博赢来的现金",
+      "properties": {
+        "note": "最近赌博赢来的一叠钞票。"
+      }
+    },
+    {
+      "name": "香烟",
+      "properties": {
+        "note": "一包香烟。"
+      }
+    }
+  ],
+  "relationships": [
+    {
+      "targetId": "Tallinn",
+      "targetName": "Tallinn",
+      "relationshipType": "rival",
+      "attitude": -30,
+      "description": "塔林喜欢叫他'小老鼠'来激怒他。",
+      "history": "他们的关系以言语挑衅和相互恼怒为特征，而非公开的信任。"
+    },
+    {
+      "targetId": "Nancy Charlotte",
+      "targetName": "Nancy Charlotte",
+      "relationshipType": "enemy",
+      "attitude": -60,
+      "description": "一个欠债者，他用她的不雅照片作为筹码。",
+      "history": "科文德用赌博骗局困住了南希，并将照片作为抵押。"
+    }
+  ],
+  "memory": [
+    {
+      "type": "information",
+      "content": "我与塔林一起在教堂下方的地下赌场工作，当欠债者不配合时负责施压。",
+      "metadata": {
+        "knowledgeId": "k_kovind_casino",
+        "difficulty": "automatic"
+      }
+    },
+    {
+      "type": "information",
+      "content": "赌场之所以能存活，是因为人们害怕在那里丢脸胜过害怕警察，而我确保这种恐惧保持有用。",
+      "metadata": {
+        "knowledgeId": "k_kovind_casino_pressure",
+        "difficulty": "regular"
+      }
+    },
+    {
+      "type": "secret",
+      "content": "我持有南希·夏洛特的不雅照片，并将其作为她赌债的抵押品。",
+      "metadata": {
+        "knowledgeId": "s_kovind_nancy_photos"
+      }
+    },
+    {
+      "type": "secret",
+      "content": "我派卢奇菲罗去收南希的债，并保留了一些照片作为筹码。",
+      "metadata": {
+        "knowledgeId": "s_kovind_lucifero"
+      }
+    },
+    {
+      "type": "information",
+      "content": "我把卢奇菲罗当作有用的收债人，因为他看起来没我那么有威胁性，这在钱需要悄悄流动时有帮助。",
+      "metadata": {
+        "knowledgeId": "k_kovind_lucifero",
+        "difficulty": "regular"
+      }
+    },
+    {
+      "type": "belief",
+      "content": "当我想让人们遵守承诺时，我更信任恐惧和债务而非仁慈。",
+      "metadata": {
+        "confidence": 0.85,
+        "reasoningChain": "赌场之所以存活，是因为人们相信违约的后果比偿还更糟。"
+      }
+    }
+  ]
+}

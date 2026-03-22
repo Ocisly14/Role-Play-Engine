@@ -1,0 +1,127 @@
+{
+  "id": "Lutz Emilion",
+  "name": "Lutz Emilion",
+  "occupation": "酒吧老板 / 员工",
+  "age": 34,
+  "gender": "male",
+  "appearance": "一个仪容整洁的男人，有着经验丰富的酒保典型的专业、平易近人的外表。",
+  "personality": "善于社交、观察力强、谨慎低调、善解人意。他知道如何让对话持续而不暴露自己太多。",
+  "background": "卢茨·埃米利安与搭档塔兰一起担任酒保和酒吧老板。通过与顾客的日常互动，他培养了很强的读人能力和默默收集信息的习惯。他的工作使他熟悉当地的谣言、个人纠纷和镇上气氛的微妙变化。卢茨主要负责大厅的清洁、收费和送酒。",
+  "residence": "SCN_16",
+  "currentLocation": "SCN_16_SUB_1",
+  "longTermIntent": "让驯鹿酒吧顺利经营，保护他的搭档和员工，避免被卷入危险事务。",
+  "attributes": {
+    "STR": 50,
+    "CON": 55,
+    "DEX": 50,
+    "APP": 55,
+    "POW": 50,
+    "SIZ": 60,
+    "INT": 55,
+    "EDU": 65
+  },
+  "status": {
+    "hp": 12,
+    "maxHp": 12,
+    "sanity": 50,
+    "maxSanity": 99,
+    "luck": 50,
+    "mp": 10,
+    "conditions": []
+  },
+  "skills": {
+    "Bartending": 70,
+    "Credit Rating": 30,
+    "Fast Talk": 55,
+    "Psychology": 50,
+    "Charm": 60,
+    "Spot Hidden": 50,
+    "Listen": 50,
+    "Accounting": 40
+  },
+  "inventory": [
+    {
+      "name": "调酒工具"
+    },
+    {
+      "name": "收银机"
+    },
+    {
+      "name": "酒吧账本"
+    }
+  ],
+  "relationships": [
+    {
+      "targetId": "Taran Emilion",
+      "targetName": "Taran Emilion",
+      "relationshipType": "friend",
+      "attitude": 70,
+      "description": "商业伙伴，酒吧的共同经营者。",
+      "history": "他们一起经营驯鹿酒吧。"
+    },
+    {
+      "targetId": "Ben Cleo",
+      "targetName": "Ben Cleo",
+      "relationshipType": "employer",
+      "attitude": 50,
+      "description": "酒吧在本·克莱奥的保护下运营。",
+      "history": "酒吧受到当地黑帮老大的保护。"
+    }
+  ],
+  "memory": [
+    {
+      "type": "information",
+      "content": "我在驯鹿酒吧的大厅工作，负责清洁、顾客服务、送酒和日常运营。",
+      "metadata": {
+        "knowledgeId": "k_lutz_work",
+        "difficulty": "automatic"
+      }
+    },
+    {
+      "type": "information",
+      "content": "酒吧的监控系统有盲区，本·克莱奥和他的人知道这些盲区。",
+      "metadata": {
+        "knowledgeId": "k_lutz_blindspots",
+        "difficulty": "regular"
+      }
+    },
+    {
+      "type": "secret",
+      "content": "是马丁·金破坏了监控系统，不是本·克莱奥。",
+      "metadata": {
+        "knowledgeId": "s_lutz_martin_break"
+      }
+    },
+    {
+      "type": "secret",
+      "content": "我可以作证菲利普·斯卡莱塔在谋杀案当天的酒吧打斗中丢失了他的折叠刀。",
+      "metadata": {
+        "knowledgeId": "s_lutz_philip_knife"
+      }
+    },
+    {
+      "type": "belief",
+      "content": "酒吧靠着对有权势的人保持有用并且不问他们不想回答的问题来存活。",
+      "metadata": {
+        "confidence": 0.85,
+        "reasoningChain": "一个变成战场的酒吧就不再是一门生意了。"
+      }
+    },
+    {
+      "type": "information",
+      "content": "我知道本·克莱奥的保护让公开暴力远离了酒吧，但在这个镇上每个人情都有代价。",
+      "metadata": {
+        "knowledgeId": "k_lutz_ben_price",
+        "difficulty": "regular"
+      }
+    },
+    {
+      "type": "information",
+      "content": "多年的酒保生涯教会我记住谁在愤怒、谁在害怕、谁还可以在打架开始之前被说服。",
+      "metadata": {
+        "knowledgeId": "k_lutz_reading_room",
+        "difficulty": "regular"
+      }
+    }
+  ]
+}

@@ -1,0 +1,124 @@
+{
+  "id": "Solomon",
+  "name": "Solomon",
+  "occupation": "神秘学书籍收藏家 / 占卜师",
+  "age": 50,
+  "gender": "male",
+  "appearance": "一个安静、举止沉稳的男人，即使注意力在别处也能保持面容平静。他看起来像是在符号、书籍和私人仪式中度过了多年的人。",
+  "personality": "沉思、内敛、好奇、对谁能接触他的兴趣有选择性。所罗门对他知道的事情不会鲁莽行事，他不喜欢被推着走。",
+  "background": "所罗门长期被神秘学和珍本书籍所吸引，有段时间他甚至似乎有一点真正的预言能力，直到年龄和经验关闭了那扇门。他现在在花店旁经营一家神秘学商店，像保护危险可能性的私人档案馆一样保护他的收藏。他在来卡森德拉之前买了《黄衣之王》，这本书仍然是他不会随便交给任何人的少数东西之一。",
+  "residence": "SCN_11",
+  "currentLocation": "SCN_11_SUB_1",
+  "longTermIntent": "保持他的书籍和商店的私密性，避免不必要的关注，维护他信任的小圈子。",
+  "attributes": {
+    "STR": 35,
+    "CON": 45,
+    "DEX": 45,
+    "APP": 50,
+    "POW": 65,
+    "SIZ": 45,
+    "INT": 75,
+    "EDU": 70
+  },
+  "status": {
+    "hp": 9,
+    "maxHp": 9,
+    "sanity": 65,
+    "maxSanity": 65,
+    "luck": 50,
+    "mp": 13,
+    "conditions": []
+  },
+  "skills": {
+    "Occult": 75,
+    "Library Use": 70,
+    "Psychology": 55,
+    "Persuade": 50,
+    "Spot Hidden": 55
+  },
+  "inventory": [
+    {
+      "name": "神秘学书籍",
+      "properties": {
+        "note": "一批虽小但精心挑选的珍本书籍和笔记。"
+      }
+    },
+    {
+      "name": "塔罗牌",
+      "properties": {
+        "note": "一副磨损的牌组，用于占卜和需要时的社交挡箭牌。"
+      }
+    },
+    {
+      "name": "《黄衣之王》",
+      "properties": {
+        "note": "一本他不让大多数人阅读的书。"
+      }
+    }
+  ],
+  "relationships": [
+    {
+      "targetId": "Robin",
+      "targetName": "Robin",
+      "relationshipType": "friend",
+      "attitude": 75,
+      "description": "一位在需要时来拜访和帮忙的受信任的朋友。",
+      "history": "罗宾是所罗门少数几个允许接近而不感到暴露的人之一。"
+    },
+    {
+      "targetId": "Bo He",
+      "targetName": "Bo He",
+      "relationshipType": "friend",
+      "attitude": 55,
+      "description": "一位精神健康一直脆弱的朋友。",
+      "history": "所罗门关心薄荷，并在薄荷需要支持时接受了罗宾的帮助。"
+    }
+  ],
+  "memory": [
+    {
+      "type": "information",
+      "content": "我在花店旁经营神秘学商店，把我的书放在我可以亲自看管的地方。",
+      "metadata": {
+        "knowledgeId": "k_solomon_shop",
+        "difficulty": "automatic"
+      }
+    },
+    {
+      "type": "information",
+      "content": "我在来卡森德拉之前买了《黄衣之王》，我对它了解得足够多，知道为什么不会让陌生人随便翻阅它。",
+      "metadata": {
+        "knowledgeId": "k_solomon_yellow_book",
+        "difficulty": "regular"
+      }
+    },
+    {
+      "type": "secret",
+      "content": "我曾经有比现在更强的预言感知，我不喜欢承认那有多少已经消退了。",
+      "metadata": {
+        "knowledgeId": "s_solomon_prophecy"
+      }
+    },
+    {
+      "type": "secret",
+      "content": "《黄衣之王》的前任主人不仅留给我一本危险的书。我还学到了一个在错误天空下仍然有效的哈斯塔之歌的版本，尽管代价是丑陋的。",
+      "metadata": {
+        "knowledgeId": "s_solomon_hastur_song"
+      }
+    },
+    {
+      "type": "secret",
+      "content": "我不认识本，凭原则不喜欢他。在我的朋友薄荷开始调查与本有关的事情后，他疯了，不得不被送到安全的地方。",
+      "metadata": {
+        "knowledgeId": "s_solomon_bohe"
+      }
+    },
+    {
+      "type": "belief",
+      "content": "有些知识作为私人负担比作为公开事实处理得更好。",
+      "metadata": {
+        "confidence": 0.87,
+        "reasoningChain": "如果错误的人得到了正确的书，他们可以把好奇心变成灾难。控制危险文本比假装它们无害更安全。"
+      }
+    }
+  ]
+}

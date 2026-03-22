@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import type { NpcStatusInfo } from "../../services/simulationApi";
 
 interface NpcCardProps {
@@ -7,6 +8,8 @@ interface NpcCardProps {
 }
 
 export function NpcCard({ npc, isSelected, onClick }: NpcCardProps) {
+  const { t } = useTranslation("simulation");
+
   return (
     <div
       className={`p-2 cursor-pointer border-b border-slate-200/60 hover:bg-white/40 transition-colors ${
@@ -25,15 +28,15 @@ export function NpcCard({ npc, isSelected, onClick }: NpcCardProps) {
       {npc.isAlive && (
         <div className="text-xs text-slate-800 mt-1">
           <span className="text-rose-500">
-            HP: {npc.hp}/{npc.maxHp}
+            {t("npc.hp")}: {npc.hp}/{npc.maxHp}
           </span>
           {" "}
           <span className="text-sky-500">
-            SAN: {npc.sanity}/{npc.maxSanity}
+            {t("npc.san")}: {npc.sanity}/{npc.maxSanity}
           </span>
           {npc.currentAction && (
             <div className="text-slate-900 mt-0.5 truncate">
-              正在进行中: {npc.currentAction}
+              {t("npc.currentAction")}: {npc.currentAction}
             </div>
           )}
         </div>

@@ -274,14 +274,16 @@ export class DynamicGameStateManager {
   /**
    * Deserialize state from storage (converts Objects back to Maps, ISO strings back to Dates)
    * @param data - Serialized state data
-   * @param checkpointGameDay - Optional: kept for backward compatibility (unused)
-   * @param checkpointTimeOfDay - Optional: kept for backward compatibility (unused)
+   * @param restoredGameDay - Optional legacy argument (unused)
+   * @param restoredTimeOfDay - Optional legacy argument (unused)
    */
   static deserialize(
     data: any,
-    checkpointGameDay?: number,
-    checkpointTimeOfDay?: string
+    restoredGameDay?: number,
+    restoredTimeOfDay?: string
   ): DynamicGameState {
+    void restoredGameDay;
+    void restoredTimeOfDay;
     // Convert scenes from object back to Map
     const scenes = new Map<string, DynamicScene>();
     if (data.scenes) {

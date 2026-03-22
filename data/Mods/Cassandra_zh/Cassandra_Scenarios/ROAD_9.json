@@ -1,0 +1,48 @@
+{
+  "id": "ROAD_9",
+  "name": "新月街C大道",
+  "description": "从新月街十字路口向南延伸的大道，沿途有菲利普的住宅。",
+  "parentLocationId": "OUTDOOR",
+  "endpointA": "JUNC_5",
+  "endpointB": "JUNC_10",
+  "travelTimeMinutes": 4,
+  "alongConnections": [],
+  "items": [
+    {
+      "id": "ITEM_ROAD9_1",
+      "name": "住户垃圾桶",
+      "description": "几只颜色各异的住户垃圾桶，桶盖上压着防风用的砖头。",
+      "type": "other"
+    },
+    {
+      "id": "ITEM_ROAD9_2",
+      "name": "门廊小灯",
+      "description": "几户人家的门廊小灯朝向街面，到了夜里只能照亮门前窄窄一片台阶。",
+      "type": "lighting",
+      "isLightSource": true,
+      "lightLevel": 2
+    },
+    {
+      "id": "ITEM_ROAD9_3",
+      "name": "沿街邮箱",
+      "description": "低矮木栅栏旁固定着一排住户邮箱，看得出经常有人随手拍上盖子。",
+      "type": "other"
+    }
+  ],
+  "conditions": [
+    {
+      "description": "露天街道，受天气影响。通往菲利普住宅的安静街道。",
+      "mechanicalEffect": {
+        "skillPenalty": [
+          {
+            "skill": "Listen",
+            "delta": 10
+          }
+        ]
+      }
+    }
+  ],
+  "itemContexts": {
+    "ITEM_ROAD9_1": "几只颜色不同的垃圾桶沿路摆放，盖子上压着砖头防止被风掀翻。"
+  }
+}

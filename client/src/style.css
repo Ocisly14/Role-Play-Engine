@@ -2433,16 +2433,34 @@ textarea {
   box-sizing: border-box;
 }
 
+.sim-header-center {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  white-space: nowrap;
+}
+
 .sim-header h1 {
-  font-size: 1.5rem;
+  font-size: 1.25rem;
   color: var(--title);
   margin: 0;
   font-family: var(--serif);
   font-weight: 700;
-  position: absolute;
-  left: 50%;
-  transform: translateX(-50%);
-  white-space: nowrap;
+}
+
+.sim-header-info {
+  font-size: 1.25rem;
+  font-family: var(--serif);
+  font-weight: 500;
+}
+
+.sim-header-separator {
+  font-size: 1.25rem;
+  color: var(--accent);
+  font-weight: 300;
 }
 
 .sim-header-spacer {
@@ -2577,7 +2595,16 @@ textarea {
   }
 
   .sim-header h1 {
-    font-size: 1rem;
+    font-size: 0.9rem;
+  }
+
+  .sim-header-info,
+  .sim-header-separator {
+    font-size: 0.9rem;
+  }
+
+  .sim-header-center {
+    gap: 6px;
   }
 
   .sim-header-spacer--back {

@@ -15,6 +15,16 @@ export interface NpcStatusInfo {
   location: string;
   inventory: Item[];
   isAlive: boolean;
+  // Profile fields
+  occupation?: string;
+  age?: number;
+  gender?: string;
+  appearance?: string;
+  personality?: string;
+  background?: string;
+  backstory?: string;
+  residence?: string;
+  longTermIntent?: string;
 }
 
 export interface TopologyResponse {

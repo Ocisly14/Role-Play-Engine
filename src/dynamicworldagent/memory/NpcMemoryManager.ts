@@ -136,13 +136,13 @@ export class NpcMemoryManager {
     }
   }
 
-  // ===== Checkpoint =====
+  // ===== History cleanup =====
 
-  async deletePostCheckpoint(
+  async deleteAfterTime(
     sessionId: string,
-    checkpointCreatedAt: Date
+    cutoffCreatedAt: Date
   ): Promise<void> {
-    await this.store.deletePostCheckpoint(sessionId, checkpointCreatedAt);
+    await this.store.deleteAfterTime(sessionId, cutoffCreatedAt);
   }
 
   // ===== Belief Update =====

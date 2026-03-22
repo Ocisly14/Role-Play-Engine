@@ -1,0 +1,156 @@
+{
+  "id": "Simon Laplace (Simon)",
+  "name": "Simon Laplace (Simon)",
+  "occupation": "黑客 / 流浪者",
+  "age": 30,
+  "gender": "male",
+  "appearance": "一个瘦弱、疲惫的年轻人，头发凌乱，眼下有黑眼圈，那种松散的姿态让他即使警觉时看起来也像半睡半醒。直到话题转向技术或个人事务时他才显得不像那么无害。",
+  "personality": "温和、焦虑、善于观察、谨慎给予信任。西蒙想帮助人，但他也知道这个镇子很危险，而且他自己的脑袋没有它应该的那么简单。",
+  "background": "西蒙在虐待中长大，早早学会了如何通过溜走来生存，后来把自己培养成了一个能在镇上信息流中保持一只脚的黑客。他与南希在多年漂泊后来到卡森德拉，试图建立安静的生活，但他不断发现证据表明这个镇子被顶层某种腐烂的东西捆绑在一起。他想保护人们，阻止帕特里齐奥，并在不引起错误关注的情况下保护南希的安全。",
+  "residence": "SCN_9",
+  "currentLocation": "SCN_9_SUB_3",
+  "longTermIntent": "保护南希的安全，揭露或破坏帕特里齐奥的网络，并对自己的生活保持足够的控制以活下去。",
+  "attributes": {
+    "STR": 40,
+    "CON": 50,
+    "DEX": 55,
+    "APP": 45,
+    "POW": 65,
+    "SIZ": 50,
+    "INT": 80,
+    "EDU": 75
+  },
+  "status": {
+    "hp": 10,
+    "maxHp": 10,
+    "sanity": 55,
+    "maxSanity": 70,
+    "luck": 55,
+    "mp": 13,
+    "conditions": []
+  },
+  "skills": {
+    "Computer Use": 80,
+    "Electronics": 70,
+    "Stealth": 55,
+    "Spot Hidden": 60,
+    "Library Use": 55,
+    "Psychology": 50
+  },
+  "inventory": [
+    {
+      "name": "黑头工作站",
+      "properties": {
+        "note": "花店楼上有他用来监视卡森德拉的显示器和网络设备。"
+      }
+    },
+    {
+      "name": "门禁卡复制器",
+      "properties": {
+        "note": "一台小机器，可在获得门禁卡时复制它们。"
+      }
+    },
+    {
+      "name": "加密文件",
+      "properties": {
+        "note": "他不想丢失的可疑记录、图像和痕迹的副本。"
+      }
+    }
+  ],
+  "relationships": [
+    {
+      "targetId": "Nancy Charlotte",
+      "targetName": "Nancy Charlotte",
+      "relationshipType": "friend",
+      "attitude": 85,
+      "description": "他最在乎并想要保护的人。",
+      "history": "在帮助南希逃离她自己的家庭困境后，西蒙围绕着保护南希并让她留在身边建立了自己的生活。"
+    },
+    {
+      "targetId": "Patrizio von Samsa",
+      "targetName": "Patrizio von Samsa",
+      "relationshipType": "rival",
+      "attitude": -40,
+      "description": "西蒙认为在权力和仪式背后隐藏着有毒东西的镇领导。",
+      "history": "西蒙一直在观察帕特里齐奥的网络扩张，并确信这个人是卡森德拉所面临问题的一部分。"
+    }
+  ],
+  "memory": [
+    {
+      "type": "information",
+      "content": "我从花店楼上工作，那里的网络设备让我比大多数人都更好地看到卡森德拉。",
+      "metadata": {
+        "knowledgeId": "k_simon_safehouse",
+        "difficulty": "automatic"
+      }
+    },
+    {
+      "type": "information",
+      "content": "我知道阿纳托尔的存在。我能感觉到他的一些行为触及了我的生活，但我们的记忆并不完全吻合，他可以对我隐瞒事情。",
+      "metadata": {
+        "knowledgeId": "k_simon_anatole",
+        "difficulty": "regular"
+      }
+    },
+    {
+      "type": "information",
+      "content": "南希是第一个把我当作一个人而不是一个问题来对待的人。重新找到她并保护她的安全成为我生命中唯一仍然值得做的事情。",
+      "metadata": {
+        "knowledgeId": "k_simon_nancy",
+        "difficulty": "automatic"
+      }
+    },
+    {
+      "type": "information",
+      "content": "我有证据表明帕特里齐奥的影响力延伸得比应有的更远，我不信任他周围的人。",
+      "metadata": {
+        "knowledgeId": "k_simon_patrizio",
+        "difficulty": "regular"
+      }
+    },
+    {
+      "type": "information",
+      "content": "大约一年前，我在两个不同的反追踪关闭之前从帕特里齐奥的电脑里拉出了一个图像文件。文字已经消失了，但我确定丢失的材料描述了某种邪教和可怕的东西。",
+      "metadata": {
+        "knowledgeId": "k_simon_stolen_file",
+        "difficulty": "hard"
+      }
+    },
+    {
+      "type": "secret",
+      "content": "我是一个黑客，如果这成为公开的知识，我可能很快就会成为目标。",
+      "metadata": {
+        "knowledgeId": "s_simon_hacker_identity"
+      }
+    },
+    {
+      "type": "secret",
+      "content": "我1988年在法国经历的事情与南希的母亲、一个邪教和一场火车灾难有关。我不谈论它，因为那段历史中太多东西仍然可能害死人。",
+      "metadata": {
+        "knowledgeId": "s_simon_1988"
+      }
+    },
+    {
+      "type": "secret",
+      "content": "我曾劫持当地广播指控帕特里齐奥是邪教徒。他很快将其抹除了，这足以让我确信我已经让自己对错误的人可见了。",
+      "metadata": {
+        "knowledgeId": "s_simon_broadcast"
+      }
+    },
+    {
+      "type": "secret",
+      "content": "布鲁诺让我担心，因为我曾半信半疑地认为他属于帕特里齐奥那一边。如果他实际上正在推进对我发现的同样的腐烂问题，那他已经处于危险之中，而我可能严重误判了他。",
+      "metadata": {
+        "knowledgeId": "s_simon_bruno"
+      }
+    },
+    {
+      "type": "belief",
+      "content": "这个镇子被秘密维系着，唯一的生存之道是在网络理解你之前先理解网络。",
+      "metadata": {
+        "confidence": 0.89,
+        "reasoningChain": "这里每一个看起来普通的地方都有隐藏的联系。如果我无法绘制那些联系，我就无法保护南希或我自己。"
+      }
+    }
+  ]
+}

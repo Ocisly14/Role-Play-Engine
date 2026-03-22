@@ -1,0 +1,95 @@
+{
+  "id": "Nyogtha",
+  "name": "Nyogtha",
+  "occupation": "旧日支配者 / 地下宇宙实体",
+  "age": 999999999,
+  "gender": "N/A",
+  "appearance": "一团巨大的、无定形的冰冷凝胶状物质，布满无数微小的裂隙。它的身体不断渗出和蠕动，仿佛大地本身被撕开并赋予了恶意的生命。",
+  "personality": "一种栖息在地下黑暗中的无形异质智慧，声称克莱奥家族的血脉归它所有。",
+  "background": "尼约格塔是一个古老的地下宇宙实体，被归类于旧日支配者或同等规模的存在。它并不完全存在于物质世界中，仅通过强大的仪式或维度裂隙显现。",
+  "residence": "SCN_7",
+  "currentLocation": "SCN_7",
+  "longTermIntent": "将活物拖入地下深渊，保持大地的空洞和饥饿，维护让它在需要时浮出表面的血脉和仪式。",
+  "attributes": {
+    "STR": 425,
+    "CON": 200,
+    "DEX": 100,
+    "APP": 0,
+    "POW": 140,
+    "SIZ": 400,
+    "INT": 100,
+    "EDU": 0
+  },
+  "status": {
+    "hp": 60,
+    "maxHp": 60,
+    "sanity": 0,
+    "maxSanity": 0,
+    "luck": 0,
+    "mp": 28,
+    "conditions": []
+  },
+  "skills": {
+    "Fighting": 100
+  },
+  "inventory": [],
+  "relationships": [
+    {
+      "targetId": "Martin Gin (Cleo)",
+      "targetName": "Martin Gin (Cleo)",
+      "relationshipType": "enemy",
+      "attitude": 0,
+      "description": "一个正被地下呼唤吸引的克莱奥血脉后裔。",
+      "history": "克莱奥家族数代前与尼约格塔订立了契约。"
+    },
+    {
+      "targetId": "Ben Cleo",
+      "targetName": "Ben Cleo",
+      "relationshipType": "enemy",
+      "attitude": 0,
+      "description": "克莱奥圈子的一个被收养成员，同样受制于家族契约。",
+      "history": "本在克莱奥家族中的位置将他与同样的地下遗产联系在一起。"
+    }
+  ],
+  "memory": [
+    {
+      "type": "information",
+      "content": "我的物质无视普通伤害。任何攻击的第一部分往往浪费在物质本身而非我的身上。",
+      "metadata": {
+        "knowledgeId": "k_nyogtha_defense",
+        "difficulty": "hard"
+      }
+    },
+    {
+      "type": "information",
+      "content": "当我显现时，我周围的地面和隧道成为移动、坍塌和消失的最便捷路径。",
+      "metadata": {
+        "knowledgeId": "k_nyogtha_terrain",
+        "difficulty": "regular"
+      }
+    },
+    {
+      "type": "secret",
+      "content": "当生命值降至零时，我从物质世界被驱逐而非被摧毁。深渊依然存在，我可以稍后通过它回来。",
+      "metadata": {
+        "knowledgeId": "s_nyogtha_banishment"
+      }
+    },
+    {
+      "type": "belief",
+      "content": "大地不是坚固的。它是一张还没有完全张开的嘴。",
+      "metadata": {
+        "confidence": 0.95,
+        "reasoningChain": "任何被掩埋足够久的东西都会成为下方黑暗的一部分。"
+      }
+    },
+    {
+      "type": "information",
+      "content": "我可以像人走过门廊一样轻松地穿过地基、竖井、水井和地陷。",
+      "metadata": {
+        "knowledgeId": "k_nyogtha_tunnels",
+        "difficulty": "hard"
+      }
+    }
+  ]
+}

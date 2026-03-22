@@ -62,6 +62,7 @@ export interface SimulationStatus {
   currentTime: string;
   ticksExecuted: number;
   stopReason?: StopReason;
+  weather?: string;
 }
 
 export interface SimulationRuntimeRecord {

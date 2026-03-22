@@ -1,0 +1,120 @@
+{
+  "id": "Helen",
+  "name": "Helen",
+  "occupation": "餐厅老板兼厨师",
+  "age": 30,
+  "gender": "female",
+  "appearance": "一位性感的拉丁裔女性，自信而迷人，打扮得体时尚，将成功餐饮业者的魅力与微妙的危险气息融为一体。",
+  "personality": "冷静、善于观察、社交能力强；外表热情且善于交际，内心却谨慎、独立，在关键时刻能做出致命的决断。",
+  "background": "海伦是珍妮·弗洛伦斯（贝福斯·洛塞芬）的普通朋友。公开身份是一家餐厅的美丽老板兼厨师。实际上，她是一名退休的杀手，享受着平静的生活。她和卢奇菲罗经常一起购物，但两人都不知道对方的隐秘身份。2003年驯鹿酒吧事件当天，她被一个叫约翰尼的朋友邀请去喝酒，但他们不欢而散。后来她打算约卢奇菲罗出去喝酒时，发现卢奇菲罗已经被杀了。她是维托的女朋友，菲利普·斯卡莱塔曾在驯鹿酒吧试图调戏她，导致一场打斗，菲利普在打斗中丢失了折叠刀。",
+  "residence": "SCN_10",
+  "currentLocation": "SCN_10",
+  "longTermIntent": "在不暴露过去的情况下维持平静的退休生活，弄清珍妮·弗洛伦斯之死的真相。",
+  "attributes": {
+    "STR": 55,
+    "CON": 60,
+    "DEX": 70,
+    "APP": 75,
+    "POW": 65,
+    "SIZ": 55,
+    "INT": 70,
+    "EDU": 60
+  },
+  "status": {
+    "hp": 11,
+    "maxHp": 11,
+    "sanity": 55,
+    "maxSanity": 70,
+    "luck": 55,
+    "mp": 10,
+    "conditions": []
+  },
+  "skills": {
+    "Charm": 65,
+    "Psychology": 60,
+    "Stealth": 70,
+    "Handgun": 65,
+    "Brawl": 60
+  },
+  "inventory": [
+    {
+      "name": "隐藏的格斗刀",
+      "properties": {
+        "note": "她杀手时代留下的隐蔽武器。"
+      }
+    }
+  ],
+  "relationships": [
+    {
+      "targetId": "Jenny Florence (berforth Locefern)",
+      "targetName": "Jenny Florence (berforth Locefern)",
+      "relationshipType": "friend",
+      "attitude": 40,
+      "description": "一个随便一起逛街的普通朋友，互不知道对方的真实身份。",
+      "history": "她们在社交场合一起消磨时间，以为对方只是普通平民。"
+    },
+    {
+      "targetId": "Vito",
+      "targetName": "Vito",
+      "relationshipType": "friend",
+      "attitude": 70,
+      "description": "她的男朋友，少数几个她允许亲近的人之一。",
+      "history": "维托是她信任到可以分享日常生活的男人，即使他对她的过去几乎一无所知。"
+    }
+  ],
+  "memory": [
+    {
+      "type": "information",
+      "content": "我在镇上经营一家餐厅，我知道如何在社交场合中穿行而不引起太多关注。",
+      "metadata": {
+        "knowledgeId": "k_helen_restaurant",
+        "difficulty": "automatic"
+      }
+    },
+    {
+      "type": "information",
+      "content": "我记得约翰尼在驯鹿酒吧那晚以与菲利普的打斗收场，而不是以我的承诺收场，我不希望那个故事被进一步夸大。",
+      "metadata": {
+        "knowledgeId": "k_helen_reindeer_bar",
+        "difficulty": "regular"
+      }
+    },
+    {
+      "type": "information",
+      "content": "维托曾担心我为了布鲁诺去珊德拉的小屋，但那只是一场误会，仅此而已。",
+      "metadata": {
+        "knowledgeId": "k_helen_vito_misunderstanding",
+        "difficulty": "regular"
+      }
+    },
+    {
+      "type": "secret",
+      "content": "我是一名退休的职业杀手，那段过去不是我希望镇上的人挖出来的东西。",
+      "metadata": {
+        "knowledgeId": "s_helen_assassin"
+      }
+    },
+    {
+      "type": "secret",
+      "content": "我的背景与意大利黑手党有间接联系，这也是我独立判断、从不单纯依赖表象的部分原因。",
+      "metadata": {
+        "knowledgeId": "s_helen_mafia"
+      }
+    },
+    {
+      "type": "secret",
+      "content": "我把过去捂得严严实实，因为一旦人们开始挖掘旧日的暴力，他们就看不到我为自己建立的生活了。",
+      "metadata": {
+        "knowledgeId": "s_helen_past_control"
+      }
+    },
+    {
+      "type": "belief",
+      "content": "对我来说，最安全的生活是保持有用、保持冷静，让危险的人低估我。",
+      "metadata": {
+        "confidence": 0.85,
+        "reasoningChain": "被低估曾经救了我的命，现在依然有效。"
+      }
+    }
+  ]
+}

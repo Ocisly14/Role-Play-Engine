@@ -1,0 +1,72 @@
+{
+  "id": "ROAD_3",
+  "name": "卡森德拉南新街",
+  "description": "案发的街道，虽然和卡森北新街只隔着一小段距离，但风格给人一种大相径庭的感觉。沿途有酒吧、教堂和五金店。",
+  "parentLocationId": "OUTDOOR",
+  "endpointA": "JUNC_3",
+  "endpointB": "JUNC_4",
+  "travelTimeMinutes": 10,
+  "alongConnections": [
+    {
+      "sceneId": "SCN_16_SUB_1",
+      "position": 0.76
+    },
+    {
+      "sceneId": "SCN_17_SUB_1",
+      "position": 0.49
+    },
+    {
+      "sceneId": "SCN_18_SUB_1",
+      "position": 0.58
+    }
+  ],
+  "items": [
+    {
+      "id": "ITEM_ROAD3_1",
+      "name": "教堂告示栏",
+      "description": "路边的教堂告示栏里夹着本周弥撒时间与慈善募捐通知。",
+      "type": "document"
+    },
+    {
+      "id": "ITEM_ROAD3_2",
+      "name": "酒吧霓虹牌",
+      "description": "一块鹿角形霓虹招牌，部分灯管已经不亮。",
+      "type": "lighting",
+      "isLightSource": true,
+      "lightLevel": 3,
+      "damaged": true
+    },
+    {
+      "id": "ITEM_ROAD3_3",
+      "name": "五金货箱",
+      "description": "几只装着钉子和锯条的木箱，箱盖边缘磨得发毛。",
+      "type": "container",
+      "containerStats": {
+        "capacity": 10,
+        "locked": false,
+        "contents": []
+      }
+    }
+  ],
+  "conditions": [
+    {
+      "description": "露天街道，受天气影响。案发所在的街道，近期气氛紧张。",
+      "mechanicalEffect": {
+        "skillPenalty": [
+          {
+            "skill": "Perception",
+            "delta": -10
+          },
+          {
+            "skill": "Stealth",
+            "delta": -10
+          }
+        ]
+      }
+    }
+  ],
+  "itemContexts": {
+    "ITEM_ROAD3_2": "从驯鹿酒吧外墙伸出的霓虹牌白天也能看见轮廓，鹿角形状的灯管有几段已经不亮。",
+    "ITEM_ROAD3_3": "五金店门外堆着几只装钉子和锯条的木箱，箱盖边缘磨得发毛。"
+  }
+}

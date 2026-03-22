@@ -1,9 +1,11 @@
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
 import { ModSelector } from "../components/ModSelector";
 import * as simApi from "../services/simulationApi";
 
 export default function SimulationSelectPage() {
+  const { t } = useTranslation("simulation");
   const navigate = useNavigate();
   const [creating, setCreating] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -27,7 +29,7 @@ export default function SimulationSelectPage() {
         <div className="fixed inset-0 flex items-center justify-center bg-black/50" style={{ zIndex: 1100 }}>
           <div className="bg-white rounded-xl px-8 py-6 shadow-xl text-center">
             <div className="animate-spin w-8 h-8 border-4 border-amber-700 border-t-transparent rounded-full mx-auto mb-3" />
-            <p className="text-gray-700 font-medium">Initializing simulation...</p>
+            <p className="text-gray-700 font-medium">{t("config.initializingSimulation")}</p>
           </div>
         </div>
       )}

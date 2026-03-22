@@ -1,5 +1,6 @@
 import type Phaser from "phaser";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useNavigate, useParams } from "react-router-dom";
 import { SidebarToggleButton } from "../components/layout/SidebarToggleButton";
 import { ConfigPanel } from "../components/simulation/ConfigPanel";
@@ -48,6 +49,7 @@ export default function SimulationPage({
   mode = "owner",
 }: SimulationPageProps) {
   const { sessionId: routeSessionId } = useParams<{ sessionId: string }>();
+  const { t } = useTranslation("simulation");
   const navigate = useNavigate();
   const isPublicMode = mode === "public";
   const sessionId = useMemo(
@@ -426,12 +428,12 @@ export default function SimulationPage({
       {/* Loading / Error overlays */}
       {state.isLoading && (
         <div className="sim-overlay">
-          <span className="text-white/80 text-lg">Loading simulation...</span>
+          <span className="text-white/80 text-lg">{t("page.loadingSimulation")}</span>
         </div>
       )}
       {state.error && (
         <div className="sim-overlay">
-          <span className="text-red-300 text-lg">Error: {state.error}</span>
+          <span className="text-red-300 text-lg">{t("page.error", { message: state.error })}</span>
         </div>
       )}
 
@@ -444,13 +446,20 @@ export default function SimulationPage({
             onClick={() => navigate("/simulation/select")}
             className="back-button backdrop-blur-md bg-white/50 border border-slate-200 shadow-md rounded-xl hover:bg-white/70 hover:border-slate-300 hover:-translate-y-0.5 transition-all"
             style={{ padding: "8px 12px" }}
-            aria-label="Back to selection"
+            aria-label={t("page.backToSelection")}
           >
             ←
           </button>
         )}
 
-        <h1>Town Simulation</h1>
+        <div className="sim-header-center">
+          <h1>{t("page.title")}</h1>
+          <span className="sim-header-separator">·</span>
+          <span className="sim-header-info font-bold text-amber-700">{t("clock.day", { day: state.gameDay })}</span>
+          <span className="sim-header-info text-slate-600">{state.timeOfDay}</span>
+          <span className="sim-header-separator">·</span>
+          <span className="sim-header-info text-slate-500">{t(`weather.${state.weather}`)}</span>
+        </div>
 
         {!isSidebarOpen && (
           <SidebarToggleButton onClick={toggleSidebar} />
@@ -510,7 +519,7 @@ export default function SimulationPage({
                   className="w-full max-h-full object-cover"
                 />
               ) : (
-                  <div className="text-slate-400 text-sm p-6">No image available</div>
+                  <div className="text-slate-400 text-sm p-6">{t("page.noImage")}</div>
                 )}
               {buildingNpcs.length > 0 && (
                 <div className="pointer-events-none absolute inset-x-0 bottom-0 p-3">
@@ -554,7 +563,7 @@ export default function SimulationPage({
       {/* Real-time sync countdown */}
       {countdown && state.simulationState === "running" && (
         <div className="fixed bottom-4 left-4 z-10 backdrop-blur-xl bg-white/50 border border-white/30 rounded-2xl px-4 py-2 shadow-lg flex items-center gap-2" onPointerDown={(e) => e.stopPropagation()}>
-          <span className="text-xs text-slate-500">Preparing...</span>
+          <span className="text-xs text-slate-500">{t("page.preparing")}</span>
           <span className="text-sm font-medium text-amber-600">
             {countdown.mins}m {String(countdown.secs).padStart(2, "0")}s
           </span>
@@ -577,7 +586,7 @@ export default function SimulationPage({
           className="fixed bottom-4 right-4 z-10 backdrop-blur-xl bg-white/50 border border-white/30 rounded-2xl px-4 py-2 shadow-lg flex items-center gap-2 text-sm font-medium text-slate-700 hover:bg-white/70 transition-all"
           onPointerDown={(e) => e.stopPropagation()}
         >
-          <span>Copy Public Link</span>
+          <span>{t("page.copyPublicLink")}</span>
           {shareFeedback && (
             <span className="text-xs text-amber-700">{shareFeedback}</span>
           )}

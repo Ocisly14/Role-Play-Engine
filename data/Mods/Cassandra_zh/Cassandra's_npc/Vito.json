@@ -1,0 +1,130 @@
+{
+  "id": "Vito",
+  "name": "Vito",
+  "occupation": "辅助警察",
+  "age": 30,
+  "gender": "male",
+  "appearance": "一个拉美裔的健壮男人，穿着朴素的辅助警察制服，友善但略显笨拙。",
+  "personality": "诚实、善良、头脑简单。他出发点很好，但不是房间里最敏锐的观察者。",
+  "background": "维托是卡森德拉的一名当地辅助警察。他可靠、善良，天性不太多疑。",
+  "residence": "SCN_3",
+  "currentLocation": "SCN_3_SUB_1",
+  "longTermIntent": "维持镇上的和平，诚实地完成工作，确保海伦的安全。",
+  "attributes": {
+    "STR": 60,
+    "CON": 65,
+    "DEX": 50,
+    "APP": 45,
+    "POW": 50,
+    "SIZ": 65,
+    "INT": 45,
+    "EDU": 40
+  },
+  "status": {
+    "hp": 13,
+    "maxHp": 13,
+    "sanity": 50,
+    "maxSanity": 50,
+    "luck": 55,
+    "mp": 10,
+    "conditions": []
+  },
+  "skills": {
+    "Spot Hidden": 40,
+    "Law": 30,
+    "Persuade": 35,
+    "Firearms (Handgun)": 30
+  },
+  "inventory": [
+    {
+      "name": "辅助警察徽章"
+    },
+    {
+      "name": "制式手枪"
+    },
+    {
+      "name": "笔记本"
+    }
+  ],
+  "relationships": [
+    {
+      "targetId": "Helen",
+      "targetName": "Helen",
+      "relationshipType": "friend",
+      "attitude": 90,
+      "description": "他的女朋友，他最在乎的人。",
+      "history": "他们最近开始约会。"
+    },
+    {
+      "targetId": "Bruno Galilei",
+      "targetName": "Bruno Galilei",
+      "relationshipType": "friend",
+      "attitude": 70,
+      "description": "他尊敬的同事。",
+      "history": "他们在警察局一起工作。"
+    },
+    {
+      "targetId": "Shandra Hernandez",
+      "targetName": "Shandra Hernandez",
+      "relationshipType": "acquaintance",
+      "attitude": 40,
+      "description": "布鲁诺经常去的店铺老板。",
+      "history": "维托不止一次去她的店里打听布鲁诺的消息。"
+    }
+  ],
+  "memory": [
+    {
+      "type": "information",
+      "content": "我是一名当地辅助警察，但我在小事务、修理和帮助普通人方面比在读懂政治或隐藏动机方面更在行。",
+      "metadata": {
+        "knowledgeId": "k_vito_local",
+        "difficulty": "automatic"
+      }
+    },
+    {
+      "type": "information",
+      "content": "去年圣诞节前，我遇见了那个后来成为2002年帕拉迪尔酒店谋杀案受害者的不知名黑人女孩。",
+      "metadata": {
+        "knowledgeId": "k_vito_victim",
+        "difficulty": "regular"
+      }
+    },
+    {
+      "type": "information",
+      "content": "海伦是菲利普在驯鹿酒吧试图调情的女人。",
+      "metadata": {
+        "knowledgeId": "k_vito_helen",
+        "difficulty": "regular"
+      }
+    },
+    {
+      "type": "secret",
+      "content": "我说我不知道有便宜的出租房，第二天我跟她说话的那个女孩就被谋杀了。",
+      "metadata": {
+        "knowledgeId": "s_vito_rooms"
+      }
+    },
+    {
+      "type": "secret",
+      "content": "我本想向警方提起那个女孩，但案子被搁置得太快，我说服自己我的记忆帮不上忙。然后我忘了这件事，这至今让我不安。",
+      "metadata": {
+        "knowledgeId": "s_vito_shelved_case"
+      }
+    },
+    {
+      "type": "secret",
+      "content": "我去珊德拉那里不止一次，因为布鲁诺在那里待过，而我解释不清楚的方式在我们最终弄清楚之前和海伦之间造成了麻烦。",
+      "metadata": {
+        "knowledgeId": "s_vito_shandra"
+      }
+    },
+    {
+      "type": "belief",
+      "content": "做正确的事应该是简单明了的，即使我不是总能看到每个角度。",
+      "metadata": {
+        "confidence": 0.8,
+        "reasoningChain": "我可能会遗漏细节，但我知道帮助人和让他们生活变糟之间的区别。"
+      }
+    }
+  ]
+}

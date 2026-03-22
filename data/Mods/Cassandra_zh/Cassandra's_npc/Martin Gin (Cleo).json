@@ -1,0 +1,138 @@
+{
+  "id": "Martin Gin (Cleo)",
+  "name": "Martin Gin (Cleo)",
+  "occupation": "犯罪信使和掮客（化名：幽灵之手）",
+  "age": 38,
+  "gender": "male",
+  "appearance": "一个看起来谨慎的男人，面容不起眼，刻意穿着朴素实用的衣服以避免引起注意。他的动作克制而警觉，好像他总在追踪出口。",
+  "personality": "善于算计、投机取巧、极度务实。马丁有耐心且谨慎，更喜欢用化名和间接方法而非正面对抗。他的忠诚仅在合作有利于自身生存和利润时才有效。",
+  "background": "马丁·金，又名幽灵之手，是卡森德拉的第三个黑客，也是2002年帕拉迪尔酒店谋杀案和2003年驯鹿酒吧谋杀案的凶手。他故意引起帕特里齐奥·冯·萨姆萨的注意，并以幽灵之手的化名被雇用处理计算机安全。作为信使和中间人，马丁将货物运送到码头并处理敏感的交付。他实际上是马丁·克莱奥，桑切斯·克莱奥的儿子，对本·克莱奥怀有仇恨，认为本应对他父亲的失踪负责。",
+  "residence": "SCN_6",
+  "currentLocation": "SCN_6_SUB_1",
+  "longTermIntent": "保持隐藏，高效完成任务，保持他的路线、化名和筹码完好。",
+  "attributes": {
+    "STR": 55,
+    "CON": 60,
+    "DEX": 65,
+    "APP": 40,
+    "POW": 55,
+    "SIZ": 55,
+    "INT": 65,
+    "EDU": 55
+  },
+  "status": {
+    "hp": 11,
+    "maxHp": 11,
+    "sanity": 55,
+    "maxSanity": 55,
+    "luck": 60,
+    "mp": 11,
+    "conditions": []
+  },
+  "skills": {
+    "Stealth": 60,
+    "Drive Auto": 55,
+    "Fast Talk": 50,
+    "Spot Hidden": 45,
+    "Locksmith": 40
+  },
+  "inventory": [
+    {
+      "name": "假身份证件",
+      "properties": {
+        "note": "隐藏他作为马丁·克莱奥的真实身份。"
+      }
+    },
+    {
+      "name": "无标记手机",
+      "properties": {
+        "note": "用于秘密通信。"
+      }
+    },
+    {
+      "name": "码头交付文件",
+      "properties": {
+        "note": "与他作为幽灵之手的工作有关。"
+      }
+    },
+    {
+      "name": ".357口径手枪（沙漠之鹰）",
+      "properties": {
+        "note": "用于2003年驯鹿酒吧谋杀案中杀害卢奇菲罗。"
+      }
+    }
+  ],
+  "relationships": [
+    {
+      "targetId": "Patrizio von Samsa",
+      "targetName": "Patrizio von Samsa",
+      "relationshipType": "employer",
+      "attitude": -20,
+      "description": "一个危险的雇主，马丁出于必要而非忠诚为他服务。",
+      "history": "马丁引起了帕特里齐奥的注意，以幽灵之手的化名接受工作以获取利润和保护。"
+    },
+    {
+      "targetId": "Ben Cleo",
+      "targetName": "Ben Cleo",
+      "relationshipType": "enemy",
+      "attitude": -60,
+      "description": "马丁认为与他父亲失踪有关的家族仇敌。",
+      "history": "马丁多年来一直对本怀有仇恨。"
+    }
+  ],
+  "memory": [
+    {
+      "type": "information",
+      "content": "我以幽灵之手的化名为帕特里齐奥处理码头交付和其他敏感差事。",
+      "metadata": {
+        "knowledgeId": "k_martin_docks",
+        "difficulty": "automatic"
+      }
+    },
+    {
+      "type": "secret",
+      "content": "我杀害了2002年帕拉迪尔酒店的受害者和2003年驯鹿酒吧的受害者。",
+      "metadata": {
+        "knowledgeId": "s_martin_murders"
+      }
+    },
+    {
+      "type": "secret",
+      "content": "我在把卢奇菲罗误认为窃取了帕特里齐奥秘密的黑客、且她截获了东莨菪碱包裹后杀害了她。",
+      "metadata": {
+        "knowledgeId": "s_martin_lucifero"
+      }
+    },
+    {
+      "type": "secret",
+      "content": "我把菲利普的折叠刀交给了勒克斯，这样调查就会被误导。",
+      "metadata": {
+        "knowledgeId": "s_martin_knife"
+      }
+    },
+    {
+      "type": "belief",
+      "content": "保持匿名比正确更重要。一旦人们知道你的名字，他们就开始围绕它设圈套。",
+      "metadata": {
+        "confidence": 0.9,
+        "reasoningChain": "我最好的生存工具一直是对身份和时机的掌控。"
+      }
+    },
+    {
+      "type": "information",
+      "content": "我把路线、化名和接头地点分开管理，因为任何看到全貌的人都可以开始收紧围在我身上的网。",
+      "metadata": {
+        "knowledgeId": "k_martin_routes",
+        "difficulty": "regular"
+      }
+    },
+    {
+      "type": "information",
+      "content": "我更喜欢那些可以伪装成物流的工作，因为这让人们争论路线和文件而不是暴力本身。",
+      "metadata": {
+        "knowledgeId": "k_martin_clean_jobs",
+        "difficulty": "regular"
+      }
+    }
+  ]
+}

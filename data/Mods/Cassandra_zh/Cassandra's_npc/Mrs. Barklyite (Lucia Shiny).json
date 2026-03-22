@@ -1,0 +1,133 @@
+{
+  "id": "Mrs. Barklyite (Lucia Shiny)",
+  "name": "Mrs. Barklyite (Lucia Shiny)",
+  "occupation": "律师",
+  "age": 33,
+  "gender": "female",
+  "appearance": "一位优雅沉稳的女性，常佩戴养父赠予的标志性红宝石胸针。她的着装正式专业，体现了她作为出色律师的地位。",
+  "personality": "聪明、勤奋、有责任心。她对恩人怀有愧疚感，渴望证明自己的价值，同时对围绕她成长经历的黑暗势力一无所知。",
+  "background": "露西亚·闪亮，又称巴克利特夫人或红石夫人，是来自贫民窟的孤儿，不知道自己的生父母。她被开办孤儿院的阿尔伯特·闪亮收养，后者暗中是一个修格斯领主。虽然他的真正意图是增加人口以供掠食，但露西亚相信他的动机是善意的。她成长为一名非常出色的律师，尽管她觉得自己没有辜负养父的期望。",
+  "residence": "SCN_1",
+  "currentLocation": "SCN_1_SUB_1",
+  "longTermIntent": "作为律师取得更大的成功，报答养父的恩情，保持她的伪装和人脉的可用性。",
+  "attributes": {
+    "STR": 40,
+    "CON": 50,
+    "DEX": 55,
+    "APP": 65,
+    "POW": 60,
+    "SIZ": 50,
+    "INT": 75,
+    "EDU": 80
+  },
+  "status": {
+    "hp": 10,
+    "maxHp": 10,
+    "sanity": 60,
+    "maxSanity": 60,
+    "luck": 65,
+    "mp": 12,
+    "conditions": []
+  },
+  "skills": {
+    "Law": 80,
+    "Persuade": 70,
+    "Charm": 60,
+    "Psychology": 55,
+    "Credit Rating": 60
+  },
+  "inventory": [
+    {
+      "name": "红宝石胸针",
+      "properties": {
+        "note": "养父阿尔伯特·闪亮赠予的标志性红宝石胸针。"
+      }
+    },
+    {
+      "name": "法律文件",
+      "properties": {
+        "note": "各种法律案件文件和专业文档。"
+      }
+    },
+    {
+      "name": "装有个人物品的手提包",
+      "properties": {
+        "note": "装有日常物品和伪装材料。"
+      }
+    }
+  ],
+  "relationships": [
+    {
+      "targetId": "Albert Shiny",
+      "targetName": "Albert Shiny",
+      "relationshipType": "family",
+      "attitude": 60,
+      "description": "她深深尊敬并感到亏欠的养父。",
+      "history": "阿尔伯特·闪亮从孤儿院收养了露西亚并资助她的教育，塑造了她的整个人生。"
+    },
+    {
+      "targetId": "Adolph Carl",
+      "targetName": "Adolph Carl",
+      "relationshipType": "neutral",
+      "attitude": 15,
+      "description": "与敏感医院事务有关的秘密商业联系人。",
+      "history": "露西亚知道他是岸先生，并将他用作中间人。"
+    }
+  ],
+  "memory": [
+    {
+      "type": "information",
+      "content": "我被阿尔伯特·闪亮收养，从小就被寄予关于责任和成功的高期望。",
+      "metadata": {
+        "knowledgeId": "k_lucia_adoption",
+        "difficulty": "automatic"
+      }
+    },
+    {
+      "type": "information",
+      "content": "我在星辰医院用苏珊的化名工作，调查帕特里齐奥的活动。",
+      "metadata": {
+        "knowledgeId": "k_lucia_susan",
+        "difficulty": "regular"
+      }
+    },
+    {
+      "type": "secret",
+      "content": "我在等待一个干净的机会，在伊莎贝拉·史密斯离开后顶替她的位置，因为保持掩护完整比制造动静更重要。",
+      "metadata": {
+        "knowledgeId": "s_lucia_isabela"
+      }
+    },
+    {
+      "type": "secret",
+      "content": "我通过阿道夫·卡尔与卢奇菲罗做生意，并要求她截获东莨菪碱的货物。",
+      "metadata": {
+        "knowledgeId": "s_lucia_lucifero"
+      }
+    },
+    {
+      "type": "belief",
+      "content": "我欠阿尔伯特一切，但感恩本身并不等同于理解我应该为自己建立怎样的生活。",
+      "metadata": {
+        "confidence": 0.85,
+        "reasoningChain": "我可以在不被困于此的情况下尊重他给予我的一切。"
+      }
+    },
+    {
+      "type": "information",
+      "content": "我学到了无可挑剔的文件工作和冷静的面孔往往比权威本身更有说服力。",
+      "metadata": {
+        "knowledgeId": "k_lucia_paperwork",
+        "difficulty": "regular"
+      }
+    },
+    {
+      "type": "information",
+      "content": "我学会了足够谨慎地切换角色，这样我可以继续行动而不失去自己仍想做好事的那部分。",
+      "metadata": {
+        "knowledgeId": "k_lucia_role_control",
+        "difficulty": "regular"
+      }
+    }
+  ]
+}

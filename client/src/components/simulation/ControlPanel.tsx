@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import * as simApi from "../../services/simulationApi";
 
 interface ControlPanelProps {
@@ -18,6 +19,7 @@ export function ControlPanel({
   simulationState,
   onStateChange,
 }: ControlPanelProps) {
+  const { t } = useTranslation("simulation");
   const isRunning = simulationState === "running";
   const isPaused = simulationState === "paused";
 
@@ -55,7 +57,7 @@ export function ControlPanel({
         onClick={handleStep}
         className="text-xl text-slate-600 hover:text-amber-600 transition-colors disabled:opacity-30"
         disabled={!isPaused}
-        title="Step one tick"
+        title={t("control.stepOneTick")}
       >
         {"\u23ED"}
       </button>

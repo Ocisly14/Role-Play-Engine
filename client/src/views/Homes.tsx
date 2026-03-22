@@ -86,10 +86,10 @@ const Homes: React.FC<HomeProps> = ({
           <div className="home-actions">
             <>
               <button className="primary" onClick={handleNewSimulation}>
-                New Simulation
+                {t("menu.newSimulation")}
               </button>
               <button className="primary" onClick={onContinueSimulation}>
-                Continue Simulation
+                {t("menu.continueSimulation")}
               </button>
               <button className="secondary" onClick={onManageMods}>
                 {t("menu.manageModules")}

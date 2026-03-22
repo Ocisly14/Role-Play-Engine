@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useLocation, useNavigate } from "react-router-dom";
 import * as simApi from "../services/simulationApi";
 
@@ -9,17 +10,18 @@ const SPEED_OPTIONS = [
   { label: "10x", ms: 6000 },
 ];
 
-const WEATHER_OPTIONS = [
-  { value: "clear", label: "Clear" },
-  { value: "rain", label: "Rain" },
-  { value: "fog", label: "Fog" },
-  { value: "storm", label: "Storm" },
-  { value: "snow", label: "Snow" },
-  { value: "extreme_heat", label: "Extreme Heat" },
-  { value: "extreme_cold", label: "Extreme Cold" },
+const WEATHER_KEYS = [
+  "clear",
+  "rain",
+  "fog",
+  "storm",
+  "snow",
+  "extreme_heat",
+  "extreme_cold",
 ] as const;
 
 export default function SimulationConfigPage() {
+  const { t } = useTranslation("simulation");
   const navigate = useNavigate();
   const location = useLocation();
   const moduleName = (location.state as { moduleName?: string })?.moduleName;
@@ -58,14 +60,13 @@ export default function SimulationConfigPage() {
     <div className="min-h-screen flex items-center justify-center p-8">
       <div className="max-w-md w-full space-y-8 bg-white/80 backdrop-blur-sm border border-white/50 rounded-2xl p-8 shadow-xl">
         <h1 className="text-2xl font-bold text-center" style={{ color: "var(--title, #3d2f1f)" }}>
-          Configure Simulation
+          {t("config.title")}
         </h1>
         <p className="text-center text-gray-600">{moduleName}</p>
 
-        {/* Tick Speed */}
         <div>
           <label className="block text-sm font-medium mb-2" style={{ color: "var(--title, #3d2f1f)" }}>
-            Tick Speed
+            {t("config.tickSpeed")}
           </label>
           <div className="flex gap-2">
             {SPEED_OPTIONS.map(({ label, ms }) => (
@@ -85,10 +86,9 @@ export default function SimulationConfigPage() {
           </div>
         </div>
 
-        {/* Max Days */}
         <div>
           <label className="block text-sm font-medium mb-2" style={{ color: "var(--title, #3d2f1f)" }}>
-            Max Days: {maxDays}
+            {t("config.maxDays")}: {maxDays}
           </label>
           <input
             type="range"
@@ -104,18 +104,17 @@ export default function SimulationConfigPage() {
           </div>
         </div>
 
-        {/* Weather */}
         <div>
           <label className="block text-sm font-medium mb-2" style={{ color: "var(--title, #3d2f1f)" }}>
-            Weather
+            {t("config.weather")}
           </label>
           <select
             value={weather}
             onChange={(e) => setWeather(e.target.value)}
             className="w-full py-2 px-3 rounded-lg border border-gray-300 bg-white/50"
           >
-            {WEATHER_OPTIONS.map(({ value, label }) => (
-              <option key={value} value={value}>{label}</option>
+            {WEATHER_KEYS.map((key) => (
+              <option key={key} value={key}>{t(`weather.${key}`)}</option>
             ))}
           </select>
         </div>
@@ -124,14 +123,13 @@ export default function SimulationConfigPage() {
           <p className="text-red-600 text-sm text-center">{error}</p>
         )}
 
-        {/* Buttons */}
         <div className="flex gap-3">
           <button
             type="button"
             onClick={() => navigate("/simulation/select")}
             className="flex-1 py-3 rounded-lg border border-gray-300 bg-white/50 hover:bg-gray-100 font-medium transition-all"
           >
-            Back
+            {t("config.back")}
           </button>
           <button
             type="button"
@@ -139,7 +137,7 @@ export default function SimulationConfigPage() {
             disabled={creating}
             className="flex-1 py-3 rounded-lg bg-amber-700 text-white font-medium hover:bg-amber-800 disabled:opacity-50 transition-all"
           >
-            {creating ? "Creating..." : "Start Simulation"}
+            {creating ? t("config.creating") : t("config.startSimulation")}
           </button>
         </div>
       </div>

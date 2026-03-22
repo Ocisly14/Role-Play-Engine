@@ -104,12 +104,23 @@ export class SimulationRunner {
 
   getStatus(): SimulationStatus {
     const gameState = this.dgsm.getState();
+    const weatherStates = this.dgsm.getFeatureState("weather") as
+      | Record<string, { weatherType?: string; intensity?: number }>
+      | undefined;
+    let weather: string | undefined;
+    if (weatherStates) {
+      const firstRegion = Object.values(weatherStates)[0];
+      if (firstRegion?.weatherType) {
+        weather = firstRegion.weatherType;
+      }
+    }
     return {
       state: this.state,
       currentDay: gameState.gameDay,
       currentTime: gameState.timeOfDay,
       ticksExecuted: this.ticksExecuted,
       stopReason: this.stopReason,
+      weather,
     };
   }
 
@@ -513,6 +524,14 @@ export class SimulationRunner {
         stateAfterTick.gameDay,
         stateAfterTick.timeOfDay
       );
+      // Get current weather for snapshot
+      const snapshotWeatherStates = this.dgsm.getFeatureState("weather") as
+        | Record<string, { weatherType?: string }>
+        | undefined;
+      const snapshotWeather = snapshotWeatherStates
+        ? Object.values(snapshotWeatherStates)[0]?.weatherType
+        : undefined;
+
       this.events.emitSimulationEvent(
         "npc_position_snapshot",
         "system",
@@ -523,6 +542,7 @@ export class SimulationRunner {
           positions: { ...stateAfterTick.characterPositions },
           currentActions,
           displayIntervalMs: this.getEffectiveTickIntervalMs(),
+          weather: snapshotWeather ?? "clear",
         }
       );
 

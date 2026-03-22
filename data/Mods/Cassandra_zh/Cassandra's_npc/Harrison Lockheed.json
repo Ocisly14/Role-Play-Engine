@@ -1,0 +1,33 @@
+{
+  "id": "Harrison Lockheed",
+  "name": "Harrison Lockheed",
+  "occupation": "五金店老板 / 军火商",
+  "age": 45,
+  "gender": "male",
+  "appearance": "一个中年男子，说话时眯着眼睛，显得有些狡猾。他喜欢在店里捣鼓一些小发明。",
+  "personality": "非常健谈，渴望被称赞，对武器改装和枪械充满热情。",
+  "background": "哈里森·洛克希德是卡森德拉一家五金店的老板。公开身份是五金店老板，但实际上他也是一个军火商。由于他的许多枪支不符合加利福尼亚法规，他只秘密出售。他受到当地黑帮势力的保护，并且有足够的技术好奇心，兴之所至时会摆弄不寻常的武器。",
+  "residence": "SCN_18",
+  "currentLocation": "SCN_18",
+  "longTermIntent": "维持五金店作为谨慎的掩护生意，继续在不引起法律注意的情况下出售枪支，并与保护他生意的人保持良好关系。",
+  "attributes": {"STR": 50, "CON": 50, "DEX": 50, "APP": 50, "POW": 50, "SIZ": 60, "INT": 50, "EDU": 60},
+  "status": {"hp": 11, "maxHp": 11, "sanity": 50, "maxSanity": 50, "luck": 50, "mp": 10, "conditions": []},
+  "skills": {"Mechanical Repair": 65, "Electrical Repair": 50, "Firearms (Handgun)": 55, "Firearms (Rifle)": 50, "Spot Hidden": 45, "Persuade": 40, "Bargain": 50, "Craft (Weaponsmith)": 60, "Listen": 40},
+  "inventory": [
+    {"name": "非法枪支库存", "properties": {"note": "公开身份是五金店老板，暗地里是军火商。"}},
+    {"name": "武器改装工具", "properties": {"note": "他用来摆弄枪支和即兴设备的爱好器材。"}}
+  ],
+  "relationships": [
+    {"targetId": "Ben Cleo", "targetName": "Ben Cleo", "relationshipType": "ally", "attitude": 50, "description": "本知道他的军火生意并提供保护。", "history": "哈里森在黑帮保护下经营。"},
+    {"targetId": "Adolph Carl", "targetName": "Adolph Carl", "relationshipType": "neutral", "attitude": 30, "description": "阿道夫知道他的军火生意和暗号。", "history": "他们有商业往来。"}
+  ],
+  "memory": [
+    {"type": "information", "content": "我在SCN_18经营五金店，但店铺也掩盖着让我维持生计的真正枪支交易。", "metadata": {"knowledgeId": "k_harrison_store", "difficulty": "automatic"}},
+    {"type": "information", "content": "我通常能看出一个顾客把五金当借口来打听枪支，而且我知道如何引导谈话。", "metadata": {"knowledgeId": "k_harrison_customer_read", "difficulty": "regular"}},
+    {"type": "information", "content": "当有人想从我这里买枪时，我让他们用暗号'锤子砸到钉子上会怎么样？'来问，只有安静的人才会被认真对待。", "metadata": {"knowledgeId": "k_harrison_code", "difficulty": "regular"}},
+    {"type": "secret", "content": "我出售的枪支不符合加利福尼亚法规，所以所有正经交易都必须保密。", "metadata": {"knowledgeId": "s_harrison_illegal_sales"}},
+    {"type": "secret", "content": "本·克莱奥和阿道夫·卡尔都知道我的军火生意，本的保护是我能继续经营的原因之一。", "metadata": {"knowledgeId": "s_harrison_protection"}},
+    {"type": "secret", "content": "我最好的一些改装品被留给那些能付得起钱又能闭嘴的人。", "metadata": {"knowledgeId": "s_harrison_special_mods"}},
+    {"type": "belief", "content": "如果我保持有用、健谈和小心，我就能让店开着，把问题大多留在账本之外。", "metadata": {"confidence": 0.8, "reasoningChain": "从我这里买东西的人要的是方便，不是关注。"}}
+  ]
+}

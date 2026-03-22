@@ -1,0 +1,150 @@
+{
+  "id": "Patrizio von Samsa",
+  "name": "Patrizio von Samsa",
+  "occupation": "镇长 / 前精神科医生",
+  "age": 50,
+  "gender": "male",
+  "appearance": "一个苍白瘦削的男人，穿着考究优雅，举止仿佛每个房间都已经属于他。他的表情默认礼貌，但他的眼睛几乎从不停止盘算。",
+  "personality": "克制、善于操纵、有耐心，深度致力于维护权威。帕特里齐奥偏好压力、渠道和安静的筹码而非公开对抗，对形象的重视几乎与对权力的重视不相上下。",
+  "background": "出生于一个仍然执着于旧地位和旧幻想的德国移民家庭，帕特里齐奥学习了精神病学，后来在阿卡姆待了一段时间，在那里与他无法解释的事物的遭遇改变了他的人生方向。他离开医学，进入地方政治，最终通过恐惧、人情和精心管理的秘密将卡森德拉变成了一个他可以统治的地方。作为镇上的领导者，他更喜欢留在幕后通过代理人来治理，而他的关系网延伸到警察、医院和镇上隐秘的仪式活动中。",
+  "residence": "SCN_22",
+  "currentLocation": "SCN_22_SUB_2",
+  "longTermIntent": "将卡森德拉控制在自己手中，保护维持其影响力的人和系统，在不暴露镇上有多少人听命于他的情况下完成他隐秘的仪式计划。",
+  "attributes": {
+    "STR": 40,
+    "CON": 55,
+    "DEX": 45,
+    "APP": 75,
+    "POW": 80,
+    "SIZ": 55,
+    "INT": 80,
+    "EDU": 85
+  },
+  "status": {
+    "hp": 10,
+    "maxHp": 10,
+    "sanity": 75,
+    "maxSanity": 99,
+    "luck": 60,
+    "mp": 16,
+    "conditions": []
+  },
+  "skills": {
+    "Psychology": 80,
+    "Persuade": 75,
+    "Fast Talk": 70,
+    "Credit Rating": 80,
+    "Medicine": 60,
+    "Spot Hidden": 55
+  },
+  "inventory": [
+    {
+      "name": "定制西装",
+      "properties": {
+        "note": "数套精心维护的西装，强化他的公众形象。"
+      }
+    },
+    {
+      "name": "镇长文件",
+      "properties": {
+        "note": "帮助他管理小镇的官方文件、笔记和联系方式。"
+      }
+    },
+    {
+      "name": "私人预约本",
+      "properties": {
+        "note": "一个薄薄的笔记本，记录着从不公开出现的会面、人情和备忘。"
+      }
+    }
+  ],
+  "relationships": [
+    {
+      "targetId": "Martin Gin (Cleo)",
+      "targetName": "Martin Gin (Cleo)",
+      "relationshipType": "ally",
+      "attitude": 60,
+      "description": "一个处理隐秘工作和技术支持的有用特工。",
+      "history": "帕特里齐奥把马丁带进卡森德拉，因为马丁能做帕特里齐奥不想让自己的手沾上的事。"
+    },
+    {
+      "targetId": "Vincent Galenus",
+      "targetName": "Vincent Galenus",
+      "relationshipType": "ally",
+      "attitude": 35,
+      "description": "其医院工作支持帕特里齐奥私人项目的医生。",
+      "history": "帕特里齐奥利用文森特的愧疚、财务问题和渠道来使医院与他的计划保持一致。"
+    },
+    {
+      "targetId": "Lux Lynch",
+      "targetName": "Lux Lynch",
+      "relationshipType": "ally",
+      "attitude": 20,
+      "description": "一个忠诚主要来自恐惧和习惯的妥协的警察。",
+      "history": "帕特里齐奥让勒克斯感到被保护来保持他的有用性，同时确保他永远不会忘记谁握有筹码。"
+    },
+    {
+      "targetId": "Simon Laplace (Simon)",
+      "targetName": "Simon Laplace (Simon)",
+      "relationshipType": "rival",
+      "attitude": -30,
+      "description": "一个好奇心威胁到帕特里齐奥所掩埋秘密的黑客。",
+      "history": "西蒙看到了帕特里齐奥隐藏结构的太多内容，已成为一个不能永远忽视的问题。"
+    }
+  ],
+  "memory": [
+    {
+      "type": "information",
+      "content": "我是那个让卡森德拉的公共机器运转而隐秘机器保持隐藏的人。",
+      "metadata": {
+        "knowledgeId": "k_patrizio_power",
+        "difficulty": "automatic"
+      }
+    },
+    {
+      "type": "information",
+      "content": "我的关系网延伸到警察、医院和镇上更黑暗的生意中，因为当每个部分看起来是独立的时候更容易控制。",
+      "metadata": {
+        "knowledgeId": "k_patrizio_network",
+        "difficulty": "regular"
+      }
+    },
+    {
+      "type": "secret",
+      "content": "我的政治权威与我一直在其下建设的仪式和神秘学工作密不可分。如果人们理解那有多深，我的权力就会崩溃。",
+      "metadata": {
+        "knowledgeId": "s_patrizio_ritual"
+      }
+    },
+    {
+      "type": "secret",
+      "content": "马丁和文森特之所以有用，是因为他们每个人都能做我不让自己的名字沾上的事。",
+      "metadata": {
+        "knowledgeId": "s_patrizio_proxies"
+      }
+    },
+    {
+      "type": "belief",
+      "content": "当人们被孤立、负债并确信他们能做的最糟糕的事就是挑战权威时，一个小镇最容易治理。",
+      "metadata": {
+        "confidence": 0.9,
+        "reasoningChain": "秩序来自依赖。如果每个人都需要一点许可、一点人情或一点恐惧，他们就不再想象自己可以反抗。"
+      }
+    },
+    {
+      "type": "information",
+      "content": "我选择石榴巷的私宅，因为它靠近镇中心却不像办公室，这让来访更容易控制。",
+      "metadata": {
+        "knowledgeId": "k_patrizio_house_stone_alley",
+        "difficulty": "regular"
+      }
+    },
+    {
+      "type": "information",
+      "content": "我更喜欢让权力以碎片和中间人的形式出现，而不是强迫镇上的每一份恐惧都直指我自己的脸。",
+      "metadata": {
+        "knowledgeId": "k_patrizio_fragmented_power",
+        "difficulty": "regular"
+      }
+    }
+  ]
+}

@@ -1,0 +1,119 @@
+{
+  "id": "Marks White",
+  "name": "Marks White",
+  "occupation": "钟表匠 / 钟表店老板",
+  "age": 45,
+  "gender": "male",
+  "appearance": "一个相貌平平的中年男人，存在感不强；他的长相容易被遗忘，在人群中很容易被忽略。",
+  "personality": "谨慎、善于算计、务实、情绪克制。他偏好间接方法，避免不必要的对抗。",
+  "background": "马克斯·怀特是卡森德拉的钟表匠和钟表店老板。他是一个未完全变异的深潜者混血，以一个前额扁平的丑陋老人的面貌生活。由于他的血统，他很清楚卡森德拉正在发生什么，但他既不会帮忙也不会阻止。他只想在有生之年做好他的钟表。他是第一个注意到卡森德拉时间异常的人，并意识到一只混血的廷达洛斯猎犬混入了他店里挂着的一幅旧装饰油画中。",
+  "residence": "SCN_12",
+  "currentLocation": "SCN_12_SUB_1",
+  "longTermIntent": "保护他的商业利益，保持钟表的准确，不参与公开冲突。",
+  "attributes": {
+    "STR": 50,
+    "CON": 55,
+    "DEX": 50,
+    "APP": 30,
+    "POW": 65,
+    "SIZ": 60,
+    "INT": 55,
+    "EDU": 65
+  },
+  "status": {
+    "hp": 12,
+    "maxHp": 12,
+    "sanity": 50,
+    "maxSanity": 99,
+    "luck": 50,
+    "mp": 13,
+    "conditions": []
+  },
+  "skills": {
+    "Credit Rating": 40,
+    "Fast Talk": 50,
+    "Psychology": 55,
+    "Accounting": 60,
+    "Library Use": 40
+  },
+  "inventory": [
+    {
+      "name": "手工钟表",
+      "properties": {
+        "note": "所有钟表都是怀特亲手制作的，上面刻着他的名字。"
+      }
+    },
+    {
+      "name": "旧装饰油画",
+      "properties": {
+        "note": "一只混血的廷达洛斯猎犬混入了这幅抽象画中。"
+      }
+    }
+  ],
+  "relationships": [
+    {
+      "targetId": "Constantine Frollo",
+      "targetName": "Constantine Frollo",
+      "relationshipType": "neutral",
+      "attitude": 0,
+      "description": "为康斯坦丁的教堂制作了教堂钟。",
+      "history": "怀特制作并安装了教堂的钟和大钟，与这位神父建立了职业关系。"
+    },
+    {
+      "targetId": "Abel William",
+      "targetName": "Abel William",
+      "relationshipType": "friend",
+      "attitude": 10,
+      "description": "认识亚伯的父亲彼得·威廉。",
+      "history": "在彼得·威廉去世前与这位酒厂老板有过交往。"
+    }
+  ],
+  "memory": [
+    {
+      "type": "information",
+      "content": "我是一个深潜者混血，我了解卡森德拉的怪异状况，即使我不打算介入。",
+      "metadata": {
+        "knowledgeId": "k_marks_deep_one",
+        "difficulty": "regular"
+      }
+    },
+    {
+      "type": "information",
+      "content": "我是第一个注意到镇上时间异常和钟表异常行为的人。",
+      "metadata": {
+        "knowledgeId": "k_marks_time_anomaly",
+        "difficulty": "regular"
+      }
+    },
+    {
+      "type": "secret",
+      "content": "一只混血的廷达洛斯猎犬混入了我店里的旧装饰油画中。",
+      "metadata": {
+        "knowledgeId": "s_marks_hound_painting"
+      }
+    },
+    {
+      "type": "belief",
+      "content": "精准和距离是我能在卡森德拉这样的镇子上活到现在的唯一原因。",
+      "metadata": {
+        "confidence": 0.8,
+        "reasoningChain": "我越少介入，就越不可能成为附带伤害。"
+      }
+    },
+    {
+      "type": "information",
+      "content": "我造的教堂钟是镇上少数几样当人们不说真话时我信任它能说真话的东西之一。",
+      "metadata": {
+        "knowledgeId": "k_marks_church_clock",
+        "difficulty": "regular"
+      }
+    },
+    {
+      "type": "secret",
+      "content": "当钟表出现不同步时，我把它当作附近有不自然的东西在活动的警告。",
+      "metadata": {
+        "knowledgeId": "s_marks_time_warning"
+      }
+    }
+  ]
+}

@@ -1,0 +1,147 @@
+{
+  "id": "Nancy Charlotte",
+  "name": "Nancy Charlotte",
+  "occupation": "花店店员",
+  "age": 24,
+  "gender": "female",
+  "appearance": "一位甜美纤弱的年轻女性，有着洋娃娃般的脸庞和及臀的金色长卷发。调查员见到她时，她穿着一件红色毛呢外套。",
+  "personality": "心地纯洁、善良、温柔、情感脆弱。尽管成长经历充满创伤，她仍然真诚、信任他人且富有同情心。",
+  "background": "南希出生于父母在土耳其度假时的一段短暂恋情。五岁时父母离异后，她被母亲带到法国。她的母亲后来嫁给了一个暗中性骚扰南希的富人。最终南希被送到寄宿学校，在那里她遇到了成为她第一个真正朋友的西蒙·拉普拉斯。她的母亲后来加入了黑山羊教团并试图献祭南希。这导致了法国的一场悲剧性火车事故，随后在暴力冲突中南希的母亲被西蒙的交替人格阿纳托尔所杀。南希随后被西蒙带到美国，此后一直生活在邪教残余势力的持续威胁之下。",
+  "residence": "SCN_9",
+  "currentLocation": "SCN_9_SUB_1",
+  "longTermIntent": "过上和平安全的生活，免受迫害，并与她的保护者和最亲密的伴侣西蒙在一起。",
+  "attributes": {
+    "STR": 35,
+    "CON": 45,
+    "DEX": 55,
+    "APP": 75,
+    "POW": 50,
+    "SIZ": 45,
+    "INT": 60,
+    "EDU": 50
+  },
+  "status": {
+    "hp": 9,
+    "maxHp": 9,
+    "sanity": 50,
+    "maxSanity": 50,
+    "luck": 70,
+    "mp": 10,
+    "conditions": [
+      "冷蜘蛛感染"
+    ]
+  },
+  "skills": {
+    "Charm": 65,
+    "Psychology": 40,
+    "Spot Hidden": 45,
+    "Listen": 50
+  },
+  "inventory": [
+    {
+      "name": "红色毛呢外套",
+      "properties": {
+        "note": "调查员第一次见到她时穿着的。"
+      }
+    },
+    {
+      "name": "手腕绷带",
+      "properties": {
+        "note": "遮盖她在酒厂附近被冷蜘蛛咬伤的伤口。"
+      }
+    },
+    {
+      "name": "纹身（部分可见）",
+      "properties": {
+        "note": "她手臂上试图隐藏的纹身。"
+      }
+    },
+    {
+      "name": "花店工具",
+      "properties": {
+        "note": "用于她在花店工作的工具。"
+      }
+    }
+  ],
+  "relationships": [
+    {
+      "targetId": "Simon Laplace (Simon)",
+      "targetName": "Simon Laplace (Simon)",
+      "relationshipType": "friend",
+      "attitude": 90,
+      "description": "她最亲密的伴侣和保护者，她深深信任的人。",
+      "history": "他们在南希就读法国寄宿学校时相识；西蒙将她从邪教迫害中救出并带到美国。"
+    },
+    {
+      "targetId": "Kovind",
+      "targetName": "Kovind",
+      "relationshipType": "enemy",
+      "attitude": -60,
+      "description": "一个用她的债务和照片作为筹码的赌徒。",
+      "history": "科文德用赌博骗局困住了南希，并保留不雅照片作为抵押。"
+    },
+    {
+      "targetId": "Black Goat Cult",
+      "targetName": "Black Goat Cult",
+      "relationshipType": "enemy",
+      "attitude": -90,
+      "description": "一个曾将她作为祭品目标的邪教。",
+      "history": "她的母亲被邪教洗脑并试图将南希作为活祭品献出。"
+    }
+  ],
+  "memory": [
+    {
+      "type": "information",
+      "content": "西蒙在法国的暴力事件后将我从邪教迫害中救出并带我来到美国。",
+      "metadata": {
+        "knowledgeId": "k_nancy_simon_rescue",
+        "difficulty": "automatic"
+      }
+    },
+    {
+      "type": "secret",
+      "content": "我在酒厂附近被冷蜘蛛咬伤，感染正在恶化。",
+      "metadata": {
+        "knowledgeId": "s_nancy_spider"
+      }
+    },
+    {
+      "type": "secret",
+      "content": "我欠科文德赌债，他保留了不雅照片作为抵押。",
+      "metadata": {
+        "knowledgeId": "s_nancy_debt"
+      }
+    },
+    {
+      "type": "secret",
+      "content": "我的母亲加入了黑山羊教团并试图献祭我。",
+      "metadata": {
+        "knowledgeId": "s_nancy_cult"
+      }
+    },
+    {
+      "type": "belief",
+      "content": "只要西蒙在我身边，我仍有机会安全地度过这一切。",
+      "metadata": {
+        "confidence": 0.9,
+        "reasoningChain": "他是唯一一个在事情变得危险时始终保护我的人。"
+      }
+    },
+    {
+      "type": "information",
+      "content": "在花店工作给了我一种日常规律，让每一天感觉更小也更安全。",
+      "metadata": {
+        "knowledgeId": "k_nancy_flower_routine",
+        "difficulty": "automatic"
+      }
+    },
+    {
+      "type": "information",
+      "content": "和花打交道以及其他普通的日常工作帮助我不让恐惧吞噬整个白天。",
+      "metadata": {
+        "knowledgeId": "k_nancy_coping_routine",
+        "difficulty": "regular"
+      }
+    }
+  ]
+}

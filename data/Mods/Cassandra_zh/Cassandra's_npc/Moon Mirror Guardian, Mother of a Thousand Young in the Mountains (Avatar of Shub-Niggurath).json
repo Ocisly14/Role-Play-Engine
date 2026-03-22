@@ -1,0 +1,96 @@
+{
+  "id": "Moon Mirror Guardian, Mother of a Thousand Young in the Mountains (Avatar of Shub-Niggurath)",
+  "name": "Moon Mirror Guardian, Mother of a Thousand Young in the Mountains (Avatar of Shub-Niggurath)",
+  "occupation": "外神化身 / 守护实体",
+  "age": 999999999,
+  "gender": "N/A",
+  "appearance": "一个巨大的、怪诞的存在，拥有半透明的凝胶状身体，顶部是一个长满无数牙齿的巨大喙。在它的体内，可以看到被吞噬的祭品正在缓慢地变异。",
+  "personality": "一个黑暗的生育神性化身，要求献祭并赐予扭曲的祝福。",
+  "background": "月镜守护者是舒卜-尼古拉斯的化身，被信徒们作为山中千子之母来崇拜。它只能在满月时通过月镜被召唤。信徒们向它献上活祭，祭品被整个吞噬，在它体内被改造为受舒卜-尼古拉斯祝福的仆从。",
+  "residence": "SCN_20",
+  "currentLocation": "SCN_20",
+  "longTermIntent": "吞噬活祭品，改造它能留下的东西，在一个为腐化而生的体内孕育舒卜-尼古拉斯的新仆从。",
+  "attributes": {
+    "STR": 275,
+    "CON": 675,
+    "DEX": 80,
+    "APP": 0,
+    "POW": 350,
+    "SIZ": 485,
+    "INT": 105,
+    "EDU": 0
+  },
+  "status": {
+    "hp": 115,
+    "maxHp": 115,
+    "sanity": 0,
+    "maxSanity": 0,
+    "luck": 0,
+    "mp": 70,
+    "conditions": []
+  },
+  "skills": {
+    "Fighting": 90,
+    "Crush": 75
+  },
+  "inventory": [],
+  "relationships": [
+    {
+      "targetId": "Shub-Niggurath",
+      "targetName": "Shub-Niggurath",
+      "relationshipType": "ally",
+      "attitude": 100,
+      "description": "外神意志在地球上的物理显现。",
+      "history": "作为舒卜-尼古拉斯力量的通道而存在，通过古老仪式被召唤。"
+    },
+    {
+      "targetId": "Black Goat Cult",
+      "targetName": "Black Goat Cult",
+      "relationshipType": "ally",
+      "attitude": 0,
+      "description": "执行召唤和喂养化身所需献祭的信徒们。",
+      "history": "卡森德拉的富裕家庭秘密维持着为其提供活猎物的仪式链条。"
+    }
+  ],
+  "memory": [
+    {
+      "type": "information",
+      "content": "月镜是仪式的门槛。在满月时，镜子允许我显现并接受献祭。",
+      "metadata": {
+        "knowledgeId": "k_moonmirror_summon",
+        "difficulty": "automatic"
+      }
+    },
+    {
+      "type": "information",
+      "content": "被吞噬的受害者并非简单地死去。他们在我体内被缓慢改造，直到可以被重塑为仆从。",
+      "metadata": {
+        "knowledgeId": "k_moonmirror_transformation",
+        "difficulty": "hard"
+      }
+    },
+    {
+      "type": "secret",
+      "content": "仪式依赖于镜子、满月和教团纪律。破坏其中任何一个都可以延迟显现。",
+      "metadata": {
+        "knowledgeId": "s_moonmirror_ritual"
+      }
+    },
+    {
+      "type": "belief",
+      "content": "献祭不是损失。它是将肉体发酵为一个更好、更奇异的目的。",
+      "metadata": {
+        "confidence": 0.9,
+        "reasoningChain": "被吞噬的可以被改造，被改造的可以侍奉。"
+      }
+    },
+    {
+      "type": "information",
+      "content": "除非镜子、月亮和祭品全部对齐，否则我不会真正出现。",
+      "metadata": {
+        "knowledgeId": "k_moonmirror_alignment",
+        "difficulty": "hard"
+      }
+    }
+  ]
+}

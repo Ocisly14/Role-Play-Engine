@@ -1,0 +1,126 @@
+{
+  "id": "Angela",
+  "name": "Angela",
+  "occupation": "毒贩",
+  "age": 34,
+  "gender": "female",
+  "appearance": "一个体型普通、外貌不起眼的女人，穿着朴素，足以消失在人群中。除非她自己愿意，否则她的外表不会引起任何人的第二次注目。",
+  "personality": "谨慎、务实、情感淡漠、以利益为导向。安吉拉偏好低风险交易、简短交谈，让自己有用但不引人注目。",
+  "background": "安吉拉活跃在卡森德拉地下经济的边缘。她与勒克斯·林奇保持着长期交易关系，供应大麻、阿拉伯茶和少量精神活性药物如哌甲酯。她刻意回避镇上更大的阴谋，靠保持流动、缩小社交圈和从不假装忠诚比谨慎更有价值来求生。",
+  "residence": "OUTDOOR",
+  "currentLocation": "ROAD_1",
+  "longTermIntent": "在不招致持续警方压力的情况下维持街头毒品交易，只要与勒克斯·林奇的交易仍有利可图就维持这层关系，并远离卡森德拉更危险的权力斗争。",
+  "attributes": {
+    "STR": 50,
+    "CON": 55,
+    "DEX": 50,
+    "APP": 55,
+    "POW": 50,
+    "SIZ": 60,
+    "INT": 55,
+    "EDU": 65
+  },
+  "status": {
+    "hp": 12,
+    "maxHp": 12,
+    "sanity": 50,
+    "maxSanity": 50,
+    "luck": 50,
+    "mp": 10,
+    "conditions": []
+  },
+  "skills": {
+    "Handgun": 50,
+    "Disguise": 50,
+    "Credit Rating": 20,
+    "Chemistry": 55,
+    "Bargain": 60,
+    "Psychology": 50,
+    "Pharmacy": 70
+  },
+  "inventory": [
+    {
+      "name": "街头挎包",
+      "properties": {
+        "note": "一个普通的手提包，用于在不引起注意的情况下搬运少量货物。"
+      }
+    },
+    {
+      "name": "毒品样品",
+      "properties": {
+        "note": "少量大麻、阿拉伯茶和几种管制兴奋剂，供固定买家使用。"
+      }
+    },
+    {
+      "name": "一次性包装",
+      "properties": {
+        "note": "简单的包裹纸、信封和小容器，用于快速交接。"
+      }
+    }
+  ],
+  "relationships": [
+    {
+      "targetId": "Lux Lynch",
+      "targetName": "Lux Lynch",
+      "relationshipType": "ally",
+      "attitude": 40,
+      "description": "一个固定买家，也是警界有用的腐败联系人。",
+      "history": "安吉拉与勒克斯做了很长时间的稳定生意，她明白这层关系只有在双方都将风险控制在可接受范围内时才能维持。"
+    }
+  ],
+  "memory": [
+    {
+      "type": "information",
+      "content": "我靠悄悄向那些知道闭嘴的人贩卖大麻、阿拉伯茶和少量精神活性药物来赚钱。",
+      "metadata": {
+        "knowledgeId": "k_angela_trade",
+        "difficulty": "automatic"
+      }
+    },
+    {
+      "type": "information",
+      "content": "我在卡森德拉四处走动，而不是固定在一个显眼的地点。街道、街角和短暂的碰面比固定地盘更适合我。",
+      "metadata": {
+        "knowledgeId": "k_angela_mobile",
+        "difficulty": "regular"
+      }
+    },
+    {
+      "type": "information",
+      "content": "我不问买家为什么想要他们想要的东西。小买卖之所以能活下去，是因为大家都同意不把一次交接变成一场供述。",
+      "metadata": {
+        "knowledgeId": "k_angela_no_questions",
+        "difficulty": "regular"
+      }
+    },
+    {
+      "type": "secret",
+      "content": "勒克斯·林奇一直是我的固定交易伙伴。他有用是因为他戴着警徽，却还想买他不该买的东西。",
+      "metadata": {
+        "knowledgeId": "s_angela_lux"
+      }
+    },
+    {
+      "type": "secret",
+      "content": "我对镇上小规模地下交易的了解比我说出来的多得多，包括谁付钱、谁用跑腿的、哪些穿制服的人宁愿对某些交易视而不见。",
+      "metadata": {
+        "knowledgeId": "s_angela_underworld"
+      }
+    },
+    {
+      "type": "secret",
+      "content": "我故意把货物、钱和联系人分开管理。没有任何一个买家或藏货点重要到如果有人贪心或被捕就能毁掉我。",
+      "metadata": {
+        "knowledgeId": "s_angela_split_risk"
+      }
+    },
+    {
+      "type": "belief",
+      "content": "卡森德拉那些对不该问的关系网问太多问题的人，最终不是被吓住、就是死了、要么被收买。小本生意和低调行事比野心更安全。",
+      "metadata": {
+        "confidence": 0.8,
+        "reasoningChain": "每个有利可图的联系最终都会触及更大更肮脏的东西。能活下来的人是那些把自己的角色缩小、知道何时消失的人。"
+      }
+    }
+  ]
+}

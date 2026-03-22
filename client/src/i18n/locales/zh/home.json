@@ -8,6 +8,8 @@
     "manageModules": "管理模组",
     "createCharacter": "创建角色",
     "viewCharacters": "查看角色",
+    "newSimulation": "新模拟",
+    "continueSimulation": "继续模拟",
     "tutorial": "新手教学",
     "settings": "设置",
     "logout": "退出登录"

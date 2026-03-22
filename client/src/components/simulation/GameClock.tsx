@@ -1,3 +1,5 @@
+import { useTranslation } from "react-i18next";
+
 interface GameClockProps {
   gameDay: number;
   timeOfDay: string;
@@ -9,10 +11,14 @@ export function GameClock({
   timeOfDay,
   simulationState,
 }: GameClockProps) {
+  const { t } = useTranslation("simulation");
+
   return (
     <div className="p-3 pr-14 border-b border-slate-200/60 flex items-center justify-between">
       <div>
-        <span className="text-lg font-bold text-amber-700">Day {gameDay}</span>
+        <span className="text-lg font-bold text-amber-700">
+          {t("clock.day", { day: gameDay })}
+        </span>
         <span className="ml-3 text-lg text-slate-600">{timeOfDay}</span>
       </div>
       <span

@@ -56,6 +56,16 @@ export interface NpcStatusInfo {
   location: string;
   inventory: Array<{ id: string; name: string; description?: string }>;
   isAlive: boolean;
+  // Profile fields
+  occupation?: string;
+  age?: number;
+  gender?: string;
+  appearance?: string;
+  personality?: string;
+  background?: string;
+  backstory?: string;
+  residence?: string;
+  longTermIntent?: string;
 }
 
 export interface SimulationStatus {
@@ -66,6 +76,7 @@ export interface SimulationStatus {
   stopReason?: string;
   moduleName?: string;
   mapsPrefix?: string;
+  weather?: string;
 }
 
 export interface SimulationListItem {

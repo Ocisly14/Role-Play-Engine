@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
 import { type SimulationListItem, deleteSimulation, listSimulations } from "../../services/simulationApi";
 
@@ -15,6 +16,7 @@ const STATUS_COLORS: Record<string, string> = {
 };
 
 export function SimulationSelectorModal({ open, onClose }: SimulationSelectorModalProps) {
+  const { t } = useTranslation("simulation");
   const navigate = useNavigate();
   const [simulations, setSimulations] = useState<SimulationListItem[]>([]);
   const [loading, setLoading] = useState(false);
@@ -57,7 +59,7 @@ export function SimulationSelectorModal({ open, onClose }: SimulationSelectorMod
       >
         <div className="flex justify-between items-center mb-6">
           <h2 className="text-xl font-bold" style={{ color: "var(--title, #3d2f1f)" }}>
-            Continue Simulation
+            {t("selector.continueSimulation")}
           </h2>
           <button type="button" onClick={onClose} className="text-gray-400 hover:text-gray-600 text-2xl">
             &times;
@@ -65,9 +67,9 @@ export function SimulationSelectorModal({ open, onClose }: SimulationSelectorMod
         </div>
 
         {loading ? (
-          <p className="text-center text-gray-500 py-8">Loading...</p>
+          <p className="text-center text-gray-500 py-8">{t("selector.loading")}</p>
         ) : simulations.length === 0 ? (
-          <p className="text-center text-gray-500 py-8">No simulations found</p>
+          <p className="text-center text-gray-500 py-8">{t("selector.noSimulations")}</p>
         ) : (
           <div className="space-y-3">
             {simulations.map((sim) => (
@@ -85,14 +87,14 @@ export function SimulationSelectorModal({ open, onClose }: SimulationSelectorMod
                 >
                   <div className="flex justify-between items-center">
                     <span className="font-medium" style={{ color: "var(--title, #3d2f1f)" }}>
-                      {sim.moduleName ?? "Unknown Module"}
+                      {sim.moduleName ?? t("selector.unknownModule")}
                     </span>
                     <span className={`text-xs px-2 py-1 rounded-full border ${STATUS_COLORS[sim.state] ?? ""}`}>
                       {sim.state}
                     </span>
                   </div>
                   <div className="text-sm text-gray-500 mt-1">
-                    Day {sim.currentDay} &middot; {sim.currentTime} &middot; {sim.ticksExecuted} ticks
+                    {t("selector.day", { day: sim.currentDay })} &middot; {sim.currentTime} &middot; {t("selector.ticks", { count: sim.ticksExecuted })}
                   </div>
                 </button>
 
@@ -104,7 +106,7 @@ export function SimulationSelectorModal({ open, onClose }: SimulationSelectorMod
                       onClick={() => handleDelete(sim.sessionId)}
                       className="text-xs px-2 py-1 rounded-lg bg-red-500 text-white hover:bg-red-600 transition-colors disabled:opacity-50"
                     >
-                      {deleting ? "..." : "Confirm"}
+                      {deleting ? "..." : t("selector.confirm")}
                     </button>
                     <button
                       type="button"
@@ -112,7 +114,7 @@ export function SimulationSelectorModal({ open, onClose }: SimulationSelectorMod
                       onClick={() => setConfirmDeleteId(null)}
                       className="text-xs px-2 py-1 rounded-lg bg-gray-200 text-gray-600 hover:bg-gray-300 transition-colors"
                     >
-                      Cancel
+                      {t("selector.cancel")}
                     </button>
                   </div>
                 ) : (
@@ -120,7 +122,7 @@ export function SimulationSelectorModal({ open, onClose }: SimulationSelectorMod
                     type="button"
                     onClick={() => setConfirmDeleteId(sim.sessionId)}
                     className="pr-4 pl-2 py-4 text-gray-300 hover:text-red-400 transition-colors"
-                    title="Delete simulation"
+                    title={t("selector.deleteSimulation")}
                   >
                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                       <polyline points="3 6 5 6 21 6" />

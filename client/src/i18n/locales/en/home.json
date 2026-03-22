@@ -8,6 +8,8 @@
     "manageModules": "Manage Modules",
     "createCharacter": "Create Character",
     "viewCharacters": "View Characters",
+    "newSimulation": "New Simulation",
+    "continueSimulation": "Continue Simulation",
     "tutorial": "Tutorial",
     "settings": "Settings",
     "logout": "Logout"
