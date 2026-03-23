@@ -2489,7 +2489,8 @@ textarea {
   width: 340px;
   z-index: 20;
   overflow-y: auto;
-  transition: transform 0.3s ease-in-out, right 0.3s ease-in-out;
+  transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1),
+              right 0.35s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .sim-sidebar.sim-sidebar-open {
@@ -2539,9 +2540,20 @@ textarea {
   z-index: 2;
 }
 
-/* When popup is open, reposition sidebar to center the pair with 20px gap */
+/* When popup is open, define shared layout vars so popup+sidebar center as a group */
+.sim-page--has-popup {
+  --popup-gap: 20px;
+  --sidebar-w: 340px;
+  --sidebar-total: calc(var(--popup-gap) + var(--sidebar-w)); /* 360px */
+  --popup-max-w: 1100px;
+  --group-max-w: calc(var(--popup-max-w) + var(--sidebar-total)); /* 1460px */
+  --group-w: min(calc(100vw - 64px), var(--group-max-w));
+  --popup-w: calc(var(--group-w) - var(--sidebar-total));
+  --side-margin: max(16px, calc((100vw - var(--group-w)) / 2));
+}
+
 .sim-page--has-popup .sim-sidebar.sim-sidebar-open {
-  right: max(16px, 14vw - 180px, 50vw - 660px);
+  right: var(--side-margin);
 }
 
 /* Scene image popup — gamechat-style glass panel */
@@ -2549,19 +2561,19 @@ textarea {
   position: fixed;
   top: 120px;
   bottom: 40px;
-  left: 16px;
-  right: 16px;
   z-index: 30;
-  width: min(80%, 1100px);
-  margin-left: auto;
-  margin-right: auto;
+  /* Explicit left+width centering (no margin:auto) so transitions always work */
+  --popup-solo-w: min(80vw, 1100px);
+  width: var(--popup-solo-w);
+  left: calc((100vw - var(--popup-solo-w)) / 2);
   animation: simPopupIn 0.25s ease-out;
-  transition: right 0.3s ease-in-out, width 0.3s ease-in-out;
+  transition: left 0.35s cubic-bezier(0.4, 0, 0.2, 1),
+              width 0.35s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .sim-scene-popup.sim-scene-popup-shifted {
-  right: 376px; /* 16px margin + 340px sidebar + 20px gap */
-  width: min(80%, 1100px, calc(100vw - 392px));
+  left: var(--side-margin);
+  width: var(--popup-w);
 }
 
 .sim-scene-popup-content {
@@ -2655,13 +2667,13 @@ textarea {
   }
 
   .sim-scene-popup {
-    width: 90%;
+    --popup-solo-w: 90vw;
     top: 60px;
   }
 
   .sim-scene-popup.sim-scene-popup-shifted {
-    right: 16px;
-    width: 90%;
+    left: 5vw;
+    width: 90vw;
   }
 
   .sim-scene-popup-body {

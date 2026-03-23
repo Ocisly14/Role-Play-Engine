@@ -81,6 +81,7 @@ interface SurfaceImpact {
 
 const WEATHER_OBSTACLE_SELECTOR = "[data-weather-obstacle]";
 const OBSTACLE_HORIZONTAL_PADDING = 6;
+const SNOW_CAP_INSET = 4;
 const MAX_SPLASH_PARTICLES = 220;
 
 function clamp(value: number, min: number, max: number): number {
@@ -302,8 +303,8 @@ function findSnowImpact(
     surfaceY = obstacle.top - getSnowDepthAt(obstacle, impactX, snowCaps);
 
     if (
-      impactX < obstacle.left - OBSTACLE_HORIZONTAL_PADDING ||
-      impactX > obstacle.right + OBSTACLE_HORIZONTAL_PADDING
+      impactX < obstacle.left + SNOW_CAP_INSET ||
+      impactX > obstacle.right - SNOW_CAP_INSET
     ) {
       continue;
     }
@@ -450,21 +451,31 @@ function drawSnowCaps(
     const snowCap = snowCaps[obstacle.id];
     if (!snowCap || snowCap.heights.every((height) => height < 0.2)) continue;
 
+    const innerLeft = obstacle.left + SNOW_CAP_INSET;
+    const innerRight = obstacle.right - SNOW_CAP_INSET;
+    // Taper zone beyond the inset boundary (smooth ramp over this distance)
+    const taperWidth = SNOW_CAP_INSET * 2;
+
     ctx.save();
     ctx.shadowColor = "rgba(255,255,255,0.16)";
     ctx.shadowBlur = 12;
     ctx.fillStyle = "rgba(245,250,255,0.9)";
     ctx.beginPath();
-    ctx.moveTo(obstacle.left, obstacle.top + 1);
+    ctx.moveTo(innerLeft, obstacle.top + 1);
 
     for (let index = 0; index < snowCap.heights.length; index += 1) {
       const x = obstacle.left + index * snowCap.segmentWidth;
-      const y = obstacle.top - snowCap.heights[index];
+      if (x < innerLeft || x > innerRight) continue;
+      // Taper from 0→1 over taperWidth inside the inset boundary
+      const dL = x - innerLeft;
+      const dR = innerRight - x;
+      const t = clamp(Math.min(dL, dR) / taperWidth, 0, 1);
+      const taper = t * t * (3 - 2 * t);
+      const y = obstacle.top - snowCap.heights[index] * taper;
       ctx.lineTo(x, y);
     }
 
-    ctx.lineTo(obstacle.right, obstacle.top - (snowCap.heights.at(-1) ?? 0));
-    ctx.lineTo(obstacle.right, obstacle.top + 2);
+    ctx.lineTo(innerRight, obstacle.top + 1);
     ctx.closePath();
     ctx.fill();
 
@@ -472,11 +483,23 @@ function drawSnowCaps(
     ctx.strokeStyle = "rgba(255,255,255,0.95)";
     ctx.lineWidth = 1.4;
     ctx.beginPath();
+    let penDown = false;
     for (let index = 0; index < snowCap.heights.length; index += 1) {
       const x = obstacle.left + index * snowCap.segmentWidth;
-      const y = obstacle.top - snowCap.heights[index];
-      if (index === 0) {
+      if (x < innerLeft || x > innerRight) continue;
+      const dL = x - innerLeft;
+      const dR = innerRight - x;
+      const t = clamp(Math.min(dL, dR) / taperWidth, 0, 1);
+      const taper = t * t * (3 - 2 * t);
+      const h = snowCap.heights[index] * taper;
+      if (h < 0.2) {
+        penDown = false;
+        continue;
+      }
+      const y = obstacle.top - h;
+      if (!penDown) {
         ctx.moveTo(x, y);
+        penDown = true;
       } else {
         ctx.lineTo(x, y);
       }
@@ -987,51 +1010,136 @@ const Clouds: React.FC<CloudProps> = ({
 
 /* ────────────────────── Fog Layers ────────────────────── */
 
-const FogLayers: React.FC = () => (
-  <>
-    {[
-      {
-        opacity: 0.35,
-        anim: "fogDrift1 20s ease-in-out infinite alternate",
-        bg: "radial-gradient(ellipse at 30% 40%, rgba(210,210,220,0.6) 0%, rgba(190,190,205,0.3) 40%, transparent 70%)",
-      },
-      {
-        opacity: 0.25,
-        anim: "fogDrift2 30s ease-in-out infinite alternate",
-        bg: "radial-gradient(ellipse at 70% 55%, rgba(200,200,215,0.55) 0%, rgba(185,185,200,0.25) 45%, transparent 70%)",
-      },
-      {
-        opacity: 0.3,
-        anim: "fogDrift3 25s ease-in-out infinite alternate",
-        bg: "radial-gradient(ellipse at 50% 60%, rgba(205,205,218,0.5) 0%, rgba(188,188,200,0.2) 50%, transparent 65%)",
-      },
-      {
-        opacity: 0.15,
-        anim: "fogDrift1 35s ease-in-out 5s infinite alternate",
-        bg: "radial-gradient(ellipse at 20% 70%, rgba(215,215,225,0.4) 0%, transparent 60%)",
-      },
-    ].map((layer, i) => (
+const FogLayers: React.FC = () => {
+  const hazeLayers = [
+    {
+      opacity: 0.18,
+      anim: "fogDrift1 36s linear -8s infinite",
+      bg: "radial-gradient(ellipse at 26% 38%, rgba(196,201,210,0.3) 0%, rgba(176,182,192,0.16) 42%, transparent 74%)",
+    },
+    {
+      opacity: 0.14,
+      anim: "fogDrift2 44s linear -18s infinite",
+      bg: "radial-gradient(ellipse at 72% 54%, rgba(186,191,201,0.26) 0%, rgba(164,170,180,0.12) 46%, transparent 76%)",
+    },
+    {
+      opacity: 0.16,
+      anim: "fogDrift3 40s linear -4s infinite",
+      bg: "radial-gradient(ellipse at 50% 66%, rgba(188,193,203,0.28) 0%, rgba(162,168,178,0.1) 54%, transparent 78%)",
+    },
+  ];
+
+  const fogBanks = [
+    {
+      width: "46%",
+      height: 220,
+      top: "10%",
+      left: "-34%",
+      blur: 17,
+      opacity: 0.56,
+      anim: "fogBankSweep1 26s linear -6s infinite",
+      bg: "radial-gradient(ellipse at 30% 48%, rgba(132,138,150,0.88) 0%, rgba(118,124,138,0.74) 34%, rgba(100,106,118,0.3) 66%, transparent 92%)",
+      edgeBg:
+        "radial-gradient(ellipse at 36% 50%, rgba(66,72,84,0) 44%, rgba(74,80,92,0.12) 62%, rgba(82,88,100,0.24) 76%, rgba(66,72,84,0) 92%)",
+    },
+    {
+      width: "38%",
+      height: 176,
+      top: "30%",
+      left: "-24%",
+      blur: 14,
+      opacity: 0.48,
+      anim: "fogBankSweep2 32s linear -14s infinite",
+      bg: "radial-gradient(ellipse at 40% 50%, rgba(122,128,140,0.82) 0%, rgba(108,114,126,0.68) 36%, rgba(88,94,106,0.26) 68%, transparent 92%)",
+      edgeBg:
+        "radial-gradient(ellipse at 42% 50%, rgba(64,70,82,0) 46%, rgba(72,78,90,0.1) 62%, rgba(78,84,96,0.22) 78%, rgba(64,70,82,0) 92%)",
+    },
+    {
+      width: "54%",
+      height: 248,
+      top: "54%",
+      left: "-40%",
+      blur: 19,
+      opacity: 0.58,
+      anim: "fogBankSweep3 30s linear -11s infinite",
+      bg: "radial-gradient(ellipse at 32% 52%, rgba(126,132,146,0.92) 0%, rgba(110,116,130,0.78) 34%, rgba(84,90,102,0.34) 66%, transparent 92%)",
+      edgeBg:
+        "radial-gradient(ellipse at 36% 54%, rgba(62,68,80,0) 44%, rgba(72,78,90,0.14) 60%, rgba(80,86,98,0.28) 76%, rgba(62,68,80,0) 92%)",
+    },
+    {
+      width: "30%",
+      height: 140,
+      top: "70%",
+      left: "-18%",
+      blur: 12,
+      opacity: 0.42,
+      anim: "fogBankSweep1 22s linear -17s infinite",
+      bg: "radial-gradient(ellipse at 38% 50%, rgba(118,124,136,0.82) 0%, rgba(102,108,120,0.66) 38%, rgba(80,86,96,0.24) 70%, transparent 92%)",
+      edgeBg:
+        "radial-gradient(ellipse at 40% 50%, rgba(60,66,78,0) 46%, rgba(68,74,86,0.08) 62%, rgba(76,82,94,0.2) 80%, rgba(60,66,78,0) 93%)",
+    },
+  ];
+
+  return (
+    <>
       <div
-        key={i}
         style={{
           position: "absolute",
           inset: 0,
-          background: layer.bg,
-          opacity: layer.opacity,
-          animation: layer.anim,
+          background:
+            "linear-gradient(180deg, rgba(170,176,186,0.08) 0%, rgba(150,156,168,0.1) 44%, rgba(128,134,146,0.16) 100%)",
         }}
       />
-    ))}
-    <div
-      style={{
-        position: "absolute",
-        inset: 0,
-        backdropFilter: "blur(1.5px)",
-        WebkitBackdropFilter: "blur(1.5px)",
-      }}
-    />
-  </>
-);
+      {hazeLayers.map((layer, index) => (
+        <div
+          key={`fog-haze-${index}`}
+          style={{
+            position: "absolute",
+            inset: "-6%",
+            background: layer.bg,
+            opacity: layer.opacity,
+            animation: layer.anim,
+            willChange: "transform",
+          }}
+        />
+      ))}
+      {fogBanks.map((bank, index) => (
+        <div
+          key={`fog-bank-${index}`}
+          style={{
+            position: "absolute",
+            top: bank.top,
+            left: bank.left,
+            width: bank.width,
+            height: bank.height,
+            borderRadius: "50%",
+            background: `${bank.edgeBg}, ${bank.bg}`,
+            opacity: bank.opacity,
+            filter: `blur(${bank.blur}px)`,
+            animation: bank.anim,
+            willChange: "transform",
+          }}
+        />
+      ))}
+      <div
+        style={{
+          position: "absolute",
+          inset: 0,
+          background:
+            "linear-gradient(180deg, rgba(255,255,255,0.03) 0%, rgba(255,255,255,0) 34%, rgba(92,98,110,0.06) 100%)",
+        }}
+      />
+      <div
+        style={{
+          position: "absolute",
+          inset: 0,
+          backdropFilter: "blur(0.7px)",
+          WebkitBackdropFilter: "blur(0.7px)",
+        }}
+      />
+    </>
+  );
+};
 
 /* ────────────────── Heat Distortion ────────────────── */
 
@@ -1314,7 +1422,7 @@ const TransitionLayer: React.FC<TransitionLayerProps> = ({
             style={{
               position: "absolute",
               inset: 0,
-              background: "rgba(180,185,195,0.12)",
+              background: "rgba(164,170,180,0.08)",
             }}
           />
           {!reducedMotion ? (
@@ -1324,7 +1432,8 @@ const TransitionLayer: React.FC<TransitionLayerProps> = ({
               style={{
                 position: "absolute",
                 inset: 0,
-                background: "rgba(200,200,210,0.3)",
+                background:
+                  "linear-gradient(180deg, rgba(184,190,200,0.2) 0%, rgba(146,152,164,0.24) 100%)",
               }}
             />
           )}
@@ -1442,16 +1551,28 @@ export const WeatherOverlay: React.FC<WeatherOverlayProps> = ({ weather }) => {
           100% { transform: translateX(25px); }
         }
         @keyframes fogDrift1 {
-          0% { transform: translateX(-50px); }
-          100% { transform: translateX(50px); }
+          0% { transform: translate3d(-10%, -1%, 0) scale(0.98); }
+          100% { transform: translate3d(12%, 1.5%, 0) scale(1.03); }
         }
         @keyframes fogDrift2 {
-          0% { transform: translateX(40px); }
-          100% { transform: translateX(-60px); }
+          0% { transform: translate3d(-14%, 1.5%, 0) scale(1.02); }
+          100% { transform: translate3d(9%, -1%, 0) scale(1.05); }
         }
         @keyframes fogDrift3 {
-          0% { transform: translateX(-30px); }
-          100% { transform: translateX(45px); }
+          0% { transform: translate3d(-8%, 2%, 0) scale(0.96); }
+          100% { transform: translate3d(14%, -1.5%, 0) scale(1.02); }
+        }
+        @keyframes fogBankSweep1 {
+          0% { transform: translate3d(0, 0, 0) scale(0.94); }
+          100% { transform: translate3d(165vw, -12px, 0) scale(1.05); }
+        }
+        @keyframes fogBankSweep2 {
+          0% { transform: translate3d(0, 0, 0) scale(0.9); }
+          100% { transform: translate3d(152vw, 10px, 0) scale(1.08); }
+        }
+        @keyframes fogBankSweep3 {
+          0% { transform: translate3d(0, 0, 0) scale(0.96); }
+          100% { transform: translate3d(172vw, -8px, 0) scale(1.03); }
         }
         @keyframes heatRise {
           0% { transform: translateY(0); opacity: 0.8; }

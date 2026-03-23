@@ -41,18 +41,21 @@ export async function getTopology(sessionId: string): Promise<TopologyResponse |
     travelTimeMinutes: r.travelTimeMinutes,
     alongConnections: r.alongConnections,
   }));
-  const scenes = Array.from(dgsm.getState().scenes.values()).map((s) => ({
-    id: s.id,
-    name: s.name,
-    description: s.description,
-    parentLocationId: s.parentLocationId,
-    conditions: s.conditions ?? [],
-    connections: (s.connections ?? []).map((c) => ({
-      targetId: typeof c === "string" ? c : c.targetId,
-      description: typeof c === "string" ? undefined : c.description,
-    })),
-  }));
   const state = dgsm.getState();
+  const scenes = Array.from(state.scenes.values()).map((s) => {
+    const dynamicConditions = state.scenarioConditions?.[s.id] ?? [];
+    return {
+      id: s.id,
+      name: s.name,
+      description: s.description,
+      parentLocationId: s.parentLocationId,
+      conditions: [...(s.conditions ?? []), ...dynamicConditions],
+      connections: (s.connections ?? []).map((c) => ({
+        targetId: typeof c === "string" ? c : c.targetId,
+        description: typeof c === "string" ? undefined : c.description,
+      })),
+    };
+  });
   const scenarioOutlines = (state.scenarioOutlines ?? [])
     .filter((o) => o.id !== "OUTDOOR")
     .map((o) => ({
