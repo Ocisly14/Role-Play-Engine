@@ -1,8 +1,29 @@
 import type { DynamicGameStateManager } from "../../state/DynamicGameState.js";
+import type { DynamicScene } from "../../state/types.js";
 
 type GameState = ReturnType<DynamicGameStateManager["getState"]>;
 
 // ── Public entry points ─────────────────────────────────────────────────
+
+/**
+ * Format a scene's connections as human-readable lines for the planning prompt.
+ * e.g. "- 正门，面朝街道 → Town Square (JUNC_1)"
+ */
+export function formatSceneConnections(
+  dgsm: DynamicGameStateManager,
+  scene: DynamicScene
+): string {
+  const connections = scene.connections ?? [];
+  if (connections.length === 0) return "";
+
+  return connections
+    .map((c) => {
+      const targetName = resolveLocationName(dgsm, c.targetId);
+      const desc = c.description ? `${c.description} → ` : "";
+      return `- ${desc}${targetName}`;
+    })
+    .join("\n");
+}
 
 export function formatSceneMap(
   dgsm: DynamicGameStateManager,

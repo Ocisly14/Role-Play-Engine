@@ -217,7 +217,7 @@ function updateFireBlocking(
   // Scene-based blocking (existing)
   const scene = dgsm.getScene(locationId);
   if (scene) {
-    const connectedSceneIds = scene.connections ?? [];
+    const connectedSceneIds = (scene.connections ?? []).map(c => c.targetId);
     if (intensity >= BLOCK_THRESHOLD) {
       for (const connId of connectedSceneIds) {
         dgsm.setConnectionBlocked(
@@ -627,7 +627,7 @@ export const fireFeature: WorldFeature = {
     ) {
       const scene = dgsm.getScene(sourceId);
       if (scene) {
-        for (const connId of scene.connections ?? []) {
+        for (const connId of (scene.connections ?? []).map(c => c.targetId)) {
           if (getFireState(dgsm, connId)) continue;
           if (isNonFireBlocked(sourceId, connId)) continue;
           const newState = createFireState(1);

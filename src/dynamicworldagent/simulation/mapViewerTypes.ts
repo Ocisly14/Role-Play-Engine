@@ -1,4 +1,4 @@
-import type { Item } from "../state/types.js";
+import type { Item, SceneConnection } from "../state/types.js";
 
 export interface MapLayout {
   junctions: Record<string, { x: number; y: number }>;
@@ -48,7 +48,7 @@ export interface TopologyResponse {
     name: string;
     description: string;
     parentLocationId: string;
-    connections: string[];
+    connections: SceneConnection[];
   }>;
   scenarioOutlines: Array<{
     id: string;

@@ -105,8 +105,8 @@ export const sceneInteractionHandler: NodeHandler = {
         ? getTopologyNeighbors(node.location, topology)
         : [];
       const scene = dgsm.getScene(node.location);
-      const directConnections = scene?.connections ?? [];
-      const connectedTargets = new Set([...directConnections, ...neighbors]);
+      const directConnectionIds = (scene?.connections ?? []).map(c => c.targetId);
+      const connectedTargets = new Set([...directConnectionIds, ...neighbors]);
       const targetExists =
         dgsm.getScene(effect.targetScenarioId) !== null ||
         dgsm.getJunction(effect.targetScenarioId) !== null ||

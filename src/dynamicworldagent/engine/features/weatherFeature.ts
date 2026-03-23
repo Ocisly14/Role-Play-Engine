@@ -321,25 +321,25 @@ function updateWeatherBlocking(
     const scene = dgsm.getScene(sceneId);
     if (!scene) continue;
 
-    for (const connId of scene.connections ?? []) {
-      const connScene = dgsm.getScene(connId);
+    for (const conn of scene.connections ?? []) {
+      const connScene = dgsm.getScene(conn.targetId);
       if (!connScene || (connScene as any).indoor) continue;
 
       if (shouldBlock) {
         dgsm.setConnectionBlocked(
-          connId,
+          conn.targetId,
           sceneId,
           true,
           `Blocked by ${weatherType} (intensity ${intensity})`
         );
       } else {
-        const reason = dgsm.getConnectionBlockReason(connId, sceneId);
+        const reason = dgsm.getConnectionBlockReason(conn.targetId, sceneId);
         if (
           reason &&
           (reason.startsWith("Blocked by storm") ||
             reason.startsWith("Blocked by snow"))
         ) {
-          dgsm.setConnectionBlocked(sceneId, connId, false, "");
+          dgsm.setConnectionBlocked(sceneId, conn.targetId, false, "");
         }
       }
     }

@@ -195,6 +195,11 @@ export interface DynamicNPCProfile {
 
 // ─── Scene types ───────────────────────────────────────────────────
 
+export interface SceneConnection {
+  targetId: string;
+  description?: string;
+}
+
 export interface DynamicScene {
   id: string;
   name: string;
@@ -203,7 +208,7 @@ export interface DynamicScene {
   items: Item[];
   itemContexts?: Record<string, string>;
   conditions: SceneCondition[];
-  connections: string[];
+  connections: SceneConnection[];
   sceneImage?: SceneImage;
   indoor?: boolean;
 }

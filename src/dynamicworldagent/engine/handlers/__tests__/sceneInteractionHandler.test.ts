@@ -13,7 +13,7 @@ function createMockDgsm() {
     skills: Record<string, number>;
     status: { luck: number };
   }> = [];
-  const scenes = new Map<string, { id: string; connections: string[] }>();
+  const scenes = new Map<string, { id: string; connections: Array<{ targetId: string; description?: string }> }>();
   const junctions = new Map<string, unknown>();
   const roads = new Map<string, unknown>();
   const blockedCalls: Array<{
@@ -91,7 +91,7 @@ function createMockDgsm() {
       characterPositions[npcId] = { type: "scene", sceneId };
       npcCharacters.push({ id: npcId, skills: {}, status: { luck: 50 } });
     },
-    _addScene(id: string, connections: string[]) {
+    _addScene(id: string, connections: Array<{ targetId: string; description?: string }>) {
       scenes.set(id, { id, connections });
     },
     _blockedCalls: blockedCalls,
@@ -139,8 +139,8 @@ describe("sceneInteractionHandler", () => {
   it("blocks a real connected location", () => {
     const dgsm = createMockDgsm();
     dgsm._addNpc("npc_a", "SCN_3_SUB_1");
-    dgsm._addScene("SCN_3_SUB_1", ["SCN_3_SUB_2"]);
-    dgsm._addScene("SCN_3_SUB_2", ["SCN_3_SUB_1"]);
+    dgsm._addScene("SCN_3_SUB_1", [{ targetId: "SCN_3_SUB_2" }]);
+    dgsm._addScene("SCN_3_SUB_2", [{ targetId: "SCN_3_SUB_1" }]);
 
     const result = sceneInteractionHandler.execute(
       makeNode({
@@ -165,8 +165,8 @@ describe("sceneInteractionHandler", () => {
   it("ignores a fabricated connection target", () => {
     const dgsm = createMockDgsm();
     dgsm._addNpc("npc_a", "SCN_3_SUB_1");
-    dgsm._addScene("SCN_3_SUB_1", ["SCN_3_SUB_2"]);
-    dgsm._addScene("SCN_3_SUB_2", ["SCN_3_SUB_1"]);
+    dgsm._addScene("SCN_3_SUB_1", [{ targetId: "SCN_3_SUB_2" }]);
+    dgsm._addScene("SCN_3_SUB_2", [{ targetId: "SCN_3_SUB_1" }]);
     const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
 
     const result = sceneInteractionHandler.execute(

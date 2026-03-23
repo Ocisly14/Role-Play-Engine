@@ -352,7 +352,7 @@ function buildSceneBlock(
         )}`
       : null,
     connections.length > 0
-      ? `Connected locations: ${JSON.stringify(connections)}`
+      ? `Connected locations: ${JSON.stringify(connections.map((c: any) => ({ targetId: c.targetId, description: c.description })))}`
       : null,
   ]
     .filter(Boolean)

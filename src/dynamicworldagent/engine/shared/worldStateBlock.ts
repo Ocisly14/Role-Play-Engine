@@ -56,7 +56,7 @@ function buildPerceivedFireState(
         isAdjacent = neighbors.includes(location);
       } else {
         const fireScene = dgsm.getScene(fireSceneId);
-        isAdjacent = fireScene?.connections.includes(location) ?? false;
+        isAdjacent = fireScene?.connections.some(c => c.targetId === location) ?? false;
       }
       if (isAdjacent) {
         perceivedFires.push({

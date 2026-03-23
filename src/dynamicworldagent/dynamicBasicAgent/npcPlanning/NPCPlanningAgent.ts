@@ -21,6 +21,7 @@ import {
 } from "./npcPlanningTemplates.js";
 import {
   buildLocationNameMap,
+  formatSceneConnections,
   formatSceneMap,
   resolveLocationId as resolveLocationFromName,
   resolveLocationName,
@@ -559,6 +560,9 @@ export class NPCPlanningAgent {
     const buildingContext = currentLocationId
       ? buildBuildingContext(dgsm, currentLocationId)
       : "";
+    const sceneConnections = currentScene
+      ? formatSceneConnections(dgsm, currentScene)
+      : "";
 
     const { systemPrompt, userPrompt } = buildDetailedNodesPrompt({
       npcName: npc.name,
@@ -573,6 +577,7 @@ export class NPCPlanningAgent {
       sceneItems,
       sceneNpcs: npcsAtLocation,
       sceneConditions,
+      sceneConnections,
       buildingContext,
       worldStatePrompt,
       npcInventory,
@@ -1771,7 +1776,7 @@ export class NPCPlanningAgent {
           isAdjacent = neighbors.includes(npcLocation);
         } else {
           const fireScene = dgsm.getScene(fireSceneId);
-          isAdjacent = fireScene?.connections.includes(npcLocation) ?? false;
+          isAdjacent = fireScene?.connections.some(c => c.targetId === npcLocation) ?? false;
         }
         if (isAdjacent) {
           perceivedFires.push({

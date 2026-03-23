@@ -175,6 +175,8 @@ export interface DetailedNodesParams {
   sceneItems: string;
   sceneNpcs: string;
   sceneConditions: string;
+  /** Formatted connections from the current scene (e.g. "通往卧室的走廊") */
+  sceneConnections?: string;
   /** Formatted overview of other rooms in the same building (name + description only) */
   buildingContext?: string;
   /** Filtered world state: weather, fire, fatigue, sanity etc. */
@@ -322,7 +324,7 @@ ${params.memoryLog || "Nothing recorded yet."}
 ## Your Current Location
 ${params.currentLocation || "Unknown"}
 
-${params.buildingContext ? `## Other Rooms In This Building\n${params.buildingContext}\n` : ""}## Where You Are
+${params.sceneConnections ? `## Exits & Passages\n${params.sceneConnections}\n\n` : ""}${params.buildingContext ? `## Other Rooms In This Building\n${params.buildingContext}\n` : ""}## Where You Are
 ${params.sceneDescription || "No description available."}
 
 ## Conditions Here
