@@ -6,6 +6,7 @@ import { SidebarToggleButton } from "../components/layout/SidebarToggleButton";
 import { ConfigPanel } from "../components/simulation/ConfigPanel";
 import { ControlPanel } from "../components/simulation/ControlPanel";
 import { PhaserContainer } from "../components/simulation/PhaserContainer";
+import { SceneInfoPanel } from "../components/simulation/SceneInfoPanel";
 import { SidePanel } from "../components/simulation/SidePanel";
 import { SubSceneTabs } from "../components/simulation/SubSceneTabs";
 import { WeatherOverlay } from "../components/simulation/WeatherOverlay";
@@ -335,6 +336,22 @@ export default function SimulationPage({
       : focusedBuilding?.description
     )?.trim() ?? null;
 
+  const focusedSceneConditions = focusedScene?.conditions ?? [];
+  const focusedSceneConnections = focusedScene?.connections ?? [];
+
+  const resolveSceneName = useCallback(
+    (targetId: string): string => {
+      const scene = state.topology?.scenes.find((s) => s.id === targetId);
+      if (scene) return scene.name;
+      const outline = state.topology?.scenarioOutlines?.find(
+        (o) => o.id === targetId
+      );
+      if (outline) return outline.name;
+      return targetId;
+    },
+    [state.topology]
+  );
+
   const eventLocationOptions = useMemo(() => {
     if (!state.topology) return [];
 
@@ -573,55 +590,58 @@ export default function SimulationPage({
               )}
             </div>
 
-            {/* Scene image */}
-            <div className="relative flex-1 overflow-hidden flex items-center justify-center">
-              {sceneImageUrl ? (
-                <img
-                  src={sceneImageUrl}
-                  alt={focusedSceneName ?? focusedBuildingName ?? ""}
-                  className="w-full max-h-full object-cover"
-                />
-              ) : (
-                <div className="text-slate-400 text-sm p-6">
-                  {t("page.noImage")}
-                </div>
-              )}
-              {focusedSceneDescription && (
-                <div className="pointer-events-none absolute inset-x-0 top-0 p-3">
-                  <div className="max-h-[45%] w-full overflow-y-auto rounded-2xl border border-white/70 bg-white/30 px-4 py-3 text-sm leading-6 text-slate-900 shadow-lg backdrop-blur-xl whitespace-pre-wrap">
-                    {focusedSceneDescription}
+            {/* Two-column body: info panel + scene image */}
+            <div className="sim-scene-popup-body">
+              <SceneInfoPanel
+                sceneName={focusedSceneName ?? focusedBuildingName}
+                description={focusedSceneDescription}
+                conditions={focusedSceneConditions}
+                connections={focusedSceneConnections}
+                resolveSceneName={resolveSceneName}
+              />
+
+              <div className="sim-scene-popup-image">
+                {sceneImageUrl ? (
+                  <img
+                    src={sceneImageUrl}
+                    alt={focusedSceneName ?? focusedBuildingName ?? ""}
+                    className="w-full max-h-full object-cover"
+                  />
+                ) : (
+                  <div className="text-slate-400 text-sm p-6">
+                    {t("page.noImage")}
                   </div>
-                </div>
-              )}
-              {buildingNpcs.length > 0 && (
-                <div className="pointer-events-none absolute inset-x-0 bottom-0 p-3">
-                  <div className="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-black/30 via-black/10 to-transparent" />
-                  <div className="relative flex items-end gap-3 flex-wrap">
-                    {buildingNpcs.map((npc) => (
-                      <div
-                        key={npc.npcId}
-                        className="pointer-events-auto flex flex-col items-start gap-1 cursor-pointer hover:opacity-80 transition-opacity max-w-[240px]"
-                        onClick={() => setSelectedNpc(npc.npcId)}
-                      >
-                        {npc.currentAction && (
-                          <div className="rounded-2xl border border-white/70 bg-white/30 px-3 py-2 text-[11px] leading-4 text-slate-900 shadow-lg backdrop-blur-xl">
-                            {npc.currentAction}
+                )}
+                {buildingNpcs.length > 0 && (
+                  <div className="pointer-events-none absolute inset-x-0 bottom-0 p-3">
+                    <div className="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-black/30 via-black/10 to-transparent" />
+                    <div className="relative flex items-end gap-3 flex-wrap">
+                      {buildingNpcs.map((npc) => (
+                        <div
+                          key={npc.npcId}
+                          className="pointer-events-auto flex flex-col items-start gap-1 cursor-pointer hover:opacity-80 transition-opacity max-w-[240px]"
+                          onClick={() => setSelectedNpc(npc.npcId)}
+                        >
+                          {npc.currentAction && (
+                            <div className="rounded-2xl border border-white/70 bg-white/30 px-3 py-2 text-[11px] leading-4 text-slate-900 shadow-lg backdrop-blur-xl">
+                              {npc.currentAction}
+                            </div>
+                          )}
+                          <div className="flex items-center gap-1.5 rounded-full border border-white/70 bg-white/30 px-2.5 py-1 text-xs text-slate-800 shadow-md backdrop-blur-xl">
+                            <span
+                              className="inline-block w-3 h-3 rounded-full border border-white/60 shrink-0"
+                              style={{ backgroundColor: npc.color }}
+                            />
+                            <span className="drop-shadow-[0_1px_1px_rgba(255,255,255,0.35)]">
+                              {npc.name}
+                            </span>
                           </div>
-                        )}
-                        <div className="flex items-center gap-1.5 rounded-full border border-white/70 bg-white/30 px-2.5 py-1 text-xs text-slate-800 shadow-md backdrop-blur-xl">
-                          <span
-                            className="inline-block w-3 h-3 rounded-full border border-white/60 shrink-0"
-                            style={{ backgroundColor: npc.color }}
-                          />
-                          <span className="drop-shadow-[0_1px_1px_rgba(255,255,255,0.35)]">
-                            {npc.name}
-                          </span>
                         </div>
-                      </div>
-                    ))}
+                      ))}
+                    </div>
                   </div>
-                </div>
-              )}
+                )}
+              </div>
             </div>
           </div>
         </div>

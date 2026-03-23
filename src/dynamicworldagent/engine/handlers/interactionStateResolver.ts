@@ -352,7 +352,12 @@ function buildSceneBlock(
         )}`
       : null,
     connections.length > 0
-      ? `Connected locations: ${JSON.stringify(connections.map((c: any) => ({ targetId: c.targetId, description: c.description })))}`
+      ? `Connected locations: ${JSON.stringify(connections.map((c: any) => {
+          const entry: any = { targetId: c.targetId, description: c.description };
+          const blockReason = dgsm.getConnectionBlockReason(node.location, c.targetId);
+          if (blockReason) entry.blocked = blockReason;
+          return entry;
+        }))}`
       : null,
   ]
     .filter(Boolean)

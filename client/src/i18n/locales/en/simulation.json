@@ -83,6 +83,14 @@
     "encounter": "{{name}} — encounter",
     "unknown": "Unknown"
   },
+  "scenePanel": {
+    "description": "Description",
+    "conditions": "Conditions",
+    "connections": "Connections",
+    "noDescription": "No description available",
+    "noConditions": "Normal",
+    "noConnections": "No connections"
+  },
   "page": {
     "loadingSimulation": "Loading simulation...",
     "error": "Error: {{message}}",

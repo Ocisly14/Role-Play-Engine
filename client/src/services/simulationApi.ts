@@ -29,7 +29,14 @@ export interface TopologyResponse {
     name: string;
     description: string;
     parentLocationId: string;
-    connections: string[];
+    conditions: Array<{
+      description: string;
+      mechanicalEffect?: {
+        skillPenalty?: Array<{ skill: string; delta: number }>;
+        blocked?: boolean;
+      };
+    }>;
+    connections: Array<{ targetId: string; description?: string }>;
   }>;
   scenarioOutlines: Array<{
     id: string;

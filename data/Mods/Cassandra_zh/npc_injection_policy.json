@@ -1,7 +1,7 @@
 {
   "moduleId": "casssandra",
   "moduleStartDate": "2003-12-25",
-  "description": "Recommended NPC injection policy for simulation startup. daily_sim NPCs should receive regular town-life planning and social behavior. investigator_sim NPCs should be active, mobile, and clue-driven, but run with stronger investigation goals and tighter pacing than ordinary residents. limited_sim NPCs should stay mostly scene-bound or constrained. scene_only entries should be instantiated as encounter, evidence, or hazard objects rather than daily autonomous NPCs. cosmic_not_sim entries should be handled by director/event systems instead of normal NPC simulation.",
+  "description": "模拟启动时推荐的NPC注入策略。daily_sim类NPC应接收常规的小镇生活规划和社交行为。investigator_sim类NPC应保持活跃、移动性强和线索导向，但以比普通居民更强的调查目标和更紧凑的节奏运行。limited_sim类NPC应大多停留在场景内或受限制。scene_only条目应被实例化为遭遇、证据或危险物体，而非每日自主NPC。cosmic_not_sim条目应由导演/事件系统处理，而非正常NPC模拟。",
   "tiers": {
     "daily_sim": [
       "Patrizio von Samsa",

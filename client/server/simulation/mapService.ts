@@ -46,7 +46,11 @@ export async function getTopology(sessionId: string): Promise<TopologyResponse |
     name: s.name,
     description: s.description,
     parentLocationId: s.parentLocationId,
-    connections: s.connections ?? [],
+    conditions: s.conditions ?? [],
+    connections: (s.connections ?? []).map((c) => ({
+      targetId: typeof c === "string" ? c : c.targetId,
+      description: typeof c === "string" ? undefined : c.description,
+    })),
   }));
   const state = dgsm.getState();
   const scenarioOutlines = (state.scenarioOutlines ?? [])

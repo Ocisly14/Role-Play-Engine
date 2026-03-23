@@ -1,4 +1,5 @@
 import type { Item, SceneConnection } from "../state/types.js";
+import type { SceneCondition } from "../dynamicBasicAgent/npcPlanning/types.js";
 
 export interface MapLayout {
   junctions: Record<string, { x: number; y: number }>;
@@ -48,6 +49,7 @@ export interface TopologyResponse {
     name: string;
     description: string;
     parentLocationId: string;
+    conditions: SceneCondition[];
     connections: SceneConnection[];
   }>;
   scenarioOutlines: Array<{

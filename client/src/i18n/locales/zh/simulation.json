@@ -83,6 +83,14 @@
     "encounter": "{{name}} — 遭遇事件",
     "unknown": "未知"
   },
+  "scenePanel": {
+    "description": "场景描述",
+    "conditions": "场景状态",
+    "connections": "连接通道",
+    "noDescription": "暂无描述",
+    "noConditions": "正常",
+    "noConnections": "无连接"
+  },
   "page": {
     "loadingSimulation": "加载模拟中...",
     "error": "错误: {{message}}",
