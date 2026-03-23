@@ -15,8 +15,14 @@ import { useSimulationWebSocket } from "../hooks/useSimulationWebSocket";
 import { api } from "../services/api";
 
 const NPC_DOT_COLORS = [
-  "#ff6b6b", "#4ecdc4", "#ffe66d", "#a29bfe",
-  "#fd79a8", "#00b894", "#e17055", "#6c5ce7",
+  "#ff6b6b",
+  "#4ecdc4",
+  "#ffe66d",
+  "#a29bfe",
+  "#fd79a8",
+  "#00b894",
+  "#e17055",
+  "#6c5ce7",
 ];
 
 const MAPS_BASE = "/api/maps";
@@ -57,15 +63,20 @@ export default function SimulationPage({
     () => normalizeSessionId(routeSessionId),
     [routeSessionId]
   );
-  const { isSidebarOpen, toggleSidebar, closeSidebar } =
-    useMobileSidebar();
+  const { isSidebarOpen, toggleSidebar, closeSidebar } = useMobileSidebar();
   const [previewWeather, setPreviewWeather] = useState<string | null>(null);
   const gameRef = useRef<Phaser.Game | null>(null);
   const mapsPrefixRef = useRef<string | null>(null);
 
   // Scene image popup state
-  const [sceneConfigs, setSceneConfigs] = useState<Record<string, SceneConfig> | null>(null);
-  const [scenarioConfigs, setScenarioConfigs] = useState<Record<string, ScenarioConfig> | null>(null);
+  const [sceneConfigs, setSceneConfigs] = useState<Record<
+    string,
+    SceneConfig
+  > | null>(null);
+  const [scenarioConfigs, setScenarioConfigs] = useState<Record<
+    string,
+    ScenarioConfig
+  > | null>(null);
   const [shareFeedback, setShareFeedback] = useState<string | null>(null);
 
   const {
@@ -141,10 +152,15 @@ export default function SimulationPage({
     if (!state.mapsPrefix) return;
     fetch(`${MAPS_BASE}/${state.mapsPrefix}/map_config.json`)
       .then((res) => res.json())
-      .then((config: { scenes?: Record<string, SceneConfig>; scenarios?: Record<string, ScenarioConfig> }) => {
-        if (config.scenes) setSceneConfigs(config.scenes);
-        if (config.scenarios) setScenarioConfigs(config.scenarios);
-      })
+      .then(
+        (config: {
+          scenes?: Record<string, SceneConfig>;
+          scenarios?: Record<string, ScenarioConfig>;
+        }) => {
+          if (config.scenes) setSceneConfigs(config.scenes);
+          if (config.scenarios) setScenarioConfigs(config.scenarios);
+        }
+      )
       .catch(() => {});
   }, [state.mapsPrefix]);
 
@@ -296,15 +312,28 @@ export default function SimulationPage({
     return null;
   })();
 
-  // Resolve scene name
-  const focusedSceneName = state.focusedSubSceneId
-    ? state.topology?.scenes.find((s) => s.id === state.focusedSubSceneId)?.name ?? null
+  const focusedScene = state.focusedSubSceneId
+    ? (state.topology?.scenes.find((s) => s.id === state.focusedSubSceneId) ??
+      null)
     : null;
 
-  // Resolve building (scenario) name
-  const focusedBuildingName = state.focusedBuildingId
-    ? state.topology?.scenarioOutlines?.find((o) => o.id === state.focusedBuildingId)?.name ?? null
+  const focusedBuilding = state.focusedBuildingId
+    ? (state.topology?.scenarioOutlines?.find(
+        (o) => o.id === state.focusedBuildingId
+      ) ?? null)
     : null;
+
+  // Resolve scene name
+  const focusedSceneName = focusedScene?.name ?? null;
+
+  // Resolve building (scenario) name
+  const focusedBuildingName = focusedBuilding?.name ?? null;
+
+  const focusedSceneDescription =
+    (state.focusedSubSceneId
+      ? focusedScene?.description
+      : focusedBuilding?.description
+    )?.trim() ?? null;
 
   const eventLocationOptions = useMemo(() => {
     if (!state.topology) return [];
@@ -381,7 +410,6 @@ export default function SimulationPage({
   const showControlPanel =
     !isPublicMode && Boolean(sessionId) && !showConfigPanel && !countdown;
 
-
   useEffect(() => {
     if (!shareFeedback) return;
     const timeoutId = window.setTimeout(() => setShareFeedback(null), 2500);
@@ -419,7 +447,9 @@ export default function SimulationPage({
   }, [sessionId]);
 
   return (
-    <div className={`sim-page${state.focusedBuildingId ? " sim-page--has-popup" : ""}`}>
+    <div
+      className={`sim-page${state.focusedBuildingId ? " sim-page--has-popup" : ""}`}
+    >
       {/* Full-viewport Phaser canvas — the interactive game area */}
       <div className="sim-canvas-layer">
         <PhaserContainer
@@ -434,19 +464,29 @@ export default function SimulationPage({
       {/* Loading / Error overlays */}
       {state.isLoading && (
         <div className="sim-overlay">
-          <span className="text-white/80 text-lg">{t("page.loadingSimulation")}</span>
+          <span className="text-white/80 text-lg">
+            {t("page.loadingSimulation")}
+          </span>
         </div>
       )}
       {state.error && (
         <div className="sim-overlay">
-          <span className="text-red-300 text-lg">{t("page.error", { message: state.error })}</span>
+          <span className="text-red-300 text-lg">
+            {t("page.error", { message: state.error })}
+          </span>
         </div>
       )}
 
       {/* Floating header */}
-      <div className="sim-header backdrop-blur-sm bg-white/50 border border-slate-200 shadow-md rounded-lg" onPointerDown={(e) => e.stopPropagation()}>
+      <div
+        className="sim-header backdrop-blur-sm bg-white/50 border border-slate-200 shadow-md rounded-lg"
+        onPointerDown={(e) => e.stopPropagation()}
+      >
         {isPublicMode ? (
-          <div className="sim-header-spacer sim-header-spacer--back" aria-hidden="true" />
+          <div
+            className="sim-header-spacer sim-header-spacer--back"
+            aria-hidden="true"
+          />
         ) : (
           <button
             onClick={() => navigate("/simulation/select")}
@@ -461,29 +501,46 @@ export default function SimulationPage({
         <div className="sim-header-center">
           <h1>{t("page.title")}</h1>
           <span className="sim-header-separator">·</span>
-          <span className="sim-header-info font-bold text-amber-700">{t("clock.day", { day: state.gameDay })}</span>
-          <span className="sim-header-info text-slate-600">{state.timeOfDay}</span>
+          <span className="sim-header-info font-bold text-amber-700">
+            {t("clock.day", { day: state.gameDay })}
+          </span>
+          <span className="sim-header-info text-slate-600">
+            {state.timeOfDay}
+          </span>
           <span className="sim-header-separator">·</span>
-          <span className="sim-header-info text-slate-500">{t(`weather.${state.weather}`)}</span>
+          <span className="sim-header-info text-slate-500">
+            {t(`weather.${state.weather}`)}
+          </span>
         </div>
 
-        {!isSidebarOpen && (
-          <SidebarToggleButton onClick={toggleSidebar} />
-        )}
+        {!isSidebarOpen && <SidebarToggleButton onClick={toggleSidebar} />}
         {isSidebarOpen && (
-          <div className="sim-header-spacer sim-header-spacer--menu" aria-hidden="true" />
+          <div
+            className="sim-header-spacer sim-header-spacer--menu"
+            aria-hidden="true"
+          />
         )}
       </div>
 
       {/* Click map to close popup — only covers canvas, below all UI */}
       {state.focusedBuildingId && (
-        <div className="sim-popup-backdrop" onClick={exitBuilding} onPointerDown={(e) => e.stopPropagation()} />
+        <div
+          className="sim-popup-backdrop"
+          onClick={exitBuilding}
+          onPointerDown={(e) => e.stopPropagation()}
+        />
       )}
 
       {/* Scene image popup */}
       {state.focusedBuildingId && (
-        <div className={`sim-scene-popup ${isSidebarOpen ? "sim-scene-popup-shifted" : ""}`} onPointerDown={(e) => e.stopPropagation()}>
-          <div className="sim-scene-popup-content backdrop-blur-sm bg-white/50 border border-slate-200 shadow-lg rounded-lg overflow-hidden">
+        <div
+          className={`sim-scene-popup ${isSidebarOpen ? "sim-scene-popup-shifted" : ""}`}
+          onPointerDown={(e) => e.stopPropagation()}
+        >
+          <div
+            className="sim-scene-popup-content backdrop-blur-sm bg-white/50 border border-slate-200 shadow-lg rounded-lg overflow-hidden"
+            data-weather-obstacle="scene-popup"
+          >
             {/* Header — scenario name + sub-scene tabs */}
             <div className="flex items-center gap-1.5 p-2 border-b border-slate-200/60 flex-wrap">
               <span
@@ -525,8 +582,17 @@ export default function SimulationPage({
                   className="w-full max-h-full object-cover"
                 />
               ) : (
-                  <div className="text-slate-400 text-sm p-6">{t("page.noImage")}</div>
-                )}
+                <div className="text-slate-400 text-sm p-6">
+                  {t("page.noImage")}
+                </div>
+              )}
+              {focusedSceneDescription && (
+                <div className="pointer-events-none absolute inset-x-0 top-0 p-3">
+                  <div className="max-h-[45%] w-full overflow-y-auto rounded-2xl border border-white/70 bg-white/30 px-4 py-3 text-sm leading-6 text-slate-900 shadow-lg backdrop-blur-xl whitespace-pre-wrap">
+                    {focusedSceneDescription}
+                  </div>
+                </div>
+              )}
               {buildingNpcs.length > 0 && (
                 <div className="pointer-events-none absolute inset-x-0 bottom-0 p-3">
                   <div className="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-black/30 via-black/10 to-transparent" />
@@ -563,12 +629,20 @@ export default function SimulationPage({
 
       {/* Config panel (pre-start) */}
       {showConfigPanel && sessionId && (
-        <ConfigPanel sessionId={sessionId} onStarted={resync} onWeatherChange={setPreviewWeather} />
+        <ConfigPanel
+          sessionId={sessionId}
+          onStarted={resync}
+          onWeatherChange={setPreviewWeather}
+        />
       )}
 
       {/* Real-time sync countdown */}
       {countdown && state.simulationState === "running" && (
-        <div className="fixed bottom-4 left-4 z-10 backdrop-blur-xl bg-white/50 border border-white/30 rounded-2xl px-4 py-2 shadow-lg flex items-center gap-2" onPointerDown={(e) => e.stopPropagation()}>
+        <div
+          className="fixed bottom-4 left-4 z-10 backdrop-blur-xl bg-white/50 border border-white/30 rounded-2xl px-4 py-2 shadow-lg flex items-center gap-2"
+          data-weather-obstacle="countdown-panel"
+          onPointerDown={(e) => e.stopPropagation()}
+        >
           <span className="text-xs text-slate-500">{t("page.preparing")}</span>
           <span className="text-sm font-medium text-amber-600">
             {countdown.mins}m {String(countdown.secs).padStart(2, "0")}s
@@ -590,6 +664,7 @@ export default function SimulationPage({
           type="button"
           onClick={() => void handleShare()}
           className="fixed bottom-4 right-4 z-10 backdrop-blur-xl bg-white/50 border border-white/30 rounded-2xl px-4 py-2 shadow-lg flex items-center gap-2 text-sm font-medium text-slate-700 hover:bg-white/70 transition-all"
+          data-weather-obstacle="share-panel"
           onPointerDown={(e) => e.stopPropagation()}
         >
           <span>{t("page.copyPublicLink")}</span>
@@ -601,7 +676,11 @@ export default function SimulationPage({
 
       {/* Sidebar */}
       {isSidebarOpen && (
-        <div className="sim-sidebar-backdrop" onClick={closeSidebar} onPointerDown={(e) => e.stopPropagation()} />
+        <div
+          className="sim-sidebar-backdrop"
+          onClick={closeSidebar}
+          onPointerDown={(e) => e.stopPropagation()}
+        />
       )}
 
       <SidePanel

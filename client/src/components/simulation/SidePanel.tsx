@@ -65,9 +65,7 @@ function buildTimeKey(gameDay: number, gameTime: string): number | null {
   return gameDay * 1440 + minutes;
 }
 
-function buildEventFilters(
-  draft: EventFilterDraft
-): SimulationEventFilters {
+function buildEventFilters(draft: EventFilterDraft): SimulationEventFilters {
   const next: SimulationEventFilters = {};
 
   if (draft.npcId) next.npcId = draft.npcId;
@@ -185,7 +183,9 @@ export function SidePanel({
   const [filterDraft, setFilterDraft] = useState<EventFilterDraft>(
     EMPTY_EVENT_FILTER_DRAFT
   );
-  const [activeFilters, setActiveFilters] = useState<SimulationEventFilters>({});
+  const [activeFilters, setActiveFilters] = useState<SimulationEventFilters>(
+    {}
+  );
   const [displayedEvents, setDisplayedEvents] = useState<SimulationEvent[]>([]);
   const [eventsError, setEventsError] = useState<string | null>(null);
   const [isEventsLoading, setIsEventsLoading] = useState(false);
@@ -214,18 +214,24 @@ export function SidePanel({
           maxTick: displayTick,
         });
         hasLoadedEventsRef.current = true;
-        const historyEvents = dedupeEventsById([...events]
-          .filter((event) => !HIDDEN_EVENT_TYPES.has(event.type))
-          .reverse());
+        const historyEvents = dedupeEventsById(
+          [...events]
+            .filter((event) => !HIDDEN_EVENT_TYPES.has(event.type))
+            .reverse()
+        );
         const seenIds = new Set(historyEvents.map((event) => event.id));
         const incoming = eventLog.filter(
           (event) =>
             !seenIds.has(event.id) &&
             matchesFilters(event, filters, locationParentById)
         );
-        setDisplayedEvents(dedupeEventsById(
-          incoming.length > 0 ? [...incoming, ...historyEvents] : historyEvents
-        ));
+        setDisplayedEvents(
+          dedupeEventsById(
+            incoming.length > 0
+              ? [...incoming, ...historyEvents]
+              : historyEvents
+          )
+        );
       } catch (error) {
         setEventsError(
           error instanceof Error ? error.message : "Failed to load events"
@@ -255,7 +261,11 @@ export function SidePanel({
   }, [activeFilters, activeTab, loadEvents, sessionId]);
 
   useEffect(() => {
-    if (activeTab !== "events" || !hasLoadedEventsRef.current || eventLog.length === 0) {
+    if (
+      activeTab !== "events" ||
+      !hasLoadedEventsRef.current ||
+      eventLog.length === 0
+    ) {
       return;
     }
 
@@ -267,7 +277,9 @@ export function SidePanel({
           matchesFilters(event, activeFilters, locationParentById)
       );
 
-      return incoming.length > 0 ? dedupeEventsById([...incoming, ...prev]) : prev;
+      return incoming.length > 0
+        ? dedupeEventsById([...incoming, ...prev])
+        : prev;
     });
   }, [activeFilters, activeTab, eventLog, locationParentById]);
 
@@ -296,6 +308,7 @@ export function SidePanel({
   return (
     <div
       className={`sim-sidebar backdrop-blur-sm bg-white/50 border border-slate-200 shadow-lg rounded-lg flex flex-col ${drawerClass}`}
+      data-weather-obstacle="sim-sidebar"
       onPointerDown={(e) => e.stopPropagation()}
     >
       <button
@@ -361,7 +374,11 @@ export function SidePanel({
                         {t("sidebar.filtersActive")}
                       </span>
                     )}
-                    <span>{isFilterPanelOpen ? t("sidebar.hide") : t("sidebar.show")}</span>
+                    <span>
+                      {isFilterPanelOpen
+                        ? t("sidebar.hide")
+                        : t("sidebar.show")}
+                    </span>
                   </span>
                 </button>
 
@@ -440,7 +457,10 @@ export function SidePanel({
                         <select
                           value={filterDraft.parentLocationId}
                           onChange={(event) =>
-                            handleDraftChange("parentLocationId", event.target.value)
+                            handleDraftChange(
+                              "parentLocationId",
+                              event.target.value
+                            )
                           }
                           className="rounded-md border border-slate-200 bg-white/70 px-2 py-1 text-xs text-slate-700 outline-none focus:border-amber-400"
                         >
@@ -472,7 +492,9 @@ export function SidePanel({
                         {t("sidebar.clear")}
                       </button>
                       {isEventsLoading && (
-                        <span className="text-[11px] text-slate-400">{t("sidebar.loading")}</span>
+                        <span className="text-[11px] text-slate-400">
+                          {t("sidebar.loading")}
+                        </span>
                       )}
                     </div>
                   </>

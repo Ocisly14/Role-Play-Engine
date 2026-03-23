@@ -46,12 +46,14 @@ export interface TopologyResponse {
   scenes: Array<{
     id: string;
     name: string;
+    description: string;
     parentLocationId: string;
     connections: string[];
   }>;
   scenarioOutlines: Array<{
     id: string;
     name: string;
+    description: string;
     entrySceneId?: string;
     residents?: string[];
     subSceneCount: number;

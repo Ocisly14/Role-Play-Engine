@@ -44,6 +44,7 @@ export async function getTopology(sessionId: string): Promise<TopologyResponse |
   const scenes = Array.from(dgsm.getState().scenes.values()).map((s) => ({
     id: s.id,
     name: s.name,
+    description: s.description,
     parentLocationId: s.parentLocationId,
     connections: s.connections ?? [],
   }));
@@ -53,6 +54,7 @@ export async function getTopology(sessionId: string): Promise<TopologyResponse |
     .map((o) => ({
       id: o.id,
       name: o.name,
+      description: o.description,
       entrySceneId: o.entrySceneId,
       residents: o.residents,
       subSceneCount: o.subSceneCount,

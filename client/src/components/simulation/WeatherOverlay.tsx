@@ -1,10 +1,5 @@
-import React, {
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from "react";
+import type React from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 /* ───────────────────────── types ───────────────────────── */
 
@@ -50,6 +45,97 @@ interface Particle {
   swaySpeed: number;
 }
 
+interface WeatherObstacle {
+  id: string;
+  left: number;
+  right: number;
+  top: number;
+  bottom: number;
+  width: number;
+  height: number;
+}
+
+interface RainSplashParticle {
+  x: number;
+  y: number;
+  vx: number;
+  vy: number;
+  size: number;
+  life: number;
+  maxLife: number;
+  opacity: number;
+}
+
+interface SnowCap {
+  heights: number[];
+  segmentWidth: number;
+  maxDepth: number;
+}
+
+interface SurfaceImpact {
+  obstacle: WeatherObstacle;
+  x: number;
+  y: number;
+  progress: number;
+}
+
+const WEATHER_OBSTACLE_SELECTOR = "[data-weather-obstacle]";
+const OBSTACLE_HORIZONTAL_PADDING = 6;
+const MAX_SPLASH_PARTICLES = 220;
+
+function clamp(value: number, min: number, max: number): number {
+  return Math.min(max, Math.max(min, value));
+}
+
+function isVisibleWeatherObstacle(element: HTMLElement): boolean {
+  const style = window.getComputedStyle(element);
+  if (style.display === "none" || style.visibility === "hidden") {
+    return false;
+  }
+  return Number.parseFloat(style.opacity || "1") > 0.02;
+}
+
+function collectWeatherObstacles(): WeatherObstacle[] {
+  if (typeof document === "undefined") return [];
+
+  return Array.from(
+    document.querySelectorAll<HTMLElement>(WEATHER_OBSTACLE_SELECTOR)
+  )
+    .filter(isVisibleWeatherObstacle)
+    .map((element, index) => {
+      const rect = element.getBoundingClientRect();
+      return {
+        id: element.dataset.weatherObstacle ?? `obstacle-${index}`,
+        left: rect.left,
+        right: rect.right,
+        top: rect.top,
+        bottom: rect.bottom,
+        width: rect.width,
+        height: rect.height,
+      };
+    })
+    .filter(
+      (obstacle) =>
+        obstacle.width > 24 &&
+        obstacle.height > 12 &&
+        obstacle.bottom > 0 &&
+        obstacle.top < window.innerHeight &&
+        obstacle.right > 0 &&
+        obstacle.left < window.innerWidth
+    )
+    .sort((a, b) => a.top - b.top);
+}
+
+function respawnRainParticle(particle: Particle, width: number): void {
+  particle.y = -particle.length - Math.random() * 40;
+  particle.x = Math.random() * width * 1.3 - width * 0.15;
+}
+
+function respawnSnowParticle(particle: Particle, width: number): void {
+  particle.y = -particle.radius * 3 - Math.random() * 60;
+  particle.x = Math.random() * width;
+}
+
 function initRainParticles(w: number, h: number, count: number): Particle[] {
   return Array.from({ length: count }, () => ({
     x: Math.random() * w * 1.3,
@@ -79,6 +165,327 @@ function initSnowParticles(w: number, h: number, count: number): Particle[] {
   });
 }
 
+function findContainingObstacle(
+  obstacles: WeatherObstacle[],
+  x: number,
+  y: number
+): WeatherObstacle | null {
+  for (const obstacle of obstacles) {
+    if (
+      x >= obstacle.left &&
+      x <= obstacle.right &&
+      y >= obstacle.top &&
+      y <= obstacle.bottom
+    ) {
+      return obstacle;
+    }
+  }
+  return null;
+}
+
+function findRainImpact(
+  startX: number,
+  startY: number,
+  endX: number,
+  endY: number,
+  obstacles: WeatherObstacle[]
+): SurfaceImpact | null {
+  const deltaY = endY - startY;
+  if (deltaY <= 0) return null;
+
+  let hit: SurfaceImpact | null = null;
+
+  for (const obstacle of obstacles) {
+    if (startY >= obstacle.bottom || endY < obstacle.top) continue;
+
+    const progress = (obstacle.top - startY) / deltaY;
+    if (progress < 0 || progress > 1) continue;
+
+    const impactX = startX + (endX - startX) * progress;
+    if (
+      impactX < obstacle.left - OBSTACLE_HORIZONTAL_PADDING ||
+      impactX > obstacle.right + OBSTACLE_HORIZONTAL_PADDING
+    ) {
+      continue;
+    }
+
+    if (!hit || progress < hit.progress) {
+      hit = {
+        obstacle,
+        x: impactX,
+        y: obstacle.top,
+        progress,
+      };
+    }
+  }
+
+  return hit;
+}
+
+function ensureSnowCaps(
+  obstacles: WeatherObstacle[],
+  previousCaps: Record<string, SnowCap>
+): Record<string, SnowCap> {
+  const nextCaps: Record<string, SnowCap> = {};
+
+  for (const obstacle of obstacles) {
+    // Use a denser sampling grid so snow height follows local landing density
+    // instead of feeling like one shared strip across the whole obstacle.
+    const segmentCount = Math.max(24, Math.ceil(obstacle.width / 8));
+    const previous = previousCaps[obstacle.id];
+    const heights = Array.from({ length: segmentCount }, (_, index) => {
+      if (!previous || previous.heights.length === 0) return 0;
+      const sourceIndex = Math.round(
+        (index / Math.max(segmentCount - 1, 1)) *
+          Math.max(previous.heights.length - 1, 0)
+      );
+      return previous.heights[sourceIndex] ?? 0;
+    });
+
+    nextCaps[obstacle.id] = {
+      heights,
+      segmentWidth: obstacle.width / segmentCount,
+      maxDepth: clamp(obstacle.height * 0.24, 10, 28),
+    };
+  }
+
+  return nextCaps;
+}
+
+function getSnowDepthAt(
+  obstacle: WeatherObstacle,
+  x: number,
+  snowCaps: Record<string, SnowCap>
+): number {
+  const snowCap = snowCaps[obstacle.id];
+  if (!snowCap || snowCap.heights.length === 0) return 0;
+
+  const normalizedX = clamp(
+    (x - obstacle.left) / Math.max(obstacle.width, 1),
+    0,
+    1
+  );
+  const scaledIndex = normalizedX * Math.max(snowCap.heights.length - 1, 0);
+  const lowerIndex = Math.floor(scaledIndex);
+  const upperIndex = Math.min(snowCap.heights.length - 1, lowerIndex + 1);
+  const blend = scaledIndex - lowerIndex;
+  const lower = snowCap.heights[lowerIndex] ?? 0;
+  const upper = snowCap.heights[upperIndex] ?? lower;
+
+  return lower + (upper - lower) * blend;
+}
+
+function findSnowImpact(
+  startX: number,
+  startY: number,
+  endX: number,
+  endY: number,
+  obstacles: WeatherObstacle[],
+  snowCaps: Record<string, SnowCap>
+): SurfaceImpact | null {
+  const deltaY = endY - startY;
+  if (deltaY <= 0) return null;
+
+  let hit: SurfaceImpact | null = null;
+
+  for (const obstacle of obstacles) {
+    if (startY >= obstacle.bottom + 4 || endY < obstacle.top - 24) continue;
+
+    let progress = clamp((obstacle.top - startY) / deltaY, 0, 1);
+    let impactX = startX + (endX - startX) * progress;
+    let surfaceY = obstacle.top - getSnowDepthAt(obstacle, impactX, snowCaps);
+
+    progress = (surfaceY - startY) / deltaY;
+    if (progress < 0 || progress > 1) continue;
+
+    impactX = startX + (endX - startX) * progress;
+    surfaceY = obstacle.top - getSnowDepthAt(obstacle, impactX, snowCaps);
+
+    if (
+      impactX < obstacle.left - OBSTACLE_HORIZONTAL_PADDING ||
+      impactX > obstacle.right + OBSTACLE_HORIZONTAL_PADDING
+    ) {
+      continue;
+    }
+
+    if (startY > surfaceY || endY < surfaceY) continue;
+
+    if (!hit || progress < hit.progress) {
+      hit = {
+        obstacle,
+        x: impactX,
+        y: surfaceY,
+        progress,
+      };
+    }
+  }
+
+  return hit;
+}
+
+function addRainSplash(
+  splashes: RainSplashParticle[],
+  x: number,
+  y: number,
+  storm: boolean
+): void {
+  const splashCount = storm ? 6 : 4;
+
+  for (let index = 0; index < splashCount; index += 1) {
+    splashes.push({
+      x,
+      y: y - 1,
+      vx: (Math.random() - 0.5) * (storm ? 2.2 : 1.5),
+      vy: -0.9 - Math.random() * (storm ? 2.6 : 1.8),
+      size: 1 + Math.random() * (storm ? 1.6 : 1.1),
+      life: 8 + Math.random() * 8,
+      maxLife: 16,
+      opacity: 0.35 + Math.random() * 0.25,
+    });
+  }
+
+  if (splashes.length > MAX_SPLASH_PARTICLES) {
+    splashes.splice(0, splashes.length - MAX_SPLASH_PARTICLES);
+  }
+}
+
+function drawRainSplashes(
+  ctx: CanvasRenderingContext2D,
+  splashes: RainSplashParticle[]
+): RainSplashParticle[] {
+  const active: RainSplashParticle[] = [];
+
+  for (const splash of splashes) {
+    splash.x += splash.vx;
+    splash.y += splash.vy;
+    splash.vy += 0.14;
+    splash.life -= 1;
+
+    if (splash.life <= 0) continue;
+
+    active.push(splash);
+    const alpha = (splash.life / splash.maxLife) * splash.opacity;
+    ctx.fillStyle = `rgba(210,230,255,${alpha})`;
+    ctx.beginPath();
+    ctx.ellipse(
+      splash.x,
+      splash.y,
+      splash.size,
+      splash.size * 0.65,
+      0,
+      0,
+      Math.PI * 2
+    );
+    ctx.fill();
+  }
+
+  return active;
+}
+
+function depositSnow(
+  obstacle: WeatherObstacle,
+  x: number,
+  amount: number,
+  snowCaps: Record<string, SnowCap>
+): void {
+  const snowCap = snowCaps[obstacle.id];
+  if (!snowCap) return;
+
+  const normalizedX = clamp(
+    (x - obstacle.left) / Math.max(obstacle.width, 1),
+    0,
+    1
+  );
+  const centerIndex = normalizedX * Math.max(snowCap.heights.length - 1, 0);
+  const minIndex = Math.max(0, Math.floor(centerIndex) - 1);
+  const maxIndex = Math.min(
+    snowCap.heights.length - 1,
+    Math.ceil(centerIndex) + 1
+  );
+
+  for (let index = minIndex; index <= maxIndex; index += 1) {
+    const distance = Math.abs(index - centerIndex);
+    const falloff = Math.exp(-(distance * distance) / 0.42);
+    if (falloff < 0.06) continue;
+
+    snowCap.heights[index] = Math.min(
+      snowCap.maxDepth,
+      snowCap.heights[index] + amount * falloff
+    );
+  }
+}
+
+function settleSnowCap(snowCap: SnowCap): void {
+  const heights = snowCap.heights;
+  if (heights.length < 2) return;
+
+  const maxSlopeDelta = clamp(snowCap.segmentWidth * 0.22, 0.8, 1.5);
+
+  for (let pass = 0; pass < 2; pass += 1) {
+    for (let index = 0; index < heights.length - 1; index += 1) {
+      const left = heights[index];
+      const right = heights[index + 1];
+      const delta = left - right;
+
+      if (Math.abs(delta) <= maxSlopeDelta) continue;
+
+      const transfer = (Math.abs(delta) - maxSlopeDelta) * 0.28;
+      if (delta > 0) {
+        heights[index] = Math.max(0, left - transfer);
+        heights[index + 1] = Math.min(snowCap.maxDepth, right + transfer);
+      } else {
+        heights[index] = Math.min(snowCap.maxDepth, left + transfer);
+        heights[index + 1] = Math.max(0, right - transfer);
+      }
+    }
+  }
+}
+
+function drawSnowCaps(
+  ctx: CanvasRenderingContext2D,
+  obstacles: WeatherObstacle[],
+  snowCaps: Record<string, SnowCap>
+): void {
+  for (const obstacle of obstacles) {
+    const snowCap = snowCaps[obstacle.id];
+    if (!snowCap || snowCap.heights.every((height) => height < 0.2)) continue;
+
+    ctx.save();
+    ctx.shadowColor = "rgba(255,255,255,0.16)";
+    ctx.shadowBlur = 12;
+    ctx.fillStyle = "rgba(245,250,255,0.9)";
+    ctx.beginPath();
+    ctx.moveTo(obstacle.left, obstacle.top + 1);
+
+    for (let index = 0; index < snowCap.heights.length; index += 1) {
+      const x = obstacle.left + index * snowCap.segmentWidth;
+      const y = obstacle.top - snowCap.heights[index];
+      ctx.lineTo(x, y);
+    }
+
+    ctx.lineTo(obstacle.right, obstacle.top - (snowCap.heights.at(-1) ?? 0));
+    ctx.lineTo(obstacle.right, obstacle.top + 2);
+    ctx.closePath();
+    ctx.fill();
+
+    ctx.shadowBlur = 0;
+    ctx.strokeStyle = "rgba(255,255,255,0.95)";
+    ctx.lineWidth = 1.4;
+    ctx.beginPath();
+    for (let index = 0; index < snowCap.heights.length; index += 1) {
+      const x = obstacle.left + index * snowCap.segmentWidth;
+      const y = obstacle.top - snowCap.heights[index];
+      if (index === 0) {
+        ctx.moveTo(x, y);
+      } else {
+        ctx.lineTo(x, y);
+      }
+    }
+    ctx.stroke();
+    ctx.restore();
+  }
+}
+
 interface CanvasLayerProps {
   type: "rain" | "snow" | "storm" | "extreme_cold_snow";
   reducedMotion: boolean;
@@ -87,8 +494,21 @@ interface CanvasLayerProps {
 const CanvasLayer: React.FC<CanvasLayerProps> = ({ type, reducedMotion }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const particlesRef = useRef<Particle[]>([]);
+  const obstaclesRef = useRef<WeatherObstacle[]>([]);
+  const rainSplashesRef = useRef<RainSplashParticle[]>([]);
+  const snowCapsRef = useRef<Record<string, SnowCap>>({});
   const rafRef = useRef(0);
   const snowTimeRef = useRef(0);
+
+  const updateObstacles = useCallback(() => {
+    const obstacles = collectWeatherObstacles();
+    obstaclesRef.current = obstacles;
+    if (type === "snow" || type === "extreme_cold_snow") {
+      snowCapsRef.current = ensureSnowCaps(obstacles, snowCapsRef.current);
+    } else {
+      snowCapsRef.current = {};
+    }
+  }, [type]);
 
   const draw = useCallback(() => {
     const canvas = canvasRef.current;
@@ -105,24 +525,45 @@ const CanvasLayer: React.FC<CanvasLayerProps> = ({ type, reducedMotion }) => {
     ctx.scale(dpr, dpr);
 
     const particles = particlesRef.current;
+    const obstacles = obstaclesRef.current;
 
     if (type === "rain" || type === "storm") {
       const isStorm = type === "storm";
       for (const p of particles) {
-        // Rain with slight width variation for depth
         const lineW = isStorm ? 1.5 : 1 + p.opacity * 0.5;
+        const angle = isStorm ? 0.4 : 0.25;
+        const nextX = p.x + p.speed * angle;
+        const nextY = p.y + p.speed;
+
+        if (findContainingObstacle(obstacles, p.x, p.y)) {
+          respawnRainParticle(p, w);
+          continue;
+        }
+
+        const impact = findRainImpact(p.x, p.y, nextX, nextY, obstacles);
+
         ctx.strokeStyle = `rgba(180,210,255,${p.opacity})`;
         ctx.lineWidth = lineW;
         ctx.beginPath();
-        const angle = isStorm ? 0.4 : 0.25;
         ctx.moveTo(p.x, p.y);
-        ctx.lineTo(p.x + p.length * angle, p.y + p.length);
+        if (impact) {
+          ctx.lineTo(impact.x, impact.y);
+        } else {
+          ctx.lineTo(p.x + p.length * angle, p.y + p.length);
+        }
         ctx.stroke();
-        p.y += p.speed;
-        p.x += p.speed * angle;
+
+        if (impact) {
+          addRainSplash(rainSplashesRef.current, impact.x, impact.y, isStorm);
+          respawnRainParticle(p, w);
+          continue;
+        }
+
+        p.y = nextY;
+        p.x = nextX;
+
         if (p.y > h) {
-          p.y = -p.length - Math.random() * 40;
-          p.x = Math.random() * w * 1.3 - w * 0.15;
+          respawnRainParticle(p, w);
         }
         if (p.x > w + 20) {
           p.x = -20;
@@ -140,28 +581,75 @@ const CanvasLayer: React.FC<CanvasLayerProps> = ({ type, reducedMotion }) => {
           }
         }
       }
+
+      rainSplashesRef.current = drawRainSplashes(ctx, rainSplashesRef.current);
     } else {
-      // snow or extreme_cold_snow
       snowTimeRef.current += 0.012;
       const t = snowTimeRef.current;
       for (const p of particles) {
-        const sx = p.x + Math.sin(t * p.swaySpeed + p.sway * 0.1) * p.sway;
-        // Draw snowflake with soft edge
-        const gradient = ctx.createRadialGradient(sx, p.y, 0, sx, p.y, p.radius);
+        const currentX =
+          p.x + Math.sin(t * p.swaySpeed + p.sway * 0.1) * p.sway;
+        const nextBaseX = p.x + Math.sin(t * 0.3 + p.sway) * 0.15;
+        const nextY = p.y + p.speed;
+        const nextTime = t + 0.012;
+        const nextX =
+          nextBaseX + Math.sin(nextTime * p.swaySpeed + p.sway * 0.1) * p.sway;
+
+        if (findContainingObstacle(obstacles, currentX, p.y)) {
+          respawnSnowParticle(p, w);
+          continue;
+        }
+
+        const impact = findSnowImpact(
+          currentX,
+          p.y,
+          nextX,
+          nextY,
+          obstacles,
+          snowCapsRef.current
+        );
+
+        if (impact) {
+          const snowAmount = 0.08 + p.radius * 0.12 + p.opacity * 0.05;
+          depositSnow(
+            impact.obstacle,
+            impact.x,
+            snowAmount,
+            snowCapsRef.current
+          );
+          const snowCap = snowCapsRef.current[impact.obstacle.id];
+          if (snowCap) {
+            settleSnowCap(snowCap);
+          }
+          respawnSnowParticle(p, w);
+          continue;
+        }
+
+        const gradient = ctx.createRadialGradient(
+          currentX,
+          p.y,
+          0,
+          currentX,
+          p.y,
+          p.radius
+        );
         gradient.addColorStop(0, `rgba(255,255,255,${p.opacity})`);
         gradient.addColorStop(0.6, `rgba(255,255,255,${p.opacity * 0.6})`);
-        gradient.addColorStop(1, `rgba(255,255,255,0)`);
+        gradient.addColorStop(1, "rgba(255,255,255,0)");
         ctx.fillStyle = gradient;
         ctx.beginPath();
-        ctx.arc(sx, p.y, p.radius * 1.5, 0, Math.PI * 2);
+        ctx.arc(currentX, p.y, p.radius * 1.5, 0, Math.PI * 2);
         ctx.fill();
-        p.y += p.speed;
-        p.x += Math.sin(t * 0.3 + p.sway) * 0.15;
+
+        p.y = nextY;
+        p.x = nextBaseX;
+
         if (p.y > h + p.radius * 2) {
-          p.y = -p.radius * 3;
-          p.x = Math.random() * w;
+          respawnSnowParticle(p, w);
         }
       }
+
+      drawSnowCaps(ctx, obstacles, snowCapsRef.current);
     }
 
     ctx.restore();
@@ -174,6 +662,9 @@ const CanvasLayer: React.FC<CanvasLayerProps> = ({ type, reducedMotion }) => {
     if (!canvas) return;
 
     let resizeTimer: ReturnType<typeof setTimeout>;
+    rainSplashesRef.current = [];
+    snowTimeRef.current = 0;
+    updateObstacles();
 
     const resize = () => {
       const dpr = window.devicePixelRatio || 1;
@@ -185,12 +676,19 @@ const CanvasLayer: React.FC<CanvasLayerProps> = ({ type, reducedMotion }) => {
       canvas.style.height = `${h}px`;
 
       const count =
-        type === "storm" ? 500 : type === "rain" ? 250 : type === "snow" ? 180 : 60;
+        type === "storm"
+          ? 500
+          : type === "rain"
+            ? 250
+            : type === "snow"
+              ? 180
+              : 60;
       if (type === "rain" || type === "storm") {
         particlesRef.current = initRainParticles(w, h, count);
       } else {
         particlesRef.current = initSnowParticles(w, h, count);
       }
+      updateObstacles();
     };
 
     const debouncedResize = () => {
@@ -198,16 +696,19 @@ const CanvasLayer: React.FC<CanvasLayerProps> = ({ type, reducedMotion }) => {
       resizeTimer = setTimeout(resize, 150);
     };
 
+    const obstacleSyncId = window.setInterval(updateObstacles, 160);
+
     resize();
     window.addEventListener("resize", debouncedResize);
     rafRef.current = requestAnimationFrame(draw);
 
     return () => {
+      window.clearInterval(obstacleSyncId);
       window.removeEventListener("resize", debouncedResize);
       clearTimeout(resizeTimer);
       cancelAnimationFrame(rafRef.current);
     };
-  }, [type, reducedMotion, draw]);
+  }, [type, reducedMotion, draw, updateObstacles]);
 
   if (reducedMotion) return null;
 
@@ -398,7 +899,7 @@ const Clouds: React.FC<CloudProps> = ({
 }) => {
   const d = Math.min(darkness, 1);
   // Cloud colors: lighter base so the shape is visible against any background
-  const coreR = Math.round(70 + (1 - d) * 80);  // 70 (dark/storm) – 150 (light/snow)
+  const coreR = Math.round(70 + (1 - d) * 80); // 70 (dark/storm) – 150 (light/snow)
   const coreG = Math.round(75 + (1 - d) * 80);
   const coreB = Math.round(85 + (1 - d) * 70);
 
@@ -414,12 +915,12 @@ const Clouds: React.FC<CloudProps> = ({
     >
       {/* Main cloud bodies — large, visible, overlapping puffy shapes */}
       {[
-        { w: "55%", h: 140, left: "5%",   top: 0,   blur: 8,  dur: 20 },
-        { w: "60%", h: 160, left: "20%",  top: -10, blur: 10, dur: 17 },
-        { w: "50%", h: 130, left: "40%",  top: 5,   blur: 8,  dur: 22 },
-        { w: "45%", h: 120, left: "55%",  top: -5,  blur: 9,  dur: 19 },
-        { w: "40%", h: 110, left: "-5%",  top: 10,  blur: 7,  dur: 24 },
-        { w: "35%", h: 100, left: "70%",  top: 8,   blur: 8,  dur: 21 },
+        { w: "55%", h: 140, left: "5%", top: 0, blur: 8, dur: 20 },
+        { w: "60%", h: 160, left: "20%", top: -10, blur: 10, dur: 17 },
+        { w: "50%", h: 130, left: "40%", top: 5, blur: 8, dur: 22 },
+        { w: "45%", h: 120, left: "55%", top: -5, blur: 9, dur: 19 },
+        { w: "40%", h: 110, left: "-5%", top: 10, blur: 7, dur: 24 },
+        { w: "35%", h: 100, left: "70%", top: 8, blur: 8, dur: 21 },
       ].map((c, i) => (
         <div
           key={`body-${i}`}
@@ -440,7 +941,7 @@ const Clouds: React.FC<CloudProps> = ({
       {/* Bottom wisps — extend below, softer */}
       {[
         { w: "50%", h: 60, left: "10%", top: coverageHeight * 0.65, blur: 18 },
-        { w: "55%", h: 50, left: "30%", top: coverageHeight * 0.7,  blur: 22 },
+        { w: "55%", h: 50, left: "30%", top: coverageHeight * 0.7, blur: 22 },
         { w: "40%", h: 45, left: "50%", top: coverageHeight * 0.68, blur: 20 },
       ].map((c, i) => (
         <div
@@ -489,14 +990,26 @@ const Clouds: React.FC<CloudProps> = ({
 const FogLayers: React.FC = () => (
   <>
     {[
-      { opacity: 0.35, anim: "fogDrift1 20s ease-in-out infinite alternate",
-        bg: "radial-gradient(ellipse at 30% 40%, rgba(210,210,220,0.6) 0%, rgba(190,190,205,0.3) 40%, transparent 70%)" },
-      { opacity: 0.25, anim: "fogDrift2 30s ease-in-out infinite alternate",
-        bg: "radial-gradient(ellipse at 70% 55%, rgba(200,200,215,0.55) 0%, rgba(185,185,200,0.25) 45%, transparent 70%)" },
-      { opacity: 0.3, anim: "fogDrift3 25s ease-in-out infinite alternate",
-        bg: "radial-gradient(ellipse at 50% 60%, rgba(205,205,218,0.5) 0%, rgba(188,188,200,0.2) 50%, transparent 65%)" },
-      { opacity: 0.15, anim: "fogDrift1 35s ease-in-out 5s infinite alternate",
-        bg: "radial-gradient(ellipse at 20% 70%, rgba(215,215,225,0.4) 0%, transparent 60%)" },
+      {
+        opacity: 0.35,
+        anim: "fogDrift1 20s ease-in-out infinite alternate",
+        bg: "radial-gradient(ellipse at 30% 40%, rgba(210,210,220,0.6) 0%, rgba(190,190,205,0.3) 40%, transparent 70%)",
+      },
+      {
+        opacity: 0.25,
+        anim: "fogDrift2 30s ease-in-out infinite alternate",
+        bg: "radial-gradient(ellipse at 70% 55%, rgba(200,200,215,0.55) 0%, rgba(185,185,200,0.25) 45%, transparent 70%)",
+      },
+      {
+        opacity: 0.3,
+        anim: "fogDrift3 25s ease-in-out infinite alternate",
+        bg: "radial-gradient(ellipse at 50% 60%, rgba(205,205,218,0.5) 0%, rgba(188,188,200,0.2) 50%, transparent 65%)",
+      },
+      {
+        opacity: 0.15,
+        anim: "fogDrift1 35s ease-in-out 5s infinite alternate",
+        bg: "radial-gradient(ellipse at 20% 70%, rgba(215,215,225,0.4) 0%, transparent 60%)",
+      },
     ].map((layer, i) => (
       <div
         key={i}
@@ -509,12 +1022,14 @@ const FogLayers: React.FC = () => (
         }}
       />
     ))}
-    <div style={{
-      position: "absolute",
-      inset: 0,
-      backdropFilter: "blur(1.5px)",
-      WebkitBackdropFilter: "blur(1.5px)",
-    }} />
+    <div
+      style={{
+        position: "absolute",
+        inset: 0,
+        backdropFilter: "blur(1.5px)",
+        WebkitBackdropFilter: "blur(1.5px)",
+      }}
+    />
   </>
 );
 
@@ -557,7 +1072,8 @@ const HeatDistortion: React.FC = () => (
         style={{
           width: "100%",
           height: "100%",
-          background: "linear-gradient(0deg, rgba(255,120,0,0.05) 0%, transparent 50%)",
+          background:
+            "linear-gradient(0deg, rgba(255,120,0,0.05) 0%, transparent 50%)",
         }}
       />
     </div>
@@ -586,7 +1102,8 @@ const HeatDistortion: React.FC = () => (
         left: 0,
         right: 0,
         height: "20%",
-        background: "linear-gradient(0deg, rgba(255,180,80,0.06) 0%, transparent 100%)",
+        background:
+          "linear-gradient(0deg, rgba(255,180,80,0.06) 0%, transparent 100%)",
         animation: "heatShimmer 6s ease-in-out 2s infinite alternate",
       }}
     />
@@ -724,7 +1241,13 @@ const TransitionLayer: React.FC<TransitionLayerProps> = ({
       {/* ── clear ── */}
       {weather === "clear" && (
         <>
-          <div style={{ position: "absolute", inset: 0, background: "rgba(255,240,200,0.05)" }} />
+          <div
+            style={{
+              position: "absolute",
+              inset: 0,
+              background: "rgba(255,240,200,0.05)",
+            }}
+          />
           <Sun />
           {!reducedMotion && <TyndallRays />}
         </>
@@ -733,7 +1256,13 @@ const TransitionLayer: React.FC<TransitionLayerProps> = ({
       {/* ── rain ── */}
       {weather === "rain" && (
         <>
-          <div style={{ position: "absolute", inset: 0, background: "rgba(0,0,15,0.12)" }} />
+          <div
+            style={{
+              position: "absolute",
+              inset: 0,
+              background: "rgba(0,0,15,0.12)",
+            }}
+          />
           {!reducedMotion && <Clouds darkness={0.55} coverageHeight={140} />}
           <CanvasLayer type="rain" reducedMotion={reducedMotion} />
         </>
@@ -742,7 +1271,13 @@ const TransitionLayer: React.FC<TransitionLayerProps> = ({
       {/* ── snow ── */}
       {weather === "snow" && (
         <>
-          <div style={{ position: "absolute", inset: 0, background: "rgba(200,210,230,0.08)" }} />
+          <div
+            style={{
+              position: "absolute",
+              inset: 0,
+              background: "rgba(200,210,230,0.08)",
+            }}
+          />
           {!reducedMotion && <Clouds darkness={0.3} coverageHeight={120} />}
           <CanvasLayer type="snow" reducedMotion={reducedMotion} />
         </>
@@ -751,11 +1286,23 @@ const TransitionLayer: React.FC<TransitionLayerProps> = ({
       {/* ── storm ── */}
       {weather === "storm" && (
         <>
-          <div style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.28)" }} />
+          <div
+            style={{
+              position: "absolute",
+              inset: 0,
+              background: "rgba(0,0,0,0.28)",
+            }}
+          />
           {!reducedMotion && <Clouds darkness={0.9} coverageHeight={220} />}
           <CanvasLayer type="storm" reducedMotion={reducedMotion} />
           {lightningFlash && (
-            <div style={{ position: "absolute", inset: 0, background: "rgba(255,255,255,0.65)" }} />
+            <div
+              style={{
+                position: "absolute",
+                inset: 0,
+                background: "rgba(255,255,255,0.65)",
+              }}
+            />
           )}
         </>
       )}
@@ -763,11 +1310,23 @@ const TransitionLayer: React.FC<TransitionLayerProps> = ({
       {/* ── fog ── */}
       {weather === "fog" && (
         <>
-          <div style={{ position: "absolute", inset: 0, background: "rgba(180,185,195,0.12)" }} />
+          <div
+            style={{
+              position: "absolute",
+              inset: 0,
+              background: "rgba(180,185,195,0.12)",
+            }}
+          />
           {!reducedMotion ? (
             <FogLayers />
           ) : (
-            <div style={{ position: "absolute", inset: 0, background: "rgba(200,200,210,0.3)" }} />
+            <div
+              style={{
+                position: "absolute",
+                inset: 0,
+                background: "rgba(200,200,210,0.3)",
+              }}
+            />
           )}
         </>
       )}
@@ -775,7 +1334,13 @@ const TransitionLayer: React.FC<TransitionLayerProps> = ({
       {/* ── extreme_heat ── */}
       {weather === "extreme_heat" && (
         <>
-          <div style={{ position: "absolute", inset: 0, background: "rgba(255,180,60,0.1)" }} />
+          <div
+            style={{
+              position: "absolute",
+              inset: 0,
+              background: "rgba(255,180,60,0.1)",
+            }}
+          />
           <Sun size={280} intensity={1.5} />
           {!reducedMotion && (
             <>
@@ -789,7 +1354,13 @@ const TransitionLayer: React.FC<TransitionLayerProps> = ({
       {/* ── extreme_cold ── */}
       {weather === "extreme_cold" && (
         <>
-          <div style={{ position: "absolute", inset: 0, background: "rgba(130,160,220,0.12)" }} />
+          <div
+            style={{
+              position: "absolute",
+              inset: 0,
+              background: "rgba(130,160,220,0.12)",
+            }}
+          />
           <Frost />
           <CanvasLayer type="extreme_cold_snow" reducedMotion={reducedMotion} />
         </>
@@ -804,7 +1375,15 @@ export const WeatherOverlay: React.FC<WeatherOverlayProps> = ({ weather }) => {
   const reducedMotion = usePrefersReducedMotion();
 
   const weatherType = (
-    ["clear", "rain", "fog", "storm", "snow", "extreme_heat", "extreme_cold"].includes(weather)
+    [
+      "clear",
+      "rain",
+      "fog",
+      "storm",
+      "snow",
+      "extreme_heat",
+      "extreme_cold",
+    ].includes(weather)
       ? weather
       : "clear"
   ) as WeatherType;

@@ -25,7 +25,11 @@ interface ConfigPanelProps {
   onWeatherChange?: (weather: string) => void;
 }
 
-export function ConfigPanel({ sessionId, onStarted, onWeatherChange }: ConfigPanelProps) {
+export function ConfigPanel({
+  sessionId,
+  onStarted,
+  onWeatherChange,
+}: ConfigPanelProps) {
   const { t } = useTranslation("simulation");
   const [expanded, setExpanded] = useState(true);
   const [tickSpeed, setTickSpeed] = useState(60000);
@@ -65,6 +69,7 @@ export function ConfigPanel({ sessionId, onStarted, onWeatherChange }: ConfigPan
         onClick={() => setExpanded(true)}
         onPointerDown={(e) => e.stopPropagation()}
         className="fixed bottom-4 left-4 z-10 backdrop-blur-xl bg-white/50 border border-white/30 rounded-2xl px-3 py-2 flex items-center gap-1.5 shadow-lg hover:bg-white/70 transition-all"
+        data-weather-obstacle="config-toggle"
       >
         <span className="text-sm">&#9881;</span>
         <span className="text-xs font-medium text-slate-600">
@@ -77,6 +82,7 @@ export function ConfigPanel({ sessionId, onStarted, onWeatherChange }: ConfigPan
   return (
     <div
       className="fixed bottom-4 left-4 right-auto z-10 backdrop-blur-xl bg-white/50 border border-white/30 rounded-2xl px-3 py-2 flex items-center gap-2 shadow-lg max-md:left-3 max-md:right-3"
+      data-weather-obstacle="config-panel"
       onPointerDown={(e) => e.stopPropagation()}
     >
       <button
@@ -95,21 +101,31 @@ export function ConfigPanel({ sessionId, onStarted, onWeatherChange }: ConfigPan
           onChange={(e) => setSyncRealTime(e.target.checked)}
           className="accent-amber-600 w-3.5 h-3.5"
         />
-        <span className="text-xs text-slate-600 whitespace-nowrap">{t("control.realTime")}</span>
+        <span className="text-xs text-slate-600 whitespace-nowrap">
+          {t("control.realTime")}
+        </span>
       </label>
 
       {syncRealTime && (
         <div className="flex items-center gap-1 shrink-0">
-          <label className="text-xs text-slate-500 whitespace-nowrap">{t("control.buffer")}</label>
+          <label className="text-xs text-slate-500 whitespace-nowrap">
+            {t("control.buffer")}
+          </label>
           <input
             type="number"
             min={0}
             max={10}
             value={bufferMinutes}
-            onChange={(e) => setBufferMinutes(Math.max(0, Math.min(10, Number(e.target.value))))}
+            onChange={(e) =>
+              setBufferMinutes(
+                Math.max(0, Math.min(10, Number(e.target.value)))
+              )
+            }
             className="w-10 py-1 px-1 rounded-lg bg-white/50 text-slate-700 border border-slate-200 text-xs text-center"
           />
-          <span className="text-xs text-slate-400">{t("control.bufferUnit")}</span>
+          <span className="text-xs text-slate-400">
+            {t("control.bufferUnit")}
+          </span>
         </div>
       )}
 
@@ -134,9 +150,7 @@ export function ConfigPanel({ sessionId, onStarted, onWeatherChange }: ConfigPan
         </div>
       )}
 
-      {!syncRealTime && (
-        <div className="w-px h-5 bg-slate-200/60 shrink-0" />
-      )}
+      {!syncRealTime && <div className="w-px h-5 bg-slate-200/60 shrink-0" />}
 
       <div className="flex items-center gap-1.5 shrink-0">
         <label className="text-xs text-slate-500 whitespace-nowrap">
