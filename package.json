@@ -26,6 +26,7 @@
     "clean": "rm -rf dist client/dist client/dist-server && rm -rf node_modules client/node_modules || true",
     "test": "vitest",
     "test:coverage": "vitest --coverage",
+    "test:dead-npc-sim": "tsx scripts/test-dead-npc-simulation.ts",
     "test:scene-npc": "node test-scene-npc-extraction.mjs",
     "test:npc-builder": "tsx scripts/test-npc-builder.ts",
     "test:scene-switch": "tsx scripts/test-scene-switch-template.ts",

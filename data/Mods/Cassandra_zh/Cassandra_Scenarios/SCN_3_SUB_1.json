@@ -59,7 +59,11 @@
       }
     }
   ],
-  "connections": ["SCN_3_SUB_2", "SCN_3_SUB_3", "JUNC_8"],
+  "connections": [
+    { "targetId": "SCN_3_SUB_2", "description": "大厅尽头狭长走廊最深处有一扇贴着Forensic Lab标牌的铁门，通往法医工作室" },
+    { "targetId": "SCN_3_SUB_3", "description": "大厅侧面通道连通一楼侧翼，经一段无窗短廊通往昏暗的档案室" },
+    { "targetId": "JUNC_8", "description": "正门沉重的玻璃门外即是新月街A大道南西端的路口" }
+  ],
   "itemContexts": {
     "ITEM_SCN3_1": "大厅接待区摆放着几张办公桌，桌面堆着日常文件、通讯记录和几只喝空的纸杯。",
     "ITEM_SCN3_11": "办公桌后方竖着几只金属文件柜，抽屉把手被常年拉拽得漆面斑驳。",

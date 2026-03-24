@@ -88,7 +88,7 @@
       }
     }
   ],
-  "connections": ["SCN_14_SUB_1"],
+  "connections": [{ "targetId": "SCN_14_SUB_1", "description": "后屋靠走廊一侧有一扇木门，经短廊连通烟草店的前厅店面" }],
   "itemContexts": {
     "ITEM_SCN14_4": "靠窗圆桌上的白瓷咖啡壶还带着一点残余香气，壶身外壁被人擦拭得很干净。",
     "ITEM_SCN14_5": "几盆被照料得很好的绿植摆在窗台上，叶片油亮，和店面的烟草气息形成奇妙反差。",

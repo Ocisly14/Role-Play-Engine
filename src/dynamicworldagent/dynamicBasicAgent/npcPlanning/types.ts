@@ -179,7 +179,7 @@ export interface CharacterAction {
   status: "completed" | "failed" | "interrupted";
   outcome: string;
   failureReason?: FailureReason;
-  interruptionReason?: "revise_replan";
+  interruptionReason?: "revise_replan" | "character_dead";
   targetCharacterIds?: string[];
   discoveries?: DiscoveryEntry[];
   damagedEvidence?: { itemId: string; sourceName: string };

@@ -100,6 +100,8 @@ export class SimulationRunner {
     this.ctx.runtime = this.npcPlanningAgent.getRuntime();
     this.ctx.language = this.language;
     this.ctx.memoryManager = this.memoryManager;
+
+    this.initializeDeadNpcIdsFromState();
   }
 
   getStatus(): SimulationStatus {
@@ -149,7 +151,8 @@ export class SimulationRunner {
     return this.npcPlanningAgent.getCurrentNpcActions(
       this.sessionId,
       gameState.gameDay,
-      gameState.timeOfDay
+      gameState.timeOfDay,
+      this.dgsm
     );
   }
 
@@ -220,6 +223,7 @@ export class SimulationRunner {
     this.shouldStop = false;
     this.tickInProgress = false;
     this.clearScheduledTick();
+    this.initializeDeadNpcIdsFromState();
   }
 
   async saveRuntime(): Promise<void> {
@@ -239,6 +243,8 @@ export class SimulationRunner {
   async start(): Promise<void> {
     if (this.state === "running") return;
     if (this.state === "stopped" || this.state === "completed") return;
+
+    await this.reconcileDeadNpcPlans();
 
     this.state = "running";
     this.shouldStop = false;
@@ -274,6 +280,7 @@ export class SimulationRunner {
 
     if (this.modifiedCharacterIds.size > 0) {
       for (const charId of this.modifiedCharacterIds) {
+        if (!this.dgsm.isNpcAlive(charId)) continue;
         await this.npcPlanningAgent.reviseSchedule(
           this.dgsm,
           this.sessionId,
@@ -293,6 +300,7 @@ export class SimulationRunner {
 
     if (this.modifiedCharacterIds.size > 0) {
       for (const charId of this.modifiedCharacterIds) {
+        if (!this.dgsm.isNpcAlive(charId)) continue;
         await this.npcPlanningAgent.reviseSchedule(
           this.dgsm,
           this.sessionId,
@@ -473,6 +481,8 @@ export class SimulationRunner {
     this.events.on("simulation_event", collectTickEvent);
 
     try {
+      await this.reconcileDeadNpcPlans();
+
       this.ticksExecuted++;
       this.events.setTick(this.ticksExecuted);
 
@@ -516,14 +526,10 @@ export class SimulationRunner {
         );
       }
 
-      this.checkDerivedEvents();
+      await this.checkDerivedEvents();
 
       const stateAfterTick = this.dgsm.getState();
-      const currentActions = await this.npcPlanningAgent.getCurrentNpcActions(
-        this.sessionId,
-        stateAfterTick.gameDay,
-        stateAfterTick.timeOfDay
-      );
+      const currentActions = await this.getCurrentNpcActions();
       // Get current weather for snapshot
       const snapshotWeatherStates = this.dgsm.getFeatureState("weather") as
         | Record<string, { weatherType?: string }>
@@ -587,15 +593,20 @@ export class SimulationRunner {
     }
   }
 
-  private checkDerivedEvents(): void {
+  private async checkDerivedEvents(): Promise<void> {
     const gameState = this.dgsm.getState();
 
     for (const npc of gameState.npcCharacters) {
       if (this.deadNpcIds.has(npc.id)) continue;
 
-      const stats = gameState.npcStats[npc.id];
-      if (stats && stats.hp <= 0) {
+      if (!this.dgsm.isNpcAlive(npc.id)) {
         this.deadNpcIds.add(npc.id);
+        await this.npcPlanningAgent.interruptOpenNodesForDeath(
+          this.sessionId,
+          npc.id,
+          gameState.gameDay,
+          gameState.timeOfDay
+        );
 
         const location = (() => {
           const position = gameState.characterPositions[npc.id];
@@ -616,11 +627,39 @@ export class SimulationRunner {
           gameState.timeOfDay,
           {
             npcName: npc.name,
-            hp: stats.hp,
+            hp: gameState.npcStats[npc.id]?.hp ?? npc.status.hp ?? 0,
           }
         );
       }
     }
+  }
+
+  private initializeDeadNpcIdsFromState(): void {
+    this.deadNpcIds.clear();
+    for (const npc of this.dgsm.getState().npcCharacters) {
+      if (!this.dgsm.isNpcAlive(npc.id)) {
+        this.deadNpcIds.add(npc.id);
+      }
+    }
+  }
+
+  private async reconcileDeadNpcPlans(): Promise<void> {
+    const gameState = this.dgsm.getState();
+    const deadNpcs = gameState.npcCharacters.filter(
+      (npc) => !this.dgsm.isNpcAlive(npc.id)
+    );
+    if (deadNpcs.length === 0) return;
+
+    await Promise.all(
+      deadNpcs.map((npc) =>
+        this.npcPlanningAgent.interruptOpenNodesForDeath(
+          this.sessionId,
+          npc.id,
+          gameState.gameDay,
+          gameState.timeOfDay
+        )
+      )
+    );
   }
 
   private shouldStopAfterTick(currentTickEvents: SimulationEvent[]): void {

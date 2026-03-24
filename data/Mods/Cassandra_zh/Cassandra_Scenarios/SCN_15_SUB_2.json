@@ -64,7 +64,7 @@
       }
     }
   ],
-  "connections": ["SCN_15_SUB_1"],
+  "connections": [{ "targetId": "SCN_15_SUB_1", "description": "监控室唯一的隔音门连通走廊，走廊另一端通往宽敞明亮的住宅客厅" }],
   "itemContexts": {
     "ITEM_SCN15_6": "桌角的小型服务器机箱持续发出低沉嗡鸣，机壳侧面贴着手写编号标签。"
   }

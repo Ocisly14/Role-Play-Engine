@@ -5,7 +5,9 @@ import { characterInteractionHandler } from "../characterInteractionHandler.js";
 
 function createMockDgsm() {
   const characterPositions: Record<string, any> = {};
+  const npcStats: Record<string, { hp: number; san: number }> = {};
   const npcCharacters: Array<{
+    name?: string;
     id: string;
     skills: Record<string, number>;
     status: { luck: number };
@@ -39,16 +41,26 @@ function createMockDgsm() {
       if (position.type === "junction") return position.junctionId;
       return position.roadId;
     },
+    isNpcAlive(npcId: string) {
+      return (npcStats[npcId]?.hp ?? 0) > 0;
+    },
     removeItemFromNpc() {
       return undefined;
     },
     addItemToNpc() {},
     _addNpc(
       npcId: string,
-      position: { type: "scene"; sceneId: string } | { type: "road"; roadId: string; position: number }
+      position: { type: "scene"; sceneId: string } | { type: "road"; roadId: string; position: number },
+      hp = 10
     ) {
       characterPositions[npcId] = position;
-      npcCharacters.push({ id: npcId, skills: {}, status: { luck: 50 } });
+      npcStats[npcId] = { hp, san: 50 };
+      npcCharacters.push({
+        id: npcId,
+        name: npcId,
+        skills: {},
+        status: { luck: 50 },
+      });
     },
   };
 }
@@ -108,5 +120,16 @@ describe("characterInteractionHandler", () => {
     const result = await characterInteractionHandler.execute(makeNode(), dgsm as any, ctx);
     expect(result.status).toBe("failed");
     expect(result.failureReason).toBe("target_absent");
+  });
+
+  it("treats dead targets like normal interaction targets at handler level", async () => {
+    const dgsm = createMockDgsm();
+    dgsm._addNpc("npc_a", { type: "road", roadId: "ROAD_1", position: 0.1 });
+    dgsm._addNpc("npc_b", { type: "road", roadId: "ROAD_1", position: 0.12 }, 0);
+
+    const result = await characterInteractionHandler.execute(makeNode(), dgsm as any, ctx);
+    expect(result.status).toBe("completed");
+    expect(result.failureReason).toBeUndefined();
+    expect(result.outcome).toBe("Talk to B");
   });
 });

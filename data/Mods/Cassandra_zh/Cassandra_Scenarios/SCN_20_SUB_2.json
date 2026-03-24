@@ -55,7 +55,9 @@
       }
     }
   ],
-  "connections": ["SCN_20_SUB_1"],
+  "connections": [
+    { "targetId": "SCN_20_SUB_1", "description": "工作屋铰链锈涩的木门外，连通开阔的伐木场废墟" }
+  ],
   "itemContexts": {
     "ITEM_SCN20_4": "墙壁上挂着的几件早已生锈报废的工具——斧头、锯子和锤子。它们与伐木场的其他设备一样，似乎很少被使用过。"
   }

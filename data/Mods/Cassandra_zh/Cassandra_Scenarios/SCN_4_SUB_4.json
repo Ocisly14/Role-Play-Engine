@@ -82,7 +82,9 @@
       }
     }
   ],
-  "connections": ["SCN_4_SUB_2"],
+  "connections": [
+    { "targetId": "SCN_4_SUB_2", "description": "储藏室一侧陡峭的水泥楼梯向上延伸，顶部金属门连通一楼后厨与餐厅" }
+  ],
   "itemContexts": {
     "ITEM_SCN4_10": "简易的灰色金属货架将储藏室隔成几个区域，上面分门别类地堆放着酒水饮料、罐头食品、清洁用品和备用的酒店布草。"
   }

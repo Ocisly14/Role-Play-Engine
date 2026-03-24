@@ -65,9 +65,7 @@
       }
     }
   ],
-  "connections": [
-    "SCN_7_SUB_1"
-  ],
+  "connections": [{ "targetId": "SCN_7_SUB_1", "description": "暗门外连通拱形砖壁通道，通道另一端是铸铁铁梯下方的下水道入口" }],
   "itemContexts": {
     "ITEM_SCN7_1": "一张被火烧去了一半的照片。残留的部分可以辨认出上面的人像是驯鹿酒吧的受害人Jenny Florence（卢奇菲罗），照片中是少女时期的她和一个女人，看起来像是家庭合照的一部分。照片背面写着一串数字：54816871。"
   }

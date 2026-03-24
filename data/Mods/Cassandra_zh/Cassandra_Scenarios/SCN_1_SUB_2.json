@@ -52,5 +52,8 @@
       }
     }
   ],
-  "connections": ["SCN_1_SUB_1", "SCN_1_SUB_5"]
+  "connections": [
+    { "targetId": "SCN_1_SUB_1", "description": "不锈钢重门外有水泥楼梯向上一层，通过铁门连通地面层的医院大厅" },
+    { "targetId": "SCN_1_SUB_5", "description": "楼梯上至地面层后左侧通道直接连通淡绿色墙壁的L型走廊与病房区，无需经过大厅" }
+  ]
 }

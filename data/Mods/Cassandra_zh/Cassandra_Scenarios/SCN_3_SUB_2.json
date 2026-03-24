@@ -68,7 +68,9 @@
       }
     }
   ],
-  "connections": ["SCN_3_SUB_1"],
+  "connections": [
+    { "targetId": "SCN_3_SUB_1", "description": "工作室铁门外的走廊连回警察局大厅，位于走廊另一端" }
+  ],
   "itemContexts": {
     "ITEM_SCN3_6": "靠墙的证物架上只剩下淡淡灰印，说明这里最近摆过一些尺寸不小的物件，如今已被转移到别处。"
   }

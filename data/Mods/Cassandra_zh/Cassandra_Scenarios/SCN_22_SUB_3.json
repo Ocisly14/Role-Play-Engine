@@ -67,7 +67,7 @@
     }
   ],
   "connections": [
-    "SCN_22_SUB_2"
+    { "targetId": "SCN_22_SUB_2", "description": "拱顶砖壁间有狭窄台阶向上，暗门连通地面层的私人书房" }
   ],
   "itemContexts": {
     "ITEM_SCN22_7": "文件盒外侧的日期标签按年份排列，摆放方式带着近乎病态的整齐。",

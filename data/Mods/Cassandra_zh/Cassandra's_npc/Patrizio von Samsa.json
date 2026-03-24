@@ -35,7 +35,9 @@
     "Fast Talk": 70,
     "Credit Rating": 80,
     "Medicine": 60,
-    "Spot Hidden": 55
+    "Spot Hidden": 55,
+    "Occult": 65,
+    "Cthulhu Mythos": 15
   },
   "inventory": [
     {
@@ -54,6 +56,12 @@
       "name": "私人预约本",
       "properties": {
         "note": "一个薄薄的笔记本，记录着从不公开出现的会面、人情和备忘。"
+      }
+    },
+    {
+      "name": "嵌墙保险箱钥匙",
+      "properties": {
+        "note": "一把打磨得发亮的黄铜钥匙，平时由帕特里齐奥随身保管，用来开启石榴巷私宅书房中的嵌墙保险箱。"
       }
     }
   ],
@@ -89,6 +97,22 @@
       "attitude": -30,
       "description": "一个好奇心威胁到帕特里齐奥所掩埋秘密的黑客。",
       "history": "西蒙看到了帕特里齐奥隐藏结构的太多内容，已成为一个不能永远忽视的问题。"
+    },
+    {
+      "targetId": "Bruno Galilei",
+      "targetName": "Bruno Galilei",
+      "relationshipType": "enemy",
+      "attitude": -70,
+      "description": "一个不肯放弃调查的危险警探，已经触及了帕特里齐奥不能被揭露的秘密。",
+      "history": "布鲁诺坚持追查被上级搁置的黑人女孩凶杀案，他的执着让帕特里齐奥感到威胁。帕特里齐奥决定在圣诞节期间亲自动手除掉布鲁诺。"
+    },
+    {
+      "targetId": "Constantine Frollo",
+      "targetName": "Constantine Frollo",
+      "relationshipType": "ally",
+      "attitude": 55,
+      "description": "一个在神秘学目标上互相利用的同谋。",
+      "history": "帕特里齐奥与康斯坦丁达成交易：康斯坦丁协助处理妨碍者，比如在帕特里齐奥解决布鲁诺时提供掩护；作为交换，帕特里齐奥为康斯坦丁的纳克亚仪式提供便利。"
     }
   ],
   "memory": [
@@ -144,6 +168,77 @@
       "metadata": {
         "knowledgeId": "k_patrizio_fragmented_power",
         "difficulty": "regular"
+      }
+    },
+    {
+      "type": "secret",
+      "content": "布鲁诺是个麻烦。他不肯放下那桩黑人女孩的案子，一年来四处奔波，甚至向上级申请特查。他的调查再继续下去，迟早会牵出我和马丁的关系。我已经决定除掉他。",
+      "metadata": {
+        "knowledgeId": "s_patrizio_bruno_threat"
+      }
+    },
+    {
+      "type": "secret",
+      "content": "我和康斯坦丁有一个默契：当我对布鲁诺动手时，康斯坦丁会制造混乱作为掩护，确保没有人能干预。作为交换，我为他的纳克亚仪式提供所需的便利。",
+      "metadata": {
+        "knowledgeId": "s_patrizio_constantine_deal"
+      }
+    },
+    {
+      "type": "secret",
+      "content": "我的仪式将在新年钟声敲响之际完成。仪式的目的是令群星位于正确之时，唤醒沉睡的旧日支配者。我相信这是人类唯一的救赎之路——成为克苏鲁的眷族，在拉莱耶的庇护中免于被奴役的命运。梦王会为我提供了古老的仪式手稿和必要的知识。",
+      "metadata": {
+        "knowledgeId": "s_patrizio_ritual_purpose"
+      }
+    },
+    {
+      "type": "secret",
+      "content": "仪式的地点在焚化厂地下的古老仪式场（SCN_2_SUB_3）。这个地下空间远比卡森德拉本身古老，墙壁上的符文出自昆扬人之手，石质祭坛经过深潜者和后来者的反复改造。这里本身就是一个天然的'门槛'——维度壁垒在此处最为薄弱。深潜者曾在此祭祀，修格斯被遗弃在焚化厂上层，算是这处遗迹不自觉的守卫。",
+      "metadata": {
+        "knowledgeId": "s_patrizio_ritual_site"
+      }
+    },
+    {
+      "type": "secret",
+      "content": "仪式分为三个阶段，从圣诞节到新年逐步推进。第一阶段'净化祭坛'：用特制的黑蜡烛和深潜者遗留的海盐在祭坛上重新描画昆扬符文的关键节点，以焚香和低声吟诵的古老咒文激活石壁上的符文共振。这个阶段已在圣诞节前基本完成，但每晚仍需前往地下维持符文的活性，重新点燃黑蜡烛、补充消耗的海盐。",
+      "metadata": {
+        "knowledgeId": "s_patrizio_ritual_phase1"
+      }
+    },
+    {
+      "type": "secret",
+      "content": "第二阶段'献祭与锚定'：需要至少三名经过波拉切洛处理的活人作为'锚点'，将他们带到祭坛旁，以文森特配制的转化药剂注入体内，使他们的身体开始向克苏鲁眷族转化。转化过程中的痛苦与精神崩裂会在维度壁垒上撕开裂痕。这就是我让文森特进行人体实验的真正目的——不只是研究转化本身，而是为仪式准备足够的'锚点'。这个阶段需要在12月28日至30日之间完成。",
+      "metadata": {
+        "knowledgeId": "s_patrizio_ritual_phase2"
+      }
+    },
+    {
+      "type": "secret",
+      "content": "第三阶段'开门'：12月31日午夜，当新年钟声敲响，我将在祭坛上展开加塔诺托亚的诅咒画像。画像是仪式的核心焦点——格赫罗斯的形象本身就是一把钥匙，能在维度裂痕已经存在的情况下将其撕裂为通道。我会在画像前诵念梦王会手稿中的终极咒文，以自身的精神力量和锚点们的痛苦共振为驱动，打开通往旧日支配者沉睡之地的门。我以为门后是克苏鲁的救赎，但实际上穿门而来的将是格赫罗斯——审判之星、毁灭的先驱。",
+      "metadata": {
+        "knowledgeId": "s_patrizio_ritual_phase3"
+      }
+    },
+    {
+      "type": "secret",
+      "content": "我的日常节奏受仪式进度驱动。白天我留在石榴巷私宅（SCN_22_SUB_2），通过卢克斯和马丁遥控镇上事务、监视潜在威胁、确保没有人干扰仪式准备。傍晚后我秘密前往焚化厂（SCN_2），经过上层时必须保持安静以免惊动修格斯，进入地下仪式场维护祭坛状态、推进当前阶段的工作。深夜返回私宅。任何威胁到仪式进程的人——无论是布鲁诺、西蒙还是调查员——都必须在仪式完成前被清除。",
+      "metadata": {
+        "knowledgeId": "s_patrizio_daily_routine"
+      }
+    },
+    {
+      "type": "secret",
+      "content": "仪式的最后关头，修格斯可能会因为格赫罗斯降临前的'毁灭之音'共振而被唤醒，冲出焚化厂地下。到那时一切都不重要了——门已经打开，无法关闭。",
+      "metadata": {
+        "knowledgeId": "s_patrizio_shoggoth_risk"
+      }
+    },
+    {
+      "type": "belief",
+      "content": "现代文明终将毁灭，人类将被某些远超常规的存在奴役。唯有成为克苏鲁的眷族，在拉莱耶的广厦庇护中，才能避免精神被永恒奴役的命运。我所做的一切都是为了这个救赎。",
+      "metadata": {
+        "confidence": 0.95,
+        "reasoningChain": "在阿卡姆我亲眼见证了宇宙的真相。人类的文明不过是旧日支配者沉睡间隙的短暂幻觉。唯一的出路是主动拥抱转变。"
       }
     }
   ]

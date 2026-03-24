@@ -56,7 +56,7 @@
       }
     }
   ],
-  "connections": ["SCN_13_SUB_1"],
+  "connections": [{ "targetId": "SCN_13_SUB_1", "description": "狭窄的石砌台阶向上通往地面层空旷的酒厂厂区车间" }],
   "itemContexts": {
     "ITEM_SCN13_2": "沿墙排列的木质酒架，存放着大量伏特加成品，瓶身上积着薄灰"
   }

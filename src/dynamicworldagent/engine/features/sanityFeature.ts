@@ -577,6 +577,7 @@ function getTrackedCharacters(dgsm: DynamicGameStateManager): Array<{
   const state = dgsm.getState();
   const result: Array<{ characterId: string }> = [];
   for (const npcId of Object.keys(state.characterPositions)) {
+    if (!dgsm.isNpcAlive(npcId)) continue;
     result.push({ characterId: npcId });
   }
   return result;
@@ -606,6 +607,7 @@ export const sanityFeature: WorldFeature = {
     const lines: string[] = [];
 
     for (const [characterId, charState] of Object.entries(allStates)) {
+      if (!dgsm.isNpcAlive(characterId)) continue;
       if (!charState) continue;
 
       // Report active insanity
@@ -629,6 +631,7 @@ export const sanityFeature: WorldFeature = {
     characterId: string,
     dgsm: DynamicGameStateManager
   ): Array<{ skill: string; delta: number }> {
+    if (!dgsm.isNpcAlive(characterId)) return [];
     const sanState = getSanityState(dgsm, characterId);
     if (!sanState) return [];
 

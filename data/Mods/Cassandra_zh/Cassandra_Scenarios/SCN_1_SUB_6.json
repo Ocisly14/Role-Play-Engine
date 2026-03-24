@@ -52,7 +52,10 @@
       }
     }
   ],
-  "connections": ["SCN_1_SUB_1", "SCN_1_SUB_5"],
+  "connections": [
+    { "targetId": "SCN_1_SUB_1", "description": "柜台前方走廊通往走廊口，连通挂着褪色海报的医院大厅" },
+    { "targetId": "SCN_1_SUB_5", "description": "柜台后方走廊两旁病房门半掩，延伸至日光灯下的L型走廊与病房区" }
+  ],
   "itemContexts": {
     "ITEM_SCN1_14": "柜台后方的文件架，存放着各类病历和医疗记录表格"
   }

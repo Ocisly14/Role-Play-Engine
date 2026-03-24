@@ -31,7 +31,7 @@
     }
   ],
   "connectedSceneIds": [
-    "SCN_2_SUB_1"
+    { "targetId": "SCN_2_SUB_1", "description": "路口左手边碎石路向西延伸，经过黄色警示牌后通往焚化炉矗立的荒地焚化设施" }
   ],
   "itemContexts": {
     "ITEM_JUNC1_1": "立在路口边的黄色金属警示牌，提醒来往车辆此方向通往焚化厂，靠近时有高温与粉尘风险。",

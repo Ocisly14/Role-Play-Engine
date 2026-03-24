@@ -16,7 +16,8 @@
   "inventory": [
     {"name": "案件证据包", "properties": {"note": "他保存在一起的实物证据，需要时出示给调查员。"}},
     {"name": "受害者手机", "properties": {"note": "2003年驯鹿酒吧案中卢奇菲罗的手机，包含几条关键信息片段。"}},
-    {"name": "折叠案件笔记", "properties": {"note": "两起谋杀案的工作笔记和他自己的后续问题。"}}
+    {"name": "折叠案件笔记", "properties": {"note": "两起谋杀案的工作笔记和他自己的后续问题。"}},
+    {"name": "档案柜与法医室钥匙", "properties": {"note": "布鲁诺长期保管的一串调查用钥匙，能打开警局大厅文件柜，并进入法医工作室处理需要亲自核对的旧案材料和工具柜。"}}
   ],
   "relationships": [
     {"targetId": "Shandra Hernandez", "targetName": "Shandra Hernandez", "relationshipType": "friend", "attitude": 70, "description": "一位亲密的知己和情感寄托。", "history": "布鲁诺经常在空闲时间去她的店里，足够信任她来倾诉自己的烦恼。"},

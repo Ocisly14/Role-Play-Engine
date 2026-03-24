@@ -56,5 +56,7 @@
       }
     }
   ],
-  "connections": ["SCN_21_SUB_1"]
+  "connections": [
+    { "targetId": "SCN_21_SUB_1", "description": "广场后方台阶连通简陋的火车站月台" }
+  ]
 }

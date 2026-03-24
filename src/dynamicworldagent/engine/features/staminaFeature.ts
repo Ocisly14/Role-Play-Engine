@@ -207,6 +207,7 @@ function getTrackedCharacters(dgsm: DynamicGameStateManager): Array<{
   }> = [];
 
   for (const npc of state.npcCharacters) {
+    if (!dgsm.isNpcAlive(npc.id)) continue;
     const locationId = resolveCharacterLocationId(npc.id, dgsm);
     if (locationId) {
       result.push({ characterId: npc.id, locationId });
@@ -258,6 +259,7 @@ export const staminaFeature: WorldFeature = {
     const lines: string[] = [];
 
     for (const [characterId, stamina] of Object.entries(allStates)) {
+      if (!dgsm.isNpcAlive(characterId)) continue;
       if (!stamina || stamina.fatigueLevel === 0) continue;
       const hours = (stamina.minutesSinceLastRest / 60).toFixed(1);
       const label = FATIGUE_LABELS[stamina.fatigueLevel] ?? "unknown";
@@ -272,6 +274,7 @@ export const staminaFeature: WorldFeature = {
     characterId: string,
     dgsm: DynamicGameStateManager
   ): Array<{ skill: string; delta: number }> {
+    if (!dgsm.isNpcAlive(characterId)) return [];
     const stamina = getStaminaState(dgsm, characterId);
     if (!stamina || stamina.fatigueLevel === 0) return [];
 

@@ -403,7 +403,7 @@ export class NPCPlanningAgent {
   ): Promise<void> {
     const state = dgsm.getState();
     const npc = state.npcCharacters.find((n) => n.id === npcId);
-    if (!npc) return;
+    if (!npc || !dgsm.isNpcAlive(npcId)) return;
 
     // Get memory context from unified memory system
     let memoryContext: string | undefined;
@@ -501,7 +501,7 @@ export class NPCPlanningAgent {
   ): Promise<PlanNode[]> {
     const state = dgsm.getState();
     const npc = state.npcCharacters.find((n) => n.id === npcId);
-    if (!npc) return [];
+    if (!npc || !dgsm.isNpcAlive(npcId)) return [];
 
     const plan = await this.prisma.npcDailyPlan.findUnique({
       where: { sessionId_npcId_gameDay: { sessionId, npcId, gameDay } },
@@ -549,6 +549,7 @@ export class NPCPlanningAgent {
       })
       .map((n) => {
         const parts = [`- ${n.name} (${n.id})`];
+        if (!dgsm.isNpcAlive(n.id)) parts.push("status: dead");
         if (n.appearance) parts.push(`appearance: ${n.appearance}`);
         const rel = relationshipGraph[n.id];
         if (rel) parts.push(`relationship: score=${rel.score} (${rel.note})`);
@@ -652,6 +653,8 @@ export class NPCPlanningAgent {
     language = "en",
     registry?: GameEngineRegistry
   ): Promise<void> {
+    if (!dgsm.isNpcAlive(npcId)) return;
+
     const openNodes = await this.getOpenNodes(sessionId, npcId, gameDay);
     if (openNodes.length > 0) return; // Already has nodes, nothing to do
 
@@ -719,7 +722,7 @@ export class NPCPlanningAgent {
   ): Promise<void> {
     const state = dgsm.getState();
     const npc = state.npcCharacters.find((n) => n.id === npcId);
-    if (!npc) return;
+    if (!npc || !dgsm.isNpcAlive(npcId)) return;
 
     const gameDay = state.gameDay;
     const plan = await this.prisma.npcDailyPlan.findUnique({
@@ -811,7 +814,7 @@ export class NPCPlanningAgent {
   ): Promise<RevisePlansResult> {
     const state = dgsm.getState();
     const npc = state.npcCharacters.find((n) => n.id === npcId);
-    if (!npc) return {};
+    if (!npc || !dgsm.isNpcAlive(npcId)) return {};
 
     const failureTrigger =
       context.trigger.type === "failure" ? context.trigger : undefined;
@@ -844,6 +847,7 @@ export class NPCPlanningAgent {
       })
       .map((n) => {
         const parts = [`- ${n.name} (${n.id})`];
+        if (!dgsm.isNpcAlive(n.id)) parts.push("status: dead");
         if (n.appearance) parts.push(`appearance: ${n.appearance}`);
         const rel = relationshipGraph[n.id];
         if (rel) parts.push(`relationship: score=${rel.score} (${rel.note})`);
@@ -1132,13 +1136,13 @@ export class NPCPlanningAgent {
     upToTime: string,
     dgsm: DynamicGameStateManager
   ): Promise<PlanNode[]> {
-    void dgsm;
     const plans = await this.prisma.npcDailyPlan.findMany({
       where: { sessionId, gameDay },
     });
 
     const dueNodes: PlanNode[] = [];
     for (const plan of plans) {
+      if (!dgsm.isNpcAlive(plan.npcId)) continue;
       const nodes = plan.nodes as unknown as PlanNode[];
       for (const node of nodes) {
         if (node.status === "pending" && node.startTime <= upToTime) {
@@ -1151,13 +1155,15 @@ export class NPCPlanningAgent {
 
   async getInProgressNodes(
     sessionId: string,
-    gameDay: number
+    gameDay: number,
+    dgsm?: DynamicGameStateManager
   ): Promise<PlanNode[]> {
     const plans = await this.prisma.npcDailyPlan.findMany({
       where: { sessionId, gameDay },
     });
     const activeNodes: PlanNode[] = [];
     for (const plan of plans) {
+      if (dgsm && !dgsm.isNpcAlive(plan.npcId)) continue;
       const nodes = plan.nodes as unknown as PlanNode[];
       for (const node of nodes) {
         if (node.status === "in_progress") {
@@ -1171,7 +1177,8 @@ export class NPCPlanningAgent {
   async getCurrentNpcActions(
     sessionId: string,
     gameDay: number,
-    currentTime: string
+    currentTime: string,
+    dgsm?: DynamicGameStateManager
   ): Promise<Record<string, string | null>> {
     const plans = await this.prisma.npcDailyPlan.findMany({
       where: { sessionId, gameDay },
@@ -1179,6 +1186,10 @@ export class NPCPlanningAgent {
 
     const actions: Record<string, string | null> = {};
     for (const plan of plans) {
+      if (dgsm && !dgsm.isNpcAlive(plan.npcId)) {
+        actions[plan.npcId] = null;
+        continue;
+      }
       const nodes = plan.nodes as unknown as PlanNode[];
       const currentNode = resolveCurrentNode(nodes, currentTime);
       actions[plan.npcId] = currentNode?.action ?? null;
@@ -1330,6 +1341,50 @@ export class NPCPlanningAgent {
     });
   }
 
+  async interruptOpenNodesForDeath(
+    sessionId: string,
+    npcId: string,
+    gameDay: number,
+    gameTime: string
+  ): Promise<void> {
+    const plan = await this.prisma.npcDailyPlan.findUnique({
+      where: { sessionId_npcId_gameDay: { sessionId, npcId, gameDay } },
+    });
+    if (!plan) return;
+
+    let changed = false;
+    const nodes = plan.nodes as unknown as PlanNode[];
+    const updatedNodes = nodes.map((node) => {
+      if (
+        node.status === "completed" ||
+        node.status === "failed" ||
+        node.status === "interrupted"
+      ) {
+        return node;
+      }
+
+      changed = true;
+      return {
+        ...node,
+        status: "interrupted" as const,
+        outcome: `${node.action} [interrupted because the actor died] interrupted`,
+        executionMeta: {
+          ...node.executionMeta,
+          remainingMinutes: 0,
+          interruptedAt: gameTime,
+          interruptionReason: "character_dead",
+        },
+      };
+    });
+
+    if (!changed) return;
+
+    await this.prisma.npcDailyPlan.update({
+      where: { sessionId_npcId_gameDay: { sessionId, npcId, gameDay } },
+      data: { nodes: updatedNodes as any },
+    });
+  }
+
   // === Day transition lifecycle ===
 
   async onNewDay(
@@ -1420,6 +1475,7 @@ export class NPCPlanningAgent {
   ): Promise<void> {
     // Requires memoryManager — skip summarization if absent
     if (!this.memoryManager) return;
+    if (!dgsm.isNpcAlive(npcId)) return;
 
     // Fetch ALL memories from this day — no semantic filtering, no type restriction
     const dayMemories = await this.memoryManager.getAllForDay(

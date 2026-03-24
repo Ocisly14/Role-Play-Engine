@@ -71,6 +71,7 @@ function parseJsonResponse<T>(raw: string): T {
 interface CharacterPromptData {
   id: string;
   name: string;
+  isAlive: boolean;
   occupation?: string;
   appearance?: string;
   personality?: string;
@@ -99,6 +100,7 @@ function collectCharacterData(
   return {
     id: characterId,
     name: npc?.name ?? characterId,
+    isAlive: dgsm.isNpcAlive(characterId),
     occupation: npc?.occupation,
     appearance: npc?.appearance,
     personality: npc?.personality,
@@ -127,6 +129,12 @@ Given a character interaction that has already been determined to succeed/fail, 
 When opposed roll results are provided per-target:
 - "Actor wins": The action takes full effect on this target. Use the pre-computed damage value if provided.
 - "Target resists": The target successfully defended — the action has reduced or no mechanical effect on this target (no damage, persuasion fails). The target should still get a memory of the attempted interaction.
+
+## Dead Targets / Corpses
+- If a target is marked as not alive or has HP <= 0, treat them as a corpse, not an active participant.
+- Corpses do not speak, resist, plan, or form new thoughts. Do not invent dialogue or conscious reactions from them.
+- You may still apply physical state changes to the corpse when appropriate: moving the body, changing appearance, transferring items, adding conditions, or further damaging it.
+- For a dead target's "memory", write a brief state note about what happened to the corpse, not a conscious first-person recollection.
 
 ## Actor Success Level Impact
 The actor's own success level (shown in "Actor skill roll") determines the intensity of effect on targets the actor won against:
@@ -264,6 +272,7 @@ function buildUserPrompt(
     actor.occupation ? `Occupation: ${actor.occupation}` : null,
     actor.appearance ? `Appearance: ${actor.appearance}` : null,
     actor.personality ? `Personality: ${actor.personality}` : null,
+    `Status: ${actor.isAlive ? "alive" : "dead"}`,
     actor.stats
       ? `Stats: HP=${actor.stats.hp}, SAN=${actor.stats.san}`
       : null,
@@ -296,6 +305,7 @@ function buildUserPrompt(
         t.occupation ? `Occupation: ${t.occupation}` : null,
         t.appearance ? `Appearance: ${t.appearance}` : null,
         t.personality ? `Personality: ${t.personality}` : null,
+        `Status: ${t.isAlive ? "alive" : "dead"}`,
         t.stats ? `Stats: HP=${t.stats.hp}, SAN=${t.stats.san}` : null,
         `Inventory: ${JSON.stringify(t.inventory)}`,
         `Position: ${t.position ?? "unknown"}`,

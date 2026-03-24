@@ -72,5 +72,7 @@
       }
     }
   ],
-  "connections": ["SCN_20_SUB_1"]
+  "connections": [
+    { "targetId": "SCN_20_SUB_1", "description": "脚下湿软泥径连通来时方向，尽头是日暮大道旁的伐木场废墟" }
+  ]
 }

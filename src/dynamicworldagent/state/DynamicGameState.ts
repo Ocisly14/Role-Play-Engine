@@ -159,11 +159,19 @@ export class DynamicGameStateManager {
   getSimulatedNpcIds(): Set<string> {
     const policy = this.state.npcInjectionPolicy;
     if (!policy) {
-      return new Set(this.state.npcCharacters.map((n) => n.id));
+      return new Set(
+        this.state.npcCharacters
+          .map((n) => n.id)
+          .filter((id) => this.isNpcAlive(id))
+      );
     }
     const ids = new Set<string>();
-    for (const name of policy.tiers.daily_sim ?? []) ids.add(name);
-    for (const name of policy.tiers.investigator_sim ?? []) ids.add(name);
+    for (const name of policy.tiers.daily_sim ?? []) {
+      if (this.isNpcAlive(name)) ids.add(name);
+    }
+    for (const name of policy.tiers.investigator_sim ?? []) {
+      if (this.isNpcAlive(name)) ids.add(name);
+    }
     return ids;
   }
 
@@ -173,6 +181,13 @@ export class DynamicGameStateManager {
   getSimulatedNpcs(): DynamicNPCProfile[] {
     const simIds = this.getSimulatedNpcIds();
     return this.state.npcCharacters.filter((n) => simIds.has(n.id));
+  }
+
+  isNpcAlive(npcId: string): boolean {
+    const stats = this.state.npcStats[npcId];
+    if (stats) return stats.hp > 0;
+    const npc = this.state.npcCharacters.find((n) => n.id === npcId);
+    return (npc?.status.hp ?? 0) > 0;
   }
 
   // === Scene Helpers ===
@@ -686,6 +701,8 @@ export class DynamicGameStateManager {
       0,
       this.state.npcStats[npcId].hp + delta
     );
+    this.syncNpcStatusFromStats(npcId);
+    this.state.lastUpdated = new Date();
   }
 
   updateNpcSan(npcId: string, delta: number): void {
@@ -694,6 +711,8 @@ export class DynamicGameStateManager {
       0,
       this.state.npcStats[npcId].san + delta
     );
+    this.syncNpcStatusFromStats(npcId);
+    this.state.lastUpdated = new Date();
   }
 
   getNpcInventory(npcId: string): Item[] {
@@ -930,5 +949,13 @@ export class DynamicGameStateManager {
       case "scene":
         return position.sceneId;
     }
+  }
+
+  private syncNpcStatusFromStats(npcId: string): void {
+    const npc = this.state.npcCharacters.find((candidate) => candidate.id === npcId);
+    const stats = this.state.npcStats[npcId];
+    if (!npc || !stats) return;
+    npc.status.hp = stats.hp;
+    npc.status.sanity = stats.san;
   }
 }

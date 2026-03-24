@@ -183,7 +183,7 @@ export function useSimulationState(sessionId: string | null) {
         case "npc_death": {
           newState.npcStatuses = prev.npcStatuses.map((npc) =>
             npc.npcId === event.actorNpcId
-              ? { ...npc, isAlive: false, hp: 0 }
+              ? { ...npc, isAlive: false, hp: 0, currentAction: null }
               : npc
           );
           break;

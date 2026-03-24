@@ -57,13 +57,16 @@ export function findAffectedCharacters(
 
   const addChar = (charId: string, level: number) => {
     if (charId === action.characterId) return;
+    if (!dgsm.isNpcAlive(charId)) return;
     const existing = result.get(charId);
     if (existing === undefined || level > existing) {
       result.set(charId, level);
     }
   };
 
-  const allCharacterIds = state.npcCharacters.map((n) => n.id);
+  const allCharacterIds = state.npcCharacters
+    .map((n) => n.id)
+    .filter((id) => dgsm.isNpcAlive(id));
 
   const getCharPosition = (charId: string) => {
     return dgsm.getCharacterPosition(charId);

@@ -62,5 +62,9 @@
       }
     }
   ],
-  "connections": ["SCN_17_SUB_2", "SCN_17_SUB_3", "SCN_17_SUB_4"]
+  "connections": [
+    { "targetId": "SCN_17_SUB_2", "description": "祭坛后方有一段仅容一人的狭窄石阶，盘旋向上通往钟楼" },
+    { "targetId": "SCN_17_SUB_3", "description": "主殿侧壁一处隐蔽角落有一扇与墙壁融为一体的厚重石板暗门，门后是弥漫寒气的蛛网通道" },
+    { "targetId": "SCN_17_SUB_4", "description": "主殿内有一处隐蔽的通道入口，石阶向下深入地底，通往教堂正下方的秘密赌场" }
+  ]
 }

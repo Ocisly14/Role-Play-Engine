@@ -56,5 +56,7 @@
       }
     }
   ],
-  "connections": ["SCN_2_SUB_1"]
+  "connections": [
+    { "targetId": "SCN_2_SUB_1", "description": "灰黑石壁间的狭窄通道连接倾斜石阶，向上通往地面层焚化炉旁的碎石空地" }
+  ]
 }

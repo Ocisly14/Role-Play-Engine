@@ -71,7 +71,10 @@
       }
     }
   ],
-  "connections": ["SCN_6_SUB_1", "SCN_6_SUB_3"],
+  "connections": [
+    { "targetId": "SCN_6_SUB_1", "description": "门厅大门外是吱呀作响的木阶梯，阶梯下方即杂草丛生的屋前院落" },
+    { "targetId": "SCN_6_SUB_3", "description": "客厅一角有窄小的木楼梯，梯板干涩嘎吱，通往二层卧室与书房" }
+  ],
   "itemContexts": {
     "ITEM_SCN6_4": "客厅里的旧沙发被厚厚灰尘罩住，坐垫上还保留着久远的下陷痕迹。",
     "ITEM_SCN6_6": "厨房橱柜的门歪斜地半开着，木板边缘因潮气而起了翘。",

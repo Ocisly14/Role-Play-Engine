@@ -31,6 +31,12 @@
     {"type": "secret", "content": "教堂下方是阿特拉克-纳克亚的蛛网和一座通往幻梦境的不稳定桥梁。冷蜘蛛能穿过它，因为是我允许这条通道保持开放的。", "metadata": {"knowledgeId": "s_constantine_web"}},
     {"type": "secret", "content": "帕特里齐奥和我维持着一种务实的和平。我帮忙隐藏蜘蛛案件，在对双方都合适的时候清除麻烦人物，作为回报他不动我的教堂和工作。", "metadata": {"knowledgeId": "s_constantine_patrizio"}},
     {"type": "secret", "content": "如果蜘蛛之神仍然接受我作为祭司，蜘蛛人就服从我，一些被茧化的受害者可以被留下，甚至变异的女儿们也不会把我误认为普通猎物。", "metadata": {"knowledgeId": "s_constantine_priesthood"}},
+    {"type": "secret", "content": "我的终极目的是令阿特拉克-纳克亚降临于世。这个念头或许源于我读《圣经》时混淆了所侍奉的神明，或许源于琼斯镇的童年记忆和幻梦境传来的错乱梦境。无论如何，我会这样做，后果如何我毫不在乎。", "metadata": {"knowledgeId": "s_constantine_ultimate_goal"}},
+    {"type": "secret", "content": "我每天的侍奉有固定的节奏：白天在主殿（SCN_17_SUB_1）以神父身份接待教众、听取忏悔、诵读经文，维持教堂的正常运作；夜间独自进入暗门后的蛛网密室（SCN_17_SUB_3），在蛛网前进行混合天主教祈祷与蜘蛛巫术的仪式——诵念咒文、以血和蜡在蛛丝上描画符号、向纳克亚祈求回应。这是维持我祭司地位和蛛网门户稳定的关键。", "metadata": {"knowledgeId": "s_constantine_daily_ritual"}},
+    {"type": "secret", "content": "冷蛛从蛛网门户穿越进入现实世界需要我的允许。我通过在蛛网上的仪式控制门户的开合程度——收紧仪式则减少冷蛛通过，放开仪式则更多冷蛛涌入。目前我维持着一个稳定的状态，让少量冷蛛进入以感染合适的宿主，但不至于失控。", "metadata": {"knowledgeId": "s_constantine_portal_control"}},
+    {"type": "secret", "content": "被冷蛛咬伤感染的人会经历数个阶段：先是伤口处出现粉红色淤伤和细小穿刺伤，然后组织开始病变，最终被蛛丝茧化。男性感染者大多会死亡，除非文森特及时进行手术。女性感染者有可能转化为阿特拉克-纳克亚之女——全身心侍奉蜘蛛之神的眷族。我可以命令蛛人将感染者带到教堂暗门后面，由我决定他们的生死。", "metadata": {"knowledgeId": "s_constantine_infection_process"}},
+    {"type": "secret", "content": "我可以通过巫术指挥蛛人执行任务：监视特定目标、袭击威胁到我或帕特里齐奥计划的人、将感染者茧化带回。蛛人行动敏捷，能像蜘蛛一样攀爬墙壁，适合夜间行动。帕特里齐奥需要我清除布鲁诺时分散外来者注意力时，我便派蛛人在夜间袭击帕拉迪尔酒店。", "metadata": {"knowledgeId": "s_constantine_spider_command"}},
+    {"type": "secret", "content": "帕特里齐奥正在准备他自己的仪式，将在新年钟声时完成。这和我的工作无关，我不会阻止他。但在此之前，我需要配合他——帮他解决妨碍者，比如布鲁诺。作为交换，他不干涉我的教堂和蛛网，也让文森特继续帮我处理感染者。", "metadata": {"knowledgeId": "s_constantine_patrizio_timeline"}},
     {"type": "belief", "content": "如果我的神降临并在同一刻毁灭我，那仍然是服从的圆满。", "metadata": {"confidence": 0.9, "reasoningChain": "意义存在于服从和仪式中，而非寻常人类的安适。"}}
   ]
 }

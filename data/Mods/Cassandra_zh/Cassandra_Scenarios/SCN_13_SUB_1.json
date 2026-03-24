@@ -41,5 +41,8 @@
       }
     }
   ],
-  "connections": ["SCN_13_SUB_2", "SCN_13_SUB_3"]
+  "connections": [
+    { "targetId": "SCN_13_SUB_2", "description": "闲置车间深处有一扇微微变形的木质门板，门后是一间隐蔽的办公室" },
+    { "targetId": "SCN_13_SUB_3", "description": "厂区角落有一道狭窄的石砌台阶，向下通往地下的阴冷酒窖" }
+  ]
 }

@@ -1010,7 +1010,8 @@ async function executeSingleTick(
   // 1. Get active and due nodes for this minute
   const inProgressNodes = await npcPlanningAgent.getInProgressNodes(
     sessionId,
-    gameDay
+    gameDay,
+    dgsm
   );
   const dueNpcNodes = await npcPlanningAgent.getDueNpcNodes(
     sessionId,
@@ -1042,10 +1043,8 @@ async function executeSingleTick(
     }
   }
 
-  const allNodes: PlanNode[] = [
-    ...nodeByNpc.values(),
-    ...(carryOverNodes ?? []),
-  ];
+  const allNodes: PlanNode[] = [...nodeByNpc.values(), ...(carryOverNodes ?? [])]
+    .filter((node) => dgsm.isNpcAlive(node.characterId));
 
   allNodes.sort((a, b) => {
     if (a.status !== b.status) {
@@ -1169,6 +1168,7 @@ async function executeSingleTick(
     tickActions.push(action);
     const eventOutcome = appendItemContext(action.outcome, itemContext);
     const eventMetadata = buildEventMetadata(action.outcome, itemContext);
+    const allTargetIds = node.targetCharacterIds ?? [];
 
     // 4. Post-execution processing
 
@@ -1271,7 +1271,6 @@ async function executeSingleTick(
 
     // On character_interaction success -> update relationships with all targets
     let relationshipChange: string | undefined;
-    const allTargetIds = node.targetCharacterIds ?? [];
     if (
       action.status === "completed" &&
       node.type === "character_interaction" &&
@@ -1832,8 +1831,17 @@ function scanUnplannedEncounters(
   gameDay: number
 ): CharacterAction[] {
   const state = dgsm.getState();
+  const aliveNpcs = state.npcCharacters.filter((npc) => dgsm.isNpcAlive(npc.id));
+  const presentNpcs = state.npcCharacters.filter((npc) =>
+    Boolean(dgsm.getCharacterPosition(npc.id))
+  );
+  const formatPresenceLabel = (npcId: string): string => {
+    const npc = state.npcCharacters.find((candidate) => candidate.id === npcId);
+    const name = npc?.name ?? npcId;
+    return dgsm.isNpcAlive(npcId) ? name : `${name} (dead)`;
+  };
   const positionByNpc = new Map(
-    state.npcCharacters.map((npc) => [npc.id, dgsm.getCharacterPosition(npc.id)])
+    presentNpcs.map((npc) => [npc.id, dgsm.getCharacterPosition(npc.id)])
   );
 
   // NPCs who just arrived at a new scene this tick
@@ -1858,31 +1866,28 @@ function scanUnplannedEncounters(
   const encounterEvents: CharacterAction[] = [];
 
   const locationEncounterMaps = new Map<string, Map<string, string[]>>();
-  const npcIds = state.npcCharacters.map((npc) => npc.id);
-  for (let i = 0; i < npcIds.length; i++) {
-    for (let j = i + 1; j < npcIds.length; j++) {
-      const npcAId = npcIds[i];
-      const npcBId = npcIds[j];
-      if (!arrivedNpcIds.has(npcAId) && !arrivedNpcIds.has(npcBId)) continue;
+  for (const observer of aliveNpcs) {
+    if (!arrivedNpcIds.has(observer.id)) continue;
 
-      const pairKey = [npcAId, npcBId].sort().join("_");
+    const observerPos = positionByNpc.get(observer.id) ?? null;
+    const locationId = observerPos ? dgsm.resolveLocationId(observerPos) : undefined;
+    if (!locationId) continue;
+
+    for (const other of presentNpcs) {
+      if (other.id === observer.id) continue;
+
+      const pairKey = [observer.id, other.id].sort().join("_");
       if (interactedPairs.has(pairKey)) continue;
 
-      const posA = positionByNpc.get(npcAId) ?? null;
-      const posB = positionByNpc.get(npcBId) ?? null;
-      if (!arePositionsCoLocated(posA, posB, dgsm)) continue;
-
-      const locationId = posA ? dgsm.resolveLocationId(posA) : undefined;
-      if (!locationId) continue;
+      const otherPos = positionByNpc.get(other.id) ?? null;
+      if (!arePositionsCoLocated(observerPos, otherPos, dgsm)) continue;
 
       if (!locationEncounterMaps.has(locationId)) {
         locationEncounterMaps.set(locationId, new Map<string, string[]>());
       }
       const npcEncounterMap = locationEncounterMaps.get(locationId)!;
-      if (!npcEncounterMap.has(npcAId)) npcEncounterMap.set(npcAId, []);
-      if (!npcEncounterMap.has(npcBId)) npcEncounterMap.set(npcBId, []);
-      npcEncounterMap.get(npcAId)!.push(npcBId);
-      npcEncounterMap.get(npcBId)!.push(npcAId);
+      if (!npcEncounterMap.has(observer.id)) npcEncounterMap.set(observer.id, []);
+      npcEncounterMap.get(observer.id)!.push(other.id);
     }
   }
 
@@ -1894,10 +1899,7 @@ function scanUnplannedEncounters(
     // Write witness memory per NPC
     if (memoryManager) {
       for (const [npcId, otherIds] of npcEncounterMap) {
-        const otherNames = otherIds.map((id) => {
-          const npc = state.npcCharacters.find((n) => n.id === id);
-          return npc?.name ?? id;
-        });
+        const otherNames = otherIds.map((id) => formatPresenceLabel(id));
         // Fire-and-forget; consistent with existing memory write pattern
         void memoryManager.add({
           npcId,
@@ -1918,10 +1920,12 @@ function scanUnplannedEncounters(
     }
 
     // Build one synthetic event per scene
-    const allNpcNames = [...npcEncounterMap.keys()].map((id) => {
-      const npc = state.npcCharacters.find((n) => n.id === id);
-      return npc?.name ?? id;
-    });
+    const allNpcIds = new Set<string>();
+    for (const [observerId, otherIds] of npcEncounterMap) {
+      allNpcIds.add(observerId);
+      for (const otherId of otherIds) allNpcIds.add(otherId);
+    }
+    const allNpcNames = [...allNpcIds].map((id) => formatPresenceLabel(id));
 
     encounterEvents.push({
       characterId: "__encounter__",

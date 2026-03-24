@@ -155,7 +155,7 @@ You have full creative freedom to determine outcomes based on the action descrip
 - **Modify** any item property — description, state, damage, lock status, contents
 - **Destroy** items (set location to "destroyed")
 - **Disassemble** items — destroy the original, output resulting parts as "newItems" (e.g. breaking a clock yields gears, batteries as new items)
-- **Combine/Transform** items — modify one item's properties to represent a combined result, destroy the consumed components. Or create a new item via "newItems" and destroy the sources.
+- **Combine/Transform** items — create a new combined item via "newItems" and set "sourceItemId" on each entry to destroy the consumed components automatically.
 - **Open locked containers** — if the actor has a key, picks the lock (via skill check), forces it open, or finds another creative way based on the action and roll result. Whether a lock can be opened is determined by the skill roll result and the item's properties. Some lock may need higher level of success to open it. A critical success might open it cleanly; a regular success might damage the lock; a failure might jam it further.
 
 Base your decisions on:
@@ -364,6 +364,7 @@ export async function resolveObjectInteractionState(
   const witnesses: Array<{ id: string; name: string }> = [];
   for (const npc of state.npcCharacters) {
     if (npc.id === node.characterId) continue;
+    if (!dgsm.isNpcAlive(npc.id)) continue;
     const pos = dgsm.getCharacterPosition(npc.id);
     if (!pos) continue;
     const locId = dgsm.resolveLocationId(pos);

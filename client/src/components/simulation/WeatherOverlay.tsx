@@ -1143,80 +1143,116 @@ const FogLayers: React.FC = () => {
 
 /* ────────────────── Heat Distortion ────────────────── */
 
-const HeatDistortion: React.FC = () => (
-  <>
-    <svg
-      style={{ position: "absolute", width: 0, height: 0 }}
-      aria-hidden="true"
-    >
-      <defs>
-        <filter id="weather-heat-distortion">
-          <feTurbulence
-            type="fractalNoise"
-            baseFrequency="0.012 0.018"
-            numOctaves={3}
-            result="turbulence"
-          />
-          <feDisplacementMap
-            in="SourceGraphic"
-            in2="turbulence"
-            scale={14}
-            xChannelSelector="R"
-            yChannelSelector="G"
-          />
-        </filter>
-      </defs>
-    </svg>
-    <div
-      style={{
-        position: "absolute",
-        inset: 0,
-        filter: "url(#weather-heat-distortion)",
-        animation: "heatShimmer 8s ease-in-out infinite alternate",
-        pointerEvents: "none",
-      }}
-    >
+const HeatDistortion: React.FC = () => {
+  const refractionLayers = [
+    {
+      inset: "-8%",
+      opacity: 0.92,
+      animation: "heatRefractionBase 3.8s linear -1.6s infinite",
+      backdrop:
+        "blur(1.9px) saturate(1.18) brightness(1.06) contrast(1.08)",
+      background:
+        "linear-gradient(180deg, rgba(255,255,255,0.004) 0%, rgba(255,244,220,0.014) 56%, rgba(255,236,198,0.02) 100%)",
+      mask: `
+        radial-gradient(20% 15% at 12% 14%, rgba(0,0,0,0.98) 0%, rgba(0,0,0,0.42) 54%, transparent 82%),
+        radial-gradient(24% 18% at 33% 24%, rgba(0,0,0,0.94) 0%, rgba(0,0,0,0.34) 56%, transparent 82%),
+        radial-gradient(22% 16% at 61% 18%, rgba(0,0,0,0.94) 0%, rgba(0,0,0,0.32) 54%, transparent 82%),
+        radial-gradient(18% 14% at 84% 26%, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0.3) 56%, transparent 82%),
+        radial-gradient(26% 18% at 18% 48%, rgba(0,0,0,0.92) 0%, rgba(0,0,0,0.34) 54%, transparent 82%),
+        radial-gradient(22% 16% at 46% 54%, rgba(0,0,0,0.95) 0%, rgba(0,0,0,0.36) 58%, transparent 84%),
+        radial-gradient(20% 15% at 74% 50%, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0.3) 54%, transparent 82%),
+        radial-gradient(22% 16% at 90% 64%, rgba(0,0,0,0.84) 0%, rgba(0,0,0,0.24) 56%, transparent 84%),
+        radial-gradient(28% 20% at 26% 84%, rgba(0,0,0,0.96) 0%, rgba(0,0,0,0.4) 56%, transparent 84%),
+        radial-gradient(24% 18% at 58% 82%, rgba(0,0,0,0.94) 0%, rgba(0,0,0,0.34) 56%, transparent 84%),
+        radial-gradient(20% 16% at 82% 86%, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0.28) 58%, transparent 86%)
+      `,
+    },
+    {
+      inset: "-7%",
+      opacity: 0.74,
+      animation: "heatRefractionField1 4.4s linear -2.8s infinite",
+      backdrop:
+        "blur(1.6px) saturate(1.14) brightness(1.05) contrast(1.06)",
+      background: "rgba(255,250,240,0.016)",
+      mask: `
+        radial-gradient(16% 12% at 8% 34%, rgba(0,0,0,0.88) 0%, rgba(0,0,0,0.26) 54%, transparent 82%),
+        radial-gradient(18% 13% at 26% 12%, rgba(0,0,0,0.86) 0%, rgba(0,0,0,0.24) 54%, transparent 82%),
+        radial-gradient(20% 14% at 44% 38%, rgba(0,0,0,0.86) 0%, rgba(0,0,0,0.26) 56%, transparent 84%),
+        radial-gradient(16% 12% at 68% 12%, rgba(0,0,0,0.84) 0%, rgba(0,0,0,0.22) 54%, transparent 82%),
+        radial-gradient(18% 13% at 88% 42%, rgba(0,0,0,0.82) 0%, rgba(0,0,0,0.2) 56%, transparent 84%),
+        radial-gradient(24% 18% at 16% 66%, rgba(0,0,0,0.92) 0%, rgba(0,0,0,0.28) 56%, transparent 84%),
+        radial-gradient(18% 13% at 40% 74%, rgba(0,0,0,0.86) 0%, rgba(0,0,0,0.24) 56%, transparent 84%),
+        radial-gradient(22% 16% at 70% 68%, rgba(0,0,0,0.88) 0%, rgba(0,0,0,0.26) 58%, transparent 84%),
+        radial-gradient(18% 13% at 92% 74%, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0.18) 56%, transparent 84%)
+      `,
+    },
+    {
+      inset: "-6%",
+      opacity: 0.62,
+      animation: "heatRefractionField2 5.1s linear -4.4s infinite",
+      backdrop:
+        "blur(1.35px) saturate(1.12) brightness(1.04) contrast(1.05)",
+      background: "rgba(255,248,230,0.014)",
+      mask: `
+        radial-gradient(14% 10% at 18% 24%, rgba(0,0,0,0.78) 0%, rgba(0,0,0,0.18) 52%, transparent 80%),
+        radial-gradient(16% 11% at 38% 18%, rgba(0,0,0,0.76) 0%, rgba(0,0,0,0.18) 52%, transparent 80%),
+        radial-gradient(14% 10% at 56% 34%, rgba(0,0,0,0.78) 0%, rgba(0,0,0,0.2) 54%, transparent 82%),
+        radial-gradient(18% 12% at 78% 18%, rgba(0,0,0,0.74) 0%, rgba(0,0,0,0.16) 52%, transparent 80%),
+        radial-gradient(14% 10% at 88% 56%, rgba(0,0,0,0.72) 0%, rgba(0,0,0,0.14) 54%, transparent 82%),
+        radial-gradient(18% 12% at 10% 82%, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0.2) 56%, transparent 82%),
+        radial-gradient(16% 11% at 34% 88%, rgba(0,0,0,0.74) 0%, rgba(0,0,0,0.16) 54%, transparent 82%),
+        radial-gradient(20% 13% at 60% 86%, rgba(0,0,0,0.76) 0%, rgba(0,0,0,0.18) 56%, transparent 84%),
+        radial-gradient(16% 11% at 80% 80%, rgba(0,0,0,0.74) 0%, rgba(0,0,0,0.16) 54%, transparent 82%)
+      `,
+    },
+    {
+      inset: "-7%",
+      opacity: 0.54,
+      animation: "heatRefractionField3 5.8s linear -3.6s infinite",
+      backdrop:
+        "blur(1.45px) saturate(1.16) brightness(1.05) contrast(1.06)",
+      background: "rgba(255,246,225,0.014)",
+      mask: `
+        radial-gradient(30% 22% at 24% 30%, rgba(0,0,0,0.86) 0%, rgba(0,0,0,0.2) 58%, transparent 86%),
+        radial-gradient(26% 20% at 78% 24%, rgba(0,0,0,0.84) 0%, rgba(0,0,0,0.18) 58%, transparent 86%),
+        radial-gradient(34% 24% at 48% 56%, rgba(0,0,0,0.88) 0%, rgba(0,0,0,0.22) 56%, transparent 86%),
+        radial-gradient(28% 22% at 18% 78%, rgba(0,0,0,0.82) 0%, rgba(0,0,0,0.16) 58%, transparent 86%),
+        radial-gradient(26% 20% at 82% 82%, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0.14) 58%, transparent 86%)
+      `,
+    },
+  ];
+
+  return (
+    <>
+      {refractionLayers.map((layer, index) => (
+        <div
+          key={`heat-refraction-${index}`}
+          style={{
+            position: "absolute",
+            inset: layer.inset,
+            opacity: layer.opacity,
+            background: layer.background,
+            backdropFilter: layer.backdrop,
+            WebkitBackdropFilter: layer.backdrop,
+            maskImage: layer.mask,
+            WebkitMaskImage: layer.mask,
+            animation: layer.animation,
+            pointerEvents: "none",
+            willChange: "transform",
+          }}
+        />
+      ))}
       <div
-        style={{
-          width: "100%",
-          height: "100%",
-          background:
-            "linear-gradient(0deg, rgba(255,120,0,0.05) 0%, transparent 50%)",
-        }}
-      />
-    </div>
-    {/* Rising heat streaks — more and wider */}
-    {[0, 1, 2, 3, 4, 5, 6].map((i) => (
-      <div
-        key={i}
         style={{
           position: "absolute",
-          bottom: 0,
-          left: `${8 + i * 13}%`,
-          width: 4 + (i % 3),
-          height: "50%",
+          inset: 0,
           background:
-            "linear-gradient(0deg, rgba(255,160,60,0.12) 0%, rgba(255,200,100,0.04) 50%, transparent 100%)",
-          animation: `heatRise ${2.5 + i * 0.4}s ease-in-out ${i * 0.4}s infinite`,
-          filter: "blur(2px)",
+            "linear-gradient(180deg, rgba(255,255,255,0) 0%, rgba(255,220,150,0.01) 40%, rgba(255,214,135,0.022) 100%)",
         }}
       />
-    ))}
-    {/* Bottom heat shimmer gradient */}
-    <div
-      style={{
-        position: "absolute",
-        bottom: 0,
-        left: 0,
-        right: 0,
-        height: "20%",
-        background:
-          "linear-gradient(0deg, rgba(255,180,80,0.06) 0%, transparent 100%)",
-        animation: "heatShimmer 6s ease-in-out 2s infinite alternate",
-      }}
-    />
-  </>
-);
+    </>
+  );
+};
 
 /* ─────────────────── Frost Border ─────────────────── */
 
@@ -1574,13 +1610,31 @@ export const WeatherOverlay: React.FC<WeatherOverlayProps> = ({ weather }) => {
           0% { transform: translate3d(0, 0, 0) scale(0.96); }
           100% { transform: translate3d(172vw, -8px, 0) scale(1.03); }
         }
-        @keyframes heatRise {
-          0% { transform: translateY(0); opacity: 0.8; }
-          100% { transform: translateY(-150px); opacity: 0; }
+        @keyframes heatRefractionBase {
+          0% { transform: translate3d(0, 0, 0) scale(1, 1) skewX(0deg); }
+          20% { transform: translate3d(10px, -4px, 0) scale(1.03, 1.02) skewX(0.6deg); }
+          45% { transform: translate3d(-9px, -11px, 0) scale(1.02, 0.98) skewX(-0.75deg); }
+          70% { transform: translate3d(7px, -8px, 0) scale(1.04, 1.03) skewX(0.45deg); }
+          100% { transform: translate3d(-6px, -15px, 0) scale(1.01, 1.02) skewX(-0.4deg); }
         }
-        @keyframes heatShimmer {
-          0% { transform: translateY(0); }
-          100% { transform: translateY(-8px); }
+        @keyframes heatRefractionField1 {
+          0% { transform: translate3d(-10px, 0, 0) scale(0.98, 0.97) skewX(-0.45deg); }
+          30% { transform: translate3d(13px, -7px, 0) scale(1.04, 1.01) skewX(0.7deg); }
+          60% { transform: translate3d(-7px, -14px, 0) scale(1.02, 1.05) skewX(-0.6deg); }
+          100% { transform: translate3d(10px, -18px, 0) scale(1.05, 1) skewX(0.35deg); }
+        }
+        @keyframes heatRefractionField2 {
+          0% { transform: translate3d(7px, 0, 0) scale(1.01, 0.98) skewX(0.3deg); }
+          25% { transform: translate3d(-9px, -9px, 0) scale(0.98, 1.03) skewX(-0.65deg); }
+          58% { transform: translate3d(12px, -16px, 0) scale(1.05, 1.01) skewX(0.5deg); }
+          100% { transform: translate3d(-6px, -12px, 0) scale(1.01, 1.04) skewX(-0.25deg); }
+        }
+        @keyframes heatRefractionField3 {
+          0% { transform: translate3d(-4px, 0, 0) scale(0.99, 0.99) skewX(-0.25deg); }
+          28% { transform: translate3d(11px, -6px, 0) scale(1.03, 1.03) skewX(0.55deg); }
+          52% { transform: translate3d(-10px, -13px, 0) scale(1.01, 1.06) skewX(-0.7deg); }
+          78% { transform: translate3d(8px, -10px, 0) scale(1.04, 0.99) skewX(0.4deg); }
+          100% { transform: translate3d(-7px, -17px, 0) scale(1.02, 1.04) skewX(-0.35deg); }
         }
       `}</style>
 

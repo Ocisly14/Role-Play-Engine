@@ -5,8 +5,16 @@ function createMockDgsm() {
   const positions: Record<string, any> = {
     actor: { type: "road", roadId: "ROAD_1", position: 0.1 },
     near: { type: "road", roadId: "ROAD_1", position: 0.25 },
+    dead: { type: "road", roadId: "ROAD_1", position: 0.18 },
     far: { type: "road", roadId: "ROAD_1", position: 0.8 },
     elsewhere: { type: "scene", sceneId: "SCENE_2" },
+  };
+  const hpByNpc: Record<string, number> = {
+    actor: 10,
+    near: 10,
+    dead: 0,
+    far: 10,
+    elsewhere: 10,
   };
 
   return {
@@ -15,6 +23,7 @@ function createMockDgsm() {
         npcCharacters: [
           { id: "actor" },
           { id: "near" },
+          { id: "dead" },
           { id: "far" },
           { id: "elsewhere" },
         ],
@@ -36,6 +45,9 @@ function createMockDgsm() {
         ]),
         transportEdges: [],
       };
+    },
+    isNpcAlive(characterId: string) {
+      return (hpByNpc[characterId] ?? 0) > 0;
     },
     getCharacterPosition(characterId: string) {
       return positions[characterId] ?? null;
@@ -85,6 +97,7 @@ describe("findAffectedCharacters", () => {
     );
 
     expect(result.get("near")).toBe(2);
+    expect(result.has("dead")).toBe(false);
     expect(result.has("far")).toBe(false);
     expect(result.has("elsewhere")).toBe(false);
   });

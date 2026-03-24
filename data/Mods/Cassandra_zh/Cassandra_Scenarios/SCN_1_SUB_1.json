@@ -87,11 +87,11 @@
     }
   ],
   "connections": [
-    "SCN_1_SUB_2",
-    "SCN_1_SUB_3",
-    "SCN_1_SUB_4",
-    "SCN_1_SUB_5",
-    "SCN_1_SUB_6"
+    { "targetId": "SCN_1_SUB_2", "description": "走廊尽头铁门后有水泥楼梯，通往地下一层的停尸间，绿色指示牌标注在大厅右侧" },
+    { "targetId": "SCN_1_SUB_3", "description": "走廊左侧一扇带电子门禁的厚重防火门连通实验室，门框旁贴有生化警告标识" },
+    { "targetId": "SCN_1_SUB_4", "description": "走廊右侧另一扇电子门禁门通往药品管理室，门旁墙上贴着发黄的管理制度告示" },
+    { "targetId": "SCN_1_SUB_5", "description": "大厅正对面的走廊口连通一条L型走廊，两侧排列着病房门，延伸至病房区深处" },
+    { "targetId": "SCN_1_SUB_6", "description": "走廊中段设有半开放式环形柜台的护士站，位于楼层交通枢纽位置" }
   ],
   "itemContexts": {
     "ITEM_SCN1_2": "大厅角落的监控显示屏可以观察各处走廊画面，但存在若干监控死角。",
