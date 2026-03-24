@@ -24,6 +24,22 @@
       "category": "evidence",
       "discoveryMethod": "inspect ground",
       "description": "湿软泥地里凹着几个过分庞大的足迹，边缘仍保持着相对新鲜的塌陷轮廓。"
+    },
+    {
+      "id": "ITEM_SCN20_8",
+      "name": "月镜",
+      "type": "other",
+      "category": "evidence",
+      "discoveryMethod": "inspect hidden clearing",
+      "description": "一面被藤蔓、黑布与泥污半掩的古老镜子，镜框上刻着黑山羊教团的污秽纹样。只有在满月直照时，镜面才会显出不属于这片森林的乳白色光泽。"
+    },
+    {
+      "id": "ITEM_SCN20_9",
+      "name": "献祭石台",
+      "type": "other",
+      "category": "evidence",
+      "discoveryMethod": "inspect hidden clearing",
+      "description": "月镜前方立着一块粗糙石台，表面有长期清洗后仍残留的暗色血痕、蜡油和束缚用铁环。"
     }
   ],
   "conditions": [

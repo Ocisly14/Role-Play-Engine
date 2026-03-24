@@ -1,6 +1,15 @@
 import { api } from "./api.js";
 import type { SimulationEvent } from "../hooks/useSimulationWebSocket.js";
 
+export type SimulationWeather =
+  | "clear"
+  | "rain"
+  | "fog"
+  | "storm"
+  | "snow"
+  | "extreme_heat"
+  | "extreme_cold";
+
 // Local type definition — mirrors backend CharacterPosition union.
 // Do NOT import from src/ — that breaks Vite bundling.
 export type CharacterPosition =
@@ -104,7 +113,7 @@ export async function createSimulation(params: {
   config?: {
     tickIntervalMs?: number;
     maxDays?: number;
-    weather?: "clear" | "rain" | "fog" | "storm" | "snow" | "extreme_heat" | "extreme_cold";
+    weather?: SimulationWeather;
     syncRealTime?: boolean;
     realTimeBufferMinutes?: number;
   };
@@ -182,6 +191,13 @@ export async function updateMaxDays(
   maxDays: number
 ): Promise<void> {
   await api.put(`/simulation/${sessionId}/config`, { maxDays });
+}
+
+export async function updateWeather(
+  sessionId: string,
+  weather: SimulationWeather
+): Promise<void> {
+  await api.put(`/simulation/${sessionId}/config`, { weather });
 }
 
 export async function updateSyncRealTime(

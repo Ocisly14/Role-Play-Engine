@@ -1,5 +1,5 @@
 import type { DynamicGameStateManager } from "../state/DynamicGameState.js";
-import type { NodeHandler, WorldFeature } from "./types.js";
+import type { ActivateResult, NodeHandler, WorldFeature } from "./types.js";
 
 /**
  * Fields that belong to the base PlanNode schema (not type-specific).
@@ -138,10 +138,39 @@ export class GameEngineRegistry {
   }
 
   /**
-   * Scan executed PlanNodes for feature overlay fields.
-   * For each feature with planNodeSchema, checks if any node contains
-   * at least one of the feature's required fields → registers propagation source
-   * and calls feature.activate() to initialize feature state in dgsm.
+   * Activate feature overlays for a single executed node.
+   * Returns collected outcomeNotes from all features that activated on this node.
+   * Also registers propagation sources.
+   */
+  activateNodeFeatures(
+    node: import("../dynamicBasicAgent/npcPlanning/types.js").PlanNode,
+    dgsm: import("../state/DynamicGameState.js").DynamicGameStateManager
+  ): ActivateResult[] {
+    const results: ActivateResult[] = [];
+    for (const feature of this.features.values()) {
+      if (!feature.planNodeSchema || !feature.activate) continue;
+      const featureFields = feature.planNodeSchema.requiredFields.map(
+        (f) => f.field
+      );
+      const hasOverlay = featureFields.some(
+        (field) => (node as Record<string, unknown>)[field] !== undefined
+      );
+      if (!hasOverlay) continue;
+
+      const result = feature.activate(node, dgsm);
+      if (result?.outcomeNote) {
+        results.push(result);
+      }
+      if (feature.propagation) {
+        this.addPropagationSource(feature.id, node.location);
+      }
+    }
+    return results;
+  }
+
+  /**
+   * Scan executed PlanNodes for feature overlay fields (batch version).
+   * Calls activateNodeFeatures per node. Used when per-node results are not needed.
    */
   detectFeatureOverlays(
     executedNodes: import(
@@ -149,24 +178,8 @@ export class GameEngineRegistry {
     ).PlanNode[],
     dgsm: import("../state/DynamicGameState.js").DynamicGameStateManager
   ): void {
-    for (const feature of this.features.values()) {
-      if (!feature.planNodeSchema) continue;
-      const featureFields = feature.planNodeSchema.requiredFields.map(
-        (f) => f.field
-      );
-      for (const node of executedNodes) {
-        const hasOverlay = featureFields.some(
-          (field) => (node as Record<string, unknown>)[field] !== undefined
-        );
-        if (hasOverlay) {
-          // Activate: let feature read overlay values and write initial state to dgsm
-          feature.activate?.(node, dgsm);
-          // Register propagation source (only if feature has propagation config)
-          if (feature.propagation) {
-            this.addPropagationSource(feature.id, node.location);
-          }
-        }
-      }
+    for (const node of executedNodes) {
+      this.activateNodeFeatures(node, dgsm);
     }
   }
 

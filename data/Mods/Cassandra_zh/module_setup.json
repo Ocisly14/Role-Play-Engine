@@ -6,5 +6,42 @@
       "weatherType": "snow",
       "intensity": 1
     }
+  ],
+  "eventTriggerPresets": [
+    {
+      "eventTriggerId": "gate_of_stars",
+      "label": "群星之门仪式",
+      "conductorNpcId": "Patrizio von Samsa",
+      "siteSceneId": "SCN_2_SUB_3",
+      "invokeType": "invoke",
+      "autoInvoke": false,
+      "conditions": [
+        { "conditionId": "altar_maintenance", "label": "祭坛维护", "type": "daily", "triggerType": "maintain" },
+        { "conditionId": "anchor_placement", "label": "锚点布置", "type": "cumulative", "requiredCount": 3, "triggerType": "sacrifice" },
+        { "conditionId": "at_ritual_site", "label": "在仪式场地", "type": "prerequisite", "triggerType": "prerequisite", "check": { "location": "SCN_2_SUB_3", "mode": "passive" } },
+        { "conditionId": "has_portrait", "label": "持有诅咒画像", "type": "prerequisite", "triggerType": "prerequisite", "check": { "item": "加塔诺托亚的诅咒画像", "mode": "passive" } },
+        { "conditionId": "has_manuscript", "label": "持有仪式手稿", "type": "prerequisite", "triggerType": "prerequisite", "check": { "item": "梦王会仪式手稿", "mode": "passive" } }
+      ],
+      "completionEffect": {
+        "sceneConditions": [{ "sceneId": "SCN_2_SUB_3", "description": "[Ritual Complete] 群星之门已开——格赫罗斯的存在扭曲了整个地下空间" }],
+        "witnessSanLoss": 8,
+        "globalSanLoss": 5
+      }
+    },
+    {
+      "eventTriggerId": "atlach_nacha_web",
+      "label": "纳克亚蛛网仪式",
+      "conductorNpcId": "Constantine Frollo",
+      "siteSceneId": "SCN_17_SUB_3",
+      "invokeType": "invoke",
+      "autoInvoke": false,
+      "conditions": [
+        { "conditionId": "web_maintenance", "label": "蛛网维护仪式", "type": "daily", "triggerType": "maintain", "failAfterMissed": 3 },
+        { "conditionId": "at_web_site", "label": "在蛛网密室", "type": "prerequisite", "triggerType": "prerequisite", "check": { "location": "SCN_17_SUB_3", "mode": "passive" } }
+      ],
+      "failureEffect": {
+        "sceneConditions": [{ "sceneId": "SCN_17_SUB_3", "description": "[Ritual Failed] 蛛网门户失去稳定——冷蛛开始不受控地涌入现实" }]
+      }
+    }
   ]
 }

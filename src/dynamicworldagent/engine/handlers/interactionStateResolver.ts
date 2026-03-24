@@ -394,7 +394,8 @@ export async function resolveInteractionState(
   skillRollResult: SkillRollInput | null,
   availableKnowledge: DiscoveryEntry[],
   language: string,
-  registry?: GameEngineRegistry
+  registry?: GameEngineRegistry,
+  featureNotes?: string[]
 ): Promise<InteractionStateDelta> {
   const targets = resolveTargets(node);
 
@@ -420,7 +421,7 @@ export async function resolveInteractionState(
 
   // Build prompts
   const systemPrompt = buildSystemPrompt(language);
-  const userPrompt = buildUserPrompt(
+  let userPrompt = buildUserPrompt(
     node,
     actor,
     targetDataList,
@@ -430,6 +431,11 @@ export async function resolveInteractionState(
     skillRollResult,
     availableKnowledge
   );
+
+  // Inject feature activation notes (e.g. ritual invoke failed)
+  if (featureNotes && featureNotes.length > 0) {
+    userPrompt += "\n\n## Feature Activation Results\n" + featureNotes.join("\n");
+  }
 
   try {
     const response = await generateText({

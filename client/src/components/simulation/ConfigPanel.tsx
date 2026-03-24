@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import * as simApi from "../../services/simulationApi";
+import type { SimulationWeather } from "../../services/simulationApi";
 
 const SPEED_OPTIONS = [
   { label: "1x", ms: 60000 },
@@ -34,7 +35,7 @@ export function ConfigPanel({
   const [expanded, setExpanded] = useState(true);
   const [tickSpeed, setTickSpeed] = useState(60000);
   const [maxDays, setMaxDays] = useState(7);
-  const [weather, setWeather] = useState("clear");
+  const [weather, setWeather] = useState<SimulationWeather>("clear");
   const [syncRealTime, setSyncRealTime] = useState(false);
   const [bufferMinutes, setBufferMinutes] = useState(0);
   const [starting, setStarting] = useState(false);
@@ -50,6 +51,7 @@ export function ConfigPanel({
       const effectiveSpeed = syncRealTime ? 60000 : tickSpeed;
       await simApi.updateSpeed(sessionId, effectiveSpeed);
       await simApi.updateMaxDays(sessionId, Math.max(1, Math.floor(maxDays)));
+      await simApi.updateWeather(sessionId, weather);
       if (syncRealTime) {
         await simApi.updateSyncRealTime(sessionId, true, bufferMinutes);
       }
@@ -171,7 +173,7 @@ export function ConfigPanel({
       <select
         value={weather}
         onChange={(e) => {
-          setWeather(e.target.value);
+          setWeather(e.target.value as SimulationWeather);
           onWeatherChange?.(e.target.value);
         }}
         className="py-1 px-1.5 rounded-lg bg-white/50 text-slate-700 border border-slate-200 text-xs"

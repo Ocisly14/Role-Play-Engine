@@ -13,7 +13,7 @@ interface MockScene {
   id: string;
   name: string;
   parentLocationId: string;
-  connections: string[];
+  connections: Array<{ targetId: string; description?: string }>;
   events: string[];
   indoor?: boolean;
   items?: any[];
@@ -142,21 +142,21 @@ function setupDefaultScenes(dgsm: MockDgsm) {
     id: "town_square",
     name: "Town Square",
     parentLocationId: "town",
-    connections: ["main_street"],
+    connections: [{ targetId: "main_street" }],
     events: [],
   });
   dgsm._addScene({
     id: "main_street",
     name: "Main Street",
     parentLocationId: "town",
-    connections: ["town_square", "tavern"],
+    connections: [{ targetId: "town_square" }, { targetId: "tavern" }],
     events: [],
   });
   dgsm._addScene({
     id: "tavern",
     name: "Tavern",
     parentLocationId: "town",
-    connections: ["main_street"],
+    connections: [{ targetId: "main_street" }],
     events: [],
     indoor: true,
   });
@@ -164,14 +164,14 @@ function setupDefaultScenes(dgsm: MockDgsm) {
     id: "forest_path",
     name: "Forest Path",
     parentLocationId: "forest",
-    connections: ["forest_clearing"],
+    connections: [{ targetId: "forest_clearing" }],
     events: [],
   });
   dgsm._addScene({
     id: "forest_clearing",
     name: "Forest Clearing",
     parentLocationId: "forest",
-    connections: ["forest_path"],
+    connections: [{ targetId: "forest_path" }],
     events: [],
   });
 }
@@ -216,7 +216,7 @@ describe("weatherFeature", () => {
         id: "room1",
         name: "Room 1",
         parentLocationId: "building",
-        connections: [],
+        connections: [] as Array<{ targetId: string; description?: string }>,
         events: [],
         indoor: true,
       });
@@ -224,7 +224,7 @@ describe("weatherFeature", () => {
         id: "room2",
         name: "Room 2",
         parentLocationId: "building",
-        connections: [],
+        connections: [] as Array<{ targetId: string; description?: string }>,
         events: [],
         indoor: true,
       });
@@ -460,6 +460,73 @@ describe("weatherFeature", () => {
 
       mockRandom.mockRestore();
     });
+
+    it("should apply storm penalties at intensity 2", () => {
+      runTicks(dgsm, runtime, 1);
+
+      const ws = dgsm.getFeatureSceneState("weather", "town") as any;
+      ws.weatherType = "storm";
+      ws.intensity = 2;
+      ws.minutesInState = 25;
+      dgsm.setFeatureSceneState("weather", "town", ws);
+
+      const mockRandom = vi.spyOn(Math, "random");
+      mockRandom.mockReturnValueOnce(0.4); // storm stays
+      mockRandom.mockReturnValueOnce(0.3); // intensity no change
+      mockRandom.mockReturnValueOnce(0.5); // forest
+
+      runTicks(dgsm, runtime, 1);
+
+      const conditions = dgsm._scenarioConditions["town_square"] ?? [];
+      const weatherCond = conditions.find((c) => c.description.startsWith("[Weather]"));
+      expect(weatherCond).toBeDefined();
+
+      const penalties = weatherCond!.mechanicalEffect!.skillPenalty!;
+      // trigger 1: Perception, Listen, Drive Auto
+      expect(penalties.find((p) => p.skill === "Perception")).toBeDefined();
+      expect(penalties.find((p) => p.skill === "Listen")).toBeDefined();
+      expect(penalties.find((p) => p.skill === "Drive Auto")).toBeDefined();
+      // trigger 2: Navigate, Climb, Swim, Pilot (Boat), Pistol, Rifle
+      expect(penalties.find((p) => p.skill === "Navigate")).toBeDefined();
+      expect(penalties.find((p) => p.skill === "Climb")).toBeDefined();
+      expect(penalties.find((p) => p.skill === "Swim")).toBeDefined();
+      expect(penalties.find((p) => p.skill === "Pistol")).toBeDefined();
+
+      mockRandom.mockRestore();
+    });
+
+    it("should apply snow penalties at intensity 3", () => {
+      runTicks(dgsm, runtime, 1);
+
+      const ws = dgsm.getFeatureSceneState("weather", "town") as any;
+      ws.weatherType = "snow";
+      ws.intensity = 3;
+      ws.minutesInState = 25;
+      dgsm.setFeatureSceneState("weather", "town", ws);
+
+      const mockRandom = vi.spyOn(Math, "random");
+      mockRandom.mockReturnValueOnce(0.6); // snow stays
+      mockRandom.mockReturnValueOnce(0.3); // intensity no change
+      mockRandom.mockReturnValueOnce(0.5); // forest
+
+      runTicks(dgsm, runtime, 1);
+
+      const conditions = dgsm._scenarioConditions["town_square"] ?? [];
+      const weatherCond = conditions.find((c) => c.description.startsWith("[Weather]"));
+      expect(weatherCond).toBeDefined();
+
+      const penalties = weatherCond!.mechanicalEffect!.skillPenalty!;
+      // trigger 1: Perception, Drive Auto
+      expect(penalties.find((p) => p.skill === "Perception")).toBeDefined();
+      expect(penalties.find((p) => p.skill === "Drive Auto")).toBeDefined();
+      // trigger 2: Climb
+      expect(penalties.find((p) => p.skill === "Climb")).toBeDefined();
+      // trigger 3: Track, Navigate
+      expect(penalties.find((p) => p.skill === "Track")).toBeDefined();
+      expect(penalties.find((p) => p.skill === "Navigate")).toBeDefined();
+
+      mockRandom.mockRestore();
+    });
   });
 
   describe("connection blocking", () => {
@@ -486,6 +553,29 @@ describe("weatherFeature", () => {
 
       // outdoor-to-indoor should NOT be blocked
       expect(dgsm.getConnectionBlockReason("main_street", "tavern")).toBeUndefined();
+
+      mockRandom.mockRestore();
+    });
+
+    it("should block outdoor connections during severe snow", () => {
+      runTicks(dgsm, runtime, 1); // init
+
+      const ws = dgsm.getFeatureSceneState("weather", "town") as any;
+      ws.weatherType = "snow";
+      ws.intensity = 4;
+      ws.minutesInState = 25;
+      dgsm.setFeatureSceneState("weather", "town", ws);
+
+      const mockRandom = vi.spyOn(Math, "random");
+      mockRandom.mockReturnValueOnce(0.6); // snow stays ([0.05, 0.60))
+      mockRandom.mockReturnValueOnce(0.3); // intensity no change
+      mockRandom.mockReturnValueOnce(0.5); // forest
+
+      runTicks(dgsm, runtime, 1);
+
+      expect(dgsm.getConnectionBlockReason("town_square", "main_street")).toBe(
+        "Blocked by snow (intensity 4)"
+      );
 
       mockRandom.mockRestore();
     });

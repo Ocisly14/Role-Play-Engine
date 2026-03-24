@@ -40,6 +40,9 @@ import { DatabaseManager } from "../core/DatabaseManager.js";
 import { WebSocketManager } from "../websocket/WebSocketManager.js";
 
 const runners = new Map<string, SimulationRunner>();
+const WEATHER_FEATURE_ID = "weather";
+const DEFAULT_WEATHER_INTENSITY = 3;
+const WEATHER_BLOCKING_INTENSITY_THRESHOLD = 4;
 
 async function ensureModuleIdForSimulation(
   prisma: PrismaClient,
@@ -234,30 +237,138 @@ export async function listSimulations(
   });
 }
 
-function applyGlobalWeather(dgsm: DynamicGameStateManager, weather: WeatherType): void {
-  const topology = dgsm.getTopology();
-  if (!topology) return;
+function getOutdoorWeatherRegionIds(dgsm: DynamicGameStateManager): string[] {
+  const regionIds = new Set<string>();
+  const state = dgsm.getState();
 
-  const DEFAULT_INTENSITY = 3;
-  const outdoorIds = [
-    ...Array.from(topology.junctions.keys()),
-    ...Array.from(topology.roads.keys()),
-  ];
+  state.scenes.forEach((scene) => {
+    if (!scene.indoor) {
+      regionIds.add(scene.parentLocationId);
+    }
+  });
+  for (const [, junction] of state.junctions) {
+    regionIds.add(junction.parentLocationId);
+  }
+  for (const [, road] of state.roads) {
+    regionIds.add(road.parentLocationId);
+  }
 
-  const label = getWeatherLabel(weather, DEFAULT_INTENSITY);
-  const penalties = computeSkillPenalties(weather, DEFAULT_INTENSITY);
+  return Array.from(regionIds);
+}
 
-  for (const sceneId of outdoorIds) {
-    const state = dgsm.getState();
-    const conditions = state.scenarioConditions[sceneId] ?? [];
-    state.scenarioConditions[sceneId] = conditions.filter(
-      (c: any) => !c.description.startsWith("[Weather]")
-    );
+function getOutdoorLocationIdsForRegion(
+  dgsm: DynamicGameStateManager,
+  regionId: string
+): string[] {
+  const state = dgsm.getState();
+  const locationIds: string[] = [];
 
-    dgsm.appendSceneCondition(sceneId, {
-      description: `[Weather] ${label}`,
-      mechanicalEffect: penalties.length > 0 ? { skillPenalty: penalties } : undefined,
+  state.scenes.forEach((scene, sceneId) => {
+    if (scene.parentLocationId === regionId && !scene.indoor) {
+      locationIds.push(sceneId);
+    }
+  });
+  for (const [junctionId, junction] of state.junctions) {
+    if (junction.parentLocationId === regionId) {
+      locationIds.push(junctionId);
+    }
+  }
+  for (const [roadId, road] of state.roads) {
+    if (road.parentLocationId === regionId) {
+      locationIds.push(roadId);
+    }
+  }
+
+  return locationIds;
+}
+
+function clearWeatherConditions(
+  dgsm: DynamicGameStateManager,
+  locationId: string
+): void {
+  const state = dgsm.getState();
+  const conditions = state.scenarioConditions[locationId];
+  if (!conditions) return;
+  state.scenarioConditions[locationId] = conditions.filter(
+    (condition: any) => !condition.description.startsWith("[Weather]")
+  );
+}
+
+function updateWeatherBlocking(
+  dgsm: DynamicGameStateManager,
+  locationIds: string[],
+  weather: WeatherType,
+  intensity: number
+): void {
+  const shouldBlock =
+    (weather === "storm" || weather === "snow") &&
+    intensity >= WEATHER_BLOCKING_INTENSITY_THRESHOLD;
+
+  for (const locationId of locationIds) {
+    const scene = dgsm.getScene(locationId);
+    if (!scene) continue;
+
+    for (const connection of scene.connections ?? []) {
+      const connectedScene = dgsm.getScene(connection.targetId);
+      if (!connectedScene || (connectedScene as any).indoor) continue;
+
+      if (shouldBlock) {
+        dgsm.setConnectionBlocked(
+          connection.targetId,
+          locationId,
+          true,
+          `Blocked by ${weather} (intensity ${intensity})`
+        );
+        continue;
+      }
+
+      const reason = dgsm.getConnectionBlockReason(connection.targetId, locationId);
+      if (
+        reason &&
+        (reason.startsWith("Blocked by storm") ||
+          reason.startsWith("Blocked by snow"))
+      ) {
+        dgsm.setConnectionBlocked(locationId, connection.targetId, false, "");
+      }
+    }
+  }
+}
+
+export function applyGlobalWeather(
+  dgsm: DynamicGameStateManager,
+  weather: WeatherType
+): void {
+  const regionIds = getOutdoorWeatherRegionIds(dgsm);
+  const intensity =
+    weather === "clear" ? 0 : DEFAULT_WEATHER_INTENSITY;
+
+  for (const regionId of regionIds) {
+    const locationIds = getOutdoorLocationIdsForRegion(dgsm, regionId);
+
+    dgsm.setFeatureSceneState(WEATHER_FEATURE_ID, regionId, {
+      weatherType: weather,
+      intensity,
+      minutesInState: 0,
+      affectedSceneIds: locationIds,
     });
+
+    for (const locationId of locationIds) {
+      clearWeatherConditions(dgsm, locationId);
+    }
+
+    if (weather !== "clear" && intensity > 0) {
+      const label = getWeatherLabel(weather, intensity);
+      const penalties = computeSkillPenalties(weather, intensity);
+      for (const locationId of locationIds) {
+        dgsm.appendSceneCondition(locationId, {
+          description: `[Weather] ${label}`,
+          mechanicalEffect:
+            penalties.length > 0 ? { skillPenalty: penalties } : undefined,
+        });
+      }
+    }
+
+    updateWeatherBlocking(dgsm, locationIds, weather, intensity);
   }
 }
 

@@ -86,6 +86,10 @@ function createMockDgsm() {
         status: { hp, sanity: san, maxSanity, conditions: [] },
       });
     },
+    isNpcAlive(npcId: string) {
+      const stats = npcStats[npcId];
+      return stats ? stats.hp > 0 : false;
+    },
     _featureState: featureState,
     _npcStats: npcStats,
   };

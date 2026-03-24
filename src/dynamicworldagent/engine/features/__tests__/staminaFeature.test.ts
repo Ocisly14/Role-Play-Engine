@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { TickRuntimeContext } from "../../types.js";
-import { staminaFeature } from "../staminaFeature.js";
+import { restCharacter, staminaFeature } from "../staminaFeature.js";
 
 // ===== Mock DGSM =====
 
@@ -54,6 +54,10 @@ function createMockDgsm() {
         name: npcId,
         status: { hp, conditions: [] },
       });
+    },
+    isNpcAlive(npcId: string) {
+      const stats = npcStats[npcId];
+      return stats ? stats.hp > 0 : false;
     },
     // Topology support for resolveCharacterLocationId
     getCharacterPosition: (id: string) => characterPositions[id] ?? null,
@@ -543,6 +547,41 @@ describe("staminaFeature", () => {
   describe("planningPrompt", () => {
     it("should contain 'fatigue' in planning prompt", () => {
       expect(staminaFeature.planningPrompt.toLowerCase()).toContain("fatigue");
+    });
+  });
+
+  // ===== restCharacter =====
+
+  describe("restCharacter", () => {
+    it("should reset all stamina fields to 0", () => {
+      dgsm.setFeatureSceneState("stamina", "npc-test", {
+        minutesSinceLastRest: 960,
+        fatigueLevel: 2,
+        exhaustedDrainTicks: 5,
+      });
+
+      restCharacter(dgsm as any, "npc-test");
+
+      const s = dgsm.getFeatureSceneState("stamina", "npc-test") as any;
+      expect(s.minutesSinceLastRest).toBe(0);
+      expect(s.fatigueLevel).toBe(0);
+      expect(s.exhaustedDrainTicks).toBe(0);
+    });
+
+    it("should remove fatigue condition from NPC", () => {
+      // Tick until tired to inject condition
+      runTicks(dgsm, runtime, 96); // 480 min → tired
+
+      const npc = dgsm.getState().npcCharacters.find((n) => n.id === "npc-test")!;
+      expect(npc.status.conditions.some((c: string) => c.includes("[Fatigue]"))).toBe(true);
+
+      restCharacter(dgsm as any, "npc-test");
+
+      expect(npc.status.conditions.some((c: string) => c.includes("[Fatigue]"))).toBe(false);
+    });
+
+    it("should not throw when no stamina state exists", () => {
+      expect(() => restCharacter(dgsm as any, "nonexistent-npc")).not.toThrow();
     });
   });
 });

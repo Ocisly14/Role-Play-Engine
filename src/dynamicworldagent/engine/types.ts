@@ -35,6 +35,16 @@ export interface NodeHandler {
 
 // ===== World Feature: self-running world system =====
 
+/** Result returned by WorldFeature.activate() */
+export interface ActivateResult {
+  /**
+   * Describes what happened (or didn't happen) during feature activation.
+   * Injected into the LLM resolver prompt for resolver-based actions,
+   * or appended to the action memory for non-resolver actions.
+   */
+  outcomeNote?: string;
+}
+
 /** Result from world feature processing (used internally by the tick engine) */
 export interface WorldFeatureResult {
   /** New PlanNodes to inject into subsequent ticks */
@@ -175,8 +185,12 @@ export interface WorldFeature {
    * Reads overlay field values from the node and writes initial feature state into dgsm
    * (e.g. adding scene conditions, penalties, etc.).
    * Only called if `planNodeSchema` is defined.
+   *
+   * May return an ActivateResult with an outcomeNote describing what happened
+   * (or didn't happen). The tick processor injects this into the LLM resolver
+   * prompt or appends it to the action memory for non-resolver paths.
    */
-  activate?(node: PlanNode, dgsm: DynamicGameStateManager): void;
+  activate?(node: PlanNode, dgsm: DynamicGameStateManager): ActivateResult | void;
 
   /**
    * Called by the tick engine on a recurring schedule (every `propagation.tickInterval` ticks)

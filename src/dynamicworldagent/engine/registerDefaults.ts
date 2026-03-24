@@ -2,6 +2,7 @@ import { fireFeature } from "./features/fireFeature.js";
 import { lightingFeature } from "./features/lightingFeature.js";
 import { sanityFeature } from "./features/sanityFeature.js";
 import { staminaFeature } from "./features/staminaFeature.js";
+import { eventTriggerFeature } from "./features/eventTriggerFeature.js";
 import { weatherFeature } from "./features/weatherFeature.js";
 import {
   characterInteractionHandler,
@@ -25,6 +26,7 @@ export function createDefaultRegistry(): GameEngineRegistry {
   registry.registerFeature(lightingFeature);
   registry.registerFeature(staminaFeature);
   registry.registerFeature(sanityFeature);
+  registry.registerFeature(eventTriggerFeature);
 
   return registry;
 }

@@ -427,6 +427,11 @@ export default function SimulationPage({
   const showControlPanel =
     !isPublicMode && Boolean(sessionId) && !showConfigPanel && !countdown;
 
+  const handleSimulationStarted = useCallback(async () => {
+    setPreviewWeather(null);
+    await resync();
+  }, [resync]);
+
   useEffect(() => {
     if (!shareFeedback) return;
     const timeoutId = window.setTimeout(() => setShareFeedback(null), 2500);
@@ -651,7 +656,7 @@ export default function SimulationPage({
       {showConfigPanel && sessionId && (
         <ConfigPanel
           sessionId={sessionId}
-          onStarted={resync}
+          onStarted={handleSimulationStarted}
           onWeatherChange={setPreviewWeather}
         />
       )}

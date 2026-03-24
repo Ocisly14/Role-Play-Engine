@@ -344,6 +344,32 @@ describe("lightingFeature", () => {
       expect(perception?.delta).toBe(-15);
     });
 
+    it("should write penalties for dark (level 2)", () => {
+      // Indoor shop at midnight with a dim light source → level 2
+      const shop = dgsm.getScene("shop")!;
+      shop.items = [
+        { id: "candle", name: "Candle", isLightSource: true, lightLevel: 2 },
+      ];
+
+      lightingFeature.tick!(dgsm as any, createRuntime("00:00"));
+
+      const conditions = dgsm._scenarioConditions["shop"] ?? [];
+      const lightCond = conditions.find((c) =>
+        c.description.startsWith("[Lighting]")
+      );
+      expect(lightCond).toBeDefined();
+      expect(lightCond!.description).toContain("Dark");
+
+      const penalties = lightCond!.mechanicalEffect?.skillPenalty ?? [];
+      expect(penalties.find((p) => p.skill === "Perception")?.delta).toBe(-20);
+      expect(penalties.find((p) => p.skill === "Navigate")?.delta).toBe(-15);
+      expect(penalties.find((p) => p.skill === "Track")?.delta).toBe(-20);
+      expect(penalties.find((p) => p.skill === "Pistol")?.delta).toBe(-20);
+      expect(penalties.find((p) => p.skill === "Climb")?.delta).toBe(-10);
+      expect(penalties.find((p) => p.skill === "Drive Auto")?.delta).toBe(-15);
+      expect(penalties.find((p) => p.skill === "Research")?.delta).toBe(-20);
+    });
+
     it("should not write condition for normal light", () => {
       lightingFeature.tick!(dgsm as any, createRuntime("06:00"));
 

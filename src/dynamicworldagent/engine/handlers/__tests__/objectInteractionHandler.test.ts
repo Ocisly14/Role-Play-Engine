@@ -117,439 +117,44 @@ describe("objectInteractionHandler", () => {
     ctx = createMockCtx();
   });
 
-  // ── Move ──
+  // ── Basic validation ──
 
-  describe("move", () => {
-    it("transfers full Item from scene to NPC inventory", () => {
-      const torch: Item = {
-        id: "torch",
-        name: "Torch",
-        type: "lighting",
-        isLightSource: true,
-        lightLevel: 3,
-      };
+  describe("basic validation", () => {
+    it("has correct type and required fields", () => {
+      expect(objectInteractionHandler.type).toBe("object_interaction");
+      expect(objectInteractionHandler.requiredFields).toContain("action");
+      expect(objectInteractionHandler.requiredFields).toContain("location");
+    });
+
+    it("succeeds when item is in scene", () => {
+      const torch: Item = { id: "torch", name: "Torch" };
       dgsm._addScene("study", [torch]);
       dgsm._addNpc("player-1", "study");
 
       const node = makeNode({
-        objectInteractionPayload: {
-          action: "move",
-          itemId: "torch",
-          from: { type: "scene" },
-          to: { type: "inventory" },
-        },
+        objectInteractionPayload: { itemId: "torch" },
       });
 
       const result = objectInteractionHandler.execute(node, dgsm as any, ctx);
       expect(result.status).toBe("completed");
-      expect(dgsm._scenes["study"].items).toHaveLength(0);
-      expect(dgsm._npcInventories["player-1"]).toHaveLength(1);
-      expect(dgsm._npcInventories["player-1"][0]).toEqual(torch);
     });
 
-    it("fails when item not found in scene", () => {
-      dgsm._addScene("study", []);
-      dgsm._addNpc("player-1", "study");
-
-      const node = makeNode({
-        objectInteractionPayload: {
-          action: "move",
-          itemId: "missing_item",
-          from: { type: "scene" },
-          to: { type: "inventory" },
-        },
-      });
-
-      const result = objectInteractionHandler.execute(node, dgsm as any, ctx);
-      expect(result.status).toBe("failed");
-      expect(result.failureReason).toBe("object_not_found");
-    });
-
-    it("transfers full Item from NPC inventory to scene", () => {
+    it("succeeds when item is in NPC inventory", () => {
       const key: Item = { id: "room_key", name: "Room Key", type: "key" };
       dgsm._addScene("study", []);
       dgsm._addNpc("player-1", "study");
       dgsm.addItemToNpc("player-1", key);
 
       const node = makeNode({
-        objectInteractionPayload: {
-          action: "move",
-          itemId: "room_key",
-          from: { type: "inventory" },
-          to: { type: "scene" },
-        },
-      });
-
-      const result = objectInteractionHandler.execute(node, dgsm as any, ctx);
-      expect(result.status).toBe("completed");
-      expect(dgsm._npcInventories["player-1"]).toHaveLength(0);
-      expect(dgsm._scenes["study"].items).toHaveLength(1);
-      expect(dgsm._scenes["study"].items[0]).toEqual(key);
-    });
-
-    it("fails when item not in inventory", () => {
-      dgsm._addScene("study", []);
-      dgsm._addNpc("player-1", "study");
-
-      const node = makeNode({
-        objectInteractionPayload: {
-          action: "move",
-          itemId: "missing_item",
-          from: { type: "inventory" },
-          to: { type: "scene" },
-        },
-      });
-
-      const result = objectInteractionHandler.execute(node, dgsm as any, ctx);
-      expect(result.status).toBe("failed");
-      expect(result.failureReason).toBe("object_not_found");
-    });
-
-    it("moves a scene item into a scene container without a prior pickup", () => {
-      const cashBox: Item = {
-        id: "cash_box",
-        name: "Cash Box",
-        type: "container",
-      };
-      const drawer: Item = {
-        id: "desk_drawer",
-        name: "Desk Drawer",
-        type: "container",
-        containerStats: { capacity: 5, locked: false, contents: [] },
-      };
-      dgsm._addScene("study", [cashBox, drawer]);
-      dgsm._addNpc("player-1", "study");
-
-      const node = makeNode({
-        objectInteractionPayload: {
-          action: "move",
-          itemId: "cash_box",
-          from: { type: "scene" },
-          to: {
-            type: "container",
-            containerItemId: "desk_drawer",
-            scope: "scene",
-          },
-        },
-      });
-
-      const result = objectInteractionHandler.execute(node, dgsm as any, ctx);
-      expect(result.status).toBe("completed");
-      expect(dgsm._scenes["study"].items).toHaveLength(1);
-      const updatedDrawer = dgsm._scenes["study"].items[0];
-      expect(updatedDrawer.id).toBe("desk_drawer");
-      expect(updatedDrawer.containerStats?.contents).toEqual(["cash_box"]);
-      expect(updatedDrawer.containerStats?.storedItems?.[0].id).toBe("cash_box");
-    });
-
-    it("moves an item from a scene container into inventory", () => {
-      const cashBox: Item = {
-        id: "cash_box",
-        name: "Cash Box",
-        type: "container",
-      };
-      const drawer: Item = {
-        id: "desk_drawer",
-        name: "Desk Drawer",
-        type: "container",
-        containerStats: {
-          capacity: 5,
-          locked: false,
-          contents: ["cash_box"],
-          storedItems: [cashBox],
-        },
-      };
-      dgsm._addScene("study", [drawer]);
-      dgsm._addNpc("player-1", "study");
-
-      const node = makeNode({
-        objectInteractionPayload: {
-          action: "move",
-          itemId: "cash_box",
-          from: {
-            type: "container",
-            containerItemId: "desk_drawer",
-            scope: "scene",
-          },
-          to: { type: "inventory" },
-        },
-      });
-
-      const result = objectInteractionHandler.execute(node, dgsm as any, ctx);
-      expect(result.status).toBe("completed");
-      expect(dgsm._npcInventories["player-1"][0].id).toBe("cash_box");
-      expect(dgsm._scenes["study"].items[0].containerStats?.contents).toEqual([]);
-    });
-  });
-
-  // ── Use (normal) ──
-
-  describe("use — normal (no actionType)", () => {
-    it("decrements consumable uses and removes when exhausted", () => {
-      const medkit: Item = {
-        id: "medkit",
-        name: "First Aid Kit",
-        type: "consumable",
-        consumableStats: { uses: 1, effect: "heals minor wounds" },
-      };
-      dgsm._addScene("study", []);
-      dgsm._addNpc("player-1", "study");
-      dgsm.addItemToNpc("player-1", medkit);
-
-      const node = makeNode({
-        objectInteractionPayload: { action: "use", itemId: "medkit" },
-      });
-
-      const result = objectInteractionHandler.execute(node, dgsm as any, ctx);
-      expect(result.status).toBe("completed");
-      expect(dgsm._npcInventories["player-1"]).toHaveLength(0);
-    });
-
-    it("decrements consumable uses but keeps item when uses remain", () => {
-      const bandage: Item = {
-        id: "bandage",
-        name: "Bandage Roll",
-        type: "consumable",
-        consumableStats: { uses: 3, effect: "stops bleeding" },
-      };
-      dgsm._addScene("study", []);
-      dgsm._addNpc("player-1", "study");
-      dgsm.addItemToNpc("player-1", bandage);
-
-      const node = makeNode({
-        objectInteractionPayload: { action: "use", itemId: "bandage" },
-      });
-
-      const result = objectInteractionHandler.execute(node, dgsm as any, ctx);
-      expect(result.status).toBe("completed");
-      expect(dgsm._npcInventories["player-1"]).toHaveLength(1);
-      expect(dgsm._npcInventories["player-1"][0].consumableStats!.uses).toBe(2);
-    });
-
-    it("toggles lighting isLightSource", () => {
-      const flashlight: Item = {
-        id: "flashlight",
-        name: "Flashlight",
-        type: "lighting",
-        isLightSource: false,
-        lightLevel: 3,
-      };
-      dgsm._addScene("study", []);
-      dgsm._addNpc("player-1", "study");
-      dgsm.addItemToNpc("player-1", flashlight);
-
-      const node = makeNode({
-        objectInteractionPayload: { action: "use", itemId: "flashlight" },
-      });
-
-      const result = objectInteractionHandler.execute(node, dgsm as any, ctx);
-      expect(result.status).toBe("completed");
-      expect(dgsm._npcInventories["player-1"][0].isLightSource).toBe(true);
-    });
-
-    it("unlocks target container with key", () => {
-      const key: Item = { id: "room_key", name: "Room Key", type: "key" };
-      const safe: Item = {
-        id: "safe",
-        name: "Safe",
-        type: "container",
-        containerStats: {
-          capacity: 10,
-          locked: true,
-          lockDifficulty: "hard",
-          contents: [],
-        },
-      };
-      dgsm._addScene("study", [safe]);
-      dgsm._addNpc("player-1", "study");
-      dgsm.addItemToNpc("player-1", key);
-
-      const node = makeNode({
-        objectInteractionPayload: {
-          action: "use",
-          itemId: "room_key",
-          targetItemId: "safe",
-        },
-      });
-
-      const result = objectInteractionHandler.execute(node, dgsm as any, ctx);
-      expect(result.status).toBe("completed");
-      expect(dgsm._scenes["study"].items[0].containerStats!.locked).toBe(false);
-    });
-
-    it("fails when key used without targetItemId", () => {
-      const key: Item = { id: "room_key", name: "Room Key", type: "key" };
-      dgsm._addScene("study", []);
-      dgsm._addNpc("player-1", "study");
-      dgsm.addItemToNpc("player-1", key);
-
-      const node = makeNode({
-        objectInteractionPayload: { action: "use", itemId: "room_key" },
-      });
-
-      const result = objectInteractionHandler.execute(node, dgsm as any, ctx);
-      expect(result.status).toBe("failed");
-      expect(result.failureReason).toBe("object_not_found");
-    });
-
-    it("opens unlocked container", () => {
-      const box: Item = {
-        id: "box",
-        name: "Box",
-        type: "container",
-        containerStats: { capacity: 5, locked: false, contents: [] },
-      };
-      dgsm._addScene("study", []);
-      dgsm._addNpc("player-1", "study");
-      dgsm.addItemToNpc("player-1", box);
-
-      const node = makeNode({
-        objectInteractionPayload: { action: "use", itemId: "box" },
+        objectInteractionPayload: { itemId: "room_key" },
       });
 
       const result = objectInteractionHandler.execute(node, dgsm as any, ctx);
       expect(result.status).toBe("completed");
     });
 
-    it("document use is a no-op success", () => {
-      const diary: Item = {
-        id: "diary",
-        name: "Diary",
-        type: "document",
-        description: "A worn diary.",
-      };
-      dgsm._addScene("study", []);
-      dgsm._addNpc("player-1", "study");
-      dgsm.addItemToNpc("player-1", diary);
-
-      const node = makeNode({
-        objectInteractionPayload: { action: "use", itemId: "diary" },
-      });
-
-      const result = objectInteractionHandler.execute(node, dgsm as any, ctx);
-      expect(result.status).toBe("completed");
-    });
-  });
-
-  // ── Use (non-normal) ──
-
-  describe("use — non-normal (has actionType)", () => {
-    it("applies itemUpdates and targetItemUpdates on success", () => {
-      const acid: Item = {
-        id: "acid",
-        name: "Acid",
-        type: "consumable",
-        consumableStats: { uses: 1, effect: "corrosive" },
-      };
-      const lock: Item = {
-        id: "padlock",
-        name: "Padlock",
-        type: "container",
-        containerStats: {
-          capacity: 0,
-          locked: true,
-          lockDifficulty: "hard",
-          contents: [],
-        },
-      };
-      dgsm._addScene("study", [lock]);
-      dgsm._addNpc("player-1", "study");
-      dgsm.addItemToNpc("player-1", acid);
-
-      const node = makeNode({
-        skill: "Perception",
-        objectInteractionPayload: {
-          action: "use",
-          itemId: "acid",
-          targetItemId: "padlock",
-          itemUpdates: { consumableStats: { uses: 0, effect: "corrosive" } },
-          targetItemUpdates: {
-            containerStats: { locked: false },
-            damaged: true,
-          },
-        },
-      });
-
-      const result = objectInteractionHandler.execute(node, dgsm as any, ctx);
-      expect(result.status).toBe("completed");
-      expect(dgsm._scenes["study"].items[0].containerStats!.locked).toBe(false);
-      expect(dgsm._scenes["study"].items[0].damaged).toBe(true);
-      expect(dgsm._npcInventories["player-1"]).toHaveLength(0);
-    });
-
-    it("does not apply updates on skill check failure", () => {
-      const failCtx = {
-        ...ctx,
-        resolveSkillRoll: () => ({
-          failed: true,
-          reason: "Fumble",
-          successLevel: "fumble" as const,
-        }),
-      } as unknown as ExecutionContext;
-
-      const lockpick: Item = { id: "lockpick", name: "Lockpick", type: "tool" };
-      const safe: Item = {
-        id: "safe",
-        name: "Safe",
-        type: "container",
-        containerStats: {
-          capacity: 10,
-          locked: true,
-          lockDifficulty: "hard",
-          contents: [],
-        },
-      };
-      dgsm._addScene("study", [safe]);
-      dgsm._addNpc("player-1", "study");
-      dgsm.addItemToNpc("player-1", lockpick);
-
-      const node = makeNode({
-        skill: "Stealth",
-        objectInteractionPayload: {
-          action: "use",
-          itemId: "lockpick",
-          targetItemId: "safe",
-          targetItemUpdates: { containerStats: { locked: false } },
-        },
-      });
-
-      const result = objectInteractionHandler.execute(
-        node,
-        dgsm as any,
-        failCtx
-      );
-      expect(result.status).toBe("failed");
-      expect(dgsm._scenes["study"].items[0].containerStats!.locked).toBe(true);
-    });
-  });
-
-  // ── Inspect ──
-
-  describe("inspect", () => {
-    it("returns item details in outcome string", () => {
-      const diary: Item = {
-        id: "diary",
-        name: "Diary",
-        type: "document",
-        description: "A worn leather diary with cryptic entries.",
-      };
-      dgsm._addScene("study", [diary], {
-        diary: "摊开在书桌上，页边压着一支掉漆的钢笔。",
-      });
-      dgsm._addNpc("player-1", "study");
-
-      const node = makeNode({
-        objectInteractionPayload: { action: "inspect", itemId: "diary" },
-      });
-
-      const result = objectInteractionHandler.execute(node, dgsm as any, ctx);
-      expect(result.status).toBe("completed");
-      expect(result.outcome).toContain("Diary");
-      expect(result.outcome).toContain("A worn leather diary");
-      expect(result.outcome).toContain("摊开在书桌上");
-    });
-
-    it("includes container contents when unlocked", () => {
+    it("succeeds when item is inside a scene container", () => {
+      const coin: Item = { id: "gold_coin", name: "Gold Coin" };
       const box: Item = {
         id: "box",
         name: "Box",
@@ -557,115 +162,94 @@ describe("objectInteractionHandler", () => {
         containerStats: {
           capacity: 5,
           locked: false,
-          contents: ["gold_coin", "silver_ring"],
+          contents: ["gold_coin"],
+          storedItems: [coin],
         },
       };
       dgsm._addScene("study", [box]);
       dgsm._addNpc("player-1", "study");
 
       const node = makeNode({
-        objectInteractionPayload: { action: "inspect", itemId: "box" },
+        objectInteractionPayload: { itemId: "gold_coin" },
       });
 
       const result = objectInteractionHandler.execute(node, dgsm as any, ctx);
       expect(result.status).toBe("completed");
-      expect(result.outcome).toContain("gold_coin");
-      expect(result.outcome).toContain("silver_ring");
     });
 
-    it("shows locked status for locked container", () => {
-      const safe: Item = {
-        id: "safe",
-        name: "Safe",
+    it("succeeds when item is inside an inventory container", () => {
+      const coin: Item = { id: "gold_coin", name: "Gold Coin" };
+      const pouch: Item = {
+        id: "pouch",
+        name: "Pouch",
         type: "container",
         containerStats: {
-          capacity: 10,
-          locked: true,
-          lockDifficulty: "hard",
-          contents: ["secret_doc"],
+          capacity: 5,
+          locked: false,
+          contents: ["gold_coin"],
+          storedItems: [coin],
         },
       };
-      dgsm._addScene("study", [safe]);
+      dgsm._addScene("study", []);
       dgsm._addNpc("player-1", "study");
+      dgsm.addItemToNpc("player-1", pouch);
 
       const node = makeNode({
-        objectInteractionPayload: { action: "inspect", itemId: "safe" },
+        objectInteractionPayload: { itemId: "gold_coin" },
       });
 
       const result = objectInteractionHandler.execute(node, dgsm as any, ctx);
       expect(result.status).toBe("completed");
-      expect(result.outcome).toContain("locked");
-      expect(result.outcome).not.toContain("secret_doc");
     });
 
-    it("works for items in NPC inventory", () => {
-      const compass: Item = {
-        id: "compass",
-        name: "Compass",
-        type: "tool",
-        description: "A brass compass.",
-      };
-      dgsm._addScene("study", [], {
-        compass: "原本挂在墙上的木钉上。",
-      });
+    it("succeeds without payload (no item pre-check)", () => {
+      dgsm._addScene("study", []);
       dgsm._addNpc("player-1", "study");
-      dgsm.addItemToNpc("player-1", compass);
 
-      const node = makeNode({
-        objectInteractionPayload: { action: "inspect", itemId: "compass" },
-      });
+      const node = makeNode();
 
       const result = objectInteractionHandler.execute(node, dgsm as any, ctx);
       expect(result.status).toBe("completed");
-      expect(result.outcome).toContain("Compass");
-      expect(result.outcome).toContain("A brass compass");
-      expect(result.outcome).not.toContain("木钉");
+    });
+
+    it("uses node.action as outcome", () => {
+      dgsm._addScene("study", []);
+      dgsm._addNpc("player-1", "study");
+
+      const node = makeNode({ action: "Search the desk drawers" });
+
+      const result = objectInteractionHandler.execute(node, dgsm as any, ctx);
+      expect(result.outcome).toBe("Search the desk drawers");
     });
   });
 
-  // ── Destroy ──
+  // ── Item not found ──
 
-  describe("destroy", () => {
-    it("removes item from scene and logs event with item name", () => {
-      const vase: Item = { id: "vase", name: "Ming Vase", type: "other" };
-      dgsm._addScene("study", [vase]);
-      dgsm._addNpc("player-1", "study");
-
-      const node = makeNode({
-        objectInteractionPayload: { action: "destroy", itemId: "vase" },
-      });
-
-      const result = objectInteractionHandler.execute(node, dgsm as any, ctx);
-      expect(result.status).toBe("completed");
-      expect(dgsm._scenes["study"].items).toHaveLength(0);
-    });
-
-    it("removes item from inventory when not in scene", () => {
-      const note: Item = { id: "note", name: "Note", type: "document" };
-      dgsm._addScene("study", []);
-      dgsm._addNpc("player-1", "study");
-      dgsm.addItemToNpc("player-1", note);
-
-      const node = makeNode({
-        objectInteractionPayload: { action: "destroy", itemId: "note" },
-      });
-
-      const result = objectInteractionHandler.execute(node, dgsm as any, ctx);
-      expect(result.status).toBe("completed");
-      expect(dgsm._npcInventories["player-1"]).toHaveLength(0);
-    });
-
-    it("fails when item not found anywhere", () => {
+  describe("item not found", () => {
+    it("fails when itemId not found in scene or inventory", () => {
       dgsm._addScene("study", []);
       dgsm._addNpc("player-1", "study");
 
       const node = makeNode({
-        objectInteractionPayload: { action: "destroy", itemId: "ghost_item" },
+        objectInteractionPayload: { itemId: "missing_item" },
       });
 
       const result = objectInteractionHandler.execute(node, dgsm as any, ctx);
       expect(result.status).toBe("failed");
       expect(result.failureReason).toBe("object_not_found");
+    });
+
+    it("includes item name in failure outcome", () => {
+      dgsm._addScene("study", []);
+      dgsm._addNpc("player-1", "study");
+
+      const node = makeNode({
+        objectInteractionPayload: { itemId: "ghost_item" },
+      });
+
+      const result = objectInteractionHandler.execute(node, dgsm as any, ctx);
+      expect(result.status).toBe("failed");
+      expect(result.outcome).toContain("ghost_item");
     });
   });
 
@@ -678,17 +262,130 @@ describe("objectInteractionHandler", () => {
 
       const node = makeNode({
         location: "study",
-        objectInteractionPayload: {
-          action: "move",
-          itemId: "book",
-          from: { type: "scene" },
-          to: { type: "inventory" },
-        },
+        objectInteractionPayload: { itemId: "book" },
       });
 
       const result = objectInteractionHandler.execute(node, dgsm as any, ctx);
       expect(result.status).toBe("failed");
       expect(result.failureReason).toBe("location_mismatch");
+    });
+
+    it("fails when NPC has no position", () => {
+      dgsm._addScene("study", [{ id: "book", name: "Book" }]);
+
+      const node = makeNode({
+        objectInteractionPayload: { itemId: "book" },
+      });
+
+      const result = objectInteractionHandler.execute(node, dgsm as any, ctx);
+      expect(result.status).toBe("failed");
+      expect(result.failureReason).toBe("location_mismatch");
+    });
+  });
+
+  // ── Skill roll ──
+
+  describe("skill roll", () => {
+    it("succeeds when skill roll passes", () => {
+      const safe: Item = {
+        id: "safe",
+        name: "Safe",
+        type: "container",
+        containerStats: { capacity: 10, locked: true, contents: [] },
+      };
+      dgsm._addScene("study", [safe]);
+      dgsm._addNpc("player-1", "study", { Locksmith: 60 });
+
+      const node = makeNode({
+        skill: "Locksmith",
+        objectInteractionPayload: { itemId: "safe" },
+      });
+
+      const result = objectInteractionHandler.execute(node, dgsm as any, ctx);
+      expect(result.status).toBe("completed");
+      expect(result.successLevel).toBe("regular");
+    });
+
+    it("fails when skill roll fails", () => {
+      const failCtx = {
+        ...ctx,
+        resolveSkillRoll: () => ({
+          failed: true,
+          reason: "Fumble",
+          successLevel: "fumble" as const,
+        }),
+      } as unknown as ExecutionContext;
+
+      const safe: Item = {
+        id: "safe",
+        name: "Safe",
+        type: "container",
+        containerStats: { capacity: 10, locked: true, contents: [] },
+      };
+      dgsm._addScene("study", [safe]);
+      dgsm._addNpc("player-1", "study", { Locksmith: 20 });
+
+      const node = makeNode({
+        skill: "Locksmith",
+        objectInteractionPayload: { itemId: "safe" },
+      });
+
+      const result = objectInteractionHandler.execute(
+        node,
+        dgsm as any,
+        failCtx
+      );
+      expect(result.status).toBe("failed");
+      expect(result.failureReason).toBe("skill_roll_failed");
+      expect(result.successLevel).toBe("fumble");
+    });
+
+    it("does not require skill — auto-succeeds without one", () => {
+      const book: Item = { id: "book", name: "Book" };
+      dgsm._addScene("study", [book]);
+      dgsm._addNpc("player-1", "study");
+
+      const node = makeNode({
+        objectInteractionPayload: { itemId: "book" },
+      });
+
+      const result = objectInteractionHandler.execute(node, dgsm as any, ctx);
+      expect(result.status).toBe("completed");
+      expect(result.successLevel).toBeUndefined();
+    });
+  });
+
+  // ── rollDetail ──
+
+  describe("rollDetail", () => {
+    it("includes rollDetail on success with skill", () => {
+      const book: Item = { id: "book", name: "Book" };
+      dgsm._addScene("study", [book]);
+      dgsm._addNpc("player-1", "study", { Perception: 60 });
+
+      const customCtx = {
+        ...ctx,
+        resolveSkillRoll: () => ({
+          failed: false,
+          detail: "Hard success (roll 22 vs 30)",
+          successLevel: "hard" as const,
+        }),
+      } as unknown as ExecutionContext;
+
+      const node = makeNode({
+        skill: "Perception",
+        objectInteractionPayload: { itemId: "book" },
+      });
+
+      const result = objectInteractionHandler.execute(
+        node,
+        dgsm as any,
+        customCtx
+      );
+      expect(result.status).toBe("completed");
+      expect((result as any).rollDetail).toBe(
+        "Hard success (roll 22 vs 30)"
+      );
     });
   });
 });

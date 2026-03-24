@@ -15,7 +15,7 @@ import { fireFeature } from "../fireFeature.js";
 interface MockScene {
   id: string;
   name: string;
-  connections: string[];
+  connections: Array<{ targetId: string; description?: string }>;
   events: string[];
   items?: Item[];
 }
@@ -232,19 +232,19 @@ describe("fireFeature", () => {
     dgsm._addScene({
       id: "warehouse",
       name: "Old Warehouse",
-      connections: ["hallway"],
+      connections: [{ targetId: "hallway" }],
       events: [],
     });
     dgsm._addScene({
       id: "hallway",
       name: "Hallway",
-      connections: ["warehouse", "office"],
+      connections: [{ targetId: "warehouse" }, { targetId: "office" }],
       events: [],
     });
     dgsm._addScene({
       id: "office",
       name: "Office",
-      connections: ["hallway"],
+      connections: [{ targetId: "hallway" }],
       events: [],
     });
   });
@@ -1255,13 +1255,13 @@ describe("fireFeature", () => {
       noTopoDgsm._addScene({
         id: "room1",
         name: "Room 1",
-        connections: ["room2"],
+        connections: [{ targetId: "room2" }],
         events: [],
       });
       noTopoDgsm._addScene({
         id: "room2",
         name: "Room 2",
-        connections: ["room1"],
+        connections: [{ targetId: "room1" }],
         events: [],
       });
 

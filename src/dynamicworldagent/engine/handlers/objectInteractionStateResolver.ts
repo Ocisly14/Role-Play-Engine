@@ -338,6 +338,7 @@ export async function resolveObjectInteractionState(
   memoryManager?: NpcMemoryManager,
   sessionId?: string,
   registry?: GameEngineRegistry,
+  featureNotes?: string[],
 ): Promise<ObjectStateDelta> {
   const state = dgsm.getState();
 
@@ -404,7 +405,7 @@ export async function resolveObjectInteractionState(
 
   // Build prompts
   const systemPrompt = buildSystemPrompt(language);
-  const userPrompt = buildUserPrompt(
+  let userPrompt = buildUserPrompt(
     node,
     actorName,
     actorInventory,
@@ -416,6 +417,11 @@ export async function resolveObjectInteractionState(
     relatedMemories,
     worldStateBlock,
   );
+
+  // Inject feature activation notes (e.g. ritual invoke failed)
+  if (featureNotes && featureNotes.length > 0) {
+    userPrompt += "\n\n## Feature Activation Results\n" + featureNotes.join("\n");
+  }
 
   try {
     const response = await generateText({

@@ -1,6 +1,18 @@
 import type { Request, Response } from "express";
+import type { WeatherType } from "../../../src/dynamicworldagent/engine/features/weatherFeature.js";
 import * as mapService from "./mapService.js";
 import { requireSimulationOwnership } from "./ownership.js";
+import { applyGlobalWeather } from "./service.js";
+
+const WEATHER_TYPES: ReadonlySet<WeatherType> = new Set([
+  "clear",
+  "rain",
+  "fog",
+  "storm",
+  "snow",
+  "extreme_heat",
+  "extreme_cold",
+]);
 
 export async function getTopology(req: Request, res: Response) {
   const topology = await mapService.getTopology(req.params.id);
@@ -36,8 +48,13 @@ export async function updateConfig(req: Request, res: Response) {
     const runner = mapService.getRunnerById(req.params.id);
     if (!runner) return res.status(404).json({ error: "Simulation not found" });
 
-    const { tickIntervalMs, maxDays, syncRealTime, realTimeBufferMinutes } =
-      req.body;
+    const {
+      tickIntervalMs,
+      maxDays,
+      syncRealTime,
+      realTimeBufferMinutes,
+      weather,
+    } = req.body;
     let didUpdate = false;
     if (typeof tickIntervalMs === "number" && tickIntervalMs > 0) {
       runner.updateTickInterval(tickIntervalMs);
@@ -45,6 +62,10 @@ export async function updateConfig(req: Request, res: Response) {
     }
     if (typeof maxDays === "number" && maxDays > 0) {
       runner.updateMaxDays(maxDays);
+      didUpdate = true;
+    }
+    if (typeof weather === "string" && WEATHER_TYPES.has(weather as WeatherType)) {
+      applyGlobalWeather(runner.getDgsm(), weather as WeatherType);
       didUpdate = true;
     }
     if (syncRealTime === true) {

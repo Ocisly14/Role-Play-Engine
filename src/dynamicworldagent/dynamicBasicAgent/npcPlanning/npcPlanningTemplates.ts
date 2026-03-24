@@ -286,7 +286,7 @@ ${TWENTY_FOUR_HOUR_TIME_GUIDANCE}
 - If all meaningful plan steps are already done, return an empty JSON array.
 
 ## Node Quality
-- Every node must represent a **meaningful, substantive action** that advances your goals or your daily plan.
+- Each node must be **one coherent, continuous action** — something the character does from start to finish without interruption. If two actions naturally flow together as one activity, keep them in one node.
 - Do NOT generate trivial micro-actions such as "close a page", "adjust posture", "glance around" as standalone nodes. These can be mentioned within a larger action's description but should not be their own node.
 - If a single logical activity can be described in one node, do not split it into multiple tiny steps.
 
@@ -509,7 +509,8 @@ Do not include topology notes, residents, or label prefixes in \`location\`; out
 - Do not generate distant later-day activities.
 - Treat the current time as 24-hour clock time.
 - **Carefully read "Relevant Memories / Recent Context"** to understand what you have already done today. Do NOT generate actions that duplicate or repeat completed actions (e.g., if you already stashed your notebook, do not generate another "stash notebook" node).
-- Every revised node must be a **meaningful, substantive action**. Do not create trivial micro-actions (e.g., "adjust posture", "close a page", "glance around") as standalone nodes. Fold minor details into the description of a larger action instead.
+- Each revised node must be **one coherent, continuous action** — something the character does from start to finish without interruption. If two actions naturally flow together as one activity, keep them in one node.
+- Do not create trivial micro-actions (e.g., "adjust posture", "close a page", "glance around") as standalone nodes. Fold minor details into the description of a larger action instead.
 
 ## Skill Checks
 You can use a skill to accomplish an action. Pick from "Available Skills". Omit for everyday actions.

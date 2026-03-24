@@ -1166,9 +1166,27 @@ async function executeSingleTick(
     const itemContext = getItemActionContext(dgsm, node);
     const action = await handler.execute(node, dgsm, ctx);
     tickActions.push(action);
-    const eventOutcome = appendItemContext(action.outcome, itemContext);
+
+    // 3b. Activate feature overlays for this node (per-node, before resolver/memory)
+    const featureResults = registry.activateNodeFeatures(node, dgsm);
+    const featureNotes = featureResults
+      .map((r) => r.outcomeNote)
+      .filter(Boolean) as string[];
+
+    let eventOutcome = appendItemContext(action.outcome, itemContext);
     const eventMetadata = buildEventMetadata(action.outcome, itemContext);
     const allTargetIds = node.targetCharacterIds ?? [];
+
+    // If non-resolver action has feature notes, replace outcome
+    if (
+      featureNotes.length > 0 &&
+      node.type !== "character_interaction" &&
+      node.type !== "object_interaction"
+    ) {
+      const combined = featureNotes.join(" ");
+      action.outcome = combined;
+      eventOutcome = combined;
+    }
 
     // 4. Post-execution processing
 
@@ -1197,7 +1215,8 @@ async function executeSingleTick(
         skillRollResult,
         npcKnowledge,
         language,
-        registry
+        registry,
+        featureNotes
       );
 
       // Apply actor state changes
@@ -1257,7 +1276,8 @@ async function executeSingleTick(
         language,
         memoryManager,
         sessionId,
-        registry
+        registry,
+        featureNotes
       );
 
       applyObjectDelta(dgsm, node.characterId, objDelta, node.location);
@@ -1761,8 +1781,8 @@ async function executeSingleTick(
     feature.tick?.(dgsm, tickRuntime);
   }
 
-  // 7. Detect feature overlay fields on executed nodes → register propagation sources
-  registry.detectFeatureOverlays(executedNodes, dgsm);
+  // 7. Feature overlay activation already done per-node in step 3b above.
+  //    (propagation sources registered there as well)
 
   // 8. Drive feature propagation on schedule
   for (const feature of registry.getAllFeatures()) {
