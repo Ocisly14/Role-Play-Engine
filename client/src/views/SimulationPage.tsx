@@ -424,7 +424,11 @@ export default function SimulationPage({
     state.eventLog.length === 0;
 
   const showControlPanel =
-    !isPublicMode && Boolean(sessionId) && !showConfigPanel && !countdown;
+    !isPublicMode &&
+    Boolean(sessionId) &&
+    !showConfigPanel &&
+    !countdown &&
+    state.simulationState !== "initializing";
 
   const handleSimulationStarted = useCallback(async () => {
     setPreviewWeather(null);
@@ -494,6 +498,13 @@ export default function SimulationPage({
         <div className="sim-overlay">
           <span className="text-red-300 text-lg">
             {t("page.error", { message: state.error })}
+          </span>
+        </div>
+      )}
+      {state.simulationState === "initializing" && (
+        <div className="sim-overlay">
+          <span className="text-white/80 text-lg animate-pulse">
+            {t("config.initializingSimulation")}
           </span>
         </div>
       )}

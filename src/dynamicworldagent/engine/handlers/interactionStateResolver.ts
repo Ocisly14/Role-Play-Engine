@@ -303,6 +303,15 @@ function buildUserPrompt(
 
   const targetSections = targets
     .map((t) => {
+      // Target not in simulation — no stats, no position, not in npcCharacters
+      if (!t.stats && !t.position) {
+        return [
+          `## Target: ${t.name}`,
+          `ID: ${t.id}`,
+          `**This person is NOT present in the current scene. The actor cannot find them here. Treat this as: the actor arrived but the target was nowhere to be found. Do NOT treat the target as dead or as a corpse — they are simply absent/unavailable.**`,
+        ].join("\n");
+      }
+
       const rel = relationships.find((r) => r.targetId === t.id);
       const targetKnowledge = availableKnowledge.filter(
         (k) => k.sourceId === t.id

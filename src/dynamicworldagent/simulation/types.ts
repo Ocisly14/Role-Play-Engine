@@ -27,7 +27,12 @@ export interface SimulationEvent {
   timestamp: Date;
 }
 
-export type SimulationState = "running" | "paused" | "stopped" | "completed";
+export type SimulationState =
+  | "initializing"
+  | "running"
+  | "paused"
+  | "stopped"
+  | "completed";
 export type StopReason = "manual" | "max_days" | "event_triggered";
 
 export interface SimulationConfig {

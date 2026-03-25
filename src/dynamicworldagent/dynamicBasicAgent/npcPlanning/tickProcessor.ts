@@ -1312,7 +1312,136 @@ async function executeSingleTick(
     }
     executedNodes.push(node);
     const itemContext = getItemActionContext(dgsm, node);
-    const action = await handler.execute(node, dgsm, ctx);
+    let action = await handler.execute(node, dgsm, ctx);
+
+    // Auto-movement: if the NPC isn't at the expected location, pathfind there
+    // automatically instead of triggering an expensive LLM revision.
+    if (action.failureReason === "location_mismatch") {
+      const currentPos = dgsm.getCharacterPosition(node.characterId);
+      const topology = dgsm.getTopology();
+      const targetPos = resolveTargetPosition(node.location, topology, dgsm);
+
+      if (currentPos && targetPos) {
+        const route = buildMovementRouteIgnoringBlocks(
+          currentPos,
+          targetPos,
+          topology,
+          dgsm
+        );
+        if (route) {
+          const travelMinutes = Math.max(1, Math.ceil(route.totalMinutes));
+          const fromLocationId = dgsm.resolveLocationId(currentPos);
+
+          // Move the NPC to the destination
+          dgsm.setCharacterPosition(node.characterId, targetPos);
+          movedNpcIds.add(node.characterId);
+
+          // Shift all subsequent pending nodes for this NPC
+          await npcPlanningAgent.shiftPendingNodesByDelta(
+            sessionId,
+            node.characterId,
+            gameDay,
+            tickStartTime,
+            -travelMinutes
+          );
+
+          // Record travel memory
+          if (memoryManager) {
+            await memoryManager.add({
+              npcId: node.characterId,
+              sessionId,
+              moduleId,
+              type: "event",
+              content: `Walked from ${fromLocationId} to ${node.location} (~${travelMinutes} min).`,
+              gameDay,
+              gameTime: tickStartTime,
+              location: node.location,
+              metadata: {
+                outcome: `auto-movement from ${fromLocationId} to ${node.location}`,
+              },
+            });
+          }
+
+          console.log(
+            `[TickProcessor] Auto-movement: ${node.characterName} walked from ${fromLocationId} to ${node.location} (~${travelMinutes} min)`
+          );
+
+          // Re-execute the handler now that the NPC is at the correct location
+          action = await handler.execute(node, dgsm, ctx);
+        }
+      }
+    }
+
+    // Auto-movement for object_not_found: search sibling sub-scenes in the
+    // same building for the missing item, walk there, and retry.
+    if (
+      action.failureReason === "object_not_found" &&
+      node.objectInteractionPayload?.itemId
+    ) {
+      const itemId = node.objectInteractionPayload.itemId;
+      const currentScene = dgsm.getScene(node.location);
+      const parentId = currentScene?.parentLocationId;
+
+      if (parentId && parentId !== "OUTDOOR") {
+        const state = dgsm.getState();
+        let targetSceneId: string | undefined;
+
+        for (const [sceneId, scene] of state.scenes) {
+          if (sceneId === node.location) continue;
+          if (scene.parentLocationId !== parentId) continue;
+          const found =
+            scene.items?.some((i) => i.id === itemId) ||
+            scene.items?.some((i) =>
+              i.containerStats?.storedItems?.some((s) => s.id === itemId)
+            );
+          if (found) {
+            targetSceneId = sceneId;
+            break;
+          }
+        }
+
+        if (targetSceneId) {
+          const fromLocationId = node.location;
+
+          dgsm.setCharacterPosition(node.characterId, {
+            type: "scene",
+            sceneId: targetSceneId,
+          });
+
+          await npcPlanningAgent.shiftPendingNodesByDelta(
+            sessionId,
+            node.characterId,
+            gameDay,
+            tickStartTime,
+            -1
+          );
+
+          if (memoryManager) {
+            await memoryManager.add({
+              npcId: node.characterId,
+              sessionId,
+              moduleId,
+              type: "event",
+              content: `Walked from ${fromLocationId} to ${targetSceneId} to use ${itemId} (~1 min).`,
+              gameDay,
+              gameTime: tickStartTime,
+              location: targetSceneId,
+              metadata: {
+                outcome: `auto-movement from ${fromLocationId} to ${targetSceneId} for item ${itemId}`,
+              },
+            });
+          }
+
+          console.log(
+            `[TickProcessor] Auto-movement: ${node.characterName} walked from ${fromLocationId} to ${targetSceneId} for item ${itemId}`
+          );
+
+          node.location = targetSceneId;
+          action = await handler.execute(node, dgsm, ctx);
+        }
+      }
+    }
+
     tickActions.push(action);
 
     // Stealth: successful Stealth → hide; any other action → reveal
@@ -2056,6 +2185,14 @@ function scanUnplannedEncounters(
 
   const encounterEvents: CharacterAction[] = [];
 
+  // Track NPCs that were caught hiding — keyed by detectorId → Set<spottedId>
+  const spottedHiddenPairs = new Map<string, Set<string>>();
+  const recordSpotted = (detectorId: string, spottedId: string) => {
+    if (!spottedHiddenPairs.has(detectorId))
+      spottedHiddenPairs.set(detectorId, new Set());
+    spottedHiddenPairs.get(detectorId)!.add(spottedId);
+  };
+
   // When a hidden NPC arrives at a scene, let all present non-hidden NPCs
   // attempt a Spot Hidden check (the reverse direction of the main loop below).
   for (const arrivedNpc of aliveNpcs) {
@@ -2071,6 +2208,7 @@ function scanUnplannedEncounters(
 
       if (tryDetectHidden(dgsm, resident.id, arrivedNpc.id)) {
         dgsm.setCharacterHidden(arrivedNpc.id, false);
+        recordSpotted(resident.id, arrivedNpc.id);
         break; // already revealed, no need for more checks
       }
     }
@@ -2093,6 +2231,7 @@ function scanUnplannedEncounters(
         if (!tryDetectHidden(dgsm, observer.id, other.id)) continue;
         // Detection succeeded — reveal the hidden NPC
         dgsm.setCharacterHidden(other.id, false);
+        recordSpotted(observer.id, other.id);
       }
 
       const pairKey = [observer.id, other.id].sort().join("_");
@@ -2119,21 +2258,37 @@ function scanUnplannedEncounters(
     // Write witness memory per NPC
     if (memoryManager) {
       for (const [npcId, otherIds] of npcEncounterMap) {
-        const otherNames = otherIds.map((id) => formatPresenceLabel(id));
+        const spotted = spottedHiddenPairs.get(npcId);
+        const normalNames: string[] = [];
+        const spottedNames: string[] = [];
+        for (const id of otherIds) {
+          if (spotted?.has(id)) {
+            spottedNames.push(formatPresenceLabel(id));
+          } else {
+            normalNames.push(formatPresenceLabel(id));
+          }
+        }
+        const parts: string[] = [];
+        if (normalNames.length > 0)
+          parts.push(`Saw ${normalNames.join(", ")} here`);
+        if (spottedNames.length > 0)
+          parts.push(`Spotted ${spottedNames.join(", ")} hiding here`);
+        if (parts.length === 0) continue;
         // Fire-and-forget; consistent with existing memory write pattern
         void memoryManager.add({
           npcId,
           sessionId,
           moduleId,
           type: "witness",
-          content: `Saw ${otherNames.join(", ")} here`,
+          content: parts.join(". "),
           gameDay,
           gameTime: tickTime,
           location: locationId,
           metadata: {
             sourceCharacterId: "__encounter__",
-            sourceAction: "co-presence",
-            impact: 2,
+            sourceAction:
+              spottedNames.length > 0 ? "detected-hidden" : "co-presence",
+            impact: spottedNames.length > 0 ? 3 : 2,
           },
         });
       }

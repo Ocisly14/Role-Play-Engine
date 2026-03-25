@@ -2,11 +2,13 @@ import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
 import { ModSelector } from "../components/ModSelector";
+import { useAppSettings } from "../contexts/AppSettingsContext";
 import * as simApi from "../services/simulationApi";
 
 export default function SimulationSelectPage() {
   const { t } = useTranslation("simulation");
   const navigate = useNavigate();
+  const { language } = useAppSettings();
   const [creating, setCreating] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -14,7 +16,10 @@ export default function SimulationSelectPage() {
     setCreating(true);
     setError(null);
     try {
-      const result = await simApi.createSimulation({ moduleName: modName });
+      const result = await simApi.createSimulation({
+        moduleName: modName,
+        language,
+      });
       navigate(`/simulation/${result.sessionId}`);
     } catch (err) {
       setError(
@@ -26,7 +31,10 @@ export default function SimulationSelectPage() {
 
   return (
     <div className="relative">
-      <ModSelector onSelectMod={handleSelectMod} />
+      <ModSelector
+        onSelectMod={handleSelectMod}
+        onCancel={() => navigate("/")}
+      />
       {creating && (
         <div
           className="fixed inset-0 flex items-center justify-center bg-black/50"

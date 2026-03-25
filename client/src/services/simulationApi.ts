@@ -87,7 +87,7 @@ export interface NpcStatusInfo {
 }
 
 export interface SimulationStatus {
-  state: "running" | "paused" | "stopped" | "completed";
+  state: "initializing" | "running" | "paused" | "stopped" | "completed";
   currentDay: number;
   currentTime: string;
   ticksExecuted: number;
@@ -100,7 +100,7 @@ export interface SimulationStatus {
 export interface SimulationListItem {
   sessionId: string;
   moduleName?: string;
-  state: "running" | "paused" | "stopped" | "completed";
+  state: "initializing" | "running" | "paused" | "stopped" | "completed";
   currentDay: number;
   currentTime: string;
   ticksExecuted: number;

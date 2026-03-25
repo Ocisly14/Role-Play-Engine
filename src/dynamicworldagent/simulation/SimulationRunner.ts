@@ -229,7 +229,10 @@ export class SimulationRunner {
     ticksExecuted: number;
     stopReason?: StopReason;
   }): void {
-    this.state = params.state === "running" ? "paused" : params.state;
+    this.state =
+      params.state === "running" || params.state === "initializing"
+        ? "paused"
+        : params.state;
     this.ticksExecuted = params.ticksExecuted;
     this.stopReason = params.stopReason;
     this.shouldPause = false;
@@ -254,12 +257,12 @@ export class SimulationRunner {
   }
 
   async start(): Promise<void> {
-    if (this.state === "running") return;
+    if (this.state === "running" || this.state === "initializing") return;
     if (this.state === "stopped" || this.state === "completed") return;
 
     await this.reconcileDeadNpcPlans();
 
-    this.state = "running";
+    this.state = "initializing";
     this.shouldStop = false;
     this.shouldPause = false;
     const event = this.emitStateChange();
@@ -276,7 +279,7 @@ export class SimulationRunner {
   }
 
   async pause(): Promise<void> {
-    if (this.state !== "running") return;
+    if (this.state !== "running" && this.state !== "initializing") return;
     this.shouldPause = true;
 
     if (!this.tickInProgress) {
@@ -435,7 +438,7 @@ export class SimulationRunner {
   }
 
   private scheduleNextTick(): void {
-    if (this.state !== "running") return;
+    if (this.state !== "running" && this.state !== "initializing") return;
 
     const delay = this.getNextTickDelayMs();
     this.intervalId = setTimeout(async () => {
@@ -483,6 +486,14 @@ export class SimulationRunner {
       await this.persistAndBroadcastEvents([event]);
       await this.saveRuntime();
       return;
+    }
+
+    // Transition from initializing → running after first tick completes
+    if (this.state === "initializing") {
+      this.state = "running";
+      const event = this.emitStateChange();
+      await this.persistAndBroadcastEvents([event]);
+      await this.saveRuntime();
     }
 
     if (this.state === "running") {

@@ -33,11 +33,9 @@ export function getOccupations(req: Request, res: Response): void {
     });
   } catch (error) {
     console.error("Error fetching occupations:", error);
-    res
-      .status(500)
-      .json({
-        error: "Failed to fetch occupations: " + (error as Error).message,
-      });
+    res.status(500).json({
+      error: "Failed to fetch occupations: " + (error as Error).message,
+    });
   }
 }
 
