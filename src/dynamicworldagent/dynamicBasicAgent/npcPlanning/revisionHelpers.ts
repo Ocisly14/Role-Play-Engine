@@ -1,10 +1,18 @@
+import { t } from "../../i18n/t.js";
 import type { CharacterAction, PlanNode } from "./types.js";
 
 export function buildInterruptedAction(
   node: PlanNode,
   gameTime: string,
-  location: string
+  location: string,
+  language = "en",
+  triggerDescription?: string
 ): CharacterAction {
+  const base = t("interrupted_replanning_at", language, {
+    action: node.action,
+    location,
+  });
+
   return {
     characterId: node.characterId,
     characterName: node.characterName,
@@ -16,17 +24,21 @@ export function buildInterruptedAction(
     impact: node.impact,
     difficulty: node.difficulty,
     status: "interrupted",
-    outcome: `${node.action} [interrupted for replanning at ${location}] interrupted`,
+    outcome: triggerDescription ?? base,
     interruptionReason: "revise_replan",
     targetCharacterIds: node.targetCharacterIds,
   };
 }
 
-function interruptNode(node: PlanNode, gameTime: string): PlanNode {
+function interruptNode(
+  node: PlanNode,
+  gameTime: string,
+  language = "en"
+): PlanNode {
   return {
     ...node,
     status: "interrupted",
-    outcome: `${node.action} [interrupted for replanning] interrupted`,
+    outcome: t("interrupted_replanning", language, { action: node.action }),
     executionMeta: {
       ...node.executionMeta,
       remainingMinutes: 0,
@@ -39,7 +51,8 @@ function interruptNode(node: PlanNode, gameTime: string): PlanNode {
 export function mergeRevisedNodesWithHistory(
   existingNodes: PlanNode[],
   revisedNodes: PlanNode[],
-  gameTime: string
+  gameTime: string,
+  language = "en"
 ): {
   nextNodes: PlanNode[];
   interruptedNode?: PlanNode;
@@ -58,7 +71,7 @@ export function mergeRevisedNodesWithHistory(
     }
 
     if (node.status === "in_progress") {
-      interruptedNode = interruptNode(node, gameTime);
+      interruptedNode = interruptNode(node, gameTime, language);
       preservedNodes.push(interruptedNode);
     }
   }

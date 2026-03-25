@@ -1,10 +1,12 @@
+import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import * as simApi from "../../services/simulationApi";
+import type { SimulationStatus } from "../../services/simulationApi";
 
 interface ControlPanelProps {
   sessionId: string;
-  simulationState: string;
-  onStateChange?: () => void;
+  simulationState: SimulationStatus["state"];
+  onStateChange?: () => Promise<void> | void;
 }
 
 const SPEEDS = [
@@ -20,22 +22,50 @@ export function ControlPanel({
   onStateChange,
 }: ControlPanelProps) {
   const { t } = useTranslation("simulation");
+  const [isPausing, setIsPausing] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const isRunning = simulationState === "running";
   const isPaused = simulationState === "paused";
+  const isTerminal =
+    simulationState === "stopped" || simulationState === "completed";
+  const controlsDisabled = isPausing || (!isRunning && !isPaused);
+
+  useEffect(() => {
+    setIsPausing(false);
+    setError(null);
+  }, [sessionId]);
+
+  useEffect(() => {
+    if (simulationState === "paused" || isTerminal) {
+      setIsPausing(false);
+      setError(null);
+    }
+  }, [isTerminal, simulationState]);
 
   async function handlePlayPause() {
+    setError(null);
+
     if (isRunning) {
-      await simApi.pauseSimulation(sessionId);
+      setIsPausing(true);
+      try {
+        await simApi.pauseSimulation(sessionId);
+      } catch (err) {
+        setIsPausing(false);
+        setError(err instanceof Error ? err.message : t("control.pauseFailed"));
+        return;
+      }
+
+      void onStateChange?.();
     } else if (isPaused) {
       await simApi.startSimulation(sessionId);
+      await onStateChange?.();
     }
-    onStateChange?.();
   }
 
   async function handleStep() {
     if (isPaused) {
       await simApi.stepSimulation(sessionId);
-      onStateChange?.();
+      await onStateChange?.();
     }
   }
 
@@ -50,17 +80,30 @@ export function ControlPanel({
       onPointerDown={(e) => e.stopPropagation()}
     >
       <button
+        type="button"
         onClick={handlePlayPause}
-        className="text-xl text-slate-600 hover:text-amber-600 transition-colors"
-        disabled={!isRunning && !isPaused}
+        className="text-xl text-slate-600 hover:text-amber-600 transition-colors disabled:opacity-30"
+        disabled={controlsDisabled}
+        title={isPausing ? t("control.pausing") : undefined}
       >
         {isRunning ? "\u23F8" : "\u25B6"}
       </button>
 
+      {isPausing && (
+        <span
+          className="text-xs font-medium text-amber-700 whitespace-nowrap"
+          role="status"
+          aria-live="polite"
+        >
+          {t("control.pausing")}
+        </span>
+      )}
+
       <button
+        type="button"
         onClick={handleStep}
         className="text-xl text-slate-600 hover:text-amber-600 transition-colors disabled:opacity-30"
-        disabled={!isPaused}
+        disabled={!isPaused || isPausing}
         title={t("control.stepOneTick")}
       >
         {"\u23ED"}
@@ -70,13 +113,19 @@ export function ControlPanel({
         {SPEEDS.map(({ label, ms }) => (
           <button
             key={label}
+            type="button"
             onClick={() => handleSpeedChange(ms)}
-            className="text-xs px-2 py-1 rounded-lg hover:bg-white/50 text-slate-500 hover:text-slate-700"
+            className="text-xs px-2 py-1 rounded-lg hover:bg-white/50 text-slate-500 hover:text-slate-700 disabled:opacity-30"
+            disabled={isPausing}
           >
             {label}
           </button>
         ))}
       </div>
+
+      {error && (
+        <span className="text-red-400 text-xs whitespace-nowrap">{error}</span>
+      )}
     </div>
   );
 }

@@ -22,7 +22,10 @@ function sanitizeOutcomeForDisplay(
   if (!outcome) return outcome;
 
   return outcome
-    .replace(/\s*\[arrived at [^\]]+\]\s*/gi, " ")
+    .replace(/\s*\[arrived at [^\]]+\]/gi, "")
+    .replace(/\s*\[已到达 [^\]]+\]/g, "")
+    .replace(/\s*(succeeded?|failed|interrupted)\s*$/i, "")
+    .replace(/\s*(成功|失败|已中断)\s*$/, "")
     .replace(/\s{2,}/g, " ")
     .trim();
 }

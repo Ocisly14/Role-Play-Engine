@@ -649,7 +649,8 @@ export class SimulationRunner {
           this.sessionId,
           npc.id,
           gameState.gameDay,
-          gameState.timeOfDay
+          gameState.timeOfDay,
+          this.language
         );
 
         const location = (() => {
@@ -700,7 +701,8 @@ export class SimulationRunner {
           this.sessionId,
           npc.id,
           gameState.gameDay,
-          gameState.timeOfDay
+          gameState.timeOfDay,
+          this.language
         )
       )
     );

@@ -32,7 +32,9 @@
     "bufferUnit": "min",
     "days": "Days",
     "start": "Start",
-    "starting": "Starting..."
+    "starting": "Starting...",
+    "pausing": "Pausing...",
+    "pauseFailed": "Failed to pause"
   },
   "config": {
     "title": "Configure Simulation",

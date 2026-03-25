@@ -7,6 +7,7 @@ import {
   describePrecisePosition,
 } from "../../engine/shared/locationPresence.js";
 import { getTopologyNeighbors } from "../../engine/shared/topologyHelpers.js";
+import { t } from "../../i18n/t.js";
 import type { NpcMemoryManager } from "../../memory/NpcMemoryManager.js";
 import type { DynamicGameStateManager } from "../../state/DynamicGameState.js";
 import { formatItemList, formatSceneItems } from "./itemFormatHelpers.js";
@@ -969,7 +970,8 @@ export class NPCPlanningAgent {
     const { nextNodes, interruptedNode } = mergeRevisedNodesWithHistory(
       existingNodes,
       revisedNodes,
-      state.timeOfDay
+      state.timeOfDay,
+      language
     );
 
     // Update daily plan while preserving history nodes.
@@ -992,7 +994,9 @@ export class NPCPlanningAgent {
           interruptedAction: buildInterruptedAction(
             interruptedNode,
             state.timeOfDay,
-            currentLocationId || interruptedNode.location
+            currentLocationId || interruptedNode.location,
+            language,
+            triggerDescription
           ),
         }
       : {};
@@ -1370,7 +1374,8 @@ export class NPCPlanningAgent {
     sessionId: string,
     npcId: string,
     gameDay: number,
-    gameTime: string
+    gameTime: string,
+    language = "en"
   ): Promise<void> {
     const plan = await this.prisma.npcDailyPlan.findUnique({
       where: { sessionId_npcId_gameDay: { sessionId, npcId, gameDay } },
@@ -1392,7 +1397,7 @@ export class NPCPlanningAgent {
       return {
         ...node,
         status: "interrupted" as const,
-        outcome: `${node.action} [interrupted because the actor died] interrupted`,
+        outcome: t("interrupted_death", language, { action: node.action }),
         executionMeta: {
           ...node.executionMeta,
           remainingMinutes: 0,

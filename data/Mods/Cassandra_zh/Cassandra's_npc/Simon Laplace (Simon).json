@@ -1,59 +1,67 @@
 {
   "id": "Simon Laplace (Simon)",
   "name": "Simon Laplace (Simon)",
-  "occupation": "黑客 / 流浪者",
+  "occupation": "黑客 / 信息安全工程师 / 监控系统设计师",
   "age": 30,
   "gender": "male",
-  "appearance": "一个瘦弱、疲惫的年轻人，头发凌乱，眼下有黑眼圈，那种松散的姿态让他即使警觉时看起来也像半睡半醒。直到话题转向技术或个人事务时他才显得不像那么无害。",
-  "personality": "温和、焦虑、善于观察、谨慎给予信任。西蒙想帮助人，但他也知道这个镇子很危险，而且他自己的脑袋没有它应该的那么简单。",
-  "background": "西蒙在虐待中长大，早早学会了如何通过溜走来生存，后来把自己培养成了一个能在镇上信息流中保持一只脚的黑客。他与南希在多年漂泊后来到卡森德拉，试图建立安静的生活，但他不断发现证据表明这个镇子被顶层某种腐烂的东西捆绑在一起。他想保护人们，阻止帕特里齐奥，并在不引起错误关注的情况下保护南希的安全。",
+  "appearance": "一个瘦弱、苍白的年轻人，面部轮廓锐利，双眼疲惫，体态透露出在屏幕前度过的漫长岁月。头发凌乱，眼下有黑眼圈，穿着朴素。那种松散的姿态让他即使警觉时也像半睡半醒，但话题转向技术或他真正在乎的人时，那双眼睛会瞬间变得锐利而冷酷。",
+  "personality": "西蒙是一个内心存在深刻分裂的人。表面上温和、焦虑、善于观察，对给予信任十分谨慎；但在这之下潜藏着一个更冷酷的自我——理性、控制欲强、情感压抑，将信息优势视为安全的唯一保障。两种冲动常常彼此拉扯：他想帮助人，但那个更冷的自我会在感情用事危及计划时强行介入，让他做出连自己事后也难以完全承认的决定。",
+  "background": "西蒙在虐待中长大，学会了通过溜走求生，后来将自己磨砺成一个熟悉信息流的黑客。1988年在法国，他经历了一件与南希的母亲、一个邪教和一场火车灾难有关的事——那件事在他内心留下了无法愈合的伤口，也催生了他更冷酷的一面。1998年，他以信息安全专家身份被神秘富裕客户招募，为其设计了最初的千维监控系统，并故意留下隐藏后门以确保永远不会被完全排除在外。他接受了保护危险客户及其秘密仪式或交易的工作，因为控制和信息优势对他来说比任何人的清白都重要。当那批客户在2002年消失时，千维系统也随之从他手中消失，但他知道它从未真正离开卡森德拉。他与南希在多年漂泊后来到这里，试图建立平静的生活，却不断发现这个镇子被某种腐烂的东西捆绑着。",
   "residence": "SCN_9",
   "currentLocation": "SCN_9_SUB_3",
-  "longTermIntent": "保护南希的安全，揭露或破坏帕特里齐奥的网络，并对自己的生活保持足够的控制以活下去。",
+  "longTermIntent": "保护南希的安全，揭露并摧毁帕特里齐奥的网络；同时通过监控权限和信息优势维持筹码，确保自己永远不会成为被操纵的一方。",
   "attributes": {
     "STR": 40,
-    "CON": 50,
+    "CON": 55,
     "DEX": 55,
     "APP": 45,
-    "POW": 65,
+    "POW": 70,
     "SIZ": 50,
     "INT": 80,
-    "EDU": 75
+    "EDU": 85
   },
   "status": {
     "hp": 10,
     "maxHp": 10,
     "sanity": 55,
     "maxSanity": 70,
-    "luck": 55,
-    "mp": 13,
+    "luck": 57,
+    "mp": 14,
     "conditions": []
   },
   "skills": {
-    "Computer Use": 80,
-    "Electronics": 70,
+    "Computer Use": 85,
+    "Electronics": 75,
+    "Electrical Repair": 65,
+    "Cryptography": 70,
     "Stealth": 55,
     "Spot Hidden": 60,
-    "Library Use": 55,
+    "Library Use": 60,
     "Psychology": 50
   },
   "inventory": [
     {
-      "name": "黑头工作站",
+      "name": "花店二楼工作站",
       "properties": {
-        "note": "花店楼上有他用来监视卡森德拉的显示器和网络设备。"
+        "note": "装有监视卡森德拉的网络设备和显示器，同时作为技术入侵与监控的主要基地。"
       }
     },
     {
-      "name": "门禁卡复制器",
+      "name": "千维系统后门知识",
       "properties": {
-        "note": "一台小机器，可在获得门禁卡时复制它们。"
+        "note": "他设计了原始系统，至今仍比任何人都更了解其隐藏的访问路径。"
+      }
+    },
+    {
+      "name": "门禁卡克隆设备",
+      "properties": {
+        "note": "一台紧凑的技术工具，可在获得原卡时复制门禁卡。"
       }
     },
     {
       "name": "加密文件",
       "properties": {
-        "note": "他不想丢失的可疑记录、图像和痕迹的副本。"
+        "note": "通过监控和入侵收集的敏感记录、图像及技术材料的副本。"
       }
     }
   ],
@@ -62,23 +70,39 @@
       "targetId": "Nancy Charlotte",
       "targetName": "Nancy Charlotte",
       "relationshipType": "friend",
-      "attitude": 85,
-      "description": "他最在乎并想要保护的人。",
-      "history": "在帮助南希逃离她自己的家庭困境后，西蒙围绕着保护南希并让她留在身边建立了自己的生活。"
+      "attitude": 75,
+      "description": "他最在乎、最想保护的人，也是他清醒时刻意识到会让自己变得脆弱的情感羁绊。",
+      "history": "在帮助南希逃离家庭困境后，西蒙围绕保护她建立了自己的生活；但他的冷酷那一面始终提醒他，这份感情在某些决策上是致命弱点。"
     },
     {
       "targetId": "Patrizio von Samsa",
       "targetName": "Patrizio von Samsa",
       "relationshipType": "rival",
       "attitude": -40,
-      "description": "西蒙认为在权力和仪式背后隐藏着有毒东西的镇领导。",
-      "history": "西蒙一直在观察帕特里齐奥的网络扩张，并确信这个人是卡森德拉所面临问题的一部分。"
+      "description": "西蒙确信这个镇领导在权力和仪式背后隐藏着腐烂的秘密。",
+      "history": "他一直在监视帕特里齐奥的网络扩张，曾劫持当地广播公开指控他，但信号很快被抹除，这让他意识到自己已暴露在错误的人面前。"
+    },
+    {
+      "targetId": "Adolph Carl",
+      "targetName": "Adolph Carl",
+      "relationshipType": "rival",
+      "attitude": -35,
+      "description": "一个掌握了他过去把柄的操纵型情报掮客，让西蒙寝食难安。",
+      "history": "阿道夫曾发出提及1988年法国事件的威胁信，迫使西蒙去驯鹿酒吧应对，证明对方愿意将旧秘密武器化。"
+    },
+    {
+      "targetId": "Lux Lynch",
+      "targetName": "Lux Lynch",
+      "relationshipType": "neutral",
+      "attitude": -15,
+      "description": "一个腐败的警察，其恐惧和妥协使他可能成为有用的筹码。",
+      "history": "西蒙相信勒克斯的腐败是可追溯的，必要时可以用来施压或争取合作。"
     }
   ],
   "memory": [
     {
       "type": "information",
-      "content": "我从花店楼上工作，那里的网络设备让我比大多数人都更好地看到卡森德拉。",
+      "content": "我从花店楼上工作，那里的网络设备让我能比大多数人更清晰地看到卡森德拉正在发生的事。",
       "metadata": {
         "knowledgeId": "k_simon_safehouse",
         "difficulty": "automatic"
@@ -86,15 +110,7 @@
     },
     {
       "type": "information",
-      "content": "我知道阿纳托尔的存在。我能感觉到他的一些行为触及了我的生活，但我们的记忆并不完全吻合，他可以对我隐瞒事情。",
-      "metadata": {
-        "knowledgeId": "k_simon_anatole",
-        "difficulty": "regular"
-      }
-    },
-    {
-      "type": "information",
-      "content": "南希是第一个把我当作一个人而不是一个问题来对待的人。重新找到她并保护她的安全成为我生命中唯一仍然值得做的事情。",
+      "content": "南希是第一个把我当作一个人而不是一个问题来对待的人。找到她并保护她的安全是我仍然在乎的少数几件事之一。",
       "metadata": {
         "knowledgeId": "k_simon_nancy",
         "difficulty": "automatic"
@@ -102,7 +118,7 @@
     },
     {
       "type": "information",
-      "content": "我有证据表明帕特里齐奥的影响力延伸得比应有的更远，我不信任他周围的人。",
+      "content": "我有证据表明帕特里齐奥的影响力延伸得远超应有，我不信任他周围的人。",
       "metadata": {
         "knowledgeId": "k_simon_patrizio",
         "difficulty": "regular"
@@ -110,46 +126,75 @@
     },
     {
       "type": "information",
-      "content": "大约一年前，我在两个不同的反追踪关闭之前从帕特里齐奥的电脑里拉出了一个图像文件。文字已经消失了，但我确定丢失的材料描述了某种邪教和可怕的东西。",
+      "content": "大约一年前，我在两次反追踪关闭之前从帕特里齐奥的电脑里拉出了一个图像文件。文字已经消失了，但我确定内容涉及某种邪教和可怕的东西。",
       "metadata": {
         "knowledgeId": "k_simon_stolen_file",
         "difficulty": "hard"
       }
     },
     {
+      "type": "information",
+      "content": "1998年我设计了最初的千维监控系统，从一开始就在其中留了一个隐藏后门。即使系统的硬件不再在我手中，我对其结构的理解仍然超过这个镇上的任何人。",
+      "metadata": {
+        "knowledgeId": "k_qianwei_backdoor",
+        "difficulty": "regular"
+      }
+    },
+    {
       "type": "secret",
-      "content": "我是一个黑客，如果这成为公开的知识，我可能很快就会成为目标。",
+      "content": "我是一个黑客，如果这成为公开的知识，我很快就会成为目标。",
       "metadata": {
         "knowledgeId": "s_simon_hacker_identity"
       }
     },
     {
       "type": "secret",
-      "content": "我1988年在法国经历的事情与南希的母亲、一个邪教和一场火车灾难有关。我不谈论它，因为那段历史中太多东西仍然可能害死人。",
+      "content": "1988年在法国，我经历了与南希的母亲、一个邪教和一场火车灾难有关的事情。那晚有人死去，而我是参与者。我不谈论它，因为那段历史中太多东西仍然可能害死人。",
       "metadata": {
         "knowledgeId": "s_simon_1988"
       }
     },
     {
       "type": "secret",
-      "content": "我曾劫持当地广播指控帕特里齐奥是邪教徒。他很快将其抹除了，这足以让我确信我已经让自己对错误的人可见了。",
+      "content": "我曾劫持当地广播指控帕特里齐奥是邪教徒。他很快将其抹除，这足以让我确信我已经让自己对错误的人可见了。",
       "metadata": {
         "knowledgeId": "s_simon_broadcast"
       }
     },
     {
       "type": "secret",
-      "content": "布鲁诺让我担心，因为我曾半信半疑地认为他属于帕特里齐奥那一边。如果他实际上正在推进对我发现的同样的腐烂问题，那他已经处于危险之中，而我可能严重误判了他。",
+      "content": "当那批富裕客户在2002年消失时，千维系统也随之消失，但我知道它没有离开卡森德拉。",
+      "metadata": {
+        "knowledgeId": "s_qianwei_lost"
+      }
+    },
+    {
+      "type": "secret",
+      "content": "我的技术工作曾保护过危险的客户以及他们想要隐藏的仪式或交易。我接受了这一点，因为控制和信息优势对我来说比任何人的清白都更重要。",
+      "metadata": {
+        "knowledgeId": "s_complicity"
+      }
+    },
+    {
+      "type": "secret",
+      "content": "勒克斯·林奇足够腐败，如果我需要警方的合作，我很可能可以挖出或重建对他的筹码。",
+      "metadata": {
+        "knowledgeId": "s_lux_leverage"
+      }
+    },
+    {
+      "type": "secret",
+      "content": "布鲁诺让我担心——我曾半信半疑地认为他属于帕特里齐奥那一边。如果他实际上正在对抗同样的腐败，那我可能严重误判了他，而他已经处于危险之中。",
       "metadata": {
         "knowledgeId": "s_simon_bruno"
       }
     },
     {
       "type": "belief",
-      "content": "这个镇子被秘密维系着，唯一的生存之道是在网络理解你之前先理解网络。",
+      "content": "这个镇子被秘密维系着，唯一的生存之道是在网络理解你之前先理解网络。感情是真实的，但它也是弱点——我需要在保护南希和保持战略清醒之间不断平衡。",
       "metadata": {
-        "confidence": 0.89,
-        "reasoningChain": "这里每一个看起来普通的地方都有隐藏的联系。如果我无法绘制那些联系，我就无法保护南希或我自己。"
+        "confidence": 0.88,
+        "reasoningChain": "每一次因情感而放弃控制，处境就会更危险。但完全放弃南希会让我失去唯一值得保护的东西。"
       }
     }
   ]

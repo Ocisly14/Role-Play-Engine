@@ -25,6 +25,7 @@ import type {
   ExecutionContext,
   TickRuntimeContext,
 } from "../../engine/types.js";
+import { t } from "../../i18n/t.js";
 import type { NpcMemoryManager } from "../../memory/NpcMemoryManager.js";
 import type { DynamicGameStateManager } from "../../state/DynamicGameState.js";
 import type { CharacterPosition } from "../../state/topologyTypes.js";
@@ -262,16 +263,28 @@ function classifyImpactPerspective(
 function buildImpactEventText(
   perspective: "targeted" | "witness" | "co_presence",
   action: CharacterAction,
-  impact: number
+  impact: number,
+  lang: string
 ): string {
   switch (perspective) {
     case "targeted":
-      return `[impact ${impact}] ${action.characterName} directly involved you: ${action.outcome}`;
+      return t("impact_targeted", lang, {
+        impact: String(impact),
+        name: action.characterName,
+        outcome: action.outcome ?? "",
+      });
     case "co_presence":
-      return `[impact ${impact}] You encountered others in person: ${action.outcome}`;
+      return t("impact_co_presence", lang, {
+        impact: String(impact),
+        outcome: action.outcome ?? "",
+      });
     case "witness":
     default:
-      return `[impact ${impact}] You noticed ${action.characterName}: ${action.outcome}`;
+      return t("impact_witness", lang, {
+        impact: String(impact),
+        name: action.characterName,
+        outcome: action.outcome ?? "",
+      });
   }
 }
 
@@ -279,16 +292,17 @@ function buildImpactMemoryContent(
   perspective: "targeted" | "witness" | "co_presence",
   _bucketTime: string,
   _gameDay: number,
-  witnessEntry: string
+  witnessEntry: string,
+  lang: string
 ): string {
   switch (perspective) {
     case "targeted":
-      return `[direct] ${witnessEntry}`;
+      return t("memory_direct", lang, { entry: witnessEntry });
     case "co_presence":
-      return `[encounter] ${witnessEntry}`;
+      return t("memory_encounter", lang, { entry: witnessEntry });
     case "witness":
     default:
-      return `[witness] ${witnessEntry}`;
+      return t("memory_witness", lang, { entry: witnessEntry });
   }
 }
 
@@ -357,7 +371,8 @@ function buildMovementAction(
 function initializeMovementNode(
   node: PlanNode,
   dgsm: DynamicGameStateManager,
-  currentTime: string
+  currentTime: string,
+  lang: string
 ): PlanNode {
   const currentPosition = dgsm.getCharacterPosition(node.characterId);
   if (!currentPosition) {
@@ -370,7 +385,7 @@ function initializeMovementNode(
         failedAt: currentTime,
         remainingMinutes: 0,
       },
-      outcome: `${node.action} [no path available in topology] failed`,
+      outcome: t("no_path_failed", lang, { action: node.action }),
     };
   }
 
@@ -433,7 +448,7 @@ function initializeMovementNode(
         failedAt: currentTime,
         remainingMinutes: 0,
       },
-      outcome: `${node.action} [no path available in topology] failed`,
+      outcome: t("no_path_failed", lang, { action: node.action }),
     };
   }
 
@@ -453,7 +468,7 @@ function initializeMovementNode(
         failedAt: currentTime,
         remainingMinutes: 0,
       },
-      outcome: `${node.action} [no path available in topology] failed`,
+      outcome: t("no_path_failed", lang, { action: node.action }),
     };
   }
 
@@ -523,7 +538,8 @@ function processImmediateMovementTransitions(
 function advanceMovementNodeOneMinute(
   node: PlanNode,
   dgsm: DynamicGameStateManager,
-  currentTime: string
+  currentTime: string,
+  lang: string
 ): {
   node: PlanNode;
   action?: CharacterAction;
@@ -546,7 +562,10 @@ function advanceMovementNodeOneMinute(
             }
           : undefined,
       },
-      outcome: `${processed.node.action} [blocked: ${processed.blockedReason}] failed`,
+      outcome: t("blocked_failed", lang, {
+        action: processed.node.action,
+        reason: processed.blockedReason,
+      }),
     };
     const failedPosition = dgsm.getCharacterPosition(node.characterId);
     return {
@@ -578,7 +597,10 @@ function advanceMovementNodeOneMinute(
         completedAt: currentTime,
         remainingMinutes: 0,
       },
-      outcome: `${processed.node.action} [arrived at ${processed.node.location}] succeeded`,
+      outcome: t("arrived_succeeded", lang, {
+        action: processed.node.action,
+        location: processed.node.location,
+      }),
     };
     return {
       node: completedNode,
@@ -614,7 +636,10 @@ function advanceMovementNodeOneMinute(
           blockedReason,
         },
       },
-      outcome: `${processed.node.action} [blocked: ${blockedReason}] failed`,
+      outcome: t("blocked_failed", lang, {
+        action: processed.node.action,
+        reason: blockedReason,
+      }),
     };
     const failedPosition = dgsm.getCharacterPosition(node.characterId);
     return {
@@ -689,7 +714,10 @@ function advanceMovementNodeOneMinute(
             }
           : undefined,
       },
-      outcome: `${afterMinute.node.action} [blocked: ${afterMinute.blockedReason}] failed`,
+      outcome: t("blocked_failed", lang, {
+        action: afterMinute.node.action,
+        reason: afterMinute.blockedReason,
+      }),
     };
     const failedPosition = dgsm.getCharacterPosition(node.characterId);
     return {
@@ -719,7 +747,10 @@ function advanceMovementNodeOneMinute(
         completedAt: currentTime,
         remainingMinutes: 0,
       },
-      outcome: `${afterMinute.node.action} [arrived at ${afterMinute.node.location}] succeeded`,
+      outcome: t("arrived_succeeded", lang, {
+        action: afterMinute.node.action,
+        location: afterMinute.node.location,
+      }),
     };
     return {
       node: completedNode,
@@ -1193,13 +1224,14 @@ async function executeSingleTick(
     if (rawNode.type === "movement") {
       const initializedNode =
         rawNode.status === "pending"
-          ? initializeMovementNode(rawNode, dgsm, tickStartTime)
+          ? initializeMovementNode(rawNode, dgsm, tickStartTime, language)
           : rawNode;
 
       const advancedMovement = advanceMovementNodeOneMinute(
         initializedNode,
         dgsm,
-        tickStartTime
+        tickStartTime,
+        language
       );
       await npcPlanningAgent.updateNode(
         sessionId,
@@ -1352,12 +1384,19 @@ async function executeSingleTick(
               sessionId,
               moduleId,
               type: "event",
-              content: `Walked from ${fromLocationId} to ${node.location} (~${travelMinutes} min).`,
+              content: t("walked_from_to", language, {
+                from: fromLocationId,
+                to: node.location,
+                minutes: String(travelMinutes),
+              }),
               gameDay,
               gameTime: tickStartTime,
               location: node.location,
               metadata: {
-                outcome: `auto-movement from ${fromLocationId} to ${node.location}`,
+                outcome: t("auto_movement_outcome", language, {
+                  from: fromLocationId,
+                  to: node.location,
+                }),
               },
             });
           }
@@ -1422,12 +1461,20 @@ async function executeSingleTick(
               sessionId,
               moduleId,
               type: "event",
-              content: `Walked from ${fromLocationId} to ${targetSceneId} to use ${itemId} (~1 min).`,
+              content: t("walked_for_item", language, {
+                from: fromLocationId,
+                to: targetSceneId,
+                item: itemId,
+              }),
               gameDay,
               gameTime: tickStartTime,
               location: targetSceneId,
               metadata: {
-                outcome: `auto-movement from ${fromLocationId} to ${targetSceneId} for item ${itemId}`,
+                outcome: t("auto_movement_item_outcome", language, {
+                  from: fromLocationId,
+                  to: targetSceneId,
+                  item: itemId,
+                }),
               },
             });
           }
@@ -1845,7 +1892,8 @@ async function executeSingleTick(
     memoryManager,
     sessionId,
     moduleId,
-    gameDay
+    gameDay,
+    language
   );
 
   // 5. Built-in impact propagation
@@ -1906,7 +1954,8 @@ async function executeSingleTick(
                 buildImpactEventText(
                   classifyImpactPerspective(npcId, e.event),
                   e.event,
-                  e.impact
+                  e.impact,
+                  language
                 )
               )
               .join("\n");
@@ -1934,7 +1983,8 @@ async function executeSingleTick(
               buildImpactEventText(
                 classifyImpactPerspective(npcId, e.event),
                 e.event,
-                e.impact
+                e.impact,
+                language
               )
             )
             .join("\n");
@@ -1966,7 +2016,8 @@ async function executeSingleTick(
                 perspective,
                 tickRuntime.tickTime,
                 gameDay,
-                result.witnessEntry
+                result.witnessEntry,
+                language
               )
             : `[witness] ${result.witnessEntry}`;
           const npcLocPos = dgsm.getCharacterPosition(npcId);
@@ -2050,9 +2101,10 @@ async function executeSingleTick(
               ? buildImpactEventText(
                   perspective,
                   primaryEvent,
-                  sortedEvents[0]?.impact ?? 1
+                  sortedEvents[0]?.impact ?? 1,
+                  language
                 )
-              : "You perceived something relevant.";
+              : t("perceived_something", language);
             await npcPlanningAgent.reviseSchedule(
               dgsm,
               sessionId,
@@ -2143,7 +2195,8 @@ function scanUnplannedEncounters(
   memoryManager: NpcMemoryManager | undefined,
   sessionId: string,
   moduleId: string,
-  gameDay: number
+  gameDay: number,
+  lang: string
 ): CharacterAction[] {
   const state = dgsm.getState();
   const aliveNpcs = state.npcCharacters.filter((npc) =>
@@ -2270,9 +2323,11 @@ function scanUnplannedEncounters(
         }
         const parts: string[] = [];
         if (normalNames.length > 0)
-          parts.push(`Saw ${normalNames.join(", ")} here`);
+          parts.push(t("saw_here", lang, { names: normalNames.join(", ") }));
         if (spottedNames.length > 0)
-          parts.push(`Spotted ${spottedNames.join(", ")} hiding here`);
+          parts.push(
+            t("spotted_hiding", lang, { names: spottedNames.join(", ") })
+          );
         if (parts.length === 0) continue;
         // Fire-and-forget; consistent with existing memory write pattern
         void memoryManager.add({
@@ -2307,14 +2362,17 @@ function scanUnplannedEncounters(
 
     encounterEvents.push({
       characterId: "__encounter__",
-      characterName: "Co-presence",
+      characterName: t("co_presence_name", lang),
       gameTime: tickTime,
-      action: `NPCs present together at ${sceneName}`,
+      action: t("npcs_present_at", lang, { scene: sceneName }),
       location: locationId,
       type: "character_interaction",
       impact: 2 as const,
       status: "completed",
-      outcome: `${allNpcNames.join(", ")} are at ${sceneName}`,
+      outcome: t("npcs_are_at", lang, {
+        names: allNpcNames.join(", "),
+        scene: sceneName,
+      }),
     });
   }
 

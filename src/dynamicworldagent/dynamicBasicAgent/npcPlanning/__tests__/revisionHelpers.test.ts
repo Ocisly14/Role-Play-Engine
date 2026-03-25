@@ -117,4 +117,36 @@ describe("revisionHelpers", () => {
     expect(action.interruptionReason).toBe("revise_replan");
     expect(action.location).toBe("ROAD_1");
   });
+
+  it("produces Chinese outcome when language is zh", () => {
+    const action = buildInterruptedAction(
+      makeNode({ status: "interrupted", action: "走到港口" }),
+      "10:02",
+      "SCN_HARBOR",
+      "zh"
+    );
+
+    expect(action.outcome).toContain("因重新规划而中断");
+    expect(action.outcome).toContain("走到港口");
+    expect(action.outcome).toContain("SCN_HARBOR");
+  });
+
+  it("mergeRevisedNodesWithHistory produces Chinese outcome for zh", () => {
+    const inProgressNode = makeNode({
+      nodeId: "move",
+      status: "in_progress",
+      action: "走到图书馆",
+      executionMeta: { remainingMinutes: 3 },
+    });
+
+    const result = mergeRevisedNodesWithHistory(
+      [inProgressNode],
+      [],
+      "10:05",
+      "zh"
+    );
+
+    expect(result.interruptedNode?.outcome).toContain("因重新规划而中断");
+    expect(result.interruptedNode?.outcome).toContain("走到图书馆");
+  });
 });

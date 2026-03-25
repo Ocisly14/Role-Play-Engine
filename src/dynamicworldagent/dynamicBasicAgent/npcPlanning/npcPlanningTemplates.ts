@@ -290,6 +290,12 @@ ${TWENTY_FOUR_HOUR_TIME_GUIDANCE}
 - Do NOT generate trivial micro-actions such as "close a page", "adjust posture", "glance around" as standalone nodes. These can be mentioned within a larger action's description but should not be their own node.
 - If a single logical activity can be described in one node, do not split it into multiple tiny steps.
 
+## Action Continuity
+- Generated nodes must form a **logical, coherent sequence**. Each action should naturally follow from the previous one — consider physical location, time flow, and narrative causality.
+- If the previous action ended at a specific location or produced a specific outcome, the next action must acknowledge and build on that context rather than ignoring it.
+- Avoid abrupt, unexplained jumps between unrelated activities. If a transition is needed (e.g., finishing a conversation then moving to a new task), ensure the sequence reads as a believable chain of behavior for this character.
+- Think about what a real person would do next given what just happened, where they are, and what they were trying to accomplish.
+
 ## Skill Checks
 You can use a skill to accomplish an action. Pick from "Available Skills" only when the action is difficult or uses a non-routine method. Omit it for straightforward actions.
 
@@ -511,6 +517,12 @@ Do not include topology notes, residents, or label prefixes in \`location\`; out
 - **Carefully read "Relevant Memories / Recent Context"** to understand what you have already done today. Do NOT generate actions that duplicate or repeat completed actions (e.g., if you already stashed your notebook, do not generate another "stash notebook" node).
 - Each revised node must be **one coherent, continuous action** — something the character does from start to finish without interruption. If two actions naturally flow together as one activity, keep them in one node.
 - Do not create trivial micro-actions (e.g., "adjust posture", "close a page", "glance around") as standalone nodes. Fold minor details into the description of a larger action instead.
+
+## Action Continuity
+- Revised nodes must form a **logical, coherent sequence**. Each action should naturally follow from the previous one — consider physical location, time flow, and narrative causality.
+- The first revised node must be a believable reaction to the interruption, acknowledging what just happened rather than ignoring it.
+- Avoid abrupt, unexplained jumps between unrelated activities. The revised plan should read as a natural continuation of the character's behavior given the disruption.
+- Think about what a real person would do next given what just happened, where they are, and what they were trying to accomplish.
 
 ## Skill Checks
 You can use a skill to accomplish an action. Pick from "Available Skills". Omit for everyday actions.

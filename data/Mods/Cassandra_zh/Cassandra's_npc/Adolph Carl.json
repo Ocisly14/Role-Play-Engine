@@ -72,12 +72,12 @@
   ],
   "relationships": [
     {
-      "targetId": "Anatole Laplace (Anatole)",
-      "targetName": "Anatole Laplace (Anatole)",
+      "targetId": "Simon Laplace (Simon)",
+      "targetName": "Simon Laplace (Simon)",
       "relationshipType": "rival",
       "attitude": -25,
       "description": "一个来自阿道夫过去的危险人物，他的秘密价值连城，他出现在卡森德拉让阿道夫不安。",
-      "history": "阿道夫在1988年秘密目睹了阿纳托尔在法国杀害了南希的母亲。他从未忘记此事，如今在卡森德拉密切监视着他。"
+      "history": "阿道夫在1988年秘密目睹了西蒙在法国杀害了南希的母亲。他从未忘记此事，如今在卡森德拉密切监视着他。"
     },
     {
       "targetId": "Lux Lynch",
@@ -146,14 +146,14 @@
     },
     {
       "type": "secret",
-      "content": "当我的家族在法国崩溃时，我秘密目睹了阿纳托尔杀害了南希的母亲。他从未意识到我在场，从那以后我一直把这份知识当作一项长期投资。",
+      "content": "当我的家族在法国崩溃时，我秘密目睹了西蒙杀害了南希的母亲。他从未意识到我在场，从那以后我一直把这份知识当作一项长期投资。",
       "metadata": {
         "knowledgeId": "s_adolph_1988_witness"
       }
     },
     {
       "type": "secret",
-      "content": "在卡森德拉认出阿纳托尔或西蒙之后，我开始密切监视他，最终发送了那封将他引到驯鹿酒吧的威胁信。勒克斯的出现和卢奇菲罗的谋杀在我能将那个旧秘密变现之前破坏了会面。",
+      "content": "在卡森德拉认出西蒙之后，我开始密切监视他，最终发送了那封将他引到驯鹿酒吧的威胁信。勒克斯的出现和卢奇菲罗的谋杀在我能将那个旧秘密变现之前破坏了会面。",
       "metadata": {
         "knowledgeId": "s_adolph_bar_note"
       }

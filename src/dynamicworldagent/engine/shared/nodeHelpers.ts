@@ -19,20 +19,8 @@ export function buildOutcome(
   // Payload context
   if (node.type === "object_interaction" && node.objectInteractionPayload) {
     const p = node.objectInteractionPayload;
-    if (p.action === "move" && p.itemId && p.from && p.to) {
-      const formatRef = (ref: typeof p.from) => {
-        if (ref.type === "container") {
-          const scope = ref.scope === "inventory" ? "inventory" : "scene";
-          return `${scope} container ${ref.containerItemId ?? "unknown"}`;
-        }
-        return ref.type;
-      };
-      parts.push(
-        `(move: ${p.itemId} ${formatRef(p.from)} -> ${formatRef(p.to)})`
-      );
-    } else {
-      const target = p.targetItemId ? ` → ${p.targetItemId}` : "";
-      parts.push(`(${p.action}${p.itemId ? `: ${p.itemId}` : ""}${target})`);
+    if (p.itemId) {
+      parts.push(`(item: ${p.itemId})`);
     }
   } else if (node.type === "scene_interaction" && node.sceneConnectionEffect) {
     const e = node.sceneConnectionEffect;

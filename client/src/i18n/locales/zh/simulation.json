@@ -32,7 +32,9 @@
     "bufferUnit": "分钟",
     "days": "天数",
     "start": "开始",
-    "starting": "启动中..."
+    "starting": "启动中...",
+    "pausing": "暂停中...",
+    "pauseFailed": "暂停失败"
   },
   "config": {
     "title": "配置模拟",
