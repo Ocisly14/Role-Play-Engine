@@ -1700,7 +1700,11 @@ async function executeSingleTick(
             sessionId,
             moduleId,
             type: "event",
-            content: `${initiatorName} ${action.action} — result: ${eventOutcome}`,
+            content: t("fallback_mirror_memory", language, {
+              name: initiatorName,
+              action: action.action,
+              outcome: eventOutcome,
+            }),
             gameDay,
             gameTime: action.gameTime,
             location: action.location,

@@ -1,3 +1,4 @@
+import axios from "axios";
 import type { SimulationEvent } from "../hooks/useSimulationWebSocket.js";
 import { api } from "./api.js";
 
@@ -125,6 +126,23 @@ export async function createSimulation(params: {
 export async function listSimulations(): Promise<SimulationListItem[]> {
   const { data } = await api.get("/simulations");
   return data.simulations;
+}
+
+export async function resolveModuleName(moduleName: string): Promise<string> {
+  const { data } = await api.get(
+    `/simulation/resolve/${encodeURIComponent(moduleName)}`
+  );
+  return data.sessionId;
+}
+
+/** Public resolve — no auth headers, no 401 interceptor redirect. */
+export async function resolveModuleNamePublic(
+  moduleName: string
+): Promise<string> {
+  const { data } = await axios.get(
+    `/api/simulation/resolve/${encodeURIComponent(moduleName)}`
+  );
+  return data.sessionId;
 }
 
 export async function deleteSimulation(sessionId: string): Promise<void> {

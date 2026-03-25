@@ -63,12 +63,19 @@ export const sceneInteractionHandler: NodeHandler = {
       | undefined;
     let lastRollDetail: string | undefined;
 
+    const lang = ctx.language ?? "en";
+
     // Location check
     if (!isCharacterAtLocation(pos, node.location)) {
       return makeAction(
         node,
         "failed",
-        buildOutcome(node, "failed", { reason: "not at expected location" }),
+        buildOutcome(
+          node,
+          "failed",
+          { reason: "not at expected location" },
+          lang
+        ),
         { difficulty, failureReason: "location_mismatch" }
       );
     }
@@ -82,7 +89,7 @@ export const sceneInteractionHandler: NodeHandler = {
         return makeAction(
           node,
           "failed",
-          buildOutcome(node, "failed", { rollDetail: lastRollDetail }),
+          buildOutcome(node, "failed", { rollDetail: lastRollDetail }, lang),
           {
             difficulty,
             successLevel: resolvedSuccessLevel,
@@ -94,9 +101,14 @@ export const sceneInteractionHandler: NodeHandler = {
     }
 
     // Append outcome as scene condition
-    const outcome = buildOutcome(node, "completed", {
-      rollDetail: lastRollDetail,
-    });
+    const outcome = buildOutcome(
+      node,
+      "completed",
+      {
+        rollDetail: lastRollDetail,
+      },
+      lang
+    );
     dgsm.appendSceneCondition(node.location, { description: outcome });
     if (node.sceneConnectionEffect) {
       const effect = node.sceneConnectionEffect;

@@ -99,7 +99,9 @@ export function SimulationSelectorModal({
                   type="button"
                   onClick={() => {
                     onClose();
-                    navigate(`/simulation/${sim.sessionId}`);
+                    navigate(
+                      `/simulation/${encodeURIComponent(sim.moduleName ?? sim.sessionId)}`
+                    );
                   }}
                   className="flex-1 text-left p-4"
                 >

@@ -20,5 +20,13 @@
   "co_presence_name": "共同在场",
   "npcs_present_at": "NPC们同时出现在 {{scene}}",
   "npcs_are_at": "{{names}} 在 {{scene}}",
-  "perceived_something": "你感知到了一些相关的事情。"
+  "perceived_something": "你感知到了一些相关的事情。",
+  "outcome_succeeded": "{{action}} 成功",
+  "outcome_failed": "{{action}} 失败",
+  "outcome_with_detail_succeeded": "{{action}} [{{detail}}] 成功",
+  "outcome_with_detail_failed": "{{action}} [{{detail}}] 失败",
+  "outcome_item": "（物品：{{item}}）",
+  "outcome_connection_block": "（封锁通往 {{target}} 的路径）",
+  "outcome_connection_unblock": "（解封通往 {{target}} 的路径）",
+  "fallback_mirror_memory": "{{name}} {{action}}——结果：{{outcome}}"
 }

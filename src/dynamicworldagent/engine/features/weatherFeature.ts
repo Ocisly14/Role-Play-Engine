@@ -22,7 +22,7 @@ export interface WeatherRegionState {
 // ===== Constants =====
 
 const FEATURE_ID = "weather";
-const TRANSITION_CHECK_INTERVAL_MINUTES = 30;
+const TRANSITION_CHECK_INTERVAL_MINUTES = 120;
 const MAX_INTENSITY = 5;
 const BLOCKING_INTENSITY_THRESHOLD = 4;
 

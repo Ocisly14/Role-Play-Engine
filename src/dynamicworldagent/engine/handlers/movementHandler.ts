@@ -58,6 +58,8 @@ export const movementHandler: NodeHandler = {
 
     const fromLocation = npcLocation ?? node.location;
 
+    const lang = ctx.language ?? "en";
+
     // Creative movement: single hop with skill check, no pathfinding
     if (node.skill) {
       const rollResult = ctx.resolveSkillRoll(node, adjustedSkills, dgsm);
@@ -67,7 +69,7 @@ export const movementHandler: NodeHandler = {
         return makeAction(
           node,
           "failed",
-          buildOutcome(node, "failed", { rollDetail: lastRollDetail }),
+          buildOutcome(node, "failed", { rollDetail: lastRollDetail }, lang),
           {
             difficulty,
             successLevel: resolvedSuccessLevel,
@@ -84,9 +86,7 @@ export const movementHandler: NodeHandler = {
       return makeAction(
         node,
         "completed",
-        buildOutcome(node, "completed", {
-          reason: "Creative movement succeeded",
-        }),
+        buildOutcome(node, "completed", { rollDetail: lastRollDetail }, lang),
         { difficulty, successLevel: resolvedSuccessLevel }
       );
     }
@@ -108,9 +108,14 @@ export const movementHandler: NodeHandler = {
         return makeAction(
           node,
           "failed",
-          buildOutcome(node, "failed", {
-            reason: "no path available in topology",
-          }),
+          buildOutcome(
+            node,
+            "failed",
+            {
+              reason: "no path available in topology",
+            },
+            lang
+          ),
           { difficulty, failureReason: "location_blocked" }
         );
       }
@@ -136,9 +141,14 @@ export const movementHandler: NodeHandler = {
       return makeAction(
         node,
         "completed",
-        buildOutcome(node, "completed", {
-          reason: `Traveled via topology in ~${topologyPath.totalMinutes} min`,
-        }),
+        buildOutcome(
+          node,
+          "completed",
+          {
+            reason: `Traveled via topology in ~${topologyPath.totalMinutes} min`,
+          },
+          lang
+        ),
         { difficulty, successLevel: resolvedSuccessLevel }
       );
     }
@@ -147,7 +157,12 @@ export const movementHandler: NodeHandler = {
     return makeAction(
       node,
       "failed",
-      buildOutcome(node, "failed", { reason: "no path available in topology" }),
+      buildOutcome(
+        node,
+        "failed",
+        { reason: "no path available in topology" },
+        lang
+      ),
       { difficulty, failureReason: "location_blocked" }
     );
   },
@@ -166,10 +181,17 @@ export function resolveTargetPosition(
   if (topology.sceneToParent.has(locationId)) {
     return { type: "scene", sceneId: locationId };
   }
-  // Roads are not valid direct targets — resolve to the far endpoint junction
-  const road = topology.roads.get(locationId);
+  // Roads: support "ROAD_ID" (midpoint) and "ROAD_ID@0.3" (explicit position)
+  const atIdx = locationId.indexOf("@");
+  const roadKey = atIdx >= 0 ? locationId.slice(0, atIdx) : locationId;
+  const road = topology.roads.get(roadKey);
   if (road) {
-    return { type: "junction", junctionId: road.endpointB };
+    const parsed =
+      atIdx >= 0 ? Number.parseFloat(locationId.slice(atIdx + 1)) : 0.5;
+    const position = Number.isFinite(parsed)
+      ? Math.max(0, Math.min(1, parsed))
+      : 0.5;
+    return { type: "road", roadId: road.id, position };
   }
   // Fallback: interior sub-scene or outline ID — resolve via entry scene
   if (dgsm) {

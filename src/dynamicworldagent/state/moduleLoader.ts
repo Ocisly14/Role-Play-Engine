@@ -278,8 +278,13 @@ export function initRuntime(params: {
     // Location: prefer explicit currentLocation from NPC profile
     const residence = npc.residence ?? residentToLocation[npc.id];
     let resolvedLocation: string;
-    if (npc.currentLocation && moduleData.scenes.has(npc.currentLocation)) {
-      // NPC profile specifies a valid sub-scene directly
+    if (
+      npc.currentLocation &&
+      (moduleData.scenes.has(npc.currentLocation) ||
+        moduleData.junctions.has(npc.currentLocation) ||
+        moduleData.roads.has(npc.currentLocation))
+    ) {
+      // NPC profile specifies a valid scene, junction, or road directly
       resolvedLocation = npc.currentLocation;
     } else if (residence) {
       resolvedLocation = macroToEntry[residence] ?? residence;

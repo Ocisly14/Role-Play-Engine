@@ -20,5 +20,13 @@
   "co_presence_name": "Co-presence",
   "npcs_present_at": "NPCs present together at {{scene}}",
   "npcs_are_at": "{{names}} are at {{scene}}",
-  "perceived_something": "You perceived something relevant."
+  "perceived_something": "You perceived something relevant.",
+  "outcome_succeeded": "{{action}} succeeded",
+  "outcome_failed": "{{action}} failed",
+  "outcome_with_detail_succeeded": "{{action}} [{{detail}}] succeeded",
+  "outcome_with_detail_failed": "{{action}} [{{detail}}] failed",
+  "outcome_item": "(item: {{item}})",
+  "outcome_connection_block": "(block connection to {{target}})",
+  "outcome_connection_unblock": "(unblock connection to {{target}})",
+  "fallback_mirror_memory": "{{name}} {{action}} — result: {{outcome}}"
 }

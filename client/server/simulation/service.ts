@@ -219,6 +219,25 @@ export async function getRunner(
   return runner;
 }
 
+export async function resolveSessionByModuleName(
+  prisma: PrismaClient,
+  moduleName: string,
+  emailId?: string
+): Promise<string | null> {
+  const runtimes = await listSimulationRuntimeRecords(prisma, emailId);
+  const match = runtimes.find((r) => r.moduleName === moduleName);
+  return match?.sessionId ?? null;
+}
+
+export async function resolveSessionByModuleNamePublic(
+  prisma: PrismaClient,
+  moduleName: string
+): Promise<string | null> {
+  const runtimes = await listSimulationRuntimeRecords(prisma);
+  const match = runtimes.find((r) => r.moduleName === moduleName);
+  return match?.sessionId ?? null;
+}
+
 export async function listSimulations(
   prisma: PrismaClient,
   emailId?: string

@@ -53,12 +53,19 @@ export const routineHandler: NodeHandler = {
       | undefined;
     let lastRollDetail: string | undefined;
 
+    const lang = ctx.language ?? "en";
+
     // Location check
     if (!isCharacterAtLocation(pos, node.location)) {
       return makeAction(
         node,
         "failed",
-        buildOutcome(node, "failed", { reason: "not at expected location" }),
+        buildOutcome(
+          node,
+          "failed",
+          { reason: "not at expected location" },
+          lang
+        ),
         { difficulty, failureReason: "location_mismatch" }
       );
     }
@@ -72,7 +79,7 @@ export const routineHandler: NodeHandler = {
         return makeAction(
           node,
           "failed",
-          buildOutcome(node, "failed", { rollDetail: lastRollDetail }),
+          buildOutcome(node, "failed", { rollDetail: lastRollDetail }, lang),
           {
             difficulty,
             successLevel: resolvedSuccessLevel,
@@ -91,7 +98,7 @@ export const routineHandler: NodeHandler = {
     return makeAction(
       node,
       "completed",
-      buildOutcome(node, "completed", { rollDetail: lastRollDetail }),
+      buildOutcome(node, "completed", { rollDetail: lastRollDetail }, lang),
       { difficulty, successLevel: resolvedSuccessLevel }
     );
   },

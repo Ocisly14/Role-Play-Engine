@@ -162,6 +162,41 @@ export async function getEvents(req: Request, res: Response) {
   }
 }
 
+export async function resolveByModuleName(req: Request, res: Response) {
+  const prisma = getPrismaClient();
+  const email = req.user?.email;
+  if (!email) {
+    return res.status(401).json({ error: "Authentication required" });
+  }
+  const moduleName = decodeURIComponent(req.params.moduleName);
+  const sessionId = await simulationService.resolveSessionByModuleName(
+    prisma,
+    moduleName,
+    email
+  );
+  if (!sessionId) {
+    return res
+      .status(404)
+      .json({ error: `No simulation found for module "${moduleName}"` });
+  }
+  return res.json({ sessionId });
+}
+
+export async function resolveByModuleNamePublic(req: Request, res: Response) {
+  const prisma = getPrismaClient();
+  const moduleName = decodeURIComponent(req.params.moduleName);
+  const sessionId = await simulationService.resolveSessionByModuleNamePublic(
+    prisma,
+    moduleName
+  );
+  if (!sessionId) {
+    return res
+      .status(404)
+      .json({ error: `No simulation found for module "${moduleName}"` });
+  }
+  return res.json({ sessionId });
+}
+
 export async function listSimulations(req: Request, res: Response) {
   const prisma = getPrismaClient();
   const email = req.user?.email;

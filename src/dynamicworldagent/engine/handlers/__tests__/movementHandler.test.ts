@@ -424,7 +424,22 @@ describe("resolveTargetPosition", () => {
     } as any;
 
     const pos = resolveTargetPosition("ROAD_1", topology);
-    expect(pos).toEqual({ type: "junction", junctionId: "JUNC_B" });
+    expect(pos).toEqual({ type: "road", roadId: "ROAD_1", position: 0.5 });
+  });
+
+  it("should resolve road ID with explicit position via @ syntax", () => {
+    const roads = new Map([
+      ["ROAD_1", { id: "ROAD_1", endpointA: "JUNC_A", endpointB: "JUNC_B" }],
+    ]);
+    const topology = {
+      junctions: new Map(),
+      roads,
+      sceneToParent: new Map(),
+      junctionToRoads: new Map(),
+    } as any;
+
+    const pos = resolveTargetPosition("ROAD_1@0.3", topology);
+    expect(pos).toEqual({ type: "road", roadId: "ROAD_1", position: 0.3 });
   });
 
   it("should return null for unknown location ID without dgsm", () => {

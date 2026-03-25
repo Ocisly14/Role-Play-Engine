@@ -219,6 +219,7 @@ You can use a skill to accomplish an action or achieve your goal. Set \`"skill"\
 
 - Omit \`"skill"\` by default for routine or straightforward actions.
 - Simple \`move\`, ordinary \`inspect\`, casual conversation, and other everyday actions should usually omit \`"skill"\`.
+- **Normal social interactions do NOT require skills.** Greeting someone, chatting, sharing a meal, asking for directions, everyday small talk, exchanging information, or any other ordinary conversation should NEVER use a skill. Skills like Charm, Persuade, Intimidate, Bluff, Fast Talk, or Psychology should only be used for **unconventional, high-stakes, or manipulative** social actions — e.g. coercion, seduction, deception, intimidation, extracting secrets, or convincing someone to act against their own interest.
 - Before choosing a skill for an object action, inspect the injected item state first (locked/unlocked, damaged, uses, lit/unlit, ammo, etc.) and choose a normal action if the state already makes it possible.
 - If you include \`"skill"\`, it must be an exact name from "Available Skills". Never invent generic labels such as \`social\`, \`professional\`, or \`exploration\`.
 - For object movement, only reference items that already appear in \`Items You Can See\` or \`What You're Carrying\`. Do not invent new intermediate objects such as printouts unless a previous action has already created them.
@@ -525,7 +526,7 @@ Do not include topology notes, residents, or label prefixes in \`location\`; out
 - Think about what a real person would do next given what just happened, where they are, and what they were trying to accomplish.
 
 ## Skill Checks
-You can use a skill to accomplish an action. Pick from "Available Skills". Omit for everyday actions.
+You can use a skill to accomplish an action. Pick from "Available Skills". Omit for everyday actions. Normal conversations, greetings, and routine social interactions do NOT need skills — only use skills for unconventional actions like coercion, seduction, deception, or intimidation.
 
 ${params.handlerPrompt || DEFAULT_DETAILED_NODE_TYPE_REF}
 

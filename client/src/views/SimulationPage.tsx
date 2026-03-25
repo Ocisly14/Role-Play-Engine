@@ -13,6 +13,10 @@ import { useMobileSidebar } from "../hooks/useMobileSidebar";
 import { useSimulationState } from "../hooks/useSimulationState";
 import { useSimulationWebSocket } from "../hooks/useSimulationWebSocket";
 import { api } from "../services/api";
+import {
+  resolveModuleName,
+  resolveModuleNamePublic,
+} from "../services/simulationApi";
 
 const NPC_DOT_COLORS = [
   "#ff6b6b",
@@ -45,24 +49,48 @@ interface SimulationPageProps {
   mode?: "owner" | "public";
 }
 
-function normalizeSessionId(rawSessionId: string | undefined): string | null {
-  const trimmed = rawSessionId?.trim();
-  if (!trimmed) return null;
-  const matchedUuid = trimmed.match(UUID_SESSION_ID_PATTERN)?.[0];
-  return matchedUuid ?? trimmed;
+function isUuid(value: string): boolean {
+  return UUID_SESSION_ID_PATTERN.test(value);
 }
 
 export default function SimulationPage({
   mode = "owner",
 }: SimulationPageProps) {
-  const { sessionId: routeSessionId } = useParams<{ sessionId: string }>();
+  const { sessionId: routeSlug } = useParams<{ sessionId: string }>();
   const { t } = useTranslation("simulation");
   const navigate = useNavigate();
   const isPublicMode = mode === "public";
-  const sessionId = useMemo(
-    () => normalizeSessionId(routeSessionId),
-    [routeSessionId]
-  );
+  const [sessionId, setSessionId] = useState<string | null>(null);
+  const [resolveError, setResolveError] = useState<string | null>(null);
+
+  // Resolve route slug → sessionId (UUID passthrough, module name lookup)
+  useEffect(() => {
+    const slug = routeSlug?.trim();
+    if (!slug) {
+      setSessionId(null);
+      return;
+    }
+    if (isUuid(slug)) {
+      setSessionId(slug);
+      return;
+    }
+    // Module name slug — resolve via API
+    let cancelled = false;
+    setResolveError(null);
+    const resolveFn = isPublicMode
+      ? resolveModuleNamePublic
+      : resolveModuleName;
+    resolveFn(decodeURIComponent(slug))
+      .then((id) => {
+        if (!cancelled) setSessionId(id);
+      })
+      .catch(() => {
+        if (!cancelled) setResolveError(`Module "${slug}" not found`);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [routeSlug, isPublicMode]);
   const { isSidebarOpen, toggleSidebar, closeSidebar } = useMobileSidebar();
   const [previewWeather, setPreviewWeather] = useState<string | null>(null);
   const gameRef = useRef<Phaser.Game | null>(null);
@@ -138,13 +166,10 @@ export default function SimulationPage({
     };
   }, [isPublicMode, sessionId]);
 
+  // Show resolve error
   useEffect(() => {
-    if (!routeSessionId || !sessionId || routeSessionId === sessionId) return;
-    const targetPath = isPublicMode
-      ? `/simulation/public/${sessionId}`
-      : `/simulation/${sessionId}`;
-    navigate(targetPath, { replace: true });
-  }, [isPublicMode, navigate, routeSessionId, sessionId]);
+    if (resolveError) console.warn("[SimulationPage]", resolveError);
+  }, [resolveError]);
 
   // Fetch map_config to get scene image URLs
   useEffect(() => {
@@ -444,8 +469,10 @@ export default function SimulationPage({
   const handleShare = useCallback(async () => {
     if (!sessionId) return;
 
+    // Use module name (from URL slug) for public link; fallback to sessionId
+    const slug = routeSlug && !isUuid(routeSlug) ? routeSlug : sessionId;
     const publicUrl = new URL(
-      `/simulation/public/${sessionId}`,
+      `/simulation/public/${encodeURIComponent(slug)}`,
       window.location.origin
     ).toString();
 
@@ -469,7 +496,7 @@ export default function SimulationPage({
     } catch {
       setShareFeedback("Copy failed");
     }
-  }, [sessionId]);
+  }, [sessionId, routeSlug]);
 
   return (
     <div
@@ -494,10 +521,10 @@ export default function SimulationPage({
           </span>
         </div>
       )}
-      {state.error && (
+      {(state.error || resolveError) && (
         <div className="sim-overlay">
           <span className="text-red-300 text-lg">
-            {t("page.error", { message: state.error })}
+            {t("page.error", { message: resolveError ?? state.error })}
           </span>
         </div>
       )}

@@ -4,30 +4,50 @@ import type {
   PlanNode,
   SuccessLevel,
 } from "../../dynamicBasicAgent/npcPlanning/types.js";
+import { t } from "../../i18n/t.js";
 
 export function buildOutcome(
   node: PlanNode,
   status: "completed" | "failed",
-  opts?: { rollDetail?: string; reason?: string }
+  opts?: { rollDetail?: string; reason?: string },
+  language = "en"
 ): string {
-  const parts: string[] = [node.action];
-  if (opts?.rollDetail) {
-    parts.push(`[${opts.rollDetail}]`);
-  } else if (opts?.reason) {
-    parts.push(`[${opts.reason}]`);
+  const detail = opts?.rollDetail ?? opts?.reason;
+  let base: string;
+  if (detail) {
+    base =
+      status === "completed"
+        ? t("outcome_with_detail_succeeded", language, {
+            action: node.action,
+            detail,
+          })
+        : t("outcome_with_detail_failed", language, {
+            action: node.action,
+            detail,
+          });
+  } else {
+    base =
+      status === "completed"
+        ? t("outcome_succeeded", language, { action: node.action })
+        : t("outcome_failed", language, { action: node.action });
   }
-  // Payload context
+
+  // Payload context suffix
   if (node.type === "object_interaction" && node.objectInteractionPayload) {
     const p = node.objectInteractionPayload;
     if (p.itemId) {
-      parts.push(`(item: ${p.itemId})`);
+      base += " " + t("outcome_item", language, { item: p.itemId });
     }
   } else if (node.type === "scene_interaction" && node.sceneConnectionEffect) {
     const e = node.sceneConnectionEffect;
-    parts.push(`(${e.action} connection to ${e.targetScenarioId})`);
+    const key =
+      e.action === "block"
+        ? "outcome_connection_block"
+        : "outcome_connection_unblock";
+    base += " " + t(key, language, { target: e.targetScenarioId });
   }
-  parts.push(status === "completed" ? "succeeded" : "failed");
-  return parts.join(" ");
+
+  return base;
 }
 
 export function makeAction(

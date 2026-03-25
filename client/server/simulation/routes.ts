@@ -18,6 +18,10 @@ router.post("/simulation/:id/step", simulationController.stepSimulation);
 router.post("/simulation/:id/stop", simulationController.stopSimulation);
 router.delete("/simulation/:id", simulationController.deleteSimulation);
 router.get("/simulations", simulationController.listSimulations);
+router.get(
+  "/simulation/resolve/:moduleName",
+  simulationController.resolveByModuleName
+);
 
 // Configuration
 router.put("/simulation/:id/config", mapController.updateConfig);

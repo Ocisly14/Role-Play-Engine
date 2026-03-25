@@ -5,6 +5,10 @@ import * as mapController from "./mapController.js";
 const router = Router();
 
 // Public simulation viewer endpoints — unauthenticated and read-only
+router.get(
+  "/simulation/resolve/:moduleName",
+  simulationController.resolveByModuleNamePublic
+);
 router.get("/simulation/:id/topology", mapController.getTopology);
 router.get("/simulation/:id/map-layout", mapController.getMapLayout);
 router.get("/simulation/:id/positions", mapController.getPositions);
