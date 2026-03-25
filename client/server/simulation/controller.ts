@@ -162,6 +162,38 @@ export async function getEvents(req: Request, res: Response) {
   }
 }
 
+export async function getNpcTimeline(req: Request, res: Response) {
+  try {
+    const npcId = req.params.npcId;
+    if (!npcId) {
+      return res.status(400).json({ error: "npcId is required" });
+    }
+
+    const prisma = getPrismaClient();
+    const entries = await simulationService.getNpcTimeline(
+      prisma,
+      req.params.id,
+      npcId,
+      {
+        gameDay: parseOptionalInt(req.query.gameDay),
+        endTime: req.query.endTime as string | undefined,
+      }
+    );
+
+    if (!entries) {
+      return res
+        .status(404)
+        .json({ error: `Simulation ${req.params.id} not found` });
+    }
+
+    return res.json({ entries });
+  } catch (error) {
+    return res.status(500).json({
+      error: error instanceof Error ? error.message : "Unknown error",
+    });
+  }
+}
+
 export async function resolveByModuleName(req: Request, res: Response) {
   const prisma = getPrismaClient();
   const email = req.user?.email;

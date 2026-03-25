@@ -1,22 +1,82 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { useTranslation } from "react-i18next";
-import type { NpcStatusInfo } from "../../services/simulationApi";
+import type {
+  NpcStatusInfo,
+  NpcTimelineEntry,
+} from "../../services/simulationApi";
+import * as simApi from "../../services/simulationApi";
 
 interface NpcDetailProps {
   npc: NpcStatusInfo;
+  sessionId: string | null;
+  gameDay: number;
+  timeOfDay: string;
   onBack: () => void;
   onZoomTo: (npcId: string) => void;
 }
 
+function stripTimelinePrefix(content: string): string {
+  const stripped = content.replace(/^(?:\[[^\]]+\]\s*)+/u, "").trim();
+  return stripped || content;
+}
+
+function TimelineCard({ entry }: { entry: NpcTimelineEntry }) {
+  const { t } = useTranslation("simulation");
+  const typeLabel =
+    entry.type === "witness"
+      ? t("npc.timelineWitness")
+      : t("npc.timelineEvent");
+  const typeClasses =
+    entry.type === "witness"
+      ? "border-sky-200/80 bg-sky-50/70 text-sky-700"
+      : "border-amber-200/80 bg-amber-50/80 text-amber-700";
+
+  return (
+    <div className="rounded-xl border border-slate-200/80 bg-white/70 px-3 py-2 shadow-sm backdrop-blur-sm">
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <div className="text-xs font-semibold text-slate-500">
+            {entry.gameTime}
+          </div>
+          <p className="mt-1 text-sm leading-relaxed text-slate-700 whitespace-pre-wrap">
+            {stripTimelinePrefix(entry.content)}
+          </p>
+        </div>
+        <span
+          className={`shrink-0 rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide ${typeClasses}`}
+        >
+          {typeLabel}
+        </span>
+      </div>
+      {entry.location && (
+        <div className="mt-2 text-[11px] text-slate-500">
+          {t("npc.location")}: {entry.location}
+        </div>
+      )}
+    </div>
+  );
+}
+
 function ProfileModal({
   npc,
+  sessionId,
+  gameDay,
+  timeOfDay,
   onClose,
 }: {
   npc: NpcStatusInfo;
+  sessionId: string | null;
+  gameDay: number;
+  timeOfDay: string;
   onClose: () => void;
 }) {
   const { t } = useTranslation("simulation");
+  const [timelineEntries, setTimelineEntries] = useState<NpcTimelineEntry[]>(
+    []
+  );
+  const [isTimelineLoading, setIsTimelineLoading] = useState(false);
+  const [timelineError, setTimelineError] = useState<string | null>(null);
 
   const fields: Array<{ label: string; value: string | number | undefined }> = [
     { label: t("profile.occupation"), value: npc.occupation },
@@ -29,6 +89,49 @@ function ProfileModal({
     { label: t("profile.residence"), value: npc.residence },
     { label: t("profile.longTermIntent"), value: npc.longTermIntent },
   ];
+
+  useEffect(() => {
+    let isCancelled = false;
+
+    async function loadTimeline(): Promise<void> {
+      if (!sessionId) {
+        setTimelineEntries([]);
+        setTimelineError(null);
+        setIsTimelineLoading(false);
+        return;
+      }
+
+      setIsTimelineLoading(true);
+      setTimelineError(null);
+
+      try {
+        const entries = await simApi.fetchNpcTimeline(sessionId, npc.npcId, {
+          gameDay,
+          endTime: timeOfDay,
+        });
+        if (!isCancelled) {
+          setTimelineEntries(entries);
+        }
+      } catch (error) {
+        if (!isCancelled) {
+          setTimelineError(
+            error instanceof Error ? error.message : t("npc.timelineError")
+          );
+          setTimelineEntries([]);
+        }
+      } finally {
+        if (!isCancelled) {
+          setIsTimelineLoading(false);
+        }
+      }
+    }
+
+    void loadTimeline();
+
+    return () => {
+      isCancelled = true;
+    };
+  }, [gameDay, npc.npcId, sessionId, t, timeOfDay]);
 
   return (
     <div
@@ -117,18 +220,58 @@ function ProfileModal({
               </p>
             )}
           </div>
+          <section className="clear-both mt-6 border-t border-white/30 pt-4">
+            <div className="mb-3 flex items-center justify-between gap-2">
+              <h4
+                className="text-base font-semibold"
+                style={{ color: "var(--title)", fontFamily: "var(--serif)" }}
+              >
+                {t("npc.timelineTitle", { day: gameDay })}
+              </h4>
+              {isTimelineLoading && (
+                <span className="text-xs text-slate-400">
+                  {t("npc.timelineLoading")}
+                </span>
+              )}
+            </div>
+            <div className="max-h-72 space-y-2 overflow-y-auto pr-1">
+              {timelineError && (
+                <div className="rounded-xl border border-red-200 bg-red-50/80 px-3 py-2 text-xs text-red-500">
+                  {timelineError}
+                </div>
+              )}
+              {!timelineError &&
+                timelineEntries.map((entry) => (
+                  <TimelineCard key={entry.id} entry={entry} />
+                ))}
+              {!timelineError &&
+                !isTimelineLoading &&
+                timelineEntries.length === 0 && (
+                  <div className="rounded-xl border border-slate-200/80 bg-white/60 px-3 py-4 text-sm text-slate-500">
+                    {t("npc.timelineEmpty")}
+                  </div>
+                )}
+            </div>
+          </section>
         </div>
       </div>
     </div>
   );
 }
 
-export function NpcDetail({ npc, onBack, onZoomTo }: NpcDetailProps) {
+export function NpcDetail({
+  npc,
+  sessionId,
+  gameDay,
+  timeOfDay,
+  onBack,
+  onZoomTo,
+}: NpcDetailProps) {
   const [showProfile, setShowProfile] = useState(false);
   const { t } = useTranslation("simulation");
 
   return (
-    <div className="p-3">
+    <div className="flex-1 min-h-0 overflow-y-auto p-3">
       <button
         onClick={onBack}
         className="text-xs text-slate-500 hover:text-slate-700 mb-2"
@@ -202,7 +345,13 @@ export function NpcDetail({ npc, onBack, onZoomTo }: NpcDetailProps) {
       </button>
       {showProfile &&
         createPortal(
-          <ProfileModal npc={npc} onClose={() => setShowProfile(false)} />,
+          <ProfileModal
+            npc={npc}
+            sessionId={sessionId}
+            gameDay={gameDay}
+            timeOfDay={timeOfDay}
+            onClose={() => setShowProfile(false)}
+          />,
           document.body
         )}
     </div>

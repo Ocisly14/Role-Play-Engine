@@ -8,7 +8,13 @@
     "currentAction": "In progress",
     "inventory": "Inventory",
     "zoomToLocation": "Zoom to location",
-    "noProfileInfo": "No profile info available"
+    "noProfileInfo": "No profile info available",
+    "timelineTitle": "Day {{day}} Timeline",
+    "timelineLoading": "Loading timeline…",
+    "timelineEmpty": "No actions or sightings recorded yet",
+    "timelineError": "Failed to load timeline",
+    "timelineEvent": "Action",
+    "timelineWitness": "Witness"
   },
   "profile": {
     "occupation": "Occupation",

@@ -14,6 +14,7 @@ import {
   createExecutionContext,
 } from "../../../src/dynamicworldagent/engine/index.js";
 import { NpcMemoryManager } from "../../../src/dynamicworldagent/memory/NpcMemoryManager.js";
+import { resolveLocationName as resolveDisplayLocationName } from "../../../src/dynamicworldagent/dynamicBasicAgent/npcPlanning/sceneMapFormatter.js";
 import { SimulationRunner } from "../../../src/dynamicworldagent/simulation/SimulationRunner.js";
 import {
   deleteSimulationRuntime,
@@ -23,6 +24,7 @@ import {
 } from "../../../src/dynamicworldagent/simulation/runtimePersistence.js";
 import type {
   SimulationConfig,
+  SimulationEvent,
   SimulationStatus,
 } from "../../../src/dynamicworldagent/simulation/types.js";
 import {
@@ -614,4 +616,70 @@ export async function getSimulationEvents(
   }
 
   return filteredRows as unknown as SimulationEvent[];
+}
+
+export interface NpcTimelineEntry {
+  id: string;
+  npcId: string;
+  type: "event" | "witness";
+  content: string;
+  gameDay: number;
+  gameTime: string;
+  location: string | null;
+  metadata: Record<string, unknown> | null;
+  createdAt: string;
+}
+
+export async function getNpcTimeline(
+  prisma: PrismaClient,
+  sessionId: string,
+  npcId: string,
+  filters?: {
+    gameDay?: number;
+    endTime?: string;
+  }
+): Promise<NpcTimelineEntry[] | null> {
+  const runner = await getRunner(prisma, sessionId);
+  if (!runner) return null;
+  const dgsm = runner.getDgsm();
+
+  let gameDay = filters?.gameDay;
+  if (typeof gameDay !== "number") {
+    const runtime = await loadSimulationRuntime(prisma, sessionId);
+    const runtimeDay = runtime?.gameState.gameDay;
+    gameDay = typeof runtimeDay === "number" ? runtimeDay : undefined;
+  }
+
+  const where: Record<string, unknown> = {
+    sessionId,
+    npcId,
+    type: { in: ["event", "witness"] },
+  };
+
+  if (typeof gameDay === "number") {
+    where.gameDay = gameDay;
+    if (filters?.endTime) {
+      where.gameTime = { lte: filters.endTime };
+    }
+  }
+
+  const rows = await prisma.npcMemory.findMany({
+    where,
+    orderBy: [{ gameTime: "desc" }, { createdAt: "desc" }],
+    take: 200,
+  });
+
+  return rows.map((row) => ({
+    id: row.id,
+    npcId: row.npcId,
+    type: row.type as "event" | "witness",
+    content: row.content,
+    gameDay: row.gameDay,
+    gameTime: row.gameTime,
+    location: row.location
+      ? resolveDisplayLocationName(dgsm, row.location)
+      : null,
+    metadata: (row.metadata as Record<string, unknown> | null) ?? null,
+    createdAt: row.createdAt.toISOString(),
+  }));
 }

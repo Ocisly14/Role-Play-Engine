@@ -8,7 +8,13 @@
     "currentAction": "正在进行中",
     "inventory": "物品栏",
     "zoomToLocation": "定位到地图",
-    "noProfileInfo": "暂无档案信息"
+    "noProfileInfo": "暂无档案信息",
+    "timelineTitle": "第 {{day}} 天时间线",
+    "timelineLoading": "加载时间线中…",
+    "timelineEmpty": "今天还没有记录到行动或目击",
+    "timelineError": "加载时间线失败",
+    "timelineEvent": "行动",
+    "timelineWitness": "目击"
   },
   "profile": {
     "occupation": "职业",

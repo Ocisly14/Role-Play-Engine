@@ -257,6 +257,23 @@ export interface SimulationEventFilters {
   parentLocationId?: string;
 }
 
+export interface NpcTimelineEntry {
+  id: string;
+  npcId: string;
+  type: "event" | "witness";
+  content: string;
+  gameDay: number;
+  gameTime: string;
+  location: string | null;
+  metadata: Record<string, unknown> | null;
+  createdAt: string;
+}
+
+export interface NpcTimelineFilters {
+  gameDay?: number;
+  endTime?: string;
+}
+
 export async function fetchEvents(
   sessionId: string,
   filters?: SimulationEventFilters
@@ -265,4 +282,18 @@ export async function fetchEvents(
     params: filters,
   });
   return data.events;
+}
+
+export async function fetchNpcTimeline(
+  sessionId: string,
+  npcId: string,
+  filters?: NpcTimelineFilters
+): Promise<NpcTimelineEntry[]> {
+  const { data } = await api.get(
+    `/simulation/${sessionId}/npcs/${encodeURIComponent(npcId)}/timeline`,
+    {
+      params: filters,
+    }
+  );
+  return data.entries;
 }

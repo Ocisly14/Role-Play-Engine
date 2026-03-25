@@ -19,5 +19,9 @@ router.get(
   simulationController.getPlaybackStatus
 );
 router.get("/simulation/:id/events", simulationController.getEvents);
+router.get(
+  "/simulation/:id/npcs/:npcId/timeline",
+  simulationController.getNpcTimeline
+);
 
 export default router;

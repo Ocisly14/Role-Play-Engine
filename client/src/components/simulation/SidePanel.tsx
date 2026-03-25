@@ -328,6 +328,9 @@ export function SidePanel({
       {selectedNpc ? (
         <NpcDetail
           npc={selectedNpc}
+          sessionId={sessionId}
+          gameDay={gameDay}
+          timeOfDay={timeOfDay}
           onBack={() => onSelectNpc(null)}
           onZoomTo={onZoomToNpc}
         />
