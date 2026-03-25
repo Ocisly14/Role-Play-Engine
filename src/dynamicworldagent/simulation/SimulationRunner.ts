@@ -502,6 +502,18 @@ export class SimulationRunner {
 
       this.events.actionsToEvents(tickResult.actions, dayBefore);
 
+      // Emit world events (encounter, scene_updated, feature_triggered)
+      for (const we of tickResult.worldEvents) {
+        this.events.emitSimulationEvent(
+          we.type,
+          "system",
+          we.location,
+          dayBefore,
+          we.gameTime,
+          { description: we.description, ...we.data }
+        );
+      }
+
       if (tickResult.dayChanged) {
         const stateAfter = this.dgsm.getState();
         this.events.emitSimulationEvent(

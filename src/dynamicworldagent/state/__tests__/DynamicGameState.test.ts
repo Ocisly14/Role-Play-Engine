@@ -57,4 +57,22 @@ describe("DynamicGameStateManager death helpers", () => {
     const dgsm = new DynamicGameStateManager(state);
     expect(dgsm.getSimulatedNpcs().map((npc) => npc.id)).toEqual(["alive"]);
   });
+
+  it("persists hidden NPC ids through serialize and deserialize", () => {
+    const state = initialDynamicGameState({
+      sessionId: "session",
+      moduleName: "module",
+    });
+    state.npcCharacters = [makeNpc("alive", 10), makeNpc("dead", 0)];
+
+    const dgsm = new DynamicGameStateManager(state);
+    dgsm.setCharacterHidden("alive", true);
+
+    const restored = new DynamicGameStateManager(
+      DynamicGameStateManager.deserialize(dgsm.serialize())
+    );
+
+    expect(restored.isCharacterHidden("alive")).toBe(true);
+    expect(restored.isCharacterHidden("dead")).toBe(false);
+  });
 });

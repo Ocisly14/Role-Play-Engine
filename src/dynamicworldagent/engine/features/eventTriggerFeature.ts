@@ -1,7 +1,7 @@
 import type { PlanNode } from "../../dynamicBasicAgent/npcPlanning/types.js";
 import type { DynamicGameStateManager } from "../../state/DynamicGameState.js";
 import type { Item } from "../../state/types.js";
-import type { ActivateResult, TickRuntimeContext, WorldFeature } from "../types.js";
+import type { ActivateResult, NodeStartBlockedResult, TickRuntimeContext, WorldFeature } from "../types.js";
 import { applySanityLoss } from "./sanityFeature.js";
 
 // ===== Types =====
@@ -224,15 +224,31 @@ function applyCompletionEffect(
   const effect = definition.completionEffect;
   if (!effect) return;
 
+  const gameDay = runtime?.gameDay ?? (dgsm.getState().gameDay ?? 1);
+  const tickTime = runtime?.tickTime ?? (dgsm.getState().timeOfDay ?? "00:00");
+
   // Scene conditions
   if (effect.sceneConditions) {
     for (const sc of effect.sceneConditions) {
       dgsm.appendSceneCondition(sc.sceneId, { description: sc.description });
+      dgsm.pushWorldEvent({
+        type: "scene_updated",
+        location: sc.sceneId,
+        gameTime: tickTime,
+        description: sc.description,
+        data: { source: "event_trigger", eventTriggerId: definition.eventTriggerId },
+      });
     }
   }
 
-  const gameDay = runtime?.gameDay ?? (dgsm.getState().gameDay ?? 1);
-  const tickTime = runtime?.tickTime ?? (dgsm.getState().timeOfDay ?? "00:00");
+  // Feature triggered event
+  dgsm.pushWorldEvent({
+    type: "feature_triggered",
+    location: definition.siteSceneId,
+    gameTime: tickTime,
+    description: `${definition.label} — completed`,
+    data: { eventTriggerId: definition.eventTriggerId, label: definition.label, outcome: "completed" },
+  });
 
   // Witness SAN loss: all characters at siteSceneId except conductor
   if (effect.witnessSanLoss && effect.witnessSanLoss > 0) {
@@ -279,17 +295,34 @@ function applyFailureEffect(
   const effect = definition.failureEffect;
   if (!effect) return;
 
+  const gameDay = runtime?.gameDay ?? (dgsm.getState().gameDay ?? 1);
+  const tickTime = runtime?.tickTime ?? (dgsm.getState().timeOfDay ?? "00:00");
+
   // Scene conditions
   if (effect.sceneConditions) {
     for (const sc of effect.sceneConditions) {
       dgsm.appendSceneCondition(sc.sceneId, { description: sc.description });
+      dgsm.pushWorldEvent({
+        type: "scene_updated",
+        location: sc.sceneId,
+        gameTime: tickTime,
+        description: sc.description,
+        data: { source: "event_trigger", eventTriggerId: definition.eventTriggerId },
+      });
     }
   }
 
+  // Feature triggered event
+  dgsm.pushWorldEvent({
+    type: "feature_triggered",
+    location: definition.siteSceneId,
+    gameTime: tickTime,
+    description: `${definition.label} — failed`,
+    data: { eventTriggerId: definition.eventTriggerId, label: definition.label, outcome: "failed" },
+  });
+
   // Witness SAN loss: all characters at siteSceneId except conductor
   if (effect.witnessSanLoss && effect.witnessSanLoss > 0) {
-    const gameDay = runtime?.gameDay ?? (dgsm.getState().gameDay ?? 1);
-    const tickTime = runtime?.tickTime ?? (dgsm.getState().timeOfDay ?? "00:00");
     const witnesses = dgsm.getCharactersInScene(definition.siteSceneId);
     for (const charId of witnesses) {
       if (charId === definition.conductorNpcId) continue;
@@ -460,6 +493,44 @@ export const eventTriggerFeature: WorldFeature = {
     );
   },
 
+  onNodeStart(node: PlanNode, dgsm: DynamicGameStateManager): NodeStartBlockedResult | void {
+    const nodeAny = node as Record<string, unknown>;
+    const eventTriggerId = nodeAny.eventTriggerId as string | undefined;
+    if (!eventTriggerId) return;
+
+    const eventTriggerConditionId = nodeAny.eventTriggerConditionId as string | undefined;
+    if (!eventTriggerConditionId) return;
+
+    const definition = findDefinition(dgsm, eventTriggerId);
+    if (!definition) return;
+
+    const state = getEventTriggerState(dgsm, eventTriggerId);
+    if (!state || state.status !== "active") return;
+
+    const condDef = definition.conditions.find(
+      (c) => c.conditionId === eventTriggerConditionId
+    );
+    if (!condDef) return;
+
+    const cs = state.conditionStates[eventTriggerConditionId];
+    if (!cs || cs.type !== "prerequisite" || cs.mode !== "manual") return;
+
+    // Check prerequisite (location/item) at action start time
+    const fulfilled = checkPrerequisitePassive(dgsm, condDef, definition.conductorNpcId);
+    cs.fulfilled = fulfilled;
+    setEventTriggerState(dgsm, eventTriggerId, state);
+
+    if (!fulfilled) {
+      const missing: string[] = [];
+      if (condDef.check?.location) missing.push(`location: ${condDef.check.location}`);
+      if (condDef.check?.item) missing.push(`item: ${condDef.check.item}`);
+      return {
+        blocked: true,
+        reason: `Prerequisite not met for "${definition.label}" — missing ${missing.join(", ")}`,
+      };
+    }
+  },
+
   activate(node: PlanNode, dgsm: DynamicGameStateManager): ActivateResult | void {
     const nodeAny = node as Record<string, unknown>;
     const eventTriggerId = nodeAny.eventTriggerId as string | undefined;
@@ -526,14 +597,8 @@ export const eventTriggerFeature: WorldFeature = {
         }
         break;
       case "prerequisite":
-        if (cs.mode === "manual") {
-          // Check location/item right now
-          cs.fulfilled = checkPrerequisitePassive(
-            dgsm,
-            condDef,
-            definition.conductorNpcId
-          );
-        }
+        // manual: location/item already checked at action start via onNodeStart
+        // passive: checked in real-time by checkAllConditions during invoke/autoInvoke
         break;
     }
 

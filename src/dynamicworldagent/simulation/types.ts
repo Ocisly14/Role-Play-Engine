@@ -3,11 +3,6 @@
 export type SimulationEventType =
   | "action_executed"
   | "action_failed"
-  | "encounter"
-  | "relationship_changed"
-  | "clue_discovered"
-  | "plan_revised"
-  | "memory_created"
   | "scene_updated"
   | "day_transition"
   | "feature_triggered"
@@ -80,11 +75,6 @@ export const DEFAULT_TICK_INTERVAL_MS = 60_000;
 export const SIMULATION_EVENT_TYPES: readonly SimulationEventType[] = [
   "action_executed",
   "action_failed",
-  "encounter",
-  "relationship_changed",
-  "clue_discovered",
-  "plan_revised",
-  "memory_created",
   "scene_updated",
   "day_transition",
   "feature_triggered",

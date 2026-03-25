@@ -20,16 +20,16 @@ import {
   buildSummarizeDayMemoryPrompt,
 } from "./npcPlanningTemplates.js";
 import {
+  buildInterruptedAction,
+  mergeRevisedNodesWithHistory,
+} from "./revisionHelpers.js";
+import {
   buildLocationNameMap,
   formatSceneConnections,
   formatSceneMap,
   resolveLocationId as resolveLocationFromName,
   resolveLocationName,
 } from "./sceneMapFormatter.js";
-import {
-  buildInterruptedAction,
-  mergeRevisedNodesWithHistory,
-} from "./revisionHelpers.js";
 import type {
   PlanNode,
   RevisePlansContext,
@@ -56,8 +56,9 @@ function resolveCurrentNode(
   const inProgressNode =
     nodes
       .filter((node) => node.status === "in_progress")
-      .sort((a, b) => timeToMinutes(a.startTime) - timeToMinutes(b.startTime))[0] ??
-    null;
+      .sort(
+        (a, b) => timeToMinutes(a.startTime) - timeToMinutes(b.startTime)
+      )[0] ?? null;
   if (inProgressNode) return inProgressNode;
 
   const duePendingNode =
@@ -67,8 +68,9 @@ function resolveCurrentNode(
           node.status === "pending" &&
           timeToMinutes(node.startTime) <= timeToMinutes(currentTime)
       )
-      .sort((a, b) => timeToMinutes(a.startTime) - timeToMinutes(b.startTime))[0] ??
-    null;
+      .sort(
+        (a, b) => timeToMinutes(a.startTime) - timeToMinutes(b.startTime)
+      )[0] ?? null;
 
   return duePendingNode;
 }
@@ -146,8 +148,31 @@ function buildBuildingContext(
   }
 
   if (siblings.length === 0) return "";
-  return siblings
-    .map((s) => `- **${s.name}**: ${s.description}`)
+  return siblings.map((s) => `- **${s.name}**: ${s.description}`).join("\n");
+}
+
+function formatVisibleNpcRoster(
+  dgsm: DynamicGameStateManager,
+  npcId: string,
+  isPresent: (candidateId: string) => boolean
+): string {
+  const state = dgsm.getState();
+  const relationshipGraph = state.npcRelationshipGraph[npcId] ?? {};
+
+  return state.npcCharacters
+    .filter((npc) => {
+      if (npc.id === npcId) return false;
+      if (dgsm.isCharacterHidden(npc.id)) return false;
+      return isPresent(npc.id);
+    })
+    .map((npc) => {
+      const parts = [`- ${npc.name} (${npc.id})`];
+      if (!dgsm.isNpcAlive(npc.id)) parts.push("status: dead");
+      if (npc.appearance) parts.push(`appearance: ${npc.appearance}`);
+      const rel = relationshipGraph[npc.id];
+      if (rel) parts.push(`relationship: score=${rel.score} (${rel.note})`);
+      return parts.join(" | ");
+    })
     .join("\n");
 }
 
@@ -186,9 +211,8 @@ function repairJson(text: string): string {
   text = text.replace(/,\s*([}\]])/g, "$1");
 
   // Fix unescaped newlines inside JSON string values
-  text = text.replace(
-    /"(?:[^"\\]|\\.)*"/g,
-    (match) => match.replace(/\n/g, "\\n").replace(/\r/g, "\\r").replace(/\t/g, "\\t")
+  text = text.replace(/"(?:[^"\\]|\\.)*"/g, (match) =>
+    match.replace(/\n/g, "\\n").replace(/\r/g, "\\r").replace(/\t/g, "\\t")
   );
 
   // Try to close truncated JSON by balancing braces/brackets
@@ -196,9 +220,18 @@ function repairJson(text: string): string {
   let escape = false;
   const stack: string[] = [];
   for (const ch of text) {
-    if (escape) { escape = false; continue; }
-    if (ch === "\\") { escape = true; continue; }
-    if (ch === '"') { inString = !inString; continue; }
+    if (escape) {
+      escape = false;
+      continue;
+    }
+    if (ch === "\\") {
+      escape = true;
+      continue;
+    }
+    if (ch === '"') {
+      inString = !inString;
+      continue;
+    }
     if (inString) continue;
     if (ch === "{") stack.push("}");
     else if (ch === "[") stack.push("]");
@@ -520,8 +553,8 @@ export class NPCPlanningAgent {
       ? (state.scenes.get(currentLocationId) ?? null)
       : null;
     // Show sub-scene name (e.g. "私人书房") so the LLM knows exactly which room
-    const currentLocationName = currentScene?.name
-      ?? resolveLocationName(dgsm, currentLocationId);
+    const currentLocationName =
+      currentScene?.name ?? resolveLocationName(dgsm, currentLocationId);
     const sceneDescription = currentScene?.description ?? "";
     const sceneItems = formatSceneItems(currentScene);
     const sceneConditions = currentScene
@@ -539,23 +572,17 @@ export class NPCPlanningAgent {
     const sceneMap = this.formatSceneMap(dgsm, npc.id);
 
     // NPCs at current location with relationship info
-    const relationshipGraph = state.npcRelationshipGraph[npcId] ?? {};
-    const npcsAtLocation = state.npcCharacters
-      .filter((n) => {
-        if (n.id === npcId) return false;
-        const nPos = dgsm.getCharacterPosition(n.id);
-        const nLoc = nPos ? dgsm.resolveLocationId(nPos) : undefined;
-        return nLoc === currentLocationId;
-      })
-      .map((n) => {
-        const parts = [`- ${n.name} (${n.id})`];
-        if (!dgsm.isNpcAlive(n.id)) parts.push("status: dead");
-        if (n.appearance) parts.push(`appearance: ${n.appearance}`);
-        const rel = relationshipGraph[n.id];
-        if (rel) parts.push(`relationship: score=${rel.score} (${rel.note})`);
-        return parts.join(" | ");
-      })
-      .join("\n");
+    const npcsAtLocation = formatVisibleNpcRoster(
+      dgsm,
+      npcId,
+      (candidateId) => {
+        const candidatePos = dgsm.getCharacterPosition(candidateId);
+        const candidateLocationId = candidatePos
+          ? dgsm.resolveLocationId(candidatePos)
+          : undefined;
+        return candidateLocationId === currentLocationId;
+      }
+    );
 
     const npcInventory = formatItemList(dgsm.getNpcInventory(npcId));
     const buildingContext = currentLocationId
@@ -831,29 +858,21 @@ export class NPCPlanningAgent {
     const currentScene = currentLocationId
       ? (state.scenes.get(currentLocationId) ?? null)
       : null;
-    const currentLocationName = currentScene?.name
-      ?? resolveLocationName(dgsm, currentLocationId);
+    const currentLocationName =
+      currentScene?.name ?? resolveLocationName(dgsm, currentLocationId);
     const plan = await this.getDailyPlan(sessionId, npcId, state.gameDay);
     const schedule = (plan?.schedule as unknown as ScheduleEntry[]) ?? [];
     const existingNodes = (plan?.nodes as unknown as PlanNode[]) ?? [];
     const sceneMap = this.formatSceneMap(dgsm, npcId);
 
-    const relationshipGraph = state.npcRelationshipGraph[npcId] ?? {};
-    const npcsAtLocation = state.npcCharacters
-      .filter((n) => {
-        if (n.id === npcId) return false;
-        const nPos = dgsm.getCharacterPosition(n.id);
-        return arePositionsCoLocated(revisePos, nPos, dgsm);
-      })
-      .map((n) => {
-        const parts = [`- ${n.name} (${n.id})`];
-        if (!dgsm.isNpcAlive(n.id)) parts.push("status: dead");
-        if (n.appearance) parts.push(`appearance: ${n.appearance}`);
-        const rel = relationshipGraph[n.id];
-        if (rel) parts.push(`relationship: score=${rel.score} (${rel.note})`);
-        return parts.join(" | ");
-      })
-      .join("\n");
+    const npcsAtLocation = formatVisibleNpcRoster(
+      dgsm,
+      npcId,
+      (candidateId) => {
+        const candidatePos = dgsm.getCharacterPosition(candidateId);
+        return arePositionsCoLocated(revisePos, candidatePos, dgsm);
+      }
+    );
 
     // Find in_progress node that will be interrupted
     const inProgressNode = existingNodes.find(
@@ -1024,7 +1043,11 @@ export class NPCPlanningAgent {
         `[Planning] ⚠️ Impact gate JSON parse failed for ${candidate.npcName}, skipping revision:`,
         err instanceof Error ? err.message : err
       );
-      return { shouldRevise: false, shouldReviseSchedule: false, witnessEntry: "" };
+      return {
+        shouldRevise: false,
+        shouldReviseSchedule: false,
+        witnessEntry: "",
+      };
     }
   }
 
@@ -1300,7 +1323,9 @@ export class NPCPlanningAgent {
 
       return {
         ...node,
-        startTime: minutesToTimeLabel(timeToMinutes(node.startTime) - deltaMinutes),
+        startTime: minutesToTimeLabel(
+          timeToMinutes(node.startTime) - deltaMinutes
+        ),
         endTime: minutesToTimeLabel(timeToMinutes(node.endTime) - deltaMinutes),
       };
     });
@@ -1776,6 +1801,13 @@ export class NPCPlanningAgent {
       }
     }
 
+    // Concealment — this NPC's hidden/stealth status
+    if (dgsm.isCharacterHidden(npcId)) {
+      sections.push(
+        "Concealment: You are currently HIDDEN (Stealth active). Others cannot see you. Moving requires a Stealth check to stay hidden. Performing any non-Stealth action will reveal you. You can use this advantage to eavesdrop, follow someone, or set up an ambush."
+      );
+    }
+
     if (sections.length === 0) return "";
     return "## World Conditions\n\n" + sections.join("\n") + "\n";
   }
@@ -1832,7 +1864,9 @@ export class NPCPlanningAgent {
           isAdjacent = neighbors.includes(npcLocation);
         } else {
           const fireScene = dgsm.getScene(fireSceneId);
-          isAdjacent = fireScene?.connections.some(c => c.targetId === npcLocation) ?? false;
+          isAdjacent =
+            fireScene?.connections.some((c) => c.targetId === npcLocation) ??
+            false;
         }
         if (isAdjacent) {
           perceivedFires.push({

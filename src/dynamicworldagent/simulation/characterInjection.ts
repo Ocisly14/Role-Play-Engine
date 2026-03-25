@@ -110,6 +110,8 @@ export async function removeCharacterFromState(
   sessionId: string,
   characterId: string
 ): Promise<void> {
+  dgsm.setCharacterHidden(characterId, false);
+
   const state = dgsm.getState() as ReturnType<typeof dgsm.getState> & {
     npcCharacters: DynamicNPCProfile[];
     npcStats: Record<string, { hp: number; san: number }>;

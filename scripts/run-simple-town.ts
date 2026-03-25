@@ -84,7 +84,7 @@ async function main() {
 
     const registry = createDefaultRegistry();
     const ctx = createExecutionContext(registry);
-    const memoryManager = new NpcMemoryManager(prisma, embedClient);
+    const memoryManager = new NpcMemoryManager(prisma, embedClient, LANGUAGE);
     const npcPlanningAgent = new NPCPlanningAgent(prisma, {}, memoryManager);
 
     let dgsm: DynamicGameStateManager;

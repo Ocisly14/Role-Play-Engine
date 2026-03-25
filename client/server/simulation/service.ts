@@ -157,7 +157,7 @@ function buildSimulationBundle(params: {
     (process.env.MODEL_PROVIDER as ModelProviderName) ??
     ModelProviderName.OPENAI;
   const embedClient = new EmbeddingClient(provider);
-  const memoryManager = new NpcMemoryManager(params.prisma, embedClient);
+  const memoryManager = new NpcMemoryManager(params.prisma, embedClient, params.language);
   const npcPlanningAgent = new NPCPlanningAgent(
     params.prisma,
     {},

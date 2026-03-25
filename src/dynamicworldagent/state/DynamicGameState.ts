@@ -79,6 +79,7 @@ export interface DynamicGameState {
 
   // === Character Positions (NPC) ===
   characterPositions: Record<string, CharacterPosition>;
+  hiddenCharacterIds?: string[];
 
   // === NPC Injection Policy ===
   npcInjectionPolicy: import("./moduleLoader.js").NpcInjectionPolicy | null;
@@ -118,6 +119,7 @@ export const initialDynamicGameState = (params: {
   transportEdges: [],
   topology: null as unknown as TownTopology,
   characterPositions: {},
+  hiddenCharacterIds: [],
   npcInjectionPolicy: null,
   loadedAt: new Date(),
   lastUpdated: new Date(),
@@ -130,10 +132,41 @@ export const initialDynamicGameState = (params: {
 export class DynamicGameStateManager {
   private state: DynamicGameState;
   private db: any;
+  private pendingWorldEvents: import("../dynamicBasicAgent/npcPlanning/types.js").WorldEventDescriptor[] = [];
+  private hiddenCharacterIds = new Set<string>();
 
   constructor(state: DynamicGameState, db?: any) {
     this.state = state;
     this.db = db || null;
+    this.hiddenCharacterIds = new Set(state.hiddenCharacterIds ?? []);
+    this.syncHiddenCharacterIds();
+  }
+
+  setCharacterHidden(characterId: string, hidden: boolean): void {
+    if (hidden) {
+      this.hiddenCharacterIds.add(characterId);
+    } else {
+      this.hiddenCharacterIds.delete(characterId);
+    }
+    this.syncHiddenCharacterIds();
+  }
+
+  isCharacterHidden(characterId: string): boolean {
+    return this.hiddenCharacterIds.has(characterId);
+  }
+
+  pushWorldEvent(event: import("../dynamicBasicAgent/npcPlanning/types.js").WorldEventDescriptor): void {
+    this.pendingWorldEvents.push(event);
+  }
+
+  drainWorldEvents(): import("../dynamicBasicAgent/npcPlanning/types.js").WorldEventDescriptor[] {
+    const events = this.pendingWorldEvents;
+    this.pendingWorldEvents = [];
+    return events;
+  }
+
+  private syncHiddenCharacterIds(): void {
+    this.state.hiddenCharacterIds = Array.from(this.hiddenCharacterIds);
   }
 
   /**
@@ -279,6 +312,7 @@ export class DynamicGameStateManager {
       blockedConnections: blockedConnsObj,
       topology: topologyObj,
       characterPositions: this.state.characterPositions,
+      hiddenCharacterIds: Array.from(this.hiddenCharacterIds),
       npcResidences: this.state.npcResidences,
       transportEdges: this.state.transportEdges,
       loadedAt: this.state.loadedAt.toISOString(),
@@ -408,6 +442,12 @@ export class DynamicGameStateManager {
         }
         return {};
       })(),
+      hiddenCharacterIds: Array.isArray(data.hiddenCharacterIds)
+        ? data.hiddenCharacterIds.filter(
+            (characterId: unknown): characterId is string =>
+              typeof characterId === "string"
+          )
+        : [],
       loadedAt: data.loadedAt
         ? typeof data.loadedAt === "string"
           ? new Date(data.loadedAt)
@@ -431,6 +471,7 @@ export class DynamicGameStateManager {
       junctions: new Map(this.state.junctions),
       roads: new Map(this.state.roads),
       blockedConnections: new Map(this.state.blockedConnections),
+      hiddenCharacterIds: [...(this.state.hiddenCharacterIds ?? [])],
     };
   }
 

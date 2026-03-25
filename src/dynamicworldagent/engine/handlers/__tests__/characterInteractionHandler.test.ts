@@ -28,6 +28,7 @@ function createMockDgsm() {
       },
     ],
   ]);
+  const hiddenCharacterIds = new Set<string>();
 
   return {
     getState() {
@@ -43,6 +44,9 @@ function createMockDgsm() {
     },
     isNpcAlive(npcId: string) {
       return (npcStats[npcId]?.hp ?? 0) > 0;
+    },
+    isCharacterHidden(npcId: string) {
+      return hiddenCharacterIds.has(npcId);
     },
     removeItemFromNpc() {
       return undefined;
@@ -61,6 +65,10 @@ function createMockDgsm() {
         skills: {},
         status: { luck: 50 },
       });
+    },
+    _setHidden(npcId: string, hidden: boolean) {
+      if (hidden) hiddenCharacterIds.add(npcId);
+      else hiddenCharacterIds.delete(npcId);
     },
   };
 }
@@ -131,5 +139,16 @@ describe("characterInteractionHandler", () => {
     expect(result.status).toBe("completed");
     expect(result.failureReason).toBeUndefined();
     expect(result.outcome).toBe("Talk to B");
+  });
+
+  it("fails when the target is hidden at the same location", async () => {
+    const dgsm = createMockDgsm();
+    dgsm._addNpc("npc_a", { type: "road", roadId: "ROAD_1", position: 0.1 });
+    dgsm._addNpc("npc_b", { type: "road", roadId: "ROAD_1", position: 0.12 });
+    dgsm._setHidden("npc_b", true);
+
+    const result = await characterInteractionHandler.execute(makeNode(), dgsm as any, ctx);
+    expect(result.status).toBe("failed");
+    expect(result.failureReason).toBe("target_absent");
   });
 });

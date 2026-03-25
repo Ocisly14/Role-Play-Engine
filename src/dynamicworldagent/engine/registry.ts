@@ -1,5 +1,5 @@
 import type { DynamicGameStateManager } from "../state/DynamicGameState.js";
-import type { ActivateResult, NodeHandler, WorldFeature } from "./types.js";
+import type { ActivateResult, NodeHandler, NodeStartBlockedResult, WorldFeature } from "./types.js";
 
 /**
  * Fields that belong to the base PlanNode schema (not type-specific).
@@ -135,6 +135,30 @@ export class GameEngineRegistry {
       featureId,
       newSources.filter((s) => s.currentHop < maxHops)
     );
+  }
+
+  /**
+   * Call onNodeStart hooks for features whose overlay fields are present on the node.
+   * Called when a node transitions from pending to in_progress (action start time).
+   * Returns a blocked result if any feature vetoes the node, otherwise undefined.
+   */
+  startNodeFeatures(
+    node: import("../dynamicBasicAgent/npcPlanning/types.js").PlanNode,
+    dgsm: import("../state/DynamicGameState.js").DynamicGameStateManager
+  ): NodeStartBlockedResult | undefined {
+    for (const feature of this.features.values()) {
+      if (!feature.planNodeSchema || !feature.onNodeStart) continue;
+      const featureFields = feature.planNodeSchema.requiredFields.map(
+        (f) => f.field
+      );
+      const hasOverlay = featureFields.some(
+        (field) => (node as Record<string, unknown>)[field] !== undefined
+      );
+      if (!hasOverlay) continue;
+      const result = feature.onNodeStart(node, dgsm);
+      if (result?.blocked) return result;
+    }
+    return undefined;
   }
 
   /**

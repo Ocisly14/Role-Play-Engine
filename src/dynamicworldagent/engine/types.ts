@@ -35,6 +35,12 @@ export interface NodeHandler {
 
 // ===== World Feature: self-running world system =====
 
+/** Result returned by WorldFeature.onNodeStart() when a precondition fails */
+export interface NodeStartBlockedResult {
+  blocked: true;
+  reason: string;
+}
+
 /** Result returned by WorldFeature.activate() */
 export interface ActivateResult {
   /**
@@ -179,6 +185,16 @@ export interface WorldFeature {
     characterId: string,
     dgsm: DynamicGameStateManager
   ): Array<{ skill: string; delta: number }>;
+
+  /**
+   * Called when a PlanNode with this feature's overlay fields transitions
+   * from pending to in_progress (action start time).
+   * Use this for precondition checks that should be evaluated at the start
+   * of the action (e.g., location prerequisites), not at the end.
+   * Only called if `planNodeSchema` is defined.
+   * Return `{ blocked: true, reason }` to abort the node before execution.
+   */
+  onNodeStart?(node: PlanNode, dgsm: DynamicGameStateManager): NodeStartBlockedResult | void;
 
   /**
    * Called once when the tick engine detects this feature's overlay fields on an executed node.

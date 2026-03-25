@@ -98,6 +98,10 @@ function createMockDgsm(options: {
     updateNpcSan(_npcId: string, _delta: number) {
       // no-op in tests
     },
+
+    pushWorldEvent(_event: any) {
+      // no-op in tests
+    },
   };
 
   return {
@@ -727,16 +731,15 @@ describe("eventTriggerFeature", () => {
       });
       eventTriggerFeature.tick!(dgsm, makeRuntime());
 
-      // Trigger manual check
-      eventTriggerFeature.activate!(
-        makeNode({
-          characterId: "NPC_A",
-          eventTriggerId: "test_manual",
-          eventTriggerType: "prepare",
-          eventTriggerConditionId: "bring_item",
-        }),
-        dgsm
-      );
+      // Trigger manual check at node start (prerequisite checked at action start time)
+      const node = makeNode({
+        characterId: "NPC_A",
+        eventTriggerId: "test_manual",
+        eventTriggerType: "prepare",
+        eventTriggerConditionId: "bring_item",
+      });
+      eventTriggerFeature.onNodeStart!(node, dgsm);
+      eventTriggerFeature.activate!(node, dgsm);
 
       const state = dgsm.getFeatureSceneState(
         "event_trigger",
@@ -770,15 +773,14 @@ describe("eventTriggerFeature", () => {
       });
       eventTriggerFeature.tick!(dgsm, makeRuntime());
 
-      eventTriggerFeature.activate!(
-        makeNode({
-          characterId: "NPC_A",
-          eventTriggerId: "test_manual",
-          eventTriggerType: "prepare",
-          eventTriggerConditionId: "bring_item",
-        }),
-        dgsm
-      );
+      const node = makeNode({
+        characterId: "NPC_A",
+        eventTriggerId: "test_manual",
+        eventTriggerType: "prepare",
+        eventTriggerConditionId: "bring_item",
+      });
+      eventTriggerFeature.onNodeStart!(node, dgsm);
+      eventTriggerFeature.activate!(node, dgsm);
 
       const state = dgsm.getFeatureSceneState(
         "event_trigger",

@@ -2,12 +2,24 @@ import { ModelClass, generateText } from "../../../models/index.js";
 import { ModelProviderName } from "../../../models/types.js";
 import { EmbeddingClient } from "../../../rag/embedding.js";
 import { drainPendingEmotions } from "../../engine/features/sanityFeature.js";
-import { resolveTargetPosition } from "../../engine/handlers/movementHandler.js";
-import type { GameEngineRegistry } from "../../engine/registry.js";
-import { findAffectedCharacters } from "../../engine/shared/impactPropagation.js";
 import {
-  arePositionsCoLocated,
-} from "../../engine/shared/locationPresence.js";
+  applyCharacterDelta,
+  resolveInteractionState,
+  resolveTargets,
+} from "../../engine/handlers/interactionStateResolver.js";
+import { resolveTargetPosition } from "../../engine/handlers/movementHandler.js";
+import {
+  applyObjectDelta,
+  resolveObjectInteractionState,
+} from "../../engine/handlers/objectInteractionStateResolver.js";
+import type { GameEngineRegistry } from "../../engine/registry.js";
+import {
+  SUCCESS_RANK,
+  getSuccessLevel,
+  rollD100,
+} from "../../engine/shared/dice.js";
+import { findAffectedCharacters } from "../../engine/shared/impactPropagation.js";
+import { arePositionsCoLocated } from "../../engine/shared/locationPresence.js";
 import { buildMovementRouteIgnoringBlocks } from "../../engine/shared/pathfinding.js";
 import type {
   ExecutionContext,
@@ -21,22 +33,11 @@ import {
   type SessionRagChunkInput,
   SessionRagService,
 } from "../knowledge/sessionRagService.js";
-import { buildAutoMovementReplacement } from "./autoMovementHelpers.js";
 import type { NPCPlanningAgent } from "./NPCPlanningAgent.js";
-import {
-  applyCharacterDelta,
-  resolveInteractionState,
-  resolveTargets,
-} from "../../engine/handlers/interactionStateResolver.js";
-import {
-  applyObjectDelta,
-  resolveObjectInteractionState,
-} from "../../engine/handlers/objectInteractionStateResolver.js";
 import type {
   CharacterAction,
   DiscoveryEntry,
   FailureTrigger,
-  MovementStep,
   PlanNode,
   SimulationTickResult,
   SuccessLevel,
@@ -57,6 +58,72 @@ function minutesToTimeLabel(minutes: number): string {
 }
 
 const TICK_DURATION_MINUTES = 1;
+
+// ==================== Stealth / Detection helpers ====================
+
+/** Get an NPC's skill value by name (case-insensitive), falling back to a default. */
+function getNpcSkillValue(
+  dgsm: DynamicGameStateManager,
+  npcId: string,
+  skillName: string,
+  defaultValue: number
+): number {
+  const npc = dgsm.getState().npcCharacters.find((n) => n.id === npcId);
+  if (!npc?.skills) return defaultValue;
+  const lower = skillName.toLowerCase();
+  for (const [k, v] of Object.entries(npc.skills)) {
+    if (k.toLowerCase() === lower) return v;
+  }
+  return defaultValue;
+}
+
+/** Get an NPC's detection skill value (Spot Hidden > Perception > base 25). */
+function getDetectionSkillValue(
+  dgsm: DynamicGameStateManager,
+  npcId: string
+): number {
+  const npc = dgsm.getState().npcCharacters.find((n) => n.id === npcId);
+  const skills = npc?.skills ?? {};
+  const lower = Object.fromEntries(
+    Object.entries(skills).map(([k, v]) => [k.toLowerCase(), v])
+  );
+  return lower["spot hidden"] ?? lower["perception"] ?? 25;
+}
+
+/**
+ * Roll a Stealth check for a hidden NPC during movement.
+ * Returns true if the NPC stays hidden.
+ */
+function rollStealthForMovement(
+  dgsm: DynamicGameStateManager,
+  npcId: string
+): boolean {
+  const stealthValue = getNpcSkillValue(dgsm, npcId, "Stealth", 20);
+  const roll = rollD100();
+  const level = getSuccessLevel(roll, stealthValue);
+  return level !== "fail" && level !== "fumble";
+}
+
+/**
+ * Opposed roll: observer's detection vs hidden NPC's Stealth.
+ * Returns true if the observer detects the hidden NPC.
+ */
+function tryDetectHidden(
+  dgsm: DynamicGameStateManager,
+  observerId: string,
+  hiddenNpcId: string
+): boolean {
+  const detectionValue = getDetectionSkillValue(dgsm, observerId);
+  const stealthValue = getNpcSkillValue(dgsm, hiddenNpcId, "Stealth", 20);
+
+  const observerRoll = rollD100();
+  const stealthRoll = rollD100();
+  const observerLevel = getSuccessLevel(observerRoll, detectionValue);
+  const stealthLevel = getSuccessLevel(stealthRoll, stealthValue);
+
+  // Observer must win strictly to detect
+  return SUCCESS_RANK[observerLevel] > SUCCESS_RANK[stealthLevel];
+}
 
 interface ItemActionContext {
   itemId?: string;
@@ -226,7 +293,10 @@ function buildImpactMemoryContent(
 }
 
 function getNodeDurationMinutes(node: PlanNode): number {
-  return Math.max(1, timeToMinutes(node.endTime) - timeToMinutes(node.startTime));
+  return Math.max(
+    1,
+    timeToMinutes(node.endTime) - timeToMinutes(node.startTime)
+  );
 }
 
 function startNode(node: PlanNode, currentTime: string): PlanNode {
@@ -249,11 +319,7 @@ function interpolateMovementPosition(
   to: CharacterPosition,
   progress: number
 ): CharacterPosition {
-  if (
-    from.type === "road" &&
-    to.type === "road" &&
-    from.roadId === to.roadId
-  ) {
+  if (from.type === "road" && to.type === "road" && from.roadId === to.roadId) {
     return {
       type: "road",
       roadId: from.roadId,
@@ -314,12 +380,16 @@ function initializeMovementNode(
     const currentScene = state.scenes.get(currentPosition.sceneId);
     const targetScene = state.scenes.get(node.location);
     if (
-      currentScene && targetScene &&
+      currentScene &&
+      targetScene &&
       currentScene.parentLocationId === targetScene.parentLocationId &&
       currentScene.parentLocationId !== "OUTDOOR" &&
       currentPosition.sceneId !== node.location
     ) {
-      const targetPos: CharacterPosition = { type: "scene", sceneId: node.location };
+      const targetPos: CharacterPosition = {
+        type: "scene",
+        sceneId: node.location,
+      };
       const moveDuration = Math.max(1, node.executionMeta.remainingMinutes);
       return {
         ...startNode(node, currentTime),
@@ -328,16 +398,18 @@ function initializeMovementNode(
           startedAt: currentTime,
           remainingMinutes: moveDuration,
           movement: {
-            routeSnapshot: [{
-              kind: "to_scene",
-              from: currentPosition,
-              to: targetPos,
-              durationMinutes: moveDuration,
-              blockCheck: {
-                fromId: currentPosition.sceneId,
-                toId: node.location,
+            routeSnapshot: [
+              {
+                kind: "to_scene",
+                from: currentPosition,
+                to: targetPos,
+                durationMinutes: moveDuration,
+                blockCheck: {
+                  fromId: currentPosition.sceneId,
+                  toId: node.location,
+                },
               },
-            }],
+            ],
             currentStepIndex: 0,
             minutesIntoStep: 0,
             lastReachablePosition: currentPosition,
@@ -415,7 +487,8 @@ function processImmediateMovementTransitions(
   while (true) {
     const currentMovement = currentNode.executionMeta.movement;
     if (!currentMovement) break;
-    const step = currentMovement.routeSnapshot[currentMovement.currentStepIndex];
+    const step =
+      currentMovement.routeSnapshot[currentMovement.currentStepIndex];
     if (!step || step.durationMinutes > 0) break;
 
     const blockedReason = step.blockCheck
@@ -522,7 +595,10 @@ function advanceMovementNodeOneMinute(
 
   const blockedReason =
     movement.minutesIntoStep === 0 && step.blockCheck
-      ? dgsm.getConnectionBlockReason(step.blockCheck.fromId, step.blockCheck.toId)
+      ? dgsm.getConnectionBlockReason(
+          step.blockCheck.fromId,
+          step.blockCheck.toId
+        )
       : undefined;
   if (blockedReason) {
     const failedNode: PlanNode = {
@@ -558,14 +634,21 @@ function advanceMovementNodeOneMinute(
   const duration = Math.max(1, step.durationMinutes);
   const nextMinutesIntoStep = movement.minutesIntoStep + 1;
   const progress = Math.min(nextMinutesIntoStep / duration, 1);
-  const nextPosition = interpolateMovementPosition(step.from, step.to, progress);
+  const nextPosition = interpolateMovementPosition(
+    step.from,
+    step.to,
+    progress
+  );
   dgsm.setCharacterPosition(node.characterId, nextPosition);
 
   let nextNode: PlanNode = {
     ...processed.node,
     executionMeta: {
       ...processed.node.executionMeta,
-      remainingMinutes: Math.max(0, processed.node.executionMeta.remainingMinutes - 1),
+      remainingMinutes: Math.max(
+        0,
+        processed.node.executionMeta.remainingMinutes - 1
+      ),
       movement: {
         ...movement,
         minutesIntoStep: nextMinutesIntoStep,
@@ -624,7 +707,10 @@ function advanceMovementNodeOneMinute(
   }
 
   const nextMovement = afterMinute.node.executionMeta.movement;
-  if (!nextMovement || !nextMovement.routeSnapshot[nextMovement.currentStepIndex]) {
+  if (
+    !nextMovement ||
+    !nextMovement.routeSnapshot[nextMovement.currentStepIndex]
+  ) {
     const completedNode: PlanNode = {
       ...afterMinute.node,
       status: "completed",
@@ -778,9 +864,10 @@ async function discoverNpcKnowledge(
       discoveries.push({
         id: (meta?.knowledgeId as string) ?? mem.id,
         text: mem.content,
-        difficulty:
-          ((meta?.difficulty as string) ??
-            (mem.type === "secret" ? "hard" : "regular")) as DiscoveryEntry["difficulty"],
+        difficulty: ((meta?.difficulty as string) ??
+          (mem.type === "secret"
+            ? "hard"
+            : "regular")) as DiscoveryEntry["difficulty"],
         source: "npc",
         sourceId: targetNpc.id,
         sourceName: targetNpc.name,
@@ -941,6 +1028,7 @@ interface SingleTickParams {
 interface SingleTickResult {
   actions: CharacterAction[];
   injectedNodes: PlanNode[];
+  worldEvents: import("./types.js").WorldEventDescriptor[];
 }
 
 /**
@@ -1031,7 +1119,9 @@ async function executeSingleTick(
       nodeByNpc.set(node.characterId, node);
       continue;
     }
-    const existingNpc = state.npcCharacters.find((n) => n.id === existing.characterId);
+    const existingNpc = state.npcCharacters.find(
+      (n) => n.id === existing.characterId
+    );
     const nodeNpc = state.npcCharacters.find((n) => n.id === node.characterId);
     const existingDex = existingNpc?.attributes?.DEX ?? 50;
     const nodeDex = nodeNpc?.attributes?.DEX ?? 50;
@@ -1043,8 +1133,10 @@ async function executeSingleTick(
     }
   }
 
-  const allNodes: PlanNode[] = [...nodeByNpc.values(), ...(carryOverNodes ?? [])]
-    .filter((node) => dgsm.isNpcAlive(node.characterId));
+  const allNodes: PlanNode[] = [
+    ...nodeByNpc.values(),
+    ...(carryOverNodes ?? []),
+  ].filter((node) => dgsm.isNpcAlive(node.characterId));
 
   allNodes.sort((a, b) => {
     if (a.status !== b.status) {
@@ -1062,8 +1154,10 @@ async function executeSingleTick(
   const tickActions: CharacterAction[] = [];
   const executedNodes: PlanNode[] = [];
   const nodesReadyToExecute: PlanNode[] = [];
-  const movementFinalizations: Array<{ node: PlanNode; action: CharacterAction }> =
-    [];
+  const movementFinalizations: Array<{
+    node: PlanNode;
+    action: CharacterAction;
+  }> = [];
   const movedNpcIds = new Set<string>();
   const pendingRevisionRequests: Array<{
     npcId: string;
@@ -1115,6 +1209,12 @@ async function executeSingleTick(
       );
       if (advancedMovement.moved) {
         movedNpcIds.add(rawNode.characterId);
+        // Hidden NPC moving: Stealth check to stay concealed
+        if (dgsm.isCharacterHidden(rawNode.characterId)) {
+          if (!rollStealthForMovement(dgsm, rawNode.characterId)) {
+            dgsm.setCharacterHidden(rawNode.characterId, false);
+          }
+        }
       }
       if (advancedMovement.action) {
         movementFinalizations.push({
@@ -1129,9 +1229,57 @@ async function executeSingleTick(
     let node = rawNode;
     if (node.status === "pending") {
       node = startNode(node, tickStartTime);
+      // Fire onNodeStart hooks for feature overlays (e.g., prerequisite location checks)
+      const blocked = registry.startNodeFeatures(node, dgsm);
+      if (blocked) {
+        // Prerequisite failed at action start — abort this node
+        const failedNode: PlanNode = {
+          ...node,
+          status: "failed",
+          executionMeta: {
+            ...node.executionMeta,
+            failedAt: tickStartTime,
+            remainingMinutes: 0,
+            blockedReason: blocked.reason,
+          },
+        };
+        await npcPlanningAgent.updateNode(
+          sessionId,
+          node.characterId,
+          gameDay,
+          failedNode
+        );
+        tickActions.push({
+          characterId: node.characterId,
+          characterName: node.characterName,
+          gameTime: tickStartTime,
+          action: node.action,
+          location: node.location,
+          type: node.type,
+          impact: node.impact ?? 0,
+          status: "failed",
+          failureReason: "prerequisite_not_met",
+          outcome: blocked.reason,
+        });
+        pendingRevisionRequests.push({
+          npcId: node.characterId,
+          trigger: {
+            type: "failure",
+            failureReason: "prerequisite_not_met",
+            action: node.action,
+            gameTime: tickStartTime,
+            failureOutcome: blocked.reason,
+          },
+          reactionQuery: blocked.reason,
+        });
+        continue;
+      }
     }
 
-    const remainingMinutes = Math.max(0, node.executionMeta.remainingMinutes - 1);
+    const remainingMinutes = Math.max(
+      0,
+      node.executionMeta.remainingMinutes - 1
+    );
     if (remainingMinutes > 0) {
       await npcPlanningAgent.updateNode(sessionId, node.characterId, gameDay, {
         ...node,
@@ -1167,6 +1315,13 @@ async function executeSingleTick(
     const action = await handler.execute(node, dgsm, ctx);
     tickActions.push(action);
 
+    // Stealth: successful Stealth → hide; any other action → reveal
+    if (action.status === "completed" && node.skill === "Stealth") {
+      dgsm.setCharacterHidden(node.characterId, true);
+    } else if (dgsm.isCharacterHidden(node.characterId)) {
+      dgsm.setCharacterHidden(node.characterId, false);
+    }
+
     // 3b. Activate feature overlays for this node (per-node, before resolver/memory)
     const featureResults = registry.activateNodeFeatures(node, dgsm);
     const featureNotes = featureResults
@@ -1199,14 +1354,13 @@ async function executeSingleTick(
         ? await discoverNpcKnowledge(node, dgsm, memoryManager)
         : [];
 
-      const skillRollResult =
-        action.successLevel
-          ? {
-              successLevel: action.successLevel,
-              detail: action.rollDetail ?? "",
-              perTargetResults: action.perTargetResults,
-            }
-          : null;
+      const skillRollResult = action.successLevel
+        ? {
+            successLevel: action.successLevel,
+            detail: action.rollDetail ?? "",
+            perTargetResults: action.perTargetResults,
+          }
+        : null;
 
       const delta = await resolveInteractionState(
         node,
@@ -1259,14 +1413,10 @@ async function executeSingleTick(
     }
 
     // 4b. object_interaction: call LLM resolver for item state changes + memories
-    if (
-      action.status === "completed" &&
-      node.type === "object_interaction"
-    ) {
-      const objSkillRollResult =
-        action.successLevel
-          ? { successLevel: action.successLevel, detail: action.rollDetail ?? "" }
-          : null;
+    if (action.status === "completed" && node.type === "object_interaction") {
+      const objSkillRollResult = action.successLevel
+        ? { successLevel: action.successLevel, detail: action.rollDetail ?? "" }
+        : null;
 
       const objDelta = await resolveObjectInteractionState(
         node,
@@ -1307,8 +1457,12 @@ async function executeSingleTick(
         );
         if (relResult) {
           const sign = relResult.scoreDelta >= 0 ? "+" : "";
-          const targetName = state.npcCharacters.find((n) => n.id === targetId)?.name ?? targetId;
-          relParts.push(`[rel:${targetName} ${sign}${relResult.scoreDelta} → ${relResult.newScore}]`);
+          const targetName =
+            state.npcCharacters.find((n) => n.id === targetId)?.name ??
+            targetId;
+          relParts.push(
+            `[rel:${targetName} ${sign}${relResult.scoreDelta} → ${relResult.newScore}]`
+          );
         }
       }
       if (relParts.length > 0) {
@@ -1340,7 +1494,9 @@ async function executeSingleTick(
       // Mirror write: other participants get event memories
       if (memoryManager && action.stateMemories) {
         // Write memories for each target in stateMemories (except actor)
-        for (const [charId, memoryText] of Object.entries(action.stateMemories)) {
+        for (const [charId, memoryText] of Object.entries(
+          action.stateMemories
+        )) {
           if (charId === node.characterId) continue; // actor already written above
           await memoryManager.add({
             npcId: charId,
@@ -1637,7 +1793,9 @@ async function executeSingleTick(
             sessionId,
             npcId
           );
-          const sortedEvents = [...npcEvents].sort((a, b) => b.impact - a.impact);
+          const sortedEvents = [...npcEvents].sort(
+            (a, b) => b.impact - a.impact
+          );
           const primaryEvent = sortedEvents[0]?.event;
           const perspective = primaryEvent
             ? classifyImpactPerspective(npcId, primaryEvent)
@@ -1760,7 +1918,11 @@ async function executeSingleTick(
           }
           if (result.shouldReviseSchedule) {
             const triggerDesc = primaryEvent
-              ? buildImpactEventText(perspective, primaryEvent, sortedEvents[0]?.impact ?? 1)
+              ? buildImpactEventText(
+                  perspective,
+                  primaryEvent,
+                  sortedEvents[0]?.impact ?? 1
+                )
               : "You perceived something relevant.";
             await npcPlanningAgent.reviseSchedule(
               dgsm,
@@ -1827,9 +1989,13 @@ async function executeSingleTick(
   // Drain sanity-triggered emotions (clear from pending queue; no longer persisted as memory)
   drainPendingEmotions(dgsm);
 
+  // Collect world events from features (scene_updated, feature_triggered)
+  const worldEvents = dgsm.drainWorldEvents();
+
   return {
     actions: tickActions,
     injectedNodes,
+    worldEvents,
   };
 }
 
@@ -1851,7 +2017,9 @@ function scanUnplannedEncounters(
   gameDay: number
 ): CharacterAction[] {
   const state = dgsm.getState();
-  const aliveNpcs = state.npcCharacters.filter((npc) => dgsm.isNpcAlive(npc.id));
+  const aliveNpcs = state.npcCharacters.filter((npc) =>
+    dgsm.isNpcAlive(npc.id)
+  );
   const presentNpcs = state.npcCharacters.filter((npc) =>
     Boolean(dgsm.getCharacterPosition(npc.id))
   );
@@ -1875,7 +2043,10 @@ function scanUnplannedEncounters(
   // Build dedup set from already-executed character_interaction actions
   const interactedPairs = new Set<string>();
   for (const action of tickActions) {
-    if (action.type === "character_interaction" && action.targetCharacterIds?.length) {
+    if (
+      action.type === "character_interaction" &&
+      action.targetCharacterIds?.length
+    ) {
       for (const targetId of action.targetCharacterIds) {
         const pairKey = [action.characterId, targetId].sort().join("_");
         interactedPairs.add(pairKey);
@@ -1885,16 +2056,44 @@ function scanUnplannedEncounters(
 
   const encounterEvents: CharacterAction[] = [];
 
+  // When a hidden NPC arrives at a scene, let all present non-hidden NPCs
+  // attempt a Spot Hidden check (the reverse direction of the main loop below).
+  for (const arrivedNpc of aliveNpcs) {
+    if (!arrivedNpcIds.has(arrivedNpc.id)) continue;
+    if (!dgsm.isCharacterHidden(arrivedNpc.id)) continue;
+
+    const arrivedPos = positionByNpc.get(arrivedNpc.id) ?? null;
+    for (const resident of aliveNpcs) {
+      if (resident.id === arrivedNpc.id) continue;
+      if (dgsm.isCharacterHidden(resident.id)) continue;
+      const residentPos = positionByNpc.get(resident.id) ?? null;
+      if (!arePositionsCoLocated(arrivedPos, residentPos, dgsm)) continue;
+
+      if (tryDetectHidden(dgsm, resident.id, arrivedNpc.id)) {
+        dgsm.setCharacterHidden(arrivedNpc.id, false);
+        break; // already revealed, no need for more checks
+      }
+    }
+  }
+
   const locationEncounterMaps = new Map<string, Map<string, string[]>>();
   for (const observer of aliveNpcs) {
     if (!arrivedNpcIds.has(observer.id)) continue;
 
     const observerPos = positionByNpc.get(observer.id) ?? null;
-    const locationId = observerPos ? dgsm.resolveLocationId(observerPos) : undefined;
+    const locationId = observerPos
+      ? dgsm.resolveLocationId(observerPos)
+      : undefined;
     if (!locationId) continue;
 
     for (const other of presentNpcs) {
       if (other.id === observer.id) continue;
+      // Hidden NPCs: opposed Spot Hidden vs Stealth check
+      if (dgsm.isCharacterHidden(other.id)) {
+        if (!tryDetectHidden(dgsm, observer.id, other.id)) continue;
+        // Detection succeeded — reveal the hidden NPC
+        dgsm.setCharacterHidden(other.id, false);
+      }
 
       const pairKey = [observer.id, other.id].sort().join("_");
       if (interactedPairs.has(pairKey)) continue;
@@ -1906,7 +2105,8 @@ function scanUnplannedEncounters(
         locationEncounterMaps.set(locationId, new Map<string, string[]>());
       }
       const npcEncounterMap = locationEncounterMaps.get(locationId)!;
-      if (!npcEncounterMap.has(observer.id)) npcEncounterMap.set(observer.id, []);
+      if (!npcEncounterMap.has(observer.id))
+        npcEncounterMap.set(observer.id, []);
       npcEncounterMap.get(observer.id)!.push(other.id);
     }
   }
@@ -1939,12 +2139,15 @@ function scanUnplannedEncounters(
       }
     }
 
-    // Build one synthetic event per scene
+    // Build one synthetic event per scene (exclude hidden NPCs from visible roster)
     const allNpcIds = new Set<string>();
     for (const [observerId, otherIds] of npcEncounterMap) {
-      allNpcIds.add(observerId);
-      for (const otherId of otherIds) allNpcIds.add(otherId);
+      if (!dgsm.isCharacterHidden(observerId)) allNpcIds.add(observerId);
+      for (const otherId of otherIds) {
+        if (!dgsm.isCharacterHidden(otherId)) allNpcIds.add(otherId);
+      }
     }
+    if (allNpcIds.size === 0) continue;
     const allNpcNames = [...allNpcIds].map((id) => formatPresenceLabel(id));
 
     encounterEvents.push({
@@ -1996,7 +2199,7 @@ export async function runSimulationTick(params: {
 
   return {
     actions: result.actions,
-    events: [], // Events will be constructed by SimulationEventEmitter from actions
+    worldEvents: result.worldEvents,
     dayChanged,
   };
 }

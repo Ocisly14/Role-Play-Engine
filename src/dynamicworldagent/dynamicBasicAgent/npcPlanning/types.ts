@@ -1,4 +1,3 @@
-import type { SimulationEvent } from "../../simulation/types.js";
 import type { CharacterPosition } from "../../state/topologyTypes.js";
 import type { Item } from "../../state/types.js";
 
@@ -201,7 +200,8 @@ export type FailureReason =
   | "target_absent"
   | "object_not_found"
   | "skill_roll_failed"
-  | "bad_luck";
+  | "bad_luck"
+  | "prerequisite_not_met";
 
 export type FailureTrigger = {
   type: "failure";
@@ -228,8 +228,18 @@ export interface RevisePlansResult {
   interruptedAction?: CharacterAction;
 }
 
+export type WorldEventType = "scene_updated" | "feature_triggered";
+
+export interface WorldEventDescriptor {
+  type: WorldEventType;
+  location: string;
+  gameTime: string;
+  description: string;
+  data: Record<string, unknown>;
+}
+
 export interface SimulationTickResult {
   actions: CharacterAction[];
-  events: SimulationEvent[];
+  worldEvents: WorldEventDescriptor[];
   dayChanged: boolean;
 }

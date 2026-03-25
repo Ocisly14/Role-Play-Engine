@@ -389,6 +389,7 @@ function createResolverDgsm() {
   }> = [];
   const characterPositions: Record<string, any> = {};
   const npcStats: Record<string, { hp: number; san: number }> = {};
+  const hiddenCharacterIds = new Set<string>();
 
   return {
     getState() {
@@ -424,6 +425,9 @@ function createResolverDgsm() {
     isNpcAlive(id: string) {
       return (npcStats[id]?.hp ?? 0) > 0;
     },
+    isCharacterHidden(id: string) {
+      return hiddenCharacterIds.has(id);
+    },
     appendSceneCondition() {},
     _addScene(id: string, name: string, items: Item[] = []) {
       scenes.set(id, {
@@ -441,6 +445,10 @@ function createResolverDgsm() {
       npcStats[id] = { hp: 10, san: 50 };
       npcInventories[id] = [];
       npcCharacters.push({ id, name, skills: {}, status: { conditions: [] } });
+    },
+    _setHidden(id: string, hidden: boolean) {
+      if (hidden) hiddenCharacterIds.add(id);
+      else hiddenCharacterIds.delete(id);
     },
   };
 }
@@ -863,5 +871,32 @@ describe("resolveObjectInteractionState (LLM)", () => {
     expect(capturedPrompt).toContain("Critical success");
     // System prompt is in the correct language
     expect(capturedSystem).toContain("zh");
+  });
+
+  it("should still include hidden NPCs in witness prompt context", async () => {
+    const { generateText } = await import("../../../../models/index.js");
+    let capturedPrompt = "";
+    (generateText as any).mockImplementationOnce(async (opts: any) => {
+      capturedPrompt = opts.context;
+      return JSON.stringify({ items: [], memory: "ok" });
+    });
+
+    const dgsm = createResolverDgsm();
+    dgsm._addScene("study", "Study", [makeItem({ id: "pen", name: "Pen" })]);
+    dgsm._addNpc("actor1", "Investigator", "study");
+    dgsm._addNpc("npc_visible", "Visible Witness", "study");
+    dgsm._addNpc("npc_hidden", "Hidden Witness", "study");
+    dgsm._setHidden("npc_hidden", true);
+
+    await resolveObjectInteractionState(
+      makeObjNode(),
+      dgsm as any,
+      {} as any,
+      null,
+      "en"
+    );
+
+    expect(capturedPrompt).toContain("Visible Witness");
+    expect(capturedPrompt).toContain("Hidden Witness");
   });
 });

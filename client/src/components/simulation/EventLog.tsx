@@ -14,6 +14,11 @@ const SYSTEM_EVENT_TYPES = new Set([
 
 const ACTION_EVENT_TYPES = new Set(["action_executed", "action_failed"]);
 
+const WORLD_EVENT_TYPES = new Set([
+  "scene_updated",
+  "feature_triggered",
+]);
+
 function sanitizeOutcomeForDisplay(outcome: string | undefined): string | undefined {
   if (!outcome) return outcome;
 
@@ -41,6 +46,9 @@ export function EventLog({ events }: EventLogProps) {
       {events.map((event) => {
         if (SYSTEM_EVENT_TYPES.has(event.type)) {
           return <SystemMessage key={event.id} event={event} />;
+        }
+        if (WORLD_EVENT_TYPES.has(event.type)) {
+          return <WorldEventMessage key={event.id} event={event} />;
         }
         if (ACTION_EVENT_TYPES.has(event.type)) {
           return <ActionMessage key={event.id} event={event} />;
@@ -109,6 +117,27 @@ function SystemMessage({ event }: { event: SimulationEvent }) {
   );
 }
 
+function WorldEventMessage({ event }: { event: SimulationEvent }) {
+  const { t } = useTranslation("simulation");
+  const description = (event.data.description as string) || event.type.replace(/_/g, " ");
+
+  return (
+    <div className="rounded-lg px-3 py-2 text-xs bg-amber-50/60 border border-amber-200/50">
+      <div className="flex items-center justify-between mb-0.5">
+        <span className="font-semibold text-amber-800">
+          {t("events.worldEvent")}
+        </span>
+        <span className="text-[10px] text-slate-400 ml-2 shrink-0">
+          {event.gameTime}
+        </span>
+      </div>
+      <div className="text-[11px] leading-relaxed text-amber-700">
+        {description}
+      </div>
+    </div>
+  );
+}
+
 function CompactMessage({ event }: { event: SimulationEvent }) {
   return (
     <div className="px-2 py-1 text-[11px] text-slate-500 flex items-center gap-1.5">
@@ -124,12 +153,6 @@ function formatCompactText(event: SimulationEvent): string {
   switch (event.type) {
     case "npc_moved":
       return `${name} → ${event.location}`;
-    case "relationship_changed":
-      return `${name} — relationship`;
-    case "clue_discovered":
-      return `${name} — clue`;
-    case "encounter":
-      return `${name} — encounter`;
     default:
       return `${name} — ${event.type.replace(/_/g, " ")}`;
   }

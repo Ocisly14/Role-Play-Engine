@@ -87,7 +87,11 @@ export const characterInteractionHandler: NodeHandler = {
       const targetLocation = targetPos
         ? dgsm.resolveLocationId(targetPos)
         : undefined;
-      if (targetLocation && !arePositionsCoLocated(pos, targetPos, dgsm)) {
+      if (
+        targetLocation &&
+        (!arePositionsCoLocated(pos, targetPos, dgsm) ||
+          dgsm.isCharacterHidden(targetId))
+      ) {
         return makeAction(
           node,
           "failed",

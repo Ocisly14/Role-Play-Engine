@@ -78,10 +78,8 @@
     "day": "第 {{day}} 天",
     "died": "{{name}} 已死亡",
     "movedTo": "{{name}} 移动至 {{location}}",
-    "relationshipChanged": "{{name}} — 关系变化",
-    "clueDiscovered": "{{name}} 发现了线索",
-    "encounter": "{{name}} — 遭遇事件",
-    "unknown": "未知"
+    "unknown": "未知",
+    "worldEvent": "世界事件"
   },
   "scenePanel": {
     "description": "场景描述",

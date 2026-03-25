@@ -78,10 +78,8 @@
     "day": "Day {{day}}",
     "died": "{{name}} died",
     "movedTo": "{{name}} moved to {{location}}",
-    "relationshipChanged": "{{name}} — relationship changed",
-    "clueDiscovered": "{{name}} discovered a clue",
-    "encounter": "{{name}} — encounter",
-    "unknown": "Unknown"
+    "unknown": "Unknown",
+    "worldEvent": "World Event"
   },
   "scenePanel": {
     "description": "Description",
