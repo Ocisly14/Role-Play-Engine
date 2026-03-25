@@ -81,7 +81,9 @@
     "died": "{{name}} died",
     "movedTo": "{{name}} moved to {{location}}",
     "unknown": "Unknown",
-    "worldEvent": "World Event"
+    "worldEvent": "World Event",
+    "legacyEncounteredOthers": "Encountered others in person: {{outcome}}",
+    "legacyActionFailed": "Action \"{{action}}\" at {{gameTime}} failed with {{reason}}."
   },
   "scenePanel": {
     "description": "Description",

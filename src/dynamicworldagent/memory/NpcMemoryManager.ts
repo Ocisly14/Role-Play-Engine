@@ -83,10 +83,18 @@ export class NpcMemoryManager {
     let memories: ScoredMemory[];
 
     if (profile.typeLimits) {
-      // Query each type separately with its own limit, then merge
+      // Types with explicit typeLimits: query each separately
+      const explicitTypes = profile.defaultTypes.filter(
+        (t) => t in profile.typeLimits!
+      );
+      // Types without explicit typeLimits: query together with shared defaultLimit
+      const sharedTypes = profile.defaultTypes.filter(
+        (t) => !(t in profile.typeLimits!)
+      );
+
       const perTypeResults = await Promise.all(
-        profile.defaultTypes.map((type) => {
-          const limit = profile.typeLimits![type] ?? profile.defaultLimit;
+        explicitTypes.map((type) => {
+          const limit = profile.typeLimits![type]!;
           return this.retriever.query({
             npcId: params.npcId,
             sessionId: params.sessionId,
@@ -96,6 +104,21 @@ export class NpcMemoryManager {
           });
         })
       );
+
+      if (sharedTypes.length > 0) {
+        const sharedResult = await this.retriever.query({
+          npcId: params.npcId,
+          sessionId: params.sessionId,
+          query,
+          filters: {
+            types: sharedTypes,
+            currentGameDay: params.currentGameDay,
+          },
+          limit: profile.defaultLimit,
+        });
+        perTypeResults.push(sharedResult);
+      }
+
       memories = perTypeResults.flat();
     } else {
       memories = await this.retriever.query({

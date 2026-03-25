@@ -70,11 +70,7 @@ export interface ScoredMemory extends PrismaNpcMemory {
   finalScore: number;
 }
 
-export type ContextPurpose =
-  | "scheduling"
-  | "conversation"
-  | "reaction"
-  | "reasoning";
+export type ContextPurpose = "scheduling" | "reaction" | "detailing";
 
 export type ReasoningTrigger =
   | "day_transition"
@@ -164,21 +160,19 @@ export interface ContextProfile {
 
 export const CONTEXT_PROFILES: Record<ContextPurpose, ContextProfile> = {
   scheduling: {
-    defaultTypes: ["information", "belief", "secret", "summary"],
+    defaultTypes: ["event", "witness", "information", "belief", "secret", "summary"],
     defaultLimit: 20,
-    typeLimits: { summary: 20, information: 0, belief: 0, secret: 10 },
-  },
-  conversation: {
-    defaultTypes: ["event", "information", "belief", "secret", "summary"],
-    defaultLimit: 20,
+    typeLimits: { event: 0, witness: 0, summary: 10, information: 0, belief: 0, secret: 10 },
   },
   reaction: {
-    defaultTypes: ["witness", "belief"],
+    defaultTypes: ["event", "witness", "belief", "secret", "information"],
     defaultLimit: 5,
+    typeLimits: { event: 0, witness: 0 },
   },
-  reasoning: {
-    defaultTypes: ["information", "witness", "event", "belief", "summary"],
-    defaultLimit: 25,
+  detailing: {
+    defaultTypes: ["event", "witness", "belief", "secret", "information"],
+    defaultLimit: 5,
+    typeLimits: { event: 0, witness: 0 },
   },
 };
 

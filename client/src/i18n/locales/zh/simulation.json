@@ -81,7 +81,9 @@
     "died": "{{name}} 已死亡",
     "movedTo": "{{name}} 移动至 {{location}}",
     "unknown": "未知",
-    "worldEvent": "世界事件"
+    "worldEvent": "世界事件",
+    "legacyEncounteredOthers": "与他人面对面相遇：{{outcome}}",
+    "legacyActionFailed": "行动“{{action}}”在 {{gameTime}} 因 {{reason}} 而失败。"
   },
   "scenePanel": {
     "description": "场景描述",

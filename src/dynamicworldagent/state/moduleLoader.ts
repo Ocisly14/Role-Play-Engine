@@ -374,17 +374,17 @@ export function initRuntime(params: {
   const scenarioConditions: Record<string, any[]> = {};
   for (const [sceneId, scene] of moduleData.scenes) {
     if (scene.conditions && scene.conditions.length > 0) {
-      scenarioConditions[sceneId] = scene.conditions;
+      scenarioConditions[sceneId] = [...scene.conditions];
     }
   }
   for (const [id, junc] of moduleData.junctions) {
     if (junc.conditions && junc.conditions.length > 0) {
-      scenarioConditions[id] = junc.conditions;
+      scenarioConditions[id] = [...junc.conditions];
     }
   }
   for (const [id, road] of moduleData.roads) {
     if (road.conditions && road.conditions.length > 0) {
-      scenarioConditions[id] = road.conditions;
+      scenarioConditions[id] = [...road.conditions];
     }
   }
 

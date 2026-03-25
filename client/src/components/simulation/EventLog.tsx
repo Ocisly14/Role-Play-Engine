@@ -30,11 +30,41 @@ function sanitizeOutcomeForDisplay(
     .trim();
 }
 
+function localizeLegacyOutcome(
+  outcome: string | undefined,
+  t: (key: string, params?: Record<string, string>) => string
+): string | undefined {
+  if (!outcome) return outcome;
+
+  const encounteredMatch = outcome.match(
+    /^Encountered others in person:\s*(.+)$/i
+  );
+  if (encounteredMatch) {
+    return t("events.legacyEncounteredOthers", {
+      outcome: encounteredMatch[1]?.trim() ?? "",
+    });
+  }
+
+  const failedMatch = outcome.match(
+    /^Action "(.+)" at ([0-2]\d:[0-5]\d) failed with (.+)\.$/i
+  );
+  if (failedMatch) {
+    return t("events.legacyActionFailed", {
+      action: failedMatch[1]?.trim() ?? "",
+      gameTime: failedMatch[2]?.trim() ?? "",
+      reason: failedMatch[3]?.trim() ?? "",
+    });
+  }
+
+  return outcome;
+}
+
 export function EventLog({ events }: EventLogProps) {
   const { t } = useTranslation("simulation");
   const bottomRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    if (events.length === 0) return;
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [events.length]);
 
@@ -70,7 +100,7 @@ function ActionMessage({ event }: { event: SimulationEvent }) {
     event.actorNpcId ||
     t("events.unknown");
   const outcome = sanitizeOutcomeForDisplay(
-    event.data.outcome as string | undefined
+    localizeLegacyOutcome(event.data.outcome as string | undefined, t)
   );
 
   return (

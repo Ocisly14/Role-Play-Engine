@@ -301,27 +301,43 @@ function formatPlanNodesForLog(
     .join("\n");
 }
 
-function buildImpactTriggerDescription(
+export function buildImpactTriggerDescription(
   npcId: string,
-  trigger: import("./types.js").ImpactTrigger
+  trigger: import("./types.js").ImpactTrigger,
+  language = "en"
 ): string {
   const action = trigger.triggeringAction;
 
   if (action.characterId === "__encounter__") {
-    return `Encountered others in person: ${action.outcome}`;
+    return t("trigger_encountered_others", language, {
+      outcome: action.outcome,
+    });
   }
 
   if (action.targetCharacterIds?.includes(npcId)) {
-    return `You were directly involved: ${action.characterName} targeted you with "${action.action}" (${action.outcome})`;
+    return t("trigger_directly_involved", language, {
+      name: action.characterName,
+      action: action.action,
+      outcome: action.outcome,
+    });
   }
 
-  return `You noticed ${action.characterName} ${action.action.toLowerCase()} (${action.outcome})`;
+  return t("trigger_noticed", language, {
+    name: action.characterName,
+    action: action.action.toLowerCase(),
+    outcome: action.outcome,
+  });
 }
 
-function buildFailureTriggerDescription(
-  trigger: import("./types.js").FailureTrigger
+export function buildFailureTriggerDescription(
+  trigger: import("./types.js").FailureTrigger,
+  language = "en"
 ): string {
-  return `Action "${trigger.action}" at ${trigger.gameTime} failed with ${trigger.failureReason}.`;
+  return t("trigger_action_failed", language, {
+    action: trigger.action,
+    gameTime: trigger.gameTime,
+    reason: trigger.failureReason,
+  });
 }
 
 export class NPCPlanningAgent {
@@ -544,7 +560,15 @@ export class NPCPlanningAgent {
     if (schedule.length === 0) return [];
 
     const longTermIntent = await this.getLongTermIntent(sessionId, npcId);
-    const memoryLog = await this.getNpcDayMemoryLog(sessionId, npcId, gameDay);
+    let memoryLog = "";
+    if (this.memoryManager) {
+      memoryLog = await this.memoryManager.getContext({
+        npcId,
+        sessionId,
+        purpose: "detailing",
+        currentGameDay: gameDay,
+      });
+    }
 
     const currentPos = dgsm.getCharacterPosition(npcId);
     const currentLocationId = currentPos
@@ -764,13 +788,13 @@ export class NPCPlanningAgent {
     // Always fetch longTermIntent (same as normal Layer 1)
     const longTermIntent = await this.getLongTermIntent(sessionId, npcId);
 
-    // Use unified memory with reaction purpose (event-focused retrieval)
+    // Use scheduling profile: full background (info/belief/secret/summary) + today's events/witnesses
     let memoryContext: string | undefined;
     if (this.memoryManager) {
       memoryContext = await this.memoryManager.getContext({
         npcId,
         sessionId,
-        purpose: "reaction",
+        purpose: "scheduling",
         query: triggerDescription,
         currentGameDay: gameDay,
       });
@@ -848,8 +872,8 @@ export class NPCPlanningAgent {
       context.trigger.type === "failure" ? context.trigger : undefined;
     const triggerDescription =
       context.trigger.type === "failure"
-        ? buildFailureTriggerDescription(context.trigger)
-        : buildImpactTriggerDescription(npcId, context.trigger);
+        ? buildFailureTriggerDescription(context.trigger, language)
+        : buildImpactTriggerDescription(npcId, context.trigger, language);
 
     const revisePos = dgsm.getCharacterPosition(npcId);
     const currentLocationId = revisePos
@@ -1610,35 +1634,6 @@ export class NPCPlanningAgent {
     }
   }
 
-  private async getNpcDayMemoryLog(
-    sessionId: string,
-    npcId: string,
-    gameDay: number
-  ): Promise<string> {
-    if (!this.memoryManager) return "";
-
-    const dayMemories = await this.memoryManager.getAllForDay(
-      npcId,
-      sessionId,
-      gameDay
-    );
-    const memories = [...dayMemories]
-      // Daily plan memories duplicate todayPlan and can confuse completion inference.
-      .filter((memory) => memory.type !== "plan")
-      .sort((a, b) => {
-        const timeCompare = (a.gameTime ?? "").localeCompare(b.gameTime ?? "");
-        if (timeCompare !== 0) return timeCompare;
-        return a.createdAt.getTime() - b.createdAt.getTime();
-      });
-
-    if (memories.length === 0) return "";
-
-    const { getAllHandlers } = await import("../../memory/handlers/index.js");
-    const handlers = getAllHandlers();
-    return memories
-      .map((memory) => handlers[memory.type].format(memory))
-      .join("\n");
-  }
 
   async resolveModuleId(sessionId: string): Promise<string | null> {
     const plan = await this.prisma.npcDailyPlan.findFirst({

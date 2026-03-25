@@ -1,5 +1,6 @@
 import * as fs from "node:fs";
 import * as path from "node:path";
+import type { SceneCondition } from "../../../src/dynamicworldagent/dynamicBasicAgent/npcPlanning/types.js";
 import type { SimulationRunner } from "../../../src/dynamicworldagent/simulation/SimulationRunner.js";
 import type {
   MapLayout,
@@ -22,6 +23,26 @@ async function requireRunner(
 
 export function getRunnerById(sessionId: string): SimulationRunner | undefined {
   return getRunnerFromMemory(sessionId);
+}
+
+export function mergeSceneConditions(
+  staticConditions: ReadonlyArray<SceneCondition> = [],
+  runtimeConditions: ReadonlyArray<SceneCondition> = []
+): SceneCondition[] {
+  const merged: SceneCondition[] = [];
+  const seen = new Set<string>();
+
+  for (const condition of [...staticConditions, ...runtimeConditions]) {
+    const key = JSON.stringify({
+      description: condition.description.trim(),
+      mechanicalEffect: condition.mechanicalEffect ?? null,
+    });
+    if (seen.has(key)) continue;
+    seen.add(key);
+    merged.push(condition);
+  }
+
+  return merged;
 }
 
 export async function getTopology(
@@ -56,7 +77,7 @@ export async function getTopology(
       name: s.name,
       description: s.description,
       parentLocationId: s.parentLocationId,
-      conditions: [...(s.conditions ?? []), ...dynamicConditions],
+      conditions: mergeSceneConditions(s.conditions ?? [], dynamicConditions),
       connections: (s.connections ?? []).map((c) => ({
         targetId: typeof c === "string" ? c : c.targetId,
         description: typeof c === "string" ? undefined : c.description,
