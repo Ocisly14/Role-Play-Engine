@@ -22,10 +22,7 @@ export function buildInterruptedAction(
   };
 }
 
-function interruptNode(
-  node: PlanNode,
-  gameTime: string
-): PlanNode {
+function interruptNode(node: PlanNode, gameTime: string): PlanNode {
   return {
     ...node,
     status: "interrupted",

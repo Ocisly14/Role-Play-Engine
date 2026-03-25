@@ -14,7 +14,10 @@ function minutesToTimeLabel(minutes: number): string {
 }
 
 function getNodeDurationMinutes(node: PlanNode): number {
-  return Math.max(1, timeToMinutes(node.endTime) - timeToMinutes(node.startTime));
+  return Math.max(
+    1,
+    timeToMinutes(node.endTime) - timeToMinutes(node.startTime)
+  );
 }
 
 export function buildAutoMovementReplacement(

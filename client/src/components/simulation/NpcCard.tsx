@@ -29,8 +29,7 @@ export function NpcCard({ npc, isSelected, onClick }: NpcCardProps) {
         <div className="text-xs text-slate-800 mt-1">
           <span className="text-rose-500">
             {t("npc.hp")}: {npc.hp}/{npc.maxHp}
-          </span>
-          {" "}
+          </span>{" "}
           <span className="text-sky-500">
             {t("npc.san")}: {npc.sanity}/{npc.maxSanity}
           </span>

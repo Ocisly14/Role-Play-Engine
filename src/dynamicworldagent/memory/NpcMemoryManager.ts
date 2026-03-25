@@ -23,7 +23,11 @@ export class NpcMemoryManager {
   private retriever: MemoryRetriever;
   private decayEngine: DecayEngine;
 
-  constructor(prisma: PrismaClient, embedClient: EmbeddingClient, language = "en") {
+  constructor(
+    prisma: PrismaClient,
+    embedClient: EmbeddingClient,
+    language = "en"
+  ) {
     this.store = new MemoryStore(prisma, embedClient, language);
     this.decayEngine = new DecayEngine();
     this.retriever = new MemoryRetriever(this.store, this.decayEngine);

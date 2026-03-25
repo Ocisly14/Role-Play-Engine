@@ -95,7 +95,9 @@ export const characterInteractionHandler: NodeHandler = {
         return makeAction(
           node,
           "failed",
-          buildOutcome(node, "failed", { reason: `target ${targetId} not present` }),
+          buildOutcome(node, "failed", {
+            reason: `target ${targetId} not present`,
+          }),
           { failureReason: "target_absent" }
         );
       }
@@ -104,9 +106,14 @@ export const characterInteractionHandler: NodeHandler = {
     // 3. Skill roll — opposed rolls handle per-target mechanics
     if (node.skill) {
       const rollResult = ctx.resolveSkillRoll(
-        node, adjustedSkills, dgsm,
+        node,
+        adjustedSkills,
+        dgsm,
         (targetId, rawSkills) => {
-          const targetScenePenalties = ctx.getScenePenalties(node.location, dgsm);
+          const targetScenePenalties = ctx.getScenePenalties(
+            node.location,
+            dgsm
+          );
           const targetCharPenalties = ctx.getCharacterPenalties(targetId, dgsm);
           return ctx.applyPenalties(
             ctx.applyPenalties(rawSkills, targetScenePenalties),
@@ -134,12 +141,9 @@ export const characterInteractionHandler: NodeHandler = {
     }
 
     // 4. Return success — tickProcessor handles LLM resolution and state changes
-    const action = makeAction(
-      node,
-      "completed",
-      node.action,
-      { successLevel: resolvedSuccessLevel }
-    );
+    const action = makeAction(node, "completed", node.action, {
+      successLevel: resolvedSuccessLevel,
+    });
     action.rollDetail = lastRollDetail;
     action.perTargetResults = resolvedPerTargetResults;
     return action;

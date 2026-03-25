@@ -540,7 +540,8 @@ ${params.longTermIntent}
 ## What Just Happened
 ${params.triggerDescription}
 
-${params.failureReason || params.failureOutcome || params.blockedReason
+${
+  params.failureReason || params.failureOutcome || params.blockedReason
     ? `## Why The Last Action Failed
 - Engine failure reason: ${params.failureReason || "unknown"}
 - Detailed outcome: ${params.failureOutcome || "No detailed outcome provided."}
@@ -554,13 +555,15 @@ ${todayPlan}
 ## Relevant Memories / Recent Context
 ${params.memoryLog || "Nothing recorded yet."}
 
-${params.interruptedNode
+${
+  params.interruptedNode
     ? `## Action Being Interrupted
 You were in the middle of this action when the disruption occurred. It is now cancelled — you must account for it in your revised plan.
 ${params.interruptedNode}
 
 `
-    : ""}## Your Pending Actions
+    : ""
+}## Your Pending Actions
 ${params.pendingNodes}
 
 ## Your Current Location

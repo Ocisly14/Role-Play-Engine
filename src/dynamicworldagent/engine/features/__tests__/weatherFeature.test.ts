@@ -32,7 +32,8 @@ function createMockDgsm() {
     [key: string]: unknown;
   };
 
-  const getNodeRef = (id: string) => resolveBlockedConnectionNodeRef(id, { scenes });
+  const getNodeRef = (id: string) =>
+    resolveBlockedConnectionNodeRef(id, { scenes });
 
   api = {
     getFeatureSceneState(featureId: string, sceneId: string) {
@@ -478,7 +479,9 @@ describe("weatherFeature", () => {
       runTicks(dgsm, runtime, 1);
 
       const conditions = dgsm._scenarioConditions["town_square"] ?? [];
-      const weatherCond = conditions.find((c) => c.description.startsWith("[Weather]"));
+      const weatherCond = conditions.find((c) =>
+        c.description.startsWith("[Weather]")
+      );
       expect(weatherCond).toBeDefined();
 
       const penalties = weatherCond!.mechanicalEffect!.skillPenalty!;
@@ -512,7 +515,9 @@ describe("weatherFeature", () => {
       runTicks(dgsm, runtime, 1);
 
       const conditions = dgsm._scenarioConditions["town_square"] ?? [];
-      const weatherCond = conditions.find((c) => c.description.startsWith("[Weather]"));
+      const weatherCond = conditions.find((c) =>
+        c.description.startsWith("[Weather]")
+      );
       expect(weatherCond).toBeDefined();
 
       const penalties = weatherCond!.mechanicalEffect!.skillPenalty!;
@@ -552,7 +557,9 @@ describe("weatherFeature", () => {
       );
 
       // outdoor-to-indoor should NOT be blocked
-      expect(dgsm.getConnectionBlockReason("main_street", "tavern")).toBeUndefined();
+      expect(
+        dgsm.getConnectionBlockReason("main_street", "tavern")
+      ).toBeUndefined();
 
       mockRandom.mockRestore();
     });
@@ -624,7 +631,10 @@ describe("weatherFeature", () => {
 
       runTicks(dgsm, oneMinuteRuntime, 29);
 
-      const beforeTransition = dgsm.getFeatureSceneState("weather", "town") as any;
+      const beforeTransition = dgsm.getFeatureSceneState(
+        "weather",
+        "town"
+      ) as any;
       expect(beforeTransition.weatherType).toBe("rain");
       expect(beforeTransition.intensity).toBe(2);
       expect(beforeTransition.minutesInState).toBe(29);

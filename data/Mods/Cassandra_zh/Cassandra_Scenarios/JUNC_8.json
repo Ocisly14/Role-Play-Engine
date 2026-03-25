@@ -39,7 +39,10 @@
     }
   ],
   "connectedSceneIds": [
-    { "targetId": "SCN_3_SUB_1", "description": "路口正对面是砖石建筑的警察局，嵌有铜质警徽的玻璃正门通往大厅" }
+    {
+      "targetId": "SCN_3_SUB_1",
+      "description": "路口正对面是砖石建筑的警察局，嵌有铜质警徽的玻璃正门通往大厅"
+    }
   ],
   "itemContexts": {
     "ITEM_JUNC8_2": "路口的高杆路灯亮得过分，把警察局门前一小块区域照得几乎没有阴影。",

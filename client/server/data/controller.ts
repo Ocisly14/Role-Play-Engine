@@ -1,8 +1,7 @@
-import type { Request, Response } from "express";
-import { listUserLibrary } from "../mod/library.js";
-import { getPrismaClient } from "../../../src/shared/agents/memory/database/prismaClient.js";
-import path from "path";
 import fs from "fs";
+import path from "path";
+import type { Request, Response } from "express";
+import { getPrismaClient } from "../../../src/shared/agents/memory/database/prismaClient.js";
 
 /**
  * Get all available occupations
@@ -24,7 +23,9 @@ export function getOccupations(req: Request, res: Response): void {
       return;
     }
 
-    const occupationsData = JSON.parse(fs.readFileSync(occupationsFile, "utf-8"));
+    const occupationsData = JSON.parse(
+      fs.readFileSync(occupationsFile, "utf-8")
+    );
 
     res.json({
       success: true,
@@ -32,7 +33,11 @@ export function getOccupations(req: Request, res: Response): void {
     });
   } catch (error) {
     console.error("Error fetching occupations:", error);
-    res.status(500).json({ error: "Failed to fetch occupations: " + (error as Error).message });
+    res
+      .status(500)
+      .json({
+        error: "Failed to fetch occupations: " + (error as Error).message,
+      });
   }
 }
 
@@ -68,7 +73,9 @@ export async function getWeapons(req: Request, res: Response): Promise<void> {
     });
   } catch (error) {
     console.error("Error fetching weapons:", error);
-    res.status(500).json({ error: "Failed to fetch weapons: " + (error as Error).message });
+    res
+      .status(500)
+      .json({ error: "Failed to fetch weapons: " + (error as Error).message });
   }
 }
 
@@ -101,6 +108,8 @@ export async function getMods(req: Request, res: Response): Promise<void> {
     });
   } catch (error) {
     console.error("Error fetching mods:", error);
-    res.status(500).json({ error: "Failed to fetch mods: " + (error as Error).message });
+    res
+      .status(500)
+      .json({ error: "Failed to fetch mods: " + (error as Error).message });
   }
 }

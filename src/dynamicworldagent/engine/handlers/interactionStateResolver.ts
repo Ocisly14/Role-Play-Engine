@@ -18,9 +18,9 @@ import type {
 import type { NpcMemoryManager } from "../../memory/NpcMemoryManager.js";
 import type { DynamicGameStateManager } from "../../state/DynamicGameState.js";
 import type { GameEngineRegistry } from "../registry.js";
-import { resolveTargetPosition } from "./movementHandler.js";
 import { findTopologyPath } from "../shared/pathfinding.js";
 import { buildWorldStateBlock } from "../shared/worldStateBlock.js";
+import { resolveTargetPosition } from "./movementHandler.js";
 
 // ─── Helpers ──────────────────────────────────────────────────────────
 
@@ -33,17 +33,25 @@ export function resolveTargets(node: PlanNode): string[] {
 
 function repairJson(text: string): string {
   text = text.replace(/,\s*([}\]])/g, "$1");
-  text = text.replace(
-    /"(?:[^"\\]|\\.)*"/g,
-    (match) => match.replace(/\n/g, "\\n").replace(/\r/g, "\\r").replace(/\t/g, "\\t")
+  text = text.replace(/"(?:[^"\\]|\\.)*"/g, (match) =>
+    match.replace(/\n/g, "\\n").replace(/\r/g, "\\r").replace(/\t/g, "\\t")
   );
   let inString = false;
   let escape = false;
   const stack: string[] = [];
   for (const ch of text) {
-    if (escape) { escape = false; continue; }
-    if (ch === "\\") { escape = true; continue; }
-    if (ch === '"') { inString = !inString; continue; }
+    if (escape) {
+      escape = false;
+      continue;
+    }
+    if (ch === "\\") {
+      escape = true;
+      continue;
+    }
+    if (ch === '"') {
+      inString = !inString;
+      continue;
+    }
     if (inString) continue;
     if (ch === "{") stack.push("}");
     else if (ch === "[") stack.push("]");
@@ -217,12 +225,15 @@ Return a single JSON object. No extra text. JSON keys must be in English. Write 
 interface SkillRollInput {
   successLevel: SuccessLevel;
   detail: string;
-  perTargetResults?: Record<string, {
-    successLevel: SuccessLevel;
-    actorWon: boolean;
-    detail: string;
-    damage?: number;
-  }>;
+  perTargetResults?: Record<
+    string,
+    {
+      successLevel: SuccessLevel;
+      actorWon: boolean;
+      detail: string;
+      damage?: number;
+    }
+  >;
 }
 
 function buildUserPrompt(
@@ -250,14 +261,21 @@ function buildUserPrompt(
 
   const rollLines: string[] = [];
   if (skillRollResult) {
-    rollLines.push(`Actor skill roll: ${skillRollResult.successLevel} — ${skillRollResult.detail}`);
+    rollLines.push(
+      `Actor skill roll: ${skillRollResult.successLevel} — ${skillRollResult.detail}`
+    );
     if (skillRollResult.perTargetResults) {
       rollLines.push("Opposed results per target:");
-      for (const [targetId, r] of Object.entries(skillRollResult.perTargetResults)) {
-        const targetName = targets.find(t => t.id === targetId)?.name ?? targetId;
+      for (const [targetId, r] of Object.entries(
+        skillRollResult.perTargetResults
+      )) {
+        const targetName =
+          targets.find((t) => t.id === targetId)?.name ?? targetId;
         const wonLabel = r.actorWon ? "Actor wins" : "Target resists";
         const damagePart = r.damage != null ? `, damage: ${r.damage}` : "";
-        rollLines.push(`  ${targetName} (${targetId}): ${r.detail} — ${wonLabel}${damagePart}`);
+        rollLines.push(
+          `  ${targetName} (${targetId}): ${r.detail} — ${wonLabel}${damagePart}`
+        );
       }
     }
   } else {
@@ -273,9 +291,7 @@ function buildUserPrompt(
     actor.appearance ? `Appearance: ${actor.appearance}` : null,
     actor.personality ? `Personality: ${actor.personality}` : null,
     `Status: ${actor.isAlive ? "alive" : "dead"}`,
-    actor.stats
-      ? `Stats: HP=${actor.stats.hp}, SAN=${actor.stats.san}`
-      : null,
+    actor.stats ? `Stats: HP=${actor.stats.hp}, SAN=${actor.stats.san}` : null,
     `Inventory: ${JSON.stringify(actor.inventory)}`,
     `Position: ${actor.position ?? "unknown"}`,
     actor.conditions.length > 0
@@ -288,14 +304,14 @@ function buildUserPrompt(
   const targetSections = targets
     .map((t) => {
       const rel = relationships.find((r) => r.targetId === t.id);
-      const targetKnowledge = availableKnowledge.filter((k) => k.sourceId === t.id);
+      const targetKnowledge = availableKnowledge.filter(
+        (k) => k.sourceId === t.id
+      );
       const knowledgeLines =
         targetKnowledge.length > 0
           ? [
               `Candidate knowledge known by this target (you must decide what, if anything, gets transferred):`,
-              ...targetKnowledge.map(
-                (k) => `  [${k.difficulty}] "${k.text}"`
-              ),
+              ...targetKnowledge.map((k) => `  [${k.difficulty}] "${k.text}"`),
             ]
           : null;
 
@@ -353,21 +369,31 @@ function buildSceneBlock(
     `ID: ${(scene as any).id ?? node.location}`,
     `Name: ${(scene as any).name ?? "unknown"}`,
     `Description: ${(scene as any).description ?? ""}`,
-    conditions.length > 0
-      ? `Conditions: ${JSON.stringify(conditions)}`
-      : null,
+    conditions.length > 0 ? `Conditions: ${JSON.stringify(conditions)}` : null,
     items.length > 0
       ? `Items: ${JSON.stringify(
-          items.map((i: any) => ({ id: i.id, name: i.name, description: i.description }))
+          items.map((i: any) => ({
+            id: i.id,
+            name: i.name,
+            description: i.description,
+          }))
         )}`
       : null,
     connections.length > 0
-      ? `Connected locations: ${JSON.stringify(connections.map((c: any) => {
-          const entry: any = { targetId: c.targetId, description: c.description };
-          const blockReason = dgsm.getConnectionBlockReason(node.location, c.targetId);
-          if (blockReason) entry.blocked = blockReason;
-          return entry;
-        }))}`
+      ? `Connected locations: ${JSON.stringify(
+          connections.map((c: any) => {
+            const entry: any = {
+              targetId: c.targetId,
+              description: c.description,
+            };
+            const blockReason = dgsm.getConnectionBlockReason(
+              node.location,
+              c.targetId
+            );
+            if (blockReason) entry.blocked = blockReason;
+            return entry;
+          })
+        )}`
       : null,
   ]
     .filter(Boolean)
@@ -417,7 +443,12 @@ export async function resolveInteractionState(
   const sceneBlock = buildSceneBlock(node, dgsm);
 
   // Build world state block (weather, fire, stamina, sanity)
-  const worldStateBlock = buildWorldStateBlock(dgsm, node.characterId, node.location, registry);
+  const worldStateBlock = buildWorldStateBlock(
+    dgsm,
+    node.characterId,
+    node.location,
+    registry
+  );
 
   // Build prompts
   const systemPrompt = buildSystemPrompt(language);
@@ -434,7 +465,8 @@ export async function resolveInteractionState(
 
   // Inject feature activation notes (e.g. ritual invoke failed)
   if (featureNotes && featureNotes.length > 0) {
-    userPrompt += "\n\n## Feature Activation Results\n" + featureNotes.join("\n");
+    userPrompt +=
+      "\n\n## Feature Activation Results\n" + featureNotes.join("\n");
   }
 
   try {
@@ -462,8 +494,7 @@ export async function resolveInteractionState(
       const raw = parsed.targetChanges?.[tId];
       targetChanges[tId] = {
         ...raw,
-        memory:
-          raw?.memory ?? `${node.characterName} interacted with me.`,
+        memory: raw?.memory ?? `${node.characterName} interacted with me.`,
       };
     }
 
@@ -551,7 +582,9 @@ export async function applyCharacterDelta(
         const locationId = dgsm.resolveLocationId(pos);
         const scene = dgsm.getScene(locationId);
         if (scene && (scene as any).items) {
-          const items = (scene as any).items as import("../../state/types.js").Item[];
+          const items = (scene as any).items as import(
+            "../../state/types.js"
+          ).Item[];
           const idx = items.findIndex((i) => i.id === itemId);
           if (idx !== -1) {
             const [item] = items.splice(idx, 1);

@@ -61,13 +61,14 @@ export function useSimulationState(sessionId: string | null) {
 
     async function loadInitialState() {
       try {
-        const [topology, positions, statuses, status, playback] = await Promise.all([
-          simApi.fetchTopology(sessionId),
-          simApi.fetchPositions(sessionId),
-          simApi.fetchNpcStatuses(sessionId),
-          simApi.fetchStatus(sessionId),
-          simApi.fetchPlaybackStatus(sessionId).catch(() => null),
-        ]);
+        const [topology, positions, statuses, status, playback] =
+          await Promise.all([
+            simApi.fetchTopology(sessionId),
+            simApi.fetchPositions(sessionId),
+            simApi.fetchNpcStatuses(sessionId),
+            simApi.fetchStatus(sessionId),
+            simApi.fetchPlaybackStatus(sessionId).catch(() => null),
+          ]);
         const displayStartTime =
           status.state === "running" &&
           playback?.displayStartTime &&
@@ -169,7 +170,10 @@ export function useSimulationState(sessionId: string | null) {
           };
           newState.simulationState = data.state;
           if (typeof data.ticksExecuted === "number") {
-            newState.displayTick = Math.max(newState.displayTick, data.ticksExecuted);
+            newState.displayTick = Math.max(
+              newState.displayTick,
+              data.ticksExecuted
+            );
           }
           newState.displayStartTime =
             data.state === "running" &&

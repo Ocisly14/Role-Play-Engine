@@ -27,11 +27,7 @@
     "maxSanity": 45,
     "luck": 45,
     "mp": 9,
-    "conditions": [
-      "酗酒",
-      "严重愧疚",
-      "慢性压力"
-    ]
+    "conditions": ["酗酒", "严重愧疚", "慢性压力"]
   },
   "skills": {
     "Credit Rating": 45,

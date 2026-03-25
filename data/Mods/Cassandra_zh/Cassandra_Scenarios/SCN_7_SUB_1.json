@@ -58,7 +58,12 @@
       }
     }
   ],
-  "connections": [{ "targetId": "SCN_7_SUB_2", "description": "拱形砖壁通道尽头有一道隐蔽暗门，暗门后是一处逼仄的地下操作平台" }],
+  "connections": [
+    {
+      "targetId": "SCN_7_SUB_2",
+      "description": "拱形砖壁通道尽头有一道隐蔽暗门，暗门后是一处逼仄的地下操作平台"
+    }
+  ],
   "itemContexts": {
     "ITEM_SCN7_5": "通往下方的铁梯每一级都覆着苔藓和水膜，踩上去带着让人不安的滑腻感。"
   }

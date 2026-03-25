@@ -10,18 +10,75 @@
   "residence": "SCN_7",
   "currentLocation": "SCN_7",
   "longTermIntent": "在隐藏血脉中最糟糕部分的同时生存下去，保持日常的人类接触可控，等待大海的召唤而不被过早地暴露。",
-  "attributes": {"STR": 55, "CON": 60, "DEX": 55, "APP": 35, "POW": 50, "SIZ": 60, "INT": 55, "EDU": 40},
-  "status": {"hp": 12, "maxHp": 12, "sanity": 0, "maxSanity": 0, "luck": 0, "mp": 10, "conditions": []},
-  "skills": {"Stealth": 46, "Swim": 60, "Jump": 45, "Dodge": 30, "Listen": 50, "Fighting": 45},
+  "attributes": {
+    "STR": 55,
+    "CON": 60,
+    "DEX": 55,
+    "APP": 35,
+    "POW": 50,
+    "SIZ": 60,
+    "INT": 55,
+    "EDU": 40
+  },
+  "status": {
+    "hp": 12,
+    "maxHp": 12,
+    "sanity": 0,
+    "maxSanity": 0,
+    "luck": 0,
+    "mp": 10,
+    "conditions": []
+  },
+  "skills": {
+    "Stealth": 46,
+    "Swim": 60,
+    "Jump": 45,
+    "Dodge": 30,
+    "Listen": 50,
+    "Fighting": 45
+  },
   "inventory": [],
   "relationships": [
-    {"targetId": "Marks White", "targetName": "Marks White", "relationshipType": "family", "attitude": 30, "description": "同样在卡森德拉携带印斯茅斯血脉的混血同族。", "history": "两人都是镇上深潜者血脉的后裔，理解同样缓慢的不可避免。"}
+    {
+      "targetId": "Marks White",
+      "targetName": "Marks White",
+      "relationshipType": "family",
+      "attitude": 30,
+      "description": "同样在卡森德拉携带印斯茅斯血脉的混血同族。",
+      "history": "两人都是镇上深潜者血脉的后裔，理解同样缓慢的不可避免。"
+    }
   ],
   "memory": [
-    {"type": "information", "content": "我在表面上像人类一样衰老，但如果我活得够久，我的血液会一直改变我，直到我变成一个完全的深潜者。", "metadata": {"knowledgeId": "k_hybrid_transformation", "difficulty": "regular"}},
-    {"type": "information", "content": "我在水源、排水管和地下通道附近感到最安全，因为那些地方让我更容易呼吸、隐藏和倾听。", "metadata": {"knowledgeId": "k_hybrid_breath", "difficulty": "regular"}},
-    {"type": "information", "content": "当我在夜晚听到大海的声音时，我能感受到血脉的拉扯比我被赋予的任何人类名字都要强烈。", "metadata": {"knowledgeId": "k_hybrid_sea_pull", "difficulty": "hard"}},
-    {"type": "secret", "content": "随着年龄增长，深潜者和大海对我的回应越来越清晰，我可能有一天会完全停止抵抗。", "metadata": {"knowledgeId": "s_hybrid_commune"}},
-    {"type": "belief", "content": "我知道大海最终会像对待每一个混血那样将我收回，与这个事实抗争只能改变我能假装多久。", "metadata": {"confidence": 0.85, "reasoningChain": "变异是遗传的、有耐心的。恐惧无法改变血统。"}}
+    {
+      "type": "information",
+      "content": "我在表面上像人类一样衰老，但如果我活得够久，我的血液会一直改变我，直到我变成一个完全的深潜者。",
+      "metadata": {
+        "knowledgeId": "k_hybrid_transformation",
+        "difficulty": "regular"
+      }
+    },
+    {
+      "type": "information",
+      "content": "我在水源、排水管和地下通道附近感到最安全，因为那些地方让我更容易呼吸、隐藏和倾听。",
+      "metadata": { "knowledgeId": "k_hybrid_breath", "difficulty": "regular" }
+    },
+    {
+      "type": "information",
+      "content": "当我在夜晚听到大海的声音时，我能感受到血脉的拉扯比我被赋予的任何人类名字都要强烈。",
+      "metadata": { "knowledgeId": "k_hybrid_sea_pull", "difficulty": "hard" }
+    },
+    {
+      "type": "secret",
+      "content": "随着年龄增长，深潜者和大海对我的回应越来越清晰，我可能有一天会完全停止抵抗。",
+      "metadata": { "knowledgeId": "s_hybrid_commune" }
+    },
+    {
+      "type": "belief",
+      "content": "我知道大海最终会像对待每一个混血那样将我收回，与这个事实抗争只能改变我能假装多久。",
+      "metadata": {
+        "confidence": 0.85,
+        "reasoningChain": "变异是遗传的、有耐心的。恐惧无法改变血统。"
+      }
+    }
   ]
 }

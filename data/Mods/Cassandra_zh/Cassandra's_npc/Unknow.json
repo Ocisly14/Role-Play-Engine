@@ -27,9 +27,7 @@
     "maxSanity": 60,
     "luck": 55,
     "mp": 12,
-    "conditions": [
-      "已死亡"
-    ]
+    "conditions": ["已死亡"]
   },
   "skills": {
     "Spot Hidden": 50,

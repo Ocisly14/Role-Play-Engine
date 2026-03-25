@@ -99,7 +99,9 @@ function createDgsm(): DynamicGameStateManager {
 
 function createThrowingPrisma() {
   const unexpectedCall = (label: string) => {
-    throw new Error(`Unexpected Prisma call while testing dead-NPC guard: ${label}`);
+    throw new Error(
+      `Unexpected Prisma call while testing dead-NPC guard: ${label}`
+    );
   };
 
   return {
@@ -145,7 +147,13 @@ function createInMemoryPrisma(seedPlans: PlanRecord[]) {
       findUnique: async ({
         where,
       }: {
-        where: { sessionId_npcId_gameDay: { sessionId: string; npcId: string; gameDay: number } };
+        where: {
+          sessionId_npcId_gameDay: {
+            sessionId: string;
+            npcId: string;
+            gameDay: number;
+          };
+        };
       }) => {
         const { sessionId, npcId, gameDay } = where.sessionId_npcId_gameDay;
         return plans.get(keyOf(sessionId, npcId, gameDay)) ?? null;
@@ -170,7 +178,8 @@ function createInMemoryPrisma(seedPlans: PlanRecord[]) {
         where?: { sessionId?: string; gameDay?: number };
       }) =>
         [...plans.values()].filter((plan) => {
-          if (where?.sessionId && plan.sessionId !== where.sessionId) return false;
+          if (where?.sessionId && plan.sessionId !== where.sessionId)
+            return false;
           if (where?.gameDay && plan.gameDay !== where.gameDay) return false;
           return true;
         }),
@@ -178,7 +187,13 @@ function createInMemoryPrisma(seedPlans: PlanRecord[]) {
         where,
         data,
       }: {
-        where: { sessionId_npcId_gameDay: { sessionId: string; npcId: string; gameDay: number } };
+        where: {
+          sessionId_npcId_gameDay: {
+            sessionId: string;
+            npcId: string;
+            gameDay: number;
+          };
+        };
         data: { nodes?: PlanNode[]; schedule?: unknown[] };
       }) => {
         const { sessionId, npcId, gameDay } = where.sessionId_npcId_gameDay;
@@ -198,7 +213,13 @@ function createInMemoryPrisma(seedPlans: PlanRecord[]) {
         create,
         update,
       }: {
-        where: { sessionId_npcId_gameDay: { sessionId: string; npcId: string; gameDay: number } };
+        where: {
+          sessionId_npcId_gameDay: {
+            sessionId: string;
+            npcId: string;
+            gameDay: number;
+          };
+        };
         create: PlanRecord;
         update: { nodes?: PlanNode[]; schedule?: unknown[] };
       }) => {
@@ -209,7 +230,9 @@ function createInMemoryPrisma(seedPlans: PlanRecord[]) {
           ? {
               ...existing,
               nodes: update.nodes ? [...update.nodes] : existing.nodes,
-              schedule: update.schedule ? [...update.schedule] : existing.schedule,
+              schedule: update.schedule
+                ? [...update.schedule]
+                : existing.schedule,
             }
           : {
               ...create,
@@ -334,11 +357,17 @@ async function testQueryFiltersAndInterruption(): Promise<void> {
   const agent = new NPCPlanningAgent(prisma as any, {});
 
   const due = await agent.getDueNpcNodes("session", 1, "08:00", dgsm);
-  assert.deepEqual(due.map((node) => node.characterId), ["alive"]);
+  assert.deepEqual(
+    due.map((node) => node.characterId),
+    ["alive"]
+  );
   logPass("dead NPC pending nodes are excluded from due-node selection");
 
   const inProgress = await agent.getInProgressNodes("session", 1, dgsm);
-  assert.deepEqual(inProgress.map((node) => node.characterId), ["alive"]);
+  assert.deepEqual(
+    inProgress.map((node) => node.characterId),
+    ["alive"]
+  );
   logPass("dead NPC in-progress nodes are excluded from active execution");
 
   const currentActionsBefore = await agent.getCurrentNpcActions(
@@ -363,9 +392,15 @@ async function testQueryFiltersAndInterruption(): Promise<void> {
   });
   assert.ok(deadPlan);
   const deadNodes = deadPlan.nodes as PlanNode[];
-  const deadPending = deadNodes.find((node) => node.action === "dead-pending-action");
-  const deadCurrent = deadNodes.find((node) => node.action === "dead-current-action");
-  const deadCompleted = deadNodes.find((node) => node.action === "dead-completed-action");
+  const deadPending = deadNodes.find(
+    (node) => node.action === "dead-pending-action"
+  );
+  const deadCurrent = deadNodes.find(
+    (node) => node.action === "dead-current-action"
+  );
+  const deadCompleted = deadNodes.find(
+    (node) => node.action === "dead-completed-action"
+  );
 
   assert.equal(deadPending?.status, "interrupted");
   assert.equal(deadCurrent?.status, "interrupted");

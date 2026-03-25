@@ -65,8 +65,14 @@
     }
   ],
   "connections": [
-    { "targetId": "SCN_6_SUB_2", "description": "翘裂的木阶梯通向门廊，半掩的大门后即是弥漫霉味的木屋一层内部" },
-    { "targetId": "JUNC_9", "description": "屋前杂草丛生的院落经碎石小径连通新月街B大道东端路口" }
+    {
+      "targetId": "SCN_6_SUB_2",
+      "description": "翘裂的木阶梯通向门廊，半掩的大门后即是弥漫霉味的木屋一层内部"
+    },
+    {
+      "targetId": "JUNC_9",
+      "description": "屋前杂草丛生的院落经碎石小径连通新月街B大道东端路口"
+    }
   ],
   "itemContexts": {
     "ITEM_SCN6_3": "门前和门廊附近能辨认出几组脚印，有的被灰土和风吹得模糊，有的则相对新鲜。",

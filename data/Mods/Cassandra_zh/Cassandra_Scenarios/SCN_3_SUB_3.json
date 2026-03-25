@@ -72,7 +72,10 @@
     }
   ],
   "connections": [
-    { "targetId": "SCN_3_SUB_1", "description": "档案室入口外的侧翼短廊连通警察局大厅，大厅方向灯光明亮" }
+    {
+      "targetId": "SCN_3_SUB_1",
+      "description": "档案室入口外的侧翼短廊连通警察局大厅，大厅方向灯光明亮"
+    }
   ],
   "itemContexts": {
     "ITEM_SCN3_8": "角落里堆着几只敞口纸箱，里面塞满了尚未来得及归档的文件袋与零散卷宗。"

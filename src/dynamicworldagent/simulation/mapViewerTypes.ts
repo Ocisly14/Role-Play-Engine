@@ -1,5 +1,5 @@
-import type { Item, SceneConnection } from "../state/types.js";
 import type { SceneCondition } from "../dynamicBasicAgent/npcPlanning/types.js";
+import type { Item, SceneConnection } from "../state/types.js";
 
 export interface MapLayout {
   junctions: Record<string, { x: number; y: number }>;

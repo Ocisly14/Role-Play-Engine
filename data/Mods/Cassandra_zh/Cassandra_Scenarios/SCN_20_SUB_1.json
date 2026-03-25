@@ -54,7 +54,13 @@
     }
   ],
   "connections": [
-    { "targetId": "SCN_20_SUB_2", "description": "伐木场角落有一间歪斜烟囱的矮小工作屋，周围散布锈蚀机器" },
-    { "targetId": "SCN_20_SUB_3", "description": "伐木场远端有一条荒废泥径，蜿蜒通往遮天蔽日的茂密森林深处" }
+    {
+      "targetId": "SCN_20_SUB_2",
+      "description": "伐木场角落有一间歪斜烟囱的矮小工作屋，周围散布锈蚀机器"
+    },
+    {
+      "targetId": "SCN_20_SUB_3",
+      "description": "伐木场远端有一条荒废泥径，蜿蜒通往遮天蔽日的茂密森林深处"
+    }
   ]
 }

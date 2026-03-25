@@ -64,7 +64,10 @@ export async function updateConfig(req: Request, res: Response) {
       runner.updateMaxDays(maxDays);
       didUpdate = true;
     }
-    if (typeof weather === "string" && WEATHER_TYPES.has(weather as WeatherType)) {
+    if (
+      typeof weather === "string" &&
+      WEATHER_TYPES.has(weather as WeatherType)
+    ) {
       applyGlobalWeather(runner.getDgsm(), weather as WeatherType);
       didUpdate = true;
     }

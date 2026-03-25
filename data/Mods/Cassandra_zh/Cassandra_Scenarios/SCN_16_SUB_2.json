@@ -67,7 +67,12 @@
       }
     }
   ],
-  "connections": [{ "targetId": "SCN_16_SUB_1", "description": "隔层角落有一段窄木楼梯，向下通往驯鹿酒吧一层大厅吧台区" }],
+  "connections": [
+    {
+      "targetId": "SCN_16_SUB_1",
+      "description": "隔层角落有一段窄木楼梯，向下通往驯鹿酒吧一层大厅吧台区"
+    }
+  ],
   "itemContexts": {
     "ITEM_SCN16_6": "围栏边排着几张小圆桌，桌面上还留着深浅不一的酒渍圆环。",
     "ITEM_SCN16_8": "隔层墙面上的几盏壁灯散着微弱琥珀色光芒，照不透角落的阴影。",

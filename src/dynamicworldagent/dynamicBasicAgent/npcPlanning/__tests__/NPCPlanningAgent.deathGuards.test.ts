@@ -1,14 +1,11 @@
 import { describe, expect, it, vi } from "vitest";
-import { NPCPlanningAgent } from "../NPCPlanningAgent.js";
-import type {
-  FailureTrigger,
-  PlanNode,
-} from "../types.js";
 import {
   DynamicGameStateManager,
   initialDynamicGameState,
 } from "../../../state/DynamicGameState.js";
 import type { DynamicNPCProfile } from "../../../state/types.js";
+import { NPCPlanningAgent } from "../NPCPlanningAgent.js";
+import type { FailureTrigger, PlanNode } from "../types.js";
 
 function makeNpc(id: string, hp: number): DynamicNPCProfile {
   return {
@@ -134,14 +131,7 @@ describe("NPCPlanningAgent death guards", () => {
       agent.generateDetailedNodes(dgsm, "session", "dead", 1, "en")
     ).resolves.toEqual([]);
     await expect(
-      agent.ensureNpcNodesAvailable(
-        dgsm,
-        "session",
-        "dead",
-        1,
-        "08:00",
-        "en"
-      )
+      agent.ensureNpcNodesAvailable(dgsm, "session", "dead", 1, "08:00", "en")
     ).resolves.toBeUndefined();
     await expect(
       agent.reviseSchedule(dgsm, "session", "dead", "manual update", "en")
@@ -192,9 +182,9 @@ describe("NPCPlanningAgent death guards", () => {
     await expect(
       agent.getDueNpcNodes("session", 1, "08:00", dgsm)
     ).resolves.toEqual([alivePending]);
-    await expect(
-      agent.getInProgressNodes("session", 1, dgsm)
-    ).resolves.toEqual([aliveInProgress]);
+    await expect(agent.getInProgressNodes("session", 1, dgsm)).resolves.toEqual(
+      [aliveInProgress]
+    );
     await expect(
       agent.getCurrentNpcActions("session", 1, "08:02", dgsm)
     ).resolves.toEqual({

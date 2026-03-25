@@ -178,7 +178,10 @@ export function resolveTargetPosition(
     const outline = (state.scenarioOutlines ?? []).find(
       (o) => o.id === locationId
     );
-    if (outline?.entrySceneId && topology.sceneToParent.has(outline.entrySceneId)) {
+    if (
+      outline?.entrySceneId &&
+      topology.sceneToParent.has(outline.entrySceneId)
+    ) {
       return { type: "scene", sceneId: outline.entrySceneId };
     }
     // Check if it's an interior sub-scene — resolve to building's entry scene
@@ -187,7 +190,10 @@ export function resolveTargetPosition(
       const parentOutline = (state.scenarioOutlines ?? []).find(
         (o) => o.id === scene.parentLocationId
       );
-      if (parentOutline?.entrySceneId && topology.sceneToParent.has(parentOutline.entrySceneId)) {
+      if (
+        parentOutline?.entrySceneId &&
+        topology.sceneToParent.has(parentOutline.entrySceneId)
+      ) {
         return { type: "scene", sceneId: parentOutline.entrySceneId };
       }
     }

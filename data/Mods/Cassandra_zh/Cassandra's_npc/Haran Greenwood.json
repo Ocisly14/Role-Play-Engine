@@ -10,23 +10,100 @@
   "residence": "SCN_21",
   "currentLocation": "SCN_21",
   "longTermIntent": "在火车站安静地度过余生，避免被卷入镇上的事务或危险的秘密。",
-  "attributes": {"STR": 40, "CON": 55, "DEX": 35, "APP": 30, "POW": 50, "SIZ": 50, "INT": 55, "EDU": 60},
-  "status": {"hp": 10, "maxHp": 10, "sanity": 50, "maxSanity": 50, "luck": 45, "mp": 10, "conditions": []},
-  "skills": {"Spot Hidden": 40, "Listen": 45, "Mechanical Repair": 30, "History (Local)": 50},
+  "attributes": {
+    "STR": 40,
+    "CON": 55,
+    "DEX": 35,
+    "APP": 30,
+    "POW": 50,
+    "SIZ": 50,
+    "INT": 55,
+    "EDU": 60
+  },
+  "status": {
+    "hp": 10,
+    "maxHp": 10,
+    "sanity": 50,
+    "maxSanity": 50,
+    "luck": 45,
+    "mp": 10,
+    "conditions": []
+  },
+  "skills": {
+    "Spot Hidden": 40,
+    "Listen": 45,
+    "Mechanical Repair": 30,
+    "History (Local)": 50
+  },
   "inventory": [
-    {"name": "货物交易记录", "properties": {"note": "哈兰多年来见证的货物运输的内部车站记录。"}},
-    {"name": "工棚通道", "properties": {"note": "工棚连接着黑帮总部的入口，同时也是他的警卫岗位。"}}
+    {
+      "name": "货物交易记录",
+      "properties": { "note": "哈兰多年来见证的货物运输的内部车站记录。" }
+    },
+    {
+      "name": "工棚通道",
+      "properties": {
+        "note": "工棚连接着黑帮总部的入口，同时也是他的警卫岗位。"
+      }
+    }
   ],
   "relationships": [
-    {"targetId": "Bruno Galilei", "targetName": "Bruno Galilei", "relationshipType": "friend", "attitude": 30, "description": "一位熟悉的当地警察，偶尔在车站与他聊天。", "history": "他们通过在火车站的日常相遇相识多年。"},
-    {"targetId": "Ben Cleo", "targetName": "Ben Cleo", "relationshipType": "employee", "attitude": 65, "description": "哈兰为之工作并默默效力的人。", "history": "哈兰帮助维持家族在火车站方面生意的秩序和隐秘。"}
+    {
+      "targetId": "Bruno Galilei",
+      "targetName": "Bruno Galilei",
+      "relationshipType": "friend",
+      "attitude": 30,
+      "description": "一位熟悉的当地警察，偶尔在车站与他聊天。",
+      "history": "他们通过在火车站的日常相遇相识多年。"
+    },
+    {
+      "targetId": "Ben Cleo",
+      "targetName": "Ben Cleo",
+      "relationshipType": "employee",
+      "attitude": 65,
+      "description": "哈兰为之工作并默默效力的人。",
+      "history": "哈兰帮助维持家族在火车站方面生意的秩序和隐秘。"
+    }
   ],
   "memory": [
-    {"type": "information", "content": "我在卡森德拉火车站工作了四十多年，了解它最初的地下历史。", "metadata": {"knowledgeId": "k_haran_history", "difficulty": "automatic"}},
-    {"type": "information", "content": "本·克莱奥信任我，因为我让车站安静了几十年，从没要求过比工资更多的东西。", "metadata": {"knowledgeId": "k_haran_ben_trust", "difficulty": "regular"}},
-    {"type": "information", "content": "我的工作记录通过车站的货物流动，我知道哪些货物比其他的更敏感。", "metadata": {"knowledgeId": "k_haran_cargo", "difficulty": "regular"}},
-    {"type": "secret", "content": "我知道工棚连接着黑帮总部的入口，需要时我在那里充当警卫。", "metadata": {"knowledgeId": "s_haran_shack"}},
-    {"type": "secret", "content": "我能分辨哪些货物是普通货运，哪些货物不应该被记录得太清楚。", "metadata": {"knowledgeId": "s_haran_sensitive_cargo"}},
-    {"type": "belief", "content": "对我来说，平安度过余生最安全的方式就是保持有用、保持安静，不问与车站无关的问题。", "metadata": {"confidence": 0.85, "reasoningChain": "几十年的工作教会我，好奇心对我这个年纪的人很少有帮助。"}}
+    {
+      "type": "information",
+      "content": "我在卡森德拉火车站工作了四十多年，了解它最初的地下历史。",
+      "metadata": {
+        "knowledgeId": "k_haran_history",
+        "difficulty": "automatic"
+      }
+    },
+    {
+      "type": "information",
+      "content": "本·克莱奥信任我，因为我让车站安静了几十年，从没要求过比工资更多的东西。",
+      "metadata": {
+        "knowledgeId": "k_haran_ben_trust",
+        "difficulty": "regular"
+      }
+    },
+    {
+      "type": "information",
+      "content": "我的工作记录通过车站的货物流动，我知道哪些货物比其他的更敏感。",
+      "metadata": { "knowledgeId": "k_haran_cargo", "difficulty": "regular" }
+    },
+    {
+      "type": "secret",
+      "content": "我知道工棚连接着黑帮总部的入口，需要时我在那里充当警卫。",
+      "metadata": { "knowledgeId": "s_haran_shack" }
+    },
+    {
+      "type": "secret",
+      "content": "我能分辨哪些货物是普通货运，哪些货物不应该被记录得太清楚。",
+      "metadata": { "knowledgeId": "s_haran_sensitive_cargo" }
+    },
+    {
+      "type": "belief",
+      "content": "对我来说，平安度过余生最安全的方式就是保持有用、保持安静，不问与车站无关的问题。",
+      "metadata": {
+        "confidence": 0.85,
+        "reasoningChain": "几十年的工作教会我，好奇心对我这个年纪的人很少有帮助。"
+      }
+    }
   ]
 }

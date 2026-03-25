@@ -27,9 +27,7 @@
     "maxSanity": 99,
     "luck": 65,
     "mp": 11,
-    "conditions": [
-      "已死亡"
-    ]
+    "conditions": ["已死亡"]
   },
   "skills": {
     "Computer Use": 90,

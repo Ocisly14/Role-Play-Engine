@@ -45,7 +45,12 @@
       }
     }
   ],
-  "connectedSceneIds": [{ "targetId": "SCN_6_SUB_1", "description": "路牌旁有一条碎石小径，经过齐腰高的荒废花园，通往那栋灰白外墙的二层木屋" }],
+  "connectedSceneIds": [
+    {
+      "targetId": "SCN_6_SUB_1",
+      "description": "路牌旁有一条碎石小径，经过齐腰高的荒废花园，通往那栋灰白外墙的二层木屋"
+    }
+  ],
   "itemContexts": {
     "ITEM_JUNC9_2": "两三个金属邮箱集中固定在木桩上，箱门边缘都带着些锈迹。"
   }

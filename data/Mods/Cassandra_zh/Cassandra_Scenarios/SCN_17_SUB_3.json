@@ -54,5 +54,10 @@
       }
     }
   ],
-  "connections": [{ "targetId": "SCN_17_SUB_1", "description": "短窄的石质通道尽头有一扇厚重的石板暗门，门后连通教堂主殿侧壁的隐蔽角落" }]
+  "connections": [
+    {
+      "targetId": "SCN_17_SUB_1",
+      "description": "短窄的石质通道尽头有一扇厚重的石板暗门，门后连通教堂主殿侧壁的隐蔽角落"
+    }
+  ]
 }

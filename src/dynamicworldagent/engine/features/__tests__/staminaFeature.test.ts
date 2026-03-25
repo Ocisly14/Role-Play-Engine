@@ -572,12 +572,18 @@ describe("staminaFeature", () => {
       // Tick until tired to inject condition
       runTicks(dgsm, runtime, 96); // 480 min → tired
 
-      const npc = dgsm.getState().npcCharacters.find((n) => n.id === "npc-test")!;
-      expect(npc.status.conditions.some((c: string) => c.includes("[Fatigue]"))).toBe(true);
+      const npc = dgsm
+        .getState()
+        .npcCharacters.find((n) => n.id === "npc-test")!;
+      expect(
+        npc.status.conditions.some((c: string) => c.includes("[Fatigue]"))
+      ).toBe(true);
 
       restCharacter(dgsm as any, "npc-test");
 
-      expect(npc.status.conditions.some((c: string) => c.includes("[Fatigue]"))).toBe(false);
+      expect(
+        npc.status.conditions.some((c: string) => c.includes("[Fatigue]"))
+      ).toBe(false);
     });
 
     it("should not throw when no stamina state exists", () => {

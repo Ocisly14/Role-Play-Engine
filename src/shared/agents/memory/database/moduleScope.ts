@@ -41,7 +41,6 @@ export async function resolveModuleIdByName(
       orderBy: { updatedAt: "desc" },
     });
     if (owned) return owned.moduleId;
-
   }
 
   const fallback = await prisma.module.findFirst({

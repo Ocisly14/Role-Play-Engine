@@ -101,12 +101,16 @@ export class PlaybackScheduler {
     }
 
     // Auto-start playback when buffer is large enough
-    if (!this.isPlaybackStarted && this.bufferedCount() >= this.minBufferTicks) {
+    if (
+      !this.isPlaybackStarted &&
+      this.bufferedCount() >= this.minBufferTicks
+    ) {
       this.startPlayback();
     }
 
     // Resume from buffering pause (only if wallclock gate has passed)
-    const wallclockReady = !this.displayStartTime || Date.now() >= this.displayStartTime;
+    const wallclockReady =
+      !this.displayStartTime || Date.now() >= this.displayStartTime;
     if (
       this.isPlaybackStarted &&
       !this.displayTimerId &&
@@ -226,7 +230,10 @@ export class PlaybackScheduler {
 
   private startDisplayTimer(): void {
     if (this.displayTimerId) return;
-    this.displayTimerId = setInterval(() => this.releaseNextTick(), this.displayIntervalMs);
+    this.displayTimerId = setInterval(
+      () => this.releaseNextTick(),
+      this.displayIntervalMs
+    );
     // Release the first tick immediately so there's no initial delay
     this.releaseNextTick();
   }
@@ -243,7 +250,8 @@ export class PlaybackScheduler {
     if (events) {
       const lastEvent = events[events.length - 1];
       this.lastReleasedGameDay = lastEvent?.gameDay ?? this.lastReleasedGameDay;
-      this.lastReleasedGameTime = lastEvent?.gameTime ?? this.lastReleasedGameTime;
+      this.lastReleasedGameTime =
+        lastEvent?.gameTime ?? this.lastReleasedGameTime;
       this.broadcastCallback?.(events);
       this.eventBuffer.delete(this.nextDisplayTick);
       this.nextDisplayTick++;
@@ -258,7 +266,9 @@ export class PlaybackScheduler {
   }
 
   /** Create a lightweight meta event (playback_buffering / playback_resumed). */
-  private makeMetaEvent(type: "playback_buffering" | "playback_resumed"): SimulationEvent {
+  private makeMetaEvent(
+    type: "playback_buffering" | "playback_resumed"
+  ): SimulationEvent {
     return {
       id: `meta_${type}_${Date.now()}`,
       sessionId: "",
@@ -269,7 +279,9 @@ export class PlaybackScheduler {
       actorNpcId: "system",
       location: "global",
       data: {
-        ...(this.displayStartTime ? { displayStartTime: this.displayStartTime } : {}),
+        ...(this.displayStartTime
+          ? { displayStartTime: this.displayStartTime }
+          : {}),
       },
       timestamp: new Date(),
     };

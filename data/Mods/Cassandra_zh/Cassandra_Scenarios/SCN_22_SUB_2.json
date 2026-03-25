@@ -33,10 +33,7 @@
         "capacity": 3,
         "locked": true,
         "lockDifficulty": "hard",
-        "contents": [
-          "梦王会仪式手稿",
-          "加塔诺托亚的诅咒画像"
-        ],
+        "contents": ["梦王会仪式手稿", "加塔诺托亚的诅咒画像"],
         "storedItems": [
           {
             "id": "ITEM_SCN22_10_A",
@@ -91,8 +88,14 @@
     }
   ],
   "connections": [
-    { "targetId": "SCN_22_SUB_1", "description": "书房门外短走道连通前方铺着黑白石砖的门厅与会客室" },
-    { "targetId": "SCN_22_SUB_3", "description": "书房靠墙书架后隐藏着一道暗门，狭窄台阶向下通往地下储藏室" }
+    {
+      "targetId": "SCN_22_SUB_1",
+      "description": "书房门外短走道连通前方铺着黑白石砖的门厅与会客室"
+    },
+    {
+      "targetId": "SCN_22_SUB_3",
+      "description": "书房靠墙书架后隐藏着一道暗门，狭窄台阶向下通往地下储藏室"
+    }
   ],
   "itemContexts": {
     "ITEM_SCN22_5": "抽屉锁孔被使用得很频繁，周围木料留下了细小擦痕。",

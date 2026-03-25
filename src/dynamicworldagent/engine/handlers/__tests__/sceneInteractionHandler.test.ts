@@ -13,7 +13,13 @@ function createMockDgsm() {
     skills: Record<string, number>;
     status: { luck: number };
   }> = [];
-  const scenes = new Map<string, { id: string; connections: Array<{ targetId: string; description?: string }> }>();
+  const scenes = new Map<
+    string,
+    {
+      id: string;
+      connections: Array<{ targetId: string; description?: string }>;
+    }
+  >();
   const junctions = new Map<string, unknown>();
   const roads = new Map<string, unknown>();
   const blockedCalls: Array<{
@@ -91,7 +97,10 @@ function createMockDgsm() {
       characterPositions[npcId] = { type: "scene", sceneId };
       npcCharacters.push({ id: npcId, skills: {}, status: { luck: 50 } });
     },
-    _addScene(id: string, connections: Array<{ targetId: string; description?: string }>) {
+    _addScene(
+      id: string,
+      connections: Array<{ targetId: string; description?: string }>
+    ) {
       scenes.set(id, { id, connections });
     },
     _blockedCalls: blockedCalls,

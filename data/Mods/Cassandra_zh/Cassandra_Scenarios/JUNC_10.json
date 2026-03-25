@@ -53,7 +53,10 @@
     }
   ],
   "connectedSceneIds": [
-    { "targetId": "SCN_8_SUB_1", "description": "街道尽头右侧有一条小径，邮箱旁经过后通往住宅区，菲利普的住宅门廊位于不远处" }
+    {
+      "targetId": "SCN_8_SUB_1",
+      "description": "街道尽头右侧有一条小径，邮箱旁经过后通往住宅区，菲利普的住宅门廊位于不远处"
+    }
   ],
   "itemContexts": {
     "ITEM_JUNC10_1": "终点附近并排放着两个塑料垃圾桶，桶盖在风里轻轻颤动。"

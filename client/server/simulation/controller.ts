@@ -106,7 +106,9 @@ export async function getStatus(req: Request, res: Response) {
     const prisma = getPrismaClient();
     const runner = await simulationService.getRunner(prisma, req.params.id);
     if (!runner) {
-      return res.status(404).json({ error: `Simulation ${req.params.id} not found` });
+      return res
+        .status(404)
+        .json({ error: `Simulation ${req.params.id} not found` });
     }
     const status = runner.getStatus();
     const moduleName = runner.getModuleName();
@@ -188,7 +190,9 @@ export async function getPlaybackStatus(req: Request, res: Response) {
     const prisma = getPrismaClient();
     const runner = await simulationService.getRunner(prisma, req.params.id);
     if (!runner) {
-      return res.status(404).json({ error: `Simulation ${req.params.id} not found` });
+      return res
+        .status(404)
+        .json({ error: `Simulation ${req.params.id} not found` });
     }
     return res.json(runner.getPlaybackStatus());
   } catch (error) {

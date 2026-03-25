@@ -111,7 +111,10 @@ function getFireLightContributions(
         const scene = dgsm.getScene(locationId);
         if (scene) {
           for (const conn of scene.connections ?? []) {
-            contributions.push({ sceneId: conn.targetId, lightLevel: adjacentLevel });
+            contributions.push({
+              sceneId: conn.targetId,
+              lightLevel: adjacentLevel,
+            });
           }
         }
       }

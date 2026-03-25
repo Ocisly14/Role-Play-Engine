@@ -43,7 +43,10 @@
   "inventory": [
     { "name": "Wallet", "properties": { "cash": 180 } },
     { "name": "Apartment Keys" },
-    { "name": "Notebook", "properties": { "note": "Small notebook for work notes" } }
+    {
+      "name": "Notebook",
+      "properties": { "note": "Small notebook for work notes" }
+    }
   ],
   "relationships": [
     {
@@ -72,7 +75,10 @@
     {
       "type": "information",
       "content": "Tom Harris is my colleague. We often eat lunch together at the town square. He's been very kind to me since I started.",
-      "metadata": { "knowledgeId": "k_lisa_about_tom", "difficulty": "automatic" }
+      "metadata": {
+        "knowledgeId": "k_lisa_about_tom",
+        "difficulty": "automatic"
+      }
     },
     {
       "type": "information",
@@ -92,7 +98,10 @@
     {
       "type": "belief",
       "content": "Victor is hiding something about the company's finances. The discrepancies I found are too consistent to be mistakes.",
-      "metadata": { "confidence": 0.75, "reasoningChain": "Monthly petty cash shortfall of ~$200, combined with Victor's defensiveness when I asked about the accounts." }
+      "metadata": {
+        "confidence": 0.75,
+        "reasoningChain": "Monthly petty cash shortfall of ~$200, combined with Victor's defensiveness when I asked about the accounts."
+      }
     }
   ]
 }

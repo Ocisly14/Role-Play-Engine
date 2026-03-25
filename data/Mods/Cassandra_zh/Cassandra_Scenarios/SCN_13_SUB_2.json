@@ -71,7 +71,12 @@
       }
     }
   ],
-  "connections": [{ "targetId": "SCN_13_SUB_1", "description": "变形木门外是闲置车间，连通蒸馏塔与储酒罐所在的厂区主体" }],
+  "connections": [
+    {
+      "targetId": "SCN_13_SUB_1",
+      "description": "变形木门外是闲置车间，连通蒸馏塔与储酒罐所在的厂区主体"
+    }
+  ],
   "itemContexts": {
     "ITEM_SCN13_4": "办公室书架上的书大多与酿酒工艺、发酵控制和小型工厂经营有关。",
     "ITEM_SCN13_6": "办公桌上摊着一份几周前的报纸，周围还散着零碎的旧报和剪下来的版面。",

@@ -1,5 +1,5 @@
 import type React from "react";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Outlet, useLocation } from "react-router-dom";
 import { useAuth } from "../../contexts/AuthContext";
 import { useGameSession } from "../../hooks/useGameSession";
@@ -12,7 +12,6 @@ export const MainLayout: React.FC = () => {
   const { clearSession } = gameSession;
   const [showAnalytics, setShowAnalytics] = useState(false);
   const location = useLocation();
-
 
   const handleLogout = async () => {
     try {

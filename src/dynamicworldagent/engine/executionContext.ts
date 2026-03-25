@@ -1,3 +1,4 @@
+import type { NpcMemoryManager } from "../memory/NpcMemoryManager.js";
 import type { GameEngineRegistry } from "./registry.js";
 import {
   applyPenalties,
@@ -6,7 +7,6 @@ import {
   resolveSkillRoll,
 } from "./shared/index.js";
 import type { ExecutionContext } from "./types.js";
-import type { NpcMemoryManager } from "../memory/NpcMemoryManager.js";
 
 export function createExecutionContext(
   registry?: GameEngineRegistry,

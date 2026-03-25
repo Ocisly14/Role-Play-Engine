@@ -1,5 +1,10 @@
 import type { DynamicGameStateManager } from "../state/DynamicGameState.js";
-import type { ActivateResult, NodeHandler, NodeStartBlockedResult, WorldFeature } from "./types.js";
+import type {
+  ActivateResult,
+  NodeHandler,
+  NodeStartBlockedResult,
+  WorldFeature,
+} from "./types.js";
 
 /**
  * Fields that belong to the base PlanNode schema (not type-specific).
@@ -352,7 +357,9 @@ The \`impact\` field on every PlanNode determines **who in the game world percei
         ? [...this.handlers.keys()].join("|")
         : "routine|movement|character_interaction|object_interaction|scene_interaction";
 
-    const langName = options?.language?.startsWith("zh") ? "Chinese" : "English";
+    const langName = options?.language?.startsWith("zh")
+      ? "Chinese"
+      : "English";
 
     const sections: string[] = [];
 

@@ -61,8 +61,14 @@
     }
   ],
   "connections": [
-    { "targetId": "SCN_4_SUB_2", "description": "大堂左侧雕花木门连通一楼的酒店餐厅，餐厅尽头与后厨相连" },
-    { "targetId": "SCN_4_SUB_3", "description": "大堂左侧设有电梯与铺着深红地毯的楼梯，通往二至四楼客房楼层" }
+    {
+      "targetId": "SCN_4_SUB_2",
+      "description": "大堂左侧雕花木门连通一楼的酒店餐厅，餐厅尽头与后厨相连"
+    },
+    {
+      "targetId": "SCN_4_SUB_3",
+      "description": "大堂左侧设有电梯与铺着深红地毯的楼梯，通往二至四楼客房楼层"
+    }
   ],
   "itemContexts": {
     "ITEM_SCN4_1": "弧形的深色胡桃木前台，台面镶嵌黄铜饰条，背后是镀金镜框的椭圆形大镜。台面上整齐地摆放着登记簿、铜制台灯和一个小巧的服务铃。"

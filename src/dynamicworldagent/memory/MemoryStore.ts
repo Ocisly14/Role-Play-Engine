@@ -8,7 +8,11 @@ export class MemoryStore {
   private embedClient: EmbeddingClient;
   private embeddingLanguage: "en" | "zh";
 
-  constructor(prisma: PrismaClient, embedClient: EmbeddingClient, language = "en") {
+  constructor(
+    prisma: PrismaClient,
+    embedClient: EmbeddingClient,
+    language = "en"
+  ) {
     this.prisma = prisma;
     this.embedClient = embedClient;
     this.embeddingLanguage = language.startsWith("zh") ? "zh" : "en";
@@ -27,7 +31,9 @@ export class MemoryStore {
 
     let embeddingBuffer: Uint8Array<ArrayBuffer> | undefined = undefined;
     try {
-      const vector = await this.embedClient.embed(params.content, { language: this.embeddingLanguage });
+      const vector = await this.embedClient.embed(params.content, {
+        language: this.embeddingLanguage,
+      });
       const float32 = new Float32Array(vector);
       // Copy into a plain ArrayBuffer to satisfy Prisma's Bytes type (Uint8Array<ArrayBuffer>)
       const ab = new ArrayBuffer(float32.byteLength);

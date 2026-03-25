@@ -1,9 +1,14 @@
+import { randomUUID } from "crypto";
 import fs from "node:fs";
 import path from "node:path";
-import { randomUUID } from "crypto";
 import type { PrismaClient } from "@prisma/client";
 import { WebSocket } from "ws";
 import { NPCPlanningAgent } from "../../../src/dynamicworldagent/dynamicBasicAgent/npcPlanning/NPCPlanningAgent.js";
+import {
+  type WeatherType,
+  computeSkillPenalties,
+  getWeatherLabel,
+} from "../../../src/dynamicworldagent/engine/features/weatherFeature.js";
 import {
   createDefaultRegistry,
   createExecutionContext,
@@ -26,16 +31,11 @@ import {
 } from "../../../src/dynamicworldagent/state/DynamicGameState.js";
 import { initializeCompleteDynamicGameState } from "../../../src/dynamicworldagent/state/DynamicGameStateLoader.js";
 import { importModule } from "../../../src/dynamicworldagent/state/moduleImporter.js";
+import type { TownTopology } from "../../../src/dynamicworldagent/state/topologyTypes.js";
 import { ModelProviderName } from "../../../src/models/types.js";
 import { EmbeddingClient } from "../../../src/rag/embedding.js";
 import { resolveModuleIdByName } from "../../../src/shared/agents/memory/database/moduleScope.js";
 import { resolveEmailId } from "../../../src/shared/agents/memory/database/userContext.js";
-import {
-  type WeatherType,
-  getWeatherLabel,
-  computeSkillPenalties,
-} from "../../../src/dynamicworldagent/engine/features/weatherFeature.js";
-import type { TownTopology } from "../../../src/dynamicworldagent/state/topologyTypes.js";
 import { DatabaseManager } from "../core/DatabaseManager.js";
 import { WebSocketManager } from "../websocket/WebSocketManager.js";
 
@@ -157,7 +157,11 @@ function buildSimulationBundle(params: {
     (process.env.MODEL_PROVIDER as ModelProviderName) ??
     ModelProviderName.OPENAI;
   const embedClient = new EmbeddingClient(provider);
-  const memoryManager = new NpcMemoryManager(params.prisma, embedClient, params.language);
+  const memoryManager = new NpcMemoryManager(
+    params.prisma,
+    embedClient,
+    params.language
+  );
   const npcPlanningAgent = new NPCPlanningAgent(
     params.prisma,
     {},
@@ -322,7 +326,10 @@ function updateWeatherBlocking(
         continue;
       }
 
-      const reason = dgsm.getConnectionBlockReason(connection.targetId, locationId);
+      const reason = dgsm.getConnectionBlockReason(
+        connection.targetId,
+        locationId
+      );
       if (
         reason &&
         (reason.startsWith("Blocked by storm") ||
@@ -339,8 +346,7 @@ export function applyGlobalWeather(
   weather: WeatherType
 ): void {
   const regionIds = getOutdoorWeatherRegionIds(dgsm);
-  const intensity =
-    weather === "clear" ? 0 : DEFAULT_WEATHER_INTENSITY;
+  const intensity = weather === "clear" ? 0 : DEFAULT_WEATHER_INTENSITY;
 
   for (const regionId of regionIds) {
     const locationIds = getOutdoorLocationIdsForRegion(dgsm, regionId);
@@ -541,7 +547,8 @@ export async function getSimulationEvents(
     typeof filters?.endDay === "number"
   ) {
     const gameDayRange: Record<string, number> = {};
-    if (typeof filters?.startDay === "number") gameDayRange.gte = filters.startDay;
+    if (typeof filters?.startDay === "number")
+      gameDayRange.gte = filters.startDay;
     if (typeof filters?.endDay === "number") gameDayRange.lte = filters.endDay;
     where.gameDay = gameDayRange;
   }

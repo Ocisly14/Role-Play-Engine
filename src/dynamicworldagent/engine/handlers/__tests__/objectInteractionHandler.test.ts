@@ -383,9 +383,7 @@ describe("objectInteractionHandler", () => {
         customCtx
       );
       expect(result.status).toBe("completed");
-      expect((result as any).rollDetail).toBe(
-        "Hard success (roll 22 vs 30)"
-      );
+      expect((result as any).rollDetail).toBe("Hard success (roll 22 vs 30)");
     });
   });
 });

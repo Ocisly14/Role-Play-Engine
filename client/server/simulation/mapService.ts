@@ -11,15 +11,22 @@ import type { CharacterPosition } from "../../../src/dynamicworldagent/state/top
 import { getPrismaClient } from "../../../src/shared/agents/memory/database/prismaClient.js";
 import { getRunner, getRunnerFromMemory } from "./service.js";
 
-async function requireRunner(sessionId: string): Promise<SimulationRunner | undefined> {
-  return getRunnerFromMemory(sessionId) ?? (await getRunner(getPrismaClient(), sessionId));
+async function requireRunner(
+  sessionId: string
+): Promise<SimulationRunner | undefined> {
+  return (
+    getRunnerFromMemory(sessionId) ??
+    (await getRunner(getPrismaClient(), sessionId))
+  );
 }
 
 export function getRunnerById(sessionId: string): SimulationRunner | undefined {
   return getRunnerFromMemory(sessionId);
 }
 
-export async function getTopology(sessionId: string): Promise<TopologyResponse | null> {
+export async function getTopology(
+  sessionId: string
+): Promise<TopologyResponse | null> {
   const runner = await requireRunner(sessionId);
   if (!runner) return null;
   const dgsm = runner.getDgsm();
@@ -75,7 +82,9 @@ export async function getTopology(sessionId: string): Promise<TopologyResponse |
   return { junctions, roads, scenes, scenarioOutlines, transportEdges };
 }
 
-export async function getMapLayout(sessionId: string): Promise<MapLayout | null> {
+export async function getMapLayout(
+  sessionId: string
+): Promise<MapLayout | null> {
   const runner = await requireRunner(sessionId);
   if (!runner) return null;
   const modulePath = runner.getModulePath();
@@ -105,7 +114,9 @@ export async function getPositions(
   return runner.getDgsm().getState().characterPositions;
 }
 
-export async function getNpcStatuses(sessionId: string): Promise<NpcStatusInfo[] | null> {
+export async function getNpcStatuses(
+  sessionId: string
+): Promise<NpcStatusInfo[] | null> {
   const runner = await requireRunner(sessionId);
   if (!runner) return null;
   const dgsm = runner.getDgsm();
@@ -152,7 +163,9 @@ function resolveResidenceName(
   if (!residenceId) return undefined;
   const state = dgsm.getState();
   // Check scenarioOutlines first (macro locations like buildings)
-  const outline = (state.scenarioOutlines ?? []).find((o) => o.id === residenceId);
+  const outline = (state.scenarioOutlines ?? []).find(
+    (o) => o.id === residenceId
+  );
   if (outline) return outline.name;
   // Check scenes
   const scene = state.scenes.get(residenceId);

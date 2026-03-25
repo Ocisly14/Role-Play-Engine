@@ -1,8 +1,8 @@
-import { describe, it, expect, beforeEach, vi } from "vitest";
-import { eventTriggerFeature } from "../eventTriggerFeature.js";
-import type { DynamicGameStateManager } from "../../../state/DynamicGameState.js";
+import { describe, expect, it, vi } from "vitest";
 import type { PlanNode } from "../../../dynamicBasicAgent/npcPlanning/types.js";
+import type { DynamicGameStateManager } from "../../../state/DynamicGameState.js";
 import type { TickRuntimeContext } from "../../types.js";
+import { eventTriggerFeature } from "../eventTriggerFeature.js";
 
 // ===== Minimal mock DGSM =====
 
@@ -112,7 +112,9 @@ function createMockDgsm(options: {
   };
 }
 
-function makeRuntime(overrides: Partial<TickRuntimeContext> = {}): TickRuntimeContext {
+function makeRuntime(
+  overrides: Partial<TickRuntimeContext> = {}
+): TickRuntimeContext {
   return {
     sessionId: "test",
     gameDay: 1,
@@ -357,9 +359,7 @@ describe("eventTriggerFeature", () => {
         npcInventory: {
           "Patrizio von Samsa": [{ name: "加塔诺托亚的诅咒画像" }],
         },
-        npcCharacters: [
-          { id: "Patrizio von Samsa", status: { hp: 10 } },
-        ],
+        npcCharacters: [{ id: "Patrizio von Samsa", status: { hp: 10 } }],
       });
       eventTriggerFeature.tick!(dgsm, makeRuntime());
 
@@ -407,9 +407,7 @@ describe("eventTriggerFeature", () => {
           "Patrizio von Samsa": [{ name: "加塔诺托亚的诅咒画像" }],
         },
         sceneItems: {},
-        npcCharacters: [
-          { id: "Patrizio von Samsa", status: { hp: 10 } },
-        ],
+        npcCharacters: [{ id: "Patrizio von Samsa", status: { hp: 10 } }],
       });
       eventTriggerFeature.tick!(dgsm, makeRuntime());
 
@@ -523,9 +521,9 @@ describe("eventTriggerFeature", () => {
         "event_trigger",
         "gate_of_stars"
       ) as any;
-      expect(afterState.conditionStates["altar_maintenance"].fulfilledToday).toBe(
-        false
-      );
+      expect(
+        afterState.conditionStates["altar_maintenance"].fulfilledToday
+      ).toBe(false);
     });
   });
 
@@ -794,17 +792,28 @@ describe("eventTriggerFeature", () => {
     function fulfillAllAndInvoke(dgsm: DynamicGameStateManager) {
       eventTriggerFeature.tick!(dgsm, makeRuntime());
       eventTriggerFeature.activate!(
-        makeNode({ eventTriggerId: "gate_of_stars", eventTriggerType: "maintain", eventTriggerConditionId: "altar_maintenance" }),
+        makeNode({
+          eventTriggerId: "gate_of_stars",
+          eventTriggerType: "maintain",
+          eventTriggerConditionId: "altar_maintenance",
+        }),
         dgsm
       );
       for (let i = 0; i < 3; i++) {
         eventTriggerFeature.activate!(
-          makeNode({ eventTriggerId: "gate_of_stars", eventTriggerType: "sacrifice", eventTriggerConditionId: "anchor_placement" }),
+          makeNode({
+            eventTriggerId: "gate_of_stars",
+            eventTriggerType: "sacrifice",
+            eventTriggerConditionId: "anchor_placement",
+          }),
           dgsm
         );
       }
       eventTriggerFeature.activate!(
-        makeNode({ eventTriggerId: "gate_of_stars", eventTriggerType: "invoke" }),
+        makeNode({
+          eventTriggerId: "gate_of_stars",
+          eventTriggerType: "invoke",
+        }),
         dgsm
       );
     }
@@ -813,14 +822,18 @@ describe("eventTriggerFeature", () => {
       const { dgsm, scenarioConditions } = createMockDgsm({
         eventTriggerPresets: [gateOfStarsPreset],
         npcPositions: { "Patrizio von Samsa": "SCN_2_SUB_3" },
-        npcInventory: { "Patrizio von Samsa": [{ name: "加塔诺托亚的诅咒画像" }] },
+        npcInventory: {
+          "Patrizio von Samsa": [{ name: "加塔诺托亚的诅咒画像" }],
+        },
         npcCharacters: [{ id: "Patrizio von Samsa", status: { hp: 10 } }],
       });
 
       fulfillAllAndInvoke(dgsm);
 
       expect(scenarioConditions["SCN_2_SUB_3"]).toBeDefined();
-      expect(scenarioConditions["SCN_2_SUB_3"][0].description).toContain("Ritual Complete");
+      expect(scenarioConditions["SCN_2_SUB_3"][0].description).toContain(
+        "Ritual Complete"
+      );
     });
 
     it("should apply witnessSanLoss to characters at site except conductor", () => {
@@ -828,11 +841,13 @@ describe("eventTriggerFeature", () => {
         eventTriggerPresets: [gateOfStarsPreset],
         npcPositions: {
           "Patrizio von Samsa": "SCN_2_SUB_3",
-          "Witness_A": "SCN_2_SUB_3",
-          "Witness_B": "SCN_2_SUB_3",
-          "Far_NPC": "SCN_OTHER",
+          Witness_A: "SCN_2_SUB_3",
+          Witness_B: "SCN_2_SUB_3",
+          Far_NPC: "SCN_OTHER",
         },
-        npcInventory: { "Patrizio von Samsa": [{ name: "加塔诺托亚的诅咒画像" }] },
+        npcInventory: {
+          "Patrizio von Samsa": [{ name: "加塔诺托亚的诅咒画像" }],
+        },
         npcCharacters: [
           { id: "Patrizio von Samsa", status: { hp: 10 } },
           { id: "Witness_A", status: { hp: 10 } },
@@ -846,8 +861,13 @@ describe("eventTriggerFeature", () => {
       fulfillAllAndInvoke(dgsm);
 
       // witnessSanLoss=8 → only witnesses at site, not conductor
-      const witnessCalls = spy.mock.calls.filter(([, d]: [string, number]) => d === -8);
-      expect(witnessCalls.map(([id]: [string]) => id).sort()).toEqual(["Witness_A", "Witness_B"]);
+      const witnessCalls = spy.mock.calls.filter(
+        ([, d]: [string, number]) => d === -8
+      );
+      expect(witnessCalls.map(([id]: [string]) => id).sort()).toEqual([
+        "Witness_A",
+        "Witness_B",
+      ]);
     });
 
     it("should apply globalSanLoss to all alive NPCs", () => {
@@ -855,11 +875,13 @@ describe("eventTriggerFeature", () => {
         eventTriggerPresets: [gateOfStarsPreset],
         npcPositions: {
           "Patrizio von Samsa": "SCN_2_SUB_3",
-          "NPC_A": "SCN_2_SUB_3",
-          "NPC_B": "SCN_OTHER",
-          "NPC_Dead": "SCN_OTHER",
+          NPC_A: "SCN_2_SUB_3",
+          NPC_B: "SCN_OTHER",
+          NPC_Dead: "SCN_OTHER",
         },
-        npcInventory: { "Patrizio von Samsa": [{ name: "加塔诺托亚的诅咒画像" }] },
+        npcInventory: {
+          "Patrizio von Samsa": [{ name: "加塔诺托亚的诅咒画像" }],
+        },
         npcCharacters: [
           { id: "Patrizio von Samsa", status: { hp: 10 } },
           { id: "NPC_A", status: { hp: 10 } },
@@ -873,9 +895,17 @@ describe("eventTriggerFeature", () => {
       fulfillAllAndInvoke(dgsm);
 
       // globalSanLoss=5 → all alive (3), not dead
-      const globalCalls = spy.mock.calls.filter(([, d]: [string, number]) => d === -5);
-      expect(globalCalls.map(([id]: [string]) => id).sort()).toEqual(["NPC_A", "NPC_B", "Patrizio von Samsa"]);
-      expect(spy.mock.calls.filter(([id]: [string]) => id === "NPC_Dead")).toHaveLength(0);
+      const globalCalls = spy.mock.calls.filter(
+        ([, d]: [string, number]) => d === -5
+      );
+      expect(globalCalls.map(([id]: [string]) => id).sort()).toEqual([
+        "NPC_A",
+        "NPC_B",
+        "Patrizio von Samsa",
+      ]);
+      expect(
+        spy.mock.calls.filter(([id]: [string]) => id === "NPC_Dead")
+      ).toHaveLength(0);
     });
   });
 
@@ -884,7 +914,9 @@ describe("eventTriggerFeature", () => {
       const presetWithSan = {
         ...webMaintenancePreset,
         failureEffect: {
-          sceneConditions: [{ sceneId: "SCN_17_SUB_3", description: "[Failed] Web collapsed" }],
+          sceneConditions: [
+            { sceneId: "SCN_17_SUB_3", description: "[Failed] Web collapsed" },
+          ],
           witnessSanLoss: 6,
         },
       };
@@ -892,8 +924,8 @@ describe("eventTriggerFeature", () => {
         eventTriggerPresets: [presetWithSan],
         npcPositions: {
           "Constantine Frollo": "SCN_17_SUB_3",
-          "Witness_X": "SCN_17_SUB_3",
-          "Elsewhere": "SCN_OTHER",
+          Witness_X: "SCN_17_SUB_3",
+          Elsewhere: "SCN_OTHER",
         },
         npcCharacters: [
           { id: "Constantine Frollo", status: { hp: 10 } },
@@ -907,9 +939,13 @@ describe("eventTriggerFeature", () => {
       eventTriggerFeature.tick!(dgsm, makeRuntime({ gameDay: 1 }));
       eventTriggerFeature.tick!(dgsm, makeRuntime({ gameDay: 4 })); // 3 days missed → fail
 
-      expect(scenarioConditions["SCN_17_SUB_3"][0].description).toContain("Failed");
+      expect(scenarioConditions["SCN_17_SUB_3"][0].description).toContain(
+        "Failed"
+      );
       // witnessSanLoss=6 → only Witness_X (not conductor, not elsewhere)
-      const calls = spy.mock.calls.filter(([, d]: [string, number]) => d === -6);
+      const calls = spy.mock.calls.filter(
+        ([, d]: [string, number]) => d === -6
+      );
       expect(calls.map(([id]: [string]) => id)).toEqual(["Witness_X"]);
     });
   });

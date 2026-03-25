@@ -2,10 +2,7 @@ import { describe, expect, it } from "vitest";
 import type { PlanNode } from "../../../dynamicBasicAgent/npcPlanning/types.js";
 import type { DynamicGameStateManager } from "../../../state/DynamicGameState.js";
 import type { ExecutionContext } from "../../types.js";
-import {
-  movementHandler,
-  resolveTargetPosition,
-} from "../movementHandler.js";
+import { movementHandler, resolveTargetPosition } from "../movementHandler.js";
 
 // ===== Mock DGSM =====
 
@@ -61,11 +58,7 @@ function createMockDgsm() {
         junctionToRoads,
       };
     },
-    _addNpc(
-      npcId: string,
-      position: any,
-      skills: Record<string, number> = {}
-    ) {
+    _addNpc(npcId: string, position: any, skills: Record<string, number> = {}) {
       characterPositions[npcId] = position;
       npcCharacters.push({
         id: npcId,
@@ -114,10 +107,7 @@ function createMockDgsm() {
       bRoads.push(road);
       junctionToRoads.set(endpointB, bRoads);
     },
-    _addScene(
-      id: string,
-      parentJunctionId: string
-    ) {
+    _addScene(id: string, parentJunctionId: string) {
       scenes.set(id, {
         id,
         name: id,
@@ -306,9 +296,13 @@ describe("movementHandler", () => {
       dgsm._addJunction("JUNC_A");
       dgsm._addJunction("JUNC_B");
       dgsm._addRoad("ROAD_1", "JUNC_A", "JUNC_B", 10);
-      dgsm._addNpc("npc_a", { type: "junction", junctionId: "JUNC_A" }, {
-        Climb: 60,
-      });
+      dgsm._addNpc(
+        "npc_a",
+        { type: "junction", junctionId: "JUNC_A" },
+        {
+          Climb: 60,
+        }
+      );
 
       const ctx = createMockCtx({
         resolveSkillRoll: () => ({
@@ -337,9 +331,13 @@ describe("movementHandler", () => {
       dgsm._addJunction("JUNC_A");
       dgsm._addJunction("JUNC_B");
       dgsm._addRoad("ROAD_1", "JUNC_A", "JUNC_B", 10);
-      dgsm._addNpc("npc_a", { type: "junction", junctionId: "JUNC_A" }, {
-        Climb: 20,
-      });
+      dgsm._addNpc(
+        "npc_a",
+        { type: "junction", junctionId: "JUNC_A" },
+        {
+          Climb: 20,
+        }
+      );
 
       const ctx = createMockCtx({
         resolveSkillRoll: () => ({

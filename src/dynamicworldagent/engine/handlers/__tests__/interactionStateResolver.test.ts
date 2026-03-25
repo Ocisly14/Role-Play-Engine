@@ -1,7 +1,14 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import type { PlanNode, CharacterStateDelta } from "../../../dynamicBasicAgent/npcPlanning/types.js";
+import type {
+  CharacterStateDelta,
+  PlanNode,
+} from "../../../dynamicBasicAgent/npcPlanning/types.js";
 import type { Item } from "../../../state/types.js";
-import { resolveTargets, applyCharacterDelta, resolveInteractionState } from "../interactionStateResolver.js";
+import {
+  applyCharacterDelta,
+  resolveInteractionState,
+  resolveTargets,
+} from "../interactionStateResolver.js";
 
 vi.mock("../../../../models/index.js", () => ({
   ModelClass: { SMALL: "small", MEDIUM: "medium", LARGE: "large" },
@@ -133,7 +140,12 @@ function createMockDgsm() {
         events: [],
       });
     },
-    _addRoad(id: string, endpointA: string, endpointB: string, travelTimeMinutes = 10) {
+    _addRoad(
+      id: string,
+      endpointA: string,
+      endpointB: string,
+      travelTimeMinutes = 10
+    ) {
       const road = {
         id,
         name: id,
@@ -432,9 +444,15 @@ describe("applyCharacterDelta", () => {
       dgsm._addJunction("JUNC_A");
       dgsm._addJunction("JUNC_B");
       dgsm._addRoad("ROAD_1", "JUNC_A", "JUNC_B", 10);
-      dgsm._addNpc("npc_a", { type: "junction", junctionId: "JUNC_A" }, 10, 50, {
-        conditions: ["hidden"],
-      });
+      dgsm._addNpc(
+        "npc_a",
+        { type: "junction", junctionId: "JUNC_A" },
+        10,
+        50,
+        {
+          conditions: ["hidden"],
+        }
+      );
       dgsm._addNpc("npc_b", { type: "junction", junctionId: "JUNC_A" });
       dgsm.addItemToNpc("npc_a", { id: "gun", name: "Pistol" });
       dgsm.addItemToNpc("npc_b", { id: "map", name: "Map" });
@@ -529,11 +547,18 @@ describe("resolveInteractionState (LLM)", () => {
 
     const dgsm = createResolverDgsm();
     const result = await resolveInteractionState(
-      makeInteractionNode(), dgsm as any, {} as any, null, [], "zh"
+      makeInteractionNode(),
+      dgsm as any,
+      {} as any,
+      null,
+      [],
+      "zh"
     );
 
     expect(result.actorChanges.memory).toBe("我和Bob聊了聊天气。");
-    expect(result.targetChanges["npc_b"].memory).toBe("Alice跟我打了招呼，聊了天气。");
+    expect(result.targetChanges["npc_b"].memory).toBe(
+      "Alice跟我打了招呼，聊了天气。"
+    );
     expect(result.actorChanges.hpDelta).toBeUndefined();
     expect(result.actorChanges.sanDelta).toBeUndefined();
   });
@@ -550,7 +575,8 @@ describe("resolveInteractionState (LLM)", () => {
           addConditions: ["adrenaline_rush"],
           removeConditions: [],
           appearanceChange: "Alice的拳头上沾着血迹，衬衫被撕破了左袖。",
-          memory: "我一拳打中了Bob的下巴，但他的反击也擦伤了我的手臂。肾上腺素让我几乎感觉不到痛。",
+          memory:
+            "我一拳打中了Bob的下巴，但他的反击也擦伤了我的手臂。肾上腺素让我几乎感觉不到痛。",
         },
         targetChanges: {
           npc_b: {
@@ -560,7 +586,8 @@ describe("resolveInteractionState (LLM)", () => {
             removeConditions: [],
             appearanceChange: "Bob的下巴肿了起来，嘴角流着血，眼神有些涣散。",
             moveTo: "JUNC_B",
-            memory: "Alice突然出拳打中了我的下巴。剧痛让我一时无法思考，我本能地向后退去，嘴里尝到了血腥味。这个女人比看起来要危险得多。",
+            memory:
+              "Alice突然出拳打中了我的下巴。剧痛让我一时无法思考，我本能地向后退去，嘴里尝到了血腥味。这个女人比看起来要危险得多。",
           },
         },
       })
@@ -584,7 +611,12 @@ describe("resolveInteractionState (LLM)", () => {
         successLevel: "hard",
         detail: "Hard success (roll 18 vs 35)",
         perTargetResults: {
-          npc_b: { successLevel: "hard", actorWon: true, detail: "Actor wins opposed roll", damage: 4 },
+          npc_b: {
+            successLevel: "hard",
+            actorWon: true,
+            detail: "Actor wins opposed roll",
+            damage: 4,
+          },
         },
       },
       [],
@@ -616,17 +648,20 @@ describe("resolveInteractionState (LLM)", () => {
         actorChanges: {
           sanDelta: -1,
           removeItems: ["bribe_money"],
-          memory: "我试图说服Bob和Carol帮我。Bob被我说动了，但Carol完全不为所动，反而对我产生了敌意。我给了Bob一些钱作为酬劳。",
+          memory:
+            "我试图说服Bob和Carol帮我。Bob被我说动了，但Carol完全不为所动，反而对我产生了敌意。我给了Bob一些钱作为酬劳。",
         },
         targetChanges: {
           npc_b: {
             addItems: ["bribe_money"],
             addConditions: ["cooperative"],
-            memory: "Alice提出了一个有趣的交易。她给了我一笔钱，让我帮她调查码头的事情。我同意了——反正也不是什么难事。",
+            memory:
+              "Alice提出了一个有趣的交易。她给了我一笔钱，让我帮她调查码头的事情。我同意了——反正也不是什么难事。",
           },
           npc_c: {
             addConditions: ["hostile"],
-            memory: "Alice企图拉拢我和Bob参与她的阴谋。我断然拒绝了。这个女人不值得信任。",
+            memory:
+              "Alice企图拉拢我和Bob参与她的阴谋。我断然拒绝了。这个女人不值得信任。",
           },
         },
       })
@@ -648,8 +683,16 @@ describe("resolveInteractionState (LLM)", () => {
         successLevel: "regular",
         detail: "Regular success (roll 42 vs 55)",
         perTargetResults: {
-          npc_b: { successLevel: "regular", actorWon: true, detail: "Actor wins" },
-          npc_c: { successLevel: "hard", actorWon: false, detail: "Target resists" },
+          npc_b: {
+            successLevel: "regular",
+            actorWon: true,
+            detail: "Actor wins",
+          },
+          npc_c: {
+            successLevel: "hard",
+            actorWon: false,
+            detail: "Target resists",
+          },
         },
       },
       [],
@@ -662,7 +705,9 @@ describe("resolveInteractionState (LLM)", () => {
 
     // Bob cooperated — got money and cooperative condition
     expect(result.targetChanges["npc_b"].addItems).toContain("bribe_money");
-    expect(result.targetChanges["npc_b"].addConditions).toContain("cooperative");
+    expect(result.targetChanges["npc_b"].addConditions).toContain(
+      "cooperative"
+    );
 
     // Carol resisted — got hostile condition, no items
     expect(result.targetChanges["npc_c"].addConditions).toContain("hostile");
@@ -683,7 +728,8 @@ describe("resolveInteractionState (LLM)", () => {
         actorChanges: {
           addItems: ["warehouse_key"],
           removeConditions: ["anxious"],
-          memory: "我用枪指着Bob，逼他交出了仓库的钥匙。他告诉我仓库在码头区第三个，里面藏着走私的古董。看他吓得发抖的样子，应该没有撒谎。",
+          memory:
+            "我用枪指着Bob，逼他交出了仓库的钥匙。他告诉我仓库在码头区第三个，里面藏着走私的古董。看他吓得发抖的样子，应该没有撒谎。",
         },
         targetChanges: {
           npc_b: {
@@ -691,7 +737,8 @@ describe("resolveInteractionState (LLM)", () => {
             removeItems: ["warehouse_key"],
             addConditions: ["terrified", "cooperative"],
             removeConditions: ["confident"],
-            memory: "Alice居然拿枪指着我！我吓坏了，把仓库钥匙交给了她，还告诉了她仓库的位置。我不想死——那些古董不值得用命去换。",
+            memory:
+              "Alice居然拿枪指着我！我吓坏了，把仓库钥匙交给了她，还告诉了她仓库的位置。我不想死——那些古董不值得用命去换。",
           },
         },
       })
@@ -710,12 +757,24 @@ describe("resolveInteractionState (LLM)", () => {
         successLevel: "critical",
         detail: "Critical success (roll 03 vs 65)",
         perTargetResults: {
-          npc_b: { successLevel: "critical", actorWon: true, detail: "Actor wins — critical" },
+          npc_b: {
+            successLevel: "critical",
+            actorWon: true,
+            detail: "Actor wins — critical",
+          },
         },
       },
       [
-        { sourceId: "npc_b", text: "仓库在码头区第三个", difficulty: "hard" as any },
-        { sourceId: "npc_b", text: "仓库里藏着走私的古董", difficulty: "extreme" as any },
+        {
+          sourceId: "npc_b",
+          text: "仓库在码头区第三个",
+          difficulty: "hard" as any,
+        },
+        {
+          sourceId: "npc_b",
+          text: "仓库里藏着走私的古董",
+          difficulty: "extreme" as any,
+        },
       ],
       "zh"
     );
@@ -745,7 +804,12 @@ describe("resolveInteractionState (LLM)", () => {
 
     const dgsm = createResolverDgsm();
     const result = await resolveInteractionState(
-      makeInteractionNode(), dgsm as any, {} as any, null, [], "zh"
+      makeInteractionNode(),
+      dgsm as any,
+      {} as any,
+      null,
+      [],
+      "zh"
     );
 
     expect(result.actorChanges.hpDelta).toBe(-1);
@@ -762,11 +826,17 @@ describe("resolveInteractionState (LLM)", () => {
     const dgsm = createResolverDgsm();
     const result = await resolveInteractionState(
       makeInteractionNode({ action: "Greet Bob" }),
-      dgsm as any, {} as any, null, [], "zh"
+      dgsm as any,
+      {} as any,
+      null,
+      [],
+      "zh"
     );
 
     expect(result.actorChanges.memory).toBe("Greet Bob");
-    expect(result.targetChanges["npc_b"].memory).toBe("Alice interacted with me.");
+    expect(result.targetChanges["npc_b"].memory).toBe(
+      "Alice interacted with me."
+    );
   });
 
   // ── Error handling ──
@@ -778,11 +848,17 @@ describe("resolveInteractionState (LLM)", () => {
     const dgsm = createResolverDgsm();
     const result = await resolveInteractionState(
       makeInteractionNode({ action: "Talk to Bob" }),
-      dgsm as any, {} as any, null, [], "zh"
+      dgsm as any,
+      {} as any,
+      null,
+      [],
+      "zh"
     );
 
     expect(result.actorChanges.memory).toBe("Talk to Bob");
-    expect(result.targetChanges["npc_b"].memory).toBe("Alice interacted with me.");
+    expect(result.targetChanges["npc_b"].memory).toBe(
+      "Alice interacted with me."
+    );
     expect(result.actorChanges.hpDelta).toBeUndefined();
   });
 
@@ -792,7 +868,12 @@ describe("resolveInteractionState (LLM)", () => {
 
     const dgsm = createResolverDgsm();
     const result = await resolveInteractionState(
-      makeInteractionNode(), dgsm as any, {} as any, null, [], "zh"
+      makeInteractionNode(),
+      dgsm as any,
+      {} as any,
+      null,
+      [],
+      "zh"
     );
 
     expect(result.actorChanges.memory).toBeDefined();
@@ -825,12 +906,24 @@ describe("resolveInteractionState (LLM)", () => {
         successLevel: "hard",
         detail: "Hard success (roll 15 vs 30)",
         perTargetResults: {
-          npc_b: { successLevel: "regular", actorWon: true, detail: "Actor wins" },
+          npc_b: {
+            successLevel: "regular",
+            actorWon: true,
+            detail: "Actor wins",
+          },
         },
       },
       [
-        { sourceId: "npc_b", text: "The ritual requires three sacrifices", difficulty: "hard" as any },
-        { sourceId: "npc_b", text: "It takes place at midnight", difficulty: "regular" as any },
+        {
+          sourceId: "npc_b",
+          text: "The ritual requires three sacrifices",
+          difficulty: "hard" as any,
+        },
+        {
+          sourceId: "npc_b",
+          text: "It takes place at midnight",
+          difficulty: "regular" as any,
+        },
       ],
       "zh"
     );

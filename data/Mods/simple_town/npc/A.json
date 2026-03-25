@@ -70,7 +70,10 @@
     {
       "type": "information",
       "content": "Lisa Chen is my colleague. She started six months ago as a junior accountant. We eat lunch together at the town square most days.",
-      "metadata": { "knowledgeId": "k_tom_about_lisa", "difficulty": "automatic" }
+      "metadata": {
+        "knowledgeId": "k_tom_about_lisa",
+        "difficulty": "automatic"
+      }
     },
     {
       "type": "information",
@@ -85,7 +88,10 @@
     {
       "type": "belief",
       "content": "Lisa seems to enjoy our time together too — she laughs at my jokes and sometimes touches my arm when we talk. Maybe she likes me back.",
-      "metadata": { "confidence": 0.5, "reasoningChain": "She initiates conversations, saves me a seat at lunch, and seems genuinely happy to see me." }
+      "metadata": {
+        "confidence": 0.5,
+        "reasoningChain": "She initiates conversations, saves me a seat at lunch, and seems genuinely happy to see me."
+      }
     }
   ]
 }

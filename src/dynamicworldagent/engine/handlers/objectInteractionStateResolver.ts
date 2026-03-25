@@ -17,8 +17,8 @@ import type {
 } from "../../dynamicBasicAgent/npcPlanning/types.js";
 import type { NpcMemoryManager } from "../../memory/NpcMemoryManager.js";
 import type { DynamicGameStateManager } from "../../state/DynamicGameState.js";
-import type { GameEngineRegistry } from "../registry.js";
 import type { Item } from "../../state/types.js";
+import type { GameEngineRegistry } from "../registry.js";
 import { deepMergeItem } from "../shared/deepMerge.js";
 import { buildWorldStateBlock } from "../shared/worldStateBlock.js";
 
@@ -26,10 +26,8 @@ import { buildWorldStateBlock } from "../shared/worldStateBlock.js";
 
 function repairJson(text: string): string {
   text = text.replace(/,\s*([}\]])/g, "$1");
-  text = text.replace(
-    /"(?:[^"\\]|\\.)*"/g,
-    (match) =>
-      match.replace(/\n/g, "\\n").replace(/\r/g, "\\r").replace(/\t/g, "\\t"),
+  text = text.replace(/"(?:[^"\\]|\\.)*"/g, (match) =>
+    match.replace(/\n/g, "\\n").replace(/\r/g, "\\r").replace(/\t/g, "\\t")
   );
   let inString = false;
   let escape = false;
@@ -78,20 +76,27 @@ function formatItem(item: Item): string {
   ];
   if (item.description) parts.push(`  description: ${item.description}`);
   if (item.category) parts.push(`  category: ${item.category}`);
-  if (item.discoveryMethod) parts.push(`  discoveryMethod: ${item.discoveryMethod}`);
-  if (item.reveals?.length) parts.push(`  reveals: ${JSON.stringify(item.reveals)}`);
+  if (item.discoveryMethod)
+    parts.push(`  discoveryMethod: ${item.discoveryMethod}`);
+  if (item.reveals?.length)
+    parts.push(`  reveals: ${JSON.stringify(item.reveals)}`);
   if (item.damaged) {
     parts.push(`  damaged: true`);
-    if (item.damageDetails) parts.push(`  damageDetails: ${JSON.stringify(item.damageDetails)}`);
+    if (item.damageDetails)
+      parts.push(`  damageDetails: ${JSON.stringify(item.damageDetails)}`);
   }
-  if (item.isLightSource != null) parts.push(`  isLightSource: ${item.isLightSource}, lightLevel: ${item.lightLevel ?? "unknown"}`);
+  if (item.isLightSource != null)
+    parts.push(
+      `  isLightSource: ${item.isLightSource}, lightLevel: ${item.lightLevel ?? "unknown"}`
+    );
   if (item.consumableStats) {
     const cs = item.consumableStats;
     const statParts: string[] = [];
     if (cs.uses != null) statParts.push(`uses: ${cs.uses}`);
     if (cs.effect) statParts.push(`effect: ${cs.effect}`);
     if (cs.duration) statParts.push(`duration: ${cs.duration}`);
-    if (statParts.length) parts.push(`  consumableStats: { ${statParts.join(", ")} }`);
+    if (statParts.length)
+      parts.push(`  consumableStats: { ${statParts.join(", ")} }`);
   }
   if (item.containerStats) {
     const cs = item.containerStats;
@@ -113,7 +118,8 @@ function formatItem(item: Item): string {
     if (ws.damage) wsParts.push(`damage: ${ws.damage}`);
     if (ws.range) wsParts.push(`range: ${ws.range}`);
     if (ws.ammo != null) wsParts.push(`ammo: ${ws.ammo}`);
-    if (ws.attacksPerRound) wsParts.push(`attacksPerRound: ${ws.attacksPerRound}`);
+    if (ws.attacksPerRound)
+      wsParts.push(`attacksPerRound: ${ws.attacksPerRound}`);
     if (wsParts.length) parts.push(`  weaponStats: { ${wsParts.join(", ")} }`);
   }
   return parts.join("\n");
@@ -225,7 +231,7 @@ function buildUserPrompt(
   witnesses: Array<{ id: string; name: string }>,
   skillRollResult: { successLevel: SuccessLevel; detail: string } | null,
   relatedMemories: string[],
-  worldStateBlock: string,
+  worldStateBlock: string
 ): string {
   // Section 1: Object Interaction Node
   const nodeSection = JSON.stringify(
@@ -238,7 +244,7 @@ function buildUserPrompt(
       targetItemId: node.objectInteractionPayload?.itemId,
     },
     null,
-    2,
+    2
   );
 
   // Skill roll result
@@ -338,7 +344,7 @@ export async function resolveObjectInteractionState(
   memoryManager?: NpcMemoryManager,
   sessionId?: string,
   registry?: GameEngineRegistry,
-  featureNotes?: string[],
+  featureNotes?: string[]
 ): Promise<ObjectStateDelta> {
   const state = dgsm.getState();
 
@@ -346,9 +352,7 @@ export async function resolveObjectInteractionState(
   const actorInventory = dgsm.getNpcInventory(node.characterId);
 
   // Get actor name
-  const actorNpc = state.npcCharacters.find(
-    (n) => n.id === node.characterId,
-  );
+  const actorNpc = state.npcCharacters.find((n) => n.id === node.characterId);
   const actorName = actorNpc?.name ?? node.characterName;
 
   // Get scene data
@@ -380,8 +384,8 @@ export async function resolveObjectInteractionState(
     try {
       const payload = node.objectInteractionPayload;
       const targetItem = payload?.itemId
-        ? sceneItems.find((i) => i.id === payload.itemId)
-          ?? actorInventory.find((i) => i.id === payload.itemId)
+        ? (sceneItems.find((i) => i.id === payload.itemId) ??
+          actorInventory.find((i) => i.id === payload.itemId))
         : null;
       const searchQuery = targetItem
         ? `${targetItem.name} ${targetItem.description ?? ""}`
@@ -401,7 +405,12 @@ export async function resolveObjectInteractionState(
   }
 
   // Build world state block (weather, fire, stamina, sanity)
-  const worldStateBlock = buildWorldStateBlock(dgsm, node.characterId, node.location, registry);
+  const worldStateBlock = buildWorldStateBlock(
+    dgsm,
+    node.characterId,
+    node.location,
+    registry
+  );
 
   // Build prompts
   const systemPrompt = buildSystemPrompt(language);
@@ -415,12 +424,13 @@ export async function resolveObjectInteractionState(
     witnesses,
     skillRollResult,
     relatedMemories,
-    worldStateBlock,
+    worldStateBlock
   );
 
   // Inject feature activation notes (e.g. ritual invoke failed)
   if (featureNotes && featureNotes.length > 0) {
-    userPrompt += "\n\n## Feature Activation Results\n" + featureNotes.join("\n");
+    userPrompt +=
+      "\n\n## Feature Activation Results\n" + featureNotes.join("\n");
   }
 
   try {
@@ -449,7 +459,7 @@ export async function resolveObjectInteractionState(
   } catch (error) {
     console.warn(
       `[ObjectInteractionStateResolver] LLM call failed, using fallback:`,
-      error instanceof Error ? error.message : error,
+      error instanceof Error ? error.message : error
     );
 
     return {
@@ -462,7 +472,12 @@ export async function resolveObjectInteractionState(
 // ─── State applicator ─────────────────────────────────────────────────
 
 interface ItemLocation {
-  source: "scene" | "inventory" | "npc-inventory" | "container-scene" | "container-inventory";
+  source:
+    | "scene"
+    | "inventory"
+    | "npc-inventory"
+    | "container-scene"
+    | "container-inventory";
   /** The Item reference */
   item: Item;
   /** NPC ID when source is "inventory" or "npc-inventory" */
@@ -480,7 +495,7 @@ function findItemLocation(
   itemId: string,
   actorId: string,
   dgsm: DynamicGameStateManager,
-  sceneId: string,
+  sceneId: string
 ): ItemLocation | null {
   // 1. Check actor inventory
   const actorInv = dgsm.getNpcInventory(actorId);
@@ -501,7 +516,7 @@ function findItemLocation(
     for (const sceneItem of scene.items) {
       if (sceneItem.containerStats?.storedItems) {
         const inContainer = sceneItem.containerStats.storedItems.find(
-          (si) => si.id === itemId,
+          (si) => si.id === itemId
         );
         if (inContainer) {
           return {
@@ -518,7 +533,7 @@ function findItemLocation(
   for (const invItem of actorInv) {
     if (invItem.containerStats?.storedItems) {
       const inContainer = invItem.containerStats.storedItems.find(
-        (si) => si.id === itemId,
+        (si) => si.id === itemId
       );
       if (inContainer) {
         return {
@@ -551,7 +566,7 @@ function findItemLocation(
 function removeFromCurrent(
   loc: ItemLocation,
   dgsm: DynamicGameStateManager,
-  sceneId: string,
+  sceneId: string
 ): void {
   switch (loc.source) {
     case "inventory":
@@ -573,7 +588,7 @@ function removeFromCurrent(
         const container = scene.items.find((i) => i.id === loc.containerId);
         if (container?.containerStats?.storedItems) {
           const idx = container.containerStats.storedItems.findIndex(
-            (i) => i.id === loc.item.id,
+            (i) => i.id === loc.item.id
           );
           if (idx !== -1) container.containerStats.storedItems.splice(idx, 1);
         }
@@ -585,7 +600,7 @@ function removeFromCurrent(
       const container = ownerInv.find((i) => i.id === loc.containerId);
       if (container?.containerStats?.storedItems) {
         const idx = container.containerStats.storedItems.findIndex(
-          (i) => i.id === loc.item.id,
+          (i) => i.id === loc.item.id
         );
         if (idx !== -1) container.containerStats.storedItems.splice(idx, 1);
       }
@@ -602,7 +617,7 @@ function addToTarget(
   targetLocation: string,
   actorId: string,
   dgsm: DynamicGameStateManager,
-  sceneId: string,
+  sceneId: string
 ): void {
   if (targetLocation === "scene") {
     const scene = dgsm.getScene(sceneId);
@@ -653,14 +668,14 @@ export function applyObjectDelta(
   dgsm: DynamicGameStateManager,
   actorId: string,
   delta: ObjectStateDelta,
-  sceneId: string,
+  sceneId: string
 ): void {
   for (const itemResult of delta.items) {
     // 1. Find current location
     const loc = findItemLocation(itemResult.itemId, actorId, dgsm, sceneId);
     if (!loc) {
       console.warn(
-        `[applyObjectDelta] Item "${itemResult.itemId}" not found anywhere — skipping.`,
+        `[applyObjectDelta] Item "${itemResult.itemId}" not found anywhere — skipping.`
       );
       continue;
     }
@@ -669,7 +684,7 @@ export function applyObjectDelta(
     if (itemResult.updates && Object.keys(itemResult.updates).length > 0) {
       deepMergeItem(
         loc.item as unknown as Record<string, unknown>,
-        itemResult.updates as Record<string, unknown>,
+        itemResult.updates as Record<string, unknown>
       );
     }
 
@@ -710,7 +725,12 @@ export function applyObjectDelta(
     for (const entry of delta.newItems) {
       // Remove source item once
       if (entry.sourceItemId && !removedSources.has(entry.sourceItemId)) {
-        const sourceLoc = findItemLocation(entry.sourceItemId, actorId, dgsm, sceneId);
+        const sourceLoc = findItemLocation(
+          entry.sourceItemId,
+          actorId,
+          dgsm,
+          sceneId
+        );
         if (sourceLoc) {
           removeFromCurrent(sourceLoc, dgsm, sceneId);
         }

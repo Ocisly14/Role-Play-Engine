@@ -12,7 +12,7 @@ import path from "node:path";
 // ── Paths ──────────────────────────────────────────────────────────────────
 const BASE = path.resolve(
   import.meta.dirname ?? path.dirname(new URL(import.meta.url).pathname),
-  "../data/Mods/casssandra",
+  "../data/Mods/casssandra"
 );
 const SCENARIOS = path.join(BASE, "Cassandra_Scenarios");
 const TMJ_PATH = path.join(BASE, "scene/map.tmj");
@@ -129,12 +129,12 @@ function cumulativeArcLengths(poly: Point[]): number[] {
 /** Project a point onto a polyline, return 0-1 position and perpendicular distance. */
 function projectOntoPolyline(
   pt: Point,
-  poly: Point[],
+  poly: Point[]
 ): { position: number; distance: number } {
   const arcLengths = cumulativeArcLengths(poly);
   const totalLength = arcLengths[arcLengths.length - 1];
 
-  let bestDist = Infinity;
+  let bestDist = Number.POSITIVE_INFINITY;
   let bestArcPos = 0;
 
   for (let i = 0; i < poly.length - 1; i++) {
@@ -184,7 +184,9 @@ for (const obj of buildingLayer.objects!) {
   const scnId = BUILDING_TO_SCN[obj.name];
   if (scnId) {
     buildingPositions.set(scnId, { x: obj.x, y: obj.y });
-    console.log(`  ${obj.name} → ${scnId} @ (${obj.x.toFixed(1)}, ${obj.y.toFixed(1)})`);
+    console.log(
+      `  ${obj.name} → ${scnId} @ (${obj.x.toFixed(1)}, ${obj.y.toFixed(1)})`
+    );
   } else {
     console.log(`  WARNING: Unknown building "${obj.name}"`);
   }
@@ -213,7 +215,7 @@ for (const obj of roadLayer.objects!) {
   const roadId = matchRoadId(obj.name);
   rawRoadPolylines.push({ tiledName: obj.name, roadId, points: absPoints });
   console.log(
-    `  Road: "${obj.name}" → ${roadId}, ${absPoints.length} vertices, length=${polylineLength(absPoints).toFixed(0)}px`,
+    `  Road: "${obj.name}" → ${roadId}, ${absPoints.length} vertices, length=${polylineLength(absPoints).toFixed(0)}px`
   );
 }
 
@@ -229,8 +231,12 @@ function findRoad(id: string): RoadPolyline | undefined {
   return rawRoadPolylines.find((r) => r.roadId === id);
 }
 
-function startPt(r: RoadPolyline): Point { return r.points[0]; }
-function endPt(r: RoadPolyline): Point { return r.points[r.points.length - 1]; }
+function startPt(r: RoadPolyline): Point {
+  return r.points[0];
+}
+function endPt(r: RoadPolyline): Point {
+  return r.points[r.points.length - 1];
+}
 
 // JUNC_1 = 星辰大道 start
 const road1 = findRoad("ROAD_1")!;
@@ -250,7 +256,10 @@ const road4Start = startPt(road4);
 const road4End = endPt(road4);
 const road4StartToJ3 = dist(road4Start, junctionCoords.get("JUNC_3")!);
 const road4EndToJ3 = dist(road4End, junctionCoords.get("JUNC_3")!);
-junctionCoords.set("JUNC_7", road4StartToJ3 > road4EndToJ3 ? road4Start : road4End);
+junctionCoords.set(
+  "JUNC_7",
+  road4StartToJ3 > road4EndToJ3 ? road4Start : road4End
+);
 
 // JUNC_4 = 南新街 end ≈ A大道北 start
 const road3 = findRoad("ROAD_3")!;
@@ -308,7 +317,7 @@ function alignRoad(roadId: string, poly: RoadPolyline): AlignedRoad {
 
   const pts = flipped ? [...poly.points].reverse() : poly.points;
   console.log(
-    `  ${roadId}: polyline start→${ep.a}=${distToA.toFixed(0)}px, start→${ep.b}=${distToB.toFixed(0)}px → ${flipped ? "FLIPPED" : "ok"}`,
+    `  ${roadId}: polyline start→${ep.a}=${distToA.toFixed(0)}px, start→${ep.b}=${distToB.toFixed(0)}px → ${flipped ? "FLIPPED" : "ok"}`
   );
   return { roadId, points: pts, flipped };
 }
@@ -325,20 +334,20 @@ for (const poly of rawRoadPolylines) {
 console.log("\n=== Step 4: Split pomegranate lane at JUNC_6 ===\n");
 
 const pomegranate = rawRoadPolylines.find(
-  (r) => r.roadId === "ROAD_POMEGRANATE",
+  (r) => r.roadId === "ROAD_POMEGRANATE"
 )!;
 const junc6 = junctionCoords.get("JUNC_6")!;
 
 // Project JUNC_6 onto the full pomegranate polyline to find the split point
 const projJ6 = projectOntoPolyline(junc6, pomegranate.points);
 console.log(
-  `  JUNC_6 projects onto pomegranate at position=${projJ6.position.toFixed(3)}, dist=${projJ6.distance.toFixed(1)}px`,
+  `  JUNC_6 projects onto pomegranate at position=${projJ6.position.toFixed(3)}, dist=${projJ6.distance.toFixed(1)}px`
 );
 
 // Split the polyline at projJ6.position
 function splitPolylineAt(
   poly: Point[],
-  position: number,
+  position: number
 ): { before: Point[]; after: Point[] } {
   const arcs = cumulativeArcLengths(poly);
   const totalLen = arcs[arcs.length - 1];
@@ -363,7 +372,7 @@ function splitPolylineAt(
 
 const { before: pomBefore, after: pomAfter } = splitPolylineAt(
   pomegranate.points,
-  projJ6.position,
+  projJ6.position
 );
 
 // Now determine direction: pomegranate start → is it JUNC_2 or JUNC_4?
@@ -376,7 +385,7 @@ const pomStartToJ4 = dist(pomStart, junc4);
 const pomStartsAtJ2 = pomStartToJ2 < pomStartToJ4;
 
 console.log(
-  `  Pomegranate start→JUNC_2=${pomStartToJ2.toFixed(0)}px, →JUNC_4=${pomStartToJ4.toFixed(0)}px → starts at ${pomStartsAtJ2 ? "JUNC_2" : "JUNC_4"}`,
+  `  Pomegranate start→JUNC_2=${pomStartToJ2.toFixed(0)}px, →JUNC_4=${pomStartToJ4.toFixed(0)}px → starts at ${pomStartsAtJ2 ? "JUNC_2" : "JUNC_4"}`
 );
 
 // ROAD_5a: JUNC_2 → JUNC_6, ROAD_5b: JUNC_6 → JUNC_4
@@ -394,10 +403,10 @@ if (pomStartsAtJ2) {
 }
 
 console.log(
-  `  ROAD_5a: ${road5aPoints.length} pts, length=${polylineLength(road5aPoints).toFixed(0)}px`,
+  `  ROAD_5a: ${road5aPoints.length} pts, length=${polylineLength(road5aPoints).toFixed(0)}px`
 );
 console.log(
-  `  ROAD_5b: ${road5bPoints.length} pts, length=${polylineLength(road5bPoints).toFixed(0)}px`,
+  `  ROAD_5b: ${road5bPoints.length} pts, length=${polylineLength(road5bPoints).toFixed(0)}px`
 );
 
 alignedRoads.set("ROAD_5a", {
@@ -451,7 +460,7 @@ for (const [roadId, scnIds] of Object.entries(ROAD_BUILDINGS)) {
 
     const warn = proj.distance > 300 ? " ⚠️ FAR!" : "";
     console.log(
-      `  ${scnId} on ${roadId}: position=${rounded.toFixed(2)}, perpDist=${proj.distance.toFixed(0)}px${warn}`,
+      `  ${scnId} on ${roadId}: position=${rounded.toFixed(2)}, perpDist=${proj.distance.toFixed(0)}px${warn}`
     );
   }
 }
@@ -468,7 +477,7 @@ for (const [roadId, aligned] of alignedRoads) {
 const baselineLength = roadLengths.get(BASELINE_ROAD)!;
 const pxPerMin = baselineLength / BASELINE_MINUTES;
 console.log(
-  `  Baseline: ${BASELINE_ROAD} = ${baselineLength.toFixed(0)}px / ${BASELINE_MINUTES}min = ${pxPerMin.toFixed(1)} px/min`,
+  `  Baseline: ${BASELINE_ROAD} = ${baselineLength.toFixed(0)}px / ${BASELINE_MINUTES}min = ${pxPerMin.toFixed(1)} px/min`
 );
 
 const newTravelTimes: Map<string, number> = new Map();
@@ -506,10 +515,7 @@ for (const [juncId, scnId] of Object.entries(junctionScenes)) {
 }
 
 /** Find the position of a scene on a given road. Returns null if not on that road. */
-function findScenePositionOnRoad(
-  scnId: string,
-  roadId: string,
-): number | null {
+function findScenePositionOnRoad(scnId: string, roadId: string): number | null {
   // Check projections first
   const proj = scnRoadPos.get(scnId);
   if (proj && proj.roadId === roadId) return proj.position;
@@ -528,7 +534,11 @@ function findScenePositionOnRoad(
 
 // ── Build a junction graph for shortest-path calculation ────────────────
 // Each edge in the graph is a road segment between two junctions with a time cost.
-interface JuncEdge { to: string; roadId: string; time: number }
+interface JuncEdge {
+  to: string;
+  roadId: string;
+  time: number;
+}
 const juncGraph: Map<string, JuncEdge[]> = new Map();
 
 for (const [roadId, ep] of Object.entries(ROAD_ENDPOINTS)) {
@@ -543,24 +553,26 @@ for (const [roadId, ep] of Object.entries(ROAD_ENDPOINTS)) {
 function shortestJunctionPath(from: string, to: string): number {
   if (from === to) return 0;
   const best = new Map<string, number>();
-  const queue: Array<{ junc: string; cost: number }> = [{ junc: from, cost: 0 }];
+  const queue: Array<{ junc: string; cost: number }> = [
+    { junc: from, cost: 0 },
+  ];
   best.set(from, 0);
 
   while (queue.length > 0) {
     queue.sort((a, b) => a.cost - b.cost);
     const { junc, cost } = queue.shift()!;
     if (junc === to) return cost;
-    if (cost > (best.get(junc) ?? Infinity)) continue;
+    if (cost > (best.get(junc) ?? Number.POSITIVE_INFINITY)) continue;
 
     for (const edge of juncGraph.get(junc) ?? []) {
       const newCost = cost + edge.time;
-      if (newCost < (best.get(edge.to) ?? Infinity)) {
+      if (newCost < (best.get(edge.to) ?? Number.POSITIVE_INFINITY)) {
         best.set(edge.to, newCost);
         queue.push({ junc: edge.to, cost: newCost });
       }
     }
   }
-  return Infinity;
+  return Number.POSITIVE_INFINITY;
 }
 
 /** Get the time from a scene to a specific junction, via its road. */
@@ -594,7 +606,7 @@ function sceneToJunctionTime(scnId: string, targetJunc: string): number | null {
 function computeEdgeTravelTime(
   fromScnId: string,
   toScnId: string,
-  _streetSceneId: string,
+  _streetSceneId: string
 ): number {
   const fromInfo = scnRoadPos.get(fromScnId);
   const toInfo = scnRoadPos.get(toScnId);
@@ -604,7 +616,10 @@ function computeEdgeTravelTime(
   // Case 1: Both on the same road
   if (fromInfo && toInfo && fromInfo.roadId === toInfo.roadId) {
     const roadTime = newTravelTimes.get(fromInfo.roadId) ?? 5;
-    return Math.max(1, Math.ceil(Math.abs(fromInfo.position - toInfo.position) * roadTime));
+    return Math.max(
+      1,
+      Math.ceil(Math.abs(fromInfo.position - toInfo.position) * roadTime)
+    );
   }
 
   // Case 2: Both at junctions
@@ -615,7 +630,7 @@ function computeEdgeTravelTime(
 
   // Case 3: One on a road, one at a junction (or on a different road)
   // Strategy: try all junction connections and find the shortest total path
-  let bestTime = Infinity;
+  let bestTime = Number.POSITIVE_INFINITY;
 
   // Get "anchor points" for from: junctions it can reach directly
   const fromAnchors: Array<{ junc: string; time: number }> = [];
@@ -646,12 +661,12 @@ function computeEdgeTravelTime(
     }
   }
 
-  if (bestTime < Infinity) {
+  if (bestTime < Number.POSITIVE_INFINITY) {
     return Math.max(1, Math.ceil(bestTime));
   }
 
   console.log(
-    `  WARNING: Could not compute time for ${fromScnId} → ${toScnId}, using 5min default`,
+    `  WARNING: Could not compute time for ${fromScnId} → ${toScnId}, using 5min default`
   );
   return 5;
 }
@@ -661,12 +676,12 @@ for (const edge of edgesData.transportEdges) {
   const newTime = computeEdgeTravelTime(
     edge.fromLocationId,
     edge.toLocationId,
-    edge.streetSceneId,
+    edge.streetSceneId
   );
   edge.travelTimeMinutes = newTime;
   const changed = oldTime !== newTime ? " ← CHANGED" : "";
   console.log(
-    `  ${edge.fromLocationId} → ${edge.toLocationId} (${edge.streetSceneId}): ${oldTime}min → ${newTime}min${changed}`,
+    `  ${edge.fromLocationId} → ${edge.toLocationId} (${edge.streetSceneId}): ${oldTime}min → ${newTime}min${changed}`
   );
 }
 
@@ -720,7 +735,7 @@ for (const roadId of allRoadIds) {
       const oldPos = conn.position;
       conn.position = proj.position;
       console.log(
-        `  ${roadId}: ${conn.sceneId} position ${oldPos} → ${proj.position}${oldPos !== proj.position ? " ← CHANGED" : ""}`,
+        `  ${roadId}: ${conn.sceneId} position ${oldPos} → ${proj.position}${oldPos !== proj.position ? " ← CHANGED" : ""}`
       );
     }
   }
@@ -744,7 +759,7 @@ if (farBuildings.length > 0) {
   console.log("⚠️  Buildings far from their road (>300px):");
   for (const p of farBuildings) {
     console.log(
-      `  ${p.scnId} on ${p.roadId}: ${p.distance.toFixed(0)}px perpendicular distance`,
+      `  ${p.scnId} on ${p.roadId}: ${p.distance.toFixed(0)}px perpendicular distance`
     );
   }
 } else {
@@ -753,7 +768,7 @@ if (farBuildings.length > 0) {
 
 // Check travel times range
 const badTimes = [...newTravelTimes.entries()].filter(
-  ([_, t]) => t < 1 || t > 20,
+  ([_, t]) => t < 1 || t > 20
 );
 if (badTimes.length > 0) {
   console.log("⚠️  Travel times outside 1-20min range:");
@@ -767,10 +782,10 @@ if (badTimes.length > 0) {
 // Print full comparison table
 console.log("\n=== Full Position Comparison ===\n");
 console.log(
-  "Road         | Scene      | Old Pos | New Pos | Perp Dist | Status",
+  "Road         | Scene      | Old Pos | New Pos | Perp Dist | Status"
 );
 console.log(
-  "-------------|------------|---------|---------|-----------|-------",
+  "-------------|------------|---------|---------|-----------|-------"
 );
 for (const p of projections) {
   const status =
@@ -780,7 +795,7 @@ for (const p of projections) {
         ? "NEW"
         : "changed";
   console.log(
-    `${p.roadId.padEnd(12)} | ${p.scnId.padEnd(10)} | ${p.oldPosition.toFixed(2).padStart(7)} | ${p.position.toFixed(2).padStart(7)} | ${p.distance.toFixed(0).padStart(7)}px | ${status}`,
+    `${p.roadId.padEnd(12)} | ${p.scnId.padEnd(10)} | ${p.oldPosition.toFixed(2).padStart(7)} | ${p.position.toFixed(2).padStart(7)} | ${p.distance.toFixed(0).padStart(7)}px | ${status}`
   );
 }
 

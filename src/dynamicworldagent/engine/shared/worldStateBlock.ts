@@ -6,8 +6,8 @@
  * so that every LLM call has consistent environmental awareness.
  */
 
-import type { GameEngineRegistry } from "../registry.js";
 import type { DynamicGameStateManager } from "../../state/DynamicGameState.js";
+import type { GameEngineRegistry } from "../registry.js";
 import { getTopologyNeighbors } from "./topologyHelpers.js";
 
 // ─── Fire perception ─────────────────────────────────────────────────
@@ -23,7 +23,7 @@ const INTENSITY_LABELS = [
 
 function buildPerceivedFireState(
   dgsm: DynamicGameStateManager,
-  location: string,
+  location: string
 ): string {
   const fireStates = dgsm.getFeatureState("fire");
   if (!fireStates || Object.keys(fireStates).length === 0) return "";
@@ -56,7 +56,8 @@ function buildPerceivedFireState(
         isAdjacent = neighbors.includes(location);
       } else {
         const fireScene = dgsm.getScene(fireSceneId);
-        isAdjacent = fireScene?.connections.some(c => c.targetId === location) ?? false;
+        isAdjacent =
+          fireScene?.connections.some((c) => c.targetId === location) ?? false;
       }
       if (isAdjacent) {
         perceivedFires.push({
@@ -72,7 +73,7 @@ function buildPerceivedFireState(
   const lines = perceivedFires.map((f) =>
     f.sceneId === location
       ? `- ${f.sceneId}: intensity ${f.intensity}/5 (${f.label}) — HERE`
-      : `- ${f.sceneId}: intensity ${f.intensity}/5 (${f.label}) — visible from current location`,
+      : `- ${f.sceneId}: intensity ${f.intensity}/5 (${f.label}) — visible from current location`
   );
   return "Nearby fires:\n" + lines.join("\n");
 }
@@ -90,7 +91,7 @@ export function buildWorldStateBlock(
   dgsm: DynamicGameStateManager,
   characterId: string,
   location: string,
-  registry?: GameEngineRegistry,
+  registry?: GameEngineRegistry
 ): string {
   if (!registry) return "";
   const sections: string[] = [];
@@ -141,7 +142,7 @@ export function buildWorldStateBlock(
     if (sanity.activeInsanity?.isActive) {
       const ai = sanity.activeInsanity;
       sections.push(
-        `Active insanity: ${ai.insanityType} (${ai.boutType}) — ${ai.description} | restriction: ${ai.actionRestriction}`,
+        `Active insanity: ${ai.insanityType} (${ai.boutType}) — ${ai.description} | restriction: ${ai.actionRestriction}`
       );
     }
   }

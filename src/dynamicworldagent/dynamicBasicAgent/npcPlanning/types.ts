@@ -1,5 +1,4 @@
 import type { CharacterPosition } from "../../state/topologyTypes.js";
-import type { Item } from "../../state/types.js";
 
 export type BuiltinNodeType =
   | "routine"
@@ -185,13 +184,16 @@ export interface CharacterAction {
   /** Per-character memory text from LLM state resolver. When present, tickProcessor writes these instead of auto-generating. */
   stateMemories?: Record<string, string>;
   /** Per-target opposed roll outcomes (multi-target character_interaction) */
-  perTargetResults?: Record<string, {
-    successLevel: SuccessLevel;
-    actorWon: boolean;
-    detail: string;
-    /** Pre-computed combat damage (only when actorWon in combat) */
-    damage?: number;
-  }>;
+  perTargetResults?: Record<
+    string,
+    {
+      successLevel: SuccessLevel;
+      actorWon: boolean;
+      detail: string;
+      /** Pre-computed combat damage (only when actorWon in combat) */
+      damage?: number;
+    }
+  >;
 }
 
 export type FailureReason =

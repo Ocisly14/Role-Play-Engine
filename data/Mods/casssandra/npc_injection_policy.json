@@ -32,14 +32,8 @@
       "Johnny",
       "Angela"
     ],
-    "investigator_sim": [
-      "Bruno Galilei"
-    ],
-    "limited_sim": [
-      "Isabela Smith",
-      "Wind",
-      "Unknow"
-    ],
+    "investigator_sim": ["Bruno Galilei"],
+    "limited_sim": ["Isabela Smith", "Wind", "Unknow"],
     "scene_only": [
       "Jenny Florence(berforth Locefern)",
       "David Campbell",

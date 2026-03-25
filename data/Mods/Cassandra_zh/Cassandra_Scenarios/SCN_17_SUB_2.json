@@ -50,5 +50,10 @@
       }
     }
   ],
-  "connections": [{ "targetId": "SCN_17_SUB_1", "description": "钟楼入口处有一段狭窄的盘旋石阶，沿烛火熏黑的石壁向下通往教堂主殿祭坛后方" }]
+  "connections": [
+    {
+      "targetId": "SCN_17_SUB_1",
+      "description": "钟楼入口处有一段狭窄的盘旋石阶，沿烛火熏黑的石壁向下通往教堂主殿祭坛后方"
+    }
+  ]
 }

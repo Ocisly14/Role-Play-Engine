@@ -41,7 +41,10 @@
     }
   ],
   "connectedSceneIds": [
-    { "targetId": "SCN_21_SUB_1", "description": "站前广场正对面即是卡森德拉火车站入口，连通简陋荒败的月台" }
+    {
+      "targetId": "SCN_21_SUB_1",
+      "description": "站前广场正对面即是卡森德拉火车站入口，连通简陋荒败的月台"
+    }
   ],
   "itemContexts": {
     "ITEM_JUNC7_3": "站前摆着一张木质长椅，椅背上刻着多年前旅客留下的名字缩写。"

@@ -60,5 +60,10 @@
       }
     }
   ],
-  "connections": [{ "targetId": "SCN_9_SUB_2", "description": "木质楼梯向下连通一楼后厅的厨房餐厅区域与地下酒窖入口" }]
+  "connections": [
+    {
+      "targetId": "SCN_9_SUB_2",
+      "description": "木质楼梯向下连通一楼后厅的厨房餐厅区域与地下酒窖入口"
+    }
+  ]
 }

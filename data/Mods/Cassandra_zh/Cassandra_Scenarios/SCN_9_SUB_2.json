@@ -92,8 +92,14 @@
     }
   ],
   "connections": [
-    { "targetId": "SCN_9_SUB_1", "description": "短廊另一端的木门连通花店前厅展示区" },
-    { "targetId": "SCN_9_SUB_3", "description": "后厅尽头有一道木质楼梯，通往二楼的私人工作室与卧室" }
+    {
+      "targetId": "SCN_9_SUB_1",
+      "description": "短廊另一端的木门连通花店前厅展示区"
+    },
+    {
+      "targetId": "SCN_9_SUB_3",
+      "description": "后厅尽头有一道木质楼梯，通往二楼的私人工作室与卧室"
+    }
   ],
   "itemContexts": {
     "ITEM_SCN9_2": "角落里的窄楼梯通向一个小酒窖，石砌拱顶下面横卧着数瓶红酒与苹果白兰地。",

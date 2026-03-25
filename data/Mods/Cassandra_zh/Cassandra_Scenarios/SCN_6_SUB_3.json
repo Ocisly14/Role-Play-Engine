@@ -65,7 +65,10 @@
     }
   ],
   "connections": [
-    { "targetId": "SCN_6_SUB_2", "description": "二层走廊尽头窄小的木楼梯向下延伸，扶手满是灰尘，连通一层客厅与厨房" }
+    {
+      "targetId": "SCN_6_SUB_2",
+      "description": "二层走廊尽头窄小的木楼梯向下延伸，扶手满是灰尘，连通一层客厅与厨房"
+    }
   ],
   "itemContexts": {
     "ITEM_SCN6_8": "卧室里的双人床仍铺着被褥，但布料已经被细灰染成一层死气沉沉的灰白色。",

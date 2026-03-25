@@ -17,10 +17,7 @@ export function buildOutcome(
     parts.push(`[${opts.reason}]`);
   }
   // Payload context
-  if (
-    node.type === "object_interaction" &&
-    node.objectInteractionPayload
-  ) {
+  if (node.type === "object_interaction" && node.objectInteractionPayload) {
     const p = node.objectInteractionPayload;
     if (p.action === "move" && p.itemId && p.from && p.to) {
       const formatRef = (ref: typeof p.from) => {

@@ -59,9 +59,18 @@
     }
   ],
   "connections": [
-    { "targetId": "SCN_21_SUB_2", "description": "月台台阶下方是一片龟裂石板地面的荒凉站前广场" },
-    { "targetId": "SCN_21_SUB_3", "description": "月台侧面值班小屋内有一处隐蔽入口，暗道向下通往地下黑手党总部" },
-    { "targetId": "JUNC_7", "description": "火车站大门外即是旧街西端的站前路口" }
+    {
+      "targetId": "SCN_21_SUB_2",
+      "description": "月台台阶下方是一片龟裂石板地面的荒凉站前广场"
+    },
+    {
+      "targetId": "SCN_21_SUB_3",
+      "description": "月台侧面值班小屋内有一处隐蔽入口，暗道向下通往地下黑手党总部"
+    },
+    {
+      "targetId": "JUNC_7",
+      "description": "火车站大门外即是旧街西端的站前路口"
+    }
   ],
   "itemContexts": {
     "ITEM_SCN21_1": "月台上竖立的一块老旧站牌，挂满了铁锈。'卡森德拉'几个字已经被风雨侵蚀得模糊不清，显示着这座火车站漫长的历史。",

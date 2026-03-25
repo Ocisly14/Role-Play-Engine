@@ -53,7 +53,9 @@ export async function persistSimulationEvents(
   prisma: PrismaClient,
   events: SimulationEvent[]
 ): Promise<void> {
-  const persistedEvents = events.filter((event) => !SKIP_PERSIST_TYPES.has(event.type));
+  const persistedEvents = events.filter(
+    (event) => !SKIP_PERSIST_TYPES.has(event.type)
+  );
   if (persistedEvents.length === 0) return;
 
   await prisma.simulationEvent.createMany({

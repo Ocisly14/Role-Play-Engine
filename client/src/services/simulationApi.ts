@@ -1,5 +1,5 @@
-import { api } from "./api.js";
 import type { SimulationEvent } from "../hooks/useSimulationWebSocket.js";
+import { api } from "./api.js";
 
 export type SimulationWeather =
   | "clear"

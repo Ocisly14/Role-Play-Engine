@@ -6,13 +6,13 @@
  * Requires: Prisma DB accessible (uses getPrismaClient)
  */
 
-import { describe, it, expect, beforeAll } from "vitest";
+import * as fs from "node:fs";
+import * as path from "node:path";
+import { beforeAll, describe, expect, it } from "vitest";
+import { resolveModuleIdByName } from "../../../shared/agents/memory/database/moduleScope.js";
 import { getPrismaClient } from "../../../shared/agents/memory/database/prismaClient.js";
 import { importModule } from "../moduleImporter.js";
-import { loadModule, initRuntime } from "../moduleLoader.js";
-import { resolveModuleIdByName } from "../../../shared/agents/memory/database/moduleScope.js";
-import * as path from "node:path";
-import * as fs from "node:fs";
+import { initRuntime, loadModule } from "../moduleLoader.js";
 
 const MODULE_NAME = "Cassandra_zh";
 const MODULE_DIR = path.join(process.cwd(), "data", "Mods", MODULE_NAME);
@@ -139,7 +139,9 @@ describe.skipIf(!moduleExists)("Module injection: Cassandra_zh", () => {
       expect(data!.npcInjectionPolicy).not.toBeNull();
       expect(data!.npcInjectionPolicy!.tiers).toBeDefined();
       expect(data!.npcInjectionPolicy!.tiers.daily_sim).toBeDefined();
-      expect(data!.npcInjectionPolicy!.tiers.daily_sim!.length).toBeGreaterThanOrEqual(10);
+      expect(
+        data!.npcInjectionPolicy!.tiers.daily_sim!.length
+      ).toBeGreaterThanOrEqual(10);
     });
   });
 
@@ -194,7 +196,9 @@ describe.skipIf(!moduleExists)("Module injection: Cassandra_zh", () => {
 
       // === NPC inventories ===
       expect(state.npcInventories["Patrizio von Samsa"]).toBeDefined();
-      expect(Array.isArray(state.npcInventories["Patrizio von Samsa"])).toBe(true);
+      expect(Array.isArray(state.npcInventories["Patrizio von Samsa"])).toBe(
+        true
+      );
 
       // === NPC positions ===
       expect(state.characterPositions["Patrizio von Samsa"]).toBeDefined();

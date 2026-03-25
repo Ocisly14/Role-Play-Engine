@@ -59,8 +59,14 @@
     }
   ],
   "connections": [
-    { "targetId": "SCN_1_SUB_1", "description": "门禁门外即走廊，前方走廊口连通医院大厅前台区域" },
-    { "targetId": "SCN_1_SUB_5", "description": "门禁门外走廊左侧方向通往日光灯照亮的L型走廊与病房区" }
+    {
+      "targetId": "SCN_1_SUB_1",
+      "description": "门禁门外即走廊，前方走廊口连通医院大厅前台区域"
+    },
+    {
+      "targetId": "SCN_1_SUB_5",
+      "description": "门禁门外走廊左侧方向通往日光灯照亮的L型走廊与病房区"
+    }
   ],
   "itemContexts": {
     "ITEM_SCN1_8": "存放着各类常规医疗药品的货架和冷藏柜"

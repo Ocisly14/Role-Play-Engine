@@ -195,6 +195,9 @@ export class InteriorScene extends Phaser.Scene {
       };
     }
     const a = this.npcAreas[Math.floor(Math.random() * this.npcAreas.length)];
-    return { x: a.x + Math.random() * a.width, y: a.y + Math.random() * a.height };
+    return {
+      x: a.x + Math.random() * a.width,
+      y: a.y + Math.random() * a.height,
+    };
   }
 }

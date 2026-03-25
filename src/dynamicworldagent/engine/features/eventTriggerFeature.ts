@@ -1,7 +1,12 @@
 import type { PlanNode } from "../../dynamicBasicAgent/npcPlanning/types.js";
 import type { DynamicGameStateManager } from "../../state/DynamicGameState.js";
 import type { Item } from "../../state/types.js";
-import type { ActivateResult, NodeStartBlockedResult, TickRuntimeContext, WorldFeature } from "../types.js";
+import type {
+  ActivateResult,
+  NodeStartBlockedResult,
+  TickRuntimeContext,
+  WorldFeature,
+} from "../types.js";
 import { applySanityLoss } from "./sanityFeature.js";
 
 // ===== Types =====
@@ -101,7 +106,9 @@ function setEventTriggerState(
   dgsm.setFeatureSceneState(FEATURE_ID, eventTriggerId, state);
 }
 
-function getEventTriggerPresets(dgsm: DynamicGameStateManager): EventTriggerDefinition[] {
+function getEventTriggerPresets(
+  dgsm: DynamicGameStateManager
+): EventTriggerDefinition[] {
   return (
     ((dgsm.getState() as any).moduleSetup?.eventTriggerPresets as
       | EventTriggerDefinition[]
@@ -113,7 +120,9 @@ function findDefinition(
   dgsm: DynamicGameStateManager,
   eventTriggerId: string
 ): EventTriggerDefinition | undefined {
-  return getEventTriggerPresets(dgsm).find((d) => d.eventTriggerId === eventTriggerId);
+  return getEventTriggerPresets(dgsm).find(
+    (d) => d.eventTriggerId === eventTriggerId
+  );
 }
 
 /**
@@ -145,7 +154,9 @@ function hasItem(
       item.containerStats?.storedItems &&
       !item.containerStats.locked
     ) {
-      if (item.containerStats.storedItems.some((si: Item) => si.name === itemName)) {
+      if (
+        item.containerStats.storedItems.some((si: Item) => si.name === itemName)
+      ) {
         return true;
       }
     }
@@ -201,7 +212,9 @@ function checkAllConditions(
         break;
       case "prerequisite":
         if (cs.mode === "passive") {
-          if (!checkPrerequisitePassive(dgsm, condDef, definition.conductorNpcId))
+          if (
+            !checkPrerequisitePassive(dgsm, condDef, definition.conductorNpcId)
+          )
             return false;
         } else {
           // manual
@@ -224,8 +237,8 @@ function applyCompletionEffect(
   const effect = definition.completionEffect;
   if (!effect) return;
 
-  const gameDay = runtime?.gameDay ?? (dgsm.getState().gameDay ?? 1);
-  const tickTime = runtime?.tickTime ?? (dgsm.getState().timeOfDay ?? "00:00");
+  const gameDay = runtime?.gameDay ?? dgsm.getState().gameDay ?? 1;
+  const tickTime = runtime?.tickTime ?? dgsm.getState().timeOfDay ?? "00:00";
 
   // Scene conditions
   if (effect.sceneConditions) {
@@ -236,7 +249,10 @@ function applyCompletionEffect(
         location: sc.sceneId,
         gameTime: tickTime,
         description: sc.description,
-        data: { source: "event_trigger", eventTriggerId: definition.eventTriggerId },
+        data: {
+          source: "event_trigger",
+          eventTriggerId: definition.eventTriggerId,
+        },
       });
     }
   }
@@ -247,7 +263,11 @@ function applyCompletionEffect(
     location: definition.siteSceneId,
     gameTime: tickTime,
     description: `${definition.label} — completed`,
-    data: { eventTriggerId: definition.eventTriggerId, label: definition.label, outcome: "completed" },
+    data: {
+      eventTriggerId: definition.eventTriggerId,
+      label: definition.label,
+      outcome: "completed",
+    },
   });
 
   // Witness SAN loss: all characters at siteSceneId except conductor
@@ -295,8 +315,8 @@ function applyFailureEffect(
   const effect = definition.failureEffect;
   if (!effect) return;
 
-  const gameDay = runtime?.gameDay ?? (dgsm.getState().gameDay ?? 1);
-  const tickTime = runtime?.tickTime ?? (dgsm.getState().timeOfDay ?? "00:00");
+  const gameDay = runtime?.gameDay ?? dgsm.getState().gameDay ?? 1;
+  const tickTime = runtime?.tickTime ?? dgsm.getState().timeOfDay ?? "00:00";
 
   // Scene conditions
   if (effect.sceneConditions) {
@@ -307,7 +327,10 @@ function applyFailureEffect(
         location: sc.sceneId,
         gameTime: tickTime,
         description: sc.description,
-        data: { source: "event_trigger", eventTriggerId: definition.eventTriggerId },
+        data: {
+          source: "event_trigger",
+          eventTriggerId: definition.eventTriggerId,
+        },
       });
     }
   }
@@ -318,7 +341,11 @@ function applyFailureEffect(
     location: definition.siteSceneId,
     gameTime: tickTime,
     description: `${definition.label} — failed`,
-    data: { eventTriggerId: definition.eventTriggerId, label: definition.label, outcome: "failed" },
+    data: {
+      eventTriggerId: definition.eventTriggerId,
+      label: definition.label,
+      outcome: "failed",
+    },
   });
 
   // Witness SAN loss: all characters at siteSceneId except conductor
@@ -474,9 +501,7 @@ export const eventTriggerFeature: WorldFeature = {
       }
 
       // Add invoke line
-      lines.push(
-        `- 启动事件触发 \u2192 eventTriggerType="${def.invokeType}"`
-      );
+      lines.push(`- 启动事件触发 \u2192 eventTriggerType="${def.invokeType}"`);
 
       if (lines.length > 0) {
         sections.push(
@@ -493,12 +518,17 @@ export const eventTriggerFeature: WorldFeature = {
     );
   },
 
-  onNodeStart(node: PlanNode, dgsm: DynamicGameStateManager): NodeStartBlockedResult | void {
+  onNodeStart(
+    node: PlanNode,
+    dgsm: DynamicGameStateManager
+  ): NodeStartBlockedResult | void {
     const nodeAny = node as Record<string, unknown>;
     const eventTriggerId = nodeAny.eventTriggerId as string | undefined;
     if (!eventTriggerId) return;
 
-    const eventTriggerConditionId = nodeAny.eventTriggerConditionId as string | undefined;
+    const eventTriggerConditionId = nodeAny.eventTriggerConditionId as
+      | string
+      | undefined;
     if (!eventTriggerConditionId) return;
 
     const definition = findDefinition(dgsm, eventTriggerId);
@@ -516,13 +546,18 @@ export const eventTriggerFeature: WorldFeature = {
     if (!cs || cs.type !== "prerequisite" || cs.mode !== "manual") return;
 
     // Check prerequisite (location/item) at action start time
-    const fulfilled = checkPrerequisitePassive(dgsm, condDef, definition.conductorNpcId);
+    const fulfilled = checkPrerequisitePassive(
+      dgsm,
+      condDef,
+      definition.conductorNpcId
+    );
     cs.fulfilled = fulfilled;
     setEventTriggerState(dgsm, eventTriggerId, state);
 
     if (!fulfilled) {
       const missing: string[] = [];
-      if (condDef.check?.location) missing.push(`location: ${condDef.check.location}`);
+      if (condDef.check?.location)
+        missing.push(`location: ${condDef.check.location}`);
       if (condDef.check?.item) missing.push(`item: ${condDef.check.item}`);
       return {
         blocked: true,
@@ -531,18 +566,25 @@ export const eventTriggerFeature: WorldFeature = {
     }
   },
 
-  activate(node: PlanNode, dgsm: DynamicGameStateManager): ActivateResult | void {
+  activate(
+    node: PlanNode,
+    dgsm: DynamicGameStateManager
+  ): ActivateResult | void {
     const nodeAny = node as Record<string, unknown>;
     const eventTriggerId = nodeAny.eventTriggerId as string | undefined;
     if (!eventTriggerId) return;
 
     const eventTriggerType = nodeAny.eventTriggerType as string | undefined;
-    const eventTriggerConditionId = nodeAny.eventTriggerConditionId as string | undefined;
+    const eventTriggerConditionId = nodeAny.eventTriggerConditionId as
+      | string
+      | undefined;
 
     // Find definition
     const definition = findDefinition(dgsm, eventTriggerId);
     if (!definition) {
-      console.warn(`[event_trigger] No definition found for eventTriggerId="${eventTriggerId}"`);
+      console.warn(
+        `[event_trigger] No definition found for eventTriggerId="${eventTriggerId}"`
+      );
       return;
     }
 

@@ -48,6 +48,9 @@
     }
   ],
   "connections": [
-    { "targetId": "SCN_2_SUB_1", "description": "小楼残存出口外是碎砖瓦砾和枯草丛生的碎石空地，对面即焚化炉所在的焚化设施" }
+    {
+      "targetId": "SCN_2_SUB_1",
+      "description": "小楼残存出口外是碎砖瓦砾和枯草丛生的碎石空地，对面即焚化炉所在的焚化设施"
+    }
   ]
 }

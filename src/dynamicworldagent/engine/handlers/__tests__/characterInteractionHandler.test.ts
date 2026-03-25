@@ -54,7 +54,9 @@ function createMockDgsm() {
     addItemToNpc() {},
     _addNpc(
       npcId: string,
-      position: { type: "scene"; sceneId: string } | { type: "road"; roadId: string; position: number },
+      position:
+        | { type: "scene"; sceneId: string }
+        | { type: "road"; roadId: string; position: number },
       hp = 10
     ) {
       characterPositions[npcId] = position;
@@ -116,7 +118,11 @@ describe("characterInteractionHandler", () => {
     dgsm._addNpc("npc_a", { type: "road", roadId: "ROAD_1", position: 0.1 });
     dgsm._addNpc("npc_b", { type: "road", roadId: "ROAD_1", position: 0.25 });
 
-    const result = await characterInteractionHandler.execute(makeNode(), dgsm as any, ctx);
+    const result = await characterInteractionHandler.execute(
+      makeNode(),
+      dgsm as any,
+      ctx
+    );
     expect(result.status).toBe("completed");
   });
 
@@ -125,7 +131,11 @@ describe("characterInteractionHandler", () => {
     dgsm._addNpc("npc_a", { type: "road", roadId: "ROAD_1", position: 0.1 });
     dgsm._addNpc("npc_b", { type: "road", roadId: "ROAD_1", position: 0.8 });
 
-    const result = await characterInteractionHandler.execute(makeNode(), dgsm as any, ctx);
+    const result = await characterInteractionHandler.execute(
+      makeNode(),
+      dgsm as any,
+      ctx
+    );
     expect(result.status).toBe("failed");
     expect(result.failureReason).toBe("target_absent");
   });
@@ -133,9 +143,17 @@ describe("characterInteractionHandler", () => {
   it("treats dead targets like normal interaction targets at handler level", async () => {
     const dgsm = createMockDgsm();
     dgsm._addNpc("npc_a", { type: "road", roadId: "ROAD_1", position: 0.1 });
-    dgsm._addNpc("npc_b", { type: "road", roadId: "ROAD_1", position: 0.12 }, 0);
+    dgsm._addNpc(
+      "npc_b",
+      { type: "road", roadId: "ROAD_1", position: 0.12 },
+      0
+    );
 
-    const result = await characterInteractionHandler.execute(makeNode(), dgsm as any, ctx);
+    const result = await characterInteractionHandler.execute(
+      makeNode(),
+      dgsm as any,
+      ctx
+    );
     expect(result.status).toBe("completed");
     expect(result.failureReason).toBeUndefined();
     expect(result.outcome).toBe("Talk to B");
@@ -147,7 +165,11 @@ describe("characterInteractionHandler", () => {
     dgsm._addNpc("npc_b", { type: "road", roadId: "ROAD_1", position: 0.12 });
     dgsm._setHidden("npc_b", true);
 
-    const result = await characterInteractionHandler.execute(makeNode(), dgsm as any, ctx);
+    const result = await characterInteractionHandler.execute(
+      makeNode(),
+      dgsm as any,
+      ctx
+    );
     expect(result.status).toBe("failed");
     expect(result.failureReason).toBe("target_absent");
   });

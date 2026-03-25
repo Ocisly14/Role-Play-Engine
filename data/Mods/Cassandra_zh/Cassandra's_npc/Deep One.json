@@ -10,18 +10,71 @@
   "residence": "SCN_7",
   "currentLocation": "SCN_7",
   "longTermIntent": "保卫深潜者领地，保持水陆之间的隐秘通道畅通，维护血脉和联盟以阻止人类对海岸的过多侵占。",
-  "attributes": {"STR": 65, "CON": 70, "DEX": 55, "APP": 10, "POW": 55, "SIZ": 65, "INT": 60, "EDU": 40},
-  "status": {"hp": 14, "maxHp": 14, "sanity": 0, "maxSanity": 0, "luck": 0, "mp": 11, "conditions": []},
-  "skills": {"Fighting": 45, "Dodge": 25},
+  "attributes": {
+    "STR": 65,
+    "CON": 70,
+    "DEX": 55,
+    "APP": 10,
+    "POW": 55,
+    "SIZ": 65,
+    "INT": 60,
+    "EDU": 40
+  },
+  "status": {
+    "hp": 14,
+    "maxHp": 14,
+    "sanity": 0,
+    "maxSanity": 0,
+    "luck": 0,
+    "mp": 11,
+    "conditions": []
+  },
+  "skills": { "Fighting": 45, "Dodge": 25 },
   "inventory": [],
   "relationships": [
-    {"targetId": "Deep One Hybrid (Bearer of the Innsmouth Taint)", "targetName": "Deep One Hybrid (Bearer of the Innsmouth Taint)", "relationshipType": "family", "attitude": 40, "description": "携带深潜者赖以传播的混合人类血统的血脉后裔。", "history": "混血是深潜者用来在人类中扩展的同一条漫长血脉的一部分。"}
+    {
+      "targetId": "Deep One Hybrid (Bearer of the Innsmouth Taint)",
+      "targetName": "Deep One Hybrid (Bearer of the Innsmouth Taint)",
+      "relationshipType": "family",
+      "attitude": 40,
+      "description": "携带深潜者赖以传播的混合人类血统的血脉后裔。",
+      "history": "混血是深潜者用来在人类中扩展的同一条漫长血脉的一部分。"
+    }
   ],
   "memory": [
-    {"type": "information", "content": "我可以不借助任何辅助在水下和陆地上呼吸，这使得人类一旦我占据了一个区域就很难将我驱走。", "metadata": {"knowledgeId": "k_deepone_breathing", "difficulty": "regular"}},
-    {"type": "information", "content": "比起人类制造的武器，我更信赖矛和三叉戟，不过必要时两者我都能使用。", "metadata": {"knowledgeId": "k_deepone_weapons", "difficulty": "regular"}},
-    {"type": "information", "content": "我知道如何穿过潮汐、排水管和水下路线，我记得人类地图遗忘的地方。", "metadata": {"knowledgeId": "k_deepone_routes", "difficulty": "regular"}},
-    {"type": "secret", "content": "我的种族将异族通婚作为一种刻意的长期策略，我把混血视为传播我们血脉工作的一部分。", "metadata": {"knowledgeId": "s_deepone_hybrid_line"}},
-    {"type": "belief", "content": "对我来说，人类定居点只是暂时的边界。水永远记得它最初在哪里。", "metadata": {"confidence": 0.9, "reasoningChain": "深处比建在其上的城市存续得更久。"}}
+    {
+      "type": "information",
+      "content": "我可以不借助任何辅助在水下和陆地上呼吸，这使得人类一旦我占据了一个区域就很难将我驱走。",
+      "metadata": {
+        "knowledgeId": "k_deepone_breathing",
+        "difficulty": "regular"
+      }
+    },
+    {
+      "type": "information",
+      "content": "比起人类制造的武器，我更信赖矛和三叉戟，不过必要时两者我都能使用。",
+      "metadata": {
+        "knowledgeId": "k_deepone_weapons",
+        "difficulty": "regular"
+      }
+    },
+    {
+      "type": "information",
+      "content": "我知道如何穿过潮汐、排水管和水下路线，我记得人类地图遗忘的地方。",
+      "metadata": { "knowledgeId": "k_deepone_routes", "difficulty": "regular" }
+    },
+    {
+      "type": "secret",
+      "content": "我的种族将异族通婚作为一种刻意的长期策略，我把混血视为传播我们血脉工作的一部分。",
+      "metadata": { "knowledgeId": "s_deepone_hybrid_line" }
+    },
+    {
+      "type": "belief",
+      "content": "对我来说，人类定居点只是暂时的边界。水永远记得它最初在哪里。",
+      "metadata": {
+        "confidence": 0.9,
+        "reasoningChain": "深处比建在其上的城市存续得更久。"
+      }
+    }
   ]
 }

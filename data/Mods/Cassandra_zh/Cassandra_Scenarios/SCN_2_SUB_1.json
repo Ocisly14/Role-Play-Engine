@@ -55,8 +55,17 @@
     }
   ],
   "connections": [
-    { "targetId": "SCN_2_SUB_2", "description": "焚化炉后方碎石荒地远处矗立着一座半坍塌的二层小楼，相距约两分钟步程" },
-    { "targetId": "SCN_2_SUB_3", "description": "焚化炉底座旁隐藏着一条向下倾斜的狭窄通道，石阶通往地下深处的古老仪式场" },
-    { "targetId": "JUNC_1", "description": "荒地东侧有一条铺满灰尘的碎石路，接上柏油路面后即为星辰大道北端路口" }
+    {
+      "targetId": "SCN_2_SUB_2",
+      "description": "焚化炉后方碎石荒地远处矗立着一座半坍塌的二层小楼，相距约两分钟步程"
+    },
+    {
+      "targetId": "SCN_2_SUB_3",
+      "description": "焚化炉底座旁隐藏着一条向下倾斜的狭窄通道，石阶通往地下深处的古老仪式场"
+    },
+    {
+      "targetId": "JUNC_1",
+      "description": "荒地东侧有一条铺满灰尘的碎石路，接上柏油路面后即为星辰大道北端路口"
+    }
   ]
 }

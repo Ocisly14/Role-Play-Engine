@@ -27,9 +27,7 @@
     "maxSanity": 70,
     "luck": 40,
     "mp": 14,
-    "conditions": [
-      "已变异"
-    ]
+    "conditions": ["已变异"]
   },
   "skills": {
     "Occult": 60,

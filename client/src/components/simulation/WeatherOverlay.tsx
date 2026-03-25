@@ -1149,8 +1149,7 @@ const HeatDistortion: React.FC = () => {
       inset: "-8%",
       opacity: 0.92,
       animation: "heatRefractionBase 3.8s linear -1.6s infinite",
-      backdrop:
-        "blur(1.9px) saturate(1.18) brightness(1.06) contrast(1.08)",
+      backdrop: "blur(1.9px) saturate(1.18) brightness(1.06) contrast(1.08)",
       background:
         "linear-gradient(180deg, rgba(255,255,255,0.004) 0%, rgba(255,244,220,0.014) 56%, rgba(255,236,198,0.02) 100%)",
       mask: `
@@ -1171,8 +1170,7 @@ const HeatDistortion: React.FC = () => {
       inset: "-7%",
       opacity: 0.74,
       animation: "heatRefractionField1 4.4s linear -2.8s infinite",
-      backdrop:
-        "blur(1.6px) saturate(1.14) brightness(1.05) contrast(1.06)",
+      backdrop: "blur(1.6px) saturate(1.14) brightness(1.05) contrast(1.06)",
       background: "rgba(255,250,240,0.016)",
       mask: `
         radial-gradient(16% 12% at 8% 34%, rgba(0,0,0,0.88) 0%, rgba(0,0,0,0.26) 54%, transparent 82%),
@@ -1190,8 +1188,7 @@ const HeatDistortion: React.FC = () => {
       inset: "-6%",
       opacity: 0.62,
       animation: "heatRefractionField2 5.1s linear -4.4s infinite",
-      backdrop:
-        "blur(1.35px) saturate(1.12) brightness(1.04) contrast(1.05)",
+      backdrop: "blur(1.35px) saturate(1.12) brightness(1.04) contrast(1.05)",
       background: "rgba(255,248,230,0.014)",
       mask: `
         radial-gradient(14% 10% at 18% 24%, rgba(0,0,0,0.78) 0%, rgba(0,0,0,0.18) 52%, transparent 80%),
@@ -1209,8 +1206,7 @@ const HeatDistortion: React.FC = () => {
       inset: "-7%",
       opacity: 0.54,
       animation: "heatRefractionField3 5.8s linear -3.6s infinite",
-      backdrop:
-        "blur(1.45px) saturate(1.16) brightness(1.05) contrast(1.06)",
+      backdrop: "blur(1.45px) saturate(1.16) brightness(1.05) contrast(1.06)",
       background: "rgba(255,246,225,0.014)",
       mask: `
         radial-gradient(30% 22% at 24% 30%, rgba(0,0,0,0.86) 0%, rgba(0,0,0,0.2) 58%, transparent 86%),

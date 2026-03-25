@@ -1,11 +1,6 @@
 import type React from "react";
 import { Suspense, lazy, useEffect } from "react";
-import {
-  BrowserRouter,
-  Navigate,
-  Route,
-  Routes,
-} from "react-router-dom";
+import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 import { MainLayout } from "./components/layout/MainLayout";
 import { AppSettingsProvider } from "./contexts/AppSettingsContext";
@@ -107,9 +102,7 @@ const AppRoutes: React.FC = () => {
         <Route
           path="/simulation/:sessionId"
           element={
-            <ProtectedRoute>
-              {renderSimulationPage("owner")}
-            </ProtectedRoute>
+            <ProtectedRoute>{renderSimulationPage("owner")}</ProtectedRoute>
           }
         />
         <Route
@@ -125,11 +118,20 @@ const AppRoutes: React.FC = () => {
             path="/character/select"
             element={<CharacterSelectionPage />}
           />
-          <Route path="/simulation/select" element={
-            <Suspense fallback={<div className="flex items-center justify-center h-screen">Loading...</div>}>
-              <SimulationSelectPage />
-            </Suspense>
-          } />
+          <Route
+            path="/simulation/select"
+            element={
+              <Suspense
+                fallback={
+                  <div className="flex items-center justify-center h-screen">
+                    Loading...
+                  </div>
+                }
+              >
+                <SimulationSelectPage />
+              </Suspense>
+            }
+          />
           <Route path="/story/create" element={<StoryCreatorPage />} />
           <Route path="/tutorial" element={<TutorialPage />} />
         </Route>

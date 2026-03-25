@@ -15,7 +15,7 @@ export const sceneInteractionHandler: NodeHandler = {
     "Interact with the scene itself, modifying scene conditions or connections. " +
     "Outcomes are appended as scene conditions.\n\n" +
     "Optional: `sceneConnectionEffect` to block/unblock a connection between scenes.\n" +
-    "Format: `{ \"targetScenarioId\": \"existing_connected_location_id\", \"action\": \"block|unblock\" }`\n" +
+    'Format: `{ "targetScenarioId": "existing_connected_location_id", "action": "block|unblock" }`\n' +
     "`targetScenarioId` must reference a real adjacent map location ID from the current location's known connections. " +
     "Never invent room fragments, doors, partitions, or descriptive sub-areas. If unsure, omit this field.\n\n" +
     "SKILL GUIDANCE: Do NOT set `skill` for ordinary scene actions — closing/opening doors, " +
@@ -105,7 +105,9 @@ export const sceneInteractionHandler: NodeHandler = {
         ? getTopologyNeighbors(node.location, topology)
         : [];
       const scene = dgsm.getScene(node.location);
-      const directConnectionIds = (scene?.connections ?? []).map(c => c.targetId);
+      const directConnectionIds = (scene?.connections ?? []).map(
+        (c) => c.targetId
+      );
       const connectedTargets = new Set([...directConnectionIds, ...neighbors]);
       const targetExists =
         dgsm.getScene(effect.targetScenarioId) !== null ||

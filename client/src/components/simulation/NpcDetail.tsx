@@ -91,31 +91,31 @@ function ProfileModal({
             }}
           />
           <div className="space-y-3">
-          {fields.map(
-            ({ label, value }) =>
-              value != null &&
-              value !== "" && (
-                <div key={label}>
-                  <span
-                    className="text-lg font-semibold tracking-wider"
-                    style={{ color: "var(--accent)" }}
-                  >
-                    {label}
-                  </span>
-                  <p
-                    className="mt-0.5 text-base whitespace-pre-wrap"
-                    style={{ fontFamily: "var(--serif)" }}
-                  >
-                    {value}
-                  </p>
-                </div>
-              )
-          )}
-          {fields.every((f) => f.value == null || f.value === "") && (
-            <p className="italic" style={{ color: "var(--accent)" }}>
-              {t("npc.noProfileInfo")}
-            </p>
-          )}
+            {fields.map(
+              ({ label, value }) =>
+                value != null &&
+                value !== "" && (
+                  <div key={label}>
+                    <span
+                      className="text-lg font-semibold tracking-wider"
+                      style={{ color: "var(--accent)" }}
+                    >
+                      {label}
+                    </span>
+                    <p
+                      className="mt-0.5 text-base whitespace-pre-wrap"
+                      style={{ fontFamily: "var(--serif)" }}
+                    >
+                      {value}
+                    </p>
+                  </div>
+                )
+            )}
+            {fields.every((f) => f.value == null || f.value === "") && (
+              <p className="italic" style={{ color: "var(--accent)" }}>
+                {t("npc.noProfileInfo")}
+              </p>
+            )}
           </div>
         </div>
       </div>
@@ -148,13 +148,16 @@ export function NpcDetail({ npc, onBack, onZoomTo }: NpcDetailProps) {
           </div>
           <div className="space-y-1 text-base text-slate-900">
             <div className="text-slate-800">
-              <span className="text-slate-700">{t("npc.hp")}:</span> {npc.hp} / {npc.maxHp}
+              <span className="text-slate-700">{t("npc.hp")}:</span> {npc.hp} /{" "}
+              {npc.maxHp}
             </div>
             <div className="text-slate-800">
-              <span className="text-slate-700">{t("npc.san")}:</span> {npc.sanity} / {npc.maxSanity}
+              <span className="text-slate-700">{t("npc.san")}:</span>{" "}
+              {npc.sanity} / {npc.maxSanity}
             </div>
             <div className="text-slate-900">
-              <span className="text-slate-700">{t("npc.location")}:</span> {npc.location}
+              <span className="text-slate-700">{t("npc.location")}:</span>{" "}
+              {npc.location}
             </div>
           </div>
         </div>
@@ -174,12 +177,15 @@ export function NpcDetail({ npc, onBack, onZoomTo }: NpcDetailProps) {
       <div className="space-y-1 text-base text-slate-900">
         {npc.currentAction && (
           <div className="text-slate-900">
-            <span className="text-slate-700">{t("npc.currentAction")}:</span> {npc.currentAction}
+            <span className="text-slate-700">{t("npc.currentAction")}:</span>{" "}
+            {npc.currentAction}
           </div>
         )}
         {npc.inventory.length > 0 && (
           <div>
-            <span className="text-slate-700 text-base">{t("npc.inventory")}:</span>
+            <span className="text-slate-700 text-base">
+              {t("npc.inventory")}:
+            </span>
             <ul className="text-base text-slate-900 mt-1">
               {npc.inventory.map((item) => (
                 <li key={item.id}>{item.name}</li>

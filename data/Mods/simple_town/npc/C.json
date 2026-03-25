@@ -44,7 +44,12 @@
     { "name": "Wallet", "properties": { "cash": 580 } },
     { "name": "Office Keys" },
     { "name": "Leather Briefcase" },
-    { "name": "Petty Cash Key", "properties": { "note": "Opens the petty cash box and filing cabinet bottom drawer" } }
+    {
+      "name": "Petty Cash Key",
+      "properties": {
+        "note": "Opens the petty cash box and filing cabinet bottom drawer"
+      }
+    }
   ],
   "relationships": [
     {
@@ -103,12 +108,18 @@
     {
       "type": "belief",
       "content": "Lisa might have already noticed the discrepancies in the petty cash. I need to restrict her access to financial records before she finds proof.",
-      "metadata": { "confidence": 0.7, "reasoningChain": "She's been looking at the petty cash ledger more than her job requires. She asked about an 'accounting correction' entry last week." }
+      "metadata": {
+        "confidence": 0.7,
+        "reasoningChain": "She's been looking at the petty cash ledger more than her job requires. She asked about an 'accounting correction' entry last week."
+      }
     },
     {
       "type": "belief",
       "content": "If I show any weakness, people will take advantage of me. I must always be in control.",
-      "metadata": { "confidence": 0.9, "reasoningChain": "Learned from my father and reinforced by the divorce." }
+      "metadata": {
+        "confidence": 0.9,
+        "reasoningChain": "Learned from my father and reinforced by the divorce."
+      }
     }
   ]
 }

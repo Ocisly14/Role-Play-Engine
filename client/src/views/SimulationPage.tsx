@@ -8,7 +8,6 @@ import { ControlPanel } from "../components/simulation/ControlPanel";
 import { PhaserContainer } from "../components/simulation/PhaserContainer";
 import { SceneInfoPanel } from "../components/simulation/SceneInfoPanel";
 import { SidePanel } from "../components/simulation/SidePanel";
-import { SubSceneTabs } from "../components/simulation/SubSceneTabs";
 import { WeatherOverlay } from "../components/simulation/WeatherOverlay";
 import { useMobileSidebar } from "../hooks/useMobileSidebar";
 import { useSimulationState } from "../hooks/useSimulationState";

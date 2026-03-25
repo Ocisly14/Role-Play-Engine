@@ -53,7 +53,10 @@
     }
   ],
   "connections": [
-    { "targetId": "SCN_4_SUB_1", "description": "楼层电梯与铺着深红地毯的楼梯均通往一楼酒店大堂" }
+    {
+      "targetId": "SCN_4_SUB_1",
+      "description": "楼层电梯与铺着深红地毯的楼梯均通往一楼酒店大堂"
+    }
   ],
   "itemContexts": {
     "ITEM_SCN4_8": "每层走廊尽头都有一扇标着绿色安全出口标识的金属防火门，通向一条朴素的水泥楼梯间，可以直达一楼的侧门出口。"

@@ -5,17 +5,17 @@
  * node handlers, world features, and SimulationRunner.
  */
 
+import {
+  getBlockedConnectionReason,
+  makeBlockedConnectionKey,
+  resolveBlockedConnectionNodeRef,
+} from "./blockedConnections.js";
 import type {
   CharacterPosition,
   JunctionNode,
   RoadNode,
   TownTopology,
 } from "./topologyTypes.js";
-import {
-  getBlockedConnectionReason,
-  makeBlockedConnectionKey,
-  resolveBlockedConnectionNodeRef,
-} from "./blockedConnections.js";
 import { buildTopology } from "./topologyTypes.js";
 import {
   InventoryUtils,
@@ -132,7 +132,9 @@ export const initialDynamicGameState = (params: {
 export class DynamicGameStateManager {
   private state: DynamicGameState;
   private db: any;
-  private pendingWorldEvents: import("../dynamicBasicAgent/npcPlanning/types.js").WorldEventDescriptor[] = [];
+  private pendingWorldEvents: import(
+    "../dynamicBasicAgent/npcPlanning/types.js"
+  ).WorldEventDescriptor[] = [];
   private hiddenCharacterIds = new Set<string>();
 
   constructor(state: DynamicGameState, db?: any) {
@@ -155,11 +157,17 @@ export class DynamicGameStateManager {
     return this.hiddenCharacterIds.has(characterId);
   }
 
-  pushWorldEvent(event: import("../dynamicBasicAgent/npcPlanning/types.js").WorldEventDescriptor): void {
+  pushWorldEvent(
+    event: import(
+      "../dynamicBasicAgent/npcPlanning/types.js"
+    ).WorldEventDescriptor
+  ): void {
     this.pendingWorldEvents.push(event);
   }
 
-  drainWorldEvents(): import("../dynamicBasicAgent/npcPlanning/types.js").WorldEventDescriptor[] {
+  drainWorldEvents(): import(
+    "../dynamicBasicAgent/npcPlanning/types.js"
+  ).WorldEventDescriptor[] {
     const events = this.pendingWorldEvents;
     this.pendingWorldEvents = [];
     return events;
@@ -895,7 +903,11 @@ export class DynamicGameStateManager {
     const fromRef = resolveBlockedConnectionNodeRef(fromId, this.state);
     const toRef = resolveBlockedConnectionNodeRef(toId, this.state);
     if (!fromRef || !toRef) return undefined;
-    return getBlockedConnectionReason(this.state.blockedConnections, fromRef, toRef);
+    return getBlockedConnectionReason(
+      this.state.blockedConnections,
+      fromRef,
+      toRef
+    );
   }
 
   setConnectionBlocked(
@@ -993,7 +1005,9 @@ export class DynamicGameStateManager {
   }
 
   private syncNpcStatusFromStats(npcId: string): void {
-    const npc = this.state.npcCharacters.find((candidate) => candidate.id === npcId);
+    const npc = this.state.npcCharacters.find(
+      (candidate) => candidate.id === npcId
+    );
     const stats = this.state.npcStats[npcId];
     if (!npc || !stats) return;
     npc.status.hp = stats.hp;

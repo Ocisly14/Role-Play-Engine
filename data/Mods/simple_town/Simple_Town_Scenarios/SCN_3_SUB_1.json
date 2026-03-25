@@ -15,7 +15,9 @@
       "description": "A metal filing cabinet containing company documents and invoices. The bottom drawer has a separate lock.",
       "category": "evidence",
       "discoveryMethod": "The bottom drawer is locked with a small key that Victor keeps on his person.",
-      "reveals": ["The petty cash records show discrepancies — several entries are crossed out and rewritten with lower amounts."]
+      "reveals": [
+        "The petty cash records show discrepancies — several entries are crossed out and rewritten with lower amounts."
+      ]
     },
     {
       "id": "ITEM_S3_3",
@@ -27,7 +29,9 @@
       "name": "Petty Cash Box",
       "description": "A small metal cash box in Victor's desk drawer. It should contain the company's petty cash fund.",
       "category": "evidence",
-      "reveals": ["The cash box is nearly empty. According to the ledger it should have $800, but there's only about $150 inside."]
+      "reveals": [
+        "The cash box is nearly empty. According to the ledger it should have $800, but there's only about $150 inside."
+      ]
     },
     {
       "id": "ITEM_S3_7",

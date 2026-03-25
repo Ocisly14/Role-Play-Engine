@@ -1,8 +1,8 @@
 import "dotenv/config";
+import { existsSync } from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
 import fs from "fs/promises";
-import { existsSync } from "fs";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -11,10 +11,7 @@ const NPC_DIR = path.resolve(
   __dirname,
   "../data/Mods/casssandra/Cassandra's_npc"
 );
-const OUTPUT_DIR = path.resolve(
-  __dirname,
-  "../data/Mods/casssandra/npc"
-);
+const OUTPUT_DIR = path.resolve(__dirname, "../data/Mods/casssandra/npc");
 
 const STYLE_PREFIX = `Style: 16-bit pixel art character portrait, half-body bust shot, Octopath Traveler / Square Enix HD-2D aesthetic, detailed pixel shading, warm cinematic lighting, slightly tilted three-quarter view, dark moody background with subtle atmospheric particles, retro JRPG character select screen feel.`;
 
@@ -88,8 +85,7 @@ async function generateGeminiImage(
 
   const inlineData = imagePart.inlineData || imagePart.inline_data;
   const base64Data = inlineData?.data;
-  const mimeType =
-    inlineData?.mimeType || inlineData?.mime_type || "image/png";
+  const mimeType = inlineData?.mimeType || inlineData?.mime_type || "image/png";
 
   if (!base64Data) throw new Error("Empty image data in response");
 
@@ -162,7 +158,9 @@ async function main() {
     );
 
     if (alreadyExists) {
-      console.log(`[${i + 1}/${npcs.length}] SKIP ${npc.name} — already exists`);
+      console.log(
+        `[${i + 1}/${npcs.length}] SKIP ${npc.name} — already exists`
+      );
       skipped.push(npc.name);
     } else {
       toGenerate.push({ npc, index: i });
@@ -186,9 +184,7 @@ async function main() {
 
     const results = await Promise.allSettled(
       chunk.map(async ({ npc, index }) => {
-        console.log(
-          `[${index + 1}/${npcs.length}] Generating ${npc.name}...`
-        );
+        console.log(`[${index + 1}/${npcs.length}] Generating ${npc.name}...`);
         const prompt = buildPrompt(npc);
         const { mimeType, base64Data } = await generateGeminiImage(prompt);
         const ext = extFromMime(mimeType);

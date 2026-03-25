@@ -11,7 +11,10 @@ function roundTravelMinutes(minutes: number): number {
   return Math.max(0, Math.round(minutes));
 }
 
-function getRoad(position: CharacterPosition, dgsm: DynamicGameStateManager): RoadNode | null {
+function getRoad(
+  position: CharacterPosition,
+  dgsm: DynamicGameStateManager
+): RoadNode | null {
   if (position.type !== "road") return null;
   return dgsm.getState().roads?.get(position.roadId) ?? null;
 }
@@ -20,7 +23,9 @@ function getJunctionName(
   junctionId: string,
   dgsm: DynamicGameStateManager
 ): string {
-  const junction = dgsm.getState().junctions.get(junctionId) as JunctionNode | undefined;
+  const junction = dgsm.getState().junctions.get(junctionId) as
+    | JunctionNode
+    | undefined;
   return junction?.name ?? junctionId;
 }
 
@@ -95,7 +100,9 @@ export function describePrecisePosition(
       const road = getRoad(position, dgsm);
       if (!road) return `On ${position.roadId}.`;
 
-      const minutesFromA = roundTravelMinutes(position.position * road.travelTimeMinutes);
+      const minutesFromA = roundTravelMinutes(
+        position.position * road.travelTimeMinutes
+      );
       const minutesFromB = roundTravelMinutes(
         (1 - position.position) * road.travelTimeMinutes
       );

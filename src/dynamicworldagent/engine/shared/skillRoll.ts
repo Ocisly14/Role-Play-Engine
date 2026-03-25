@@ -86,7 +86,10 @@ export function resolveSkillRoll(
   adjustedSkills: Record<string, number>,
   dgsm: DynamicGameStateManager,
   /** Apply scene + character feature penalties to a target's skills */
-  adjustTargetSkills?: (targetId: string, rawSkills: Record<string, number>) => Record<string, number>
+  adjustTargetSkills?: (
+    targetId: string,
+    rawSkills: Record<string, number>
+  ) => Record<string, number>
 ): SkillRollResult {
   const skill = node.skill;
   if (!skill) return { failed: false, successLevel: "regular" };
@@ -96,8 +99,14 @@ export function resolveSkillRoll(
   const targetIds = node.targetCharacterIds ?? [];
   const npc = state.npcCharacters.find((n) => n.id === node.characterId);
   const npcAttrs = npc?.attributes ?? {
-    STR: 50, DEX: 50, INT: 50, POW: 50,
-    CON: 50, SIZ: 50, APP: 50, EDU: 50,
+    STR: 50,
+    DEX: 50,
+    INT: 50,
+    POW: 50,
+    CON: 50,
+    SIZ: 50,
+    APP: 50,
+    EDU: 50,
   };
 
   // NPC's trained value, or CoC base value for untrained skill (case-insensitive)
@@ -191,7 +200,10 @@ export function resolveSkillRoll(
       const targetSkills = adjustTargetSkills
         ? adjustTargetSkills(targetId, rawTargetSkills)
         : rawTargetSkills;
-      const defSkill = pickBestFromCandidates(SOCIAL_DEFEND_SKILLS, targetSkills);
+      const defSkill = pickBestFromCandidates(
+        SOCIAL_DEFEND_SKILLS,
+        targetSkills
+      );
       const defValue =
         defSkill?.value ?? Math.floor((target?.attributes?.INT ?? 50) / 2);
 

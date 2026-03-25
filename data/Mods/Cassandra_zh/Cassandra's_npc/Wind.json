@@ -27,9 +27,7 @@
     "maxSanity": 40,
     "luck": 50,
     "mp": 8,
-    "conditions": [
-      "暂时性精神错乱"
-    ]
+    "conditions": ["暂时性精神错乱"]
   },
   "skills": {
     "Psychology": 40,

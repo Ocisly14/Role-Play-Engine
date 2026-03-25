@@ -6,14 +6,14 @@ vi.mock("../../../../models/index.js", () => ({
 }));
 
 import { generateText } from "../../../../models/index.js";
-import { NPCPlanningAgent } from "../NPCPlanningAgent.js";
-import type { PlanNode } from "../types.js";
 import {
   DynamicGameStateManager,
   initialDynamicGameState,
 } from "../../../state/DynamicGameState.js";
 import { buildTopology } from "../../../state/topologyTypes.js";
 import type { DynamicNPCProfile, DynamicScene } from "../../../state/types.js";
+import { NPCPlanningAgent } from "../NPCPlanningAgent.js";
+import type { PlanNode } from "../types.js";
 
 function makeNpc(
   id: string,

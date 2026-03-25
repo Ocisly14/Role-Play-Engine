@@ -66,9 +66,7 @@
       }
     }
   ],
-  "connections": [
-    "SCN_22_SUB_2"
-  ],
+  "connections": ["SCN_22_SUB_2"],
   "itemContexts": {
     "ITEM_SCN22_7": "文件盒外侧的日期标签按年份排列，摆放方式带着近乎病态的整齐。",
     "ITEM_SCN22_9": "碎纸盆里压着几片没有完全烧透的纸角，像是被反复确认过内容才处理掉。"

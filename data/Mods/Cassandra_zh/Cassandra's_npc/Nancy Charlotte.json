@@ -27,9 +27,7 @@
     "maxSanity": 50,
     "luck": 70,
     "mp": 10,
-    "conditions": [
-      "冷蜘蛛感染"
-    ]
+    "conditions": ["冷蜘蛛感染"]
   },
   "skills": {
     "Charm": 65,

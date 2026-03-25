@@ -48,7 +48,10 @@
     }
   ],
   "connections": [
-    { "targetId": "SCN_22_SUB_2", "description": "会客室后方有一扇上锁的书房门，位于绿绒沙发旁的走道尽头" }
+    {
+      "targetId": "SCN_22_SUB_2",
+      "description": "会客室后方有一扇上锁的书房门，位于绿绒沙发旁的走道尽头"
+    }
   ],
   "itemContexts": {
     "ITEM_SCN22_1": "壁炉台上的黄铜座钟走时精准，钟面玻璃上几乎看不见灰尘。",

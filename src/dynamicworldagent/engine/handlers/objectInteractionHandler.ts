@@ -5,7 +5,6 @@ import type {
 } from "../../dynamicBasicAgent/npcPlanning/types.js";
 import type { DynamicGameStateManager } from "../../state/DynamicGameState.js";
 import type { Item } from "../../state/types.js";
-import { deepMergeItem } from "../shared/deepMerge.js";
 import { isCharacterAtLocation } from "../shared/locationPresence.js";
 import { buildOutcome, makeAction } from "../shared/nodeHelpers.js";
 import type { ExecutionContext, NodeHandler } from "../types.js";
@@ -106,7 +105,7 @@ function buildInspectOutcomeWithContext(
     const contentLabels =
       storedItems.length > 0
         ? storedItems.map((stored) => `${stored.name} (id:${stored.id})`)
-        : item.containerStats.contents ?? [];
+        : (item.containerStats.contents ?? []);
     if (item.containerStats.locked) {
       parts.push("Status: locked");
     } else if (contentLabels.length > 0) {
@@ -316,7 +315,11 @@ export const objectInteractionHandler: NodeHandler = {
       if (!inInventory && !inScene) {
         if (scene?.items) {
           for (const si of scene.items) {
-            if (si.containerStats?.storedItems?.some((s) => s.id === payload.itemId)) {
+            if (
+              si.containerStats?.storedItems?.some(
+                (s) => s.id === payload.itemId
+              )
+            ) {
               inContainer = true;
               break;
             }
@@ -325,7 +328,11 @@ export const objectInteractionHandler: NodeHandler = {
         if (!inContainer) {
           const inv = dgsm.getNpcInventory(node.characterId);
           for (const ii of inv) {
-            if (ii.containerStats?.storedItems?.some((s) => s.id === payload.itemId)) {
+            if (
+              ii.containerStats?.storedItems?.some(
+                (s) => s.id === payload.itemId
+              )
+            ) {
               inContainer = true;
               break;
             }
@@ -336,19 +343,19 @@ export const objectInteractionHandler: NodeHandler = {
         return makeAction(
           node,
           "failed",
-          buildOutcome(node, "failed", { reason: `${payload.itemId} not found` }),
+          buildOutcome(node, "failed", {
+            reason: `${payload.itemId} not found`,
+          }),
           { difficulty, failureReason: "object_not_found" }
         );
       }
     }
 
     // Return success — tickProcessor calls LLM resolver for state changes
-    const action = makeAction(
-      node,
-      "completed",
-      node.action,
-      { difficulty, successLevel: resolvedSuccessLevel }
-    );
+    const action = makeAction(node, "completed", node.action, {
+      difficulty,
+      successLevel: resolvedSuccessLevel,
+    });
     action.rollDetail = lastRollDetail;
     return action;
   },

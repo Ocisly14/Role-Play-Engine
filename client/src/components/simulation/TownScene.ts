@@ -95,11 +95,16 @@ export class TownScene extends Phaser.Scene {
   private baseUrl = "";
   private isBuilt = false;
   /** Animation state for road NPCs — constant-speed interpolation between snapshots. */
-  private npcAnimTargets: Map<string, {
-    startX: number; startY: number;
-    targetX: number; targetY: number;
-    startTime: number;
-  }> = new Map();
+  private npcAnimTargets: Map<
+    string,
+    {
+      startX: number;
+      startY: number;
+      targetX: number;
+      targetY: number;
+      startTime: number;
+    }
+  > = new Map();
   /** Expected ms between position snapshots — used to pace NPC movement. */
   private displayIntervalMs = 60_000;
   private mapWidth = 0;
@@ -130,7 +135,11 @@ export class TownScene extends Phaser.Scene {
 
   /** Returns true when a pointer event originated outside the Phaser canvas (i.e. on a UI overlay). */
   private isOverUI(pointer: Phaser.Input.Pointer): boolean {
-    const domEvent = pointer.event as PointerEvent | MouseEvent | WheelEvent | undefined;
+    const domEvent = pointer.event as
+      | PointerEvent
+      | MouseEvent
+      | WheelEvent
+      | undefined;
     if (!domEvent?.target) return false;
     return domEvent.target !== this.game.canvas;
   }
@@ -142,7 +151,9 @@ export class TownScene extends Phaser.Scene {
       if (this.isOverUI(pointer)) {
         this.input.enabled = false;
         // Re-enable on next frame so subsequent canvas interactions work normally.
-        this.time.delayedCall(0, () => { this.input.enabled = true; });
+        this.time.delayedCall(0, () => {
+          this.input.enabled = true;
+        });
       }
     });
 
@@ -192,7 +203,12 @@ export class TownScene extends Phaser.Scene {
       const p1 = this.input.pointer1;
       const p2 = this.input.pointer2;
       if (p1.isDown && p2.isDown) {
-        this.lastPinchDist = Phaser.Math.Distance.Between(p1.x, p1.y, p2.x, p2.y);
+        this.lastPinchDist = Phaser.Math.Distance.Between(
+          p1.x,
+          p1.y,
+          p2.x,
+          p2.y
+        );
         this.lastPinchMidX = (p1.x + p2.x) / 2;
         this.lastPinchMidY = (p1.y + p2.y) / 2;
       }
@@ -458,7 +474,13 @@ export class TownScene extends Phaser.Scene {
       // Shadow
       const shadow = this.add.graphics();
       shadow.fillStyle(0x000000, 0.4);
-      shadow.fillRoundedRect(-halfW + 6, -halfH + 6, NODE_WIDTH, NODE_HEIGHT, 16);
+      shadow.fillRoundedRect(
+        -halfW + 6,
+        -halfH + 6,
+        NODE_WIDTH,
+        NODE_HEIGHT,
+        16
+      );
       container.add(shadow);
 
       // Thumbnail + mask
@@ -488,13 +510,37 @@ export class TownScene extends Phaser.Scene {
       // Hover glow (hidden) — multi-layer for bloom/highlight effect
       const hoverGlow = this.add.graphics();
       hoverGlow.lineStyle(20, 0xffffff, 0.15);
-      hoverGlow.strokeRoundedRect(-halfW - 10, -halfH - 10, NODE_WIDTH + 20, NODE_HEIGHT + 20, 26);
+      hoverGlow.strokeRoundedRect(
+        -halfW - 10,
+        -halfH - 10,
+        NODE_WIDTH + 20,
+        NODE_HEIGHT + 20,
+        26
+      );
       hoverGlow.lineStyle(12, 0xffffff, 0.35);
-      hoverGlow.strokeRoundedRect(-halfW - 6, -halfH - 6, NODE_WIDTH + 12, NODE_HEIGHT + 12, 22);
+      hoverGlow.strokeRoundedRect(
+        -halfW - 6,
+        -halfH - 6,
+        NODE_WIDTH + 12,
+        NODE_HEIGHT + 12,
+        22
+      );
       hoverGlow.lineStyle(6, 0xffffff, 0.65);
-      hoverGlow.strokeRoundedRect(-halfW - 3, -halfH - 3, NODE_WIDTH + 6, NODE_HEIGHT + 6, 19);
+      hoverGlow.strokeRoundedRect(
+        -halfW - 3,
+        -halfH - 3,
+        NODE_WIDTH + 6,
+        NODE_HEIGHT + 6,
+        19
+      );
       hoverGlow.lineStyle(3, 0xffffff, 1);
-      hoverGlow.strokeRoundedRect(-halfW - 1, -halfH - 1, NODE_WIDTH + 2, NODE_HEIGHT + 2, 17);
+      hoverGlow.strokeRoundedRect(
+        -halfW - 1,
+        -halfH - 1,
+        NODE_WIDTH + 2,
+        NODE_HEIGHT + 2,
+        17
+      );
       hoverGlow.setAlpha(0);
       container.add(hoverGlow);
 
@@ -527,7 +573,7 @@ export class TownScene extends Phaser.Scene {
         label.setResolution(Math.max(3, Math.ceil(1 / cam.zoom) * 3));
         // Adaptive hover: consistent visual enlargement regardless of zoom level
         const hoverScale = Phaser.Math.Clamp(
-          1.2 * this.referenceZoom / cam.zoom,
+          (1.2 * this.referenceZoom) / cam.zoom,
           1.1,
           3.0
         );
@@ -580,13 +626,19 @@ export class TownScene extends Phaser.Scene {
       cam.setBounds(0, 0, this.mapWidth, this.mapHeight);
       cam.centerOn(this.mapWidth / 2, this.mapHeight / 2);
       // minZoom = cover (map always fills viewport, no black edges)
-      this.minZoom = Math.max(cam.width / this.mapWidth, cam.height / this.mapHeight);
+      this.minZoom = Math.max(
+        cam.width / this.mapWidth,
+        cam.height / this.mapHeight
+      );
       // Default zoom = 300% of cover
       cam.setZoom(this.minZoom * 3);
     } else if (this.nodePositions.size > 0) {
       // Fallback to node bounds
       const margin = 150;
-      let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+      let minX = Number.POSITIVE_INFINITY,
+        minY = Number.POSITIVE_INFINITY,
+        maxX = Number.NEGATIVE_INFINITY,
+        maxY = Number.NEGATIVE_INFINITY;
       for (const pos of this.nodePositions.values()) {
         minX = Math.min(minX, pos.x);
         minY = Math.min(minY, pos.y);
@@ -640,7 +692,12 @@ export class TownScene extends Phaser.Scene {
 
     for (const [npcId, position] of Object.entries(data.positions)) {
       activeNpcIds.add(npcId);
-      const buildingId = this.resolveParentBuilding(position, sceneToParent, junctionMap, roadToEdge);
+      const buildingId = this.resolveParentBuilding(
+        position,
+        sceneToParent,
+        junctionMap,
+        roadToEdge
+      );
       if (buildingId) {
         npcBuildingMap.set(npcId, buildingId);
         const list = buildingNpcs.get(buildingId);
@@ -769,7 +826,13 @@ export class TownScene extends Phaser.Scene {
    * @param ty y position (local to container if buildingId set, otherwise world)
    * @param buildingId attach to this building's container, or null for world-level
    */
-  private upsertNpcDot(npcId: string, name: string, tx: number, ty: number, buildingId: string | null = null) {
+  private upsertNpcDot(
+    npcId: string,
+    name: string,
+    tx: number,
+    ty: number,
+    buildingId: string | null = null
+  ) {
     const existing = this.npcDots.get(npcId);
 
     // If the NPC moved to a different building, remove old dot and recreate
@@ -806,7 +869,8 @@ export class TownScene extends Phaser.Scene {
           });
           // Move bubble with dot
           if (existing.bubbleText) {
-            const bubbleY = ty - NPC_DOT_RADIUS - BUBBLE_LABEL_GAP - BUBBLE_ARROW_H;
+            const bubbleY =
+              ty - NPC_DOT_RADIUS - BUBBLE_LABEL_GAP - BUBBLE_ARROW_H;
             this.tweens.add({
               targets: existing.bubbleText,
               x: tx,
@@ -881,7 +945,8 @@ export class TownScene extends Phaser.Scene {
       npcData.label.setPosition(newX, newY + NPC_DOT_RADIUS + 6);
       // Move bubble with road NPC
       if (npcData.bubbleText && npcData.bubbleBg) {
-        const bubbleY = newY - NPC_DOT_RADIUS - BUBBLE_LABEL_GAP - BUBBLE_ARROW_H;
+        const bubbleY =
+          newY - NPC_DOT_RADIUS - BUBBLE_LABEL_GAP - BUBBLE_ARROW_H;
         this.positionBubble(npcData, newX, bubbleY);
       }
       npcData.currentX = newX;
@@ -955,11 +1020,7 @@ export class TownScene extends Phaser.Scene {
     });
   }
 
-  private positionBubble(
-    npcData: NpcDotData,
-    cx: number,
-    bottomY: number
-  ) {
+  private positionBubble(npcData: NpcDotData, cx: number, bottomY: number) {
     const text = npcData.bubbleText!;
     const bg = npcData.bubbleBg!;
 

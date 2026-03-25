@@ -14,12 +14,11 @@ const SYSTEM_EVENT_TYPES = new Set([
 
 const ACTION_EVENT_TYPES = new Set(["action_executed", "action_failed"]);
 
-const WORLD_EVENT_TYPES = new Set([
-  "scene_updated",
-  "feature_triggered",
-]);
+const WORLD_EVENT_TYPES = new Set(["scene_updated", "feature_triggered"]);
 
-function sanitizeOutcomeForDisplay(outcome: string | undefined): string | undefined {
+function sanitizeOutcomeForDisplay(
+  outcome: string | undefined
+): string | undefined {
   if (!outcome) return outcome;
 
   return outcome
@@ -64,7 +63,9 @@ function ActionMessage({ event }: { event: SimulationEvent }) {
   const { t } = useTranslation("simulation");
   const isFailed = event.type === "action_failed";
   const name =
-    (event.data.characterName as string) || event.actorNpcId || t("events.unknown");
+    (event.data.characterName as string) ||
+    event.actorNpcId ||
+    t("events.unknown");
   const outcome = sanitizeOutcomeForDisplay(
     event.data.outcome as string | undefined
   );
@@ -119,7 +120,8 @@ function SystemMessage({ event }: { event: SimulationEvent }) {
 
 function WorldEventMessage({ event }: { event: SimulationEvent }) {
   const { t } = useTranslation("simulation");
-  const description = (event.data.description as string) || event.type.replace(/_/g, " ");
+  const description =
+    (event.data.description as string) || event.type.replace(/_/g, " ");
 
   return (
     <div className="rounded-lg px-3 py-2 text-xs bg-amber-50/60 border border-amber-200/50">
@@ -148,8 +150,7 @@ function CompactMessage({ event }: { event: SimulationEvent }) {
 }
 
 function formatCompactText(event: SimulationEvent): string {
-  const name =
-    (event.data.characterName as string) || event.actorNpcId || "";
+  const name = (event.data.characterName as string) || event.actorNpcId || "";
   switch (event.type) {
     case "npc_moved":
       return `${name} → ${event.location}`;

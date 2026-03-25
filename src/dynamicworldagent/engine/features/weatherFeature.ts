@@ -268,7 +268,10 @@ const WEATHER_LABELS: Record<WeatherType, string[]> = {
   ],
 };
 
-export function getWeatherLabel(weatherType: WeatherType, intensity: number): string {
+export function getWeatherLabel(
+  weatherType: WeatherType,
+  intensity: number
+): string {
   if (weatherType === "clear") return "Clear skies";
   const labels = WEATHER_LABELS[weatherType];
   return labels[intensity] ?? labels[labels.length - 1];

@@ -1,8 +1,8 @@
 import "dotenv/config";
+import { existsSync } from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
 import fs from "fs/promises";
-import { existsSync } from "fs";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -83,8 +83,7 @@ async function generateGeminiImage(
 
   const inlineData = imagePart.inlineData || imagePart.inline_data;
   const base64Data = inlineData?.data;
-  const mimeType =
-    inlineData?.mimeType || inlineData?.mime_type || "image/png";
+  const mimeType = inlineData?.mimeType || inlineData?.mime_type || "image/png";
 
   if (!base64Data) throw new Error("Empty image data in response");
 
@@ -111,9 +110,7 @@ async function scanSubScenes(): Promise<SubScene[]> {
     .sort((a, b) => {
       const [, aScn, aSub] = a.match(/SCN_(\d+)_SUB_(\d+)/) || [];
       const [, bScn, bSub] = b.match(/SCN_(\d+)_SUB_(\d+)/) || [];
-      return (
-        Number(aScn) - Number(bScn) || Number(aSub) - Number(bSub)
-      );
+      return Number(aScn) - Number(bScn) || Number(aSub) - Number(bSub);
     });
 
   const scenes: SubScene[] = [];
@@ -142,9 +139,7 @@ async function updateMapConfig(
 
   if (!config.scenes) config.scenes = {};
 
-  const defaultNpcAreas = [
-    { x: 50, y: 50, width: 200, height: 120 },
-  ];
+  const defaultNpcAreas = [{ x: 50, y: 50, width: 200, height: 120 }];
 
   for (const { scene, relativePath } of generatedScenes) {
     const existing = config.scenes[scene.id];
@@ -183,9 +178,7 @@ async function main() {
     let alreadyExists = false;
     if (existsSync(parentDir)) {
       const existing = await fs.readdir(parentDir);
-      alreadyExists = existing.some(
-        (f) => path.parse(f).name === scene.name
-      );
+      alreadyExists = existing.some((f) => path.parse(f).name === scene.name);
     }
 
     if (alreadyExists) {
@@ -204,14 +197,18 @@ async function main() {
     }
   }
 
-  console.log(`\nNeed to generate: ${toGenerate.length} images (concurrency: ${CONCURRENCY})\n`);
+  console.log(
+    `\nNeed to generate: ${toGenerate.length} images (concurrency: ${CONCURRENCY})\n`
+  );
 
   // Process in parallel batches of CONCURRENCY
   for (let batch = 0; batch < toGenerate.length; batch += CONCURRENCY) {
     const chunk = toGenerate.slice(batch, batch + CONCURRENCY);
     const batchNum = Math.floor(batch / CONCURRENCY) + 1;
     const totalBatches = Math.ceil(toGenerate.length / CONCURRENCY);
-    console.log(`--- Batch ${batchNum}/${totalBatches} (${chunk.length} scenes) ---`);
+    console.log(
+      `--- Batch ${batchNum}/${totalBatches} (${chunk.length} scenes) ---`
+    );
 
     const results = await Promise.allSettled(
       chunk.map(async ({ scene, index }) => {

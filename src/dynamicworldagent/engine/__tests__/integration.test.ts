@@ -5,32 +5,33 @@
  * 3 realistic NPCs, a connected scene graph, and all feature systems.
  */
 
-import { describe, it, expect, beforeAll, vi } from "vitest";
+import { beforeAll, describe, expect, it } from "vitest";
+import { ModelClass, generateText } from "../../../models/index.js";
+import { buildSummarizeDayMemoryPrompt } from "../../dynamicBasicAgent/npcPlanning/npcPlanningTemplates.js";
+import type { PlanNode } from "../../dynamicBasicAgent/npcPlanning/types.js";
 import {
   DynamicGameStateManager,
   initialDynamicGameState,
 } from "../../state/DynamicGameState.js";
 import { buildTopology } from "../../state/topologyTypes.js";
+import type { JunctionNode, RoadNode } from "../../state/topologyTypes.js";
 import type {
-  JunctionNode,
-  RoadNode,
-} from "../../state/topologyTypes.js";
-import type { DynamicNPCProfile, DynamicScene, Item } from "../../state/types.js";
-import type { PlanNode } from "../../dynamicBasicAgent/npcPlanning/types.js";
-import type { ExecutionContext, TickRuntimeContext } from "../types.js";
-import { createDefaultRegistry } from "../registerDefaults.js";
-import type { GameEngineRegistry } from "../registry.js";
+  DynamicNPCProfile,
+  DynamicScene,
+  Item,
+} from "../../state/types.js";
 import {
-  resolveInteractionState,
   applyCharacterDelta,
+  resolveInteractionState,
   resolveTargets,
 } from "../handlers/interactionStateResolver.js";
 import {
-  resolveObjectInteractionState,
   applyObjectDelta,
+  resolveObjectInteractionState,
 } from "../handlers/objectInteractionStateResolver.js";
-import { generateText, ModelClass } from "../../../models/index.js";
-import { buildSummarizeDayMemoryPrompt } from "../../dynamicBasicAgent/npcPlanning/npcPlanningTemplates.js";
+import { createDefaultRegistry } from "../registerDefaults.js";
+import type { GameEngineRegistry } from "../registry.js";
+import type { ExecutionContext, TickRuntimeContext } from "../types.js";
 
 // ===== World Fixtures =====
 
@@ -90,16 +91,14 @@ function buildWorld() {
     parentLocationId: "SCN_MANOR",
     items: [],
     conditions: [],
-    connections: [
-      { targetId: "manor_library" },
-      { targetId: "manor_cellar" },
-    ],
+    connections: [{ targetId: "manor_library" }, { targetId: "manor_cellar" }],
     indoor: true,
   };
   const library: DynamicScene = {
     id: "manor_library",
     name: "Manor Library",
-    description: "Floor-to-ceiling bookshelves line the walls. A reading desk sits by the window.",
+    description:
+      "Floor-to-ceiling bookshelves line the walls. A reading desk sits by the window.",
     parentLocationId: "SCN_MANOR",
     items: [
       {
@@ -145,12 +144,38 @@ function buildWorld() {
     occupation: "Scholar",
     age: 45,
     gender: "male",
-    appearance: "A bespectacled man with silver-streaked hair and ink-stained fingers.",
+    appearance:
+      "A bespectacled man with silver-streaked hair and ink-stained fingers.",
     personality: "Curious and methodical, driven by academic obsession.",
-    longTermIntent: "Uncover the truth behind the Blackwood family's occult history.",
-    attributes: { STR: 40, CON: 55, DEX: 50, APP: 60, POW: 65, SIZ: 60, INT: 80, EDU: 85 },
-    status: { hp: 11, maxHp: 11, sanity: 60, maxSanity: 70, luck: 55, conditions: [] },
-    skills: { "Library Use": 75, Occult: 65, History: 70, Research: 60, "Spot Hidden": 45, Persuade: 50, Psychology: 40 },
+    longTermIntent:
+      "Uncover the truth behind the Blackwood family's occult history.",
+    attributes: {
+      STR: 40,
+      CON: 55,
+      DEX: 50,
+      APP: 60,
+      POW: 65,
+      SIZ: 60,
+      INT: 80,
+      EDU: 85,
+    },
+    status: {
+      hp: 11,
+      maxHp: 11,
+      sanity: 60,
+      maxSanity: 70,
+      luck: 55,
+      conditions: [],
+    },
+    skills: {
+      "Library Use": 75,
+      Occult: 65,
+      History: 70,
+      Research: 60,
+      "Spot Hidden": 45,
+      Persuade: 50,
+      Psychology: 40,
+    },
     inventory: [{ name: "Magnifying Glass" }, { name: "Journal" }],
     relationships: [],
   };
@@ -163,9 +188,32 @@ function buildWorld() {
     appearance: "A striking woman with dark eyes and a silver pendant.",
     personality: "Secretive and devout, hiding fanaticism beneath charm.",
     longTermIntent: "Complete the Binding Ritual to summon her patron.",
-    attributes: { STR: 45, CON: 50, DEX: 60, APP: 70, POW: 75, SIZ: 50, INT: 65, EDU: 55 },
-    status: { hp: 10, maxHp: 10, sanity: 45, maxSanity: 55, luck: 60, conditions: [] },
-    skills: { Occult: 80, Stealth: 65, "Fast Talk": 55, Dodge: 50, Listen: 45, "Cthulhu Mythos": 30 },
+    attributes: {
+      STR: 45,
+      CON: 50,
+      DEX: 60,
+      APP: 70,
+      POW: 75,
+      SIZ: 50,
+      INT: 65,
+      EDU: 55,
+    },
+    status: {
+      hp: 10,
+      maxHp: 10,
+      sanity: 45,
+      maxSanity: 55,
+      luck: 60,
+      conditions: [],
+    },
+    skills: {
+      Occult: 80,
+      Stealth: 65,
+      "Fast Talk": 55,
+      Dodge: 50,
+      Listen: 45,
+      "Cthulhu Mythos": 30,
+    },
     inventory: [{ name: "Ceremonial Robe" }],
     relationships: [],
   };
@@ -175,12 +223,38 @@ function buildWorld() {
     occupation: "Police Officer",
     age: 38,
     gender: "male",
-    appearance: "A broad-shouldered man in a rumpled uniform, badge slightly askew.",
+    appearance:
+      "A broad-shouldered man in a rumpled uniform, badge slightly askew.",
     personality: "Gruff but well-meaning. Trusts his gut over evidence.",
     longTermIntent: "Investigate the disappearances linked to the manor.",
-    attributes: { STR: 70, CON: 65, DEX: 55, APP: 50, POW: 50, SIZ: 75, INT: 55, EDU: 50 },
-    status: { hp: 13, maxHp: 13, sanity: 55, maxSanity: 60, luck: 45, conditions: [] },
-    skills: { Intimidate: 65, "Spot Hidden": 55, "Fighting (Brawl)": 60, "Firearms (Handgun)": 55, "Drive Auto": 45, Law: 40, Persuade: 35, Dodge: 40 },
+    attributes: {
+      STR: 70,
+      CON: 65,
+      DEX: 55,
+      APP: 50,
+      POW: 50,
+      SIZ: 75,
+      INT: 55,
+      EDU: 50,
+    },
+    status: {
+      hp: 13,
+      maxHp: 13,
+      sanity: 55,
+      maxSanity: 60,
+      luck: 45,
+      conditions: [],
+    },
+    skills: {
+      Intimidate: 65,
+      "Spot Hidden": 55,
+      "Fighting (Brawl)": 60,
+      "Firearms (Handgun)": 55,
+      "Drive Auto": 45,
+      Law: 40,
+      Persuade: 35,
+      Dodge: 40,
+    },
     inventory: [{ name: "Service Revolver" }],
     relationships: [],
   };
@@ -202,9 +276,15 @@ function buildWorld() {
 
   // --- NPC Inventories ---
   state.npcInventories = {
-    npc_webb: [{ id: "magnifying_glass", name: "Magnifying Glass", type: "tool" }] as Item[],
-    npc_isabella: [{ id: "ceremonial_robe", name: "Ceremonial Robe", type: "other" }] as Item[],
-    npc_harlow: [{ id: "service_revolver", name: "Service Revolver", type: "weapon" }] as Item[],
+    npc_webb: [
+      { id: "magnifying_glass", name: "Magnifying Glass", type: "tool" },
+    ] as Item[],
+    npc_isabella: [
+      { id: "ceremonial_robe", name: "Ceremonial Robe", type: "other" },
+    ] as Item[],
+    npc_harlow: [
+      { id: "service_revolver", name: "Service Revolver", type: "weapon" },
+    ] as Item[],
   };
 
   // --- Module Setup ---
@@ -220,16 +300,38 @@ function buildWorld() {
         invokeType: "invoke",
         autoInvoke: false,
         conditions: [
-          { conditionId: "altar_maintenance", label: "Daily altar maintenance", type: "daily", triggerType: "maintain", failAfterMissed: 3 },
-          { conditionId: "ritual_components", label: "Gather ritual components", type: "cumulative", triggerType: "gather", requiredCount: 3 },
+          {
+            conditionId: "altar_maintenance",
+            label: "Daily altar maintenance",
+            type: "daily",
+            triggerType: "maintain",
+            failAfterMissed: 3,
+          },
+          {
+            conditionId: "ritual_components",
+            label: "Gather ritual components",
+            type: "cumulative",
+            triggerType: "gather",
+            requiredCount: 3,
+          },
         ],
         completionEffect: {
-          sceneConditions: [{ sceneId: "manor_cellar", description: "The altar glows with otherworldly light" }],
+          sceneConditions: [
+            {
+              sceneId: "manor_cellar",
+              description: "The altar glows with otherworldly light",
+            },
+          ],
           witnessSanLoss: 3,
           globalSanLoss: 1,
         },
         failureEffect: {
-          sceneConditions: [{ sceneId: "manor_cellar", description: "The altar cracks and crumbles" }],
+          sceneConditions: [
+            {
+              sceneId: "manor_cellar",
+              description: "The altar cracks and crumbles",
+            },
+          ],
         },
       },
     ],
@@ -263,15 +365,19 @@ function makeCtx(rollOverride?: () => any): ExecutionContext {
     getScenePenalties: () => new Map<string, number>(),
     getCharacterPenalties: () => new Map<string, number>(),
     applyPenalties: (skills: Record<string, number>) => skills,
-    resolveSkillRoll: rollOverride ?? (() => ({
-      failed: false,
-      detail: "Regular success",
-      successLevel: "regular" as const,
-    })),
+    resolveSkillRoll:
+      rollOverride ??
+      (() => ({
+        failed: false,
+        detail: "Regular success",
+        successLevel: "regular" as const,
+      })),
   } as unknown as ExecutionContext;
 }
 
-function makeRuntime(overrides?: Partial<TickRuntimeContext>): TickRuntimeContext {
+function makeRuntime(
+  overrides?: Partial<TickRuntimeContext>
+): TickRuntimeContext {
   return {
     sessionId: "integration-test",
     gameDay: 1,
@@ -297,7 +403,11 @@ describe("Engine Integration — Blackwood Manor", () => {
   let registry: GameEngineRegistry;
   const memoryWrites: MemoryEntry[] = [];
 
-  function recordMemory(action: { characterId: string; outcome: string; location: string }) {
+  function recordMemory(action: {
+    characterId: string;
+    outcome: string;
+    location: string;
+  }) {
     memoryWrites.push({
       npcId: action.characterId,
       type: "event",
@@ -317,9 +427,18 @@ describe("Engine Integration — Blackwood Manor", () => {
     it("should have 3 NPCs with correct positions", () => {
       const state = dgsm.getState();
       expect(state.npcCharacters).toHaveLength(3);
-      expect(dgsm.getCharacterPosition("npc_webb")).toEqual({ type: "scene", sceneId: "manor_library" });
-      expect(dgsm.getCharacterPosition("npc_isabella")).toEqual({ type: "scene", sceneId: "manor_cellar" });
-      expect(dgsm.getCharacterPosition("npc_harlow")).toEqual({ type: "scene", sceneId: "manor_foyer" });
+      expect(dgsm.getCharacterPosition("npc_webb")).toEqual({
+        type: "scene",
+        sceneId: "manor_library",
+      });
+      expect(dgsm.getCharacterPosition("npc_isabella")).toEqual({
+        type: "scene",
+        sceneId: "manor_cellar",
+      });
+      expect(dgsm.getCharacterPosition("npc_harlow")).toEqual({
+        type: "scene",
+        sceneId: "manor_foyer",
+      });
     });
 
     it("should have scenes with items", () => {
@@ -379,7 +498,10 @@ describe("Engine Integration — Blackwood Manor", () => {
         feature.tick!(dgsm, makeRuntime());
       }
 
-      const webbStamina = dgsm.getFeatureSceneState("stamina", "npc_webb") as any;
+      const webbStamina = dgsm.getFeatureSceneState(
+        "stamina",
+        "npc_webb"
+      ) as any;
       expect(webbStamina).toBeDefined();
       expect(webbStamina.fatigueLevel).toBe(1); // tired
       expect(webbStamina.minutesSinceLastRest).toBe(480);
@@ -416,7 +538,10 @@ describe("Engine Integration — Blackwood Manor", () => {
 
     it("should move Isabella to foyer via direct position set (interior movement)", () => {
       // Interior scene-to-scene movement bypasses topology
-      dgsm.setCharacterPosition("npc_isabella", { type: "scene", sceneId: "manor_foyer" });
+      dgsm.setCharacterPosition("npc_isabella", {
+        type: "scene",
+        sceneId: "manor_foyer",
+      });
       expect(dgsm.getCharacterPosition("npc_isabella")).toEqual({
         type: "scene",
         sceneId: "manor_foyer",
@@ -474,7 +599,10 @@ describe("Engine Integration — Blackwood Manor", () => {
   describe("5. character_interaction handler", () => {
     it("should complete Harlow interrogating Webb", async () => {
       // Move Harlow back from town square to library
-      dgsm.setCharacterPosition("npc_harlow", { type: "scene", sceneId: "manor_library" });
+      dgsm.setCharacterPosition("npc_harlow", {
+        type: "scene",
+        sceneId: "manor_library",
+      });
 
       const handler = registry.getHandler("character_interaction")!;
       const ctx = makeCtx(() => ({
@@ -508,7 +636,10 @@ describe("Engine Integration — Blackwood Manor", () => {
   describe("6. scene_interaction handler", () => {
     it("should barricade the cellar door", () => {
       // Move Harlow back to foyer
-      dgsm.setCharacterPosition("npc_harlow", { type: "scene", sceneId: "manor_foyer" });
+      dgsm.setCharacterPosition("npc_harlow", {
+        type: "scene",
+        sceneId: "manor_foyer",
+      });
 
       const handler = registry.getHandler("scene_interaction")!;
       const ctx = makeCtx();
@@ -543,10 +674,15 @@ describe("Engine Integration — Blackwood Manor", () => {
       const feature = registry.getFeature("event_trigger")!;
       feature.tick!(dgsm, makeRuntime());
 
-      const state = dgsm.getFeatureSceneState("event_trigger", "ritual_of_binding") as any;
+      const state = dgsm.getFeatureSceneState(
+        "event_trigger",
+        "ritual_of_binding"
+      ) as any;
       expect(state).toBeDefined();
       expect(state.status).toBe("active");
-      expect(state.conditionStates.altar_maintenance.fulfilledToday).toBe(false);
+      expect(state.conditionStates.altar_maintenance.fulfilledToday).toBe(
+        false
+      );
     });
 
     it("should fulfill daily maintenance via activate", () => {
@@ -565,7 +701,10 @@ describe("Engine Integration — Blackwood Manor", () => {
       // No outcomeNote for successful maintenance
       expect(results.filter((r) => r.outcomeNote)).toHaveLength(0);
 
-      const state = dgsm.getFeatureSceneState("event_trigger", "ritual_of_binding") as any;
+      const state = dgsm.getFeatureSceneState(
+        "event_trigger",
+        "ritual_of_binding"
+      ) as any;
       expect(state.conditionStates.altar_maintenance.fulfilledToday).toBe(true);
       expect(state.conditionStates.altar_maintenance.lastFulfilledDay).toBe(1);
     });
@@ -591,7 +730,10 @@ describe("Engine Integration — Blackwood Manor", () => {
       expect(notes[0].outcomeNote).toContain("nothing happened");
 
       // Status should still be active
-      const state = dgsm.getFeatureSceneState("event_trigger", "ritual_of_binding") as any;
+      const state = dgsm.getFeatureSceneState(
+        "event_trigger",
+        "ritual_of_binding"
+      ) as any;
       expect(state.status).toBe("active");
     });
   });
@@ -603,7 +745,10 @@ describe("Engine Integration — Blackwood Manor", () => {
       const feature = registry.getFeature("weather")!;
       feature.tick!(dgsm, makeRuntime({ tickTime: "23:00" }));
 
-      const outdoorState = dgsm.getFeatureSceneState("weather", "OUTDOOR") as any;
+      const outdoorState = dgsm.getFeatureSceneState(
+        "weather",
+        "OUTDOOR"
+      ) as any;
       expect(outdoorState).toBeDefined();
       expect(outdoorState.weatherType).toBe("fog");
       expect(outdoorState.intensity).toBe(2);
@@ -614,12 +759,18 @@ describe("Engine Integration — Blackwood Manor", () => {
       feature.tick!(dgsm, makeRuntime({ tickTime: "23:00" }));
 
       // Indoor library with oil lamp (level 3) → should be lit
-      const libraryLight = dgsm.getFeatureSceneState("lighting", "manor_library") as any;
+      const libraryLight = dgsm.getFeatureSceneState(
+        "lighting",
+        "manor_library"
+      ) as any;
       expect(libraryLight).toBeDefined();
       expect(libraryLight.lightLevel).toBeGreaterThanOrEqual(3);
 
       // Indoor cellar with no light source → dark or pitch black
-      const cellarLight = dgsm.getFeatureSceneState("lighting", "manor_cellar") as any;
+      const cellarLight = dgsm.getFeatureSceneState(
+        "lighting",
+        "manor_cellar"
+      ) as any;
       expect(cellarLight).toBeDefined();
       expect(cellarLight.lightLevel).toBeLessThanOrEqual(2);
     });
@@ -640,7 +791,10 @@ describe("Engine Integration — Blackwood Manor", () => {
 
       registry.activateNodeFeatures(node, dgsm);
 
-      const fireState = dgsm.getFeatureSceneState("fire", "manor_cellar") as any;
+      const fireState = dgsm.getFeatureSceneState(
+        "fire",
+        "manor_cellar"
+      ) as any;
       expect(fireState).toBeDefined();
       expect(fireState.intensity).toBe(2);
       expect(fireState.phase).toBe("growing");
@@ -654,12 +808,18 @@ describe("Engine Integration — Blackwood Manor", () => {
         feature.tick!(dgsm, makeRuntime());
       }
 
-      const fireState = dgsm.getFeatureSceneState("fire", "manor_cellar") as any;
+      const fireState = dgsm.getFeatureSceneState(
+        "fire",
+        "manor_cellar"
+      ) as any;
       expect(fireState.intensity).toBe(3);
 
       // Fire scene condition should exist
-      const conditions = dgsm.getState().scenarioConditions["manor_cellar"] ?? [];
-      const fireCond = conditions.find((c: any) => c.description.startsWith("[Fire]"));
+      const conditions =
+        dgsm.getState().scenarioConditions["manor_cellar"] ?? [];
+      const fireCond = conditions.find((c: any) =>
+        c.description.startsWith("[Fire]")
+      );
       expect(fireCond).toBeDefined();
     });
   });
@@ -679,7 +839,8 @@ describe("Engine Integration — Blackwood Manor", () => {
 
       // Harlow's movement to town
       const harlowMovement = memoryWrites.find(
-        (m) => m.npcId === "npc_harlow" && m.content.includes("Walk to the town")
+        (m) =>
+          m.npcId === "npc_harlow" && m.content.includes("Walk to the town")
       );
       expect(harlowMovement).toBeDefined();
 
@@ -748,7 +909,8 @@ describe("Engine Integration — Blackwood Manor", () => {
       const node = makeNode({
         characterId: "npc_webb",
         characterName: "Dr. Marcus Webb",
-        action: "Pick up the Necronomicon Fragment and examine its eldritch script",
+        action:
+          "Pick up the Necronomicon Fragment and examine its eldritch script",
         location: "manor_library",
         type: "object_interaction",
         objectInteractionPayload: { itemId: "necronomicon" },
@@ -761,7 +923,7 @@ describe("Engine Integration — Blackwood Manor", () => {
         dgsm,
         runtime,
         null, // no skill roll — auto success
-        "zh",
+        "zh"
       );
 
       // LLM should return items array and a memory
@@ -797,13 +959,20 @@ describe("Engine Integration — Blackwood Manor", () => {
   describe("14. real LLM — character_interaction resolver", () => {
     it("should call LLM to resolve Harlow interrogating Webb", async () => {
       // Ensure both are in the library
-      dgsm.setCharacterPosition("npc_harlow", { type: "scene", sceneId: "manor_library" });
-      dgsm.setCharacterPosition("npc_webb", { type: "scene", sceneId: "manor_library" });
+      dgsm.setCharacterPosition("npc_harlow", {
+        type: "scene",
+        sceneId: "manor_library",
+      });
+      dgsm.setCharacterPosition("npc_webb", {
+        type: "scene",
+        sceneId: "manor_library",
+      });
 
       const node = makeNode({
         characterId: "npc_harlow",
         characterName: "Officer James Harlow",
-        action: "Interrogate Dr. Webb about what he found in the Necronomicon and why he is in the manor at night",
+        action:
+          "Interrogate Dr. Webb about what he found in the Necronomicon and why he is in the manor at night",
         location: "manor_library",
         type: "character_interaction",
         skill: "Intimidate",
@@ -824,13 +993,14 @@ describe("Engine Integration — Blackwood Manor", () => {
             npc_webb: {
               successLevel: "regular",
               actorWon: true,
-              detail: "Actor wins opposed roll (Intimidate 18 vs Psychology 72)",
+              detail:
+                "Actor wins opposed roll (Intimidate 18 vs Psychology 72)",
             },
           },
         },
         [], // no knowledge entries
         "zh",
-        registry,
+        registry
       );
 
       console.log("[LLM Interaction Delta]", JSON.stringify(delta, null, 2));
@@ -847,8 +1017,18 @@ describe("Engine Integration — Blackwood Manor", () => {
 
       // Apply deltas
       const targets = resolveTargets(node);
-      await applyCharacterDelta(dgsm, "npc_harlow", delta.actorChanges, targets);
-      await applyCharacterDelta(dgsm, "npc_webb", delta.targetChanges["npc_webb"], ["npc_harlow"]);
+      await applyCharacterDelta(
+        dgsm,
+        "npc_harlow",
+        delta.actorChanges,
+        targets
+      );
+      await applyCharacterDelta(
+        dgsm,
+        "npc_webb",
+        delta.targetChanges["npc_webb"],
+        ["npc_harlow"]
+      );
 
       // Record memories
       memoryWrites.push({
@@ -868,7 +1048,8 @@ describe("Engine Integration — Blackwood Manor", () => {
       const harlowMem = delta.actorChanges.memory;
       const webbMem = delta.targetChanges["npc_webb"].memory;
       // At least one should contain Chinese characters
-      const hasChinese = /[\u4e00-\u9fff]/.test(harlowMem) || /[\u4e00-\u9fff]/.test(webbMem);
+      const hasChinese =
+        /[\u4e00-\u9fff]/.test(harlowMem) || /[\u4e00-\u9fff]/.test(webbMem);
       expect(hasChinese).toBe(true);
     }, 30000);
   });
@@ -879,7 +1060,9 @@ describe("Engine Integration — Blackwood Manor", () => {
     it("should have accumulated meaningful memories from all actions", () => {
       console.log("\n=== Memory Writes Summary ===");
       for (const m of memoryWrites) {
-        console.log(`[${m.npcId}] @ ${m.location}: ${m.content.slice(0, 80)}...`);
+        console.log(
+          `[${m.npcId}] @ ${m.location}: ${m.content.slice(0, 80)}...`
+        );
       }
       console.log(`Total: ${memoryWrites.length} memories\n`);
 
@@ -901,7 +1084,9 @@ describe("Engine Integration — Blackwood Manor", () => {
   describe("16. real LLM — daily summary", () => {
     it("should generate daily summary for Dr. Webb from accumulated memories", async () => {
       const webbMemories = memoryWrites.filter((m) => m.npcId === "npc_webb");
-      const eventLog = webbMemories.map((m) => `[21:00] ${m.content}`).join("\n");
+      const eventLog = webbMemories
+        .map((m) => `[21:00] ${m.content}`)
+        .join("\n");
 
       const { systemPrompt, userPrompt } = buildSummarizeDayMemoryPrompt({
         npcName: "Dr. Marcus Webb",
@@ -928,7 +1113,12 @@ describe("Engine Integration — Blackwood Manor", () => {
       // Parse JSON response
       let parsed: {
         memories: Array<{ content: string; importance: number }>;
-        newKnowledge?: Array<{ id?: string; text: string; category?: string; difficulty?: string }>;
+        newKnowledge?: Array<{
+          id?: string;
+          text: string;
+          category?: string;
+          difficulty?: string;
+        }>;
       };
       try {
         const fenceMatch = response.match(/```(?:json)?\s*([\s\S]*?)```/);
@@ -939,7 +1129,10 @@ describe("Engine Integration — Blackwood Manor", () => {
         parsed = JSON.parse(response.replace(/,\s*([}\]])/g, "$1"));
       }
 
-      console.log("[LLM Daily Summary — Webb parsed]", JSON.stringify(parsed, null, 2));
+      console.log(
+        "[LLM Daily Summary — Webb parsed]",
+        JSON.stringify(parsed, null, 2)
+      );
 
       // Should have at least 1 summary memory
       expect(parsed.memories).toBeDefined();
@@ -954,12 +1147,15 @@ describe("Engine Integration — Blackwood Manor", () => {
       }
 
       // Memories should be in Chinese
-      const hasChinese = parsed.memories.some((m) => /[\u4e00-\u9fff]/.test(m.content));
+      const hasChinese = parsed.memories.some((m) =>
+        /[\u4e00-\u9fff]/.test(m.content)
+      );
       expect(hasChinese).toBe(true);
 
       // Should reference the Necronomicon or the interrogation
       const allContent = parsed.memories.map((m) => m.content).join(" ");
-      const mentionsKey = allContent.includes("死灵") ||
+      const mentionsKey =
+        allContent.includes("死灵") ||
         allContent.includes("Necronomicon") ||
         allContent.includes("Harlow") ||
         allContent.includes("审问") ||
@@ -969,8 +1165,12 @@ describe("Engine Integration — Blackwood Manor", () => {
     }, 30000);
 
     it("should generate daily summary for Officer Harlow", async () => {
-      const harlowMemories = memoryWrites.filter((m) => m.npcId === "npc_harlow");
-      const eventLog = harlowMemories.map((m) => `[21:00] ${m.content}`).join("\n");
+      const harlowMemories = memoryWrites.filter(
+        (m) => m.npcId === "npc_harlow"
+      );
+      const eventLog = harlowMemories
+        .map((m) => `[21:00] ${m.content}`)
+        .join("\n");
 
       const { systemPrompt, userPrompt } = buildSummarizeDayMemoryPrompt({
         npcName: "Officer James Harlow",
@@ -996,7 +1196,12 @@ describe("Engine Integration — Blackwood Manor", () => {
 
       let parsed: {
         memories: Array<{ content: string; importance: number }>;
-        newKnowledge?: Array<{ id?: string; text: string; category?: string; difficulty?: string }>;
+        newKnowledge?: Array<{
+          id?: string;
+          text: string;
+          category?: string;
+          difficulty?: string;
+        }>;
       };
       try {
         const fenceMatch = response.match(/```(?:json)?\s*([\s\S]*?)```/);
@@ -1006,7 +1211,10 @@ describe("Engine Integration — Blackwood Manor", () => {
         parsed = JSON.parse(response.replace(/,\s*([}\]])/g, "$1"));
       }
 
-      console.log("[LLM Daily Summary — Harlow parsed]", JSON.stringify(parsed, null, 2));
+      console.log(
+        "[LLM Daily Summary — Harlow parsed]",
+        JSON.stringify(parsed, null, 2)
+      );
 
       expect(parsed.memories.length).toBeGreaterThanOrEqual(1);
 

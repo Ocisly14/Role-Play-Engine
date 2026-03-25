@@ -77,7 +77,12 @@
       }
     }
   ],
-  "connections": [{ "targetId": "SCN_16_SUB_2", "description": "大厅靠墙角落有一段吱呀作响的窄木楼梯，向上通往俯瞰大厅的二层环廊隔层" }],
+  "connections": [
+    {
+      "targetId": "SCN_16_SUB_2",
+      "description": "大厅靠墙角落有一段吱呀作响的窄木楼梯，向上通往俯瞰大厅的二层环廊隔层"
+    }
+  ],
   "itemContexts": {
     "ITEM_SCN16_1": "酒吧的主吧台，Taran Emilion通常在这里调酒。吧台后方的架子上摆放着各式酒类",
     "ITEM_SCN16_2": "墙壁上装饰着驯鹿角，是酒吧标志性的装饰元素",

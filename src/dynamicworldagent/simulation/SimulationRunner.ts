@@ -15,6 +15,10 @@ import {
   upsertIntent,
 } from "./characterInjection.js";
 import {
+  persistSimulationEvents,
+  persistSimulationRuntime,
+} from "./runtimePersistence.js";
+import {
   DEFAULT_TICK_INTERVAL_MS,
   type PlaybackStatus,
   type SimulationConfig,
@@ -23,20 +27,24 @@ import {
   type SimulationStatus,
   type StopReason,
 } from "./types.js";
-import {
-  persistSimulationEvents,
-  persistSimulationRuntime,
-} from "./runtimePersistence.js";
 
 const ONE_MINUTE_MS = 60_000;
 
 function alignToMinuteBoundary(timestampMs: number): number {
   const remainder = timestampMs % ONE_MINUTE_MS;
-  return remainder === 0 ? timestampMs : timestampMs + (ONE_MINUTE_MS - remainder);
+  return remainder === 0
+    ? timestampMs
+    : timestampMs + (ONE_MINUTE_MS - remainder);
 }
 
-function buildRealTimeStart(timestampMs: number, bufferMinutes: number): number {
-  return alignToMinuteBoundary(timestampMs) + Math.max(0, bufferMinutes) * ONE_MINUTE_MS;
+function buildRealTimeStart(
+  timestampMs: number,
+  bufferMinutes: number
+): number {
+  return (
+    alignToMinuteBoundary(timestampMs) +
+    Math.max(0, bufferMinutes) * ONE_MINUTE_MS
+  );
 }
 
 function formatGameTime(timestampMs: number): string {
@@ -72,7 +80,8 @@ export class SimulationRunner {
 
   readonly events: SimulationEventEmitter;
   private readonly collectedEvents: SimulationEvent[] = [];
-  private broadcastCallback: ((events: SimulationEvent[]) => void) | null = null;
+  private broadcastCallback: ((events: SimulationEvent[]) => void) | null =
+    null;
 
   constructor(params: {
     config: SimulationConfig;
@@ -180,7 +189,11 @@ export class SimulationRunner {
   updateTickInterval(ms: number): void {
     this.config.tickIntervalMs = ms;
 
-    if (!this.config.syncRealTime && this.state === "running" && !this.tickInProgress) {
+    if (
+      !this.config.syncRealTime &&
+      this.state === "running" &&
+      !this.tickInProgress
+    ) {
       this.clearScheduledTick();
       this.scheduleNextTick();
     }
@@ -326,7 +339,10 @@ export class SimulationRunner {
     }
   }
 
-  async injectCharacter(profile: DynamicNPCProfile, intent: string): Promise<void> {
+  async injectCharacter(
+    profile: DynamicNPCProfile,
+    intent: string
+  ): Promise<void> {
     if (this.state !== "paused") {
       throw new Error(
         `Cannot inject character while simulation is ${this.state}. Pause first.`
@@ -409,7 +425,9 @@ export class SimulationRunner {
 
   getInjectedCharacters(): DynamicNPCProfile[] {
     const gameState = this.dgsm.getState();
-    return gameState.npcCharacters.filter((npc) => npc.isPlayerInjected === true);
+    return gameState.npcCharacters.filter(
+      (npc) => npc.isPlayerInjected === true
+    );
   }
 
   private isTerminal(): boolean {
@@ -429,7 +447,10 @@ export class SimulationRunner {
 
   private getNextTickDelayMs(): number {
     if (!this.config.syncRealTime) {
-      return Math.max(1, this.config.tickIntervalMs ?? DEFAULT_TICK_INTERVAL_MS);
+      return Math.max(
+        1,
+        this.config.tickIntervalMs ?? DEFAULT_TICK_INTERVAL_MS
+      );
     }
 
     const now = Date.now();
@@ -677,7 +698,10 @@ export class SimulationRunner {
   private shouldStopAfterTick(currentTickEvents: SimulationEvent[]): void {
     const gameState = this.dgsm.getState();
 
-    if (this.config.maxDays !== undefined && gameState.gameDay > this.config.maxDays) {
+    if (
+      this.config.maxDays !== undefined &&
+      gameState.gameDay > this.config.maxDays
+    ) {
       this.transitionToTerminalState("max_days");
       return;
     }
@@ -734,7 +758,9 @@ export class SimulationRunner {
     await persistSimulationEvents(this.prisma, events);
   }
 
-  private async persistAndBroadcastEvents(events: SimulationEvent[]): Promise<void> {
+  private async persistAndBroadcastEvents(
+    events: SimulationEvent[]
+  ): Promise<void> {
     if (events.length === 0) return;
     await this.persistEvents(events);
     this.broadcastCallback?.(events);
@@ -743,11 +769,13 @@ export class SimulationRunner {
   private getEffectiveTickIntervalMs(): number {
     return this.config.syncRealTime
       ? ONE_MINUTE_MS
-      : this.config.tickIntervalMs ?? DEFAULT_TICK_INTERVAL_MS;
+      : (this.config.tickIntervalMs ?? DEFAULT_TICK_INTERVAL_MS);
   }
 
   private getPendingDisplayStartTime(): number | undefined {
-    const displayStartTime = this.config.syncRealTime ? this.config.displayStartTime : undefined;
+    const displayStartTime = this.config.syncRealTime
+      ? this.config.displayStartTime
+      : undefined;
     if (typeof displayStartTime !== "number") return undefined;
     return displayStartTime > Date.now() ? displayStartTime : undefined;
   }

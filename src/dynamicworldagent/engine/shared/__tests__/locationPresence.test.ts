@@ -1,8 +1,5 @@
 import { describe, expect, it } from "vitest";
-import type {
-  JunctionNode,
-  RoadNode,
-} from "../../../state/topologyTypes.js";
+import type { JunctionNode, RoadNode } from "../../../state/topologyTypes.js";
 import {
   arePositionsCoLocated,
   describePrecisePosition,
@@ -69,17 +66,26 @@ describe("locationPresence", () => {
   const dgsm = createMockDgsm() as any;
 
   it("treats scene, junction, and road membership as exact location checks", () => {
-    expect(isCharacterAtLocation({ type: "scene", sceneId: "SCENE_1" }, "SCENE_1")).toBe(
-      true
-    );
     expect(
-      isCharacterAtLocation({ type: "junction", junctionId: "JUNC_A" }, "JUNC_A")
+      isCharacterAtLocation({ type: "scene", sceneId: "SCENE_1" }, "SCENE_1")
     ).toBe(true);
     expect(
-      isCharacterAtLocation({ type: "road", roadId: "ROAD_1", position: 0.3 }, "ROAD_1")
+      isCharacterAtLocation(
+        { type: "junction", junctionId: "JUNC_A" },
+        "JUNC_A"
+      )
     ).toBe(true);
     expect(
-      isCharacterAtLocation({ type: "road", roadId: "ROAD_1", position: 0.3 }, "JUNC_A")
+      isCharacterAtLocation(
+        { type: "road", roadId: "ROAD_1", position: 0.3 },
+        "ROAD_1"
+      )
+    ).toBe(true);
+    expect(
+      isCharacterAtLocation(
+        { type: "road", roadId: "ROAD_1", position: 0.3 },
+        "JUNC_A"
+      )
     ).toBe(false);
   });
 
@@ -94,11 +100,14 @@ describe("locationPresence", () => {
   });
 
   it("describes precise road and scene positions for revise context", () => {
-    expect(describePrecisePosition({ type: "scene", sceneId: "SCENE_1" }, dgsm)).toBe(
-      "Inside Library."
-    );
     expect(
-      describePrecisePosition({ type: "road", roadId: "ROAD_1", position: 0.2 }, dgsm)
+      describePrecisePosition({ type: "scene", sceneId: "SCENE_1" }, dgsm)
+    ).toBe("Inside Library.");
+    expect(
+      describePrecisePosition(
+        { type: "road", roadId: "ROAD_1", position: 0.2 },
+        dgsm
+      )
     ).toContain("about 2 minute(s) from North Gate");
   });
 });

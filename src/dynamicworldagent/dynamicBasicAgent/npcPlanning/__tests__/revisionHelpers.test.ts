@@ -39,7 +39,11 @@ describe("revisionHelpers", () => {
           routeSnapshot: [],
           currentStepIndex: 0,
           minutesIntoStep: 1,
-          lastReachablePosition: { type: "road", roadId: "ROAD_1", position: 0.2 },
+          lastReachablePosition: {
+            type: "road",
+            roadId: "ROAD_1",
+            position: 0.2,
+          },
           targetPosition: { type: "scene", sceneId: "harbor" },
         },
       },

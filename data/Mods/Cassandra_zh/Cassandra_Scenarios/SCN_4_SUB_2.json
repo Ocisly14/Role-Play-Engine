@@ -59,8 +59,14 @@
     }
   ],
   "connections": [
-    { "targetId": "SCN_4_SUB_1", "description": "餐厅入口的雕花木门外即是挑高两层、悬挂水晶吊灯的酒店大堂" },
-    { "targetId": "SCN_4_SUB_4", "description": "后厨深处厚重的灰色金属门后有陡峭水泥楼梯，通往地下一层储藏室" }
+    {
+      "targetId": "SCN_4_SUB_1",
+      "description": "餐厅入口的雕花木门外即是挑高两层、悬挂水晶吊灯的酒店大堂"
+    },
+    {
+      "targetId": "SCN_4_SUB_4",
+      "description": "后厨深处厚重的灰色金属门后有陡峭水泥楼梯，通往地下一层储藏室"
+    }
   ],
   "itemContexts": {
     "ITEM_SCN4_4": "铺着白色亚麻桌布的餐桌，每张桌上摆放着银质烛台和精心折叠的布餐巾。桌椅均为深色木质，椅背雕刻着简洁的卷草花纹。",

@@ -1,13 +1,11 @@
-import type {
-  MovementStep,
-} from "../../dynamicBasicAgent/npcPlanning/types.js";
+import type { MovementStep } from "../../dynamicBasicAgent/npcPlanning/types.js";
 import type { DynamicGameStateManager } from "../../state/DynamicGameState.js";
+import { hasBlockedConnection } from "../../state/blockedConnections.js";
 import type {
   CharacterPosition,
   RoadNode,
   TownTopology,
 } from "../../state/topologyTypes.js";
-import { hasBlockedConnection } from "../../state/blockedConnections.js";
 
 /**
  * If a scene is not in sceneToParent (interior sub-scene),
@@ -26,7 +24,10 @@ function resolveToEntryScene(
   const outline = (state.scenarioOutlines ?? []).find(
     (o) => o.id === scene.parentLocationId
   );
-  if (outline?.entrySceneId && topology.sceneToParent.has(outline.entrySceneId)) {
+  if (
+    outline?.entrySceneId &&
+    topology.sceneToParent.has(outline.entrySceneId)
+  ) {
     return outline.entrySceneId;
   }
   return null;
@@ -79,7 +80,12 @@ export function findTopologyPath(
     return { steps: [], totalMinutes: 0 };
   }
 
-  const startInfo = resolveToJunctions(from, topology, blockedConnections, dgsm);
+  const startInfo = resolveToJunctions(
+    from,
+    topology,
+    blockedConnections,
+    dgsm
+  );
   const endInfo = resolveToJunctions(to, topology, blockedConnections, dgsm);
 
   if (!startInfo || !endInfo) return null;
@@ -174,10 +180,7 @@ export function buildMovementRouteIgnoringBlocks(
     | undefined;
 
   for (const startEntry of startEntries) {
-    const dijkstra = computeShortestRoadPaths(
-      startEntry.junctionId,
-      topology
-    );
+    const dijkstra = computeShortestRoadPaths(startEntry.junctionId, topology);
     for (const endEntry of endEntries) {
       const roadMinutes = dijkstra.distances.get(endEntry.junctionId);
       if (roadMinutes === undefined) continue;
@@ -415,12 +418,20 @@ function resolveToRouteJunctions(
       return [
         {
           junctionId: road.endpointA,
-          transitionSteps: buildRoadPositionToJunctionSteps(pos, road, road.endpointA),
+          transitionSteps: buildRoadPositionToJunctionSteps(
+            pos,
+            road,
+            road.endpointA
+          ),
           transitionMinutes: pos.position * road.travelTimeMinutes,
         },
         {
           junctionId: road.endpointB,
-          transitionSteps: buildRoadPositionToJunctionSteps(pos, road, road.endpointB),
+          transitionSteps: buildRoadPositionToJunctionSteps(
+            pos,
+            road,
+            road.endpointB
+          ),
           transitionMinutes: (1 - pos.position) * road.travelTimeMinutes,
         },
       ];
@@ -499,8 +510,7 @@ function resolveToRouteJunctions(
             },
             ...buildRoadPositionToJunctionSteps(roadPos, road, road.endpointB),
           ],
-          transitionMinutes:
-            1 + (1 - parent.position) * road.travelTimeMinutes,
+          transitionMinutes: 1 + (1 - parent.position) * road.travelTimeMinutes,
         },
       ];
     }

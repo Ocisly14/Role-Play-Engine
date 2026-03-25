@@ -194,7 +194,10 @@ export interface WorldFeature {
    * Only called if `planNodeSchema` is defined.
    * Return `{ blocked: true, reason }` to abort the node before execution.
    */
-  onNodeStart?(node: PlanNode, dgsm: DynamicGameStateManager): NodeStartBlockedResult | void;
+  onNodeStart?(
+    node: PlanNode,
+    dgsm: DynamicGameStateManager
+  ): NodeStartBlockedResult | void;
 
   /**
    * Called once when the tick engine detects this feature's overlay fields on an executed node.
@@ -206,7 +209,10 @@ export interface WorldFeature {
    * (or didn't happen). The tick processor injects this into the LLM resolver
    * prompt or appends it to the action memory for non-resolver paths.
    */
-  activate?(node: PlanNode, dgsm: DynamicGameStateManager): ActivateResult | void;
+  activate?(
+    node: PlanNode,
+    dgsm: DynamicGameStateManager
+  ): ActivateResult | void;
 
   /**
    * Called by the tick engine on a recurring schedule (every `propagation.tickInterval` ticks)
@@ -230,7 +236,10 @@ export interface ExecutionContext {
     node: PlanNode,
     adjustedSkills: Record<string, number>,
     dgsm: DynamicGameStateManager,
-    adjustTargetSkills?: (targetId: string, rawSkills: Record<string, number>) => Record<string, number>
+    adjustTargetSkills?: (
+      targetId: string,
+      rawSkills: Record<string, number>
+    ) => Record<string, number>
   ): SkillRollResult;
 
   /** Get scene penalties for a location */

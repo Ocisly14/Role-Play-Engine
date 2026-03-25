@@ -63,8 +63,14 @@
     }
   ],
   "connections": [
-    { "targetId": "SCN_1_SUB_1", "description": "贴有生化标识的厚重防火门外即走廊，前方走廊口连通米白瓷砖地面的医院大厅" },
-    { "targetId": "SCN_1_SUB_5", "description": "防火门外走廊右侧方向通往L型走廊与病房区，两侧排列着病房门" }
+    {
+      "targetId": "SCN_1_SUB_1",
+      "description": "贴有生化标识的厚重防火门外即走廊，前方走廊口连通米白瓷砖地面的医院大厅"
+    },
+    {
+      "targetId": "SCN_1_SUB_5",
+      "description": "防火门外走廊右侧方向通往L型走廊与病房区，两侧排列着病房门"
+    }
   ],
   "itemContexts": {
     "ITEM_SCN1_5": "一批崭新的医疗器械，上面印着产地来自波士顿，与这家偏远小镇医院的规模极不相称",
