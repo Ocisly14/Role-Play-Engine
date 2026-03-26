@@ -50,9 +50,15 @@ export function buildLocationNameMap(
   }
 
   // Junctions: junction name → junction ID
+  // Roads: road name → road ID
   if (state.topology) {
     for (const [id, junction] of state.topology.junctions) {
       map.set(junction.name, id);
+    }
+    for (const [id, road] of state.topology.roads) {
+      if (!map.has(road.name)) {
+        map.set(road.name, id);
+      }
     }
   }
 
