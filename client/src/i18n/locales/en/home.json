@@ -174,6 +174,21 @@
     "errors": {
       "loadFailed": "Failed to load analytics",
       "refreshFailed": "Failed to refresh analytics"
+    },
+    "tabs": {
+      "usage": "Usage Stats",
+      "visitors": "Visitor Stats"
+    },
+    "visitors": {
+      "todaySummary": "Today's Overview",
+      "totalVisits": "Total Visits",
+      "avgDuration": "Avg Duration",
+      "hourlyChart": "Hourly Visitors",
+      "ipTable": "Visitor Details by IP",
+      "ip": "IP Address",
+      "visitCount": "Visits",
+      "avgDurationCol": "Avg Duration",
+      "noData": "No visitor data yet"
     }
   }
 }

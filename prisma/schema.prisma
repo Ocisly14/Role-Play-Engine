@@ -316,6 +316,21 @@ model ModuleSetup {
   @@map("module_setups")
 }
 
+// ─── Visitor Analytics ───────────────────────────────────────────
+
+model VisitorSession {
+  id              String   @id @default(uuid())
+  sessionId       String   @unique @map("session_id")
+  ip              String
+  userAgent       String?  @map("user_agent")
+  startedAt       DateTime @default(now()) @map("started_at")
+  lastHeartbeatAt DateTime @default(now()) @map("last_heartbeat_at")
+
+  @@index([ip])
+  @@index([startedAt])
+  @@map("visitor_sessions")
+}
+
 // ─── Token Usage Tracking ─────────────────────────────────────────
 
 model UserTokenUsage {

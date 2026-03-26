@@ -6,6 +6,7 @@ import { MainLayout } from "./components/layout/MainLayout";
 import { AppSettingsProvider } from "./contexts/AppSettingsContext";
 import { AuthProvider } from "./contexts/AuthContext";
 import { GameSessionProvider } from "./contexts/GameSessionContext";
+import { useVisitorTracking } from "./hooks/useVisitorTracking";
 import { setBackgroundWithTransition } from "./utils/backgroundTransition";
 import { findAvailableImage } from "./utils/imageLoader";
 import { CharacterCreationPage } from "./views/CharacterCreationPage";
@@ -59,6 +60,8 @@ const BackgroundManager: React.FC = () => {
 
 // App routes component (needs to be inside providers to use BackgroundManager)
 const AppRoutes: React.FC = () => {
+  useVisitorTracking();
+
   return (
     <>
       <BackgroundManager />
