@@ -34,6 +34,10 @@ import {
   type SessionRagChunkInput,
   SessionRagService,
 } from "../knowledge/sessionRagService.js";
+import {
+  buildEncounterSnapshot,
+  shouldEmitEncounter,
+} from "../../engine/shared/encounterDedup.js";
 import type { NPCPlanningAgent } from "./NPCPlanningAgent.js";
 import type {
   CharacterAction,
@@ -1046,6 +1050,7 @@ interface SingleTickParams {
   tickDurationMinutes: number;
   /** Nodes injected by previous ticks' feature propagation, to be executed in this tick */
   carryOverNodes?: PlanNode[];
+  previousEncounterSignatures?: ReadonlySet<string>;
   dgsm: DynamicGameStateManager;
   npcPlanningAgent: NPCPlanningAgent;
   sessionId: string;
@@ -1060,6 +1065,7 @@ interface SingleTickResult {
   actions: CharacterAction[];
   injectedNodes: PlanNode[];
   worldEvents: import("./types.js").WorldEventDescriptor[];
+  encounterSignatures: string[];
 }
 
 /**
@@ -1090,6 +1096,7 @@ async function executeSingleTick(
     registry,
     ctx,
     memoryManager,
+    previousEncounterSignatures,
   } = params;
 
   const state = dgsm.getState();
@@ -1893,6 +1900,7 @@ async function executeSingleTick(
     tickStartTime,
     tickActions,
     movedNpcIds,
+    previousEncounterSignatures ?? new Set<string>(),
     memoryManager,
     sessionId,
     moduleId,
@@ -2176,11 +2184,13 @@ async function executeSingleTick(
 
   // Collect world events from features (scene_updated, feature_triggered)
   const worldEvents = dgsm.drainWorldEvents();
+  const encounterSignatures = [...buildEncounterSnapshot(dgsm)];
 
   return {
     actions: tickActions,
     injectedNodes,
     worldEvents,
+    encounterSignatures,
   };
 }
 
@@ -2196,6 +2206,7 @@ function scanUnplannedEncounters(
   tickTime: string,
   tickActions: CharacterAction[],
   movedNpcIds: Set<string>,
+  previousEncounterSignatures: ReadonlySet<string>,
   memoryManager: NpcMemoryManager | undefined,
   sessionId: string,
   moduleId: string,
@@ -2312,6 +2323,23 @@ function scanUnplannedEncounters(
 
     const sceneName = dgsm.getScene(locationId)?.name ?? locationId;
 
+    const allNpcIds = new Set<string>();
+    for (const [observerId, otherIds] of npcEncounterMap) {
+      if (!dgsm.isCharacterHidden(observerId)) allNpcIds.add(observerId);
+      for (const otherId of otherIds) {
+        if (!dgsm.isCharacterHidden(otherId)) allNpcIds.add(otherId);
+      }
+    }
+    if (
+      !shouldEmitEncounter(
+        locationId,
+        allNpcIds,
+        previousEncounterSignatures
+      )
+    ) {
+      continue;
+    }
+
     // Write witness memory per NPC
     if (memoryManager) {
       for (const [npcId, otherIds] of npcEncounterMap) {
@@ -2352,16 +2380,6 @@ function scanUnplannedEncounters(
         });
       }
     }
-
-    // Build one synthetic event per scene (exclude hidden NPCs from visible roster)
-    const allNpcIds = new Set<string>();
-    for (const [observerId, otherIds] of npcEncounterMap) {
-      if (!dgsm.isCharacterHidden(observerId)) allNpcIds.add(observerId);
-      for (const otherId of otherIds) {
-        if (!dgsm.isCharacterHidden(otherId)) allNpcIds.add(otherId);
-      }
-    }
-    if (allNpcIds.size === 0) continue;
     const allNpcNames = [...allNpcIds].map((id) => formatPresenceLabel(id));
 
     encounterEvents.push({
@@ -2400,6 +2418,7 @@ export async function runSimulationTick(params: {
   registry: GameEngineRegistry;
   ctx: ExecutionContext;
   memoryManager?: NpcMemoryManager;
+  previousEncounterSignatures?: ReadonlySet<string>;
 }): Promise<SimulationTickResult> {
   const state = params.dgsm.getState();
   const tickStartMinutes =
@@ -2417,6 +2436,7 @@ export async function runSimulationTick(params: {
   return {
     actions: result.actions,
     worldEvents: result.worldEvents,
+    encounterSignatures: result.encounterSignatures,
     dayChanged,
   };
 }

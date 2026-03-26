@@ -1,6 +1,7 @@
 import * as path from "node:path";
 import type { PrismaClient } from "@prisma/client";
 import type { NPCPlanningAgent } from "../dynamicBasicAgent/npcPlanning/NPCPlanningAgent.js";
+import { buildEncounterSnapshot } from "../engine/shared/encounterDedup.js";
 import { runSimulationTick } from "../dynamicBasicAgent/npcPlanning/tickProcessor.js";
 import type { GameEngineRegistry } from "../engine/registry.js";
 import type { ExecutionContext } from "../engine/types.js";
@@ -77,6 +78,7 @@ export class SimulationRunner {
 
   private readonly deadNpcIds: Set<string> = new Set();
   private readonly modifiedCharacterIds: Set<string> = new Set();
+  private previousEncounterSignatures: Set<string> = new Set();
 
   readonly events: SimulationEventEmitter;
   private readonly collectedEvents: SimulationEvent[] = [];
@@ -240,6 +242,7 @@ export class SimulationRunner {
     this.tickInProgress = false;
     this.clearScheduledTick();
     this.initializeDeadNpcIdsFromState();
+    this.previousEncounterSignatures = buildEncounterSnapshot(this.dgsm);
   }
 
   async saveRuntime(): Promise<void> {
@@ -530,7 +533,11 @@ export class SimulationRunner {
         registry: this.registry,
         ctx: this.ctx,
         memoryManager: this.memoryManager,
+        previousEncounterSignatures: this.previousEncounterSignatures,
       });
+      this.previousEncounterSignatures = new Set(
+        tickResult.encounterSignatures
+      );
 
       this.events.actionsToEvents(tickResult.actions, dayBefore);
 

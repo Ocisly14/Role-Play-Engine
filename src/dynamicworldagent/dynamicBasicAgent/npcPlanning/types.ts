@@ -243,5 +243,6 @@ export interface WorldEventDescriptor {
 export interface SimulationTickResult {
   actions: CharacterAction[];
   worldEvents: WorldEventDescriptor[];
+  encounterSignatures: string[];
   dayChanged: boolean;
 }
