@@ -193,7 +193,8 @@ export function useSimulationState(sessionId: string | null) {
           break;
         }
         case "action_executed":
-        case "action_failed": {
+        case "action_failed":
+        case "action_interrupted": {
           const data = event.data as { action?: string };
           if (data.action) {
             newState.npcStatuses = prev.npcStatuses.map((npc) =>

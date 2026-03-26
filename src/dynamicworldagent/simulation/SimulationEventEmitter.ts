@@ -49,7 +49,11 @@ export class SimulationEventEmitter extends EventEmitter {
     const events: SimulationEvent[] = [];
     for (const action of actions) {
       const type: SimulationEventType =
-        action.status === "completed" ? "action_executed" : "action_failed";
+        action.status === "completed"
+          ? "action_executed"
+          : action.status === "failed"
+            ? "action_failed"
+            : "action_interrupted";
 
       events.push(
         this.emitSimulationEvent(

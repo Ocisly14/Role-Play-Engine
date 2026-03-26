@@ -123,7 +123,9 @@ export default function SimulationPage({
     (event: Parameters<typeof handleEvent>[0]) => {
       handleEvent(event);
       if (
-        (event.type === "action_executed" || event.type === "action_failed") &&
+        (event.type === "action_executed" ||
+          event.type === "action_failed" ||
+          event.type === "action_interrupted") &&
         event.data.action &&
         gameRef.current
       ) {

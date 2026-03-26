@@ -12,7 +12,11 @@ const SYSTEM_EVENT_TYPES = new Set([
   "simulation_state_changed",
 ]);
 
-const ACTION_EVENT_TYPES = new Set(["action_executed", "action_failed"]);
+const ACTION_EVENT_TYPES = new Set([
+  "action_executed",
+  "action_failed",
+  "action_interrupted",
+]);
 
 const WORLD_EVENT_TYPES = new Set(["scene_updated", "feature_triggered"]);
 
@@ -95,6 +99,7 @@ export function EventLog({ events }: EventLogProps) {
 function ActionMessage({ event }: { event: SimulationEvent }) {
   const { t } = useTranslation("simulation");
   const isFailed = event.type === "action_failed";
+  const isInterrupted = event.type === "action_interrupted";
   const name =
     (event.data.characterName as string) ||
     event.actorNpcId ||
@@ -102,11 +107,20 @@ function ActionMessage({ event }: { event: SimulationEvent }) {
   const outcome = sanitizeOutcomeForDisplay(
     localizeLegacyOutcome(event.data.outcome as string | undefined, t)
   );
+  const containerClass = isFailed
+    ? "bg-red-50/60 border border-red-200/50"
+    : isInterrupted
+      ? "bg-amber-50/60 border border-amber-200/50"
+      : "bg-white/60 border border-slate-200/50";
+  const outcomeClass = isFailed
+    ? "text-red-500"
+    : isInterrupted
+      ? "text-amber-700"
+      : "text-emerald-600";
+  const outcomePrefix = isFailed ? "✗" : isInterrupted ? "↺" : "✓";
 
   return (
-    <div
-      className={`rounded-lg px-3 py-2 text-xs ${isFailed ? "bg-red-50/60 border border-red-200/50" : "bg-white/60 border border-slate-200/50"}`}
-    >
+    <div className={`rounded-lg px-3 py-2 text-xs ${containerClass}`}>
       <div className="flex items-center justify-between mb-0.5">
         <span className="font-semibold text-slate-800 truncate">{name}</span>
         <span className="text-[10px] text-slate-400 ml-2 shrink-0">
@@ -114,10 +128,8 @@ function ActionMessage({ event }: { event: SimulationEvent }) {
         </span>
       </div>
       {outcome && (
-        <div
-          className={`text-[11px] leading-relaxed ${isFailed ? "text-red-500" : "text-emerald-600"}`}
-        >
-          {isFailed ? "✗" : "✓"} {outcome}
+        <div className={`text-[11px] leading-relaxed ${outcomeClass}`}>
+          {outcomePrefix} {outcome}
         </div>
       )}
     </div>
