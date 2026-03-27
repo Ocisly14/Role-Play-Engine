@@ -72,6 +72,28 @@ export interface ObjectStateDelta {
   witnessMemories?: Record<string, string>;
 }
 
+// ===== LLM State Resolver types (scene_interaction) =====
+
+export interface SceneConnectionEffectResult {
+  targetId: string;
+  action: "block" | "unblock" | "reveal" | "hide";
+}
+
+export interface SceneStateDelta {
+  /** Scene conditions to add (with optional mechanical effects). */
+  addSceneConditions?: SceneCondition[];
+  /** Exact existing condition descriptions to remove. */
+  removeSceneConditions?: string[];
+  /** Connection effects: block/unblock/reveal/hide passages. */
+  connectionEffects?: SceneConnectionEffectResult[];
+  /** Item state changes (tool damage, consumption, movement). */
+  items?: ItemResult[];
+  /** First-person memory for the actor. */
+  memory: string;
+  /** First-person memories for co-present NPCs who witnessed the action. */
+  witnessMemories?: Record<string, string>;
+}
+
 export interface ObjectInteractionPayload {
   /** Primary item this interaction targets. Used for existence pre-check. */
   itemId?: string;
@@ -80,11 +102,6 @@ export interface ObjectInteractionPayload {
 export interface ScheduleEntry {
   location: string; // scene ID
   activity: string; // natural language description
-}
-
-export interface SceneConnectionEffect {
-  targetScenarioId: string;
-  action: "block" | "unblock";
 }
 
 export interface MovementStep {
@@ -141,7 +158,6 @@ export interface PlanNode {
   difficulty?: "regular" | "hard" | "extreme";
   targetCharacterIds?: string[];
   objectInteractionPayload?: ObjectInteractionPayload;
-  sceneConnectionEffect?: SceneConnectionEffect;
   status: PlanNodeStatus;
   executionMeta: PlanNodeExecutionMeta;
   outcome?: string;

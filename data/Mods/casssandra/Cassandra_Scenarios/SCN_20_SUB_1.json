@@ -16,7 +16,7 @@
       "id": "ITEM_SCN20_2",
       "name": "腐烂的木头碎片",
       "type": "other",
-      "description": "散落在地面上的各种木头碎片，大部分已经腐烂变软，与枯枝落叶混杂在一起。"
+      "description": "散落在地面的树皮碎片、断木条与木屑，大部分已经腐烂变软，与枯枝落叶混杂在一起。"
     }
   ],
   "conditions": [
@@ -54,5 +54,14 @@
       }
     }
   ],
-  "connections": ["SCN_20_SUB_2", "SCN_20_SUB_3"]
+  "connections": [
+    {
+      "targetId": "SCN_20_SUB_2",
+      "description": "伐木场角落有一间歪斜烟囱的矮小工作屋，周围散布锈蚀机器"
+    },
+    {
+      "targetId": "SCN_20_SUB_3",
+      "description": "伐木场远端有一条荒废泥径，蜿蜒通往遮天蔽日的茂密森林深处"
+    }
+  ]
 }

@@ -4,19 +4,17 @@ import type {
 } from "../../dynamicBasicAgent/npcPlanning/types.js";
 import type { DynamicGameStateManager } from "../../state/DynamicGameState.js";
 import { buildOutcome, makeAction } from "../shared/nodeHelpers.js";
-import { getTopologyNeighbors } from "../shared/topologyHelpers.js";
 import type { ExecutionContext, NodeHandler } from "../types.js";
 
 export const sceneInteractionHandler: NodeHandler = {
   type: "scene_interaction",
 
   description:
-    "Interact with the scene itself, modifying scene conditions or connections. " +
-    "Outcomes are appended as scene conditions.\n\n" +
-    "Optional: `sceneConnectionEffect` to block/unblock a connection between scenes.\n" +
-    'Format: `{ "targetScenarioId": "existing_connected_location_id", "action": "block|unblock" }`\n' +
-    "`targetScenarioId` must reference a real adjacent map location ID from the current location's known connections. " +
-    "Never invent room fragments, doors, partitions, or descriptive sub-areas. If unsure, omit this field.\n\n" +
+    "Interact with the scene itself — search, investigate, or modify the environment. " +
+    "An LLM resolver determines all scene state changes (conditions, connection effects, item changes, memories) " +
+    "based on the action description and skill roll result.\n\n" +
+    "If using a tool/item for the interaction, set `objectInteractionPayload.itemId` to the item being used " +
+    "(e.g. crowbar to pry open a window, key to unlock a door).\n\n" +
     "SKILL GUIDANCE: Do NOT set `skill` for ordinary scene actions — closing/opening doors, " +
     "drawing curtains, turning on lights, or looking around a room. These always succeed. " +
     "Only set `skill` when the action requires special effort: barricading a door (STR), " +
@@ -24,18 +22,18 @@ export const sceneInteractionHandler: NodeHandler = {
 
   requiredFields: ["action"],
 
-  optionalFields: ["skill", "sceneConnectionEffect"],
+  optionalFields: ["skill", "objectInteractionPayload"],
 
   exampleNode: {
     nodeId: "si1",
     startTime: "11:00",
     endTime: "11:10",
     type: "scene_interaction",
-    action: "Barricade the door to the basement",
-    impact: 3,
-    sceneConnectionEffect: {
-      targetScenarioId: "service_hallway",
-      action: "block",
+    action: "Pry open the boarded window with the crowbar",
+    skill: "STR",
+    impact: 2,
+    objectInteractionPayload: {
+      itemId: "crowbar",
     },
   },
 
@@ -62,8 +60,6 @@ export const sceneInteractionHandler: NodeHandler = {
       | undefined;
     let lastRollDetail: string | undefined;
 
-    const lang = ctx.language ?? "en";
-
     // Skill roll if skill present; otherwise auto-success
     if (node.skill) {
       const rollResult = ctx.resolveSkillRoll(node, adjustedSkills, dgsm);
@@ -73,7 +69,7 @@ export const sceneInteractionHandler: NodeHandler = {
         return makeAction(
           node,
           "failed",
-          buildOutcome(node, "failed", { rollDetail: lastRollDetail }, lang),
+          buildOutcome(node, "failed", { rollDetail: lastRollDetail }),
           {
             difficulty,
             successLevel: resolvedSuccessLevel,
@@ -84,50 +80,30 @@ export const sceneInteractionHandler: NodeHandler = {
       lastRollDetail = rollResult.detail;
     }
 
-    // Append outcome as scene condition
-    const outcome = buildOutcome(
-      node,
-      "completed",
-      {
-        rollDetail: lastRollDetail,
-      },
-      lang
-    );
-    dgsm.appendSceneCondition(node.location, { description: outcome });
-    if (node.sceneConnectionEffect) {
-      const effect = node.sceneConnectionEffect;
-      const topology = dgsm.getTopology();
-      const neighbors = topology
-        ? getTopologyNeighbors(node.location, topology)
-        : [];
+    // Item existence pre-check
+    const payload = node.objectInteractionPayload;
+    if (payload?.itemId) {
       const scene = dgsm.getScene(node.location);
-      const directConnectionIds = (scene?.connections ?? []).map(
-        (c) => c.targetId
-      );
-      const connectedTargets = new Set([...directConnectionIds, ...neighbors]);
-      const targetExists =
-        dgsm.getScene(effect.targetScenarioId) !== null ||
-        dgsm.getJunction(effect.targetScenarioId) !== null ||
-        dgsm.getRoad(effect.targetScenarioId) !== null;
-
-      if (targetExists && connectedTargets.has(effect.targetScenarioId)) {
-        const blocked = effect.action === "block";
-        dgsm.setConnectionBlocked(
-          node.location,
-          effect.targetScenarioId,
-          blocked,
-          outcome
-        );
-      } else {
-        console.warn(
-          `[sceneInteractionHandler] Ignoring invalid sceneConnectionEffect from ${node.location} to ${effect.targetScenarioId}`
+      const inInventory = dgsm.findNpcItem(node.characterId, payload.itemId);
+      const inScene = scene?.items.find((i) => i.id === payload.itemId);
+      if (!inInventory && !inScene) {
+        return makeAction(
+          node,
+          "failed",
+          buildOutcome(node, "failed", {
+            reason: `${payload.itemId} not found`,
+          }),
+          { difficulty, failureReason: "object_not_found" }
         );
       }
     }
 
-    return makeAction(node, "completed", outcome, {
+    // Return success — tickProcessor calls LLM resolver for state changes
+    const action = makeAction(node, "completed", node.action, {
       difficulty,
       successLevel: resolvedSuccessLevel,
     });
+    action.rollDetail = lastRollDetail;
+    return action;
   },
 };

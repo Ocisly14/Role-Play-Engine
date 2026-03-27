@@ -10,6 +10,18 @@
       "name": "Vincent Galenus妻子的墓碑",
       "description": "一块相对较新的墓碑，上面刻着Vincent Galenus妻子的名字和生卒年份。墓碑前偶尔能看到枯萎的花束，显示有人曾来此祭拜。",
       "type": "other"
+    },
+    {
+      "id": "ITEM_SCN19_2",
+      "name": "锈蚀铁门",
+      "type": "other",
+      "description": "入口处半掩着的锈蚀铁门，铰链锈蚀严重，推动时发出刺耳的金属摩擦声。"
+    },
+    {
+      "id": "ITEM_SCN19_3",
+      "name": "风化墓碑群",
+      "type": "other",
+      "description": "年代久远的石碑散布在荒草间，铭文已被风雨侵蚀得难以辨认。"
     }
   ],
   "conditions": [
@@ -51,5 +63,9 @@
       }
     }
   ],
-  "connections": []
+  "connections": [],
+  "itemContexts": {
+    "ITEM_SCN19_2": "公墓入口的铁门半掩着，铰链锈蚀严重，轻推便发出刺耳的金属摩擦声。",
+    "ITEM_SCN19_3": "大片年代久远的石碑散布在荒草间，铭文被风雨侵蚀得模糊不清，记录着小镇几代人的名字。"
+  }
 }

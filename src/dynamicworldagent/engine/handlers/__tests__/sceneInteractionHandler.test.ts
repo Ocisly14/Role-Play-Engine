@@ -1,7 +1,6 @@
-import { describe, expect, it, vi } from "vitest";
+import { describe, expect, it } from "vitest";
 import type { PlanNode } from "../../../dynamicBasicAgent/npcPlanning/types.js";
 import type { DynamicGameStateManager } from "../../../state/DynamicGameState.js";
-import type { DynamicScene } from "../../../state/types.js";
 import type { ExecutionContext } from "../../types.js";
 import { sceneInteractionHandler } from "../sceneInteractionHandler.js";
 
@@ -13,62 +12,12 @@ function createMockDgsm() {
     skills: Record<string, number>;
     status: { luck: number };
   }> = [];
-  const scenes = new Map<
-    string,
-    {
-      id: string;
-      connections: Array<{ targetId: string; description?: string }>;
-    }
-  >();
-  const junctions = new Map<string, unknown>();
-  const roads = new Map<string, unknown>();
-  const blockedCalls: Array<{
-    fromId: string;
-    toId: string;
-    blocked: boolean;
-    reason: string;
-  }> = [];
-  const appendedConditions: Array<{ locationId: string; description: string }> =
-    [];
+  const sceneItemsById: Record<string, Array<{ id: string }>> = {};
+  const npcItemsById: Record<string, Array<{ id: string }>> = {};
 
   return {
     getState() {
-      return {
-        npcCharacters,
-        topology: {
-          junctions,
-          roads,
-          junctionToRoads: new Map(),
-          sceneToParent: new Map(),
-        },
-      };
-    },
-    getTopology() {
-      return {
-        junctions,
-        roads,
-        junctionToRoads: new Map(),
-        sceneToParent: new Map(),
-      };
-    },
-    getScene(sceneId: string) {
-      const scene = scenes.get(sceneId);
-      return scene
-        ? ({
-            ...scene,
-            name: scene.id,
-            description: scene.id,
-            parentLocationId: "OUTDOOR",
-            items: [],
-            conditions: [],
-          } as DynamicScene)
-        : null;
-    },
-    getJunction(junctionId: string) {
-      return junctions.get(junctionId) ?? null;
-    },
-    getRoad(roadId: string) {
-      return roads.get(roadId) ?? null;
+      return { npcCharacters };
     },
     getCharacterPosition(characterId: string) {
       return characterPositions[characterId] ?? null;
@@ -76,39 +25,34 @@ function createMockDgsm() {
     resolveLocationId(position: { type: "scene"; sceneId: string }) {
       return position.sceneId;
     },
-    appendSceneCondition(
-      locationId: string,
-      condition: { description: string }
-    ) {
-      appendedConditions.push({
-        locationId,
-        description: condition.description,
-      });
+    getScene(sceneId: string) {
+      const items = sceneItemsById[sceneId] ?? [];
+      return { id: sceneId, items };
     },
-    setConnectionBlocked(
-      fromId: string,
-      toId: string,
-      blocked: boolean,
-      reason: string
-    ) {
-      blockedCalls.push({ fromId, toId, blocked, reason });
+    findNpcItem(npcId: string, itemId: string) {
+      return npcItemsById[npcId]?.find((i) => i.id === itemId);
     },
-    _addNpc(npcId: string, sceneId: string) {
+    _addNpc(
+      npcId: string,
+      sceneId: string,
+      skills: Record<string, number> = {}
+    ) {
       characterPositions[npcId] = { type: "scene", sceneId };
-      npcCharacters.push({ id: npcId, skills: {}, status: { luck: 50 } });
+      npcCharacters.push({ id: npcId, skills, status: { luck: 50 } });
     },
-    _addScene(
-      id: string,
-      connections: Array<{ targetId: string; description?: string }>
-    ) {
-      scenes.set(id, { id, connections });
+    _setSceneItems(sceneId: string, items: Array<{ id: string }>) {
+      sceneItemsById[sceneId] = items;
     },
-    _blockedCalls: blockedCalls,
-    _appendedConditions: appendedConditions,
+    _setNpcItems(npcId: string, items: Array<{ id: string }>) {
+      npcItemsById[npcId] = items;
+    },
   };
 }
 
-function createMockCtx(): ExecutionContext {
+function createMockCtx(
+  rollFailed = false,
+  successLevel: "regular" | "hard" | "critical" = "regular"
+): ExecutionContext {
   return {
     getNodeDifficulty: () => "regular" as const,
     getScenePenalties: () => new Map<string, number>(),
@@ -118,9 +62,10 @@ function createMockCtx(): ExecutionContext {
       _penalties: Map<string, number>
     ) => skills,
     resolveSkillRoll: () => ({
-      failed: false,
-      detail: "Regular success",
-      successLevel: "regular" as const,
+      failed: rollFailed,
+      detail: rollFailed ? "Failed" : `${successLevel} success`,
+      reason: rollFailed ? "Rolled too high" : undefined,
+      successLevel,
     }),
   } as unknown as ExecutionContext;
 }
@@ -143,58 +88,84 @@ function makeNode(overrides: Partial<PlanNode> = {}): PlanNode {
 }
 
 describe("sceneInteractionHandler", () => {
-  const ctx = createMockCtx();
-
-  it("blocks a real connected location", () => {
+  it("auto-succeeds without skill roll", () => {
     const dgsm = createMockDgsm();
     dgsm._addNpc("npc_a", "SCN_3_SUB_1");
-    dgsm._addScene("SCN_3_SUB_1", [{ targetId: "SCN_3_SUB_2" }]);
-    dgsm._addScene("SCN_3_SUB_2", [{ targetId: "SCN_3_SUB_1" }]);
+    const ctx = createMockCtx();
 
     const result = sceneInteractionHandler.execute(
-      makeNode({
-        sceneConnectionEffect: {
-          targetScenarioId: "SCN_3_SUB_2",
-          action: "block",
-        },
-      }),
+      makeNode(),
       dgsm as unknown as DynamicGameStateManager,
       ctx
     );
 
-    expect(result.status).toBe("completed");
-    expect(dgsm._blockedCalls).toHaveLength(1);
-    expect(dgsm._blockedCalls[0]).toMatchObject({
-      fromId: "SCN_3_SUB_1",
-      toId: "SCN_3_SUB_2",
-      blocked: true,
-    });
+    expect(result).toHaveProperty("status", "completed");
   });
 
-  it("ignores a fabricated connection target", () => {
+  it("succeeds with skill roll", () => {
     const dgsm = createMockDgsm();
-    dgsm._addNpc("npc_a", "SCN_3_SUB_1");
-    dgsm._addScene("SCN_3_SUB_1", [{ targetId: "SCN_3_SUB_2" }]);
-    dgsm._addScene("SCN_3_SUB_2", [{ targetId: "SCN_3_SUB_1" }]);
-    const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+    dgsm._addNpc("npc_a", "SCN_3_SUB_1", { "Spot Hidden": 60 });
+    const ctx = createMockCtx(false, "hard");
+
+    const result = sceneInteractionHandler.execute(
+      makeNode({ skill: "Spot Hidden" }),
+      dgsm as unknown as DynamicGameStateManager,
+      ctx
+    );
+
+    expect(result).toHaveProperty("status", "completed");
+    expect(result).toHaveProperty("successLevel", "hard");
+  });
+
+  it("fails on skill roll failure", () => {
+    const dgsm = createMockDgsm();
+    dgsm._addNpc("npc_a", "SCN_3_SUB_1", { "Spot Hidden": 30 });
+    const ctx = createMockCtx(true);
+
+    const result = sceneInteractionHandler.execute(
+      makeNode({ skill: "Spot Hidden" }),
+      dgsm as unknown as DynamicGameStateManager,
+      ctx
+    );
+
+    expect(result).toHaveProperty("status", "failed");
+  });
+
+  it("fails object_not_found when objectInteractionPayload.itemId is absent from inventory and scene", () => {
+    const dgsm = createMockDgsm();
+    dgsm._addNpc("npc_a", "SCN_3_SUB_1", { STR: 50 });
+    dgsm._setSceneItems("SCN_3_SUB_1", []);
+    const ctx = createMockCtx();
 
     const result = sceneInteractionHandler.execute(
       makeNode({
-        sceneConnectionEffect: {
-          targetScenarioId: "private_office_partition",
-          action: "block",
-        },
+        skill: "STR",
+        objectInteractionPayload: { itemId: "crowbar" },
       }),
       dgsm as unknown as DynamicGameStateManager,
       ctx
     );
 
-    expect(result.status).toBe("completed");
-    expect(dgsm._blockedCalls).toHaveLength(0);
-    expect(warnSpy).toHaveBeenCalledWith(
-      "[sceneInteractionHandler] Ignoring invalid sceneConnectionEffect from SCN_3_SUB_1 to private_office_partition"
+    expect(result).toHaveProperty("status", "failed");
+    expect(result.failureReason).toBe("object_not_found");
+  });
+
+  it("succeeds when tool exists in NPC inventory", () => {
+    const dgsm = createMockDgsm();
+    dgsm._addNpc("npc_a", "SCN_3_SUB_1", { STR: 50 });
+    dgsm._setSceneItems("SCN_3_SUB_1", []);
+    dgsm._setNpcItems("npc_a", [{ id: "crowbar" }]);
+    const ctx = createMockCtx();
+
+    const result = sceneInteractionHandler.execute(
+      makeNode({
+        skill: "STR",
+        objectInteractionPayload: { itemId: "crowbar" },
+      }),
+      dgsm as unknown as DynamicGameStateManager,
+      ctx
     );
 
-    warnSpy.mockRestore();
+    expect(result).toHaveProperty("status", "completed");
   });
 });

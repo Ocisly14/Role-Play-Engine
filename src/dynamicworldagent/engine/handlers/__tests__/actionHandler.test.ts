@@ -118,7 +118,6 @@ describe("actionHandler", () => {
       expect(result.action).toBe("Sit and read a book");
       expect(result.location).toBe("library");
     });
-
   });
 
   describe("skill roll", () => {
@@ -165,7 +164,6 @@ describe("actionHandler", () => {
       expect(result.successLevel).toBe("fumble");
       expect(result.failureReason).toBe("skill_roll_failed");
     });
-
   });
 
   describe("rest subtype", () => {

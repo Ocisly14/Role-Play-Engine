@@ -653,10 +653,6 @@ describe("Engine Integration — Blackwood Manor", () => {
           type: "scene_interaction",
           skill: "STR",
           impact: 2 as any,
-          sceneConnectionEffect: {
-            targetScenarioId: "manor_cellar",
-            action: "block",
-          },
         }),
         dgsm,
         ctx

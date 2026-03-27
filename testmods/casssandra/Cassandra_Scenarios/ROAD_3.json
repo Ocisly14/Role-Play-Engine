@@ -9,15 +9,15 @@
   "alongConnections": [
     {
       "sceneId": "SCN_16_SUB_1",
-      "position": 0.2
+      "position": 0.76
     },
     {
       "sceneId": "SCN_17_SUB_1",
-      "position": 0.5
+      "position": 0.49
     },
     {
       "sceneId": "SCN_18_SUB_1",
-      "position": 0.8
+      "position": 0.58
     }
   ],
   "items": [
@@ -38,8 +38,8 @@
     },
     {
       "id": "ITEM_ROAD3_3",
-      "name": "五金货箱",
-      "description": "几只装着钉子和锯条的木箱，箱盖边缘磨得发毛。",
+      "name": "店外钉锯木箱",
+      "description": "几只装着钉子和锯条的木箱，箱盖边缘磨得发毛，与哈里森五金店门外的堆放一致。",
       "type": "container",
       "containerStats": {
         "capacity": 10,

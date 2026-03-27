@@ -12,6 +12,10 @@ import {
   applyObjectDelta,
   resolveObjectInteractionState,
 } from "../../engine/handlers/objectInteractionStateResolver.js";
+import {
+  applySceneDelta,
+  resolveSceneInteractionState,
+} from "../../engine/handlers/sceneInteractionStateResolver.js";
 import type { GameEngineRegistry } from "../../engine/registry.js";
 import {
   SUCCESS_RANK,
@@ -1568,7 +1572,8 @@ async function executeSingleTick(
     if (
       featureNotes.length > 0 &&
       node.type !== "character_interaction" &&
-      node.type !== "object_interaction"
+      node.type !== "object_interaction" &&
+      node.type !== "scene_interaction"
     ) {
       const combined = featureNotes.join(" ");
       action.outcome = combined;
@@ -1668,6 +1673,31 @@ async function executeSingleTick(
       action.stateMemories = {
         [node.characterId]: objDelta.memory,
         ...(objDelta.witnessMemories ?? {}),
+      };
+    }
+
+    // 4c. scene_interaction: call LLM resolver for scene state changes + memories
+    if (action.status === "completed" && node.type === "scene_interaction") {
+      const sceneSkillRollResult = action.successLevel
+        ? { successLevel: action.successLevel, detail: action.rollDetail ?? "" }
+        : null;
+
+      const sceneDelta = await resolveSceneInteractionState(
+        node,
+        dgsm,
+        ctx.runtime,
+        sceneSkillRollResult,
+        language,
+        registry,
+        featureNotes
+      );
+
+      applySceneDelta(dgsm, sceneDelta, node.location, node.characterId);
+
+      action.outcome = sceneDelta.memory;
+      action.stateMemories = {
+        [node.characterId]: sceneDelta.memory,
+        ...(sceneDelta.witnessMemories ?? {}),
       };
     }
 

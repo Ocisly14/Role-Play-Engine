@@ -22,6 +22,12 @@
       "name": "圣经",
       "description": "放在祭坛上的一本古旧圣经，Constantine Frollo经常在此处诵读。书页泛黄，边角磨损，显示出频繁使用的痕迹。",
       "type": "document"
+    },
+    {
+      "id": "ITEM_SCN17_9",
+      "name": "木质长椅",
+      "type": "other",
+      "description": "两侧排列着年代久远的木质长椅，椅面被无数信众磨得光滑发亮。"
     }
   ],
   "conditions": [
@@ -76,5 +82,8 @@
       "targetId": "SCN_17_SUB_4",
       "description": "主殿内有一处隐蔽的通道入口，石阶向下深入地底，通往教堂正下方的秘密赌场"
     }
-  ]
+  ],
+  "itemContexts": {
+    "ITEM_SCN17_9": "主殿两侧排列着年代久远的木质长椅，椅面被无数信众的坐姿磨得光滑发亮。"
+  }
 }

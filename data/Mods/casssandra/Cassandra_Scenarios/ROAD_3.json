@@ -38,8 +38,8 @@
     },
     {
       "id": "ITEM_ROAD3_3",
-      "name": "五金货箱",
-      "description": "几只装着钉子和锯条的木箱，箱盖边缘磨得发毛。",
+      "name": "店外钉锯木箱",
+      "description": "几只装着钉子和锯条的木箱，箱盖边缘磨得发毛，与哈里森五金店门外的堆放一致。",
       "type": "container",
       "containerStats": {
         "capacity": 10,

@@ -933,6 +933,20 @@ export class DynamicGameStateManager {
     this.state.lastUpdated = new Date();
   }
 
+  setConnectionHidden(
+    sceneId: string,
+    targetId: string,
+    hidden: boolean
+  ): void {
+    const scene = this.state.scenes.get(sceneId);
+    if (!scene) return;
+    const conn = scene.connections.find((c) => c.targetId === targetId);
+    if (conn) {
+      conn.hidden = hidden;
+      this.state.lastUpdated = new Date();
+    }
+  }
+
   // === Topology ===
 
   getJunction(junctionId: string): JunctionNode | null {

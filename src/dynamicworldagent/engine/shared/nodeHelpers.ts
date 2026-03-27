@@ -38,13 +38,6 @@ export function buildOutcome(
     if (p.itemId) {
       base += " " + t("outcome_item", language, { item: p.itemId });
     }
-  } else if (node.type === "scene_interaction" && node.sceneConnectionEffect) {
-    const e = node.sceneConnectionEffect;
-    const key =
-      e.action === "block"
-        ? "outcome_connection_block"
-        : "outcome_connection_unblock";
-    base += " " + t(key, language, { target: e.targetScenarioId });
   }
 
   return base;

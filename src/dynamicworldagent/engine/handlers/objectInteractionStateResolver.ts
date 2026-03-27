@@ -659,32 +659,24 @@ function addToTarget(
 }
 
 /**
- * Apply the resolved object state delta to the game state.
- *
- * For each ItemResult:
- * 1. Find the item's current location
- * 2. Apply updates if present
- * 3. If target location differs, move the item
- *
- * Also applies scene condition additions.
+ * Apply a list of item results (final location + optional field updates).
+ * Shared by object_interaction and scene_interaction resolvers.
  */
-export function applyObjectDelta(
+export function applyItemResults(
   dgsm: DynamicGameStateManager,
   actorId: string,
-  delta: ObjectStateDelta,
+  items: ItemResult[],
   sceneId: string
 ): void {
-  for (const itemResult of delta.items) {
-    // 1. Find current location
+  for (const itemResult of items) {
     const loc = findItemLocation(itemResult.itemId, actorId, dgsm, sceneId);
     if (!loc) {
       console.warn(
-        `[applyObjectDelta] Item "${itemResult.itemId}" not found anywhere — skipping.`
+        `[applyItemResults] Item "${itemResult.itemId}" not found anywhere — skipping.`
       );
       continue;
     }
 
-    // 2. Apply updates via deep merge
     if (itemResult.updates && Object.keys(itemResult.updates).length > 0) {
       deepMergeItem(
         loc.item as unknown as Record<string, unknown>,
@@ -692,7 +684,6 @@ export function applyObjectDelta(
       );
     }
 
-    // 3. Determine current location string for comparison
     let currentLocationStr: string;
     switch (loc.source) {
       case "scene":
@@ -710,18 +701,33 @@ export function applyObjectDelta(
         break;
     }
 
-    // 4. Move if target differs from current
     const targetLocation = itemResult.location;
     if (targetLocation !== currentLocationStr) {
-      // Remove from current location
       removeFromCurrent(loc, dgsm, sceneId);
-
-      // Add to target location (unless destroyed)
       if (targetLocation !== "destroyed") {
         addToTarget(loc.item, targetLocation, actorId, dgsm, sceneId);
       }
     }
   }
+}
+
+/**
+ * Apply the resolved object state delta to the game state.
+ *
+ * For each ItemResult:
+ * 1. Find the item's current location
+ * 2. Apply updates if present
+ * 3. If target location differs, move the item
+ *
+ * Also applies scene condition additions.
+ */
+export function applyObjectDelta(
+  dgsm: DynamicGameStateManager,
+  actorId: string,
+  delta: ObjectStateDelta,
+  sceneId: string
+): void {
+  applyItemResults(dgsm, actorId, delta.items, sceneId);
 
   // Create new items from disassembly/crafting, auto-remove sources
   if (delta.newItems) {

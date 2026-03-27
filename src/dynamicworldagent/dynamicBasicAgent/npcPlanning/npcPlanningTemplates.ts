@@ -216,11 +216,7 @@ const DEFAULT_DETAILED_NODE_TYPE_REF = `## Node Type Reference
   - Put all targets in top-level \`targetCharacterIds\`.
   - For single-target interactions, \`targetCharacterIds\` should still be an array with one ID.
 - **"object_interaction"**: Interact with a physical object — pick up, hide, move, use, combine, lock, unlock, destroy, etc. Describe what you do in \`action\`. Set \`objectInteractionPayload.itemId\` to the primary item. An LLM resolver handles all state changes.
-- **"scene_interaction"**: Search, investigate, or modify the environment.
-  - Only include \`sceneConnectionEffect\` when you are changing a real map connection that already exists.
-  - \`sceneConnectionEffect.targetScenarioId\` must be an existing connected location ID from the current location's known map data.
-  - Never invent internal sub-areas, doors, partitions, or descriptive labels such as \`private_office_partition\`.
-  - If there is no exact existing connected location ID to target, omit \`sceneConnectionEffect\`.
+- **"scene_interaction"**: Search, investigate, or modify the environment. Describe what you do in \`action\`. An LLM resolver determines scene condition changes, connection effects (block/unblock/reveal passages), and memories.
 
 ## Skill Checks (Call of Cthulhu 7e Rules)
 

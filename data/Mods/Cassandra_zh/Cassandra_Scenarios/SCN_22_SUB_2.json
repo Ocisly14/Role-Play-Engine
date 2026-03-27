@@ -62,6 +62,22 @@
       "type": "other",
       "category": "evidence",
       "discoveryMethod": "search fireplace"
+    },
+    {
+      "id": "ITEM_SCN22_13",
+      "name": "外文旧书",
+      "type": "other",
+      "category": "evidence",
+      "discoveryMethod": "inspect bookshelf",
+      "description": "书架上混在法学和心理学书籍间的少量装帧古怪的外文旧书，散发着一种陈旧而诡异的气息。"
+    },
+    {
+      "id": "ITEM_SCN22_14",
+      "name": "未封口的来信",
+      "type": "document",
+      "category": "evidence",
+      "discoveryMethod": "inspect desk",
+      "description": "书桌上散落的几封未封口的来信，信纸上的笔迹工整而克制。"
     }
   ],
   "conditions": [
@@ -101,6 +117,8 @@
   "itemContexts": {
     "ITEM_SCN22_5": "抽屉锁孔被使用得很频繁，周围木料留下了细小擦痕。",
     "ITEM_SCN22_10": "保险箱被书架与黑布双重遮住，只有熟悉房间布局的人才会立刻注意到它的存在。",
-    "ITEM_SCN22_6": "炉膛里的灰烬还没有彻底冷透，像是近期才烧掉过不想留下的纸张。"
+    "ITEM_SCN22_6": "炉膛里的灰烬还没有彻底冷透，像是近期才烧掉过不想留下的纸张。",
+    "ITEM_SCN22_13": "书架上混在常规书籍间的几本外文旧书装帧古怪，封面上的文字既非英语也非已知的欧洲语言。",
+    "ITEM_SCN22_14": "书桌上散落着几封未封口的来信，信纸上的笔迹工整而克制。"
   }
 }
