@@ -97,7 +97,6 @@ describe("actionHandler", () => {
   it("has correct type and required fields", () => {
     expect(actionHandler.type).toBe("action");
     expect(actionHandler.requiredFields).toContain("action");
-    expect(actionHandler.requiredFields).toContain("location");
     expect(actionHandler.optionalFields).toContain("skill");
     expect(actionHandler.optionalFields).toContain("routineSubtype");
   });
@@ -120,35 +119,6 @@ describe("actionHandler", () => {
       expect(result.location).toBe("library");
     });
 
-    it("should fail when character is not at expected location", () => {
-      const dgsm = createMockDgsm();
-      dgsm._addNpc("npc_a", "tavern"); // at tavern, not library
-      const ctx = createMockCtx();
-
-      const result = actionHandler.execute(
-        makeNode(),
-        dgsm as unknown as DynamicGameStateManager,
-        ctx
-      );
-
-      expect(result.status).toBe("failed");
-      expect(result.failureReason).toBe("location_mismatch");
-    });
-
-    it("should fail when character has no position", () => {
-      const dgsm = createMockDgsm();
-      // Don't add npc_a — no position
-      const ctx = createMockCtx();
-
-      const result = actionHandler.execute(
-        makeNode(),
-        dgsm as unknown as DynamicGameStateManager,
-        ctx
-      );
-
-      expect(result.status).toBe("failed");
-      expect(result.failureReason).toBe("location_mismatch");
-    });
   });
 
   describe("skill roll", () => {
@@ -196,31 +166,6 @@ describe("actionHandler", () => {
       expect(result.failureReason).toBe("skill_roll_failed");
     });
 
-    it("should check location before skill roll", () => {
-      const dgsm = createMockDgsm();
-      dgsm._addNpc("npc_a", "tavern");
-      let rollCalled = false;
-      const ctx = createMockCtx({
-        resolveSkillRoll: () => {
-          rollCalled = true;
-          return {
-            failed: false,
-            detail: "Regular success",
-            successLevel: "regular" as const,
-          };
-        },
-      } as any);
-
-      const result = actionHandler.execute(
-        makeNode({ skill: "Library Use" }),
-        dgsm as unknown as DynamicGameStateManager,
-        ctx
-      );
-
-      expect(result.status).toBe("failed");
-      expect(result.failureReason).toBe("location_mismatch");
-      expect(rollCalled).toBe(false);
-    });
   });
 
   describe("rest subtype", () => {

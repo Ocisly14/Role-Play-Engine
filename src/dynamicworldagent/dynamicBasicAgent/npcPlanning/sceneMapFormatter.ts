@@ -17,6 +17,7 @@ export function formatSceneConnections(
   if (connections.length === 0) return "";
 
   return connections
+    .filter((c) => !c.hidden)
     .map((c) => {
       const targetName = resolveLocationName(dgsm, c.targetId);
       const desc = c.description ? `${c.description} → ` : "";
@@ -25,10 +26,17 @@ export function formatSceneConnections(
     .join("\n");
 }
 
+export interface SceneMapParts {
+  /** Static topology (junctions/roads/buildings/descriptions/residents) — cacheable in system prompt */
+  townMap: string;
+  /** Dynamic NPC position + home — belongs in user prompt */
+  yourLocation: string;
+}
+
 export function formatSceneMap(
   dgsm: DynamicGameStateManager,
   npcId: string
-): string {
+): SceneMapParts {
   return formatTopologySceneMap(dgsm, npcId);
 }
 
@@ -137,7 +145,7 @@ export function resolveLocationId(
 function formatTopologySceneMap(
   dgsm: DynamicGameStateManager,
   npcId: string
-): string {
+): SceneMapParts {
   const state = dgsm.getState();
   const topology = state.topology!;
   const entryToOutline = buildEntrySceneToOutlineMap(state);
@@ -147,13 +155,14 @@ function formatTopologySceneMap(
   // Helper: resolve a connected scene ID to a building name label
   const buildingInfo = (
     sceneId: string
-  ): { name: string; residents?: string[] } | null => {
+  ): { name: string; description?: string; residents?: string[] } | null => {
     // Try entryScene → outline mapping first
     const outline = entryToOutline.get(sceneId);
     if (outline) {
       const residents = residentsMap.get(outline.id);
       return {
         name: outline.name,
+        description: outline.description || undefined,
         residents: residents && residents.length > 0 ? residents : undefined,
       };
     }
@@ -165,6 +174,7 @@ function formatTopologySceneMap(
         const residents = residentsMap.get(parent.id);
         return {
           name: parent.name,
+          description: parent.description || undefined,
           residents: residents && residents.length > 0 ? residents : undefined,
         };
       }
@@ -212,18 +222,19 @@ function formatTopologySceneMap(
     }
   }
 
-  const parts: string[] = [];
+  const locationParts: string[] = [];
 
   // ── Your Current Location ──
   if (currentMacro && currentMacro.id !== "OUTDOOR") {
-    parts.push(
-      `Your Current Location:\n  Exact Name: ${currentMacro.name}${currentPositionLabel ? `\n  Topology Note: ${currentPositionLabel}` : ""}`
+    const sceneName = currentScene?.name ?? currentMacro.name;
+    locationParts.push(
+      `Exact Name: ${sceneName}\nBuilding: ${currentMacro.name}${currentPositionLabel ? `\nTopology Note: ${currentPositionLabel}` : ""}`
     );
   } else if (npcLocation) {
     // NPC is outdoors — show junction/road name
     const name = resolveLocationName(dgsm, npcLocation);
-    parts.push(
-      `Your Current Location:\n  Exact Name: ${name}${currentPositionLabel ? `\n  Topology Note: ${currentPositionLabel}` : ""}`
+    locationParts.push(
+      `Exact Name: ${name}${currentPositionLabel ? `\nTopology Note: ${currentPositionLabel}` : ""}`
     );
   }
 
@@ -244,11 +255,11 @@ function formatTopologySceneMap(
         const road = topology.roads.get(homeTopoParent.roadId);
         homePositionLabel = `along ${road?.name ?? homeTopoParent.roadId}`;
       }
-      parts.push(
-        `Your Home:\n  Exact Name: ${residenceMacro.name}${homePositionLabel ? `\n  Topology Note: ${homePositionLabel}` : ""}`
+      locationParts.push(
+        `Your Home: ${residenceMacro.name}${homePositionLabel ? ` (${homePositionLabel})` : ""}`
       );
     } else {
-      parts.push(`Your Home:\n  Exact Name: ${residence}`);
+      locationParts.push(`Your Home: ${residence}`);
     }
   }
 
@@ -275,6 +286,9 @@ function formatTopologySceneMap(
       const info = buildingInfo(sceneId);
       if (!info) continue;
       juncBuildings.push(info.name);
+      if (info.description) {
+        mapLines.push(`    ${info.name}: ${info.description}`);
+      }
       if (info.residents?.length) {
         mapLines.push(
           `    Residents at ${info.name}: ${info.residents.join(", ")}`
@@ -293,6 +307,9 @@ function formatTopologySceneMap(
         const info = buildingInfo(along.sceneId);
         if (!info) continue;
         alongBuildings.push(info.name);
+        if (info.description) {
+          mapLines.push(`    ${info.name}: ${info.description}`);
+        }
         if (info.residents?.length) {
           mapLines.push(
             `    Residents at ${info.name}: ${info.residents.join(", ")}`
@@ -307,11 +324,15 @@ function formatTopologySceneMap(
     mapLines.push(""); // blank line between junctions
   }
 
-  if (mapLines.length > 0) {
-    parts.push("Town Map:\n\n" + mapLines.join("\n").trimEnd());
-  }
+  const townMap =
+    mapLines.length > 0
+      ? "Town Map:\n\n" + mapLines.join("\n").trimEnd()
+      : "No map data.";
 
-  return parts.join("\n\n") || "No scene data.";
+  return {
+    townMap,
+    yourLocation: locationParts.join("\n") || "Unknown",
+  };
 }
 
 // ── Helper maps ─────────────────────────────────────────────────────────
@@ -339,10 +360,13 @@ function buildLocationResidentsMap(
 
 function buildEntrySceneToOutlineMap(
   state: GameState
-): Map<string, { id: string; name: string; entrySceneId?: string }> {
+): Map<
+  string,
+  { id: string; name: string; description: string; entrySceneId?: string }
+> {
   const map = new Map<
     string,
-    { id: string; name: string; entrySceneId?: string }
+    { id: string; name: string; description: string; entrySceneId?: string }
   >();
   for (const outline of state.scenarioOutlines ?? []) {
     if (outline.entrySceneId) {

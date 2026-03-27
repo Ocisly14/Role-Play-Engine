@@ -4,10 +4,7 @@ import type {
   SuccessLevel,
 } from "../../dynamicBasicAgent/npcPlanning/types.js";
 import type { DynamicGameStateManager } from "../../state/DynamicGameState.js";
-import {
-  arePositionsCoLocated,
-  isCharacterAtLocation,
-} from "../shared/locationPresence.js";
+import { arePositionsCoLocated } from "../shared/locationPresence.js";
 import { buildOutcome, makeAction } from "../shared/nodeHelpers.js";
 import type { ExecutionContext, NodeHandler } from "../types.js";
 
@@ -25,7 +22,7 @@ export const characterInteractionHandler: NodeHandler = {
     "position, conditions, appearance) for both characters based on " +
     "the action description and skill roll result.",
 
-  requiredFields: ["action", "location", "targetCharacterIds"],
+  requiredFields: ["action", "targetCharacterIds"],
 
   optionalFields: ["skill"],
 
@@ -35,7 +32,6 @@ export const characterInteractionHandler: NodeHandler = {
     endTime: "10:05",
     type: "character_interaction",
     action: "Convince Dr. Morgan to follow me to the library",
-    location: "hospital_lobby",
     targetCharacterIds: ["npc_dr_morgan"],
     impact: 2,
     skill: "Persuade",
@@ -48,6 +44,7 @@ export const characterInteractionHandler: NodeHandler = {
   ): Promise<CharacterAction> {
     const state = dgsm.getState();
     const pos = dgsm.getCharacterPosition(node.characterId);
+    if (pos) node.location = dgsm.resolveLocationId(pos);
     const npc = state.npcCharacters.find((n) => n.id === node.characterId);
     const npcSkills = npc?.skills ?? {};
     const targetIds = node.targetCharacterIds ?? [];
@@ -71,17 +68,7 @@ export const characterInteractionHandler: NodeHandler = {
     let lastRollDetail: string | undefined;
     let resolvedPerTargetResults: CharacterAction["perTargetResults"];
 
-    // 1. Location check
-    if (!isCharacterAtLocation(pos, node.location)) {
-      return makeAction(
-        node,
-        "failed",
-        buildOutcome(node, "failed", { reason: "not at expected location" }),
-        { failureReason: "location_mismatch" }
-      );
-    }
-
-    // 2. Target presence check — all targets must be co-located
+    // 1. Target presence check — all targets must be co-located
     for (const targetId of targetIds) {
       const targetPos = dgsm.getCharacterPosition(targetId);
       const targetLocation = targetPos
@@ -103,7 +90,7 @@ export const characterInteractionHandler: NodeHandler = {
       }
     }
 
-    // 3. Skill roll — opposed rolls handle per-target mechanics
+    // 2. Skill roll — opposed rolls handle per-target mechanics
     if (node.skill) {
       const rollResult = ctx.resolveSkillRoll(
         node,
@@ -140,7 +127,7 @@ export const characterInteractionHandler: NodeHandler = {
       lastRollDetail = rollResult.detail;
     }
 
-    // 4. Return success — tickProcessor handles LLM resolution and state changes
+    // 3. Return success — tickProcessor handles LLM resolution and state changes
     const action = makeAction(node, "completed", node.action, {
       successLevel: resolvedSuccessLevel,
     });

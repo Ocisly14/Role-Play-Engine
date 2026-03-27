@@ -198,6 +198,8 @@ export interface DynamicNPCProfile {
 export interface SceneConnection {
   targetId: string;
   description?: string;
+  /** When true, this connection is not visible to NPCs until revealed */
+  hidden?: boolean;
 }
 
 export interface DynamicScene {

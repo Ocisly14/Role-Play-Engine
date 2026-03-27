@@ -3,7 +3,6 @@ import type {
   PlanNode,
 } from "../../dynamicBasicAgent/npcPlanning/types.js";
 import type { DynamicGameStateManager } from "../../state/DynamicGameState.js";
-import { isCharacterAtLocation } from "../shared/locationPresence.js";
 import { buildOutcome, makeAction } from "../shared/nodeHelpers.js";
 import { getTopologyNeighbors } from "../shared/topologyHelpers.js";
 import type { ExecutionContext, NodeHandler } from "../types.js";
@@ -23,7 +22,7 @@ export const sceneInteractionHandler: NodeHandler = {
     "Only set `skill` when the action requires special effort: barricading a door (STR), " +
     "searching for hidden passages (Spot Hidden), or disabling a security system (Electrical Repair).",
 
-  requiredFields: ["action", "location"],
+  requiredFields: ["action"],
 
   optionalFields: ["skill", "sceneConnectionEffect"],
 
@@ -33,7 +32,6 @@ export const sceneInteractionHandler: NodeHandler = {
     endTime: "11:10",
     type: "scene_interaction",
     action: "Barricade the door to the basement",
-    location: "ground_floor_hallway",
     impact: 3,
     sceneConnectionEffect: {
       targetScenarioId: "service_hallway",
@@ -48,6 +46,7 @@ export const sceneInteractionHandler: NodeHandler = {
   ): CharacterAction {
     const state = dgsm.getState();
     const pos = dgsm.getCharacterPosition(node.characterId);
+    if (pos) node.location = dgsm.resolveLocationId(pos);
     const npc = state.npcCharacters.find((n) => n.id === node.characterId);
     const npcSkills = npc?.skills ?? {};
     const difficulty = ctx.getNodeDifficulty(node, dgsm);
@@ -64,21 +63,6 @@ export const sceneInteractionHandler: NodeHandler = {
     let lastRollDetail: string | undefined;
 
     const lang = ctx.language ?? "en";
-
-    // Location check
-    if (!isCharacterAtLocation(pos, node.location)) {
-      return makeAction(
-        node,
-        "failed",
-        buildOutcome(
-          node,
-          "failed",
-          { reason: "not at expected location" },
-          lang
-        ),
-        { difficulty, failureReason: "location_mismatch" }
-      );
-    }
 
     // Skill roll if skill present; otherwise auto-success
     if (node.skill) {

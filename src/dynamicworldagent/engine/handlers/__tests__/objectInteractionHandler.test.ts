@@ -123,7 +123,6 @@ describe("objectInteractionHandler", () => {
     it("has correct type and required fields", () => {
       expect(objectInteractionHandler.type).toBe("object_interaction");
       expect(objectInteractionHandler.requiredFields).toContain("action");
-      expect(objectInteractionHandler.requiredFields).toContain("location");
     });
 
     it("succeeds when item is in scene", () => {
@@ -250,36 +249,6 @@ describe("objectInteractionHandler", () => {
       const result = objectInteractionHandler.execute(node, dgsm as any, ctx);
       expect(result.status).toBe("failed");
       expect(result.outcome).toContain("ghost_item");
-    });
-  });
-
-  // ── Location check ──
-
-  describe("location check", () => {
-    it("fails when NPC is not at expected location", () => {
-      dgsm._addScene("study", [{ id: "book", name: "Book" }]);
-      dgsm._addNpc("player-1", "kitchen");
-
-      const node = makeNode({
-        location: "study",
-        objectInteractionPayload: { itemId: "book" },
-      });
-
-      const result = objectInteractionHandler.execute(node, dgsm as any, ctx);
-      expect(result.status).toBe("failed");
-      expect(result.failureReason).toBe("location_mismatch");
-    });
-
-    it("fails when NPC has no position", () => {
-      dgsm._addScene("study", [{ id: "book", name: "Book" }]);
-
-      const node = makeNode({
-        objectInteractionPayload: { itemId: "book" },
-      });
-
-      const result = objectInteractionHandler.execute(node, dgsm as any, ctx);
-      expect(result.status).toBe("failed");
-      expect(result.failureReason).toBe("location_mismatch");
     });
   });
 

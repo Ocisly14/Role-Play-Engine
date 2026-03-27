@@ -59,6 +59,7 @@ export function makeAction(
     difficulty?: "regular" | "hard" | "extreme";
     successLevel?: SuccessLevel;
     failureReason?: FailureReason;
+    location?: string;
   }
 ): CharacterAction {
   return {
@@ -66,7 +67,7 @@ export function makeAction(
     characterName: node.characterName,
     gameTime: opts?.gameTime ?? node.endTime,
     action: node.action,
-    location: node.location,
+    location: opts?.location ?? node.location,
     type: node.type,
     skill: node.skill,
     impact: node.impact,

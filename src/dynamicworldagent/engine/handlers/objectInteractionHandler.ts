@@ -3,7 +3,6 @@ import type {
   PlanNode,
 } from "../../dynamicBasicAgent/npcPlanning/types.js";
 import type { DynamicGameStateManager } from "../../state/DynamicGameState.js";
-import { isCharacterAtLocation } from "../shared/locationPresence.js";
 import { buildOutcome, makeAction } from "../shared/nodeHelpers.js";
 import type { ExecutionContext, NodeHandler } from "../types.js";
 
@@ -21,7 +20,7 @@ export const objectInteractionHandler: NodeHandler = {
     "disarming a trap (Mechanical Repair), forcing open a stuck/barricaded container (STR), " +
     "or using an item in a non-standard way that requires expertise.",
 
-  requiredFields: ["action", "location"],
+  requiredFields: ["action"],
 
   optionalFields: ["skill", "objectInteractionPayload"],
 
@@ -31,7 +30,6 @@ export const objectInteractionHandler: NodeHandler = {
     endTime: "14:10",
     type: "object_interaction",
     action: "Move the petty cash box from the desk drawer into my briefcase",
-    location: "study_room",
     impact: 1,
     objectInteractionPayload: {
       itemId: "petty_cash_box",
@@ -45,6 +43,7 @@ export const objectInteractionHandler: NodeHandler = {
   ): CharacterAction {
     const state = dgsm.getState();
     const pos = dgsm.getCharacterPosition(node.characterId);
+    if (pos) node.location = dgsm.resolveLocationId(pos);
     const npc = state.npcCharacters.find((n) => n.id === node.characterId);
     const npcSkills = npc?.skills ?? {};
     const difficulty = ctx.getNodeDifficulty(node, dgsm);
@@ -54,16 +53,6 @@ export const objectInteractionHandler: NodeHandler = {
     const charPenalties = ctx.getCharacterPenalties(node.characterId, dgsm);
     const afterScene = ctx.applyPenalties(npcSkills, scenePenalties);
     const adjustedSkills = ctx.applyPenalties(afterScene, charPenalties);
-
-    // Location check
-    if (!isCharacterAtLocation(pos, node.location)) {
-      return makeAction(
-        node,
-        "failed",
-        buildOutcome(node, "failed", { reason: "not at expected location" }),
-        { difficulty, failureReason: "location_mismatch" }
-      );
-    }
 
     // Skill roll (for non-normal use with skill)
     let resolvedSuccessLevel:

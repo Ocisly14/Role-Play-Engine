@@ -85,7 +85,8 @@ export interface DailyScheduleParams {
   npcProfile: string;
   longTermIntent: string;
   relationships: string;
-  sceneMap: string;
+  townMap: string;
+  yourLocation: string;
   scenarioConditions: string;
   /** Filtered world state: weather, nearby fires, NPC fatigue/sanity */
   worldStatePrompt: string;
@@ -130,10 +131,13 @@ Return a JSON array in the order you plan to do them. No extra text. JSON keys m
 
 Each entry has exactly two fields:
 - \`"location"\`: exact location name from "Places You Know" (always English)
-- \`"activity"\`: one sentence — what you intend to do there (in ${contentLanguageName(params.language)})`;
+- \`"activity"\`: one sentence — what you intend to do there (in ${contentLanguageName(params.language)})
 
-  const userPrompt = `## Places You Know
-${params.sceneMap}
+## Places You Know
+${params.townMap}`;
+
+  const userPrompt = `## Your Location
+${params.yourLocation}
 
 ## Current Conditions Around You
 ${params.scenarioConditions || "Nothing unusual."}
@@ -168,16 +172,14 @@ export interface DetailedNodesParams {
   longTermIntent: string;
   memoryLog: string;
   todayPlan: ScheduleEntry[];
-  currentLocation: string;
-  sceneMap: string;
+  yourLocation: string;
+  townMap: string;
   sceneDescription: string;
   sceneItems: string;
   sceneNpcs: string;
   sceneConditions: string;
   /** Formatted connections from the current scene (e.g. "通往卧室的走廊") */
   sceneConnections?: string;
-  /** Formatted overview of other rooms in the same building (name + description only) */
-  buildingContext?: string;
   /** Filtered world state: weather, fire, fatigue, sanity etc. */
   worldStatePrompt: string;
   npcInventory: string;
@@ -194,7 +196,7 @@ const TWENTY_FOUR_HOUR_TIME_GUIDANCE = `## Time Semantics
 
 const DEFAULT_NODE_GUARDRAILS_PROMPT = `## Planning Guardrails
 - You can only interact with items, characters, and the environment in your **current scene**. To act in a different scene (including other scenes in the same building), emit a movement node to that scene first, then your action node.
-- For \`location\`, use the exact scene or place name. If you are inside a building, use the specific scene name (from "Your Current Location" or "Other Rooms In This Building"), not the building name.
+- For movement nodes, set \`location\` to the exact scene or place name from "Places You Know". Non-movement nodes execute at your current position — do not specify \`location\`.
 - For object interactions, you may only target items that already appear in \`Items You Can See\` or \`What You're Carrying\`.
 - Do not invent new documents, copies, notes, printouts, receipts, witness copies, or memo variants unless they already exist in the scene, inventory, or prior action history.`;
 
@@ -208,7 +210,7 @@ const DEFAULT_DETAILED_NODE_TYPE_REF = `## Node Type Reference
   - Searching, investigating, or modifying the environment → use "scene_interaction"
   - Going to a different location → use "movement"
 
-- **"movement"**: Move to a destination. Set location to the exact destination name from "Places You Know".
+- **"movement"**: Move to a destination. Set \`location\` to the exact destination name from "Places You Know". This is the ONLY type that uses the \`location\` field.
 - **"character_interaction"**: Interact with one or more characters. This includes any action that uses a skill targeting another character (e.g., Spot Hidden to observe someone, Psychology to read them, Persuade to convince them).
   - Describe what you do entirely in \`action\`.
   - Put all targets in top-level \`targetCharacterIds\`.
@@ -281,7 +283,7 @@ Return a JSON array of PlanNode objects. No extra text. JSON keys must be in Eng
   "startTime": "HH:MM",
   "endTime": "HH:MM",
   "action": "description of what you do (in ${lang})",
-  "location": "exact location name from Places You Know (English)",
+  "location": "ONLY for movement — exact destination from Places You Know (English). Omit for other types.",
   "type": "action|movement|character_interaction|object_interaction|scene_interaction",
   "skill": "OMIT if no skill check needed, otherwise exact skill name (English)",
   "impact": "Default 0. Use 1 only for targeted consequential actions with skill; 2+ for broader effects"
@@ -351,12 +353,12 @@ ${DEFAULT_NODE_GUARDRAILS_PROMPT}
 
 ${params.planningPrompt || ""}
 
-${params.outputSchemaPrompt || defaultDetailedOutputSchema(params.language)}`;
+${params.outputSchemaPrompt || defaultDetailedOutputSchema(params.language)}
 
-  const userPrompt = `## Places You Know
-${params.sceneMap || "No map available."}
+## Places You Know
+${params.townMap || "No map available."}`;
 
-## Right Now
+  const userPrompt = `## Right Now
 Day ${params.gameDay}, ${params.currentTime}
 
 ## Character: ${params.npcName} (${params.npcId})
@@ -373,10 +375,10 @@ ${todayPlan}
 ## What Happened Today So Far
 ${params.memoryLog || "Nothing recorded yet."}
 
-## Your Current Location
-${params.currentLocation || "Unknown"}
+## Your Location
+${params.yourLocation || "Unknown"}
 
-${params.sceneConnections ? `## Exits & Passages\n${params.sceneConnections}\n\n` : ""}${params.buildingContext ? `## Other Rooms In This Building\n${params.buildingContext}\n` : ""}## Where You Are
+${params.sceneConnections ? `## Exits & Passages\n${params.sceneConnections}\n\n` : ""}## Where You Are
 ${params.sceneDescription || "No description available."}
 
 ## Conditions Here
@@ -407,7 +409,8 @@ export interface ReviseScheduleParams {
   longTermIntent: string;
   memoryContext: string;
   relationships: string;
-  sceneMap: string;
+  townMap: string;
+  yourLocation: string;
   scenarioConditions: string;
   worldStatePrompt: string;
   remainingSchedule: string;
@@ -445,10 +448,13 @@ Return a single JSON object. No extra text. JSON keys must be in English. Write 
   "shouldUpdateLongTermIntent": false,
   "updatedLongTermIntent": "only if shouldUpdateLongTermIntent is true"
 }
-\`\`\``;
+\`\`\`
 
-  const userPrompt = `## Places You Know
-${params.sceneMap}
+## Places You Know
+${params.townMap}`;
+
+  const userPrompt = `## Your Location
+${params.yourLocation}
 
 ## Current Conditions Around You
 ${params.scenarioConditions || "Nothing unusual."}
@@ -492,14 +498,13 @@ export interface RevisePlansParams {
   pendingNodes: string;
   interruptedNode?: string;
   triggerDescription: string;
-  currentLocation: string;
+  yourLocation: string;
   currentPositionDetail: string;
-  sceneMap: string;
+  townMap: string;
   sceneDescription: string;
   sceneItems: string;
   sceneNpcs: string;
   sceneConditions: string;
-  buildingContext?: string;
   worldStatePrompt: string;
   npcInventory: string;
   currentTime: string;
@@ -529,7 +534,7 @@ IMPORTANT: "revisedNodes" must cover only the current phase of action from right
       "startTime": "HH:MM",
       "endTime": "HH:MM",
       "action": "description of what you do (in ${lang})",
-      "location": "exact location name from Places You Know (English)",
+      "location": "ONLY for movement — exact destination from Places You Know (English). Omit for other types.",
       "type": "action|movement|character_interaction|object_interaction|scene_interaction",
       "impact": "Default 0. Use 1 only for targeted consequential actions with skill; 2+ for broader effects"
     }
@@ -576,12 +581,12 @@ ${DEFAULT_NODE_GUARDRAILS_PROMPT}
 
 ${params.planningPrompt || ""}
 
-${params.outputSchemaPrompt || revisePlansOutputSchema(params.language)}`;
+${params.outputSchemaPrompt || revisePlansOutputSchema(params.language)}
 
-  const userPrompt = `## Places You Know
-${params.sceneMap || "No map available."}
+## Places You Know
+${params.townMap || "No map available."}`;
 
-## Right Now
+  const userPrompt = `## Right Now
 Day ${params.gameDay}, ${params.currentTime}
 
 ## Character: ${params.npcName} (${params.npcId})
@@ -621,13 +626,13 @@ ${params.interruptedNode}
 }## Your Pending Actions
 ${params.pendingNodes}
 
-## Your Current Location
-${params.currentLocation || "Unknown"}
+## Your Location
+${params.yourLocation || "Unknown"}
 
 ## Your Exact Position
 ${params.currentPositionDetail || "Unknown."}
 
-${params.buildingContext ? `## Other Rooms In This Building\n${params.buildingContext}\n` : ""}## Where You Are
+## Where You Are
 ${params.sceneDescription || "No description available."}
 
 ## Conditions Here

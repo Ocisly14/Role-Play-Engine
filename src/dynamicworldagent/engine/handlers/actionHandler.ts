@@ -4,7 +4,6 @@ import type {
 } from "../../dynamicBasicAgent/npcPlanning/types.js";
 import type { DynamicGameStateManager } from "../../state/DynamicGameState.js";
 import { restCharacter } from "../features/staminaFeature.js";
-import { isCharacterAtLocation } from "../shared/locationPresence.js";
 import { buildOutcome, makeAction } from "../shared/nodeHelpers.js";
 import type { ExecutionContext, NodeHandler } from "../types.js";
 
@@ -14,7 +13,7 @@ export const actionHandler: NodeHandler = {
   description:
     'A narrative action performed by a character at their current location. This handler is for actions that do NOT change object, character, or scene state. If skill is set, a skill roll determines success; otherwise the action auto-succeeds. Set routineSubtype to "rest" for sleeping, napping, or resting — this resets fatigue automatically.',
 
-  requiredFields: ["action", "location"],
+  requiredFields: ["action"],
 
   optionalFields: ["skill", "routineSubtype"],
 
@@ -25,7 +24,6 @@ export const actionHandler: NodeHandler = {
     type: "action",
     routineSubtype: "rest",
     action: "Sleep for the night to recover from exhaustion",
-    location: "home_bedroom",
     impact: 0,
   },
 
@@ -36,6 +34,7 @@ export const actionHandler: NodeHandler = {
   ): CharacterAction {
     const state = dgsm.getState();
     const pos = dgsm.getCharacterPosition(node.characterId);
+    if (pos) node.location = dgsm.resolveLocationId(pos);
     const npc = state.npcCharacters.find((n) => n.id === node.characterId);
     const npcSkills = npc?.skills ?? {};
     const difficulty = ctx.getNodeDifficulty(node, dgsm);
@@ -52,21 +51,6 @@ export const actionHandler: NodeHandler = {
     let lastRollDetail: string | undefined;
 
     const lang = ctx.language ?? "en";
-
-    // Location check
-    if (!isCharacterAtLocation(pos, node.location)) {
-      return makeAction(
-        node,
-        "failed",
-        buildOutcome(
-          node,
-          "failed",
-          { reason: "not at expected location" },
-          lang
-        ),
-        { difficulty, failureReason: "location_mismatch" }
-      );
-    }
 
     // skill present? -> skill roll
     if (node.skill) {

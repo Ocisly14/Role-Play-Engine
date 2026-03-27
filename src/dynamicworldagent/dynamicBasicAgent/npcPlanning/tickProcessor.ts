@@ -292,6 +292,62 @@ function buildImpactEventText(
   }
 }
 
+/**
+ * For encounter events, build a personalized outcome for a specific NPC:
+ * filter out the NPC itself and any NPCs it already interacted with this tick.
+ */
+function personalizeEncounterForNpc(
+  event: CharacterAction,
+  npcId: string,
+  allTickActions: CharacterAction[],
+  state: { npcCharacters: Array<{ id: string; name: string }> },
+  dgsm: DynamicGameStateManager,
+  lang: string
+): CharacterAction | null {
+  if (event.characterId !== "__encounter__") return event;
+  if (!event.targetCharacterIds) return event;
+
+  // Collect NPCs this NPC already interacted with this tick
+  const alreadyInteracted = new Set<string>();
+  for (const action of allTickActions) {
+    if (
+      action.type === "character_interaction" &&
+      action.status === "completed"
+    ) {
+      if (action.characterId === npcId) {
+        for (const targetId of action.targetCharacterIds ?? []) {
+          alreadyInteracted.add(targetId);
+        }
+      }
+      if (action.targetCharacterIds?.includes(npcId)) {
+        alreadyInteracted.add(action.characterId);
+      }
+    }
+  }
+
+  // Filter: remove self + already-interacted NPCs
+  const relevantIds = event.targetCharacterIds.filter(
+    (id) => id !== npcId && !alreadyInteracted.has(id)
+  );
+
+  if (relevantIds.length === 0) return null;
+
+  const relevantNames = relevantIds.map((id) => {
+    const npc = state.npcCharacters.find((n) => n.id === id);
+    const name = npc?.name ?? id;
+    return dgsm.isNpcAlive(id) ? name : `${name} (dead)`;
+  });
+  const sceneName = dgsm.getScene(event.location)?.name ?? event.location;
+
+  return {
+    ...event,
+    outcome: t("npcs_are_at", lang, {
+      names: relevantNames.join(", "),
+      scene: sceneName,
+    }),
+  };
+}
+
 function buildImpactMemoryContent(
   perspective: "targeted" | "witness" | "co_presence",
   _bucketTime: string,
@@ -1315,28 +1371,21 @@ async function executeSingleTick(
       }
     }
 
-    const remainingMinutes = Math.max(
-      0,
-      node.executionMeta.remainingMinutes - 1
-    );
-    if (remainingMinutes > 0) {
-      await npcPlanningAgent.updateNode(sessionId, node.characterId, gameDay, {
-        ...node,
-        executionMeta: {
-          ...node.executionMeta,
-          remainingMinutes,
-        },
-      });
+    // Non-movement nodes: execute when tick reaches endTime
+    if (tickStartTime < node.endTime) {
+      // Still in progress — persist status change if just started
+      if (rawNode.status === "pending") {
+        await npcPlanningAgent.updateNode(
+          sessionId,
+          node.characterId,
+          gameDay,
+          node
+        );
+      }
       continue;
     }
 
-    nodesReadyToExecute.push({
-      ...node,
-      executionMeta: {
-        ...node.executionMeta,
-        remainingMinutes: 0,
-      },
-    });
+    nodesReadyToExecute.push(node);
   }
 
   // 2. Execute nodes that reach their final minute in this tick
@@ -1959,9 +2008,29 @@ async function executeSingleTick(
             (plan?.schedule as unknown as import(
               "./types.js"
             ).ScheduleEntry[]) ?? [];
+          // Personalize encounter events: filter out self + already-interacted NPCs
+          const personalizedEvents = npcEvents
+            .map((e) => {
+              const personalized = personalizeEncounterForNpc(
+                e.event,
+                npcId,
+                tickActions,
+                state,
+                dgsm,
+                language
+              );
+              return personalized ? { ...e, event: personalized } : null;
+            })
+            .filter(
+              (e): e is { event: CharacterAction; impact: number } => e !== null
+            );
+
+          // All encounter NPCs were already interacted with — skip impact gate
+          if (personalizedEvents.length === 0) return;
+
           let reactionContext: string | undefined;
           if (memoryManager) {
-            const triggeringEvents = npcEvents
+            const triggeringEvents = personalizedEvents
               .map((e) =>
                 buildImpactEventText(
                   classifyImpactPerspective(npcId, e.event),
@@ -1983,14 +2052,14 @@ async function executeSingleTick(
             sessionId,
             npcId
           );
-          const sortedEvents = [...npcEvents].sort(
+          const sortedEvents = [...personalizedEvents].sort(
             (a, b) => b.impact - a.impact
           );
           const primaryEvent = sortedEvents[0]?.event;
           const perspective = primaryEvent
             ? classifyImpactPerspective(npcId, primaryEvent)
             : "witness";
-          const triggeringEvents = npcEvents
+          const triggeringEvents = personalizedEvents
             .map((e) =>
               buildImpactEventText(
                 classifyImpactPerspective(npcId, e.event),
@@ -2391,6 +2460,7 @@ function scanUnplannedEncounters(
         names: allNpcNames.join(", "),
         scene: sceneName,
       }),
+      targetCharacterIds: [...allNpcIds],
     });
   }
 

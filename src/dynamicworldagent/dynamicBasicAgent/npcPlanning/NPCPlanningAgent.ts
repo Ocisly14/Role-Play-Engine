@@ -129,28 +129,6 @@ function normalizeNodeTimeRange(
  * Returns name + description for each room the NPC is NOT currently in,
  * or empty string if the NPC is outdoors or the building has only one room.
  */
-function buildBuildingContext(
-  dgsm: DynamicGameStateManager,
-  currentSceneId: string
-): string {
-  const state = dgsm.getState();
-  const currentScene = state.scenes.get(currentSceneId);
-  if (!currentScene) return "";
-
-  const parentId = currentScene.parentLocationId;
-  if (!parentId || parentId === "OUTDOOR") return "";
-
-  const siblings: { name: string; description: string }[] = [];
-  for (const [id, scene] of state.scenes) {
-    if (id === currentSceneId) continue;
-    if (scene.parentLocationId === parentId) {
-      siblings.push({ name: scene.name, description: scene.description });
-    }
-  }
-
-  if (siblings.length === 0) return "";
-  return siblings.map((s) => `- **${s.name}**: ${s.description}`).join("\n");
-}
 
 function formatVisibleNpcRoster(
   dgsm: DynamicGameStateManager,
@@ -469,7 +447,7 @@ export class NPCPlanningAgent {
 
     const npcProfile = this.formatNpcProfile(npc);
     const relationships = this.formatRelationships(dgsm, npc.id);
-    const sceneMap = this.formatSceneMap(dgsm, npc.id);
+    const { townMap, yourLocation } = this.formatSceneMap(dgsm, npc.id);
     const npcPos = dgsm.getCharacterPosition(npc.id);
     const npcLocation = npcPos ? dgsm.resolveLocationId(npcPos) : undefined;
     const scenarioConditions = this.formatNpcLocalConditions(dgsm, npcLocation);
@@ -486,7 +464,8 @@ export class NPCPlanningAgent {
       npcProfile,
       longTermIntent,
       relationships,
-      sceneMap,
+      townMap,
+      yourLocation,
       scenarioConditions,
       worldStatePrompt,
       gameDay,
@@ -577,9 +556,6 @@ export class NPCPlanningAgent {
     const currentScene = currentLocationId
       ? (state.scenes.get(currentLocationId) ?? null)
       : null;
-    // Show sub-scene name (e.g. "私人书房") so the LLM knows exactly which room
-    const currentLocationName =
-      currentScene?.name ?? resolveLocationName(dgsm, currentLocationId);
     const sceneDescription = currentScene?.description ?? "";
     const sceneItems = formatSceneItems(currentScene);
     const sceneConditions = currentScene
@@ -594,7 +570,7 @@ export class NPCPlanningAgent {
       currentLocationId,
       registry
     );
-    const sceneMap = this.formatSceneMap(dgsm, npc.id);
+    const { townMap, yourLocation } = this.formatSceneMap(dgsm, npc.id);
 
     // NPCs at current location with relationship info
     const npcsAtLocation = formatVisibleNpcRoster(
@@ -610,9 +586,6 @@ export class NPCPlanningAgent {
     );
 
     const npcInventory = formatItemList(dgsm.getNpcInventory(npcId));
-    const buildingContext = currentLocationId
-      ? buildBuildingContext(dgsm, currentLocationId)
-      : "";
     const sceneConnections = currentScene
       ? formatSceneConnections(dgsm, currentScene)
       : "";
@@ -624,14 +597,13 @@ export class NPCPlanningAgent {
       longTermIntent,
       memoryLog,
       todayPlan: schedule,
-      currentLocation: currentLocationName,
-      sceneMap,
+      yourLocation,
+      townMap,
       sceneDescription,
       sceneItems,
       sceneNpcs: npcsAtLocation,
       sceneConditions,
       sceneConnections,
-      buildingContext,
       worldStatePrompt,
       npcInventory,
       currentTime: state.timeOfDay,
@@ -812,7 +784,7 @@ export class NPCPlanningAgent {
       longTermIntent,
       memoryContext: memoryContext ?? "",
       relationships: this.formatRelationships(dgsm, npcId),
-      sceneMap: this.formatSceneMap(dgsm, npcId),
+      ...this.formatSceneMap(dgsm, npcId),
       scenarioConditions: this.formatNpcLocalConditions(dgsm, npcLocation),
       worldStatePrompt: this.buildNpcWorldStatePrompt(
         dgsm,
@@ -883,12 +855,10 @@ export class NPCPlanningAgent {
     const currentScene = currentLocationId
       ? (state.scenes.get(currentLocationId) ?? null)
       : null;
-    const currentLocationName =
-      currentScene?.name ?? resolveLocationName(dgsm, currentLocationId);
     const plan = await this.getDailyPlan(sessionId, npcId, state.gameDay);
     const schedule = (plan?.schedule as unknown as ScheduleEntry[]) ?? [];
     const existingNodes = (plan?.nodes as unknown as PlanNode[]) ?? [];
-    const sceneMap = this.formatSceneMap(dgsm, npcId);
+    const { townMap, yourLocation } = this.formatSceneMap(dgsm, npcId);
 
     const npcsAtLocation = formatVisibleNpcRoster(
       dgsm,
@@ -904,10 +874,6 @@ export class NPCPlanningAgent {
       (n) => n.status === "in_progress"
     );
 
-    const buildingContext = currentLocationId
-      ? buildBuildingContext(dgsm, currentLocationId)
-      : "";
-
     const { systemPrompt, userPrompt } = buildRevisePlansPrompt({
       npcName: npc.name,
       npcId: npc.id,
@@ -920,9 +886,9 @@ export class NPCPlanningAgent {
         ? JSON.stringify(inProgressNode, null, 2)
         : undefined,
       triggerDescription,
-      currentLocation: currentLocationName,
+      yourLocation,
       currentPositionDetail,
-      sceneMap,
+      townMap,
       sceneDescription: currentScene?.description ?? "",
       sceneItems: formatSceneItems(currentScene),
       sceneNpcs: npcsAtLocation,
@@ -932,7 +898,6 @@ export class NPCPlanningAgent {
             .map((c) => `- ${c.description}`)
             .join("\n")
         : "",
-      buildingContext,
       worldStatePrompt: this.buildNpcWorldStatePrompt(
         dgsm,
         npcId,
@@ -1685,7 +1650,7 @@ export class NPCPlanningAgent {
       .join("\n");
   }
 
-  private formatSceneMap(dgsm: DynamicGameStateManager, npcId: string): string {
+  private formatSceneMap(dgsm: DynamicGameStateManager, npcId: string) {
     return formatSceneMap(dgsm, npcId);
   }
 
