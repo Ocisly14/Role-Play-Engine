@@ -1,7 +1,7 @@
 import type { CharacterPosition } from "../../state/topologyTypes.js";
 
 export type BuiltinNodeType =
-  | "routine"
+  | "action"
   | "movement"
   | "character_interaction"
   | "object_interaction"

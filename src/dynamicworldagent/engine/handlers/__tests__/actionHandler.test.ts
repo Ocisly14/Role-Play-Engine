@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import type { PlanNode } from "../../../dynamicBasicAgent/npcPlanning/types.js";
 import type { DynamicGameStateManager } from "../../../state/DynamicGameState.js";
 import type { ExecutionContext } from "../../types.js";
-import { routineHandler } from "../routineHandler.js";
+import { actionHandler } from "../actionHandler.js";
 
 // ===== Mock DGSM =====
 
@@ -83,7 +83,7 @@ function makeNode(overrides: Partial<PlanNode> = {}): PlanNode {
     endTime: "22:05",
     action: "Sit and read a book",
     location: "library",
-    type: "routine",
+    type: "action",
     impact: 0,
     status: "pending",
     executionMeta: { remainingMinutes: 5 },
@@ -93,13 +93,13 @@ function makeNode(overrides: Partial<PlanNode> = {}): PlanNode {
 
 // ===== Tests =====
 
-describe("routineHandler", () => {
+describe("actionHandler", () => {
   it("has correct type and required fields", () => {
-    expect(routineHandler.type).toBe("routine");
-    expect(routineHandler.requiredFields).toContain("action");
-    expect(routineHandler.requiredFields).toContain("location");
-    expect(routineHandler.optionalFields).toContain("skill");
-    expect(routineHandler.optionalFields).toContain("routineSubtype");
+    expect(actionHandler.type).toBe("action");
+    expect(actionHandler.requiredFields).toContain("action");
+    expect(actionHandler.requiredFields).toContain("location");
+    expect(actionHandler.optionalFields).toContain("skill");
+    expect(actionHandler.optionalFields).toContain("routineSubtype");
   });
 
   describe("basic execution", () => {
@@ -108,7 +108,7 @@ describe("routineHandler", () => {
       dgsm._addNpc("npc_a", "library");
       const ctx = createMockCtx();
 
-      const result = routineHandler.execute(
+      const result = actionHandler.execute(
         makeNode(),
         dgsm as unknown as DynamicGameStateManager,
         ctx
@@ -125,7 +125,7 @@ describe("routineHandler", () => {
       dgsm._addNpc("npc_a", "tavern"); // at tavern, not library
       const ctx = createMockCtx();
 
-      const result = routineHandler.execute(
+      const result = actionHandler.execute(
         makeNode(),
         dgsm as unknown as DynamicGameStateManager,
         ctx
@@ -140,7 +140,7 @@ describe("routineHandler", () => {
       // Don't add npc_a — no position
       const ctx = createMockCtx();
 
-      const result = routineHandler.execute(
+      const result = actionHandler.execute(
         makeNode(),
         dgsm as unknown as DynamicGameStateManager,
         ctx
@@ -163,7 +163,7 @@ describe("routineHandler", () => {
         }),
       } as any);
 
-      const result = routineHandler.execute(
+      const result = actionHandler.execute(
         makeNode({ skill: "Library Use" }),
         dgsm as unknown as DynamicGameStateManager,
         ctx
@@ -185,7 +185,7 @@ describe("routineHandler", () => {
         }),
       } as any);
 
-      const result = routineHandler.execute(
+      const result = actionHandler.execute(
         makeNode({ skill: "Library Use" }),
         dgsm as unknown as DynamicGameStateManager,
         ctx
@@ -211,7 +211,7 @@ describe("routineHandler", () => {
         },
       } as any);
 
-      const result = routineHandler.execute(
+      const result = actionHandler.execute(
         makeNode({ skill: "Library Use" }),
         dgsm as unknown as DynamicGameStateManager,
         ctx
@@ -237,7 +237,7 @@ describe("routineHandler", () => {
 
       const ctx = createMockCtx();
 
-      const result = routineHandler.execute(
+      const result = actionHandler.execute(
         makeNode({
           location: "bedroom",
           routineSubtype: "rest",
@@ -267,7 +267,7 @@ describe("routineHandler", () => {
 
       const ctx = createMockCtx();
 
-      routineHandler.execute(
+      actionHandler.execute(
         makeNode(),
         dgsm as unknown as DynamicGameStateManager,
         ctx
@@ -313,7 +313,7 @@ describe("routineHandler", () => {
         },
       } as any);
 
-      routineHandler.execute(
+      actionHandler.execute(
         makeNode({ skill: "Library Use" }),
         dgsm as unknown as DynamicGameStateManager,
         ctx

@@ -18,6 +18,10 @@ import {
   getSuccessLevel,
   rollD100,
 } from "../../engine/shared/dice.js";
+import {
+  buildEncounterSnapshot,
+  shouldEmitEncounter,
+} from "../../engine/shared/encounterDedup.js";
 import { findAffectedCharacters } from "../../engine/shared/impactPropagation.js";
 import { arePositionsCoLocated } from "../../engine/shared/locationPresence.js";
 import { buildMovementRouteIgnoringBlocks } from "../../engine/shared/pathfinding.js";
@@ -34,10 +38,6 @@ import {
   type SessionRagChunkInput,
   SessionRagService,
 } from "../knowledge/sessionRagService.js";
-import {
-  buildEncounterSnapshot,
-  shouldEmitEncounter,
-} from "../../engine/shared/encounterDedup.js";
 import type { NPCPlanningAgent } from "./NPCPlanningAgent.js";
 import type {
   CharacterAction,
@@ -2331,11 +2331,7 @@ function scanUnplannedEncounters(
       }
     }
     if (
-      !shouldEmitEncounter(
-        locationId,
-        allNpcIds,
-        previousEncounterSignatures
-      )
+      !shouldEmitEncounter(locationId, allNpcIds, previousEncounterSignatures)
     ) {
       continue;
     }

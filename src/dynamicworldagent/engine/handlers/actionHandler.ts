@@ -8,23 +8,21 @@ import { isCharacterAtLocation } from "../shared/locationPresence.js";
 import { buildOutcome, makeAction } from "../shared/nodeHelpers.js";
 import type { ExecutionContext, NodeHandler } from "../types.js";
 
-export const routineHandler: NodeHandler = {
-  type: "routine",
+export const actionHandler: NodeHandler = {
+  type: "action",
 
   description:
-    "A routine action performed by a character at their current location. " +
-    "If skill is set, a skill roll determines success; otherwise the action auto-succeeds. " +
-    'Set routineSubtype to "rest" for sleeping, napping, or resting — this resets fatigue automatically.',
+    'A narrative action performed by a character at their current location. This handler is for actions that do NOT change object, character, or scene state. If skill is set, a skill roll determines success; otherwise the action auto-succeeds. Set routineSubtype to "rest" for sleeping, napping, or resting — this resets fatigue automatically.',
 
   requiredFields: ["action", "location"],
 
   optionalFields: ["skill", "routineSubtype"],
 
   exampleNode: {
-    nodeId: "r1",
+    nodeId: "a1",
     startTime: "22:00",
     endTime: "22:05",
-    type: "routine",
+    type: "action",
     routineSubtype: "rest",
     action: "Sleep for the night to recover from exhaustion",
     location: "home_bedroom",

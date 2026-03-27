@@ -455,7 +455,7 @@ export const eventTriggerFeature: WorldFeature = {
       },
     ],
     exampleNode: {
-      type: "routine",
+      type: "action",
       action: "perform maintenance ritual at the altar",
       eventTriggerId: "example_event_trigger",
       eventTriggerType: "maintain",

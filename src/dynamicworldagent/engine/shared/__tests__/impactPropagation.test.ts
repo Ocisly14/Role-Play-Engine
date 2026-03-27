@@ -87,7 +87,7 @@ describe("findAffectedCharacters", () => {
         gameTime: "10:00",
         action: "Shout on the road",
         location: "ROAD_1",
-        type: "routine",
+        type: "action",
         impact: 2,
         status: "completed",
         outcome: "Shouted loudly",

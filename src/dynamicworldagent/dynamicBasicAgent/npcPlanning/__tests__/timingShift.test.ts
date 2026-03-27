@@ -28,7 +28,7 @@ describe("NPCPlanningAgent.shiftPendingNodesByDelta", () => {
           status: "completed",
           startTime: "08:00",
           endTime: "08:30",
-          type: "routine",
+          type: "action",
           action: "Breakfast",
         }),
         makeNode({
@@ -39,14 +39,14 @@ describe("NPCPlanningAgent.shiftPendingNodesByDelta", () => {
         }),
         makeNode({
           nodeId: "eat",
-          type: "routine",
+          type: "action",
           action: "Eat",
           startTime: "09:10",
           endTime: "09:30",
         }),
         makeNode({
           nodeId: "work",
-          type: "routine",
+          type: "action",
           action: "Work",
           startTime: "09:30",
           endTime: "10:00",
@@ -89,14 +89,14 @@ describe("NPCPlanningAgent.shiftPendingNodesByDelta", () => {
         }),
         makeNode({
           nodeId: "eat",
-          type: "routine",
+          type: "action",
           action: "Eat",
           startTime: "09:10",
           endTime: "09:30",
         }),
         makeNode({
           nodeId: "work",
-          type: "routine",
+          type: "action",
           action: "Work",
           startTime: "09:30",
           endTime: "10:00",

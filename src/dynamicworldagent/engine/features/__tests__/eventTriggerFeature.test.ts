@@ -128,7 +128,7 @@ function makeRuntime(
 
 function makeNode(fields: Record<string, unknown>): PlanNode {
   return {
-    type: "routine",
+    type: "action",
     action: "test action",
     location: "SCN_2_SUB_3",
     characterId: "Patrizio von Samsa",

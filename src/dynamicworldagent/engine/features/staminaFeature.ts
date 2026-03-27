@@ -221,7 +221,7 @@ function getTrackedCharacters(dgsm: DynamicGameStateManager): Array<{
 
 /**
  * Reset a character's fatigue after resting.
- * Called by routineHandler when a rest node completes.
+ * Called by actionHandler when a rest node completes.
  */
 export function restCharacter(
   dgsm: DynamicGameStateManager,

@@ -1,4 +1,3 @@
-import { COC_SKILL_LIST_PROMPT } from "./cocSkillList.js";
 import type { ScheduleEntry } from "./types.js";
 
 // ===================== Shared Type =====================
@@ -200,28 +199,60 @@ const DEFAULT_NODE_GUARDRAILS_PROMPT = `## Planning Guardrails
 - Do not invent new documents, copies, notes, printouts, receipts, witness copies, or memo variants unless they already exist in the scene, inventory, or prior action history.`;
 
 const DEFAULT_DETAILED_NODE_TYPE_REF = `## Node Type Reference
-- **"routine"**: Self-contained action, no interaction target.
+
+- **"action"**: A self-contained action that does NOT change any object, character, or scene state. Use this for narrative-only behavior: waiting, thinking, eating, resting, watching (without using a skill), pretending, walking around a room, etc. No LLM resolver runs — the engine treats this as "the character did it, period."
+
+  If your action involves:
+  - Moving/hiding/using/modifying a physical item → use "object_interaction"
+  - Talking to, persuading, threatening, or observing (with a skill) another character → use "character_interaction"
+  - Searching, investigating, or modifying the environment → use "scene_interaction"
+  - Going to a different location → use "movement"
+
 - **"movement"**: Move to a destination. Set location to the exact destination name from "Places You Know".
-- **"character_interaction"**: Interact with one or more characters.
+- **"character_interaction"**: Interact with one or more characters. This includes any action that uses a skill targeting another character (e.g., Spot Hidden to observe someone, Psychology to read them, Persuade to convince them).
   - Describe what you do entirely in \`action\`.
   - Put all targets in top-level \`targetCharacterIds\`.
   - For single-target interactions, \`targetCharacterIds\` should still be an array with one ID.
-- **"object_interaction"**: Interact with a physical object. Describe what you do in \`action\`. Set \`objectInteractionPayload.itemId\` to the primary item. An LLM resolver handles all state changes.
+- **"object_interaction"**: Interact with a physical object — pick up, hide, move, use, combine, lock, unlock, destroy, etc. Describe what you do in \`action\`. Set \`objectInteractionPayload.itemId\` to the primary item. An LLM resolver handles all state changes.
 - **"scene_interaction"**: Search, investigate, or modify the environment.
   - Only include \`sceneConnectionEffect\` when you are changing a real map connection that already exists.
   - \`sceneConnectionEffect.targetScenarioId\` must be an existing connected location ID from the current location's known map data.
   - Never invent internal sub-areas, doors, partitions, or descriptive labels such as \`private_office_partition\`.
   - If there is no exact existing connected location ID to target, omit \`sceneConnectionEffect\`.
 
-## Skill Checks
+## Skill Checks (Call of Cthulhu 7e Rules)
 
-You can use a skill to accomplish an action or achieve your goal. Set \`"skill"\` to a skill name from "Available Skills" below only when the action is genuinely difficult or uses an unusual, forceful, deceptive, or creative method. The engine will roll d100 to determine success or failure.
+The engine acts as Keeper. A skill roll is called ONLY when:
+1. The outcome is **genuinely uncertain** for someone with this character's ability
+2. Failure has **meaningful consequences** (danger, lost time, alerting enemies, missing information, psychological harm)
 
-- Omit \`"skill"\` by default for routine or straightforward actions.
-- Simple \`move\`, ordinary \`inspect\`, casual conversation, and other everyday actions should usually omit \`"skill"\`.
-- **Normal social interactions do NOT require skills.** Greeting someone, chatting, sharing a meal, asking for directions, everyday small talk, exchanging information, or any other ordinary conversation should NEVER use a skill. Skills like Charm, Persuade, Intimidate, Bluff, Fast Talk, or Psychology should only be used for **unconventional, high-stakes, or manipulative** social actions — e.g. coercion, seduction, deception, intimidation, extracting secrets, or convincing someone to act against their own interest.
-- Before choosing a skill for an object action, inspect the injected item state first (locked/unlocked, damaged, uses, lit/unlit, ammo, etc.) and choose a normal action if the state already makes it possible.
+**Do NOT use a skill when:**
+- The task is trivially easy for a competent person (opening an unlocked door, reading a sign, walking down a street, picking up an object in plain sight)
+- Failure would have no interesting consequence ("nothing happens" is not a stake)
+- The outcome is a foregone conclusion (attacking a sleeping person, entering an empty unlocked room)
+
+**DO use a skill when:**
+- There is opposition or resistance (another character resists, a lock is locked, information is hidden)
+- There is danger or time pressure (even a routine task becomes roll-worthy under stress or pursuit)
+- The character is attempting something deceptive, forceful, or creative beyond normal capability
+
+**Skill use determines node type:**
+- Action with NO skill → type is usually "action" (pure narrative, no state change)
+- Skill targeting a **person** (Spot Hidden to observe, Psychology to read, Persuade to convince, Intimidate to threaten) → "character_interaction" with targetCharacterIds
+- Skill targeting an **object** (Locksmith to pick a lock, Mechanical Repair to fix something, Sleight of Hand to hide an item) → "object_interaction"
+- Skill targeting the **environment** (Spot Hidden to search a room, Track to follow footprints, Navigate to find a path) → "scene_interaction"
+
+**Social interactions:**
+- Normal conversation, greetings, small talk, sharing information → NO skill, use "character_interaction" only if it meaningfully affects the target
+- Coercion, seduction, deception, intimidation, extracting secrets, convincing someone to act against their interest → USE skill (Charm/Persuade/Intimidate/Fast Talk), type "character_interaction"
+
+**Difficulty:**
+- "regular" (roll ≤ skill value): Standard challenge — vast majority of rolls
+- "hard" (roll ≤ skill/2): Exceptionally difficult, would challenge a professional
+- "extreme" (roll ≤ skill/5): Borders of human capability — very rare
+
 - If you include \`"skill"\`, it must be an exact name from "Available Skills". Never invent generic labels such as \`social\`, \`professional\`, or \`exploration\`.
+- Before choosing a skill for an object action, inspect the injected item state first (locked/unlocked, damaged, uses, lit/unlit, ammo, etc.) and choose a normal action if the state already makes it possible.
 - For object movement, only reference items that already appear in \`Items You Can See\` or \`What You're Carrying\`. Do not invent new intermediate objects such as printouts unless a previous action has already created them.
 - Use \`move\` when the item is simply changing where it is. Do not split same-scene relocation into artificial \`pickup\` then \`place\` steps.
 
@@ -236,7 +267,7 @@ You can use a skill to accomplish an action or achieve your goal. Set \`"skill"\
 - Default to \`"impact": 0\` unless there is a clear reason to escalate it.
 
 ## Available Skills
-${COC_SKILL_LIST_PROMPT}`;
+\${COC_SKILL_LIST_PROMPT}`;
 
 function defaultDetailedOutputSchema(language: string): string {
   const lang = contentLanguageName(language);
@@ -251,7 +282,7 @@ Return a JSON array of PlanNode objects. No extra text. JSON keys must be in Eng
   "endTime": "HH:MM",
   "action": "description of what you do (in ${lang})",
   "location": "exact location name from Places You Know (English)",
-  "type": "routine|movement|character_interaction|object_interaction|scene_interaction",
+  "type": "action|movement|character_interaction|object_interaction|scene_interaction",
   "skill": "OMIT if no skill check needed, otherwise exact skill name (English)",
   "impact": "Default 0. Use 1 only for targeted consequential actions with skill; 2+ for broader effects"
 }
@@ -286,19 +317,33 @@ ${TWENTY_FOUR_HOUR_TIME_GUIDANCE}
 - Choose exactly one next plan step to execute now.
 - If all meaningful plan steps are already done, return an empty JSON array.
 
-## Node Quality
-- Each node must be **one coherent, continuous action** — something the character does from start to finish without interruption. If two actions naturally flow together as one activity, keep them in one node.
-- Do NOT generate trivial micro-actions such as "close a page", "adjust posture", "glance around" as standalone nodes. These can be mentioned within a larger action's description but should not be their own node.
-- If a single logical activity can be described in one node, do not split it into multiple tiny steps.
+## Node Quality — Atomic Actions
+
+Each node must be **one atomic action** — a single, physically continuous activity with one verb and one target. Split into separate nodes whenever:
+
+- You **switch to a different object** (putting away notebook → picking up keys = 2 nodes)
+- You **switch to a different person** (talking to A → turning to B = 2 nodes)
+- You **change method or intent** (hiding a file → wiping fingerprints = 2 nodes)
+- There is a natural **"then"** or **"and then"** break in the activity
+
+**Good decomposition:**
+- Node 1: [object_interaction] Put the sealed folder into the filing cabinet and lock it
+- Node 2: [object_interaction] Take out irrelevant records and place them on the archive shelf as cover
+- Node 3: [action] Wipe down the cabinet handle and surrounding surfaces
+- Node 4: [object_interaction] Write a brief routine inspection entry in the mortuary log
+
+**Bad (crammed into one node):**
+- [action] Put the folder into the cabinet and lock it, take out fake records to cover tracks, clean fingerprints off the handle, and write a fake log entry
+
+**What is NOT a separate node:**
+- Trivial micro-actions embedded in a larger action (adjusting posture, glancing around)
+- Natural continuation of the same physical activity (opening a drawer and reaching inside)
+- Actions that cannot produce an independent outcome (unlocking a lock is part of opening a container)
 
 ## Action Continuity
-- Generated nodes must form a **logical, coherent sequence**. Each action should naturally follow from the previous one — consider physical location, time flow, and narrative causality.
-- If the previous action ended at a specific location or produced a specific outcome, the next action must acknowledge and build on that context rather than ignoring it.
-- Avoid abrupt, unexplained jumps between unrelated activities. If a transition is needed (e.g., finishing a conversation then moving to a new task), ensure the sequence reads as a believable chain of behavior for this character.
-- Think about what a real person would do next given what just happened, where they are, and what they were trying to accomplish.
-
-## Skill Checks
-You can use a skill to accomplish an action. Pick from "Available Skills" only when the action is difficult or uses a non-routine method. Omit it for straightforward actions.
+- Atomic nodes must still form a **logical, coherent sequence**. Each action should naturally follow from the previous one.
+- The sequence should read as a believable chain of behavior — no abrupt jumps between unrelated activities.
+- Think: what would a real person do next given where they are and what just happened?
 
 ${params.handlerPrompt || DEFAULT_DETAILED_NODE_TYPE_REF}
 
@@ -485,7 +530,7 @@ IMPORTANT: "revisedNodes" must cover only the current phase of action from right
       "endTime": "HH:MM",
       "action": "description of what you do (in ${lang})",
       "location": "exact location name from Places You Know (English)",
-      "type": "routine|movement|character_interaction|object_interaction|scene_interaction",
+      "type": "action|movement|character_interaction|object_interaction|scene_interaction",
       "impact": "Default 0. Use 1 only for targeted consequential actions with skill; 2+ for broader effects"
     }
   ],
@@ -516,7 +561,7 @@ Do not include topology notes, residents, or label prefixes in \`location\`; out
 - Do not generate distant later-day activities.
 - Treat the current time as 24-hour clock time.
 - **Carefully read "Relevant Memories / Recent Context"** to understand what you have already done today. Do NOT generate actions that duplicate or repeat completed actions (e.g., if you already stashed your notebook, do not generate another "stash notebook" node).
-- Each revised node must be **one coherent, continuous action** — something the character does from start to finish without interruption. If two actions naturally flow together as one activity, keep them in one node.
+- Each revised node must be **one atomic action** — a single, physically continuous activity with one verb and one target. Split whenever you switch objects, switch people, change method/intent, or there is a natural "then" break.
 - Do not create trivial micro-actions (e.g., "adjust posture", "close a page", "glance around") as standalone nodes. Fold minor details into the description of a larger action instead.
 
 ## Action Continuity
@@ -524,9 +569,6 @@ Do not include topology notes, residents, or label prefixes in \`location\`; out
 - The first revised node must be a believable reaction to the interruption, acknowledging what just happened rather than ignoring it.
 - Avoid abrupt, unexplained jumps between unrelated activities. The revised plan should read as a natural continuation of the character's behavior given the disruption.
 - Think about what a real person would do next given what just happened, where they are, and what they were trying to accomplish.
-
-## Skill Checks
-You can use a skill to accomplish an action. Pick from "Available Skills". Omit for everyday actions. Normal conversations, greetings, and routine social interactions do NOT need skills — only use skills for unconventional actions like coercion, seduction, deception, or intimidation.
 
 ${params.handlerPrompt || DEFAULT_DETAILED_NODE_TYPE_REF}
 

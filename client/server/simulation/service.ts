@@ -4,6 +4,7 @@ import path from "node:path";
 import type { PrismaClient } from "@prisma/client";
 import { WebSocket } from "ws";
 import { NPCPlanningAgent } from "../../../src/dynamicworldagent/dynamicBasicAgent/npcPlanning/NPCPlanningAgent.js";
+import { resolveLocationName as resolveDisplayLocationName } from "../../../src/dynamicworldagent/dynamicBasicAgent/npcPlanning/sceneMapFormatter.js";
 import {
   type WeatherType,
   computeSkillPenalties,
@@ -14,7 +15,6 @@ import {
   createExecutionContext,
 } from "../../../src/dynamicworldagent/engine/index.js";
 import { NpcMemoryManager } from "../../../src/dynamicworldagent/memory/NpcMemoryManager.js";
-import { resolveLocationName as resolveDisplayLocationName } from "../../../src/dynamicworldagent/dynamicBasicAgent/npcPlanning/sceneMapFormatter.js";
 import { SimulationRunner } from "../../../src/dynamicworldagent/simulation/SimulationRunner.js";
 import {
   deleteSimulationRuntime,

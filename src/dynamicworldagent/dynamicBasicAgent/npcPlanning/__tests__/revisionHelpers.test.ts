@@ -28,7 +28,7 @@ describe("revisionHelpers", () => {
       nodeId: "done",
       status: "completed",
       action: "Finished breakfast",
-      type: "routine",
+      type: "action",
     });
     const inProgressMovement = makeNode({
       nodeId: "move",

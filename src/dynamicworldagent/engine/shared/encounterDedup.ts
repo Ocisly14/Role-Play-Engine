@@ -1,6 +1,6 @@
-import { arePositionsCoLocated } from "./locationPresence.js";
 import type { DynamicGameStateManager } from "../../state/DynamicGameState.js";
 import type { CharacterPosition } from "../../state/topologyTypes.js";
+import { arePositionsCoLocated } from "./locationPresence.js";
 
 export type EncounterSignature = string;
 

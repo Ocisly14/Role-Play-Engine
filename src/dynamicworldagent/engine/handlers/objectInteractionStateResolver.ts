@@ -200,6 +200,10 @@ If other NPCs are present in the scene, decide if they noticed the action based 
 - The actor's intent matters — if they are deliberately being stealthy, witnesses are less likely to notice
 Write a first-person witness memory only for those who noticed, keyed by NPC ID in "witnessMemories".
 
+## Narrative Grounding
+- **Deterministic facts must match injected data:** items, objects, scene contents, sensory observations (what characters see/hear/smell), and physical properties must come from the provided context. Do not fabricate objects or details that objectively exist or don't exist in the world.
+- **Non-deterministic character behavior may be creative:** how the character handles the object, their reactions, internal thoughts, and descriptions of the physical interaction are yours to craft.
+
 ## Memory
 Always required for the actor. Write from the actor's first-person perspective: what they did, what they observed, and the result. Write in ${language}.
 

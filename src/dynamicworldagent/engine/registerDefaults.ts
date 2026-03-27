@@ -5,17 +5,17 @@ import { sanityFeature } from "./features/sanityFeature.js";
 import { staminaFeature } from "./features/staminaFeature.js";
 import { weatherFeature } from "./features/weatherFeature.js";
 import {
+  actionHandler,
   characterInteractionHandler,
   movementHandler,
   objectInteractionHandler,
-  routineHandler,
   sceneInteractionHandler,
 } from "./handlers/index.js";
 import { GameEngineRegistry } from "./registry.js";
 
 export function createDefaultRegistry(): GameEngineRegistry {
   const registry = new GameEngineRegistry();
-  registry.registerHandler(routineHandler);
+  registry.registerHandler(actionHandler);
   registry.registerHandler(movementHandler);
   registry.registerHandler(characterInteractionHandler);
   registry.registerHandler(objectInteractionHandler);

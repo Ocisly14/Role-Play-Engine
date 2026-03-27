@@ -81,7 +81,7 @@ function getDefaultNodeDurationMinutes(type: string): number {
     case "scene_interaction":
     case "object_interaction":
       return 10;
-    case "routine":
+    case "action":
     case "movement":
     case "character_interaction":
     default:
@@ -104,7 +104,7 @@ function normalizeNodeTimeRange(
     rawEnd = minutesToTimeLabel(
       baseMinutes +
         getDefaultNodeDurationMinutes(
-          typeof rawNode.type === "string" ? rawNode.type : "routine"
+          typeof rawNode.type === "string" ? rawNode.type : "action"
         )
     );
   }
@@ -112,7 +112,7 @@ function normalizeNodeTimeRange(
   let remainingMinutes = timeToMinutes(rawEnd) - timeToMinutes(rawStart);
   if (remainingMinutes <= 0) {
     remainingMinutes = getDefaultNodeDurationMinutes(
-      typeof rawNode.type === "string" ? rawNode.type : "routine"
+      typeof rawNode.type === "string" ? rawNode.type : "action"
     );
     rawEnd = minutesToTimeLabel(timeToMinutes(rawStart) + remainingMinutes);
   }
@@ -1633,7 +1633,6 @@ export class NPCPlanningAgent {
       }
     }
   }
-
 
   async resolveModuleId(sessionId: string): Promise<string | null> {
     const plan = await this.prisma.npcDailyPlan.findFirst({

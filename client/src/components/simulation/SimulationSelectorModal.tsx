@@ -122,8 +122,9 @@ export function SimulationSelectorModal({
     handleExitSelectionMode();
   }
 
-  const selectedCount = simulations.filter((sim) => selectedIds[sim.sessionId])
-    .length;
+  const selectedCount = simulations.filter(
+    (sim) => selectedIds[sim.sessionId]
+  ).length;
   const isBusy = deleting || bulkDeleting;
 
   if (!open) return null;

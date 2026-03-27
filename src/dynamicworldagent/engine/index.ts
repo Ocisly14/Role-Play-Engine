@@ -13,7 +13,7 @@ export type {
   PropagationResult,
 } from "./types.js";
 export {
-  routineHandler,
+  actionHandler,
   movementHandler,
   characterInteractionHandler,
   objectInteractionHandler,

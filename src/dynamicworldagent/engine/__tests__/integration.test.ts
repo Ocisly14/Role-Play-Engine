@@ -351,7 +351,7 @@ function makeNode(overrides: Partial<PlanNode>): PlanNode {
     endTime: "21:05",
     action: "Do something",
     location: "manor_library",
-    type: "routine",
+    type: "action",
     impact: 0 as const,
     status: "pending" as const,
     executionMeta: { remainingMinutes: 5 },
@@ -471,7 +471,7 @@ describe("Engine Integration — Blackwood Manor", () => {
         detail: "Library Use 15/75 (hard success)",
         successLevel: "hard" as const,
       }));
-      const handler = registry.getHandler("routine")!;
+      const handler = registry.getHandler("action")!;
 
       const action = handler.execute(
         makeNode({
@@ -691,7 +691,7 @@ describe("Engine Integration — Blackwood Manor", () => {
         characterName: "Isabella Rossi",
         action: "Perform the nightly altar maintenance ritual",
         location: "manor_cellar",
-        type: "routine",
+        type: "action",
         eventTriggerId: "ritual_of_binding",
         eventTriggerType: "maintain",
         eventTriggerConditionId: "altar_maintenance",
@@ -719,7 +719,7 @@ describe("Engine Integration — Blackwood Manor", () => {
         characterName: "Isabella Rossi",
         action: "Attempt to complete the Binding Ritual",
         location: "manor_cellar",
-        type: "routine",
+        type: "action",
         eventTriggerId: "ritual_of_binding",
         eventTriggerType: "invoke",
       });

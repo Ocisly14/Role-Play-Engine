@@ -198,6 +198,8 @@ Apply both factors together: a critical success in casual small-talk still only 
 ## General Rules
 - Only output fields that have a meaningful value. Omit fields with no change.
 - Do not invent items, locations, or knowledge that do not appear in the provided data.
+- **Deterministic facts must match injected data:** items, objects, scene contents, sensory observations (what characters see/hear/smell), backstory, lore, and factual information must come from the provided context. Do not fabricate things that objectively exist or don't exist in the world.
+- **Non-deterministic character behavior may be creative:** dialogue, lies, deception content, social tactics, emotional reactions, and subjective judgments are yours to craft. If a character deceives another, you may invent the false narrative they tell — that is character behavior, not world fact.
 
 ## Output
 Return a single JSON object. No extra text. JSON keys must be in English. Write "memory" values in ${language}.
