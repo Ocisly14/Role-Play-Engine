@@ -11,6 +11,11 @@ function createMockDgsm() {
   const npcInventories: Record<string, Item[]> = {};
   const npcCharacters: Array<{ id: string; name: string }> = [];
   const scenarioConditions: Record<string, Array<{ description: string }>> = {};
+  const setConnectionHiddenCalls: Array<{
+    sceneId: string;
+    targetId: string;
+    hidden: boolean;
+  }> = [];
 
   return {
     getState() {
@@ -46,7 +51,14 @@ function createMockDgsm() {
       return scenarioConditions[sceneId] ?? [];
     },
     setConnectionBlocked(): void {},
-    setConnectionHidden(): void {},
+    setConnectionHiddenCalls,
+    setConnectionHidden(
+      sceneId: string,
+      targetId: string,
+      hidden: boolean
+    ): void {
+      setConnectionHiddenCalls.push({ sceneId, targetId, hidden });
+    },
 
     _addScene(id: string, name: string, items: Item[]): void {
       scenes.set(id, {
@@ -154,5 +166,27 @@ describe("applySceneDelta", () => {
     const room = dgsm.getScene("room1");
     expect(room?.items).toHaveLength(1);
     expect(room?.items?.[0].id).toBe("flashlight");
+  });
+
+  it("tracks hidden connection reveals without mutating global hidden state", () => {
+    const dgsm = createMockDgsm();
+    dgsm._addScene("room1", "Hall", []);
+
+    const delta: SceneStateDelta = {
+      memory: "I found a hidden latch behind the shelf.",
+      connectionEffects: [{ targetId: "secret_stairs", action: "reveal" }],
+    };
+
+    const result = applySceneDelta(
+      dgsm as unknown as DynamicGameStateManager,
+      delta,
+      "room1",
+      "actor1"
+    );
+
+    expect(result.revealedHiddenConnections).toEqual([
+      { sceneId: "room1", targetId: "secret_stairs" },
+    ]);
+    expect(dgsm.setConnectionHiddenCalls).toEqual([]);
   });
 });

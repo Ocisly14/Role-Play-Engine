@@ -18,7 +18,11 @@ export class MemoryStore {
     this.embeddingLanguage = language.startsWith("zh") ? "zh" : "en";
   }
 
-  async create(params: AddMemoryParams): Promise<NpcMemory> {
+  private prepareMemoryRecord(params: AddMemoryParams): {
+    baseImportance: number;
+    tags: string[];
+    metadata: Record<string, any>;
+  } {
     const handler = getHandler(params.type);
     const prepared = handler.prepare(
       params.content,
@@ -28,6 +32,15 @@ export class MemoryStore {
     const baseImportance =
       params.baseImportanceOverride ?? prepared.baseImportance;
     const tags = params.tagsOverride ?? prepared.tags;
+    return {
+      baseImportance,
+      tags,
+      metadata: prepared.metadata,
+    };
+  }
+
+  async create(params: AddMemoryParams): Promise<NpcMemory> {
+    const prepared = this.prepareMemoryRecord(params);
 
     let embeddingBuffer: Uint8Array<ArrayBuffer> | undefined = undefined;
     try {
@@ -52,12 +65,12 @@ export class MemoryStore {
         content: params.content,
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         metadata: prepared.metadata as any,
-        tags,
+        tags: prepared.tags,
         gameDay: params.gameDay,
         gameTime: params.gameTime,
         location: params.location ?? null,
-        baseImportance,
-        importance: baseImportance,
+        baseImportance: prepared.baseImportance,
+        importance: prepared.baseImportance,
         embedding: embeddingBuffer,
       },
     });
@@ -151,6 +164,17 @@ export class MemoryStore {
     return this.prisma.npcMemory.findMany({ where: { sessionId } });
   }
 
+  async findLatestByType(
+    sessionId: string,
+    npcId: string,
+    type: NpcMemoryType
+  ): Promise<NpcMemory | null> {
+    return this.prisma.npcMemory.findFirst({
+      where: { sessionId, npcId, type },
+      orderBy: [{ updatedAt: "desc" }, { createdAt: "desc" }],
+    });
+  }
+
   async reinforce(memoryId: string, newImportance: number): Promise<void> {
     await this.prisma.npcMemory.update({
       where: { id: memoryId },
@@ -176,6 +200,43 @@ export class MemoryStore {
         ...(extraFields?.baseImportance !== undefined && {
           baseImportance: extraFields.baseImportance,
         }),
+      },
+    });
+  }
+
+  async updateMemory(
+    memoryId: string,
+    params: Pick<
+      AddMemoryParams,
+      | "type"
+      | "content"
+      | "gameDay"
+      | "gameTime"
+      | "location"
+      | "metadata"
+      | "baseImportanceOverride"
+      | "tagsOverride"
+    >
+  ): Promise<NpcMemory> {
+    const prepared = this.prepareMemoryRecord({
+      npcId: "",
+      sessionId: "",
+      moduleId: "",
+      ...params,
+    });
+
+    return this.prisma.npcMemory.update({
+      where: { id: memoryId },
+      data: {
+        content: params.content,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        metadata: prepared.metadata as any,
+        tags: prepared.tags,
+        gameDay: params.gameDay,
+        gameTime: params.gameTime,
+        location: params.location ?? null,
+        baseImportance: prepared.baseImportance,
+        importance: prepared.baseImportance,
       },
     });
   }

@@ -32,14 +32,15 @@ function makeMemory(overrides: Partial<NpcMemory> = {}): NpcMemory {
 // ===== Tests =====
 
 describe("getAllHandlers", () => {
-  it("returns exactly 9 handlers", () => {
+  it("returns exactly 8 handlers", () => {
     const handlers = getAllHandlers();
     const keys = Object.keys(handlers);
-    expect(keys).toHaveLength(7);
+    expect(keys).toHaveLength(8);
     expect(keys.sort()).toEqual([
       "belief",
       "event",
       "information",
+      "map",
       "plan",
       "secret",
       "summary",
@@ -163,6 +164,34 @@ describe("InformationHandler", () => {
   });
 });
 
+// ===== MapHandler =====
+
+describe("MapHandler", () => {
+  const handler = getHandler("map");
+
+  it("has type 'map'", () => {
+    expect(handler.type).toBe("map");
+  });
+
+  it("prepare returns baseImportance 4.0 and includes map + location tags", () => {
+    const result = handler.prepare("Known map snapshot", {}, "library");
+    expect(result.baseImportance).toBe(4.0);
+    expect(result.tags).toEqual(["map", "library"]);
+  });
+
+  it("format returns compact map prefix", () => {
+    const mem = makeMemory({
+      type: "map" as any,
+      content: "Known map snapshot",
+    });
+    expect(handler.format(mem)).toBe("[map] Known map snapshot");
+  });
+
+  it("customDecayRate returns 0.1", () => {
+    expect(handler.customDecayRate!()).toBe(0.1);
+  });
+});
+
 // ===== BeliefHandler =====
 
 describe("BeliefHandler", () => {
@@ -283,7 +312,7 @@ describe("SecretHandler", () => {
 
   it("prepare without location only has 'secret' tag", () => {
     const result = handler.prepare("Hidden truth");
-    expect(result.tags).toEqual(["secret"]);
+    expect(result.tags).toEqual(["secret", "difficulty:hard"]);
   });
 
   it("format returns correct prefix", () => {

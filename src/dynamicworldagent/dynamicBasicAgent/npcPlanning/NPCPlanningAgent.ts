@@ -9,6 +9,7 @@ import {
 import { getTopologyNeighbors } from "../../engine/shared/topologyHelpers.js";
 import { t } from "../../i18n/t.js";
 import type { NpcMemoryManager } from "../../memory/NpcMemoryManager.js";
+import type { KnownMapSnapshot } from "../../memory/types.js";
 import type { DynamicGameStateManager } from "../../state/DynamicGameState.js";
 import { formatItemList, formatSceneItems } from "./itemFormatHelpers.js";
 import {
@@ -444,13 +445,22 @@ export class NPCPlanningAgent {
       });
     }
     const longTermIntent = await this.getLongTermIntent(sessionId, npc.id);
+    const mapSnapshot = await this.getPlanningMapSnapshot(sessionId, npc.id);
 
     const npcProfile = this.formatNpcProfile(npc);
     const relationships = this.formatRelationships(dgsm, npc.id);
-    const { townMap, yourLocation } = this.formatSceneMap(dgsm, npc.id);
+    const { townMap, yourLocation } = this.formatSceneMap(
+      dgsm,
+      npc.id,
+      mapSnapshot
+    );
     const npcPos = dgsm.getCharacterPosition(npc.id);
     const npcLocation = npcPos ? dgsm.resolveLocationId(npcPos) : undefined;
-    const scenarioConditions = this.formatNpcLocalConditions(dgsm, npcLocation);
+    const scenarioConditions = this.formatNpcLocalConditions(
+      dgsm,
+      npcLocation,
+      mapSnapshot
+    );
     const worldStatePrompt = this.buildNpcWorldStatePrompt(
       dgsm,
       npc.id,
@@ -553,24 +563,28 @@ export class NPCPlanningAgent {
     const currentLocationId = currentPos
       ? dgsm.resolveLocationId(currentPos)
       : "";
+    const mapSnapshot = await this.getPlanningMapSnapshot(sessionId, npcId);
     const currentScene = currentLocationId
-      ? (state.scenes.get(currentLocationId) ?? null)
+      ? (mapSnapshot?.scenes[currentLocationId] ??
+        state.scenes.get(currentLocationId) ??
+        null)
       : null;
     const sceneDescription = currentScene?.description ?? "";
     const sceneItems = formatSceneItems(currentScene);
-    const sceneConditions = currentScene
-      ? dgsm
-          .getSceneConditions(currentScene.id)
-          .map((c) => `- ${c.description}`)
-          .join("\n")
-      : "";
+    const sceneConditions =
+      currentScene?.conditions?.map((c) => `- ${c.description}`).join("\n") ??
+      "";
     const worldStatePrompt = this.buildNpcWorldStatePrompt(
       dgsm,
       npcId,
       currentLocationId,
       registry
     );
-    const { townMap, yourLocation } = this.formatSceneMap(dgsm, npc.id);
+    const { townMap, yourLocation } = this.formatSceneMap(
+      dgsm,
+      npc.id,
+      mapSnapshot
+    );
 
     // NPCs at current location with relationship info
     const npcsAtLocation = formatVisibleNpcRoster(
@@ -587,7 +601,7 @@ export class NPCPlanningAgent {
 
     const npcInventory = formatItemList(dgsm.getNpcInventory(npcId));
     const sceneConnections = currentScene
-      ? formatSceneConnections(dgsm, currentScene)
+      ? formatSceneConnections(dgsm, currentScene, mapSnapshot)
       : "";
 
     const { systemPrompt, userPrompt } = buildDetailedNodesPrompt({
@@ -631,7 +645,7 @@ export class NPCPlanningAgent {
 
     const rawNodes = parseJsonResponse<any[]>(response);
     // Resolve location names to IDs
-    const nameMap = buildLocationNameMap(dgsm);
+    const nameMap = buildLocationNameMap(dgsm, mapSnapshot);
     const enrichedNodes: PlanNode[] = rawNodes.map((node) => ({
       ...normalizePlanNode(node as Record<string, unknown>, {
         npcId,
@@ -771,6 +785,7 @@ export class NPCPlanningAgent {
         currentGameDay: gameDay,
       });
     }
+    const mapSnapshot = await this.getPlanningMapSnapshot(sessionId, npcId);
 
     const revSchedPos = dgsm.getCharacterPosition(npcId);
     const npcLocation = revSchedPos
@@ -784,8 +799,12 @@ export class NPCPlanningAgent {
       longTermIntent,
       memoryContext: memoryContext ?? "",
       relationships: this.formatRelationships(dgsm, npcId),
-      ...this.formatSceneMap(dgsm, npcId),
-      scenarioConditions: this.formatNpcLocalConditions(dgsm, npcLocation),
+      ...this.formatSceneMap(dgsm, npcId, mapSnapshot),
+      scenarioConditions: this.formatNpcLocalConditions(
+        dgsm,
+        npcLocation,
+        mapSnapshot
+      ),
       worldStatePrompt: this.buildNpcWorldStatePrompt(
         dgsm,
         npcId,
@@ -852,13 +871,20 @@ export class NPCPlanningAgent {
       ? dgsm.resolveLocationId(revisePos)
       : "";
     const currentPositionDetail = describePrecisePosition(revisePos, dgsm);
+    const mapSnapshot = await this.getPlanningMapSnapshot(sessionId, npcId);
     const currentScene = currentLocationId
-      ? (state.scenes.get(currentLocationId) ?? null)
+      ? (mapSnapshot?.scenes[currentLocationId] ??
+        state.scenes.get(currentLocationId) ??
+        null)
       : null;
     const plan = await this.getDailyPlan(sessionId, npcId, state.gameDay);
     const schedule = (plan?.schedule as unknown as ScheduleEntry[]) ?? [];
     const existingNodes = (plan?.nodes as unknown as PlanNode[]) ?? [];
-    const { townMap, yourLocation } = this.formatSceneMap(dgsm, npcId);
+    const { townMap, yourLocation } = this.formatSceneMap(
+      dgsm,
+      npcId,
+      mapSnapshot
+    );
 
     const npcsAtLocation = formatVisibleNpcRoster(
       dgsm,
@@ -892,12 +918,9 @@ export class NPCPlanningAgent {
       sceneDescription: currentScene?.description ?? "",
       sceneItems: formatSceneItems(currentScene),
       sceneNpcs: npcsAtLocation,
-      sceneConditions: currentScene
-        ? dgsm
-            .getSceneConditions(currentScene.id)
-            .map((c) => `- ${c.description}`)
-            .join("\n")
-        : "",
+      sceneConditions:
+        currentScene?.conditions?.map((c) => `- ${c.description}`).join("\n") ??
+        "",
       worldStatePrompt: this.buildNpcWorldStatePrompt(
         dgsm,
         npcId,
@@ -940,7 +963,7 @@ export class NPCPlanningAgent {
     }
 
     // Resolve location names to IDs
-    const nameMap = buildLocationNameMap(dgsm);
+    const nameMap = buildLocationNameMap(dgsm, mapSnapshot);
     const revisedNodes = rawRevisedNodes.map((node) => ({
       ...normalizePlanNode(node as Record<string, unknown>, {
         npcId,
@@ -1650,8 +1673,12 @@ export class NPCPlanningAgent {
       .join("\n");
   }
 
-  private formatSceneMap(dgsm: DynamicGameStateManager, npcId: string) {
-    return formatSceneMap(dgsm, npcId);
+  private formatSceneMap(
+    dgsm: DynamicGameStateManager,
+    npcId: string,
+    snapshot?: KnownMapSnapshot
+  ) {
+    return formatSceneMap(dgsm, npcId, snapshot);
   }
 
   private formatScenarioConditions(dgsm: DynamicGameStateManager): string {
@@ -1671,9 +1698,30 @@ export class NPCPlanningAgent {
    */
   private formatNpcLocalConditions(
     dgsm: DynamicGameStateManager,
-    npcLocation?: string
+    npcLocation?: string,
+    snapshot?: KnownMapSnapshot
   ): string {
     if (!npcLocation) return "";
+    if (snapshot) {
+      const currentScene = snapshot.scenes[npcLocation];
+      if (!currentScene) return "";
+
+      const relevantScenes = Object.values(snapshot.scenes).filter(
+        (scene) => scene.parentLocationId === currentScene.parentLocationId
+      );
+      if (relevantScenes.length === 0) return "";
+
+      return relevantScenes
+        .filter((scene) => (scene.conditions ?? []).length > 0)
+        .map(
+          (scene) =>
+            `${scene.id}: ${(scene.conditions ?? [])
+              .map((condition) => condition.description)
+              .join("; ")}`
+        )
+        .join("\n");
+    }
+
     const state = dgsm.getState();
     const conds = state.scenarioConditions;
     const currentScene = state.scenes.get(npcLocation);
@@ -1697,6 +1745,16 @@ export class NPCPlanningAgent {
           `${scenarioId}: ${conditions.map((c) => c.description).join("; ")}`
       )
       .join("\n");
+  }
+
+  private async getPlanningMapSnapshot(
+    sessionId: string,
+    npcId: string
+  ): Promise<KnownMapSnapshot | undefined> {
+    if (!this.memoryManager) return undefined;
+    return (
+      (await this.memoryManager.getMapSnapshot(npcId, sessionId)) ?? undefined
+    );
   }
 
   /**

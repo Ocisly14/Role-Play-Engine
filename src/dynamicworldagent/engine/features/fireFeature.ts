@@ -146,7 +146,7 @@ function clearFireConditions(
   const conditions = state.scenarioConditions[sceneId];
   if (!conditions) return;
   const nonFire = conditions.filter((c) => !c.description.startsWith("[Fire]"));
-  (dgsm.getState() as any).scenarioConditions[sceneId] = nonFire;
+  dgsm.replaceSceneConditions(sceneId, nonFire);
 }
 
 function writeAftermathCondition(

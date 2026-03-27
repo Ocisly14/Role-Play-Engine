@@ -2,6 +2,13 @@ import type {
   NpcMemoryType,
   NpcMemory as PrismaNpcMemory,
 } from "@prisma/client";
+import type {
+  DynamicScene,
+  KnownMapSeed,
+  ScenarioOutline,
+  TransportEdge,
+} from "../state/types.js";
+import type { JunctionNode, RoadNode } from "../state/topologyTypes.js";
 
 // Re-export Prisma types
 export type { NpcMemoryType } from "@prisma/client";
@@ -26,7 +33,6 @@ export interface WitnessMetadata {
 export interface KnowledgeMetadata {
   knowledgeId: string;
   difficulty?: string;
-  relatedTo?: string[];
   revealed?: boolean;
 }
 
@@ -54,6 +60,34 @@ export interface PlanMetadata {
   priority?: number;
 }
 
+export interface KnownMapIds {
+  sceneIds: string[];
+  junctionIds: string[];
+  roadIds: string[];
+  scenarioOutlineIds: string[];
+}
+
+export interface KnownMapScene extends DynamicScene {
+  detailLevel?: "full" | "name_only";
+}
+
+export interface KnownMapSnapshot {
+  schemaVersion: number;
+  updatedAt: string;
+  knownIds: KnownMapIds;
+  revealedHiddenConnections: string[];
+  scenes: Record<string, KnownMapScene>;
+  junctions: Record<string, JunctionNode>;
+  roads: Record<string, RoadNode>;
+  scenarioOutlines: ScenarioOutline[];
+  transportEdges: TransportEdge[];
+  blockedConnections: Record<string, string>;
+}
+
+export interface MapMetadata {
+  snapshot: KnownMapSnapshot;
+}
+
 export type MemoryMetadata =
   | EventMetadata
   | WitnessMetadata
@@ -61,8 +95,29 @@ export type MemoryMetadata =
   | BeliefMetadata
   | EmotionMetadata
   | RelationshipMetadata
-  | PlanMetadata;
+  | PlanMetadata
+  | MapMetadata;
 
+export interface EnsureMapSnapshotParams {
+  npcId: string;
+  sessionId: string;
+  moduleId: string;
+  gameDay: number;
+  gameTime: string;
+  location?: string;
+  dgsm: import("../state/DynamicGameState.js").DynamicGameStateManager;
+  seed?: KnownMapSeed;
+}
+
+export interface RefreshMapSnapshotParams {
+  npcId: string;
+  sessionId: string;
+  moduleId: string;
+  gameDay: number;
+  gameTime: string;
+  location?: string;
+  dgsm: import("../state/DynamicGameState.js").DynamicGameStateManager;
+}
 // ===== Query & Retrieval Types =====
 
 export interface ScoredMemory extends PrismaNpcMemory {

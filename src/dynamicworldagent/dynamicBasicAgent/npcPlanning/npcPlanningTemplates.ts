@@ -131,13 +131,13 @@ Return a JSON array in the order you plan to do them. No extra text. JSON keys m
 
 Each entry has exactly two fields:
 - \`"location"\`: exact location name from "Places You Know" (always English)
-- \`"activity"\`: one sentence — what you intend to do there (in ${contentLanguageName(params.language)})
-
-## Places You Know
-${params.townMap}`;
+- \`"activity"\`: one sentence — what you intend to do there (in ${contentLanguageName(params.language)})`;
 
   const userPrompt = `## Your Location
 ${params.yourLocation}
+
+## Places You Know
+${params.townMap || "No map available."}
 
 ## Current Conditions Around You
 ${params.scenarioConditions || "Nothing unusual."}
@@ -350,9 +350,7 @@ ${DEFAULT_NODE_GUARDRAILS_PROMPT}
 ${params.planningPrompt || ""}
 
 ${params.outputSchemaPrompt || defaultDetailedOutputSchema(params.language)}
-
-## Places You Know
-${params.townMap || "No map available."}`;
+`;
 
   const userPrompt = `## Right Now
 Day ${params.gameDay}, ${params.currentTime}
@@ -373,6 +371,9 @@ ${params.memoryLog || "Nothing recorded yet."}
 
 ## Your Location
 ${params.yourLocation || "Unknown"}
+
+## Places You Know
+${params.townMap || "No map available."}
 
 ${params.sceneConnections ? `## Exits & Passages\n${params.sceneConnections}\n\n` : ""}## Where You Are
 ${params.sceneDescription || "No description available."}
@@ -444,13 +445,13 @@ Return a single JSON object. No extra text. JSON keys must be in English. Write 
   "shouldUpdateLongTermIntent": false,
   "updatedLongTermIntent": "only if shouldUpdateLongTermIntent is true"
 }
-\`\`\`
-
-## Places You Know
-${params.townMap}`;
+\`\`\``;
 
   const userPrompt = `## Your Location
 ${params.yourLocation}
+
+## Places You Know
+${params.townMap || "No map available."}
 
 ## Current Conditions Around You
 ${params.scenarioConditions || "Nothing unusual."}
@@ -578,9 +579,7 @@ ${DEFAULT_NODE_GUARDRAILS_PROMPT}
 ${params.planningPrompt || ""}
 
 ${params.outputSchemaPrompt || revisePlansOutputSchema(params.language)}
-
-## Places You Know
-${params.townMap || "No map available."}`;
+`;
 
   const userPrompt = `## Right Now
 Day ${params.gameDay}, ${params.currentTime}
@@ -624,6 +623,9 @@ ${params.pendingNodes}
 
 ## Your Location
 ${params.yourLocation || "Unknown"}
+
+## Places You Know
+${params.townMap || "No map available."}
 
 ## Your Exact Position
 ${params.currentPositionDetail || "Unknown."}

@@ -1,7 +1,9 @@
 import { describe, expect, it } from "vitest";
 import {
+  buildDailySchedulePrompt,
   buildDetailedNodesPrompt,
   buildImpactGatePrompt,
+  buildReviseSchedulePrompt,
   buildRevisePlansPrompt,
 } from "../npcPlanningTemplates.js";
 
@@ -74,6 +76,93 @@ describe("npcPlanningTemplates", () => {
     expect(userPrompt).toContain("## Relevant Memories / Recent Context");
   });
 
+  it("keeps dynamic map context in the user prompt", () => {
+    const townMap = "Town Map:\n- Study\n- Hallway";
+
+    const daily = buildDailySchedulePrompt({
+      npcName: "Tom Harris",
+      npcId: "npc_tom",
+      npcProfile: "A cautious office worker.",
+      longTermIntent: "Protect myself and keep records straight.",
+      relationships: "- Lisa Chen",
+      townMap,
+      yourLocation: "Study",
+      scenarioConditions: "Nothing unusual.",
+      worldStatePrompt: "",
+      gameDay: 1,
+      currentTime: "10:00",
+      language: "en",
+    });
+
+    const reviseSchedule = buildReviseSchedulePrompt({
+      npcName: "Tom Harris",
+      npcId: "npc_tom",
+      npcProfile: "A cautious office worker.",
+      longTermIntent: "Protect myself and keep records straight.",
+      memoryContext: "Victor has been pressuring me all day.",
+      relationships: "- Lisa Chen",
+      townMap,
+      yourLocation: "Study",
+      scenarioConditions: "Nothing unusual.",
+      worldStatePrompt: "",
+      remainingSchedule: "- Go to Hallway",
+      triggerDescription: "A gunshot echoed downstairs.",
+      gameDay: 1,
+      currentTime: "10:00",
+      language: "en",
+    });
+
+    const detailed = buildDetailedNodesPrompt({
+      npcName: "Tom Harris",
+      npcId: "npc_tom",
+      npcProfile: "A cautious office worker.",
+      longTermIntent: "Protect myself and keep records straight.",
+      memoryLog: "Victor searched the filing cabinet earlier.",
+      todayPlan: [{ location: "Study", activity: "Work" }],
+      yourLocation: "Study",
+      townMap,
+      sceneDescription: "A small office.",
+      sceneItems: "- Filing Cabinet",
+      sceneNpcs: "- Lisa Chen",
+      sceneConditions: "Nothing unusual.",
+      sceneConnections: "- Hallway",
+      worldStatePrompt: "",
+      npcInventory: "- Notebook",
+      currentTime: "10:00",
+      gameDay: 1,
+      language: "en",
+    });
+
+    const revisePlans = buildRevisePlansPrompt({
+      npcName: "Tom Harris",
+      npcId: "npc_tom",
+      npcProfile: "A cautious office worker.",
+      longTermIntent: "Protect myself and keep records straight.",
+      memoryLog: "Victor has been pressuring me all day.",
+      todayPlan: [{ location: "Study", activity: "Work" }],
+      pendingNodes: "[]",
+      triggerDescription: "A gunshot echoed downstairs.",
+      yourLocation: "Study",
+      currentPositionDetail: "Inside the study.",
+      townMap,
+      sceneDescription: "A small office.",
+      sceneItems: "- Filing Cabinet",
+      sceneNpcs: "- Lisa Chen",
+      sceneConditions: "Nothing unusual.",
+      worldStatePrompt: "",
+      npcInventory: "- Notebook",
+      currentTime: "10:00",
+      gameDay: 1,
+      language: "en",
+    });
+
+    for (const prompt of [daily, detailed, reviseSchedule, revisePlans]) {
+      expect(prompt.systemPrompt).not.toContain(townMap);
+      expect(prompt.userPrompt).toContain("## Places You Know");
+      expect(prompt.userPrompt).toContain(townMap);
+    }
+  });
+
   it("tightens impact gate prompt to major immediate disruptions only", () => {
     const { systemPrompt } = buildImpactGatePrompt({
       bucketTime: "15:08",
@@ -91,13 +180,13 @@ describe("npcPlanningTemplates", () => {
     });
 
     expect(systemPrompt).toContain(
-      "Set shouldRevise=true only for major immediate disruptions"
+      "shouldRevise=true ONLY when the event directly threatens your current plan's success or your personal safety"
     );
     expect(systemPrompt).toContain(
-      "Minor observations, background tension, ordinary chatter, low-stakes suspicion"
+      "Casual encounters, background noise, overhearing conversation, minor curiosity"
     );
     expect(systemPrompt).toContain(
-      "Use shouldRevise=true when your current action is materially blocked"
+      "Your current action is materially blocked or impossible to continue"
     );
   });
 });

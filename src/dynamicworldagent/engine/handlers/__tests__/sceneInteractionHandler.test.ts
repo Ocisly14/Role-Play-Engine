@@ -147,7 +147,7 @@ describe("sceneInteractionHandler", () => {
     );
 
     expect(result).toHaveProperty("status", "failed");
-    expect(result.failureReason).toBe("object_not_found");
+    expect((result as any).failureReason).toBe("object_not_found");
   });
 
   it("succeeds when tool exists in NPC inventory", () => {

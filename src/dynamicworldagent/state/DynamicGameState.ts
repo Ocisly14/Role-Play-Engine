@@ -856,6 +856,17 @@ export class DynamicGameStateManager {
     if (!this.state.scenarioConditions[scenarioId])
       this.state.scenarioConditions[scenarioId] = [];
     this.state.scenarioConditions[scenarioId].push(condition);
+    this.state.lastUpdated = new Date();
+  }
+
+  replaceSceneConditions(
+    scenarioId: string,
+    conditions: import(
+      "../dynamicBasicAgent/npcPlanning/types.js"
+    ).SceneCondition[]
+  ): void {
+    this.state.scenarioConditions[scenarioId] = conditions;
+    this.state.lastUpdated = new Date();
   }
 
   // === Feature State ===

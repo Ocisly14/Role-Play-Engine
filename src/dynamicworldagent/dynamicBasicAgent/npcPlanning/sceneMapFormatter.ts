@@ -1,64 +1,83 @@
+import {
+  getBlockedConnectionReason,
+  resolveBlockedConnectionNodeRef,
+} from "../../state/blockedConnections.js";
+import { hydrateKnownMapSnapshot } from "../../memory/mapMemory.js";
+import type { KnownMapSnapshot } from "../../memory/types.js";
 import type { DynamicGameStateManager } from "../../state/DynamicGameState.js";
 import type { DynamicScene } from "../../state/types.js";
 
 type GameState = ReturnType<DynamicGameStateManager["getState"]>;
 
-// ── Public entry points ─────────────────────────────────────────────────
-
-/**
- * Format a scene's connections as human-readable lines for the planning prompt.
- * e.g. "- 正门，面朝街道 → Town Square (JUNC_1)"
- */
-export function formatSceneConnections(
+function createMapState(
   dgsm: DynamicGameStateManager,
-  scene: DynamicScene
+  snapshot?: KnownMapSnapshot
+): GameState {
+  const liveState = dgsm.getState();
+  if (!snapshot) return liveState;
+
+  const hydrated = hydrateKnownMapSnapshot(snapshot);
+  return {
+    ...liveState,
+    scenes: hydrated.scenes,
+    junctions: hydrated.junctions,
+    roads: hydrated.roads,
+    scenarioOutlines: hydrated.scenarioOutlines,
+    transportEdges: hydrated.transportEdges,
+    blockedConnections: hydrated.blockedConnections,
+    topology: hydrated.topology,
+  } as GameState;
+}
+
+function resolveLocationNameFromState(
+  state: GameState,
+  locationId: string
 ): string {
-  const connections = scene.connections ?? [];
-  if (connections.length === 0) return "";
+  if (!locationId) return "Unknown";
 
-  return connections
-    .filter((c) => !c.hidden)
-    .map((c) => {
-      const targetName = resolveLocationName(dgsm, c.targetId);
-      const desc = c.description ? `${c.description} → ` : "";
-      return `- ${desc}${targetName}`;
-    })
-    .join("\n");
+  for (const outline of state.scenarioOutlines ?? []) {
+    if (outline.entrySceneId === locationId && outline.id !== "OUTDOOR") {
+      return outline.name;
+    }
+  }
+
+  const scene = state.scenes.get(locationId);
+  if (scene) {
+    const detailLevel = (
+      scene as DynamicScene & {
+        detailLevel?: "full" | "name_only";
+      }
+    ).detailLevel;
+    if (detailLevel === "name_only") {
+      return scene.name;
+    }
+    const outline = (state.scenarioOutlines ?? []).find(
+      (o) => o.id === scene.parentLocationId && o.id !== "OUTDOOR"
+    );
+    if (outline) return outline.name;
+    return scene.name;
+  }
+
+  if (state.topology) {
+    const junction = state.topology.junctions.get(locationId);
+    if (junction) return junction.name;
+
+    const road = state.topology.roads.get(locationId);
+    if (road) return road.name;
+  }
+
+  return locationId;
 }
 
-export interface SceneMapParts {
-  /** Static topology (junctions/roads/buildings/descriptions/residents) — cacheable in system prompt */
-  townMap: string;
-  /** Dynamic NPC position + home — belongs in user prompt */
-  yourLocation: string;
-}
-
-export function formatSceneMap(
-  dgsm: DynamicGameStateManager,
-  npcId: string
-): SceneMapParts {
-  return formatTopologySceneMap(dgsm, npcId);
-}
-
-/**
- * Build a name → ID lookup map for all navigable locations.
- * Used to resolve LLM-generated location names back to IDs.
- */
-export function buildLocationNameMap(
-  dgsm: DynamicGameStateManager
-): Map<string, string> {
-  const state = dgsm.getState();
+function buildLocationNameMapFromState(state: GameState): Map<string, string> {
   const map = new Map<string, string>();
 
-  // Buildings: outline name → entry scene ID
   for (const outline of state.scenarioOutlines ?? []) {
     if (outline.entrySceneId && outline.id !== "OUTDOOR") {
       map.set(outline.name, outline.entrySceneId);
     }
   }
 
-  // Junctions: junction name → junction ID
-  // Roads: road name → road ID
   if (state.topology) {
     for (const [id, junction] of state.topology.junctions) {
       map.set(junction.name, id);
@@ -70,13 +89,82 @@ export function buildLocationNameMap(
     }
   }
 
-  // Individual scenes — each sub-scene resolves to its own ID
   for (const [id, scene] of state.scenes) {
-    if (map.has(scene.name)) continue; // outline/junction name takes priority
+    if (map.has(scene.name)) continue;
     map.set(scene.name, id);
   }
 
   return map;
+}
+
+function getBlockedConnectionReasonFromState(
+  state: GameState,
+  fromId: string,
+  toId: string
+): string | undefined {
+  const fromRef = resolveBlockedConnectionNodeRef(fromId, state);
+  const toRef = resolveBlockedConnectionNodeRef(toId, state);
+  if (!fromRef || !toRef) return undefined;
+  return getBlockedConnectionReason(state.blockedConnections, fromRef, toRef);
+}
+
+// ── Public entry points ─────────────────────────────────────────────────
+
+/**
+ * Format a scene's connections as human-readable lines for the planning prompt.
+ * e.g. "- 正门，面朝街道 → Town Square (JUNC_1)"
+ */
+export function formatSceneConnections(
+  dgsm: DynamicGameStateManager,
+  scene: DynamicScene,
+  snapshot?: KnownMapSnapshot
+): string {
+  const state = createMapState(dgsm, snapshot);
+  const connections = scene.connections ?? [];
+  if (connections.length === 0) return "";
+
+  return connections
+    .filter((c) => !c.hidden)
+    .map((c) => {
+      const targetName = resolveLocationNameFromState(state, c.targetId);
+      const desc = c.description ? `${c.description} → ` : "";
+      const blockedReason = getBlockedConnectionReasonFromState(
+        state,
+        scene.id,
+        c.targetId
+      );
+      if (blockedReason) {
+        return `- ${desc}${targetName} [BLOCKED: ${blockedReason}]`;
+      }
+      return `- ${desc}${targetName}`;
+    })
+    .join("\n");
+}
+
+export interface SceneMapParts {
+  /** NPC-specific known map snapshot — should be injected as user prompt state */
+  townMap: string;
+  /** Dynamic NPC position + home — belongs in user prompt */
+  yourLocation: string;
+}
+
+export function formatSceneMap(
+  dgsm: DynamicGameStateManager,
+  npcId: string,
+  snapshot?: KnownMapSnapshot
+): SceneMapParts {
+  return formatTopologySceneMap(createMapState(dgsm, snapshot), npcId);
+}
+
+/**
+ * Build a name → ID lookup map for all navigable locations.
+ * Used to resolve LLM-generated location names back to IDs.
+ */
+export function buildLocationNameMap(
+  dgsm: DynamicGameStateManager,
+  snapshot?: KnownMapSnapshot
+): Map<string, string> {
+  return buildLocationNameMapFromState(createMapState(dgsm, snapshot));
 }
 
 /**
@@ -85,38 +173,13 @@ export function buildLocationNameMap(
  */
 export function resolveLocationName(
   dgsm: DynamicGameStateManager,
-  locationId: string
+  locationId: string,
+  snapshot?: KnownMapSnapshot
 ): string {
-  if (!locationId) return "Unknown";
-  const state = dgsm.getState();
-
-  // Check if it's an entry scene → use outline (building) name
-  for (const outline of state.scenarioOutlines ?? []) {
-    if (outline.entrySceneId === locationId && outline.id !== "OUTDOOR") {
-      return outline.name;
-    }
-  }
-
-  // Check scenes — if inside a building sub-scene, use the outline name
-  const scene = state.scenes.get(locationId);
-  if (scene) {
-    const outline = (state.scenarioOutlines ?? []).find(
-      (o) => o.id === scene.parentLocationId && o.id !== "OUTDOOR"
-    );
-    if (outline) return outline.name;
-    return scene.name;
-  }
-
-  // Check junctions
-  if (state.topology) {
-    const junction = state.topology.junctions.get(locationId);
-    if (junction) return junction.name;
-
-    const road = state.topology.roads.get(locationId);
-    if (road) return road.name;
-  }
-
-  return locationId; // fallback to raw ID
+  return resolveLocationNameFromState(
+    createMapState(dgsm, snapshot),
+    locationId
+  );
 }
 
 /**
@@ -143,10 +206,9 @@ export function resolveLocationId(
 // ── Topology-aware scene map ────────────────────────────────────────────
 
 function formatTopologySceneMap(
-  dgsm: DynamicGameStateManager,
+  state: GameState,
   npcId: string
 ): SceneMapParts {
-  const state = dgsm.getState();
   const topology = state.topology!;
   const entryToOutline = buildEntrySceneToOutlineMap(state);
   const residentsMap = buildLocationResidentsMap(state, npcId);
@@ -232,7 +294,7 @@ function formatTopologySceneMap(
     );
   } else if (npcLocation) {
     // NPC is outdoors — show junction/road name
-    const name = resolveLocationName(dgsm, npcLocation);
+    const name = resolveLocationNameFromState(state, npcLocation);
     locationParts.push(
       `Exact Name: ${name}${currentPositionLabel ? `\nTopology Note: ${currentPositionLabel}` : ""}`
     );

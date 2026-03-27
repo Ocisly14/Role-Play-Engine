@@ -314,8 +314,11 @@ function clearWeatherConditions(
   const state = dgsm.getState();
   const conditions = state.scenarioConditions[locationId];
   if (!conditions) return;
-  state.scenarioConditions[locationId] = conditions.filter(
-    (condition: any) => !condition.description.startsWith("[Weather]")
+  dgsm.replaceSceneConditions(
+    locationId,
+    conditions.filter(
+      (condition: any) => !condition.description.startsWith("[Weather]")
+    )
   );
 }
 

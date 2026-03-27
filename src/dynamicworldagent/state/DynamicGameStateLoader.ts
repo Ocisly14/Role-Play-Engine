@@ -5,12 +5,14 @@
 
 import fs from "fs";
 import path from "path";
+import { NpcMemoryManager } from "../memory/index.js";
 import { ModelProviderName } from "../../models/types.js";
 import { EmbeddingClient } from "../../rag/embedding.js";
 import { resolveModuleIdByName } from "../../shared/agents/memory/database/moduleScope.js";
 import { getPrismaClient } from "../../shared/agents/memory/database/prismaClient.js";
 import { resolveEmailId } from "../../shared/agents/memory/database/userContext.js";
 import type { DynamicGameState } from "./DynamicGameState.js";
+import { DynamicGameStateManager } from "./DynamicGameState.js";
 import { importModule } from "./moduleImporter.js";
 import { createSession, initRuntime, loadModule } from "./moduleLoader.js";
 
@@ -93,6 +95,65 @@ export async function initializeCompleteDynamicGameState(
     gameDay,
     timeOfDay,
   });
+
+  const dgsm = new DynamicGameStateManager(state);
+  const memoryManager = new NpcMemoryManager(prisma, embedClient);
+  await Promise.all(
+    state.npcCharacters.map(async (npc) => {
+      const position = dgsm.getCharacterPosition(npc.id);
+      const location = position ? dgsm.resolveLocationId(position) : undefined;
+      const seed = npc.knownMapSeed;
+      const seedWithCurrentLocation = (() => {
+        if (!position) return seed;
+
+        switch (position.type) {
+          case "scene":
+            return {
+              ...seed,
+              sceneIds: [
+                ...new Set([...(seed?.sceneIds ?? []), position.sceneId]),
+              ],
+            };
+          case "junction":
+            return {
+              ...seed,
+              junctionIds: [
+                ...new Set([...(seed?.junctionIds ?? []), position.junctionId]),
+              ],
+            };
+          case "road":
+            return {
+              ...seed,
+              roadIds: [
+                ...new Set([...(seed?.roadIds ?? []), position.roadId]),
+              ],
+            };
+        }
+      })();
+
+      await memoryManager.ensureMapSnapshot({
+        npcId: npc.id,
+        sessionId: params.sessionId,
+        moduleId,
+        gameDay,
+        gameTime: timeOfDay,
+        location,
+        dgsm,
+        seed: seedWithCurrentLocation,
+      });
+      if (location) {
+        await memoryManager.ensureCurrentLocationInMap({
+          npcId: npc.id,
+          sessionId: params.sessionId,
+          moduleId,
+          gameDay,
+          gameTime: timeOfDay,
+          location,
+          dgsm,
+        });
+      }
+    })
+  );
 
   console.log(
     `[DynamicGameState] Initialized module "${params.moduleName}" — ${state.npcCharacters.length}/${moduleData.npcs.length} NPCs (policy filtered), ${moduleData.scenes.size} scenes`

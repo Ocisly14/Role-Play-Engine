@@ -49,6 +49,13 @@ export interface NpcProfileMemoryEntry {
   metadata?: Record<string, any>;
 }
 
+export interface KnownMapSeed {
+  sceneIds?: string[];
+  junctionIds?: string[];
+  roadIds?: string[];
+  scenarioOutlineIds?: string[];
+}
+
 export interface NPCRelationship {
   targetId: string;
   targetName: string;
@@ -184,11 +191,13 @@ export interface DynamicNPCProfile {
   background?: string;
   backstory?: string;
   residence?: string;
+  currentLocation?: string;
 
   // Simulation data
   longTermIntent: string;
   relationships: NPCRelationship[];
   memory?: NpcProfileMemoryEntry[];
+  knownMapSeed?: KnownMapSeed;
 
   isPlayerInjected?: boolean;
 }

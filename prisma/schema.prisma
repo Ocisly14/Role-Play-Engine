@@ -254,6 +254,7 @@ enum NpcMemoryType {
   event
   witness
   information
+  map
   belief
   plan
   secret

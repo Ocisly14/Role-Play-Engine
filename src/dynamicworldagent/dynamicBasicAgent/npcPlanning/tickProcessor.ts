@@ -1692,7 +1692,40 @@ async function executeSingleTick(
         featureNotes
       );
 
-      applySceneDelta(dgsm, sceneDelta, node.location, node.characterId);
+      const appliedSceneDelta = applySceneDelta(
+        dgsm,
+        sceneDelta,
+        node.location,
+        node.characterId
+      );
+
+      if (
+        memoryManager &&
+        appliedSceneDelta.revealedHiddenConnections.length > 0
+      ) {
+        const recipientIds = new Set<string>([
+          node.characterId,
+          ...Object.keys(sceneDelta.witnessMemories ?? {}),
+        ]);
+        await Promise.all(
+          [...recipientIds].map(async (npcId) => {
+            const npcPos = dgsm.getCharacterPosition(npcId);
+            const npcLocation = npcPos
+              ? dgsm.resolveLocationId(npcPos)
+              : undefined;
+            await memoryManager.revealHiddenConnectionsInMap({
+              npcId,
+              sessionId,
+              moduleId,
+              gameDay,
+              gameTime: action.gameTime,
+              location: npcLocation,
+              dgsm,
+              connections: appliedSceneDelta.revealedHiddenConnections,
+            });
+          })
+        );
+      }
 
       action.outcome = sceneDelta.memory;
       action.stateMemories = {
@@ -1933,6 +1966,30 @@ async function executeSingleTick(
   }
 
   if (pendingRevisionRequests.length > 0) {
+    // Refresh map snapshots for NPCs about to revise so they see latest scene state
+    if (memoryManager) {
+      const revisionNpcIds = [
+        ...new Set(pendingRevisionRequests.map((r) => r.npcId)),
+      ];
+      await Promise.all(
+        revisionNpcIds.map(async (npcId) => {
+          const position = dgsm.getCharacterPosition(npcId);
+          const location = position
+            ? dgsm.resolveLocationId(position)
+            : undefined;
+          await memoryManager.refreshMapSnapshot({
+            npcId,
+            sessionId,
+            moduleId,
+            gameDay,
+            gameTime: tickRuntime.tickTime,
+            location,
+            dgsm,
+          });
+        })
+      );
+    }
+
     const revisionResults = await Promise.all(
       pendingRevisionRequests.map(async (request) => {
         let failureContext: string | undefined;
@@ -2017,6 +2074,27 @@ async function executeSingleTick(
           existing.push({ event, impact: level });
         }
       }
+    }
+
+    // Refresh map snapshots for affected NPCs before impact revision
+    if (memoryManager && characterEventsMap.size > 0) {
+      await Promise.all(
+        [...characterEventsMap.keys()].map(async (npcId) => {
+          const position = dgsm.getCharacterPosition(npcId);
+          const location = position
+            ? dgsm.resolveLocationId(position)
+            : undefined;
+          await memoryManager.refreshMapSnapshot({
+            npcId,
+            sessionId,
+            moduleId,
+            gameDay,
+            gameTime: tickRuntime.tickTime,
+            location,
+            dgsm,
+          });
+        })
+      );
     }
 
     // NPC processing — parallel LLM calls
@@ -2281,6 +2359,18 @@ async function executeSingleTick(
   // Drain sanity-triggered emotions (clear from pending queue; no longer persisted as memory)
   drainPendingEmotions(dgsm);
 
+  if (memoryManager) {
+    await syncNpcMapMemories({
+      dgsm,
+      memoryManager,
+      sessionId,
+      moduleId,
+      gameDay,
+      gameTime: tickRuntime.tickTime,
+      movedNpcIds,
+    });
+  }
+
   // Collect world events from features (scene_updated, feature_triggered)
   const worldEvents = dgsm.drainWorldEvents();
   const encounterSignatures = [...buildEncounterSnapshot(dgsm)];
@@ -2291,6 +2381,60 @@ async function executeSingleTick(
     worldEvents,
     encounterSignatures,
   };
+}
+
+async function syncNpcMapMemories(params: {
+  dgsm: DynamicGameStateManager;
+  memoryManager: NpcMemoryManager;
+  sessionId: string;
+  moduleId: string;
+  gameDay: number;
+  gameTime: string;
+  movedNpcIds: ReadonlySet<string>;
+}): Promise<void> {
+  const {
+    dgsm,
+    memoryManager,
+    sessionId,
+    moduleId,
+    gameDay,
+    gameTime,
+    movedNpcIds,
+  } = params;
+  const state = dgsm.getState();
+
+  await Promise.all(
+    [...movedNpcIds].map(async (npcId) => {
+      const position = dgsm.getCharacterPosition(npcId);
+      const location = position ? dgsm.resolveLocationId(position) : undefined;
+      await memoryManager.ensureCurrentLocationInMap({
+        npcId,
+        sessionId,
+        moduleId,
+        gameDay,
+        gameTime,
+        location,
+        dgsm,
+      });
+    })
+  );
+
+  await Promise.all(
+    state.npcCharacters.map(async (npc) => {
+      const npcId = npc.id;
+      const position = dgsm.getCharacterPosition(npcId);
+      const location = position ? dgsm.resolveLocationId(position) : undefined;
+      await memoryManager.refreshMapSnapshot({
+        npcId,
+        sessionId,
+        moduleId,
+        gameDay,
+        gameTime,
+        location,
+        dgsm,
+      });
+    })
+  );
 }
 
 // ==================== Unplanned encounters (signal-only) ====================

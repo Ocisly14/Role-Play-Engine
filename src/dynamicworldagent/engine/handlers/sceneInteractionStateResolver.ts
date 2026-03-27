@@ -369,16 +369,16 @@ export function applySceneDelta(
   delta: SceneStateDelta,
   sceneId: string,
   actorId: string
-): void {
+): { revealedHiddenConnections: Array<{ sceneId: string; targetId: string }> } {
+  const revealedHiddenConnections: Array<{ sceneId: string; targetId: string }> = [];
+
   // Remove conditions
   if (delta.removeSceneConditions && delta.removeSceneConditions.length > 0) {
     const toRemove = new Set(delta.removeSceneConditions);
     const existing = dgsm.getSceneConditions(sceneId);
     const filtered = existing.filter((c) => !toRemove.has(c.description));
-    // Replace the array in state
-    const state = dgsm.getState();
     if (filtered.length !== existing.length) {
-      state.scenarioConditions[sceneId] = filtered;
+      dgsm.replaceSceneConditions(sceneId, filtered);
     }
   }
 
@@ -410,7 +410,10 @@ export function applySceneDelta(
           );
           break;
         case "reveal":
-          dgsm.setConnectionHidden(sceneId, effect.targetId, false);
+          revealedHiddenConnections.push({
+            sceneId,
+            targetId: effect.targetId,
+          });
           break;
         case "hide":
           dgsm.setConnectionHidden(sceneId, effect.targetId, true);
@@ -422,4 +425,6 @@ export function applySceneDelta(
   if (delta.items && delta.items.length > 0) {
     applyItemResults(dgsm, actorId, delta.items, sceneId);
   }
+
+  return { revealedHiddenConnections };
 }
