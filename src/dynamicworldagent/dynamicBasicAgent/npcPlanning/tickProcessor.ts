@@ -43,6 +43,10 @@ import {
   SessionRagService,
 } from "../knowledge/sessionRagService.js";
 import type { NPCPlanningAgent } from "./NPCPlanningAgent.js";
+import {
+  buildLocationNameMap,
+  resolveLocationId as resolveLocationFromName,
+} from "./sceneMapFormatter.js";
 import type {
   CharacterAction,
   DiscoveryEntry,
@@ -1393,7 +1397,18 @@ async function executeSingleTick(
   }
 
   // 2. Execute nodes that reach their final minute in this tick
+  //    Group by location so different scenes run in parallel,
+  //    while nodes within the same scene stay serial.
+  const nodesByLocation = new Map<string, PlanNode[]>();
   for (const node of nodesReadyToExecute) {
+    const group = nodesByLocation.get(node.location) ?? [];
+    group.push(node);
+    nodesByLocation.set(node.location, group);
+  }
+
+  await Promise.all(
+    [...nodesByLocation.values()].map(async (sceneNodes) => {
+  for (const node of sceneNodes) {
     // Dispatch to registry handler
     const handler = registry.getHandler(node.type);
     if (!handler) {
@@ -1637,6 +1652,61 @@ async function executeSingleTick(
           gameDay,
           node.endTime
         );
+      }
+
+      // Update maps with learned location names
+      if (memoryManager) {
+        const nameMap = buildLocationNameMap(dgsm);
+        const resolveNames = (names: string[]): string[] =>
+          names
+            .map((name) => {
+              const resolved = resolveLocationFromName(name, nameMap);
+              // If resolved === name and it's not a known ID, it's unresolvable
+              if (resolved === name && !dgsm.getState().scenes.has(name) &&
+                !dgsm.getState().junctions.has(name) &&
+                !dgsm.getState().roads.has(name)) {
+                return null;
+              }
+              return resolved;
+            })
+            .filter((id): id is string => id !== null);
+
+        const learnedEntries: Array<{ npcId: string; locationIds: string[] }> =
+          [];
+        if (delta.actorChanges.learnedLocationNames?.length) {
+          const ids = resolveNames(delta.actorChanges.learnedLocationNames);
+          if (ids.length > 0) {
+            learnedEntries.push({ npcId: node.characterId, locationIds: ids });
+          }
+        }
+        for (const [targetId, targetDelta] of Object.entries(
+          delta.targetChanges
+        )) {
+          if (targetDelta.learnedLocationNames?.length) {
+            const ids = resolveNames(targetDelta.learnedLocationNames);
+            if (ids.length > 0) {
+              learnedEntries.push({ npcId: targetId, locationIds: ids });
+            }
+          }
+        }
+        if (learnedEntries.length > 0) {
+          await Promise.all(
+            learnedEntries.map(async (entry) => {
+              const pos = dgsm.getCharacterPosition(entry.npcId);
+              const loc = pos ? dgsm.resolveLocationId(pos) : undefined;
+              await memoryManager.revealLocationsInMap({
+                npcId: entry.npcId,
+                sessionId,
+                moduleId,
+                gameDay,
+                gameTime: node.endTime,
+                location: loc,
+                dgsm,
+                locationIds: entry.locationIds,
+              });
+            })
+          );
+        }
       }
 
       // Update action with LLM-resolved memory
@@ -1912,6 +1982,8 @@ async function executeSingleTick(
       });
     }
   }
+    })
+  );
 
   for (const { node, action } of movementFinalizations) {
     tickActions.push(action);

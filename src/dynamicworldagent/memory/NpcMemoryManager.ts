@@ -34,6 +34,7 @@ import {
   MIN_MEMORIES_FOR_REASONING,
   type QueryMemoryParams,
   type RefreshMapSnapshotParams,
+  type RevealMapLocationsParams,
   type ScoredMemory,
   type TriggerReasoningParams,
 } from "./types.js";
@@ -167,6 +168,46 @@ export class NpcMemoryManager {
     return snapshot;
   }
 
+  async revealLocationsInMap(
+    params: RevealMapLocationsParams
+  ): Promise<KnownMapSnapshot> {
+    const existing = await this.ensureMapSnapshot({
+      ...params,
+      seed: undefined,
+    });
+    const needsSceneUpgrade = params.locationIds.some(
+      (locationId) => existing.scenes[locationId]?.detailLevel === "name_only"
+    );
+    const nextKnownIds = revealKnownMapLocations(
+      params.dgsm,
+      existing.knownIds,
+      params.locationIds
+    );
+    if (
+      areKnownMapIdsEqual(existing.knownIds, nextKnownIds) &&
+      !needsSceneUpgrade
+    ) {
+      return existing;
+    }
+    const nameOnlySceneIds = extractNameOnlySceneIds(existing).filter(
+      (sceneId) => !params.locationIds.includes(sceneId)
+    );
+    const snapshot = buildKnownMapSnapshot(params.dgsm, nextKnownIds, {
+      revealedHiddenConnections: existing.revealedHiddenConnections,
+      nameOnlySceneIds,
+      currentLocationId: params.location,
+    });
+    await this.upsertMapSnapshot({
+      npcId: params.npcId,
+      sessionId: params.sessionId,
+      moduleId: params.moduleId,
+      gameDay: params.gameDay,
+      gameTime: params.gameTime,
+      location: params.location,
+      snapshot,
+    });
+    return snapshot;
+  }
 
   async ensureCurrentLocationInMap(
     params: RefreshMapSnapshotParams

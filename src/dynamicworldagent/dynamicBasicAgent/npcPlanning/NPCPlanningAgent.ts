@@ -1532,6 +1532,7 @@ export class NPCPlanningAgent {
     const state = dgsm.getState();
 
     const eventLog = dayMemories
+      .filter((m) => m.type !== "map")
       .map((m) => handlers[m.type].format(m))
       .join("\n");
 

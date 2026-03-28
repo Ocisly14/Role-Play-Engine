@@ -118,6 +118,11 @@ export interface RefreshMapSnapshotParams {
   location?: string;
   dgsm: import("../state/DynamicGameState.js").DynamicGameStateManager;
 }
+
+export interface RevealMapLocationsParams extends RefreshMapSnapshotParams {
+  locationIds: string[];
+}
+
 // ===== Query & Retrieval Types =====
 
 export interface ScoredMemory extends PrismaNpcMemory {

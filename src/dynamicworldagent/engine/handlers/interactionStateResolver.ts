@@ -215,6 +215,7 @@ Return a single JSON object. No extra text. JSON keys must be in English. Write 
     "addConditions": ["condition_name"] (optional),
     "removeConditions": ["condition_name"] (optional),
     "appearanceChange": "description" (optional, it is a full description of the character's appearance if changes applied),
+    "learnedLocationNames": ["location name"] (optional, names of places this character learns about from the conversation, e.g. building names, street names, area names mentioned by the other party),
     "memory": "first-person account of what happened with whom, including knowledge context if relevant (REQUIRED)"
   },
   "targetChanges": {

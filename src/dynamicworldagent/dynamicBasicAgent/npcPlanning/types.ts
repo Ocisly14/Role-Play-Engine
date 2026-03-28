@@ -29,6 +29,7 @@ export interface CharacterStateDelta {
   addConditions?: string[];
   removeConditions?: string[];
   appearanceChange?: string;
+  learnedLocationNames?: string[];
   memory: string;
 }
 
