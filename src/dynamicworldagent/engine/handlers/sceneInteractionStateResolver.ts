@@ -370,7 +370,10 @@ export function applySceneDelta(
   sceneId: string,
   actorId: string
 ): { revealedHiddenConnections: Array<{ sceneId: string; targetId: string }> } {
-  const revealedHiddenConnections: Array<{ sceneId: string; targetId: string }> = [];
+  const revealedHiddenConnections: Array<{
+    sceneId: string;
+    targetId: string;
+  }> = [];
 
   // Remove conditions
   if (delta.removeSceneConditions && delta.removeSceneConditions.length > 0) {

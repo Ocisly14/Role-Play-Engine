@@ -1408,580 +1408,618 @@ async function executeSingleTick(
 
   await Promise.all(
     [...nodesByLocation.values()].map(async (sceneNodes) => {
-  for (const node of sceneNodes) {
-    // Dispatch to registry handler
-    const handler = registry.getHandler(node.type);
-    if (!handler) {
-      console.warn(
-        `[TickProcessor] No handler for node type: ${node.type}, skipping`
-      );
-      continue;
-    }
-    executedNodes.push(node);
-    const itemContext = getItemActionContext(dgsm, node);
-    let action = await handler.execute(node, dgsm, ctx);
-
-    // Auto-movement: if the NPC isn't at the expected location, pathfind there
-    // automatically instead of triggering an expensive LLM revision.
-    if (action.failureReason === "location_mismatch") {
-      const currentPos = dgsm.getCharacterPosition(node.characterId);
-      const topology = dgsm.getTopology();
-      const targetPos = resolveTargetPosition(node.location, topology, dgsm);
-
-      if (currentPos && targetPos) {
-        const route = buildMovementRouteIgnoringBlocks(
-          currentPos,
-          targetPos,
-          topology,
-          dgsm
-        );
-        if (route) {
-          const travelMinutes = Math.max(1, Math.ceil(route.totalMinutes));
-          const fromLocationId = dgsm.resolveLocationId(currentPos);
-
-          // Move the NPC to the destination
-          dgsm.setCharacterPosition(node.characterId, targetPos);
-          movedNpcIds.add(node.characterId);
-
-          // Shift all subsequent pending nodes for this NPC
-          await npcPlanningAgent.shiftPendingNodesByDelta(
-            sessionId,
-            node.characterId,
-            gameDay,
-            tickStartTime,
-            -travelMinutes
+      for (const node of sceneNodes) {
+        // Dispatch to registry handler
+        const handler = registry.getHandler(node.type);
+        if (!handler) {
+          console.warn(
+            `[TickProcessor] No handler for node type: ${node.type}, skipping`
           );
-
-          // Record travel memory
-          if (memoryManager) {
-            await memoryManager.add({
-              npcId: node.characterId,
-              sessionId,
-              moduleId,
-              type: "event",
-              content: t("walked_from_to", language, {
-                from: fromLocationId,
-                to: node.location,
-                minutes: String(travelMinutes),
-              }),
-              gameDay,
-              gameTime: tickStartTime,
-              location: node.location,
-              metadata: {
-                outcome: t("auto_movement_outcome", language, {
-                  from: fromLocationId,
-                  to: node.location,
-                }),
-              },
-            });
-          }
-
-          console.log(
-            `[TickProcessor] Auto-movement: ${node.characterName} walked from ${fromLocationId} to ${node.location} (~${travelMinutes} min)`
-          );
-
-          // Re-execute the handler now that the NPC is at the correct location
-          action = await handler.execute(node, dgsm, ctx);
+          continue;
         }
-      }
-    }
+        executedNodes.push(node);
+        const itemContext = getItemActionContext(dgsm, node);
+        let action = await handler.execute(node, dgsm, ctx);
 
-    // Auto-movement for object_not_found: search sibling sub-scenes in the
-    // same building for the missing item, walk there, and retry.
-    if (
-      action.failureReason === "object_not_found" &&
-      node.objectInteractionPayload?.itemId
-    ) {
-      const itemId = node.objectInteractionPayload.itemId;
-      const currentScene = dgsm.getScene(node.location);
-      const parentId = currentScene?.parentLocationId;
+        // Auto-movement: if the NPC isn't at the expected location, pathfind there
+        // automatically instead of triggering an expensive LLM revision.
+        if (action.failureReason === "location_mismatch") {
+          const currentPos = dgsm.getCharacterPosition(node.characterId);
+          const topology = dgsm.getTopology();
+          const targetPos = resolveTargetPosition(
+            node.location,
+            topology,
+            dgsm
+          );
 
-      if (parentId && parentId !== "OUTDOOR") {
-        const state = dgsm.getState();
-        let targetSceneId: string | undefined;
-
-        for (const [sceneId, scene] of state.scenes) {
-          if (sceneId === node.location) continue;
-          if (scene.parentLocationId !== parentId) continue;
-          const found =
-            scene.items?.some((i) => i.id === itemId) ||
-            scene.items?.some((i) =>
-              i.containerStats?.storedItems?.some((s) => s.id === itemId)
+          if (currentPos && targetPos) {
+            const route = buildMovementRouteIgnoringBlocks(
+              currentPos,
+              targetPos,
+              topology,
+              dgsm
             );
-          if (found) {
-            targetSceneId = sceneId;
-            break;
-          }
-        }
+            if (route) {
+              const travelMinutes = Math.max(1, Math.ceil(route.totalMinutes));
+              const fromLocationId = dgsm.resolveLocationId(currentPos);
 
-        if (targetSceneId) {
-          const fromLocationId = node.location;
+              // Move the NPC to the destination
+              dgsm.setCharacterPosition(node.characterId, targetPos);
+              movedNpcIds.add(node.characterId);
 
-          dgsm.setCharacterPosition(node.characterId, {
-            type: "scene",
-            sceneId: targetSceneId,
-          });
+              // Shift all subsequent pending nodes for this NPC
+              await npcPlanningAgent.shiftPendingNodesByDelta(
+                sessionId,
+                node.characterId,
+                gameDay,
+                tickStartTime,
+                -travelMinutes
+              );
 
-          await npcPlanningAgent.shiftPendingNodesByDelta(
-            sessionId,
-            node.characterId,
-            gameDay,
-            tickStartTime,
-            -1
-          );
-
-          if (memoryManager) {
-            await memoryManager.add({
-              npcId: node.characterId,
-              sessionId,
-              moduleId,
-              type: "event",
-              content: t("walked_for_item", language, {
-                from: fromLocationId,
-                to: targetSceneId,
-                item: itemId,
-              }),
-              gameDay,
-              gameTime: tickStartTime,
-              location: targetSceneId,
-              metadata: {
-                outcome: t("auto_movement_item_outcome", language, {
-                  from: fromLocationId,
-                  to: targetSceneId,
-                  item: itemId,
-                }),
-              },
-            });
-          }
-
-          console.log(
-            `[TickProcessor] Auto-movement: ${node.characterName} walked from ${fromLocationId} to ${targetSceneId} for item ${itemId}`
-          );
-
-          node.location = targetSceneId;
-          action = await handler.execute(node, dgsm, ctx);
-        }
-      }
-    }
-
-    tickActions.push(action);
-
-    // Stealth: successful Stealth → hide; any other action → reveal
-    if (action.status === "completed" && node.skill === "Stealth") {
-      dgsm.setCharacterHidden(node.characterId, true);
-    } else if (dgsm.isCharacterHidden(node.characterId)) {
-      dgsm.setCharacterHidden(node.characterId, false);
-    }
-
-    // 3b. Activate feature overlays for this node (per-node, before resolver/memory)
-    const featureResults = registry.activateNodeFeatures(node, dgsm);
-    const featureNotes = featureResults
-      .map((r) => r.outcomeNote)
-      .filter(Boolean) as string[];
-
-    let eventOutcome = appendItemContext(action.outcome, itemContext);
-    const eventMetadata = buildEventMetadata(action.outcome, itemContext);
-    const allTargetIds = node.targetCharacterIds ?? [];
-
-    // If non-resolver action has feature notes, replace outcome
-    if (
-      featureNotes.length > 0 &&
-      node.type !== "character_interaction" &&
-      node.type !== "object_interaction" &&
-      node.type !== "scene_interaction"
-    ) {
-      const combined = featureNotes.join(" ");
-      action.outcome = combined;
-      eventOutcome = combined;
-    }
-
-    // 4. Post-execution processing
-
-    // 4a. character_interaction: load full NPC knowledge first, then let the LLM decide transfer
-    if (
-      action.status === "completed" &&
-      node.type === "character_interaction"
-    ) {
-      const npcKnowledge = memoryManager
-        ? await discoverNpcKnowledge(node, dgsm, memoryManager)
-        : [];
-
-      const skillRollResult = action.successLevel
-        ? {
-            successLevel: action.successLevel,
-            detail: action.rollDetail ?? "",
-            perTargetResults: action.perTargetResults,
-          }
-        : null;
-
-      const delta = await resolveInteractionState(
-        node,
-        dgsm,
-        ctx.runtime,
-        skillRollResult,
-        npcKnowledge,
-        language,
-        registry,
-        featureNotes
-      );
-
-      // Apply actor state changes
-      const interactionTargets = resolveTargets(node);
-      await applyCharacterDelta(
-        dgsm,
-        node.characterId,
-        delta.actorChanges,
-        interactionTargets.length > 0 ? interactionTargets : [node.characterId],
-        memoryManager,
-        sessionId,
-        moduleId,
-        gameDay,
-        node.endTime
-      );
-
-      // Apply each target's state changes
-      for (const targetId of Object.keys(delta.targetChanges)) {
-        await applyCharacterDelta(
-          dgsm,
-          targetId,
-          delta.targetChanges[targetId],
-          [node.characterId],
-          memoryManager,
-          sessionId,
-          moduleId,
-          gameDay,
-          node.endTime
-        );
-      }
-
-      // Update maps with learned location names
-      if (memoryManager) {
-        const nameMap = buildLocationNameMap(dgsm);
-        const resolveNames = (names: string[]): string[] =>
-          names
-            .map((name) => {
-              const resolved = resolveLocationFromName(name, nameMap);
-              // If resolved === name and it's not a known ID, it's unresolvable
-              if (resolved === name && !dgsm.getState().scenes.has(name) &&
-                !dgsm.getState().junctions.has(name) &&
-                !dgsm.getState().roads.has(name)) {
-                return null;
+              // Record travel memory
+              if (memoryManager) {
+                await memoryManager.add({
+                  npcId: node.characterId,
+                  sessionId,
+                  moduleId,
+                  type: "event",
+                  content: t("walked_from_to", language, {
+                    from: fromLocationId,
+                    to: node.location,
+                    minutes: String(travelMinutes),
+                  }),
+                  gameDay,
+                  gameTime: tickStartTime,
+                  location: node.location,
+                  metadata: {
+                    outcome: t("auto_movement_outcome", language, {
+                      from: fromLocationId,
+                      to: node.location,
+                    }),
+                  },
+                });
               }
-              return resolved;
-            })
-            .filter((id): id is string => id !== null);
 
-        const learnedEntries: Array<{ npcId: string; locationIds: string[] }> =
-          [];
-        if (delta.actorChanges.learnedLocationNames?.length) {
-          const ids = resolveNames(delta.actorChanges.learnedLocationNames);
-          if (ids.length > 0) {
-            learnedEntries.push({ npcId: node.characterId, locationIds: ids });
-          }
-        }
-        for (const [targetId, targetDelta] of Object.entries(
-          delta.targetChanges
-        )) {
-          if (targetDelta.learnedLocationNames?.length) {
-            const ids = resolveNames(targetDelta.learnedLocationNames);
-            if (ids.length > 0) {
-              learnedEntries.push({ npcId: targetId, locationIds: ids });
+              console.log(
+                `[TickProcessor] Auto-movement: ${node.characterName} walked from ${fromLocationId} to ${node.location} (~${travelMinutes} min)`
+              );
+
+              // Re-execute the handler now that the NPC is at the correct location
+              action = await handler.execute(node, dgsm, ctx);
             }
           }
         }
-        if (learnedEntries.length > 0) {
-          await Promise.all(
-            learnedEntries.map(async (entry) => {
-              const pos = dgsm.getCharacterPosition(entry.npcId);
-              const loc = pos ? dgsm.resolveLocationId(pos) : undefined;
-              await memoryManager.revealLocationsInMap({
-                npcId: entry.npcId,
-                sessionId,
-                moduleId,
-                gameDay,
-                gameTime: node.endTime,
-                location: loc,
-                dgsm,
-                locationIds: entry.locationIds,
+
+        // Auto-movement for object_not_found: search sibling sub-scenes in the
+        // same building for the missing item, walk there, and retry.
+        if (
+          action.failureReason === "object_not_found" &&
+          node.objectInteractionPayload?.itemId
+        ) {
+          const itemId = node.objectInteractionPayload.itemId;
+          const currentScene = dgsm.getScene(node.location);
+          const parentId = currentScene?.parentLocationId;
+
+          if (parentId && parentId !== "OUTDOOR") {
+            const state = dgsm.getState();
+            let targetSceneId: string | undefined;
+
+            for (const [sceneId, scene] of state.scenes) {
+              if (sceneId === node.location) continue;
+              if (scene.parentLocationId !== parentId) continue;
+              const found =
+                scene.items?.some((i) => i.id === itemId) ||
+                scene.items?.some((i) =>
+                  i.containerStats?.storedItems?.some((s) => s.id === itemId)
+                );
+              if (found) {
+                targetSceneId = sceneId;
+                break;
+              }
+            }
+
+            if (targetSceneId) {
+              const fromLocationId = node.location;
+
+              dgsm.setCharacterPosition(node.characterId, {
+                type: "scene",
+                sceneId: targetSceneId,
               });
-            })
-          );
+
+              await npcPlanningAgent.shiftPendingNodesByDelta(
+                sessionId,
+                node.characterId,
+                gameDay,
+                tickStartTime,
+                -1
+              );
+
+              if (memoryManager) {
+                await memoryManager.add({
+                  npcId: node.characterId,
+                  sessionId,
+                  moduleId,
+                  type: "event",
+                  content: t("walked_for_item", language, {
+                    from: fromLocationId,
+                    to: targetSceneId,
+                    item: itemId,
+                  }),
+                  gameDay,
+                  gameTime: tickStartTime,
+                  location: targetSceneId,
+                  metadata: {
+                    outcome: t("auto_movement_item_outcome", language, {
+                      from: fromLocationId,
+                      to: targetSceneId,
+                      item: itemId,
+                    }),
+                  },
+                });
+              }
+
+              console.log(
+                `[TickProcessor] Auto-movement: ${node.characterName} walked from ${fromLocationId} to ${targetSceneId} for item ${itemId}`
+              );
+
+              node.location = targetSceneId;
+              action = await handler.execute(node, dgsm, ctx);
+            }
+          }
         }
-      }
 
-      // Update action with LLM-resolved memory
-      action.outcome = delta.actorChanges.memory;
-      action.stateMemories = {
-        [node.characterId]: delta.actorChanges.memory,
-        ...Object.fromEntries(
-          Object.entries(delta.targetChanges).map(([id, d]) => [id, d.memory])
-        ),
-      };
-    }
+        tickActions.push(action);
 
-    // 4b. object_interaction: call LLM resolver for item state changes + memories
-    if (action.status === "completed" && node.type === "object_interaction") {
-      const objSkillRollResult = action.successLevel
-        ? { successLevel: action.successLevel, detail: action.rollDetail ?? "" }
-        : null;
+        // Stealth: successful Stealth → hide; any other action → reveal
+        if (action.status === "completed" && node.skill === "Stealth") {
+          dgsm.setCharacterHidden(node.characterId, true);
+        } else if (dgsm.isCharacterHidden(node.characterId)) {
+          dgsm.setCharacterHidden(node.characterId, false);
+        }
 
-      const objDelta = await resolveObjectInteractionState(
-        node,
-        dgsm,
-        ctx.runtime,
-        objSkillRollResult,
-        language,
-        memoryManager,
-        sessionId,
-        registry,
-        featureNotes
-      );
+        // 3b. Activate feature overlays for this node (per-node, before resolver/memory)
+        const featureResults = registry.activateNodeFeatures(node, dgsm);
+        const featureNotes = featureResults
+          .map((r) => r.outcomeNote)
+          .filter(Boolean) as string[];
 
-      applyObjectDelta(dgsm, node.characterId, objDelta, node.location);
+        let eventOutcome = appendItemContext(action.outcome, itemContext);
+        const eventMetadata = buildEventMetadata(action.outcome, itemContext);
+        const allTargetIds = node.targetCharacterIds ?? [];
 
-      action.outcome = objDelta.memory;
-      action.stateMemories = {
-        [node.characterId]: objDelta.memory,
-        ...(objDelta.witnessMemories ?? {}),
-      };
-    }
+        // If non-resolver action has feature notes, replace outcome
+        if (
+          featureNotes.length > 0 &&
+          node.type !== "character_interaction" &&
+          node.type !== "object_interaction" &&
+          node.type !== "scene_interaction"
+        ) {
+          const combined = featureNotes.join(" ");
+          action.outcome = combined;
+          eventOutcome = combined;
+        }
 
-    // 4c. scene_interaction: call LLM resolver for scene state changes + memories
-    if (action.status === "completed" && node.type === "scene_interaction") {
-      const sceneSkillRollResult = action.successLevel
-        ? { successLevel: action.successLevel, detail: action.rollDetail ?? "" }
-        : null;
+        // 4. Post-execution processing
 
-      const sceneDelta = await resolveSceneInteractionState(
-        node,
-        dgsm,
-        ctx.runtime,
-        sceneSkillRollResult,
-        language,
-        registry,
-        featureNotes
-      );
+        // 4a. character_interaction: load full NPC knowledge first, then let the LLM decide transfer
+        if (
+          action.status === "completed" &&
+          node.type === "character_interaction"
+        ) {
+          const npcKnowledge = memoryManager
+            ? await discoverNpcKnowledge(node, dgsm, memoryManager)
+            : [];
 
-      const appliedSceneDelta = applySceneDelta(
-        dgsm,
-        sceneDelta,
-        node.location,
-        node.characterId
-      );
+          const skillRollResult = action.successLevel
+            ? {
+                successLevel: action.successLevel,
+                detail: action.rollDetail ?? "",
+                perTargetResults: action.perTargetResults,
+              }
+            : null;
 
-      if (
-        memoryManager &&
-        appliedSceneDelta.revealedHiddenConnections.length > 0
-      ) {
-        const recipientIds = new Set<string>([
-          node.characterId,
-          ...Object.keys(sceneDelta.witnessMemories ?? {}),
-        ]);
-        await Promise.all(
-          [...recipientIds].map(async (npcId) => {
-            const npcPos = dgsm.getCharacterPosition(npcId);
-            const npcLocation = npcPos
-              ? dgsm.resolveLocationId(npcPos)
-              : undefined;
-            await memoryManager.revealHiddenConnectionsInMap({
-              npcId,
+          const delta = await resolveInteractionState(
+            node,
+            dgsm,
+            ctx.runtime,
+            skillRollResult,
+            npcKnowledge,
+            language,
+            registry,
+            featureNotes
+          );
+
+          // Apply actor state changes
+          const interactionTargets = resolveTargets(node);
+          await applyCharacterDelta(
+            dgsm,
+            node.characterId,
+            delta.actorChanges,
+            interactionTargets.length > 0
+              ? interactionTargets
+              : [node.characterId],
+            memoryManager,
+            sessionId,
+            moduleId,
+            gameDay,
+            node.endTime
+          );
+
+          // Apply each target's state changes
+          for (const targetId of Object.keys(delta.targetChanges)) {
+            await applyCharacterDelta(
+              dgsm,
+              targetId,
+              delta.targetChanges[targetId],
+              [node.characterId],
+              memoryManager,
               sessionId,
               moduleId,
               gameDay,
-              gameTime: action.gameTime,
-              location: npcLocation,
+              node.endTime
+            );
+          }
+
+          // Update maps with learned location names
+          if (memoryManager) {
+            const nameMap = buildLocationNameMap(dgsm);
+            const resolveNames = (names: string[]): string[] =>
+              names
+                .map((name) => {
+                  const resolved = resolveLocationFromName(name, nameMap);
+                  // If resolved === name and it's not a known ID, it's unresolvable
+                  if (
+                    resolved === name &&
+                    !dgsm.getState().scenes.has(name) &&
+                    !dgsm.getState().junctions.has(name) &&
+                    !dgsm.getState().roads.has(name)
+                  ) {
+                    return null;
+                  }
+                  return resolved;
+                })
+                .filter((id): id is string => id !== null);
+
+            const learnedEntries: Array<{
+              npcId: string;
+              locationIds: string[];
+            }> = [];
+            if (delta.actorChanges.learnedLocationNames?.length) {
+              const ids = resolveNames(delta.actorChanges.learnedLocationNames);
+              if (ids.length > 0) {
+                learnedEntries.push({
+                  npcId: node.characterId,
+                  locationIds: ids,
+                });
+              }
+            }
+            for (const [targetId, targetDelta] of Object.entries(
+              delta.targetChanges
+            )) {
+              if (targetDelta.learnedLocationNames?.length) {
+                const ids = resolveNames(targetDelta.learnedLocationNames);
+                if (ids.length > 0) {
+                  learnedEntries.push({ npcId: targetId, locationIds: ids });
+                }
+              }
+            }
+            if (learnedEntries.length > 0) {
+              await Promise.all(
+                learnedEntries.map(async (entry) => {
+                  const pos = dgsm.getCharacterPosition(entry.npcId);
+                  const loc = pos ? dgsm.resolveLocationId(pos) : undefined;
+                  await memoryManager.revealLocationsInMap({
+                    npcId: entry.npcId,
+                    sessionId,
+                    moduleId,
+                    gameDay,
+                    gameTime: node.endTime,
+                    location: loc,
+                    dgsm,
+                    locationIds: entry.locationIds,
+                  });
+                })
+              );
+            }
+          }
+
+          // Update action with LLM-resolved memory
+          action.outcome = delta.actorChanges.memory;
+          action.stateMemories = {
+            [node.characterId]: delta.actorChanges.memory,
+            ...Object.fromEntries(
+              Object.entries(delta.targetChanges).map(([id, d]) => [
+                id,
+                d.memory,
+              ])
+            ),
+          };
+        }
+
+        // 4b. object_interaction: call LLM resolver for item state changes + memories
+        if (
+          action.status === "completed" &&
+          node.type === "object_interaction"
+        ) {
+          const objSkillRollResult = action.successLevel
+            ? {
+                successLevel: action.successLevel,
+                detail: action.rollDetail ?? "",
+              }
+            : null;
+
+          const objDelta = await resolveObjectInteractionState(
+            node,
+            dgsm,
+            ctx.runtime,
+            objSkillRollResult,
+            language,
+            memoryManager,
+            sessionId,
+            registry,
+            featureNotes
+          );
+
+          applyObjectDelta(dgsm, node.characterId, objDelta, node.location);
+
+          action.outcome = objDelta.memory;
+          action.stateMemories = {
+            [node.characterId]: objDelta.memory,
+            ...(objDelta.witnessMemories ?? {}),
+          };
+        }
+
+        // 4c. scene_interaction: call LLM resolver for scene state changes + memories
+        if (
+          action.status === "completed" &&
+          node.type === "scene_interaction"
+        ) {
+          const sceneSkillRollResult = action.successLevel
+            ? {
+                successLevel: action.successLevel,
+                detail: action.rollDetail ?? "",
+              }
+            : null;
+
+          const sceneDelta = await resolveSceneInteractionState(
+            node,
+            dgsm,
+            ctx.runtime,
+            sceneSkillRollResult,
+            language,
+            registry,
+            featureNotes
+          );
+
+          const appliedSceneDelta = applySceneDelta(
+            dgsm,
+            sceneDelta,
+            node.location,
+            node.characterId
+          );
+
+          if (
+            memoryManager &&
+            appliedSceneDelta.revealedHiddenConnections.length > 0
+          ) {
+            const recipientIds = new Set<string>([
+              node.characterId,
+              ...Object.keys(sceneDelta.witnessMemories ?? {}),
+            ]);
+            await Promise.all(
+              [...recipientIds].map(async (npcId) => {
+                const npcPos = dgsm.getCharacterPosition(npcId);
+                const npcLocation = npcPos
+                  ? dgsm.resolveLocationId(npcPos)
+                  : undefined;
+                await memoryManager.revealHiddenConnectionsInMap({
+                  npcId,
+                  sessionId,
+                  moduleId,
+                  gameDay,
+                  gameTime: action.gameTime,
+                  location: npcLocation,
+                  dgsm,
+                  connections: appliedSceneDelta.revealedHiddenConnections,
+                });
+              })
+            );
+          }
+
+          action.outcome = sceneDelta.memory;
+          action.stateMemories = {
+            [node.characterId]: sceneDelta.memory,
+            ...(sceneDelta.witnessMemories ?? {}),
+          };
+        }
+
+        // On character_interaction success -> update relationships with all targets
+        let relationshipChange: string | undefined;
+        if (
+          action.status === "completed" &&
+          node.type === "character_interaction" &&
+          allTargetIds.length > 0
+        ) {
+          const relParts: string[] = [];
+          for (const targetId of allTargetIds) {
+            const relResult = await npcPlanningAgent.updateRelationshipViaLLM(
               dgsm,
-              connections: appliedSceneDelta.revealedHiddenConnections,
+              node.characterId,
+              targetId,
+              action.outcome,
+              language
+            );
+            if (relResult) {
+              const sign = relResult.scoreDelta >= 0 ? "+" : "";
+              const targetName =
+                state.npcCharacters.find((n) => n.id === targetId)?.name ??
+                targetId;
+              relParts.push(
+                `[rel:${targetName} ${sign}${relResult.scoreDelta} → ${relResult.newScore}]`
+              );
+            }
+          }
+          if (relParts.length > 0) {
+            relationshipChange = relParts.join(" ");
+          }
+        }
+
+        // Log NPC actions and mark completed
+        {
+          // Actor event memory: prefer stateMemories if available
+          let logEntry =
+            action.stateMemories?.[node.characterId] ?? eventOutcome;
+          if (relationshipChange) logEntry += ` ${relationshipChange}`;
+
+          // Write event memory via NpcMemoryManager
+          if (memoryManager) {
+            await memoryManager.add({
+              npcId: node.characterId,
+              sessionId,
+              moduleId,
+              type: "event",
+              content: logEntry,
+              gameDay,
+              gameTime: action.gameTime,
+              location: action.location,
+              metadata: eventMetadata,
             });
-          })
-        );
-      }
+          }
 
-      action.outcome = sceneDelta.memory;
-      action.stateMemories = {
-        [node.characterId]: sceneDelta.memory,
-        ...(sceneDelta.witnessMemories ?? {}),
-      };
-    }
+          // Mirror write: other participants get event memories
+          if (memoryManager && action.stateMemories) {
+            // Write memories for each target in stateMemories (except actor)
+            for (const [charId, memoryText] of Object.entries(
+              action.stateMemories
+            )) {
+              if (charId === node.characterId) continue; // actor already written above
+              await memoryManager.add({
+                npcId: charId,
+                sessionId,
+                moduleId,
+                type: "event",
+                content: memoryText,
+                gameDay,
+                gameTime: action.gameTime,
+                location: action.location,
+                metadata: eventMetadata,
+              });
+            }
+          } else if (
+            memoryManager &&
+            action.status === "completed" &&
+            node.type === "character_interaction" &&
+            allTargetIds.length > 0
+          ) {
+            // Fallback mirror write for non-stateMemories handlers
+            const initiatorName = node.characterName;
+            for (const targetId of allTargetIds) {
+              await memoryManager.add({
+                npcId: targetId,
+                sessionId,
+                moduleId,
+                type: "event",
+                content: t("fallback_mirror_memory", language, {
+                  name: initiatorName,
+                  action: action.action,
+                  outcome: eventOutcome,
+                }),
+                gameDay,
+                gameTime: action.gameTime,
+                location: action.location,
+                metadata: eventMetadata,
+              });
+            }
+          }
 
-    // On character_interaction success -> update relationships with all targets
-    let relationshipChange: string | undefined;
-    if (
-      action.status === "completed" &&
-      node.type === "character_interaction" &&
-      allTargetIds.length > 0
-    ) {
-      const relParts: string[] = [];
-      for (const targetId of allTargetIds) {
-        const relResult = await npcPlanningAgent.updateRelationshipViaLLM(
-          dgsm,
-          node.characterId,
-          targetId,
-          action.outcome,
-          language
-        );
-        if (relResult) {
-          const sign = relResult.scoreDelta >= 0 ? "+" : "";
-          const targetName =
-            state.npcCharacters.find((n) => n.id === targetId)?.name ??
-            targetId;
-          relParts.push(
-            `[rel:${targetName} ${sign}${relResult.scoreDelta} → ${relResult.newScore}]`
+          await npcPlanningAgent.markNodeCompleted(
+            sessionId,
+            node.characterId,
+            gameDay,
+            node.nodeId,
+            action.outcome
           );
         }
-      }
-      if (relParts.length > 0) {
-        relationshipChange = relParts.join(" ");
-      }
-    }
 
-    // Log NPC actions and mark completed
-    {
-      // Actor event memory: prefer stateMemories if available
-      let logEntry = action.stateMemories?.[node.characterId] ?? eventOutcome;
-      if (relationshipChange) logEntry += ` ${relationshipChange}`;
+        // Discovery — NPC discovers evidence on successful actions
+        // Note: character_interaction npcKnowledge is already handled in step 4a above.
+        if (action.status === "completed") {
+          const effectiveSuccess: SuccessLevel =
+            action.successLevel ?? "regular";
+          const evidence = await discoverEvidence(
+            node,
+            effectiveSuccess,
+            dgsm,
+            language,
+            node.location
+          );
+          const allDiscoveries = evidence;
 
-      // Write event memory via NpcMemoryManager
-      if (memoryManager) {
-        await memoryManager.add({
-          npcId: node.characterId,
-          sessionId,
-          moduleId,
-          type: "event",
-          content: logEntry,
-          gameDay,
-          gameTime: action.gameTime,
-          location: action.location,
-          metadata: eventMetadata,
-        });
-      }
-
-      // Mirror write: other participants get event memories
-      if (memoryManager && action.stateMemories) {
-        // Write memories for each target in stateMemories (except actor)
-        for (const [charId, memoryText] of Object.entries(
-          action.stateMemories
-        )) {
-          if (charId === node.characterId) continue; // actor already written above
-          await memoryManager.add({
-            npcId: charId,
-            sessionId,
-            moduleId,
-            type: "event",
-            content: memoryText,
-            gameDay,
-            gameTime: action.gameTime,
-            location: action.location,
-            metadata: eventMetadata,
-          });
+          if (allDiscoveries.length > 0) {
+            // Merge with any discoveries already set (e.g. from step 4a)
+            action.discoveries = [
+              ...(action.discoveries ?? []),
+              ...allDiscoveries,
+            ];
+            embedDiscoveries(allDiscoveries, dgsm, language as "en" | "zh");
+            console.log(
+              `[TickProcessor] NPC discovered ${allDiscoveries.length} item(s): ${allDiscoveries.map((d) => `[${d.difficulty}] ${d.text.slice(0, 40)}`).join("; ")}`
+            );
+          }
         }
-      } else if (
-        memoryManager &&
-        action.status === "completed" &&
-        node.type === "character_interaction" &&
-        allTargetIds.length > 0
-      ) {
-        // Fallback mirror write for non-stateMemories handlers
-        const initiatorName = node.characterName;
-        for (const targetId of allTargetIds) {
-          await memoryManager.add({
-            npcId: targetId,
+
+        logNodeExecutionResult(node, action);
+
+        // Fumble -> damage a random evidence item in the NPC's current scene
+        if (action.successLevel === "fumble") {
+          const scene = dgsm.getScene(node.location);
+          const damageable =
+            scene?.items?.filter(
+              (i) => i.category === "evidence" && !i.damaged
+            ) ?? [];
+          if (damageable.length > 0) {
+            const victim =
+              damageable[Math.floor(Math.random() * damageable.length)];
+            dgsm.damageEvidenceItem(
+              victim.id,
+              node.characterName,
+              `Fumbled: ${node.action}`,
+              node.location
+            );
+            action.damagedEvidence = {
+              itemId: victim.id,
+              sourceName: scene!.name,
+            };
+            console.log(
+              `[TickProcessor] Fumble damaged evidence: ${(victim.description || victim.name).slice(0, 40)}`
+            );
+          }
+        }
+
+        // On failure -> mark node as failed (removes from pending), then revisePlans
+        if (action.status === "failed") {
+          // Remove the failed node first so revisePlans won't see it in pendingNodes
+          await npcPlanningAgent.markNodeFailed(
             sessionId,
-            moduleId,
-            type: "event",
-            content: t("fallback_mirror_memory", language, {
-              name: initiatorName,
+            node.characterId,
+            gameDay,
+            node.nodeId,
+            action.failureReason ?? "unknown"
+          );
+
+          pendingRevisionRequests.push({
+            npcId: node.characterId,
+            trigger: {
+              type: "failure",
+              failureReason: action.failureReason!,
               action: action.action,
-              outcome: eventOutcome,
-            }),
-            gameDay,
-            gameTime: action.gameTime,
-            location: action.location,
-            metadata: eventMetadata,
+              gameTime: action.gameTime,
+              failureOutcome: action.outcome,
+            },
+            reactionQuery: `${action.action} failed: ${action.outcome}`,
           });
         }
       }
-
-      await npcPlanningAgent.markNodeCompleted(
-        sessionId,
-        node.characterId,
-        gameDay,
-        node.nodeId,
-        action.outcome
-      );
-    }
-
-    // Discovery — NPC discovers evidence on successful actions
-    // Note: character_interaction npcKnowledge is already handled in step 4a above.
-    if (action.status === "completed") {
-      const effectiveSuccess: SuccessLevel = action.successLevel ?? "regular";
-      const evidence = await discoverEvidence(
-        node,
-        effectiveSuccess,
-        dgsm,
-        language,
-        node.location
-      );
-      const allDiscoveries = evidence;
-
-      if (allDiscoveries.length > 0) {
-        // Merge with any discoveries already set (e.g. from step 4a)
-        action.discoveries = [...(action.discoveries ?? []), ...allDiscoveries];
-        embedDiscoveries(allDiscoveries, dgsm, language as "en" | "zh");
-        console.log(
-          `[TickProcessor] NPC discovered ${allDiscoveries.length} item(s): ${allDiscoveries.map((d) => `[${d.difficulty}] ${d.text.slice(0, 40)}`).join("; ")}`
-        );
-      }
-    }
-
-    logNodeExecutionResult(node, action);
-
-    // Fumble -> damage a random evidence item in the NPC's current scene
-    if (action.successLevel === "fumble") {
-      const scene = dgsm.getScene(node.location);
-      const damageable =
-        scene?.items?.filter((i) => i.category === "evidence" && !i.damaged) ??
-        [];
-      if (damageable.length > 0) {
-        const victim =
-          damageable[Math.floor(Math.random() * damageable.length)];
-        dgsm.damageEvidenceItem(
-          victim.id,
-          node.characterName,
-          `Fumbled: ${node.action}`,
-          node.location
-        );
-        action.damagedEvidence = { itemId: victim.id, sourceName: scene!.name };
-        console.log(
-          `[TickProcessor] Fumble damaged evidence: ${(victim.description || victim.name).slice(0, 40)}`
-        );
-      }
-    }
-
-    // On failure -> mark node as failed (removes from pending), then revisePlans
-    if (action.status === "failed") {
-      // Remove the failed node first so revisePlans won't see it in pendingNodes
-      await npcPlanningAgent.markNodeFailed(
-        sessionId,
-        node.characterId,
-        gameDay,
-        node.nodeId,
-        action.failureReason ?? "unknown"
-      );
-
-      pendingRevisionRequests.push({
-        npcId: node.characterId,
-        trigger: {
-          type: "failure",
-          failureReason: action.failureReason!,
-          action: action.action,
-          gameTime: action.gameTime,
-          failureOutcome: action.outcome,
-        },
-        reactionQuery: `${action.action} failed: ${action.outcome}`,
-      });
-    }
-  }
     })
   );
 
@@ -2327,35 +2365,6 @@ async function executeSingleTick(
             );
             await recordRevisionInterruption(reviseResult.interruptedAction);
 
-            // Trigger reasoning for high-impact events
-            if (memoryManager) {
-              const npcForReasoning = state.npcCharacters.find(
-                (n) => n.id === npcId
-              );
-              const npcProfile =
-                npcForReasoning?.background ?? npcForReasoning?.backstory ?? "";
-              const generateTextFn = (prompt: string) =>
-                generateText({
-                  runtime: npcPlanningAgent.getRuntime(),
-                  context: prompt,
-                  modelClass: ModelClass.MEDIUM,
-                });
-              await memoryManager.triggerReasoning(
-                {
-                  npcId,
-                  sessionId,
-                  moduleId,
-                  trigger: "high_impact",
-                  context: triggeringEvents,
-                  gameDay,
-                  gameTime: tickRuntime.tickTime,
-                },
-                npcForReasoning?.name ?? npcId,
-                npcProfile,
-                generateTextFn,
-                language
-              );
-            }
           }
           if (result.shouldReviseSchedule) {
             const triggerDesc = primaryEvent

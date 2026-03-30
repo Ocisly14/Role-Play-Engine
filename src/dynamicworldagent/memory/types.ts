@@ -2,13 +2,13 @@ import type {
   NpcMemoryType,
   NpcMemory as PrismaNpcMemory,
 } from "@prisma/client";
+import type { JunctionNode, RoadNode } from "../state/topologyTypes.js";
 import type {
   DynamicScene,
   KnownMapSeed,
   ScenarioOutline,
   TransportEdge,
 } from "../state/types.js";
-import type { JunctionNode, RoadNode } from "../state/topologyTypes.js";
 
 // Re-export Prisma types
 export type { NpcMemoryType } from "@prisma/client";

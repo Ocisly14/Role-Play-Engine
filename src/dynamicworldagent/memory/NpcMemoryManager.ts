@@ -1,10 +1,13 @@
 import type { NpcMemory, NpcMemoryType, PrismaClient } from "@prisma/client";
 import type { EmbeddingClient } from "../../rag/embedding.js";
 import { DecayEngine } from "./DecayEngine.js";
+import { MemoryRetriever } from "./MemoryRetriever.js";
+import { MemoryStore } from "./MemoryStore.js";
+import { getAllHandlers, getHandler } from "./handlers/index.js";
 import {
-  areKnownMapSnapshotsEquivalent,
   areKnownMapConnectionKeysEqual,
   areKnownMapIdsEqual,
+  areKnownMapSnapshotsEquivalent,
   buildKnownMapSnapshot,
   createFullKnownMapIds,
   createKnownMapIdsFromSeed,
@@ -17,13 +20,6 @@ import {
   revealKnownMapLocationsDirect,
   snapshotSummary,
 } from "./mapMemory.js";
-import { MemoryRetriever } from "./MemoryRetriever.js";
-import { MemoryStore } from "./MemoryStore.js";
-import { getAllHandlers, getHandler } from "./handlers/index.js";
-import {
-  buildReasoningPrompt,
-  parseReasoningOutput,
-} from "./prompts/reasoningPrompt.js";
 import {
   type AddMemoryParams,
   CONTEXT_PROFILES,
@@ -31,12 +27,10 @@ import {
   type GetContextParams,
   type KnownMapIds,
   type KnownMapSnapshot,
-  MIN_MEMORIES_FOR_REASONING,
   type QueryMemoryParams,
   type RefreshMapSnapshotParams,
   type RevealMapLocationsParams,
   type ScoredMemory,
-  type TriggerReasoningParams,
 } from "./types.js";
 
 export class NpcMemoryManager {
@@ -413,6 +407,22 @@ export class NpcMemoryManager {
     });
   }
 
+  /** Fetch memories for a specific NPC, game day, and set of memory types (no scoring/semantic filtering). */
+  async getForDayByTypes(
+    npcId: string,
+    sessionId: string,
+    gameDay: number,
+    types: NpcMemoryType[],
+    limit = 500
+  ): Promise<NpcMemory[]> {
+    return this.store.findCandidates({
+      sessionId,
+      npcId,
+      filters: { gameDay, types },
+      limit,
+    });
+  }
+
   // ===== Context Building =====
 
   async getContext(params: GetContextParams): Promise<string> {
@@ -530,109 +540,16 @@ export class NpcMemoryManager {
     });
   }
 
-  async triggerReasoning(
-    params: TriggerReasoningParams,
-    npcName: string,
-    npcProfile: string,
-    generateTextFn: (prompt: string) => Promise<string>,
-    language?: string
-  ): Promise<NpcMemory[]> {
-    // Fetch relevant memories for reasoning
-    const memories = await this.retriever.query({
-      npcId: params.npcId,
-      sessionId: params.sessionId,
-      query: params.context ?? "",
-      filters: {
-        types: ["information", "witness", "event", "belief"],
-        currentGameDay: params.gameDay,
-      },
-      limit: 25,
+  async updateKnowledgeContent(
+    memoryId: string,
+    newContent: string,
+    currentMetadata: Record<string, any>
+  ): Promise<void> {
+    await this.store.updateContent(memoryId, newContent);
+    await this.store.updateMetadata(memoryId, {
+      ...currentMetadata,
+      lastUpdated: new Date().toISOString(),
     });
-
-    // Early return if insufficient information
-    if (memories.length < MIN_MEMORIES_FOR_REASONING) {
-      return [];
-    }
-
-    // Fetch existing active beliefs
-    const existingBeliefs = await this.retriever.query({
-      npcId: params.npcId,
-      sessionId: params.sessionId,
-      query: "",
-      filters: { types: ["belief"] },
-      limit: 20,
-    });
-    // Filter out disproven beliefs (confidence = 0)
-    const activeBeliefs = existingBeliefs.filter((b) => {
-      const meta = b.metadata as Record<string, any> | null;
-      return (meta?.confidence ?? 0) > 0;
-    });
-
-    // Build and execute reasoning prompt
-    const prompt = buildReasoningPrompt({
-      npcName,
-      npcProfile,
-      memories,
-      existingBeliefs: activeBeliefs,
-      trigger: params.trigger,
-      triggerContext: params.context,
-      language,
-    });
-
-    const rawResult = await generateTextFn(prompt);
-    const result = parseReasoningOutput(rawResult);
-
-    const newMemories: NpcMemory[] = [];
-
-    // Create new belief memories
-    for (const belief of result.newBeliefs) {
-      const memory = await this.add({
-        npcId: params.npcId,
-        sessionId: params.sessionId,
-        moduleId: params.moduleId,
-        type: "belief",
-        content: belief.belief,
-        gameDay: params.gameDay,
-        gameTime: params.gameTime,
-        metadata: {
-          confidence: belief.confidence,
-          reasoningChain: belief.reasoningChain,
-        },
-      });
-      newMemories.push(memory);
-    }
-
-    // Update existing beliefs
-    for (const update of result.updatedBeliefs) {
-      const existing = activeBeliefs.find(
-        (b) => b.content === update.originalBelief
-      );
-      if (!existing) continue;
-
-      await this.updateBeliefConfidence(
-        existing.id,
-        update.newConfidence,
-        update.reason,
-        (existing.metadata as Record<string, any>) ?? {}
-      );
-    }
-
-    return newMemories;
   }
 
-  async shouldTriggerReasoningOnConversation(
-    npcId: string,
-    sessionId: string,
-    playerUtterance: string
-  ): Promise<boolean> {
-    const results = await this.retriever.query({
-      npcId,
-      sessionId,
-      query: playerUtterance,
-      limit: 5,
-    });
-
-    const maxSimilarity = results.length > 0 ? results[0].similarityScore : 0;
-    return maxSimilarity < 0.3;
-  }
 }

@@ -1,8 +1,8 @@
-import {
-  buildTopology,
-  type CharacterPosition,
-} from "../state/topologyTypes.js";
 import type { DynamicGameStateManager } from "../state/DynamicGameState.js";
+import {
+  type CharacterPosition,
+  buildTopology,
+} from "../state/topologyTypes.js";
 import type { KnownMapSeed, ScenarioOutline } from "../state/types.js";
 import type { KnownMapIds, KnownMapScene, KnownMapSnapshot } from "./types.js";
 

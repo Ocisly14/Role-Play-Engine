@@ -241,6 +241,13 @@ export class MemoryStore {
     });
   }
 
+  async updateContent(memoryId: string, content: string): Promise<void> {
+    await this.prisma.npcMemory.update({
+      where: { id: memoryId },
+      data: { content },
+    });
+  }
+
   async batchUpdateImportance(
     sessionId: string,
     updates: Array<{ id: string; importance: number }>

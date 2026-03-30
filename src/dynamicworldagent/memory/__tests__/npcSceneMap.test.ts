@@ -7,13 +7,14 @@ import { buildTopology } from "../../state/topologyTypes.js";
 import type { JunctionNode, RoadNode } from "../../state/topologyTypes.js";
 import type { DynamicScene, ScenarioOutline } from "../../state/types.js";
 import {
+  areKnownMapConnectionKeysEqual,
   areKnownMapIdsEqual,
   areKnownMapSnapshotsEquivalent,
-  areKnownMapConnectionKeysEqual,
   buildKnownMapSnapshot,
   createFullKnownMapIds,
   createKnownMapIdsFromSeed,
   extractNameOnlySceneIds,
+  getKnownMapLocationIdsFromPosition,
   hydrateKnownMapSnapshot,
   knownMapIdsContainLocation,
   makeKnownMapConnectionKey,
@@ -21,9 +22,12 @@ import {
   normalizeKnownMapConnectionKeys,
   revealKnownMapLocations,
   revealKnownMapLocationsDirect,
-  getKnownMapLocationIdsFromPosition,
 } from "../mapMemory.js";
-import type { KnownMapIds, KnownMapSnapshot } from "../types.js";
+import type { KnownMapIds } from "../types.js";
+import {
+  buildLocationNameMap,
+  resolveLocationId,
+} from "../../dynamicBasicAgent/npcPlanning/sceneMapFormatter.js";
 
 // ===== Helpers =====
 
@@ -411,7 +415,10 @@ describe("normalizeKnownMapConnectionKeys", () => {
 describe("getKnownMapLocationIdsFromPosition", () => {
   it("returns sceneId for scene position", () => {
     expect(
-      getKnownMapLocationIdsFromPosition({ type: "scene", sceneId: "hall_lobby" })
+      getKnownMapLocationIdsFromPosition({
+        type: "scene",
+        sceneId: "hall_lobby",
+      })
     ).toEqual(["hall_lobby"]);
   });
 
@@ -885,6 +892,178 @@ describe("NPC scene map scenarios", () => {
         expect(snapshot.scenes.hall_office.description).toBe("");
         expect(snapshot.scenes.hall_office.connections).toEqual([]);
       }
+    });
+  });
+
+  describe("learned location names — fuzzy resolve", () => {
+    it("resolves exact outline name to entry scene ID", () => {
+      const dgsm = createTownDgsm();
+      const nameMap = buildLocationNameMap(dgsm);
+
+      expect(resolveLocationId("Town Hall", nameMap)).toBe("hall_lobby");
+      expect(resolveLocationId("Bookshop", nameMap)).toBe("bookshop_main");
+    });
+
+    it("resolves case-insensitive name", () => {
+      const dgsm = createTownDgsm();
+      const nameMap = buildLocationNameMap(dgsm);
+
+      expect(resolveLocationId("town hall", nameMap)).toBe("hall_lobby");
+      expect(resolveLocationId("BOOKSHOP", nameMap)).toBe("bookshop_main");
+      expect(resolveLocationId("Town square", nameMap)).toBe("JUNC_SQUARE");
+    });
+
+    it("resolves junction and road names", () => {
+      const dgsm = createTownDgsm();
+      const nameMap = buildLocationNameMap(dgsm);
+
+      expect(resolveLocationId("Town Square", nameMap)).toBe("JUNC_SQUARE");
+      expect(resolveLocationId("Train Station", nameMap)).toBe("JUNC_STATION");
+      expect(resolveLocationId("Main Street", nameMap)).toBe("ROAD_MAIN");
+    });
+
+    it("resolves sub-scene names to scene IDs", () => {
+      const dgsm = createTownDgsm();
+      const nameMap = buildLocationNameMap(dgsm);
+
+      expect(resolveLocationId("Town Hall Office", nameMap)).toBe(
+        "hall_office"
+      );
+      expect(resolveLocationId("Town Hall Basement", nameMap)).toBe(
+        "hall_basement"
+      );
+    });
+
+    it("fuzzy matches minor typos (≥80% similarity)", () => {
+      const dgsm = createTownDgsm();
+      const nameMap = buildLocationNameMap(dgsm);
+
+      // "Town Hal" vs "Town Hall" — 1 char diff in 9 chars → 89% similarity
+      expect(resolveLocationId("Town Hal", nameMap)).toBe("hall_lobby");
+      // "Bookshp" vs "Bookshop" — 1 char diff in 8 chars → 88% similarity
+      expect(resolveLocationId("Bookshp", nameMap)).toBe("bookshop_main");
+      // "Main Stret" vs "Main Street" — 1 char diff in 11 chars → 91% similarity
+      expect(resolveLocationId("Main Stret", nameMap)).toBe("ROAD_MAIN");
+    });
+
+    it("fuzzy matches with extra/missing characters", () => {
+      const dgsm = createTownDgsm();
+      const nameMap = buildLocationNameMap(dgsm);
+
+      // "Town Halll" vs "Town Hall" — 1 extra char → 90% similarity
+      expect(resolveLocationId("Town Halll", nameMap)).toBe("hall_lobby");
+      // "Train Staton" vs "Train Station" — 1 char diff → 92% similarity
+      expect(resolveLocationId("Train Staton", nameMap)).toBe("JUNC_STATION");
+    });
+
+    it("does NOT fuzzy match when similarity is below threshold", () => {
+      const dgsm = createTownDgsm();
+      const nameMap = buildLocationNameMap(dgsm);
+
+      // Completely different name
+      expect(resolveLocationId("Library", nameMap)).toBe("Library");
+      // Too short / too different
+      expect(resolveLocationId("Hall", nameMap)).toBe("Hall");
+    });
+
+    it("returns original string for unknown names", () => {
+      const dgsm = createTownDgsm();
+      const nameMap = buildLocationNameMap(dgsm);
+
+      expect(resolveLocationId("Nonexistent Place", nameMap)).toBe(
+        "Nonexistent Place"
+      );
+    });
+
+    it("simulates full learnedLocationNames pipeline", () => {
+      const dgsm = createTownDgsm();
+      const nameMap = buildLocationNameMap(dgsm);
+      const state = dgsm.getState();
+
+      // LLM outputs these names from a conversation
+      const learnedNames = [
+        "Bookshop", // valid → bookshop_main
+        "town hall", // valid, case-insensitive → hall_lobby
+        "Main Street", // valid → ROAD_MAIN
+        "Secret Hideout", // invalid — no match
+      ];
+
+      const resolvedIds = learnedNames
+        .map((name) => {
+          const resolved = resolveLocationId(name, nameMap);
+          if (
+            resolved === name &&
+            !state.scenes.has(name) &&
+            !state.junctions.has(name) &&
+            !state.roads.has(name)
+          ) {
+            return null;
+          }
+          return resolved;
+        })
+        .filter((id): id is string => id !== null);
+
+      expect(resolvedIds).toContain("bookshop_main");
+      expect(resolvedIds).toContain("hall_lobby");
+      expect(resolvedIds).toContain("ROAD_MAIN");
+      expect(resolvedIds).not.toContain("Secret Hideout");
+      expect(resolvedIds).toHaveLength(3);
+    });
+  });
+
+  describe("revealLocationsInMap expands map with name_only", () => {
+    it("revealing a location adds it and neighbors as name_only", () => {
+      const dgsm = createTownDgsm();
+
+      // Alice starts with only Town Hall
+      const aliceBase: KnownMapIds = {
+        sceneIds: ["hall_lobby", "hall_office"],
+        junctionIds: [],
+        roadIds: [],
+        scenarioOutlineIds: ["TOWN_HALL"],
+      };
+
+      // Someone tells Alice about the Bookshop (bookshop_main)
+      const expanded = revealKnownMapLocations(dgsm, aliceBase, [
+        "bookshop_main",
+      ]);
+
+      expect(expanded.sceneIds).toContain("bookshop_main");
+      expect(expanded.junctionIds).toContain("JUNC_STATION");
+      expect(expanded.sceneIds).toContain("hall_lobby");
+      expect(expanded.sceneIds).toContain("hall_office");
+
+      // Build snapshot — new scenes as name_only
+      const nameOnlySceneIds = expanded.sceneIds.filter(
+        (id) => !aliceBase.sceneIds.includes(id)
+      );
+      const snapshot = buildKnownMapSnapshot(dgsm, expanded, {
+        nameOnlySceneIds,
+        currentLocationId: "hall_office",
+      });
+
+      // bookshop_main is name_only (heard about it, never visited)
+      expect(snapshot.scenes.bookshop_main.detailLevel).toBe("name_only");
+      expect(snapshot.scenes.bookshop_main.name).toBe("Bookshop Interior");
+      expect(snapshot.scenes.bookshop_main.description).toBe("");
+
+      // Alice's current location is still full
+      expect(snapshot.scenes.hall_office.detailLevel).toBe("full");
+    });
+  });
+
+  describe("map memory excluded from summary", () => {
+    it("map type memories are filtered from day memories", () => {
+      const dayMemories = [
+        { type: "event", content: "Searched the study" },
+        { type: "witness", content: "Saw Bob enter" },
+        { type: "map", content: "Known map snapshot with 4 scenes" },
+        { type: "information", content: "The key is hidden" },
+      ];
+
+      const filtered = dayMemories.filter((m) => m.type !== "map");
+      expect(filtered).toHaveLength(3);
+      expect(filtered.every((m) => m.type !== "map")).toBe(true);
     });
   });
 });

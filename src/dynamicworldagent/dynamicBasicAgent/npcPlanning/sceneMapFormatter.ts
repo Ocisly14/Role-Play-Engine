@@ -1,10 +1,10 @@
+import { hydrateKnownMapSnapshot } from "../../memory/mapMemory.js";
+import type { KnownMapSnapshot } from "../../memory/types.js";
+import type { DynamicGameStateManager } from "../../state/DynamicGameState.js";
 import {
   getBlockedConnectionReason,
   resolveBlockedConnectionNodeRef,
 } from "../../state/blockedConnections.js";
-import { hydrateKnownMapSnapshot } from "../../memory/mapMemory.js";
-import type { KnownMapSnapshot } from "../../memory/types.js";
-import type { DynamicGameStateManager } from "../../state/DynamicGameState.js";
 import type { DynamicScene } from "../../state/types.js";
 
 type GameState = ReturnType<DynamicGameStateManager["getState"]>;
@@ -182,9 +182,37 @@ export function resolveLocationName(
   );
 }
 
+function levenshteinDistance(a: string, b: string): number {
+  const m = a.length;
+  const n = b.length;
+  const dp: number[][] = Array.from({ length: m + 1 }, () =>
+    Array(n + 1).fill(0)
+  );
+  for (let i = 0; i <= m; i++) dp[i][0] = i;
+  for (let j = 0; j <= n; j++) dp[0][j] = j;
+  for (let i = 1; i <= m; i++) {
+    for (let j = 1; j <= n; j++) {
+      dp[i][j] =
+        a[i - 1] === b[j - 1]
+          ? dp[i - 1][j - 1]
+          : 1 + Math.min(dp[i - 1][j], dp[i][j - 1], dp[i - 1][j - 1]);
+    }
+  }
+  return dp[m][n];
+}
+
+function stringSimilarity(a: string, b: string): number {
+  const maxLen = Math.max(a.length, b.length);
+  if (maxLen === 0) return 1;
+  return 1 - levenshteinDistance(a, b) / maxLen;
+}
+
+const FUZZY_THRESHOLD = 0.8;
+
 /**
  * Resolve a location name (from LLM output) to a location ID.
- * Falls back to case-insensitive match, then returns the original string.
+ * Falls back to case-insensitive match, then fuzzy match (≥80% similarity),
+ * then returns the original string.
  */
 export function resolveLocationId(
   name: string,
@@ -199,6 +227,18 @@ export function resolveLocationId(
   for (const [key, value] of nameMap) {
     if (key.toLowerCase() === lower) return value;
   }
+
+  // Fuzzy match — find the best candidate above threshold
+  let bestScore = 0;
+  let bestValue: string | undefined;
+  for (const [key, value] of nameMap) {
+    const score = stringSimilarity(lower, key.toLowerCase());
+    if (score >= FUZZY_THRESHOLD && score > bestScore) {
+      bestScore = score;
+      bestValue = value;
+    }
+  }
+  if (bestValue) return bestValue;
 
   return name; // return as-is (may already be an ID)
 }

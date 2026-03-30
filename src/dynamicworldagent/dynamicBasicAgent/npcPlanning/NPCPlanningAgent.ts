@@ -19,8 +19,8 @@ import {
   buildRelationshipUpdatePrompt,
   buildRevisePlansPrompt,
   buildReviseSchedulePrompt,
-  buildSummarizeDayMemoryPrompt,
 } from "./npcPlanningTemplates.js";
+import { buildSummarizeDayMemoryPrompt } from "./npcSummaryTemplates.js";
 import {
   buildInterruptedAction,
   mergeRevisedNodesWithHistory,
@@ -1449,36 +1449,6 @@ export class NPCPlanningAgent {
       );
     }
 
-    // 1b. After summarization, trigger day_transition reasoning for all NPCs
-    if (this.memoryManager && previousDay >= 1) {
-      const generateTextFn = (prompt: string) =>
-        generateText({
-          runtime: this.runtime,
-          context: prompt,
-          modelClass: ModelClass.MEDIUM,
-        });
-
-      const npcCharacters = dgsm.getSimulatedNpcs();
-      const reasoningPromises = npcCharacters.map((npc) =>
-        this.memoryManager!.triggerReasoning(
-          {
-            npcId: npc.id,
-            sessionId,
-            moduleId,
-            trigger: "day_transition" as const,
-            context: "End of day review",
-            gameDay: previousDay,
-            gameTime: "23:59",
-          },
-          npc.name,
-          npc.background ?? npc.backstory ?? "",
-          generateTextFn,
-          language
-        )
-      );
-      await Promise.all(reasoningPromises);
-    }
-
     // 2. Generate daily schedules for all NPCs (includes long-term intent check via ensureNpc path)
     await this.generateDailySchedule(
       dgsm,
@@ -1519,39 +1489,54 @@ export class NPCPlanningAgent {
     if (!this.memoryManager) return;
     if (!dgsm.isNpcAlive(npcId)) return;
 
-    // Fetch ALL memories from this day — no semantic filtering, no type restriction
-    const dayMemories = await this.memoryManager.getAllForDay(
+    // Fetch only event + witness memories — these are what actually happened
+    const dayMemories = await this.memoryManager.getForDayByTypes(
       npcId,
       sessionId,
-      gameDay
+      gameDay,
+      ["event", "witness"]
     );
     if (dayMemories.length === 0) return;
 
-    const { getAllHandlers } = await import("../../memory/handlers/index.js");
-    const handlers = getAllHandlers();
+    const { getHandler } = await import("../../memory/handlers/index.js");
+    const eventHandler = getHandler("event");
+    const witnessHandler = getHandler("witness");
     const state = dgsm.getState();
 
     const eventLog = dayMemories
-      .filter((m) => m.type !== "map")
-      .map((m) => handlers[m.type].format(m))
+      .map((m) =>
+        m.type === "event" ? eventHandler.format(m) : witnessHandler.format(m)
+      )
       .join("\n");
 
     const npc = state.npcCharacters.find((n) => n.id === npcId);
     if (!npc) return;
 
     // Query NPC's existing information/secret memories as knowledge context
-    const existingKnowledgeMemories = await this.memoryManager.query({
+    const existingKnowledgeMemories = await this.memoryManager.getAllByTypes(
       npcId,
       sessionId,
-      query: "",
-      filters: { types: ["information", "secret"] },
-      limit: 50,
-    });
+      ["information", "secret"],
+    );
     const existingKnowledge = existingKnowledgeMemories
       .map((m) => {
         const meta = m.metadata as Record<string, any> | null;
         const kid = (meta?.knowledgeId as string) ?? m.id;
         return `- [${kid}] ${m.content}`;
+      })
+      .join("\n");
+
+    // Query NPC's current beliefs
+    const existingBeliefMemories = await this.memoryManager.getAllByTypes(
+      npcId,
+      sessionId,
+      ["belief"],
+    );
+    const existingBeliefs = existingBeliefMemories
+      .map((m) => {
+        const meta = m.metadata as Record<string, any> | null;
+        const confidence = meta?.confidence ?? 1.0;
+        return `- [${m.id}] ${m.content} (confidence: ${confidence})`;
       })
       .join("\n");
 
@@ -1561,6 +1546,7 @@ export class NPCPlanningAgent {
       gameDay,
       eventLog,
       existingKnowledge,
+      existingBeliefs,
       language,
     });
 
@@ -1579,6 +1565,16 @@ export class NPCPlanningAgent {
         text: string;
         category?: string;
         difficulty?: string;
+      }>;
+      updatedKnowledge?: Array<{
+        id: string;
+        text?: string;
+        action?: "update" | "remove";
+      }>;
+      updatedBeliefs?: Array<{
+        id: string;
+        confidence: number;
+        reason: string;
       }>;
     }>(response);
 
@@ -1619,6 +1615,54 @@ export class NPCPlanningAgent {
             revealed: false,
           },
         });
+      }
+    }
+
+    // Update existing knowledge
+    if (parsed.updatedKnowledge?.length) {
+      const knowledgeById = new Map(
+        existingKnowledgeMemories.map((m) => {
+          const meta = m.metadata as Record<string, any> | null;
+          const kid = (meta?.knowledgeId as string) ?? m.id;
+          return [kid, m];
+        })
+      );
+      for (const uk of parsed.updatedKnowledge) {
+        const existing = knowledgeById.get(uk.id);
+        if (!existing) continue;
+        if (uk.action === "remove") {
+          // Mark as disproven by setting importance to near-zero (accelerate decay)
+          await this.memoryManager!.updateBeliefConfidence(
+            existing.id,
+            0,
+            "Disproven during day summary",
+            (existing.metadata as Record<string, any>) ?? {},
+          );
+        } else if (uk.text) {
+          const meta = (existing.metadata as Record<string, any>) ?? {};
+          await this.memoryManager!.updateKnowledgeContent(
+            existing.id,
+            uk.text,
+            meta,
+          );
+        }
+      }
+    }
+
+    // Update existing beliefs
+    if (parsed.updatedBeliefs?.length) {
+      const beliefById = new Map(
+        existingBeliefMemories.map((m) => [m.id, m])
+      );
+      for (const ub of parsed.updatedBeliefs) {
+        const existing = beliefById.get(ub.id);
+        if (!existing) continue;
+        await this.memoryManager!.updateBeliefConfidence(
+          existing.id,
+          ub.confidence,
+          ub.reason ?? "",
+          (existing.metadata as Record<string, any>) ?? {},
+        );
       }
     }
   }

@@ -3,8 +3,8 @@ import {
   buildDailySchedulePrompt,
   buildDetailedNodesPrompt,
   buildImpactGatePrompt,
-  buildReviseSchedulePrompt,
   buildRevisePlansPrompt,
+  buildReviseSchedulePrompt,
 } from "../npcPlanningTemplates.js";
 
 describe("npcPlanningTemplates", () => {

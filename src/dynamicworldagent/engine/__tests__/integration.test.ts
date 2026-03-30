@@ -7,7 +7,7 @@
 
 import { beforeAll, describe, expect, it } from "vitest";
 import { ModelClass, generateText } from "../../../models/index.js";
-import { buildSummarizeDayMemoryPrompt } from "../../dynamicBasicAgent/npcPlanning/npcPlanningTemplates.js";
+import { buildSummarizeDayMemoryPrompt } from "../../dynamicBasicAgent/npcPlanning/npcSummaryTemplates.js";
 import type { PlanNode } from "../../dynamicBasicAgent/npcPlanning/types.js";
 import {
   DynamicGameStateManager,
