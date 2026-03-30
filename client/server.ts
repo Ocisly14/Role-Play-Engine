@@ -71,12 +71,12 @@ app.use(express.static(staticDir));
 app.use("/api/maps", mapRoutes); // /api/maps/* - Map image serving (MUST be first, no auth)
 app.use("/api/auth", authRoutes); // /api/auth/* - Authentication routes
 app.use("/api", simulationMapRoutes); // /api/simulation/:id/* public viewer reads (no auth, MUST be before authenticated routers)
+app.use("/api", analyticsRoutes); // /api/analytics/* (visitor routes are public, MUST be before authenticated routers)
 app.use("/api", dataRoutes); // /api/occupations, /api/weapons, /api/mods
 app.use("/api", characterRoutes); // /api/character*, /api/characters
 app.use("/api", modRoutes); // /api/mod/*, /api/module/*
 app.use("/api", memoRoutes); // /api/memos
 app.use("/api", skillRoutes); // /api/skills/*
-app.use("/api", analyticsRoutes); // /api/analytics/*
 app.use("/api", ragRoutes); // /api/rag/*
 app.use("/api", simulationRoutes); // /api/simulation*, /api/simulations
 

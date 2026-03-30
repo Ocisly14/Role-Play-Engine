@@ -4,7 +4,7 @@
  * After the handler determines success/failure via dice,
  * this module asks a MEDIUM-class LLM to produce concrete
  * state deltas (item locations, item updates, scene conditions, memories)
- * for the actor and any witnesses.
+ * for the actor.
  */
 
 import { ModelClass, generateText } from "../../../models/index.js";
@@ -193,13 +193,6 @@ For "inspect" actions, no item changes are typically needed. Write a detailed me
 ## Scene Conditions
 Use "addSceneConditions" for observable environmental changes caused by the action (e.g. "desk drawer left open", "broken glass on the floor"). Each entry is a short description string.
 
-## Witnesses
-If other NPCs are present in the scene, decide if they noticed the action based on context:
-- Obvious actions (moving furniture, breaking things, loud noise) → witnesses notice
-- Subtle actions (quietly pocketing a small item, reading a document) → may go unnoticed
-- The actor's intent matters — if they are deliberately being stealthy, witnesses are less likely to notice
-Write a first-person witness memory only for those who noticed, keyed by NPC ID in "witnessMemories".
-
 ## Narrative Grounding
 - **Deterministic facts must match injected data:** items, objects, scene contents, sensory observations (what characters see/hear/smell), and physical properties must come from the provided context. Do not fabricate objects or details that objectively exist or don't exist in the world.
 - **Non-deterministic character behavior may be creative:** how the character handles the object, their reactions, internal thoughts, and descriptions of the physical interaction are yours to craft.
@@ -208,7 +201,7 @@ Write a first-person witness memory only for those who noticed, keyed by NPC ID 
 Always required for the actor. Write from the actor's first-person perspective: what they did, what they observed, and the result. Write in ${language}.
 
 ## Output
-Return a single JSON object. No extra text. JSON keys must be in English. Write "memory" and witness memory values in ${language}.
+Return a single JSON object. No extra text. JSON keys must be in English. Write "memory" values in ${language}.
 
 \`\`\`json
 {
@@ -219,8 +212,7 @@ Return a single JSON object. No extra text. JSON keys must be in English. Write 
     { "id": "gear_01", "name": "Small Gear", "type": "other", "description": "A tiny brass gear", "location": "scene", "sourceItemId": "clock_01" }
   ],
   "addSceneConditions": ["desk drawer left open"],
-  "memory": "first-person account (REQUIRED)",
-  "witnessMemories": { "<npc_id>": "first-person witness account" }
+  "memory": "first-person account (REQUIRED)"
 }
 \`\`\``;
 }
@@ -232,7 +224,6 @@ function buildUserPrompt(
   sceneItems: Item[],
   sceneDescription: string,
   itemContexts: Record<string, string> | undefined,
-  witnesses: Array<{ id: string; name: string }>,
   skillRollResult: { successLevel: SuccessLevel; detail: string } | null,
   relatedMemories: string[],
   worldStateBlock: string
@@ -288,15 +279,6 @@ function buildUserPrompt(
     sceneItemsSection = `### Scene Items\n(none)`;
   }
 
-  // Section 7: Other NPCs Present
-  const witnessSection =
-    witnesses.length > 0
-      ? [
-          `## Other NPCs Present`,
-          ...witnesses.map((w) => `- ${w.name} (${w.id})`),
-        ].join("\n")
-      : `## Other NPCs Present\n(none)`;
-
   const memorySection =
     relatedMemories.length > 0
       ? [
@@ -318,8 +300,6 @@ function buildUserPrompt(
     sceneSection,
     "",
     sceneItemsSection,
-    "",
-    witnessSection,
     ...(memorySection ? ["", memorySection] : []),
     ...(worldStateBlock ? ["", worldStateBlock] : []),
   ].join("\n");
@@ -369,19 +349,6 @@ export async function resolveObjectInteractionState(
     | Record<string, string>
     | undefined;
 
-  // Find witnesses: NPCs in the same scene, excluding the actor
-  const witnesses: Array<{ id: string; name: string }> = [];
-  for (const npc of state.npcCharacters) {
-    if (npc.id === node.characterId) continue;
-    if (!dgsm.isNpcAlive(npc.id)) continue;
-    const pos = dgsm.getCharacterPosition(npc.id);
-    if (!pos) continue;
-    const locId = dgsm.resolveLocationId(pos);
-    if (locId === node.location) {
-      witnesses.push({ id: npc.id, name: npc.name });
-    }
-  }
-
   // Query related memories about the target item via semantic search
   let relatedMemories: string[] = [];
   if (memoryManager && sessionId) {
@@ -425,7 +392,6 @@ export async function resolveObjectInteractionState(
     sceneItems,
     sceneDescription,
     itemContexts,
-    witnesses,
     skillRollResult,
     relatedMemories,
     worldStateBlock
@@ -450,7 +416,6 @@ export async function resolveObjectInteractionState(
       newItems?: NewItemEntry[];
       addSceneConditions?: string[];
       memory?: string;
-      witnessMemories?: Record<string, string>;
     }>(response);
 
     return {
@@ -458,7 +423,6 @@ export async function resolveObjectInteractionState(
       newItems: parsed.newItems,
       addSceneConditions: parsed.addSceneConditions,
       memory: parsed.memory ?? node.action,
-      witnessMemories: parsed.witnessMemories,
     };
   } catch (error) {
     console.warn(

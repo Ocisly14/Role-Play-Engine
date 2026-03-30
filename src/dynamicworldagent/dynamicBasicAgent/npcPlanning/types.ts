@@ -69,8 +69,6 @@ export interface ObjectStateDelta {
   addSceneConditions?: string[];
   /** First-person memory for the actor. */
   memory: string;
-  /** First-person memories for co-present NPCs who witnessed the action. */
-  witnessMemories?: Record<string, string>;
 }
 
 // ===== LLM State Resolver types (scene_interaction) =====
@@ -91,8 +89,6 @@ export interface SceneStateDelta {
   items?: ItemResult[];
   /** First-person memory for the actor. */
   memory: string;
-  /** First-person memories for co-present NPCs who witnessed the action. */
-  witnessMemories?: Record<string, string>;
 }
 
 export interface ObjectInteractionPayload {

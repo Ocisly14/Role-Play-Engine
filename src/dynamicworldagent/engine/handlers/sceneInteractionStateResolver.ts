@@ -4,7 +4,7 @@
  * After the handler determines success/failure via dice,
  * this module asks a MEDIUM-class LLM to produce concrete
  * state deltas (scene conditions, connection effects, memories)
- * for the actor and any witnesses.
+ * for the actor.
  */
 
 import { ModelClass, generateText } from "../../../models/index.js";
@@ -111,12 +111,6 @@ Only include items that actually changed. Common cases:
 - Consumable used up → \`{ "itemId": "matches", "location": "destroyed" }\`
 - Item dropped during action → \`{ "itemId": "flashlight", "location": "scene" }\`
 
-## Witnesses
-If other NPCs are present in the scene, decide if they noticed the action:
-- Obvious actions (barricading a door, breaking things) → witnesses notice
-- Subtle actions (quietly searching a corner, inspecting a wall) → may go unnoticed
-Write a first-person witness memory only for those who noticed, keyed by NPC ID.
-
 ## Narrative Grounding
 - **Deterministic facts must match injected data:** scene contents, connections, conditions, and physical properties must come from the provided context. Do not fabricate details.
 - **Non-deterministic character behavior may be creative:** how the character interacts with the environment, their reactions, and internal thoughts are yours to craft.
@@ -125,7 +119,7 @@ Write a first-person witness memory only for those who noticed, keyed by NPC ID.
 Always required for the actor. Write from the actor's first-person perspective: what they did, what they observed, and the result. Write in ${language}.
 
 ## Output
-Return a single JSON object. No extra text. JSON keys must be in English. Write "memory" and witness memory values in ${language}.
+Return a single JSON object. No extra text. JSON keys must be in English. Write "memory" values in ${language}.
 
 \`\`\`json
 {
@@ -140,8 +134,7 @@ Return a single JSON object. No extra text. JSON keys must be in English. Write 
   "items": [
     { "itemId": "crowbar", "location": "inventory", "updates": { "damaged": true } }
   ],
-  "memory": "first-person account (REQUIRED)",
-  "witnessMemories": { "<npc_id>": "first-person witness account" }
+  "memory": "first-person account (REQUIRED)"
 }
 \`\`\``;
 }
@@ -151,7 +144,6 @@ function buildUserPrompt(
   actorName: string,
   sceneBlock: string,
   toolItemBlock: string | null,
-  witnesses: Array<{ id: string; name: string }>,
   skillRollResult: { successLevel: SuccessLevel; detail: string } | null,
   worldStateBlock: string
 ): string {
@@ -175,14 +167,6 @@ function buildUserPrompt(
     `ID: ${node.characterId}`,
   ].join("\n");
 
-  const witnessSection =
-    witnesses.length > 0
-      ? [
-          `## Other NPCs Present`,
-          ...witnesses.map((w) => `- ${w.name} (${w.id})`),
-        ].join("\n")
-      : `## Other NPCs Present\n(none)`;
-
   return [
     "# Scene Interaction Node",
     nodeSection,
@@ -193,8 +177,6 @@ function buildUserPrompt(
     "",
     sceneBlock,
     ...(toolItemBlock ? ["", toolItemBlock] : []),
-    "",
-    witnessSection,
     ...(worldStateBlock ? ["", worldStateBlock] : []),
   ].join("\n");
 }
@@ -265,19 +247,6 @@ export async function resolveSceneInteractionState(
   const actorNpc = state.npcCharacters.find((n) => n.id === node.characterId);
   const actorName = actorNpc?.name ?? node.characterName;
 
-  // Find witnesses
-  const witnesses: Array<{ id: string; name: string }> = [];
-  for (const npc of state.npcCharacters) {
-    if (npc.id === node.characterId) continue;
-    if (!dgsm.isNpcAlive(npc.id)) continue;
-    const pos = dgsm.getCharacterPosition(npc.id);
-    if (!pos) continue;
-    const locId = dgsm.resolveLocationId(pos);
-    if (locId === node.location) {
-      witnesses.push({ id: npc.id, name: npc.name });
-    }
-  }
-
   const sceneBlock = buildSceneBlock(node, dgsm);
 
   // Build tool item block if an item is being used
@@ -305,7 +274,6 @@ export async function resolveSceneInteractionState(
     actorName,
     sceneBlock,
     toolItemBlock,
-    witnesses,
     skillRollResult,
     worldStateBlock
   );
@@ -342,7 +310,6 @@ export async function resolveSceneInteractionState(
         updates?: Record<string, unknown>;
       }>;
       memory?: string;
-      witnessMemories?: Record<string, string>;
     }>(response);
 
     return {
@@ -351,7 +318,6 @@ export async function resolveSceneInteractionState(
       connectionEffects: parsed.connectionEffects,
       items: parsed.items,
       memory: parsed.memory ?? node.action,
-      witnessMemories: parsed.witnessMemories,
     };
   } catch (error) {
     console.warn(

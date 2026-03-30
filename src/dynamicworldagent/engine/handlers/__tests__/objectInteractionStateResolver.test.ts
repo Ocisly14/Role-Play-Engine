@@ -567,12 +567,6 @@ describe("resolveObjectInteractionState (LLM)", () => {
         ],
         memory:
           "我小心翼翼地拆解了那台老座钟。在钟的内部机构中，我发现了一个精密的黄铜齿轮，上面刻着我从未见过的符文。更令人惊讶的是，钟摆内部似乎封印着某种发光的液体。最意外的发现是藏在钟壳夹层里的一张泛黄纸条。",
-        witnessMemories: {
-          npc_butler:
-            "调查员把客厅里的老座钟给拆了！碎片散了一地。他似乎在里面找到了什么东西。",
-          npc_maid:
-            "那位先生在拆主人最珍贵的座钟！我看到他从里面取出了一些零件和一张纸。",
-        },
       })
     );
 
@@ -626,10 +620,6 @@ describe("resolveObjectInteractionState (LLM)", () => {
     // Actor memory
     expect(result.memory).toContain("符文");
     expect(result.memory).toContain("纸条");
-
-    // Witness memories
-    expect(result.witnessMemories!["npc_butler"]).toContain("座钟");
-    expect(result.witnessMemories!["npc_maid"]).toContain("纸");
   });
 
   // ── Complex: unlock container + extract + update item ──
@@ -949,7 +939,7 @@ describe("resolveObjectInteractionState (LLM)", () => {
     expect(capturedSystem).toContain("zh");
   });
 
-  it("should still include hidden NPCs in witness prompt context", async () => {
+  it("should no longer inject co-present NPCs into the resolver prompt", async () => {
     const { generateText } = await import("../../../../models/index.js");
     let capturedPrompt = "";
     (generateText as any).mockImplementationOnce(async (opts: any) => {
@@ -972,7 +962,7 @@ describe("resolveObjectInteractionState (LLM)", () => {
       "en"
     );
 
-    expect(capturedPrompt).toContain("Visible Witness");
-    expect(capturedPrompt).toContain("Hidden Witness");
+    expect(capturedPrompt).not.toContain("Visible Witness");
+    expect(capturedPrompt).not.toContain("Hidden Witness");
   });
 });

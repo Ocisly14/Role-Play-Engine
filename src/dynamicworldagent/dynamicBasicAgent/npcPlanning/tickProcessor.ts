@@ -374,6 +374,21 @@ function buildImpactMemoryContent(
   }
 }
 
+function resolveImpactMemoryEntry(
+  witnessEntry: string,
+  perspective: "targeted" | "witness" | "co_presence",
+  primaryEvent: CharacterAction | undefined,
+  lang: string
+): string {
+  const trimmedEntry = witnessEntry.trim();
+  if (trimmedEntry.length > 0) return trimmedEntry;
+  if (perspective === "co_presence") {
+    const fallbackOutcome = primaryEvent?.outcome?.trim();
+    if (fallbackOutcome) return fallbackOutcome;
+  }
+  return t("perceived_something", lang);
+}
+
 function getNodeDurationMinutes(node: PlanNode): number {
   return Math.max(
     1,
@@ -1765,7 +1780,6 @@ async function executeSingleTick(
           action.outcome = objDelta.memory;
           action.stateMemories = {
             [node.characterId]: objDelta.memory,
-            ...(objDelta.witnessMemories ?? {}),
           };
         }
 
@@ -1802,10 +1816,16 @@ async function executeSingleTick(
             memoryManager &&
             appliedSceneDelta.revealedHiddenConnections.length > 0
           ) {
-            const recipientIds = new Set<string>([
-              node.characterId,
-              ...Object.keys(sceneDelta.witnessMemories ?? {}),
-            ]);
+            const recipientIds = new Set<string>([node.characterId]);
+            for (const npc of state.npcCharacters) {
+              if (npc.id === node.characterId) continue;
+              if (!dgsm.isNpcAlive(npc.id)) continue;
+              const pos = dgsm.getCharacterPosition(npc.id);
+              if (!pos) continue;
+              if (dgsm.resolveLocationId(pos) === node.location) {
+                recipientIds.add(npc.id);
+              }
+            }
             await Promise.all(
               [...recipientIds].map(async (npcId) => {
                 const npcPos = dgsm.getCharacterPosition(npcId);
@@ -1829,7 +1849,6 @@ async function executeSingleTick(
           action.outcome = sceneDelta.memory;
           action.stateMemories = {
             [node.characterId]: sceneDelta.memory,
-            ...(sceneDelta.witnessMemories ?? {}),
           };
         }
 
@@ -1886,23 +1905,31 @@ async function executeSingleTick(
             });
           }
 
-          // Mirror write: other participants get event memories
+          // Mirror write: other participants get memories
           if (memoryManager && action.stateMemories) {
-            // Write memories for each target in stateMemories (except actor)
+            const targetIdSet = new Set(allTargetIds);
             for (const [charId, memoryText] of Object.entries(
               action.stateMemories
             )) {
               if (charId === node.characterId) continue; // actor already written above
+              // Direct interaction targets → event; pure witnesses → witness
+              const isDirectTarget = targetIdSet.has(charId);
               await memoryManager.add({
                 npcId: charId,
                 sessionId,
                 moduleId,
-                type: "event",
+                type: isDirectTarget ? "event" : "witness",
                 content: memoryText,
                 gameDay,
                 gameTime: action.gameTime,
                 location: action.location,
-                metadata: eventMetadata,
+                metadata: isDirectTarget
+                  ? eventMetadata
+                  : {
+                      sourceCharacterId: node.characterId,
+                      sourceAction: action.action,
+                      impact: action.impact,
+                    },
               });
             }
           } else if (
@@ -2147,10 +2174,6 @@ async function executeSingleTick(
     tickActions,
     movedNpcIds,
     previousEncounterSignatures ?? new Set<string>(),
-    memoryManager,
-    sessionId,
-    moduleId,
-    gameDay,
     language
   );
 
@@ -2310,15 +2333,21 @@ async function executeSingleTick(
             language
           );
 
+          const resolvedWitnessEntry = resolveImpactMemoryEntry(
+            result.witnessEntry,
+            perspective,
+            primaryEvent,
+            language
+          );
           const logEntry = primaryEvent
             ? buildImpactMemoryContent(
                 perspective,
                 tickRuntime.tickTime,
                 gameDay,
-                result.witnessEntry,
+                resolvedWitnessEntry,
                 language
               )
-            : `[witness] ${result.witnessEntry}`;
+            : `[witness] ${resolvedWitnessEntry}`;
           const npcLocPos = dgsm.getCharacterPosition(npcId);
           const npcLoc = npcLocPos
             ? dgsm.resolveLocationId(npcLocPos)
@@ -2522,8 +2551,8 @@ async function syncNpcMapMemories(params: {
 
 /**
  * Detect NPC co-presence per scene after node execution.
- * Writes a lightweight witness memory per NPC and returns synthetic
- * impact-2 CharacterActions (one per scene) for the gate pipeline.
+ * Returns synthetic impact-2 CharacterActions (one per scene)
+ * for the unified impact-gate pipeline.
  */
 function scanUnplannedEncounters(
   dgsm: DynamicGameStateManager,
@@ -2531,10 +2560,6 @@ function scanUnplannedEncounters(
   tickActions: CharacterAction[],
   movedNpcIds: Set<string>,
   previousEncounterSignatures: ReadonlySet<string>,
-  memoryManager: NpcMemoryManager | undefined,
-  sessionId: string,
-  moduleId: string,
-  gameDay: number,
   lang: string
 ): CharacterAction[] {
   const state = dgsm.getState();
@@ -2660,46 +2685,6 @@ function scanUnplannedEncounters(
       continue;
     }
 
-    // Write witness memory per NPC
-    if (memoryManager) {
-      for (const [npcId, otherIds] of npcEncounterMap) {
-        const spotted = spottedHiddenPairs.get(npcId);
-        const normalNames: string[] = [];
-        const spottedNames: string[] = [];
-        for (const id of otherIds) {
-          if (spotted?.has(id)) {
-            spottedNames.push(formatPresenceLabel(id));
-          } else {
-            normalNames.push(formatPresenceLabel(id));
-          }
-        }
-        const parts: string[] = [];
-        if (normalNames.length > 0)
-          parts.push(t("saw_here", lang, { names: normalNames.join(", ") }));
-        if (spottedNames.length > 0)
-          parts.push(
-            t("spotted_hiding", lang, { names: spottedNames.join(", ") })
-          );
-        if (parts.length === 0) continue;
-        // Fire-and-forget; consistent with existing memory write pattern
-        void memoryManager.add({
-          npcId,
-          sessionId,
-          moduleId,
-          type: "witness",
-          content: parts.join(". "),
-          gameDay,
-          gameTime: tickTime,
-          location: locationId,
-          metadata: {
-            sourceCharacterId: "__encounter__",
-            sourceAction:
-              spottedNames.length > 0 ? "detected-hidden" : "co-presence",
-            impact: spottedNames.length > 0 ? 3 : 2,
-          },
-        });
-      }
-    }
     const allNpcNames = [...allNpcIds].map((id) => formatPresenceLabel(id));
 
     encounterEvents.push({
