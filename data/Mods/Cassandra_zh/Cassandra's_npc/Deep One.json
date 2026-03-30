@@ -9,6 +9,12 @@
   "background": "深潜者是栖息在深海中的古老水生种族。它们既能在水下也能在陆地上生活，经常通过邪教、异族通婚或海岸定居点与人类互动，其中最臭名昭著的是与印斯茅斯的历史渊源。",
   "residence": "SCN_7",
   "currentLocation": "SCN_7",
+  "knownMapSeed": {
+    "junctionIds": [],
+    "roadIds": [],
+    "scenarioOutlineIds": ["SCN_7"],
+    "sceneIds": ["SCN_7_SUB_1", "SCN_7_SUB_2"]
+  },
   "longTermIntent": "保卫深潜者领地，保持水陆之间的隐秘通道畅通，维护血脉和联盟以阻止人类对海岸的过多侵占。",
   "attributes": {
     "STR": 65,

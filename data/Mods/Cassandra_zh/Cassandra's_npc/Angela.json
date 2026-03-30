@@ -9,6 +9,62 @@
   "background": "安吉拉活跃在卡森德拉地下经济的边缘。她与勒克斯·林奇保持着长期交易关系，供应大麻、阿拉伯茶和少量精神活性药物如哌甲酯。她刻意回避镇上更大的阴谋，靠保持流动、缩小社交圈和从不假装忠诚比谨慎更有价值来求生。",
   "residence": "OUTDOOR",
   "currentLocation": "JUNC_2",
+  "knownMapSeed": {
+    "sceneIds": [
+      "SCN_16_SUB_1",
+      "SCN_16_SUB_2",
+      "SCN_21_SUB_1",
+      "SCN_21_SUB_2"
+    ],
+    "junctionIds": [
+      "JUNC_1",
+      "JUNC_2",
+      "JUNC_3",
+      "JUNC_4",
+      "JUNC_5",
+      "JUNC_6",
+      "JUNC_7",
+      "JUNC_8",
+      "JUNC_9",
+      "JUNC_10",
+      "JUNC_11"
+    ],
+    "roadIds": [
+      "ROAD_1",
+      "ROAD_2",
+      "ROAD_3",
+      "ROAD_4",
+      "ROAD_5a",
+      "ROAD_5b",
+      "ROAD_6",
+      "ROAD_7",
+      "ROAD_8",
+      "ROAD_9",
+      "ROAD_10"
+    ],
+    "scenarioOutlineIds": [
+      "SCN_1",
+      "SCN_2",
+      "SCN_3",
+      "SCN_4",
+      "SCN_5",
+      "SCN_6",
+      "SCN_8",
+      "SCN_9",
+      "SCN_10",
+      "SCN_11",
+      "SCN_12",
+      "SCN_13",
+      "SCN_14",
+      "SCN_15",
+      "SCN_16",
+      "SCN_17",
+      "SCN_18",
+      "SCN_19",
+      "SCN_21",
+      "SCN_22"
+    ]
+  },
   "longTermIntent": "在不招致持续警方压力的情况下维持街头毒品交易，只要与勒克斯·林奇的交易仍有利可图就维持这层关系，并远离卡森德拉更危险的权力斗争。",
   "attributes": {
     "STR": 50,

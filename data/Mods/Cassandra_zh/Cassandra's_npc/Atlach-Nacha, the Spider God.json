@@ -9,6 +9,12 @@
   "background": "阿特拉克-纳克亚是一位栖息在幻梦境中的古老蜘蛛之神，无休止地编织着一张旨在连接其领域与清醒世界的巨型之网。通过教团、蜘蛛生物和隐秘的庇护所，它的影响力渗透到人类现实中。",
   "residence": "SCN_17",
   "currentLocation": "SCN_17",
+  "knownMapSeed": {
+    "sceneIds": ["SCN_17_SUB_1", "SCN_17_SUB_2", "SCN_17_SUB_3", "SCN_17_SUB_4"],
+    "junctionIds": [],
+    "roadIds": [],
+    "scenarioOutlineIds": ["SCN_17"]
+  },
   "longTermIntent": "完成连接幻梦境和清醒世界的巨网，然后通过信徒、蜘蛛生物和被腐化的人类扩大其影响力，使两个世界更容易穿越。",
   "attributes": {
     "STR": 150,

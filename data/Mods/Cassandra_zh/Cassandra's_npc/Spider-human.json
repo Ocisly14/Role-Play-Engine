@@ -9,6 +9,12 @@
   "background": "蜘蛛人是被冷蜘蛛感染后幸存的前人类。他们没有死亡，而是被同化为混合形态，成为蜘蛛之神及其代理人的仆从和工具。",
   "residence": "SCN_17",
   "currentLocation": "SCN_17",
+  "knownMapSeed": {
+    "sceneIds": ["SCN_17_SUB_1", "SCN_17_SUB_2", "SCN_17_SUB_3"],
+    "junctionIds": ["JUNC_3", "JUNC_4"],
+    "roadIds": ["ROAD_3"],
+    "scenarioOutlineIds": ["SCN_17"]
+  },
   "longTermIntent": "侍奉蛛网，猎杀更高级蜘蛛力量指定的目标，保持被感染的身体足够功能以继续在人类空间中行动。",
   "attributes": {
     "STR": 83,

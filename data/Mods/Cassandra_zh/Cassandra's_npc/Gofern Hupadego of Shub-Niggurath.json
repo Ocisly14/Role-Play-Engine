@@ -9,6 +9,12 @@
   "background": "曾经是一个富有的商人，参与了献给舒卜-尼古拉斯的禁忌仪式。在一次失败或过度的仪式中，他被变异为一个怪物般的仆从，注定在潮湿的森林和沼泽中作为黑暗之母的造物生活。",
   "residence": "SCN_20",
   "currentLocation": "SCN_20",
+  "knownMapSeed": {
+    "junctionIds": [],
+    "roadIds": [],
+    "scenarioOutlineIds": ["SCN_20"],
+    "sceneIds": ["SCN_20_SUB_1", "SCN_20_SUB_2", "SCN_20_SUB_3"]
+  },
   "longTermIntent": "进食、生存，并从沼泽边缘继续侍奉舒卜-尼古拉斯，直到猎物或饥饿最终摧毁这具身体。",
   "attributes": {
     "STR": 55,

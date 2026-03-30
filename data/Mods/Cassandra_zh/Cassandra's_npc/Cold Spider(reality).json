@@ -9,6 +9,12 @@
   "background": "冷蜘蛛起源于幻梦境，通过阿特拉克-纳克亚编织的巨网穿越到现实世界。它们的形态在现实中被削弱，但保留了最恐怖的特征：通过植入蜘蛛卵来感染人类，这可能杀死宿主或将其转变为蜘蛛人。",
   "residence": "SCN_17",
   "currentLocation": "SCN_17",
+  "knownMapSeed": {
+    "sceneIds": ["SCN_17_SUB_1", "SCN_17_SUB_2", "SCN_17_SUB_3"],
+    "junctionIds": ["JUNC_3", "JUNC_4"],
+    "roadIds": ["ROAD_3"],
+    "scenarioOutlineIds": ["SCN_17"]
+  },
   "longTermIntent": "感染人类宿主，扩散冷蛛网，保持教堂侧通道足够长时间的开放，以便下一代孵化。",
   "attributes": {
     "STR": 28,

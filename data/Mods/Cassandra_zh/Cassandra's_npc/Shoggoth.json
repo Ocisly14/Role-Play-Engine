@@ -9,6 +9,12 @@
   "background": "修格斯是古老者在前人类时代设计用作奴隶劳动力的原始原生质生物。经过漫长的时间，一些发展出了有限的自主性。它们现在潜伏在深层地下遗迹和被遗忘的地方，是已逝宇宙文明的遗迹。",
   "residence": "SCN_2",
   "currentLocation": "SCN_2",
+  "knownMapSeed": {
+    "junctionIds": ["JUNC_1"],
+    "roadIds": [],
+    "scenarioOutlineIds": ["SCN_2"],
+    "sceneIds": ["SCN_2_SUB_1", "SCN_2_SUB_2", "SCN_2_SUB_3"]
+  },
   "longTermIntent": "待在黑暗隐蔽的地方，吞噬任何进入错误房间的东西，服从当前躯体中最强的古老调教。",
   "attributes": {
     "STR": 315,

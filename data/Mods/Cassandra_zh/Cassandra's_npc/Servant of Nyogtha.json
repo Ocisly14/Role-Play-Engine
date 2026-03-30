@@ -9,6 +9,12 @@
   "background": "尼约格塔的仆从是与外神尼约格塔绑定的人类。在青春期他们学习禁忌仪式并开始渐进变异。有些人保持人类外表数年，而另一些人则完全转化为浸透尼约格塔冰冷深渊本质的怪物形态。",
   "residence": "SCN_7",
   "currentLocation": "SCN_7",
+  "knownMapSeed": {
+    "junctionIds": [],
+    "roadIds": [],
+    "scenarioOutlineIds": ["SCN_7"],
+    "sceneIds": ["SCN_7_SUB_1", "SCN_7_SUB_2"]
+  },
   "longTermIntent": "侍奉尼约格塔，捕获指定的受害者，在可以直接打击之前保持人类的低怀疑度。",
   "attributes": {
     "STR": 80,

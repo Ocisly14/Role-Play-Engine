@@ -9,6 +9,31 @@
   "background": "大卫·坎贝尔六年前与以赛亚·阿尔巴一起作为富有的投资者和神秘商业利益的前台来到卡森德拉。他们的妻子是黑山羊教团的成员，最初的恐惧在大卫参与仪式实践并饮用了黑暗之母的乳汁后变成了渴望。教团赐予他青春、力量和美貌，他和以赛亚利用这些恩赐牟利，同时在各国间流转寻找更安全的地方献祭受害者。在卡森德拉，他们躲在制药投资者和林业利益的形象背后，利用镇上薄弱的监管和周围的森林进行仪式活动。2002年，大卫在一次仪式中被献祭并发生了变异，从正常社会中消失，成为了一种现在更靠近沼泽和阴暗林线生存的存在。",
   "residence": "SCN_20",
   "currentLocation": "SCN_20_SUB_3",
+  "knownMapSeed": {
+    "sceneIds": [
+      "SCN_20_SUB_1",
+      "SCN_20_SUB_2",
+      "SCN_20_SUB_3",
+      "SCN_4_SUB_1",
+      "SCN_4_SUB_2"
+    ],
+    "junctionIds": [
+      "JUNC_2",
+      "JUNC_4",
+      "JUNC_6",
+      "JUNC_11"
+    ],
+    "roadIds": [
+      "ROAD_5a",
+      "ROAD_5b",
+      "ROAD_10"
+    ],
+    "scenarioOutlineIds": [
+      "SCN_4",
+      "SCN_19",
+      "SCN_20"
+    ]
+  },
   "longTermIntent": "保住通过舒卜-尼古拉斯教团获得的神秘力量和改变后的生命力，在变异状态下生存，并在他仍有能力牟利和掠食的情况下继续利用超自然资源。",
   "attributes": {
     "STR": 68,
@@ -27,7 +52,9 @@
     "maxSanity": 68,
     "luck": 35,
     "mp": 14,
-    "conditions": ["已变异"]
+    "conditions": [
+      "已变异"
+    ]
   },
   "skills": {
     "Occult": 55,
@@ -82,12 +109,16 @@
     {
       "type": "secret",
       "content": "我故意协助人祭，并在品尝了黑暗之母的乳汁对人体的作用后从教团力量中获利。",
-      "metadata": { "knowledgeId": "s_david_cult_profit" }
+      "metadata": {
+        "knowledgeId": "s_david_cult_profit"
+      }
     },
     {
       "type": "secret",
       "content": "我知道使我变强的神秘变异也使我变得不那么像人了，我再也不能像从前那样在正常生活中行走。",
-      "metadata": { "knowledgeId": "s_david_transformed" }
+      "metadata": {
+        "knowledgeId": "s_david_transformed"
+      }
     },
     {
       "type": "belief",

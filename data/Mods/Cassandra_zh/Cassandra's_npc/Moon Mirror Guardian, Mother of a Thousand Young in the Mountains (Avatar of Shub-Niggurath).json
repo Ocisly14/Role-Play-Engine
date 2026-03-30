@@ -9,6 +9,12 @@
   "background": "月镜守护者是舒卜-尼古拉斯的化身，被信徒们作为山中千子之母来崇拜。它只能在满月时通过月镜被召唤。信徒们向它献上活祭，祭品被整个吞噬，在它体内被改造为受舒卜-尼古拉斯祝福的仆从。",
   "residence": "SCN_20",
   "currentLocation": "SCN_20",
+  "knownMapSeed": {
+    "junctionIds": [],
+    "roadIds": [],
+    "scenarioOutlineIds": ["SCN_20"],
+    "sceneIds": ["SCN_20_SUB_1", "SCN_20_SUB_2", "SCN_20_SUB_3"]
+  },
   "longTermIntent": "吞噬活祭品，改造它能留下的东西，在一个为腐化而生的体内孕育舒卜-尼古拉斯的新仆从。",
   "attributes": {
     "STR": 275,

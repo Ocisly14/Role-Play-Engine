@@ -9,6 +9,12 @@
   "background": "冷蜘蛛起源于幻梦境，与蜘蛛之神阿特拉克-纳克亚有关。在这个领域中，它们以更强大、更原始的形态存在。有些传说提到真正巨大的个体，比普通的幻梦境冷蜘蛛还要大得多。",
   "residence": "SCN_17",
   "currentLocation": "SCN_17",
+  "knownMapSeed": {
+    "sceneIds": ["SCN_17_SUB_1", "SCN_17_SUB_2", "SCN_17_SUB_3"],
+    "junctionIds": [],
+    "roadIds": [],
+    "scenarioOutlineIds": ["SCN_17"]
+  },
   "longTermIntent": "在幻梦境中猎食，通过统治地位在蛛网的政治中生存，并在不被竞争者吞食的情况下继续服务于阿特拉克-纳克亚的宏大计划。",
   "attributes": {
     "STR": 140,

@@ -9,6 +9,12 @@
   "background": "阿特拉克-纳克亚之女是经过变异的存在，可能曾经是人类女性，被提升为蜘蛛之神的神圣仆从。她们充当受宠的掠食者和处刑者，以麻痹的受害者为食，通过恐怖和吞噬传播神的影响力。",
   "residence": "SCN_17",
   "currentLocation": "SCN_17",
+  "knownMapSeed": {
+    "sceneIds": ["SCN_17_SUB_1", "SCN_17_SUB_2", "SCN_17_SUB_3"],
+    "junctionIds": [],
+    "roadIds": [],
+    "scenarioOutlineIds": ["SCN_17"]
+  },
   "longTermIntent": "以绝对的虔诚侍奉阿特拉克-纳克亚，猎杀被选中的受害者，用可以被制成更多仆从的尸体喂养蛛网。",
   "attributes": {
     "STR": 113,

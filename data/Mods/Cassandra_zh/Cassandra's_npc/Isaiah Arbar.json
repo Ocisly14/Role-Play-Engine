@@ -9,6 +9,31 @@
   "background": "以赛亚·阿尔巴六年前与商业伙伴大卫·坎贝尔一起来到卡森德拉进行投资和经商。两人都受到妻子们的影响而被卷入，她们是跨大西洋的黑山羊教团的成员。以赛亚最初对教团的仪式感到恐惧，但在参与了一次亵渎的仪式并饮用了黑暗之母的'乳汁'后，他的看法改变了。他与大卫一起通过将这种来源商品化而获取了巨额利润。2002年在一次仪式中，以赛亚被变异为一种被称为舒卜-尼古拉斯的戈弗恩·胡帕德戈的怪物实体，从公众视野中消失。",
   "residence": "SCN_20",
   "currentLocation": "SCN_20",
+  "knownMapSeed": {
+    "sceneIds": [
+      "SCN_20_SUB_1",
+      "SCN_20_SUB_2",
+      "SCN_20_SUB_3",
+      "SCN_4_SUB_1",
+      "SCN_4_SUB_2"
+    ],
+    "junctionIds": [
+      "JUNC_2",
+      "JUNC_4",
+      "JUNC_6",
+      "JUNC_11"
+    ],
+    "roadIds": [
+      "ROAD_5a",
+      "ROAD_5b",
+      "ROAD_10"
+    ],
+    "scenarioOutlineIds": [
+      "SCN_4",
+      "SCN_19",
+      "SCN_20"
+    ]
+  },
   "longTermIntent": "保住从仪式中获得的力量和生命力，在变异状态下生存，并推动教团利益的发展。",
   "attributes": {
     "STR": 70,
@@ -27,7 +52,9 @@
     "maxSanity": 70,
     "luck": 40,
     "mp": 14,
-    "conditions": ["已变异"]
+    "conditions": [
+      "已变异"
+    ]
   },
   "skills": {
     "Occult": 60,

@@ -9,6 +9,66 @@
   "background": "珍妮·弗洛伦斯是一名天才黑客，在一个贫穷的黑人家庭长大。她在学校第一次接触电脑，很快就对编程着迷。为了养家而辍学后，她在麻省理工学院附近工作，尽可能地学习，最终在阿布弗斯·卢奇菲罗的化名下伪造了新身份，然后来到加利福尼亚。在驯鹿酒吧事件发生时，她已经深入地下黑客工作，并携带着关于卡森德拉犯罪的证据。",
   "residence": "SCN_16",
   "currentLocation": "SCN_16",
+  "knownMapSeed": {
+    "sceneIds": [
+      "SCN_16_SUB_1",
+      "SCN_16_SUB_2",
+      "SCN_17_SUB_1",
+      "SCN_17_SUB_4",
+      "SCN_21_SUB_1",
+      "SCN_21_SUB_2",
+      "SCN_4_SUB_1",
+      "SCN_4_SUB_2"
+    ],
+    "junctionIds": [
+      "JUNC_1",
+      "JUNC_2",
+      "JUNC_3",
+      "JUNC_4",
+      "JUNC_5",
+      "JUNC_6",
+      "JUNC_7",
+      "JUNC_8",
+      "JUNC_9",
+      "JUNC_10",
+      "JUNC_11"
+    ],
+    "roadIds": [
+      "ROAD_1",
+      "ROAD_2",
+      "ROAD_3",
+      "ROAD_4",
+      "ROAD_5a",
+      "ROAD_5b",
+      "ROAD_6",
+      "ROAD_7",
+      "ROAD_8",
+      "ROAD_9",
+      "ROAD_10"
+    ],
+    "scenarioOutlineIds": [
+      "SCN_1",
+      "SCN_2",
+      "SCN_3",
+      "SCN_4",
+      "SCN_5",
+      "SCN_6",
+      "SCN_8",
+      "SCN_9",
+      "SCN_10",
+      "SCN_11",
+      "SCN_12",
+      "SCN_13",
+      "SCN_14",
+      "SCN_15",
+      "SCN_16",
+      "SCN_17",
+      "SCN_18",
+      "SCN_19",
+      "SCN_21",
+      "SCN_22"
+    ]
+  },
   "longTermIntent": "用自己的黑客才能在地下世界站稳脚跟，过上自由富足、不被出身所定义的生活。她从贫穷的黑人家庭中挣脱出来，靠聪明和努力重塑了自己，绝不允许任何人将她打回原形。",
   "attributes": {
     "STR": 40,
@@ -27,7 +87,9 @@
     "maxSanity": 99,
     "luck": 65,
     "mp": 11,
-    "conditions": ["已死亡"]
+    "conditions": [
+      "已死亡"
+    ]
   },
   "skills": {
     "Computer Use": 90,

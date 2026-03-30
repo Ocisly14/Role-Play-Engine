@@ -9,6 +9,12 @@
   "background": "深潜者混血是被印斯茅斯血脉污染的人类后裔。虽然以人类身份出生，但他们在后半生不可避免地经历向完全深潜者的渐进变异。有些人多年不知道自己的血统，而另一些人则在将这种命运视为正常甚至崇敬的社区中长大。",
   "residence": "SCN_7",
   "currentLocation": "SCN_7",
+  "knownMapSeed": {
+    "junctionIds": ["JUNC_5", "JUNC_9"],
+    "roadIds": ["ROAD_8"],
+    "scenarioOutlineIds": ["SCN_7", "SCN_12"],
+    "sceneIds": ["SCN_7_SUB_1", "SCN_7_SUB_2"]
+  },
   "longTermIntent": "在隐藏血脉中最糟糕部分的同时生存下去，保持日常的人类接触可控，等待大海的召唤而不被过早地暴露。",
   "attributes": {
     "STR": 55,

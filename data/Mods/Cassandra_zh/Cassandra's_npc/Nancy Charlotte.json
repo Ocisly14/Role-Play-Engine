@@ -9,6 +9,65 @@
   "background": "南希出生于父母在土耳其度假时的一段短暂恋情。五岁时父母离异后，她被母亲带到法国。她的母亲后来嫁给了一个暗中性骚扰南希的富人。最终南希被送到寄宿学校，在那里她遇到了成为她第一个真正朋友的西蒙·拉普拉斯。她的母亲后来加入了黑山羊教团并试图献祭南希。这导致了法国的一场悲剧性火车事故，随后在暴力冲突中南希的母亲被西蒙的交替人格阿纳托尔所杀。南希随后被西蒙带到美国，此后一直生活在邪教残余势力的持续威胁之下。",
   "residence": "SCN_9",
   "currentLocation": "SCN_9_SUB_1",
+  "knownMapSeed": {
+    "sceneIds": [
+      "SCN_16_SUB_1",
+      "SCN_16_SUB_2",
+      "SCN_21_SUB_1",
+      "SCN_21_SUB_2",
+      "SCN_9_SUB_1",
+      "SCN_9_SUB_2",
+      "SCN_9_SUB_3"
+    ],
+    "junctionIds": [
+      "JUNC_1",
+      "JUNC_2",
+      "JUNC_3",
+      "JUNC_4",
+      "JUNC_5",
+      "JUNC_6",
+      "JUNC_7",
+      "JUNC_8",
+      "JUNC_9",
+      "JUNC_10",
+      "JUNC_11"
+    ],
+    "roadIds": [
+      "ROAD_1",
+      "ROAD_2",
+      "ROAD_3",
+      "ROAD_4",
+      "ROAD_5a",
+      "ROAD_5b",
+      "ROAD_6",
+      "ROAD_7",
+      "ROAD_8",
+      "ROAD_9",
+      "ROAD_10"
+    ],
+    "scenarioOutlineIds": [
+      "SCN_1",
+      "SCN_2",
+      "SCN_3",
+      "SCN_4",
+      "SCN_5",
+      "SCN_6",
+      "SCN_8",
+      "SCN_9",
+      "SCN_10",
+      "SCN_11",
+      "SCN_12",
+      "SCN_13",
+      "SCN_14",
+      "SCN_15",
+      "SCN_16",
+      "SCN_17",
+      "SCN_18",
+      "SCN_19",
+      "SCN_21",
+      "SCN_22"
+    ]
+  },
   "longTermIntent": "克服过去的阴影和赌瘾，成为一个配得上西蒙的人，和他一起过平静安稳的生活。她从不敢对西蒙表达自己的感情，只要每天在花店里能看到他就已经很满足了。",
   "attributes": {
     "STR": 35,
@@ -27,7 +86,9 @@
     "maxSanity": 50,
     "luck": 70,
     "mp": 10,
-    "conditions": ["冷蜘蛛感染"]
+    "conditions": [
+      "冷蜘蛛感染"
+    ]
   },
   "skills": {
     "Charm": 65,

@@ -9,6 +9,64 @@
   "background": "哈兰原本是一名走私贩，在一次拒绝走私毒品后遭到报复袭击，妻儿被杀害，自己也身受重伤、命悬一线。克莱奥家族的当家人卡绒（本·克莱奥的父亲）救了他的命，还帮助他向杀害其妻儿的凶手复仇。哈兰从此留在卡森德拉，发誓用余生报答卡绒的救命之恩。他帮助卡绒、后来又帮助本通过火车站管理合法与非法货物的运输，同时守卫着连接他工棚与黑帮总部的秘密入口。哈兰看着本从小长大，待他如同侄子一般，而本也像尊敬长辈一样敬重他。四十多年来，哈兰一直是克莱奥家族最忠实的心腹，火车站的一切明面和暗面事务都由他打理。",
   "residence": "SCN_21",
   "currentLocation": "SCN_21",
+  "knownMapSeed": {
+    "sceneIds": [
+      "SCN_16_SUB_1",
+      "SCN_16_SUB_2",
+      "SCN_21_SUB_1",
+      "SCN_21_SUB_2",
+      "SCN_21_SUB_3"
+    ],
+    "junctionIds": [
+      "JUNC_1",
+      "JUNC_2",
+      "JUNC_3",
+      "JUNC_4",
+      "JUNC_5",
+      "JUNC_6",
+      "JUNC_7",
+      "JUNC_8",
+      "JUNC_9",
+      "JUNC_10",
+      "JUNC_11"
+    ],
+    "roadIds": [
+      "ROAD_1",
+      "ROAD_2",
+      "ROAD_3",
+      "ROAD_4",
+      "ROAD_5a",
+      "ROAD_5b",
+      "ROAD_6",
+      "ROAD_7",
+      "ROAD_8",
+      "ROAD_9",
+      "ROAD_10"
+    ],
+    "scenarioOutlineIds": [
+      "SCN_1",
+      "SCN_2",
+      "SCN_3",
+      "SCN_4",
+      "SCN_5",
+      "SCN_6",
+      "SCN_7",
+      "SCN_8",
+      "SCN_9",
+      "SCN_10",
+      "SCN_11",
+      "SCN_12",
+      "SCN_13",
+      "SCN_14",
+      "SCN_15",
+      "SCN_16",
+      "SCN_17",
+      "SCN_18",
+      "SCN_19",
+      "SCN_21",
+      "SCN_22"
+    ]
+  },
   "longTermIntent": "守护克莱奥家族的利益和安全，忠心耿耿地为本打理火车站的一切事务，用余生报答卡绒的救命之恩。",
   "attributes": {
     "STR": 40,
@@ -38,7 +96,9 @@
   "inventory": [
     {
       "name": "货物交易记录",
-      "properties": { "note": "哈兰多年来见证的货物运输的内部车站记录。" }
+      "properties": {
+        "note": "哈兰多年来见证的货物运输的内部车站记录。"
+      }
     },
     {
       "name": "工棚通道",
@@ -85,17 +145,24 @@
     {
       "type": "information",
       "content": "我的工作记录通过车站的货物流动，我知道哪些货物比其他的更敏感。",
-      "metadata": { "knowledgeId": "k_haran_cargo", "difficulty": "regular" }
+      "metadata": {
+        "knowledgeId": "k_haran_cargo",
+        "difficulty": "regular"
+      }
     },
     {
       "type": "secret",
       "content": "我知道工棚连接着黑帮总部的入口，需要时我在那里充当警卫。",
-      "metadata": { "knowledgeId": "s_haran_shack" }
+      "metadata": {
+        "knowledgeId": "s_haran_shack"
+      }
     },
     {
       "type": "secret",
       "content": "我能分辨哪些货物是普通货运，哪些货物不应该被记录得太清楚。",
-      "metadata": { "knowledgeId": "s_haran_sensitive_cargo" }
+      "metadata": {
+        "knowledgeId": "s_haran_sensitive_cargo"
+      }
     },
     {
       "type": "belief",

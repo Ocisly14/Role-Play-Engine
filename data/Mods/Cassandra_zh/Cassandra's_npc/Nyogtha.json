@@ -9,6 +9,12 @@
   "background": "尼约格塔是一个古老的地下宇宙实体，被归类于旧日支配者或同等规模的存在。它并不完全存在于物质世界中，仅通过强大的仪式或维度裂隙显现。",
   "residence": "SCN_7",
   "currentLocation": "SCN_7",
+  "knownMapSeed": {
+    "junctionIds": [],
+    "roadIds": [],
+    "scenarioOutlineIds": ["SCN_7"],
+    "sceneIds": ["SCN_7_SUB_1", "SCN_7_SUB_2"]
+  },
   "longTermIntent": "将活物拖入地下深渊，保持大地的空洞和饥饿，维护让它在需要时浮出表面的血脉和仪式。",
   "attributes": {
     "STR": 425,

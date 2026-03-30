@@ -9,6 +9,12 @@
   "background": "克苏鲁是一位旧日支配者，以类死亡的沉睡状态躺在太平洋下沉没的拉莱耶城中。当群星归位时，它可能苏醒并为世界带来疯狂和毁灭。即使在沉睡中，它的存在也影响着梦境、邪教和宇宙事件。",
   "residence": "SCN_20",
   "currentLocation": "SCN_20",
+  "knownMapSeed": {
+    "junctionIds": [],
+    "roadIds": [],
+    "scenarioOutlineIds": ["SCN_20"],
+    "sceneIds": ["SCN_20_SUB_1", "SCN_20_SUB_2", "SCN_20_SUB_3"]
+  },
   "longTermIntent": "保持沉睡直到群星归位，然后在一个已被梦境、邪教仪式和恐惧所软化的世界中苏醒。",
   "attributes": {
     "STR": 700,

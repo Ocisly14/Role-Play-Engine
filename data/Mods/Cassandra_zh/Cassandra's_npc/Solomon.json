@@ -9,6 +9,63 @@
   "background": "所罗门长期被神秘学和珍本书籍所吸引，有段时间他甚至似乎有一点真正的预言能力，直到年龄和经验关闭了那扇门。他现在在花店旁经营一家神秘学商店，像保护危险可能性的私人档案馆一样保护他的收藏。他在来卡森德拉之前买了《黄衣之王》，这本书仍然是他不会随便交给任何人的少数东西之一。",
   "residence": "SCN_11",
   "currentLocation": "SCN_11_SUB_1",
+  "knownMapSeed": {
+    "sceneIds": [
+      "SCN_16_SUB_1",
+      "SCN_16_SUB_2",
+      "SCN_21_SUB_1",
+      "SCN_21_SUB_2"
+    ],
+    "junctionIds": [
+      "JUNC_1",
+      "JUNC_2",
+      "JUNC_3",
+      "JUNC_4",
+      "JUNC_5",
+      "JUNC_6",
+      "JUNC_7",
+      "JUNC_8",
+      "JUNC_9",
+      "JUNC_10",
+      "JUNC_11"
+    ],
+    "roadIds": [
+      "ROAD_1",
+      "ROAD_2",
+      "ROAD_3",
+      "ROAD_4",
+      "ROAD_5a",
+      "ROAD_5b",
+      "ROAD_6",
+      "ROAD_7",
+      "ROAD_8",
+      "ROAD_9",
+      "ROAD_10"
+    ],
+    "scenarioOutlineIds": [
+      "SCN_1",
+      "SCN_2",
+      "SCN_3",
+      "SCN_4",
+      "SCN_5",
+      "SCN_6",
+      "SCN_8",
+      "SCN_9",
+      "SCN_10",
+      "SCN_11",
+      "SCN_12",
+      "SCN_13",
+      "SCN_14",
+      "SCN_15",
+      "SCN_16",
+      "SCN_17",
+      "SCN_18",
+      "SCN_19",
+      "SCN_20",
+      "SCN_21",
+      "SCN_22"
+    ]
+  },
   "longTermIntent": "穷尽一生探索神秘学的真谛，收集和守护那些常人不应触碰的禁忌知识。他相信这个世界远比表面所见更加深邃和危险，而理解这些隐秘的真相是他存在的意义。",
   "attributes": {
     "STR": 35,
