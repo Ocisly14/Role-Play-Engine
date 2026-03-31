@@ -103,4 +103,3 @@ Retains: `id`, `name`, `description`, `connections[]`, `tags`, `evidence`, `clue
 11. `src/dynamicworldagent/visual/sceneImage.ts` — use DynamicScene
 12. `src/template.ts` — update type reference
 13. `src/dynamicworldagent/world_builder/worldModuleLoader.ts` — output DynamicScene
-14. Multiplayer equivalents (multiplayerState, multiplayerAgent/director, multiplayerAgent/keeper, multiplayerGraph, sceneRoomMerger)

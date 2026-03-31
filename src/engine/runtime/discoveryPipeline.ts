@@ -239,7 +239,6 @@ export function embedDiscoveries(
   const ragChunks = discoveries.map((entry) => ({
     sessionId: state.sessionId,
     chunkType: "discovery" as const,
-    role: "system" as const,
     content: [
       "Discovery",
       `Type: ${entry.source}`,

@@ -51,8 +51,8 @@ export const I18nTest: React.FC = () => {
           <strong>{t("common:i18nTest.homeNamespace")}</strong>
         </p>
         <ul style={{ margin: "5px 0", paddingLeft: "20px" }}>
-          <li>{t("home:menu.newGame")}</li>
-          <li>{t("home:menu.continueGame")}</li>
+          <li>{t("home:menu.manageModules")}</li>
+          <li>{t("home:menu.newSimulation")}</li>
           <li>{t("home:characters.title")}</li>
         </ul>
 
@@ -60,8 +60,8 @@ export const I18nTest: React.FC = () => {
           <strong>{t("common:i18nTest.gameNamespace")}</strong>
         </p>
         <ul style={{ margin: "5px 0", paddingLeft: "20px" }}>
-          <li>{t("game:session.playingAs")}</li>
-          <li>{t("game:input.send")}</li>
+          <li>{t("game:dice.roll")}</li>
+          <li>{t("game:dice.success")}</li>
         </ul>
 
         <p style={{ fontSize: "12px", opacity: 0.7, marginTop: "10px" }}>

@@ -1,33 +1,25 @@
 import type React from "react";
 import { useState } from "react";
-import { Outlet, useLocation } from "react-router-dom";
+import { Outlet } from "react-router-dom";
 import { useAuth } from "../../contexts/AuthContext";
-import { useGameSession } from "../../hooks/useGameSession";
 import { Analytics } from "../Analytics";
 import { UserMenu } from "./UserMenu";
 
 export const MainLayout: React.FC = () => {
   const { user, logout } = useAuth();
-  const gameSession = useGameSession();
-  const { clearSession } = gameSession;
   const [showAnalytics, setShowAnalytics] = useState(false);
-  const location = useLocation();
 
   const handleLogout = async () => {
     try {
       await logout();
-      clearSession();
     } catch (error) {
       console.error("Error logging out:", error);
     }
   };
 
-  // Hide UserMenu on game page (mobile only)
-  const isGamePage = location.pathname === "/game";
-
   return (
     <>
-      <div className={isGamePage ? "hide-user-menu-mobile" : ""}>
+      <div>
         <UserMenu
           user={user}
           onLogout={handleLogout}

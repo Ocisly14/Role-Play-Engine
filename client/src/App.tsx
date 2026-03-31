@@ -5,15 +5,12 @@ import { ProtectedRoute } from "./components/ProtectedRoute";
 import { MainLayout } from "./components/layout/MainLayout";
 import { AppSettingsProvider } from "./contexts/AppSettingsContext";
 import { AuthProvider } from "./contexts/AuthContext";
-import { GameSessionProvider } from "./contexts/GameSessionContext";
 import { useVisitorTracking } from "./hooks/useVisitorTracking";
 import { setBackgroundWithTransition } from "./utils/backgroundTransition";
 import { findAvailableImage } from "./utils/imageLoader";
 import { CharacterCreationPage } from "./views/CharacterCreationPage";
-import { CharacterSelectionPage } from "./views/CharacterSelectionPage";
 import { HomePage } from "./views/HomePage";
 import { StoryCreatorPage } from "./views/StoryCreatorPage";
-import { TutorialPage } from "./views/TutorialPage";
 import ForgotPassword from "./views/auth/ForgotPassword";
 import Login from "./views/auth/Login";
 import Register from "./views/auth/Register";
@@ -95,7 +92,6 @@ const AppRoutes: React.FC = () => {
         />
 
         {/* Legacy route redirects */}
-        <Route path="/gamechat" element={<Navigate to="/" replace />} />
         <Route
           path="/charactercreate"
           element={<Navigate to="/character/create" replace />}
@@ -118,10 +114,6 @@ const AppRoutes: React.FC = () => {
           <Route path="/" element={<HomePage />} />
           <Route path="/character/create" element={<CharacterCreationPage />} />
           <Route
-            path="/character/select"
-            element={<CharacterSelectionPage />}
-          />
-          <Route
             path="/simulation/select"
             element={
               <Suspense
@@ -136,7 +128,6 @@ const AppRoutes: React.FC = () => {
             }
           />
           <Route path="/story/create" element={<StoryCreatorPage />} />
-          <Route path="/tutorial" element={<TutorialPage />} />
         </Route>
       </Routes>
     </>
@@ -151,11 +142,9 @@ const App: React.FC = () => (
     }}
   >
     <AuthProvider>
-      <GameSessionProvider>
-        <AppSettingsProvider>
-          <AppRoutes />
-        </AppSettingsProvider>
-      </GameSessionProvider>
+      <AppSettingsProvider>
+        <AppRoutes />
+      </AppSettingsProvider>
     </AuthProvider>
   </BrowserRouter>
 );

@@ -647,7 +647,7 @@ embedding BYTEA, language, created_at, email_id
 - Semantic: cosine similarity (in-process, no vector index)
 - BM25: PostgreSQL full-text `ts_rank_cd`
 - Fusion: `hybridScore = 0.7 × semNorm + 0.3 × bm25Norm` (min-max normalized)
-- Filters: `chunkType`, `segmentType`, `sceneRoomId`
+- Filters: `chunkType`, `segmentType`
 
 ### 11.3 Turn Indexing
 
@@ -751,7 +751,7 @@ NPC Builder (4 steps per batch):
 Three modes:
 1. **Initial**: All scenario outlines → labeled overview map
 2. **Incremental**: Previous map as reference → add new scene, keep existing
-3. **Merge**: Multiple parent maps → unified map (for multiplayer convergence)
+3. **Merge**: Multiple parent maps → unified map
 
 Saved to `data/Mods/<Module>/Map/<moduleName>_<timestamp>.png`
 

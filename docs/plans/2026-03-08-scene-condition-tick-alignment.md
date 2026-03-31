@@ -62,8 +62,6 @@ Affected files (all currently treat `mechanicalEffect` as `string`):
 | `src/dynamicworldagent/world_builder/worldModuleLoader.ts` | 1065 | `mechanicalEffect: condition.mechanicalEffect \|\| null` | Same as persistence |
 | `src/dynamicworldagent/world_builder/subSceneBuilder.ts` | 142 | `mechanicalEffect: c.mechanicalEffect` | Pass through (already correct after type change) |
 | `src/dynamicworldagent/state/DynamicGameStateLoader.ts` | 613 | `mechanicalEffect: cond.mechanicalEffect \|\| undefined` | Parse from DB: `mechanicalEffect: cond.mechanicalEffect ? (cond.mechanicalEffect as any) : undefined` |
-| `src/dynamicworldagent/multiplayerState/MultiplayerDynamicGameStateLoader.ts` | 231 | Same pattern | Same fix |
-
 **Step 3:** Commit: `"refactor: unify ScenarioCondition.mechanicalEffect to structured format"`
 
 ---

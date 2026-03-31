@@ -6,30 +6,17 @@ import { useCharacterCreation } from "../hooks/useCharacterCreation";
 export const CharacterCreationPage: React.FC = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-
-  // Check if creating from game flow via URL query param
-  const isCreatingFromGameFlow = searchParams.get("fromGame") === "true";
   const editingCharacterId = searchParams.get("characterId") || undefined;
 
   const characterCreation = useCharacterCreation({
     characterId: editingCharacterId,
     onCharacterCreated: () => {
-      if (isCreatingFromGameFlow) {
-        // If creating from game flow, navigate back to character selection
-        navigate("/character/select");
-      } else {
-        // If creating from home, navigate to home
-        navigate("/");
-      }
+      navigate("/");
     },
   });
 
   const handleCancel = () => {
-    if (isCreatingFromGameFlow) {
-      navigate("/character/select");
-    } else {
-      navigate("/");
-    }
+    navigate("/");
   };
 
   return <CharacterForm {...characterCreation} onCancel={handleCancel} />;

@@ -30,7 +30,7 @@
 
 **Step 1: Open schema and find where to add**
 
-Read the end of `prisma/schema.prisma` to find a good insertion point (after existing multiplayer tables).
+Read the end of `prisma/schema.prisma` to find a good insertion point near related session/state tables.
 
 **Step 2: Add 3 models**
 

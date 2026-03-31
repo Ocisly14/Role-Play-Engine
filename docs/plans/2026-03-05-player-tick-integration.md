@@ -18,7 +18,7 @@
 - Run `pnpm build:tsc` after each task to catch type errors
 - Working directory: `/Users/sunyining/project_SentiEdge/CoC-AI-agent`
 - Read any file fully before modifying it
-- This plan only touches single-player (`dynamicBasicAgent/` + `graph/`). Multiplayer (`multiplayerAgent/` + `multiplayerGraph/`) is NOT modified.
+- This plan only touches the single-player tick pipeline (`dynamicBasicAgent/` + `graph/`).
 
 ---
 

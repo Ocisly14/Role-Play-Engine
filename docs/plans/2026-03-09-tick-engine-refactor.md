@@ -1059,9 +1059,9 @@ Run: `pnpm build`
 
 Run: `pnpm build`
 
-**Step 2: TypeScript check (expect only pre-existing multiplayer errors)**
+**Step 2: TypeScript check**
 
-Run: `pnpm build:tsc 2>&1 | grep -v multiplayerState`
+Run: `pnpm build:tsc`
 Expected: No new errors
 
 **Step 3: Search for any remaining references to old APIs**
@@ -1071,4 +1071,3 @@ grep -r "onBucketEnd\|onTickStart\|conditionTypes\|minutesToBucket\|runTick\b\|r
 ```
 
 Expected: No matches (or only in test files / comments)
-

@@ -1,4 +1,4 @@
-import { calculateDailyStats, saveDailyStats } from "./service.js";
+import { calculateDailyStats } from "./service.js";
 
 let schedulerInterval: NodeJS.Timeout | null = null;
 
@@ -14,7 +14,7 @@ function getMillisecondsUntilMidnight(): number {
 }
 
 /**
- * Save analytics for the previous day
+ * Precompute analytics for the previous day
  */
 async function saveYesterdayAnalytics(): Promise<void> {
   try {
@@ -27,8 +27,9 @@ async function saveYesterdayAnalytics(): Promise<void> {
 
     console.log(`[Analytics Scheduler] Calculating stats for ${dateStr}...`);
     const stats = await calculateDailyStats(dateStr);
-    await saveDailyStats(stats);
-    console.log(`[Analytics Scheduler] Stats saved for ${dateStr}`);
+    console.log(
+      `[Analytics Scheduler] ${dateStr}: ${stats.total_simulations_count} simulations, ${stats.total_simulation_events_count} events`
+    );
   } catch (error) {
     console.error("[Analytics Scheduler] Error saving analytics:", error);
   }

@@ -20,8 +20,9 @@ interface DailyStats {
   login_users_count: number;
   active_users_count: number;
   new_users_count: number;
-  total_messages_count: number;
-  avg_messages_per_active_user: number;
+  total_simulations_count: number;
+  total_simulation_events_count: number;
+  avg_simulations_per_active_user: number;
   new_mods_short_count: number;
   new_mods_medium_count: number;
   new_mods_long_count: number;
@@ -36,8 +37,9 @@ interface WindowStats {
   login_users_count: number;
   active_users_count: number;
   new_users_count: number;
-  total_messages_count: number;
-  avg_messages_per_active_user: number;
+  total_simulations_count: number;
+  total_simulation_events_count: number;
+  avg_simulations_per_active_user: number;
   new_mods_short_count: number;
   new_mods_medium_count: number;
   new_mods_long_count: number;
@@ -46,13 +48,13 @@ interface WindowStats {
 
 interface AccumulatedStats {
   accumulated_users_count: number;
-  accumulated_messages_count: number;
+  accumulated_simulations_count: number;
 }
 
-interface TopUserMessages {
+interface TopUserSimulations {
   email: string;
   username: string | null;
-  messages_count: number;
+  simulations_count: number;
 }
 
 interface VisitorHourlyEntry {
@@ -80,8 +82,9 @@ interface ChartEntry {
   loginUsers: number;
   activeUsers: number;
   newUsers: number;
-  messages: number;
-  avgMsgsPerUser: number;
+  simulations: number;
+  simulationEvents: number;
+  avgSimsPerUser: number;
   newMods: number;
 }
 
@@ -104,7 +107,7 @@ export function Analytics({ onClose }: AnalyticsProps) {
   const [stats, setStats] = useState<DailyStats[]>([]);
   const [recent48h, setRecent48h] = useState<WindowStats | null>(null);
   const [accumulated, setAccumulated] = useState<AccumulatedStats | null>(null);
-  const [topUsersToday, setTopUsersToday] = useState<TopUserMessages[]>([]);
+  const [topUsersToday, setTopUsersToday] = useState<TopUserSimulations[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -194,8 +197,9 @@ export function Analytics({ onClose }: AnalyticsProps) {
     loginUsers: stat.login_users_count,
     activeUsers: stat.active_users_count,
     newUsers: stat.new_users_count,
-    messages: stat.total_messages_count,
-    avgMsgsPerUser: Number(stat.avg_messages_per_active_user.toFixed(1)),
+    simulations: stat.total_simulations_count,
+    simulationEvents: stat.total_simulation_events_count,
+    avgSimsPerUser: Number(stat.avg_simulations_per_active_user.toFixed(1)),
     newMods: stat.total_new_mods_count,
   }));
 
@@ -214,8 +218,9 @@ export function Analytics({ onClose }: AnalyticsProps) {
       loginUsers: t("home:analytics.metrics.loginUsers"),
       activeUsers: t("home:analytics.metrics.activeUsers"),
       newUsers: t("home:analytics.metrics.newUsers"),
-      messages: t("home:analytics.metrics.messages"),
-      avgMsgsPerUser: t("home:analytics.metrics.avgMsgsPerUser"),
+      simulations: t("home:analytics.metrics.simulations"),
+      simulationEvents: t("home:analytics.metrics.simulationEvents"),
+      avgSimsPerUser: t("home:analytics.metrics.avgSimsPerUser"),
       newMods: t("home:analytics.metrics.newMods"),
       short: t("home:analytics.length.short"),
       medium: t("home:analytics.length.medium"),
@@ -441,7 +446,7 @@ function UsageTab({
 }: {
   stats: DailyStats[];
   accumulated: AccumulatedStats | null;
-  topUsersToday: TopUserMessages[];
+  topUsersToday: TopUserSimulations[];
   todayStats: DailyStats | undefined;
   recent48h: WindowStats | null;
   chartData: ChartEntry[];
@@ -522,8 +527,8 @@ function UsageTab({
                   color="#0ea5e9"
                 />
                 <StatCard
-                  label={t("home:analytics.metrics.accumulatedMessages")}
-                  value={accumulated.accumulated_messages_count}
+                  label={t("home:analytics.metrics.accumulatedSimulations")}
+                  value={accumulated.accumulated_simulations_count}
                   color="#f97316"
                 />
               </div>
@@ -562,7 +567,7 @@ function UsageTab({
                     <StatCard
                       key={`${user.email}-${index}`}
                       label={displayLabel}
-                      value={user.messages_count}
+                      value={user.simulations_count}
                       color="#0ea5e9"
                     />
                   );
@@ -610,14 +615,19 @@ function UsageTab({
                   color="#8b5cf6"
                 />
                 <StatCard
-                  label={t("home:analytics.metrics.totalMessages")}
-                  value={todayStats.total_messages_count}
+                  label={t("home:analytics.metrics.totalSimulations")}
+                  value={todayStats.total_simulations_count}
                   color="#f59e0b"
                 />
                 <StatCard
-                  label={t("home:analytics.metrics.avgMsgsPerUser")}
-                  value={todayStats.avg_messages_per_active_user.toFixed(1)}
+                  label={t("home:analytics.metrics.simulationEvents")}
+                  value={todayStats.total_simulation_events_count}
                   color="#06b6d4"
+                />
+                <StatCard
+                  label={t("home:analytics.metrics.avgSimsPerUser")}
+                  value={todayStats.avg_simulations_per_active_user.toFixed(1)}
+                  color="#8b5cf6"
                 />
                 <StatCard
                   label={t("home:analytics.metrics.newMods")}
@@ -668,14 +678,19 @@ function UsageTab({
                   color="#8b5cf6"
                 />
                 <StatCard
-                  label={t("home:analytics.metrics.totalMessages")}
-                  value={recent48h.total_messages_count}
+                  label={t("home:analytics.metrics.totalSimulations")}
+                  value={recent48h.total_simulations_count}
                   color="#f59e0b"
                 />
                 <StatCard
-                  label={t("home:analytics.metrics.avgMsgsPerUser")}
-                  value={recent48h.avg_messages_per_active_user.toFixed(1)}
+                  label={t("home:analytics.metrics.simulationEvents")}
+                  value={recent48h.total_simulation_events_count}
                   color="#06b6d4"
+                />
+                <StatCard
+                  label={t("home:analytics.metrics.avgSimsPerUser")}
+                  value={recent48h.avg_simulations_per_active_user.toFixed(1)}
+                  color="#8b5cf6"
                 />
                 <StatCard
                   label={t("home:analytics.metrics.newMods")}
@@ -748,7 +763,7 @@ function UsageTab({
             </ResponsiveContainer>
           </div>
 
-          {/* Message Activity Chart */}
+          {/* Simulation Activity Chart */}
           <div style={{ marginBottom: "32px" }}>
             <h3
               style={{
@@ -759,7 +774,7 @@ function UsageTab({
                 color: "var(--title)",
               }}
             >
-              {t("home:analytics.charts.messageActivity")}
+              {t("home:analytics.charts.simulationActivity")}
             </h3>
             <ResponsiveContainer width="100%" height={300}>
               <LineChart data={chartData}>
@@ -775,14 +790,20 @@ function UsageTab({
                 <Legend formatter={(value) => formatMetric(String(value))} />
                 <Line
                   type="monotone"
-                  dataKey="messages"
+                  dataKey="simulations"
                   stroke="#f59e0b"
                   strokeWidth={2}
                 />
                 <Line
                   type="monotone"
-                  dataKey="avgMsgsPerUser"
+                  dataKey="simulationEvents"
                   stroke="#06b6d4"
+                  strokeWidth={2}
+                />
+                <Line
+                  type="monotone"
+                  dataKey="avgSimsPerUser"
+                  stroke="#8b5cf6"
                   strokeWidth={2}
                 />
               </LineChart>

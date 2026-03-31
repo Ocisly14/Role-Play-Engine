@@ -13,9 +13,7 @@ import authRoutes from "./server/auth/routes.js";
 import characterRoutes from "./server/character/routes.js";
 import dataRoutes from "./server/data/routes.js";
 import mapRoutes from "./server/maps/routes.js";
-import memoRoutes from "./server/memos/routes.js";
 import modRoutes from "./server/mod/routes.js";
-import ragRoutes from "./server/rag/routes.js";
 import simulationMapRoutes from "./server/simulation/mapRoutes.js";
 import simulationRoutes from "./server/simulation/routes.js";
 import skillRoutes from "./server/skills/routes.js";
@@ -75,9 +73,7 @@ app.use("/api", analyticsRoutes); // /api/analytics/* (visitor routes are public
 app.use("/api", dataRoutes); // /api/occupations, /api/weapons, /api/mods
 app.use("/api", characterRoutes); // /api/character*, /api/characters
 app.use("/api", modRoutes); // /api/mod/*, /api/module/*
-app.use("/api", memoRoutes); // /api/memos
 app.use("/api", skillRoutes); // /api/skills/*
-app.use("/api", ragRoutes); // /api/rag/*
 app.use("/api", simulationRoutes); // /api/simulation*, /api/simulations
 
 // SPA fallback (must be after API routes)

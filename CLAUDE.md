@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project
 
-CoC Multi-Agent System — an AI-powered Call of Cthulhu 7e Game Master. TypeScript full-stack: Express + WebSocket backend, React frontend, PostgreSQL with Prisma ORM. Uses LangChain/LangGraph for multi-agent orchestration. Supports both single-player and multiplayer sessions.
+CoC Dynamic World Simulation — an AI-powered Call of Cthulhu 7e Game Master. TypeScript full-stack: Express + WebSocket backend, React frontend, PostgreSQL with Prisma ORM. Uses LangChain as LLM wrapper (ChatAnthropic/ChatOpenAI/ChatGoogleGenerativeAI). Tick-based world simulation with NPC planning and memory.
 
 ## Commands
 
@@ -57,19 +57,18 @@ Tick-based world simulation:
 ### State Management
 
 - **DynamicGameState** (`state/DynamicGameState.ts`): Complete runtime state — NPCs, scenes, topology (junctions/roads), feature state, inventory, relationships.
-- **Multiplayer state** (`multiplayerState/`): Scene rooms with freeze-fork-merge tree history for party splitting.
 
 ### Server & Client
 
 - **Server entry**: `client/server.ts` — Express + WebSocket on port 3000
-- **API routes**: `client/server/` — organized by domain (`auth/`, `simulation/`, `mod/`, `character/`, `multiplayer/`)
+- **API routes**: `client/server/` — organized by domain (`auth/`, `simulation/`, `mod/`, `character/`)
 - **Frontend**: `client/src/` — React 18 + Vite + TailwindCSS + Phaser (scene viz)
 - **i18n**: English + Chinese (`client/src/i18n/locales/`)
-- **WebSocket**: Real-time simulation events, multiplayer sync (`client/server/websocket/`)
+- **WebSocket**: Real-time simulation events (`client/server/websocket/`)
 
 ### Database
 
-PostgreSQL via Prisma (`prisma/schema.prisma`). Key tables: Module/ModuleNpc/ModuleScene (game content), Session/SimulationRuntime/SimulationEvents (runtime), NpcMemory (embeddings), NpcDailyPlan, multiplayer tables.
+PostgreSQL via Prisma (`prisma/schema.prisma`). Key tables: Module/ModuleNpc/ModuleScene (game content), Session/SimulationRuntime/SimulationEvents (runtime), NpcMemory (embeddings), NpcDailyPlan.
 
 ## Code Conventions
 

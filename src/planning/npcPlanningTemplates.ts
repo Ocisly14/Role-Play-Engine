@@ -154,7 +154,7 @@ const DEFAULT_DETAILED_NODE_TYPE_REF = `## Node Type Reference
 
 ## Skill Checks (Call of Cthulhu 7e Rules)
 
-The engine acts as Keeper. A skill roll is called ONLY when:
+The engine resolves skill rolls mechanically. A skill roll is called ONLY when:
 1. The outcome is **genuinely uncertain** for someone with this character's ability
 2. Failure has **meaningful consequences** (danger, lost time, alerting enemies, missing information, psychological harm)
 

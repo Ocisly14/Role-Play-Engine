@@ -35,7 +35,7 @@ interface ParsedDiceRoll {
   checkDetail?: string;
 }
 
-/** Psychology check: do not display dice result (Keeper secret) */
+/** Psychology checks hide the result to preserve imperfect information. */
 function isPsychologyRoll(info: DiceRollInfo): boolean {
   const skill = (info.skill ?? "").toLowerCase();
   const roll = (info.roll ?? "").toLowerCase();

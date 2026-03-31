@@ -1,64 +1,14 @@
 {
-  "title": "Modules",
   "select": "Select Module",
   "chooseAdventure": "Choose Your Adventure",
   "selectScenario": "Select a scenario to begin your investigation",
   "createStory": "Create Your Own Story",
   "createStoryDesc": "Design your own TaleCraft adventure with AI",
   "startAdventure": "Start Adventure",
-  "manage": "Manage Modules",
-  "upload": "Upload Module",
-  "delete": "Delete Module",
   "loading": "Loading modules...",
-  "uploading": "Uploading module...",
-  "deleting": "Deleting...",
-  "empty": "No modules available",
-  "emptyDescription": "Upload a module to start your investigation",
-  "name": "Module Name",
-  "description": "Description",
-  "author": "Author",
-  "version": "Version",
-  "createdAt": "Created: {{date}}",
-  "scenarios": "{{count}} scenario",
-  "scenarios_plural": "{{count}} scenarios",
-  "npcs": "{{count}} NPC",
-  "npcs_plural": "{{count}} NPCs",
-  "details": "Module Details",
-  "background": "Background",
-  "storyOutline": "Story Outline",
-  "keeperGuidance": "Keeper Guidance",
-  "initialGameTime": "Initial Game Time",
-  "selectModule": "Select this module",
-  "uploadInstructions": {
-    "title": "Upload Module Instructions",
-    "step1": "Prepare your module folder with the following structure:",
-    "step2": "module_setup.json - Runtime setup (weather presets)",
-    "step3": "[Module]_npc/ - NPC profiles (JSON or documents)",
-    "step4": "[Module]_Scenarios/ - Scenario files (JSON or documents)",
-    "step5": "Compress the folder as a ZIP file",
-    "step6": "Click the upload button and select your ZIP file",
-    "supportedFormats": "Supported formats: JSON, DOCX, PDF",
-    "maxSize": "Maximum size: 50MB"
-  },
-  "validation": {
-    "invalidFormat": "Invalid module format",
-    "missingDigest": "Missing module_setup.json",
-    "fileTooLarge": "File size exceeds 50MB limit",
-    "invalidZip": "Invalid ZIP file"
-  },
-  "success": {
-    "uploaded": "Module uploaded successfully",
-    "deleted": "Module deleted successfully",
-    "loaded": "Module loaded successfully"
-  },
   "errors": {
-    "uploadFailed": "Failed to upload module",
-    "deleteFailed": "Failed to delete module",
-    "loadFailed": "Failed to load module",
-    "notFound": "Module not found",
-    "corrupted": "Module data is corrupted"
+    "loadFailed": "Failed to load module"
   },
-  "confirmDelete": "Are you sure you want to delete the module \"{{name}}\"?\\n\\nThis will remove all associated scenarios and NPCs.",
   "intro": {
     "title": "Module Introduction",
     "closeAria": "Close",
@@ -66,19 +16,8 @@
     "nextSelectCharacter": "Next: Select Character"
   },
   "moduleLoad": {
-    "stages": {
-      "initializing": "Initializing",
-      "generatingIntro": "Generating Introduction Narrative",
-      "complete": "Complete"
-    },
     "messages": {
-      "initializing": "Initializing...",
-      "loadingModule": "Loading module...",
-      "generatingIntro": "Generating module introduction narrative...",
-      "ready": "Ready"
-    },
-    "errors": {
-      "noLoadResult": "Server did not return load result"
+      "loadingModule": "Loading module..."
     }
   },
   "storyCreator": {

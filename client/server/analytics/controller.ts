@@ -5,8 +5,7 @@ import {
   getHistoricalStats,
   getRecentWindowStats,
   getTodayStats,
-  getTopUsersByMessagesForDate,
-  saveDailyStats,
+  getTopUsersBySimulationsForDate,
 } from "./service.js";
 
 /**
@@ -25,7 +24,7 @@ export async function getDailyAnalytics(req: Request, res: Response) {
     const historicalStats = await getHistoricalStats(days);
     const recent48h = await getRecentWindowStats(48);
     const accumulated = await getAccumulatedStats();
-    const topUsersToday = await getTopUsersByMessagesForDate(today, 5);
+    const topUsersToday = await getTopUsersBySimulationsForDate(today, 5);
 
     return res.json({
       today: todayStats,
@@ -54,15 +53,9 @@ export async function refreshAnalytics(req: Request, res: Response) {
     // Calculate fresh stats
     const stats = await calculateDailyStats(today);
 
-    // Save to database
-    await saveDailyStats(stats);
-
-    // Get the saved record
-    const todayStats = await getTodayStats();
-
     return res.json({
       success: true,
-      stats: todayStats,
+      stats,
     });
   } catch (error) {
     console.error("Error refreshing analytics:", error);

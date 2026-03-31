@@ -20,7 +20,7 @@ import {
  * Model class usage guidelines:
  * - SMALL: Quick responses, simple classifications, basic conversational turns
  * - MEDIUM: Standard gameplay interactions, character agent responses, memory queries
- * - LARGE: Complex reasoning, rule interpretations, comprehensive analysis, keeper responses
+ * - LARGE: Complex reasoning, rule interpretations, and narrative-heavy outputs
  */
 
 /**

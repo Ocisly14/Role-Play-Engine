@@ -318,9 +318,9 @@ Expected: Clean build with no errors.
 
 **Step 2: Check for stale imports**
 
-Run: `grep -rn "ScenarioSnapshot\|ScenarioProfile\|ScenarioCharacter\|clueRevelations\|previousScenarioJson" src/ --include="*.ts" | grep -v node_modules | grep -v multiplayerAgent | grep -v multiplayerState | grep -v multiplayerGraph | grep -v scenarioDocumentParser`
+Run: `grep -rn "ScenarioSnapshot\|ScenarioProfile\|ScenarioCharacter\|clueRevelations\|previousScenarioJson" src/ --include="*.ts" | grep -v node_modules | grep -v scenarioDocumentParser`
 
-Expected: No matches (multiplayer files and document parser excluded).
+Expected: No matches (document parser excluded).
 
 **Step 3: Commit any remaining fixes**
 

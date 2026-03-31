@@ -289,9 +289,10 @@ refresh_tokens         -- "Remember me" tokens
 Updated game tables:
 ```sql
 characters             -- Now has user_id column
-sessions              -- Game sessions (existing)
-game_turns            -- Game history (existing)
-...                   -- Other existing game tables
+sessions              -- Simulation sessions
+simulation_runtime    -- Runtime state per session
+simulation_events     -- Persisted simulation event log
+...                   -- Other existing runtime tables
 ```
 
 ---

@@ -1,9 +1,6 @@
-import fs from "fs";
-import path from "path";
 import handlebars from "handlebars";
 import { names, uniqueNamesGenerator } from "unique-names-generator";
 import type { DynamicGameState } from "./state/index.js";
-import type { DynamicScene } from "./state/types.js";
 import type { ImageInput } from "./models/types.js";
 import { stripModuleScope } from "./shared/agents/memory/database/moduleScope.js";
 
@@ -77,28 +74,12 @@ const sanitizeTemplateValue = (
 };
 
 /**
- * Multiplayer scene-scoped state — carries only the active sceneRoom's scene.
- * Avoids passing the entire multiplayer state into templates (prevents cross-scene leakage).
- */
-export interface MultiplayerSceneScopedState {
-  /** Discriminator to distinguish from single-player state */
-  multiplayerSceneScope: true;
-  /** The current sceneRoom's scene */
-  currentScene: DynamicScene | null;
-  /** Map image path (from ScenarioOutline, provided by caller) */
-  mapImagePath?: string;
-  [key: string]: unknown;
-}
-
-/**
  * CoC State type for template composition
- * Can be a DynamicGameState directly, an object containing dynamicGameState,
- * or a multiplayer scene-scoped state.
+ * Can be a DynamicGameState directly or an object containing dynamicGameState.
  */
 export type CoCState =
   | DynamicGameState
-  | { dynamicGameState?: DynamicGameState; [key: string]: any }
-  | MultiplayerSceneScopedState;
+  | { dynamicGameState?: DynamicGameState; [key: string]: any };
 
 // Template function type for dynamic templates
 export type TemplateType = string | ((params: { state: CoCState }) => string);
@@ -128,57 +109,6 @@ const getValueAtPath = (context: TemplateContext, rawPath: string): unknown => {
   }, context);
 };
 
-const imageMimeTypes: Record<string, string> = {
-  ".png": "image/png",
-  ".jpg": "image/jpeg",
-  ".jpeg": "image/jpeg",
-  ".webp": "image/webp",
-};
-
-const inferMimeType = (filePath: string): string => {
-  const ext = path.extname(filePath).toLowerCase();
-  return imageMimeTypes[ext] || "image/png";
-};
-
-const resolveMapImage = (mapImagePath?: string): ImageInput | null => {
-  if (!mapImagePath) return null;
-
-  const normalized = mapImagePath.replace(/\\/g, path.sep);
-  const candidates = new Set<string>();
-
-  if (path.isAbsolute(normalized)) {
-    candidates.add(normalized);
-  }
-
-  candidates.add(path.join(process.cwd(), normalized));
-  candidates.add(path.join(process.cwd(), "data", normalized));
-
-  const modsDir = path.join(process.cwd(), "data", "Mods");
-  if (fs.existsSync(modsDir)) {
-    const moduleDirs = fs
-      .readdirSync(modsDir, { withFileTypes: true })
-      .filter((dirent) => dirent.isDirectory())
-      .map((dirent) => dirent.name);
-
-    for (const moduleDir of moduleDirs) {
-      candidates.add(path.join(modsDir, moduleDir, normalized));
-    }
-  }
-
-  for (const candidate of candidates) {
-    try {
-      if (fs.existsSync(candidate) && fs.statSync(candidate).isFile()) {
-        const data = fs.readFileSync(candidate);
-        return { data, mimeType: inferMimeType(candidate) };
-      }
-    } catch (error) {
-      console.warn(`Failed to load image at ${candidate}:`, error);
-    }
-  }
-
-  return null;
-};
-
 const isDynamicGameState = (state: unknown): state is DynamicGameState => {
   return Boolean(
     state &&
@@ -201,37 +131,17 @@ const extractDynamicGameState = (state: CoCState): DynamicGameState | null => {
 
 /**
  * Collects scenario images (e.g., map) from the current game state.
- * mapImagePath is now on ScenarioOutline, not on the scene itself.
+ * Current callers do not provide scoped scene image context, so this is a no-op.
  */
 export const collectScenarioImages = (state: CoCState): ImageInput[] => {
-  let mapImagePath: string | undefined;
-  if ("multiplayerSceneScope" in state && state.multiplayerSceneScope) {
-    // Multiplayer: caller provides mapImagePath directly on the scoped state
-    mapImagePath = state.mapImagePath as string | undefined;
-  } else {
-    // Simulation mode: no current scene concept, skip map image
-  }
-  if (!mapImagePath) return [];
-
-  const resolved = resolveMapImage(mapImagePath);
-  if (!resolved) {
-    console.warn(`Map image path provided but file not found: ${mapImagePath}`);
-    return [];
-  }
-
-  return [resolved];
+  void state;
+  return [];
 };
 
 /**
  * Enhanced template composition with support for dynamic templates and handlebars.
  * Replaces `{{path.to.value}}` placeholders in a template using state-driven context.
  * This keeps prompts declarative while safely surfacing the latest state to the LLM.
- *
- * Multiplayer note:
- * - Template composition is purely a renderer; it does NOT enforce isolation.
- * - When running native multiplayer with multiple sceneRooms in parallel, callers MUST inject
- *   sceneRoom-scoped views (current scene + scene members + per-scene temporaryInfo)
- *   instead of passing the entire multiplayer state into templates, to avoid cross-scene leakage.
  *
  * @param template - Template string or function
  * @param state - CoC game state

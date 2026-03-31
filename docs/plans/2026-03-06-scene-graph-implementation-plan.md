@@ -1474,7 +1474,7 @@ git commit -m "refactor: NPCPlanningAgent uses scene graph context for movement 
 
 **Step 1: Search for all remaining `connectionStates` references**
 
-Run: `grep -rn "connectionStates\|ScenarioConnectionState" src/ --include="*.ts" | grep -v node_modules | grep -v multiplayer`
+Run: `grep -rn "connectionStates\|ScenarioConnectionState" src/ --include="*.ts" | grep -v node_modules`
 
 Fix each reference: replace `connectionStates` reads with `blockedConnections`, remove `ScenarioConnectionState` imports.
 
@@ -1486,7 +1486,7 @@ Ensure all `DynamicScene` constructions include the new required fields.
 
 **Step 3: Search for old `ScenarioOutline` field usage**
 
-Run: `grep -rn "outline\.connections\|outline\.tags\|outline\.evidence\|outline\.clues\|estimatedShortActions\|timeRestriction" src/ --include="*.ts" | grep -v node_modules | grep -v multiplayer`
+Run: `grep -rn "outline\.connections\|outline\.tags\|outline\.evidence\|outline\.clues\|estimatedShortActions\|timeRestriction" src/ --include="*.ts" | grep -v node_modules`
 
 Remove or update references to removed fields.
 

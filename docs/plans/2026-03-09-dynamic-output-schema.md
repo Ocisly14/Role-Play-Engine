@@ -401,7 +401,7 @@ Run: `pnpm build`
 Expected: Passes (all 178+ files compiled)
 
 Run: `pnpm build:tsc`
-Expected: Only pre-existing errors in `multiplayerState/` directory
+Expected: Only pre-existing unrelated type errors
 
 **Step 3: Commit**
 

@@ -503,19 +503,12 @@ git commit -m "feat: add TransportEdge and parentLocationId types for scene grap
 
 ---
 
-### Task 7: Update multiplayer orchestrator template (if applicable)
+### Task 7: Final verification
 
-**Files:**
-- Modify: `src/dynamicworldagent/multiplayerAgent/orchestrator/orchestratorTemplate.ts`
-
-**Step 1: Check if multiplayer template has impact levels**
-
-If it has the same 0-3 impact guide as the single-player orchestrator, update it to 0-5 with the same text as Task 2.
-
-**Step 2: Build + commit**
+**Step 1: Build**
 
 ```bash
 pnpm build
-git add src/dynamicworldagent/multiplayerAgent/orchestrator/orchestratorTemplate.ts
-git commit -m "docs: update multiplayer orchestrator template impact levels to 0-5"
 ```
+
+**Step 2: Confirm all orchestrator-facing impact guidance is aligned to 0-5**

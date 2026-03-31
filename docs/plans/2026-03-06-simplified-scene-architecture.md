@@ -796,7 +796,7 @@ The Director agent itself (directorAgent.ts) mainly does game ending checks. Upd
 **Step 1: Search for all remaining references**
 
 ```bash
-grep -rn "DynamicScenarioSnapshot\|currentScenario\|updatedDynamicScenarioSnapshots\|previousScenario\|refreshCurrentScenarioSnapshot" src/dynamicworldagent/ --include="*.ts" | grep -v "multiplayer"
+grep -rn "DynamicScenarioSnapshot\|currentScenario\|updatedDynamicScenarioSnapshots\|previousScenario\|refreshCurrentScenarioSnapshot" src/dynamicworldagent/ --include="*.ts"
 ```
 
 Fix each remaining reference.
@@ -804,7 +804,7 @@ Fix each remaining reference.
 **Step 2: Search for `snapshot` references that should be `scene`**
 
 ```bash
-grep -rn "snapshot" src/dynamicworldagent/ --include="*.ts" | grep -v "multiplayer" | grep -v node_modules | grep -v ".d.ts"
+grep -rn "snapshot" src/dynamicworldagent/ --include="*.ts" | grep -v node_modules | grep -v ".d.ts"
 ```
 
 Rename variables from `snapshot` to `scene` where appropriate.
@@ -834,7 +834,6 @@ Show `git diff --stat` and wait for user confirmation before committing.
 ### Notes
 
 **Out of scope (follow-up tasks):**
-- Multiplayer equivalents (`src/dynamicworldagent/multiplayerState/`, `multiplayerAgent/`, `multiplayerGraph/`)
 - Prisma schema changes (add `domain`, `items` columns to ScenarioSnapshot table, remove ScenarioCharacter FK)
 - ScenarioOutline Prisma migration (add `showMap`, `mapImagePath`, `estimatedShortActions`, `timeRestriction`)
 - Updating orchestrator agent if it reads `scenario.characters`
