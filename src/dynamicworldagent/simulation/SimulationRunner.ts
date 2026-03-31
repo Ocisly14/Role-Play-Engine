@@ -1,10 +1,10 @@
 import * as path from "node:path";
 import type { PrismaClient } from "@prisma/client";
 import type { NPCPlanningAgent } from "../dynamicBasicAgent/npcPlanning/NPCPlanningAgent.js";
-import { runSimulationTick } from "../dynamicBasicAgent/npcPlanning/tickProcessor.js";
-import type { GameEngineRegistry } from "../engine/registry.js";
-import { buildEncounterSnapshot } from "../engine/shared/encounterDedup.js";
-import type { ExecutionContext } from "../engine/types.js";
+import type { GameEngineRegistry } from "../../engine/registry.js";
+import { runSimulationTick } from "../../engine/runtime/tickProcessor.js";
+import { buildEncounterSnapshot } from "../../engine/shared/encounterDedup.js";
+import type { ExecutionContext } from "../../engine/types.js";
 import type { NpcMemoryManager } from "../memory/NpcMemoryManager.js";
 import type { DynamicGameStateManager } from "../state/DynamicGameState.js";
 import type { DynamicNPCProfile } from "../state/types.js";

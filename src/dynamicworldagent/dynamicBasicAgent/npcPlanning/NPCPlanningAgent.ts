@@ -1,12 +1,12 @@
 import { randomUUID } from "crypto";
 import type { PrismaClient } from "@prisma/client";
 import { ModelClass, generateText } from "../../../models/index.js";
-import type { GameEngineRegistry } from "../../engine/registry.js";
+import type { GameEngineRegistry } from "../../../engine/registry.js";
 import {
   arePositionsCoLocated,
   describePrecisePosition,
-} from "../../engine/shared/locationPresence.js";
-import { getTopologyNeighbors } from "../../engine/shared/topologyHelpers.js";
+} from "../../../engine/shared/locationPresence.js";
+import { getTopologyNeighbors } from "../../../engine/shared/topologyHelpers.js";
 import { t } from "../../i18n/t.js";
 import type { NpcMemoryManager } from "../../memory/NpcMemoryManager.js";
 import type { KnownMapSnapshot } from "../../memory/types.js";

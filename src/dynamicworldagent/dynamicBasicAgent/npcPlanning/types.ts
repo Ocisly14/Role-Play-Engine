@@ -216,7 +216,8 @@ export type FailureReason =
   | "object_not_found"
   | "skill_roll_failed"
   | "bad_luck"
-  | "prerequisite_not_met";
+  | "prerequisite_not_met"
+  | "unknown";
 
 export type FailureTrigger = {
   type: "failure";

@@ -10,7 +10,6 @@ dynamicBasicAgent/
 ├── skillDefaults.ts          # Default skill values
 ├── npcPlanning/
 │   ├── NPCPlanningAgent.ts   # Daily schedule generation via LLM
-│   ├── tickProcessor.ts      # Per-minute tick execution
 │   ├── npcPlanningTemplates.ts
 │   ├── types.ts
 │   ├── autoMovementHelpers.ts
@@ -26,3 +25,7 @@ dynamicBasicAgent/
     ├── ragQueryRewriter.ts       # Query rewriting
     └── textChunker.ts            # Text chunking for embeddings
 ```
+
+Tick execution runtime now lives under `src/engine/runtime/`, while
+`npcPlanning/` keeps planning-specific schemas, prompts, and the
+`NPCPlanningAgent`.

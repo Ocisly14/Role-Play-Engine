@@ -39,14 +39,14 @@ prisma db push            # Apply schema changes (use this, NOT migrate dev — 
 
 ## Architecture
 
-### Dynamic World Simulation Engine (`src/dynamicworldagent/engine/`)
+### Dynamic World Simulation Engine (`src/engine/`)
 Tick-based world simulation:
 
 - **Registry** (`registry.ts`): Central registry for handlers and features. Collects skill modifiers, manages propagation state.
 - **Handlers** (5 types in `handlers/`): Process NPC action nodes — `routine`, `movement`, `characterInteraction`, `objectInteraction`, `sceneInteraction`.
 - **Features** (6 systems in `features/`): Pluggable world systems — `fire`, `weather`, `lighting`, `sanity`, `stamina`, `eventTrigger`. Each follows a lifecycle: `planningPrompt()` → `tick()` → `onNodeStart()` → `activate()` → `propagate()`.
 - **SimulationRunner** (`simulation/SimulationRunner.ts`): Orchestrates tick processing, time progression, WebSocket broadcasting.
-- **TickProcessor** (`dynamicBasicAgent/npcPlanning/tickProcessor.ts`): Executes one game-minute per tick — runs skill rolls, applies features, records actions to memory.
+- **TickProcessor** (`engine/runtime/tickProcessor.ts`): Executes one game-minute per tick — runs skill rolls, applies features, records actions to memory.
 
 ### NPC Intelligence
 
