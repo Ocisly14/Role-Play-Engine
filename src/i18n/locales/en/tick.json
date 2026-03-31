@@ -14,7 +14,7 @@
   "memory_witness": "[witness] {{entry}}",
   "no_path_failed": "{{action}} [no path available in topology] failed",
   "blocked_failed": "{{action}} [blocked: {{reason}}] failed",
-  "arrived_succeeded": "{{action}} [arrived at {{location}}] succeeded",
+  "arrived_succeeded": "{{action}} succeeded",
   "walked_from_to": "Walked from {{from}} to {{to}} (~{{minutes}} min).",
   "auto_movement_outcome": "auto-movement from {{from}} to {{to}}",
   "walked_for_item": "Walked from {{from}} to {{to}} to use {{item}} (~1 min).",

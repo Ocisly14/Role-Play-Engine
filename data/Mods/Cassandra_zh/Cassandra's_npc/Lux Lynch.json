@@ -138,12 +138,20 @@
       "history": "勒克斯通过向帕特里齐奥靠拢获得了晋升，后者后来将他拉入了越来越危险的事务中。"
     },
     {
-      "targetId": "Jenny Florence (berforth Locefern)",
-      "targetName": "Jenny Florence (berforth Locefern)",
-      "relationshipType": "enemy",
-      "attitude": -20,
-      "description": "一个黑客，她的死压在勒克斯的良心上。",
-      "history": "勒克斯间接参与了导致她被谋杀的事件链，因为他奉命释放了她的凶手。"
+      "targetId": "Bruno Galilei",
+      "targetName": "Bruno Galilei",
+      "relationshipType": "ally",
+      "attitude": 20,
+      "description": "一个正直到令人不安的同事。布鲁诺信任勒克斯，而勒克斯在内疚和自保之间摇摆——他知道帕特里齐奥迟早会要求他对布鲁诺动手。",
+      "history": "他们在警局共事多年。布鲁诺视勒克斯为值得信赖的同事，但勒克斯知道自己随时可能被迫背叛他。"
+    },
+    {
+      "targetId": "Angela",
+      "targetName": "Angela",
+      "relationshipType": "neutral",
+      "attitude": 5,
+      "description": "一个固定的毒品供应商，维持着低调但稳定的交易关系。",
+      "history": "勒克斯从安吉拉那里购买大麻和少量兴奋剂来缓解压力，双方都明白保持沉默是交易的前提。"
     }
   ],
   "memory": [
@@ -191,6 +199,20 @@
       "metadata": {
         "knowledgeId": "k_lux_survival_pattern",
         "difficulty": "regular"
+      }
+    },
+    {
+      "type": "secret",
+      "content": "珍妮·弗洛伦斯（卢奇菲罗）的死压在我的良心上。我奉命释放了马丁·金，间接让她的凶手逃脱了。她的鬼魂和那把被栽赃的折叠刀是我夜里最常想起的东西。",
+      "metadata": {
+        "knowledgeId": "s_lux_jenny_guilt"
+      }
+    },
+    {
+      "type": "secret",
+      "content": "布鲁诺是一个正直的人，他信任我让我既感动又恐惧。我知道帕特里齐奥迟早会要求我在布鲁诺的调查中发挥作用——到那时我将不得不在良心和生存之间做出选择。",
+      "metadata": {
+        "knowledgeId": "s_lux_bruno_dilemma"
       }
     }
   ]

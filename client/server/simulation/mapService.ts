@@ -1,5 +1,6 @@
 import * as fs from "node:fs";
 import * as path from "node:path";
+import { resolveDisplayLocationName } from "../../../src/planning/sceneMapFormatter.js";
 import type { SceneCondition } from "../../../src/planning/types.js";
 import { getPrismaClient } from "../../../src/shared/agents/memory/database/prismaClient.js";
 import type { SimulationRunner } from "../../../src/simulation/SimulationRunner.js";
@@ -198,23 +199,7 @@ function resolveLocationName(
   position: CharacterPosition,
   dgsm: DynamicGameStateManager
 ): string {
-  const topology = dgsm.getTopology();
-  if (!topology) return "Unknown";
-
-  switch (position.type) {
-    case "junction": {
-      const j = topology.junctions.get(position.junctionId);
-      return j?.name ?? position.junctionId;
-    }
-    case "road": {
-      const r = topology.roads.get(position.roadId);
-      return r?.name ?? position.roadId;
-    }
-    case "scene": {
-      const s = dgsm.getState().scenes.get(position.sceneId);
-      return s?.name ?? position.sceneId;
-    }
-  }
+  return resolveDisplayLocationName(dgsm, dgsm.resolveLocationId(position));
 }
 
 export function findSceneDirectory(modulePath: string): string | null {

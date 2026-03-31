@@ -156,7 +156,7 @@ const DEFAULT_DETAILED_NODE_TYPE_REF = `## Node Type Reference
 - **"object_interaction"**: Interact with a physical object — pick up, hide, move, use, combine, lock, unlock, destroy, etc. Describe what you do in \`action\`. Set \`objectInteractionPayload.itemId\` to the primary item. An LLM resolver handles all state changes.
 - **"scene_interaction"**: Search, investigate, or modify the environment. Describe what you do in \`action\`. An LLM resolver determines scene condition changes, connection effects (block/unblock/reveal passages), and memories.
 
-## Skill Checks
+## Skill Checks (Call of Cthulhu 7e Rules)
 
 The engine resolves skill rolls mechanically. A skill roll is called ONLY when:
 1. The outcome is **genuinely uncertain** for someone with this character's ability

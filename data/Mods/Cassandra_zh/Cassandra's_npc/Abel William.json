@@ -86,7 +86,7 @@
     "maxSanity": 50,
     "luck": 55,
     "mp": 10,
-    "conditions": ["疲惫", "颈部伤口", "冷蜘蛛感染"]
+    "conditions": ["疲惫"]
   },
   "skills": {
     "Accounting": 45,
@@ -99,18 +99,6 @@
   "inventory": [
     {
       "name": "办公室钥匙"
-    },
-    {
-      "name": "颈部绷带",
-      "properties": {
-        "note": "缠绕在亚伯声称是工伤事故的伤口上。"
-      }
-    },
-    {
-      "name": "杀虫喷雾",
-      "properties": {
-        "note": "在地窖和储藏区反复使用，但几乎没有明显效果。"
-      }
     },
     {
       "name": "账本",
@@ -176,20 +164,6 @@
       "metadata": {
         "knowledgeId": "k_abel_office_papers",
         "difficulty": "regular"
-      }
-    },
-    {
-      "type": "secret",
-      "content": "有什么东西在酒厂附近咬伤或撕裂了我的脖子。我一直称它为普通的工伤事故，因为我不想让任何人认为我软弱、生病或不再掌控这里。",
-      "metadata": {
-        "knowledgeId": "s_abel_neck_wound"
-      }
-    },
-    {
-      "type": "secret",
-      "content": "蜘蛛在地窖和工厂关闭的区域最为严重。我清理蛛网、喷洒毒药，回来后发现它们又出现了，好像这个地方在自己生长它们一样。",
-      "metadata": {
-        "knowledgeId": "s_abel_spiders"
       }
     },
     {

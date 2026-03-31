@@ -104,20 +104,20 @@
   ],
   "relationships": [
     {
-      "targetId": "Jenny Florence (berforth Locefern)",
-      "targetName": "Jenny Florence (berforth Locefern)",
-      "relationshipType": "friend",
-      "attitude": 40,
-      "description": "一个随便一起逛街的普通朋友，互不知道对方的真实身份。",
-      "history": "她们在社交场合一起消磨时间，以为对方只是普通平民。"
-    },
-    {
       "targetId": "Vito",
       "targetName": "Vito",
       "relationshipType": "friend",
       "attitude": 70,
       "description": "她的男朋友，少数几个她允许亲近的人之一。",
       "history": "维托是她信任到可以分享日常生活的男人，即使他对她的过去几乎一无所知。"
+    },
+    {
+      "targetId": "Johnny",
+      "targetName": "Johnny",
+      "relationshipType": "acquaintance",
+      "attitude": 10,
+      "description": "一个猎人朋友，对她有明显的好感，但海伦并不在意。",
+      "history": "约翰尼在驯鹿酒吧约她喝酒并试图表白，但因为与菲利普的打斗而不欢而散。"
     }
   ],
   "memory": [
@@ -164,6 +164,13 @@
       "content": "我把过去捂得严严实实，因为一旦人们开始挖掘旧日的暴力，他们就看不到我为自己建立的生活了。",
       "metadata": {
         "knowledgeId": "s_helen_past_control"
+      }
+    },
+    {
+      "type": "event",
+      "content": "卢奇菲罗——我经常一起逛街的朋友——在驯鹿酒吧被杀了。我本打算约她出去喝酒时才发现她已经死了。我们互不知道对方的真实身份，现在永远也不会知道了。这让我意识到卡森德拉比表面看起来更危险。",
+      "metadata": {
+        "knowledgeId": "k_helen_lucifero_death"
       }
     },
     {

@@ -15,7 +15,7 @@ import {
 import { NpcMemoryManager } from "../../../src/memory/NpcMemoryManager.js";
 import { ModelProviderName } from "../../../src/models/types.js";
 import { NPCPlanningAgent } from "../../../src/planning/NPCPlanningAgent.js";
-import { resolveLocationName as resolveDisplayLocationName } from "../../../src/planning/sceneMapFormatter.js";
+import { resolveDisplayLocationName } from "../../../src/planning/sceneMapFormatter.js";
 import { EmbeddingClient } from "../../../src/rag/embedding.js";
 import { resolveModuleIdByName } from "../../../src/shared/agents/memory/database/moduleScope.js";
 import { resolveEmailId } from "../../../src/shared/agents/memory/database/userContext.js";

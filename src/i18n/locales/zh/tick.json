@@ -14,7 +14,7 @@
   "memory_witness": "[目击] {{entry}}",
   "no_path_failed": "{{action}} [拓扑中无可用路径] 失败",
   "blocked_failed": "{{action}} [受阻：{{reason}}] 失败",
-  "arrived_succeeded": "{{action}} [已到达 {{location}}] 成功",
+  "arrived_succeeded": "{{action}} 成功",
   "walked_from_to": "从 {{from}} 步行到 {{to}}（约 {{minutes}} 分钟）。",
   "auto_movement_outcome": "从 {{from}} 自动移动到 {{to}}",
   "walked_for_item": "从 {{from}} 步行到 {{to}} 使用 {{item}}（约1分钟）。",

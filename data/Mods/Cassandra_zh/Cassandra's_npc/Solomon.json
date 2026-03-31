@@ -115,20 +115,20 @@
   ],
   "relationships": [
     {
-      "targetId": "Robin",
-      "targetName": "Robin",
-      "relationshipType": "friend",
-      "attitude": 75,
-      "description": "一位在需要时来拜访和帮忙的受信任的朋友。",
-      "history": "罗宾是所罗门少数几个允许接近而不感到暴露的人之一。"
+      "targetId": "Nancy Charlotte",
+      "targetName": "Nancy Charlotte",
+      "relationshipType": "acquaintance",
+      "attitude": 30,
+      "description": "隔壁花店的年轻女店员，偶尔会到店里翻看几本无害的占星书籍。",
+      "history": "南希在花店工作，所罗门的神秘学商店就在旁边。他们是点头之交，所罗门觉得她善良但脆弱。"
     },
     {
-      "targetId": "Bo He",
-      "targetName": "Bo He",
-      "relationshipType": "friend",
-      "attitude": 55,
-      "description": "一位精神健康一直脆弱的朋友。",
-      "history": "所罗门关心薄荷，并在薄荷需要支持时接受了罗宾的帮助。"
+      "targetId": "Simon Laplace (Simon)",
+      "targetName": "Simon Laplace (Simon)",
+      "relationshipType": "neutral",
+      "attitude": 10,
+      "description": "花店楼上的住客，一个安静而警觉的年轻人，所罗门注意到他深夜的异常活动但从不过问。",
+      "history": "所罗门和西蒙共享同一条街道，彼此心照不宣地保持距离和礼貌。"
     }
   ],
   "memory": [
@@ -164,7 +164,7 @@
     },
     {
       "type": "secret",
-      "content": "我不认识本，凭原则不喜欢他。在我的朋友薄荷开始调查与本有关的事情后，他疯了，不得不被送到安全的地方。",
+      "content": "我不认识本，凭原则不喜欢他。我曾有一位叫薄荷的朋友，他开始调查与本有关的事情后精神崩溃，不得不被送走。另一位帮忙照顾薄荷的朋友罗宾随后也离开了卡森德拉。自那以后，我变得更加孤僻，不再主动与人建立深层联系。",
       "metadata": {
         "knowledgeId": "s_solomon_bohe"
       }

@@ -86,7 +86,7 @@
     "maxSanity": 50,
     "luck": 70,
     "mp": 10,
-    "conditions": ["冷蜘蛛感染"]
+    "conditions": []
   },
   "skills": {
     "Charm": 65,
@@ -104,7 +104,7 @@
     {
       "name": "手腕绷带",
       "properties": {
-        "note": "遮盖她在酒厂附近被冷蜘蛛咬伤的伤口。"
+        "note": "遮盖她手腕上的旧伤痕。"
       }
     },
     {
@@ -153,13 +153,6 @@
       "metadata": {
         "knowledgeId": "k_nancy_simon_rescue",
         "difficulty": "automatic"
-      }
-    },
-    {
-      "type": "secret",
-      "content": "我在酒厂附近被冷蜘蛛咬伤，感染正在恶化。",
-      "metadata": {
-        "knowledgeId": "s_nancy_spider"
       }
     },
     {

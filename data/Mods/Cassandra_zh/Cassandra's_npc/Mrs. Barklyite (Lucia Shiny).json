@@ -158,9 +158,9 @@
     },
     {
       "type": "secret",
-      "content": "我在等待一个干净的机会，在伊莎贝拉·史密斯离开后顶替她的位置，因为保持掩护完整比制造动静更重要。",
+      "content": "我已经以'苏珊'的化名在星辰医院站稳了脚跟，目前担任普通护士。保持掩护完整比制造动静更重要——我需要在不引起怀疑的前提下继续收集帕特里齐奥在医院里活动的证据。",
       "metadata": {
-        "knowledgeId": "s_lucia_isabela"
+        "knowledgeId": "s_lucia_cover_established"
       }
     },
     {
