@@ -1,5 +1,9 @@
 import { describe, expect, it } from "vitest";
 import {
+  buildLocationNameMap,
+  resolveLocationId,
+} from "../../planning/sceneMapFormatter.js";
+import {
   DynamicGameStateManager,
   initialDynamicGameState,
 } from "../../state/DynamicGameState.js";
@@ -24,10 +28,6 @@ import {
   revealKnownMapLocationsDirect,
 } from "../mapMemory.js";
 import type { KnownMapIds } from "../types.js";
-import {
-  buildLocationNameMap,
-  resolveLocationId,
-} from "../../planning/sceneMapFormatter.js";
 
 // ===== Helpers =====
 

@@ -1,10 +1,10 @@
+import { t } from "../../i18n/t.js";
 import type {
   CharacterAction,
   FailureReason,
   PlanNode,
   SuccessLevel,
 } from "../../planning/types.js";
-import { t } from "../../i18n/t.js";
 
 export function buildOutcome(
   node: PlanNode,

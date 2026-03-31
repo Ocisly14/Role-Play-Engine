@@ -7,6 +7,7 @@
  * for the actor.
  */
 
+import type { NpcMemoryManager } from "../../memory/NpcMemoryManager.js";
 import { ModelClass, generateText } from "../../models/index.js";
 import type {
   ItemResult,
@@ -15,7 +16,6 @@ import type {
   PlanNode,
   SuccessLevel,
 } from "../../planning/types.js";
-import type { NpcMemoryManager } from "../../memory/NpcMemoryManager.js";
 import type { DynamicGameStateManager } from "../../state/DynamicGameState.js";
 import type { Item } from "../../state/types.js";
 import type { GameEngineRegistry } from "../registry.js";

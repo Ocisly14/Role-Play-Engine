@@ -1,7 +1,7 @@
 /// <reference path="../types/express.d.ts" />
 import type { Request, Response } from "express";
-import { buildInjectedProfile } from "../../../src/simulation/characterInjection.js";
 import { getPrismaClient } from "../../../src/shared/agents/memory/database/prismaClient.js";
+import { buildInjectedProfile } from "../../../src/simulation/characterInjection.js";
 import { requireSimulationOwnership } from "./ownership.js";
 import * as simulationService from "./service.js";
 

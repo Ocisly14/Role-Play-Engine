@@ -1,8 +1,8 @@
 import handlebars from "handlebars";
 import { names, uniqueNamesGenerator } from "unique-names-generator";
-import type { DynamicGameState } from "./state/index.js";
 import type { ImageInput } from "./models/types.js";
 import { stripModuleScope } from "./shared/agents/memory/database/moduleScope.js";
+import type { DynamicGameState } from "./state/index.js";
 
 type TemplateContext = Record<string, unknown>;
 const ID_LIKE_KEYS = new Set([

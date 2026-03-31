@@ -10,21 +10,10 @@
   "residence": "SCN_1",
   "currentLocation": "SCN_1_SUB_5",
   "knownMapSeed": {
-    "sceneIds": [
-      "SCN_1_SUB_1",
-      "SCN_1_SUB_5",
-      "SCN_1_SUB_6"
-    ],
-    "junctionIds": [
-      "JUNC_1",
-      "JUNC_2"
-    ],
-    "roadIds": [
-      "ROAD_1"
-    ],
-    "scenarioOutlineIds": [
-      "SCN_1"
-    ]
+    "sceneIds": ["SCN_1_SUB_1", "SCN_1_SUB_5", "SCN_1_SUB_6"],
+    "junctionIds": ["JUNC_1", "JUNC_2"],
+    "roadIds": ["ROAD_1"],
+    "scenarioOutlineIds": ["SCN_1"]
   },
   "longTermIntent": "恢复到足以请求有人帮忙找到军先生，并回到他预期的生活。",
   "attributes": {
@@ -44,9 +33,7 @@
     "maxSanity": 40,
     "luck": 50,
     "mp": 8,
-    "conditions": [
-      "暂时性精神错乱"
-    ]
+    "conditions": ["暂时性精神错乱"]
   },
   "skills": {
     "Psychology": 40,

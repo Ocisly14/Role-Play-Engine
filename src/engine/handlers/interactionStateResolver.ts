@@ -7,6 +7,7 @@
  * for both actor and target characters.
  */
 
+import type { NpcMemoryManager } from "../../memory/NpcMemoryManager.js";
 import { ModelClass, generateText } from "../../models/index.js";
 import type {
   CharacterStateDelta,
@@ -15,7 +16,6 @@ import type {
   PlanNode,
   SuccessLevel,
 } from "../../planning/types.js";
-import type { NpcMemoryManager } from "../../memory/NpcMemoryManager.js";
 import type { DynamicGameStateManager } from "../../state/DynamicGameState.js";
 import type { GameEngineRegistry } from "../registry.js";
 import { findTopologyPath } from "../shared/pathfinding.js";

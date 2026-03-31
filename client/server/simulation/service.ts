@@ -3,8 +3,6 @@ import fs from "node:fs";
 import path from "node:path";
 import type { PrismaClient } from "@prisma/client";
 import { WebSocket } from "ws";
-import { NPCPlanningAgent } from "../../../src/planning/NPCPlanningAgent.js";
-import { resolveLocationName as resolveDisplayLocationName } from "../../../src/planning/sceneMapFormatter.js";
 import {
   type WeatherType,
   computeSkillPenalties,
@@ -15,6 +13,12 @@ import {
   createExecutionContext,
 } from "../../../src/engine/index.js";
 import { NpcMemoryManager } from "../../../src/memory/NpcMemoryManager.js";
+import { ModelProviderName } from "../../../src/models/types.js";
+import { NPCPlanningAgent } from "../../../src/planning/NPCPlanningAgent.js";
+import { resolveLocationName as resolveDisplayLocationName } from "../../../src/planning/sceneMapFormatter.js";
+import { EmbeddingClient } from "../../../src/rag/embedding.js";
+import { resolveModuleIdByName } from "../../../src/shared/agents/memory/database/moduleScope.js";
+import { resolveEmailId } from "../../../src/shared/agents/memory/database/userContext.js";
 import { SimulationRunner } from "../../../src/simulation/SimulationRunner.js";
 import {
   deleteSimulationRuntime,
@@ -34,10 +38,6 @@ import {
 import { initializeCompleteDynamicGameState } from "../../../src/state/DynamicGameStateLoader.js";
 import { importModule } from "../../../src/state/moduleImporter.js";
 import type { TownTopology } from "../../../src/state/topologyTypes.js";
-import { ModelProviderName } from "../../../src/models/types.js";
-import { EmbeddingClient } from "../../../src/rag/embedding.js";
-import { resolveModuleIdByName } from "../../../src/shared/agents/memory/database/moduleScope.js";
-import { resolveEmailId } from "../../../src/shared/agents/memory/database/userContext.js";
 import { DatabaseManager } from "../core/DatabaseManager.js";
 import { WebSocketManager } from "../websocket/WebSocketManager.js";
 

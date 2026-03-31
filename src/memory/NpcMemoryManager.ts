@@ -551,5 +551,4 @@ export class NpcMemoryManager {
       lastUpdated: new Date().toISOString(),
     });
   }
-
 }

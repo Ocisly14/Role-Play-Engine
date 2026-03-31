@@ -1,12 +1,12 @@
+import { t } from "../../i18n/t.js";
+import type { NpcMemoryManager } from "../../memory/NpcMemoryManager.js";
+import type { NPCPlanningAgent } from "../../planning/NPCPlanningAgent.js";
+import type { CharacterAction } from "../../planning/types.js";
+import type { DynamicGameStateManager } from "../../state/DynamicGameState.js";
 import type { GameEngineRegistry } from "../registry.js";
 import { findAffectedCharacters } from "../shared/impactPropagation.js";
 import type { TickRuntimeContext } from "../types.js";
 import { personalizeEncounterForNpc } from "./encounterScanner.js";
-import type { NPCPlanningAgent } from "../../planning/NPCPlanningAgent.js";
-import { t } from "../../i18n/t.js";
-import type { NpcMemoryManager } from "../../memory/NpcMemoryManager.js";
-import type { DynamicGameStateManager } from "../../state/DynamicGameState.js";
-import type { CharacterAction } from "../../planning/types.js";
 
 function shouldRunImpactGate(action: CharacterAction): boolean {
   return action.impact >= 2 || (action.impact === 1 && Boolean(action.skill));
@@ -262,7 +262,8 @@ export async function processImpactPipeline(params: {
           memoryContext: reactionContext,
         },
         tickRuntime.tickTime,
-        language
+        language,
+        state.moduleSetup?.background || state.moduleSetup?.introduction || ""
       );
 
       const resolvedWitnessEntry = resolveImpactMemoryEntry(

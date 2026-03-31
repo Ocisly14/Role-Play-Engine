@@ -2,10 +2,7 @@
 
 import assert from "node:assert/strict";
 import { NPCPlanningAgent } from "../src/planning/NPCPlanningAgent.js";
-import type {
-  FailureTrigger,
-  PlanNode,
-} from "../src/planning/types.js";
+import type { FailureTrigger, PlanNode } from "../src/planning/types.js";
 import {
   DynamicGameStateManager,
   initialDynamicGameState,

@@ -1,3 +1,18 @@
+import { t } from "../../i18n/t.js";
+import type { NpcMemoryManager } from "../../memory/NpcMemoryManager.js";
+import type { NPCPlanningAgent } from "../../planning/NPCPlanningAgent.js";
+import {
+  buildLocationNameMap,
+  resolveLocationId as resolveLocationFromName,
+} from "../../planning/sceneMapFormatter.js";
+import type {
+  CharacterAction,
+  FailureTrigger,
+  PlanNode,
+  SuccessLevel,
+} from "../../planning/types.js";
+import type { DynamicGameStateManager } from "../../state/DynamicGameState.js";
+import type { Item } from "../../state/types.js";
 import {
   applyCharacterDelta,
   resolveInteractionState,
@@ -18,21 +33,6 @@ import {
   discoverNpcKnowledge,
   embedDiscoveries,
 } from "./discoveryPipeline.js";
-import {
-  buildLocationNameMap,
-  resolveLocationId as resolveLocationFromName,
-} from "../../planning/sceneMapFormatter.js";
-import type { NPCPlanningAgent } from "../../planning/NPCPlanningAgent.js";
-import { t } from "../../i18n/t.js";
-import type { NpcMemoryManager } from "../../memory/NpcMemoryManager.js";
-import type { DynamicGameStateManager } from "../../state/DynamicGameState.js";
-import type { Item } from "../../state/types.js";
-import type {
-  CharacterAction,
-  FailureTrigger,
-  PlanNode,
-  SuccessLevel,
-} from "../../planning/types.js";
 
 interface ItemActionContext {
   itemId?: string;

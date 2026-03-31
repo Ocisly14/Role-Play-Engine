@@ -1,8 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import type {
-  ObjectStateDelta,
-  PlanNode,
-} from "../../../planning/types.js";
+import type { ObjectStateDelta, PlanNode } from "../../../planning/types.js";
 import type { DynamicScene, Item } from "../../../state/types.js";
 import {
   applyObjectDelta,

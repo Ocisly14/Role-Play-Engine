@@ -1,7 +1,7 @@
 import { randomUUID } from "crypto";
 import { ModelProviderName } from "../../models/types.js";
-import { EmbeddingClient } from "../embedding.js";
 import { getPrismaClient } from "../../shared/agents/memory/database/prismaClient.js";
+import { EmbeddingClient } from "../embedding.js";
 
 export type SessionRagChunkType = "discovery";
 

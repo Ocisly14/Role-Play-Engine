@@ -202,9 +202,7 @@ export class GameEngineRegistry {
    * Calls activateNodeFeatures per node. Used when per-node results are not needed.
    */
   detectFeatureOverlays(
-    executedNodes: import(
-      "../planning/types.js"
-    ).PlanNode[],
+    executedNodes: import("../planning/types.js").PlanNode[],
     dgsm: import("../state/DynamicGameState.js").DynamicGameStateManager
   ): void {
     for (const node of executedNodes) {

@@ -1,7 +1,4 @@
-import type {
-  CharacterAction,
-  PlanNode,
-} from "../../planning/types.js";
+import type { CharacterAction, PlanNode } from "../../planning/types.js";
 import type { DynamicGameStateManager } from "../../state/DynamicGameState.js";
 import { buildOutcome, makeAction } from "../shared/nodeHelpers.js";
 import type { ExecutionContext, NodeHandler } from "../types.js";

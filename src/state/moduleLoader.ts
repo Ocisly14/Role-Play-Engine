@@ -4,8 +4,8 @@
  */
 
 import type { PrismaClient } from "@prisma/client";
-import type { EmbeddingClient } from "../rag/embedding.js";
 import { NpcMemoryManager } from "../memory/NpcMemoryManager.js";
+import type { EmbeddingClient } from "../rag/embedding.js";
 import type { DynamicGameState } from "./DynamicGameState.js";
 import { buildTopology } from "./topologyTypes.js";
 import type {

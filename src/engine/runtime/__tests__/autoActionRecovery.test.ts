@@ -1,13 +1,10 @@
 import { describe, expect, it, vi } from "vitest";
+import type { NpcMemoryManager } from "../../../memory/NpcMemoryManager.js";
+import type { NPCPlanningAgent } from "../../../planning/NPCPlanningAgent.js";
+import type { CharacterAction, PlanNode } from "../../../planning/types.js";
+import type { DynamicGameStateManager } from "../../../state/DynamicGameState.js";
 import type { ExecutionContext, NodeHandler } from "../../types.js";
 import { recoverActionExecution } from "../autoActionRecovery.js";
-import type { NPCPlanningAgent } from "../../../planning/NPCPlanningAgent.js";
-import type { NpcMemoryManager } from "../../../memory/NpcMemoryManager.js";
-import type { DynamicGameStateManager } from "../../../state/DynamicGameState.js";
-import type {
-  CharacterAction,
-  PlanNode,
-} from "../../../planning/types.js";
 
 function makeNode(overrides: Partial<PlanNode> = {}): PlanNode {
   return {

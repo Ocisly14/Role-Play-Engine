@@ -1,9 +1,9 @@
+import { t } from "../../i18n/t.js";
+import type { CharacterAction } from "../../planning/types.js";
+import type { DynamicGameStateManager } from "../../state/DynamicGameState.js";
 import { shouldEmitEncounter } from "../shared/encounterDedup.js";
 import { arePositionsCoLocated } from "../shared/locationPresence.js";
 import { tryDetectHidden } from "./movementTick.js";
-import { t } from "../../i18n/t.js";
-import type { DynamicGameStateManager } from "../../state/DynamicGameState.js";
-import type { CharacterAction } from "../../planning/types.js";
 
 export function personalizeEncounterForNpc(
   event: CharacterAction,

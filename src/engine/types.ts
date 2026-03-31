@@ -108,7 +108,8 @@ export interface NpcPlanningCapability {
       memoryContext?: string;
     },
     bucketTime: string,
-    language: string
+    language: string,
+    moduleBackground?: string
   ): Promise<{
     shouldRevise: boolean;
     shouldReviseSchedule: boolean;
@@ -121,9 +122,7 @@ export interface NpcPlanningCapability {
     context: RevisePlansContext,
     language: string,
     registry?: import("./registry.js").GameEngineRegistry
-  ): Promise<
-    import("../planning/types.js").RevisePlansResult
-  >;
+  ): Promise<import("../planning/types.js").RevisePlansResult>;
 }
 
 /** Runtime dependencies passed to WorldFeature hooks */
@@ -288,16 +287,12 @@ export interface SkillRollResult {
   failed: boolean;
   reason?: string;
   detail?: string;
-  successLevel: import(
-    "../planning/types.js"
-  ).SuccessLevel;
+  successLevel: import("../planning/types.js").SuccessLevel;
   /** Per-target opposed roll outcomes (multi-target character_interaction) */
   perTargetResults?: Record<
     string,
     {
-      successLevel: import(
-        "../planning/types.js"
-      ).SuccessLevel;
+      successLevel: import("../planning/types.js").SuccessLevel;
       actorWon: boolean;
       detail: string;
       /** Pre-computed combat damage (only when actorWon in combat) */

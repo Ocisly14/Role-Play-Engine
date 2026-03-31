@@ -5,12 +5,12 @@
 
 import fs from "fs";
 import path from "path";
+import { NpcMemoryManager } from "../memory/index.js";
 import { ModelProviderName } from "../models/types.js";
 import { EmbeddingClient } from "../rag/embedding.js";
 import { resolveModuleIdByName } from "../shared/agents/memory/database/moduleScope.js";
 import { getPrismaClient } from "../shared/agents/memory/database/prismaClient.js";
 import { resolveEmailId } from "../shared/agents/memory/database/userContext.js";
-import { NpcMemoryManager } from "../memory/index.js";
 import type { DynamicGameState } from "./DynamicGameState.js";
 import { DynamicGameStateManager } from "./DynamicGameState.js";
 import { importModule } from "./moduleImporter.js";

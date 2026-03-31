@@ -1,17 +1,10 @@
-import { resolveTargetPosition } from "../handlers/movementHandler.js";
-import {
-  SUCCESS_RANK,
-  getSuccessLevel,
-  rollD100,
-} from "../shared/dice.js";
-import { buildMovementRouteIgnoringBlocks } from "../shared/pathfinding.js";
 import { t } from "../../i18n/t.js";
+import type { CharacterAction, PlanNode } from "../../planning/types.js";
 import type { DynamicGameStateManager } from "../../state/DynamicGameState.js";
 import type { CharacterPosition } from "../../state/topologyTypes.js";
-import type {
-  CharacterAction,
-  PlanNode,
-} from "../../planning/types.js";
+import { resolveTargetPosition } from "../handlers/movementHandler.js";
+import { SUCCESS_RANK, getSuccessLevel, rollD100 } from "../shared/dice.js";
+import { buildMovementRouteIgnoringBlocks } from "../shared/pathfinding.js";
 
 export const TICK_DURATION_MINUTES = 1;
 

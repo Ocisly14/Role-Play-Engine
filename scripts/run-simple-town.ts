@@ -10,10 +10,12 @@
 import fs from "fs";
 import path from "path";
 import { PrismaClient } from "@prisma/client";
-import { NPCPlanningAgent } from "../src/planning/NPCPlanningAgent.js";
 import { createExecutionContext } from "../src/engine/executionContext.js";
 import { createDefaultRegistry } from "../src/engine/registerDefaults.js";
 import { NpcMemoryManager } from "../src/memory/NpcMemoryManager.js";
+import { ModelProviderName } from "../src/models/types.js";
+import { NPCPlanningAgent } from "../src/planning/NPCPlanningAgent.js";
+import { EmbeddingClient } from "../src/rag/embedding.js";
 import { SimulationRunner } from "../src/simulation/SimulationRunner.js";
 import { DynamicGameStateManager } from "../src/state/DynamicGameState.js";
 import { importModule } from "../src/state/moduleImporter.js";
@@ -22,8 +24,6 @@ import {
   initRuntime,
   loadModule,
 } from "../src/state/moduleLoader.js";
-import { ModelProviderName } from "../src/models/types.js";
-import { EmbeddingClient } from "../src/rag/embedding.js";
 
 const MODULE_NAME = "simple_town";
 const SESSION_ID = `simple_town_sim`;

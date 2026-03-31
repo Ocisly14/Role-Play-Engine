@@ -20,18 +20,8 @@
       "SCN_4_SUB_3",
       "SCN_4_SUB_4"
     ],
-    "junctionIds": [
-      "JUNC_2",
-      "JUNC_3",
-      "JUNC_4",
-      "JUNC_5",
-      "JUNC_7"
-    ],
-    "roadIds": [
-      "ROAD_2",
-      "ROAD_3",
-      "ROAD_6"
-    ],
+    "junctionIds": ["JUNC_2", "JUNC_3", "JUNC_4", "JUNC_5", "JUNC_7"],
+    "roadIds": ["ROAD_2", "ROAD_3", "ROAD_6"],
     "scenarioOutlineIds": [
       "SCN_4",
       "SCN_9",
@@ -59,9 +49,7 @@
     "maxSanity": 60,
     "luck": 55,
     "mp": 12,
-    "conditions": [
-      "已死亡"
-    ]
+    "conditions": ["已死亡"]
   },
   "skills": {
     "Spot Hidden": 50,

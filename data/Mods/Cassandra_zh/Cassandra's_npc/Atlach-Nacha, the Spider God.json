@@ -10,7 +10,12 @@
   "residence": "SCN_17",
   "currentLocation": "SCN_17",
   "knownMapSeed": {
-    "sceneIds": ["SCN_17_SUB_1", "SCN_17_SUB_2", "SCN_17_SUB_3", "SCN_17_SUB_4"],
+    "sceneIds": [
+      "SCN_17_SUB_1",
+      "SCN_17_SUB_2",
+      "SCN_17_SUB_3",
+      "SCN_17_SUB_4"
+    ],
     "junctionIds": [],
     "roadIds": [],
     "scenarioOutlineIds": ["SCN_17"]

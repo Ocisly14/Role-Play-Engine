@@ -86,11 +86,7 @@
     "maxSanity": 50,
     "luck": 55,
     "mp": 10,
-    "conditions": [
-      "疲惫",
-      "颈部伤口",
-      "冷蜘蛛感染"
-    ]
+    "conditions": ["疲惫", "颈部伤口", "冷蜘蛛感染"]
   },
   "skills": {
     "Accounting": 45,

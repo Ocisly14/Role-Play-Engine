@@ -15,15 +15,15 @@
 
 import path from "node:path";
 import { PrismaClient } from "@prisma/client";
-import { NPCPlanningAgent } from "../src/planning/NPCPlanningAgent.js";
 import { createExecutionContext } from "../src/engine/executionContext.js";
 import { createDefaultRegistry } from "../src/engine/registerDefaults.js";
 import { NpcMemoryManager } from "../src/memory/NpcMemoryManager.js";
+import { getModelSettings } from "../src/models/index.js";
+import { ModelClass, ModelProviderName } from "../src/models/types.js";
+import { NPCPlanningAgent } from "../src/planning/NPCPlanningAgent.js";
+import { EmbeddingClient } from "../src/rag/embedding.js";
 import { SimulationRunner } from "../src/simulation/SimulationRunner.js";
-import type {
-  SimulationState,
-  StopReason,
-} from "../src/simulation/types.js";
+import type { SimulationState, StopReason } from "../src/simulation/types.js";
 import { DynamicGameStateManager } from "../src/state/DynamicGameState.js";
 import { importModule } from "../src/state/moduleImporter.js";
 import {
@@ -33,9 +33,6 @@ import {
   loadModule,
 } from "../src/state/moduleLoader.js";
 import type { DynamicNPCProfile } from "../src/state/types.js";
-import { getModelSettings } from "../src/models/index.js";
-import { ModelClass, ModelProviderName } from "../src/models/types.js";
-import { EmbeddingClient } from "../src/rag/embedding.js";
 
 const MODULE_NAME = "casssandra";
 const SESSION_ID = "casssandra_module_runtime";

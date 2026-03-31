@@ -29,13 +29,15 @@ export interface DailyScheduleParams {
   language: string;
   /** Ranked memory context from unified memory system */
   memoryContext?: string;
+  /** Module background: era, location, technology level, atmosphere */
+  moduleBackground?: string;
 }
 
 export function buildDailySchedulePrompt(
   params: DailyScheduleParams
 ): PromptParts {
-  const systemPrompt = `You are an NPC character in a Call of Cthulhu tabletop RPG.
-
+  const systemPrompt = `You are a character living in a simulated world. Act as a real person would.
+${params.moduleBackground ? `\n## Setting\n${params.moduleBackground}\n` : ""}
 ## Task
 Plan your day. Think about what you need to do and where you need to go — from now until you go to sleep.
 
@@ -59,7 +61,7 @@ Return a JSON array in the order you plan to do them. No extra text. JSON keys m
 \`\`\`json
 [
   { "location": "My Home", "activity": "Have breakfast and review notes from yesterday" },
-  { "location": "Public Library", "activity": "Search the archives for information about the ritual" }
+  { "location": "Public Library", "activity": "Look up old newspaper clippings about the missing person case" }
 ]
 \`\`\`
 
@@ -123,6 +125,8 @@ export interface DetailedNodesParams {
   handlerPrompt?: string;
   planningPrompt?: string;
   outputSchemaPrompt?: string;
+  /** Module background: era, location, technology level, atmosphere */
+  moduleBackground?: string;
 }
 
 const TWENTY_FOUR_HOUR_TIME_GUIDANCE = `## Time Semantics
@@ -152,7 +156,7 @@ const DEFAULT_DETAILED_NODE_TYPE_REF = `## Node Type Reference
 - **"object_interaction"**: Interact with a physical object — pick up, hide, move, use, combine, lock, unlock, destroy, etc. Describe what you do in \`action\`. Set \`objectInteractionPayload.itemId\` to the primary item. An LLM resolver handles all state changes.
 - **"scene_interaction"**: Search, investigate, or modify the environment. Describe what you do in \`action\`. An LLM resolver determines scene condition changes, connection effects (block/unblock/reveal passages), and memories.
 
-## Skill Checks (Call of Cthulhu 7e Rules)
+## Skill Checks
 
 The engine resolves skill rolls mechanically. A skill roll is called ONLY when:
 1. The outcome is **genuinely uncertain** for someone with this character's ability
@@ -228,8 +232,8 @@ export function buildDetailedNodesPrompt(
 ): PromptParts {
   const todayPlan = JSON.stringify(params.todayPlan, null, 2);
 
-  const systemPrompt = `You are an NPC character in a Call of Cthulhu tabletop RPG.
-
+  const systemPrompt = `You are a character living in a simulated world. Act as a real person would.
+${params.moduleBackground ? `\n## Setting\n${params.moduleBackground}\n` : ""}
 ## Task
 Look at your full plan for today and what has already happened. First decide which plan step is the next one you should actually do now. Then break only that next step into concrete action nodes.
 
@@ -349,13 +353,15 @@ export interface ReviseScheduleParams {
   gameDay: number;
   currentTime: string;
   language: string;
+  /** Module background: era, location, technology level, atmosphere */
+  moduleBackground?: string;
 }
 
 export function buildReviseSchedulePrompt(
   params: ReviseScheduleParams
 ): PromptParts {
-  const systemPrompt = `You are an NPC character in a Call of Cthulhu tabletop RPG.
-
+  const systemPrompt = `You are a character living in a simulated world. Act as a real person would.
+${params.moduleBackground ? `\n## Setting\n${params.moduleBackground}\n` : ""}
 ## Task
 Something significant just happened. Look at your remaining plans for today and decide: do you need to change anything?
 
@@ -447,6 +453,8 @@ export interface RevisePlansParams {
   failureReason?: string;
   failureOutcome?: string;
   blockedReason?: string;
+  /** Module background: era, location, technology level, atmosphere */
+  moduleBackground?: string;
 }
 
 function revisePlansOutputSchema(language: string): string {
@@ -479,8 +487,8 @@ IMPORTANT: "revisedNodes" must cover only the current phase of action from right
 export function buildRevisePlansPrompt(params: RevisePlansParams): PromptParts {
   const todayPlan = JSON.stringify(params.todayPlan, null, 2);
 
-  const systemPrompt = `You are an NPC character in a Call of Cthulhu tabletop RPG.
-
+  const systemPrompt = `You are a character living in a simulated world. Act as a real person would.
+${params.moduleBackground ? `\n## Setting\n${params.moduleBackground}\n` : ""}
 ## Task
 Something just disrupted your plans. Look at what you were about to do right now and decide how to adjust the current phase of action.
 
@@ -601,6 +609,8 @@ export interface ImpactGateParams {
     memoryContext?: string;
   };
   language: string;
+  /** Module background: era, location, technology level, atmosphere */
+  moduleBackground?: string;
 }
 
 export function buildImpactGatePrompt(params: ImpactGateParams): PromptParts {
@@ -610,8 +620,8 @@ export function buildImpactGatePrompt(params: ImpactGateParams): PromptParts {
     ? `\n## Relevant Memories\n${c.memoryContext}\n`
     : "";
 
-  const systemPrompt = `You are an NPC character in a Call of Cthulhu tabletop RPG.
-
+  const systemPrompt = `You are a character living in a simulated world. Act as a real person would.
+${params.moduleBackground ? `\n## Setting\n${params.moduleBackground}\n` : ""}
 ## Task
 Something just happened involving you or around you. Think about what you perceived and how it affects you.
 
@@ -679,7 +689,7 @@ export interface RelationshipUpdateParams {
 export function buildRelationshipUpdatePrompt(
   params: RelationshipUpdateParams
 ): string {
-  return `You are the Game Master for a Call of Cthulhu tabletop RPG.
+  return `You are the narrator of a simulated world.
 
 ## Task
 After a character interaction, update the relationship between two characters.

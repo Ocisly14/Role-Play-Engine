@@ -1,8 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import type {
-  CharacterStateDelta,
-  PlanNode,
-} from "../../../planning/types.js";
+import type { CharacterStateDelta, PlanNode } from "../../../planning/types.js";
 import type { Item } from "../../../state/types.js";
 import {
   applyCharacterDelta,

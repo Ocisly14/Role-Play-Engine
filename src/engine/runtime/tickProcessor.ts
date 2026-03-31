@@ -1,10 +1,15 @@
+import type { NpcMemoryManager } from "../../memory/NpcMemoryManager.js";
+import type { NPCPlanningAgent } from "../../planning/NPCPlanningAgent.js";
+import type {
+  CharacterAction,
+  PlanNode,
+  SimulationTickResult,
+} from "../../planning/types.js";
+import type { DynamicGameStateManager } from "../../state/DynamicGameState.js";
 import { drainPendingEmotions } from "../features/sanityFeature.js";
 import type { GameEngineRegistry } from "../registry.js";
 import { buildEncounterSnapshot } from "../shared/encounterDedup.js";
 import type { ExecutionContext, TickRuntimeContext } from "../types.js";
-import type { NPCPlanningAgent } from "../../planning/NPCPlanningAgent.js";
-import type { NpcMemoryManager } from "../../memory/NpcMemoryManager.js";
-import type { DynamicGameStateManager } from "../../state/DynamicGameState.js";
 import {
   type PendingRevisionRequest,
   postProcessExecutedNodeAction,
@@ -26,11 +31,6 @@ import {
   processPendingRevisionRequests,
   recordRevisionInterruption as recordRevisionInterruptionEntry,
 } from "./revisionPipeline.js";
-import type {
-  CharacterAction,
-  PlanNode,
-  SimulationTickResult,
-} from "../../planning/types.js";
 
 function formatActionStatusLabel(action: CharacterAction): string {
   switch (action.status) {
@@ -81,8 +81,7 @@ interface SingleTickParams {
 interface SingleTickResult {
   actions: CharacterAction[];
   injectedNodes: PlanNode[];
-  worldEvents:
-    import("../../planning/types.js").WorldEventDescriptor[];
+  worldEvents: import("../../planning/types.js").WorldEventDescriptor[];
   encounterSignatures: string[];
 }
 

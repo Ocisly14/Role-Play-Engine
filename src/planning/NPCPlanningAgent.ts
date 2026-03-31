@@ -1,6 +1,5 @@
 import { randomUUID } from "crypto";
 import type { PrismaClient } from "@prisma/client";
-import { ModelClass, generateText } from "../models/index.js";
 import type { GameEngineRegistry } from "../engine/registry.js";
 import {
   arePositionsCoLocated,
@@ -10,6 +9,7 @@ import { getTopologyNeighbors } from "../engine/shared/topologyHelpers.js";
 import { t } from "../i18n/t.js";
 import type { NpcMemoryManager } from "../memory/NpcMemoryManager.js";
 import type { KnownMapSnapshot } from "../memory/types.js";
+import { ModelClass, generateText } from "../models/index.js";
 import type { DynamicGameStateManager } from "../state/DynamicGameState.js";
 import { formatItemList, formatSceneItems } from "./itemFormatHelpers.js";
 import {
@@ -468,6 +468,9 @@ export class NPCPlanningAgent {
       registry
     );
 
+    const moduleBackground =
+      state.moduleSetup?.background || state.moduleSetup?.introduction || "";
+
     const { systemPrompt, userPrompt } = buildDailySchedulePrompt({
       npcName: npc.name,
       npcId: npc.id,
@@ -482,6 +485,7 @@ export class NPCPlanningAgent {
       currentTime: state.timeOfDay,
       language,
       memoryContext,
+      moduleBackground,
     });
 
     console.log(`[Planning] 📋 Generating daily schedule for ${npc.name}`);
@@ -604,6 +608,9 @@ export class NPCPlanningAgent {
       ? formatSceneConnections(dgsm, currentScene, mapSnapshot)
       : "";
 
+    const moduleBackground =
+      state.moduleSetup?.background || state.moduleSetup?.introduction || "";
+
     const { systemPrompt, userPrompt } = buildDetailedNodesPrompt({
       npcName: npc.name,
       npcId: npc.id,
@@ -630,6 +637,7 @@ export class NPCPlanningAgent {
           "Use the current time as the default startTime for the first node. Always include both startTime and endTime.",
         language,
       }),
+      moduleBackground,
     });
 
     const nextEntry = schedule[0];
@@ -792,6 +800,9 @@ export class NPCPlanningAgent {
       ? dgsm.resolveLocationId(revSchedPos)
       : undefined;
 
+    const moduleBackground =
+      state.moduleSetup?.background || state.moduleSetup?.introduction || "";
+
     const { systemPrompt, userPrompt } = buildReviseSchedulePrompt({
       npcName: npc.name,
       npcId: npc.id,
@@ -816,6 +827,7 @@ export class NPCPlanningAgent {
       gameDay,
       currentTime: state.timeOfDay,
       language,
+      moduleBackground,
     });
 
     console.log(
@@ -900,6 +912,9 @@ export class NPCPlanningAgent {
       (n) => n.status === "in_progress"
     );
 
+    const moduleBackground =
+      state.moduleSetup?.background || state.moduleSetup?.introduction || "";
+
     const { systemPrompt, userPrompt } = buildRevisePlansPrompt({
       npcName: npc.name,
       npcId: npc.id,
@@ -941,6 +956,7 @@ export class NPCPlanningAgent {
       failureReason: failureTrigger?.failureReason,
       failureOutcome: failureTrigger?.failureOutcome,
       blockedReason: failureTrigger?.blockedReason,
+      moduleBackground,
     });
 
     console.log(
@@ -1026,7 +1042,8 @@ export class NPCPlanningAgent {
       memoryContext?: string;
     },
     bucketTime: string,
-    language = "en"
+    language = "en",
+    moduleBackground?: string
   ): Promise<{
     shouldRevise: boolean;
     shouldReviseSchedule: boolean;
@@ -1036,6 +1053,7 @@ export class NPCPlanningAgent {
       bucketTime,
       candidate,
       language,
+      moduleBackground,
     });
 
     console.log(
@@ -1516,7 +1534,7 @@ export class NPCPlanningAgent {
     const existingKnowledgeMemories = await this.memoryManager.getAllByTypes(
       npcId,
       sessionId,
-      ["information", "secret"],
+      ["information", "secret"]
     );
     const existingKnowledge = existingKnowledgeMemories
       .map((m) => {
@@ -1530,7 +1548,7 @@ export class NPCPlanningAgent {
     const existingBeliefMemories = await this.memoryManager.getAllByTypes(
       npcId,
       sessionId,
-      ["belief"],
+      ["belief"]
     );
     const existingBeliefs = existingBeliefMemories
       .map((m) => {
@@ -1636,14 +1654,14 @@ export class NPCPlanningAgent {
             existing.id,
             0,
             "Disproven during day summary",
-            (existing.metadata as Record<string, any>) ?? {},
+            (existing.metadata as Record<string, any>) ?? {}
           );
         } else if (uk.text) {
           const meta = (existing.metadata as Record<string, any>) ?? {};
           await this.memoryManager!.updateKnowledgeContent(
             existing.id,
             uk.text,
-            meta,
+            meta
           );
         }
       }
@@ -1651,9 +1669,7 @@ export class NPCPlanningAgent {
 
     // Update existing beliefs
     if (parsed.updatedBeliefs?.length) {
-      const beliefById = new Map(
-        existingBeliefMemories.map((m) => [m.id, m])
-      );
+      const beliefById = new Map(existingBeliefMemories.map((m) => [m.id, m]));
       for (const ub of parsed.updatedBeliefs) {
         const existing = beliefById.get(ub.id);
         if (!existing) continue;
@@ -1661,7 +1677,7 @@ export class NPCPlanningAgent {
           existing.id,
           ub.confidence,
           ub.reason ?? "",
-          (existing.metadata as Record<string, any>) ?? {},
+          (existing.metadata as Record<string, any>) ?? {}
         );
       }
     }

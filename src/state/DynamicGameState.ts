@@ -158,16 +158,12 @@ export class DynamicGameStateManager {
   }
 
   pushWorldEvent(
-    event: import(
-      "../planning/types.js"
-    ).WorldEventDescriptor
+    event: import("../planning/types.js").WorldEventDescriptor
   ): void {
     this.pendingWorldEvents.push(event);
   }
 
-  drainWorldEvents(): import(
-    "../planning/types.js"
-  ).WorldEventDescriptor[] {
+  drainWorldEvents(): import("../planning/types.js").WorldEventDescriptor[] {
     const events = this.pendingWorldEvents;
     this.pendingWorldEvents = [];
     return events;
@@ -849,9 +845,7 @@ export class DynamicGameStateManager {
 
   appendSceneCondition(
     scenarioId: string,
-    condition: import(
-      "../planning/types.js"
-    ).SceneCondition
+    condition: import("../planning/types.js").SceneCondition
   ): void {
     if (!this.state.scenarioConditions[scenarioId])
       this.state.scenarioConditions[scenarioId] = [];
@@ -861,9 +855,7 @@ export class DynamicGameStateManager {
 
   replaceSceneConditions(
     scenarioId: string,
-    conditions: import(
-      "../planning/types.js"
-    ).SceneCondition[]
+    conditions: import("../planning/types.js").SceneCondition[]
   ): void {
     this.state.scenarioConditions[scenarioId] = conditions;
     this.state.lastUpdated = new Date();

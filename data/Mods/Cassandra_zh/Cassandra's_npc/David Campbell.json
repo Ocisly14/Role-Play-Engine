@@ -17,22 +17,9 @@
       "SCN_4_SUB_1",
       "SCN_4_SUB_2"
     ],
-    "junctionIds": [
-      "JUNC_2",
-      "JUNC_4",
-      "JUNC_6",
-      "JUNC_11"
-    ],
-    "roadIds": [
-      "ROAD_5a",
-      "ROAD_5b",
-      "ROAD_10"
-    ],
-    "scenarioOutlineIds": [
-      "SCN_4",
-      "SCN_19",
-      "SCN_20"
-    ]
+    "junctionIds": ["JUNC_2", "JUNC_4", "JUNC_6", "JUNC_11"],
+    "roadIds": ["ROAD_5a", "ROAD_5b", "ROAD_10"],
+    "scenarioOutlineIds": ["SCN_4", "SCN_19", "SCN_20"]
   },
   "longTermIntent": "保住通过舒卜-尼古拉斯教团获得的神秘力量和改变后的生命力，在变异状态下生存，并在他仍有能力牟利和掠食的情况下继续利用超自然资源。",
   "attributes": {
@@ -52,9 +39,7 @@
     "maxSanity": 68,
     "luck": 35,
     "mp": 14,
-    "conditions": [
-      "已变异"
-    ]
+    "conditions": ["已变异"]
   },
   "skills": {
     "Occult": 55,
