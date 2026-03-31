@@ -1,11 +1,11 @@
 import { describe, expect, it } from "vitest";
-import { makeBlockedConnectionKey } from "../../../dynamicworldagent/state/blockedConnections.js";
+import { makeBlockedConnectionKey } from "../../../state/blockedConnections.js";
 import type {
   JunctionNode,
   RoadNode,
   TownTopology,
-} from "../../../dynamicworldagent/state/topologyTypes.js";
-import { buildTopology } from "../../../dynamicworldagent/state/topologyTypes.js";
+} from "../../../state/topologyTypes.js";
+import { buildTopology } from "../../../state/topologyTypes.js";
 import { findTopologyPath } from "../pathfinding.js";
 
 // Helper: build a simple test topology

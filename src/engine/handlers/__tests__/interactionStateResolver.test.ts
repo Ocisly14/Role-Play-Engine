@@ -2,15 +2,15 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import type {
   CharacterStateDelta,
   PlanNode,
-} from "../../../dynamicworldagent/dynamicBasicAgent/npcPlanning/types.js";
-import type { Item } from "../../../dynamicworldagent/state/types.js";
+} from "../../../planning/types.js";
+import type { Item } from "../../../state/types.js";
 import {
   applyCharacterDelta,
   resolveInteractionState,
   resolveTargets,
 } from "../interactionStateResolver.js";
 
-vi.mock("../../../../models/index.js", () => ({
+vi.mock("../../../models/index.js", () => ({
   ModelClass: { SMALL: "small", MEDIUM: "medium", LARGE: "large" },
   generateText: vi.fn(),
 }));
@@ -537,7 +537,7 @@ describe("resolveInteractionState (LLM)", () => {
   // ── Basic parsing ──
 
   it("should parse simple conversation response", async () => {
-    const { generateText } = await import("../../../../models/index.js");
+    const { generateText } = await import("../../../models/index.js");
     (generateText as any).mockResolvedValueOnce(
       JSON.stringify({
         actorChanges: { memory: "我和Bob聊了聊天气。" },
@@ -566,7 +566,7 @@ describe("resolveInteractionState (LLM)", () => {
   // ── Combat: full HP/SAN + conditions + appearance + movement ──
 
   it("should parse a full combat response with all delta fields", async () => {
-    const { generateText } = await import("../../../../models/index.js");
+    const { generateText } = await import("../../../models/index.js");
     (generateText as any).mockResolvedValueOnce(
       JSON.stringify({
         actorChanges: {
@@ -642,7 +642,7 @@ describe("resolveInteractionState (LLM)", () => {
   // ── Multi-target: 1 actor vs 2 targets with different outcomes ──
 
   it("should handle multi-target interaction with mixed outcomes", async () => {
-    const { generateText } = await import("../../../../models/index.js");
+    const { generateText } = await import("../../../models/index.js");
     (generateText as any).mockResolvedValueOnce(
       JSON.stringify({
         actorChanges: {
@@ -722,7 +722,7 @@ describe("resolveInteractionState (LLM)", () => {
   // ── Intimidation: bidirectional item + condition + knowledge ──
 
   it("should parse intimidation with item handover and condition changes", async () => {
-    const { generateText } = await import("../../../../models/index.js");
+    const { generateText } = await import("../../../models/index.js");
     (generateText as any).mockResolvedValueOnce(
       JSON.stringify({
         actorChanges: {
@@ -797,7 +797,7 @@ describe("resolveInteractionState (LLM)", () => {
   // ── JSON edge cases ──
 
   it("should handle JSON wrapped in markdown fences", async () => {
-    const { generateText } = await import("../../../../models/index.js");
+    const { generateText } = await import("../../../models/index.js");
     (generateText as any).mockResolvedValueOnce(
       '```json\n{"actorChanges":{"hpDelta":-1,"memory":"fenced response"},"targetChanges":{"npc_b":{"sanDelta":-2,"memory":"也fenced"}}}\n```'
     );
@@ -818,7 +818,7 @@ describe("resolveInteractionState (LLM)", () => {
   });
 
   it("should fill default memory when LLM omits it", async () => {
-    const { generateText } = await import("../../../../models/index.js");
+    const { generateText } = await import("../../../models/index.js");
     (generateText as any).mockResolvedValueOnce(
       JSON.stringify({ actorChanges: { hpDelta: -1 }, targetChanges: {} })
     );
@@ -842,7 +842,7 @@ describe("resolveInteractionState (LLM)", () => {
   // ── Error handling ──
 
   it("should return fallback on LLM failure", async () => {
-    const { generateText } = await import("../../../../models/index.js");
+    const { generateText } = await import("../../../models/index.js");
     (generateText as any).mockRejectedValueOnce(new Error("LLM timeout"));
 
     const dgsm = createResolverDgsm();
@@ -863,7 +863,7 @@ describe("resolveInteractionState (LLM)", () => {
   });
 
   it("should return fallback on malformed JSON", async () => {
-    const { generateText } = await import("../../../../models/index.js");
+    const { generateText } = await import("../../../models/index.js");
     (generateText as any).mockResolvedValueOnce("this is not json at all }{}{");
 
     const dgsm = createResolverDgsm();
@@ -883,7 +883,7 @@ describe("resolveInteractionState (LLM)", () => {
   // ── Prompt verification ──
 
   it("should include skill roll, target data, and knowledge in prompt", async () => {
-    const { generateText } = await import("../../../../models/index.js");
+    const { generateText } = await import("../../../models/index.js");
     let capturedPrompt = "";
     (generateText as any).mockImplementationOnce(async (opts: any) => {
       capturedPrompt = opts.context;

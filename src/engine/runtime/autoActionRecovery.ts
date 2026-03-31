@@ -1,14 +1,14 @@
 import { resolveTargetPosition } from "../handlers/movementHandler.js";
 import { buildMovementRouteIgnoringBlocks } from "../shared/pathfinding.js";
 import type { ExecutionContext, NodeHandler } from "../types.js";
-import type { NPCPlanningAgent } from "../../dynamicworldagent/dynamicBasicAgent/npcPlanning/NPCPlanningAgent.js";
-import { t } from "../../dynamicworldagent/i18n/t.js";
-import type { NpcMemoryManager } from "../../dynamicworldagent/memory/NpcMemoryManager.js";
-import type { DynamicGameStateManager } from "../../dynamicworldagent/state/DynamicGameState.js";
+import type { NPCPlanningAgent } from "../../planning/NPCPlanningAgent.js";
+import { t } from "../../i18n/t.js";
+import type { NpcMemoryManager } from "../../memory/NpcMemoryManager.js";
+import type { DynamicGameStateManager } from "../../state/DynamicGameState.js";
 import type {
   CharacterAction,
   PlanNode,
-} from "../../dynamicworldagent/dynamicBasicAgent/npcPlanning/types.js";
+} from "../../planning/types.js";
 
 async function writeAutoMovementMemory(params: {
   dgsm: DynamicGameStateManager;

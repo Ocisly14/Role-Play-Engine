@@ -1,5 +1,5 @@
-import type { NpcMemoryManager } from "../../dynamicworldagent/memory/NpcMemoryManager.js";
-import type { DynamicGameStateManager } from "../../dynamicworldagent/state/DynamicGameState.js";
+import type { NpcMemoryManager } from "../../memory/NpcMemoryManager.js";
+import type { DynamicGameStateManager } from "../../state/DynamicGameState.js";
 
 export async function syncNpcMapMemories(params: {
   dgsm: DynamicGameStateManager;

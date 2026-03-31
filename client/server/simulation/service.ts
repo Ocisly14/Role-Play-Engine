@@ -3,37 +3,37 @@ import fs from "node:fs";
 import path from "node:path";
 import type { PrismaClient } from "@prisma/client";
 import { WebSocket } from "ws";
-import { NPCPlanningAgent } from "../../../src/dynamicworldagent/dynamicBasicAgent/npcPlanning/NPCPlanningAgent.js";
-import { resolveLocationName as resolveDisplayLocationName } from "../../../src/dynamicworldagent/dynamicBasicAgent/npcPlanning/sceneMapFormatter.js";
+import { NPCPlanningAgent } from "../../../src/planning/NPCPlanningAgent.js";
+import { resolveLocationName as resolveDisplayLocationName } from "../../../src/planning/sceneMapFormatter.js";
 import {
   type WeatherType,
   computeSkillPenalties,
   getWeatherLabel,
-} from "../../../src/dynamicworldagent/engine/features/weatherFeature.js";
+} from "../../../src/engine/features/weatherFeature.js";
 import {
   createDefaultRegistry,
   createExecutionContext,
-} from "../../../src/dynamicworldagent/engine/index.js";
-import { NpcMemoryManager } from "../../../src/dynamicworldagent/memory/NpcMemoryManager.js";
-import { SimulationRunner } from "../../../src/dynamicworldagent/simulation/SimulationRunner.js";
+} from "../../../src/engine/index.js";
+import { NpcMemoryManager } from "../../../src/memory/NpcMemoryManager.js";
+import { SimulationRunner } from "../../../src/simulation/SimulationRunner.js";
 import {
   deleteSimulationRuntime,
   listSimulationRuntimeRecords,
   loadSimulationRuntime,
   runtimeToStatus,
-} from "../../../src/dynamicworldagent/simulation/runtimePersistence.js";
+} from "../../../src/simulation/runtimePersistence.js";
 import type {
   SimulationConfig,
   SimulationEvent,
   SimulationStatus,
-} from "../../../src/dynamicworldagent/simulation/types.js";
+} from "../../../src/simulation/types.js";
 import {
   type DynamicGameState,
   DynamicGameStateManager,
-} from "../../../src/dynamicworldagent/state/DynamicGameState.js";
-import { initializeCompleteDynamicGameState } from "../../../src/dynamicworldagent/state/DynamicGameStateLoader.js";
-import { importModule } from "../../../src/dynamicworldagent/state/moduleImporter.js";
-import type { TownTopology } from "../../../src/dynamicworldagent/state/topologyTypes.js";
+} from "../../../src/state/DynamicGameState.js";
+import { initializeCompleteDynamicGameState } from "../../../src/state/DynamicGameStateLoader.js";
+import { importModule } from "../../../src/state/moduleImporter.js";
+import type { TownTopology } from "../../../src/state/topologyTypes.js";
 import { ModelProviderName } from "../../../src/models/types.js";
 import { EmbeddingClient } from "../../../src/rag/embedding.js";
 import { resolveModuleIdByName } from "../../../src/shared/agents/memory/database/moduleScope.js";

@@ -50,7 +50,7 @@ Tick-based world simulation:
 
 ### NPC Intelligence
 
-**Planning** (`dynamicBasicAgent/npcPlanning/`): LLM generates daily schedules decomposed into action nodes. Plans revise dynamically based on world events.
+**Planning** (`planning/`): LLM generates daily schedules decomposed into action nodes. Plans revise dynamically based on world events.
 
 **Memory** (`memory/`): 7 memory types (event, witness, information, belief, plan, secret, summary). FastEmbed local embeddings for semantic search. Decay engine for realistic forgetting.
 

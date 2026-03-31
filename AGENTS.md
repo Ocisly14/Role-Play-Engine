@@ -76,9 +76,14 @@ CoC-AI-agent/
 │   ├── shared/
 │   │   ├── agents/                        # AI agents (action, character, memory, models)
 │   │   └── database/                      # SQLite schema & seed data
-│   ├── dynamicworldagent/                 # Dynamic world generation
+│   ├── engine/                            # Tick engine, handlers, features, shared runtime logic
+│   ├── planning/                          # NPC planning agent, plan types, templates
+│   ├── memory/                            # NPC memory system
+│   ├── simulation/                        # Simulation runner and runtime persistence
+│   ├── state/                             # Dynamic game state and module loading
+│   ├── i18n/                              # Simulation/runtime translations
 │   ├── models/                            # Shared types
-│   ├── rag/                               # RAG infrastructure (WIP)
+│   ├── rag/                               # RAG infrastructure and session retrieval
 │   ├── template.ts                        # Prompt templates
 │   └── types/                             # Type definitions
 │

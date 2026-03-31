@@ -1,4 +1,4 @@
-import type { NpcMemoryManager } from "../dynamicworldagent/memory/NpcMemoryManager.js";
+import type { NpcMemoryManager } from "../memory/NpcMemoryManager.js";
 import type { GameEngineRegistry } from "./registry.js";
 import {
   applyPenalties,

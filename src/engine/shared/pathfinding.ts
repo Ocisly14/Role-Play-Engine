@@ -1,11 +1,11 @@
-import type { MovementStep } from "../../dynamicworldagent/dynamicBasicAgent/npcPlanning/types.js";
-import type { DynamicGameStateManager } from "../../dynamicworldagent/state/DynamicGameState.js";
-import { hasBlockedConnection } from "../../dynamicworldagent/state/blockedConnections.js";
+import type { MovementStep } from "../../planning/types.js";
+import type { DynamicGameStateManager } from "../../state/DynamicGameState.js";
+import { hasBlockedConnection } from "../../state/blockedConnections.js";
 import type {
   CharacterPosition,
   RoadNode,
   TownTopology,
-} from "../../dynamicworldagent/state/topologyTypes.js";
+} from "../../state/topologyTypes.js";
 
 /**
  * If a scene is not in sceneToParent (interior sub-scene),

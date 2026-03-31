@@ -1,8 +1,8 @@
 import type {
   CharacterAction,
   PlanNode,
-} from "../../dynamicworldagent/dynamicBasicAgent/npcPlanning/types.js";
-import type { DynamicGameStateManager } from "../../dynamicworldagent/state/DynamicGameState.js";
+} from "../../planning/types.js";
+import type { DynamicGameStateManager } from "../../state/DynamicGameState.js";
 import { buildOutcome, makeAction } from "../shared/nodeHelpers.js";
 import type { ExecutionContext, NodeHandler } from "../types.js";
 
@@ -56,7 +56,7 @@ export const sceneInteractionHandler: NodeHandler = {
     const adjustedSkills = ctx.applyPenalties(afterScene, charPenalties);
 
     let resolvedSuccessLevel:
-      | import("../../dynamicworldagent/dynamicBasicAgent/npcPlanning/types.js").SuccessLevel
+      | import("../../planning/types.js").SuccessLevel
       | undefined;
     let lastRollDetail: string | undefined;
 

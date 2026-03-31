@@ -1,14 +1,14 @@
 import * as fs from "node:fs";
 import * as path from "node:path";
-import type { SceneCondition } from "../../../src/dynamicworldagent/dynamicBasicAgent/npcPlanning/types.js";
-import type { SimulationRunner } from "../../../src/dynamicworldagent/simulation/SimulationRunner.js";
+import type { SceneCondition } from "../../../src/planning/types.js";
+import type { SimulationRunner } from "../../../src/simulation/SimulationRunner.js";
 import type {
   MapLayout,
   NpcStatusInfo,
   TopologyResponse,
-} from "../../../src/dynamicworldagent/simulation/mapViewerTypes.js";
-import type { DynamicGameStateManager } from "../../../src/dynamicworldagent/state/DynamicGameState.js";
-import type { CharacterPosition } from "../../../src/dynamicworldagent/state/topologyTypes.js";
+} from "../../../src/simulation/mapViewerTypes.js";
+import type { DynamicGameStateManager } from "../../../src/state/DynamicGameState.js";
+import type { CharacterPosition } from "../../../src/state/topologyTypes.js";
 import { getPrismaClient } from "../../../src/shared/agents/memory/database/prismaClient.js";
 import { getRunner, getRunnerFromMemory } from "./service.js";
 

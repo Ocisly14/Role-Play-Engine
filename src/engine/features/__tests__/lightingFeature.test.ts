@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it } from "vitest";
-import type { SceneCondition } from "../../../dynamicworldagent/dynamicBasicAgent/npcPlanning/types.js";
+import type { SceneCondition } from "../../../planning/types.js";
 import type { TickRuntimeContext } from "../../types.js";
 import { lightingFeature } from "../lightingFeature.js";
 

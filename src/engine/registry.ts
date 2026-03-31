@@ -1,4 +1,4 @@
-import type { DynamicGameStateManager } from "../dynamicworldagent/state/DynamicGameState.js";
+import type { DynamicGameStateManager } from "../state/DynamicGameState.js";
 import type {
   ActivateResult,
   NodeHandler,
@@ -148,8 +148,8 @@ export class GameEngineRegistry {
    * Returns a blocked result if any feature vetoes the node, otherwise undefined.
    */
   startNodeFeatures(
-    node: import("../dynamicworldagent/dynamicBasicAgent/npcPlanning/types.js").PlanNode,
-    dgsm: import("../dynamicworldagent/state/DynamicGameState.js").DynamicGameStateManager
+    node: import("../planning/types.js").PlanNode,
+    dgsm: import("../state/DynamicGameState.js").DynamicGameStateManager
   ): NodeStartBlockedResult | undefined {
     for (const feature of this.features.values()) {
       if (!feature.planNodeSchema || !feature.onNodeStart) continue;
@@ -172,8 +172,8 @@ export class GameEngineRegistry {
    * Also registers propagation sources.
    */
   activateNodeFeatures(
-    node: import("../dynamicworldagent/dynamicBasicAgent/npcPlanning/types.js").PlanNode,
-    dgsm: import("../dynamicworldagent/state/DynamicGameState.js").DynamicGameStateManager
+    node: import("../planning/types.js").PlanNode,
+    dgsm: import("../state/DynamicGameState.js").DynamicGameStateManager
   ): ActivateResult[] {
     const results: ActivateResult[] = [];
     for (const feature of this.features.values()) {
@@ -203,9 +203,9 @@ export class GameEngineRegistry {
    */
   detectFeatureOverlays(
     executedNodes: import(
-      "../dynamicworldagent/dynamicBasicAgent/npcPlanning/types.js"
+      "../planning/types.js"
     ).PlanNode[],
-    dgsm: import("../dynamicworldagent/state/DynamicGameState.js").DynamicGameStateManager
+    dgsm: import("../state/DynamicGameState.js").DynamicGameStateManager
   ): void {
     for (const node of executedNodes) {
       this.activateNodeFeatures(node, dgsm);

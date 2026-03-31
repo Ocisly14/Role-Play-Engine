@@ -1,9 +1,9 @@
-import type { DynamicGameStateManager } from "../../dynamicworldagent/state/DynamicGameState.js";
+import type { DynamicGameStateManager } from "../../state/DynamicGameState.js";
 import type {
   CharacterPosition,
   JunctionNode,
   RoadNode,
-} from "../../dynamicworldagent/state/topologyTypes.js";
+} from "../../state/topologyTypes.js";
 
 export const ROAD_COPRESENCE_THRESHOLD_MINUTES = 2;
 

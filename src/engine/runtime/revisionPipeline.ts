@@ -1,10 +1,10 @@
 import type { GameEngineRegistry } from "../registry.js";
 import type { TickRuntimeContext } from "../types.js";
 import type { PendingRevisionRequest } from "./actionPostProcessing.js";
-import type { NPCPlanningAgent } from "../../dynamicworldagent/dynamicBasicAgent/npcPlanning/NPCPlanningAgent.js";
-import type { NpcMemoryManager } from "../../dynamicworldagent/memory/NpcMemoryManager.js";
-import type { DynamicGameStateManager } from "../../dynamicworldagent/state/DynamicGameState.js";
-import type { CharacterAction } from "../../dynamicworldagent/dynamicBasicAgent/npcPlanning/types.js";
+import type { NPCPlanningAgent } from "../../planning/NPCPlanningAgent.js";
+import type { NpcMemoryManager } from "../../memory/NpcMemoryManager.js";
+import type { DynamicGameStateManager } from "../../state/DynamicGameState.js";
+import type { CharacterAction } from "../../planning/types.js";
 
 export async function recordRevisionInterruption(params: {
   action: CharacterAction | undefined;

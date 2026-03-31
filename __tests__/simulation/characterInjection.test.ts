@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { buildInjectedProfile } from "../../src/dynamicworldagent/simulation/characterInjection.js";
+import { buildInjectedProfile } from "../../src/simulation/characterInjection.js";
 
 describe("buildInjectedProfile", () => {
   const baseInput = {
@@ -34,9 +34,8 @@ describe("buildInjectedProfile", () => {
     expect(profile1.id).not.toBe(profile2.id);
   });
 
-  it("sets isNPC to true and isPlayerInjected to true", () => {
+  it("sets isPlayerInjected to true", () => {
     const profile = buildInjectedProfile(baseInput);
-    expect(profile.isNPC).toBe(true);
     expect(profile.isPlayerInjected).toBe(true);
   });
 
@@ -85,9 +84,9 @@ describe("buildInjectedProfile", () => {
     expect(profile.status.conditions).toEqual([]);
   });
 
-  it("initializes knowledge as an empty array", () => {
+  it("does not seed memory entries by default", () => {
     const profile = buildInjectedProfile(baseInput);
-    expect(profile.knowledge).toEqual([]);
+    expect(profile.memory).toBeUndefined();
   });
 
   it("initializes relationships as an empty array", () => {

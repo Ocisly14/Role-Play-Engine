@@ -10,18 +10,18 @@
 import fs from "fs";
 import path from "path";
 import { PrismaClient } from "@prisma/client";
-import { NPCPlanningAgent } from "../src/dynamicworldagent/dynamicBasicAgent/npcPlanning/NPCPlanningAgent.js";
-import { createExecutionContext } from "../src/dynamicworldagent/engine/executionContext.js";
-import { createDefaultRegistry } from "../src/dynamicworldagent/engine/registerDefaults.js";
-import { NpcMemoryManager } from "../src/dynamicworldagent/memory/NpcMemoryManager.js";
-import { SimulationRunner } from "../src/dynamicworldagent/simulation/SimulationRunner.js";
-import { DynamicGameStateManager } from "../src/dynamicworldagent/state/DynamicGameState.js";
-import { importModule } from "../src/dynamicworldagent/state/moduleImporter.js";
+import { NPCPlanningAgent } from "../src/planning/NPCPlanningAgent.js";
+import { createExecutionContext } from "../src/engine/executionContext.js";
+import { createDefaultRegistry } from "../src/engine/registerDefaults.js";
+import { NpcMemoryManager } from "../src/memory/NpcMemoryManager.js";
+import { SimulationRunner } from "../src/simulation/SimulationRunner.js";
+import { DynamicGameStateManager } from "../src/state/DynamicGameState.js";
+import { importModule } from "../src/state/moduleImporter.js";
 import {
   createSession,
   initRuntime,
   loadModule,
-} from "../src/dynamicworldagent/state/moduleLoader.js";
+} from "../src/state/moduleLoader.js";
 import { ModelProviderName } from "../src/models/types.js";
 import { EmbeddingClient } from "../src/rag/embedding.js";
 

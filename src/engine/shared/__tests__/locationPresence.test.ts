@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import type { JunctionNode, RoadNode } from "../../../dynamicworldagent/state/topologyTypes.js";
+import type { JunctionNode, RoadNode } from "../../../state/topologyTypes.js";
 import {
   arePositionsCoLocated,
   describePrecisePosition,

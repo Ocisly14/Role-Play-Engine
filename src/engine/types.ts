@@ -2,8 +2,8 @@ import type {
   CharacterAction,
   PlanNode,
   RevisePlansContext,
-} from "../dynamicworldagent/dynamicBasicAgent/npcPlanning/types.js";
-import type { DynamicGameStateManager } from "../dynamicworldagent/state/DynamicGameState.js";
+} from "../planning/types.js";
+import type { DynamicGameStateManager } from "../state/DynamicGameState.js";
 
 // ===== Node Handler: executes a specific PlanNode type =====
 
@@ -122,7 +122,7 @@ export interface NpcPlanningCapability {
     language: string,
     registry?: import("./registry.js").GameEngineRegistry
   ): Promise<
-    import("../dynamicworldagent/dynamicBasicAgent/npcPlanning/types.js").RevisePlansResult
+    import("../planning/types.js").RevisePlansResult
   >;
 }
 
@@ -281,7 +281,7 @@ export interface ExecutionContext {
   language?: string;
 
   /** NPC memory manager — used by handlers that write character memories */
-  memoryManager?: import("../dynamicworldagent/memory/NpcMemoryManager.js").NpcMemoryManager;
+  memoryManager?: import("../memory/NpcMemoryManager.js").NpcMemoryManager;
 }
 
 export interface SkillRollResult {
@@ -289,14 +289,14 @@ export interface SkillRollResult {
   reason?: string;
   detail?: string;
   successLevel: import(
-    "../dynamicworldagent/dynamicBasicAgent/npcPlanning/types.js"
+    "../planning/types.js"
   ).SuccessLevel;
   /** Per-target opposed roll outcomes (multi-target character_interaction) */
   perTargetResults?: Record<
     string,
     {
       successLevel: import(
-        "../dynamicworldagent/dynamicBasicAgent/npcPlanning/types.js"
+        "../planning/types.js"
       ).SuccessLevel;
       actorWon: boolean;
       detail: string;

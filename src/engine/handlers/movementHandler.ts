@@ -1,12 +1,12 @@
 import type {
   CharacterAction,
   PlanNode,
-} from "../../dynamicworldagent/dynamicBasicAgent/npcPlanning/types.js";
-import type { DynamicGameStateManager } from "../../dynamicworldagent/state/DynamicGameState.js";
+} from "../../planning/types.js";
+import type { DynamicGameStateManager } from "../../state/DynamicGameState.js";
 import type {
   CharacterPosition,
   TownTopology,
-} from "../../dynamicworldagent/state/topologyTypes.js";
+} from "../../state/topologyTypes.js";
 import { buildOutcome, makeAction } from "../shared/nodeHelpers.js";
 import { findTopologyPath } from "../shared/pathfinding.js";
 import type { ExecutionContext, NodeHandler } from "../types.js";
@@ -52,7 +52,7 @@ export const movementHandler: NodeHandler = {
     const adjustedSkills = ctx.applyPenalties(afterScene, charPenalties);
 
     let resolvedSuccessLevel:
-      | import("../../dynamicworldagent/dynamicBasicAgent/npcPlanning/types.js").SuccessLevel
+      | import("../../planning/types.js").SuccessLevel
       | undefined;
     let lastRollDetail: string | undefined;
 

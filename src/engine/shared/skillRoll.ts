@@ -1,6 +1,6 @@
-import { COC_SKILL_BASE_VALUES } from "../../dynamicworldagent/dynamicBasicAgent/npcPlanning/cocSkillList.js";
-import type { PlanNode } from "../../dynamicworldagent/dynamicBasicAgent/npcPlanning/types.js";
-import type { DynamicGameStateManager } from "../../dynamicworldagent/state/DynamicGameState.js";
+import { COC_SKILL_BASE_VALUES } from "../../planning/cocSkillList.js";
+import type { PlanNode } from "../../planning/types.js";
+import type { DynamicGameStateManager } from "../../state/DynamicGameState.js";
 import type { SkillRollResult } from "../types.js";
 import {
   SUCCESS_RANK,

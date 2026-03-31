@@ -7,16 +7,16 @@
  * for both actor and target characters.
  */
 
-import { ModelClass, generateText } from "../../../models/index.js";
+import { ModelClass, generateText } from "../../models/index.js";
 import type {
   CharacterStateDelta,
   DiscoveryEntry,
   InteractionStateDelta,
   PlanNode,
   SuccessLevel,
-} from "../../dynamicworldagent/dynamicBasicAgent/npcPlanning/types.js";
-import type { NpcMemoryManager } from "../../dynamicworldagent/memory/NpcMemoryManager.js";
-import type { DynamicGameStateManager } from "../../dynamicworldagent/state/DynamicGameState.js";
+} from "../../planning/types.js";
+import type { NpcMemoryManager } from "../../memory/NpcMemoryManager.js";
+import type { DynamicGameStateManager } from "../../state/DynamicGameState.js";
 import type { GameEngineRegistry } from "../registry.js";
 import { findTopologyPath } from "../shared/pathfinding.js";
 import { buildWorldStateBlock } from "../shared/worldStateBlock.js";
@@ -595,7 +595,7 @@ export async function applyCharacterDelta(
         const scene = dgsm.getScene(locationId);
         if (scene && (scene as any).items) {
           const items = (scene as any).items as import(
-            "../../dynamicworldagent/state/types.js"
+            "../../state/types.js"
           ).Item[];
           const idx = items.findIndex((i) => i.id === itemId);
           if (idx !== -1) {

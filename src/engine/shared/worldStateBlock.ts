@@ -6,7 +6,7 @@
  * so that every LLM call has consistent environmental awareness.
  */
 
-import type { DynamicGameStateManager } from "../../dynamicworldagent/state/DynamicGameState.js";
+import type { DynamicGameStateManager } from "../../state/DynamicGameState.js";
 import type { GameEngineRegistry } from "../registry.js";
 import { getTopologyNeighbors } from "./topologyHelpers.js";
 

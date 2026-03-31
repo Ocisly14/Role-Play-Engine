@@ -6,20 +6,20 @@
  */
 
 import { beforeAll, describe, expect, it } from "vitest";
-import { ModelClass, generateText } from "../../../models/index.js";
-import { buildSummarizeDayMemoryPrompt } from "../../dynamicworldagent/dynamicBasicAgent/npcPlanning/npcSummaryTemplates.js";
-import type { PlanNode } from "../../dynamicworldagent/dynamicBasicAgent/npcPlanning/types.js";
+import { ModelClass, generateText } from "../../models/index.js";
+import { buildSummarizeDayMemoryPrompt } from "../../planning/npcSummaryTemplates.js";
+import type { PlanNode } from "../../planning/types.js";
 import {
   DynamicGameStateManager,
   initialDynamicGameState,
-} from "../../dynamicworldagent/state/DynamicGameState.js";
-import { buildTopology } from "../../dynamicworldagent/state/topologyTypes.js";
-import type { JunctionNode, RoadNode } from "../../dynamicworldagent/state/topologyTypes.js";
+} from "../../state/DynamicGameState.js";
+import { buildTopology } from "../../state/topologyTypes.js";
+import type { JunctionNode, RoadNode } from "../../state/topologyTypes.js";
 import type {
   DynamicNPCProfile,
   DynamicScene,
   Item,
-} from "../../dynamicworldagent/state/types.js";
+} from "../../state/types.js";
 import {
   applyCharacterDelta,
   resolveInteractionState,

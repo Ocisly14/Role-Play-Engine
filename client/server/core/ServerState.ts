@@ -1,4 +1,4 @@
-import type { DynamicGameState } from "../../../src/dynamicworldagent/state/index.js";
+import type { DynamicGameState } from "../../../src/state/index.js";
 
 /**
  * Singleton class to manage global server state

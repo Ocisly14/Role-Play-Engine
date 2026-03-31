@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import type { PlanNode } from "../../../dynamicworldagent/dynamicBasicAgent/npcPlanning/types.js";
-import type { DynamicGameStateManager } from "../../../dynamicworldagent/state/DynamicGameState.js";
+import type { PlanNode } from "../../../planning/types.js";
+import type { DynamicGameStateManager } from "../../../state/DynamicGameState.js";
 import type { ExecutionContext } from "../../types.js";
 import { movementHandler, resolveTargetPosition } from "../movementHandler.js";
 

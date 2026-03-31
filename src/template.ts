@@ -2,8 +2,8 @@ import fs from "fs";
 import path from "path";
 import handlebars from "handlebars";
 import { names, uniqueNamesGenerator } from "unique-names-generator";
-import type { DynamicGameState } from "./dynamicworldagent/state/index.js";
-import type { DynamicScene } from "./dynamicworldagent/state/types.js";
+import type { DynamicGameState } from "./state/index.js";
+import type { DynamicScene } from "./state/types.js";
 import type { ImageInput } from "./models/types.js";
 import { stripModuleScope } from "./shared/agents/memory/database/moduleScope.js";
 

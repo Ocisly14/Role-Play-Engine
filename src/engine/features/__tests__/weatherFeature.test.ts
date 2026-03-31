@@ -1,9 +1,9 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import type { SceneCondition } from "../../../dynamicworldagent/dynamicBasicAgent/npcPlanning/types.js";
+import type { SceneCondition } from "../../../planning/types.js";
 import {
   makeBlockedConnectionKey,
   resolveBlockedConnectionNodeRef,
-} from "../../../dynamicworldagent/state/blockedConnections.js";
+} from "../../../state/blockedConnections.js";
 import type { TickRuntimeContext } from "../../types.js";
 import { weatherFeature } from "../weatherFeature.js";
 

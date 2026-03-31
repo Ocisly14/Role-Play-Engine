@@ -1,16 +1,16 @@
 #!/usr/bin/env tsx
 
 import assert from "node:assert/strict";
-import { NPCPlanningAgent } from "../src/dynamicworldagent/dynamicBasicAgent/npcPlanning/NPCPlanningAgent.js";
+import { NPCPlanningAgent } from "../src/planning/NPCPlanningAgent.js";
 import type {
   FailureTrigger,
   PlanNode,
-} from "../src/dynamicworldagent/dynamicBasicAgent/npcPlanning/types.js";
+} from "../src/planning/types.js";
 import {
   DynamicGameStateManager,
   initialDynamicGameState,
-} from "../src/dynamicworldagent/state/DynamicGameState.js";
-import type { DynamicNPCProfile } from "../src/dynamicworldagent/state/types.js";
+} from "../src/state/DynamicGameState.js";
+import type { DynamicNPCProfile } from "../src/state/types.js";
 
 function logSection(title: string): void {
   console.log(`\n=== ${title} ===`);

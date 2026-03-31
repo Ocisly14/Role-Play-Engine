@@ -7,17 +7,17 @@
  * for the actor.
  */
 
-import { ModelClass, generateText } from "../../../models/index.js";
+import { ModelClass, generateText } from "../../models/index.js";
 import type {
   ItemResult,
   NewItemEntry,
   ObjectStateDelta,
   PlanNode,
   SuccessLevel,
-} from "../../dynamicworldagent/dynamicBasicAgent/npcPlanning/types.js";
-import type { NpcMemoryManager } from "../../dynamicworldagent/memory/NpcMemoryManager.js";
-import type { DynamicGameStateManager } from "../../dynamicworldagent/state/DynamicGameState.js";
-import type { Item } from "../../dynamicworldagent/state/types.js";
+} from "../../planning/types.js";
+import type { NpcMemoryManager } from "../../memory/NpcMemoryManager.js";
+import type { DynamicGameStateManager } from "../../state/DynamicGameState.js";
+import type { Item } from "../../state/types.js";
 import type { GameEngineRegistry } from "../registry.js";
 import { deepMergeItem } from "../shared/deepMerge.js";
 import { buildWorldStateBlock } from "../shared/worldStateBlock.js";

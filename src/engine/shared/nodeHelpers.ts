@@ -3,8 +3,8 @@ import type {
   FailureReason,
   PlanNode,
   SuccessLevel,
-} from "../../dynamicworldagent/dynamicBasicAgent/npcPlanning/types.js";
-import { t } from "../../dynamicworldagent/i18n/t.js";
+} from "../../planning/types.js";
+import { t } from "../../i18n/t.js";
 
 export function buildOutcome(
   node: PlanNode,

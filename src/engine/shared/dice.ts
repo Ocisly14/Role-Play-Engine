@@ -1,4 +1,4 @@
-import type { SuccessLevel } from "../../dynamicworldagent/dynamicBasicAgent/npcPlanning/types.js";
+import type { SuccessLevel } from "../../planning/types.js";
 
 export function rollD100(): number {
   return Math.floor(Math.random() * 100) + 1;

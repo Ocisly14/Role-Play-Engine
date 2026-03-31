@@ -1,4 +1,4 @@
-import type { DynamicGameStateManager } from "../../dynamicworldagent/state/DynamicGameState.js";
+import type { DynamicGameStateManager } from "../../state/DynamicGameState.js";
 import { getTopologyNeighbors } from "../shared/topologyHelpers.js";
 import type { TickRuntimeContext, WorldFeature } from "../types.js";
 

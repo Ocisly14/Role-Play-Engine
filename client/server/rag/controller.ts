@@ -3,7 +3,7 @@ import type { Request, Response } from "express";
 import {
   type RecentTurn,
   SessionRagQaService,
-} from "../../../src/dynamicworldagent/dynamicBasicAgent/knowledge/sessionRagQaService.js";
+} from "../../../src/rag/session/sessionRagQaService.js";
 import { getPrismaClient } from "../../../src/shared/agents/memory/database/prismaClient.js";
 import { ServerState } from "../core/ServerState.js";
 

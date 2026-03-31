@@ -2,14 +2,14 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import type {
   ObjectStateDelta,
   PlanNode,
-} from "../../../dynamicworldagent/dynamicBasicAgent/npcPlanning/types.js";
-import type { DynamicScene, Item } from "../../../dynamicworldagent/state/types.js";
+} from "../../../planning/types.js";
+import type { DynamicScene, Item } from "../../../state/types.js";
 import {
   applyObjectDelta,
   resolveObjectInteractionState,
 } from "../objectInteractionStateResolver.js";
 
-vi.mock("../../../../models/index.js", () => ({
+vi.mock("../../../models/index.js", () => ({
   ModelClass: { SMALL: "small", MEDIUM: "medium", LARGE: "large" },
   generateText: vi.fn(),
 }));
@@ -500,7 +500,7 @@ describe("resolveObjectInteractionState (LLM)", () => {
   // ── Basic: pick up item ──
 
   it("should parse simple pickup response", async () => {
-    const { generateText } = await import("../../../../models/index.js");
+    const { generateText } = await import("../../../models/index.js");
     (generateText as any).mockResolvedValueOnce(
       JSON.stringify({
         items: [{ itemId: "pen", location: "inventory" }],
@@ -531,7 +531,7 @@ describe("resolveObjectInteractionState (LLM)", () => {
   // ── Complex: disassemble with newItems + conditions + witness ──
 
   it("should parse disassemble response with newItems, scene conditions, and witnesses", async () => {
-    const { generateText } = await import("../../../../models/index.js");
+    const { generateText } = await import("../../../models/index.js");
     (generateText as any).mockResolvedValueOnce(
       JSON.stringify({
         items: [{ itemId: "grandfather_clock", location: "destroyed" }],
@@ -625,7 +625,7 @@ describe("resolveObjectInteractionState (LLM)", () => {
   // ── Complex: unlock container + extract + update item ──
 
   it("should parse multi-item response with updates and container operations", async () => {
-    const { generateText } = await import("../../../../models/index.js");
+    const { generateText } = await import("../../../models/index.js");
     (generateText as any).mockResolvedValueOnce(
       JSON.stringify({
         items: [
@@ -749,7 +749,7 @@ describe("resolveObjectInteractionState (LLM)", () => {
   // ── Move to container (location: "container:xxx") ──
 
   it("should parse item moves into containers and between NPCs", async () => {
-    const { generateText } = await import("../../../../models/index.js");
+    const { generateText } = await import("../../../models/index.js");
     (generateText as any).mockResolvedValueOnce(
       JSON.stringify({
         items: [
@@ -806,7 +806,7 @@ describe("resolveObjectInteractionState (LLM)", () => {
   // ── JSON edge cases ──
 
   it("should handle markdown-fenced JSON with trailing commas", async () => {
-    const { generateText } = await import("../../../../models/index.js");
+    const { generateText } = await import("../../../models/index.js");
     // Simulates imperfect LLM JSON with trailing comma
     (generateText as any).mockResolvedValueOnce(
       '```json\n{"items":[{"itemId":"pen","location":"inventory",}],"memory":"repaired",}\n```'
@@ -829,7 +829,7 @@ describe("resolveObjectInteractionState (LLM)", () => {
   });
 
   it("should fill default memory when LLM omits it", async () => {
-    const { generateText } = await import("../../../../models/index.js");
+    const { generateText } = await import("../../../models/index.js");
     (generateText as any).mockResolvedValueOnce(JSON.stringify({ items: [] }));
 
     const dgsm = createResolverDgsm();
@@ -850,7 +850,7 @@ describe("resolveObjectInteractionState (LLM)", () => {
   // ── Error handling ──
 
   it("should return fallback on LLM failure", async () => {
-    const { generateText } = await import("../../../../models/index.js");
+    const { generateText } = await import("../../../models/index.js");
     (generateText as any).mockRejectedValueOnce(new Error("API error"));
 
     const dgsm = createResolverDgsm();
@@ -870,7 +870,7 @@ describe("resolveObjectInteractionState (LLM)", () => {
   });
 
   it("should return fallback on malformed JSON", async () => {
-    const { generateText } = await import("../../../../models/index.js");
+    const { generateText } = await import("../../../models/index.js");
     (generateText as any).mockResolvedValueOnce("not valid json {{{");
 
     const dgsm = createResolverDgsm();
@@ -892,7 +892,7 @@ describe("resolveObjectInteractionState (LLM)", () => {
   // ── Prompt content verification ──
 
   it("should include scene items, inventory, skill roll and item context in prompt", async () => {
-    const { generateText } = await import("../../../../models/index.js");
+    const { generateText } = await import("../../../models/index.js");
     let capturedPrompt = "";
     let capturedSystem = "";
     (generateText as any).mockImplementationOnce(async (opts: any) => {
@@ -940,7 +940,7 @@ describe("resolveObjectInteractionState (LLM)", () => {
   });
 
   it("should no longer inject co-present NPCs into the resolver prompt", async () => {
-    const { generateText } = await import("../../../../models/index.js");
+    const { generateText } = await import("../../../models/index.js");
     let capturedPrompt = "";
     (generateText as any).mockImplementationOnce(async (opts: any) => {
       capturedPrompt = opts.context;

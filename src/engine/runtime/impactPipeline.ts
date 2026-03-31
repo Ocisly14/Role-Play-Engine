@@ -2,11 +2,11 @@ import type { GameEngineRegistry } from "../registry.js";
 import { findAffectedCharacters } from "../shared/impactPropagation.js";
 import type { TickRuntimeContext } from "../types.js";
 import { personalizeEncounterForNpc } from "./encounterScanner.js";
-import type { NPCPlanningAgent } from "../../dynamicworldagent/dynamicBasicAgent/npcPlanning/NPCPlanningAgent.js";
-import { t } from "../../dynamicworldagent/i18n/t.js";
-import type { NpcMemoryManager } from "../../dynamicworldagent/memory/NpcMemoryManager.js";
-import type { DynamicGameStateManager } from "../../dynamicworldagent/state/DynamicGameState.js";
-import type { CharacterAction } from "../../dynamicworldagent/dynamicBasicAgent/npcPlanning/types.js";
+import type { NPCPlanningAgent } from "../../planning/NPCPlanningAgent.js";
+import { t } from "../../i18n/t.js";
+import type { NpcMemoryManager } from "../../memory/NpcMemoryManager.js";
+import type { DynamicGameStateManager } from "../../state/DynamicGameState.js";
+import type { CharacterAction } from "../../planning/types.js";
 
 function shouldRunImpactGate(action: CharacterAction): boolean {
   return action.impact >= 2 || (action.impact === 1 && Boolean(action.skill));

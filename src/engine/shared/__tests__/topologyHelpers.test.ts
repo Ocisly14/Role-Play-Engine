@@ -3,8 +3,8 @@ import type {
   JunctionNode,
   RoadNode,
   TownTopology,
-} from "../../../dynamicworldagent/state/topologyTypes.js";
-import { buildTopology } from "../../../dynamicworldagent/state/topologyTypes.js";
+} from "../../../state/topologyTypes.js";
+import { buildTopology } from "../../../state/topologyTypes.js";
 import {
   getTopologyNeighbors,
   isJunctionId,

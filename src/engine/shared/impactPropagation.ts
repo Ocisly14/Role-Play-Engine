@@ -1,6 +1,6 @@
-import type { CharacterAction } from "../../dynamicworldagent/dynamicBasicAgent/npcPlanning/types.js";
-import type { DynamicGameStateManager } from "../../dynamicworldagent/state/DynamicGameState.js";
-import type { TransportEdge } from "../../dynamicworldagent/state/types.js";
+import type { CharacterAction } from "../../planning/types.js";
+import type { DynamicGameStateManager } from "../../state/DynamicGameState.js";
+import type { TransportEdge } from "../../state/types.js";
 import { arePositionsCoLocated } from "./locationPresence.js";
 
 const NEIGHBORHOOD_TRAVEL_MINUTES = 15;

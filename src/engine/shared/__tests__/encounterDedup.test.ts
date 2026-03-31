@@ -2,10 +2,10 @@ import { describe, expect, it } from "vitest";
 import {
   DynamicGameStateManager,
   initialDynamicGameState,
-} from "../../../dynamicworldagent/state/DynamicGameState.js";
-import { buildTopology } from "../../../dynamicworldagent/state/topologyTypes.js";
-import type { JunctionNode, RoadNode } from "../../../dynamicworldagent/state/topologyTypes.js";
-import type { DynamicNPCProfile, DynamicScene } from "../../../dynamicworldagent/state/types.js";
+} from "../../../state/DynamicGameState.js";
+import { buildTopology } from "../../../state/topologyTypes.js";
+import type { JunctionNode, RoadNode } from "../../../state/topologyTypes.js";
+import type { DynamicNPCProfile, DynamicScene } from "../../../state/types.js";
 import {
   buildEncounterSignature,
   buildEncounterSnapshot,

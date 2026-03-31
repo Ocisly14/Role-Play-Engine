@@ -1,12 +1,12 @@
 import { beforeEach, describe, expect, it } from "vitest";
-import type { PlanNode } from "../../../dynamicworldagent/dynamicBasicAgent/npcPlanning/types.js";
-import type { SceneCondition } from "../../../dynamicworldagent/dynamicBasicAgent/npcPlanning/types.js";
+import type { PlanNode } from "../../../planning/types.js";
+import type { SceneCondition } from "../../../planning/types.js";
 import {
   getBlockedConnectionReason,
   makeBlockedConnectionKey,
   resolveBlockedConnectionNodeRef,
-} from "../../../dynamicworldagent/state/blockedConnections.js";
-import type { Item } from "../../../dynamicworldagent/state/types.js";
+} from "../../../state/blockedConnections.js";
+import type { Item } from "../../../state/types.js";
 import type { TickRuntimeContext } from "../../types.js";
 import { fireFeature } from "../fireFeature.js";
 

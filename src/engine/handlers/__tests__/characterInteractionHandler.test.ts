@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import type { PlanNode } from "../../../dynamicworldagent/dynamicBasicAgent/npcPlanning/types.js";
+import type { PlanNode } from "../../../planning/types.js";
 import type { ExecutionContext } from "../../types.js";
 import { characterInteractionHandler } from "../characterInteractionHandler.js";
 

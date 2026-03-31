@@ -21,18 +21,18 @@ import {
 import {
   buildLocationNameMap,
   resolveLocationId as resolveLocationFromName,
-} from "../../dynamicworldagent/dynamicBasicAgent/npcPlanning/sceneMapFormatter.js";
-import type { NPCPlanningAgent } from "../../dynamicworldagent/dynamicBasicAgent/npcPlanning/NPCPlanningAgent.js";
-import { t } from "../../dynamicworldagent/i18n/t.js";
-import type { NpcMemoryManager } from "../../dynamicworldagent/memory/NpcMemoryManager.js";
-import type { DynamicGameStateManager } from "../../dynamicworldagent/state/DynamicGameState.js";
-import type { Item } from "../../dynamicworldagent/state/types.js";
+} from "../../planning/sceneMapFormatter.js";
+import type { NPCPlanningAgent } from "../../planning/NPCPlanningAgent.js";
+import { t } from "../../i18n/t.js";
+import type { NpcMemoryManager } from "../../memory/NpcMemoryManager.js";
+import type { DynamicGameStateManager } from "../../state/DynamicGameState.js";
+import type { Item } from "../../state/types.js";
 import type {
   CharacterAction,
   FailureTrigger,
   PlanNode,
   SuccessLevel,
-} from "../../dynamicworldagent/dynamicBasicAgent/npcPlanning/types.js";
+} from "../../planning/types.js";
 
 interface ItemActionContext {
   itemId?: string;

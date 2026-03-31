@@ -1,5 +1,5 @@
-import type { DynamicGameStateManager } from "../../dynamicworldagent/state/DynamicGameState.js";
-import type { TownTopology } from "../../dynamicworldagent/state/topologyTypes.js";
+import type { DynamicGameStateManager } from "../../state/DynamicGameState.js";
+import type { TownTopology } from "../../state/topologyTypes.js";
 
 /**
  * Returns true if the given location ID is a road in the topology.

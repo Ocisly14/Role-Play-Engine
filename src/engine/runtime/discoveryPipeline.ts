@@ -1,14 +1,14 @@
 import { ModelProviderName } from "../../models/types.js";
 import { EmbeddingClient } from "../../rag/embedding.js";
 import { resolveTargets } from "../handlers/interactionStateResolver.js";
-import { SessionRagService } from "../../dynamicworldagent/dynamicBasicAgent/knowledge/sessionRagService.js";
-import type { NpcMemoryManager } from "../../dynamicworldagent/memory/NpcMemoryManager.js";
-import type { DynamicGameStateManager } from "../../dynamicworldagent/state/DynamicGameState.js";
+import { SessionRagService } from "../../rag/session/sessionRagService.js";
+import type { NpcMemoryManager } from "../../memory/NpcMemoryManager.js";
+import type { DynamicGameStateManager } from "../../state/DynamicGameState.js";
 import type {
   DiscoveryEntry,
   PlanNode,
   SuccessLevel,
-} from "../../dynamicworldagent/dynamicBasicAgent/npcPlanning/types.js";
+} from "../../planning/types.js";
 
 const DIFFICULTY_RANK: Record<string, number> = {
   automatic: 0,

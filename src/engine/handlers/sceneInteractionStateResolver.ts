@@ -7,13 +7,13 @@
  * for the actor.
  */
 
-import { ModelClass, generateText } from "../../../models/index.js";
+import { ModelClass, generateText } from "../../models/index.js";
 import type {
   PlanNode,
   SceneStateDelta,
   SuccessLevel,
-} from "../../dynamicworldagent/dynamicBasicAgent/npcPlanning/types.js";
-import type { DynamicGameStateManager } from "../../dynamicworldagent/state/DynamicGameState.js";
+} from "../../planning/types.js";
+import type { DynamicGameStateManager } from "../../state/DynamicGameState.js";
 import type { GameEngineRegistry } from "../registry.js";
 import { buildWorldStateBlock } from "../shared/worldStateBlock.js";
 import { applyItemResults } from "./objectInteractionStateResolver.js";

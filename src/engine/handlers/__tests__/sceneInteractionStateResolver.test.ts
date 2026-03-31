@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
-import type { SceneStateDelta } from "../../../dynamicworldagent/dynamicBasicAgent/npcPlanning/types.js";
-import type { DynamicGameStateManager } from "../../../dynamicworldagent/state/DynamicGameState.js";
-import type { DynamicScene, Item } from "../../../dynamicworldagent/state/types.js";
+import type { SceneStateDelta } from "../../../planning/types.js";
+import type { DynamicGameStateManager } from "../../../state/DynamicGameState.js";
+import type { DynamicScene, Item } from "../../../state/types.js";
 import { applySceneDelta } from "../sceneInteractionStateResolver.js";
 
 // ─── Mock DGSM (aligned with objectInteractionStateResolver tests) ───
