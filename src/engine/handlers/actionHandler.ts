@@ -31,13 +31,13 @@ export const actionHandler: NodeHandler = {
   ): CharacterAction {
     const state = dgsm.getState();
     const pos = dgsm.getCharacterPosition(node.characterId);
-    if (pos) node.location = dgsm.resolveLocationId(pos);
+    const locationId = pos ? dgsm.resolveLocationId(pos) : "";
     const npc = state.npcCharacters.find((n) => n.id === node.characterId);
     const npcSkills = npc?.skills ?? {};
     const difficulty = ctx.getNodeDifficulty(node, dgsm);
 
     // Scene + character penalties
-    const scenePenalties = ctx.getScenePenalties(node.location, dgsm);
+    const scenePenalties = ctx.getScenePenalties(locationId, dgsm);
     const charPenalties = ctx.getCharacterPenalties(node.characterId, dgsm);
     const afterScene = ctx.applyPenalties(npcSkills, scenePenalties);
     const adjustedSkills = ctx.applyPenalties(afterScene, charPenalties);
@@ -61,6 +61,7 @@ export const actionHandler: NodeHandler = {
           buildOutcome(node, "failed", { rollDetail: lastRollDetail }, lang),
           {
             difficulty,
+            location: locationId,
             successLevel: resolvedSuccessLevel,
             failureReason: "skill_roll_failed",
           }
@@ -78,7 +79,7 @@ export const actionHandler: NodeHandler = {
       node,
       "completed",
       buildOutcome(node, "completed", { rollDetail: lastRollDetail }, lang),
-      { difficulty, successLevel: resolvedSuccessLevel }
+      { difficulty, location: locationId, successLevel: resolvedSuccessLevel }
     );
   },
 };

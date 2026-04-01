@@ -25,6 +25,7 @@ export function buildAutoMovementReplacement(
   params: {
     currentTime: string;
     fromLocation: string;
+    targetDestination: string;
     travelMinutes: number;
   }
 ): { movementNode: PlanNode; resumedNode: PlanNode } {
@@ -39,8 +40,8 @@ export function buildAutoMovementReplacement(
     characterName: node.characterName,
     startTime: movementStart,
     endTime: movementEnd,
-    action: `Travel from ${params.fromLocation} to ${node.location} before: ${node.action}`,
-    location: node.location,
+    action: `Travel from ${params.fromLocation} to ${params.targetDestination} before: ${node.action}`,
+    destination: params.targetDestination,
     type: "movement",
     impact: 0,
     status: "pending",

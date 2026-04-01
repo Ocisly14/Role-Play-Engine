@@ -44,22 +44,22 @@ export const characterInteractionHandler: NodeHandler = {
   ): Promise<CharacterAction> {
     const state = dgsm.getState();
     const pos = dgsm.getCharacterPosition(node.characterId);
-    if (pos) node.location = dgsm.resolveLocationId(pos);
+    const locationId = pos ? dgsm.resolveLocationId(pos) : "";
     const npc = state.npcCharacters.find((n) => n.id === node.characterId);
     const npcSkills = npc?.skills ?? {};
     const targetIds = node.targetCharacterIds ?? [];
 
     if (targetIds.length === 0) {
-      return makeAction(
-        node,
-        "failed",
-        buildOutcome(node, "failed", { reason: "no target specified" }),
-        { failureReason: "target_absent" }
-      );
-    }
+        return makeAction(
+          node,
+          "failed",
+          buildOutcome(node, "failed", { reason: "no target specified" }),
+          { location: locationId, failureReason: "target_absent" }
+        );
+      }
 
     // Scene + character penalties
-    const scenePenalties = ctx.getScenePenalties(node.location, dgsm);
+    const scenePenalties = ctx.getScenePenalties(locationId, dgsm);
     const charPenalties = ctx.getCharacterPenalties(node.characterId, dgsm);
     const afterScene = ctx.applyPenalties(npcSkills, scenePenalties);
     const adjustedSkills = ctx.applyPenalties(afterScene, charPenalties);
@@ -85,7 +85,7 @@ export const characterInteractionHandler: NodeHandler = {
           buildOutcome(node, "failed", {
             reason: `target ${targetId} not present`,
           }),
-          { failureReason: "target_absent" }
+          { location: locationId, failureReason: "target_absent" }
         );
       }
     }
@@ -98,7 +98,7 @@ export const characterInteractionHandler: NodeHandler = {
         dgsm,
         (targetId, rawSkills) => {
           const targetScenePenalties = ctx.getScenePenalties(
-            node.location,
+            locationId,
             dgsm
           );
           const targetCharPenalties = ctx.getCharacterPenalties(targetId, dgsm);
@@ -117,6 +117,7 @@ export const characterInteractionHandler: NodeHandler = {
           "failed",
           buildOutcome(node, "failed", { rollDetail: lastRollDetail }),
           {
+            location: locationId,
             successLevel: resolvedSuccessLevel,
             failureReason: "skill_roll_failed",
           }
@@ -129,6 +130,7 @@ export const characterInteractionHandler: NodeHandler = {
 
     // 3. Return success — tickProcessor handles LLM resolution and state changes
     const action = makeAction(node, "completed", node.action, {
+      location: locationId,
       successLevel: resolvedSuccessLevel,
     });
     action.rollDetail = lastRollDetail;

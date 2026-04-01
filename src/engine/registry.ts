@@ -15,7 +15,6 @@ const BASE_NODE_FIELDS = new Set([
   "startTime",
   "endTime",
   "action",
-  "location",
   "type",
   "skill",
   "impact",
@@ -191,7 +190,18 @@ export class GameEngineRegistry {
         results.push(result);
       }
       if (feature.propagation) {
-        this.addPropagationSource(feature.id, node.location);
+        const sceneId =
+          node.type === "movement"
+            ? node.destination
+            : (() => {
+                const pos = dgsm.getCharacterPosition(node.characterId);
+                return pos ? dgsm.resolveLocationId(pos) : undefined;
+              })();
+        if (!sceneId) continue;
+        this.addPropagationSource(
+          feature.id,
+          sceneId
+        );
       }
     }
     return results;
@@ -317,7 +327,6 @@ The \`impact\` field on every PlanNode determines **who in the game world percei
       startTime: (handler.exampleNode.startTime as string) ?? "09:00",
       endTime: (handler.exampleNode.endTime as string) ?? "09:05",
       action: (handler.exampleNode.action as string) ?? "Example action",
-      location: (handler.exampleNode.location as string) ?? "example_location",
       type: handler.type,
     };
 
@@ -364,7 +373,7 @@ The \`impact\` field on every PlanNode determines **who in the game world percei
     // Header
     sections.push("## Output");
     sections.push(
-      `Return a JSON array of PlanNode objects. No extra text. JSON keys must be in English. Write "action" values in ${langName}. Keep "location", "type", "skill", "nodeId", IDs, and enum values in English.`
+      `Return a JSON array of PlanNode objects. No extra text. JSON keys must be in English. Write "action" values in ${langName}. Keep "destination", "type", "skill", "nodeId", IDs, and enum values in English.`
     );
     if (options?.extraInstructions) {
       sections.push(options.extraInstructions);
@@ -389,7 +398,6 @@ The \`impact\` field on every PlanNode determines **who in the game world percei
       startTime: "HH:MM" as any,
       endTime: "HH:MM" as any,
       action: "description of what the character does" as any,
-      location: "sceneId" as any,
       type: typeNames as any,
       skill: "exact skill name (OMIT if no check needed)" as any,
       impact: 0,

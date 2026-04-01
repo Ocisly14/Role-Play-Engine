@@ -44,13 +44,14 @@ interface ItemActionContext {
 function findKnownItem(
   dgsm: DynamicGameStateManager,
   node: PlanNode,
+  locationId: string,
   itemId: string
 ): Item | null {
   const actorItem = dgsm.findNpcItem(node.characterId, itemId);
   if (actorItem) return actorItem;
 
   const sceneItem = dgsm
-    .getScene(node.location)
+    .getScene(locationId)
     ?.items.find((i) => i.id === itemId);
   if (sceneItem) return sceneItem;
 
@@ -65,12 +66,13 @@ function findKnownItem(
 
 function getItemActionContext(
   dgsm: DynamicGameStateManager,
-  node: PlanNode
+  node: PlanNode,
+  locationId: string
 ): ItemActionContext | null {
   if (node.type === "object_interaction" && node.objectInteractionPayload) {
     const { itemId } = node.objectInteractionPayload;
     if (!itemId) return null;
-    const item = findKnownItem(dgsm, node, itemId);
+    const item = findKnownItem(dgsm, node, locationId, itemId);
     return {
       itemId,
       itemName: item?.name,
@@ -164,7 +166,8 @@ export async function postProcessExecutedNodeAction(params: {
     memoryManager,
   } = params;
   const state = dgsm.getState();
-  const itemContext = getItemActionContext(dgsm, node);
+  const locationId = action.location;
+  const itemContext = getItemActionContext(dgsm, node, locationId);
   let eventOutcome = appendItemContext(action.outcome, itemContext);
   const eventMetadata = buildEventMetadata(action.outcome, itemContext);
   const allTargetIds = node.targetCharacterIds ?? [];
@@ -207,6 +210,7 @@ export async function postProcessExecutedNodeAction(params: {
       ctx.runtime,
       skillRollResult,
       npcKnowledge,
+      locationId,
       language,
       registry,
       featureNotes
@@ -323,6 +327,7 @@ export async function postProcessExecutedNodeAction(params: {
       dgsm,
       ctx.runtime,
       objSkillRollResult,
+      locationId,
       language,
       memoryManager,
       sessionId,
@@ -330,7 +335,7 @@ export async function postProcessExecutedNodeAction(params: {
       featureNotes
     );
 
-    applyObjectDelta(dgsm, node.characterId, objDelta, node.location);
+    applyObjectDelta(dgsm, node.characterId, objDelta, locationId);
     action.outcome = objDelta.memory;
     action.stateMemories = {
       [node.characterId]: objDelta.memory,
@@ -350,6 +355,7 @@ export async function postProcessExecutedNodeAction(params: {
       dgsm,
       ctx.runtime,
       sceneSkillRollResult,
+      locationId,
       language,
       registry,
       featureNotes
@@ -358,7 +364,7 @@ export async function postProcessExecutedNodeAction(params: {
     const appliedSceneDelta = applySceneDelta(
       dgsm,
       sceneDelta,
-      node.location,
+      locationId,
       node.characterId
     );
 
@@ -372,7 +378,7 @@ export async function postProcessExecutedNodeAction(params: {
         if (!dgsm.isNpcAlive(npc.id)) continue;
         const pos = dgsm.getCharacterPosition(npc.id);
         if (!pos) continue;
-        if (dgsm.resolveLocationId(pos) === node.location) {
+        if (dgsm.resolveLocationId(pos) === locationId) {
           recipientIds.add(npc.id);
         }
       }
@@ -510,7 +516,7 @@ export async function postProcessExecutedNodeAction(params: {
       effectiveSuccess,
       dgsm,
       language,
-      node.location
+      locationId
     );
     if (discoveries.length > 0) {
       action.discoveries = [...(action.discoveries ?? []), ...discoveries];

@@ -401,7 +401,14 @@ export const fireFeature: WorldFeature = {
   },
 
   activate(node: PlanNode, dgsm: DynamicGameStateManager): void {
-    const sceneId = node.location;
+    const sceneId =
+      node.type === "movement"
+        ? node.destination
+        : (() => {
+            const pos = dgsm.getCharacterPosition(node.characterId);
+            return pos ? dgsm.resolveLocationId(pos) : undefined;
+          })();
+    if (!sceneId) return;
 
     // Handle extinguish
     if ((node as Record<string, unknown>).fireExtinguish === true) {

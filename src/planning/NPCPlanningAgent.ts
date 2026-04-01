@@ -161,7 +161,7 @@ function normalizePlanNode(
   params: {
     npcId: string;
     npcName: string;
-    locationId: string;
+    destinationId?: string;
     fallbackStartTime: string;
   }
 ): PlanNode {
@@ -169,14 +169,19 @@ function normalizePlanNode(
     rawNode,
     params.fallbackStartTime
   );
+  const {
+    location: _rawLocation,
+    destination: _rawDestination,
+    ...rest
+  } = rawNode;
 
   return {
-    ...rawNode,
+    ...rest,
     nodeId:
       (typeof rawNode.nodeId === "string" && rawNode.nodeId) || randomUUID(),
     characterId: params.npcId,
     characterName: params.npcName,
-    location: params.locationId,
+    ...(params.destinationId ? { destination: params.destinationId } : {}),
     startTime,
     endTime,
     status: "pending",
@@ -272,10 +277,12 @@ function formatPlanNodesForLog(
   return nodes
     .map(
       (node) =>
-        `- [${node.startTime}-${node.endTime}] ${node.type} @ ${resolveLocationName(
-          dgsm,
-          node.location
-        )}: ${node.action}`
+        node.type === "movement" && node.destination
+          ? `- [${node.startTime}-${node.endTime}] ${node.type} @ ${resolveLocationName(
+              dgsm,
+              node.destination
+            )}: ${node.action}`
+          : `- [${node.startTime}-${node.endTime}] ${node.type}: ${node.action}`
     )
     .join("\n");
 }
@@ -652,16 +659,28 @@ export class NPCPlanningAgent {
     });
 
     const rawNodes = parseJsonResponse<any[]>(response);
-    // Resolve location names to IDs
     const nameMap = buildLocationNameMap(dgsm, mapSnapshot);
-    const enrichedNodes: PlanNode[] = rawNodes.map((node) => ({
-      ...normalizePlanNode(node as Record<string, unknown>, {
+    const enrichedNodes: PlanNode[] = rawNodes.map((node) => {
+      const rawNode = node as Record<string, unknown>;
+      const nodeType =
+        typeof rawNode.type === "string" ? rawNode.type : "action";
+      const rawDestination =
+        typeof rawNode.destination === "string" && rawNode.destination
+          ? rawNode.destination
+          : undefined;
+      const destinationId = rawDestination
+        ? resolveLocationFromName(rawDestination, nameMap)
+        : undefined;
+      const normalized = normalizePlanNode(rawNode, {
         npcId,
         npcName: npc.name,
-        locationId: resolveLocationFromName(node.location, nameMap),
+        destinationId:
+          nodeType === "movement" ? destinationId : undefined,
         fallbackStartTime: state.timeOfDay,
-      }),
-    }));
+      });
+
+      return normalized;
+    });
     console.log(
       `[Planning] 🧩 Detailed nodes for ${npc.name}\n${formatPlanNodesForLog(
         dgsm,
@@ -978,16 +997,28 @@ export class NPCPlanningAgent {
       return {};
     }
 
-    // Resolve location names to IDs
     const nameMap = buildLocationNameMap(dgsm, mapSnapshot);
-    const revisedNodes = rawRevisedNodes.map((node) => ({
-      ...normalizePlanNode(node as Record<string, unknown>, {
+    const revisedNodes = rawRevisedNodes.map((node) => {
+      const rawNode = node as Record<string, unknown>;
+      const nodeType =
+        typeof rawNode.type === "string" ? rawNode.type : "action";
+      const rawDestination =
+        typeof rawNode.destination === "string" && rawNode.destination
+          ? rawNode.destination
+          : undefined;
+      const destinationId = rawDestination
+        ? resolveLocationFromName(rawDestination, nameMap)
+        : undefined;
+      const normalized = normalizePlanNode(rawNode, {
         npcId,
         npcName: npc.name,
-        locationId: resolveLocationFromName(node.location, nameMap),
+        destinationId:
+          nodeType === "movement" ? destinationId : undefined,
         fallbackStartTime: state.timeOfDay,
-      }),
-    }));
+      });
+
+      return normalized;
+    });
     console.log(
       `[Planning] 📝 Revised nodes for ${npc.name}\n${formatPlanNodesForLog(
         dgsm,
@@ -1022,7 +1053,7 @@ export class NPCPlanningAgent {
           interruptedAction: buildInterruptedAction(
             interruptedNode,
             state.timeOfDay,
-            currentLocationId || interruptedNode.location,
+            currentLocationId || "",
             language,
             triggerDescription
           ),

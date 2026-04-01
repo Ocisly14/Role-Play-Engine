@@ -521,7 +521,7 @@ describe("Engine Integration — Blackwood Manor", () => {
           characterId: "npc_harlow",
           characterName: "Officer James Harlow",
           action: "Walk to the town square",
-          location: "JUNC_town_square",
+          destination: "JUNC_town_square",
           type: "movement",
         }),
         dgsm,

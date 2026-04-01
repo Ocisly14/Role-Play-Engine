@@ -249,6 +249,7 @@ interface SkillRollInput {
 
 function buildUserPrompt(
   node: PlanNode,
+  locationId: string,
   actor: CharacterPromptData,
   targets: CharacterPromptData[],
   relationships: { targetId: string; score: number; note: string }[],
@@ -263,7 +264,7 @@ function buildUserPrompt(
       type: node.type,
       skill: node.skill,
       impact: node.impact,
-      location: node.location,
+      location: locationId,
       targetCharacterIds: node.targetCharacterIds,
     },
     null,
@@ -374,19 +375,19 @@ function buildUserPrompt(
 }
 
 function buildSceneBlock(
-  node: PlanNode,
+  locationId: string,
   dgsm: DynamicGameStateManager
 ): string {
-  const scene = dgsm.getScene(node.location);
+  const scene = dgsm.getScene(locationId);
   if (!scene) return "## Scene\n(no scene data)";
 
-  const conditions = dgsm.getSceneConditions(node.location);
+  const conditions = dgsm.getSceneConditions(locationId);
   const items = (scene as any).items ?? [];
   const connections = (scene as any).connections ?? [];
 
   return [
     "## Scene",
-    `ID: ${(scene as any).id ?? node.location}`,
+    `ID: ${(scene as any).id ?? locationId}`,
     `Name: ${(scene as any).name ?? "unknown"}`,
     `Description: ${(scene as any).description ?? ""}`,
     conditions.length > 0 ? `Conditions: ${JSON.stringify(conditions)}` : null,
@@ -406,10 +407,7 @@ function buildSceneBlock(
               targetId: c.targetId,
               description: c.description,
             };
-            const blockReason = dgsm.getConnectionBlockReason(
-              node.location,
-              c.targetId
-            );
+            const blockReason = dgsm.getConnectionBlockReason(locationId, c.targetId);
             if (blockReason) entry.blocked = blockReason;
             return entry;
           })
@@ -439,6 +437,7 @@ export async function resolveInteractionState(
   runtime: any,
   skillRollResult: SkillRollInput | null,
   availableKnowledge: DiscoveryEntry[],
+  locationId: string,
   language: string,
   registry?: GameEngineRegistry,
   featureNotes?: string[]
@@ -460,13 +459,13 @@ export async function resolveInteractionState(
   });
 
   // Build scene block
-  const sceneBlock = buildSceneBlock(node, dgsm);
+  const sceneBlock = buildSceneBlock(locationId, dgsm);
 
   // Build world state block (weather, fire, stamina, sanity)
   const worldStateBlock = buildWorldStateBlock(
     dgsm,
     node.characterId,
-    node.location,
+    locationId,
     registry
   );
 
@@ -474,6 +473,7 @@ export async function resolveInteractionState(
   const systemPrompt = buildSystemPrompt(language);
   let userPrompt = buildUserPrompt(
     node,
+    locationId,
     actor,
     targetDataList,
     relationships,

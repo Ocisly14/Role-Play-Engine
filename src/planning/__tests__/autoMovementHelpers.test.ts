@@ -10,7 +10,6 @@ function makeNode(overrides: Partial<PlanNode> = {}): PlanNode {
     startTime: "08:05",
     endTime: "08:10",
     action: "Invite Lisa for coffee",
-    location: "town_square",
     type: "character_interaction",
     impact: 1,
     status: "pending",
@@ -27,6 +26,7 @@ describe("buildAutoMovementReplacement", () => {
       {
         currentTime: "08:05",
         fromLocation: "victor_office",
+        targetDestination: "town_square",
         travelMinutes: 4,
       }
     );
@@ -34,7 +34,7 @@ describe("buildAutoMovementReplacement", () => {
     expect(movementNode.type).toBe("movement");
     expect(movementNode.startTime).toBe("08:05");
     expect(movementNode.endTime).toBe("08:09");
-    expect(movementNode.location).toBe("town_square");
+    expect(movementNode.destination).toBe("town_square");
 
     expect(resumedNode.nodeId).toBe("action-1");
     expect(resumedNode.status).toBe("pending");

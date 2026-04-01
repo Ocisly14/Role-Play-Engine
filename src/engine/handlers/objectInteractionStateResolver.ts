@@ -228,6 +228,7 @@ Return a single JSON object. No extra text. JSON keys must be in English. Write 
 
 function buildUserPrompt(
   node: PlanNode,
+  locationId: string,
   actorName: string,
   actorInventory: Item[],
   sceneItems: Item[],
@@ -244,7 +245,7 @@ function buildUserPrompt(
       type: node.type,
       skill: node.skill,
       impact: node.impact,
-      location: node.location,
+      location: locationId,
       targetItemId: node.objectInteractionPayload?.itemId,
     },
     null,
@@ -333,6 +334,7 @@ export async function resolveObjectInteractionState(
   dgsm: DynamicGameStateManager,
   runtime: any,
   skillRollResult: { successLevel: SuccessLevel; detail: string } | null,
+  locationId: string,
   language: string,
   memoryManager?: NpcMemoryManager,
   sessionId?: string,
@@ -349,10 +351,10 @@ export async function resolveObjectInteractionState(
   const actorName = actorNpc?.name ?? node.characterName;
 
   // Get scene data
-  const scene = dgsm.getScene(node.location);
+  const scene = dgsm.getScene(locationId);
   const sceneItems = scene?.items ?? [];
   const sceneDescription = scene
-    ? `${(scene as any).name ?? node.location}: ${(scene as any).description ?? ""}`
+    ? `${(scene as any).name ?? locationId}: ${(scene as any).description ?? ""}`
     : "(no scene data)";
   const itemContexts = (scene as any)?.itemContexts as
     | Record<string, string>
@@ -388,7 +390,7 @@ export async function resolveObjectInteractionState(
   const worldStateBlock = buildWorldStateBlock(
     dgsm,
     node.characterId,
-    node.location,
+    locationId,
     registry
   );
 
@@ -396,6 +398,7 @@ export async function resolveObjectInteractionState(
   const systemPrompt = buildSystemPrompt(language);
   let userPrompt = buildUserPrompt(
     node,
+    locationId,
     actorName,
     actorInventory,
     sceneItems,

@@ -163,7 +163,7 @@ function makeNode(overrides: Partial<PlanNode> = {}): PlanNode {
     startTime: "09:00",
     endTime: "09:05",
     action: "Walk to the harbor",
-    location: "JUNC_B",
+    destination: "JUNC_B",
     type: "movement",
     impact: 0,
     status: "pending",
@@ -178,7 +178,7 @@ describe("movementHandler", () => {
   it("has correct type and required fields", () => {
     expect(movementHandler.type).toBe("movement");
     expect(movementHandler.requiredFields).toContain("action");
-    expect(movementHandler.requiredFields).toContain("location");
+    expect(movementHandler.requiredFields).toContain("destination");
     expect(movementHandler.optionalFields).toContain("skill");
   });
 
@@ -193,7 +193,7 @@ describe("movementHandler", () => {
       const ctx = createMockCtx();
 
       const result = movementHandler.execute(
-        makeNode({ location: "JUNC_B" }),
+        makeNode({ destination: "JUNC_B" }),
         dgsm as unknown as DynamicGameStateManager,
         ctx
       );
@@ -217,7 +217,7 @@ describe("movementHandler", () => {
       const ctx = createMockCtx();
 
       const result = movementHandler.execute(
-        makeNode({ location: "JUNC_B" }),
+        makeNode({ destination: "JUNC_B" }),
         dgsm as unknown as DynamicGameStateManager,
         ctx
       );
@@ -241,7 +241,7 @@ describe("movementHandler", () => {
       const ctx = createMockCtx();
 
       const result = movementHandler.execute(
-        makeNode({ location: "SCN_DOCK" }),
+        makeNode({ destination: "SCN_DOCK" }),
         dgsm as unknown as DynamicGameStateManager,
         ctx
       );
@@ -263,7 +263,7 @@ describe("movementHandler", () => {
       const ctx = createMockCtx();
 
       const result = movementHandler.execute(
-        makeNode({ location: "JUNC_B" }),
+        makeNode({ destination: "JUNC_B" }),
         dgsm as unknown as DynamicGameStateManager,
         ctx
       );
@@ -280,7 +280,7 @@ describe("movementHandler", () => {
       const ctx = createMockCtx();
 
       const result = movementHandler.execute(
-        makeNode({ location: "NONEXISTENT" }),
+        makeNode({ destination: "NONEXISTENT" }),
         dgsm as unknown as DynamicGameStateManager,
         ctx
       );
@@ -313,13 +313,14 @@ describe("movementHandler", () => {
       } as any);
 
       const result = movementHandler.execute(
-        makeNode({ location: "JUNC_B", skill: "Climb" }),
+        makeNode({ destination: "JUNC_B", skill: "Climb" }),
         dgsm as unknown as DynamicGameStateManager,
         ctx
       );
 
       expect(result.status).toBe("completed");
-      expect(result.outcome).toContain("Creative movement succeeded");
+      expect(result.outcome).toContain("Walk to the harbor");
+      expect(result.outcome).toContain("Regular success");
       expect(dgsm._characterPositions["npc_a"]).toEqual({
         type: "junction",
         junctionId: "JUNC_B",
@@ -349,7 +350,7 @@ describe("movementHandler", () => {
       } as any);
 
       const result = movementHandler.execute(
-        makeNode({ location: "JUNC_B", skill: "Climb" }),
+        makeNode({ destination: "JUNC_B", skill: "Climb" }),
         dgsm as unknown as DynamicGameStateManager,
         ctx
       );
@@ -373,7 +374,7 @@ describe("movementHandler", () => {
       const ctx = createMockCtx();
 
       const result = movementHandler.execute(
-        makeNode({ location: "JUNC_A" }),
+        makeNode({ destination: "JUNC_A" }),
         dgsm as unknown as DynamicGameStateManager,
         ctx
       );

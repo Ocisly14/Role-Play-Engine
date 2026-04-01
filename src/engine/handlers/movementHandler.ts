@@ -16,7 +16,7 @@ export const movementHandler: NodeHandler = {
     "If skill is set, a creative single-hop movement with skill check is attempted. " +
     "Otherwise, topology pathfinding is used to find a route through the scene graph.",
 
-  requiredFields: ["action", "location"],
+  requiredFields: ["action", "destination"],
 
   optionalFields: ["skill"],
 
@@ -26,7 +26,7 @@ export const movementHandler: NodeHandler = {
     endTime: "09:05",
     type: "movement",
     action: "Walk to the harbor docks",
-    location: "harbor_docks",
+    destination: "harbor_docks",
     impact: 0,
   },
 
@@ -38,12 +38,26 @@ export const movementHandler: NodeHandler = {
     const state = dgsm.getState();
     const pos = dgsm.getCharacterPosition(node.characterId);
     const npcLocation = pos ? dgsm.resolveLocationId(pos) : undefined;
+    const targetLocation = node.destination;
     const npc = state.npcCharacters.find((n) => n.id === node.characterId);
     const npcSkills = npc?.skills ?? {};
     const difficulty = ctx.getNodeDifficulty(node, dgsm);
 
+    if (!targetLocation) {
+      return makeAction(
+        node,
+        "failed",
+        buildOutcome(node, "failed", { reason: "no destination specified" }),
+        {
+          difficulty,
+          location: npcLocation ?? "",
+          failureReason: "location_blocked",
+        }
+      );
+    }
+
     // Scene + character penalties
-    const scenePenalties = ctx.getScenePenalties(node.location, dgsm);
+    const scenePenalties = ctx.getScenePenalties(targetLocation, dgsm);
     const charPenalties = ctx.getCharacterPenalties(node.characterId, dgsm);
     const afterScene = ctx.applyPenalties(npcSkills, scenePenalties);
     const adjustedSkills = ctx.applyPenalties(afterScene, charPenalties);
@@ -53,7 +67,7 @@ export const movementHandler: NodeHandler = {
       | undefined;
     let lastRollDetail: string | undefined;
 
-    const fromLocation = npcLocation ?? node.location;
+    const fromLocation = npcLocation ?? "";
 
     const lang = ctx.language ?? "en";
 
@@ -69,6 +83,7 @@ export const movementHandler: NodeHandler = {
           buildOutcome(node, "failed", { rollDetail: lastRollDetail }, lang),
           {
             difficulty,
+            location: fromLocation,
             successLevel: resolvedSuccessLevel,
             failureReason: "skill_roll_failed",
           }
@@ -76,7 +91,7 @@ export const movementHandler: NodeHandler = {
       }
       lastRollDetail = rollResult.detail;
       const topology = dgsm.getTopology();
-      const targetPos = resolveTargetPosition(node.location, topology, dgsm);
+      const targetPos = resolveTargetPosition(targetLocation, topology, dgsm);
       if (targetPos) {
         dgsm.setCharacterPosition(node.characterId, targetPos);
       }
@@ -84,14 +99,18 @@ export const movementHandler: NodeHandler = {
         node,
         "completed",
         buildOutcome(node, "completed", { rollDetail: lastRollDetail }, lang),
-        { difficulty, successLevel: resolvedSuccessLevel }
+        {
+          difficulty,
+          location: targetLocation,
+          successLevel: resolvedSuccessLevel,
+        }
       );
     }
 
     // Topology-based movement
     const topology = dgsm.getTopology();
     const currentPos = dgsm.getCharacterPosition(node.characterId);
-    const targetPos = resolveTargetPosition(node.location, topology, dgsm);
+    const targetPos = resolveTargetPosition(targetLocation, topology, dgsm);
     if (currentPos && targetPos) {
       const topologyPath = findTopologyPath(
         currentPos,
@@ -113,7 +132,11 @@ export const movementHandler: NodeHandler = {
             },
             lang
           ),
-          { difficulty, failureReason: "location_blocked" }
+          {
+            difficulty,
+            location: fromLocation,
+            failureReason: "location_blocked",
+          }
         );
       }
 
@@ -125,7 +148,7 @@ export const movementHandler: NodeHandler = {
         ctx.simulationEmitter.emitSimulationEvent(
           "npc_moved",
           node.characterId,
-          node.location,
+          targetLocation,
           state.gameDay,
           state.timeOfDay,
           {
@@ -146,7 +169,11 @@ export const movementHandler: NodeHandler = {
           },
           lang
         ),
-        { difficulty, successLevel: resolvedSuccessLevel }
+        {
+          difficulty,
+          location: targetLocation,
+          successLevel: resolvedSuccessLevel,
+        }
       );
     }
 
@@ -160,7 +187,11 @@ export const movementHandler: NodeHandler = {
         { reason: "no path available in topology" },
         lang
       ),
-      { difficulty, failureReason: "location_blocked" }
+      {
+        difficulty,
+        location: fromLocation,
+        failureReason: "location_blocked",
+      }
     );
   },
 };

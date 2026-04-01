@@ -163,6 +163,59 @@ describe("npcPlanningTemplates", () => {
     }
   });
 
+  it("uses destination only for movement nodes in node planning prompts", () => {
+    const detailed = buildDetailedNodesPrompt({
+      npcName: "Tom Harris",
+      npcId: "npc_tom",
+      npcProfile: "A cautious office worker.",
+      longTermIntent: "Protect myself and keep records straight.",
+      memoryLog: "Victor searched the filing cabinet earlier.",
+      todayPlan: [{ location: "Study", activity: "Work" }],
+      yourLocation: "Study",
+      townMap: "Town Map:\n- Study\n- Hallway",
+      sceneDescription: "A small office.",
+      sceneItems: "- Filing Cabinet",
+      sceneNpcs: "- Lisa Chen",
+      sceneConditions: "Nothing unusual.",
+      worldStatePrompt: "",
+      npcInventory: "- Notebook",
+      currentTime: "10:00",
+      gameDay: 1,
+      language: "en",
+    });
+
+    const revise = buildRevisePlansPrompt({
+      npcName: "Tom Harris",
+      npcId: "npc_tom",
+      npcProfile: "A cautious office worker.",
+      longTermIntent: "Protect myself and keep records straight.",
+      memoryLog: "Victor has been pressuring me all day.",
+      todayPlan: [{ location: "Study", activity: "Work" }],
+      pendingNodes: "[]",
+      triggerDescription: "A gunshot echoed downstairs.",
+      yourLocation: "Study",
+      currentPositionDetail: "Inside the study.",
+      townMap: "Town Map:\n- Study\n- Hallway",
+      sceneDescription: "A small office.",
+      sceneItems: "- Filing Cabinet",
+      sceneNpcs: "- Lisa Chen",
+      sceneConditions: "Nothing unusual.",
+      worldStatePrompt: "",
+      npcInventory: "- Notebook",
+      currentTime: "10:00",
+      gameDay: 1,
+      language: "en",
+    });
+
+    expect(detailed.systemPrompt).toContain(
+      '"destination": "ONLY for movement'
+    );
+    expect(detailed.systemPrompt).not.toContain('Keep "location", "type"');
+    expect(revise.systemPrompt).toContain("Only movement nodes use `destination`");
+    expect(revise.systemPrompt).toContain('"destination": "ONLY for movement');
+    expect(revise.systemPrompt).not.toContain('Keep "location", "type"');
+  });
+
   it("tightens impact gate prompt to major immediate disruptions only", () => {
     const { systemPrompt } = buildImpactGatePrompt({
       bucketTime: "15:08",

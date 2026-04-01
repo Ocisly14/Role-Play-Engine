@@ -81,11 +81,14 @@ export async function recoverActionExecution(params: {
   let { node, action } = params;
 
   if (action.failureReason === "location_mismatch") {
+    const targetDestination = node.destination;
     const currentPos = dgsm.getCharacterPosition(node.characterId);
     const topology = dgsm.getTopology();
-    const targetPos = resolveTargetPosition(node.location, topology, dgsm);
+    const targetPos = targetDestination
+      ? resolveTargetPosition(targetDestination, topology, dgsm)
+      : null;
 
-    if (currentPos && targetPos) {
+    if (currentPos && targetPos && targetDestination) {
       const route = buildMovementRouteIgnoringBlocks(
         currentPos,
         targetPos,
@@ -114,21 +117,21 @@ export async function recoverActionExecution(params: {
           moduleId,
           gameDay,
           gameTime: tickStartTime,
-          location: node.location,
+          location: targetDestination,
           content: t("walked_from_to", language, {
             from: fromLocationId,
-            to: node.location,
+            to: targetDestination,
             minutes: String(travelMinutes),
           }),
           outcome: t("auto_movement_outcome", language, {
             from: fromLocationId,
-            to: node.location,
+            to: targetDestination,
           }),
           memoryManager,
         });
 
         console.log(
-          `[TickProcessor] Auto-movement: ${node.characterName} walked from ${fromLocationId} to ${node.location} (~${travelMinutes} min)`
+          `[TickProcessor] Auto-movement: ${node.characterName} walked from ${fromLocationId} to ${targetDestination} (~${travelMinutes} min)`
         );
 
         action = await handler.execute(node, dgsm, ctx);
@@ -141,7 +144,7 @@ export async function recoverActionExecution(params: {
     node.objectInteractionPayload?.itemId
   ) {
     const itemId = node.objectInteractionPayload.itemId;
-    const currentScene = dgsm.getScene(node.location);
+    const currentScene = dgsm.getScene(action.location);
     const parentId = currentScene?.parentLocationId;
 
     if (parentId && parentId !== "OUTDOOR") {
@@ -149,7 +152,7 @@ export async function recoverActionExecution(params: {
       let targetSceneId: string | undefined;
 
       for (const [sceneId, scene] of state.scenes) {
-        if (sceneId === node.location) continue;
+        if (sceneId === action.location) continue;
         if (scene.parentLocationId !== parentId) continue;
         const found =
           scene.items?.some((item) => item.id === itemId) ||
@@ -165,7 +168,7 @@ export async function recoverActionExecution(params: {
       }
 
       if (targetSceneId) {
-        const fromLocationId = node.location;
+        const fromLocationId = action.location;
 
         dgsm.setCharacterPosition(node.characterId, {
           type: "scene",
@@ -205,10 +208,6 @@ export async function recoverActionExecution(params: {
           `[TickProcessor] Auto-movement: ${node.characterName} walked from ${fromLocationId} to ${targetSceneId} for item ${itemId}`
         );
 
-        node = {
-          ...node,
-          location: targetSceneId,
-        };
         action = await handler.execute(node, dgsm, ctx);
       }
     }

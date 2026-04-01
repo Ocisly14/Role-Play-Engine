@@ -313,7 +313,10 @@ async function executeSingleTick(
           characterName: node.characterName,
           gameTime: tickStartTime,
           action: node.action,
-          location: node.location,
+          location: (() => {
+            const pos = dgsm.getCharacterPosition(node.characterId);
+            return pos ? dgsm.resolveLocationId(pos) : "";
+          })(),
           type: node.type,
           impact: node.impact ?? 0,
           status: "failed",
@@ -357,9 +360,11 @@ async function executeSingleTick(
   //    while nodes within the same scene stay serial.
   const nodesByLocation = new Map<string, PlanNode[]>();
   for (const node of nodesReadyToExecute) {
-    const group = nodesByLocation.get(node.location) ?? [];
+    const pos = dgsm.getCharacterPosition(node.characterId);
+    const loc = pos ? dgsm.resolveLocationId(pos) : "";
+    const group = nodesByLocation.get(loc) ?? [];
     group.push(node);
-    nodesByLocation.set(node.location, group);
+    nodesByLocation.set(loc, group);
   }
 
   await Promise.all(
@@ -474,7 +479,7 @@ async function executeSingleTick(
 
         // Fumble -> damage a random evidence item in the NPC's current scene
         if (action.successLevel === "fumble") {
-          const scene = dgsm.getScene(node.location);
+          const scene = dgsm.getScene(action.location);
           const damageable =
             scene?.items?.filter(
               (i) => i.category === "evidence" && !i.damaged
@@ -486,11 +491,11 @@ async function executeSingleTick(
               victim.id,
               node.characterName,
               `Fumbled: ${node.action}`,
-              node.location
+              action.location
             );
             action.damagedEvidence = {
               itemId: victim.id,
-              sourceName: scene?.name ?? node.location,
+              sourceName: scene?.name ?? action.location,
             };
             console.log(
               `[TickProcessor] Fumble damaged evidence: ${(victim.description || victim.name).slice(0, 40)}`

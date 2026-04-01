@@ -60,7 +60,7 @@ export function makeAction(
     characterName: node.characterName,
     gameTime: opts?.gameTime ?? node.endTime,
     action: node.action,
-    location: opts?.location ?? node.location,
+    location: opts?.location ?? node.destination ?? "",
     type: node.type,
     skill: node.skill,
     impact: node.impact,

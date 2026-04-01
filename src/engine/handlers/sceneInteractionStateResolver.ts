@@ -192,13 +192,13 @@ function buildUserPrompt(
 }
 
 function buildSceneBlock(
-  node: PlanNode,
+  locationId: string,
   dgsm: DynamicGameStateManager
 ): string {
-  const scene = dgsm.getScene(node.location);
+  const scene = dgsm.getScene(locationId);
   if (!scene) return "## Scene\n(no scene data)";
 
-  const conditions = dgsm.getSceneConditions(node.location);
+  const conditions = dgsm.getSceneConditions(locationId);
   const items = (scene as any).items ?? [];
   const connections = (scene as any).connections ?? [];
 
@@ -210,10 +210,7 @@ function buildSceneBlock(
             description: c.description,
           };
           if (c.hidden) entry.hidden = "[HIDDEN]";
-          const blockReason = dgsm.getConnectionBlockReason(
-            node.location,
-            c.targetId
-          );
+          const blockReason = dgsm.getConnectionBlockReason(locationId, c.targetId);
           if (blockReason) entry.blocked = blockReason;
           return entry;
         })
@@ -221,7 +218,7 @@ function buildSceneBlock(
 
   return [
     "## Scene",
-    `ID: ${(scene as any).id ?? node.location}`,
+    `ID: ${(scene as any).id ?? locationId}`,
     `Name: ${(scene as any).name ?? "unknown"}`,
     `Description: ${(scene as any).description ?? ""}`,
     conditions.length > 0 ? `Conditions: ${JSON.stringify(conditions)}` : null,
@@ -249,6 +246,7 @@ export async function resolveSceneInteractionState(
   dgsm: DynamicGameStateManager,
   runtime: any,
   skillRollResult: { successLevel: SuccessLevel; detail: string } | null,
+  locationId: string,
   language: string,
   registry?: GameEngineRegistry,
   featureNotes?: string[]
@@ -257,7 +255,7 @@ export async function resolveSceneInteractionState(
   const actorNpc = state.npcCharacters.find((n) => n.id === node.characterId);
   const actorName = actorNpc?.name ?? node.characterName;
 
-  const sceneBlock = buildSceneBlock(node, dgsm);
+  const sceneBlock = buildSceneBlock(locationId, dgsm);
 
   // Build tool item block if an item is being used
   let toolItemBlock: string | null = null;
@@ -265,7 +263,9 @@ export async function resolveSceneInteractionState(
   if (payload?.itemId) {
     const item =
       dgsm.findNpcItem(node.characterId, payload.itemId) ??
-      dgsm.getScene(node.location)?.items.find((i) => i.id === payload.itemId);
+      dgsm
+        .getScene(locationId)
+        ?.items.find((i) => i.id === payload.itemId);
     if (item) {
       toolItemBlock = `## Tool Being Used\n${JSON.stringify({ id: item.id, name: item.name, description: item.description, type: item.type, damaged: item.damaged, consumableStats: item.consumableStats }, null, 2)}`;
     }
@@ -274,7 +274,7 @@ export async function resolveSceneInteractionState(
   const worldStateBlock = buildWorldStateBlock(
     dgsm,
     node.characterId,
-    node.location,
+    locationId,
     registry
   );
 

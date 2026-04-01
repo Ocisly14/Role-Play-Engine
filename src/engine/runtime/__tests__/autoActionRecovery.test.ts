@@ -14,7 +14,6 @@ function makeNode(overrides: Partial<PlanNode> = {}): PlanNode {
     startTime: "08:00",
     endTime: "08:10",
     action: "Fetch the brass key",
-    location: "office",
     type: "object_interaction",
     impact: 1,
     status: "pending",
@@ -110,8 +109,8 @@ describe("recoverActionExecution", () => {
       } as unknown as NpcMemoryManager,
     });
 
-    expect(result.node.location).toBe("storage");
     expect(result.action).toEqual(recoveredAction);
+    expect(result.action.location).toBe("storage");
     expect(setCharacterPosition).toHaveBeenCalledWith("npc-1", {
       type: "scene",
       sceneId: "storage",

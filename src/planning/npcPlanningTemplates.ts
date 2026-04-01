@@ -134,7 +134,7 @@ const TWENTY_FOUR_HOUR_TIME_GUIDANCE = `## Time Semantics
 
 const DEFAULT_NODE_GUARDRAILS_PROMPT = `## Planning Guardrails
 - You can only interact with items, characters, and the environment in your **current scene**. To act in a different scene (including other scenes in the same building), emit a movement node to that scene first, then your action node.
-- For movement nodes, set \`location\` to the exact scene or place name from "Places You Know". Non-movement nodes execute at your current position — do not specify \`location\`.
+- For movement nodes, set \`destination\` to the exact scene or place name from "Places You Know". Non-movement nodes execute at your current position — do not specify \`destination\`.
 - For object interactions, you may only target items that already appear in \`Items You Can See\` or \`What You're Carrying\`.
 - Do not invent new documents, copies, notes, printouts, receipts, witness copies, or memo variants unless they already exist in the scene, inventory, or prior action history.`;
 
@@ -148,7 +148,7 @@ const DEFAULT_DETAILED_NODE_TYPE_REF = `## Node Type Reference
   - Searching, investigating, or modifying the environment → use "scene_interaction"
   - Going to a different location → use "movement"
 
-- **"movement"**: Move to a destination. Set \`location\` to the exact destination name from "Places You Know". This is the ONLY type that uses the \`location\` field.
+- **"movement"**: Move to a destination. Set \`destination\` to the exact destination name from "Places You Know". This is the ONLY type that uses the \`destination\` field.
 - **"character_interaction"**: Interact with one or more characters. This includes any action that uses a skill targeting another character (e.g., Spot Hidden to observe someone, Psychology to read them, Persuade to convince them).
   - Describe what you do entirely in \`action\`.
   - Put all targets in top-level \`targetCharacterIds\`.
@@ -208,7 +208,7 @@ The engine resolves skill rolls mechanically. A skill roll is called ONLY when:
 function defaultDetailedOutputSchema(language: string): string {
   const lang = contentLanguageName(language);
   return `## Output
-Return a JSON array of PlanNode objects. No extra text. JSON keys must be in English. Write "action" values in ${lang}. Keep "location", "type", "skill", "nodeId", IDs, and enum values in English.
+Return a JSON array of PlanNode objects. No extra text. JSON keys must be in English. Write "action" values in ${lang}. Keep "destination", "type", "skill", "nodeId", IDs, and enum values in English.
 
 ### Fields
 \`\`\`json
@@ -217,7 +217,7 @@ Return a JSON array of PlanNode objects. No extra text. JSON keys must be in Eng
   "startTime": "HH:MM",
   "endTime": "HH:MM",
   "action": "description of what you do (in ${lang})",
-  "location": "ONLY for movement — exact destination from Places You Know (English). Omit for other types.",
+  "destination": "ONLY for movement — exact destination from Places You Know (English). Omit for other types.",
   "type": "action|movement|character_interaction|object_interaction|scene_interaction",
   "skill": "OMIT if no skill check needed, otherwise exact skill name (English)",
   "impact": "Default 0. Use 1 only for targeted consequential actions with skill; 2+ for broader effects"
@@ -239,8 +239,8 @@ Look at your full plan for today and what has already happened. First decide whi
 
 Do not expand the whole day. Do not repeat plan steps that your memory log already shows as completed, interrupted, cancelled, or no longer relevant.
 
-If the next step is not at your current location, emit a movement node first (set location to the destination), then emit the action node. Movement does not need to be broken into segments — one movement node will take you directly to the destination regardless of distance.
-Use only the exact destination name itself in \`location\`; do not include topology notes or any explanatory suffix.
+If the next step is not at your current location, emit a movement node first (set destination to the destination), then emit the action node. Movement does not need to be broken into segments — one movement node will take you directly to the destination regardless of distance.
+Use only the exact destination name itself in \`destination\`; do not include topology notes or any explanatory suffix.
 
 ${TWENTY_FOUR_HOUR_TIME_GUIDANCE}
 
@@ -460,7 +460,7 @@ export interface RevisePlansParams {
 function revisePlansOutputSchema(language: string): string {
   const lang = contentLanguageName(language);
   return `## Output
-Return a single JSON object with a "revisedNodes" array. No extra text. JSON keys must be in English. Write "action" and "updatedLongTermIntent" values in ${lang}. Keep "location", "type", "skill", "nodeId", IDs, and enum values in English.
+Return a single JSON object with a "revisedNodes" array. No extra text. JSON keys must be in English. Write "action" and "updatedLongTermIntent" values in ${lang}. Keep "destination", "type", "skill", "nodeId", IDs, and enum values in English.
 
 IMPORTANT: "revisedNodes" MUST be an array of PlanNode objects — even if there is only one node, wrap it in an array.
 IMPORTANT: "revisedNodes" must cover only the current phase of action from right now, not the whole day.
@@ -473,7 +473,7 @@ IMPORTANT: "revisedNodes" must cover only the current phase of action from right
       "startTime": "HH:MM",
       "endTime": "HH:MM",
       "action": "description of what you do (in ${lang})",
-      "location": "ONLY for movement — exact destination from Places You Know (English). Omit for other types.",
+      "destination": "ONLY for movement — exact destination from Places You Know (English). Omit for other types.",
       "type": "action|movement|character_interaction|object_interaction|scene_interaction",
       "impact": "Default 0. Use 1 only for targeted consequential actions with skill; 2+ for broader effects"
     }
@@ -494,8 +494,8 @@ Something just disrupted your plans. Look at what you were about to do right now
 
 You can reorder, change, add, or drop actions within this immediate phase. If this event fundamentally changes what you're trying to accomplish long-term, say so.
 
-Set each node's \`location\` to the exact location name from "Places You Know" where that action happens. If the next step is not at your current location, include movement nodes first.
-Do not include topology notes, residents, or label prefixes in \`location\`; output only the exact place name.
+Only movement nodes use \`destination\`. Set it to the exact location name from "Places You Know". If the next step is not at your current location, include movement nodes first.
+Do not include topology notes, residents, or label prefixes in \`destination\`; output only the exact place name.
 
 ## Instructions
 - Only change what the event actually affects. Don't rewrite actions that are still fine.

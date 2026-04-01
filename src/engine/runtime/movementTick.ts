@@ -141,8 +141,9 @@ export function initializeMovementNode(
   currentTime: string,
   lang: string
 ): PlanNode {
+  const destination = node.destination;
   const currentPosition = dgsm.getCharacterPosition(node.characterId);
-  if (!currentPosition) {
+  if (!currentPosition || !destination) {
     return {
       ...startNode(node, currentTime),
       status: "failed",
@@ -159,17 +160,17 @@ export function initializeMovementNode(
   if (currentPosition.type === "scene") {
     const state = dgsm.getState();
     const currentScene = state.scenes.get(currentPosition.sceneId);
-    const targetScene = state.scenes.get(node.location);
+    const targetScene = state.scenes.get(destination);
     if (
       currentScene &&
       targetScene &&
       currentScene.parentLocationId === targetScene.parentLocationId &&
       currentScene.parentLocationId !== "OUTDOOR" &&
-      currentPosition.sceneId !== node.location
+      currentPosition.sceneId !== destination
     ) {
       const targetPos: CharacterPosition = {
         type: "scene",
-        sceneId: node.location,
+        sceneId: destination,
       };
       const moveDuration = Math.max(1, node.executionMeta.remainingMinutes);
       return {
@@ -187,7 +188,7 @@ export function initializeMovementNode(
                 durationMinutes: moveDuration,
                 blockCheck: {
                   fromId: currentPosition.sceneId,
-                  toId: node.location,
+                  toId: destination,
                 },
               },
             ],
@@ -202,7 +203,7 @@ export function initializeMovementNode(
   }
 
   const topology = dgsm.getTopology();
-  const targetPosition = resolveTargetPosition(node.location, topology, dgsm);
+  const targetPosition = resolveTargetPosition(destination, topology, dgsm);
   if (!targetPosition) {
     return {
       ...startNode(node, currentTime),
@@ -346,7 +347,9 @@ export function advanceMovementNodeOneMinute(
         failedNode,
         "failed",
         currentTime,
-        failedPosition ? dgsm.resolveLocationId(failedPosition) : node.location,
+        failedPosition
+          ? dgsm.resolveLocationId(failedPosition)
+          : processed.node.destination ?? "",
         failedOutcome,
         "location_blocked"
       ),
@@ -370,14 +373,14 @@ export function advanceMovementNodeOneMinute(
       },
       outcome: t("arrived_succeeded", lang, {
         action: processed.node.action,
-        location: processed.node.location,
+        location: processed.node.destination ?? "",
       }),
     };
     const completedOutcome =
       completedNode.outcome ??
       t("arrived_succeeded", lang, {
         action: processed.node.action,
-        location: processed.node.location,
+        location: processed.node.destination ?? "",
       });
     return {
       node: completedNode,
@@ -386,7 +389,7 @@ export function advanceMovementNodeOneMinute(
         completedNode,
         "completed",
         currentTime,
-        processed.node.location,
+        processed.node.destination ?? "",
         completedOutcome
       ),
     };
@@ -432,7 +435,9 @@ export function advanceMovementNodeOneMinute(
         failedNode,
         "failed",
         currentTime,
-        failedPosition ? dgsm.resolveLocationId(failedPosition) : node.location,
+        failedPosition
+          ? dgsm.resolveLocationId(failedPosition)
+          : processed.node.destination ?? "",
         failedOutcome,
         "location_blocked"
       ),
@@ -524,7 +529,9 @@ export function advanceMovementNodeOneMinute(
         failedNode,
         "failed",
         currentTime,
-        failedPosition ? dgsm.resolveLocationId(failedPosition) : node.location,
+        failedPosition
+          ? dgsm.resolveLocationId(failedPosition)
+          : node.destination ?? "",
         failedOutcome,
         "location_blocked"
       ),
@@ -546,14 +553,14 @@ export function advanceMovementNodeOneMinute(
       },
       outcome: t("arrived_succeeded", lang, {
         action: afterMinute.node.action,
-        location: afterMinute.node.location,
+        location: afterMinute.node.destination ?? "",
       }),
     };
     const completedOutcome =
       completedNode.outcome ??
       t("arrived_succeeded", lang, {
         action: afterMinute.node.action,
-        location: afterMinute.node.location,
+        location: afterMinute.node.destination ?? "",
       });
     return {
       node: completedNode,
@@ -562,7 +569,7 @@ export function advanceMovementNodeOneMinute(
         completedNode,
         "completed",
         currentTime,
-        afterMinute.node.location,
+        afterMinute.node.destination ?? "",
         completedOutcome
       ),
     };

@@ -48,7 +48,6 @@ function makeNode(
     startTime: "08:00",
     endTime: "08:05",
     action: `${npcId}-${status}-action`,
-    location: "SCENE_1",
     type: "action",
     impact: 1,
     status,

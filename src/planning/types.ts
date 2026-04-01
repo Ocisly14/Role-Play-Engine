@@ -147,7 +147,8 @@ export interface PlanNode {
   startTime: string;
   endTime: string;
   action: string;
-  location: string;
+  /** Movement-only target location ID. */
+  destination?: string;
   type: PlanNodeType;
   /** Skill name for dice roll. Omit = auto-success. */
   skill?: string;
