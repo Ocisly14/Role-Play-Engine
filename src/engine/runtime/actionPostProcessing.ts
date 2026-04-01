@@ -180,7 +180,15 @@ export async function postProcessExecutedNodeAction(params: {
     eventOutcome = combined;
   }
 
-  if (action.status === "completed" && node.type === "character_interaction") {
+  // Run LLM resolver for character_interaction when the interaction actually
+  // took place (completed OR skill_roll_failed — both mean actor & targets were
+  // co-located and the attempt happened). Skip for target_absent / prerequisite_not_met.
+  const interactionAttempted =
+    node.type === "character_interaction" &&
+    (action.status === "completed" ||
+      action.failureReason === "skill_roll_failed");
+
+  if (interactionAttempted) {
     const npcKnowledge = memoryManager
       ? await discoverNpcKnowledge(node, dgsm, memoryManager)
       : [];
@@ -395,11 +403,7 @@ export async function postProcessExecutedNodeAction(params: {
   }
 
   let relationshipChange: string | undefined;
-  if (
-    action.status === "completed" &&
-    node.type === "character_interaction" &&
-    allTargetIds.length > 0
-  ) {
+  if (interactionAttempted && allTargetIds.length > 0) {
     const relParts: string[] = [];
     for (const targetId of allTargetIds) {
       const relResult = await npcPlanningAgent.updateRelationshipViaLLM(

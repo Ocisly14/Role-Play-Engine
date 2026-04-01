@@ -168,22 +168,7 @@ async function executeSingleTick(
     nodeByNpc.set(node.characterId, node);
   }
   for (const node of dueNpcNodes) {
-    if (nodeByNpc.has(node.characterId)) continue;
-    const existing = nodeByNpc.get(node.characterId);
-    if (!existing) {
-      nodeByNpc.set(node.characterId, node);
-      continue;
-    }
-    const existingNpc = state.npcCharacters.find(
-      (n) => n.id === existing.characterId
-    );
-    const nodeNpc = state.npcCharacters.find((n) => n.id === node.characterId);
-    const existingDex = existingNpc?.attributes?.DEX ?? 50;
-    const nodeDex = nodeNpc?.attributes?.DEX ?? 50;
-    if (
-      node.startTime < existing.startTime ||
-      (node.startTime === existing.startTime && nodeDex > existingDex)
-    ) {
+    if (!nodeByNpc.has(node.characterId)) {
       nodeByNpc.set(node.characterId, node);
     }
   }
@@ -205,6 +190,22 @@ async function executeSingleTick(
     const dexB = npcB?.attributes?.DEX ?? 50;
     return dexB - dexA;
   });
+
+  // NPCs targeted by an in-progress character_interaction (impact >= 1)
+  // are "engaged" and should not execute their own nodes this tick.
+  const engagedTargets = new Set<string>();
+  for (const node of allNodes) {
+    if (
+      node.type === "character_interaction" &&
+      node.status === "in_progress" &&
+      (node.impact ?? 0) >= 1 &&
+      node.targetCharacterIds?.length
+    ) {
+      for (const tid of node.targetCharacterIds) {
+        engagedTargets.add(tid);
+      }
+    }
+  }
 
   const tickActions: CharacterAction[] = [];
   const executedNodes: PlanNode[] = [];
@@ -229,6 +230,24 @@ async function executeSingleTick(
     });
 
   for (const rawNode of allNodes) {
+    // Skip execution for NPCs engaged as interaction targets
+    if (engagedTargets.has(rawNode.characterId)) {
+      if (rawNode.status === "pending") {
+        const held: PlanNode = {
+          ...rawNode,
+          status: "in_progress",
+          executionMeta: { ...rawNode.executionMeta, startedAt: tickStartTime },
+        };
+        await npcPlanningAgent.updateNode(
+          sessionId,
+          held.characterId,
+          gameDay,
+          held
+        );
+      }
+      continue;
+    }
+
     if (rawNode.type === "movement") {
       const initializedNode =
         rawNode.status === "pending"
@@ -345,7 +364,36 @@ async function executeSingleTick(
 
   await Promise.all(
     [...nodesByLocation.values()].map(async (sceneNodes) => {
+      // Within same scene, higher DEX acts first
+      sceneNodes.sort((a, b) => {
+        const npcA = state.npcCharacters.find((n) => n.id === a.characterId);
+        const npcB = state.npcCharacters.find((n) => n.id === b.characterId);
+        return (npcB?.attributes?.DEX ?? 50) - (npcA?.attributes?.DEX ?? 50);
+      });
+      // Track targets engaged by interactions resolved within this scene
+      const sceneEngaged = new Set<string>();
       for (const rawNode of sceneNodes) {
+        if (sceneEngaged.has(rawNode.characterId)) {
+          // Engaged by an interaction that just resolved — hold node in_progress
+          if (rawNode.status === "pending") {
+            const held: PlanNode = {
+              ...rawNode,
+              status: "in_progress",
+              executionMeta: {
+                ...rawNode.executionMeta,
+                startedAt: tickStartTime,
+              },
+            };
+            await npcPlanningAgent.updateNode(
+              sessionId,
+              held.characterId,
+              gameDay,
+              held
+            );
+          }
+          continue;
+        }
+
         let node = rawNode;
         // Dispatch to registry handler
         const handler = registry.getHandler(node.type);
@@ -408,6 +456,18 @@ async function executeSingleTick(
           pendingRevisionRequests.push(
             postProcessResult.pendingRevisionRequest
           );
+        }
+
+        // Mark interaction targets as engaged so their nodes are skipped
+        if (
+          node.type === "character_interaction" &&
+          action.status === "completed" &&
+          (node.impact ?? 0) >= 1 &&
+          node.targetCharacterIds?.length
+        ) {
+          for (const tid of node.targetCharacterIds) {
+            sceneEngaged.add(tid);
+          }
         }
 
         logNodeExecutionResult(node, action);
@@ -585,6 +645,7 @@ async function executeSingleTick(
   drainPendingEmotions(dgsm);
 
   if (memoryManager) {
+    const actedNpcIds = new Set(tickActions.map((a) => a.characterId));
     await syncNpcMapMemories({
       dgsm,
       memoryManager,
@@ -593,6 +654,7 @@ async function executeSingleTick(
       gameDay,
       gameTime: tickRuntime.tickTime,
       movedNpcIds,
+      actedNpcIds,
     });
   }
 

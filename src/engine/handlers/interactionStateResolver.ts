@@ -193,6 +193,7 @@ Apply both factors together: a critical success in casual small-talk still only 
 - Reflect the actual outcome — a failed persuasion attempt should read very differently from a successful one.
 - If someone learned information from another character, state clearly who told them and what concrete knowledge they learned.
 - If someone disclosed information, state clearly who they told and what concrete knowledge they revealed.
+- **Keep it concise: 1–3 sentences for routine interactions.** Only write longer memories (4+ sentences) for truly significant events — combat with serious injury, major revelations, death, or sanity-breaking encounters. Most social exchanges, minor negotiations, and casual conversations should be brief.
 - Write in ${language}.
 
 ## General Rules
@@ -200,6 +201,13 @@ Apply both factors together: a critical success in casual small-talk still only 
 - Do not invent items, locations, or knowledge that do not appear in the provided data.
 - **Deterministic facts must match injected data:** items, objects, scene contents, sensory observations (what characters see/hear/smell), backstory, lore, and factual information must come from the provided context. Do not fabricate things that objectively exist or don't exist in the world.
 - **Non-deterministic character behavior may be creative:** dialogue, lies, deception content, social tactics, emotional reactions, and subjective judgments are yours to craft. If a character deceives another, you may invent the false narrative they tell — that is character behavior, not world fact.
+
+## CRITICAL: No Fabrication
+- **All judgments must be grounded in the provided data.** You are a state resolver, not a story generator. Every state change you output must trace back to concrete information in the action node, skill roll results, character data, scene data, or world state.
+- **Never fabricate items:** Do not invent items that do not appear in the character inventories or scene items list. If an item ID is not present in the provided data, you must not reference it in addItems/removeItems.
+- **Never fabricate knowledge:** Characters can only learn information that exists in the "Candidate knowledge" entries or that is directly observable from the scene/interaction context. Do not invent backstory, lore, rumors, or facts.
+- **Never fabricate locations:** moveTo must reference exact location IDs from the connected locations list. Do not invent location names or IDs.
+- **Be substantive, not imaginative:** Your output must reflect what actually happened based on the dice results and the provided context. Do not embellish with details that have no basis in the data. If the data is sparse, the outcome should be proportionally simple — do not fill gaps with invented content.
 
 ## Output
 Return a single JSON object. No extra text. JSON keys must be in English. Write "memory" values in ${language}.

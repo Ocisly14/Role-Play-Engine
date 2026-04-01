@@ -77,23 +77,9 @@ export const sceneInteractionHandler: NodeHandler = {
       lastRollDetail = rollResult.detail;
     }
 
-    // Item existence pre-check
-    const payload = node.objectInteractionPayload;
-    if (payload?.itemId) {
-      const scene = dgsm.getScene(node.location);
-      const inInventory = dgsm.findNpcItem(node.characterId, payload.itemId);
-      const inScene = scene?.items.find((i) => i.id === payload.itemId);
-      if (!inInventory && !inScene) {
-        return makeAction(
-          node,
-          "failed",
-          buildOutcome(node, "failed", {
-            reason: `${payload.itemId} not found`,
-          }),
-          { difficulty, failureReason: "object_not_found" }
-        );
-      }
-    }
+    // No item pre-check here — the tool item (objectInteractionPayload.itemId)
+    // is optional context for the LLM resolver. The resolver receives full
+    // inventory/scene data and handles missing tools in its response.
 
     // Return success — tickProcessor calls LLM resolver for state changes
     const action = makeAction(node, "completed", node.action, {
