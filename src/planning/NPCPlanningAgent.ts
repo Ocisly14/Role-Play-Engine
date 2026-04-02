@@ -1,10 +1,5 @@
-import { randomUUID } from "crypto";
 import type { PrismaClient } from "@prisma/client";
 import type { GameEngineRegistry } from "../engine/registry.js";
-import {
-  arePositionsCoLocated,
-  describePrecisePosition,
-} from "../engine/shared/locationPresence.js";
 import { getTopologyNeighbors } from "../engine/shared/topologyHelpers.js";
 import { t } from "../i18n/t.js";
 import type { NpcMemoryManager } from "../memory/NpcMemoryManager.js";
@@ -17,14 +12,9 @@ import {
   buildDetailedNodesPrompt,
   buildImpactGatePrompt,
   buildRelationshipUpdatePrompt,
-  buildRevisePlansPrompt,
   buildReviseSchedulePrompt,
 } from "./npcPlanningTemplates.js";
 import { buildSummarizeDayMemoryPrompt } from "./npcSummaryTemplates.js";
-import {
-  buildInterruptedAction,
-  mergeRevisedNodesWithHistory,
-} from "./revisionHelpers.js";
 import {
   buildLocationNameMap,
   formatSceneConnections,
@@ -32,12 +22,7 @@ import {
   resolveLocationId as resolveLocationFromName,
   resolveLocationName,
 } from "./sceneMapFormatter.js";
-import type {
-  PlanNode,
-  RevisePlansContext,
-  RevisePlansResult,
-  ScheduleEntry,
-} from "./types.js";
+import type { PlanNode, ScheduleEntry } from "./types.js";
 
 function timeToMinutes(hhmm: string): number {
   const [h, m] = hhmm.split(":").map(Number);
@@ -175,10 +160,13 @@ function normalizePlanNode(
     ...rest
   } = rawNode;
 
+  // Always generate a deterministic, unique nodeId from NPC + timestamp
+  // to prevent duplication when the LLM reuses the same nodeId across replans.
+  const nodeId = `${params.npcId}_${startTime.replace(":", "")}_${Date.now().toString(36)}`;
+
   return {
     ...rest,
-    nodeId:
-      (typeof rawNode.nodeId === "string" && rawNode.nodeId) || randomUUID(),
+    nodeId,
     characterId: params.npcId,
     characterName: params.npcName,
     ...(params.destinationId ? { destination: params.destinationId } : {}),
@@ -244,30 +232,6 @@ function parseJsonResponse<T>(raw: string): T {
   }
 }
 
-/**
- * Extract revisedNodes array from various LLM response shapes:
- * - { revisedNodes: [...] }         → return revisedNodes
- * - { revisedNodes: { ... } }       → wrap in array
- * - [ ... ]  (raw array)            → return as-is
- * - { nodes: [...] }                → return nodes (common LLM alias)
- */
-function extractRevisedNodes(parsed: unknown): PlanNode[] | null {
-  if (Array.isArray(parsed)) return parsed;
-  if (parsed && typeof parsed === "object") {
-    const obj = parsed as Record<string, unknown>;
-    if (Array.isArray(obj.revisedNodes)) return obj.revisedNodes as PlanNode[];
-    if (
-      obj.revisedNodes &&
-      typeof obj.revisedNodes === "object" &&
-      !Array.isArray(obj.revisedNodes)
-    ) {
-      return [obj.revisedNodes as PlanNode];
-    }
-    if (Array.isArray(obj.nodes)) return obj.nodes as PlanNode[];
-  }
-  return null;
-}
-
 function formatPlanNodesForLog(
   dgsm: DynamicGameStateManager,
   nodes: PlanNode[]
@@ -275,55 +239,15 @@ function formatPlanNodesForLog(
   if (nodes.length === 0) return "(no nodes)";
 
   return nodes
-    .map(
-      (node) =>
-        node.type === "movement" && node.destination
-          ? `- [${node.startTime}-${node.endTime}] ${node.type} @ ${resolveLocationName(
-              dgsm,
-              node.destination
-            )}: ${node.action}`
-          : `- [${node.startTime}-${node.endTime}] ${node.type}: ${node.action}`
+    .map((node) =>
+      node.type === "movement" && node.destination
+        ? `- [${node.startTime}-${node.endTime}] ${node.type} @ ${resolveLocationName(
+            dgsm,
+            node.destination
+          )}: ${node.action}`
+        : `- [${node.startTime}-${node.endTime}] ${node.type}: ${node.action}`
     )
     .join("\n");
-}
-
-export function buildImpactTriggerDescription(
-  npcId: string,
-  trigger: import("./types.js").ImpactTrigger,
-  language = "en"
-): string {
-  const action = trigger.triggeringAction;
-
-  if (action.characterId === "__encounter__") {
-    return t("trigger_encountered_others", language, {
-      outcome: action.outcome,
-    });
-  }
-
-  if (action.targetCharacterIds?.includes(npcId)) {
-    return t("trigger_directly_involved", language, {
-      name: action.characterName,
-      action: action.action,
-      outcome: action.outcome,
-    });
-  }
-
-  return t("trigger_noticed", language, {
-    name: action.characterName,
-    action: action.action.toLowerCase(),
-    outcome: action.outcome,
-  });
-}
-
-export function buildFailureTriggerDescription(
-  trigger: import("./types.js").FailureTrigger,
-  language = "en"
-): string {
-  return t("trigger_action_failed", language, {
-    action: trigger.action,
-    gameTime: trigger.gameTime,
-    reason: trigger.failureReason,
-  });
 }
 
 export class NPCPlanningAgent {
@@ -541,25 +465,26 @@ export class NPCPlanningAgent {
     }
   }
 
-  async generateDetailedNodes(
+  async generateNextAction(
     dgsm: DynamicGameStateManager,
     sessionId: string,
     npcId: string,
     gameDay: number,
     language = "en",
     registry?: GameEngineRegistry
-  ): Promise<PlanNode[]> {
+  ): Promise<PlanNode | null> {
     const state = dgsm.getState();
     const npc = state.npcCharacters.find((n) => n.id === npcId);
-    if (!npc || !dgsm.isNpcAlive(npcId)) return [];
+    if (!npc || !dgsm.isNpcAlive(npcId)) return null;
 
     const plan = await this.prisma.npcDailyPlan.findUnique({
       where: { sessionId_npcId_gameDay: { sessionId, npcId, gameDay } },
     });
     const schedule = (plan?.schedule as unknown as ScheduleEntry[]) ?? [];
-    if (schedule.length === 0) return [];
+    if (schedule.length === 0) return null;
 
     const longTermIntent = await this.getLongTermIntent(sessionId, npcId);
+    const shortTermIntent = await this.getShortTermIntent(sessionId, npcId);
     let memoryLog = "";
     if (this.memoryManager) {
       memoryLog = await this.memoryManager.getContext({
@@ -569,6 +494,18 @@ export class NPCPlanningAgent {
         currentGameDay: gameDay,
       });
     }
+
+    // Get last action outcome from existing nodes
+    const existingNodes = (plan?.nodes as unknown as PlanNode[]) ?? [];
+    const lastCompletedNode = [...existingNodes]
+      .reverse()
+      .find(
+        (n) =>
+          n.status === "completed" ||
+          n.status === "failed" ||
+          n.status === "interrupted"
+      );
+    const lastActionOutcome = lastCompletedNode?.outcome ?? undefined;
 
     const currentPos = dgsm.getCharacterPosition(npcId);
     const currentLocationId = currentPos
@@ -623,6 +560,8 @@ export class NPCPlanningAgent {
       npcId: npc.id,
       npcProfile: this.formatNpcProfile(npc),
       longTermIntent,
+      shortTermIntent,
+      lastActionOutcome,
       memoryLog,
       todayPlan: schedule,
       yourLocation,
@@ -649,7 +588,7 @@ export class NPCPlanningAgent {
 
     const nextEntry = schedule[0];
     console.log(
-      `[Planning] 🎯 Generating detailed nodes for ${npc.name}: "${nextEntry?.activity ?? ""}" @ ${nextEntry?.location ?? "?"}`
+      `[Planning] 🎯 Generating next action for ${npc.name}: "${nextEntry?.activity ?? ""}" @ ${nextEntry?.location ?? "?"}`
     );
     const response = await generateText({
       runtime: this.runtime,
@@ -658,55 +597,61 @@ export class NPCPlanningAgent {
       modelClass: ModelClass.MEDIUM,
     });
 
-    const rawNodes = parseJsonResponse<any[]>(response);
-    const nameMap = buildLocationNameMap(dgsm, mapSnapshot);
-    const enrichedNodes: PlanNode[] = rawNodes.map((node) => {
-      const rawNode = node as Record<string, unknown>;
-      const nodeType =
-        typeof rawNode.type === "string" ? rawNode.type : "action";
-      const rawDestination =
-        typeof rawNode.destination === "string" && rawNode.destination
-          ? rawNode.destination
-          : undefined;
-      const destinationId = rawDestination
-        ? resolveLocationFromName(rawDestination, nameMap)
-        : undefined;
-      const normalized = normalizePlanNode(rawNode, {
-        npcId,
-        npcName: npc.name,
-        destinationId:
-          nodeType === "movement" ? destinationId : undefined,
-        fallbackStartTime: state.timeOfDay,
-      });
+    const parsed = parseJsonResponse<{
+      node: Record<string, unknown>;
+      updatedShortTermIntent?: string;
+    }>(response);
 
-      return normalized;
+    const rawNode = parsed.node;
+    if (!rawNode) {
+      console.warn(
+        `[Planning] generateNextAction for ${npc.name}: no node in LLM response`
+      );
+      return null;
+    }
+
+    const nameMap = buildLocationNameMap(dgsm, mapSnapshot);
+    const nodeType = typeof rawNode.type === "string" ? rawNode.type : "action";
+    const rawDestination =
+      typeof rawNode.destination === "string" && rawNode.destination
+        ? rawNode.destination
+        : undefined;
+    const destinationId = rawDestination
+      ? resolveLocationFromName(rawDestination, nameMap)
+      : undefined;
+    const enrichedNode = normalizePlanNode(rawNode, {
+      npcId,
+      npcName: npc.name,
+      destinationId: nodeType === "movement" ? destinationId : undefined,
+      fallbackStartTime: state.timeOfDay,
     });
+
     console.log(
-      `[Planning] 🧩 Detailed nodes for ${npc.name}\n${formatPlanNodesForLog(
+      `[Planning] 🧩 Next action for ${npc.name}\n${formatPlanNodesForLog(
         dgsm,
-        enrichedNodes
+        [enrichedNode]
       )}`
     );
 
-    // Append new nodes to existing nodes in DB and consume the schedule entry
-    const existingPlan = await this.prisma.npcDailyPlan.findUnique({
-      where: { sessionId_npcId_gameDay: { sessionId, npcId, gameDay } },
-    });
-    const existingNodes = (existingPlan?.nodes as unknown as PlanNode[]) ?? [];
-    const mergedNodes = [...existingNodes, ...enrichedNodes];
+    // Append single node to existing nodes in DB
+    const mergedNodes = [...existingNodes, enrichedNode];
 
-    // Consume the first schedule entry (shift it off)
-    const remainingSchedule = schedule.slice(1);
+    // Update short-term intent if provided
+    if (parsed.updatedShortTermIntent) {
+      await this.setShortTermIntent(
+        sessionId,
+        npcId,
+        parsed.updatedShortTermIntent
+      );
+    }
 
+    // Append node to DB — schedule stays intact (LLM judges progress via memory)
     await this.prisma.npcDailyPlan.update({
       where: { sessionId_npcId_gameDay: { sessionId, npcId, gameDay } },
-      data: {
-        nodes: mergedNodes as any,
-        schedule: remainingSchedule as any,
-      },
+      data: { nodes: mergedNodes as any },
     });
 
-    return enrichedNodes;
+    return enrichedNode;
   }
 
   async ensureNpcNodesAvailable(
@@ -767,7 +712,7 @@ export class NPCPlanningAgent {
       (refreshedPlan?.schedule as unknown as ScheduleEntry[]) ?? [];
     if (schedule.length === 0) return; // No more schedule entries for today
 
-    await this.generateDetailedNodes(
+    await this.generateNextAction(
       dgsm,
       sessionId,
       npcId,
@@ -878,189 +823,6 @@ export class NPCPlanningAgent {
     }
   }
 
-  async revisePlans(
-    dgsm: DynamicGameStateManager,
-    sessionId: string,
-    npcId: string,
-    context: RevisePlansContext,
-    language = "en",
-    registry?: GameEngineRegistry
-  ): Promise<RevisePlansResult> {
-    const state = dgsm.getState();
-    const npc = state.npcCharacters.find((n) => n.id === npcId);
-    if (!npc || !dgsm.isNpcAlive(npcId)) return {};
-
-    const failureTrigger =
-      context.trigger.type === "failure" ? context.trigger : undefined;
-    const triggerDescription =
-      context.trigger.type === "failure"
-        ? buildFailureTriggerDescription(context.trigger, language)
-        : buildImpactTriggerDescription(npcId, context.trigger, language);
-
-    const revisePos = dgsm.getCharacterPosition(npcId);
-    const currentLocationId = revisePos
-      ? dgsm.resolveLocationId(revisePos)
-      : "";
-    const currentPositionDetail = describePrecisePosition(revisePos, dgsm);
-    const mapSnapshot = await this.getPlanningMapSnapshot(sessionId, npcId);
-    const currentScene = currentLocationId
-      ? (mapSnapshot?.scenes[currentLocationId] ??
-        state.scenes.get(currentLocationId) ??
-        null)
-      : null;
-    const plan = await this.getDailyPlan(sessionId, npcId, state.gameDay);
-    const schedule = (plan?.schedule as unknown as ScheduleEntry[]) ?? [];
-    const existingNodes = (plan?.nodes as unknown as PlanNode[]) ?? [];
-    const { townMap, yourLocation } = this.formatSceneMap(
-      dgsm,
-      npcId,
-      mapSnapshot
-    );
-
-    const npcsAtLocation = formatVisibleNpcRoster(
-      dgsm,
-      npcId,
-      (candidateId) => {
-        const candidatePos = dgsm.getCharacterPosition(candidateId);
-        return arePositionsCoLocated(revisePos, candidatePos, dgsm);
-      }
-    );
-
-    // Find in_progress node that will be interrupted
-    const inProgressNode = existingNodes.find(
-      (n) => n.status === "in_progress"
-    );
-
-    const moduleBackground =
-      state.moduleSetup?.background || state.moduleSetup?.introduction || "";
-
-    const { systemPrompt, userPrompt } = buildRevisePlansPrompt({
-      npcName: npc.name,
-      npcId: npc.id,
-      npcProfile: this.formatNpcProfile(npc),
-      longTermIntent: context.longTermIntent,
-      memoryLog: context.memoryLog.join("\n"),
-      todayPlan: schedule,
-      pendingNodes: JSON.stringify(context.pendingNodes, null, 2),
-      interruptedNode: inProgressNode
-        ? JSON.stringify(inProgressNode, null, 2)
-        : undefined,
-      triggerDescription,
-      yourLocation,
-      currentPositionDetail,
-      townMap,
-      sceneDescription: currentScene?.description ?? "",
-      sceneItems: formatSceneItems(currentScene),
-      sceneNpcs: npcsAtLocation,
-      sceneConditions:
-        currentScene?.conditions?.map((c) => `- ${c.description}`).join("\n") ??
-        "",
-      worldStatePrompt: this.buildNpcWorldStatePrompt(
-        dgsm,
-        npcId,
-        currentLocationId,
-        registry
-      ),
-      npcInventory: formatItemList(dgsm.getNpcInventory(npcId)),
-      currentTime: state.timeOfDay,
-      gameDay: state.gameDay,
-      language,
-      handlerPrompt: registry?.buildHandlerPrompt(),
-      planningPrompt: registry?.buildPlanningPrompt(),
-      outputSchemaPrompt: registry?.buildOutputSchemaPrompt({
-        extraInstructions:
-          "Revise pending actions. Only change what the event actually affects.",
-        language,
-      }),
-      failureReason: failureTrigger?.failureReason,
-      failureOutcome: failureTrigger?.failureOutcome,
-      blockedReason: failureTrigger?.blockedReason,
-      moduleBackground,
-    });
-
-    console.log(
-      `[Planning] ⚡ Revising plans for ${npc.name}: ${triggerDescription.slice(0, 60)}`
-    );
-    const response = await generateText({
-      runtime: this.runtime,
-      context: userPrompt,
-      customSystemPrompt: systemPrompt,
-      modelClass: ModelClass.MEDIUM,
-    });
-
-    const parsed = parseJsonResponse<Record<string, unknown>>(response);
-    const rawRevisedNodes = extractRevisedNodes(parsed);
-    if (!rawRevisedNodes || rawRevisedNodes.length === 0) {
-      console.warn(
-        `[Planning] revisePlans for ${npc.name}: could not extract revisedNodes from LLM response, keeping existing nodes`
-      );
-      return {};
-    }
-
-    const nameMap = buildLocationNameMap(dgsm, mapSnapshot);
-    const revisedNodes = rawRevisedNodes.map((node) => {
-      const rawNode = node as Record<string, unknown>;
-      const nodeType =
-        typeof rawNode.type === "string" ? rawNode.type : "action";
-      const rawDestination =
-        typeof rawNode.destination === "string" && rawNode.destination
-          ? rawNode.destination
-          : undefined;
-      const destinationId = rawDestination
-        ? resolveLocationFromName(rawDestination, nameMap)
-        : undefined;
-      const normalized = normalizePlanNode(rawNode, {
-        npcId,
-        npcName: npc.name,
-        destinationId:
-          nodeType === "movement" ? destinationId : undefined,
-        fallbackStartTime: state.timeOfDay,
-      });
-
-      return normalized;
-    });
-    console.log(
-      `[Planning] 📝 Revised nodes for ${npc.name}\n${formatPlanNodesForLog(
-        dgsm,
-        revisedNodes
-      )}`
-    );
-
-    const { nextNodes, interruptedNode } = mergeRevisedNodesWithHistory(
-      existingNodes,
-      revisedNodes,
-      state.timeOfDay,
-      language
-    );
-
-    // Update daily plan while preserving history nodes.
-    const gameDay = state.gameDay;
-    await this.prisma.npcDailyPlan.updateMany({
-      where: { sessionId, npcId, gameDay },
-      data: { nodes: nextNodes as any },
-    });
-
-    // Optionally update long-term intent
-    if (parsed.shouldUpdateLongTermIntent && parsed.updatedLongTermIntent) {
-      await this.prisma.npcLongTermIntent.updateMany({
-        where: { sessionId, npcId },
-        data: { intent: parsed.updatedLongTermIntent as string },
-      });
-    }
-
-    return interruptedNode
-      ? {
-          interruptedAction: buildInterruptedAction(
-            interruptedNode,
-            state.timeOfDay,
-            currentLocationId || "",
-            language,
-            triggerDescription
-          ),
-        }
-      : {};
-  }
-
   async runImpactGateForNpc(
     candidate: {
       npcId: string;
@@ -1071,12 +833,15 @@ export class NPCPlanningAgent {
       currentDetailedPlan: string;
       triggeringEvents: string;
       memoryContext?: string;
+      shortTermIntent?: string;
     },
     bucketTime: string,
     language = "en",
     moduleBackground?: string
   ): Promise<{
-    shouldRevise: boolean;
+    shouldUpdateIntent: boolean;
+    updatedIntent?: string;
+    shouldInterruptCurrentNode: boolean;
     shouldReviseSchedule: boolean;
     witnessEntry: string;
   }> {
@@ -1099,7 +864,9 @@ export class NPCPlanningAgent {
 
     try {
       return parseJsonResponse<{
-        shouldRevise: boolean;
+        shouldUpdateIntent: boolean;
+        updatedIntent?: string;
+        shouldInterruptCurrentNode: boolean;
         shouldReviseSchedule: boolean;
         witnessEntry: string;
       }>(response);
@@ -1109,7 +876,8 @@ export class NPCPlanningAgent {
         err instanceof Error ? err.message : err
       );
       return {
-        shouldRevise: false,
+        shouldUpdateIntent: false,
+        shouldInterruptCurrentNode: false,
         shouldReviseSchedule: false,
         witnessEntry: "",
       };
@@ -1216,6 +984,28 @@ export class NPCPlanningAgent {
       where: { sessionId, npcId },
     });
     return record?.intent ?? "";
+  }
+
+  async getShortTermIntent(
+    sessionId: string,
+    npcId: string
+  ): Promise<string | null> {
+    const record = await this.prisma.npcShortTermIntent.findUnique({
+      where: { sessionId_npcId: { sessionId, npcId } },
+    });
+    return record?.intent ?? null;
+  }
+
+  async setShortTermIntent(
+    sessionId: string,
+    npcId: string,
+    intent: string
+  ): Promise<void> {
+    await this.prisma.npcShortTermIntent.upsert({
+      where: { sessionId_npcId: { sessionId, npcId } },
+      update: { intent },
+      create: { sessionId, npcId, intent },
+    });
   }
 
   async getDueNpcNodes(
@@ -1919,6 +1709,18 @@ export class NPCPlanningAgent {
     if (dgsm.isCharacterHidden(npcId)) {
       sections.push(
         "Concealment: You are currently HIDDEN (Stealth active). Others cannot see you. Moving requires a Stealth check to stay hidden. Performing any non-Stealth action will reveal you. You can use this advantage to eavesdrop, follow someone, or set up an ambush."
+      );
+    }
+
+    // Physical conditions — detained, restrained, unconscious, etc.
+    const npc = state.npcCharacters.find((n) => n.id === npcId);
+    const conditions = npc?.status?.conditions ?? [];
+    const nonInsanityConditions = conditions.filter(
+      (c) => !c.startsWith("[Insanity:")
+    );
+    if (nonInsanityConditions.length > 0) {
+      sections.push(
+        `Physical conditions: ${nonInsanityConditions.join(", ")}. These are binding physical constraints on your current state. You cannot take actions that contradict these conditions unless you first resolve or escape them.`
       );
     }
 

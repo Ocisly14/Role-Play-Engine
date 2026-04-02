@@ -40,8 +40,7 @@ export async function syncNpcMapMemories(params: {
   );
 
   // Only refresh map snapshots for NPCs who moved or acted this tick.
-  // NPCs affected by impact events already got refreshed in impactPipeline,
-  // and NPCs with pending revisions got refreshed in revisionPipeline.
+  // NPCs affected by impact events already got refreshed in impactPipeline.
   const changedNpcIds = new Set([...movedNpcIds, ...actedNpcIds]);
   if (changedNpcIds.size === 0) return;
 

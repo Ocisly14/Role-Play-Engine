@@ -1,8 +1,4 @@
-import type {
-  CharacterAction,
-  PlanNode,
-  RevisePlansContext,
-} from "../planning/types.js";
+import type { CharacterAction, PlanNode } from "../planning/types.js";
 import type { DynamicGameStateManager } from "../state/DynamicGameState.js";
 
 // ===== Node Handler: executes a specific PlanNode type =====
@@ -106,23 +102,44 @@ export interface NpcPlanningCapability {
       currentDetailedPlan: string;
       triggeringEvents: string;
       memoryContext?: string;
+      shortTermIntent?: string;
     },
     bucketTime: string,
     language: string,
     moduleBackground?: string
   ): Promise<{
-    shouldRevise: boolean;
+    shouldUpdateIntent: boolean;
+    updatedIntent?: string;
+    shouldInterruptCurrentNode: boolean;
     shouldReviseSchedule: boolean;
     witnessEntry: string;
   }>;
-  revisePlans(
+  getShortTermIntent(sessionId: string, npcId: string): Promise<string | null>;
+  setShortTermIntent(
+    sessionId: string,
+    npcId: string,
+    intent: string
+  ): Promise<void>;
+  getLongTermIntent(sessionId: string, npcId: string): Promise<string>;
+  getDailyPlan(
+    sessionId: string,
+    npcId: string,
+    gameDay: number
+  ): Promise<{ nodes: unknown; schedule: unknown } | null>;
+  updateNode(
+    sessionId: string,
+    npcId: string,
+    gameDay: number,
+    node: PlanNode
+  ): Promise<void>;
+  reviseSchedule(
     dgsm: DynamicGameStateManager,
     sessionId: string,
     npcId: string,
-    context: RevisePlansContext,
-    language: string,
+    triggerDescription: string,
+    language?: string,
     registry?: import("./registry.js").GameEngineRegistry
-  ): Promise<import("../planning/types.js").RevisePlansResult>;
+  ): Promise<void>;
 }
 
 /** Runtime dependencies passed to WorldFeature hooks */

@@ -125,3 +125,40 @@ export function buildTopology(
 
   return { junctions, roads, junctionToRoads, sceneToParent };
 }
+
+/**
+ * Enrich a topology by adding interior sub-scenes to `sceneToParent`.
+ *
+ * Interior sub-scenes (e.g. SCN_6_SUB_1, 2nd floor) are not directly
+ * connected to junctions/roads but belong to a building whose entry scene IS.
+ * This function gives every sub-scene the same topology attachment as its
+ * building's entry scene, so pathfinding can route to/from them.
+ */
+export function enrichTopologyWithInteriorScenes(
+  topology: TownTopology,
+  scenes: Map<string, { id: string; parentLocationId: string }>,
+  outlines: Array<{ id: string; entrySceneId?: string }>
+): void {
+  // Build outline lookup: outlineId → entrySceneId
+  const outlineEntryMap = new Map<string, string>();
+  for (const outline of outlines) {
+    if (outline.entrySceneId) {
+      outlineEntryMap.set(outline.id, outline.entrySceneId);
+    }
+  }
+
+  for (const scene of scenes.values()) {
+    // Skip scenes already indexed
+    if (topology.sceneToParent.has(scene.id)) continue;
+
+    // Find the building's entry scene via the parent outline
+    const entrySceneId = outlineEntryMap.get(scene.parentLocationId);
+    if (!entrySceneId) continue;
+
+    // Inherit the entry scene's topology attachment
+    const parentEntry = topology.sceneToParent.get(entrySceneId);
+    if (!parentEntry) continue;
+
+    topology.sceneToParent.set(scene.id, parentEntry);
+  }
+}

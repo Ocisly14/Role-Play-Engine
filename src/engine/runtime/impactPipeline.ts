@@ -1,12 +1,47 @@
 import { t } from "../../i18n/t.js";
 import type { NpcMemoryManager } from "../../memory/NpcMemoryManager.js";
 import type { NPCPlanningAgent } from "../../planning/NPCPlanningAgent.js";
-import type { CharacterAction } from "../../planning/types.js";
+import {
+  buildInterruptedAction,
+  interruptNode,
+} from "../../planning/revisionHelpers.js";
+import type { CharacterAction, PlanNode } from "../../planning/types.js";
 import type { DynamicGameStateManager } from "../../state/DynamicGameState.js";
 import type { GameEngineRegistry } from "../registry.js";
 import { findAffectedCharacters } from "../shared/impactPropagation.js";
 import type { TickRuntimeContext } from "../types.js";
 import { personalizeEncounterForNpc } from "./encounterScanner.js";
+
+export async function recordRevisionInterruption(params: {
+  action: CharacterAction | undefined;
+  tickActions: CharacterAction[];
+  sessionId: string;
+  moduleId: string;
+  gameDay: number;
+  memoryManager?: NpcMemoryManager;
+}): Promise<void> {
+  const { action, tickActions, sessionId, moduleId, gameDay, memoryManager } =
+    params;
+  if (!action) return;
+
+  tickActions.push(action);
+  if (!memoryManager) return;
+
+  await memoryManager.add({
+    npcId: action.characterId,
+    sessionId,
+    moduleId,
+    type: "event",
+    content: action.outcome,
+    gameDay,
+    gameTime: action.gameTime,
+    location: action.location,
+    metadata: {
+      outcome: action.outcome,
+      interruptionReason: action.interruptionReason ?? "",
+    },
+  });
+}
 
 function shouldRunImpactGate(action: CharacterAction): boolean {
   return action.impact >= 2 || (action.impact === 1 && Boolean(action.skill));
@@ -243,6 +278,11 @@ export async function processImpactPipeline(params: {
         )
         .join("\n");
 
+      const shortTermIntent = await npcPlanningAgent.getShortTermIntent(
+        sessionId,
+        npcId
+      );
+
       const result = await npcPlanningAgent.runImpactGateForNpc(
         {
           npcId,
@@ -252,6 +292,7 @@ export async function processImpactPipeline(params: {
             return position ? dgsm.resolveLocationId(position) : "unknown";
           })(),
           longTermIntent,
+          shortTermIntent: shortTermIntent ?? undefined,
           todayScheduleSummary: schedule
             .map((entry) => `${entry.location}: ${entry.activity}`)
             .join("; "),
@@ -299,25 +340,44 @@ export async function processImpactPipeline(params: {
         });
       }
 
-      if (result.shouldRevise && primaryEvent) {
-        const memoryLog = reactionContext ? [reactionContext] : [];
-        const reviseResult = await npcPlanningAgent.revisePlans(
-          dgsm,
+      if (result.shouldUpdateIntent && result.updatedIntent) {
+        await npcPlanningAgent.setShortTermIntent(
           sessionId,
           npcId,
-          {
-            longTermIntent,
-            memoryLog,
-            pendingNodes,
-            trigger: {
-              type: "impact",
-              triggeringAction: primaryEvent,
-            },
-          },
-          language,
-          registry
+          result.updatedIntent
         );
-        await recordRevisionInterruption(reviseResult.interruptedAction);
+      }
+
+      if (result.shouldInterruptCurrentNode) {
+        // Find and interrupt the in_progress node
+        const allNodes =
+          ((await npcPlanningAgent.getDailyPlan(sessionId, npcId, gameDay))
+            ?.nodes as unknown as PlanNode[]) ?? [];
+        const inProgressNode = allNodes.find(
+          (n: PlanNode) => n.status === "in_progress"
+        );
+        if (inProgressNode) {
+          const npcPos = dgsm.getCharacterPosition(npcId);
+          const npcLoc = npcPos ? dgsm.resolveLocationId(npcPos) : "";
+          const interrupted = interruptNode(
+            inProgressNode,
+            tickRuntime.tickTime,
+            language
+          );
+          await npcPlanningAgent.updateNode(
+            sessionId,
+            npcId,
+            gameDay,
+            interrupted
+          );
+          const interruptedAction = buildInterruptedAction(
+            inProgressNode,
+            tickRuntime.tickTime,
+            npcLoc,
+            language
+          );
+          await recordRevisionInterruption(interruptedAction);
+        }
       }
 
       if (result.shouldReviseSchedule) {

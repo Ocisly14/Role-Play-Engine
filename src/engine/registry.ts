@@ -198,10 +198,7 @@ export class GameEngineRegistry {
                 return pos ? dgsm.resolveLocationId(pos) : undefined;
               })();
         if (!sceneId) continue;
-        this.addPropagationSource(
-          feature.id,
-          sceneId
-        );
+        this.addPropagationSource(feature.id, sceneId);
       }
     }
     return results;
@@ -373,7 +370,7 @@ The \`impact\` field on every PlanNode determines **who in the game world percei
     // Header
     sections.push("## Output");
     sections.push(
-      `Return a JSON array of PlanNode objects. No extra text. JSON keys must be in English. Write "action" values in ${langName}. Keep "destination", "type", "skill", "nodeId", IDs, and enum values in English.`
+      `Return a single JSON object. No extra text. JSON keys must be in English. Write "action" values in ${langName}. Keep "destination", "type", "skill", "nodeId", IDs, and enum values in English.`
     );
     if (options?.extraInstructions) {
       sections.push(options.extraInstructions);
@@ -381,7 +378,11 @@ The \`impact\` field on every PlanNode determines **who in the game world percei
 
     // Section 1: Assembly instruction
     sections.push("");
-    sections.push("Each node is a single flat JSON object combining:");
+    sections.push(
+      'The top-level object has a `"node"` field (your one next action) and an optional `"updatedShortTermIntent"` field (update your current focus if it shifted).'
+    );
+    sections.push("");
+    sections.push("The node is a single flat JSON object combining:");
     sections.push("1. All **Base Fields** (required on every node)");
     sections.push(
       "2. **Type-specific fields** for the chosen `type` (see below — omit if type has none)"
@@ -390,22 +391,34 @@ The \`impact\` field on every PlanNode determines **who in the game world percei
       "3. **Feature overlay fields** if the action involves an active world feature (see below)"
     );
 
-    // Section 2: Base Fields
+    // Section 2: Top-level structure + Base Fields
     sections.push("");
-    sections.push("### Base Fields (every node)");
-    const baseJson: Record<string, string | number> = {
-      nodeId: "unique-id",
-      startTime: "HH:MM" as any,
-      endTime: "HH:MM" as any,
-      action: "description of what the character does" as any,
-      type: typeNames as any,
-      skill: "exact skill name (OMIT if no check needed)" as any,
-      impact: 0,
-    };
-
+    sections.push("### Response Structure");
     sections.push("```json");
-    sections.push(JSON.stringify(baseJson, null, 2));
+    sections.push(
+      JSON.stringify(
+        {
+          node: {
+            nodeId: "unique-id",
+            startTime: "HH:MM",
+            endTime: "HH:MM",
+            action: "description of what the character does",
+            type: typeNames,
+            skill: "exact skill name (OMIT if no check needed)",
+            impact: 0,
+          },
+          updatedShortTermIntent:
+            "optional — update your current focus if it changed",
+        },
+        null,
+        2
+      )
+    );
     sections.push("```");
+    sections.push("");
+    sections.push(
+      "- `updatedShortTermIntent`: set this if your focus has shifted. Omit if unchanged."
+    );
 
     // Section 3: Type-Specific Additional Fields (show ALL types)
     const typeSpecSections: string[] = [];
@@ -502,7 +515,16 @@ The \`impact\` field on every PlanNode determines **who in the game world percei
       sections.push("");
       sections.push("### Complete Example");
       sections.push("```json");
-      sections.push(JSON.stringify([fullExample], null, 2));
+      sections.push(
+        JSON.stringify(
+          {
+            node: fullExample,
+            updatedShortTermIntent: "optional — update if focus changed",
+          },
+          null,
+          2
+        )
+      );
       sections.push("```");
     }
 

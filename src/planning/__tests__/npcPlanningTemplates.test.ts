@@ -3,7 +3,6 @@ import {
   buildDailySchedulePrompt,
   buildDetailedNodesPrompt,
   buildImpactGatePrompt,
-  buildRevisePlansPrompt,
   buildReviseSchedulePrompt,
 } from "../npcPlanningTemplates.js";
 
@@ -39,41 +38,6 @@ describe("npcPlanningTemplates", () => {
     expect(systemPrompt).toContain(
       "Do not invent new documents, copies, notes, printouts, receipts, witness copies, or memo variants"
     );
-  });
-
-  it("injects detailed failure context into revise prompts", () => {
-    const { userPrompt } = buildRevisePlansPrompt({
-      npcName: "Tom Harris",
-      npcId: "npc_tom",
-      npcProfile: "A cautious office worker.",
-      longTermIntent: "Protect myself and keep records straight.",
-      memoryLog: "Victor has been pressuring me all day.",
-      todayPlan: [{ location: "Victor's Company Building", activity: "Work" }],
-      pendingNodes: "[]",
-      triggerDescription:
-        'Action "Ask Lisa to re-sign a witness copy" at 15:08 failed with object_not_found.',
-      yourLocation: "Victor's Company Building",
-      currentPositionDetail: "Inside the main office.",
-      townMap: "Victor's Company Building",
-      sceneDescription: "A small office.",
-      sceneItems: "- Filing Cabinet\n- Office Computer",
-      sceneNpcs: "- Lisa Chen",
-      sceneConditions: "Victor is nearby.",
-      worldStatePrompt: "",
-      npcInventory: "- Notebook",
-      currentTime: "15:08",
-      gameDay: 1,
-      language: "en",
-      failureReason: "object_not_found",
-      failureOutcome:
-        "Ask Lisa to re-sign a witness copy ... [item signed_witness_copy not in inventory] failed",
-      blockedReason: "",
-    });
-
-    expect(userPrompt).toContain("## Why The Last Action Failed");
-    expect(userPrompt).toContain("Engine failure reason: object_not_found");
-    expect(userPrompt).toContain("signed_witness_copy not in inventory");
-    expect(userPrompt).toContain("## Relevant Memories / Recent Context");
   });
 
   it("keeps dynamic map context in the user prompt", () => {
@@ -133,30 +97,7 @@ describe("npcPlanningTemplates", () => {
       language: "en",
     });
 
-    const revisePlans = buildRevisePlansPrompt({
-      npcName: "Tom Harris",
-      npcId: "npc_tom",
-      npcProfile: "A cautious office worker.",
-      longTermIntent: "Protect myself and keep records straight.",
-      memoryLog: "Victor has been pressuring me all day.",
-      todayPlan: [{ location: "Study", activity: "Work" }],
-      pendingNodes: "[]",
-      triggerDescription: "A gunshot echoed downstairs.",
-      yourLocation: "Study",
-      currentPositionDetail: "Inside the study.",
-      townMap,
-      sceneDescription: "A small office.",
-      sceneItems: "- Filing Cabinet",
-      sceneNpcs: "- Lisa Chen",
-      sceneConditions: "Nothing unusual.",
-      worldStatePrompt: "",
-      npcInventory: "- Notebook",
-      currentTime: "10:00",
-      gameDay: 1,
-      language: "en",
-    });
-
-    for (const prompt of [daily, detailed, reviseSchedule, revisePlans]) {
+    for (const prompt of [daily, detailed, reviseSchedule]) {
       expect(prompt.systemPrompt).not.toContain(townMap);
       expect(prompt.userPrompt).toContain("## Places You Know");
       expect(prompt.userPrompt).toContain(townMap);
@@ -184,36 +125,10 @@ describe("npcPlanningTemplates", () => {
       language: "en",
     });
 
-    const revise = buildRevisePlansPrompt({
-      npcName: "Tom Harris",
-      npcId: "npc_tom",
-      npcProfile: "A cautious office worker.",
-      longTermIntent: "Protect myself and keep records straight.",
-      memoryLog: "Victor has been pressuring me all day.",
-      todayPlan: [{ location: "Study", activity: "Work" }],
-      pendingNodes: "[]",
-      triggerDescription: "A gunshot echoed downstairs.",
-      yourLocation: "Study",
-      currentPositionDetail: "Inside the study.",
-      townMap: "Town Map:\n- Study\n- Hallway",
-      sceneDescription: "A small office.",
-      sceneItems: "- Filing Cabinet",
-      sceneNpcs: "- Lisa Chen",
-      sceneConditions: "Nothing unusual.",
-      worldStatePrompt: "",
-      npcInventory: "- Notebook",
-      currentTime: "10:00",
-      gameDay: 1,
-      language: "en",
-    });
-
     expect(detailed.systemPrompt).toContain(
       '"destination": "ONLY for movement'
     );
     expect(detailed.systemPrompt).not.toContain('Keep "location", "type"');
-    expect(revise.systemPrompt).toContain("Only movement nodes use `destination`");
-    expect(revise.systemPrompt).toContain('"destination": "ONLY for movement');
-    expect(revise.systemPrompt).not.toContain('Keep "location", "type"');
   });
 
   it("tightens impact gate prompt to major immediate disruptions only", () => {
@@ -232,14 +147,8 @@ describe("npcPlanningTemplates", () => {
       language: "en",
     });
 
-    expect(systemPrompt).toContain(
-      "shouldRevise=true ONLY when the event directly threatens your current plan's success or your personal safety"
-    );
-    expect(systemPrompt).toContain(
-      "Casual encounters, background noise, overhearing conversation, minor curiosity"
-    );
-    expect(systemPrompt).toContain(
-      "Your current action is materially blocked or impossible to continue"
-    );
+    expect(systemPrompt).toContain("shouldUpdateIntent");
+    expect(systemPrompt).toContain("shouldInterruptCurrentNode");
+    expect(systemPrompt).not.toContain('"shouldRevise"');
   });
 });

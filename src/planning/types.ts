@@ -220,31 +220,6 @@ export type FailureReason =
   | "prerequisite_not_met"
   | "unknown";
 
-export type FailureTrigger = {
-  type: "failure";
-  failureReason: FailureReason;
-  action: string;
-  gameTime: string;
-  failureOutcome?: string;
-  blockedReason?: string;
-};
-
-export type ImpactTrigger = {
-  type: "impact";
-  triggeringAction: CharacterAction;
-};
-
-export interface RevisePlansContext {
-  longTermIntent: string;
-  memoryLog: string[];
-  pendingNodes: PlanNode[];
-  trigger: FailureTrigger | ImpactTrigger;
-}
-
-export interface RevisePlansResult {
-  interruptedAction?: CharacterAction;
-}
-
 export type WorldEventType = "scene_updated" | "feature_triggered";
 
 export interface WorldEventDescriptor {

@@ -10,13 +10,13 @@ import { drainPendingEmotions } from "../features/sanityFeature.js";
 import type { GameEngineRegistry } from "../registry.js";
 import { buildEncounterSnapshot } from "../shared/encounterDedup.js";
 import type { ExecutionContext, TickRuntimeContext } from "../types.js";
-import {
-  type PendingRevisionRequest,
-  postProcessExecutedNodeAction,
-} from "./actionPostProcessing.js";
+import { postProcessExecutedNodeAction } from "./actionPostProcessing.js";
 import { recoverActionExecution } from "./autoActionRecovery.js";
 import { scanUnplannedEncounters } from "./encounterScanner.js";
-import { processImpactPipeline } from "./impactPipeline.js";
+import {
+  processImpactPipeline,
+  recordRevisionInterruption as recordRevisionInterruptionEntry,
+} from "./impactPipeline.js";
 import { syncNpcMapMemories } from "./mapMemorySync.js";
 import {
   TICK_DURATION_MINUTES,
@@ -27,10 +27,6 @@ import {
   startNode,
   timeToMinutes,
 } from "./movementTick.js";
-import {
-  processPendingRevisionRequests,
-  recordRevisionInterruption as recordRevisionInterruptionEntry,
-} from "./revisionPipeline.js";
 
 function formatActionStatusLabel(action: CharacterAction): string {
   switch (action.status) {
@@ -91,8 +87,8 @@ interface SingleTickResult {
  * 1. Fetch NPC nodes due in [tickStart, tickEnd)
  * 2. Merge with carry-over nodes, sort (gameTime ASC, DEX DESC), scan encounters
  * 3. Execute all nodes via registry handlers
- * 4. Post-execution: relationship update, NPC memory, discovery, NPC failure revisePlans
- * 5. Built-in impact propagation (scan impact>0 actions, notify affected NPCs, LLM gate, plan revision)
+ * 4. Post-execution: relationship update, NPC memory, discovery
+ * 5. Built-in impact propagation (scan impact>0 actions, notify affected NPCs, LLM gate, intent update / node interruption)
  * 6. Feature temporal tick — each feature updates its time/state-driven logic
  * 7. Detect feature overlay fields on executed nodes → register propagation sources
  * 8. Drive feature propagation on schedule
@@ -215,7 +211,6 @@ async function executeSingleTick(
     action: CharacterAction;
   }> = [];
   const movedNpcIds = new Set<string>();
-  const pendingRevisionRequests: PendingRevisionRequest[] = [];
 
   const recordRevisionInterruption = async (
     action: CharacterAction | undefined
@@ -322,17 +317,6 @@ async function executeSingleTick(
           status: "failed",
           failureReason: "prerequisite_not_met",
           outcome: blocked.reason,
-        });
-        pendingRevisionRequests.push({
-          npcId: node.characterId,
-          trigger: {
-            type: "failure",
-            failureReason: "prerequisite_not_met",
-            action: node.action,
-            gameTime: tickStartTime,
-            failureOutcome: blocked.reason,
-          },
-          reactionQuery: blocked.reason,
         });
         continue;
       }
@@ -457,11 +441,6 @@ async function executeSingleTick(
           memoryManager,
         });
         action = postProcessResult.action;
-        if (postProcessResult.pendingRevisionRequest) {
-          pendingRevisionRequests.push(
-            postProcessResult.pendingRevisionRequest
-          );
-        }
 
         // Mark interaction targets as engaged so their nodes are skipped
         if (
@@ -528,20 +507,7 @@ async function executeSingleTick(
       });
     }
 
-    if (action.status === "failed") {
-      pendingRevisionRequests.push({
-        npcId: node.characterId,
-        trigger: {
-          type: "failure",
-          failureReason: "location_blocked",
-          action: action.action,
-          gameTime: action.gameTime,
-          failureOutcome: action.outcome,
-          blockedReason: node.executionMeta.blockedReason,
-        },
-        reactionQuery: `${action.action} failed: ${node.executionMeta.blockedReason ?? action.outcome}`,
-      });
-    } else if (action.status === "completed") {
+    if (action.status === "completed") {
       const scheduledEndMinutes = timeToMinutes(node.endTime);
       const actualEndMinutes = timeToMinutes(action.gameTime);
       const scheduleDeltaMinutes = scheduledEndMinutes - actualEndMinutes;
@@ -557,20 +523,6 @@ async function executeSingleTick(
       }
     }
   }
-
-  await processPendingRevisionRequests({
-    pendingRevisionRequests,
-    dgsm,
-    npcPlanningAgent,
-    sessionId,
-    moduleId,
-    gameDay,
-    language,
-    registry,
-    tickRuntime,
-    recordRevisionInterruption,
-    memoryManager,
-  });
 
   const encounterEvents = scanUnplannedEncounters({
     dgsm,

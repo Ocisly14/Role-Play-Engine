@@ -127,6 +127,10 @@ export interface DetailedNodesParams {
   outputSchemaPrompt?: string;
   /** Module background: era, location, technology level, atmosphere */
   moduleBackground?: string;
+  /** The NPC's current short-term focus (null when starting a new schedule entry) */
+  shortTermIntent?: string | null;
+  /** Outcome text from the previous completed/failed/interrupted node */
+  lastActionOutcome?: string;
 }
 
 const TWENTY_FOUR_HOUR_TIME_GUIDANCE = `## Time Semantics
@@ -136,7 +140,8 @@ const DEFAULT_NODE_GUARDRAILS_PROMPT = `## Planning Guardrails
 - You can only interact with items, characters, and the environment in your **current scene**. To act in a different scene (including other scenes in the same building), emit a movement node to that scene first, then your action node.
 - For movement nodes, set \`destination\` to the exact scene or place name from "Places You Know". Non-movement nodes execute at your current position — do not specify \`destination\`.
 - For object interactions, you may only target items that already appear in \`Items You Can See\` or \`What You're Carrying\`.
-- Do not invent new documents, copies, notes, printouts, receipts, witness copies, or memo variants unless they already exist in the scene, inventory, or prior action history.`;
+- Do not invent new documents, copies, notes, printouts, receipts, witness copies, or memo variants unless they already exist in the scene, inventory, or prior action history.
+- **Respect objective reality:** Your actions must be consistent with the physical conditions listed in "World Conditions" and the events recorded in "What Happened Today So Far". If you are detained, restrained, bound, or otherwise physically constrained, you cannot freely move, interact with objects, or leave — unless your action is specifically aimed at escaping or resolving the constraint (e.g., breaking free, persuading a captor to release you). Likewise, do not plan actions that contradict established facts from your memory log.`;
 
 const DEFAULT_DETAILED_NODE_TYPE_REF = `## Node Type Reference
 
@@ -208,23 +213,26 @@ The engine resolves skill rolls mechanically. A skill roll is called ONLY when:
 function defaultDetailedOutputSchema(language: string): string {
   const lang = contentLanguageName(language);
   return `## Output
-Return a JSON array of PlanNode objects. No extra text. JSON keys must be in English. Write "action" values in ${lang}. Keep "destination", "type", "skill", "nodeId", IDs, and enum values in English.
+Return a single JSON object. No extra text. JSON keys must be in English. Write "action" values in ${lang}. Keep "destination", "type", "skill", IDs, and enum values in English.
 
-### Fields
 \`\`\`json
 {
-  "nodeId": "unique-id",
-  "startTime": "HH:MM",
-  "endTime": "HH:MM",
-  "action": "description of what you do (in ${lang})",
-  "destination": "ONLY for movement — exact destination from Places You Know (English). Omit for other types.",
-  "type": "action|movement|character_interaction|object_interaction|scene_interaction",
-  "skill": "OMIT if no skill check needed, otherwise exact skill name (English)",
-  "impact": "Default 0. Use 1 only for targeted consequential actions with skill; 2+ for broader effects"
+  "node": {
+    "startTime": "HH:MM",
+    "endTime": "HH:MM",
+    "action": "description of what you do (in ${lang})",
+    "destination": "ONLY for movement — exact destination from Places You Know (English). Omit for other types.",
+    "type": "action|movement|character_interaction|object_interaction|scene_interaction",
+    "skill": "OMIT if no skill check needed, otherwise exact skill name (English)",
+    "impact": "Default 0. Use 1 only for targeted consequential actions with skill; 2+ for broader effects"
+  },
+  "updatedShortTermIntent": "optional — update your current focus if it changed based on what happened"
 }
 \`\`\`
 
-Add type-specific fields as documented in the Node Type Reference above.`;
+Add type-specific fields to \`node\` as documented in the Node Type Reference above.
+
+- \`updatedShortTermIntent\`: set this if your focus has shifted (e.g., you finished what you were doing and are moving on, or something unexpected changed your plan). Omit if your focus hasn't changed.`;
 }
 
 export function buildDetailedNodesPrompt(
@@ -235,41 +243,24 @@ export function buildDetailedNodesPrompt(
   const systemPrompt = `You are a character living in a simulated world. Act as a real person would.
 ${params.moduleBackground ? `\n## Setting\n${params.moduleBackground}\n` : ""}
 ## Task
-Look at your full plan for today and what has already happened. First decide which plan step is the next one you should actually do now. Then break only that next step into concrete action nodes.
+Look at your current focus, your plan for today, and what has already happened. Decide your **one** next action.
 
-Do not expand the whole day. Do not repeat plan steps that your memory log already shows as completed, interrupted, cancelled, or no longer relevant.
-
-If the next step is not at your current location, emit a movement node first (set destination to the destination), then emit the action node. Movement does not need to be broken into segments — one movement node will take you directly to the destination regardless of distance.
+If your next action is not at your current location, emit a movement node (set destination to the destination). Movement does not need to be broken into segments — one movement node will take you directly to the destination regardless of distance.
 Use only the exact destination name itself in \`destination\`; do not include topology notes or any explanatory suffix.
 
 ${TWENTY_FOUR_HOUR_TIME_GUIDANCE}
 
-## How To Choose The Next Step
+## How To Choose Your Next Action
+- Use "Your Current Focus" as your immediate guide for what you're trying to accomplish.
 - Use "Your Plan For Today" as the source of truth for the intended sequence.
-- **Carefully read "What Happened Today So Far"** to understand what you have already done, what outcomes occurred, and what the current situation is. Use this to:
+- **Carefully read "What Happened Today So Far"** and "Last Action Result" to understand what you have already done, what outcomes occurred, and what the current situation is. Use this to:
   - Judge which planned steps are already done, blocked, disrupted, or no longer necessary.
   - Avoid generating actions that duplicate, repeat, or contradict what you already accomplished (e.g., if you already hid your notebook, do not generate another "hide notebook" action).
-  - Build on completed actions — your next steps should logically follow from what has already happened, not ignore it.
-- Choose exactly one next plan step to execute now.
-- If all meaningful plan steps are already done, return an empty JSON array.
+  - Build on completed actions — your next action should logically follow from what has already happened, not ignore it.
 
 ## Node Quality — Atomic Actions
 
-Each node must be **one atomic action** — a single, physically continuous activity with one verb and one target. Split into separate nodes whenever:
-
-- You **switch to a different object** (putting away notebook → picking up keys = 2 nodes)
-- You **switch to a different person** (talking to A → turning to B = 2 nodes)
-- You **change method or intent** (hiding a file → wiping fingerprints = 2 nodes)
-- There is a natural **"then"** or **"and then"** break in the activity
-
-**Good decomposition:**
-- Node 1: [object_interaction] Put the sealed folder into the filing cabinet and lock it
-- Node 2: [object_interaction] Take out irrelevant records and place them on the archive shelf as cover
-- Node 3: [action] Wipe down the cabinet handle and surrounding surfaces
-- Node 4: [object_interaction] Write a brief routine inspection entry in the mortuary log
-
-**Bad (crammed into one node):**
-- [action] Put the folder into the cabinet and lock it, take out fake records to cover tracks, clean fingerprints off the handle, and write a fake log entry
+Your node must be **one atomic action** — a single, physically continuous activity with one verb and one target.
 
 **What is NOT a separate node:**
 - Trivial micro-actions embedded in a larger action (adjusting posture, glancing around)
@@ -277,8 +268,7 @@ Each node must be **one atomic action** — a single, physically continuous acti
 - Actions that cannot produce an independent outcome (unlocking a lock is part of opening a container)
 
 ## Action Continuity
-- Atomic nodes must still form a **logical, coherent sequence**. Each action should naturally follow from the previous one.
-- The sequence should read as a believable chain of behavior — no abrupt jumps between unrelated activities.
+- Your action should naturally follow from what just happened.
 - Think: what would a real person do next given where they are and what just happened?
 
 ${params.handlerPrompt || DEFAULT_DETAILED_NODE_TYPE_REF}
@@ -301,11 +291,17 @@ ${params.npcProfile}
 ## Your Goal
 ${params.longTermIntent}
 
+## Your Current Focus
+${params.shortTermIntent || "Starting a new phase."}
+
 ## Your Plan For Today
 ${todayPlan}
 
 ## What Happened Today So Far
 ${params.memoryLog || "Nothing recorded yet."}
+
+## Last Action Result
+${params.lastActionOutcome || "No previous action."}
 
 ## Your Location
 ${params.yourLocation || "Unknown"}
@@ -423,177 +419,6 @@ ${params.remainingSchedule}`;
   return { systemPrompt, userPrompt };
 }
 
-// ===================== Plan Node Revision (Layer 2) =====================
-
-export interface RevisePlansParams {
-  npcName: string;
-  npcId: string;
-  npcProfile: string;
-  longTermIntent: string;
-  memoryLog: string;
-  todayPlan: ScheduleEntry[];
-  pendingNodes: string;
-  interruptedNode?: string;
-  triggerDescription: string;
-  yourLocation: string;
-  currentPositionDetail: string;
-  townMap: string;
-  sceneDescription: string;
-  sceneItems: string;
-  sceneNpcs: string;
-  sceneConditions: string;
-  worldStatePrompt: string;
-  npcInventory: string;
-  currentTime: string;
-  gameDay: number;
-  language: string;
-  handlerPrompt?: string;
-  planningPrompt?: string;
-  outputSchemaPrompt?: string;
-  failureReason?: string;
-  failureOutcome?: string;
-  blockedReason?: string;
-  /** Module background: era, location, technology level, atmosphere */
-  moduleBackground?: string;
-}
-
-function revisePlansOutputSchema(language: string): string {
-  const lang = contentLanguageName(language);
-  return `## Output
-Return a single JSON object with a "revisedNodes" array. No extra text. JSON keys must be in English. Write "action" and "updatedLongTermIntent" values in ${lang}. Keep "destination", "type", "skill", "nodeId", IDs, and enum values in English.
-
-IMPORTANT: "revisedNodes" MUST be an array of PlanNode objects — even if there is only one node, wrap it in an array.
-IMPORTANT: "revisedNodes" must cover only the current phase of action from right now, not the whole day.
-
-\`\`\`json
-{
-  "revisedNodes": [
-    {
-      "nodeId": "unique-id",
-      "startTime": "HH:MM",
-      "endTime": "HH:MM",
-      "action": "description of what you do (in ${lang})",
-      "destination": "ONLY for movement — exact destination from Places You Know (English). Omit for other types.",
-      "type": "action|movement|character_interaction|object_interaction|scene_interaction",
-      "impact": "Default 0. Use 1 only for targeted consequential actions with skill; 2+ for broader effects"
-    }
-  ],
-  "shouldUpdateLongTermIntent": false,
-  "updatedLongTermIntent": "only if shouldUpdateLongTermIntent is true"
-}
-\`\`\``;
-}
-
-export function buildRevisePlansPrompt(params: RevisePlansParams): PromptParts {
-  const todayPlan = JSON.stringify(params.todayPlan, null, 2);
-
-  const systemPrompt = `You are a character living in a simulated world. Act as a real person would.
-${params.moduleBackground ? `\n## Setting\n${params.moduleBackground}\n` : ""}
-## Task
-Something just disrupted your plans. Look at what you were about to do right now and decide how to adjust the current phase of action.
-
-You can reorder, change, add, or drop actions within this immediate phase. If this event fundamentally changes what you're trying to accomplish long-term, say so.
-
-Only movement nodes use \`destination\`. Set it to the exact location name from "Places You Know". If the next step is not at your current location, include movement nodes first.
-Do not include topology notes, residents, or label prefixes in \`destination\`; output only the exact place name.
-
-## Instructions
-- Only change what the event actually affects. Don't rewrite actions that are still fine.
-- Revise only the current phase or immediate next step from right now.
-- Generate only short-horizon actionable nodes for what you do next.
-- Do not expand the rest of the day into detailed nodes unless it is the last step of the current phase.
-- Do not generate distant later-day activities.
-- Treat the current time as 24-hour clock time.
-- **Carefully read "Relevant Memories / Recent Context"** to understand what you have already done today. Do NOT generate actions that duplicate or repeat completed actions (e.g., if you already stashed your notebook, do not generate another "stash notebook" node).
-- Each revised node must be **one atomic action** — a single, physically continuous activity with one verb and one target. Split whenever you switch objects, switch people, change method/intent, or there is a natural "then" break.
-- Do not create trivial micro-actions (e.g., "adjust posture", "close a page", "glance around") as standalone nodes. Fold minor details into the description of a larger action instead.
-
-## Action Continuity
-- Revised nodes must form a **logical, coherent sequence**. Each action should naturally follow from the previous one — consider physical location, time flow, and narrative causality.
-- The first revised node must be a believable reaction to the interruption, acknowledging what just happened rather than ignoring it.
-- Avoid abrupt, unexplained jumps between unrelated activities. The revised plan should read as a natural continuation of the character's behavior given the disruption.
-- Think about what a real person would do next given what just happened, where they are, and what they were trying to accomplish.
-
-${params.handlerPrompt || DEFAULT_DETAILED_NODE_TYPE_REF}
-
-${DEFAULT_NODE_GUARDRAILS_PROMPT}
-
-${params.planningPrompt || ""}
-
-${params.outputSchemaPrompt || revisePlansOutputSchema(params.language)}
-`;
-
-  const userPrompt = `## Right Now
-Day ${params.gameDay}, ${params.currentTime}
-
-## Character: ${params.npcName} (${params.npcId})
-
-## Who You Are
-${params.npcProfile}
-
-## Your Goal
-${params.longTermIntent}
-
-## What Just Happened
-${params.triggerDescription}
-
-${
-  params.failureReason || params.failureOutcome || params.blockedReason
-    ? `## Why The Last Action Failed
-- Engine failure reason: ${params.failureReason || "unknown"}
-- Detailed outcome: ${params.failureOutcome || "No detailed outcome provided."}
-${params.blockedReason ? `- Blocked reason: ${params.blockedReason}` : ""}`
-    : ""
-}
-
-## Your Plan For Today
-${todayPlan}
-
-## Relevant Memories / Recent Context
-${params.memoryLog || "Nothing recorded yet."}
-
-${
-  params.interruptedNode
-    ? `## Action Being Interrupted
-You were in the middle of this action when the disruption occurred. It is now cancelled — you must account for it in your revised plan.
-${params.interruptedNode}
-
-`
-    : ""
-}## Your Pending Actions
-${params.pendingNodes}
-
-## Your Location
-${params.yourLocation || "Unknown"}
-
-## Places You Know
-${params.townMap || "No map available."}
-
-## Your Exact Position
-${params.currentPositionDetail || "Unknown."}
-
-## Where You Are
-${params.sceneDescription || "No description available."}
-
-## Conditions Here
-${params.sceneConditions || "Nothing unusual."}
-
-${params.worldStatePrompt || ""}
-
-## Items You Can See
-${params.sceneItems || "Nothing here."}
-
-## People Present
-${params.sceneNpcs || "You're alone."}
-
-## What You're Carrying
-${params.npcInventory || "Nothing."}
-
-`;
-
-  return { systemPrompt, userPrompt };
-}
-
 // ===================== Impact Gate (per-NPC) =====================
 
 export interface ImpactGateParams {
@@ -607,6 +432,7 @@ export interface ImpactGateParams {
     currentDetailedPlan: string;
     triggeringEvents: string;
     memoryContext?: string;
+    shortTermIntent?: string;
   };
   language: string;
   /** Module background: era, location, technology level, atmosphere */
@@ -626,20 +452,28 @@ ${params.moduleBackground ? `\n## Setting\n${params.moduleBackground}\n` : ""}
 Something just happened involving you or around you. Think about what you perceived and how it affects you.
 
 Decide:
-1. Should you change what you're doing **right now**? (shouldRevise)
-2. Should you change your **plans for the rest of the day**? (shouldReviseSchedule)
+1. Should you update what you're focused on? (shouldUpdateIntent)
+2. Should you stop what you're doing right now and react immediately? (shouldInterruptCurrentNode)
+3. Should you change your **plans for the rest of the day**? (shouldReviseSchedule)
 
 ## Instructions
-- Write a brief note about what you perceived and how you feel about it.
-- shouldRevise=true ONLY when the event directly threatens your current plan's success or your personal safety:
-  - Your current action is materially blocked or impossible to continue
+- Write a brief note (1-2 sentences) about what you perceived and how you feel about it. This is a memory record of your perception and inner reaction only — do NOT describe any actions you take or plan to take.
+- shouldUpdateIntent=true when the event changes your priorities or what you're focused on:
+  - New information shifts what you care about or what you should be doing next
+  - An opportunity or threat reframes your immediate goals
+  - What you were focused on is no longer relevant or has been superseded
+- shouldUpdateIntent=false for everything else:
+  - The event is interesting but doesn't change what you're trying to accomplish
+  - Minor distractions, background events, casual encounters
+- shouldInterruptCurrentNode=true ONLY when you need to physically stop your current action and do something else immediately:
   - You are in physical danger or your sanity is at risk
+  - Your current action is materially blocked or impossible to continue
   - A critical opportunity or threat demands an immediate change in action
   - Someone you need for your plan has left, been incapacitated, or turned hostile
-- shouldRevise=false for everything else:
-  - Someone entering or leaving the room is NOT a reason to revise unless it directly blocks your plan
+- shouldInterruptCurrentNode=false for everything else:
+  - Someone entering or leaving the room is NOT a reason to interrupt unless it directly blocks your action
   - Casual encounters, background noise, overhearing conversation, minor curiosity
-  - Events that are interesting but don't affect what you're currently doing
+  - Events that are interesting but don't prevent what you're currently doing
   - Seeing colleagues or acquaintances nearby — this is normal, not disruptive
 - shouldReviseSchedule=true ONLY if the event makes your rest-of-day plans impossible or pointless (e.g., a destination destroyed, a key person arrested, a critical deadline moved).
 - A brief interruption or local distraction is never enough to change the rest-of-day schedule.
@@ -649,7 +483,9 @@ Return a single JSON object. No extra text. JSON keys must be in English. Write 
 
 \`\`\`json
 {
-  "shouldRevise": false,
+  "shouldUpdateIntent": false,
+  "updatedIntent": "only if shouldUpdateIntent is true — your new focus",
+  "shouldInterruptCurrentNode": false,
   "shouldReviseSchedule": false,
   "witnessEntry": "Brief description of what you perceived."
 }
@@ -663,6 +499,7 @@ ${memorySection}
 ## Who You Are
 - Current location: ${c.currentLocation}
 - Your goal: ${c.longTermIntent}
+- What you're focused on: ${c.shortTermIntent || "No specific focus."}
 - Your plan for today: ${c.todayScheduleSummary || "No schedule."}
 - What you're doing right now: ${c.currentDetailedPlan || "Nothing planned."}
 

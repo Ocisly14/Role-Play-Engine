@@ -123,6 +123,9 @@ Only include items that actually changed. Common cases:
 - **Memory must reflect actual events:** The actor's memory must describe what actually happened based on the action and skill roll. Do not invent observations or sensory details that are not supported by the scene data. If the scene description is brief, the actor's observation should be proportionally brief.
 - **Be substantive, not imaginative:** If the provided data is sparse, the outcome should be proportionally simple. Do not fill gaps with invented environmental details, hidden features, or atmospheric descriptions that have no basis in the data.
 
+## Actor Conditions
+If the actor has physical conditions listed (e.g. "detained", "restrained", "unconscious"), these represent binding constraints on the actor's current state. A detained or restrained actor cannot freely search rooms, barricade doors, or perform actions requiring free movement. Reflect these constraints in the outcome and memory — the action should fail or be severely limited if it contradicts the actor's physical state.
+
 ## Memory
 Always required for the actor. Write from the actor's first-person perspective: what they did, what they observed, and the result.
 - **Keep it concise: 1–3 sentences for routine interactions.** Only write longer memories (4+ sentences) for truly significant events — discovering a hidden passage, witnessing a supernatural phenomenon, or encountering something dangerous. Most environmental inspections, barricading doors, and routine scene actions should be brief.
@@ -152,6 +155,7 @@ Return a single JSON object. No extra text. JSON keys must be in English. Write 
 function buildUserPrompt(
   node: PlanNode,
   actorName: string,
+  actorConditions: string[],
   sceneBlock: string,
   toolItemBlock: string | null,
   skillRollResult: { successLevel: SuccessLevel; detail: string } | null,
@@ -175,6 +179,9 @@ function buildUserPrompt(
     `## Actor`,
     `Name: ${actorName}`,
     `ID: ${node.characterId}`,
+    ...(actorConditions.length > 0
+      ? [`Conditions: ${actorConditions.join(", ")}`]
+      : []),
   ].join("\n");
 
   return [
@@ -210,7 +217,10 @@ function buildSceneBlock(
             description: c.description,
           };
           if (c.hidden) entry.hidden = "[HIDDEN]";
-          const blockReason = dgsm.getConnectionBlockReason(locationId, c.targetId);
+          const blockReason = dgsm.getConnectionBlockReason(
+            locationId,
+            c.targetId
+          );
           if (blockReason) entry.blocked = blockReason;
           return entry;
         })
@@ -254,6 +264,7 @@ export async function resolveSceneInteractionState(
   const state = dgsm.getState();
   const actorNpc = state.npcCharacters.find((n) => n.id === node.characterId);
   const actorName = actorNpc?.name ?? node.characterName;
+  const actorConditions = actorNpc?.status?.conditions ?? [];
 
   const sceneBlock = buildSceneBlock(locationId, dgsm);
 
@@ -263,9 +274,7 @@ export async function resolveSceneInteractionState(
   if (payload?.itemId) {
     const item =
       dgsm.findNpcItem(node.characterId, payload.itemId) ??
-      dgsm
-        .getScene(locationId)
-        ?.items.find((i) => i.id === payload.itemId);
+      dgsm.getScene(locationId)?.items.find((i) => i.id === payload.itemId);
     if (item) {
       toolItemBlock = `## Tool Being Used\n${JSON.stringify({ id: item.id, name: item.name, description: item.description, type: item.type, damaged: item.damaged, consumableStats: item.consumableStats }, null, 2)}`;
     }
@@ -282,6 +291,7 @@ export async function resolveSceneInteractionState(
   let userPrompt = buildUserPrompt(
     node,
     actorName,
+    actorConditions,
     sceneBlock,
     toolItemBlock,
     skillRollResult,

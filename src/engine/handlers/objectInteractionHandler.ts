@@ -119,7 +119,11 @@ export const objectInteractionHandler: NodeHandler = {
           buildOutcome(node, "failed", {
             reason: `${payload.itemId} not found`,
           }),
-          { difficulty, location: locationId, failureReason: "object_not_found" }
+          {
+            difficulty,
+            location: locationId,
+            failureReason: "object_not_found",
+          }
         );
       }
     }

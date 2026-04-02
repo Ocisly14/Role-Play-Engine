@@ -5,9 +5,6 @@ export type {
   ObjectInteractionPayload,
   SceneCondition,
   ScheduleEntry,
-  FailureTrigger,
-  ImpactTrigger,
-  RevisePlansContext,
   FailureReason,
   SimulationTickResult,
 } from "./types.js";

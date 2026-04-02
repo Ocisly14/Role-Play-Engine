@@ -16,7 +16,10 @@ import type {
   RoadNode,
   TownTopology,
 } from "./topologyTypes.js";
-import { buildTopology } from "./topologyTypes.js";
+import {
+  buildTopology,
+  enrichTopologyWithInteriorScenes,
+} from "./topologyTypes.js";
 import {
   InventoryUtils,
   type ModuleSetup,
@@ -406,6 +409,12 @@ export class DynamicGameStateManager {
         topoRoads.set(id, r as RoadNode)
       );
       topology = buildTopology(topoJunctions, topoRoads);
+    }
+
+    // Enrich topology with interior sub-scenes so pathfinding works for them
+    const outlines = data.scenarioOutlines ?? [];
+    if (topology && (scenes.size > 0 || outlines.length > 0)) {
+      enrichTopologyWithInteriorScenes(topology, scenes, outlines);
     }
 
     return {

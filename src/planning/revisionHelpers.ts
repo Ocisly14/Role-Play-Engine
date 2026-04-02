@@ -30,7 +30,7 @@ export function buildInterruptedAction(
   };
 }
 
-function interruptNode(
+export function interruptNode(
   node: PlanNode,
   gameTime: string,
   language = "en"
@@ -45,39 +45,5 @@ function interruptNode(
       interruptedAt: gameTime,
       interruptionReason: "revise_replan",
     },
-  };
-}
-
-export function mergeRevisedNodesWithHistory(
-  existingNodes: PlanNode[],
-  revisedNodes: PlanNode[],
-  gameTime: string,
-  language = "en"
-): {
-  nextNodes: PlanNode[];
-  interruptedNode?: PlanNode;
-} {
-  const preservedNodes: PlanNode[] = [];
-  let interruptedNode: PlanNode | undefined;
-
-  for (const node of existingNodes) {
-    if (
-      node.status === "completed" ||
-      node.status === "failed" ||
-      node.status === "interrupted"
-    ) {
-      preservedNodes.push(node);
-      continue;
-    }
-
-    if (node.status === "in_progress") {
-      interruptedNode = interruptNode(node, gameTime, language);
-      preservedNodes.push(interruptedNode);
-    }
-  }
-
-  return {
-    nextNodes: [...preservedNodes, ...revisedNodes],
-    interruptedNode,
   };
 }

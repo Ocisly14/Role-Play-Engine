@@ -204,6 +204,9 @@ Use "addSceneConditions" for observable environmental changes caused by the acti
 - **Memory must reflect actual events:** The actor's memory must describe what actually happened based on the action and skill roll. Do not invent discoveries, observations, or sensory details that are not supported by the scene data and item data provided. If the scene data does not describe a detail, the actor does not observe it.
 - **Be substantive, not imaginative:** If the provided data is sparse, the outcome should be proportionally simple. Do not fill gaps with invented content. An empty scene stays empty — do not populate it with imagined objects.
 
+## Actor Conditions
+If the actor has physical conditions listed (e.g. "detained", "restrained", "unconscious"), these represent binding constraints on the actor's current state. A detained or restrained actor cannot freely manipulate objects, move items, or perform actions requiring free movement. Reflect these constraints in the outcome and memory — the action should fail or be severely limited if it contradicts the actor's physical state.
+
 ## Memory
 Always required for the actor. Write from the actor's first-person perspective: what they did, what they observed, and the result.
 - **Keep it concise: 1–3 sentences for routine interactions.** Only write longer memories (4+ sentences) for truly significant discoveries — finding critical evidence, triggering a trap, uncovering a hidden passage, or encountering something sanity-breaking. Most item pickups, inspections, and mundane manipulations should be brief.
@@ -230,6 +233,7 @@ function buildUserPrompt(
   node: PlanNode,
   locationId: string,
   actorName: string,
+  actorConditions: string[],
   actorInventory: Item[],
   sceneItems: Item[],
   sceneDescription: string,
@@ -262,6 +266,9 @@ function buildUserPrompt(
     `## Actor`,
     `Name: ${actorName}`,
     `ID: ${node.characterId}`,
+    ...(actorConditions.length > 0
+      ? [`Conditions: ${actorConditions.join(", ")}`]
+      : []),
   ].join("\n");
 
   // Section 4: Actor Inventory
@@ -346,9 +353,10 @@ export async function resolveObjectInteractionState(
   // Collect actor inventory
   const actorInventory = dgsm.getNpcInventory(node.characterId);
 
-  // Get actor name
+  // Get actor name and conditions
   const actorNpc = state.npcCharacters.find((n) => n.id === node.characterId);
   const actorName = actorNpc?.name ?? node.characterName;
+  const actorConditions = actorNpc?.status?.conditions ?? [];
 
   // Get scene data
   const scene = dgsm.getScene(locationId);
@@ -400,6 +408,7 @@ export async function resolveObjectInteractionState(
     node,
     locationId,
     actorName,
+    actorConditions,
     actorInventory,
     sceneItems,
     sceneDescription,

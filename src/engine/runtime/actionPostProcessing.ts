@@ -7,7 +7,6 @@ import {
 } from "../../planning/sceneMapFormatter.js";
 import type {
   CharacterAction,
-  FailureTrigger,
   PlanNode,
   SuccessLevel,
 } from "../../planning/types.js";
@@ -128,12 +127,6 @@ function buildEventMetadata(
   return metadata;
 }
 
-export interface PendingRevisionRequest {
-  npcId: string;
-  trigger: FailureTrigger;
-  reactionQuery: string;
-}
-
 export async function postProcessExecutedNodeAction(params: {
   node: PlanNode;
   action: CharacterAction;
@@ -149,7 +142,6 @@ export async function postProcessExecutedNodeAction(params: {
   memoryManager?: NpcMemoryManager;
 }): Promise<{
   action: CharacterAction;
-  pendingRevisionRequest?: PendingRevisionRequest;
 }> {
   const {
     node,
@@ -536,21 +528,6 @@ export async function postProcessExecutedNodeAction(params: {
       node.nodeId,
       failureReason
     );
-
-    return {
-      action,
-      pendingRevisionRequest: {
-        npcId: node.characterId,
-        trigger: {
-          type: "failure",
-          failureReason,
-          action: action.action,
-          gameTime: action.gameTime,
-          failureOutcome: action.outcome,
-        },
-        reactionQuery: `${action.action} failed: ${action.outcome}`,
-      },
-    };
   }
 
   return { action };

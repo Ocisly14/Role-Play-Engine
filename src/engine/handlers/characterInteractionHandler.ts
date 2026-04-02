@@ -50,13 +50,13 @@ export const characterInteractionHandler: NodeHandler = {
     const targetIds = node.targetCharacterIds ?? [];
 
     if (targetIds.length === 0) {
-        return makeAction(
-          node,
-          "failed",
-          buildOutcome(node, "failed", { reason: "no target specified" }),
-          { location: locationId, failureReason: "target_absent" }
-        );
-      }
+      return makeAction(
+        node,
+        "failed",
+        buildOutcome(node, "failed", { reason: "no target specified" }),
+        { location: locationId, failureReason: "target_absent" }
+      );
+    }
 
     // Scene + character penalties
     const scenePenalties = ctx.getScenePenalties(locationId, dgsm);
@@ -97,10 +97,7 @@ export const characterInteractionHandler: NodeHandler = {
         adjustedSkills,
         dgsm,
         (targetId, rawSkills) => {
-          const targetScenePenalties = ctx.getScenePenalties(
-            locationId,
-            dgsm
-          );
+          const targetScenePenalties = ctx.getScenePenalties(locationId, dgsm);
           const targetCharPenalties = ctx.getCharacterPenalties(targetId, dgsm);
           return ctx.applyPenalties(
             ctx.applyPenalties(rawSkills, targetScenePenalties),

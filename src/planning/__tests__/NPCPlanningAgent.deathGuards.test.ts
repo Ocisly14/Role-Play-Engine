@@ -5,7 +5,7 @@ import {
 } from "../../state/DynamicGameState.js";
 import type { DynamicNPCProfile } from "../../state/types.js";
 import { NPCPlanningAgent } from "../NPCPlanningAgent.js";
-import type { FailureTrigger, PlanNode } from "../types.js";
+import type { PlanNode } from "../types.js";
 
 function makeNpc(id: string, hp: number): DynamicNPCProfile {
   return {
@@ -109,13 +109,6 @@ describe("NPCPlanningAgent death guards", () => {
     const dgsm = createDgsm();
     const prisma = createThrowingPrisma();
     const agent = new NPCPlanningAgent(prisma, {});
-    const trigger: FailureTrigger = {
-      type: "failure",
-      failureReason: "target_absent",
-      action: "look for someone",
-      gameTime: "08:00",
-    };
-
     await expect(
       agent.generateSingleNpcSchedule(
         dgsm,
@@ -127,28 +120,14 @@ describe("NPCPlanningAgent death guards", () => {
       )
     ).resolves.toBeUndefined();
     await expect(
-      agent.generateDetailedNodes(dgsm, "session", "dead", 1, "en")
-    ).resolves.toEqual([]);
+      agent.generateNextAction(dgsm, "session", "dead", 1, "en")
+    ).resolves.toBeNull();
     await expect(
       agent.ensureNpcNodesAvailable(dgsm, "session", "dead", 1, "08:00", "en")
     ).resolves.toBeUndefined();
     await expect(
       agent.reviseSchedule(dgsm, "session", "dead", "manual update", "en")
     ).resolves.toBeUndefined();
-    await expect(
-      agent.revisePlans(
-        dgsm,
-        "session",
-        "dead",
-        {
-          longTermIntent: "",
-          memoryLog: [],
-          pendingNodes: [],
-          trigger,
-        },
-        "en"
-      )
-    ).resolves.toEqual({});
 
     expect(prisma.npcDailyPlan.findUnique).not.toHaveBeenCalled();
     expect(prisma.npcDailyPlan.findFirst).not.toHaveBeenCalled();

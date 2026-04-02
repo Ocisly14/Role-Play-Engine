@@ -349,7 +349,7 @@ export function advanceMovementNodeOneMinute(
         currentTime,
         failedPosition
           ? dgsm.resolveLocationId(failedPosition)
-          : processed.node.destination ?? "",
+          : (processed.node.destination ?? ""),
         failedOutcome,
         "location_blocked"
       ),
@@ -437,7 +437,7 @@ export function advanceMovementNodeOneMinute(
         currentTime,
         failedPosition
           ? dgsm.resolveLocationId(failedPosition)
-          : processed.node.destination ?? "",
+          : (processed.node.destination ?? ""),
         failedOutcome,
         "location_blocked"
       ),
@@ -531,7 +531,7 @@ export function advanceMovementNodeOneMinute(
         currentTime,
         failedPosition
           ? dgsm.resolveLocationId(failedPosition)
-          : node.destination ?? "",
+          : (node.destination ?? ""),
         failedOutcome,
         "location_blocked"
       ),

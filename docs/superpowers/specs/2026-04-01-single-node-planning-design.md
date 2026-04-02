@@ -94,8 +94,7 @@ model NpcShortTermIntent {
     "impact": 0-5,
     "targetCharacterIds": ["可选"]
   },
-  "updatedShortTermIntent": "可选，如果当前意图需要调整",
-  "scheduleEntryCompleted": false
+  "updatedShortTermIntent": "可选，如果当前意图需要调整"
 }
 ```
 
@@ -114,7 +113,7 @@ model NpcShortTermIntent {
 5. 解析返回值：
    - 将 node 追加到 `NpcDailyPlan.nodes`
    - 如果 `updatedShortTermIntent` → 更新 `NpcShortTermIntent`
-   - 如果 `scheduleEntryCompleted` → 消耗对应 schedule entry，清空 shortTermIntent
+   - Schedule 始终保持完整不消耗，LLM 通过 memory 自行判断进度
 
 ### 3c. 改造 `ensureNpcNodesAvailable()`
 

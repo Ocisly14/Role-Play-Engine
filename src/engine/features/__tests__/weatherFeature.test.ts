@@ -122,11 +122,11 @@ function createMockRuntime(
     npcPlanning: {
       getPendingNodes: async () => [],
       runImpactGateForNpc: async () => ({
-        shouldRevise: false,
+        shouldUpdateIntent: false,
+        shouldInterruptCurrentNode: false,
         shouldReviseSchedule: false,
         witnessEntry: "",
       }),
-      revisePlans: async () => ({}),
     },
     ...overrides,
   };

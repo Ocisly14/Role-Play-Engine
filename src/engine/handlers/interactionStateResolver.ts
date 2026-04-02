@@ -407,7 +407,10 @@ function buildSceneBlock(
               targetId: c.targetId,
               description: c.description,
             };
-            const blockReason = dgsm.getConnectionBlockReason(locationId, c.targetId);
+            const blockReason = dgsm.getConnectionBlockReason(
+              locationId,
+              c.targetId
+            );
             if (blockReason) entry.blocked = blockReason;
             return entry;
           })

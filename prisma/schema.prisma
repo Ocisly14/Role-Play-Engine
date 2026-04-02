@@ -142,9 +142,10 @@ model Session {
   moduleId        String?            @map("module_id") @db.Uuid
   emailId         String?            @map("email_id")
 
-  module             Module?            @relation(fields: [moduleId], references: [moduleId])
-  npcLongTermIntents NpcLongTermIntent[]
-  npcDailyPlans      NpcDailyPlan[]
+  module              Module?              @relation(fields: [moduleId], references: [moduleId])
+  npcLongTermIntents  NpcLongTermIntent[]
+  npcShortTermIntents NpcShortTermIntent[]
+  npcDailyPlans       NpcDailyPlan[]
   npcMemories        NpcMemory[]
   simulationEvents   SimulationEvent[]
   simulationRuntime  SimulationRuntime?
@@ -192,6 +193,21 @@ model NpcLongTermIntent {
   @@unique([sessionId, npcId])
   @@index([sessionId])
   @@map("npc_long_term_intents")
+}
+
+model NpcShortTermIntent {
+  id        String   @id @default(uuid()) @db.Uuid
+  sessionId String   @map("session_id")
+  npcId     String   @map("npc_id")
+  intent    String
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  session Session @relation(fields: [sessionId], references: [sessionId], onDelete: Cascade)
+
+  @@unique([sessionId, npcId])
+  @@index([sessionId])
+  @@map("npc_short_term_intents")
 }
 
 model NpcDailyPlan {

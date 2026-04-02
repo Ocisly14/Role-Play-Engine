@@ -118,6 +118,11 @@ function createPrisma() {
     npcLongTermIntent: {
       findFirst: vi.fn(async () => ({ intent: "Stay in control" })),
     },
+    npcShortTermIntent: {
+      findUnique: vi.fn(async () => null),
+      upsert: vi.fn(async () => undefined),
+      deleteMany: vi.fn(async () => undefined),
+    },
   } as any;
 }
 
@@ -126,49 +131,26 @@ describe("NPCPlanningAgent hidden isolation", () => {
     vi.clearAllMocks();
   });
 
-  it("excludes hidden NPCs from detailed node generation prompts", async () => {
+  it("excludes hidden NPCs from next action generation prompts", async () => {
     let capturedPrompt = "";
     (generateText as any).mockImplementationOnce(async (opts: any) => {
       capturedPrompt = opts.context;
-      return "[]";
-    });
-
-    const agent = new NPCPlanningAgent(createPrisma(), {});
-    const dgsm = createDgsm();
-
-    await agent.generateDetailedNodes(dgsm, "session", "npc_actor", 1, "en");
-
-    expect(capturedPrompt).toContain("Visible Ally");
-    expect(capturedPrompt).not.toContain("Hidden Stalker");
-  });
-
-  it("excludes hidden NPCs from revise plan prompts", async () => {
-    let capturedPrompt = "";
-    (generateText as any).mockImplementationOnce(async (opts: any) => {
-      capturedPrompt = opts.context;
-      return JSON.stringify({ revisedNodes: [] });
-    });
-
-    const agent = new NPCPlanningAgent(createPrisma(), {});
-    const dgsm = createDgsm();
-
-    await agent.revisePlans(
-      dgsm,
-      "session",
-      "npc_actor",
-      {
-        longTermIntent: "Stay in control",
-        memoryLog: [],
-        pendingNodes: [],
-        trigger: {
-          type: "failure",
-          failureReason: "target_absent",
-          action: "Talk to someone nearby",
-          gameTime: "08:00",
+      return JSON.stringify({
+        node: {
+          nodeId: "n1",
+          startTime: "08:00",
+          endTime: "08:10",
+          action: "Wait",
+          type: "action",
+          impact: 0,
         },
-      },
-      "en"
-    );
+      });
+    });
+
+    const agent = new NPCPlanningAgent(createPrisma(), {});
+    const dgsm = createDgsm();
+
+    await agent.generateNextAction(dgsm, "session", "npc_actor", 1, "en");
 
     expect(capturedPrompt).toContain("Visible Ally");
     expect(capturedPrompt).not.toContain("Hidden Stalker");

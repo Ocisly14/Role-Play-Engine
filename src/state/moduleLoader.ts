@@ -7,7 +7,10 @@ import type { PrismaClient } from "@prisma/client";
 import { NpcMemoryManager } from "../memory/NpcMemoryManager.js";
 import type { EmbeddingClient } from "../rag/embedding.js";
 import type { DynamicGameState } from "./DynamicGameState.js";
-import { buildTopology } from "./topologyTypes.js";
+import {
+  buildTopology,
+  enrichTopologyWithInteriorScenes,
+} from "./topologyTypes.js";
 import type {
   CharacterPosition,
   JunctionNode,
@@ -236,6 +239,15 @@ export function initRuntime(params: {
   if (!topology) {
     throw new Error(
       `Module ${moduleData.moduleId} has no topology. Topology is required.`
+    );
+  }
+
+  // Enrich topology with interior sub-scenes
+  if (moduleData.scenes.size > 0 || moduleData.scenarioOutlines?.length) {
+    enrichTopologyWithInteriorScenes(
+      topology,
+      moduleData.scenes,
+      moduleData.scenarioOutlines ?? []
     );
   }
 
