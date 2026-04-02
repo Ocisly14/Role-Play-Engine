@@ -6,6 +6,7 @@ import {
   resolveLocationId as resolveLocationFromName,
 } from "../../planning/sceneMapFormatter.js";
 import type {
+  ActionResolutionContext,
   CharacterAction,
   PlanNode,
   SuccessLevel,
@@ -22,9 +23,11 @@ import {
   resolveObjectInteractionState,
 } from "../handlers/objectInteractionStateResolver.js";
 import {
-  applySceneDelta,
-  resolveSceneInteractionState,
-} from "../handlers/sceneInteractionStateResolver.js";
+  applyActionSceneDelta,
+  resolveActionState,
+} from "../handlers/actionStateResolver.js";
+import { resolveTargetPosition } from "../handlers/movementHandler.js";
+import { applyFatigueDelta } from "../features/staminaFeature.js";
 import type { GameEngineRegistry } from "../registry.js";
 import type { ExecutionContext } from "../types.js";
 import {
@@ -32,6 +35,7 @@ import {
   discoverNpcKnowledge,
   embedDiscoveries,
 } from "./discoveryPipeline.js";
+import { buildActionResolutionContext } from "./resolutionExecutionContext.js";
 
 interface ItemActionContext {
   itemId?: string;
@@ -127,6 +131,46 @@ function buildEventMetadata(
   return metadata;
 }
 
+export function shouldRunResolver(action: CharacterAction): boolean {
+  return (
+    action.status === "completed" ||
+    action.status === "interrupted" ||
+    action.failureReason === "skill_roll_failed"
+  );
+}
+
+export function sanitizeFatigueDelta(
+  fatigueDelta: number | undefined,
+  resolutionContext: ActionResolutionContext
+): number {
+  if (fatigueDelta == null || !Number.isFinite(fatigueDelta)) return 0;
+  const absoluteBound = Math.max(
+    3,
+    Math.min(8, Math.ceil(resolutionContext.plannedMinutes / 30))
+  );
+  return Math.max(-absoluteBound, Math.min(absoluteBound, Math.trunc(fatigueDelta)));
+}
+
+export function applyIncidentalActionMove(params: {
+  dgsm: DynamicGameStateManager;
+  characterId: string;
+  moveTo?: string;
+}): boolean {
+  const { dgsm, characterId, moveTo } = params;
+  if (!moveTo) return false;
+
+  const targetPosition = resolveTargetPosition(moveTo, dgsm.getTopology(), dgsm);
+  if (!targetPosition) {
+    console.warn(
+      `[ActionPostProcessing] Ignoring invalid incidental action moveTo "${moveTo}" for ${characterId}`
+    );
+    return false;
+  }
+
+  dgsm.setCharacterPosition(characterId, targetPosition);
+  return true;
+}
+
 export async function postProcessExecutedNodeAction(params: {
   node: PlanNode;
   action: CharacterAction;
@@ -163,25 +207,19 @@ export async function postProcessExecutedNodeAction(params: {
   let eventOutcome = appendItemContext(action.outcome, itemContext);
   const eventMetadata = buildEventMetadata(action.outcome, itemContext);
   const allTargetIds = node.targetCharacterIds ?? [];
-
-  if (
-    featureNotes.length > 0 &&
-    node.type !== "character_interaction" &&
-    node.type !== "object_interaction" &&
-    node.type !== "scene_interaction"
-  ) {
-    const combined = featureNotes.join(" ");
-    action.outcome = combined;
-    eventOutcome = combined;
+  const resolutionContext = buildActionResolutionContext(node, action);
+  if (action.failureReason) {
+    eventMetadata.failureReason = action.failureReason;
+  }
+  if (action.interruptionReason) {
+    eventMetadata.interruptionReason = action.interruptionReason;
   }
 
   // Run LLM resolver for character_interaction when the interaction actually
   // took place (completed OR skill_roll_failed — both mean actor & targets were
   // co-located and the attempt happened). Skip for target_absent / prerequisite_not_met.
   const interactionAttempted =
-    node.type === "character_interaction" &&
-    (action.status === "completed" ||
-      action.failureReason === "skill_roll_failed");
+    node.type === "character_interaction" && shouldRunResolver(action);
 
   if (interactionAttempted) {
     const npcKnowledge = memoryManager
@@ -205,10 +243,15 @@ export async function postProcessExecutedNodeAction(params: {
       locationId,
       language,
       registry,
-      featureNotes
+      featureNotes,
+      resolutionContext
     );
 
     const interactionTargets = resolveTargets(node);
+    delta.actorChanges.fatigueDelta = sanitizeFatigueDelta(
+      delta.actorChanges.fatigueDelta,
+      resolutionContext
+    );
     await applyCharacterDelta(
       dgsm,
       node.characterId,
@@ -218,10 +261,14 @@ export async function postProcessExecutedNodeAction(params: {
       sessionId,
       moduleId,
       gameDay,
-      node.endTime
+      action.gameTime
     );
 
     for (const targetId of Object.keys(delta.targetChanges)) {
+      delta.targetChanges[targetId].fatigueDelta = sanitizeFatigueDelta(
+        delta.targetChanges[targetId].fatigueDelta,
+        resolutionContext
+      );
       await applyCharacterDelta(
         dgsm,
         targetId,
@@ -231,7 +278,7 @@ export async function postProcessExecutedNodeAction(params: {
         sessionId,
         moduleId,
         gameDay,
-        node.endTime
+        action.gameTime
       );
     }
 
@@ -284,7 +331,7 @@ export async function postProcessExecutedNodeAction(params: {
               sessionId,
               moduleId,
               gameDay,
-              gameTime: node.endTime,
+              gameTime: action.gameTime,
               location: loc,
               dgsm,
               locationIds: entry.locationIds,
@@ -295,6 +342,7 @@ export async function postProcessExecutedNodeAction(params: {
     }
 
     action.outcome = delta.actorChanges.memory;
+    eventOutcome = appendItemContext(action.outcome, itemContext);
     action.stateMemories = {
       [node.characterId]: delta.actorChanges.memory,
       ...Object.fromEntries(
@@ -306,7 +354,10 @@ export async function postProcessExecutedNodeAction(params: {
     };
   }
 
-  if (action.status === "completed" && node.type === "object_interaction") {
+  const objectInteractionAttempted =
+    node.type === "object_interaction" && shouldRunResolver(action);
+
+  if (objectInteractionAttempted) {
     const objSkillRollResult = action.successLevel
       ? {
           successLevel: action.successLevel,
@@ -324,17 +375,27 @@ export async function postProcessExecutedNodeAction(params: {
       memoryManager,
       sessionId,
       registry,
-      featureNotes
+      featureNotes,
+      resolutionContext
     );
 
     applyObjectDelta(dgsm, node.characterId, objDelta, locationId);
+    applyFatigueDelta(
+      dgsm,
+      node.characterId,
+      sanitizeFatigueDelta(objDelta.fatigueDelta, resolutionContext)
+    );
     action.outcome = objDelta.memory;
+    eventOutcome = appendItemContext(action.outcome, itemContext);
     action.stateMemories = {
       [node.characterId]: objDelta.memory,
     };
   }
 
-  if (action.status === "completed" && node.type === "scene_interaction") {
+  const sceneLikeActionAttempted =
+    node.type === "action" && shouldRunResolver(action);
+
+  if (sceneLikeActionAttempted) {
     const sceneSkillRollResult = action.successLevel
       ? {
           successLevel: action.successLevel,
@@ -342,7 +403,7 @@ export async function postProcessExecutedNodeAction(params: {
         }
       : null;
 
-    const sceneDelta = await resolveSceneInteractionState(
+    const sceneDelta = await resolveActionState(
       node,
       dgsm,
       ctx.runtime,
@@ -350,14 +411,25 @@ export async function postProcessExecutedNodeAction(params: {
       locationId,
       language,
       registry,
-      featureNotes
+      featureNotes,
+      resolutionContext
     );
 
-    const appliedSceneDelta = applySceneDelta(
+    const appliedSceneDelta = applyActionSceneDelta(
       dgsm,
       sceneDelta,
       locationId,
       node.characterId
+    );
+    applyIncidentalActionMove({
+      dgsm,
+      characterId: node.characterId,
+      moveTo: sceneDelta.moveTo,
+    });
+    applyFatigueDelta(
+      dgsm,
+      node.characterId,
+      sanitizeFatigueDelta(sceneDelta.fatigueDelta, resolutionContext)
     );
 
     if (
@@ -395,6 +467,7 @@ export async function postProcessExecutedNodeAction(params: {
     }
 
     action.outcome = sceneDelta.memory;
+    eventOutcome = appendItemContext(action.outcome, itemContext);
     action.stateMemories = {
       [node.characterId]: sceneDelta.memory,
     };
@@ -427,6 +500,7 @@ export async function postProcessExecutedNodeAction(params: {
 
   let logEntry = action.stateMemories?.[node.characterId] ?? eventOutcome;
   if (relationshipChange) logEntry += ` ${relationshipChange}`;
+  eventMetadata.outcome = action.outcome;
 
   if (memoryManager) {
     await memoryManager.add({

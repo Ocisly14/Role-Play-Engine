@@ -27,7 +27,6 @@ function createMockDgsm() {
       if (position.type === "junction") return position.junctionId;
       return position.roadId;
     },
-    // Feature state for stamina (restCharacter uses these)
     getFeatureSceneState(featureId: string, key: string) {
       return featureState[featureId]?.[key];
     },
@@ -98,7 +97,9 @@ describe("actionHandler", () => {
     expect(actionHandler.type).toBe("action");
     expect(actionHandler.requiredFields).toContain("action");
     expect(actionHandler.optionalFields).toContain("skill");
-    expect(actionHandler.optionalFields).toContain("routineSubtype");
+    expect(actionHandler.optionalFields).not.toContain(
+      "objectInteractionPayload"
+    );
   });
 
   describe("basic execution", () => {
@@ -166,13 +167,13 @@ describe("actionHandler", () => {
     });
   });
 
-  describe("rest subtype", () => {
-    it("should reset stamina when routineSubtype is rest", () => {
+  describe("fatigue handling", () => {
+    it("should not mutate stamina directly for a rest-like action", () => {
       const dgsm = createMockDgsm();
       dgsm._addNpc("npc_a", "bedroom");
 
-      // Set up exhausted stamina state
       dgsm.setFeatureSceneState("stamina", "npc_a", {
+        fatigue: 960,
         minutesSinceLastRest: 960,
         fatigueLevel: 2,
         exhaustedDrainTicks: 5,
@@ -183,7 +184,6 @@ describe("actionHandler", () => {
       const result = actionHandler.execute(
         makeNode({
           location: "bedroom",
-          routineSubtype: "rest",
           action: "Sleep for the night",
         }),
         dgsm as unknown as DynamicGameStateManager,
@@ -193,16 +193,18 @@ describe("actionHandler", () => {
       expect(result.status).toBe("completed");
 
       const stamina = dgsm.getFeatureSceneState("stamina", "npc_a") as any;
-      expect(stamina.minutesSinceLastRest).toBe(0);
-      expect(stamina.fatigueLevel).toBe(0);
-      expect(stamina.exhaustedDrainTicks).toBe(0);
+      expect(stamina.fatigue).toBe(960);
+      expect(stamina.minutesSinceLastRest).toBe(960);
+      expect(stamina.fatigueLevel).toBe(2);
+      expect(stamina.exhaustedDrainTicks).toBe(5);
     });
 
-    it("should not reset stamina for non-rest routines", () => {
+    it("should leave existing stamina untouched for other actions", () => {
       const dgsm = createMockDgsm();
       dgsm._addNpc("npc_a", "library");
 
       dgsm.setFeatureSceneState("stamina", "npc_a", {
+        fatigue: 500,
         minutesSinceLastRest: 500,
         fatigueLevel: 1,
         exhaustedDrainTicks: 0,
@@ -217,6 +219,7 @@ describe("actionHandler", () => {
       );
 
       const stamina = dgsm.getFeatureSceneState("stamina", "npc_a") as any;
+      expect(stamina.fatigue).toBe(500);
       expect(stamina.minutesSinceLastRest).toBe(500);
       expect(stamina.fatigueLevel).toBe(1);
     });

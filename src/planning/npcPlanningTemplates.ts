@@ -137,7 +137,7 @@ const TWENTY_FOUR_HOUR_TIME_GUIDANCE = `## Time Semantics
 - All times use a 24-hour clock in \`HH:MM\` format.`;
 
 const DEFAULT_NODE_GUARDRAILS_PROMPT = `## Planning Guardrails
-- You can only interact with items, characters, and the environment in your **current scene**. To act in a different scene (including other scenes in the same building), emit a movement node to that scene first, then your action node.
+- You can only interact with items, characters, and the environment in your **current scene**. To act in a different scene (including other scenes in the same building), emit a movement node to that scene first, then your action node. The only exception is when the action itself directly displaces you as a side effect, such as jumping out a window or diving through an opening.
 - For movement nodes, set \`destination\` to the exact scene or place name from "Places You Know". Non-movement nodes execute at your current position — do not specify \`destination\`.
 - For object interactions, you may only target items that already appear in \`Items You Can See\` or \`What You're Carrying\`.
 - Do not invent new documents, copies, notes, printouts, receipts, witness copies, or memo variants unless they already exist in the scene, inventory, or prior action history.
@@ -145,13 +145,14 @@ const DEFAULT_NODE_GUARDRAILS_PROMPT = `## Planning Guardrails
 
 const DEFAULT_DETAILED_NODE_TYPE_REF = `## Node Type Reference
 
-- **"action"**: A self-contained action that does NOT change any object, character, or scene state. Use this for narrative-only behavior: waiting, thinking, eating, resting, watching (without using a skill), pretending, walking around a room, etc. No LLM resolver runs — the engine treats this as "the character did it, period."
+- **"action"**: A current-location action performed in your present scene. Use this for quiet self-directed behavior AND environment-facing actions in the same scene: waiting, thinking, eating, resting, watching, searching the room, investigating the surroundings, drawing curtains, barring a door, turning off the lights, hiding in place, etc. An LLM resolver determines any scene changes, partial outcomes, memories, and fatigue impact after the action resolves.
+
+  An "action" may also end with incidental self-movement when the action itself physically throws or carries you into a nearby location as a side effect, such as jumping out a window into a courtyard or diving through a newly opened passage. Do NOT use "action" for ordinary travel.
 
   If your action involves:
   - Moving/hiding/using/modifying a physical item → use "object_interaction"
   - Talking to, persuading, threatening, or observing (with a skill) another character → use "character_interaction"
-  - Searching, investigating, or modifying the environment → use "scene_interaction"
-  - Going to a different location → use "movement"
+  - Going to a different location on purpose, such as walking to the courtyard or heading upstairs → use "movement"
 
 - **"movement"**: Move to a destination. Set \`destination\` to the exact destination name from "Places You Know". This is the ONLY type that uses the \`destination\` field.
 - **"character_interaction"**: Interact with one or more characters. This includes any action that uses a skill targeting another character (e.g., Spot Hidden to observe someone, Psychology to read them, Persuade to convince them).
@@ -159,7 +160,6 @@ const DEFAULT_DETAILED_NODE_TYPE_REF = `## Node Type Reference
   - Put all targets in top-level \`targetCharacterIds\`.
   - For single-target interactions, \`targetCharacterIds\` should still be an array with one ID.
 - **"object_interaction"**: Interact with a physical object — pick up, hide, move, use, combine, lock, unlock, destroy, etc. Describe what you do in \`action\`. Set \`objectInteractionPayload.itemId\` to the primary item. An LLM resolver handles all state changes.
-- **"scene_interaction"**: Search, investigate, or modify the environment. Describe what you do in \`action\`. An LLM resolver determines scene condition changes, connection effects (block/unblock/reveal passages), and memories.
 
 ## Skill Checks (Call of Cthulhu 7e Rules)
 
@@ -178,10 +178,10 @@ The engine resolves skill rolls mechanically. A skill roll is called ONLY when:
 - The character is attempting something deceptive, forceful, or creative beyond normal capability
 
 **Skill use determines node type:**
-- Action with NO skill → type is usually "action" (pure narrative, no state change)
+- Action with NO skill → type is usually "action"
 - Skill targeting a **person** (Spot Hidden to observe, Psychology to read, Persuade to convince, Intimidate to threaten) → "character_interaction" with targetCharacterIds
 - Skill targeting an **object** (Locksmith to pick a lock, Mechanical Repair to fix something, Sleight of Hand to hide an item) → "object_interaction"
-- Skill targeting the **environment** (Spot Hidden to search a room, Track to follow footprints, Navigate to find a path) → "scene_interaction"
+- Skill targeting the **environment** (Spot Hidden to search a room, Track to follow footprints, Navigate to find a path) → "action"
 
 **Social interactions:**
 - Normal conversation, greetings, small talk, sharing information → NO skill, use "character_interaction" only if it meaningfully affects the target
@@ -222,7 +222,7 @@ Return a single JSON object. No extra text. JSON keys must be in English. Write 
     "endTime": "HH:MM",
     "action": "description of what you do (in ${lang})",
     "destination": "ONLY for movement — exact destination from Places You Know (English). Omit for other types.",
-    "type": "action|movement|character_interaction|object_interaction|scene_interaction",
+    "type": "action|movement|character_interaction|object_interaction",
     "skill": "OMIT if no skill check needed, otherwise exact skill name (English)",
     "impact": "Default 0. Use 1 only for targeted consequential actions with skill; 2+ for broader effects"
   },

@@ -62,7 +62,7 @@ export const objectInteractionHandler: NodeHandler = {
       const rollResult = ctx.resolveSkillRoll(node, adjustedSkills, dgsm);
       resolvedSuccessLevel = rollResult.successLevel;
       if (rollResult.failed) {
-        return makeAction(
+        const failedAction = makeAction(
           node,
           "failed",
           buildOutcome(node, "failed", { rollDetail: rollResult.reason }),
@@ -73,6 +73,8 @@ export const objectInteractionHandler: NodeHandler = {
             failureReason: "skill_roll_failed",
           }
         );
+        failedAction.rollDetail = rollResult.reason;
+        return failedAction;
       }
       lastRollDetail = rollResult.detail;
     }

@@ -17,7 +17,6 @@ export {
   movementHandler,
   characterInteractionHandler,
   objectInteractionHandler,
-  sceneInteractionHandler,
 } from "./handlers/index.js";
 export {
   findAffectedCharacters,

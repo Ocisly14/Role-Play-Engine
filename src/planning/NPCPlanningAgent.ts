@@ -64,7 +64,6 @@ function resolveCurrentNode(
 
 function getDefaultNodeDurationMinutes(type: string): number {
   switch (type) {
-    case "scene_interaction":
     case "object_interaction":
       return 10;
     case "action":
@@ -1652,6 +1651,7 @@ export class NPCPlanningAgent {
     registry?: GameEngineRegistry
   ): string {
     if (!registry) return "";
+    const state = dgsm.getState();
     const sections: string[] = [];
 
     // Weather — global, always include
@@ -1669,14 +1669,28 @@ export class NPCPlanningAgent {
 
     // Stamina — only this NPC's fatigue
     const staminaStates = dgsm.getFeatureState("stamina") as
-      | Record<string, { fatigueLevel?: number; minutesSinceLastRest?: number }>
+      | Record<
+          string,
+          {
+            fatigue?: number;
+            fatigueLevel?: number;
+            minutesSinceLastRest?: number;
+          }
+        >
       | undefined;
     if (staminaStates?.[npcId]) {
       const stamina = staminaStates[npcId];
       if (stamina.fatigueLevel && stamina.fatigueLevel > 0) {
-        const hours = ((stamina.minutesSinceLastRest ?? 0) / 60).toFixed(1);
+        const fatigue = Math.max(
+          0,
+          stamina.fatigue ?? stamina.minutesSinceLastRest ?? 0
+        );
+        const score = Math.max(
+          0,
+          Math.min(100, Math.round((fatigue / 960) * 100))
+        );
         const label = stamina.fatigueLevel === 1 ? "Tired" : "Exhausted";
-        sections.push(`Fatigue: ${label} (${hours}h active)`);
+        sections.push(`Fatigue: ${label} (${score}/100)`);
       }
     }
 

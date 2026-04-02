@@ -371,7 +371,7 @@ export const fireFeature: WorldFeature = {
       },
     ],
     exampleNode: {
-      type: "scene_interaction",
+      type: "action",
       action: "Set fire to the old warehouse",
       fireIntensity: 1,
     },
@@ -404,10 +404,12 @@ export const fireFeature: WorldFeature = {
     const sceneId =
       node.type === "movement"
         ? node.destination
-        : (() => {
-            const pos = dgsm.getCharacterPosition(node.characterId);
-            return pos ? dgsm.resolveLocationId(pos) : undefined;
-          })();
+        : (typeof (node as Record<string, unknown>).location === "string"
+            ? ((node as Record<string, unknown>).location as string)
+            : (() => {
+                const pos = dgsm.getCharacterPosition(node.characterId);
+                return pos ? dgsm.resolveLocationId(pos) : undefined;
+              })());
     if (!sceneId) return;
 
     // Handle extinguish

@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { TickRuntimeContext } from "../../types.js";
-import { restCharacter, staminaFeature } from "../staminaFeature.js";
+import { applyFatigueDelta, staminaFeature } from "../staminaFeature.js";
 
 // ===== Mock DGSM =====
 
@@ -550,27 +550,28 @@ describe("staminaFeature", () => {
     });
   });
 
-  // ===== restCharacter =====
+  // ===== applyFatigueDelta =====
 
-  describe("restCharacter", () => {
-    it("should reset all stamina fields to 0", () => {
+  describe("applyFatigueDelta", () => {
+    it("should reduce fatigue in hour-sized steps and update derived state", () => {
       dgsm.setFeatureSceneState("stamina", "npc-test", {
+        fatigue: 960,
         minutesSinceLastRest: 960,
         fatigueLevel: 2,
         exhaustedDrainTicks: 5,
       });
 
-      restCharacter(dgsm as any, "npc-test");
+      applyFatigueDelta(dgsm as any, "npc-test", -2);
 
       const s = dgsm.getFeatureSceneState("stamina", "npc-test") as any;
-      expect(s.minutesSinceLastRest).toBe(0);
-      expect(s.fatigueLevel).toBe(0);
+      expect(s.fatigue).toBe(840);
+      expect(s.minutesSinceLastRest).toBe(840);
+      expect(s.fatigueLevel).toBe(1);
       expect(s.exhaustedDrainTicks).toBe(0);
     });
 
-    it("should remove fatigue condition from NPC", () => {
-      // Tick until tired to inject condition
-      runTicks(dgsm, runtime, 96); // 480 min → tired
+    it("should remove fatigue condition when recovery drops below tired", () => {
+      runTicks(dgsm, runtime, 96);
 
       const npc = dgsm
         .getState()
@@ -579,15 +580,21 @@ describe("staminaFeature", () => {
         npc.status.conditions.some((c: string) => c.includes("[Fatigue]"))
       ).toBe(true);
 
-      restCharacter(dgsm as any, "npc-test");
+      applyFatigueDelta(dgsm as any, "npc-test", -3);
 
       expect(
         npc.status.conditions.some((c: string) => c.includes("[Fatigue]"))
       ).toBe(false);
     });
 
-    it("should not throw when no stamina state exists", () => {
-      expect(() => restCharacter(dgsm as any, "nonexistent-npc")).not.toThrow();
+    it("should create state when applying delta to an untracked character", () => {
+      dgsm._addNpc("npc-new", "tavern", 10);
+
+      expect(() => applyFatigueDelta(dgsm as any, "npc-new", 1)).not.toThrow();
+
+      const stamina = dgsm.getFeatureSceneState("stamina", "npc-new") as any;
+      expect(stamina.fatigue).toBe(60);
+      expect(stamina.minutesSinceLastRest).toBe(60);
     });
   });
 });

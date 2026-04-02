@@ -456,15 +456,15 @@ describe("Engine Integration — Blackwood Manor", () => {
       expect(topo.sceneToParent.has("manor_foyer")).toBe(true);
     });
 
-    it("should have registry with 5 handlers and 6 features", () => {
-      expect(registry.getAllHandlers()).toHaveLength(5);
+    it("should have registry with 4 handlers and 6 features", () => {
+      expect(registry.getAllHandlers()).toHaveLength(4);
       expect(registry.getAllFeatures()).toHaveLength(6);
     });
   });
 
   // ── 2. Routine Handler + Stamina ──
 
-  describe("2. routine handler + stamina", () => {
+  describe("2. action handler + stamina", () => {
     it("should complete Webb's research with hard success", () => {
       const ctx = makeCtx(() => ({
         failed: false,
@@ -631,9 +631,9 @@ describe("Engine Integration — Blackwood Manor", () => {
     });
   });
 
-  // ── 6. Scene Interaction Handler ──
+  // ── 6. Current-Location Action Handler ──
 
-  describe("6. scene_interaction handler", () => {
+  describe("6. environment-facing action handler", () => {
     it("should barricade the cellar door", () => {
       // Move Harlow back to foyer
       dgsm.setCharacterPosition("npc_harlow", {
@@ -641,7 +641,7 @@ describe("Engine Integration — Blackwood Manor", () => {
         sceneId: "manor_foyer",
       });
 
-      const handler = registry.getHandler("scene_interaction")!;
+      const handler = registry.getHandler("action")!;
       const ctx = makeCtx();
 
       const action = handler.execute(
@@ -650,7 +650,7 @@ describe("Engine Integration — Blackwood Manor", () => {
           characterName: "Officer James Harlow",
           action: "Barricade the cellar door with furniture",
           location: "manor_foyer",
-          type: "scene_interaction",
+          type: "action",
           skill: "STR",
           impact: 2 as any,
         }),
@@ -781,7 +781,7 @@ describe("Engine Integration — Blackwood Manor", () => {
         characterName: "Isabella Rossi",
         action: "Knock over the oil lantern onto the altar cloth",
         location: "manor_cellar",
-        type: "scene_interaction",
+        type: "action",
         fireIntensity: 2,
       });
 

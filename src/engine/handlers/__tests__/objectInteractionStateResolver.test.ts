@@ -919,6 +919,7 @@ describe("resolveObjectInteractionState (LLM)", () => {
       dgsm as any,
       {} as any,
       { successLevel: "critical", detail: "Critical success (roll 01 vs 65)" },
+      "study",
       "zh"
     );
 

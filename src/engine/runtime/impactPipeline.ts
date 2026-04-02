@@ -15,32 +15,11 @@ import { personalizeEncounterForNpc } from "./encounterScanner.js";
 export async function recordRevisionInterruption(params: {
   action: CharacterAction | undefined;
   tickActions: CharacterAction[];
-  sessionId: string;
-  moduleId: string;
-  gameDay: number;
-  memoryManager?: NpcMemoryManager;
 }): Promise<void> {
-  const { action, tickActions, sessionId, moduleId, gameDay, memoryManager } =
-    params;
+  const { action, tickActions } = params;
   if (!action) return;
 
   tickActions.push(action);
-  if (!memoryManager) return;
-
-  await memoryManager.add({
-    npcId: action.characterId,
-    sessionId,
-    moduleId,
-    type: "event",
-    content: action.outcome,
-    gameDay,
-    gameTime: action.gameTime,
-    location: action.location,
-    metadata: {
-      outcome: action.outcome,
-      interruptionReason: action.interruptionReason ?? "",
-    },
-  });
 }
 
 function shouldRunImpactGate(action: CharacterAction): boolean {
@@ -126,6 +105,7 @@ export async function processImpactPipeline(params: {
   tickRuntime: TickRuntimeContext;
   memoryManager?: NpcMemoryManager;
   recordRevisionInterruption: (
+    node: PlanNode,
     action: CharacterAction | undefined
   ) => Promise<void>;
 }): Promise<void> {
@@ -359,6 +339,14 @@ export async function processImpactPipeline(params: {
         if (inProgressNode) {
           const npcPos = dgsm.getCharacterPosition(npcId);
           const npcLoc = npcPos ? dgsm.resolveLocationId(npcPos) : "";
+          const triggerDesc = primaryEvent
+            ? buildImpactEventText(
+                perspective,
+                primaryEvent,
+                sortedEvents[0]?.impact ?? 1,
+                language
+              )
+            : t("perceived_something", language);
           const interrupted = interruptNode(
             inProgressNode,
             tickRuntime.tickTime,
@@ -374,9 +362,10 @@ export async function processImpactPipeline(params: {
             inProgressNode,
             tickRuntime.tickTime,
             npcLoc,
-            language
+            language,
+            triggerDesc
           );
-          await recordRevisionInterruption(interruptedAction);
+          await recordRevisionInterruption(inProgressNode, interruptedAction);
         }
       }
 

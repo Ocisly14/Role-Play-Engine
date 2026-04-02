@@ -71,7 +71,10 @@ export async function discoverEvidence(
 ): Promise<DiscoveryEntry[]> {
   const scene = dgsm.getScene(sceneId);
   if (!scene?.items) return [];
-  if (node.type !== "scene_interaction" && node.type !== "object_interaction") {
+  if (
+    node.type !== "action" &&
+    node.type !== "object_interaction"
+  ) {
     return [];
   }
 

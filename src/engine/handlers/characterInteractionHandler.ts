@@ -119,6 +119,7 @@ export const characterInteractionHandler: NodeHandler = {
             failureReason: "skill_roll_failed",
           }
         );
+        failedAction.rollDetail = lastRollDetail;
         failedAction.perTargetResults = resolvedPerTargetResults;
         return failedAction;
       }

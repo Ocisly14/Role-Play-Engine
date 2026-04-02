@@ -128,6 +128,12 @@ describe("npcPlanningTemplates", () => {
     expect(detailed.systemPrompt).toContain(
       '"destination": "ONLY for movement'
     );
+    expect(detailed.systemPrompt).toContain(
+      "jumping out a window into a courtyard"
+    );
+    expect(detailed.systemPrompt).toContain(
+      "walking to the courtyard or heading upstairs"
+    );
     expect(detailed.systemPrompt).not.toContain('Keep "location", "type"');
   });
 

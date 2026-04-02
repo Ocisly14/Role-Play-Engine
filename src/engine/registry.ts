@@ -220,11 +220,13 @@ export class GameEngineRegistry {
   // ===== Prompt generation =====
 
   /** Auto-generate prompt fragment listing all registered node types with descriptions + examples */
-  buildHandlerPrompt(): string {
+  buildHandlerPrompt(options?: { excludeTypes?: string[] }): string {
     if (this.handlers.size === 0) return "";
 
+    const excluded = new Set(options?.excludeTypes ?? []);
     let prompt = "## Node Type Reference\n\n";
     for (const handler of this.handlers.values()) {
+      if (excluded.has(handler.type)) continue;
       prompt += `### ${handler.type}\n`;
       prompt += `${handler.description}\n`;
       prompt += `Required fields: ${handler.requiredFields.join(", ")}\n`;
@@ -355,11 +357,16 @@ The \`impact\` field on every PlanNode determines **who in the game world percei
   buildOutputSchemaPrompt(options?: {
     extraInstructions?: string;
     language?: string;
+    excludeTypes?: string[];
   }): string {
+    const excluded = new Set(options?.excludeTypes ?? []);
+    const plannerVisibleHandlers = [...this.handlers.values()].filter(
+      (handler) => !excluded.has(handler.type)
+    );
     const typeNames =
-      this.handlers.size > 0
-        ? [...this.handlers.keys()].join("|")
-        : "routine|movement|character_interaction|object_interaction|scene_interaction";
+      plannerVisibleHandlers.length > 0
+        ? plannerVisibleHandlers.map((handler) => handler.type).join("|")
+        : "action|movement|character_interaction|object_interaction";
 
     const langName = options?.language?.startsWith("zh")
       ? "Chinese"
@@ -422,7 +429,7 @@ The \`impact\` field on every PlanNode determines **who in the game world percei
 
     // Section 3: Type-Specific Additional Fields (show ALL types)
     const typeSpecSections: string[] = [];
-    for (const handler of this.handlers.values()) {
+    for (const handler of plannerVisibleHandlers) {
       const { required, optional, exampleExtras } =
         this.getTypeSpecificFields(handler);
 
@@ -497,7 +504,7 @@ The \`impact\` field on every PlanNode determines **who in the game world percei
     let richestHandler: NodeHandler | undefined;
     let richestExtras: Record<string, unknown> = {};
     let maxExtras = 0;
-    for (const handler of this.handlers.values()) {
+    for (const handler of plannerVisibleHandlers) {
       const { exampleExtras } = this.getTypeSpecificFields(handler);
       const count = Object.keys(exampleExtras).length;
       if (count > maxExtras) {

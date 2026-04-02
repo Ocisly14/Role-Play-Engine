@@ -1,6 +1,5 @@
 import type { CharacterAction, PlanNode } from "../../planning/types.js";
 import type { DynamicGameStateManager } from "../../state/DynamicGameState.js";
-import { restCharacter } from "../features/staminaFeature.js";
 import { buildOutcome, makeAction } from "../shared/nodeHelpers.js";
 import type { ExecutionContext, NodeHandler } from "../types.js";
 
@@ -8,19 +7,22 @@ export const actionHandler: NodeHandler = {
   type: "action",
 
   description:
-    'A narrative action performed by a character at their current location. This handler is for actions that do NOT change object, character, or scene state. If skill is set, a skill roll determines success; otherwise the action auto-succeeds. Set routineSubtype to "rest" for sleeping, napping, or resting — this resets fatigue automatically.',
+    "A current-location action performed in the actor's present scene. " +
+    "Use this for self-directed behavior and environment-facing actions that do not primarily target a specific item or character. " +
+    "Examples: resting, waiting, searching the room, listening at the door, drawing curtains, barring an exit, hiding in place. " +
+    "If skill is set, a skill roll determines success; otherwise the action auto-succeeds. " +
+    "An LLM resolver determines scene changes, partial outcomes, and fatigue effects after execution.",
 
   requiredFields: ["action"],
 
-  optionalFields: ["skill", "routineSubtype"],
+  optionalFields: ["skill"],
 
   exampleNode: {
     nodeId: "a1",
     startTime: "22:00",
     endTime: "22:05",
     type: "action",
-    routineSubtype: "rest",
-    action: "Sleep for the night to recover from exhaustion",
+    action: "Search the study carefully for signs that someone opened the desk",
     impact: 0,
   },
 
@@ -55,7 +57,7 @@ export const actionHandler: NodeHandler = {
       resolvedSuccessLevel = rollResult.successLevel;
       if (rollResult.failed) {
         lastRollDetail = rollResult.reason;
-        return makeAction(
+        const failedAction = makeAction(
           node,
           "failed",
           buildOutcome(node, "failed", { rollDetail: lastRollDetail }, lang),
@@ -66,20 +68,19 @@ export const actionHandler: NodeHandler = {
             failureReason: "skill_roll_failed",
           }
         );
+        failedAction.rollDetail = lastRollDetail;
+        return failedAction;
       }
       lastRollDetail = rollResult.detail;
     }
 
-    // Rest subtype → reset fatigue via stamina feature
-    if (node.routineSubtype === "rest") {
-      restCharacter(dgsm, node.characterId);
-    }
-
-    return makeAction(
+    const action = makeAction(
       node,
       "completed",
       buildOutcome(node, "completed", { rollDetail: lastRollDetail }, lang),
       { difficulty, location: locationId, successLevel: resolvedSuccessLevel }
     );
+    action.rollDetail = lastRollDetail;
+    return action;
   },
 };

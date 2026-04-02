@@ -1,8 +1,12 @@
 import { describe, expect, it } from "vitest";
 import type { SceneStateDelta } from "../../../planning/types.js";
 import type { DynamicGameStateManager } from "../../../state/DynamicGameState.js";
+import type { TownTopology } from "../../../state/topologyTypes.js";
 import type { DynamicScene, Item } from "../../../state/types.js";
-import { applySceneDelta } from "../sceneInteractionStateResolver.js";
+import {
+  applyActionSceneDelta,
+  collectActionMoveCandidates,
+} from "../actionStateResolver.js";
 
 // ─── Mock DGSM (aligned with objectInteractionStateResolver tests) ───
 
@@ -11,6 +15,12 @@ function createMockDgsm() {
   const npcInventories: Record<string, Item[]> = {};
   const npcCharacters: Array<{ id: string; name: string }> = [];
   const scenarioConditions: Record<string, Array<{ description: string }>> = {};
+  const topology: TownTopology = {
+    junctions: new Map(),
+    roads: new Map(),
+    junctionToRoads: new Map(),
+    sceneToParent: new Map(),
+  };
   const setConnectionHiddenCalls: Array<{
     sceneId: string;
     targetId: string;
@@ -19,10 +29,25 @@ function createMockDgsm() {
 
   return {
     getState() {
-      return { npcCharacters, npcInventories, scenarioConditions };
+      return {
+        npcCharacters,
+        npcInventories,
+        scenarioConditions,
+        scenes,
+        scenarioOutlines: [],
+      };
     },
     getScene(sceneId: string): DynamicScene | null {
       return scenes.get(sceneId) ?? null;
+    },
+    getTopology(): TownTopology {
+      return topology;
+    },
+    getJunction(junctionId: string) {
+      return topology.junctions.get(junctionId) ?? null;
+    },
+    getRoad(roadId: string) {
+      return topology.roads.get(roadId) ?? null;
     },
     getNpcInventory(npcId: string): Item[] {
       return npcInventories[npcId] ?? [];
@@ -60,16 +85,48 @@ function createMockDgsm() {
       setConnectionHiddenCalls.push({ sceneId, targetId, hidden });
     },
 
-    _addScene(id: string, name: string, items: Item[]): void {
+    _addScene(
+      id: string,
+      name: string,
+      items: Item[],
+      parentLocationId = "PARENT"
+    ): void {
       scenes.set(id, {
         id,
         name,
         description: "",
-        parentLocationId: "PARENT",
+        parentLocationId,
         items,
         conditions: [],
         connections: [],
       });
+    },
+    _connectSceneToJunction(
+      sceneId: string,
+      junctionId: string,
+      junctionName = junctionId
+    ): void {
+      topology.sceneToParent.set(sceneId, {
+        type: "junction",
+        junctionId,
+      });
+      if (!topology.junctions.has(junctionId)) {
+        topology.junctions.set(junctionId, {
+          id: junctionId,
+          name: junctionName,
+          description: "",
+          parentLocationId: "OUTDOOR",
+          items: [],
+          conditions: [],
+          connectedSceneIds: [sceneId],
+        });
+        topology.junctionToRoads.set(junctionId, []);
+      } else {
+        const junction = topology.junctions.get(junctionId)!;
+        if (!junction.connectedSceneIds.includes(sceneId)) {
+          junction.connectedSceneIds.push(sceneId);
+        }
+      }
     },
     _addInventory(npcId: string, items: Item[]): void {
       npcInventories[npcId] = items;
@@ -86,7 +143,7 @@ function makeItem(
   return { ...overrides };
 }
 
-describe("applySceneDelta", () => {
+describe("applyActionSceneDelta", () => {
   it("applies damaged tool update while item stays in inventory", () => {
     const dgsm = createMockDgsm();
     const crowbar = makeItem({
@@ -108,7 +165,7 @@ describe("applySceneDelta", () => {
       ],
     };
 
-    applySceneDelta(
+    applyActionSceneDelta(
       dgsm as unknown as DynamicGameStateManager,
       delta,
       "room1",
@@ -119,7 +176,7 @@ describe("applySceneDelta", () => {
     expect(dgsm.getNpcInventory("actor1")[0].damaged).toBe(true);
   });
 
-  it("removes consumable destroyed by scene interaction", () => {
+  it("removes consumable destroyed by a current-location action", () => {
     const dgsm = createMockDgsm();
     const matches = makeItem({
       id: "matches",
@@ -134,7 +191,7 @@ describe("applySceneDelta", () => {
       items: [{ itemId: "matches", location: "destroyed" }],
     };
 
-    applySceneDelta(
+    applyActionSceneDelta(
       dgsm as unknown as DynamicGameStateManager,
       delta,
       "room1",
@@ -155,7 +212,7 @@ describe("applySceneDelta", () => {
       items: [{ itemId: "flashlight", location: "scene" }],
     };
 
-    applySceneDelta(
+    applyActionSceneDelta(
       dgsm as unknown as DynamicGameStateManager,
       delta,
       "room1",
@@ -177,7 +234,7 @@ describe("applySceneDelta", () => {
       connectionEffects: [{ targetId: "secret_stairs", action: "reveal" }],
     };
 
-    const result = applySceneDelta(
+    const result = applyActionSceneDelta(
       dgsm as unknown as DynamicGameStateManager,
       delta,
       "room1",
@@ -188,5 +245,26 @@ describe("applySceneDelta", () => {
       { sceneId: "room1", targetId: "secret_stairs" },
     ]);
     expect(dgsm.setConnectionHiddenCalls).toEqual([]);
+  });
+});
+
+describe("collectActionMoveCandidates", () => {
+  it("includes sibling scenes and topology locations reachable within 2 minutes", () => {
+    const dgsm = createMockDgsm();
+    dgsm._addScene("study", "Study", [], "MANOR");
+    dgsm._addScene("bedroom", "Bedroom", [], "MANOR");
+    dgsm._addScene("courtyard", "Courtyard", [], "OUTDOOR");
+    dgsm._connectSceneToJunction("study", "JUNC_1", "Front Junction");
+    dgsm._connectSceneToJunction("courtyard", "JUNC_1", "Front Junction");
+
+    const candidates = collectActionMoveCandidates(
+      "study",
+      dgsm as unknown as DynamicGameStateManager
+    );
+    const candidateIds = candidates.map((candidate) => candidate.id);
+
+    expect(candidateIds).toContain("bedroom");
+    expect(candidateIds).toContain("JUNC_1");
+    expect(candidateIds).toContain("courtyard");
   });
 });

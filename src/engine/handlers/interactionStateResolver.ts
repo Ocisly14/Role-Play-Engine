@@ -10,6 +10,7 @@
 import type { NpcMemoryManager } from "../../memory/NpcMemoryManager.js";
 import { ModelClass, generateText } from "../../models/index.js";
 import type {
+  ActionResolutionContext,
   CharacterStateDelta,
   DiscoveryEntry,
   InteractionStateDelta,
@@ -18,8 +19,11 @@ import type {
 } from "../../planning/types.js";
 import type { DynamicGameStateManager } from "../../state/DynamicGameState.js";
 import type { GameEngineRegistry } from "../registry.js";
+import { applyFatigueDelta } from "../features/staminaFeature.js";
+import { parseJsonResponse } from "../shared/jsonParse.js";
 import { findTopologyPath } from "../shared/pathfinding.js";
 import { buildWorldStateBlock } from "../shared/worldStateBlock.js";
+import { buildExecutionContextPromptBlock, diffMinutes } from "../runtime/resolutionExecutionContext.js";
 import { resolveTargetPosition } from "./movementHandler.js";
 
 // ─── Helpers ──────────────────────────────────────────────────────────
@@ -29,49 +33,6 @@ import { resolveTargetPosition } from "./movementHandler.js";
  */
 export function resolveTargets(node: PlanNode): string[] {
   return node.targetCharacterIds ?? [];
-}
-
-function repairJson(text: string): string {
-  text = text.replace(/,\s*([}\]])/g, "$1");
-  text = text.replace(/"(?:[^"\\]|\\.)*"/g, (match) =>
-    match.replace(/\n/g, "\\n").replace(/\r/g, "\\r").replace(/\t/g, "\\t")
-  );
-  let inString = false;
-  let escape = false;
-  const stack: string[] = [];
-  for (const ch of text) {
-    if (escape) {
-      escape = false;
-      continue;
-    }
-    if (ch === "\\") {
-      escape = true;
-      continue;
-    }
-    if (ch === '"') {
-      inString = !inString;
-      continue;
-    }
-    if (inString) continue;
-    if (ch === "{") stack.push("}");
-    else if (ch === "[") stack.push("]");
-    else if (ch === "}" || ch === "]") stack.pop();
-  }
-  while (stack.length > 0) text += stack.pop();
-  return text;
-}
-
-function parseJsonResponse<T>(raw: string): T {
-  let text = raw.trim();
-  const fenceMatch = text.match(/```(?:json)?\s*([\s\S]*?)```/);
-  if (fenceMatch) text = fenceMatch[1].trim();
-  text = text.replace(/\\([^"\\\/bfnrtu])/g, "$1");
-  try {
-    return JSON.parse(text) as T;
-  } catch {
-    const repaired = repairJson(text);
-    return JSON.parse(repaired) as T;
-  }
 }
 
 // ─── Character data collector ─────────────────────────────────────────
@@ -123,7 +84,12 @@ function collectCharacterData(
 
 function buildSystemPrompt(language: string): string {
   return `You are a Call of Cthulhu 7th Edition game state resolver.
-Given a character interaction that has already been determined to succeed/fail, determine the concrete state changes for both characters.
+Given a character interaction that has already been determined to complete, fail, or be interrupted, determine the concrete state changes for both characters.
+
+## Execution Status
+- **completed**: resolve the interaction normally.
+- **failed**: the primary goal did NOT succeed. Usually output no major state change, though grounded side effects are allowed.
+- **interrupted**: the interaction stopped partway through. Use elapsed time and interruption context to decide whether there is no effect or only a partial effect. Do NOT assume the full intended result happened.
 
 ## HP / SAN Changes
 - When pre-computed damage values are provided in the opposed roll results, use them directly as negative hpDelta on the target. Do NOT invent different damage numbers.
@@ -196,6 +162,16 @@ Apply both factors together: a critical success in casual small-talk still only 
 - **Keep it concise: 1–3 sentences for routine interactions.** Only write longer memories (4+ sentences) for truly significant events — combat with serious injury, major revelations, death, or sanity-breaking encounters. Most social exchanges, minor negotiations, and casual conversations should be brief.
 - Write in ${language}.
 
+## Fatigue
+You may output optional "fatigueDelta" on either actorChanges or targetChanges.
+
+Rules:
+- "fatigueDelta" is an integer from -3 to 3
+- Negative = recovered / caught breath
+- Positive = more fatigued from stress, exertion, dragging, fighting, or intense effort
+- Omit or use 0 when fatigue impact is negligible
+- Interrupted interactions should usually have smaller absolute fatigue changes than completed ones
+
 ## General Rules
 - Only output fields that have a meaningful value. Omit fields with no change.
 - Do not invent items, locations, or knowledge that do not appear in the provided data.
@@ -217,6 +193,7 @@ Return a single JSON object. No extra text. JSON keys must be in English. Write 
   "actorChanges": {
     "hpDelta": -2 (optional, negative = damage),
     "sanDelta": -1 (optional, negative = loss),
+    "fatigueDelta": 1 (optional, -3..3),
     "moveTo": "scene_id" (optional, must be from connected locations list),
     "addItems": ["item_id"] (optional, item must exist in scene or counterpart inventory),
     "removeItems": ["item_id"] (optional),
@@ -256,7 +233,8 @@ function buildUserPrompt(
   sceneBlock: string,
   worldStateBlock: string,
   skillRollResult: SkillRollInput | null,
-  availableKnowledge: DiscoveryEntry[]
+  availableKnowledge: DiscoveryEntry[],
+  resolutionContext: ActionResolutionContext
 ): string {
   const nodeSection = JSON.stringify(
     {
@@ -365,6 +343,8 @@ function buildUserPrompt(
     "",
     rollSection,
     "",
+    buildExecutionContextPromptBlock(resolutionContext),
+    "",
     actorSection,
     "",
     targetSections,
@@ -441,11 +421,20 @@ export async function resolveInteractionState(
   skillRollResult: SkillRollInput | null,
   availableKnowledge: DiscoveryEntry[],
   locationId: string,
-  language: string,
+  language?: string,
   registry?: GameEngineRegistry,
-  featureNotes?: string[]
+  featureNotes?: string[],
+  resolutionContext?: ActionResolutionContext
 ): Promise<InteractionStateDelta> {
   const targets = resolveTargets(node);
+  const resolvedLanguage = language ?? locationId;
+  const resolvedLocationId =
+    language == null
+      ? (() => {
+          const pos = dgsm.getCharacterPosition(node.characterId);
+          return pos ? dgsm.resolveLocationId(pos) : "";
+        })()
+      : locationId;
 
   // Collect character data
   const actor = collectCharacterData(node.characterId, dgsm);
@@ -462,28 +451,35 @@ export async function resolveInteractionState(
   });
 
   // Build scene block
-  const sceneBlock = buildSceneBlock(locationId, dgsm);
+  const sceneBlock = buildSceneBlock(resolvedLocationId, dgsm);
 
   // Build world state block (weather, fire, stamina, sanity)
   const worldStateBlock = buildWorldStateBlock(
     dgsm,
     node.characterId,
-    locationId,
+    resolvedLocationId,
     registry
   );
 
   // Build prompts
-  const systemPrompt = buildSystemPrompt(language);
+  const systemPrompt = buildSystemPrompt(resolvedLanguage);
   let userPrompt = buildUserPrompt(
     node,
-    locationId,
+    resolvedLocationId,
     actor,
     targetDataList,
     relationships,
     sceneBlock,
     worldStateBlock,
     skillRollResult,
-    availableKnowledge
+    availableKnowledge,
+    resolutionContext ?? {
+      executionStatus: "completed",
+      startedAt: node.executionMeta.startedAt ?? node.startTime,
+      resolvedAt: node.endTime,
+      elapsedMinutes: Math.max(1, diffMinutes(node.startTime, node.endTime)),
+      plannedMinutes: Math.max(1, diffMinutes(node.startTime, node.endTime)),
+    }
   );
 
   // Inject feature activation notes (e.g. ritual invoke failed)
@@ -576,6 +572,7 @@ export async function applyCharacterDelta(
   if (delta.sanDelta) {
     dgsm.updateNpcSan(characterId, delta.sanDelta);
   }
+  applyFatigueDelta(dgsm, characterId, delta.fatigueDelta);
 
   // 2. Remove items
   if (delta.removeItems) {

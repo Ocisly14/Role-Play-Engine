@@ -80,6 +80,9 @@ function createMockDgsm() {
       if (!scenarioConditions[scenarioId]) scenarioConditions[scenarioId] = [];
       scenarioConditions[scenarioId].push(condition);
     },
+    replaceSceneConditions(scenarioId: string, conditions: SceneCondition[]): void {
+      scenarioConditions[scenarioId] = [...conditions];
+    },
 
     // Scene lookup
     getScene(sceneId: string): MockScene | undefined {
@@ -179,7 +182,7 @@ function makeFireNode(
     endTime: "08:05",
     action: "Set fire",
     location,
-    type: "scene_interaction",
+    type: "action",
     impact: 3,
     status: "pending",
     executionMeta: { remainingMinutes: 5 },

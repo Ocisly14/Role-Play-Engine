@@ -26,6 +26,7 @@ export function buildInterruptedAction(
     status: "interrupted",
     outcome: triggerDescription ?? base,
     interruptionReason: "revise_replan",
+    triggerDescription,
     targetCharacterIds: node.targetCharacterIds,
   };
 }

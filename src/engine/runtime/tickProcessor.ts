@@ -213,16 +213,30 @@ async function executeSingleTick(
   const movedNpcIds = new Set<string>();
 
   const recordRevisionInterruption = async (
+    node: PlanNode,
     action: CharacterAction | undefined
-  ): Promise<void> =>
-    recordRevisionInterruptionEntry({
+  ): Promise<void> => {
+    if (!action) return;
+    const postProcessResult = await postProcessExecutedNodeAction({
+      node,
       action,
-      tickActions,
+      dgsm,
+      ctx,
+      npcPlanningAgent,
       sessionId,
       moduleId,
       gameDay,
+      language,
+      registry,
+      featureNotes: [],
       memoryManager,
     });
+    await recordRevisionInterruptionEntry({
+      action: postProcessResult.action,
+      tickActions,
+    });
+    logNodeExecutionResult(node, postProcessResult.action);
+  };
 
   for (const rawNode of allNodes) {
     // Skip execution for NPCs engaged as interaction targets

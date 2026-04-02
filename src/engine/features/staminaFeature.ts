@@ -6,7 +6,9 @@ import { applySanityLoss } from "./sanityFeature.js";
 // ===== Internal types =====
 
 export interface StaminaCharacterState {
-  minutesSinceLastRest: number;
+  fatigue: number;
+  /** Legacy compatibility for persisted sessions and older tests. Mirrors `fatigue`. */
+  minutesSinceLastRest?: number;
   fatigueLevel: 0 | 1 | 2; // 0=rested, 1=tired, 2=exhausted
   exhaustedDrainTicks: number;
 }
@@ -27,6 +29,7 @@ const FEATURE_ID = "stamina";
 const TIRED_THRESHOLD = 480; // minutes → fatigue level 1
 const EXHAUSTED_THRESHOLD = 960; // minutes → fatigue level 2
 const DRAIN_TICK_INTERVAL = 6; // check every 6 ticks at exhausted
+const FATIGUE_DELTA_UNIT = 60; // one LLM fatigue step ~= one hour of fatigue
 const BASE_FAIL_CHANCE = 0.3;
 const MAX_FAIL_CHANCE = 0.6;
 const FIRE_ACCEL_THRESHOLD = 2; // fire intensity >= 2 → +1x
@@ -53,9 +56,17 @@ function getStaminaState(
   dgsm: DynamicGameStateManager,
   characterId: string
 ): StaminaCharacterState | undefined {
-  return dgsm.getFeatureSceneState(FEATURE_ID, characterId) as
-    | StaminaCharacterState
+  const raw = dgsm.getFeatureSceneState(FEATURE_ID, characterId) as
+    | Partial<StaminaCharacterState>
     | undefined;
+  if (!raw) return undefined;
+  const fatigue = Math.max(0, raw.fatigue ?? raw.minutesSinceLastRest ?? 0);
+  return {
+    fatigue,
+    minutesSinceLastRest: fatigue,
+    fatigueLevel: raw.fatigueLevel ?? computeFatigueLevel(fatigue),
+    exhaustedDrainTicks: raw.exhaustedDrainTicks ?? 0,
+  };
 }
 
 function setStaminaState(
@@ -63,13 +74,23 @@ function setStaminaState(
   characterId: string,
   state: StaminaCharacterState
 ): void {
-  dgsm.setFeatureSceneState(FEATURE_ID, characterId, state);
+  dgsm.setFeatureSceneState(FEATURE_ID, characterId, {
+    ...state,
+    minutesSinceLastRest: state.fatigue,
+  });
 }
 
-function computeFatigueLevel(minutesSinceLastRest: number): 0 | 1 | 2 {
-  if (minutesSinceLastRest >= EXHAUSTED_THRESHOLD) return 2;
-  if (minutesSinceLastRest >= TIRED_THRESHOLD) return 1;
+function computeFatigueLevel(fatigue: number): 0 | 1 | 2 {
+  if (fatigue >= EXHAUSTED_THRESHOLD) return 2;
+  if (fatigue >= TIRED_THRESHOLD) return 1;
   return 0;
+}
+
+function computeFatigueBarScore(fatigue: number): number {
+  return Math.max(
+    0,
+    Math.min(100, Math.round((fatigue / EXHAUSTED_THRESHOLD) * 100))
+  );
 }
 
 /**
@@ -122,11 +143,11 @@ function roll1d3(): number {
 
 /**
  * Compute the CON fail chance for an exhausted character.
- * failChance = min(0.6, 0.3 + (minutesSinceLastRest - 960) / 960 * 0.3)
+ * failChance = min(0.6, 0.3 + (fatigue - 960) / 960 * 0.3)
  */
-function computeFailChance(minutesSinceLastRest: number): number {
+function computeFailChance(fatigue: number): number {
   const extra =
-    ((minutesSinceLastRest - EXHAUSTED_THRESHOLD) / EXHAUSTED_THRESHOLD) * 0.3;
+    ((fatigue - EXHAUSTED_THRESHOLD) / EXHAUSTED_THRESHOLD) * 0.3;
   return Math.min(MAX_FAIL_CHANCE, BASE_FAIL_CHANCE + extra);
 }
 
@@ -145,7 +166,7 @@ function processExhaustionDrain(
   if (stamina.exhaustedDrainTicks >= DRAIN_TICK_INTERVAL) {
     stamina.exhaustedDrainTicks = 0;
 
-    const failChance = computeFailChance(stamina.minutesSinceLastRest);
+    const failChance = computeFailChance(stamina.fatigue);
     if (Math.random() < failChance) {
       // CON check failed — drain HP and SAN
       const sanDrain = roll1d3();
@@ -217,24 +238,44 @@ function getTrackedCharacters(dgsm: DynamicGameStateManager): Array<{
   return result;
 }
 
-// ===== Rest / Recovery =====
-
-/**
- * Reset a character's fatigue after resting.
- * Called by actionHandler when a rest node completes.
- */
-export function restCharacter(
+function updateTrackedStaminaState(
   dgsm: DynamicGameStateManager,
-  characterId: string
+  characterId: string,
+  nextFatigue: number
 ): void {
-  const stamina = getStaminaState(dgsm, characterId);
-  if (!stamina) return;
-
-  stamina.minutesSinceLastRest = 0;
-  stamina.fatigueLevel = 0;
-  stamina.exhaustedDrainTicks = 0;
+  const stamina = getStaminaState(dgsm, characterId) ?? {
+    fatigue: 0,
+    minutesSinceLastRest: 0,
+    fatigueLevel: 0,
+    exhaustedDrainTicks: 0,
+  };
+  stamina.fatigue = Math.max(0, nextFatigue);
+  stamina.minutesSinceLastRest = stamina.fatigue;
+  const prevLevel = stamina.fatigueLevel;
+  stamina.fatigueLevel = computeFatigueLevel(stamina.fatigue);
+  if (stamina.fatigueLevel !== 2) {
+    stamina.exhaustedDrainTicks = 0;
+  }
   setStaminaState(dgsm, characterId, stamina);
-  updateFatigueCondition(dgsm, characterId, 0);
+  if (stamina.fatigueLevel !== prevLevel) {
+    updateFatigueCondition(dgsm, characterId, stamina.fatigueLevel);
+  }
+}
+
+export function applyFatigueDelta(
+  dgsm: DynamicGameStateManager,
+  characterId: string,
+  fatigueDelta: number | undefined
+): void {
+  if (fatigueDelta == null || !Number.isFinite(fatigueDelta)) return;
+  const clampedUnits = Math.trunc(fatigueDelta);
+  if (clampedUnits === 0) return;
+  const currentFatigue = getStaminaState(dgsm, characterId)?.fatigue ?? 0;
+  updateTrackedStaminaState(
+    dgsm,
+    characterId,
+    currentFatigue + clampedUnits * FATIGUE_DELTA_UNIT
+  );
 }
 
 // ===== Exported feature =====
@@ -248,8 +289,9 @@ export const staminaFeature: WorldFeature = {
 - Characters accumulate fatigue over time. After ~8 hours (480 min) they become tired; after ~16 hours (960 min) they become exhausted.
 - Exhausted characters risk HP and SAN loss from failed CON checks.
 - Environmental hazards (intense fire, extreme weather) accelerate fatigue accumulation.
+- The simulation tick adds baseline fatigue automatically; action resolvers may also add or reduce fatigue based on what the character actually did.
 - NPCs should consider resting when tired and urgently seek shelter when exhausted.
-- You do NOT control fatigue directly — it is tracked automatically by the stamina system.`,
+- Do not use special "rest mode" mechanics. Rest is just an action whose outcome may reduce fatigue.`,
 
   stateDescription(dgsm: DynamicGameStateManager): string {
     const allStates = dgsm.getFeatureState(FEATURE_ID) as Record<
@@ -260,11 +302,12 @@ export const staminaFeature: WorldFeature = {
 
     for (const [characterId, stamina] of Object.entries(allStates)) {
       if (!dgsm.isNpcAlive(characterId)) continue;
-      if (!stamina || stamina.fatigueLevel === 0) continue;
-      const hours = (stamina.minutesSinceLastRest / 60).toFixed(1);
-      const label = FATIGUE_LABELS[stamina.fatigueLevel] ?? "unknown";
+      const normalized = getStaminaState(dgsm, characterId);
+      if (!normalized || normalized.fatigueLevel === 0) continue;
+      const score = computeFatigueBarScore(normalized.fatigue);
+      const label = FATIGUE_LABELS[normalized.fatigueLevel] ?? "unknown";
       const name = characterId;
-      lines.push(`- ${name}: ${label} (${hours}h active)`);
+      lines.push(`- ${name}: ${label} (${score}/100)`);
     }
 
     return lines.length > 0 ? "Character fatigue:\n" + lines.join("\n") : "";
@@ -291,6 +334,7 @@ export const staminaFeature: WorldFeature = {
       let stamina = getStaminaState(dgsm, characterId);
       if (!stamina) {
         stamina = {
+          fatigue: 0,
           minutesSinceLastRest: 0,
           fatigueLevel: 0,
           exhaustedDrainTicks: 0,
@@ -302,9 +346,10 @@ export const staminaFeature: WorldFeature = {
       const effectiveMinutes = runtime.tickDurationMinutes * multiplier;
 
       // Accumulate fatigue
-      stamina.minutesSinceLastRest += effectiveMinutes;
+      stamina.fatigue += effectiveMinutes;
+      stamina.minutesSinceLastRest = stamina.fatigue;
       const prevLevel = stamina.fatigueLevel;
-      stamina.fatigueLevel = computeFatigueLevel(stamina.minutesSinceLastRest);
+      stamina.fatigueLevel = computeFatigueLevel(stamina.fatigue);
 
       // Inject/remove fatigue condition on level change
       if (stamina.fatigueLevel !== prevLevel) {

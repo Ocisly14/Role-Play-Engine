@@ -4,8 +4,7 @@ export type BuiltinNodeType =
   | "action"
   | "movement"
   | "character_interaction"
-  | "object_interaction"
-  | "scene_interaction";
+  | "object_interaction";
 
 /** Open to plugin extensions — accepts any string, with IDE hints for built-in types */
 export type PlanNodeType = BuiltinNodeType | (string & {});
@@ -18,9 +17,14 @@ export interface SceneCondition {
   };
 }
 
+export interface FatigueEffectDelta {
+  /** Fatigue modifier from LLM resolver. Clamped at runtime to [-N, N] where N scales with action duration (3–8). */
+  fatigueDelta?: number;
+}
+
 // ===== LLM State Resolver types (character_interaction) =====
 
-export interface CharacterStateDelta {
+export interface CharacterStateDelta extends FatigueEffectDelta {
   hpDelta?: number;
   sanDelta?: number;
   moveTo?: string;
@@ -60,7 +64,7 @@ export interface NewItemEntry {
   [key: string]: unknown;
 }
 
-export interface ObjectStateDelta {
+export interface ObjectStateDelta extends FatigueEffectDelta {
   /** Final state of each affected item. Only include items that changed. */
   items: ItemResult[];
   /** New items created by disassembly, crafting, or transformation. */
@@ -71,20 +75,22 @@ export interface ObjectStateDelta {
   memory: string;
 }
 
-// ===== LLM State Resolver types (scene_interaction) =====
+// ===== LLM State Resolver types (current-location action) =====
 
 export interface SceneConnectionEffectResult {
   targetId: string;
   action: "block" | "unblock" | "reveal" | "hide";
 }
 
-export interface SceneStateDelta {
+export interface SceneStateDelta extends FatigueEffectDelta {
   /** Scene conditions to add (with optional mechanical effects). */
   addSceneConditions?: SceneCondition[];
   /** Exact existing condition descriptions to remove. */
   removeSceneConditions?: string[];
   /** Connection effects: block/unblock/reveal/hide passages. */
   connectionEffects?: SceneConnectionEffectResult[];
+  /** Optional incidental actor relocation caused by the action. */
+  moveTo?: string;
   /** Item state changes (tool damage, consumption, movement). */
   items?: ItemResult[];
   /** First-person memory for the actor. */
@@ -175,6 +181,17 @@ export interface DiscoveryEntry {
 
 export type SuccessLevel = "critical" | "hard" | "regular" | "fail" | "fumble";
 
+export interface ActionResolutionContext {
+  executionStatus: "completed" | "failed" | "interrupted";
+  startedAt: string;
+  resolvedAt: string;
+  elapsedMinutes: number;
+  plannedMinutes: number;
+  failureReason?: FailureReason;
+  interruptionReason?: "revise_replan" | "character_dead";
+  triggerDescription?: string;
+}
+
 export interface CharacterAction {
   characterId: string;
   characterName: string;
@@ -192,6 +209,7 @@ export interface CharacterAction {
   outcome: string;
   failureReason?: FailureReason;
   interruptionReason?: "revise_replan" | "character_dead";
+  triggerDescription?: string;
   targetCharacterIds?: string[];
   discoveries?: DiscoveryEntry[];
   damagedEvidence?: { itemId: string; sourceName: string };

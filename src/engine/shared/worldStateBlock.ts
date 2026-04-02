@@ -111,14 +111,24 @@ export function buildWorldStateBlock(
 
   // Stamina — only this character's fatigue
   const staminaStates = dgsm.getFeatureState("stamina") as
-    | Record<string, { fatigueLevel?: number; minutesSinceLastRest?: number }>
+    | Record<
+        string,
+        { fatigue?: number; fatigueLevel?: number; minutesSinceLastRest?: number }
+      >
     | undefined;
   if (staminaStates?.[characterId]) {
     const stamina = staminaStates[characterId];
     if (stamina.fatigueLevel && stamina.fatigueLevel > 0) {
-      const hours = ((stamina.minutesSinceLastRest ?? 0) / 60).toFixed(1);
+      const fatigue = Math.max(
+        0,
+        stamina.fatigue ?? stamina.minutesSinceLastRest ?? 0
+      );
+      const score = Math.max(
+        0,
+        Math.min(100, Math.round((fatigue / 960) * 100))
+      );
       const label = stamina.fatigueLevel === 1 ? "Tired" : "Exhausted";
-      sections.push(`Fatigue: ${label} (${hours}h active)`);
+      sections.push(`Fatigue: ${label} (${score}/100)`);
     }
   }
 

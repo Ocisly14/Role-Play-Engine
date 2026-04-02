@@ -10,6 +10,7 @@
 import type { NpcMemoryManager } from "../../memory/NpcMemoryManager.js";
 import { ModelClass, generateText } from "../../models/index.js";
 import type {
+  ActionResolutionContext,
   ItemResult,
   NewItemEntry,
   ObjectStateDelta,
@@ -20,52 +21,9 @@ import type { DynamicGameStateManager } from "../../state/DynamicGameState.js";
 import type { Item } from "../../state/types.js";
 import type { GameEngineRegistry } from "../registry.js";
 import { deepMergeItem } from "../shared/deepMerge.js";
+import { parseJsonResponse } from "../shared/jsonParse.js";
 import { buildWorldStateBlock } from "../shared/worldStateBlock.js";
-
-// ─── Helpers ──────────────────────────────────────────────────────────
-
-function repairJson(text: string): string {
-  text = text.replace(/,\s*([}\]])/g, "$1");
-  text = text.replace(/"(?:[^"\\]|\\.)*"/g, (match) =>
-    match.replace(/\n/g, "\\n").replace(/\r/g, "\\r").replace(/\t/g, "\\t")
-  );
-  let inString = false;
-  let escape = false;
-  const stack: string[] = [];
-  for (const ch of text) {
-    if (escape) {
-      escape = false;
-      continue;
-    }
-    if (ch === "\\") {
-      escape = true;
-      continue;
-    }
-    if (ch === '"') {
-      inString = !inString;
-      continue;
-    }
-    if (inString) continue;
-    if (ch === "{") stack.push("}");
-    else if (ch === "[") stack.push("]");
-    else if (ch === "}" || ch === "]") stack.pop();
-  }
-  while (stack.length > 0) text += stack.pop();
-  return text;
-}
-
-function parseJsonResponse<T>(raw: string): T {
-  let text = raw.trim();
-  const fenceMatch = text.match(/```(?:json)?\s*([\s\S]*?)```/);
-  if (fenceMatch) text = fenceMatch[1].trim();
-  text = text.replace(/\\([^"\\\/bfnrtu])/g, "$1");
-  try {
-    return JSON.parse(text) as T;
-  } catch {
-    const repaired = repairJson(text);
-    return JSON.parse(repaired) as T;
-  }
-}
+import { buildExecutionContextPromptBlock, diffMinutes } from "../runtime/resolutionExecutionContext.js";
 
 // ─── Item formatter ───────────────────────────────────────────────────
 
@@ -129,7 +87,12 @@ function formatItem(item: Item): string {
 
 function buildSystemPrompt(language: string): string {
   return `You are a Call of Cthulhu 7th Edition game state resolver for object interactions.
-Given an NPC's object interaction that has already been determined to succeed/fail via dice, determine the concrete item state changes, scene condition changes, and memory.
+Given an NPC's object interaction that has already been determined to complete, fail, or be interrupted, determine the concrete item state changes, scene condition changes, fatigue change, and memory.
+
+## Execution Status
+- **completed**: resolve the action normally.
+- **failed**: the primary goal did NOT succeed. Usually output no item transfer, though grounded side effects are allowed.
+- **interrupted**: the action stopped partway through. Use elapsed time and interruption context to decide whether there is no effect or only a partial effect. Do NOT assume the intended result fully happened.
 
 ## Items Array
 Output an "items" array. Each entry has:
@@ -212,6 +175,16 @@ Always required for the actor. Write from the actor's first-person perspective: 
 - **Keep it concise: 1–3 sentences for routine interactions.** Only write longer memories (4+ sentences) for truly significant discoveries — finding critical evidence, triggering a trap, uncovering a hidden passage, or encountering something sanity-breaking. Most item pickups, inspections, and mundane manipulations should be brief.
 - Write in ${language}.
 
+## Fatigue
+You may output:
+- "fatigueDelta": integer from -3 to 3
+
+Rules:
+- Negative = reduced fatigue (catching breath, low-effort safe downtime)
+- Positive = increased fatigue (forcing, hauling, rummaging hard, stressful exertion)
+- Omit or use 0 when fatigue impact is negligible
+- Interrupted actions should usually have smaller absolute fatigue changes than completed ones
+
 ## Output
 Return a single JSON object. No extra text. JSON keys must be in English. Write "memory" values in ${language}.
 
@@ -224,6 +197,7 @@ Return a single JSON object. No extra text. JSON keys must be in English. Write 
     { "id": "gear_01", "name": "Small Gear", "type": "other", "description": "A tiny brass gear", "location": "scene", "sourceItemId": "clock_01" }
   ],
   "addSceneConditions": ["desk drawer left open"],
+  "fatigueDelta": 1,
   "memory": "first-person account (REQUIRED)"
 }
 \`\`\``;
@@ -240,7 +214,8 @@ function buildUserPrompt(
   itemContexts: Record<string, string> | undefined,
   skillRollResult: { successLevel: SuccessLevel; detail: string } | null,
   relatedMemories: string[],
-  worldStateBlock: string
+  worldStateBlock: string,
+  resolutionContext: ActionResolutionContext
 ): string {
   // Section 1: Object Interaction Node
   const nodeSection = JSON.stringify(
@@ -310,6 +285,8 @@ function buildUserPrompt(
     "",
     rollSection,
     "",
+    buildExecutionContextPromptBlock(resolutionContext),
+    "",
     actorSection,
     "",
     actorInvSection,
@@ -342,13 +319,22 @@ export async function resolveObjectInteractionState(
   runtime: any,
   skillRollResult: { successLevel: SuccessLevel; detail: string } | null,
   locationId: string,
-  language: string,
+  language?: string,
   memoryManager?: NpcMemoryManager,
   sessionId?: string,
   registry?: GameEngineRegistry,
-  featureNotes?: string[]
+  featureNotes?: string[],
+  resolutionContext?: ActionResolutionContext
 ): Promise<ObjectStateDelta> {
   const state = dgsm.getState();
+  const resolvedLanguage = language ?? locationId;
+  const resolvedLocationId =
+    language == null
+      ? (() => {
+          const pos = dgsm.getCharacterPosition(node.characterId);
+          return pos ? dgsm.resolveLocationId(pos) : "";
+        })()
+      : locationId;
 
   // Collect actor inventory
   const actorInventory = dgsm.getNpcInventory(node.characterId);
@@ -359,10 +345,10 @@ export async function resolveObjectInteractionState(
   const actorConditions = actorNpc?.status?.conditions ?? [];
 
   // Get scene data
-  const scene = dgsm.getScene(locationId);
+  const scene = dgsm.getScene(resolvedLocationId);
   const sceneItems = scene?.items ?? [];
   const sceneDescription = scene
-    ? `${(scene as any).name ?? locationId}: ${(scene as any).description ?? ""}`
+    ? `${(scene as any).name ?? resolvedLocationId}: ${(scene as any).description ?? ""}`
     : "(no scene data)";
   const itemContexts = (scene as any)?.itemContexts as
     | Record<string, string>
@@ -398,15 +384,15 @@ export async function resolveObjectInteractionState(
   const worldStateBlock = buildWorldStateBlock(
     dgsm,
     node.characterId,
-    locationId,
+    resolvedLocationId,
     registry
   );
 
   // Build prompts
-  const systemPrompt = buildSystemPrompt(language);
+  const systemPrompt = buildSystemPrompt(resolvedLanguage);
   let userPrompt = buildUserPrompt(
     node,
-    locationId,
+    resolvedLocationId,
     actorName,
     actorConditions,
     actorInventory,
@@ -415,7 +401,14 @@ export async function resolveObjectInteractionState(
     itemContexts,
     skillRollResult,
     relatedMemories,
-    worldStateBlock
+    worldStateBlock,
+    resolutionContext ?? {
+      executionStatus: "completed",
+      startedAt: node.executionMeta.startedAt ?? node.startTime,
+      resolvedAt: node.endTime,
+      elapsedMinutes: Math.max(1, diffMinutes(node.startTime, node.endTime)),
+      plannedMinutes: Math.max(1, diffMinutes(node.startTime, node.endTime)),
+    }
   );
 
   // Inject feature activation notes (e.g. ritual invoke failed)
@@ -436,6 +429,7 @@ export async function resolveObjectInteractionState(
       items?: ItemResult[];
       newItems?: NewItemEntry[];
       addSceneConditions?: string[];
+      fatigueDelta?: number;
       memory?: string;
     }>(response);
 
@@ -443,6 +437,8 @@ export async function resolveObjectInteractionState(
       items: parsed.items ?? [],
       newItems: parsed.newItems,
       addSceneConditions: parsed.addSceneConditions,
+      fatigueDelta:
+        typeof parsed.fatigueDelta === "number" ? parsed.fatigueDelta : undefined,
       memory: parsed.memory ?? node.action,
     };
   } catch (error) {
@@ -645,7 +641,7 @@ function addToTarget(
 
 /**
  * Apply a list of item results (final location + optional field updates).
- * Shared by object_interaction and scene_interaction resolvers.
+ * Shared by object_interaction and current-location action resolvers.
  */
 export function applyItemResults(
   dgsm: DynamicGameStateManager,

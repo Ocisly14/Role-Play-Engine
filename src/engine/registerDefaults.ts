@@ -9,7 +9,6 @@ import {
   characterInteractionHandler,
   movementHandler,
   objectInteractionHandler,
-  sceneInteractionHandler,
 } from "./handlers/index.js";
 import { GameEngineRegistry } from "./registry.js";
 
@@ -19,7 +18,6 @@ export function createDefaultRegistry(): GameEngineRegistry {
   registry.registerHandler(movementHandler);
   registry.registerHandler(characterInteractionHandler);
   registry.registerHandler(objectInteractionHandler);
-  registry.registerHandler(sceneInteractionHandler);
 
   registry.registerFeature(fireFeature);
   registry.registerFeature(weatherFeature);
