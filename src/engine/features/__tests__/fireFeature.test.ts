@@ -80,7 +80,10 @@ function createMockDgsm() {
       if (!scenarioConditions[scenarioId]) scenarioConditions[scenarioId] = [];
       scenarioConditions[scenarioId].push(condition);
     },
-    replaceSceneConditions(scenarioId: string, conditions: SceneCondition[]): void {
+    replaceSceneConditions(
+      scenarioId: string,
+      conditions: SceneCondition[]
+    ): void {
       scenarioConditions[scenarioId] = [...conditions];
     },
 

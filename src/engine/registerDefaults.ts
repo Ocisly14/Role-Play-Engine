@@ -8,16 +8,15 @@ import {
   actionHandler,
   characterInteractionHandler,
   movementHandler,
-  objectInteractionHandler,
 } from "./handlers/index.js";
 import { GameEngineRegistry } from "./registry.js";
+import { itemTool } from "./tools/itemTool.js";
 
 export function createDefaultRegistry(): GameEngineRegistry {
   const registry = new GameEngineRegistry();
   registry.registerHandler(actionHandler);
   registry.registerHandler(movementHandler);
   registry.registerHandler(characterInteractionHandler);
-  registry.registerHandler(objectInteractionHandler);
 
   registry.registerFeature(fireFeature);
   registry.registerFeature(weatherFeature);
@@ -25,6 +24,8 @@ export function createDefaultRegistry(): GameEngineRegistry {
   registry.registerFeature(staminaFeature);
   registry.registerFeature(sanityFeature);
   registry.registerFeature(eventTriggerFeature);
+
+  registry.registerTool(itemTool);
 
   return registry;
 }

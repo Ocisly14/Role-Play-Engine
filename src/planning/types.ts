@@ -64,15 +64,13 @@ export interface NewItemEntry {
   [key: string]: unknown;
 }
 
-export interface ObjectStateDelta extends FatigueEffectDelta {
+export interface ObjectStateDelta {
   /** Final state of each affected item. Only include items that changed. */
   items: ItemResult[];
   /** New items created by disassembly, crafting, or transformation. */
   newItems?: NewItemEntry[];
-  /** Scene condition descriptions to add. */
-  addSceneConditions?: string[];
-  /** First-person memory for the actor. */
-  memory: string;
+  /** Factual outcome description of what happened to items. */
+  outcome: string;
 }
 
 // ===== LLM State Resolver types (current-location action) =====
@@ -95,6 +93,13 @@ export interface SceneStateDelta extends FatigueEffectDelta {
   items?: ItemResult[];
   /** First-person memory for the actor. */
   memory: string;
+}
+
+export interface ToolCall {
+  /** Tool ID, e.g. "item" */
+  name: string;
+  /** Tool-specific arguments */
+  args: Record<string, unknown>;
 }
 
 export interface ObjectInteractionPayload {
@@ -162,6 +167,8 @@ export interface PlanNode {
   difficulty?: "regular" | "hard" | "extreme";
   targetCharacterIds?: string[];
   objectInteractionPayload?: ObjectInteractionPayload;
+  /** Engine tool invocations parsed from planner output */
+  tools?: ToolCall[];
   status: PlanNodeStatus;
   executionMeta: PlanNodeExecutionMeta;
   outcome?: string;

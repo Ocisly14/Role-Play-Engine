@@ -113,7 +113,11 @@ export function buildWorldStateBlock(
   const staminaStates = dgsm.getFeatureState("stamina") as
     | Record<
         string,
-        { fatigue?: number; fatigueLevel?: number; minutesSinceLastRest?: number }
+        {
+          fatigue?: number;
+          fatigueLevel?: number;
+          minutesSinceLastRest?: number;
+        }
       >
     | undefined;
   if (staminaStates?.[characterId]) {

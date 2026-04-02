@@ -12,6 +12,12 @@ export type {
   FeaturePropagationConfig,
   PropagationResult,
 } from "./types.js";
+export type {
+  ActionTool,
+  ActionToolArgsSchema,
+  ToolPreCheckResult,
+  ToolResolutionResult,
+} from "./types.js";
 export {
   actionHandler,
   movementHandler,

@@ -404,12 +404,12 @@ export const fireFeature: WorldFeature = {
     const sceneId =
       node.type === "movement"
         ? node.destination
-        : (typeof (node as Record<string, unknown>).location === "string"
-            ? ((node as Record<string, unknown>).location as string)
-            : (() => {
-                const pos = dgsm.getCharacterPosition(node.characterId);
-                return pos ? dgsm.resolveLocationId(pos) : undefined;
-              })());
+        : typeof (node as Record<string, unknown>).location === "string"
+          ? ((node as Record<string, unknown>).location as string)
+          : (() => {
+              const pos = dgsm.getCharacterPosition(node.characterId);
+              return pos ? dgsm.resolveLocationId(pos) : undefined;
+            })();
     if (!sceneId) return;
 
     // Handle extinguish

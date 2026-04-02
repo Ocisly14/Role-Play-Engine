@@ -13,22 +13,22 @@ import type {
 } from "../../planning/types.js";
 import type { DynamicGameStateManager } from "../../state/DynamicGameState.js";
 import type { Item } from "../../state/types.js";
+import { applyFatigueDelta } from "../features/staminaFeature.js";
+import {
+  applyActionSceneDelta,
+  resolveActionState,
+} from "../handlers/actionStateResolver.js";
 import {
   applyCharacterDelta,
   resolveInteractionState,
   resolveTargets,
 } from "../handlers/interactionStateResolver.js";
+import { resolveTargetPosition } from "../handlers/movementHandler.js";
+import type { GameEngineRegistry } from "../registry.js";
 import {
   applyObjectDelta,
-  resolveObjectInteractionState,
-} from "../handlers/objectInteractionStateResolver.js";
-import {
-  applyActionSceneDelta,
-  resolveActionState,
-} from "../handlers/actionStateResolver.js";
-import { resolveTargetPosition } from "../handlers/movementHandler.js";
-import { applyFatigueDelta } from "../features/staminaFeature.js";
-import type { GameEngineRegistry } from "../registry.js";
+  resolveItemState,
+} from "../tools/itemStateResolver.js";
 import type { ExecutionContext } from "../types.js";
 import {
   discoverEvidence,
@@ -148,7 +148,10 @@ export function sanitizeFatigueDelta(
     3,
     Math.min(8, Math.ceil(resolutionContext.plannedMinutes / 30))
   );
-  return Math.max(-absoluteBound, Math.min(absoluteBound, Math.trunc(fatigueDelta)));
+  return Math.max(
+    -absoluteBound,
+    Math.min(absoluteBound, Math.trunc(fatigueDelta))
+  );
 }
 
 export function applyIncidentalActionMove(params: {
@@ -159,7 +162,11 @@ export function applyIncidentalActionMove(params: {
   const { dgsm, characterId, moveTo } = params;
   if (!moveTo) return false;
 
-  const targetPosition = resolveTargetPosition(moveTo, dgsm.getTopology(), dgsm);
+  const targetPosition = resolveTargetPosition(
+    moveTo,
+    dgsm.getTopology(),
+    dgsm
+  );
   if (!targetPosition) {
     console.warn(
       `[ActionPostProcessing] Ignoring invalid incidental action moveTo "${moveTo}" for ${characterId}`
@@ -365,7 +372,7 @@ export async function postProcessExecutedNodeAction(params: {
         }
       : null;
 
-    const objDelta = await resolveObjectInteractionState(
+    const objDelta = await resolveItemState(
       node,
       dgsm,
       ctx.runtime,
@@ -380,15 +387,10 @@ export async function postProcessExecutedNodeAction(params: {
     );
 
     applyObjectDelta(dgsm, node.characterId, objDelta, locationId);
-    applyFatigueDelta(
-      dgsm,
-      node.characterId,
-      sanitizeFatigueDelta(objDelta.fatigueDelta, resolutionContext)
-    );
-    action.outcome = objDelta.memory;
+    action.outcome = objDelta.outcome;
     eventOutcome = appendItemContext(action.outcome, itemContext);
     action.stateMemories = {
-      [node.characterId]: objDelta.memory,
+      [node.characterId]: objDelta.outcome,
     };
   }
 

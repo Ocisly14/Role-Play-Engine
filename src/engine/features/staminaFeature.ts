@@ -146,8 +146,7 @@ function roll1d3(): number {
  * failChance = min(0.6, 0.3 + (fatigue - 960) / 960 * 0.3)
  */
 function computeFailChance(fatigue: number): number {
-  const extra =
-    ((fatigue - EXHAUSTED_THRESHOLD) / EXHAUSTED_THRESHOLD) * 0.3;
+  const extra = ((fatigue - EXHAUSTED_THRESHOLD) / EXHAUSTED_THRESHOLD) * 0.3;
   return Math.min(MAX_FAIL_CHANCE, BASE_FAIL_CHANCE + extra);
 }
 

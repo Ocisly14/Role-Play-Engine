@@ -1,9 +1,9 @@
 /**
- * LLM-based state resolver for object_interaction nodes.
+ * LLM-based state resolver for the item ActionTool.
  *
  * After the handler determines success/failure via dice,
  * this module asks a MEDIUM-class LLM to produce concrete
- * state deltas (item locations, item updates, scene conditions, memories)
+ * state deltas (item locations, item updates, scene conditions, outcome)
  * for the actor.
  */
 
@@ -20,10 +20,13 @@ import type {
 import type { DynamicGameStateManager } from "../../state/DynamicGameState.js";
 import type { Item } from "../../state/types.js";
 import type { GameEngineRegistry } from "../registry.js";
+import {
+  buildExecutionContextPromptBlock,
+  diffMinutes,
+} from "../runtime/resolutionExecutionContext.js";
 import { deepMergeItem } from "../shared/deepMerge.js";
 import { parseJsonResponse } from "../shared/jsonParse.js";
 import { buildWorldStateBlock } from "../shared/worldStateBlock.js";
-import { buildExecutionContextPromptBlock, diffMinutes } from "../runtime/resolutionExecutionContext.js";
 
 // ─── Item formatter ───────────────────────────────────────────────────
 
@@ -87,7 +90,7 @@ function formatItem(item: Item): string {
 
 function buildSystemPrompt(language: string): string {
   return `You are a Call of Cthulhu 7th Edition game state resolver for object interactions.
-Given an NPC's object interaction that has already been determined to complete, fail, or be interrupted, determine the concrete item state changes, scene condition changes, fatigue change, and memory.
+Given an NPC's object interaction that has already been determined to complete, fail, or be interrupted, determine the concrete item state changes, scene condition changes, and outcome.
 
 ## Execution Status
 - **completed**: resolve the action normally.
@@ -137,7 +140,7 @@ Base your decisions on:
 - **Critical success**: exceptional outcome — maximum effect, bonus discoveries, pristine execution
 - **Hard success**: strong outcome — action succeeds cleanly
 - **Regular success**: moderate outcome — action succeeds but may be imperfect (slight damage, noise, etc.)
-- **Skill check failed**: the action did NOT succeed. Reflect this in the memory. Minor side effects (dropping something, making noise, partial damage) are acceptable but the primary goal was not achieved.
+- **Skill check failed**: the action did NOT succeed. Reflect this in the outcome. Minor side effects (dropping something, making noise, partial damage) are acceptable but the primary goal was not achieved.
 
 ## Hidden Items & Discovery
 Some items have a "discoveryMethod" field — these are hidden or not immediately obvious. When the actor's action relates to such an item, decide whether the actor discovers/accesses it based on:
@@ -146,15 +149,12 @@ Some items have a "discoveryMethod" field — these are hidden or not immediatel
 3. **The skill roll result** — higher success = more likely to find hidden items. No skill check = only obvious items found.
 
 If the actor **can** access the hidden item: process it normally (move, inspect, modify, etc.).
-If the actor **cannot** (wrong approach, failed roll, physically blocked like a locked container without a key): do NOT include the item in the "items" array. Instead, explain in the actor's memory what happened from their first-person perspective — e.g. "I searched the desk but didn't find anything unusual", "I tried to open the cabinet but it was locked solid", "I rummaged through the papers but nothing caught my eye."
+If the actor **cannot** (wrong approach, failed roll, physically blocked like a locked container without a key): do NOT include the item in the "items" array. Instead, note in the outcome what happened — e.g. "Searched the desk but found nothing unusual", "Tried to open the cabinet but it was locked solid".
 
 The actor's related memories (if provided) give important context — they may recall hearing about this item, seeing someone else interact with it, or having prior knowledge of its existence. Use this to inform whether the actor would know to look for it and how they approach the interaction.
 
 ## Inspect Actions
-For "inspect" actions, no item changes are typically needed. Write a detailed memory of what the actor observed — describe textures, markings, wear, hidden compartments, anything the character would notice based on the skill result.
-
-## Scene Conditions
-Use "addSceneConditions" for observable environmental changes caused by the action (e.g. "desk drawer left open", "broken glass on the floor"). Each entry is a short description string.
+For "inspect" actions, no item changes are typically needed. Write a factual outcome describing what the inspection revealed — textures, markings, wear, hidden compartments, anything observable based on the skill result.
 
 ## Narrative Grounding
 - **Deterministic facts must match injected data:** items, objects, scene contents, sensory observations (what characters see/hear/smell), and physical properties must come from the provided context. Do not fabricate objects or details that objectively exist or don't exist in the world.
@@ -164,29 +164,19 @@ Use "addSceneConditions" for observable environmental changes caused by the acti
 - **All judgments must be grounded in the provided data.** You are a state resolver, not a story generator. Every item change you output must trace back to concrete information in the action node, skill roll results, actor inventory, or scene items.
 - **Never fabricate items:** Do not invent items that do not appear in the actor inventory or scene items list. "newItems" may only be used when an existing item is being disassembled or transformed — the source item must exist in the provided data. Do not conjure items out of thin air.
 - **Never fabricate item properties:** When writing item "updates", only describe properties that are plausible given the item's existing data and the action performed. Do not add capabilities, contents, or descriptions that have no basis in the provided context.
-- **Memory must reflect actual events:** The actor's memory must describe what actually happened based on the action and skill roll. Do not invent discoveries, observations, or sensory details that are not supported by the scene data and item data provided. If the scene data does not describe a detail, the actor does not observe it.
+- **Outcome must reflect actual events:** The outcome must describe what actually happened based on the action and skill roll. Do not invent discoveries, observations, or sensory details that are not supported by the scene data and item data provided. If the scene data does not describe a detail, it was not observed.
 - **Be substantive, not imaginative:** If the provided data is sparse, the outcome should be proportionally simple. Do not fill gaps with invented content. An empty scene stays empty — do not populate it with imagined objects.
 
 ## Actor Conditions
-If the actor has physical conditions listed (e.g. "detained", "restrained", "unconscious"), these represent binding constraints on the actor's current state. A detained or restrained actor cannot freely manipulate objects, move items, or perform actions requiring free movement. Reflect these constraints in the outcome and memory — the action should fail or be severely limited if it contradicts the actor's physical state.
+If the actor has physical conditions listed (e.g. "detained", "restrained", "unconscious"), these represent binding constraints on the actor's current state. A detained or restrained actor cannot freely manipulate objects, move items, or perform actions requiring free movement. Reflect these constraints in the outcome — the action should fail or be severely limited if it contradicts the actor's physical state.
 
-## Memory
-Always required for the actor. Write from the actor's first-person perspective: what they did, what they observed, and the result.
-- **Keep it concise: 1–3 sentences for routine interactions.** Only write longer memories (4+ sentences) for truly significant discoveries — finding critical evidence, triggering a trap, uncovering a hidden passage, or encountering something sanity-breaking. Most item pickups, inspections, and mundane manipulations should be brief.
-- Write in ${language}.
-
-## Fatigue
-You may output:
-- "fatigueDelta": integer from -3 to 3
-
-Rules:
-- Negative = reduced fatigue (catching breath, low-effort safe downtime)
-- Positive = increased fatigue (forcing, hauling, rummaging hard, stressful exertion)
-- Omit or use 0 when fatigue impact is negligible
-- Interrupted actions should usually have smaller absolute fatigue changes than completed ones
+## Outcome
+Always required. Write a factual third-person description of what happened to the items: what moved, what changed, what was discovered. This is NOT the actor's memory — it is an objective summary for the engine.
+- Keep it concise: 1-2 sentences.
+- Write in English (always English, regardless of game language).
 
 ## Output
-Return a single JSON object. No extra text. JSON keys must be in English. Write "memory" values in ${language}.
+Return a single JSON object. No extra text. JSON keys must be in English.
 
 \`\`\`json
 {
@@ -196,9 +186,7 @@ Return a single JSON object. No extra text. JSON keys must be in English. Write 
   "newItems": [
     { "id": "gear_01", "name": "Small Gear", "type": "other", "description": "A tiny brass gear", "location": "scene", "sourceItemId": "clock_01" }
   ],
-  "addSceneConditions": ["desk drawer left open"],
-  "fatigueDelta": 1,
-  "memory": "first-person account (REQUIRED)"
+  "outcome": "factual third-person description (REQUIRED)"
 }
 \`\`\``;
 }
@@ -313,7 +301,7 @@ function buildUserPrompt(
  * @param sessionId        Session ID (required when memoryManager is provided).
  * @returns Concrete state deltas for items, conditions, and memories.
  */
-export async function resolveObjectInteractionState(
+export async function resolveItemState(
   node: PlanNode,
   dgsm: DynamicGameStateManager,
   runtime: any,
@@ -428,28 +416,23 @@ export async function resolveObjectInteractionState(
     const parsed = parseJsonResponse<{
       items?: ItemResult[];
       newItems?: NewItemEntry[];
-      addSceneConditions?: string[];
-      fatigueDelta?: number;
-      memory?: string;
+      outcome?: string;
     }>(response);
 
     return {
       items: parsed.items ?? [],
       newItems: parsed.newItems,
-      addSceneConditions: parsed.addSceneConditions,
-      fatigueDelta:
-        typeof parsed.fatigueDelta === "number" ? parsed.fatigueDelta : undefined,
-      memory: parsed.memory ?? node.action,
+      outcome: parsed.outcome ?? node.action,
     };
   } catch (error) {
     console.warn(
-      `[ObjectInteractionStateResolver] LLM call failed, using fallback:`,
+      `[ItemStateResolver] LLM call failed, using fallback:`,
       error instanceof Error ? error.message : error
     );
 
     return {
       items: [],
-      memory: node.action,
+      outcome: node.action,
     };
   }
 }
@@ -700,7 +683,6 @@ export function applyItemResults(
  * 2. Apply updates if present
  * 3. If target location differs, move the item
  *
- * Also applies scene condition additions.
  */
 export function applyObjectDelta(
   dgsm: DynamicGameStateManager,
@@ -735,13 +717,6 @@ export function applyObjectDelta(
         ...itemFields,
       } as Item;
       addToTarget(newItem, entry.location, actorId, dgsm, sceneId);
-    }
-  }
-
-  // Apply scene condition additions
-  if (delta.addSceneConditions) {
-    for (const description of delta.addSceneConditions) {
-      dgsm.appendSceneCondition(sceneId, { description });
     }
   }
 }

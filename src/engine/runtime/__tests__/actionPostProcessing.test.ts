@@ -68,9 +68,7 @@ describe("applyIncidentalActionMove", () => {
 });
 
 describe("shouldRunResolver", () => {
-  function makeAction(
-    overrides: Partial<CharacterAction>
-  ): CharacterAction {
+  function makeAction(overrides: Partial<CharacterAction>): CharacterAction {
     return {
       action: "test action",
       status: "completed",
@@ -116,8 +114,20 @@ describe("shouldRunResolver", () => {
 });
 
 describe("sanitizeFatigueDelta", () => {
-  const shortCtx = { executionStatus: "completed" as const, startedAt: "08:00", resolvedAt: "08:30", elapsedMinutes: 30, plannedMinutes: 30 };
-  const longCtx = { executionStatus: "completed" as const, startedAt: "08:00", resolvedAt: "12:00", elapsedMinutes: 240, plannedMinutes: 240 };
+  const shortCtx = {
+    executionStatus: "completed" as const,
+    startedAt: "08:00",
+    resolvedAt: "08:30",
+    elapsedMinutes: 30,
+    plannedMinutes: 30,
+  };
+  const longCtx = {
+    executionStatus: "completed" as const,
+    startedAt: "08:00",
+    resolvedAt: "12:00",
+    elapsedMinutes: 240,
+    plannedMinutes: 240,
+  };
 
   it("returns 0 for null or undefined", () => {
     expect(sanitizeFatigueDelta(undefined, shortCtx)).toBe(0);
@@ -125,8 +135,8 @@ describe("sanitizeFatigueDelta", () => {
   });
 
   it("returns 0 for NaN or Infinity", () => {
-    expect(sanitizeFatigueDelta(NaN, shortCtx)).toBe(0);
-    expect(sanitizeFatigueDelta(Infinity, shortCtx)).toBe(0);
+    expect(sanitizeFatigueDelta(Number.NaN, shortCtx)).toBe(0);
+    expect(sanitizeFatigueDelta(Number.POSITIVE_INFINITY, shortCtx)).toBe(0);
   });
 
   it("clamps to ±3 for short actions (30 min)", () => {

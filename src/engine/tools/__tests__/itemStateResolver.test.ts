@@ -1,10 +1,7 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import type { ObjectStateDelta, PlanNode } from "../../../planning/types.js";
 import type { DynamicScene, Item } from "../../../state/types.js";
-import {
-  applyObjectDelta,
-  resolveObjectInteractionState,
-} from "../objectInteractionStateResolver.js";
+import { applyObjectDelta, resolveItemState } from "../itemStateResolver.js";
 
 vi.mock("../../../models/index.js", () => ({
   ModelClass: { SMALL: "small", MEDIUM: "medium", LARGE: "large" },
@@ -102,7 +99,7 @@ describe("applyObjectDelta", () => {
 
     const delta: ObjectStateDelta = {
       items: [{ itemId: "pen", location: "inventory" }],
-      memory: "I picked up the pen.",
+      outcome: "I picked up the pen.",
     };
 
     applyObjectDelta(dgsm as any, "actor1", delta, "room1");
@@ -120,7 +117,7 @@ describe("applyObjectDelta", () => {
 
     const delta: ObjectStateDelta = {
       items: [{ itemId: "book", location: "scene" }],
-      memory: "I placed the book on the table.",
+      outcome: "I placed the book on the table.",
     };
 
     applyObjectDelta(dgsm as any, "actor1", delta, "room1");
@@ -144,7 +141,7 @@ describe("applyObjectDelta", () => {
 
     const delta: ObjectStateDelta = {
       items: [{ itemId: "letter", location: "inventory" }],
-      memory: "I took the letter from the box.",
+      outcome: "I took the letter from the box.",
     };
 
     applyObjectDelta(dgsm as any, "actor1", delta, "room1");
@@ -168,7 +165,7 @@ describe("applyObjectDelta", () => {
 
     const delta: ObjectStateDelta = {
       items: [{ itemId: "coin", location: "container:briefcase" }],
-      memory: "I put the coin in the briefcase.",
+      outcome: "I put the coin in the briefcase.",
     };
 
     applyObjectDelta(dgsm as any, "actor1", delta, "room1");
@@ -206,7 +203,7 @@ describe("applyObjectDelta", () => {
           updates: { containerStats: { locked: false } },
         },
       ],
-      memory: "I unlocked the safe.",
+      outcome: "I unlocked the safe.",
     };
 
     applyObjectDelta(dgsm as any, "actor1", delta, "room1");
@@ -228,7 +225,7 @@ describe("applyObjectDelta", () => {
 
     const delta: ObjectStateDelta = {
       items: [{ itemId: "vase", location: "destroyed" }],
-      memory: "I smashed the vase.",
+      outcome: "I smashed the vase.",
     };
 
     applyObjectDelta(dgsm as any, "actor1", delta, "room1");
@@ -244,34 +241,12 @@ describe("applyObjectDelta", () => {
 
     const delta: ObjectStateDelta = {
       items: [{ itemId: "note", location: "destroyed" }],
-      memory: "I burned the note.",
+      outcome: "I burned the note.",
     };
 
     applyObjectDelta(dgsm as any, "actor1", delta, "room1");
 
     expect(dgsm.getNpcInventory("actor1")).toHaveLength(0);
-  });
-
-  it("adds scene conditions", () => {
-    const dgsm = createMockDgsm();
-    dgsm._addScene("room1", "Kitchen", []);
-    dgsm._addInventory("actor1", []);
-
-    const delta: ObjectStateDelta = {
-      items: [],
-      addSceneConditions: [
-        "broken glass on the floor",
-        "smell of spilled chemicals",
-      ],
-      memory: "I knocked over the beakers.",
-    };
-
-    applyObjectDelta(dgsm as any, "actor1", delta, "room1");
-
-    const conditions = dgsm._getConditions("room1");
-    expect(conditions).toHaveLength(2);
-    expect(conditions[0].description).toBe("broken glass on the floor");
-    expect(conditions[1].description).toBe("smell of spilled chemicals");
   });
 
   it("skips unknown items gracefully", () => {
@@ -282,7 +257,7 @@ describe("applyObjectDelta", () => {
 
     const delta: ObjectStateDelta = {
       items: [{ itemId: "nonexistent_item", location: "inventory" }],
-      memory: "I tried to pick something up.",
+      outcome: "I tried to pick something up.",
     };
 
     // Should not throw
@@ -317,7 +292,7 @@ describe("applyObjectDelta", () => {
           updates: { containerStats: { locked: false } },
         },
       ],
-      memory: "I unlocked the chest with the old key.",
+      outcome: "I unlocked the chest with the old key.",
     };
     applyObjectDelta(dgsm as any, "actor1", unlockDelta, "room1");
     expect(chest.containerStats!.locked).toBe(false);
@@ -325,7 +300,7 @@ describe("applyObjectDelta", () => {
     // Operation 2: take jewel from (now-unlocked) chest
     const extractDelta: ObjectStateDelta = {
       items: [{ itemId: "jewel", location: "inventory" }],
-      memory: "I took the ruby from the chest.",
+      outcome: "I took the ruby from the chest.",
     };
     applyObjectDelta(dgsm as any, "actor1", extractDelta, "room1");
 
@@ -349,7 +324,7 @@ describe("applyObjectDelta", () => {
 
     const delta: ObjectStateDelta = {
       items: [{ itemId: "diary", location: "inventory" }],
-      memory: "I grabbed the diary from the locker.",
+      outcome: "I grabbed the diary from the locker.",
     };
 
     applyObjectDelta(dgsm as any, "actor1", delta, "room1");
@@ -375,7 +350,7 @@ describe("applyObjectDelta", () => {
 
     const delta: ObjectStateDelta = {
       items: [{ itemId: "diary", location: "inventory" }],
-      memory: "I unlocked the locker and took the diary.",
+      outcome: "I unlocked the locker and took the diary.",
     };
 
     applyObjectDelta(dgsm as any, "actor1", delta, "room1");
@@ -389,7 +364,7 @@ describe("applyObjectDelta", () => {
   });
 });
 
-// ===== resolveObjectInteractionState (LLM) =====
+// ===== resolveItemState (LLM) =====
 
 function createResolverDgsm() {
   const scenes = new Map<string, DynamicScene>();
@@ -489,7 +464,7 @@ function makeObjNode(overrides: Partial<PlanNode> = {}): PlanNode {
   } as PlanNode;
 }
 
-describe("resolveObjectInteractionState (LLM)", () => {
+describe("resolveItemState (LLM)", () => {
   afterEach(() => {
     vi.restoreAllMocks();
   });
@@ -501,7 +476,7 @@ describe("resolveObjectInteractionState (LLM)", () => {
     (generateText as any).mockResolvedValueOnce(
       JSON.stringify({
         items: [{ itemId: "pen", location: "inventory" }],
-        memory: "我从书桌上拿起了那支钢笔。笔身上刻着一个我不认识的徽章。",
+        outcome: "我从书桌上拿起了那支钢笔。笔身上刻着一个我不认识的徽章。",
       })
     );
 
@@ -511,7 +486,7 @@ describe("resolveObjectInteractionState (LLM)", () => {
     ]);
     dgsm._addNpc("actor1", "Investigator", "study");
 
-    const result = await resolveObjectInteractionState(
+    const result = await resolveItemState(
       makeObjNode(),
       dgsm as any,
       {} as any,
@@ -522,7 +497,7 @@ describe("resolveObjectInteractionState (LLM)", () => {
     expect(result.items).toHaveLength(1);
     expect(result.items[0].itemId).toBe("pen");
     expect(result.items[0].location).toBe("inventory");
-    expect(result.memory).toContain("钢笔");
+    expect(result.outcome).toContain("钢笔");
   });
 
   // ── Complex: disassemble with newItems + conditions + witness ──
@@ -558,11 +533,7 @@ describe("resolveObjectInteractionState (LLM)", () => {
             sourceItemId: "grandfather_clock",
           },
         ],
-        addSceneConditions: [
-          "座钟的碎片散落一地，木屑和金属零件混在一起",
-          "空气中弥漫着陈旧的机油味",
-        ],
-        memory:
+        outcome:
           "我小心翼翼地拆解了那台老座钟。在钟的内部机构中，我发现了一个精密的黄铜齿轮，上面刻着我从未见过的符文。更令人惊讶的是，钟摆内部似乎封印着某种发光的液体。最意外的发现是藏在钟壳夹层里的一张泛黄纸条。",
       })
     );
@@ -578,7 +549,7 @@ describe("resolveObjectInteractionState (LLM)", () => {
     dgsm._addNpc("npc_butler", "Butler", "study");
     dgsm._addNpc("npc_maid", "Maid", "study");
 
-    const result = await resolveObjectInteractionState(
+    const result = await resolveItemState(
       makeObjNode({
         action: "Carefully disassemble the grandfather clock",
         skill: "Mechanical Repair",
@@ -609,14 +580,9 @@ describe("resolveObjectInteractionState (LLM)", () => {
     const note = result.newItems!.find((i) => i.id === "hidden_note");
     expect(note!.type).toBe("document");
 
-    // Scene conditions
-    expect(result.addSceneConditions).toHaveLength(2);
-    expect(result.addSceneConditions![0]).toContain("碎片");
-    expect(result.addSceneConditions![1]).toContain("机油");
-
-    // Actor memory
-    expect(result.memory).toContain("符文");
-    expect(result.memory).toContain("纸条");
+    // Actor outcome
+    expect(result.outcome).toContain("符文");
+    expect(result.outcome).toContain("纸条");
   });
 
   // ── Complex: unlock container + extract + update item ──
@@ -659,8 +625,7 @@ describe("resolveObjectInteractionState (LLM)", () => {
             },
           },
         ],
-        addSceneConditions: ["保险箱门敞开着，里面空空如也"],
-        memory:
+        outcome:
           "我用撬锁工具花了好一番功夫才打开保险箱。里面有一本看起来像是邪教账本的东西，还有一把让人不安的黑曜石匕首。可惜撬锁的时候弄断了一根撬针。账本上记录着大量来路不明的资金流向，还有一些我看不懂的符号。",
       })
     );
@@ -695,7 +660,7 @@ describe("resolveObjectInteractionState (LLM)", () => {
     dgsm._addNpc("actor1", "Investigator", "study");
     dgsm.addItemToNpc("actor1", lockpick);
 
-    const result = await resolveObjectInteractionState(
+    const result = await resolveItemState(
       makeObjNode({
         action: "Pick the lock on the wall safe with my lockpick set",
         skill: "Locksmith",
@@ -734,13 +699,10 @@ describe("resolveObjectInteractionState (LLM)", () => {
     expect(lockpickResult!.updates!.damaged).toBe(true);
     expect(lockpickResult!.updates!.consumableStats).toEqual({ uses: 2 });
 
-    // Scene condition
-    expect(result.addSceneConditions![0]).toContain("保险箱");
-
     // Memory mentions key findings
-    expect(result.memory).toContain("邪教");
-    expect(result.memory).toContain("匕首");
-    expect(result.memory).toContain("撬针");
+    expect(result.outcome).toContain("邪教");
+    expect(result.outcome).toContain("匕首");
+    expect(result.outcome).toContain("撬针");
   });
 
   // ── Move to container (location: "container:xxx") ──
@@ -753,7 +715,7 @@ describe("resolveObjectInteractionState (LLM)", () => {
           { itemId: "evidence_photo", location: "container:briefcase" },
           { itemId: "poison_vial", location: "inventory:npc_butler" },
         ],
-        memory:
+        outcome:
           "我把证据照片放进了公文包里。那瓶毒药太危险了，我让管家帮忙保管。",
       })
     );
@@ -780,7 +742,7 @@ describe("resolveObjectInteractionState (LLM)", () => {
     dgsm._addNpc("npc_butler", "Butler", "study");
     dgsm.addItemToNpc("actor1", briefcase);
 
-    const result = await resolveObjectInteractionState(
+    const result = await resolveItemState(
       makeObjNode({
         action: "Put the photo in my briefcase, give the vial to the butler",
         objectInteractionPayload: { itemId: "evidence_photo" },
@@ -806,14 +768,14 @@ describe("resolveObjectInteractionState (LLM)", () => {
     const { generateText } = await import("../../../models/index.js");
     // Simulates imperfect LLM JSON with trailing comma
     (generateText as any).mockResolvedValueOnce(
-      '```json\n{"items":[{"itemId":"pen","location":"inventory",}],"memory":"repaired",}\n```'
+      '```json\n{"items":[{"itemId":"pen","location":"inventory",}],"outcome":"repaired",}\n```'
     );
 
     const dgsm = createResolverDgsm();
     dgsm._addScene("study", "Study", [makeItem({ id: "pen", name: "Pen" })]);
     dgsm._addNpc("actor1", "Investigator", "study");
 
-    const result = await resolveObjectInteractionState(
+    const result = await resolveItemState(
       makeObjNode(),
       dgsm as any,
       {} as any,
@@ -821,11 +783,11 @@ describe("resolveObjectInteractionState (LLM)", () => {
       "zh"
     );
 
-    expect(result.memory).toBe("repaired");
+    expect(result.outcome).toBe("repaired");
     expect(result.items[0].itemId).toBe("pen");
   });
 
-  it("should fill default memory when LLM omits it", async () => {
+  it("should fill default outcome when LLM omits it", async () => {
     const { generateText } = await import("../../../models/index.js");
     (generateText as any).mockResolvedValueOnce(JSON.stringify({ items: [] }));
 
@@ -833,7 +795,7 @@ describe("resolveObjectInteractionState (LLM)", () => {
     dgsm._addScene("study", "Study", []);
     dgsm._addNpc("actor1", "Investigator", "study");
 
-    const result = await resolveObjectInteractionState(
+    const result = await resolveItemState(
       makeObjNode({ action: "Search the desk" }),
       dgsm as any,
       {} as any,
@@ -841,7 +803,7 @@ describe("resolveObjectInteractionState (LLM)", () => {
       "zh"
     );
 
-    expect(result.memory).toBe("Search the desk");
+    expect(result.outcome).toBe("Search the desk");
   });
 
   // ── Error handling ──
@@ -854,7 +816,7 @@ describe("resolveObjectInteractionState (LLM)", () => {
     dgsm._addScene("study", "Study", []);
     dgsm._addNpc("actor1", "Investigator", "study");
 
-    const result = await resolveObjectInteractionState(
+    const result = await resolveItemState(
       makeObjNode({ action: "Pick up the pen" }),
       dgsm as any,
       {} as any,
@@ -863,7 +825,7 @@ describe("resolveObjectInteractionState (LLM)", () => {
     );
 
     expect(result.items).toEqual([]);
-    expect(result.memory).toBe("Pick up the pen");
+    expect(result.outcome).toBe("Pick up the pen");
   });
 
   it("should return fallback on malformed JSON", async () => {
@@ -874,7 +836,7 @@ describe("resolveObjectInteractionState (LLM)", () => {
     dgsm._addScene("study", "Study", []);
     dgsm._addNpc("actor1", "Investigator", "study");
 
-    const result = await resolveObjectInteractionState(
+    const result = await resolveItemState(
       makeObjNode(),
       dgsm as any,
       {} as any,
@@ -883,7 +845,7 @@ describe("resolveObjectInteractionState (LLM)", () => {
     );
 
     expect(result.items).toEqual([]);
-    expect(result.memory).toBeDefined();
+    expect(result.outcome).toBeDefined();
   });
 
   // ── Prompt content verification ──
@@ -895,7 +857,7 @@ describe("resolveObjectInteractionState (LLM)", () => {
     (generateText as any).mockImplementationOnce(async (opts: any) => {
       capturedPrompt = opts.context;
       capturedSystem = opts.customSystemPrompt;
-      return JSON.stringify({ items: [], memory: "ok" });
+      return JSON.stringify({ items: [], outcome: "ok" });
     });
 
     const dgsm = createResolverDgsm();
@@ -910,7 +872,7 @@ describe("resolveObjectInteractionState (LLM)", () => {
     dgsm._addNpc("actor1", "Investigator", "study");
     dgsm.addItemToNpc("actor1", matchbox);
 
-    await resolveObjectInteractionState(
+    await resolveItemState(
       makeObjNode({
         action: "Read the diary carefully",
         skill: "Library Use",
@@ -933,8 +895,8 @@ describe("resolveObjectInteractionState (LLM)", () => {
     // Skill roll
     expect(capturedPrompt).toContain("critical");
     expect(capturedPrompt).toContain("Critical success");
-    // System prompt is in the correct language
-    expect(capturedSystem).toContain("zh");
+    // System prompt instructs English outcome (language-independent)
+    expect(capturedSystem).toContain("always English");
   });
 
   it("should no longer inject co-present NPCs into the resolver prompt", async () => {
@@ -942,7 +904,7 @@ describe("resolveObjectInteractionState (LLM)", () => {
     let capturedPrompt = "";
     (generateText as any).mockImplementationOnce(async (opts: any) => {
       capturedPrompt = opts.context;
-      return JSON.stringify({ items: [], memory: "ok" });
+      return JSON.stringify({ items: [], outcome: "ok" });
     });
 
     const dgsm = createResolverDgsm();
@@ -952,13 +914,7 @@ describe("resolveObjectInteractionState (LLM)", () => {
     dgsm._addNpc("npc_hidden", "Hidden Witness", "study");
     dgsm._setHidden("npc_hidden", true);
 
-    await resolveObjectInteractionState(
-      makeObjNode(),
-      dgsm as any,
-      {} as any,
-      null,
-      "en"
-    );
+    await resolveItemState(makeObjNode(), dgsm as any, {} as any, null, "en");
 
     expect(capturedPrompt).not.toContain("Visible Witness");
     expect(capturedPrompt).not.toContain("Hidden Witness");

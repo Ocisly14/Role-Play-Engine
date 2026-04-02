@@ -18,12 +18,15 @@ import type {
   SuccessLevel,
 } from "../../planning/types.js";
 import type { DynamicGameStateManager } from "../../state/DynamicGameState.js";
-import type { GameEngineRegistry } from "../registry.js";
 import { applyFatigueDelta } from "../features/staminaFeature.js";
+import type { GameEngineRegistry } from "../registry.js";
+import {
+  buildExecutionContextPromptBlock,
+  diffMinutes,
+} from "../runtime/resolutionExecutionContext.js";
 import { parseJsonResponse } from "../shared/jsonParse.js";
 import { findTopologyPath } from "../shared/pathfinding.js";
 import { buildWorldStateBlock } from "../shared/worldStateBlock.js";
-import { buildExecutionContextPromptBlock, diffMinutes } from "../runtime/resolutionExecutionContext.js";
 import { resolveTargetPosition } from "./movementHandler.js";
 
 // ─── Helpers ──────────────────────────────────────────────────────────

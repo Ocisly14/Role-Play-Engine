@@ -25,12 +25,12 @@ import {
   resolveInteractionState,
   resolveTargets,
 } from "../handlers/interactionStateResolver.js";
-import {
-  applyObjectDelta,
-  resolveObjectInteractionState,
-} from "../handlers/objectInteractionStateResolver.js";
 import { createDefaultRegistry } from "../registerDefaults.js";
 import type { GameEngineRegistry } from "../registry.js";
+import {
+  applyObjectDelta,
+  resolveItemState,
+} from "../tools/itemStateResolver.js";
 import type { ExecutionContext, TickRuntimeContext } from "../types.js";
 
 // ===== World Fixtures =====
@@ -914,7 +914,7 @@ describe("Engine Integration — Blackwood Manor", () => {
 
       const runtime = { modelProvider: "openai" };
 
-      const delta = await resolveObjectInteractionState(
+      const delta = await resolveItemState(
         node,
         dgsm,
         runtime,
@@ -922,11 +922,11 @@ describe("Engine Integration — Blackwood Manor", () => {
         "zh"
       );
 
-      // LLM should return items array and a memory
+      // LLM should return items array and an outcome
       console.log("[LLM Object Delta]", JSON.stringify(delta, null, 2));
       expect(delta.items).toBeDefined();
-      expect(delta.memory).toBeDefined();
-      expect(delta.memory.length).toBeGreaterThan(0);
+      expect(delta.outcome).toBeDefined();
+      expect(delta.outcome.length).toBeGreaterThan(0);
 
       // Apply the delta
       applyObjectDelta(dgsm, "npc_webb", delta, "manor_library");

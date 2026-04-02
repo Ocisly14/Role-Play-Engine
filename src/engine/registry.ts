@@ -1,8 +1,10 @@
 import type { DynamicGameStateManager } from "../state/DynamicGameState.js";
 import type {
+  ActionTool,
   ActivateResult,
   NodeHandler,
   NodeStartBlockedResult,
+  ToolPreCheckResult,
   WorldFeature,
 } from "./types.js";
 
@@ -29,6 +31,7 @@ const BASE_NODE_FIELDS = new Set([
 export class GameEngineRegistry {
   private handlers = new Map<string, NodeHandler>();
   private features = new Map<string, WorldFeature>();
+  private tools = new Map<string, ActionTool>();
 
   registerHandler(handler: NodeHandler): void {
     if (this.handlers.has(handler.type)) {
@@ -64,6 +67,81 @@ export class GameEngineRegistry {
 
   getFeature(id: string): WorldFeature | undefined {
     return this.features.get(id);
+  }
+
+  // ===== Tool management =====
+
+  registerTool(tool: ActionTool): void {
+    if (this.tools.has(tool.id)) {
+      console.warn(`[GameEngineRegistry] Overwriting tool: ${tool.id}`);
+    }
+    this.tools.set(tool.id, tool);
+  }
+
+  getTool(id: string): ActionTool | undefined {
+    return this.tools.get(id);
+  }
+
+  getAllTools(): ActionTool[] {
+    return [...this.tools.values()];
+  }
+
+  getActiveTools(
+    node: import("../planning/types.js").PlanNode
+  ): Array<{ tool: ActionTool; args: Record<string, unknown> }> {
+    if (!node.tools?.length) return [];
+    const results: Array<{ tool: ActionTool; args: Record<string, unknown> }> =
+      [];
+    for (const call of node.tools) {
+      const tool = this.tools.get(call.name);
+      if (tool) results.push({ tool, args: call.args });
+    }
+    return results;
+  }
+
+  runToolPreChecks(
+    node: import("../planning/types.js").PlanNode,
+    dgsm: DynamicGameStateManager
+  ): ToolPreCheckResult | null {
+    for (const { tool, args } of this.getActiveTools(node)) {
+      const result = tool.preCheck(node, args, dgsm);
+      if (!result.passed) return result;
+    }
+    return null;
+  }
+
+  buildToolPrompt(): string {
+    if (this.tools.size === 0) return "";
+    const sections: string[] = [
+      "## Available Tools",
+      "",
+      'When your action needs an engine capability, add a tool call to the `"tools"` array in your response.',
+      "",
+    ];
+    for (const tool of this.tools.values()) {
+      sections.push(`**${tool.id}** — ${tool.description}`);
+      sections.push("Args:");
+      for (const arg of tool.argsSchema.requiredArgs) {
+        sections.push(
+          `- \`"${arg.name}"\`: (REQUIRED, ${arg.type}) ${arg.description}`
+        );
+      }
+      if (tool.argsSchema.optionalArgs) {
+        for (const arg of tool.argsSchema.optionalArgs) {
+          sections.push(
+            `- \`"${arg.name}"\`: (optional, ${arg.type}) ${arg.description}`
+          );
+        }
+      }
+      sections.push("Example:");
+      sections.push("```json");
+      sections.push(JSON.stringify(tool.exampleCall, null, 2));
+      sections.push("```");
+      sections.push("");
+      sections.push(tool.planningPrompt);
+      sections.push("");
+    }
+    return sections.join("\n");
   }
 
   /** Collect character-level skill modifiers from all registered features */
@@ -372,6 +450,7 @@ The \`impact\` field on every PlanNode determines **who in the game world percei
       ? "Chinese"
       : "English";
 
+    const toolsAvailable = this.tools.size > 0;
     const sections: string[] = [];
 
     // Header
@@ -402,30 +481,33 @@ The \`impact\` field on every PlanNode determines **who in the game world percei
     sections.push("");
     sections.push("### Response Structure");
     sections.push("```json");
-    sections.push(
-      JSON.stringify(
-        {
-          node: {
-            nodeId: "unique-id",
-            startTime: "HH:MM",
-            endTime: "HH:MM",
-            action: "description of what the character does",
-            type: typeNames,
-            skill: "exact skill name (OMIT if no check needed)",
-            impact: 0,
-          },
-          updatedShortTermIntent:
-            "optional — update your current focus if it changed",
-        },
-        null,
-        2
-      )
-    );
+    const responseStructure: Record<string, unknown> = {
+      node: {
+        nodeId: "unique-id",
+        startTime: "HH:MM",
+        endTime: "HH:MM",
+        action: "description of what the character does",
+        type: typeNames,
+        skill: "exact skill name (OMIT if no check needed)",
+        impact: 0,
+        ...(toolsAvailable
+          ? { tools: [{ name: "tool_id", args: { targetId: "..." } }] }
+          : {}),
+      },
+      updatedShortTermIntent:
+        "optional — update your current focus if it changed",
+    };
+    sections.push(JSON.stringify(responseStructure, null, 2));
     sections.push("```");
     sections.push("");
     sections.push(
       "- `updatedShortTermIntent`: set this if your focus has shifted. Omit if unchanged."
     );
+    if (toolsAvailable) {
+      sections.push(
+        "- `tools`: (optional) array of engine tool calls. Only include when your action needs a registered tool. See Available Tools below."
+      );
+    }
 
     // Section 3: Type-Specific Additional Fields (show ALL types)
     const typeSpecSections: string[] = [];
@@ -533,6 +615,12 @@ The \`impact\` field on every PlanNode determines **who in the game world percei
         )
       );
       sections.push("```");
+    }
+
+    const toolPrompt = this.buildToolPrompt();
+    if (toolPrompt) {
+      sections.push("");
+      sections.push(toolPrompt);
     }
 
     return sections.join("\n") + "\n";

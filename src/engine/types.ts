@@ -244,6 +244,62 @@ export interface WorldFeature {
   ): Promise<PropagationResult>;
 }
 
+// ===== Action Tool: action sub-system invoked by planner tool calls =====
+
+export interface ActionToolArgsSchema {
+  requiredArgs: Array<{ name: string; type: string; description: string }>;
+  optionalArgs?: Array<{ name: string; type: string; description: string }>;
+}
+
+export interface ToolPreCheckResult {
+  passed: boolean;
+  failureReason?: import("../planning/types.js").FailureReason;
+  failureDetail?: string;
+}
+
+export interface ToolResolutionResult<TDelta = unknown> {
+  delta: TDelta;
+  outcomeDescription: string;
+}
+
+export interface ActionTool<TDelta = unknown> {
+  id: string;
+  description: string;
+  argsSchema: ActionToolArgsSchema;
+  exampleCall: { name: string; args: Record<string, unknown> };
+  planningPrompt: string;
+  preCheck(
+    node: import("../planning/types.js").PlanNode,
+    args: Record<string, unknown>,
+    dgsm: DynamicGameStateManager
+  ): ToolPreCheckResult;
+  resolve(
+    node: import("../planning/types.js").PlanNode,
+    args: Record<string, unknown>,
+    dgsm: DynamicGameStateManager,
+    runtime: any,
+    skillRollResult: {
+      successLevel: import("../planning/types.js").SuccessLevel;
+      detail: string;
+    } | null,
+    locationId: string,
+    language: string,
+    resolutionContext: import("../planning/types.js").ActionResolutionContext,
+    extras: {
+      memoryManager?: import("../memory/NpcMemoryManager.js").NpcMemoryManager;
+      sessionId?: string;
+      registry?: import("./registry.js").GameEngineRegistry;
+      featureNotes?: string[];
+    }
+  ): Promise<ToolResolutionResult<TDelta>>;
+  apply(
+    dgsm: DynamicGameStateManager,
+    actorId: string,
+    delta: TDelta,
+    locationId: string
+  ): void;
+}
+
 // ===== Execution Context: shared utilities passed to handlers =====
 
 export interface ExecutionContext {

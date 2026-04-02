@@ -22,7 +22,10 @@ function timeToMinutes(value: string | undefined): number | null {
   return hours * 60 + minutes;
 }
 
-export function diffMinutes(start: string | undefined, end: string | undefined): number {
+export function diffMinutes(
+  start: string | undefined,
+  end: string | undefined
+): number {
   const startMinutes = timeToMinutes(start);
   const endMinutes = timeToMinutes(end);
   if (startMinutes == null || endMinutes == null) return 0;
@@ -37,10 +40,10 @@ export function buildActionResolutionContext(
   const startedAt = node.executionMeta.startedAt ?? node.startTime;
   const resolvedAt =
     action.status === "interrupted"
-      ? node.executionMeta.interruptedAt ?? action.gameTime
+      ? (node.executionMeta.interruptedAt ?? action.gameTime)
       : action.status === "failed"
-        ? node.executionMeta.failedAt ?? action.gameTime
-        : node.executionMeta.completedAt ?? action.gameTime;
+        ? (node.executionMeta.failedAt ?? action.gameTime)
+        : (node.executionMeta.completedAt ?? action.gameTime);
 
   const elapsedMinutes =
     action.status === "completed"

@@ -13,14 +13,17 @@ import type {
   SceneStateDelta,
   SuccessLevel,
 } from "../../planning/types.js";
-import { buildExecutionContextPromptBlock, diffMinutes } from "../runtime/resolutionExecutionContext.js";
-import { parseJsonResponse } from "../shared/jsonParse.js";
 import type { DynamicGameStateManager } from "../../state/DynamicGameState.js";
-import { buildMovementRouteIgnoringBlocks } from "../shared/pathfinding.js";
 import type { GameEngineRegistry } from "../registry.js";
+import {
+  buildExecutionContextPromptBlock,
+  diffMinutes,
+} from "../runtime/resolutionExecutionContext.js";
+import { parseJsonResponse } from "../shared/jsonParse.js";
+import { buildMovementRouteIgnoringBlocks } from "../shared/pathfinding.js";
 import { buildWorldStateBlock } from "../shared/worldStateBlock.js";
+import { applyItemResults } from "../tools/itemStateResolver.js";
 import { resolveTargetPosition } from "./movementHandler.js";
-import { applyItemResults } from "./objectInteractionStateResolver.js";
 
 export interface ActionMoveCandidate {
   id: string;
@@ -223,7 +226,9 @@ function describeActionMoveCandidate(
     return { kind: "road", name: road.name };
   }
 
-  const outline = dgsm.getState().scenarioOutlines.find((o) => o.id === locationId);
+  const outline = dgsm
+    .getState()
+    .scenarioOutlines.find((o) => o.id === locationId);
   if (outline) {
     return { kind: "outline", name: outline.name };
   }
@@ -247,7 +252,12 @@ function collectNearbyActionMoveCandidateIds(
     if (candidateId === locationId) return false;
     const target = resolveTargetPosition(candidateId, topology, dgsm);
     if (!target) return false;
-    const route = buildMovementRouteIgnoringBlocks(from, target, topology, dgsm);
+    const route = buildMovementRouteIgnoringBlocks(
+      from,
+      target,
+      topology,
+      dgsm
+    );
     return route != null && route.totalMinutes <= 2;
   });
 }
@@ -462,7 +472,9 @@ export async function resolveActionState(
           : undefined,
       items: parsed.items,
       fatigueDelta:
-        typeof parsed.fatigueDelta === "number" ? parsed.fatigueDelta : undefined,
+        typeof parsed.fatigueDelta === "number"
+          ? parsed.fatigueDelta
+          : undefined,
       memory: parsed.memory ?? node.action,
     };
   } catch (error) {
