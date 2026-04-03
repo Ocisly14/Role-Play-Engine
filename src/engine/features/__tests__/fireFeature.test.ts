@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it } from "vitest";
-import type { PlanNode } from "../../../planning/types.js";
-import type { SceneCondition } from "../../../planning/types.js";
+import type { PlanNode } from "../../../npc/planning/types.js";
+import type { SceneCondition } from "../../../npc/planning/types.js";
 import {
   getBlockedConnectionReason,
   makeBlockedConnectionKey,

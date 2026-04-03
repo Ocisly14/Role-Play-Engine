@@ -3,7 +3,7 @@
  * All types used by DynamicGameState, TickProcessor, and engine components.
  */
 
-import type { SceneCondition } from "../planning/types.js";
+import type { SceneCondition } from "../npc/planning/types.js";
 
 // ─── Character-related types ───────────────────────────────────────
 

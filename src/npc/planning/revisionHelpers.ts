@@ -1,4 +1,4 @@
-import { t } from "../i18n/t.js";
+import { t } from "../../i18n/t.js";
 import type { CharacterAction, PlanNode } from "./types.js";
 
 export function buildInterruptedAction(

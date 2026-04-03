@@ -2,7 +2,7 @@ import type {
   ActionResolutionContext,
   CharacterAction,
   PlanNode,
-} from "../../planning/types.js";
+} from "../../npc/planning/types.js";
 
 function timeToMinutes(value: string | undefined): number | null {
   if (!value) return null;

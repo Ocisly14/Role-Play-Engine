@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   buildLocationNameMap,
   resolveLocationId,
-} from "../../planning/sceneMapFormatter.js";
+} from "../../npc/planning/sceneMapFormatter.js";
 import {
   DynamicGameStateManager,
   initialDynamicGameState,

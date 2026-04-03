@@ -1,13 +1,14 @@
 import * as path from "node:path";
 import type { PrismaClient } from "@prisma/client";
 import type { GameEngineRegistry } from "../engine/registry.js";
-import { runSimulationTick } from "../engine/runtime/tickProcessor.js";
 import { buildEncounterSnapshot } from "../engine/shared/encounterDedup.js";
 import type { ExecutionContext } from "../engine/types.js";
 import type { NpcMemoryManager } from "../memory/NpcMemoryManager.js";
-import type { NPCPlanningAgent } from "../planning/NPCPlanningAgent.js";
+import type { NPCPlanningAgent } from "../npc/planning/NPCPlanningAgent.js";
+import { TickOrchestrator } from "../orchestration/tickOrchestrator.js";
 import type { DynamicGameStateManager } from "../state/DynamicGameState.js";
 import type { DynamicNPCProfile } from "../state/types.js";
+import { translatePlanNode } from "../translation/actionTranslator.js";
 import { SimulationEventEmitter } from "./SimulationEventEmitter.js";
 import {
   injectCharacterIntoState,
@@ -81,6 +82,8 @@ export class SimulationRunner {
   private previousEncounterSignatures: Set<string> = new Set();
 
   readonly events: SimulationEventEmitter;
+  /** Tick orchestrator using the new four-layer architecture (EngineTool-based) */
+  readonly orchestrator: TickOrchestrator;
   private readonly collectedEvents: SimulationEvent[] = [];
   private broadcastCallback: ((events: SimulationEvent[]) => void) | null =
     null;
@@ -106,6 +109,10 @@ export class SimulationRunner {
     this.prisma = params.prisma;
 
     this.events = new SimulationEventEmitter(this.sessionId);
+    this.orchestrator = new TickOrchestrator({
+      registry: this.registry,
+      translatePlanNode,
+    });
 
     this.ctx.simulationEmitter = this.events;
     this.ctx.runtime = this.npcPlanningAgent.getRuntime();
@@ -524,13 +531,12 @@ export class SimulationRunner {
       const gameState = this.dgsm.getState();
       const dayBefore = gameState.gameDay;
 
-      const tickResult = await runSimulationTick({
+      const tickResult = await this.orchestrator.runSimulationTick({
         dgsm: this.dgsm,
         npcPlanningAgent: this.npcPlanningAgent,
         sessionId: this.sessionId,
         moduleId: this.config.moduleId,
         language: this.language,
-        registry: this.registry,
         ctx: this.ctx,
         memoryManager: this.memoryManager,
         previousEncounterSignatures: this.previousEncounterSignatures,

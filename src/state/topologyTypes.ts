@@ -1,4 +1,4 @@
-import type { SceneCondition } from "../planning/types.js";
+import type { SceneCondition } from "../npc/planning/types.js";
 import type { Item } from "./types.js";
 
 /**

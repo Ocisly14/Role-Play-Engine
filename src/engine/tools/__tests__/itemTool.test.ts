@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import type { PlanNode } from "../../../planning/types.js";
+import type { PlanNode } from "../../../npc/planning/types.js";
 import { itemTool } from "../itemTool.js";
 
 function createMockDgsm() {

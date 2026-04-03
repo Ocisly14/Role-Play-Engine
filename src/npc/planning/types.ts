@@ -1,4 +1,4 @@
-import type { CharacterPosition } from "../state/topologyTypes.js";
+import type { CharacterPosition } from "../../state/topologyTypes.js";
 
 export type BuiltinNodeType =
   | "action"

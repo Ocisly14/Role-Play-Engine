@@ -16,7 +16,7 @@ import type {
   InteractionStateDelta,
   PlanNode,
   SuccessLevel,
-} from "../../planning/types.js";
+} from "../../npc/planning/types.js";
 import type { DynamicGameStateManager } from "../../state/DynamicGameState.js";
 import { applyFatigueDelta } from "../features/staminaFeature.js";
 import type { GameEngineRegistry } from "../registry.js";

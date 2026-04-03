@@ -1,4 +1,4 @@
-import type { CharacterAction, PlanNode } from "../planning/types.js";
+import type { CharacterAction, PlanNode } from "../npc/planning/types.js";
 import type { DynamicGameStateManager } from "../state/DynamicGameState.js";
 
 // ===== Node Handler: executes a specific PlanNode type =====
@@ -372,4 +372,51 @@ export interface SkillRollResult {
       damage?: number;
     }
   >;
+}
+
+// ===== EngineTool: unified operation (replaces NodeHandler + ActionTool) =====
+
+/** Parameter schema for an EngineTool — like an LLM function definition */
+export interface EngineToolSchema {
+  requiredParams: Array<{ name: string; type: string; description: string }>;
+  optionalParams?: Array<{ name: string; type: string; description: string }>;
+  example: Record<string, unknown>;
+}
+
+/** Narrative output from an EngineTool execution */
+export interface EngineNarrative {
+  /** Brief outcome description */
+  outcome: string;
+  /** Per-character memory entries */
+  memories?: Array<{ characterId: string; text: string }>;
+}
+
+/** Result of executing an EngineTool */
+export interface EngineToolResult<TDelta = unknown> {
+  delta: TDelta;
+  narrative: EngineNarrative;
+}
+
+/** EngineTool definition — registered in registry, invoked via EngineToolCall */
+export interface EngineTool<TDelta = unknown> {
+  /** Unique identifier (e.g. "move", "action", "item") */
+  id: string;
+  /** Human-readable description */
+  description: string;
+  /** Parameter schema — describes what params this tool accepts */
+  schema: EngineToolSchema;
+  /** Execute the tool with given params, producing a delta and narrative */
+  execute(
+    params: Record<string, unknown>,
+    dgsm: DynamicGameStateManager,
+    ctx: ExecutionContext
+  ): Promise<EngineToolResult<TDelta>>;
+  /** Apply the produced delta to state */
+  applyDelta(dgsm: DynamicGameStateManager, delta: TDelta): void;
+}
+
+/** Tool call produced by the translation layer — like an LLM tool_call */
+export interface EngineToolCall {
+  toolId: string;
+  params: Record<string, unknown>;
 }

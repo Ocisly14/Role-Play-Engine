@@ -2,8 +2,8 @@ import { describe, expect, it, vi } from "vitest";
 import {
   DynamicGameStateManager,
   initialDynamicGameState,
-} from "../../state/DynamicGameState.js";
-import type { DynamicNPCProfile } from "../../state/types.js";
+} from "../../../state/DynamicGameState.js";
+import type { DynamicNPCProfile } from "../../../state/types.js";
 import { NPCPlanningAgent } from "../NPCPlanningAgent.js";
 import type { PlanNode } from "../types.js";
 

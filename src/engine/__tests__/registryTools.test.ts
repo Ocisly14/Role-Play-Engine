@@ -1,4 +1,4 @@
-import type { PlanNode } from "../../planning/types.js";
+import type { PlanNode } from "../../npc/planning/types.js";
 import { GameEngineRegistry } from "../registry.js";
 import type { ActionTool, ToolPreCheckResult } from "../types.js";
 

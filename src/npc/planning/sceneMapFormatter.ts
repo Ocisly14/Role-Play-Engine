@@ -1,11 +1,11 @@
-import { hydrateKnownMapSnapshot } from "../memory/mapMemory.js";
-import type { KnownMapSnapshot } from "../memory/types.js";
-import type { DynamicGameStateManager } from "../state/DynamicGameState.js";
+import { hydrateKnownMapSnapshot } from "../../memory/mapMemory.js";
+import type { KnownMapSnapshot } from "../../memory/types.js";
+import type { DynamicGameStateManager } from "../../state/DynamicGameState.js";
 import {
   getBlockedConnectionReason,
   resolveBlockedConnectionNodeRef,
-} from "../state/blockedConnections.js";
-import type { DynamicScene } from "../state/types.js";
+} from "../../state/blockedConnections.js";
+import type { DynamicScene } from "../../state/types.js";
 
 type GameState = ReturnType<DynamicGameStateManager["getState"]>;
 

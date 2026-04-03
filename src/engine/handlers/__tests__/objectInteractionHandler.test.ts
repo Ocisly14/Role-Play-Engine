@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it } from "vitest";
-import type { PlanNode } from "../../../planning/types.js";
+import type { PlanNode } from "../../../npc/planning/types.js";
 import type { DynamicScene, Item } from "../../../state/types.js";
 import type { ExecutionContext } from "../../types.js";
 import { objectInteractionHandler } from "../objectInteractionHandler.js";

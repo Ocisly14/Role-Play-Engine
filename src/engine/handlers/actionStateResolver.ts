@@ -12,7 +12,7 @@ import type {
   PlanNode,
   SceneStateDelta,
   SuccessLevel,
-} from "../../planning/types.js";
+} from "../../npc/planning/types.js";
 import type { DynamicGameStateManager } from "../../state/DynamicGameState.js";
 import type { GameEngineRegistry } from "../registry.js";
 import {

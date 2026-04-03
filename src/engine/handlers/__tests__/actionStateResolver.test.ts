@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import type { SceneStateDelta } from "../../../planning/types.js";
+import type { SceneStateDelta } from "../../../npc/planning/types.js";
 import type { DynamicGameStateManager } from "../../../state/DynamicGameState.js";
 import type { TownTopology } from "../../../state/topologyTypes.js";
 import type { DynamicScene, Item } from "../../../state/types.js";

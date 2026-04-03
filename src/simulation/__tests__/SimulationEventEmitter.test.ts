@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import type { CharacterAction } from "../../planning/types.js";
 import { SimulationEventEmitter } from "../SimulationEventEmitter.js";
+import type { CharacterAction } from "../npc/planning/types.js";
 
 function makeAction(
   status: CharacterAction["status"],

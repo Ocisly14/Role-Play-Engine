@@ -1,4 +1,4 @@
-import type { CharacterAction } from "../../planning/types.js";
+import type { CharacterAction } from "../../npc/planning/types.js";
 import type { DynamicGameStateManager } from "../../state/DynamicGameState.js";
 import type { TransportEdge } from "../../state/types.js";
 import { arePositionsCoLocated } from "./locationPresence.js";

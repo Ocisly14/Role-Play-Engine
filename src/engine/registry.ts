@@ -2,6 +2,7 @@ import type { DynamicGameStateManager } from "../state/DynamicGameState.js";
 import type {
   ActionTool,
   ActivateResult,
+  EngineTool,
   NodeHandler,
   NodeStartBlockedResult,
   ToolPreCheckResult,
@@ -142,6 +143,72 @@ export class GameEngineRegistry {
       sections.push("");
     }
     return sections.join("\n");
+  }
+
+  // ===== EngineTool management (new unified tools) =====
+
+  private engineTools = new Map<string, EngineTool>();
+
+  registerEngineTool(tool: EngineTool): void {
+    if (this.engineTools.has(tool.id)) {
+      console.warn(`[GameEngineRegistry] Overwriting engine tool: ${tool.id}`);
+    }
+    this.engineTools.set(tool.id, tool);
+  }
+
+  getEngineTool(id: string): EngineTool | undefined {
+    return this.engineTools.get(id);
+  }
+
+  getAllEngineTools(): EngineTool[] {
+    return [...this.engineTools.values()];
+  }
+
+  async executeToolCall(
+    call: EngineToolCall,
+    dgsm: DynamicGameStateManager,
+    ctx: ExecutionContext
+  ): Promise<EngineToolResult> {
+    const tool = this.engineTools.get(call.toolId);
+    if (!tool) {
+      throw new Error(`Unknown engine tool: ${call.toolId}`);
+    }
+    return tool.execute(call.params, dgsm, ctx);
+  }
+
+  async executeToolCalls(
+    calls: EngineToolCall[],
+    dgsm: DynamicGameStateManager,
+    ctx: ExecutionContext
+  ): Promise<
+    Array<{ toolId: string; delta: unknown; narrative: EngineNarrative }>
+  > {
+    const results: Array<{
+      toolId: string;
+      delta: unknown;
+      narrative: EngineNarrative;
+    }> = [];
+    for (const call of calls) {
+      const result = await this.executeToolCall(call, dgsm, ctx);
+      results.push({
+        toolId: call.toolId,
+        delta: result.delta,
+        narrative: result.narrative,
+      });
+    }
+    return results;
+  }
+
+  applyToolResult(
+    toolId: string,
+    dgsm: DynamicGameStateManager,
+    delta: unknown
+  ): void {
+    const tool = this.engineTools.get(toolId);
+    if (!tool) {
+      throw new Error(`Unknown engine tool: ${toolId}`);
+    }
+    tool.applyDelta(dgsm, delta);
   }
 
   /** Collect character-level skill modifiers from all registered features */

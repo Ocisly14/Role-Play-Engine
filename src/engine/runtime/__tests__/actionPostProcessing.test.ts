@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import type { CharacterAction } from "../../../planning/types.js";
+import type { CharacterAction } from "../../../npc/planning/types.js";
 import type { DynamicGameStateManager } from "../../../state/DynamicGameState.js";
 import type { TownTopology } from "../../../state/topologyTypes.js";
 import {

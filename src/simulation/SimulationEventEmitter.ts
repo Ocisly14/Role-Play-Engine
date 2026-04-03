@@ -1,6 +1,6 @@
 import { randomUUID } from "node:crypto";
 import { EventEmitter } from "node:events";
-import type { CharacterAction } from "../planning/types.js";
+import type { CharacterAction } from "../npc/planning/types.js";
 import type { SimulationEvent, SimulationEventType } from "./types.js";
 
 export class SimulationEventEmitter extends EventEmitter {

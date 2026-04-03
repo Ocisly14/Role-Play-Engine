@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import type { DynamicGameStateManager } from "../../state/DynamicGameState.js";
+import type { DynamicGameStateManager } from "../../../state/DynamicGameState.js";
 import {
   resolveDisplayLocationName,
   resolveLocationName,

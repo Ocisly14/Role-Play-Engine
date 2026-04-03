@@ -1,5 +1,5 @@
-import { COC_SKILL_BASE_VALUES } from "../../planning/cocSkillList.js";
-import type { PlanNode } from "../../planning/types.js";
+import { COC_SKILL_BASE_VALUES } from "../../npc/planning/cocSkillList.js";
+import type { PlanNode } from "../../npc/planning/types.js";
 import type { DynamicGameStateManager } from "../../state/DynamicGameState.js";
 import type { SkillRollResult } from "../types.js";
 import {

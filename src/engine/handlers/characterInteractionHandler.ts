@@ -2,7 +2,7 @@ import type {
   CharacterAction,
   PlanNode,
   SuccessLevel,
-} from "../../planning/types.js";
+} from "../../npc/planning/types.js";
 import type { DynamicGameStateManager } from "../../state/DynamicGameState.js";
 import { arePositionsCoLocated } from "../shared/locationPresence.js";
 import { buildOutcome, makeAction } from "../shared/nodeHelpers.js";

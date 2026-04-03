@@ -4,7 +4,7 @@ import type {
   DiscoveryEntry,
   PlanNode,
   SuccessLevel,
-} from "../../planning/types.js";
+} from "../../npc/planning/types.js";
 import { EmbeddingClient } from "../../rag/embedding.js";
 import { SessionRagService } from "../../rag/session/sessionRagService.js";
 import type { DynamicGameStateManager } from "../../state/DynamicGameState.js";

@@ -1,4 +1,4 @@
-import type { DynamicScene, Item } from "../state/types.js";
+import type { DynamicScene, Item } from "../../state/types.js";
 
 /**
  * One-line summary of an Item: "Name (id: X, type: Y, ...key stats)"

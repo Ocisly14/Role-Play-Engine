@@ -1,5 +1,5 @@
 import { t } from "../../i18n/t.js";
-import type { CharacterAction, PlanNode } from "../../planning/types.js";
+import type { CharacterAction, PlanNode } from "../../npc/planning/types.js";
 import type { DynamicGameStateManager } from "../../state/DynamicGameState.js";
 import type { CharacterPosition } from "../../state/topologyTypes.js";
 import { resolveTargetPosition } from "../handlers/movementHandler.js";

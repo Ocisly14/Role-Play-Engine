@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import type { SceneCondition } from "../../../planning/types.js";
+import type { SceneCondition } from "../../../npc/planning/types.js";
 import {
   makeBlockedConnectionKey,
   resolveBlockedConnectionNodeRef,
@@ -286,7 +286,7 @@ describe("weatherFeature", () => {
       const ws = dgsm.getFeatureSceneState("weather", "town") as any;
       ws.weatherType = "rain";
       ws.intensity = 3;
-      ws.minutesInState = 25;
+      ws.minutesInState = 115;
       dgsm.setFeatureSceneState("weather", "town", ws);
 
       const mockRandom = vi.spyOn(Math, "random");
@@ -311,7 +311,7 @@ describe("weatherFeature", () => {
       const ws = dgsm.getFeatureSceneState("weather", "town") as any;
       ws.weatherType = "rain";
       ws.intensity = 2;
-      ws.minutesInState = 25;
+      ws.minutesInState = 115;
       dgsm.setFeatureSceneState("weather", "town", ws);
 
       const mockRandom = vi.spyOn(Math, "random");
@@ -337,7 +337,7 @@ describe("weatherFeature", () => {
       const ws = dgsm.getFeatureSceneState("weather", "town") as any;
       ws.weatherType = "rain";
       ws.intensity = 1;
-      ws.minutesInState = 25;
+      ws.minutesInState = 115;
       dgsm.setFeatureSceneState("weather", "town", ws);
 
       const mockRandom = vi.spyOn(Math, "random");
@@ -363,7 +363,7 @@ describe("weatherFeature", () => {
       const ws = dgsm.getFeatureSceneState("weather", "town") as any;
       ws.weatherType = "storm";
       ws.intensity = 5;
-      ws.minutesInState = 25;
+      ws.minutesInState = 115;
       dgsm.setFeatureSceneState("weather", "town", ws);
 
       const mockRandom = vi.spyOn(Math, "random");
@@ -390,7 +390,7 @@ describe("weatherFeature", () => {
       const ws = dgsm.getFeatureSceneState("weather", "town") as any;
       ws.weatherType = "fog";
       ws.intensity = 3;
-      ws.minutesInState = 25;
+      ws.minutesInState = 115;
       dgsm.setFeatureSceneState("weather", "town", ws);
 
       const mockRandom = vi.spyOn(Math, "random");
@@ -433,7 +433,7 @@ describe("weatherFeature", () => {
       const ws = dgsm.getFeatureSceneState("weather", "town") as any;
       ws.weatherType = "rain";
       ws.intensity = 2;
-      ws.minutesInState = 25;
+      ws.minutesInState = 115;
       dgsm.setFeatureSceneState("weather", "town", ws);
 
       const mockRandom = vi.spyOn(Math, "random");
@@ -468,7 +468,7 @@ describe("weatherFeature", () => {
       const ws = dgsm.getFeatureSceneState("weather", "town") as any;
       ws.weatherType = "storm";
       ws.intensity = 2;
-      ws.minutesInState = 25;
+      ws.minutesInState = 115;
       dgsm.setFeatureSceneState("weather", "town", ws);
 
       const mockRandom = vi.spyOn(Math, "random");
@@ -504,7 +504,7 @@ describe("weatherFeature", () => {
       const ws = dgsm.getFeatureSceneState("weather", "town") as any;
       ws.weatherType = "snow";
       ws.intensity = 3;
-      ws.minutesInState = 25;
+      ws.minutesInState = 115;
       dgsm.setFeatureSceneState("weather", "town", ws);
 
       const mockRandom = vi.spyOn(Math, "random");
@@ -541,7 +541,7 @@ describe("weatherFeature", () => {
       const ws = dgsm.getFeatureSceneState("weather", "town") as any;
       ws.weatherType = "storm";
       ws.intensity = 4;
-      ws.minutesInState = 25;
+      ws.minutesInState = 115;
       dgsm.setFeatureSceneState("weather", "town", ws);
 
       const mockRandom = vi.spyOn(Math, "random");
@@ -570,7 +570,7 @@ describe("weatherFeature", () => {
       const ws = dgsm.getFeatureSceneState("weather", "town") as any;
       ws.weatherType = "snow";
       ws.intensity = 4;
-      ws.minutesInState = 25;
+      ws.minutesInState = 115;
       dgsm.setFeatureSceneState("weather", "town", ws);
 
       const mockRandom = vi.spyOn(Math, "random");
@@ -593,7 +593,7 @@ describe("weatherFeature", () => {
       const ws = dgsm.getFeatureSceneState("weather", "town") as any;
       ws.weatherType = "storm";
       ws.intensity = 3;
-      ws.minutesInState = 25;
+      ws.minutesInState = 115;
       dgsm.setFeatureSceneState("weather", "town", ws);
 
       const mockRandom = vi.spyOn(Math, "random");
@@ -619,7 +619,7 @@ describe("weatherFeature", () => {
   });
 
   describe("minute-based pacing", () => {
-    it("should preserve the 30-minute transition interval with 1-minute ticks", () => {
+    it("should preserve the 120-minute transition interval with 1-minute ticks", () => {
       const oneMinuteRuntime = createMockRuntime({ tickDurationMinutes: 1 });
       runTicks(dgsm, oneMinuteRuntime, 1); // init
 

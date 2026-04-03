@@ -18,6 +18,25 @@ export type {
   ToolPreCheckResult,
   ToolResolutionResult,
 } from "./types.js";
+export type {
+  EngineTool,
+  EngineToolCall,
+  EngineToolResult,
+  EngineToolSchema,
+  EngineNarrative,
+} from "./types.js";
+export {
+  actionOp,
+  movementOp,
+  characterInteractionOp,
+  itemOp,
+} from "./operations/index.js";
+export type {
+  ActionDelta,
+  MovementDelta,
+  CharacterInteractionDelta,
+  ItemDelta,
+} from "./operations/index.js";
 export {
   actionHandler,
   movementHandler,

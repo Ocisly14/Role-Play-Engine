@@ -16,7 +16,7 @@ import type {
   ObjectStateDelta,
   PlanNode,
   SuccessLevel,
-} from "../../planning/types.js";
+} from "../../npc/planning/types.js";
 import type { DynamicGameStateManager } from "../../state/DynamicGameState.js";
 import type { Item } from "../../state/types.js";
 import type { GameEngineRegistry } from "../registry.js";

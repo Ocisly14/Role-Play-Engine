@@ -1,7 +1,7 @@
 import { t } from "../../i18n/t.js";
 import type { NpcMemoryManager } from "../../memory/NpcMemoryManager.js";
-import type { NPCPlanningAgent } from "../../planning/NPCPlanningAgent.js";
-import type { CharacterAction, PlanNode } from "../../planning/types.js";
+import type { NPCPlanningAgent } from "../../npc/planning/NPCPlanningAgent.js";
+import type { CharacterAction, PlanNode } from "../../npc/planning/types.js";
 import type { DynamicGameStateManager } from "../../state/DynamicGameState.js";
 import { resolveTargetPosition } from "../handlers/movementHandler.js";
 import { buildMovementRouteIgnoringBlocks } from "../shared/pathfinding.js";

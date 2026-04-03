@@ -1,17 +1,16 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-vi.mock("../../models/index.js", () => ({
+vi.mock("../../../models/index.js", () => ({
   ModelClass: { SMALL: "small", MEDIUM: "medium", LARGE: "large" },
   generateText: vi.fn(),
 }));
 
-import { generateText } from "../../models/index.js";
 import {
   DynamicGameStateManager,
   initialDynamicGameState,
-} from "../../state/DynamicGameState.js";
-import { buildTopology } from "../../state/topologyTypes.js";
-import type { DynamicNPCProfile, DynamicScene } from "../../state/types.js";
+} from "../../../state/DynamicGameState.js";
+import { buildTopology } from "../../../state/topologyTypes.js";
+import type { DynamicNPCProfile, DynamicScene } from "../../../state/types.js";
 import { NPCPlanningAgent } from "../NPCPlanningAgent.js";
 import type { PlanNode } from "../types.js";
 
@@ -132,6 +131,7 @@ describe("NPCPlanningAgent hidden isolation", () => {
   });
 
   it("excludes hidden NPCs from next action generation prompts", async () => {
+    const { generateText } = await import("../../../models/index.js");
     let capturedPrompt = "";
     (generateText as any).mockImplementationOnce(async (opts: any) => {
       capturedPrompt = opts.context;

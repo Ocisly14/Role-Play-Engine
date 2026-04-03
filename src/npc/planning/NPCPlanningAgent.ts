@@ -1,11 +1,11 @@
 import type { PrismaClient } from "@prisma/client";
-import type { GameEngineRegistry } from "../engine/registry.js";
-import { getTopologyNeighbors } from "../engine/shared/topologyHelpers.js";
-import { t } from "../i18n/t.js";
-import type { NpcMemoryManager } from "../memory/NpcMemoryManager.js";
-import type { KnownMapSnapshot } from "../memory/types.js";
-import { ModelClass, generateText } from "../models/index.js";
-import type { DynamicGameStateManager } from "../state/DynamicGameState.js";
+import type { GameEngineRegistry } from "../../engine/registry.js";
+import { getTopologyNeighbors } from "../../engine/shared/topologyHelpers.js";
+import { t } from "../../i18n/t.js";
+import type { NpcMemoryManager } from "../../memory/NpcMemoryManager.js";
+import type { KnownMapSnapshot } from "../../memory/types.js";
+import { ModelClass, generateText } from "../../models/index.js";
+import type { DynamicGameStateManager } from "../../state/DynamicGameState.js";
 import { formatItemList, formatSceneItems } from "./itemFormatHelpers.js";
 import {
   buildDailySchedulePrompt,

@@ -4,7 +4,7 @@ import type {
   FailureReason,
   PlanNode,
   SuccessLevel,
-} from "../../planning/types.js";
+} from "../../npc/planning/types.js";
 
 export function buildOutcome(
   node: PlanNode,

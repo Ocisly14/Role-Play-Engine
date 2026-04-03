@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import type { SceneCondition } from "../../../src/planning/types.js";
+import type { SceneCondition } from "../../../src/npc/planning/types.js";
 import { mergeSceneConditions } from "./mapService.js";
 
 describe("mergeSceneConditions", () => {

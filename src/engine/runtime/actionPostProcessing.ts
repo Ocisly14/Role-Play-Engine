@@ -1,16 +1,16 @@
 import { t } from "../../i18n/t.js";
 import type { NpcMemoryManager } from "../../memory/NpcMemoryManager.js";
-import type { NPCPlanningAgent } from "../../planning/NPCPlanningAgent.js";
+import type { NPCPlanningAgent } from "../../npc/planning/NPCPlanningAgent.js";
 import {
   buildLocationNameMap,
   resolveLocationId as resolveLocationFromName,
-} from "../../planning/sceneMapFormatter.js";
+} from "../../npc/planning/sceneMapFormatter.js";
 import type {
   ActionResolutionContext,
   CharacterAction,
   PlanNode,
   SuccessLevel,
-} from "../../planning/types.js";
+} from "../../npc/planning/types.js";
 import type { DynamicGameStateManager } from "../../state/DynamicGameState.js";
 import type { Item } from "../../state/types.js";
 import { applyFatigueDelta } from "../features/staminaFeature.js";
