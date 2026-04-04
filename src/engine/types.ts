@@ -300,6 +300,103 @@ export interface ActionTool<TDelta = unknown> {
   ): void;
 }
 
+// ===== Action Definition: declarative game rules =====
+
+export interface ActionDefinitionSkillCheck {
+  skills: string[];
+  difficulty: "regular" | "hard" | "extreme";
+  type: "single" | "opposed";
+  opposedDefense?: string[];
+  failBehavior: "abort" | "partial";
+}
+
+export interface ActionDefinition {
+  id: string;
+  title: string;
+  description: string;
+  content: string;
+  skillCheck?: ActionDefinitionSkillCheck;
+}
+
+// ===== Dispatcher: action → definition steps =====
+
+export interface DispatchStep {
+  definitionId: string;
+  args?: Record<string, unknown>;
+}
+
+export interface DispatchResult {
+  steps: DispatchStep[];
+}
+
+// ===== StateResolution: structured state changes =====
+
+export interface CharacterChange {
+  characterId: string;
+  hp?: number;
+  san?: number;
+  fatigue?: number;
+  addConditions?: string[];
+  removeConditions?: string[];
+  position?: import("../state/topologyTypes.js").CharacterPosition;
+}
+
+export interface ItemChange {
+  itemId: string;
+  action: "move" | "destroy" | "create" | "modify";
+  from?: string;
+  to?: string;
+  properties?: Record<string, unknown>;
+}
+
+export interface SceneChange {
+  sceneId: string;
+  addConditions?: string[];
+  removeConditions?: string[];
+}
+
+export interface MemoryEntry {
+  characterId: string;
+  type: string;
+  content: string;
+}
+
+export interface RelationshipChange {
+  from: string;
+  to: string;
+  change: string;
+}
+
+export interface StateResolution {
+  characterChanges?: CharacterChange[];
+  itemChanges?: ItemChange[];
+  sceneChanges?: SceneChange[];
+  memories?: MemoryEntry[];
+  relationships?: RelationshipChange[];
+  featureOverlays?: Record<string, unknown>;
+  narrative: string;
+}
+
+// ===== ToolResult: code tool execution result =====
+
+export interface ToolResult {
+  done: boolean;
+  status: "completed" | "failed" | "interrupted";
+  outcomeDescription: string;
+  remainingMinutes?: number;
+  rollDetail?: string;
+  successLevel?: import("../planning/types.js").SuccessLevel;
+  perTargetResults?: Record<
+    string,
+    {
+      successLevel: import("../planning/types.js").SuccessLevel;
+      actorWon: boolean;
+      detail: string;
+      damage?: number;
+    }
+  >;
+}
+
 // ===== Execution Context: shared utilities passed to handlers =====
 
 export interface ExecutionContext {
