@@ -1,5 +1,6 @@
 import type { DynamicGameStateManager } from "../state/DynamicGameState.js";
 import type {
+  ActionDefinition,
   ActionTool,
   ActivateResult,
   NodeHandler,
@@ -32,6 +33,7 @@ export class GameEngineRegistry {
   private handlers = new Map<string, NodeHandler>();
   private features = new Map<string, WorldFeature>();
   private tools = new Map<string, ActionTool>();
+  private definitions = new Map<string, ActionDefinition>();
 
   registerHandler(handler: NodeHandler): void {
     if (this.handlers.has(handler.type)) {
@@ -84,6 +86,31 @@ export class GameEngineRegistry {
 
   getAllTools(): ActionTool[] {
     return [...this.tools.values()];
+  }
+
+  // ===== Definition management =====
+
+  registerDefinition(def: ActionDefinition): void {
+    if (this.definitions.has(def.id)) {
+      console.warn(`[GameEngineRegistry] Overwriting definition: ${def.id}`);
+    }
+    this.definitions.set(def.id, def);
+  }
+
+  getDefinition(id: string): ActionDefinition | undefined {
+    return this.definitions.get(id);
+  }
+
+  getAllDefinitions(): ActionDefinition[] {
+    return [...this.definitions.values()];
+  }
+
+  buildDispatcherDefinitionList(): string {
+    const lines: string[] = [];
+    for (const def of this.definitions.values()) {
+      lines.push(`- **${def.id}**: ${def.description}`);
+    }
+    return lines.join("\n");
   }
 
   getActiveTools(
