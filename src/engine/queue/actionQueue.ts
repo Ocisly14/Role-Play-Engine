@@ -1,5 +1,5 @@
-import type { MovementTickState } from "../tools/movementTool.js";
-import type { DispatchStep, ToolResult } from "../types.js";
+import type { MovementTickState } from "../types.js";
+import type { InterpretedStep, ToolResult } from "../types.js";
 
 export interface QueueEntry {
   nodeId: string;
@@ -10,7 +10,7 @@ export interface QueueEntry {
   impact: number;
   status: "pending" | "in_progress" | "completed" | "failed" | "interrupted";
 
-  steps?: DispatchStep[];
+  steps?: InterpretedStep[];
   currentStepIndex?: number;
   skillCheckResult?: ToolResult;
 

@@ -163,7 +163,6 @@ export interface PlanNode {
   type: PlanNodeType;
   /** Skill name for dice roll. Omit = auto-success. */
   skill?: string;
-  impact: 0 | 1 | 2 | 3 | 4 | 5;
   difficulty?: "regular" | "hard" | "extreme";
   targetCharacterIds?: string[];
   objectInteractionPayload?: ObjectInteractionPayload;

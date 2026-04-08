@@ -1,6 +1,6 @@
 import type {
   ActionDefinition,
-  DispatchResult,
+  InterpretedResult,
   StateResolution,
   ToolResult,
 } from "../types.js";
@@ -24,11 +24,11 @@ describe("engine types", () => {
     expect(def.skillCheck?.type).toBe("opposed");
   });
 
-  it("DispatchResult contains ordered steps", () => {
-    const result: DispatchResult = {
+  it("InterpretedResult contains ordered steps", () => {
+    const result: InterpretedResult = {
       steps: [
-        { definitionId: "movement", args: { destination: "harbor_docks" } },
-        { definitionId: "social", args: { targetId: "captain_wang" } },
+        { definitionId: "movement", impact: 0 },
+        { definitionId: "social", impact: 1 },
       ],
     };
     expect(result.steps).toHaveLength(2);

@@ -197,16 +197,6 @@ The engine resolves skill rolls mechanically. A skill roll is called ONLY when:
 - For object movement, only reference items that already appear in \`Items You Can See\` or \`What You're Carrying\`. Do not invent new intermediate objects such as printouts unless a previous action has already created them.
 - Use \`move\` when the item is simply changing where it is. Do not split same-scene relocation into artificial \`pickup\` then \`place\` steps.
 
-## Impact
-
-- \`"impact": 0\` = private or low-consequence action. No one else needs to react.
-- \`"impact": 1\` = direct target only. Use this only for targeted actions with \`targetCharacterIds\` where the target should meaningfully react, and only when the action also uses a \`skill\`.
-- \`"impact": 2\` = noticeable to others in the same scene.
-- \`"impact": 3\` = noticeable across the same larger location or building.
-- \`"impact": 4\` = noticeable in nearby locations or the surrounding area.
-- \`"impact": 5\` = major event with global or session-wide consequences.
-- Default to \`"impact": 0\` unless there is a clear reason to escalate it.
-
 ## Available Skills
 \${COC_SKILL_LIST_PROMPT}`;
 
@@ -223,8 +213,7 @@ Return a single JSON object. No extra text. JSON keys must be in English. Write 
     "action": "description of what you do (in ${lang})",
     "destination": "ONLY for movement — exact destination from Places You Know (English). Omit for other types.",
     "type": "action|movement|character_interaction|object_interaction",
-    "skill": "OMIT if no skill check needed, otherwise exact skill name (English)",
-    "impact": "Default 0. Use 1 only for targeted consequential actions with skill; 2+ for broader effects"
+    "skill": "OMIT if no skill check needed, otherwise exact skill name (English)"
   },
   "updatedShortTermIntent": "optional — update your current focus if it changed based on what happened"
 }

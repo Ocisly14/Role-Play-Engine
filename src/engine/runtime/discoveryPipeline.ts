@@ -8,7 +8,9 @@ import type {
 import { EmbeddingClient } from "../../rag/embedding.js";
 import { SessionRagService } from "../../rag/session/sessionRagService.js";
 import type { DynamicGameStateManager } from "../../state/DynamicGameState.js";
-import { resolveTargets } from "../handlers/interactionStateResolver.js";
+function resolveTargets(node: PlanNode): string[] {
+  return node.targetCharacterIds ?? [];
+}
 
 const DIFFICULTY_RANK: Record<string, number> = {
   automatic: 0,

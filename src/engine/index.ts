@@ -2,7 +2,6 @@ export { GameEngineRegistry } from "./registry.js";
 export { createExecutionContext } from "./executionContext.js";
 export { createDefaultRegistry } from "./registerDefaults.js";
 export type {
-  NodeHandler,
   WorldFeature,
   ExecutionContext,
   SkillRollResult,
@@ -11,19 +10,12 @@ export type {
   FeatureNodeSchema,
   FeaturePropagationConfig,
   PropagationResult,
+  ActionDefinition,
+  StateDomainSpec,
+  InterpretedResult,
+  StateResolution,
+  ToolResult,
 } from "./types.js";
-export type {
-  ActionTool,
-  ActionToolArgsSchema,
-  ToolPreCheckResult,
-  ToolResolutionResult,
-} from "./types.js";
-export {
-  actionHandler,
-  movementHandler,
-  characterInteractionHandler,
-  objectInteractionHandler,
-} from "./handlers/index.js";
 export {
   findAffectedCharacters,
   findAffectedScenes,

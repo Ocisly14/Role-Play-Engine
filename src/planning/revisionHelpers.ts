@@ -21,7 +21,7 @@ export function buildInterruptedAction(
     location,
     type: node.type,
     skill: node.skill,
-    impact: node.impact,
+    impact: 0,
     difficulty: node.difficulty,
     status: "interrupted",
     outcome: triggerDescription ?? base,

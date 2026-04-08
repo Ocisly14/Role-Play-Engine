@@ -6,7 +6,7 @@ import type {
   TownTopology,
 } from "../../../state/topologyTypes.js";
 import { buildTopology } from "../../../state/topologyTypes.js";
-import { findTopologyPath } from "../pathfinding.js";
+import { findTopologyPath, resolveTargetPosition } from "../pathfinding.js";
 
 // Helper: build a simple test topology
 //   JUNC_A -- ROAD_1 (10min) -- JUNC_B -- ROAD_2 (5min) -- JUNC_C
@@ -268,5 +268,71 @@ describe("findTopologyPath", () => {
     );
 
     expect(path).toBeNull();
+  });
+});
+
+describe("resolveTargetPosition", () => {
+  it("resolves junction IDs", () => {
+    const topology = {
+      junctions: new Map([["harbor_docks", { id: "harbor_docks" }]]),
+      roads: new Map(),
+      sceneToParent: new Map(),
+    } as any;
+    const result = resolveTargetPosition("harbor_docks", topology);
+    expect(result).toEqual({ type: "junction", junctionId: "harbor_docks" });
+  });
+
+  it("resolves scene IDs in sceneToParent", () => {
+    const topology = {
+      junctions: new Map(),
+      roads: new Map(),
+      sceneToParent: new Map([
+        ["church_interior", { type: "junction", junctionId: "main_square" }],
+      ]),
+    } as any;
+    const result = resolveTargetPosition("church_interior", topology);
+    expect(result).toEqual({ type: "scene", sceneId: "church_interior" });
+  });
+
+  it("resolves road IDs to midpoint position", () => {
+    const topology = {
+      junctions: new Map(),
+      roads: new Map([
+        ["main_road", { id: "main_road", travelTimeMinutes: 10 }],
+      ]),
+      sceneToParent: new Map(),
+    } as any;
+    const result = resolveTargetPosition("main_road", topology);
+    expect(result).toEqual({
+      type: "road",
+      roadId: "main_road",
+      position: 0.5,
+    });
+  });
+
+  it("resolves road IDs with explicit position", () => {
+    const topology = {
+      junctions: new Map(),
+      roads: new Map([
+        ["main_road", { id: "main_road", travelTimeMinutes: 10 }],
+      ]),
+      sceneToParent: new Map(),
+    } as any;
+    const result = resolveTargetPosition("main_road@0.3", topology);
+    expect(result).toEqual({
+      type: "road",
+      roadId: "main_road",
+      position: 0.3,
+    });
+  });
+
+  it("returns null for unknown location", () => {
+    const topology = {
+      junctions: new Map(),
+      roads: new Map(),
+      sceneToParent: new Map(),
+    } as any;
+    const result = resolveTargetPosition("unknown_location", topology);
+    expect(result).toBeNull();
   });
 });

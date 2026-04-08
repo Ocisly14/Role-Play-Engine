@@ -1,34 +1,6 @@
 import type { CharacterAction, PlanNode } from "../planning/types.js";
 import type { DynamicGameStateManager } from "../state/DynamicGameState.js";
 
-// ===== Node Handler: executes a specific PlanNode type =====
-
-export interface NodeHandler {
-  /** The PlanNodeType this handler processes (e.g. "movement", "fire_spread") */
-  type: string;
-
-  /** Execute a single node, return the resulting action (may be async for LLM-based handlers) */
-  execute(
-    node: PlanNode,
-    dgsm: DynamicGameStateManager,
-    ctx: ExecutionContext
-  ): CharacterAction | Promise<CharacterAction>;
-
-  // --- LLM prompt metadata (auto-injected into plan agent prompts) ---
-
-  /** Human-readable description of what this type does */
-  description: string;
-
-  /** Fields the LLM must provide on the PlanNode */
-  requiredFields: string[];
-
-  /** Fields the LLM may optionally provide */
-  optionalFields?: string[];
-
-  /** Example PlanNode for the LLM prompt */
-  exampleNode: Partial<PlanNode>;
-}
-
 // ===== World Feature: self-running world system =====
 
 /** Result returned by WorldFeature.onNodeStart() when a precondition fails */
@@ -244,62 +216,6 @@ export interface WorldFeature {
   ): Promise<PropagationResult>;
 }
 
-// ===== Action Tool: action sub-system invoked by planner tool calls =====
-
-export interface ActionToolArgsSchema {
-  requiredArgs: Array<{ name: string; type: string; description: string }>;
-  optionalArgs?: Array<{ name: string; type: string; description: string }>;
-}
-
-export interface ToolPreCheckResult {
-  passed: boolean;
-  failureReason?: import("../planning/types.js").FailureReason;
-  failureDetail?: string;
-}
-
-export interface ToolResolutionResult<TDelta = unknown> {
-  delta: TDelta;
-  outcomeDescription: string;
-}
-
-export interface ActionTool<TDelta = unknown> {
-  id: string;
-  description: string;
-  argsSchema: ActionToolArgsSchema;
-  exampleCall: { name: string; args: Record<string, unknown> };
-  planningPrompt: string;
-  preCheck(
-    node: import("../planning/types.js").PlanNode,
-    args: Record<string, unknown>,
-    dgsm: DynamicGameStateManager
-  ): ToolPreCheckResult;
-  resolve(
-    node: import("../planning/types.js").PlanNode,
-    args: Record<string, unknown>,
-    dgsm: DynamicGameStateManager,
-    runtime: any,
-    skillRollResult: {
-      successLevel: import("../planning/types.js").SuccessLevel;
-      detail: string;
-    } | null,
-    locationId: string,
-    language: string,
-    resolutionContext: import("../planning/types.js").ActionResolutionContext,
-    extras: {
-      memoryManager?: import("../memory/NpcMemoryManager.js").NpcMemoryManager;
-      sessionId?: string;
-      registry?: import("./registry.js").GameEngineRegistry;
-      featureNotes?: string[];
-    }
-  ): Promise<ToolResolutionResult<TDelta>>;
-  apply(
-    dgsm: DynamicGameStateManager,
-    actorId: string,
-    delta: TDelta,
-    locationId: string
-  ): void;
-}
-
 // ===== Action Definition: declarative game rules =====
 
 export interface ActionDefinitionSkillCheck {
@@ -310,23 +226,44 @@ export interface ActionDefinitionSkillCheck {
   failBehavior: "abort" | "partial";
 }
 
+export interface StateDomainSpec {
+  inject: string[];
+  fields?: string[] | Record<string, string[]>;
+  output: string[];
+}
+
+export interface ActionDefinitionInterpreter {
+  examples: string[];
+}
+
+export interface ActionDefinitionImpactHint {
+  default: number;
+  range?: string;
+  examples?: string;
+}
+
 export interface ActionDefinition {
   id: string;
   title: string;
   description: string;
   content: string;
+  guidanceBody: string;
   skillCheck?: ActionDefinitionSkillCheck;
+  stateDomains?: Record<string, StateDomainSpec>;
+  interpreter?: ActionDefinitionInterpreter;
+  featureOverlay?: Record<string, unknown>;
+  impactHint?: ActionDefinitionImpactHint;
 }
 
-// ===== Dispatcher: action → definition steps =====
+// ===== GameInterpreter: action → definition steps =====
 
-export interface DispatchStep {
+export interface InterpretedStep {
   definitionId: string;
-  args?: Record<string, unknown>;
+  impact: 0 | 1 | 2 | 3 | 4 | 5;
 }
 
-export interface DispatchResult {
-  steps: DispatchStep[];
+export interface InterpretedResult {
+  steps: InterpretedStep[];
 }
 
 // ===== StateResolution: structured state changes =====
@@ -375,6 +312,14 @@ export interface StateResolution {
   relationships?: RelationshipChange[];
   featureOverlays?: Record<string, unknown>;
   narrative: string;
+}
+
+// ===== Movement tick state =====
+
+export interface MovementTickState {
+  remainingMinutes: number;
+  destination: string;
+  targetPosition: import("../state/topologyTypes.js").CharacterPosition;
 }
 
 // ===== ToolResult: code tool execution result =====

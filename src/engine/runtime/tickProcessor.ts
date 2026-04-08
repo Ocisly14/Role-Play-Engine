@@ -6,12 +6,15 @@ import type {
   SimulationTickResult,
 } from "../../planning/types.js";
 import type { DynamicGameStateManager } from "../../state/DynamicGameState.js";
+import { interpretAction } from "../interpreter/gameInterpreter.js";
 import { drainPendingEmotions } from "../features/sanityFeature.js";
 import type { GameEngineRegistry } from "../registry.js";
+import { applyStateResolution } from "../resolver/applyStateResolution.js";
+import { buildStateContext } from "../resolver/stateContextBuilder.js";
+import { resolveState } from "../resolver/stateResolver.js";
 import { buildEncounterSnapshot } from "../shared/encounterDedup.js";
+import { executeSkillCheck } from "../tools/skillCheckTool.js";
 import type { ExecutionContext, TickRuntimeContext } from "../types.js";
-import { postProcessExecutedNodeAction } from "./actionPostProcessing.js";
-import { recoverActionExecution } from "./autoActionRecovery.js";
 import { scanUnplannedEncounters } from "./encounterScanner.js";
 import {
   processImpactPipeline,
@@ -27,6 +30,10 @@ import {
   startNode,
   timeToMinutes,
 } from "./movementTick.js";
+import {
+  buildExecutionContextPromptBlock,
+  diffMinutes,
+} from "./resolutionExecutionContext.js";
 
 function formatActionStatusLabel(action: CharacterAction): string {
   switch (action.status) {
@@ -187,14 +194,13 @@ async function executeSingleTick(
     return dexB - dexA;
   });
 
-  // NPCs targeted by an in-progress character_interaction (impact >= 1)
+  // NPCs targeted by an in-progress character_interaction
   // are "engaged" and should not execute their own nodes this tick.
   const engagedTargets = new Set<string>();
   for (const node of allNodes) {
     if (
       node.type === "character_interaction" &&
       node.status === "in_progress" &&
-      (node.impact ?? 0) >= 1 &&
       node.targetCharacterIds?.length
     ) {
       for (const tid of node.targetCharacterIds) {
@@ -217,25 +223,26 @@ async function executeSingleTick(
     action: CharacterAction | undefined
   ): Promise<void> => {
     if (!action) return;
-    const postProcessResult = await postProcessExecutedNodeAction({
-      node,
-      action,
-      dgsm,
-      ctx,
-      npcPlanningAgent,
-      sessionId,
-      moduleId,
-      gameDay,
-      language,
-      registry,
-      featureNotes: [],
-      memoryManager,
-    });
+
+    // Write a memory for the interrupted action
+    if (memoryManager) {
+      await memoryManager.add({
+        npcId: node.characterId,
+        sessionId,
+        moduleId,
+        type: "event",
+        content: action.outcome ?? `${node.action} was interrupted.`,
+        gameDay,
+        gameTime: action.gameTime,
+        location: action.location,
+      });
+    }
+
     await recordRevisionInterruptionEntry({
-      action: postProcessResult.action,
+      action,
       tickActions,
     });
-    logNodeExecutionResult(node, postProcessResult.action);
+    logNodeExecutionResult(node, action);
   };
 
   for (const rawNode of allNodes) {
@@ -327,7 +334,7 @@ async function executeSingleTick(
             return pos ? dgsm.resolveLocationId(pos) : "";
           })(),
           type: node.type,
-          impact: node.impact ?? 0,
+          impact: 0,
           status: "failed",
           failureReason: "prerequisite_not_met",
           outcome: blocked.reason,
@@ -397,34 +404,170 @@ async function executeSingleTick(
           continue;
         }
 
-        let node = rawNode;
-        // Dispatch to registry handler
-        const handler = registry.getHandler(node.type);
-        if (!handler) {
-          console.warn(
-            `[TickProcessor] No handler for node type: ${node.type}, skipping`
-          );
-          continue;
-        }
+        const node = rawNode;
         executedNodes.push(node);
-        let action = await handler.execute(node, dgsm, ctx);
-        const recoveryResult = await recoverActionExecution({
-          node,
-          action,
-          handler,
+
+        // --- GameInterpreter: classify action into definition steps ---
+        const definitions = registry.getAllDefinitions();
+        const interpreted = await interpretAction(
+          node.action,
+          definitions,
+          ctx.runtime,
+          language
+        );
+        const steps = interpreted.steps;
+
+        // Use first non-movement step (movement steps handled above in the movement section)
+        const step =
+          steps.find((s) => s.definitionId !== "movement") ?? steps[0];
+        const definition =
+          registry.getDefinition(step.definitionId) ??
+          registry.getDefinition("generic");
+
+        // --- Skill Check ---
+        const pos = dgsm.getCharacterPosition(node.characterId);
+        const locationId = pos ? dgsm.resolveLocationId(pos) : "";
+        const targetIds = node.targetCharacterIds;
+
+        const skillResult = executeSkillCheck(
+          definition?.skillCheck,
+          node.characterId,
+          node.skill,
           dgsm,
-          ctx,
-          npcPlanningAgent,
-          sessionId,
-          moduleId,
-          gameDay,
-          tickStartTime,
-          language,
-          movedNpcIds,
-          memoryManager,
-        });
-        node = recoveryResult.node;
-        action = recoveryResult.action;
+          locationId,
+          registry,
+          targetIds
+        );
+
+        let action: CharacterAction;
+
+        if (
+          skillResult.status === "failed" &&
+          definition?.skillCheck?.failBehavior === "abort"
+        ) {
+          // Skill check failed with abort behavior
+          action = {
+            characterId: node.characterId,
+            characterName: node.characterName,
+            gameTime: tickStartTime,
+            action: node.action,
+            location: locationId,
+            type: node.type,
+            impact: step.impact,
+            status: "failed",
+            failureReason: "skill_roll_failed",
+            outcome: skillResult.outcomeDescription,
+            successLevel: skillResult.successLevel,
+            rollDetail: skillResult.rollDetail,
+            perTargetResults: skillResult.perTargetResults,
+          };
+        } else {
+          // --- StateResolver: generate state changes ---
+          const outcomeKey =
+            skillResult.status === "failed" ? "On Failure" : "On Success";
+          const sectionRegex = new RegExp(
+            `### ${outcomeKey}\\n([\\s\\S]*?)(?=### |## |$)`
+          );
+          const guidanceBody =
+            definition?.guidanceBody ?? definition?.content ?? "";
+          const sectionMatch = guidanceBody.match(sectionRegex);
+          const outcomeSection = sectionMatch?.[1] ?? guidanceBody;
+
+          const stateCtx = buildStateContext(
+            definition!,
+            node,
+            dgsm,
+            locationId,
+            registry
+          );
+
+          const resolutionContext = {
+            executionStatus: "completed" as const,
+            startedAt: node.executionMeta?.startedAt ?? node.startTime,
+            resolvedAt: node.endTime,
+            elapsedMinutes: Math.max(
+              1,
+              diffMinutes(node.startTime, node.endTime)
+            ),
+            plannedMinutes: Math.max(
+              1,
+              diffMinutes(node.startTime, node.endTime)
+            ),
+          };
+
+          const stateResolution = await resolveState(
+            {
+              action: node.action,
+              definition: definition!,
+              outcomeSection,
+              skillCheckResult: skillResult,
+              stateContext: stateCtx,
+              executionContext:
+                buildExecutionContextPromptBlock(resolutionContext),
+              language,
+            },
+            ctx.runtime
+          );
+
+          applyStateResolution(dgsm, stateResolution);
+
+          // Feature overlay activation from StateResolution
+          if (stateResolution.featureOverlays) {
+            for (const feature of registry.getAllFeatures()) {
+              const schema = feature.planNodeSchema;
+              if (!schema) continue;
+              const allFields = [
+                ...schema.requiredFields,
+                ...(schema.optionalFields ?? []),
+              ];
+              for (const fieldDef of allFields) {
+                if (
+                  stateResolution.featureOverlays[fieldDef.field] !== undefined
+                ) {
+                  const syntheticNode = {
+                    ...node,
+                    [fieldDef.field]:
+                      stateResolution.featureOverlays[fieldDef.field],
+                  };
+                  feature.activate?.(syntheticNode as any, dgsm);
+                  break; // one activation per feature
+                }
+              }
+            }
+          }
+
+          // Write memories from StateResolution
+          if (stateResolution.memories?.length && memoryManager) {
+            for (const mem of stateResolution.memories) {
+              await memoryManager.add({
+                npcId: mem.characterId,
+                sessionId,
+                moduleId,
+                type: mem.type as any,
+                content: mem.content,
+                gameDay,
+                gameTime: tickStartTime,
+                location: locationId,
+              });
+            }
+          }
+
+          action = {
+            characterId: node.characterId,
+            characterName: node.characterName,
+            gameTime: tickStartTime,
+            action: node.action,
+            location: locationId,
+            type: node.type,
+            impact: step.impact,
+            status: skillResult.status === "failed" ? "failed" : "completed",
+            outcome:
+              stateResolution.narrative ?? skillResult.outcomeDescription,
+            successLevel: skillResult.successLevel,
+            rollDetail: skillResult.rollDetail,
+            perTargetResults: skillResult.perTargetResults,
+          };
+        }
 
         tickActions.push(action);
 
@@ -435,32 +578,10 @@ async function executeSingleTick(
           dgsm.setCharacterHidden(node.characterId, false);
         }
 
-        // 3b. Activate feature overlays for this node (per-node, before resolver/memory)
-        const featureResults = registry.activateNodeFeatures(node, dgsm);
-        const featureNotes = featureResults
-          .map((r) => r.outcomeNote)
-          .filter(Boolean) as string[];
-        const postProcessResult = await postProcessExecutedNodeAction({
-          node,
-          action,
-          dgsm,
-          ctx,
-          npcPlanningAgent,
-          sessionId,
-          moduleId,
-          gameDay,
-          language,
-          registry,
-          featureNotes,
-          memoryManager,
-        });
-        action = postProcessResult.action;
-
         // Mark interaction targets as engaged so their nodes are skipped
         if (
           node.type === "character_interaction" &&
           action.status === "completed" &&
-          (node.impact ?? 0) >= 1 &&
           node.targetCharacterIds?.length
         ) {
           for (const tid of node.targetCharacterIds) {

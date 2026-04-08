@@ -8,6 +8,59 @@ import type {
 } from "../../state/topologyTypes.js";
 
 /**
+ * Convert a location ID string to a CharacterPosition using topology and dgsm state.
+ * Checks: junctions → sceneToParent → roads → outline fallback → interior sub-scene fallback.
+ */
+export function resolveTargetPosition(
+  locationId: string,
+  topology: TownTopology,
+  dgsm?: DynamicGameStateManager
+): CharacterPosition | null {
+  if (topology.junctions.has(locationId)) {
+    return { type: "junction", junctionId: locationId };
+  }
+  if (topology.sceneToParent.has(locationId)) {
+    return { type: "scene", sceneId: locationId };
+  }
+  const atIdx = locationId.indexOf("@");
+  const roadKey = atIdx >= 0 ? locationId.slice(0, atIdx) : locationId;
+  const road = topology.roads.get(roadKey);
+  if (road) {
+    const parsed =
+      atIdx >= 0 ? Number.parseFloat(locationId.slice(atIdx + 1)) : 0.5;
+    const position = Number.isFinite(parsed)
+      ? Math.max(0, Math.min(1, parsed))
+      : 0.5;
+    return { type: "road", roadId: road.id, position };
+  }
+  if (dgsm) {
+    const state = dgsm.getState();
+    const outline = (state.scenarioOutlines ?? []).find(
+      (o) => o.id === locationId
+    );
+    if (
+      outline?.entrySceneId &&
+      topology.sceneToParent.has(outline.entrySceneId)
+    ) {
+      return { type: "scene", sceneId: outline.entrySceneId };
+    }
+    const scene = state.scenes.get(locationId);
+    if (scene) {
+      const parentOutline = (state.scenarioOutlines ?? []).find(
+        (o) => o.id === scene.parentLocationId
+      );
+      if (
+        parentOutline?.entrySceneId &&
+        topology.sceneToParent.has(parentOutline.entrySceneId)
+      ) {
+        return { type: "scene", sceneId: parentOutline.entrySceneId };
+      }
+    }
+  }
+  return null;
+}
+
+/**
  * If a scene is not in sceneToParent (interior sub-scene),
  * find its building's entry scene which IS in the topology.
  */

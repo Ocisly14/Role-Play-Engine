@@ -2,9 +2,11 @@ import { t } from "../../i18n/t.js";
 import type { CharacterAction, PlanNode } from "../../planning/types.js";
 import type { DynamicGameStateManager } from "../../state/DynamicGameState.js";
 import type { CharacterPosition } from "../../state/topologyTypes.js";
-import { resolveTargetPosition } from "../handlers/movementHandler.js";
 import { SUCCESS_RANK, getSuccessLevel, rollD100 } from "../shared/dice.js";
-import { buildMovementRouteIgnoringBlocks } from "../shared/pathfinding.js";
+import {
+  buildMovementRouteIgnoringBlocks,
+  resolveTargetPosition,
+} from "../shared/pathfinding.js";
 
 export const TICK_DURATION_MINUTES = 1;
 
@@ -127,7 +129,7 @@ function buildMovementAction(
     location,
     type: node.type,
     skill: node.skill,
-    impact: node.impact,
+    impact: 0,
     status,
     outcome,
     failureReason,

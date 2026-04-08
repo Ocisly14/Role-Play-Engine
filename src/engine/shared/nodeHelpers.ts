@@ -49,6 +49,7 @@ export function makeAction(
   outcome: string,
   opts?: {
     gameTime?: string;
+    impact?: 0 | 1 | 2 | 3 | 4 | 5;
     difficulty?: "regular" | "hard" | "extreme";
     successLevel?: SuccessLevel;
     failureReason?: FailureReason;
@@ -63,7 +64,7 @@ export function makeAction(
     location: opts?.location ?? node.destination ?? "",
     type: node.type,
     skill: node.skill,
-    impact: node.impact,
+    impact: opts?.impact ?? 0,
     difficulty: opts?.difficulty,
     successLevel: opts?.successLevel,
     status,

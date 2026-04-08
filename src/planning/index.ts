@@ -17,7 +17,6 @@ export {
   createExecutionContext,
 } from "../engine/index.js";
 export type {
-  NodeHandler,
   WorldFeature,
   ExecutionContext,
 } from "../engine/types.js";
