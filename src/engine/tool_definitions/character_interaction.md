@@ -36,6 +36,20 @@ stateDomains:
   relationship:
     inject: [actorToTargets]
     output: [change]
+
+outputSchema:
+  use:
+    - character.hp
+    - character.san
+    - character.fatigue
+    - character.condition
+    - character.position
+    - item.move
+    - item.destroy
+    - memory.event
+    - memory.witness
+    - memory.information
+    - relationship.change
 ---
 
 # Character Interaction Resolution Guidance

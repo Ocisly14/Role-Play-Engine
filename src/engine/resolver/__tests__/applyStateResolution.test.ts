@@ -1,5 +1,5 @@
 import type { DynamicGameStateManager } from "../../../state/DynamicGameState.js";
-import type { StateResolution } from "../../types.js";
+import type { OutputSchemaConfig } from "../../types.js";
 import { applyStateResolution } from "../applyStateResolution.js";
 
 // ─── Minimal mock of DynamicGameStateManager ──────────────────────────────────
@@ -108,41 +108,59 @@ function makeMockDgsm(
 // ─── Tests: applyStateResolution ─────────────────────────────────────────────
 
 describe("applyStateResolution", () => {
-  describe("character changes", () => {
-    it("applies HP delta to a character", () => {
+  describe("character.hp", () => {
+    it("applies character.hp delta to a character", () => {
       const dgsm = makeMockDgsm();
-      const resolution: StateResolution = {
-        characterChanges: [{ characterId: "npc_1", hp: -3 }],
-        narrative: "Alice was wounded.",
-      };
 
-      applyStateResolution(dgsm, resolution);
+      applyStateResolution(
+        dgsm,
+        { "character.hp": [{ characterId: "npc_1", delta: -3 }] },
+        { use: ["character.hp"] }
+      );
 
       expect(dgsm.updateNpcHp).toHaveBeenCalledWith("npc_1", -3);
     });
 
-    it("applies SAN delta to a character", () => {
+    it("skips hp update when delta is 0", () => {
       const dgsm = makeMockDgsm();
-      const resolution: StateResolution = {
-        characterChanges: [{ characterId: "npc_1", san: -5 }],
-        narrative: "Alice witnessed something terrible.",
-      };
 
-      applyStateResolution(dgsm, resolution);
+      applyStateResolution(
+        dgsm,
+        { "character.hp": [{ characterId: "npc_1", delta: 0 }] },
+        { use: ["character.hp"] }
+      );
+
+      expect(dgsm.updateNpcHp).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("character.san", () => {
+    it("applies character.san delta to a character", () => {
+      const dgsm = makeMockDgsm();
+
+      applyStateResolution(
+        dgsm,
+        { "character.san": [{ characterId: "npc_1", delta: -5 }] },
+        { use: ["character.san"] }
+      );
 
       expect(dgsm.updateNpcSan).toHaveBeenCalledWith("npc_1", -5);
     });
+  });
 
+  describe("character.condition", () => {
     it("adds conditions to a character", () => {
       const dgsm = makeMockDgsm();
-      const resolution: StateResolution = {
-        characterChanges: [
-          { characterId: "npc_1", addConditions: ["bleeding"] },
-        ],
-        narrative: "Alice started bleeding.",
-      };
 
-      applyStateResolution(dgsm, resolution);
+      applyStateResolution(
+        dgsm,
+        {
+          "character.condition": [
+            { characterId: "npc_1", add: ["bleeding"], remove: [] },
+          ],
+        },
+        { use: ["character.condition"] }
+      );
 
       const state = dgsm.getState();
       const npc = state.npcCharacters.find((n: any) => n.id === "npc_1");
@@ -150,179 +168,139 @@ describe("applyStateResolution", () => {
     });
 
     it("removes conditions from a character", () => {
-      // Start with a condition
       const dgsm = makeMockDgsm();
+      // Pre-seed a condition
       const state = dgsm.getState();
       const npc = state.npcCharacters.find((n: any) => n.id === "npc_1");
       npc?.status.conditions.push("frightened");
 
-      const resolution: StateResolution = {
-        characterChanges: [
-          { characterId: "npc_1", removeConditions: ["frightened"] },
-        ],
-        narrative: "Alice calmed down.",
-      };
-
-      applyStateResolution(dgsm, resolution);
+      applyStateResolution(
+        dgsm,
+        {
+          "character.condition": [
+            { characterId: "npc_1", add: [], remove: ["frightened"] },
+          ],
+        },
+        { use: ["character.condition"] }
+      );
 
       expect(npc?.status.conditions).not.toContain("frightened");
     });
+  });
 
+  describe("character.position", () => {
     it("sets character position", () => {
       const dgsm = makeMockDgsm();
-      const newPos = { type: "scene" as const, sceneId: "scene_hall" };
-      const resolution: StateResolution = {
-        characterChanges: [{ characterId: "npc_1", position: newPos }],
-        narrative: "Alice moved to the hall.",
-      };
 
-      applyStateResolution(dgsm, resolution);
+      applyStateResolution(
+        dgsm,
+        {
+          "character.position": [
+            { characterId: "npc_1", sceneId: "scene_hall" },
+          ],
+        },
+        { use: ["character.position"] }
+      );
 
-      expect(dgsm.setCharacterPosition).toHaveBeenCalledWith("npc_1", newPos);
-    });
-
-    it("skips HP update when hp is 0 (no change)", () => {
-      const dgsm = makeMockDgsm();
-      const resolution: StateResolution = {
-        characterChanges: [{ characterId: "npc_1", hp: 0 }],
-        narrative: "No damage.",
-      };
-
-      applyStateResolution(dgsm, resolution);
-
-      expect(dgsm.updateNpcHp).not.toHaveBeenCalled();
+      expect(dgsm.setCharacterPosition).toHaveBeenCalledWith("npc_1", {
+        type: "scene",
+        sceneId: "scene_hall",
+      });
     });
   });
 
-  describe("scene changes", () => {
+  describe("scene.condition", () => {
     it("adds a condition to a scene", () => {
       const dgsm = makeMockDgsm();
-      const resolution: StateResolution = {
-        sceneChanges: [
-          {
-            sceneId: "scene_study",
-            addConditions: ["door is barricaded"],
-          },
-        ],
-        narrative: "The door was barricaded.",
-      };
 
-      applyStateResolution(dgsm, resolution);
+      applyStateResolution(
+        dgsm,
+        {
+          "scene.condition": [
+            { sceneId: "scene_study", add: ["door is barricaded"], remove: [] },
+          ],
+        },
+        { use: ["scene.condition"] }
+      );
 
       expect(dgsm.appendSceneCondition).toHaveBeenCalledWith("scene_study", {
         description: "door is barricaded",
       });
     });
+  });
 
-    it("removes a condition from a scene", () => {
+  describe("item.move", () => {
+    it("moves an item from NPC inventory to a scene", () => {
       const dgsm = makeMockDgsm();
-      // Pre-seed a condition
-      (dgsm.appendSceneCondition as ReturnType<typeof vi.fn>).mockClear();
-      // Manually push a condition into the backing store
-      const state = dgsm.getState();
-      state.scenarioConditions.scene_study = [
-        { description: "smoke fills the room" },
-      ];
-      // Override getSceneConditions to use backing store
-      (dgsm.getSceneConditions as ReturnType<typeof vi.fn>).mockImplementation(
-        // biome-ignore lint/suspicious/noExplicitAny: test mock uses dynamic key access
-        (id: string) => (state.scenarioConditions as any)[id] ?? []
+
+      applyStateResolution(
+        dgsm,
+        {
+          "item.move": [
+            {
+              itemId: "lantern",
+              from: "npc_1",
+              to: "scene:scene_study",
+            },
+          ],
+        },
+        { use: ["item.move"] }
       );
 
-      const resolution: StateResolution = {
-        sceneChanges: [
-          {
-            sceneId: "scene_study",
-            removeConditions: ["smoke fills the room"],
-          },
-        ],
-        narrative: "Smoke cleared.",
-      };
-
-      applyStateResolution(dgsm, resolution);
-
-      expect(dgsm.replaceSceneConditions).toHaveBeenCalledWith(
-        "scene_study",
-        []
-      );
+      expect(dgsm.removeItemFromNpc).toHaveBeenCalledWith("npc_1", "lantern");
+      expect(dgsm.getScene).toHaveBeenCalledWith("scene_study");
     });
   });
 
-  describe("item changes", () => {
-    it("moves an item from NPC inventory to a scene", () => {
-      const dgsm = makeMockDgsm();
-      const resolution: StateResolution = {
-        itemChanges: [
-          {
-            itemId: "lantern",
-            action: "move",
-            from: "npc_1",
-            to: "scene:scene_study",
-          },
-        ],
-        narrative: "The lantern was placed in the study.",
-      };
-
-      applyStateResolution(dgsm, resolution);
-
-      // Item was removed from NPC
-      expect(dgsm.removeItemFromNpc).toHaveBeenCalledWith("npc_1", "lantern");
-      // Item was added to scene (getScene called to find destination)
-      expect(dgsm.getScene).toHaveBeenCalledWith("scene_study");
-    });
-
+  describe("item.destroy", () => {
     it("destroys an item from a scene", () => {
       const dgsm = makeMockDgsm();
-      const resolution: StateResolution = {
-        itemChanges: [
-          {
-            itemId: "book",
-            action: "destroy",
-            from: "scene_study",
-          },
-        ],
-        narrative: "The book was destroyed.",
-      };
 
-      applyStateResolution(dgsm, resolution);
+      applyStateResolution(
+        dgsm,
+        {
+          "item.destroy": [{ itemId: "book", from: "scene_study" }],
+        },
+        { use: ["item.destroy"] }
+      );
 
-      // Verify scene was accessed for removal
       expect(dgsm.getScene).toHaveBeenCalledWith("scene_study");
-      // The scene's item list should no longer contain the book
       const scene = dgsm.getScene("scene_study");
       expect(scene?.items?.find((i: any) => i.id === "book")).toBeUndefined();
     });
+  });
 
+  describe("item.modify", () => {
     it("modifies item properties", () => {
       const dgsm = makeMockDgsm();
-      const resolution: StateResolution = {
-        itemChanges: [
-          {
-            itemId: "lantern",
-            action: "modify",
-            properties: { damaged: true },
-          },
-        ],
-        narrative: "The lantern was damaged.",
-      };
 
-      applyStateResolution(dgsm, resolution);
+      applyStateResolution(
+        dgsm,
+        {
+          "item.modify": [{ itemId: "lantern", properties: { damaged: true } }],
+        },
+        { use: ["item.modify"] }
+      );
 
-      // Check the item was mutated in the NPC's inventory
       const inv = dgsm.getNpcInventory("npc_1");
       const lantern = inv.find((i: any) => i.id === "lantern");
-      expect(lantern?.damaged).toBe(true);
+      expect((lantern as any)?.damaged).toBe(true);
     });
   });
 
   describe("empty resolution", () => {
     it("does nothing when resolution has no changes", () => {
       const dgsm = makeMockDgsm();
-      const resolution: StateResolution = {
-        narrative: "Nothing happened.",
+      const config: OutputSchemaConfig = {
+        use: [
+          "character.hp",
+          "character.san",
+          "scene.condition",
+          "character.position",
+        ],
       };
 
-      applyStateResolution(dgsm, resolution);
+      applyStateResolution(dgsm, {}, config);
 
       expect(dgsm.updateNpcHp).not.toHaveBeenCalled();
       expect(dgsm.updateNpcSan).not.toHaveBeenCalled();

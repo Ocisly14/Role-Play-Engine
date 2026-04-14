@@ -12,6 +12,13 @@ stateDomains:
     fields:
       actor: [id, name, position]
     output: [position, fatigueDelta, memory]
+
+outputSchema:
+  use:
+    - character.fatigue
+    - character.position
+    - memory.event
+    - memory.witness
 ---
 
 # Movement

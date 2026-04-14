@@ -4,8 +4,8 @@ import { fileURLToPath } from "node:url";
 import { parse as parseYaml } from "yaml";
 import type {
   ActionDefinition,
-  ActionDefinitionInterpreter,
   ActionDefinitionImpactHint,
+  ActionDefinitionInterpreter,
   ActionDefinitionSkillCheck,
   StateDomainSpec,
 } from "../types.js";
@@ -21,6 +21,7 @@ interface YamlFrontmatter {
   interpreter?: ActionDefinitionInterpreter;
   skillCheck?: ActionDefinitionSkillCheck;
   stateDomains?: Record<string, StateDomainSpec>;
+  outputSchema?: import("../types.js").OutputSchemaConfig;
   featureOverlay?: Record<string, unknown>;
   impactHint?: ActionDefinitionImpactHint;
 }
@@ -69,6 +70,7 @@ export function loadActionDefinitions(): ActionDefinition[] {
       guidanceBody: body,
       skillCheck: frontmatter.skillCheck,
       stateDomains: frontmatter.stateDomains,
+      outputSchema: frontmatter.outputSchema,
       interpreter: frontmatter.interpreter,
       featureOverlay: frontmatter.featureOverlay,
       impactHint: frontmatter.impactHint,

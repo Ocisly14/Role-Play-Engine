@@ -1,16 +1,17 @@
 /**
- * StateResolver — LLM call that generates a StateResolution from action context.
+ * StateResolver — LLM call that generates structured state changes from action context.
  *
  * The resolver reads the action definition's guidanceBody as the primary LLM rules,
- * and uses stateDomains to selectively inject state context and constrain output fields.
+ * and uses the definition's outputSchema to constrain output fields.
  */
 
 import { ModelClass, generateText } from "../../models/index.js";
 import type {
   ActionDefinition,
-  StateResolution,
+  OutputSchemaConfig,
   ToolResult,
 } from "../types.js";
+import { formatOutputSchemaPrompt } from "./schemaBuilder.js";
 import type { StateContext } from "./stateContextBuilder.js";
 
 // ===== ResolverContext =====
@@ -61,7 +62,7 @@ export function buildResolverPrompt(ctx: ResolverContext): string {
   // Build state context sections
   const sections: string[] = [];
 
-  sections.push(`# Action Node`);
+  sections.push("# Action Node");
   sections.push(`Action: "${ctx.action}"`);
   sections.push("");
   sections.push(formatSkillCheckResult(ctx.skillCheckResult));
@@ -102,12 +103,19 @@ export function buildResolverPrompt(ctx: ResolverContext): string {
     sections.push(ctx.featureNotes.join("\n"));
   }
 
+  if (definition.outputSchema) {
+    sections.push("");
+    sections.push(formatOutputSchemaPrompt(definition.outputSchema));
+  }
+
   sections.push("");
-  sections.push(`Write all memory and narrative text in ${language}.`);
+  sections.push(
+    `Write all memory text in ${language}. Respond ONLY with the JSON object, no other text.`
+  );
 
   const userPrompt = sections.join("\n");
 
-  return `You are a Call of Cthulhu 7th Edition game state resolver.
+  return `You are a Call of Cthulhu 7th Edition game state resolver. You output structured state changes only — no narrative, no prose.
 
 ${guidance}
 
@@ -118,58 +126,36 @@ ${userPrompt}`;
 
 // ===== Parser =====
 
-export function parseStateResolution(raw: string): StateResolution {
+export function parseStateResolution(raw: string): Record<string, any> {
   try {
     const jsonMatch = raw.match(/```json\s*([\s\S]*?)```/) ??
       raw.match(/```\s*([\s\S]*?)```/) ?? [null, null];
     const jsonStr =
       jsonMatch[1]?.trim() ?? raw.match(/\{[\s\S]*\}/)?.[0] ?? raw.trim();
-
     const parsed = JSON.parse(jsonStr);
-
-    if (typeof parsed !== "object" || parsed === null) {
-      throw new Error("Parsed value is not an object");
-    }
-
-    const narrative =
-      typeof parsed.narrative === "string" && parsed.narrative.trim()
-        ? parsed.narrative
-        : typeof parsed.outcome === "string" && parsed.outcome.trim()
-          ? parsed.outcome
-          : "The action resolved without further detail.";
-
-    return {
-      characterChanges: Array.isArray(parsed.characterChanges)
-        ? parsed.characterChanges
-        : undefined,
-      itemChanges: Array.isArray(parsed.itemChanges)
-        ? parsed.itemChanges
-        : undefined,
-      sceneChanges: Array.isArray(parsed.sceneChanges)
-        ? parsed.sceneChanges
-        : undefined,
-      memories: Array.isArray(parsed.memories) ? parsed.memories : undefined,
-      relationships: Array.isArray(parsed.relationships)
-        ? parsed.relationships
-        : undefined,
-      featureOverlays:
-        parsed.featureOverlays !== null &&
-        typeof parsed.featureOverlays === "object"
-          ? parsed.featureOverlays
-          : undefined,
-      narrative,
-      // Support legacy item resolver output shape
-      items: Array.isArray(parsed.items) ? parsed.items : undefined,
-      newItems: Array.isArray(parsed.newItems) ? parsed.newItems : undefined,
-      // Support legacy interaction resolver output shape
-      actorChanges: parsed.actorChanges,
-      targetChanges: parsed.targetChanges,
-    };
+    if (typeof parsed !== "object" || parsed === null) return {};
+    return parsed;
   } catch {
-    return {
-      narrative: "The action resolved without further detail.",
-    };
+    return {};
   }
+}
+
+// ===== Validation =====
+
+export function validateResolution(
+  resolution: Record<string, any>,
+  config: OutputSchemaConfig
+): boolean {
+  const allowed = new Set<string>(config.use);
+  if (config.custom) {
+    for (const key of Object.keys(config.custom)) {
+      allowed.add(key);
+    }
+  }
+  for (const key of Object.keys(resolution)) {
+    if (!allowed.has(key)) return false;
+  }
+  return true;
 }
 
 // ===== Async LLM call =====
@@ -177,7 +163,7 @@ export function parseStateResolution(raw: string): StateResolution {
 export async function resolveState(
   ctx: ResolverContext,
   runtime: any
-): Promise<StateResolution> {
+): Promise<Record<string, any>> {
   const prompt = buildResolverPrompt(ctx);
 
   try {
@@ -189,14 +175,28 @@ export async function resolveState(
       operation: "state-resolver",
     });
 
-    return parseStateResolution(text);
+    const resolution = parseStateResolution(text);
+
+    if (ctx.definition.outputSchema) {
+      if (!validateResolution(resolution, ctx.definition.outputSchema)) {
+        const allowed = new Set<string>(ctx.definition.outputSchema.use);
+        if (ctx.definition.outputSchema.custom) {
+          for (const key of Object.keys(ctx.definition.outputSchema.custom)) {
+            allowed.add(key);
+          }
+        }
+        for (const key of Object.keys(resolution)) {
+          if (!allowed.has(key)) delete resolution[key];
+        }
+      }
+    }
+
+    return resolution;
   } catch (error) {
     console.warn(
-      "[StateResolver] LLM call failed, returning minimal resolution:",
+      "[StateResolver] LLM call failed, returning empty resolution:",
       error instanceof Error ? error.message : error
     );
-    return {
-      narrative: `${ctx.action} resolved.`,
-    };
+    return {};
   }
 }

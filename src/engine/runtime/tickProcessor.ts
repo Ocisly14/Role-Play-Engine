@@ -6,8 +6,8 @@ import type {
   SimulationTickResult,
 } from "../../planning/types.js";
 import type { DynamicGameStateManager } from "../../state/DynamicGameState.js";
-import { interpretAction } from "../interpreter/gameInterpreter.js";
 import { drainPendingEmotions } from "../features/sanityFeature.js";
+import { interpretAction } from "../interpreter/gameInterpreter.js";
 import type { GameEngineRegistry } from "../registry.js";
 import { applyStateResolution } from "../resolver/applyStateResolution.js";
 import { buildStateContext } from "../resolver/stateContextBuilder.js";
@@ -509,46 +509,53 @@ async function executeSingleTick(
             ctx.runtime
           );
 
-          applyStateResolution(dgsm, stateResolution);
+          const outputSchema = definition?.outputSchema;
+          if (outputSchema) {
+            applyStateResolution(dgsm, stateResolution, outputSchema);
+          }
 
           // Feature overlay activation from StateResolution
-          if (stateResolution.featureOverlays) {
-            for (const feature of registry.getAllFeatures()) {
-              const schema = feature.planNodeSchema;
-              if (!schema) continue;
-              const allFields = [
-                ...schema.requiredFields,
-                ...(schema.optionalFields ?? []),
-              ];
-              for (const fieldDef of allFields) {
-                if (
-                  stateResolution.featureOverlays[fieldDef.field] !== undefined
-                ) {
-                  const syntheticNode = {
-                    ...node,
-                    [fieldDef.field]:
-                      stateResolution.featureOverlays[fieldDef.field],
-                  };
-                  feature.activate?.(syntheticNode as any, dgsm);
-                  break; // one activation per feature
-                }
+          for (const feature of registry.getAllFeatures()) {
+            const schema = feature.planNodeSchema;
+            if (!schema) continue;
+            const allFields = [
+              ...schema.requiredFields,
+              ...(schema.optionalFields ?? []),
+            ];
+            for (const fieldDef of allFields) {
+              if (stateResolution[fieldDef.field] !== undefined) {
+                const syntheticNode = {
+                  ...node,
+                  [fieldDef.field]: stateResolution[fieldDef.field],
+                };
+                feature.activate?.(syntheticNode as any, dgsm);
+                break; // one activation per feature
               }
             }
           }
 
           // Write memories from StateResolution
-          if (stateResolution.memories?.length && memoryManager) {
-            for (const mem of stateResolution.memories) {
-              await memoryManager.add({
-                npcId: mem.characterId,
-                sessionId,
-                moduleId,
-                type: mem.type as any,
-                content: mem.content,
-                gameDay,
-                gameTime: tickStartTime,
-                location: locationId,
-              });
+          const memoryTypes = [
+            "memory.event",
+            "memory.witness",
+            "memory.information",
+          ];
+          if (memoryManager) {
+            for (const memType of memoryTypes) {
+              const memories = stateResolution[memType];
+              if (!Array.isArray(memories)) continue;
+              for (const mem of memories) {
+                await memoryManager.add({
+                  npcId: mem.characterId,
+                  sessionId,
+                  moduleId,
+                  type: memType.split(".")[1] as any,
+                  content: mem.content,
+                  gameDay,
+                  gameTime: tickStartTime,
+                  location: locationId,
+                });
+              }
             }
           }
 
@@ -561,8 +568,7 @@ async function executeSingleTick(
             type: node.type,
             impact: step.impact,
             status: skillResult.status === "failed" ? "failed" : "completed",
-            outcome:
-              stateResolution.narrative ?? skillResult.outcomeDescription,
+            outcome: skillResult.outcomeDescription,
             successLevel: skillResult.successLevel,
             rollDetail: skillResult.rollDetail,
             perTargetResults: skillResult.perTargetResults,

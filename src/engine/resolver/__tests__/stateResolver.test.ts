@@ -1,12 +1,20 @@
-import type { ActionDefinition } from "../../types.js";
-import { buildResolverPrompt, parseStateResolution } from "../stateResolver.js";
+import type { ActionDefinition, OutputSchemaConfig } from "../../types.js";
+import {
+  buildResolverPrompt,
+  parseStateResolution,
+  validateResolution,
+} from "../stateResolver.js";
 
-const makeDef = (guidance: string): ActionDefinition => ({
+const makeDef = (
+  guidance: string,
+  outputSchema?: OutputSchemaConfig
+): ActionDefinition => ({
   id: "test",
   title: "Test",
   description: "Test definition",
   content: guidance,
   guidanceBody: guidance,
+  outputSchema,
 });
 
 // ─── buildResolverPrompt ──────────────────────────────────────────────────────
@@ -138,114 +146,143 @@ describe("buildResolverPrompt", () => {
     expect(prompt).toContain("Ritual circle activated");
     expect(prompt).toContain("Sanity pressure building");
   });
+
+  it("includes output schema section when definition has outputSchema", () => {
+    const prompt = buildResolverPrompt({
+      action: "Search the study",
+      definition: makeDef("Guidance", {
+        use: ["character.hp", "memory.event"],
+      }),
+      outcomeSection: "find clues",
+      stateContext: {},
+    });
+
+    expect(prompt).toContain("## Output Format");
+    expect(prompt).toContain("character.hp");
+    expect(prompt).toContain("memory.event");
+  });
 });
 
 // ─── parseStateResolution ─────────────────────────────────────────────────────
 
 describe("parseStateResolution", () => {
-  it("parses valid JSON with a narrative", () => {
+  it("parses valid JSON with state changes", () => {
     const raw = JSON.stringify({
-      characterChanges: [{ characterId: "npc_1", fatigue: 1 }],
-      narrative: "The investigator found nothing.",
+      "character.fatigue": [{ characterId: "npc_1", fatigue: 1 }],
     });
 
     const result = parseStateResolution(raw);
 
-    expect(result.narrative).toBe("The investigator found nothing.");
-    expect(result.characterChanges).toHaveLength(1);
-    expect(result.characterChanges?.[0].characterId).toBe("npc_1");
+    expect(result["character.fatigue"]).toHaveLength(1);
+    expect(result["character.fatigue"][0].characterId).toBe("npc_1");
   });
 
   it("parses JSON wrapped in markdown fences", () => {
     const raw = `Here is the resolution:\n\`\`\`json\n${JSON.stringify({
-      narrative: "Alice was hurt.",
-      characterChanges: [{ characterId: "npc_alice", hp: -2 }],
+      "character.hp": [{ characterId: "npc_alice", hp: -2 }],
     })}\n\`\`\``;
 
     const result = parseStateResolution(raw);
 
-    expect(result.narrative).toBe("Alice was hurt.");
-    expect(result.characterChanges?.[0].hp).toBe(-2);
+    expect(result["character.hp"]).toHaveLength(1);
+    expect(result["character.hp"][0].hp).toBe(-2);
   });
 
-  it("returns a minimal resolution on invalid JSON", () => {
+  it("returns empty object on invalid JSON", () => {
     const result = parseStateResolution("garbage input not json");
 
-    expect(result.narrative).toBeTruthy();
-    expect(typeof result.narrative).toBe("string");
+    expect(result).toEqual({});
   });
 
-  it("returns a minimal resolution when the JSON is empty object", () => {
-    const result = parseStateResolution("{}");
-
-    expect(result.narrative).toBeTruthy();
-  });
-
-  it("preserves sceneChanges", () => {
+  it("preserves multiple state change types", () => {
     const raw = JSON.stringify({
-      sceneChanges: [
-        { sceneId: "scene_hall", addConditions: ["lights are off"] },
+      "character.hp": [{ characterId: "npc_1", hp: -3 }],
+      "memory.event": [
+        { characterId: "npc_1", type: "event", content: "Hurt badly" },
       ],
-      narrative: "The lights went out.",
     });
 
     const result = parseStateResolution(raw);
 
-    expect(result.sceneChanges).toHaveLength(1);
-    expect(result.sceneChanges?.[0].addConditions).toContain("lights are off");
+    expect(result["character.hp"]).toHaveLength(1);
+    expect(result["memory.event"]).toHaveLength(1);
+    expect(result["memory.event"][0].content).toBe("Hurt badly");
   });
 
-  it("preserves itemChanges", () => {
+  it("preserves custom fields", () => {
     const raw = JSON.stringify({
-      itemChanges: [
-        {
-          itemId: "lantern",
-          action: "move",
-          from: "npc_1",
-          to: "scene:scene_hall",
+      "character.hp": [{ characterId: "npc_1", hp: -1 }],
+      ritualProgress: "stage_2",
+    });
+
+    const result = parseStateResolution(raw);
+
+    expect(result["character.hp"]).toHaveLength(1);
+    expect(result.ritualProgress).toBe("stage_2");
+  });
+});
+
+// ─── validateResolution ─────────────────────────────────────────────────────
+
+describe("validateResolution", () => {
+  it("returns true for valid resolution matching schema", () => {
+    const result = validateResolution(
+      {
+        "character.hp": [{ characterId: "npc_1", hp: -2 }],
+        "memory.event": [
+          { characterId: "npc_1", type: "event", content: "Hurt" },
+        ],
+      },
+      { use: ["character.hp", "memory.event"] }
+    );
+
+    expect(result).toBe(true);
+  });
+
+  it("returns true for empty arrays", () => {
+    const result = validateResolution(
+      {
+        "character.hp": [],
+        "memory.event": [],
+      },
+      { use: ["character.hp", "memory.event"] }
+    );
+
+    expect(result).toBe(true);
+  });
+
+  it("returns false when resolution has undeclared types", () => {
+    const result = validateResolution(
+      {
+        "character.hp": [{ characterId: "npc_1", hp: -2 }],
+        "scene.condition": [{ sceneId: "s1", addConditions: ["dark"] }],
+      },
+      { use: ["character.hp"] }
+    );
+
+    expect(result).toBe(false);
+  });
+
+  it("returns true for empty resolution", () => {
+    const result = validateResolution({}, { use: ["character.hp"] });
+
+    expect(result).toBe(true);
+  });
+
+  it("returns true when custom fields are declared and present", () => {
+    const result = validateResolution(
+      {
+        "character.hp": [{ characterId: "npc_1", hp: -1 }],
+        ritualProgress: "stage_2",
+      },
+      {
+        use: ["character.hp"],
+        custom: {
+          ritualProgress: { type: "string", description: "Ritual stage" },
         },
-      ],
-      narrative: "The lantern was placed down.",
-    });
+      }
+    );
 
-    const result = parseStateResolution(raw);
-
-    expect(result.itemChanges).toHaveLength(1);
-    expect(result.itemChanges?.[0].action).toBe("move");
-  });
-
-  it("preserves memories", () => {
-    const raw = JSON.stringify({
-      memories: [
-        { characterId: "npc_1", type: "event", content: "I found a clue." },
-      ],
-      narrative: "A clue was found.",
-    });
-
-    const result = parseStateResolution(raw);
-
-    expect(result.memories).toHaveLength(1);
-    expect(result.memories?.[0].content).toBe("I found a clue.");
-  });
-
-  it("preserves legacy items/newItems output", () => {
-    const raw = JSON.stringify({
-      items: [{ itemId: "clock_01", location: "destroyed" }],
-      newItems: [
-        {
-          id: "gear_01",
-          name: "Gear",
-          location: "scene",
-          sourceItemId: "clock_01",
-        },
-      ],
-      outcome: "The clock was broken apart.",
-    });
-
-    const result = parseStateResolution(raw);
-
-    expect(result.items).toHaveLength(1);
-    expect(result.newItems).toHaveLength(1);
-    expect(result.narrative).toBe("The clock was broken apart.");
+    expect(result).toBe(true);
   });
 });

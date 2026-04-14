@@ -35,6 +35,16 @@ stateDomains:
   item:
     inject: [sceneItems, actorInventory]
     output: [move, modify, destroy]
+
+outputSchema:
+  use:
+    - character.fatigue
+    - character.condition
+    - scene.condition
+    - item.move
+    - item.modify
+    - item.destroy
+    - memory.event
 ---
 
 # Current-Location Action Resolution Guidance

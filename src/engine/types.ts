@@ -232,6 +232,16 @@ export interface StateDomainSpec {
   output: string[];
 }
 
+export interface CustomFieldDef {
+  type: string;
+  description?: string;
+}
+
+export interface OutputSchemaConfig {
+  use: string[];
+  custom?: Record<string, CustomFieldDef>;
+}
+
 export interface ActionDefinitionInterpreter {
   examples: string[];
 }
@@ -250,6 +260,7 @@ export interface ActionDefinition {
   guidanceBody: string;
   skillCheck?: ActionDefinitionSkillCheck;
   stateDomains?: Record<string, StateDomainSpec>;
+  outputSchema?: OutputSchemaConfig;
   interpreter?: ActionDefinitionInterpreter;
   featureOverlay?: Record<string, unknown>;
   impactHint?: ActionDefinitionImpactHint;
@@ -268,6 +279,7 @@ export interface InterpretedResult {
 
 // ===== StateResolution: structured state changes =====
 
+/** @deprecated Use state change types from resolver/stateChangeTypes.ts instead */
 export interface CharacterChange {
   characterId: string;
   hp?: number;
@@ -278,6 +290,7 @@ export interface CharacterChange {
   position?: import("../state/topologyTypes.js").CharacterPosition;
 }
 
+/** @deprecated Use state change types from resolver/stateChangeTypes.ts instead */
 export interface ItemChange {
   itemId: string;
   action: "move" | "destroy" | "create" | "modify";
@@ -286,24 +299,28 @@ export interface ItemChange {
   properties?: Record<string, unknown>;
 }
 
+/** @deprecated Use state change types from resolver/stateChangeTypes.ts instead */
 export interface SceneChange {
   sceneId: string;
   addConditions?: string[];
   removeConditions?: string[];
 }
 
+/** @deprecated Use state change types from resolver/stateChangeTypes.ts instead */
 export interface MemoryEntry {
   characterId: string;
   type: string;
   content: string;
 }
 
+/** @deprecated Use state change types from resolver/stateChangeTypes.ts instead */
 export interface RelationshipChange {
   from: string;
   to: string;
   change: string;
 }
 
+/** @deprecated Use state change types from resolver/stateChangeTypes.ts instead */
 export interface StateResolution {
   characterChanges?: CharacterChange[];
   itemChanges?: ItemChange[];

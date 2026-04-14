@@ -40,6 +40,14 @@ stateDomains:
   memory:
     inject: [relatedMemories]
     output: [actorMemory]
+
+outputSchema:
+  use:
+    - item.move
+    - item.modify
+    - item.destroy
+    - character.fatigue
+    - memory.event
 ---
 
 # Item Modification / Manipulation Resolution Guidance

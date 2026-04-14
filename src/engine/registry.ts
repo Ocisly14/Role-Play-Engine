@@ -229,7 +229,8 @@ export class GameEngineRegistry {
     extraInstructions?: string;
     language?: string;
   }): string {
-    const typeNames = "action|movement|character_interaction|object_interaction";
+    const typeNames =
+      "action|movement|character_interaction|object_interaction";
 
     const langName = options?.language?.startsWith("zh")
       ? "Chinese"

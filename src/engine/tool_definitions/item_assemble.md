@@ -34,6 +34,15 @@ stateDomains:
     inject: [current]
     fields: [id, name, description]
     output: []
+
+outputSchema:
+  use:
+    - item.move
+    - item.modify
+    - item.destroy
+    - item.create
+    - character.fatigue
+    - memory.event
 ---
 
 # Item Assembly / Crafting Resolution Guidance
