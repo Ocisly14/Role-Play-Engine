@@ -4,18 +4,51 @@ import type { ActionDefinition, InterpretedResult } from "../types.js";
 export function buildInterpreterPrompt(
   definitions: ActionDefinition[]
 ): string {
-  const defList = definitions
-    .map((d) => {
-      let line = `- **${d.id}**: ${d.description}`;
-      if (d.impactHint) {
-        line += ` [impact: default ${d.impactHint.default}`;
-        if (d.impactHint.range) line += `, range ${d.impactHint.range}`;
-        if (d.impactHint.examples) line += `, e.g. ${d.impactHint.examples}`;
-        line += "]";
-      }
-      return line;
-    })
-    .join("\n");
+  const generalDefs = definitions.filter((d) => !d.skillCheck);
+  const skillDefs = definitions.filter((d) => d.skillCheck);
+
+  const opposedDefs = skillDefs.filter(
+    (d) => d.skillCheck?.type === "opposed",
+  );
+  const singleDefs = skillDefs.filter(
+    (d) => d.skillCheck?.type === "single",
+  );
+
+  const formatDef = (d: ActionDefinition): string => {
+    let line = `- **${d.id}**: ${d.description}`;
+    if (d.interpreter?.examples?.length) {
+      line += ` (e.g. "${d.interpreter.examples[0]}")`;
+    }
+    if (d.impactHint) {
+      line += ` [impact: default ${d.impactHint.default}`;
+      if (d.impactHint.range) line += `, range ${d.impactHint.range}`;
+      line += "]";
+    }
+    return line;
+  };
+
+  const sections: string[] = [];
+
+  if (generalDefs.length > 0) {
+    sections.push("### General Actions (no skill check)");
+    sections.push(generalDefs.map(formatDef).join("\n"));
+  }
+
+  if (opposedDefs.length > 0) {
+    sections.push("");
+    sections.push("### Opposed Skills (social/combat — require target)");
+    sections.push(opposedDefs.map(formatDef).join("\n"));
+  }
+
+  if (singleDefs.length > 0) {
+    sections.push("");
+    sections.push(
+      "### Single Skills (perception, knowledge, physical, technical)"
+    );
+    sections.push(singleDefs.map(formatDef).join("\n"));
+  }
+
+  const defList = sections.join("\n");
 
   return `You are an action interpreter for a game simulation engine.
 
@@ -25,10 +58,13 @@ Given a natural language action, decompose it into an ordered sequence of steps.
 ${defList}
 
 ## Rules
-- A simple action maps to a single step (e.g., "search the room" → [action])
-- A composite action maps to multiple ordered steps (e.g., "go to the harbor and ask the captain" → [movement, character_interaction])
+- A simple action maps to a single step (e.g., "搜查房间" → [perception])
+- A composite action maps to multiple ordered steps (e.g., "撬开柜子然后搜查里面" → [locksmith, perception])
 - If the action involves going somewhere first, the first step should be "movement"
-- If no definition matches, use "generic"
+- If the action is a simple conversation without persuasion/deception, use "conversation"
+- If the action involves giving/receiving items, use "item_exchange"
+- If no specific skill definition matches, use "action" (general action)
+- Never use "generic" if a more specific definition exists
 
 ## Impact Levels (per step)
 Each step gets its own impact value determining who perceives it:
@@ -44,8 +80,8 @@ Default to 0 unless the step clearly warrants higher. Use each definition's impa
 Respond with ONLY a JSON object:
 {
   "steps": [
-    { "definitionId": "movement", "impact": 0 },
-    { "definitionId": "character_interaction", "impact": 1 }
+    { "definitionId": "locksmith", "impact": 1 },
+    { "definitionId": "perception", "impact": 0 }
   ]
 }`;
 }

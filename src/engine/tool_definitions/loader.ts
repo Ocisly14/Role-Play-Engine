@@ -1,4 +1,4 @@
-import { readFileSync, readdirSync } from "node:fs";
+import { existsSync, readFileSync, readdirSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { parse as parseYaml } from "yaml";
@@ -54,26 +54,47 @@ function parseTitle(content: string): string {
 
 // ==================== Main loader ====================
 
-export function loadActionDefinitions(): ActionDefinition[] {
-  const files = readdirSync(__dirname).filter((f) => f.endsWith(".md"));
-  return files.map((file) => {
-    const raw = readFileSync(join(__dirname, file), "utf-8");
-    const id = file.replace(/\.md$/, "");
-    const { frontmatter, body } = splitFrontmatter(raw);
+function loadDefinitionFile(
+  filePath: string,
+  fallbackId: string
+): ActionDefinition {
+  const raw = readFileSync(filePath, "utf-8");
+  const { frontmatter, body } = splitFrontmatter(raw);
+  const title = frontmatter.title ?? parseTitle(body) ?? fallbackId;
+  return {
+    id: frontmatter.id ?? fallbackId,
+    title,
+    description: frontmatter.description ?? title,
+    content: raw,
+    guidanceBody: body,
+    skillCheck: frontmatter.skillCheck,
+    stateDomains: frontmatter.stateDomains,
+    outputSchema: frontmatter.outputSchema,
+    interpreter: frontmatter.interpreter,
+    featureOverlay: frontmatter.featureOverlay,
+    impactHint: frontmatter.impactHint,
+  };
+}
 
-    const title = frontmatter.title ?? parseTitle(body) ?? id;
-    return {
-      id: frontmatter.id ?? id,
-      title,
-      description: frontmatter.description ?? title,
-      content: raw,
-      guidanceBody: body,
-      skillCheck: frontmatter.skillCheck,
-      stateDomains: frontmatter.stateDomains,
-      outputSchema: frontmatter.outputSchema,
-      interpreter: frontmatter.interpreter,
-      featureOverlay: frontmatter.featureOverlay,
-      impactHint: frontmatter.impactHint,
-    };
-  });
+export function loadActionDefinitions(): ActionDefinition[] {
+  const definitions: ActionDefinition[] = [];
+
+  // Root-level definitions
+  const rootFiles = readdirSync(__dirname).filter((f) => f.endsWith(".md"));
+  for (const file of rootFiles) {
+    const id = file.replace(/\.md$/, "");
+    definitions.push(loadDefinitionFile(join(__dirname, file), id));
+  }
+
+  // Skill definitions from skills/ subdirectory
+  const skillsDir = join(__dirname, "skills");
+  if (existsSync(skillsDir)) {
+    const skillFiles = readdirSync(skillsDir).filter((f) => f.endsWith(".md"));
+    for (const file of skillFiles) {
+      const id = file.replace(/\.md$/, "");
+      definitions.push(loadDefinitionFile(join(skillsDir, file), id));
+    }
+  }
+
+  return definitions;
 }

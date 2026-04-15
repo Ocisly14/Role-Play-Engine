@@ -1,0 +1,47 @@
+---
+id: sleight_of_hand
+title: Sleight of Hand
+description: "Pickpocketing, palming objects, secret manipulation — stealing or planting items unnoticed"
+
+skillCheck:
+  skill: Sleight of Hand
+  difficulty: regular
+  type: single
+  failBehavior: partial
+
+stateDomains:
+  character:
+    inject: [actor, targets]
+    fields:
+      actor: [id, name, conditions]
+      targets: [id, name, conditions]
+  scene:
+    inject: [current]
+    fields: [id, name, description]
+  item:
+    inject: [sceneItems, actorInventory]
+
+outputSchema:
+  use:
+    - item.move
+    - memory.event
+
+interpreter:
+  examples:
+    - "Quietly take the key from the table"
+    - "Slip the document into my pocket while he is distracted"
+    - "Secretly palm the key from the desk"
+---
+
+# Sleight of Hand Resolution Guidance
+
+## On Success
+- **Regular success**: The actor lifts, palms, or plants the item without the target or nearby observers noticing. The item transfer occurs invisibly within the context of natural movement or conversation.
+- **Hard success**: The actor's execution is clean and efficient — the motion is so natural that even an attentive observer would have nothing to remark on. The actor may handle a second small item in the same action.
+- **Extreme success**: The item is obtained or placed with surgical precision. No one in the scene has any reason to suspect anything occurred. The actor could repeat the action in the same moment if needed.
+
+## On Failure
+- The target notices their pocket being touched, or an observer sees the actor reach for the item in a suspicious way.
+- The actor is caught in the act — the target confronts them, calls out, or physically stops them.
+- A fumble means the actor drops the item conspicuously or makes an obvious grabbing motion, immediately drawing the attention of everyone nearby.
+- Once caught attempting sleight of hand, all persons present will watch the actor closely, making further attempts in this scene extremely difficult or impossible.

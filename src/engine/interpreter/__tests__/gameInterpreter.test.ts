@@ -58,6 +58,63 @@ describe("buildInterpreterPrompt", () => {
     expect(prompt).toContain("generic");
     expect(prompt).toContain("Move to a different location");
   });
+
+  it("includes all definition IDs grouped by category", () => {
+    const defs: ActionDefinition[] = [
+      {
+        id: "action",
+        title: "Action",
+        description: "General actions",
+        content: "",
+        guidanceBody: "",
+        impactHint: { default: 0, range: "0-2" },
+      },
+      {
+        id: "perception",
+        title: "Perception",
+        description: "Finding hidden objects",
+        content: "",
+        guidanceBody: "",
+        skillCheck: {
+          skills: ["Perception"],
+          difficulty: "regular",
+          type: "single",
+          failBehavior: "partial",
+        },
+        interpreter: { examples: ["搜查房间"] },
+      },
+      {
+        id: "brawling",
+        title: "Brawling",
+        description: "Hand-to-hand combat",
+        content: "",
+        guidanceBody: "",
+        skillCheck: {
+          skills: ["Brawling"],
+          difficulty: "regular",
+          type: "opposed",
+          opposedDefense: ["Dodge"],
+          failBehavior: "abort",
+        },
+        interpreter: { examples: ["挥拳攻击"] },
+      },
+    ];
+
+    const prompt = buildInterpreterPrompt(defs);
+
+    expect(prompt).toContain("action");
+    expect(prompt).toContain("General actions");
+    expect(prompt).toContain("perception");
+    expect(prompt).toContain("Finding hidden objects");
+    expect(prompt).toContain("brawling");
+    expect(prompt).toContain("Hand-to-hand combat");
+    expect(prompt).toContain("General Actions (no skill check)");
+    expect(prompt).toContain("Opposed Skills");
+    expect(prompt).toContain("Single Skills");
+    // Includes interpreter examples
+    expect(prompt).toContain("搜查房间");
+    expect(prompt).toContain("挥拳攻击");
+  });
 });
 
 describe("parseInterpretedResult", () => {

@@ -1,0 +1,45 @@
+---
+id: research
+title: Research
+description: "Research in libraries, archives, databases — finding specific information in records"
+
+skillCheck:
+  skill: Research
+  difficulty: regular
+  type: single
+  failBehavior: partial
+
+stateDomains:
+  character:
+    inject: [actor]
+    fields:
+      actor: [id, name, conditions]
+  scene:
+    inject: [current]
+    fields: [id, name, description, conditions, items]
+  item:
+    inject: [sceneItems, actorInventory]
+
+outputSchema:
+  use:
+    - memory.event
+    - memory.information
+    - character.fatigue
+
+interpreter:
+  examples:
+    - "Look up relevant materials at the library"
+    - "Search the archives for clues"
+    - "Search the archives for records of the incident"
+---
+
+# Research Resolution Guidance
+
+## On Success
+- regular success: The investigator locates the relevant documents, articles, or records after a thorough search. The information found directly addresses what they were looking for and provides a useful lead or piece of evidence.
+- hard success: The investigator finds the primary source material quickly and also uncovers related documents that provide important context or reveal a secondary connection to the case.
+- extreme success: The investigator's search is exhaustive and inspired — they locate not only the target document but also a hidden or cross-referenced record that others have missed. The finding may be the keystone of the entire investigation.
+
+## On Failure
+- The search yields nothing useful. Either the records do not exist, are filed under an unexpected classification, or the investigator simply cannot navigate the system effectively within the available time.
+- On a fumble, the investigator disturbs the archive, misfiled materials obscure future searches, or they attract unwanted attention from someone who notices what they were searching for.
