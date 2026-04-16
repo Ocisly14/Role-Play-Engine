@@ -22,12 +22,11 @@ stateDomains:
     fields: [id, name, description, conditions]
 
 outputSchema:
+  presets:
+    - default
   use:
     - character.hp
     - character.condition
-    - character.fatigue
-    - memory.event
-    - memory.witness
 
 interpreter:
   examples:

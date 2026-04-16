@@ -7,6 +7,7 @@ describe("registry definition management", () => {
     title: id,
     description: `${id} definition`,
     content: `# ${id}`,
+    guidanceBody: `# ${id}`,
   });
 
   it("registerDefinition + getDefinition", () => {

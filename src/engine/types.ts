@@ -84,8 +84,24 @@ export interface NpcPlanningCapability {
     updatedIntent?: string;
     shouldInterruptCurrentNode: boolean;
     shouldReviseSchedule: boolean;
-    witnessEntry: string;
   }>;
+  generateImpactObservationForNpc(
+    candidate: {
+      npcId: string;
+      npcName: string;
+      currentLocation: string;
+      longTermIntent: string;
+      todayScheduleSummary: string;
+      currentDetailedPlan: string;
+      triggeringEvents: string;
+      memoryContext?: string;
+      shortTermIntent?: string;
+    },
+    bucketTime: string,
+    perspective: "targeted" | "witness" | "co_presence",
+    language: string,
+    moduleBackground?: string
+  ): Promise<string>;
   getShortTermIntent(sessionId: string, npcId: string): Promise<string | null>;
   setShortTermIntent(
     sessionId: string,
@@ -219,7 +235,8 @@ export interface WorldFeature {
 // ===== Action Definition: declarative game rules =====
 
 export interface ActionDefinitionSkillCheck {
-  skills: string[];
+  /** Exact skill name for this definition. Omit when the definition delegates to PlanNode.skill. */
+  skill?: string;
   difficulty: "regular" | "hard" | "extreme";
   type: "single" | "opposed";
   opposedDefense?: string[];
@@ -238,7 +255,8 @@ export interface CustomFieldDef {
 }
 
 export interface OutputSchemaConfig {
-  use: string[];
+  presets?: string[];
+  use?: string[];
   custom?: Record<string, CustomFieldDef>;
 }
 

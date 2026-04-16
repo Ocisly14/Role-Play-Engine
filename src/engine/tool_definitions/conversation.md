@@ -44,5 +44,5 @@ impactHint:
 - Information exchange depends on the relationship and target's knowledge
 - The target will share information they know and are willing to share
 - The target will NOT share secrets or sensitive information without persuasion
-- Both characters form memories of the conversation
+- Use `memory.event` for the conversation itself, `memory.information` for factual disclosures, and `relationship.change` for rapport shifts.
 - Relationship may change slightly based on conversation topic and rapport

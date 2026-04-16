@@ -19,11 +19,10 @@ stateDomains:
     fields: [id, name, description, conditions]
 
 outputSchema:
+  presets: [default]
   use:
     - character.hp
-    - character.fatigue
     - character.condition
-    - memory.event
     - memory.information
 
 interpreter:
@@ -38,7 +37,7 @@ interpreter:
 ## On Success
 - **Regular success**: The actor successfully finds or constructs adequate shelter against the cold — a snow cave, a wind-blocked hollow, or a makeshift lean-to. The immediate threat of hypothermia is averted for several hours, and the actor may rest without further HP loss from exposure.
 - **Hard success**: The actor not only survives but thrives in the conditions — they locate a particularly effective shelter site, find cached food or fuel, or identify a route that avoids the worst of the weather. Fatigue is partially recovered from the improved conditions.
-- **Extreme success**: The actor demonstrates expert-level cold-weather survival — the shelter is warm and defensible, resources are located (food, water from melted snow, dry fuel), and a navigable path through the terrain is identified. Other members of the group benefit from the actor's expertise.
+- **Extreme success**: The actor demonstrates expert-level cold-weather survival — the shelter is warm and defensible, resources are located (food, water from melted snow, dry fuel), and a navigable path through the terrain is identified. The useful route and shelter knowledge can be carried forward as information.
 
 ## On Failure
 - The actor fails to find adequate shelter or warmth before conditions deteriorate further.

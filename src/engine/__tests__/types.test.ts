@@ -12,8 +12,9 @@ describe("engine types", () => {
       title: "Combat",
       description: "Physical combat between characters",
       content: "# Combat\n## Skill Check\n...",
+      guidanceBody: "# Combat\n## Skill Check\n...",
       skillCheck: {
-        skills: ["Fighting (Brawl)", "Fighting (Melee)"],
+        skill: "Fighting (Brawl)",
         difficulty: "regular",
         type: "opposed",
         opposedDefense: ["Dodge", "Fighting (Brawl)"],

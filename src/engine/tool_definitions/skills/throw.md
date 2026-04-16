@@ -20,11 +20,11 @@ stateDomains:
     fields: [id, name, description]
 
 outputSchema:
+  presets:
+    - default
   use:
     - character.hp
-    - character.fatigue
-    - memory.event
-    - memory.witness
+    - character.condition
 
 interpreter:
   examples:
@@ -43,5 +43,5 @@ interpreter:
 ## On Failure
 - The thrown object misses its target. The GM determines where it lands — possibly near the target, possibly dangerously off course.
 - For grenades or explosives, the GM rolls deviation to determine where they land.
-- Witnesses to the failed throw may respond — alerted guards, frightened bystanders, or an antagonist given time to react.
+- Nearby observers may respond — alerted guards, frightened bystanders, or an antagonist given time to react.
 - A fumble may mean the object drops nearby, strikes an unintended target, or in the case of a grenade, creates a hazard for the actor.

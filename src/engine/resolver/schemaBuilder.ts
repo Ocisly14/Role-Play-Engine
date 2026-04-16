@@ -1,4 +1,5 @@
 import type { CustomFieldDef, OutputSchemaConfig } from "../types.js";
+import { resolveOutputSchemaTypeIds } from "../outputSchema.js";
 import { STATE_CHANGE_TYPES } from "./stateChangeTypes.js";
 
 // ===== Interfaces =====
@@ -33,12 +34,37 @@ function customFieldToJsonSchema(
   return schema;
 }
 
+function formatSchemaTypeLabel(schema: Record<string, any>): string {
+  if (schema.type === "array") {
+    const itemLabel = schema.items
+      ? formatSchemaTypeLabel(schema.items as Record<string, any>)
+      : "unknown";
+    return `${itemLabel}[]`;
+  }
+
+  if (schema.type === "object") {
+    if (schema.properties) {
+      const required = new Set<string>(schema.required ?? []);
+      const fields = Object.entries(schema.properties).map(
+        ([fieldName, fieldSchema]) => {
+          const optionalSuffix = required.has(fieldName) ? "" : "?";
+          return `${fieldName}${optionalSuffix}: ${formatSchemaTypeLabel(fieldSchema as Record<string, any>)}`;
+        }
+      );
+      return `{ ${fields.join(", ")} }`;
+    }
+    return "object";
+  }
+
+  return String(schema.type ?? "unknown");
+}
+
 // ===== Exports =====
 
 export function buildOutputSchema(config: OutputSchemaConfig): JsonSchema {
   const properties: Record<string, any> = {};
 
-  for (const typeId of config.use) {
+  for (const typeId of resolveOutputSchemaTypeIds(config)) {
     const typeDef = STATE_CHANGE_TYPES[typeId];
     if (typeDef === undefined) {
       throw new Error(`Unknown state change type: "${typeId}"`);
@@ -63,15 +89,14 @@ export function buildOutputSchema(config: OutputSchemaConfig): JsonSchema {
 }
 
 export function formatOutputSchemaPrompt(config: OutputSchemaConfig): string {
-  const schema = buildOutputSchema(config);
-  const schemaJson = JSON.stringify(schema, null, 2);
+  const fieldBullets: string[] = [];
 
-  const descriptionBullets: string[] = [];
-
-  for (const typeId of config.use) {
+  for (const typeId of resolveOutputSchemaTypeIds(config)) {
     const typeDef = STATE_CHANGE_TYPES[typeId];
     if (typeDef !== undefined) {
-      descriptionBullets.push(`- **${typeId}**: ${typeDef.description}`);
+      fieldBullets.push(
+        `- \`${typeId}[]\`: ${formatSchemaTypeLabel(typeDef.schema)} — ${typeDef.description}`
+      );
     }
   }
 
@@ -79,23 +104,20 @@ export function formatOutputSchemaPrompt(config: OutputSchemaConfig): string {
     for (const [fieldName, fieldDef] of Object.entries(config.custom)) {
       const desc =
         fieldDef.description ?? `Custom field of type ${fieldDef.type}.`;
-      descriptionBullets.push(`- **${fieldName}**: ${desc}`);
+      fieldBullets.push(
+        `- \`${fieldName}\`: ${formatSchemaTypeLabel(customFieldToJsonSchema(fieldDef))} — ${desc}`
+      );
     }
   }
-
-  const descriptionsSection =
-    descriptionBullets.length > 0
-      ? `\n### Field Descriptions\n\n${descriptionBullets.join("\n")}`
-      : "";
 
   return [
     "## Output Format",
     "",
-    "Respond with a JSON object matching this schema exactly. Do not include any fields not listed here. Each state change type is an array (may be empty or omitted if no changes of that type).",
+    "Respond with a JSON object using only the allowed top-level fields below. Omit any field with no changes.",
+    "For state change fields, each top-level field is an array of objects. Required keys are shown plainly; optional keys use `?`.",
     "",
-    "```json",
-    schemaJson,
-    "```",
-    descriptionsSection,
+    "### Allowed Fields",
+    "",
+    ...fieldBullets,
   ].join("\n");
 }

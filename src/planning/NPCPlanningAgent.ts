@@ -11,8 +11,10 @@ import {
   buildDailySchedulePrompt,
   buildDetailedNodesPrompt,
   buildImpactGatePrompt,
+  buildImpactObservationPrompt,
   buildRelationshipUpdatePrompt,
   buildReviseSchedulePrompt,
+  type ImpactPerspective,
 } from "./npcPlanningTemplates.js";
 import { buildSummarizeDayMemoryPrompt } from "./npcSummaryTemplates.js";
 import {
@@ -842,7 +844,6 @@ export class NPCPlanningAgent {
     updatedIntent?: string;
     shouldInterruptCurrentNode: boolean;
     shouldReviseSchedule: boolean;
-    witnessEntry: string;
   }> {
     const { systemPrompt, userPrompt } = buildImpactGatePrompt({
       bucketTime,
@@ -867,7 +868,6 @@ export class NPCPlanningAgent {
         updatedIntent?: string;
         shouldInterruptCurrentNode: boolean;
         shouldReviseSchedule: boolean;
-        witnessEntry: string;
       }>(response);
     } catch (err) {
       console.warn(
@@ -878,8 +878,54 @@ export class NPCPlanningAgent {
         shouldUpdateIntent: false,
         shouldInterruptCurrentNode: false,
         shouldReviseSchedule: false,
-        witnessEntry: "",
       };
+    }
+  }
+
+  async generateImpactObservationForNpc(
+    candidate: {
+      npcId: string;
+      npcName: string;
+      currentLocation: string;
+      longTermIntent: string;
+      todayScheduleSummary: string;
+      currentDetailedPlan: string;
+      triggeringEvents: string;
+      memoryContext?: string;
+      shortTermIntent?: string;
+    },
+    bucketTime: string,
+    perspective: ImpactPerspective,
+    language = "en",
+    moduleBackground?: string
+  ): Promise<string> {
+    const { systemPrompt, userPrompt } = buildImpactObservationPrompt({
+      bucketTime,
+      candidate,
+      perspective,
+      language,
+      moduleBackground,
+    });
+
+    console.log(
+      `[Planning] 👁️ Impact observation for ${candidate.npcName}: "${candidate.triggeringEvents.slice(0, 60)}"`
+    );
+    const response = await generateText({
+      runtime: this.runtime,
+      context: userPrompt,
+      customSystemPrompt: systemPrompt,
+      modelClass: ModelClass.MEDIUM,
+    });
+
+    try {
+      const parsed = parseJsonResponse<{ observation: string }>(response);
+      return parsed.observation?.trim() ?? "";
+    } catch (err) {
+      console.warn(
+        `[Planning] ⚠️ Impact observation JSON parse failed for ${candidate.npcName}, using fallback:`,
+        err instanceof Error ? err.message : err
+      );
+      return "";
     }
   }
 

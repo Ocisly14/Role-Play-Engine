@@ -3,6 +3,7 @@ import {
   buildDailySchedulePrompt,
   buildDetailedNodesPrompt,
   buildImpactGatePrompt,
+  buildImpactObservationPrompt,
   buildReviseSchedulePrompt,
 } from "../npcPlanningTemplates.js";
 
@@ -156,5 +157,27 @@ describe("npcPlanningTemplates", () => {
     expect(systemPrompt).toContain("shouldUpdateIntent");
     expect(systemPrompt).toContain("shouldInterruptCurrentNode");
     expect(systemPrompt).not.toContain('"shouldRevise"');
+    expect(systemPrompt).not.toContain("witnessEntry");
+  });
+
+  it("renders a separate observation prompt with an observation field", () => {
+    const { systemPrompt } = buildImpactObservationPrompt({
+      bucketTime: "15:08",
+      perspective: "witness",
+      candidate: {
+        npcId: "npc_tom",
+        npcName: "Tom Harris",
+        currentLocation: "Victor's Company Building",
+        longTermIntent: "Protect myself and keep records straight.",
+        todayScheduleSummary: "Work at the office.",
+        currentDetailedPlan: "Review the custody log.",
+        triggeringEvents:
+          "[impact 2] You noticed Victor search the filing cabinet.",
+      },
+      language: "en",
+    });
+
+    expect(systemPrompt).toContain("observation");
+    expect(systemPrompt).not.toContain("witnessEntry");
   });
 });

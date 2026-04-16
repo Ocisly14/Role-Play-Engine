@@ -19,9 +19,8 @@ stateDomains:
     fields: [id, name, description, conditions]
 
 outputSchema:
-  use:
-    - memory.event
-    - character.fatigue
+  presets:
+    - default
 
 interpreter:
   examples:

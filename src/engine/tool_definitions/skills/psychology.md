@@ -50,13 +50,13 @@ interpreter:
 
 ## On Success
 
-- **Regular success**: The actor gains a meaningful read on the target's mental state. They can identify one truthful piece of insight — whether the target is lying, afraid, hiding something, or acting against their own interests. Record as memory.information.
+- **Regular success**: The actor gains a meaningful read on the target's mental state. They can identify one truthful piece of insight — whether the target is lying, afraid, hiding something, or acting against their own interests. Record the observation as memory.event and the conclusion as memory.information.
 - **Hard success**: The actor reads the target with clarity. They understand the target's current emotional state and can detect deception or concealment with confidence. They may also sense the general nature of what is being hidden (fear, guilt, grief, desire) without knowing specifics.
 - **Extreme success**: The actor perceives the target's deeper motivations and psychological state. They understand what the target truly wants or fears, not just their surface behavior. This may reveal a secret or contradiction not visible through normal observation.
 
 ## On Failure
 
 - The actor gains no useful insight into the target's mental state.
-- On a partial failure, they may form an inaccurate impression — believing someone honest who is actually lying, or seeing distress where there is only fatigue. Record the incorrect read as memory.information with low confidence.
+- On a partial failure, they may form an inaccurate impression — believing someone honest who is actually lying, or seeing distress where there is only fatigue. Record the incorrect read as memory.information with low confidence, and keep the inspection itself as memory.event if it is useful to remember.
 - This incorrect impression may affect subsequent interactions if the actor acts on faulty conclusions.
 - Psychology cannot be re-attempted on the same target in the same scene for the same purpose.

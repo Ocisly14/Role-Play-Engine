@@ -925,8 +925,8 @@ function createMockRuntime(
         shouldUpdateIntent: false,
         shouldInterruptCurrentNode: false,
         shouldReviseSchedule: false,
-        witnessEntry: "",
       }),
+      generateImpactObservationForNpc: async () => "",
     },
     ...overrides,
   };

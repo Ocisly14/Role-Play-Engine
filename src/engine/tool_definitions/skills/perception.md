@@ -33,11 +33,10 @@ stateDomains:
       - sceneItems
 
 outputSchema:
+  presets: [default]
   use:
-    - scene.condition
     - item.modify
-    - memory.event
-    - character.fatigue
+    - memory.information
 
 interpreter:
   examples:
@@ -51,9 +50,9 @@ interpreter:
 
 ## On Success
 
-- **Regular success**: The actor notices something that was not immediately obvious — a hidden object, a displaced item, a detail out of place, or a clue relevant to the current situation. Record the discovered item or detail in memory.event and update item or scene state accordingly.
-- **Hard success**: The actor finds what they were looking for and also spots additional contextual details — the age of a disturbance, signs of struggle, fingerprints, or the direction something was moved. This provides richer investigative context beyond the primary find.
-- **Extreme success**: The actor perceives the full picture of what occurred in the scene. They may reconstruct the sequence of events from physical evidence, locate multiple hidden items, or notice a detail of profound significance that would otherwise require a separate investigation.
+- **Regular success**: The actor notices something that was not immediately obvious — a hidden object, a displaced item, a detail out of place, or a clue relevant to the current situation. Record the discovery as memory.information; if the search itself is notable, the attempt can also be retained as memory.event. Update item or scene state accordingly.
+- **Hard success**: The actor finds what they were looking for and also spots additional contextual details — the age of a disturbance, signs of struggle, fingerprints, or the direction something was moved. This provides richer investigative context beyond the primary find and may justify scene.condition or item.modify updates.
+- **Extreme success**: The actor perceives the full picture of what occurred in the scene. They may reconstruct the sequence of events from physical evidence, locate multiple hidden items, or notice a detail of profound significance that would otherwise require a separate investigation. Record the important finding as memory.information and apply any matching scene or item changes.
 
 ## On Failure
 

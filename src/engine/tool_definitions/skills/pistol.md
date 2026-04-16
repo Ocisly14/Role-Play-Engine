@@ -20,12 +20,11 @@ stateDomains:
     fields: [id, name, description, conditions]
 
 outputSchema:
+  presets:
+    - default
   use:
     - character.hp
     - character.condition
-    - character.fatigue
-    - memory.event
-    - memory.witness
 
 interpreter:
   examples:
@@ -49,5 +48,5 @@ impactHint:
 ## On Failure
 - The shot goes wide — a poor grip, sudden movement, or nerves spoiling the aim.
 - No damage is dealt this exchange and the bullet is spent.
-- The sound of the shot still echoes through the scene regardless of whether it hit; witnesses react accordingly.
+- The sound of the shot still echoes through the scene regardless of whether it hit; nearby observers may react according to the scene.
 - A fumble means the pistol jams, misfires, or is accidentally dropped — the actor must spend a full action to clear the malfunction before firing again.

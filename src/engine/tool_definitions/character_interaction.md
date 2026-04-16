@@ -16,7 +16,6 @@ interpreter:
     - "Give the key to Officer Harlow"
 
 skillCheck:
-  skills: []
   difficulty: regular
   type: opposed
   opposedDefense: []
@@ -28,7 +27,7 @@ stateDomains:
     fields:
       actor: [id, name, occupation, appearance, personality, isAlive, stats, inventory, position, conditions]
       targets: [id, name, occupation, appearance, personality, isAlive, stats, inventory, position, conditions, relationship, knowledge]
-    output: [hpDelta, sanDelta, fatigueDelta, moveTo, addItems, removeItems, addConditions, removeConditions, appearanceChange, learnedLocationNames, memory]
+    output: [character.hp, character.san, character.fatigue, character.position, item.move, item.modify, item.destroy, character.condition, memory.event, memory.information, relationship.change]
   scene:
     inject: [current]
     fields: [id, name, description, conditions, items, connections]
@@ -38,16 +37,15 @@ stateDomains:
     output: [change]
 
 outputSchema:
+  presets: [default]
   use:
     - character.hp
     - character.san
-    - character.fatigue
     - character.condition
     - character.position
     - item.move
+    - item.modify
     - item.destroy
-    - memory.event
-    - memory.witness
     - memory.information
     - relationship.change
 ---
@@ -62,7 +60,7 @@ You are resolving a character interaction that has already been determined to co
 - **interrupted**: the interaction stopped partway through. Use elapsed time and interruption context to decide whether there is no effect or only a partial effect. Do NOT assume the full intended result happened.
 
 ## HP / SAN Changes
-- When pre-computed damage values are provided in the opposed roll results, use them directly as negative hpDelta on the target. Do NOT invent different damage numbers.
+- When pre-computed damage values are provided in the opposed roll results, use them directly as negative `character.hp` on the target. Do NOT invent different damage numbers.
 - When no pre-computed damage is provided, apply damage only when the action involves physical harm or healing, following CoC 7e mechanics.
 - If a target resisted the opposed roll ("Target resists"), do NOT apply damage to that target.
 - SAN loss: apply only for genuinely disturbing revelations or events (e.g. witnessing violence, learning a Mythos secret). Minor social friction does not cause SAN loss.
@@ -87,22 +85,23 @@ The actor's own success level determines the intensity of effect on targets the 
 - regular: Moderate effect — target complies but may have reservations or conditions.
 - In combat, the pre-computed damage already reflects the success level — use it directly.
 
-## Movement (moveTo)
+## Movement (`character.position`)
 - Use only when the interaction physically displaces a character (e.g. fleeing after a fight, being escorted out, being knocked back).
-- Value must be an exact location ID from the "Connected locations" list in the scene data. Do not invent IDs.
+- The value must be an exact location ID from the connected locations in the scene data. Do not invent IDs.
 - Omit if neither character changes location as a result of this interaction.
 
-## Items (addItems / removeItems)
+## Items (`item.move` / `item.modify` / `item.destroy`)
 - Use item IDs exactly as they appear in the character inventories or scene items list.
 - Items transfer from one party to the other, or from the scene to a character. Do not invent new items.
-- removeItems on the giver + addItems on the receiver for a transfer (both sides must be specified).
-- Omit both fields if no item changes hands.
+- Use `item.move` for transfer.
+- Use `item.modify` for item damage, tampering, or other property changes.
+- Use `item.destroy` when the interaction removes the item from play.
+- Omit these fields if no item changes hands or changes state.
 
-## Conditions (addConditions / removeConditions)
+## Conditions (`character.condition`)
 - Use short English labels: "bleeding", "unconscious" etc.
-- Add a condition only when it is a direct mechanical or narrative consequence of this interaction.
-- Remove a condition only when this interaction logically resolves it (e.g. being calmed removes "frightened").
-- Omit both fields if no condition changes.
+- Add or remove a condition only when it is a direct mechanical or narrative consequence of this interaction.
+- Omit if no condition changes.
 
 ## Knowledge Transfer In Memory
 When knowledge is revealed in this interaction, encode it directly in each character's "memory" text instead of relying on a separate field.
@@ -133,7 +132,8 @@ Apply both factors together: a critical success in casual small-talk still only 
 - Write in the specified language.
 
 ## Fatigue
-- "fatigueDelta": integer from -3 to 3
+- Use `character.fatigue`.
+- integer from -3 to 3
 - Negative = recovered / caught breath
 - Positive = more fatigued from stress, exertion, dragging, fighting, or intense effort
 - Omit or use 0 when fatigue impact is negligible
@@ -143,7 +143,7 @@ Apply both factors together: a critical success in casual small-talk still only 
 - **All judgments must be grounded in the provided data.** You are a state resolver, not a story generator.
 - **Never fabricate items:** Do not invent items not in character inventories or scene items list.
 - **Never fabricate knowledge:** Characters can only learn information from "Candidate knowledge" entries or directly observable context.
-- **Never fabricate locations:** moveTo must reference exact location IDs from connected locations.
+- **Never fabricate locations:** `character.position` must reference exact location IDs from connected locations.
 - **Deterministic facts must match injected data:** items, objects, scene contents, sensory observations, backstory, lore, and factual information must come from provided context.
 - **Non-deterministic character behavior may be creative:** dialogue, lies, deception content, social tactics, emotional reactions, and subjective judgments are yours to craft.
 
@@ -152,40 +152,45 @@ Apply both factors together: a critical success in casual small-talk still only 
 ### character
 - Actor: apply effects based on interaction type and success level
 - Target: apply pre-computed damage (combat), condition changes, item transfers
-- Both: fatigueDelta based on exertion
-- Both: memory from their perspective
+- Both: `character.fatigue` based on exertion
+- Both: `memory.event` / `memory.information` from their perspective
 
 ## On Failure
 
 ### character
-- Actor: fatigueDelta +1
-- Actor: memory reflecting the failed attempt
-- Target: memory noting the attempted interaction (no major state changes)
+- Actor: `character.fatigue` +1
+- Actor: `memory.event` reflecting the failed attempt
+- Target: `memory.event` noting the attempted interaction (no major state changes)
 
-## Output Schema
+## Output Schema Example
 ```json
 {
-  "actorChanges": {
-    "hpDelta": -2,
-    "sanDelta": -1,
-    "fatigueDelta": 1,
-    "moveTo": "scene_id",
-    "addItems": ["item_id"],
-    "removeItems": ["item_id"],
-    "addConditions": ["condition_name"],
-    "removeConditions": ["condition_name"],
-    "appearanceChange": "full description if changed",
-    "learnedLocationNames": ["location name"],
-    "memory": "first-person account (REQUIRED)"
-  },
-  "targetChanges": {
-    "<target_character_id>": {
-      "hpDelta": -5,
-      "sanDelta": 0,
-      "fatigueDelta": 0,
-      "addConditions": ["bleeding"],
-      "memory": "first-person account (REQUIRED)"
-    }
-  }
+  "character.hp": [
+    { "characterId": "actor_id", "delta": -2 }
+  ],
+  "character.san": [
+    { "characterId": "target_id", "delta": -1 }
+  ],
+  "character.fatigue": [
+    { "characterId": "actor_id", "delta": 1 }
+  ],
+  "character.position": [
+    { "characterId": "target_id", "sceneId": "scene_id" }
+  ],
+  "item.move": [
+    { "itemId": "key", "from": "npc_1", "to": "npc_2" }
+  ],
+  "character.condition": [
+    { "characterId": "target_id", "add": ["bleeding"] }
+  ],
+  "relationship.change": [
+    { "fromId": "actor_id", "toId": "target_id", "delta": 1, "note": "helped with the exchange" }
+  ],
+  "memory.event": [
+    { "characterId": "actor_id", "content": "I forced the door and dragged him outside." }
+  ],
+  "memory.information": [
+    { "characterId": "target_id", "content": "I learned he was carrying the key." }
+  ]
 }
 ```

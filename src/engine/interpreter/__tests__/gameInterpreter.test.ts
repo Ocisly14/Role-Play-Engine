@@ -1,4 +1,5 @@
 import type { ActionDefinition } from "../../types.js";
+import { loadActionDefinitions } from "../../tool_definitions/loader.js";
 import {
   buildInterpreterPrompt,
   parseInterpretedResult,
@@ -19,7 +20,7 @@ const mockDefinitions: ActionDefinition[] = [
     content: "",
     guidanceBody: "",
     skillCheck: {
-      skills: ["Fighting (Brawl)"],
+      skill: "Fighting (Brawl)",
       difficulty: "regular",
       type: "opposed",
       opposedDefense: ["Dodge"],
@@ -33,7 +34,7 @@ const mockDefinitions: ActionDefinition[] = [
     content: "",
     guidanceBody: "",
     skillCheck: {
-      skills: ["Persuade"],
+      skill: "Persuade",
       difficulty: "regular",
       type: "opposed",
       opposedDefense: ["Psychology"],
@@ -76,7 +77,7 @@ describe("buildInterpreterPrompt", () => {
         content: "",
         guidanceBody: "",
         skillCheck: {
-          skills: ["Perception"],
+          skill: "Perception",
           difficulty: "regular",
           type: "single",
           failBehavior: "partial",
@@ -90,7 +91,7 @@ describe("buildInterpreterPrompt", () => {
         content: "",
         guidanceBody: "",
         skillCheck: {
-          skills: ["Brawling"],
+          skill: "Brawling",
           difficulty: "regular",
           type: "opposed",
           opposedDefense: ["Dodge"],
@@ -114,6 +115,17 @@ describe("buildInterpreterPrompt", () => {
     // Includes interpreter examples
     expect(prompt).toContain("搜查房间");
     expect(prompt).toContain("挥拳攻击");
+  });
+
+  it("reflects item actions through action and related skills, not removed root item definitions", () => {
+    const prompt = buildInterpreterPrompt(loadActionDefinitions());
+
+    expect(prompt).toContain("basic item use or manipulation");
+    expect(prompt).toContain("Artistic skills, craftsmanship");
+    expect(prompt).toContain("Scientific knowledge of chemicals, reactions");
+    expect(prompt).not.toContain("**item_modify**");
+    expect(prompt).not.toContain("**item_assemble**");
+    expect(prompt).not.toContain("**item_disassemble**");
   });
 });
 

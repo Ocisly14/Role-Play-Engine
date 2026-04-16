@@ -39,7 +39,6 @@ outputSchema:
     - character.condition
     - character.san
     - memory.event
-    - memory.witness
     - relationship.change
 
 interpreter:
@@ -53,8 +52,8 @@ interpreter:
 
 ## On Success
 
-- **Regular success**: The target is cowed and complies out of fear. They provide what was demanded or back down from opposition. They remain frightened for the duration of this scene. Relationship worsens due to coercion.
-- **Hard success**: The target is badly shaken. They comply fully and may offer additional information or concessions unprompted to avoid further threat. They may be unable to act effectively this scene due to fear-induced paralysis.
+- **Regular success**: The target is cowed and complies out of fear. They provide what was demanded or back down from opposition. They remain frightened for the duration of this scene. Relationship worsens due to coercion, and the exchange should be kept as memory.event.
+- **Hard success**: The target is badly shaken. They comply fully and may offer additional concessions unprompted to avoid further threat. They may be unable to act effectively this scene due to fear-induced paralysis; keep the intimidation result as memory.event.
 - **Extreme success**: The target is overwhelmed with fear. They comply and may suffer 1 point of Sanity loss from the intensity of the threat. Witnesses present may also be disturbed. Record as a traumatic memory event for the target.
 
 ## On Failure

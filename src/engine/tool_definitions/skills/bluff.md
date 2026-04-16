@@ -57,9 +57,9 @@ interpreter:
 
 ## On Success
 
-- **Regular success**: The target believes the lie or misdirection. They accept the actor's fabricated story and act accordingly — standing aside, providing access, or changing their behavior based on the false information.
-- **Hard success**: The target believes the bluff completely and does not question it. Even if later presented with mild contradicting evidence, they initially dismiss it. The false impression persists for a meaningful duration.
-- **Extreme success**: The target is fully deceived and may actively reinforce the lie to others. They could unknowingly mislead third parties, compounding the bluff's reach. Record the deception in memory as established false information.
+- **Regular success**: The target believes the lie or misdirection. They accept the actor's fabricated story and act accordingly — standing aside, providing access, or changing their behavior based on the false information. Record the exchange as memory.event; any concrete accepted claims can be kept as memory.information.
+- **Hard success**: The target believes the bluff completely and does not question it. Even if later presented with mild contradicting evidence, they initially dismiss it. The false impression persists for a meaningful duration, and the successful deception remains part of memory.event.
+- **Extreme success**: The target is fully deceived and may actively reinforce the lie to others. They could unknowingly mislead third parties, compounding the bluff's reach. Record the deception in memory.event and preserve any established false claims as memory.information.
 
 ## On Failure
 

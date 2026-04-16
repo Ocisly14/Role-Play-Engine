@@ -9,6 +9,7 @@ import type {
   ActionDefinitionSkillCheck,
   StateDomainSpec,
 } from "../types.js";
+import { buildOutputSchema } from "../resolver/schemaBuilder.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
@@ -60,6 +61,9 @@ function loadDefinitionFile(
 ): ActionDefinition {
   const raw = readFileSync(filePath, "utf-8");
   const { frontmatter, body } = splitFrontmatter(raw);
+  if (frontmatter.outputSchema) {
+    buildOutputSchema(frontmatter.outputSchema);
+  }
   const title = frontmatter.title ?? parseTitle(body) ?? fallbackId;
   return {
     id: frontmatter.id ?? fallbackId,

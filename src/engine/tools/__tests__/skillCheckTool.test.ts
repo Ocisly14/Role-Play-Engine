@@ -26,7 +26,7 @@ describe("executeSkillCheck", () => {
 
   it("returns success for single skill check", () => {
     const skillCheck: ActionDefinitionSkillCheck = {
-      skills: ["Spot Hidden"],
+      skill: "Spot Hidden",
       difficulty: "regular",
       type: "single",
       failBehavior: "partial",
@@ -38,7 +38,7 @@ describe("executeSkillCheck", () => {
     const result = executeSkillCheck(
       skillCheck,
       "npc_1",
-      "Spot Hidden",
+      undefined,
       dgsm,
       "scene_1"
     );

@@ -1,7 +1,7 @@
 ---
 id: action
 title: Current-Location Action
-description: A current-location action performed in the actor's present scene — self-directed behavior, environmental interaction, searching, resting, listening, barricading, hiding in place.
+description: A current-location action performed in the actor's present scene — self-directed behavior, environmental interaction, basic item use or manipulation, searching, resting, listening, barricading, hiding in place.
 
 impactHint:
   default: 0
@@ -11,13 +11,15 @@ impactHint:
 interpreter:
   examples:
     - "Search the study carefully for signs that someone opened the desk"
+    - "Pick up the key from the desk"
+    - "Read the old journal"
+    - "Light the oil lamp"
     - "Rest and catch my breath"
     - "Listen at the door"
     - "Barricade the entrance with furniture"
     - "Hide behind the curtains"
 
 skillCheck:
-  skills: []
   difficulty: regular
   type: single
   failBehavior: partial
@@ -27,24 +29,21 @@ stateDomains:
     inject: [actor]
     fields:
       actor: [id, name, conditions]
-    output: [fatigueDelta, memory]
+    output: [character.hp, character.condition, character.fatigue, memory.event, memory.information]
   scene:
     inject: [current]
     fields: [id, name, description, conditions, items, connections]
-    output: [addConditions, removeConditions, connectionEffects, moveTo]
+    output: [scene.condition, character.position]
   item:
     inject: [sceneItems, actorInventory]
-    output: [move, modify, destroy]
+    output: [item.move, item.modify, item.destroy, item.create]
 
 outputSchema:
+  presets: [default, item_modify]
   use:
-    - character.fatigue
+    - character.hp
     - character.condition
-    - scene.condition
-    - item.move
-    - item.modify
-    - item.destroy
-    - memory.event
+    - character.position
 ---
 
 # Current-Location Action Resolution Guidance
@@ -57,32 +56,25 @@ You are resolving a current-location action. The node may be a quiet self-direct
 - **interrupted**: the action stopped partway through. Use elapsed time and the trigger information to decide whether there is no effect or only a partial effect. Do NOT assume the full intended result happened.
 
 ## Scene Conditions
-Use "addSceneConditions" for observable environmental changes. Only include "mechanicalEffect" when it has a clear impact on dice rolls or movement.
-Use "removeSceneConditions" to remove existing conditions (use the exact description string).
+Use `scene.condition` for observable environmental changes. Only include `mechanicalEffect` when it has a clear impact on dice rolls or movement.
+Use the `add` list to add conditions and the `remove` list to remove existing conditions.
 
-## Connection Effects
-Use "connectionEffects" when the action changes access between locations:
-- **"block"**: The actor barricades, locks, or obstructs a passage. The "targetId" must be an existing connected location ID.
-- **"unblock"**: The actor clears debris, unlocks, or removes an obstruction.
-- **"reveal"**: The actor discovers a hidden passage or secret door. Only use this for connections marked as [HIDDEN] in the scene data. The actor must be actively searching/investigating, and the skill roll must succeed.
-- **"hide"**: The actor conceals a passage (rare — e.g. pushing a bookshelf back to cover a secret door).
+## Access / Passage
+If the action blocks, clears, reveals, or hides access between locations, reflect the resulting state with `scene.condition`.
+If the action physically moves the actor through that opening, also use `character.position`.
 
-Each entry needs:
-- "targetId": the exact connected location ID from the scene data
-- "action": one of "block", "unblock", "reveal", "hide"
-
-## Incidental Relocation (moveTo)
-Use "moveTo" only when the action itself physically displaces the actor into a nearby valid location as a side effect, such as:
+## Incidental Relocation (`character.position`)
+Use `character.position` only when the action itself physically displaces the actor into a nearby valid location as a side effect, such as:
 - jumping out a window into a courtyard
 - diving through a newly opened passage
 - crawling into a revealed hidden stairwell
 
 Rules:
-- Do NOT use "moveTo" for ordinary travel or deliberate navigation. Those belong in a movement node.
-- "moveTo" must be the exact ID from the injected "Incidental Relocation Targets" list.
-- Omit "moveTo" when the actor stays where they are.
-- On failed or interrupted actions, only use "moveTo" if the action genuinely got the actor to the destination.
-- Never use "moveTo" to teleport to a distant or unrelated location.
+Do NOT use `character.position` for ordinary travel or deliberate navigation. Those belong in a movement node.
+Use the exact destination scene ID from the provided relocation targets.
+Omit `character.position` when the actor stays where they are.
+On failed or interrupted actions, only use `character.position` if the action genuinely got the actor to the destination.
+Never use `character.position` to teleport to a distant or unrelated location.
 
 ## Hidden Connections
 Connections marked as [HIDDEN] are secret passages, trap doors, or concealed exits that the actor does not know about.
@@ -90,7 +82,7 @@ Connections marked as [HIDDEN] are secret passages, trap doors, or concealed exi
 - A critical success may reveal even the most cleverly concealed passages.
 - A regular success reveals passages that are moderately hidden.
 - Without a skill check or on failure, hidden connections must NOT be revealed.
-- Do NOT mention hidden connections in the actor's memory if they were not revealed.
+- Reflect any discovery in `scene.condition`, `character.position`, or `memory.information` as appropriate.
 
 ## Skill Check Results
 - **No skill check (auto success)**: routine actions succeed as described. Hidden connections are NOT revealed without a skill check.
@@ -100,15 +92,18 @@ Connections marked as [HIDDEN] are secret passages, trap doors, or concealed exi
 - **Skill check failed**: the action did NOT succeed. Reflect this in the memory. The actor found nothing unusual.
 
 ## Items
-Use "items" to output state changes for items affected by the interaction:
-- "itemId": the exact item ID
-- "location": final location — "scene", "inventory", "destroyed"
-- "updates": (optional) changed Item fields to deep-merge (e.g. "damaged", "damageDetails", "consumableStats")
+Use `item.move`, `item.modify`, `item.destroy`, and `item.create` for item state changes:
+- use exact item IDs from the provided scene or inventory data
+- only include items that actually changed
+- do not invent source items or unsupported item properties
+- use `item.create` only when the action clearly transforms provided materials or opens an existing object into a grounded new item or recovered part
 
-Only include items that actually changed. Common cases:
-- Tool gets damaged from forceful use
-- Consumable used up
-- Item dropped during action
+Common cases:
+- tool gets damaged from forceful use
+- consumable used up
+- item dropped during action
+- note or clue read, inspected, or discovered as `memory.information`
+- simple improvised result created from available materials
 
 ## Actor Conditions
 If the actor has physical conditions listed (e.g. "detained", "restrained", "unconscious"), these represent binding constraints. A detained or restrained actor cannot freely search rooms, barricade doors, or perform actions requiring free movement. Reflect these constraints in the outcome — the action should fail or be severely limited.
@@ -119,7 +114,8 @@ Always required for the actor. Write from the actor's first-person perspective: 
 - Write in the specified language.
 
 ## Fatigue
-- "fatigueDelta": integer from -3 to 3
+Use `character.fatigue`.
+- integer from -3 to 3
 - Negative = reduced fatigue (resting, catching breath, safe downtime)
 - Positive = increased fatigue (searching hard, forcing doors, sustained exertion)
 - Omit or use 0 when negligible
@@ -128,22 +124,22 @@ Always required for the actor. Write from the actor's first-person perspective: 
 ## CRITICAL: No Fabrication
 - **All judgments must be grounded in the provided data.** You are a state resolver, not a story generator.
 - **Never fabricate scene contents:** Do not invent objects, furniture, or environmental features not in the scene data.
-- **Never fabricate connections:** connectionEffects must only reference targetId values from the scene's Connections list.
-- **Never fabricate items:** items must reference exact item IDs from scene items or actor inventory.
+- **Never fabricate connections:** any access change must reference real locations from the scene data and be expressed through `scene.condition` or `character.position`.
+- **Never fabricate items:** existing items must reference exact item IDs from scene items or actor inventory. Newly created items must be grounded in the described action and available materials.
 - **Memory must reflect actual events.** If the scene data is sparse, the outcome should be proportionally simple.
 
 ## On Success
 
 ### scene
-- Add relevant scene conditions with mechanical effects where applicable.
+- Add relevant `scene.condition` entries with mechanical effects where applicable.
 - Reveal hidden connections if skill check warrants it.
 
 ### item
 - Apply item state changes (damage, consume, move).
 
 ### character
-- fatigueDelta: based on exertion level
-- memory: first-person account of what happened
+- `character.fatigue`: based on exertion level
+- `memory.event` / `memory.information`: first-person account of what happened and what was learned
 
 ## On Failure
 
@@ -151,25 +147,27 @@ Always required for the actor. Write from the actor's first-person perspective: 
 - Usually no scene changes on failure.
 
 ### character
-- fatigueDelta: +1 (the attempt still costs effort)
-- memory: first-person account reflecting failure
+- `character.fatigue`: +1 (the attempt still costs effort)
+- `memory.event`: first-person account reflecting failure
 
-## Output Schema
+## Output Schema Example
 ```json
 {
-  "addSceneConditions": [
-    { "description": "the door is barricaded with heavy furniture" },
-    { "description": "the room is pitch dark", "mechanicalEffect": { "skillPenalty": [{ "skill": "Spot Hidden", "delta": -30 }] } }
+  "scene.condition": [
+    { "sceneId": "study_scene_id", "add": ["the door is barricaded with heavy furniture"] },
+    { "sceneId": "study_scene_id", "add": ["the room is pitch dark"] }
   ],
-  "removeSceneConditions": ["exact existing condition to remove"],
-  "connectionEffects": [
-    { "targetId": "location_id", "action": "reveal" }
+  "character.position": [
+    { "characterId": "actor_id", "sceneId": "courtyard_scene_id" }
   ],
-  "moveTo": "courtyard_scene_id",
-  "items": [
-    { "itemId": "crowbar", "location": "inventory", "updates": { "damaged": true } }
+  "item.modify": [
+    { "itemId": "crowbar", "properties": { "damaged": true } }
   ],
-  "fatigueDelta": 1,
-  "memory": "first-person account (REQUIRED)"
+  "character.fatigue": [
+    { "characterId": "actor_id", "delta": 1 }
+  ],
+  "memory.event": [
+    { "characterId": "actor_id", "content": "I barricaded the door and climbed into the courtyard." }
+  ]
 }
 ```

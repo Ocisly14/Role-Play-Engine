@@ -42,5 +42,5 @@ impactHint:
 - No skill check required — willing exchange between characters
 - The target must be willing to accept the item (check relationship)
 - If the target refuses, no item.move occurs
-- Both characters form memories of the exchange
-- Relationship may change based on the value or significance of the item
+- Both characters form `memory.event` entries for the exchange
+- Relationship may change based on the value or significance of the item through `relationship.change`

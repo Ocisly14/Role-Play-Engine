@@ -410,22 +410,93 @@ ${params.remainingSchedule}`;
 
 // ===================== Impact Gate (per-NPC) =====================
 
+export type ImpactPerspective = "targeted" | "witness" | "co_presence";
+
+export interface ImpactCandidate {
+  npcId: string;
+  npcName: string;
+  currentLocation: string;
+  longTermIntent: string;
+  todayScheduleSummary: string;
+  currentDetailedPlan: string;
+  triggeringEvents: string;
+  memoryContext?: string;
+  shortTermIntent?: string;
+}
+
 export interface ImpactGateParams {
   bucketTime: string;
-  candidate: {
-    npcId: string;
-    npcName: string;
-    currentLocation: string;
-    longTermIntent: string;
-    todayScheduleSummary: string;
-    currentDetailedPlan: string;
-    triggeringEvents: string;
-    memoryContext?: string;
-    shortTermIntent?: string;
-  };
+  candidate: ImpactCandidate;
   language: string;
   /** Module background: era, location, technology level, atmosphere */
   moduleBackground?: string;
+}
+
+export interface ImpactObservationParams {
+  bucketTime: string;
+  candidate: ImpactCandidate;
+  perspective: ImpactPerspective;
+  language: string;
+  /** Module background: era, location, technology level, atmosphere */
+  moduleBackground?: string;
+}
+
+export function buildImpactObservationPrompt(
+  params: ImpactObservationParams
+): PromptParts {
+  const c = params.candidate;
+
+  const memorySection = c.memoryContext
+    ? `\n## Relevant Memories\n${c.memoryContext}\n`
+    : "";
+
+  const systemPrompt = `You are a character living in a simulated world. Act as a real person would.
+${params.moduleBackground ? `\n## Setting\n${params.moduleBackground}\n` : ""}
+## Task
+Something just happened involving you or around you. Write a short memory entry describing what you perceived from your perspective.
+
+## Instructions
+- Write 1-2 sentences only.
+- Focus on what you noticed and your immediate reaction.
+- Do NOT describe any actions you took or plan to take.
+- Keep the tone grounded and specific to the event.
+- Use the current language for the memory entry.
+
+## Perspective
+- targeted: you were directly involved
+- witness: you observed the event
+- co_presence: you were nearby when it happened
+
+## Output
+Return a single JSON object. No extra text. JSON keys must be in English. Write "observation" in ${contentLanguageName(
+    params.language
+  )}.
+
+\`\`\`json
+{
+  "observation": "Brief description of what you perceived."
+}
+\`\`\``;
+
+  const userPrompt = `You are ${c.npcName}.
+
+## Perspective
+${params.perspective}
+
+## What Just Happened
+${c.triggeringEvents}
+${memorySection}
+## Who You Are
+- Current location: ${c.currentLocation}
+- Your goal: ${c.longTermIntent}
+- What you're focused on: ${c.shortTermIntent || "No specific focus."}
+- Your plan for today: ${c.todayScheduleSummary || "No schedule."}
+- What you're doing right now: ${c.currentDetailedPlan || "Nothing planned."}
+
+## Right Now
+${params.bucketTime}`;
+
+  return { systemPrompt, userPrompt };
 }
 
 export function buildImpactGatePrompt(params: ImpactGateParams): PromptParts {
@@ -446,7 +517,6 @@ Decide:
 3. Should you change your **plans for the rest of the day**? (shouldReviseSchedule)
 
 ## Instructions
-- Write a brief note (1-2 sentences) about what you perceived and how you feel about it. This is a memory record of your perception and inner reaction only — do NOT describe any actions you take or plan to take.
 - shouldUpdateIntent=true when the event changes your priorities or what you're focused on:
   - New information shifts what you care about or what you should be doing next
   - An opportunity or threat reframes your immediate goals
@@ -468,15 +538,14 @@ Decide:
 - A brief interruption or local distraction is never enough to change the rest-of-day schedule.
 
 ## Output
-Return a single JSON object. No extra text. JSON keys must be in English. Write "witnessEntry" in ${contentLanguageName(params.language)}.
+Return a single JSON object. No extra text. JSON keys must be in English.
 
 \`\`\`json
 {
   "shouldUpdateIntent": false,
   "updatedIntent": "only if shouldUpdateIntent is true — your new focus",
   "shouldInterruptCurrentNode": false,
-  "shouldReviseSchedule": false,
-  "witnessEntry": "Brief description of what you perceived."
+  "shouldReviseSchedule": false
 }
 \`\`\``;
 

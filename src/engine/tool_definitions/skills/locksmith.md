@@ -21,11 +21,7 @@ stateDomains:
     inject: [sceneItems, actorInventory]
 
 outputSchema:
-  use:
-    - scene.condition
-    - item.modify
-    - memory.event
-    - character.fatigue
+  presets: [default, item_modify]
 
 interpreter:
   examples:
@@ -35,6 +31,14 @@ interpreter:
 ---
 
 # Locksmith Resolution Guidance
+
+## State Changes
+- Use `scene.condition` for the opened, jammed, or permanently blocked state of the door, safe, cabinet, or lockable passage.
+- Use `item.modify` when the physical lock, latch, keyway, or alarmed hardware is altered but remains in play.
+- Use `item.destroy` if the lock mechanism or a delicate tool breaks beyond recovery.
+- Use `item.move` only when the attempt dislodges a removable locking part or physically frees an item trapped by the lock.
+- Use `item.create` only when the attempt physically produces a new loose part, broken fragment, or improvised bypass piece.
+- Use `memory.information` only when the actor learns a concrete fact about the lock, alarm, or security mechanism.
 
 ## On Success
 - **Regular success**: The lock yields to the actor's tools and technique. The door, cabinet, or container is opened without permanent damage. The time taken is proportional to the lock's complexity.

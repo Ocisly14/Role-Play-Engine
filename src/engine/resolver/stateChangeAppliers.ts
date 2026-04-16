@@ -7,6 +7,7 @@
  */
 
 import type { DynamicGameStateManager } from "../../state/DynamicGameState.js";
+import { resolveOutputSchemaTypeIds } from "../outputSchema.js";
 import type { OutputSchemaConfig } from "../types.js";
 
 // ===== Applier type =====
@@ -259,7 +260,7 @@ export const STATE_CHANGE_APPLIERS: Record<string, Applier> = {
 // ===== applyByTypeId =====
 
 /**
- * Dispatch appliers for all typeIds listed in config.use.
+ * Dispatch appliers for all typeIds resolved from outputSchema presets + use.
  * Skips types not in STATE_CHANGE_APPLIERS and skips empty arrays.
  */
 export function applyByTypeId(
@@ -267,7 +268,7 @@ export function applyByTypeId(
   resolution: Record<string, any>,
   config: OutputSchemaConfig
 ): void {
-  for (const typeId of config.use) {
+  for (const typeId of resolveOutputSchemaTypeIds(config)) {
     const changes = resolution[typeId];
     if (!Array.isArray(changes) || changes.length === 0) continue;
     const applier = STATE_CHANGE_APPLIERS[typeId];

@@ -151,7 +151,8 @@ describe("buildResolverPrompt", () => {
     const prompt = buildResolverPrompt({
       action: "Search the study",
       definition: makeDef("Guidance", {
-        use: ["character.hp", "memory.event"],
+        presets: ["default"],
+        use: ["character.hp"],
       }),
       outcomeSection: "find clues",
       stateContext: {},
@@ -160,6 +161,10 @@ describe("buildResolverPrompt", () => {
     expect(prompt).toContain("## Output Format");
     expect(prompt).toContain("character.hp");
     expect(prompt).toContain("memory.event");
+    expect(prompt).toContain("character.fatigue");
+    expect(prompt).toContain("scene.condition");
+    expect(prompt).not.toContain('"additionalProperties"');
+    expect(prompt).not.toContain('"required"');
   });
 });
 
@@ -281,6 +286,18 @@ describe("validateResolution", () => {
           ritualProgress: { type: "string", description: "Ritual stage" },
         },
       }
+    );
+
+    expect(result).toBe(true);
+  });
+
+  it("accepts preset-derived fields during validation", () => {
+    const result = validateResolution(
+      {
+        "memory.event": [{ characterId: "npc_1", content: "I searched." }],
+        "character.fatigue": [{ characterId: "npc_1", delta: 1 }],
+      },
+      { presets: ["default"] }
     );
 
     expect(result).toBe(true);

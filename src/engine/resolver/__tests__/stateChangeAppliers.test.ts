@@ -232,4 +232,27 @@ describe("applyByTypeId", () => {
     // HP should still be applied
     expect(dgsm.updateNpcHp).toHaveBeenCalledWith("npc_1", -1);
   });
+
+  it("dispatches preset-derived types", () => {
+    const dgsm = makeMockDgsm();
+    const originalApplier = STATE_CHANGE_APPLIERS["memory.event"];
+    const spy = vi.fn();
+    STATE_CHANGE_APPLIERS["memory.event"] = spy;
+
+    try {
+      applyByTypeId(
+        dgsm,
+        {
+          "memory.event": [{ characterId: "npc_1", content: "Noted." }],
+        },
+        { presets: ["default"] }
+      );
+
+      expect(spy).toHaveBeenCalledWith(dgsm, [
+        { characterId: "npc_1", content: "Noted." },
+      ]);
+    } finally {
+      STATE_CHANGE_APPLIERS["memory.event"] = originalApplier;
+    }
+  });
 });

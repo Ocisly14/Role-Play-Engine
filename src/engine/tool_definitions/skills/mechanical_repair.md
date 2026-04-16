@@ -21,10 +21,7 @@ stateDomains:
     inject: [sceneItems, actorInventory]
 
 outputSchema:
-  use:
-    - item.modify
-    - memory.event
-    - character.fatigue
+  presets: [default, item_modify]
 
 interpreter:
   examples:
@@ -34,6 +31,13 @@ interpreter:
 ---
 
 # Mechanical Repair Resolution Guidance
+
+## State Changes
+- Use `item.modify` for repaired machinery, cleared jams, replaced settings, or restored moving parts.
+- Use `item.destroy` when a spring, bolt, gear, or other component is ruined during the attempt.
+- Use `item.move` when parts are removed, reinstalled, or repositioned as part of the repair process.
+- Use `item.create` only when the actor fabricates or recovers a grounded replacement part during the repair.
+- Use `memory.information` only when the actor learns a concrete diagnostic detail about the fault, wear pattern, or mechanism design.
 
 ## On Success
 - **Regular success**: The mechanical fault is identified and corrected. An engine turns over, a seized gear is freed, a broken mechanism returns to working order. The repair holds for normal use.

@@ -95,8 +95,8 @@ function createRuntime(tickTime: string): TickRuntimeContext {
         shouldUpdateIntent: false,
         shouldInterruptCurrentNode: false,
         shouldReviseSchedule: false,
-        witnessEntry: "",
       }),
+      generateImpactObservationForNpc: async () => "",
     },
   };
 }

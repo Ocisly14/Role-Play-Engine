@@ -20,11 +20,10 @@ stateDomains:
     fields: [id, name, description]
 
 outputSchema:
+  presets: [default]
   use:
     - character.san
     - character.condition
-    - memory.event
-    - character.fatigue
 
 interpreter:
   examples:
@@ -37,7 +36,7 @@ interpreter:
 
 ## On Success
 - regular success: The investigator helps the patient process their trauma. The patient recovers 1d3 SAN and one acute mental condition — "terrified," "shaken," or "hysterical" — is resolved. The patient is calmer and capable of functioning again, though underlying trauma remains.
-- hard success: The session breaks through to a deeper level. The patient recovers 1d3 SAN, the acute mental condition is resolved, and the investigator also identifies the root psychological mechanism driving the patient's distress — a piece of information that may be significant to the investigation or to future treatment.
+- hard success: The session breaks through to a deeper level. The patient recovers 1d3 SAN, the acute mental condition is resolved, and the investigator also identifies the root psychological mechanism driving the patient's distress.
 - extreme success: The therapeutic intervention is transformative. The patient recovers 1d3+1 SAN, all acute mental conditions are cleared, and the patient gains a temporary sense of psychological resilience. The investigator may also uncover a repressed memory relevant to the case — something the patient witnessed but could not consciously hold.
 
 ## On Failure

@@ -20,11 +20,10 @@ stateDomains:
     fields: [id, name, description]
 
 outputSchema:
+  presets: [default]
   use:
     - character.hp
     - character.condition
-    - memory.event
-    - character.fatigue
 
 interpreter:
   examples:

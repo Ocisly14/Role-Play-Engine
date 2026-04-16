@@ -21,10 +21,9 @@ stateDomains:
     inject: [sceneItems, actorInventory]
 
 outputSchema:
+  presets: [default]
   use:
-    - memory.event
     - memory.information
-    - character.fatigue
     - character.san
 
 interpreter:

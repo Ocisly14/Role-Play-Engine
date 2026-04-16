@@ -30,7 +30,7 @@ export function executeSkillCheck(
   const state = dgsm.getState();
   const npc = state.npcCharacters.find((n) => n.id === characterId);
   const npcSkills = npc?.skills ?? {};
-  const resolvedSkill = skill ?? skillCheckDef?.skills[0];
+  const resolvedSkill = skill ?? skillCheckDef?.skill;
   if (!resolvedSkill) {
     return {
       done: true,

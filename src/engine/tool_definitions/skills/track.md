@@ -29,10 +29,9 @@ stateDomains:
       - connections
 
 outputSchema:
+  presets: [default]
   use:
-    - memory.event
     - memory.information
-    - character.fatigue
 
 interpreter:
   examples:
@@ -45,7 +44,7 @@ interpreter:
 
 ## On Success
 
-- **Regular success**: The actor successfully identifies and follows a trail. They determine the direction of travel and can proceed to the next location along the quarry's path. Record the trail details as memory.information — footprint type, gait, approximate time since passage.
+- **Regular success**: The actor successfully identifies and follows a trail. They determine the direction of travel and can proceed to the next location along the quarry's path. Record the trail details as memory.information — footprint type, gait, approximate time since passage — and keep the tracking attempt itself as memory.event if it is worth remembering.
 - **Hard success**: The actor reads the trail with expertise. Beyond direction, they can infer the quarry's physical state (injured, hurrying, carrying a load), the number of individuals, and whether the quarry was aware of being followed. The trail leads clearly to a specific connected scene.
 - **Extreme success**: The actor reconstructs the quarry's full route and intent from the physical evidence. They may anticipate where the quarry was heading, discover a shortcut to intercept them, or uncover a secondary trail (a dropped item, a hidden cache) that reveals additional information.
 

@@ -11,6 +11,7 @@ import type {
   OutputSchemaConfig,
   ToolResult,
 } from "../types.js";
+import { resolveOutputSchemaTypeIds } from "../outputSchema.js";
 import { formatOutputSchemaPrompt } from "./schemaBuilder.js";
 import type { StateContext } from "./stateContextBuilder.js";
 
@@ -146,16 +147,21 @@ export function validateResolution(
   resolution: Record<string, any>,
   config: OutputSchemaConfig
 ): boolean {
-  const allowed = new Set<string>(config.use);
+  const allowed = getAllowedResolutionKeys(config);
+  for (const key of Object.keys(resolution)) {
+    if (!allowed.has(key)) return false;
+  }
+  return true;
+}
+
+function getAllowedResolutionKeys(config: OutputSchemaConfig): Set<string> {
+  const allowed = new Set<string>(resolveOutputSchemaTypeIds(config));
   if (config.custom) {
     for (const key of Object.keys(config.custom)) {
       allowed.add(key);
     }
   }
-  for (const key of Object.keys(resolution)) {
-    if (!allowed.has(key)) return false;
-  }
-  return true;
+  return allowed;
 }
 
 // ===== Async LLM call =====
@@ -179,12 +185,7 @@ export async function resolveState(
 
     if (ctx.definition.outputSchema) {
       if (!validateResolution(resolution, ctx.definition.outputSchema)) {
-        const allowed = new Set<string>(ctx.definition.outputSchema.use);
-        if (ctx.definition.outputSchema.custom) {
-          for (const key of Object.keys(ctx.definition.outputSchema.custom)) {
-            allowed.add(key);
-          }
-        }
+        const allowed = getAllowedResolutionKeys(ctx.definition.outputSchema);
         for (const key of Object.keys(resolution)) {
           if (!allowed.has(key)) delete resolution[key];
         }
