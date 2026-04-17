@@ -7,12 +7,8 @@ export function buildInterpreterPrompt(
   const generalDefs = definitions.filter((d) => !d.skillCheck);
   const skillDefs = definitions.filter((d) => d.skillCheck);
 
-  const opposedDefs = skillDefs.filter(
-    (d) => d.skillCheck?.type === "opposed",
-  );
-  const singleDefs = skillDefs.filter(
-    (d) => d.skillCheck?.type === "single",
-  );
+  const opposedDefs = skillDefs.filter((d) => d.skillCheck?.type === "opposed");
+  const singleDefs = skillDefs.filter((d) => d.skillCheck?.type === "single");
 
   const formatDef = (d: ActionDefinition): string => {
     let line = `- **${d.id}**: ${d.description}`;

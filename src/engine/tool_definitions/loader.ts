@@ -2,6 +2,7 @@ import { existsSync, readFileSync, readdirSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { parse as parseYaml } from "yaml";
+import { buildOutputSchema } from "../resolver/schemaBuilder.js";
 import type {
   ActionDefinition,
   ActionDefinitionImpactHint,
@@ -9,7 +10,6 @@ import type {
   ActionDefinitionSkillCheck,
   StateDomainSpec,
 } from "../types.js";
-import { buildOutputSchema } from "../resolver/schemaBuilder.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 

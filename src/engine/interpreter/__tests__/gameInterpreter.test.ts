@@ -1,5 +1,5 @@
-import type { ActionDefinition } from "../../types.js";
 import { loadActionDefinitions } from "../../tool_definitions/loader.js";
+import type { ActionDefinition } from "../../types.js";
 import {
   buildInterpreterPrompt,
   parseInterpretedResult,

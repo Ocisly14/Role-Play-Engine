@@ -265,30 +265,35 @@ export async function processImpactPipeline(params: {
 
       let gateMemoryContext = reactionContext;
       if (memoryManager) {
-        const observationEntry = await npcPlanningAgent.generateImpactObservationForNpc(
-          {
-            npcId,
-            npcName: npc?.name ?? npcId,
-            currentLocation: (() => {
-              const position = dgsm.getCharacterPosition(npcId);
-              return position ? dgsm.resolveLocationId(position) : "unknown";
-            })(),
-            longTermIntent,
-            shortTermIntent: shortTermIntent ?? undefined,
-            todayScheduleSummary: schedule
-              .map((entry) => `${entry.location}: ${entry.activity}`)
-              .join("; "),
-            currentDetailedPlan: pendingNodes
-              .map((node) => `${node.startTime}-${node.endTime} ${node.action}`)
-              .join("; "),
-            triggeringEvents,
-            memoryContext: reactionContext,
-          },
-          tickRuntime.tickTime,
-          perspective,
-          language,
-          state.moduleSetup?.background || state.moduleSetup?.introduction || ""
-        );
+        const observationEntry =
+          await npcPlanningAgent.generateImpactObservationForNpc(
+            {
+              npcId,
+              npcName: npc?.name ?? npcId,
+              currentLocation: (() => {
+                const position = dgsm.getCharacterPosition(npcId);
+                return position ? dgsm.resolveLocationId(position) : "unknown";
+              })(),
+              longTermIntent,
+              shortTermIntent: shortTermIntent ?? undefined,
+              todayScheduleSummary: schedule
+                .map((entry) => `${entry.location}: ${entry.activity}`)
+                .join("; "),
+              currentDetailedPlan: pendingNodes
+                .map(
+                  (node) => `${node.startTime}-${node.endTime} ${node.action}`
+                )
+                .join("; "),
+              triggeringEvents,
+              memoryContext: reactionContext,
+            },
+            tickRuntime.tickTime,
+            perspective,
+            language,
+            state.moduleSetup?.background ||
+              state.moduleSetup?.introduction ||
+              ""
+          );
 
         const resolvedObservationEntry = resolveImpactObservationEntry(
           observationEntry,
@@ -297,11 +302,17 @@ export async function processImpactPipeline(params: {
           language
         );
         const logEntry = primaryEvent
-          ? buildImpactMemoryContent(perspective, resolvedObservationEntry, language)
+          ? buildImpactMemoryContent(
+              perspective,
+              resolvedObservationEntry,
+              language
+            )
           : `[witness] ${resolvedObservationEntry}`;
 
         const npcLocPos = dgsm.getCharacterPosition(npcId);
-        const npcLoc = npcLocPos ? dgsm.resolveLocationId(npcLocPos) : "unknown";
+        const npcLoc = npcLocPos
+          ? dgsm.resolveLocationId(npcLocPos)
+          : "unknown";
         await memoryManager.add({
           npcId,
           sessionId,

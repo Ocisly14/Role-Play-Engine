@@ -1,5 +1,5 @@
-import type { CustomFieldDef, OutputSchemaConfig } from "../types.js";
 import { resolveOutputSchemaTypeIds } from "../outputSchema.js";
+import type { CustomFieldDef, OutputSchemaConfig } from "../types.js";
 import { STATE_CHANGE_TYPES } from "./stateChangeTypes.js";
 
 // ===== Interfaces =====

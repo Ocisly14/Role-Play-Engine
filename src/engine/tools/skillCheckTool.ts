@@ -35,7 +35,7 @@ export function executeSkillCheck(
     return {
       done: true,
       status: "completed",
-      outcomeDescription: "No skill specified",
+      outcomeDescription: "No skill check required",
       successLevel: "regular",
     };
   }

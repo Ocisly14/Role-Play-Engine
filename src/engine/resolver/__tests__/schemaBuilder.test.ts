@@ -1,5 +1,5 @@
-import type { OutputSchemaConfig } from "../../types.js";
 import { resolveOutputSchemaTypeIds } from "../../outputSchema.js";
+import type { OutputSchemaConfig } from "../../types.js";
 import {
   buildOutputSchema,
   formatOutputSchemaPrompt,
@@ -198,7 +198,9 @@ describe("formatOutputSchemaPrompt", () => {
     });
 
     expect(result).toContain("`scene.condition[]`");
-    expect(result).toContain("{ sceneId: string, add?: string[], remove?: string[] }");
+    expect(result).toContain(
+      "{ sceneId: string, add?: string[], remove?: string[] }"
+    );
     expect(result).toContain("`item.destroy[]`");
     expect(result).toContain("{ itemId: string, from?: string }");
     expect(result).not.toContain('"additionalProperties"');

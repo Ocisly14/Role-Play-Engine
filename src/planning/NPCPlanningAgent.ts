@@ -8,13 +8,13 @@ import { ModelClass, generateText } from "../models/index.js";
 import type { DynamicGameStateManager } from "../state/DynamicGameState.js";
 import { formatItemList, formatSceneItems } from "./itemFormatHelpers.js";
 import {
+  type ImpactPerspective,
   buildDailySchedulePrompt,
   buildDetailedNodesPrompt,
   buildImpactGatePrompt,
   buildImpactObservationPrompt,
   buildRelationshipUpdatePrompt,
   buildReviseSchedulePrompt,
-  type ImpactPerspective,
 } from "./npcPlanningTemplates.js";
 import { buildSummarizeDayMemoryPrompt } from "./npcSummaryTemplates.js";
 import {

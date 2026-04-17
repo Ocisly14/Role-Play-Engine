@@ -12,15 +12,15 @@
  *   npx tsx scripts/test-resolver-schema.ts
  */
 
-import { loadActionDefinitions } from "../src/engine/tool_definitions/loader.js";
+import { applyStateResolution } from "../src/engine/resolver/applyStateResolution.js";
+import { buildOutputSchema } from "../src/engine/resolver/schemaBuilder.js";
+import type { StateContext } from "../src/engine/resolver/stateContextBuilder.js";
 import {
   resolveState,
   validateResolution,
 } from "../src/engine/resolver/stateResolver.js";
-import { applyStateResolution } from "../src/engine/resolver/applyStateResolution.js";
-import { buildOutputSchema } from "../src/engine/resolver/schemaBuilder.js";
+import { loadActionDefinitions } from "../src/engine/tool_definitions/loader.js";
 import type { ActionDefinition } from "../src/engine/types.js";
-import type { StateContext } from "../src/engine/resolver/stateContextBuilder.js";
 
 // ─── Mock DGSM ─────────────────────────────────────────────────────────────────
 
@@ -105,7 +105,10 @@ function createMockWorld() {
       const npc = npcs[npcId];
       if (npc) {
         npc.hp += delta;
-        log.push({ type: "hp", detail: `${npc.name} HP ${delta > 0 ? "+" : ""}${delta} → ${npc.hp}` });
+        log.push({
+          type: "hp",
+          detail: `${npc.name} HP ${delta > 0 ? "+" : ""}${delta} → ${npc.hp}`,
+        });
       }
     },
 
@@ -113,7 +116,10 @@ function createMockWorld() {
       const npc = npcs[npcId];
       if (npc) {
         npc.san += delta;
-        log.push({ type: "san", detail: `${npc.name} SAN ${delta > 0 ? "+" : ""}${delta} → ${npc.san}` });
+        log.push({
+          type: "san",
+          detail: `${npc.name} SAN ${delta > 0 ? "+" : ""}${delta} → ${npc.san}`,
+        });
       }
     },
 
@@ -130,14 +136,20 @@ function createMockWorld() {
     replaceSceneConditions: (sceneId: string, conditions: any[]) => {
       if (scenes[sceneId]) {
         scenes[sceneId].conditions = conditions;
-        log.push({ type: "scene_condition", detail: `${sceneId} conditions replaced` });
+        log.push({
+          type: "scene_condition",
+          detail: `${sceneId} conditions replaced`,
+        });
       }
     },
 
     appendSceneCondition: (sceneId: string, condition: any) => {
       if (scenes[sceneId]) {
         scenes[sceneId].conditions.push(condition);
-        log.push({ type: "scene_condition", detail: `${sceneId} +condition: ${condition.description}` });
+        log.push({
+          type: "scene_condition",
+          detail: `${sceneId} +condition: ${condition.description}`,
+        });
       }
     },
 
@@ -146,7 +158,10 @@ function createMockWorld() {
     addItemToNpc: (npcId: string, item: any) => {
       if (npcs[npcId]) {
         npcs[npcId].inventory.push(item);
-        log.push({ type: "item", detail: `${npcs[npcId].name} +item: ${item.name ?? item.id}` });
+        log.push({
+          type: "item",
+          detail: `${npcs[npcId].name} +item: ${item.name ?? item.id}`,
+        });
       }
     },
 
@@ -264,7 +279,7 @@ async function runScenario(
   definitions: ActionDefinition[],
   runtime: any,
   dgsm: any,
-  log: StateLog[],
+  log: StateLog[]
 ): Promise<ScenarioResult> {
   const definition = definitions.find((d) => d.id === definitionId);
   if (!definition) {
@@ -291,7 +306,9 @@ async function runScenario(
   // Show the generated JSON Schema
   if (definition.outputSchema) {
     const schema = buildOutputSchema(definition.outputSchema);
-    console.log(`Generated JSON Schema keys: [${Object.keys(schema.properties).join(", ")}]`);
+    console.log(
+      `Generated JSON Schema keys: [${Object.keys(schema.properties).join(", ")}]`
+    );
   }
 
   // Clear the mutation log
@@ -307,7 +324,7 @@ async function runScenario(
         stateContext,
         language: "zh",
       },
-      runtime,
+      runtime
     );
 
     const validationPassed = definition.outputSchema
@@ -318,7 +335,8 @@ async function runScenario(
     console.log(`\nLLM Response:`);
     console.log(JSON.stringify(resolution, null, 2));
     console.log(`\nValidation: ${validationPassed ? "✓ PASS" : "✗ FAIL"}`);
-    if (hasNarrative) console.log(`⚠ Response contains "narrative" field (should not)`);
+    if (hasNarrative)
+      console.log(`⚠ Response contains "narrative" field (should not)`);
 
     // Apply to state
     if (definition.outputSchema) {
@@ -335,7 +353,11 @@ async function runScenario(
     }
 
     // Log memories (not applied via DGSM, but present in resolution)
-    const memoryTypes = ["memory.event", "memory.witness", "memory.information"];
+    const memoryTypes = [
+      "memory.event",
+      "memory.witness",
+      "memory.information",
+    ];
     for (const memType of memoryTypes) {
       const memories = resolution[memType];
       if (Array.isArray(memories) && memories.length > 0) {
@@ -378,16 +400,22 @@ async function main(): Promise<void> {
   console.log("═══════════════════════════════════════════════════");
   console.log("  StateResolver Output Schema — Engine Test");
   console.log("═══════════════════════════════════════════════════");
-  console.log(`MODEL_PROVIDER: ${process.env.MODEL_PROVIDER ?? "(not set, defaults to openai)"}`);
+  console.log(
+    `MODEL_PROVIDER: ${process.env.MODEL_PROVIDER ?? "(not set, defaults to openai)"}`
+  );
 
   // Load real definitions
   const definitions = loadActionDefinitions();
-  console.log(`\nLoaded ${definitions.length} definitions: [${definitions.map((d) => d.id).join(", ")}]`);
+  console.log(
+    `\nLoaded ${definitions.length} definitions: [${definitions.map((d) => d.id).join(", ")}]`
+  );
 
   // Verify outputSchema is present
   for (const def of definitions) {
     const hasSchema = def.outputSchema?.use?.length ?? 0;
-    console.log(`  ${def.id}: outputSchema.use = ${hasSchema > 0 ? `[${def.outputSchema!.use.join(", ")}]` : "NONE"}`);
+    console.log(
+      `  ${def.id}: outputSchema.use = ${hasSchema > 0 ? `[${def.outputSchema!.use.join(", ")}]` : "NONE"}`
+    );
   }
 
   const runtime = {};
@@ -404,8 +432,8 @@ async function main(): Promise<void> {
       definitions,
       runtime,
       dgsm,
-      log,
-    ),
+      log
+    )
   );
 
   // Scenario 2: character_interaction — Bruno talks to Helen
@@ -418,8 +446,8 @@ async function main(): Promise<void> {
       definitions,
       runtime,
       dgsm,
-      log,
-    ),
+      log
+    )
   );
 
   // Scenario 3: item_modify — Bruno inspects old book
@@ -432,8 +460,8 @@ async function main(): Promise<void> {
       definitions,
       runtime,
       dgsm,
-      log,
-    ),
+      log
+    )
   );
 
   // Summary
@@ -449,7 +477,9 @@ async function main(): Promise<void> {
   console.log(`Scenarios:     ${results.length}`);
   console.log(`Completed:     ${completed.length}/${results.length}`);
   console.log(`Validated:     ${validated.length}/${results.length}`);
-  console.log(`Has narrative: ${withNarrative.length}/${results.length} ${withNarrative.length === 0 ? "(good)" : "(BAD)"}`);
+  console.log(
+    `Has narrative: ${withNarrative.length}/${results.length} ${withNarrative.length === 0 ? "(good)" : "(BAD)"}`
+  );
   console.log(`Errors:        ${withErrors.length}/${results.length}`);
 
   // TypeId distribution
@@ -463,25 +493,37 @@ async function main(): Promise<void> {
   }
   if (Object.keys(typeIdCounts).length > 0) {
     console.log(`\nActive typeIds across all scenarios:`);
-    for (const [typeId, count] of Object.entries(typeIdCounts).sort((a, b) => b[1] - a[1])) {
+    for (const [typeId, count] of Object.entries(typeIdCounts).sort(
+      (a, b) => b[1] - a[1]
+    )) {
       console.log(`  ${typeId}: ${count}`);
     }
   }
 
   // Verdict
   console.log("");
-  if (completed.length === results.length && validated.length === results.length && withNarrative.length === 0) {
+  if (
+    completed.length === results.length &&
+    validated.length === results.length &&
+    withNarrative.length === 0
+  ) {
     console.log("✓ ALL PASS — Output schema system working correctly.");
   } else if (withErrors.length > 0) {
     console.log(`✗ ${withErrors.length} scenario(s) failed with errors.`);
   } else if (withNarrative.length > 0) {
-    console.log(`✗ ${withNarrative.length} scenario(s) still returned "narrative".`);
+    console.log(
+      `✗ ${withNarrative.length} scenario(s) still returned "narrative".`
+    );
   } else {
-    console.log(`⚠ ${results.length - validated.length} scenario(s) failed validation.`);
+    console.log(
+      `⚠ ${results.length - validated.length} scenario(s) failed validation.`
+    );
   }
 }
 
 main().catch((error) => {
-  console.error(error instanceof Error ? error.stack ?? error.message : error);
+  console.error(
+    error instanceof Error ? (error.stack ?? error.message) : error
+  );
   process.exitCode = 1;
 });

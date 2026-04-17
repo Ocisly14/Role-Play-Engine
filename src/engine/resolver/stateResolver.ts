@@ -6,12 +6,12 @@
  */
 
 import { ModelClass, generateText } from "../../models/index.js";
+import { resolveOutputSchemaTypeIds } from "../outputSchema.js";
 import type {
   ActionDefinition,
   OutputSchemaConfig,
   ToolResult,
 } from "../types.js";
-import { resolveOutputSchemaTypeIds } from "../outputSchema.js";
 import { formatOutputSchemaPrompt } from "./schemaBuilder.js";
 import type { StateContext } from "./stateContextBuilder.js";
 
