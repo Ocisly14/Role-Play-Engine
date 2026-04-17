@@ -44,6 +44,15 @@ outputSchema:
     - character.hp
     - character.condition
     - character.position
+    - scene.condition
+  requireOnSuccess:
+    - character.position
+    - scene.condition
+    - item.modify
+    - item.move
+    - item.create
+    - item.destroy
+    - memory.information
 ---
 
 # Current-Location Action Resolution Guidance

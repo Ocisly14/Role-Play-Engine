@@ -22,6 +22,9 @@ stateDomains:
 
 outputSchema:
   presets: [default, item_modify]
+  requireOnSuccess:
+    - item.modify
+    - scene.condition
 
 interpreter:
   examples:

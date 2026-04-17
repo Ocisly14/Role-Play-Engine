@@ -22,6 +22,8 @@ stateDomains:
 
 outputSchema:
   presets: [default, item_modify]
+  requireOnSuccess:
+    - item.create
 
 interpreter:
   examples:

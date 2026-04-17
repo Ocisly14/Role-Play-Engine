@@ -37,6 +37,8 @@ outputSchema:
   use:
     - item.modify
     - memory.information
+  requireOnSuccess:
+    - memory.information
 
 interpreter:
   examples:

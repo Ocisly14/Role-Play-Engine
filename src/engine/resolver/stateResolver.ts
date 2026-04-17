@@ -105,8 +105,12 @@ export function buildResolverPrompt(ctx: ResolverContext): string {
   }
 
   if (definition.outputSchema) {
+    const skillSucceeded =
+      !ctx.skillCheckResult || ctx.skillCheckResult.status === "completed";
     sections.push("");
-    sections.push(formatOutputSchemaPrompt(definition.outputSchema));
+    sections.push(
+      formatOutputSchemaPrompt(definition.outputSchema, { skillSucceeded })
+    );
   }
 
   sections.push("");

@@ -24,6 +24,9 @@ outputSchema:
     - character.hp
     - character.condition
     - memory.information
+  requireOnSuccess:
+    - memory.information
+    - character.condition
 
 interpreter:
   examples:

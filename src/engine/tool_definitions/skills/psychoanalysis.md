@@ -24,6 +24,8 @@ outputSchema:
   use:
     - character.san
     - character.condition
+  requireOnSuccess:
+    - character.san
 
 interpreter:
   examples:

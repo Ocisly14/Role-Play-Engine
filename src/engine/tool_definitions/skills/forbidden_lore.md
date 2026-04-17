@@ -25,6 +25,9 @@ outputSchema:
   use:
     - memory.information
     - character.san
+  requireOnSuccess:
+    - memory.information
+    - character.san
 
 interpreter:
   examples:

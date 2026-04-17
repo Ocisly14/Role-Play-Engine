@@ -257,6 +257,13 @@ export interface CustomFieldDef {
 export interface OutputSchemaConfig {
   presets?: string[];
   use?: string[];
+  /**
+   * Top-level fields that MUST appear (non-empty) when the skill check
+   * succeeds. Expressed as "at least one of" — resolver prompt forces
+   * the LLM to include at least one of these, rather than defaulting
+   * to only fallback keys like `memory.event` / `character.fatigue`.
+   */
+  requireOnSuccess?: string[];
   custom?: Record<string, CustomFieldDef>;
 }
 

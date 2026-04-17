@@ -17,6 +17,8 @@ outputSchema:
   presets: [default]
   use:
     - character.position
+  requireOnSuccess:
+    - character.position
 ---
 
 # Movement

@@ -38,6 +38,8 @@ outputSchema:
   use:
     - memory.event
     - memory.information
+  requireOnSuccess:
+    - memory.information
 
 interpreter:
   examples:

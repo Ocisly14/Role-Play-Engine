@@ -22,6 +22,13 @@ stateDomains:
 
 outputSchema:
   presets: [default, item_modify]
+  use:
+    - item.create
+    - memory.information
+  requireOnSuccess:
+    - item.create
+    - item.modify
+    - memory.information
 
 interpreter:
   examples:

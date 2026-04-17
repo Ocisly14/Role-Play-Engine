@@ -32,6 +32,8 @@ outputSchema:
   presets: [default]
   use:
     - memory.information
+  requireOnSuccess:
+    - memory.information
 
 interpreter:
   examples:

@@ -22,6 +22,11 @@ outputSchema:
   presets: [default]
   use:
     - character.hp
+    - character.position
+    - memory.event
+  requireOnSuccess:
+    - character.position
+    - memory.event
 
 interpreter:
   examples:

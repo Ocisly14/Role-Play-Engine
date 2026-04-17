@@ -88,7 +88,15 @@ export function buildOutputSchema(config: OutputSchemaConfig): JsonSchema {
   };
 }
 
-export function formatOutputSchemaPrompt(config: OutputSchemaConfig): string {
+export interface FormatOutputSchemaPromptOptions {
+  /** Whether the action's skill check succeeded (no-skill-check counts as success). */
+  skillSucceeded?: boolean;
+}
+
+export function formatOutputSchemaPrompt(
+  config: OutputSchemaConfig,
+  options?: FormatOutputSchemaPromptOptions
+): string {
   const fieldBullets: string[] = [];
 
   for (const typeId of resolveOutputSchemaTypeIds(config)) {
@@ -110,7 +118,7 @@ export function formatOutputSchemaPrompt(config: OutputSchemaConfig): string {
     }
   }
 
-  return [
+  const sections: string[] = [
     "## Output Format",
     "",
     "Respond with a JSON object using only the allowed top-level fields below. Omit any field with no changes.",
@@ -119,5 +127,23 @@ export function formatOutputSchemaPrompt(config: OutputSchemaConfig): string {
     "### Allowed Fields",
     "",
     ...fieldBullets,
-  ].join("\n");
+  ];
+
+  if (
+    options?.skillSucceeded &&
+    config.requireOnSuccess !== undefined &&
+    config.requireOnSuccess.length > 0
+  ) {
+    const requiredList = config.requireOnSuccess
+      .map((key) => `\`${key}\``)
+      .join(", ");
+    sections.push("");
+    sections.push("### Required on Success");
+    sections.push("");
+    sections.push(
+      `This action succeeded. Your output MUST include at least one of the following top-level fields with non-empty content: ${requiredList}. Do NOT respond with only \`memory.event\` or \`character.fatigue\` — those are fallbacks, not substitutes for the specific state change this skill produces.`
+    );
+  }
+
+  return sections.join("\n");
 }

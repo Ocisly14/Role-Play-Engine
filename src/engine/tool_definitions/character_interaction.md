@@ -48,6 +48,13 @@ outputSchema:
     - item.destroy
     - memory.information
     - relationship.change
+  requireOnSuccess:
+    - character.hp
+    - character.condition
+    - character.position
+    - item.move
+    - relationship.change
+    - memory.information
 ---
 
 # Character Interaction Resolution Guidance

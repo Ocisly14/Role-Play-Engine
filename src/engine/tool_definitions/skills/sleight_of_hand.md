@@ -25,6 +25,8 @@ outputSchema:
   use:
     - item.move
     - memory.event
+  requireOnSuccess:
+    - item.move
 
 interpreter:
   examples:

@@ -207,4 +207,43 @@ describe("formatOutputSchemaPrompt", () => {
     expect(result).not.toContain('"type": "object"');
     expect(result).not.toContain('"required"');
   });
+
+  it("omits the Required-on-Success block when skillSucceeded is false", () => {
+    const result = formatOutputSchemaPrompt(
+      {
+        use: ["character.hp", "character.condition"],
+        requireOnSuccess: ["character.hp", "character.condition"],
+      },
+      { skillSucceeded: false }
+    );
+
+    expect(result).not.toContain("Required on Success");
+  });
+
+  it("omits the Required-on-Success block when requireOnSuccess is empty", () => {
+    const result = formatOutputSchemaPrompt(
+      {
+        use: ["memory.event"],
+      },
+      { skillSucceeded: true }
+    );
+
+    expect(result).not.toContain("Required on Success");
+  });
+
+  it("emits the Required-on-Success block when skillSucceeded and requireOnSuccess are set", () => {
+    const result = formatOutputSchemaPrompt(
+      {
+        use: ["character.hp", "character.condition"],
+        requireOnSuccess: ["character.hp", "character.condition"],
+      },
+      { skillSucceeded: true }
+    );
+
+    expect(result).toContain("### Required on Success");
+    expect(result).toContain("`character.hp`");
+    expect(result).toContain("`character.condition`");
+    expect(result).toContain("at least one of");
+    expect(result).toContain("Do NOT respond with only");
+  });
 });

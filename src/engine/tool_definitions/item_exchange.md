@@ -18,6 +18,8 @@ outputSchema:
     - item.move
     - memory.event
     - relationship.change
+  requireOnSuccess:
+    - item.move
 
 interpreter:
   examples:

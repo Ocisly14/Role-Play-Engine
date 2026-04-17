@@ -45,6 +45,8 @@ outputSchema:
     - memory.event
     - memory.information
     - relationship.change
+  requireOnSuccess:
+    - relationship.change
 
 interpreter:
   examples:

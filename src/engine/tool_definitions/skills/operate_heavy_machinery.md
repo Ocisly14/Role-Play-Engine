@@ -22,6 +22,11 @@ outputSchema:
   presets: [default]
   use:
     - character.hp
+    - scene.condition
+    - item.modify
+  requireOnSuccess:
+    - scene.condition
+    - item.modify
 
 interpreter:
   examples:

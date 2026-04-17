@@ -24,6 +24,9 @@ outputSchema:
   use:
     - character.hp
     - character.condition
+    - character.position
+  requireOnSuccess:
+    - character.position
 
 interpreter:
   examples:

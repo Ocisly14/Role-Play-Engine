@@ -21,6 +21,12 @@ stateDomains:
 outputSchema:
   presets:
     - default
+  use:
+    - memory.event
+    - character.position
+  requireOnSuccess:
+    - memory.event
+    - character.position
 
 interpreter:
   examples:
