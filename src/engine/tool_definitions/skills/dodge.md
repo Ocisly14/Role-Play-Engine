@@ -1,7 +1,7 @@
 ---
 id: dodge
 title: Dodge
-description: "Avoiding attacks and danger — reflexive evasion"
+description: "Reactive evasion of incoming attacks — sidestepping, ducking, diving, or tumbling clear. Does NOT involve attacking back, weapon parrying, or any offensive action."
 
 skillCheck:
   skill: Dodge
@@ -27,9 +27,10 @@ outputSchema:
 
 interpreter:
   examples:
-    - "Dodge the attack"
-    - "Duck away from the thrown object"
-    - "Dodge the incoming blow"
+    - "Throw myself sideways to dodge the cultist's swing."
+    - "Duck under the incoming punch."
+    - "Dive behind the pew to avoid the gunshot."
+    - "Roll out of the way as the creature lunges at me."
 ---
 
 # Dodge Resolution Guidance

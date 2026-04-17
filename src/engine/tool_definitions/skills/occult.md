@@ -1,7 +1,7 @@
 ---
 id: occult
 title: Occult
-description: "Knowledge of supernatural beliefs, magic traditions, folklore, and mystical practices"
+description: "Mundane worldly knowledge of folklore, magical traditions, séances, and mystical belief systems. Does NOT cover genuine Mythos entities or eldritch truths (Forbidden Lore), nor archaeological religion."
 
 skillCheck:
   skill: Occult
@@ -27,9 +27,10 @@ outputSchema:
 
 interpreter:
   examples:
-    - "Identify these mysterious symbols"
-    - "Analyze the purpose of this ritual"
-    - "Identify the occult significance of these symbols"
+    - "Identify which folk-magic tradition these protective symbols belong to"
+    - "Determine whether this séance ritual follows any known spiritualist practice"
+    - "Recognize the alchemical tradition behind the symbols drawn on the altar"
+    - "Recall the folklore surrounding this type of warding charm"
 ---
 
 # Occult Resolution Guidance

@@ -1,7 +1,7 @@
 ---
 id: language_other
 title: Language (Other)
-description: "Reading, speaking, and understanding foreign languages — translation, communication"
+description: "Read, write, speak, or translate in a specific non-native language, including archaic or technical registers of that language. Does NOT cover Language (Own) (native tongue mastery) or Cthulhu Mythos (alien script decipherment)."
 
 skillCheck:
   skill: Language (Other)
@@ -27,9 +27,10 @@ outputSchema:
 
 interpreter:
   examples:
-    - "Translate this foreign text"
-    - "Try to communicate with him in a foreign language"
-    - "Translate this foreign inscription"
+    - "Translate the Latin manuscript into English to extract its ritual instructions"
+    - "Speak with the German scholar in his own language to negotiate access to the archive"
+    - "Write a formal letter in French to the Paris institute requesting records"
+    - "Read the archaic Arabic inscription on the stone tablet to determine its warning"
 ---
 
 # Language (Other) Resolution Guidance

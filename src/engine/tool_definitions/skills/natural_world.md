@@ -1,7 +1,7 @@
 ---
 id: natural_world
 title: Natural World
-description: "Knowledge of flora, fauna, natural phenomena, weather patterns"
+description: "Folk-level knowledge of plants, animals, and weather — identifying species, reading omens in nature, and predicting conditions. Does NOT cover scientific classification (Biology), route-finding (Navigate), tracking (Track), or terrain survival."
 
 skillCheck:
   skill: Natural World
@@ -27,9 +27,11 @@ outputSchema:
 
 interpreter:
   examples:
-    - "Identify whether this plant is toxic"
-    - "Assess the situation based on weather conditions"
-    - "Identify whether this plant is poisonous"
+    - "Recognize that the red berries on this shrub are poisonous based on their distinctive markings."
+    - "Read the darkening clouds and wind shift to predict a violent storm within the hour."
+    - "Identify the large claw marks on the tree trunk as belonging to a black bear, not a human threat."
+    - "Judge from the smell and discoloration of the water whether it is safe to drink."
+    - "Determine from the behavior of local birds that a predator is moving through the nearby undergrowth."
 ---
 
 # Natural World Resolution Guidance

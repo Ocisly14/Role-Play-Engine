@@ -1,7 +1,7 @@
 ---
 id: mechanical_repair
 title: Mechanical Repair
-description: "Repairing mechanical devices, engines, locks — fixing cars, machines, mechanisms"
+description: "Diagnose, fix, modify, or build mechanical devices — engines, gears, clockwork, and mechanical locks. Does NOT cover electrical systems (Electrical Repair) or passive observation."
 
 skillCheck:
   skill: Mechanical Repair
@@ -25,9 +25,11 @@ outputSchema:
 
 interpreter:
   examples:
-    - "Repair the car engine"
-    - "Fix the jammed mechanism"
-    - "Fix the jammed lock mechanism"
+    - "Strip down the seized engine and replace the cracked piston"
+    - "Diagnose why the printing press keeps jamming and free the stuck gear train"
+    - "Rebuild the clockwork mechanism so the timer operates correctly"
+    - "Weld the broken axle back into alignment so the vehicle can move"
+    - "Fabricate a replacement gear from scrap metal to restore the winch"
 ---
 
 # Mechanical Repair Resolution Guidance

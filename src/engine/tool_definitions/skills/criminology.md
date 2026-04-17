@@ -1,7 +1,7 @@
 ---
 id: criminology
 title: Criminology
-description: "Understanding criminal behavior, investigation techniques, forensic analysis"
+description: "Forensic analysis of crime scenes — interpreting blood spatter, fingerprints, wound patterns, and criminal MO to reconstruct events and profile the perpetrator. Does NOT cover general visual searching (Perception/Spot Hidden), following trails (Track), or finding records (Research/Library Use)."
 
 skillCheck:
   skill: Criminology
@@ -27,9 +27,10 @@ outputSchema:
 
 interpreter:
   examples:
-    - "Analyze the clues at the crime scene"
-    - "Deduce the perpetrator's method of committing the crime"
-    - "Analyze the crime scene for behavioral clues"
+    - "Analyze the blood spatter to determine where the victim was standing when struck"
+    - "Examine the wound pattern to identify what kind of weapon was used"
+    - "Profile the killer based on how the body was arranged"
+    - "Determine whether the room was ransacked by the killer or staged to look that way"
 ---
 
 # Criminology Resolution Guidance

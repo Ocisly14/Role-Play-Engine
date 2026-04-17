@@ -1,7 +1,7 @@
 ---
 id: accounting
 title: Accounting
-description: "Understanding financial records, detecting embezzlement, analyzing budgets"
+description: "Expertly interpret financial records, ledgers, and accounts to detect fraud, embezzlement, or hidden assets. Does NOT cover general document reading (Research/Library Use) or legal interpretation (Law)."
 
 skillCheck:
   skill: Accounting
@@ -27,9 +27,10 @@ outputSchema:
 
 interpreter:
   examples:
-    - "Examine the ledger for irregularities"
-    - "Analyze financial records for fraud"
-    - "Examine the ledger for discrepancies"
+    - "Audit the ledger entries for signs of embezzlement or falsified figures"
+    - "Trace the flow of funds through these account books to find hidden withdrawals"
+    - "Estimate how long this systematic skimming of the payroll has been going on"
+    - "Determine whether these balance sheets have been deliberately manipulated"
 ---
 
 # Accounting Resolution Guidance

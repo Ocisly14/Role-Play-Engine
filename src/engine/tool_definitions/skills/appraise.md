@@ -1,7 +1,7 @@
 ---
 id: appraise
 title: Appraise
-description: "Estimating the value, quality, and authenticity of objects and antiques"
+description: "Judging the monetary value, quality, and authenticity of trade goods, art, jewelry, antiques, and everyday items. Does NOT cover dating or identifying ancient artifacts (Archaeology), evaluating occult or ritual objects (Occult), or visual searching for hidden features (Perception/Spot Hidden)."
 
 skillCheck:
   skill: Appraise
@@ -27,9 +27,10 @@ outputSchema:
 
 interpreter:
   examples:
-    - "Estimate the value of this antique"
-    - "Authenticate whether this gemstone is genuine"
-    - "Appraise the value of this jewelry"
+    - "Estimate how much this pocket watch is worth on the open market"
+    - "Determine whether this diamond is genuine or a paste imitation"
+    - "Judge the quality and price of the goods in the merchant's stall"
+    - "Tell whether this painting is an original or a forgery"
 ---
 
 # Appraise Resolution Guidance

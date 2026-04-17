@@ -1,7 +1,7 @@
 ---
 id: chemistry
 title: Chemistry
-description: "Scientific knowledge of chemicals, reactions, compounds, and poisons"
+description: "Analyze chemical composition, synthesize compounds, and reason about reactions, poisons, and materials through expert laboratory knowledge. Does NOT cover biological organisms (Biology), pharmaceutical treatment (Medicine), or passive observation (Spot Hidden)."
 
 skillCheck:
   skill: Chemistry
@@ -25,10 +25,10 @@ outputSchema:
 
 interpreter:
   examples:
-    - "Analyze this chemical substance for composition"
-    - "Combine the chemicals to create an explosive"
-    - "Determine whether this liquid is toxic"
-    - "Analyze this chemical substance"
+    - "Determine the molecular composition of this residue and identify whether it is a synthesized poison"
+    - "Assess the purity and concentration of this alkaloid compound"
+    - "Predict how these two reagents will react if combined under heat"
+    - "Identify whether this accelerant was professionally manufactured or improvised"
 ---
 
 # Chemistry Resolution Guidance

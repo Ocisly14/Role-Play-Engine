@@ -1,7 +1,7 @@
 ---
 id: swim
 title: Swim
-description: "Swimming, diving, surviving in water — crossing rivers, escaping floods"
+description: "Staying afloat and moving through water under one's own power. Does NOT cover piloting boats, riding rafts, or climbing out of water."
 
 skillCheck:
   skill: Swim
@@ -27,9 +27,10 @@ outputSchema:
 
 interpreter:
   examples:
-    - "Swim across the river"
-    - "Struggle to survive in the floodwaters"
-    - "Swim across the river to the other side"
+    - "Swim across the river to reach the far bank."
+    - "Keep their head above water while the floodwaters rush through the basement."
+    - "Dive beneath the surface to retrieve the sunken lantern."
+    - "Fight the current to avoid being swept downstream."
 ---
 
 # Swim Resolution Guidance

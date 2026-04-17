@@ -1,7 +1,7 @@
 ---
 id: survival_desert
 title: Survival (Desert)
-description: "Surviving in desert and arid environments — finding water, avoiding heatstroke, navigating sand"
+description: "Surviving hot, arid environments — locating hidden water, rationing supplies, building sun shelters, and traveling safely across dunes and rock flats. Does NOT cover Navigate, arctic survival, or forest survival."
 
 skillCheck:
   skill: Survival (Desert)
@@ -27,9 +27,11 @@ outputSchema:
 
 interpreter:
   examples:
-    - "Search for water in the desert"
-    - "Avoid heatstroke in this heat"
-    - "Find water in the desert"
+    - "Locate a hidden spring by reading dry wadi channels and the presence of desert vegetation."
+    - "Construct a shade shelter from a canvas tarp stretched between two rock outcroppings to survive the midday heat."
+    - "Ration remaining water across the group to ensure survival until the next known well."
+    - "Recognize the early symptoms of heatstroke in a companion and move them to shade with forced rest."
+    - "Plan the day's travel to move before dawn and after dusk, avoiding the lethal heat of the afternoon sun."
 ---
 
 # Survival (Desert) Resolution Guidance

@@ -1,7 +1,7 @@
 ---
 id: intimidate
 title: Intimidate
-description: "Frightening or coercing others through threats — physical or verbal intimidation"
+description: "Coerce compliance from a target through explicit threats, displays of violence, or fear-inducing physical presence. Does NOT cover Charm (friendly persuasion), Persuade (rational argument), or Bluff (deception)."
 
 skillCheck:
   skill: Intimidate
@@ -43,9 +43,10 @@ outputSchema:
 
 interpreter:
   examples:
-    - "Threaten him into telling the truth"
-    - "Slam a fist on the table to frighten the other party"
-    - "Threaten the shopkeeper to hand over the key"
+    - "Threaten the informant with exposure to his boss unless he reveals what he knows"
+    - "Loom over the shopkeeper and growl a warning to make him hand over the key"
+    - "Slam a fist on the table and threaten violence to break the guard's nerve"
+    - "Press a weapon into sight and threaten consequences if she does not cooperate"
 ---
 
 # Intimidate Resolution Guidance

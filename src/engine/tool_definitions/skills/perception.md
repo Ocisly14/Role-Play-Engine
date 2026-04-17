@@ -1,7 +1,7 @@
 ---
 id: perception
 title: Perception
-description: "Finding hidden objects, spotting clues, noticing details that others miss"
+description: "Noticing things that are physically hidden or deliberately concealed — secret doors and compartments, hidden intruders or ambushers, inconspicuous physical clues, disguises, or small details out of place in the immediate environment. Does NOT cover hearing sounds (Listen), identifying symbols/records/artifacts (Occult/Research/Archaeology/Law/History), tracking trails (Track), or reading people (Psychology)."
 
 skillCheck:
   skill: Perception
@@ -40,10 +40,11 @@ outputSchema:
 
 interpreter:
   examples:
-    - "Thoroughly search the room for clues"
-    - "Look over the tabletop for anything out of the ordinary"
     - "Check the walls for a hidden door"
-    - "Search the desk for hidden compartments"
+    - "Search the desk for a hidden compartment"
+    - "Notice the bloodstain on the carpet"
+    - "Spot someone hiding in the shadows"
+    - "Find the concealed trapdoor under the rug"
 ---
 
 # Perception Resolution Guidance

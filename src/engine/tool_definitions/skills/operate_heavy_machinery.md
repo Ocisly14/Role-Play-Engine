@@ -1,7 +1,7 @@
 ---
 id: operate_heavy_machinery
 title: Operate Heavy Machinery
-description: "Operating cranes, bulldozers, industrial equipment — heavy machinery operation"
+description: "Operating industrial machines such as cranes, bulldozers, and factory equipment. Does NOT cover automobiles (Drive Auto), aircraft (Pilot), or any personal-scale vehicle."
 
 skillCheck:
   skill: Operate Heavy Machinery
@@ -25,9 +25,10 @@ outputSchema:
 
 interpreter:
   examples:
-    - "Operate the crane"
-    - "Drive the bulldozer"
-    - "Operate the crane to move the debris"
+    - "Use the dock crane to lift the crate from the ship's hold."
+    - "Push the bulldozer through the collapsed wall to clear a path."
+    - "Operate the industrial press to stamp out the required components."
+    - "Lower the drilling rig's bit to the marked depth without hitting the pipe casing."
 ---
 
 # Operate Heavy Machinery Resolution Guidance

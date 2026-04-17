@@ -1,7 +1,7 @@
 ---
 id: survival_forest
 title: Survival (Forest)
-description: "Surviving in forest and wilderness — foraging, shelter-building, avoiding predators"
+description: "Surviving in woodland environments — building rain-proof shelters from timber and foliage, foraging edible plants and game, and avoiding forest predators. Does NOT cover Navigate, arctic survival, or desert survival."
 
 skillCheck:
   skill: Survival (Forest)
@@ -27,9 +27,11 @@ outputSchema:
 
 interpreter:
   examples:
-    - "Forage for food in the forest"
-    - "Build a temporary shelter"
-    - "Forage for edible plants in the forest"
+    - "Lash fallen branches and broad leaves into a rain-proof lean-to shelter before nightfall."
+    - "Identify edible mushrooms and wild berries that will sustain the group through the day."
+    - "Set a simple snare trap using cord and bent saplings to catch small woodland game overnight."
+    - "Recognize the signs of a wolf den nearby — gnawed bones, matted grass — and choose a campsite further away."
+    - "Find a clean stream by following the downhill slope of the terrain and filter the water through layered cloth."
 ---
 
 # Survival (Forest) Resolution Guidance

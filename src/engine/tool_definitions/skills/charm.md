@@ -1,7 +1,7 @@
 ---
 id: charm
 title: Charm
-description: "Being likeable, making friends, seduction — winning someone over with personality"
+description: "Win genuine liking or favor from a target through personal charisma, warmth, or seduction. Does NOT cover Bluff (deception), Intimidate (threats/fear), or Persuade (logical argument)."
 
 skillCheck:
   skill: Charm
@@ -48,9 +48,10 @@ outputSchema:
 
 interpreter:
   examples:
-    - "Use charm to convince her to help"
-    - "Try to win him over with personal charisma"
-    - "Try to charm the receptionist into letting me pass"
+    - "Charm the librarian with warm flattery to win her goodwill and cooperation"
+    - "Win over the innkeeper with a friendly joke and genuine interest in his stories"
+    - "Use personal charisma to make the guard feel respected and disposed to help"
+    - "Seduce the contact into sharing information by making her feel truly heard"
 ---
 
 # Charm Resolution Guidance

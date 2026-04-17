@@ -1,7 +1,7 @@
 ---
 id: pistol
 title: Pistol
-description: "Using pistols and revolvers — aiming, firing, quick-drawing"
+description: "Ranged attacks with handguns and revolvers — aiming, firing, and quick-drawing. Does NOT cover rifles, shotguns, submachine guns, bows, or any melee attack."
 
 skillCheck:
   skill: Pistol
@@ -28,9 +28,11 @@ outputSchema:
 
 interpreter:
   examples:
-    - "Shoot with the pistol"
-    - "Draw the revolver and fire"
-    - "Fire the pistol at the target"
+    - "Draw my revolver and fire at the cultist."
+    - "Shoot the man in the leg with my pistol."
+    - "Fire a shot at the fleeing figure before he reaches the door."
+    - "Quick-draw and put two rounds into the creature's chest."
+    - "Aim my .45 at his head and pull the trigger."
 
 impactHint:
   default: 3

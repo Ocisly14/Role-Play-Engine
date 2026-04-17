@@ -1,7 +1,7 @@
 ---
 id: history
 title: History
-description: "Knowledge of historical events, periods, and their significance"
+description: "Recall and interpret documented historical events, periods, figures, and their significance through expert scholarly knowledge. Does NOT cover physical artifact dating (Archaeology), legal precedent (Law), passive observation (Spot Hidden), or document retrieval (Research/Library Use)."
 
 skillCheck:
   skill: History
@@ -27,9 +27,10 @@ outputSchema:
 
 interpreter:
   examples:
-    - "Recall the history of this building"
-    - "Analyze the historical context of this event"
-    - "Recall what happened at this location historically"
+    - "Identify which political faction controlled this district during the 1890s and what atrocities they committed"
+    - "Recall documented accounts of this cult from 18th-century ecclesiastical records"
+    - "Place this seal within its correct dynastic period and explain its administrative significance"
+    - "Determine whether the massacre described in this account matches any suppressed historical incident"
 ---
 
 # History Resolution Guidance

@@ -1,7 +1,7 @@
 ---
 id: locksmith
 title: Locksmith
-description: "Picking locks, understanding security systems — bypassing physical security"
+description: "Bypass, pick, or crack physical locks and safes using lockpicking tools or safecracking techniques. Does NOT cover repairing lock mechanisms (Mechanical Repair) or defeating electrical alarm systems (Electrical Repair)."
 
 skillCheck:
   skill: Locksmith
@@ -25,9 +25,11 @@ outputSchema:
 
 interpreter:
   examples:
-    - "Pick the lock"
-    - "Use tools to open the safe"
-    - "Pick the lock on the cabinet"
+    - "Pick the padlock on the warehouse door using a tension wrench and pick"
+    - "Crack the combination safe by feel to find the correct dial positions"
+    - "Bypass the lock trap on the chest before it can trigger"
+    - "Probe the cabinet lock's tumblers to identify its type and force it open"
+    - "Rake the cheap pin-tumbler lock open in under a minute"
 ---
 
 # Locksmith Resolution Guidance

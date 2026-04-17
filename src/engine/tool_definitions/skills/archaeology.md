@@ -1,7 +1,7 @@
 ---
 id: archaeology
 title: Archaeology
-description: "Knowledge of ancient cultures, artifacts, excavation techniques"
+description: "Date and interpret artifacts, ruins, and material remains of ancient or extinct cultures through expert analysis of construction, stratigraphy, and provenance. Does NOT cover living cultures (Anthropology), item valuation (Appraise), passive observation (Spot Hidden), or document lookup (Research/Library Use)."
 
 skillCheck:
   skill: Archaeology
@@ -27,9 +27,10 @@ outputSchema:
 
 interpreter:
   examples:
-    - "Determine the age of this ancient object"
-    - "Analyze the history of this ruin"
-    - "Date this artifact based on its construction"
+    - "Carbon-date this pottery fragment and identify the Neolithic culture that produced it"
+    - "Determine the stratigraphy of this excavation site and which layer predates the collapse"
+    - "Identify the construction technique of this stonework and the civilization responsible"
+    - "Assess whether this bronze fibula belongs to the correct burial period or is an anachronism"
 ---
 
 # Archaeology Resolution Guidance

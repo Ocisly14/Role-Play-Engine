@@ -1,7 +1,7 @@
 ---
 id: survival_arctic
 title: Survival (Arctic)
-description: "Surviving in arctic and cold environments — finding shelter, avoiding hypothermia, navigating snow"
+description: "Surviving cold, snowy, and icy environments — building snow shelters, preventing hypothermia, sourcing water from ice, and traveling over frozen terrain. Does NOT cover Navigate, Climb, desert survival, or forest survival."
 
 skillCheck:
   skill: Survival (Arctic)
@@ -27,9 +27,11 @@ outputSchema:
 
 interpreter:
   examples:
-    - "Build a shelter in the blizzard"
-    - "Find a place to escape the wind"
-    - "Find shelter in the blizzard"
+    - "Dig a snow cave into the drift to shelter the group from the blizzard overnight."
+    - "Recognize the early signs of frostbite on the actor's fingers and apply proper field treatment."
+    - "Melt snow in a tin cup over a small flame to obtain safe drinking water in sub-zero conditions."
+    - "Choose a path across the frozen river by testing ice thickness with a pole before crossing."
+    - "Insulate a sleeping position with packed snow walls and salvaged clothing to prevent hypothermia through the night."
 ---
 
 # Survival (Arctic) Resolution Guidance

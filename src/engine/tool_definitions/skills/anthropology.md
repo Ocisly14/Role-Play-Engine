@@ -1,7 +1,7 @@
 ---
 id: anthropology
 title: Anthropology
-description: "Knowledge of human cultures, rituals, social structures and customs"
+description: "Interpret the beliefs, rituals, and social structures of living or recently living human cultures through expert ethnographic analysis. Does NOT cover ancient or extinct cultures (Archaeology), passive observation (Spot Hidden), or document lookup (Research/Library Use)."
 
 skillCheck:
   skill: Anthropology
@@ -27,9 +27,10 @@ outputSchema:
 
 interpreter:
   examples:
-    - "Analyze the cultural background of this ritual"
-    - "Determine the cultural meaning of these symbols"
-    - "Identify the cultural origin of this artifact"
+    - "Identify which living cultural tradition this initiation rite belongs to and what it signifies"
+    - "Interpret the social taboos embedded in this community's burial customs"
+    - "Determine whether this folk practice has been corrupted from its original ethnographic form"
+    - "Explain what violation of this kinship rule would mean to this tribe"
 ---
 
 # Anthropology Resolution Guidance

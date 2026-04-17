@@ -1,7 +1,7 @@
 ---
 id: drive_auto
 title: Drive Auto
-description: "Driving automobiles — chases, evasion, dangerous road conditions"
+description: "Operating cars, trucks, and motorcycles on roads — chases, evasion, and hazardous driving conditions. Does NOT cover aircraft (Pilot Aircraft), watercraft (Pilot Boat), or heavy machinery."
 
 skillCheck:
   skill: Drive Auto
@@ -25,9 +25,10 @@ outputSchema:
 
 interpreter:
   examples:
-    - "Drive at high speed to escape"
-    - "Drive through the narrow alley"
-    - "Drive through the narrow alley at high speed"
+    - "Floor the accelerator and lose the pursuing car through the back streets"
+    - "Steer the truck through the flooded road without stalling"
+    - "Execute a handbrake turn to escape the roadblock"
+    - "Ride the motorcycle at high speed along the narrow cliff road"
 ---
 
 # Drive Auto Resolution Guidance

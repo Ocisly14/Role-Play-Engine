@@ -1,7 +1,7 @@
 ---
 id: persuade
 title: Persuade
-description: "Convincing others through logical argument, negotiation, and reasoning"
+description: "Convince a target to change their belief or action through rational argument, evidence, or negotiation — producing a lasting mind-change. Does NOT cover Bluff (quick deception), Charm (emotional warmth), or Intimidate (threats)."
 
 skillCheck:
   skill: Persuade
@@ -48,9 +48,10 @@ outputSchema:
 
 interpreter:
   examples:
-    - "Persuade the doctor to let me review the medical records"
-    - "Use reason to talk him into changing his mind"
-    - "Try to convince the officer to let me examine the crime scene"
+    - "Convince the doctor with reasoned medical evidence to grant access to the records"
+    - "Argue logically that the official's policy will backfire, persuading him to reconsider"
+    - "Present a well-reasoned case to the officer with supporting evidence to gain scene access"
+    - "Negotiate with clear factual points to bring the reluctant contact around to our side"
 ---
 
 # Persuade Resolution Guidance

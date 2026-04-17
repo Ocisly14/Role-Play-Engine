@@ -1,7 +1,7 @@
 ---
 id: medicine
 title: Medicine
-description: "Professional medical knowledge and practice — surgery, diagnosis, treatment"
+description: "Professional medical knowledge — diagnosis, surgery, and prescription by a trained physician. Does NOT cover emergency field bandaging (First Aid), biology research, or handing someone a pill (item use)."
 
 skillCheck:
   skill: Medicine
@@ -27,9 +27,10 @@ outputSchema:
 
 interpreter:
   examples:
-    - "Perform surgical treatment"
-    - "Diagnose the patient's condition"
-    - "Perform medical treatment on the patient"
+    - "Diagnose the patient's deteriorating condition and identify the cause"
+    - "Perform emergency surgery to remove the infected tissue"
+    - "Determine the correct antidote and dosage for the poisoning"
+    - "Assess whether the fever indicates a systemic infection requiring treatment"
 ---
 
 # Medicine Resolution Guidance

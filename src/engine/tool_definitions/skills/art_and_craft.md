@@ -1,7 +1,7 @@
 ---
 id: art_and_craft
 title: Art and Craft
-description: "Artistic skills, craftsmanship, evaluating art and handmade objects"
+description: "Specialization-based creative work — Painting, Sculpture, Writing, Photography, Cooking, or Carpentry — including creation, restoration, and authentication. Does NOT cover social storytelling (Bluff/Charm) or languages."
 
 skillCheck:
   skill: Art and Craft
@@ -25,9 +25,11 @@ outputSchema:
 
 interpreter:
   examples:
-    - "Determine whether this painting is genuine or a forgery"
-    - "Craft a simple tool by hand"
-    - "Evaluate whether this painting is authentic"
+    - "Determine whether this oil painting is a genuine Vermeer or a skilled forgery"
+    - "Carve a replacement wooden component for the antique cabinet"
+    - "Photograph the crime scene in a way that captures every relevant detail"
+    - "Sculpt a clay likeness of the suspect from witness descriptions"
+    - "Write a convincing short story to be planted as a distraction"
 ---
 
 # Art and Craft Resolution Guidance

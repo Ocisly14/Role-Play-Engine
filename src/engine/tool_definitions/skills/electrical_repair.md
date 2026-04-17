@@ -1,7 +1,7 @@
 ---
 id: electrical_repair
 title: Electrical Repair
-description: "Repairing electrical devices, wiring, circuits — fixing radios, lights, alarms"
+description: "Diagnose, fix, modify, or build electrical systems — wiring, circuits, electronics, radios, electrical locks. Does NOT cover passive observation (Spot Hidden) or general physics knowledge (Science: Physics)."
 
 skillCheck:
   skill: Electrical Repair
@@ -25,9 +25,11 @@ outputSchema:
 
 interpreter:
   examples:
-    - "Fix the broken radio"
-    - "Repair the severed electrical circuit"
-    - "Repair the broken radio"
+    - "Rewire the fuse box to restore power to the basement"
+    - "Diagnose why the monitor circuit has dropped feeds and restore the signal"
+    - "Disable the electrical alarm by cutting and bridging the trigger wire"
+    - "Build a makeshift transmitter from salvaged components"
+    - "Repair the severed wiring in the radio so it can broadcast again"
 ---
 
 # Electrical Repair Resolution Guidance

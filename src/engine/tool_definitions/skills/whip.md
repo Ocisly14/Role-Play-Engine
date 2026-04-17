@@ -1,7 +1,7 @@
 ---
 id: whip
 title: Whip
-description: "Combat with whips — entangling, disarming, striking at range"
+description: "Melee attacks with a whip — lashing, entangling a limb, and disarming at close reach. Does NOT cover swords, axes, brawling, or any firearm or thrown attack."
 
 skillCheck:
   skill: Whip
@@ -30,9 +30,10 @@ outputSchema:
 
 interpreter:
   examples:
-    - "Wrap the whip around his arm"
-    - "Strike with the whip"
-    - "Lash out with the whip"
+    - "Crack the whip across the cultist's face."
+    - "Snap the whip to wrap around his weapon hand and disarm him."
+    - "Lash out with the whip to entangle the man's legs and trip him."
+    - "Use my whip to coil around his wrist and yank him off balance."
 ---
 
 # Whip Resolution Guidance

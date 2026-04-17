@@ -1,7 +1,7 @@
 ---
 id: psychology
 title: Psychology
-description: "Understanding human behavior, detecting lies, reading emotions and intentions"
+description: "Reading a person's emotional state, detecting deception, and sensing hidden motivations through behavior and body language during direct interaction. Does NOT cover physical scene observation (Perception/Spot Hidden), therapy or trauma treatment (Psychoanalysis), or social persuasion (Persuade/Charm/Bluff)."
 
 skillCheck:
   skill: Psychology
@@ -41,9 +41,10 @@ outputSchema:
 
 interpreter:
   examples:
-    - "Watch his facial expressions while he speaks to judge whether he is lying"
-    - "Analyze her behavioral motivations"
-    - "Read the suspect's body language to see if they're hiding something"
+    - "Watch his face while he speaks to judge whether he is telling the truth"
+    - "Assess whether her distress is genuine or performed"
+    - "Read the suspect's body language to detect signs of guilt or fear"
+    - "Sense what emotion the witness is suppressing beneath their calm exterior"
 ---
 
 # Psychology Resolution Guidance

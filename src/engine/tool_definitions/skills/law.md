@@ -1,7 +1,7 @@
 ---
 id: law
 title: Law
-description: "Knowledge of legal systems, procedures, rights, and regulations"
+description: "Interpret and apply knowledge of legal systems, statutes, rights, procedures, and jurisdictional rules through expert legal reasoning. Does NOT cover general document reading (Research/Library Use), historical legal scholarship (History), or passive observation (Spot Hidden)."
 
 skillCheck:
   skill: Law
@@ -27,9 +27,10 @@ outputSchema:
 
 interpreter:
   examples:
-    - "Determine whether this action is lawful"
-    - "Use legal knowledge to find a procedural loophole"
-    - "Determine the legal implications of this evidence"
+    - "Determine whether the warrant authorizes entry to the cellar under this jurisdiction's statutes"
+    - "Identify whether this confession was obtained in violation of due process and is therefore inadmissible"
+    - "Advise on what habeas corpus rights apply to a person detained without charge"
+    - "Find the statutory loophole that would allow the estate to be transferred without probate"
 ---
 
 # Law Resolution Guidance

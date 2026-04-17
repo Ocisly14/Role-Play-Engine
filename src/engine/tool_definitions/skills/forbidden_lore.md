@@ -1,7 +1,7 @@
 ---
 id: forbidden_lore
 title: Forbidden Lore
-description: "Knowledge of forbidden truths, cosmic horrors, and things humanity was not meant to know"
+description: "Genuine eldritch knowledge of the Cthulhu Mythos — Great Old Ones, Mythos entities, and forbidden texts whose truths erode sanity. Does NOT cover mundane folklore or magical traditions (Occult)."
 
 skillCheck:
   skill: Forbidden Lore
@@ -28,9 +28,10 @@ outputSchema:
 
 interpreter:
   examples:
-    - "Try to recall knowledge about this ancient entity"
-    - "Analyze the meaning of these forbidden texts"
-    - "Recall what is known about this ancient entity"
+    - "Identify the Great Old One whose sigil is carved into the monolith"
+    - "Recall the true nature of the entity that has been summoned here"
+    - "Decipher this passage from the Necronomicon and understand its ritual purpose"
+    - "Recognize the Mythos entity described in the cultist's raving, at the cost of one's sanity"
 ---
 
 # Forbidden Lore Resolution Guidance

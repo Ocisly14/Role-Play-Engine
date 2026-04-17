@@ -1,7 +1,7 @@
 ---
 id: jump
 title: Jump
-description: "Leaping over gaps, obstacles, jumping down from heights"
+description: "Making an explicit leap across a gap, over an obstacle, or down from a height. Does NOT cover climbing vertical surfaces or swimming."
 
 skillCheck:
   skill: Jump
@@ -27,9 +27,10 @@ outputSchema:
 
 interpreter:
   examples:
-    - "Jump across the gap"
-    - "Leap down from the window"
-    - "Jump across the gap between buildings"
+    - "Leap across the gap between the two rooftops."
+    - "Jump down from the second-floor window to the alley below."
+    - "Vault over the overturned table to reach the door."
+    - "Spring across the flooded ditch blocking the path."
 ---
 
 # Jump Resolution Guidance

@@ -1,7 +1,7 @@
 ---
 id: navigate
 title: Navigate
-description: "Finding direction, using maps and compasses — navigating unfamiliar terrain"
+description: "Determining direction and plotting courses using maps, compasses, stars, and landmarks across any terrain. Does NOT cover plant/animal knowledge (Natural World), tracking (Track), or terrain-specific survival."
 
 skillCheck:
   skill: Navigate
@@ -25,9 +25,11 @@ outputSchema:
 
 interpreter:
   examples:
-    - "Find direction in the forest"
-    - "Use a map to locate the destination"
-    - "Use the map to find the way through the mountains"
+    - "Use a compass and topographic map to determine which valley leads toward the town."
+    - "Orient by the position of the stars to maintain a heading north across the open moor."
+    - "Identify the river bend on the map to confirm the group's current position."
+    - "Plot a safe route around the flooded lowlands using landmarks visible from the hilltop."
+    - "Correct course after the group drifted off-trail in heavy fog by retracing to a known landmark."
 ---
 
 # Navigate Resolution Guidance

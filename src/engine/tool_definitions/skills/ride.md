@@ -1,7 +1,7 @@
 ---
 id: ride
 title: Ride
-description: "Riding horses and similar animals — maintaining control in difficult situations"
+description: "Controlling a horse or other riding animal in challenging conditions. Does NOT cover driving automobiles, operating motorcycles, or piloting any vehicle."
 
 skillCheck:
   skill: Ride
@@ -25,9 +25,10 @@ outputSchema:
 
 interpreter:
   examples:
-    - "Ride the horse in pursuit"
-    - "Control the mount on rough terrain"
-    - "Ride the horse through the forest"
+    - "Push the horse to a full gallop to chase the fleeing carriage."
+    - "Keep the terrified mount under control as gunshots ring out nearby."
+    - "Guide the horse along the narrow mountain trail without losing footing."
+    - "Calm and remount the spooked horse after it throws the rider."
 ---
 
 # Ride Resolution Guidance

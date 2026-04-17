@@ -1,7 +1,7 @@
 ---
 id: biology
 title: Biology
-description: "Scientific knowledge of living organisms, anatomy, ecology"
+description: "Identify species, analyze biological specimens, and interpret life processes — including pathogens, anatomy, and ecology — through expert scientific reasoning. Does NOT cover medical treatment (First Aid/Medicine), chemical composition analysis (Chemistry), or passive observation (Spot Hidden)."
 
 skillCheck:
   skill: Biology
@@ -27,9 +27,10 @@ outputSchema:
 
 interpreter:
   examples:
-    - "Analyze this biological sample"
-    - "Determine the cause of death of this body"
-    - "Identify this biological specimen"
+    - "Classify this fungal specimen to genus and assess whether its spores are pathogenic"
+    - "Determine whether the tissue necrosis pattern matches any known parasitic infection"
+    - "Identify the species of this creature from its anatomical features and ecological niche"
+    - "Assess how long this organism has been dead based on its decomposition stage"
 ---
 
 # Biology Resolution Guidance

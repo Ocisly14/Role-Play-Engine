@@ -1,7 +1,7 @@
 ---
 id: stealth
 title: Stealth
-description: "Moving silently, hiding, avoiding detection — sneaking past guards, remaining unseen"
+description: "Moving silently and staying visually unnoticed while in motion through an area. Does NOT cover static hiding while stationary, pickpocketing, or disguise."
 
 skillCheck:
   skill: Stealth
@@ -24,9 +24,10 @@ outputSchema:
 
 interpreter:
   examples:
-    - "Quietly slip into the room"
-    - "Hide in the shadows to avoid the patrol"
-    - "Sneak past the guard without being noticed"
+    - "Slip past the patrolling guard without making a sound."
+    - "Creep down the corridor while the cultist's back is turned."
+    - "Move through the darkened warehouse without disturbing any of the crates."
+    - "Edge along the wall to reach the far door while the professor is speaking."
 ---
 
 # Stealth Resolution Guidance

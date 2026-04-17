@@ -1,7 +1,7 @@
 ---
 id: climb
 title: Climb
-description: "Scaling walls, climbing obstacles, ascending heights"
+description: "Scaling vertical or near-vertical surfaces using hands and feet. Does NOT cover stairs, ramps, jumping across gaps, or swimming."
 
 skillCheck:
   skill: Climb
@@ -27,9 +27,10 @@ outputSchema:
 
 interpreter:
   examples:
-    - "Climb over the fence"
-    - "Climb the drainpipe up to the second floor"
-    - "Climb the wall to reach the window"
+    - "Scale the brick wall using the window ledges as handholds."
+    - "Climb the drainpipe up to the second-floor balcony."
+    - "Haul themselves up the cliff face hand over hand."
+    - "Scramble up the chain-link fence to escape the yard."
 ---
 
 # Climb Resolution Guidance

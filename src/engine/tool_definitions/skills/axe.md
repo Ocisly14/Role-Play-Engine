@@ -1,7 +1,7 @@
 ---
 id: axe
 title: Axe
-description: "Combat with axes and heavy chopping weapons — powerful but slower strikes"
+description: "Melee attacks with axes and hatchets — chopping, cleaving, and hooking blows. Does NOT cover swords, whips, brawling, or any ranged attack."
 
 skillCheck:
   skill: Axe
@@ -30,9 +30,10 @@ outputSchema:
 
 interpreter:
   examples:
-    - "Chop with the axe"
-    - "Swing the axe in an attack"
-    - "Swing the axe at the target"
+    - "Swing the fire axe at the cultist's shoulder."
+    - "Bring the hatchet down on the creature's skull."
+    - "Hack at the wooden door with my axe to break through."
+    - "Bury the axe head into the ghoul's chest."
 ---
 
 # Axe Resolution Guidance

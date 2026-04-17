@@ -1,7 +1,7 @@
 ---
 id: brawling
 title: Brawling
-description: "Hand-to-hand combat — punching, kicking, grappling"
+description: "Unarmed melee or improvised-weapon attacks — punching, kicking, grappling, headbutting, and striking with held objects not defined as weapons. Does NOT cover axe, sword, whip, or any ranged attack."
 
 skillCheck:
   skill: Brawling
@@ -31,9 +31,11 @@ outputSchema:
 
 interpreter:
   examples:
-    - "Swing a fist at him"
-    - "Punch him in the face"
-    - "Punch the cultist in the face"
+    - "Punch the cultist in the face."
+    - "Kick the door guard in the stomach."
+    - "Tackle him to the ground and pin him down."
+    - "Headbutt the man blocking my path."
+    - "Grab the attacker's arm and twist it behind his back."
 ---
 
 # Brawling Resolution Guidance

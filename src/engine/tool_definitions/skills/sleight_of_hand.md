@@ -1,7 +1,7 @@
 ---
 id: sleight_of_hand
 title: Sleight of Hand
-description: "Pickpocketing, palming objects, secret manipulation — stealing or planting items unnoticed"
+description: "Quick, precise hand movements to conceal, produce, or swap small objects WHILE being observed by at least one person. Does NOT apply when simply picking up an unattended item with no one watching."
 
 skillCheck:
   skill: Sleight of Hand
@@ -28,9 +28,10 @@ outputSchema:
 
 interpreter:
   examples:
-    - "Quietly take the key from the table"
-    - "Slip the document into my pocket while he is distracted"
-    - "Secretly palm the key from the desk"
+    - "Palm the key from the desk without the guard behind the counter noticing."
+    - "Slip the envelope into a coat pocket while shaking the detective's hand."
+    - "Swap the real gem for a glass replica while the merchant watches the transaction."
+    - "Produce the concealed knife from inside the sleeve while being frisked."
 ---
 
 # Sleight of Hand Resolution Guidance

@@ -1,7 +1,7 @@
 ---
 id: pilot_aircraft
 title: "Pilot (Aircraft)"
-description: "Piloting airplanes and other aircraft — takeoff, landing, emergency maneuvers"
+description: "Operating fixed-wing aircraft, helicopters, and gliders — takeoff, landing, and emergency maneuvers in the air. Does NOT cover ground vehicles (Drive Auto) or watercraft (Pilot Boat)."
 
 skillCheck:
   skill: "Pilot (Aircraft)"
@@ -25,9 +25,10 @@ outputSchema:
 
 interpreter:
   examples:
-    - "Pilot the aircraft"
-    - "Make an emergency landing in the storm"
-    - "Pilot the plane through the storm"
+    - "Bring the biplane down for an emergency landing in the fog"
+    - "Bank the aircraft hard to evade the pursuing fighter plane"
+    - "Keep the helicopter stable while descending through the violent storm"
+    - "Take off from the short jungle clearing without clipping the tree line"
 ---
 
 # Pilot (Aircraft) Resolution Guidance

@@ -1,7 +1,7 @@
 ---
 id: throw
 title: Throw
-description: "Throwing objects accurately at targets — rocks, grenades, improvised weapons"
+description: "Hurling an object at a target — rocks, knives, grenades, and other thrown items. Does NOT cover point-blank melee strikes, firearms, bows, or unarmed grappling."
 
 skillCheck:
   skill: Throw
@@ -28,9 +28,11 @@ outputSchema:
 
 interpreter:
   examples:
-    - "Throw the rock at the window"
-    - "Hurl a grenade at the enemy"
-    - "Throw the rock at the target"
+    - "Hurl the grenade into the middle of the cultist group."
+    - "Throw the rock at the guard's head to knock him out."
+    - "Fling the knife at the fleeing suspect."
+    - "Toss the lit dynamite stick through the doorway."
+    - "Chuck the heavy book at the creature to distract it."
 ---
 
 # Throw Resolution Guidance

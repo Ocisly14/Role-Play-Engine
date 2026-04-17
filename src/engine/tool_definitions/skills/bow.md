@@ -1,7 +1,7 @@
 ---
 id: bow
 title: Bow
-description: "Using bows and crossbows — archery, ranged silent attacks"
+description: "Ranged attacks with bows and crossbows — drawing, aiming, and loosing arrows or bolts. Does NOT cover firearms, thrown weapons, or any melee attack."
 
 skillCheck:
   skill: Bow
@@ -28,9 +28,10 @@ outputSchema:
 
 interpreter:
   examples:
-    - "Shoot the target with the bow"
-    - "Draw the bow and take aim"
-    - "Shoot an arrow at the target"
+    - "Nock an arrow and shoot the cultist from across the room."
+    - "Draw my crossbow and fire a bolt at the fleeing figure."
+    - "Aim at the torch on the wall and shoot it out with an arrow."
+    - "Silently loose an arrow at the guard before he raises the alarm."
 
 impactHint:
   default: 1

@@ -1,7 +1,7 @@
 ---
 id: listen
 title: Listen
-description: "Hearing sounds, eavesdropping, detecting noises from adjacent areas"
+description: "Detecting and interpreting sounds — overheard conversations, approaching footsteps, creatures moving in the dark, or noises through walls and doors. Does NOT cover visual observation (Perception/Spot Hidden), reading a person's emotional state (Psychology), or identifying what a sound means beyond its source."
 
 skillCheck:
   skill: Listen
@@ -35,9 +35,10 @@ outputSchema:
 
 interpreter:
   examples:
-    - "Press my ear against the door to eavesdrop on the conversation inside"
-    - "Listen carefully for any footsteps nearby"
-    - "Listen at the door to hear what they're saying"
+    - "Eavesdrop on conversation through the lab door"
+    - "Listen for footsteps approaching down the corridor"
+    - "Hold still and listen for any sounds coming from the floor above"
+    - "Try to make out what the men outside are saying through the wall"
 ---
 
 # Listen Resolution Guidance

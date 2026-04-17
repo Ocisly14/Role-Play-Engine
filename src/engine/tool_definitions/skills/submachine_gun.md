@@ -1,7 +1,7 @@
 ---
 id: submachine_gun
 title: Submachine Gun
-description: "Using submachine guns — burst fire, suppressive fire"
+description: "Ranged attacks with submachine guns — single shots, burst fire, and suppressive automatic fire. Does NOT cover pistols, rifles, shotguns, bows, or any melee attack."
 
 skillCheck:
   skill: Submachine Gun
@@ -28,9 +28,10 @@ outputSchema:
 
 interpreter:
   examples:
-    - "Spray fire with the submachine gun"
-    - "Lay down suppressive fire"
-    - "Open fire with the submachine gun"
+    - "Squeeze the trigger on my Thompson and let loose a burst at the mob."
+    - "Hose down the corridor with suppressive fire to pin them back."
+    - "Fire a short controlled burst at the cultist rushing toward me."
+    - "Sweep the room with automatic fire as I back toward the exit."
 
 impactHint:
   default: 4

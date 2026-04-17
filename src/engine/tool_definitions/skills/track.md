@@ -1,7 +1,7 @@
 ---
 id: track
 title: Track
-description: "Following tracks and trails, reading signs of passage, tracking people or animals"
+description: "Following physical trails left by people or animals — footprints, disturbed vegetation, blood drops, or other signs of passage through terrain. Does NOT cover stationary visual searching (Perception/Spot Hidden), identifying criminal methods (Criminology), or hearing movement (Listen)."
 
 skillCheck:
   skill: Track
@@ -35,9 +35,10 @@ outputSchema:
 
 interpreter:
   examples:
-    - "Follow the footprints on the ground"
-    - "Look for the traces he left behind when he departed"
-    - "Follow the tracks in the snow"
+    - "Follow the muddy footprints leading into the woods"
+    - "Determine how many people passed through here and which direction they went"
+    - "Pick up the trail again after it disappears into the stream"
+    - "Read the tracks to tell whether the animal was running or walking"
 ---
 
 # Track Resolution Guidance

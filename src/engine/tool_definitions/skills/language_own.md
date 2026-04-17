@@ -1,7 +1,7 @@
 ---
 id: language_own
 title: Language (Own)
-description: "Reading and understanding archaic or complex texts in native language"
+description: "Master the native language through rhetoric, nuanced writing, and deciphering archaic or highly technical native-language texts. Does NOT cover Language (Other) (foreign languages) or Library Use (research navigation)."
 
 skillCheck:
   skill: Language (Own)
@@ -27,9 +27,10 @@ outputSchema:
 
 interpreter:
   examples:
-    - "Read this old document in my native language"
-    - "Try to understand this obscure passage"
-    - "Read the archaic text in my native language"
+    - "Decipher the archaic seventeenth-century English in the handwritten journal to extract its meaning"
+    - "Write a persuasive public speech in native English to sway the crowd's opinion"
+    - "Parse the dense legalese in the Victorian contract to determine what rights it grants"
+    - "Interpret the cryptic phrasing in the old newspaper editorial to uncover the editor's hidden meaning"
 ---
 
 # Language (Own) Resolution Guidance

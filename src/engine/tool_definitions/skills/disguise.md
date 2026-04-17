@@ -1,7 +1,7 @@
 ---
 id: disguise
 title: Disguise
-description: "Changing appearance to avoid recognition — costumes, makeup, impersonation"
+description: "Alter physical appearance through makeup, costume, or gait to impersonate another person or role. Does NOT cover verbal deception (Fast Talk/Persuade), environmental concealment (Stealth), or producing fake documents (Forgery)."
 
 skillCheck:
   skill: Disguise
@@ -25,9 +25,10 @@ outputSchema:
 
 interpreter:
   examples:
-    - "Disguise myself as a doctor to blend into the hospital"
-    - "Apply makeup to alter my appearance"
-    - "Disguise myself as a nurse to enter the ward"
+    - "Apply stage makeup and a wig to pass as the missing professor"
+    - "Dress in a janitor's uniform and adopt a slouched gait to move through the building unrecognized"
+    - "Pad the coat and adjust posture to impersonate the heavyset night watchman"
+    - "Use greasepaint and a fake moustache to alter facial features before entering the gala"
 ---
 
 # Disguise Resolution Guidance

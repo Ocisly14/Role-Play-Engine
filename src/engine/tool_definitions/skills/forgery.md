@@ -1,7 +1,7 @@
 ---
 id: forgery
 title: Forgery
-description: "Creating fake documents, signatures, credentials — producing convincing forgeries"
+description: "Produce or alter fake documents, signatures, currency, or credentials to deceive scrutiny. Does NOT cover in-person impersonation (Disguise) or financial fraud through accounting (Accounting)."
 
 skillCheck:
   skill: Forgery
@@ -25,9 +25,11 @@ outputSchema:
 
 interpreter:
   examples:
-    - "Forge a travel pass"
-    - "Copy his signature"
-    - "Forge a fake ID document"
+    - "Produce a forged travel pass bearing the official seal and correct date stamps"
+    - "Reproduce the curator's signature on the acquisition letter to authorize access"
+    - "Alter the original deed to change the property owner's name"
+    - "Fabricate a press credential to gain entry to the restricted area"
+    - "Copy the wax seal design onto the forged letter so it passes as authentic"
 ---
 
 # Forgery Resolution Guidance

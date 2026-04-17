@@ -1,7 +1,7 @@
 ---
 id: first_aid
 title: First Aid
-description: "Emergency medical treatment — bandaging wounds, stopping bleeding, basic stabilization"
+description: "Emergency field treatment — bandaging wounds, stopping bleeding, and stabilizing an injured person on the spot. Does NOT cover professional diagnosis, surgery, or prescription (Medicine)."
 
 skillCheck:
   skill: First Aid
@@ -27,9 +27,10 @@ outputSchema:
 
 interpreter:
   examples:
-    - "Bandage the injured person's wound"
-    - "Perform emergency bleeding control"
-    - "Bandage the wound to stop the bleeding"
+    - "Apply pressure to stop the victim's arterial bleeding"
+    - "Bandage the gunshot wound before the patient loses any more blood"
+    - "Splint the broken arm so the investigator can keep moving"
+    - "Stabilize the unconscious man before he goes into shock"
 ---
 
 # First Aid Resolution Guidance

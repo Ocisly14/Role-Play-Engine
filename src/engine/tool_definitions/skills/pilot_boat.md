@@ -1,7 +1,7 @@
 ---
 id: pilot_boat
 title: "Pilot (Boat)"
-description: "Piloting boats and ships — navigating waterways, storms, docking"
+description: "Operating boats and ships on water — navigating channels, storms, and docking maneuvers. Does NOT cover ground vehicles (Drive Auto) or aircraft (Pilot Aircraft)."
 
 skillCheck:
   skill: "Pilot (Boat)"
@@ -25,9 +25,10 @@ outputSchema:
 
 interpreter:
   examples:
-    - "Pilot the boat through the storm"
-    - "Control the small boat in the rapids"
-    - "Navigate the boat through rough waters"
+    - "Steer the fishing boat through the storm surge without capsizing"
+    - "Navigate the motor launch through the fog-shrouded reef"
+    - "Dock the yacht quietly at the private pier without running aground"
+    - "Keep the rowboat steady while crossing the tidal current"
 ---
 
 # Pilot (Boat) Resolution Guidance

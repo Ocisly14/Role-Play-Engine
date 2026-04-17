@@ -1,7 +1,7 @@
 ---
 id: bluff
 title: Bluff
-description: "Quick deception, misdirection, verbal tricks — lying convincingly in the moment"
+description: "Fast Talk a target with quick lies or misdirection that are believed in the moment but may not hold up later. Does NOT cover Charm (genuine warmth), Intimidate (threats), or Persuade (rational argument)."
 
 skillCheck:
   skill: Bluff
@@ -48,9 +48,10 @@ outputSchema:
 
 interpreter:
   examples:
-    - "Lie and claim to be a police officer"
-    - "Make up a reason to deceive the guard"
-    - "Bluff my way past the guard by pretending to be a doctor"
+    - "Lie that I am a police detective to talk my way past the gate"
+    - "Make up a fabricated errand to misdirect the suspicious guard"
+    - "Fast-talk the receptionist with a plausible-sounding false story to gain entry"
+    - "Invent a fake authority figure to deflect the shopkeeper's questions"
 ---
 
 # Bluff Resolution Guidance

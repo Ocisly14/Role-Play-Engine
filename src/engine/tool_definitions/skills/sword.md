@@ -1,7 +1,7 @@
 ---
 id: sword
 title: Sword
-description: "Combat with swords and bladed weapons — slashing, thrusting, parrying"
+description: "Melee attacks with swords, daggers, and bladed weapons — slashing, thrusting, and parrying. Does NOT cover axes, whips, brawling, or any ranged attack."
 
 skillCheck:
   skill: Sword
@@ -31,9 +31,10 @@ outputSchema:
 
 interpreter:
   examples:
-    - "Slash the enemy with the sword"
-    - "Draw the sword and thrust at the opponent"
-    - "Slash at the enemy with the sword"
+    - "Draw my sword and slash at the cultist's torso."
+    - "Thrust the dagger into the creature's side."
+    - "Parry the cultist's blade and riposte with my own sword."
+    - "Drive the knife into the back of his neck."
 ---
 
 # Sword Resolution Guidance

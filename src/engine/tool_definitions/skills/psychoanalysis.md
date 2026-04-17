@@ -1,7 +1,7 @@
 ---
 id: psychoanalysis
 title: Psychoanalysis
-description: "Professional treatment of mental disorders — therapy, trauma recovery, psychological healing"
+description: "Conduct long-term therapeutic treatment to recover Sanity and resolve mental disorders over multiple sessions of days or weeks. Does NOT cover Psychology (single-session insight), Persuade (rational argument), or Charm (social warmth)."
 
 skillCheck:
   skill: Psychoanalysis
@@ -27,9 +27,10 @@ outputSchema:
 
 interpreter:
   examples:
-    - "Conduct psychotherapy for the mentally traumatized person"
-    - "Help her overcome her fear"
-    - "Treat the patient's mental trauma"
+    - "Conduct a structured therapy session to treat the investigator's acute trauma and recover Sanity"
+    - "Systematically work through the patient's phobia over several sessions to resolve the mental disorder"
+    - "Guide the traumatized witness through clinical psychoanalysis to clear the indefinite insanity condition"
+    - "Perform therapeutic analysis to help the patient process repressed memories and regain psychological stability"
 ---
 
 # Psychoanalysis Resolution Guidance

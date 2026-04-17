@@ -1,7 +1,7 @@
 ---
 id: physics
 title: Physics
-description: "Scientific knowledge of mechanics, energy, forces, and structural properties"
+description: "Apply expert knowledge of mechanics, optics, thermodynamics, and material forces to analyze physical phenomena and calculate outcomes. Does NOT cover chemical properties (Chemistry), equipment repair (Mechanical/Electrical Repair), or passive observation (Spot Hidden)."
 
 skillCheck:
   skill: Physics
@@ -27,9 +27,10 @@ outputSchema:
 
 interpreter:
   examples:
-    - "Calculate the load-bearing capacity of this structure"
-    - "Analyze the ballistic trajectory"
-    - "Figure out the trajectory of the projectile"
+    - "Calculate whether this floor joist can bear the weight of the mechanism described"
+    - "Determine the muzzle velocity and trajectory required to produce this bullet wound angle"
+    - "Assess whether the optical properties of this lens arrangement could produce the observed refraction"
+    - "Identify the thermodynamic anomaly in this steam pressure reading that defies the laws of physics"
 ---
 
 # Physics Resolution Guidance

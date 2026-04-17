@@ -1,7 +1,7 @@
 ---
 id: rifle
 title: Rifle
-description: "Using rifles and shotguns — aimed shots, long-range fire"
+description: "Ranged attacks with rifles and shotguns — aimed fire, long-range shooting, and pump-action blasts. Does NOT cover pistols, submachine guns, bows, or any melee attack."
 
 skillCheck:
   skill: Rifle
@@ -28,9 +28,10 @@ outputSchema:
 
 interpreter:
   examples:
-    - "Aim and fire the rifle"
-    - "Raise the shotgun and fire"
-    - "Take aim with the rifle and fire"
+    - "Take careful aim with the rifle and fire at the distant figure."
+    - "Blast the creature at close range with my shotgun."
+    - "Lie prone and snipe the cultist through the window."
+    - "Level the hunting rifle at the driver and shoot out the tire."
 
 impactHint:
   default: 3

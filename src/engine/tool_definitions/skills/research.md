@@ -1,7 +1,7 @@
 ---
 id: research
 title: Research
-description: "Research in libraries, archives, databases — finding specific information in records"
+description: "Finding specific information in libraries, archives, newspapers, databases, or other written and recorded sources. Does NOT cover physical scene observation (Perception/Spot Hidden), dating or authenticating artifacts (Archaeology), or identifying occult knowledge (Occult)."
 
 skillCheck:
   skill: Research
@@ -27,9 +27,10 @@ outputSchema:
 
 interpreter:
   examples:
-    - "Look up relevant materials at the library"
-    - "Search the archives for clues"
-    - "Search the archives for records of the incident"
+    - "Search the newspaper morgue for articles about the Marsh family"
+    - "Look up the property deed records at the county registry"
+    - "Find any published research on non-Euclidean geometry in the university library"
+    - "Locate the asylum's admission records from 1921"
 ---
 
 # Research Resolution Guidance
