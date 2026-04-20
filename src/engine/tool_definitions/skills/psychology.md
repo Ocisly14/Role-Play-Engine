@@ -37,6 +37,10 @@ stateDomains:
 outputSchema:
   use:
     - memory.event
+  durationGuidance:
+    default: 2
+    range: "1-5"
+    notes: "a quick read of body language 1-2 min; sustained observation during conversation 3-5 min"
 
 interpreter:
   examples:

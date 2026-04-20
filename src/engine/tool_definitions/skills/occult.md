@@ -22,6 +22,10 @@ stateDomains:
 
 outputSchema:
   presets: [default]
+  durationGuidance:
+    default: 10
+    range: "3-30"
+    notes: "identify folk belief 3-5 min; interpret symbols 10-20 min; deep ritual analysis 20-30 min"
 
 interpreter:
   examples:

@@ -46,6 +46,10 @@ outputSchema:
     - relationship.change
   requireOnSuccess:
     - relationship.change
+  durationGuidance:
+    default: 5
+    range: "2-15"
+    notes: "brief charming exchange 2-3 min; sustained rapport-building 5-10 min; courtship-level 10-15 min"
 
 interpreter:
   examples:

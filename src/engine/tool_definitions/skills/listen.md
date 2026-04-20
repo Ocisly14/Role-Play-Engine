@@ -30,6 +30,10 @@ stateDomains:
 
 outputSchema:
   presets: [default]
+  durationGuidance:
+    default: 1
+    range: "1-5"
+    notes: "overhear a fragment 1 min; sustained eavesdropping 3-5 min"
 
 interpreter:
   examples:

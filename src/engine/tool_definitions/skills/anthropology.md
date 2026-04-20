@@ -22,6 +22,10 @@ stateDomains:
 
 outputSchema:
   presets: [default]
+  durationGuidance:
+    default: 10
+    range: "3-60"
+    notes: "quick cultural ID 3-5 min; ritual interpretation 15-30 min; fieldwork synthesis 45-60 min"
 
 interpreter:
   examples:

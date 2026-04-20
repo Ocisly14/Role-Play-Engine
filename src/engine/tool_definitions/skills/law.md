@@ -22,6 +22,10 @@ stateDomains:
 
 outputSchema:
   presets: [default]
+  durationGuidance:
+    default: 10
+    range: "3-30"
+    notes: "quick statute lookup 3-5 min; contract or case analysis 15-30 min"
 
 interpreter:
   examples:

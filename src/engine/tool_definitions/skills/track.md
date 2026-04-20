@@ -30,6 +30,10 @@ stateDomains:
 
 outputSchema:
   presets: [default]
+  durationGuidance:
+    default: 10
+    range: "3-30"
+    notes: "fresh obvious trail 3-5 min; faint or cold trail 15-30 min; terrain and weather stretch time"
 
 interpreter:
   examples:

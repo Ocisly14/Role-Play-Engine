@@ -22,6 +22,10 @@ stateDomains:
 
 outputSchema:
   presets: [default]
+  durationGuidance:
+    default: 15
+    range: "5-60"
+    notes: "quick artifact ID 5-10 min; careful site reading 20-30 min; structured excavation 45-60 min"
 
 interpreter:
   examples:

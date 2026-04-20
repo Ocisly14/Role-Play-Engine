@@ -30,6 +30,13 @@ export interface GameInterpreterSkillFlowCase {
     | { type: "scene"; sceneId: string }
     | { type: "road"; roadId: string; position: number }
     | { type: "junction"; junctionId: string };
+  /**
+   * Inclusive [min, max] expected range for resolver-reported `elapsedMinutes`.
+   * When set, the harness reports whether the LLM's elapsed choice fell in
+   * range. Leave undefined to only capture (no pass/fail) — useful for
+   * conflict cases where we study which side the LLM lands on.
+   */
+  expectedElapsedMinutesRange?: [number, number];
 }
 
 export const GAME_INTERPRETER_SKILL_FLOW_CASES: GameInterpreterSkillFlowCase[] =
@@ -553,5 +560,100 @@ export const GAME_INTERPRETER_SKILL_FLOW_CASES: GameInterpreterSkillFlowCase[] =
       expectedSteps: ["track"],
       expectedPrimaryDefinitionId: "track",
       expectedOutputKeysAnyOf: ["memory.event"],
+    },
+    // ========== Group E — Duration: elapsedMinutes calibration ==========
+    {
+      id: "duration_explicit_half_hour",
+      label: "时长：action 明确半小时 — 小睡恢复",
+      actorId: "Bruno Galilei",
+      executionSceneId: "SCN_1_SUB_1",
+      actionText: "找把椅子坐下小睡半小时恢复精神",
+      expectedSteps: ["action"],
+      expectedPrimaryDefinitionId: "action",
+      expectedOutputKeysAnyOf: ["memory.event", "character.fatigue"],
+      expectedElapsedMinutesRange: [25, 35],
+      notes:
+        "Action 明确说半小时=30min，action.md guidance default=3 range 1-15。测试：LLM 是否尊重 action 明确的时间。",
+    },
+    {
+      id: "duration_qualitative_glance",
+      label: "时长：限定语 — 扫一眼（应走下限）",
+      actorId: "Bruno Galilei",
+      executionSceneId: "SCN_1_SUB_1",
+      actionText: "扫一眼来访登记簿最新的那一页",
+      expectedSteps: ["perception"],
+      expectedPrimaryDefinitionId: "perception",
+      expectedOutputKeysAnyOf: ["memory.event"],
+      expectedElapsedMinutesRange: [1, 2],
+      notes:
+        "扫一眼=quick glance。perception guidance default=3 range 1-10。测试：限定语能否把时长下压到 1-2 min。",
+    },
+    {
+      id: "duration_explicit_ten_minutes",
+      label: "时长：action 明确 10 分钟 — 细查",
+      actorId: "Bruno Galilei",
+      executionSceneId: "SCN_1_SUB_1",
+      actionText: "花十分钟仔细检查接待桌上的每一张纸条",
+      expectedSteps: ["perception"],
+      expectedPrimaryDefinitionId: "perception",
+      expectedOutputKeysAnyOf: ["memory.event"],
+      expectedElapsedMinutesRange: [8, 12],
+      notes:
+        "Action 明确十分钟=10min，perception guidance range 1-10 上限。测试：LLM 是否照单全收。",
+    },
+    {
+      id: "duration_long_research_two_hours",
+      label: "时长：action 明确两小时 — 长时间研究",
+      actorId: "Marks White",
+      executionSceneId: "SCN_12_SUB_1",
+      actionText: "坐下来专心翻查两个小时的维修登记簿，把每一笔异常都记下来",
+      expectedSteps: ["research"],
+      expectedPrimaryDefinitionId: "research",
+      expectedOutputKeysAnyOf: ["memory.event"],
+      expectedElapsedMinutesRange: [100, 130],
+      notes:
+        "Action 明确两小时=120min，research guidance default=30 range 15-120。正好顶上限。",
+    },
+    {
+      id: "duration_conflict_above_range",
+      label: "时长冲突：action 说一整天 ≫ guidance 最大 15 分钟",
+      actorId: "Helen",
+      targetIds: ["Bruno Galilei"],
+      executionSceneId: "SCN_10_SUB_1",
+      actionText: "花整整一整天的时间慢慢给布鲁诺包扎和重新清创伤口",
+      expectedSteps: ["first_aid"],
+      expectedPrimaryDefinitionId: "first_aid",
+      expectedOutputKeysAnyOf: ["character.hp", "character.condition"],
+      // No expectedElapsedMinutesRange — we want to study which way LLM goes:
+      // (a) clamp to guidance max 15, (b) honor action 480+ min, (c) split difference.
+      notes:
+        "Action 一整天 ~ 8-24 小时，first_aid guidance range 1-15。冲突场景，不设期望范围，观察 LLM 选择模式。",
+    },
+    {
+      id: "duration_conflict_below_range",
+      label: "时长冲突：action 说瞬间 < guidance 最小 1 分钟",
+      actorId: "Bruno Galilei",
+      targetIds: ["Helen"],
+      executionSceneId: "SCN_10_SUB_1",
+      actionText: "一瞬间就挥拳把海伦按在桌上制服她",
+      expectedSteps: ["brawling"],
+      expectedPrimaryDefinitionId: "brawling",
+      expectedOutputKeysAnyOf: ["character.hp"],
+      expectedElapsedMinutesRange: [1, 1],
+      notes:
+        "瞬间 implies sub-minute。brawling guidance range 1-5。应 clamp 到下限 1。",
+    },
+    {
+      id: "duration_qualitative_thorough",
+      label: "时长：限定语 — 彻底搜查（应靠上限）",
+      actorId: "Bruno Galilei",
+      executionSceneId: "SCN_1_SUB_1",
+      actionText: "里里外外彻底搜查整个接待室，每个抽屉都翻一遍",
+      expectedSteps: ["perception"],
+      expectedPrimaryDefinitionId: "perception",
+      expectedOutputKeysAnyOf: ["memory.event"],
+      expectedElapsedMinutesRange: [7, 10],
+      notes:
+        "彻底/里里外外=thorough。perception guidance default=3 range 1-10。测试：限定语能否把时长推到上限。",
     },
   ];

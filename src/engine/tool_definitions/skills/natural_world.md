@@ -22,6 +22,10 @@ stateDomains:
 
 outputSchema:
   presets: [default]
+  durationGuidance:
+    default: 5
+    range: "1-30"
+    notes: "quick plant/animal ID 1-3 min; tracking ecosystem signs 10-20 min; weather/terrain prediction 20-30 min"
 
 interpreter:
   examples:

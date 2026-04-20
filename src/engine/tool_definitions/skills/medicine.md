@@ -27,6 +27,10 @@ outputSchema:
   requireOnSuccess:
     - character.hp
     - character.condition
+  durationGuidance:
+    default: 15
+    range: "5-60"
+    notes: "quick diagnostic check 5-10 min; proper diagnosis 15-30 min; surgery or prolonged treatment 30-60 min"
 
 interpreter:
   examples:

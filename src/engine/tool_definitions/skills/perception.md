@@ -36,6 +36,10 @@ outputSchema:
   presets: [default]
   use:
     - item.modify
+  durationGuidance:
+    default: 3
+    range: "1-10"
+    notes: "glance across a room 1 min; focused search of a desk/shelf 3-5 min; thorough sweep of a large area 5-10 min"
 
 interpreter:
   examples:

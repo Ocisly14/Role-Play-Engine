@@ -27,6 +27,10 @@ outputSchema:
     - scene.condition
   requireOnFailure:
     - item.modify
+  durationGuidance:
+    default: 10
+    range: "3-30"
+    notes: "swap a fuse 3-5 min; trace wiring fault 15-20 min; rewire complex system 25-30 min"
 
 interpreter:
   examples:

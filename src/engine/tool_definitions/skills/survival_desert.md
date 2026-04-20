@@ -25,6 +25,10 @@ outputSchema:
     - character.condition
   requireOnSuccess:
     - character.condition
+  durationGuidance:
+    default: 30
+    range: "5-120"
+    notes: "quick forage or water-sign read 5-10 min; establish shade shelter or locate water 30-60 min; multi-hour survival task 60-120 min"
 
 interpreter:
   examples:

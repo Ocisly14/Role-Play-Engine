@@ -20,6 +20,10 @@ stateDomains:
 
 outputSchema:
   presets: [default]
+  durationGuidance:
+    default: 10
+    range: "3-30"
+    notes: "waypoint check 3-5 min; route plotting 10-15 min; celestial/dead-reckoning fix 20-30 min"
 
 interpreter:
   examples:

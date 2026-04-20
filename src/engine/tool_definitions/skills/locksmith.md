@@ -27,6 +27,10 @@ outputSchema:
     - item.modify
   requireOnFailure:
     - item.modify
+  durationGuidance:
+    default: 3
+    range: "1-15"
+    notes: "simple padlock 1-3 min; standard pin-tumbler 3-5 min; complex or trapped lock 10-15 min"
 
 interpreter:
   examples:

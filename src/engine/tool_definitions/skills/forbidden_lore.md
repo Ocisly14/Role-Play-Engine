@@ -26,6 +26,10 @@ outputSchema:
     - character.san
   requireOnSuccess:
     - character.san
+  durationGuidance:
+    default: 10
+    range: "3-30"
+    notes: "sudden recall 3-5 min; cross-referencing esoteric texts 10-20 min; sustained mythos study risks sanity and takes 20-30 min"
 
 interpreter:
   examples:

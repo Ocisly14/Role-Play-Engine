@@ -22,6 +22,10 @@ stateDomains:
 
 outputSchema:
   presets: [default]
+  durationGuidance:
+    default: 30
+    range: "15-120"
+    notes: "targeted lookup 15-20 min; thorough document trawl 30-60 min; broad archive research 90-120 min"
 
 interpreter:
   examples:

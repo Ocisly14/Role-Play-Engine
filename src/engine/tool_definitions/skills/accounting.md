@@ -22,6 +22,10 @@ stateDomains:
 
 outputSchema:
   presets: [default]
+  durationGuidance:
+    default: 10
+    range: "3-60"
+    notes: "single ledger entry check 3-5 min; full audit pass 15-30 min; forensic financial reconstruction 45-60 min"
 
 interpreter:
   examples:

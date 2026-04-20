@@ -302,4 +302,16 @@ describe("validateResolution", () => {
 
     expect(result).toBe(true);
   });
+
+  it("accepts elapsedMinutes as a universally-allowed meta field", () => {
+    const result = validateResolution(
+      {
+        "memory.event": [{ characterId: "npc_1", content: "Searched 5 min." }],
+        elapsedMinutes: 5,
+      },
+      { use: ["memory.event"] }
+    );
+
+    expect(result).toBe(true);
+  });
 });

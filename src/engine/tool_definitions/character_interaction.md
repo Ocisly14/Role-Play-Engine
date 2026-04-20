@@ -44,6 +44,10 @@ outputSchema:
     - relationship.change
   requireOnSuccess:
     - relationship.change
+  durationGuidance:
+    default: 3
+    range: "1-15"
+    notes: "quick greeting or order 1-2 min; casual conversation 3-5 min; extended exchange 10-15 min"
 ---
 
 # Character Interaction Resolution Guidance

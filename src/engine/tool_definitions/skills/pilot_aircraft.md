@@ -26,6 +26,10 @@ outputSchema:
     - memory.event
   requireOnSuccess:
     - character.position
+  durationGuidance:
+    default: 3
+    range: "1-30"
+    notes: "a critical maneuver 1-3 min; takeoff/landing sequence 5-10 min; emergency or prolonged flying 20-30 min"
 
 interpreter:
   examples:

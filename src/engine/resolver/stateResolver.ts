@@ -12,7 +12,10 @@ import type {
   OutputSchemaConfig,
   ToolResult,
 } from "../types.js";
-import { formatOutputSchemaPrompt } from "./schemaBuilder.js";
+import {
+  formatOutputSchemaPrompt,
+  RESOLVER_STATIC_SYSTEM_PROMPT,
+} from "./schemaBuilder.js";
 import type { StateContext } from "./stateContextBuilder.js";
 
 // ===== ResolverContext =====
@@ -57,76 +60,87 @@ export function buildResolverPrompt(ctx: ResolverContext): string {
   const language = ctx.language ?? "en";
   const { definition, stateContext } = ctx;
 
-  // System prompt = definition's guidance body
+  // Definition-specific guidance body (CoC skill rulebook text).
   const guidance = definition.guidanceBody || definition.content;
 
-  // Build state context sections
-  const sections: string[] = [];
-
-  sections.push("# Action Node");
-  sections.push(`Action: "${ctx.action}"`);
-  sections.push("");
-  sections.push(formatSkillCheckResult(ctx.skillCheckResult));
-
-  if (ctx.executionContext) {
-    sections.push("");
-    sections.push(ctx.executionContext);
-  }
-
-  if (stateContext.actorSection) {
-    sections.push("");
-    sections.push(stateContext.actorSection);
-  }
-
-  if (stateContext.targetSections) {
-    sections.push("");
-    sections.push(stateContext.targetSections);
-  }
-
-  if (stateContext.sceneSection) {
-    sections.push("");
-    sections.push(stateContext.sceneSection);
-  }
-
-  if (stateContext.itemSection) {
-    sections.push("");
-    sections.push(stateContext.itemSection);
-  }
-
-  if (stateContext.worldStateSection) {
-    sections.push("");
-    sections.push(stateContext.worldStateSection);
-  }
-
-  if (ctx.featureNotes && ctx.featureNotes.length > 0) {
-    sections.push("");
-    sections.push("## Feature Activation Results");
-    sections.push(ctx.featureNotes.join("\n"));
-  }
-
+  // Definition-specific output schema section (allowed fields, duration,
+  // required-on-success/failure).
+  let schemaSection = "";
   if (definition.outputSchema) {
     const skillSucceeded =
       !ctx.skillCheckResult || ctx.skillCheckResult.status === "completed";
-    sections.push("");
-    sections.push(
-      formatOutputSchemaPrompt(definition.outputSchema, { skillSucceeded })
-    );
+    schemaSection = formatOutputSchemaPrompt(definition.outputSchema, {
+      skillSucceeded,
+    });
   }
 
-  sections.push("");
-  sections.push(
+  // Per-request state context + action text.
+  const requestSections: string[] = [];
+  requestSections.push("# Action Node");
+  requestSections.push(`Action: "${ctx.action}"`);
+  requestSections.push("");
+  requestSections.push(formatSkillCheckResult(ctx.skillCheckResult));
+
+  if (ctx.executionContext) {
+    requestSections.push("");
+    requestSections.push(ctx.executionContext);
+  }
+
+  if (stateContext.actorSection) {
+    requestSections.push("");
+    requestSections.push(stateContext.actorSection);
+  }
+
+  if (stateContext.targetSections) {
+    requestSections.push("");
+    requestSections.push(stateContext.targetSections);
+  }
+
+  if (stateContext.sceneSection) {
+    requestSections.push("");
+    requestSections.push(stateContext.sceneSection);
+  }
+
+  if (stateContext.itemSection) {
+    requestSections.push("");
+    requestSections.push(stateContext.itemSection);
+  }
+
+  if (stateContext.worldStateSection) {
+    requestSections.push("");
+    requestSections.push(stateContext.worldStateSection);
+  }
+
+  if (ctx.featureNotes && ctx.featureNotes.length > 0) {
+    requestSections.push("");
+    requestSections.push("## Feature Activation Results");
+    requestSections.push(ctx.featureNotes.join("\n"));
+  }
+
+  requestSections.push("");
+  requestSections.push(
     `Write all memory text in ${language}. Respond ONLY with the JSON object, no other text.`
   );
 
-  const userPrompt = sections.join("\n");
-
-  return `You are a Call of Cthulhu 7th Edition game state resolver. You output structured state changes only — no narrative, no prose.
-
-${guidance}
-
----
-
-${userPrompt}`;
+  // Assembly order is cache-friendly: static prefix → per-definition middle
+  // → per-request tail. Prompt caching benefits grow as more calls reuse the
+  // same definition (e.g., many perception rolls within one session).
+  return [
+    RESOLVER_STATIC_SYSTEM_PROMPT,
+    "---",
+    "",
+    "# Definition Guidance",
+    "",
+    guidance,
+    schemaSection ? "" : null,
+    schemaSection || null,
+    "",
+    "---",
+    "",
+    requestSections.join("\n"),
+  ]
+    .filter((s) => s !== null)
+    .join("\n");
 }
 
 // ===== Parser =====
@@ -158,12 +172,22 @@ export function validateResolution(
   return true;
 }
 
+/**
+ * Meta fields the resolver emits that are NOT state changes.
+ * `elapsedMinutes` is universally required alongside `memory.event` and
+ * carries the semantic duration of the action — the tick layer consumes it.
+ */
+const RESOLVER_META_KEYS = ["elapsedMinutes"] as const;
+
 function getAllowedResolutionKeys(config: OutputSchemaConfig): Set<string> {
   const allowed = new Set<string>(resolveOutputSchemaTypeIds(config));
   if (config.custom) {
     for (const key of Object.keys(config.custom)) {
       allowed.add(key);
     }
+  }
+  for (const metaKey of RESOLVER_META_KEYS) {
+    allowed.add(metaKey);
   }
   return allowed;
 }

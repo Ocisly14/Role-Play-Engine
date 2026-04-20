@@ -46,6 +46,10 @@ outputSchema:
     - relationship.change
   requireOnSuccess:
     - relationship.change
+  durationGuidance:
+    default: 2
+    range: "1-5"
+    notes: "quick cover story 1-2 min; sustained deception 3-5 min"
 
 interpreter:
   examples:

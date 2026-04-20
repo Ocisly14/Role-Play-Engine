@@ -26,6 +26,10 @@ outputSchema:
     - character.position
   requireOnSuccess:
     - character.position
+  durationGuidance:
+    default: 3
+    range: "1-15"
+    notes: "quick dash across a room 1-3 min; sustained infiltration or shadowing 5-15 min"
 
 interpreter:
   examples:

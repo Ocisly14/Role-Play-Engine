@@ -46,6 +46,10 @@ outputSchema:
     - relationship.change
   requireOnSuccess:
     - relationship.change
+  durationGuidance:
+    default: 5
+    range: "2-20"
+    notes: "short appeal 2-3 min; substantive argument 5-10 min; lengthy negotiation 15-20 min"
 
 interpreter:
   examples:

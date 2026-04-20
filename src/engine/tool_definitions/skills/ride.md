@@ -26,6 +26,10 @@ outputSchema:
     - memory.event
   requireOnSuccess:
     - character.position
+  durationGuidance:
+    default: 3
+    range: "1-30"
+    notes: "a brief maneuver 1-3 min; handling a spooked mount 5-10 min; endurance ride 20-30 min"
 
 interpreter:
   examples:

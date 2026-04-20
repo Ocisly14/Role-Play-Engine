@@ -24,6 +24,10 @@ outputSchema:
   presets: [default, item_modify]
   requireOnFailure:
     - item.modify
+  durationGuidance:
+    default: 15
+    range: "5-60"
+    notes: "reagent ID 5-10 min; basic analysis 15-30 min; synthesis or titration 45-60 min"
 
 interpreter:
   examples:

@@ -26,6 +26,10 @@ outputSchema:
     - character.condition
   requireOnSuccess:
     - character.san
+  durationGuidance:
+    default: 30
+    range: "15-60"
+    notes: "brief therapeutic session 15-20 min; proper session 30-45 min; deep regression 60 min"
 
 interpreter:
   examples:

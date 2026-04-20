@@ -22,6 +22,10 @@ stateDomains:
 
 outputSchema:
   presets: [default]
+  durationGuidance:
+    default: 10
+    range: "3-60"
+    notes: "single clue assessment 3-5 min; proper scene analysis 15-30 min; full forensic reconstruction 45-60 min"
 
 interpreter:
   examples:

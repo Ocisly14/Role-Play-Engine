@@ -22,6 +22,10 @@ stateDomains:
 
 outputSchema:
   presets: [default]
+  durationGuidance:
+    default: 10
+    range: "2-60"
+    notes: "short passage 2-5 min; dense or archaic text 15-30 min; book-length reading 60+ min"
 
 interpreter:
   examples:

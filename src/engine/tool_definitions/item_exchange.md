@@ -20,6 +20,10 @@ outputSchema:
     - relationship.change
   requireOnSuccess:
     - item.move
+  durationGuidance:
+    default: 1
+    range: "1-3"
+    notes: "simple handoff 1 min; a deliberate ceremony or negotiation around the item 2-3 min"
 
 interpreter:
   examples:

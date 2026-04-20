@@ -29,6 +29,10 @@ outputSchema:
     - character.condition
   requireOnSuccess:
     - character.hp
+  durationGuidance:
+    default: 1
+    range: "1-5"
+    notes: "single exchange ≈ 1 min; prolonged combat 2-5 min; pursuing a fleeing target longer"
 
 interpreter:
   examples:

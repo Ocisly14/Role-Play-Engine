@@ -50,6 +50,10 @@ outputSchema:
     - item.move
     - item.create
     - item.destroy
+  durationGuidance:
+    default: 3
+    range: "1-15"
+    notes: "routine pickup/read 1-2 min; light or meaningful action 3-5 min; barricade or multi-step setup 10-15 min"
 ---
 
 # Current-Location Action Resolution Guidance

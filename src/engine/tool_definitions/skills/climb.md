@@ -26,6 +26,10 @@ outputSchema:
     - character.position
   requireOnSuccess:
     - character.position
+  durationGuidance:
+    default: 3
+    range: "1-15"
+    notes: "easy low wall 1 min; technical multi-pitch 10-15 min; hampered by weight/rain/injury"
 
 interpreter:
   examples:

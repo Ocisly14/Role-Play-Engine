@@ -26,6 +26,10 @@ outputSchema:
     - memory.event
   requireOnSuccess:
     - character.position
+  durationGuidance:
+    default: 1
+    range: "1-30"
+    notes: "a single tense maneuver 1 min; sustained pursuit or evasion 5-10 min; long drive with hazard 15-30 min"
 
 interpreter:
   examples:

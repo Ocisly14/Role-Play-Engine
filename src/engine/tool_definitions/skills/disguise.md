@@ -22,6 +22,10 @@ outputSchema:
   use:
     - character.condition
     - memory.event
+  durationGuidance:
+    default: 10
+    range: "5-30"
+    notes: "quick cover (hat + coat) 5 min; full costume and makeup 15-30 min"
 
 interpreter:
   examples:

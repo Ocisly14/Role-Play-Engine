@@ -22,6 +22,10 @@ stateDomains:
 
 outputSchema:
   presets: [default]
+  durationGuidance:
+    default: 10
+    range: "3-60"
+    notes: "quick calculation 3-5 min; measurement and analysis 15-30 min; complex modeling 45-60 min"
 
 interpreter:
   examples:

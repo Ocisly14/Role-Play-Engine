@@ -22,6 +22,10 @@ stateDomains:
 
 outputSchema:
   presets: [default]
+  durationGuidance:
+    default: 15
+    range: "3-120"
+    notes: "brief translation 3-5 min; extended translation or conversation 20-30 min; full document translation 60-120 min"
 
 interpreter:
   examples:

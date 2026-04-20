@@ -27,6 +27,10 @@ outputSchema:
   requireOnSuccess:
     - scene.condition
     - item.modify
+  durationGuidance:
+    default: 5
+    range: "1-30"
+    notes: "single lift/push 1-3 min; sustained operation 10-15 min; complex crane/excavation run 20-30 min"
 
 interpreter:
   examples:

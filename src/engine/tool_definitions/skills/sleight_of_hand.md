@@ -27,6 +27,10 @@ outputSchema:
     - memory.event
   requireOnSuccess:
     - item.move
+  durationGuidance:
+    default: 1
+    range: "1-3"
+    notes: "a single quick lift 1 min; a more deliberate switch or plant 2-3 min"
 
 interpreter:
   examples:

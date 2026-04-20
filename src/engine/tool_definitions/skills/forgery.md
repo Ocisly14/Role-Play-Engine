@@ -26,6 +26,10 @@ outputSchema:
     - item.create
   requireOnFailure:
     - item.create
+  durationGuidance:
+    default: 30
+    range: "10-120"
+    notes: "quick signature copy 10-15 min; forge a document 30-60 min; full counterfeit with seals/paper 90-120 min"
 
 interpreter:
   examples:

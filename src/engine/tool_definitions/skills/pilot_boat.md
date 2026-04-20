@@ -26,6 +26,10 @@ outputSchema:
     - memory.event
   requireOnSuccess:
     - character.position
+  durationGuidance:
+    default: 3
+    range: "1-30"
+    notes: "a critical maneuver 1-3 min; docking or navigating hazard 5-10 min; storm handling 20-30 min"
 
 interpreter:
   examples:

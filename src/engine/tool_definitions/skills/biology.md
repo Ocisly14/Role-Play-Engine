@@ -22,6 +22,10 @@ stateDomains:
 
 outputSchema:
   presets: [default]
+  durationGuidance:
+    default: 10
+    range: "3-60"
+    notes: "quick specimen ID 3-5 min; dissection or assay 15-30 min; extended study 45-60 min"
 
 interpreter:
   examples:

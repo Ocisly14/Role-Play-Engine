@@ -26,6 +26,10 @@ outputSchema:
     - character.position
   requireOnSuccess:
     - character.position
+  durationGuidance:
+    default: 1
+    range: "1-2"
+    notes: "single leap 1 min; combined with a run-up or repeated attempts 2 min"
 
 interpreter:
   examples:

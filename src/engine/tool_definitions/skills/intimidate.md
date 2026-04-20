@@ -42,6 +42,10 @@ outputSchema:
     - relationship.change
   requireOnSuccess:
     - relationship.change
+  durationGuidance:
+    default: 2
+    range: "1-5"
+    notes: "a single threatening demand 1-2 min; sustained pressure or interrogation 3-5 min"
 
 interpreter:
   examples:

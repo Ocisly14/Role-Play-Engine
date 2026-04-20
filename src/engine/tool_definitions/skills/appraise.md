@@ -22,6 +22,10 @@ stateDomains:
 
 outputSchema:
   presets: [default]
+  durationGuidance:
+    default: 2
+    range: "1-10"
+    notes: "glance-value estimate 1-2 min; careful inspection 5-10 min"
 
 interpreter:
   examples:

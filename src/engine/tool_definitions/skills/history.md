@@ -22,6 +22,10 @@ stateDomains:
 
 outputSchema:
   presets: [default]
+  durationGuidance:
+    default: 10
+    range: "3-30"
+    notes: "date/period ID 3-5 min; contextual interpretation 10-15 min; deep archival recall 20-30 min"
 
 interpreter:
   examples:

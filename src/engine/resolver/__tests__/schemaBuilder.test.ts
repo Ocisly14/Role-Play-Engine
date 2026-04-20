@@ -3,6 +3,7 @@ import type { OutputSchemaConfig } from "../../types.js";
 import {
   buildOutputSchema,
   formatOutputSchemaPrompt,
+  RESOLVER_STATIC_SYSTEM_PROMPT,
 } from "../schemaBuilder.js";
 
 describe("resolveOutputSchemaTypeIds", () => {
@@ -168,15 +169,45 @@ describe("buildOutputSchema", () => {
   });
 });
 
+describe("RESOLVER_STATIC_SYSTEM_PROMPT", () => {
+  it("declares universal output format rules", () => {
+    expect(RESOLVER_STATIC_SYSTEM_PROMPT).toContain("Output Format");
+    expect(RESOLVER_STATIC_SYSTEM_PROMPT).toContain("JSON object");
+  });
+
+  it("names memory.event and elapsedMinutes as universally required", () => {
+    expect(RESOLVER_STATIC_SYSTEM_PROMPT).toContain(
+      "Universally Required Fields"
+    );
+    expect(RESOLVER_STATIC_SYSTEM_PROMPT).toContain("`memory.event`");
+    expect(RESOLVER_STATIC_SYSTEM_PROMPT).toContain("`elapsedMinutes`");
+    expect(RESOLVER_STATIC_SYSTEM_PROMPT).toContain("EVERY resolution");
+  });
+
+  it("encodes the elapsedMinutes priority order (explicit > qualitative > default)", () => {
+    expect(RESOLVER_STATIC_SYSTEM_PROMPT).toContain("PRIORITY ORDER");
+    expect(RESOLVER_STATIC_SYSTEM_PROMPT).toContain("AUTHORITATIVE");
+    expect(RESOLVER_STATIC_SYSTEM_PROMPT).toContain("半小时");
+    expect(RESOLVER_STATIC_SYSTEM_PROMPT).toContain("扫一眼");
+  });
+
+  it("explains Required-on-Success / Required-on-Failure semantics", () => {
+    expect(RESOLVER_STATIC_SYSTEM_PROMPT).toContain("Required on Success");
+    expect(RESOLVER_STATIC_SYSTEM_PROMPT).toContain("Required on Failure");
+    expect(RESOLVER_STATIC_SYSTEM_PROMPT).toContain(
+      'Failure is NOT "nothing happened"'
+    );
+  });
+});
+
 describe("formatOutputSchemaPrompt", () => {
-  it("returns a string containing 'Output Format'", () => {
-    const config: OutputSchemaConfig = {
-      use: ["character.hp"],
-    };
+  it("returns a string with the per-action section header", () => {
+    const config: OutputSchemaConfig = { use: ["character.hp"] };
     const result = formatOutputSchemaPrompt(config);
 
     expect(typeof result).toBe("string");
-    expect(result).toContain("Output Format");
+    expect(result).toContain("## This Action");
+    expect(result).toContain("### Allowed Fields");
   });
 
   it("includes preset-derived fields in the prompt", () => {
@@ -242,30 +273,7 @@ describe("formatOutputSchemaPrompt", () => {
     expect(result).toContain("### Required on Success");
     expect(result).toContain("`character.hp`");
     expect(result).toContain("`character.condition`");
-    expect(result).toContain("at least one of");
-  });
-
-  it("always emits the Always-Required block naming memory.event", () => {
-    const result = formatOutputSchemaPrompt({
-      use: ["character.hp"],
-    });
-
-    expect(result).toContain("### Always Required");
-    expect(result).toContain("`memory.event`");
-    expect(result).toContain("EVERY resolution");
-  });
-
-  it("emits Always-Required block on failure too", () => {
-    const result = formatOutputSchemaPrompt(
-      {
-        use: ["character.hp"],
-        requireOnSuccess: ["character.hp"],
-      },
-      { skillSucceeded: false }
-    );
-
-    expect(result).toContain("### Always Required");
-    expect(result).toContain("`memory.event`");
+    expect(result).toContain("At least one of");
   });
 
   it("omits the Required-on-Failure block when skillSucceeded is true", () => {
@@ -303,7 +311,50 @@ describe("formatOutputSchemaPrompt", () => {
     expect(result).toContain("### Required on Failure");
     expect(result).toContain("`item.modify`");
     expect(result).toContain("`character.fatigue`");
-    expect(result).toContain("at least one of");
-    expect(result).toContain("NOT");
+    expect(result).toContain("At least one of");
+  });
+
+  it("lists elapsedMinutes alongside state-change fields in Allowed Fields", () => {
+    const result = formatOutputSchemaPrompt({
+      use: ["character.hp"],
+    });
+
+    expect(result).toContain("`elapsedMinutes`");
+    expect(result).toContain("integer");
+  });
+
+  it("renders Duration Guidance block when durationGuidance is set", () => {
+    const result = formatOutputSchemaPrompt({
+      use: ["character.hp"],
+      durationGuidance: {
+        default: 5,
+        range: "1-15",
+        notes: "light wound 1-3 min; severe bleeding 3-10 min.",
+      },
+    });
+
+    expect(result).toContain("### Duration Guidance");
+    expect(result).toContain("Default: 5 min");
+    expect(result).toContain("Range: 1-15");
+    expect(result).toContain("light wound 1-3 min");
+  });
+
+  it("omits Duration Guidance block when durationGuidance is absent", () => {
+    const result = formatOutputSchemaPrompt({
+      use: ["character.hp"],
+    });
+
+    expect(result).not.toContain("Duration Guidance");
+  });
+
+  it("renders Duration Guidance with only default when range and notes omitted", () => {
+    const result = formatOutputSchemaPrompt({
+      use: ["character.hp"],
+      durationGuidance: { default: 3 },
+    });
+
+    expect(result).toContain("### Duration Guidance");
+    expect(result).toContain("Default: 3 min");
+    expect(result).not.toContain("Range:");
   });
 });

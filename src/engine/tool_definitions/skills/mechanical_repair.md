@@ -27,6 +27,10 @@ outputSchema:
     - scene.condition
   requireOnFailure:
     - item.modify
+  durationGuidance:
+    default: 15
+    range: "5-60"
+    notes: "quick adjustment 5-10 min; replace part or fix jam 15-30 min; major rebuild 45-60 min"
 
 interpreter:
   examples:

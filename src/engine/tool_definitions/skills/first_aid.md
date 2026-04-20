@@ -27,6 +27,10 @@ outputSchema:
   requireOnSuccess:
     - character.hp
     - character.condition
+  durationGuidance:
+    default: 5
+    range: "1-15"
+    notes: "light cut or bandage 1-3 min; severe bleeding stabilization 5-10 min; complex or multi-wound 10-15 min"
 
 interpreter:
   examples:

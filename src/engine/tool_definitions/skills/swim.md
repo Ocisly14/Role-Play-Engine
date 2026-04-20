@@ -27,6 +27,10 @@ outputSchema:
     - character.position
   requireOnSuccess:
     - character.position
+  durationGuidance:
+    default: 3
+    range: "1-30"
+    notes: "short crossing 1-3 min; river crossing 5-10 min; long swim or rescue 15-30 min"
 
 interpreter:
   examples:

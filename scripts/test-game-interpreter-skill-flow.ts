@@ -89,6 +89,7 @@ interface CaseExecutionResult {
   expectedSteps: string[];
   expectedPrimaryDefinitionId: string;
   expectedOutputKeysAnyOf: string[];
+  expectedElapsedMinutesRange?: [number, number];
   notes?: string;
   environment?: "scene" | "road" | "junction";
   interpreter: {
@@ -116,6 +117,10 @@ interface CaseExecutionResult {
     validationPassed: boolean;
     outputKeys: string[];
     outputKeyMatch: boolean;
+    /** Resolver-reported action duration (meta field, not a state change). */
+    elapsedMinutes: number | null;
+    /** Whether elapsedMinutes fell within expectedElapsedMinutesRange (null if no expectation set). */
+    elapsedMatch: boolean | null;
     skippedReason?: string;
   };
   resolution: Record<string, unknown>;
@@ -387,9 +392,12 @@ function arraysEqual(left: string[], right: string[]): boolean {
   );
 }
 
+const RESOLVER_META_KEYS_TO_EXCLUDE = new Set(["elapsedMinutes"]);
+
 function collectResolutionKeys(resolution: Record<string, unknown>): string[] {
   return Object.entries(resolution)
-    .filter(([, value]) => {
+    .filter(([key, value]) => {
+      if (RESOLVER_META_KEYS_TO_EXCLUDE.has(key)) return false;
       if (Array.isArray(value)) return value.length > 0;
       return value !== undefined && value !== null;
     })
@@ -646,6 +654,9 @@ async function runCase(params: {
     expectedSteps: [...testCase.expectedSteps],
     expectedPrimaryDefinitionId: testCase.expectedPrimaryDefinitionId,
     expectedOutputKeysAnyOf: [...testCase.expectedOutputKeysAnyOf],
+    ...(testCase.expectedElapsedMinutesRange
+      ? { expectedElapsedMinutesRange: testCase.expectedElapsedMinutesRange }
+      : {}),
     ...(testCase.notes ? { notes: testCase.notes } : {}),
     environment: testCase.executionLocation?.type ?? "scene",
     interpreter: {
@@ -667,6 +678,8 @@ async function runCase(params: {
       validationPassed: false,
       outputKeys: [],
       outputKeyMatch: false,
+      elapsedMinutes: null,
+      elapsedMatch: null,
     },
     resolution: {},
     memoryEntries: [],
@@ -786,6 +799,20 @@ async function runCase(params: {
       result.resolver.outputKeys.includes(key)
     );
 
+  const rawElapsed = resolution["elapsedMinutes"];
+  const parsedElapsed =
+    typeof rawElapsed === "number" && Number.isFinite(rawElapsed)
+      ? Math.floor(rawElapsed)
+      : null;
+  result.resolver.elapsedMinutes = parsedElapsed;
+  const expectedRange = testCase.expectedElapsedMinutesRange;
+  if (expectedRange && parsedElapsed !== null) {
+    const [min, max] = expectedRange;
+    result.resolver.elapsedMatch = parsedElapsed >= min && parsedElapsed <= max;
+  } else {
+    result.resolver.elapsedMatch = null;
+  }
+
   if (definition.outputSchema) {
     result.resolver.validationPassed = validateResolution(
       resolution,
@@ -848,8 +875,18 @@ function printCaseResult(
   }
 
   if (result.resolver.ran) {
+    const elapsedLabel =
+      result.resolver.elapsedMinutes === null
+        ? "(none)"
+        : `${result.resolver.elapsedMinutes}m`;
+    const elapsedMatchLabel =
+      result.resolver.elapsedMatch === null
+        ? "n/a"
+        : result.resolver.elapsedMatch
+          ? "in-range"
+          : "out-of-range";
     console.log(
-      `Resolver: validation=${result.resolver.validationPassed ? "pass" : "fail"} | outputKeys=${result.resolver.outputKeys.join(", ") || "(none)"} | expectedOutputHit=${result.resolver.outputKeyMatch ? "yes" : "no"}`
+      `Resolver: validation=${result.resolver.validationPassed ? "pass" : "fail"} | outputKeys=${result.resolver.outputKeys.join(", ") || "(none)"} | expectedOutputHit=${result.resolver.outputKeyMatch ? "yes" : "no"} | elapsed=${elapsedLabel} (${elapsedMatchLabel})`
     );
   } else {
     console.log(
@@ -935,6 +972,35 @@ function buildSummary(results: CaseExecutionResult[]): Record<string, unknown> {
   const applyPass = results.filter((r) => r.applyPassed).length;
   const withErrors = results.filter((r) => r.error).length;
 
+  // Elapsed minutes stats
+  const elapsedReported = results.filter(
+    (r) => r.resolver.ran && r.resolver.elapsedMinutes !== null
+  );
+  const elapsedReportedCount = elapsedReported.length;
+  const elapsedValues = elapsedReported
+    .map((r) => r.resolver.elapsedMinutes as number)
+    .sort((a, b) => a - b);
+  const elapsedMedian =
+    elapsedValues.length === 0
+      ? null
+      : elapsedValues[Math.floor(elapsedValues.length / 2)];
+  const elapsedCasesWithExpectation = results.filter(
+    (r) => r.resolver.elapsedMatch !== null
+  );
+  const elapsedInRange = elapsedCasesWithExpectation.filter(
+    (r) => r.resolver.elapsedMatch === true
+  );
+  const elapsedOutOfRange = elapsedCasesWithExpectation
+    .filter((r) => r.resolver.elapsedMatch === false)
+    .map((r) => ({
+      id: r.id,
+      got: r.resolver.elapsedMinutes,
+      expected: r.expectedElapsedMinutesRange,
+    }));
+  const elapsedMissing = results
+    .filter((r) => r.resolver.ran && r.resolver.elapsedMinutes === null)
+    .map((r) => r.id);
+
   return {
     totalCases: results.length,
     primarySelectionPass,
@@ -958,6 +1024,15 @@ function buildSummary(results: CaseExecutionResult[]): Record<string, unknown> {
           : results.filter((r) => !r.resolver.ran || r.resolver.outputKeyMatch)
               .length / results.length,
       missingCases,
+    },
+    elapsedMinutes: {
+      reportedCount: elapsedReportedCount,
+      median: elapsedMedian,
+      values: elapsedValues,
+      withExpectation: elapsedCasesWithExpectation.length,
+      inRange: elapsedInRange.length,
+      outOfRange: elapsedOutOfRange,
+      missing: elapsedMissing,
     },
   };
 }
@@ -1027,6 +1102,45 @@ function printSummary(summary: Record<string, unknown>): void {
   if (expectedVsActual.missingCases.length > 0) {
     console.log(
       `- Mismatch cases: ${expectedVsActual.missingCases.join(", ")}`
+    );
+  }
+
+  const elapsed = summary.elapsedMinutes as {
+    reportedCount: number;
+    median: number | null;
+    values: number[];
+    withExpectation: number;
+    inRange: number;
+    outOfRange: Array<{
+      id: string;
+      got: number | null;
+      expected: [number, number] | undefined;
+    }>;
+    missing: string[];
+  };
+  console.log("\nElapsed Minutes");
+  const elapsedRangeLabel =
+    elapsed.values.length > 0
+      ? `${elapsed.values[0]}-${elapsed.values[elapsed.values.length - 1]}`
+      : "n/a";
+  console.log(
+    `- Reported: ${elapsed.reportedCount} cases | median=${elapsed.median ?? "n/a"} min | range=${elapsedRangeLabel}`
+  );
+  console.log(
+    `- With expected range: ${elapsed.withExpectation} | in-range: ${elapsed.inRange} (${elapsed.withExpectation === 0 ? "n/a" : ((elapsed.inRange / elapsed.withExpectation) * 100).toFixed(0) + "%"})`
+  );
+  if (elapsed.outOfRange.length > 0) {
+    console.log("- Out-of-range cases:");
+    for (const oor of elapsed.outOfRange) {
+      const expLabel = oor.expected
+        ? `${oor.expected[0]}-${oor.expected[1]}`
+        : "?";
+      console.log(`    - ${oor.id}: got=${oor.got} min, expected=${expLabel}`);
+    }
+  }
+  if (elapsed.missing.length > 0) {
+    console.log(
+      `- Missing elapsedMinutes from resolver: ${elapsed.missing.join(", ")}`
     );
   }
 }

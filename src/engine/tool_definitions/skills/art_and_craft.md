@@ -29,6 +29,10 @@ outputSchema:
     - item.modify
   requireOnFailure:
     - item.modify
+  durationGuidance:
+    default: 30
+    range: "10-120"
+    notes: "quick sketch or small carving 10-15 min; proper artwork 30-60 min; major piece 90-120 min"
 
 interpreter:
   examples:

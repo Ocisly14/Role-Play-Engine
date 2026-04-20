@@ -254,6 +254,21 @@ export interface CustomFieldDef {
   description?: string;
 }
 
+/**
+ * Per-definition duration hint rendered into the resolver prompt so the LLM
+ * can judge `elapsedMinutes` consistently with CoC-canon expectations.
+ * Semantic authority lives in the engine (definition + resolver); tick-layer
+ * consumption of `elapsedMinutes` is a separate mechanical concern.
+ */
+export interface DurationGuidance {
+  /** Typical minutes when no special factors apply. */
+  default: number;
+  /** Human-readable min-max range, e.g. "1-15". */
+  range?: string;
+  /** Short prose describing the factors that push elapsed up or down. */
+  notes?: string;
+}
+
 export interface OutputSchemaConfig {
   presets?: string[];
   use?: string[];
@@ -271,6 +286,12 @@ export interface OutputSchemaConfig {
    * universally required regardless of outcome.
    */
   requireOnFailure?: string[];
+  /**
+   * Duration guidance rendered into the resolver prompt. The resolver is
+   * always required to emit `elapsedMinutes`; this block tells it the
+   * expected shape for this definition.
+   */
+  durationGuidance?: DurationGuidance;
   custom?: Record<string, CustomFieldDef>;
 }
 
