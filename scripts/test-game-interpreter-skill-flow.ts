@@ -400,11 +400,7 @@ function collectResolutionKeys(resolution: Record<string, unknown>): string[] {
 function collectMemoryEntries(
   resolution: Record<string, unknown>
 ): Array<{ type: string; characterId: string; content: string }> {
-  const memoryTypes = [
-    "memory.event",
-    "memory.witness",
-    "memory.information",
-  ] as const;
+  const memoryTypes = ["memory.event", "memory.witness"] as const;
   const entries: Array<{ type: string; characterId: string; content: string }> =
     [];
 
@@ -559,7 +555,6 @@ function inferNodeType(
   if (definitionId === "movement") return "movement";
   if (
     targetIds.length > 0 ||
-    definitionId === "conversation" ||
     definitionId === "item_exchange" ||
     definitionId === "character_interaction"
   ) {
@@ -658,8 +653,14 @@ async function runCase(params: {
       fullStepMatch: arraysEqual(stepIds, testCase.expectedSteps),
       primaryDefinitionId: primaryStep?.definitionId,
       primaryImpact: primaryStep?.impact,
-      primaryMatch:
-        primaryStep?.definitionId === testCase.expectedPrimaryDefinitionId,
+      primaryMatch: (() => {
+        const actual = primaryStep?.definitionId;
+        if (!actual) return false;
+        if (testCase.expectedPrimaryDefinitionIdAnyOf?.length) {
+          return testCase.expectedPrimaryDefinitionIdAnyOf.includes(actual);
+        }
+        return actual === testCase.expectedPrimaryDefinitionId;
+      })(),
     },
     resolver: {
       ran: false,

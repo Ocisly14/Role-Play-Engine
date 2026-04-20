@@ -24,11 +24,11 @@ outputSchema:
   presets: [default, item_modify]
   use:
     - item.create
-    - memory.information
   requireOnSuccess:
     - item.create
     - item.modify
-    - memory.information
+  requireOnFailure:
+    - item.modify
 
 interpreter:
   examples:
@@ -46,7 +46,7 @@ interpreter:
 - Use `item.modify` when the actor restores, refines, decorates, or otherwise changes an existing object.
 - Use `item.destroy` when source materials are consumed or a failed attempt ruins the workpiece.
 - Use `item.move` when materials or finished goods are relocated between scene, inventory, or container.
-- Use `memory.information` when the actor learns something concrete about authenticity, style, provenance, craftsmanship, or hidden alterations.
+- Use `memory.event` when the actor learns something concrete about authenticity, style, provenance, craftsmanship, or hidden alterations.
 
 ## On Success
 - regular success: The investigator determines whether an artwork or handmade object is genuine or a reproduction, and can describe the style, period, and approximate skill level of the maker. If creating something, the result is functional and competent.

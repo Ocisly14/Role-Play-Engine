@@ -245,10 +245,6 @@ export const STATE_CHANGE_APPLIERS: Record<string, Applier> = {
     // No-op: memory writing is handled by the caller (tickProcessor)
   },
 
-  "memory.information": (_dgsm, _changes) => {
-    // No-op: memory writing is handled by the caller (tickProcessor)
-  },
-
   // ── relationship.change ──────────────────────────────────────────────────────
   "relationship.change": (dgsm, changes) => {
     for (const c of changes) {

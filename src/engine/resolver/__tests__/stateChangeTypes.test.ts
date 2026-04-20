@@ -18,7 +18,7 @@ const ITEM_TYPES = ["item.move", "item.destroy", "item.create", "item.modify"];
 
 const SCENE_TYPES = ["scene.condition"];
 
-const MEMORY_TYPES = ["memory.event", "memory.witness", "memory.information"];
+const MEMORY_TYPES = ["memory.event", "memory.witness"];
 
 const RELATIONSHIP_TYPES = ["relationship.change"];
 
@@ -164,13 +164,6 @@ describe("getStateChangeType", () => {
 
   it("returns the correct def for memory.witness — both fields required", () => {
     const def = getStateChangeType("memory.witness");
-    expect(def).toBeDefined();
-    expect(def?.schema.required).toContain("characterId");
-    expect(def?.schema.required).toContain("content");
-  });
-
-  it("returns the correct def for memory.information — both fields required", () => {
-    const def = getStateChangeType("memory.information");
     expect(def).toBeDefined();
     expect(def?.schema.required).toContain("characterId");
     expect(def?.schema.required).toContain("content");

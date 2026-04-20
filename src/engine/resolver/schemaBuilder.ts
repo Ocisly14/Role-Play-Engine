@@ -127,10 +127,16 @@ export function formatOutputSchemaPrompt(
     "### Allowed Fields",
     "",
     ...fieldBullets,
+    "",
+    "### Always Required",
+    "",
+    "`memory.event` MUST appear in EVERY resolution, regardless of skill outcome (success, failure, fumble, or interrupted). It records what the actor did or attempted from their first-person perspective. An empty resolution is NEVER acceptable.",
   ];
 
+  const skillSucceeded = options?.skillSucceeded ?? true;
+
   if (
-    options?.skillSucceeded &&
+    skillSucceeded &&
     config.requireOnSuccess !== undefined &&
     config.requireOnSuccess.length > 0
   ) {
@@ -141,7 +147,23 @@ export function formatOutputSchemaPrompt(
     sections.push("### Required on Success");
     sections.push("");
     sections.push(
-      `This action succeeded. Your output MUST include at least one of the following top-level fields with non-empty content: ${requiredList}. Do NOT respond with only \`memory.event\` or \`character.fatigue\` — those are fallbacks, not substitutes for the specific state change this skill produces.`
+      `This action succeeded. Beyond the always-required \`memory.event\`, your output MUST also include at least one of the following top-level fields with non-empty content: ${requiredList}. Do NOT respond with only fallback keys (\`memory.event\` / \`character.fatigue\`) — they are not substitutes for the specific state change this skill produces on success.`
+    );
+  }
+
+  if (
+    !skillSucceeded &&
+    config.requireOnFailure !== undefined &&
+    config.requireOnFailure.length > 0
+  ) {
+    const requiredList = config.requireOnFailure
+      .map((key) => `\`${key}\``)
+      .join(", ");
+    sections.push("");
+    sections.push("### Required on Failure");
+    sections.push("");
+    sections.push(
+      `This action failed or fumbled. Failure is NOT "nothing happened" — the world still changed. Beyond the always-required \`memory.event\`, your output MUST also include at least one of the following top-level fields with non-empty content: ${requiredList}. These capture the physical side effects of the failed attempt (damaged tools, wasted materials, spilled contents, etc.).`
     );
   }
 

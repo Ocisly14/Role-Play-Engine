@@ -7,7 +7,6 @@ export const OUTPUT_SCHEMA_PRESETS: Record<string, readonly string[]> = {
     "item.modify",
     "item.destroy",
     "item.create",
-    "memory.information",
   ],
 };
 

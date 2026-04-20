@@ -43,11 +43,9 @@ outputSchema:
   use:
     - character.condition
     - memory.event
-    - memory.information
     - relationship.change
   requireOnSuccess:
     - relationship.change
-    - memory.information
 
 interpreter:
   examples:
@@ -61,9 +59,9 @@ interpreter:
 
 ## On Success
 
-- **Regular success**: The target is convinced by the actor's reasoning. They agree to the request, change their stated position, or grant access. Their belief or stance genuinely shifts based on the argument presented; record the exchange as memory.event and any concrete concessions as memory.information.
+- **Regular success**: The target is convinced by the actor's reasoning. They agree to the request, change their stated position, or grant access. Their belief or stance genuinely shifts based on the argument presented; record the exchange and any concrete concessions as memory.event.
 - **Hard success**: The target is fully persuaded and commits to their agreement. They may advocate for the actor's position to others or volunteer further support. Any future persuasion attempts by the actor on this topic face no additional resistance, and the committed support should remain in memory.event.
-- **Extreme success**: The target becomes an active advocate. They believe the argument was their own conclusion and may take independent actions in line with what they were persuaded toward. Record the resulting belief shift as memory.information and the persuasion outcome as memory.event.
+- **Extreme success**: The target becomes an active advocate. They believe the argument was their own conclusion and may take independent actions in line with what they were persuaded toward. Record the resulting belief shift and the persuasion outcome as memory.event.
 
 ## On Failure
 

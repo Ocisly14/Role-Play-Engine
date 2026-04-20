@@ -39,10 +39,8 @@ outputSchema:
     - character.condition
     - character.san
     - memory.event
-    - memory.information
     - relationship.change
   requireOnSuccess:
-    - memory.information
     - relationship.change
 
 interpreter:

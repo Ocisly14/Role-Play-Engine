@@ -57,10 +57,17 @@ ${defList}
 - A simple action maps to a single step (e.g., "搜查房间" → [perception])
 - A composite action maps to multiple ordered steps (e.g., "撬开柜子然后搜查里面" → [locksmith, perception])
 - If the action involves going somewhere first, the first step should be "movement"
-- If the action is a simple conversation without persuasion/deception, use "conversation"
-- If the action involves giving/receiving items, use "item_exchange"
-- If no specific skill definition matches, use "action" (general action)
-- Never use "generic" if a more specific definition exists
+- If the action involves giving/receiving items without dialogue, use "item_exchange"
+- If no specific skill definition matches, use "action" (general no-skill action) for solo/environmental actions, or "character_interaction" for casual talk / greetings / asking questions / leading someone
+
+## Definition Selection Priority
+When multiple definitions could match:
+1. **Prefer specific skill definitions** (perception, listen, first_aid, brawling, persuade, etc.) over umbrella definitions (action, character_interaction, item_exchange).
+2. Umbrella definitions are FALLBACKS — pick them only when no specific skill fits.
+3. Physical violence (punching, grappling, tackling, attacking with a weapon) is ALWAYS a combat skill (Brawling / Axe / Sword / Whip / Firearms / Throw), never character_interaction.
+4. Therapeutic giving (handing medicine with intent to treat) is Medicine / First Aid, not Item Exchange.
+5. Social manipulation (persuading, charming, intimidating, deceiving) is the specific social skill (Persuade / Charm / Intimidate / Bluff), not character_interaction.
+6. Long-term mental therapy (calming / treating SAN over sessions) is Psychoanalysis, not character_interaction.
 
 ## Impact Levels (per step)
 Each step gets its own impact value determining who perceives it:

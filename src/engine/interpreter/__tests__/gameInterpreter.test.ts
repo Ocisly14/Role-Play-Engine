@@ -120,9 +120,7 @@ describe("buildInterpreterPrompt", () => {
   it("reflects item actions through action and related skills, not removed root item definitions", () => {
     const prompt = buildInterpreterPrompt(loadActionDefinitions());
 
-    expect(prompt).toContain("basic item use or manipulation");
-    expect(prompt).toContain("Artistic skills, craftsmanship");
-    expect(prompt).toContain("Scientific knowledge of chemicals, reactions");
+    expect(prompt).toContain("picking up an item");
     expect(prompt).not.toContain("**item_modify**");
     expect(prompt).not.toContain("**item_assemble**");
     expect(prompt).not.toContain("**item_disassemble**");

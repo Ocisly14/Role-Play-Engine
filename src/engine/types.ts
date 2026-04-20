@@ -259,11 +259,18 @@ export interface OutputSchemaConfig {
   use?: string[];
   /**
    * Top-level fields that MUST appear (non-empty) when the skill check
-   * succeeds. Expressed as "at least one of" — resolver prompt forces
-   * the LLM to include at least one of these, rather than defaulting
-   * to only fallback keys like `memory.event` / `character.fatigue`.
+   * succeeds. Expressed as "at least one of". Do NOT list `memory.event`
+   * here — it is universally required (see resolver's Always Required block).
    */
   requireOnSuccess?: string[];
+  /**
+   * Top-level fields that MUST appear (non-empty) when the skill check
+   * fails or fumbles. Expressed as "at least one of". Declare here for
+   * skills whose failure has physical side effects (damaged tool, spilled
+   * contents, wasted material). Do NOT list `memory.event` — it is
+   * universally required regardless of outcome.
+   */
+  requireOnFailure?: string[];
   custom?: Record<string, CustomFieldDef>;
 }
 

@@ -17,9 +17,9 @@ describe("loadActionDefinitions", () => {
     const ci = defs.find((d) => d.id === "character_interaction");
     expect(ci).toBeDefined();
     expect(ci?.title).toBe("Character Interaction");
-    expect(ci?.description).toContain("Interact with one or more characters");
-    expect(ci?.skillCheck?.type).toBe("opposed");
-    expect(ci?.skillCheck?.failBehavior).toBe("abort");
+    expect(ci?.description).toContain("Any interaction with one or more target characters");
+    expect(ci?.skillCheck?.type).toBe("single");
+    expect(ci?.skillCheck?.failBehavior).toBe("partial");
   });
 
   it("parses stateDomains from YAML frontmatter", () => {
@@ -28,8 +28,8 @@ describe("loadActionDefinitions", () => {
     expect(ci?.stateDomains).toBeDefined();
     expect(ci?.stateDomains?.character?.inject).toContain("actor");
     expect(ci?.stateDomains?.character?.inject).toContain("targets");
-    expect(ci?.stateDomains?.character?.output).toContain("character.hp");
     expect(ci?.stateDomains?.character?.output).toContain("memory.event");
+    expect(ci?.stateDomains?.character?.output).toContain("relationship.change");
   });
 
   it("parses interpreter examples from YAML frontmatter", () => {
@@ -86,10 +86,7 @@ describe("loadActionDefinitions", () => {
       "item_modify",
     ]);
     expect(locksmith?.outputSchema?.use).toBeUndefined();
-    expect(perception?.outputSchema?.use).toEqual([
-      "item.modify",
-      "memory.information",
-    ]);
+    expect(perception?.outputSchema?.use).toEqual(["item.modify"]);
     expect(artAndCraft?.outputSchema?.presets).toEqual([
       "default",
       "item_modify",

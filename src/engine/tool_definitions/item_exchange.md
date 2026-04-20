@@ -23,10 +23,10 @@ outputSchema:
 
 interpreter:
   examples:
-    - "Hand the key over to him"
-    - "Give her a glass of water"
-    - "Hand the key to Officer Harlow"
-    - "Give her the medicine"
+    - "Hand the key over to Officer Harlow"
+    - "Give the coin to the beggar"
+    - "Trade my lantern for his rope"
+    - "Return the stolen locket to its owner"
 
 impactHint:
   default: 1

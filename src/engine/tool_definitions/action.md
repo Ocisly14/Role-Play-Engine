@@ -1,23 +1,21 @@
 ---
 id: action
 title: Current-Location Action
-description: A current-location action performed in the actor's present scene — self-directed behavior, environmental interaction, basic item use or manipulation, searching, resting, listening, barricading, hiding in place.
+description: "A routine current-location action that needs no specialized skill — picking up an item, reading a visible note, operating a pre-existing device, resting, eating, waiting, or barricading with nearby furniture. FALLBACK: use a specific skill when one fits (Spot Hidden for searching hidden things, Listen for hearing through walls, Stealth for hiding in motion, Locksmith for picking locks, First Aid for treating wounds, Mechanical Repair / Electrical Repair for fixing gear)."
 
 impactHint:
   default: 0
   range: "0-2"
-  examples: "thinking/resting/observing=0, searching a room openly=2, screaming=2"
+  examples: "thinking/resting/observing=0, lighting a lamp=1, barricading=2"
 
 interpreter:
   examples:
-    - "Search the study carefully for signs that someone opened the desk"
     - "Pick up the key from the desk"
     - "Read the old journal"
     - "Light the oil lamp"
     - "Rest and catch my breath"
-    - "Listen at the door"
+    - "Put the registry log into my pocket from the counter"
     - "Barricade the entrance with furniture"
-    - "Hide behind the curtains"
 
 skillCheck:
   difficulty: regular
@@ -29,7 +27,7 @@ stateDomains:
     inject: [actor]
     fields:
       actor: [id, name, conditions]
-    output: [character.hp, character.condition, character.fatigue, memory.event, memory.information]
+    output: [character.hp, character.condition, character.fatigue, memory.event]
   scene:
     inject: [current]
     fields: [id, name, description, conditions, items, connections]
@@ -52,7 +50,6 @@ outputSchema:
     - item.move
     - item.create
     - item.destroy
-    - memory.information
 ---
 
 # Current-Location Action Resolution Guidance
@@ -91,7 +88,7 @@ Connections marked as [HIDDEN] are secret passages, trap doors, or concealed exi
 - A critical success may reveal even the most cleverly concealed passages.
 - A regular success reveals passages that are moderately hidden.
 - Without a skill check or on failure, hidden connections must NOT be revealed.
-- Reflect any discovery in `scene.condition`, `character.position`, or `memory.information` as appropriate.
+- Reflect any discovery in `scene.condition`, `character.position`, or `memory.event` as appropriate.
 
 ## Skill Check Results
 - **No skill check (auto success)**: routine actions succeed as described. Hidden connections are NOT revealed without a skill check.
@@ -111,7 +108,7 @@ Common cases:
 - tool gets damaged from forceful use
 - consumable used up
 - item dropped during action
-- note or clue read, inspected, or discovered as `memory.information`
+- note or clue read, inspected, or discovered as `memory.event`
 - simple improvised result created from available materials
 
 ## Actor Conditions
@@ -148,7 +145,7 @@ Use `character.fatigue`.
 
 ### character
 - `character.fatigue`: based on exertion level
-- `memory.event` / `memory.information`: first-person account of what happened and what was learned
+- `memory.event`: first-person account of what happened and what was learned
 
 ## On Failure
 

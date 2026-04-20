@@ -20,7 +20,6 @@ const STANDARD_TYPE_IDS = [
   "scene.condition",
   "memory.event",
   "memory.witness",
-  "memory.information",
   "relationship.change",
 ] as const;
 
@@ -129,8 +128,8 @@ function makeMockDgsm(
 // ─── Tests ────────────────────────────────────────────────────────────────────
 
 describe("STATE_CHANGE_APPLIERS", () => {
-  it("has an applier for every standard type (14 types)", () => {
-    expect(STANDARD_TYPE_IDS).toHaveLength(14);
+  it("has an applier for every standard type (13 types)", () => {
+    expect(STANDARD_TYPE_IDS).toHaveLength(13);
     for (const typeId of STANDARD_TYPE_IDS) {
       expect(STATE_CHANGE_APPLIERS).toHaveProperty(typeId);
       expect(typeof STATE_CHANGE_APPLIERS[typeId]).toBe("function");

@@ -24,6 +24,8 @@ outputSchema:
   presets: [default, item_modify]
   requireOnSuccess:
     - item.create
+  requireOnFailure:
+    - item.create
 
 interpreter:
   examples:
@@ -41,7 +43,7 @@ interpreter:
 - Use `item.modify` when the actor alters an existing original, draft, seal, or partially prepared document.
 - Use `item.destroy` when source materials, spoiled drafts, or ruined originals are consumed or rendered unusable.
 - Use `item.move` when the finished forgery or working materials are handed off, hidden, pocketed, or otherwise relocated during the action.
-- Use `memory.information` only when the actor learns a concrete technical detail about the original, seal, handwriting, or production method while studying it.
+- Use `memory.event` only when the actor learns a concrete technical detail about the original, seal, handwriting, or production method while studying it.
 
 ## On Success
 - **Regular success**: The actor produces a convincing forgery that will pass casual inspection — a fake pass, a copied signature, or a reproduced credential (item.create). Untrained observers or a quick glance will not detect the fraud; the item can be used for its intended purpose under normal circumstances.

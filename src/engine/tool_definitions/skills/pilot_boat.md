@@ -26,7 +26,6 @@ outputSchema:
     - memory.event
   requireOnSuccess:
     - character.position
-    - memory.event
 
 interpreter:
   examples:

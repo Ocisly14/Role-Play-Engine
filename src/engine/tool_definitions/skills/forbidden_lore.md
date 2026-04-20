@@ -23,10 +23,8 @@ stateDomains:
 outputSchema:
   presets: [default]
   use:
-    - memory.information
     - character.san
   requireOnSuccess:
-    - memory.information
     - character.san
 
 interpreter:

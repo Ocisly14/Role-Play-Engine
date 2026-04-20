@@ -25,7 +25,6 @@ outputSchema:
     - memory.event
     - character.position
   requireOnSuccess:
-    - memory.event
     - character.position
 
 interpreter:

@@ -25,6 +25,8 @@ outputSchema:
   requireOnSuccess:
     - item.modify
     - scene.condition
+  requireOnFailure:
+    - item.modify
 
 interpreter:
   examples:
@@ -42,7 +44,7 @@ interpreter:
 - Use `item.destroy` when a spring, bolt, gear, or other component is ruined during the attempt.
 - Use `item.move` when parts are removed, reinstalled, or repositioned as part of the repair process.
 - Use `item.create` only when the actor fabricates or recovers a grounded replacement part during the repair.
-- Use `memory.information` only when the actor learns a concrete diagnostic detail about the fault, wear pattern, or mechanism design.
+- Use `memory.event` only when the actor learns a concrete diagnostic detail about the fault, wear pattern, or mechanism design.
 
 ## On Success
 - **Regular success**: The mechanical fault is identified and corrected. An engine turns over, a seized gear is freed, a broken mechanism returns to working order. The repair holds for normal use.

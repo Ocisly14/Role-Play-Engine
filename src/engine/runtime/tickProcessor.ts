@@ -535,11 +535,7 @@ async function executeSingleTick(
           }
 
           // Write memories from StateResolution
-          const memoryTypes = [
-            "memory.event",
-            "memory.witness",
-            "memory.information",
-          ];
+          const memoryTypes = ["memory.event", "memory.witness"];
           if (memoryManager) {
             for (const memType of memoryTypes) {
               const memories = stateResolution[memType];

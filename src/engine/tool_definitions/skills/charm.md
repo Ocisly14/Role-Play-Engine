@@ -43,7 +43,6 @@ outputSchema:
   use:
     - character.condition
     - memory.event
-    - memory.information
     - relationship.change
   requireOnSuccess:
     - relationship.change
@@ -60,9 +59,9 @@ interpreter:
 
 ## On Success
 
-- **Regular success**: The target warms up noticeably. They become friendly or cooperative, willing to share information or grant a small favor. Record the interaction as memory.event; if they reveal something useful, keep that as memory.information. Relationship improves by one tier (e.g., Neutral → Friendly).
-- **Hard success**: The target is genuinely won over. They trust the actor and may volunteer information beyond what was asked, or go out of their way to assist. Relationship improves and the effect lingers beyond this interaction; any concrete revelations should be preserved as memory.information.
-- **Extreme success**: The target is completely charmed — they feel a strong personal connection to the actor. They will take meaningful risks to help and may become a recurring ally. Relationship improves significantly; record the notable bond and any lasting change as memory.event or memory.information as appropriate.
+- **Regular success**: The target warms up noticeably. They become friendly or cooperative, willing to share information or grant a small favor. Record the interaction and any useful revelation as memory.event. Relationship improves by one tier (e.g., Neutral → Friendly).
+- **Hard success**: The target is genuinely won over. They trust the actor and may volunteer information beyond what was asked, or go out of their way to assist. Relationship improves and the effect lingers beyond this interaction; any concrete revelations should be preserved as memory.event.
+- **Extreme success**: The target is completely charmed — they feel a strong personal connection to the actor. They will take meaningful risks to help and may become a recurring ally. Relationship improves significantly; record the notable bond and any lasting change as memory.event.
 
 ## On Failure
 

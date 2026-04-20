@@ -257,22 +257,6 @@ export const STATE_CHANGE_TYPES: Record<string, StateChangeTypeDef> = {
     },
   },
 
-  "memory.information": {
-    description:
-      "Record an information memory for a character (something they learned).",
-    schema: {
-      type: "object",
-      properties: {
-        characterId: {
-          type: "string",
-          description: "ID of the character receiving the memory.",
-        },
-        content: { type: "string", description: "Content of the information." },
-      },
-      required: ["characterId", "content"],
-    },
-  },
-
   // ── Relationship ─────────────────────────────────────────────────────────────
 
   "relationship.change": {

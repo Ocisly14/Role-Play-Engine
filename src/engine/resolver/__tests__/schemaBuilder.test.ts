@@ -9,15 +9,15 @@ describe("resolveOutputSchemaTypeIds", () => {
   it("expands presets and preserves stable merged order", () => {
     const config: OutputSchemaConfig = {
       presets: ["default"],
-      use: ["memory.information", "character.fatigue", "relationship.change"],
+      use: ["relationship.change", "character.fatigue", "item.modify"],
     };
 
     expect(resolveOutputSchemaTypeIds(config)).toEqual([
       "memory.event",
       "character.fatigue",
       "scene.condition",
-      "memory.information",
       "relationship.change",
+      "item.modify",
     ]);
   });
 
@@ -35,7 +35,6 @@ describe("resolveOutputSchemaTypeIds", () => {
       "item.modify",
       "item.destroy",
       "item.create",
-      "memory.information",
     ]);
   });
 
@@ -244,6 +243,67 @@ describe("formatOutputSchemaPrompt", () => {
     expect(result).toContain("`character.hp`");
     expect(result).toContain("`character.condition`");
     expect(result).toContain("at least one of");
-    expect(result).toContain("Do NOT respond with only");
+  });
+
+  it("always emits the Always-Required block naming memory.event", () => {
+    const result = formatOutputSchemaPrompt({
+      use: ["character.hp"],
+    });
+
+    expect(result).toContain("### Always Required");
+    expect(result).toContain("`memory.event`");
+    expect(result).toContain("EVERY resolution");
+  });
+
+  it("emits Always-Required block on failure too", () => {
+    const result = formatOutputSchemaPrompt(
+      {
+        use: ["character.hp"],
+        requireOnSuccess: ["character.hp"],
+      },
+      { skillSucceeded: false }
+    );
+
+    expect(result).toContain("### Always Required");
+    expect(result).toContain("`memory.event`");
+  });
+
+  it("omits the Required-on-Failure block when skillSucceeded is true", () => {
+    const result = formatOutputSchemaPrompt(
+      {
+        use: ["item.modify"],
+        requireOnFailure: ["item.modify"],
+      },
+      { skillSucceeded: true }
+    );
+
+    expect(result).not.toContain("Required on Failure");
+  });
+
+  it("omits the Required-on-Failure block when requireOnFailure is empty", () => {
+    const result = formatOutputSchemaPrompt(
+      {
+        use: ["memory.event"],
+      },
+      { skillSucceeded: false }
+    );
+
+    expect(result).not.toContain("Required on Failure");
+  });
+
+  it("emits the Required-on-Failure block when skillSucceeded is false and requireOnFailure is set", () => {
+    const result = formatOutputSchemaPrompt(
+      {
+        use: ["item.modify", "character.fatigue"],
+        requireOnFailure: ["item.modify", "character.fatigue"],
+      },
+      { skillSucceeded: false }
+    );
+
+    expect(result).toContain("### Required on Failure");
+    expect(result).toContain("`item.modify`");
+    expect(result).toContain("`character.fatigue`");
+    expect(result).toContain("at least one of");
+    expect(result).toContain("NOT");
   });
 });

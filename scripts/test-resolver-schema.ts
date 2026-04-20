@@ -353,11 +353,7 @@ async function runScenario(
     }
 
     // Log memories (not applied via DGSM, but present in resolution)
-    const memoryTypes = [
-      "memory.event",
-      "memory.witness",
-      "memory.information",
-    ];
+    const memoryTypes = ["memory.event", "memory.witness"];
     for (const memType of memoryTypes) {
       const memories = resolution[memType];
       if (Array.isArray(memories) && memories.length > 0) {

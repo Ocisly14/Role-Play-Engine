@@ -25,6 +25,8 @@ outputSchema:
   requireOnSuccess:
     - item.modify
     - scene.condition
+  requireOnFailure:
+    - item.modify
 
 interpreter:
   examples:
@@ -42,7 +44,7 @@ interpreter:
 - Use `item.destroy` when a component burns out, shorts, or is ruined during the attempt.
 - Use `item.move` when parts are removed, reinstalled, or relocated as part of the repair.
 - Use `item.create` only when the actor fabricates or replaces a grounded new component from available materials.
-- Use `memory.information` only when the actor learns a concrete diagnostic fact about the fault, wiring layout, or cause of failure.
+- Use `memory.event` only when the actor learns a concrete diagnostic fact about the fault, wiring layout, or cause of failure.
 
 ## On Success
 - **Regular success**: The device is repaired and returns to functional operation. The fault — a blown fuse, severed wire, burnt component — is identified and corrected using available tools and materials.

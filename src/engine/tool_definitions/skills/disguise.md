@@ -22,8 +22,6 @@ outputSchema:
   use:
     - character.condition
     - memory.event
-  requireOnSuccess:
-    - memory.event
 
 interpreter:
   examples:

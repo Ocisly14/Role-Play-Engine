@@ -7,6 +7,14 @@ export interface GameInterpreterSkillFlowCase {
   actionText: string;
   expectedSteps: string[];
   expectedPrimaryDefinitionId: string;
+  /**
+   * Optional: if set, the interpreter's chosen primaryDefinitionId counts as
+   * a match when it appears in this list. `expectedPrimaryDefinitionId`
+   * remains the first choice and MUST appear in this list when both are set.
+   * Use only for cases with genuine CoC-canon ambiguity — don't weaken
+   * unambiguous expectations.
+   */
+  expectedPrimaryDefinitionIdAnyOf?: string[];
   expectedOutputKeysAnyOf: string[];
   notes?: string;
   /**
@@ -34,7 +42,7 @@ export const GAME_INTERPRETER_SKILL_FLOW_CASES: GameInterpreterSkillFlowCase[] =
       actionText: "仔细观察接待窗口和来访登记表，找有没有被人翻动过的痕迹",
       expectedSteps: ["perception"],
       expectedPrimaryDefinitionId: "perception",
-      expectedOutputKeysAnyOf: ["memory.information", "item.modify"],
+      expectedOutputKeysAnyOf: ["memory.event", "item.modify"],
     },
     {
       id: "single_listen_lab_door",
@@ -44,7 +52,7 @@ export const GAME_INTERPRETER_SKILL_FLOW_CASES: GameInterpreterSkillFlowCase[] =
       actionText: "贴在实验室门边仔细听里面有没有说话声",
       expectedSteps: ["listen"],
       expectedPrimaryDefinitionId: "listen",
-      expectedOutputKeysAnyOf: ["memory.information"],
+      expectedOutputKeysAnyOf: ["memory.event"],
     },
     {
       id: "single_action_barricade",
@@ -84,7 +92,7 @@ export const GAME_INTERPRETER_SKILL_FLOW_CASES: GameInterpreterSkillFlowCase[] =
       actionText: "翻查维修登记簿，找最近几天谁来送修过钟表",
       expectedSteps: ["research"],
       expectedPrimaryDefinitionId: "research",
-      expectedOutputKeysAnyOf: ["memory.information"],
+      expectedOutputKeysAnyOf: ["memory.event"],
     },
     {
       id: "single_occult_web",
@@ -94,7 +102,7 @@ export const GAME_INTERPRETER_SKILL_FLOW_CASES: GameInterpreterSkillFlowCase[] =
       actionText: "研究巨网和霜痕，判断这里是不是某种超自然通道",
       expectedSteps: ["occult"],
       expectedPrimaryDefinitionId: "occult",
-      expectedOutputKeysAnyOf: ["memory.information", "scene.condition"],
+      expectedOutputKeysAnyOf: ["memory.event", "scene.condition"],
     },
     {
       id: "single_stealth_waiting_chairs",
@@ -113,13 +121,9 @@ export const GAME_INTERPRETER_SKILL_FLOW_CASES: GameInterpreterSkillFlowCase[] =
       targetIds: ["Helen"],
       executionSceneId: "SCN_10_SUB_1",
       actionText: "和海伦随便聊聊今天店里怎么样，顺便看看她会不会主动提起什么",
-      expectedSteps: ["conversation"],
-      expectedPrimaryDefinitionId: "conversation",
-      expectedOutputKeysAnyOf: [
-        "memory.event",
-        "memory.information",
-        "relationship.change",
-      ],
+      expectedSteps: ["character_interaction"],
+      expectedPrimaryDefinitionId: "character_interaction",
+      expectedOutputKeysAnyOf: ["memory.event", "relationship.change"],
     },
     {
       id: "single_locksmith_lab_access",
@@ -140,7 +144,7 @@ export const GAME_INTERPRETER_SKILL_FLOW_CASES: GameInterpreterSkillFlowCase[] =
         "先去医院大厅，再仔细观察接待窗口和来访登记表有没有被人翻动过的痕迹",
       expectedSteps: ["movement", "perception"],
       expectedPrimaryDefinitionId: "perception",
-      expectedOutputKeysAnyOf: ["memory.information", "item.modify"],
+      expectedOutputKeysAnyOf: ["memory.event", "item.modify"],
       notes: "当前引擎只消费第一个非 movement step。",
     },
     {
@@ -151,7 +155,7 @@ export const GAME_INTERPRETER_SKILL_FLOW_CASES: GameInterpreterSkillFlowCase[] =
       actionText: "先去医院大厅，再贴在实验室门边仔细听里面有没有说话声",
       expectedSteps: ["movement", "listen"],
       expectedPrimaryDefinitionId: "listen",
-      expectedOutputKeysAnyOf: ["memory.information"],
+      expectedOutputKeysAnyOf: ["memory.event"],
       notes: "当前引擎只消费第一个非 movement step。",
     },
     {
@@ -184,7 +188,7 @@ export const GAME_INTERPRETER_SKILL_FLOW_CASES: GameInterpreterSkillFlowCase[] =
       actionText: "先拆开坏掉的钟表检查内部，再观察有没有人故意做过手脚",
       expectedSteps: ["mechanical_repair", "perception"],
       expectedPrimaryDefinitionId: "mechanical_repair",
-      expectedOutputKeysAnyOf: ["item.modify", "memory.information"],
+      expectedOutputKeysAnyOf: ["item.modify", "memory.event"],
     },
     {
       id: "multi_locksmith_then_perception",
@@ -194,7 +198,7 @@ export const GAME_INTERPRETER_SKILL_FLOW_CASES: GameInterpreterSkillFlowCase[] =
       actionText: "先打开实验室门禁，再检查里面有没有异常痕迹",
       expectedSteps: ["locksmith", "perception"],
       expectedPrimaryDefinitionId: "locksmith",
-      expectedOutputKeysAnyOf: ["scene.condition", "memory.information"],
+      expectedOutputKeysAnyOf: ["scene.condition", "memory.event"],
     },
     {
       id: "multi_move_then_occult",
@@ -204,7 +208,7 @@ export const GAME_INTERPRETER_SKILL_FLOW_CASES: GameInterpreterSkillFlowCase[] =
       actionText: "先穿过教堂暗门，再研究巨网上的寒霜和异常光泽",
       expectedSteps: ["movement", "occult"],
       expectedPrimaryDefinitionId: "occult",
-      expectedOutputKeysAnyOf: ["memory.information", "scene.condition"],
+      expectedOutputKeysAnyOf: ["memory.event", "scene.condition"],
       notes: "当前引擎只消费第一个非 movement step。",
     },
     {
@@ -215,7 +219,7 @@ export const GAME_INTERPRETER_SKILL_FLOW_CASES: GameInterpreterSkillFlowCase[] =
       actionText: "先躲到候诊椅后面，再偷听实验室门后的对话",
       expectedSteps: ["stealth", "listen"],
       expectedPrimaryDefinitionId: "stealth",
-      expectedOutputKeysAnyOf: ["memory.information", "memory.event"],
+      expectedOutputKeysAnyOf: ["memory.event"],
     },
     {
       id: "multi_action_then_stealth",
@@ -234,13 +238,9 @@ export const GAME_INTERPRETER_SKILL_FLOW_CASES: GameInterpreterSkillFlowCase[] =
       targetIds: ["Bruno Galilei"],
       executionSceneId: "SCN_12_SUB_1",
       actionText: "先翻查维修登记簿，再和布鲁诺随口聊聊最近来送修的人",
-      expectedSteps: ["research", "conversation"],
+      expectedSteps: ["research", "character_interaction"],
       expectedPrimaryDefinitionId: "research",
-      expectedOutputKeysAnyOf: [
-        "memory.information",
-        "memory.event",
-        "relationship.change",
-      ],
+      expectedOutputKeysAnyOf: ["memory.event", "relationship.change"],
     },
     // ========== Group C — Skill check branch coverage (forcedSkillStatus) ==========
     {
@@ -251,7 +251,7 @@ export const GAME_INTERPRETER_SKILL_FLOW_CASES: GameInterpreterSkillFlowCase[] =
       actionText: "仔细观察接待窗口和来访登记表，找有没有被人翻动过的痕迹",
       expectedSteps: ["perception"],
       expectedPrimaryDefinitionId: "perception",
-      expectedOutputKeysAnyOf: ["memory.information"],
+      expectedOutputKeysAnyOf: ["memory.event"],
       forcedSkillStatus: "critical",
       notes: "强制 critical，验证 resolver 的大成功叙事分支",
     },
@@ -274,7 +274,7 @@ export const GAME_INTERPRETER_SKILL_FLOW_CASES: GameInterpreterSkillFlowCase[] =
       actionText: "翻查维修登记簿，找最近几天谁来送修过钟表",
       expectedSteps: ["research"],
       expectedPrimaryDefinitionId: "research",
-      expectedOutputKeysAnyOf: ["memory.information"],
+      expectedOutputKeysAnyOf: ["memory.event"],
       forcedSkillStatus: "regular",
     },
     {
@@ -286,7 +286,7 @@ export const GAME_INTERPRETER_SKILL_FLOW_CASES: GameInterpreterSkillFlowCase[] =
       actionText: "观察海伦的神色，看她有没有在说谎",
       expectedSteps: ["psychology"],
       expectedPrimaryDefinitionId: "psychology",
-      expectedOutputKeysAnyOf: ["memory.information", "relationship.change"],
+      expectedOutputKeysAnyOf: ["memory.event", "relationship.change"],
       forcedSkillStatus: "fail",
       notes:
         "psychology 的 failBehavior=partial；resolver 应该继续跑，只是渲染失败叙事",
@@ -327,7 +327,7 @@ export const GAME_INTERPRETER_SKILL_FLOW_CASES: GameInterpreterSkillFlowCase[] =
       actionText: "走在通往焚化厂的路上留心街上有没有异常",
       expectedSteps: ["perception"],
       expectedPrimaryDefinitionId: "perception",
-      expectedOutputKeysAnyOf: ["memory.information"],
+      expectedOutputKeysAnyOf: ["memory.event"],
       executionLocation: { type: "road", roadId: "ROAD_1", position: 0.5 },
     },
     {
@@ -338,7 +338,7 @@ export const GAME_INTERPRETER_SKILL_FLOW_CASES: GameInterpreterSkillFlowCase[] =
       actionText: "站在十字路口，听附近有没有人低声交谈",
       expectedSteps: ["listen"],
       expectedPrimaryDefinitionId: "listen",
-      expectedOutputKeysAnyOf: ["memory.information"],
+      expectedOutputKeysAnyOf: ["memory.event"],
       executionLocation: { type: "junction", junctionId: "JUNC_3" },
     },
     // ========== Group B — Output key targeted coverage ==========
@@ -361,7 +361,7 @@ export const GAME_INTERPRETER_SKILL_FLOW_CASES: GameInterpreterSkillFlowCase[] =
       actionText: "凑近研究那张诡异的巨网，想看清上面的纹路",
       expectedSteps: ["occult"],
       expectedPrimaryDefinitionId: "occult",
-      expectedOutputKeysAnyOf: ["character.san", "memory.information"],
+      expectedOutputKeysAnyOf: ["character.san", "memory.event"],
     },
     {
       id: "key_character_condition_medicine",
@@ -372,7 +372,9 @@ export const GAME_INTERPRETER_SKILL_FLOW_CASES: GameInterpreterSkillFlowCase[] =
       actionText: "给发烧的海伦喂退烧药",
       expectedSteps: ["medicine"],
       expectedPrimaryDefinitionId: "medicine",
+      expectedPrimaryDefinitionIdAnyOf: ["medicine", "first_aid"],
       expectedOutputKeysAnyOf: ["character.condition", "character.hp"],
+      notes: "喂药在 CoC 规则下 medicine（处方级）和 first_aid（急救级）都 canonical",
     },
     {
       id: "key_character_position_stealth",
@@ -392,7 +394,9 @@ export const GAME_INTERPRETER_SKILL_FLOW_CASES: GameInterpreterSkillFlowCase[] =
       actionText: "从柜台上把来访登记簿揣进口袋",
       expectedSteps: ["action"],
       expectedPrimaryDefinitionId: "action",
+      expectedPrimaryDefinitionIdAnyOf: ["action", "sleight_of_hand"],
       expectedOutputKeysAnyOf: ["item.move", "memory.event"],
+      notes: "有接待员在场时 sleight_of_hand 也 canonical；无观察者时 action 就够",
     },
     {
       id: "key_item_destroy_brawling",
@@ -414,7 +418,7 @@ export const GAME_INTERPRETER_SKILL_FLOW_CASES: GameInterpreterSkillFlowCase[] =
       actionText: "站在大厅角落，远远看着布鲁诺在窗口做什么",
       expectedSteps: ["perception"],
       expectedPrimaryDefinitionId: "perception",
-      expectedOutputKeysAnyOf: ["memory.witness", "memory.information"],
+      expectedOutputKeysAnyOf: ["memory.witness", "memory.event"],
     },
     // ========== Group A — Category-representative skills ==========
     {
@@ -459,7 +463,7 @@ export const GAME_INTERPRETER_SKILL_FLOW_CASES: GameInterpreterSkillFlowCase[] =
       actionText: "拍桌子瞪眼逼问海伦知道多少",
       expectedSteps: ["intimidate"],
       expectedPrimaryDefinitionId: "intimidate",
-      expectedOutputKeysAnyOf: ["memory.information", "relationship.change"],
+      expectedOutputKeysAnyOf: ["memory.event", "relationship.change"],
     },
     {
       id: "social_bluff_false_identity",
@@ -481,7 +485,9 @@ export const GAME_INTERPRETER_SKILL_FLOW_CASES: GameInterpreterSkillFlowCase[] =
       actionText: "撕下衣角给布鲁诺绑紧伤口止血",
       expectedSteps: ["first_aid"],
       expectedPrimaryDefinitionId: "first_aid",
+      expectedPrimaryDefinitionIdAnyOf: ["first_aid", "medicine"],
       expectedOutputKeysAnyOf: ["character.hp", "character.condition"],
+      notes: "improvised 紧急止血是 first_aid；受过医学训练的人也可走 medicine",
     },
     {
       id: "medical_medicine_diagnose",
@@ -492,7 +498,7 @@ export const GAME_INTERPRETER_SKILL_FLOW_CASES: GameInterpreterSkillFlowCase[] =
       actionText: "给海伦把脉量体温判断她是不是得了什么病",
       expectedSteps: ["medicine"],
       expectedPrimaryDefinitionId: "medicine",
-      expectedOutputKeysAnyOf: ["memory.information", "character.condition"],
+      expectedOutputKeysAnyOf: ["memory.event", "character.condition"],
     },
     {
       id: "medical_psychology_read",
@@ -503,7 +509,7 @@ export const GAME_INTERPRETER_SKILL_FLOW_CASES: GameInterpreterSkillFlowCase[] =
       actionText: "观察海伦的表情判断她有没有说谎",
       expectedSteps: ["psychology"],
       expectedPrimaryDefinitionId: "psychology",
-      expectedOutputKeysAnyOf: ["memory.information", "relationship.change"],
+      expectedOutputKeysAnyOf: ["memory.event", "relationship.change"],
     },
     {
       id: "academic_psychoanalysis_calm",
@@ -514,7 +520,9 @@ export const GAME_INTERPRETER_SKILL_FLOW_CASES: GameInterpreterSkillFlowCase[] =
       actionText: "陪海伦坐下慢慢疏导她的情绪",
       expectedSteps: ["psychoanalysis"],
       expectedPrimaryDefinitionId: "psychoanalysis",
+      expectedPrimaryDefinitionIdAnyOf: ["psychoanalysis", "character_interaction"],
       expectedOutputKeysAnyOf: ["character.san", "relationship.change"],
+      notes: "单次安抚 canon 上是 character_interaction；系列疗程才是 psychoanalysis——单次动作 under-determined",
     },
     {
       id: "academic_law_interpret",
@@ -524,7 +532,7 @@ export const GAME_INTERPRETER_SKILL_FLOW_CASES: GameInterpreterSkillFlowCase[] =
       actionText: "翻查工坊执照看能不能找出对方违规的地方",
       expectedSteps: ["law"],
       expectedPrimaryDefinitionId: "law",
-      expectedOutputKeysAnyOf: ["memory.information"],
+      expectedOutputKeysAnyOf: ["memory.event"],
     },
     {
       id: "academic_archaeology_inspect",
@@ -534,7 +542,7 @@ export const GAME_INTERPRETER_SKILL_FLOW_CASES: GameInterpreterSkillFlowCase[] =
       actionText: "仔细查看祭坛底座的刻痕判断年代",
       expectedSteps: ["archaeology"],
       expectedPrimaryDefinitionId: "archaeology",
-      expectedOutputKeysAnyOf: ["memory.information"],
+      expectedOutputKeysAnyOf: ["memory.event"],
     },
     {
       id: "special_track_footprint",
@@ -544,6 +552,6 @@ export const GAME_INTERPRETER_SKILL_FLOW_CASES: GameInterpreterSkillFlowCase[] =
       actionText: "蹲下观察地上的脚印推断对方往哪走了",
       expectedSteps: ["track"],
       expectedPrimaryDefinitionId: "track",
-      expectedOutputKeysAnyOf: ["memory.information"],
+      expectedOutputKeysAnyOf: ["memory.event"],
     },
   ];

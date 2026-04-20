@@ -30,10 +30,6 @@ stateDomains:
 
 outputSchema:
   presets: [default]
-  use:
-    - memory.information
-  requireOnSuccess:
-    - memory.information
 
 interpreter:
   examples:
@@ -47,7 +43,7 @@ interpreter:
 
 ## On Success
 
-- **Regular success**: The actor hears something meaningful — fragments of conversation, distinctive footsteps, a specific sound that reveals activity nearby. Record the useful content as memory.information; the listening attempt itself can remain as memory.event when that matters.
+- **Regular success**: The actor hears something meaningful — fragments of conversation, distinctive footsteps, a specific sound that reveals activity nearby. Record the useful content and the listening attempt as memory.event.
 - **Hard success**: The actor hears clearly and comprehensively. Full sentences are understood, the number of speakers can be estimated, and the emotional tone (argument, whispering, laughter) is apparent. The information gathered is actionable and reliable.
 - **Extreme success**: The actor catches every word or sound in perfect clarity, including hushed details or sounds beneath ambient noise. They may overhear a key piece of information — a name, a location, a secret — that significantly advances their understanding of the situation.
 
