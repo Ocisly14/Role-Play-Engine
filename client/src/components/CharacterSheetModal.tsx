@@ -119,8 +119,8 @@ export function CharacterSheetModal({
               // HP, SAN, MP etc are in status field, not derived
               HP: char.status?.hp || undefined,
               maxHP: char.status?.maxHp || undefined,
-              SAN: char.status?.sanity || undefined,
-              maxSAN: char.status?.maxSanity || undefined,
+              SAN: char.status?.san || undefined,
+              maxSAN: char.status?.maxSan || undefined,
               MP: char.status?.mp || undefined,
               maxMP: char.status?.mp || undefined,
               LUCK: char.status?.luck || undefined,
@@ -175,8 +175,8 @@ export function CharacterSheetModal({
               LCK: playerChar.attributes?.LCK || undefined,
               HP: playerChar.status?.hp || undefined,
               maxHP: playerChar.status?.maxHp || undefined,
-              SAN: playerChar.status?.sanity || undefined,
-              maxSAN: playerChar.status?.maxSanity || undefined,
+              SAN: playerChar.status?.san || undefined,
+              maxSAN: playerChar.status?.maxSan || undefined,
               MP: playerChar.status?.mp || undefined,
               maxMP: playerChar.status?.mp || undefined, // MP doesn't have a separate max, usually same as current
               LUCK: playerChar.status?.luck || undefined,

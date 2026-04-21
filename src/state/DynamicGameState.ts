@@ -32,6 +32,7 @@ import type {
   Item,
   TransportEdge,
 } from "./types.js";
+import type { FeatureStateScope } from "../engine/core/types.js";
 
 /**
  * Dynamic Game State — runtime data for the simulation engine.
@@ -59,8 +60,15 @@ export interface DynamicGameState {
   scenarioOutlines: ScenarioOutline[];
 
   // === World Feature Runtime State ===
-  // Keyed by featureId -> sceneId -> feature-defined data
-  featureState: Record<string, Record<string, unknown>>;
+  // Scope-aware buckets: scope -> featureId -> key -> feature-defined data.
+  // Scope "scene" is keyed by sceneId, "region" by regionId, "character" by
+  // characterId, and "global" uses "" as the sole key.
+  scopedFeatureStates: {
+    scene: Record<string, Record<string, unknown>>;
+    region: Record<string, Record<string, unknown>>;
+    character: Record<string, Record<string, unknown>>;
+    global: Record<string, Record<string, unknown>>;
+  };
 
   // === NPC Planning System Runtime State ===
   npcStats: Record<string, { hp: number; san: number }>;
@@ -112,7 +120,7 @@ export const initialDynamicGameState = (params: {
   moduleName: params.moduleName,
   moduleSetup: null,
   scenarioOutlines: [],
-  featureState: {},
+  scopedFeatureStates: { scene: {}, region: {}, character: {}, global: {} },
   npcStats: {},
   npcInventories: {},
   npcRelationshipGraph: {},
@@ -140,10 +148,20 @@ export class DynamicGameStateManager {
   ).WorldEventDescriptor[] = [];
   private hiddenCharacterIds = new Set<string>();
 
-  constructor(state: DynamicGameState, db?: any) {
-    this.state = state;
+  /**
+   * Tracks per-connection refcount-based block votes for the Applier.
+   * Keyed by connectionId; value true means at least one feature is voting blocked.
+   * This is an engine-refactor path, separate from the legacy two-id
+   * blockedConnections Map used by pathfinding.
+   */
+  private blockedConnectionsById = new Map<string, boolean>();
+
+  constructor(state?: DynamicGameState, db?: any) {
+    this.state =
+      state ??
+      initialDynamicGameState({ sessionId: "", moduleName: "" });
     this.db = db || null;
-    this.hiddenCharacterIds = new Set(state.hiddenCharacterIds ?? []);
+    this.hiddenCharacterIds = new Set(this.state.hiddenCharacterIds ?? []);
     this.syncHiddenCharacterIds();
   }
 
@@ -429,7 +447,18 @@ export class DynamicGameStateManager {
       junctions,
       roads,
       blockedConnections,
-      featureState: data.featureState ?? {},
+      scopedFeatureStates: (() => {
+        const raw = data.scopedFeatureStates;
+        if (raw && typeof raw === "object") {
+          return {
+            scene: raw.scene ?? {},
+            region: raw.region ?? {},
+            character: raw.character ?? {},
+            global: raw.global ?? {},
+          };
+        }
+        return { scene: {}, region: {}, character: {}, global: {} };
+      })(),
       npcStats: data.npcStats ?? {},
       npcInventories: data.npcInventories ?? {},
       npcRelationshipGraph: data.npcRelationshipGraph ?? {},
@@ -541,18 +570,45 @@ export class DynamicGameStateManager {
       character.name = updates.name;
     }
 
-    // Update status values (hp, sanity, mp, etc.)
+    // Update status values (hp, san, mp, etc.)
     if (updates.status) {
       for (const [key, value] of Object.entries(updates.status)) {
         if (key === "conditions" && Array.isArray(value)) {
-          const normalizedConditions = Array.from(
-            new Set(
-              value
-                .filter((item): item is string => typeof item === "string")
-                .map((item) => item.trim())
-                .filter((item) => item.length > 0)
-            )
-          );
+          const seen = new Set<string>();
+          const normalizedConditions: import(
+            "../engine/core/types.js"
+          ).CharacterCondition[] = [];
+          for (const item of value) {
+            if (typeof item === "string") {
+              const trimmed = item.trim();
+              if (trimmed.length === 0 || seen.has(trimmed)) continue;
+              seen.add(trimmed);
+              normalizedConditions.push({
+                id: (globalThis.crypto?.randomUUID?.() ??
+                  `${Date.now()}-${Math.random()}`) as string,
+                description: trimmed,
+              });
+            } else if (
+              item &&
+              typeof item === "object" &&
+              typeof (item as { description?: unknown }).description === "string"
+            ) {
+              const cond = item as import(
+                "../engine/core/types.js"
+              ).CharacterCondition;
+              const desc = cond.description.trim();
+              if (desc.length === 0 || seen.has(desc)) continue;
+              seen.add(desc);
+              normalizedConditions.push({
+                ...cond,
+                id:
+                  cond.id ??
+                  ((globalThis.crypto?.randomUUID?.() ??
+                    `${Date.now()}-${Math.random()}`) as string),
+                description: desc,
+              });
+            }
+          }
           character.status.conditions = normalizedConditions;
           continue;
         }
@@ -854,11 +910,34 @@ export class DynamicGameStateManager {
 
   appendSceneCondition(
     scenarioId: string,
-    condition: import("../planning/types.js").SceneCondition
+    condition:
+      | import("../planning/types.js").SceneCondition
+      | import("../engine/core/types.js").SceneCondition
   ): void {
     if (!this.state.scenarioConditions[scenarioId])
       this.state.scenarioConditions[scenarioId] = [];
-    this.state.scenarioConditions[scenarioId].push(condition);
+    this.state.scenarioConditions[scenarioId].push(
+      condition as import("../planning/types.js").SceneCondition
+    );
+    this.state.lastUpdated = new Date();
+  }
+
+  /**
+   * Remove all conditions in a scene owned by a given featureId.
+   * Used by the Applier to implement the replace-wholesale pattern
+   * (removeCondition({featureId}) + addCondition(...)).
+   */
+  removeSceneConditionsByFeatureId(
+    scenarioId: string,
+    featureId: string
+  ): void {
+    const existing = this.state.scenarioConditions[scenarioId];
+    if (!existing) return;
+    this.state.scenarioConditions[scenarioId] = existing.filter(
+      (c) =>
+        (c as import("../engine/core/types.js").SceneCondition).featureId !==
+        featureId
+    );
     this.state.lastUpdated = new Date();
   }
 
@@ -870,44 +949,215 @@ export class DynamicGameStateManager {
     this.state.lastUpdated = new Date();
   }
 
-  // === Feature State ===
+  // === Scoped Feature State ===
 
-  /** Get feature state for a specific scene. Returns undefined if not set. */
-  getFeatureSceneState(
+  /** Set feature state at a specific scope+key. */
+  setScopedFeatureState(
     featureId: string,
-    sceneId: string
-  ): unknown | undefined {
-    return this.state.featureState[featureId]?.[sceneId];
-  }
-
-  /** Set feature state for a specific scene. */
-  setFeatureSceneState(
-    featureId: string,
-    sceneId: string,
+    scope: FeatureStateScope,
+    key: string,
     data: unknown
   ): void {
-    if (!this.state.featureState[featureId])
-      this.state.featureState[featureId] = {};
-    this.state.featureState[featureId][sceneId] = data;
+    const bucket = this.state.scopedFeatureStates[scope];
+    if (!bucket[featureId]) bucket[featureId] = {};
+    bucket[featureId][key] = data;
     this.state.lastUpdated = new Date();
   }
 
-  /** Get all scene states for a feature. Returns empty object if none. */
-  getFeatureState(featureId: string): Record<string, unknown> {
-    return this.state.featureState[featureId] ?? {};
+  /** Get feature state at a specific scope+key. */
+  getScopedFeatureState<T>(
+    featureId: string,
+    scope: FeatureStateScope,
+    key: string
+  ): T | undefined {
+    return this.state.scopedFeatureStates[scope][featureId]?.[key] as
+      | T
+      | undefined;
   }
 
-  /** Remove feature state for a specific scene. */
-  removeFeatureSceneState(featureId: string, sceneId: string): void {
-    if (this.state.featureState[featureId]) {
-      delete this.state.featureState[featureId][sceneId];
-      this.state.lastUpdated = new Date();
+  /** Get all entries for a feature in a scope. */
+  getAllScopedFeatureStates<T>(
+    featureId: string,
+    scope: FeatureStateScope
+  ): Array<{ key: string; state: T }> {
+    const bucket = this.state.scopedFeatureStates[scope][featureId] ?? {};
+    return Object.entries(bucket).map(([key, state]) => ({
+      key,
+      state: state as T,
+    }));
+  }
+
+  /** Remove a single feature state entry at scope+key. */
+  removeScopedFeatureState(
+    featureId: string,
+    scope: FeatureStateScope,
+    key: string
+  ): void {
+    const bucket = this.state.scopedFeatureStates[scope][featureId];
+    if (!bucket) return;
+    delete bucket[key];
+    this.state.lastUpdated = new Date();
+  }
+
+  // === Narrow helpers ===
+
+  getAllSceneIds(): string[] {
+    return Array.from(this.state.scenes.keys());
+  }
+
+  getRegionIdForScene(sceneId: string): string | undefined {
+    return this.state.scenes.get(sceneId)?.parentLocationId;
+  }
+
+  getGameDay(): number {
+    return this.state.gameDay;
+  }
+
+  setGameDay(n: number): void {
+    this.state.gameDay = n;
+    this.state.lastUpdated = new Date();
+  }
+
+  getTickTime(): string {
+    return this.state.timeOfDay;
+  }
+
+  setTickTime(s: string): void {
+    this.state.timeOfDay = s;
+    this.state.lastUpdated = new Date();
+  }
+
+  getNpcProfile(characterId: string): DynamicNPCProfile | undefined {
+    return this.state.npcCharacters.find((n) => n.id === characterId);
+  }
+
+  /**
+   * Insert/upsert an NPC profile. Used by Applier tests + bootstrap paths.
+   */
+  registerNpcProfile(profile: DynamicNPCProfile): void {
+    const existingIndex = this.state.npcCharacters.findIndex(
+      (n) => n.id === profile.id
+    );
+    if (existingIndex >= 0) {
+      this.state.npcCharacters[existingIndex] = profile;
+    } else {
+      this.state.npcCharacters.push(profile);
     }
+    this.state.lastUpdated = new Date();
+  }
+
+  /**
+   * Directly write a character status field to an absolute value.
+   * Thin wrapper used by the Applier after summing deltas + clamping.
+   */
+  setCharacterField(
+    characterId: string,
+    field: "hp" | "san" | "fatigue",
+    value: number
+  ): void {
+    const profile = this.state.npcCharacters.find(
+      (n) => n.id === characterId
+    );
+    if (!profile) return;
+    profile.status[field] = value;
+    // Keep legacy npcStats mirror in sync for hp/san so planning helpers
+    // that read `npcStats` continue to see fresh values.
+    if (field === "hp" || field === "san") {
+      const stats = this.state.npcStats[characterId];
+      if (stats) {
+        stats[field] = value;
+      }
+    }
+    this.state.lastUpdated = new Date();
+  }
+
+  /**
+   * Mark a character as dead. Adds a structured "dead" condition.
+   * Does NOT force hp to 0 — caller (Applier) has already clamped hp.
+   */
+  markCharacterDead(characterId: string): void {
+    const profile = this.state.npcCharacters.find(
+      (n) => n.id === characterId
+    );
+    if (!profile) return;
+    const already = profile.status.conditions.some(
+      (c) => c.description === "dead"
+    );
+    if (already) return;
+    profile.status.conditions.push({
+      id: (globalThis.crypto?.randomUUID?.() ??
+        `${Date.now()}-${Math.random()}`) as string,
+      description: "dead",
+    });
+    this.state.lastUpdated = new Date();
+  }
+
+  /**
+   * Push a character-level condition onto profile.status.conditions.
+   */
+  addCharacterCondition(
+    characterId: string,
+    condition: import("../engine/core/types.js").CharacterCondition
+  ): void {
+    const profile = this.state.npcCharacters.find(
+      (n) => n.id === characterId
+    );
+    if (!profile) return;
+    profile.status.conditions.push(condition);
+    this.state.lastUpdated = new Date();
+  }
+
+  /**
+   * Remove a character-level condition by its id.
+   */
+  removeCharacterCondition(characterId: string, conditionId: string): void {
+    const profile = this.state.npcCharacters.find(
+      (n) => n.id === characterId
+    );
+    if (!profile) return;
+    profile.status.conditions = profile.status.conditions.filter(
+      (c) => c.id !== conditionId
+    );
+    this.state.lastUpdated = new Date();
+  }
+
+  /**
+   * Ensure a scene exists in state.scenes. Creates a minimal DynamicScene
+   * with empty items/conditions/connections if not already present.
+   * Used by the Applier + tests to seed scene state.
+   */
+  ensureScene(sceneId: string): void {
+    if (this.state.scenes.has(sceneId)) return;
+    this.state.scenes.set(sceneId, {
+      id: sceneId,
+      name: sceneId,
+      description: "",
+      parentLocationId: "",
+      items: [],
+      conditions: [],
+      connections: [],
+    });
+    this.state.lastUpdated = new Date();
+  }
+
+  /**
+   * Ensure a connection id is known to the refcount-based block store.
+   * Current impl is a no-op: setConnectionBlocked/isConnectionBlocked
+   * (single-id variants) already handle missing keys safely.
+   */
+  ensureConnection(_connectionId: string): void {
+    // no-op placeholder; single-id block store tolerates missing keys
   }
 
   // === Blocked Connections ===
 
-  isConnectionBlocked(fromId: string, toId: string): boolean {
+  isConnectionBlocked(fromId: string, toId: string): boolean;
+  isConnectionBlocked(connectionId: string): boolean;
+  isConnectionBlocked(fromId: string, toId?: string): boolean {
+    if (toId === undefined) {
+      // Single-id form: consult the refcount-based store
+      return this.blockedConnectionsById.get(fromId) === true;
+    }
     return this.getConnectionBlockReason(fromId, toId) !== undefined;
   }
 
@@ -927,7 +1177,32 @@ export class DynamicGameStateManager {
     toId: string,
     blocked: boolean,
     reason: string
+  ): void;
+  setConnectionBlocked(connectionId: string, blocked: boolean): void;
+  setConnectionBlocked(
+    arg1: string,
+    arg2: string | boolean,
+    arg3?: boolean,
+    arg4?: string
   ): void {
+    // Single-id form: (connectionId, blocked)
+    if (typeof arg2 === "boolean") {
+      const connectionId = arg1;
+      const blocked = arg2;
+      if (blocked) {
+        this.blockedConnectionsById.set(connectionId, true);
+      } else {
+        this.blockedConnectionsById.delete(connectionId);
+      }
+      this.state.lastUpdated = new Date();
+      return;
+    }
+
+    // Two-id form: (fromId, toId, blocked, reason) — legacy pathfinding store
+    const fromId = arg1;
+    const toId = arg2;
+    const blocked = arg3 ?? false;
+    const reason = arg4 ?? "";
     const fromRef = resolveBlockedConnectionNodeRef(fromId, this.state);
     const toRef = resolveBlockedConnectionNodeRef(toId, this.state);
     if (!fromRef || !toRef) {
@@ -1037,6 +1312,6 @@ export class DynamicGameStateManager {
     const stats = this.state.npcStats[npcId];
     if (!npc || !stats) return;
     npc.status.hp = stats.hp;
-    npc.status.sanity = stats.san;
+    npc.status.san = stats.san;
   }
 }

@@ -34,8 +34,8 @@ function createMockDgsm() {
     name: string;
     status: {
       hp: number;
-      sanity: number;
-      maxSanity: number;
+      san: number;
+      maxSan: number;
       conditions: string[];
     };
   }> = [];
@@ -76,14 +76,14 @@ function createMockDgsm() {
       location: string,
       hp: number,
       san = 50,
-      maxSanity = 99
+      maxSan = 99
     ) {
       characterPositions[npcId] = { type: "scene", sceneId: location };
       npcStats[npcId] = { hp, san };
       npcCharacters.push({
         id: npcId,
         name: npcId,
-        status: { hp, sanity: san, maxSanity, conditions: [] },
+        status: { hp, san, maxSan, conditions: [] },
       });
     },
     isNpcAlive(npcId: string) {

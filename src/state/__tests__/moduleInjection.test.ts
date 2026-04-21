@@ -217,7 +217,12 @@ describe.skipIf(!moduleExists)("Module injection: Cassandra_zh", () => {
       expect(state.npcInjectionPolicy).not.toBeNull();
 
       // === Feature state (initially empty, features init on first tick) ===
-      expect(state.featureState).toEqual({});
+      expect(state.scopedFeatureStates).toEqual({
+        scene: {},
+        region: {},
+        character: {},
+        global: {},
+      });
 
       // === Scene conditions (from scene/junction/road definitions) ===
       // SCN_2_SUB_3 should have conditions

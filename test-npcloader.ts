@@ -122,7 +122,7 @@ async function testNPCLoader() {
         // Status
         logger.debug("💪 Status:");
         logger.debug(`  HP: ${npc.status.hp}/${npc.status.maxHp}`);
-        logger.debug(`  Sanity: ${npc.status.sanity}/${npc.status.maxSanity}`);
+        logger.debug(`  Sanity: ${npc.status.san}/${npc.status.maxSan}`);
         logger.debug(`  Luck: ${npc.status.luck}`);
         if (npc.status.mp) logger.debug(`  Magic Points: ${npc.status.mp}`);
 

@@ -3,6 +3,7 @@
  * All types used by DynamicGameState, TickProcessor, and engine components.
  */
 
+import type { CharacterCondition } from "../engine/core/types.js";
 import type { SceneCondition } from "../planning/types.js";
 
 // ─── Character-related types ───────────────────────────────────────
@@ -24,16 +25,18 @@ export interface CharacterAttributes {
 export interface CharacterStatus {
   hp: number;
   maxHp: number;
-  sanity: number;
-  maxSanity: number;
+  san: number;
+  maxSan: number;
+  fatigue: number;
+  maxFatigue: number;
   luck: number;
   mp?: number;
-  conditions: string[];
+  conditions: CharacterCondition[];
   notes?: string;
   damageBonus?: string;
   build?: number;
   mov?: number;
-  [key: string]: number | string[] | string | undefined;
+  [key: string]: number | CharacterCondition[] | string | undefined;
 }
 
 export interface InventoryItem {

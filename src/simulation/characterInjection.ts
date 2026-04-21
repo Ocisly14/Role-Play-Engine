@@ -23,7 +23,7 @@ export function buildInjectedProfile(input: {
   const { attributes } = input;
 
   const hp = Math.floor((attributes.CON + attributes.SIZ) / 10);
-  const sanity = attributes.POW;
+  const san = attributes.POW;
   const luck = typeof attributes["luck"] === "number" ? attributes["luck"] : 50;
 
   return {
@@ -41,8 +41,10 @@ export function buildInjectedProfile(input: {
     status: {
       hp,
       maxHp: hp,
-      sanity,
-      maxSanity: 99,
+      san,
+      maxSan: 99,
+      fatigue: 0,
+      maxFatigue: 100,
       luck,
       conditions: [],
     },
@@ -85,7 +87,7 @@ export function injectCharacterIntoState(
   // Initialise npcStats (uses `san` not `sanity`)
   state.npcStats[profile.id] = {
     hp: profile.status.hp,
-    san: profile.status.sanity,
+    san: profile.status.san,
   };
 
   // Initialise residence

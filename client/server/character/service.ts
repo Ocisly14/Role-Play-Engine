@@ -18,8 +18,10 @@ export function prepareCharacterForDB(characterData: any): any {
     status: JSON.stringify({
       hp: characterData.derived?.HP || 10,
       maxHp: characterData.derived?.HP || 10,
-      sanity: characterData.derived?.SAN || characterData.attributes?.POW || 60,
-      maxSanity: 99, // COC规则：最大理智值固定为99
+      san: characterData.derived?.SAN || characterData.attributes?.POW || 60,
+      maxSan: 99, // COC规则：最大理智值固定为99
+      fatigue: 0,
+      maxFatigue: 100,
       luck: characterData.derived?.LUCK || characterData.attributes?.LCK || 50,
       mp:
         characterData.derived?.MP ||

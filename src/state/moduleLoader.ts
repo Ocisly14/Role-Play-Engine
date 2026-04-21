@@ -327,7 +327,11 @@ export function initRuntime(params: {
     // Stats
     npcStats[npc.id] = {
       hp: npc.status?.hp ?? npc.attributes?.CON ?? 10,
-      san: npc.status?.sanity ?? npc.attributes?.POW ?? 50,
+      san:
+        npc.status?.san ??
+        (npc.status as unknown as { sanity?: number })?.sanity ??
+        npc.attributes?.POW ??
+        50,
     };
 
     // Inventory
@@ -411,7 +415,7 @@ export function initRuntime(params: {
     moduleName: moduleData.moduleName,
     moduleSetup: moduleData.setup,
     scenarioOutlines: moduleData.scenarioOutlines,
-    featureState: {},
+    scopedFeatureStates: { scene: {}, region: {}, character: {}, global: {} },
     npcStats,
     npcInventories,
     npcRelationshipGraph,

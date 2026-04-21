@@ -31,7 +31,7 @@ export function NpcCard({ npc, isSelected, onClick }: NpcCardProps) {
             {t("npc.hp")}: {npc.hp}/{npc.maxHp}
           </span>{" "}
           <span className="text-sky-500">
-            {t("npc.san")}: {npc.sanity}/{npc.maxSanity}
+            {t("npc.san")}: {npc.san}/{npc.maxSan}
           </span>
           {npc.currentAction && (
             <div className="text-slate-900 mt-0.5 truncate">

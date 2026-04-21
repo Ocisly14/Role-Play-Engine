@@ -50,7 +50,9 @@ function buildActorSection(
   if (allFields || fields?.includes("conditions")) {
     const conditions = npc.status?.conditions ?? [];
     if (conditions.length > 0) {
-      lines.push(`Conditions: ${conditions.join(", ")}`);
+      lines.push(
+        `Conditions: ${conditions.map((c) => c.description).join(", ")}`
+      );
     }
   }
 
@@ -108,7 +110,9 @@ function buildTargetSection(
   if (allFields || fields?.includes("conditions")) {
     const conditions = npc.status?.conditions ?? [];
     if (conditions.length > 0) {
-      lines.push(`Conditions: ${conditions.join(", ")}`);
+      lines.push(
+        `Conditions: ${conditions.map((c) => c.description).join(", ")}`
+      );
     }
   }
   if (allFields || fields?.includes("relationship")) {

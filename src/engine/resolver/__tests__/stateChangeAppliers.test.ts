@@ -32,7 +32,11 @@ function makeMockDgsm(
     {
       id: "npc_1",
       name: "Alice",
-      status: { hp: 10, sanity: 60, conditions: [] as string[] },
+      status: {
+        hp: 10,
+        san: 60,
+        conditions: [] as Array<{ id: string; description: string }>,
+      },
     },
   ];
   const npcStats: Record<string, { hp: number; san: number }> = {
@@ -78,7 +82,7 @@ function makeMockDgsm(
       if (npcStats[npcId]) {
         npcStats[npcId].san = Math.max(0, npcStats[npcId].san + delta);
         const npc = npcCharacters.find((n) => n.id === npcId);
-        if (npc) npc.status.sanity = npcStats[npcId].san;
+        if (npc) npc.status.san = npcStats[npcId].san;
       }
     }),
 
@@ -166,7 +170,11 @@ describe("applyByTypeId", () => {
 
     const state = dgsm.getState();
     const npc = state.npcCharacters.find((n: any) => n.id === "npc_1");
-    expect(npc?.status.conditions).toContain("bleeding");
+    expect(
+      npc?.status.conditions.some(
+        (c: { description: string }) => c.description === "bleeding"
+      )
+    ).toBe(true);
   });
 
   it("applies scene.condition add", () => {

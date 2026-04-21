@@ -1776,11 +1776,11 @@ export class NPCPlanningAgent {
     const npc = state.npcCharacters.find((n) => n.id === npcId);
     const conditions = npc?.status?.conditions ?? [];
     const nonInsanityConditions = conditions.filter(
-      (c) => !c.startsWith("[Insanity:")
+      (c) => !c.description.startsWith("[Insanity:")
     );
     if (nonInsanityConditions.length > 0) {
       sections.push(
-        `Physical conditions: ${nonInsanityConditions.join(", ")}. These are binding physical constraints on your current state. You cannot take actions that contradict these conditions unless you first resolve or escape them.`
+        `Physical conditions: ${nonInsanityConditions.map((c) => c.description).join(", ")}. These are binding physical constraints on your current state. You cannot take actions that contradict these conditions unless you first resolve or escape them.`
       );
     }
 

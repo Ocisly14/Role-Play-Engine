@@ -46,14 +46,14 @@ describe("buildInjectedProfile", () => {
     expect(profile.status.maxHp).toBe(13);
   });
 
-  it("derives sanity from POW", () => {
+  it("derives san from POW", () => {
     const profile = buildInjectedProfile(baseInput);
-    expect(profile.status.sanity).toBe(80);
+    expect(profile.status.san).toBe(80);
   });
 
-  it("sets maxSanity to 99", () => {
+  it("sets maxSan to 99", () => {
     const profile = buildInjectedProfile(baseInput);
-    expect(profile.status.maxSanity).toBe(99);
+    expect(profile.status.maxSan).toBe(99);
   });
 
   it("includes luck from attributes.luck in status", () => {

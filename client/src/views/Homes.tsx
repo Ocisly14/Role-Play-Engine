@@ -315,7 +315,7 @@ const Homes: React.FC<HomeProps> = ({
                                     color: "#6a1b9a",
                                   }}
                                 >
-                                  🧠 {status.sanity || "?"}
+                                  🧠 {status.san || "?"}
                                 </span>
                                 <span
                                   className="backdrop-blur-sm bg-green-50/60 border border-green-200 rounded-lg"

@@ -10,8 +10,8 @@ export interface NpcStatusInfo {
   name: string;
   hp: number;
   maxHp: number;
-  sanity: number;
-  maxSanity: number;
+  san: number;
+  maxSan: number;
   currentAction: string | null;
   location: string;
   inventory: Item[];

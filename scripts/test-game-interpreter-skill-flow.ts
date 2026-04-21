@@ -294,7 +294,7 @@ function getNpcSnapshot(
     id: npc.id,
     name: npc.name,
     hp: stats?.hp ?? npc.status?.hp,
-    san: stats?.san ?? npc.status?.sanity,
+    san: stats?.san ?? npc.status?.san,
     conditions: [...(npc.status?.conditions ?? [])].sort(),
     position: position ? dgsm.resolveLocationId(position) : undefined,
     inventory,

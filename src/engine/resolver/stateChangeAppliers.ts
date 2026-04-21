@@ -6,6 +6,7 @@
  * (tickProcessor) via memoryManager.
  */
 
+import { randomUUID } from "node:crypto";
 import type { DynamicGameStateManager } from "../../state/DynamicGameState.js";
 import { resolveOutputSchemaTypeIds } from "../outputSchema.js";
 import type { OutputSchemaConfig } from "../types.js";
@@ -65,15 +66,20 @@ export const STATE_CHANGE_APPLIERS: Record<string, Applier> = {
       if (c.remove && c.remove.length > 0) {
         const toRemove = new Set<string>(c.remove);
         npc.status.conditions = npc.status.conditions.filter(
-          (cond: string) => !toRemove.has(cond)
+          (cond) => !toRemove.has(cond.description)
         );
       }
 
       if (c.add && c.add.length > 0) {
-        const existing = new Set<string>(npc.status.conditions);
+        const existing = new Set<string>(
+          npc.status.conditions.map((cond) => cond.description)
+        );
         for (const cond of c.add) {
           if (!existing.has(cond)) {
-            npc.status.conditions.push(cond);
+            npc.status.conditions.push({
+              id: randomUUID(),
+              description: cond,
+            });
             existing.add(cond);
           }
         }

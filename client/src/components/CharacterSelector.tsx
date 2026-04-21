@@ -193,7 +193,7 @@ export function CharacterSelector({
                         {status && (
                           <div className="character-status">
                             <span>HP: {status.hp || "?"}</span>
-                            <span>SAN: {status.sanity || "?"}</span>
+                            <span>SAN: {status.san || "?"}</span>
                             <span>MP: {status.mp || "?"}</span>
                           </div>
                         )}

@@ -34,8 +34,10 @@ function makeNpc(id: string, hp: number): DynamicNPCProfile {
     status: {
       hp,
       maxHp: 10,
-      sanity: 50,
-      maxSanity: 50,
+      san: 50,
+      maxSan: 50,
+      fatigue: 0,
+      maxFatigue: 100,
       luck: 50,
       conditions: [],
     },
