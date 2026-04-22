@@ -156,7 +156,9 @@ describe("core types", () => {
 
 ```ts
 // src/engine/core/types.ts
-import type { StateResolution } from "../resolver/stateResolver.js";
+// No imports from legacy `../types.js` or `../resolver/*` — Phase B uses its
+// own PlannedOutcome (defined below) as the canonical resolver output shape.
+// The legacy `StateResolution` is deprecated and does NOT appear in core types.
 
 export type FeatureStateScope = "scene" | "region" | "character" | "global";
 
@@ -221,10 +223,31 @@ export interface ActionStep {
 
   activatedAt?: GameTime;
   plannedDuration?: number;
-  plannedOutcome?: StateResolution;
+  plannedOutcome?: PlannedOutcome;
   completionTime?: GameTime;
 
   status: ActionStatus;
+}
+
+/**
+ * Canonical result of resolving an action. Produced by the injected ResolveFn
+ * at activation time, consumed by Applier at commit time.
+ *
+ * Replaces the deprecated `StateResolution` (`src/engine/types.ts:377`), which
+ * bundled "characterChanges / itemChanges / memories / narrative" and does not
+ * match today's resolver output (a `Record<string, any>` keyed by the
+ * `stateChangeTypes.ts` registry).
+ *
+ * All mutations to game state MUST be expressed as `StateChange[]` so the
+ * Applier stays the single DGSM mutator.
+ */
+export interface PlannedOutcome {
+  /** Normalized state changes — fed directly into the tick buffer at commit. */
+  stateChanges: StateChange[];
+  /** In-game minutes the action takes. Drives `completionTime`. */
+  elapsedMinutes: number;
+  /** Optional human/LLM-readable summary (UI, memory). */
+  narrative?: string;
 }
 
 export interface InterruptReason {
@@ -240,7 +263,7 @@ export interface CancelResult {
 export interface InterruptResult {
   applied: boolean;
   remainingChainCancelled: number;
-  partialOutcome?: StateResolution;
+  partialOutcome?: PlannedOutcome;
 }
 
 export interface SceneCondition {
@@ -316,6 +339,11 @@ export type StateChange =
   | { kind: "feature.removeState"; featureId: string; key: string }
   | { kind: "event.emit"; event: FeatureEvent };
 
+// No CharacterSkillModifier type: skill modifiers flow through
+// SceneCondition.mechanicalEffect.skillPenalty and CharacterCondition.mechanicalEffect.skillPenalty.
+// Resolver / skill-check tool aggregates from ctx.getScene(sceneId).conditions +
+// ctx.getCharacter(charId).status.conditions at check time. No per-feature hook.
+
 export interface CharacterAction {
   characterId: string;
   handleId: string;
@@ -327,7 +355,7 @@ export interface CharacterAction {
   targetCharacterIds: string[];
   activatedAt: GameTime;
   completedAt: GameTime;
-  outcome?: StateResolution;
+  outcome?: PlannedOutcome;
 }
 
 export interface DamageReport {
@@ -1325,13 +1353,16 @@ Expected: PASS (3 tests).
 
 ## Phase B — TickEngine Core
 
+> **⚠ Execution order note:** Run **Phase C (ScriptedEventRunner) BEFORE Phase B**. Tasks B5 (TickOrchestrator) and B6 (TickEngine) import `ScriptedEventRunner` from `src/engine/core/scriptedEventRunner.ts`, which is created in Phase C Task C3. Phase C depends only on Phase A (verified: C1 → A1+A3, C2 → C1, C3 → A1+A3+C1). Physical ordering of this document keeps Phase B before Phase C for reading continuity of the "engine core" narrative, but dependency-correct execution is **A → C → B → D → E**.
+
+
 ### Task B1: FeatureRunner
 
 **Files:**
 - Create: `src/engine/core/featureRunner.ts`
 - Test: `src/engine/core/__tests__/featureRunner.test.ts`
 
-Holds the new-style features in priority-sorted order. Methods: `runTick`, `runActionEnqueue`, `runActionCommit`, `runPropagation`, `getCharacterSkillModifiers`, `getFeatureScopeMap`.
+Holds the new-style features in priority-sorted order. Methods: `runTick`, `runActionCommit`, `runPropagation`, `getFeatureScopeMap`.
 
 - [ ] **Step 1: Write the failing test**
 
@@ -1382,16 +1413,15 @@ import type { FeatureReadContext } from "./featureReadContext.js";
 import type {
   ActionStep,
   FeatureStateScope,
+  PlannedOutcome,
   StateChange,
-  CharacterSkillModifier,
 } from "./types.js";
-import type { StateResolution } from "../resolver/stateResolver.js";
 
-export interface CharacterSkillModifier {
-  skill: string;
-  delta: number;
-  source: string;
-}
+// Skill modifiers flow through SceneCondition / CharacterCondition
+// (mechanicalEffect.skillPenalty), NOT through a per-feature hook. Features
+// that want to debuff a skill emit `scene.addCondition` / `character.addCondition`
+// StateChanges with the mechanicalEffect filled in. The resolver aggregates
+// at skill-check time by reading ctx.getScene / ctx.getCharacter conditions.
 
 export interface WorldFeature {
   readonly id: string;
@@ -1407,13 +1437,9 @@ export interface WorldFeature {
 
   stateDescription?(ctx: FeatureReadContext): string;
   onTick?(ctx: FeatureReadContext): StateChange[];
-  onActionEnqueue?(
-    step: ActionStep,
-    ctx: FeatureReadContext,
-  ): { blocked: { reason: string } } | { changes: StateChange[] };
   onActionCommit?(
     step: ActionStep,
-    outcome: StateResolution,
+    outcome: PlannedOutcome,
     ctx: FeatureReadContext,
     opts?: { interrupted?: boolean },
   ): StateChange[];
@@ -1421,10 +1447,6 @@ export interface WorldFeature {
     source: { sceneId: string; hop: number },
     ctx: FeatureReadContext,
   ): { spreadToSceneIds: string[]; changes: StateChange[] };
-  getCharacterSkillModifiers?(
-    characterId: string,
-    ctx: FeatureReadContext,
-  ): CharacterSkillModifier[];
 }
 ```
 
@@ -1435,10 +1457,9 @@ import type { WorldFeature } from "./worldFeature.js";
 import type {
   ActionStep,
   FeatureStateScope,
+  PlannedOutcome,
   StateChange,
-  CharacterSkillModifier,
 } from "./types.js";
-import type { StateResolution } from "../resolver/stateResolver.js";
 
 const DEFAULT_PRIORITY = 999;
 
@@ -1462,23 +1483,9 @@ export class FeatureRunner {
     return out;
   }
 
-  runActionEnqueue(
-    step: ActionStep,
-    ctx: FeatureReadContext,
-  ): { blocked?: { reason: string }; changes: StateChange[] } {
-    const out: StateChange[] = [];
-    for (const f of this.ordered) {
-      if (!f.onActionEnqueue) continue;
-      const result = f.onActionEnqueue(step, ctx);
-      if ("blocked" in result) return { blocked: result.blocked, changes: out };
-      if ("changes" in result) out.push(...result.changes);
-    }
-    return { changes: out };
-  }
-
   runActionCommit(
     step: ActionStep,
-    outcome: StateResolution,
+    outcome: PlannedOutcome,
     ctx: FeatureReadContext,
     opts?: { interrupted?: boolean },
   ): StateChange[] {
@@ -1501,19 +1508,6 @@ export class FeatureRunner {
       for (const sceneId of ctx.getSceneIds()) {
         const { changes } = f.onPropagate({ sceneId, hop: 0 }, ctx);
         out.push(...changes);
-      }
-    }
-    return out;
-  }
-
-  getCharacterSkillModifiers(
-    characterId: string,
-    ctx: FeatureReadContext,
-  ): CharacterSkillModifier[] {
-    const out: CharacterSkillModifier[] = [];
-    for (const f of this.ordered) {
-      if (f.getCharacterSkillModifiers) {
-        out.push(...f.getCharacterSkillModifiers(characterId, ctx));
       }
     }
     return out;
@@ -1617,21 +1611,28 @@ export class EventBus {
     return () => this.listeners[ev]?.delete(cb);
   }
 
+  /** Snapshot-and-iterate so listeners can safely subscribe / unsubscribe
+   *  inside their own callback. New subscriptions take effect on the NEXT
+   *  emit; unsubscribes during the current emit still see the rest of the
+   *  snapshot list invoked. (Same guarantee as Node's EventEmitter.) */
+  private snapshotListeners(channel: string): AnyCB[] {
+    return [...(this.listeners[channel] ?? [])];
+  }
+
   emitActionCompleted(a: CharacterAction): void {
-    for (const cb of this.listeners.actionCompleted ?? []) (cb as AnyCB)(a);
+    for (const cb of this.snapshotListeners("actionCompleted")) cb(a);
   }
   emitActionInterrupted(a: CharacterAction, r: InterruptReason): void {
-    for (const cb of this.listeners.actionInterrupted ?? []) (cb as AnyCB)(a, r);
+    for (const cb of this.snapshotListeners("actionInterrupted")) cb(a, r);
   }
   emitActionCancelled(a: CharacterAction): void {
-    for (const cb of this.listeners.actionCancelled ?? []) (cb as AnyCB)(a);
+    for (const cb of this.snapshotListeners("actionCancelled")) cb(a);
   }
   emitFeatureEvent(e: FeatureEvent): void {
-    for (const cb of this.listeners.featureEvent ?? []) (cb as AnyCB)(e);
+    for (const cb of this.snapshotListeners("featureEvent")) cb(e);
   }
   async emitTickCompleted(r: TickReport): Promise<void> {
-    const subs = [...(this.listeners.tickCompleted ?? [])];
-    for (const cb of subs) await (cb as AnyCB)(r);
+    for (const cb of this.snapshotListeners("tickCompleted")) await cb(r);
   }
 }
 ```
@@ -1753,96 +1754,185 @@ Expected: PASS.
 
 ---
 
-### Task B4: EmergentEventEmitter
+### Task B4: EmergentEventEmitter (scanner aggregator)
 
 **Files:**
-- Create: `src/engine/core/emergentEventEmitter.ts`
-- Modify: `src/engine/runtime/encounterScanner.ts` — rewrite `scanUnplannedEncounters(...)` to return `FeatureEvent[]` directly (instead of the legacy fake `CharacterAction[]` with `characterId: "__encounter__"`)
+- Create: `src/engine/core/emergentScanner.ts` — `EmergentScanner` interface + `ScannerContext` interface
+- Create: `src/engine/core/emergentEventEmitter.ts` — aggregator class
+- Create: `src/engine/core/scanners/encounterScanner.ts` — `EncounterScanner` class wrapping the existing runtime scanner
+- Modify: `src/engine/runtime/encounterScanner.ts` — rewrite `scanUnplannedEncounters(...)` to return `Array<{ event: FeatureEvent; signature: string }>` (drops the legacy fake `CharacterAction[]` with `characterId: "__encounter__"`)
 - Test: `src/engine/core/__tests__/emergentEventEmitter.test.ts`
 
-Encounters are emitted as `FeatureEvent { type: "encounter.detected", sceneId, data: { observedNpcIds, description } }` so role sim's impact gate consumes a single unified event channel (no separate `encounters` array). No LLM, no impact gate.
+**Design intent (spec §2 "Scan phase" + §5 EmergentEventEmitter):** This is the aggregation point for **all non-feature deterministic emergent detection** (encounters, discoveries, world-event triggers, future scanners). Currently only the encounter scanner plugs in; the aggregator shape is deliberate so future scanners (e.g., `discoveryPipeline`, `mapMemorySync`, world-event triggers) can register without touching TickOrchestrator.
 
-- [ ] **Step 1: Rewrite `encounterScanner.ts`**
+Encounters are emitted as `FeatureEvent { type: "encounter.detected", sceneId, data: { observedNpcIds, description } }` so role sim's impact gate consumes a single unified event channel. No LLM, no impact gate.
+
+- [ ] **Step 1: Define `EmergentScanner` + `ScannerContext`**
+
+Create `src/engine/core/emergentScanner.ts`:
+
+```ts
+import type { DynamicGameStateManager } from "../../state/DynamicGameState.js";
+import type { CharacterAction, FeatureEvent, GameTime } from "./types.js";
+
+/** Per-tick context handed to every scanner. Scanners keep their own per-scanner
+ *  state (e.g., dedup caches, previous-signature sets) as instance fields. */
+export interface ScannerContext {
+  dgsm: DynamicGameStateManager;
+  tickTime: GameTime;
+  committedActionsThisTick: readonly CharacterAction[];
+  lang: string;
+}
+
+/** Engine-internal passive observer. Runs in TickOrchestrator's Scan phase
+ *  (phase 8) — after feature ticks, propagation, and scripted events, before
+ *  Applier flush. Scanners must not mutate DGSM; they only produce events. */
+export interface EmergentScanner {
+  readonly id: string;
+  scan(ctx: ScannerContext): FeatureEvent[];
+}
+```
+
+- [ ] **Step 2: Rewrite `src/engine/runtime/encounterScanner.ts`**
 
 The existing scanner returns legacy `CharacterAction[]` shaped objects with fields (`characterName`, `action`, `impact`, `outcome`, `type`) that don't exist after the P0-1 simplification. Keep its detection logic (co-presence, hidden-character reveal, dedup via `shouldEmitEncounter`) and change only the output shape.
 
 New signature:
 
 ```ts
-// src/engine/runtime/encounterScanner.ts (new signature)
 export function scanUnplannedEncounters(params: {
   dgsm: DynamicGameStateManager;
   tickTime: string;
-  committedActionsThisTick: CharacterAction[];  // simplified shape from core/types
   movedNpcIds: ReadonlySet<string>;
   previousEncounterSignatures: ReadonlySet<string>;
   lang: string;
-}): FeatureEvent[];
+}): Array<{ event: FeatureEvent; signature: string }>;
 ```
 
-For each encounter location it currently builds as a fake CharacterAction, build a FeatureEvent instead:
+Returns `{ event, signature }` pairs so the wrapper class can update its dedup set. Each event has shape:
 
 ```ts
-featureEvents.push({
+{
   type: "encounter.detected",
   sceneId: locationId,
   data: {
     observedNpcIds: [...allNpcIds],
     description: t("npcs_are_at", lang, { names: allNpcNames.join(", "), scene: sceneName }),
   },
-});
+}
 ```
+
+`signature` is the dedup key computed via the existing `shouldEmitEncounter` logic (typically `sortedNpcIds.join("|") + "@" + locationId`).
 
 Delete `personalizeEncounterForNpc` if it's only used by the legacy CharacterAction path — confirm via grep; if role sim needs per-NPC personalization, it can filter the single `featureEvent` stream itself.
 
-- [ ] **Step 2: Write the failing test**
+- [ ] **Step 3: Write the `EncounterScanner` wrapper class**
+
+Create `src/engine/core/scanners/encounterScanner.ts`:
 
 ```ts
-// src/engine/core/__tests__/emergentEventEmitter.test.ts
-import { describe, it, expect, vi } from "vitest";
-import { EmergentEventEmitter } from "../emergentEventEmitter.js";
+import type { EmergentScanner, ScannerContext } from "../emergentScanner.js";
+import type { FeatureEvent } from "../types.js";
+import { scanUnplannedEncounters } from "../../runtime/encounterScanner.js";
 
-describe("EmergentEventEmitter", () => {
-  it("delegates to encounterScanner and returns its FeatureEvents", () => {
-    const scan = vi.fn().mockReturnValue([
-      {
-        type: "encounter.detected",
-        sceneId: "s1",
-        data: { observedNpcIds: ["n1", "n2"], description: "A and B are at bar" },
-      },
-    ]);
-    const emitter = new EmergentEventEmitter({ scanEncounters: scan });
-    const result = emitter.scan({} as never);
-    expect(result.featureEvents).toHaveLength(1);
-    expect(result.featureEvents[0].type).toBe("encounter.detected");
-    expect(scan).toHaveBeenCalled();
-  });
-});
-```
+export class EncounterScanner implements EmergentScanner {
+  readonly id = "encounter";
+  private previousSignatures: Set<string> = new Set();
 
-- [ ] **Step 3: Implement**
+  scan(ctx: ScannerContext): FeatureEvent[] {
+    const movedNpcIds = new Set<string>(
+      ctx.committedActionsThisTick
+        .filter((a) => a.definitionId === "movement" || a.definitionId.startsWith("movement."))
+        .map((a) => a.characterId),
+    );
 
-```ts
-// src/engine/core/emergentEventEmitter.ts
-import type { FeatureEvent } from "./types.js";
+    const results = scanUnplannedEncounters({
+      dgsm: ctx.dgsm,
+      tickTime: ctx.tickTime.tickTime,
+      movedNpcIds,
+      previousEncounterSignatures: this.previousSignatures,
+      lang: ctx.lang,
+    });
 
-export interface EncounterScannerFn {
-  (ctx: unknown): FeatureEvent[];
-}
-
-export class EmergentEventEmitter {
-  constructor(private deps: { scanEncounters: EncounterScannerFn }) {}
-
-  scan(ctx: unknown): { featureEvents: FeatureEvent[] } {
-    return { featureEvents: this.deps.scanEncounters(ctx) };
+    this.previousSignatures = new Set(results.map((r) => r.signature));
+    return results.map((r) => r.event);
   }
 }
 ```
 
-- [ ] **Step 4: Run test**
+- [ ] **Step 4: Write the aggregator**
+
+Create `src/engine/core/emergentEventEmitter.ts`:
+
+```ts
+import type { EmergentScanner, ScannerContext } from "./emergentScanner.js";
+import type { FeatureEvent } from "./types.js";
+
+export class EmergentEventEmitter {
+  private readonly scanners: EmergentScanner[] = [];
+
+  constructor(scanners: EmergentScanner[] = []) {
+    for (const s of scanners) this.register(s);
+  }
+
+  register(scanner: EmergentScanner): void {
+    this.scanners.push(scanner);
+  }
+
+  scan(ctx: ScannerContext): { featureEvents: FeatureEvent[] } {
+    const featureEvents: FeatureEvent[] = [];
+    for (const s of this.scanners) {
+      featureEvents.push(...s.scan(ctx));
+    }
+    return { featureEvents };
+  }
+
+  listScannerIds(): readonly string[] {
+    return this.scanners.map((s) => s.id);
+  }
+}
+```
+
+- [ ] **Step 5: Test**
+
+```ts
+// src/engine/core/__tests__/emergentEventEmitter.test.ts
+import { describe, it, expect } from "vitest";
+import { EmergentEventEmitter } from "../emergentEventEmitter.js";
+import type { EmergentScanner, ScannerContext } from "../emergentScanner.js";
+import type { FeatureEvent } from "../types.js";
+
+class FakeScanner implements EmergentScanner {
+  constructor(readonly id: string, private events: FeatureEvent[]) {}
+  scan(): FeatureEvent[] {
+    return this.events;
+  }
+}
+
+const fakeCtx = {} as ScannerContext;
+
+describe("EmergentEventEmitter", () => {
+  it("concatenates events from all registered scanners in registration order", () => {
+    const emitter = new EmergentEventEmitter([
+      new FakeScanner("a", [{ type: "a.evt" }]),
+      new FakeScanner("b", [{ type: "b.evt1" }, { type: "b.evt2" }]),
+    ]);
+    const { featureEvents } = emitter.scan(fakeCtx);
+    expect(featureEvents.map((e) => e.type)).toEqual(["a.evt", "b.evt1", "b.evt2"]);
+  });
+
+  it("register() adds scanners after construction", () => {
+    const emitter = new EmergentEventEmitter();
+    emitter.register(new FakeScanner("late", [{ type: "late.evt" }]));
+    const { featureEvents } = emitter.scan(fakeCtx);
+    expect(featureEvents).toHaveLength(1);
+    expect(emitter.listScannerIds()).toEqual(["late"]);
+  });
+});
+```
 
 Run: `npx vitest run src/engine/core/__tests__/emergentEventEmitter.test.ts`
-Expected: PASS.
+Expected: 2 PASS.
 
 ---
 
@@ -1870,7 +1960,16 @@ import type { WorldFeature } from "../worldFeature.js";
 describe("TickOrchestrator", () => {
   it("runs phases in order and produces a TickReport", async () => {
     const dgsm = new DynamicGameStateManager();
-    dgsm.upsertCharacter({ characterId: "npc1", hp: 10, maxHp: 10, san: 50, maxSan: 50, fatigue: 0, dex: 50, sceneId: "s1", alive: true, name: "npc1" });
+    dgsm.registerNpcProfile({
+      id: "npc1",
+      name: "npc1",
+      attributes: { STR: 50, CON: 50, DEX: 50, APP: 50, POW: 50, SIZ: 50, INT: 50, EDU: 50 },
+      status: { hp: 10, maxHp: 10, san: 50, maxSan: 50, fatigue: 0, maxFatigue: 100, luck: 50, conditions: [] },
+      inventory: [],
+      skills: {},
+      longTermIntent: "",
+      relationships: [],
+    });
 
     const queue = new Queue();
     const feature: WorldFeature = {
@@ -1884,7 +1983,7 @@ describe("TickOrchestrator", () => {
     const featureRunner = new FeatureRunner([feature]);
     const applier = new Applier(dgsm, featureRunner.getFeatureScopeMap());
     const scriptedRunner = { run: vi.fn().mockReturnValue([]) };
-    const emitter = new EmergentEventEmitter({ scanEncounters: () => ({ detections: [] }) });
+    const emitter = new EmergentEventEmitter();  // no scanners registered for this test
 
     const orch = new TickOrchestrator({
       dgsm,
@@ -1895,11 +1994,11 @@ describe("TickOrchestrator", () => {
       applier,
       resolve: vi.fn(),
       tickDurationMinutes: 1,
-      getFeatureScopeFor: (id) => featureRunner.getFeatureScopeMap().get(id) ?? "scene",
+      lang: "en",
     });
 
     const report = await orch.tick();
-    expect(dgsm.getCharacterView("npc1")!.hp).toBe(9);
+    expect(dgsm.getNpcProfile("npc1")!.status.hp).toBe(9);
     expect(report.damageReports).toHaveLength(1);
     expect(report.damageReports[0].finalValueAfter).toBe(9);
   });
@@ -1922,21 +2021,21 @@ import type {
   FeatureStateScope,
   GameTime,
   InterruptReason,
+  PlannedOutcome,
   StateChange,
   TickReport,
 } from "./types.js";
-import type { StateResolution } from "../resolver/stateResolver.js";
 import { makeDGSMFeatureReadContext } from "./featureReadContext.js";
 
 export interface PendingInterrupt {
   handleId: string;
-  reason?: InterruptReason;
-  kind: "cancel" | "interrupt";
+  reason: InterruptReason;
+  activeStepId: string;  // must exist; queued-only interrupts are handled as cancel sync
 }
 
 export interface ResolveFn {
   (step: ActionStep, ctx: unknown): Promise<{
-    outcome: StateResolution;
+    outcome: PlannedOutcome;
     plannedDuration: number;
   }>;
 }
@@ -1950,17 +2049,33 @@ export interface OrchestratorDeps {
   applier: Applier;
   resolve: ResolveFn;
   tickDurationMinutes: number;
-  getFeatureScopeFor: (featureId: string) => FeatureStateScope;
+  lang: string;                  // passed through to ScannerContext
 }
 
 export class TickOrchestrator {
+  // Pending interrupt requests — only store "active step needs C-compromise" work.
+  // Queued-sibling cancels and full-chain cancels are applied synchronously by
+  // TickEngine.cancelAction / interruptAction (see Option Y decision).
   private pendingInterrupts: PendingInterrupt[] = [];
-  private pendingCommits: CharacterAction[] = [];
+  // Sync-cancelled ActionSteps waiting to be surfaced as CharacterAction events.
+  // TickEngine.cancelAction pushes here at call time; orchestrator drains into
+  // TickReport.cancellations at the start of the next tick.
+  private pendingCancelledSteps: ActionStep[] = [];
 
   constructor(private deps: OrchestratorDeps) {}
 
-  queueInterrupt(req: PendingInterrupt): void {
+  /** Called by TickEngine.interruptAction when the active step needs C-compromise
+   *  resolution next tick. Queued siblings are cancelled synchronously by the caller;
+   *  this only queues the one active-step entry. */
+  queuePendingInterrupt(req: PendingInterrupt): void {
     this.pendingInterrupts.push(req);
+  }
+
+  /** Called by TickEngine.cancelAction (or interruptAction on a queued-only handle)
+   *  after marking the step cancelled in the queue. The orchestrator surfaces it as
+   *  a CharacterAction in the next tick's TickReport.cancellations. */
+  recordCancelledStep(step: ActionStep): void {
+    this.pendingCancelledSteps.push(step);
   }
 
   async tick(): Promise<TickReport> {
@@ -1974,10 +2089,15 @@ export class TickOrchestrator {
     const cancellations: CharacterAction[] = [];
     const commitsThisTick: CharacterAction[] = [];
 
-    // Phase 2: apply pending interrupts/cancels
+    // Phase 2a: surface sync-cancelled steps into TickReport.cancellations
+    for (const step of this.pendingCancelledSteps) {
+      cancellations.push(this.stepToAction(step, nextTickTime));
+    }
+    this.pendingCancelledSteps = [];
+
+    // Phase 2b: apply deferred interrupts (active-step C-compromise)
     for (const pend of this.pendingInterrupts) {
-      const touched = this.applyPendingInterrupt(pend, nextTickTime, buffer, interruptions, cancellations);
-      // touched contributions are already accumulated; keep going
+      this.applyPendingInterrupt(pend, nextTickTime, buffer, interruptions);
     }
     this.pendingInterrupts = [];
 
@@ -2008,13 +2128,20 @@ export class TickOrchestrator {
         callerFeatureId: "__commit__",
         callerScope: "global",
       });
-      const outcome = step.plannedOutcome!;
+      const outcome = step.plannedOutcome;
+      // `plannedOutcome` is set in Phase 3 before markActive, so a missing
+      // value here is a programmer error (resolver returned nothing / step
+      // reached Phase 4 without going through activation). Skip to keep the
+      // tick alive rather than crashing with a non-null assertion.
+      if (!outcome) {
+        queue.markCompleted(step.id);
+        continue;
+      }
       const featureChanges = featureRunner.runActionCommit(step, outcome, ctx);
       buffer.push(...featureChanges);
-      // also push outcome's own stateChanges if the resolver emitted them inline
-      if ((outcome as unknown as { stateChanges?: StateChange[] }).stateChanges) {
-        buffer.push(...(outcome as unknown as { stateChanges: StateChange[] }).stateChanges);
-      }
+      // Resolver's own state changes flow directly — no cast, no deprecated
+      // `StateResolution` bridge.
+      buffer.push(...outcome.stateChanges);
       queue.markCompleted(step.id);
       const committed: CharacterAction = {
         characterId: step.characterId,
@@ -2031,7 +2158,6 @@ export class TickOrchestrator {
       };
       commitsThisTick.push(committed);
     }
-    this.pendingCommits = commitsThisTick;
 
     // Phase 5: feature onTick
     const featureCtx = makeDGSMFeatureReadContext(dgsm, {
@@ -2051,8 +2177,14 @@ export class TickOrchestrator {
     });
     buffer.push(...scriptedChanges);
 
-    // Phase 8: emergent events scan (encounters come back as FeatureEvents)
-    const { featureEvents: emergentEvents } = emergentEventEmitter.scan(featureCtx);
+    // Phase 8: emergent events scan — aggregator runs all registered scanners
+    const scannerCtx = {
+      dgsm,
+      tickTime: nextTickTime,
+      committedActionsThisTick: commitsThisTick,
+      lang: this.deps.lang,
+    };
+    const { featureEvents: emergentEvents } = emergentEventEmitter.scan(scannerCtx);
 
     // Phase 9: applier flush
     const applied = applier.flush(buffer, nextTickTime);
@@ -2071,37 +2203,31 @@ export class TickOrchestrator {
 
   // --- helpers ---
 
+  /** Processes a deferred interrupt on an active step. At call time the queue
+   *  already has `activeStepId` in `"active"` status (TickEngine didn't mark it
+   *  cancelled synchronously because features may need to react). This helper
+   *  runs the C-compromise (<50% discard / ≥50% partial outcome via
+   *  `runActionCommit({ interrupted: true })`) and marks the step interrupted. */
   private applyPendingInterrupt(
     req: PendingInterrupt,
     nowTickTime: GameTime,
     buffer: StateChange[],
     interruptions: TickReport["interruptions"],
-    cancellations: CharacterAction[],
-  ): boolean {
-    const active = this.deps.queue
-      .snapshotAll()
-      .find((s) => s.handle.id === req.handleId && s.status === "active");
-    const queuedSibs = this.deps.queue
-      .snapshotAll()
-      .filter((s) => s.handle.id === req.handleId && s.status === "queued");
-
-    if (req.kind === "cancel") {
-      for (const s of queuedSibs) this.deps.queue.markCancelled(s.id);
-      if (active) {
-        this.deps.queue.markCancelled(active.id);
-        cancellations.push(this.stepToAction(active, nowTickTime));
-      }
-      return true;
+  ): void {
+    const active = this.deps.queue.get(req.activeStepId);
+    if (!active || active.status !== "active") {
+      // Step was completed / otherwise resolved between the interruptAction
+      // call and this tick phase. Spec says "first wins" — silently drop.
+      return;
     }
 
-    // kind === "interrupt"
-    for (const s of queuedSibs) this.deps.queue.markCancelled(s.id);
-    if (!active) {
-      // queued-only interrupt behaves as cancel; no partial outcome
-      return true;
+    if (active.activatedAt === undefined) {
+      throw new Error(
+        `TickOrchestrator: active step ${active.id} has no activatedAt (queue corruption)`,
+      );
     }
 
-    const elapsed = this.minutesBetween(active.activatedAt!, nowTickTime);
+    const elapsed = this.minutesBetween(active.activatedAt, nowTickTime);
     const planned = active.plannedDuration ?? 1;
     const ratio = elapsed / planned;
     if (ratio >= 0.5 && active.plannedOutcome) {
@@ -2120,9 +2246,8 @@ export class TickOrchestrator {
     this.deps.queue.markInterrupted(active.id);
     interruptions.push({
       action: this.stepToAction(active, nowTickTime),
-      reason: req.reason!,
+      reason: req.reason,
     });
-    return true;
   }
 
   private stepToAction(step: ActionStep, now: GameTime): CharacterAction {
@@ -2209,7 +2334,7 @@ import { DynamicGameStateManager } from "../../../state/DynamicGameState.js";
 describe("TickEngine", () => {
   it("submitAction → tick → actionCompleted event fires", async () => {
     const dgsm = new DynamicGameStateManager();
-    dgsm.upsertCharacter({ characterId: "npc1", hp: 10, maxHp: 10, san: 50, maxSan: 50, fatigue: 0, dex: 50, sceneId: "s1", alive: true, name: "npc1" });
+    // Use real DGSM.registerNpcProfile in the real test; see Phase A sweep note.
 
     const engine = createTickEngine({
       dgsm,
@@ -2217,9 +2342,10 @@ describe("TickEngine", () => {
       scriptedEvents: [],
       interpretAction: async () => ({ steps: [{ definitionId: "idle", actionText: "wait" }] }),
       resolve: async () => ({ outcome: { stateChanges: [] } as never, plannedDuration: 0 }),
-      scanEncounters: () => [],
+      emergentScanners: [],
       getActorDex: () => 50,
       tickDurationMinutes: 1,
+      lang: "en",
     });
 
     const completedSpy = vi.fn();
@@ -2237,7 +2363,6 @@ describe("TickEngine", () => {
 
   it("cancelAction removes all chain steps and fires actionCancelled", async () => {
     const dgsm = new DynamicGameStateManager();
-    dgsm.upsertCharacter({ characterId: "npc1", hp: 10, maxHp: 10, san: 50, maxSan: 50, fatigue: 0, dex: 50, sceneId: "s1", alive: true, name: "npc1" });
 
     const engine = createTickEngine({
       dgsm,
@@ -2245,9 +2370,10 @@ describe("TickEngine", () => {
       scriptedEvents: [],
       interpretAction: async () => ({ steps: [{ definitionId: "idle", actionText: "" }, { definitionId: "idle2", actionText: "" }] }),
       resolve: async () => ({ outcome: { stateChanges: [] } as never, plannedDuration: 5 }),
-      scanEncounters: () => [],
+      emergentScanners: [],
       getActorDex: () => 50,
       tickDurationMinutes: 1,
+      lang: "en",
     });
 
     const cancelledSpy = vi.fn();
@@ -2262,7 +2388,6 @@ describe("TickEngine", () => {
     expect(result.applied).toBe(true);
     expect(result.remainingChainCancelled).toBe(2);
     await engine.tick();
-    // Two steps were cancelled; the already-active one (none yet) fires event
   });
 });
 ```
@@ -2287,6 +2412,7 @@ import type {
   Unsubscribe,
 } from "./types.js";
 import type { ScriptedEvent } from "../scriptedEvents/types.js";
+import type { EmergentScanner } from "./emergentScanner.js";
 import { Queue } from "./queue.js";
 import { ActionIntake } from "./actionIntake.js";
 import { FeatureRunner } from "./featureRunner.js";
@@ -2316,11 +2442,15 @@ export interface CreateTickEngineOptions {
   dgsm: DynamicGameStateManager;
   features: WorldFeature[];
   scriptedEvents: ScriptedEvent[];
+  /** Pre-instantiated emergent scanners (EncounterScanner, DiscoveryScanner, etc.).
+   *  Order in the array = order of events in TickReport.featureEvents. */
+  emergentScanners: EmergentScanner[];
   interpretAction: (input: ActionInput) => Promise<{ steps: import("../types.js").InterpretedStep[] }>;
   resolve: ResolveFn;
-  scanEncounters: (ctx: unknown) => import("./types.js").FeatureEvent[];
   getActorDex: (characterId: string) => number;
   tickDurationMinutes: number;
+  /** Session language code (e.g., "en", "zh") — passed through to ScannerContext for i18n. */
+  lang: string;
 }
 
 export function createTickEngine(opts: CreateTickEngineOptions): TickEngine {
@@ -2328,7 +2458,7 @@ export function createTickEngine(opts: CreateTickEngineOptions): TickEngine {
   const featureRunner = new FeatureRunner(opts.features);
   const applier = new Applier(opts.dgsm, featureRunner.getFeatureScopeMap());
   const scriptedRunner = new ScriptedEventRunner(opts.scriptedEvents);
-  const emergent = new EmergentEventEmitter({ scanEncounters: opts.scanEncounters });
+  const emergent = new EmergentEventEmitter(opts.emergentScanners);
   const bus = new EventBus();
   const intake = new ActionIntake({
     queue,
@@ -2345,35 +2475,73 @@ export function createTickEngine(opts: CreateTickEngineOptions): TickEngine {
     applier,
     resolve: opts.resolve,
     tickDurationMinutes: opts.tickDurationMinutes,
-    getFeatureScopeFor: (id) => featureRunner.getFeatureScopeMap().get(id) ?? "scene",
+    lang: opts.lang,
   });
 
-  function findTerminal(handleId: string, status: ActionStatus): boolean {
-    return queue.serialize().some((s) => s.handle.id === handleId && s.status === status);
+  /** Returns all queued + active steps for a handle. Used by cancel/interrupt
+   *  to decide (a) whether the chain is still live and (b) which steps to mark. */
+  function liveSteps(handleId: string): ActionStep[] {
+    return queue
+      .serialize()
+      .filter(
+        (s) =>
+          s.handle.id === handleId &&
+          (s.status === "queued" || s.status === "active"),
+      );
   }
 
   return {
     submitAction: (input) => intake.submit(input),
 
     cancelAction(handle) {
-      if (findTerminal(handle.id, "completed") || findTerminal(handle.id, "cancelled") || findTerminal(handle.id, "interrupted")) {
+      const live = liveSteps(handle.id);
+      if (live.length === 0) {
+        // Either the chain already finished, or a prior cancel/interrupt
+        // already marked every step terminal. Idempotent: second call is a
+        // no-op.
         return { applied: false, remainingChainCancelled: 0 };
       }
-      const steps = queue.serialize().filter((s) => s.handle.id === handle.id && (s.status === "queued" || s.status === "active"));
-      orchestrator.queueInterrupt({ handleId: handle.id, kind: "cancel" });
-      return { applied: true, remainingChainCancelled: steps.length };
+      // Sync-mark every live step cancelled so subsequent calls see no live
+      // steps and return applied:false naturally (Option Y). Pick a
+      // representative step for the event payload (prefer active, else the
+      // lowest stepIndex queued).
+      const rep =
+        live.find((s) => s.status === "active") ??
+        [...live].sort((a, b) => a.stepIndex - b.stepIndex)[0];
+      for (const s of live) queue.markCancelled(s.id);
+      orchestrator.recordCancelledStep(rep);
+      return { applied: true, remainingChainCancelled: live.length };
     },
 
     interruptAction(handle, reason) {
-      if (findTerminal(handle.id, "completed") || findTerminal(handle.id, "cancelled") || findTerminal(handle.id, "interrupted")) {
+      const live = liveSteps(handle.id);
+      if (live.length === 0) {
         return { applied: false, remainingChainCancelled: 0 };
       }
-      const steps = queue.serialize().filter((s) => s.handle.id === handle.id && (s.status === "queued" || s.status === "active"));
-      orchestrator.queueInterrupt({ handleId: handle.id, reason, kind: "interrupt" });
-      return {
-        applied: true,
-        remainingChainCancelled: steps.filter((s) => s.status === "queued").length,
-      };
+      const active = live.find((s) => s.status === "active");
+      const queuedSibs = live.filter((s) => s.status === "queued");
+
+      // Sync: cancel queued siblings (no resolver work needed).
+      for (const s of queuedSibs) queue.markCancelled(s.id);
+
+      if (!active) {
+        // Spec §3 edge case: interrupt on queued-only handle behaves as cancel.
+        // Fire actionCancelled via the same recordCancelledStep path.
+        const rep = [...queuedSibs].sort((a, b) => a.stepIndex - b.stepIndex)[0];
+        orchestrator.recordCancelledStep(rep);
+        return { applied: true, remainingChainCancelled: queuedSibs.length };
+      }
+
+      // Deferred: active step needs C-compromise (<50% discard / ≥50% partial
+      // outcome). TickOrchestrator phase 2b handles it next tick. The step
+      // stays in "active" status until then so features still see it as the
+      // owner's active slot until the orchestrator marks it "interrupted".
+      orchestrator.queuePendingInterrupt({
+        handleId: handle.id,
+        reason,
+        activeStepId: active.id,
+      });
+      return { applied: true, remainingChainCancelled: queuedSibs.length };
     },
 
     async tick() {
@@ -2429,33 +2597,34 @@ import { DynamicGameStateManager } from "../../../state/DynamicGameState.js";
 describe("TickEngine persistence", () => {
   it("round-trips queue + connection refcounts", async () => {
     const dgsm1 = new DynamicGameStateManager();
-    dgsm1.upsertCharacter({ characterId: "npc1", hp: 10, maxHp: 10, san: 50, maxSan: 50, fatigue: 0, dex: 50, sceneId: "s1", alive: true, name: "npc1" });
+    // Use DGSM.registerNpcProfile for real NPCs; see Phase A sweep note.
 
     const engine1 = createTickEngine({
       dgsm: dgsm1,
       features: [],
       scriptedEvents: [],
+      emergentScanners: [],
       interpretAction: async () => ({ steps: [{ definitionId: "wait", actionText: "" }] }),
       resolve: async () => ({ outcome: { stateChanges: [] } as never, plannedDuration: 10 }),
-      scanEncounters: () => [],
       getActorDex: () => 50,
       tickDurationMinutes: 1,
+      lang: "en",
     });
     await engine1.submitAction({ characterId: "npc1", actionText: "wait", sceneId: "s1" });
 
     const snapshot = engine1.serialize();
 
     const dgsm2 = new DynamicGameStateManager();
-    dgsm2.upsertCharacter({ characterId: "npc1", hp: 10, maxHp: 10, san: 50, maxSan: 50, fatigue: 0, dex: 50, sceneId: "s1", alive: true, name: "npc1" });
     const engine2 = createTickEngine({
       dgsm: dgsm2,
       features: [],
       scriptedEvents: [],
+      emergentScanners: [],
       interpretAction: async () => ({ steps: [] }),
       resolve: async () => ({ outcome: { stateChanges: [] } as never, plannedDuration: 0 }),
-      scanEncounters: () => [],
       getActorDex: () => 50,
       tickDurationMinutes: 1,
+      lang: "en",
       persistedState: snapshot,
     });
     expect(engine2.getActorQueue("npc1")).toHaveLength(1);
@@ -2756,6 +2925,22 @@ const ritual: ScriptedEvent = {
   ],
 };
 
+// Minimal NPC profile for test fixtures. The `getCharactersInScene` helper
+// returns full DynamicNPCProfile objects (per A3's no-View-projection decision);
+// ScriptedEventRunner only needs `id` to resolve the "witnesses" predicate.
+function makeStubNpc(id: string): import("../../../state/types.js").DynamicNPCProfile {
+  return {
+    id,
+    name: id,
+    attributes: { STR: 50, CON: 50, DEX: 50, APP: 50, POW: 50, SIZ: 50, INT: 50, EDU: 50 },
+    status: { hp: 10, maxHp: 10, san: 50, maxSan: 50, fatigue: 0, maxFatigue: 100, luck: 50, conditions: [] },
+    inventory: [],
+    skills: {},
+    longTermIntent: "",
+    relationships: [],
+  };
+}
+
 function baseCtx(): FeatureReadContext {
   return {
     gameDay: 1,
@@ -2764,10 +2949,8 @@ function baseCtx(): FeatureReadContext {
     getSceneIds: () => ["altar"],
     getScene: () => undefined,
     getCharacter: () => undefined,
-    getCharactersInScene: () => [
-      { characterId: "witness1", sceneId: "altar", hp: 10, maxHp: 10, san: 50, maxSan: 50, fatigue: 0, dex: 50, alive: true },
-      { characterId: "witness2", sceneId: "altar", hp: 10, maxHp: 10, san: 50, maxSan: 50, fatigue: 0, dex: 50, alive: true },
-    ],
+    getCharactersInScene: (sceneId) =>
+      sceneId === "altar" ? [makeStubNpc("witness1"), makeStubNpc("witness2")] : [],
     getRegionId: () => undefined,
     getFeatureState: () => undefined,
     getAllFeatureStates: () => [],
@@ -2962,12 +3145,13 @@ export class ScriptedEventRunner {
     if (typeof pred === "object") return pred.characterIds;
     if (pred === "witnesses") {
       if (!event.siteSceneId) return [];
-      return ctx.getCharactersInScene(event.siteSceneId).map((c) => c.characterId);
+      // getCharactersInScene returns DynamicNPCProfile[] (per A3); use `.id`.
+      return ctx.getCharactersInScene(event.siteSceneId).map((c) => c.id);
     }
     if (pred === "global") {
       const out: string[] = [];
       for (const sid of ctx.getSceneIds()) {
-        out.push(...ctx.getCharactersInScene(sid).map((c) => c.characterId));
+        out.push(...ctx.getCharactersInScene(sid).map((c) => c.id));
       }
       return out;
     }
@@ -3161,12 +3345,12 @@ Same shape as D1. Read `src/engine/features/weatherFeature.ts`. Port to:
 - `priority: 100` (runs first: environment affects everything downstream)
 - `affectedKinds`: `["connection.setBlock", "scene.addCondition", "scene.removeCondition", "feature.setState", "feature.removeState"]`
 - `propagation`: weather fronts can move between regions — use `{ tickInterval: 10, maxHops: 3 }` or whatever the current file uses
-- `getCharacterSkillModifiers`: yes — storms debuff Spot / Listen etc.
+- **Skill modifiers:** emitted via `scene.addCondition` with `mechanicalEffect.skillPenalty` (e.g., storm → `{ Spot: -10, Listen: -20 }`). Resolver aggregates conditions at skill-check time; no per-feature hook.
 
 Write a new-interface test that exercises `onTick` → producing scene conditions over all scenes in a storming region. Rewrite and run.
 
 - [ ] **Step 1: Read** `src/engine/features/weatherFeature.ts`
-- [ ] **Step 2: Write failing test** at `src/engine/features/__tests__/weatherFeature.test.ts` asserting (a) `stateScope === "region"`, (b) `onTick` returns `scene.addCondition` for every scene in the region that has active weather state, (c) `getCharacterSkillModifiers` returns a non-empty list when weather is active.
+- [ ] **Step 2: Write failing test** at `src/engine/features/__tests__/weatherFeature.test.ts` asserting (a) `stateScope === "region"`, (b) `onTick` returns `scene.addCondition` for every scene in the region that has active weather state, (c) at least one such condition carries `mechanicalEffect.skillPenalty` with Spot/Listen entries when weather is active.
 - [ ] **Step 3: Rewrite**
 - [ ] **Step 4: Run** `npx vitest run src/engine/features/__tests__/weatherFeature.test.ts`
 
@@ -3175,7 +3359,7 @@ Write a new-interface test that exercises `onTick` → producing scene condition
 ### Task D3: Lighting feature
 
 - [ ] **Step 1: Read** `src/engine/features/lightingFeature.ts`
-- [ ] **Step 2: Write failing test** asserting (a) `stateScope === "scene"`, `priority: 150`, `affectedKinds` includes `scene.addCondition`; (b) dark scenes get a Spot penalty via `getCharacterSkillModifiers`; (c) no state changes if torch lit.
+- [ ] **Step 2: Write failing test** asserting (a) `stateScope === "scene"`, `priority: 150`, `affectedKinds` includes `scene.addCondition`; (b) dark scenes get a `scene.addCondition` whose `mechanicalEffect.skillPenalty.Spot` is negative; (c) no state changes if torch lit.
 - [ ] **Step 3: Rewrite** to new interface.
 - [ ] **Step 4: Run** `npx vitest run src/engine/features/__tests__/lightingFeature.test.ts`
 
@@ -3403,15 +3587,21 @@ Skeleton:
 
 ```ts
 // inside SimulationRunner constructor
+import { EncounterScanner } from "../engine/core/scanners/encounterScanner.js";
+
 this.tickEngine = createTickEngine({
   dgsm: this.dgsm,
   features: getDefaultFeatures(),
   scriptedEvents: loadScriptedEventsFromModuleData(moduleData),
+  emergentScanners: [
+    new EncounterScanner(),
+    // future: new DiscoveryScanner(), new WorldEventScanner(), ...
+  ],
   interpretAction: (input) => interpretAction(input, this.ctx),
   resolve: (step, ctx) => resolveState(step, ctx, this.ctx),
-  scanEncounters: (ctx) => scanEncounters(ctx, this.dgsm),
-  getActorDex: (id) => this.dgsm.getCharacterView(id)?.dex ?? 0,
+  getActorDex: (id) => this.dgsm.getNpcProfile(id)?.attributes.DEX ?? 0,
   tickDurationMinutes: 1,
+  lang: this.language,
   persistedState: initialPersistedTickEngineState,
 });
 
@@ -3505,7 +3695,7 @@ Run: `pnpm build:tsc`
 Expected: errors at every call site that still reads legacy fields (`impact`, `skill`, `rollDetail`, `successLevel`, `status`, `outcome` as string, `characterName`, `discoveries`, `damagedEvidence`, `stateMemories`, `perTargetResults`, `type: PlanNodeType`, or the old `skillPenalty: Array<...>` / `blocked: boolean`).
 
 Fix each error by either:
-- Looking the value up from DGSM at the call site (e.g., `characterName` ← `dgsm.getCharacterView(characterId)?.name`)
+- Looking the value up from DGSM at the call site (e.g., `characterName` ← `dgsm.getNpcProfile(characterId)?.name`)
 - Moving the semantic into a new place (e.g., `outcome: string` human text now lives as `CharacterAction.outcome?.description` if present, or derived from `StateResolution`)
 - Deleting the code path entirely if it was tied to the old pipeline that's gone
 
@@ -3525,7 +3715,7 @@ Expected: no errors.
 - Modify: `src/simulation/__tests__/SimulationEventEmitter.test.ts`
 - Modify (follow-up): `client/src/**` — any component reading WebSocket event fields that changed
 
-The old emitter packaged every legacy `CharacterAction` field (`characterName`, `impact`, `skill`, `rollDetail`, `successLevel`, `status`, human `outcome`) directly into the WebSocket payload. The new `CharacterAction` doesn't carry those fields; the emitter must derive them from DGSM and the accompanying `StateResolution`.
+The old emitter packaged every legacy `CharacterAction` field (`characterName`, `impact`, `skill`, `rollDetail`, `successLevel`, `status`, human `outcome`) directly into the WebSocket payload. The new `CharacterAction` doesn't carry those fields; the emitter must derive them from DGSM and the accompanying `PlannedOutcome` (`outcome.narrative`, `outcome.stateChanges`, `outcome.elapsedMinutes`).
 
 - [ ] **Step 1: Add DGSM dependency to the emitter**
 
@@ -3553,7 +3743,7 @@ Replace the current helper (likely `actionsToEvents(actions: CharacterAction[], 
 
 ```ts
 private toWireEvent(action: CharacterAction): WireSimulationEvent {
-  const character = this.dgsm.getCharacterView(action.characterId);
+  const character = this.dgsm.getNpcProfile(action.characterId);
   const outcomeText = action.outcome?.description ?? "";
   return {
     characterId: action.characterId,
@@ -3732,7 +3922,7 @@ No "TBD" / "TODO" / "add validation" placeholders in the task bodies. D2–D5 re
 ### Type consistency
 
 - `ActionStep` / `ActionHandle` / `StateChange` / `SceneCondition` / `FeatureEvent` / `TickReport` / `DamageReport` / `CharacterAction` / `InterruptReason` / `CancelResult` / `InterruptResult` / `FeatureStateScope` / `GameTime` — all defined once in `src/engine/core/types.ts` (Task A1), imported everywhere else.
-- `WorldFeature` / `CharacterSkillModifier` — defined in `src/engine/core/worldFeature.ts` (Task B1).
+- `WorldFeature` — defined in `src/engine/core/worldFeature.ts` (Task B1). No per-feature skill-modifier hook; skill modifiers flow through `SceneCondition.mechanicalEffect.skillPenalty` and `CharacterCondition.mechanicalEffect.skillPenalty`, aggregated by resolver / skill-check tool.
 - `FeatureReadContext` — defined in `src/engine/core/featureReadContext.ts` (Task A3). No `CharacterView` / `SceneView` types — features consume raw `DynamicScene` / `DynamicNPCProfile`.
 - `ScriptedEvent*` — defined in `src/engine/scriptedEvents/types.ts` (Task C1).
 - DGSM method names used across tasks: `getScopedFeatureState`, `setScopedFeatureState`, `getAllScopedFeatureStates`, `removeScopedFeatureState`, `getAllSceneIds`, `getRegionIdForScene`, `getGameDay`, `setGameDay`, `getTickTime`, `setTickTime`, `getNpcProfile`, `registerNpcProfile`, `setCharacterField`, `markCharacterDead`, `addCharacterCondition`, `removeCharacterCondition`, `appendSceneCondition`, `removeSceneConditionsByFeatureId`, `ensureConnection`, `setConnectionBlocked`, `isConnectionBlocked` — all introduced/consolidated in Task A2. Consistency enforced by type-check at E5 (per the "batch test at end" preference, intermediate type-check failures between A2 and Phase D/E completion are expected and tolerated).

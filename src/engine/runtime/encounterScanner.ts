@@ -1,74 +1,27 @@
+import type { FeatureEvent } from "../../engine/core/types.js";
 import { t } from "../../i18n/t.js";
-import type { CharacterAction } from "../../planning/types.js";
 import type { DynamicGameStateManager } from "../../state/DynamicGameState.js";
-import { shouldEmitEncounter } from "../shared/encounterDedup.js";
+import {
+  buildEncounterSignature,
+  shouldEmitEncounter,
+} from "../shared/encounterDedup.js";
 import { arePositionsCoLocated } from "../shared/locationPresence.js";
 import { tryDetectHidden } from "./movementTick.js";
-
-export function personalizeEncounterForNpc(
-  event: CharacterAction,
-  npcId: string,
-  allTickActions: CharacterAction[],
-  state: { npcCharacters: Array<{ id: string; name: string }> },
-  dgsm: DynamicGameStateManager,
-  lang: string
-): CharacterAction | null {
-  if (event.characterId !== "__encounter__") return event;
-  if (!event.targetCharacterIds) return event;
-
-  const alreadyInteracted = new Set<string>();
-  for (const action of allTickActions) {
-    if (
-      action.type === "character_interaction" &&
-      action.status === "completed"
-    ) {
-      if (action.characterId === npcId) {
-        for (const targetId of action.targetCharacterIds ?? []) {
-          alreadyInteracted.add(targetId);
-        }
-      }
-      if (action.targetCharacterIds?.includes(npcId)) {
-        alreadyInteracted.add(action.characterId);
-      }
-    }
-  }
-
-  const relevantIds = event.targetCharacterIds.filter(
-    (id) => id !== npcId && !alreadyInteracted.has(id)
-  );
-  if (relevantIds.length === 0) return null;
-
-  const relevantNames = relevantIds.map((id) => {
-    const npc = state.npcCharacters.find((n) => n.id === id);
-    const name = npc?.name ?? id;
-    return dgsm.isNpcAlive(id) ? name : `${name} (dead)`;
-  });
-  const sceneName = dgsm.getScene(event.location)?.name ?? event.location;
-
-  return {
-    ...event,
-    outcome: t("npcs_are_at", lang, {
-      names: relevantNames.join(", "),
-      scene: sceneName,
-    }),
-  };
-}
 
 export function scanUnplannedEncounters(params: {
   dgsm: DynamicGameStateManager;
   tickTime: string;
-  tickActions: CharacterAction[];
   movedNpcIds: ReadonlySet<string>;
   previousEncounterSignatures: ReadonlySet<string>;
   lang: string;
-}): CharacterAction[] {
+  interactedPairs?: ReadonlySet<string>;
+}): Array<{ event: FeatureEvent; signature: string }> {
   const {
     dgsm,
-    tickTime,
-    tickActions,
     movedNpcIds,
     previousEncounterSignatures,
     lang,
+    interactedPairs: interactedPairsParam,
   } = params;
   const state = dgsm.getState();
   const aliveNpcs = state.npcCharacters.filter((npc) =>
@@ -87,26 +40,9 @@ export function scanUnplannedEncounters(params: {
   );
 
   const arrivedNpcIds = new Set<string>(movedNpcIds);
-  for (const action of tickActions) {
-    if (action.type === "movement" && action.status === "completed") {
-      arrivedNpcIds.add(action.characterId);
-    }
-  }
+  const interactedPairs = interactedPairsParam ?? new Set<string>();
 
-  const interactedPairs = new Set<string>();
-  for (const action of tickActions) {
-    if (
-      action.type === "character_interaction" &&
-      action.targetCharacterIds?.length
-    ) {
-      for (const targetId of action.targetCharacterIds) {
-        const pairKey = [action.characterId, targetId].sort().join("_");
-        interactedPairs.add(pairKey);
-      }
-    }
-  }
-
-  const encounterEvents: CharacterAction[] = [];
+  const encounterEvents: Array<{ event: FeatureEvent; signature: string }> = [];
 
   for (const arrivedNpc of aliveNpcs) {
     if (!arrivedNpcIds.has(arrivedNpc.id)) continue;
@@ -179,20 +115,20 @@ export function scanUnplannedEncounters(params: {
     }
 
     const allNpcNames = [...allNpcIds].map((id) => formatPresenceLabel(id));
+    const signature = buildEncounterSignature(locationId, allNpcIds);
     encounterEvents.push({
-      characterId: "__encounter__",
-      characterName: t("co_presence_name", lang),
-      gameTime: tickTime,
-      action: t("npcs_present_at", lang, { scene: sceneName }),
-      location: locationId,
-      type: "character_interaction",
-      impact: 2 as const,
-      status: "completed",
-      outcome: t("npcs_are_at", lang, {
-        names: allNpcNames.join(", "),
-        scene: sceneName,
-      }),
-      targetCharacterIds: [...allNpcIds],
+      event: {
+        type: "encounter.detected",
+        sceneId: locationId,
+        data: {
+          observedNpcIds: [...allNpcIds],
+          description: t("npcs_are_at", lang, {
+            names: allNpcNames.join(", "),
+            scene: sceneName,
+          }),
+        },
+      },
+      signature,
     });
   }
 
