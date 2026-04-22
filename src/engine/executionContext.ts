@@ -2,6 +2,7 @@ import type { NpcMemoryManager } from "../memory/NpcMemoryManager.js";
 import type { GameEngineRegistry } from "./registry.js";
 import {
   applyPenalties,
+  getCharacterConditionPenalties,
   getNodeDifficulty,
   getScenePenalties,
   resolveSkillRoll,
@@ -9,7 +10,7 @@ import {
 import type { ExecutionContext } from "./types.js";
 
 export function createExecutionContext(
-  registry?: GameEngineRegistry,
+  _registry?: GameEngineRegistry,
   opts?: {
     runtime?: any;
     language?: string;
@@ -21,10 +22,7 @@ export function createExecutionContext(
     getScenePenalties,
     applyPenalties,
     getNodeDifficulty,
-    getCharacterPenalties(characterId, dgsm) {
-      if (!registry) return new Map();
-      return registry.collectCharacterPenalties(characterId, dgsm);
-    },
+    getCharacterPenalties: getCharacterConditionPenalties,
     runtime: opts?.runtime,
     language: opts?.language,
     memoryManager: opts?.memoryManager,

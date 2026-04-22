@@ -1,3 +1,4 @@
+import type { SceneCondition } from "../engine/core/types.js";
 import type { CharacterPosition } from "../state/topologyTypes.js";
 
 export type BuiltinNodeType =
@@ -8,14 +9,6 @@ export type BuiltinNodeType =
 
 /** Open to plugin extensions — accepts any string, with IDE hints for built-in types */
 export type PlanNodeType = BuiltinNodeType | (string & {});
-
-export interface SceneCondition {
-  description: string;
-  mechanicalEffect?: {
-    skillPenalty?: Array<{ skill: string; delta: number }>;
-    blocked?: boolean;
-  };
-}
 
 export interface FatigueEffectDelta {
   /** Fatigue modifier from LLM resolver. Clamped at runtime to [-N, N] where N scales with action duration (3–8). */

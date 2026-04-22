@@ -181,16 +181,6 @@ export interface WorldFeature {
   tick?(dgsm: DynamicGameStateManager, runtime: TickRuntimeContext): void;
 
   /**
-   * Return skill modifiers for a specific character based on this feature's state.
-   * Called during skill roll resolution to apply character-level penalties/bonuses.
-   * Use skill name "*" to apply to ALL skills.
-   */
-  getCharacterSkillModifiers?(
-    characterId: string,
-    dgsm: DynamicGameStateManager
-  ): Array<{ skill: string; delta: number }>;
-
-  /**
    * Called when a PlanNode with this feature's overlay fields transitions
    * from pending to in_progress (action start time).
    * Use this for precondition checks that should be evaluated at the start

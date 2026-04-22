@@ -42,12 +42,14 @@ src/engine/
 ├── scriptedEvents/                       [NEW]
 │   ├── types.ts                          [NEW] ScriptedEvent, Effect, Condition, Progress
 │   └── loader.ts                         [NEW] Build ScriptedEvent[] from module data
-├── features/                             [MODIFY each]
-│   ├── fireFeature.ts                    [MODIFY] Port to new WorldFeature interface
-│   ├── weatherFeature.ts                 [MODIFY]
-│   ├── lightingFeature.ts                [MODIFY]
-│   ├── staminaFeature.ts                 [MODIFY]
-│   ├── sanityFeature.ts                  [MODIFY]
+├── features/                             [MODIFY each — see Phase D redesign]
+│   ├── fireFeature.ts                    [MODIFY] Port to new WorldFeature interface; contributes to EnvironmentReading
+│   ├── weatherFeature.ts                 [MODIFY] Same; contributes temperature + illumination cap
+│   ├── lightingFeature.ts                [DELETE] Split into sunFeature (contributor) + Applier illumination aggregation
+│   ├── sunFeature.ts                     [NEW] Time-of-day illumination contributor + dark/blinding scene-condition observer
+│   ├── staminaFeature.ts                 [MODIFY] Reads env.temperature; emits character.san on CON fail (no sanity import)
+│   ├── itemDamageFeature.ts              [NEW] Reactor: env.temperature > 200°C → emit scene.damageItem
+│   ├── sanityFeature.ts                  [DELETE] Relocates to src/simulation/roleSim/sanityGuidance.ts (LLM-judged)
 │   └── eventTriggerFeature.ts            [DELETE] Replaced by ScriptedEventRunner
 ├── interpreter/gameInterpreter.ts        [UNCHANGED] Reused by ActionIntake
 ├── resolver/                             [UNCHANGED] Reused by Queue activation
@@ -72,7 +74,8 @@ src/simulation/
 ├── SimulationRunner.ts                   [MODIFY] Drive TickEngine; consume tickCompleted batch
 └── roleSim/                              [NEW]
     ├── impactGateHandler.ts              [NEW] Moved from engine; LLM-driven interrupt decisions
-    └── memoryEventWriter.ts              [NEW] Subscribes to actionInterrupted/actionCancelled/featureEvent, writes NpcMemory
+    ├── memoryEventWriter.ts              [NEW] Subscribes to actionInterrupted/actionCancelled/featureEvent, writes NpcMemory
+    └── sanityGuidance.ts                 [NEW] BOUT_OF_MADNESS_TABLE + SANITY_GUIDANCE_PROMPT fragment for resolver prompt
 
 src/planning/types.ts                    [MODIFY] Update SceneCondition to owner-tagged form; delete legacy CharacterAction; re-export new one from core
 src/simulation/SimulationEventEmitter.ts [MODIFY] Adapt to thin CharacterAction; derive missing UI fields (characterName etc.) via DGSM lookup
@@ -3321,219 +3324,646 @@ npx vitest run src/engine/core/__tests__/scriptedEventRunner.integration.test.ts
 Expected: 3 PASS.
 
 ---
-## Phase D — Feature Migrations
+## Phase D — Feature Migrations + Environmental Reading Layer
 
-Each feature migration task has the same shape:
+> **Phase D redesign (2026-04-22):** the original plan proposed a mechanical port of each feature to the new interface, one-to-one. Review surfaced that the current code has **7 direct cross-feature state reads** (e.g. `lightingFeature` reading `fire.intensity`, `staminaFeature` calling `applySanityLoss(...)` directly). A raw port would preserve this coupling in StateChange-output clothing — ugly features with invisible dependencies on each other's private state.
+>
+> Phase D is restructured around an **EnvironmentReading** intermediate layer: features contribute to shared physical quantities (temperature, illumination, oxygen, noise, airborne hazards) at each location; other features react by reading the aggregated reading. Direct feature-to-feature state reads are banned after Phase D.
+>
+> Additionally, **`sanityFeature` relocates to role sim** (psychology is LLM-judged narrative, not physics-modeled mechanics). The BOUT-of-madness table becomes prompt-reference text; the LLM resolver decides bouts in-context and emits both `character.san` and `character.addCondition { expiresAt }` as part of its `PlannedOutcome`.
+>
+> **Spec document update** (§3 "sanity in role sim", §6 "EnvironmentReading + new StateChange kinds + `scene.damageItem`", and a new section on `WorldFeature.init()` + Phase 0) is done **once** at the end of Phase D, after all Phase D tests pass and before any Phase E task begins. Not per-task. Rationale: spec should reflect the final landed design, not the in-progress drafts; Phase D is where design details get finalized via implementation feedback, so spec sync waits for that. Doc debt is acknowledged during the Phase D window — readers who hit the spec during that time should defer to the plan.
 
-1. Read the existing feature to understand its current behavior (DGSM calls, state keys, propagation).
-2. Write a new-interface test case that exercises the core behavior.
-3. Rewrite the feature as a new `WorldFeature` returning `StateChange[]` — no DGSM writes.
-4. Run the test.
+### §D-env-architecture — EnvironmentReading layer
 
-Priorities (per spec §3 convention):
+Per-location physical reading published in DGSM, consumed by features on the next tick:
 
-| Feature | stateScope | priority |
+```ts
+// src/engine/core/types.ts
+export interface EnvironmentReading {
+  temperature: number;        // °C, baseline 20
+  illumination: number;       // 0–5, baseline 3
+  oxygen: number;             // 0–1, baseline 1
+  noise: number;              // 0–5, baseline 0
+  airborneHazards: string[];  // "smoke" | "toxic_gas" | ...
+}
+
+export const DEFAULT_ENVIRONMENT_READING: EnvironmentReading = {
+  temperature: 20,
+  illumination: 3,
+  oxygen: 1,
+  noise: 0,
+  airborneHazards: [],
+};
+```
+
+**Three new StateChange kinds** added to the union:
+
+```ts
+| {
+    kind: "environment.contribute";
+    locationId: string;
+    quantity: "temperature" | "illumination" | "oxygen" | "noise";
+    value: number;
+    sourceFeatureId: string;
+  }
+| {
+    kind: "environment.cap";
+    locationId: string;
+    quantity: "illumination";            // MVP: only illumination needs capping
+    value: number;                       // maximum allowed final value
+    sourceFeatureId: string;
+  }
+| {
+    kind: "environment.hazard";
+    locationId: string;
+    add?: string[];                      // hazards to add
+    remove?: string[];                   // hazards to remove
+    sourceFeatureId: string;
+  }
+```
+
+`environment.cap` exists because fog / storm need to *lower* illumination — the baseline reducer (`max`) would otherwise ignore their "darkening" contribution. A cap is applied after the max aggregation.
+
+**Applier aggregation** (new Pass 1.5, between Pass 1 and Pass 2a):
+
+| Quantity | Reducer | Baseline |
 |---|---|---|
-| weather | region | 100 |
-| lighting | scene | 150 |
-| fire | scene | 200 |
-| stamina | character | 300 |
-| sanity | character | 310 |
+| temperature | `baseline + sum(contributions)` | 20 |
+| illumination | `min(min(caps…), max(baseline, max(contributions)))` | 3 |
+| oxygen | clamp-to-[0,1] of `baseline + sum(contributions)` | 1 |
+| noise | `max(baseline, max(contributions))` | 0 |
+| airborneHazards | `(union_of_adds) \\ (union_of_removes)` | `[]` |
+
+Final reading written via `dgsm.setEnvironmentReading(locationId, reading)`. Only locations receiving contributions this tick get written; unvisited locations retain their last-known reading. Features that want their contribution to decay must **re-contribute every tick** — this is the natural pattern (fire keeps contributing while burning, weather keeps contributing while active).
+
+**FeatureReadContext** gains:
+
+```ts
+getEnvironmentReading(locationId: string): EnvironmentReading;
+```
+
+**1-tick lag**: features contribute in Phase 5 (`onTick`), Applier computes final reading in Phase 9 (`flush`), readers see the new value from their `onTick` the NEXT tick. At 1 minute per tick this is imperceptible and avoids a second flush pass.
+
+### §D-feature-responsibilities
+
+Responsibility matrix after Phase D — contributors vs reactors, no cross-feature state reads:
+
+| Feature | stateScope | priority | Contributes | Reacts to |
+|---|---|---|---|---|
+| **weather** | region | 100 | `temperature` (rain −10·intensity·0.2, snow −20, heat +30, cold −30)<br>`illumination.cap` (fog −1, storm −2 below baseline 3) | nothing |
+| **sun** (replaces lighting) | global | 150 | `illumination` (sine-like sun curve; moonlight @ night) | env.illumination → emits `[Lighting]` scene conditions outside [3,4] |
+| **fire** | scene | 200 | `temperature +intensity·100`<br>`illumination +intensity+1`<br>`oxygen −intensity·0.1`<br>`hazard smoke` @ intensity ≥ 2 | env.temperature < 5°C (cold rain) → faster decay |
+| **stamina** | character | 300 | nothing | env.temperature ∉ [10,30]°C → +1× fatigue accel |
+| **itemDamage** (new) | global | 350 | nothing | env.temperature > 200°C → emit `scene.damageItem` for 20% of flammable items |
+
+7 direct cross-feature reads → 0 after Phase D.
+
+### §D-sanity-relocation
+
+`src/engine/features/sanityFeature.ts` is **deleted**. Its logic moves to:
+
+- **`src/simulation/roleSim/sanityGuidance.ts`** — exports `BOUT_OF_MADNESS_TABLE` (data) and `SANITY_GUIDANCE_PROMPT` (prompt fragment)
+- **LLM resolver** (which already produces `PlannedOutcome.stateChanges`) — decides bouts in-context, emits both the `character.san` delta AND the insanity `character.addCondition { expiresAt }` in the same outcome
+- **Condition expiry** handled generically by Task D8 (not sanity-specific)
+- **Persistent phobia/mania** = `character.addCondition` without `expiresAt`. Never auto-removed.
+
+Action restrictions (e.g. "flee_only", "incapacitated") flow via the condition's `description` + `mechanicalEffect.globalSkillPenalty`. The LLM planner reads conditions naturally; no hardcoded `actionRestriction` enum needed.
+
+**Accepted behavior reductions** (documented, not bugs):
+
+- Silent SAN drops from stamina (exhaustion CON failure) no longer auto-trigger bouts. Bouts are narrative events; pure mechanical fatigue drain isn't a narrative event the LLM sees.
+- Cumulative SAN-over-60-min threshold becomes LLM judgment — the resolver sees recent narrative context. If this proves insufficient in Phase E smoke tests, add `ctx.getRecentSanLosses(characterId, minutes)` helper and feed into resolver prompt (deferred, YAGNI).
+- Scripted events dropping SAN don't auto-trigger bouts unless the event's `onComplete` also includes an insanity `character.addCondition` effect. Event authors must declare bouts explicitly — this is more controllable than the current implicit trigger.
+
+### §D-testing strategy
+
+The environmental reading layer's whole point is enabling clean **cross-feature interactions**. Per-feature unit tests verify implementation details in isolation — they miss the thing the architecture is actually for. Phase D testing is organized in **three layers**:
+
+**Layer 1 — Middle-layer correctness (D0)**
+`src/engine/core/__tests__/applier.environment.test.ts` — verifies the Applier's aggregation rules: sum / max / cap / set-union per quantity, baseline fallback for untouched locations, multi-contributor scenarios per quantity.
+
+**Layer 2 — Feature interactions via the middle layer (Task D11)**
+`src/engine/__tests__/integration/*.test.ts` — each test focuses on **one cross-feature chain** through the env layer. Specific chains are chosen during implementation (representative examples: fire → temperature → stamina-accel; weather(rain) → low-temp → fire decay; fire + weather(heat) → compound temperature → stamina ×2 accel; sun + fire → illumination max → no dark condition; stamina CON fail → SAN drop → condition expiry; sun's day/night curve → scene conditions over 24h). Each test uses real DGSM + real Applier + real feature set (no mocks), runs multi-tick scenarios, and asserts on the observable downstream effect — not on intermediate feature state.
+
+**Layer 3 — Feature-internal invariants (embedded in D1/D2/D3/D4/D7 tasks)**
+Only the algorithmic logic that interaction tests cannot naturally exercise:
+- D1 fire: lifecycle (intensity 1→5→0 over correct tick counts), topology spread (scene→junction→road handoff, road burnRange endpoint triggers), aftermath threshold bucketing
+- D2 weather: Markov transition row sums ≈ 1 over 1000 trials; `init()` fires once on fresh session, skipped on rehydrated
+- D3 sun: time-of-day curve produces expected values at 04:00 / 12:00 / 18:00 / 22:00
+- D4 stamina: fatigue level transition thresholds (480 / 960 min), exhaustion CON fail chance formula
+- D7 itemDamage: 20% sample rate over 10 items → exactly 2 damaged; skips already-damaged items
+
+Each Layer 3 test is deliberately narrow (~50-80 LOC) and avoids duplicating what Layer 2 tests already cover via real scenarios.
+
+**Out of scope:**
+- Old mock-DGSM feature tests at `src/engine/features/__tests__/*.test.ts` (~3000 LOC) are **deleted** — they test old-interface implementation details and cannot be ported cleanly.
+- Exhaustive branch coverage of every intensity × weather-type × scene-indoor/outdoor combination. Phase E module smoke runs catch the edge cases that matter.
+
+**Additional test cases:**
+- **D5** — snapshot test on `SANITY_GUIDANCE_PROMPT` verifying BOUT table content
+- **D8** — condition expiry case added to tickOrchestrator integration test
+- **D9** — `globalSkillPenalty` aggregation case added to existing skill-check test
+
+**Target total**: ~1000 LOC of new test code across layers. Net change: −2000 LOC (old 3000 → new ~1000). Test value shifts from isolated-feature branch coverage to architecturally-aligned interaction coverage.
+
+### Revised task list
+
+| Task | Action | Target LOC |
+|---|---|---|
+| **D0** | **[NEW]** EnvironmentReading + Applier aggregation + 3 new StateChange kinds + Layer-1 middle-layer test | ~250 prod + ~100 test |
+| **D1** | Rewrite `fireFeature.ts` + Layer-3 internal-invariants test (lifecycle + topology + aftermath thresholds) | ~200 prod + ~150 test |
+| **D2** | Rewrite `weatherFeature.ts`; add `WorldFeature.init()` hook + `TickOrchestrator` Phase 0; loader passthrough for `moduleSetup.featureInit.weather` + Layer-3 test (Markov + init fresh/rehydrated) | ~250 prod + ~100 test |
+| **D3** | **[NEW]** `sunFeature.ts` (replaces `lightingFeature.ts`) + Layer-3 test (time-of-day curve) | ~100 prod + ~50 test |
+| **D4** | Rewrite `staminaFeature.ts` (no sanity coupling) + Layer-3 test (level transitions + fail-chance formula) | ~150 prod + ~80 test |
+| **D5** | **[DELETE]** `sanityFeature.ts`; create `src/simulation/roleSim/sanityGuidance.ts` + prompt snapshot test | ~150 prod + ~30 test |
+| **D6** | **[DELETE]** `eventTriggerFeature.ts` | — |
+| **D7** | **[NEW]** `itemDamageFeature.ts` + `scene.damageItem` StateChange kind + Layer-3 test (sample rate + skip-damaged) | ~100 prod + ~50 test |
+| **D8** | **[NEW]** Condition expiry sweep in TickOrchestrator + test | ~30 prod + ~30 test |
+| **D9** | **[NEW]** `CharacterCondition.mechanicalEffect.globalSkillPenalty` + skill-check aggregation + test | ~20 prod + ~20 test |
+| **D11** | **[NEW]** Layer-2 interaction test suite at `src/engine/__tests__/integration/*.test.ts` | ~400 test |
+
+Total Phase D: ~1250 LOC production + ~1000 LOC tests. Original plan: ~2900 LOC mechanical port + old per-feature tests kept. Cross-feature coupling: 7 → 0.
+
+---
+
+### Task D0: EnvironmentReading + Applier aggregation
+
+**Files:**
+- Modify: `src/engine/core/types.ts` — add `EnvironmentReading` + `DEFAULT_ENVIRONMENT_READING` + 3 new StateChange kinds
+- Modify: `src/state/DynamicGameState.ts` — add `environmentReadings: Record<string, EnvironmentReading>` state field + accessors
+- Modify: `src/engine/core/featureReadContext.ts` — add `getEnvironmentReading`
+- Modify: `src/engine/core/applier.ts` — add Pass 1.5 env aggregation
+- Test: `src/engine/core/__tests__/applier.environment.test.ts`
+
+- [ ] **Step 1: Add types**
+
+Add to `src/engine/core/types.ts`:
+
+```ts
+export interface EnvironmentReading {
+  temperature: number;
+  illumination: number;
+  oxygen: number;
+  noise: number;
+  airborneHazards: string[];
+}
+
+export const DEFAULT_ENVIRONMENT_READING: EnvironmentReading = {
+  temperature: 20,
+  illumination: 3,
+  oxygen: 1,
+  noise: 0,
+  airborneHazards: [],
+};
+```
+
+Extend `StateChange` union with the three kinds in §D-env-architecture.
+
+- [ ] **Step 2: DGSM storage**
+
+On the `DynamicGameState` interface:
+
+```ts
+environmentReadings: Record<string /* locationId */, EnvironmentReading>;
+```
+
+Initialize to `{}` in `createInitialDynamicGameState()`. Serialize as plain object. Deserialize defaults missing field to `{}`.
+
+Accessors:
+
+```ts
+getEnvironmentReading(locationId: string): EnvironmentReading {
+  return this.state.environmentReadings[locationId] ?? DEFAULT_ENVIRONMENT_READING;
+}
+
+setEnvironmentReading(locationId: string, reading: EnvironmentReading): void {
+  this.state.environmentReadings[locationId] = reading;
+  this.state.lastUpdated = new Date();
+}
+```
+
+- [ ] **Step 3: FeatureReadContext wire-up**
+
+Add to interface + `makeDGSMFeatureReadContext`:
+
+```ts
+getEnvironmentReading: (locationId: string) => dgsm.getEnvironmentReading(locationId),
+```
+
+- [ ] **Step 4: Applier Pass 1.5 aggregation**
+
+Between existing Pass 1 and Pass 2(a):
+
+```ts
+// pseudocode in Applier.flush()
+const envBuckets = new Map<string, {
+  temperature: number[];
+  illumination: number[];
+  illuminationCaps: number[];
+  oxygen: number[];
+  noise: number[];
+  hazardAdds: Set<string>;
+  hazardRemoves: Set<string>;
+}>();
+
+for (const c of changes) {
+  if (c.kind === "environment.contribute") {
+    getOrCreate(envBuckets, c.locationId)[c.quantity].push(c.value);
+  } else if (c.kind === "environment.cap") {
+    getOrCreate(envBuckets, c.locationId).illuminationCaps.push(c.value);
+  } else if (c.kind === "environment.hazard") {
+    const b = getOrCreate(envBuckets, c.locationId);
+    (c.add ?? []).forEach((h) => b.hazardAdds.add(h));
+    (c.remove ?? []).forEach((h) => b.hazardRemoves.add(h));
+  }
+}
+
+for (const [locationId, b] of envBuckets) {
+  const base = DEFAULT_ENVIRONMENT_READING;
+  const temperature = base.temperature + sum(b.temperature);
+  const illumPreCap = Math.max(base.illumination, ...b.illumination);
+  const illumination = b.illuminationCaps.length > 0
+    ? Math.min(illumPreCap, ...b.illuminationCaps)
+    : illumPreCap;
+  const oxygen = clamp(0, 1, base.oxygen + sum(b.oxygen));
+  const noise = Math.max(base.noise, ...b.noise);
+  const hazards = [...b.hazardAdds].filter((h) => !b.hazardRemoves.has(h));
+  this.dgsm.setEnvironmentReading(locationId, {
+    temperature, illumination, oxygen, noise, airborneHazards: hazards,
+  });
+}
+```
+
+- [ ] **Step 5: Test**
+
+```ts
+// src/engine/core/__tests__/applier.environment.test.ts — 4 scenarios
+describe("Applier env aggregation", () => {
+  it("single contribution raises temperature above baseline", () => { /* 320°C */ });
+  it("multi-quantity from multiple features aggregates per-quantity rule", () => {
+    // fire (temp +300, illum +4, oxygen −0.3, hazard smoke)
+    // + sun (illum +5) → {temp:320, illum:5 (max), oxygen:0.7, hazards:[smoke]}
+  });
+  it("illumination cap lowers final value below max contribution", () => {
+    // sun contributes 5, storm caps at 2 → final 2
+  });
+  it("untouched location returns DEFAULT_ENVIRONMENT_READING", () => { /* baseline */ });
+});
+```
+
+Run: `npx vitest run src/engine/core/__tests__/applier.environment.test.ts`
+Expected: 4 PASS.
+
+---
 
 ### Task D1: Fire feature
 
 **Files:**
-- Modify: `src/engine/features/fireFeature.ts` (full rewrite)
-- Test: `src/engine/features/__tests__/fireFeature.test.ts` (rewrite if exists)
+- Rewrite: `src/engine/features/fireFeature.ts` (full rewrite)
+- Delete: `src/engine/features/__tests__/fireFeature.test.ts` (old mock-based test)
+- Create: `src/engine/features/__tests__/fireFeature.test.ts` (new integration test)
 
-- [ ] **Step 1: Read the current file**
+**Responsibilities (post-refactor):**
 
-Run: `cat src/engine/features/fireFeature.ts` (in your head — use `Read` tool). Note every DGSM mutation.
+`stateScope: "scene"`, `priority: 200`, `propagation: { tickInterval: 10, maxHops: 3 }`.
 
-- [ ] **Step 2: Write the failing test**
-
-```ts
-// src/engine/features/__tests__/fireFeature.test.ts
-import { describe, it, expect } from "vitest";
-import { fireFeature } from "../fireFeature.js";
-import type { FeatureReadContext } from "../../core/featureReadContext.js";
-
-function ctxFor(sceneId: string, intensity?: number): FeatureReadContext {
-  return {
-    gameDay: 1,
-    tickTime: "08:00",
-    tickDurationMinutes: 1,
-    getSceneIds: () => [sceneId],
-    getScene: (id) => id === sceneId ? { sceneId, characterIds: ["npc1"], conditions: [] } : undefined,
-    getCharacter: (id) => id === "npc1" ? { characterId: id, sceneId, hp: 10, maxHp: 10, san: 50, maxSan: 50, fatigue: 0, dex: 50, alive: true } : undefined,
-    getCharactersInScene: (id) => id === sceneId ? [{ characterId: "npc1", sceneId: id, hp: 10, maxHp: 10, san: 50, maxSan: 50, fatigue: 0, dex: 50, alive: true }] : [],
-    getRegionId: () => undefined,
-    getFeatureState: <T,>(k: string) => (k === sceneId && intensity !== undefined ? ({ intensity } as unknown as T) : undefined),
-    getAllFeatureStates: () => (intensity !== undefined ? [{ key: sceneId, state: { intensity } as unknown }] : []),
-    getOtherFeatureState: () => undefined,
-  } as FeatureReadContext;
-}
-
-describe("fireFeature", () => {
-  it("onTick produces hp deltas for characters in burning scenes proportional to intensity", () => {
-    const changes = fireFeature.onTick!(ctxFor("s1", 3));
-    const hp = changes.filter((c) => c.kind === "character.hp");
-    expect(hp).toHaveLength(1);
-    expect(hp[0]).toMatchObject({ characterId: "npc1", sourceFeatureId: "fire" });
-    expect(hp[0].delta).toBeLessThan(0);
-  });
-
-  it("declares correct scope + affectedKinds", () => {
-    expect(fireFeature.stateScope).toBe("scene");
-    expect(fireFeature.affectedKinds).toContain("character.hp");
-  });
-});
-```
-
-- [ ] **Step 3: Rewrite the feature**
-
-Template (numeric constants chosen to roughly match current behavior — adjust based on what the existing file does):
+Per-scene feature state (stored via `feature.setState`):
 
 ```ts
-// src/engine/features/fireFeature.ts
-import type { WorldFeature } from "../core/worldFeature.js";
-import type { StateChange } from "../core/types.js";
-
 interface FireSceneState {
-  intensity: number; // 0–5
+  intensity: number;              // 1–5
+  phase: "growing" | "decaying";
+  minutesInPhase: number;
+  totalBurnMinutes: number;
+  burnRange?: { start: number; end: number };  // road-only
   ignitedOnDay: number;
   ignitedAtTime: string;
 }
-
-const DAMAGE_PER_INTENSITY_PER_TICK = 1; // ≈1 hp per intensity per minute tick
-
-export const fireFeature: WorldFeature = {
-  id: "fire",
-  description: "Localized fire that damages characters and can spread.",
-  stateScope: "scene",
-  affectedKinds: ["character.hp", "scene.addCondition", "scene.removeCondition", "feature.setState", "feature.removeState", "event.emit"],
-  effectSummary:
-    "Burns characters in the scene proportional to intensity; spreads to adjacent scenes when intensity is high.",
-  impactRange: { "character.hp": [-5, 0] },
-  priority: 200,
-  propagation: { tickInterval: 3, maxHops: 2 },
-
-  stateDescription(ctx) {
-    const states = ctx.getAllFeatureStates<FireSceneState>();
-    if (states.length === 0) return "No active fires.";
-    return states
-      .map((s) => `Scene ${s.key}: intensity ${s.state.intensity}`)
-      .join("; ");
-  },
-
-  onTick(ctx) {
-    const out: StateChange[] = [];
-    const states = ctx.getAllFeatureStates<FireSceneState>();
-    for (const { key: sceneId, state } of states) {
-      const chars = ctx.getCharactersInScene(sceneId);
-      for (const c of chars) {
-        out.push({
-          kind: "character.hp",
-          characterId: c.characterId,
-          delta: -state.intensity * DAMAGE_PER_INTENSITY_PER_TICK,
-          sourceFeatureId: "fire",
-          reason: "burn",
-        });
-      }
-    }
-    return out;
-  },
-
-  onActionCommit(step, _outcome, _ctx) {
-    // If a character's action is "douse", reduce intensity by 1 (or snuff if 0)
-    if (step.definitionId === "douse_fire") {
-      return [
-        {
-          kind: "feature.setState",
-          featureId: "fire",
-          key: step.executionSceneId,
-          state: { intensity: 0 }, // simplest form
-        },
-      ];
-    }
-    return [];
-  },
-
-  onPropagate(source, ctx) {
-    const state = ctx.getFeatureState<FireSceneState>(source.sceneId);
-    if (!state || state.intensity < 3) {
-      return { spreadToSceneIds: [], changes: [] };
-    }
-    // Simplified: caller will iterate adjacent scenes via DGSM topology.
-    // For now, signal spread by emitting a featureEvent; actual adjacent
-    // logic can be kept in DGSM helpers or an injected helper.
-    return {
-      spreadToSceneIds: [],
-      changes: [
-        {
-          kind: "event.emit",
-          event: {
-            type: "fire.spreadPressure",
-            sceneId: source.sceneId,
-            data: { intensity: state.intensity },
-          },
-        },
-      ],
-    };
-  },
-};
 ```
 
+**`onActionCommit(step)`:**
+- `step.overlayFields.fireIntensity` set → if no fire at `step.executionSceneId`, emit `feature.setState` to create fire + initial `scene.addCondition { featureId: "fire", description: "[Fire] Light smoke", mechanicalEffect: { skillPenalty: {...} } }`. If fire exists and new intensity higher, boost.
+- `step.overlayFields.fireExtinguish === true` → if fire exists, reduce intensity by 2. If ≤0 emit `feature.removeState` + `scene.removeCondition { predicate: { featureId: "fire" } }` + aftermath `scene.addCondition`.
+
+**`onTick(ctx)`:**
+
+For each burning scene (`ctx.getAllFeatureStates<FireSceneState>()`):
+- Advance `totalBurnMinutes` + `minutesInPhase` by `ctx.tickDurationMinutes`
+- When `minutesInPhase >= 10`, advance intensity (growing +1 up to 5 then flip to decaying; decaying −1 down to 0)
+- Emit `feature.setState` for updated state
+- Emit `environment.contribute` (temperature, illumination, oxygen) and `environment.hazard { add: ["smoke"] }` when intensity ≥ 2
+- On intensity level-change, emit `scene.removeCondition { featureId: "fire" }` + new `scene.addCondition`
+- On extinguish (intensity reaches 0) emit `feature.removeState` + aftermath condition sized by `totalBurnMinutes` (minor / partial / severe / destroyed)
+- At intensity ≥ 3 emit `connection.setBlock { blocked: true }` for each neighbor connection; below 3 emit `blocked: false` (Applier refcount resolves conflicts)
+- Read `ctx.getEnvironmentReading(sceneId).temperature` — if < 5°C (cold rain has been contributing), double decay rate
+
+**`onPropagate({ sceneId, hop }, ctx)`:**
+
+Topology-aware spread when intensity ≥ 3. Use `ctx.getTopology()` (add to `FeatureReadContext` if missing) or new helper `ctx.getSceneNeighbors(sceneId)`:
+- Scene → parent road (with burnRange start = along-position) or parent junction
+- Junction → connected roads (burnRange anchored at junction end: 0.0 or 1.0) + connected scenes
+- Road → endpoint junctions when `burnRange.start <= 0.05` / `burnRange.end >= 0.95`
+- Road burnRange expands by `0.4 × tickDurationMinutes / travelTimeMinutes`, modulated by cold/heat via env.temperature
+
+Return `{ spreadToSceneIds, changes }` where `changes` emit `feature.setState` for new fire + initial `scene.addCondition`.
+
+**Key change from current:** no direct reads of weather state or item state. Item damage migrates entirely to D7.
+
+- [ ] **Step 1: Delete old test** — `rm src/engine/features/__tests__/fireFeature.test.ts`
+- [ ] **Step 2: Rewrite feature** (~200 LOC)
+- [ ] **Step 3: Write Layer-3 internal-invariants test** (~150 LOC) covering lifecycle (intensity 1→5→0 over correct tick counts), topology spread (scene→junction→road handoff, road burnRange endpoint triggers), and aftermath threshold bucketing. Cross-feature behavior (fire raises temperature, fire + sun compounds illumination, etc.) is NOT tested here — covered by Task D11's Layer-2 suite.
 - [ ] **Step 4: Run test**
 
-Run: `npx vitest run src/engine/features/__tests__/fireFeature.test.ts`
-Expected: PASS.
+---
+
+### Task D2: Weather feature + `init()` hook infrastructure
+
+**Files:**
+- Rewrite: `src/engine/features/weatherFeature.ts`
+- Delete + rewrite: `src/engine/features/__tests__/weatherFeature.test.ts`
+- Modify: `src/engine/core/worldFeature.ts` — add optional `init(ctx): StateChange[]` to `WorldFeature`
+- Modify: `src/engine/core/tickOrchestrator.ts` — add Phase 0 that runs feature `init()` once on fresh sessions
+- Modify: `src/engine/core/tickEngine.ts` — accept `featureInitConfigs: Record<string, unknown>` in opts, thread through to orchestrator
+- Modify: `src/engine/core/featureReadContext.ts` — add `getFeatureInitConfig<T>(featureId)`
+- Modify: `src/state/moduleLoader.ts` — populate `moduleSetup.featureInit.weather` from module data (pure passthrough; loader has zero knowledge of weather state shape)
+
+**Responsibilities (post-refactor):**
+
+`stateScope: "region"`, `priority: 100`, no `propagation`.
+
+Per-region state (shape preserved from current):
+
+```ts
+interface WeatherRegionState {
+  weatherType: WeatherType;
+  intensity: number;         // 0–5
+  minutesInState: number;
+  affectedSceneIds: string[];
+}
+```
+
+**`init(ctx)` — NEW, fires once per TickEngine lifecycle on fresh sessions:**
+
+Reads preset configs via `ctx.getFeatureInitConfig<WeatherInitConfig[]>("weather")`. For each `{ regionId, weatherType, intensity }` entry, returns:
+- `feature.setState` for the region's initial `WeatherRegionState` (compute `affectedSceneIds` from topology)
+- `environment.contribute` / `environment.cap` for each affected scene per the contribution rules in `onTick` below
+- `scene.addCondition` for the initial `[Weather]` condition
+- `connection.setBlock` for intensity-4 storm/snow at outdoor connections
+
+Returns `[]` if no preset config or if `WeatherType === "clear"` everywhere.
+
+**`onTick(ctx)`:**
+
+For each region in feature state:
+- Advance `minutesInState` by `ctx.tickDurationMinutes`
+- When ≥ 120, sample Markov transition (unchanged logic); possibly update `weatherType` / `intensity`
+- Emit `feature.setState` for updated state
+- For each scene in `affectedSceneIds`, emit contributions:
+  - `rain`: `temperature −10 · intensity · 0.2`
+  - `storm`: `temperature −15`, `illumination.cap = 3 − (intensity ≥ 4 ? 2 : 1)`
+  - `snow`: `temperature −20`
+  - `extreme_heat`: `temperature +30`
+  - `extreme_cold`: `temperature −30`
+  - `fog`: `illumination.cap = 3 − (intensity ≥ 3 ? 2 : 1)`
+  - `clear`: no contribution
+- On weatherType / intensity change, emit `scene.removeCondition { featureId: "weather" }` + new `scene.addCondition` with `[Weather]` descriptor + weather-skill-penalty map (port penalty tables from current code)
+- At intensity ≥ 4 with `storm` / `snow`, emit `connection.setBlock { blocked: true }` for outdoor connections
+
+### §D2-init-infrastructure — `init()` hook + Phase 0
+
+New optional method on `WorldFeature`:
+
+```ts
+interface WorldFeature {
+  // ...existing
+  init?(ctx: FeatureReadContext): StateChange[];
+}
+```
+
+TickOrchestrator gains Phase 0:
+
+```ts
+// TickOrchestrator
+private hasInitialized = this.deps.persistedState !== undefined;
+
+async tick(): Promise<TickReport> {
+  // Phase 0 — one-shot init on fresh session only
+  if (!this.hasInitialized) {
+    const currentTickTime = {
+      day: dgsm.getGameDay(),
+      tickTime: dgsm.getTickTime(),
+    };
+    const ctx = makeDGSMFeatureReadContext(dgsm, {
+      callerFeatureId: "__init__",
+      callerScope: "global",
+    });
+    const initChanges: StateChange[] = [];
+    for (const f of featureRunner.listFeatures()) {
+      if (f.init) initChanges.push(...f.init(ctx));
+    }
+    applier.flush(initChanges, currentTickTime);
+    this.hasInitialized = true;
+  }
+
+  // Phase 1 — advance clock (existing)
+  // ... rest unchanged
+}
+```
+
+`FeatureReadContext` gains:
+
+```ts
+getFeatureInitConfig<T>(featureId: string): T | undefined;
+// implementation: returns dgsm.getModuleSetup()?.featureInit?.[featureId] as T | undefined;
+```
+
+`createTickEngine` gains:
+
+```ts
+featureInitConfigs?: Record<string, unknown>;
+// passed into DGSM's moduleSetup.featureInit via a setter, OR stored on orchestrator
+// and exposed via ctx.getFeatureInitConfig — same effect, pick whichever matches
+// existing ModuleSetup plumbing
+```
+
+**moduleLoader responsibility**: read `moduleData.weatherPresets` (or wherever the JSON stores them) and populate `moduleSetup.featureInit.weather = [{ regionId, weatherType, intensity }, ...]`. Loader has **zero knowledge** of weather's internal state shape — pure passthrough. Future features follow the same convention: `moduleSetup.featureInit.<featureId> = <feature-specific-config-blob>`.
+
+**Rehydration behavior**: `persistedState !== undefined` ⇒ `hasInitialized = true` from construction ⇒ Phase 0 skipped. State is already in DGSM from the rehydrated JSON, no re-init needed.
+
+### Steps
+
+- [ ] **Step 1**: Add `init?(ctx): StateChange[]` to `WorldFeature` interface
+- [ ] **Step 2**: Add `getFeatureInitConfig<T>` to `FeatureReadContext` interface + `makeDGSMFeatureReadContext`
+- [ ] **Step 3**: Add `featureInitConfigs` threading to `createTickEngine` and `TickOrchestrator` (pick whether to go via `moduleSetup.featureInit` on DGSM or a standalone orchestrator field; former is easier if DGSM already has `moduleSetup`)
+- [ ] **Step 4**: Add Phase 0 to `TickOrchestrator.tick()` with `hasInitialized` gating
+- [ ] **Step 5**: Update `moduleLoader.ts` to copy module's weather presets into `moduleSetup.featureInit.weather`
+- [ ] **Step 6**: Delete old weather test
+- [ ] **Step 7**: Rewrite `weatherFeature.ts` including `init()` (~220 LOC)
+- [ ] **Step 8**: Write Layer-3 internal-invariants test (~100 LOC) covering Markov transition row-sum ≈ 1 over 1000 trials AND init firing on fresh session / skipping on rehydrated session. Cross-feature behavior (rain cooling fire, fog darkening scenes, etc.) NOT tested here — covered by Task D11's Layer-2 suite.
+- [ ] **Step 9**: Run test
 
 ---
 
-### Task D2: Weather feature
+### Task D3: Sun feature (replaces lightingFeature)
 
-Same shape as D1. Read `src/engine/features/weatherFeature.ts`. Port to:
+**Files:**
+- Create: `src/engine/features/sunFeature.ts`
+- Delete: `src/engine/features/lightingFeature.ts`
+- Delete: `src/engine/features/__tests__/lightingFeature.test.ts`
+- Create: `src/engine/features/__tests__/sunFeature.test.ts`
 
-- `stateScope: "region"` (weather is per-region, not per-scene)
-- `priority: 100` (runs first: environment affects everything downstream)
-- `affectedKinds`: `["connection.setBlock", "scene.addCondition", "scene.removeCondition", "feature.setState", "feature.removeState"]`
-- `propagation`: weather fronts can move between regions — use `{ tickInterval: 10, maxHops: 3 }` or whatever the current file uses
-- **Skill modifiers:** emitted via `scene.addCondition` with `mechanicalEffect.skillPenalty` (e.g., storm → `{ Spot: -10, Listen: -20 }`). Resolver aggregates conditions at skill-check time; no per-feature hook.
+**Responsibilities:**
 
-Write a new-interface test that exercises `onTick` → producing scene conditions over all scenes in a storming region. Rewrite and run.
+`stateScope: "global"`, `priority: 150`. No persistent feature state.
 
-- [ ] **Step 1: Read** `src/engine/features/weatherFeature.ts`
-- [ ] **Step 2: Write failing test** at `src/engine/features/__tests__/weatherFeature.test.ts` asserting (a) `stateScope === "region"`, (b) `onTick` returns `scene.addCondition` for every scene in the region that has active weather state, (c) at least one such condition carries `mechanicalEffect.skillPenalty` with Spot/Listen entries when weather is active.
-- [ ] **Step 3: Rewrite**
-- [ ] **Step 4: Run** `npx vitest run src/engine/features/__tests__/weatherFeature.test.ts`
+**`onTick(ctx)`:**
 
----
+1. **Sun contribution** — compute sun level from `ctx.tickTime` (port `lightingFeature.computeSunLevel` sine-like curve). For each outdoor location (scenes where `scene.indoor !== true`, plus all roads and junctions — add `ctx.getRoadIds()` / `ctx.getJunctionIds()` to `FeatureReadContext` if missing):
+   - Emit `environment.contribute { quantity: "illumination", value: sunLevel }`
+   - At night (sunLevel = 1), also emit `value: 2` with the same quantity (moonlight; reducer takes max)
 
-### Task D3: Lighting feature
+2. **Item light sources** — for each scene with `scene.items`, scan for `item.isLightSource && !item.damaged`, emit `environment.contribute { quantity: "illumination", value: item.lightLevel }` for each.
 
-- [ ] **Step 1: Read** `src/engine/features/lightingFeature.ts`
-- [ ] **Step 2: Write failing test** asserting (a) `stateScope === "scene"`, `priority: 150`, `affectedKinds` includes `scene.addCondition`; (b) dark scenes get a `scene.addCondition` whose `mechanicalEffect.skillPenalty.Spot` is negative; (c) no state changes if torch lit.
-- [ ] **Step 3: Rewrite** to new interface.
-- [ ] **Step 4: Run** `npx vitest run src/engine/features/__tests__/lightingFeature.test.ts`
+3. **Illumination-based scene conditions** — reading **last tick's** aggregated `env.illumination` (1-tick lag is fine), for each scene/road/junction:
+   - `illumination === 1` → emit `scene.addCondition { featureId: "sun", description: "[Lighting] Pitch black", mechanicalEffect: { skillPenalty: {...} } }`
+   - `illumination === 2` → `[Lighting] Dark` with lighter penalties
+   - `illumination === 5` → `[Lighting] Blinding` with glare penalties
+   - `illumination ∈ {3, 4}` → emit `scene.removeCondition { featureId: "sun" }` (no condition; normal visibility)
+   - Port the full skill-penalty tables from current `lightingFeature.LIGHT_LEVEL_PENALTIES`
+
+- [ ] **Step 1: Delete old lightingFeature + its test**
+- [ ] **Step 2: Create sunFeature** (~100 LOC)
+- [ ] **Step 3: Write Layer-3 internal-invariants test** (~50 LOC) — time-of-day curve produces expected illumination contribution at 04:00 / 12:00 / 18:00 / 22:00; moonlight kicks in when sun ≤ 1. Cross-feature (fire illuminates dark scene, fog caps illumination, etc.) NOT tested here.
+- [ ] **Step 4: Run test**
 
 ---
 
 ### Task D4: Stamina feature
 
-- [ ] **Step 1: Read** `src/engine/features/staminaFeature.ts`
-- [ ] **Step 2: Write failing test** asserting (a) `stateScope === "character"`, `priority: 300`; (b) `onActionCommit` increases fatigue for strenuous action definitions; (c) `onTick` slowly regenerates fatigue for resting characters via `character.fatigue` with negative delta.
-- [ ] **Step 3: Rewrite** — key wrinkle: `stateScope === "character"` means the feature stores per-NPC state under the character's id, not the scene's.
-- [ ] **Step 4: Run** `npx vitest run src/engine/features/__tests__/staminaFeature.test.ts`
+**Files:**
+- Rewrite: `src/engine/features/staminaFeature.ts`
+- Delete + rewrite: `src/engine/features/__tests__/staminaFeature.test.ts`
+
+**Responsibilities (post-refactor):**
+
+`stateScope: "character"`, `priority: 300`. No propagation.
+
+Per-character state:
+
+```ts
+interface StaminaCharacterState {
+  fatigue: number;
+  fatigueLevel: 0 | 1 | 2;        // 0 rested, 1 tired, 2 exhausted
+  exhaustedDrainTicks: number;
+}
+```
+
+**`onTick(ctx)`:**
+
+For each alive NPC (iterate via `ctx.getCharacter` over known ids; add `ctx.getAllCharacterIds()` if missing):
+- Resolve current locationId via character position + topology (add `ctx.getCharacterLocationId(characterId)` helper if not already present)
+- Read `ctx.getEnvironmentReading(locationId).temperature`
+- `accel = 1`; if `temperature < 10 || > 30` → `accel = 2`
+- `effectiveMinutes = ctx.tickDurationMinutes × accel`
+- Compute new fatigue; emit `feature.setState` for updated character state
+- On fatigueLevel transition:
+  - Emit `character.removeCondition { conditionId: "stamina:tired" | "stamina:exhausted" }` (remove old level's condition)
+  - For new level ≥ 1, emit `character.addCondition { id: "stamina:tired" / "stamina:exhausted", description: "Tired — ..." | "Exhausted — ...", mechanicalEffect: { globalSkillPenalty: -10 | -20 } }`
+- At `fatigueLevel === 2`, every 6 ticks roll CON:
+  - Fail chance = `min(0.6, 0.3 + (fatigue - 960) / 960 × 0.3)`
+  - On fail: emit `character.hp { delta: -1 }` + `character.san { delta: -rollD3() }`
+  - **No sanity import.** The SAN drop flows through Applier normally; the LLM resolver is not in the loop; consequently no bout triggers. This is the accepted behavior reduction documented in §D-sanity-relocation.
+
+**No direct reads of fire / weather state** — temperature comes from env reading which aggregates fire + weather contributions.
+
+- [ ] **Step 1: Delete old test**
+- [ ] **Step 2: Rewrite feature** (~150 LOC)
+- [ ] **Step 3: Write Layer-3 internal-invariants test** (~80 LOC) — fatigue level transitions at 480 / 960 min under normal temp; CON-fail chance formula at representative fatigue values; globalSkillPenalty -10 / -20 on the emitted condition. Cross-feature (fire or heat env raises accel, SAN drop routes through Applier and doesn't trigger bout) NOT tested here.
+- [ ] **Step 4: Run test**
 
 ---
 
-### Task D5: Sanity feature
+### Task D5: Relocate sanity to role sim
 
-- [ ] **Step 1: Read** `src/engine/features/sanityFeature.ts`
-- [ ] **Step 2: Write failing test** asserting (a) `stateScope === "character"`, `priority: 310`; (b) on a `character.san` delta arriving via a feature event (e.g., "saw corpse"), san drops — but note sanity feature is typically reactive: it translates *witnessed events* into san deltas. Since `onEvent` is removed, sanity now observes `committed actions` via DGSM state or through its own `onActionCommit` hook.
-- [ ] **Step 3: Rewrite** — the sanity feature becomes simpler: it uses `onActionCommit` to check whether a committed action involved a horror-tagged target (based on DGSM state queried via context) and emits `character.san` deltas.
-- [ ] **Step 4: Run** `npx vitest run src/engine/features/__tests__/sanityFeature.test.ts`
+**Files:**
+- Delete: `src/engine/features/sanityFeature.ts`
+- Delete: `src/engine/features/__tests__/sanityFeature.test.ts`
+- Create: `src/simulation/roleSim/sanityGuidance.ts`
+- Create: `src/simulation/roleSim/__tests__/sanityGuidance.test.ts` (snapshot only)
+- Modify: `src/engine/registerDefaults.ts` — remove sanity registration
+- (Deferred) Modify: resolver prompt assembly — inject sanity guidance (exact integration located during D5 or deferred to Phase E if no clean hook)
+
+**`sanityGuidance.ts` contents:**
+
+```ts
+// src/simulation/roleSim/sanityGuidance.ts
+
+export interface BoutOfMadnessEntry {
+  roll: number;
+  label: string;
+  description: string;
+  actionRestriction: "none" | "incapacitated" | "flee_only" | "attack_only" | "impaired";
+  persistent?: boolean;
+}
+
+export const BOUT_OF_MADNESS_TABLE: readonly BoutOfMadnessEntry[] = [
+  // Port the 10 entries verbatim from current sanityFeature.ts:BOUT_OF_MADNESS_TABLE
+];
+
+export const SANITY_GUIDANCE_PROMPT = `
+## Sanity effects (guidance)
+
+When resolving an action that causes a SAN drop, consider whether it should also trigger a bout of madness. If so, emit a \`character.addCondition\` alongside the \`character.san\` delta in your state changes:
+
+- **Temporary insanity** — a single SAN loss of 5 or more may trigger a bout. Use \`expiresAt\` 1–10 hours from current game time.
+- **Indefinite insanity** — a cumulative SAN loss exceeding (current SAN / 5) within the last hour may trigger an indefinite bout. Use \`expiresAt\` 1–10 days out with optional onset delay described in the condition.
+- **Persistent phobia/mania** — emit \`character.addCondition\` WITHOUT \`expiresAt\`. It never auto-removes.
+
+Style reference (10 bout types from the CoC 7e table):
+${BOUT_OF_MADNESS_TABLE.map((b) => \`- **\${b.label}**: \${b.description}\`).join("\\n")}
+
+Tailor the condition \`description\` to the specific situation — don't copy the table verbatim.
+
+Use \`mechanicalEffect.globalSkillPenalty\` on the bout condition:
+- \`incapacitated\` → \`-100\` (can't effectively act)
+- \`impaired\` → \`-15\`
+- \`flee_only\` / \`attack_only\` → no global penalty; the condition \`description\` alone drives NPC planner behavior
+`;
+
+export function buildSanityContextForResolver(
+  _dgsm: unknown,
+  _characterId: string,
+): string {
+  // MVP: empty. Follow-up: surface recent SAN history / persistent conditions / current SAN here.
+  return "";
+}
+```
+
+- [ ] **Step 1: Port `BOUT_OF_MADNESS_TABLE`** from current `sanityFeature.ts`
+- [ ] **Step 2: Delete `sanityFeature.ts` + its test file**
+- [ ] **Step 3: Remove sanity registration** from `registerDefaults.ts`
+- [ ] **Step 4: Create `sanityGuidance.ts`** per above
+- [ ] **Step 5: Locate resolver prompt assembly** (grep `rg 'buildResolverPrompt|resolverPrompt|stateResolver' src/`) — if a clean injection point exists, add `SANITY_GUIDANCE_PROMPT` to the prompt. If not, defer to Phase E1 resolver rewiring.
+- [ ] **Step 6: Snapshot test**
+
+```ts
+// src/simulation/roleSim/__tests__/sanityGuidance.test.ts
+import { describe, it, expect } from "vitest";
+import { SANITY_GUIDANCE_PROMPT, BOUT_OF_MADNESS_TABLE } from "../sanityGuidance.js";
+
+describe("sanityGuidance", () => {
+  it("BOUT_OF_MADNESS_TABLE has 10 entries covering the 1d10 range", () => {
+    expect(BOUT_OF_MADNESS_TABLE).toHaveLength(10);
+    expect(BOUT_OF_MADNESS_TABLE.map((e) => e.roll).sort()).toEqual([1,2,3,4,5,6,7,8,9,10]);
+  });
+  it("SANITY_GUIDANCE_PROMPT includes bout names", () => {
+    for (const entry of BOUT_OF_MADNESS_TABLE) {
+      expect(SANITY_GUIDANCE_PROMPT).toContain(entry.label);
+    }
+  });
+});
+```
 
 ---
 
@@ -3541,25 +3971,190 @@ Write a new-interface test that exercises `onTick` → producing scene condition
 
 **Files:**
 - Delete: `src/engine/features/eventTriggerFeature.ts`
-- Modify: `src/engine/registerDefaults.ts` — remove the import + registration (will be further overhauled in Task E2)
+- Delete: `src/engine/features/__tests__/eventTriggerFeature.test.ts`
+- Modify: `src/engine/registerDefaults.ts` — remove the import + registration (further overhauled in Task E2)
 - Delete: any eventTrigger-specific exports from `src/engine/types.ts`
 
-- [ ] **Step 1: Search for all imports of eventTriggerFeature**
+- [ ] **Step 1: Search for all imports**
 
 Run: `rg -l eventTriggerFeature src/` — record paths.
 
-- [ ] **Step 2: Remove all those imports and references**
+- [ ] **Step 2: Remove imports and references**
 
 In `registerDefaults.ts`, delete the `registerFeature(eventTriggerFeature)` line and its import. Anywhere else, delete.
 
-- [ ] **Step 3: Delete the file**
+- [ ] **Step 3: Delete files**
 
-Run: `rm src/engine/features/eventTriggerFeature.ts`
+Run: `rm src/engine/features/eventTriggerFeature.ts src/engine/features/__tests__/eventTriggerFeature.test.ts`
 
 - [ ] **Step 4: Type-check**
 
 Run: `pnpm build:tsc`
-Expected: no new errors. (Existing `tickProcessor.ts` still references the old-interface features; that's addressed in Phase E.)
+Expected: no new errors beyond those already introduced by D3 (lighting deletion) and D5 (sanity deletion) and the ongoing dependency of `tickProcessor.ts` on the old-interface features (addressed in Phase E).
+
+---
+
+### Task D7: itemDamageFeature
+
+**Files:**
+- Create: `src/engine/features/itemDamageFeature.ts`
+- Create: `src/engine/features/__tests__/itemDamageFeature.test.ts`
+- Modify: `src/engine/core/types.ts` — add `scene.damageItem` StateChange kind
+- Modify: `src/engine/core/applier.ts` — handle `scene.damageItem` in Pass 2 (b)
+- Modify: `src/state/DynamicGameState.ts` — add `markItemDamaged(sceneId, itemId, damagedBy, reason)` helper if not present
+
+**New StateChange kind:**
+
+```ts
+| {
+    kind: "scene.damageItem";
+    sceneId: string;
+    itemId: string;
+    damagedBy: string;           // "fire" | "moisture" | "weapon" | ...
+    reason: string;
+    sourceFeatureId: string;
+  }
+```
+
+Applier handles by looking up `scene.items`, marking `item.damaged = true` + stamping `damageDetails: { damagedBy, damagedAt: now, reason }`.
+
+**itemDamageFeature responsibilities:**
+
+`stateScope: "global"`, `priority: 350`. No persistent state.
+
+**`onTick(ctx)`:**
+
+For each scene / road / junction:
+- Read `ctx.getEnvironmentReading(locationId).temperature`
+- If `temperature > 200°C`:
+  - Find undamaged items in scene (roads/junctions currently have no items; skip)
+  - Emit `scene.damageItem` for ~20% of them (rounded, RNG-sampled)
+  - `damagedBy: "fire"`, `reason: \`Damaged by heat (temperature \${temperature}°C)\``
+- (Future extensions: moisture, cold — not in MVP)
+
+Heat contribution from weather alone caps at +30°C (extreme_heat) → doesn't reach 200°C threshold; only fire's +intensity·100 contribution can.
+
+- [ ] **Step 1: Add `scene.damageItem` StateChange kind + Applier handler**
+- [ ] **Step 2: Create feature** (~100 LOC)
+- [ ] **Step 3: Write Layer-3 internal-invariants test** (~50 LOC) — with env.temperature = 300°C (directly seeded, no fire involvement), scene with 10 undamaged items → exactly 2 damaged; already-damaged items are skipped from sampling. Cross-feature (fire raising temperature → items damage) NOT tested here.
+- [ ] **Step 4: Run test**
+
+---
+
+### Task D8: Condition expiry sweep
+
+**Files:**
+- Modify: `src/engine/core/tickOrchestrator.ts` — add Phase 9.5 condition expiry
+- Modify: `src/state/DynamicGameState.ts` — ensure `removeCharacterCondition(characterId, conditionId)` exists
+- Test: add case to `tickOrchestrator.test.ts`
+
+**Placement:** after `applier.flush(...)` (Phase 9), before `return TickReport` (Phase 10). Kept out of the Applier because the Applier only applies StateChanges — lifecycle management of existing conditions is orchestration.
+
+```ts
+// Inside TickOrchestrator.tick(), after applier.flush:
+this.sweepExpiredCharacterConditions(nextTickTime);
+
+// ...
+
+private sweepExpiredCharacterConditions(now: GameTime): void {
+  const npcs = this.deps.dgsm.getState().npcCharacters;
+  for (const npc of npcs) {
+    const conditions = npc.status.conditions;
+    if (!conditions || conditions.length === 0) continue;
+    const expired = conditions.filter(
+      (c) => c.expiresAt && this.timeIsAtOrBefore(c.expiresAt, now),
+    );
+    for (const c of expired) {
+      this.deps.dgsm.removeCharacterCondition(npc.id, c.id);
+    }
+  }
+}
+```
+
+Scene conditions have no `expiresAt` field in the current schema — out of scope for D8.
+
+- [ ] **Step 1: Implement sweep** in TickOrchestrator
+- [ ] **Step 2: Test**
+
+```ts
+it("sweeps expired character conditions", async () => {
+  // seed: npc1 with condition { id: "bout1", expiresAt: { day: 1, tickTime: "08:00" } }
+  // advance tickTime to 09:00
+  // assert: condition removed after tick
+});
+```
+
+---
+
+### Task D9: `globalSkillPenalty` on `CharacterCondition`
+
+**Files:**
+- Modify: `src/engine/core/types.ts` — extend `CharacterCondition.mechanicalEffect`
+- Modify: skill-check aggregation site (located during execution via `rg 'conditions.*skillPenalty|CharacterCondition.*mechanicalEffect' src/engine/`)
+- Test: add case to existing skill-check test
+
+Add field:
+
+```ts
+export interface CharacterCondition {
+  // ...existing
+  mechanicalEffect?: {
+    skillPenalty?: Record<string, number>;
+    globalSkillPenalty?: number;   // NEW — adds to every skill check
+    attackPenalty?: number;
+  };
+}
+```
+
+**Aggregation update:**
+
+Locate the existing code that sums `skillPenalty` from active character conditions (likely in the resolver or skill-roll helper). Add:
+
+```ts
+const globalDelta = conditions.reduce(
+  (acc, c) => acc + (c.mechanicalEffect?.globalSkillPenalty ?? 0),
+  0,
+);
+// Apply globalDelta to every skill in the effective skill map
+for (const skill of Object.keys(skills)) {
+  skills[skill] += globalDelta;
+}
+```
+
+- [ ] **Step 1: Extend type**
+- [ ] **Step 2: Locate + update aggregation**
+- [ ] **Step 3: Test** — character with two conditions each carrying `globalSkillPenalty: -10` → effective skill = base - 20
+
+---
+
+### Task D11: Layer-2 interaction test suite
+
+**Files:**
+- Create: `src/engine/__tests__/integration/*.test.ts` — one file per interaction chain
+- Create: `src/engine/__tests__/integration/makeIntegrationEngine.ts` — shared helper (~80 LOC) that builds a real TickEngine with real DGSM, real Applier, real feature set, minimal seed (scenes / NPCs / optional weather presets)
+
+**Purpose:**
+Verify that the env middle layer correctly mediates cross-feature interactions. Each test focuses on **one chain** through the env layer, exercises it over multiple ticks via real `TickEngine.tick()` calls, and asserts on observable downstream effects (DGSM state, scene conditions, damage reports) — not on intermediate feature state.
+
+**Implementation approach (decided at execution time, not pre-specified):**
+
+Write one test file per chain that falls out of the feature responsibility matrix in §D-feature-responsibilities. Representative candidates (list is illustrative; final set chosen during implementation based on what the matrix actually surfaces and which chains have the most coupling risk):
+
+- `fire-stamina.test.ts` — fire raises temperature; stamina's accel kicks in
+- `fire-itemDamage.test.ts` — fire pushes temperature > 200°C; itemDamage marks items damaged
+- `fire-sun-illumination.test.ts` — fire + sun both contribute illumination; max reducer wins; `[Lighting] Dark` condition drops
+- `weather-fire-decay.test.ts` — rain lowers temperature; fire onTick sees low temp, decays faster
+- `weather-sun-fog.test.ts` — fog caps illumination; sun's condition observer writes `[Lighting] Dark` even at midday
+- `compound-temperature.test.ts` — fire + extreme_heat add to give temperature around 150°C; stamina sees accumulated env reading
+- `stamina-san-condition-expiry.test.ts` — stamina CON fail emits SAN drop via Applier (verifies no bout triggered, §D-sanity-relocation behavior reduction); manually-injected bout with expiresAt swept by D8 sweep
+- `sun-daynight.test.ts` — run 24h worth of ticks, assert illumination + conditions at dawn / noon / dusk / midnight
+
+Target: 6-10 files, ~50-100 LOC each, ~400 LOC total.
+
+- [ ] **Step 1**: Build `makeIntegrationEngine.ts` helper — real TickEngine + DGSM, parameterized seed (scenes, NPCs, feature init configs), returns `{ engine, dgsm, tick(n) }` convenience API
+- [ ] **Step 2**: Pick the chains to cover. Start with the 2-3 highest-risk ones (fire-stamina, weather-fire-decay, fire-sun-illumination — they touch the most features each). Add more as needed for coverage.
+- [ ] **Step 3**: For each chosen chain, write one focused test file with 1-3 scenarios exercising that chain. Assertion surface: DGSM state after N ticks, no assertions on feature-internal state.
+- [ ] **Step 4**: Run the full suite: `npx vitest run src/engine/__tests__/integration/`
 
 ---
 

@@ -33,6 +33,15 @@ export interface WorldFeature {
   readonly planNodeSchema?: unknown;
 
   stateDescription?(ctx: FeatureReadContext): string;
+  /**
+   * Optional one-time initialization hook. Called by TickOrchestrator's Phase 0
+   * the first time tick() runs on a fresh session (not on rehydrated sessions).
+   * Returns StateChanges that establish the feature's initial state — e.g.,
+   * weather emits region states + scene conditions from module presets.
+   *
+   * Read preset data via ctx.getFeatureInitConfig<T>(featureId).
+   */
+  init?(ctx: FeatureReadContext): StateChange[];
   onTick?(ctx: FeatureReadContext): StateChange[];
   onActionCommit?(
     step: ActionStep,

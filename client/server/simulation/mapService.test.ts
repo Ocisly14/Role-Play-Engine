@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import type { SceneCondition } from "../../../src/planning/types.js";
+import type { SceneCondition } from "../../../src/engine/core/types.js";
 import { mergeSceneConditions } from "./mapService.js";
 
 describe("mergeSceneConditions", () => {
@@ -30,7 +30,7 @@ describe("mergeSceneConditions", () => {
           {
             description: baseDescription,
             mechanicalEffect: {
-              skillPenalty: [{ skill: "潜行", delta: -10 }],
+              skillPenalty: { 潜行: -10 },
             },
           },
         ]
@@ -40,7 +40,7 @@ describe("mergeSceneConditions", () => {
       {
         description: baseDescription,
         mechanicalEffect: {
-          skillPenalty: [{ skill: "潜行", delta: -10 }],
+          skillPenalty: { 潜行: -10 },
         },
       },
     ]);

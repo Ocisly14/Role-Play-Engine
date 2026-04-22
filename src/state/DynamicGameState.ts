@@ -32,7 +32,11 @@ import type {
   Item,
   TransportEdge,
 } from "./types.js";
-import type { FeatureStateScope } from "../engine/core/types.js";
+import type {
+  EnvironmentReading,
+  FeatureStateScope,
+} from "../engine/core/types.js";
+import { DEFAULT_ENVIRONMENT_READING } from "../engine/core/types.js";
 import type { ScriptedEventState } from "../engine/scriptedEvents/types.js";
 
 /**
@@ -76,6 +80,12 @@ export interface DynamicGameState {
   // tracker counters. Persistence rides DGSM's existing JSON round-trip.
   scriptedEventStates: Record<string, ScriptedEventState>;
 
+  // === Environment Readings (Phase D) ===
+  // Per-location aggregated environmental snapshot (temperature, illumination,
+  // oxygen, noise, airborne hazards). Written by the Applier each tick from
+  // environment.* StateChanges; read by features via FeatureReadContext.
+  environmentReadings: Record<string /* locationId */, EnvironmentReading>;
+
   // === NPC Planning System Runtime State ===
   npcStats: Record<string, { hp: number; san: number }>;
   npcInventories: Record<string, Item[]>; // npcId -> items
@@ -85,7 +95,7 @@ export interface DynamicGameState {
   >;
   scenarioConditions: Record<
     string,
-    import("../planning/types.js").SceneCondition[]
+    import("../engine/core/types.js").SceneCondition[]
   >;
   blockedConnections: Map<string, string>; // "scene:id::road:id" typed canonical edge key -> reason
   npcResidences: Record<string, string>; // npcId -> macroLocationId
@@ -128,6 +138,7 @@ export const initialDynamicGameState = (params: {
   scenarioOutlines: [],
   scopedFeatureStates: { scene: {}, region: {}, character: {}, global: {} },
   scriptedEventStates: {},
+  environmentReadings: {},
   npcStats: {},
   npcInventories: {},
   npcRelationshipGraph: {},
@@ -347,6 +358,7 @@ export class DynamicGameStateManager {
       hiddenCharacterIds: Array.from(this.hiddenCharacterIds),
       npcResidences: this.state.npcResidences,
       transportEdges: this.state.transportEdges,
+      environmentReadings: this.state.environmentReadings,
       loadedAt: this.state.loadedAt.toISOString(),
       lastUpdated: this.state.lastUpdated.toISOString(),
     };
@@ -469,6 +481,10 @@ export class DynamicGameStateManager {
       scriptedEventStates:
         data.scriptedEventStates && typeof data.scriptedEventStates === "object"
           ? (data.scriptedEventStates as Record<string, ScriptedEventState>)
+          : {},
+      environmentReadings:
+        data.environmentReadings && typeof data.environmentReadings === "object"
+          ? (data.environmentReadings as Record<string, EnvironmentReading>)
           : {},
       npcStats: data.npcStats ?? {},
       npcInventories: data.npcInventories ?? {},
@@ -881,6 +897,32 @@ export class DynamicGameStateManager {
     }
   }
 
+  /**
+   * Generic item damage helper used by the Applier for `scene.damageItem`
+   * StateChanges. Unlike `damageEvidenceItem`, this targets ANY item in the
+   * scene (not just evidence). Idempotent: a second call on an already-damaged
+   * item is a no-op.
+   */
+  markItemDamaged(
+    sceneId: string,
+    itemId: string,
+    damagedBy: string,
+    reason: string
+  ): void {
+    const scene = this.getScene(sceneId);
+    if (!scene?.items) return;
+    const item = scene.items.find((i) => i.id === itemId);
+    if (!item) return;
+    if (item.damaged) return;
+    item.damaged = true;
+    item.damageDetails = {
+      damagedBy,
+      damagedAt: new Date().toISOString(),
+      reason,
+    };
+    this.state.lastUpdated = new Date();
+  }
+
   getRelationship(
     npcId: string,
     targetId: string
@@ -915,21 +957,17 @@ export class DynamicGameStateManager {
 
   getSceneConditions(
     scenarioId: string
-  ): import("../planning/types.js").SceneCondition[] {
+  ): import("../engine/core/types.js").SceneCondition[] {
     return this.state.scenarioConditions[scenarioId] ?? [];
   }
 
   appendSceneCondition(
     scenarioId: string,
-    condition:
-      | import("../planning/types.js").SceneCondition
-      | import("../engine/core/types.js").SceneCondition
+    condition: import("../engine/core/types.js").SceneCondition
   ): void {
     if (!this.state.scenarioConditions[scenarioId])
       this.state.scenarioConditions[scenarioId] = [];
-    this.state.scenarioConditions[scenarioId].push(
-      condition as import("../planning/types.js").SceneCondition
-    );
+    this.state.scenarioConditions[scenarioId].push(condition);
     this.state.lastUpdated = new Date();
   }
 
@@ -945,16 +983,14 @@ export class DynamicGameStateManager {
     const existing = this.state.scenarioConditions[scenarioId];
     if (!existing) return;
     this.state.scenarioConditions[scenarioId] = existing.filter(
-      (c) =>
-        (c as import("../engine/core/types.js").SceneCondition).featureId !==
-        featureId
+      (c) => c.featureId !== featureId
     );
     this.state.lastUpdated = new Date();
   }
 
   replaceSceneConditions(
     scenarioId: string,
-    conditions: import("../planning/types.js").SceneCondition[]
+    conditions: import("../engine/core/types.js").SceneCondition[]
   ): void {
     this.state.scenarioConditions[scenarioId] = conditions;
     this.state.lastUpdated = new Date();
@@ -1027,6 +1063,22 @@ export class DynamicGameStateManager {
 
   removeScriptedEventState(eventId: string): void {
     delete this.state.scriptedEventStates[eventId];
+    this.state.lastUpdated = new Date();
+  }
+
+  // === Environment Readings (Phase D) ===
+
+  getEnvironmentReading(locationId: string): EnvironmentReading {
+    return (
+      this.state.environmentReadings[locationId] ?? DEFAULT_ENVIRONMENT_READING
+    );
+  }
+
+  setEnvironmentReading(
+    locationId: string,
+    reading: EnvironmentReading
+  ): void {
+    this.state.environmentReadings[locationId] = reading;
     this.state.lastUpdated = new Date();
   }
 

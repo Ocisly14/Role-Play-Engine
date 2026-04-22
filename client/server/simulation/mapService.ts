@@ -1,7 +1,7 @@
 import * as fs from "node:fs";
 import * as path from "node:path";
 import { resolveDisplayLocationName } from "../../../src/planning/sceneMapFormatter.js";
-import type { SceneCondition } from "../../../src/planning/types.js";
+import type { SceneCondition } from "../../../src/engine/core/types.js";
 import { getPrismaClient } from "../../../src/shared/agents/memory/database/prismaClient.js";
 import type { SimulationRunner } from "../../../src/simulation/SimulationRunner.js";
 import type {

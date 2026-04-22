@@ -42,22 +42,6 @@ export class GameEngineRegistry {
     return [...this.definitions.values()];
   }
 
-  /** Collect character-level skill modifiers from all registered features */
-  collectCharacterPenalties(
-    characterId: string,
-    dgsm: DynamicGameStateManager
-  ): Map<string, number> {
-    const penalties = new Map<string, number>();
-    for (const feature of this.features.values()) {
-      if (!feature.getCharacterSkillModifiers) continue;
-      const modifiers = feature.getCharacterSkillModifiers(characterId, dgsm);
-      for (const { skill, delta } of modifiers) {
-        penalties.set(skill, (penalties.get(skill) ?? 0) + delta);
-      }
-    }
-    return penalties;
-  }
-
   // ===== Propagation state management =====
 
   private propagationTickCounters = new Map<string, number>();

@@ -3,8 +3,7 @@
  * All types used by DynamicGameState, TickProcessor, and engine components.
  */
 
-import type { CharacterCondition } from "../engine/core/types.js";
-import type { SceneCondition } from "../planning/types.js";
+import type { CharacterCondition, SceneCondition } from "../engine/core/types.js";
 
 // ─── Character-related types ───────────────────────────────────────
 
@@ -332,6 +331,12 @@ export interface ModuleSetup {
       | "extreme_cold";
     intensity: number;
   }>;
+  /**
+   * Per-feature initialization configs, populated by the module loader.
+   * Each feature reads its own config via ctx.getFeatureInitConfig(featureId).
+   * Loader has zero knowledge of feature internals — pure passthrough blob.
+   */
+  featureInit?: Record<string /* featureId */, unknown>;
   [key: string]: unknown;
 }
 

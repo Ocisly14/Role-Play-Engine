@@ -1,11 +1,35 @@
 import type { DynamicGameStateManager } from "../../state/DynamicGameState.js";
 import type {
   DamageReport,
+  EnvironmentReading,
   FeatureEvent,
   FeatureStateScope,
   GameTime,
   StateChange,
 } from "./types.js";
+import { DEFAULT_ENVIRONMENT_READING } from "./types.js";
+
+interface EnvBucket {
+  temperature: number[];
+  illumination: number[];
+  illuminationCaps: number[];
+  oxygen: number[];
+  noise: number[];
+  hazardAdds: Set<string>;
+  hazardRemoves: Set<string>;
+}
+
+function makeEnvBucket(): EnvBucket {
+  return {
+    temperature: [],
+    illumination: [],
+    illuminationCaps: [],
+    oxygen: [],
+    noise: [],
+    hazardAdds: new Set(),
+    hazardRemoves: new Set(),
+  };
+}
 
 type ConnectionVote = { featureId: string; reason: string };
 
@@ -60,6 +84,15 @@ export class Applier {
       reason: string;
     }> = [];
     const featureEmissions: FeatureEvent[] = [];
+    const envBuckets = new Map<string, EnvBucket>();
+    const ensureEnvBucket = (locationId: string): EnvBucket => {
+      let b = envBuckets.get(locationId);
+      if (!b) {
+        b = makeEnvBucket();
+        envBuckets.set(locationId, b);
+      }
+      return b;
+    };
 
     for (const c of changes) {
       switch (c.kind) {
@@ -83,9 +116,67 @@ export class Applier {
         case "event.emit":
           featureEmissions.push(c.event);
           break;
+        case "environment.contribute": {
+          const b = ensureEnvBucket(c.locationId);
+          b[c.quantity].push(c.value);
+          break;
+        }
+        case "environment.cap": {
+          const b = ensureEnvBucket(c.locationId);
+          b.illuminationCaps.push(c.value);
+          break;
+        }
+        case "environment.hazard": {
+          const b = ensureEnvBucket(c.locationId);
+          if (c.add) {
+            for (const h of c.add) b.hazardAdds.add(h);
+          }
+          if (c.remove) {
+            for (const h of c.remove) b.hazardRemoves.add(h);
+          }
+          break;
+        }
         default:
           break;
       }
+    }
+
+    // Pass 1.5 — environment aggregation
+    // Aggregate per-location contributions into final EnvironmentReadings.
+    // Only locations that received contributions this flush are written;
+    // unvisited locations retain their last reading. Features re-contribute
+    // each tick they care about a quantity.
+    const TEMP_BASELINE = DEFAULT_ENVIRONMENT_READING.temperature;
+    const ILLUM_BASELINE = DEFAULT_ENVIRONMENT_READING.illumination;
+    const OXY_BASELINE = DEFAULT_ENVIRONMENT_READING.oxygen;
+    const NOISE_BASELINE = DEFAULT_ENVIRONMENT_READING.noise;
+    for (const [locationId, b] of envBuckets) {
+      const temperature =
+        TEMP_BASELINE + b.temperature.reduce((a, x) => a + x, 0);
+      const illumPreCap = b.illumination.reduce(
+        (m, x) => Math.max(m, x),
+        ILLUM_BASELINE,
+      );
+      const illumination = b.illuminationCaps.reduce(
+        (m, x) => Math.min(m, x),
+        illumPreCap,
+      );
+      const oxygen = Math.max(
+        0,
+        Math.min(1, OXY_BASELINE + b.oxygen.reduce((a, x) => a + x, 0)),
+      );
+      const noise = b.noise.reduce((m, x) => Math.max(m, x), NOISE_BASELINE);
+      const airborneHazards = [...b.hazardAdds].filter(
+        (h) => !b.hazardRemoves.has(h),
+      );
+      const reading: EnvironmentReading = {
+        temperature,
+        illumination,
+        oxygen,
+        noise,
+        airborneHazards,
+      };
+      this.dgsm.setEnvironmentReading(locationId, reading);
     }
 
     // Pass 2 (a) — order-independent
@@ -132,6 +223,10 @@ export class Applier {
         case "feature.removeState": {
           const scope = this.featureScopes.get(c.featureId) ?? "scene";
           this.dgsm.removeScopedFeatureState(c.featureId, scope, c.key);
+          break;
+        }
+        case "scene.damageItem": {
+          this.dgsm.markItemDamaged(c.sceneId, c.itemId, c.damagedBy, c.reason);
           break;
         }
         default:

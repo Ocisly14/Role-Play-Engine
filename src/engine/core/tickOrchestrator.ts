@@ -14,7 +14,7 @@ import type {
   TickReport,
 } from "./types.js";
 // PlannedOutcome defined in worldFeature.ts (B1).
-import type { PlannedOutcome } from "./worldFeature.js";
+import type { PlannedOutcome, WorldFeature } from "./worldFeature.js";
 
 export interface PendingInterrupt {
   handleId: string;
@@ -42,6 +42,11 @@ export interface OrchestratorDeps {
   resolve: ResolveFn;
   tickDurationMinutes: number;
   lang: string;
+  /**
+   * True when the engine is constructed from a persisted snapshot (rehydrated
+   * session); false on a fresh session. Gates Phase 0 one-shot feature init.
+   */
+  hasInitialized: boolean;
 }
 
 export class TickOrchestrator {
@@ -53,8 +58,13 @@ export class TickOrchestrator {
   // TickEngine.cancelAction pushes here at call time; orchestrator drains into
   // TickReport.cancellations at the start of the next tick.
   private pendingCancelledSteps: ActionStep[] = [];
+  // Latched on first tick to skip Phase 0 on subsequent ticks. Initialized from
+  // deps.hasInitialized so rehydrated sessions never re-run feature init().
+  private hasInitialized: boolean;
 
-  constructor(private deps: OrchestratorDeps) {}
+  constructor(private deps: OrchestratorDeps) {
+    this.hasInitialized = deps.hasInitialized;
+  }
 
   /** Called by TickEngine.interruptAction when the active step needs C-compromise
    *  next tick. Queued siblings are cancelled synchronously by the caller. */
@@ -78,6 +88,40 @@ export class TickOrchestrator {
       applier,
       resolve,
     } = this.deps;
+
+    // Phase 0: one-shot feature init on fresh sessions.
+    // Rehydrated sessions already carry the post-init snapshot, so this runs
+    // only when hasInitialized is false — i.e., the engine was constructed
+    // without persistedState. Per-feature init failures are isolated so one
+    // bad feature doesn't prevent others from initializing; `hasInitialized`
+    // latches to true regardless so we never retry (which would duplicate
+    // scene conditions emitted by already-succeeded features).
+    if (!this.hasInitialized) {
+      const currentTickTime: GameTime = {
+        day: dgsm.getGameDay(),
+        tickTime: dgsm.getTickTime(),
+      };
+      const initChanges: StateChange[] = [];
+      for (const f of featureRunner.listFeatures()) {
+        if (!f.init) continue;
+        const ctx = makeDGSMFeatureReadContext(dgsm, {
+          callerFeatureId: f.id,
+          callerScope: f.stateScope,
+        });
+        try {
+          initChanges.push(...f.init(ctx));
+        } catch (err) {
+          console.error(
+            `[TickOrchestrator] feature "${f.id}" init() threw; skipping. Error:`,
+            err,
+          );
+        }
+      }
+      if (initChanges.length > 0) {
+        applier.flush(initChanges, currentTickTime);
+      }
+      this.hasInitialized = true;
+    }
 
     // Phase 1: advance clock
     const nextTickTime = this.advanceClock();
@@ -125,18 +169,27 @@ export class TickOrchestrator {
           this.timeIsAtOrBefore(s.completionTime, nextTickTime),
       );
 
-    for (const step of due) {
-      const ctx = makeDGSMFeatureReadContext(dgsm, {
-        callerFeatureId: "__commit__",
-        callerScope: "global",
+    // Per-feature ctx factory for commit-time onActionCommit hooks (mirrors
+    // the Phase 5+6 reasoning below — fire.onActionCommit reads its own state
+    // when boosting an existing fire, and it must hit the `("fire","scene")`
+    // bucket, not a shared `__commit__/global` one.)
+    const commitCtxFor = (f: WorldFeature) =>
+      makeDGSMFeatureReadContext(dgsm, {
+        callerFeatureId: f.id,
+        callerScope: f.stateScope,
       });
+    for (const step of due) {
       const outcome = step.plannedOutcome as unknown as PlannedOutcome | undefined;
       // plannedOutcome is set in Phase 3 before markActive; missing = programmer error.
       if (!outcome) {
         queue.markCompleted(step.id);
         continue;
       }
-      const featureChanges = featureRunner.runActionCommit(step, outcome, ctx);
+      const featureChanges = featureRunner.runActionCommit(
+        step,
+        outcome,
+        commitCtxFor,
+      );
       buffer.push(...featureChanges);
       buffer.push(...outcome.stateChanges);
       queue.markCompleted(step.id);
@@ -155,15 +208,20 @@ export class TickOrchestrator {
       });
     }
 
-    // Phase 5: feature onTick
-    const featureCtx = makeDGSMFeatureReadContext(dgsm, {
-      callerFeatureId: "__tick__",
-      callerScope: "global",
-    });
-    buffer.push(...featureRunner.runTick(featureCtx));
+    // Phase 5+6: feature onTick / propagation. Each feature gets a per-feature
+    // read context so own-state reads (`ctx.getFeatureState`,
+    // `ctx.getAllFeatureStates`) route to that feature's `(featureId, scope)`
+    // bucket in DGSM. A shared `__tick__` ctx would silently drop every
+    // stateful feature's read on the floor.
+    const featureCtxFor = (f: WorldFeature) =>
+      makeDGSMFeatureReadContext(dgsm, {
+        callerFeatureId: f.id,
+        callerScope: f.stateScope,
+      });
+    buffer.push(...featureRunner.runTick(featureCtxFor));
 
     // Phase 6: feature propagation
-    buffer.push(...featureRunner.runPropagation(featureCtx));
+    buffer.push(...featureRunner.runPropagation(featureCtxFor));
 
     // Phase 7: scripted events
     const currentTick =
@@ -188,6 +246,11 @@ export class TickOrchestrator {
 
     // Phase 9: applier flush
     const applied = applier.flush(buffer, nextTickTime);
+
+    // Phase 9.5 — sweep expired character conditions.
+    // CharacterCondition can carry expiresAt (GameTime); when reached, the
+    // condition is auto-removed. Scene conditions don't have expiresAt today.
+    this.sweepExpiredCharacterConditions(nextTickTime);
 
     // Phase 10: build report (event emission is TickEngine + EventBus's job)
     return {
@@ -298,6 +361,21 @@ export class TickOrchestrator {
     const [ah, am] = a.tickTime.split(":").map(Number);
     const [bh, bm] = b.tickTime.split(":").map(Number);
     return (b.day - a.day) * 1440 + (bh * 60 + bm) - (ah * 60 + am);
+  }
+
+  private sweepExpiredCharacterConditions(now: GameTime): void {
+    const npcs = this.deps.dgsm.getState().npcCharacters;
+    for (const npc of npcs) {
+      const conditions = npc.status?.conditions;
+      if (!conditions || conditions.length === 0) continue;
+      // Iterate via copy because removeCharacterCondition mutates the array.
+      const expired = conditions.filter(
+        (c) => c.expiresAt && this.timeIsAtOrBefore(c.expiresAt, now),
+      );
+      for (const c of expired) {
+        this.deps.dgsm.removeCharacterCondition(npc.id, c.id);
+      }
+    }
   }
 
   private timeIsAtOrBefore(t: GameTime | undefined, now: GameTime): boolean {

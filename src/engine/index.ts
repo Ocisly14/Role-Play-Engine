@@ -22,17 +22,6 @@ export {
 } from "./shared/impactPropagation.js";
 export { fireFeature } from "./features/fireFeature.js";
 export { weatherFeature } from "./features/weatherFeature.js";
-export { lightingFeature } from "./features/lightingFeature.js";
+export { sunFeature } from "./features/sunFeature.js";
 export { staminaFeature } from "./features/staminaFeature.js";
-export { eventTriggerFeature } from "./features/eventTriggerFeature.js";
-export {
-  sanityFeature,
-  applySanityLoss,
-  drainPendingEmotions,
-} from "./features/sanityFeature.js";
-export type {
-  SanityCharacterState,
-  SanityEmotionEntry,
-  BoutOfMadnessType,
-  ActionRestriction,
-} from "./features/sanityFeature.js";
+export { itemDamageFeature } from "./features/itemDamageFeature.js";

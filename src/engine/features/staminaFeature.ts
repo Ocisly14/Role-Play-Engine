@@ -1,26 +1,14 @@
 import type { DynamicGameStateManager } from "../../state/DynamicGameState.js";
-import { resolveCharacterLocationId } from "../shared/topologyHelpers.js";
-import type { TickRuntimeContext, WorldFeature } from "../types.js";
-import { applySanityLoss } from "./sanityFeature.js";
+import type { FeatureReadContext } from "../core/featureReadContext.js";
+import type { CharacterCondition, StateChange } from "../core/types.js";
+import type { WorldFeature } from "../core/worldFeature.js";
 
 // ===== Internal types =====
 
 export interface StaminaCharacterState {
   fatigue: number;
-  /** Legacy compatibility for persisted sessions and older tests. Mirrors `fatigue`. */
-  minutesSinceLastRest?: number;
-  fatigueLevel: 0 | 1 | 2; // 0=rested, 1=tired, 2=exhausted
+  fatigueLevel: 0 | 1 | 2; // 0 = rested, 1 = tired, 2 = exhausted
   exhaustedDrainTicks: number;
-}
-
-interface WeatherRegionState {
-  weatherType: string;
-  intensity: number;
-  affectedSceneIds: string[];
-}
-
-interface FireSceneState {
-  intensity: number;
 }
 
 // ===== Constants =====
@@ -28,14 +16,33 @@ interface FireSceneState {
 const FEATURE_ID = "stamina";
 const TIRED_THRESHOLD = 480; // minutes → fatigue level 1
 const EXHAUSTED_THRESHOLD = 960; // minutes → fatigue level 2
-const DRAIN_TICK_INTERVAL = 6; // check every 6 ticks at exhausted
-const FATIGUE_DELTA_UNIT = 60; // one LLM fatigue step ~= one hour of fatigue
+const DRAIN_TICK_INTERVAL = 6; // CON-check cadence at exhausted
+const FATIGUE_DELTA_UNIT = 60; // one LLM "fatigue step" ~= 60 minutes
 const BASE_FAIL_CHANCE = 0.3;
 const MAX_FAIL_CHANCE = 0.6;
-const FIRE_ACCEL_THRESHOLD = 2; // fire intensity >= 2 → +1x
-const WEATHER_ACCEL_THRESHOLD = 3; // extreme weather intensity >= 3 → +1x
 
-// ===== Fatigue level labels =====
+// Acceleration thresholds — env.temperature is the single source of truth.
+// Default baseline temperature (DEFAULT_ENVIRONMENT_READING) is 20 °C, comfortably
+// inside [10, 30]. Outside that band counts as a hostile thermal environment
+// (cold or hot) and adds +1x fatigue accumulation. Outside the more extreme
+// [-10, 60] band (e.g. snow stacked on extreme_cold, or fire stacked on
+// extreme_heat) adds another +1x, giving max 3x — matching the prior
+// fire-AND-weather stacking behavior without coupling to either feature's
+// internal state.
+const TEMP_HOSTILE_LOW_C = 10;
+const TEMP_HOSTILE_HIGH_C = 30;
+const TEMP_EXTREME_LOW_C = -10;
+const TEMP_EXTREME_HIGH_C = 60;
+
+// ===== Condition definitions =====
+
+const TIRED_CONDITION_ID = "stamina:tired";
+const EXHAUSTED_CONDITION_ID = "stamina:exhausted";
+
+const TIRED_DESCRIPTION =
+  "Tired — eyes heavy, movements sluggish, concentration wavering. Needs rest soon.";
+const EXHAUSTED_DESCRIPTION =
+  "Exhausted — on the verge of collapse. Hands trembling, vision blurring, barely able to stay on feet.";
 
 const FATIGUE_LABELS: Record<number, string> = {
   0: "rested",
@@ -43,42 +50,7 @@ const FATIGUE_LABELS: Record<number, string> = {
   2: "exhausted",
 };
 
-const FATIGUE_CONDITION_PREFIX = "[Fatigue]";
-
-const FATIGUE_CONDITIONS: Record<number, string> = {
-  1: `${FATIGUE_CONDITION_PREFIX} Tired — eyes heavy, movements sluggish, concentration wavering. Needs rest soon.`,
-  2: `${FATIGUE_CONDITION_PREFIX} Exhausted — on the verge of collapse. Hands trembling, vision blurring, barely able to stay on feet.`,
-};
-
-// ===== Helper functions =====
-
-function getStaminaState(
-  dgsm: DynamicGameStateManager,
-  characterId: string
-): StaminaCharacterState | undefined {
-  const raw = dgsm.getFeatureSceneState(FEATURE_ID, characterId) as
-    | Partial<StaminaCharacterState>
-    | undefined;
-  if (!raw) return undefined;
-  const fatigue = Math.max(0, raw.fatigue ?? raw.minutesSinceLastRest ?? 0);
-  return {
-    fatigue,
-    minutesSinceLastRest: fatigue,
-    fatigueLevel: raw.fatigueLevel ?? computeFatigueLevel(fatigue),
-    exhaustedDrainTicks: raw.exhaustedDrainTicks ?? 0,
-  };
-}
-
-function setStaminaState(
-  dgsm: DynamicGameStateManager,
-  characterId: string,
-  state: StaminaCharacterState
-): void {
-  dgsm.setFeatureSceneState(FEATURE_ID, characterId, {
-    ...state,
-    minutesSinceLastRest: state.fatigue,
-  });
-}
+// ===== Pure helpers =====
 
 function computeFatigueLevel(fatigue: number): 0 | 1 | 2 {
   if (fatigue >= EXHAUSTED_THRESHOLD) return 2;
@@ -89,192 +61,142 @@ function computeFatigueLevel(fatigue: number): 0 | 1 | 2 {
 function computeFatigueBarScore(fatigue: number): number {
   return Math.max(
     0,
-    Math.min(100, Math.round((fatigue / EXHAUSTED_THRESHOLD) * 100))
+    Math.min(100, Math.round((fatigue / EXHAUSTED_THRESHOLD) * 100)),
   );
 }
 
 /**
- * Compute environmental acceleration multiplier for a character at a given scene.
- * Base is 1x. +1x if fire intensity >= 2 at scene. +1x if extreme weather (intensity >= 3)
- * affects the scene. Both stack → max 3x.
+ * Compute environmental fatigue acceleration from the per-location temperature.
+ * Base 1x; +1x in hostile thermal range; +1x more in extreme range. Max 3x.
  */
-function getAccelerationMultiplier(
-  dgsm: DynamicGameStateManager,
-  sceneId: string
-): number {
-  let multiplier = 1;
-
-  // Check fire at this scene
-  const fireState = dgsm.getFeatureSceneState("fire", sceneId) as
-    | FireSceneState
-    | undefined;
-  if (fireState && fireState.intensity >= FIRE_ACCEL_THRESHOLD) {
-    multiplier += 1;
+function getAccelerationMultiplier(temperature: number): number {
+  let accel = 1;
+  if (temperature < TEMP_HOSTILE_LOW_C || temperature > TEMP_HOSTILE_HIGH_C) {
+    accel += 1;
   }
-
-  // Check weather — iterate all weather regions looking for extreme types affecting this scene
-  const weatherStates = dgsm.getFeatureState("weather") as Record<
-    string,
-    WeatherRegionState
-  >;
-  for (const regionId of Object.keys(weatherStates)) {
-    const ws = weatherStates[regionId];
-    if (!ws) continue;
-    if (
-      (ws.weatherType === "extreme_heat" ||
-        ws.weatherType === "extreme_cold") &&
-      ws.intensity >= WEATHER_ACCEL_THRESHOLD &&
-      ws.affectedSceneIds?.includes(sceneId)
-    ) {
-      multiplier += 1;
-      break; // Only count weather once
-    }
+  if (temperature < TEMP_EXTREME_LOW_C || temperature > TEMP_EXTREME_HIGH_C) {
+    accel += 1;
   }
+  return accel;
+}
 
-  return multiplier;
+function rollD3(): number {
+  return 1 + Math.floor(Math.random() * 3);
 }
 
 /**
- * Roll 1d3 — returns 1, 2, or 3
- */
-function roll1d3(): number {
-  return Math.floor(Math.random() * 3) + 1;
-}
-
-/**
- * Compute the CON fail chance for an exhausted character.
- * failChance = min(0.6, 0.3 + (fatigue - 960) / 960 * 0.3)
+ * CON-fail chance for an exhausted character, scaling with fatigue past the
+ * exhausted threshold. min(0.6, 0.3 + (fatigue - 960) / 960 * 0.3)
  */
 function computeFailChance(fatigue: number): number {
   const extra = ((fatigue - EXHAUSTED_THRESHOLD) / EXHAUSTED_THRESHOLD) * 0.3;
   return Math.min(MAX_FAIL_CHANCE, BASE_FAIL_CHANCE + extra);
 }
 
-/**
- * Process exhaustion drain for a single character.
- * Every DRAIN_TICK_INTERVAL ticks at exhausted, do a CON check.
- * On fail: -1 HP, -1d3 SAN.
- */
-function processExhaustionDrain(
-  dgsm: DynamicGameStateManager,
-  characterId: string,
-  stamina: StaminaCharacterState
-): void {
-  stamina.exhaustedDrainTicks++;
-
-  if (stamina.exhaustedDrainTicks >= DRAIN_TICK_INTERVAL) {
-    stamina.exhaustedDrainTicks = 0;
-
-    const failChance = computeFailChance(stamina.fatigue);
-    if (Math.random() < failChance) {
-      // CON check failed — drain HP and SAN
-      const sanDrain = roll1d3();
-      dgsm.updateNpcHp(characterId, -1);
-      // Route SAN drain through sanity feature for insanity trigger checks
-      applySanityLoss(
-        dgsm,
-        characterId,
-        -sanDrain,
-        undefined,
-        undefined,
-        "exhaustion"
-      );
-    }
-  }
-}
-
-// ===== Character condition injection =====
-
-function updateFatigueCondition(
-  dgsm: DynamicGameStateManager,
-  characterId: string,
-  fatigueLevel: 0 | 1 | 2
-): void {
-  const state = dgsm.getState();
-  const npc = state.npcCharacters?.find((n: any) => n.id === characterId);
-  const conditions = npc?.status?.conditions;
-  if (!conditions) return;
-
-  // Remove any existing fatigue condition
-  const filtered = conditions.filter(
-    (c: string) => !c.startsWith(FATIGUE_CONDITION_PREFIX)
-  );
-
-  // Add new condition if fatigued
-  const newCondition = FATIGUE_CONDITIONS[fatigueLevel];
-  if (newCondition) {
-    filtered.push(newCondition);
-  }
-
-  // Write back
-  if (npc?.status) {
-    (npc.status as any).conditions = filtered;
-  }
-}
-
-/**
- * Build a list of all tracked characters and their location IDs.
- * Uses CharacterPosition to resolve location IDs.
- */
-function getTrackedCharacters(dgsm: DynamicGameStateManager): Array<{
-  characterId: string;
-  locationId: string;
-}> {
-  const state = dgsm.getState();
-  const result: Array<{
-    characterId: string;
-    locationId: string;
-  }> = [];
-
-  for (const npc of state.npcCharacters) {
-    if (!dgsm.isNpcAlive(npc.id)) continue;
-    const locationId = resolveCharacterLocationId(npc.id, dgsm);
-    if (locationId) {
-      result.push({ characterId: npc.id, locationId });
-    }
-  }
-
-  return result;
-}
-
-function updateTrackedStaminaState(
-  dgsm: DynamicGameStateManager,
-  characterId: string,
-  nextFatigue: number
-): void {
-  const stamina = getStaminaState(dgsm, characterId) ?? {
-    fatigue: 0,
-    minutesSinceLastRest: 0,
-    fatigueLevel: 0,
-    exhaustedDrainTicks: 0,
+function buildTiredCondition(): CharacterCondition {
+  return {
+    id: TIRED_CONDITION_ID,
+    featureId: FEATURE_ID,
+    description: TIRED_DESCRIPTION,
+    mechanicalEffect: { globalSkillPenalty: -10 },
   };
-  stamina.fatigue = Math.max(0, nextFatigue);
-  stamina.minutesSinceLastRest = stamina.fatigue;
-  const prevLevel = stamina.fatigueLevel;
-  stamina.fatigueLevel = computeFatigueLevel(stamina.fatigue);
-  if (stamina.fatigueLevel !== 2) {
-    stamina.exhaustedDrainTicks = 0;
-  }
-  setStaminaState(dgsm, characterId, stamina);
-  if (stamina.fatigueLevel !== prevLevel) {
-    updateFatigueCondition(dgsm, characterId, stamina.fatigueLevel);
-  }
 }
+
+function buildExhaustedCondition(): CharacterCondition {
+  return {
+    id: EXHAUSTED_CONDITION_ID,
+    featureId: FEATURE_ID,
+    description: EXHAUSTED_DESCRIPTION,
+    mechanicalEffect: { globalSkillPenalty: -20 },
+  };
+}
+
+/**
+ * Emit the StateChanges that bring a character's fatigue conditions in sync
+ * with `newLevel`. Always strips both stamina conditions first so transitions
+ * are idempotent (Applier no-ops the remove if not present).
+ */
+function emitConditionTransition(
+  characterId: string,
+  newLevel: 0 | 1 | 2,
+): StateChange[] {
+  const out: StateChange[] = [
+    {
+      kind: "character.removeCondition",
+      characterId,
+      conditionId: TIRED_CONDITION_ID,
+    },
+    {
+      kind: "character.removeCondition",
+      characterId,
+      conditionId: EXHAUSTED_CONDITION_ID,
+    },
+  ];
+  if (newLevel === 1) {
+    out.push({
+      kind: "character.addCondition",
+      characterId,
+      condition: buildTiredCondition(),
+    });
+  } else if (newLevel === 2) {
+    out.push({
+      kind: "character.addCondition",
+      characterId,
+      condition: buildExhaustedCondition(),
+    });
+  }
+  return out;
+}
+
+// ===== Legacy applyFatigueDelta shim =====
+//
+// `applyFatigueDelta` is still required by the dynamic-require path in
+// `engine/resolver/stateChangeAppliers.ts` (handles `character.fatigue`
+// StateChange). The resolver code is scheduled for deletion in Phase E; until
+// then this thin shim mutates DGSM directly so action-driven fatigue still
+// flows through. New code should emit `character.fatigue` StateChanges
+// instead of calling this function.
+//
+// Imported lazily by stateChangeAppliers via require() — kept here so the
+// import path doesn't have to change.
 
 export function applyFatigueDelta(
   dgsm: DynamicGameStateManager,
   characterId: string,
-  fatigueDelta: number | undefined
+  fatigueDelta: number | undefined,
 ): void {
   if (fatigueDelta == null || !Number.isFinite(fatigueDelta)) return;
   const clampedUnits = Math.trunc(fatigueDelta);
   if (clampedUnits === 0) return;
-  const currentFatigue = getStaminaState(dgsm, characterId)?.fatigue ?? 0;
-  updateTrackedStaminaState(
-    dgsm,
+
+  const prev = dgsm.getScopedFeatureState<StaminaCharacterState>(
+    FEATURE_ID,
+    "character",
     characterId,
-    currentFatigue + clampedUnits * FATIGUE_DELTA_UNIT
   );
+  const baseFatigue = prev?.fatigue ?? 0;
+  const nextFatigue = Math.max(0, baseFatigue + clampedUnits * FATIGUE_DELTA_UNIT);
+  const nextLevel = computeFatigueLevel(nextFatigue);
+
+  const next: StaminaCharacterState = {
+    fatigue: nextFatigue,
+    fatigueLevel: nextLevel,
+    exhaustedDrainTicks:
+      nextLevel === 2 ? prev?.exhaustedDrainTicks ?? 0 : 0,
+  };
+  dgsm.setScopedFeatureState(FEATURE_ID, "character", characterId, next);
+
+  const prevLevel = prev?.fatigueLevel ?? 0;
+  if (prevLevel !== nextLevel) {
+    // Mirror the StateChange-side condition swap directly into DGSM.
+    dgsm.removeCharacterCondition(characterId, TIRED_CONDITION_ID);
+    dgsm.removeCharacterCondition(characterId, EXHAUSTED_CONDITION_ID);
+    if (nextLevel === 1) {
+      dgsm.addCharacterCondition(characterId, buildTiredCondition());
+    } else if (nextLevel === 2) {
+      dgsm.addCharacterCondition(characterId, buildExhaustedCondition());
+    }
+  }
 }
 
 // ===== Exported feature =====
@@ -282,88 +204,118 @@ export function applyFatigueDelta(
 export const staminaFeature: WorldFeature = {
   id: FEATURE_ID,
   description:
-    "Fatigue and stamina system — tracks per-character fatigue with environmental acceleration and exhaustion drain",
-
+    "Per-character fatigue and stamina — accumulates over time, accelerated by hostile temperatures, drains HP/SAN at exhausted level on CON failure.",
+  stateScope: "character",
+  affectedKinds: [
+    "feature.setState",
+    "character.addCondition",
+    "character.removeCondition",
+    "character.hp",
+    "character.san",
+  ],
+  effectSummary:
+    "Tracks per-character fatigue (480/960 min thresholds), emits Tired/Exhausted character conditions with global skill penalties, and rolls CON for HP+SAN drain at exhausted.",
+  priority: 300,
   planningPrompt: `## Fatigue / Stamina
 - Characters accumulate fatigue over time. After ~8 hours (480 min) they become tired; after ~16 hours (960 min) they become exhausted.
 - Exhausted characters risk HP and SAN loss from failed CON checks.
-- Environmental hazards (intense fire, extreme weather) accelerate fatigue accumulation.
+- Hostile temperatures (cold or hot environments) accelerate fatigue accumulation.
 - The simulation tick adds baseline fatigue automatically; action resolvers may also add or reduce fatigue based on what the character actually did.
 - NPCs should consider resting when tired and urgently seek shelter when exhausted.
 - Do not use special "rest mode" mechanics. Rest is just an action whose outcome may reduce fatigue.`,
 
-  stateDescription(dgsm: DynamicGameStateManager): string {
-    const allStates = dgsm.getFeatureState(FEATURE_ID) as Record<
-      string,
-      StaminaCharacterState
-    >;
+  stateDescription(ctx: FeatureReadContext): string {
+    const states =
+      ctx.getAllFeatureStates<StaminaCharacterState>();
+    if (states.length === 0) return "";
     const lines: string[] = [];
-
-    for (const [characterId, stamina] of Object.entries(allStates)) {
-      if (!dgsm.isNpcAlive(characterId)) continue;
-      const normalized = getStaminaState(dgsm, characterId);
-      if (!normalized || normalized.fatigueLevel === 0) continue;
-      const score = computeFatigueBarScore(normalized.fatigue);
-      const label = FATIGUE_LABELS[normalized.fatigueLevel] ?? "unknown";
-      const name = characterId;
-      lines.push(`- ${name}: ${label} (${score}/100)`);
+    for (const { key: characterId, state } of states) {
+      if (!state || state.fatigueLevel === 0) continue;
+      const score = computeFatigueBarScore(state.fatigue);
+      const label = FATIGUE_LABELS[state.fatigueLevel] ?? "unknown";
+      lines.push(`- ${characterId}: ${label} (${score}/100)`);
     }
-
-    return lines.length > 0 ? "Character fatigue:\n" + lines.join("\n") : "";
+    return lines.length > 0
+      ? `Character fatigue:\n${lines.join("\n")}`
+      : "";
   },
 
-  getCharacterSkillModifiers(
-    characterId: string,
-    dgsm: DynamicGameStateManager
-  ): Array<{ skill: string; delta: number }> {
-    if (!dgsm.isNpcAlive(characterId)) return [];
-    const stamina = getStaminaState(dgsm, characterId);
-    if (!stamina || stamina.fatigueLevel === 0) return [];
+  onTick(ctx: FeatureReadContext): StateChange[] {
+    const out: StateChange[] = [];
+    const elapsedMinutes = Math.max(1, ctx.tickDurationMinutes);
 
-    // Tired: all skills -10, Exhausted: all skills -20
-    const delta = stamina.fatigueLevel === 1 ? -10 : -20;
-    return [{ skill: "*", delta }];
-  },
+    for (const characterId of ctx.getAllAliveCharacterIds()) {
+      const locationId = ctx.getCharacterLocationId(characterId);
 
-  tick(dgsm: DynamicGameStateManager, runtime: TickRuntimeContext): void {
-    const characters = getTrackedCharacters(dgsm);
+      // Default to baseline temperature when location is unknown — keeps
+      // fatigue accumulating at 1x rather than skipping the character.
+      const temperature = locationId
+        ? ctx.getEnvironmentReading(locationId).temperature
+        : 20;
+      const accel = getAccelerationMultiplier(temperature);
+      const effectiveMinutes = elapsedMinutes * accel;
 
-    for (const { characterId, locationId } of characters) {
-      // Get or create stamina state
-      let stamina = getStaminaState(dgsm, characterId);
-      if (!stamina) {
-        stamina = {
-          fatigue: 0,
-          minutesSinceLastRest: 0,
-          fatigueLevel: 0,
-          exhaustedDrainTicks: 0,
-        };
+      const prev = ctx.getFeatureState<StaminaCharacterState>(characterId) ?? {
+        fatigue: 0,
+        fatigueLevel: 0,
+        exhaustedDrainTicks: 0,
+      };
+      const prevLevel = prev.fatigueLevel;
+
+      const nextFatigue = prev.fatigue + effectiveMinutes;
+      const nextLevel = computeFatigueLevel(nextFatigue);
+
+      let exhaustedDrainTicks =
+        nextLevel === 2 ? prev.exhaustedDrainTicks : 0;
+      let triggerDrain = false;
+
+      if (nextLevel === 2) {
+        exhaustedDrainTicks += 1;
+        if (exhaustedDrainTicks >= DRAIN_TICK_INTERVAL) {
+          triggerDrain = true;
+          exhaustedDrainTicks = 0;
+        }
       }
 
-      // Compute environmental acceleration
-      const multiplier = getAccelerationMultiplier(dgsm, locationId);
-      const effectiveMinutes = runtime.tickDurationMinutes * multiplier;
+      const next: StaminaCharacterState = {
+        fatigue: nextFatigue,
+        fatigueLevel: nextLevel,
+        exhaustedDrainTicks,
+      };
 
-      // Accumulate fatigue
-      stamina.fatigue += effectiveMinutes;
-      stamina.minutesSinceLastRest = stamina.fatigue;
-      const prevLevel = stamina.fatigueLevel;
-      stamina.fatigueLevel = computeFatigueLevel(stamina.fatigue);
+      out.push({
+        kind: "feature.setState",
+        featureId: FEATURE_ID,
+        key: characterId,
+        state: next,
+      });
 
-      // Inject/remove fatigue condition on level change
-      if (stamina.fatigueLevel !== prevLevel) {
-        updateFatigueCondition(dgsm, characterId, stamina.fatigueLevel);
+      if (nextLevel !== prevLevel) {
+        out.push(...emitConditionTransition(characterId, nextLevel));
       }
 
-      // Process exhaustion drain if at level 2
-      if (stamina.fatigueLevel === 2) {
-        processExhaustionDrain(dgsm, characterId, stamina);
-      } else {
-        stamina.exhaustedDrainTicks = 0;
+      if (triggerDrain) {
+        const failChance = computeFailChance(nextFatigue);
+        if (Math.random() < failChance) {
+          const sanLoss = rollD3();
+          out.push({
+            kind: "character.hp",
+            characterId,
+            delta: -1,
+            sourceFeatureId: FEATURE_ID,
+            reason: "exhaustion",
+          });
+          out.push({
+            kind: "character.san",
+            characterId,
+            delta: -sanLoss,
+            sourceFeatureId: FEATURE_ID,
+            reason: "exhaustion",
+          });
+        }
       }
-
-      // Persist
-      setStaminaState(dgsm, characterId, stamina);
     }
+
+    return out;
   },
 };

@@ -6,7 +6,14 @@ import type {
   SimulationTickResult,
 } from "../../planning/types.js";
 import type { DynamicGameStateManager } from "../../state/DynamicGameState.js";
-import { drainPendingEmotions } from "../features/sanityFeature.js";
+// Phase D: sanityFeature was relocated to src/simulation/roleSim/sanityGuidance.ts
+// (LLM-judged bouts of madness). The legacy drainPendingEmotions queue no
+// longer exists. tickProcessor.ts is slated for deletion in Phase E (Task E3);
+// until then this is a no-op stub so transitive importers (e.g. mapService) can
+// still resolve the module graph.
+function drainPendingEmotions(_dgsm: unknown): unknown[] {
+  return [];
+}
 import { interpretAction } from "../interpreter/gameInterpreter.js";
 import type { GameEngineRegistry } from "../registry.js";
 import { applyStateResolution } from "../resolver/applyStateResolution.js";

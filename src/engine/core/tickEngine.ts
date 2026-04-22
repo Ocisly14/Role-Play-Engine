@@ -107,6 +107,9 @@ export function createTickEngine(opts: CreateTickEngineOptions): TickEngine {
     resolve: opts.resolve,
     tickDurationMinutes: opts.tickDurationMinutes,
     lang: opts.lang,
+    // Rehydrated sessions ship the post-init snapshot; fresh sessions need
+    // Phase 0 to run so WorldFeature.init() seed state is emitted once.
+    hasInitialized: opts.persistedState !== undefined,
   });
 
   /** Returns all queued + active steps for a handle. Used by cancel/interrupt. */

@@ -4,6 +4,26 @@ import type { PlannedOutcome, WorldFeature } from "./worldFeature.js";
 
 const DEFAULT_PRIORITY = 999;
 
+/**
+ * Resolve a per-feature read context. Accepts either:
+ *   - a plain {@link FeatureReadContext} (legacy: same ctx for every feature
+ *     — fine for tests that don't rely on `ctx.getFeatureState` / `ctx.getAllFeatureStates`)
+ *   - a factory `(feature) => FeatureReadContext` so callers can wire each
+ *     feature's `callerFeatureId`/`callerScope` through `makeDGSMFeatureReadContext`.
+ *     Required for stateful features (fire, weather, stamina, …) whose own-state
+ *     reads route through `dgsm.getScopedFeatureState(callerFeatureId, …)`.
+ */
+export type CtxOrFactory =
+  | FeatureReadContext
+  | ((feature: WorldFeature) => FeatureReadContext);
+
+function resolveCtx(
+  source: CtxOrFactory,
+  feature: WorldFeature,
+): FeatureReadContext {
+  return typeof source === "function" ? source(feature) : source;
+}
+
 export class FeatureRunner {
   private readonly ordered: WorldFeature[];
   private readonly propagationTickCounter = new Map<string, number>();
@@ -16,10 +36,10 @@ export class FeatureRunner {
     });
   }
 
-  runTick(ctx: FeatureReadContext): StateChange[] {
+  runTick(source: CtxOrFactory): StateChange[] {
     const out: StateChange[] = [];
     for (const f of this.ordered) {
-      if (f.onTick) out.push(...f.onTick(ctx));
+      if (f.onTick) out.push(...f.onTick(resolveCtx(source, f)));
     }
     return out;
   }
@@ -27,23 +47,25 @@ export class FeatureRunner {
   runActionCommit(
     step: ActionStep,
     outcome: PlannedOutcome,
-    ctx: FeatureReadContext,
+    source: CtxOrFactory,
     opts?: { interrupted?: boolean },
   ): StateChange[] {
     const out: StateChange[] = [];
     for (const f of this.ordered) {
-      if (f.onActionCommit) out.push(...f.onActionCommit(step, outcome, ctx, opts));
+      if (f.onActionCommit)
+        out.push(...f.onActionCommit(step, outcome, resolveCtx(source, f), opts));
     }
     return out;
   }
 
-  runPropagation(ctx: FeatureReadContext): StateChange[] {
+  runPropagation(source: CtxOrFactory): StateChange[] {
     const out: StateChange[] = [];
     for (const f of this.ordered) {
       if (!f.propagation || !f.onPropagate) continue;
       const nextCount = (this.propagationTickCounter.get(f.id) ?? 0) + 1;
       this.propagationTickCounter.set(f.id, nextCount);
       if (nextCount % f.propagation.tickInterval !== 0) continue;
+      const ctx = resolveCtx(source, f);
       for (const sceneId of ctx.getSceneIds()) {
         const { changes } = f.onPropagate({ sceneId, hop: 0 }, ctx);
         out.push(...changes);

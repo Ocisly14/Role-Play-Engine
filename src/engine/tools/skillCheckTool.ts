@@ -3,6 +3,7 @@ import type { DynamicGameStateManager } from "../../state/DynamicGameState.js";
 import type { GameEngineRegistry } from "../registry.js";
 import {
   applyPenalties,
+  getCharacterConditionPenalties,
   getScenePenalties,
   resolveSkillRoll,
 } from "../shared/index.js";
@@ -42,9 +43,7 @@ export function executeSkillCheck(
 
   // Build penalty-adjusted skills
   const scenePenalties = getScenePenalties(locationId, dgsm);
-  const charPenalties = registry
-    ? registry.collectCharacterPenalties(characterId, dgsm)
-    : new Map<string, number>();
+  const charPenalties = getCharacterConditionPenalties(characterId, dgsm);
   const afterScene = applyPenalties(npcSkills, scenePenalties);
   const adjustedSkills = applyPenalties(afterScene, charPenalties);
 
@@ -62,9 +61,10 @@ export function executeSkillCheck(
     skillCheckDef?.type === "opposed"
       ? (targetId: string, rawSkills: Record<string, number>) => {
           const targetScenePenalties = getScenePenalties(locationId, dgsm);
-          const targetCharPenalties = registry
-            ? registry.collectCharacterPenalties(targetId, dgsm)
-            : new Map<string, number>();
+          const targetCharPenalties = getCharacterConditionPenalties(
+            targetId,
+            dgsm
+          );
           return applyPenalties(
             applyPenalties(rawSkills, targetScenePenalties),
             targetCharPenalties

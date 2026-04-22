@@ -455,6 +455,28 @@ export function initRuntime(params: {
     }
   }
 
+  // Passthrough: surface module-level feature init configs onto moduleSetup.
+  // Loader stays "dumb" about feature internals — it just mirrors known blobs
+  // (today: weatherPresets) under `featureInit[featureId]`. Features read via
+  // FeatureReadContext.getFeatureInitConfig<T>(featureId) during Phase 0 init.
+  let moduleSetupWithInit: ModuleSetup | null = moduleData.setup;
+  if (moduleSetupWithInit) {
+    const mergedInit: Record<string, unknown> = {
+      ...(moduleSetupWithInit.featureInit ?? {}),
+    };
+    if (
+      Array.isArray(moduleSetupWithInit.weatherPresets) &&
+      moduleSetupWithInit.weatherPresets.length > 0
+    ) {
+      mergedInit.weather = moduleSetupWithInit.weatherPresets;
+    }
+    moduleSetupWithInit = {
+      ...moduleSetupWithInit,
+      featureInit:
+        Object.keys(mergedInit).length > 0 ? mergedInit : undefined,
+    };
+  }
+
   return {
     sessionId,
     scenes: moduleData.scenes,
@@ -464,7 +486,7 @@ export function initRuntime(params: {
     timeOfDay,
     npcCharacters: simulatedNpcs,
     moduleName: moduleData.moduleName,
-    moduleSetup: moduleData.setup,
+    moduleSetup: moduleSetupWithInit,
     scenarioOutlines: moduleData.scenarioOutlines,
     scopedFeatureStates: { scene: {}, region: {}, character: {}, global: {} },
     npcStats,

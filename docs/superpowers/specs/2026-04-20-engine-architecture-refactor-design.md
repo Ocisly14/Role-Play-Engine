@@ -241,6 +241,45 @@ Problems:
 
 ---
 
+## 3a. Phase D Refinements (2026-04-22)
+
+The following decisions surfaced during Phase D implementation review and refine the original design without changing its overall shape. They drive the concrete tasks in `docs/superpowers/plans/2026-04-21-engine-architecture-refactor-plan.md` Phase D.
+
+### EnvironmentReading layer → middle-tier for cross-feature dependencies
+- Original §3 left features to query each other's scoped state directly via `ctx.getOtherFeatureState(featureId, key)`. Phase D review surfaced **7 such direct cross-feature reads** in the existing codebase (lighting→fire, lighting→weather, fire→weather, stamina→fire, stamina→weather, stamina→sanity, fire→items). Every additional feature multiplies the coupling.
+- Decision: introduce `EnvironmentReading` per-location (temperature / illumination / oxygen / noise / airborneHazards). Features only **contribute** (via new `environment.contribute` / `environment.cap` / `environment.hazard` StateChanges) and **react** (via `ctx.getEnvironmentReading(locationId)`) — never read each other's private state.
+- Applier aggregates per-quantity with fixed reducers: temperature `baseline + sum`, illumination `min(caps, max(baseline, contributions))`, oxygen `clamp[0,1] of baseline + sum`, noise `max(baseline, contributions)`, hazards `union(adds) \ union(removes)`.
+- Reading lags one tick behind contribution (writers contribute in tick N, readers see the aggregate in tick N+1) — acceptable at 1 min/tick.
+- Cross-feature direct reads after Phase D: **7 → 0**. New features declare contributor / reactor relationships purely through the env layer.
+
+### sanity → role sim
+- Original §3 implicitly placed sanity alongside fire/weather/stamina as a physical-system feature. Phase D review reframed this: sanity is **psychological interpretation**, not physics — it belongs with the LLM-driven role sim, not the deterministic engine.
+- Decision: delete `sanityFeature` from engine. Replace with `src/simulation/roleSim/sanityGuidance.ts` exporting `BOUT_OF_MADNESS_TABLE` and `SANITY_GUIDANCE_PROMPT` consumed by the LLM resolver.
+- LLM resolver decides bouts in-context and emits both `character.san` and `character.addCondition { expiresAt }` in its `PlannedOutcome`. No mechanical state machine needed.
+- `TickOrchestrator` Phase 9.5 (condition-expiry sweep) auto-removes bout conditions when `expiresAt <= currentTickTime`.
+- **Accepted behavior reductions** (documented, not bugs):
+  - Stamina-driven silent SAN drops no longer auto-trigger bouts (no narrative event for the LLM to react to).
+  - Cumulative-SAN-over-60-min trigger becomes LLM judgment based on resolver context.
+  - Scripted events dropping SAN must explicitly emit insanity `character.addCondition` if a bout is wanted (more controllable than the prior implicit trigger).
+
+### `WorldFeature.init()` hook + TickOrchestrator Phase 0
+- Original §3 implicitly assumed features mutate DGSM directly in their first `tick()` call to seed initial state (e.g., weather presets). The new StateChange-only contract makes this impossible — features cannot mutate DGSM.
+- Decision: add optional `init?(ctx: FeatureReadContext): StateChange[]` to `WorldFeature`. `TickOrchestrator` runs **Phase 0** (one-shot) at the start of the first `tick()` on fresh sessions only; rehydrated sessions (constructed with `persistedState`) skip init since DGSM already carries the post-init snapshot.
+- Per-feature `init()` failures are caught + logged; `hasInitialized` latches `true` regardless to prevent duplicate scene-condition emission on retry.
+- Used by `weatherFeature` to load module-defined regional weather presets via `ctx.getFeatureInitConfig<T>(featureId)`. `moduleLoader` copies presets into `moduleSetup.featureInit.<featureId>` as opaque blobs — the loader has zero feature-internal knowledge (loader passthrough; feature owns its own preset shape).
+
+### `globalSkillPenalty` on CharacterCondition (replaces `getCharacterSkillModifiers` hook)
+- Original §6 had a `WorldFeature.getCharacterSkillModifiers(characterId, ctx)` hook returning per-character skill modifiers with a `"*"` wildcard convention for blanket debuffs. Phase D review found this hook diverged from the rest of the new architecture — every other feature output is a StateChange; this one was a side-channel callback.
+- Decision: **remove the hook entirely** (and its `CharacterSkillModifier` interface). Add `globalSkillPenalty?: number` to `CharacterCondition.mechanicalEffect`. Skill-check aggregator reads character conditions directly via a new `getCharacterConditionPenalties(characterId, dgsm)` helper that folds `globalSkillPenalty` into the existing `"*"` wildcard convention used by `applyPenalties`.
+- `staminaFeature` emits `character.addCondition { id: "stamina:tired", mechanicalEffect: { globalSkillPenalty: -10 } }` (or `-20` for exhausted) instead of returning modifiers from a hook. Conditions auto-remove on level transitions or via the Phase 9.5 expiry sweep if `expiresAt` is set.
+
+### `scenePenalty.ts` Record-shape migration (cleanup, not new behavior)
+- The legacy `SceneCondition` shape in `src/planning/types.ts` carried `skillPenalty: Array<{ skill, delta }>`. The Phase A canonical shape in `src/engine/core/types.ts` carries `skillPenalty: Record<string, number>`. Both definitions coexisted during early Phase D, with `scenePenalty.ts` reading the old Array form.
+- Phase D features emit Record-shape conditions; the old Array reader silently returned no penalties (TS union types let the divergence pass without error).
+- Decision: collapse to a single canonical SceneCondition definition (`src/engine/core/types.ts`); migrate `scenePenalty.ts` to read Record shape; delete the legacy duplicate. Achieved during Phase D wrap-up (no new task — folded into the Phase D commit).
+
+---
+
 ## 4. TickEngine API
 
 ```ts
@@ -482,6 +521,13 @@ interface WorldFeature {
   // ===== Behavior hooks (TS code) =====
   stateDescription?(ctx: FeatureReadContext): string;
 
+  // ===== Lifecycle =====
+  // §3a addition. One-shot init on fresh sessions only (TickOrchestrator Phase 0
+  // skips this on rehydrated sessions). Used to seed initial state from module
+  // presets (e.g., weather reads ctx.getFeatureInitConfig<T>("weather")).
+  // Per-feature failures are caught/logged; hasInitialized latches regardless.
+  init?(ctx: FeatureReadContext): StateChange[];
+
   onTick?(ctx: FeatureReadContext): StateChange[];
 
   onActionEnqueue?(
@@ -502,16 +548,10 @@ interface WorldFeature {
     ctx: FeatureReadContext
   ): { spreadToSceneIds: string[]; changes: StateChange[] };
 
-  getCharacterSkillModifiers?(
-    characterId: string,
-    ctx: FeatureReadContext
-  ): CharacterSkillModifier[];
-}
-
-interface CharacterSkillModifier {
-  skill: string;
-  delta: number;
-  source: string;            // human-readable attribution (e.g., "fire: smoke")
+  // §3a removal: getCharacterSkillModifiers + CharacterSkillModifier deleted.
+  // Stamina/sanity-style blanket debuffs now flow as character.addCondition
+  // StateChanges with mechanicalEffect.globalSkillPenalty (see CharacterCondition
+  // below). Skill-check aggregator reads character conditions directly.
 }
 
 interface FeatureReadContext {
@@ -526,13 +566,47 @@ interface FeatureReadContext {
   getCharactersInScene(sceneId: string): CharacterView[];
   getRegionId(sceneId: string): string | undefined;            // for region-scope features mapping scenes → regions
 
+  // §3a additions for Phase D layered features.
+  getRoadIds(): string[];
+  getJunctionIds(): string[];
+  getOutdoorLocationIdsInRegion(regionId: string): string[];   // bundled helper (used by weather init)
+  getAllAliveCharacterIds(): string[];                          // used by stamina iteration
+  getCharacterLocationId(characterId: string): string | undefined;
+  getTopology(): TownTopology | undefined;                      // exposed for fire's spread logic
+
   // Feature state queries (key meaning depends on the calling feature's `stateScope`)
   getFeatureState<T>(key: string): T | undefined;
   getAllFeatureStates<T>(): Array<{ key: string; state: T }>;
 
-  // Cross-feature read: caller must know the other feature's scope to pass the right key
+  // §3a addition: per-feature init config (passthrough from moduleSetup.featureInit[featureId]).
+  // Loader stays opaque; each feature owns its own preset shape.
+  getFeatureInitConfig<T>(featureId: string): T | undefined;
+
+  // §3a addition: per-location aggregated environmental reading (1-tick lag —
+  // contributors emit env.contribute / env.cap / env.hazard StateChanges in tick
+  // N; readers see the new aggregate from tick N+1).
+  getEnvironmentReading(locationId: string): EnvironmentReading;
+
+  // Cross-feature read: caller must know the other feature's scope to pass the right key.
+  // Phase D features should prefer getEnvironmentReading over this — direct cross-feature
+  // reads are banned for new code. Kept for legacy paths and edge cases.
   getOtherFeatureState<T>(featureId: string, key: string): T | undefined;
 }
+
+// §3a addition. Per-location physical reading published in DGSM, computed each
+// tick by Applier from environment.contribute / .cap / .hazard StateChanges.
+// Features only contribute / react — never cross-read each other's private state.
+interface EnvironmentReading {
+  temperature: number;        // °C, baseline 20
+  illumination: number;       // 0–5, baseline 3
+  oxygen: number;             // 0–1, baseline 1
+  noise: number;              // 0–5, baseline 0
+  airborneHazards: string[];  // "smoke" | "toxic_gas" | ...
+}
+
+const DEFAULT_ENVIRONMENT_READING: EnvironmentReading = {
+  temperature: 20, illumination: 3, oxygen: 1, noise: 0, airborneHazards: [],
+};
 
 // Owner-tagged structured condition. No `kind` discriminator — features either keep one
 // condition per scene and carry differentiation in `data`, or add multiple and replace
@@ -550,6 +624,9 @@ interface SceneCondition {
 type StateChange =
   | { kind: "scene.addCondition"; sceneId: string; condition: SceneCondition }
   | { kind: "scene.removeCondition"; sceneId: string; predicate: ConditionPredicate }
+  // §3a addition: Phase D scene.damageItem (itemDamageFeature reactor; emitted
+  // when env.temperature > 200°C in a scene with flammable items)
+  | { kind: "scene.damageItem"; sceneId: string; itemId: string; damagedBy: string; reason: string; sourceFeatureId: string }
   | { kind: "character.hp"; characterId: string; delta: number; sourceFeatureId: string; reason: string }
   | { kind: "character.san"; characterId: string; delta: number; sourceFeatureId: string; reason: string }
   | { kind: "character.fatigue"; characterId: string; delta: number; sourceFeatureId: string; reason: string }
@@ -558,10 +635,35 @@ type StateChange =
   | { kind: "connection.setBlock"; connectionId: string; blocked: boolean; sourceFeatureId: string; reason: string }
   | { kind: "feature.setState"; featureId: string; key: string; state: unknown }      // key per feature's stateScope
   | { kind: "feature.removeState"; featureId: string; key: string }                   // key per feature's stateScope
+  // §3a additions: env layer contributions. Aggregated per-quantity by Applier
+  // Pass 1.5; final EnvironmentReading written to dgsm.environmentReadings.
+  // Reducers: temperature = baseline + sum; illumination = min(caps, max(baseline, contributions));
+  // oxygen = clamp[0,1] of baseline + sum; noise = max(baseline, contributions);
+  // airborneHazards = union(adds) \ union(removes).
+  | { kind: "environment.contribute"; locationId: string; quantity: "temperature"|"illumination"|"oxygen"|"noise"; value: number; sourceFeatureId: string }
+  | { kind: "environment.cap"; locationId: string; quantity: "illumination"; value: number; sourceFeatureId: string }
+  | { kind: "environment.hazard"; locationId: string; add?: string[]; remove?: string[]; sourceFeatureId: string }
   | { kind: "event.emit"; event: FeatureEvent };
 
 // Owner-only — features remove their own conditions wholesale, then re-add fresh ones
 type ConditionPredicate = { featureId: string };
+
+// Symmetric with SceneCondition. Carries optional expiresAt — TickOrchestrator
+// Phase 9.5 auto-removes conditions when expiresAt <= currentTickTime.
+// §3a: globalSkillPenalty replaces the deleted WorldFeature.getCharacterSkillModifiers
+// hook. Aggregator folds it into the existing "*" wildcard convention.
+interface CharacterCondition {
+  id: string;
+  featureId?: string;
+  description: string;
+  data?: Record<string, unknown>;
+  mechanicalEffect?: {
+    skillPenalty?: Record<string, number>;
+    globalSkillPenalty?: number;        // §3a — applies to every skill check
+    attackPenalty?: number;
+  };
+  expiresAt?: GameTime;                 // §3a — auto-swept by TickOrchestrator Phase 9.5
+}
 ```
 
 ### ScriptedEvent (module-defined story beats)
@@ -706,6 +808,10 @@ All seven open questions from the original draft were resolved in the 2026-04-20
 | 5 | Backwards compatibility | None — old `SimulationRuntime` rows become unloadable; no migration, no schemaVersion gate | §3 "Backwards Compatibility" |
 | 6 | Interruption detection contract | Impact gate moves to role sim. TickEngine streams events + emits `tickCompleted(TickReport)` batch; role sim's handler decides + calls `interruptAction`. 1-tick latency accepted | §3 "Impact Gate Location" / "Event Emission" / "Cancel vs Interrupt", §4 API |
 | 7 | FeatureReadContext mock | Not a spec-level decision. Interface is pure; implementation choice deferred to plan | §6 mockability note |
+| 8 | Cross-feature coupling growth | Introduce `EnvironmentReading` middle layer. Features only contribute / react via env; direct cross-feature reads banned | §3a "EnvironmentReading layer", §6 EnvironmentReading + StateChange env kinds |
+| 9 | Sanity placement (engine vs role sim) | Move to role sim. Delete `sanityFeature`; add `src/simulation/roleSim/sanityGuidance.ts`; LLM resolver decides bouts | §3a "sanity → role sim" |
+| 10 | Feature initial state in StateChange-only world | Add `WorldFeature.init?(ctx): StateChange[]` hook; TickOrchestrator Phase 0 fires once on fresh sessions | §3a "init() hook + Phase 0", §6 WorldFeature |
+| 11 | Blanket skill debuffs without per-feature hook | Remove `getCharacterSkillModifiers`; add `globalSkillPenalty` to CharacterCondition; aggregator folds into existing `"*"` wildcard | §3a "globalSkillPenalty", §6 CharacterCondition |
 
 ---
 
@@ -764,3 +870,18 @@ All seven open questions from the original draft were resolved in the 2026-04-20
 | `triggerActionType` semantics | A (rename to `triggerDefinitionId`, matches `ActionStep.definitionId`) | B (LLM-matched free text — violates sub-second tick), C (free text + string match — fragile) |
 | ≥ 50% interrupt apply path | A (go through `FeatureRunner.runActionCommit` with `{interrupted: true}` flag so features react) | B (raw apply partialOutcome — features lose visibility into mid-action events) |
 | ScriptedEventEffect shape asymmetry | C (keep sceneId-vs-predicate asymmetry, make sceneId optional defaulting to siteSceneId, document rationale) | A (force `sceneTarget` predicate for consistency — redundant wrapping), B (remove predicates, force explicit IDs — can't express "witnesses") |
+| **Phase D — env layer aggregation reducers** | per-quantity hard-coded in Applier (sum / max / cap / set-union) | per-feature declared reducers (over-engineering for current needs) |
+| **Phase D — env contributor lag** | 1-tick lag accepted (contribute tick N → read tick N+1) | second Applier flush phase (extra overhead, no gameplay benefit at 1 min/tick) |
+| **Phase D — sanity feature placement** | Move to role sim (`src/simulation/roleSim/sanityGuidance.ts`); LLM resolver decides bouts | Keep as engine WorldFeature with state machine; Hybrid (engine triggers, role sim describes) |
+| **Phase D — bout-of-madness trigger source** | LLM resolver in-context (no auto-trigger from non-action SAN drops) | A: post-Applier reaction phase (extra phase, possible cycles); B: 1-tick lag delivery via FeatureEvent (more infra, same outcome) |
+| **Phase D — feature init mechanism** | Optional `WorldFeature.init?(ctx): StateChange[]` + TickOrchestrator Phase 0 | A: lazy init in onTick first-call (needs DGSM-mutation backdoor); B: moduleLoader pre-populates state (cross-layer knowledge leak) |
+| **Phase D — Phase 0 init invocation timing** | Inside first tick(), before Phase 1 (clock advance) | Constructor-time (forces Applier ready at construct, harder to test) |
+| **Phase D — moduleLoader feature preset shape** | Opaque `featureInit[featureId]` blob; loader has zero feature knowledge | Loader knows each feature's state shape (cross-layer leak; doesn't scale) |
+| **Phase D — globalSkillPenalty representation** | New `mechanicalEffect.globalSkillPenalty: number` field on CharacterCondition | A: keep `getCharacterSkillModifiers` hook (side-channel diverges from StateChange contract); B: enumerate all skills explicitly (unwieldy) |
+| **Phase D — `getCharacterSkillModifiers` hook removal** | Delete entirely; new aggregator reads CharacterCondition directly | Keep alongside new path (dual paths = bug surface) |
+| **Phase D — replace lighting with sun feature** | Delete `lightingFeature`; new `sunFeature` contributes illumination + observes env to write `[Lighting]` conditions | Keep `lightingFeature` as observer-only (still couples to fire/weather state directly) |
+| **Phase D — itemDamage as own feature** | New `itemDamageFeature` reactor (env.temperature > 200°C → emit scene.damageItem) | Keep item-damage logic inside fireFeature (perpetuates fire→items coupling) |
+| **Phase D — testing strategy** | 3-layer: middle-layer correctness (D0) + per-feature internal invariants (Layer 3) + cross-feature integration (D11/Layer 2) | Per-feature mock-DGSM unit tests (3000+ LOC, low value); 1:1 port of old test cases (mostly tested implementation details) |
+| **Phase D — interaction test directory location** | `src/engine/__tests__/integration/` (cross-feature scope) | `core/__tests__/interactions/` (couples to one subsystem); `features/__tests__/integration/` (couples to features layer) |
+| **Phase D — review cadence** | Implementer + spec-compliance reviewer per task; skip code-quality reviewer for routine feature ports | Three-stage review per task (overhead) |
+| **Phase D — SceneCondition unification** | Single canonical definition in `src/engine/core/types.ts`; delete legacy `planning/types.ts` definition; all consumers import from core | Keep both definitions with cast-bridge in DGSM (silently breaks scene skill penalties) |

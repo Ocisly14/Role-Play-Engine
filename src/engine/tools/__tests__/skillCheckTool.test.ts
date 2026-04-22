@@ -18,6 +18,7 @@ describe("executeSkillCheck", () => {
       getState: () => ({
         npcCharacters: npcs,
       }),
+      getNpcProfile: (id: string) => npcs.find((n) => n.id === id),
       getScene: () => null,
       resolveLocationId: () => "scene_1",
       getCharacterPosition: () => ({ type: "scene", sceneId: "scene_1" }),
@@ -57,5 +58,45 @@ describe("executeSkillCheck", () => {
     expect(result.status).toBe("completed");
     expect(result.done).toBe(true);
     expect(result.successLevel).toBe("regular");
+  });
+
+  it("applies character globalSkillPenalty to every skill check", () => {
+    const skillCheck: ActionDefinitionSkillCheck = {
+      skill: "Spot Hidden",
+      difficulty: "regular",
+      type: "single",
+      failBehavior: "partial",
+    };
+    const dgsm = makeDgsm([
+      {
+        id: "npc_1",
+        skills: { "Spot Hidden": 60 },
+        attributes: {},
+        status: {
+          conditions: [
+            {
+              id: "c1",
+              featureId: "stamina",
+              description: "exhausted",
+              mechanicalEffect: { globalSkillPenalty: -20 },
+            },
+          ],
+        },
+      },
+    ]);
+
+    const result = executeSkillCheck(
+      skillCheck,
+      "npc_1",
+      undefined,
+      dgsm,
+      "scene_1"
+    );
+
+    // With mocked dice (roll=30, level=regular) the detail string bakes in the
+    // post-penalty skill value. 60 − 20 = 40.
+    expect(result.status).toBe("completed");
+    expect(result.rollDetail).toContain("/40");
+    expect(result.rollDetail).not.toContain("/60");
   });
 });

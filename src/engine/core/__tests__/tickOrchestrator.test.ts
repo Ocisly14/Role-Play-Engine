@@ -71,6 +71,7 @@ describe("TickOrchestrator", () => {
       resolve: vi.fn(),
       tickDurationMinutes: 1,
       lang: "en",
+      hasInitialized: true,
     });
 
     const report = await orch.tick();

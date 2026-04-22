@@ -1,5 +1,6 @@
-import type { DynamicGameStateManager } from "../../state/DynamicGameState.js";
-import type { TickRuntimeContext, WorldFeature } from "../types.js";
+import type { FeatureReadContext } from "../core/featureReadContext.js";
+import type { SceneCondition, StateChange } from "../core/types.js";
+import type { WorldFeature } from "../core/worldFeature.js";
 
 // ===== Types =====
 
@@ -19,14 +20,24 @@ export interface WeatherRegionState {
   affectedSceneIds: string[];
 }
 
+export interface WeatherInitConfigEntry {
+  regionId: string;
+  weatherType: WeatherType;
+  intensity: number;
+}
+
 // ===== Constants =====
 
 const FEATURE_ID = "weather";
 const TRANSITION_CHECK_INTERVAL_MINUTES = 120;
 const MAX_INTENSITY = 5;
 const BLOCKING_INTENSITY_THRESHOLD = 4;
+// Stable vote id for Applier's connection.setBlock refcount table.
+// A single logical vote per connection per feature — additions and withdrawals
+// across weather transitions must match via identical (featureId, reason).
+const WEATHER_BLOCK_REASON = "weather-block";
 
-const WEATHER_TYPES: WeatherType[] = [
+export const WEATHER_TYPES: readonly WeatherType[] = [
   "clear",
   "rain",
   "fog",
@@ -36,7 +47,9 @@ const WEATHER_TYPES: WeatherType[] = [
   "extreme_cold",
 ];
 
-const TRANSITION_MATRIX: number[][] = [
+// Row-per-current-type transition probabilities indexed by WEATHER_TYPES order.
+// Rows are expected to sum to ≈ 1.0 (see test).
+export const TRANSITION_MATRIX: readonly (readonly number[])[] = [
   [0.65, 0.1, 0.1, 0.02, 0.03, 0.05, 0.05],
   [0.1, 0.45, 0.1, 0.2, 0.05, 0.0, 0.1],
   [0.25, 0.15, 0.55, 0.0, 0.03, 0.02, 0.0],
@@ -121,108 +134,6 @@ const WEATHER_SKILL_PENALTIES: Partial<
   ],
 };
 
-// ===== Helper Functions =====
-
-function getWeatherState(
-  dgsm: DynamicGameStateManager,
-  regionId: string
-): WeatherRegionState | undefined {
-  return dgsm.getFeatureSceneState(FEATURE_ID, regionId) as
-    | WeatherRegionState
-    | undefined;
-}
-
-function setWeatherState(
-  dgsm: DynamicGameStateManager,
-  regionId: string,
-  state: WeatherRegionState
-): void {
-  dgsm.setFeatureSceneState(FEATURE_ID, regionId, state);
-}
-
-function getAllWeatherRegions(dgsm: DynamicGameStateManager): string[] {
-  return Object.keys(dgsm.getFeatureState(FEATURE_ID));
-}
-
-function getOutdoorSceneIds(
-  dgsm: DynamicGameStateManager,
-  regionId: string
-): string[] {
-  const state = dgsm.getState();
-  const sceneIds: string[] = [];
-  state.scenes.forEach((scene, id) => {
-    if (scene.parentLocationId === regionId && !scene.indoor) {
-      sceneIds.push(id);
-    }
-  });
-  for (const [id, junc] of state.junctions) {
-    if (junc.parentLocationId === regionId) {
-      sceneIds.push(id);
-    }
-  }
-  for (const [id, road] of state.roads) {
-    if (road.parentLocationId === regionId) {
-      sceneIds.push(id);
-    }
-  }
-  return sceneIds;
-}
-
-function createWeatherState(
-  weatherType: WeatherType,
-  intensity: number,
-  affectedSceneIds: string[]
-): WeatherRegionState {
-  return {
-    weatherType,
-    intensity:
-      weatherType === "clear"
-        ? 0
-        : Math.max(1, Math.min(intensity, MAX_INTENSITY)),
-    minutesInState: 0,
-    affectedSceneIds,
-  };
-}
-
-function sampleTransition(currentType: WeatherType): WeatherType {
-  const rowIndex = WEATHER_TYPES.indexOf(currentType);
-  const row = TRANSITION_MATRIX[rowIndex];
-  const r = Math.random();
-  let cumulative = 0;
-  for (let i = 0; i < row.length; i++) {
-    cumulative += row[i];
-    if (r < cumulative) return WEATHER_TYPES[i];
-  }
-  return WEATHER_TYPES[row.length - 1];
-}
-
-function evolveIntensity(current: number): number {
-  const r = Math.random();
-  if (r < INTENSITY_NO_CHANGE) return current;
-  if (r < INTENSITY_NO_CHANGE + INTENSITY_UP)
-    return Math.min(current + 1, MAX_INTENSITY);
-  return current - 1;
-}
-
-export function computeSkillPenalties(
-  weatherType: WeatherType,
-  intensity: number
-): Array<{ skill: string; delta: number }> {
-  const rules = WEATHER_SKILL_PENALTIES[weatherType];
-  if (!rules || intensity <= 0) return [];
-
-  const penalties: Array<{ skill: string; delta: number }> = [];
-  for (const rule of rules) {
-    if (intensity >= rule.triggerIntensity) {
-      penalties.push({
-        skill: rule.skill,
-        delta: rule.deltaPerLevel * intensity,
-      });
-    }
-  }
-  return penalties;
-}
-
 const WEATHER_LABELS: Record<WeatherType, string[]> = {
   clear: ["Clear skies"],
   rain: [
@@ -268,141 +179,185 @@ const WEATHER_LABELS: Record<WeatherType, string[]> = {
   ],
 };
 
+// ===== Pure helpers (exported for testing) =====
+
 export function getWeatherLabel(
   weatherType: WeatherType,
-  intensity: number
+  intensity: number,
 ): string {
   if (weatherType === "clear") return "Clear skies";
   const labels = WEATHER_LABELS[weatherType];
   return labels[intensity] ?? labels[labels.length - 1];
 }
 
-function writeWeatherConditions(
-  dgsm: DynamicGameStateManager,
-  regionState: WeatherRegionState
-): void {
-  const { weatherType, intensity, affectedSceneIds } = regionState;
+export function computeSkillPenalties(
+  weatherType: WeatherType,
+  intensity: number,
+): Array<{ skill: string; delta: number }> {
+  const rules = WEATHER_SKILL_PENALTIES[weatherType];
+  if (!rules || intensity <= 0) return [];
+  const out: Array<{ skill: string; delta: number }> = [];
+  for (const rule of rules) {
+    if (intensity >= rule.triggerIntensity) {
+      out.push({ skill: rule.skill, delta: rule.deltaPerLevel * intensity });
+    }
+  }
+  return out;
+}
+
+export function sampleTransition(currentType: WeatherType): WeatherType {
+  const rowIndex = WEATHER_TYPES.indexOf(currentType);
+  const row = TRANSITION_MATRIX[rowIndex];
+  const r = Math.random();
+  let cumulative = 0;
+  for (let i = 0; i < row.length; i++) {
+    cumulative += row[i];
+    if (r < cumulative) return WEATHER_TYPES[i];
+  }
+  return WEATHER_TYPES[row.length - 1];
+}
+
+export function evolveIntensity(current: number): number {
+  const r = Math.random();
+  if (r < INTENSITY_NO_CHANGE) return current;
+  if (r < INTENSITY_NO_CHANGE + INTENSITY_UP)
+    return Math.min(current + 1, MAX_INTENSITY);
+  return current - 1;
+}
+
+// ===== Internal emit helpers =====
+
+/**
+ * Stable, order-independent connection vote id for a scene pair. Matches the
+ * Applier's single-id vote table — reason strings are still attached so the
+ * applier can deduplicate votes by (featureId, reason).
+ */
+function connectionIdFor(a: string, b: string): string {
+  return a <= b ? `weather:${a}|${b}` : `weather:${b}|${a}`;
+}
+
+function buildWeatherSceneCondition(
+  sceneId: string,
+  state: WeatherRegionState,
+): StateChange {
+  const label = getWeatherLabel(state.weatherType, state.intensity);
+  const penaltyArr = computeSkillPenalties(state.weatherType, state.intensity);
+  const skillPenalty: Record<string, number> = {};
+  for (const { skill, delta } of penaltyArr) {
+    skillPenalty[skill] = (skillPenalty[skill] ?? 0) + delta;
+  }
+  const condition: SceneCondition = {
+    featureId: FEATURE_ID,
+    description: `[Weather] ${label}`,
+    mechanicalEffect:
+      penaltyArr.length > 0 ? { skillPenalty } : undefined,
+  };
+  return { kind: "scene.addCondition", sceneId, condition };
+}
+
+/**
+ * Emit environment contributions (temperature, illumination cap) for every
+ * outdoor location affected by the given weather state. Called from both
+ * init() and onTick() so every tick re-contributes (Applier requires this —
+ * unvisited locations retain prior readings).
+ */
+function emitEnvContributions(state: WeatherRegionState): StateChange[] {
+  if (state.weatherType === "clear" || state.intensity <= 0) return [];
+  const { weatherType, intensity, affectedSceneIds } = state;
+  const out: StateChange[] = [];
 
   for (const sceneId of affectedSceneIds) {
-    clearWeatherConditions(dgsm, sceneId);
-
-    if (weatherType === "clear" || intensity <= 0) continue;
-
-    const label = getWeatherLabel(weatherType, intensity);
-    const penalties = computeSkillPenalties(weatherType, intensity);
-
-    dgsm.appendSceneCondition(sceneId, {
-      description: `[Weather] ${label}`,
-      mechanicalEffect:
-        penalties.length > 0 ? { skillPenalty: penalties } : undefined,
-    });
+    let tempDelta = 0;
+    if (weatherType === "rain") tempDelta = -10 * intensity * 0.2;
+    else if (weatherType === "storm") tempDelta = -15;
+    else if (weatherType === "snow") tempDelta = -20;
+    else if (weatherType === "extreme_heat") tempDelta = +30;
+    else if (weatherType === "extreme_cold") tempDelta = -30;
+    if (tempDelta !== 0) {
+      out.push({
+        kind: "environment.contribute",
+        locationId: sceneId,
+        quantity: "temperature",
+        value: tempDelta,
+        sourceFeatureId: FEATURE_ID,
+      });
+    }
+    if (weatherType === "fog") {
+      const capValue = intensity >= 3 ? 1 : 2;
+      out.push({
+        kind: "environment.cap",
+        locationId: sceneId,
+        quantity: "illumination",
+        value: capValue,
+        sourceFeatureId: FEATURE_ID,
+      });
+    } else if (weatherType === "storm") {
+      const capValue = intensity >= 4 ? 1 : 2;
+      out.push({
+        kind: "environment.cap",
+        locationId: sceneId,
+        quantity: "illumination",
+        value: capValue,
+        sourceFeatureId: FEATURE_ID,
+      });
+    }
   }
+  return out;
 }
 
-function clearWeatherConditions(
-  dgsm: DynamicGameStateManager,
-  sceneId: string
-): void {
-  const state = dgsm.getState();
-  const conditions = state.scenarioConditions[sceneId];
-  if (!conditions) return;
-  dgsm.replaceSceneConditions(
-    sceneId,
-    conditions.filter((c: any) => !c.description.startsWith("[Weather]"))
-  );
-}
-
-function updateWeatherBlocking(
-  dgsm: DynamicGameStateManager,
-  regionState: WeatherRegionState
-): void {
-  const { weatherType, intensity, affectedSceneIds } = regionState;
+/**
+ * Emit connection.setBlock StateChanges for outdoor↔outdoor connections in a
+ * region, given the current weather state. Needs ctx for neighbor iteration,
+ * so this lives outside emitEnvContributions.
+ */
+function emitConnectionBlocks(
+  state: WeatherRegionState,
+  ctx: FeatureReadContext,
+): StateChange[] {
+  const { weatherType, intensity, affectedSceneIds } = state;
   const shouldBlock =
     (weatherType === "storm" || weatherType === "snow") &&
     intensity >= BLOCKING_INTENSITY_THRESHOLD;
+  const out: StateChange[] = [];
+  // Constant reason so Applier's (featureId, reason) refcount table
+  // matches additions and withdrawals across weather transitions.
+  // Human-readable diagnostics can come from other channels (featureEvents
+  // or scene conditions); this field is for vote dedup only.
+  const reason = WEATHER_BLOCK_REASON;
 
   for (const sceneId of affectedSceneIds) {
-    const scene = dgsm.getScene(sceneId);
+    const scene = ctx.getScene(sceneId);
     if (!scene) continue;
-
     for (const conn of scene.connections ?? []) {
-      const connScene = dgsm.getScene(conn.targetId);
-      if (!connScene || (connScene as any).indoor) continue;
-
-      if (shouldBlock) {
-        dgsm.setConnectionBlocked(
-          conn.targetId,
-          sceneId,
-          true,
-          `Blocked by ${weatherType} (intensity ${intensity})`
-        );
-      } else {
-        const reason = dgsm.getConnectionBlockReason(conn.targetId, sceneId);
-        if (
-          reason &&
-          (reason.startsWith("Blocked by storm") ||
-            reason.startsWith("Blocked by snow"))
-        ) {
-          dgsm.setConnectionBlocked(sceneId, conn.targetId, false, "");
-        }
-      }
+      const other = ctx.getScene(conn.targetId);
+      // Only outdoor↔outdoor edges are weather-blockable.
+      if (!other || other.indoor) continue;
+      out.push({
+        kind: "connection.setBlock",
+        connectionId: connectionIdFor(sceneId, conn.targetId),
+        blocked: shouldBlock,
+        sourceFeatureId: FEATURE_ID,
+        reason,
+      });
     }
   }
+  return out;
 }
 
-// ===== Initialization =====
-
-function initWeatherFromPresets(dgsm: DynamicGameStateManager): void {
-  const state = dgsm.getState();
-
-  const regionIds = new Set<string>();
-  state.scenes.forEach((scene) => {
-    regionIds.add(scene.parentLocationId);
-  });
-  for (const [, junc] of state.junctions) {
-    regionIds.add(junc.parentLocationId);
-  }
-  for (const [, road] of state.roads) {
-    regionIds.add(road.parentLocationId);
-  }
-
-  const presets: Array<{
-    regionId: string;
-    weatherType: WeatherType;
-    intensity: number;
-  }> = (state as any).moduleSetup?.weatherPresets ?? [];
-
-  const presetMap = new Map<
-    string,
-    { weatherType: WeatherType; intensity: number }
-  >();
-  for (const p of presets) {
-    presetMap.set(p.regionId, {
-      weatherType: p.weatherType,
-      intensity: p.intensity,
-    });
-  }
-
-  for (const regionId of regionIds) {
-    const outdoorScenes = getOutdoorSceneIds(dgsm, regionId);
-    if (outdoorScenes.length === 0) continue;
-
-    const preset = presetMap.get(regionId);
-    const weatherType = preset?.weatherType ?? "clear";
-    const intensity = preset?.intensity ?? 0;
-
-    const regionState = createWeatherState(
-      weatherType,
-      intensity,
-      outdoorScenes
-    );
-    setWeatherState(dgsm, regionId, regionState);
-
-    if (weatherType !== "clear" && intensity > 0) {
-      writeWeatherConditions(dgsm, regionState);
-      updateWeatherBlocking(dgsm, regionState);
-    }
-  }
+function makeRegionState(
+  preset: WeatherInitConfigEntry,
+  affectedSceneIds: string[],
+): WeatherRegionState {
+  const intensity =
+    preset.weatherType === "clear"
+      ? 0
+      : Math.max(1, Math.min(preset.intensity, MAX_INTENSITY));
+  return {
+    weatherType: preset.weatherType,
+    intensity,
+    minutesInState: 0,
+    affectedSceneIds,
+  };
 }
 
 // ===== Exported Feature =====
@@ -410,67 +365,129 @@ function initWeatherFromPresets(dgsm: DynamicGameStateManager): void {
 export const weatherFeature: WorldFeature = {
   id: FEATURE_ID,
   description:
-    "Regional weather system — Markov chain evolution with skill penalties and connection blocking",
-
+    "Regional weather — Markov evolution with env contributions and scene conditions",
+  stateScope: "region",
+  affectedKinds: [
+    "feature.setState",
+    "feature.removeState",
+    "scene.addCondition",
+    "scene.removeCondition",
+    "environment.contribute",
+    "environment.cap",
+    "connection.setBlock",
+  ],
+  effectSummary:
+    "Per-region weather contributing temperature/illumination cap to env and writing scene conditions with skill penalties.",
+  priority: 100,
   planningPrompt: `## Weather
 Current weather conditions are shown in the state description below.
 Weather changes automatically — you do NOT need to set or control weather.
 Weather affects outdoor scenes only (skill penalties, blocked paths in severe weather).`,
 
-  stateDescription(dgsm: DynamicGameStateManager): string {
-    const regionIds = getAllWeatherRegions(dgsm);
-    if (regionIds.length === 0) return "";
-
-    const lines: string[] = [];
-    for (const regionId of regionIds) {
-      const ws = getWeatherState(dgsm, regionId);
-      if (!ws || ws.weatherType === "clear") continue;
-      const label = getWeatherLabel(ws.weatherType, ws.intensity);
-      lines.push(
-        `- ${regionId}: ${ws.weatherType} intensity ${ws.intensity}/5 (${label})`
+  init(ctx) {
+    const presets = ctx.getFeatureInitConfig<WeatherInitConfigEntry[]>(
+      FEATURE_ID,
+    );
+    if (!presets || presets.length === 0) return [];
+    const out: StateChange[] = [];
+    for (const preset of presets) {
+      const affectedSceneIds = ctx.getOutdoorLocationIdsInRegion(
+        preset.regionId,
       );
+      if (affectedSceneIds.length === 0) continue;
+      const regionState = makeRegionState(preset, affectedSceneIds);
+      out.push({
+        kind: "feature.setState",
+        featureId: FEATURE_ID,
+        key: preset.regionId,
+        state: regionState,
+      });
+      out.push(...emitEnvContributions(regionState));
+      if (
+        regionState.weatherType !== "clear" &&
+        regionState.intensity > 0
+      ) {
+        for (const sceneId of regionState.affectedSceneIds) {
+          out.push(buildWeatherSceneCondition(sceneId, regionState));
+        }
+      }
+      out.push(...emitConnectionBlocks(regionState, ctx));
     }
-
-    if (lines.length === 0) return "Weather: Clear in all regions";
-    return "Weather:\n" + lines.join("\n");
+    return out;
   },
 
-  tick(dgsm: DynamicGameStateManager, runtime: TickRuntimeContext): void {
-    const regions = getAllWeatherRegions(dgsm);
-    if (regions.length === 0) {
-      initWeatherFromPresets(dgsm);
-      return;
-    }
-
-    const elapsedMinutes = Math.max(1, runtime.tickDurationMinutes);
-
-    for (const regionId of regions) {
-      const ws = getWeatherState(dgsm, regionId);
-      if (!ws) continue;
-
-      ws.minutesInState += elapsedMinutes;
-
-      while (ws.minutesInState >= TRANSITION_CHECK_INTERVAL_MINUTES) {
-        ws.minutesInState -= TRANSITION_CHECK_INTERVAL_MINUTES;
-
-        const newType = sampleTransition(ws.weatherType);
-
-        if (newType !== ws.weatherType) {
-          ws.weatherType = newType;
-          ws.intensity = newType === "clear" ? 0 : 1;
-        } else if (ws.weatherType !== "clear") {
-          ws.intensity = evolveIntensity(ws.intensity);
-          if (ws.intensity <= 0) {
-            ws.weatherType = "clear";
-            ws.intensity = 0;
+  onTick(ctx) {
+    const out: StateChange[] = [];
+    const states = ctx.getAllFeatureStates<WeatherRegionState>();
+    for (const { key: regionId, state } of states) {
+      const next: WeatherRegionState = {
+        ...state,
+        affectedSceneIds: [...state.affectedSceneIds],
+        minutesInState: state.minutesInState + ctx.tickDurationMinutes,
+      };
+      let transitioned = false;
+      while (next.minutesInState >= TRANSITION_CHECK_INTERVAL_MINUTES) {
+        next.minutesInState -= TRANSITION_CHECK_INTERVAL_MINUTES;
+        const newType = sampleTransition(next.weatherType);
+        if (newType !== next.weatherType) {
+          next.weatherType = newType;
+          next.intensity = newType === "clear" ? 0 : 1;
+          transitioned = true;
+        } else if (next.weatherType !== "clear") {
+          const newIntensity = evolveIntensity(next.intensity);
+          if (newIntensity !== next.intensity) transitioned = true;
+          next.intensity = newIntensity;
+          if (next.intensity <= 0) {
+            next.weatherType = "clear";
+            next.intensity = 0;
           }
         }
-
-        writeWeatherConditions(dgsm, ws);
-        updateWeatherBlocking(dgsm, ws);
       }
 
-      setWeatherState(dgsm, regionId, ws);
+      out.push({
+        kind: "feature.setState",
+        featureId: FEATURE_ID,
+        key: regionId,
+        state: next,
+      });
+
+      // Re-contribute env quantities every tick so the Applier's fresh-per-tick
+      // env reading stays populated. (Applier only writes readings for
+      // locations visited in the current flush.)
+      out.push(...emitEnvContributions(next));
+
+      // Conditions and connection blocking only change on transitions — the
+      // Applier doesn't dedupe scene conditions by featureId, so we first
+      // remove stale `[Weather]` conditions, then add the current one.
+      if (transitioned) {
+        for (const sceneId of next.affectedSceneIds) {
+          out.push({
+            kind: "scene.removeCondition",
+            sceneId,
+            predicate: { featureId: FEATURE_ID },
+          });
+          if (next.weatherType !== "clear" && next.intensity > 0) {
+            out.push(buildWeatherSceneCondition(sceneId, next));
+          }
+        }
+        out.push(...emitConnectionBlocks(next, ctx));
+      }
     }
+    return out;
+  },
+
+  stateDescription(ctx) {
+    const states = ctx.getAllFeatureStates<WeatherRegionState>();
+    if (states.length === 0) return "";
+    const lines: string[] = [];
+    for (const { key: regionId, state } of states) {
+      if (state.weatherType === "clear") continue;
+      const label = getWeatherLabel(state.weatherType, state.intensity);
+      lines.push(
+        `- ${regionId}: ${state.weatherType} intensity ${state.intensity}/5 (${label})`,
+      );
+    }
+    if (lines.length === 0) return "Weather: Clear in all regions";
+    return `Weather:\n${lines.join("\n")}`;
   },
 };

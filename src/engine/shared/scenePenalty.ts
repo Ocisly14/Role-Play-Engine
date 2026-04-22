@@ -1,5 +1,5 @@
-import type { SceneCondition } from "../../planning/types.js";
 import type { DynamicGameStateManager } from "../../state/DynamicGameState.js";
+import type { SceneCondition } from "../core/types.js";
 
 export function getScenePenalties(
   location: string,
@@ -8,10 +8,10 @@ export function getScenePenalties(
   const penalties = new Map<string, number>();
   const conditions: SceneCondition[] = dgsm.getSceneConditions(location);
   for (const cond of conditions) {
-    if (cond.mechanicalEffect?.skillPenalty) {
-      for (const p of cond.mechanicalEffect.skillPenalty) {
-        penalties.set(p.skill, (penalties.get(p.skill) ?? 0) + p.delta);
-      }
+    const sp = cond.mechanicalEffect?.skillPenalty;
+    if (!sp) continue;
+    for (const [skill, delta] of Object.entries(sp)) {
+      penalties.set(skill, (penalties.get(skill) ?? 0) + delta);
     }
   }
   return penalties;
@@ -24,7 +24,10 @@ export function applyPenalties(
   if (penalties.size === 0) return skills;
   const adjusted = { ...skills };
 
-  // Handle wildcard "*" first — applies to all skills
+  // Handle wildcard "*" first — applies to all skills.
+  // (Only used by character-condition aggregation: the
+  //  characterConditionPenalties helper folds CharacterCondition.mechanicalEffect.globalSkillPenalty
+  //  into this "*" key.)
   const wildcardDelta = penalties.get("*");
   if (wildcardDelta) {
     for (const skill of Object.keys(adjusted)) {

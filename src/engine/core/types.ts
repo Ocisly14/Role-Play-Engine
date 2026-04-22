@@ -23,6 +23,8 @@ export interface CharacterCondition {
   data?: Record<string, unknown>; // feature-private metadata
   mechanicalEffect?: {
     skillPenalty?: Record<string, number>;
+    /** Adds to every skill check (wildcard "*"). Summed across conditions. */
+    globalSkillPenalty?: number;
     attackPenalty?: number;
   };
   expiresAt?: GameTime; // optional auto-expiry (not enforced by Applier — features check)
@@ -107,6 +109,29 @@ export interface FeatureEvent {
   data?: Record<string, unknown>;
 }
 
+/**
+ * Per-location aggregated environmental reading, computed each tick by the
+ * Applier from `environment.contribute` / `environment.cap` / `environment.hazard`
+ * StateChanges. Features (fire, weather, lighting, sanity, etc.) read this via
+ * FeatureReadContext.getEnvironmentReading(locationId) instead of cross-querying
+ * each other's scoped state.
+ */
+export interface EnvironmentReading {
+  temperature: number;
+  illumination: number;
+  oxygen: number;
+  noise: number;
+  airborneHazards: string[];
+}
+
+export const DEFAULT_ENVIRONMENT_READING: EnvironmentReading = Object.freeze({
+  temperature: 20,
+  illumination: 3,
+  oxygen: 1,
+  noise: 0,
+  airborneHazards: Object.freeze([]) as string[],
+}) as EnvironmentReading;
+
 export type StateChange =
   | { kind: "scene.addCondition"; sceneId: string; condition: SceneCondition }
   | {
@@ -159,7 +184,36 @@ export type StateChange =
       state: unknown;
     }
   | { kind: "feature.removeState"; featureId: string; key: string }
-  | { kind: "event.emit"; event: FeatureEvent };
+  | { kind: "event.emit"; event: FeatureEvent }
+  | {
+      kind: "environment.contribute";
+      locationId: string;
+      quantity: "temperature" | "illumination" | "oxygen" | "noise";
+      value: number;
+      sourceFeatureId: string;
+    }
+  | {
+      kind: "environment.cap";
+      locationId: string;
+      quantity: "illumination";
+      value: number;
+      sourceFeatureId: string;
+    }
+  | {
+      kind: "environment.hazard";
+      locationId: string;
+      add?: string[];
+      remove?: string[];
+      sourceFeatureId: string;
+    }
+  | {
+      kind: "scene.damageItem";
+      sceneId: string;
+      itemId: string;
+      damagedBy: string; // "fire" | "moisture" | "weapon" | ...
+      reason: string;
+      sourceFeatureId: string;
+    };
 
 export interface CharacterAction {
   characterId: string;
