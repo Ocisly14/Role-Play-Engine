@@ -2682,491 +2682,645 @@ Expected: PASS.
 
 ## Phase C — ScriptedEventRunner
 
+> **STATUS — under design (2026-04-21).** The original Phase C plan (idealized DSL: `daily/cumulative/prerequisite` enum + `predicate: "witnesses"|"global"`) was found insufficient after auditing `src/engine/features/eventTriggerFeature.ts` (731 lines) — it doesn't model multi-condition tracking, day rollover, fail-after-missed, prerequisite, or conductor-NPC witness exclusion. Replaced with a clean-slate **unified Predicate DSL** (sections C-overview + new C1 below). C2 and C3 task bodies are placeholders pending the runtime/evaluator + persistence + loader sections being completed.
+
+---
+
+### Phase C Design Overview
+
+#### Architecture role
+
+```
+NPC (lives via memory + intent)
+  ↓ submitAction(...)
+TickEngine
+  Phase 4: commit actions
+  Phase 5–6: features
+  Phase 7: ScriptedEventRunner ← invisible to NPC (no introspection API)
+  Phase 8: emergent scanners
+  Phase 9: applier flush
+DGSM
+```
+
+#### Design principles
+
+1. **GM-only viewpoint.** ScriptedEventRunner observes and reacts; it does **not** participate in NPC decision-making. NPCs guide their own behavior via memory + intent + personality. Modules that need NPCs to do specific things give them appropriate intents — they do **not** rely on the planner LLM seeing the tracker state. Runner exposes only `run(input)`; **no `describe()`, no `getActiveEventsSnapshot()`, no introspection.** State persistence is handled implicitly via DGSM (state lives in `state.scriptedEventStates`, rides DGSM's existing JSON round-trip), so no `serialize()`/`rehydrate()` on the Runner either.
+2. **Pure unified Predicate DSL.** All conditions (action-driven, state-match, time-based, cross-event) and all effect filters (NPC target, scene target) use a single closed-form predicate language. No sugar layer / shortcuts — module authors compose predicates explicitly. Maximum extensibility (new predicate kind = additive change).
+3. **Declarative module data.** Module YAML/JSON contains `scriptedEvents: ScriptedEvent[]`. Loader does structural validation (schema + reference resolution) at load time; runner trusts the loaded data at runtime.
+4. **Same-tick cascade with `maxCascade=8`.** Effect-driven cascade (event A's `onComplete` includes `event.transition: B`) and predicate-driven cascade (event B's `fireWhen` is `eventStatus(A, completed)`) both fire same tick. Cascade loop re-evaluates all active events until no status changes OR cap reached. Overflow logs warning + drops further triggers.
+5. **Effects are predicate-filtered StateChanges.** `Effect.targetFilter: CharacterPredicate` and `Effect.sceneFilter: ScenePredicate` are evaluated at fire time; runner expands one Effect into N StateChanges (one per matched character / scene).
+
+#### Use case coverage (A/B/C/D)
+
+A unified predicate language covers all four use-case categories:
+
+- **A** Action-driven (daily/cumulative/invoke/prerequisite/fail-after-missed): via `Tracker` + `actionCommittedThisTick` + `trackerCount` / `trackerSinceFulfillment` / `trackerNeverFulfilled` predicates. "Daily" semantics expressed as `trackerSinceFulfillment(cmp: lte, value: 1440)`; "missed 3 days in a row" as `trackerSinceFulfillment(cmp: gte, value: 4320)`.
+- **B** State-match (NPC died, item at scene, gameDay reached): via `characterAlive` / `characterAt` / `characterHasItem` / `gameDay` / `sceneHasConditionFromFeature` predicates.
+- **C** Composition: via `and` / `or` / `not` predicate operators.
+- **D** Cross-event cascading: via `eventStatus` predicate (predicate-driven) + `event.transition` effect (effect-driven).
+
+#### Design decision log
+
+| Topic | Chosen | Rejected |
+|---|---|---|
+| Use case scope | A+B+C+D unified | A only (closed enum), separate systems for state vs action conditions |
+| DSL style | Pure unified Predicate | Sugar layer over predicate (loader transforms shortcuts) |
+| Cascade timing | Same tick + maxCascade=8 cap | Next-tick cascade (1-tick latency per hop), explicit `delayTicks` per effect |
+| Effect target | Pure CharacterPredicate / ScenePredicate | Enum shortcuts ("witnesses" / "global") + predicate fallback |
+| Planner integration | None — Runner invisible to planner | Runner exposes `describe(ctx) → string`, `getActiveEventsSnapshot()` |
+| Tracker `failAfterMissed` field | Removed; threshold lives in `failWhen` predicate | Keep as a hint/shortcut |
+| `lastActionDay` Tracker | Removed — redundant with the new `lastFulfillment` Tracker, which records `lastFulfilledTick` and supports any time-window query via `trackerSinceFulfillment` | Keep as a separate Tracker variant |
+| `sceneHasCondition` matcher | Match by `featureId` | Match by `description` text |
+| `narrative.broadcast` Effect | Removed; use `event.emit` instead | Keep as separate Effect kind |
+| `CharacterPredicate.isNpc` naming | Rename to `is` (symmetric with ScenePredicate) | Keep as `isNpc` |
+| Per-event timing | DSL has 2 fields: `fireDelayTicks` + `durationTicks` | One field only; per-effect delay |
+| Runtime status states | 5 states: `active` / `pending` / `completed` / `failed` / `disabled` | 6 states (separate `delayed` and `in_progress`); 4 states (no `disabled`) |
+| Phase distinction (delay vs duration) | Runtime collapses both into `pending` via `scheduledCompleteTick = now + delay + duration`. Module authors that need "visible duration" semantics decompose into two events linked by cascade. | Engine tracks separate `delayed` / `in_progress` phases |
+| Failure during pending | `failWhen` priority over completion in same tick — `failed` wins | Race condition undefined |
+| Schedule stickiness | Sticky — `fireWhen` becoming false after schedule does NOT cancel | Re-evaluate `fireWhen` each tick during pending |
+| `event.transition` vs `fireDelayTicks`/`durationTicks` | `event.transition` (effect-driven) skips delay/duration, immediate. Predicate-driven cascade respects the target event's own delay/duration | Both paths apply delay |
+| Time semantics for "daily" / "missed N days" | Continuous tick-based (`lastFulfillment` Tracker + `trackerSinceFulfillment` Predicate) | Discrete day boundary (`dailyFlag` + `trackerFulfilledToday` + day rollover handler) |
+| `consecutiveMissed` storage | Removed — derived from `(currentTick - lastFulfilledTick) / 1440` at predicate eval time | Stored alongside `fulfilledToday` |
+| `lastCheckedDay` field on event state | Removed — no day rollover, no need to track | Required for day-rollover detection |
+| `ScriptedEventState` storage location | DGSM (new dedicated bucket `scriptedEventStates`) — narrative state belongs in the world store; rides DGSM's existing serialization automatically | Runner-owned `Map<id, ScriptedEventState>` with separate `serialize()`/`rehydrate()` methods (mirrors Applier.connectionVotes, but ScriptedEvent state is more "world" than "engine bookkeeping") |
+| Per-Runner `serialize()` / `rehydrate()` | Removed — state lives in DGSM, persistence is automatic via DGSM's existing JSON round-trip | Required if Runner owned the state |
+| `persistedState.scriptedEvents` field on `CreateTickEngineOptions` | Removed — no separate Runner state to persist | Required if Runner owned the state |
+| Module data file layout | Multi-file directory `data/Mods/<modName>/scripted-events/*.json` (each file root = `ScriptedEvent[]`); files grouped by author preference (storyline / NPC / region) | Single file `scripted-events.json`; embed in existing `setup.json` JSON blob |
+| Loader error reporting | Aggregate all errors before throwing (one `ScriptedEventLoadError` listing every issue with file + path locations) | Fail-fast on first error |
+| Validation library | Hand-written recursive validator | `zod` / `valibot` / similar schema lib |
+| Semantic-sanity validation | Skipped — runner's `MAX_CASCADE` cap covers infinite-cascade module bugs at runtime | Detect "fireWhen always false", "self-trigger event.transition: self", etc. at load time |
+| DB persistence of module data | Merged `ScriptedEvent[]` array stored on `ModuleSetup.data.scriptedEvents` (existing Prisma `Json` field); original multi-file structure not persisted | Persist file-by-file structure for re-export; load directly from disk each session |
+
+---
+
 ### Task C1: ScriptedEvent types
 
 **Files:**
 - Create: `src/engine/scriptedEvents/types.ts`
 - Test: none — type-only file, covered by C3 behavior tests.
 
-- [ ] **Step 1: Create the file**
+> **Note:** A stub version of this file already exists at `src/engine/scriptedEvents/types.ts` (created during Phase B pre-work to unblock B5/B6 import). Replace its contents wholesale with the version below.
+
+- [ ] **Step 1: Replace the file**
 
 ```ts
 // src/engine/scriptedEvents/types.ts
-import type { FeatureReadContext } from "../core/featureReadContext.js";
 import type {
-  CharacterAction,
+  CharacterCondition,
+  FeatureEvent,
   SceneCondition,
-  StateChange,
 } from "../core/types.js";
 
+// ─── Top-level Event ────────────────────────────────────────────
 export interface ScriptedEvent {
   id: string;
-  label: string;
-  enabled: boolean;
-  conductorNpcId?: string;
-  siteSceneId?: string;
-  conditions: ScriptedEventCondition[];
-  onComplete: ScriptedEventEffect[];
-  onFail?: ScriptedEventEffect[];
+  label: string;                          // human-readable, debug/log only
+  initialStatus?: "active" | "disabled";  // default "active"
+
+  // Timing — DSL distinguishes "delay before event manifests" vs "duration the
+  // event takes". Runtime collapses both into one `pending` phase whose
+  // scheduledCompleteTick = currentTick + (fireDelayTicks ?? 0) + (durationTicks ?? 0).
+  // Module authors that need to query "is X visibly happening now?" decompose into
+  // two events linked by cascade — the engine doesn't track separate phases.
+  fireDelayTicks?: number;                // default 0; ticks before the event starts manifesting
+  durationTicks?: number;                 // default 0; ticks the event takes once started
+
+  trackers?: Tracker[];                   // optional; needed if predicates reference trackers
+  fireWhen: Predicate;                    // when true → transition to "pending" (or "completed" if delay+duration = 0)
+  failWhen?: Predicate;                   // optional; when true → transition to "failed" (priority over completion)
+  onComplete: Effect[];
+  onFail?: Effect[];
 }
 
-export type ScriptedEventCondition =
-  | { type: "daily"; triggerDefinitionId: string; failAfterMissed: number }
-  | { type: "cumulative"; triggerDefinitionId: string; requiredCount: number }
+// ─── Trackers (cross-tick state) ────────────────────────────────
+// All time semantics are continuous (tick-based). No day-boundary special case;
+// "daily" / "missed N days" predicates are derived from tick deltas in the
+// trackerSinceFulfillment predicate.
+export type Tracker =
+  | { id: string; kind: "actionCount"; match: ActionMatch }
+  | { id: string; kind: "lastFulfillment"; match: ActionMatch };
+
+export interface ActionMatch {
+  definitionId?: string;     // omit = any action kind
+  byNpcId?: string;          // omit = any NPC
+  atSceneId?: string;        // omit = any scene
+  withTargetId?: string;     // omit = any/no target
+}
+
+// ─── Predicate (tick-level boolean) ─────────────────────────────
+export type Predicate =
+  // ── Tracker queries ────────────────────────────────────
+  | { op: "trackerCount"; trackerId: string; cmp: "gte" | "lte" | "eq"; value: number }
+  // ticks since the matching action last committed; for "daily" use cmp:lte,value:1440;
+  // for "missed N days" use cmp:gte,value:N*1440. Returns false (and treats as +∞)
+  // if the tracker has never been fulfilled.
+  | { op: "trackerSinceFulfillment"; trackerId: string; cmp: "gte" | "lte" | "eq"; value: number }
+  | { op: "trackerNeverFulfilled"; trackerId: string }
+  // ── This-tick events ───────────────────────────────────
+  | { op: "actionCommittedThisTick"; match: ActionMatch }
+  // ── World state ────────────────────────────────────────
+  | { op: "characterAt"; characterId: string; sceneId: string }
+  | { op: "characterAlive"; characterId: string; expectedAlive: boolean }
+  | { op: "characterHasItem"; characterId: string; itemName: string }
+  | { op: "sceneHasConditionFromFeature"; sceneId: string; featureId: string }
+  | { op: "gameDay"; cmp: "gte" | "lte" | "eq"; value: number }
+  // ── Cross-event (D) ────────────────────────────────────
   | {
-      type: "prerequisite";
-      locationId?: string;
-      itemId?: string;
-      mode: "manual" | "passive";
+      op: "eventStatus";
+      otherEventId: string;
+      isStatus: ScriptedEventStatus;       // see ScriptedEventState below
+    }
+  // ── Composition (C) ────────────────────────────────────
+  | { op: "and"; children: Predicate[] }
+  | { op: "or"; children: Predicate[] }
+  | { op: "not"; child: Predicate };
+
+// ─── CharacterPredicate (filter a single NPC) ───────────────────
+// Used in Effect.targetFilter. Not unified with Predicate because the
+// leaf operations are subject-bound (operate on a specific character).
+export type CharacterPredicate =
+  | { op: "atScene"; sceneId: string }
+  | { op: "alive"; expectedAlive: boolean }
+  | { op: "hasItem"; itemName: string }
+  | { op: "is"; characterId: string }
+  | { op: "and"; children: CharacterPredicate[] }
+  | { op: "or"; children: CharacterPredicate[] }
+  | { op: "not"; child: CharacterPredicate };
+
+// ─── ScenePredicate (filter a single scene) ─────────────────────
+// Used in Effect.sceneFilter. Subject-bound like CharacterPredicate.
+export type ScenePredicate =
+  | { op: "is"; sceneId: string }
+  | { op: "inRegion"; regionId: string }
+  | { op: "hasConditionFromFeature"; featureId: string }
+  | { op: "and"; children: ScenePredicate[] }
+  | { op: "or"; children: ScenePredicate[] }
+  | { op: "not"; child: ScenePredicate };
+
+// ─── Effects (Runner expands → StateChange[]) ───────────────────
+export type Effect =
+  // Filtered by CharacterPredicate
+  | { kind: "character.san"; targetFilter: CharacterPredicate; delta: number }
+  | { kind: "character.hp"; targetFilter: CharacterPredicate; delta: number }
+  | { kind: "character.fatigue"; targetFilter: CharacterPredicate; delta: number }
+  | { kind: "character.addCondition"; targetFilter: CharacterPredicate; condition: CharacterCondition }
+  | { kind: "character.removeCondition"; targetFilter: CharacterPredicate; conditionId: string }
+  // Filtered by ScenePredicate
+  | { kind: "scene.addCondition"; sceneFilter: ScenePredicate; condition: SceneCondition }
+  | { kind: "scene.removeCondition"; sceneFilter: ScenePredicate; predicate: { featureId: string } }
+  // Direct (no filter)
+  | { kind: "connection.setBlock"; connectionId: string; blocked: boolean; reason: string }
+  | { kind: "event.emit"; event: FeatureEvent }
+  // Cross-event (D)
+  | {
+      kind: "event.transition";
+      otherEventId: string;
+      to: "active" | "completed" | "failed" | "disabled";
     };
 
-export type ScriptedEventEffect =
-  | {
-      kind: "scene.addCondition";
-      sceneId?: string;
-      condition: SceneCondition;
-    }
-  | {
-      kind: "character.san";
-      predicate: "witnesses" | "global" | { characterIds: string[] };
-      delta: number;
-    }
-  | {
-      kind: "character.hp";
-      predicate: "witnesses" | "global" | { characterIds: string[] };
-      delta: number;
-    }
-  | { kind: "trigger"; otherEventId: string };
+// ─── Runtime state (lives in DGSM) ──────────────────────────────
+// All state below is stored as a record in DGSM (`state.scriptedEventStates`,
+// keyed by event id) — NOT in the ScriptedEventRunner instance. Persistence
+// rides on DGSM's existing JSON round-trip; no separate serialize/rehydrate
+// path on the Runner.
 
-export type ScriptedEventProgress =
-  | {
-      type: "daily";
-      fulfilledToday: boolean;
-      lastFulfilledDay: number;
-      consecutiveMissed: number;
-    }
-  | { type: "cumulative"; currentCount: number }
-  | { type: "prerequisite"; fulfilled: boolean };
+export type ScriptedEventStatus =
+  | "active"     // being evaluated; waiting for fireWhen
+  | "pending"    // fireWhen met; scheduled to complete at scheduledCompleteTick
+  | "completed"  // terminal: success (onComplete fired)
+  | "failed"     // terminal: failure (onFail fired)
+  | "disabled";  // not evaluated; can be re-activated via event.transition
 
-export interface ScriptedEventReadContext extends FeatureReadContext {
-  getCommittedActionsThisTick(): ReadonlyArray<CharacterAction>;
-  getCommittedActionsByCharacter(
-    characterId: string,
-  ): ReadonlyArray<CharacterAction>;
-  getAccumulatedStateChanges(): ReadonlyArray<StateChange>;
-  getEventProgress(eventId: string): ScriptedEventProgress | undefined;
+export interface ScriptedEventState {
+  id: string;
+  status: ScriptedEventStatus;
+  scheduledCompleteTick: number | null;          // set when status = "pending"; null otherwise
+  trackerStates: Record<string, TrackerState>;   // keyed by Tracker.id
 }
+
+export type TrackerState =
+  | { kind: "actionCount"; count: number }
+  | { kind: "lastFulfillment"; lastFulfilledTick: number | null };  // null = never fulfilled
 ```
+
+**Notes on the type design:**
+
+- **No `failAfterMissed` field on Tracker** — the threshold is expressed in the `failWhen` predicate (e.g., `{ op: "trackerSinceFulfillment", trackerId, cmp: "gte", value: 4320 }`). Keeps Tracker as pure data tracking; no dual declaration.
+- **Three separate predicate types** (`Predicate` / `CharacterPredicate` / `ScenePredicate`) instead of one generic `Predicate<S>` — leaf operations are subject-bound. Generic-over-subject increases TS complexity without ergonomic gain.
+- **No `narrative.broadcast` Effect** — module authors use `event.emit` with `{ type: "narrative", description: "..." }`; `memoryEventWriter` (E1) picks these up and writes NPC memory.
+- **`sourceFeatureId` on emitted StateChanges** is set automatically by Runner to `"scripted:<eventId>"` — module authors don't write it.
+- **`ScriptedEventReadContext` type is removed** vs the old plan — the runner's evaluator takes a structured `EvaluatorContext` (defined in C3) instead of extending FeatureReadContext.
 
 - [ ] **Step 2: Type-check**
 
 Run: `pnpm build:tsc`
-Expected: no new TS errors.
-
-- [ ] **Step 3:** (none — proceed to C2)
+Expected: no new TS errors. (Project-wide errors from legacy code are still expected per the batch-test-at-end policy.)
 
 ---
 
-### Task C2: ScriptedEvent loader (from module data)
+### §C-runtime — State Machine + Tick Algorithm
 
-**Files:**
-- Create: `src/engine/scriptedEvents/loader.ts`
-- Test: `src/engine/scriptedEvents/__tests__/loader.test.ts`
+Runtime design is settled (state machine + cascade loop + tick algorithm + predicate evaluators + tracker updater). Cascade cycle-detection details are inline in the C3 implementation step (mirror `MAX_CASCADE = 8` for the recursive `applyTransitionEffects` helper).
 
-Reads the same module data `eventTriggerFeature.ts` currently consumes (`ModuleSetup.data.eventTriggers` or equivalent), converts to `ScriptedEvent[]`.
+#### State Machine
 
-- [ ] **Step 1: Write the failing test**
-
-Use the shape observed in the existing `eventTriggerFeature.ts` (from the earlier exploration report, lines "EventTriggerConditionDefinition with daily/cumulative/prerequisite types"). Since the exact field names live in that file, the implementer must read it and design a structurally identical transform.
-
-```ts
-// src/engine/scriptedEvents/__tests__/loader.test.ts
-import { describe, it, expect } from "vitest";
-import { loadScriptedEventsFromModuleData } from "../loader.js";
-
-describe("loadScriptedEventsFromModuleData", () => {
-  it("converts eventTrigger module data to ScriptedEvent[]", () => {
-    const input = {
-      eventTriggers: [
-        {
-          eventTriggerId: "altar_ritual",
-          label: "Ritual at the Altar",
-          enabled: true,
-          conductorNpcId: "npc_priest",
-          siteSceneId: "altar",
-          conditions: [
-            { type: "daily", triggerActionType: "pray", failAfterMissed: 3 },
-          ],
-          onCompleteEffects: [
-            {
-              kind: "character.san",
-              predicate: "witnesses",
-              delta: -10,
-            },
-          ],
-        },
-      ],
-    };
-    const out = loadScriptedEventsFromModuleData(input);
-    expect(out).toHaveLength(1);
-    expect(out[0].id).toBe("altar_ritual");
-    expect(out[0].conditions[0]).toEqual({
-      type: "daily",
-      triggerDefinitionId: "pray",
-      failAfterMissed: 3,
-    });
-  });
-});
+```
+[active]
+   ↓ fireWhen first becomes true
+   ↓ scheduledCompleteTick = now + (fireDelayTicks ?? 0) + (durationTicks ?? 0)
+   ↓
+   ├─ if scheduledCompleteTick == now → directly to [completed] (same hop)
+   │
+   ├─ else → [pending]
+   │       ↓ currentTick >= scheduledCompleteTick
+   │       ↓
+   │     [completed]   (fire onComplete)
+   │
+   └─ at any non-terminal state: failWhen true → [failed]   (fire onFail; cancel any pending schedule)
 ```
 
-- [ ] **Step 2: Implement**
+`failWhen` always takes priority over `fireWhen` and over completion in the same tick — `failed` wins races.
+
+`scheduledCompleteTick` becomes "sticky" once set: subsequent `fireWhen` flickers (true → false → true) do NOT cancel the schedule. Only `failWhen` can cancel a pending event.
+
+#### Cascade Loop
+
+Within one tick, repeat the evaluator until no event status changed OR `maxCascade=8` hops reached. Each hop re-evaluates all non-terminal events because:
+
+1. **Effect-driven cascade:** event A's `event.transition` effect explicitly forces event B to a new status (skips B's `fireWhen` and B's `fireDelayTicks`/`durationTicks` — immediate transition).
+2. **Predicate-driven cascade:** event B's `fireWhen` includes `eventStatus(A, ...)`; A's transition this hop changes B's `fireWhen` value, which the next hop notices.
+
+Both paths fire same tick. Maxcascade overflow logs a warning and drops further triggers (prevents infinite loops if author writes `A → B → A → ...`).
+
+For the predicate-driven cascade case where the activated event has its own `fireDelayTicks`/`durationTicks`, those still apply (B is scheduled `pending`, completes later). For the effect-driven case (`event.transition: B → completed`), B's effects fire immediately the same hop — this is the explicit "skip the timer" path.
+
+#### Tick Algorithm Pseudocode
+
+All event state lives in DGSM (`dgsm.scriptedEventStates`). The Runner only owns the
+event definitions Map (loaded from module data, not persisted). Reads and writes
+go through `dgsm.getScriptedEventState(id)` / `dgsm.setScriptedEventState(id, state)`.
+
+```python
+def run(self, input):
+  # input has: { dgsm, currentTick, gameDay, tickTime, committedActionsThisTick }
+  out: StateChange[] = []
+  # Lazy init: any event without a DGSM record yet gets one (initial status
+  # from the event's initialStatus, default "active").
+  for event_id, event in self.events.items():
+    if input.dgsm.getScriptedEventState(event_id) is None:
+      input.dgsm.setScriptedEventState(event_id, init_event_state(event, input.gameDay))
+
+  # No day-rollover step — time is continuous and tick-based throughout.
+  self.update_trackers(input.dgsm, input.committed_actions, input.current_tick)
+
+  for hop in range(MAX_CASCADE):
+    changed = False
+    for event_id in self.events.keys():
+      state = input.dgsm.getScriptedEventState(event_id)  # mutable reference
+      if self.evaluate_event(event_id, state, input, out):
+        # Mutations to `state` are by-reference; DGSM's record is updated in place.
+        # If the impl returns a new object, write it back via setScriptedEventState.
+        changed = True
+    if not changed:
+      break
+  else:
+    log.warn(f"[ScriptedEventRunner] cascade cap ({MAX_CASCADE}) reached")
+
+  return out
+
+def evaluate_event(self, event_id, state, input, out):
+  event = self.events[event_id]
+  # Terminals don't move
+  if state.status in TERMINAL:  # completed / failed / disabled
+    return False
+
+  ctx = self.make_evaluator_context(input)  # wraps dgsm.getScriptedEventState
+
+  # failWhen has priority; can interrupt pending events
+  if event.failWhen and self.eval_predicate(event.failWhen, ctx, state):
+    state.status = "failed"
+    state.scheduledCompleteTick = None
+    out.extend(self.expand_effects(event.onFail or [], event, ctx))
+    return True
+
+  if state.status == "active":
+    if self.eval_predicate(event.fireWhen, ctx, state):
+      total_wait = (event.fireDelayTicks or 0) + (event.durationTicks or 0)
+      if total_wait > 0:
+        state.status = "pending"
+        state.scheduledCompleteTick = input.current_tick + total_wait
+      else:
+        state.status = "completed"
+        out.extend(self.expand_effects(event.onComplete, event, ctx))
+      return True
+
+  elif state.status == "pending":
+    if input.current_tick >= state.scheduledCompleteTick:
+      state.status = "completed"
+      state.scheduledCompleteTick = None
+      out.extend(self.expand_effects(event.onComplete, event, ctx))
+      return True
+
+  return False
+```
+
+`update_trackers(committed_actions, current_tick)` walks `committedActionsThisTick` and, for each matching action:
+
+- `actionCount` tracker: `state.count += 1` per matching action
+- `lastFulfillment` tracker: `state.lastFulfilledTick = current_tick` if any matching action this tick (idempotent — multiple matches in one tick still set it once)
+
+There is **no `handle_day_rollover`**. "Daily" / "missed N days" semantics are derived in the predicate evaluator at query time:
+
+- `trackerSinceFulfillment(trackerId, cmp, value)`: if `lastFulfilledTick == null` → returns the result of comparing `+∞` (i.e., `cmp == "gte"` returns true, `cmp == "lte"` returns false). Otherwise `cmp(currentTick - lastFulfilledTick, value)`.
+- `trackerNeverFulfilled(trackerId)`: returns `lastFulfilledTick == null`.
+
+Effects are expanded inside `expand_effects`: target/scene predicates are evaluated against all NPCs / scenes; one StateChange is produced per match. The effect's `sourceFeatureId` is auto-set to `"scripted:<eventId>"` by the runner — module authors don't write it.
+
+---
+
+### §C-loader — Module Data Path + Validation
+
+#### Physical layout
+
+Per-module directory:
+
+```
+data/Mods/<modName>/
+  scripted-events/
+    ritual.json          # ScriptedEvent[] for ritual storyline
+    cult.json            # ScriptedEvent[] for cult NPCs
+    ending.json          # ScriptedEvent[] for endgame
+    ...
+```
+
+- Each `*.json` file's root is a `ScriptedEvent[]` array (1+ events per file)
+- Filename has no semantic meaning — author groups by storyline / NPC / region as preferred
+- File loading order: dictionary order (sort), so behavior is deterministic across runs
+- `*.json` filter: non-JSON files in the directory are ignored
+
+If `scripted-events/` doesn't exist or is empty → loader returns `[]` (module is valid with no scripted events).
+
+#### moduleLoader.ts integration
+
+`src/state/moduleLoader.ts` gains a step:
+
+```ts
+import { loadScriptedEvents } from "../engine/scriptedEvents/loader.js";
+
+async function loadModule(modName: string) {
+  // ...existing: load setup.json, NPCs, scenes, etc.
+
+  const eventsDir = path.join(modPath, "scripted-events");
+  const allRawFiles: ScriptedEventFile[] = [];
+  if (fs.existsSync(eventsDir)) {
+    const files = fs.readdirSync(eventsDir).filter(f => f.endsWith(".json")).sort();
+    for (const file of files) {
+      const filePath = path.join(eventsDir, file);
+      const raw = JSON.parse(fs.readFileSync(filePath, "utf-8"));
+      allRawFiles.push({ file, raw });
+    }
+  }
+  const scriptedEvents = loadScriptedEvents(allRawFiles);  // throws on validation failure
+
+  return { ...existing, scriptedEvents };
+}
+```
+
+#### Loader API
 
 ```ts
 // src/engine/scriptedEvents/loader.ts
-import type { ScriptedEvent, ScriptedEventCondition, ScriptedEventEffect } from "./types.js";
+import type { ScriptedEvent } from "./types.js";
 
-interface RawEventTrigger {
-  eventTriggerId: string;
-  label: string;
-  enabled: boolean;
-  conductorNpcId?: string;
-  siteSceneId?: string;
-  conditions: Array<{
-    type: "daily" | "cumulative" | "prerequisite";
-    triggerActionType?: string;
-    requiredCount?: number;
-    failAfterMissed?: number;
-    locationId?: string;
-    itemId?: string;
-    mode?: "manual" | "passive";
-  }>;
-  onCompleteEffects: ScriptedEventEffect[];
-  onFailEffects?: ScriptedEventEffect[];
+export interface ScriptedEventFile {
+  file: string;          // filename for error reporting (e.g., "ritual.json")
+  raw: unknown;          // parsed JSON content (root is array)
 }
 
-export function loadScriptedEventsFromModuleData(data: {
-  eventTriggers?: RawEventTrigger[];
-}): ScriptedEvent[] {
-  return (data.eventTriggers ?? []).map((raw) => ({
-    id: raw.eventTriggerId,
-    label: raw.label,
-    enabled: raw.enabled,
-    conductorNpcId: raw.conductorNpcId,
-    siteSceneId: raw.siteSceneId,
-    conditions: raw.conditions.map((c): ScriptedEventCondition => {
-      if (c.type === "daily") {
-        return {
-          type: "daily",
-          triggerDefinitionId: c.triggerActionType!,
-          failAfterMissed: c.failAfterMissed ?? 0,
-        };
-      }
-      if (c.type === "cumulative") {
-        return {
-          type: "cumulative",
-          triggerDefinitionId: c.triggerActionType!,
-          requiredCount: c.requiredCount ?? 1,
-        };
-      }
-      return {
-        type: "prerequisite",
-        locationId: c.locationId,
-        itemId: c.itemId,
-        mode: c.mode ?? "passive",
-      };
-    }),
-    onComplete: raw.onCompleteEffects,
-    onFail: raw.onFailEffects,
-  }));
+export interface LoaderError {
+  file: string;          // which file the error is in
+  path: string;          // path within the file (e.g., "[2].fireWhen.children[1].trackerId")
+  message: string;
 }
+
+export class ScriptedEventLoadError extends Error {
+  constructor(public errors: LoaderError[]) {
+    super(`Invalid scripted events: ${errors.length} error(s)`);
+  }
+}
+
+export function loadScriptedEvents(files: ScriptedEventFile[]): ScriptedEvent[];
+// throws ScriptedEventLoadError if any validation fails. All errors collected,
+// not fail-fast — author sees full list in one go.
 ```
 
-If inspection of `src/engine/features/eventTriggerFeature.ts` reveals different field names, adjust `RawEventTrigger` to match the true shape — this loader's job is to bridge them.
+#### Validation layers
 
-- [ ] **Step 3: Run test**
+**Layer 1 — Structural (per file, per event):**
+- Root of each file is an array
+- Each event has required fields (`id`, `label`, `fireWhen`, `onComplete`)
+- Field types match the spec (e.g., `id` is string, `fireWhen` is a valid Predicate tree)
+- Predicate / CharacterPredicate / ScenePredicate / Effect leaf nodes use known `op` / `kind` values
+- Tracker `kind` is `"actionCount"` or `"lastFulfillment"`
+- Status enum values are valid
 
-Run: `npx vitest run src/engine/scriptedEvents/__tests__/loader.test.ts`
-Expected: PASS.
+Hand-written recursive validator (no schema library dep). Each validation step builds a path string for error reporting (`"[2].fireWhen.children[1].trackerId"`).
+
+**Layer 2 — Reference integrity (cross-event, second pass after structural validation):**
+- All `Predicate.eventStatus.otherEventId` resolve to a known event id (across all files)
+- All `Effect.event.transition.otherEventId` resolve to a known event id
+- All `Predicate.trackerCount` / `trackerSinceFulfillment` / `trackerNeverFulfilled` `trackerId` resolve to a tracker declared on the SAME event (not cross-event)
+- Event IDs are unique across all files (duplicate id is fatal):
+  ```
+  Duplicate event id "altar_ritual":
+    ritual.json [0]
+    cult.json [3]
+  ```
+
+**Layer 3 — Semantic sanity (skipped):**
+- Out of scope: detecting "fireWhen always evaluates false", "onComplete is empty", "self-trigger event.transition: self", etc.
+- Runner's `MAX_CASCADE` cap covers infinite-cascade module bugs at runtime.
+
+#### Error aggregation strategy
+
+**Collect ALL errors before throwing.** Author should see the full list in one re-parse, not fix-and-rerun-and-fix-and-rerun.
+
+Example error report:
+
+```
+Module "haunted_house" — invalid scripted-events:
+  ritual.json:
+    [2] (id="cult_ritual"):
+      fireWhen.children[1].trackerId = "ritua" — no such tracker.
+      Available trackers on this event: [pray, sacrifice]
+  cult.json:
+    [0] (id="awakening"):
+      onComplete[2].otherEventId = "altar_finale" — no such event.
+      Available events: [pray_daily, awakening, betrayal, ending]
+  Duplicate event id "altar_ritual":
+    ritual.json [0]
+    cult.json [3]
+```
+
+#### Persistence to DB
+
+`ModuleSetup.data.scriptedEvents: ScriptedEvent[]` — the merged, validated array is stored in the module setup record (the existing `Json` field on the Prisma `ModuleSetup` table). The original multi-file structure is not persisted; only the merged + validated output.
+
+Module re-import (when author edits any `*.json`) re-runs the loader and overwrites `ModuleSetup.data.scriptedEvents`. SimulationRunner reads from DB at session start.
+
+#### Future extension (NOT in MVP)
+
+- Single-file fallback: `data/Mods/<modName>/scripted-events.json` if author prefers everything in one file. Loader could check for either form. **Not included in MVP — start with directory only.**
 
 ---
 
-### Task C3: ScriptedEventRunner
+### §C-testing — Test Strategy
+
+**Single integration test file. No separate unit tests for predicate evaluator, tracker updater, loader, or state machine.** Coverage comes from end-to-end scenarios that exercise multiple subsystems together.
+
+Rationale (consistent with `feedback_skip_trivial_tests.md`): the unified Predicate DSL + simple Runner have low surface area. Comprehensive unit tests (one per leaf op × 3 evaluators × 7 status transitions × ...) would add ~1000 lines of tests for marginal regression-protection value. A focused integration test exercises the real behavior at ~200 lines.
+
+#### Test file
+
+`src/engine/core/__tests__/scriptedEventRunner.integration.test.ts` — three `it` blocks under one `describe`.
+
+#### Scenarios
+
+**1. `it("fires onComplete when fireWhen + tracker condition met across ticks")`**
+
+- Set up: one event with `actionCount` tracker (`match: { definitionId: "pray" }`), `fireWhen: trackerCount(gte, 3)`, `onComplete: [character.san targetFilter atScene("altar") delta -10]`
+- Seed DGSM: 1 priest NPC + 2 witnesses at "altar" scene
+- Submit "pray" action 3 times across 3 separate ticks
+- Assert: tracker count goes 1 → 2 → 3 in DGSM `scriptedEventStates`
+- Assert tick 3: event status flips to `completed`, witnesses' san dropped by 10 each, priest's san unchanged (caller is conductor — but we use targetFilter not exclude-conductor explicitly here for simplicity; test that `atScene("altar")` predicate matches all 3 NPCs at the scene including priest)
+
+Covers: tracker accumulation, fireWhen evaluation, Effect.character.san expansion via CharacterPredicate, StateChange application to DGSM via Applier.
+
+**2. `it("cascade: event A completion triggers event B same tick via eventStatus predicate")`**
+
+- Set up: event A (`fireWhen: actionCommittedThisTick(definitionId: "ritual")`, `onComplete: [event.transition: B → active]`) + event B (`initialStatus: "disabled"`, `fireWhen: eventStatus(A, "completed")`, `onComplete: [character.san targetFilter alive(true) delta -5]`)
+- Seed DGSM: 1 NPC at any scene
+- Submit "ritual" action; tick once
+- Assert: A is `completed`, B is `completed` (NOT `active` waiting for next tick — same-tick cascade), NPC san dropped by 5
+- Assert exactly 1 tick: cascade did not stretch across ticks
+
+Covers: cascade loop, `event.transition` effect-driven cascade, `eventStatus` predicate-driven cascade, multi-hop cascade in one tick.
+
+**3. `it("DGSM persistence: state survives serialize/rehydrate cycle")`**
+
+- Set up: same event as Scenario 1 (cumulative pray, requires 3)
+- Submit "pray" 2 times across 2 ticks; assert tracker count = 2 in DGSM
+- "Save": call `dgsm.toJSON()` (or whatever DGSM's serialize is) → JSON
+- Build a NEW `DynamicGameStateManager` from that JSON; build a NEW `TickEngine` referencing the new DGSM (with same events config)
+- "Load": call `dgsm.fromJSON()` (or however)
+- Submit "pray" once more on the new engine; tick once
+- Assert: tracker count = 3 (rehydrated from 2 + new pray); event status is `completed`; SAN effects applied
+
+Covers: `ScriptedEventState` round-trip through DGSM JSON (no separate runner serialize path), lazy-init of events that already have rehydrated state, end-to-end persistence happy path.
+
+#### Shared helper
+
+```ts
+function makeTestEngine(events: ScriptedEvent[]): {
+  dgsm: DynamicGameStateManager;
+  engine: TickEngine;
+  seedNpc: (id: string, sceneId: string) => void;
+  submitAndTick: (npcId: string, actionText: string, definitionId: string, sceneId: string) => Promise<void>;
+}
+```
+
+The 3 scenarios share this setup — keeps each `it` body tight on the actual assertion logic.
+
+#### Coverage trade-offs (accepted)
+
+- **Not covered:** maxCascade overflow logging, `failWhen` / `onFail` path (symmetric to fireWhen / onComplete), `delay`/`duration` pending state explicitly (Scenario 3 indirectly stresses pending-state persistence), individual predicate leaf ops beyond the 3 used (`actionCommittedThisTick`, `trackerCount`, `eventStatus`).
+- **Acceptable risks:** failure-path regressions and edge-case predicate bugs may slip through; Phase E end-to-end smoke test (booting a real session) catches most integration-level regressions.
+
+#### Code size estimate
+
+~200 lines: 3 scenarios × ~50 lines + helper ~50 lines.
+
+---
+
+### Task C2: ScriptedEvent loader
 
 **Files:**
-- Create: `src/engine/core/scriptedEventRunner.ts`
-- Test: `src/engine/core/__tests__/scriptedEventRunner.test.ts`
+- Create: `src/engine/scriptedEvents/loader.ts`
+- Modify: `src/state/moduleLoader.ts` — scan `scripted-events/` directory, call loader
 
-Evaluates conditions, expands effect predicates into concrete `StateChange[]`, enforces `maxCascade = 8` per tick.
+Implements §C-loader above. No standalone test (covered by C3 integration test loading a fake module via injected `ScriptedEventFile[]`).
 
-- [ ] **Step 1: Write the failing test**
+- [ ] **Step 1: Implement loader**
 
-```ts
-// src/engine/core/__tests__/scriptedEventRunner.test.ts
-import { describe, it, expect, vi } from "vitest";
-import { ScriptedEventRunner } from "../scriptedEventRunner.js";
-import type { ScriptedEvent } from "../../scriptedEvents/types.js";
-import type { CharacterAction, StateChange } from "../types.js";
-import type { FeatureReadContext } from "../featureReadContext.js";
+Create `src/engine/scriptedEvents/loader.ts` per §C-loader signature:
+- Hand-written recursive validator (no schema lib)
+- Two-pass validation: structural first, then reference integrity
+- Aggregate all errors before throwing `ScriptedEventLoadError`
 
-const ritual: ScriptedEvent = {
-  id: "ritual",
-  label: "Ritual",
-  enabled: true,
-  siteSceneId: "altar",
-  conditions: [
-    { type: "daily", triggerDefinitionId: "pray", failAfterMissed: 0 },
-  ],
-  onComplete: [
-    {
-      kind: "character.san",
-      predicate: "witnesses",
-      delta: -5,
-    },
-  ],
-};
+- [ ] **Step 2: Integrate into moduleLoader**
 
-// Minimal NPC profile for test fixtures. The `getCharactersInScene` helper
-// returns full DynamicNPCProfile objects (per A3's no-View-projection decision);
-// ScriptedEventRunner only needs `id` to resolve the "witnesses" predicate.
-function makeStubNpc(id: string): import("../../../state/types.js").DynamicNPCProfile {
-  return {
-    id,
-    name: id,
-    attributes: { STR: 50, CON: 50, DEX: 50, APP: 50, POW: 50, SIZ: 50, INT: 50, EDU: 50 },
-    status: { hp: 10, maxHp: 10, san: 50, maxSan: 50, fatigue: 0, maxFatigue: 100, luck: 50, conditions: [] },
-    inventory: [],
-    skills: {},
-    longTermIntent: "",
-    relationships: [],
-  };
-}
+In `src/state/moduleLoader.ts`, after existing setup loading:
+- Check for `data/Mods/<modName>/scripted-events/` directory
+- Read all `*.json` files (sorted by filename)
+- Call `loadScriptedEvents(files)`
+- Add result to module data record
 
-function baseCtx(): FeatureReadContext {
-  return {
-    gameDay: 1,
-    tickTime: "08:00",
-    tickDurationMinutes: 1,
-    getSceneIds: () => ["altar"],
-    getScene: () => undefined,
-    getCharacter: () => undefined,
-    getCharactersInScene: (sceneId) =>
-      sceneId === "altar" ? [makeStubNpc("witness1"), makeStubNpc("witness2")] : [],
-    getRegionId: () => undefined,
-    getFeatureState: () => undefined,
-    getAllFeatureStates: () => [],
-    getOtherFeatureState: () => undefined,
-  };
-}
+- [ ] **Step 3: DB persistence wiring**
 
-describe("ScriptedEventRunner", () => {
-  it("fires onComplete when daily trigger action commits in the site scene", () => {
-    const runner = new ScriptedEventRunner([ritual]);
-    const committed: CharacterAction[] = [
-      {
-        characterId: "priest",
-        handleId: "h1",
-        stepGroupId: "h1",
-        stepIndex: 0,
-        definitionId: "pray",
-        actionText: "prays",
-        sceneId: "altar",
-        targetCharacterIds: [],
-        activatedAt: { day: 1, tickTime: "07:59" },
-        completedAt: { day: 1, tickTime: "08:00" },
-      },
-    ];
-    const changes = runner.run({
-      baseCtx: baseCtx(),
-      committedActionsThisTick: committed,
-      accumulatedStateChanges: [],
-    });
-    const sanChanges = changes.filter((c): c is Extract<StateChange, { kind: "character.san" }> => c.kind === "character.san");
-    expect(sanChanges).toHaveLength(2); // both witnesses
-    expect(sanChanges.every((c) => c.delta === -5)).toBe(true);
-  });
-
-  it("caps cascades at maxCascade = 8", () => {
-    const infinite: ScriptedEvent = {
-      id: "loop",
-      label: "loop",
-      enabled: true,
-      conditions: [],
-      onComplete: [{ kind: "trigger", otherEventId: "loop" }],
-    };
-    const runner = new ScriptedEventRunner([infinite]);
-    // force fire via always-true: empty conditions → true
-    const changes = runner.run({
-      baseCtx: baseCtx(),
-      committedActionsThisTick: [],
-      accumulatedStateChanges: [],
-    });
-    // No StateChanges produced (trigger-only effects) but no infinite loop
-    expect(changes).toEqual([]);
-  });
-});
-```
-
-- [ ] **Step 2: Implement**
-
-```ts
-// src/engine/core/scriptedEventRunner.ts
-import type { FeatureReadContext } from "./featureReadContext.js";
-import type {
-  CharacterAction,
-  SceneCondition,
-  StateChange,
-} from "./types.js";
-import type {
-  ScriptedEvent,
-  ScriptedEventEffect,
-  ScriptedEventProgress,
-  ScriptedEventReadContext,
-} from "../scriptedEvents/types.js";
-
-export interface RunInput {
-  baseCtx: FeatureReadContext;
-  committedActionsThisTick: CharacterAction[];
-  accumulatedStateChanges: StateChange[];
-}
-
-const MAX_CASCADE = 8;
-
-export class ScriptedEventRunner {
-  private readonly eventsById = new Map<string, ScriptedEvent>();
-  private progress = new Map<string, ScriptedEventProgress>();
-
-  constructor(events: ScriptedEvent[]) {
-    for (const e of events) this.eventsById.set(e.id, e);
-  }
-
-  run(input: RunInput): StateChange[] {
-    const out: StateChange[] = [];
-    const firedThisTick = new Set<string>();
-
-    const tryFire = (eventId: string, cascadeDepth: number): void => {
-      if (cascadeDepth >= MAX_CASCADE) {
-        console.warn(`[ScriptedEventRunner] cascade cap reached, dropping trigger ${eventId}`);
-        return;
-      }
-      if (firedThisTick.has(eventId)) return;
-      const event = this.eventsById.get(eventId);
-      if (!event || !event.enabled) return;
-      const ctx = this.makeCtx(input);
-      if (!this.conditionsMet(event, ctx, input.committedActionsThisTick)) return;
-      firedThisTick.add(eventId);
-      for (const effect of event.onComplete) {
-        const changes = this.expandEffect(effect, event, ctx);
-        out.push(...changes);
-      }
-      // Cascade triggers
-      for (const effect of event.onComplete) {
-        if (effect.kind === "trigger") tryFire(effect.otherEventId, cascadeDepth + 1);
-      }
-    };
-
-    for (const event of this.eventsById.values()) {
-      tryFire(event.id, 0);
-    }
-    return out;
-  }
-
-  private makeCtx(input: RunInput): ScriptedEventReadContext {
-    return {
-      ...input.baseCtx,
-      getCommittedActionsThisTick: () => input.committedActionsThisTick,
-      getCommittedActionsByCharacter: (id) =>
-        input.committedActionsThisTick.filter((a) => a.characterId === id),
-      getAccumulatedStateChanges: () => input.accumulatedStateChanges,
-      getEventProgress: (id) => this.progress.get(id),
-    };
-  }
-
-  private conditionsMet(
-    event: ScriptedEvent,
-    ctx: ScriptedEventReadContext,
-    actions: CharacterAction[],
-  ): boolean {
-    if (event.conditions.length === 0) return true;
-    return event.conditions.every((c) => {
-      if (c.type === "daily") {
-        return actions.some(
-          (a) =>
-            a.definitionId === c.triggerDefinitionId &&
-            (!event.siteSceneId || a.sceneId === event.siteSceneId),
-        );
-      }
-      if (c.type === "cumulative") {
-        const pg = ctx.getEventProgress(event.id);
-        const prior = pg?.type === "cumulative" ? pg.currentCount : 0;
-        const hit = actions.filter((a) => a.definitionId === c.triggerDefinitionId).length;
-        return prior + hit >= c.requiredCount;
-      }
-      // prerequisite: gate, not a fire condition — always true for MVP
-      return true;
-    });
-  }
-
-  private expandEffect(
-    effect: ScriptedEventEffect,
-    event: ScriptedEvent,
-    ctx: ScriptedEventReadContext,
-  ): StateChange[] {
-    switch (effect.kind) {
-      case "scene.addCondition": {
-        const sceneId = effect.sceneId ?? event.siteSceneId;
-        if (!sceneId) return [];
-        const condition: SceneCondition = {
-          ...effect.condition,
-          featureId: effect.condition.featureId ?? `scripted:${event.id}`,
-        };
-        return [{ kind: "scene.addCondition", sceneId, condition }];
-      }
-      case "character.san":
-      case "character.hp": {
-        const targets = this.resolveCharacterTargets(effect.predicate, event, ctx);
-        return targets.map((cid) => ({
-          kind: effect.kind,
-          characterId: cid,
-          delta: effect.delta,
-          sourceFeatureId: `scripted:${event.id}`,
-          reason: event.label,
-        }));
-      }
-      case "trigger":
-        return []; // handled at cascade time
-    }
-  }
-
-  private resolveCharacterTargets(
-    pred: { characterIds: string[] } | "witnesses" | "global",
-    event: ScriptedEvent,
-    ctx: ScriptedEventReadContext,
-  ): string[] {
-    if (typeof pred === "object") return pred.characterIds;
-    if (pred === "witnesses") {
-      if (!event.siteSceneId) return [];
-      // getCharactersInScene returns DynamicNPCProfile[] (per A3); use `.id`.
-      return ctx.getCharactersInScene(event.siteSceneId).map((c) => c.id);
-    }
-    if (pred === "global") {
-      const out: string[] = [];
-      for (const sid of ctx.getSceneIds()) {
-        out.push(...ctx.getCharactersInScene(sid).map((c) => c.id));
-      }
-      return out;
-    }
-    return [];
-  }
-}
-```
-
-- [ ] **Step 3: Run test**
-
-Run: `npx vitest run src/engine/core/__tests__/scriptedEventRunner.test.ts`
-Expected: PASS.
+When module is imported via existing tooling, `ModuleSetup.data.scriptedEvents` gets the merged array. SimulationRunner reads from there at session start.
 
 ---
 
+### Task C3: ScriptedEventRunner + DGSM extensions
+
+**Files:**
+- Modify: `src/state/types.ts` — add `scriptedEventStates: Record<string, ScriptedEventState>` to state shape
+- Modify: `src/state/DynamicGameState.ts` — add 4 accessor methods + state init
+- Replace: `src/engine/core/scriptedEventRunner.ts` (currently stub from Phase B pre-work)
+- Create: `src/engine/core/__tests__/scriptedEventRunner.integration.test.ts` (per §C-testing)
+- Modify: `src/engine/core/tickEngine.ts` — pass `scriptedEvents` from `opts` into Runner constructor (already done by Phase B's `createTickEngine`; just verify wiring)
+
+- [ ] **Step 1: Extend DGSM**
+
+Add to `state` shape in `src/state/types.ts`:
+```ts
+scriptedEventStates: Record<string /* eventId */, ScriptedEventState>;
+```
+(import `ScriptedEventState` from `src/engine/scriptedEvents/types.js`)
+
+In `createInitialDynamicGameState()`: initialize `scriptedEventStates: {}`.
+
+Add to `DynamicGameStateManager`:
+```ts
+getScriptedEventState(eventId: string): ScriptedEventState | undefined;
+setScriptedEventState(eventId: string, state: ScriptedEventState): void;
+getAllScriptedEventStates(): Record<string, ScriptedEventState>;
+removeScriptedEventState(eventId: string): void;
+```
+Methods read/write `this.state.scriptedEventStates[eventId]`. `setScriptedEventState` bumps `lastUpdated`.
+
+- [ ] **Step 2: Implement ScriptedEventRunner per §C-runtime**
+
+Replace the stub at `src/engine/core/scriptedEventRunner.ts` with the full implementation per §C-runtime spec:
+- `run(input)` per pseudocode
+- `evaluatePredicate` / `evaluateCharacterPredicate` / `evaluateScenePredicate` (per §C-runtime evaluator definitions)
+- `update_trackers` (per §C-runtime spec)
+- `expand_effects` (per §C-runtime + §6 effect kinds)
+- `applyTransitionEffects` recursive helper for `event.transition` cascade (with own depth cap matching `MAX_CASCADE = 8`)
+- All state reads/writes go through `input.dgsm.getScriptedEventState` / `setScriptedEventState`. **No private `eventStates` Map on the Runner.**
+
+- [ ] **Step 3: Write integration test**
+
+Create `src/engine/core/__tests__/scriptedEventRunner.integration.test.ts` with the 3 scenarios from §C-testing (cumulative+effect, cascade, persistence).
+
+- [ ] **Step 4: Run test**
+
+```
+npx vitest run src/engine/core/__tests__/scriptedEventRunner.integration.test.ts
+```
+Expected: 3 PASS.
+
+---
 ## Phase D — Feature Migrations
 
 Each feature migration task has the same shape:
