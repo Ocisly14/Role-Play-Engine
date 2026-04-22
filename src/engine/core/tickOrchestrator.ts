@@ -166,10 +166,13 @@ export class TickOrchestrator {
     buffer.push(...featureRunner.runPropagation(featureCtx));
 
     // Phase 7: scripted events
+    const currentTick =
+      nextTickTime.day * 1440 + this.minutesOfDay(nextTickTime.tickTime);
     const scriptedChanges = scriptedEventRunner.run({
-      baseCtx: featureCtx,
+      dgsm,
+      currentTick,
+      tickTime: nextTickTime,
       committedActionsThisTick: commitsThisTick,
-      accumulatedStateChanges: buffer,
     });
     buffer.push(...scriptedChanges);
 
@@ -284,6 +287,11 @@ export class TickOrchestrator {
     const hh = String(Math.floor(total / 60)).padStart(2, "0");
     const mm = String(total % 60).padStart(2, "0");
     return { day, tickTime: `${hh}:${mm}` };
+  }
+
+  private minutesOfDay(tickTime: string): number {
+    const [h, m] = tickTime.split(":").map(Number);
+    return h * 60 + m;
   }
 
   private minutesBetween(a: GameTime, b: GameTime): number {

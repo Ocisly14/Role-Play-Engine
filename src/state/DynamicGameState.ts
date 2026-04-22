@@ -33,6 +33,7 @@ import type {
   TransportEdge,
 } from "./types.js";
 import type { FeatureStateScope } from "../engine/core/types.js";
+import type { ScriptedEventState } from "../engine/scriptedEvents/types.js";
 
 /**
  * Dynamic Game State — runtime data for the simulation engine.
@@ -69,6 +70,11 @@ export interface DynamicGameState {
     character: Record<string, Record<string, unknown>>;
     global: Record<string, Record<string, unknown>>;
   };
+
+  // === Scripted Event Runtime State (Phase C) ===
+  // Keyed by ScriptedEvent.id; holds status, scheduled completion tick, and
+  // tracker counters. Persistence rides DGSM's existing JSON round-trip.
+  scriptedEventStates: Record<string, ScriptedEventState>;
 
   // === NPC Planning System Runtime State ===
   npcStats: Record<string, { hp: number; san: number }>;
@@ -121,6 +127,7 @@ export const initialDynamicGameState = (params: {
   moduleSetup: null,
   scenarioOutlines: [],
   scopedFeatureStates: { scene: {}, region: {}, character: {}, global: {} },
+  scriptedEventStates: {},
   npcStats: {},
   npcInventories: {},
   npcRelationshipGraph: {},
@@ -459,6 +466,10 @@ export class DynamicGameStateManager {
         }
         return { scene: {}, region: {}, character: {}, global: {} };
       })(),
+      scriptedEventStates:
+        data.scriptedEventStates && typeof data.scriptedEventStates === "object"
+          ? (data.scriptedEventStates as Record<string, ScriptedEventState>)
+          : {},
       npcStats: data.npcStats ?? {},
       npcInventories: data.npcInventories ?? {},
       npcRelationshipGraph: data.npcRelationshipGraph ?? {},
@@ -996,6 +1007,26 @@ export class DynamicGameStateManager {
     const bucket = this.state.scopedFeatureStates[scope][featureId];
     if (!bucket) return;
     delete bucket[key];
+    this.state.lastUpdated = new Date();
+  }
+
+  // === Scripted Event State (Phase C) ===
+
+  getScriptedEventState(eventId: string): ScriptedEventState | undefined {
+    return this.state.scriptedEventStates[eventId];
+  }
+
+  setScriptedEventState(eventId: string, state: ScriptedEventState): void {
+    this.state.scriptedEventStates[eventId] = state;
+    this.state.lastUpdated = new Date();
+  }
+
+  getAllScriptedEventStates(): Record<string, ScriptedEventState> {
+    return this.state.scriptedEventStates;
+  }
+
+  removeScriptedEventState(eventId: string): void {
+    delete this.state.scriptedEventStates[eventId];
     this.state.lastUpdated = new Date();
   }
 

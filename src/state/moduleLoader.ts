@@ -3,7 +3,14 @@
  * loadModule() → createSession() → initRuntime()
  */
 
+import fs from "node:fs";
+import path from "node:path";
 import type { PrismaClient } from "@prisma/client";
+import {
+  type ScriptedEventFile,
+  loadScriptedEvents,
+} from "../engine/scriptedEvents/loader.js";
+import type { ScriptedEvent } from "../engine/scriptedEvents/types.js";
 import { NpcMemoryManager } from "../memory/NpcMemoryManager.js";
 import type { EmbeddingClient } from "../rag/embedding.js";
 import type { DynamicGameState } from "./DynamicGameState.js";
@@ -24,6 +31,9 @@ import type {
   ModuleSetup,
   ScenarioOutline,
 } from "./types.js";
+
+/** Default disk location for module source files. */
+const DEFAULT_MODS_DIR = "data/Mods";
 
 export interface NpcInjectionPolicy {
   moduleId?: string;
@@ -50,15 +60,23 @@ export interface ModuleData {
   scenarioOutlines: ScenarioOutline[];
   transportEdges: TransportEdge[];
   npcInjectionPolicy: NpcInjectionPolicy | null;
+  /** Loaded+validated scripted events (may be empty if module has no scripted-events/ dir). */
+  scriptedEvents: ScriptedEvent[];
 }
 
 /**
  * Step 1: Load module data from DB. Pure data, no side effects.
+ *
+ * Also scans `<modsDir>/<moduleName>/scripted-events/*.json` from disk (if the
+ * directory exists) and attaches the validated event list. Disk access here is
+ * intentional: scripted-events are not (yet) persisted to the DB.
  */
 export async function loadModule(
   prisma: PrismaClient,
-  moduleId: string
+  moduleId: string,
+  options?: { modsDir?: string }
 ): Promise<ModuleData | null> {
+  const modsDir = options?.modsDir ?? DEFAULT_MODS_DIR;
   const mod = await prisma.module.findUnique({
     where: { moduleId },
     select: { moduleId: true, moduleName: true },
@@ -112,6 +130,11 @@ export async function loadModule(
   });
   const npcs = npcRows.map((row) => row.data as unknown as DynamicNPCProfile);
 
+  // Load scripted events from disk: `<modsDir>/<moduleName>/scripted-events/*.json`.
+  // Missing directory → empty array (module is valid with no scripted events).
+  // Files are sorted alphabetically for deterministic merge order across runs.
+  const scriptedEvents = loadScriptedEventsFromDisk(modsDir, mod.moduleName);
+
   return {
     moduleId: mod.moduleId,
     moduleName: mod.moduleName,
@@ -123,7 +146,35 @@ export async function loadModule(
     scenarioOutlines,
     transportEdges,
     npcInjectionPolicy,
+    scriptedEvents,
   };
+}
+
+/**
+ * Scan a module's `scripted-events/` directory, parse every `*.json`, and
+ * delegate to the loader for validation. Returns `[]` if the directory does
+ * not exist. Throws `ScriptedEventLoadError` on validation failure.
+ */
+function loadScriptedEventsFromDisk(
+  modsDir: string,
+  moduleName: string
+): ScriptedEvent[] {
+  const eventsDir = path.join(modsDir, moduleName, "scripted-events");
+  if (!fs.existsSync(eventsDir)) return [];
+
+  const files = fs
+    .readdirSync(eventsDir)
+    .filter((f) => f.endsWith(".json"))
+    .sort();
+  if (files.length === 0) return [];
+
+  const allRawFiles: ScriptedEventFile[] = [];
+  for (const file of files) {
+    const filePath = path.join(eventsDir, file);
+    const raw = JSON.parse(fs.readFileSync(filePath, "utf-8"));
+    allRawFiles.push({ file, raw });
+  }
+  return loadScriptedEvents(allRawFiles);
 }
 
 /**
