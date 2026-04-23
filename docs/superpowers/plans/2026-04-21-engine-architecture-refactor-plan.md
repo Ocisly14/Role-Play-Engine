@@ -4160,455 +4160,1089 @@ Target: 6-10 files, ~50-100 LOC each, ~400 LOC total.
 
 ## Phase E — Integration, Cutover, Cleanup
 
-### Task E1: Role-sim impact gate handler
+> **Phase E redesign (2026-04-23):** Audit of the original Phase E surfaced (a) `GameEngineRegistry` / `src/engine/runtime/` file dispositions weren't fully specified; (b) several pieces of "per-NPC perspective" logic (`discoveryPipeline`, `mapMemorySync`, `impactPipeline`'s perspective-text block) were independent ad-hoc solutions to the same underlying problem (the missing abstraction is a per-NPC perception/rendering layer).
+>
+> **Fix (Phase E scope):** ship the engine cutover + dual-engine dispatch + roleSim controller skeleton + delete legacy perception code. The **Renderer Layer is deferred** to a separate post-Phase-E discussion (placeholder kept in §E-renderer-layer). During Phase E NPCs run their planned actions to completion without perception-driven interrupts — the same effective behavior as the old impact gate when no events broke threshold; perception/interrupt support returns when the renderer ships.
+>
+> **Phase E vs Phase F:** Phase E ships engine + dual-engine + roleSim glue; Phase F rewrites NPCPlanningAgent into a tool-driven `RoleSimAgent`. Renderer is its own follow-on (no number assigned yet).
+>
+> **Spec sync** (§3 dual-engine + deletions table) happens **once** at the end of Phase E, mirroring Phase D's approach.
 
-**Files:**
-- Create: `src/simulation/roleSim/impactGateHandler.ts`
-- Create: `src/simulation/roleSim/memoryEventWriter.ts`
-- Move: `src/engine/runtime/impactPipeline.ts` → `src/simulation/roleSim/impactPipeline.ts`
-- Test: `src/simulation/roleSim/__tests__/impactGateHandler.test.ts`
+### §E-architecture-decisions — Decisions consolidated
 
-Role sim subscribes to `TickEngine.on("tickCompleted")` and runs the impact gate LLM. For each affected NPC, decides whether to interrupt — and if so, calls `tickEngine.interruptAction(handle, reason)`. Also subscribes to `actionInterrupted` / `actionCancelled` / `featureEvent` for NPC memory writes.
+| Topic | Decision | Why |
+|---|---|---|
+| **Dual-engine dispatch** | `ActionDefinition` declares `engine: "code" \| "llm"` (+ optional `codeSubsystem`). Interpreter copies it onto each `ActionStep`. TickOrchestrator dispatches per-step: code-engine steps run a deterministic subsystem; llm-engine steps run the existing resolver path. Both emit `StateChange[]` to the same Applier. See §E-dual-engine for the full model. | First principles: routing is per-action-type metadata, not a runtime concern. The interpreter already picks the definition; making it the dispatcher costs nothing and keeps a **single TickEngine.tick() loop** (no parallel runtimes, no async sync). Movement-style intents become `CodeEngine` subsystems, not `ActionStep` handlers — `ActionStep` stays immutable. |
+| **Top-level architectural directories** | Promote `engine/`, `renderer/`, `roleSim/` to be **siblings under `src/`** (not nested under `simulation/`). `src/simulation/` shrinks to pure orchestration glue (`SimulationRunner`, `SimulationEventEmitter`). Existing `src/simulation/roleSim/sanityGuidance.ts` moves to `src/roleSim/sanityGuidance.ts`. | First principles: the three architectural concerns — objective world (engine), subjective perception (renderer), NPC psychology/behavior (roleSim) — are peer-level; the file layout should reflect that. Hiding `roleSim` under `simulation` and putting `renderer` next to it suggests a hierarchy that doesn't exist. |
+| **Phase split: E vs F vs Renderer follow-on** | Phase E ships engine cutover + dual-engine dispatch + roleSim controller skeleton + a **thin adapter** that lets the existing `NPCPlanningAgent` satisfy the new `RoleSimAgent` interface. **Phase F replaces the adapter with a true tool-driven `RoleSimAgent`** (4-tool MVP: `act` / `plan` / `interrupt` / `wait`); migrates plan storage from `NpcDailyPlan` to `NpcMemory` with `type: "plan"`; deletes `NPCPlanningAgent` (1865 LOC) + `PlanNode` / `ScheduleEntry` types + `NpcDailyPlan` Prisma table. **Renderer layer ships in a separate post-Phase-E follow-on** — architecture is decided (see §E-renderer-layer) but implementation is held back so each milestone is independently shippable and testable. | First principles: each phase needs an independently-shippable, testable milestone. Cramming renderer + agent rewrite into Phase E means a 4-6 week monolithic landing where any subsystem failure rolls back everything. Splitting gives Phase E a 2-3 week scope with smoke-testable checkpoints; Phase F is a focused agent redesign on stable engine substrate; the renderer follow-on is a focused perception-layer build with its own design loop. |
+| `GameEngineRegistry` | **Split.** Create `src/engine/definitions/registry.ts` exporting `ActionDefinitionRegistry`. Delete `src/engine/registry.ts`. Rename `ExecutionContext.registry` → `ExecutionContext.definitions`. Update all 33 callers. | First principles: after Phase D removed feature-registration from the registry, only action definitions remain. "Registry" is a vague container word; `definitions` describes contents truthfully. |
+| `discoveryPipeline.ts` | **Delete.** Subsumed by Renderer Layer. | The pipeline existed to extract "what NPC noticed" from raw events using embedding similarity + skill-gating. The renderer does this generically with LLM judgment, applying skill-roll constraints as explicit prompt inputs. |
+| `mapMemorySync.ts` | **Delete.** Subsumed by Renderer Layer. | "NPC learned this location" is a special case of "NPC perceived this event." |
+| `impactPipeline.ts` perspective-text logic (~150 of 431 LOC) | **Delete.** Subsumed by Renderer Layer. | Hand-written `buildImpactEventText` / `classifyImpactPerspective` templates replaced by LLM rendering. Remaining impact-pipeline pieces (event collection, NPC fan-out plumbing) move into the role-sim controller. |
+| Phase E vs Phase F | **Merged into Phase E.** | Phase boundary was bureaucratic; the renderer touches enough of Phase E's surface (CharacterAction shape, impact gate, memory writer) that doing them sequentially would mean rewriting the same code twice. |
 
-- [ ] **Step 1: Write the failing test**
+### §E-renderer-layer — Per-NPC perception via LLM rendering
 
-```ts
-// src/simulation/roleSim/__tests__/impactGateHandler.test.ts
-import { describe, it, expect, vi } from "vitest";
-import { ImpactGateHandler } from "../impactGateHandler.js";
+> **🚧 Phase E execution: DO NOT IMPLEMENT.** Architecture is decided, but renderer implementation is deferred out of Phase E to keep cutover scope manageable. The full design below is preserved for the post-Phase-E discussion; Phase E creates `src/renderer/` as an empty placeholder directory only. The legacy perception modules listed in the deletion table **are still deleted in Task E7** (they're tied to the old `CharacterAction` shape and would block cutover) — perception/interrupt functionality returns when the renderer ships.
 
-describe("ImpactGateHandler", () => {
-  it("calls tickEngine.interruptAction when LLM says interrupt", async () => {
-    const interruptFn = vi.fn().mockReturnValue({ applied: true, remainingChainCancelled: 1 });
-    const handler = new ImpactGateHandler({
-      runImpactGate: vi.fn().mockResolvedValue({
-        decisions: [
-          {
-            characterId: "npc1",
-            shouldInterrupt: true,
-            reason: { triggerKind: "featureEvent", description: "fire nearby" },
-            handleId: "h1",
-          },
-        ],
-      }),
-      tickEngine: { interruptAction: interruptFn } as never,
-      getActiveHandleFor: () => ({ id: "h1", characterId: "npc1", submittedAt: { day: 1, tickTime: "00:00" } }),
-    });
-    await handler.onTickReport({
-      tickTime: { day: 1, tickTime: "08:00" },
-      commits: [],
-      interruptions: [],
-      cancellations: [],
-      featureEvents: [{ type: "fire.spreadPressure", sceneId: "s1" }],
-      stateChanges: [],
-      damageReports: [],
-    });
-    expect(interruptFn).toHaveBeenCalledOnce();
-  });
-});
+**Three-layer model:**
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│ LAYER 1 — Engine (objective truth)                          │
+│   Produces:  StateChange[] + FeatureEvent[] + commits        │
+│   Each event carries an intrinsic `impact` (0–5)            │
+│   = audibility/visibility = how loud/bright the event is     │
+└──────────────────────────┬──────────────────────────────────┘
+                           ↓ per-NPC perceptibility threshold filter
+┌─────────────────────────────────────────────────────────────┐
+│ LAYER 2 — Renderer (LLM, per NPC, per tick when needed)     │
+│   Lives in:  src/renderer/                                   │
+│   Input:   perceived events + NPC profile + scene state      │
+│   Output:  { narrative, perceivedFacts }                     │
+│   Job:     "what does this NPC see/hear/feel" — pure         │
+│            perception; no behavioral decisions                │
+└──────────────────────────┬──────────────────────────────────┘
+                           ↓ pass perception to NPC's mind
+┌─────────────────────────────────────────────────────────────┐
+│ LAYER 3 — Role (post-Phase-F: RoleSimAgent's interrupt tool) │
+│   Lives in:  src/roleSim/                                    │
+│   Input:   current action + plan + perceivedFacts            │
+│   Output:  continue / interrupt / replan                     │
+│   Phase F replaces interim adapter with the unified agent;   │
+│   perception-driven interrupt becomes `tool: "interrupt"`.  │
+└──────────────────────────┬──────────────────────────────────┘
+                           ↓
+                  tickEngine.interruptAction() / no-op
 ```
 
-- [ ] **Step 2: Implement**
+**Why three separate layers (and not two):**
+
+1. **Engine doesn't know NPC perspectives** — it produces objective truth. Mixing per-NPC view into engine output (the legacy `CharacterAction.discoveries` / `perTargetResults` approach) is the original sin Phase E undoes.
+2. **Renderer doesn't make decisions** — same perception fires different reactions across personalities (a soldier reacts to gunshots; a coward freezes). Auto-interrupt-on-perception collapses this.
+3. **Role owns behavior** — interruption is a behavioral choice. The `NPCPlanningAgent` already knows the NPC's plan and personality; the renderer doesn't and shouldn't.
+
+**Impact = perceptibility threshold (not "importance"):**
+
+The `impact` field on events becomes a **physical property** — how loud / visible / radiant the event is. It is set by the engine when the event is created (a gunshot is intrinsically impact 5; a falling leaf is intrinsically impact 0). NPCs have an `attentionThreshold` based on what they're currently doing (`sleep` → 4; `guard_post` → 1). Only events with `impact ≥ threshold` enter the renderer for that NPC.
+
+This collapses two prior questions ("did NPC perceive it?" and "is it important?") into one ("did it pass the threshold?").
+
+**Cost / fast path:**
+
+- If no event passes the threshold for a given NPC → renderer is **not invoked** for that NPC this tick.
+- If renderer produces empty `perceivedFacts` → role layer is **not invoked**.
+- Quiet ticks → **zero LLM calls**.
+
+Illustrative call rates:
+
+| Tick scenario | Renderer calls | Role-layer calls |
+|---|---|---|
+| Quiet tick (nothing above threshold for any NPC) | 0 | 0 |
+| One mid-impact event in 10-NPC scene; ~3 NPCs perceive | 3 | 3 |
+| Major event (impact 5), all 10 NPCs perceive | 10 | 10 |
+
+Role-layer call can use a smaller/cheaper model (its input is structured: `current action + perceivedFacts`; its output is bounded: `continue | interrupt | replan` with reason string). Renderer uses the primary model for narrative quality.
+
+**Determinism / testability:**
+
+Renderer is non-deterministic (LLM temperature). To keep replay/testing tractable:
+- Renderer prompt is given dice rolls + skill check results as **explicit constraints** ("the NPC's Spot Hidden roll FAILED — they cannot see hidden clues this tick"), not left to LLM judgment.
+- Role-layer interrupt decision is **structured output** (`{ shouldInterrupt: bool, reason: string }`), not free-form prose, so it's loggable and replayable.
+- Role-layer subscribers can be unit-tested by feeding fixed renderer outputs and asserting on `tickEngine.interruptAction` calls.
+
+**What gets deleted as a result (still in scope for Task E7 even though renderer is deferred — these legacy modules block the new `CharacterAction` shape regardless):**
+
+| Module | LOC | Disposition |
+|---|---|---|
+| `src/engine/runtime/discoveryPipeline.ts` | 263 | DELETE — renderer will handle when shipped |
+| `src/engine/runtime/mapMemorySync.ts` | 62 | DELETE — renderer will handle when shipped |
+| `src/engine/runtime/impactPipeline.ts` perspective-text block (incl. `personalizeEncounterForNpc`) | ~150 of 431 | DELETE — renderer will handle when shipped |
+| `src/engine/runtime/encounterScanner.ts` | 137 | DELETE — encounter is just position-change perception under renderer model; no separate detector needed |
+| `src/engine/core/scanners/encounterScanner.ts` (wrapper) | ~35 | DELETE — its only client (the legacy scanner) is gone |
+| `src/engine/shared/encounterDedup.ts` (`buildEncounterSignature`, `shouldEmitEncounter`, `buildEncounterSnapshot`) | full file | DELETE — dedup is implicit in per-tick renderer perception |
+| `encounter.detected` FeatureEvent type + `encounterSignatures: string[]` field on `SimulationTickResult` | n/a | DELETE — no scripted event predicate watches it (audit 2026-04-23 confirmed); all current callers are inside Phase E's deletion/rewrite scope (`tickProcessor`, `SimulationRunner`, `impactPipeline`, legacy `planning/types.ts`) |
+| `triggerKind: "encounter"` enum value on `InterruptReason` (string label only) | n/a | RENAME to `"perception"` — encounter under renderer is a special case of perception, not its own trigger category. (Done in Task E1 with the other type changes; remains valid even though Phase E has no consumer firing it.) |
+| Legacy `CharacterAction` fields: `discoveries`, `damagedEvidence`, `stateMemories`, `perTargetResults`, `characterName`, `outcome: string` | n/a | DELETE — these existed only to ferry per-NPC perspective data through a shared structure; renderer output replaces all of them |
+
+**Open questions (for the post-Phase-E discussion):**
+
+1. ~~Auto-interrupt vs role decides~~ → **Resolved.** Role decides. Renderer is pure perception.
+2. ~~Role-layer placement~~ → **Resolved.** Phase F's unified `RoleSimAgent` with `interrupt` tool — separate "RoleReactor" module is not built; the agent IS the reactor (see §F).
+3. **`chooseToIgnore` field** in renderer output — would let an NPC perceive but consciously suppress (selective attention). MVP: omit; can add later if narrative requires.
+4. **NPC `attentionThreshold` schema** — defined per ActionDefinition (e.g., `definitionId: "sleep"` → 4; `"guard_post"` → 1). Where this lives in the ActionDefinition schema is an implementation detail deferred to the renderer task.
+5. **Renderer prompt design** (system prompt + user prompt structure + JSON schema for `PerceivedFact`) — full design happens in the post-Phase-E discussion.
+6. **Batching strategy** when many NPCs perceive the same event — single batched LLM call vs per-NPC parallel calls.
+
+### §E-dual-engine — Per-step dispatch via ActionDefinition
+
+**Insight:** the new architecture already has two distinct execution models hiding inside `TickEngine`:
+
+| | Code-driven | LLM-driven |
+|---|---|---|
+| **Currently embodied by** | `FeatureRunner` (fire/weather/sun/stamina/itemDamage), `Applier`, `ScriptedEventRunner`, `EmergentEventEmitter` | `Resolver` (state resolver), `NPCPlanningAgent`, upcoming `Renderer`, upcoming `RoleReactor` |
+| **Characteristics** | Pure functions → `StateChange[]`; no LLM; deterministic; cheap; testable with fixtures | Calls LLM; non-deterministic; latency + token cost; tested with prompt fixtures |
+| **Triggered by** | Per-tick orchestrator, scripted predicates, event scanners | Action completion (resolver), NPC planning cycles, perception events (renderer) |
+
+These run **side by side** today but the boundary is implicit. Phase E makes it explicit, **without introducing a second runtime loop**: dispatch is per-step, not per-engine.
+
+**Mechanism:** `ActionDefinition` declares which engine handles it.
 
 ```ts
-// src/simulation/roleSim/impactGateHandler.ts
-import type { TickEngine } from "../../engine/core/tickEngine.js";
-import type { TickReport } from "../../engine/core/types.js";
+// src/engine/definitions/types.ts
+interface ActionDefinition {
+  id: string;
+  // ... existing fields ...
 
-export interface ImpactGateDeps {
-  runImpactGate: (report: TickReport) => Promise<{
-    decisions: Array<{
-      characterId: string;
-      shouldInterrupt: boolean;
-      reason?: import("../../engine/core/types.js").InterruptReason;
-      handleId: string;
-    }>;
-  }>;
-  tickEngine: Pick<TickEngine, "interruptAction">;
-  getActiveHandleFor: (characterId: string, handleId: string) => import("../../engine/core/types.js").ActionHandle | undefined;
+  engine: "code" | "llm";           // NEW — declared in the definition JSON
+  codeSubsystem?: string;            // NEW — present iff engine = "code", names the handler ("movement", "combat", ...)
+  // resolver-related fields stay as today; only consulted when engine = "llm"
 }
+```
 
-export class ImpactGateHandler {
-  constructor(private deps: ImpactGateDeps) {}
+**Lifecycle:**
 
-  async onTickReport(report: TickReport): Promise<void> {
-    if (report.featureEvents.length === 0) {
-      return; // fast path: no events → no LLM call
+```
+NPC plan: "go to library, then read the book"
+   ↓ Interpreter — picks definition per phrase
+ActionStep[
+  { definitionId: "movement", engine: "code", codeSubsystem: "movement", target: "library" },
+  { definitionId: "read",     engine: "llm",  target: "book" },
+]
+   ↓ TickOrchestrator processes active steps each tick
+   ├─ engine == "code" → CodeEngine.process(step, ctx) → returns { stateChanges, completed? }
+   └─ engine == "llm"  → countdown durationTicks; on completion → call Resolver(step, ctx) → returns StateResolution
+   ↓
+Applier flushes both kinds uniformly (same StateChange[] protocol)
+```
+
+**Why this is simpler than two runtime engines:**
+
+- Single `TickEngine.tick()` loop — no parallel ticking, no message queues, no distributed-systems problems.
+- Engine type is **declarative metadata** on each definition. Adding a new code-driven action = a new definition with `engine: "code"` + a subsystem registration. No architectural change.
+- ActionStep stays immutable: `{ definitionId, engine, target, ... }` describes intent only. State that needs to evolve per-tick (e.g., `routeSnapshot`, `progress`, `minutesIntoStep` for movement) lives in the `CodeEngine` subsystem itself, exactly the same pattern as features holding `fire.intensity`.
+
+**What gets added:**
+
+- `ActionDefinition.engine` + `codeSubsystem` fields.
+- `src/engine/codeEngine/` directory housing per-subsystem state + per-step processors (initial inhabitant: `movement.ts`).
+- `CodeEngineSubsystem` interface (per-step processor contract; analogous to but distinct from `WorldFeature`).
+- TickOrchestrator dispatch branch on `step.engine`.
+
+**What stays unchanged:**
+
+- `WorldFeature` interface and the Phase D feature set (features are global ambient systems, not action handlers — different concept, kept separate).
+- Renderer / RoleReactor designs from §E-renderer-layer (those are LLM-side, orthogonal).
+- `Applier`, `StateChange` protocol, `DGSM` shape.
+- Existing `Resolver` for `engine: "llm"` steps.
+
+**Where movement lands (resolves Q2e):**
+
+Movement is no longer an ActionStep handler at all. It becomes a CodeEngine subsystem (`src/engine/codeEngine/movement.ts`) that:
+
+- Keeps per-character `MovementState` (`routeSnapshot`, `currentStepIndex`, `minutesIntoStep`, `lastReachablePosition`) in scoped feature-state-style storage.
+- On step activation, calls `buildMovementRouteIgnoringBlocks` (kept from `engine/shared/pathfinding.ts`) to populate the route.
+- On each tick, advances `minutesIntoStep`, computes interpolated position, emits `character.position` StateChanges through the Applier (no direct DGSM mutation).
+- On blocked connection, emits a step-failure signal; on arrival, emits step-completion signal.
+
+The algorithm is preserved from `movementTick.ts`; the **shape** is now subsystem-internal-state + StateChange-out, not in-place PlanNode/ActionStep mutation.
+
+### §E-runtime-disposition — Files in `src/engine/runtime/` (all resolved)
+
+| File | LOC | Disposition |
+|---|---|---|
+| `discoveryPipeline.ts` | 263 | DELETE (legacy `CharacterAction` shape blocks cutover; functionality returns with renderer — see §E-renderer-layer) |
+| `mapMemorySync.ts` | 62 | DELETE (same reason) |
+| `encounterScanner.ts` | 137 | DELETE (audit confirmed no scripted-event consumer; functionality returns with renderer) |
+| `resolutionExecutionContext.ts` | 88 | DELETE (entire file — legacy `PlanNode → fat-CharacterAction prompt` plumbing; only caller is `tickProcessor.ts` which is also being deleted; new resolver builds prompts from `(ActionStep, ctx)` with no "execution context" intermediate object) |
+| `movementTick.ts` | 584 | **SPLIT BY CLUSTER** (see §E-dual-engine for the movement-handler design): (a) Cluster A pure time utilities (`timeToMinutes`, `minutesToTimeLabel`, `getNodeDurationMinutes`, `startNode`, `TICK_DURATION_MINUTES` — ~30 LOC) → DELETE; planning layer already has its own copies (`planning/NPCPlanningAgent.ts:29-34`, `planning/autoMovementHelpers.ts:4-19`), and runtime no longer needs them. (b) Cluster B perception dice (`rollStealthForMovement`, `tryDetectHidden`, helpers — ~80 LOC) → MOVE to `src/engine/shared/perceptionDice.ts`; called by renderer's perceptibility-threshold computation (per §E-renderer-layer). (c) Cluster C per-tick movement processor (`initializeMovementNode`, `advanceMovementNodeOneMinute`, `interpolateMovementPosition`, `processImmediateMovementTransitions`, `buildMovementAction` — ~470 LOC) → DELETE; replaced by `src/engine/codeEngine/movement.ts` per §E-dual-engine. Pathfinding helpers (`engine/shared/pathfinding.ts`) are kept and reused by the new subsystem. |
+| `tickProcessor.ts` | 812 | DELETE (already in original Task E3) |
+| `impactPipeline.ts` | 431 (~150 deleted; remaining migrates) | partial DELETE + relocate; see §E-renderer-layer |
+
+### §E-npc-controller — NPC action submission loop
+
+> **Note:** the controller skeleton below shows the **post-renderer end state** — `decide(npcId, opts?: { perceivedFacts? })` + `onRendered()`. Phase E ships a simpler variant **without the perception path** (see Task E5): only the engine-event-driven `decide(npcId)` half. The renderer follow-on adds back the `opts.perceivedFacts` parameter and the `onRendered` method without changing the rest.
+
+**Lives in** `src/roleSim/npcActionController.ts` (~80 LOC).
+
+**Role:** thin event-driven glue between TickEngine and the role layer. Subscribes to engine completion events, asks the role layer "what's next for this NPC?", submits the result back to engine. Stateless — engine is the source of truth for which actions are in flight.
+
+**Phase E shape:**
+
+```ts
+// src/roleSim/npcActionController.ts
+export class NpcActionController {
+  constructor(
+    private engine: TickEngine,
+    private agent: RoleSimAgent,           // Phase E = NpcAgentAdapter; Phase F = real RoleSimAgent
+    private memory: NpcMemoryManager,
+    private dgsm: DynamicGameStateManager,
+  ) {
+    engine.on("actionCompleted",   (a) => this.decide(a.characterId));
+    engine.on("actionInterrupted", (a) => this.decide(a.characterId));
+    engine.on("actionCancelled",   (a) => this.decide(a.characterId));
+  }
+
+  async bootstrap(): Promise<void> {
+    for (const npcId of this.dgsm.getAliveNpcIds()) {
+      await this.decide(npcId);
     }
-    const result = await this.deps.runImpactGate(report);
-    for (const d of result.decisions) {
-      if (!d.shouldInterrupt || !d.reason) continue;
-      const handle = this.deps.getActiveHandleFor(d.characterId, d.handleId);
-      if (!handle) continue;
-      this.deps.tickEngine.interruptAction(handle, d.reason);
+  }
+
+  async decide(npcId: string, opts?: { perceivedFacts?: PerceivedFact[] }): Promise<void> {
+    if (!this.dgsm.isNpcAlive(npcId)) return;
+    const ctx = await this.buildContext(npcId, opts);
+
+    for (let i = 0; i < MAX_TOOL_LOOP_ITERATIONS; i++) {
+      const decision = await this.agent.decideNext(ctx);
+      switch (decision.tool) {
+        case "act":
+          this.engine.submitAction(decision.input);
+          return;
+        case "interrupt":
+          // Phase E: only fires from rule-based reactor; Phase F: from agent
+          const handle = this.findActiveHandle(npcId);
+          if (handle) this.engine.interruptAction(handle, decision.reason);
+          return;
+        case "plan":
+          await this.memory.write({ npcId, type: "plan", content: decision.planText });
+          ctx.recentMemory = await this.loadRecentMemory(npcId);
+          continue;  // re-prompt agent with the updated plan in context
+        case "wait":
+          return;
+      }
     }
+    console.warn(`[NpcActionController] tool loop exceeded for ${npcId}`);
   }
 }
 ```
 
-```ts
-// src/simulation/roleSim/memoryEventWriter.ts
-import type { TickEngine } from "../../engine/core/tickEngine.js";
-import type { NpcMemoryManager } from "../../memory/NpcMemoryManager.js";
+**Phase E vs Phase F:**
 
-/** Subscribes to engine events and writes NpcMemory rows. */
-export function wireMemoryEventWriter(
-  tickEngine: TickEngine,
-  memory: NpcMemoryManager,
-): () => void {
-  const offs = [
-    tickEngine.on("actionInterrupted", async (action, reason) => {
-      await memory.recordEvent({
-        characterId: action.characterId,
-        type: "event",
-        content: `Interrupted while ${action.actionText}: ${reason.description}`,
-        gameDay: action.completedAt.day,
-        gameTime: action.completedAt.tickTime,
-      });
-    }),
-    tickEngine.on("actionCancelled", async (action) => {
-      await memory.recordEvent({
-        characterId: action.characterId,
-        type: "event",
-        content: `Cancelled plan to ${action.actionText}`,
-        gameDay: action.completedAt.day,
-        gameTime: action.completedAt.tickTime,
-      });
-    }),
-    tickEngine.on("featureEvent", async () => {
-      // Feature-event → memory routing is per-event-type; skip for MVP
-    }),
-  ];
-  return () => offs.forEach((off) => off());
-}
-```
+| | Phase E | Phase F |
+|---|---|---|
+| `agent: RoleSimAgent` | `NpcAgentAdapter` (wraps existing `NPCPlanningAgent`; only emits `act` decisions; calls `generateNextAction` internally and converts the returned `PlanNode` to `ActionInput`) | True LLM-driven `RoleSimAgent` that can emit any of the 4 tools |
+| `tool: "plan"` | Never returned by adapter; controller's `plan` branch is dead code initially | Live; agent writes plans to memory |
+| `tool: "interrupt"` | Returned by an interim rule-based reactor (impact ≥ N → interrupt) running before adapter | Returned by agent when it judges the perception warrants stopping |
+| `tool: "wait"` | Returned by adapter when `NPCPlanningAgent` has no next action (e.g., end of day) | Same |
+| `perceivedFacts` in ctx | Renderer fires; ctx carries facts; rule-based reactor reads `impact` and decides | Agent reads facts and judges contextually |
 
-- [ ] **Step 3: Move `impactPipeline.ts`**
-
-Run: `mv src/engine/runtime/impactPipeline.ts src/simulation/roleSim/impactPipeline.ts`
-
-Update all imports to the new path.
-
-- [ ] **Step 4: Run test**
-
-Run: `npx vitest run src/simulation/roleSim/__tests__/impactGateHandler.test.ts`
-Expected: PASS.
+**Persistence:** controller is stateless; it never writes anything itself. Engine owns `persistedState`; agent owns its own DB tables (current `NpcDailyPlan` in Phase E; migrated to memory-only in Phase F). On session restart, controller re-runs `bootstrap()` for any NPC the engine has no in-flight handle for.
 
 ---
 
-### Task E2: Rewire SimulationRunner
+> **Task E1–E10 are post-revision (2026-04-23).** The original Task E1–E6 from this plan have been entirely rewritten to reflect the §E-architecture-decisions: top-level directories, dual-engine dispatch, registry split, renderer layer, NpcAgentAdapter (instead of full agent rewrite — that's Phase F), and the new runtime-disposition table. Old task numbering is **discarded**; do not refer to "Task E4.5" etc. from prior versions.
+
+---
+
+### Task E1: ActionDefinition `engine` field + ActionDefinitionRegistry split
+
+**Goal:** add the dual-engine discriminator to `ActionDefinition`, extract definition management into its own registry class, delete the legacy `GameEngineRegistry`, update all callers.
 
 **Files:**
-- Modify: `src/simulation/SimulationRunner.ts`
-- Modify: `src/engine/registerDefaults.ts` — produce the `WorldFeature[]` array for TickEngine
+- Modify: `src/engine/types.ts:298-310` — add `engine: "code" | "llm"` and optional `codeSubsystem?: string` to `ActionDefinition`
+- Modify: `src/engine/types.ts:314-317` — add `engine` and `codeSubsystem` to `InterpretedStep` (interpreter copies them through)
+- Create: `src/engine/definitions/registry.ts` — `ActionDefinitionRegistry` (only register/get/getAll for `ActionDefinition`)
+- Create: `src/engine/definitions/__tests__/registry.test.ts`
+- Modify: `src/engine/registerDefaults.ts` — strip out `GameEngineRegistry` construction; `getDefaultFeatures()` already returns features array (Phase D); add new `createDefaultDefinitions()` returning `ActionDefinitionRegistry`
+- Modify: `src/engine/executionContext.ts` — drop the unused `_registry` parameter from `createExecutionContext`
+- Modify: `src/engine/tool_definitions/loader.ts` and every action-definition JSON file under `src/engine/tool_definitions/` — declare `"engine": "llm"` for every existing definition (movement gets `"engine": "code", "codeSubsystem": "movement"` in Task E2)
+- Modify: `src/engine/interpreter/gameInterpreter.ts` — when constructing `InterpretedStep`, copy `engine` + `codeSubsystem` from the matched `ActionDefinition`
+- Modify: `src/planning/NPCPlanningAgent.ts` — replace 8 `registry?: GameEngineRegistry` parameters with `definitions?: ActionDefinitionRegistry`; rename `registry.getDefinition(...)` → `definitions.get(...)` at every call site inside the agent
+- Modify: `src/simulation/SimulationRunner.ts:63,92` — replace `registry: GameEngineRegistry` field/param with `definitions: ActionDefinitionRegistry`
+- Modify: `src/engine/index.ts` and `src/planning/index.ts` — drop `GameEngineRegistry` / `createDefaultRegistry` from public API; export `ActionDefinitionRegistry` / `createDefaultDefinitions` instead
+- Modify: `client/server/simulation/service.ts`, `scripts/run-cassandra.ts`, `scripts/run-simple-town.ts`, `scripts/test-game-interpreter-skill-flow.ts` — update construction call sites
+- Delete: `src/engine/registry.ts` (308 LOC; propagation-state methods are dead code — only the legacy `tickProcessor.ts` consumed them, and that's deleted in Task E7)
 
-The old `runSimulationTick` is replaced by a `TickEngine` instance owned by `SimulationRunner`. Each external tick cadence call becomes `await this.tickEngine.tick()`.
+- [ ] **Step 1: Write the failing registry test**
 
-- [ ] **Step 1: Update `registerDefaults.ts`**
+```ts
+// src/engine/definitions/__tests__/registry.test.ts
+import { describe, it, expect } from "vitest";
+import { ActionDefinitionRegistry } from "../registry.js";
+import type { ActionDefinition } from "../../types.js";
+
+const stub = (id: string, engine: "code" | "llm" = "llm"): ActionDefinition => ({
+  id, engine, title: id, description: "", content: "", guidanceBody: "",
+});
+
+describe("ActionDefinitionRegistry", () => {
+  it("registers and retrieves a definition by id", () => {
+    const r = new ActionDefinitionRegistry();
+    const def = stub("examine");
+    r.register(def);
+    expect(r.get("examine")).toBe(def);
+  });
+
+  it("returns undefined for unknown id", () => {
+    expect(new ActionDefinitionRegistry().get("missing")).toBeUndefined();
+  });
+
+  it("warns on overwrite, keeps the most recent", () => {
+    const r = new ActionDefinitionRegistry();
+    const a = stub("dup"); const b = stub("dup");
+    r.register(a); r.register(b);
+    expect(r.get("dup")).toBe(b);
+  });
+
+  it("getAll returns every registered definition", () => {
+    const r = new ActionDefinitionRegistry();
+    r.register(stub("a")); r.register(stub("b"));
+    expect(r.getAll().map(d => d.id).sort()).toEqual(["a", "b"]);
+  });
+});
+```
+
+- [ ] **Step 2: Implement `ActionDefinitionRegistry`**
+
+```ts
+// src/engine/definitions/registry.ts
+import type { ActionDefinition } from "../types.js";
+
+export class ActionDefinitionRegistry {
+  private definitions = new Map<string, ActionDefinition>();
+
+  register(def: ActionDefinition): void {
+    if (this.definitions.has(def.id)) {
+      console.warn(`[ActionDefinitionRegistry] Overwriting definition: ${def.id}`);
+    }
+    this.definitions.set(def.id, def);
+  }
+
+  get(id: string): ActionDefinition | undefined {
+    return this.definitions.get(id);
+  }
+
+  getAll(): ActionDefinition[] {
+    return [...this.definitions.values()];
+  }
+}
+```
+
+- [ ] **Step 3: Add `engine` field to `ActionDefinition` and `InterpretedStep`; rename `InterruptReason.triggerKind` enum value `"encounter"` → `"perception"`**
+
+In `src/engine/types.ts`, extend the interfaces:
+
+```ts
+export interface ActionDefinition {
+  id: string;
+  title: string;
+  description: string;
+  content: string;
+  guidanceBody: string;
+  engine: "code" | "llm";          // NEW — required
+  codeSubsystem?: string;           // NEW — required iff engine = "code"
+  // ... existing optional fields
+}
+
+export interface InterpretedStep {
+  definitionId: string;
+  impact: 0 | 1 | 2 | 3 | 4 | 5;
+  engine: "code" | "llm";           // NEW — copied from definition
+  codeSubsystem?: string;           // NEW
+}
+```
+
+In `src/engine/core/types.ts` (`InterruptReason.triggerKind`), rename:
+
+```diff
+-  triggerKind: "encounter" | "featureEvent" | "stateChange" | "other";
++  triggerKind: "perception" | "featureEvent" | "stateChange" | "other";
+```
+
+Reason: `encounter` was the legacy term tied to `encounterScanner` (deleted in Task E7). The semantics — "an NPC noticed something that warrants stopping" — are perception under the renderer model. No active consumer fires the value during Phase E (impactPipeline is gone), but keeping the enum coherent now avoids a churn point when the renderer ships.
+
+- [ ] **Step 4: Update every JSON definition file under `src/engine/tool_definitions/` to declare `"engine": "llm"`**
+
+For each `*.json` definition file, add `"engine": "llm"` (movement gets the code-engine settings in Task E2). Run a single search to enumerate:
+
+Run: `find src/engine/tool_definitions -name '*.json'`
+
+For each, add the field. Example diff:
+
+```diff
+   "id": "examine",
++  "engine": "llm",
+   "title": "Examine",
+```
+
+- [ ] **Step 5: Update `gameInterpreter.ts` to copy fields onto `InterpretedStep`**
+
+When the interpreter resolves an action text to a definition, propagate the engine fields into the step.
+
+- [ ] **Step 6: Update `registerDefaults.ts`**
 
 ```ts
 // src/engine/registerDefaults.ts
 import { fireFeature } from "./features/fireFeature.js";
-import { weatherFeature } from "./features/weatherFeature.js";
-import { lightingFeature } from "./features/lightingFeature.js";
+import { itemDamageFeature } from "./features/itemDamageFeature.js";
 import { staminaFeature } from "./features/staminaFeature.js";
-import { sanityFeature } from "./features/sanityFeature.js";
+import { sunFeature } from "./features/sunFeature.js";
+import { weatherFeature } from "./features/weatherFeature.js";
 import type { WorldFeature } from "./core/worldFeature.js";
+import { ActionDefinitionRegistry } from "./definitions/registry.js";
+import { loadActionDefinitions } from "./tool_definitions/loader.js";
 
 export function getDefaultFeatures(): WorldFeature[] {
-  return [weatherFeature, lightingFeature, fireFeature, staminaFeature, sanityFeature];
+  return [weatherFeature, sunFeature, fireFeature, staminaFeature, itemDamageFeature];
+}
+
+export function createDefaultDefinitions(): ActionDefinitionRegistry {
+  const reg = new ActionDefinitionRegistry();
+  for (const def of loadActionDefinitions()) reg.register(def);
+  return reg;
 }
 ```
 
-Delete the old class-based `GameEngineRegistry` exports.
+- [ ] **Step 7: Migrate every caller**
 
-- [ ] **Step 2: Rewrite `SimulationRunner.executeTick`**
+Run: `rg "GameEngineRegistry|createDefaultRegistry" src/ client/ scripts/` — list every hit. For each:
+- If the caller uses `registry.getDefinition(id)` → switch to `definitions.get(id)` and accept `definitions: ActionDefinitionRegistry` instead.
+- If the caller uses `registry.getAllFeatures()` → switch to receiving `features: WorldFeature[]` from `getDefaultFeatures()`.
+- If the caller uses `registry.registerFeature` / propagation methods → delete the call (already replaced by the Phase D engine).
 
-In `SimulationRunner`:
+- [ ] **Step 8: Delete `src/engine/registry.ts`**
 
-- In the constructor, construct the `TickEngine` with `createTickEngine({ ... })`, passing the DGSM, the features array from `getDefaultFeatures()`, the scripted events via `loadScriptedEventsFromModuleData(moduleData)`, and wiring the interpreter + resolver as `interpretAction` / `resolve` callbacks.
-- Subscribe the `ImpactGateHandler` to `tickCompleted`.
-- Subscribe the memory event writer.
-- In `executeTick()`, replace the call to `runSimulationTick` with `await this.tickEngine.tick()`.
-- For action submission: NPC planning agent's per-NPC `"what's next"` loop now calls `this.tickEngine.submitAction(...)`. Replace the old `in_progress + due` node scheduling machinery (the parts of tickProcessor Phase 1) with per-NPC submission driven by a thin role-sim controller.
+Run: `rm src/engine/registry.ts`
 
-Skeleton:
+- [ ] **Step 9: Type-check and run the unit test**
+
+Run:
+- `pnpm build:tsc` — must exit 0 (any remaining stale import is a real bug; fix at site)
+- `npx vitest run src/engine/definitions/__tests__/registry.test.ts` — must pass
+
+---
+
+### Task E2: CodeEngine framework + Movement subsystem + perception dice
+
+**Goal:** introduce the per-step CodeEngine dispatch path; implement the first `CodeEngineSubsystem` (movement) replacing legacy `movementTick.ts` Cluster C; relocate Cluster B perception dice; wire the orchestrator to dispatch.
+
+**Files:**
+- Create: `src/engine/codeEngine/types.ts` — `CodeEngineSubsystem` interface
+- Create: `src/engine/codeEngine/movement.ts` — movement subsystem (~350 LOC; algorithm ported from `src/engine/runtime/movementTick.ts` — specifically the functions `initializeMovementNode` (lines 140–258), `advanceMovementNodeOneMinute` (lines 306–584), `interpolateMovementPosition` (lines 100–114), and `processImmediateMovementTransitions` (lines 260–304); the `buildMovementAction` helper at lines 116–138 is dropped — Phase E doesn't construct legacy CharacterAction)
+- Create: `src/engine/codeEngine/__tests__/movement.test.ts`
+- Create: `src/engine/codeEngine/registry.ts` — keyed `Map<codeSubsystem, CodeEngineSubsystem>` (small)
+- Create: `src/engine/shared/perceptionDice.ts` — `rollStealthForMovement`, `tryDetectHidden`, helpers (Cluster B; copy verbatim from `src/engine/runtime/movementTick.ts:25-76`)
+- Create: `src/engine/shared/__tests__/perceptionDice.test.ts`
+- Modify: `src/engine/core/tickOrchestrator.ts` — in the activate-step branch, dispatch on `step.engine`: `"code"` → `codeEngineRegistry.get(step.codeSubsystem).process(step, ctx)`; `"llm"` → existing resolver path (no behavior change)
+- Modify: `src/engine/core/types.ts:54+` — extend `ActionStep` with `engine` + `codeSubsystem` fields propagated from `InterpretedStep`
+- Move: `MovementStep` interface from `src/planning/types.ts:108` → `src/engine/core/types.ts` (the type is engine-internal now that Movement is a CodeEngine subsystem; `planning/types.ts` re-exports for any straggling caller). `MovementExecutionState` (lines 120-127) stays in `planning/types.ts` for now; it's only used by the legacy `executionMeta.movement` field which goes away with `tickProcessor.ts`.
+- Modify: `src/engine/interpreter/gameInterpreter.ts` — when the interpreter matches the movement definition, parse the destination scene/junction from the action text and write it into `overlayFields: { destination: <id> }` on the resulting step. Convention: **`overlayFields.destination: string`** is how movement actions carry their destination from role sim → engine → code subsystem (no new top-level `ActionInput.destination` field; `overlayFields` is the existing escape hatch for action-specific extras).
+- Modify: `src/engine/tool_definitions/movement.json` (or wherever movement is defined) — set `"engine": "code", "codeSubsystem": "movement"`
+- Modify: `src/engine/core/applier.ts` — confirm `character.position` StateChange is handled; if not, add a Pass-2(b) handler that calls `dgsm.setCharacterPosition(...)` once
+
+**Subsystem contract:**
 
 ```ts
-// inside SimulationRunner constructor
-import { EncounterScanner } from "../engine/core/scanners/encounterScanner.js";
+// src/engine/codeEngine/types.ts
+import type { ActionStep, FeatureReadContext, StateChange } from "../core/types.js";
+
+export interface CodeEngineSubsystem {
+  readonly id: string;            // matches ActionDefinition.codeSubsystem
+
+  /** Called when the step is first activated. Returns initial StateChanges + per-step internal state to seed. */
+  onActivate(step: ActionStep, ctx: FeatureReadContext): {
+    stateChanges: StateChange[];
+    completed: boolean;
+    failed?: { reason: string };
+  };
+
+  /** Called every tick after activation, until the subsystem reports completed/failed. */
+  onTick(step: ActionStep, ctx: FeatureReadContext): {
+    stateChanges: StateChange[];
+    completed: boolean;
+    failed?: { reason: string };
+  };
+
+  /** Optional: called when the step is interrupted by role sim. Cleanup, emit final StateChanges. */
+  onInterrupt?(step: ActionStep, ctx: FeatureReadContext): { stateChanges: StateChange[] };
+}
+```
+
+Subsystem state lives **inside the subsystem instance** (e.g., `private routes = new Map<characterId, MovementRouteState>()`). Same pattern as features holding `fire.intensity` per scene.
+
+- [ ] **Step 1: Write the perception dice tests** (Cluster B port)
+
+```ts
+// src/engine/shared/__tests__/perceptionDice.test.ts
+import { describe, it, expect, vi } from "vitest";
+import { rollStealthForMovement, tryDetectHidden } from "../perceptionDice.js";
+
+// Tests verify that opposed roll uses Spot Hidden vs Stealth, and that defaults apply when skills missing
+// (full test bodies elided here — preserve existing coverage from any pre-existing tests on movementTick)
+```
+
+- [ ] **Step 2: Implement `perceptionDice.ts`**
+
+Copy verbatim from `src/engine/runtime/movementTick.ts:25-76` — the `getNpcSkillValue`, `getDetectionSkillValue`, `rollStealthForMovement`, `tryDetectHidden` functions. No behavior changes.
+
+- [ ] **Step 3: Write the movement subsystem tests**
+
+Cover at minimum:
+1. `onActivate` builds a route from character's current position to destination; emits no StateChanges yet.
+2. `onTick` advances 1 minute; emits a `character.position` StateChange interpolating along the road.
+3. Reaching the final route step → `completed: true`.
+4. A blocked connection mid-route → `failed: { reason: "blocked-by-X" }`.
+5. Interpolation along a road segment of `durationMinutes: 4` → 4 ticks each emitting a fractional position.
+
+- [ ] **Step 4: Implement `movement.ts`**
+
+Port the algorithm from `movementTick.ts` (`initializeMovementNode` + `advanceMovementNodeOneMinute`) but change the shape:
+
+- Input: `ActionStep` (carries `targetCharacterIds` and other fields; movement target lives in `step.overlayFields?.destination`)
+- State: `private routes = new Map<characterId, MovementRouteState>()` — internal subsystem state
+- Output: `StateChange[]` (use `character.position` kind), never call `dgsm.setCharacterPosition` directly
+- Reuse: `engine/shared/pathfinding.ts` (`buildMovementRouteIgnoringBlocks`, `resolveTargetPosition`) — pure functions, no migration needed
+
+```ts
+// src/engine/codeEngine/movement.ts (skeleton — full implementation by porting the algorithm)
+import type { CodeEngineSubsystem } from "./types.js";
+import type { ActionStep, FeatureReadContext, StateChange, CharacterPosition } from "../core/types.js";
+import { buildMovementRouteIgnoringBlocks, resolveTargetPosition } from "../shared/pathfinding.js";
+
+// MovementStep was moved from planning/types.ts to engine/core/types.ts in this task.
+interface MovementRouteState {
+  routeSnapshot: import("../core/types.js").MovementStep[];
+  currentStepIndex: number;
+  minutesIntoStep: number;
+  lastReachablePosition: CharacterPosition;
+  targetPosition: CharacterPosition;
+}
+
+export class MovementSubsystem implements CodeEngineSubsystem {
+  readonly id = "movement";
+  private routes = new Map<string, MovementRouteState>();
+
+  onActivate(step: ActionStep, ctx: FeatureReadContext) {
+    // Resolve current position → destination → route via pathfinding
+    // Store in this.routes; return { stateChanges: [], completed: false }
+  }
+
+  onTick(step: ActionStep, ctx: FeatureReadContext) {
+    // Pull route from this.routes; advance minutesIntoStep; check blocked;
+    // emit character.position StateChange with interpolated position;
+    // detect arrival → { completed: true }
+  }
+}
+```
+
+- [ ] **Step 5: Implement the codeEngine registry**
+
+```ts
+// src/engine/codeEngine/registry.ts
+import type { CodeEngineSubsystem } from "./types.js";
+import { MovementSubsystem } from "./movement.js";
+
+export class CodeEngineRegistry {
+  private subsystems = new Map<string, CodeEngineSubsystem>();
+  register(s: CodeEngineSubsystem): void { this.subsystems.set(s.id, s); }
+  get(id: string): CodeEngineSubsystem | undefined { return this.subsystems.get(id); }
+}
+
+export function createDefaultCodeEngineRegistry(): CodeEngineRegistry {
+  const r = new CodeEngineRegistry();
+  r.register(new MovementSubsystem());
+  return r;
+}
+```
+
+- [ ] **Step 6: Wire dispatch in `tickOrchestrator.ts`**
+
+When activating a step, branch on `step.engine`:
+
+```ts
+if (step.engine === "code") {
+  const sub = this.codeEngineRegistry.get(step.codeSubsystem!);
+  if (!sub) throw new Error(`Unknown code subsystem: ${step.codeSubsystem}`);
+  const result = sub.onActivate(step, ctx);
+  // accumulate result.stateChanges into Applier; complete/fail step accordingly
+} else {
+  // existing resolver-based path
+}
+```
+
+Same pattern in the per-tick advance branch (call `onTick` for in-flight code steps).
+
+- [ ] **Step 7: Update `tickEngine.ts` to construct + thread the codeEngineRegistry**
+
+Add `codeEngineRegistry?: CodeEngineRegistry` to `CreateTickEngineOptions`; default to `createDefaultCodeEngineRegistry()` if omitted.
+
+- [ ] **Step 8: Update movement definition JSON**
+
+In whichever `*.json` file defines the movement action:
+
+```diff
+   "id": "movement",
+-  "engine": "llm",
++  "engine": "code",
++  "codeSubsystem": "movement",
+```
+
+- [ ] **Step 9: Run all new tests + type-check**
+
+Run:
+- `npx vitest run src/engine/codeEngine/__tests__/ src/engine/shared/__tests__/perceptionDice.test.ts`
+- `pnpm build:tsc`
+
+Expected: green. Movement now flows through the code engine; LLM-based actions still flow through the resolver. Both produce StateChange[] for the Applier.
+
+---
+
+### Task E3: Top-level directory scaffold (`src/renderer/`, `src/roleSim/`)
+
+**Goal:** create the new top-level directories and migrate the one existing inhabitant. Pure structural change — no behavior.
+
+**Files:**
+- Create: `src/renderer/` (empty placeholder; populated by Task E4)
+- Create: `src/roleSim/` (top-level)
+- Move: `src/simulation/roleSim/sanityGuidance.ts` → `src/roleSim/sanityGuidance.ts`
+- Move: `src/simulation/roleSim/__tests__/sanityGuidance.test.ts` → `src/roleSim/__tests__/sanityGuidance.test.ts`
+- Modify: every importer of `simulation/roleSim/sanityGuidance` → update path to `roleSim/sanityGuidance`
+- Delete: `src/simulation/roleSim/` (empty after move)
+
+- [ ] **Step 1: Move the files**
+
+Run:
+```bash
+mkdir -p src/roleSim/__tests__ src/renderer
+git mv src/simulation/roleSim/sanityGuidance.ts src/roleSim/sanityGuidance.ts
+git mv src/simulation/roleSim/__tests__/sanityGuidance.test.ts src/roleSim/__tests__/sanityGuidance.test.ts
+rmdir src/simulation/roleSim/__tests__ src/simulation/roleSim
+```
+
+- [ ] **Step 2: Update import paths**
+
+Run: `rg "simulation/roleSim" src/ client/` to find all importers; rewrite each path to `roleSim/...`.
+
+- [ ] **Step 3: Type-check + run sanity test**
+
+Run:
+- `pnpm build:tsc`
+- `npx vitest run src/roleSim/__tests__/sanityGuidance.test.ts`
+
+Expected: green.
+
+---
+
+### Task E4: Renderer layer — DEFERRED
+
+> **🚧 SKIP this task during Phase E execution.**
+>
+> Architecture is decided (see §E-renderer-layer above) but implementation is held back so each Phase E milestone is independently shippable. Phase E creates `src/renderer/` as an empty placeholder directory only (Task E3 already covers that).
+>
+> **What this means in practice for the rest of Phase E:**
+> - Task E5 builds the `NpcActionController` **without** the perception path: no `perceptionReactor.ts`, no `onRendered()` method on the controller. Controller is purely event-driven on engine completion events (`actionCompleted` / `actionInterrupted` / `actionCancelled`).
+> - Task E6 (`SimulationRunner` rewire) does **not** construct a `Renderer` or wire any perception dispatcher.
+> - Task E7 still deletes the legacy perception files (`discoveryPipeline.ts`, `mapMemorySync.ts`, `encounterScanner.ts`, `impactPipeline.ts`, `shared/encounterDedup.ts`) — they're tied to the old `CharacterAction` shape and would block cutover. Functionality returns when the renderer ships.
+> - Task E9 smoke test does **not** assert on rendered narrative or perception-driven interrupts — those scenarios are out of scope until the renderer ships.
+>
+> **Resumption:** the renderer ships in a separate post-Phase-E phase with its own design doc + implementation plan. The architecture content in §E-renderer-layer is the starting brief for that work.
+
+---
+
+### Task E5: roleSim layer (RoleSimAgent interface, NpcAgentAdapter, NpcActionController)
+
+**Goal:** define the `RoleSimAgent` interface; implement the Phase E adapter that wraps existing `NPCPlanningAgent`; implement the controller wiring engine events to the adapter.
+
+> **🚧 Renderer-related parts deferred:** §E-npc-controller's full skeleton (with `decide(npcId, opts?)` taking `perceivedFacts` and `onRendered()` method calling `decideInterrupt`) describes the post-renderer end state. **In Phase E, ship only the engine-event-driven path** — no `perceptionReactor.ts`, no `onRendered()` method, no `perceivedFacts` field on the controller's `decide()` signature. The controller is purely event-driven on `actionCompleted` / `actionInterrupted` / `actionCancelled`. The renderer follow-on adds the perception path.
+
+**Files:**
+- Create: `src/roleSim/agent.ts` — `RoleSimAgent`, `RoleSimContext`, `RoleSimDecision` types (interface only; full agent ships in Phase F)
+- Create: `src/roleSim/npcAgentAdapter.ts` — wraps `NPCPlanningAgent`; satisfies `RoleSimAgent`; only ever returns `{ tool: "act" | "wait" }`
+- Create: `src/roleSim/npcActionController.ts` — per §E-npc-controller (Phase E variant); subscribes to engine completion events; orchestrates `decide(npcId)` loop
+- Create: `src/roleSim/__tests__/npcAgentAdapter.test.ts`
+- Create: `src/roleSim/__tests__/npcActionController.test.ts`
+
+**Type definitions** (Phase E variant — `perceivedFacts` field omitted; will be added back when renderer ships):
+
+```ts
+// src/roleSim/agent.ts
+import type { ActionInput, GameTime, ActionHandle, InterruptReason } from "../engine/core/types.js";
+import type { DynamicNPCProfile } from "../state/types.js";
+
+export interface RoleSimContext {
+  npcId: string;
+  currentTime: GameTime;
+  npcProfile: DynamicNPCProfile;
+  currentScene: string;
+  currentAction?: { handle: ActionHandle; actionText: string };
+  recentMemory: ReadonlyArray<{ type: string; content: string; gameDay: number; gameTime: string }>;
+  longTermIntent?: string;
+  // perceivedFacts?: PerceivedFact[];  // ← added back when renderer ships
+}
+
+export type RoleSimDecision =
+  | { tool: "act"; input: ActionInput }
+  | { tool: "plan"; planText: string }
+  | { tool: "interrupt"; reason: InterruptReason }
+  | { tool: "wait"; untilTime?: GameTime; reason?: string };
+
+export interface RoleSimAgent {
+  decideNext(ctx: RoleSimContext): Promise<RoleSimDecision>;
+}
+```
+
+The discriminated union is kept as-is (`interrupt` and `plan` variants stay declared so the type doesn't churn when Phase F + renderer arrive). Phase E's `NpcAgentAdapter` simply never returns those two variants.
+
+- [ ] **Step 1: Write adapter test**
+
+Verify:
+- When `NPCPlanningAgent.ensureNpcNodesAvailable` succeeds and a `PlanNode` is available → adapter returns `{ tool: "act", input: {...} }` with `actionText` from the PlanNode.
+- When no plan node available (e.g., end of day) → adapter returns `{ tool: "wait" }`.
+- Adapter never returns `plan` or `interrupt` (those need Phase F + renderer).
+
+- [ ] **Step 2: Implement `NpcAgentAdapter`**
+
+```ts
+// src/roleSim/npcAgentAdapter.ts
+import type { RoleSimAgent, RoleSimContext, RoleSimDecision } from "./agent.js";
+import type { NPCPlanningAgent } from "../planning/NPCPlanningAgent.js";
+import type { DynamicGameStateManager } from "../state/DynamicGameState.js";
+import type { ActionDefinitionRegistry } from "../engine/definitions/registry.js";
+
+export class NpcAgentAdapter implements RoleSimAgent {
+  constructor(
+    private agent: NPCPlanningAgent,
+    private dgsm: DynamicGameStateManager,
+    private definitions: ActionDefinitionRegistry,
+    private sessionId: string,
+    private language: string,
+  ) {}
+
+  async decideNext(ctx: RoleSimContext): Promise<RoleSimDecision> {
+    await this.agent.ensureNpcNodesAvailable(
+      this.dgsm, this.sessionId, ctx.npcId, ctx.currentTime.day,
+      ctx.currentTime.tickTime, this.language, this.definitions,
+    );
+    const inProgress = await this.agent.getInProgressNodes(this.sessionId, ctx.currentTime.day, this.dgsm);
+    const due = await this.agent.getDueNpcNodes(this.sessionId, ctx.currentTime.day, ctx.currentTime.tickTime, this.dgsm);
+    const node = inProgress.find((n) => n.characterId === ctx.npcId) ?? due.find((n) => n.characterId === ctx.npcId);
+    if (!node) return { tool: "wait" };
+    return {
+      tool: "act",
+      input: {
+        characterId: ctx.npcId,
+        actionText: node.action,
+        targetCharacterIds: node.targetCharacterIds,
+        sceneId: ctx.currentScene,
+      },
+    };
+  }
+}
+```
+
+- [ ] **Step 3: Implement `NpcActionController`** (Phase E variant — engine-events only)
+
+```ts
+// src/roleSim/npcActionController.ts
+import type { TickEngine } from "../engine/core/types.js";
+import type { DynamicGameStateManager } from "../state/DynamicGameState.js";
+import type { NpcMemoryManager } from "../memory/NpcMemoryManager.js";
+import type { RoleSimAgent } from "./agent.js";
+
+const MAX_TOOL_LOOP_ITERATIONS = 5;
+
+export class NpcActionController {
+  constructor(
+    private engine: TickEngine,
+    private agent: RoleSimAgent,
+    private memory: NpcMemoryManager,
+    private dgsm: DynamicGameStateManager,
+  ) {
+    engine.on("actionCompleted",   (a) => this.decide(a.characterId));
+    engine.on("actionInterrupted", (a) => this.decide(a.characterId));
+    engine.on("actionCancelled",   (a) => this.decide(a.characterId));
+  }
+
+  async bootstrap(): Promise<void> {
+    for (const npcId of this.dgsm.getAliveNpcIds()) {
+      await this.decide(npcId);
+    }
+  }
+
+  async decide(npcId: string): Promise<void> {
+    if (!this.dgsm.isNpcAlive(npcId)) return;
+    const ctx = await this.buildContext(npcId);
+
+    for (let i = 0; i < MAX_TOOL_LOOP_ITERATIONS; i++) {
+      const decision = await this.agent.decideNext(ctx);
+      switch (decision.tool) {
+        case "act":
+          this.engine.submitAction(decision.input);
+          return;
+        case "interrupt":
+          // Phase E: adapter never returns interrupt, but switch is exhaustive
+          return;
+        case "plan":
+          await this.memory.write({ npcId, type: "plan", content: decision.planText });
+          ctx.recentMemory = await this.loadRecentMemory(npcId);
+          continue;
+        case "wait":
+          return;
+      }
+    }
+    console.warn(`[NpcActionController] tool loop exceeded for ${npcId}`);
+  }
+
+  private async buildContext(npcId: string): Promise<import("./agent.js").RoleSimContext> {
+    // build RoleSimContext from DGSM + memory; details depend on existing helpers
+    // ...
+  }
+
+  private async loadRecentMemory(npcId: string): Promise<ReadonlyArray<{ type: string; content: string; gameDay: number; gameTime: string }>> {
+    // call NpcMemoryManager
+    // ...
+  }
+}
+```
+
+- [ ] **Step 4: Write controller test**
+
+Cover:
+- Bootstrap: every alive NPC gets `submitAction` called once.
+- Event-driven continuation: `actionCompleted` → `decide(characterId)` → `submitAction` for that NPC.
+- Dead NPC: no `submitAction`.
+- Adapter returns `wait` → controller does not call `submitAction`.
+
+- [ ] **Step 5: Run roleSim tests + type-check**
+
+Run:
+- `npx vitest run src/roleSim/__tests__/`
+- `pnpm build:tsc`
+
+Expected: green.
+
+---
+
+### Task E6: Rewire `SimulationRunner`
+
+**Goal:** replace the legacy `runSimulationTick` flow with a `TickEngine` instance; wire roleSim controller; ship a single end-to-end runtime path.
+
+> **🚧 Renderer wiring deferred:** the construction shown below intentionally **omits** Renderer + RendererDispatcher. They land in the post-Phase-E renderer phase. During Phase E, NPCs run their planned actions to completion without perception-driven interrupts.
+
+**Files:**
+- Modify: `src/simulation/SimulationRunner.ts` — significant rewrite of constructor, `executeTick`, and persistence handling
+- Modify: `src/simulation/runtimePersistence.ts` — include `tickEngine: tickEngine.serialize()` in the persisted blob; rehydrate on resume by passing `persistedState` to `createTickEngine`
+- Modify: `client/server/simulation/service.ts` — update construction call sites if signatures changed
+
+**Key changes inside `SimulationRunner`:**
+
+```ts
+// constructor (excerpt) — Phase E variant; renderer wiring deferred
+import { loadScriptedEventsForSession } from "../engine/scriptedEvents/loader.js";
+//                            ^^ exact symbol/name to be confirmed against the loader API
+//                            shipped in Phase C; the historical name
+//                            `loadScriptedEventsFromModuleData` referenced in earlier
+//                            drafts of this plan does not exist.
+
+const features = getDefaultFeatures();
+const definitions = createDefaultDefinitions();
+const codeEngineRegistry = createDefaultCodeEngineRegistry();
 
 this.tickEngine = createTickEngine({
   dgsm: this.dgsm,
-  features: getDefaultFeatures(),
-  scriptedEvents: loadScriptedEventsFromModuleData(moduleData),
-  emergentScanners: [
-    new EncounterScanner(),
-    // future: new DiscoveryScanner(), new WorldEventScanner(), ...
-  ],
-  interpretAction: (input) => interpretAction(input, this.ctx),
-  resolve: (step, ctx) => resolveState(step, ctx, this.ctx),
+  features,
+  definitions,
+  codeEngineRegistry,
+  scriptedEvents: loadScriptedEventsForSession(moduleData),
+  interpretAction: (input) => interpretAction(input, /* ctx with definitions */),
+  resolve: (step, ctx) => resolveState(step, ctx),
   getActorDex: (id) => this.dgsm.getNpcProfile(id)?.attributes.DEX ?? 0,
   tickDurationMinutes: 1,
   lang: this.language,
-  persistedState: initialPersistedTickEngineState,
+  persistedState: persistedTickEngineBlob,  // null on fresh session
 });
 
-this.impactHandler = new ImpactGateHandler({
-  runImpactGate: (report) => runImpactPipeline(report, this.dgsm, this.ctx),
-  tickEngine: this.tickEngine,
-  getActiveHandleFor: (cid, hid) => this.activeHandles.get(`${cid}:${hid}`),
-});
-this.tickEngine.on("tickCompleted", (r) => this.impactHandler.onTickReport(r));
-wireMemoryEventWriter(this.tickEngine, this.memoryManager);
+this.npcController = new NpcActionController(
+  this.tickEngine,
+  new NpcAgentAdapter(this.npcPlanningAgent, this.dgsm, definitions, this.sessionId, this.language),
+  this.memoryManager,
+  this.dgsm,
+);
+await this.npcController.bootstrap();
+// NOTE: Renderer + RendererDispatcher construction omitted — see §E-renderer-layer.
 ```
 
-Adapt NPC planning layer to `submitAction` calls. Specifically: replace `ensureNpcNodesAvailable` + `getInProgressNodes` + `getDueNpcNodes` with a new per-NPC loop that:
+`executeTick()` becomes essentially `await this.tickEngine.tick()`. All node scheduling / `ensureNpcNodesAvailable` / `getDueNpcNodes` calls move out of `SimulationRunner` (they live inside `NpcAgentAdapter` now).
 
-1. Queries the planning agent for the next action text.
-2. Calls `tickEngine.submitAction({ characterId, actionText, sceneId, ... })`.
-3. Stores the returned handle in `this.activeHandles` keyed by `characterId:handleId`.
+- [ ] **Step 1: Resolve the scripted-events loader symbol**
 
-Save persisted state at appropriate checkpoints: when `SimulationRunner` writes `SimulationRuntime.gameState`, include `tickEngine: this.tickEngine.serialize()` in the blob.
+The original Phase E plan referenced `loadScriptedEventsFromModuleData` which doesn't exist. Look up the actual loader exported by `src/engine/scriptedEvents/loader.ts` (Phase C) and use its real name + signature in the construction snippet above.
 
-- [ ] **Step 3: Type-check**
+- [ ] **Step 2: Map every legacy `runSimulationTick` parameter to its new home**
 
-Run: `pnpm build:tsc`
-Expected: no errors. (There will be. Fix them until there aren't.)
+Before deleting the call, audit `SimulationRunner.executeTick` and confirm each input has a destination:
+- module data → constructor (already wired)
+- registry → split into features + definitions + codeEngineRegistry (constructor)
+- ctx → constructed inside the engine
+- previous encounter signatures → DELETE (encounter scanner is gone per Q2c)
 
----
+- [ ] **Step 2: Rewrite the constructor and `executeTick`**
 
-### Task E3: Delete dead code
+Largest single edit in Phase E. Implementer note: this is too large to write atomically — split into commits at natural boundaries (constructor wiring | executeTick rewrite | persistence rewire).
 
-**Files:**
-- Delete: `src/engine/runtime/tickProcessor.ts`
-- Delete: `src/engine/queue/actionQueue.ts`
-- Delete: `src/engine/registry.ts`
-- Delete: `src/engine/resolver/applyStateResolution.ts` (superseded by Applier)
-- Delete: `src/engine/shared/nodeHelpers.ts`'s `makeAction()` (obsolete — built legacy `CharacterAction` shape from `PlanNode`; no callers after tickProcessor removal)
-- Delete: `src/planning/revisionHelpers.ts`'s `buildInterruptedAction()` (same reason)
-- Delete or gut: `src/engine/runtime/movementTick.ts`'s `buildMovementAction()` (produces legacy shape; verify whether the resolver still needs this helper or if the new commit flow suffices — delete if not called)
-- Modify: `src/engine/types.ts` — remove old `WorldFeature` type; keep unrelated types
-- Modify: `src/engine/shared/impactPropagation.ts` — any reference to legacy `CharacterAction` fields (`impact`, `successLevel`, `rollDetail`) must be removed or rewritten; this file's role may shrink since impact gate moved to role sim
-- Modify: `src/engine/runtime/resolutionExecutionContext.ts` — same; strip legacy field usage
-
-- [ ] **Step 1: Search for consumers of each to be deleted**
-
-Run (one per file):
-- `rg -l 'runtime/tickProcessor' src/ client/ tests/`
-- `rg -l 'queue/actionQueue' src/ client/ tests/`
-- `rg -l "from.*engine/registry" src/ client/ tests/`
-- `rg -l 'applyStateResolution' src/ client/ tests/`
-- `rg -l 'makeAction\b' src/ client/ tests/`
-- `rg -l 'buildInterruptedAction\b' src/ client/ tests/`
-- `rg -l 'buildMovementAction\b' src/ client/ tests/`
-
-Each path that appears must be either fixed (replace import with new-path equivalent), flagged, or included in this task's deletions.
-
-- [ ] **Step 2: Delete files and obsolete helpers**
-
-Run: `rm src/engine/runtime/tickProcessor.ts src/engine/queue/actionQueue.ts src/engine/registry.ts src/engine/resolver/applyStateResolution.ts`
-
-For files that are kept but have obsolete helpers (`nodeHelpers.ts`, `revisionHelpers.ts`, `movementTick.ts`), delete just the obsolete function(s) — not the whole file.
-
-- [ ] **Step 3: Type-check**
-
-Run: `pnpm build:tsc`
-Expected: no errors. Fix any remaining stale imports.
-
----
-
-### Task E4: Re-home `SceneCondition` and `CharacterAction` in `src/planning/types.ts`
-
-**Files:**
-- Modify: `src/planning/types.ts` — delete legacy `SceneCondition` and legacy `CharacterAction`; re-export both from `src/engine/core/types.ts`
-
-Both types now have a single canonical definition in `src/engine/core/types.ts`. `planning/types.ts` only re-exports, so existing imports like `import type { CharacterAction } from "../planning/types.js"` continue to resolve.
-
-- [ ] **Step 1: Delete legacy definitions**
-
-In `src/planning/types.ts`:
-- Remove the `interface SceneCondition { ... }` block (currently lines 12–18 — owner-less, uses old `skillPenalty: Array<...>` / `blocked: boolean`)
-- Remove the `export interface CharacterAction { ... }` block (currently lines 201–235 — rich shape with `impact` / `skill` / `rollDetail` / `discoveries` / `damagedEvidence` / `perTargetResults` / `stateMemories` / `characterName` / `status` / `outcome: string` etc.)
-
-- [ ] **Step 2: Add re-exports**
+- [ ] **Step 3: Rewire persistence**
 
 ```ts
-// src/planning/types.ts (near the top)
-export type { SceneCondition, CharacterAction } from "../engine/core/types.js";
-```
-
-- [ ] **Step 3: Type-check**
-
-Run: `pnpm build:tsc`
-Expected: errors at every call site that still reads legacy fields (`impact`, `skill`, `rollDetail`, `successLevel`, `status`, `outcome` as string, `characterName`, `discoveries`, `damagedEvidence`, `stateMemories`, `perTargetResults`, `type: PlanNodeType`, or the old `skillPenalty: Array<...>` / `blocked: boolean`).
-
-Fix each error by either:
-- Looking the value up from DGSM at the call site (e.g., `characterName` ← `dgsm.getNpcProfile(characterId)?.name`)
-- Moving the semantic into a new place (e.g., `outcome: string` human text now lives as `CharacterAction.outcome?.description` if present, or derived from `StateResolution`)
-- Deleting the code path entirely if it was tied to the old pipeline that's gone
-
-SimulationEventEmitter's adaptation is in E4.5; most non-emitter fixes happen here.
-
-- [ ] **Step 4: Re-run type-check**
-
-Run: `pnpm build:tsc`
-Expected: no errors.
-
----
-
-### Task E4.5: Adapt `SimulationEventEmitter` to the simplified `CharacterAction`
-
-**Files:**
-- Modify: `src/simulation/SimulationEventEmitter.ts`
-- Modify: `src/simulation/__tests__/SimulationEventEmitter.test.ts`
-- Modify (follow-up): `client/src/**` — any component reading WebSocket event fields that changed
-
-The old emitter packaged every legacy `CharacterAction` field (`characterName`, `impact`, `skill`, `rollDetail`, `successLevel`, `status`, human `outcome`) directly into the WebSocket payload. The new `CharacterAction` doesn't carry those fields; the emitter must derive them from DGSM and the accompanying `PlannedOutcome` (`outcome.narrative`, `outcome.stateChanges`, `outcome.elapsedMinutes`).
-
-- [ ] **Step 1: Add DGSM dependency to the emitter**
-
-Update the constructor signature so the emitter has a `DynamicGameStateManager` handle:
-
-```ts
-// src/simulation/SimulationEventEmitter.ts
-import type { DynamicGameStateManager } from "../state/DynamicGameState.js";
-import type { CharacterAction } from "../engine/core/types.js";
-
-export class SimulationEventEmitter {
-  constructor(
-    private readonly broadcaster: Broadcaster,
-    private readonly dgsm: DynamicGameStateManager,
-  ) {}
-  // ...
+// src/simulation/runtimePersistence.ts (excerpt)
+export interface PersistedSimulationRuntime {
+  // ... existing fields ...
+  tickEngine: import("../engine/core/types.js").SerializedTickEngineState;
 }
 ```
 
-Update the site(s) that instantiate it (most likely `SimulationRunner`) to pass `this.dgsm`.
+On bootstrap rehydrate: extract `tickEngine` blob → pass to `createTickEngine({ ..., persistedState })`.
 
-- [ ] **Step 2: Rewrite the action-to-event converter**
-
-Replace the current helper (likely `actionsToEvents(actions: CharacterAction[], dayBefore: number)` or similar) with a version that computes the legacy-style fields on the fly:
-
-```ts
-private toWireEvent(action: CharacterAction): WireSimulationEvent {
-  const character = this.dgsm.getNpcProfile(action.characterId);
-  const outcomeText = action.outcome?.description ?? "";
-  return {
-    characterId: action.characterId,
-    characterName: character?.name ?? action.characterId,
-    gameTime: action.completedAt.tickTime,
-    gameDay: action.completedAt.day,
-    action: action.actionText,
-    location: action.sceneId,
-    definitionId: action.definitionId,
-    targetCharacterIds: action.targetCharacterIds,
-    outcome: outcomeText,
-    // `impact`, `skill`, `rollDetail`, `successLevel`, `status` intentionally omitted;
-    // the impact-gate event stream carries those now, not the action-completion event.
-  };
-}
-```
-
-If UI code relies on any removed field, see Step 4.
-
-- [ ] **Step 3: Update the emitter test**
-
-`src/simulation/__tests__/SimulationEventEmitter.test.ts` currently builds `CharacterAction` fixtures with the old rich shape. Rewrite the `makeAction(...)` helper and assertions against the new fields (`actionText`, `sceneId`, `completedAt`, `definitionId`, `outcome?.description`) plus the injected DGSM stub.
-
-Run: `npx vitest run src/simulation/__tests__/SimulationEventEmitter.test.ts`
-Expected: PASS.
-
-- [ ] **Step 4: Reconcile client consumers**
-
-Search the frontend for references to removed wire fields:
-
-- `rg "impact" client/src/`
-- `rg "rollDetail" client/src/`
-- `rg "successLevel" client/src/`
-- `rg "\\bstatus\\b" client/src/ --type=ts --type=tsx | rg -i "action|event"`
-- `rg "characterName" client/src/`
-
-For each hit, either:
-- Drop the field from the UI (if the UI lives fine without it — e.g., `impact` was for server-side gating, not display),
-- Derive it client-side from other data already broadcast (e.g., character roster is cached client-side, `characterName` can be looked up by `characterId`),
-- Extend the wire event in Step 2 to include what the UI truly needs.
-
-Do this surgically — only touch components that actually rendered the removed fields. The goal is a working UI, not a full redesign.
-
-- [ ] **Step 5: Final type-check + build**
-
-Run: `pnpm build:tsc && cd client && pnpm build`
-Expected: both exit 0.
-
----
-
-### Task E5: End-to-end smoke verification
-
-**Files:**
-- No new files; run existing test suite + a small scripted session.
-
-- [ ] **Step 1: Run the full test suite**
-
-Run: `pnpm test -- --run`
-Expected: all tests pass. Fix any failures.
-
-- [ ] **Step 2: Run the type-checker**
+- [ ] **Step 4: Type-check**
 
 Run: `pnpm build:tsc`
-Expected: exits 0.
+Expected: 0 errors. Many will surface; fix at site. Critical guidance: never silence a type error with `as any` — if a field doesn't exist on the new type, find where it should now come from (DGSM lookup, engine query, removed concept).
 
-- [ ] **Step 3: Run the Biome linter**
+- [ ] **Step 5: Smoke run a single tick**
 
-Run: `pnpm check`
-Expected: exits 0 (auto-fix applies formatting / import sort).
-
-- [ ] **Step 4: Boot the dev server + run a short simulated session**
-
-Run: `pnpm chat:dev` (or `pnpm chat`)
-
-Confirm via UI or server logs:
-- A fresh session boots.
-- NPC actions flow: submitted → activated → committed → emitted.
-- Feature ticks fire (set a small fire, watch hp deltas arrive).
-- Trigger a scripted event (pray at the altar in a test module) → observe sanity loss effect.
-- Trigger an interrupt (run the impact gate) → observe `actionInterrupted` event + NPC memory entry.
-
-If anything misbehaves, fix before proceeding.
-
-- [ ] **Step 5: Verify existing `SimulationRuntime` rows are unloadable (expected)**
-
-Boot the server, try to resume an old session (pre-refactor row in DB). Expect: loading throws with a type/shape error. This is the accepted break per §3 "Backwards Compatibility".
-
-Note any thrown error and confirm the failure is at load time (not silent data corruption).
+Boot the dev server (`pnpm chat:dev`); start a fresh session; observe a single tick advance. Don't worry about long-term stability yet; that's Task E9.
 
 ---
 
-### Task E6: Final commit
+### Task E7: Delete dead code
 
-- [ ] **Step 1: Review git status + diff**
+**Goal:** remove every file enumerated in §E-runtime-disposition + the spec deletions table. Type-check after each batch.
 
-Run: `git status` and `git diff --stat`
-Confirm the expected file set: ~20 new files under `src/engine/core/`, ~5 new files under `src/engine/scriptedEvents/` + `src/simulation/roleSim/`, ~5 modified features, 4 deletions, a few modified top-level files.
+Per §E-runtime-disposition (now fully resolved):
 
-- [ ] **Step 2: Stage and commit**
+| File | LOC | Disposition |
+|---|---|---|
+| `src/engine/runtime/tickProcessor.ts` | 812 | DELETE |
+| `src/engine/runtime/discoveryPipeline.ts` | 263 | DELETE (renderer subsumes) |
+| `src/engine/runtime/mapMemorySync.ts` | 62 | DELETE (renderer subsumes) |
+| `src/engine/runtime/encounterScanner.ts` | 137 | DELETE (renderer subsumes) |
+| `src/engine/core/scanners/encounterScanner.ts` | ~35 | DELETE (wrapper of above) |
+| `src/engine/runtime/resolutionExecutionContext.ts` | 88 | DELETE |
+| `src/engine/runtime/movementTick.ts` | 584 | DELETE (Cluster A → planning copies, Cluster B → `engine/shared/perceptionDice.ts` already in E2, Cluster C → `engine/codeEngine/movement.ts` already in E2) |
+| `src/engine/runtime/impactPipeline.ts` | 431 | DELETE entirely (perspective-text block subsumed by renderer; remaining impact-event collection logic absorbed into RendererDispatcher) |
+| `src/engine/queue/actionQueue.ts` | n/a | DELETE (legacy action queue) |
+| `src/engine/resolver/applyStateResolution.ts` | n/a | DELETE (superseded by Applier) |
+| `src/engine/shared/encounterDedup.ts` | n/a | DELETE (`buildEncounterSignature`, `shouldEmitEncounter`, `buildEncounterSnapshot` — all dead with encounter scanner gone) |
 
-Run (all changes in one commit per user preference):
+**Helpers within retained files:**
+- Delete `makeAction()` from `src/engine/shared/nodeHelpers.ts`
+- Delete `buildInterruptedAction()` from `src/planning/revisionHelpers.ts`
+- Delete `encounter.detected` `FeatureEvent` type entry; rename `triggerKind: "encounter"` → `"perception"` in `InterruptReason` (already done in Task E5 if not earlier; this task confirms)
+- Delete `encounterSignatures` field from `SimulationTickResult` (legacy `planning/types.ts`)
+
+- [ ] **Step 1: Audit each file's external consumers**
+
+For each file in the table, run:
+```bash
+rg -l "<filename without extension>" src/ client/ scripts/ tests/
+```
+
+Expected: every hit should be either inside the file itself, inside another file already in this deletion list, or already migrated by Tasks E1–E6. If anything else surfaces, stop and resolve.
+
+- [ ] **Step 2: Delete in batches**
+
+Batch A (engine runtime):
+```bash
+rm src/engine/runtime/tickProcessor.ts \
+   src/engine/runtime/discoveryPipeline.ts \
+   src/engine/runtime/mapMemorySync.ts \
+   src/engine/runtime/encounterScanner.ts \
+   src/engine/runtime/resolutionExecutionContext.ts \
+   src/engine/runtime/movementTick.ts \
+   src/engine/runtime/impactPipeline.ts
+```
+
+Batch B (engine misc):
+```bash
+rm src/engine/queue/actionQueue.ts \
+   src/engine/resolver/applyStateResolution.ts \
+   src/engine/shared/encounterDedup.ts \
+   src/engine/core/scanners/encounterScanner.ts
+```
+
+After each batch: `pnpm build:tsc` → fix any straggler imports.
+
+- [ ] **Step 3: Strip helpers from retained files**
+
+Edit `src/engine/shared/nodeHelpers.ts`, `src/planning/revisionHelpers.ts` per the table. Strip the encounter event type and rename trigger.
+
+- [ ] **Step 4: Delete legacy `SimulationTickResult.encounterSignatures` field**
+
+Search: `rg "encounterSignatures" src/ client/`
+Remove every reference.
+
+- [ ] **Step 5: Final type-check**
+
+Run: `pnpm build:tsc`
+Expected: 0 errors.
+
+---
+
+### Task E8: Re-home `CharacterAction` + adapt `SimulationEventEmitter`
+
+**Goal:** delete legacy `CharacterAction` from `src/planning/types.ts`; re-export the canonical type from `src/engine/core/types.ts`; rewrite `SimulationEventEmitter` to derive UI-facing fields from DGSM + outcome instead of from the legacy fat shape.
+
+**Files:**
+- Modify: `src/planning/types.ts` — delete the legacy `CharacterAction` interface (lines 194–228); replace with `export type { CharacterAction } from "../engine/core/types.js"`
+- Modify: `src/simulation/SimulationEventEmitter.ts` — accept DGSM in constructor; rewrite `actionsToEvents` to compute `characterName`, `outcome`, etc. from canonical action + DGSM
+- Modify: `src/simulation/__tests__/SimulationEventEmitter.test.ts` — rewrite fixtures using new `CharacterAction` shape
+- Modify: `client/src/**` — search for usages of removed wire fields (`impact`, `rollDetail`, `successLevel`, `status`, `characterName`); fix or remove per UI need
+
+(Same body as the original Task E4 + E4.5, but now executed after E1–E7 have already cleared most callers — the surface should be smaller.)
+
+- [ ] **Step 1: Delete legacy `CharacterAction`, add re-export**
+- [ ] **Step 2: Run `pnpm build:tsc`**: every error names a place where legacy fields were read. Fix each at site (lookup from DGSM, derive from outcome, or delete the code path).
+- [ ] **Step 3: Update `SimulationEventEmitter` constructor signature + `toWireEvent` derivation**
+- [ ] **Step 4: Update emitter test**: `npx vitest run src/simulation/__tests__/SimulationEventEmitter.test.ts`
+- [ ] **Step 5: Reconcile client consumers**: surgical fixes only; goal is a working UI, not a rewrite.
+- [ ] **Step 6: Final type-check + frontend build**: `pnpm build:tsc && cd client && pnpm build`
+
+---
+
+### Task E9: End-to-end smoke verification
+
+**Files:** none new; runs the full suite.
+
+- [ ] **Step 1: Full test suite**: `pnpm test -- --run` → all green. Fix any failures (the 13 currently-failing Blackwood Manor integration tests are explicit Phase E targets — fix or delete-with-replacement).
+- [ ] **Step 2: Type-check**: `pnpm build:tsc` → exits 0.
+- [ ] **Step 3: Biome**: `pnpm check` → exits 0.
+- [ ] **Step 4: Boot dev server, run a scripted session**: `pnpm chat:dev`. Confirm via UI/logs:
+  - Fresh session boots; NPC actions submitted → activated → committed → emitted.
+  - Movement actions advance position smoothly across ticks (CodeEngine subsystem path).
+  - LLM actions (e.g., "examine the desk") complete via resolver.
+  - Feature ticks fire (set a small fire; observe environment + hp deltas).
+  - Trigger a scripted event (pray at altar) → observe sanity loss.
+  - **Out of scope for Phase E** (returns with renderer follow-on): perception-driven NPC behavior — events that previously caused NPCs to notice clues, see other NPCs, or get interrupted by nearby happenings will not fire during Phase E. NPCs run their planned actions to completion regardless of world events. This is an accepted regression that lifts when the renderer ships.
+- [ ] **Step 5: Confirm legacy `SimulationRuntime` rows are unloadable** (per spec §3 "Backwards Compatibility"). Boot the server, try to resume a pre-refactor session: expect a load-time type/shape error — not silent corruption.
+
+---
+
+### Task E10: Final commit
+
+- [ ] **Step 1**: `git status` and `git diff --stat`. Confirm expected file set roughly:
+  - New: `src/engine/definitions/`, `src/engine/codeEngine/`, `src/engine/shared/perceptionDice.ts`, `src/renderer/`, `src/roleSim/` (with multiple files)
+  - Deleted: `src/engine/registry.ts`, multiple files under `src/engine/runtime/`, `src/engine/queue/`, `src/engine/resolver/applyStateResolution.ts`, `src/engine/shared/encounterDedup.ts`
+  - Modified: `src/engine/types.ts`, `src/simulation/SimulationRunner.ts`, `src/simulation/SimulationEventEmitter.ts`, `src/planning/NPCPlanningAgent.ts`, `src/simulation/runtimePersistence.ts`, JSON definition files
+  - Net LOC: ~3000–4000 deleted, ~1500 added (net deletion is the win)
+- [ ] **Step 2: Stage and commit** (single commit per user preference):
 
 ```bash
-git add src/ docs/superpowers/plans/2026-04-21-engine-architecture-refactor-plan.md docs/superpowers/specs/2026-04-20-engine-architecture-refactor-design.md
+git add src/ client/ docs/superpowers/plans/2026-04-21-engine-architecture-refactor-plan.md docs/superpowers/specs/2026-04-20-engine-architecture-refactor-design.md
 git commit -m "$(cat <<'EOF'
-refactor(engine): replace tickProcessor god function with TickEngine
+refactor(engine): Phase E — TickEngine cutover, dual-engine dispatch, renderer layer
 
-Rebuild the tick loop as a queue-based orchestrator composed of focused
-subsystems (Applier, FeatureRunner, ScriptedEventRunner, EmergentEventEmitter,
-TickOrchestrator) behind the TickEngine API. Features now return StateChange[]
-instead of mutating DGSM, scripted story beats move into a dedicated subsystem
-with declarative module data, and the impact gate moves out to role sim. No
-backwards compatibility with pre-refactor SimulationRuntime rows.
+Replaces the legacy tickProcessor pipeline with TickEngine; introduces per-step
+dual-engine dispatch (code vs llm) routed by ActionDefinition.engine; ships the
+per-NPC Renderer perception layer with a rule-based interim reactor; threads a
+thin NpcAgentAdapter so the existing NPCPlanningAgent satisfies the new
+RoleSimAgent interface (full agent rewrite is Phase F). Movement migrates from
+runtime mutation to a CodeEngine subsystem emitting StateChanges. ~3K LOC of
+legacy runtime deleted (tickProcessor, discoveryPipeline, mapMemorySync,
+encounterScanner, impactPipeline, applyStateResolution, encounterDedup,
+movementTick); top-level src/renderer/ and src/roleSim/ directories established.
 
 See docs/superpowers/specs/2026-04-20-engine-architecture-refactor-design.md
-for full rationale and decisions; implementation plan in
+for full rationale; implementation plan in
 docs/superpowers/plans/2026-04-21-engine-architecture-refactor-plan.md.
 
 Co-Authored-By: Claude Opus 4.7 (1M context) <noreply@anthropic.com>
@@ -4616,10 +5250,95 @@ EOF
 )"
 ```
 
-- [ ] **Step 3: Verify commit landed**
+- [ ] **Step 3: Verify commit landed**: `git log --oneline -1` → one new commit line.
 
-Run: `git log --oneline -1`
-Expected: one line showing the new commit.
+---
+
+## Phase F — RoleSimAgent rewrite + plan storage migration
+
+> **Phase F intent (2026-04-23):** Phase E ships engine + renderer + dual-engine + a thin adapter that lets the existing `NPCPlanningAgent` satisfy the new `RoleSimAgent` interface. Phase F replaces the adapter with a real tool-driven LLM agent and migrates plan storage from `NpcDailyPlan` to `NpcMemory`. Net effect: ~2100 LOC removed (1865-LOC `NPCPlanningAgent` + helpers + Prisma table), ~400 LOC added (`RoleSimAgent` + prompt fragments).
+
+### §F-architecture — Tool-driven agent shape
+
+**Single entry point:**
+```ts
+// src/roleSim/agent.ts
+export interface RoleSimAgent {
+  decideNext(ctx: RoleSimContext): Promise<RoleSimDecision>;
+}
+
+export interface RoleSimContext {
+  npcId: string;
+  currentTime: GameTime;
+  npcProfile: DynamicNPCProfile;
+  currentScene: string;
+  currentAction?: { handle: ActionHandle; actionText: string };  // present iff in-flight
+  perceivedFacts?: PerceivedFact[];                              // present iff renderer fired
+  recentMemory: NpcMemoryEntry[];                                // includes type="plan" entries
+  longTermIntent?: string;
+}
+
+export type RoleSimDecision =
+  | { tool: "act"; input: ActionInput }
+  | { tool: "plan"; planText: string }
+  | { tool: "interrupt"; reason: InterruptReason }
+  | { tool: "wait"; untilTime?: GameTime; reason?: string };
+```
+
+**4-tool MVP:**
+- `act` — submit an action to the engine (the only tool that produces world change)
+- `plan` — write a plan note to NpcMemory; controller re-prompts agent immediately so it can then choose `act`
+- `interrupt` — when ctx has `currentAction` + `perceivedFacts`, agent can decide to break focus and replan
+- `wait` — explicitly do nothing this round (returns control to controller; agent gets re-prompted at next event or after `untilTime`)
+
+Future tools (deferred): `recallMemory` (active retrieval), `observe` (focus attention), `reviseLongTermIntent`.
+
+**Roles dissolved:** the renderer plan's separate "RoleReactor" module is **not built**; perception-driven interrupts are just `tool: "interrupt"`. Same agent, same LLM call, different tool branch.
+
+**Daily schedule dissolved:** there's no `ScheduleEntry[]` data structure anymore. If an agent wants to "plan the day", it returns `tool: "plan"` with free-form text; that text goes into NpcMemory and shows up in `ctx.recentMemory` next call.
+
+### §F-storage — Plan storage = NpcMemory entries
+
+`NpcMemory` already supports `type: "plan"` (one of the 7 types) and decay. Phase F:
+
+- Agent's `plan` tool writes through `NpcMemoryManager.write({ npcId, type: "plan", content: planText, gameDay, gameTime })`.
+- Agent's context loader pulls recent `plan` memories alongside other types via existing memory query API.
+- Decay handled by existing decay engine.
+
+Removed:
+- Prisma table `NpcDailyPlan` (drop after Phase F migration).
+- `ScheduleEntry`, `PlanNode`, `PlanNodeStatus`, `PlanNodeExecutionMeta` types (`src/planning/types.ts`).
+- `NpcLongTermIntent` table — ~~unchanged?~~ kept as long-term intent is still useful and lives separately from plans.
+
+### §F-deletions — What goes away
+
+| File | LOC | Disposition |
+|---|---|---|
+| `src/planning/NPCPlanningAgent.ts` | 1865 | DELETE — replaced by `src/roleSim/agent.ts` (~300 LOC) |
+| `src/planning/autoMovementHelpers.ts` | 63 | DELETE — agent emits movement actions directly via `tool: "act"` |
+| `src/planning/revisionHelpers.ts` | 50 | DELETE — replan = agent calls `tool: "plan"` then `tool: "act"` |
+| `src/planning/types.ts` | varies | SHRINK — keep only types still used by other systems (e.g., `MovementStep` if engine movement subsystem uses it) |
+| `src/roleSim/npcAgentAdapter.ts` (Phase E temp) | n/a | DELETE — no longer needed once real agent ships |
+| `prisma/schema.prisma` `NpcDailyPlan` table | n/a | DROP — migration script truncates after backup |
+
+### §F-tasks — Task outline (to be expanded into Phase F's own implementation plan)
+
+> **Note:** Phase F gets its own brainstorm + spec + plan cycle once Phase E is shipped and stable. The list below is scope-setting, not a final task list.
+
+1. **F1** — Design and document the agent prompt (system prompt + tool schemas + example interactions). Iterate against real NPC scenarios.
+2. **F2** — Implement `RoleSimAgent` (`src/roleSim/agent.ts`): construct context, call LLM with tools, parse decision, validate.
+3. **F3** — Migrate `NpcAgentAdapter` callers to the new agent. Initially: feature-flag the old adapter so we can A/B compare in dev.
+4. **F4** — Plan-storage migration: write `NpcDailyPlan` rows out as `NpcMemory` entries (one-time migration); add `plan`-type memory query helper if not already present.
+5. **F5** — Delete `NPCPlanningAgent` + helpers; remove `NpcDailyPlan` from Prisma schema; `prisma db push`; run smoke tests.
+6. **F6** — Type-check + Biome + smoke session boot. Verify NPCs behave plausibly across a multi-tick session including `plan` → `act` chains and `interrupt` from perception.
+7. **F7** — Final commit.
+
+### §F-out-of-scope
+
+- The 3 future tools (`recallMemory`, `observe`, `reviseLongTermIntent`).
+- `chooseToIgnore` field on renderer output (still deferred per §E-renderer-layer).
+- Player-controlled character (would be a parallel `playerActionController.ts` with player input replacing the LLM call; out of scope).
+- LLM-side caching / batching optimizations (correctness first; perf separate phase).
 
 ---
 
