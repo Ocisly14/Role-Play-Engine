@@ -14,8 +14,8 @@ import type { DynamicGameStateManager } from "../../state/DynamicGameState.js";
 function drainPendingEmotions(_dgsm: unknown): unknown[] {
   return [];
 }
+import type { ActionDefinitionRegistry } from "../definitions/registry.js";
 import { interpretAction } from "../interpreter/gameInterpreter.js";
-import type { GameEngineRegistry } from "../registry.js";
 import { applyStateResolution } from "../resolver/applyStateResolution.js";
 import { buildStateContext } from "../resolver/stateContextBuilder.js";
 import { resolveState } from "../resolver/stateResolver.js";
@@ -83,7 +83,7 @@ interface SingleTickParams {
   sessionId: string;
   moduleId: string;
   language: string;
-  registry: GameEngineRegistry;
+  definitions: ActionDefinitionRegistry;
   ctx: ExecutionContext;
   memoryManager?: NpcMemoryManager;
 }
@@ -120,7 +120,7 @@ async function executeSingleTick(
     sessionId,
     moduleId,
     language,
-    registry,
+    definitions,
     ctx,
     memoryManager,
     previousEncounterSignatures,
@@ -155,7 +155,7 @@ async function executeSingleTick(
         gameDay,
         tickStartTime,
         language,
-        registry
+        definitions
       )
     )
   );
@@ -311,43 +311,11 @@ async function executeSingleTick(
     let node = rawNode;
     if (node.status === "pending") {
       node = startNode(node, tickStartTime);
-      // Fire onNodeStart hooks for feature overlays (e.g., prerequisite location checks)
-      const blocked = registry.startNodeFeatures(node, dgsm);
-      if (blocked) {
-        // Prerequisite failed at action start — abort this node
-        const failedNode: PlanNode = {
-          ...node,
-          status: "failed",
-          executionMeta: {
-            ...node.executionMeta,
-            failedAt: tickStartTime,
-            remainingMinutes: 0,
-            blockedReason: blocked.reason,
-          },
-        };
-        await npcPlanningAgent.updateNode(
-          sessionId,
-          node.characterId,
-          gameDay,
-          failedNode
-        );
-        tickActions.push({
-          characterId: node.characterId,
-          characterName: node.characterName,
-          gameTime: tickStartTime,
-          action: node.action,
-          location: (() => {
-            const pos = dgsm.getCharacterPosition(node.characterId);
-            return pos ? dgsm.resolveLocationId(pos) : "";
-          })(),
-          type: node.type,
-          impact: 0,
-          status: "failed",
-          failureReason: "prerequisite_not_met",
-          outcome: blocked.reason,
-        });
-        continue;
-      }
+      // Phase E1: GameEngineRegistry.startNodeFeatures() (feature onNodeStart
+      // veto hooks) was removed alongside the legacy registry. The Phase D
+      // TickEngine handles precondition checks via WorldFeature.onTick →
+      // StateChange emissions. The legacy tickProcessor is slated for
+      // deletion in Task E7, so this block is intentionally a no-op.
     }
 
     // Non-movement nodes: execute when tick reaches endTime
@@ -415,10 +383,10 @@ async function executeSingleTick(
         executedNodes.push(node);
 
         // --- GameInterpreter: classify action into definition steps ---
-        const definitions = registry.getAllDefinitions();
+        const defList = definitions.getAll();
         const interpreted = await interpretAction(
           node.action,
-          definitions,
+          defList,
           ctx.runtime,
           language
         );
@@ -428,8 +396,7 @@ async function executeSingleTick(
         const step =
           steps.find((s) => s.definitionId !== "movement") ?? steps[0];
         const definition =
-          registry.getDefinition(step.definitionId) ??
-          registry.getDefinition("generic");
+          definitions.get(step.definitionId) ?? definitions.get("generic");
 
         // --- Skill Check ---
         const pos = dgsm.getCharacterPosition(node.characterId);
@@ -442,7 +409,6 @@ async function executeSingleTick(
           node.skill,
           dgsm,
           locationId,
-          registry,
           targetIds
         );
 
@@ -484,8 +450,7 @@ async function executeSingleTick(
             definition!,
             node,
             dgsm,
-            locationId,
-            registry
+            locationId
           );
 
           const resolutionContext = {
@@ -521,25 +486,11 @@ async function executeSingleTick(
             applyStateResolution(dgsm, stateResolution, outputSchema);
           }
 
-          // Feature overlay activation from StateResolution
-          for (const feature of registry.getAllFeatures()) {
-            const schema = feature.planNodeSchema;
-            if (!schema) continue;
-            const allFields = [
-              ...schema.requiredFields,
-              ...(schema.optionalFields ?? []),
-            ];
-            for (const fieldDef of allFields) {
-              if (stateResolution[fieldDef.field] !== undefined) {
-                const syntheticNode = {
-                  ...node,
-                  [fieldDef.field]: stateResolution[fieldDef.field],
-                };
-                feature.activate?.(syntheticNode as any, dgsm);
-                break; // one activation per feature
-              }
-            }
-          }
+          // Phase E1: GameEngineRegistry.getAllFeatures() was removed.
+          // Feature overlay activation from StateResolution previously fanned
+          // out per-feature; the Phase D TickEngine handles overlay-driven
+          // StateChanges directly through onActionCommit. The legacy
+          // tickProcessor will be deleted in Task E7, so this block is a no-op.
 
           // Write memories from StateResolution
           const memoryTypes = ["memory.event", "memory.witness"];
@@ -688,59 +639,19 @@ async function executeSingleTick(
     moduleId,
     gameDay,
     language,
-    registry,
+    definitions,
     tickRuntime,
     memoryManager,
     recordRevisionInterruption,
   });
 
-  // 6. Feature temporal tick — let each feature update its time/state-driven logic
-  for (const feature of registry.getAllFeatures()) {
-    feature.tick?.(dgsm, tickRuntime);
-  }
-
-  // 7. Feature overlay activation already done per-node in step 3b above.
-  //    (propagation sources registered there as well)
-
-  // 8. Drive feature propagation on schedule
-  for (const feature of registry.getAllFeatures()) {
-    if (!feature.propagation || !feature.propagate) continue;
-    if (!registry.shouldPropagationFire(feature.id, isFullTick)) continue;
-
-    const sources = registry.getPropagationSources(feature.id);
-    if (sources.length === 0) continue;
-
-    const nextSources: Array<{ sceneId: string; currentHop: number }> = [];
-
-    for (const source of sources) {
-      const propResult = await feature.propagate(
-        source.sceneId,
-        source.currentHop,
-        dgsm,
-        tickRuntime
-      );
-
-      // New scenes become sources at hop+1
-      for (const newSceneId of propResult.spreadTo) {
-        nextSources.push({
-          sceneId: newSceneId,
-          currentHop: source.currentHop + 1,
-        });
-      }
-      // Original source persists at hop+1
-      nextSources.push({
-        sceneId: source.sceneId,
-        currentHop: source.currentHop + 1,
-      });
-
-      // Collect propagation-injected nodes
-      if (propResult.newNodes?.length) {
-        injectedNodes.push(...propResult.newNodes);
-      }
-    }
-
-    registry.updatePropagationSources(feature.id, nextSources);
-  }
+  // Phase E1: feature temporal tick + propagation (steps 6-8) used to live
+  // here, driven by GameEngineRegistry.getAllFeatures() / propagation state.
+  // Both the feature loop and the propagation state machine were deleted
+  // alongside the legacy registry — the Phase D TickEngine now owns
+  // WorldFeature.onTick() and WorldFeature.onPropagate(). The legacy
+  // tickProcessor (this file) is slated for deletion in Task E7.
+  void isFullTick;
 
   // Drain sanity-triggered emotions (clear from pending queue; no longer persisted as memory)
   drainPendingEmotions(dgsm);
@@ -785,7 +696,7 @@ export async function runSimulationTick(params: {
   sessionId: string;
   moduleId: string;
   language: string;
-  registry: GameEngineRegistry;
+  definitions: ActionDefinitionRegistry;
   ctx: ExecutionContext;
   memoryManager?: NpcMemoryManager;
   previousEncounterSignatures?: ReadonlySet<string>;

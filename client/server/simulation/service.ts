@@ -9,7 +9,7 @@ import {
   getWeatherLabel,
 } from "../../../src/engine/features/weatherFeature.js";
 import {
-  createDefaultRegistry,
+  createDefaultDefinitions,
   createExecutionContext,
 } from "../../../src/engine/index.js";
 import { NpcMemoryManager } from "../../../src/memory/NpcMemoryManager.js";
@@ -153,8 +153,8 @@ function buildSimulationBundle(params: {
 } {
   const db = DatabaseManager.getInstance().getDatabase();
   const dgsm = new DynamicGameStateManager(params.gameState, db);
-  const registry = createDefaultRegistry();
-  const ctx = createExecutionContext(registry);
+  const definitions = createDefaultDefinitions();
+  const ctx = createExecutionContext();
   const provider =
     (process.env.MODEL_PROVIDER as ModelProviderName) ??
     ModelProviderName.OPENAI;
@@ -174,7 +174,7 @@ function buildSimulationBundle(params: {
     config: params.config,
     dgsm,
     npcPlanningAgent,
-    registry,
+    definitions,
     ctx,
     language: params.language,
     memoryManager,

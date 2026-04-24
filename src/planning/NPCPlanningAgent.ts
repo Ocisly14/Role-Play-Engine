@@ -1,5 +1,5 @@
 import type { PrismaClient } from "@prisma/client";
-import type { GameEngineRegistry } from "../engine/registry.js";
+import type { ActionDefinitionRegistry } from "../engine/definitions/registry.js";
 import { getTopologyNeighbors } from "../engine/shared/topologyHelpers.js";
 import { t } from "../i18n/t.js";
 import type { NpcMemoryManager } from "../memory/NpcMemoryManager.js";
@@ -315,7 +315,7 @@ export class NPCPlanningAgent {
     moduleId: string,
     gameDay: number,
     language = "en",
-    registry?: GameEngineRegistry
+    definitions?: ActionDefinitionRegistry
   ): Promise<void> {
     // Delegate to two-tier schedule generation
     await this.generateDailySchedule(
@@ -324,7 +324,7 @@ export class NPCPlanningAgent {
       moduleId,
       gameDay,
       language,
-      registry
+      definitions
     );
   }
 
@@ -334,7 +334,7 @@ export class NPCPlanningAgent {
     moduleId: string,
     gameDay: number,
     language = "en",
-    registry?: GameEngineRegistry
+    definitions?: ActionDefinitionRegistry
   ): Promise<void> {
     const npcs = dgsm.getSimulatedNpcs();
 
@@ -347,7 +347,7 @@ export class NPCPlanningAgent {
           npc.id,
           gameDay,
           language,
-          registry
+          definitions
         );
       })
     );
@@ -360,7 +360,7 @@ export class NPCPlanningAgent {
     npcId: string,
     gameDay: number,
     language = "en",
-    registry?: GameEngineRegistry
+    definitions?: ActionDefinitionRegistry
   ): Promise<void> {
     const state = dgsm.getState();
     const npc = state.npcCharacters.find((n) => n.id === npcId);
@@ -397,7 +397,7 @@ export class NPCPlanningAgent {
       dgsm,
       npc.id,
       npcLocation,
-      registry
+      definitions
     );
 
     const moduleBackground =
@@ -472,7 +472,7 @@ export class NPCPlanningAgent {
     npcId: string,
     gameDay: number,
     language = "en",
-    registry?: GameEngineRegistry
+    definitions?: ActionDefinitionRegistry
   ): Promise<PlanNode | null> {
     const state = dgsm.getState();
     const npc = state.npcCharacters.find((n) => n.id === npcId);
@@ -527,7 +527,7 @@ export class NPCPlanningAgent {
       dgsm,
       npcId,
       currentLocationId,
-      registry
+      definitions
     );
     const { townMap, yourLocation } = this.formatSceneMap(
       dgsm,
@@ -577,13 +577,11 @@ export class NPCPlanningAgent {
       currentTime: state.timeOfDay,
       gameDay,
       language,
-      handlerPrompt: registry?.buildHandlerPrompt(),
-      planningPrompt: registry?.buildPlanningPrompt(),
-      outputSchemaPrompt: registry?.buildOutputSchemaPrompt({
-        extraInstructions:
-          "Use the current time as the default startTime for the first node. Always include both startTime and endTime.",
-        language,
-      }),
+      // handlerPrompt / planningPrompt / outputSchemaPrompt previously came
+      // from the legacy GameEngineRegistry's buildXxx helpers. Phase E1
+      // removed those helpers; the templates fall back to their built-in
+      // defaults when these fields are omitted. A future phase will route
+      // the new ActionDefinitionRegistry through dedicated prompt builders.
       moduleBackground,
     });
 
@@ -662,7 +660,7 @@ export class NPCPlanningAgent {
     gameDay: number,
     currentTime: string,
     language = "en",
-    registry?: GameEngineRegistry
+    definitions?: ActionDefinitionRegistry
   ): Promise<void> {
     if (!dgsm.isNpcAlive(npcId)) return;
 
@@ -700,7 +698,7 @@ export class NPCPlanningAgent {
           npcId,
           gameDay,
           language,
-          registry
+          definitions
         );
       }
     }
@@ -719,7 +717,7 @@ export class NPCPlanningAgent {
       npcId,
       gameDay,
       language,
-      registry
+      definitions
     );
   }
 
@@ -729,7 +727,7 @@ export class NPCPlanningAgent {
     npcId: string,
     triggerDescription: string,
     language = "en",
-    registry?: GameEngineRegistry
+    definitions?: ActionDefinitionRegistry
   ): Promise<void> {
     const state = dgsm.getState();
     const npc = state.npcCharacters.find((n) => n.id === npcId);
@@ -785,7 +783,7 @@ export class NPCPlanningAgent {
         dgsm,
         npcId,
         npcLocation,
-        registry
+        definitions
       ),
       remainingSchedule: JSON.stringify(schedule, null, 2),
       triggerDescription,
@@ -1319,7 +1317,7 @@ export class NPCPlanningAgent {
     moduleId: string,
     gameDay: number,
     language = "en",
-    registry?: GameEngineRegistry
+    definitions?: ActionDefinitionRegistry
   ): Promise<void> {
     const previousDay = gameDay - 1;
 
@@ -1340,7 +1338,7 @@ export class NPCPlanningAgent {
       moduleId,
       gameDay,
       language,
-      registry
+      definitions
     );
 
     console.log(
@@ -1694,18 +1692,16 @@ export class NPCPlanningAgent {
     dgsm: DynamicGameStateManager,
     npcId: string,
     npcLocation?: string,
-    registry?: GameEngineRegistry
+    _definitions?: ActionDefinitionRegistry
   ): string {
-    if (!registry) return "";
+    // Phase E1: the legacy GameEngineRegistry-driven weather/feature prompt
+    // path was removed. The new TickEngine surfaces world-state through
+    // WorldFeature.stateDescription(ctx), which is reached from the Phase D
+    // shared/worldStateBlock helpers. The remaining sections below are
+    // pre-existing transitional code retained for the legacy tickProcessor
+    // until Task E7 deletes it.
     const state = dgsm.getState();
     const sections: string[] = [];
-
-    // Weather — global, always include
-    const weatherFeature = registry.getFeature("weather");
-    if (weatherFeature) {
-      const weatherState = weatherFeature.stateDescription(dgsm);
-      if (weatherState) sections.push(weatherState);
-    }
 
     // Fire — only fires the NPC can perceive (fire light reach)
     if (npcLocation) {

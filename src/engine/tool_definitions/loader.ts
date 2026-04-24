@@ -19,6 +19,8 @@ interface YamlFrontmatter {
   id?: string;
   title?: string;
   description?: string;
+  engine?: "code" | "llm";
+  codeSubsystem?: string;
   interpreter?: ActionDefinitionInterpreter;
   skillCheck?: ActionDefinitionSkillCheck;
   stateDomains?: Record<string, StateDomainSpec>;
@@ -65,8 +67,22 @@ function loadDefinitionFile(
     buildOutputSchema(frontmatter.outputSchema);
   }
   const title = frontmatter.title ?? parseTitle(body) ?? fallbackId;
+  const id = frontmatter.id ?? fallbackId;
+  const engine = frontmatter.engine;
+  if (engine !== "code" && engine !== "llm") {
+    throw new Error(
+      `Definition "${id}" must declare "engine" as "code" or "llm" in its YAML frontmatter`
+    );
+  }
+  if (engine === "code" && !frontmatter.codeSubsystem) {
+    throw new Error(
+      `Definition "${id}" declares engine: "code" but is missing "codeSubsystem"`
+    );
+  }
   return {
-    id: frontmatter.id ?? fallbackId,
+    id,
+    engine,
+    codeSubsystem: frontmatter.codeSubsystem,
     title,
     description: frontmatter.description ?? title,
     content: raw,

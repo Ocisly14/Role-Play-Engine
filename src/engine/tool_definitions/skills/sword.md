@@ -1,5 +1,6 @@
 ---
 id: sword
+engine: llm
 title: Sword
 description: "Melee attacks with swords, daggers, and bladed weapons — slashing, thrusting, and parrying. Does NOT cover axes, whips, brawling, or any ranged attack."
 

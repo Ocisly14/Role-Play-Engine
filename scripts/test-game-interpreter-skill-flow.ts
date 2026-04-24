@@ -4,7 +4,7 @@ import { existsSync } from "node:fs";
 import path from "node:path";
 import { interpretAction } from "../src/engine/interpreter/gameInterpreter.js";
 import { resolveOutputSchemaTypeIds } from "../src/engine/outputSchema.js";
-import { createDefaultRegistry } from "../src/engine/registerDefaults.js";
+import { createDefaultDefinitions } from "../src/engine/registerDefaults.js";
 import { applyStateResolution } from "../src/engine/resolver/applyStateResolution.js";
 import { buildStateContext } from "../src/engine/resolver/stateContextBuilder.js";
 import {
@@ -449,7 +449,7 @@ function getProviderLabel(): string {
 
 async function initializeBaseState(): Promise<{
   baseSerializedState: ReturnType<DynamicGameStateManager["serialize"]>;
-  registry: ReturnType<typeof createDefaultRegistry>;
+  definitions: ReturnType<typeof createDefaultDefinitions>;
   runtime: Record<string, unknown>;
 }> {
   const prisma = getPrismaClient();
@@ -486,11 +486,11 @@ async function initializeBaseState(): Promise<{
   });
 
   const baseSerializedState = new DynamicGameStateManager(state).serialize();
-  const registry = createDefaultRegistry();
+  const definitions = createDefaultDefinitions();
 
   return {
     baseSerializedState,
-    registry,
+    definitions,
     runtime: {},
   };
 }
@@ -623,17 +623,17 @@ function extractOutcomeSection(
 async function runCase(params: {
   testCase: GameInterpreterSkillFlowCase;
   baseSerializedState: ReturnType<DynamicGameStateManager["serialize"]>;
-  registry: ReturnType<typeof createDefaultRegistry>;
+  definitions: ReturnType<typeof createDefaultDefinitions>;
   runtime: Record<string, unknown>;
 }): Promise<CaseExecutionResult> {
-  const { testCase, baseSerializedState, registry, runtime } = params;
+  const { testCase, baseSerializedState, definitions, runtime } = params;
   const dgsm = buildFreshDgsm(baseSerializedState);
   stageCaseState(dgsm, testCase);
 
-  const definitions = registry.getAllDefinitions();
+  const defList = definitions.getAll();
   const interpreted = await interpretAction(
     testCase.actionText,
-    definitions,
+    defList,
     runtime,
     LANGUAGE
   );
@@ -699,8 +699,7 @@ async function runCase(params: {
   }
 
   const definition =
-    registry.getDefinition(primaryStep.definitionId) ??
-    registry.getDefinition("action");
+    definitions.get(primaryStep.definitionId) ?? definitions.get("action");
   if (!definition) {
     result.error = `Definition "${primaryStep.definitionId}" not found`;
     result.resolver.skippedReason = "definition_missing";
@@ -731,7 +730,6 @@ async function runCase(params: {
     node.skill,
     dgsm,
     testCase.executionSceneId,
-    registry,
     node.targetCharacterIds
   );
 
@@ -763,8 +761,7 @@ async function runCase(params: {
     definition,
     node,
     dgsm,
-    testCase.executionSceneId,
-    registry
+    testCase.executionSceneId
   );
   const outcomeSection = extractOutcomeSection(
     definition,
@@ -1204,7 +1201,7 @@ async function main(): Promise<void> {
     `Running ${pendingCases.length} case(s) (of ${selectedCases.length}) against ${MODULE_NAME} with provider=${getProviderLabel()}`
   );
 
-  const { baseSerializedState, registry, runtime } =
+  const { baseSerializedState, definitions, runtime } =
     await initializeBaseState();
   const results: CaseExecutionResult[] = [...priorResults];
 
@@ -1214,7 +1211,7 @@ async function main(): Promise<void> {
       const result = await runCase({
         testCase,
         baseSerializedState,
-        registry,
+        definitions,
         runtime,
       });
       results.push(result);

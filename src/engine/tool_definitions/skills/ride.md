@@ -1,5 +1,6 @@
 ---
 id: ride
+engine: llm
 title: Ride
 description: "Controlling a horse or other riding animal in challenging conditions. Does NOT cover driving automobiles, operating motorcycles, or piloting any vehicle."
 

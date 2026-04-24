@@ -1,5 +1,6 @@
 ---
 id: perception
+engine: llm
 title: Perception
 description: "Noticing things that are physically hidden or deliberately concealed — secret doors and compartments, hidden intruders or ambushers, inconspicuous physical clues, disguises, or small details out of place in the immediate environment. Does NOT cover hearing sounds (Listen), identifying symbols/records/artifacts (Occult/Research/Archaeology/Law/History), tracking trails (Track), or reading people (Psychology)."
 

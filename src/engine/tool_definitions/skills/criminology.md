@@ -1,5 +1,6 @@
 ---
 id: criminology
+engine: llm
 title: Criminology
 description: "Forensic analysis of crime scenes — interpreting blood spatter, fingerprints, wound patterns, and criminal MO to reconstruct events and profile the perpetrator. Does NOT cover general visual searching (Perception/Spot Hidden), following trails (Track), or finding records (Research/Library Use)."
 

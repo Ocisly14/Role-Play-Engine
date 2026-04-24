@@ -1,5 +1,6 @@
 ---
 id: mechanical_repair
+engine: llm
 title: Mechanical Repair
 description: "Diagnose, fix, modify, or build mechanical devices — engines, gears, clockwork, and mechanical locks. Does NOT cover electrical systems (Electrical Repair) or passive observation."
 

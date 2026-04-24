@@ -1,5 +1,6 @@
 ---
 id: pilot_boat
+engine: llm
 title: "Pilot (Boat)"
 description: "Operating boats and ships on water — navigating channels, storms, and docking maneuvers. Does NOT cover ground vehicles (Drive Auto) or aircraft (Pilot Aircraft)."
 

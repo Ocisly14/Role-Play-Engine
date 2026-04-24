@@ -1,5 +1,6 @@
 ---
 id: climb
+engine: llm
 title: Climb
 description: "Scaling vertical or near-vertical surfaces using hands and feet. Does NOT cover stairs, ramps, jumping across gaps, or swimming."
 

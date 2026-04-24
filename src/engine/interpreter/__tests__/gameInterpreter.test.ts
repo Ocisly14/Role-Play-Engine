@@ -8,6 +8,7 @@ import {
 const mockDefinitions: ActionDefinition[] = [
   {
     id: "movement",
+    engine: "llm",
     title: "Movement",
     description: "Move to a different location",
     content: "",
@@ -15,6 +16,7 @@ const mockDefinitions: ActionDefinition[] = [
   },
   {
     id: "combat",
+    engine: "llm",
     title: "Combat",
     description: "Physical combat between characters",
     content: "",
@@ -29,6 +31,7 @@ const mockDefinitions: ActionDefinition[] = [
   },
   {
     id: "social",
+    engine: "llm",
     title: "Social Interaction",
     description: "Social interaction with characters",
     content: "",
@@ -43,6 +46,7 @@ const mockDefinitions: ActionDefinition[] = [
   },
   {
     id: "generic",
+    engine: "llm",
     title: "Generic Action",
     description: "Fallback for unmatched actions",
     content: "",

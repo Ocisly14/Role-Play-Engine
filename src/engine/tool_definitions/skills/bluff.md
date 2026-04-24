@@ -1,5 +1,6 @@
 ---
 id: bluff
+engine: llm
 title: Bluff
 description: "Fast Talk a target with quick lies or misdirection that are believed in the moment but may not hold up later. Does NOT cover Charm (genuine warmth), Intimidate (threats), or Persuade (rational argument)."
 

@@ -1,5 +1,6 @@
 ---
 id: axe
+engine: llm
 title: Axe
 description: "Melee attacks with axes and hatchets — chopping, cleaving, and hooking blows. Does NOT cover swords, whips, brawling, or any ranged attack."
 

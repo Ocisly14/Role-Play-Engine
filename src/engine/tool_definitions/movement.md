@@ -1,7 +1,9 @@
 ---
 id: movement
+engine: code
+codeSubsystem: movement
 title: Movement
-description: Move a character to a different location via topology pathfinding. Handled by movementTool (pure code), not StateResolver.
+description: Move a character to a different location via topology pathfinding. Handled by the CodeEngine movement subsystem (deterministic per-tick processor), not the LLM resolver.
 
 impactHint:
   default: 0

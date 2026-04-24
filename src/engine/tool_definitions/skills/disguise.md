@@ -1,5 +1,6 @@
 ---
 id: disguise
+engine: llm
 title: Disguise
 description: "Alter physical appearance through makeup, costume, or gait to impersonate another person or role. Does NOT cover verbal deception (Fast Talk/Persuade), environmental concealment (Stealth), or producing fake documents (Forgery)."
 

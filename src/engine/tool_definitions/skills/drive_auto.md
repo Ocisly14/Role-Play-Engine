@@ -1,5 +1,6 @@
 ---
 id: drive_auto
+engine: llm
 title: Drive Auto
 description: "Operating cars, trucks, and motorcycles on roads — chases, evasion, and hazardous driving conditions. Does NOT cover aircraft (Pilot Aircraft), watercraft (Pilot Boat), or heavy machinery."
 

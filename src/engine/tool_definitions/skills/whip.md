@@ -1,5 +1,6 @@
 ---
 id: whip
+engine: llm
 title: Whip
 description: "Melee attacks with a whip — lashing, entangling a limb, and disarming at close reach. Does NOT cover swords, axes, brawling, or any firearm or thrown attack."
 

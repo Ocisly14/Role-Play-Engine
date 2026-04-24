@@ -1,5 +1,6 @@
 ---
 id: dodge
+engine: llm
 title: Dodge
 description: "Reactive evasion of incoming attacks — sidestepping, ducking, diving, or tumbling clear. Does NOT involve attacking back, weapon parrying, or any offensive action."
 

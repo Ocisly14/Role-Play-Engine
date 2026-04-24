@@ -1,5 +1,6 @@
 ---
 id: character_interaction
+engine: llm
 title: Character Interaction
 description: "Any interaction with one or more target characters that is not covered by a specific skill — casual conversation, greetings, asking open questions, giving an order, leading or escorting, or non-manipulative information exchange. FALLBACK: use a specific skill when the interaction has a manipulative mode (Persuade / Charm / Intimidate / Bluff), therapeutic intent (Psychoanalysis), physical violence (Brawling / Axe / Sword / Whip / Firearms / Throw), or pure item handoff without dialogue (Item Exchange)."
 

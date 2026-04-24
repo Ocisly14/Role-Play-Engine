@@ -1,5 +1,6 @@
 ---
 id: electrical_repair
+engine: llm
 title: Electrical Repair
 description: "Diagnose, fix, modify, or build electrical systems — wiring, circuits, electronics, radios, electrical locks. Does NOT cover passive observation (Spot Hidden) or general physics knowledge (Science: Physics)."
 

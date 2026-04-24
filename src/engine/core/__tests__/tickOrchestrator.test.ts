@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import { DynamicGameStateManager } from "../../../state/DynamicGameState.js";
+import { createDefaultCodeEngineRegistry } from "../../codeEngine/registry.js";
 import { Applier } from "../applier.js";
 import { EmergentEventEmitter } from "../emergentEventEmitter.js";
 import { FeatureRunner } from "../featureRunner.js";
@@ -69,6 +70,7 @@ describe("TickOrchestrator", () => {
       emergentEventEmitter: emitter,
       applier,
       resolve: vi.fn(),
+      codeEngineRegistry: createDefaultCodeEngineRegistry(),
       tickDurationMinutes: 1,
       lang: "en",
       hasInitialized: true,

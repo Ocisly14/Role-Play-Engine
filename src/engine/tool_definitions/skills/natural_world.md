@@ -1,5 +1,6 @@
 ---
 id: natural_world
+engine: llm
 title: Natural World
 description: "Folk-level knowledge of plants, animals, and weather — identifying species, reading omens in nature, and predicting conditions. Does NOT cover scientific classification (Biology), route-finding (Navigate), tracking (Track), or terrain survival."
 

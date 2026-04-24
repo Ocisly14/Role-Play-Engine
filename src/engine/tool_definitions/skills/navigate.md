@@ -1,5 +1,6 @@
 ---
 id: navigate
+engine: llm
 title: Navigate
 description: "Determining direction and plotting courses using maps, compasses, stars, and landmarks across any terrain. Does NOT cover plant/animal knowledge (Natural World), tracking (Track), or terrain-specific survival."
 

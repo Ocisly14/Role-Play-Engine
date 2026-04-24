@@ -1,4 +1,6 @@
 import type { DynamicGameStateManager } from "../../state/DynamicGameState.js";
+import type { CodeEngineRegistry } from "../codeEngine/registry.js";
+import { makeCodeEngineContext } from "../codeEngine/types.js";
 import type { Applier } from "./applier.js";
 import type { EmergentEventEmitter } from "./emergentEventEmitter.js";
 import { makeDGSMFeatureReadContext } from "./featureReadContext.js";
@@ -40,6 +42,13 @@ export interface OrchestratorDeps {
   emergentEventEmitter: EmergentEventEmitter;
   applier: Applier;
   resolve: ResolveFn;
+  /**
+   * Per-step CodeEngine subsystems keyed by `ActionDefinition.codeSubsystem`
+   * (e.g. `"movement"`). When an `ActionStep` carries `engine === "code"`,
+   * the orchestrator routes activation + per-tick advance through the
+   * matching subsystem instead of the resolver. See §E-dual-engine.
+   */
+  codeEngineRegistry: CodeEngineRegistry;
   tickDurationMinutes: number;
   lang: string;
   /**
@@ -143,11 +152,27 @@ export class TickOrchestrator {
     }
     this.pendingInterrupts = [];
 
-    // Phase 3: activate idle actors
+    // Phase 3: activate idle actors. Dispatch on `step.engine`:
+    //   - "code" → call CodeEngineSubsystem.onActivate; the result is
+    //     terminal (completed/failed) within this tick or moves the step into
+    //     the active pool for per-tick advancement (Phase 3.5).
+    //   - "llm"  → call the resolver, then mark active and let the existing
+    //     completionTime-based commit logic in Phase 4 finalize.
     const actorIds = this.getIdleActorIds();
     for (const actorId of actorIds) {
       const next = queue.nextIdleForActor(actorId);
       if (!next) continue;
+
+      if (next.engine === "code") {
+        await this.activateCodeStep(
+          next,
+          nextTickTime,
+          buffer,
+          commitsThisTick,
+        );
+        continue;
+      }
+
       const readCtx = makeDGSMFeatureReadContext(dgsm, {
         callerFeatureId: "__resolver__",
         callerScope: "global",
@@ -160,12 +185,33 @@ export class TickOrchestrator {
       queue.markActive(next.id);
     }
 
-    // Phase 4: commit due steps
+    // Phase 3.5: advance any active code-engine steps that did not terminate
+    // on activation. Each tick calls `subsystem.onTick(step, ctx)` until the
+    // subsystem reports completed or failed.
+    for (const step of queue.snapshotAll()) {
+      if (step.status !== "active" || step.engine !== "code") continue;
+      // Skip steps that were just activated this tick (their onActivate
+      // already produced this tick's StateChanges). We detect "this tick" by
+      // comparing activatedAt to nextTickTime.
+      if (
+        step.activatedAt &&
+        step.activatedAt.day === nextTickTime.day &&
+        step.activatedAt.tickTime === nextTickTime.tickTime
+      ) {
+        continue;
+      }
+      this.advanceCodeStep(step, nextTickTime, buffer, commitsThisTick);
+    }
+
+    // Phase 4: commit due LLM-driven steps. Code-engine steps were already
+    // committed by activateCodeStep / advanceCodeStep above and so will not
+    // appear in this filter.
     const due = queue
       .snapshotAll()
       .filter(
         (s) =>
           s.status === "active" &&
+          s.engine !== "code" &&
           this.timeIsAtOrBefore(s.completionTime, nextTickTime),
       );
 
@@ -265,6 +311,77 @@ export class TickOrchestrator {
   }
 
   // --- helpers ---
+
+  /**
+   * Activate a code-engine step. Calls `subsystem.onActivate(step, ctx)` and:
+   *   - Pushes any returned StateChanges into the buffer (Applier flushes
+   *     them in Phase 9).
+   *   - If completed/failed: marks the step terminal, surfaces a
+   *     CharacterAction commit so downstream listeners see the action close.
+   *   - Otherwise: marks the step active so Phase 3.5 will drive it forward
+   *     each subsequent tick via `subsystem.onTick`.
+   */
+  private async activateCodeStep(
+    step: ActionStep,
+    nextTickTime: GameTime,
+    buffer: StateChange[],
+    commitsThisTick: CharacterAction[],
+  ): Promise<void> {
+    const subsystem = step.codeSubsystem
+      ? this.deps.codeEngineRegistry.get(step.codeSubsystem)
+      : undefined;
+    if (!subsystem) {
+      throw new Error(
+        `TickOrchestrator: ActionStep ${step.id} declares engine="code" but codeSubsystem "${step.codeSubsystem}" is not registered`,
+      );
+    }
+    const ctx = this.makeCodeCtx();
+    const result = subsystem.onActivate(step, ctx);
+    buffer.push(...result.stateChanges);
+    step.activatedAt = nextTickTime;
+    this.deps.queue.markActive(step.id);
+    if (result.failed || result.completed) {
+      step.completionTime = nextTickTime;
+      this.deps.queue.markCompleted(step.id);
+      commitsThisTick.push(this.stepToAction(step, nextTickTime));
+    }
+  }
+
+  /**
+   * Drive an in-flight code-engine step forward by one tick. Pushes
+   * StateChanges and surfaces a commit on terminal results.
+   */
+  private advanceCodeStep(
+    step: ActionStep,
+    nextTickTime: GameTime,
+    buffer: StateChange[],
+    commitsThisTick: CharacterAction[],
+  ): void {
+    const subsystem = step.codeSubsystem
+      ? this.deps.codeEngineRegistry.get(step.codeSubsystem)
+      : undefined;
+    if (!subsystem) {
+      throw new Error(
+        `TickOrchestrator: ActionStep ${step.id} declares engine="code" but codeSubsystem "${step.codeSubsystem}" is not registered`,
+      );
+    }
+    const ctx = this.makeCodeCtx();
+    const result = subsystem.onTick(step, ctx);
+    buffer.push(...result.stateChanges);
+    if (result.failed || result.completed) {
+      step.completionTime = nextTickTime;
+      this.deps.queue.markCompleted(step.id);
+      commitsThisTick.push(this.stepToAction(step, nextTickTime));
+    }
+  }
+
+  private makeCodeCtx() {
+    const base = makeDGSMFeatureReadContext(this.deps.dgsm, {
+      callerFeatureId: "__codeEngine__",
+      callerScope: "global",
+    });
+    return makeCodeEngineContext(base, this.deps.dgsm);
+  }
 
   private applyPendingInterrupt(
     req: PendingInterrupt,

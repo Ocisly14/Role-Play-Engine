@@ -1,5 +1,6 @@
 ---
 id: archaeology
+engine: llm
 title: Archaeology
 description: "Date and interpret artifacts, ruins, and material remains of ancient or extinct cultures through expert analysis of construction, stratigraphy, and provenance. Does NOT cover living cultures (Anthropology), item valuation (Appraise), passive observation (Spot Hidden), or document lookup (Research/Library Use)."
 

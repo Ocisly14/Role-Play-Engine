@@ -229,6 +229,10 @@ export class Applier {
           this.dgsm.markItemDamaged(c.sceneId, c.itemId, c.damagedBy, c.reason);
           break;
         }
+        case "character.position": {
+          this.dgsm.setCharacterPosition(c.characterId, c.position);
+          break;
+        }
         default:
           break;
       }

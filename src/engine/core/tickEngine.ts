@@ -1,4 +1,8 @@
 import type { DynamicGameStateManager } from "../../state/DynamicGameState.js";
+import {
+  type CodeEngineRegistry,
+  createDefaultCodeEngineRegistry,
+} from "../codeEngine/registry.js";
 import type { ScriptedEvent } from "../scriptedEvents/types.js";
 import { ActionIntake } from "./actionIntake.js";
 import { Applier } from "./applier.js";
@@ -67,6 +71,13 @@ export interface CreateTickEngineOptions {
   tickDurationMinutes: number;
   /** Session language code (e.g., "en", "zh") — passed through to ScannerContext. */
   lang: string;
+  /**
+   * Optional CodeEngineRegistry for `engine: "code"` action dispatch. Defaults
+   * to `createDefaultCodeEngineRegistry()` (movement only in Phase E). Tests
+   * and plugins can supply a custom registry to register additional
+   * subsystems or replace the defaults.
+   */
+  codeEngineRegistry?: CodeEngineRegistry;
   persistedState?: {
     queue: ActionStep[];
     dexByActor: Record<string, number>;
@@ -97,6 +108,8 @@ export function createTickEngine(opts: CreateTickEngineOptions): TickEngine {
     );
     applier.rehydrateConnectionVotes(opts.persistedState.connectionVotes);
   }
+  const codeEngineRegistry =
+    opts.codeEngineRegistry ?? createDefaultCodeEngineRegistry();
   const orchestrator = new TickOrchestrator({
     dgsm: opts.dgsm,
     queue,
@@ -105,6 +118,7 @@ export function createTickEngine(opts: CreateTickEngineOptions): TickEngine {
     emergentEventEmitter: emergent,
     applier,
     resolve: opts.resolve,
+    codeEngineRegistry,
     tickDurationMinutes: opts.tickDurationMinutes,
     lang: opts.lang,
     // Rehydrated sessions ship the post-init snapshot; fresh sessions need

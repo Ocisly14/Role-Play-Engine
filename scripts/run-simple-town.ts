@@ -11,7 +11,7 @@ import fs from "fs";
 import path from "path";
 import { PrismaClient } from "@prisma/client";
 import { createExecutionContext } from "../src/engine/executionContext.js";
-import { createDefaultRegistry } from "../src/engine/registerDefaults.js";
+import { createDefaultDefinitions } from "../src/engine/registerDefaults.js";
 import { NpcMemoryManager } from "../src/memory/NpcMemoryManager.js";
 import { ModelProviderName } from "../src/models/types.js";
 import { NPCPlanningAgent } from "../src/planning/NPCPlanningAgent.js";
@@ -82,8 +82,8 @@ async function main() {
           where: { sessionId: SESSION_ID },
         });
 
-    const registry = createDefaultRegistry();
-    const ctx = createExecutionContext(registry);
+    const definitions = createDefaultDefinitions();
+    const ctx = createExecutionContext();
     const memoryManager = new NpcMemoryManager(prisma, embedClient, LANGUAGE);
     const npcPlanningAgent = new NPCPlanningAgent(prisma, {}, memoryManager);
 
@@ -176,7 +176,7 @@ async function main() {
         moduleId,
         gameDay,
         LANGUAGE,
-        registry
+        definitions
       );
       printSchedules(dgsm, npcPlanningAgent, moduleData.npcs, gameDay);
     }
@@ -191,7 +191,7 @@ async function main() {
       },
       dgsm,
       npcPlanningAgent,
-      registry,
+      definitions,
       ctx,
       language: LANGUAGE,
       memoryManager,

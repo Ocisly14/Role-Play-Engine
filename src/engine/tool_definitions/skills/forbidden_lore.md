@@ -1,5 +1,6 @@
 ---
 id: forbidden_lore
+engine: llm
 title: Forbidden Lore
 description: "Genuine eldritch knowledge of the Cthulhu Mythos — Great Old Ones, Mythos entities, and forbidden texts whose truths erode sanity. Does NOT cover mundane folklore or magical traditions (Occult)."
 

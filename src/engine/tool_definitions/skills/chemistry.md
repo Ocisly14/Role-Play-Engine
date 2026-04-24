@@ -1,5 +1,6 @@
 ---
 id: chemistry
+engine: llm
 title: Chemistry
 description: "Analyze chemical composition, synthesize compounds, and reason about reactions, poisons, and materials through expert laboratory knowledge. Does NOT cover biological organisms (Biology), pharmaceutical treatment (Medicine), or passive observation (Spot Hidden)."
 

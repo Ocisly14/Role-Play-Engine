@@ -1,5 +1,6 @@
 ---
 id: survival_desert
+engine: llm
 title: Survival (Desert)
 description: "Surviving hot, arid environments — locating hidden water, rationing supplies, building sun shelters, and traveling safely across dunes and rock flats. Does NOT cover Navigate, arctic survival, or forest survival."
 

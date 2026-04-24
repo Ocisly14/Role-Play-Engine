@@ -1,5 +1,6 @@
 ---
 id: locksmith
+engine: llm
 title: Locksmith
 description: "Bypass, pick, or crack physical locks and safes using lockpicking tools or safecracking techniques. Does NOT cover repairing lock mechanisms (Mechanical Repair) or defeating electrical alarm systems (Electrical Repair)."
 

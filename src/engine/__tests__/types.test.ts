@@ -9,6 +9,7 @@ describe("engine types", () => {
   it("ActionDefinition has required fields", () => {
     const def: ActionDefinition = {
       id: "combat",
+      engine: "llm",
       title: "Combat",
       description: "Physical combat between characters",
       content: "# Combat\n## Skill Check\n...",
@@ -28,8 +29,8 @@ describe("engine types", () => {
   it("InterpretedResult contains ordered steps", () => {
     const result: InterpretedResult = {
       steps: [
-        { definitionId: "movement", impact: 0 },
-        { definitionId: "social", impact: 1 },
+        { definitionId: "movement", impact: 0, engine: "llm" },
+        { definitionId: "social", impact: 1, engine: "llm" },
       ],
     };
     expect(result.steps).toHaveLength(2);

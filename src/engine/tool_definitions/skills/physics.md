@@ -1,5 +1,6 @@
 ---
 id: physics
+engine: llm
 title: Physics
 description: "Apply expert knowledge of mechanics, optics, thermodynamics, and material forces to analyze physical phenomena and calculate outcomes. Does NOT cover chemical properties (Chemistry), equipment repair (Mechanical/Electrical Repair), or passive observation (Spot Hidden)."
 

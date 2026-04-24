@@ -16,7 +16,7 @@
 import path from "node:path";
 import { PrismaClient } from "@prisma/client";
 import { createExecutionContext } from "../src/engine/executionContext.js";
-import { createDefaultRegistry } from "../src/engine/registerDefaults.js";
+import { createDefaultDefinitions } from "../src/engine/registerDefaults.js";
 import { NpcMemoryManager } from "../src/memory/NpcMemoryManager.js";
 import { getModelSettings } from "../src/models/index.js";
 import { ModelClass, ModelProviderName } from "../src/models/types.js";
@@ -386,8 +386,8 @@ async function main(): Promise<void> {
           where: { sessionId: SESSION_ID },
         });
 
-    const registry = createDefaultRegistry();
-    const ctx = createExecutionContext(registry);
+    const definitions = createDefaultDefinitions();
+    const ctx = createExecutionContext();
     const memoryManager = new NpcMemoryManager(prisma, embedClient, LANGUAGE);
     const npcPlanningAgent = new NPCPlanningAgent(prisma, {}, memoryManager);
 
@@ -505,7 +505,7 @@ async function main(): Promise<void> {
         moduleId,
         startDay,
         LANGUAGE,
-        registry
+        definitions
       );
     }
 
@@ -518,7 +518,7 @@ async function main(): Promise<void> {
       },
       dgsm,
       npcPlanningAgent,
-      registry,
+      definitions,
       ctx,
       language: LANGUAGE,
       memoryManager,

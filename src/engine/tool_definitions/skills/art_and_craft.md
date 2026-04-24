@@ -1,5 +1,6 @@
 ---
 id: art_and_craft
+engine: llm
 title: Art and Craft
 description: "Specialization-based creative work — Painting, Sculpture, Writing, Photography, Cooking, or Carpentry — including creation, restoration, and authentication. Does NOT cover social storytelling (Bluff/Charm) or languages."
 

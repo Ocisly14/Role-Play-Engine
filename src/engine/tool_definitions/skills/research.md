@@ -1,5 +1,6 @@
 ---
 id: research
+engine: llm
 title: Research
 description: "Finding specific information in libraries, archives, newspapers, databases, or other written and recorded sources. Does NOT cover physical scene observation (Perception/Spot Hidden), dating or authenticating artifacts (Archaeology), or identifying occult knowledge (Occult)."
 

@@ -1,5 +1,6 @@
 ---
 id: swim
+engine: llm
 title: Swim
 description: "Staying afloat and moving through water under one's own power. Does NOT cover piloting boats, riding rafts, or climbing out of water."
 

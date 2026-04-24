@@ -1,5 +1,6 @@
 ---
 id: brawling
+engine: llm
 title: Brawling
 description: "Unarmed melee or improvised-weapon attacks — punching, kicking, grappling, headbutting, and striking with held objects not defined as weapons. Does NOT cover axe, sword, whip, or any ranged attack."
 

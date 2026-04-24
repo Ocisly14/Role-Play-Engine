@@ -1,5 +1,6 @@
 ---
 id: persuade
+engine: llm
 title: Persuade
 description: "Convince a target to change their belief or action through rational argument, evidence, or negotiation — producing a lasting mind-change. Does NOT cover Bluff (quick deception), Charm (emotional warmth), or Intimidate (threats)."
 

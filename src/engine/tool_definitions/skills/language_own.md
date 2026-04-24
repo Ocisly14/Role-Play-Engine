@@ -1,5 +1,6 @@
 ---
 id: language_own
+engine: llm
 title: Language (Own)
 description: "Master the native language through rhetoric, nuanced writing, and deciphering archaic or highly technical native-language texts. Does NOT cover Language (Other) (foreign languages) or Library Use (research navigation)."
 

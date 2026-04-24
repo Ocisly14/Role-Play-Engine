@@ -20,8 +20,8 @@ import type {
   DynamicScene,
   Item,
 } from "../../state/types.js";
-import { createDefaultRegistry } from "../registerDefaults.js";
-import type { GameEngineRegistry } from "../registry.js";
+import type { ActionDefinitionRegistry } from "../definitions/registry.js";
+import { createDefaultDefinitions } from "../registerDefaults.js";
 import type { TickRuntimeContext } from "../types.js";
 
 // ===== World Fixtures =====
@@ -374,10 +374,13 @@ function makeRuntime(
 
 describe("Engine Integration — Blackwood Manor", () => {
   let dgsm: DynamicGameStateManager;
-  let registry: GameEngineRegistry;
+  // Preserved as `registry` to minimize churn in this already-broken legacy
+  // test file, which will be removed when the legacy tickProcessor is deleted
+  // in Task E7. The identifier points at the new ActionDefinitionRegistry.
+  let registry: ActionDefinitionRegistry;
   beforeAll(() => {
     dgsm = buildWorld();
-    registry = createDefaultRegistry();
+    registry = createDefaultDefinitions();
   });
 
   // ── 1. World Setup ──

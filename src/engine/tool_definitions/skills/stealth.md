@@ -1,5 +1,6 @@
 ---
 id: stealth
+engine: llm
 title: Stealth
 description: "Moving silently and staying visually unnoticed while in motion through an area. Does NOT cover static hiding while stationary, pickpocketing, or disguise."
 

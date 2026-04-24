@@ -1,5 +1,6 @@
 ---
 id: first_aid
+engine: llm
 title: First Aid
 description: "Emergency field treatment — bandaging wounds, stopping bleeding, and stabilizing an injured person on the spot. Does NOT cover professional diagnosis, surgery, or prescription (Medicine)."
 

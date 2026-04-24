@@ -1,5 +1,6 @@
 ---
 id: forgery
+engine: llm
 title: Forgery
 description: "Produce or alter fake documents, signatures, currency, or credentials to deceive scrutiny. Does NOT cover in-person impersonation (Disguise) or financial fraud through accounting (Accounting)."
 

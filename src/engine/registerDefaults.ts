@@ -1,25 +1,24 @@
+import type { WorldFeature } from "./core/worldFeature.js";
+import { ActionDefinitionRegistry } from "./definitions/registry.js";
 import { fireFeature } from "./features/fireFeature.js";
 import { itemDamageFeature } from "./features/itemDamageFeature.js";
 import { staminaFeature } from "./features/staminaFeature.js";
 import { sunFeature } from "./features/sunFeature.js";
 import { weatherFeature } from "./features/weatherFeature.js";
-import { GameEngineRegistry } from "./registry.js";
 import { loadActionDefinitions } from "./tool_definitions/loader.js";
 
-export function createDefaultRegistry(): GameEngineRegistry {
-  const registry = new GameEngineRegistry();
+export function getDefaultFeatures(): WorldFeature[] {
+  return [
+    weatherFeature,
+    sunFeature,
+    fireFeature,
+    staminaFeature,
+    itemDamageFeature,
+  ];
+}
 
-  // Features
-  registry.registerFeature(fireFeature);
-  registry.registerFeature(weatherFeature);
-  registry.registerFeature(sunFeature);
-  registry.registerFeature(staminaFeature);
-  registry.registerFeature(itemDamageFeature);
-
-  // Action definitions
-  for (const def of loadActionDefinitions()) {
-    registry.registerDefinition(def);
-  }
-
-  return registry;
+export function createDefaultDefinitions(): ActionDefinitionRegistry {
+  const reg = new ActionDefinitionRegistry();
+  for (const def of loadActionDefinitions()) reg.register(def);
+  return reg;
 }

@@ -1,5 +1,6 @@
 ---
 id: jump
+engine: llm
 title: Jump
 description: "Making an explicit leap across a gap, over an obstacle, or down from a height. Does NOT cover climbing vertical surfaces or swimming."
 

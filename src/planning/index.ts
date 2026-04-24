@@ -12,8 +12,9 @@ export type { SceneCondition } from "../engine/core/types.js";
 export { NPCPlanningAgent } from "./NPCPlanningAgent.js";
 export { runSimulationTick } from "../engine/runtime/tickProcessor.js";
 export {
-  GameEngineRegistry,
-  createDefaultRegistry,
+  ActionDefinitionRegistry,
+  createDefaultDefinitions,
+  getDefaultFeatures,
   createExecutionContext,
 } from "../engine/index.js";
 export type {

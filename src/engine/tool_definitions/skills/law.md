@@ -1,5 +1,6 @@
 ---
 id: law
+engine: llm
 title: Law
 description: "Interpret and apply knowledge of legal systems, statutes, rights, procedures, and jurisdictional rules through expert legal reasoning. Does NOT cover general document reading (Research/Library Use), historical legal scholarship (History), or passive observation (Spot Hidden)."
 

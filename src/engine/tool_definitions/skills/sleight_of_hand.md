@@ -1,5 +1,6 @@
 ---
 id: sleight_of_hand
+engine: llm
 title: Sleight of Hand
 description: "Quick, precise hand movements to conceal, produce, or swap small objects WHILE being observed by at least one person. Does NOT apply when simply picking up an unattended item with no one watching."
 

@@ -1,5 +1,6 @@
 ---
 id: medicine
+engine: llm
 title: Medicine
 description: "Professional medical knowledge — diagnosis, surgery, and prescription by a trained physician. Does NOT cover emergency field bandaging (First Aid), biology research, or handing someone a pill (item use)."
 

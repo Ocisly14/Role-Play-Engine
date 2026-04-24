@@ -13,8 +13,18 @@ describe("ActionIntake", () => {
     const queue = new Queue();
     fakeInterpret.mockResolvedValueOnce({
       steps: [
-        { definitionId: "walk", actionText: "walk to bar" } as InterpretedStep,
-        { definitionId: "order", actionText: "order whisky" } as InterpretedStep,
+        {
+          definitionId: "walk",
+          impact: 0,
+          engine: "llm",
+          actionText: "walk to bar",
+        } as InterpretedStep,
+        {
+          definitionId: "order",
+          impact: 0,
+          engine: "llm",
+          actionText: "order whisky",
+        } as InterpretedStep,
       ],
     });
     const intake = new ActionIntake({

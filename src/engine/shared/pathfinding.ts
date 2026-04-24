@@ -1,5 +1,5 @@
-import type { MovementStep } from "../../planning/types.js";
 import type { DynamicGameStateManager } from "../../state/DynamicGameState.js";
+import type { MovementStep } from "../core/types.js";
 import { hasBlockedConnection } from "../../state/blockedConnections.js";
 import type {
   CharacterPosition,

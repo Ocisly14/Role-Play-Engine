@@ -1,5 +1,6 @@
 ---
 id: accounting
+engine: llm
 title: Accounting
 description: "Expertly interpret financial records, ledgers, and accounts to detect fraud, embezzlement, or hidden assets. Does NOT cover general document reading (Research/Library Use) or legal interpretation (Law)."
 

@@ -1,5 +1,6 @@
 ---
 id: charm
+engine: llm
 title: Charm
 description: "Win genuine liking or favor from a target through personal charisma, warmth, or seduction. Does NOT cover Bluff (deception), Intimidate (threats/fear), or Persuade (logical argument)."
 

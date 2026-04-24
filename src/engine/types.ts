@@ -126,7 +126,7 @@ export interface NpcPlanningCapability {
     npcId: string,
     triggerDescription: string,
     language?: string,
-    registry?: import("./registry.js").GameEngineRegistry
+    definitions?: import("./definitions/registry.js").ActionDefinitionRegistry
   ): Promise<void>;
 }
 
@@ -301,6 +301,17 @@ export interface ActionDefinition {
   description: string;
   content: string;
   guidanceBody: string;
+  /**
+   * Dispatch discriminator. `"llm"` definitions are resolved by the LLM
+   * resolver pipeline; `"code"` definitions are dispatched to a
+   * `CodeEngineSubsystem` keyed by `codeSubsystem` (e.g. `"movement"`).
+   */
+  engine: "code" | "llm";
+  /**
+   * Required iff `engine === "code"`. Identifies which `CodeEngineSubsystem`
+   * handles steps generated from this definition.
+   */
+  codeSubsystem?: string;
   skillCheck?: ActionDefinitionSkillCheck;
   stateDomains?: Record<string, StateDomainSpec>;
   outputSchema?: OutputSchemaConfig;
@@ -314,6 +325,17 @@ export interface ActionDefinition {
 export interface InterpretedStep {
   definitionId: string;
   impact: 0 | 1 | 2 | 3 | 4 | 5;
+  /** Copied from the matched `ActionDefinition.engine`. */
+  engine: "code" | "llm";
+  /** Copied from the matched `ActionDefinition.codeSubsystem`, when present. */
+  codeSubsystem?: string;
+  /**
+   * Per-step overlay fields surfaced by the interpreter (e.g. movement's
+   * `destination` location ID). Merged into `ActionStep.overlayFields` by
+   * `ActionIntake`. Convention: code-engine subsystems read their inputs from
+   * here (e.g. `overlayFields.destination` for movement).
+   */
+  overlayFields?: Record<string, unknown>;
 }
 
 export interface InterpretedResult {

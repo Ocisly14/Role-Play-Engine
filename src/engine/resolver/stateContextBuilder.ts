@@ -1,6 +1,5 @@
 import type { PlanNode } from "../../planning/types.js";
 import type { DynamicGameStateManager } from "../../state/DynamicGameState.js";
-import type { GameEngineRegistry } from "../registry.js";
 import { buildWorldStateBlock } from "../shared/worldStateBlock.js";
 import type { ActionDefinition } from "../types.js";
 
@@ -249,8 +248,7 @@ export function buildStateContext(
   definition: ActionDefinition,
   node: PlanNode,
   dgsm: DynamicGameStateManager,
-  locationId: string,
-  registry?: GameEngineRegistry
+  locationId: string
 ): StateContext {
   const domains = definition.stateDomains;
   if (!domains) {
@@ -261,8 +259,7 @@ export function buildStateContext(
       worldStateSection: buildWorldStateBlock(
         dgsm,
         node.characterId,
-        locationId,
-        registry
+        locationId
       ),
     };
   }
@@ -324,8 +321,7 @@ export function buildStateContext(
   result.worldStateSection = buildWorldStateBlock(
     dgsm,
     node.characterId,
-    locationId,
-    registry
+    locationId
   );
 
   return result;

@@ -1,5 +1,6 @@
 ---
 id: biology
+engine: llm
 title: Biology
 description: "Identify species, analyze biological specimens, and interpret life processes — including pathogens, anatomy, and ecology — through expert scientific reasoning. Does NOT cover medical treatment (First Aid/Medicine), chemical composition analysis (Chemistry), or passive observation (Spot Hidden)."
 

@@ -1,5 +1,6 @@
 ---
 id: psychoanalysis
+engine: llm
 title: Psychoanalysis
 description: "Conduct long-term therapeutic treatment to recover Sanity and resolve mental disorders over multiple sessions of days or weeks. Does NOT cover Psychology (single-session insight), Persuade (rational argument), or Charm (social warmth)."
 

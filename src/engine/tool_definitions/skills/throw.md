@@ -1,5 +1,6 @@
 ---
 id: throw
+engine: llm
 title: Throw
 description: "Hurling an object at a target — rocks, knives, grenades, and other thrown items. Does NOT cover point-blank melee strikes, firearms, bows, or unarmed grappling."
 

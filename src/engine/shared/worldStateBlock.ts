@@ -7,7 +7,6 @@
  */
 
 import type { DynamicGameStateManager } from "../../state/DynamicGameState.js";
-import type { GameEngineRegistry } from "../registry.js";
 import { getTopologyNeighbors } from "./topologyHelpers.js";
 
 // ─── Fire perception ─────────────────────────────────────────────────
@@ -83,25 +82,19 @@ function buildPerceivedFireState(
 /**
  * Build a world-state prompt block scoped to a specific character + location.
  *
- * Includes: weather (global), fire (perception-based), stamina & sanity
- * (character-specific). Returns empty string when registry is absent or
- * no features have meaningful state.
+ * Phase E1: the legacy GameEngineRegistry-based weather lookup was removed.
+ * Weather state will be re-added through the Phase D WorldFeature
+ * `stateDescription(ctx)` channel in a follow-up phase. The remaining
+ * sections (fire perception, stamina, sanity, conditions) read directly
+ * from `dgsm` and are kept as-is so the legacy tickProcessor still produces
+ * a meaningful world-state block until Task E7 deletes that path.
  */
 export function buildWorldStateBlock(
   dgsm: DynamicGameStateManager,
   characterId: string,
-  location: string,
-  registry?: GameEngineRegistry
+  location: string
 ): string {
-  if (!registry) return "";
   const sections: string[] = [];
-
-  // Weather — global, always include
-  const weatherFeature = registry.getFeature("weather");
-  if (weatherFeature) {
-    const weatherState = weatherFeature.stateDescription(dgsm);
-    if (weatherState) sections.push(weatherState);
-  }
 
   // Fire — only fires the character can perceive
   if (location) {

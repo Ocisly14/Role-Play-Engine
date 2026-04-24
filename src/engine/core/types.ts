@@ -1,9 +1,28 @@
 // StateResolution currently lives at src/engine/types.ts (marked @deprecated there).
 // Cleaning up resolver output types is out of scope for this refactor; we use
 // the type as-is for now.
+import type { CharacterPosition } from "../../state/topologyTypes.js";
 import type { StateResolution } from "../types.js";
 
 export type FeatureStateScope = "scene" | "region" | "character" | "global";
+
+/**
+ * One leg of a movement route — junction-to-junction segments produced by
+ * pathfinding. Used by the CodeEngine movement subsystem (and re-exported from
+ * `planning/types.ts` for any straggling caller still on the legacy
+ * PlanNode.executionMeta.movement shape).
+ */
+export interface MovementStep {
+  kind: "to_junction" | "along_road" | "to_scene";
+  from: CharacterPosition;
+  to: CharacterPosition;
+  durationMinutes: number;
+  roadId?: string;
+  blockCheck?: {
+    fromId: string;
+    toId: string;
+  };
+}
 
 export interface GameTime {
   day: number;
@@ -64,6 +83,20 @@ export interface ActionStep {
   executionSceneId: string;
   overlayFields?: Record<string, unknown>;
 
+  /**
+   * Dispatch discriminator copied from the matched `ActionDefinition.engine`
+   * during interpretation. `"code"` steps are dispatched to a
+   * `CodeEngineSubsystem`; `"llm"` steps run through the resolver path.
+   * Optional for back-compat with steps constructed before the dual-engine
+   * cutover (e.g. via tests); the orchestrator treats `undefined` as `"llm"`.
+   */
+  engine?: "code" | "llm";
+  /**
+   * Identifies which `CodeEngineSubsystem` handles this step when
+   * `engine === "code"`. Copied from `ActionDefinition.codeSubsystem`.
+   */
+  codeSubsystem?: string;
+
   submittedAt: GameTime;
 
   activatedAt?: GameTime;
@@ -75,7 +108,7 @@ export interface ActionStep {
 }
 
 export interface InterruptReason {
-  triggerKind: "encounter" | "featureEvent" | "stateChange" | "other";
+  triggerKind: "perception" | "featureEvent" | "stateChange" | "other";
   description: string;
 }
 
@@ -213,6 +246,17 @@ export type StateChange =
       damagedBy: string; // "fire" | "moisture" | "weapon" | ...
       reason: string;
       sourceFeatureId: string;
+    }
+  | {
+      /**
+       * Move a character to a new topology position. Emitted by the CodeEngine
+       * movement subsystem each tick as it interpolates along a route.
+       * `sourceSubsystem` mirrors `sourceFeatureId` for traceability.
+       */
+      kind: "character.position";
+      characterId: string;
+      position: CharacterPosition;
+      sourceSubsystem: string;
     };
 
 export interface CharacterAction {

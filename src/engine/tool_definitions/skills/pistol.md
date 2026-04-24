@@ -1,5 +1,6 @@
 ---
 id: pistol
+engine: llm
 title: Pistol
 description: "Ranged attacks with handguns and revolvers — aiming, firing, and quick-drawing. Does NOT cover rifles, shotguns, submachine guns, bows, or any melee attack."
 

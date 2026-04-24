@@ -1,5 +1,6 @@
 ---
 id: intimidate
+engine: llm
 title: Intimidate
 description: "Coerce compliance from a target through explicit threats, displays of violence, or fear-inducing physical presence. Does NOT cover Charm (friendly persuasion), Persuade (rational argument), or Bluff (deception)."
 

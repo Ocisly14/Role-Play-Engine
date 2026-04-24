@@ -1,5 +1,6 @@
 ---
 id: rifle
+engine: llm
 title: Rifle
 description: "Ranged attacks with rifles and shotguns — aimed fire, long-range shooting, and pump-action blasts. Does NOT cover pistols, submachine guns, bows, or any melee attack."
 

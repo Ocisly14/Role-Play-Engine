@@ -1,5 +1,6 @@
 ---
 id: history
+engine: llm
 title: History
 description: "Recall and interpret documented historical events, periods, figures, and their significance through expert scholarly knowledge. Does NOT cover physical artifact dating (Archaeology), legal precedent (Law), passive observation (Spot Hidden), or document retrieval (Research/Library Use)."
 

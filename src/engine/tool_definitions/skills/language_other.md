@@ -1,5 +1,6 @@
 ---
 id: language_other
+engine: llm
 title: Language (Other)
 description: "Read, write, speak, or translate in a specific non-native language, including archaic or technical registers of that language. Does NOT cover Language (Own) (native tongue mastery) or Cthulhu Mythos (alien script decipherment)."
 

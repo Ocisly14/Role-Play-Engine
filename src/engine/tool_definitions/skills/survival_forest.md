@@ -1,5 +1,6 @@
 ---
 id: survival_forest
+engine: llm
 title: Survival (Forest)
 description: "Surviving in woodland environments — building rain-proof shelters from timber and foliage, foraging edible plants and game, and avoiding forest predators. Does NOT cover Navigate, arctic survival, or desert survival."
 

@@ -1,6 +1,9 @@
-export { GameEngineRegistry } from "./registry.js";
+export { ActionDefinitionRegistry } from "./definitions/registry.js";
 export { createExecutionContext } from "./executionContext.js";
-export { createDefaultRegistry } from "./registerDefaults.js";
+export {
+  createDefaultDefinitions,
+  getDefaultFeatures,
+} from "./registerDefaults.js";
 export type {
   WorldFeature,
   ExecutionContext,

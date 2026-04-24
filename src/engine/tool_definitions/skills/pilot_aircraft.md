@@ -1,5 +1,6 @@
 ---
 id: pilot_aircraft
+engine: llm
 title: "Pilot (Aircraft)"
 description: "Operating fixed-wing aircraft, helicopters, and gliders — takeoff, landing, and emergency maneuvers in the air. Does NOT cover ground vehicles (Drive Auto) or watercraft (Pilot Boat)."
 

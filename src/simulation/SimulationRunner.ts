@@ -1,6 +1,6 @@
 import * as path from "node:path";
 import type { PrismaClient } from "@prisma/client";
-import type { GameEngineRegistry } from "../engine/registry.js";
+import type { ActionDefinitionRegistry } from "../engine/definitions/registry.js";
 import { runSimulationTick } from "../engine/runtime/tickProcessor.js";
 import { buildEncounterSnapshot } from "../engine/shared/encounterDedup.js";
 import type { ExecutionContext } from "../engine/types.js";
@@ -60,7 +60,7 @@ export class SimulationRunner {
   private readonly config: SimulationConfig;
   private readonly dgsm: DynamicGameStateManager;
   private readonly npcPlanningAgent: NPCPlanningAgent;
-  private readonly registry: GameEngineRegistry;
+  private readonly definitions: ActionDefinitionRegistry;
   private readonly ctx: ExecutionContext;
   private readonly language: string;
   private readonly memoryManager?: NpcMemoryManager;
@@ -89,7 +89,7 @@ export class SimulationRunner {
     config: SimulationConfig;
     dgsm: DynamicGameStateManager;
     npcPlanningAgent: NPCPlanningAgent;
-    registry: GameEngineRegistry;
+    definitions: ActionDefinitionRegistry;
     ctx: ExecutionContext;
     language: string;
     memoryManager?: NpcMemoryManager;
@@ -99,7 +99,7 @@ export class SimulationRunner {
     this.sessionId = params.config.sessionId;
     this.dgsm = params.dgsm;
     this.npcPlanningAgent = params.npcPlanningAgent;
-    this.registry = params.registry;
+    this.definitions = params.definitions;
     this.ctx = params.ctx;
     this.language = params.language;
     this.memoryManager = params.memoryManager;
@@ -530,7 +530,7 @@ export class SimulationRunner {
         sessionId: this.sessionId,
         moduleId: this.config.moduleId,
         language: this.language,
-        registry: this.registry,
+        definitions: this.definitions,
         ctx: this.ctx,
         memoryManager: this.memoryManager,
         previousEncounterSignatures: this.previousEncounterSignatures,
@@ -573,7 +573,7 @@ export class SimulationRunner {
           this.config.moduleId,
           stateAfter.gameDay,
           this.language,
-          this.registry
+          this.definitions
         );
       }
 

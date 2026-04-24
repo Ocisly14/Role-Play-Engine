@@ -1,5 +1,10 @@
-import type { SceneCondition } from "../engine/core/types.js";
+import type { MovementStep, SceneCondition } from "../engine/core/types.js";
 import type { CharacterPosition } from "../state/topologyTypes.js";
+
+// Re-export MovementStep — relocated to engine/core/types.ts in Phase E
+// (movement is now a CodeEngine subsystem). This keeps any straggling caller
+// importing from `planning/types` compiling until they migrate.
+export type { MovementStep } from "../engine/core/types.js";
 
 export type BuiltinNodeType =
   | "action"
@@ -103,18 +108,6 @@ export interface ObjectInteractionPayload {
 export interface ScheduleEntry {
   location: string; // scene ID
   activity: string; // natural language description
-}
-
-export interface MovementStep {
-  kind: "to_junction" | "along_road" | "to_scene";
-  from: CharacterPosition;
-  to: CharacterPosition;
-  durationMinutes: number;
-  roadId?: string;
-  blockCheck?: {
-    fromId: string;
-    toId: string;
-  };
 }
 
 export interface MovementExecutionState {

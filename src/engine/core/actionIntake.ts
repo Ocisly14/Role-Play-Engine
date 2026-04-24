@@ -36,6 +36,14 @@ export class ActionIntake {
       const stepActionText =
         (s as InterpretedStep & { actionText?: string }).actionText ??
         input.actionText;
+      // Merge intake-time overlay fields (caller-supplied) with per-step
+      // overlay fields the interpreter pulled out of the prompt (e.g.
+      // movement's `destination`). Per-step fields take precedence so the
+      // interpreter can refine generic intake input.
+      const mergedOverlay =
+        input.overlayFields || s.overlayFields
+          ? { ...(input.overlayFields ?? {}), ...(s.overlayFields ?? {}) }
+          : undefined;
       const step: ActionStep = {
         id: `${handleId}#${i}`,
         handle,
@@ -46,7 +54,9 @@ export class ActionIntake {
         actionText: stepActionText,
         definitionId: s.definitionId,
         executionSceneId: input.sceneId,
-        overlayFields: input.overlayFields,
+        overlayFields: mergedOverlay,
+        engine: s.engine,
+        codeSubsystem: s.codeSubsystem,
         submittedAt,
         status: "queued",
       };

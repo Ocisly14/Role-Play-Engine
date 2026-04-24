@@ -1,5 +1,6 @@
 ---
 id: submachine_gun
+engine: llm
 title: Submachine Gun
 description: "Ranged attacks with submachine guns — single shots, burst fire, and suppressive automatic fire. Does NOT cover pistols, rifles, shotguns, bows, or any melee attack."
 

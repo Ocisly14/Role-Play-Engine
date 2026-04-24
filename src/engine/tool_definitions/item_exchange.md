@@ -1,5 +1,6 @@
 ---
 id: item_exchange
+engine: llm
 title: Item Exchange
 description: Giving, receiving, or trading items between characters without skill checks
 

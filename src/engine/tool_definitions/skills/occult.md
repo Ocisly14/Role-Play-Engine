@@ -1,5 +1,6 @@
 ---
 id: occult
+engine: llm
 title: Occult
 description: "Mundane worldly knowledge of folklore, magical traditions, séances, and mystical belief systems. Does NOT cover genuine Mythos entities or eldritch truths (Forbidden Lore), nor archaeological religion."
 

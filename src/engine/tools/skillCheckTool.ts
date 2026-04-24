@@ -1,6 +1,5 @@
 import type { PlanNode } from "../../planning/types.js";
 import type { DynamicGameStateManager } from "../../state/DynamicGameState.js";
-import type { GameEngineRegistry } from "../registry.js";
 import {
   applyPenalties,
   getCharacterConditionPenalties,
@@ -15,7 +14,6 @@ export function executeSkillCheck(
   skill: string | undefined,
   dgsm: DynamicGameStateManager,
   locationId: string,
-  registry?: GameEngineRegistry,
   targetIds?: string[]
 ): ToolResult {
   // No skill check required — auto success

@@ -1,5 +1,6 @@
 ---
 id: operate_heavy_machinery
+engine: llm
 title: Operate Heavy Machinery
 description: "Operating industrial machines such as cranes, bulldozers, and factory equipment. Does NOT cover automobiles (Drive Auto), aircraft (Pilot), or any personal-scale vehicle."
 

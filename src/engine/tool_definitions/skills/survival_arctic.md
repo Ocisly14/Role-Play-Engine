@@ -1,5 +1,6 @@
 ---
 id: survival_arctic
+engine: llm
 title: Survival (Arctic)
 description: "Surviving cold, snowy, and icy environments — building snow shelters, preventing hypothermia, sourcing water from ice, and traveling over frozen terrain. Does NOT cover Navigate, Climb, desert survival, or forest survival."
 

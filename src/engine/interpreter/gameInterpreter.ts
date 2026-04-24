@@ -56,7 +56,7 @@ ${defList}
 ## Rules
 - A simple action maps to a single step (e.g., "搜查房间" → [perception])
 - A composite action maps to multiple ordered steps (e.g., "撬开柜子然后搜查里面" → [locksmith, perception])
-- If the action involves going somewhere first, the first step should be "movement"
+- If the action involves going somewhere first, the first step should be "movement". For movement steps, ALWAYS include a \`destination\` string set to the target location ID exactly as it appears in the action text (e.g. "library", "JUNC_HARBOR", "SCN_42"). Do not paraphrase — preserve the literal location identifier.
 - If the action involves giving/receiving items without dialogue, use "item_exchange"
 - If no specific skill definition matches, use "action" (general no-skill action) for solo/environmental actions, or "character_interaction" for casual talk / greetings / asking questions / leading someone
 
@@ -83,38 +83,75 @@ Default to 0 unless the step clearly warrants higher. Use each definition's impa
 Respond with ONLY a JSON object:
 {
   "steps": [
+    { "definitionId": "movement", "impact": 0, "destination": "library" },
     { "definitionId": "locksmith", "impact": 1 },
     { "definitionId": "perception", "impact": 0 }
   ]
 }`;
 }
 
-export function parseInterpretedResult(raw: string): InterpretedResult {
+export function parseInterpretedResult(
+  raw: string,
+  definitions?: ActionDefinition[]
+): InterpretedResult {
+  const defMap = new Map<string, ActionDefinition>();
+  if (definitions) {
+    for (const def of definitions) defMap.set(def.id, def);
+  }
+  const enrich = (definitionId: string) => {
+    const def = defMap.get(definitionId);
+    return {
+      engine: (def?.engine ?? "llm") as "code" | "llm",
+      codeSubsystem: def?.codeSubsystem,
+    };
+  };
+
   try {
     const jsonMatch = raw.match(/\{[\s\S]*\}/);
     if (!jsonMatch) throw new Error("No JSON found");
     const parsed = JSON.parse(jsonMatch[0]);
     if (Array.isArray(parsed.steps) && parsed.steps.length > 0) {
       const steps = parsed.steps.map(
-        (s: { definitionId?: string; impact?: number }) => ({
-          definitionId: s.definitionId ?? "generic",
-          impact:
-            typeof s.impact === "number"
-              ? (Math.max(0, Math.min(5, Math.round(s.impact))) as
-                  | 0
-                  | 1
-                  | 2
-                  | 3
-                  | 4
-                  | 5)
-              : (0 as const),
-        })
+        (s: {
+          definitionId?: string;
+          impact?: number;
+          destination?: string;
+        }) => {
+          const definitionId = s.definitionId ?? "generic";
+          const { engine, codeSubsystem } = enrich(definitionId);
+          // Movement (and any future code-engine subsystem) carries
+          // subsystem-specific inputs in overlayFields. Today the only
+          // such input is `destination` for movement.
+          const overlayFields =
+            codeSubsystem === "movement" && typeof s.destination === "string"
+              ? { destination: s.destination }
+              : undefined;
+          return {
+            definitionId,
+            impact:
+              typeof s.impact === "number"
+                ? (Math.max(0, Math.min(5, Math.round(s.impact))) as
+                    | 0
+                    | 1
+                    | 2
+                    | 3
+                    | 4
+                    | 5)
+                : (0 as const),
+            engine,
+            codeSubsystem,
+            overlayFields,
+          };
+        }
       );
       return { steps };
     }
     throw new Error("Invalid steps");
   } catch {
-    return { steps: [{ definitionId: "generic", impact: 0 }] };
+    const { engine, codeSubsystem } = enrich("generic");
+    return {
+      steps: [{ definitionId: "generic", impact: 0, engine, codeSubsystem }],
+    };
   }
 }
 
@@ -138,5 +175,5 @@ export async function interpretAction(
     operation: "game-interpreter",
   });
 
-  return parseInterpretedResult(text);
+  return parseInterpretedResult(text, definitions);
 }

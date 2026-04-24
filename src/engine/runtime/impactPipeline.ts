@@ -7,7 +7,7 @@ import {
 } from "../../planning/revisionHelpers.js";
 import type { CharacterAction, PlanNode } from "../../planning/types.js";
 import type { DynamicGameStateManager } from "../../state/DynamicGameState.js";
-import type { GameEngineRegistry } from "../registry.js";
+import type { ActionDefinitionRegistry } from "../definitions/registry.js";
 import { findAffectedCharacters } from "../shared/impactPropagation.js";
 import type { TickRuntimeContext } from "../types.js";
 import { personalizeEncounterForNpc } from "./encounterScanner.js";
@@ -101,7 +101,7 @@ export async function processImpactPipeline(params: {
   moduleId: string;
   gameDay: number;
   language: string;
-  registry: GameEngineRegistry;
+  definitions: ActionDefinitionRegistry;
   tickRuntime: TickRuntimeContext;
   memoryManager?: NpcMemoryManager;
   recordRevisionInterruption: (
@@ -118,7 +118,7 @@ export async function processImpactPipeline(params: {
     moduleId,
     gameDay,
     language,
-    registry,
+    definitions,
     tickRuntime,
     memoryManager,
     recordRevisionInterruption,
@@ -423,7 +423,7 @@ export async function processImpactPipeline(params: {
           npcId,
           triggerDesc,
           language,
-          registry
+          definitions
         );
       }
     })
