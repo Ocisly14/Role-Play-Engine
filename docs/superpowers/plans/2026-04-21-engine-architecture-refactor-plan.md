@@ -5258,6 +5258,8 @@ EOF
 
 > **Phase F intent (2026-04-23):** Phase E ships engine + renderer + dual-engine + a thin adapter that lets the existing `NPCPlanningAgent` satisfy the new `RoleSimAgent` interface. Phase F replaces the adapter with a real tool-driven LLM agent and migrates plan storage from `NpcDailyPlan` to `NpcMemory`. Net effect: ~2100 LOC removed (1865-LOC `NPCPlanningAgent` + helpers + Prisma table), ~400 LOC added (`RoleSimAgent` + prompt fragments).
 
+> **Phase F brainstorm iteration (2026-04-24, complete):** Architecture brainstorm produced 29 decisions; logged in §F-brainstorm-2026-04-24 below. The older §F-architecture / §F-storage / §F-deletions sections' details are superseded by these decisions; the brainstorm summary table at the end of §F-brainstorm-2026-04-24 indexes which decision covers each topic. F1 prompt design is explicitly deferred to a separate post-Phase-F brainstorm (Decision 29). Next step: transform decisions into an F1–F7 implementation plan.
+
 ### §F-architecture — Tool-driven agent shape
 
 **Single entry point:**
@@ -5332,6 +5334,515 @@ Removed:
 5. **F5** — Delete `NPCPlanningAgent` + helpers; remove `NpcDailyPlan` from Prisma schema; `prisma db push`; run smoke tests.
 6. **F6** — Type-check + Biome + smoke session boot. Verify NPCs behave plausibly across a multi-tick session including `plan` → `act` chains and `interrupt` from perception.
 7. **F7** — Final commit.
+
+### §F-brainstorm-2026-04-24 — In-progress decisions
+
+> Brainstorm is mid-discussion. Items below are confirmed; everything else (tool catalog, loop semantics, prompt design, migration details) is still open.
+
+#### Decision 1: Architecture model — agent-loop with tools
+
+The original §F-architecture treats each `controller.decide(npcId)` as a single LLM call returning one of 4 decisions. **Replaced by an agent-loop model**: agent self-selects tools across multiple LLM turns per decision, similar to the Anthropic SDK tool_use pattern (Claude Code itself works this way). Each tool execution returns a result that flows back into the next LLM call; loop ends when agent picks a "terminal" tool.
+
+Lifecycle hooks (`seedLongTermIntent`, `onIntentRevised`, `onNewDay`, etc.) dissolve — the agent decides when to do these by selecting tools.
+
+#### Decision 2: Long-term intent storage
+
+Drop the `NpcLongTermIntent` Prisma table. Long-term intent becomes a new `NpcMemory` type:
+
+```ts
+{ type: "long_term_intent", content: <intent text>, gameDay, gameTime }
+```
+
+Consequences:
+- No separate `reviseLongTermIntent` tool — agent revises its own intent by writing a new memory entry of `type: "long_term_intent"`.
+- Agent gets free intent-evolution history.
+- One-time migration in Phase F: write each existing `NpcLongTermIntent` row out as a memory entry, then drop the table.
+- UI queries that read "current long-term intent for NPC X" change from `prisma.npcLongTermIntent.findFirst` to "latest NpcMemory where `type = 'long_term_intent'`".
+
+#### Decision 3: `plan` is short-term, written to memory
+
+A `plan` is a short-term intention that the agent writes to its own `NpcMemory` so future LLM calls (in later ticks) can see what the NPC was planning. It does **not** change the world — only `act` does.
+
+#### Decision 4: No typed sugar tool for `plan` — folded into generic `writeMemory`
+
+`plan` does not get its own tool. The agent writes a plan via `writeMemory({ type: "plan", content: "..." })`, same shape as any other memory write. Rationale: symmetric with the long-term-intent decision (Decision 2), and avoids tool-list asymmetry where only one memory type would be privileged.
+
+Tool list so far: **`act`, `wait`, `writeMemory`** (3 tools).
+
+#### Decision 5: `writeMemory` accepts 6 memory types
+
+Agent-writable: `plan`, `belief`, `secret`, `long_term_intent`, `information`, `map`.
+
+Not agent-writable (system-only): `event`, `witness`, `summary`.
+- `event` — written by engine when actions complete (objective fact)
+- `witness` — written by renderer when ships (perception layer)
+- `summary` — written by background summarization task
+- Rationale: prevents agent from fabricating objective records; preserves separation of concerns.
+
+#### Decision 6: `map` memory — structured-incremental, by location name
+
+`map` is the one type where `writeMemory` accepts a structured (non-text) payload. Agent **does not** provide free text for map; instead it provides incremental additions:
+
+```ts
+writeMemory({
+  type: "map",
+  add: {
+    sceneNames?: string[],          // e.g. ["the library", "main street"]
+    junctionNames?: string[],       // e.g. ["intersection of Oak and Main"]
+    roadNames?: string[],           // e.g. ["Oak Street"]
+    revealHiddenConnection?: string // e.g. "from library to cellar"
+  }
+})
+```
+
+Rules:
+- **Incremental, not replacement.** Agent says only what it newly learned. System merges into the existing `KnownMapSnapshot`. Agent cannot accidentally cause amnesia by omitting known places.
+- **Names, not IDs.** Agent uses natural location names (`"the library"`), not internal scene IDs (`"scene_blackwood_library"`). Name → ID mapping is the system's responsibility.
+- **Existing `KnownMapSnapshot` graph structure is preserved.** Movement gating, UI rendering, Spot Hidden reveals continue to work against the structured snapshot — nothing about those mechanics changes.
+- **System writers stay** (entering scene auto-adds to snapshot, Spot Hidden reveals connections). Agent's `writeMemory({ type: "map", ... })` is an additional path, not a replacement.
+
+Open implementation detail: how name → ID mapping behaves when agent's name is ambiguous, unknown, or matches multiple scenes. Resolved during F1/F2.
+
+#### Decision 7: `writeMemory` schema is polymorphic by type (option P)
+
+Tool surface stays at 3 (act, wait, writeMemory). The `writeMemory` schema is a discriminated union:
+
+```ts
+writeMemory(input:
+  | { type: "plan" | "belief" | "secret" | "long_term_intent" | "information"; content: string }
+  | { type: "map"; add: { sceneNames?, junctionNames?, roadNames?, revealHiddenConnection? } }
+)
+```
+
+Claude's `tool_use` schema supports discriminated unions natively. Rejected alternative (option Q): a separate `updateMap` tool — would have grown the tool count and broken symmetry with the rest of the writeMemory contract.
+
+#### Decision 8: Hybrid context model — basics pre-loaded, memory reads via tools
+
+Pre-load basic situational context into `RoleSimContext`; expose memory queries as read tools the agent can invoke when it needs to dig deeper.
+
+Rationale: average decision is one LLM turn (basics in ctx are enough); complex decisions can deepen via memory queries. Avoids two extremes — bloated ctx (path 1) and chatty agent loops (path 2).
+
+Open: exact ctx field set + exact memory read tool set (next decisions).
+
+#### Decision 9: Memory read tools — `recallMemory` + `getMapSnapshot`
+
+Two read tools, mirroring the writeMemory split:
+
+```ts
+recallMemory({
+  query?: string,           // semantic search if provided; chronological listing if omitted
+  types?: NpcMemoryType[],  // restrict to certain types
+  gameDay?: number,         // restrict to a specific day
+  limit?: number,
+})
+// Returns memory entries (chronological or by relevance).
+
+getMapSnapshot()
+// Returns the merged current KnownMapSnapshot (structured), not memory entries.
+// Special-cased because map is the one structured memory type.
+```
+
+Tool list now: **`act`, `wait`, `writeMemory`, `recallMemory`, `getMapSnapshot`** (5 tools).
+
+Rejected:
+- One unified `recallMemory` covering map (returns mismatched shape — entries vs snapshot).
+- Per-type read tools (`recallEvents`, `recallBeliefs`, ...) — would explode tool count and break symmetry with writeMemory's unified type enum.
+
+#### Decision 10: `RoleSimContext` shape — self info + perception block
+
+The pre-loaded ctx splits into two zones, mirroring the architectural distinction between "what the NPC IS" and "what the NPC SEES":
+
+```ts
+RoleSimContext = {
+  // === Self (always present) ===
+  npcId: string,
+  currentTime: GameTime,
+  npcProfile: DynamicNPCProfile,    // self-knowledge: full attributes, skills, status
+  longTermIntent: string,           // pinned: latest long_term_intent memory content
+  recentMemory: NpcMemoryEntry[],   // short-term: last ~10 entries across all types
+  currentAction?: { handle, actionText },  // what's in flight, if anything
+
+  // === Perception (renderer output; structure NOT pre-defined here) ===
+  perception?: {
+    narrative: string,                    // descriptive text of what the NPC perceives
+    perceivedFacts?: PerceivedFact[],     // structured atoms (renderer-defined shape)
+  }
+}
+```
+
+Key principle: **the contents of `perception` are whatever the renderer produces** — engine code does not pre-impose a structured `scene / nearbyCharacters / items` schema. The renderer owns the shape; ctx is just a passthrough channel.
+
+#### Decision 11: Phase F ships with `perception` empty (renderer deferred)
+
+Phase F does not introduce a perception stub. The `perception` field is `undefined` for the entire Phase F lifetime. Agents make decisions purely from self info + memory queries. When the renderer ships (post-Phase-F follow-on), it fills `perception` and agents start receiving situational awareness without any agent-side code change.
+
+Consequences for Phase F NPC behavior:
+- NPCs cannot react to "what's right in front of them" — they're effectively blind to the immediate scene.
+- NPCs decide via `longTermIntent` + `recentMemory` + `recallMemory` + `getMapSnapshot`.
+- NPCs find out what happened by reading their own `event` memories (engine writes these on action completion).
+- This is an **accepted limitation** for Phase F's scope: Phase F's goal is the agent infrastructure rewrite + storage migration, not full NPC behavior quality. Behavior gets richer when renderer ships.
+
+#### Decision 12: No `inspectCharacter` (or other engine-read tools) in Phase F MVP
+
+Without perception, agent has no situational target to "look at" — `inspectCharacter` would only work on characters the agent already remembers, which `recallMemory({ query: "<name>" })` already covers. Engine-read tools (`inspectCharacter`, `getSceneInfo`, `getRelationship`, etc.) re-enter the design when the renderer ships and agents have actual situational targets.
+
+#### Decision 13: Mid-flight interrupt — agent-driven via revise event injection
+
+Re-examined the existing revise system and found two distinct legacy paths:
+
+| Legacy path | Trigger | Mechanism |
+|---|---|---|
+| **A. Player edit** | Player updates NPC intent in UI | Force-call `reviseSchedule()` on resume/step (no LLM gate) |
+| **B. Engine event + impact gate** | Engine fires action / FeatureEvent | `impactPipeline` finds affected NPCs → `runImpactGateForNpc()` LLM judges {shouldUpdateIntent, shouldInterruptCurrentNode, shouldReviseSchedule} → execute |
+
+Phase F's redesign:
+
+- **Path A is deleted entirely.** Player editing intent becomes a pure memory write (`writeMemory({type:"long_term_intent",...})` from the system side). Agent sees the new intent on its next natural `decide()` call. No force-interrupt of in-flight actions on player edits — players who want immediate effect should `pause` first.
+- **Path B is merged into the agent loop.** When an engine event fires, controller computes affected NPCs, injects a `reviseTrigger` field into ctx, and force-calls `decide()` for each affected NPC even if they have an in-flight action. Agent then chooses (via tools) whether to interrupt + replan or continue.
+
+Removed code (in addition to NPCPlanningAgent itself): `runImpactGateForNpc`, `reviseSchedule`, `generateImpactObservationForNpc`, `modifiedCharacterIds` field on SimulationRunner, the `updateIntent`-triggers-revise pathway. Their combined responsibilities collapse into the agent's tool selection.
+
+#### Decision 14: New `interrupt` tool; `wait` renamed to `continue`
+
+Tool list grows from 5 to 6:
+
+```
+act, continue, interrupt, writeMemory, recallMemory, getMapSnapshot
+```
+
+**`interrupt({ reason: string })`**: cancels NPC's in-flight `ActionStep` via `engine.interruptAction(handle, { triggerKind: "perception", description: reason })`. Tool effect is engine-level; loop semantics (terminal vs non-terminal) is still part of open loop-semantics discussion.
+
+**`wait` → `continue` rename**: more accurate verb. With revise events potentially firing during in-flight actions, the agent's "do nothing" choice means "keep current state" (continue the in-flight action OR continue idling) — not literally "wait for X". Same terminal-tool semantics as before; just clearer name.
+
+#### Decision 15: "Affected NPCs" judgment uses `impactPropagation.findAffectedCharacters`
+
+For each engine event, controller determines which NPCs to revise-ping by reusing the existing `findAffectedCharacters(action, impactLevel, dgsm)` helper from `src/engine/shared/impactPropagation.ts` (Phase E kept this file alive). Levels 1–5 already model "targeted / same scene / same macro / neighborhood / global" radii — the same model the legacy impact pipeline used.
+
+Implementation detail (resolved in F1/F2): mapping from new engine `CharacterAction` / `FeatureEvent` shape to the helper's expected impact level — `ActionStep` doesn't currently surface `impact` to engine-emitted events; need to either propagate it through or compute from event type.
+
+When the renderer ships, this judgment is replaced by perception-threshold filtering — the helper becomes obsolete.
+
+#### Decision 16: `RoleSimContext` adds `reviseTrigger` field
+
+```ts
+RoleSimContext = {
+  ...,
+  reviseTrigger?: {
+    description: string,                  // e.g., "fire spread to your scene"
+    sourceEvent?: FeatureEvent | CharacterAction,  // optional structured payload
+  }
+}
+```
+
+Present iff controller is force-pinging this `decide()` call due to a revise event. Absent on natural `decide()` calls (post-action-complete). Agent can read it to understand the situation and decide whether to `interrupt`.
+
+#### Decision 17: Loop termination = "tool consumes a tick"
+
+The agent is conceptually a continuously-running mind; "loop boundaries" are just the gaps between tools that consume simulated time. Termination is therefore not a tool-by-tool design choice — it falls out of whether a tool advances simulation time.
+
+| Tool | Consumes tick? | Terminal? |
+|---|---|---|
+| `act` | Yes (action runs over N ticks) | ✅ |
+| `interrupt` | Yes (1 tick to apply cancellation) | ✅ |
+| `continue` | Yes (lets 1 tick pass without new action) | ✅ |
+| `writeMemory` | No (instant mental write) | ❌ |
+| `recallMemory` | No (instant mental query) | ❌ |
+| `getMapSnapshot` | No (instant mental query) | ❌ |
+
+Agent's loop continues as long as it keeps calling instant tools (`writeMemory` / `recallMemory` / `getMapSnapshot`); it ends as soon as it calls a tick-consuming tool (`act` / `interrupt` / `continue`). This makes the rule mechanical and prompt-friendly.
+
+#### Decision 18: Each `decide()` call is a fresh LLM conversation
+
+Although the agent is **conceptually** "always running" (Decision 17), the implementation does not persist LLM conversation history across `decide()` calls. Every call starts a new LLM conversation seeded by `RoleSimContext` + memory queries.
+
+Rationale:
+- All cross-call continuity already lives in `NpcMemory` (long-term intent, plans, beliefs, secrets, learned info, map). The memory layer is the single persistence channel.
+- Predictable token budget per call; no unbounded conversation growth.
+- No conversation-history persistence needed (NpcMemory already persisted via Prisma).
+- Anthropic prompt caching covers the static system-prompt portion — performance benefit of conversation reuse is mostly redundant with prompt caching.
+
+Within one `decide()` call, the agent loop (instant-tool iterations followed by a tick-consuming terminal tool) is naturally a single conversation; once the loop ends, that conversation is discarded.
+
+#### Decision 19: Per-tool call limits within a single `decide()`
+
+Each instant tool has its own per-call budget. This prevents both (a) infinite loops on a single tool and (b) over-broad limits that allow agents to bloat any single category:
+
+| Tool | Max calls per `decide()` |
+|---|---|
+| `recallMemory` | 10 |
+| `writeMemory` | 3 |
+| `getMapSnapshot` | 1 |
+
+Implicit total cap = 14 instant calls before the agent is forced to terminate.
+
+**Per-tool cap reached:** the tool call is rejected with an error result fed back to the LLM ("this tool has been used the maximum N times in this decide()"). Other tools remain available; the agent typically responds by trying a different tool or committing to a terminal tool.
+
+**All caps reached + agent still hasn't terminated:** system force-injects `continue` and logs a warning. NPC takes no action this tick; will re-engage at next event.
+
+#### Decision 20: Implicit termination — plain text → `continue`
+
+If the LLM returns text without any `tool_use` block, treat it as an implicit `continue` and end the loop. Log a warning so we can spot prompt-design issues (frequent occurrences indicate the prompt isn't directing the agent clearly enough).
+
+Rationale: Anthropic SDK's tool_use semantics naturally allow text-only responses; rejecting them and retrying wastes a round. "I have nothing to do" is exactly what `continue` means anyway.
+
+#### Decision 21: Write side-effect — immediate visibility within the loop
+
+When the agent calls `writeMemory(...)`, the write is committed to the DB immediately. The next iteration of the same loop can read it via `recallMemory` and sees it via the agent's own subsequent decisions.
+
+Rationale: lets the agent reason coherently — it can chain "write a plan, then act based on the plan I just wrote". No buffered-pending-writes complexity.
+
+Trade-off accepted: no transactional rollback if the loop fails mid-way. Acceptable for Phase F MVP — failures are logged, partial writes are visible to subsequent calls (which may even be useful for debugging).
+
+#### Decision 22: `seedLongTermIntents` — system writes initial intent memory at module load
+
+A small helper function in `src/roleSim/` (no class) loops over module-defined NPCs and writes their initial `long_term_intent` memory entries directly via `NpcMemoryManager.add(...)`. Called from `DynamicGameStateLoader.initializeCompleteDynamicGameState` (or equivalent module-load path) right after NPC profiles are registered.
+
+```ts
+// src/roleSim/seedIntents.ts (or similar)
+async function seedNpcLongTermIntents(
+  npcs: DynamicNPCProfile[],
+  sessionId: string,
+  moduleId: string,
+  memoryManager: NpcMemoryManager,
+  gameDay: number,
+  gameTime: string,
+): Promise<void> {
+  for (const npc of npcs) {
+    if (!npc.longTermIntent) continue;
+    await memoryManager.add({
+      npcId: npc.id,
+      sessionId, moduleId,
+      type: "long_term_intent",
+      content: npc.longTermIntent,
+      gameDay, gameTime,
+    });
+  }
+}
+```
+
+Rationale:
+- Module-author-defined NPC intents are narrative design and must be preserved verbatim — agent doesn't get to improvise the starting state.
+- Agent still has full autonomy to revise later via `writeMemory({type:"long_term_intent",...})`.
+- No LLM call at seed time — fast, deterministic, testable.
+- Replaces `NPCPlanningAgent.seedLongTermIntents` and the `NpcLongTermIntent` table writes.
+
+#### Decision 23: `injectCharacter` simplifies; relies on tick-poll for activation
+
+`SimulationRunner.injectCharacter(profile, intent)` shrinks to: validate / inject into DGSM / write a `long_term_intent` memory entry (via the same helper from Decision 22) / save runtime. The legacy call to `generateSingleNpcSchedule` is **deleted** — there is no daily schedule to generate.
+
+Newly-injected NPC's first `decide()` happens naturally on the next tick when `executeTick` polls all alive NPCs. Treats injected NPCs identically to module-defined NPCs (single code path).
+
+```ts
+async injectCharacter(profile, intent) {
+  // validation + scene resolution unchanged
+  injectCharacterIntoState(this.dgsm, profile, entrySceneId);
+  await this.memoryManager.add({
+    npcId: profile.id,
+    sessionId: this.sessionId,
+    moduleId: this.config.moduleId,
+    type: "long_term_intent",
+    content: intent,
+    gameDay, gameTime,
+  });
+  await this.saveRuntime();
+  // No generateSingleNpcSchedule; controller's next-tick poll handles first decide.
+}
+```
+
+`upsertIntent` helper (currently writes to `NpcLongTermIntent` table) is dropped — replaced by direct `memoryManager.add`.
+
+#### Decision 24: `getCurrentNpcActions` queries TickEngine, stays on `SimulationRunner`
+
+The legacy implementation queried `NpcDailyPlan` rows for each NPC's current `PlanNode`. After Phase F, the source of truth is the engine itself — `tickEngine.getActorQueue(npcId)` returns all queued/active `ActionStep`s for that NPC.
+
+Stays as a method on `SimulationRunner` (its current home), reimplemented as a thin engine-query wrapper:
+
+```ts
+async getCurrentNpcActions(): Promise<Record<string, string | null>> {
+  const result: Record<string, string | null> = {};
+  for (const npc of this.dgsm.getState().npcCharacters) {
+    if (!this.dgsm.isNpcAlive(npc.id)) {
+      result[npc.id] = null;
+      continue;
+    }
+    const queue = this.tickEngine.getActorQueue(npc.id);
+    const active = queue.find(s => s.status === "active");
+    result[npc.id] = active?.actionText ?? null;
+  }
+  return result;
+}
+```
+
+No LLM, no DB query. Keeps the existing public API contract (callers in `service.ts`, the `npc_position_snapshot` event payload) unchanged.
+
+#### Decision 25: Daily summarization — system-driven, slim output, ISO-dated
+
+`onNewDay`'s legacy two responsibilities split:
+- **`generateDailySchedule`** — DELETED (no schedule concept).
+- **`summarizeAllNpcDayMemory`** — RETAINED but slimmed down + dated. Lifted out of `NPCPlanningAgent` into a standalone module (e.g. `src/roleSim/dailySummarization.ts`) with its own self-contained prompt builder and formatters.
+
+**Slimmed output (compared to legacy):**
+
+The legacy summarization LLM call produced 4 categories: `memories` (summary type), `newKnowledge`, `updatedKnowledge`, `updatedBeliefs`. Phase F shrinks this to **only `memories`** (the `summary` type). Rationale: the agent now writes `belief` / `information` / `secret` autonomously throughout the day via `writeMemory` — re-doing those at night creates duplicates / conflicts. The "auto knowledge/belief sweep" is intentionally dropped; agents are responsible for recording during the day.
+
+```json
+{
+  "memories": [
+    { "content": "[1923-10-17] Today I went to the library...", "importance": 4 }
+  ]
+}
+```
+
+**Dating: ISO 8601 in content + structured `gameDay` field:**
+
+- New `ModuleSetup.startDate?: string` (ISO format `YYYY-MM-DD`, e.g. `"1923-10-15"`) — module author defines when day 1 occurs in the story world.
+- Summarizer computes `currentDate = startDate + (gameDay - 1) days` and passes it to the prompt.
+- LLM puts `[YYYY-MM-DD]` prefix at the start of each summary's content (`"[1923-10-17] Today I..."`).
+- Existing `NpcMemory.gameDay` field stays as a structured filter key — dual-track (content + field).
+- If module doesn't define `startDate`: fall back to `[Day N]` prefix and log a warning encouraging module authors to add the field.
+- The dead `NpcInjectionPolicy.moduleStartDate` field is also removed during this cleanup.
+
+**Trigger:** SimulationRunner's day-transition handler (in `executeTick` after detecting `dayBefore !== dayAfter`) calls `summarizeAllNpcDayMemory(dgsm, sessionId, previousDay, ...)` from the new module. No longer routed through `NPCPlanningAgent`.
+
+**Trade-off accepted:** if agent doesn't actively `writeMemory` belief/information updates during the day, those updates are lost. Aligns with the Phase F "agent owns its own mind" philosophy.
+
+#### Decision 26: NPC death — cancel in-flight action + write death event memory
+
+`NPCPlanningAgent.interruptOpenNodesForDeath` is deleted (no `NpcDailyPlan` rows to clean up). Replacement is small and lives in `SimulationRunner.checkDerivedEvents` (existing pattern):
+
+```ts
+if (!this.dgsm.isNpcAlive(npc.id)) {
+  this.deadNpcIds.add(npc.id);
+
+  // 1. Cancel any in-flight engine action(s) — chain cancellation handles queued siblings.
+  const queue = this.tickEngine.getActorQueue(npc.id);
+  const active = queue.find(s => s.status === "active" || s.status === "queued");
+  if (active) this.tickEngine.cancelAction(active.handle);
+
+  // 2. Write a death event memory (audit + future "others remember this NPC died" use).
+  await this.memoryManager.add({
+    npcId: npc.id,
+    sessionId, moduleId,
+    type: "event",
+    content: `[${currentDate}] Died at ${gameTime} in ${location}`,
+    gameDay, gameTime,
+  });
+
+  // 3. Emit npc_death UI event (unchanged).
+  this.events.emitSimulationEvent("npc_death", ...);
+}
+```
+
+`currentDate` follows Decision 25's format (`[YYYY-MM-DD]` if `ModuleSetup.startDate` defined, else `[Day N]`). `location` is `dgsm.resolveLocationId(getCharacterPosition(npcId))`.
+
+After death:
+- Controller's existing `decide(npcId)` guard `if (!this.dgsm.isNpcAlive(npcId)) return` ensures dead NPCs are never prompted again.
+- The death `event` memory persists for audit, replay, and potential future use (e.g., other NPCs grieving via `recallMemory({ query: "Smith" })`).
+- Cleanup is otherwise zero-touch — no plan-node table to maintain.
+
+#### Re-homing summary table (NPCPlanningAgent's responsibilities)
+
+With Decisions 22–26 the legacy `NPCPlanningAgent` is fully decomposed. Final disposition:
+
+| Legacy method | Phase F destination |
+|---|---|
+| `generateNextAction` | Replaced by agent's `act` tool (Decision 1) |
+| `generateSingleNpcSchedule` | Deleted (no daily schedule concept) |
+| `seedLongTermIntents` | Standalone helper in `src/roleSim/` (Decision 22) |
+| `reviseSchedule`, `runImpactGateForNpc`, `generateImpactObservationForNpc` | Deleted (Decision 13: agent does this via `interrupt` + `writeMemory`) |
+| `interruptOpenNodesForDeath` | Replaced by `tickEngine.cancelAction` + death memory write in `checkDerivedEvents` (Decision 26) |
+| `onNewDay` | Day summarization → standalone module (Decision 25); schedule generation → deleted |
+| `getCurrentNpcActions` | Stays on `SimulationRunner`, queries `tickEngine.getActorQueue` (Decision 24) |
+| `getInProgressNodes` / `getDueNpcNodes` / `updateNode` / `replaceNodeWithNodes` / `getOpenNodes` | Deleted (no plan-node concept) |
+| `getLongTermIntent` | Replaced by reading latest `long_term_intent` memory (Decision 2) |
+| `injectCharacter` flow (the `npcPlanningAgent` calls inside `SimulationRunner.injectCharacter`) | Deleted (Decision 23) |
+| `getShortTermIntent` / `setShortTermIntent` | TBD — confirm no remaining callers; likely deletable |
+| `seedLongTermIntents` formatters (`formatNpcProfile`, etc.) | Move into `src/roleSim/` (used by seedIntents and dailySummarization standalone modules) |
+
+#### Decision 27: F4 storage migration — none
+
+Phase F drops the `NpcDailyPlan` and `NpcLongTermIntent` Prisma tables. **No data-migration script is written.** Rationale:
+
+- Spec §3 "Backwards Compatibility" already declared existing `SimulationRuntime` rows unloadable from Phase E onward. Rows in `NpcDailyPlan` / `NpcLongTermIntent` belong to those already-broken sessions — migrating their content to `NpcMemory` produces data nobody can read.
+- Dev-stage software, no real users (per spec).
+- Module-defined long-term intents are re-seeded on new session load via Decision 22's helper — no need to preserve old `NpcLongTermIntent` rows for that purpose either.
+
+F4 task collapses to:
+
+1. Delete all code references to `prisma.npcDailyPlan` and `prisma.npcLongTermIntent`.
+2. Remove the two `model` blocks from `prisma/schema.prisma`.
+3. `pnpm prisma:generate`.
+4. `prisma db push` (project convention per CLAUDE.md — not `migrate dev`).
+
+The `npcDailyPlan` / `npcLongTermIntent` related types in `src/planning/types.ts` (`PlanNode`, `PlanNodeStatus`, `PlanNodeExecutionMeta`, `ScheduleEntry`) are deleted as part of this — most are already orphan after the agent rewrite.
+
+#### Decision 28: F3 feature-flag — none; hard cutover
+
+The original plan §F-tasks proposed feature-flagging the old `NpcAgentAdapter` so dev could A/B compare new vs legacy behavior. After Decisions 22–27 all delete the legacy `NPCPlanningAgent` entirely, **there is nothing to A/B against** — keeping both agents in code would force preserving thousands of LOC just for the comparison period.
+
+Phase F does a hard cutover:
+- `NPCPlanningAgent` is deleted in F5.
+- `NpcAgentAdapter` (Phase E temporary bridge) is deleted in F5.
+- New `RoleSimAgent` becomes the only agent code path from Phase F day 1.
+
+Validation strategy:
+- Smoke tests + manual dev runs catch obvious regressions.
+- If the new agent has issues, `git revert` the Phase F commit returns to Phase E state cleanly.
+- Acceptable per spec §3 "no backwards compat / dev-stage software" stance.
+
+**F3 task collapses into F5** (the deletion task). The original F1–F7 sequence becomes effectively F1, F2, F4, F5, F6, F7 — F3 is absorbed.
+
+#### Decision 29: F1 prompt design — deferred to a separate post-Phase-F brainstorm
+
+The agent's actual system prompt + tool schemas + few-shot examples are **not designed during this brainstorm**. Phase F implementation ships with a **minimal placeholder prompt** sufficient to validate the wiring (loop runs, tools dispatch correctly, persistence works). Real prompt design happens in a dedicated follow-on brainstorm + implementation cycle.
+
+Rationale:
+- Phase F's primary value is the infrastructure rewrite: new agent loop, tool dispatcher, NpcMemory-only storage, controller wiring, dead-code deletion. Quality of LLM-driven NPC behavior is **orthogonal** to this — a prompt redesign can land later without touching the wiring.
+- Prompt design is a deep iterative concern (prompt + few-shot + model choice + failure handling + i18n + behavioral tuning) that benefits from focused attention with the working pipeline already in place to test against.
+- Splitting the work prevents Phase F from becoming a 2-month monolith. Each shippable chunk stays smaller and reviewable.
+
+**What Phase F actually ships for the prompt:**
+- A minimal system prompt: "You are an NPC in a Call of Cthulhu simulation. Use the provided tools to act and reason."
+- Tool schemas auto-generated from the type definitions.
+- No few-shot examples.
+- Sonnet by default for all calls (model tuning deferred).
+- Failure handling = retry once, then `continue` fallback.
+
+**Out of scope for Phase F prompt:**
+- Persona-tuned prompts per NPC type (investigator vs civilian vs cultist).
+- Behavioral guidance (when to interrupt, when to plan, etc.).
+- Few-shot example library.
+- Per-tool model selection.
+- i18n behavioral tuning (Chinese-language NPC quirks etc.).
+
+These all become the post-Phase-F prompt brainstorm's domain.
+
+---
+
+### Phase F brainstorm summary (29 decisions, 2026-04-24)
+
+The brainstorm produced 29 architecture decisions covering:
+
+| Cluster | Decisions |
+|---|---|
+| Architecture model | 1 (agent-loop), 17 (tick-consuming = terminal), 18 (fresh conversation per decide) |
+| Storage | 2 (long_term_intent → memory), 4 (no plan tool), 5 (5+map types), 6 (map structured-incremental), 7 (polymorphic schema), 27 (no F4 migration) |
+| Tool catalog | 3 (plan in memory), 9 (memory read tools), 10 (ctx shape), 11 (perception empty), 12 (no inspectCharacter), 14 (interrupt + continue rename), 19 (per-tool caps), 20 (text → continue), 21 (immediate writes) |
+| Revise / Interrupt | 13 (delete A, merge B), 15 (impactPropagation), 16 (reviseTrigger ctx field) |
+| Lifecycle | 8 (hybrid context), 22 (seedLongTermIntents helper), 23 (injectCharacter simplified), 24 (getCurrentNpcActions on Runner), 25 (daily summarization slim+dated), 26 (death = cancel + memory) |
+| Process | 28 (no A/B feature flag), 29 (prompt design deferred) |
+
+**Implementation plan** (transforming these into F1–F7 tasks) is the next document, following the format of the Phase A–E task lists above.
+
+#### Open questions (still being discussed)
+
+- Re-homing of `NPCPlanningAgent`'s remaining responsibilities (seed long-term intents on module load, onNewDay hook, getCurrentNpcActions UI query, injectCharacter pathway).
+- `recentMemory` size + selection strategy in default ctx (10? 20? latest-by-time vs prioritized sample).
+- Plan-storage migration approach (F4): one-shot script vs lazy migration; rollback / backup strategy.
+- Feature-flag mechanism for F3 A/B comparison (env var? config flag? per-session?).
+- Name → ID mapping policy for `map` memory writes (Decision 6 implementation detail — F1/F2).
+- Impact-level computation for engine events in Decision 15 implementation (F1/F2).
+- Agent prompt design (F1).
 
 ### §F-out-of-scope
 
