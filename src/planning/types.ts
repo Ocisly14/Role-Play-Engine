@@ -184,41 +184,16 @@ export interface ActionResolutionContext {
   triggerDescription?: string;
 }
 
-export interface CharacterAction {
-  characterId: string;
-  characterName: string;
-  gameTime: string;
-  action: string;
-  location: string;
-  type: PlanNodeType;
-  skill?: string;
-  impact: 0 | 1 | 2 | 3 | 4 | 5;
-  difficulty?: "regular" | "hard" | "extreme";
-  successLevel?: SuccessLevel;
-  /** Dice roll detail string from the skill check (e.g. "rolled 45 vs. skill 60"). Used by tickProcessor to pass context to LLM state resolver. */
-  rollDetail?: string;
-  status: "completed" | "failed" | "interrupted";
-  outcome: string;
-  failureReason?: FailureReason;
-  interruptionReason?: "revise_replan" | "character_dead";
-  triggerDescription?: string;
-  targetCharacterIds?: string[];
-  discoveries?: DiscoveryEntry[];
-  damagedEvidence?: { itemId: string; sourceName: string };
-  /** Per-character memory text from LLM state resolver. When present, tickProcessor writes these instead of auto-generating. */
-  stateMemories?: Record<string, string>;
-  /** Per-target opposed roll outcomes (multi-target character_interaction) */
-  perTargetResults?: Record<
-    string,
-    {
-      successLevel: SuccessLevel;
-      actorWon: boolean;
-      detail: string;
-      /** Pre-computed combat damage (only when actorWon in combat) */
-      damage?: number;
-    }
-  >;
-}
+/**
+ * Phase E: legacy fat `CharacterAction` interface deleted. The canonical type
+ * now lives in `src/engine/core/types.ts` and is re-exported here for any
+ * straggling caller. Engine-core action shape is intentionally minimal —
+ * `characterId`, `actionText`, `sceneId`, `outcome` (StateResolution), plus
+ * step bookkeeping. UI-facing fields like `characterName`, narrative outcome
+ * strings, and `successLevel` are derived from DGSM by
+ * `SimulationEventEmitter` (see `actionsToEvents`).
+ */
+export type { CharacterAction } from "../engine/core/types.js";
 
 export type FailureReason =
   | "location_mismatch"
@@ -229,20 +204,3 @@ export type FailureReason =
   | "bad_luck"
   | "prerequisite_not_met"
   | "unknown";
-
-export type WorldEventType = "scene_updated" | "feature_triggered";
-
-export interface WorldEventDescriptor {
-  type: WorldEventType;
-  location: string;
-  gameTime: string;
-  description: string;
-  data: Record<string, unknown>;
-}
-
-export interface SimulationTickResult {
-  actions: CharacterAction[];
-  worldEvents: WorldEventDescriptor[];
-  encounterSignatures: string[];
-  dayChanged: boolean;
-}

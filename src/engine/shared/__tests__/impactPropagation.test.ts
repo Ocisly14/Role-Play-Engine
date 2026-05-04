@@ -83,14 +83,7 @@ describe("findAffectedCharacters", () => {
     const result = findAffectedCharacters(
       {
         characterId: "actor",
-        characterName: "Actor",
-        gameTime: "10:00",
-        action: "Shout on the road",
         location: "ROAD_1",
-        type: "action",
-        impact: 2,
-        status: "completed",
-        outcome: "Shouted loudly",
       },
       2,
       dgsm

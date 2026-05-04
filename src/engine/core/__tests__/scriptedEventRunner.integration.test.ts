@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { DynamicGameStateManager } from "../../../state/DynamicGameState.js";
 import type { ScriptedEvent } from "../../scriptedEvents/types.js";
-import { createTickEngine, type TickEngine } from "../tickEngine.js";
+import { type TickEngine, createTickEngine } from "../tickEngine.js";
 
 /**
  * Integration tests for ScriptedEventRunner — see plan §C-testing.
@@ -17,13 +17,13 @@ interface TestEngine {
     npcId: string,
     actionText: string,
     definitionId: string,
-    sceneId: string,
+    sceneId: string
   ) => Promise<void>;
 }
 
 function makeTestEngine(
   events: ScriptedEvent[],
-  existingDgsm?: DynamicGameStateManager,
+  existingDgsm?: DynamicGameStateManager
 ): TestEngine {
   const dgsm = existingDgsm ?? new DynamicGameStateManager();
 
@@ -35,7 +35,8 @@ function makeTestEngine(
     interpretAction: async (input) => ({
       steps: [
         {
-          definitionId: (input.overlayFields?.__definitionId as string) ?? "noop",
+          definitionId:
+            (input.overlayFields?.__definitionId as string) ?? "noop",
           actionText: input.actionText,
           impact: 0,
         } as never,
@@ -87,7 +88,7 @@ function makeTestEngine(
     npcId: string,
     actionText: string,
     definitionId: string,
-    sceneId: string,
+    sceneId: string
   ): Promise<void> {
     await engine.submitAction({
       characterId: npcId,
@@ -130,7 +131,7 @@ describe("ScriptedEventRunner — integration", () => {
 
     await submitAndTick("priest", "pray at altar", "pray", "altar");
     expect(
-      dgsm.getScriptedEventState("ritual")?.trackerStates.pray,
+      dgsm.getScriptedEventState("ritual")?.trackerStates.pray
     ).toMatchObject({
       kind: "actionCount",
       count: 1,
@@ -139,7 +140,7 @@ describe("ScriptedEventRunner — integration", () => {
 
     await submitAndTick("priest", "pray at altar", "pray", "altar");
     expect(
-      dgsm.getScriptedEventState("ritual")?.trackerStates.pray,
+      dgsm.getScriptedEventState("ritual")?.trackerStates.pray
     ).toMatchObject({
       kind: "actionCount",
       count: 2,
@@ -222,7 +223,7 @@ describe("ScriptedEventRunner — integration", () => {
     await setup1.submitAndTick("priest", "pray", "pray", "altar");
 
     expect(
-      setup1.dgsm.getScriptedEventState("ritual")?.trackerStates.pray,
+      setup1.dgsm.getScriptedEventState("ritual")?.trackerStates.pray
     ).toMatchObject({ kind: "actionCount", count: 2 });
     expect(setup1.dgsm.getScriptedEventState("ritual")?.status).toBe("active");
     // Priest's SAN should be unchanged (event hasn't fired yet).
@@ -231,7 +232,7 @@ describe("ScriptedEventRunner — integration", () => {
     // Serialize + rehydrate.
     const serialized = setup1.dgsm.serialize();
     expect(serialized.scriptedEventStates.ritual.trackerStates.pray.count).toBe(
-      2,
+      2
     );
 
     const jsonRoundTripped = JSON.parse(JSON.stringify(serialized));
@@ -240,7 +241,7 @@ describe("ScriptedEventRunner — integration", () => {
 
     // Sanity: rehydrated tracker state survives round-trip.
     expect(
-      dgsm2.getScriptedEventState("ritual")?.trackerStates.pray,
+      dgsm2.getScriptedEventState("ritual")?.trackerStates.pray
     ).toMatchObject({ kind: "actionCount", count: 2 });
     expect(dgsm2.getNpcProfile("priest")?.name).toBe("priest");
 

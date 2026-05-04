@@ -17,7 +17,9 @@ describe("loadActionDefinitions", () => {
     const ci = defs.find((d) => d.id === "character_interaction");
     expect(ci).toBeDefined();
     expect(ci?.title).toBe("Character Interaction");
-    expect(ci?.description).toContain("Any interaction with one or more target characters");
+    expect(ci?.description).toContain(
+      "Any interaction with one or more target characters"
+    );
     expect(ci?.skillCheck?.type).toBe("single");
     expect(ci?.skillCheck?.failBehavior).toBe("partial");
   });
@@ -29,7 +31,9 @@ describe("loadActionDefinitions", () => {
     expect(ci?.stateDomains?.character?.inject).toContain("actor");
     expect(ci?.stateDomains?.character?.inject).toContain("targets");
     expect(ci?.stateDomains?.character?.output).toContain("memory.event");
-    expect(ci?.stateDomains?.character?.output).toContain("relationship.change");
+    expect(ci?.stateDomains?.character?.output).toContain(
+      "relationship.change"
+    );
   });
 
   it("parses interpreter examples from YAML frontmatter", () => {

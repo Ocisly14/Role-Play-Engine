@@ -1,7 +1,18 @@
-import type { CharacterAction } from "../../planning/types.js";
 import type { DynamicGameStateManager } from "../../state/DynamicGameState.js";
 import type { TransportEdge } from "../../state/types.js";
 import { arePositionsCoLocated } from "./locationPresence.js";
+
+/**
+ * Minimal action shape consumed by impact propagation. Engine-core and legacy
+ * CharacterAction shapes both satisfy this contract: they expose `characterId`
+ * + `targetCharacterIds` directly, and `location` is filled from `sceneId`
+ * (engine-core) or read directly (legacy).
+ */
+interface ImpactPropagationAction {
+  characterId: string;
+  targetCharacterIds?: string[];
+  location: string;
+}
 
 const NEIGHBORHOOD_TRAVEL_MINUTES = 15;
 
@@ -47,7 +58,7 @@ function getParentLocationId(
  * Excludes the acting character itself.
  */
 export function findAffectedCharacters(
-  action: CharacterAction,
+  action: ImpactPropagationAction,
   impactLevel: number,
   dgsm: DynamicGameStateManager
 ): Map<string, number> {

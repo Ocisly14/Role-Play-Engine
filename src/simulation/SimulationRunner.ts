@@ -1,12 +1,32 @@
 import * as path from "node:path";
 import type { PrismaClient } from "@prisma/client";
+import {
+  type TickEngine,
+  createTickEngine,
+} from "../engine/core/tickEngine.js";
+import type {
+  ActionStep,
+  CharacterAction as EngineCharacterAction,
+  FeatureEvent,
+  InterruptReason,
+  TickReport,
+} from "../engine/core/types.js";
+import type { PlannedOutcome } from "../engine/core/worldFeature.js";
 import type { ActionDefinitionRegistry } from "../engine/definitions/registry.js";
-import { runSimulationTick } from "../engine/runtime/tickProcessor.js";
-import { buildEncounterSnapshot } from "../engine/shared/encounterDedup.js";
+import { interpretAction } from "../engine/interpreter/gameInterpreter.js";
+import {
+  createDefaultDefinitions,
+  getDefaultFeatures,
+} from "../engine/registerDefaults.js";
+import { buildStateContext } from "../engine/resolver/stateContextBuilder.js";
+import { resolveState } from "../engine/resolver/stateResolver.js";
 import type { ExecutionContext } from "../engine/types.js";
 import type { NpcMemoryManager } from "../memory/NpcMemoryManager.js";
 import type { NPCPlanningAgent } from "../planning/NPCPlanningAgent.js";
+import { NpcActionController } from "../roleSim/npcActionController.js";
+import { NpcAgentAdapter } from "../roleSim/npcAgentAdapter.js";
 import type { DynamicGameStateManager } from "../state/DynamicGameState.js";
+import { loadScriptedEventsForModule } from "../state/moduleLoader.js";
 import type { DynamicNPCProfile } from "../state/types.js";
 import { SimulationEventEmitter } from "./SimulationEventEmitter.js";
 import {
@@ -30,6 +50,7 @@ import {
 } from "./types.js";
 
 const ONE_MINUTE_MS = 60_000;
+const TICK_ENGINE_PERSISTED_KEY = "_tickEngine";
 
 function alignToMinuteBoundary(timestampMs: number): number {
   const remainder = timestampMs % ONE_MINUTE_MS;
@@ -60,7 +81,7 @@ export class SimulationRunner {
   private readonly config: SimulationConfig;
   private readonly dgsm: DynamicGameStateManager;
   private readonly npcPlanningAgent: NPCPlanningAgent;
-  private readonly definitions: ActionDefinitionRegistry;
+  private definitions: ActionDefinitionRegistry;
   private readonly ctx: ExecutionContext;
   private readonly language: string;
   private readonly memoryManager?: NpcMemoryManager;
@@ -78,7 +99,13 @@ export class SimulationRunner {
 
   private readonly deadNpcIds: Set<string> = new Set();
   private readonly modifiedCharacterIds: Set<string> = new Set();
-  private previousEncounterSignatures: Set<string> = new Set();
+
+  /** Snapshot of the persisted TickEngine state captured during deserialize.
+   *  Consumed by `ensureTickEngine()` on first tick. Cleared after use. */
+  private pendingTickEngineState: ReturnType<TickEngine["serialize"]> | null =
+    null;
+  private tickEngine: TickEngine | null = null;
+  private npcController: NpcActionController | null = null;
 
   readonly events: SimulationEventEmitter;
   private readonly collectedEvents: SimulationEvent[] = [];
@@ -105,7 +132,7 @@ export class SimulationRunner {
     this.memoryManager = params.memoryManager;
     this.prisma = params.prisma;
 
-    this.events = new SimulationEventEmitter(this.sessionId);
+    this.events = new SimulationEventEmitter(this.sessionId, this.dgsm);
 
     this.ctx.simulationEmitter = this.events;
     this.ctx.runtime = this.npcPlanningAgent.getRuntime();
@@ -117,23 +144,16 @@ export class SimulationRunner {
 
   getStatus(): SimulationStatus {
     const gameState = this.dgsm.getState();
-    const weatherStates = this.dgsm.getFeatureState("weather") as
-      | Record<string, { weatherType?: string; intensity?: number }>
-      | undefined;
-    let weather: string | undefined;
-    if (weatherStates) {
-      const firstRegion = Object.values(weatherStates)[0];
-      if (firstRegion?.weatherType) {
-        weather = firstRegion.weatherType;
-      }
-    }
+    // Phase E: weather lookup via the legacy `getFeatureState("weather")` was
+    // removed (Phase D). External weather snapshot will be reintroduced when
+    // the renderer ships and exposes the environment read path. Until then,
+    // status omits the field.
     return {
       state: this.state,
       currentDay: gameState.gameDay,
       currentTime: gameState.timeOfDay,
       ticksExecuted: this.ticksExecuted,
       stopReason: this.stopReason,
-      weather,
     };
   }
 
@@ -230,6 +250,7 @@ export class SimulationRunner {
     state: SimulationState;
     ticksExecuted: number;
     stopReason?: StopReason;
+    persistedTickEngineState?: ReturnType<TickEngine["serialize"]>;
   }): void {
     this.state =
       params.state === "running" || params.state === "initializing"
@@ -242,10 +263,16 @@ export class SimulationRunner {
     this.tickInProgress = false;
     this.clearScheduledTick();
     this.initializeDeadNpcIdsFromState();
-    this.previousEncounterSignatures = buildEncounterSnapshot(this.dgsm);
+    if (params.persistedTickEngineState) {
+      this.pendingTickEngineState = params.persistedTickEngineState;
+    }
   }
 
   async saveRuntime(): Promise<void> {
+    const gameState = this.dgsm.serialize();
+    if (this.tickEngine) {
+      gameState[TICK_ENGINE_PERSISTED_KEY] = this.tickEngine.serialize();
+    }
     await persistSimulationRuntime({
       prisma: this.prisma,
       sessionId: this.sessionId,
@@ -255,7 +282,7 @@ export class SimulationRunner {
       language: this.language,
       moduleName: this.moduleName,
       config: this.config,
-      gameState: this.dgsm.serialize(),
+      gameState,
     });
   }
 
@@ -491,7 +518,6 @@ export class SimulationRunner {
       return;
     }
 
-    // Transition from initializing → running after first tick completes
     if (this.state === "initializing") {
       this.state = "running";
       const event = this.emitStateChange();
@@ -502,6 +528,164 @@ export class SimulationRunner {
     if (this.state === "running") {
       this.scheduleNextTick();
     }
+  }
+
+  /**
+   * Lazily construct the TickEngine + NpcActionController on first tick.
+   * Async because scripted events are loaded from disk; module name is set
+   * after the runner is constructed (`setModuleName`), so we cannot do this
+   * in the constructor.
+   */
+  private async ensureTickEngine(): Promise<{
+    engine: TickEngine;
+    controller: NpcActionController;
+  }> {
+    if (this.tickEngine && this.npcController) {
+      return { engine: this.tickEngine, controller: this.npcController };
+    }
+
+    if (this.definitions.getAll().length === 0) {
+      this.definitions = createDefaultDefinitions();
+    }
+
+    const features = getDefaultFeatures();
+    const scriptedEvents = this.moduleName
+      ? loadScriptedEventsForModule(this.moduleName)
+      : [];
+
+    const definitionList = this.definitions.getAll();
+
+    const engine = createTickEngine({
+      dgsm: this.dgsm,
+      features,
+      scriptedEvents,
+      emergentScanners: [],
+      interpretAction: async (input) => {
+        const result = await interpretAction(
+          input.actionText,
+          definitionList,
+          this.ctx.runtime,
+          this.language
+        );
+        return { steps: result.steps };
+      },
+      resolve: async (
+        step: ActionStep,
+        ctx: unknown
+      ): Promise<{ outcome: PlannedOutcome; plannedDuration: number }> => {
+        const definition = this.definitions.get(step.definitionId);
+        if (!definition) {
+          return {
+            outcome: { stateChanges: [], elapsedMinutes: 0 },
+            plannedDuration: 0,
+          };
+        }
+        // buildStateContext only reads characterId + targetCharacterIds from
+        // the node arg; build a thin PlanNode-shaped object from the step so
+        // we don't have to thread the legacy PlanNode type through here.
+        const nodeShim = {
+          characterId: step.characterId,
+          targetCharacterIds: step.targetCharacterIds,
+        } as unknown as import("../planning/types.js").PlanNode;
+        const stateContext = buildStateContext(
+          definition,
+          nodeShim,
+          this.dgsm,
+          step.executionSceneId
+        );
+        const resolution = await resolveState(
+          {
+            action: step.actionText,
+            definition,
+            outcomeSection: definition.content,
+            stateContext,
+            language: this.language,
+          },
+          this.ctx.runtime
+        );
+        const stateChanges = Array.isArray(resolution.stateChanges)
+          ? (resolution.stateChanges as PlannedOutcome["stateChanges"])
+          : [];
+        const elapsedMinutes =
+          typeof resolution.elapsedMinutes === "number"
+            ? resolution.elapsedMinutes
+            : 0;
+        const narrative =
+          typeof resolution.narrative === "string"
+            ? resolution.narrative
+            : undefined;
+        // Suppress unused-arg warning for ctx — orchestrator passes its own
+        // FeatureReadContext but the LLM resolver builds its own stateContext.
+        void ctx;
+        return {
+          outcome: { stateChanges, elapsedMinutes, narrative },
+          plannedDuration: elapsedMinutes,
+        };
+      },
+      getActorDex: (id) => this.dgsm.getNpcProfile(id)?.attributes?.DEX ?? 50,
+      tickDurationMinutes: 1,
+      lang: this.language,
+      persistedState: this.pendingTickEngineState ?? undefined,
+    });
+
+    this.pendingTickEngineState = null;
+
+    const adapter = new NpcAgentAdapter(
+      this.npcPlanningAgent,
+      this.dgsm,
+      this.definitions,
+      this.sessionId,
+      this.language
+    );
+    const controller = new NpcActionController({
+      engine,
+      agent: adapter,
+      memory: this.memoryManager as NpcMemoryManager,
+      dgsm: this.dgsm,
+      planningAgent: this.npcPlanningAgent,
+      sessionId: this.sessionId,
+      moduleId: this.config.moduleId,
+    });
+
+    this.wireEngineEvents(engine);
+
+    this.tickEngine = engine;
+    this.npcController = controller;
+    return { engine, controller };
+  }
+
+  /**
+   * Subscribe SimulationEventEmitter outputs to TickEngine event channels.
+   * Each engine event is translated into a `SimulationEvent` for the UI.
+   * Wired once per engine instance.
+   */
+  private wireEngineEvents(engine: TickEngine): void {
+    engine.on("actionCompleted", (a: EngineCharacterAction) => {
+      this.events.actionsToEvents([a], "completed", a.completedAt.day);
+    });
+    engine.on(
+      "actionInterrupted",
+      (a: EngineCharacterAction, _r: InterruptReason) => {
+        this.events.actionsToEvents([a], "interrupted", a.completedAt.day);
+      }
+    );
+    engine.on("actionCancelled", (a: EngineCharacterAction) => {
+      this.events.actionsToEvents([a], "interrupted", a.completedAt.day);
+    });
+    engine.on("featureEvent", (e: FeatureEvent) => {
+      const gameState = this.dgsm.getState();
+      this.events.emitSimulationEvent(
+        "feature_triggered",
+        e.characterId ?? "system",
+        e.sceneId ?? "global",
+        gameState.gameDay,
+        gameState.timeOfDay,
+        { eventType: e.type, ...(e.data ?? {}) }
+      );
+    });
+    engine.on("tickCompleted", (_report: TickReport) => {
+      // Reserved for future per-tick aggregations (e.g., damage summaries).
+    });
   }
 
   private async executeTick(): Promise<void> {
@@ -524,36 +708,21 @@ export class SimulationRunner {
       const gameState = this.dgsm.getState();
       const dayBefore = gameState.gameDay;
 
-      const tickResult = await runSimulationTick({
-        dgsm: this.dgsm,
-        npcPlanningAgent: this.npcPlanningAgent,
-        sessionId: this.sessionId,
-        moduleId: this.config.moduleId,
-        language: this.language,
-        definitions: this.definitions,
-        ctx: this.ctx,
-        memoryManager: this.memoryManager,
-        previousEncounterSignatures: this.previousEncounterSignatures,
-      });
-      this.previousEncounterSignatures = new Set(
-        tickResult.encounterSignatures
-      );
+      const { engine, controller } = await this.ensureTickEngine();
 
-      this.events.actionsToEvents(tickResult.actions, dayBefore);
-
-      // Emit world events (encounter, scene_updated, feature_triggered)
-      for (const we of tickResult.worldEvents) {
-        this.events.emitSimulationEvent(
-          we.type,
-          "system",
-          we.location,
-          dayBefore,
-          we.gameTime,
-          { description: we.description, ...we.data }
-        );
+      // Poll all alive NPCs without an active engine handle. Submits initial
+      // actions on the first tick after construction (replaces the legacy
+      // "every tick, ensureNpcNodesAvailable for every NPC") and mops up NPCs
+      // whose previous action has completed but who didn't get a follow-on
+      // submission in the same tick.
+      for (const npc of this.dgsm.getState().npcCharacters) {
+        if (!this.dgsm.isNpcAlive(npc.id)) continue;
+        await controller.decide(npc.id);
       }
 
-      if (tickResult.dayChanged) {
+      await engine.tick();
+
+      if (this.dgsm.getGameDay() !== dayBefore) {
         const stateAfter = this.dgsm.getState();
         this.events.emitSimulationEvent(
           "day_transition",
@@ -581,13 +750,6 @@ export class SimulationRunner {
 
       const stateAfterTick = this.dgsm.getState();
       const currentActions = await this.getCurrentNpcActions();
-      // Get current weather for snapshot
-      const snapshotWeatherStates = this.dgsm.getFeatureState("weather") as
-        | Record<string, { weatherType?: string }>
-        | undefined;
-      const snapshotWeather = snapshotWeatherStates
-        ? Object.values(snapshotWeatherStates)[0]?.weatherType
-        : undefined;
 
       this.events.emitSimulationEvent(
         "npc_position_snapshot",
@@ -599,7 +761,8 @@ export class SimulationRunner {
           positions: { ...stateAfterTick.characterPositions },
           currentActions,
           displayIntervalMs: this.getEffectiveTickIntervalMs(),
-          weather: snapshotWeather ?? "clear",
+          // Phase E: weather snapshot omitted — renderer follow-on restores it.
+          weather: "clear",
         }
       );
 

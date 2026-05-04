@@ -5,6 +5,12 @@
  * node handlers, world features, and SimulationRunner.
  */
 
+import type {
+  EnvironmentReading,
+  FeatureStateScope,
+} from "../engine/core/types.js";
+import { DEFAULT_ENVIRONMENT_READING } from "../engine/core/types.js";
+import type { ScriptedEventState } from "../engine/scriptedEvents/types.js";
 import {
   getBlockedConnectionReason,
   makeBlockedConnectionKey,
@@ -32,12 +38,6 @@ import type {
   Item,
   TransportEdge,
 } from "./types.js";
-import type {
-  EnvironmentReading,
-  FeatureStateScope,
-} from "../engine/core/types.js";
-import { DEFAULT_ENVIRONMENT_READING } from "../engine/core/types.js";
-import type { ScriptedEventState } from "../engine/scriptedEvents/types.js";
 
 /**
  * Dynamic Game State — runtime data for the simulation engine.
@@ -161,9 +161,6 @@ export const initialDynamicGameState = (params: {
 export class DynamicGameStateManager {
   private state: DynamicGameState;
   private db: any;
-  private pendingWorldEvents: import(
-    "../planning/types.js"
-  ).WorldEventDescriptor[] = [];
   private hiddenCharacterIds = new Set<string>();
 
   /**
@@ -176,8 +173,7 @@ export class DynamicGameStateManager {
 
   constructor(state?: DynamicGameState, db?: any) {
     this.state =
-      state ??
-      initialDynamicGameState({ sessionId: "", moduleName: "" });
+      state ?? initialDynamicGameState({ sessionId: "", moduleName: "" });
     this.db = db || null;
     this.hiddenCharacterIds = new Set(this.state.hiddenCharacterIds ?? []);
     this.syncHiddenCharacterIds();
@@ -194,18 +190,6 @@ export class DynamicGameStateManager {
 
   isCharacterHidden(characterId: string): boolean {
     return this.hiddenCharacterIds.has(characterId);
-  }
-
-  pushWorldEvent(
-    event: import("../planning/types.js").WorldEventDescriptor
-  ): void {
-    this.pendingWorldEvents.push(event);
-  }
-
-  drainWorldEvents(): import("../planning/types.js").WorldEventDescriptor[] {
-    const events = this.pendingWorldEvents;
-    this.pendingWorldEvents = [];
-    return events;
   }
 
   private syncHiddenCharacterIds(): void {
@@ -618,7 +602,8 @@ export class DynamicGameStateManager {
             } else if (
               item &&
               typeof item === "object" &&
-              typeof (item as { description?: unknown }).description === "string"
+              typeof (item as { description?: unknown }).description ===
+                "string"
             ) {
               const cond = item as import(
                 "../engine/core/types.js"
@@ -1074,10 +1059,7 @@ export class DynamicGameStateManager {
     );
   }
 
-  setEnvironmentReading(
-    locationId: string,
-    reading: EnvironmentReading
-  ): void {
+  setEnvironmentReading(locationId: string, reading: EnvironmentReading): void {
     this.state.environmentReadings[locationId] = reading;
     this.state.lastUpdated = new Date();
   }
@@ -1138,9 +1120,7 @@ export class DynamicGameStateManager {
     field: "hp" | "san" | "fatigue",
     value: number
   ): void {
-    const profile = this.state.npcCharacters.find(
-      (n) => n.id === characterId
-    );
+    const profile = this.state.npcCharacters.find((n) => n.id === characterId);
     if (!profile) return;
     profile.status[field] = value;
     // Keep legacy npcStats mirror in sync for hp/san so planning helpers
@@ -1159,9 +1139,7 @@ export class DynamicGameStateManager {
    * Does NOT force hp to 0 — caller (Applier) has already clamped hp.
    */
   markCharacterDead(characterId: string): void {
-    const profile = this.state.npcCharacters.find(
-      (n) => n.id === characterId
-    );
+    const profile = this.state.npcCharacters.find((n) => n.id === characterId);
     if (!profile) return;
     const already = profile.status.conditions.some(
       (c) => c.description === "dead"
@@ -1182,9 +1160,7 @@ export class DynamicGameStateManager {
     characterId: string,
     condition: import("../engine/core/types.js").CharacterCondition
   ): void {
-    const profile = this.state.npcCharacters.find(
-      (n) => n.id === characterId
-    );
+    const profile = this.state.npcCharacters.find((n) => n.id === characterId);
     if (!profile) return;
     profile.status.conditions.push(condition);
     this.state.lastUpdated = new Date();
@@ -1194,9 +1170,7 @@ export class DynamicGameStateManager {
    * Remove a character-level condition by its id.
    */
   removeCharacterCondition(characterId: string, conditionId: string): void {
-    const profile = this.state.npcCharacters.find(
-      (n) => n.id === characterId
-    );
+    const profile = this.state.npcCharacters.find((n) => n.id === characterId);
     if (!profile) return;
     profile.status.conditions = profile.status.conditions.filter(
       (c) => c.id !== conditionId

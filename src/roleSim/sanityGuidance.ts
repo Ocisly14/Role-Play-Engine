@@ -1,4 +1,4 @@
-// src/simulation/roleSim/sanityGuidance.ts
+// src/roleSim/sanityGuidance.ts
 //
 // Role-sim resource for the LLM resolver. The resolver uses this guidance to
 // decide, in-context, whether a SAN drop should also trigger a bout of madness
@@ -46,7 +46,8 @@ export const BOUT_OF_MADNESS_TABLE: readonly BoutOfMadnessEntry[] = [
     roll: 1,
     boutType: "amnesia",
     label: "Amnesia",
-    description: "Mind goes blank — cannot recall recent events or surroundings",
+    description:
+      "Mind goes blank — cannot recall recent events or surroundings",
     actionRestriction: "impaired",
   },
   {
@@ -77,7 +78,8 @@ export const BOUT_OF_MADNESS_TABLE: readonly BoutOfMadnessEntry[] = [
     roll: 5,
     boutType: "significant_person",
     label: "Significant Person Fixation",
-    description: "Reality warps — sees a significant person where there is none",
+    description:
+      "Reality warps — sees a significant person where there is none",
     actionRestriction: "impaired",
   },
   {
@@ -124,7 +126,7 @@ export const BOUT_OF_MADNESS_TABLE: readonly BoutOfMadnessEntry[] = [
 
 const BOUT_REFERENCE_LINES = BOUT_OF_MADNESS_TABLE.map(
   (b) =>
-    `- **${b.label}** (restriction: ${b.actionRestriction}${b.persistent ? ", persistent" : ""}): ${b.description}`,
+    `- **${b.label}** (restriction: ${b.actionRestriction}${b.persistent ? ", persistent" : ""}): ${b.description}`
 ).join("\n");
 
 export const SANITY_GUIDANCE_PROMPT = `## Sanity effects (guidance for the LLM resolver)
@@ -193,7 +195,7 @@ Note the absence of \`expiresAt\` for the phobia — TickOrchestrator's expiry s
  */
 export function buildSanityContextForResolver(
   _dgsm: unknown,
-  _characterId: string,
+  _characterId: string
 ): string {
   return "";
 }

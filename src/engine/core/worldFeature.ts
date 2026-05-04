@@ -47,10 +47,10 @@ export interface WorldFeature {
     step: ActionStep,
     outcome: PlannedOutcome,
     ctx: FeatureReadContext,
-    opts?: { interrupted?: boolean },
+    opts?: { interrupted?: boolean }
   ): StateChange[];
   onPropagate?(
     source: { sceneId: string; hop: number },
-    ctx: FeatureReadContext,
+    ctx: FeatureReadContext
   ): { spreadToSceneIds: string[]; changes: StateChange[] };
 }

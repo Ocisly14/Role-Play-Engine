@@ -105,8 +105,7 @@ export function computeSunLevel(timeStr: string): number {
 // ===== Emit helpers =====
 
 function buildLightingCondition(illumination: number): SceneCondition {
-  const label =
-    LIGHT_LEVEL_LABELS[illumination] ?? LIGHT_LEVEL_LABELS[1];
+  const label = LIGHT_LEVEL_LABELS[illumination] ?? LIGHT_LEVEL_LABELS[1];
   const penaltyArr = LIGHT_LEVEL_PENALTIES[illumination] ?? [];
   const skillPenalty: Record<string, number> = {};
   for (const { skill, delta } of penaltyArr) {
@@ -115,14 +114,13 @@ function buildLightingCondition(illumination: number): SceneCondition {
   return {
     featureId: FEATURE_ID,
     description: `[Lighting] ${label}`,
-    mechanicalEffect:
-      penaltyArr.length > 0 ? { skillPenalty } : undefined,
+    mechanicalEffect: penaltyArr.length > 0 ? { skillPenalty } : undefined,
   };
 }
 
 function contributeIllumination(
   locationId: string,
-  value: number,
+  value: number
 ): StateChange {
   return {
     kind: "environment.contribute",

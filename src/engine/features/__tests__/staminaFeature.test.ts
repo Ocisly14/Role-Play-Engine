@@ -14,7 +14,7 @@ import {
 
 function makeStaminaCtx(
   dgsm: DynamicGameStateManager,
-  overrides?: { tickDurationMinutes?: number },
+  overrides?: { tickDurationMinutes?: number }
 ) {
   const base = makeDGSMFeatureReadContext(dgsm, {
     callerFeatureId: "stamina",
@@ -31,7 +31,7 @@ function makeStaminaCtx(
  */
 function applyStaminaMutations(
   dgsm: DynamicGameStateManager,
-  changes: StateChange[],
+  changes: StateChange[]
 ): void {
   for (const c of changes) {
     if (c.kind === "feature.setState" && c.featureId === "stamina") {
@@ -40,7 +40,11 @@ function applyStaminaMutations(
   }
 }
 
-function seedNpc(dgsm: DynamicGameStateManager, npcId: string, sceneId: string) {
+function seedNpc(
+  dgsm: DynamicGameStateManager,
+  npcId: string,
+  sceneId: string
+) {
   dgsm.updateScene(sceneId, {
     id: sceneId,
     name: sceneId,
@@ -66,7 +70,7 @@ function seedNpc(dgsm: DynamicGameStateManager, npcId: string, sceneId: string) 
 function runStaminaTicks(
   dgsm: DynamicGameStateManager,
   count: number,
-  tickDurationMinutes = 5,
+  tickDurationMinutes = 5
 ): StateChange[] {
   const all: StateChange[] = [];
   for (let i = 0; i < count; i++) {
@@ -85,49 +89,43 @@ describe("staminaFeature internal invariants", () => {
     vi.restoreAllMocks();
   });
 
-  it(
-    "level transitions emit Tired then Exhausted character conditions with correct globalSkillPenalty",
-    () => {
-      const dgsm = new DynamicGameStateManager();
-      seedNpc(dgsm, "npc-1", "tavern");
-      // Pin baseline temperature so accel = 1x.
-      dgsm.setEnvironmentReading("tavern", { ...DEFAULT_ENVIRONMENT_READING });
+  it("level transitions emit Tired then Exhausted character conditions with correct globalSkillPenalty", () => {
+    const dgsm = new DynamicGameStateManager();
+    seedNpc(dgsm, "npc-1", "tavern");
+    // Pin baseline temperature so accel = 1x.
+    dgsm.setEnvironmentReading("tavern", { ...DEFAULT_ENVIRONMENT_READING });
 
-      // 96 * 5 = 480 min → tired threshold reached on tick 96.
-      const tiredChanges = runStaminaTicks(dgsm, 96);
-      const tiredAdds = tiredChanges.filter(
-        (c): c is Extract<StateChange, { kind: "character.addCondition" }> =>
-          c.kind === "character.addCondition" &&
-          c.condition.id === "stamina:tired",
-      );
-      expect(tiredAdds).toHaveLength(1);
-      expect(tiredAdds[0].condition.mechanicalEffect?.globalSkillPenalty).toBe(
-        -10,
-      );
-      expect(tiredAdds[0].condition.featureId).toBe("stamina");
+    // 96 * 5 = 480 min → tired threshold reached on tick 96.
+    const tiredChanges = runStaminaTicks(dgsm, 96);
+    const tiredAdds = tiredChanges.filter(
+      (c): c is Extract<StateChange, { kind: "character.addCondition" }> =>
+        c.kind === "character.addCondition" &&
+        c.condition.id === "stamina:tired"
+    );
+    expect(tiredAdds).toHaveLength(1);
+    expect(tiredAdds[0].condition.mechanicalEffect?.globalSkillPenalty).toBe(
+      -10
+    );
+    expect(tiredAdds[0].condition.featureId).toBe("stamina");
 
-      // Continue to tick 192 → 960 min → exhausted.
-      const exhaustedChanges = runStaminaTicks(dgsm, 96);
-      const removes = exhaustedChanges.filter(
-        (c): c is Extract<
-          StateChange,
-          { kind: "character.removeCondition" }
-        > =>
-          c.kind === "character.removeCondition" &&
-          c.conditionId === "stamina:tired",
-      );
-      expect(removes.length).toBeGreaterThan(0);
-      const exhaustedAdds = exhaustedChanges.filter(
-        (c): c is Extract<StateChange, { kind: "character.addCondition" }> =>
-          c.kind === "character.addCondition" &&
-          c.condition.id === "stamina:exhausted",
-      );
-      expect(exhaustedAdds).toHaveLength(1);
-      expect(
-        exhaustedAdds[0].condition.mechanicalEffect?.globalSkillPenalty,
-      ).toBe(-20);
-    },
-  );
+    // Continue to tick 192 → 960 min → exhausted.
+    const exhaustedChanges = runStaminaTicks(dgsm, 96);
+    const removes = exhaustedChanges.filter(
+      (c): c is Extract<StateChange, { kind: "character.removeCondition" }> =>
+        c.kind === "character.removeCondition" &&
+        c.conditionId === "stamina:tired"
+    );
+    expect(removes.length).toBeGreaterThan(0);
+    const exhaustedAdds = exhaustedChanges.filter(
+      (c): c is Extract<StateChange, { kind: "character.addCondition" }> =>
+        c.kind === "character.addCondition" &&
+        c.condition.id === "stamina:exhausted"
+    );
+    expect(exhaustedAdds).toHaveLength(1);
+    expect(
+      exhaustedAdds[0].condition.mechanicalEffect?.globalSkillPenalty
+    ).toBe(-20);
+  });
 
   it("cold env temperature doubles fatigue accumulation", () => {
     const dgsm = new DynamicGameStateManager();
@@ -143,7 +141,7 @@ describe("staminaFeature internal invariants", () => {
     const state = dgsm.getScopedFeatureState<StaminaCharacterState>(
       "stamina",
       "character",
-      "npc-2",
+      "npc-2"
     );
     expect(state).toBeDefined();
     expect(state?.fatigue).toBe(480);
@@ -160,7 +158,7 @@ describe("staminaFeature internal invariants", () => {
       "stamina",
       "character",
       "npc-3",
-      { fatigue: 961, fatigueLevel: 2, exhaustedDrainTicks: 0 },
+      { fatigue: 961, fatigueLevel: 2, exhaustedDrainTicks: 0 }
     );
 
     // Force CON fail (random < 0.3) and a deterministic d3 = 1 (random ≈ 0.0).
@@ -171,11 +169,11 @@ describe("staminaFeature internal invariants", () => {
 
     const hpEmits = changes.filter(
       (c): c is Extract<StateChange, { kind: "character.hp" }> =>
-        c.kind === "character.hp" && c.characterId === "npc-3",
+        c.kind === "character.hp" && c.characterId === "npc-3"
     );
     const sanEmits = changes.filter(
       (c): c is Extract<StateChange, { kind: "character.san" }> =>
-        c.kind === "character.san" && c.characterId === "npc-3",
+        c.kind === "character.san" && c.characterId === "npc-3"
     );
     expect(hpEmits).toHaveLength(1);
     expect(hpEmits[0].delta).toBe(-1);

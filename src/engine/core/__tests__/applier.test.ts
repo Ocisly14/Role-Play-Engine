@@ -1,4 +1,4 @@
-import { describe, it, expect } from "vitest";
+import { describe, expect, it } from "vitest";
 import { DynamicGameStateManager } from "../../../state/DynamicGameState.js";
 import { Applier } from "../applier.js";
 import type { StateChange } from "../types.js";
@@ -7,7 +7,7 @@ function seedNpc(
   d: DynamicGameStateManager,
   id: string,
   hp = 10,
-  maxHp = 10,
+  maxHp = 10
 ): void {
   d.registerNpcProfile({
     id,
@@ -65,9 +65,9 @@ describe("Applier", () => {
     expect(report.damageReports).toHaveLength(1);
     expect(report.damageReports[0].contributors).toHaveLength(2);
     expect(report.damageReports[0].died).toBe(true);
-    expect(
-      report.featureEvents.some((e) => e.type === "character.died"),
-    ).toBe(true);
+    expect(report.featureEvents.some((e) => e.type === "character.died")).toBe(
+      true
+    );
   });
 
   it("connection.setBlock uses refcount: two voters must both withdraw", () => {
@@ -91,7 +91,7 @@ describe("Applier", () => {
           reason: "flooded",
         },
       ],
-      { tickTime: "08:00", day: 1 },
+      { tickTime: "08:00", day: 1 }
     );
     expect(d.isConnectionBlocked("c1")).toBe(true);
 
@@ -105,7 +105,7 @@ describe("Applier", () => {
           reason: "flames",
         },
       ],
-      { tickTime: "08:01", day: 1 },
+      { tickTime: "08:01", day: 1 }
     );
     expect(d.isConnectionBlocked("c1")).toBe(true);
 
@@ -119,20 +119,19 @@ describe("Applier", () => {
           reason: "flooded",
         },
       ],
-      { tickTime: "08:02", day: 1 },
+      { tickTime: "08:02", day: 1 }
     );
     expect(d.isConnectionBlocked("c1")).toBe(false);
   });
 
   it("feature.setState routes to correct scope bucket", () => {
     const d = new DynamicGameStateManager();
-    const scopes = new Map<
-      string,
-      "scene" | "region" | "character" | "global"
-    >([
-      ["fire", "scene"],
-      ["weather", "region"],
-    ]);
+    const scopes = new Map<string, "scene" | "region" | "character" | "global">(
+      [
+        ["fire", "scene"],
+        ["weather", "region"],
+      ]
+    );
     const applier = new Applier(d, scopes);
     applier.flush(
       [
@@ -149,7 +148,7 @@ describe("Applier", () => {
           state: { kind: "storm" },
         },
       ],
-      { tickTime: "08:00", day: 1 },
+      { tickTime: "08:00", day: 1 }
     );
     expect(d.getScopedFeatureState("fire", "scene", "s1")).toEqual({
       intensity: 3,
@@ -161,10 +160,9 @@ describe("Applier", () => {
 
   it("feature.setState / removeState on same key honor emission order", () => {
     const d = new DynamicGameStateManager();
-    const scopes = new Map<
-      string,
-      "scene" | "region" | "character" | "global"
-    >([["fire", "scene"]]);
+    const scopes = new Map<string, "scene" | "region" | "character" | "global">(
+      [["fire", "scene"]]
+    );
     const applier = new Applier(d, scopes);
     applier.flush(
       [
@@ -176,7 +174,7 @@ describe("Applier", () => {
           state: { intensity: 4 },
         },
       ],
-      { tickTime: "08:00", day: 1 },
+      { tickTime: "08:00", day: 1 }
     );
     expect(d.getScopedFeatureState("fire", "scene", "s1")).toEqual({
       intensity: 4,
@@ -192,7 +190,7 @@ describe("Applier", () => {
         },
         { kind: "feature.removeState", featureId: "fire", key: "s1" },
       ],
-      { tickTime: "08:01", day: 1 },
+      { tickTime: "08:01", day: 1 }
     );
     expect(d.getScopedFeatureState("fire", "scene", "s1")).toBeUndefined();
   });
@@ -223,7 +221,7 @@ describe("Applier", () => {
           },
         },
       ],
-      { tickTime: "08:00", day: 1 },
+      { tickTime: "08:00", day: 1 }
     );
     const conds = d.getSceneConditions("s1");
     expect(conds).toHaveLength(1);

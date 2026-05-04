@@ -37,12 +37,11 @@ describe("integration: fire → stamina chain", () => {
     // first 10 minutes — well within the 6-tick window).
     expect(env.temperature).toBe(20 + 3 * 100);
 
-    const stamina =
-      setup.dgsm.getScopedFeatureState<StaminaCharacterState>(
-        "stamina",
-        "character",
-        "miner",
-      );
+    const stamina = setup.dgsm.getScopedFeatureState<StaminaCharacterState>(
+      "stamina",
+      "character",
+      "miner"
+    );
     expect(stamina).toBeDefined();
     // 6 ticks total. Tick 1 stamina sees default 20°C (no accel; +1 minute).
     // Ticks 2..6 stamina sees 320°C → +1x base + 1x hostile + 1x extreme = 3x
@@ -58,12 +57,11 @@ describe("integration: fire → stamina chain", () => {
 
     await setup.tickN(6);
 
-    const stamina =
-      setup.dgsm.getScopedFeatureState<StaminaCharacterState>(
-        "stamina",
-        "character",
-        "miner",
-      );
+    const stamina = setup.dgsm.getScopedFeatureState<StaminaCharacterState>(
+      "stamina",
+      "character",
+      "miner"
+    );
     expect(stamina).toBeDefined();
     // No env contributions → default 20 °C → 1x accel → exactly elapsed minutes.
     expect(stamina!.fatigue).toBe(6);
@@ -81,17 +79,16 @@ describe("integration: fire → stamina chain", () => {
 
     await Promise.all([noFire.tickN(8), withFire.tickN(8)]);
 
-    const baseline =
-      noFire.dgsm.getScopedFeatureState<StaminaCharacterState>(
-        "stamina",
-        "character",
-        "miner",
-      );
+    const baseline = noFire.dgsm.getScopedFeatureState<StaminaCharacterState>(
+      "stamina",
+      "character",
+      "miner"
+    );
     const accelerated =
       withFire.dgsm.getScopedFeatureState<StaminaCharacterState>(
         "stamina",
         "character",
-        "miner",
+        "miner"
       );
     expect(accelerated!.fatigue).toBeGreaterThan(baseline!.fatigue);
   });

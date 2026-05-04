@@ -35,7 +35,7 @@ function seedOutdoorAndIndoorScenes(dgsm: DynamicGameStateManager): void {
 
 function illumContributions(
   changes: StateChange[],
-  locationId: string,
+  locationId: string
 ): number[] {
   return changes
     .filter(
@@ -43,7 +43,7 @@ function illumContributions(
         c.kind === "environment.contribute" &&
         c.quantity === "illumination" &&
         c.locationId === locationId &&
-        c.sourceFeatureId === "sun",
+        c.sourceFeatureId === "sun"
     )
     .map((c) => c.value);
 }

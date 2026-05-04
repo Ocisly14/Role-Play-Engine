@@ -24,15 +24,13 @@ export interface PendingInterrupt {
   activeStepId: string;
 }
 
-export interface ResolveFn {
-  (
-    step: ActionStep,
-    ctx: unknown,
-  ): Promise<{
-    outcome: PlannedOutcome;
-    plannedDuration: number;
-  }>;
-}
+export type ResolveFn = (
+  step: ActionStep,
+  ctx: unknown
+) => Promise<{
+  outcome: PlannedOutcome;
+  plannedDuration: number;
+}>;
 
 export interface OrchestratorDeps {
   dgsm: DynamicGameStateManager;
@@ -122,7 +120,7 @@ export class TickOrchestrator {
         } catch (err) {
           console.error(
             `[TickOrchestrator] feature "${f.id}" init() threw; skipping. Error:`,
-            err,
+            err
           );
         }
       }
@@ -168,7 +166,7 @@ export class TickOrchestrator {
           next,
           nextTickTime,
           buffer,
-          commitsThisTick,
+          commitsThisTick
         );
         continue;
       }
@@ -180,8 +178,12 @@ export class TickOrchestrator {
       const resolved = await resolve(next, readCtx);
       next.activatedAt = nextTickTime;
       next.plannedDuration = resolved.plannedDuration;
-      next.plannedOutcome = resolved.outcome as unknown as ActionStep["plannedOutcome"];
-      next.completionTime = this.addMinutes(nextTickTime, resolved.plannedDuration);
+      next.plannedOutcome =
+        resolved.outcome as unknown as ActionStep["plannedOutcome"];
+      next.completionTime = this.addMinutes(
+        nextTickTime,
+        resolved.plannedDuration
+      );
       queue.markActive(next.id);
     }
 
@@ -212,7 +214,7 @@ export class TickOrchestrator {
         (s) =>
           s.status === "active" &&
           s.engine !== "code" &&
-          this.timeIsAtOrBefore(s.completionTime, nextTickTime),
+          this.timeIsAtOrBefore(s.completionTime, nextTickTime)
       );
 
     // Per-feature ctx factory for commit-time onActionCommit hooks (mirrors
@@ -225,7 +227,9 @@ export class TickOrchestrator {
         callerScope: f.stateScope,
       });
     for (const step of due) {
-      const outcome = step.plannedOutcome as unknown as PlannedOutcome | undefined;
+      const outcome = step.plannedOutcome as unknown as
+        | PlannedOutcome
+        | undefined;
       // plannedOutcome is set in Phase 3 before markActive; missing = programmer error.
       if (!outcome) {
         queue.markCompleted(step.id);
@@ -234,7 +238,7 @@ export class TickOrchestrator {
       const featureChanges = featureRunner.runActionCommit(
         step,
         outcome,
-        commitCtxFor,
+        commitCtxFor
       );
       buffer.push(...featureChanges);
       buffer.push(...outcome.stateChanges);
@@ -325,14 +329,14 @@ export class TickOrchestrator {
     step: ActionStep,
     nextTickTime: GameTime,
     buffer: StateChange[],
-    commitsThisTick: CharacterAction[],
+    commitsThisTick: CharacterAction[]
   ): Promise<void> {
     const subsystem = step.codeSubsystem
       ? this.deps.codeEngineRegistry.get(step.codeSubsystem)
       : undefined;
     if (!subsystem) {
       throw new Error(
-        `TickOrchestrator: ActionStep ${step.id} declares engine="code" but codeSubsystem "${step.codeSubsystem}" is not registered`,
+        `TickOrchestrator: ActionStep ${step.id} declares engine="code" but codeSubsystem "${step.codeSubsystem}" is not registered`
       );
     }
     const ctx = this.makeCodeCtx();
@@ -355,14 +359,14 @@ export class TickOrchestrator {
     step: ActionStep,
     nextTickTime: GameTime,
     buffer: StateChange[],
-    commitsThisTick: CharacterAction[],
+    commitsThisTick: CharacterAction[]
   ): void {
     const subsystem = step.codeSubsystem
       ? this.deps.codeEngineRegistry.get(step.codeSubsystem)
       : undefined;
     if (!subsystem) {
       throw new Error(
-        `TickOrchestrator: ActionStep ${step.id} declares engine="code" but codeSubsystem "${step.codeSubsystem}" is not registered`,
+        `TickOrchestrator: ActionStep ${step.id} declares engine="code" but codeSubsystem "${step.codeSubsystem}" is not registered`
       );
     }
     const ctx = this.makeCodeCtx();
@@ -387,7 +391,7 @@ export class TickOrchestrator {
     req: PendingInterrupt,
     nowTickTime: GameTime,
     buffer: StateChange[],
-    interruptions: TickReport["interruptions"],
+    interruptions: TickReport["interruptions"]
   ): void {
     const active = this.deps.queue.get(req.activeStepId);
     if (!active || active.status !== "active") {
@@ -396,7 +400,7 @@ export class TickOrchestrator {
     }
     if (active.activatedAt === undefined) {
       throw new Error(
-        `TickOrchestrator: active step ${active.id} has no activatedAt (queue corruption)`,
+        `TickOrchestrator: active step ${active.id} has no activatedAt (queue corruption)`
       );
     }
 
@@ -412,7 +416,7 @@ export class TickOrchestrator {
         active,
         active.plannedOutcome as unknown as PlannedOutcome,
         ctx,
-        { interrupted: true },
+        { interrupted: true }
       );
       buffer.push(...partialChanges);
     }
@@ -487,7 +491,7 @@ export class TickOrchestrator {
       if (!conditions || conditions.length === 0) continue;
       // Iterate via copy because removeCharacterCondition mutates the array.
       const expired = conditions.filter(
-        (c) => c.expiresAt && this.timeIsAtOrBefore(c.expiresAt, now),
+        (c) => c.expiresAt && this.timeIsAtOrBefore(c.expiresAt, now)
       );
       for (const c of expired) {
         this.deps.dgsm.removeCharacterCondition(npc.id, c.id);

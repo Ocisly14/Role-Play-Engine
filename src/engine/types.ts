@@ -1,4 +1,4 @@
-import type { CharacterAction, PlanNode } from "../planning/types.js";
+import type { PlanNode } from "../planning/types.js";
 import type { DynamicGameStateManager } from "../state/DynamicGameState.js";
 
 // ===== World Feature: self-running world system =====
@@ -23,8 +23,6 @@ export interface ActivateResult {
 export interface WorldFeatureResult {
   /** New PlanNodes to inject into subsequent ticks */
   newNodes?: PlanNode[];
-  /** Player witness events (for interrupt handling) */
-  playerEvents?: Array<{ event: CharacterAction; impact: number }>;
 }
 
 // ===== Feature schema & propagation declarations =====
@@ -53,8 +51,6 @@ export interface PropagationResult {
   spreadTo: string[];
   /** New PlanNodes to inject (e.g. NPC reaction to fire arrival) */
   newNodes?: PlanNode[];
-  /** Player witness events from propagation */
-  playerEvents?: Array<{ event: CharacterAction; impact: number }>;
 }
 
 /** Minimal interface for NPC planning capabilities needed by WorldFeatures */

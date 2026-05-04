@@ -200,6 +200,18 @@ export async function getRunner(
   const runtime = await loadSimulationRuntime(prisma, sessionId);
   if (!runtime) return undefined;
 
+  const persistedTickEngineState = (
+    runtime.gameState as Record<string, unknown>
+  )._tickEngine as
+    | {
+        queue: unknown[];
+        dexByActor: Record<string, number>;
+        connectionVotes: Record<
+          string,
+          { featureId: string; reason: string }[]
+        >;
+      }
+    | undefined;
   const gameState = DynamicGameStateManager.deserialize(runtime.gameState);
   const { runner } = buildSimulationBundle({
     prisma,
@@ -211,6 +223,11 @@ export async function getRunner(
     state: runtime.simulationState,
     ticksExecuted: runtime.tick,
     stopReason: runtime.stopReason,
+    persistedTickEngineState: persistedTickEngineState as
+      | Parameters<
+          typeof runner.hydrateFromRuntime
+        >[0]["persistedTickEngineState"]
+      | undefined,
   });
   runner.setModuleName(runtime.moduleName ?? "");
   if (runtime.simulationState === "running") {

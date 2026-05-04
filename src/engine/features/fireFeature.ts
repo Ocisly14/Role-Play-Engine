@@ -61,7 +61,7 @@ const INTENSITY_LABELS = [
 function createFireState(initialIntensity: number): FireSceneState {
   const clamped = Math.max(
     1,
-    Math.min(initialIntensity, DEFAULT_MAX_INTENSITY),
+    Math.min(initialIntensity, DEFAULT_MAX_INTENSITY)
   );
   return {
     intensity: clamped,
@@ -77,7 +77,7 @@ function createFireState(initialIntensity: number): FireSceneState {
 
 function createRoadFireState(
   initialIntensity: number,
-  position: number,
+  position: number
 ): FireRoadState {
   const base = createFireState(initialIntensity);
   return {
@@ -88,8 +88,7 @@ function createRoadFireState(
 
 function intensityLabel(intensity: number): string {
   return (
-    INTENSITY_LABELS[intensity] ??
-    INTENSITY_LABELS[INTENSITY_LABELS.length - 1]
+    INTENSITY_LABELS[intensity] ?? INTENSITY_LABELS[INTENSITY_LABELS.length - 1]
   );
 }
 
@@ -160,7 +159,7 @@ function fireConnectionIdFor(a: string, b: string): string {
  */
 function getBlockableNeighbors(
   locationId: string,
-  ctx: FeatureReadContext,
+  ctx: FeatureReadContext
 ): string[] {
   const neighbors: string[] = [];
   const scene = ctx.getScene(locationId);
@@ -195,7 +194,7 @@ function getBlockableNeighbors(
 /** Helper: emit `removeCondition + addCondition(intensity)` for a fire scene. */
 function emitFireConditionRefresh(
   sceneId: string,
-  intensity: number,
+  intensity: number
 ): StateChange[] {
   return [
     {
@@ -214,7 +213,7 @@ function emitFireConditionRefresh(
 /** Helper: tear down fire at `locationId` — remove state, swap conditions for aftermath. */
 function emitFireExtinguish(
   locationId: string,
-  totalBurnMinutes: number,
+  totalBurnMinutes: number
 ): StateChange[] {
   return [
     { kind: "feature.removeState", featureId: FEATURE_ID, key: locationId },
@@ -292,8 +291,8 @@ export const fireFeature: WorldFeature = {
     for (const { key, state } of states) {
       lines.push(
         `- ${key}: intensity ${state.intensity}/5 (${intensityLabel(
-          state.intensity,
-        )}), phase: ${state.phase}`,
+          state.intensity
+        )}), phase: ${state.phase}`
       );
     }
     return lines.length > 0 ? `Active fires:\n${lines.join("\n")}` : "";
@@ -309,7 +308,10 @@ export const fireFeature: WorldFeature = {
       const existing = ctx.getFeatureState<FireSceneState>(sceneId);
       if (!existing) return []; // nothing to extinguish
 
-      const next: FireSceneState = { ...existing, intensity: existing.intensity - 2 };
+      const next: FireSceneState = {
+        ...existing,
+        intensity: existing.intensity - 2,
+      };
       if (next.intensity <= 0) {
         return emitFireExtinguish(sceneId, existing.totalBurnMinutes);
       }
@@ -497,13 +499,10 @@ export const fireFeature: WorldFeature = {
 
   onPropagate(
     source: { sceneId: string; hop: number },
-    ctx: FeatureReadContext,
+    ctx: FeatureReadContext
   ): { spreadToSceneIds: string[]; changes: StateChange[] } {
     const sourceState = ctx.getFeatureState<FireSceneState>(source.sceneId);
-    if (
-      !sourceState ||
-      sourceState.intensity < sourceState.spreadThreshold
-    ) {
+    if (!sourceState || sourceState.intensity < sourceState.spreadThreshold) {
       return { spreadToSceneIds: [], changes: [] };
     }
 
@@ -512,7 +511,7 @@ export const fireFeature: WorldFeature = {
 
     const ignite = (
       targetId: string,
-      newState: FireSceneState | FireRoadState,
+      newState: FireSceneState | FireRoadState
     ): void => {
       // Don't overwrite an already-burning location.
       if (ctx.getFeatureState<FireSceneState>(targetId)) return;

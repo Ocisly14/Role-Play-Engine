@@ -6,7 +6,7 @@ import { getCharacterConditionPenalties } from "../characterConditionPenalties.j
 function seedNpc(
   d: DynamicGameStateManager,
   id: string,
-  conditions: CharacterCondition[],
+  conditions: CharacterCondition[]
 ): void {
   d.registerNpcProfile({
     id,

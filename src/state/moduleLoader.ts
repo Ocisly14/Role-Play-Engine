@@ -155,6 +155,18 @@ export async function loadModule(
  * delegate to the loader for validation. Returns `[]` if the directory does
  * not exist. Throws `ScriptedEventLoadError` on validation failure.
  */
+/**
+ * Public entry point — load scripted events for `moduleName` from
+ * `<DEFAULT_MODS_DIR>/<moduleName>/scripted-events/*.json`. Used by
+ * `SimulationRunner` to feed the TickEngine without re-fetching DB-backed
+ * module data when only the scripted-event list is needed.
+ */
+export function loadScriptedEventsForModule(
+  moduleName: string
+): ScriptedEvent[] {
+  return loadScriptedEventsFromDisk(DEFAULT_MODS_DIR, moduleName);
+}
+
 function loadScriptedEventsFromDisk(
   modsDir: string,
   moduleName: string
@@ -472,8 +484,7 @@ export function initRuntime(params: {
     }
     moduleSetupWithInit = {
       ...moduleSetupWithInit,
-      featureInit:
-        Object.keys(mergedInit).length > 0 ? mergedInit : undefined,
+      featureInit: Object.keys(mergedInit).length > 0 ? mergedInit : undefined,
     };
   }
 

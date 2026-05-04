@@ -2,12 +2,7 @@ import type { OutputSchemaConfig } from "./types.js";
 
 export const OUTPUT_SCHEMA_PRESETS: Record<string, readonly string[]> = {
   default: ["memory.event", "character.fatigue", "scene.condition"],
-  item_modify: [
-    "item.move",
-    "item.modify",
-    "item.destroy",
-    "item.create",
-  ],
+  item_modify: ["item.move", "item.modify", "item.destroy", "item.create"],
 };
 
 /**

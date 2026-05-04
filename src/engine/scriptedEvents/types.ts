@@ -7,20 +7,20 @@ import type {
 // ─── Top-level Event ────────────────────────────────────────────
 export interface ScriptedEvent {
   id: string;
-  label: string;                          // human-readable, debug/log only
-  initialStatus?: "active" | "disabled";  // default "active"
+  label: string; // human-readable, debug/log only
+  initialStatus?: "active" | "disabled"; // default "active"
 
   // Timing — DSL distinguishes "delay before event manifests" vs "duration the
   // event takes". Runtime collapses both into one `pending` phase whose
   // scheduledCompleteTick = currentTick + (fireDelayTicks ?? 0) + (durationTicks ?? 0).
   // Module authors that need to query "is X visibly happening now?" decompose into
   // two events linked by cascade — the engine doesn't track separate phases.
-  fireDelayTicks?: number;                // default 0
-  durationTicks?: number;                 // default 0
+  fireDelayTicks?: number; // default 0
+  durationTicks?: number; // default 0
 
-  trackers?: Tracker[];                   // optional; only needed if predicates reference trackers
-  fireWhen: Predicate;                    // when true → transition to "pending" (or directly "completed" if delay+duration = 0)
-  failWhen?: Predicate;                   // optional; when true → transition to "failed" (priority over completion)
+  trackers?: Tracker[]; // optional; only needed if predicates reference trackers
+  fireWhen: Predicate; // when true → transition to "pending" (or directly "completed" if delay+duration = 0)
+  failWhen?: Predicate; // optional; when true → transition to "failed" (priority over completion)
   onComplete: Effect[];
   onFail?: Effect[];
 }
@@ -34,20 +34,30 @@ export type Tracker =
   | { id: string; kind: "lastFulfillment"; match: ActionMatch };
 
 export interface ActionMatch {
-  definitionId?: string;     // omit = any action kind
-  byNpcId?: string;          // omit = any NPC
-  atSceneId?: string;        // omit = any scene
-  withTargetId?: string;     // omit = any/no target
+  definitionId?: string; // omit = any action kind
+  byNpcId?: string; // omit = any NPC
+  atSceneId?: string; // omit = any scene
+  withTargetId?: string; // omit = any/no target
 }
 
 // ─── Predicate (tick-level boolean) ─────────────────────────────
 export type Predicate =
   // ── Tracker queries ────────────────────────────────────
-  | { op: "trackerCount"; trackerId: string; cmp: "gte" | "lte" | "eq"; value: number }
+  | {
+      op: "trackerCount";
+      trackerId: string;
+      cmp: "gte" | "lte" | "eq";
+      value: number;
+    }
   // ticks since the matching action last committed; for "daily" use cmp:lte,value:1440;
   // for "missed N days" use cmp:gte,value:N*1440. If lastFulfilledTick == null
   // (never fulfilled), treats elapsed as +Infinity.
-  | { op: "trackerSinceFulfillment"; trackerId: string; cmp: "gte" | "lte" | "eq"; value: number }
+  | {
+      op: "trackerSinceFulfillment";
+      trackerId: string;
+      cmp: "gte" | "lte" | "eq";
+      value: number;
+    }
   | { op: "trackerNeverFulfilled"; trackerId: string }
   // ── This-tick events ───────────────────────────────────
   | { op: "actionCommittedThisTick"; match: ActionMatch }
@@ -94,14 +104,39 @@ export type Effect =
   // Filtered by CharacterPredicate
   | { kind: "character.san"; targetFilter: CharacterPredicate; delta: number }
   | { kind: "character.hp"; targetFilter: CharacterPredicate; delta: number }
-  | { kind: "character.fatigue"; targetFilter: CharacterPredicate; delta: number }
-  | { kind: "character.addCondition"; targetFilter: CharacterPredicate; condition: CharacterCondition }
-  | { kind: "character.removeCondition"; targetFilter: CharacterPredicate; conditionId: string }
+  | {
+      kind: "character.fatigue";
+      targetFilter: CharacterPredicate;
+      delta: number;
+    }
+  | {
+      kind: "character.addCondition";
+      targetFilter: CharacterPredicate;
+      condition: CharacterCondition;
+    }
+  | {
+      kind: "character.removeCondition";
+      targetFilter: CharacterPredicate;
+      conditionId: string;
+    }
   // Filtered by ScenePredicate
-  | { kind: "scene.addCondition"; sceneFilter: ScenePredicate; condition: SceneCondition }
-  | { kind: "scene.removeCondition"; sceneFilter: ScenePredicate; predicate: { featureId: string } }
+  | {
+      kind: "scene.addCondition";
+      sceneFilter: ScenePredicate;
+      condition: SceneCondition;
+    }
+  | {
+      kind: "scene.removeCondition";
+      sceneFilter: ScenePredicate;
+      predicate: { featureId: string };
+    }
   // Direct (no filter)
-  | { kind: "connection.setBlock"; connectionId: string; blocked: boolean; reason: string }
+  | {
+      kind: "connection.setBlock";
+      connectionId: string;
+      blocked: boolean;
+      reason: string;
+    }
   | { kind: "event.emit"; event: FeatureEvent }
   // Cross-event (D)
   | {
@@ -117,19 +152,19 @@ export type Effect =
 // path on the Runner.
 
 export type ScriptedEventStatus =
-  | "active"     // being evaluated; waiting for fireWhen
-  | "pending"    // fireWhen met; scheduled to complete at scheduledCompleteTick
-  | "completed"  // terminal: success (onComplete fired)
-  | "failed"     // terminal: failure (onFail fired)
-  | "disabled";  // not evaluated; can be re-activated via event.transition
+  | "active" // being evaluated; waiting for fireWhen
+  | "pending" // fireWhen met; scheduled to complete at scheduledCompleteTick
+  | "completed" // terminal: success (onComplete fired)
+  | "failed" // terminal: failure (onFail fired)
+  | "disabled"; // not evaluated; can be re-activated via event.transition
 
 export interface ScriptedEventState {
   id: string;
   status: ScriptedEventStatus;
-  scheduledCompleteTick: number | null;          // set when status = "pending"; null otherwise
-  trackerStates: Record<string, TrackerState>;   // keyed by Tracker.id
+  scheduledCompleteTick: number | null; // set when status = "pending"; null otherwise
+  trackerStates: Record<string, TrackerState>; // keyed by Tracker.id
 }
 
 export type TrackerState =
   | { kind: "actionCount"; count: number }
-  | { kind: "lastFulfillment"; lastFulfilledTick: number | null };  // null = never fulfilled
+  | { kind: "lastFulfillment"; lastFulfilledTick: number | null }; // null = never fulfilled

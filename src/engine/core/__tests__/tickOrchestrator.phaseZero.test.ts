@@ -38,7 +38,8 @@ const sentinelFeature: WorldFeature = {
   description: "test sentinel",
   stateScope: "global",
   affectedKinds: ["feature.setState"],
-  effectSummary: "writes a global flag from init() so we can assert Phase 0 ran",
+  effectSummary:
+    "writes a global flag from init() so we can assert Phase 0 ran",
   init() {
     return [
       {
@@ -61,14 +62,14 @@ describe("TickOrchestrator — Phase 0 (one-shot init)", () => {
     });
 
     expect(
-      dgsm.getScopedFeatureState<boolean>("sentinel", "global", "ran"),
+      dgsm.getScopedFeatureState<boolean>("sentinel", "global", "ran")
     ).toBeUndefined();
 
     await orch.tick();
 
-    expect(dgsm.getScopedFeatureState<boolean>("sentinel", "global", "ran")).toBe(
-      true,
-    );
+    expect(
+      dgsm.getScopedFeatureState<boolean>("sentinel", "global", "ran")
+    ).toBe(true);
   });
 
   it("rehydrated session: first tick() does NOT run feature.init()", async () => {
@@ -82,7 +83,7 @@ describe("TickOrchestrator — Phase 0 (one-shot init)", () => {
     await orch.tick();
 
     expect(
-      dgsm.getScopedFeatureState<boolean>("sentinel", "global", "ran"),
+      dgsm.getScopedFeatureState<boolean>("sentinel", "global", "ran")
     ).toBeUndefined();
   });
 
@@ -155,9 +156,9 @@ describe("TickOrchestrator — Phase 0 (one-shot init)", () => {
     await orch.tick();
     // Sibling's init ran in spite of exploding's throw
     expect(siblingSpy).toHaveBeenCalledTimes(1);
-    expect(dgsm.getScopedFeatureState<boolean>("sibling", "global", "ran")).toBe(
-      true,
-    );
+    expect(
+      dgsm.getScopedFeatureState<boolean>("sibling", "global", "ran")
+    ).toBe(true);
 
     // Second tick does NOT re-run sibling.init (hasInitialized latched)
     await orch.tick();

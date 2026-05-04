@@ -52,7 +52,7 @@ describe("FeatureRunner", () => {
     const runner = new FeatureRunner([lowPrio, noTick, highPrio]);
     const changes = runner.runTick(fakeCtx);
     expect(
-      changes.map((c) => (c.kind === "character.hp" ? c.sourceFeatureId : "")),
+      changes.map((c) => (c.kind === "character.hp" ? c.sourceFeatureId : ""))
     ).toEqual(["hi", "lo"]);
   });
 

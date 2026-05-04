@@ -281,9 +281,9 @@ export interface DamageReport {
   died: boolean;
 }
 
-// No standalone EncounterDetection type: encounters are emitted as
-// FeatureEvents with type "encounter.detected", so role sim consumes a single
-// unified event channel. See B4 EmergentEventEmitter.
+// Phase E: encounter detection is removed. Per-NPC perception (including the
+// "two NPCs in the same scene" case the legacy encounter scanner detected)
+// becomes the renderer's job in the post-Phase-E perception layer.
 
 export interface TickReport {
   tickTime: GameTime;

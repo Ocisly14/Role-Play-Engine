@@ -13,8 +13,8 @@ import type {
   ToolResult,
 } from "../types.js";
 import {
-  formatOutputSchemaPrompt,
   RESOLVER_STATIC_SYSTEM_PROMPT,
+  formatOutputSchemaPrompt,
 } from "./schemaBuilder.js";
 import type { StateContext } from "./stateContextBuilder.js";
 

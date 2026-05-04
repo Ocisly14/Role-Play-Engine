@@ -87,18 +87,20 @@ export class Queue {
 
   entriesByGroup(stepGroupId: string): ActionStep[] {
     return [...this.steps.values()].filter(
-      (s) => s.stepGroupId === stepGroupId,
+      (s) => s.stepGroupId === stepGroupId
     );
   }
 
   isLastStepInChain(stepGroupId: string, stepIndex: number): boolean {
     return !this.entriesByGroup(stepGroupId).some(
-      (s) => s.stepIndex > stepIndex && s.status !== "cancelled",
+      (s) => s.stepIndex > stepIndex && s.status !== "cancelled"
     );
   }
 
   cancelByHandle(handleId: string): number {
-    const hits = [...this.steps.values()].filter((s) => s.handle.id === handleId);
+    const hits = [...this.steps.values()].filter(
+      (s) => s.handle.id === handleId
+    );
     for (const h of hits) {
       this.steps.delete(h.id);
     }

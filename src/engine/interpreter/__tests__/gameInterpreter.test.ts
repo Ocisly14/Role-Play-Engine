@@ -68,6 +68,7 @@ describe("buildInterpreterPrompt", () => {
     const defs: ActionDefinition[] = [
       {
         id: "action",
+        engine: "llm",
         title: "Action",
         description: "General actions",
         content: "",
@@ -76,6 +77,7 @@ describe("buildInterpreterPrompt", () => {
       },
       {
         id: "perception",
+        engine: "llm",
         title: "Perception",
         description: "Finding hidden objects",
         content: "",
@@ -90,6 +92,7 @@ describe("buildInterpreterPrompt", () => {
       },
       {
         id: "brawling",
+        engine: "llm",
         title: "Brawling",
         description: "Hand-to-hand combat",
         content: "",

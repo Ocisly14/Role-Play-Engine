@@ -381,7 +381,8 @@ export const GAME_INTERPRETER_SKILL_FLOW_CASES: GameInterpreterSkillFlowCase[] =
       expectedPrimaryDefinitionId: "medicine",
       expectedPrimaryDefinitionIdAnyOf: ["medicine", "first_aid"],
       expectedOutputKeysAnyOf: ["character.condition", "character.hp"],
-      notes: "喂药在 CoC 规则下 medicine（处方级）和 first_aid（急救级）都 canonical",
+      notes:
+        "喂药在 CoC 规则下 medicine（处方级）和 first_aid（急救级）都 canonical",
     },
     {
       id: "key_character_position_stealth",
@@ -403,7 +404,8 @@ export const GAME_INTERPRETER_SKILL_FLOW_CASES: GameInterpreterSkillFlowCase[] =
       expectedPrimaryDefinitionId: "action",
       expectedPrimaryDefinitionIdAnyOf: ["action", "sleight_of_hand"],
       expectedOutputKeysAnyOf: ["item.move", "memory.event"],
-      notes: "有接待员在场时 sleight_of_hand 也 canonical；无观察者时 action 就够",
+      notes:
+        "有接待员在场时 sleight_of_hand 也 canonical；无观察者时 action 就够",
     },
     {
       id: "key_item_destroy_brawling",
@@ -527,9 +529,13 @@ export const GAME_INTERPRETER_SKILL_FLOW_CASES: GameInterpreterSkillFlowCase[] =
       actionText: "陪海伦坐下慢慢疏导她的情绪",
       expectedSteps: ["psychoanalysis"],
       expectedPrimaryDefinitionId: "psychoanalysis",
-      expectedPrimaryDefinitionIdAnyOf: ["psychoanalysis", "character_interaction"],
+      expectedPrimaryDefinitionIdAnyOf: [
+        "psychoanalysis",
+        "character_interaction",
+      ],
       expectedOutputKeysAnyOf: ["character.san", "relationship.change"],
-      notes: "单次安抚 canon 上是 character_interaction；系列疗程才是 psychoanalysis——单次动作 under-determined",
+      notes:
+        "单次安抚 canon 上是 character_interaction；系列疗程才是 psychoanalysis——单次动作 under-determined",
     },
     {
       id: "academic_law_interpret",

@@ -1,6 +1,5 @@
 import type { PrismaClient } from "@prisma/client";
 import type { ActionDefinitionRegistry } from "../engine/definitions/registry.js";
-import { getTopologyNeighbors } from "../engine/shared/topologyHelpers.js";
 import { t } from "../i18n/t.js";
 import type { NpcMemoryManager } from "../memory/NpcMemoryManager.js";
 import type { KnownMapSnapshot } from "../memory/types.js";
@@ -1691,75 +1690,17 @@ export class NPCPlanningAgent {
   private buildNpcWorldStatePrompt(
     dgsm: DynamicGameStateManager,
     npcId: string,
-    npcLocation?: string,
+    _npcLocation?: string,
     _definitions?: ActionDefinitionRegistry
   ): string {
-    // Phase E1: the legacy GameEngineRegistry-driven weather/feature prompt
-    // path was removed. The new TickEngine surfaces world-state through
-    // WorldFeature.stateDescription(ctx), which is reached from the Phase D
-    // shared/worldStateBlock helpers. The remaining sections below are
-    // pre-existing transitional code retained for the legacy tickProcessor
-    // until Task E7 deletes it.
+    // Phase E: the legacy `dgsm.getFeatureState(...)` API was removed in
+    // Phase D. Per-NPC perception of fire / stamina / sanity is the
+    // renderer's responsibility (post-Phase-E follow-on). The two sections
+    // below — concealment + physical conditions — read directly from DGSM
+    // and remain valid; everything else is suppressed until the renderer
+    // ships.
     const state = dgsm.getState();
     const sections: string[] = [];
-
-    // Fire — only fires the NPC can perceive (fire light reach)
-    if (npcLocation) {
-      const fireDesc = this.buildPerceivedFireState(dgsm, npcLocation);
-      if (fireDesc) sections.push(fireDesc);
-    }
-
-    // Stamina — only this NPC's fatigue
-    const staminaStates = dgsm.getFeatureState("stamina") as
-      | Record<
-          string,
-          {
-            fatigue?: number;
-            fatigueLevel?: number;
-            minutesSinceLastRest?: number;
-          }
-        >
-      | undefined;
-    if (staminaStates?.[npcId]) {
-      const stamina = staminaStates[npcId];
-      if (stamina.fatigueLevel && stamina.fatigueLevel > 0) {
-        const fatigue = Math.max(
-          0,
-          stamina.fatigue ?? stamina.minutesSinceLastRest ?? 0
-        );
-        const score = Math.max(
-          0,
-          Math.min(100, Math.round((fatigue / 960) * 100))
-        );
-        const label = stamina.fatigueLevel === 1 ? "Tired" : "Exhausted";
-        sections.push(`Fatigue: ${label} (${score}/100)`);
-      }
-    }
-
-    // Sanity — only this NPC's active insanity
-    const sanityStates = dgsm.getFeatureState("sanity") as
-      | Record<
-          string,
-          {
-            activeInsanity?: {
-              isActive?: boolean;
-              insanityType?: string;
-              boutType?: string;
-              description?: string;
-              actionRestriction?: string;
-            };
-          }
-        >
-      | undefined;
-    if (sanityStates?.[npcId]) {
-      const sanity = sanityStates[npcId];
-      if (sanity.activeInsanity?.isActive) {
-        const ai = sanity.activeInsanity;
-        sections.push(
-          `Active insanity: ${ai.insanityType} (${ai.boutType}) — ${ai.description} | restriction: ${ai.actionRestriction}`
-        );
-      }
-    }
 
     // Concealment — this NPC's hidden/stealth status
     if (dgsm.isCharacterHidden(npcId)) {
@@ -1782,80 +1723,5 @@ export class NPCPlanningAgent {
 
     if (sections.length === 0) return "";
     return "## World Conditions\n\n" + sections.join("\n") + "\n";
-  }
-
-  /**
-   * Determine which fires the NPC can perceive based on fire light coverage.
-   * A fire is perceivable if its light reaches the NPC's current scene:
-   * - Fire is at the NPC's scene → directly perceivable
-   * - Fire intensity >= 3 and NPC is at an adjacent scene (topology neighbor or connection) → perceivable via light
-   */
-  private buildPerceivedFireState(
-    dgsm: DynamicGameStateManager,
-    npcLocation: string
-  ): string {
-    const fireStates = dgsm.getFeatureState("fire");
-    if (!fireStates || Object.keys(fireStates).length === 0) return "";
-
-    const topology = dgsm.getTopology();
-
-    // Build set of scenes whose fire light reaches the NPC
-    const perceivedFires: Array<{
-      sceneId: string;
-      intensity: number;
-      label: string;
-    }> = [];
-    const INTENSITY_LABELS = [
-      "",
-      "Smoldering",
-      "Small Fire",
-      "Burning",
-      "Blazing",
-      "Inferno",
-    ];
-
-    for (const [fireSceneId, state] of Object.entries(fireStates)) {
-      const fs = state as { intensity: number; phase?: string } | undefined;
-      if (!fs || fs.intensity <= 0) continue;
-
-      // Direct: fire is at NPC's scene
-      if (fireSceneId === npcLocation) {
-        perceivedFires.push({
-          sceneId: fireSceneId,
-          intensity: fs.intensity,
-          label: INTENSITY_LABELS[fs.intensity] ?? INTENSITY_LABELS[5],
-        });
-        continue;
-      }
-
-      // Adjacent: fire intense enough (>=3) to cast light to neighbors
-      if (fs.intensity >= 3) {
-        let isAdjacent = false;
-        if (topology) {
-          const neighbors = getTopologyNeighbors(fireSceneId, topology);
-          isAdjacent = neighbors.includes(npcLocation);
-        } else {
-          const fireScene = dgsm.getScene(fireSceneId);
-          isAdjacent =
-            fireScene?.connections.some((c) => c.targetId === npcLocation) ??
-            false;
-        }
-        if (isAdjacent) {
-          perceivedFires.push({
-            sceneId: fireSceneId,
-            intensity: fs.intensity,
-            label: INTENSITY_LABELS[fs.intensity] ?? INTENSITY_LABELS[5],
-          });
-        }
-      }
-    }
-
-    if (perceivedFires.length === 0) return "";
-    const lines = perceivedFires.map((f) =>
-      f.sceneId === npcLocation
-        ? `- ${f.sceneId}: intensity ${f.intensity}/5 (${f.label}) — HERE`
-        : `- ${f.sceneId}: intensity ${f.intensity}/5 (${f.label}) — visible from current location`
-    );
-    return "Nearby fires:\n" + lines.join("\n");
   }
 }

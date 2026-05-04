@@ -6,7 +6,9 @@ import {
 describe("sanityGuidance", () => {
   it("BOUT_OF_MADNESS_TABLE has 10 entries spanning rolls 1-10", () => {
     expect(BOUT_OF_MADNESS_TABLE).toHaveLength(10);
-    const rolls = BOUT_OF_MADNESS_TABLE.map((b) => b.roll).sort((a, b) => a - b);
+    const rolls = BOUT_OF_MADNESS_TABLE.map((b) => b.roll).sort(
+      (a, b) => a - b
+    );
     expect(rolls).toEqual([1, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
   });
 

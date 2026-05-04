@@ -14,13 +14,13 @@ export class EventBus {
   on(ev: "actionCompleted", cb: (a: CharacterAction) => void): Unsubscribe;
   on(
     ev: "actionInterrupted",
-    cb: (a: CharacterAction, r: InterruptReason) => void,
+    cb: (a: CharacterAction, r: InterruptReason) => void
   ): Unsubscribe;
   on(ev: "actionCancelled", cb: (a: CharacterAction) => void): Unsubscribe;
   on(ev: "featureEvent", cb: (e: FeatureEvent) => void): Unsubscribe;
   on(
     ev: "tickCompleted",
-    cb: (r: TickReport) => Promise<void> | void,
+    cb: (r: TickReport) => Promise<void> | void
   ): Unsubscribe;
   on(ev: string, cb: AnyCB): Unsubscribe {
     if (!this.listeners[ev]) this.listeners[ev] = new Set();

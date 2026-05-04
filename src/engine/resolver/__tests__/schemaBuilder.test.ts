@@ -1,9 +1,9 @@
 import { resolveOutputSchemaTypeIds } from "../../outputSchema.js";
 import type { OutputSchemaConfig } from "../../types.js";
 import {
+  RESOLVER_STATIC_SYSTEM_PROMPT,
   buildOutputSchema,
   formatOutputSchemaPrompt,
-  RESOLVER_STATIC_SYSTEM_PROMPT,
 } from "../schemaBuilder.js";
 
 describe("resolveOutputSchemaTypeIds", () => {

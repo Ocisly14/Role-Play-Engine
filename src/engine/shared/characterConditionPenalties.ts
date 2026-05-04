@@ -13,7 +13,7 @@ import type { CharacterCondition } from "../core/types.js";
  */
 export function getCharacterConditionPenalties(
   characterId: string,
-  dgsm: DynamicGameStateManager,
+  dgsm: DynamicGameStateManager
 ): Map<string, number> {
   const penalties = new Map<string, number>();
   const profile = dgsm.getNpcProfile(characterId);
@@ -28,10 +28,7 @@ export function getCharacterConditionPenalties(
     if (!mech) continue;
 
     if (typeof mech.globalSkillPenalty === "number") {
-      penalties.set(
-        "*",
-        (penalties.get("*") ?? 0) + mech.globalSkillPenalty,
-      );
+      penalties.set("*", (penalties.get("*") ?? 0) + mech.globalSkillPenalty);
     }
     if (mech.skillPenalty) {
       for (const [skill, delta] of Object.entries(mech.skillPenalty)) {

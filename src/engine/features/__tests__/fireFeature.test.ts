@@ -1,17 +1,14 @@
 import { describe, expect, it } from "vitest";
 import { DynamicGameStateManager } from "../../../state/DynamicGameState.js";
 import {
-  buildTopology,
   type JunctionNode,
   type RoadNode,
+  buildTopology,
 } from "../../../state/topologyTypes.js";
+import { makeDGSMFeatureReadContext } from "../../core/featureReadContext.js";
 import type { ActionStep, StateChange } from "../../core/types.js";
 import { DEFAULT_ENVIRONMENT_READING } from "../../core/types.js";
-import { makeDGSMFeatureReadContext } from "../../core/featureReadContext.js";
-import {
-  type FireSceneState,
-  fireFeature,
-} from "../fireFeature.js";
+import { type FireSceneState, fireFeature } from "../fireFeature.js";
 
 // ===== Test plumbing =====
 
@@ -22,7 +19,7 @@ import {
  */
 function makeFireCtx(
   dgsm: DynamicGameStateManager,
-  overrides?: { tickDurationMinutes?: number },
+  overrides?: { tickDurationMinutes?: number }
 ) {
   const base = makeDGSMFeatureReadContext(dgsm, {
     callerFeatureId: "fire",
@@ -40,7 +37,7 @@ function makeFireCtx(
  */
 function applyFireMutations(
   dgsm: DynamicGameStateManager,
-  changes: StateChange[],
+  changes: StateChange[]
 ): void {
   for (const c of changes) {
     if (c.kind === "feature.setState" && c.featureId === "fire") {
@@ -54,7 +51,7 @@ function applyFireMutations(
 function igniteAt(
   dgsm: DynamicGameStateManager,
   sceneId: string,
-  intensity: number,
+  intensity: number
 ): StateChange[] {
   const ctx = makeFireCtx(dgsm);
   const step: ActionStep = {
@@ -79,16 +76,13 @@ function igniteAt(
     fireFeature.onActionCommit?.(
       step,
       { stateChanges: [], elapsedMinutes: 0 },
-      ctx,
+      ctx
     ) ?? [];
   applyFireMutations(dgsm, changes);
   return changes;
 }
 
-function seedSimpleScene(
-  dgsm: DynamicGameStateManager,
-  sceneId: string,
-): void {
+function seedSimpleScene(dgsm: DynamicGameStateManager, sceneId: string): void {
   dgsm.updateScene(sceneId, {
     id: sceneId,
     name: sceneId,
@@ -103,7 +97,7 @@ function seedSimpleScene(
 function runFireTicks(
   dgsm: DynamicGameStateManager,
   count: number,
-  tickDurationMinutes = 5,
+  tickDurationMinutes = 5
 ): StateChange[] {
   const allChanges: StateChange[] = [];
   for (let i = 0; i < count; i++) {
@@ -117,7 +111,7 @@ function runFireTicks(
 
 function lastFireState(
   dgsm: DynamicGameStateManager,
-  sceneId: string,
+  sceneId: string
 ): FireSceneState | undefined {
   return dgsm.getScopedFeatureState<FireSceneState>("fire", "scene", sceneId);
 }
@@ -147,14 +141,14 @@ describe("fireFeature internal invariants", () => {
 
     // Final batch must include feature.removeState + scene.removeCondition + aftermath addCondition.
     const removed = decayChanges.find(
-      (c) => c.kind === "feature.removeState" && c.featureId === "fire",
+      (c) => c.kind === "feature.removeState" && c.featureId === "fire"
     );
     expect(removed).toBeDefined();
     const aftermath = decayChanges.find(
       (c) =>
         c.kind === "scene.addCondition" &&
         c.condition.featureId === "fire" &&
-        c.condition.description.startsWith("[Fire Aftermath]"),
+        c.condition.description.startsWith("[Fire Aftermath]")
     );
     expect(aftermath).toBeDefined();
   });
@@ -206,7 +200,7 @@ describe("fireFeature internal invariants", () => {
         (c) =>
           c.kind === "scene.addCondition" &&
           c.condition.featureId === "fire" &&
-          c.condition.description.startsWith("[Fire Aftermath]"),
+          c.condition.description.startsWith("[Fire Aftermath]")
       );
       expect(aftermath, `bucket for ${tc.totalBurnMinutes}min`).toBeDefined();
       if (aftermath?.kind === "scene.addCondition") {
@@ -304,10 +298,7 @@ describe("fireFeature internal invariants", () => {
     dgsm.setScopedFeatureState("fire", "scene", "SCN_A", seed);
 
     const ctx = makeFireCtx(dgsm);
-    const result = fireFeature.onPropagate?.(
-      { sceneId: "SCN_A", hop: 0 },
-      ctx,
-    );
+    const result = fireFeature.onPropagate?.({ sceneId: "SCN_A", hop: 0 }, ctx);
     expect(result).toBeDefined();
     expect(result?.spreadToSceneIds).toContain("JUNC_1");
 
@@ -316,7 +307,7 @@ describe("fireFeature internal invariants", () => {
       (c) =>
         c.kind === "feature.setState" &&
         c.featureId === "fire" &&
-        c.key === "JUNC_1",
+        c.key === "JUNC_1"
     );
     expect(ignited).toBeDefined();
     if (ignited?.kind === "feature.setState") {

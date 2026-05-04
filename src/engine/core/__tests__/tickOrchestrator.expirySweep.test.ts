@@ -9,7 +9,10 @@ import { Queue } from "../queue.js";
 import { TickOrchestrator } from "../tickOrchestrator.js";
 import type { CharacterCondition } from "../types.js";
 
-function makeNpc(id: string, conditions: CharacterCondition[]): DynamicNPCProfile {
+function makeNpc(
+  id: string,
+  conditions: CharacterCondition[]
+): DynamicNPCProfile {
   return {
     id,
     name: id.toUpperCase(),
@@ -75,7 +78,7 @@ describe("TickOrchestrator — Phase 9.5 condition expiry sweep", () => {
           featureId: "sanity",
           expiresAt: { day: 1, tickTime: "10:00" },
         },
-      ]),
+      ])
     );
     // Set DGSM clock so tickDuration (1 min) advances to 09:00 in Phase 1.
     // 08:00 condition is expired; 10:00 condition is not.
@@ -100,7 +103,7 @@ describe("TickOrchestrator — Phase 9.5 condition expiry sweep", () => {
           featureId: "sanity",
           // no expiresAt — never auto-removes
         },
-      ]),
+      ])
     );
     dgsm.setGameDay(99);
     dgsm.setTickTime("23:00");
@@ -123,7 +126,7 @@ describe("TickOrchestrator — Phase 9.5 condition expiry sweep", () => {
           featureId: "sanity",
           expiresAt: { day: 1, tickTime: "09:00" },
         },
-      ]),
+      ])
     );
     dgsm.setGameDay(1);
     dgsm.setTickTime("08:59"); // → 09:00 after Phase 1
@@ -145,7 +148,7 @@ describe("TickOrchestrator — Phase 9.5 condition expiry sweep", () => {
           featureId: "sanity",
           expiresAt: { day: 1, tickTime: "07:00" },
         },
-      ]),
+      ])
     );
     dgsm.registerNpcProfile(
       makeNpc("npcB", [
@@ -155,7 +158,7 @@ describe("TickOrchestrator — Phase 9.5 condition expiry sweep", () => {
           featureId: "sanity",
           expiresAt: { day: 2, tickTime: "00:00" },
         },
-      ]),
+      ])
     );
     dgsm.setGameDay(1);
     dgsm.setTickTime("08:59"); // → 09:00 day 1

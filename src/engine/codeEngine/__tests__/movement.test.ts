@@ -89,7 +89,17 @@ function makeTopology(): TownTopology {
 
 function seedDgsm(): DynamicGameStateManager {
   const dgsm = new DynamicGameStateManager();
-  dgsm.setTopology(makeTopology());
+  const topology = makeTopology();
+  dgsm.setTopology(topology);
+  // The blocked-connections resolver looks junctions/roads up via the
+  // state-level Maps, not the topology object — mirror them so
+  // setConnectionBlocked tests can resolve endpoint references.
+  const state = dgsm.getState() as unknown as {
+    junctions: Map<string, unknown>;
+    roads: Map<string, unknown>;
+  };
+  for (const [id, j] of topology.junctions) state.junctions.set(id, j);
+  for (const [id, r] of topology.roads) state.roads.set(id, r);
   dgsm.registerNpcProfile({
     id: "npc1",
     name: "npc1",
@@ -161,12 +171,12 @@ function makeCtx(dgsm: DynamicGameStateManager) {
 describe("MovementSubsystem.onActivate", () => {
   it("builds a route from current position to destination and emits no StateChanges yet", () => {
     const dgsm = seedDgsm();
-    dgsm.setCharacterPosition("npc1", { type: "junction", junctionId: "JUNC_A" });
+    dgsm.setCharacterPosition("npc1", {
+      type: "junction",
+      junctionId: "JUNC_A",
+    });
     const sub = new MovementSubsystem();
-    const result = sub.onActivate(
-      makeStep("npc1", "JUNC_C"),
-      makeCtx(dgsm)
-    );
+    const result = sub.onActivate(makeStep("npc1", "JUNC_C"), makeCtx(dgsm));
     expect(result.completed).toBe(false);
     expect(result.failed).toBeUndefined();
     expect(result.stateChanges).toEqual([]);
@@ -174,7 +184,10 @@ describe("MovementSubsystem.onActivate", () => {
 
   it("returns failed when the destination is missing from overlayFields", () => {
     const dgsm = seedDgsm();
-    dgsm.setCharacterPosition("npc1", { type: "junction", junctionId: "JUNC_A" });
+    dgsm.setCharacterPosition("npc1", {
+      type: "junction",
+      junctionId: "JUNC_A",
+    });
     const sub = new MovementSubsystem();
     const step = makeStep("npc1", "JUNC_C");
     step.overlayFields = {};
@@ -184,7 +197,10 @@ describe("MovementSubsystem.onActivate", () => {
 
   it("returns failed when no path can be built", () => {
     const dgsm = seedDgsm();
-    dgsm.setCharacterPosition("npc1", { type: "junction", junctionId: "JUNC_A" });
+    dgsm.setCharacterPosition("npc1", {
+      type: "junction",
+      junctionId: "JUNC_A",
+    });
     const sub = new MovementSubsystem();
     const result = sub.onActivate(
       makeStep("npc1", "UNKNOWN_LOCATION"),
@@ -195,12 +211,12 @@ describe("MovementSubsystem.onActivate", () => {
 
   it("returns completed immediately when already at destination", () => {
     const dgsm = seedDgsm();
-    dgsm.setCharacterPosition("npc1", { type: "junction", junctionId: "JUNC_A" });
+    dgsm.setCharacterPosition("npc1", {
+      type: "junction",
+      junctionId: "JUNC_A",
+    });
     const sub = new MovementSubsystem();
-    const result = sub.onActivate(
-      makeStep("npc1", "JUNC_A"),
-      makeCtx(dgsm)
-    );
+    const result = sub.onActivate(makeStep("npc1", "JUNC_A"), makeCtx(dgsm));
     expect(result.completed).toBe(true);
   });
 });
@@ -208,7 +224,10 @@ describe("MovementSubsystem.onActivate", () => {
 describe("MovementSubsystem.onTick — interpolation along a road", () => {
   it("interpolates fractional position each tick and completes after durationMinutes ticks", () => {
     const dgsm = seedDgsm();
-    dgsm.setCharacterPosition("npc1", { type: "junction", junctionId: "JUNC_A" });
+    dgsm.setCharacterPosition("npc1", {
+      type: "junction",
+      junctionId: "JUNC_A",
+    });
     const sub = new MovementSubsystem();
     const step = makeStep("npc1", "JUNC_B");
     sub.onActivate(step, makeCtx(dgsm));
@@ -224,7 +243,8 @@ describe("MovementSubsystem.onTick — interpolation along a road", () => {
           positions.push(JSON.stringify(c.position));
         }
       }
-      if (result.failed) throw new Error(`unexpected failure: ${result.failed.reason}`);
+      if (result.failed)
+        throw new Error(`unexpected failure: ${result.failed.reason}`);
       completed = result.completed;
     }
 
@@ -279,7 +299,10 @@ describe("MovementSubsystem.onTick — interpolation along a road", () => {
 describe("MovementSubsystem.onTick — block detection", () => {
   it("fails when a connection on the route is blocked", () => {
     const dgsm = seedDgsm();
-    dgsm.setCharacterPosition("npc1", { type: "junction", junctionId: "JUNC_A" });
+    dgsm.setCharacterPosition("npc1", {
+      type: "junction",
+      junctionId: "JUNC_A",
+    });
     // Block JUNC_A ↔ ROAD_1 so the very first transition is impassable.
     dgsm.setConnectionBlocked("JUNC_A", "ROAD_1", true, "barricade");
     const sub = new MovementSubsystem();
@@ -297,7 +320,10 @@ describe("MovementSubsystem.onTick — block detection", () => {
 describe("MovementSubsystem.onTick — completion", () => {
   it("reports completed:true once the final route step is consumed", () => {
     const dgsm = seedDgsm();
-    dgsm.setCharacterPosition("npc1", { type: "junction", junctionId: "JUNC_A" });
+    dgsm.setCharacterPosition("npc1", {
+      type: "junction",
+      junctionId: "JUNC_A",
+    });
     const sub = new MovementSubsystem();
     const step = makeStep("npc1", "JUNC_C");
     sub.onActivate(step, makeCtx(dgsm));
@@ -329,7 +355,10 @@ describe("MovementSubsystem.onTick — completion", () => {
 describe("MovementSubsystem.onInterrupt", () => {
   it("clears internal route state", () => {
     const dgsm = seedDgsm();
-    dgsm.setCharacterPosition("npc1", { type: "junction", junctionId: "JUNC_A" });
+    dgsm.setCharacterPosition("npc1", {
+      type: "junction",
+      junctionId: "JUNC_A",
+    });
     const sub = new MovementSubsystem();
     const step = makeStep("npc1", "JUNC_C");
     sub.onActivate(step, makeCtx(dgsm));

@@ -1,6 +1,6 @@
 import type { DynamicGameStateManager } from "../../state/DynamicGameState.js";
 import type { TownTopology } from "../../state/topologyTypes.js";
-import type { DynamicScene, DynamicNPCProfile } from "../../state/types.js";
+import type { DynamicNPCProfile, DynamicScene } from "../../state/types.js";
 import { resolveCharacterLocationId } from "../shared/topologyHelpers.js";
 import type { EnvironmentReading, FeatureStateScope } from "./types.js";
 
@@ -80,7 +80,7 @@ export interface ReadContextOptions {
 
 export function makeDGSMFeatureReadContext(
   dgsm: DynamicGameStateManager,
-  opts: ReadContextOptions,
+  opts: ReadContextOptions
 ): FeatureReadContext {
   const scope = opts.callerScope ?? "scene";
   return {

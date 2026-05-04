@@ -1,6 +1,6 @@
 import { DynamicGameStateManager } from "../../../state/DynamicGameState.js";
 import type { ModuleSetup } from "../../../state/types.js";
-import { createTickEngine, type TickEngine } from "../../core/tickEngine.js";
+import { type TickEngine, createTickEngine } from "../../core/tickEngine.js";
 import type { WorldFeature } from "../../core/worldFeature.js";
 import { fireFeature } from "../../features/fireFeature.js";
 import { itemDamageFeature } from "../../features/itemDamageFeature.js";
@@ -45,7 +45,7 @@ const DEFAULT_FEATURES: WorldFeature[] = [
 ];
 
 export function makeIntegrationEngine(
-  opts: IntegrationEngineOptions = {},
+  opts: IntegrationEngineOptions = {}
 ): IntegrationEngineSetup {
   const dgsm = new DynamicGameStateManager();
   if (opts.moduleSetup) {
@@ -94,7 +94,7 @@ export function makeIntegrationEngine(
 export function seedNpc(
   dgsm: DynamicGameStateManager,
   id: string,
-  sceneId: string,
+  sceneId: string
 ): void {
   dgsm.registerNpcProfile({
     id,
@@ -139,7 +139,7 @@ export function seedScene(
     parentLocationId?: string;
     indoor?: boolean;
     items?: Array<{ id: string; name: string }>;
-  } = {},
+  } = {}
 ): void {
   dgsm.updateScene(sceneId, {
     id: sceneId,
@@ -170,7 +170,7 @@ export function injectFire(
     totalBurnMinutes: number;
     growthRate: number;
     decayRate: number;
-  }> = {},
+  }> = {}
 ): void {
   dgsm.setScopedFeatureState("fire", "scene", sceneId, {
     intensity,

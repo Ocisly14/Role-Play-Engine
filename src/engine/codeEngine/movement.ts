@@ -1,11 +1,7 @@
 import type { DynamicGameStateManager } from "../../state/DynamicGameState.js";
 import type { CharacterPosition } from "../../state/topologyTypes.js";
 import type { FeatureReadContext } from "../core/featureReadContext.js";
-import type {
-  ActionStep,
-  MovementStep,
-  StateChange,
-} from "../core/types.js";
+import type { ActionStep, MovementStep, StateChange } from "../core/types.js";
 import {
   buildMovementRouteIgnoringBlocks,
   resolveTargetPosition,
@@ -159,9 +155,7 @@ export class MovementSubsystem implements CodeEngineSubsystem {
   onTick(step: ActionStep, ctx: FeatureReadContext): CodeEngineStepResult {
     const dgsm = getCodeEngineDgsm(ctx);
     if (!dgsm) {
-      return failure(
-        "movement subsystem requires a DGSM-bearing context"
-      );
+      return failure("movement subsystem requires a DGSM-bearing context");
     }
 
     const route = this.routes.get(step.id);

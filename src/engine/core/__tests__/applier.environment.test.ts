@@ -114,7 +114,7 @@ describe("Applier — environment aggregation (Pass 1.5)", () => {
           sourceFeatureId: "fire",
         },
       ],
-      { tickTime: "08:00", day: 1 },
+      { tickTime: "08:00", day: 1 }
     );
     const reading = d.getEnvironmentReading("untouched-location");
     expect(reading).toEqual(DEFAULT_ENVIRONMENT_READING);
@@ -179,7 +179,7 @@ describe("Applier — environment aggregation (Pass 1.5)", () => {
           sourceFeatureId: "fire",
         },
       ],
-      { tickTime: "08:00", day: 1 },
+      { tickTime: "08:00", day: 1 }
     );
     expect(d.getEnvironmentReading("warehouse").temperature).toBe(320);
 
@@ -194,7 +194,7 @@ describe("Applier — environment aggregation (Pass 1.5)", () => {
           sourceFeatureId: "weather",
         },
       ],
-      { tickTime: "08:01", day: 1 },
+      { tickTime: "08:01", day: 1 }
     );
     const reading = d.getEnvironmentReading("warehouse");
     // Previous +300 is GONE; only current -10 counts (plus baseline 20)

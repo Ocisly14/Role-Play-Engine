@@ -57,7 +57,7 @@ describe("weatherFeature internal invariants", () => {
       const sum = row.reduce((acc, v) => acc + v, 0);
       expect(
         sum,
-        `row ${i} (${WEATHER_TYPES[i]}) must sum to ~1.0 (got ${sum})`,
+        `row ${i} (${WEATHER_TYPES[i]}) must sum to ~1.0 (got ${sum})`
       ).toBeGreaterThanOrEqual(0.999);
       expect(sum).toBeLessThanOrEqual(1.001);
     }
@@ -71,65 +71,61 @@ describe("weatherFeature internal invariants", () => {
     expect(changes).toEqual([]);
   });
 
-  it(
-    "init emits region state + env contribution + scene condition for non-clear preset",
-    () => {
-      const dgsm = new DynamicGameStateManager();
-      seedTownAndForest(dgsm);
-      const presets: WeatherInitConfigEntry[] = [
-        { regionId: "town", weatherType: "fog", intensity: 3 },
-      ];
-      dgsm.loadWorldData({
-        moduleSetup: {
-          featureInit: { weather: presets },
-        },
-      });
-      const ctx = makeWeatherCtx(dgsm);
-      const changes: StateChange[] = weatherFeature.init?.(ctx) ?? [];
+  it("init emits region state + env contribution + scene condition for non-clear preset", () => {
+    const dgsm = new DynamicGameStateManager();
+    seedTownAndForest(dgsm);
+    const presets: WeatherInitConfigEntry[] = [
+      { regionId: "town", weatherType: "fog", intensity: 3 },
+    ];
+    dgsm.loadWorldData({
+      moduleSetup: {
+        featureInit: { weather: presets },
+      },
+    });
+    const ctx = makeWeatherCtx(dgsm);
+    const changes: StateChange[] = weatherFeature.init?.(ctx) ?? [];
 
-      // 1) region state set for "town" with the chosen weather and outdoor scenes
-      const setStates = changes.filter(
-        (c): c is Extract<StateChange, { kind: "feature.setState" }> =>
-          c.kind === "feature.setState" && c.featureId === "weather",
-      );
-      expect(setStates).toHaveLength(1);
-      expect(setStates[0].key).toBe("town");
-      const regionState = setStates[0].state as WeatherRegionState;
-      expect(regionState.weatherType).toBe("fog");
-      expect(regionState.intensity).toBe(3);
-      expect(regionState.affectedSceneIds).toEqual(
-        expect.arrayContaining(["town_square", "main_street"]),
-      );
-      expect(regionState.affectedSceneIds).not.toContain("tavern");
+    // 1) region state set for "town" with the chosen weather and outdoor scenes
+    const setStates = changes.filter(
+      (c): c is Extract<StateChange, { kind: "feature.setState" }> =>
+        c.kind === "feature.setState" && c.featureId === "weather"
+    );
+    expect(setStates).toHaveLength(1);
+    expect(setStates[0].key).toBe("town");
+    const regionState = setStates[0].state as WeatherRegionState;
+    expect(regionState.weatherType).toBe("fog");
+    expect(regionState.intensity).toBe(3);
+    expect(regionState.affectedSceneIds).toEqual(
+      expect.arrayContaining(["town_square", "main_street"])
+    );
+    expect(regionState.affectedSceneIds).not.toContain("tavern");
 
-      // 2) at least one env.cap (fog → illumination cap) on an outdoor scene
-      const envCaps = changes.filter(
-        (c): c is Extract<StateChange, { kind: "environment.cap" }> =>
-          c.kind === "environment.cap" && c.sourceFeatureId === "weather",
-      );
-      expect(envCaps.length).toBeGreaterThan(0);
-      expect(envCaps.every((c) => c.quantity === "illumination")).toBe(true);
-      expect(envCaps.map((c) => c.locationId)).toEqual(
-        expect.arrayContaining(["town_square", "main_street"]),
-      );
+    // 2) at least one env.cap (fog → illumination cap) on an outdoor scene
+    const envCaps = changes.filter(
+      (c): c is Extract<StateChange, { kind: "environment.cap" }> =>
+        c.kind === "environment.cap" && c.sourceFeatureId === "weather"
+    );
+    expect(envCaps.length).toBeGreaterThan(0);
+    expect(envCaps.every((c) => c.quantity === "illumination")).toBe(true);
+    expect(envCaps.map((c) => c.locationId)).toEqual(
+      expect.arrayContaining(["town_square", "main_street"])
+    );
 
-      // 3) [Weather] scene condition emitted with skill-penalty Record (not array)
-      const addConds = changes.filter(
-        (c): c is Extract<StateChange, { kind: "scene.addCondition" }> =>
-          c.kind === "scene.addCondition" &&
-          c.condition.featureId === "weather",
-      );
-      expect(addConds.length).toBeGreaterThan(0);
-      const sample = addConds[0];
-      expect(sample.condition.description.startsWith("[Weather]")).toBe(true);
-      const skillPenalty = sample.condition.mechanicalEffect?.skillPenalty;
-      expect(skillPenalty).toBeDefined();
-      expect(typeof skillPenalty).toBe("object");
-      expect(Array.isArray(skillPenalty)).toBe(false);
-      // fog @ intensity 3 should hit Perception with -10*3 = -30
-      expect(skillPenalty?.Perception).toBe(-30);
-    },
-  );
+    // 3) [Weather] scene condition emitted with skill-penalty Record (not array)
+    const addConds = changes.filter(
+      (c): c is Extract<StateChange, { kind: "scene.addCondition" }> =>
+        c.kind === "scene.addCondition" && c.condition.featureId === "weather"
+    );
+    expect(addConds.length).toBeGreaterThan(0);
+    const sample = addConds[0];
+    expect(sample.condition.description.startsWith("[Weather]")).toBe(true);
+    const skillPenalty = sample.condition.mechanicalEffect?.skillPenalty;
+    expect(skillPenalty).toBeDefined();
+    expect(typeof skillPenalty).toBe("object");
+    expect(Array.isArray(skillPenalty)).toBe(false);
+    // fog @ intensity 3 should hit Perception with -10*3 = -30
+    expect(skillPenalty?.Perception).toBe(-30);
+  });
 
   it("init returns no changes for a clear preset (intensity coerced to 0)", () => {
     const dgsm = new DynamicGameStateManager();
@@ -158,7 +154,7 @@ describe("weatherFeature internal invariants", () => {
     // weatherType/intensity.
     const run = (
       weatherType: WeatherInitConfigEntry["weatherType"],
-      intensity: number,
+      intensity: number
     ): string[] => {
       const dgsm = new DynamicGameStateManager();
       seedTownAndForest(dgsm);
@@ -174,7 +170,7 @@ describe("weatherFeature internal invariants", () => {
       return changes
         .filter(
           (c): c is Extract<StateChange, { kind: "connection.setBlock" }> =>
-            c.kind === "connection.setBlock",
+            c.kind === "connection.setBlock"
         )
         .map((c) => c.reason);
     };

@@ -61,10 +61,7 @@ describe("getScenePenalties — reads Record-shape skillPenalty from SceneCondit
       mechanicalEffect: { skillPenalty: { Perception: -20 } },
     });
     const penalties = getScenePenalties("warehouse", dgsm);
-    const adjusted = applyPenalties(
-      { Perception: 60, Climb: 50 },
-      penalties,
-    );
+    const adjusted = applyPenalties({ Perception: 60, Climb: 50 }, penalties);
     expect(adjusted.Perception).toBe(40);
     expect(adjusted.Climb).toBe(50); // unchanged
   });

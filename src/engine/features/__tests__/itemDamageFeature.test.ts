@@ -117,7 +117,7 @@ describe("itemDamageFeature", () => {
     >;
     // Selected id must be one of the still-undamaged items (item-5..item-9).
     expect(["item-5", "item-6", "item-7", "item-8", "item-9"]).toContain(
-      dc.itemId,
+      dc.itemId
     );
   });
 });

@@ -19,7 +19,7 @@ export type CtxOrFactory =
 
 function resolveCtx(
   source: CtxOrFactory,
-  feature: WorldFeature,
+  feature: WorldFeature
 ): FeatureReadContext {
   return typeof source === "function" ? source(feature) : source;
 }
@@ -48,12 +48,14 @@ export class FeatureRunner {
     step: ActionStep,
     outcome: PlannedOutcome,
     source: CtxOrFactory,
-    opts?: { interrupted?: boolean },
+    opts?: { interrupted?: boolean }
   ): StateChange[] {
     const out: StateChange[] = [];
     for (const f of this.ordered) {
       if (f.onActionCommit)
-        out.push(...f.onActionCommit(step, outcome, resolveCtx(source, f), opts));
+        out.push(
+          ...f.onActionCommit(step, outcome, resolveCtx(source, f), opts)
+        );
     }
     return out;
   }

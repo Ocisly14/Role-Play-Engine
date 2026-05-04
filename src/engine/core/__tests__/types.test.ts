@@ -1,9 +1,5 @@
-import { describe, it, expect } from "vitest";
-import type {
-  StateChange,
-  SceneCondition,
-  TickReport,
-} from "../types.js";
+import { describe, expect, it } from "vitest";
+import type { SceneCondition, StateChange, TickReport } from "../types.js";
 
 describe("core types", () => {
   it("StateChange union discriminates by kind", () => {
@@ -29,7 +25,10 @@ describe("core types", () => {
     const cond: SceneCondition = {
       featureId: "fire",
       data: { intensity: 3 },
-      mechanicalEffect: { skillPenalty: { Spot: -20 }, blockConnections: false },
+      mechanicalEffect: {
+        skillPenalty: { Spot: -20 },
+        blockConnections: false,
+      },
       description: "burning intensely",
     };
     expect(cond.featureId).toBe("fire");

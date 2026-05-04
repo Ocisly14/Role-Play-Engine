@@ -22,9 +22,8 @@ import type { CharacterAction, GameTime, StateChange } from "./types.js";
  */
 
 const MAX_CASCADE = 8;
-const TERMINAL_STATUSES: ReadonlySet<ScriptedEventStatus> = new Set<
-  ScriptedEventStatus
->(["completed", "failed", "disabled"]);
+const TERMINAL_STATUSES: ReadonlySet<ScriptedEventStatus> =
+  new Set<ScriptedEventStatus>(["completed", "failed", "disabled"]);
 
 export interface EvaluatorContext {
   dgsm: DynamicGameStateManager;
@@ -63,7 +62,7 @@ export class ScriptedEventRunner {
     this.updateTrackers(
       input.dgsm,
       input.committedActionsThisTick,
-      input.currentTick,
+      input.currentTick
     );
 
     // Cascade loop.
@@ -80,7 +79,7 @@ export class ScriptedEventRunner {
     }
     if (hop >= MAX_CASCADE && changed) {
       console.warn(
-        `[ScriptedEventRunner] cascade cap (${MAX_CASCADE}) reached`,
+        `[ScriptedEventRunner] cascade cap (${MAX_CASCADE}) reached`
       );
     }
 
@@ -112,7 +111,7 @@ export class ScriptedEventRunner {
   private updateTrackers(
     dgsm: DynamicGameStateManager,
     committedActions: readonly CharacterAction[],
-    currentTick: number,
+    currentTick: number
   ): void {
     for (const [eventId, event] of this.events) {
       const state = dgsm.getScriptedEventState(eventId);
@@ -123,7 +122,7 @@ export class ScriptedEventRunner {
       let mutated = false;
       for (const tracker of event.trackers) {
         const matching = committedActions.filter((a) =>
-          this.matchesAction(a, tracker.match),
+          this.matchesAction(a, tracker.match)
         );
         if (matching.length === 0) continue;
         const ts = state.trackerStates[tracker.id];
@@ -178,7 +177,7 @@ export class ScriptedEventRunner {
   private evaluateAndTransition(
     eventId: string,
     input: RunInput,
-    out: StateChange[],
+    out: StateChange[]
   ): boolean {
     const event = this.events.get(eventId);
     if (!event) return false;
@@ -245,11 +244,11 @@ export class ScriptedEventRunner {
     effects: readonly Effect[],
     ctx: EvaluatorContext,
     out: StateChange[],
-    depth: number,
+    depth: number
   ): void {
     if (depth >= MAX_CASCADE) {
       console.warn(
-        `[ScriptedEventRunner] applyTransitionEffects depth cap (${MAX_CASCADE}) reached`,
+        `[ScriptedEventRunner] applyTransitionEffects depth cap (${MAX_CASCADE}) reached`
       );
       return;
     }
@@ -264,12 +263,14 @@ export class ScriptedEventRunner {
       target.scheduledCompleteTick = null;
 
       if (effect.to === "completed") {
-        out.push(...this.expandEffects(targetEvent.onComplete, targetEvent, ctx));
+        out.push(
+          ...this.expandEffects(targetEvent.onComplete, targetEvent, ctx)
+        );
         this.applyTransitionEffects(
           targetEvent.onComplete,
           ctx,
           out,
-          depth + 1,
+          depth + 1
         );
       } else if (effect.to === "failed") {
         const onFail = targetEvent.onFail ?? [];
@@ -289,7 +290,7 @@ export class ScriptedEventRunner {
   private expandEffects(
     effects: readonly Effect[],
     event: ScriptedEvent,
-    ctx: EvaluatorContext,
+    ctx: EvaluatorContext
   ): StateChange[] {
     const out: StateChange[] = [];
     const sourceFeatureId = `scripted:${event.id}`;
@@ -308,7 +309,9 @@ export class ScriptedEventRunner {
                 ? "hp"
                 : "fatigue";
           for (const npc of allNpcs) {
-            if (this.evaluateCharacterPredicate(effect.targetFilter, npc, ctx)) {
+            if (
+              this.evaluateCharacterPredicate(effect.targetFilter, npc, ctx)
+            ) {
               if (field === "san") {
                 out.push({
                   kind: "character.san",
@@ -340,7 +343,9 @@ export class ScriptedEventRunner {
         }
         case "character.addCondition": {
           for (const npc of allNpcs) {
-            if (this.evaluateCharacterPredicate(effect.targetFilter, npc, ctx)) {
+            if (
+              this.evaluateCharacterPredicate(effect.targetFilter, npc, ctx)
+            ) {
               out.push({
                 kind: "character.addCondition",
                 characterId: npc.id,
@@ -352,7 +357,9 @@ export class ScriptedEventRunner {
         }
         case "character.removeCondition": {
           for (const npc of allNpcs) {
-            if (this.evaluateCharacterPredicate(effect.targetFilter, npc, ctx)) {
+            if (
+              this.evaluateCharacterPredicate(effect.targetFilter, npc, ctx)
+            ) {
               out.push({
                 kind: "character.removeCondition",
                 characterId: npc.id,
@@ -425,7 +432,7 @@ export class ScriptedEventRunner {
   private evaluatePredicate(
     pred: Predicate,
     ctx: EvaluatorContext,
-    thisEventState: ScriptedEventState,
+    thisEventState: ScriptedEventState
   ): boolean {
     switch (pred.op) {
       case "trackerCount": {
@@ -452,7 +459,7 @@ export class ScriptedEventRunner {
       }
       case "actionCommittedThisTick": {
         return ctx.committedActionsThisTick.some((a) =>
-          this.matchesAction(a, pred.match),
+          this.matchesAction(a, pred.match)
         );
       }
       case "characterAt": {
@@ -477,8 +484,7 @@ export class ScriptedEventRunner {
         const scene = ctx.dgsm.getScene(pred.sceneId);
         if (!scene) return false;
         return (scene.conditions ?? []).some(
-          (c) =>
-            (c as { featureId?: string }).featureId === pred.featureId,
+          (c) => (c as { featureId?: string }).featureId === pred.featureId
         );
       }
       case "gameDay": {
@@ -491,11 +497,11 @@ export class ScriptedEventRunner {
       }
       case "and":
         return pred.children.every((c) =>
-          this.evaluatePredicate(c, ctx, thisEventState),
+          this.evaluatePredicate(c, ctx, thisEventState)
         );
       case "or":
         return pred.children.some((c) =>
-          this.evaluatePredicate(c, ctx, thisEventState),
+          this.evaluatePredicate(c, ctx, thisEventState)
         );
       case "not":
         return !this.evaluatePredicate(pred.child, ctx, thisEventState);
@@ -505,7 +511,7 @@ export class ScriptedEventRunner {
   private evaluateCharacterPredicate(
     pred: CharacterPredicate,
     character: DynamicNPCProfile,
-    ctx: EvaluatorContext,
+    ctx: EvaluatorContext
   ): boolean {
     switch (pred.op) {
       case "atScene": {
@@ -526,11 +532,11 @@ export class ScriptedEventRunner {
         return character.id === pred.characterId;
       case "and":
         return pred.children.every((c) =>
-          this.evaluateCharacterPredicate(c, character, ctx),
+          this.evaluateCharacterPredicate(c, character, ctx)
         );
       case "or":
         return pred.children.some((c) =>
-          this.evaluateCharacterPredicate(c, character, ctx),
+          this.evaluateCharacterPredicate(c, character, ctx)
         );
       case "not":
         return !this.evaluateCharacterPredicate(pred.child, character, ctx);
@@ -540,7 +546,7 @@ export class ScriptedEventRunner {
   private evaluateScenePredicate(
     pred: ScenePredicate,
     scene: DynamicScene,
-    ctx: EvaluatorContext,
+    ctx: EvaluatorContext
   ): boolean {
     switch (pred.op) {
       case "is":
@@ -549,16 +555,15 @@ export class ScriptedEventRunner {
         return scene.parentLocationId === pred.regionId;
       case "hasConditionFromFeature":
         return (scene.conditions ?? []).some(
-          (c) =>
-            (c as { featureId?: string }).featureId === pred.featureId,
+          (c) => (c as { featureId?: string }).featureId === pred.featureId
         );
       case "and":
         return pred.children.every((c) =>
-          this.evaluateScenePredicate(c, scene, ctx),
+          this.evaluateScenePredicate(c, scene, ctx)
         );
       case "or":
         return pred.children.some((c) =>
-          this.evaluateScenePredicate(c, scene, ctx),
+          this.evaluateScenePredicate(c, scene, ctx)
         );
       case "not":
         return !this.evaluateScenePredicate(pred.child, scene, ctx);

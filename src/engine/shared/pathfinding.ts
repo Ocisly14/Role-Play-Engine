@@ -1,11 +1,11 @@
 import type { DynamicGameStateManager } from "../../state/DynamicGameState.js";
-import type { MovementStep } from "../core/types.js";
 import { hasBlockedConnection } from "../../state/blockedConnections.js";
 import type {
   CharacterPosition,
   RoadNode,
   TownTopology,
 } from "../../state/topologyTypes.js";
+import type { MovementStep } from "../core/types.js";
 
 /**
  * Convert a location ID string to a CharacterPosition using topology and dgsm state.

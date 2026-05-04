@@ -61,7 +61,7 @@ function computeFatigueLevel(fatigue: number): 0 | 1 | 2 {
 function computeFatigueBarScore(fatigue: number): number {
   return Math.max(
     0,
-    Math.min(100, Math.round((fatigue / EXHAUSTED_THRESHOLD) * 100)),
+    Math.min(100, Math.round((fatigue / EXHAUSTED_THRESHOLD) * 100))
   );
 }
 
@@ -118,7 +118,7 @@ function buildExhaustedCondition(): CharacterCondition {
  */
 function emitConditionTransition(
   characterId: string,
-  newLevel: 0 | 1 | 2,
+  newLevel: 0 | 1 | 2
 ): StateChange[] {
   const out: StateChange[] = [
     {
@@ -163,7 +163,7 @@ function emitConditionTransition(
 export function applyFatigueDelta(
   dgsm: DynamicGameStateManager,
   characterId: string,
-  fatigueDelta: number | undefined,
+  fatigueDelta: number | undefined
 ): void {
   if (fatigueDelta == null || !Number.isFinite(fatigueDelta)) return;
   const clampedUnits = Math.trunc(fatigueDelta);
@@ -172,17 +172,19 @@ export function applyFatigueDelta(
   const prev = dgsm.getScopedFeatureState<StaminaCharacterState>(
     FEATURE_ID,
     "character",
-    characterId,
+    characterId
   );
   const baseFatigue = prev?.fatigue ?? 0;
-  const nextFatigue = Math.max(0, baseFatigue + clampedUnits * FATIGUE_DELTA_UNIT);
+  const nextFatigue = Math.max(
+    0,
+    baseFatigue + clampedUnits * FATIGUE_DELTA_UNIT
+  );
   const nextLevel = computeFatigueLevel(nextFatigue);
 
   const next: StaminaCharacterState = {
     fatigue: nextFatigue,
     fatigueLevel: nextLevel,
-    exhaustedDrainTicks:
-      nextLevel === 2 ? prev?.exhaustedDrainTicks ?? 0 : 0,
+    exhaustedDrainTicks: nextLevel === 2 ? (prev?.exhaustedDrainTicks ?? 0) : 0,
   };
   dgsm.setScopedFeatureState(FEATURE_ID, "character", characterId, next);
 
@@ -225,8 +227,7 @@ export const staminaFeature: WorldFeature = {
 - Do not use special "rest mode" mechanics. Rest is just an action whose outcome may reduce fatigue.`,
 
   stateDescription(ctx: FeatureReadContext): string {
-    const states =
-      ctx.getAllFeatureStates<StaminaCharacterState>();
+    const states = ctx.getAllFeatureStates<StaminaCharacterState>();
     if (states.length === 0) return "";
     const lines: string[] = [];
     for (const { key: characterId, state } of states) {
@@ -235,9 +236,7 @@ export const staminaFeature: WorldFeature = {
       const label = FATIGUE_LABELS[state.fatigueLevel] ?? "unknown";
       lines.push(`- ${characterId}: ${label} (${score}/100)`);
     }
-    return lines.length > 0
-      ? `Character fatigue:\n${lines.join("\n")}`
-      : "";
+    return lines.length > 0 ? `Character fatigue:\n${lines.join("\n")}` : "";
   },
 
   onTick(ctx: FeatureReadContext): StateChange[] {
@@ -265,8 +264,7 @@ export const staminaFeature: WorldFeature = {
       const nextFatigue = prev.fatigue + effectiveMinutes;
       const nextLevel = computeFatigueLevel(nextFatigue);
 
-      let exhaustedDrainTicks =
-        nextLevel === 2 ? prev.exhaustedDrainTicks : 0;
+      let exhaustedDrainTicks = nextLevel === 2 ? prev.exhaustedDrainTicks : 0;
       let triggerDrain = false;
 
       if (nextLevel === 2) {

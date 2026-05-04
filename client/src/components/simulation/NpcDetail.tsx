@@ -295,8 +295,8 @@ export function NpcDetail({
               {npc.maxHp}
             </div>
             <div className="text-slate-800">
-              <span className="text-slate-700">{t("npc.san")}:</span>{" "}
-              {npc.san} / {npc.maxSan}
+              <span className="text-slate-700">{t("npc.san")}:</span> {npc.san}{" "}
+              / {npc.maxSan}
             </div>
             <div className="text-slate-900">
               <span className="text-slate-700">{t("npc.location")}:</span>{" "}

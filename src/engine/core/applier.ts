@@ -53,12 +53,12 @@ export class Applier {
 
   constructor(
     private readonly dgsm: DynamicGameStateManager,
-    private readonly featureScopes: ReadonlyMap<string, FeatureStateScope>,
+    private readonly featureScopes: ReadonlyMap<string, FeatureStateScope>
   ) {}
 
   flush(
     changes: readonly StateChange[],
-    _tickTime: GameTime,
+    _tickTime: GameTime
   ): {
     damageReports: DamageReport[];
     featureEvents: FeatureEvent[];
@@ -155,19 +155,19 @@ export class Applier {
         TEMP_BASELINE + b.temperature.reduce((a, x) => a + x, 0);
       const illumPreCap = b.illumination.reduce(
         (m, x) => Math.max(m, x),
-        ILLUM_BASELINE,
+        ILLUM_BASELINE
       );
       const illumination = b.illuminationCaps.reduce(
         (m, x) => Math.min(m, x),
-        illumPreCap,
+        illumPreCap
       );
       const oxygen = Math.max(
         0,
-        Math.min(1, OXY_BASELINE + b.oxygen.reduce((a, x) => a + x, 0)),
+        Math.min(1, OXY_BASELINE + b.oxygen.reduce((a, x) => a + x, 0))
       );
       const noise = b.noise.reduce((m, x) => Math.max(m, x), NOISE_BASELINE);
       const airborneHazards = [...b.hazardAdds].filter(
-        (h) => !b.hazardRemoves.has(h),
+        (h) => !b.hazardRemoves.has(h)
       );
       const reading: EnvironmentReading = {
         temperature,
@@ -206,7 +206,7 @@ export class Applier {
         case "scene.removeCondition":
           this.dgsm.removeSceneConditionsByFeatureId(
             c.sceneId,
-            c.predicate.featureId,
+            c.predicate.featureId
           );
           break;
         case "character.addCondition":
@@ -262,7 +262,7 @@ export class Applier {
       Array<{ featureId: string; delta: number; reason: string }>
     >,
     id: string,
-    c: T,
+    c: T
   ): void {
     if (!buckets.has(id)) buckets.set(id, []);
     buckets
@@ -273,7 +273,7 @@ export class Applier {
   private applyDelta(
     characterId: string,
     field: "hp" | "san" | "fatigue",
-    contribs: Array<{ featureId: string; delta: number; reason: string }>,
+    contribs: Array<{ featureId: string; delta: number; reason: string }>
   ): DamageReport | null {
     const profile = this.dgsm.getNpcProfile(characterId);
     if (!profile) return null;
@@ -310,7 +310,7 @@ export class Applier {
     }
     const votes = this.connectionVotes.get(vote.connectionId)!;
     const existingIdx = votes.findIndex(
-      (v) => v.featureId === vote.featureId && v.reason === vote.reason,
+      (v) => v.featureId === vote.featureId && v.reason === vote.reason
     );
     if (vote.blocked) {
       if (existingIdx === -1) {

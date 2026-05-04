@@ -4,7 +4,7 @@ import { rollStealthForMovement, tryDetectHidden } from "../perceptionDice.js";
 
 // Minimal fake DGSM exposing only the methods the perception helpers consult.
 function makeFakeDgsm(
-  npcs: Array<{ id: string; skills?: Record<string, number> }>,
+  npcs: Array<{ id: string; skills?: Record<string, number> }>
 ) {
   return {
     getState: () => ({

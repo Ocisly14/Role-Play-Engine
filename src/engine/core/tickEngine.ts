@@ -6,8 +6,8 @@ import {
 import type { ScriptedEvent } from "../scriptedEvents/types.js";
 import { ActionIntake } from "./actionIntake.js";
 import { Applier } from "./applier.js";
-import type { EmergentScanner } from "./emergentScanner.js";
 import { EmergentEventEmitter } from "./emergentEventEmitter.js";
+import type { EmergentScanner } from "./emergentScanner.js";
 import { EventBus } from "./eventBus.js";
 import { FeatureRunner } from "./featureRunner.js";
 import { Queue } from "./queue.js";
@@ -31,19 +31,22 @@ import type { WorldFeature } from "./worldFeature.js";
 export interface TickEngine {
   submitAction(input: ActionInput): Promise<ActionHandle>;
   cancelAction(handle: ActionHandle): CancelResult;
-  interruptAction(handle: ActionHandle, reason: InterruptReason): InterruptResult;
+  interruptAction(
+    handle: ActionHandle,
+    reason: InterruptReason
+  ): InterruptResult;
   tick(): Promise<void>;
 
   on(ev: "actionCompleted", cb: (a: CharacterAction) => void): Unsubscribe;
   on(
     ev: "actionInterrupted",
-    cb: (a: CharacterAction, r: InterruptReason) => void,
+    cb: (a: CharacterAction, r: InterruptReason) => void
   ): Unsubscribe;
   on(ev: "actionCancelled", cb: (a: CharacterAction) => void): Unsubscribe;
   on(ev: "featureEvent", cb: (e: FeatureEvent) => void): Unsubscribe;
   on(
     ev: "tickCompleted",
-    cb: (r: TickReport) => Promise<void> | void,
+    cb: (r: TickReport) => Promise<void> | void
   ): Unsubscribe;
 
   getActionStatus(handle: ActionHandle): ActionStatus;
@@ -64,7 +67,7 @@ export interface CreateTickEngineOptions {
    *  Order in the array = order of events in TickReport.featureEvents. */
   emergentScanners: EmergentScanner[];
   interpretAction: (
-    input: ActionInput,
+    input: ActionInput
   ) => Promise<{ steps: import("../types.js").InterpretedStep[] }>;
   resolve: ResolveFn;
   getActorDex: (characterId: string) => number;
@@ -104,7 +107,7 @@ export function createTickEngine(opts: CreateTickEngineOptions): TickEngine {
   if (opts.persistedState) {
     queue.rehydrate(
       opts.persistedState.queue,
-      new Map(Object.entries(opts.persistedState.dexByActor)),
+      new Map(Object.entries(opts.persistedState.dexByActor))
     );
     applier.rehydrateConnectionVotes(opts.persistedState.connectionVotes);
   }
@@ -133,7 +136,7 @@ export function createTickEngine(opts: CreateTickEngineOptions): TickEngine {
       .filter(
         (s) =>
           s.handle.id === handleId &&
-          (s.status === "queued" || s.status === "active"),
+          (s.status === "queued" || s.status === "active")
       );
   }
 
@@ -170,7 +173,9 @@ export function createTickEngine(opts: CreateTickEngineOptions): TickEngine {
 
       if (!active) {
         // Spec §3 edge case: interrupt on queued-only handle behaves as cancel.
-        const rep = [...queuedSibs].sort((a, b) => a.stepIndex - b.stepIndex)[0];
+        const rep = [...queuedSibs].sort(
+          (a, b) => a.stepIndex - b.stepIndex
+        )[0];
         orchestrator.recordCancelledStep(rep);
         return { applied: true, remainingChainCancelled: queuedSibs.length };
       }

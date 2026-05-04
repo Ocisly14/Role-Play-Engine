@@ -1,4 +1,5 @@
 import { randomUUID } from "node:crypto";
+import type { InterpretedStep } from "../types.js";
 import type { Queue } from "./queue.js";
 import type {
   ActionHandle,
@@ -6,11 +7,12 @@ import type {
   ActionStep,
   GameTime,
 } from "./types.js";
-import type { InterpretedStep } from "../types.js";
 
 export interface ActionIntakeDeps {
   queue: Queue;
-  interpretAction: (input: ActionInput) => Promise<{ steps: InterpretedStep[] }>;
+  interpretAction: (
+    input: ActionInput
+  ) => Promise<{ steps: InterpretedStep[] }>;
   getActorDex: (characterId: string) => number;
   getNow: () => GameTime;
 }

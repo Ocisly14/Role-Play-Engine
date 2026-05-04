@@ -183,7 +183,7 @@ const WEATHER_LABELS: Record<WeatherType, string[]> = {
 
 export function getWeatherLabel(
   weatherType: WeatherType,
-  intensity: number,
+  intensity: number
 ): string {
   if (weatherType === "clear") return "Clear skies";
   const labels = WEATHER_LABELS[weatherType];
@@ -192,7 +192,7 @@ export function getWeatherLabel(
 
 export function computeSkillPenalties(
   weatherType: WeatherType,
-  intensity: number,
+  intensity: number
 ): Array<{ skill: string; delta: number }> {
   const rules = WEATHER_SKILL_PENALTIES[weatherType];
   if (!rules || intensity <= 0) return [];
@@ -238,7 +238,7 @@ function connectionIdFor(a: string, b: string): string {
 
 function buildWeatherSceneCondition(
   sceneId: string,
-  state: WeatherRegionState,
+  state: WeatherRegionState
 ): StateChange {
   const label = getWeatherLabel(state.weatherType, state.intensity);
   const penaltyArr = computeSkillPenalties(state.weatherType, state.intensity);
@@ -249,8 +249,7 @@ function buildWeatherSceneCondition(
   const condition: SceneCondition = {
     featureId: FEATURE_ID,
     description: `[Weather] ${label}`,
-    mechanicalEffect:
-      penaltyArr.length > 0 ? { skillPenalty } : undefined,
+    mechanicalEffect: penaltyArr.length > 0 ? { skillPenalty } : undefined,
   };
   return { kind: "scene.addCondition", sceneId, condition };
 }
@@ -312,7 +311,7 @@ function emitEnvContributions(state: WeatherRegionState): StateChange[] {
  */
 function emitConnectionBlocks(
   state: WeatherRegionState,
-  ctx: FeatureReadContext,
+  ctx: FeatureReadContext
 ): StateChange[] {
   const { weatherType, intensity, affectedSceneIds } = state;
   const shouldBlock =
@@ -346,7 +345,7 @@ function emitConnectionBlocks(
 
 function makeRegionState(
   preset: WeatherInitConfigEntry,
-  affectedSceneIds: string[],
+  affectedSceneIds: string[]
 ): WeatherRegionState {
   const intensity =
     preset.weatherType === "clear"
@@ -385,14 +384,13 @@ Weather changes automatically — you do NOT need to set or control weather.
 Weather affects outdoor scenes only (skill penalties, blocked paths in severe weather).`,
 
   init(ctx) {
-    const presets = ctx.getFeatureInitConfig<WeatherInitConfigEntry[]>(
-      FEATURE_ID,
-    );
+    const presets =
+      ctx.getFeatureInitConfig<WeatherInitConfigEntry[]>(FEATURE_ID);
     if (!presets || presets.length === 0) return [];
     const out: StateChange[] = [];
     for (const preset of presets) {
       const affectedSceneIds = ctx.getOutdoorLocationIdsInRegion(
-        preset.regionId,
+        preset.regionId
       );
       if (affectedSceneIds.length === 0) continue;
       const regionState = makeRegionState(preset, affectedSceneIds);
@@ -403,10 +401,7 @@ Weather affects outdoor scenes only (skill penalties, blocked paths in severe we
         state: regionState,
       });
       out.push(...emitEnvContributions(regionState));
-      if (
-        regionState.weatherType !== "clear" &&
-        regionState.intensity > 0
-      ) {
+      if (regionState.weatherType !== "clear" && regionState.intensity > 0) {
         for (const sceneId of regionState.affectedSceneIds) {
           out.push(buildWeatherSceneCondition(sceneId, regionState));
         }
@@ -484,7 +479,7 @@ Weather affects outdoor scenes only (skill penalties, blocked paths in severe we
       if (state.weatherType === "clear") continue;
       const label = getWeatherLabel(state.weatherType, state.intensity);
       lines.push(
-        `- ${regionId}: ${state.weatherType} intensity ${state.intensity}/5 (${label})`,
+        `- ${regionId}: ${state.weatherType} intensity ${state.intensity}/5 (${label})`
       );
     }
     if (lines.length === 0) return "Weather: Clear in all regions";

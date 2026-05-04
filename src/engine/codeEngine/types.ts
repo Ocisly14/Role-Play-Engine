@@ -42,19 +42,13 @@ export interface CodeEngineSubsystem {
    * `StateChange[]` to seed effects, mark the step `completed` immediately
    * (zero-tick action), or `failed` with a reason.
    */
-  onActivate(
-    step: ActionStep,
-    ctx: FeatureReadContext
-  ): CodeEngineStepResult;
+  onActivate(step: ActionStep, ctx: FeatureReadContext): CodeEngineStepResult;
 
   /**
    * Called every tick after activation, until the subsystem reports
    * completed/failed.
    */
-  onTick(
-    step: ActionStep,
-    ctx: FeatureReadContext
-  ): CodeEngineStepResult;
+  onTick(step: ActionStep, ctx: FeatureReadContext): CodeEngineStepResult;
 
   /**
    * Optional cleanup hook called when the step is interrupted by the role-sim

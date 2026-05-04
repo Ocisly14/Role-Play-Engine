@@ -1,8 +1,10 @@
-import { describe, it, expect } from "vitest";
+import { describe, expect, it } from "vitest";
 import { Queue } from "../queue.js";
 import type { ActionStep } from "../types.js";
 
-function step(partial: Partial<ActionStep> & { id: string; characterId: string }): ActionStep {
+function step(
+  partial: Partial<ActionStep> & { id: string; characterId: string }
+): ActionStep {
   return {
     stepGroupId: partial.stepGroupId ?? partial.id,
     stepIndex: partial.stepIndex ?? 0,
@@ -31,8 +33,14 @@ describe("Queue", () => {
 
   it("enforces per-actor slot mutex: only one active per actor", () => {
     const q = new Queue();
-    q.insert(step({ id: "a1", characterId: "npc1", stepIndex: 0, stepGroupId: "g" }), 50);
-    q.insert(step({ id: "a2", characterId: "npc1", stepIndex: 1, stepGroupId: "g" }), 50);
+    q.insert(
+      step({ id: "a1", characterId: "npc1", stepIndex: 0, stepGroupId: "g" }),
+      50
+    );
+    q.insert(
+      step({ id: "a2", characterId: "npc1", stepIndex: 1, stepGroupId: "g" }),
+      50
+    );
     const next = q.nextIdleForActor("npc1");
     expect(next?.id).toBe("a1");
     q.markActive("a1");
@@ -41,8 +49,14 @@ describe("Queue", () => {
 
   it("isLastStepInChain derives from queue content", () => {
     const q = new Queue();
-    q.insert(step({ id: "g-0", characterId: "npc1", stepIndex: 0, stepGroupId: "g" }), 50);
-    q.insert(step({ id: "g-1", characterId: "npc1", stepIndex: 1, stepGroupId: "g" }), 50);
+    q.insert(
+      step({ id: "g-0", characterId: "npc1", stepIndex: 0, stepGroupId: "g" }),
+      50
+    );
+    q.insert(
+      step({ id: "g-1", characterId: "npc1", stepIndex: 1, stepGroupId: "g" }),
+      50
+    );
     expect(q.isLastStepInChain("g", 0)).toBe(false);
     expect(q.isLastStepInChain("g", 1)).toBe(true);
   });
@@ -50,7 +64,10 @@ describe("Queue", () => {
   it("cancelByHandle removes all queued + active steps for that handle", () => {
     const q = new Queue();
     q.insert(step({ id: "g-0", characterId: "npc1", stepGroupId: "g" }), 50);
-    q.insert(step({ id: "g-1", characterId: "npc1", stepGroupId: "g", stepIndex: 1 }), 50);
+    q.insert(
+      step({ id: "g-1", characterId: "npc1", stepGroupId: "g", stepIndex: 1 }),
+      50
+    );
     const removed = q.cancelByHandle("g");
     expect(removed).toBe(2);
     expect(q.snapshotAll()).toHaveLength(0);

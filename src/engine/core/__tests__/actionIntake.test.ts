@@ -1,12 +1,9 @@
-import { describe, it, expect, vi } from "vitest";
+import { describe, expect, it, vi } from "vitest";
+import type { InterpretedStep } from "../../types.js";
 import { ActionIntake } from "../actionIntake.js";
 import { Queue } from "../queue.js";
-import type { InterpretedStep } from "../../types.js";
 
-const fakeInterpret = vi.fn<
-  [unknown],
-  Promise<{ steps: InterpretedStep[] }>
->();
+const fakeInterpret = vi.fn<[unknown], Promise<{ steps: InterpretedStep[] }>>();
 
 describe("ActionIntake", () => {
   it("expands interpreter output into ActionSteps sharing stepGroupId", async () => {

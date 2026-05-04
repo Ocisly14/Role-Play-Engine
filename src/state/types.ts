@@ -3,7 +3,10 @@
  * All types used by DynamicGameState, TickProcessor, and engine components.
  */
 
-import type { CharacterCondition, SceneCondition } from "../engine/core/types.js";
+import type {
+  CharacterCondition,
+  SceneCondition,
+} from "../engine/core/types.js";
 
 // ─── Character-related types ───────────────────────────────────────
 
