@@ -27,7 +27,6 @@ import {
  * Resolves the effective model class based on runtime settings and overrides
  */
 export function resolveModelClass(
-  runtime: any,
   requested: ModelClass = ModelClass.MEDIUM
 ): ModelClass {
   return requested;
@@ -265,7 +264,6 @@ export async function generateText(
   options: GenerationOptions
 ): Promise<string> {
   const {
-    runtime,
     context,
     modelClass = ModelClass.MEDIUM,
     providerOverride,
@@ -278,16 +276,12 @@ export async function generateText(
     temperature,
   } = options;
 
-  // Get provider from environment variable, runtime, or default to OpenAI
+  // Get provider from environment variable or default to OpenAI
   const envProvider = process.env.MODEL_PROVIDER as ModelProviderName;
-  const provider =
-    providerOverride ||
-    envProvider ||
-    runtime.modelProvider ||
-    ModelProviderName.OPENAI;
+  const provider = providerOverride || envProvider || ModelProviderName.OPENAI;
 
   // Resolve effective model class
-  const effectiveModelClass = resolveModelClass(runtime, modelClass);
+  const effectiveModelClass = resolveModelClass(modelClass);
 
   // Prepare messages
   const messages: Array<{

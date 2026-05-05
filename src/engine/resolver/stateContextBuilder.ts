@@ -1,4 +1,13 @@
-import type { PlanNode } from "../../planning/types.js";
+/**
+ * Minimal node shape consumed by `buildStateContext`. Only `characterId` and
+ * `targetCharacterIds` are read — synthetic shims (e.g. SimulationRunner's
+ * resolve callback) and real engine actions both qualify. Replaces the
+ * legacy `PlanNode` import (deleted in Phase F).
+ */
+interface ResolverContextNode {
+  characterId: string;
+  targetCharacterIds?: string[];
+}
 import type { DynamicGameStateManager } from "../../state/DynamicGameState.js";
 import { buildWorldStateBlock } from "../shared/worldStateBlock.js";
 import type { ActionDefinition } from "../types.js";
@@ -246,7 +255,7 @@ export interface StateContext {
 
 export function buildStateContext(
   definition: ActionDefinition,
-  node: PlanNode,
+  node: ResolverContextNode,
   dgsm: DynamicGameStateManager,
   locationId: string
 ): StateContext {

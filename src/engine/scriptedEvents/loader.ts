@@ -767,6 +767,27 @@ function validateEffect(
     case "event.emit": {
       if (!isObject(item.event)) {
         pushErr(errors, file, `${path}.event`, "required FeatureEvent object");
+        return;
+      }
+      const ev = item.event;
+      if (typeof ev.impact !== "number" || ev.impact < 0 || ev.impact > 5) {
+        pushErr(
+          errors,
+          file,
+          `${path}.event.impact`,
+          "event.emit: 'impact' must be a number 0-5"
+        );
+      }
+      if (
+        typeof ev.description !== "string" ||
+        !(ev.description as string).trim()
+      ) {
+        pushErr(
+          errors,
+          file,
+          `${path}.event.description`,
+          "event.emit: 'description' is required"
+        );
       }
       return;
     }

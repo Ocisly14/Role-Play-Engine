@@ -54,6 +54,14 @@ export class NpcMemoryManager {
     return this.store.create(params);
   }
 
+  async findLatestByType(
+    sessionId: string,
+    npcId: string,
+    type: NpcMemoryType
+  ): Promise<NpcMemory | null> {
+    return this.store.findLatestByType(sessionId, npcId, type);
+  }
+
   private async upsertMapSnapshot(params: {
     npcId: string;
     sessionId: string;

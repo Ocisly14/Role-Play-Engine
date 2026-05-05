@@ -32,14 +32,15 @@ function makeMemory(overrides: Partial<NpcMemory> = {}): NpcMemory {
 // ===== Tests =====
 
 describe("getAllHandlers", () => {
-  it("returns exactly 8 handlers", () => {
+  it("returns exactly 9 handlers", () => {
     const handlers = getAllHandlers();
     const keys = Object.keys(handlers);
-    expect(keys).toHaveLength(8);
+    expect(keys).toHaveLength(9);
     expect(keys.sort()).toEqual([
       "belief",
       "event",
       "information",
+      "long_term_intent",
       "map",
       "plan",
       "secret",

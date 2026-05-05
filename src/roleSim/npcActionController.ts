@@ -1,32 +1,39 @@
 // src/roleSim/npcActionController.ts
 //
-// Phase E variant — engine-event-driven only (no perception path). Subscribes
-// to TickEngine completion events and asks the role-sim agent what's next for
-// the affected NPC. The renderer follow-on adds the perception path
-// (`decide(npcId, opts?: { perceivedFacts? })` + `onRendered()`).
+// Phase F TickReport-driven controller. Subscribes to a single
+// `tickCompleted` channel; per tick the controller computes (a) NPCs whose
+// action ended this tick, (b) NPCs whose currently-running action received a
+// revise-relevant FeatureEvent (per impactPropagation), (c) alive idle NPCs
+// candidate for first decide(). Each affected NPC gets ONE decide() call with
+// all this-tick triggers batched into ctx.reviseTriggers.
 //
-// Stateless: the engine is the source of truth for which actions are in
-// flight. On session restart the controller re-runs `bootstrap()` for any
-// alive NPC the engine has no in-flight handle for.
+// Engine handles never appear in agent-facing types — the engine is the
+// source of truth for in-flight state; the controller queries it on demand
+// instead of mirroring it.
 
 import type { TickEngine } from "../engine/core/tickEngine.js";
-import type { ActionHandle, CharacterAction } from "../engine/core/types.js";
+import type {
+  CharacterAction,
+  FeatureEvent,
+  TickReport,
+} from "../engine/core/types.js";
+import { findAffectedCharacters } from "../engine/shared/impactPropagation.js";
 import type { NpcMemoryManager } from "../memory/NpcMemoryManager.js";
-import type { NPCPlanningAgent } from "../planning/NPCPlanningAgent.js";
 import type { DynamicGameStateManager } from "../state/DynamicGameState.js";
 import type { RoleSimAgent, RoleSimContext } from "./agent.js";
 
-const MAX_TOOL_LOOP_ITERATIONS = 5;
+interface ReviseTrigger {
+  description: string;
+  sourceEvent?: FeatureEvent | CharacterAction;
+}
 
 export interface NpcActionControllerDeps {
   engine: TickEngine;
   agent: RoleSimAgent;
   memory: NpcMemoryManager;
   dgsm: DynamicGameStateManager;
-  /** Used to fetch long-term intent for context building. */
-  planningAgent: NPCPlanningAgent;
   sessionId: string;
-  /** Module id required by NpcMemoryManager.add when writing plan entries. */
+  /** Module id required by NpcMemoryManager.add when writing memories. */
   moduleId: string;
 }
 
@@ -35,34 +42,24 @@ export class NpcActionController {
   private readonly agent: RoleSimAgent;
   private readonly memory: NpcMemoryManager;
   private readonly dgsm: DynamicGameStateManager;
-  private readonly planningAgent: NPCPlanningAgent;
   private readonly sessionId: string;
   private readonly moduleId: string;
-  private readonly activeHandles = new Map<string, ActionHandle>();
 
   constructor(deps: NpcActionControllerDeps) {
     this.engine = deps.engine;
     this.agent = deps.agent;
     this.memory = deps.memory;
     this.dgsm = deps.dgsm;
-    this.planningAgent = deps.planningAgent;
     this.sessionId = deps.sessionId;
     this.moduleId = deps.moduleId;
 
-    this.engine.on("actionCompleted", (a: CharacterAction) => {
-      this.activeHandles.delete(a.handleId);
-      void this.decide(a.characterId);
-    });
-    this.engine.on("actionInterrupted", (a: CharacterAction) => {
-      this.activeHandles.delete(a.handleId);
-      void this.decide(a.characterId);
-    });
-    this.engine.on("actionCancelled", (a: CharacterAction) => {
-      this.activeHandles.delete(a.handleId);
-      void this.decide(a.characterId);
-    });
+    this.engine.on("tickCompleted", (report: TickReport) =>
+      this.processTickReport(report)
+    );
   }
 
+  /** Seed first decide() pass for every alive NPC. Called once at session
+   *  start (SimulationRunner.executeTick uses tickCompleted thereafter). */
   async bootstrap(): Promise<void> {
     const alive = this.dgsm
       .getState()
@@ -72,62 +69,123 @@ export class NpcActionController {
     }
   }
 
-  async decide(npcId: string): Promise<void> {
-    if (!this.dgsm.isNpcAlive(npcId)) return;
-    // Skip if engine already has an in-flight step for this NPC. Prevents
-    // duplicate submission when bootstrap runs against NPCs whose previously
-    // submitted action is still active.
-    if (this.hasActiveHandle(npcId)) return;
+  private async processTickReport(report: TickReport): Promise<void> {
+    // 1. Build per-NPC trigger lists from this tick's FeatureEvents
+    //    (Decision 15). FeatureEvent is now self-describing — read impact +
+    //    description directly off the event.
+    const triggersByNpc = new Map<string, ReviseTrigger[]>();
 
-    const ctx = await this.buildContext(npcId);
-    if (!ctx) return;
-
-    for (let i = 0; i < MAX_TOOL_LOOP_ITERATIONS; i++) {
-      const decision = await this.agent.decideNext(ctx);
-      switch (decision.tool) {
-        case "act": {
-          const handle = await this.engine.submitAction(decision.input);
-          this.activeHandles.set(handle.id, handle);
-          return;
-        }
-        case "interrupt": {
-          this.engine.interruptAction(decision.handle, decision.reason);
-          return;
-        }
-        case "plan": {
-          await this.memory.add({
-            npcId,
-            sessionId: this.sessionId,
-            moduleId: this.moduleId,
-            type: "plan",
-            content: decision.planText,
-            gameDay: ctx.currentTime.day,
-            gameTime: ctx.currentTime.tickTime,
-          });
-          ctx.recentMemory = await this.loadRecentMemory(
-            npcId,
-            ctx.currentTime.day
-          );
-          continue;
-        }
-        case "wait":
-          return;
+    for (const event of report.featureEvents) {
+      if (!event.characterId && !event.sceneId) continue;
+      const action = {
+        characterId: event.characterId ?? "system",
+        targetCharacterIds: [] as string[],
+        location: event.sceneId ?? "",
+      };
+      const affected = findAffectedCharacters(action, event.impact, this.dgsm);
+      for (const [npcId] of affected) {
+        const list = triggersByNpc.get(npcId) ?? [];
+        list.push({ description: event.description, sourceEvent: event });
+        triggersByNpc.set(npcId, list);
       }
     }
-    console.warn(
-      `[NpcActionController] tool loop exceeded for ${npcId} (max ${MAX_TOOL_LOOP_ITERATIONS} iterations)`
-    );
+
+    // 2. NPCs whose action ended this tick.
+    const npcsWithEndedAction = new Set<string>([
+      ...report.commits.map((a) => a.characterId),
+      ...report.interruptions.map((i) => i.action.characterId),
+      ...report.cancellations.map((a) => a.characterId),
+    ]);
+
+    // 3. Alive idle NPCs (no in-flight action). Replaces the per-tick
+    //    polling that used to live in SimulationRunner.executeTick.
+    const idleAlive = this.dgsm
+      .getState()
+      .npcCharacters.filter((n) => this.dgsm.isNpcAlive(n.id))
+      .filter((n) => !this.npcHasActiveStep(n.id))
+      .map((n) => n.id);
+
+    // 4. Union of all NPCs that need decide() this tick.
+    const allTargets = new Set<string>([
+      ...triggersByNpc.keys(),
+      ...npcsWithEndedAction,
+      ...idleAlive,
+    ]);
+
+    // 5. Sequential decide() — no concurrency, no race.
+    for (const npcId of allTargets) {
+      if (!this.dgsm.isNpcAlive(npcId)) continue;
+      const triggers = triggersByNpc.get(npcId);
+      await this.decide(
+        npcId,
+        triggers && triggers.length > 0
+          ? { reviseTriggers: triggers }
+          : undefined
+      );
+    }
   }
 
-  private hasActiveHandle(npcId: string): boolean {
-    for (const h of this.activeHandles.values()) {
-      if (h.characterId === npcId) return true;
+  async decide(
+    npcId: string,
+    opts?: { reviseTriggers?: ReadonlyArray<ReviseTrigger> }
+  ): Promise<void> {
+    if (!this.dgsm.isNpcAlive(npcId)) return;
+
+    // Skip if NPC is busy AND has no triggers — its action is already running.
+    // With reviseTriggers present, the agent gets a chance to switch action
+    // mid-flight (Decision 14 — `act` absorbs cancellation).
+    if (
+      this.npcHasActiveStep(npcId) &&
+      !(opts?.reviseTriggers && opts.reviseTriggers.length > 0)
+    ) {
+      return;
     }
-    return false;
+
+    const ctx = await this.buildContext(npcId, opts);
+    if (!ctx) return;
+
+    const decision = await this.agent.decideNext(ctx);
+    switch (decision.tool) {
+      case "act": {
+        // Decision 14: cancel current action first if any. Engine is the
+        // source of truth for in-flight state — query it, do not mirror.
+        const queue = this.engine.getActorQueue(npcId);
+        const live = queue.find(
+          (s) => s.status === "active" || s.status === "queued"
+        );
+        if (live) this.engine.cancelAction(live.handle);
+
+        await this.engine.submitAction({
+          characterId: npcId,
+          actionText: decision.input.actionText,
+          targetCharacterIds: decision.input.targetCharacterIds,
+          sceneId: this.resolveCurrentSceneId(npcId),
+        });
+        return;
+      }
+      case "continue":
+        return;
+      // writeMemory / recallMemory / getMapSnapshot are instant tools —
+      // dispatched inside agent.decideNext() and never reach this switch.
+      default:
+        return;
+    }
+  }
+
+  private npcHasActiveStep(npcId: string): boolean {
+    return this.engine
+      .getActorQueue(npcId)
+      .some((s) => s.status === "active" || s.status === "queued");
+  }
+
+  private resolveCurrentSceneId(npcId: string): string {
+    const position = this.dgsm.getCharacterPosition(npcId);
+    return position ? this.dgsm.resolveLocationId(position) : "";
   }
 
   private async buildContext(
-    npcId: string
+    npcId: string,
+    opts?: { reviseTriggers?: ReadonlyArray<ReviseTrigger> }
   ): Promise<RoleSimContext | undefined> {
     const profile = this.dgsm.getNpcProfile(npcId);
     if (!profile) return undefined;
@@ -137,10 +195,14 @@ export class NpcActionController {
     const position = this.dgsm.getCharacterPosition(npcId);
     const currentScene = position ? this.dgsm.resolveLocationId(position) : "";
 
-    const longTermIntent = await this.planningAgent
-      .getLongTermIntent(this.sessionId, npcId)
-      .catch(() => "");
+    const longTermIntent = await this.loadLongTermIntent(npcId);
     const recentMemory = await this.loadRecentMemory(npcId, day);
+
+    const queue = this.engine.getActorQueue(npcId);
+    const active = queue.find((s) => s.status === "active");
+    const currentAction = active
+      ? { actionText: active.actionText }
+      : undefined;
 
     return {
       npcId,
@@ -149,7 +211,19 @@ export class NpcActionController {
       currentScene,
       recentMemory,
       longTermIntent,
+      reviseTriggers: opts?.reviseTriggers,
+      currentAction,
+      // perception left undefined per Decision 11 (renderer deferred).
     };
+  }
+
+  private async loadLongTermIntent(npcId: string): Promise<string> {
+    const entry = await this.memory.findLatestByType(
+      this.sessionId,
+      npcId,
+      "long_term_intent"
+    );
+    return entry?.content ?? "";
   }
 
   private async loadRecentMemory(

@@ -240,7 +240,12 @@ export class Applier {
 
     const synthesizedDeaths: FeatureEvent[] = damageReports
       .filter((r) => r.died)
-      .map((r) => ({ type: "character.died", characterId: r.characterId }));
+      .map((r) => ({
+        type: "character.died",
+        impact: 4,
+        description: `${r.characterId} died`,
+        characterId: r.characterId,
+      }));
 
     return {
       damageReports,

@@ -114,8 +114,6 @@ model Module {
   updatedAt            DateTime        @default(now()) @map("updated_at")
 
   sessions           Session[]
-  npcLongTermIntents NpcLongTermIntent[]
-  npcDailyPlans      NpcDailyPlan[]
   npcMemories        NpcMemory[]
   moduleNpcs         ModuleNpc[]
   moduleScenes       ModuleScene[]
@@ -143,9 +141,7 @@ model Session {
   emailId         String?            @map("email_id")
 
   module              Module?              @relation(fields: [moduleId], references: [moduleId])
-  npcLongTermIntents  NpcLongTermIntent[]
   npcShortTermIntents NpcShortTermIntent[]
-  npcDailyPlans       NpcDailyPlan[]
   npcMemories        NpcMemory[]
   simulationEvents   SimulationEvent[]
   simulationRuntime  SimulationRuntime?
@@ -177,24 +173,6 @@ model SimulationRuntime {
 
 // ─── NPC Planning ────────────────────────────────────────────────
 
-model NpcLongTermIntent {
-  id        String   @id @default(uuid()) @db.Uuid
-  sessionId String   @map("session_id")
-  moduleId  String   @map("module_id") @db.Uuid
-  npcId     String   @map("npc_id")
-  npcName   String   @map("npc_name")
-  intent    String
-  updatedAt DateTime @updatedAt @map("updated_at")
-  createdAt DateTime @default(now()) @map("created_at")
-
-  session Session @relation(fields: [sessionId], references: [sessionId], onDelete: Cascade)
-  module  Module  @relation(fields: [moduleId], references: [moduleId], onDelete: Cascade)
-
-  @@unique([sessionId, npcId])
-  @@index([sessionId])
-  @@map("npc_long_term_intents")
-}
-
 model NpcShortTermIntent {
   id        String   @id @default(uuid()) @db.Uuid
   sessionId String   @map("session_id")
@@ -208,25 +186,6 @@ model NpcShortTermIntent {
   @@unique([sessionId, npcId])
   @@index([sessionId])
   @@map("npc_short_term_intents")
-}
-
-model NpcDailyPlan {
-  id          String   @id @default(uuid()) @db.Uuid
-  sessionId   String   @map("session_id")
-  moduleId    String   @map("module_id") @db.Uuid
-  npcId       String   @map("npc_id")
-  npcName     String   @map("npc_name")
-  gameDay     Int      @map("game_day")
-  nodes       Json
-  schedule    Json?
-  generatedAt DateTime @default(now()) @map("generated_at")
-
-  session Session @relation(fields: [sessionId], references: [sessionId], onDelete: Cascade)
-  module  Module  @relation(fields: [moduleId], references: [moduleId], onDelete: Cascade)
-
-  @@unique([sessionId, npcId, gameDay])
-  @@index([sessionId, gameDay])
-  @@map("npc_daily_plans")
 }
 
 // ─── NPC Memory ──────────────────────────────────────────────────
@@ -275,6 +234,7 @@ enum NpcMemoryType {
   plan
   secret
   summary
+  long_term_intent
 }
 
 // ─── Simulation Events ───────────────────────────────────────────

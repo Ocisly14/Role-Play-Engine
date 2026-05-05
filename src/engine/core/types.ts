@@ -137,6 +137,20 @@ export type ConditionPredicate = { featureId: string };
 
 export interface FeatureEvent {
   type: string;
+  /**
+   * Intrinsic perceptibility / impact level (0-5). Drives
+   * impactPropagation.findAffectedCharacters: 1=targeted, 2=same scene,
+   * 3=macro location, 4=neighborhood, 5=global. Set by the emitter; matches
+   * spec §E-renderer-layer's "events carry intrinsic impact" model.
+   */
+  impact: 0 | 1 | 2 | 3 | 4 | 5;
+  /**
+   * One-line human-readable description used by NpcActionController to render
+   * the event into the agent's `reviseTriggers` prompt section. Set by the
+   * emitter so each event type is self-describing without controller-side
+   * format tables.
+   */
+  description: string;
   characterId?: string;
   sceneId?: string;
   data?: Record<string, unknown>;

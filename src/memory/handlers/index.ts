@@ -3,6 +3,7 @@ import type { MemoryHandler } from "../types.js";
 import { BeliefHandler } from "./BeliefHandler.js";
 import { EventHandler } from "./EventHandler.js";
 import { InformationHandler } from "./InformationHandler.js";
+import { LongTermIntentHandler } from "./LongTermIntentHandler.js";
 import { MapHandler } from "./MapHandler.js";
 import { PlanHandler } from "./PlanHandler.js";
 import { SecretHandler } from "./SecretHandler.js";
@@ -13,6 +14,7 @@ export {
   EventHandler,
   WitnessHandler,
   InformationHandler,
+  LongTermIntentHandler,
   MapHandler,
   BeliefHandler,
   PlanHandler,
@@ -29,6 +31,7 @@ const HANDLERS: Record<NpcMemoryType, MemoryHandler> = {
   plan: new PlanHandler(),
   secret: new SecretHandler(),
   summary: new SummaryHandler(),
+  long_term_intent: new LongTermIntentHandler(),
 };
 
 export function getHandler(type: NpcMemoryType): MemoryHandler {

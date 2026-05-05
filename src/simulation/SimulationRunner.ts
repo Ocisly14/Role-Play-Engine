@@ -20,11 +20,13 @@ import {
 } from "../engine/registerDefaults.js";
 import { buildStateContext } from "../engine/resolver/stateContextBuilder.js";
 import { resolveState } from "../engine/resolver/stateResolver.js";
-import type { ExecutionContext } from "../engine/types.js";
 import type { NpcMemoryManager } from "../memory/NpcMemoryManager.js";
-import type { NPCPlanningAgent } from "../planning/NPCPlanningAgent.js";
+import {
+  formatDayPrefix,
+  summarizeAllNpcDayMemory,
+} from "../roleSim/dailySummarization.js";
+import { LLMRoleSimAgent } from "../roleSim/llmAgent.js";
 import { NpcActionController } from "../roleSim/npcActionController.js";
-import { NpcAgentAdapter } from "../roleSim/npcAgentAdapter.js";
 import type { DynamicGameStateManager } from "../state/DynamicGameState.js";
 import { loadScriptedEventsForModule } from "../state/moduleLoader.js";
 import type { DynamicNPCProfile } from "../state/types.js";
@@ -33,7 +35,6 @@ import {
   injectCharacterIntoState,
   removeCharacterFromState,
   resolveEntryScene,
-  upsertIntent,
 } from "./characterInjection.js";
 import {
   persistSimulationEvents,
@@ -80,9 +81,7 @@ export class SimulationRunner {
   private readonly sessionId: string;
   private readonly config: SimulationConfig;
   private readonly dgsm: DynamicGameStateManager;
-  private readonly npcPlanningAgent: NPCPlanningAgent;
   private definitions: ActionDefinitionRegistry;
-  private readonly ctx: ExecutionContext;
   private readonly language: string;
   private readonly memoryManager?: NpcMemoryManager;
   private readonly prisma: PrismaClient;
@@ -98,7 +97,6 @@ export class SimulationRunner {
   private shouldPause = false;
 
   private readonly deadNpcIds: Set<string> = new Set();
-  private readonly modifiedCharacterIds: Set<string> = new Set();
 
   /** Snapshot of the persisted TickEngine state captured during deserialize.
    *  Consumed by `ensureTickEngine()` on first tick. Cleared after use. */
@@ -115,9 +113,7 @@ export class SimulationRunner {
   constructor(params: {
     config: SimulationConfig;
     dgsm: DynamicGameStateManager;
-    npcPlanningAgent: NPCPlanningAgent;
     definitions: ActionDefinitionRegistry;
-    ctx: ExecutionContext;
     language: string;
     memoryManager?: NpcMemoryManager;
     prisma: PrismaClient;
@@ -125,19 +121,12 @@ export class SimulationRunner {
     this.config = params.config;
     this.sessionId = params.config.sessionId;
     this.dgsm = params.dgsm;
-    this.npcPlanningAgent = params.npcPlanningAgent;
     this.definitions = params.definitions;
-    this.ctx = params.ctx;
     this.language = params.language;
     this.memoryManager = params.memoryManager;
     this.prisma = params.prisma;
 
     this.events = new SimulationEventEmitter(this.sessionId, this.dgsm);
-
-    this.ctx.simulationEmitter = this.events;
-    this.ctx.runtime = this.npcPlanningAgent.getRuntime();
-    this.ctx.language = this.language;
-    this.ctx.memoryManager = this.memoryManager;
 
     this.initializeDeadNpcIdsFromState();
   }
@@ -178,13 +167,17 @@ export class SimulationRunner {
   }
 
   async getCurrentNpcActions(): Promise<Record<string, string | null>> {
-    const gameState = this.dgsm.getState();
-    return this.npcPlanningAgent.getCurrentNpcActions(
-      this.sessionId,
-      gameState.gameDay,
-      gameState.timeOfDay,
-      this.dgsm
-    );
+    const result: Record<string, string | null> = {};
+    for (const npc of this.dgsm.getState().npcCharacters) {
+      if (!this.dgsm.isNpcAlive(npc.id)) {
+        result[npc.id] = null;
+        continue;
+      }
+      const queue = this.tickEngine?.getActorQueue(npc.id) ?? [];
+      const active = queue.find((s) => s.status === "active");
+      result[npc.id] = active?.actionText ?? null;
+    }
+    return result;
   }
 
   getDgsm(): DynamicGameStateManager {
@@ -290,8 +283,6 @@ export class SimulationRunner {
     if (this.state === "running" || this.state === "initializing") return;
     if (this.state === "stopped" || this.state === "completed") return;
 
-    await this.reconcileDeadNpcPlans();
-
     this.state = "initializing";
     this.shouldStop = false;
     this.shouldPause = false;
@@ -323,40 +314,11 @@ export class SimulationRunner {
 
   async resume(): Promise<void> {
     if (this.state !== "paused") return;
-
-    if (this.modifiedCharacterIds.size > 0) {
-      for (const charId of this.modifiedCharacterIds) {
-        if (!this.dgsm.isNpcAlive(charId)) continue;
-        await this.npcPlanningAgent.reviseSchedule(
-          this.dgsm,
-          this.sessionId,
-          charId,
-          "Player updated character intent",
-          this.language
-        );
-      }
-      this.modifiedCharacterIds.clear();
-    }
-
     return this.start();
   }
 
   async step(ticks = 1): Promise<void> {
     if (this.state !== "paused") return;
-
-    if (this.modifiedCharacterIds.size > 0) {
-      for (const charId of this.modifiedCharacterIds) {
-        if (!this.dgsm.isNpcAlive(charId)) continue;
-        await this.npcPlanningAgent.reviseSchedule(
-          this.dgsm,
-          this.sessionId,
-          charId,
-          "Player updated character intent",
-          this.language
-        );
-      }
-      this.modifiedCharacterIds.clear();
-    }
 
     for (let i = 0; i < ticks; i++) {
       if (this.isTerminal()) break;
@@ -393,24 +355,19 @@ export class SimulationRunner {
 
     injectCharacterIntoState(this.dgsm, profile, entrySceneId);
 
-    await upsertIntent(
-      this.prisma,
-      this.sessionId,
-      this.config.moduleId,
-      profile.id,
-      profile.name,
-      intent
-    );
-
     const gameState = this.dgsm.getState();
-    await this.npcPlanningAgent.generateSingleNpcSchedule(
-      this.dgsm,
-      this.sessionId,
-      this.config.moduleId,
-      profile.id,
-      gameState.gameDay,
-      this.language
-    );
+    if (this.memoryManager) {
+      await this.memoryManager.add({
+        npcId: profile.id,
+        sessionId: this.sessionId,
+        moduleId: this.config.moduleId,
+        type: "long_term_intent",
+        content: intent,
+        gameDay: gameState.gameDay,
+        gameTime: gameState.timeOfDay,
+      });
+    }
+
     await this.saveRuntime();
   }
 
@@ -443,16 +400,18 @@ export class SimulationRunner {
       throw new Error(`Character "${characterId}" not found in game state.`);
     }
 
-    await upsertIntent(
-      this.prisma,
-      this.sessionId,
-      this.config.moduleId,
-      characterId,
-      npc.name,
-      intent
-    );
+    if (this.memoryManager) {
+      await this.memoryManager.add({
+        npcId: characterId,
+        sessionId: this.sessionId,
+        moduleId: this.config.moduleId,
+        type: "long_term_intent",
+        content: intent,
+        gameDay: gameState.gameDay,
+        gameTime: gameState.timeOfDay,
+      });
+    }
 
-    this.modifiedCharacterIds.add(characterId);
     await this.saveRuntime();
   }
 
@@ -564,7 +523,6 @@ export class SimulationRunner {
         const result = await interpretAction(
           input.actionText,
           definitionList,
-          this.ctx.runtime,
           this.language
         );
         return { steps: result.steps };
@@ -580,29 +538,22 @@ export class SimulationRunner {
             plannedDuration: 0,
           };
         }
-        // buildStateContext only reads characterId + targetCharacterIds from
-        // the node arg; build a thin PlanNode-shaped object from the step so
-        // we don't have to thread the legacy PlanNode type through here.
-        const nodeShim = {
-          characterId: step.characterId,
-          targetCharacterIds: step.targetCharacterIds,
-        } as unknown as import("../planning/types.js").PlanNode;
         const stateContext = buildStateContext(
           definition,
-          nodeShim,
+          {
+            characterId: step.characterId,
+            targetCharacterIds: step.targetCharacterIds,
+          },
           this.dgsm,
           step.executionSceneId
         );
-        const resolution = await resolveState(
-          {
-            action: step.actionText,
-            definition,
-            outcomeSection: definition.content,
-            stateContext,
-            language: this.language,
-          },
-          this.ctx.runtime
-        );
+        const resolution = await resolveState({
+          action: step.actionText,
+          definition,
+          outcomeSection: definition.content,
+          stateContext,
+          language: this.language,
+        });
         const stateChanges = Array.isArray(resolution.stateChanges)
           ? (resolution.stateChanges as PlannedOutcome["stateChanges"])
           : [];
@@ -630,19 +581,18 @@ export class SimulationRunner {
 
     this.pendingTickEngineState = null;
 
-    const adapter = new NpcAgentAdapter(
-      this.npcPlanningAgent,
-      this.dgsm,
-      this.definitions,
-      this.sessionId,
-      this.language
-    );
-    const controller = new NpcActionController({
-      engine,
-      agent: adapter,
+    const agent = new LLMRoleSimAgent({
       memory: this.memoryManager as NpcMemoryManager,
       dgsm: this.dgsm,
-      planningAgent: this.npcPlanningAgent,
+      sessionId: this.sessionId,
+      moduleId: this.config.moduleId,
+      language: this.language,
+    });
+    const controller = new NpcActionController({
+      engine,
+      agent,
+      memory: this.memoryManager as NpcMemoryManager,
+      dgsm: this.dgsm,
       sessionId: this.sessionId,
       moduleId: this.config.moduleId,
     });
@@ -700,25 +650,18 @@ export class SimulationRunner {
     this.events.on("simulation_event", collectTickEvent);
 
     try {
-      await this.reconcileDeadNpcPlans();
-
       this.ticksExecuted++;
       this.events.setTick(this.ticksExecuted);
 
       const gameState = this.dgsm.getState();
       const dayBefore = gameState.gameDay;
 
-      const { engine, controller } = await this.ensureTickEngine();
+      const { engine } = await this.ensureTickEngine();
 
-      // Poll all alive NPCs without an active engine handle. Submits initial
-      // actions on the first tick after construction (replaces the legacy
-      // "every tick, ensureNpcNodesAvailable for every NPC") and mops up NPCs
-      // whose previous action has completed but who didn't get a follow-on
-      // submission in the same tick.
-      for (const npc of this.dgsm.getState().npcCharacters) {
-        if (!this.dgsm.isNpcAlive(npc.id)) continue;
-        await controller.decide(npc.id);
-      }
+      // Phase F: per-tick polling moved into NpcActionController.processTickReport
+      // (driven by `tickCompleted`). One-time bootstrap happens via
+      // controller.bootstrap() the first time ensureTickEngine constructs the
+      // controller — see ensureTickEngine for the wiring.
 
       await engine.tick();
 
@@ -736,14 +679,20 @@ export class SimulationRunner {
           }
         );
 
-        await this.npcPlanningAgent.onNewDay(
-          this.dgsm,
-          this.sessionId,
-          this.config.moduleId,
-          stateAfter.gameDay,
-          this.language,
-          this.definitions
-        );
+        // Daily summarization (Decision 25) — system writes [date]-prefixed
+        // summary memories for every alive NPC. Schedule generation (the
+        // legacy second half of onNewDay) is deleted with the planner.
+        if (this.memoryManager) {
+          await summarizeAllNpcDayMemory({
+            dgsm: this.dgsm,
+            memoryManager: this.memoryManager,
+            sessionId: this.sessionId,
+            moduleId: this.config.moduleId,
+            // summarize the day that JUST ended (not the new gameDay)
+            gameDay: dayBefore,
+            language: this.language,
+          });
+        }
       }
 
       await this.checkDerivedEvents();
@@ -812,40 +761,57 @@ export class SimulationRunner {
 
     for (const npc of gameState.npcCharacters) {
       if (this.deadNpcIds.has(npc.id)) continue;
+      if (this.dgsm.isNpcAlive(npc.id)) continue;
 
-      if (!this.dgsm.isNpcAlive(npc.id)) {
-        this.deadNpcIds.add(npc.id);
-        await this.npcPlanningAgent.interruptOpenNodesForDeath(
-          this.sessionId,
-          npc.id,
-          gameState.gameDay,
-          gameState.timeOfDay,
-          this.language
+      this.deadNpcIds.add(npc.id);
+
+      // (1) Cancel any in-flight engine action(s) for this NPC.
+      if (this.tickEngine) {
+        const queue = this.tickEngine.getActorQueue(npc.id);
+        const live = queue.find(
+          (s) => s.status === "active" || s.status === "queued"
         );
-
-        const location = (() => {
-          const position = gameState.characterPositions[npc.id];
-          return position
-            ? position.type === "scene"
-              ? position.sceneId
-              : position.type === "junction"
-                ? position.junctionId
-                : position.roadId
-            : "unknown";
-        })();
-
-        this.events.emitSimulationEvent(
-          "npc_death",
-          npc.id,
-          location,
-          gameState.gameDay,
-          gameState.timeOfDay,
-          {
-            npcName: npc.name,
-            hp: gameState.npcStats[npc.id]?.hp ?? npc.status.hp ?? 0,
-          }
-        );
+        if (live) this.tickEngine.cancelAction(live.handle);
       }
+
+      // (2) Write death event memory (Decision 26). Use scene/junction/road
+      // *name* in the memory text so it reads naturally to the agent.
+      const position = gameState.characterPositions[npc.id];
+      const locationId = position
+        ? this.dgsm.resolveLocationId(position)
+        : "unknown";
+      const locationName =
+        locationId !== "unknown"
+          ? (this.dgsm.getScene(locationId)?.name ?? locationId)
+          : "unknown";
+      const dayPrefix = formatDayPrefix(
+        gameState.gameDay,
+        gameState.moduleSetup?.startDate as string | undefined
+      );
+      if (this.memoryManager) {
+        await this.memoryManager.add({
+          npcId: npc.id,
+          sessionId: this.sessionId,
+          moduleId: this.config.moduleId,
+          type: "event",
+          content: `${dayPrefix} Died at ${gameState.timeOfDay} in ${locationName}`,
+          gameDay: gameState.gameDay,
+          gameTime: gameState.timeOfDay,
+        });
+      }
+
+      // (3) UI event keeps `location` as the ID for backward compatibility.
+      this.events.emitSimulationEvent(
+        "npc_death",
+        npc.id,
+        locationId,
+        gameState.gameDay,
+        gameState.timeOfDay,
+        {
+          npcName: npc.name,
+          hp: gameState.npcStats[npc.id]?.hp ?? npc.status.hp ?? 0,
+        }
+      );
     }
   }
 
@@ -856,26 +822,6 @@ export class SimulationRunner {
         this.deadNpcIds.add(npc.id);
       }
     }
-  }
-
-  private async reconcileDeadNpcPlans(): Promise<void> {
-    const gameState = this.dgsm.getState();
-    const deadNpcs = gameState.npcCharacters.filter(
-      (npc) => !this.dgsm.isNpcAlive(npc.id)
-    );
-    if (deadNpcs.length === 0) return;
-
-    await Promise.all(
-      deadNpcs.map((npc) =>
-        this.npcPlanningAgent.interruptOpenNodesForDeath(
-          this.sessionId,
-          npc.id,
-          gameState.gameDay,
-          gameState.timeOfDay,
-          this.language
-        )
-      )
-    );
   }
 
   private shouldStopAfterTick(currentTickEvents: SimulationEvent[]): void {

@@ -8,15 +8,12 @@ import {
   computeSkillPenalties,
   getWeatherLabel,
 } from "../../../src/engine/features/weatherFeature.js";
-import {
-  createDefaultDefinitions,
-  createExecutionContext,
-} from "../../../src/engine/index.js";
+import { createDefaultDefinitions } from "../../../src/engine/index.js";
 import { NpcMemoryManager } from "../../../src/memory/NpcMemoryManager.js";
 import { ModelProviderName } from "../../../src/models/types.js";
-import { NPCPlanningAgent } from "../../../src/planning/NPCPlanningAgent.js";
 import { resolveDisplayLocationName } from "../../../src/planning/sceneMapFormatter.js";
 import { EmbeddingClient } from "../../../src/rag/embedding.js";
+import { seedNpcLongTermIntents } from "../../../src/roleSim/seedIntents.js";
 import { resolveModuleIdByName } from "../../../src/shared/agents/memory/database/moduleScope.js";
 import { resolveEmailId } from "../../../src/shared/agents/memory/database/userContext.js";
 import { SimulationRunner } from "../../../src/simulation/SimulationRunner.js";
@@ -149,12 +146,11 @@ function buildSimulationBundle(params: {
 }): {
   runner: SimulationRunner;
   dgsm: DynamicGameStateManager;
-  npcPlanningAgent: NPCPlanningAgent;
+  memoryManager: NpcMemoryManager;
 } {
   const db = DatabaseManager.getInstance().getDatabase();
   const dgsm = new DynamicGameStateManager(params.gameState, db);
   const definitions = createDefaultDefinitions();
-  const ctx = createExecutionContext();
   const provider =
     (process.env.MODEL_PROVIDER as ModelProviderName) ??
     ModelProviderName.OPENAI;
@@ -164,24 +160,17 @@ function buildSimulationBundle(params: {
     embedClient,
     params.language
   );
-  const npcPlanningAgent = new NPCPlanningAgent(
-    params.prisma,
-    {},
-    memoryManager
-  );
 
   const runner = new SimulationRunner({
     config: params.config,
     dgsm,
-    npcPlanningAgent,
     definitions,
-    ctx,
     language: params.language,
     memoryManager,
     prisma: params.prisma,
   });
 
-  return { runner, dgsm, npcPlanningAgent };
+  return { runner, dgsm, memoryManager };
 }
 
 export function getRunnerFromMemory(
@@ -449,7 +438,7 @@ export async function createSimulation(
     );
   }
 
-  const { runner, dgsm, npcPlanningAgent } = buildSimulationBundle({
+  const { runner, dgsm, memoryManager } = buildSimulationBundle({
     prisma,
     gameState,
     config: {
@@ -470,7 +459,15 @@ export async function createSimulation(
     applyGlobalWeather(dgsm, config.weather);
   }
 
-  await npcPlanningAgent.seedLongTermIntents(dgsm, sessionId, moduleId);
+  // Decision 22 — F3 helper writes long_term_intent memory entries directly.
+  await seedNpcLongTermIntents({
+    npcs: dgsm.getState().npcCharacters,
+    sessionId,
+    moduleId,
+    memoryManager,
+    gameDay: dgsm.getGameDay(),
+    gameTime: dgsm.getTickTime(),
+  });
   if (config?.syncRealTime) {
     runner.enableRealTimeSync(config.realTimeBufferMinutes ?? 0);
   }

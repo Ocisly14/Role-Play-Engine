@@ -37,7 +37,6 @@ const DEFAULT_MODS_DIR = "data/Mods";
 
 export interface NpcInjectionPolicy {
   moduleId?: string;
-  moduleStartDate?: string;
   description?: string;
   tiers: {
     daily_sim?: string[];

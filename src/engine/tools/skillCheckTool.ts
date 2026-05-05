@@ -1,4 +1,3 @@
-import type { PlanNode } from "../../planning/types.js";
 import type { DynamicGameStateManager } from "../../state/DynamicGameState.js";
 import {
   applyPenalties,
@@ -6,6 +5,7 @@ import {
   getScenePenalties,
   resolveSkillRoll,
 } from "../shared/index.js";
+import type { SkillRollNode } from "../shared/skillRoll.js";
 import type { ActionDefinitionSkillCheck, ToolResult } from "../types.js";
 
 export function executeSkillCheck(
@@ -45,8 +45,7 @@ export function executeSkillCheck(
   const afterScene = applyPenalties(npcSkills, scenePenalties);
   const adjustedSkills = applyPenalties(afterScene, charPenalties);
 
-  // Build a synthetic PlanNode for resolveSkillRoll
-  const syntheticNode: Partial<PlanNode> = {
+  const syntheticNode: SkillRollNode = {
     characterId,
     skill: resolvedSkill,
     difficulty: skillCheckDef?.difficulty ?? "regular",
@@ -71,7 +70,7 @@ export function executeSkillCheck(
       : undefined;
 
   const rollResult = resolveSkillRoll(
-    syntheticNode as PlanNode,
+    syntheticNode,
     adjustedSkills,
     dgsm,
     adjustTargetSkills

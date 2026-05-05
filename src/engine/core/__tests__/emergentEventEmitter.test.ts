@@ -18,8 +18,13 @@ const fakeCtx = {} as ScannerContext;
 describe("EmergentEventEmitter", () => {
   it("concatenates events from all registered scanners in registration order", () => {
     const emitter = new EmergentEventEmitter([
-      new FakeScanner("a", [{ type: "a.evt" }]),
-      new FakeScanner("b", [{ type: "b.evt1" }, { type: "b.evt2" }]),
+      new FakeScanner("a", [
+        { type: "a.evt", impact: 0, description: "a.evt" },
+      ]),
+      new FakeScanner("b", [
+        { type: "b.evt1", impact: 0, description: "b.evt1" },
+        { type: "b.evt2", impact: 0, description: "b.evt2" },
+      ]),
     ]);
     const { featureEvents } = emitter.scan(fakeCtx);
     expect(featureEvents.map((e) => e.type)).toEqual([
@@ -31,7 +36,11 @@ describe("EmergentEventEmitter", () => {
 
   it("register() adds scanners after construction", () => {
     const emitter = new EmergentEventEmitter();
-    emitter.register(new FakeScanner("late", [{ type: "late.evt" }]));
+    emitter.register(
+      new FakeScanner("late", [
+        { type: "late.evt", impact: 0, description: "late.evt" },
+      ])
+    );
     const { featureEvents } = emitter.scan(fakeCtx);
     expect(featureEvents).toHaveLength(1);
     expect(emitter.listScannerIds()).toEqual(["late"]);

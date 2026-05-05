@@ -320,6 +320,13 @@ export interface ModuleSetup {
   background?: string;
   storyOutline?: string;
   introduction?: string;
+  /**
+   * In-world calendar date for game day 1 in ISO 8601 (YYYY-MM-DD).
+   * Used by daily summarization to date summary memories
+   * (`[1923-10-17] Today I...`). When omitted, summaries fall back
+   * to `[Day N]` prefix and a console warning suggests adding the field.
+   */
+  startDate?: string;
   initialGameTime?: string;
   tags?: string[];
   weatherPresets?: Array<{
@@ -354,7 +361,6 @@ export interface NpcInjectionPolicyTiers {
 
 export interface NpcInjectionPolicy {
   moduleId?: string;
-  moduleStartDate?: string;
   description?: string;
   tiers?: NpcInjectionPolicyTiers;
 }

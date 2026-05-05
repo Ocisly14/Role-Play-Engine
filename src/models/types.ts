@@ -91,7 +91,6 @@ export type ImageInput =
  * Generation options for AI calls
  */
 export interface GenerationOptions {
-  runtime: any; // CoC runtime interface
   context: string;
   modelClass?: ModelClass;
   providerOverride?: ModelProviderName;

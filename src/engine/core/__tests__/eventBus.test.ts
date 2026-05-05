@@ -31,7 +31,7 @@ describe("EventBus", () => {
     const cb = vi.fn();
     const off = bus.on("featureEvent", cb);
     off();
-    bus.emitFeatureEvent({ type: "x" });
+    bus.emitFeatureEvent({ type: "x", impact: 0, description: "x" });
     expect(cb).not.toHaveBeenCalled();
   });
 });

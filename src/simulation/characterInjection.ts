@@ -147,15 +147,9 @@ export async function removeCharacterFromState(
     delete state.npcRelationshipGraph[otherId][characterId];
   }
 
-  // Prisma cleanup — delete all DB records for this NPC in this session
-  await prisma.npcLongTermIntent.deleteMany({
-    where: { sessionId, npcId: characterId },
-  });
-
-  await prisma.npcDailyPlan.deleteMany({
-    where: { sessionId, npcId: characterId },
-  });
-
+  // Prisma cleanup — delete this NPC's memory rows for the session.
+  // Phase F dropped npc_long_term_intents + npc_daily_plans tables; long-term
+  // intent now lives as a memory row, swept by the npcMemory deleteMany below.
   await prisma.npcMemory.deleteMany({
     where: { sessionId, npcId: characterId },
   });
@@ -173,31 +167,4 @@ export function resolveEntryScene(
   const outline = state.scenarioOutlines.find((o) => o.id === macroLocationId);
   if (!outline) return null;
   return outline.entrySceneId ?? null;
-}
-
-/**
- * Upsert an NpcLongTermIntent record for a player-injected character.
- * Uses deterministic ID `${sessionId}_${characterId}`.
- */
-export async function upsertIntent(
-  prisma: PrismaClient,
-  sessionId: string,
-  moduleId: string,
-  characterId: string,
-  characterName: string,
-  intent: string
-): Promise<void> {
-  await prisma.npcLongTermIntent.upsert({
-    where: {
-      sessionId_npcId: { sessionId, npcId: characterId },
-    },
-    update: { intent },
-    create: {
-      sessionId,
-      moduleId,
-      npcId: characterId,
-      npcName: characterName,
-      intent,
-    },
-  });
 }

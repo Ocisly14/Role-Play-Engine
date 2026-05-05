@@ -1,18 +1,11 @@
 export { ActionDefinitionRegistry } from "./definitions/registry.js";
-export { createExecutionContext } from "./executionContext.js";
 export {
   createDefaultDefinitions,
   getDefaultFeatures,
 } from "./registerDefaults.js";
 export type {
   WorldFeature,
-  ExecutionContext,
   SkillRollResult,
-  TickRuntimeContext,
-  NpcPlanningCapability,
-  FeatureNodeSchema,
-  FeaturePropagationConfig,
-  PropagationResult,
   ActionDefinition,
   StateDomainSpec,
   InterpretedResult,

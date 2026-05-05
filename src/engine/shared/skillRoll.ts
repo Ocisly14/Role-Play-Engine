@@ -1,7 +1,20 @@
 import { COC_SKILL_BASE_VALUES } from "../../planning/cocSkillList.js";
-import type { PlanNode } from "../../planning/types.js";
 import type { DynamicGameStateManager } from "../../state/DynamicGameState.js";
 import type { SkillRollResult } from "../types.js";
+
+/**
+ * Minimal structural shape consumed by `resolveSkillRoll` / `getNodeDifficulty`.
+ * Replaces the legacy `PlanNode` import (deleted in Phase F). Callers may pass
+ * any object that includes these fields — synthetic shims (e.g.
+ * `skillCheckTool.executeSkillCheck`) and real engine actions both qualify.
+ */
+export interface SkillRollNode {
+  characterId: string;
+  skill?: string;
+  difficulty?: "regular" | "hard" | "extreme";
+  targetCharacterIds?: string[];
+  type?: string;
+}
 import {
   SUCCESS_RANK,
   getDamageBonus,
@@ -14,7 +27,7 @@ import {
 // ==================== Difficulty derivation ====================
 
 export function getNodeDifficulty(
-  node: PlanNode,
+  node: SkillRollNode,
   _dgsm: DynamicGameStateManager
 ): "regular" | "hard" | "extreme" {
   // character_interaction always uses "regular" — opposed rolls handle
@@ -82,7 +95,7 @@ const COMBAT_DEFEND_SKILLS = ["Dodge", "Fighting (Brawl)"];
 const CHASE_SKILLS = ["Dodge", "Drive Auto", "Climb", "Swim", "Jump", "Ride"];
 
 export function resolveSkillRoll(
-  node: PlanNode,
+  node: SkillRollNode,
   adjustedSkills: Record<string, number>,
   dgsm: DynamicGameStateManager,
   /** Apply scene + character feature penalties to a target's skills */

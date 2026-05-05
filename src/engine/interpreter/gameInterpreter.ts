@@ -158,7 +158,6 @@ export function parseInterpretedResult(
 export async function interpretAction(
   action: string,
   definitions: ActionDefinition[],
-  runtime: any,
   language: string
 ): Promise<InterpretedResult> {
   const systemPrompt = buildInterpreterPrompt(definitions);
@@ -168,7 +167,6 @@ export async function interpretAction(
       : "The action is in English.";
 
   const text = await generateText({
-    runtime,
     customSystemPrompt: systemPrompt,
     context: `${langInstruction}\n\nAction: "${action}"`,
     modelClass: ModelClass.SMALL,

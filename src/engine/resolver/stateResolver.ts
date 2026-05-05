@@ -195,14 +195,12 @@ function getAllowedResolutionKeys(config: OutputSchemaConfig): Set<string> {
 // ===== Async LLM call =====
 
 export async function resolveState(
-  ctx: ResolverContext,
-  runtime: any
+  ctx: ResolverContext
 ): Promise<Record<string, any>> {
   const prompt = buildResolverPrompt(ctx);
 
   try {
     const text = await generateText({
-      runtime,
       customSystemPrompt: prompt,
       context: "",
       modelClass: ModelClass.MEDIUM,
