@@ -5498,19 +5498,30 @@ Re-examined the existing revise system and found two distinct legacy paths:
 Phase F's redesign:
 
 - **Path A is deleted entirely.** Player editing intent becomes a pure memory write (`writeMemory({type:"long_term_intent",...})` from the system side). Agent sees the new intent on its next natural `decide()` call. No force-interrupt of in-flight actions on player edits — players who want immediate effect should `pause` first.
-- **Path B is merged into the agent loop.** When an engine event fires, controller computes affected NPCs, injects a `reviseTrigger` field into ctx, and force-calls `decide()` for each affected NPC even if they have an in-flight action. Agent then chooses (via tools) whether to interrupt + replan or continue.
+- **Path B is merged into the agent loop.** Controller subscribes to engine `tickCompleted`; for each tick's TickReport it computes affected NPCs (per impactPropagation), batches that tick's events into `ctx.reviseTriggers` (plural, Decision 16), and calls `decide()` once per affected NPC even if they have an in-flight action. Agent then chooses (via tools) whether to switch action (call `act` — Decision 14: this auto-cancels the in-flight action) or stay the course (call `continue`).
 
 Removed code (in addition to NPCPlanningAgent itself): `runImpactGateForNpc`, `reviseSchedule`, `generateImpactObservationForNpc`, `modifiedCharacterIds` field on SimulationRunner, the `updateIntent`-triggers-revise pathway. Their combined responsibilities collapse into the agent's tool selection.
 
-#### Decision 14: New `interrupt` tool; `wait` renamed to `continue`
+#### Decision 14: No separate `interrupt` tool; `act` absorbs cancellation; `wait` renamed to `continue`
 
-Tool list grows from 5 to 6:
+Originally Phase F brainstorm proposed a 6-tool list including `interrupt({ reason: string })` to cancel an in-flight action. Re-examination found `interrupt` is only ever meaningful when **both** `ctx.currentAction` and `ctx.reviseTrigger` are present (the engine-event-driven revise flow) — otherwise `currentAction` is undefined (post-action-complete decide) and there's nothing to interrupt. In that single useful scenario, the agent always wants to cancel + start a new action, never cancel and do nothing.
+
+Decision: **delete `interrupt` from the tool list**; merge its semantic into `act`:
 
 ```
-act, continue, interrupt, writeMemory, recallMemory, getMapSnapshot
+act, continue, writeMemory, recallMemory, getMapSnapshot   (5 tools)
 ```
 
-**`interrupt({ reason: string })`**: cancels NPC's in-flight `ActionStep` via `engine.interruptAction(handle, { triggerKind: "perception", description: reason })`. Tool effect is engine-level; loop semantics (terminal vs non-terminal) is still part of open loop-semantics discussion.
+`act` dispatcher logic:
+- If `ctx.currentAction` is undefined → submit new action (normal case)
+- If `ctx.currentAction` is defined → cancel current via `engine.cancelAction(currentAction.handle)`, then submit new action
+
+From the agent's perspective: it just calls `act({ actionText, ... })` whenever it wants to do something. Whether that means "start fresh" or "interrupt and switch" is invisible — the dispatcher handles it.
+
+**Loss accepted:** no way for agent to "cancel current action without replacement". To approximate, agent calls `act({ actionText: "rest in place" })` or similar. Acceptable because:
+- Real NPC behavior almost always replaces an interrupted action with a new one (the NPC stops because they want to do something else)
+- Agent can write to memory before deciding (instant tools), so deliberation is preserved
+- Engine cancellation without replacement was never a clean state anyway
 
 **`wait` → `continue` rename**: more accurate verb. With revise events potentially firing during in-flight actions, the agent's "do nothing" choice means "keep current state" (continue the in-flight action OR continue idling) — not literally "wait for X". Same terminal-tool semantics as before; just clearer name.
 
@@ -5518,23 +5529,34 @@ act, continue, interrupt, writeMemory, recallMemory, getMapSnapshot
 
 For each engine event, controller determines which NPCs to revise-ping by reusing the existing `findAffectedCharacters(action, impactLevel, dgsm)` helper from `src/engine/shared/impactPropagation.ts` (Phase E kept this file alive). Levels 1–5 already model "targeted / same scene / same macro / neighborhood / global" radii — the same model the legacy impact pipeline used.
 
-Implementation detail (resolved in F1/F2): mapping from new engine `CharacterAction` / `FeatureEvent` shape to the helper's expected impact level — `ActionStep` doesn't currently surface `impact` to engine-emitted events; need to either propagate it through or compute from event type.
+Implementation detail (resolved 2026-04-24, F1 Step 6): `FeatureEvent` is extended with intrinsic `impact: 0-5` + `description: string` fields. Each emitter (Applier for synthesized `character.died`, scripted-event runner for `event.emit` effects, future features) sets these. The controller reads `event.impact` directly — no controller-side type→level mapping table needed.
 
 When the renderer ships, this judgment is replaced by perception-threshold filtering — the helper becomes obsolete.
 
-#### Decision 16: `RoleSimContext` adds `reviseTrigger` field
+#### Decision 16: `RoleSimContext` adds `reviseTriggers` field (batched per tick)
 
 ```ts
 RoleSimContext = {
   ...,
-  reviseTrigger?: {
-    description: string,                  // e.g., "fire spread to your scene"
-    sourceEvent?: FeatureEvent | CharacterAction,  // optional structured payload
-  }
+  reviseTriggers?: ReadonlyArray<{
+    description: string,                            // e.g., "fire spread to your scene"
+    sourceEvent?: FeatureEvent | CharacterAction,   // optional structured payload
+  }>
 }
 ```
 
-Present iff controller is force-pinging this `decide()` call due to a revise event. Absent on natural `decide()` calls (post-action-complete). Agent can read it to understand the situation and decide whether to `interrupt`.
+**Batched, not per-event.** Originally drafted as a singular `reviseTrigger` (one event per `decide()` call). Refined 2026-04-24 to a plural array so all events from one tick reach the agent in a single decision pass:
+- The controller subscribes only to engine `tickCompleted` (not individual `featureEvent`s).
+- For each tick's `TickReport.featureEvents`, controller groups by affected NPC (per `impactPropagation.findAffectedCharacters`).
+- Each affected NPC gets ONE `decide()` call per tick with all triggers in `reviseTriggers`.
+
+Why batched:
+- Eliminates concurrent `decide()` calls for the same NPC (per-event firing caused races).
+- Agent makes one combined-context decision ("fire + scream + Sarah died") rather than reacting to each event in isolation.
+- Saves LLM calls (1 instead of N).
+- Matches spec §3 — role sim's impact gate processes the full `TickReport` at end of tick.
+
+`reviseTriggers` is absent (or empty) when the tick had no revise events for this NPC.
 
 #### Decision 17: Loop termination = "tool consumes a tick"
 
@@ -5542,14 +5564,13 @@ The agent is conceptually a continuously-running mind; "loop boundaries" are jus
 
 | Tool | Consumes tick? | Terminal? |
 |---|---|---|
-| `act` | Yes (action runs over N ticks) | ✅ |
-| `interrupt` | Yes (1 tick to apply cancellation) | ✅ |
-| `continue` | Yes (lets 1 tick pass without new action) | ✅ |
+| `act` | Yes (action runs over N ticks; auto-cancels in-flight action if any per Decision 14) | ✅ |
+| `continue` | Yes (lets 1 tick pass; in-flight action keeps running if any) | ✅ |
 | `writeMemory` | No (instant mental write) | ❌ |
 | `recallMemory` | No (instant mental query) | ❌ |
 | `getMapSnapshot` | No (instant mental query) | ❌ |
 
-Agent's loop continues as long as it keeps calling instant tools (`writeMemory` / `recallMemory` / `getMapSnapshot`); it ends as soon as it calls a tick-consuming tool (`act` / `interrupt` / `continue`). This makes the rule mechanical and prompt-friendly.
+Agent's loop continues as long as it keeps calling instant tools (`writeMemory` / `recallMemory` / `getMapSnapshot`); it ends as soon as it calls a tick-consuming tool (`act` / `continue`). This makes the rule mechanical and prompt-friendly.
 
 #### Decision 18: Each `decide()` call is a fresh LLM conversation
 
@@ -5749,7 +5770,7 @@ With Decisions 22–26 the legacy `NPCPlanningAgent` is fully decomposed. Final 
 | `generateNextAction` | Replaced by agent's `act` tool (Decision 1) |
 | `generateSingleNpcSchedule` | Deleted (no daily schedule concept) |
 | `seedLongTermIntents` | Standalone helper in `src/roleSim/` (Decision 22) |
-| `reviseSchedule`, `runImpactGateForNpc`, `generateImpactObservationForNpc` | Deleted (Decision 13: agent does this via `interrupt` + `writeMemory`) |
+| `reviseSchedule`, `runImpactGateForNpc`, `generateImpactObservationForNpc` | Deleted (Decision 13: agent does this via `act` (with auto-cancel of current per Decision 14) + `writeMemory`) |
 | `interruptOpenNodesForDeath` | Replaced by `tickEngine.cancelAction` + death memory write in `checkDerivedEvents` (Decision 26) |
 | `onNewDay` | Day summarization → standalone module (Decision 25); schedule generation → deleted |
 | `getCurrentNpcActions` | Stays on `SimulationRunner`, queries `tickEngine.getActorQueue` (Decision 24) |
@@ -5827,12 +5848,2164 @@ The brainstorm produced 29 architecture decisions covering:
 |---|---|
 | Architecture model | 1 (agent-loop), 17 (tick-consuming = terminal), 18 (fresh conversation per decide) |
 | Storage | 2 (long_term_intent → memory), 4 (no plan tool), 5 (5+map types), 6 (map structured-incremental), 7 (polymorphic schema), 27 (no F4 migration) |
-| Tool catalog | 3 (plan in memory), 9 (memory read tools), 10 (ctx shape), 11 (perception empty), 12 (no inspectCharacter), 14 (interrupt + continue rename), 19 (per-tool caps), 20 (text → continue), 21 (immediate writes) |
-| Revise / Interrupt | 13 (delete A, merge B), 15 (impactPropagation), 16 (reviseTrigger ctx field) |
+| Tool catalog | 3 (plan in memory), 9 (memory read tools), 10 (ctx shape), 11 (perception empty), 12 (no inspectCharacter), 14 (no interrupt — `act` absorbs cancellation; `wait`→`continue`), 19 (per-tool caps), 20 (text → continue), 21 (immediate writes) |
+| Revise / Interrupt | 13 (delete A, merge B; controller subscribes to tickCompleted only), 15 (impactPropagation), 16 (reviseTriggers ctx field — batched per tick) |
 | Lifecycle | 8 (hybrid context), 22 (seedLongTermIntents helper), 23 (injectCharacter simplified), 24 (getCurrentNpcActions on Runner), 25 (daily summarization slim+dated), 26 (death = cancel + memory) |
 | Process | 28 (no A/B feature flag), 29 (prompt design deferred) |
 
-**Implementation plan** (transforming these into F1–F7 tasks) is the next document, following the format of the Phase A–E task lists above.
+**Implementation plan** (transforming these into F1–F7 tasks) follows below, matching the Phase A–E task format.
+
+---
+
+### Task F1: Schema, types, and module-setup field changes
+
+**Goal:** lay the data-layer foundation for Phase F. Drop the two doomed Prisma tables, introduce the `long_term_intent` memory type, delete planning types nobody reads anymore, and add `ModuleSetup.startDate` for daily-summary dating.
+
+This task contains no behavior changes — it's pure schema + type plumbing — but every later task depends on these definitions being in place.
+
+> **Important:** after F1 ships, the project **will not type-check cleanly until F6 lands**. Every site that still references the deleted types (`PlanNode`, `ScheduleEntry`, etc.) will surface as a TS error. This is expected and intentional — the cost of doing schema/type changes upfront. Don't try to fix individual call-site errors during F1; they self-resolve as F2–F6 replace or delete those call sites.
+
+**Files:**
+- Modify: `prisma/schema.prisma` — drop `model NpcDailyPlan`, drop `model NpcLongTermIntent`, add `long_term_intent` to `enum NpcMemoryType`
+- Modify: `src/state/types.ts` — add `startDate?: string` to `ModuleSetup`; delete `moduleStartDate` from `NpcInjectionPolicy` (dead field per Decision 25)
+- Modify: `src/state/moduleLoader.ts` — same `moduleStartDate` deletion
+- Modify: `src/planning/types.ts` — delete `PlanNode`, `PlanNodeStatus`, `PlanNodeExecutionMeta`, `ScheduleEntry`, `PlanNodeType`, `ObjectInteractionPayload` (planning-internal types with no remaining consumers); keep `CharacterAction` re-export and `FailureReason`
+- Modify: `src/planning/index.ts` — drop now-orphan exports
+- Modify: `src/memory/types.ts` — extend `NpcMemoryType` literal union with `"long_term_intent"`
+- Run: `pnpm prisma:generate` then `prisma db push` (per CLAUDE.md convention — not `migrate dev`, due to existing reminder_embeddings drift)
+
+**Per Decisions 2, 25, 27:**
+- Decision 2 lives in: schema enum + memory types
+- Decision 25 lives in: `ModuleSetup.startDate`
+- Decision 27 lives in: schema model deletions
+
+- [ ] **Step 1: Update Prisma schema**
+
+```diff
+ enum NpcMemoryType {
+   event
+   witness
+   information
+   map
+   belief
+   plan
+   secret
+   summary
++  long_term_intent
+ }
+
+-model NpcDailyPlan {
+-  ...
+-}
+-
+-model NpcLongTermIntent {
+-  ...
+-}
+```
+
+- [ ] **Step 2: Update `ModuleSetup` interface**
+
+```diff
+ export interface ModuleSetup {
+   title?: string;
+   background?: string;
+   storyOutline?: string;
+   introduction?: string;
++  /**
++   * In-world calendar date for game day 1 in ISO 8601 (YYYY-MM-DD).
++   * Used by daily summarization to date summary memories
++   * (`[1923-10-17] Today I...`). When omitted, summaries fall back
++   * to `[Day N]` prefix and a console warning suggests adding the field.
++   */
++  startDate?: string;
+   initialGameTime?: string;
+   tags?: string[];
+   ...
+ }
+```
+
+- [ ] **Step 3: Delete dead `moduleStartDate` field**
+
+```diff
+ export interface NpcInjectionPolicy {
+   moduleId?: string;
+-  moduleStartDate?: string;
+   description?: string;
+   tiers?: NpcInjectionPolicyTiers;
+ }
+```
+
+Apply the same diff to the duplicate definition in `src/state/moduleLoader.ts:38-50`.
+
+- [ ] **Step 4: Update memory types**
+
+```diff
+ // src/memory/types.ts
+ export type NpcMemoryType =
+   | "event"
+   | "witness"
+   | "information"
+   | "map"
+   | "belief"
+   | "plan"
+   | "secret"
+-  | "summary";
++  | "summary"
++  | "long_term_intent";
+```
+
+(Keep alignment with the Prisma enum from Step 1 — this is the TS-side mirror.)
+
+- [ ] **Step 5: Delete orphan planning types (with sweep audit)**
+
+In `src/planning/types.ts`, delete the **PlanNode-era + discoveryPipeline-era types**. The full delete list (verified against the codebase 2026-04-24 — no external consumers outside `NPCPlanningAgent.ts` + planning helpers, all of which F6 deletes):
+
+**PlanNode cluster:**
+- `interface PlanNode`
+- `interface PlanNodeExecutionMeta`
+- `interface MovementExecutionState`  *(only PlanNode.executionMeta references it)*
+- `interface ObjectInteractionPayload`
+- `interface ScheduleEntry`
+- `type PlanNodeType`
+- `type PlanNodeStatus`
+- `type BuiltinNodeType`  *(only PlanNodeType uses it)*
+
+**Old state-delta cluster** (replaced by Phase A `StateChange`):
+- `interface FatigueEffectDelta`
+- `interface CharacterStateDelta`
+- `interface InteractionStateDelta`
+- `interface ItemResult`
+- `interface NewItemEntry`
+- `interface ObjectStateDelta`
+- `interface SceneConnectionEffectResult`
+- `interface SceneStateDelta`
+
+**discoveryPipeline-era (deleted in Phase E):**
+- `interface DiscoveryEntry`
+
+**Other orphans** (verified zero external consumers):
+- `interface ActionResolutionContext`
+- `interface ToolCall`
+
+**Keep:**
+- `re-export of CharacterAction` from `engine/core/types.js` (still used)
+- `re-export of MovementStep` from `engine/core/types.js` (used by codeEngine)
+- `type FailureReason` (used by SimulationEvent payload formatting)
+- `type SuccessLevel` (still used by resolver outputs)
+
+**Sweep verification (do not skip):** before committing the deletes, for each deleted type name run
+
+```bash
+grep -rln "<TypeName>" src/ client/ scripts/ 2>/dev/null | grep -v "src/planning/"
+```
+
+Expected: empty output (after `NPCPlanningAgent.ts` and helpers are queued for F6 deletion). If any non-planning file references one of these types, **stop and resolve** — it likely means F2–F6 missed a wiring change or a new dependency snuck in.
+
+Drop orphan re-exports in `src/planning/index.ts` accordingly.
+
+- [ ] **Step 6: Extend `FeatureEvent` with intrinsic `impact` + `description`**
+
+`FeatureEvent` becomes self-describing — each emitter sets the event's intrinsic impact level (audibility / visibility radius per spec §3a) and a human-readable description string. Removes the need for the controller to maintain a `eventType → impact` mapping table (Decision 15 implementation: F5 now reads `event.impact` directly).
+
+```diff
+ // src/engine/core/types.ts
+ export interface FeatureEvent {
+   type: string;
++  /**
++   * Intrinsic perceptibility / impact level (0-5). Drives
++   * impactPropagation.findAffectedCharacters: 1=targeted, 2=same scene,
++   * 3=macro location, 4=neighborhood, 5=global. Set by the emitter; matches
++   * spec §E-renderer-layer's "events carry intrinsic impact" model.
++   */
++  impact: 0 | 1 | 2 | 3 | 4 | 5;
++  /**
++   * One-line human-readable description used by NpcActionController to render
++   * the event into the agent's `reviseTriggers` prompt section. Set by the
++   * emitter so each event type is self-describing without controller-side
++   * format tables.
++   */
++  description: string;
+   characterId?: string;
+   sceneId?: string;
+   data?: Record<string, unknown>;
+ }
+```
+
+Update the only two synthesis sites in the engine:
+
+```diff
+ // src/engine/core/applier.ts:243 — death synthesis
+-  .map((r) => ({ type: "character.died", characterId: r.characterId }));
++  .map((r) => ({
++    type: "character.died",
++    impact: 4,                                     // major event; neighborhood radius
++    description: `${r.characterId} died`,          // npcName lookup deferred to renderer; ID is fine for MVP
++    characterId: r.characterId,
++  }));
+```
+
+Update the scripted-event loader (`src/engine/scriptedEvents/loader.ts`) to require `impact` + `description` on `event.emit` effect events. Currently `data/Mods/**` has zero `event.emit` effects (verified 2026-04-24), so no module data needs migrating.
+
+```diff
+ // loader.ts — event.emit validation
+ case "event.emit": {
+-  // existing structural validation
++  if (typeof effect.event?.impact !== "number" || effect.event.impact < 0 || effect.event.impact > 5) {
++    pushErr(errors, file, path + ".event.impact", "event.emit: 'impact' must be a number 0-5");
++  }
++  if (typeof effect.event?.description !== "string" || !effect.event.description.trim()) {
++    pushErr(errors, file, path + ".event.description", "event.emit: 'description' is required");
++  }
++  // existing structural validation continues
+ }
+```
+
+`ScriptedEventRunner.ts:417` (forwards `effect.event`) needs no change — it just passes the event through; loader-level validation guarantees the fields are present.
+
+Future feature additions that emit events must set both fields. No controller-side mapping table to maintain.
+
+- [ ] **Step 7: Run Prisma codegen + db push**
+
+```bash
+pnpm prisma:generate
+pnpm prisma db push
+```
+
+Expected: codegen succeeds; `db push` drops the two tables.
+
+> **⚠️ Destructive step.** All rows in `NpcDailyPlan` and `NpcLongTermIntent` are deleted along with the tables — no migration script preserves their data. Pre-Phase-F sessions that depended on these tables become unrecoverable on resume (consistent with spec §3 "no backwards compat" + Decision 27).
+>
+> Prisma may prompt for `--accept-data-loss` confirmation depending on the project setup; confirm by checking the actual prompt output. If a dev DB has test data you want to preserve in any other table, **back it up first** — `db push` schema diffs can sometimes be broader than expected.
+
+> **Verification deferred to F7.** TypeScript will complain about every site that still references the deleted types (`NPCPlanningAgent`, helpers, etc.) — those errors are intentional and resolve themselves as F2–F6 land. Per project preference, no per-task type-check / test runs.
+
+---
+
+### Task F1.5: Drop vestigial `runtime` parameter from the LLM call chain
+
+**Goal:** remove the `runtime: any` parameter from every LLM-call interface in the codebase. Currently `runtime` propagates `service.ts → SimulationRunner → ExecutionContext → engine helpers → generateText`, but it has been an empty `{}` literally everywhere it's set; only one field (`runtime.modelProvider`) is read inside `generateText`, with a fallback to `process.env.MODEL_PROVIDER`. The fallback always wins. The parameter is 100% dead code.
+
+Doing this **before** F2 means F2/F3 are written without the parameter at all — no need for a follow-up cleanup pass.
+
+**Files:**
+- Modify: `src/models/generator.ts` — drop `runtime` from `generateText` param type; remove the `runtime.modelProvider ||` fallback (env var becomes the sole source)
+- Modify: `src/engine/interpreter/gameInterpreter.ts` — drop `runtime` from `interpretAction`'s signature + body
+- Modify: `src/engine/resolver/stateResolver.ts` — drop `runtime` from `resolveState`'s signature + body
+- Modify: `src/engine/types.ts` — drop `runtime?: any` from `ExecutionContext`
+- Modify: `src/engine/executionContext.ts` — drop `runtime` from `createExecutionContext` opts
+- Modify: `src/planning/NPCPlanningAgent.ts` — strip `runtime: this.runtime` from its 6 `generateText` call sites; the file is deleted in F6 anyway, but it must compile until then
+- Modify: `src/simulation/SimulationRunner.ts` — drop `this.ctx.runtime = ...` setup line; update internal `interpretAction(...)` and `resolveState(...)` calls to drop the runtime arg
+
+> No `as any` workarounds. The parameter is gone from every signature.
+
+- [ ] **Step 1: Update `generateText` signature**
+
+```diff
+ // src/models/generator.ts
+ export async function generateText(opts: {
+-  runtime: any;
+   customSystemPrompt: string;
+   context: string;
+   modelClass?: ModelClass;
+   operation?: string;
+   provider?: ModelProviderName;
+   ...
+ }): Promise<string> {
+   ...
+   const provider =
+     providerOverride ||
+     envProvider ||
+-    runtime.modelProvider ||
+     ModelProviderName.OPENAI;
+   ...
+-  const effectiveModelClass = resolveModelClass(runtime, modelClass);
++  const effectiveModelClass = resolveModelClass(modelClass);
+   ...
+ }
+```
+
+If `resolveModelClass` also reads `runtime`, drop it from there too (small cascade).
+
+- [ ] **Step 2: Update `interpretAction` signature**
+
+```diff
+ // src/engine/interpreter/gameInterpreter.ts
+ export async function interpretAction(
+   action: string,
+   definitions: ActionDefinition[],
+-  runtime: any,
+   language: string,
+ ): Promise<InterpretedResult> {
+   ...
+   const text = await generateText({
+-    runtime,
+     customSystemPrompt: systemPrompt,
+     context: ...,
+     modelClass: ModelClass.SMALL,
+     operation: "game-interpreter",
+   });
+   ...
+ }
+```
+
+- [ ] **Step 3: Update `resolveState` signature**
+
+```diff
+ // src/engine/resolver/stateResolver.ts
+ export async function resolveState(
+   ctx: ResolverContext,
+-  runtime: any,
+ ): Promise<Record<string, any>> {
+   ...
+   const text = await generateText({
+-    runtime,
+     customSystemPrompt: prompt,
+     context: "",
+     modelClass: ModelClass.MEDIUM,
+     operation: "state-resolver",
+   });
+   ...
+ }
+```
+
+- [ ] **Step 4: Drop `ExecutionContext.runtime` field**
+
+```diff
+ // src/engine/types.ts
+ export interface ExecutionContext {
+   resolveSkillRoll: ...;
+   getScenePenalties: ...;
+   ...
+-  runtime?: any;
+   language?: string;
+   memoryManager?: NpcMemoryManager;
+   ...
+ }
+```
+
+```diff
+ // src/engine/executionContext.ts
+ export function createExecutionContext(opts?: {
+-  runtime?: any;
+   language?: string;
+   memoryManager?: NpcMemoryManager;
+ }): ExecutionContext {
+   return {
+     resolveSkillRoll,
+     ...
+-    runtime: opts?.runtime,
+     language: opts?.language,
+     memoryManager: opts?.memoryManager,
+   };
+ }
+```
+
+- [ ] **Step 5: Update `NPCPlanningAgent` to compile without `runtime`**
+
+The class itself is being deleted in F6, but it still has to compile between F1.5 and F6 (per the F4-F6 single-session note doesn't apply here — F1.5 ships independently).
+
+In `src/planning/NPCPlanningAgent.ts`:
+- Strip the `private runtime: any,` constructor parameter (and the field)
+- Strip `getRuntime()` method
+- For each of the 6 `await generateText({ runtime: this.runtime, ... })` calls, drop the `runtime: this.runtime` line
+
+The class still works — internally it just calls generateText without runtime, generator.ts uses env vars.
+
+- [ ] **Step 6: Update `SimulationRunner`**
+
+```diff
+   constructor(params: {
+     ...
+   }) {
+     ...
+-    this.ctx.runtime = this.npcPlanningAgent.getRuntime();
+     this.ctx.language = this.language;
+     ...
+   }
+
+   ...
+   interpretAction: async (input) => {
+     const result = await interpretAction(
+       input.actionText,
+       definitionList,
+-      this.ctx.runtime,
+       this.language,
+     );
+     ...
+   },
+
+   resolve: async (step, ctx) => {
+     ...
+     const resolution = await resolveState(
+       { action, definition, ..., language: this.language },
+-      this.ctx.runtime,
+     );
+     ...
+   },
+```
+
+- [ ] **Step 7: Update `client/server/simulation/service.ts`**
+
+```diff
+   const npcPlanningAgent = new NPCPlanningAgent(
+     params.prisma,
+-    {},
+     memoryManager,
+   );
+```
+
+(NPCPlanningAgent's constructor lost the runtime param in Step 5.)
+
+> **Verification deferred to F7.** F1.5 changes are pure API simplifications — no behavior change expected. TS will catch any missed call site immediately.
+
+---
+
+### Task F2: `RoleSimAgent` LLM implementation + tool dispatcher
+
+**Goal:** ship the actual LLM-driven agent that replaces `NpcAgentAdapter`. Implements the agent-loop model from Decisions 1, 17, 18, 21: each `decide(npcId)` opens a fresh Claude conversation, the LLM picks tools, the dispatcher executes them, instant tools loop back, tick-consuming tools terminate. Per-tool call caps from Decision 19 are enforced; cap-rejected tools surface an error to the LLM (Decision 19 option a); plain-text responses fall back to `continue` (Decision 20).
+
+This is the largest task in Phase F by LOC.
+
+**Files:**
+- Modify: `src/roleSim/agent.ts` — replace the Phase E stub union with the final 5-tool `RoleSimDecision` union (drop `wait`/`plan`; rename `wait` → `continue`; no separate `interrupt`); extend `RoleSimContext` with `reviseTriggers` (plural — per-tick batched, Decision 16) + `perception` fields
+- Create: `src/roleSim/llmAgent.ts` (~200 LOC) — concrete `LLMRoleSimAgent` class implementing `RoleSimAgent.decideNext`; runs the agent loop using existing `generateText` + `parseJsonResponse` (same pattern as `NPCPlanningAgent`); inline system prompt with embedded tool descriptions
+- Create: `src/roleSim/toolDispatcher.ts` (~180 LOC) — pure helper that takes a parsed `{tool, ...input}` object + executes it against `NpcMemoryManager` / `DynamicGameStateManager` / `TickEngine`; returns the result string for next LLM round; owns `TOOL_CAPS` + `TERMINAL_TOOLS` constants
+- Create: `src/roleSim/__tests__/toolDispatcher.test.ts` — covers tool-routing + cap enforcement + error surfacing (no LLM in tests, mocked tool inputs)
+- Modify: `src/roleSim/npcActionController.ts` — minor: rename `wait` → `continue` in the switch; constructor field stays `agent: RoleSimAgent` (accepts any implementation); F5 swaps the per-event subscriptions for `tickCompleted` + `reviseTriggers` plumbing
+
+> **No new model wrapper.** The new agent uses the existing `generateText({ customSystemPrompt, context, modelClass })` from `src/models/` (post-F1.5 — `runtime` parameter is gone). Tool selection is JSON-in-string (LLM emits `{ "tool": "...", ... }`, parsed by `parseJsonResponse`). Native Anthropic `tool_use` API not used in Phase F MVP — keeps the LLM call path identical to existing project conventions.
+
+**Per Decisions 1, 14, 17–21:**
+- Decision 1: agent-loop architecture
+- Decision 14: 5-tool list `act / continue / writeMemory / recallMemory / getMapSnapshot` (no separate `interrupt` — `act` absorbs cancellation; `wait` renamed to `continue`)
+- Decision 17: tick-consuming = terminal
+- Decision 18: fresh conversation per decide()
+- Decision 19: per-tool caps (recall=10, write=3, getMap=1) + cap error to LLM
+- Decision 20: plain text → continue + warning
+- Decision 21: writeMemory immediate visibility
+
+- [ ] **Step 1: Rewrite `RoleSimAgent` types**
+
+In `src/roleSim/agent.ts`, replace the Phase E stub with the full 5-tool union and updated context shape. **Engine handles never appear in agent-facing types** — the engine is the source of truth for in-flight state; controller queries it on demand instead of mirroring it:
+
+```ts
+import type { FeatureEvent, GameTime, CharacterAction } from "../engine/core/types.js";
+import type { DynamicNPCProfile } from "../state/types.js";
+import type { NpcMemoryType } from "../memory/types.js";
+
+export type RoleSimDecision =
+  | {
+      tool: "act";
+      input: { actionText: string; targetCharacterIds?: string[] };
+    }
+  | { tool: "continue"; reason?: string }
+  | {
+      tool: "writeMemory";
+      type: NpcMemoryType;
+      content?: string;
+      mapAdd?: {
+        sceneNames?: string[];
+        junctionNames?: string[];
+        roadNames?: string[];
+        revealHiddenConnection?: string;
+      };
+    }
+  | {
+      tool: "recallMemory";
+      query?: string;
+      types?: NpcMemoryType[];
+      gameDay?: number;
+      limit?: number;
+    }
+  | { tool: "getMapSnapshot" };
+
+export interface RoleSimContext {
+  npcId: string;
+  currentTime: GameTime;
+  npcProfile: DynamicNPCProfile;
+  currentScene: string;
+  /** In-flight action, if any. NO handle field — handle is engine-internal.
+   *  When agent decides `act` while currentAction is defined, the controller
+   *  queries the engine for the active handle and cancels it (Decision 14). */
+  currentAction?: { actionText: string };
+  recentMemory: ReadonlyArray<{
+    type: string;
+    content: string;
+    gameDay: number;
+    gameTime: string;
+  }>;
+  longTermIntent?: string;
+  /** Present iff this tick produced revise-relevant events affecting this NPC
+   *  (per impactPropagation). All triggers from one tick are batched here so
+   *  the agent makes a single combined-context decision rather than reacting
+   *  to each event in isolation. Absent when the tick had no revise events
+   *  for this NPC. Decision 16 (revised 2026-04-24). */
+  reviseTriggers?: ReadonlyArray<{
+    description: string;
+    sourceEvent?: FeatureEvent | CharacterAction;
+  }>;
+  /** Renderer-layer perception output (Decision 10). Empty during Phase F
+   *  (Decision 11 — renderer deferred). */
+  perception?: {
+    narrative: string;
+    perceivedFacts?: unknown[];
+  };
+}
+
+export interface RoleSimAgent {
+  decideNext(ctx: RoleSimContext): Promise<RoleSimDecision>;
+}
+```
+
+Design principle: **agent and controller speak in semantic terms (action text, intent, memory); engine handles stay inside the engine.** Controller queries `engine.getActorQueue(npcId)` whenever it needs to know "is this NPC busy?" or "what handle to cancel?" — no `activeHandles` mirror map.
+
+Notes:
+- `tool: "plan"` removed (Decision 4 — plan goes through `writeMemory({ type: "plan", ... })`).
+- `tool: "interrupt"` removed (Decision 14 — `act` absorbs cancellation when `currentAction` exists).
+- `tool: "wait"` renamed to `continue` (Decision 14).
+- `RoleSimDecision.act.input` is a slim shape — no `characterId` (controller adds it from npcId), no `sceneId` (controller adds it from DGSM), and no engine handle.
+
+- [ ] **Step 2: Define `TOOL_CAPS` + `TERMINAL_TOOLS` constants in `toolDispatcher.ts`**
+
+Tool "schemas" are not separate JSON files — they're embedded as descriptive text in the system prompt (Step 5). Only the runtime constants live in code:
+
+```ts
+// src/roleSim/toolDispatcher.ts (constants)
+
+/** Tools that consume a tick — calling one ends the agent loop. Decision 17. */
+export const TERMINAL_TOOLS = new Set(["act", "continue"]);
+
+/** Per-tool call budget within a single decide() call. Decision 19. */
+export const TOOL_CAPS: Record<string, number> = {
+  recallMemory: 10,
+  writeMemory: 3,
+  getMapSnapshot: 1,
+};
+
+/** Whitelist of valid tool names — used for LLM output validation. */
+export const VALID_TOOLS = new Set([
+  "act", "continue", "writeMemory", "recallMemory", "getMapSnapshot",
+]);
+```
+
+The user-facing tool catalog (with shapes, semantics, and JSON output format) is documented inline in the system prompt at Step 5. This is the same convention `NPCPlanningAgent` uses — instructions live in the prompt, parsing logic lives in `parseJsonResponse` + dispatch.
+
+- [ ] **Step 3: Implement `toolDispatcher.ts`** (instant tools only)
+
+The dispatcher executes only the **instant tools** (`writeMemory` / `recallMemory` / `getMapSnapshot`) — those touch memory and DGSM but never the engine. **Terminal tools** (`act` / `continue`) do not flow through the dispatcher; the agent loop returns them straight to the controller, which makes the engine call directly. This keeps engine handles strictly inside engine + controller.
+
+```ts
+// src/roleSim/toolDispatcher.ts
+export interface DispatcherDeps {
+  memory: NpcMemoryManager;
+  dgsm: DynamicGameStateManager;
+  npcId: string;
+  sessionId: string;
+  moduleId: string;
+  gameDay: number;
+  gameTime: string;
+}
+
+export interface DispatchResult {
+  /** Result string fed back to the LLM as the tool_result content. */
+  result: string;
+}
+
+export async function dispatchInstantTool(
+  toolName: string,
+  input: unknown,
+  caps: Record<string, number>,        // remaining call budget per tool
+  deps: DispatcherDeps,
+): Promise<DispatchResult> {
+  // 1. Cap check (Decision 19 option a):
+  if (caps[toolName] !== undefined && caps[toolName] <= 0) {
+    return {
+      result: `Error: tool "${toolName}" has been used the maximum allowed times in this decision. Try a different tool or commit with act/continue.`,
+    };
+  }
+  if (caps[toolName] !== undefined) caps[toolName] -= 1;
+
+  // 2. Route by tool name (instant tools only — Decision 14 + handle-isolation):
+  switch (toolName) {
+    case "writeMemory":      return await dispatchWriteMemory(input as WriteMemoryInput, deps);
+    case "recallMemory":     return await dispatchRecallMemory(input as RecallMemoryInput, deps);
+    case "getMapSnapshot":   return dispatchGetMapSnapshot(deps);
+    default:                 return { result: `Unknown instant tool: ${toolName}` };
+  }
+}
+
+// dispatchWriteMemory / dispatchRecallMemory / dispatchGetMapSnapshot:
+//  - call memory.add / memory.query / read map snapshot
+//  - return result string with success info or fetched data
+```
+
+`act` and `continue` (terminal tools) are **not** in the dispatcher — they're returned by the agent loop as `RoleSimDecision` and handled by the controller's switch in F5 Step 5 (which is where engine submission/cancellation lives).
+
+The `mapAdd` branch of `writeMemory` does name → ID mapping internally (Decision 6 implementation detail) — for Phase F MVP, take a best-effort approach: case-insensitive match on scene/junction/road `name` fields in DGSM; on no match log warning + still write the memory entry with the raw name in content (so it's at least preserved as a textual note).
+
+- [ ] **Step 4: Implement `LLMRoleSimAgent.decideNext`**
+
+Uses the existing `generateText` + `parseJsonResponse` pattern (same as `NPCPlanningAgent`'s LLM calls). No new model wrapper. Engine is **not** a dependency — handle-related work happens in the controller.
+
+```ts
+// src/roleSim/llmAgent.ts
+import { ModelClass, generateText } from "../models/index.js";
+import { parseJsonResponse } from "../shared/jsonParse.js";
+import { dispatchInstantTool, TOOL_CAPS, TERMINAL_TOOLS, VALID_TOOLS } from "./toolDispatcher.js";
+import type { RoleSimAgent, RoleSimContext, RoleSimDecision } from "./agent.js";
+
+const MAX_TOTAL_ITERATIONS = 14; // sum of TOOL_CAPS + a few terminal-call attempts
+
+export class LLMRoleSimAgent implements RoleSimAgent {
+  constructor(
+    private deps: {
+      memory: NpcMemoryManager;
+      dgsm: DynamicGameStateManager;
+      sessionId: string;
+      moduleId: string;
+      language: string;
+    },
+  ) {}
+
+  async decideNext(ctx: RoleSimContext): Promise<RoleSimDecision> {
+    const caps = { ...TOOL_CAPS };
+    const dispatcherDeps = this.buildDispatcherDeps(ctx);
+    const transcript: string[] = [];   // accumulated tool calls + results across iterations
+
+    for (let i = 0; i < MAX_TOTAL_ITERATIONS; i++) {
+      const userPrompt = this.buildUserPrompt(ctx, transcript);
+
+      const responseText = await generateText({
+        customSystemPrompt: PHASE_F_PLACEHOLDER_SYSTEM_PROMPT,
+        context: userPrompt,
+        modelClass: ModelClass.MEDIUM,
+      });
+
+      let parsed: { tool: string; [k: string]: unknown };
+      try {
+        parsed = parseJsonResponse<{ tool: string; [k: string]: unknown }>(responseText);
+      } catch {
+        // LLM returned plain text without parseable JSON — implicit continue (Decision 20)
+        console.warn(`[LLMRoleSimAgent] ${ctx.npcId} returned non-JSON — falling back to continue`);
+        return { tool: "continue", reason: "implicit (no JSON tool call)" };
+      }
+
+      if (!parsed.tool || !VALID_TOOLS.has(parsed.tool)) {
+        // LLM made up a tool name — error feedback, loop continues
+        transcript.push(this.formatToolError(parsed.tool, "Unknown tool name."));
+        continue;
+      }
+
+      // Terminal tools (act / continue) — return the decision; controller does the engine call.
+      if (TERMINAL_TOOLS.has(parsed.tool)) {
+        return this.buildTerminalDecision(parsed);
+      }
+
+      // Instant tools (writeMemory / recallMemory / getMapSnapshot) — execute via dispatcher, loop continues.
+      const dispatched = await dispatchInstantTool(parsed.tool, parsed, caps, dispatcherDeps);
+      transcript.push(this.formatToolCall(parsed));
+      transcript.push(this.formatToolResult(dispatched.result));
+    }
+
+    console.warn(`[LLMRoleSimAgent] ${ctx.npcId} hit MAX_TOTAL_ITERATIONS without terminating — forcing continue`);
+    return { tool: "continue", reason: "iteration cap (forced)" };
+  }
+
+  /** Convert LLM-emitted JSON into a typed RoleSimDecision for the controller. */
+  private buildTerminalDecision(parsed: { tool: string; [k: string]: unknown }): RoleSimDecision {
+    if (parsed.tool === "act") {
+      const actionText = String(parsed.actionText ?? "");
+      const targetCharacterIds = Array.isArray(parsed.targetCharacterIds)
+        ? (parsed.targetCharacterIds as string[])
+        : undefined;
+      return { tool: "act", input: { actionText, targetCharacterIds } };
+    }
+    return { tool: "continue", reason: typeof parsed.reason === "string" ? parsed.reason : undefined };
+  }
+
+  /** Initial ctx + accumulated transcript so far. Phase F MVP placeholder; F1 brainstorm refines. */
+  private buildUserPrompt(ctx: RoleSimContext, transcript: string[]): string {
+    const lines: string[] = [];
+    lines.push(`# You are ${ctx.npcProfile.name}`);
+    lines.push(`Time: Day ${ctx.currentTime.day}, ${ctx.currentTime.tickTime}`);
+    lines.push(`Current scene: ${ctx.currentScene}`);
+    if (ctx.longTermIntent) {
+      lines.push(`\n## Your long-term intent\n${ctx.longTermIntent}`);
+    }
+    if (ctx.currentAction) {
+      lines.push(`\n## Currently doing\n"${ctx.currentAction.actionText}"`);
+    }
+    if (ctx.reviseTriggers && ctx.reviseTriggers.length > 0) {
+      lines.push(`\n## Things that just happened around you (this tick)`);
+      for (const t of ctx.reviseTriggers) {
+        lines.push(`- ${t.description}`);
+      }
+    }
+    if (ctx.perception?.narrative) {
+      lines.push(`\n## What you perceive\n${ctx.perception.narrative}`);
+    }
+    if (ctx.recentMemory.length > 0) {
+      lines.push(`\n## Recent memories`);
+      for (const m of ctx.recentMemory) {
+        lines.push(`- [${m.gameTime}] (${m.type}) ${m.content}`);
+      }
+    }
+    if (transcript.length > 0) {
+      lines.push(`\n## Tool calls so far this decision\n${transcript.join("\n")}`);
+    }
+    lines.push(`\n## Decide your next action using the tools described in the system prompt. Output a single JSON object.`);
+    return lines.join("\n");
+  }
+
+  private formatToolCall(parsed: { tool: string; [k: string]: unknown }): string {
+    return `→ Called: ${JSON.stringify(parsed)}`;
+  }
+  private formatToolResult(result: string): string {
+    return `← Result: ${result}`;
+  }
+  private formatToolError(toolName: unknown, msg: string): string {
+    return `← Error for "${String(toolName)}": ${msg}`;
+  }
+
+  private buildDispatcherDeps(ctx: RoleSimContext): DispatcherDeps {
+    return {
+      memory: this.deps.memory,
+      dgsm: this.deps.dgsm,
+      npcId: ctx.npcId,
+      sessionId: this.deps.sessionId,
+      moduleId: this.deps.moduleId,
+      gameDay: ctx.currentTime.day,
+      gameTime: ctx.currentTime.tickTime,
+    };
+  }
+}
+```
+
+The transcript-string approach (vs. native Anthropic message history) is intentional — same pattern as the rest of the project. Each iteration sends the **full** ctx + transcript-so-far as one user prompt; LLM doesn't need conversation history because we re-render everything. Slightly more tokens per call but mechanically simpler.
+
+- [ ] **Step 5: Placeholder system prompt**
+
+```ts
+// src/roleSim/llmAgent.ts (constant)
+const PHASE_F_PLACEHOLDER_SYSTEM_PROMPT = `
+You are an NPC in a Call of Cthulhu tabletop RPG simulation. Each turn you receive your current
+context (your profile, time of day, long-term intent, recent memories, current action if any,
+and possibly a notification of something that just happened around you) and must choose what to
+do next using the provided tools.
+
+Tools that consume a tick (terminate this decision — you must end with exactly one):
+- act(actionText, targetCharacterIds?): take a physical action in the world (move, examine, talk,
+  attack, etc.). If you currently have an in-flight action, calling act will CANCEL it and start
+  the new one — use this when something happens that makes you want to switch focus.
+- continue(reason?): do nothing new; if you have an in-flight action let it keep running, otherwise
+  let time pass.
+
+Tools that don't consume a tick (loop continues, you can chain multiple before terminating):
+- writeMemory(type, content | mapAdd): record a thought/plan/belief/secret/etc. to your memory.
+- recallMemory(query?, types?, limit?): query your past memories.
+- getMapSnapshot(): view your known map of places.
+
+You must end every decision by calling exactly one of: act, continue.
+`.trim();
+```
+
+- [ ] **Step 6: Tool dispatcher tests** (instant tools only)
+
+`src/roleSim/__tests__/toolDispatcher.test.ts` covers the instant tools the dispatcher actually owns:
+
+- `writeMemory({type:"plan", content:"..."})` calls `memory.add` with correct args; returns confirmation string
+- `writeMemory({type:"belief", content:"..."})` ditto
+- `writeMemory({type:"long_term_intent", content:"..."})` ditto
+- `writeMemory({type:"map", mapAdd:{sceneNames:["library"]}})` resolves "library" via DGSM scene-name match → calls memory.add with structured map update
+- `writeMemory({type:"map", mapAdd:{sceneNames:["nonexistent"]}})` logs warning + still writes a textual map memory
+- `recallMemory({query:"smith", limit:5})` calls `memory.query` with correct args; formats results
+- `recallMemory()` (no query) returns chronological listing
+- `getMapSnapshot()` returns the merged KnownMapSnapshot
+- Cap enforcement: 11th `recallMemory` call returns cap-exceeded error result string
+- Unknown tool name returns error result string
+
+Use mocked DGSM / memory manager. No LLM in tests. **No `act` / `continue` tests here** — those terminal tools don't go through the dispatcher; they're tested via the controller (F5 Step 6).
+
+- [ ] **Step 7: Wire `LLMRoleSimAgent` into `NpcActionController`**
+
+Update `npcActionController.ts` constructor signature so it accepts any `RoleSimAgent` (interface unchanged from F2 Step 1). Phase E's `NpcAgentAdapter` and the new `LLMRoleSimAgent` both satisfy it; F4 swaps in the LLM agent.
+
+The controller's switch over `RoleSimDecision` is a 2-arm switch (only terminal tools reach here; instant tools were already executed inside the agent loop). **Engine cancellation + submission both happen here** — the dispatcher does not call the engine, so this is the single source of truth for engine writes:
+
+```ts
+switch (decision.tool) {
+  case "act": {
+    // Decision 14: if NPC has an in-flight action, cancel it before submitting the new one.
+    // Engine is the source of truth for in-flight state — query it, do not mirror.
+    const queue = this.engine.getActorQueue(npcId);
+    const live = queue.find((s) => s.status === "active" || s.status === "queued");
+    if (live) this.engine.cancelAction(live.handle);
+
+    await this.engine.submitAction({
+      characterId: npcId,
+      actionText: decision.input.actionText,
+      targetCharacterIds: decision.input.targetCharacterIds,
+      sceneId: this.resolveCurrentSceneId(npcId),
+    });
+    return;
+  }
+  case "continue":
+    return;
+  // writeMemory / recallMemory / getMapSnapshot are instant tools — they
+  // were dispatched inside agent.decideNext() and never reach here.
+}
+```
+
+`resolveCurrentSceneId(npcId)` is a tiny helper that calls `dgsm.resolveLocationId(dgsm.getCharacterPosition(npcId))`.
+
+**Phase E `activeHandles` map is removed.** It mirrored what the engine already knows. Replacing it everywhere:
+- "Is this NPC busy?" → `engine.getActorQueue(npcId).some(s => s.status === "active" || s.status === "queued")`
+- "What's this NPC doing?" → `engine.getActorQueue(npcId).find(s => s.status === "active")?.actionText`
+
+F4 / F5 use the same query pattern.
+
+> **Verification deferred to F7.**
+
+---
+
+### Task F3: `seedNpcLongTermIntents` + `dailySummarization` standalone modules
+
+**Goal:** lift the two surviving NPCPlanningAgent helpers into self-contained modules under `src/roleSim/`. Both are system-driven (not agent-driven) — Phase F treats them as "background processes" that produce memory entries via `NpcMemoryManager.add(...)`. After this task, `NPCPlanningAgent.seedLongTermIntents` and `NPCPlanningAgent.onNewDay` (the summarization half) have replacement homes.
+
+**Files:**
+- Create: `src/roleSim/seedIntents.ts` (~40 LOC) — single function `seedNpcLongTermIntents(...)`
+- Create: `src/roleSim/dailySummarization.ts` (~250 LOC) — `summarizeAllNpcDayMemory(...)` + `summarizeDayMemory(...)` + slim summary-only prompt builder + ISO date helpers
+- Create: `src/roleSim/__tests__/seedIntents.test.ts` — verifies one-memory-per-NPC + skip-when-no-intent
+- Create: `src/roleSim/__tests__/dailySummarization.test.ts` — verifies date prefix, only-summary output, mocked LLM
+- Modify: nothing else in F3 (wiring happens in F4)
+
+**Per Decisions 22, 25:**
+- Decision 22: seedIntents helper (system writes initial long_term_intent memory at module load)
+- Decision 25: slim summarization (summary-only, ISO `[YYYY-MM-DD]` prefix, fall back to `[Day N]`)
+
+- [ ] **Step 1: `seedNpcLongTermIntents`**
+
+```ts
+// src/roleSim/seedIntents.ts
+import type { NpcMemoryManager } from "../memory/NpcMemoryManager.js";
+import type { DynamicNPCProfile } from "../state/types.js";
+
+/**
+ * Module-load helper: write each NPC's module-defined `longTermIntent` as a
+ * `long_term_intent` memory entry. Called once per session bootstrap.
+ *
+ * Per Decision 22 (Phase F brainstorm 2026-04-24): module-author intents are
+ * narrative design and must be preserved verbatim into NpcMemory; agent can
+ * later self-revise via writeMemory.
+ */
+export async function seedNpcLongTermIntents(params: {
+  npcs: DynamicNPCProfile[];
+  sessionId: string;
+  moduleId: string;
+  memoryManager: NpcMemoryManager;
+  gameDay: number;
+  gameTime: string;
+}): Promise<void> {
+  let seeded = 0;
+  for (const npc of params.npcs) {
+    if (!npc.longTermIntent) continue;
+    await params.memoryManager.add({
+      npcId: npc.id,
+      sessionId: params.sessionId,
+      moduleId: params.moduleId,
+      type: "long_term_intent",
+      content: npc.longTermIntent,
+      gameDay: params.gameDay,
+      gameTime: params.gameTime,
+    });
+    seeded += 1;
+  }
+  console.log(
+    `[seedNpcLongTermIntents] seeded ${seeded} long-term intent(s) ` +
+    `(${params.npcs.length - seeded} npcs had no module-defined intent)`,
+  );
+}
+```
+
+The console log is part of the contract — F7 Step 4 looks for `[seedNpcLongTermIntents]` in the boot logs to confirm the seeding ran.
+
+- [ ] **Step 2: `dailySummarization` — date helper + prompt + driver**
+
+`src/roleSim/dailySummarization.ts` lifts the legacy `summarizeAllNpcDayMemory` + `summarizeDayMemory` from `NPCPlanningAgent.ts`, applies the Decision 25 simplifications:
+
+```ts
+// src/roleSim/dailySummarization.ts
+import type { NpcMemoryManager } from "../memory/NpcMemoryManager.js";
+import type { DynamicGameStateManager } from "../state/DynamicGameState.js";
+import { ModelClass, generateText } from "../models/index.js";
+import { parseJsonResponse } from "../shared/jsonParse.js";
+// Inline self-contained formatters (do not import from src/planning/) — F6 deletes that directory's planning code.
+
+/**
+ * Resolve in-world calendar date for a given gameDay.
+ * Returns "[YYYY-MM-DD]" when ModuleSetup.startDate is a valid ISO 8601 date,
+ * "[Day N]" otherwise. Invalid input is logged + falls back gracefully (does
+ * not throw — failed dating must not crash the nightly summarization batch).
+ *
+ * Exported so other system writers (e.g., SimulationRunner's death-memory
+ * write in F4) can produce identically-formatted date prefixes without
+ * duplicating the validation + fallback logic.
+ */
+export function formatDayPrefix(gameDay: number, startDate?: string): string {
+  if (!startDate) {
+    console.warn(
+      `[dailySummarization] ModuleSetup.startDate not set; falling back to "[Day ${gameDay}]" prefix. ` +
+      `Add a startDate field to enable ISO calendar dating.`,
+    );
+    return `[Day ${gameDay}]`;
+  }
+  const start = new Date(startDate);
+  if (Number.isNaN(start.getTime())) {
+    console.warn(
+      `[dailySummarization] startDate "${startDate}" is not a valid ISO 8601 date ` +
+      `(expected YYYY-MM-DD); falling back to "[Day ${gameDay}]"`,
+    );
+    return `[Day ${gameDay}]`;
+  }
+  const result = new Date(start);
+  result.setUTCDate(result.getUTCDate() + (gameDay - 1));
+  return `[${result.toISOString().slice(0, 10)}]`;
+}
+
+interface SummaryItem { content: string; importance: number }
+
+function buildSummaryPrompt(params: {
+  npcName: string;
+  npcProfile: string;       // simple inline format
+  gameDay: number;
+  dayPrefix: string;        // "[1923-10-17]" or "[Day 3]"
+  eventLog: string;
+  language: string;
+}): { systemPrompt: string; userPrompt: string } {
+  const lang = params.language?.startsWith("zh") ? "Chinese" : "English";
+
+  const systemPrompt = `You are an NPC reflecting on the day at bedtime. Write 1-4 short
+diary-style memories in first person summarizing today's significant events and
+your reactions to them. Each memory must start with "${params.dayPrefix} " so
+future-you can date it. Drop routine actions; focus on important events,
+relationship changes, emotional moments. Each memory is 2-3 sentences.
+
+importance: 1=minor, 2=routine, 3=significant, 4=major turning point, 5=critical.
+
+Return JSON only. Write content in ${lang}.
+
+\`\`\`json
+{
+  "memories": [
+    { "content": "${params.dayPrefix} ...", "importance": 3 }
+  ]
+}
+\`\`\``;
+
+  const userPrompt = `## You are ${params.npcName}
+${params.npcProfile}
+
+## Today's Events (Day ${params.gameDay})
+${params.eventLog}`;
+
+  return { systemPrompt, userPrompt };
+}
+
+export async function summarizeDayMemory(params: {
+  dgsm: DynamicGameStateManager;
+  memoryManager: NpcMemoryManager;
+  sessionId: string;
+  moduleId: string;
+  npcId: string;
+  gameDay: number;
+  language: string;
+  startDate?: string;
+}): Promise<void> {
+  if (!params.dgsm.isNpcAlive(params.npcId)) return;
+
+  const events = await params.memoryManager.getForDayByTypes(
+    params.npcId, params.sessionId, params.gameDay, ["event", "witness"],
+  );
+  if (events.length === 0) return;
+
+  const npc = params.dgsm.getState().npcCharacters.find((n) => n.id === params.npcId);
+  if (!npc) return;
+
+  const dayPrefix = formatDayPrefix(params.gameDay, params.startDate);
+  const eventLog = events.map((e) => `- [${e.gameTime}] (${e.type}) ${e.content}`).join("\n");
+
+  // Phase F MVP: minimal profile rendering. F1 prompt brainstorm refines this
+  // to include full background / personality / skills.
+  const profileBits = [npc.name];
+  if (npc.occupation) profileBits.push(npc.occupation);
+  if (npc.age != null) profileBits.push(`age ${npc.age}`);
+
+  const { systemPrompt, userPrompt } = buildSummaryPrompt({
+    npcName: npc.name,
+    npcProfile: profileBits.join(", "),
+    gameDay: params.gameDay,
+    dayPrefix,
+    eventLog,
+    language: params.language,
+  });
+
+  console.log(`[dailySummarization] 📝 Day ${params.gameDay} for ${npc.name}`);
+  const response = await generateText({
+    customSystemPrompt: systemPrompt,
+    context: userPrompt,
+    modelClass: ModelClass.MEDIUM,
+  });
+
+  // LLM occasionally returns malformed JSON. Skip this NPC's summary on parse
+  // failure rather than crashing the whole nightly batch (running in
+  // Promise.all in summarizeAllNpcDayMemory below).
+  let parsed: { memories: SummaryItem[] };
+  try {
+    parsed = parseJsonResponse<{ memories: SummaryItem[] }>(response);
+  } catch (err) {
+    console.warn(
+      `[dailySummarization] ${npc.name}: JSON parse failed, skipping summary:`,
+      err instanceof Error ? err.message : err,
+    );
+    return;
+  }
+
+  await Promise.all(
+    parsed.memories.map((m) =>
+      params.memoryManager.add({
+        npcId: params.npcId,
+        sessionId: params.sessionId,
+        moduleId: params.moduleId,
+        type: "summary",
+        content: m.content,
+        gameDay: params.gameDay,
+        gameTime: "23:59",
+        metadata: { importance: m.importance },
+      }),
+    ),
+  );
+}
+
+export async function summarizeAllNpcDayMemory(params: {
+  dgsm: DynamicGameStateManager;
+  memoryManager: NpcMemoryManager;
+  sessionId: string;
+  moduleId: string;
+  gameDay: number;
+  language: string;
+}): Promise<void> {
+  const startDate = params.dgsm.getState().moduleSetup?.startDate;
+  const npcs = params.dgsm.getSimulatedNpcs();
+  // TODO(post-Phase-F): rate-limit when npcs.length is large. Promise.all
+  // fires N concurrent LLM calls — risk of hitting Anthropic RPM limits on
+  // sessions with many NPCs. Acceptable for MVP (matches legacy behavior in
+  // NPCPlanningAgent.summarizeAllNpcDayMemory). Per-NPC failures are
+  // already isolated by summarizeDayMemory's try/catch.
+  await Promise.all(
+    npcs.map((npc) =>
+      summarizeDayMemory({
+        ...params,
+        npcId: npc.id,
+        startDate,
+      }),
+    ),
+  );
+}
+```
+
+Note: prompt formatter uses an inline NPC-profile renderer rather than importing from `src/planning/`. F6 deletes the whole legacy `src/planning/` non-essential surface; this module must not depend on anything that's about to be removed.
+
+- [ ] **Step 3: Tests**
+
+Both tests use mocked `NpcMemoryManager` + LLM call to verify outputs without real LLM:
+
+```ts
+// src/roleSim/__tests__/seedIntents.test.ts
+// - Skips NPCs with empty longTermIntent
+// - Writes one memory per NPC with non-empty intent
+// - Memory has type: "long_term_intent" + correct content/sessionId/moduleId
+
+// src/roleSim/__tests__/dailySummarization.test.ts
+// - When startDate set: prefix is "[1923-10-17]"
+// - When startDate omitted: prefix is "[Day 3]" + warning logged
+// - Skips NPCs without event memories that day
+// - Skips dead NPCs
+// - Writes only summary type (no information/belief writes — verify mock not called for those)
+// - LLM called exactly once per alive NPC with day-events
+```
+
+> **Verification deferred to F7.**
+
+---
+
+### Task F4: `SimulationRunner` integration changes
+
+**Goal:** rewire `SimulationRunner` to consume the new agent + standalone helpers from F2/F3 and to drop the legacy code paths the brainstorm killed. Removes `modifiedCharacterIds`-based revise gate, `npcPlanningAgent.onNewDay` call, schedule generation, and `interruptOpenNodesForDeath`. Adds direct `memoryManager` usage, `tickEngine.getActorQueue` queries, and `summarizeAllNpcDayMemory` invocation.
+
+> **⚠️ F4 + F5 + F6 must be implemented as a single continuous work session — do not commit between them.**
+>
+> Between any two of these tasks the codebase does not compile cleanly:
+> - F4 + F5 introduce calls to `LLMRoleSimAgent` and the new revise-event plumbing, but `NPCPlanningAgent` + `NpcAgentAdapter` are still imported/constructed (they're only deleted in F6)
+> - F1.5 dropped `runtime` from the LLM call chain — `npcPlanningAgent.getRuntime()` no longer exists. F4 already passes no runtime arg to `interpretAction` / `resolveState`. Mention here is just for context; this dependency is already gone.
+> - The Phase E controller signature still has `planningAgent` until F6 Step 9 strips it
+>
+> F7 is the **single Phase F commit boundary**. If you must pause mid-implementation, leave the working tree dirty rather than committing a half-state.
+
+**Files:**
+- Modify: `src/simulation/SimulationRunner.ts` (substantial — multiple methods)
+- Modify: `src/simulation/characterInjection.ts` — drop `upsertIntent` helper (or keep as a thin shim to memory-write only; cleaner to inline at call site and delete the helper)
+- Modify: `client/server/simulation/service.ts` — `buildSimulationBundle` now constructs `LLMRoleSimAgent` instead of `NpcAgentAdapter`; pass it into the controller
+
+**Per Decisions 23, 24, 25, 26, 28:**
+- Decision 23: injectCharacter simplification
+- Decision 24: getCurrentNpcActions reimplementation
+- Decision 25: dailySummarization wiring on day_transition
+- Decision 26: death handling (cancel + memory)
+- Decision 28: hard-cutover to LLM agent (no feature flag)
+
+- [ ] **Step 1: `getCurrentNpcActions` — reimplement via engine**
+
+Replace the `npcPlanningAgent.getCurrentNpcActions(...)` delegation with a direct engine query:
+
+```ts
+async getCurrentNpcActions(): Promise<Record<string, string | null>> {
+  const result: Record<string, string | null> = {};
+  for (const npc of this.dgsm.getState().npcCharacters) {
+    if (!this.dgsm.isNpcAlive(npc.id)) {
+      result[npc.id] = null;
+      continue;
+    }
+    const queue = this.tickEngine?.getActorQueue(npc.id) ?? [];
+    const active = queue.find((s) => s.status === "active");
+    result[npc.id] = active?.actionText ?? null;
+  }
+  return result;
+}
+```
+
+Note: `this.tickEngine` is constructed lazily in `ensureTickEngine` (Phase E pattern). Until first tick this method may return all-null — acceptable since UI won't display actions for not-yet-started simulations.
+
+- [ ] **Step 2: `checkDerivedEvents` — replace `interruptOpenNodesForDeath` with engine cancel + death memory**
+
+```ts
+import { formatDayPrefix } from "../roleSim/dailySummarization.js";
+
+private async checkDerivedEvents(): Promise<void> {
+  const gameState = this.dgsm.getState();
+
+  for (const npc of gameState.npcCharacters) {
+    if (this.deadNpcIds.has(npc.id)) continue;
+    if (this.dgsm.isNpcAlive(npc.id)) continue;
+
+    this.deadNpcIds.add(npc.id);
+
+    // (1) cancel in-flight engine action(s) for this NPC
+    if (this.tickEngine) {
+      const queue = this.tickEngine.getActorQueue(npc.id);
+      const live = queue.find((s) => s.status === "active" || s.status === "queued");
+      if (live) this.tickEngine.cancelAction(live.handle);
+    }
+
+    // (2) write death event memory (Decision 26)
+    // Use scene/junction/road *name* in the memory text so it reads naturally
+    // ("the manor cellar" not "scene_blackwood_cellar"). UI event below keeps
+    // the *ID* in its `location` field for backward compatibility with frontend
+    // consumers.
+    const position = gameState.characterPositions[npc.id];
+    const locationId = position ? this.dgsm.resolveLocationId(position) : "unknown";
+    const locationName = (locationId !== "unknown")
+      ? (this.dgsm.getScene(locationId)?.name ?? locationId)
+      : "unknown";
+    const dayPrefix = formatDayPrefix(gameState.gameDay, gameState.moduleSetup?.startDate);
+    if (this.memoryManager) {
+      await this.memoryManager.add({
+        npcId: npc.id,
+        sessionId: this.sessionId,
+        moduleId: this.config.moduleId,
+        type: "event",
+        content: `${dayPrefix} Died at ${gameState.timeOfDay} in ${locationName}`,
+        gameDay: gameState.gameDay,
+        gameTime: gameState.timeOfDay,
+      });
+    }
+
+    // (3) emit npc_death UI event — keep `location` as ID (existing API contract)
+    this.events.emitSimulationEvent("npc_death", npc.id, locationId, gameState.gameDay, gameState.timeOfDay, {
+      npcName: npc.name,
+      hp: gameState.npcStats[npc.id]?.hp ?? npc.status.hp ?? 0,
+    });
+  }
+}
+```
+
+Date prefix uses the same `formatDayPrefix` helper F3 exports — death-memory dating and daily-summary dating share validation, fallback, and warning behavior. No duplicated date logic.
+
+- [ ] **Step 3: Day-transition handling — call `summarizeAllNpcDayMemory`, drop `onNewDay`**
+
+In `executeTick`, replace:
+
+```diff
+       if (this.dgsm.getGameDay() !== dayBefore) {
+         const stateAfter = this.dgsm.getState();
+         this.events.emitSimulationEvent(...day_transition...);
+
+-        await this.npcPlanningAgent.onNewDay(
+-          this.dgsm,
+-          this.sessionId,
+-          this.config.moduleId,
+-          stateAfter.gameDay,
+-          this.language,
+-          this.definitions,
+-        );
++        // Daily summarization (Decision 25) — system writes [date]-prefixed
++        // summary memories for every alive NPC. Schedule generation (the
++        // legacy second half of onNewDay) is deleted with the planner.
++        if (this.memoryManager) {
++          await summarizeAllNpcDayMemory({
++            dgsm: this.dgsm,
++            memoryManager: this.memoryManager,
++            sessionId: this.sessionId,
++            moduleId: this.config.moduleId,
++            gameDay: dayBefore,                // summarize the day that JUST ended
++            language: this.language,
++          });
++        }
+       }
+```
+
+Note: `dayBefore` (not `stateAfter.gameDay`) is passed because we're summarizing the day that just ended. No `runtime` parameter — F1.5 dropped the `runtime` field from `summarizeAllNpcDayMemory`'s signature; `generateText` reads provider from env directly.
+
+- [ ] **Step 4: `injectCharacter` — simplify**
+
+```ts
+async injectCharacter(profile: DynamicNPCProfile, intent: string): Promise<void> {
+  if (this.state !== "paused") {
+    throw new Error(`Cannot inject character while simulation is ${this.state}. Pause first.`);
+  }
+
+  const entrySceneId = profile.residence
+    ? resolveEntryScene(this.dgsm, profile.residence)
+    : null;
+  if (!entrySceneId) {
+    throw new Error(`Cannot resolve entry scene for residence "${profile.residence}". Check scenarioOutlines.`);
+  }
+
+  injectCharacterIntoState(this.dgsm, profile, entrySceneId);
+
+  // Decision 23: write long_term_intent memory directly. No more upsertIntent
+  // (NpcLongTermIntent table is gone). No more generateSingleNpcSchedule (no
+  // schedule concept). Newly injected NPC's first decide() happens via
+  // executeTick's per-tick poll on next resume.
+  const gameState = this.dgsm.getState();
+  if (this.memoryManager) {
+    await this.memoryManager.add({
+      npcId: profile.id,
+      sessionId: this.sessionId,
+      moduleId: this.config.moduleId,
+      type: "long_term_intent",
+      content: intent,
+      gameDay: gameState.gameDay,
+      gameTime: gameState.timeOfDay,
+    });
+  }
+
+  await this.saveRuntime();
+}
+```
+
+Drops: `upsertIntent(...)` call; `generateSingleNpcSchedule(...)` call.
+
+- [ ] **Step 5: `updateIntent` — strip path A revise trigger**
+
+```ts
+async updateIntent(characterId: string, intent: string): Promise<void> {
+  if (this.state !== "paused") {
+    throw new Error(`Cannot update intent while simulation is ${this.state}. Pause first.`);
+  }
+
+  const gameState = this.dgsm.getState();
+  const npc = gameState.npcCharacters.find((n) => n.id === characterId);
+  if (!npc) {
+    throw new Error(`Character "${characterId}" not found in game state.`);
+  }
+
+  // Decision 13: path A (player edit triggers reviseSchedule) is deleted.
+  // Player edits become pure memory writes; agent picks up the new intent
+  // on next natural decide() call.
+  if (this.memoryManager) {
+    await this.memoryManager.add({
+      npcId: characterId,
+      sessionId: this.sessionId,
+      moduleId: this.config.moduleId,
+      type: "long_term_intent",
+      content: intent,
+      gameDay: gameState.gameDay,
+      gameTime: gameState.timeOfDay,
+    });
+  }
+
+  // No more this.modifiedCharacterIds.add(characterId)
+  await this.saveRuntime();
+}
+```
+
+- [ ] **Step 6: Drop `modifiedCharacterIds` field + the `resume`/`step` revise loops**
+
+```diff
+   private readonly deadNpcIds: Set<string> = new Set();
+-  private readonly modifiedCharacterIds: Set<string> = new Set();
+
+   async resume(): Promise<void> {
+     if (this.state !== "paused") return;
+-
+-    if (this.modifiedCharacterIds.size > 0) {
+-      for (const charId of this.modifiedCharacterIds) {
+-        if (!this.dgsm.isNpcAlive(charId)) continue;
+-        await this.npcPlanningAgent.reviseSchedule(...);
+-      }
+-      this.modifiedCharacterIds.clear();
+-    }
+-
+     return this.start();
+   }
+
+   async step(ticks = 1): Promise<void> {
+     if (this.state !== "paused") return;
+-
+-    if (this.modifiedCharacterIds.size > 0) {
+-      for (const charId of this.modifiedCharacterIds) {
+-        if (!this.dgsm.isNpcAlive(charId)) continue;
+-        await this.npcPlanningAgent.reviseSchedule(...);
+-      }
+-      this.modifiedCharacterIds.clear();
+-    }
+-
+     for (let i = 0; i < ticks; i++) { ... }
+   }
+```
+
+- [ ] **Step 7: Construct `LLMRoleSimAgent` instead of `NpcAgentAdapter`**
+
+In `ensureTickEngine()` (or wherever the controller is constructed):
+
+```diff
+-  const adapter = new NpcAgentAdapter(
+-    this.npcPlanningAgent,
+-    this.dgsm,
+-    this.definitions,
+-    this.sessionId,
+-    this.language,
+-  );
++  // LLMRoleSimAgent has NO engine dep (handle/queue is engine-internal) and
++  // NO runtime dep (F1.5 dropped runtime from the LLM call chain).
++  const agent = new LLMRoleSimAgent({
++    memory: this.memoryManager as NpcMemoryManager,
++    dgsm: this.dgsm,
++    sessionId: this.sessionId,
++    moduleId: this.config.moduleId,
++    language: this.language,
++  });
+   const controller = new NpcActionController({
+     engine,
+-    agent: adapter,
++    agent,
+     memory: this.memoryManager as NpcMemoryManager,
+     dgsm: this.dgsm,
+-    planningAgent: this.npcPlanningAgent,
+     sessionId: this.sessionId,
+     moduleId: this.config.moduleId,
+   });
+```
+
+The controller's `planningAgent` constructor field is dropped here — it was Phase E's adapter dependency; the new agent doesn't need it. F6 finishes removing the `npcPlanningAgent` field from `SimulationRunner` once nothing else references it.
+
+- [ ] **Step 8: Drop the per-tick NPC polling loop in `executeTick`**
+
+Phase E added (around `SimulationRunner.executeTick` line 718):
+
+```ts
+// Poll all alive NPCs without an active engine handle...
+for (const npc of this.dgsm.getState().npcCharacters) {
+  if (!this.dgsm.isNpcAlive(npc.id)) continue;
+  await controller.decide(npc.id);
+}
+await engine.tick();
+```
+
+After F5's controller redesign, this polling is **redundant** — the controller's `tickCompleted` handler does the same job (drives decide() for affected/idle NPCs from the TickReport). Having both means double-decide per NPC per tick.
+
+```diff
+   const { engine, controller } = await this.ensureTickEngine();
+-
+-  // Poll all alive NPCs without an active engine handle...
+-  for (const npc of this.dgsm.getState().npcCharacters) {
+-    if (!this.dgsm.isNpcAlive(npc.id)) continue;
+-    await controller.decide(npc.id);
+-  }
+-
+   await engine.tick();
+```
+
+After F5: controller subscribes to `engine.on("tickCompleted", report => ...)` and processes everything from the report. No outside polling needed.
+
+> **One-time bootstrap:** brand-new sessions need at least one decide() pass before the first `engine.tick()` to seed initial actions. Use `await controller.bootstrap()` (Phase E pattern) once at session start. F5 keeps the `bootstrap()` method on the controller for this purpose.
+
+- [ ] **Step 9: Replace `npcPlanningAgent.seedLongTermIntents` call in `service.ts`**
+
+`client/server/simulation/service.ts` already has the exact line to replace (currently around line 473 in `createSimulation`):
+
+```diff
+   if (config?.weather && config.weather !== "clear") {
+     applyGlobalWeather(dgsm, config.weather);
+   }
+
+-  await npcPlanningAgent.seedLongTermIntents(dgsm, sessionId, moduleId);
++  // Decision 22 — F3 helper writes long_term_intent memory entries directly.
++  await seedNpcLongTermIntents({
++    npcs: dgsm.getState().npcCharacters,
++    sessionId,
++    moduleId,
++    memoryManager,
++    gameDay: dgsm.getGameDay(),
++    gameTime: dgsm.getTickTime(),
++  });
+   if (config?.syncRealTime) {
+     runner.enableRealTimeSync(config.realTimeBufferMinutes ?? 0);
+   }
+```
+
+`dgsm` and `memoryManager` are already in scope at this point (memoryManager from line ~162, dgsm from `buildSimulationBundle` return). Add the import at the top of `service.ts`:
+
+```ts
+import { seedNpcLongTermIntents } from "../../../src/roleSim/seedIntents.js";
+```
+
+This replaces the exact call site — no scattering "find the right place" ambiguity.
+
+- [ ] **Step 10: Document `npcPlanningAgent` field deferral to F6**
+
+After F1.5 + F4, `SimulationRunner.npcPlanningAgent` has only **one** remaining purpose: keeping the field around so its construction in `service.ts` (line ~167) doesn't break before F6 deletes the class. It's no longer used for runtime access (F1.5 dropped that whole chain) — F4 Step 7 already constructs `LLMRoleSimAgent` without runtime.
+
+F6 Step 6 + 7 deletes:
+1. The `npcPlanningAgent` constructor param + class field on SimulationRunner
+2. The `new NPCPlanningAgent(...)` construction in `service.ts buildSimulationBundle`
+3. The `npcPlanningAgent` from `buildSimulationBundle`'s return
+
+**Reminder (per the F4 Goal warning):** F4 + F5 + F6 are a single continuous work session. Don't commit after F4 expecting a clean build — `npcPlanningAgent` is still around but `LLMRoleSimAgent` is also wired in, dual-presence isn't a stable state.
+
+> **Verification deferred to F7.**
+
+---
+
+### Task F5: `NpcActionController` — TickReport-driven decide pipeline
+
+**Goal:** redesign `NpcActionController` around a single `tickCompleted` subscription. Each tick the controller receives a `TickReport` from the engine; from it the controller computes (a) which NPCs received revise-relevant events (per Decision 15 / impactPropagation), (b) which NPCs had an action end this tick, (c) which NPCs are alive and idle. Each affected NPC gets ONE `decide()` call with all triggers from this tick batched into `ctx.reviseTriggers`.
+
+This eliminates concurrency races, ensures one decide per NPC per tick, and gives the agent a complete picture of "what just happened around me".
+
+**Files:**
+- Modify: `src/roleSim/npcActionController.ts` — replace Phase E's per-event subscriptions (`actionCompleted` / `actionInterrupted` / `actionCancelled` / `featureEvent`) with a single `tickCompleted` subscription; remove `activeHandles` field; rewrite `decide()` + `buildContext()` to thread `reviseTriggers`
+- Modify: `src/engine/shared/impactPropagation.ts` — confirm the `ImpactPropagationAction` interface from Phase E covers what we need; extend if a FeatureEvent's impact-level computation needs different inputs
+- Modify: `src/roleSim/agent.ts` — confirm `RoleSimContext.reviseTriggers` field added per F2 Step 1
+- Create: `src/roleSim/__tests__/npcActionController.tickReport.test.ts` — verify TickReport → decide-per-affected-NPC; multi-event batching; idle-NPC inclusion
+
+**Per Decisions 13, 15, 16:**
+- Decision 13: path B (engine event → revise) merged into agent; deletes legacy reviseSchedule + impactGate
+- Decision 15: use `impactPropagation.findAffectedCharacters` for affected-NPC determination
+- Decision 16: `RoleSimContext.reviseTriggers` field (revised 2026-04-24 to plural — batched)
+
+- [ ] **Step 1: Replace per-event subscriptions with one `tickCompleted` subscription**
+
+The Phase E controller subscribed to four channels (`actionCompleted` / `Interrupted` / `Cancelled` / `featureEvent`) and called `decide()` per event. Phase F collapses to one subscription:
+
+```diff
+   constructor(deps: NpcActionControllerDeps) {
+     ...
+-    this.engine.on("actionCompleted", (a) => { this.activeHandles.delete(a.handleId); void this.decide(a.characterId); });
+-    this.engine.on("actionInterrupted", (a) => { this.activeHandles.delete(a.handleId); void this.decide(a.characterId); });
+-    this.engine.on("actionCancelled", (a) => { this.activeHandles.delete(a.handleId); void this.decide(a.characterId); });
++    this.engine.on("tickCompleted", (report: TickReport) => this.processTickReport(report));
+   }
+```
+
+The Phase E `activeHandles: Map<handleId, ActionHandle>` field and `hasActiveHandle` / `findActiveHandle` methods are also **deleted** — the engine is queried directly via `getActorQueue` whenever in-flight state is needed.
+
+`bootstrap()` stays — F4 Step 8 still calls it once at session start to seed the first decide pass before the first `engine.tick()`.
+
+- [ ] **Step 2: Implement `processTickReport`**
+
+```ts
+private async processTickReport(report: TickReport): Promise<void> {
+  // 1. Build per-NPC trigger lists from this tick's FeatureEvents (Decision 15)
+  const triggersByNpc = new Map<string, Array<{ description: string; sourceEvent: FeatureEvent | CharacterAction }>>();
+
+  for (const event of report.featureEvents) {
+    if (!event.characterId && !event.sceneId) continue;   // unanchored event, skip
+    // F1 Step 6 made FeatureEvent self-describing — read impact + description
+    // directly off the event. No controller-side type→level mapping table.
+    const action: ImpactPropagationAction = {
+      characterId: event.characterId ?? "system",
+      targetCharacterIds: [],
+      location: event.sceneId ?? "",
+    };
+    const affected = findAffectedCharacters(action, event.impact, this.dgsm);
+    for (const [npcId, _level] of affected) {
+      const list = triggersByNpc.get(npcId) ?? [];
+      list.push({ description: event.description, sourceEvent: event });
+      triggersByNpc.set(npcId, list);
+    }
+  }
+
+  // 2. NPCs whose action ended this tick (need a decide() to choose what's next)
+  const npcsWithEndedAction = new Set<string>([
+    ...report.commits.map((a) => a.characterId),
+    ...report.interruptions.map((i) => i.action.characterId),
+    ...report.cancellations.map((a) => a.characterId),
+  ]);
+
+  // 3. Alive NPCs currently idle (no in-flight action). They're candidates for
+  //    decide() too — replaces the per-tick polling that lived in
+  //    SimulationRunner.executeTick (F4 Step 8 deletes it there).
+  const idleAlive = this.dgsm
+    .getState()
+    .npcCharacters.filter((n) => this.dgsm.isNpcAlive(n.id))
+    .filter((n) => !this.npcHasActiveStep(n.id))
+    .map((n) => n.id);
+
+  // 4. Union of all NPCs that need decide() this tick
+  const allTargets = new Set<string>([
+    ...triggersByNpc.keys(),
+    ...npcsWithEndedAction,
+    ...idleAlive,
+  ]);
+
+  // 5. Sequential decide() — no concurrency, no race
+  for (const npcId of allTargets) {
+    if (!this.dgsm.isNpcAlive(npcId)) continue;
+    const triggers = triggersByNpc.get(npcId);
+    await this.decide(
+      npcId,
+      triggers && triggers.length > 0 ? { reviseTriggers: triggers } : undefined,
+    );
+  }
+}
+
+private npcHasActiveStep(npcId: string): boolean {
+  return this.engine.getActorQueue(npcId).some(
+    (s) => s.status === "active" || s.status === "queued",
+  );
+}
+```
+
+**Impact + description come from the event itself.** F1 Step 6 made `FeatureEvent` self-describing (`impact: 0-5` + `description: string`). Each emitter (Applier for synthetic `character.died`, scripted-event runner for `event.emit` effects, future features) sets these fields. The controller doesn't maintain a `eventType → impact` table or a description formatter — it just reads `event.impact` and `event.description`.
+
+This matches spec §E-renderer-layer's "events carry intrinsic impact" model and avoids drift between emitter intent and consumer interpretation.
+
+**On affected-NPC depth (the original review's #6 concern):** for FeatureEvents, the source action passed to `findAffectedCharacters` has `targetCharacterIds: []` — level-1 (targeted) hits no one. Coverage starts at level 2 (same scene). Distant relational depth (e.g., "Smith's mother lives in another town and grieves when he dies") is **out of scope** for Phase F — that's a renderer/perception concern that will be handled when the renderer ships and perception filtering becomes contextual.
+
+- [ ] **Step 3: Update `decide` signature to accept batched `reviseTriggers`**
+
+```diff
+-  async decide(npcId: string): Promise<void> {
++  async decide(
++    npcId: string,
++    opts?: { reviseTriggers?: ReadonlyArray<{ description: string; sourceEvent?: FeatureEvent | CharacterAction }> },
++  ): Promise<void> {
+     if (!this.dgsm.isNpcAlive(npcId)) return;
+-    if (this.hasActiveHandle(npcId)) return;
++    // Skip if NPC is busy AND has no triggers — busy idle NPCs without revise
++    // triggers don't need a new decision (their action is already running).
++    // With reviseTriggers, the agent gets a chance to switch action mid-flight.
++    if (this.npcHasActiveStep(npcId) && !(opts?.reviseTriggers && opts.reviseTriggers.length > 0)) return;
+
+-    const ctx = await this.buildContext(npcId);
++    const ctx = await this.buildContext(npcId, opts);
+     if (!ctx) return;
+     ...
+   }
+```
+
+- [ ] **Step 4: Thread `reviseTriggers` through `buildContext`; derive `currentAction` from engine**
+
+```diff
+-  private async buildContext(npcId: string): Promise<RoleSimContext | undefined> {
++  private async buildContext(
++    npcId: string,
++    opts?: { reviseTriggers?: ReadonlyArray<{ description: string; sourceEvent?: FeatureEvent | CharacterAction }> },
++  ): Promise<RoleSimContext | undefined> {
+     ...
++
++    // Derive currentAction from engine — no handle in agent-facing ctx.
++    const queue = this.engine.getActorQueue(npcId);
++    const active = queue.find((s) => s.status === "active");
++    const currentAction = active ? { actionText: active.actionText } : undefined;
++
+     return {
+       npcId,
+       currentTime: { day, tickTime },
+       npcProfile: profile,
+       currentScene,
+       recentMemory,
+       longTermIntent,
++      reviseTriggers: opts?.reviseTriggers,
++      currentAction,
++      // perception left undefined per Decision 11 (renderer deferred)
+     };
+   }
+```
+
+No `findActiveActionContext` helper; inline `engine.getActorQueue` is the only source for in-flight state.
+
+- [ ] **Step 5: Implement the 2-arm controller switch over terminal decisions**
+
+When agent wants to break an in-flight action and switch, it calls `act({ actionText: ... })`. The controller (this method) is the **single place** engine submission and cancellation happen — the dispatcher (F2 Step 3) does not touch the engine.
+
+```ts
+switch (decision.tool) {
+  case "act": {
+    // Decision 14: cancel current action first if any. Engine is the source of
+    // truth for in-flight state — query it, do not mirror with activeHandles.
+    const queue = this.engine.getActorQueue(npcId);
+    const live = queue.find((s) => s.status === "active" || s.status === "queued");
+    if (live) this.engine.cancelAction(live.handle);
+
+    await this.engine.submitAction({
+      characterId: npcId,
+      actionText: decision.input.actionText,
+      targetCharacterIds: decision.input.targetCharacterIds,
+      sceneId: this.resolveCurrentSceneId(npcId),
+    });
+    return;
+  }
+  case "continue":
+    return;
+  // writeMemory / recallMemory / getMapSnapshot are instant tools — they were
+  // dispatched inside agent.decideNext() and never reach this switch.
+}
+```
+
+`resolveCurrentSceneId(npcId)` is `dgsm.resolveLocationId(dgsm.getCharacterPosition(npcId))`.
+
+This is the single source of engine writes — handle-tracking is implicit (engine maintains its own queue; controller never stores ActionHandle).
+
+- [ ] **Step 6: Test — TickReport → batched decide()**
+
+`src/roleSim/__tests__/npcActionController.tickReport.test.ts`:
+- Mock TickEngine emits one `tickCompleted` event with a stub `TickReport` containing 2 featureEvents (e.g. a fire spread + a character.died) anchored to scene `S1`
+- Mock DGSM: 3 NPCs — `npc1` in `S1`, `npc2` in `S1`, `npc3` elsewhere
+- Stub agent's `decideNext` to record the ctx it receives and return `{ tool: "continue" }`
+- Verify:
+  - `decideNext` is called exactly **once** for `npc1` and once for `npc2` (both same-scene)
+  - `decideNext` is **not** called for `npc3` (different scene, no triggers, but has active step → skipped per Step 3 guard); call once if `npc3` is idle (decoupled assertion)
+  - The `ctx.reviseTriggers` for `npc1` contains **both** featureEvents (batched) — confirms multi-event batching from one tick
+  - `decideNext` is NEVER called twice for the same NPC in the same TickReport processing
+
+Also test the "act + currentAction" cancel-then-submit path (Decision 14):
+- Stub agent returns `{ tool: "act", input: { actionText: "flee" } }` when ctx has `currentAction` + `reviseTriggers`
+- Mock engine: `getActorQueue(npcId)` returns one `active` step
+- Verify the controller switch invokes BOTH `engine.cancelAction(activeHandle)` and `engine.submitAction(...)` in that order
+
+> **Verification deferred to F7.**
+
+---
+
+### Task F6: Delete `NPCPlanningAgent` + adapter + dead helpers
+
+**Goal:** all replacements are now in place (F2 ships the agent, F3 ships the standalone helpers, F4 wires SimulationRunner to use them, F5 routes engine events). F6 deletes everything the brainstorm marked as obsolete.
+
+**Files to delete:**
+
+| Path | LOC | Why |
+|---|---|---|
+| `src/planning/NPCPlanningAgent.ts` | 1865 | Replaced by `LLMRoleSimAgent` (F2) + standalone helpers (F3) |
+| `src/roleSim/npcAgentAdapter.ts` | ~70 | Phase E temp bridge; new agent is the real one |
+| `src/planning/npcPlanningTemplates.ts` | 619 | Old planner prompts (impactGate, reviseSchedule, schedule generation) — all retired |
+| `src/planning/npcSummaryTemplates.ts` | 102 | F3 lifted what it needed into self-contained dailySummarization |
+| `src/planning/autoMovementHelpers.ts` | 63 | Movement is engine subsystem now (Phase E), planner doesn't auto-insert moves |
+| `src/planning/revisionHelpers.ts` | ~20 | `interruptNode` was the only thing left; no PlanNode means no need |
+| `src/planning/itemFormatHelpers.ts` | 37 | NPCPlanningAgent was sole consumer |
+| `src/planning/skillDefaults.ts` | 150 | NPCPlanningAgent was sole consumer (verify with `rg`) |
+| `src/planning/__tests__/NPCPlanningAgent.deathGuards.test.ts` | n/a | Testee gone |
+| `src/planning/__tests__/NPCPlanningAgent.hiddenIsolation.test.ts` | n/a | Testee gone (already failed in Phase E) |
+| `src/planning/__tests__/npcPlanningTemplates.test.ts` | n/a | Testee gone |
+| `src/planning/__tests__/autoMovementHelpers.test.ts` | n/a | Testee gone |
+| `src/planning/__tests__/timingShift.test.ts` | n/a | Tests planning agent timing logic — gone with planner |
+
+**Files to keep + repurpose:**
+
+| Path | Reason |
+|---|---|
+| `src/planning/sceneMapFormatter.ts` (541 LOC) | Used by `mapService.ts`, `service.ts`, `npcSceneMap.test.ts` — UI/server consumers. Stays, but consider moving to `src/state/` or `src/memory/` (out of `planning/` namespace) |
+| `src/planning/cocSkillList.ts` (187 LOC) | Used by `engine/shared/skillRoll.ts`. Stays. Consider moving to `src/engine/shared/`. |
+| `src/planning/types.ts` (post-F1) | Re-exports `CharacterAction`, plus `FailureReason` / `SuccessLevel` still used. Stays slim. |
+| `src/planning/index.ts` | Stays, slim re-exports of remaining surface |
+
+**Files to modify (cleanup imports / dead references):**
+
+- `src/engine/types.ts` — delete the `NpcPlanningCapability` interface (was used by the legacy planner; nothing else consumes it)
+- `src/engine/types.ts` — `ExecutionContext` may have unused fields after planner is gone; audit and slim
+- `src/simulation/SimulationRunner.ts` — drop the `npcPlanningAgent` field from constructor params + class state (no `runtime` replacement needed — F1.5 already eliminated runtime from the LLM call chain)
+- `client/server/simulation/service.ts` — drop `npcPlanningAgent` construction in `buildSimulationBundle` and from its return value
+- `src/i18n/locales/en.ts`, `src/i18n/locales/zh.ts` — remove i18n keys that only the planner used (`outcome_with_detail_succeeded` etc. referenced from `nodeHelpers.ts` already deleted; `interrupted_death`, `interrupted_replanning_at`, etc.). Audit before removing — some may be used by the engine for action outcomes.
+
+**Per Decisions 13, 22, 23, 25, 26, 27, 28:**
+- Decision 13: deletes reviseSchedule + impactGate + revisionHelpers
+- Decision 22: deletes seedLongTermIntents (replaced by F3 helper)
+- Decision 23: deletes generateSingleNpcSchedule code path
+- Decision 25: deletes onNewDay (replaced by F3 + F4 wiring)
+- Decision 26: deletes interruptOpenNodesForDeath (replaced by F4 inline)
+- Decision 27: deletes the two Prisma tables (already done in F1)
+- Decision 28: confirms hard-cutover (no feature flag preservation)
+
+- [ ] **Step 1: Verify nothing imports the to-be-deleted helpers (apart from each other and NPCPlanningAgent)**
+
+For each helper file in the deletion table, run:
+```bash
+grep -rl "from.*planning/<helper>" src/ client/ scripts/ tests/
+```
+
+Expected: only hits inside `src/planning/` itself or in NPCPlanningAgent.ts.
+If anything else hits, stop and resolve (likely an oversight in F2-F5 wiring).
+
+For `skillDefaults` specifically (no listed external consumers in the brainstorm scan):
+```bash
+grep -rln "from.*planning/skillDefaults" src/ client/ scripts/
+```
+If 0 hits outside `src/planning/`, delete it. Otherwise keep + move out of planning/.
+
+- [ ] **Step 2: Delete the agent + adapter**
+
+```bash
+rm src/planning/NPCPlanningAgent.ts \
+   src/roleSim/npcAgentAdapter.ts
+```
+
+- [ ] **Step 3: Delete dead helpers**
+
+```bash
+rm src/planning/npcPlanningTemplates.ts \
+   src/planning/npcSummaryTemplates.ts \
+   src/planning/autoMovementHelpers.ts \
+   src/planning/revisionHelpers.ts \
+   src/planning/itemFormatHelpers.ts \
+   src/planning/skillDefaults.ts   # only if Step 1 verified no external consumers
+```
+
+- [ ] **Step 4: Delete planning tests for deleted code**
+
+```bash
+rm src/planning/__tests__/NPCPlanningAgent.deathGuards.test.ts \
+   src/planning/__tests__/NPCPlanningAgent.hiddenIsolation.test.ts \
+   src/planning/__tests__/npcPlanningTemplates.test.ts \
+   src/planning/__tests__/autoMovementHelpers.test.ts \
+   src/planning/__tests__/timingShift.test.ts
+```
+
+(Keep `sceneMapFormatter.test.ts` and `npcSceneMap.test.ts` since their testees survive.)
+
+- [ ] **Step 5: Strip `NpcPlanningCapability` interface and **delete `ExecutionContext` entirely**
+
+In `src/engine/types.ts`, delete:
+- `interface NpcPlanningCapability { ... }` (the whole interface)
+- `interface ExecutionContext { ... }` (whole interface — see below)
+- Any imports / re-exports referencing them
+
+**Why ExecutionContext is fully dead** (verified 2026-04-24):
+
+Every field on `ExecutionContext` is unused after F1.5 + F2-F5 land:
+
+| Field | Reader count | Status |
+|---|---|---|
+| `resolveSkillRoll` | 0 | dead — uses `PlanNode` (deleted in F1) |
+| `getScenePenalties` | 0 | dead |
+| `applyPenalties` | 0 | dead |
+| `getCharacterPenalties` | 0 | dead |
+| `getNodeDifficulty` | 0 | dead — uses `PlanNode` |
+| `currentTime?: string` | 0 | dead |
+| `simulationEmitter?` | 0 readers (only `SimulationRunner.ts:137` sets it) | dead |
+| `runtime?: any` | 0 (F1.5 deletes) | dead |
+| `language?: string` | 0 readers (`SimulationRunner.ts:139` sets, nobody reads — `stateResolver` reads its own `ResolverContext.language`, different type) | dead |
+| `memoryManager?` | 0 readers (`SimulationRunner.ts:140` sets, nobody reads — `LLMRoleSimAgent` and `dailySummarization` get memory directly) | dead |
+
+So:
+- Delete `interface ExecutionContext` from `src/engine/types.ts`
+- Delete `src/engine/executionContext.ts` entirely (the `createExecutionContext` factory)
+- Drop `src/engine/index.ts` export of `createExecutionContext`
+- Drop `src/planning/index.ts` re-export of `createExecutionContext` + `ExecutionContext`
+
+In `SimulationRunner`:
+```diff
+   constructor(params: {
+     config: SimulationConfig;
+     dgsm: DynamicGameStateManager;
+     definitions: ActionDefinitionRegistry;
+-    ctx: ExecutionContext;
+     language: string;
+     memoryManager?: NpcMemoryManager;
+     prisma: PrismaClient;
+   }) {
+     ...
+-    this.ctx = params.ctx;
+     this.language = params.language;
+     this.memoryManager = params.memoryManager;
+     ...
+-    this.ctx.simulationEmitter = this.events;
+-    this.ctx.language = this.language;
+-    this.ctx.memoryManager = this.memoryManager;
+   }
+-
+-  private readonly ctx: ExecutionContext;
+```
+
+In `service.ts buildSimulationBundle`:
+```diff
+-  const ctx = createExecutionContext();
+   const runner = new SimulationRunner({
+     ...,
+-    ctx,
+     ...,
+   });
+```
+
+Net: ~50 LOC dead code deleted (interface + factory + setup) on top of the F6 deletion list.
+
+- [ ] **Step 6: SimulationRunner cleanup**
+
+Drop the `npcPlanningAgent` field entirely — F1.5 already removed the only thing it was used for (runtime access via `getRuntime()`).
+
+```diff
+   constructor(params: {
+     config: SimulationConfig;
+     dgsm: DynamicGameStateManager;
+-    npcPlanningAgent: NPCPlanningAgent;
+     definitions: ActionDefinitionRegistry;
+     ctx: ExecutionContext;
+     language: string;
+     memoryManager?: NpcMemoryManager;
+     prisma: PrismaClient;
+   }) {
+     ...
+-    this.ctx.runtime = this.npcPlanningAgent.getRuntime();
+     this.ctx.language = this.language;
+   }
+```
+
+`reconcileDeadNpcPlans` is also deleted — its only caller (`reviseSchedule`-era cleanup) is gone.
+
+- [ ] **Step 7: `service.ts` cleanup**
+
+Both call sites of `buildSimulationBundle` (`createSimulation` ~line 405 + `getRunner` ~line 200) need updating. Inside `buildSimulationBundle`:
+
+```diff
+-  const npcPlanningAgent = new NPCPlanningAgent(
+-    params.prisma,
+-    memoryManager,                          // post-F1.5 — runtime arg already gone
+-  );
+
+   const runner = new SimulationRunner({
+     config: params.config,
+     dgsm,
+-    npcPlanningAgent,
+     definitions,
+     ctx,
+     language: params.language,
+     memoryManager,
+     prisma: params.prisma,
+   });
+
+-  return { runner, dgsm, npcPlanningAgent };
++  return { runner, dgsm };
+```
+
+Update both call sites of `buildSimulationBundle`:
+- `createSimulation` (the destructure currently is `const { runner, dgsm, npcPlanningAgent } = buildSimulationBundle(...)` — drop `npcPlanningAgent`)
+- `getRunner` (same destructure, same fix)
+
+Also update the `await npcPlanningAgent.seedLongTermIntents(...)` call in `createSimulation` — F4 Step 9 already replaced it with `await seedNpcLongTermIntents({...})`. Confirm this swap is still in place.
+
+- [ ] **Step 8: i18n key audit**
+
+```bash
+grep -rln "interrupted_death\|interrupted_replanning\|outcome_with_detail" src/ client/
+```
+
+For each i18n key with no remaining references after F2-F6, remove from `src/i18n/locales/en.ts` + `zh.ts`. Skip ones still used by the engine (action outcome formatting in resolver).
+
+- [ ] **Step 9: Add `loadLongTermIntent` helper to controller (and expose `findLatestByType` from NpcMemoryManager)**
+
+F4 Step 7 already removed `planningAgent` from `NpcActionController` construction; F5 Step 1 already removed `planningAgent` from the deps interface. What remains: the controller's `buildContext` (F5 Step 4) reads `longTermIntent` from somewhere — Phase E was `this.planningAgent.getLongTermIntent(...)`. Per Decision 2, the latest `long_term_intent` memory entry is the current intent.
+
+`NpcMemoryManager.getAllByTypes` orders by `importance desc`, which is wrong for "latest". `MemoryStore` already has `findLatestByType` (orders by `updatedAt desc, createdAt desc`) — expose it through the manager:
+
+```diff
+ // src/memory/NpcMemoryManager.ts (add public method)
++  async findLatestByType(
++    sessionId: string,
++    npcId: string,
++    type: NpcMemoryType,
++  ): Promise<NpcMemory | null> {
++    return this.store.findLatestByType(sessionId, npcId, type);
++  }
+```
+
+Then in `NpcActionController`:
+
+```ts
+private async loadLongTermIntent(npcId: string): Promise<string> {
+  const entry = await this.memory.findLatestByType(this.sessionId, npcId, "long_term_intent");
+  return entry?.content ?? "";
+}
+```
+
+Update `buildContext`:
+
+```diff
+-    const longTermIntent = await this.planningAgent
+-      .getLongTermIntent(this.sessionId, npcId)
+-      .catch(() => "");
++    const longTermIntent = await this.loadLongTermIntent(npcId);
+```
+
+This is the last `npcPlanningAgent`-coupled call in the controller. After this, the controller has zero references to the deleted class.
+
+> **Verification deferred to F7.**
+
+---
+
+### Task F7: End-to-end verification + Phase F commit
+
+**Goal:** consolidated verification of all F1–F6 changes (per project preference: skip per-task tests, batch at end). Then a single Phase F commit.
+
+**Files:** none new; runs the full verification stack.
+
+- [ ] **Step 1: Full test suite**
+
+```bash
+pnpm vitest run --reporter=basic
+```
+
+Expected: all green. Likely failures to expect + how to handle:
+
+- **F2/F3 unit tests** (toolDispatcher, seedIntents, dailySummarization): should pass on first run if F2/F3 followed the spec
+- **Pre-existing failures from Phase E**: `NPCPlanningAgent.hiddenIsolation.test.ts` etc. — these are removed in F6 Step 4, so they're gone from the run
+- **Resolver / interpreter / engine tests**: should be unaffected by Phase F
+- **Frontend tests** (if any): should be unaffected
+
+If a test fails, fix at site. Common categories likely to surface:
+- Stale imports referencing deleted files (fix or delete the test)
+- Missing tool dispatcher behavior (fix in F2 implementation)
+- Type-shape mismatch on `RoleSimContext` (fix in F2 Step 1)
+
+**Disambiguating "is this a Phase F regression or pre-existing?"** —
+when uncertain, stash the working tree and re-run the same test against
+Phase E baseline:
+
+```bash
+git stash --include-untracked
+pnpm vitest run <suspect-file>          # baseline behavior on Phase E
+git stash pop
+pnpm vitest run <suspect-file>          # post-Phase-F behavior
+```
+
+If both fail identically → pre-existing, skip. If only post-F fails → Phase F regression, fix.
+
+If you can't figure out a test failure within ~15 min, **stop and ask for help** instead of guessing — partial fixes risk breaking the bigger picture.
+
+- [ ] **Step 2: Type check**
+
+```bash
+pnpm build:tsc 2>&1 | grep -E "error TS" | head -50
+```
+
+Expected: 0 errors from Phase F surface (`src/roleSim/`, `src/simulation/SimulationRunner.ts`, `client/server/simulation/service.ts`, `src/planning/types.ts`, `src/engine/types.ts`).
+
+Pre-existing Phase D errors (`worldStateBlock.ts getFeatureState`, `fireFeature`, `eventBus overload`) may persist; they're unrelated to Phase F and don't need to be fixed here.
+
+If a Phase-F-introduced error surfaces, fix at site — most commonly:
+- Missing field on `RoleSimContext` (add to type, F2 Step 1)
+- Tool schema input type mismatch (refine F2 Step 3)
+- Stale `NPCPlanningAgent` reference somewhere F6 missed (delete the reference)
+
+- [ ] **Step 3: Biome check**
+
+```bash
+pnpm check 2>&1 | tail -20
+```
+
+If biome auto-applies fixes, accept them (style cleanup; safe).
+
+If biome errors persist on Phase F files, fix at site.
+
+- [ ] **Step 4a: Boot smoke (server + first tick)**
+
+```bash
+pnpm chat:dev
+```
+
+Bare minimum confirmation that wiring is correct:
+
+1. Server starts without throwing (most common failure mode here: `LLMRoleSimAgent` constructor or `toolDispatcher` import errors — fix at site, re-run)
+2. Frontend at `http://localhost:5173` loads
+3. Create a new simulation from any available test module (check `data/Mods/` for what's actually present — `simple-town`, `blackwood-manor`, etc.)
+4. Click Start
+5. Confirm via server logs:
+   - `[seedNpcLongTermIntents] seeded N long-term intent(s)` — F3 helper ran (Decision 22)
+   - First tick completes without throwing
+   - At least one NPC's `decide()` produced a `tool_use` block in the agent logs
+   - `engine.submitAction(...)` returned a handle, action was processed
+
+If 4a passes, the new agent + dispatcher + memory writes are wired correctly. If anything throws, **stop here and fix**; don't proceed to 4b.
+
+- [ ] **Step 4b: Feature smoke (behavior walkthrough — best-effort)**
+
+These confirm individual Decisions land correctly. Some require functionality the project doesn't have a UI / scripted test path for — mark those as "not testable without renderer / dev script" rather than failing the task.
+
+| # | Scenario | How to verify | Decision |
+|---|---|---|---|
+| 1 | Day-transition triggers summarization | Use `step ticks=N` in dev API to advance to day boundary fast (e.g., N = ticksPerDay). Confirm `[dailySummarization]` log + new `summary` memory rows in DB | 25 |
+| 2 | Player intent edit takes effect on next decide() | Pause sim → use UI (or POST `/api/simulation/:id/intent`) to update an NPC's intent → resume → next decide() ctx contains the new long-term intent (visible in agent logs) | 13 path A |
+| 3 | Inject a new NPC | Pause → inject via UI → resume → new NPC starts acting (visible in event stream) | 23 |
+| 4 | Engine event triggers revise | **Untestable in Phase F without a dev trigger script** — note as "verify post-renderer when perception path lights up". Optional pre-renderer check: programmatically push a `featureEvent` via Node REPL into the engine and confirm controller logs `decide()` called with `reviseTriggers` populated (look in transcript for "Things that just happened around you") | 13 path B / 15 / 16 |
+| 5 | NPC death cleanup | **Untestable in Phase F without a dev trigger** for HP-to-0. If a real CoC scenario exists where NPCs can plausibly die during a smoke run (e.g., a combat module), use it. Otherwise mark as "verified by code review of `checkDerivedEvents`" | 26 |
+
+If items 4 + 5 are untestable in this environment, that's accepted — they're code-reviewed in F4/F5 and exercised properly when the renderer or a dev trigger script ships.
+
+> **Time budget hint:** if a default tick interval is high (e.g. 1 tick / minute realtime), use `pnpm chat:debug` or set `tickIntervalMs=100` via the simulation config to make day boundaries reachable in a smoke session.
+
+- [ ] **Step 5: Confirm legacy `SimulationRuntime` rows are unloadable** (per Phase E E9 Step 5 — same expectation carries forward)
+
+Boot the server, attempt to resume any pre-Phase-F session: expect a load-time type/shape error mentioning the missing `NpcDailyPlan` / `NpcLongTermIntent` table or planning types. **Not silent corruption.** This confirms the "no backwards compat" stance from spec §3 + Decision 27.
+
+- [ ] **Step 5.5: Failure-recovery decision point**
+
+If Step 1–5 surfaces a critical problem you can't fix within ~30 minutes:
+
+- **Fix forward**: re-run the relevant F1–F6 task fix-up + re-run F7 from Step 1. Acceptable when the issue is localized (one wiring miss, a typed error).
+- **Roll back to Phase E**: per Decision 28, Phase F is a hard cutover with no feature flag — fallback path is `git revert` of the Phase F commits.
+  ```bash
+  git log --oneline                    # find F1-F7 commit hash(es)
+  git revert <hash>                    # if single squashed commit
+  # or:
+  git reset --hard cabfbb3             # back to Phase E HEAD (cabfbb3 = Phase E commit per repo log)
+  ```
+  Then raise an issue documenting what failed; re-brainstorm if the failure surface is architectural (not just an impl bug).
+
+Choose based on issue severity. **Don't ship a half-working Phase F.**
+
+- [ ] **Step 6: Verify file inventory**
+
+```bash
+git status
+git diff --stat HEAD
+```
+
+Expected file set (final delete list depends on F6 Step 1 grep results — `skillDefaults.ts` only deleted if F6 verified zero external consumers; otherwise it stays + may be moved out of `src/planning/`):
+
+- **New:** `src/roleSim/llmAgent.ts`, `src/roleSim/toolDispatcher.ts`, `src/roleSim/toolSchemas.ts`, `src/roleSim/seedIntents.ts`, `src/roleSim/dailySummarization.ts`, plus tests
+- **Deleted:** `src/planning/NPCPlanningAgent.ts`, `npcPlanningTemplates.ts`, `npcSummaryTemplates.ts`, `autoMovementHelpers.ts`, `revisionHelpers.ts`, `itemFormatHelpers.ts`, `src/roleSim/npcAgentAdapter.ts`, plus their tests (`+ skillDefaults.ts` per F6 Step 1)
+- **Modified:** `prisma/schema.prisma`, `src/state/types.ts`, `src/state/moduleLoader.ts`, `src/planning/types.ts`, `src/planning/index.ts`, `src/memory/types.ts`, `src/engine/types.ts`, `src/simulation/SimulationRunner.ts`, `client/server/simulation/service.ts`, `src/roleSim/agent.ts`, `src/roleSim/npcActionController.ts`
+- Net LOC: ~2200 deleted, ~700 added (matches the brainstorm projection of ~2100 / ~400, slightly higher add due to thorough toolDispatcher implementation)
+
+If `git status` shows files **not** in the above lists (typical culprit: biome auto-fixes from Step 3 touching unrelated files, like Phase E hit), see Step 7 for how to handle.
+
+- [ ] **Step 7: Stage + Phase F commit (single commit, narrow `git add`)**
+
+Per user preference (`feedback_commit_all_at_once.md`): one commit for all of F1–F7.
+
+**Important: do NOT use `git add src/` blanket** — `pnpm check` (Step 3) often auto-formats unrelated files (Phase E hit this exact issue, ~50 unrelated files got biome fixes mixed in). Two clean approaches:
+
+**Option (i) — Stash unrelated biome fixes, commit Phase F only:**
+
+```bash
+# 1. Identify which files Phase F actually touched (compare against the list in Step 6)
+git status --short
+
+# 2. Add ONLY the Phase F files explicitly:
+git add prisma/schema.prisma \
+        src/state/types.ts src/state/moduleLoader.ts \
+        src/planning/types.ts src/planning/index.ts \
+        src/memory/types.ts \
+        src/engine/types.ts \
+        src/simulation/SimulationRunner.ts \
+        client/server/simulation/service.ts \
+        src/roleSim/                                # all of roleSim/
+git add docs/superpowers/plans/2026-04-21-engine-architecture-refactor-plan.md
+
+# 3. Stage deletions explicitly
+git add -u src/planning/                            # picks up rm'd planning files
+git add -u src/roleSim/npcAgentAdapter.ts           # explicit rm
+
+# 4. Verify nothing extra is staged
+git diff --cached --stat
+# Should match Step 6 inventory. If extra files appear, unstage them:
+# git restore --staged <unrelated-file>
+
+# 5. Stash anything left in the working tree (the biome auto-fixes)
+git stash --include-untracked --message "biome auto-fixes from F7 pnpm check"
+```
+
+**Option (ii) — Commit everything together (Phase F + biome fixes), like Phase E did:**
+
+If you decide the biome fixes are pure formatting and you don't mind them riding along (Phase E user chose this option), use a broader `git add` and acknowledge it in the commit message body.
+
+```bash
+git add -A
+```
+
+Then in the commit message body add: `Bundled with this commit: cosmetic biome auto-fix sweep applied to N unrelated files.`
+
+Pick one approach. Phase E used Option (ii); Phase F can do the same or be tighter.
+
+```bash
+git commit -m "$(cat <<'EOF'
+refactor(engine): Phase F — RoleSimAgent + memory-only storage + dead-code purge
+
+Replaces the 1865-LOC NPCPlanningAgent with a tool-driven LLMRoleSimAgent
+following the agent-loop architecture from the 29 brainstorm decisions.
+All NPC mental state collapses into NpcMemory: drops the NpcDailyPlan
+and NpcLongTermIntent Prisma tables, dissolves PlanNode / ScheduleEntry
+types, folds long-term intent into a long_term_intent memory type.
+
+Key changes:
+- New LLMRoleSimAgent with 5-tool dispatcher (act, continue,
+  writeMemory, recallMemory, getMapSnapshot — no separate interrupt;
+  `act` absorbs cancellation). Per-tool call caps; immediate
+  write visibility within a loop; tick-consuming tools = terminal.
+- Engine TickReport → controller batches that tick's events into
+  ctx.reviseTriggers (plural), calls decide() once per affected NPC.
+  Affected NPCs computed via impactPropagation.findAffectedCharacters.
+  Replaces the legacy reviseSchedule + impactGate two-stage LLM call.
+- Standalone seedNpcLongTermIntents and dailySummarization modules in
+  src/roleSim/. Summarization slimmed to summary-only output with ISO
+  YYYY-MM-DD prefix (ModuleSetup.startDate added).
+- SimulationRunner integrates: simplified injectCharacter / updateIntent
+  (drop reviseSchedule trigger), checkDerivedEvents handles death (cancel
+  in-flight + write death memory), day-transition triggers summarization.
+- Phase F ships with placeholder system prompt (Decision 29); proper
+  prompt design is a separate post-Phase-F brainstorm.
+
+Net: ~2200 LOC removed (NPCPlanningAgent + helpers + 2 Prisma tables +
+related templates / tests), ~700 LOC added. No backwards compatibility
+for existing SimulationRuntime rows (consistent with spec §3 stance).
+
+See docs/superpowers/plans/2026-04-21-engine-architecture-refactor-plan.md
+§F-brainstorm-2026-04-24 for the 29 architecture decisions and
+Tasks F1-F7 for the implementation plan.
+
+Co-Authored-By: Claude Opus 4.7 (1M context) <noreply@anthropic.com>
+EOF
+)"
+```
+
+- [ ] **Step 8: Verify commit landed**
+
+```bash
+git log --oneline -1
+```
+
+Expected: one new commit with the Phase F message.
+
+---
 
 #### Open questions (still being discussed)
 
@@ -5841,7 +8014,7 @@ The brainstorm produced 29 architecture decisions covering:
 - Plan-storage migration approach (F4): one-shot script vs lazy migration; rollback / backup strategy.
 - Feature-flag mechanism for F3 A/B comparison (env var? config flag? per-session?).
 - Name → ID mapping policy for `map` memory writes (Decision 6 implementation detail — F1/F2).
-- Impact-level computation for engine events in Decision 15 implementation (F1/F2).
+- ~~Impact-level computation for engine events in Decision 15 implementation~~ — resolved by F1 Step 6 (intrinsic `impact` + `description` fields on `FeatureEvent`).
 - Agent prompt design (F1).
 
 ### §F-out-of-scope
