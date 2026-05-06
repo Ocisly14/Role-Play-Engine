@@ -17,7 +17,8 @@ import type { DynamicNPCProfile } from "../state/types.js";
 export type RoleSimDecision =
   | {
       tool: "act";
-      input: { actionText: string; targetCharacterIds?: string[] };
+      actionText: string;
+      targetCharacterIds?: string[];
     }
   | { tool: "continue"; reason?: string }
   | {
@@ -35,7 +36,7 @@ export type RoleSimDecision =
       tool: "recallMemory";
       query?: string;
       types?: NpcMemoryType[];
-      gameDate?: string;
+      gameDates?: string[];
       limit?: number;
     }
   | { tool: "getMapSnapshot" };

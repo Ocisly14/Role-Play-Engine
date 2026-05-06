@@ -159,8 +159,8 @@ export class NpcActionController {
 
         await this.engine.submitAction({
           characterId: npcId,
-          actionText: decision.input.actionText,
-          targetCharacterIds: decision.input.targetCharacterIds,
+          actionText: decision.actionText,
+          targetCharacterIds: decision.targetCharacterIds,
           sceneId: this.resolveCurrentSceneId(npcId),
         });
         return;

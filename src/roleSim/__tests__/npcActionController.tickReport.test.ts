@@ -232,7 +232,7 @@ describe("NpcActionController.processTickReport", () => {
     ]);
     const { engine, calls } = makeEngine({ actorQueue: queue });
     const { agent, setDecision } = makeAgent();
-    setDecision({ tool: "act", input: { actionText: "flee" } });
+    setDecision({ tool: "act", actionText: "flee" });
 
     const controller = new NpcActionController({
       engine,

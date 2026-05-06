@@ -58,7 +58,7 @@ interface WriteMemoryInput {
 interface RecallMemoryInput {
   query?: string;
   types?: NpcMemoryType[];
-  gameDate?: string;
+  gameDates?: string[];
   limit?: number;
 }
 
@@ -87,12 +87,22 @@ export async function dispatchInstantTool(
   }
 }
 
+const WRITE_MEMORY_DISALLOWED: ReadonlySet<string> = new Set([
+  "event",
+  "witness",
+]);
+
 async function dispatchWriteMemory(
   input: WriteMemoryInput,
   deps: DispatcherDeps
 ): Promise<DispatchResult> {
   if (!input || typeof input.type !== "string") {
     return { result: "Error: writeMemory requires a 'type' field." };
+  }
+  if (WRITE_MEMORY_DISALLOWED.has(input.type)) {
+    return {
+      result: `Error: writeMemory cannot write type "${input.type}" — engine-only. Allowed types: plan, belief, secret, information, summary, long_term_intent, map.`,
+    };
   }
 
   let content = typeof input.content === "string" ? input.content : "";
@@ -193,20 +203,29 @@ async function dispatchRecallMemory(
   deps: DispatcherDeps
 ): Promise<DispatchResult> {
   const limit = clampLimit(input.limit, 5, 20);
-  let gameDate: string | undefined;
-  if (input.gameDate !== undefined) {
-    const coerced = coerceIsoDate(input.gameDate);
-    if (coerced && coerced !== input.gameDate.trim()) {
-      console.debug(
-        `[toolDispatcher] coerced recallMemory.gameDate "${input.gameDate}" -> "${coerced}"`
-      );
+  let gameDates: string[] | undefined;
+  if (input.gameDates !== undefined) {
+    if (!Array.isArray(input.gameDates)) {
+      return {
+        result: `Error: gameDates must be an array of ISO 8601 dates (e.g. ["1923-10-15"])`,
+      };
     }
-    gameDate = coerced ?? undefined;
-  }
-  if (input.gameDate !== undefined && gameDate === undefined) {
-    return {
-      result: `Error: gameDate must be ISO 8601 date "YYYY-MM-DD" (got: "${input.gameDate}")`,
-    };
+    const coerced: string[] = [];
+    for (const raw of input.gameDates) {
+      const c = typeof raw === "string" ? coerceIsoDate(raw) : null;
+      if (!c) {
+        return {
+          result: `Error: gameDates entries must be ISO 8601 date "YYYY-MM-DD" (got: ${JSON.stringify(raw)})`,
+        };
+      }
+      if (c !== raw.trim()) {
+        console.debug(
+          `[toolDispatcher] coerced recallMemory.gameDates entry "${raw}" -> "${c}"`
+        );
+      }
+      coerced.push(c);
+    }
+    gameDates = coerced.length > 0 ? coerced : undefined;
   }
   const memories = await deps.memory.query({
     npcId: deps.npcId,
@@ -214,7 +233,7 @@ async function dispatchRecallMemory(
     query: input.query ?? "",
     filters: {
       types: input.types,
-      ...(gameDate !== undefined ? { gameDate } : {}),
+      ...(gameDates !== undefined ? { gameDate: gameDates } : {}),
     },
     limit,
   });

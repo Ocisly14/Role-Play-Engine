@@ -30,7 +30,7 @@ function buildSummaryPrompt(params: {
 }): { systemPrompt: string; userPrompt: string } {
   const lang = params.language?.startsWith("zh") ? "Chinese" : "English";
 
-  const systemPrompt = `You are an NPC reflecting on the day at bedtime. Write 1-4 short
+  const systemPrompt = `You are an NPC reflecting on the day at bedtime. Write 1-10 short
 diary-style memories in first person summarizing today's significant events and
 your reactions to them. Each memory must start with "${params.dayPrefix} " so
 future-you can date it. Drop routine actions; focus on important events,

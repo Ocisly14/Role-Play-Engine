@@ -43,15 +43,13 @@ const PRINCIPLES = `## Decision Principles
 
 const OUTPUT_FORMAT = `## Output
 
-Respond with ONE JSON object per turn. Examples:
+Respond with exactly ONE JSON object per turn — a single tool call. Each
+tool's JSON shape is documented in its \`## Output\` section above; pick one
+and emit it verbatim (no prose, no markdown fences, no multiple objects).
 
-{ "tool": "recallMemory", "query": "smith last night" }
-
-{ "tool": "writeMemory", "type": "belief", "content": "Smith is hiding something — he was outside earlier despite saying he was reading." }
-
-{ "tool": "act", "input": { "actionText": "head to the harbor" } }
-
-When emitting dates in tool inputs or memory content, use ISO 8601 ("YYYY-MM-DD" or "YYYY-MM-DDTHH:MM:SS"). Do not copy the readable form shown in the user prompt.`;
+When emitting dates in any tool input or memory content, use ISO 8601
+("YYYY-MM-DD" or "YYYY-MM-DDTHH:MM:SS"). Do not copy the readable form
+shown in the user prompt.`;
 
 export const SYSTEM_PROMPT = [
   FRAMING,

@@ -87,7 +87,7 @@ export class MemoryStore {
     npcId: string;
     filters?: {
       types?: NpcMemoryType[];
-      gameDate?: string;
+      gameDate?: string | string[];
       currentGameDate?: string;
       location?: string;
       tags?: string[];
@@ -96,6 +96,21 @@ export class MemoryStore {
     limit?: number;
   }): Promise<NpcMemory[]> {
     const { filters, limit } = params;
+    const dateFilter = (() => {
+      if (filters?.gameDate === undefined) return undefined;
+      if (Array.isArray(filters.gameDate)) {
+        if (filters.gameDate.length === 0) return undefined;
+        if (filters.gameDate.length === 1) {
+          return { gameDateTime: { startsWith: filters.gameDate[0] } };
+        }
+        return {
+          OR: filters.gameDate.map((d) => ({
+            gameDateTime: { startsWith: d },
+          })),
+        };
+      }
+      return { gameDateTime: { startsWith: filters.gameDate } };
+    })();
 
     // When currentGameDate is set, ephemeral types (event/witness/plan) are restricted
     // to the current date only; past dates are represented by summary memories.
@@ -147,9 +162,7 @@ export class MemoryStore {
         sessionId: params.sessionId,
         npcId: params.npcId,
         ...(filters?.types && { type: { in: filters.types } }),
-        ...(filters?.gameDate !== undefined && {
-          gameDateTime: { startsWith: filters.gameDate },
-        }),
+        ...(dateFilter ?? {}),
         ...(filters?.location && { location: filters.location }),
         ...(filters?.tags && { tags: { hasSome: filters.tags } }),
         ...(filters?.minImportance !== undefined && {

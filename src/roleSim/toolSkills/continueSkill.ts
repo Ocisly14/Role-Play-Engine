@@ -18,7 +18,7 @@ Don't start anything new. If you have an in-flight action, let it keep running. 
 - You want to start a new action — use \`act\`
 - You want to reflect / record something — use \`writeMemory\` (then loop back to \`continue\` or \`act\` to terminate)
 
-## Usage
+## Output
 { "tool": "continue", "reason": "<optional one-line justification>" }
 
 - \`reason\`: optional. One sentence explaining why you're continuing. Useful for debugging your own decisions.

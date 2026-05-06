@@ -158,7 +158,8 @@ export interface QueryMemoryParams {
   query: string;
   filters?: {
     types?: NpcMemoryType[];
-    gameDate?: string;
+    /** Single ISO date "YYYY-MM-DD" matches that day; array matches any of the listed days (OR-set). */
+    gameDate?: string | string[];
     /** When set, ephemeral types (event/witness/plan) are restricted to this day only. */
     currentGameDate?: string;
     location?: string;

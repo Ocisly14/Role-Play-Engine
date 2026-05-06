@@ -11,13 +11,15 @@ Record something to your memory. Doesn't consume a tick — you can chain other 
 
 Use this for **internal mental events** that you wouldn't otherwise leave a trace of. Physical events you do (actions) and witness (other people's actions affecting you) are auto-logged by the engine — don't duplicate.
 
-## When to use
-- You formed a new plan: "I'll go to the library after dinner" → \`type=plan\`
-- You came to believe something: "Smith is lying" → \`type=belief\`
-- You learned something hidden: "I just realized X is the killer" → \`type=secret\`
-- You learned a fact: "The library closes at 6 PM" → \`type=information\`
-- Your long-term goal genuinely shifted (rare) → \`type=long_term_intent\`
-- You learned about a place / route → \`type=map\` (use \`mapAdd\` not \`content\`)
+## Allowed types (you may ONLY use these 7)
+- \`plan\` — a new plan you formed: "I'll go to the library after dinner"
+- \`belief\` — something you came to believe: "Smith is lying"
+- \`secret\` — something hidden you realized: "X is the killer"
+- \`information\` — a fact you learned: "The library closes at 6 PM"
+- \`summary\` — an end-of-day reflection / dated diary entry
+- \`long_term_intent\` — your long-term goal genuinely shifted (rare)
+- \`map\` — a place / route you learned (use \`mapAdd\`, not \`content\`)
+
 
 ## When NOT to use
 - To narrate what just happened — events / witness are auto-recorded by the engine
@@ -25,7 +27,7 @@ Use this for **internal mental events** that you wouldn't otherwise leave a trac
 - "I think I should do X next" — that's just an action choice, use \`act\` directly
 - Routine observations ("the room is dim") — these are perception, not memory
 
-## Usage
+## Output
 { "tool": "writeMemory", "type": "<type>", "content": "<text>" }
 
 For \`type=map\`:

@@ -18,7 +18,7 @@ Inspect your current map — what places you know exist, hidden connections you'
 - You just need the name of your current scene — that's already in \`## Right now\`
 - Routine — capped at 1 per decision
 
-## Usage
+## Output
 { "tool": "getMapSnapshot" }
 
 No arguments. Returns a list of known scenes, junctions, roads, and revealed hidden connections.

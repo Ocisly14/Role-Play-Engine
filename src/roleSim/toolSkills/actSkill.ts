@@ -21,8 +21,8 @@ This consumes a tick — calling \`act\` ends the current decision.
 - You just want to "think more" — use \`recallMemory\` or \`writeMemory\` instead (they don't consume a tick)
 - The action is purely internal (forming a belief, planning) — use \`writeMemory\`
 
-## Usage
-{ "tool": "act", "input": { "actionText": "<one sentence describing what you do>", "targetCharacterIds": ["<npcId>", ...] } }
+## Output
+{ "tool": "act", "actionText": "<one sentence describing what you do>", "targetCharacterIds": ["<npcId>", ...] }
 
 - \`actionText\`: describe your action in one natural sentence ("walk to the library", "ask Smith about the letter", "search the desk")
 - \`targetCharacterIds\`: optional. NPC IDs you're directly interacting with.
@@ -32,11 +32,11 @@ The engine resolves the action — you don't need to specify duration, skill che
 ## Examples
 
 You see Smith in the room and decide to confront him:
-{ "tool": "act", "input": { "actionText": "confront Smith about where he was last night", "targetCharacterIds": ["smith"] } }
+{ "tool": "act", "actionText": "confront Smith about where he was last night", "targetCharacterIds": ["smith"] }
 
 You're alone and want to leave:
-{ "tool": "act", "input": { "actionText": "head to the harbor" } }
+{ "tool": "act", "actionText": "head to the harbor" }
 
 You're in the middle of reading and a fire breaks out — interrupt and flee:
-{ "tool": "act", "input": { "actionText": "drop the book and run for the exit" } }
+{ "tool": "act", "actionText": "drop the book and run for the exit" }
 `;
