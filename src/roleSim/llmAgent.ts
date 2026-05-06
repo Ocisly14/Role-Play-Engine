@@ -12,6 +12,7 @@ import type { NpcMemoryManager } from "../memory/NpcMemoryManager.js";
 import { ModelClass, generateText } from "../models/index.js";
 import type { DynamicGameStateManager } from "../state/DynamicGameState.js";
 import type { RoleSimAgent, RoleSimContext, RoleSimDecision } from "./agent.js";
+import { SYSTEM_PROMPT } from "./systemPrompt.js";
 import {
   type DispatcherDeps,
   TERMINAL_TOOLS,
@@ -19,38 +20,9 @@ import {
   VALID_TOOLS,
   dispatchInstantTool,
 } from "./toolDispatcher.js";
+import { buildUserPrompt } from "./userPromptBuilder.js";
 
 const MAX_TOTAL_ITERATIONS = 14;
-
-const PHASE_F_PLACEHOLDER_SYSTEM_PROMPT = `
-You are an NPC in a Call of Cthulhu tabletop RPG simulation. Each turn you receive your current
-context (your profile, time of day, long-term intent, recent memories, current action if any,
-and possibly a notification of something that just happened around you) and must choose what to
-do next using the provided tools.
-
-Tools that consume a tick (terminate this decision — you must end with exactly one):
-- act(actionText, targetCharacterIds?): take a physical action in the world (move, examine, talk,
-  attack, etc.). If you currently have an in-flight action, calling act will CANCEL it and start
-  the new one — use this when something happens that makes you want to switch focus.
-- continue(reason?): do nothing new; if you have an in-flight action let it keep running, otherwise
-  let time pass.
-
-Tools that don't consume a tick (loop continues, you can chain multiple before terminating):
-- writeMemory(type, content | mapAdd): record a thought/plan/belief/secret/etc. to your memory.
-  Memory types: event, witness, information, map, belief, plan, secret, summary, long_term_intent.
-  For type="map", supply mapAdd: { sceneNames?, junctionNames?, roadNames?, revealHiddenConnection? }.
-- recallMemory(query?, types?, gameDay?, limit?): query your past memories.
-- getMapSnapshot(): view your known map of places.
-
-You must end every decision by calling exactly one of: act, continue.
-
-Respond with ONE JSON object per turn, e.g.:
-{ "tool": "recallMemory", "query": "smith" }
-or
-{ "tool": "act", "input": { "actionText": "go to the library" } }
-or
-{ "tool": "continue", "reason": "still finishing the book" }
-`.trim();
 
 export interface LLMRoleSimAgentDeps {
   memory: NpcMemoryManager;
@@ -69,10 +41,13 @@ export class LLMRoleSimAgent implements RoleSimAgent {
     const transcript: string[] = [];
 
     for (let i = 0; i < MAX_TOTAL_ITERATIONS; i++) {
-      const userPrompt = this.buildUserPrompt(ctx, transcript);
+      const userPrompt = buildUserPrompt(ctx, transcript, {
+        language: this.deps.language,
+        dgsm: this.deps.dgsm,
+      });
 
       const responseText = await generateText({
-        customSystemPrompt: PHASE_F_PLACEHOLDER_SYSTEM_PROMPT,
+        customSystemPrompt: SYSTEM_PROMPT,
         context: userPrompt,
         modelClass: ModelClass.MEDIUM,
         operation: "role-sim-agent",
@@ -133,43 +108,6 @@ export class LLMRoleSimAgent implements RoleSimAgent {
       tool: "continue",
       reason: typeof parsed.reason === "string" ? parsed.reason : undefined,
     };
-  }
-
-  private buildUserPrompt(ctx: RoleSimContext, transcript: string[]): string {
-    const lines: string[] = [];
-    lines.push(`# You are ${ctx.npcProfile.name}`);
-    lines.push(`Time: Day ${ctx.currentTime.day}, ${ctx.currentTime.tickTime}`);
-    lines.push(`Current scene: ${ctx.currentScene}`);
-    if (ctx.longTermIntent) {
-      lines.push(`\n## Your long-term intent\n${ctx.longTermIntent}`);
-    }
-    if (ctx.currentAction) {
-      lines.push(`\n## Currently doing\n"${ctx.currentAction.actionText}"`);
-    }
-    if (ctx.reviseTriggers && ctx.reviseTriggers.length > 0) {
-      lines.push(`\n## Things that just happened around you (this tick)`);
-      for (const t of ctx.reviseTriggers) {
-        lines.push(`- ${t.description}`);
-      }
-    }
-    if (ctx.perception?.narrative) {
-      lines.push(`\n## What you perceive\n${ctx.perception.narrative}`);
-    }
-    if (ctx.recentMemory.length > 0) {
-      lines.push(`\n## Recent memories`);
-      for (const m of ctx.recentMemory) {
-        lines.push(`- [${m.gameTime}] (${m.type}) ${m.content}`);
-      }
-    }
-    if (transcript.length > 0) {
-      lines.push(
-        `\n## Tool calls so far this decision\n${transcript.join("\n")}`
-      );
-    }
-    lines.push(
-      `\nDecide your next action using the tools described in the system prompt. Output a single JSON object.`
-    );
-    return lines.join("\n");
   }
 
   private formatToolCall(parsed: {

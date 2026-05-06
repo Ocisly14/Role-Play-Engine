@@ -21,6 +21,7 @@ import { findAffectedCharacters } from "../engine/shared/impactPropagation.js";
 import type { NpcMemoryManager } from "../memory/NpcMemoryManager.js";
 import type { DynamicGameStateManager } from "../state/DynamicGameState.js";
 import type { RoleSimAgent, RoleSimContext } from "./agent.js";
+import { buildPerceptionNarrative } from "./perceptionRenderer.js";
 
 interface ReviseTrigger {
   description: string;
@@ -196,13 +197,17 @@ export class NpcActionController {
     const currentScene = position ? this.dgsm.resolveLocationId(position) : "";
 
     const longTermIntent = await this.loadLongTermIntent(npcId);
-    const recentMemory = await this.loadRecentMemory(npcId, day);
+    const recentMemory = await this.loadTodayMemories(npcId, day);
 
     const queue = this.engine.getActorQueue(npcId);
     const active = queue.find((s) => s.status === "active");
     const currentAction = active
       ? { actionText: active.actionText }
       : undefined;
+
+    const perception = {
+      narrative: buildPerceptionNarrative(npcId, this.dgsm),
+    };
 
     return {
       npcId,
@@ -213,7 +218,7 @@ export class NpcActionController {
       longTermIntent,
       reviseTriggers: opts?.reviseTriggers,
       currentAction,
-      // perception left undefined per Decision 11 (renderer deferred).
+      perception,
     };
   }
 
@@ -226,11 +231,17 @@ export class NpcActionController {
     return entry?.content ?? "";
   }
 
-  private async loadRecentMemory(
+  private async loadTodayMemories(
     npcId: string,
     gameDay: number
   ): Promise<RoleSimContext["recentMemory"]> {
-    const rows = await this.memory.getAllForDay(npcId, this.sessionId, gameDay);
+    const rows = await this.memory.getForDayByTypes(
+      npcId,
+      this.sessionId,
+      gameDay,
+      ["event", "witness"],
+      20
+    );
     return rows.map((r) => ({
       type: r.type,
       content: r.content,

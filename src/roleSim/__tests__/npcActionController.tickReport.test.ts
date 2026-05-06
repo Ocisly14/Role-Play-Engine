@@ -85,13 +85,23 @@ function makeDgsm(
         id: n.id,
         name: n.id,
         attributes: {},
-        status: {},
+        status: {
+          hp: 12,
+          maxHp: 12,
+          san: 50,
+          maxSan: 50,
+          fatigue: 0,
+          maxFatigue: 100,
+          luck: 50,
+          conditions: [],
+        },
         inventory: [],
         skills: {},
         longTermIntent: "",
         relationships: [],
       };
     },
+    getScene: () => null,
     getGameDay: () => 1,
     getTickTime: () => "08:00",
   } as unknown as DynamicGameStateManager;
@@ -100,6 +110,7 @@ function makeDgsm(
 function makeMemory(): NpcMemoryManager {
   return {
     getAllForDay: async () => [],
+    getForDayByTypes: async () => [],
     findLatestByType: async () => null,
   } as unknown as NpcMemoryManager;
 }
