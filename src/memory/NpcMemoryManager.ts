@@ -1,5 +1,5 @@
 import type { NpcMemory, NpcMemoryType, PrismaClient } from "@prisma/client";
-import type { EmbeddingClient } from "../../rag/embedding.js";
+import type { EmbeddingClient } from "../rag/embedding.js";
 import { DecayEngine } from "./DecayEngine.js";
 import { MemoryRetriever } from "./MemoryRetriever.js";
 import { MemoryStore } from "./MemoryStore.js";
@@ -66,8 +66,7 @@ export class NpcMemoryManager {
     npcId: string;
     sessionId: string;
     moduleId: string;
-    gameDay: number;
-    gameTime: string;
+    gameDateTime: string;
     location?: string;
     snapshot: KnownMapSnapshot;
   }): Promise<NpcMemory> {
@@ -86,8 +85,7 @@ export class NpcMemoryManager {
         moduleId: params.moduleId,
         type: "map",
         content,
-        gameDay: params.gameDay,
-        gameTime: params.gameTime,
+        gameDateTime: params.gameDateTime,
         location: params.location,
         metadata,
       });
@@ -96,8 +94,7 @@ export class NpcMemoryManager {
     return this.store.updateMemory(existing.id, {
       type: "map",
       content,
-      gameDay: params.gameDay,
-      gameTime: params.gameTime,
+      gameDateTime: params.gameDateTime,
       location: params.location,
       metadata,
     });
@@ -137,8 +134,7 @@ export class NpcMemoryManager {
       npcId: params.npcId,
       sessionId: params.sessionId,
       moduleId: params.moduleId,
-      gameDay: params.gameDay,
-      gameTime: params.gameTime,
+      gameDateTime: params.gameDateTime,
       location: params.location,
       snapshot,
     });
@@ -162,8 +158,7 @@ export class NpcMemoryManager {
       npcId: params.npcId,
       sessionId: params.sessionId,
       moduleId: params.moduleId,
-      gameDay: params.gameDay,
-      gameTime: params.gameTime,
+      gameDateTime: params.gameDateTime,
       location: params.location,
       snapshot,
     });
@@ -203,8 +198,7 @@ export class NpcMemoryManager {
       npcId: params.npcId,
       sessionId: params.sessionId,
       moduleId: params.moduleId,
-      gameDay: params.gameDay,
-      gameTime: params.gameTime,
+      gameDateTime: params.gameDateTime,
       location: params.location,
       snapshot,
     });
@@ -267,8 +261,7 @@ export class NpcMemoryManager {
       npcId: params.npcId,
       sessionId: params.sessionId,
       moduleId: params.moduleId,
-      gameDay: params.gameDay,
-      gameTime: params.gameTime,
+      gameDateTime: params.gameDateTime,
       location: params.location,
       snapshot,
     });
@@ -295,8 +288,7 @@ export class NpcMemoryManager {
       npcId: params.npcId,
       sessionId: params.sessionId,
       moduleId: params.moduleId,
-      gameDay: params.gameDay,
-      gameTime: params.gameTime,
+      gameDateTime: params.gameDateTime,
       location: params.location,
       snapshot,
     });
@@ -372,8 +364,7 @@ export class NpcMemoryManager {
       npcId: params.npcId,
       sessionId: params.sessionId,
       moduleId: params.moduleId,
-      gameDay: params.gameDay,
-      gameTime: params.gameTime,
+      gameDateTime: params.gameDateTime,
       location: params.location,
       snapshot,
     });
@@ -386,16 +377,16 @@ export class NpcMemoryManager {
     return this.retriever.query(params);
   }
 
-  /** Fetch all memories for a specific NPC on a specific game day (no scoring/semantic filtering). */
-  async getAllForDay(
+  /** Fetch all memories for a specific NPC on a specific game date (no scoring/semantic filtering). */
+  async getAllForDate(
     npcId: string,
     sessionId: string,
-    gameDay: number
+    gameDate: string
   ): Promise<NpcMemory[]> {
     return this.store.findCandidates({
       sessionId,
       npcId,
-      filters: { gameDay },
+      filters: { gameDate },
       limit: 500,
     });
   }
@@ -415,18 +406,18 @@ export class NpcMemoryManager {
     });
   }
 
-  /** Fetch memories for a specific NPC, game day, and set of memory types (no scoring/semantic filtering). */
-  async getForDayByTypes(
+  /** Fetch memories for a specific NPC, game date, and set of memory types (no scoring/semantic filtering). */
+  async getForDateByTypes(
     npcId: string,
     sessionId: string,
-    gameDay: number,
+    gameDate: string,
     types: NpcMemoryType[],
     limit = 500
   ): Promise<NpcMemory[]> {
     return this.store.findCandidates({
       sessionId,
       npcId,
-      filters: { gameDay, types },
+      filters: { gameDate, types },
       limit,
     });
   }
@@ -456,7 +447,7 @@ export class NpcMemoryManager {
             npcId: params.npcId,
             sessionId: params.sessionId,
             query,
-            filters: { types: [type], currentGameDay: params.currentGameDay },
+            filters: { types: [type], currentGameDate: params.currentGameDate },
             limit: limit === 0 ? 500 : limit,
           });
         })
@@ -469,7 +460,7 @@ export class NpcMemoryManager {
           query,
           filters: {
             types: sharedTypes,
-            currentGameDay: params.currentGameDay,
+            currentGameDate: params.currentGameDate,
           },
           limit: profile.defaultLimit,
         });
@@ -484,7 +475,7 @@ export class NpcMemoryManager {
         query,
         filters: {
           types: profile.defaultTypes,
-          currentGameDay: params.currentGameDay,
+          currentGameDate: params.currentGameDate,
         },
         limit: profile.defaultLimit,
       });

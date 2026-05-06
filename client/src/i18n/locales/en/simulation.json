@@ -9,7 +9,7 @@
     "inventory": "Inventory",
     "zoomToLocation": "Zoom to location",
     "noProfileInfo": "No profile info available",
-    "timelineTitle": "Day {{day}} Timeline",
+    "timelineTitle": "{{date}} Timeline",
     "timelineLoading": "Loading timeline…",
     "timelineEmpty": "No actions or sightings recorded yet",
     "timelineError": "Failed to load timeline",
@@ -28,7 +28,7 @@
     "longTermIntent": "Long-term Intent"
   },
   "clock": {
-    "day": "Day {{day}}"
+    "date": "{{date}}"
   },
   "control": {
     "stepOneTick": "Step one tick",
@@ -68,9 +68,9 @@
     "filtersActive": "Filters active",
     "show": "Show",
     "hide": "Hide",
-    "startDay": "Start Day",
+    "startDate": "Start Date",
     "startTime": "Start Time",
-    "endDay": "End Day",
+    "endDate": "End Date",
     "endTime": "End Time",
     "character": "Character",
     "allCharacters": "All characters",
@@ -83,7 +83,7 @@
   },
   "events": {
     "noEvents": "No events yet",
-    "day": "Day {{day}}",
+    "date": "{{date}}",
     "died": "{{name}} died",
     "movedTo": "{{name}} moved to {{location}}",
     "unknown": "Unknown",
@@ -124,7 +124,6 @@
     "deleteSimulation": "Delete simulation",
     "deleteFailed": "Failed to delete simulation",
     "bulkDeleteFailed": "Failed to delete {{count}} simulation(s)",
-    "day": "Day {{day}}",
     "ticks": "{{count}} ticks",
     "unknownModule": "Unknown Module"
   }

@@ -24,13 +24,14 @@ describe("integration: weather (fog) → sun illumination chain", () => {
   it("dense fog at midday caps illumination and triggers [Lighting] Pitch black", async () => {
     const setup = makeIntegrationEngine({
       moduleSetup: {
+        startDate: "1923-10-17",
         featureInit: {
           weather: [{ regionId: "town", weatherType: "fog", intensity: 3 }],
         },
       },
       // Noon: sun curve peaks at level 5 → without fog, [Lighting] would not
       // be emitted (5 = bright). With fog cap=1 the env reading drops to 1.
-      initialTime: { day: 1, tickTime: "12:00" },
+      initialTime: "1923-10-17T12:00:00",
     });
     seedScene(setup.dgsm, "plaza", { parentLocationId: "town" });
 
@@ -52,11 +53,12 @@ describe("integration: weather (fog) → sun illumination chain", () => {
   it("moderate fog (intensity 2) caps illumination at 2 → [Lighting] Dark", async () => {
     const setup = makeIntegrationEngine({
       moduleSetup: {
+        startDate: "1923-10-17",
         featureInit: {
           weather: [{ regionId: "town", weatherType: "fog", intensity: 2 }],
         },
       },
-      initialTime: { day: 1, tickTime: "12:00" },
+      initialTime: "1923-10-17T12:00:00",
     });
     seedScene(setup.dgsm, "plaza", { parentLocationId: "town" });
 
@@ -73,7 +75,7 @@ describe("integration: weather (fog) → sun illumination chain", () => {
 
   it("clear weather at midday → env.illumination = 5 (bright), no [Lighting] condition", async () => {
     const setup = makeIntegrationEngine({
-      initialTime: { day: 1, tickTime: "12:00" },
+      initialTime: "1923-10-17T12:00:00",
     });
     seedScene(setup.dgsm, "plaza", { parentLocationId: "town" });
 

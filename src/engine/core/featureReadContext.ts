@@ -1,4 +1,5 @@
 import type { DynamicGameStateManager } from "../../state/DynamicGameState.js";
+import { timePart } from "../../state/gameClock.js";
 import type { TownTopology } from "../../state/topologyTypes.js";
 import type { DynamicNPCProfile, DynamicScene } from "../../state/types.js";
 import { resolveCharacterLocationId } from "../shared/topologyHelpers.js";
@@ -10,7 +11,7 @@ import type { EnvironmentReading, FeatureStateScope } from "./types.js";
 // detail, etc.). Acceptable trade-off per the 2026-04-21 decision.
 
 export interface FeatureReadContext {
-  readonly gameDay: number;
+  readonly gameDateTime: string;
   readonly tickTime: string;
   readonly tickDurationMinutes: number;
 
@@ -84,11 +85,11 @@ export function makeDGSMFeatureReadContext(
 ): FeatureReadContext {
   const scope = opts.callerScope ?? "scene";
   return {
-    get gameDay() {
-      return dgsm.getGameDay();
+    get gameDateTime() {
+      return dgsm.getGameDateTime();
     },
     get tickTime() {
-      return dgsm.getTickTime();
+      return timePart(dgsm.getGameDateTime());
     },
     tickDurationMinutes: 1,
 

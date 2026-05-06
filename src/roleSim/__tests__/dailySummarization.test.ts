@@ -1,7 +1,7 @@
 import { vi } from "vitest";
 import type { NpcMemoryManager } from "../../memory/NpcMemoryManager.js";
 import type { DynamicGameStateManager } from "../../state/DynamicGameState.js";
-import { formatDayPrefix, summarizeDayMemory } from "../dailySummarization.js";
+import { formatDatePrefix, summarizeDayMemory } from "../dailySummarization.js";
 
 vi.mock("../../models/index.js", async () => {
   const actual = await vi.importActual<typeof import("../../models/index.js")>(
@@ -22,8 +22,7 @@ interface ManagerCalls {
   events: Array<{
     type: string;
     content: string;
-    gameDay: number;
-    gameTime: string;
+    gameDateTime: string;
   }>;
 }
 
@@ -31,8 +30,7 @@ function makeManager(opts?: {
   events?: Array<{
     type: string;
     content: string;
-    gameDay: number;
-    gameTime: string;
+    gameDateTime: string;
   }>;
 }): { manager: NpcMemoryManager; calls: ManagerCalls } {
   const calls: ManagerCalls = { add: [], events: opts?.events ?? [] };
@@ -41,7 +39,7 @@ function makeManager(opts?: {
       calls.add.push(params);
       return params;
     },
-    getForDayByTypes: async () => calls.events,
+    getForDateByTypes: async () => calls.events,
   } as unknown as NpcMemoryManager;
   return { manager, calls };
 }
@@ -58,31 +56,23 @@ function makeDgsm(opts?: {
   } as unknown as DynamicGameStateManager;
 }
 
-describe("formatDayPrefix", () => {
-  test("returns ISO date when startDate is a valid YYYY-MM-DD", () => {
-    expect(formatDayPrefix(1, "1923-10-17")).toBe("[1923-10-17]");
-    expect(formatDayPrefix(3, "1923-10-17")).toBe("[1923-10-19]");
-  });
-
-  test("falls back to [Day N] when startDate is missing", () => {
-    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
-    expect(formatDayPrefix(3)).toBe("[Day 3]");
-    expect(warn).toHaveBeenCalled();
-    warn.mockRestore();
-  });
-
-  test("falls back to [Day N] when startDate is invalid", () => {
-    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
-    expect(formatDayPrefix(2, "not-a-date")).toBe("[Day 2]");
-    expect(warn).toHaveBeenCalled();
-    warn.mockRestore();
+describe("formatDatePrefix", () => {
+  test("returns ISO date prefix when gameDate is a valid YYYY-MM-DD", () => {
+    expect(formatDatePrefix("1923-10-17")).toBe("[1923-10-17]");
+    expect(formatDatePrefix("1923-10-19")).toBe("[1923-10-19]");
   });
 });
 
 describe("summarizeDayMemory", () => {
   test("skips dead NPCs", async () => {
     const { manager, calls } = makeManager({
-      events: [{ type: "event", content: "x", gameDay: 1, gameTime: "08:00" }],
+      events: [
+        {
+          type: "event",
+          content: "x",
+          gameDateTime: "1923-10-17T08:00:00",
+        },
+      ],
     });
     await summarizeDayMemory({
       dgsm: makeDgsm({ alive: false }),
@@ -90,7 +80,7 @@ describe("summarizeDayMemory", () => {
       sessionId: "s",
       moduleId: "m",
       npcId: "npc1",
-      gameDay: 1,
+      gameDate: "1923-10-17",
       language: "en",
     });
     expect(calls.add.length).toBe(0);
@@ -104,7 +94,7 @@ describe("summarizeDayMemory", () => {
       sessionId: "s",
       moduleId: "m",
       npcId: "npc1",
-      gameDay: 1,
+      gameDate: "1923-10-17",
       language: "en",
     });
     expect(calls.add.length).toBe(0);
@@ -116,8 +106,7 @@ describe("summarizeDayMemory", () => {
         {
           type: "event",
           content: "found a clue",
-          gameDay: 1,
-          gameTime: "10:00",
+          gameDateTime: "1923-10-17T10:00:00",
         },
       ],
     });
@@ -127,15 +116,14 @@ describe("summarizeDayMemory", () => {
       sessionId: "s",
       moduleId: "m",
       npcId: "npc1",
-      gameDay: 1,
+      gameDate: "1923-10-17",
       language: "en",
-      startDate: "1923-10-17",
     });
     expect(calls.add.length).toBe(1);
     expect(calls.add[0]).toMatchObject({
       type: "summary",
       content: "Mock summary",
-      gameTime: "23:59",
+      gameDateTime: "1923-10-17T23:59:00",
     });
   });
 });

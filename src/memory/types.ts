@@ -102,8 +102,7 @@ export interface EnsureMapSnapshotParams {
   npcId: string;
   sessionId: string;
   moduleId: string;
-  gameDay: number;
-  gameTime: string;
+  gameDateTime: string;
   location?: string;
   dgsm: import("../state/DynamicGameState.js").DynamicGameStateManager;
   seed?: KnownMapSeed;
@@ -113,8 +112,7 @@ export interface RefreshMapSnapshotParams {
   npcId: string;
   sessionId: string;
   moduleId: string;
-  gameDay: number;
-  gameTime: string;
+  gameDateTime: string;
   location?: string;
   dgsm: import("../state/DynamicGameState.js").DynamicGameStateManager;
 }
@@ -147,8 +145,7 @@ export interface AddMemoryParams {
   moduleId: string;
   type: NpcMemoryType;
   content: string;
-  gameDay: number;
-  gameTime: string;
+  gameDateTime: string;
   location?: string;
   metadata?: Record<string, any>;
   baseImportanceOverride?: number;
@@ -161,9 +158,9 @@ export interface QueryMemoryParams {
   query: string;
   filters?: {
     types?: NpcMemoryType[];
-    gameDay?: number;
+    gameDate?: string;
     /** When set, ephemeral types (event/witness/plan) are restricted to this day only. */
-    currentGameDay?: number;
+    currentGameDate?: string;
     location?: string;
     tags?: string[];
     minImportance?: number;
@@ -176,8 +173,8 @@ export interface GetContextParams {
   sessionId: string;
   purpose: ContextPurpose;
   query?: string;
-  /** Current game day — ephemeral memories (event/witness/plan) are restricted to this day. */
-  currentGameDay?: number;
+  /** Current game date — ephemeral memories (event/witness/plan) are restricted to this date. */
+  currentGameDate?: string;
 }
 
 export interface TriggerReasoningParams {
@@ -186,8 +183,7 @@ export interface TriggerReasoningParams {
   moduleId: string;
   trigger: ReasoningTrigger;
   context?: string;
-  gameDay: number;
-  gameTime: string;
+  gameDateTime: string;
 }
 
 // ===== Belief Reasoning Output =====

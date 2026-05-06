@@ -9,7 +9,7 @@
     "inventory": "物品栏",
     "zoomToLocation": "定位到地图",
     "noProfileInfo": "暂无档案信息",
-    "timelineTitle": "第 {{day}} 天时间线",
+    "timelineTitle": "{{date}} 时间线",
     "timelineLoading": "加载时间线中…",
     "timelineEmpty": "今天还没有记录到行动或目击",
     "timelineError": "加载时间线失败",
@@ -28,7 +28,7 @@
     "longTermIntent": "长期意图"
   },
   "clock": {
-    "day": "第 {{day}} 天"
+    "date": "{{date}}"
   },
   "control": {
     "stepOneTick": "推进一步",
@@ -68,9 +68,9 @@
     "filtersActive": "已启用筛选",
     "show": "展开",
     "hide": "收起",
-    "startDay": "起始日",
+    "startDate": "起始日期",
     "startTime": "起始时间",
-    "endDay": "结束日",
+    "endDate": "结束日期",
     "endTime": "结束时间",
     "character": "角色",
     "allCharacters": "所有角色",
@@ -83,7 +83,7 @@
   },
   "events": {
     "noEvents": "暂无事件",
-    "day": "第 {{day}} 天",
+    "date": "{{date}}",
     "died": "{{name}} 已死亡",
     "movedTo": "{{name}} 移动至 {{location}}",
     "unknown": "未知",
@@ -124,7 +124,6 @@
     "deleteSimulation": "删除模拟",
     "deleteFailed": "删除模拟失败",
     "bulkDeleteFailed": "有 {{count}} 个模拟删除失败",
-    "day": "第 {{day}} 天",
     "ticks": "{{count}} 步",
     "unknownModule": "未知模组"
   }

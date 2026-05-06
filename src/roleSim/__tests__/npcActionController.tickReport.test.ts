@@ -37,7 +37,7 @@ function makeEngine(opts?: {
       return {
         id: "h1",
         characterId: "x",
-        submittedAt: { day: 1, tickTime: "00:00" },
+        submittedAt: "1923-10-17T00:00:00",
       };
     },
     cancelAction: () => {
@@ -102,8 +102,7 @@ function makeDgsm(
       };
     },
     getScene: () => null,
-    getGameDay: () => 1,
-    getTickTime: () => "08:00",
+    getGameDateTime: () => "1923-10-17T08:00:00",
   } as unknown as DynamicGameStateManager;
 }
 
@@ -111,6 +110,7 @@ function makeMemory(): NpcMemoryManager {
   return {
     getAllForDay: async () => [],
     getForDayByTypes: async () => [],
+    getForDateByTypes: async () => [],
     findLatestByType: async () => null,
   } as unknown as NpcMemoryManager;
 }
@@ -140,7 +140,7 @@ function makeAgent(): {
 
 function emptyReport(): TickReport {
   return {
-    tickTime: { day: 1, tickTime: "08:00" },
+    gameDateTime: "1923-10-17T08:00:00",
     commits: [],
     interruptions: [],
     cancellations: [],
@@ -217,7 +217,7 @@ describe("NpcActionController.processTickReport", () => {
         handle: {
           id: "h1",
           characterId: "npc1",
-          submittedAt: { day: 1, tickTime: "08:00" },
+          submittedAt: "1923-10-17T08:00:00",
         },
         stepGroupId: "g1",
         stepIndex: 0,
@@ -226,7 +226,7 @@ describe("NpcActionController.processTickReport", () => {
         actionText: "old",
         definitionId: "action",
         executionSceneId: "SCN1",
-        submittedAt: { day: 1, tickTime: "08:00" },
+        submittedAt: "1923-10-17T08:00:00",
         status: "active",
       },
     ]);

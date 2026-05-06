@@ -13,6 +13,7 @@ import { getPrismaClient } from "../shared/agents/memory/database/prismaClient.j
 import { resolveEmailId } from "../shared/agents/memory/database/userContext.js";
 import type { DynamicGameState } from "./DynamicGameState.js";
 import { DynamicGameStateManager } from "./DynamicGameState.js";
+import { makeDateTime } from "./gameClock.js";
 import { importModule } from "./moduleImporter.js";
 import { createSession, initRuntime, loadModule } from "./moduleLoader.js";
 
@@ -62,6 +63,11 @@ export async function initializeCompleteDynamicGameState(
     );
     return null;
   }
+  if (!moduleData.setup) {
+    throw new Error(
+      `Module "${moduleId}" missing required ModuleSetup.startDate.`
+    );
+  }
 
   // Step 2: Create session + bootstrap NPC memory
   const embedClient = new EmbeddingClient(
@@ -77,23 +83,21 @@ export async function initializeCompleteDynamicGameState(
   });
 
   // Parse initial game time from module setup data
-  let gameDay = 1;
   let timeOfDay = "08:00";
   const setupData = moduleData.setup as Record<string, any> | null;
   if (setupData?.initialGameTime) {
     const parsed = parseInitialGameTime(setupData.initialGameTime);
     if (parsed) {
-      if (parsed.gameDay) gameDay = parsed.gameDay;
       timeOfDay = parsed.timeOfDay;
     }
   }
+  const gameDateTime = makeDateTime(moduleData.setup.startDate, timeOfDay);
 
   // Step 3: Build runtime state
   const state = initRuntime({
     sessionId: params.sessionId,
     moduleData,
-    gameDay,
-    timeOfDay,
+    gameDateTime,
   });
 
   const dgsm = new DynamicGameStateManager(state);
@@ -135,8 +139,7 @@ export async function initializeCompleteDynamicGameState(
         npcId: npc.id,
         sessionId: params.sessionId,
         moduleId,
-        gameDay,
-        gameTime: timeOfDay,
+        gameDateTime,
         location,
         dgsm,
         seed: seedWithCurrentLocation,
@@ -146,8 +149,7 @@ export async function initializeCompleteDynamicGameState(
           npcId: npc.id,
           sessionId: params.sessionId,
           moduleId,
-          gameDay,
-          gameTime: timeOfDay,
+          gameDateTime,
           location,
           dgsm,
         });
@@ -164,44 +166,8 @@ export async function initializeCompleteDynamicGameState(
 /**
  * Parse initial game time from string format
  */
-function parseInitialGameTime(
-  value: string
-): { gameDay?: number; timeOfDay: string } | null {
+function parseInitialGameTime(value: string): { timeOfDay: string } | null {
   const trimmed = value.trim();
-
-  // Match format: "Day X, HH:MM" or "Day X HH:MM" (case insensitive, comma optional)
-  const dayMatchWithComma = /^day\s+(\d+),\s*(\d{1,2}):(\d{2})$/i.exec(trimmed);
-  if (dayMatchWithComma) {
-    const gameDay = Number(dayMatchWithComma[1]);
-    const hours = dayMatchWithComma[2];
-    const minutes = dayMatchWithComma[3];
-    const timeOfDay = `${hours.padStart(2, "0")}:${minutes}`;
-    if (
-      Number.isFinite(gameDay) &&
-      gameDay > 0 &&
-      isValidTimeOfDay(timeOfDay)
-    ) {
-      return { gameDay, timeOfDay };
-    }
-    return null;
-  }
-
-  // Match format: "Day X HH:MM" (without comma, case insensitive)
-  const dayMatch = /^day\s+(\d+)\s+(\d{1,2}):(\d{2})$/i.exec(trimmed);
-  if (dayMatch) {
-    const gameDay = Number(dayMatch[1]);
-    const hours = dayMatch[2];
-    const minutes = dayMatch[3];
-    const timeOfDay = `${hours.padStart(2, "0")}:${minutes}`;
-    if (
-      Number.isFinite(gameDay) &&
-      gameDay > 0 &&
-      isValidTimeOfDay(timeOfDay)
-    ) {
-      return { gameDay, timeOfDay };
-    }
-    return null;
-  }
 
   // Match format: "HH:MM" only
   if (isValidTimeOfDay(trimmed)) {

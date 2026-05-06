@@ -2,39 +2,17 @@
 //
 // Standalone daily summarization. Replaces the legacy
 // NPCPlanningAgent.summarizeAllNpcDayMemory + summarizeDayMemory. Slimmed per
-// Decision 25: summary-only output, ISO YYYY-MM-DD prefix when
-// ModuleSetup.startDate is set, "[Day N]" fallback otherwise. No imports from
+// Decision 25: summary-only output with ISO YYYY-MM-DD prefix. No imports from
 // src/planning/ — that module is being deleted.
 
 import { parseJsonResponse } from "../engine/shared/jsonParse.js";
 import type { NpcMemoryManager } from "../memory/NpcMemoryManager.js";
 import { ModelClass, generateText } from "../models/index.js";
 import type { DynamicGameStateManager } from "../state/DynamicGameState.js";
+import { makeDateTime, timePart } from "../state/gameClock.js";
 
-/**
- * Resolve in-world calendar date for a given gameDay.
- * Returns "[YYYY-MM-DD]" when ModuleSetup.startDate is a valid ISO 8601 date,
- * "[Day N]" otherwise.
- */
-export function formatDayPrefix(gameDay: number, startDate?: string): string {
-  if (!startDate) {
-    console.warn(
-      `[dailySummarization] ModuleSetup.startDate not set; falling back to "[Day ${gameDay}]" prefix. ` +
-        `Add a startDate field to enable ISO calendar dating.`
-    );
-    return `[Day ${gameDay}]`;
-  }
-  const start = new Date(startDate);
-  if (Number.isNaN(start.getTime())) {
-    console.warn(
-      `[dailySummarization] startDate "${startDate}" is not a valid ISO 8601 date ` +
-        `(expected YYYY-MM-DD); falling back to "[Day ${gameDay}]"`
-    );
-    return `[Day ${gameDay}]`;
-  }
-  const result = new Date(start);
-  result.setUTCDate(result.getUTCDate() + (gameDay - 1));
-  return `[${result.toISOString().slice(0, 10)}]`;
+export function formatDatePrefix(gameDate: string): string {
+  return `[${gameDate}]`;
 }
 
 interface SummaryItem {
@@ -45,7 +23,7 @@ interface SummaryItem {
 function buildSummaryPrompt(params: {
   npcName: string;
   npcProfile: string;
-  gameDay: number;
+  gameDate: string;
   dayPrefix: string;
   eventLog: string;
   language: string;
@@ -73,7 +51,7 @@ Return JSON only. Write content in ${lang}.
   const userPrompt = `## You are ${params.npcName}
 ${params.npcProfile}
 
-## Today's Events (Day ${params.gameDay})
+## Today's Events (${params.gameDate})
 ${params.eventLog}`;
 
   return { systemPrompt, userPrompt };
@@ -85,16 +63,15 @@ export async function summarizeDayMemory(params: {
   sessionId: string;
   moduleId: string;
   npcId: string;
-  gameDay: number;
+  gameDate: string;
   language: string;
-  startDate?: string;
 }): Promise<void> {
   if (!params.dgsm.isNpcAlive(params.npcId)) return;
 
-  const events = await params.memoryManager.getForDayByTypes(
+  const events = await params.memoryManager.getForDateByTypes(
     params.npcId,
     params.sessionId,
-    params.gameDay,
+    params.gameDate,
     ["event", "witness"]
   );
   if (events.length === 0) return;
@@ -104,9 +81,9 @@ export async function summarizeDayMemory(params: {
     .npcCharacters.find((n) => n.id === params.npcId);
   if (!npc) return;
 
-  const dayPrefix = formatDayPrefix(params.gameDay, params.startDate);
+  const dayPrefix = formatDatePrefix(params.gameDate);
   const eventLog = events
-    .map((e) => `- [${e.gameTime}] (${e.type}) ${e.content}`)
+    .map((e) => `- [${timePart(e.gameDateTime)}] (${e.type}) ${e.content}`)
     .join("\n");
 
   const profileBits: string[] = [npc.name];
@@ -116,13 +93,15 @@ export async function summarizeDayMemory(params: {
   const { systemPrompt, userPrompt } = buildSummaryPrompt({
     npcName: npc.name,
     npcProfile: profileBits.join(", "),
-    gameDay: params.gameDay,
+    gameDate: params.gameDate,
     dayPrefix,
     eventLog,
     language: params.language,
   });
 
-  console.log(`[dailySummarization] 📝 Day ${params.gameDay} for ${npc.name}`);
+  console.log(
+    `[dailySummarization] summarizing ${params.gameDate} for ${npc.name}`
+  );
   const response = await generateText({
     customSystemPrompt: systemPrompt,
     context: userPrompt,
@@ -149,9 +128,8 @@ export async function summarizeDayMemory(params: {
         moduleId: params.moduleId,
         type: "summary",
         content: m.content,
-        gameDay: params.gameDay,
-        gameTime: "23:59",
-        metadata: { importance: m.importance },
+        gameDateTime: makeDateTime(params.gameDate, "23:59"),
+        metadata: { importance: m.importance, gameDate: params.gameDate },
       })
     )
   );
@@ -162,12 +140,9 @@ export async function summarizeAllNpcDayMemory(params: {
   memoryManager: NpcMemoryManager;
   sessionId: string;
   moduleId: string;
-  gameDay: number;
+  gameDate: string;
   language: string;
 }): Promise<void> {
-  const startDate = params.dgsm.getState().moduleSetup?.startDate as
-    | string
-    | undefined;
   const npcs = params.dgsm.getSimulatedNpcs();
   // TODO(post-Phase-F): rate-limit when npcs.length is large. Promise.all
   // fires N concurrent LLM calls — risk of hitting Anthropic RPM limits on
@@ -179,7 +154,6 @@ export async function summarizeAllNpcDayMemory(params: {
       summarizeDayMemory({
         ...params,
         npcId: npc.id,
-        startDate,
       })
     )
   );

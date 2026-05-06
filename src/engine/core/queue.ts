@@ -54,11 +54,8 @@ export class Queue {
     const queued = [...this.steps.values()]
       .filter((s) => s.characterId === characterId && s.status === "queued")
       .sort((a, b) => {
-        if (a.submittedAt.day !== b.submittedAt.day) {
-          return a.submittedAt.day - b.submittedAt.day;
-        }
-        if (a.submittedAt.tickTime !== b.submittedAt.tickTime) {
-          return a.submittedAt.tickTime.localeCompare(b.submittedAt.tickTime);
+        if (a.submittedAt !== b.submittedAt) {
+          return a.submittedAt.localeCompare(b.submittedAt);
         }
         return a.stepIndex - b.stepIndex;
       });
@@ -71,10 +68,7 @@ export class Queue {
       const dexA = this.dexByActor.get(a.characterId) ?? 0;
       const dexB = this.dexByActor.get(b.characterId) ?? 0;
       if (dexA !== dexB) return dexB - dexA;
-      if (a.submittedAt.day !== b.submittedAt.day) {
-        return a.submittedAt.day - b.submittedAt.day;
-      }
-      return a.submittedAt.tickTime.localeCompare(b.submittedAt.tickTime);
+      return a.submittedAt.localeCompare(b.submittedAt);
     });
   }
 

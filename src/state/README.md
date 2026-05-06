@@ -22,7 +22,7 @@ import { loadModule, createSession, initRuntime } from "./moduleLoader.js";
 
 const moduleData = await loadModule(prisma, moduleId);
 await createSession(prisma, { sessionId, moduleId, moduleData, embedClient });
-const state = initRuntime({ sessionId, moduleData, gameDay: 1, timeOfDay: "08:00" });
+const state = initRuntime({ sessionId, moduleData, gameDateTime: "1923-10-17T08:00:00" });
 const manager = new DynamicGameStateManager(state);
 ```
 

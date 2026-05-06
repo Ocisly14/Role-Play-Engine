@@ -201,8 +201,7 @@ model NpcMemory {
   metadata       Json?
   tags           String[]
 
-  gameDay        Int           @map("game_day")
-  gameTime       String        @map("game_time")
+  gameDateTime   String        @map("game_datetime")
   location       String?
 
   importance     Float         @default(1.0)
@@ -220,7 +219,7 @@ model NpcMemory {
 
   @@index([sessionId, npcId])
   @@index([sessionId, npcId, type])
-  @@index([sessionId, npcId, gameDay])
+  @@index([sessionId, npcId, gameDateTime])
   @@index([sessionId, createdAt])
   @@map("npc_memories")
 }
@@ -243,8 +242,7 @@ model SimulationEvent {
   id          String   @id @default(uuid())
   sessionId   String   @map("session_id")
   tick        Int
-  gameDay     Int      @map("game_day")
-  gameTime    String   @map("game_time")
+  gameDateTime String   @map("game_datetime")
   type        String
   actorNpcId  String   @map("actor_npc_id")
   targetNpcId String?  @map("target_npc_id")
@@ -256,7 +254,7 @@ model SimulationEvent {
 
   @@index([sessionId])
   @@index([sessionId, type])
-  @@index([sessionId, gameDay])
+  @@index([sessionId, gameDateTime])
   @@map("simulation_events")
 }
 

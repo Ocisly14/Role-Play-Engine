@@ -16,8 +16,7 @@ export interface SimulationViewState {
   focusedBuildingId: string | null;
   focusedSubSceneId: string | null;
   selectedNpcId: string | null;
-  gameDay: number;
-  timeOfDay: string;
+  gameDateTime: string;
   weather: string;
   simulationState: SimulationStatus["state"];
   moduleName: string | null;
@@ -42,8 +41,7 @@ export function useSimulationState(sessionId: string | null) {
     focusedBuildingId: null,
     focusedSubSceneId: null,
     selectedNpcId: null,
-    gameDay: 1,
-    timeOfDay: "08:00",
+    gameDateTime: "1900-01-01T08:00:00",
     weather: "clear",
     simulationState: "paused",
     moduleName: null,
@@ -81,8 +79,7 @@ export function useSimulationState(sessionId: string | null) {
           topology,
           npcPositions: positions,
           npcStatuses: statuses,
-          gameDay: status.currentDay,
-          timeOfDay: status.currentTime,
+          gameDateTime: status.currentDateTime,
           weather: status.weather ?? "clear",
           simulationState: status.state,
           moduleName: status.moduleName ?? null,
@@ -108,8 +105,7 @@ export function useSimulationState(sessionId: string | null) {
       const newState = { ...prev };
 
       // Update game time from all events (except transient meta events)
-      if (event.gameDay) newState.gameDay = event.gameDay;
-      if (event.gameTime) newState.timeOfDay = event.gameTime;
+      if (event.gameDateTime) newState.gameDateTime = event.gameDateTime;
       if (typeof event.tick === "number") {
         newState.displayTick = Math.max(prev.displayTick, event.tick);
       }
@@ -263,8 +259,7 @@ export function useSimulationState(sessionId: string | null) {
         ...prev,
         npcPositions: positions,
         npcStatuses: statuses,
-        gameDay: status.currentDay,
-        timeOfDay: status.currentTime,
+        gameDateTime: status.currentDateTime,
         weather: status.weather ?? "clear",
         simulationState: status.state,
         displayTick: status.ticksExecuted,

@@ -42,6 +42,9 @@ Forming a belief from observation:
 Recording a plan:
 { "tool": "writeMemory", "type": "plan", "content": "Tomorrow morning, head to the harbor before anyone notices I'm gone." }
 
+Writing a dated summary-style memory:
+{ "tool": "writeMemory", "type": "summary", "content": "[1923-10-17] Today I realized Smith is afraid of the harbor." }
+
 Recording a discovered location:
 { "tool": "writeMemory", "type": "map", "mapAdd": { "sceneNames": ["abandoned warehouse"] } }
 `;

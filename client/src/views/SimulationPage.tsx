@@ -563,10 +563,10 @@ export default function SimulationPage({
           <h1>{t("page.title")}</h1>
           <span className="sim-header-separator">·</span>
           <span className="sim-header-info font-bold text-amber-700">
-            {t("clock.day", { day: state.gameDay })}
+            {t("clock.date", { date: state.gameDateTime.slice(0, 10) })}
           </span>
           <span className="sim-header-info text-slate-600">
-            {state.timeOfDay}
+            {state.gameDateTime.slice(11, 16)}
           </span>
           <span className="sim-header-separator">·</span>
           <span className="sim-header-info text-slate-500">
@@ -749,8 +749,7 @@ export default function SimulationPage({
 
       <SidePanel
         sessionId={sessionId ?? null}
-        gameDay={state.gameDay}
-        timeOfDay={state.timeOfDay}
+        gameDateTime={state.gameDateTime}
         simulationState={state.simulationState}
         npcStatuses={state.npcStatuses}
         displayTick={state.displayTick}

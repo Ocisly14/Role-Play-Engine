@@ -145,10 +145,10 @@ export async function getEvents(req: Request, res: Response) {
       {
         type: req.query.type as string | undefined,
         npcId: req.query.npcId as string | undefined,
-        day: parseOptionalInt(req.query.day),
-        startDay: parseOptionalInt(req.query.startDay),
+        gameDate: req.query.gameDate as string | undefined,
+        startDate: req.query.startDate as string | undefined,
         startTime: req.query.startTime as string | undefined,
-        endDay: parseOptionalInt(req.query.endDay),
+        endDate: req.query.endDate as string | undefined,
         endTime: req.query.endTime as string | undefined,
         maxTick: parseOptionalInt(req.query.maxTick),
         parentLocationId: req.query.parentLocationId as string | undefined,
@@ -175,7 +175,7 @@ export async function getNpcTimeline(req: Request, res: Response) {
       req.params.id,
       npcId,
       {
-        gameDay: parseOptionalInt(req.query.gameDay),
+        gameDate: req.query.gameDate as string | undefined,
         endTime: req.query.endTime as string | undefined,
       }
     );

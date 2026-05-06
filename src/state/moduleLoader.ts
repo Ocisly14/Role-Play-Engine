@@ -14,6 +14,7 @@ import type { ScriptedEvent } from "../engine/scriptedEvents/types.js";
 import { NpcMemoryManager } from "../memory/NpcMemoryManager.js";
 import type { EmbeddingClient } from "../rag/embedding.js";
 import type { DynamicGameState } from "./DynamicGameState.js";
+import { ISO_DATE_RE, makeDateTime } from "./gameClock.js";
 import {
   buildTopology,
   enrichTopologyWithInteriorScenes,
@@ -23,13 +24,13 @@ import type {
   JunctionNode,
   RoadNode,
   TownTopology,
-  TransportEdge,
 } from "./topologyTypes.js";
 import type {
   DynamicNPCProfile,
   DynamicScene,
   ModuleSetup,
   ScenarioOutline,
+  TransportEdge,
 } from "./types.js";
 
 /** Default disk location for module source files. */
@@ -87,6 +88,7 @@ export async function loadModule(
     where: { moduleId },
   });
   const setup = (setupRow?.data as ModuleSetup) ?? null;
+  validateModuleSetupStartDate(mod.moduleId, setup);
 
   // Load all scene entries
   const sceneRows = await prisma.moduleScene.findMany({
@@ -202,6 +204,12 @@ export async function createSession(
   }
 ): Promise<void> {
   const { sessionId, moduleId, moduleData, embedClient, emailId } = params;
+  const startDate = moduleData.setup?.startDate;
+  if (!startDate) {
+    throw new Error(
+      `Module "${moduleId}" missing required ModuleSetup.startDate. Add a "startDate": "YYYY-MM-DD" field (e.g. "1923-10-15") to the module's setup section.`
+    );
+  }
 
   // Upsert session
   await prisma.session.upsert({
@@ -246,8 +254,7 @@ export async function createSession(
         moduleId,
         type: entry.type as any,
         content: entry.content.trim(),
-        gameDay: 1,
-        gameTime: "00:00",
+        gameDateTime: makeDateTime(startDate, "00:00"),
         metadata: entry.metadata,
       });
     }
@@ -281,10 +288,9 @@ export function filterNpcsByPolicy(
 export function initRuntime(params: {
   sessionId: string;
   moduleData: ModuleData;
-  gameDay: number;
-  timeOfDay: string;
+  gameDateTime: string;
 }): DynamicGameState {
-  const { sessionId, moduleData, gameDay, timeOfDay } = params;
+  const { sessionId, moduleData, gameDateTime } = params;
 
   // Filter NPCs by injection policy (only daily_sim + investigator_sim)
   const simulatedNpcs = filterNpcsByPolicy(
@@ -492,13 +498,14 @@ export function initRuntime(params: {
     scenes: moduleData.scenes,
     junctions: moduleData.junctions,
     roads: moduleData.roads,
-    gameDay,
-    timeOfDay,
+    gameDateTime,
     npcCharacters: simulatedNpcs,
     moduleName: moduleData.moduleName,
     moduleSetup: moduleSetupWithInit,
     scenarioOutlines: moduleData.scenarioOutlines,
     scopedFeatureStates: { scene: {}, region: {}, character: {}, global: {} },
+    scriptedEventStates: {},
+    environmentReadings: {},
     npcStats,
     npcInventories,
     npcRelationshipGraph,
@@ -512,4 +519,20 @@ export function initRuntime(params: {
     loadedAt: new Date(),
     lastUpdated: new Date(),
   };
+}
+
+function validateModuleSetupStartDate(
+  moduleId: string,
+  setup: ModuleSetup | null
+): void {
+  if (!setup?.startDate) {
+    throw new Error(
+      `Module "${moduleId}" missing required ModuleSetup.startDate. Add a "startDate": "YYYY-MM-DD" field (e.g. "1923-10-15") to the module's setup section.`
+    );
+  }
+  if (!ISO_DATE_RE.test(setup.startDate)) {
+    throw new Error(
+      `Module "${moduleId}" has invalid ModuleSetup.startDate "${setup.startDate}". Expected ISO date "YYYY-MM-DD" (e.g. "1923-10-15").`
+    );
+  }
 }

@@ -17,7 +17,7 @@ describe("Applier — environment aggregation (Pass 1.5)", () => {
         sourceFeatureId: "fire",
       },
     ];
-    applier.flush(changes, { tickTime: "08:00", day: 1 });
+    applier.flush(changes, "1923-10-17T08:00:00");
     const reading = d.getEnvironmentReading("warehouse");
     expect(reading.temperature).toBe(320);
     expect(reading.illumination).toBe(DEFAULT_ENVIRONMENT_READING.illumination);
@@ -67,7 +67,7 @@ describe("Applier — environment aggregation (Pass 1.5)", () => {
         sourceFeatureId: "sun",
       },
     ];
-    applier.flush(changes, { tickTime: "08:00", day: 1 });
+    applier.flush(changes, "1923-10-17T08:00:00");
     const reading = d.getEnvironmentReading("warehouse");
     expect(reading.temperature).toBe(320);
     expect(reading.illumination).toBe(5);
@@ -95,7 +95,7 @@ describe("Applier — environment aggregation (Pass 1.5)", () => {
         sourceFeatureId: "storm",
       },
     ];
-    applier.flush(changes, { tickTime: "08:00", day: 1 });
+    applier.flush(changes, "1923-10-17T08:00:00");
     const reading = d.getEnvironmentReading("outdoor");
     expect(reading.illumination).toBe(2);
   });
@@ -114,7 +114,7 @@ describe("Applier — environment aggregation (Pass 1.5)", () => {
           sourceFeatureId: "fire",
         },
       ],
-      { tickTime: "08:00", day: 1 }
+      "1923-10-17T08:00:00"
     );
     const reading = d.getEnvironmentReading("untouched-location");
     expect(reading).toEqual(DEFAULT_ENVIRONMENT_READING);
@@ -151,7 +151,7 @@ describe("Applier — environment aggregation (Pass 1.5)", () => {
         sourceFeatureId: "combat",
       },
     ];
-    applier.flush(changes, { tickTime: "08:00", day: 1 });
+    applier.flush(changes, "1923-10-17T08:00:00");
     const reading = d.getEnvironmentReading("warehouse");
     // remove wins over add when both present in same flush
     expect(reading.airborneHazards).toEqual(["smoke"]);
@@ -179,7 +179,7 @@ describe("Applier — environment aggregation (Pass 1.5)", () => {
           sourceFeatureId: "fire",
         },
       ],
-      { tickTime: "08:00", day: 1 }
+      "1923-10-17T08:00:00"
     );
     expect(d.getEnvironmentReading("warehouse").temperature).toBe(320);
 
@@ -194,7 +194,7 @@ describe("Applier — environment aggregation (Pass 1.5)", () => {
           sourceFeatureId: "weather",
         },
       ],
-      { tickTime: "08:01", day: 1 }
+      "1923-10-17T08:01:00"
     );
     const reading = d.getEnvironmentReading("warehouse");
     // Previous +300 is GONE; only current -10 counts (plus baseline 20)

@@ -32,8 +32,7 @@ function createDgsm(): DynamicGameStateManager {
   const state = initialDynamicGameState({
     sessionId: "session",
     moduleName: "module",
-    gameDay: 1,
-    timeOfDay: "08:00",
+    gameDateTime: "1923-10-17T08:00:00",
   });
 
   state.scenes.set(

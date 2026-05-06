@@ -269,8 +269,8 @@ export function SimulationSelectorModal({
                     </span>
                   </div>
                   <div className="text-sm text-gray-500 mt-1">
-                    {t("selector.day", { day: sim.currentDay })} &middot;{" "}
-                    {sim.currentTime} &middot;{" "}
+                    {sim.currentDateTime.slice(0, 10)} &middot;{" "}
+                    {sim.currentDateTime.slice(11, 16)} &middot;{" "}
                     {t("selector.ticks", { count: sim.ticksExecuted })}
                   </div>
                 </button>

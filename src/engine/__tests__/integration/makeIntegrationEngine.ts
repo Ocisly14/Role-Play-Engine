@@ -30,8 +30,8 @@ export interface IntegrationEngineOptions {
   features?: WorldFeature[];
   /** Pre-populate DGSM with module setup (weather presets etc.). */
   moduleSetup?: ModuleSetup;
-  /** Initial game time (default day 1, 08:00). */
-  initialTime?: { day: number; tickTime: string };
+  /** Initial game datetime. */
+  initialTime?: string;
   /** Tick duration in minutes (default 1). */
   tickDurationMinutes?: number;
 }
@@ -51,9 +51,8 @@ export function makeIntegrationEngine(
   if (opts.moduleSetup) {
     dgsm.loadWorldData({ moduleSetup: opts.moduleSetup });
   }
-  const initial = opts.initialTime ?? { day: 1, tickTime: "08:00" };
-  dgsm.setGameDay(initial.day);
-  dgsm.setTickTime(initial.tickTime);
+  const initial = opts.initialTime ?? "1923-10-17T08:00:00";
+  dgsm.setGameDateTime(initial);
 
   const engine = createTickEngine({
     dgsm,

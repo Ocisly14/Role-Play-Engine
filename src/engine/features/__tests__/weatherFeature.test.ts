@@ -79,6 +79,7 @@ describe("weatherFeature internal invariants", () => {
     ];
     dgsm.loadWorldData({
       moduleSetup: {
+        startDate: "1923-10-17",
         featureInit: { weather: presets },
       },
     });
@@ -134,7 +135,10 @@ describe("weatherFeature internal invariants", () => {
       { regionId: "town", weatherType: "clear", intensity: 0 },
     ];
     dgsm.loadWorldData({
-      moduleSetup: { featureInit: { weather: presets } },
+      moduleSetup: {
+        startDate: "1923-10-15",
+        featureInit: { weather: presets },
+      },
     });
     const ctx = makeWeatherCtx(dgsm);
     const changes = weatherFeature.init?.(ctx) ?? [];
@@ -160,6 +164,7 @@ describe("weatherFeature internal invariants", () => {
       seedTownAndForest(dgsm);
       dgsm.loadWorldData({
         moduleSetup: {
+          startDate: "1923-10-17",
           featureInit: {
             weather: [{ regionId: "town", weatherType, intensity }],
           },

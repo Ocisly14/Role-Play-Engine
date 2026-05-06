@@ -16,6 +16,7 @@ import {
   makeBlockedConnectionKey,
   resolveBlockedConnectionNodeRef,
 } from "./blockedConnections.js";
+import { addMinutes, datePart, isSameDay, makeDateTime } from "./gameClock.js";
 import type {
   CharacterPosition,
   JunctionNode,
@@ -53,8 +54,7 @@ export interface DynamicGameState {
   roads: Map<string, RoadNode>;
 
   // === Time ===
-  gameDay: number; // Day number in game
-  timeOfDay: string; // Game time in HH:MM format
+  gameDateTime: string; // In-game ISO datetime, YYYY-MM-DDTHH:MM:SS
 
   // === Characters ===
   npcCharacters: DynamicNPCProfile[];
@@ -118,20 +118,18 @@ export interface DynamicGameState {
 
 /**
  * Create initial DynamicGameState with provided runtime data.
- * Character, gameDay, and timeOfDay should be loaded from DB or user selection.
+ * Character and gameDateTime should be loaded from DB or module setup.
  */
 export const initialDynamicGameState = (params: {
   sessionId: string;
   moduleName: string;
-  gameDay?: number;
-  timeOfDay?: string;
+  gameDateTime?: string;
 }): DynamicGameState => ({
   sessionId: params.sessionId,
   scenes: new Map(),
   junctions: new Map(),
   roads: new Map(),
-  gameDay: params.gameDay ?? 1,
-  timeOfDay: params.timeOfDay ?? "08:00",
+  gameDateTime: params.gameDateTime ?? "1900-01-01T08:00:00",
   npcCharacters: [],
   moduleName: params.moduleName,
   moduleSetup: null,
@@ -350,17 +348,8 @@ export class DynamicGameStateManager {
 
   /**
    * Deserialize state from storage (converts Objects back to Maps, ISO strings back to Dates)
-   * @param data - Serialized state data
-   * @param restoredGameDay - Optional legacy argument (unused)
-   * @param restoredTimeOfDay - Optional legacy argument (unused)
    */
-  static deserialize(
-    data: any,
-    restoredGameDay?: number,
-    restoredTimeOfDay?: string
-  ): DynamicGameState {
-    void restoredGameDay;
-    void restoredTimeOfDay;
+  static deserialize(data: any): DynamicGameState {
     // Convert scenes from object back to Map
     const scenes = new Map<string, DynamicScene>();
     if (data.scenes) {
@@ -442,8 +431,10 @@ export class DynamicGameStateManager {
       sessionId: data.sessionId ?? "",
       moduleName: data.moduleName ?? "",
       moduleSetup: data.moduleSetup ?? null,
-      gameDay: data.gameDay ?? 1,
-      timeOfDay: data.timeOfDay ?? "08:00",
+      gameDateTime:
+        typeof data.gameDateTime === "string"
+          ? data.gameDateTime
+          : makeDateTime(data.moduleSetup?.startDate ?? "1900-01-01", "08:00"),
       npcCharacters: data.npcCharacters ?? [],
       scenarioOutlines: data.scenarioOutlines ?? [],
       scenes,
@@ -768,46 +759,35 @@ export class DynamicGameStateManager {
    */
   updateGameTime(elapsedMinutes: number): {
     dayChanged: boolean;
-    previousDay: number;
+    previousDateTime: string;
   } {
     if (!elapsedMinutes || elapsedMinutes <= 0)
-      return { dayChanged: false, previousDay: this.state.gameDay };
+      return {
+        dayChanged: false,
+        previousDateTime: this.state.gameDateTime,
+      };
 
-    const previousDay = this.state.gameDay;
-
-    // Parse current time "HH:MM"
-    const [hours, minutes] = this.state.timeOfDay.split(":").map(Number);
-
-    // Calculate new time
-    let totalMinutes = hours * 60 + minutes + elapsedMinutes;
-
-    // Handle day overflow (24 hours = 1440 minutes)
-    if (totalMinutes >= 1440) {
-      const daysElapsed = Math.floor(totalMinutes / 1440);
-      this.state.gameDay += daysElapsed;
-      totalMinutes = totalMinutes % 1440;
-      console.log(`A new day has dawned! It is now Day ${this.state.gameDay}`);
+    const previousDateTime = this.state.gameDateTime;
+    this.state.gameDateTime = addMinutes(previousDateTime, elapsedMinutes);
+    if (!isSameDay(previousDateTime, this.state.gameDateTime)) {
+      console.log(
+        `A new day has dawned! It is now ${datePart(this.state.gameDateTime)}`
+      );
     }
-
-    const newHours = Math.floor(totalMinutes / 60);
-    const newMinutes = totalMinutes % 60;
-
-    // Update time in HH:MM format
-    this.state.timeOfDay = `${String(newHours).padStart(2, "0")}:${String(newMinutes).padStart(2, "0")}`;
     this.state.lastUpdated = new Date();
 
-    return { dayChanged: this.state.gameDay !== previousDay, previousDay };
+    return {
+      dayChanged: !isSameDay(this.state.gameDateTime, previousDateTime),
+      previousDateTime,
+    };
   }
 
   /**
    * Set the in-game clock directly.
    * Used by simulation bootstrap paths such as real-time sync alignment.
    */
-  setGameClock(params: { gameDay?: number; timeOfDay: string }): void {
-    if (typeof params.gameDay === "number" && params.gameDay > 0) {
-      this.state.gameDay = params.gameDay;
-    }
-    this.state.timeOfDay = params.timeOfDay;
+  setGameClock(params: { gameDateTime: string }): void {
+    this.state.gameDateTime = params.gameDateTime;
     this.state.lastUpdated = new Date();
   }
 
@@ -1074,21 +1054,12 @@ export class DynamicGameStateManager {
     return this.state.scenes.get(sceneId)?.parentLocationId;
   }
 
-  getGameDay(): number {
-    return this.state.gameDay;
+  getGameDateTime(): string {
+    return this.state.gameDateTime;
   }
 
-  setGameDay(n: number): void {
-    this.state.gameDay = n;
-    this.state.lastUpdated = new Date();
-  }
-
-  getTickTime(): string {
-    return this.state.timeOfDay;
-  }
-
-  setTickTime(s: string): void {
-    this.state.timeOfDay = s;
+  setGameDateTime(value: string): void {
+    this.state.gameDateTime = value;
     this.state.lastUpdated = new Date();
   }
 

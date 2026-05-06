@@ -1,4 +1,5 @@
 import type { DynamicGameStateManager } from "../../state/DynamicGameState.js";
+import { datePart } from "../../state/gameClock.js";
 import type { DynamicNPCProfile, DynamicScene } from "../../state/types.js";
 import type {
   ActionMatch,
@@ -27,8 +28,7 @@ const TERMINAL_STATUSES: ReadonlySet<ScriptedEventStatus> =
 
 export interface EvaluatorContext {
   dgsm: DynamicGameStateManager;
-  gameDay: number;
-  tickTime: GameTime;
+  gameDateTime: string;
   currentTick: number;
   committedActionsThisTick: readonly CharacterAction[];
   getEventState: (eventId: string) => ScriptedEventState | undefined;
@@ -37,7 +37,7 @@ export interface EvaluatorContext {
 export interface RunInput {
   dgsm: DynamicGameStateManager;
   currentTick: number;
-  tickTime: GameTime;
+  gameDateTime: GameTime;
   committedActionsThisTick: readonly CharacterAction[];
 }
 
@@ -166,8 +166,7 @@ export class ScriptedEventRunner {
   private makeEvaluatorContext(input: RunInput): EvaluatorContext {
     return {
       dgsm: input.dgsm,
-      gameDay: input.tickTime.day,
-      tickTime: input.tickTime,
+      gameDateTime: input.gameDateTime,
       currentTick: input.currentTick,
       committedActionsThisTick: input.committedActionsThisTick,
       getEventState: (id) => input.dgsm.getScriptedEventState(id),
@@ -487,8 +486,8 @@ export class ScriptedEventRunner {
           (c) => (c as { featureId?: string }).featureId === pred.featureId
         );
       }
-      case "gameDay": {
-        return cmp(ctx.gameDay, pred.cmp, pred.value);
+      case "gameDate": {
+        return cmpString(datePart(ctx.gameDateTime), pred.cmp, pred.value);
       }
       case "eventStatus": {
         const target = ctx.getEventState(pred.otherEventId);
@@ -572,6 +571,12 @@ export class ScriptedEventRunner {
 }
 
 function cmp(a: number, op: "gte" | "lte" | "eq", b: number): boolean {
+  if (op === "gte") return a >= b;
+  if (op === "lte") return a <= b;
+  return a === b;
+}
+
+function cmpString(a: string, op: "gte" | "lte" | "eq", b: string): boolean {
   if (op === "gte") return a >= b;
   if (op === "lte") return a <= b;
   return a === b;

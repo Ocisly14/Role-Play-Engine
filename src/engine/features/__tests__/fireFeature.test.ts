@@ -59,7 +59,7 @@ function igniteAt(
     handle: {
       id: "h1",
       characterId: "npc-1",
-      submittedAt: { day: 1, tickTime: "08:00" },
+      submittedAt: "1923-10-17T08:00:00",
     },
     stepGroupId: "g1",
     stepIndex: 0,
@@ -69,7 +69,7 @@ function igniteAt(
     definitionId: "ignite",
     executionSceneId: sceneId,
     overlayFields: { fireIntensity: intensity },
-    submittedAt: { day: 1, tickTime: "08:00" },
+    submittedAt: "1923-10-17T08:00:00",
     status: "active",
   };
   const changes =

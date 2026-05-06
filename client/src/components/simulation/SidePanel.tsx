@@ -14,9 +14,9 @@ import { NpcDetail } from "./NpcDetail";
 type SimTabType = "npcs" | "events";
 
 interface EventFilterDraft {
-  startDay: string;
+  startDate: string;
   startTime: string;
-  endDay: string;
+  endDate: string;
   endTime: string;
   npcId: string;
   parentLocationId: string;
@@ -28,9 +28,9 @@ interface EventLocationOption {
 }
 
 const EMPTY_EVENT_FILTER_DRAFT: EventFilterDraft = {
-  startDay: "",
+  startDate: "",
   startTime: "",
-  endDay: "",
+  endDate: "",
   endTime: "",
   npcId: "",
   parentLocationId: "",
@@ -42,27 +42,8 @@ const HIDDEN_EVENT_TYPES = new Set([
   "playback_resumed",
 ]);
 
-function timeToMinutes(hhmm: string): number | null {
-  const [hoursPart, minutesPart] = hhmm.split(":");
-  const hours = Number.parseInt(hoursPart ?? "", 10);
-  const minutes = Number.parseInt(minutesPart ?? "", 10);
-  if (
-    Number.isNaN(hours) ||
-    Number.isNaN(minutes) ||
-    hours < 0 ||
-    hours > 23 ||
-    minutes < 0 ||
-    minutes > 59
-  ) {
-    return null;
-  }
-  return hours * 60 + minutes;
-}
-
-function buildTimeKey(gameDay: number, gameTime: string): number | null {
-  const minutes = timeToMinutes(gameTime);
-  if (minutes === null) return null;
-  return gameDay * 1440 + minutes;
+function makeDateTimeKey(date: string, time: string): string {
+  return `${date}T${time}:00`;
 }
 
 function buildEventFilters(draft: EventFilterDraft): SimulationEventFilters {
@@ -71,15 +52,13 @@ function buildEventFilters(draft: EventFilterDraft): SimulationEventFilters {
   if (draft.npcId) next.npcId = draft.npcId;
   if (draft.parentLocationId) next.parentLocationId = draft.parentLocationId;
 
-  const parsedStartDay = Number.parseInt(draft.startDay, 10);
-  if (!Number.isNaN(parsedStartDay)) {
-    next.startDay = parsedStartDay;
+  if (draft.startDate) {
+    next.startDate = draft.startDate;
     if (draft.startTime) next.startTime = draft.startTime;
   }
 
-  const parsedEndDay = Number.parseInt(draft.endDay, 10);
-  if (!Number.isNaN(parsedEndDay)) {
-    next.endDay = parsedEndDay;
+  if (draft.endDate) {
+    next.endDate = draft.endDate;
     if (draft.endTime) next.endTime = draft.endTime;
   }
 
@@ -110,23 +89,18 @@ function matchesFilters(
     return false;
   }
 
-  const startKey =
-    typeof filters.startDay === "number"
-      ? buildTimeKey(filters.startDay, filters.startTime ?? "00:00")
-      : null;
-  const endKey =
-    typeof filters.endDay === "number"
-      ? buildTimeKey(filters.endDay, filters.endTime ?? "23:59")
-      : null;
-  const eventKey = buildTimeKey(event.gameDay, event.gameTime);
+  const startKey = filters.startDate
+    ? makeDateTimeKey(filters.startDate, filters.startTime ?? "00:00")
+    : undefined;
+  const endKey = filters.endDate
+    ? makeDateTimeKey(filters.endDate, filters.endTime ?? "23:59")
+    : undefined;
+  const eventKey = event.gameDateTime;
 
-  if ((startKey !== null || endKey !== null) && eventKey === null) {
+  if (startKey && eventKey < startKey) {
     return false;
   }
-  if (startKey !== null && eventKey !== null && eventKey < startKey) {
-    return false;
-  }
-  if (endKey !== null && eventKey !== null && eventKey > endKey) {
+  if (endKey && eventKey > endKey) {
     return false;
   }
 
@@ -144,8 +118,7 @@ function matchesFilters(
 
 interface SidePanelProps {
   sessionId: string | null;
-  gameDay: number;
-  timeOfDay: string;
+  gameDateTime: string;
   simulationState: string;
   npcStatuses: NpcStatusInfo[];
   displayTick: number;
@@ -162,8 +135,7 @@ interface SidePanelProps {
 
 export function SidePanel({
   sessionId,
-  gameDay,
-  timeOfDay,
+  gameDateTime,
   simulationState,
   npcStatuses,
   displayTick,
@@ -320,8 +292,7 @@ export function SidePanel({
       </button>
 
       <GameClock
-        gameDay={gameDay}
-        timeOfDay={timeOfDay}
+        gameDateTime={gameDateTime}
         simulationState={simulationState}
       />
 
@@ -329,8 +300,7 @@ export function SidePanel({
         <NpcDetail
           npc={selectedNpc}
           sessionId={sessionId}
-          gameDay={gameDay}
-          timeOfDay={timeOfDay}
+          gameDateTime={gameDateTime}
           onBack={() => onSelectNpc(null)}
           onZoomTo={onZoomToNpc}
         />
@@ -389,13 +359,12 @@ export function SidePanel({
                   <>
                     <div className="grid grid-cols-2 gap-2 mt-2">
                       <label className="flex flex-col gap-1 text-[11px] text-slate-500">
-                        <span>{t("sidebar.startDay")}</span>
+                        <span>{t("sidebar.startDate")}</span>
                         <input
-                          type="number"
-                          min="1"
-                          value={filterDraft.startDay}
+                          type="date"
+                          value={filterDraft.startDate}
                           onChange={(event) =>
-                            handleDraftChange("startDay", event.target.value)
+                            handleDraftChange("startDate", event.target.value)
                           }
                           className="rounded-md border border-slate-200 bg-white/70 px-2 py-1 text-xs text-slate-700 outline-none focus:border-amber-400"
                         />
@@ -412,13 +381,12 @@ export function SidePanel({
                         />
                       </label>
                       <label className="flex flex-col gap-1 text-[11px] text-slate-500">
-                        <span>{t("sidebar.endDay")}</span>
+                        <span>{t("sidebar.endDate")}</span>
                         <input
-                          type="number"
-                          min="1"
-                          value={filterDraft.endDay}
+                          type="date"
+                          value={filterDraft.endDate}
                           onChange={(event) =>
-                            handleDraftChange("endDay", event.target.value)
+                            handleDraftChange("endDate", event.target.value)
                           }
                           className="rounded-md border border-slate-200 bg-white/70 px-2 py-1 text-xs text-slate-700 outline-none focus:border-amber-400"
                         />

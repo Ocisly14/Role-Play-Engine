@@ -1,25 +1,22 @@
 import { useTranslation } from "react-i18next";
 
 interface GameClockProps {
-  gameDay: number;
-  timeOfDay: string;
+  gameDateTime: string;
   simulationState: string;
 }
 
-export function GameClock({
-  gameDay,
-  timeOfDay,
-  simulationState,
-}: GameClockProps) {
+export function GameClock({ gameDateTime, simulationState }: GameClockProps) {
   const { t } = useTranslation("simulation");
+  const gameDate = gameDateTime.slice(0, 10);
+  const gameTime = gameDateTime.slice(11, 16);
 
   return (
     <div className="p-3 pr-14 border-b border-slate-200/60 flex items-center justify-between">
       <div>
         <span className="text-lg font-bold text-amber-700">
-          {t("clock.day", { day: gameDay })}
+          {t("clock.date", { date: gameDate })}
         </span>
-        <span className="ml-3 text-lg text-slate-600">{timeOfDay}</span>
+        <span className="ml-3 text-lg text-slate-600">{gameTime}</span>
       </div>
       <span
         className={`text-xs px-2 py-1 rounded-lg ${

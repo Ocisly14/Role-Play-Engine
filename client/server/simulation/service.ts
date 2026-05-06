@@ -33,6 +33,7 @@ import {
   DynamicGameStateManager,
 } from "../../../src/state/DynamicGameState.js";
 import { initializeCompleteDynamicGameState } from "../../../src/state/DynamicGameStateLoader.js";
+import { datePart, makeDateTime } from "../../../src/state/gameClock.js";
 import { importModule } from "../../../src/state/moduleImporter.js";
 import type { TownTopology } from "../../../src/state/topologyTypes.js";
 import { DatabaseManager } from "../core/DatabaseManager.js";
@@ -66,29 +67,6 @@ async function ensureModuleIdForSimulation(
   });
 
   return resolveModuleIdByName(moduleName, emailId);
-}
-
-function timeToMinutes(hhmm: string): number | null {
-  const [hoursPart, minutesPart] = hhmm.split(":");
-  const hours = Number.parseInt(hoursPart ?? "", 10);
-  const minutes = Number.parseInt(minutesPart ?? "", 10);
-  if (
-    Number.isNaN(hours) ||
-    Number.isNaN(minutes) ||
-    hours < 0 ||
-    hours > 23 ||
-    minutes < 0 ||
-    minutes > 59
-  ) {
-    return null;
-  }
-  return hours * 60 + minutes;
-}
-
-function buildTimeKey(gameDay: number, gameTime: string): number | null {
-  const minutes = timeToMinutes(gameTime);
-  if (minutes === null) return null;
-  return gameDay * 1440 + minutes;
 }
 
 function resolveTopLevelLocationId(
@@ -465,8 +443,7 @@ export async function createSimulation(
     sessionId,
     moduleId,
     memoryManager,
-    gameDay: dgsm.getGameDay(),
-    gameTime: dgsm.getTickTime(),
+    gameDateTime: dgsm.getGameDateTime(),
   });
   if (config?.syncRealTime) {
     runner.enableRealTimeSync(config.realTimeBufferMinutes ?? 0);
@@ -563,10 +540,10 @@ export async function getSimulationEvents(
   filters?: {
     type?: string;
     npcId?: string;
-    day?: number;
-    startDay?: number;
+    gameDate?: string;
+    startDate?: string;
     startTime?: string;
-    endDay?: number;
+    endDate?: string;
     endTime?: string;
     maxTick?: number;
     parentLocationId?: string;
@@ -578,17 +555,23 @@ export async function getSimulationEvents(
   if (typeof filters?.maxTick === "number") {
     where.tick = { lte: filters.maxTick };
   }
-  if (filters?.day) {
-    where.gameDay = filters.day;
-  } else if (
-    typeof filters?.startDay === "number" ||
-    typeof filters?.endDay === "number"
-  ) {
-    const gameDayRange: Record<string, number> = {};
-    if (typeof filters?.startDay === "number")
-      gameDayRange.gte = filters.startDay;
-    if (typeof filters?.endDay === "number") gameDayRange.lte = filters.endDay;
-    where.gameDay = gameDayRange;
+  if (filters?.gameDate) {
+    where.gameDateTime = { startsWith: filters.gameDate };
+  } else if (filters?.startDate || filters?.endDate) {
+    const gameDateTimeRange: Record<string, string> = {};
+    if (filters?.startDate) {
+      gameDateTimeRange.gte = makeDateTime(
+        filters.startDate,
+        filters.startTime ?? "00:00"
+      );
+    }
+    if (filters?.endDate) {
+      gameDateTimeRange.lte = makeDateTime(
+        filters.endDate,
+        filters.endTime ?? "23:59"
+      );
+    }
+    where.gameDateTime = gameDateTimeRange;
   }
 
   const rows = await prisma.simulationEvent.findMany({
@@ -597,25 +580,6 @@ export async function getSimulationEvents(
   });
 
   let filteredRows = rows;
-
-  const startKey =
-    typeof filters?.startDay === "number"
-      ? buildTimeKey(filters.startDay, filters.startTime ?? "00:00")
-      : null;
-  const endKey =
-    typeof filters?.endDay === "number"
-      ? buildTimeKey(filters.endDay, filters.endTime ?? "23:59")
-      : null;
-
-  if (startKey !== null || endKey !== null) {
-    filteredRows = filteredRows.filter((row) => {
-      const rowKey = buildTimeKey(row.gameDay, row.gameTime);
-      if (rowKey === null) return false;
-      if (startKey !== null && rowKey < startKey) return false;
-      if (endKey !== null && rowKey > endKey) return false;
-      return true;
-    });
-  }
 
   if (filters?.parentLocationId) {
     const runner = await requireRunner(prisma, sessionId);
@@ -640,8 +604,7 @@ export interface NpcTimelineEntry {
   npcId: string;
   type: "event" | "witness";
   content: string;
-  gameDay: number;
-  gameTime: string;
+  gameDateTime: string;
   location: string | null;
   metadata: Record<string, unknown> | null;
   createdAt: string;
@@ -652,7 +615,7 @@ export async function getNpcTimeline(
   sessionId: string,
   npcId: string,
   filters?: {
-    gameDay?: number;
+    gameDate?: string;
     endTime?: string;
   }
 ): Promise<NpcTimelineEntry[] | null> {
@@ -660,11 +623,14 @@ export async function getNpcTimeline(
   if (!runner) return null;
   const dgsm = runner.getDgsm();
 
-  let gameDay = filters?.gameDay;
-  if (typeof gameDay !== "number") {
+  let gameDate = filters?.gameDate;
+  if (typeof gameDate !== "string") {
     const runtime = await loadSimulationRuntime(prisma, sessionId);
-    const runtimeDay = runtime?.gameState.gameDay;
-    gameDay = typeof runtimeDay === "number" ? runtimeDay : undefined;
+    const runtimeDateTime = runtime?.gameState.gameDateTime;
+    gameDate =
+      typeof runtimeDateTime === "string"
+        ? datePart(runtimeDateTime)
+        : undefined;
   }
 
   const where: Record<string, unknown> = {
@@ -673,16 +639,18 @@ export async function getNpcTimeline(
     type: { in: ["event", "witness"] },
   };
 
-  if (typeof gameDay === "number") {
-    where.gameDay = gameDay;
-    if (filters?.endTime) {
-      where.gameTime = { lte: filters.endTime };
-    }
+  if (typeof gameDate === "string") {
+    where.gameDateTime = filters?.endTime
+      ? {
+          gte: makeDateTime(gameDate, "00:00"),
+          lte: makeDateTime(gameDate, filters.endTime),
+        }
+      : { startsWith: gameDate };
   }
 
   const rows = await prisma.npcMemory.findMany({
     where,
-    orderBy: [{ gameTime: "desc" }, { createdAt: "desc" }],
+    orderBy: [{ gameDateTime: "desc" }, { createdAt: "desc" }],
     take: 200,
   });
 
@@ -691,8 +659,7 @@ export async function getNpcTimeline(
     npcId: row.npcId,
     type: row.type as "event" | "witness",
     content: row.content,
-    gameDay: row.gameDay,
-    gameTime: row.gameTime,
+    gameDateTime: row.gameDateTime,
     location: row.location
       ? resolveDisplayLocationName(dgsm, row.location)
       : null,

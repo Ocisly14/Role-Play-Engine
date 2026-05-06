@@ -23,8 +23,7 @@ export class PlaybackScheduler {
   private readonly eventBuffer: Map<number, SimulationEvent[]> = new Map();
   private nextDisplayTick = 1;
   private highestBufferedTick = 0;
-  private lastReleasedGameDay: number | null = null;
-  private lastReleasedGameTime: string | null = null;
+  private lastReleasedGameDateTime: string | null = null;
   private displayTimerId: ReturnType<typeof setInterval> | null = null;
   private isPlaybackStarted = false;
   private broadcastCallback: ((events: SimulationEvent[]) => void) | null =
@@ -187,8 +186,7 @@ export class PlaybackScheduler {
     isPlaying: boolean;
     displayStartTime?: number;
     timeUntilStart?: number;
-    displayGameDay?: number;
-    displayGameTime?: string;
+    displayGameDateTime?: string;
   } {
     const now = Date.now();
     const timeUntilStart =
@@ -202,8 +200,7 @@ export class PlaybackScheduler {
       isPlaying: this.displayTimerId !== null,
       displayStartTime: this.displayStartTime,
       timeUntilStart,
-      displayGameDay: this.lastReleasedGameDay ?? undefined,
-      displayGameTime: this.lastReleasedGameTime ?? undefined,
+      displayGameDateTime: this.lastReleasedGameDateTime ?? undefined,
     };
   }
 
@@ -218,8 +215,7 @@ export class PlaybackScheduler {
     this.isPlaybackStarted = false;
     this.highestBufferedTick = 0;
     this.nextDisplayTick = 1;
-    this.lastReleasedGameDay = null;
-    this.lastReleasedGameTime = null;
+    this.lastReleasedGameDateTime = null;
   }
 
   // ── Private ───────────────────────────────────────────────────
@@ -249,9 +245,8 @@ export class PlaybackScheduler {
     const events = this.eventBuffer.get(this.nextDisplayTick);
     if (events) {
       const lastEvent = events[events.length - 1];
-      this.lastReleasedGameDay = lastEvent?.gameDay ?? this.lastReleasedGameDay;
-      this.lastReleasedGameTime =
-        lastEvent?.gameTime ?? this.lastReleasedGameTime;
+      this.lastReleasedGameDateTime =
+        lastEvent?.gameDateTime ?? this.lastReleasedGameDateTime;
       this.broadcastCallback?.(events);
       this.eventBuffer.delete(this.nextDisplayTick);
       this.nextDisplayTick++;
@@ -273,8 +268,7 @@ export class PlaybackScheduler {
       id: `meta_${type}_${Date.now()}`,
       sessionId: "",
       tick: this.nextDisplayTick - 1,
-      gameDay: 0,
-      gameTime: "",
+      gameDateTime: "1900-01-01T00:00:00",
       type,
       actorNpcId: "system",
       location: "global",

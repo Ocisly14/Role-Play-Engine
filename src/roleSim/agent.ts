@@ -35,7 +35,7 @@ export type RoleSimDecision =
       tool: "recallMemory";
       query?: string;
       types?: NpcMemoryType[];
-      gameDay?: number;
+      gameDate?: string;
       limit?: number;
     }
   | { tool: "getMapSnapshot" };
@@ -52,8 +52,7 @@ export interface RoleSimContext {
   recentMemory: ReadonlyArray<{
     type: string;
     content: string;
-    gameDay: number;
-    gameTime: string;
+    gameDateTime: string;
   }>;
   longTermIntent?: string;
   /** Present iff this tick produced revise-relevant events affecting this NPC

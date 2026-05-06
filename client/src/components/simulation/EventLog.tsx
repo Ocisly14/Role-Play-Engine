@@ -20,6 +20,10 @@ const ACTION_EVENT_TYPES = new Set([
 
 const WORLD_EVENT_TYPES = new Set(["scene_updated", "feature_triggered"]);
 
+function formatEventTime(event: SimulationEvent): string {
+  return event.gameDateTime.slice(11, 16);
+}
+
 function sanitizeOutcomeForDisplay(
   outcome: string | undefined
 ): string | undefined {
@@ -124,7 +128,7 @@ function ActionMessage({ event }: { event: SimulationEvent }) {
       <div className="flex items-center justify-between mb-0.5">
         <span className="font-semibold text-slate-800 truncate">{name}</span>
         <span className="text-[10px] text-slate-400 ml-2 shrink-0">
-          {event.gameTime}
+          {formatEventTime(event)}
         </span>
       </div>
       {outcome && (
@@ -141,7 +145,7 @@ function SystemMessage({ event }: { event: SimulationEvent }) {
   let text: string;
   switch (event.type) {
     case "day_transition":
-      text = t("events.day", { day: event.gameDay });
+      text = t("events.date", { date: event.gameDateTime.slice(0, 10) });
       break;
     case "npc_death":
       text = t("events.died", {
@@ -175,7 +179,7 @@ function WorldEventMessage({ event }: { event: SimulationEvent }) {
           {t("events.worldEvent")}
         </span>
         <span className="text-[10px] text-slate-400 ml-2 shrink-0">
-          {event.gameTime}
+          {formatEventTime(event)}
         </span>
       </div>
       <div className="text-[11px] leading-relaxed text-amber-700">
@@ -188,7 +192,7 @@ function WorldEventMessage({ event }: { event: SimulationEvent }) {
 function CompactMessage({ event }: { event: SimulationEvent }) {
   return (
     <div className="px-2 py-1 text-[11px] text-slate-500 flex items-center gap-1.5">
-      <span className="text-slate-400">{event.gameTime}</span>
+      <span className="text-slate-400">{formatEventTime(event)}</span>
       <span className="truncate">{formatCompactText(event)}</span>
     </div>
   );

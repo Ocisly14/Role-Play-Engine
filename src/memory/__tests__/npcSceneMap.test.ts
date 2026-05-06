@@ -102,8 +102,7 @@ function createTownDgsm(): DynamicGameStateManager {
   const state = initialDynamicGameState({
     sessionId: "test-session",
     moduleName: "test-module",
-    gameDay: 1,
-    timeOfDay: "08:00",
+    gameDateTime: "1923-10-17T08:00:00",
   });
 
   // Outlines (macro locations)

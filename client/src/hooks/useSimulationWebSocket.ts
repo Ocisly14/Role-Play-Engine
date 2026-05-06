@@ -4,8 +4,7 @@ export interface SimulationEvent {
   id: string;
   sessionId: string;
   tick: number;
-  gameDay: number;
-  gameTime: string;
+  gameDateTime: string;
   type: string;
   actorNpcId: string;
   targetNpcId?: string;

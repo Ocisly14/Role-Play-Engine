@@ -63,8 +63,7 @@ export async function persistSimulationEvents(
       id: event.id,
       sessionId: event.sessionId,
       tick: event.tick,
-      gameDay: event.gameDay,
-      gameTime: event.gameTime,
+      gameDateTime: event.gameDateTime,
       type: event.type,
       actorNpcId: event.actorNpcId,
       targetNpcId: event.targetNpcId,
@@ -137,19 +136,14 @@ export async function deleteSimulationRuntime(
 export function runtimeToStatus(
   runtime: SimulationRuntimeRecord
 ): SimulationStatus {
-  const gameDay =
-    typeof runtime.gameState.gameDay === "number"
-      ? runtime.gameState.gameDay
-      : 1;
-  const currentTime =
-    typeof runtime.gameState.timeOfDay === "string"
-      ? runtime.gameState.timeOfDay
-      : "08:00";
+  const currentDateTime =
+    typeof runtime.gameState.gameDateTime === "string"
+      ? runtime.gameState.gameDateTime
+      : "1900-01-01T08:00:00";
 
   return {
     state: runtime.simulationState,
-    currentDay: gameDay,
-    currentTime,
+    currentDateTime,
     ticksExecuted: runtime.tick,
     stopReason: runtime.stopReason,
   };

@@ -9,6 +9,7 @@
 import type { NpcMemoryManager } from "../memory/NpcMemoryManager.js";
 import type { NpcMemoryType } from "../memory/types.js";
 import type { DynamicGameStateManager } from "../state/DynamicGameState.js";
+import { coerceIsoDate, formatForPrompt } from "../state/gameClock.js";
 
 /** Tools that consume a tick — calling one ends the agent loop. Decision 17. */
 export const TERMINAL_TOOLS = new Set<string>(["act", "continue"]);
@@ -35,8 +36,7 @@ export interface DispatcherDeps {
   npcId: string;
   sessionId: string;
   moduleId: string;
-  gameDay: number;
-  gameTime: string;
+  gameDateTime: string;
 }
 
 export interface DispatchResult {
@@ -58,7 +58,7 @@ interface WriteMemoryInput {
 interface RecallMemoryInput {
   query?: string;
   types?: NpcMemoryType[];
-  gameDay?: number;
+  gameDate?: string;
   limit?: number;
 }
 
@@ -115,8 +115,7 @@ async function dispatchWriteMemory(
     moduleId: deps.moduleId,
     type: input.type,
     content,
-    gameDay: deps.gameDay,
-    gameTime: deps.gameTime,
+    gameDateTime: deps.gameDateTime,
   });
 
   return {
@@ -194,13 +193,28 @@ async function dispatchRecallMemory(
   deps: DispatcherDeps
 ): Promise<DispatchResult> {
   const limit = clampLimit(input.limit, 5, 20);
+  let gameDate: string | undefined;
+  if (input.gameDate !== undefined) {
+    const coerced = coerceIsoDate(input.gameDate);
+    if (coerced && coerced !== input.gameDate.trim()) {
+      console.debug(
+        `[toolDispatcher] coerced recallMemory.gameDate "${input.gameDate}" -> "${coerced}"`
+      );
+    }
+    gameDate = coerced ?? undefined;
+  }
+  if (input.gameDate !== undefined && gameDate === undefined) {
+    return {
+      result: `Error: gameDate must be ISO 8601 date "YYYY-MM-DD" (got: "${input.gameDate}")`,
+    };
+  }
   const memories = await deps.memory.query({
     npcId: deps.npcId,
     sessionId: deps.sessionId,
     query: input.query ?? "",
     filters: {
       types: input.types,
-      gameDay: input.gameDay,
+      ...(gameDate !== undefined ? { gameDate } : {}),
     },
     limit,
   });
@@ -211,7 +225,7 @@ async function dispatchRecallMemory(
 
   const lines = memories.map(
     (m) =>
-      `- [Day ${m.gameDay} ${m.gameTime}] (${m.type}) ${truncate(m.content, 200)}`
+      `- [${formatForPrompt(m.gameDateTime)}] (${m.type}) ${truncate(m.content, 200)}`
   );
   return {
     result: `Found ${memories.length} memory(ies):\n${lines.join("\n")}`,

@@ -60,7 +60,7 @@ describe("Applier", () => {
         reason: "burn-spread",
       },
     ];
-    const report = applier.flush(changes, { tickTime: "08:00", day: 1 });
+    const report = applier.flush(changes, "1923-10-17T08:00:00");
     expect(d.getNpcProfile("npc1")?.status.hp).toBe(0);
     expect(report.damageReports).toHaveLength(1);
     expect(report.damageReports[0].contributors).toHaveLength(2);
@@ -91,7 +91,7 @@ describe("Applier", () => {
           reason: "flooded",
         },
       ],
-      { tickTime: "08:00", day: 1 }
+      "1923-10-17T08:00:00"
     );
     expect(d.isConnectionBlocked("c1")).toBe(true);
 
@@ -105,7 +105,7 @@ describe("Applier", () => {
           reason: "flames",
         },
       ],
-      { tickTime: "08:01", day: 1 }
+      "1923-10-17T08:01:00"
     );
     expect(d.isConnectionBlocked("c1")).toBe(true);
 
@@ -119,7 +119,7 @@ describe("Applier", () => {
           reason: "flooded",
         },
       ],
-      { tickTime: "08:02", day: 1 }
+      "1923-10-17T08:02:00"
     );
     expect(d.isConnectionBlocked("c1")).toBe(false);
   });
@@ -148,7 +148,7 @@ describe("Applier", () => {
           state: { kind: "storm" },
         },
       ],
-      { tickTime: "08:00", day: 1 }
+      "1923-10-17T08:00:00"
     );
     expect(d.getScopedFeatureState("fire", "scene", "s1")).toEqual({
       intensity: 3,
@@ -174,7 +174,7 @@ describe("Applier", () => {
           state: { intensity: 4 },
         },
       ],
-      { tickTime: "08:00", day: 1 }
+      "1923-10-17T08:00:00"
     );
     expect(d.getScopedFeatureState("fire", "scene", "s1")).toEqual({
       intensity: 4,
@@ -190,7 +190,7 @@ describe("Applier", () => {
         },
         { kind: "feature.removeState", featureId: "fire", key: "s1" },
       ],
-      { tickTime: "08:01", day: 1 }
+      "1923-10-17T08:01:00"
     );
     expect(d.getScopedFeatureState("fire", "scene", "s1")).toBeUndefined();
   });
@@ -221,7 +221,7 @@ describe("Applier", () => {
           },
         },
       ],
-      { tickTime: "08:00", day: 1 }
+      "1923-10-17T08:00:00"
     );
     const conds = d.getSceneConditions("s1");
     expect(conds).toHaveLength(1);

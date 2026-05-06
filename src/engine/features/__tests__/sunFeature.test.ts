@@ -49,7 +49,7 @@ function illumContributions(
 }
 
 function setTickTime(dgsm: DynamicGameStateManager, time: string): void {
-  dgsm.setTickTime(time);
+  dgsm.setGameClock({ gameDateTime: `1923-10-17T${time}:00` });
 }
 
 describe("sunFeature internal invariants", () => {

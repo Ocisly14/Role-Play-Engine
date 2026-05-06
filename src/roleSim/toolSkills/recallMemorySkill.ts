@@ -21,12 +21,12 @@ Search your memories for something specific. Today's events / witness are alread
 - More than 10 times per decision — capped
 
 ## Usage
-{ "tool": "recallMemory", "query": "<keyword phrase>", "types": ["<type>", ...], "gameDay": <number>, "limit": <1-20> }
+{ "tool": "recallMemory", "query": "<keyword phrase>", "types": ["<type>", ...], "gameDate": "YYYY-MM-DD", "limit": <1-20> }
 
 All fields optional:
 - \`query\`: semantic search string (omit for chronological dump)
 - \`types\`: filter by memory type (event, witness, belief, secret, plan, information, summary, long_term_intent, map)
-- \`gameDay\`: only memories from a specific day
+- \`gameDate\`: ISO 8601 date "YYYY-MM-DD" (no time, no T separator). Example: "1923-10-16".
 - \`limit\`: 1-20 (default 5; clamped)
 
 ## Cap

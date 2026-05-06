@@ -130,8 +130,7 @@ export class LLMRoleSimAgent implements RoleSimAgent {
       npcId: ctx.npcId,
       sessionId: this.deps.sessionId,
       moduleId: this.deps.moduleId,
-      gameDay: ctx.currentTime.day,
-      gameTime: ctx.currentTime.tickTime,
+      gameDateTime: ctx.currentTime,
     };
   }
 }

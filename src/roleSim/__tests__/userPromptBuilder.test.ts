@@ -7,7 +7,7 @@ import { buildUserPrompt } from "../userPromptBuilder.js";
 function makeCtx(overrides: Partial<RoleSimContext> = {}): RoleSimContext {
   return {
     npcId: "npc1",
-    currentTime: { day: 3, tickTime: "08:15" },
+    currentTime: "1923-10-17T08:15:00",
     npcProfile: {
       id: "npc1",
       name: "Alice",
@@ -63,7 +63,7 @@ describe("buildUserPrompt", () => {
     expect(out).toContain("# You are Alice");
     expect(out).toContain("## Who you are");
     expect(out).toContain("## Right now");
-    expect(out).toContain("Day 3, 08:15");
+    expect(out).toContain("1923-10-17 08:15");
     expect(out).toContain("Scene: library");
     expect(out).toContain("## What you perceive");
     expect(out).toContain("You are in Library.");
@@ -122,8 +122,7 @@ describe("buildUserPrompt", () => {
         {
           type: "event",
           content: "saw a stranger by the well",
-          gameDay: 3,
-          gameTime: "07:42",
+          gameDateTime: "1923-10-17T07:42:00",
         },
       ],
     });

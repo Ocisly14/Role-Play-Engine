@@ -36,7 +36,7 @@ describe("core types", () => {
 
   it("TickReport shape carries all expected collections", () => {
     const report: TickReport = {
-      tickTime: { day: 1, tickTime: "08:00" },
+      gameDateTime: "1923-10-17T08:00:00",
       commits: [],
       interruptions: [],
       cancellations: [],

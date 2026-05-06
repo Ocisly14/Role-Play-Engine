@@ -151,7 +151,7 @@ const PREDICATE_OPS = [
   "characterAlive",
   "characterHasItem",
   "sceneHasConditionFromFeature",
-  "gameDay",
+  "gameDate",
   "eventStatus",
   "and",
   "or",
@@ -425,7 +425,7 @@ function validatePredicate(
       }
       return;
     }
-    case "gameDay": {
+    case "gameDate": {
       if (!isString(item.cmp) || !VALID_CMP.has(item.cmp)) {
         pushErr(
           errors,
@@ -434,8 +434,8 @@ function validatePredicate(
           `must be one of: ${[...VALID_CMP].join(", ")}`
         );
       }
-      if (!isNumber(item.value)) {
-        pushErr(errors, file, `${path}.value`, "required number");
+      if (!isString(item.value)) {
+        pushErr(errors, file, `${path}.value`, "required ISO date string");
       }
       return;
     }

@@ -66,7 +66,7 @@ export type Predicate =
   | { op: "characterAlive"; characterId: string; expectedAlive: boolean }
   | { op: "characterHasItem"; characterId: string; itemName: string }
   | { op: "sceneHasConditionFromFeature"; sceneId: string; featureId: string }
-  | { op: "gameDay"; cmp: "gte" | "lte" | "eq"; value: number }
+  | { op: "gameDate"; cmp: "gte" | "lte" | "eq"; value: string }
   // ── Cross-event (D) ────────────────────────────────────
   | {
       op: "eventStatus";

@@ -2,6 +2,7 @@ import { randomUUID } from "node:crypto";
 import { EventEmitter } from "node:events";
 import type { CharacterAction } from "../engine/core/types.js";
 import type { DynamicGameStateManager } from "../state/DynamicGameState.js";
+import { timePart } from "../state/gameClock.js";
 import type { SimulationEvent, SimulationEventType } from "./types.js";
 
 /**
@@ -36,8 +37,7 @@ export class SimulationEventEmitter extends EventEmitter {
     type: SimulationEventType,
     actorNpcId: string,
     location: string,
-    gameDay: number,
-    gameTime: string,
+    gameDateTime: string,
     data: Record<string, unknown>,
     targetNpcId?: string
   ): SimulationEvent {
@@ -45,8 +45,7 @@ export class SimulationEventEmitter extends EventEmitter {
       id: randomUUID(),
       sessionId: this.sessionId,
       tick: this.tick,
-      gameDay,
-      gameTime,
+      gameDateTime,
       type,
       actorNpcId,
       targetNpcId,
@@ -66,8 +65,7 @@ export class SimulationEventEmitter extends EventEmitter {
    */
   actionsToEvents(
     actions: CharacterAction[],
-    status: "completed" | "failed" | "interrupted",
-    gameDay: number
+    status: "completed" | "failed" | "interrupted"
   ): SimulationEvent[] {
     const events: SimulationEvent[] = [];
     const eventType: SimulationEventType =
@@ -94,12 +92,12 @@ export class SimulationEventEmitter extends EventEmitter {
           eventType,
           action.characterId,
           action.sceneId,
-          gameDay,
-          action.completedAt.tickTime,
+          action.completedAt,
           {
             action: action.actionText,
             characterName,
             outcome: outcomeText,
+            gameTime: timePart(action.completedAt),
           },
           action.targetCharacterIds[0]
         )

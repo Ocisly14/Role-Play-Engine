@@ -24,10 +24,8 @@ export interface MovementStep {
   };
 }
 
-export interface GameTime {
-  day: number;
-  tickTime: string; // "HH:MM"
-}
+export type GameDateTime = string;
+export type GameTime = GameDateTime;
 
 export type Unsubscribe = () => void;
 
@@ -176,7 +174,7 @@ export const DEFAULT_ENVIRONMENT_READING: EnvironmentReading = Object.freeze({
   illumination: 3,
   oxygen: 1,
   noise: 0,
-  airborneHazards: Object.freeze([]) as string[],
+  airborneHazards: Object.freeze([]) as unknown as string[],
 }) as EnvironmentReading;
 
 export type StateChange =
@@ -300,7 +298,7 @@ export interface DamageReport {
 // becomes the renderer's job in the post-Phase-E perception layer.
 
 export interface TickReport {
-  tickTime: GameTime;
+  gameDateTime: GameDateTime;
   commits: CharacterAction[];
   interruptions: Array<{ action: CharacterAction; reason: InterruptReason }>;
   cancellations: CharacterAction[];

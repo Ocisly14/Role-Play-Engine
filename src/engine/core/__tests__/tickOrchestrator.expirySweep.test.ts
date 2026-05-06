@@ -70,20 +70,19 @@ describe("TickOrchestrator — Phase 9.5 condition expiry sweep", () => {
           id: "bout-temp",
           description: "Temporary bout of madness",
           featureId: "sanity",
-          expiresAt: { day: 1, tickTime: "08:00" },
+          expiresAt: "1923-10-17T08:00:00",
         },
         {
           id: "bout-future",
           description: "Future bout",
           featureId: "sanity",
-          expiresAt: { day: 1, tickTime: "10:00" },
+          expiresAt: "1923-10-17T10:00:00",
         },
       ])
     );
     // Set DGSM clock so tickDuration (1 min) advances to 09:00 in Phase 1.
     // 08:00 condition is expired; 10:00 condition is not.
-    dgsm.setGameDay(1);
-    dgsm.setTickTime("08:59");
+    dgsm.setGameClock({ gameDateTime: "1923-10-17T08:59:00" });
 
     const orch = makeOrchestrator(dgsm);
     await orch.tick();
@@ -105,8 +104,7 @@ describe("TickOrchestrator — Phase 9.5 condition expiry sweep", () => {
         },
       ])
     );
-    dgsm.setGameDay(99);
-    dgsm.setTickTime("23:00");
+    dgsm.setGameClock({ gameDateTime: "1923-10-17T23:00:00" });
 
     const orch = makeOrchestrator(dgsm);
     await orch.tick();
@@ -124,12 +122,11 @@ describe("TickOrchestrator — Phase 9.5 condition expiry sweep", () => {
           id: "boundary",
           description: "Expires exactly at 09:00",
           featureId: "sanity",
-          expiresAt: { day: 1, tickTime: "09:00" },
+          expiresAt: "1923-10-17T09:00:00",
         },
       ])
     );
-    dgsm.setGameDay(1);
-    dgsm.setTickTime("08:59"); // → 09:00 after Phase 1
+    dgsm.setGameClock({ gameDateTime: "1923-10-17T08:59:00" }); // → 09:00 after Phase 1
 
     const orch = makeOrchestrator(dgsm);
     await orch.tick();
@@ -146,7 +143,7 @@ describe("TickOrchestrator — Phase 9.5 condition expiry sweep", () => {
           id: "a-expired",
           description: "expired",
           featureId: "sanity",
-          expiresAt: { day: 1, tickTime: "07:00" },
+          expiresAt: "1923-10-17T07:00:00",
         },
       ])
     );
@@ -156,12 +153,11 @@ describe("TickOrchestrator — Phase 9.5 condition expiry sweep", () => {
           id: "b-future",
           description: "future",
           featureId: "sanity",
-          expiresAt: { day: 2, tickTime: "00:00" },
+          expiresAt: "1923-10-18T00:00:00",
         },
       ])
     );
-    dgsm.setGameDay(1);
-    dgsm.setTickTime("08:59"); // → 09:00 day 1
+    dgsm.setGameClock({ gameDateTime: "1923-10-17T08:59:00" }); // → 09:00 day 1
 
     const orch = makeOrchestrator(dgsm);
     await orch.tick();

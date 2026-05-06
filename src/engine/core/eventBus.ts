@@ -6,7 +6,7 @@ import type {
   Unsubscribe,
 } from "./types.js";
 
-type AnyCB = (...a: unknown[]) => unknown | Promise<unknown>;
+type AnyCB = (...a: any[]) => unknown | Promise<unknown>;
 
 export class EventBus {
   private listeners: Record<string, Set<AnyCB>> = {};

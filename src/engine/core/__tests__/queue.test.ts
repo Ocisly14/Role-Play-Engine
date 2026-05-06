@@ -12,12 +12,12 @@ function step(
     actionText: "",
     definitionId: "noop",
     executionSceneId: "s1",
-    submittedAt: { day: 1, tickTime: "08:00" },
+    submittedAt: "1923-10-17T08:00:00",
     status: "queued",
     handle: {
       id: partial.stepGroupId ?? partial.id,
       characterId: partial.characterId,
-      submittedAt: { day: 1, tickTime: "08:00" },
+      submittedAt: "1923-10-17T08:00:00",
     },
     ...partial,
   };

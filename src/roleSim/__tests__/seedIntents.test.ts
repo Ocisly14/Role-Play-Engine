@@ -37,8 +37,7 @@ describe("seedNpcLongTermIntents", () => {
       sessionId: "s1",
       moduleId: "m1",
       memoryManager: manager,
-      gameDay: 1,
-      gameTime: "08:00",
+      gameDateTime: "1923-10-17T08:00:00",
     });
     expect(calls.length).toBe(2);
     expect(calls[0]).toMatchObject({
@@ -62,8 +61,7 @@ describe("seedNpcLongTermIntents", () => {
       sessionId: "s1",
       moduleId: "m1",
       memoryManager: manager,
-      gameDay: 1,
-      gameTime: "08:00",
+      gameDateTime: "1923-10-17T08:00:00",
     });
     expect(calls.length).toBe(1);
     expect(calls[0]).toMatchObject({ npcId: "b" });

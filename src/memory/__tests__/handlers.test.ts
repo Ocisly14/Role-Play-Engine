@@ -14,8 +14,7 @@ function makeMemory(overrides: Partial<NpcMemory> = {}): NpcMemory {
     content: "Test content",
     metadata: null,
     tags: [],
-    gameDay: 1,
-    gameTime: "10:00",
+    gameDateTime: "1923-10-17T10:00:00",
     location: null,
     importance: 1.0,
     baseImportance: 1.0,
@@ -75,11 +74,10 @@ describe("EventHandler", () => {
     const mem = makeMemory({
       type: "event",
       content: "Searched the library",
-      gameDay: 1,
-      gameTime: "10:00",
+      gameDateTime: "1923-10-17T10:00:00",
     });
     expect(handler.format(mem)).toBe(
-      "[event] Day1 10:00 - Searched the library"
+      "[event] 1923-10-17 10:00 - Searched the library"
     );
   });
 
@@ -118,10 +116,11 @@ describe("WitnessHandler", () => {
     const mem = makeMemory({
       type: "witness",
       content: "Saw John steal",
-      gameDay: 1,
-      gameTime: "10:00",
+      gameDateTime: "1923-10-17T10:00:00",
     });
-    expect(handler.format(mem)).toBe("[witness] Day1 10:00 - Saw John steal");
+    expect(handler.format(mem)).toBe(
+      "[witness] 1923-10-17 10:00 - Saw John steal"
+    );
   });
 
   it("does not have customDecayRate", () => {
@@ -154,8 +153,7 @@ describe("InformationHandler", () => {
     const mem = makeMemory({
       type: "information" as any,
       content: "Ritual requires dagger",
-      gameDay: 1,
-      gameTime: "10:00",
+      gameDateTime: "1923-10-17T10:00:00",
     });
     expect(handler.format(mem)).toBe("[information] Ritual requires dagger");
   });

@@ -20,6 +20,7 @@ import type {
 import { findAffectedCharacters } from "../engine/shared/impactPropagation.js";
 import type { NpcMemoryManager } from "../memory/NpcMemoryManager.js";
 import type { DynamicGameStateManager } from "../state/DynamicGameState.js";
+import { datePart } from "../state/gameClock.js";
 import type { RoleSimAgent, RoleSimContext } from "./agent.js";
 import { buildPerceptionNarrative } from "./perceptionRenderer.js";
 
@@ -191,13 +192,15 @@ export class NpcActionController {
     const profile = this.dgsm.getNpcProfile(npcId);
     if (!profile) return undefined;
 
-    const day = this.dgsm.getGameDay();
-    const tickTime = this.dgsm.getTickTime();
+    const gameDateTime = this.dgsm.getGameDateTime();
     const position = this.dgsm.getCharacterPosition(npcId);
     const currentScene = position ? this.dgsm.resolveLocationId(position) : "";
 
     const longTermIntent = await this.loadLongTermIntent(npcId);
-    const recentMemory = await this.loadTodayMemories(npcId, day);
+    const recentMemory = await this.loadTodayMemories(
+      npcId,
+      datePart(gameDateTime)
+    );
 
     const queue = this.engine.getActorQueue(npcId);
     const active = queue.find((s) => s.status === "active");
@@ -211,7 +214,7 @@ export class NpcActionController {
 
     return {
       npcId,
-      currentTime: { day, tickTime },
+      currentTime: gameDateTime,
       npcProfile: profile,
       currentScene,
       recentMemory,
@@ -233,20 +236,19 @@ export class NpcActionController {
 
   private async loadTodayMemories(
     npcId: string,
-    gameDay: number
+    gameDate: string
   ): Promise<RoleSimContext["recentMemory"]> {
-    const rows = await this.memory.getForDayByTypes(
+    const rows = await this.memory.getForDateByTypes(
       npcId,
       this.sessionId,
-      gameDay,
+      gameDate,
       ["event", "witness"],
       20
     );
     return rows.map((r) => ({
       type: r.type,
       content: r.content,
-      gameDay: r.gameDay,
-      gameTime: r.gameTime,
+      gameDateTime: r.gameDateTime,
     }));
   }
 }

@@ -1,4 +1,5 @@
 import type { DynamicGameStateManager } from "../../state/DynamicGameState.js";
+import { addMinutes, diffDays, timePart } from "../../state/gameClock.js";
 import type { CodeEngineRegistry } from "../codeEngine/registry.js";
 import { makeCodeEngineContext } from "../codeEngine/types.js";
 import type { Applier } from "./applier.js";
@@ -104,10 +105,7 @@ export class TickOrchestrator {
     // latches to true regardless so we never retry (which would duplicate
     // scene conditions emitted by already-succeeded features).
     if (!this.hasInitialized) {
-      const currentTickTime: GameTime = {
-        day: dgsm.getGameDay(),
-        tickTime: dgsm.getTickTime(),
-      };
+      const currentTickTime: GameTime = dgsm.getGameDateTime();
       const initChanges: StateChange[] = [];
       for (const f of featureRunner.listFeatures()) {
         if (!f.init) continue;
@@ -180,10 +178,7 @@ export class TickOrchestrator {
       next.plannedDuration = resolved.plannedDuration;
       next.plannedOutcome =
         resolved.outcome as unknown as ActionStep["plannedOutcome"];
-      next.completionTime = this.addMinutes(
-        nextTickTime,
-        resolved.plannedDuration
-      );
+      next.completionTime = addMinutes(nextTickTime, resolved.plannedDuration);
       queue.markActive(next.id);
     }
 
@@ -195,11 +190,7 @@ export class TickOrchestrator {
       // Skip steps that were just activated this tick (their onActivate
       // already produced this tick's StateChanges). We detect "this tick" by
       // comparing activatedAt to nextTickTime.
-      if (
-        step.activatedAt &&
-        step.activatedAt.day === nextTickTime.day &&
-        step.activatedAt.tickTime === nextTickTime.tickTime
-      ) {
+      if (step.activatedAt && step.activatedAt === nextTickTime) {
         continue;
       }
       this.advanceCodeStep(step, nextTickTime, buffer, commitsThisTick);
@@ -275,11 +266,16 @@ export class TickOrchestrator {
 
     // Phase 7: scripted events
     const currentTick =
-      nextTickTime.day * 1440 + this.minutesOfDay(nextTickTime.tickTime);
+      diffDays(
+        nextTickTime,
+        dgsm.getState().moduleSetup?.startDate ?? nextTickTime
+      ) *
+        1440 +
+      this.minutesOfDay(timePart(nextTickTime));
     const scriptedChanges = scriptedEventRunner.run({
       dgsm,
       currentTick,
-      tickTime: nextTickTime,
+      gameDateTime: nextTickTime,
       committedActionsThisTick: commitsThisTick,
     });
     buffer.push(...scriptedChanges);
@@ -304,7 +300,7 @@ export class TickOrchestrator {
 
     // Phase 10: build report (event emission is TickEngine + EventBus's job)
     return {
-      tickTime: nextTickTime,
+      gameDateTime: nextTickTime,
       commits: commitsThisTick,
       interruptions,
       cancellations,
@@ -444,13 +440,9 @@ export class TickOrchestrator {
   }
 
   private advanceClock(): GameTime {
-    const before = {
-      day: this.deps.dgsm.getGameDay(),
-      tickTime: this.deps.dgsm.getTickTime(),
-    };
-    const next = this.addMinutes(before, this.deps.tickDurationMinutes);
-    this.deps.dgsm.setGameDay(next.day);
-    this.deps.dgsm.setTickTime(next.tickTime);
+    const before = this.deps.dgsm.getGameDateTime();
+    const next = addMinutes(before, this.deps.tickDurationMinutes);
+    this.deps.dgsm.setGameDateTime(next);
     return next;
   }
 
@@ -460,28 +452,15 @@ export class TickOrchestrator {
     return [...all].filter((id) => !this.deps.queue.hasActiveFor(id));
   }
 
-  private addMinutes(t: GameTime, minutes: number): GameTime {
-    const [h, m] = t.tickTime.split(":").map(Number);
-    let total = h * 60 + m + minutes;
-    let day = t.day;
-    while (total >= 24 * 60) {
-      total -= 24 * 60;
-      day += 1;
-    }
-    const hh = String(Math.floor(total / 60)).padStart(2, "0");
-    const mm = String(total % 60).padStart(2, "0");
-    return { day, tickTime: `${hh}:${mm}` };
-  }
-
   private minutesOfDay(tickTime: string): number {
     const [h, m] = tickTime.split(":").map(Number);
     return h * 60 + m;
   }
 
   private minutesBetween(a: GameTime, b: GameTime): number {
-    const [ah, am] = a.tickTime.split(":").map(Number);
-    const [bh, bm] = b.tickTime.split(":").map(Number);
-    return (b.day - a.day) * 1440 + (bh * 60 + bm) - (ah * 60 + am);
+    const [ah, am] = timePart(a).split(":").map(Number);
+    const [bh, bm] = timePart(b).split(":").map(Number);
+    return diffDays(b, a) * 1440 + (bh * 60 + bm) - (ah * 60 + am);
   }
 
   private sweepExpiredCharacterConditions(now: GameTime): void {
@@ -501,8 +480,6 @@ export class TickOrchestrator {
 
   private timeIsAtOrBefore(t: GameTime | undefined, now: GameTime): boolean {
     if (!t) return false;
-    if (t.day < now.day) return true;
-    if (t.day > now.day) return false;
-    return t.tickTime <= now.tickTime;
+    return t <= now;
   }
 }

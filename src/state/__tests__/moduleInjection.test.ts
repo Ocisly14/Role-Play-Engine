@@ -153,16 +153,14 @@ describe.skipIf(!moduleExists)("Module injection: Cassandra_zh", () => {
       const state = initRuntime({
         sessionId: "test-session",
         moduleData: moduleData!,
-        gameDay: 1,
-        timeOfDay: "21:00",
+        gameDateTime: "1923-10-15T21:00:00",
       });
 
       // === Module metadata ===
       expect(state.moduleName).toBe(MODULE_NAME);
       expect(state.moduleSetup).not.toBeNull();
       expect(state.sessionId).toBe("test-session");
-      expect(state.gameDay).toBe(1);
-      expect(state.timeOfDay).toBe("21:00");
+      expect(state.gameDateTime).toBe("1923-10-15T21:00:00");
 
       // === Scenes ===
       expect(state.scenes.size).toBeGreaterThanOrEqual(10);
@@ -235,8 +233,7 @@ describe.skipIf(!moduleExists)("Module injection: Cassandra_zh", () => {
       const state = initRuntime({
         sessionId: "test-inventory",
         moduleData: moduleData!,
-        gameDay: 1,
-        timeOfDay: "21:00",
+        gameDateTime: "1923-10-15T21:00:00",
       });
 
       const patrizioInventory = state.npcInventories["Patrizio von Samsa"];
@@ -253,8 +250,7 @@ describe.skipIf(!moduleExists)("Module injection: Cassandra_zh", () => {
       const state = initRuntime({
         sessionId: "test-setup",
         moduleData: moduleData!,
-        gameDay: 1,
-        timeOfDay: "21:00",
+        gameDateTime: "1923-10-15T21:00:00",
       });
 
       const setup = state.moduleSetup as any;

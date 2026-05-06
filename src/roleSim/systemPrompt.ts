@@ -49,7 +49,9 @@ Respond with ONE JSON object per turn. Examples:
 
 { "tool": "writeMemory", "type": "belief", "content": "Smith is hiding something — he was outside earlier despite saying he was reading." }
 
-{ "tool": "act", "input": { "actionText": "head to the harbor" } }`;
+{ "tool": "act", "input": { "actionText": "head to the harbor" } }
+
+When emitting dates in tool inputs or memory content, use ISO 8601 ("YYYY-MM-DD" or "YYYY-MM-DDTHH:MM:SS"). Do not copy the readable form shown in the user prompt.`;
 
 export const SYSTEM_PROMPT = [
   FRAMING,

@@ -15,8 +15,7 @@ export async function seedNpcLongTermIntents(params: {
   sessionId: string;
   moduleId: string;
   memoryManager: NpcMemoryManager;
-  gameDay: number;
-  gameTime: string;
+  gameDateTime: string;
 }): Promise<void> {
   let seeded = 0;
   for (const npc of params.npcs) {
@@ -27,8 +26,7 @@ export async function seedNpcLongTermIntents(params: {
       moduleId: params.moduleId,
       type: "long_term_intent",
       content: npc.longTermIntent,
-      gameDay: params.gameDay,
-      gameTime: params.gameTime,
+      gameDateTime: params.gameDateTime,
     });
     seeded += 1;
   }

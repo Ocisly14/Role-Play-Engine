@@ -139,7 +139,7 @@ function makeStep(
   const handle: ActionHandle = {
     id: "h1",
     characterId,
-    submittedAt: { day: 1, tickTime: "08:00" },
+    submittedAt: "1923-10-17T08:00:00",
   };
   return {
     id: overrides.id ?? "h1#0",

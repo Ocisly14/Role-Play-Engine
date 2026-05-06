@@ -164,7 +164,7 @@ For an investigator who saw a tentacled horror and lost 8 SAN:
     "featureId": "sanity",
     "description": "Flees in panic from the room, screaming about tentacles in the walls",
     "mechanicalEffect": { "globalSkillPenalty": 0 },
-    "expiresAt": { "day": 5, "tickTime": "14:00" }
+    "expiresAt": "1923-10-21T14:00:00"
   }
 }
 \`\`\`

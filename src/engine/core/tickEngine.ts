@@ -99,10 +99,7 @@ export function createTickEngine(opts: CreateTickEngineOptions): TickEngine {
     queue,
     interpretAction: opts.interpretAction,
     getActorDex: opts.getActorDex,
-    getNow: () => ({
-      day: opts.dgsm.getGameDay(),
-      tickTime: opts.dgsm.getTickTime(),
-    }),
+    getNow: () => opts.dgsm.getGameDateTime(),
   });
   if (opts.persistedState) {
     queue.rehydrate(

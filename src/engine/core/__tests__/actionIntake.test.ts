@@ -28,7 +28,7 @@ describe("ActionIntake", () => {
       queue,
       interpretAction: fakeInterpret,
       getActorDex: () => 60,
-      getNow: () => ({ day: 1, tickTime: "08:00" }),
+      getNow: () => "1923-10-17T08:00:00",
     });
     const handle = await intake.submit({
       characterId: "npc1",

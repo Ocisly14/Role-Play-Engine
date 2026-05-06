@@ -10,8 +10,7 @@ import * as simApi from "../../services/simulationApi";
 interface NpcDetailProps {
   npc: NpcStatusInfo;
   sessionId: string | null;
-  gameDay: number;
-  timeOfDay: string;
+  gameDateTime: string;
   onBack: () => void;
   onZoomTo: (npcId: string) => void;
 }
@@ -37,7 +36,7 @@ function TimelineCard({ entry }: { entry: NpcTimelineEntry }) {
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           <div className="text-xs font-semibold text-slate-500">
-            {entry.gameTime}
+            {entry.gameDateTime.slice(11, 16)}
           </div>
           <p className="mt-1 text-sm leading-relaxed text-slate-700 whitespace-pre-wrap">
             {stripTimelinePrefix(entry.content)}
@@ -61,14 +60,12 @@ function TimelineCard({ entry }: { entry: NpcTimelineEntry }) {
 function ProfileModal({
   npc,
   sessionId,
-  gameDay,
-  timeOfDay,
+  gameDateTime,
   onClose,
 }: {
   npc: NpcStatusInfo;
   sessionId: string | null;
-  gameDay: number;
-  timeOfDay: string;
+  gameDateTime: string;
   onClose: () => void;
 }) {
   const { t } = useTranslation("simulation");
@@ -106,8 +103,8 @@ function ProfileModal({
 
       try {
         const entries = await simApi.fetchNpcTimeline(sessionId, npc.npcId, {
-          gameDay,
-          endTime: timeOfDay,
+          gameDate: gameDateTime.slice(0, 10),
+          endTime: gameDateTime.slice(11, 16),
         });
         if (!isCancelled) {
           setTimelineEntries(entries);
@@ -131,7 +128,7 @@ function ProfileModal({
     return () => {
       isCancelled = true;
     };
-  }, [gameDay, npc.npcId, sessionId, t, timeOfDay]);
+  }, [gameDateTime, npc.npcId, sessionId, t]);
 
   return (
     <div
@@ -226,7 +223,9 @@ function ProfileModal({
                 className="text-base font-semibold"
                 style={{ color: "var(--title)", fontFamily: "var(--serif)" }}
               >
-                {t("npc.timelineTitle", { day: gameDay })}
+                {t("npc.timelineTitle", {
+                  date: gameDateTime.slice(0, 10),
+                })}
               </h4>
               {isTimelineLoading && (
                 <span className="text-xs text-slate-400">
@@ -262,8 +261,7 @@ function ProfileModal({
 export function NpcDetail({
   npc,
   sessionId,
-  gameDay,
-  timeOfDay,
+  gameDateTime,
   onBack,
   onZoomTo,
 }: NpcDetailProps) {
@@ -348,8 +346,7 @@ export function NpcDetail({
           <ProfileModal
             npc={npc}
             sessionId={sessionId}
-            gameDay={gameDay}
-            timeOfDay={timeOfDay}
+            gameDateTime={gameDateTime}
             onClose={() => setShowProfile(false)}
           />,
           document.body

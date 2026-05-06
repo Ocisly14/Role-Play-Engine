@@ -6,17 +6,19 @@
 // pass either a Prisma `NpcMemory` row or a slim `RoleSimContext.recentMemory`
 // item without coupling to the full Prisma type.
 
+import { timePart } from "../state/gameClock.js";
+
 export interface FormattableMemory {
   type: string;
   content: string;
-  gameTime: string;
+  gameDateTime: string;
 }
 
 export function formatTodayMemories(
   rows: ReadonlyArray<FormattableMemory>
 ): string {
   return [...rows]
-    .sort((a, b) => (a.gameTime < b.gameTime ? -1 : 1))
-    .map((m) => `- [${m.gameTime}] (${m.type}) ${m.content}`)
+    .sort((a, b) => a.gameDateTime.localeCompare(b.gameDateTime))
+    .map((m) => `- [${timePart(m.gameDateTime)}] (${m.type}) ${m.content}`)
     .join("\n");
 }

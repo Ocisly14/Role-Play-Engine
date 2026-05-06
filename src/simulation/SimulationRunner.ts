@@ -21,13 +21,16 @@ import {
 import { buildStateContext } from "../engine/resolver/stateContextBuilder.js";
 import { resolveState } from "../engine/resolver/stateResolver.js";
 import type { NpcMemoryManager } from "../memory/NpcMemoryManager.js";
-import {
-  formatDayPrefix,
-  summarizeAllNpcDayMemory,
-} from "../roleSim/dailySummarization.js";
+import { summarizeAllNpcDayMemory } from "../roleSim/dailySummarization.js";
 import { LLMRoleSimAgent } from "../roleSim/llmAgent.js";
 import { NpcActionController } from "../roleSim/npcActionController.js";
 import type { DynamicGameStateManager } from "../state/DynamicGameState.js";
+import {
+  datePart,
+  diffDays,
+  makeDateTime,
+  timePart,
+} from "../state/gameClock.js";
 import { loadScriptedEventsForModule } from "../state/moduleLoader.js";
 import type { DynamicNPCProfile } from "../state/types.js";
 import { SimulationEventEmitter } from "./SimulationEventEmitter.js";
@@ -139,8 +142,7 @@ export class SimulationRunner {
     // status omits the field.
     return {
       state: this.state,
-      currentDay: gameState.gameDay,
-      currentTime: gameState.timeOfDay,
+      currentDateTime: gameState.gameDateTime,
       ticksExecuted: this.ticksExecuted,
       stopReason: this.stopReason,
     };
@@ -161,8 +163,7 @@ export class SimulationRunner {
       isPlaying: this.state === "running" && timeUntilStart === 0,
       displayStartTime,
       timeUntilStart,
-      displayGameDay: gameState.gameDay,
-      displayGameTime: gameState.timeOfDay,
+      displayGameDateTime: gameState.gameDateTime,
     };
   }
 
@@ -220,11 +221,15 @@ export class SimulationRunner {
 
   enableRealTimeSync(bufferMinutes = 0): {
     displayStartTime: number;
-    gameTime: string;
+    gameDateTime: string;
   } {
     const startWall = buildRealTimeStart(Date.now(), bufferMinutes);
     const gameTime = formatGameTime(startWall);
-    this.dgsm.setGameClock({ timeOfDay: gameTime });
+    const gameDateTime = makeDateTime(
+      datePart(this.dgsm.getGameDateTime()),
+      gameTime
+    );
+    this.dgsm.setGameClock({ gameDateTime });
 
     this.config.syncRealTime = true;
     this.config.realTimeBufferMinutes = Math.max(0, bufferMinutes);
@@ -236,7 +241,7 @@ export class SimulationRunner {
       this.scheduleNextTick();
     }
 
-    return { displayStartTime: startWall, gameTime };
+    return { displayStartTime: startWall, gameDateTime };
   }
 
   hydrateFromRuntime(params: {
@@ -363,8 +368,7 @@ export class SimulationRunner {
         moduleId: this.config.moduleId,
         type: "long_term_intent",
         content: intent,
-        gameDay: gameState.gameDay,
-        gameTime: gameState.timeOfDay,
+        gameDateTime: gameState.gameDateTime,
       });
     }
 
@@ -407,8 +411,7 @@ export class SimulationRunner {
         moduleId: this.config.moduleId,
         type: "long_term_intent",
         content: intent,
-        gameDay: gameState.gameDay,
-        gameTime: gameState.timeOfDay,
+        gameDateTime: gameState.gameDateTime,
       });
     }
 
@@ -611,16 +614,16 @@ export class SimulationRunner {
    */
   private wireEngineEvents(engine: TickEngine): void {
     engine.on("actionCompleted", (a: EngineCharacterAction) => {
-      this.events.actionsToEvents([a], "completed", a.completedAt.day);
+      this.events.actionsToEvents([a], "completed");
     });
     engine.on(
       "actionInterrupted",
       (a: EngineCharacterAction, _r: InterruptReason) => {
-        this.events.actionsToEvents([a], "interrupted", a.completedAt.day);
+        this.events.actionsToEvents([a], "interrupted");
       }
     );
     engine.on("actionCancelled", (a: EngineCharacterAction) => {
-      this.events.actionsToEvents([a], "interrupted", a.completedAt.day);
+      this.events.actionsToEvents([a], "interrupted");
     });
     engine.on("featureEvent", (e: FeatureEvent) => {
       const gameState = this.dgsm.getState();
@@ -628,8 +631,7 @@ export class SimulationRunner {
         "feature_triggered",
         e.characterId ?? "system",
         e.sceneId ?? "global",
-        gameState.gameDay,
-        gameState.timeOfDay,
+        gameState.gameDateTime,
         { eventType: e.type, ...(e.data ?? {}) }
       );
     });
@@ -654,7 +656,7 @@ export class SimulationRunner {
       this.events.setTick(this.ticksExecuted);
 
       const gameState = this.dgsm.getState();
-      const dayBefore = gameState.gameDay;
+      const dateBefore = datePart(gameState.gameDateTime);
 
       const { engine } = await this.ensureTickEngine();
 
@@ -665,17 +667,16 @@ export class SimulationRunner {
 
       await engine.tick();
 
-      if (this.dgsm.getGameDay() !== dayBefore) {
+      if (datePart(this.dgsm.getGameDateTime()) !== dateBefore) {
         const stateAfter = this.dgsm.getState();
         this.events.emitSimulationEvent(
           "day_transition",
           "system",
           "global",
-          stateAfter.gameDay,
-          stateAfter.timeOfDay,
+          stateAfter.gameDateTime,
           {
-            previousDay: dayBefore,
-            newDay: stateAfter.gameDay,
+            previousDate: dateBefore,
+            newDate: datePart(stateAfter.gameDateTime),
           }
         );
 
@@ -688,8 +689,8 @@ export class SimulationRunner {
             memoryManager: this.memoryManager,
             sessionId: this.sessionId,
             moduleId: this.config.moduleId,
-            // summarize the day that JUST ended (not the new gameDay)
-            gameDay: dayBefore,
+            // summarize the date that JUST ended.
+            gameDate: dateBefore,
             language: this.language,
           });
         }
@@ -704,8 +705,7 @@ export class SimulationRunner {
         "npc_position_snapshot",
         "system",
         "global",
-        stateAfterTick.gameDay,
-        stateAfterTick.timeOfDay,
+        stateAfterTick.gameDateTime,
         {
           positions: { ...stateAfterTick.characterPositions },
           currentActions,
@@ -784,19 +784,14 @@ export class SimulationRunner {
         locationId !== "unknown"
           ? (this.dgsm.getScene(locationId)?.name ?? locationId)
           : "unknown";
-      const dayPrefix = formatDayPrefix(
-        gameState.gameDay,
-        gameState.moduleSetup?.startDate as string | undefined
-      );
       if (this.memoryManager) {
         await this.memoryManager.add({
           npcId: npc.id,
           sessionId: this.sessionId,
           moduleId: this.config.moduleId,
           type: "event",
-          content: `${dayPrefix} Died at ${gameState.timeOfDay} in ${locationName}`,
-          gameDay: gameState.gameDay,
-          gameTime: gameState.timeOfDay,
+          content: `[${datePart(gameState.gameDateTime)}] Died at ${timePart(gameState.gameDateTime)} in ${locationName}`,
+          gameDateTime: gameState.gameDateTime,
         });
       }
 
@@ -805,8 +800,7 @@ export class SimulationRunner {
         "npc_death",
         npc.id,
         locationId,
-        gameState.gameDay,
-        gameState.timeOfDay,
+        gameState.gameDateTime,
         {
           npcName: npc.name,
           hp: gameState.npcStats[npc.id]?.hp ?? npc.status.hp ?? 0,
@@ -829,7 +823,10 @@ export class SimulationRunner {
 
     if (
       this.config.maxDays !== undefined &&
-      gameState.gameDay > this.config.maxDays
+      diffDays(
+        gameState.gameDateTime,
+        gameState.moduleSetup?.startDate ?? gameState.gameDateTime
+      ) >= this.config.maxDays
     ) {
       this.transitionToTerminalState("max_days");
       return;
@@ -864,8 +861,7 @@ export class SimulationRunner {
       "simulation_state_changed",
       "system",
       "global",
-      gameState.gameDay,
-      gameState.timeOfDay,
+      gameState.gameDateTime,
       {
         state: this.state,
         ticksExecuted: this.ticksExecuted,

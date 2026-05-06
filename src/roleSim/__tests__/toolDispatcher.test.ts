@@ -20,8 +20,7 @@ function makeDeps(opts?: {
   queryResult?: Array<{
     type: string;
     content: string;
-    gameDay: number;
-    gameTime: string;
+    gameDateTime: string;
   }>;
   mapSnapshot?: unknown;
 }): { deps: DispatcherDeps; calls: Calls } {
@@ -56,8 +55,7 @@ function makeDeps(opts?: {
       npcId: "npc1",
       sessionId: "sess1",
       moduleId: "mod1",
-      gameDay: 1,
-      gameTime: "08:00",
+      gameDateTime: "1923-10-17T08:00:00",
     },
     calls,
   };
@@ -141,7 +139,11 @@ describe("toolDispatcher.dispatchInstantTool", () => {
   test("recallMemory: passes query and limit, formats results", async () => {
     const { deps, calls } = makeDeps({
       queryResult: [
-        { type: "event", content: "smith left", gameDay: 1, gameTime: "07:00" },
+        {
+          type: "event",
+          content: "smith left",
+          gameDateTime: "1923-10-17T07:00:00",
+        },
       ],
     });
     const caps = { ...TOOL_CAPS };

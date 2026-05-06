@@ -18,8 +18,7 @@ export interface SimulationEvent {
   id: string;
   sessionId: string;
   tick: number;
-  gameDay: number;
-  gameTime: string;
+  gameDateTime: string;
   type: SimulationEventType;
   actorNpcId: string;
   targetNpcId?: string;
@@ -59,8 +58,7 @@ export interface SimulationConfig {
 
 export interface SimulationStatus {
   state: SimulationState;
-  currentDay: number;
-  currentTime: string;
+  currentDateTime: string;
   ticksExecuted: number;
   stopReason?: StopReason;
   weather?: string;
@@ -102,6 +100,5 @@ export interface PlaybackStatus {
   displayStartTime?: number;
   /** Milliseconds until the scheduled real-time start (0 = already started). */
   timeUntilStart?: number;
-  displayGameDay?: number;
-  displayGameTime?: string;
+  displayGameDateTime?: string;
 }

@@ -6,6 +6,7 @@
 // at the end mirrors the old planner's `contentLanguageName` convention.
 
 import type { DynamicGameStateManager } from "../state/DynamicGameState.js";
+import { formatForPrompt } from "../state/gameClock.js";
 import type { RoleSimContext } from "./agent.js";
 import { formatTodayMemories } from "./memoryFormatter.js";
 import { formatProfile } from "./profileFormatter.js";
@@ -27,7 +28,7 @@ export function buildUserPrompt(
   sections.push(`## Who you are\n${formatProfile(ctx.npcProfile, opts.dgsm)}`);
 
   sections.push(
-    `## Right now\nDay ${ctx.currentTime.day}, ${ctx.currentTime.tickTime}\nScene: ${ctx.currentScene}`
+    `## Right now\nToday: ${formatForPrompt(ctx.currentTime)}\nScene: ${ctx.currentScene}`
   );
 
   if (ctx.perception?.narrative) {

@@ -1,5 +1,5 @@
 import type { NpcMemory, NpcMemoryType, PrismaClient } from "@prisma/client";
-import type { EmbeddingClient } from "../../rag/embedding.js";
+import type { EmbeddingClient } from "../rag/embedding.js";
 import { getHandler } from "./handlers/index.js";
 import type { AddMemoryParams } from "./types.js";
 
@@ -66,8 +66,7 @@ export class MemoryStore {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         metadata: prepared.metadata as any,
         tags: prepared.tags,
-        gameDay: params.gameDay,
-        gameTime: params.gameTime,
+        gameDateTime: params.gameDateTime,
         location: params.location ?? null,
         baseImportance: prepared.baseImportance,
         importance: prepared.baseImportance,
@@ -88,8 +87,8 @@ export class MemoryStore {
     npcId: string;
     filters?: {
       types?: NpcMemoryType[];
-      gameDay?: number;
-      currentGameDay?: number;
+      gameDate?: string;
+      currentGameDate?: string;
       location?: string;
       tags?: string[];
       minImportance?: number;
@@ -98,11 +97,11 @@ export class MemoryStore {
   }): Promise<NpcMemory[]> {
     const { filters, limit } = params;
 
-    // When currentGameDay is set, ephemeral types (event/witness/plan) are restricted
-    // to the current day only; past days are represented by summary memories.
+    // When currentGameDate is set, ephemeral types (event/witness/plan) are restricted
+    // to the current date only; past dates are represented by summary memories.
     if (
-      filters?.currentGameDay !== undefined &&
-      filters.gameDay === undefined
+      filters?.currentGameDate !== undefined &&
+      filters.gameDate === undefined
     ) {
       const requestedTypes = filters.types;
       const ephemeralRequested = requestedTypes
@@ -130,7 +129,7 @@ export class MemoryStore {
         orClauses.push({
           ...baseWhere,
           type: { in: ephemeralRequested },
-          gameDay: filters.currentGameDay,
+          gameDateTime: { startsWith: filters.currentGameDate },
         });
       }
 
@@ -148,7 +147,9 @@ export class MemoryStore {
         sessionId: params.sessionId,
         npcId: params.npcId,
         ...(filters?.types && { type: { in: filters.types } }),
-        ...(filters?.gameDay !== undefined && { gameDay: filters.gameDay }),
+        ...(filters?.gameDate !== undefined && {
+          gameDateTime: { startsWith: filters.gameDate },
+        }),
         ...(filters?.location && { location: filters.location }),
         ...(filters?.tags && { tags: { hasSome: filters.tags } }),
         ...(filters?.minImportance !== undefined && {
@@ -210,8 +211,7 @@ export class MemoryStore {
       AddMemoryParams,
       | "type"
       | "content"
-      | "gameDay"
-      | "gameTime"
+      | "gameDateTime"
       | "location"
       | "metadata"
       | "baseImportanceOverride"
@@ -232,8 +232,7 @@ export class MemoryStore {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         metadata: prepared.metadata as any,
         tags: prepared.tags,
-        gameDay: params.gameDay,
-        gameTime: params.gameTime,
+        gameDateTime: params.gameDateTime,
         location: params.location ?? null,
         baseImportance: prepared.baseImportance,
         importance: prepared.baseImportance,

@@ -1,4 +1,5 @@
 import type { NpcMemory as PrismaNpcMemory } from "@prisma/client";
+import { formatForPrompt } from "../../state/gameClock.js";
 import type { MemoryHandler } from "../types.js";
 
 export class EventHandler implements MemoryHandler {
@@ -20,6 +21,6 @@ export class EventHandler implements MemoryHandler {
 
   format(memory: PrismaNpcMemory): string {
     const loc = memory.location ? ` [${memory.location}]` : "";
-    return `[event] Day${memory.gameDay} ${memory.gameTime}${loc} - ${memory.content}`;
+    return `[event] ${formatForPrompt(memory.gameDateTime)}${loc} - ${memory.content}`;
   }
 }

@@ -89,8 +89,7 @@ export interface NpcStatusInfo {
 
 export interface SimulationStatus {
   state: "initializing" | "running" | "paused" | "stopped" | "completed";
-  currentDay: number;
-  currentTime: string;
+  currentDateTime: string;
   ticksExecuted: number;
   stopReason?: string;
   moduleName?: string;
@@ -102,8 +101,7 @@ export interface SimulationListItem {
   sessionId: string;
   moduleName?: string;
   state: "initializing" | "running" | "paused" | "stopped" | "completed";
-  currentDay: number;
-  currentTime: string;
+  currentDateTime: string;
   ticksExecuted: number;
 }
 
@@ -236,8 +234,7 @@ export interface PlaybackStatus {
   isPlaying: boolean;
   displayStartTime?: number;
   timeUntilStart?: number;
-  displayGameDay?: number;
-  displayGameTime?: string;
+  displayGameDateTime?: string;
 }
 
 export async function fetchPlaybackStatus(
@@ -249,9 +246,10 @@ export async function fetchPlaybackStatus(
 
 export interface SimulationEventFilters {
   npcId?: string;
-  startDay?: number;
+  gameDate?: string;
+  startDate?: string;
   startTime?: string;
-  endDay?: number;
+  endDate?: string;
   endTime?: string;
   maxTick?: number;
   parentLocationId?: string;
@@ -262,15 +260,14 @@ export interface NpcTimelineEntry {
   npcId: string;
   type: "event" | "witness";
   content: string;
-  gameDay: number;
-  gameTime: string;
+  gameDateTime: string;
   location: string | null;
   metadata: Record<string, unknown> | null;
   createdAt: string;
 }
 
 export interface NpcTimelineFilters {
-  gameDay?: number;
+  gameDate?: string;
   endTime?: string;
 }
 
