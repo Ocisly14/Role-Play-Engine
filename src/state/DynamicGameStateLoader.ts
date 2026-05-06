@@ -63,9 +63,10 @@ export async function initializeCompleteDynamicGameState(
     );
     return null;
   }
-  if (!moduleData.setup) {
+  if (!moduleData.setup?.startDate) {
     throw new Error(
-      `Module "${moduleId}" missing required ModuleSetup.startDate.`
+      `Module "${moduleId}" missing required ModuleSetup.startDate. ` +
+        `Add a "startDate": "YYYY-MM-DD" field (e.g. "1923-10-15") to the module's setup section.`
     );
   }
 

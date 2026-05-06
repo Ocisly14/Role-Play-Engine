@@ -283,7 +283,7 @@ export class TickOrchestrator {
     // Phase 8: emergent events scan — aggregator runs all registered scanners
     const scannerCtx = {
       dgsm,
-      tickTime: nextTickTime,
+      gameDateTime: nextTickTime,
       committedActionsThisTick: commitsThisTick,
       lang: this.deps.lang,
     };

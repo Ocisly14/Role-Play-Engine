@@ -58,7 +58,7 @@ export class Applier {
 
   flush(
     changes: readonly StateChange[],
-    _tickTime: GameTime
+    _gameDateTime: GameTime
   ): {
     damageReports: DamageReport[];
     featureEvents: FeatureEvent[];

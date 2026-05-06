@@ -5,7 +5,7 @@ import type { CharacterAction, FeatureEvent, GameTime } from "./types.js";
  *  state (e.g., dedup caches, previous-signature sets) as instance fields. */
 export interface ScannerContext {
   dgsm: DynamicGameStateManager;
-  tickTime: GameTime;
+  gameDateTime: GameTime;
   committedActionsThisTick: readonly CharacterAction[];
   lang: string;
 }
