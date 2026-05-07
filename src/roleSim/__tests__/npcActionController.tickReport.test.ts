@@ -1,3 +1,4 @@
+import { vi } from "vitest";
 import type { TickEngine } from "../../engine/core/tickEngine.js";
 import type {
   ActionStep,
@@ -12,6 +13,20 @@ import type {
   RoleSimDecision,
 } from "../agent.js";
 import { NpcActionController } from "../npcActionController.js";
+
+// Renderer makes real LLM calls via generateText; mock it so the controller
+// tests don't hit the network. Each call returns deterministic narrative.
+vi.mock("../../models/index.js", async () => {
+  const actual = await vi.importActual<typeof import("../../models/index.js")>(
+    "../../models/index.js"
+  );
+  return {
+    ...actual,
+    generateText: vi.fn(
+      async () => "[narrative]\nMock perception narrative.\n\n[references]\n"
+    ),
+  };
+});
 
 interface FakeEngine extends TickEngine {
   fireTickCompleted(report: TickReport): Promise<void>;
@@ -243,9 +258,13 @@ describe("NpcActionController.processTickReport", () => {
       moduleId: "m",
     });
 
-    await controller.decide("npc1", {
-      reviseTriggers: [{ description: "fire" }],
-    });
+    const fireEvent: FeatureEvent = {
+      type: "fire",
+      impact: 2,
+      description: "fire",
+      sceneId: "SCN1",
+    };
+    await controller.decide("npc1", { eventsForNpc: [fireEvent] });
 
     expect(calls.cancel).toBe(1);
     expect(calls.submit).toBe(1);

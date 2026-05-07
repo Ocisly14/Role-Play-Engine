@@ -8028,6 +8028,229 @@ Expected: one new commit with the Phase F message.
 
 ---
 
+## Phase G — Renderer Layer (perception rendering for NPCs)
+
+> **Phase G intent (2026-05-07):** The renderer was deferred from Phase E (Task E4) and Phase F (§F-out-of-scope). Phase G fills it in. Currently, `NpcActionController` already does impact propagation via `findAffectedCharacters` and uses raw `event.description` (god-eye text) as the trigger for `decideNext`. Phase G inserts a true rendering step that converts FeatureEvents + DGSM state into a per-NPC, first-person, citation-annotated narrative — and threads it into the agent's prompt context.
+
+### §G-decisions (in progress, brainstorm 2026-05-07)
+
+The decisions below are confirmed in discussion; remaining open questions sit in §G-open-questions.
+
+#### Decision G1: Renderer lives in the roleSim layer, controller-driven
+
+`NpcActionController.processTickReport` is the single integration point. The TickEngine stays ignorant of NPC AI (per Phase B / §3 Decisions). Flow:
+
+```
+TickEngine → TickReport
+  ↓
+controller.processTickReport:
+  ├─ affectedNpcs = ⋃(per FeatureEvent e: findAffectedCharacters(synthAction, e.impact, dgsm))
+  ├─ endedNpcs    = commits ∪ interruptions ∪ cancellations
+  ├─ targets      = affectedNpcs ∪ endedNpcs ∪ idleAlive
+  └─ for each npc in targets:
+       perceived  = buildPerceivedBundle(npc, report, dgsm)
+       narrative  = await renderer.render(npc, perceived, dgsm)   ← new
+       agent.decideNext({ ...ctx, perception: narrative })
+```
+
+The full `perceived` bundle composition is defined in G10. Renderer is invoked **only for NPCs the controller already decided need a `decide()` pass**. No global render-everyone-every-tick. The synthetic-action shape passed into `findAffectedCharacters` matches the current `processTickReport` implementation (`{ characterId, targetCharacterIds: [], location }`).
+
+#### Decision G2: Renderer output is annotated narrative text (paper-citation style)
+
+The renderer returns a single string with two sections:
+
+```
+[narrative]
+I'm in the kitchen [1] when Alex Brown [2] bursts in, swinging a rusty
+kitchen knife [3] at Tom Reed [4]. Smoke pours from the east wall;
+Alex Brown's [2] coat catches an ember.
+
+[references]
+[1] kitchen: warm, low-ceilinged, copper pots on the wall
+[2] Alex Brown: gaunt man, mid-40s, frayed coat
+[3] rusty kitchen knife: jagged blade, dried blood on the hilt
+[4] Tom Reed: younger, terrified, hands raised
+```
+
+Rules:
+
+- Narrative reads standalone — names appear inline, `[N]` is a citation marker not a substitute.
+- Same entity reused within one render → same number (renderer dedups).
+- Reference block sorted by appearance order, one entry per cited entity.
+- Sub-locations (`east wall`), `SceneCondition` effects (`burning`, `smoke`), weather, and generic environmental prose appear in the narrative **without** `[N]` markers — they are scene attributes / atmosphere, not citation targets. See G5 for the full inclusion rule.
+- No structured `PerceivedFact[]` external API in MVP — the controller does not introspect the rendered text. Cost / attention short-circuit lives in event propagation (G9), not in narrative parsing.
+
+#### Decision G3: Citation numbering is per-render-call local
+
+`[N]` numbering is a one-shot reading aid for that single LLM call. Not stable across ticks, not stable across NPCs.
+
+- NPC A's `[1]` at tick 100 may be Alex; at tick 101 may be Tom Reed (whoever is mentioned first).
+- NPC B's `[1]` in the same tick is independent of NPC A's.
+- Identity tracking lives in memory (canonical names) and relationship tables (IDs); citation numbers do not participate.
+
+#### Decision G4: Two bracket dialects, half-width `[]` both directions, disambiguated by content
+
+| Direction | Form | Example | Parser |
+|---|---|---|---|
+| Renderer → LLM (prompt) | `[N]` numeric anchor after canonical name | `Alex Brown [2]` | n/a (LLM reads it) |
+| LLM → engine (`actionText`) | `[Name]` canonical-name tag | `I attack [Alex Brown] with the [rusty kitchen knife]` | `/\[([^\]]+)\]/g`, then filter `^\d+$` to skip echoed numbers |
+
+Same `[]` both directions; content type (pure digits vs. text) disambiguates. Numeric brackets in LLM output are illegal — they are stripped / warned, with fallback to the existing fuzzy name → entity matcher.
+
+#### Decision G5: Annotation scope (what gets `[N]` / `[Name]`)
+
+**Citation principle:** an entity is cited iff DGSM models it as a **first-class entity with an `id` and a `name`**. Such entities have intrinsic attributes — stats, conditions, descriptions, identity — that warrant a reference-block entry. Scene attributes (conditions, weather) and prose-only descriptors (sub-locations buried inside `scene.description`) are not first-class entities and stay inline as plain prose.
+
+**In scope (cite with `[N]` in prompt narrative; tag with `[Name]` in `actionText`):**
+
+- **People** — `DynamicNPCProfile` (NPC) and PC. By canonical full name (or description-based identifier per G8 if unknown).
+- **Named items / objects** — entries in DGSM's `items` map with `id + name + description`.
+- **Scenes** — `DynamicScene` (`id + name + description`).
+- **Topology nodes** — `JunctionNode`, `RoadNode` (`id + name`) when narrative mentions them by name (e.g. "I head out onto Main Street [3]").
+
+**Out of scope (write inline as plain prose, no `[N]` / `[Name]`):**
+
+- **Sub-locations buried in `scene.description`** (`east wall`, `the desk`, `the fireplace`) — not first-class DGSM entities; they are part of the scene's prose description.
+- **`SceneCondition` effects** (`burning`, `flooded`, `dim`) — these are state attached to a scene, not entities themselves. Express via prose ("flames climb the east wall", "the room is half-flooded").
+- **`CharacterCondition` effects on others** — same logic; render via the carrier's prose ("Alex's hands are trembling").
+- **Weather, time-of-day, ambient mood** — atmosphere, not entities.
+- **Generic nouns** (`door`, `window`, `floor`, `ceiling`).
+- **Numbers, times, action verbs, abstract emotions.**
+- **LLM-improvised flourishes** that have no DGSM origin.
+
+The same scope applies in both directions: prompt citation block and `actionText` `[Name]` tags use identical inclusion rules so the parser surface stays uniform. The agent's `targetCharacterIds` / scene-id channels remain authoritative for ID resolution; `[Name]` tags are an additional human-readable / parser-anchor layer.
+
+#### Decision G6: Renderer is an LLM layer, lower-tier model, uniform pipeline
+
+The renderer makes a real LLM call (not a code template). Two reasons:
+
+1. **Player-facing reuse.** The same renderer feeds the future player UI. A code-templated narrative would be too robotic for player consumption and would have to be rewritten as an LLM layer later — the code path is throwaway work.
+2. **Multi-event prose merging.** Several events in one tick read as a single coherent paragraph from the LLM, not a bullet-list stitch from templates.
+
+Cost mitigation: **use a lower-tier model** (Haiku class) for the renderer call. The renderer's job is "facts → first-person prose with citations" — translation, not reasoning. Decision-making (`agent.decideNext`) keeps Sonnet; rendering does not need it.
+
+No trivial-case short-circuit (e.g. "if the only event is the NPC's own action completing, skip LLM"). The pipeline stays uniform — every NPC in `targets` goes through one renderer call. Lower-tier model cost makes this affordable.
+
+Pipeline:
+
+```
+controller.processTickReport
+  └─ for each npc in targets:
+       perceived = buildPerceivedBundle(npc, report, dgsm)              // see G10
+       narrative: string = await renderer.render(npc, perceived, dgsm)  // 1 LLM call (Haiku-tier)
+       ctx.perception = narrative
+       await agent.decideNext(ctx)                                       // separate LLM loop (Sonnet)
+```
+
+Renderer output is the annotated narrative + reference block from G2. Citation discipline is enforced by prompt design only — there is no post-parse validator that re-checks `[N]` numbering or reference-block well-formedness in MVP. If the renderer's output is malformed (missing reference block, mismatched numbers), it is still passed verbatim to `agent.decideNext`; agents are robust to imperfect prompts. A validator may be added once we have failure data, but is out of scope for Phase G.
+
+#### Decision G7: Renderer is sensory-only — first-principles input scope
+
+The renderer renders only what the viewpoint NPC perceives **right now**: external sights / sounds / smells / touches plus the viewpoint NPC's own proprioception. Memory / relationship history / learned knowledge / long-term intent stay out of the renderer (they live in `agent.decideNext`'s ctx via `recentMemory` / `longTermIntent` / `recallMemory` tool).
+
+**Renderer prompt input:**
+
+1. **Viewpoint NPC**: `name`, `appearance` (baseline), **all** active conditions (proprioceptive — own internal state is self-knowable). Always rendered as first-person ("I"), never cited with `[N]`.
+2. **Current scene** (citable per G5): `name`, `description`, plus `activeConditions[]` (scene-level state, e.g. burning / flooded — non-citable, narrative renders as prose attributes of the scene). The scene itself is cited; its attributes are not.
+3. **Other citable entities mentioned in events** (people + items + adjacent scenes + topology nodes per G5): `name`, `description` / `appearance`, **all** active conditions. These become `[N]` citations. Filtering of which conditions show up is delegated to the renderer LLM via prompt instruction (`only render externally perceivable conditions for non-self entities; do not leak plot secrets or hidden allegiances`). The phrases "plot secrets" and "hidden allegiances" are prose hints to the LLM, not first-class data — no condition schema field tags them. Single-layer prompt control: no code-level `internal: boolean` / `sensoryManifestation` schema flag, no code-level `plot_secret` allowlist.
+4. **Events**: `kind`, `description`, `impact`, involved entity ids.
+5. **Relationship presence check** (identity gate, see G8). A boolean per cited person, nothing else.
+
+**Excluded from renderer prompt** (this stays in `agent.decideNext`):
+
+- `NpcMemory` of any type (event / witness / belief / secret / information / summary / long_term_intent / map)
+- relationship score / history / interaction count
+- Any reasoning / planning / knowledge state
+
+#### Decision G8: Identity gate — name vs description by relationship-graph presence
+
+For each person cited in events, the renderer queries `viewpoint.relationships.has(otherCharId)` (boolean presence — not score, not history).
+
+- **Known**: render canonical name in narrative and references — `[2] Alex Brown: gaunt man, mid-40s, frayed coat`.
+- **Unknown**: render description-based identifier — `[2] the gaunt man: mid-40s, frayed coat, breathing hard`. Disambiguate multiple unknowns by leaning on `appearance` differences (`the gaunt man in frayed coat` vs `the heavy-set woman in red shawl`).
+
+Repeat sightings of the same unknown person **do not auto-promote** to known — identity knowledge only changes when the relationship graph itself changes (formal introduction, name leaked in dialogue, etc.). NPCs that want to track "I've seen this person before" do so via their own `writeMemory` calls; the renderer is stateless on this axis.
+
+The viewpoint NPC's own ID is always rendered as canonical `I` / first-person; the identity gate applies only to **other people**, not to items, scenes, or sub-locations. Items and locations have no relationship-graph concept — they always render with their canonical name + DGSM description. (An NPC walking into an unfamiliar room still sees `the parlor` if that's the canonical name; "unfamiliarity" is something the agent can write into its own memory after the fact, not something the renderer obscures.)
+
+This is the only place where the renderer reads relationship data — and only the boolean presence, never the score or history. It is the minimum-information identity resolution and does not violate G7's exclusion of memory/relationship content.
+
+#### Decision G9: No `attentionThreshold`, no `chooseToIgnore` — propagation + `continue` already cover it
+
+The two `§G-open-questions` originally tracked here (per-action `attentionThreshold` short-circuit, new `chooseToIgnore` tool) are dropped — the existing pipeline already covers their semantics:
+
+- **Cost short-circuit lives in event propagation, not in the controller.** `findAffectedCharacters(action, event.impact, dgsm)` already filters by scene topology + event impact; an event that doesn't propagate to a given NPC's scene never enters their `targets` set, so renderer + `decideNext` are never invoked. There is no need for an additional per-`ActionDefinition.attentionThreshold` field — the propagation layer is the threshold layer.
+- **"Acknowledge but don't act" is `continue`.** The Phase F `continue` terminal tool returns from the controller without canceling or submitting any action; the in-flight action keeps running. This is exactly `chooseToIgnore` semantics. No new tool.
+
+Phase G's behavioral change is therefore narrow: replace the raw `event.description` (god-eye text) currently fed into `reviseTriggers[].description` with the rendered first-person citation-annotated narrative. Everything else (propagation, targets union, `continue` handling) is unchanged.
+
+#### Decision G10: Renderer always emits scene baseline + action state + events overlay
+
+The `perceived` bundle is **always** populated with three parts, even when the NPC entered `targets` solely because they were idle (no events, no ended action). Renderer always runs; output always includes a scene baseline.
+
+```ts
+interface PerceivedBundle {
+  // Always present — the scene the NPC currently inhabits.
+  scene: {
+    id: string;
+    name: string;
+    description: string;
+    activeConditions: SceneCondition[];     // perceivable scene-level conditions
+  };
+
+  // The NPC's own action posture this tick.
+  ownAction:
+    | { kind: "ongoing"; actionText: string }
+    | { kind: "ended"; actionText: string; status: "committed" | "interrupted" | "cancelled" }
+    | { kind: "idle" };
+
+  // Subset of TickReport.featureEvents that propagated to this NPC. May be empty.
+  events: FeatureEvent[];
+}
+```
+
+Composition rules:
+
+- **Scene baseline always**. The renderer always describes "where I am" — ground truth from DGSM. Even idle NPCs get a paragraph about their surroundings.
+- **`ownAction.kind = "ongoing"`** when the NPC has an active step in the engine queue and that step did **not** end this tick. Renderer mentions "I'm reading the journal when…" as the lead-in.
+- **`ownAction.kind = "ended"`** when the NPC's action commit / interrupt / cancel landed in this tick's `TickReport`. Status carries the engine's resolution. Renderer mentions "I just finished reading the journal" or "My grip slips on the rope — I lose hold" depending on status.
+- **`ownAction.kind = "idle"`** when neither ongoing nor ended applies (most common at session bootstrap). Renderer renders only scene baseline + any events.
+- **`events`** is always the propagated subset, possibly empty. When non-empty, renderer weaves them into a single coherent paragraph alongside scene baseline and own-action — no bullet list, no two-section split between own-action and external events. Single unified narrative per G2.
+
+The `agent.decideNext` ctx still receives separate `currentAction` / `currentScene` fields as it does today (Phase F); the renderer-rendered `narrative` is an additional, prose-form perception. Agents do not lose access to structured action / scene data.
+
+#### Decision G11: Renderer LLM failure → retry once, then fall back to god-eye concat
+
+The renderer LLM call is wrapped in a single retry. If both attempts fail (timeout, rate-limit, malformed output, network), the controller falls back to a deterministic code-built god-eye narrative built from the same `PerceivedBundle`: a one-line scene baseline (`"You are in <scene.name>: <scene.description>"`), one line for `ownAction` if non-idle, and `event.description` concatenated for each event. No citation block. This fallback is uglier prose but contains the same information; agents tolerate it.
+
+```ts
+async function renderWithFallback(npc, perceived, dgsm): Promise<string> {
+  for (let attempt = 0; attempt < 2; attempt++) {
+    try {
+      return await renderer.renderViaLLM(npc, perceived, dgsm);
+    } catch (err) {
+      console.warn(`[renderer] attempt ${attempt + 1} failed:`, err);
+    }
+  }
+  return buildGodEyeFallback(npc, perceived, dgsm);  // deterministic, no LLM
+}
+```
+
+Tick pipeline never blocks on a renderer failure: simulation continues, the affected NPC just receives a less-polished prompt. Failures are logged at `warn` level for observability; if they become frequent we revisit retry budget / model fallback.
+
+### §G-open-questions
+
+- **`[narrative]` / `[references]` literal section markers vs. structured separator** — MVP literal text headings. Format may evolve once we see prompt behavior.
+- **Renderer model tier configuration** — which exact model satisfies G6's "lower-tier" (e.g. `claude-haiku-4-5`)? Pinned at implementation time.
+
+### §G-out-of-scope (not in Phase G)
+
+- Player-character renderer (would be a separate `playerPerceptionRenderer` writing to UI, not LLM)
+- Cross-tick narrative continuity / "you remember…" splicing — that's memory's job
+- Sound / smell / off-screen rumor channels — only direct line-of-sight + same-scene + connected-scene impact for MVP
+
+---
+
 ## Self-review notes
 
 ### Spec coverage

@@ -1,33 +1,25 @@
 // src/roleSim/npcActionController.ts
 //
-// Phase F TickReport-driven controller. Subscribes to a single
+// Phase F + G TickReport-driven controller. Subscribes to a single
 // `tickCompleted` channel; per tick the controller computes (a) NPCs whose
 // action ended this tick, (b) NPCs whose currently-running action received a
 // revise-relevant FeatureEvent (per impactPropagation), (c) alive idle NPCs
-// candidate for first decide(). Each affected NPC gets ONE decide() call with
-// all this-tick triggers batched into ctx.reviseTriggers.
+// candidate for first decide(). Each affected NPC gets ONE decide() call;
+// inside decide() the renderer (G6) turns the per-NPC PerceivedBundle into
+// a first-person narrative that lands in ctx.perception.narrative.
 //
 // Engine handles never appear in agent-facing types — the engine is the
 // source of truth for in-flight state; the controller queries it on demand
 // instead of mirroring it.
 
 import type { TickEngine } from "../engine/core/tickEngine.js";
-import type {
-  CharacterAction,
-  FeatureEvent,
-  TickReport,
-} from "../engine/core/types.js";
+import type { FeatureEvent, TickReport } from "../engine/core/types.js";
 import { findAffectedCharacters } from "../engine/shared/impactPropagation.js";
 import type { NpcMemoryManager } from "../memory/NpcMemoryManager.js";
 import type { DynamicGameStateManager } from "../state/DynamicGameState.js";
 import { datePart } from "../state/gameClock.js";
 import type { RoleSimAgent, RoleSimContext } from "./agent.js";
-import { buildPerceptionNarrative } from "./perceptionRenderer.js";
-
-interface ReviseTrigger {
-  description: string;
-  sourceEvent?: FeatureEvent | CharacterAction;
-}
+import { buildPerceivedBundle, render } from "./renderer/index.js";
 
 export interface NpcActionControllerDeps {
   engine: TickEngine;
@@ -37,6 +29,15 @@ export interface NpcActionControllerDeps {
   sessionId: string;
   /** Module id required by NpcMemoryManager.add when writing memories. */
   moduleId: string;
+  /** Module language ("en" | "zh"). Drives renderer output language. */
+  language?: string;
+}
+
+interface DecideOpts {
+  /** TickReport for this round (omit for bootstrap / pre-tick). */
+  report?: TickReport;
+  /** Pre-filtered FeatureEvents that propagated to this NPC. */
+  eventsForNpc?: FeatureEvent[];
 }
 
 export class NpcActionController {
@@ -46,6 +47,7 @@ export class NpcActionController {
   private readonly dgsm: DynamicGameStateManager;
   private readonly sessionId: string;
   private readonly moduleId: string;
+  private readonly language: string;
 
   constructor(deps: NpcActionControllerDeps) {
     this.engine = deps.engine;
@@ -54,6 +56,7 @@ export class NpcActionController {
     this.dgsm = deps.dgsm;
     this.sessionId = deps.sessionId;
     this.moduleId = deps.moduleId;
+    this.language = deps.language ?? "en";
 
     this.engine.on("tickCompleted", (report: TickReport) =>
       this.processTickReport(report)
@@ -72,23 +75,27 @@ export class NpcActionController {
   }
 
   private async processTickReport(report: TickReport): Promise<void> {
-    // 1. Build per-NPC trigger lists from this tick's FeatureEvents
-    //    (Decision 15). FeatureEvent is now self-describing — read impact +
-    //    description directly off the event.
-    const triggersByNpc = new Map<string, ReviseTrigger[]>();
+    // 1. Build per-NPC propagated event list. FeatureEvent already carries
+    //    intrinsic impact + description (Phase F1); the renderer turns the
+    //    set into per-NPC first-person narrative downstream (Phase G).
+    const eventsByNpc = new Map<string, FeatureEvent[]>();
 
     for (const event of report.featureEvents) {
       if (!event.characterId && !event.sceneId) continue;
-      const action = {
+      const synthAction = {
         characterId: event.characterId ?? "system",
         targetCharacterIds: [] as string[],
         location: event.sceneId ?? "",
       };
-      const affected = findAffectedCharacters(action, event.impact, this.dgsm);
+      const affected = findAffectedCharacters(
+        synthAction,
+        event.impact,
+        this.dgsm
+      );
       for (const [npcId] of affected) {
-        const list = triggersByNpc.get(npcId) ?? [];
-        list.push({ description: event.description, sourceEvent: event });
-        triggersByNpc.set(npcId, list);
+        const list = eventsByNpc.get(npcId) ?? [];
+        list.push(event);
+        eventsByNpc.set(npcId, list);
       }
     }
 
@@ -109,7 +116,7 @@ export class NpcActionController {
 
     // 4. Union of all NPCs that need decide() this tick.
     const allTargets = new Set<string>([
-      ...triggersByNpc.keys(),
+      ...eventsByNpc.keys(),
       ...npcsWithEndedAction,
       ...idleAlive,
     ]);
@@ -117,28 +124,25 @@ export class NpcActionController {
     // 5. Sequential decide() — no concurrency, no race.
     for (const npcId of allTargets) {
       if (!this.dgsm.isNpcAlive(npcId)) continue;
-      const triggers = triggersByNpc.get(npcId);
-      await this.decide(
-        npcId,
-        triggers && triggers.length > 0
-          ? { reviseTriggers: triggers }
-          : undefined
-      );
+      const eventsForNpc = eventsByNpc.get(npcId);
+      await this.decide(npcId, {
+        report,
+        eventsForNpc:
+          eventsForNpc && eventsForNpc.length > 0 ? eventsForNpc : undefined,
+      });
     }
   }
 
-  async decide(
-    npcId: string,
-    opts?: { reviseTriggers?: ReadonlyArray<ReviseTrigger> }
-  ): Promise<void> {
+  async decide(npcId: string, opts?: DecideOpts): Promise<void> {
     if (!this.dgsm.isNpcAlive(npcId)) return;
 
-    // Skip if NPC is busy AND has no triggers — its action is already running.
-    // With reviseTriggers present, the agent gets a chance to switch action
-    // mid-flight (Decision 14 — `act` absorbs cancellation).
+    // Skip if NPC is busy AND this tick had no propagated events for them —
+    // their action is already running and nothing has happened that warrants
+    // a wake-up. With events present, the agent gets a chance to switch
+    // action mid-flight (Decision 14 — `act` absorbs cancellation).
     if (
       this.npcHasActiveStep(npcId) &&
-      !(opts?.reviseTriggers && opts.reviseTriggers.length > 0)
+      !(opts?.eventsForNpc && opts.eventsForNpc.length > 0)
     ) {
       return;
     }
@@ -187,7 +191,7 @@ export class NpcActionController {
 
   private async buildContext(
     npcId: string,
-    opts?: { reviseTriggers?: ReadonlyArray<ReviseTrigger> }
+    opts?: DecideOpts
   ): Promise<RoleSimContext | undefined> {
     const profile = this.dgsm.getNpcProfile(npcId);
     if (!profile) return undefined;
@@ -208,9 +212,20 @@ export class NpcActionController {
       ? { actionText: active.actionText }
       : undefined;
 
-    const perception = {
-      narrative: buildPerceptionNarrative(npcId, this.dgsm),
-    };
+    const bundle = buildPerceivedBundle({
+      npcId,
+      report: opts?.report,
+      eventsForNpc: opts?.eventsForNpc,
+      dgsm: this.dgsm,
+      engine: this.engine,
+    });
+
+    const rendered = await render({
+      npcId,
+      bundle,
+      dgsm: this.dgsm,
+      language: this.language,
+    });
 
     return {
       npcId,
@@ -219,9 +234,8 @@ export class NpcActionController {
       currentScene,
       recentMemory,
       longTermIntent,
-      reviseTriggers: opts?.reviseTriggers,
       currentAction,
-      perception,
+      perception: { narrative: rendered.narrative },
     };
   }
 

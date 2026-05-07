@@ -35,19 +35,12 @@ export function buildUserPrompt(
     sections.push(`## What you perceive\n${ctx.perception.narrative}`);
   }
 
-  if (ctx.longTermIntent && ctx.longTermIntent.trim()) {
+  if (ctx.longTermIntent?.trim()) {
     sections.push(`## Your long-term goal\n${ctx.longTermIntent}`);
   }
 
   if (ctx.currentAction) {
     sections.push(`## Currently doing\n"${ctx.currentAction.actionText}"`);
-  }
-
-  if (ctx.reviseTriggers && ctx.reviseTriggers.length > 0) {
-    const lines = ctx.reviseTriggers.map((t) => `- ${t.description}`);
-    sections.push(
-      `## Things that just happened around you\n${lines.join("\n")}`
-    );
   }
 
   if (ctx.recentMemory.length > 0) {

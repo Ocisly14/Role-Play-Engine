@@ -87,27 +87,6 @@ describe("buildUserPrompt", () => {
     expect(out).toContain('"reading the journal"');
   });
 
-  test("omits 'Things that just happened' when no reviseTriggers", () => {
-    const out = buildUserPrompt(makeCtx(), [], {
-      language: "en",
-      dgsm: makeDgsm(),
-    });
-    expect(out).not.toContain("## Things that just happened");
-  });
-
-  test("includes 'Things that just happened' when reviseTriggers populated", () => {
-    const ctx = makeCtx({
-      reviseTriggers: [
-        { description: "Smith entered the room" },
-        { description: "you hear footsteps upstairs" },
-      ],
-    });
-    const out = buildUserPrompt(ctx, [], { language: "en", dgsm: makeDgsm() });
-    expect(out).toContain("## Things that just happened around you");
-    expect(out).toContain("- Smith entered the room");
-    expect(out).toContain("- you hear footsteps upstairs");
-  });
-
   test("omits 'Today's memories' when empty", () => {
     const out = buildUserPrompt(makeCtx(), [], {
       language: "en",

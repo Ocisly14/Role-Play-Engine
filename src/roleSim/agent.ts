@@ -6,11 +6,7 @@
 // agent-facing types: the engine is the source of truth for in-flight state;
 // controller queries it on demand instead of mirroring it.
 
-import type {
-  CharacterAction,
-  FeatureEvent,
-  GameTime,
-} from "../engine/core/types.js";
+import type { GameTime } from "../engine/core/types.js";
 import type { NpcMemoryType } from "../memory/types.js";
 import type { DynamicNPCProfile } from "../state/types.js";
 
@@ -56,20 +52,12 @@ export interface RoleSimContext {
     gameDateTime: string;
   }>;
   longTermIntent?: string;
-  /** Present iff this tick produced revise-relevant events affecting this NPC
-   *  (per impactPropagation). All triggers from one tick are batched here so
-   *  the agent makes a single combined-context decision rather than reacting
-   *  to each event in isolation. Absent when the tick had no revise events
-   *  for this NPC. Decision 16 (revised 2026-04-24). */
-  reviseTriggers?: ReadonlyArray<{
-    description: string;
-    sourceEvent?: FeatureEvent | CharacterAction;
-  }>;
-  /** Renderer-layer perception output (Decision 10). Empty during Phase F
-   *  (Decision 11 — renderer deferred). */
+  /** Renderer-layer perception output (G1 / G6). One first-person citation-
+   *  annotated paragraph that subsumes the prior `reviseTriggers` god-eye
+   *  list — the agent reads what just happened from the rendered narrative,
+   *  not from a parallel structured trigger list. */
   perception?: {
     narrative: string;
-    perceivedFacts?: unknown[];
   };
 }
 

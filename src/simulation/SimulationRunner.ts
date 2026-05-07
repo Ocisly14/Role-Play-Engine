@@ -598,6 +598,7 @@ export class SimulationRunner {
       dgsm: this.dgsm,
       sessionId: this.sessionId,
       moduleId: this.config.moduleId,
+      language: this.language,
     });
 
     this.wireEngineEvents(engine);
