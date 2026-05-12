@@ -98,10 +98,7 @@ export class LLMRoleSimAgent implements RoleSimAgent {
   }): RoleSimDecision {
     if (parsed.tool === "act") {
       const actionText = String(parsed.actionText ?? "");
-      const targetCharacterIds = Array.isArray(parsed.targetCharacterIds)
-        ? (parsed.targetCharacterIds as string[])
-        : undefined;
-      return { tool: "act", actionText, targetCharacterIds };
+      return { tool: "act", actionText };
     }
     return {
       tool: "continue",

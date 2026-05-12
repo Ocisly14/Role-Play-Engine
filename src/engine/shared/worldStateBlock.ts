@@ -24,8 +24,11 @@ function buildPerceivedFireState(
   dgsm: DynamicGameStateManager,
   location: string
 ): string {
-  const fireStates = dgsm.getFeatureState("fire");
-  if (!fireStates || Object.keys(fireStates).length === 0) return "";
+  const fireEntries = dgsm.getAllScopedFeatureStates<{
+    intensity: number;
+    phase?: string;
+  }>("fire", "scene");
+  if (fireEntries.length === 0) return "";
 
   const topology = dgsm.getTopology();
 
@@ -35,8 +38,7 @@ function buildPerceivedFireState(
     label: string;
   }> = [];
 
-  for (const [fireSceneId, state] of Object.entries(fireStates)) {
-    const fs = state as { intensity: number; phase?: string } | undefined;
+  for (const { key: fireSceneId, state: fs } of fireEntries) {
     if (!fs || fs.intensity <= 0) continue;
 
     if (fireSceneId === location) {
@@ -103,18 +105,14 @@ export function buildWorldStateBlock(
   }
 
   // Stamina — only this character's fatigue
-  const staminaStates = dgsm.getFeatureState("stamina") as
-    | Record<
-        string,
-        {
-          fatigue?: number;
-          fatigueLevel?: number;
-          minutesSinceLastRest?: number;
-        }
-      >
-    | undefined;
-  if (staminaStates?.[characterId]) {
-    const stamina = staminaStates[characterId];
+  const staminaEntries = dgsm.getAllScopedFeatureStates<{
+    fatigue?: number;
+    fatigueLevel?: number;
+    minutesSinceLastRest?: number;
+  }>("stamina", "character");
+  const staminaState = staminaEntries.find((e) => e.key === characterId)?.state;
+  if (staminaState) {
+    const stamina = staminaState;
     if (stamina.fatigueLevel && stamina.fatigueLevel > 0) {
       const fatigue = Math.max(
         0,
@@ -130,22 +128,18 @@ export function buildWorldStateBlock(
   }
 
   // Sanity — only this character's active insanity
-  const sanityStates = dgsm.getFeatureState("sanity") as
-    | Record<
-        string,
-        {
-          activeInsanity?: {
-            isActive?: boolean;
-            insanityType?: string;
-            boutType?: string;
-            description?: string;
-            actionRestriction?: string;
-          };
-        }
-      >
-    | undefined;
-  if (sanityStates?.[characterId]) {
-    const sanity = sanityStates[characterId];
+  const sanityEntries = dgsm.getAllScopedFeatureStates<{
+    activeInsanity?: {
+      isActive?: boolean;
+      insanityType?: string;
+      boutType?: string;
+      description?: string;
+      actionRestriction?: string;
+    };
+  }>("sanity", "character");
+  const sanityState = sanityEntries.find((e) => e.key === characterId)?.state;
+  if (sanityState) {
+    const sanity = sanityState;
     if (sanity.activeInsanity?.isActive) {
       const ai = sanity.activeInsanity;
       sections.push(

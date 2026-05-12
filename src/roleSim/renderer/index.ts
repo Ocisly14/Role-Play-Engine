@@ -1,13 +1,11 @@
 // src/roleSim/renderer/index.ts
 //
-// Phase G renderer entry. Two modes:
-//   render(...)      — LLM call (Haiku-tier per G6) with retry; falls back
-//                      to deterministic god-eye prose on failure (G11).
-//   renderFallback(...) — direct god-eye path, used by tests and as the
-//                      fallback target.
+// Phase G renderer entry. Single mode: LLM call with built-in retry
+// (maxRetries=2 in llmRenderer). On hard failure (LLM rejects, empty output,
+// retry exhausted) returns null — caller (NpcActionController) handles by
+// skipping that NPC's decide() this tick. No god-eye fallback (D6).
 
 import type { DynamicGameStateManager } from "../../state/DynamicGameState.js";
-import { buildGodEyeFallback } from "./godEyeFallback.js";
 import { renderViaLLM } from "./llmRenderer.js";
 import type { PerceivedBundle, RenderedPerception } from "./types.js";
 
@@ -17,7 +15,6 @@ export type {
   RenderedPerception,
 } from "./types.js";
 export { buildPerceivedBundle } from "./buildBundle.js";
-export { buildGodEyeFallback } from "./godEyeFallback.js";
 
 export interface RenderParams {
   npcId: string;
@@ -26,42 +23,27 @@ export interface RenderParams {
   language?: string;
 }
 
-/** Render via LLM with built-in retry; on hard failure, degrade to god-eye. */
+/**
+ * Render via LLM. Returns null on hard failure (caller skips decide() that tick).
+ * Empty narrative also counts as failure.
+ */
 export async function render(
   params: RenderParams
-): Promise<RenderedPerception> {
+): Promise<RenderedPerception | null> {
   try {
     const narrative = await renderViaLLM(params);
     if (narrative.trim().length === 0) {
       console.warn(
-        `[renderer] LLM returned empty output for ${params.npcId}, falling back`
+        `[renderer] LLM returned empty output for ${params.npcId}; skipping decide() this tick`
       );
-      return {
-        narrative: buildGodEyeFallback(
-          params.npcId,
-          params.bundle,
-          params.dgsm
-        ),
-        llmSucceeded: false,
-      };
+      return null;
     }
-    return { narrative, llmSucceeded: true };
+    return { narrative };
   } catch (err) {
     console.warn(
-      `[renderer] LLM call failed for ${params.npcId}, falling back:`,
+      `[renderer] LLM call failed for ${params.npcId}; skipping decide() this tick:`,
       err instanceof Error ? err.message : err
     );
-    return {
-      narrative: buildGodEyeFallback(params.npcId, params.bundle, params.dgsm),
-      llmSucceeded: false,
-    };
+    return null;
   }
-}
-
-/** Direct god-eye path. Synchronous, no LLM. */
-export function renderFallback(params: RenderParams): RenderedPerception {
-  return {
-    narrative: buildGodEyeFallback(params.npcId, params.bundle, params.dgsm),
-    llmSucceeded: false,
-  };
 }

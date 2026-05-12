@@ -67,7 +67,8 @@ export interface CreateTickEngineOptions {
    *  Order in the array = order of events in TickReport.featureEvents. */
   emergentScanners: EmergentScanner[];
   interpretAction: (
-    input: ActionInput
+    input: ActionInput,
+    directory: import("../../state/perceivableDirectory.js").PerceivableDirectory
   ) => Promise<{ steps: import("../types.js").InterpretedStep[] }>;
   resolve: ResolveFn;
   getActorDex: (characterId: string) => number;
@@ -97,6 +98,7 @@ export function createTickEngine(opts: CreateTickEngineOptions): TickEngine {
   const bus = new EventBus();
   const intake = new ActionIntake({
     queue,
+    dgsm: opts.dgsm,
     interpretAction: opts.interpretAction,
     getActorDex: opts.getActorDex,
     getNow: () => opts.dgsm.getGameDateTime(),

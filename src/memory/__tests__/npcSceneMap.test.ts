@@ -112,17 +112,20 @@ function createTownDgsm(): DynamicGameStateManager {
       name: "Town Hall",
       description: "The local government building",
       entrySceneId: "hall_lobby",
+      subSceneCount: 2,
     },
     {
       id: "BOOKSHOP",
       name: "Bookshop",
       description: "A dusty old bookshop",
       entrySceneId: "bookshop_main",
+      subSceneCount: 1,
     },
     {
       id: "OUTDOOR",
       name: "Outdoor",
       description: "",
+      subSceneCount: 0,
     },
   ];
   state.scenarioOutlines = outlines;
@@ -435,7 +438,7 @@ describe("getKnownMapLocationIdsFromPosition", () => {
       getKnownMapLocationIdsFromPosition({
         type: "road",
         roadId: "ROAD_MAIN",
-        progress: 0.5,
+        position: 0.5,
       })
     ).toEqual(["ROAD_MAIN"]);
   });
@@ -594,8 +597,8 @@ describe("buildKnownMapSnapshot", () => {
 
   it("includes blocked connections only between known locations", () => {
     const dgsm = createTownDgsm();
-    dgsm.setConnectionBlocked("hall_lobby", "hall_office", "Door is locked");
-    dgsm.setConnectionBlocked("hall_lobby", "bookshop_main", "No passage");
+    dgsm.setConnectionBlocked("hall_lobby", "hall_office", true, "Door is locked");
+    dgsm.setConnectionBlocked("hall_lobby", "bookshop_main", true, "No passage");
 
     const ids: KnownMapIds = {
       sceneIds: ["hall_lobby", "hall_office"],

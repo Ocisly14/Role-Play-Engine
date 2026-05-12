@@ -1,3 +1,4 @@
+/// <reference types="vitest/globals" />
 import type { NpcMemoryManager } from "../../memory/NpcMemoryManager.js";
 import type { DynamicNPCProfile } from "../../state/types.js";
 import { seedNpcLongTermIntents } from "../seedIntents.js";

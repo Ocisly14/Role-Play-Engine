@@ -1,4 +1,5 @@
 // src/roleSim/__tests__/profileFormatter.test.ts
+/// <reference types="vitest/globals" />
 
 import type { DynamicGameStateManager } from "../../state/DynamicGameState.js";
 import type { DynamicNPCProfile, InventoryItem } from "../../state/types.js";

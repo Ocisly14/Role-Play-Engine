@@ -375,7 +375,7 @@ export const fireFeature: WorldFeature = {
       // Work on a shallow copy so we never observe mid-tick mutations of the
       // DGSM-stored state via ctx (though in practice the read-context returns
       // a reference — defensive copy keeps the loop semantics clean).
-      const next: FireSceneState = isFireRoadState(state)
+      const next: FireSceneState | FireRoadState = isFireRoadState(state)
         ? { ...state, burnRange: { ...state.burnRange } }
         : { ...state };
 

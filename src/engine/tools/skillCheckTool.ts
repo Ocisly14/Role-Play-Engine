@@ -49,7 +49,7 @@ export function executeSkillCheck(
     characterId,
     skill: resolvedSkill,
     difficulty: skillCheckDef?.difficulty ?? "regular",
-    targetCharacterIds: targetIds,
+    referencedEntities: targetIds?.map((id) => ({ id, kind: "character" as const })),
     type:
       skillCheckDef?.type === "opposed" ? "character_interaction" : "action",
   };

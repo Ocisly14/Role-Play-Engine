@@ -1,12 +1,14 @@
+import type { ReferencedEntity } from "../core/types.js";
+
 /**
  * Minimal node shape consumed by `buildStateContext`. Only `characterId` and
- * `targetCharacterIds` are read — synthetic shims (e.g. SimulationRunner's
+ * `referencedEntities` are read — synthetic shims (e.g. SimulationRunner's
  * resolve callback) and real engine actions both qualify. Replaces the
  * legacy `PlanNode` import (deleted in Phase F).
  */
 interface ResolverContextNode {
   characterId: string;
-  targetCharacterIds?: string[];
+  referencedEntities?: ReferencedEntity[];
 }
 import type { DynamicGameStateManager } from "../../state/DynamicGameState.js";
 import { buildWorldStateBlock } from "../shared/worldStateBlock.js";
@@ -37,7 +39,7 @@ function buildActorSection(
     if (npc.personality) lines.push(`Personality: ${npc.personality}`);
   }
   if (allFields || fields?.includes("isAlive")) {
-    lines.push(`Status: ${npc.status?.isAlive !== false ? "alive" : "dead"}`);
+    lines.push(`Status: ${dgsm.isNpcAlive(characterId) ? "alive" : "dead"}`);
   }
   if (allFields || fields?.includes("stats")) {
     if (npc.status) {
@@ -97,7 +99,7 @@ function buildTargetSection(
     if (npc.personality) lines.push(`Personality: ${npc.personality}`);
   }
   if (allFields || fields?.includes("isAlive")) {
-    lines.push(`Status: ${npc.status?.isAlive !== false ? "alive" : "dead"}`);
+    lines.push(`Status: ${dgsm.isNpcAlive(targetId) ? "alive" : "dead"}`);
   }
   if (allFields || fields?.includes("stats")) {
     if (npc.status) {
@@ -293,7 +295,9 @@ export function buildStateContext(
       );
     }
     if (spec.inject.includes("targets")) {
-      const targetIds = node.targetCharacterIds ?? [];
+      const targetIds = (node.referencedEntities ?? [])
+        .filter((r) => r.kind === "character")
+        .map((r) => r.id);
       if (targetIds.length > 0) {
         result.targetSections = targetIds
           .map((tid) =>

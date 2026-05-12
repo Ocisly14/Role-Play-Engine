@@ -154,11 +154,11 @@ export class ScriptedEventRunner {
     if (m.atSceneId !== undefined && a.sceneId !== m.atSceneId) {
       return false;
     }
-    if (
-      m.withTargetId !== undefined &&
-      !a.targetCharacterIds.includes(m.withTargetId)
-    ) {
-      return false;
+    if (m.withTargetId !== undefined) {
+      const charRefIds = a.referencedEntities
+        .filter((r) => r.kind === "character")
+        .map((r) => r.id);
+      if (!charRefIds.includes(m.withTargetId)) return false;
     }
     return true;
   }

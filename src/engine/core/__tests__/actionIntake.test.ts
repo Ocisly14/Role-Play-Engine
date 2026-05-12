@@ -1,14 +1,22 @@
 import { describe, expect, it, vi } from "vitest";
 import type { InterpretedStep } from "../../types.js";
+import type { ActionInput } from "../types.js";
 import { ActionIntake } from "../actionIntake.js";
 import { Queue } from "../queue.js";
+import type { DynamicGameStateManager } from "../../../state/DynamicGameState.js";
+import type { PerceivableDirectory } from "../../../state/perceivableDirectory.js";
 
-const fakeInterpret = vi.fn<[unknown], Promise<{ steps: InterpretedStep[] }>>();
+// vi.fn() typed as the desired function shape directly to avoid vitest 2.x
+// type-param API changes.
+const fakeInterpret = vi.fn() as unknown as (
+  input: ActionInput,
+  directory: PerceivableDirectory
+) => Promise<{ steps: InterpretedStep[] }>;
 
 describe("ActionIntake", () => {
   it("expands interpreter output into ActionSteps sharing stepGroupId", async () => {
     const queue = new Queue();
-    fakeInterpret.mockResolvedValueOnce({
+    vi.mocked(fakeInterpret).mockResolvedValueOnce({
       steps: [
         {
           definitionId: "walk",
@@ -24,8 +32,10 @@ describe("ActionIntake", () => {
         } as InterpretedStep,
       ],
     });
+    const fakeDgsm = {} as DynamicGameStateManager;
     const intake = new ActionIntake({
       queue,
+      dgsm: fakeDgsm,
       interpretAction: fakeInterpret,
       getActorDex: () => 60,
       getNow: () => "1923-10-17T08:00:00",

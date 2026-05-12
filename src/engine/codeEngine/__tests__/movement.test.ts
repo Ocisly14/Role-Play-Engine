@@ -147,7 +147,7 @@ function makeStep(
     stepGroupId: "h1",
     stepIndex: 0,
     characterId,
-    targetCharacterIds: [],
+    referencedEntities: [],
     actionText: `move to ${destination}`,
     definitionId: "movement",
     executionSceneId: "SCN_A",

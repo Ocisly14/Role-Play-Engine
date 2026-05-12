@@ -1,3 +1,4 @@
+/// <reference types="vitest/globals" />
 import {
   STATE_CHANGE_TYPES,
   getAllStateChangeTypeIds,

@@ -40,6 +40,4 @@ export interface PerceivedBundle {
 export interface RenderedPerception {
   /** Final narrative + reference text fed into the agent prompt. */
   narrative: string;
-  /** Whether the LLM call succeeded; false ⇒ god-eye fallback path was used. */
-  llmSucceeded: boolean;
 }

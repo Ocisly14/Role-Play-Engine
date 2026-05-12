@@ -8,7 +8,7 @@ function step(
   return {
     stepGroupId: partial.stepGroupId ?? partial.id,
     stepIndex: partial.stepIndex ?? 0,
-    targetCharacterIds: [],
+    referencedEntities: [],
     actionText: "",
     definitionId: "noop",
     executionSceneId: "s1",

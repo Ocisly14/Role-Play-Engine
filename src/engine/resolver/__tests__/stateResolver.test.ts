@@ -1,3 +1,4 @@
+/// <reference types="vitest/globals" />
 import type { ActionDefinition, OutputSchemaConfig } from "../../types.js";
 import {
   buildResolverPrompt,
@@ -10,6 +11,7 @@ const makeDef = (
   outputSchema?: OutputSchemaConfig
 ): ActionDefinition => ({
   id: "test",
+  engine: "llm",
   title: "Test",
   description: "Test definition",
   content: guidance,

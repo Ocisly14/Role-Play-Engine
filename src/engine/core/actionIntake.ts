@@ -1,4 +1,9 @@
 import { randomUUID } from "node:crypto";
+import {
+  buildPerceivableDirectory,
+  type PerceivableDirectory,
+} from "../../state/perceivableDirectory.js";
+import type { DynamicGameStateManager } from "../../state/DynamicGameState.js";
 import type { InterpretedStep } from "../types.js";
 import type { Queue } from "./queue.js";
 import type {
@@ -10,8 +15,10 @@ import type {
 
 export interface ActionIntakeDeps {
   queue: Queue;
+  dgsm: DynamicGameStateManager;
   interpretAction: (
-    input: ActionInput
+    input: ActionInput,
+    directory: PerceivableDirectory
   ) => Promise<{ steps: InterpretedStep[] }>;
   getActorDex: (characterId: string) => number;
   getNow: () => GameTime;
@@ -28,7 +35,11 @@ export class ActionIntake {
       characterId: input.characterId,
       submittedAt,
     };
-    const { steps } = await this.deps.interpretAction(input);
+    const directory = buildPerceivableDirectory(
+      input.characterId,
+      this.deps.dgsm
+    );
+    const { steps } = await this.deps.interpretAction(input, directory);
     const dex = this.deps.getActorDex(input.characterId);
 
     steps.forEach((s, i) => {
@@ -52,7 +63,7 @@ export class ActionIntake {
         stepGroupId: handleId,
         stepIndex: i,
         characterId: input.characterId,
-        targetCharacterIds: input.targetCharacterIds ?? [],
+        referencedEntities: s.referencedEntities ?? [],
         actionText: stepActionText,
         definitionId: s.definitionId,
         executionSceneId: input.sceneId,

@@ -14,7 +14,8 @@ export type RoleSimDecision =
   | {
       tool: "act";
       actionText: string;
-      targetCharacterIds?: string[];
+      // targetCharacterIds removed (Phase H D2) — agent emits citations [Name]
+      // in actionText; GameInterpreter resolves to ActionStep.referencedEntities.
     }
   | { tool: "continue"; reason?: string }
   | {

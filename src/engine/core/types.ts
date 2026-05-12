@@ -29,6 +29,18 @@ export type GameTime = GameDateTime;
 
 export type Unsubscribe = () => void;
 
+/** Kind of entity referenced via [Name] citation in actionText.
+ *  Drives downstream routing: stateContextBuilder, scriptedEventRunner.matchTarget,
+ *  impactPropagation level-1 propagation all filter by kind === "character". */
+export type EntityKind = "character" | "item" | "scene";
+
+/** A resolved citation from `actionText`: directory lookup result.
+ *  Produced by GameInterpreter; carried on InterpretedStep / ActionStep / CharacterAction. */
+export interface ReferencedEntity {
+  id: string;
+  kind: EntityKind;
+}
+
 /**
  * Structured character-level condition. Symmetric with SceneCondition.
  * Replaces the old `status.conditions: string[]` representation.
@@ -50,9 +62,9 @@ export interface CharacterCondition {
 export interface ActionInput {
   characterId: string;
   actionText: string;
-  targetCharacterIds?: string[];
   sceneId: string;
   overlayFields?: Record<string, unknown>;
+  // targetCharacterIds removed — agent no longer emits this; interpreter derives referencedEntities
 }
 
 export interface ActionHandle {
@@ -75,7 +87,9 @@ export interface ActionStep {
   stepIndex: number;
 
   characterId: string;
-  targetCharacterIds: string[];
+  /** Citations from actionText resolved by interpreter — typed (id + kind).
+   *  Replaces legacy `targetCharacterIds: string[]` (Phase H). */
+  referencedEntities: ReferencedEntity[];
   actionText: string;
   definitionId: string;
   executionSceneId: string;
@@ -279,7 +293,9 @@ export interface CharacterAction {
   definitionId: string;
   actionText: string;
   sceneId: string;
-  targetCharacterIds: string[];
+  /** Citations from actionText resolved by interpreter — typed (id + kind).
+   *  Phase H rename of `targetCharacterIds: string[]`. */
+  referencedEntities: ReferencedEntity[];
   activatedAt: GameTime;
   completedAt: GameTime;
   outcome?: StateResolution;

@@ -1,5 +1,55 @@
 import { ModelClass, generateText } from "../../models/index.js";
 import type { ActionDefinition, InterpretedResult } from "../types.js";
+import type { ReferencedEntity } from "../core/types.js";
+import type { PerceivableDirectory } from "../../state/perceivableDirectory.js";
+
+export class CitationResolutionError extends Error {
+  constructor(
+    public readonly citation: string,
+    public readonly actionText: string
+  ) {
+    super(
+      `Citation [${citation}] not in PerceivableDirectory. actionText: "${actionText}"`
+    );
+    this.name = "CitationResolutionError";
+  }
+}
+
+const CITATION_REGEX = /\[([^\]]+)\]/g;
+
+export function parseCitations(
+  actionText: string,
+  directory: PerceivableDirectory
+): ReferencedEntity[] {
+  const result: ReferencedEntity[] = [];
+  const seen = new Set<string>();
+  let match: RegExpExecArray | null;
+  CITATION_REGEX.lastIndex = 0;
+  while ((match = CITATION_REGEX.exec(actionText)) !== null) {
+    const name = match[1];
+    if (seen.has(name)) continue;
+    seen.add(name);
+
+    const charId = directory.characters.get(name);
+    if (charId !== undefined) {
+      result.push({ id: charId, kind: "character" });
+      continue;
+    }
+    const itemId = directory.items.get(name);
+    if (itemId !== undefined) {
+      result.push({ id: itemId, kind: "item" });
+      continue;
+    }
+    const sceneId = directory.scenes.get(name);
+    if (sceneId !== undefined) {
+      result.push({ id: sceneId, kind: "scene" });
+      continue;
+    }
+
+    throw new CitationResolutionError(name, actionText);
+  }
+  return result;
+}
 
 export function buildInterpreterPrompt(
   definitions: ActionDefinition[]
@@ -158,7 +208,8 @@ export function parseInterpretedResult(
 export async function interpretAction(
   action: string,
   definitions: ActionDefinition[],
-  language: string
+  language: string,
+  directory: PerceivableDirectory
 ): Promise<InterpretedResult> {
   const systemPrompt = buildInterpreterPrompt(definitions);
   const langInstruction =
@@ -173,5 +224,10 @@ export async function interpretAction(
     operation: "game-interpreter",
   });
 
-  return parseInterpretedResult(text, definitions);
+  const parsed = parseInterpretedResult(text, definitions);
+  // Phase H: every step shares the same citations parsed from actionText.
+  const referencedEntities = parseCitations(action, directory);
+  return {
+    steps: parsed.steps.map((s) => ({ ...s, referencedEntities })),
+  };
 }

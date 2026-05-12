@@ -1,16 +1,17 @@
 import type { DynamicGameStateManager } from "../../state/DynamicGameState.js";
 import type { TransportEdge } from "../../state/types.js";
+import type { ReferencedEntity } from "../core/types.js";
 import { arePositionsCoLocated } from "./locationPresence.js";
 
 /**
  * Minimal action shape consumed by impact propagation. Engine-core and legacy
  * CharacterAction shapes both satisfy this contract: they expose `characterId`
- * + `targetCharacterIds` directly, and `location` is filled from `sceneId`
+ * + `referencedEntities` directly, and `location` is filled from `sceneId`
  * (engine-core) or read directly (legacy).
  */
 interface ImpactPropagationAction {
   characterId: string;
-  targetCharacterIds?: string[];
+  referencedEntities?: ReferencedEntity[];
   location: string;
 }
 
@@ -88,10 +89,12 @@ export function findAffectedCharacters(
     return pos ? dgsm.resolveLocationId(pos) : undefined;
   };
 
-  // Level 1: targeted
-  if (impactLevel >= 1 && action.targetCharacterIds?.length) {
-    for (const targetId of action.targetCharacterIds) {
-      addChar(targetId, 1);
+  // Level 1: targeted (character entities only)
+  if (impactLevel >= 1 && action.referencedEntities?.length) {
+    for (const ref of action.referencedEntities) {
+      if (ref.kind === "character") {
+        addChar(ref.id, 1);
+      }
     }
   }
 

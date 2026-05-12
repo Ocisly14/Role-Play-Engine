@@ -1,20 +1,18 @@
 // src/roleSim/__tests__/renderer.test.ts
 //
-// Phase G renderer tests. Covers PerceivedBundle composition, god-eye
-// fallback shape, and render() retry/fallback behavior with a mocked
-// generateText.
+// Phase G renderer tests. Covers PerceivedBundle composition and render()
+// null-fallback behavior (D6) with a mocked generateText.
+/// <reference types="vitest/globals" />
 
 import { vi } from "vitest";
 import type { TickEngine } from "../../engine/core/tickEngine.js";
 import type {
   ActionStep,
   CharacterAction,
-  FeatureEvent,
   TickReport,
 } from "../../engine/core/types.js";
 import type { DynamicGameStateManager } from "../../state/DynamicGameState.js";
 import { buildPerceivedBundle } from "../renderer/buildBundle.js";
-import { buildGodEyeFallback } from "../renderer/godEyeFallback.js";
 import { render } from "../renderer/index.js";
 
 // Mockable generateText. Tests reach in via vi.mocked() to control behavior.
@@ -109,7 +107,7 @@ function makeAction(actionText: string): CharacterAction {
     definitionId: "action",
     actionText,
     sceneId: "kitchen",
-    targetCharacterIds: [],
+    referencedEntities: [],
     activatedAt: "1923-10-17T08:00:00",
     completedAt: "1923-10-17T08:01:00",
   };
@@ -126,7 +124,7 @@ function activeStep(actionText: string): ActionStep {
     stepGroupId: "g1",
     stepIndex: 0,
     characterId: "npc1",
-    targetCharacterIds: [],
+    referencedEntities: [],
     actionText,
     definitionId: "action",
     executionSceneId: "kitchen",
@@ -221,109 +219,39 @@ describe("buildPerceivedBundle", () => {
   });
 });
 
-// ---- buildGodEyeFallback ---------------------------------------------------
+// ---- render() — D6 null fallback -------------------------------------------
 
-describe("buildGodEyeFallback", () => {
-  test("emits scene baseline + own action + each event description", () => {
-    const dgsm = makeDgsm({
-      sceneName: "library",
-      sceneDescription: "shelves",
-    });
-    const event: FeatureEvent = {
-      type: "fire.spread",
-      impact: 3,
-      description: "Flames climb the east wall.",
-      sceneId: "library",
-    };
-    const text = buildGodEyeFallback(
-      "npc1",
-      {
-        scene: {
-          id: "library",
-          name: "library",
-          description: "shelves",
-          activeConditions: [{ description: "smoky" }],
-        },
-        ownConditions: [],
-        ownAction: { kind: "ongoing", actionText: "reading the journal" },
-        events: [event],
-      },
-      dgsm
-    );
-    expect(text).toContain("You are in library.");
-    expect(text).toContain("shelves");
-    expect(text).toContain("smoky");
-    expect(text).toContain('"reading the journal"');
-    expect(text).toContain("Flames climb the east wall.");
-  });
-
-  test("idle + no events still produces something", () => {
-    const dgsm = makeDgsm({ sceneName: "kitchen" });
-    const text = buildGodEyeFallback(
-      "npc1",
-      {
-        scene: {
-          id: "kitchen",
-          name: "kitchen",
-          description: "",
-          activeConditions: [],
-        },
-        ownConditions: [],
-        ownAction: { kind: "idle" },
-        events: [],
-      },
-      dgsm
-    );
-    expect(text).toContain("kitchen");
-    expect(text.length).toBeGreaterThan(0);
-  });
-});
-
-// ---- render() (retry + fallback) -------------------------------------------
-
-describe("render() with mocked generateText", () => {
-  test("returns LLM output when generateText resolves", async () => {
-    vi.mocked(generateText).mockResolvedValueOnce(
-      "[narrative]\nI hear footsteps.\n\n[references]\n[1] Bob: tall man"
-    );
+describe("render() — D6 null fallback", () => {
+  function makeBundle() {
     const dgsm = makeDgsm();
     const engine = makeEngine();
-    const bundle = buildPerceivedBundle({
-      npcId: "npc1",
-      dgsm,
-      engine,
-    });
-    const out = await render({ npcId: "npc1", bundle, dgsm });
-    expect(out.llmSucceeded).toBe(true);
-    expect(out.narrative).toContain("[narrative]");
-    expect(out.narrative).toContain("footsteps");
+    const bundle = buildPerceivedBundle({ npcId: "npc1", dgsm, engine });
+    return { bundle, dgsm };
+  }
+
+  test("returns null when LLM throws after retries", async () => {
+    vi.mocked(generateText).mockRejectedValue(new Error("LLM hard fail"));
+    const { bundle, dgsm } = makeBundle();
+    const result = await render({ npcId: "npc1", bundle, dgsm });
+    expect(result).toBeNull();
   });
 
-  test("falls back to god-eye when generateText throws", async () => {
-    vi.mocked(generateText).mockRejectedValueOnce(new Error("boom"));
-    const dgsm = makeDgsm({ sceneName: "parlor" });
-    const engine = makeEngine();
-    const bundle = buildPerceivedBundle({
-      npcId: "npc1",
-      dgsm,
-      engine,
-    });
-    const out = await render({ npcId: "npc1", bundle, dgsm });
-    expect(out.llmSucceeded).toBe(false);
-    expect(out.narrative).toContain("parlor");
+  test("returns null when LLM returns empty output", async () => {
+    vi.mocked(generateText).mockResolvedValue("   ");
+    const { bundle, dgsm } = makeBundle();
+    const result = await render({ npcId: "npc1", bundle, dgsm });
+    expect(result).toBeNull();
   });
 
-  test("falls back when LLM returns empty string", async () => {
-    vi.mocked(generateText).mockResolvedValueOnce("   ");
-    const dgsm = makeDgsm();
-    const engine = makeEngine();
-    const bundle = buildPerceivedBundle({
-      npcId: "npc1",
-      dgsm,
-      engine,
+  test("returns RenderedPerception { narrative } on success — no llmSucceeded field", async () => {
+    vi.mocked(generateText).mockResolvedValue(
+      "[narrative]\nI walk in.\n\n[references]\n"
+    );
+    const { bundle, dgsm } = makeBundle();
+    const result = await render({ npcId: "npc1", bundle, dgsm });
+    expect(result).toEqual({
+      narrative: "[narrative]\nI walk in.\n\n[references]",
     });
-    const out = await render({ npcId: "npc1", bundle, dgsm });
-    expect(out.llmSucceeded).toBe(false);
-    expect(out.narrative.length).toBeGreaterThan(0);
+    expect(result && "llmSucceeded" in result).toBe(false);
   });
 });

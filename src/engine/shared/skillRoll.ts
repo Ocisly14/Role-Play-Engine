@@ -1,5 +1,6 @@
 import { COC_SKILL_BASE_VALUES } from "../../planning/cocSkillList.js";
 import type { DynamicGameStateManager } from "../../state/DynamicGameState.js";
+import type { ReferencedEntity } from "../core/types.js";
 import type { SkillRollResult } from "../types.js";
 
 /**
@@ -12,7 +13,7 @@ export interface SkillRollNode {
   characterId: string;
   skill?: string;
   difficulty?: "regular" | "hard" | "extreme";
-  targetCharacterIds?: string[];
+  referencedEntities?: ReferencedEntity[];
   type?: string;
 }
 import {
@@ -109,7 +110,9 @@ export function resolveSkillRoll(
 
   const state = dgsm.getState();
   const difficulty = node.difficulty ?? "regular";
-  const targetIds = node.targetCharacterIds ?? [];
+  const targetIds = (node.referencedEntities ?? [])
+    .filter((r) => r.kind === "character")
+    .map((r) => r.id);
   const npc = state.npcCharacters.find((n) => n.id === node.characterId);
   const npcAttrs = npc?.attributes ?? {
     STR: 50,

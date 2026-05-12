@@ -84,7 +84,7 @@ export class NpcActionController {
       if (!event.characterId && !event.sceneId) continue;
       const synthAction = {
         characterId: event.characterId ?? "system",
-        targetCharacterIds: [] as string[],
+        referencedEntities: [],
         location: event.sceneId ?? "",
       };
       const affected = findAffectedCharacters(
@@ -164,7 +164,6 @@ export class NpcActionController {
         await this.engine.submitAction({
           characterId: npcId,
           actionText: decision.actionText,
-          targetCharacterIds: decision.targetCharacterIds,
           sceneId: this.resolveCurrentSceneId(npcId),
         });
         return;
@@ -226,6 +225,13 @@ export class NpcActionController {
       dgsm: this.dgsm,
       language: this.language,
     });
+
+    if (rendered === null) {
+      // Phase H D6: LLM render failed → NPC perceives nothing this tick.
+      // Skip decide() entirely; in-flight action continues. Events for this NPC
+      // are dropped (acceptable — render fail rate << 0.1%).
+      return undefined;
+    }
 
     return {
       npcId,

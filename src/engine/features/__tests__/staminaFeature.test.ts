@@ -154,11 +154,11 @@ describe("staminaFeature internal invariants", () => {
     dgsm.setEnvironmentReading("alley", { ...DEFAULT_ENVIRONMENT_READING });
     // Seed at exhausted + 1 minute past threshold so first tick stays at level 2
     // (no level transition emit) and the drain counter is fresh.
-    dgsm.setScopedFeatureState<StaminaCharacterState>(
+    dgsm.setScopedFeatureState(
       "stamina",
       "character",
       "npc-3",
-      { fatigue: 961, fatigueLevel: 2, exhaustedDrainTicks: 0 }
+      { fatigue: 961, fatigueLevel: 2, exhaustedDrainTicks: 0 } satisfies StaminaCharacterState
     );
 
     // Force CON fail (random < 0.3) and a deterministic d3 = 1 (random ≈ 0.0).

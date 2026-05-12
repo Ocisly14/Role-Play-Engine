@@ -522,11 +522,12 @@ export class SimulationRunner {
       features,
       scriptedEvents,
       emergentScanners: [],
-      interpretAction: async (input) => {
+      interpretAction: async (input, directory) => {
         const result = await interpretAction(
           input.actionText,
           definitionList,
-          this.language
+          this.language,
+          directory
         );
         return { steps: result.steps };
       },
@@ -545,7 +546,7 @@ export class SimulationRunner {
           definition,
           {
             characterId: step.characterId,
-            targetCharacterIds: step.targetCharacterIds,
+            referencedEntities: step.referencedEntities,
           },
           this.dgsm,
           step.executionSceneId

@@ -1,4 +1,5 @@
 // src/roleSim/__tests__/userPromptBuilder.test.ts
+/// <reference types="vitest/globals" />
 
 import type { DynamicGameStateManager } from "../../state/DynamicGameState.js";
 import type { RoleSimContext } from "../agent.js";

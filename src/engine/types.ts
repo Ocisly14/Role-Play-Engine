@@ -80,6 +80,9 @@ export interface InterpretedStep {
   engine: "code" | "llm";
   codeSubsystem?: string;
   overlayFields?: Record<string, unknown>;
+  /** Resolved [Name] citations from actionText (Phase H). Empty array if no
+   *  citations present. ActionIntake passes through to ActionStep. */
+  referencedEntities?: import("./core/types.js").ReferencedEntity[];
 }
 
 export interface InterpretedResult {

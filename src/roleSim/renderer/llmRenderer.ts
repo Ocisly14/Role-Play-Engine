@@ -4,10 +4,14 @@
 // citation-annotated narrative per §G-decisions G2/G4/G5/G7/G8. Uses
 // ModelClass.SMALL (Haiku-tier per G6). One LLM round-trip; retry budget is
 // owned by `generateText`'s `maxRetries` (set to 2 = initial + 1 retry per
-// G11). On failure the wrapper in index.ts falls back to god-eye.
+// G11). On failure the wrapper in index.ts returns null (D6 — no god-eye fallback).
 
 import { ModelClass, generateText } from "../../models/index.js";
 import type { DynamicGameStateManager } from "../../state/DynamicGameState.js";
+import {
+  descriptionIdentifier,
+  isKnownTo,
+} from "../../state/perceivableDirectory.js";
 import type { DynamicNPCProfile } from "../../state/types.js";
 import type { PerceivedBundle } from "./types.js";
 
@@ -210,26 +214,6 @@ function collectOtherEntities(
   }
 
   return lines.length > 0 ? lines.join("\n") : null;
-}
-
-function isKnownTo(
-  viewpoint: DynamicNPCProfile | undefined,
-  otherCharId: string
-): boolean {
-  if (!viewpoint?.relationships) return false;
-  return viewpoint.relationships.some((r) => r.targetId === otherCharId);
-}
-
-function descriptionIdentifier(profile: DynamicNPCProfile): string {
-  const bits: string[] = [];
-  if (profile.appearance) bits.push(profile.appearance);
-  else if (profile.gender || profile.age) {
-    if (profile.age) bits.push(`age ${profile.age}`);
-    if (profile.gender) bits.push(profile.gender);
-  } else if (profile.occupation) {
-    bits.push(profile.occupation);
-  }
-  return bits.length > 0 ? `the ${bits.join(", ")}` : "an unfamiliar person";
 }
 
 function formatOwnAction(bundle: PerceivedBundle): string {

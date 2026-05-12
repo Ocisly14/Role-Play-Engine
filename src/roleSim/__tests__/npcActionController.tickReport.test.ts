@@ -1,3 +1,4 @@
+/// <reference types="vitest/globals" />
 import { vi } from "vitest";
 import type { TickEngine } from "../../engine/core/tickEngine.js";
 import type {
@@ -5,6 +6,7 @@ import type {
   FeatureEvent,
   TickReport,
 } from "../../engine/core/types.js";
+import { generateText } from "../../models/index.js";
 import type { NpcMemoryManager } from "../../memory/NpcMemoryManager.js";
 import type { DynamicGameStateManager } from "../../state/DynamicGameState.js";
 import type {
@@ -237,7 +239,7 @@ describe("NpcActionController.processTickReport", () => {
         stepGroupId: "g1",
         stepIndex: 0,
         characterId: "npc1",
-        targetCharacterIds: [],
+        referencedEntities: [],
         actionText: "old",
         definitionId: "action",
         executionSceneId: "SCN1",
@@ -268,5 +270,31 @@ describe("NpcActionController.processTickReport", () => {
 
     expect(calls.cancel).toBe(1);
     expect(calls.submit).toBe(1);
+  });
+
+  it("skips decide() when render returns null (Phase H D6)", async () => {
+    const dgsm = makeDgsm([{ id: "npc1", alive: true, sceneId: "SCN1" }]);
+    const { engine, calls } = makeEngine();
+    const { agent, setDecision } = makeAgent();
+    setDecision({ tool: "act", actionText: "flee" });
+
+    const controller = new NpcActionController({
+      engine,
+      agent,
+      memory: makeMemory(),
+      dgsm,
+      sessionId: "s",
+      moduleId: "m",
+    });
+
+    // Force render to fail by rejecting the generateText LLM call.
+    (generateText as ReturnType<typeof vi.fn>).mockRejectedValueOnce(
+      new Error("LLM fail")
+    );
+
+    await controller.decide("npc1");
+
+    expect(calls.submit).toBe(0);
+    expect(calls.cancel).toBe(0);
   });
 });

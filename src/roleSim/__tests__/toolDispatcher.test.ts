@@ -1,3 +1,4 @@
+/// <reference types="vitest/globals" />
 import { vi } from "vitest";
 import type { NpcMemoryManager } from "../../memory/NpcMemoryManager.js";
 import type { DynamicGameStateManager } from "../../state/DynamicGameState.js";

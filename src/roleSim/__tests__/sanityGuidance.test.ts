@@ -1,3 +1,4 @@
+/// <reference types="vitest/globals" />
 import {
   BOUT_OF_MADNESS_TABLE,
   SANITY_GUIDANCE_PROMPT,

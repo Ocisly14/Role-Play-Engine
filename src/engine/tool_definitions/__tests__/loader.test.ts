@@ -1,3 +1,4 @@
+/// <reference types="vitest/globals" />
 import { loadActionDefinitions } from "../loader.js";
 
 describe("loadActionDefinitions", () => {

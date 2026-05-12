@@ -1,8 +1,10 @@
-import type { NpcMemory as PrismaNpcMemory } from "@prisma/client";
+import type { NpcMemory as PrismaNpcMemory, NpcMemoryType } from "@prisma/client";
 import type { MemoryHandler } from "../types.js";
 
 export class RelationshipHandler implements MemoryHandler {
-  type = "relationship" as const;
+  // "relationship" is a legacy type not present in the current Prisma NpcMemoryType
+  // enum. Cast to satisfy the MemoryHandler contract until the schema is updated.
+  type = "relationship" as unknown as NpcMemoryType;
 
   prepare(
     _content: string,

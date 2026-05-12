@@ -1,3 +1,4 @@
+/// <reference types="vitest/globals" />
 import type { DynamicGameStateManager } from "../../../state/DynamicGameState.js";
 import type { OutputSchemaConfig } from "../../types.js";
 import {

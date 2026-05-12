@@ -64,7 +64,7 @@ function igniteAt(
     stepGroupId: "g1",
     stepIndex: 0,
     characterId: "npc-1",
-    targetCharacterIds: [],
+    referencedEntities: [],
     actionText: "Set fire",
     definitionId: "ignite",
     executionSceneId: sceneId,

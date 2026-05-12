@@ -99,7 +99,7 @@ export class SimulationEventEmitter extends EventEmitter {
             outcome: outcomeText,
             gameTime: timePart(action.completedAt),
           },
-          action.targetCharacterIds[0]
+          action.referencedEntities.find((r) => r.kind === "character")?.id
         )
       );
     }
