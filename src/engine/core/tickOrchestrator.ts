@@ -1,11 +1,10 @@
 import type { DynamicGameStateManager } from "../../state/DynamicGameState.js";
 import { addMinutes, diffDays, timePart } from "../../state/gameClock.js";
-import type { CodeEngineRegistry } from "../codeEngine/registry.js";
-import { makeCodeEngineContext } from "../codeEngine/types.js";
+import { makeActionSubsystemContext } from "../subsystem/actionContext.js";
+import type { SubsystemRegistry } from "../subsystem/registry.js";
+import type { AnchorSubsystem } from "../subsystem/types.js";
 import type { Applier } from "./applier.js";
-import type { EmergentEventEmitter } from "./emergentEventEmitter.js";
 import { makeDGSMFeatureReadContext } from "./featureReadContext.js";
-import type { FeatureRunner } from "./featureRunner.js";
 import type { Queue } from "./queue.js";
 import type { ScriptedEventRunner } from "./scriptedEventRunner.js";
 import type {
@@ -13,11 +12,10 @@ import type {
   CharacterAction,
   GameTime,
   InterruptReason,
+  PlannedOutcome,
   StateChange,
   TickReport,
 } from "./types.js";
-// PlannedOutcome defined in worldFeature.ts (B1).
-import type { PlannedOutcome, WorldFeature } from "./worldFeature.js";
 
 export interface PendingInterrupt {
   handleId: string;
@@ -36,23 +34,16 @@ export type ResolveFn = (
 export interface OrchestratorDeps {
   dgsm: DynamicGameStateManager;
   queue: Queue;
-  featureRunner: FeatureRunner;
   scriptedEventRunner: ScriptedEventRunner;
-  emergentEventEmitter: EmergentEventEmitter;
   applier: Applier;
   resolve: ResolveFn;
-  /**
-   * Per-step CodeEngine subsystems keyed by `ActionDefinition.codeSubsystem`
-   * (e.g. `"movement"`). When an `ActionStep` carries `engine === "code"`,
-   * the orchestrator routes activation + per-tick advance through the
-   * matching subsystem instead of the resolver. See §E-dual-engine.
-   */
-  codeEngineRegistry: CodeEngineRegistry;
+  /** Unified Subsystem registry — required. Drives all tick paths. */
+  subsystemRegistry: SubsystemRegistry;
   tickDurationMinutes: number;
   lang: string;
   /**
    * True when the engine is constructed from a persisted snapshot (rehydrated
-   * session); false on a fresh session. Gates Phase 0 one-shot feature init.
+   * session); false on a fresh session.
    */
   hasInitialized: boolean;
 }
@@ -66,9 +57,17 @@ export class TickOrchestrator {
   // TickEngine.cancelAction pushes here at call time; orchestrator drains into
   // TickReport.cancellations at the start of the next tick.
   private pendingCancelledSteps: ActionStep[] = [];
-  // Latched on first tick to skip Phase 0 on subsequent ticks. Initialized from
-  // deps.hasInitialized so rehydrated sessions never re-run feature init().
+  // Latched on first tick to skip any one-shot init on subsequent ticks.
+  // Initialized from deps.hasInitialized so rehydrated sessions never re-run.
   private hasInitialized: boolean;
+  /**
+   * Active anchor subsystem instances, keyed by `${subsystemId}:${anchorId}`.
+   * Reconstructed lazily on first tick from DGSM scopedFeatureState (see
+   * Phase 5 implementation). Action subsystem instances are NOT tracked here
+   * — their lifetime is managed by the queue + onTick.completed signal.
+   */
+  private activeAnchorInstances = new Set<string>();
+  private anchorInstancesRehydrated = false;
 
   constructor(private deps: OrchestratorDeps) {
     this.hasInitialized = deps.hasInitialized;
@@ -86,47 +85,121 @@ export class TickOrchestrator {
     this.pendingCancelledSteps.push(step);
   }
 
+  /** Enumerate anchor ids for a subsystem's anchor kind. */
+  private anchorIdsFor(kind: AnchorSubsystem["anchorKind"]): string[] {
+    const dgsm = this.deps.dgsm;
+    switch (kind) {
+      case "scene":
+        return dgsm.getAllSceneIds().slice().sort();
+      case "region": {
+        const out = new Set<string>();
+        for (const sid of dgsm.getAllSceneIds()) {
+          const r = dgsm.getRegionIdForScene(sid);
+          if (r) out.add(r);
+        }
+        return Array.from(out).sort();
+      }
+      case "character":
+        return dgsm
+          .getState()
+          .npcCharacters.filter((n) => dgsm.isNpcAlive(n.id))
+          .map((n) => n.id)
+          .sort();
+      case "global":
+        return ["global"];
+    }
+  }
+
+  /**
+   * Reconstruct activeAnchorInstances from DGSM scopedFeatureState. Called
+   * once on the first tick after construction — both fresh and rehydrated
+   * sessions go through this path. For fresh sessions, DGSM has no scoped
+   * feature buckets yet, so activeAnchorInstances stays empty and Phase 5
+   * will spawn fresh instances. For rehydrated sessions, every existing
+   * bucket maps to a live instance.
+   */
+  private rehydrateAnchorInstancesFromDGSM(registry: SubsystemRegistry): void {
+    if (this.anchorInstancesRehydrated) return;
+    this.anchorInstancesRehydrated = true;
+    const dgsm = this.deps.dgsm;
+    for (const sub of registry.getAnchorSubsystems()) {
+      const all = dgsm.getAllScopedFeatureStates<unknown>(
+        sub.id,
+        sub.anchorKind
+      );
+      for (const { key } of all) {
+        this.activeAnchorInstances.add(`${sub.id}:${key}`);
+      }
+    }
+  }
+
+  /** Phase 5 — anchor lifecycle pass. */
+  private runAnchorLifecyclePass(
+    registry: SubsystemRegistry,
+    buffer: StateChange[]
+  ): void {
+    const dgsm = this.deps.dgsm;
+    for (const sub of registry.getAnchorSubsystems()) {
+      const ctx = makeDGSMFeatureReadContext(dgsm, {
+        callerFeatureId: sub.id,
+        callerScope: sub.anchorKind,
+      });
+      const anchorIds = this.anchorIdsFor(sub.anchorKind);
+      for (const anchorId of anchorIds) {
+        const key = `${sub.id}:${anchorId}`;
+        const shouldBe = sub.shouldExist(anchorId, ctx);
+        const isActive = this.activeAnchorInstances.has(key);
+        if (shouldBe && !isActive) {
+          this.activeAnchorInstances.add(key);
+          // Skip initialState if a bucket already exists (rehydrated session
+          // hand-edited, or LLM pre-seeded state). Idempotency guard from D9.
+          const existing = dgsm.getScopedFeatureState<unknown>(
+            sub.id,
+            sub.anchorKind,
+            anchorId
+          );
+          if (existing === undefined) {
+            buffer.push(...sub.initialState(anchorId, ctx));
+          }
+        } else if (!shouldBe && isActive) {
+          this.activeAnchorInstances.delete(key);
+          buffer.push({
+            kind: "feature.removeState",
+            featureId: sub.id,
+            key: anchorId,
+          });
+        }
+      }
+    }
+  }
+
+  /** Phase 6 — unified onTick pass for anchor subsystems. */
+  private runUnifiedOnTickPass(
+    registry: SubsystemRegistry,
+    buffer: StateChange[]
+  ): void {
+    const dgsm = this.deps.dgsm;
+    for (const sub of registry.getAnchorSubsystems()) {
+      const ctx = makeDGSMFeatureReadContext(dgsm, {
+        callerFeatureId: sub.id,
+        callerScope: sub.anchorKind,
+      });
+      for (const anchorId of this.anchorIdsFor(sub.anchorKind)) {
+        if (!this.activeAnchorInstances.has(`${sub.id}:${anchorId}`)) continue;
+        buffer.push(...sub.onTick(anchorId, ctx));
+      }
+    }
+  }
+
   async tick(): Promise<TickReport> {
     const {
       dgsm,
       queue,
-      featureRunner,
       scriptedEventRunner,
-      emergentEventEmitter,
       applier,
       resolve,
+      subsystemRegistry,
     } = this.deps;
-
-    // Phase 0: one-shot feature init on fresh sessions.
-    // Rehydrated sessions already carry the post-init snapshot, so this runs
-    // only when hasInitialized is false — i.e., the engine was constructed
-    // without persistedState. Per-feature init failures are isolated so one
-    // bad feature doesn't prevent others from initializing; `hasInitialized`
-    // latches to true regardless so we never retry (which would duplicate
-    // scene conditions emitted by already-succeeded features).
-    if (!this.hasInitialized) {
-      const currentTickTime: GameTime = dgsm.getGameDateTime();
-      const initChanges: StateChange[] = [];
-      for (const f of featureRunner.listFeatures()) {
-        if (!f.init) continue;
-        const ctx = makeDGSMFeatureReadContext(dgsm, {
-          callerFeatureId: f.id,
-          callerScope: f.stateScope,
-        });
-        try {
-          initChanges.push(...f.init(ctx));
-        } catch (err) {
-          console.error(
-            `[TickOrchestrator] feature "${f.id}" init() threw; skipping. Error:`,
-            err
-          );
-        }
-      }
-      if (initChanges.length > 0) {
-        applier.flush(initChanges, currentTickTime);
-      }
-      this.hasInitialized = true;
-    }
 
     // Phase 1: advance clock
     const nextTickTime = this.advanceClock();
@@ -149,7 +222,7 @@ export class TickOrchestrator {
     this.pendingInterrupts = [];
 
     // Phase 3: activate idle actors. Dispatch on `step.engine`:
-    //   - "code" → call CodeEngineSubsystem.onActivate; the result is
+    //   - "code" → call ActionSubsystem.onActivate; the result is
     //     terminal (completed/failed) within this tick or moves the step into
     //     the active pool for per-tick advancement (Phase 3.5).
     //   - "llm"  → call the resolver, then mark active and let the existing
@@ -208,15 +281,6 @@ export class TickOrchestrator {
           this.timeIsAtOrBefore(s.completionTime, nextTickTime)
       );
 
-    // Per-feature ctx factory for commit-time onActionCommit hooks (mirrors
-    // the Phase 5+6 reasoning below — fire.onActionCommit reads its own state
-    // when boosting an existing fire, and it must hit the `("fire","scene")`
-    // bucket, not a shared `__commit__/global` one.)
-    const commitCtxFor = (f: WorldFeature) =>
-      makeDGSMFeatureReadContext(dgsm, {
-        callerFeatureId: f.id,
-        callerScope: f.stateScope,
-      });
     for (const step of due) {
       const outcome = step.plannedOutcome as unknown as
         | PlannedOutcome
@@ -226,12 +290,6 @@ export class TickOrchestrator {
         queue.markCompleted(step.id);
         continue;
       }
-      const featureChanges = featureRunner.runActionCommit(
-        step,
-        outcome,
-        commitCtxFor
-      );
-      buffer.push(...featureChanges);
       buffer.push(...outcome.stateChanges);
       queue.markCompleted(step.id);
       commitsThisTick.push({
@@ -249,20 +307,12 @@ export class TickOrchestrator {
       });
     }
 
-    // Phase 5+6: feature onTick / propagation. Each feature gets a per-feature
-    // read context so own-state reads (`ctx.getFeatureState`,
-    // `ctx.getAllFeatureStates`) route to that feature's `(featureId, scope)`
-    // bucket in DGSM. A shared `__tick__` ctx would silently drop every
-    // stateful feature's read on the floor.
-    const featureCtxFor = (f: WorldFeature) =>
-      makeDGSMFeatureReadContext(dgsm, {
-        callerFeatureId: f.id,
-        callerScope: f.stateScope,
-      });
-    buffer.push(...featureRunner.runTick(featureCtxFor));
+    // Phase 5: anchor subsystem lifecycle pass.
+    this.rehydrateAnchorInstancesFromDGSM(subsystemRegistry);
+    this.runAnchorLifecyclePass(subsystemRegistry, buffer);
 
-    // Phase 6: feature propagation
-    buffer.push(...featureRunner.runPropagation(featureCtxFor));
+    // Phase 6: unified anchor subsystem onTick pass.
+    this.runUnifiedOnTickPass(subsystemRegistry, buffer);
 
     // Phase 7: scripted events
     const currentTick =
@@ -280,23 +330,11 @@ export class TickOrchestrator {
     });
     buffer.push(...scriptedChanges);
 
-    // Phase 8: emergent events scan — aggregator runs all registered scanners
-    const scannerCtx = {
-      dgsm,
-      gameDateTime: nextTickTime,
-      committedActionsThisTick: commitsThisTick,
-      lang: this.deps.lang,
-    };
-    const { featureEvents: emergentEvents } =
-      emergentEventEmitter.scan(scannerCtx);
+    // Phase 8: (emergent events removed — subsystem conditionExpiry handles
+    // condition cleanup; future scanners can register as anchor subsystems)
 
     // Phase 9: applier flush
     const applied = applier.flush(buffer, nextTickTime);
-
-    // Phase 9.5 — sweep expired character conditions.
-    // CharacterCondition can carry expiresAt (GameTime); when reached, the
-    // condition is auto-removed. Scene conditions don't have expiresAt today.
-    this.sweepExpiredCharacterConditions(nextTickTime);
 
     // Phase 10: build report (event emission is TickEngine + EventBus's job)
     return {
@@ -304,7 +342,7 @@ export class TickOrchestrator {
       commits: commitsThisTick,
       interruptions,
       cancellations,
-      featureEvents: [...applied.featureEvents, ...emergentEvents],
+      featureEvents: [...applied.featureEvents],
       stateChanges: [...buffer],
       damageReports: applied.damageReports,
     };
@@ -328,7 +366,7 @@ export class TickOrchestrator {
     commitsThisTick: CharacterAction[]
   ): Promise<void> {
     const subsystem = step.codeSubsystem
-      ? this.deps.codeEngineRegistry.get(step.codeSubsystem)
+      ? this.deps.subsystemRegistry.getActionSubsystem(step.codeSubsystem)
       : undefined;
     if (!subsystem) {
       throw new Error(
@@ -336,7 +374,9 @@ export class TickOrchestrator {
       );
     }
     const ctx = this.makeCodeCtx();
-    const result = subsystem.onActivate(step, ctx);
+    const result = subsystem.onActivate
+      ? subsystem.onActivate(step, ctx)
+      : { stateChanges: [], completed: false };
     buffer.push(...result.stateChanges);
     step.activatedAt = nextTickTime;
     this.deps.queue.markActive(step.id);
@@ -358,7 +398,7 @@ export class TickOrchestrator {
     commitsThisTick: CharacterAction[]
   ): void {
     const subsystem = step.codeSubsystem
-      ? this.deps.codeEngineRegistry.get(step.codeSubsystem)
+      ? this.deps.subsystemRegistry.getActionSubsystem(step.codeSubsystem)
       : undefined;
     if (!subsystem) {
       throw new Error(
@@ -380,7 +420,7 @@ export class TickOrchestrator {
       callerFeatureId: "__codeEngine__",
       callerScope: "global",
     });
-    return makeCodeEngineContext(base, this.deps.dgsm);
+    return makeActionSubsystemContext(base, this.deps.dgsm);
   }
 
   private applyPendingInterrupt(
@@ -404,17 +444,9 @@ export class TickOrchestrator {
     const planned = active.plannedDuration ?? 1;
     const ratio = elapsed / planned;
     if (ratio >= 0.5 && active.plannedOutcome) {
-      const ctx = makeDGSMFeatureReadContext(this.deps.dgsm, {
-        callerFeatureId: "__interrupt__",
-        callerScope: "global",
-      });
-      const partialChanges = this.deps.featureRunner.runActionCommit(
-        active,
-        active.plannedOutcome as unknown as PlannedOutcome,
-        ctx,
-        { interrupted: true }
-      );
-      buffer.push(...partialChanges);
+      // Partial commit: apply outcome stateChanges only (no feature hooks).
+      const outcome = active.plannedOutcome as unknown as PlannedOutcome;
+      buffer.push(...outcome.stateChanges);
     }
     this.deps.queue.markInterrupted(active.id);
     interruptions.push({
@@ -461,21 +493,6 @@ export class TickOrchestrator {
     const [ah, am] = timePart(a).split(":").map(Number);
     const [bh, bm] = timePart(b).split(":").map(Number);
     return diffDays(b, a) * 1440 + (bh * 60 + bm) - (ah * 60 + am);
-  }
-
-  private sweepExpiredCharacterConditions(now: GameTime): void {
-    const npcs = this.deps.dgsm.getState().npcCharacters;
-    for (const npc of npcs) {
-      const conditions = npc.status?.conditions;
-      if (!conditions || conditions.length === 0) continue;
-      // Iterate via copy because removeCharacterCondition mutates the array.
-      const expired = conditions.filter(
-        (c) => c.expiresAt && this.timeIsAtOrBefore(c.expiresAt, now)
-      );
-      for (const c of expired) {
-        this.deps.dgsm.removeCharacterCondition(npc.id, c.id);
-      }
-    }
   }
 
   private timeIsAtOrBefore(t: GameTime | undefined, now: GameTime): boolean {

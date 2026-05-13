@@ -1,9 +1,9 @@
 import { randomUUID } from "node:crypto";
-import {
-  buildPerceivableDirectory,
-  type PerceivableDirectory,
-} from "../../state/perceivableDirectory.js";
 import type { DynamicGameStateManager } from "../../state/DynamicGameState.js";
+import {
+  type PerceivableDirectory,
+  buildPerceivableDirectory,
+} from "../../state/perceivableDirectory.js";
 import type { InterpretedStep } from "../types.js";
 import type { Queue } from "./queue.js";
 import type {

@@ -1,15 +1,9 @@
 import type { DynamicGameStateManager } from "../../state/DynamicGameState.js";
-import {
-  type CodeEngineRegistry,
-  createDefaultCodeEngineRegistry,
-} from "../codeEngine/registry.js";
 import type { ScriptedEvent } from "../scriptedEvents/types.js";
+import type { SubsystemRegistry } from "../subsystem/registry.js";
 import { ActionIntake } from "./actionIntake.js";
 import { Applier } from "./applier.js";
-import { EmergentEventEmitter } from "./emergentEventEmitter.js";
-import type { EmergentScanner } from "./emergentScanner.js";
 import { EventBus } from "./eventBus.js";
-import { FeatureRunner } from "./featureRunner.js";
 import { Queue } from "./queue.js";
 import { ScriptedEventRunner } from "./scriptedEventRunner.js";
 import { type ResolveFn, TickOrchestrator } from "./tickOrchestrator.js";
@@ -26,7 +20,6 @@ import type {
   TickReport,
   Unsubscribe,
 } from "./types.js";
-import type { WorldFeature } from "./worldFeature.js";
 
 export interface TickEngine {
   submitAction(input: ActionInput): Promise<ActionHandle>;
@@ -61,27 +54,20 @@ export interface TickEngine {
 
 export interface CreateTickEngineOptions {
   dgsm: DynamicGameStateManager;
-  features: WorldFeature[];
   scriptedEvents: ScriptedEvent[];
-  /** Pre-instantiated emergent scanners (EncounterScanner, future scanners).
-   *  Order in the array = order of events in TickReport.featureEvents. */
-  emergentScanners: EmergentScanner[];
+  /** Unified Subsystem registry. Required — drives all tick paths. */
+  subsystemRegistry: SubsystemRegistry;
   interpretAction: (
     input: ActionInput,
-    directory: import("../../state/perceivableDirectory.js").PerceivableDirectory
+    directory: import(
+      "../../state/perceivableDirectory.js"
+    ).PerceivableDirectory
   ) => Promise<{ steps: import("../types.js").InterpretedStep[] }>;
   resolve: ResolveFn;
   getActorDex: (characterId: string) => number;
   tickDurationMinutes: number;
   /** Session language code (e.g., "en", "zh") — passed through to ScannerContext. */
   lang: string;
-  /**
-   * Optional CodeEngineRegistry for `engine: "code"` action dispatch. Defaults
-   * to `createDefaultCodeEngineRegistry()` (movement only in Phase E). Tests
-   * and plugins can supply a custom registry to register additional
-   * subsystems or replace the defaults.
-   */
-  codeEngineRegistry?: CodeEngineRegistry;
   persistedState?: {
     queue: ActionStep[];
     dexByActor: Record<string, number>;
@@ -91,10 +77,8 @@ export interface CreateTickEngineOptions {
 
 export function createTickEngine(opts: CreateTickEngineOptions): TickEngine {
   const queue = new Queue();
-  const featureRunner = new FeatureRunner(opts.features);
-  const applier = new Applier(opts.dgsm, featureRunner.getFeatureScopeMap());
+  const applier = new Applier(opts.dgsm, new Map());
   const scriptedRunner = new ScriptedEventRunner(opts.scriptedEvents);
-  const emergent = new EmergentEventEmitter(opts.emergentScanners);
   const bus = new EventBus();
   const intake = new ActionIntake({
     queue,
@@ -110,22 +94,16 @@ export function createTickEngine(opts: CreateTickEngineOptions): TickEngine {
     );
     applier.rehydrateConnectionVotes(opts.persistedState.connectionVotes);
   }
-  const codeEngineRegistry =
-    opts.codeEngineRegistry ?? createDefaultCodeEngineRegistry();
   const orchestrator = new TickOrchestrator({
     dgsm: opts.dgsm,
     queue,
-    featureRunner,
     scriptedEventRunner: scriptedRunner,
-    emergentEventEmitter: emergent,
     applier,
     resolve: opts.resolve,
-    codeEngineRegistry,
     tickDurationMinutes: opts.tickDurationMinutes,
     lang: opts.lang,
-    // Rehydrated sessions ship the post-init snapshot; fresh sessions need
-    // Phase 0 to run so WorldFeature.init() seed state is emitted once.
     hasInitialized: opts.persistedState !== undefined,
+    subsystemRegistry: opts.subsystemRegistry,
   });
 
   /** Returns all queued + active steps for a handle. Used by cancel/interrupt. */

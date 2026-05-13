@@ -1,7 +1,7 @@
 import { ModelClass, generateText } from "../../models/index.js";
-import type { ActionDefinition, InterpretedResult } from "../types.js";
-import type { ReferencedEntity } from "../core/types.js";
 import type { PerceivableDirectory } from "../../state/perceivableDirectory.js";
+import type { ReferencedEntity } from "../core/types.js";
+import type { ActionDefinition, InterpretedResult } from "../types.js";
 
 export class CitationResolutionError extends Error {
   constructor(

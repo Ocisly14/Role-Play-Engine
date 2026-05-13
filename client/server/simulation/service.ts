@@ -3,12 +3,12 @@ import fs from "node:fs";
 import path from "node:path";
 import type { PrismaClient } from "@prisma/client";
 import { WebSocket } from "ws";
+import { createDefaultDefinitions } from "../../../src/engine/index.js";
 import {
   type WeatherType,
   computeSkillPenalties,
   getWeatherLabel,
-} from "../../../src/engine/features/weatherFeature.js";
-import { createDefaultDefinitions } from "../../../src/engine/index.js";
+} from "../../../src/engine/subsystem/weather.js";
 import { NpcMemoryManager } from "../../../src/memory/NpcMemoryManager.js";
 import { ModelProviderName } from "../../../src/models/types.js";
 import { resolveDisplayLocationName } from "../../../src/planning/sceneMapFormatter.js";

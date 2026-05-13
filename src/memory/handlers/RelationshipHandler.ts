@@ -1,4 +1,7 @@
-import type { NpcMemory as PrismaNpcMemory, NpcMemoryType } from "@prisma/client";
+import type {
+  NpcMemoryType,
+  NpcMemory as PrismaNpcMemory,
+} from "@prisma/client";
 import type { MemoryHandler } from "../types.js";
 
 export class RelationshipHandler implements MemoryHandler {

@@ -4,6 +4,5 @@ export type { SceneCondition } from "../engine/core/types.js";
 export {
   ActionDefinitionRegistry,
   createDefaultDefinitions,
-  getDefaultFeatures,
+  createDefaultSubsystemRegistry,
 } from "../engine/index.js";
-export type { WorldFeature } from "../engine/types.js";

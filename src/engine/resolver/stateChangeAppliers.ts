@@ -37,23 +37,12 @@ export const STATE_CHANGE_APPLIERS: Record<string, Applier> = {
   },
 
   // ── character.fatigue ───────────────────────────────────────────────────────
-  "character.fatigue": (dgsm, changes) => {
-    for (const c of changes) {
-      try {
-        const { applyFatigueDelta } =
-          // eslint-disable-next-line @typescript-eslint/no-require-imports
-          require("../../features/staminaFeature.js") as {
-            applyFatigueDelta: (
-              dgsm: DynamicGameStateManager,
-              characterId: string,
-              delta: number | undefined
-            ) => void;
-          };
-        applyFatigueDelta(dgsm, c.characterId, c.delta);
-      } catch {
-        /* skip */
-      }
-    }
+  // Phase I: fatigue is now managed by the staminaSubsystem (AnchorSubsystem)
+  // via feature.setState / character.addCondition StateChanges. This legacy
+  // resolver applier is a no-op; the new Applier (core/applier.ts) handles
+  // character.fatigue StateChanges from the subsystem pipeline.
+  "character.fatigue": (_dgsm, _changes) => {
+    // no-op
   },
 
   // ── character.condition ─────────────────────────────────────────────────────

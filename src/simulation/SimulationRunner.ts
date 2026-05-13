@@ -9,14 +9,14 @@ import type {
   CharacterAction as EngineCharacterAction,
   FeatureEvent,
   InterruptReason,
+  PlannedOutcome,
   TickReport,
 } from "../engine/core/types.js";
-import type { PlannedOutcome } from "../engine/core/worldFeature.js";
 import type { ActionDefinitionRegistry } from "../engine/definitions/registry.js";
 import { interpretAction } from "../engine/interpreter/gameInterpreter.js";
 import {
   createDefaultDefinitions,
-  getDefaultFeatures,
+  createDefaultSubsystemRegistry,
 } from "../engine/registerDefaults.js";
 import { buildStateContext } from "../engine/resolver/stateContextBuilder.js";
 import { resolveState } from "../engine/resolver/stateResolver.js";
@@ -510,7 +510,7 @@ export class SimulationRunner {
       this.definitions = createDefaultDefinitions();
     }
 
-    const features = getDefaultFeatures();
+    const subsystemRegistry = createDefaultSubsystemRegistry();
     const scriptedEvents = this.moduleName
       ? loadScriptedEventsForModule(this.moduleName)
       : [];
@@ -519,9 +519,8 @@ export class SimulationRunner {
 
     const engine = createTickEngine({
       dgsm: this.dgsm,
-      features,
+      subsystemRegistry,
       scriptedEvents,
-      emergentScanners: [],
       interpretAction: async (input, directory) => {
         const result = await interpretAction(
           input.actionText,

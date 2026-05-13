@@ -191,6 +191,17 @@ export const DEFAULT_ENVIRONMENT_READING: EnvironmentReading = Object.freeze({
   airborneHazards: Object.freeze([]) as unknown as string[],
 }) as EnvironmentReading;
 
+/**
+ * Output of the resolver pipeline for a single action step. Consumed by
+ * Phase 4 commit (applier processes stateChanges) and by EventBus emission
+ * (narrative surfaces). Moved here from worldFeature.ts in Phase I.
+ */
+export interface PlannedOutcome {
+  stateChanges: StateChange[];
+  elapsedMinutes: number;
+  narrative?: string;
+}
+
 export type StateChange =
   | { kind: "scene.addCondition"; sceneId: string; condition: SceneCondition }
   | {

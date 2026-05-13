@@ -1,5 +1,5 @@
 import type { Request, Response } from "express";
-import type { WeatherType } from "../../../src/engine/features/weatherFeature.js";
+import type { WeatherType } from "../../../src/engine/subsystem/weather.js";
 import * as mapService from "./mapService.js";
 import { requireSimulationOwnership } from "./ownership.js";
 import { applyGlobalWeather } from "./service.js";

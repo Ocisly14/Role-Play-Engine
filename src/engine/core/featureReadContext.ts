@@ -3,7 +3,11 @@ import { timePart } from "../../state/gameClock.js";
 import type { TownTopology } from "../../state/topologyTypes.js";
 import type { DynamicNPCProfile, DynamicScene } from "../../state/types.js";
 import { resolveCharacterLocationId } from "../shared/topologyHelpers.js";
-import type { EnvironmentReading, FeatureStateScope } from "./types.js";
+import type {
+  EnvironmentReading,
+  FeatureStateScope,
+  SceneCondition,
+} from "./types.js";
 
 // No projection: features consume raw DGSM types directly. Keeps the engine
 // boundary simpler (one source of truth for scene/character shape) at the cost
@@ -42,6 +46,23 @@ export interface FeatureReadContext {
    */
   getCharacterLocationId(characterId: string): string | undefined;
   getRegionId(sceneId: string): string | undefined;
+  /**
+   * Enumerate every region ID currently known to DGSM (deduplicated parent
+   * locations of scenes). Used by AnchorSubsystem.shouldExist when anchorKind
+   * is "region" — TickOrchestrator iterates this set each Phase 5.
+   */
+  getAllRegionIds(): string[];
+
+  /**
+   * Read runtime SceneConditions added to a scene via the `scene.addCondition`
+   * StateChange. These live in `dgsm.scenarioConditions` (NOT in the static
+   * `DynamicScene.conditions` field, which is the module-loaded baseline).
+   * AnchorSubsystem.shouldExist predicates that key off runtime conditions
+   * (e.g. fire watching for `burning`) MUST read through this method, not
+   * `getScene(...).conditions`. Returns `[]` when no runtime conditions exist
+   * for the scene.
+   */
+  getSceneConditions(sceneId: string): SceneCondition[];
 
   getFeatureState<T>(key: string): T | undefined;
   getAllFeatureStates<T>(): Array<{ key: string; state: T }>;
@@ -111,6 +132,16 @@ export function makeDGSMFeatureReadContext(
     getCharacterLocationId: (characterId) =>
       resolveCharacterLocationId(characterId, dgsm),
     getRegionId: (sceneId) => dgsm.getRegionIdForScene(sceneId),
+    getSceneConditions: (sceneId) => dgsm.getSceneConditions(sceneId),
+
+    getAllRegionIds: () => {
+      const out = new Set<string>();
+      for (const sceneId of dgsm.getAllSceneIds()) {
+        const rid = dgsm.getRegionIdForScene(sceneId);
+        if (rid) out.add(rid);
+      }
+      return Array.from(out).sort();
+    },
 
     getFeatureState<T>(key: string) {
       return dgsm.getScopedFeatureState<T>(opts.callerFeatureId, scope, key);

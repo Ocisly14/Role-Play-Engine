@@ -1,18 +1,15 @@
 import { DynamicGameStateManager } from "../../../state/DynamicGameState.js";
 import type { ModuleSetup } from "../../../state/types.js";
 import { type TickEngine, createTickEngine } from "../../core/tickEngine.js";
-import type { WorldFeature } from "../../core/worldFeature.js";
-import { fireFeature } from "../../features/fireFeature.js";
-import { itemDamageFeature } from "../../features/itemDamageFeature.js";
-import { staminaFeature } from "../../features/staminaFeature.js";
-import { sunFeature } from "../../features/sunFeature.js";
-import { weatherFeature } from "../../features/weatherFeature.js";
+import { createDefaultSubsystemRegistry } from "../../registerDefaults.js";
+import type { SubsystemRegistry } from "../../subsystem/registry.js";
 
 /**
- * Layer-2 integration harness — wires a real TickEngine with the default Phase
- * D feature set (weather, sun, fire, stamina, itemDamage), a stub
- * interpretAction that forwards `__definitionId` + the rest of `overlayFields`
- * onto the ActionStep, and a no-op resolver. Mirrors the pattern in
+ * Layer-2 integration harness — wires a real TickEngine with the default
+ * subsystem registry (weather, sun, fire, stamina, itemDamage, movement,
+ * condition expiry), a stub interpretAction that forwards `__definitionId` +
+ * the rest of `overlayFields` onto the ActionStep, and a no-op resolver.
+ * Mirrors the pattern in
  * `core/__tests__/scriptedEventRunner.integration.test.ts` but adds DGSM
  * convenience seeders so individual chain tests stay focused on the assertion
  * logic rather than world-construction boilerplate.
@@ -26,8 +23,8 @@ export interface IntegrationEngineSetup {
 }
 
 export interface IntegrationEngineOptions {
-  /** Override the default feature set (e.g. test fire+stamina only). */
-  features?: WorldFeature[];
+  /** Override the default subsystem registry (e.g. test fire+stamina only). */
+  subsystemRegistry?: SubsystemRegistry;
   /** Pre-populate DGSM with module setup (weather presets etc.). */
   moduleSetup?: ModuleSetup;
   /** Initial game datetime. */
@@ -35,14 +32,6 @@ export interface IntegrationEngineOptions {
   /** Tick duration in minutes (default 1). */
   tickDurationMinutes?: number;
 }
-
-const DEFAULT_FEATURES: WorldFeature[] = [
-  weatherFeature,
-  sunFeature,
-  fireFeature,
-  staminaFeature,
-  itemDamageFeature,
-];
 
 export function makeIntegrationEngine(
   opts: IntegrationEngineOptions = {}
@@ -56,9 +45,9 @@ export function makeIntegrationEngine(
 
   const engine = createTickEngine({
     dgsm,
-    features: opts.features ?? DEFAULT_FEATURES,
+    subsystemRegistry:
+      opts.subsystemRegistry ?? createDefaultSubsystemRegistry(),
     scriptedEvents: [],
-    emergentScanners: [],
     interpretAction: async (input) => ({
       steps: [
         {

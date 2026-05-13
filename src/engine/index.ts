@@ -1,10 +1,9 @@
 export { ActionDefinitionRegistry } from "./definitions/registry.js";
 export {
   createDefaultDefinitions,
-  getDefaultFeatures,
+  createDefaultSubsystemRegistry,
 } from "./registerDefaults.js";
 export type {
-  WorldFeature,
   SkillRollResult,
   ActionDefinition,
   StateDomainSpec,
@@ -16,8 +15,3 @@ export {
   findAffectedCharacters,
   findAffectedScenes,
 } from "./shared/impactPropagation.js";
-export { fireFeature } from "./features/fireFeature.js";
-export { weatherFeature } from "./features/weatherFeature.js";
-export { sunFeature } from "./features/sunFeature.js";
-export { staminaFeature } from "./features/staminaFeature.js";
-export { itemDamageFeature } from "./features/itemDamageFeature.js";

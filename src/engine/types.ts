@@ -186,13 +186,3 @@ export interface SkillRollResult {
     }
   >;
 }
-
-// ===== Re-exports of engine-core types still consumed via planning/index.js =====
-//
-// Phase F purged the legacy `WorldFeature` / `ExecutionContext` /
-// `TickRuntimeContext` / `NpcPlanningCapability` / `FeatureNodeSchema` /
-// `FeaturePropagationConfig` / `PropagationResult` / `WorldFeatureResult` /
-// `NodeStartBlockedResult` / `ActivateResult` interfaces. The Phase D
-// `WorldFeature` lives in `core/worldFeature.ts` and is the canonical one.
-
-export type { WorldFeature } from "./core/worldFeature.js";
