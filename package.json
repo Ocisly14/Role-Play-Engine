@@ -1,5 +1,5 @@
 {
-  "name": "coc-multiagent",
+  "name": "role-play-engine",
   "version": "0.1.0",
   "description": "LangGraph-based multi-agent starter written in TypeScript.",
   "type": "module",
@@ -34,7 +34,7 @@
     "verify:module-migration": "node --import tsx scripts/verify-module-migration.ts"
   },
   "keywords": ["langgraph", "langchain", "multi-agent", "typescript"],
-  "author": "CoC AI",
+  "author": "Role Play Engine",
   "license": "MIT",
   "dependencies": {
     "@langchain/anthropic": "^0.3.8",

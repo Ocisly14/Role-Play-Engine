@@ -133,7 +133,7 @@ function formatItem(item: Item): string {
 // ─── Prompt builders ──────────────────────────────────────────────────
 
 function buildSystemPrompt(language: string): string {
-  return `You are a Call of Cthulhu 7th Edition game state resolver for object interactions.
+  return `You are a tabletop horror RPG 7th Edition game state resolver for object interactions.
 Given an NPC's action on objects/items and the skill roll outcome, determine the concrete item state changes.
 
 ## Item Operations

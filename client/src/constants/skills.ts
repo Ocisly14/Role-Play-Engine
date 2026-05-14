@@ -1,5 +1,5 @@
 /**
- * Call of Cthulhu 7th Edition - Standard Skills List
+ * Tabletop Horror RPG - Standard Skills List
  * Base values and categories for all available skills
  */
 

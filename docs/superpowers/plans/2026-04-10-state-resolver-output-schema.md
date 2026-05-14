@@ -1611,7 +1611,7 @@ export function buildResolverPrompt(ctx: ResolverContext): string {
 
   const userPrompt = sections.join("\n");
 
-  return `You are a Call of Cthulhu 7th Edition game state resolver. You output structured state changes only — no narrative, no prose.
+  return `You are a tabletop horror RPG 7th Edition game state resolver. You output structured state changes only — no narrative, no prose.
 
 ${guidance}
 

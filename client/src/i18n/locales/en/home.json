@@ -13,7 +13,7 @@
     "ready": "ready",
     "loading": "Loading characters...",
     "empty": "No characters created yet",
-    "emptyDescription": "Create your first investigator to begin your journey into the world of Call of Cthulhu",
+    "emptyDescription": "Create your first investigator to begin your journey",
     "viewSheet": "View Sheet",
     "unknownOccupation": "Unknown Occupation"
   },

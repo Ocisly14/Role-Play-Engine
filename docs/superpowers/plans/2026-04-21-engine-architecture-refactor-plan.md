@@ -3920,7 +3920,7 @@ When resolving an action that causes a SAN drop, consider whether it should also
 - **Indefinite insanity** — a cumulative SAN loss exceeding (current SAN / 5) within the last hour may trigger an indefinite bout. Use \`expiresAt\` 1–10 days out with optional onset delay described in the condition.
 - **Persistent phobia/mania** — emit \`character.addCondition\` WITHOUT \`expiresAt\`. It never auto-removes.
 
-Style reference (10 bout types from the CoC 7e table):
+Style reference (10 bout types from the tabletop horror RPG table):
 ${BOUT_OF_MADNESS_TABLE.map((b) => \`- **\${b.label}**: \${b.description}\`).join("\\n")}
 
 Tailor the condition \`description\` to the specific situation — don't copy the table verbatim.
@@ -5825,7 +5825,7 @@ Rationale:
 - Splitting the work prevents Phase F from becoming a 2-month monolith. Each shippable chunk stays smaller and reviewable.
 
 **What Phase F actually ships for the prompt:**
-- A minimal system prompt: "You are an NPC in a Call of Cthulhu simulation. Use the provided tools to act and reason."
+- A minimal system prompt: "You are an NPC in a tabletop horror RPG simulation. Use the provided tools to act and reason."
 - Tool schemas auto-generated from the type definitions.
 - No few-shot examples.
 - Sonnet by default for all calls (model tuning deferred).
@@ -6590,7 +6590,7 @@ The transcript-string approach (vs. native Anthropic message history) is intenti
 ```ts
 // src/roleSim/llmAgent.ts (constant)
 const PHASE_F_PLACEHOLDER_SYSTEM_PROMPT = `
-You are an NPC in a Call of Cthulhu tabletop RPG simulation. Each turn you receive your current
+You are an NPC in a tabletop horror RPG tabletop RPG simulation. Each turn you receive your current
 context (your profile, time of day, long-term intent, recent memories, current action if any,
 and possibly a notification of something that just happened around you) and must choose what to
 do next using the provided tools.
@@ -7868,7 +7868,7 @@ These confirm individual Decisions land correctly. Some require functionality th
 | 2 | Player intent edit takes effect on next decide() | Pause sim → use UI (or POST `/api/simulation/:id/intent`) to update an NPC's intent → resume → next decide() ctx contains the new long-term intent (visible in agent logs) | 13 path A |
 | 3 | Inject a new NPC | Pause → inject via UI → resume → new NPC starts acting (visible in event stream) | 23 |
 | 4 | Engine event triggers revise | **Untestable in Phase F without a dev trigger script** — note as "verify post-renderer when perception path lights up". Optional pre-renderer check: programmatically push a `featureEvent` via Node REPL into the engine and confirm controller logs `decide()` called with `reviseTriggers` populated (look in transcript for "Things that just happened around you") | 13 path B / 15 / 16 |
-| 5 | NPC death cleanup | **Untestable in Phase F without a dev trigger** for HP-to-0. If a real CoC scenario exists where NPCs can plausibly die during a smoke run (e.g., a combat module), use it. Otherwise mark as "verified by code review of `checkDerivedEvents`" | 26 |
+| 5 | NPC death cleanup | **Untestable in Phase F without a dev trigger** for HP-to-0. If a real tabletop horror RPG scenario exists where NPCs can plausibly die during a smoke run (e.g., a combat module), use it. Otherwise mark as "verified by code review of `checkDerivedEvents`" | 26 |
 
 If items 4 + 5 are untestable in this environment, that's accepted — they're code-reviewed in F4/F5 and exercised properly when the renderer or a dev trigger script ships.
 

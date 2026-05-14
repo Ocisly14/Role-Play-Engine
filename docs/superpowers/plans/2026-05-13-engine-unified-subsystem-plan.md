@@ -1044,7 +1044,7 @@ If finer control (e.g. "reduce intensity by N rather than fully extinguish") is 
 - [ ] **Step 1: Locate ignite/extinguish action definitions.**
 
 ```bash
-grep -rln "fireIntensity\|fireExtinguish" /Users/sunyining/project_SentiEdge/CoC-AI-agent/src/engine/tool_definitions
+grep -rln "fireIntensity\|fireExtinguish" /Users/sunyining/project_SentiEdge/role-play-engine/src/engine/tool_definitions
 ```
 
 For each match: read the YAML, find the commit outcome StateChange block, replace `overlayFields: { fireIntensity: … }` with the appropriate `scene.addCondition` or `scene.removeCondition` shape.
@@ -1535,9 +1535,9 @@ For action subsystem context construction (where the old code called `makeCodeEn
 Search:
 ```bash
 grep -rln "getDefaultFeatures\|emergentScanners\|createDefaultCodeEngineRegistry" \
-  /Users/sunyining/project_SentiEdge/CoC-AI-agent/src \
-  /Users/sunyining/project_SentiEdge/CoC-AI-agent/client \
-  /Users/sunyining/project_SentiEdge/CoC-AI-agent/__tests__
+  /Users/sunyining/project_SentiEdge/role-play-engine/src \
+  /Users/sunyining/project_SentiEdge/role-play-engine/client \
+  /Users/sunyining/project_SentiEdge/role-play-engine/__tests__
 ```
 
 Likely callers: `client/server/simulation/*`, `src/simulation/SimulationRunner.ts`, test fixtures. For each, replace:
@@ -1607,7 +1607,7 @@ Update all importers (search via `grep -rn "from.*worldFeature.js" src` and `gre
 - [ ] **Step 2: Delete the files listed above.**
 
 ```bash
-cd /Users/sunyining/project_SentiEdge/CoC-AI-agent
+cd /Users/sunyining/project_SentiEdge/role-play-engine
 rm src/engine/core/worldFeature.ts
 rm src/engine/core/featureRunner.ts
 rm src/engine/core/emergentEventEmitter.ts
@@ -1620,9 +1620,9 @@ rm -r src/engine/features/
 
 ```bash
 grep -rln "from.*worldFeature.js\|from.*featureRunner.js\|from.*emergentEventEmitter.js\|from.*emergentScanner.js\|from.*codeEngine/\|from.*features/\(fire\|item\|stamina\|sun\|weather\)Feature" \
-  /Users/sunyining/project_SentiEdge/CoC-AI-agent/src \
-  /Users/sunyining/project_SentiEdge/CoC-AI-agent/client \
-  /Users/sunyining/project_SentiEdge/CoC-AI-agent/__tests__
+  /Users/sunyining/project_SentiEdge/role-play-engine/src \
+  /Users/sunyining/project_SentiEdge/role-play-engine/client \
+  /Users/sunyining/project_SentiEdge/role-play-engine/__tests__
 ```
 
 Every match must be rewritten — either to the new subsystem path or removed entirely (e.g., test fixtures that used `MovementSubsystem` directly should now import `movementSubsystem` from `src/engine/subsystem/movement.ts`).
@@ -1633,8 +1633,8 @@ Check that nothing else imports `getDefaultFeatures` or `createDefaultCodeEngine
 
 ```bash
 grep -rln "getDefaultFeatures\|createDefaultCodeEngineRegistry" \
-  /Users/sunyining/project_SentiEdge/CoC-AI-agent/src \
-  /Users/sunyining/project_SentiEdge/CoC-AI-agent/client
+  /Users/sunyining/project_SentiEdge/role-play-engine/src \
+  /Users/sunyining/project_SentiEdge/role-play-engine/client
 ```
 
 Zero results expected.
@@ -1650,7 +1650,7 @@ Zero results expected.
 - [ ] **Step 1: Type-check.**
 
 ```bash
-cd /Users/sunyining/project_SentiEdge/CoC-AI-agent
+cd /Users/sunyining/project_SentiEdge/role-play-engine
 pnpm build:tsc
 ```
 

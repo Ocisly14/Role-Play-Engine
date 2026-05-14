@@ -284,7 +284,7 @@ Examples:
 
 两个 RAG 查询表（均用 EmbeddingClient 做 semantic match）：
 - **Skill RAG**：actionTypeSkillMap 候选技能 → 匹配 NPC 实际技能值
-- **Horror RAG**：CoC 规则书 + 模组恐怖源条目（怪物/事件/场景）→ 每条含 `sanLossMin` / `sanLossMax`
+- **Horror RAG**：tabletop horror RPG 规则书 + 模组恐怖源条目（怪物/事件/场景）→ 每条含 `sanLossMin` / `sanLossMax`
 
 **执行结构（TypeScript async/await，串行保证状态一致性）：**
 
@@ -671,7 +671,7 @@ const ACTION_TYPE_SKILL_MAP: Record<ActionType, string[]> = {
   ],
   mental: [
     "Psychology", "Psychoanalysis",
-    "Occult", "Cthulhu Mythos",
+    "Occult", "Forbidden Lore",
     "History", "Science (Astronomy)",
     "Medicine",                     // 处理精神创伤
     "Art/Craft (Fine Art)",         // 以创作疏导恐惧
@@ -770,7 +770,7 @@ src/dynamicworldagent/dynamicBasicAgent/npcPlanning/
 ├── NPCPlanningAgent.ts      # LLM: generate intents, daily plans, revise plans
 ├── NPCPlanningTemplate.ts   # prompt templates
 ├── actionTypeSkillMap.ts    # static ActionType → skills mapping
-├── horrorSourceData.ts      # CoC 规则书恐怖源条目（sanLossMin/Max），供 Horror RAG 使用
+├── horrorSourceData.ts      # tabletop horror RPG 规则书恐怖源条目（sanLossMin/Max），供 Horror RAG 使用
 └── tickProcessor.ts         # pure state machine; uses Skill RAG + Horror RAG
 ```
 

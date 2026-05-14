@@ -20,7 +20,7 @@ mechanicalEffect?: {
 };
 ```
 
-**Skill names** (CoC 7e English, matching character skills):
+**Skill names** (tabletop horror RPG English, matching character skills):
 `Spot Hidden`, `Listen`, `Stealth`, `Library Use`, `Disguise`, `Dodge`, `Climb`, `Navigate`, `Survival`, `Track`, `Psychology`, `First Aid`, `Locksmith`, `Mechanical Repair`, `Electrical Repair`
 
 **Attribute-as-skill**: `STR`, `CON`, `DEX`, `INT`, `POW`

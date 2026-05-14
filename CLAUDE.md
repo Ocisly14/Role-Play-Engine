@@ -26,7 +26,7 @@ Path alias `@/*` -> `src/*` is configured for vitest; respect that when adding t
 
 ## Architecture
 
-This is a **tick-based Call of Cthulhu world simulation**, not a turn-based chat agent. The legacy single-player chat / turn polling / memo path has been removed; only the simulation surface is active.
+This is a **tick-based tabletop horror RPG world simulation**, not a turn-based chat agent. The legacy single-player chat / turn polling / memo path has been removed; only the simulation surface is active.
 
 ### Runtime flow
 

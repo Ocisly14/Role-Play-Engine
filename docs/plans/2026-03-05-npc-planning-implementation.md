@@ -17,7 +17,7 @@
 - All imports use `.js` extensions (ESM requirement)
 - Run `pnpm build:tsc` (not `pnpm build`) after each task to catch type errors
 - DB changes: use `prisma db push` (NOT `prisma migrate dev` — schema has drift from reminder_embeddings)
-- Working directory: `/Users/sunyining/project_SentiEdge/CoC-AI-agent`
+- Working directory: `/Users/sunyining/project_SentiEdge/role-play-engine`
 - All new files go under `src/dynamicworldagent/dynamicBasicAgent/npcPlanning/`
 - Read `src/dynamicworldagent/state/DynamicGameState.ts` before touching it — it is large
 
@@ -96,7 +96,7 @@ Also add back-relations to `Session` and `Module` models:
 **Step 3: Apply schema**
 
 ```bash
-cd /Users/sunyining/project_SentiEdge/CoC-AI-agent
+cd /Users/sunyining/project_SentiEdge/role-play-engine
 npx prisma db push
 ```
 

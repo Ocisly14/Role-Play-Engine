@@ -237,7 +237,7 @@ const DEFAULT_DETAILED_NODE_TYPE_REF = `## Node Type Reference
   - Never invent internal sub-areas, doors, partitions, or descriptive labels such as \`private_office_partition\`.
   - If there is no exact existing connected location ID to target, omit \`sceneConnectionEffect\`.
 
-## Skill Checks (Call of Cthulhu 7e Rules)
+## Skill Checks (tabletop horror RPG 7e Rules)
 
 The engine acts as Keeper. A skill roll is called ONLY when:
 1. The outcome is **genuinely uncertain** for someone with this character's ability
@@ -446,12 +446,12 @@ Expected: No matches (only the word "routine" in natural language text is accept
 
 ```bash
 git add -A
-git commit -m "refactor: rename routine node type to action, add atomic node generation and CoC 7e skill check rules
+git commit -m "refactor: rename routine node type to action, add atomic node generation and tabletop horror RPG skill check rules
 
 - Rename routine→action in type enum, handler, registry, exports, and all tests
 - Rewrite Node Type Reference: action = no state change (exclusion logic)
 - Rewrite Node Quality: atomic actions with physical continuity split rules
-- Rewrite Skill Checks: CoC 7e rules, skill determines node type
+- Rewrite Skill Checks: tabletop horror RPG rules, skill determines node type
 - Update output schemas in detailed node and revision prompts
 - DB compatible: old 'routine' data maps to 'action' at load time"
 ```

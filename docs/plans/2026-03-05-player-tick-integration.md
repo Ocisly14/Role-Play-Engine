@@ -16,7 +16,7 @@
 
 - All imports use `.js` extensions (ESM requirement)
 - Run `pnpm build:tsc` after each task to catch type errors
-- Working directory: `/Users/sunyining/project_SentiEdge/CoC-AI-agent`
+- Working directory: `/Users/sunyining/project_SentiEdge/role-play-engine`
 - Read any file fully before modifying it
 - This plan only touches the single-player tick pipeline (`dynamicBasicAgent/` + `graph/`).
 

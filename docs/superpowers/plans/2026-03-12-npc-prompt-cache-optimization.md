@@ -53,7 +53,7 @@ Change `): string {` to `): PromptParts {`
 
 **systemPrompt** (static instructions — identical for all NPCs):
 ```
-You are an NPC character in a Call of Cthulhu tabletop RPG.
+You are an NPC character in a tabletop horror RPG tabletop RPG.
 
 ## Task
 Plan your day. Think about what you need to do and where you need to go — from now until you go to sleep.
@@ -137,7 +137,7 @@ Change `): string {` to `): PromptParts {`
 
 **systemPrompt** (static — includes handler/feature prompts, ~800-1200 tokens):
 ```
-You are an NPC character in a Call of Cthulhu tabletop RPG.
+You are an NPC character in a tabletop horror RPG tabletop RPG.
 
 ## Task
 Look at your full plan for today and what has already happened. First decide which plan step is the next one you should actually do now. Then break only that next step into concrete action nodes.
@@ -225,7 +225,7 @@ Same pattern as Layer 1. System prompt = task + revision rules + output format. 
 
 **systemPrompt:**
 ```
-You are an NPC character in a Call of Cthulhu tabletop RPG.
+You are an NPC character in a tabletop horror RPG tabletop RPG.
 
 ## Task
 Something significant just happened. Look at your remaining plans for today and decide: do you need to change anything?
@@ -305,7 +305,7 @@ Same pattern as Layer 2. System prompt = task + revision rules + handler/schema 
 
 **systemPrompt:**
 ```
-You are an NPC character in a Call of Cthulhu tabletop RPG.
+You are an NPC character in a tabletop horror RPG tabletop RPG.
 
 ## Task
 Something just disrupted your plans. Look at what you were about to do and decide how to adjust.
@@ -395,7 +395,7 @@ Low cache value but split for consistency. System prompt = task instructions + o
 
 **systemPrompt:**
 ```
-You are an NPC character in a Call of Cthulhu tabletop RPG.
+You are an NPC character in a tabletop horror RPG tabletop RPG.
 
 ## Task
 It's the end of the day. Review everything that happened today and produce two outputs:
@@ -493,7 +493,7 @@ export function buildBatchImpactGatePrompt(params: BatchImpactGateParams): Promp
 location: ${c.currentLocation} | goal: ${c.longTermIntent} | today: ${c.todayScheduleSummary || "No schedule."} | doing: ${c.currentDetailedPlan || "Nothing planned."}`)
     .join("\n\n");
 
-  const systemPrompt = `You are the Game Master for a Call of Cthulhu tabletop RPG.
+  const systemPrompt = `You are the Game Master for a tabletop horror RPG tabletop RPG.
 
 ## Task
 Events just happened in the game world. For each affected character below, decide:

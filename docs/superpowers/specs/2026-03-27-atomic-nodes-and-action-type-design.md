@@ -51,9 +51,9 @@ Rename the `routine` node type to `action` with a strict new definition:
 
 The definition uses **exclusion logic** — if the action involves an object, character, or scene state change, it must use the corresponding type instead.
 
-### Part 3: Skill Checks rewrite with CoC 7e rules
+### Part 3: Skill Checks rewrite with tabletop horror RPG rules
 
-Replace the existing Skill Checks prompt section with guidance based on official CoC 7e Keeper rules:
+Replace the existing Skill Checks prompt section with guidance based on official tabletop horror RPG Keeper rules:
 
 **Core principle**: Only roll when the outcome is genuinely uncertain AND failure has meaningful consequences.
 
@@ -142,7 +142,7 @@ with one verb and one target. Split into separate nodes whenever:
 ### New Skill Checks Section
 
 ```
-## Skill Checks (Call of Cthulhu 7e Rules)
+## Skill Checks (tabletop horror RPG 7e Rules)
 
 The engine acts as Keeper. A skill roll is called ONLY when:
 1. The outcome is **genuinely uncertain** for someone with this character's ability
@@ -206,7 +206,7 @@ All `"routine"` string comparisons → `"action"`.
 
 - Replace `DEFAULT_DETAILED_NODE_TYPE_REF` with the new Node Type Reference
 - Replace "Node Quality" and "Action Continuity" sections with the new atomic rules
-- Replace "Skill Checks" section with the new CoC 7e-based version
+- Replace "Skill Checks" section with the new tabletop horror RPG-based version
 - Update output schema: `"routine|movement|..."` → `"action|movement|..."`
 - Apply same changes to the revision prompt (`buildRevisePlansPrompt`)
 

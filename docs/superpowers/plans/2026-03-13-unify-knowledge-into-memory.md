@@ -505,7 +505,7 @@ export interface SummarizeDayMemoryParams {
 export function buildSummarizeDayMemoryPrompt(
   params: SummarizeDayMemoryParams
 ): PromptParts {
-  const systemPrompt = `You are an NPC character in a Call of Cthulhu tabletop RPG.
+  const systemPrompt = `You are an NPC character in a tabletop horror RPG tabletop RPG.
 
 ## Task
 It's the end of the day. Review everything that happened today and produce two outputs:

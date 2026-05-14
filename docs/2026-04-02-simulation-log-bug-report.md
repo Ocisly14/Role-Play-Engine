@@ -211,7 +211,7 @@ Harrison → Angela: relationship increases by `+2 → 7` after a **failed** Per
 | Patrizio | STR | 1 | 15-90 | Physical actions impossible |
 | Patrizio | Locksmith | 1 | 1-99 | Cannot pick any lock |
 
-In CoC 7e, regular difficulty requires rolling at or under the skill value on d100. With STR 1, only rolling exactly 1 succeeds (1% chance). This is almost certainly a module data error.
+In tabletop horror RPG, regular difficulty requires rolling at or under the skill value on d100. With STR 1, only rolling exactly 1 succeeds (1% chance). This is almost certainly a module data error.
 
 ---
 

@@ -14,7 +14,7 @@ The current `character_interaction` handler only supports two rigid operations v
 - `"item"` — move one item from actor to target
 - `"information"` — write knowledge memory to target (handled in tickProcessor post-execution)
 
-This cannot express richer interactions that are natural in Call of Cthulhu scenarios:
+This cannot express richer interactions that are natural in tabletop horror RPG scenarios:
 - Leading or escorting an NPC to another location
 - Forcing/driving an NPC away
 - Physical altercations (HP changes for both sides)
@@ -131,13 +131,13 @@ characterInteractionHandler.execute(node, dgsm, ctx): Promise<CharacterAction>
 
 **System prompt:**
 ```
-You are a Call of Cthulhu 7th Edition game state resolver.
+You are a tabletop horror RPG 7th Edition game state resolver.
 Given a character interaction that has already been determined to succeed/fail,
 determine the concrete state changes for both characters.
 
 Rules:
 - Only output changes that logically follow from the action and its result.
-- HP/SAN changes must be proportional to CoC 7e mechanics.
+- HP/SAN changes must be proportional to tabletop horror RPG mechanics.
 - moveTo must be a location ID from the provided scene context.
 - Items can only transfer between the two characters or from scene items.
   addItems/removeItems use item IDs.

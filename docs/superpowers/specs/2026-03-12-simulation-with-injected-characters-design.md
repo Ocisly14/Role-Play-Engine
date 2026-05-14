@@ -239,7 +239,7 @@ When injecting a character, the following fields are required:
 |-------|----------|-------------|
 | `name` | Yes | Character name |
 | `attributes` | Yes | STR, CON, SIZ, DEX, APP, INT, POW, EDU, LUCK |
-| `skills` | Yes | `Record<string, number>` — CoC skill percentages |
+| `skills` | Yes | `Record<string, number>` — tabletop horror RPG skill percentages |
 | `backstory` | Yes | Character background narrative |
 | `residence` | Yes | Starting macro location (`scenarioOutline.id`), must exist in module. Returns 400 if invalid. |
 | `personality` | Recommended | Personality description (used by AI for behavior) |
