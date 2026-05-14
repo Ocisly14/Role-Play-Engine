@@ -4,7 +4,7 @@
 
 **Goal:** Create ~65 skill definition `.md` files, update the loader to read them from `skills/` subdirectory, and enhance GameInterpreter to select from ~72 definitions (7 general + ~65 skill).
 
-**Architecture:** Each CoC 7e skill becomes an ActionDefinition with its own skillCheck config, outputSchema, interpreter examples, and resolution guidance. The loader scans both root and `skills/` directories. The interpreter prompt is restructured to handle the larger definition set by grouping definitions by category.
+**Architecture:** Each tabletop horror RPG skill becomes an ActionDefinition with its own skillCheck config, outputSchema, interpreter examples, and resolution guidance. The loader scans both root and `skills/` directories. The interpreter prompt is restructured to handle the larger definition set by grouping definitions by category.
 
 **Tech Stack:** TypeScript, YAML frontmatter, Vitest
 
@@ -15,7 +15,7 @@
 ## File Structure
 
 **New files (~65):**
-- `src/engine/tool_definitions/skills/*.md` — one per CoC 7e skill
+- `src/engine/tool_definitions/skills/*.md` — one per tabletop horror RPG skill
 
 **New general definitions (3):**
 - `src/engine/tool_definitions/conversation.md` — plain conversation (no skill check)

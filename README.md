@@ -85,6 +85,74 @@ There is no central scheduler. The pipeline is one-way:
 
 ---
 
+## Citations: how actions pick their targets
+
+In academic writing, you cite works inline by marker and define them in a
+reference block. The same pattern threads through this engine — and not
+by accident.
+
+### The contract
+
+**Renderer → Agent.** The perception narrative cites named entities
+inline as `[N]`, with a `[references]` block listing each one. The agent
+reads the narrative the way you read a paper:
+
+```
+[narrative]
+I step into the lantern light spilling from the doorway. Smith[1] is
+hunched at the table, turning over the bound ledger[2] in his hands.
+
+[references]
+[1] Smith: gaunt, soot-stained coat
+[2] the bound ledger: thick leather, brass clasp
+```
+
+**Agent → Engine.** When the agent acts, it cites entities in
+`actionText` by name in square brackets — drawn verbatim from the
+reference block it just read:
+
+```
+"ask [Smith] about [the bound ledger]"
+"approach [the gaunt man]"
+"hand [the bound ledger] to [Helen Park]"
+```
+
+**Engine resolution.** The `GameInterpreter` builds a per-actor
+*perceivable directory* — KNOWN people from the actor's relationship
+graph, plus UNKNOWN people / items / scenes currently in view — and
+resolves each `[Name]` to a typed `{ id, kind }` reference. The action's
+`referencedEntities` field becomes the single source of truth for "who
+or what this action is about." There is no parallel `targetCharacterIds`
+list to drift.
+
+### Why this format
+
+Several reasons converge:
+
+1. **Renderer output is a 1:1 mirror of a paper.** Inline `[N]` plus a
+   reference block is one of the most heavily attested structures in LLM
+   pretraining (arXiv, PubMed, Wikipedia). The model is fluent at
+   producing it without being taught.
+2. **`[Name]` in `actionText` is wiki / footnote–flavored** — also a
+   high-prior pattern (Wikipedia internal links, markdown footnotes,
+   legal citations). Brackets around a token are an unambiguous "this is
+   a named referent" signal the model has seen millions of times.
+3. **It composes with prose.** JSON or XML target fields would split the
+   narrative; brackets stay readable inline and survive being written to
+   memory — `"ask [Smith] about [the letter]"` is self-describing even
+   out of context.
+4. **Format gives the prior; strict naming gives the precision.** The
+   contract requires verbatim names from the reference block — no
+   abbreviations, no aliases. Brackets make the model good at this; the
+   naming rule makes it exact.
+
+The result is a symmetric, low-ambiguity contract: characters, items,
+and scenes all use the same citation surface, every layer reads the same
+text, and `actionText` alone tells you what the action is and who it's
+against.
+
+---
+
 ## The three pillars
 
 ### 1. The Hybrid World Engine — `src/engine/`

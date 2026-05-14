@@ -313,7 +313,7 @@ export async function buildCharacterInteractionPrompt(
     : "Respond in English.";
 
   // ── System prompt ──
-  const systemPrompt = `You are the game engine for a Call of Cthulhu tabletop RPG simulation.
+  const systemPrompt = `You are the game engine for a tabletop horror RPG tabletop RPG simulation.
 Your task is to resolve a character interaction and produce a structured JSON result.
 
 ${langInstruction}

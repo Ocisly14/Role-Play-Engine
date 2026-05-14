@@ -99,7 +99,7 @@ export function buildOutputSchema(config: OutputSchemaConfig): JsonSchema {
  * resolver calls share an identical prompt prefix, and only the
  * per-definition + per-request tail varies.
  */
-export const RESOLVER_STATIC_SYSTEM_PROMPT = `You are a Call of Cthulhu 7th Edition game state resolver. You output structured state changes only — no narrative, no prose.
+export const RESOLVER_STATIC_SYSTEM_PROMPT = `You are a tabletop horror RPG game state resolver. You output structured state changes only — no narrative, no prose.
 
 ## Output Format
 

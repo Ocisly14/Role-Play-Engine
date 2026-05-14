@@ -1214,7 +1214,7 @@ Expected: 35（28 + 7）。
 
 | spec 原意 | 实际用 | 原因 |
 |---|---|---|
-| firearms | pistol | firearms 在 CoC 7e 被拆成 pistol/rifle/submachine_gun，仓库里是拆开的 |
+| firearms | pistol | firearms 在 tabletop horror RPG 被拆成 pistol/rifle/submachine_gun，仓库里是拆开的 |
 | fast_talk | bluff | 仓库用 bluff 代替 |
 | library_use | law | 学术类代表换成 law（law.md 存在） |
 | spot_hidden | archaeology | 学术/观察类换成 archaeology |

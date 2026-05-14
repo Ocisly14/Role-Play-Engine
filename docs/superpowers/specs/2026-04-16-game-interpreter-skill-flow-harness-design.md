@@ -34,7 +34,7 @@ JSONL append 模式。`--report <path>` 指定的文件既是进度文件也是�
 
 ### Group A — 技能类别代表性（12 case）
 
-按 CoC skill 类别挑选，确保每类至少 2 个代表。不强求全 40 个技能全覆盖。
+按 tabletop horror RPG skill 类别挑选，确保每类至少 2 个代表。不强求全 40 个技能全覆盖。
 
 | ID | 类别 | skill / definition | 说明 |
 |---|---|---|---|

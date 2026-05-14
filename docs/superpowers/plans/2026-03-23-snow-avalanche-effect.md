@@ -78,7 +78,7 @@ const HEIGHT_REDUCTION = 0.5;
 
 - [ ] **Step 3: Verify no TypeScript errors**
 
-Run: `cd /Users/sunyining/project_SentiEdge/CoC-AI-agent/client && npx tsc --noEmit --pretty 2>&1 | head -30`
+Run: `cd /Users/sunyining/project_SentiEdge/role-play-engine/client && npx tsc --noEmit --pretty 2>&1 | head -30`
 Expected: No errors related to the new types/constants.
 
 - [ ] **Step 4: Commit**
@@ -189,7 +189,7 @@ function trySpawnSnowChunks(
 
 - [ ] **Step 2: Verify no TypeScript errors**
 
-Run: `cd /Users/sunyining/project_SentiEdge/CoC-AI-agent/client && npx tsc --noEmit --pretty 2>&1 | head -30`
+Run: `cd /Users/sunyining/project_SentiEdge/role-play-engine/client && npx tsc --noEmit --pretty 2>&1 | head -30`
 Expected: No errors.
 
 - [ ] **Step 3: Commit**
@@ -258,7 +258,7 @@ function drawChunkFragments(
 
 - [ ] **Step 3: Verify no TypeScript errors**
 
-Run: `cd /Users/sunyining/project_SentiEdge/CoC-AI-agent/client && npx tsc --noEmit --pretty 2>&1 | head -30`
+Run: `cd /Users/sunyining/project_SentiEdge/role-play-engine/client && npx tsc --noEmit --pretty 2>&1 | head -30`
 Expected: No errors.
 
 - [ ] **Step 4: Commit**
@@ -346,7 +346,7 @@ function updateAndDrawSnowChunks(
 
 - [ ] **Step 2: Verify no TypeScript errors**
 
-Run: `cd /Users/sunyining/project_SentiEdge/CoC-AI-agent/client && npx tsc --noEmit --pretty 2>&1 | head -30`
+Run: `cd /Users/sunyining/project_SentiEdge/role-play-engine/client && npx tsc --noEmit --pretty 2>&1 | head -30`
 Expected: No errors.
 
 - [ ] **Step 3: Commit**
@@ -412,7 +412,7 @@ In the `resize` function, after `updateObstacles();` (line 691), add:
 
 - [ ] **Step 5: Verify no TypeScript errors**
 
-Run: `cd /Users/sunyining/project_SentiEdge/CoC-AI-agent/client && npx tsc --noEmit --pretty 2>&1 | head -30`
+Run: `cd /Users/sunyining/project_SentiEdge/role-play-engine/client && npx tsc --noEmit --pretty 2>&1 | head -30`
 Expected: No errors.
 
 - [ ] **Step 6: Commit**
@@ -428,7 +428,7 @@ git commit -m "feat(weather): wire snow avalanche into CanvasLayer draw loop"
 
 - [ ] **Step 1: Build the client**
 
-Run: `cd /Users/sunyining/project_SentiEdge/CoC-AI-agent/client && pnpm build 2>&1 | tail -10`
+Run: `cd /Users/sunyining/project_SentiEdge/role-play-engine/client && pnpm build 2>&1 | tail -10`
 Expected: Build succeeds with no errors.
 
 - [ ] **Step 2: Manual visual test**

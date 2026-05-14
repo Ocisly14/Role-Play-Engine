@@ -10,7 +10,7 @@ Replace Phase F's placeholder prompt with a persona-simulation framework. The fi
 
 ## Non-goals
 
-- CoC-specific rules / skill-check / combat tactics in the prompt
+- tabletop horror RPG-specific rules / skill-check / combat tactics in the prompt
 - LLM-driven renderer (perception narrative is a controller-side template stub; a real renderer is a separate future phase)
 - Native Anthropic `tool_use` API (Phase F's `generateText` + `parseJsonResponse` pattern stays)
 - New tools (5-tool set from Phase F stays: `act` / `continue` / `writeMemory` / `recallMemory` / `getMapSnapshot`)

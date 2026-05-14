@@ -1101,7 +1101,7 @@ export function buildDispatcherPrompt(definitions: ActionDefinition[]): string {
     .map((d) => `- **${d.id}**: ${d.description}`)
     .join("\n");
 
-  return `You are an action dispatcher for a Call of Cthulhu simulation engine.
+  return `You are an action dispatcher for a tabletop horror RPG simulation engine.
 
 Given a natural language action, decompose it into an ordered sequence of steps. Each step references one of the available action definitions.
 
@@ -1411,7 +1411,7 @@ export function buildResolverPrompt(ctx: ResolverContext): string {
     ? `\nWorld Conditions:\n${ctx.featureContext}`
     : "";
 
-  return `You are a state resolver for a Call of Cthulhu simulation. Given an action, its outcome, and guidance from the action definition, output the exact state changes.
+  return `You are a state resolver for a tabletop horror RPG simulation. Given an action, its outcome, and guidance from the action definition, output the exact state changes.
 
 ## Action
 "${ctx.action}"

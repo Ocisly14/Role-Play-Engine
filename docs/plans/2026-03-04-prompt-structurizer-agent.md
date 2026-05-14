@@ -87,7 +87,7 @@ Return a single JSON object with these fields (ALL in English, regardless of use
 1. PRESERVE every specific detail from the user's input (locations, character ideas, plot hooks, atmosphere cues).
 2. The \`refinedPrompt\` must contain ALL user-specified details — nothing may be dropped.
 3. If the user writes in a non-English language, translate and expand — do NOT transliterate.
-4. For CoC (Call of Cthulhu) scenarios, default worldbuilding should include Lovecraftian cosmic horror elements unless the user explicitly requests otherwise.
+4. For tabletop horror RPG scenarios, default worldbuilding should include Lovecraftian cosmic horror elements unless the user explicitly requests otherwise.
 5. Output ONLY the JSON object. No commentary before or after.`;
 }
 ```
@@ -349,7 +349,7 @@ Rules that CANNOT be broken:
 3. If the user specifies THEMES → they MUST appear in the generated content.
 4. If ANY conflict arises between the user query and genre conventions, setting
    type defaults, or example content → the user query WINS, always.
-5. Do NOT import locations, organizations, or atmospheres from generic CoC
+5. Do NOT import locations, organizations, or atmospheres from generic tabletop horror RPG
    templates if they contradict what the user asked for.
 ════════════════════════════════════════════════════════
 
@@ -372,7 +372,7 @@ Rules that CANNOT be broken:
 5. The GENRE field(s) dictate narrative conventions to follow.
 6. If ANY conflict arises between the story elements and setting type defaults
    or example content → the story elements WIN, always.
-7. Do NOT import locations, organizations, or atmospheres from generic CoC
+7. Do NOT import locations, organizations, or atmospheres from generic tabletop horror RPG
    templates if they contradict the story elements.
 ════════════════════════════════════════════════════════
 ```

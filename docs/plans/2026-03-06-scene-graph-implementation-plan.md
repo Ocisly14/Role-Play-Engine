@@ -519,7 +519,7 @@ export interface TransportNetworkParams {
 }
 
 export function buildTransportNetworkPrompt(params: TransportNetworkParams): string {
-  return `You are designing the transportation network for a Call of Cthulhu tabletop RPG setting.
+  return `You are designing the transportation network for a tabletop horror RPG tabletop RPG setting.
 
 ## Setting
 ${params.settingDescription}
@@ -665,7 +665,7 @@ export interface SubSceneParams {
 export function buildSubScenePrompt(params: SubSceneParams): string {
   const hasResidents = params.macroLocation.residents && params.macroLocation.residents.length > 0;
 
-  return `You are designing the interior layout of a location for a Call of Cthulhu tabletop RPG.
+  return `You are designing the interior layout of a location for a tabletop horror RPG tabletop RPG.
 
 ## Setting
 ${params.settingDescription}

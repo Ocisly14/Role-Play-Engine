@@ -1,6 +1,6 @@
 # Sanity WorldFeature Design
 
-> CoC 7e faithful sanity/insanity system as a WorldFeature plugin.
+> tabletop horror RPG faithful sanity/insanity system as a WorldFeature plugin.
 
 **Goal:** Implement automatic insanity triggers, bout of madness effects, and duration management when characters lose SAN — currently SAN loss has zero mechanical consequences.
 

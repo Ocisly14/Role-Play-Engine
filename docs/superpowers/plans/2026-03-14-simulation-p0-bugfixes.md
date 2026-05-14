@@ -441,7 +441,7 @@ function caseInsensitiveMapGet(
 Replace lines 73-75:
 
 ```typescript
-  // NPC's trained value, or CoC base value for untrained skill
+  // NPC's trained value, or tabletop horror RPG base value for untrained skill
   const baseValue = COC_SKILL_BASE_VALUES.get(skill) ?? 1;
   const skillValue = adjustedSkills[skill] ?? baseValue;
 ```
@@ -449,7 +449,7 @@ Replace lines 73-75:
 With:
 
 ```typescript
-  // NPC's trained value, or CoC base value for untrained skill (case-insensitive)
+  // NPC's trained value, or tabletop horror RPG base value for untrained skill (case-insensitive)
   const baseValue = caseInsensitiveMapGet(COC_SKILL_BASE_VALUES, skill) ?? 1;
   const skillValue = caseInsensitiveLookup(adjustedSkills, skill) ?? baseValue;
 ```

@@ -148,7 +148,7 @@ Expected: ~90 weapons loaded, no JSON parse errors
 
 - [ ] **Step 1: Create consumables.json**
 
-Include functional consumable items relevant to CoC 7e investigation gameplay:
+Include functional consumable items relevant to tabletop horror RPG investigation gameplay:
 
 **Medical (~8 items):** First aid kit, bandages, morphine/painkillers, antidote, smelling salts, surgical kit, blood transfusion kit, herbal remedy
 **Ammunition (~6 items):** Pistol ammo box, rifle ammo box, shotgun shells box, arrow quiver, crossbow bolts, flare rounds

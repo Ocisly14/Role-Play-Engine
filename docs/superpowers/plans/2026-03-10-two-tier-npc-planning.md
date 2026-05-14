@@ -258,7 +258,7 @@ export interface DailyScheduleParams {
 }
 
 export function buildDailySchedulePrompt(params: DailyScheduleParams): string {
-  return `You are the Game Master for a Call of Cthulhu tabletop RPG.
+  return `You are the Game Master for a tabletop horror RPG tabletop RPG.
 
 ## Task
 Generate a high-level daily schedule for NPC "${params.npcName}" (ID: "${params.npcId}", Day ${params.gameDay}).
@@ -366,7 +366,7 @@ Add type-specific fields as needed:
 - **scene_interaction**: optional \`"sceneConnectionEffect"\``;
 
 export function buildDetailedNodesPrompt(params: DetailedNodesParams): string {
-  return `You are the Game Master for a Call of Cthulhu tabletop RPG.
+  return `You are the Game Master for a tabletop horror RPG tabletop RPG.
 
 ## Task
 Generate 1-3 detailed action nodes for NPC "${params.npcName}" (ID: "${params.npcId}") to fulfill the following schedule entry:
@@ -429,7 +429,7 @@ export interface ReviseScheduleParams {
 }
 
 export function buildReviseSchedulePrompt(params: ReviseScheduleParams): string {
-  return `You are the Game Master for a Call of Cthulhu tabletop RPG.
+  return `You are the Game Master for a tabletop horror RPG tabletop RPG.
 
 ## Task
 Revise the remaining daily schedule for NPC "${params.npcName}" after a significant event.

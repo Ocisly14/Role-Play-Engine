@@ -13,7 +13,7 @@
 
 ### 1. Skill Definition 体系
 
-将每个 CoC 7e skill 写成独立的 definition `.md` 文件，放在 `tool_definitions/skills/` 子目录。加上通用 definition，总共约 72 个文件。
+将每个 tabletop horror RPG skill 写成独立的 definition `.md` 文件，放在 `tool_definitions/skills/` 子目录。加上通用 definition，总共约 72 个文件。
 
 #### 目录结构
 

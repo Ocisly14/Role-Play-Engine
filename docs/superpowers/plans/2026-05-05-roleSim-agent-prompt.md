@@ -1560,8 +1560,8 @@ If anything unexpected, fix at site.
 Per `feedback_no_auto_commit.md`, **do not commit autonomously**. Instead:
 
 ```bash
-git -C /Users/sunyining/project_SentiEdge/CoC-AI-agent status --short
-git -C /Users/sunyining/project_SentiEdge/CoC-AI-agent diff --stat HEAD
+git -C /Users/sunyining/project_SentiEdge/role-play-engine status --short
+git -C /Users/sunyining/project_SentiEdge/role-play-engine diff --stat HEAD
 ```
 
 Show the user the file list + LOC delta. Ask: *"Implementation done. All tests pass / type errors are pre-existing. Files changed: [list]. Want me to commit, or do you want to review first?"*
@@ -1623,7 +1623,7 @@ Co-Authored-By: Claude Opus 4.7 (1M context) <noreply@anthropic.com>
 Use HEREDOC syntax to pass the message:
 
 ```bash
-git -C /Users/sunyining/project_SentiEdge/CoC-AI-agent commit -m "$(cat <<'EOF'
+git -C /Users/sunyining/project_SentiEdge/role-play-engine commit -m "$(cat <<'EOF'
 <paste message above>
 EOF
 )"
