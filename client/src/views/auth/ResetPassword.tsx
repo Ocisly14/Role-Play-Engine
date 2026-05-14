@@ -1,10 +1,9 @@
-import React from 'react';
-import { ResetPasswordForm } from '../../components/auth/ResetPasswordForm';
-import { FrameImage } from '../../components/FrameImage';
-import { useBackgroundImage } from '../../hooks/useBackgroundImage';
+import { FrameImage } from "../../components/FrameImage";
+import { ResetPasswordForm } from "../../components/auth/ResetPasswordForm";
+import { useBackgroundImage } from "../../hooks/useBackgroundImage";
 
 export default function ResetPassword() {
-  useBackgroundImage('background', true);
+  useBackgroundImage("background", true);
 
   return (
     <div className="auth-page">

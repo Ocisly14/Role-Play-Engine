@@ -1,0 +1,488 @@
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
+import type { SimulationEvent } from "../../hooks/useSimulationWebSocket";
+import type {
+  NpcStatusInfo,
+  SimulationEventFilters,
+} from "../../services/simulationApi";
+import * as simApi from "../../services/simulationApi";
+import { EventLog } from "./EventLog";
+import { GameClock } from "./GameClock";
+import { NpcCard } from "./NpcCard";
+import { NpcDetail } from "./NpcDetail";
+
+type SimTabType = "npcs" | "events";
+
+interface EventFilterDraft {
+  startDate: string;
+  startTime: string;
+  endDate: string;
+  endTime: string;
+  npcId: string;
+  parentLocationId: string;
+}
+
+interface EventLocationOption {
+  id: string;
+  name: string;
+}
+
+const EMPTY_EVENT_FILTER_DRAFT: EventFilterDraft = {
+  startDate: "",
+  startTime: "",
+  endDate: "",
+  endTime: "",
+  npcId: "",
+  parentLocationId: "",
+};
+
+const HIDDEN_EVENT_TYPES = new Set([
+  "npc_position_snapshot",
+  "playback_buffering",
+  "playback_resumed",
+]);
+
+function makeDateTimeKey(date: string, time: string): string {
+  return `${date}T${time}:00`;
+}
+
+function buildEventFilters(draft: EventFilterDraft): SimulationEventFilters {
+  const next: SimulationEventFilters = {};
+
+  if (draft.npcId) next.npcId = draft.npcId;
+  if (draft.parentLocationId) next.parentLocationId = draft.parentLocationId;
+
+  if (draft.startDate) {
+    next.startDate = draft.startDate;
+    if (draft.startTime) next.startTime = draft.startTime;
+  }
+
+  if (draft.endDate) {
+    next.endDate = draft.endDate;
+    if (draft.endTime) next.endTime = draft.endTime;
+  }
+
+  return next;
+}
+
+function dedupeEventsById(events: SimulationEvent[]): SimulationEvent[] {
+  const seenIds = new Set<string>();
+  const deduped: SimulationEvent[] = [];
+  for (const event of events) {
+    if (seenIds.has(event.id)) continue;
+    seenIds.add(event.id);
+    deduped.push(event);
+  }
+  return deduped;
+}
+
+function matchesFilters(
+  event: SimulationEvent,
+  filters: SimulationEventFilters,
+  locationParentById: Record<string, string>
+): boolean {
+  if (HIDDEN_EVENT_TYPES.has(event.type)) {
+    return false;
+  }
+
+  if (filters.npcId && event.actorNpcId !== filters.npcId) {
+    return false;
+  }
+
+  const startKey = filters.startDate
+    ? makeDateTimeKey(filters.startDate, filters.startTime ?? "00:00")
+    : undefined;
+  const endKey = filters.endDate
+    ? makeDateTimeKey(filters.endDate, filters.endTime ?? "23:59")
+    : undefined;
+  const eventKey = event.gameDateTime;
+
+  if (startKey && eventKey < startKey) {
+    return false;
+  }
+  if (endKey && eventKey > endKey) {
+    return false;
+  }
+
+  if (filters.parentLocationId) {
+    const parentLocationId =
+      locationParentById[event.location] ??
+      (event.location === "OUTDOOR" ? "OUTDOOR" : event.location);
+    if (parentLocationId !== filters.parentLocationId) {
+      return false;
+    }
+  }
+
+  return true;
+}
+
+interface SidePanelProps {
+  sessionId: string | null;
+  gameDateTime: string;
+  simulationState: string;
+  npcStatuses: NpcStatusInfo[];
+  displayTick: number;
+  locationOptions: EventLocationOption[];
+  locationParentById: Record<string, string>;
+  selectedNpcId: string | null;
+  eventLog: SimulationEvent[];
+  onSelectNpc: (npcId: string | null) => void;
+  onZoomToNpc: (npcId: string) => void;
+  isMobile: boolean;
+  isOpen: boolean;
+  onClose: () => void;
+}
+
+export function SidePanel({
+  sessionId,
+  gameDateTime,
+  simulationState,
+  npcStatuses,
+  displayTick,
+  locationOptions,
+  locationParentById,
+  selectedNpcId,
+  eventLog,
+  onSelectNpc,
+  onZoomToNpc,
+  isMobile,
+  isOpen,
+  onClose,
+}: SidePanelProps) {
+  const { t } = useTranslation("simulation");
+  const [activeTab, setActiveTab] = useState<SimTabType>("npcs");
+  const [isFilterPanelOpen, setIsFilterPanelOpen] = useState(false);
+  const [filterDraft, setFilterDraft] = useState<EventFilterDraft>(
+    EMPTY_EVENT_FILTER_DRAFT
+  );
+  const [activeFilters, setActiveFilters] = useState<SimulationEventFilters>(
+    {}
+  );
+  const [displayedEvents, setDisplayedEvents] = useState<SimulationEvent[]>([]);
+  const [eventsError, setEventsError] = useState<string | null>(null);
+  const [isEventsLoading, setIsEventsLoading] = useState(false);
+  const hasLoadedEventsRef = useRef(false);
+
+  const selectedNpc = selectedNpcId
+    ? npcStatuses.find((n) => n.npcId === selectedNpcId)
+    : null;
+
+  const drawerClass = isOpen ? "sim-sidebar-open" : "sim-sidebar-closed";
+  const hasActiveFilters = useMemo(
+    () => Object.keys(activeFilters).length > 0,
+    [activeFilters]
+  );
+
+  const loadEvents = useCallback(
+    async (filters: SimulationEventFilters) => {
+      if (!sessionId) return;
+
+      setIsEventsLoading(true);
+      setEventsError(null);
+
+      try {
+        const events = await simApi.fetchEvents(sessionId, {
+          ...filters,
+          maxTick: displayTick,
+        });
+        hasLoadedEventsRef.current = true;
+        const historyEvents = dedupeEventsById(
+          [...events]
+            .filter((event) => !HIDDEN_EVENT_TYPES.has(event.type))
+            .reverse()
+        );
+        const seenIds = new Set(historyEvents.map((event) => event.id));
+        const incoming = eventLog.filter(
+          (event) =>
+            !seenIds.has(event.id) &&
+            matchesFilters(event, filters, locationParentById)
+        );
+        setDisplayedEvents(
+          dedupeEventsById(
+            incoming.length > 0
+              ? [...incoming, ...historyEvents]
+              : historyEvents
+          )
+        );
+      } catch (error) {
+        setEventsError(
+          error instanceof Error ? error.message : "Failed to load events"
+        );
+      } finally {
+        setIsEventsLoading(false);
+      }
+    },
+    [displayTick, eventLog, locationParentById, sessionId]
+  );
+
+  useEffect(() => {
+    hasLoadedEventsRef.current = false;
+    setDisplayedEvents([]);
+    setEventsError(null);
+    setIsEventsLoading(false);
+    setIsFilterPanelOpen(false);
+    setFilterDraft(EMPTY_EVENT_FILTER_DRAFT);
+    setActiveFilters({});
+  }, [sessionId]);
+
+  useEffect(() => {
+    if (activeTab !== "events" || !sessionId || hasLoadedEventsRef.current) {
+      return;
+    }
+    void loadEvents(activeFilters);
+  }, [activeFilters, activeTab, loadEvents, sessionId]);
+
+  useEffect(() => {
+    if (
+      activeTab !== "events" ||
+      !hasLoadedEventsRef.current ||
+      eventLog.length === 0
+    ) {
+      return;
+    }
+
+    setDisplayedEvents((prev) => {
+      const seenIds = new Set(prev.map((event) => event.id));
+      const incoming = eventLog.filter(
+        (event) =>
+          !seenIds.has(event.id) &&
+          matchesFilters(event, activeFilters, locationParentById)
+      );
+
+      return incoming.length > 0
+        ? dedupeEventsById([...incoming, ...prev])
+        : prev;
+    });
+  }, [activeFilters, activeTab, eventLog, locationParentById]);
+
+  const handleDraftChange = useCallback(
+    (field: keyof EventFilterDraft, value: string) => {
+      setFilterDraft((prev) => ({
+        ...prev,
+        [field]: value,
+      }));
+    },
+    []
+  );
+
+  const handleApplyFilters = useCallback(async () => {
+    const nextFilters = buildEventFilters(filterDraft);
+    setActiveFilters(nextFilters);
+    await loadEvents(nextFilters);
+  }, [filterDraft, loadEvents]);
+
+  const handleClearFilters = useCallback(async () => {
+    setFilterDraft(EMPTY_EVENT_FILTER_DRAFT);
+    setActiveFilters({});
+    await loadEvents({});
+  }, [loadEvents]);
+
+  return (
+    <div
+      className={`sim-sidebar backdrop-blur-sm bg-white/50 border border-slate-200 shadow-lg rounded-lg flex flex-col ${drawerClass}`}
+      data-weather-obstacle="sim-sidebar"
+      onPointerDown={(e) => e.stopPropagation()}
+    >
+      <button
+        className="sim-sidebar-close"
+        onClick={onClose}
+        aria-label={t("sidebar.closeSidebar")}
+      >
+        ×
+      </button>
+
+      <GameClock
+        gameDateTime={gameDateTime}
+        simulationState={simulationState}
+      />
+
+      {selectedNpc ? (
+        <NpcDetail
+          npc={selectedNpc}
+          sessionId={sessionId}
+          gameDateTime={gameDateTime}
+          onBack={() => onSelectNpc(null)}
+          onZoomTo={onZoomToNpc}
+        />
+      ) : (
+        <>
+          <div className="sidebar-tabs">
+            <button
+              className={`sidebar-tab backdrop-blur-sm bg-white/50 border border-slate-200 shadow-md rounded-lg hover:bg-white/70 transition-all ${activeTab === "npcs" ? "active" : ""}`}
+              onClick={() => setActiveTab("npcs")}
+            >
+              {t("sidebar.npcs")}
+            </button>
+            <button
+              className={`sidebar-tab backdrop-blur-sm bg-white/50 border border-slate-200 shadow-md rounded-lg hover:bg-white/70 transition-all ${activeTab === "events" ? "active" : ""}`}
+              onClick={() => setActiveTab("events")}
+            >
+              {t("sidebar.events")}
+            </button>
+          </div>
+
+          {activeTab === "npcs" ? (
+            <div className="flex-1 overflow-y-auto">
+              {npcStatuses.map((npc) => (
+                <NpcCard
+                  key={npc.npcId}
+                  npc={npc}
+                  isSelected={npc.npcId === selectedNpcId}
+                  onClick={() => onSelectNpc(npc.npcId)}
+                />
+              ))}
+            </div>
+          ) : (
+            <div className="flex-1 min-h-0 flex flex-col">
+              <div className="px-2 pt-2 pb-1 border-b border-slate-200/60 bg-white/30">
+                <button
+                  type="button"
+                  onClick={() => setIsFilterPanelOpen((prev) => !prev)}
+                  className="w-full flex items-center justify-between rounded-md border border-slate-200 bg-white/60 px-3 py-2 text-xs text-slate-600 transition-colors hover:bg-white/80"
+                >
+                  <span className="font-medium">{t("sidebar.filters")}</span>
+                  <span className="flex items-center gap-2">
+                    {hasActiveFilters && (
+                      <span className="text-[11px] text-amber-600">
+                        {t("sidebar.filtersActive")}
+                      </span>
+                    )}
+                    <span>
+                      {isFilterPanelOpen
+                        ? t("sidebar.hide")
+                        : t("sidebar.show")}
+                    </span>
+                  </span>
+                </button>
+
+                {isFilterPanelOpen && (
+                  <>
+                    <div className="grid grid-cols-2 gap-2 mt-2">
+                      <label className="flex flex-col gap-1 text-[11px] text-slate-500">
+                        <span>{t("sidebar.startDate")}</span>
+                        <input
+                          type="date"
+                          value={filterDraft.startDate}
+                          onChange={(event) =>
+                            handleDraftChange("startDate", event.target.value)
+                          }
+                          className="rounded-md border border-slate-200 bg-white/70 px-2 py-1 text-xs text-slate-700 outline-none focus:border-amber-400"
+                        />
+                      </label>
+                      <label className="flex flex-col gap-1 text-[11px] text-slate-500">
+                        <span>{t("sidebar.startTime")}</span>
+                        <input
+                          type="time"
+                          value={filterDraft.startTime}
+                          onChange={(event) =>
+                            handleDraftChange("startTime", event.target.value)
+                          }
+                          className="rounded-md border border-slate-200 bg-white/70 px-2 py-1 text-xs text-slate-700 outline-none focus:border-amber-400"
+                        />
+                      </label>
+                      <label className="flex flex-col gap-1 text-[11px] text-slate-500">
+                        <span>{t("sidebar.endDate")}</span>
+                        <input
+                          type="date"
+                          value={filterDraft.endDate}
+                          onChange={(event) =>
+                            handleDraftChange("endDate", event.target.value)
+                          }
+                          className="rounded-md border border-slate-200 bg-white/70 px-2 py-1 text-xs text-slate-700 outline-none focus:border-amber-400"
+                        />
+                      </label>
+                      <label className="flex flex-col gap-1 text-[11px] text-slate-500">
+                        <span>{t("sidebar.endTime")}</span>
+                        <input
+                          type="time"
+                          value={filterDraft.endTime}
+                          onChange={(event) =>
+                            handleDraftChange("endTime", event.target.value)
+                          }
+                          className="rounded-md border border-slate-200 bg-white/70 px-2 py-1 text-xs text-slate-700 outline-none focus:border-amber-400"
+                        />
+                      </label>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-2 mt-2">
+                      <label className="flex flex-col gap-1 text-[11px] text-slate-500">
+                        <span>{t("sidebar.character")}</span>
+                        <select
+                          value={filterDraft.npcId}
+                          onChange={(event) =>
+                            handleDraftChange("npcId", event.target.value)
+                          }
+                          className="rounded-md border border-slate-200 bg-white/70 px-2 py-1 text-xs text-slate-700 outline-none focus:border-amber-400"
+                        >
+                          <option value="">{t("sidebar.allCharacters")}</option>
+                          {npcStatuses.map((npc) => (
+                            <option key={npc.npcId} value={npc.npcId}>
+                              {npc.name}
+                            </option>
+                          ))}
+                        </select>
+                      </label>
+
+                      <label className="flex flex-col gap-1 text-[11px] text-slate-500">
+                        <span>{t("sidebar.locationFilter")}</span>
+                        <select
+                          value={filterDraft.parentLocationId}
+                          onChange={(event) =>
+                            handleDraftChange(
+                              "parentLocationId",
+                              event.target.value
+                            )
+                          }
+                          className="rounded-md border border-slate-200 bg-white/70 px-2 py-1 text-xs text-slate-700 outline-none focus:border-amber-400"
+                        >
+                          <option value="">{t("sidebar.allLocations")}</option>
+                          {locationOptions.map((location) => (
+                            <option key={location.id} value={location.id}>
+                              {location.name}
+                            </option>
+                          ))}
+                        </select>
+                      </label>
+                    </div>
+
+                    <div className="mt-2 flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => void handleApplyFilters()}
+                        disabled={!sessionId || isEventsLoading}
+                        className="rounded-md bg-amber-600 px-3 py-1.5 text-xs font-medium text-white transition-colors hover:bg-amber-700 disabled:cursor-not-allowed disabled:bg-slate-300"
+                      >
+                        {t("sidebar.apply")}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => void handleClearFilters()}
+                        disabled={!sessionId || isEventsLoading}
+                        className="rounded-md border border-slate-200 bg-white/70 px-3 py-1.5 text-xs text-slate-600 transition-colors hover:bg-white disabled:cursor-not-allowed disabled:text-slate-300"
+                      >
+                        {t("sidebar.clear")}
+                      </button>
+                      {isEventsLoading && (
+                        <span className="text-[11px] text-slate-400">
+                          {t("sidebar.loading")}
+                        </span>
+                      )}
+                    </div>
+                  </>
+                )}
+
+                {eventsError && (
+                  <div className="mt-2 rounded-md border border-red-200 bg-red-50/70 px-2 py-1.5 text-[11px] text-red-500">
+                    {eventsError}
+                  </div>
+                )}
+              </div>
+
+              <EventLog events={displayedEvents} />
+            </div>
+          )}
+        </>
+      )}
+    </div>
+  );
+}

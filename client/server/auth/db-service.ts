@@ -1,22 +1,9 @@
 import crypto from "crypto";
 import { randomUUID } from "crypto";
-import type Database from "better-sqlite3";
+import { getPrismaClient } from "../../../src/shared/agents/memory/database/prismaClient.js";
 import { emailService } from "../email/service.js";
 import { generateAccessToken, generateRefreshToken } from "./jwt.js";
 import { hashPassword, verifyPassword } from "./password.js";
-
-// Get database instance from CoCDatabase singleton
-import { CoCDatabase } from "../../../src/coc_multiagents_system/agents/memory/database/schema.js";
-
-// Create a singleton instance
-let dbInstance: CoCDatabase | null = null;
-
-function getDB(): Database.Database {
-  if (!dbInstance) {
-    dbInstance = new CoCDatabase();
-  }
-  return dbInstance.getDatabase();
-}
 
 const parsedIdleMinutes = Number(
   process.env.SESSION_IDLE_TIMEOUT_MINUTES || 60
@@ -27,8 +14,8 @@ const IDLE_TIMEOUT_MINUTES =
     : 60;
 const IDLE_TIMEOUT_MS = IDLE_TIMEOUT_MINUTES * 60 * 1000;
 
-function getIdleExpiresAt(): string {
-  return new Date(Date.now() + IDLE_TIMEOUT_MS).toISOString();
+function getIdleExpiresAt(): Date {
+  return new Date(Date.now() + IDLE_TIMEOUT_MS);
 }
 
 export interface User {
@@ -52,63 +39,91 @@ export const authDbService = {
     username?: string;
     referralCode: string;
   }) {
-    const db = getDB();
+    const prisma = getPrismaClient();
 
     // Validate referral code (case-insensitive)
     const referralCodeUpper = data.referralCode.toUpperCase();
-    const referral = db
-      .prepare("SELECT * FROM referral_codes WHERE UPPER(code) = ?")
-      .get(referralCodeUpper) as any;
+    const referral = await prisma.referralCode.findFirst({
+      where: { code: { equals: referralCodeUpper, mode: "insensitive" } },
+      include: { uses: true },
+    });
 
     if (!referral) {
       throw new Error("Invalid referral code");
     }
 
     // Check usage limit (max_uses = null means unlimited)
-    if (referral.max_uses != null) {
-      const usage = db
-        .prepare(
-          "SELECT COUNT(*) as count FROM referral_code_uses WHERE referral_code_id = ?"
-        )
-        .get(referral.id) as { count: number };
-      if (usage.count >= referral.max_uses) {
-        throw new Error("Referral code has reached its usage limit");
-      }
+    if (referral.maxUses != null && referral.uses.length >= referral.maxUses) {
+      throw new Error("Referral code has reached its usage limit");
     }
 
     // Check if email already exists
-    const existing = db
-      .prepare("SELECT id FROM users WHERE email = ?")
-      .get(data.email);
+    const existing = await prisma.user.findUnique({
+      where: { email: data.email },
+      select: { id: true },
+    });
 
     if (existing) {
       throw new Error("Email already registered");
     }
 
+    // Check if email domain is in disposable email blacklist
+    const emailDomain = data.email.split("@")[1]?.toLowerCase();
+    if (emailDomain) {
+      const blacklisted = await prisma.disposableEmailDomain.findUnique({
+        where: { domain: emailDomain },
+      });
+
+      if (blacklisted) {
+        throw new Error(
+          "Disposable email addresses are not allowed. Please use a permanent email address."
+        );
+      }
+    }
+
     const userId = randomUUID();
     const passwordHash = await hashPassword(data.password);
 
-    // Create user
-    db.prepare(`
-      INSERT INTO users (id, email, username, password_hash, is_email_verified, is_active, role)
-      VALUES (?, ?, ?, ?, 0, 1, 'USER')
-    `).run(userId, data.email, data.username || null, passwordHash);
+    // Determine user role based on ADMIN_EMAIL environment variable
+    const adminEmails = (process.env.ADMIN_EMAIL || "")
+      .split(",")
+      .map((email) => email.trim().toLowerCase())
+      .filter((email) => email.length > 0);
+    const userRole = adminEmails.includes(data.email.toLowerCase())
+      ? "ADMIN"
+      : "USER";
 
-    // Record referral code use (permanent codes; track email per use)
-    db.prepare(`
-      INSERT INTO referral_code_uses (id, referral_code_id, email_id, used_at)
-      VALUES (?, ?, ?, CURRENT_TIMESTAMP)
-    `).run(randomUUID(), referral.id, data.email);
+    // Create user and record referral code use in a transaction
+    const user = await prisma.$transaction(async (tx) => {
+      const newUser = await tx.user.create({
+        data: {
+          id: userId,
+          email: data.email,
+          username: data.username || null,
+          passwordHash,
+          isEmailVerified: false,
+          isActive: true,
+          role: userRole,
+        },
+      });
 
-    const user = db
-      .prepare("SELECT * FROM users WHERE id = ?")
-      .get(userId) as User;
+      // Record referral code use
+      await tx.referralCodeUse.create({
+        data: {
+          id: randomUUID(),
+          referralCodeId: referral.id,
+          userId: newUser.id,
+        },
+      });
+
+      return newUser;
+    });
 
     // Send verification email
     await this.sendEmailVerification(data.email);
 
     return {
-      user: this.sanitizeUser(user),
+      user: this.sanitizeUser(this.formatUser(user)),
       message:
         "Registration successful. A verification code has been sent to your email.",
     };
@@ -120,12 +135,12 @@ export const authDbService = {
     password: string;
     rememberMe?: boolean;
   }) {
-    const db = getDB();
+    const prisma = getPrismaClient();
 
     // Find user
-    const user = db
-      .prepare("SELECT * FROM users WHERE email = ?")
-      .get(data.email) as User | undefined;
+    const user = await prisma.user.findUnique({
+      where: { email: data.email },
+    });
 
     if (!user) {
       throw new Error("Invalid email or password");
@@ -134,7 +149,7 @@ export const authDbService = {
     // Verify password
     const isValidPassword = await verifyPassword(
       data.password,
-      user.password_hash
+      user.passwordHash
     );
 
     if (!isValidPassword) {
@@ -142,80 +157,102 @@ export const authDbService = {
     }
 
     // Check account status
-    if (!user.is_active) {
+    if (!user.isActive) {
       throw new Error("Account is disabled");
     }
 
-    if (!user.is_email_verified) {
-      throw new Error("Email not verified. Please verify your email first.");
+    // If email not verified, send verification code and return special status
+    if (!user.isEmailVerified) {
+      await this.sendEmailVerification(data.email);
+
+      // Throw special error with email_not_verified type
+      const error: any = new Error(
+        "Email not verified. A verification code has been sent to your email."
+      );
+      error.code = "EMAIL_NOT_VERIFIED";
+      error.email = data.email;
+      throw error;
     }
 
     // Update last login time
-    db.prepare(
-      "UPDATE users SET last_login_at = CURRENT_TIMESTAMP WHERE id = ?"
-    ).run(user.id);
+    await prisma.user.update({
+      where: { id: user.id },
+      data: { lastLoginAt: new Date() },
+    });
 
     // Generate tokens
-    const accessToken = generateAccessToken(user);
+    const formattedUser = this.formatUser(user);
+    const accessToken = generateAccessToken(formattedUser);
     let refreshToken: string | undefined;
 
     if (data.rememberMe) {
-      refreshToken = generateRefreshToken(user);
+      refreshToken = generateRefreshToken(formattedUser);
 
       // Save refresh token
       const tokenId = randomUUID();
       const expiresAt = getIdleExpiresAt();
 
-      db.prepare(`
-        INSERT INTO refresh_tokens (id, email_id, token, expires_at)
-        VALUES (?, ?, ?, ?)
-      `).run(tokenId, user.email, refreshToken, expiresAt);
+      await prisma.refreshToken.create({
+        data: {
+          id: tokenId,
+          userId: user.id,
+          token: refreshToken,
+          expiresAt,
+        },
+      });
     }
 
     return {
-      user: this.sanitizeUser(user),
+      user: this.sanitizeUser(formattedUser),
       accessToken,
       refreshToken,
     };
   },
 
-  // Send email verification code
+  // Send email verification code (for existing users)
   async sendEmailVerification(email: string) {
-    const db = getDB();
+    const prisma = getPrismaClient();
 
-    const user = db.prepare("SELECT * FROM users WHERE email = ?").get(email) as
-      | User
-      | undefined;
+    const user = await prisma.user.findUnique({
+      where: { email },
+    });
 
     if (!user) {
       throw new Error("User not found");
     }
 
-    if (user.is_email_verified) {
+    if (user.isEmailVerified) {
       throw new Error("Email already verified");
     }
 
     // Enforce 60-second cooldown between sends
-    const recent = db
-      .prepare(
-        "SELECT created_at FROM email_verifications WHERE email_id = ? AND is_used = 0 ORDER BY created_at DESC LIMIT 1"
-      )
-      .get(user.email) as { created_at: string } | undefined;
+    const recent = await prisma.emailVerification.findFirst({
+      where: {
+        userId: user.id,
+        verified: false,
+      },
+      orderBy: { createdAt: "desc" },
+      select: { createdAt: true },
+    });
 
-    if (recent && Date.now() - new Date(recent.created_at).getTime() < 60 * 1000) {
+    if (recent && Date.now() - recent.createdAt.getTime() < 60 * 1000) {
       throw new Error("Please wait before requesting a new code");
     }
 
     // Generate 5-digit verification code
     const code = crypto.randomInt(10000, 100000).toString();
     const verificationId = randomUUID();
-    const expiresAt = new Date(Date.now() + 10 * 60 * 1000).toISOString(); // 10 minutes
+    const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
 
     // Save to database
-    db.prepare(`
-      INSERT INTO email_verifications (id, email_id, token, expires_at)
-      VALUES (?, ?, ?, ?)
-    `).run(verificationId, user.email, code, expiresAt);
+    await prisma.emailVerification.create({
+      data: {
+        id: verificationId,
+        userId: user.id,
+        code,
+        expiresAt,
+      },
+    });
 
     // Send email with code
     await emailService.sendVerificationEmail(user.email, code);
@@ -225,44 +262,55 @@ export const authDbService = {
 
   // Verify email with 5-digit code
   async verifyEmailCode(email: string, code: string) {
-    const db = getDB();
+    const prisma = getPrismaClient();
 
-    const verification = db
-      .prepare(`
-      SELECT * FROM email_verifications
-      WHERE email_id = ? AND token = ? AND is_used = 0
-    `)
-      .get(email, code) as any;
+    const user = await prisma.user.findUnique({
+      where: { email },
+      include: {
+        emailVerifications: {
+          where: {
+            code,
+            verified: false,
+          },
+          orderBy: { createdAt: "desc" },
+          take: 1,
+        },
+      },
+    });
 
-    if (!verification) {
+    if (!user || user.emailVerifications.length === 0) {
       throw new Error("Invalid verification code");
     }
 
-    if (new Date(verification.expires_at) < new Date()) {
+    const verification = user.emailVerifications[0];
+
+    if (verification.expiresAt < new Date()) {
       throw new Error("Verification code has expired");
     }
 
-    // Mark email as verified
-    db.prepare("UPDATE users SET is_email_verified = 1 WHERE email = ?").run(
-      email
-    );
-
-    // Mark code as used
-    db.prepare("UPDATE email_verifications SET is_used = 1 WHERE id = ?").run(
-      verification.id
-    );
+    // Mark email as verified and code as used in transaction
+    await prisma.$transaction([
+      prisma.user.update({
+        where: { id: user.id },
+        data: { isEmailVerified: true },
+      }),
+      prisma.emailVerification.update({
+        where: { id: verification.id },
+        data: { verified: true },
+      }),
+    ]);
 
     return { message: "Email verified successfully" };
   },
 
   // Resend verification code (public-safe: never reveals whether email exists)
   async resendEmailVerification(email: string) {
-    const db = getDB();
-    const user = db.prepare("SELECT * FROM users WHERE email = ?").get(email) as
-      | User
-      | undefined;
+    const prisma = getPrismaClient();
+    const user = await prisma.user.findUnique({
+      where: { email },
+    });
 
-    if (!user || user.is_email_verified) {
+    if (!user || user.isEmailVerified) {
       // Generic message to prevent email enumeration
       return { message: "Verification code sent" };
     }
@@ -273,11 +321,11 @@ export const authDbService = {
 
   // Request password reset
   async requestPasswordReset(email: string) {
-    const db = getDB();
+    const prisma = getPrismaClient();
 
-    const user = db.prepare("SELECT * FROM users WHERE email = ?").get(email) as
-      | User
-      | undefined;
+    const user = await prisma.user.findUnique({
+      where: { email },
+    });
 
     if (!user) {
       // Don't reveal if user exists
@@ -287,13 +335,17 @@ export const authDbService = {
     // Generate reset token
     const token = crypto.randomBytes(32).toString("hex");
     const resetId = randomUUID();
-    const expiresAt = new Date(Date.now() + 60 * 60 * 1000).toISOString();
+    const expiresAt = new Date(Date.now() + 60 * 60 * 1000);
 
     // Save to database
-    db.prepare(`
-      INSERT INTO password_resets (id, email_id, token, expires_at)
-      VALUES (?, ?, ?, ?)
-    `).run(resetId, user.email, token, expiresAt);
+    await prisma.passwordReset.create({
+      data: {
+        id: resetId,
+        userId: user.id,
+        token,
+        expiresAt,
+      },
+    });
 
     // Send email
     await emailService.sendPasswordResetEmail(user.email, token);
@@ -303,123 +355,108 @@ export const authDbService = {
 
   // Reset password
   async resetPassword(token: string, newPassword: string) {
-    const db = getDB();
+    const prisma = getPrismaClient();
 
-    const reset = db
-      .prepare("SELECT * FROM password_resets WHERE token = ?")
-      .get(token) as any;
+    const reset = await prisma.passwordReset.findUnique({
+      where: { token },
+    });
 
     if (!reset) {
       throw new Error("Invalid reset token");
     }
 
-    if (reset.is_used) {
+    if (reset.used) {
       throw new Error("Token already used");
     }
 
-    if (new Date(reset.expires_at) < new Date()) {
+    if (reset.expiresAt < new Date()) {
       throw new Error("Token expired");
     }
 
-    // Update password
+    // Update password, mark token as used, and revoke all refresh tokens
     const passwordHash = await hashPassword(newPassword);
-    db.prepare("UPDATE users SET password_hash = ? WHERE email = ?").run(
-      passwordHash,
-      reset.email_id
-    );
 
-    // Mark token as used
-    db.prepare("UPDATE password_resets SET is_used = 1 WHERE id = ?").run(
-      reset.id
-    );
-
-    // Revoke all refresh tokens
-    db.prepare(
-      "UPDATE refresh_tokens SET is_revoked = 1 WHERE email_id = ?"
-    ).run(reset.email_id);
+    await prisma.$transaction([
+      prisma.user.update({
+        where: { id: reset.userId },
+        data: { passwordHash },
+      }),
+      prisma.passwordReset.update({
+        where: { id: reset.id },
+        data: {
+          used: true,
+          usedAt: new Date(),
+        },
+      }),
+      prisma.refreshToken.updateMany({
+        where: { userId: reset.userId },
+        data: { revokedAt: new Date() },
+      }),
+    ]);
 
     return { message: "Password reset successfully" };
   },
 
   // Refresh access token
   async refreshAccessToken(refreshToken: string) {
-    const db = getDB();
+    const prisma = getPrismaClient();
 
-    const token = db
-      .prepare(`
-      SELECT rt.id AS token_id, rt.is_revoked, rt.expires_at,
-             u.id AS uid, u.email, u.username, u.password_hash,
-             u.is_email_verified, u.is_active, u.role,
-             u.created_at, u.updated_at, u.last_login_at
-      FROM refresh_tokens rt
-      JOIN users u ON rt.email_id = u.email
-      WHERE rt.token = ?
-    `)
-      .get(refreshToken) as any;
+    const token = await prisma.refreshToken.findUnique({
+      where: { token: refreshToken },
+      include: { user: true },
+    });
 
-    if (!token || token.is_revoked || new Date(token.expires_at) < new Date()) {
+    if (!token || token.revokedAt || token.expiresAt < new Date()) {
       throw new Error("Invalid or expired refresh token");
     }
 
-    db.prepare("UPDATE refresh_tokens SET expires_at = ? WHERE id = ?").run(
-      getIdleExpiresAt(),
-      token.token_id
-    );
+    // Update token expiration
+    await prisma.refreshToken.update({
+      where: { id: token.id },
+      data: { expiresAt: getIdleExpiresAt() },
+    });
 
-    const user: User = {
-      id: token.uid,
-      email: token.email,
-      username: token.username,
-      password_hash: token.password_hash,
-      is_email_verified: Boolean(token.is_email_verified),
-      is_active: Boolean(token.is_active),
-      role: token.role,
-      created_at: token.created_at,
-      updated_at: token.updated_at,
-      last_login_at: token.last_login_at,
-    };
-
-    const accessToken = generateAccessToken(user);
+    const formattedUser = this.formatUser(token.user);
+    const accessToken = generateAccessToken(formattedUser);
 
     return { accessToken };
   },
 
-  touchRefreshToken(refreshToken: string, email: string) {
-    const db = getDB();
+  async touchRefreshToken(refreshToken: string, userId: string) {
+    const prisma = getPrismaClient();
 
-    const token = db
-      .prepare(`
-      SELECT id, expires_at, is_revoked
-      FROM refresh_tokens
-      WHERE token = ? AND email_id = ?
-    `)
-      .get(refreshToken, email) as any;
+    const token = await prisma.refreshToken.findFirst({
+      where: {
+        token: refreshToken,
+        userId,
+      },
+    });
 
-    if (!token || token.is_revoked || new Date(token.expires_at) < new Date()) {
+    if (!token || token.revokedAt || token.expiresAt < new Date()) {
       return false;
     }
 
-    db.prepare("UPDATE refresh_tokens SET expires_at = ? WHERE id = ?").run(
-      getIdleExpiresAt(),
-      token.id
-    );
+    await prisma.refreshToken.update({
+      where: { id: token.id },
+      data: { expiresAt: getIdleExpiresAt() },
+    });
 
     return true;
   },
 
   // Get user by ID
   async getUserById(userId: string) {
-    const db = getDB();
+    const prisma = getPrismaClient();
 
-    const user = db.prepare("SELECT * FROM users WHERE id = ?").get(userId) as
-      | User
-      | undefined;
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+    });
 
     if (!user) {
       throw new Error("User not found");
     }
 
-    return this.sanitizeUser(user);
+    return this.sanitizeUser(this.formatUser(user));
   },
 
   // Change password
@@ -428,33 +465,35 @@ export const authDbService = {
     oldPassword: string,
     newPassword: string
   ) {
-    const db = getDB();
+    const prisma = getPrismaClient();
 
-    const user = db.prepare("SELECT * FROM users WHERE email = ?").get(email) as
-      | User
-      | undefined;
+    const user = await prisma.user.findUnique({
+      where: { email },
+    });
 
     if (!user) {
       throw new Error("User not found");
     }
 
     // Verify old password
-    const isValid = await verifyPassword(oldPassword, user.password_hash);
+    const isValid = await verifyPassword(oldPassword, user.passwordHash);
     if (!isValid) {
       throw new Error("Invalid old password");
     }
 
-    // Update password
+    // Update password and revoke all refresh tokens
     const passwordHash = await hashPassword(newPassword);
-    db.prepare("UPDATE users SET password_hash = ? WHERE email = ?").run(
-      passwordHash,
-      email
-    );
 
-    // Revoke all refresh tokens
-    db.prepare(
-      "UPDATE refresh_tokens SET is_revoked = 1 WHERE email_id = ?"
-    ).run(email);
+    await prisma.$transaction([
+      prisma.user.update({
+        where: { email },
+        data: { passwordHash },
+      }),
+      prisma.refreshToken.updateMany({
+        where: { userId: user.id },
+        data: { revokedAt: new Date() },
+      }),
+    ]);
 
     return { message: "Password changed successfully" };
   },
@@ -469,48 +508,73 @@ export const authDbService = {
     };
   },
 
-  /** Get emails that used a specific referral code (case-insensitive). */
-  getReferralCodeUsage(code: string): {
-    code: string;
-    emails: string[];
-    count: number;
-  } {
-    const db = getDB();
-    const upper = code.toUpperCase();
-    const ref = db
-      .prepare("SELECT id FROM referral_codes WHERE UPPER(code) = ?")
-      .get(upper) as { id: string } | undefined;
-    if (!ref) {
-      return { code: upper, emails: [], count: 0 };
-    }
-    const rows = db
-      .prepare(
-        "SELECT email_id AS email FROM referral_code_uses WHERE referral_code_id = ? ORDER BY used_at ASC"
-      )
-      .all(ref.id) as { email: string }[];
-    const emails = rows.map((r) => r.email);
-    return { code: upper, emails, count: emails.length };
+  // Format Prisma user to match old schema format
+  formatUser(user: any): User {
+    return {
+      id: user.id,
+      email: user.email,
+      username: user.username,
+      password_hash: user.passwordHash,
+      is_email_verified: user.isEmailVerified,
+      is_active: user.isActive,
+      role: user.role,
+      created_at: user.createdAt.toISOString(),
+      updated_at: user.updatedAt.toISOString(),
+      last_login_at: user.lastLoginAt?.toISOString() || null,
+    };
   },
 
-  /** List all referral codes with their usage (emails per code). */
-  listAllReferralCodeUsage(): Array<{
+  /** Get emails that used a specific referral code (case-insensitive). */
+  async getReferralCodeUsage(code: string): Promise<{
     code: string;
     emails: string[];
     count: number;
   }> {
-    const db = getDB();
-    const codes = db
-      .prepare("SELECT id, code FROM referral_codes ORDER BY code")
-      .all() as { id: string; code: string }[];
-    const out: Array<{ code: string; emails: string[]; count: number }> = [];
-    const getEmails = db.prepare(
-      "SELECT email_id AS email FROM referral_code_uses WHERE referral_code_id = ? ORDER BY used_at ASC"
-    );
-    for (const c of codes) {
-      const rows = getEmails.all(c.id) as { email: string }[];
-      const emails = rows.map((r) => r.email);
-      out.push({ code: c.code, emails, count: emails.length });
+    const prisma = getPrismaClient();
+    const upper = code.toUpperCase();
+
+    const referralCode = await prisma.referralCode.findFirst({
+      where: { code: { equals: upper, mode: "insensitive" } },
+      include: {
+        uses: {
+          include: { user: { select: { email: true } } },
+          orderBy: { usedAt: "asc" },
+        },
+      },
+    });
+
+    if (!referralCode) {
+      return { code: upper, emails: [], count: 0 };
     }
-    return out;
+
+    const emails = referralCode.uses.map((use) => use.user.email);
+    return { code: upper, emails, count: emails.length };
+  },
+
+  /** List all referral codes with their usage (emails per code). */
+  async listAllReferralCodeUsage(): Promise<
+    Array<{
+      code: string;
+      emails: string[];
+      count: number;
+    }>
+  > {
+    const prisma = getPrismaClient();
+
+    const codes = await prisma.referralCode.findMany({
+      include: {
+        uses: {
+          include: { user: { select: { email: true } } },
+          orderBy: { usedAt: "asc" },
+        },
+      },
+      orderBy: { code: "asc" },
+    });
+
+    return codes.map((c) => ({
+      code: c.code,
+      emails: c.uses.map((use) => use.user.email),
+      count: c.uses.length,
+    }));
   },
 };

@@ -1,0 +1,55 @@
+{
+  "id": "SCN_22_SUB_1",
+  "name": "门厅与会客室",
+  "description": "推开厚重的深色木门，先是一段不长的门厅，地面铺着擦得发亮的黑白石砖，墙边立着一只雕花衣帽架和一把收起的黑伞。再往里是会客室，陈设克制而考究：深绿色绒面沙发围着一张低矮茶几，壁炉台上摆着一只走时精准的黄铜座钟和几只没有署名的相框。厚重窗帘终日拉拢，将石榴巷南段的喧闹挡在外面。这里不像富豪的奢靡客厅，更像一个习惯发号施令的人为有限来客准备的中立空间，整洁、温暖，却始终带着拒人千里的距离感。",
+  "parentLocationId": "SCN_22",
+  "items": [
+    {
+      "id": "ITEM_SCN22_1",
+      "name": "黄铜座钟",
+      "description": "一只擦拭得一尘不染的黄铜座钟，指针走得异常精准。",
+      "type": "other"
+    },
+    {
+      "id": "ITEM_SCN22_2",
+      "name": "无署名相框",
+      "description": "几只摆在壁炉台上的相框，里面夹着风景照与正式合影，却都看不见题字。",
+      "type": "other"
+    },
+    {
+      "id": "ITEM_SCN22_3",
+      "name": "待客茶盘",
+      "description": "银色茶盘里摆着干净的茶具，仿佛随时准备接待某位被筛选过的访客。",
+      "type": "other"
+    }
+  ],
+  "conditions": [
+    {
+      "description": "窗帘长期拉拢，室内光线柔和但偏暗。",
+      "mechanicalEffect": {
+        "skillPenalty": [
+          {
+            "skill": "Perception",
+            "delta": -10
+          }
+        ]
+      }
+    },
+    {
+      "description": "会客室被打理得过于整齐，任何被挪动的东西都会显得突兀。",
+      "mechanicalEffect": {
+        "skillPenalty": [
+          {
+            "skill": "Stealth",
+            "delta": -10
+          }
+        ]
+      }
+    }
+  ],
+  "connections": ["SCN_22_SUB_2"],
+  "itemContexts": {
+    "ITEM_SCN22_1": "壁炉台上的黄铜座钟走时精准，钟面玻璃上几乎看不见灰尘。",
+    "ITEM_SCN22_2": "相框里的人物和风景都经过了精心筛选，只留下了合适被外人看到的部分。"
+  }
+}

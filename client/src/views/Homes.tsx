@@ -1,12 +1,14 @@
-import React, { useState } from "react";
-import { authFetch } from "../utils/authFetch";
+import type React from "react";
+import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { CharacterSheetModal } from "../components/CharacterSheetModal";
 import { FrameImage } from "../components/FrameImage";
+import { authFetch } from "../utils/authFetch";
 
 interface HomeProps {
   onCreate: () => void;
-  onStartGame: () => void;
-  onContinueGame: () => void;
+  onNewSimulation: () => void;
+  onContinueSimulation: () => void;
   onManageMods: () => void;
 }
 
@@ -19,16 +21,20 @@ interface Character {
   status?: string;
 }
 
-const Homes: React.FC<HomeProps> = ({ onCreate, onStartGame, onContinueGame, onManageMods }) => {
+const Homes: React.FC<HomeProps> = ({
+  onCreate,
+  onNewSimulation,
+  onContinueSimulation,
+  onManageMods,
+}) => {
+  const { t } = useTranslation("home");
   const [showCharacterBrowser, setShowCharacterBrowser] = useState(false);
   const [characters, setCharacters] = useState<Character[]>([]);
   const [loading, setLoading] = useState(false);
   const [selectedCharacterId, setSelectedCharacterId] = useState<string>("");
   const [showCharacterSheet, setShowCharacterSheet] = useState(false);
-
-  const handleStartGame = () => {
-    // Just trigger the character selector
-    onStartGame();
+  const handleNewSimulation = () => {
+    onNewSimulation();
   };
 
   const handleViewCharacters = async () => {
@@ -78,21 +84,23 @@ const Homes: React.FC<HomeProps> = ({ onCreate, onStartGame, onContinueGame, onM
         <div className="home-frame">
           <FrameImage />
           <div className="home-actions">
-            <button className="primary" onClick={handleStartGame}>
-              New Game
-            </button>
-            <button className="secondary" onClick={onContinueGame}>
-              Continue Game
-            </button>
-            <button className="secondary" onClick={onManageMods}>
-              Manage Modules
-            </button>
-            <button className="secondary" onClick={onCreate}>
-              Create Character
-            </button>
-            <button className="secondary" onClick={handleViewCharacters}>
-              View Characters
-            </button>
+            <>
+              <button className="primary" onClick={handleNewSimulation}>
+                {t("menu.newSimulation")}
+              </button>
+              <button className="primary" onClick={onContinueSimulation}>
+                {t("menu.continueSimulation")}
+              </button>
+              <button className="secondary" onClick={onManageMods}>
+                {t("menu.manageModules")}
+              </button>
+              <button className="secondary" onClick={onCreate}>
+                {t("menu.createCharacter")}
+              </button>
+              <button className="secondary" onClick={handleViewCharacters}>
+                {t("menu.viewCharacters")}
+              </button>
+            </>
           </div>
         </div>
       </div>
@@ -105,209 +113,262 @@ const Homes: React.FC<HomeProps> = ({ onCreate, onStartGame, onContinueGame, onM
               <div className="flex justify-between items-center">
                 <div className="flex items-center gap-3">
                   <h2 className="text-2xl font-semibold m-0">
-                    Your Characters
+                    {t("characters.title")}
                   </h2>
                   <p className="text-sm text-gray-600 italic m-0">
-                    {characters.length} {characters.length === 1 ? 'investigator' : 'investigators'} ready
+                    {t("characters.count", { count: characters.length })}{" "}
+                    {t("characters.ready")}
                   </p>
                 </div>
                 <button
                   onClick={() => setShowCharacterBrowser(false)}
                   className="close-button"
-                  aria-label="Close"
+                  aria-label={t("common:button.close")}
                 >
                   ×
                 </button>
               </div>
 
-            <div className="overflow-y-auto flex-1">
-              {loading ? (
-                <div style={{
-                  textAlign: 'center',
-                  padding: '60px 20px',
-                  fontSize: '1.1rem',
-                  color: 'var(--title)',
-                }}>
-                  <div style={{
-                    fontSize: '3rem',
-                    marginBottom: '20px',
-                    animation: 'spin 1s linear infinite',
-                  }}>
-                    🎲
+              <div className="overflow-y-auto flex-1">
+                {loading ? (
+                  <div
+                    style={{
+                      textAlign: "center",
+                      padding: "60px 20px",
+                      fontSize: "1.1rem",
+                      color: "var(--title)",
+                    }}
+                  >
+                    <div
+                      style={{
+                        fontSize: "3rem",
+                        marginBottom: "20px",
+                        animation: "spin 1s linear infinite",
+                      }}
+                    >
+                      🎲
+                    </div>
+                    {t("characters.loading")}
                   </div>
-                  Loading characters...
-                </div>
-              ) : characters.length === 0 ? (
-                <div style={{
-                  textAlign: 'center',
-                  padding: '60px 20px',
-                  color: '#999',
-                }}>
-                  <div style={{ fontSize: '4rem', marginBottom: '20px' }}>📋</div>
-                  <p style={{ fontSize: '1.2rem', marginBottom: '8px', color: 'var(--title)' }}>
-                    No characters created yet
-                  </p>
-                  <p style={{ fontSize: '0.95rem' }}>
-                    Create your first investigator to begin your journey
-                  </p>
-                </div>
-              ) : (
-                <div style={{
-                  display: 'grid',
-                  gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))',
-                  gap: '20px',
-                }}>
-                  {characters.map((char, index) => {
-                    const attrs = parseAttributes(char.attributes);
-                    const status = parseStatus(char.status);
+                ) : characters.length === 0 ? (
+                  <div
+                    style={{
+                      textAlign: "center",
+                      padding: "60px 20px",
+                      color: "#999",
+                    }}
+                  >
+                    <div style={{ fontSize: "4rem", marginBottom: "20px" }}>
+                      📋
+                    </div>
+                    <p
+                      style={{
+                        fontSize: "1.2rem",
+                        marginBottom: "8px",
+                        color: "var(--title)",
+                      }}
+                    >
+                      {t("characters.empty")}
+                    </p>
+                    <p style={{ fontSize: "0.95rem" }}>
+                      {t("characters.emptyDescription")}
+                    </p>
+                  </div>
+                ) : (
+                  <div
+                    style={{
+                      display: "grid",
+                      gridTemplateColumns:
+                        "repeat(auto-fill, minmax(300px, 1fr))",
+                      gap: "20px",
+                    }}
+                  >
+                    {characters.map((char, index) => {
+                      const attrs = parseAttributes(char.attributes);
+                      const status = parseStatus(char.status);
 
-                    return (
-                      <div
-                        key={char.character_id}
-                        onClick={() => handleViewCharacterSheet(char.character_id)}
-                        className="backdrop-blur-sm bg-white/50 border border-slate-200 shadow-md rounded-xl hover:bg-white/70 hover:border-slate-300 hover:-translate-y-1 transition-all"
-                        style={{
-                          padding: '20px',
-                          cursor: 'pointer',
-                          animation: `cardFadeIn 0.4s ease-out ${index * 0.05}s backwards`,
-                          position: 'relative',
-                          overflow: 'hidden',
-                        }}
-                      >
-                        <div style={{
-                          position: 'absolute',
-                          top: '12px',
-                          right: '12px',
-                          background: 'linear-gradient(135deg, var(--accent) 0%, #6d5840 100%)',
-                          color: 'var(--paper)',
-                          padding: '4px 10px',
-                          borderRadius: '12px',
-                          fontSize: '0.75rem',
-                          fontWeight: 'bold',
-                          letterSpacing: '0.5px',
-                          textTransform: 'uppercase',
-                          boxShadow: '0 2px 6px rgba(0, 0, 0, 0.2)',
-                        }}>
-                          View Sheet
-                        </div>
-                        <div style={{
-                          marginBottom: '16px',
-                          borderBottom: '2px solid var(--accent)',
-                          paddingBottom: '12px',
-                        }}>
-                          <h3 style={{
-                            margin: '0 0 6px 0',
-                            fontSize: '1.4rem',
-                            color: 'var(--title, #3d2f1f)',
-                            fontWeight: '700',
-                            letterSpacing: '1px',
-                            wordBreak: 'break-word',
-                          }}>
-                            {char.name}
-                          </h3>
-                          <div style={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '8px',
-                          }}>
-                            <span style={{ fontSize: '1.2rem' }}>👤</span>
-                            <span style={{
-                              fontSize: '0.95rem',
-                              color: '#666',
-                              fontStyle: 'italic',
-                              fontWeight: '500',
-                            }}>
-                              {char.occupation || 'Unknown Occupation'}
-                            </span>
+                      return (
+                        <div
+                          key={char.character_id}
+                          onClick={() =>
+                            handleViewCharacterSheet(char.character_id)
+                          }
+                          className="backdrop-blur-sm bg-white/50 border border-slate-200 shadow-md rounded-xl hover:bg-white/70 hover:border-slate-300 hover:-translate-y-1 transition-all"
+                          style={{
+                            padding: "20px",
+                            cursor: "pointer",
+                            animation: `cardFadeIn 0.4s ease-out ${index * 0.05}s backwards`,
+                            position: "relative",
+                            overflow: "hidden",
+                          }}
+                        >
+                          <div
+                            style={{
+                              position: "absolute",
+                              top: "12px",
+                              right: "12px",
+                              background:
+                                "linear-gradient(135deg, var(--accent) 0%, #6d5840 100%)",
+                              color: "var(--paper)",
+                              padding: "4px 10px",
+                              borderRadius: "12px",
+                              fontSize: "0.75rem",
+                              fontWeight: "bold",
+                              letterSpacing: "0.5px",
+                              textTransform: "uppercase",
+                              boxShadow: "0 2px 6px rgba(0, 0, 0, 0.2)",
+                            }}
+                          >
+                            {t("characters.viewSheet")}
+                          </div>
+                          <div
+                            style={{
+                              marginBottom: "16px",
+                              borderBottom: "2px solid var(--accent)",
+                              paddingBottom: "12px",
+                            }}
+                          >
+                            <h3
+                              style={{
+                                margin: "0 0 6px 0",
+                                fontSize: "1.4rem",
+                                color: "var(--title, #3d2f1f)",
+                                fontWeight: "700",
+                                letterSpacing: "1px",
+                                wordBreak: "break-word",
+                              }}
+                            >
+                              {char.name}
+                            </h3>
+                            <div
+                              style={{
+                                display: "flex",
+                                alignItems: "center",
+                                gap: "8px",
+                              }}
+                            >
+                              <span style={{ fontSize: "1.2rem" }}>👤</span>
+                              <span
+                                style={{
+                                  fontSize: "0.95rem",
+                                  color: "#666",
+                                  fontStyle: "italic",
+                                  fontWeight: "500",
+                                }}
+                              >
+                                {char.occupation ||
+                                  t("characters.unknownOccupation")}
+                              </span>
+                            </div>
+                          </div>
+
+                          <div style={{ fontSize: "0.9rem" }}>
+                            {char.age && (
+                              <div
+                                style={{
+                                  margin: "8px 0",
+                                  display: "flex",
+                                  alignItems: "center",
+                                  gap: "8px",
+                                }}
+                              >
+                                <span style={{ fontSize: "1.1rem" }}>🎂</span>
+                                <span
+                                  style={{
+                                    fontWeight: "600",
+                                    color: "var(--title)",
+                                  }}
+                                >
+                                  {t("selector.age")} {char.age}
+                                </span>
+                              </div>
+                            )}
+
+                            {status && (
+                              <div
+                                style={{
+                                  display: "flex",
+                                  gap: "8px",
+                                  margin: "12px 0",
+                                  flexWrap: "wrap",
+                                }}
+                              >
+                                <span
+                                  className="backdrop-blur-sm bg-blue-50/60 border border-blue-200 rounded-lg"
+                                  style={{
+                                    padding: "6px 12px",
+                                    fontFamily: "var(--mono)",
+                                    fontSize: "0.85rem",
+                                    fontWeight: "700",
+                                    color: "#1565c0",
+                                  }}
+                                >
+                                  ❤️ {status.hp || "?"}
+                                </span>
+                                <span
+                                  className="backdrop-blur-sm bg-purple-50/60 border border-purple-200 rounded-lg"
+                                  style={{
+                                    padding: "6px 12px",
+                                    fontFamily: "var(--mono)",
+                                    fontSize: "0.85rem",
+                                    fontWeight: "700",
+                                    color: "#6a1b9a",
+                                  }}
+                                >
+                                  🧠 {status.san || "?"}
+                                </span>
+                                <span
+                                  className="backdrop-blur-sm bg-green-50/60 border border-green-200 rounded-lg"
+                                  style={{
+                                    padding: "6px 12px",
+                                    fontFamily: "var(--mono)",
+                                    fontSize: "0.85rem",
+                                    fontWeight: "700",
+                                    color: "#2e7d32",
+                                  }}
+                                >
+                                  ✨ {status.mp || "?"}
+                                </span>
+                              </div>
+                            )}
+
+                            {attrs && (
+                              <div
+                                style={{
+                                  display: "grid",
+                                  gridTemplateColumns: "repeat(3, 1fr)",
+                                  gap: "6px",
+                                  margin: "12px 0",
+                                }}
+                              >
+                                {["STR", "CON", "DEX", "INT", "POW", "SIZ"].map(
+                                  (attr) =>
+                                    attrs[attr] && (
+                                      <span
+                                        key={attr}
+                                        className="backdrop-blur-sm bg-white/60 border border-slate-200 rounded-lg"
+                                        style={{
+                                          padding: "4px 8px",
+                                          fontFamily: "var(--mono)",
+                                          fontSize: "0.75rem",
+                                          fontWeight: "600",
+                                          textAlign: "center",
+                                          color: "var(--title)",
+                                        }}
+                                      >
+                                        {attr}: {attrs[attr]}
+                                      </span>
+                                    )
+                                )}
+                              </div>
+                            )}
                           </div>
                         </div>
-
-                        <div style={{ fontSize: '0.9rem' }}>
-                          {char.age && (
-                            <div style={{
-                              margin: '8px 0',
-                              display: 'flex',
-                              alignItems: 'center',
-                              gap: '8px',
-                            }}>
-                              <span style={{ fontSize: '1.1rem' }}>🎂</span>
-                              <span style={{ fontWeight: '600', color: 'var(--title)' }}>
-                                Age: {char.age}
-                              </span>
-                            </div>
-                          )}
-
-                          {status && (
-                            <div style={{
-                              display: 'flex',
-                              gap: '8px',
-                              margin: '12px 0',
-                              flexWrap: 'wrap',
-                            }}>
-                              <span className="backdrop-blur-sm bg-blue-50/60 border border-blue-200 rounded-lg" style={{
-                                padding: '6px 12px',
-                                fontFamily: 'var(--mono)',
-                                fontSize: '0.85rem',
-                                fontWeight: '700',
-                                color: '#1565c0',
-                              }}>
-                                ❤️ {status.hp || '?'}
-                              </span>
-                              <span className="backdrop-blur-sm bg-purple-50/60 border border-purple-200 rounded-lg" style={{
-                                padding: '6px 12px',
-                                fontFamily: 'var(--mono)',
-                                fontSize: '0.85rem',
-                                fontWeight: '700',
-                                color: '#6a1b9a',
-                              }}>
-                                🧠 {status.sanity || '?'}
-                              </span>
-                              <span className="backdrop-blur-sm bg-green-50/60 border border-green-200 rounded-lg" style={{
-                                padding: '6px 12px',
-                                fontFamily: 'var(--mono)',
-                                fontSize: '0.85rem',
-                                fontWeight: '700',
-                                color: '#2e7d32',
-                              }}>
-                                ✨ {status.mp || '?'}
-                              </span>
-                            </div>
-                          )}
-
-                          {attrs && (
-                            <div style={{
-                              display: 'grid',
-                              gridTemplateColumns: 'repeat(3, 1fr)',
-                              gap: '6px',
-                              margin: '12px 0',
-                            }}>
-                              {['STR', 'CON', 'DEX', 'INT', 'POW', 'SIZ'].map(attr => (
-                                attrs[attr] && (
-                                  <span
-                                    key={attr}
-                                    className="backdrop-blur-sm bg-white/60 border border-slate-200 rounded-lg"
-                                    style={{
-                                      padding: '4px 8px',
-                                      fontFamily: 'var(--mono)',
-                                      fontSize: '0.75rem',
-                                      fontWeight: '600',
-                                      textAlign: 'center',
-                                      color: 'var(--title)',
-                                    }}
-                                  >
-                                    {attr}: {attrs[attr]}
-                                  </span>
-                                )
-                              ))}
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
-            </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         </div>

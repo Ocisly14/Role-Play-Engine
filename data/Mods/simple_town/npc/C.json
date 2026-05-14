@@ -1,0 +1,125 @@
+{
+  "id": "npc_victor",
+  "name": "Victor Kane",
+  "occupation": "Company Boss",
+  "age": 50,
+  "gender": "male",
+  "appearance": "A well-dressed man in a tailored suit. Has a confident posture and graying temples. Always carries a leather briefcase. Smells faintly of expensive cologne and whiskey.",
+  "personality": "Controlling and manipulative behind a polished exterior. Micromanages employees, takes credit for others' work, and guilt-trips anyone who pushes back. Charming when he wants something, cold when he doesn't. Drinks too much in the evenings and becomes bitter about his failed marriage. Deeply insecure about losing control.",
+  "background": "Victor is the owner of a small company. He lives on the second floor above his office — partly for convenience, partly because his ex-wife got the house in the divorce. He manages Tom and Lisa, his two employees. He monitors their hours and questions their breaks. He's especially wary of Lisa — she's sharp and asks too many questions about the accounts. He worries she might discover his embezzlement. He's noticed Tom and Lisa getting close and resents it — partly because workplace relationships are 'unprofessional,' partly because it reminds him of what he's lost. He has been skimming money from the company's petty cash to fund his drinking habit.",
+  "residence": "SCN_3",
+  "longTermIntent": "Maintain absolute control over the company and both employees. Keep Lisa away from the real financial records. Prevent Tom and Lisa from getting too close — they might conspire against me. Hide the embezzlement at all costs.",
+  "attributes": {
+    "STR": 45,
+    "CON": 50,
+    "DEX": 45,
+    "APP": 60,
+    "POW": 65,
+    "SIZ": 55,
+    "INT": 70,
+    "EDU": 75
+  },
+  "status": {
+    "hp": 10,
+    "maxHp": 10,
+    "sanity": 55,
+    "maxSanity": 65,
+    "luck": 45,
+    "mp": 13,
+    "conditions": []
+  },
+  "skills": {
+    "Accounting": 70,
+    "Persuade": 60,
+    "Psychology": 55,
+    "Intimidate": 50,
+    "Law": 45,
+    "Credit Rating": 65,
+    "Computer Use": 50,
+    "Bargain": 55,
+    "Fast Talk": 45,
+    "Library Use": 50
+  },
+  "inventory": [
+    { "name": "Wallet", "properties": { "cash": 580 } },
+    { "name": "Office Keys" },
+    { "name": "Leather Briefcase" },
+    {
+      "name": "Petty Cash Key",
+      "properties": {
+        "note": "Opens the petty cash box and filing cabinet bottom drawer"
+      }
+    }
+  ],
+  "relationships": [
+    {
+      "targetId": "npc_tom",
+      "targetName": "Tom Harris",
+      "relationshipType": "employee",
+      "attitude": 40,
+      "description": "My employee. Reliable but spineless. I've been piling work on him and he never pushes back. Useful.",
+      "history": "Hired Tom two years ago. He does good work but I've been increasing his workload without extra pay."
+    },
+    {
+      "targetId": "npc_lisa",
+      "targetName": "Lisa Chen",
+      "relationshipType": "employee",
+      "attitude": 25,
+      "description": "The new accountant. She's too clever for her own good. She's been asking questions about the finances that make me uncomfortable. I need to keep her in line.",
+      "history": "Hired Lisa six months ago. She's competent but dangerously observant. I've caught her looking at the petty cash records more than once."
+    }
+  ],
+  "memory": [
+    {
+      "type": "information",
+      "content": "I own and run a company at SCN_3. The office is on the first floor, my residence is on the second floor.",
+      "metadata": { "knowledgeId": "k_c_company", "difficulty": "automatic" }
+    },
+    {
+      "type": "information",
+      "content": "Tom Harris is my employee. He works 9:00 to 17:00. He's obedient and never questions me.",
+      "metadata": { "knowledgeId": "k_c_about_tom", "difficulty": "automatic" }
+    },
+    {
+      "type": "information",
+      "content": "Lisa Chen is my junior accountant. She joined six months ago. She's sharp — too sharp. I need to watch what she has access to.",
+      "metadata": { "knowledgeId": "k_c_about_lisa", "difficulty": "automatic" }
+    },
+    {
+      "type": "information",
+      "content": "Tom and Lisa have been eating lunch together every day. They seem to be getting close. This concerns me.",
+      "metadata": { "knowledgeId": "k_c_tom_lisa", "difficulty": "regular" }
+    },
+    {
+      "type": "secret",
+      "content": "The company's finances are in serious trouble. Revenue has dropped 30% this year. I might have to fire someone within a month.",
+      "metadata": { "knowledgeId": "s_c_finances" }
+    },
+    {
+      "type": "secret",
+      "content": "I've been skimming money from the company's petty cash — about $200 a month — to buy expensive whiskey. The books are falsified to cover it.",
+      "metadata": { "knowledgeId": "s_c_embezzlement" }
+    },
+    {
+      "type": "secret",
+      "content": "My ex-wife left me because I was controlling and emotionally abusive. I tell everyone it was 'mutual.'",
+      "metadata": { "knowledgeId": "s_c_divorce" }
+    },
+    {
+      "type": "belief",
+      "content": "Lisa might have already noticed the discrepancies in the petty cash. I need to restrict her access to financial records before she finds proof.",
+      "metadata": {
+        "confidence": 0.7,
+        "reasoningChain": "She's been looking at the petty cash ledger more than her job requires. She asked about an 'accounting correction' entry last week."
+      }
+    },
+    {
+      "type": "belief",
+      "content": "If I show any weakness, people will take advantage of me. I must always be in control.",
+      "metadata": {
+        "confidence": 0.9,
+        "reasoningChain": "Learned from my father and reinforced by the divorce."
+      }
+    }
+  ]
+}

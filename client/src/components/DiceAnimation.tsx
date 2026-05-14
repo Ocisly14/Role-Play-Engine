@@ -4,20 +4,22 @@
  * Shows character, skill, penalty, and dice result.
  */
 
-import { useState, useEffect, useMemo, useRef } from 'react';
+import { useEffect, useMemo, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 
 /** Structured dice roll info (matches backend DiceRollInfo) */
 export interface DiceRollInfo {
   character: string;
   roll: string;
   skill?: string;
-  success?: 'success' | 'failure' | 'critical' | 'fumble';
+  success?: "success" | "failure" | "critical" | "fumble";
   penalty?: string;
+  checkDetail?: string;
 }
 
 interface DiceAnimationProps {
-  /** Dice rolls: structured (DiceRollInfo[]) or legacy (string[]) */
-  diceRolls: DiceRollInfo[] | string[];
+  /** Dice rolls: structured, legacy, or mixed */
+  diceRolls: Array<string | DiceRollInfo>;
   onAnimationComplete?: () => void;
 }
 
@@ -30,57 +32,65 @@ interface ParsedDiceRoll {
   skill?: string;
   success?: string;
   penalty?: string;
+  checkDetail?: string;
 }
 
-/** Psychology check: do not display dice result (Keeper secret) */
+/** Psychology checks hide the result to preserve imperfect information. */
 function isPsychologyRoll(info: DiceRollInfo): boolean {
-  const skill = (info.skill ?? '').toLowerCase();
-  const roll = (info.roll ?? '').toLowerCase();
+  const skill = (info.skill ?? "").toLowerCase();
+  const roll = (info.roll ?? "").toLowerCase();
   return (
-    skill.includes('psychology') ||
-    skill.includes('心理学') ||
-    roll.includes('psychology') ||
-    roll.includes('心理学')
+    skill.includes("psychology") ||
+    skill.includes("心理学") || // Chinese translation - required for zh language support
+    roll.includes("psychology") ||
+    roll.includes("心理学") // Chinese translation - required for zh language support
   );
 }
 
 /** Normalize input to DiceRollInfo[] */
-function normalizeDiceRolls(input: DiceRollInfo[] | string[]): DiceRollInfo[] {
+function normalizeDiceRolls(
+  input: Array<string | DiceRollInfo>
+): DiceRollInfo[] {
   if (!input?.length) return [];
-  const first = input[0];
-  if (typeof first === 'string') {
-    return (input as string[]).map((roll) => ({ character: '', roll }));
-  }
-  return input as DiceRollInfo[];
+  return input.map((item) =>
+    typeof item === "string" ? { character: "", roll: item } : item
+  );
 }
 
 /** Parse expression and result from roll string */
-function parseDiceRoll(roll: string): { expression: string; result: number; diceType: string; numDice: number } {
-  let match = roll.match(/roll_dice:\s*(\d+)d(\d+)\s*->\s*(?:[\d+\s=]+\s*=\s*)?(\d+)/);
+function parseDiceRoll(roll: string): {
+  expression: string;
+  result: number;
+  diceType: string;
+  numDice: number;
+} {
+  let match = roll.match(
+    /roll_dice:\s*(\d+)d(\d+)\s*->\s*(?:[\d+\s=]+\s*=\s*)?(\d+)/
+  );
   if (match) {
     return {
       expression: `${match[1]}d${match[2]}`,
-      result: parseInt(match[3], 10),
+      result: Number.parseInt(match[3], 10),
       diceType: `d${match[2]}`,
-      numDice: parseInt(match[1], 10),
+      numDice: Number.parseInt(match[1], 10),
     };
   }
   match = roll.match(/^(\d+)d(\d+)\s*->\s*(\d+)$/);
   if (match) {
     return {
       expression: `${match[1]}d${match[2]}`,
-      result: parseInt(match[3], 10),
+      result: Number.parseInt(match[3], 10),
       diceType: `d${match[2]}`,
-      numDice: parseInt(match[1], 10),
+      numDice: Number.parseInt(match[1], 10),
     };
   }
   match = roll.match(/(\d+)d(\d+)(?:\[\d+\])?:\s*(\d+)/);
   if (match) {
     return {
       expression: `${match[1]}d${match[2]}`,
-      result: parseInt(match[3], 10),
+      result: Number.parseInt(match[3], 10),
       diceType: `d${match[2]}`,
-      numDice: parseInt(match[1], 10),
+      numDice: Number.parseInt(match[1], 10),
     };
   }
   const exprMatch = roll.match(/(\d+)d(\d+)/);
@@ -88,25 +98,40 @@ function parseDiceRoll(roll: string): { expression: string; result: number; dice
   if (exprMatch && resultMatch) {
     return {
       expression: `${exprMatch[1]}d${exprMatch[2]}`,
-      result: parseInt(resultMatch[1], 10),
+      result: Number.parseInt(resultMatch[1], 10),
       diceType: `d${exprMatch[2]}`,
-      numDice: parseInt(exprMatch[1], 10),
+      numDice: Number.parseInt(exprMatch[1], 10),
     };
   }
   const fallbackMatch = roll.match(/(\d+)$/);
   const fallbackExpr = roll.match(/(\d+)d(\d+)/);
   if (fallbackMatch) {
     return {
-      expression: fallbackExpr ? `${fallbackExpr[1]}d${fallbackExpr[2]}` : '1d100',
-      result: parseInt(fallbackMatch[1], 10),
-      diceType: fallbackExpr ? `d${fallbackExpr[2]}` : 'd100',
-      numDice: fallbackExpr ? parseInt(fallbackExpr[1], 10) : 1,
+      expression: fallbackExpr
+        ? `${fallbackExpr[1]}d${fallbackExpr[2]}`
+        : "1d100",
+      result: Number.parseInt(fallbackMatch[1], 10),
+      diceType: fallbackExpr ? `d${fallbackExpr[2]}` : "d100",
+      numDice: fallbackExpr ? Number.parseInt(fallbackExpr[1], 10) : 1,
     };
   }
-  return { expression: roll, result: 0, diceType: 'd100', numDice: 1 };
+  return { expression: roll, result: 0, diceType: "d100", numDice: 1 };
 }
 
-export function DiceAnimation({ diceRolls, onAnimationComplete }: DiceAnimationProps) {
+function extractCheckDetailFromRoll(roll: string): string | undefined {
+  if (!roll) return undefined;
+  const matches = [...roll.matchAll(/\(([^)]+)\)/g)];
+  if (matches.length === 0) return undefined;
+  const content = matches[matches.length - 1][1]?.trim();
+  if (!content || !content.includes("=")) return undefined;
+  return content;
+}
+
+export function DiceAnimation({
+  diceRolls,
+  onAnimationComplete,
+}: DiceAnimationProps) {
+  const { t } = useTranslation("game");
   const [isAnimating, setIsAnimating] = useState(true);
   const [animationCompleted, setAnimationCompleted] = useState(false);
   const animationTimerRef = useRef<number | null>(null);
@@ -121,17 +146,19 @@ export function DiceAnimation({ diceRolls, onAnimationComplete }: DiceAnimationP
         const parsed = parseDiceRoll(info.roll);
         return {
           ...parsed,
-          character: info.character || '',
+          character: info.character || "",
           skill: info.skill,
           success: info.success,
           penalty: info.penalty,
+          checkDetail:
+            info.checkDetail ?? extractCheckDetailFromRoll(info.roll),
         };
       })
       .filter((p) => p.result > 0);
   }, [normalized]);
 
-  const animatedDiceRollsRef = useRef<string>('');
-  const callbackCalledRef = useRef<string>('');
+  const animatedDiceRollsRef = useRef<string>("");
+  const callbackCalledRef = useRef<string>("");
 
   useEffect(() => {
     if (onAnimationComplete === undefined) {
@@ -153,7 +180,7 @@ export function DiceAnimation({ diceRolls, onAnimationComplete }: DiceAnimationP
     }
 
     animatedDiceRollsRef.current = diceRollsKey;
-    callbackCalledRef.current = '';
+    callbackCalledRef.current = "";
     setIsAnimating(true);
     setAnimationCompleted(false);
 
@@ -179,11 +206,26 @@ export function DiceAnimation({ diceRolls, onAnimationComplete }: DiceAnimationP
     return null;
   }
 
+  const getSuccessLabel = (success?: string): string => {
+    switch (success) {
+      case "success":
+        return t("dice.success");
+      case "failure":
+        return t("dice.failure");
+      case "critical":
+        return t("dice.critical");
+      case "fumble":
+        return t("dice.fumble");
+      default:
+        return success ?? "";
+    }
+  };
+
   return (
     <div className="dice-animation-container">
       <div className="dice-animation-header">
         <span className="dice-icon">🎲</span>
-        <span className="dice-label">Dice Roll</span>
+        <span className="dice-label">{t("dice.roll")}</span>
       </div>
       <div className="dice-rolls-container">
         {parsedRolls.map((roll, index) => (
@@ -199,14 +241,23 @@ export function DiceAnimation({ diceRolls, onAnimationComplete }: DiceAnimationP
                 <span className="dice-roll-penalty">{roll.penalty}</span>
               )}
               {roll.success && (
-                <span className={`dice-roll-success dice-roll-success--${roll.success}`}>
-                  {roll.success}
+                <span
+                  className={`dice-roll-success dice-roll-success--${roll.success}`}
+                >
+                  {getSuccessLabel(roll.success)}
+                </span>
+              )}
+              {roll.checkDetail && (
+                <span className="dice-roll-check-detail">
+                  ({roll.checkDetail})
                 </span>
               )}
             </div>
             <div className="dice-roll-values">
               <div className="dice-expression">{roll.expression}</div>
-              <div className={`dice-result ${isAnimating ? 'dice-spinning' : 'dice-final'}`}>
+              <div
+                className={`dice-result ${isAnimating ? "dice-spinning" : "dice-final"}`}
+              >
                 {isAnimating ? (
                   <div className="dice-spinner">
                     <span className="dice-face">⚀</span>

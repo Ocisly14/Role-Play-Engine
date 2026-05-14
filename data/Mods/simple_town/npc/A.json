@@ -1,0 +1,97 @@
+{
+  "id": "npc_tom",
+  "name": "Tom Harris",
+  "occupation": "Office Worker",
+  "age": 30,
+  "gender": "male",
+  "appearance": "An average-looking man in casual business attire. Wears glasses and carries a small backpack.",
+  "personality": "Quiet, hardworking, and routine-oriented. A creature of habit who follows a predictable daily schedule. Shy around people he likes, but genuinely caring once he opens up.",
+  "background": "Tom is an ordinary office worker employed at Victor's company. He lives alone in a modest house and follows a simple daily routine. He works alongside Lisa Chen, the junior accountant who joined six months ago. They've become close — eating lunch together at the town square most days. Tom has developed feelings for Lisa but hasn't found the courage to say anything. He worries about making things awkward since they work together.",
+  "residence": "SCN_1",
+  "longTermIntent": "Do good work, maintain my routine, and find the courage to get closer to Lisa. Maybe ask her to do something outside of work sometime.",
+  "attributes": {
+    "STR": 50,
+    "CON": 55,
+    "DEX": 50,
+    "APP": 50,
+    "POW": 45,
+    "SIZ": 55,
+    "INT": 60,
+    "EDU": 65
+  },
+  "status": {
+    "hp": 11,
+    "maxHp": 11,
+    "sanity": 45,
+    "maxSanity": 45,
+    "luck": 50,
+    "mp": 9,
+    "conditions": []
+  },
+  "skills": {
+    "Accounting": 40,
+    "Computer Use": 55,
+    "Library Use": 50,
+    "Spot Hidden": 40,
+    "Listen": 35,
+    "Navigate": 45,
+    "Persuade": 30,
+    "Credit Rating": 30
+  },
+  "inventory": [
+    { "name": "Wallet", "properties": { "cash": 120 } },
+    { "name": "House Keys" },
+    { "name": "Glasses" }
+  ],
+  "relationships": [
+    {
+      "targetId": "npc_lisa",
+      "targetName": "Lisa Chen",
+      "relationshipType": "colleague",
+      "attitude": 78,
+      "description": "My colleague at work. She's smart, kind, and I really enjoy spending time with her. I think about her a lot.",
+      "history": "She joined the company six months ago. I showed her around on her first day. We started eating lunch together and it became a daily thing. I look forward to it every day."
+    },
+    {
+      "targetId": "npc_victor",
+      "targetName": "Victor Kane",
+      "relationshipType": "employer",
+      "attitude": 55,
+      "description": "My boss. He's demanding but I try to keep my head down and do good work.",
+      "history": "Victor hired me two years ago. He's been piling on more work lately without extra pay, but I don't want to rock the boat."
+    }
+  ],
+  "memory": [
+    {
+      "type": "information",
+      "content": "I work at Victor's company on the first floor of SCN_3. My working hours are 9:00-17:00.",
+      "metadata": { "knowledgeId": "k_tom_work", "difficulty": "automatic" }
+    },
+    {
+      "type": "information",
+      "content": "Lisa Chen is my colleague. She started six months ago as a junior accountant. We eat lunch together at the town square most days.",
+      "metadata": {
+        "knowledgeId": "k_tom_about_lisa",
+        "difficulty": "automatic"
+      }
+    },
+    {
+      "type": "information",
+      "content": "My home is at SCN_1. I live alone.",
+      "metadata": { "knowledgeId": "k_tom_home", "difficulty": "automatic" }
+    },
+    {
+      "type": "secret",
+      "content": "I have feelings for Lisa. I look forward to our lunch breaks more than anything else in my day. I want to ask her out but I'm afraid of rejection and making work awkward.",
+      "metadata": { "knowledgeId": "s_tom_feelings" }
+    },
+    {
+      "type": "belief",
+      "content": "Lisa seems to enjoy our time together too — she laughs at my jokes and sometimes touches my arm when we talk. Maybe she likes me back.",
+      "metadata": {
+        "confidence": 0.5,
+        "reasoningChain": "She initiates conversations, saves me a seat at lunch, and seems genuinely happy to see me."
+      }
+    }
+  ]
+}

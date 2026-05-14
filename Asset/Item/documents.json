@@ -1,0 +1,298 @@
+[
+  {
+    "id": "DOC_NEWSPAPER",
+    "name": "报纸",
+    "description": "当地报纸，可能包含与调查相关的新闻报道。",
+    "type": "document"
+  },
+  {
+    "id": "DOC_NEWSPAPER_CLIPPING",
+    "name": "报纸剪报",
+    "description": "被剪下的报纸文章，通常是某人认为重要的新闻。",
+    "type": "document"
+  },
+  {
+    "id": "DOC_NOTEBOOK",
+    "name": "笔记本",
+    "description": "一本空白或部分写有内容的笔记本，可用于记录调查线索。",
+    "type": "document"
+  },
+  {
+    "id": "DOC_MAP",
+    "name": "地图",
+    "description": "一张区域地图，标注了主要道路、建筑和地标。",
+    "type": "document"
+  },
+  {
+    "id": "DOC_LETTER",
+    "name": "信件",
+    "description": "一封手写或打字的信件，可能包含重要信息。",
+    "type": "document"
+  },
+  {
+    "id": "DOC_DIARY",
+    "name": "日记",
+    "description": "一本私人日记，记录了主人的日常生活和秘密。",
+    "type": "document"
+  },
+  {
+    "id": "DOC_PASSPORT",
+    "name": "护照",
+    "description": "个人护照，记录了持有者的身份信息和出入境记录。",
+    "type": "document"
+  },
+  {
+    "id": "DOC_PHOTOGRAPH",
+    "name": "照片",
+    "description": "一张照片，可能拍摄了某个人物、地点或事件。",
+    "type": "document"
+  },
+  {
+    "id": "DOC_BLUEPRINT",
+    "name": "建筑图纸",
+    "description": "建筑设计图纸，标注了建筑的结构布局和隐藏空间。",
+    "type": "document"
+  },
+  {
+    "id": "DOC_BOOK",
+    "name": "书籍",
+    "description": "一本普通书籍，可能包含有用的知识或线索。",
+    "type": "document"
+  },
+  {
+    "id": "DOC_ANCIENT_TOME",
+    "name": "古籍",
+    "description": "一本古老的书籍，封面磨损，页面泛黄，可能记载了禁忌知识。",
+    "type": "document"
+  },
+  {
+    "id": "DOC_OCCULT_GRIMOIRE",
+    "name": "神秘典籍",
+    "description": "记载神秘学、魔法仪式或克苏鲁神话知识的书籍，阅读可能影响理智。",
+    "type": "document"
+  },
+  {
+    "id": "DOC_TELEGRAM",
+    "name": "电报",
+    "description": "一份电报消息，简短但可能包含紧急信息。",
+    "type": "document"
+  },
+  {
+    "id": "DOC_BUSINESS_CARD",
+    "name": "名片",
+    "description": "印有姓名、职业和联络方式的名片。",
+    "type": "document"
+  },
+  {
+    "id": "DOC_POLICE_REPORT",
+    "name": "警察报告",
+    "description": "官方警察报告，记录了案件详情和调查进展。",
+    "type": "document"
+  },
+  {
+    "id": "DOC_MEDICAL_RECORD",
+    "name": "病历",
+    "description": "患者的医疗记录，包含诊断、治疗和用药信息。",
+    "type": "document"
+  },
+  {
+    "id": "DOC_AUTOPSY_REPORT",
+    "name": "验尸报告",
+    "description": "法医出具的验尸报告，详述死因和尸体状况。",
+    "type": "document"
+  },
+  {
+    "id": "DOC_WILL",
+    "name": "遗嘱",
+    "description": "某人的最后遗嘱，记录了遗产分配意愿。",
+    "type": "document"
+  },
+  {
+    "id": "DOC_WANTED_POSTER",
+    "name": "通缉令",
+    "description": "印有嫌犯照片和信息的通缉布告。",
+    "type": "document"
+  },
+  {
+    "id": "DOC_RECEIPT",
+    "name": "收据/发票",
+    "description": "购物或交易的收据，可追溯购买记录。",
+    "type": "document"
+  },
+  {
+    "id": "DOC_CERTIFICATE",
+    "name": "证书",
+    "description": "官方颁发的证书，如学位证、执照或奖状。",
+    "type": "document"
+  },
+  {
+    "id": "DOC_DELIVERY_LOG",
+    "name": "送货记录",
+    "description": "货物运输的记录清单，包含日期、物品和目的地。",
+    "type": "document"
+  },
+  {
+    "id": "DOC_LEDGER",
+    "name": "账簿",
+    "description": "财务账簿，记录了收支明细。",
+    "type": "document"
+  },
+  {
+    "id": "DOC_BIBLE",
+    "name": "圣经",
+    "description": "一本圣经，可能有标注或夹带纸条。",
+    "type": "document"
+  },
+  {
+    "id": "DOC_SCROLL",
+    "name": "卷轴",
+    "description": "古老的羊皮纸卷轴，记载着古代文字或符号。",
+    "type": "document"
+  },
+  {
+    "id": "DOC_CASE_FILE",
+    "name": "案件档案",
+    "description": "关于特定案件的完整档案，包含多份文件和证据记录。",
+    "type": "document"
+  },
+  {
+    "id": "DOC_PRINTED_EMAIL",
+    "name": "打印邮件",
+    "description": "打印出的电子邮件页面，通常保留了发件人、时间戳和主题等关键信息。",
+    "type": "document",
+    "era": "2000s"
+  },
+  {
+    "id": "DOC_CHAT_LOG_PRINT",
+    "name": "聊天记录打印件",
+    "description": "从即时通讯软件导出的聊天记录打印件，可能显示昵称、时间和对话片段。",
+    "type": "document",
+    "era": "2000s"
+  },
+  {
+    "id": "DOC_BOARDING_PASS",
+    "name": "登机牌",
+    "description": "航空公司打印的登机牌，包含乘客姓名、航班号、座位和登机时间。",
+    "type": "document",
+    "era": "2000s"
+  },
+  {
+    "id": "DOC_COURIER_LABEL",
+    "name": "快递面单",
+    "description": "贴在包裹外部的快递面单，记录收寄地址、联系电话和物流编号。",
+    "type": "document",
+    "era": "2000s"
+  },
+  {
+    "id": "DOC_PARKING_RECEIPT",
+    "name": "停车票据",
+    "description": "停车场出具的小票，可能注明入场时间、车牌号和收费记录。",
+    "type": "document",
+    "era": "2000s"
+  },
+  {
+    "id": "DOC_LAB_REPORT",
+    "name": "化验报告",
+    "description": "医院或实验室出具的检验报告，列有样本编号、检测项目和结果摘要。",
+    "type": "document",
+    "era": "2000s"
+  },
+  {
+    "id": "DOC_PHONE_NUMBER_NOTE",
+    "name": "电话号码便签",
+    "description": "写有手机号、分机号或地址的便签纸，常夹在显示器、记事本或钱包中。",
+    "type": "document",
+    "era": "2000s"
+  },
+  {
+    "id": "DOC_VISITOR_LOG",
+    "name": "访客登记单",
+    "description": "大楼或前台使用的访客登记表，记录姓名、来访时间、被访人和证件信息。",
+    "type": "document",
+    "era": "2000s"
+  },
+  {
+    "id": "DOC_SECURITY_FOOTAGE_DISC",
+    "name": "监控录像光盘",
+    "description": "用于备份监控录像的刻录光盘，通常附有日期、机位号或保安签名。",
+    "type": "document",
+    "era": "2000s"
+  },
+  {
+    "id": "DOC_BANK_STATEMENT",
+    "name": "银行对账单",
+    "description": "银行打印的交易流水或月结单，可用于追查资金往来和活动轨迹。",
+    "type": "document",
+    "era": "2000s"
+  },
+  {
+    "id": "DOC_SHIFT_SCHEDULE",
+    "name": "排班表",
+    "description": "写有员工姓名、时段和岗位安排的排班表，常见于医院、餐厅或安保岗位。",
+    "type": "document",
+    "era": "2000s"
+  },
+  {
+    "id": "DOC_GUEST_REGISTER",
+    "name": "住客登记簿",
+    "description": "旅馆或酒店前台登记住客信息的册页，通常包含姓名、房号和入住时间。",
+    "type": "document",
+    "era": "2000s"
+  },
+  {
+    "id": "DOC_TRAIN_TIMETABLE",
+    "name": "列车时刻表",
+    "description": "印有班次、到发时间和站台信息的列车时刻表，可用于追查旅客行程。",
+    "type": "document",
+    "era": "2000s"
+  },
+  {
+    "id": "DOC_INVENTORY_SHEET",
+    "name": "库存清单",
+    "description": "记录货品、数量和存放位置的库存清单，常见于仓储、后厨和药品管理场所。",
+    "type": "document",
+    "era": "2000s"
+  },
+  {
+    "id": "DOC_CREMATION_LOG",
+    "name": "焚化记录",
+    "description": "焚化设施的操作记录，通常包含日期、编号、处理对象与值班人员签名。",
+    "type": "document",
+    "era": "2000s"
+  },
+  {
+    "id": "DOC_REPAIR_LEDGER",
+    "name": "维修登记簿",
+    "description": "记录送修时间、物件名称、故障说明和取件状态的登记簿，常见于钟表店或维修铺。",
+    "type": "document",
+    "era": "2000s"
+  },
+  {
+    "id": "DOC_RESERVATION_BOOK",
+    "name": "预约本",
+    "description": "餐厅、诊所或服务场所用于登记预约姓名、时间和人数的记录本。",
+    "type": "document",
+    "era": "2000s"
+  },
+  {
+    "id": "DOC_MENU",
+    "name": "点菜单",
+    "description": "列有菜品、饮料和价格的菜单页，常放在餐厅柜台或餐桌旁供顾客点单。",
+    "type": "document",
+    "era": "2000s"
+  },
+  {
+    "id": "DOC_PAYMENT_NOTICE",
+    "name": "欠费通知",
+    "description": "提醒房租、水电或其他账单逾期未缴的通知单，通常带有截止日期和应付金额。",
+    "type": "document",
+    "era": "2000s"
+  },
+  {
+    "id": "DOC_CASE_FILE_FOLDER",
+    "name": "案件资料夹",
+    "description": "用于装订笔录、照片、物证清单和手写批注的案件资料夹。",
+    "type": "document",
+    "era": "2000s"
+  }
+]

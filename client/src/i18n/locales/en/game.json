@@ -1,0 +1,9 @@
+{
+  "dice": {
+    "roll": "Roll",
+    "success": "Success!",
+    "failure": "Failure",
+    "critical": "Critical Success!",
+    "fumble": "Fumble!"
+  }
+}

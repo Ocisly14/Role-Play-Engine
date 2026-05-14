@@ -10,7 +10,7 @@
       "inputs": ["src/**/*.ts", "src/**/*.js"]
     },
     "build:tsc": {
-      "outputs": ["dist/**"], 
+      "outputs": ["dist/**"],
       "inputs": ["src/**/*.ts", "src/**/*.js", "tsconfig.json"]
     },
     "dev": {

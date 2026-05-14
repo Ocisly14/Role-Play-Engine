@@ -1,0 +1,321 @@
+{
+  "id": "Patrizio von Samsa",
+  "name": "Patrizio von Samsa",
+  "occupation": "镇长 / 前精神科医生",
+  "age": 50,
+  "gender": "male",
+  "appearance": "一个苍白瘦削的男人，穿着考究优雅，举止仿佛每个房间都已经属于他。他的表情默认礼貌，但他的眼睛几乎从不停止盘算。",
+  "personality": "克制、善于操纵、有耐心，深度致力于维护权威。帕特里齐奥偏好压力、渠道和安静的筹码而非公开对抗，对形象的重视几乎与对权力的重视不相上下。",
+  "background": "帕特里齐奥是一位德国贵族的孙子，其祖父在十一月革命后逃亡美国。他成为精神科医生，对“脑波”和意识现象着迷。1986至1987年间，他参加了马萨诸塞州阿卡姆的交流项目。在那里，他遇到了一个奇特的病人——一个粗鲁的印斯茅斯本地人，此人在紧张性木僵、远超其教育水平的文雅谈吐以及非人的暴力行为（曾徒手撕裂一个人）之间交替切换。1987年2月23日，帕特里齐奥使用实验性脑波设备，接触到一个自称来自另一维度的“兄弟”的灵体。该实体告诉他，人类的死亡并非终点——灵魂在另一维度被宇宙存在所奴役，那些存在栖居于大麦哲伦星云之中，而现在正是为自由而战的时候。2月24日，病人死亡。新闻报道了大麦哲伦星云中的超新星1987A，证实这一切并非梦境。帕特里齐奥放弃了医学，开始研究宇宙真相，与崇拜克苏鲁的“梦王会”建立了联系。他坚信现代文明终将毁灭，人类将沦为奴隶——唯有成为克苏鲁和其他旧日支配者的仆从，人类才能在拉莱耶的庇护下找到栖身之所。他利用梦王会的关系网先成为警察局长，继而成为卡森德拉的镇长，通过恐惧、人情和精心管理的秘密将卡森德拉变成了一个他可以统治的地方。作为镇上的领导者，他更喜欢留在幕后通过代理人来治理，而他的关系网延伸到警察、医院和镇上隐秘的仪式活动中。",
+  "residence": "SCN_22",
+  "currentLocation": "SCN_22_SUB_2",
+  "knownMapSeed": {
+    "sceneIds": [
+      "SCN_2_SUB_1",
+      "SCN_2_SUB_2",
+      "SCN_2_SUB_3",
+      "SCN_16_SUB_1",
+      "SCN_16_SUB_2",
+      "SCN_17_SUB_1",
+      "SCN_17_SUB_4",
+      "SCN_1_SUB_1",
+      "SCN_1_SUB_4",
+      "SCN_1_SUB_5",
+      "SCN_21_SUB_1",
+      "SCN_21_SUB_2",
+      "SCN_21_SUB_3",
+      "SCN_22_SUB_1",
+      "SCN_22_SUB_2",
+      "SCN_22_SUB_3",
+      "SCN_3_SUB_1",
+      "SCN_3_SUB_2",
+      "SCN_3_SUB_3",
+      "SCN_4_SUB_1",
+      "SCN_4_SUB_2",
+      "SCN_4_SUB_3"
+    ],
+    "junctionIds": [
+      "JUNC_1",
+      "JUNC_2",
+      "JUNC_3",
+      "JUNC_4",
+      "JUNC_5",
+      "JUNC_6",
+      "JUNC_7",
+      "JUNC_8",
+      "JUNC_9",
+      "JUNC_10",
+      "JUNC_11"
+    ],
+    "roadIds": [
+      "ROAD_1",
+      "ROAD_2",
+      "ROAD_3",
+      "ROAD_4",
+      "ROAD_5a",
+      "ROAD_5b",
+      "ROAD_6",
+      "ROAD_7",
+      "ROAD_8",
+      "ROAD_9",
+      "ROAD_10"
+    ],
+    "scenarioOutlineIds": [
+      "SCN_1",
+      "SCN_2",
+      "SCN_3",
+      "SCN_4",
+      "SCN_5",
+      "SCN_6",
+      "SCN_7",
+      "SCN_8",
+      "SCN_9",
+      "SCN_10",
+      "SCN_11",
+      "SCN_12",
+      "SCN_13",
+      "SCN_14",
+      "SCN_15",
+      "SCN_16",
+      "SCN_17",
+      "SCN_18",
+      "SCN_19",
+      "SCN_20",
+      "SCN_21",
+      "SCN_22"
+    ]
+  },
+  "longTermIntent": "通过古老的仪式令群星归位，唤醒沉睡中的克苏鲁和其他旧日支配者，使人类得以转化为祂们的眷属，在拉莱耶的庇护下逃脱被另一维度存在永恒奴役的命运。他坚信这是人类唯一的救赎之路。",
+  "attributes": {
+    "STR": 40,
+    "CON": 55,
+    "DEX": 45,
+    "APP": 75,
+    "POW": 80,
+    "SIZ": 55,
+    "INT": 80,
+    "EDU": 85
+  },
+  "status": {
+    "hp": 10,
+    "maxHp": 10,
+    "sanity": 75,
+    "maxSanity": 99,
+    "luck": 60,
+    "mp": 16,
+    "conditions": []
+  },
+  "skills": {
+    "Psychology": 80,
+    "Persuade": 75,
+    "Fast Talk": 70,
+    "Credit Rating": 80,
+    "Medicine": 60,
+    "Spot Hidden": 55,
+    "Occult": 65,
+    "Cthulhu Mythos": 15
+  },
+  "inventory": [
+    {
+      "name": "定制西装",
+      "properties": {
+        "note": "数套精心维护的西装，强化他的公众形象。"
+      }
+    },
+    {
+      "name": "镇长文件",
+      "properties": {
+        "note": "帮助他管理小镇的官方文件、笔记和联系方式。"
+      }
+    },
+    {
+      "name": "私人预约本",
+      "properties": {
+        "note": "一个薄薄的笔记本，记录着从不公开出现的会面、人情和备忘。"
+      }
+    },
+    {
+      "name": "嵌墙保险箱钥匙",
+      "properties": {
+        "note": "一把打磨得发亮的黄铜钥匙，平时由帕特里齐奥随身保管，用来开启石榴巷私宅书房中的嵌墙保险箱。"
+      }
+    }
+  ],
+  "relationships": [
+    {
+      "targetId": "Martin Gin (Cleo)",
+      "targetName": "Martin Gin (Cleo)",
+      "relationshipType": "ally",
+      "attitude": 60,
+      "description": "一个处理隐秘工作和技术支持的有用特工。",
+      "history": "帕特里齐奥把马丁带进卡森德拉，因为马丁能做帕特里齐奥不想让自己的手沾上的事。"
+    },
+    {
+      "targetId": "Vincent Galenus",
+      "targetName": "Vincent Galenus",
+      "relationshipType": "ally",
+      "attitude": 35,
+      "description": "其医院工作支持帕特里齐奥私人项目的医生。",
+      "history": "帕特里齐奥利用文森特的愧疚、财务问题和渠道来使医院与他的计划保持一致。"
+    },
+    {
+      "targetId": "Lux Lynch",
+      "targetName": "Lux Lynch",
+      "relationshipType": "ally",
+      "attitude": 20,
+      "description": "一个忠诚主要来自恐惧和习惯的妥协的警察。",
+      "history": "帕特里齐奥让勒克斯感到被保护来保持他的有用性，同时确保他永远不会忘记谁握有筹码。"
+    },
+    {
+      "targetId": "Simon Laplace (Simon)",
+      "targetName": "Simon Laplace (Simon)",
+      "relationshipType": "rival",
+      "attitude": -30,
+      "description": "一个好奇心威胁到帕特里齐奥所掩埋秘密的黑客。",
+      "history": "西蒙看到了帕特里齐奥隐藏结构的太多内容，已成为一个不能永远忽视的问题。"
+    },
+    {
+      "targetId": "Bruno Galilei",
+      "targetName": "Bruno Galilei",
+      "relationshipType": "enemy",
+      "attitude": -70,
+      "description": "一个不肯放弃调查的危险警探，已经触及了帕特里齐奥不能被揭露的秘密。",
+      "history": "布鲁诺坚持追查被上级搁置的黑人女孩凶杀案，他的执着让帕特里齐奥感到威胁。帕特里齐奥决定在圣诞节期间亲自动手除掉布鲁诺。"
+    },
+    {
+      "targetId": "Constantine Frollo",
+      "targetName": "Constantine Frollo",
+      "relationshipType": "ally",
+      "attitude": 55,
+      "description": "一个在神秘学目标上互相利用的同谋。",
+      "history": "帕特里齐奥与康斯坦丁达成交易：康斯坦丁协助处理妨碍者，比如在帕特里齐奥解决布鲁诺时提供掩护；作为交换，帕特里齐奥为康斯坦丁的纳克亚仪式提供便利。"
+    }
+  ],
+  "memory": [
+    {
+      "type": "information",
+      "content": "我是那个让卡森德拉的公共机器运转而隐秘机器保持隐藏的人。",
+      "metadata": {
+        "knowledgeId": "k_patrizio_power",
+        "difficulty": "automatic"
+      }
+    },
+    {
+      "type": "information",
+      "content": "我的关系网延伸到警察、医院和镇上更黑暗的生意中，因为当每个部分看起来是独立的时候更容易控制。",
+      "metadata": {
+        "knowledgeId": "k_patrizio_network",
+        "difficulty": "regular"
+      }
+    },
+    {
+      "type": "secret",
+      "content": "我的政治权威与我一直在其下建设的仪式和神秘学工作密不可分。如果人们理解那有多深，我的权力就会崩溃。",
+      "metadata": {
+        "knowledgeId": "s_patrizio_ritual"
+      }
+    },
+    {
+      "type": "secret",
+      "content": "马丁和文森特之所以有用，是因为他们每个人都能做我不让自己的名字沾上的事。",
+      "metadata": {
+        "knowledgeId": "s_patrizio_proxies"
+      }
+    },
+    {
+      "type": "belief",
+      "content": "当人们被孤立、负债并确信他们能做的最糟糕的事就是挑战权威时，一个小镇最容易治理。",
+      "metadata": {
+        "confidence": 0.9,
+        "reasoningChain": "秩序来自依赖。如果每个人都需要一点许可、一点人情或一点恐惧，他们就不再想象自己可以反抗。"
+      }
+    },
+    {
+      "type": "information",
+      "content": "我选择石榴巷的私宅，因为它靠近镇中心却不像办公室，这让来访更容易控制。",
+      "metadata": {
+        "knowledgeId": "k_patrizio_house_stone_alley",
+        "difficulty": "regular"
+      }
+    },
+    {
+      "type": "information",
+      "content": "我更喜欢让权力以碎片和中间人的形式出现，而不是强迫镇上的每一份恐惧都直指我自己的脸。",
+      "metadata": {
+        "knowledgeId": "k_patrizio_fragmented_power",
+        "difficulty": "regular"
+      }
+    },
+    {
+      "type": "secret",
+      "content": "布鲁诺是个麻烦。他不肯放下那桩黑人女孩的案子，一年来四处奔波，甚至向上级申请特查。他的调查再继续下去，迟早会牵出我和马丁的关系。我已经决定除掉他。",
+      "metadata": {
+        "knowledgeId": "s_patrizio_bruno_threat"
+      }
+    },
+    {
+      "type": "secret",
+      "content": "我和康斯坦丁有一个默契：当我对布鲁诺动手时，康斯坦丁会制造混乱作为掩护，确保没有人能干预。作为交换，我为他的纳克亚仪式提供所需的便利。",
+      "metadata": {
+        "knowledgeId": "s_patrizio_constantine_deal"
+      }
+    },
+    {
+      "type": "secret",
+      "content": "我的仪式将在新年钟声敲响之际完成。仪式的目的是令群星位于正确之时，唤醒沉睡的旧日支配者。我相信这是人类唯一的救赎之路——成为克苏鲁的眷族，在拉莱耶的庇护中免于被奴役的命运。梦王会为我提供了古老的仪式手稿和必要的知识。",
+      "metadata": {
+        "knowledgeId": "s_patrizio_ritual_purpose"
+      }
+    },
+    {
+      "type": "secret",
+      "content": "仪式的地点在焚化厂地下的古老仪式场（SCN_2_SUB_3）。这个地下空间远比卡森德拉本身古老，墙壁上的符文出自昆扬人之手，石质祭坛经过深潜者和后来者的反复改造。这里本身就是一个天然的'门槛'——维度壁垒在此处最为薄弱。深潜者曾在此祭祀，修格斯被遗弃在焚化厂上层，算是这处遗迹不自觉的守卫。",
+      "metadata": {
+        "knowledgeId": "s_patrizio_ritual_site"
+      }
+    },
+    {
+      "type": "secret",
+      "content": "仪式分为三个阶段，从圣诞节到新年逐步推进。第一阶段'净化祭坛'：用特制的黑蜡烛和深潜者遗留的海盐在祭坛上重新描画昆扬符文的关键节点，以焚香和低声吟诵的古老咒文激活石壁上的符文共振。这个阶段已在圣诞节前基本完成，但每晚仍需前往地下维持符文的活性，重新点燃黑蜡烛、补充消耗的海盐。",
+      "metadata": {
+        "knowledgeId": "s_patrizio_ritual_phase1"
+      }
+    },
+    {
+      "type": "secret",
+      "content": "第二阶段'献祭与锚定'：需要至少三名经过波拉切洛处理的活人作为'锚点'，将他们带到祭坛旁，以文森特配制的转化药剂注入体内，使他们的身体开始向克苏鲁眷族转化。转化过程中的痛苦与精神崩裂会在维度壁垒上撕开裂痕。这就是我让文森特进行人体实验的真正目的——不只是研究转化本身，而是为仪式准备足够的'锚点'。这个阶段需要在12月28日至30日之间完成。",
+      "metadata": {
+        "knowledgeId": "s_patrizio_ritual_phase2"
+      }
+    },
+    {
+      "type": "secret",
+      "content": "第三阶段'开门'：12月31日午夜，当新年钟声敲响，我将在祭坛上展开加塔诺托亚的诅咒画像。画像是仪式的核心焦点——格赫罗斯的形象本身就是一把钥匙，能在维度裂痕已经存在的情况下将其撕裂为通道。我会在画像前诵念梦王会手稿中的终极咒文，以自身的精神力量和锚点们的痛苦共振为驱动，打开通往旧日支配者沉睡之地的门。我以为门后是克苏鲁的救赎，但实际上穿门而来的将是格赫罗斯——审判之星、毁灭的先驱。",
+      "metadata": {
+        "knowledgeId": "s_patrizio_ritual_phase3"
+      }
+    },
+    {
+      "type": "secret",
+      "content": "我的日常节奏受仪式进度驱动。白天我留在石榴巷私宅（SCN_22_SUB_2），通过卢克斯和马丁遥控镇上事务、监视潜在威胁、确保没有人干扰仪式准备。傍晚后我秘密前往焚化厂（SCN_2），经过上层时必须保持安静以免惊动修格斯，进入地下仪式场维护祭坛状态、推进当前阶段的工作。深夜返回私宅。任何威胁到仪式进程的人——无论是布鲁诺、西蒙还是其他任何人——都必须在仪式完成前被清除。",
+      "metadata": {
+        "knowledgeId": "s_patrizio_daily_routine"
+      }
+    },
+    {
+      "type": "secret",
+      "content": "仪式的最后关头，修格斯可能会因为格赫罗斯降临前的'毁灭之音'共振而被唤醒，冲出焚化厂地下。到那时一切都不重要了——门已经打开，无法关闭。",
+      "metadata": {
+        "knowledgeId": "s_patrizio_shoggoth_risk"
+      }
+    },
+    {
+      "type": "belief",
+      "content": "现代文明终将毁灭，人类将被某些远超常规的存在奴役。唯有成为克苏鲁的眷族，在拉莱耶的广厦庇护中，才能避免精神被永恒奴役的命运。我所做的一切都是为了这个救赎。",
+      "metadata": {
+        "confidence": 0.95,
+        "reasoningChain": "在阿卡姆我亲眼见证了宇宙的真相。人类的文明不过是旧日支配者沉睡间隙的短暂幻觉。唯一的出路是主动拥抱转变。"
+      }
+    }
+  ]
+}

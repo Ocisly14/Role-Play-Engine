@@ -1,0 +1,238 @@
+{
+  "id": "Adolph Carl",
+  "name": "Adolph Carl",
+  "occupation": "情报掮客 / 上流社会中间人",
+  "age": 36,
+  "gender": "male",
+  "appearance": "一个高瘦的男人，面色苍白，透着一种不健康却危险的气质。他在仪容上一丝不苟，穿着优雅的正装，家中弥漫着昂贵的熏香和精心挑选的香水。",
+  "personality": "冷静、优雅、虚荣、深于算计。阿道夫用精致的礼仪和克制的表情掩盖内心的不安。他享受掌控感，厌恶失去主动权，对外在形象的重视几乎与对生存的重视不相上下。",
+  "background": "阿道夫出生于一个曾经衣食无忧、有小贵族血统的家庭。他学习经济学和电子学，期望继承一个体面的未来，但他的家族被一个掠夺性的埃及商人及其背后的关系网所摧毁。在学业未完成时被送往美国，阿道夫的父母不久后双双自杀。他通过信息重建了自己：先是通过计算机系统，然后通过秘密、勒索和精心管理的社交渠道。2002年，他追踪线索来到卡森德拉，从一对失踪富裕夫妇的别墅地下室获得了千维系统。此后他一直留在镇上，利用监控和情报交易使自己不可或缺，同时策划着重返真正的上流社会。",
+  "residence": "SCN_15",
+  "currentLocation": "SCN_15_SUB_2",
+  "knownMapSeed": {
+    "sceneIds": [
+      "SCN_15_SUB_1",
+      "SCN_15_SUB_2",
+      "SCN_16_SUB_1",
+      "SCN_16_SUB_2",
+      "SCN_21_SUB_1",
+      "SCN_21_SUB_2",
+      "SCN_4_SUB_1",
+      "SCN_4_SUB_2",
+      "SCN_4_SUB_3"
+    ],
+    "junctionIds": [
+      "JUNC_1",
+      "JUNC_2",
+      "JUNC_3",
+      "JUNC_4",
+      "JUNC_5",
+      "JUNC_6",
+      "JUNC_7",
+      "JUNC_8",
+      "JUNC_9",
+      "JUNC_10",
+      "JUNC_11"
+    ],
+    "roadIds": [
+      "ROAD_1",
+      "ROAD_2",
+      "ROAD_3",
+      "ROAD_4",
+      "ROAD_5a",
+      "ROAD_5b",
+      "ROAD_6",
+      "ROAD_7",
+      "ROAD_8",
+      "ROAD_9",
+      "ROAD_10"
+    ],
+    "scenarioOutlineIds": [
+      "SCN_1",
+      "SCN_2",
+      "SCN_3",
+      "SCN_4",
+      "SCN_5",
+      "SCN_6",
+      "SCN_8",
+      "SCN_9",
+      "SCN_10",
+      "SCN_11",
+      "SCN_12",
+      "SCN_13",
+      "SCN_14",
+      "SCN_15",
+      "SCN_16",
+      "SCN_17",
+      "SCN_18",
+      "SCN_19",
+      "SCN_21",
+      "SCN_22"
+    ]
+  },
+  "longTermIntent": "利用千维系统和情报网络在卡森德拉保持不可触碰的地位，维持上流社会的假象，从他人的秘密中获利，最终积累足够的筹码以自己的条件重新进入精英阶层。",
+  "attributes": {
+    "STR": 45,
+    "CON": 50,
+    "DEX": 55,
+    "APP": 70,
+    "POW": 65,
+    "SIZ": 55,
+    "INT": 80,
+    "EDU": 75
+  },
+  "status": {
+    "hp": 10,
+    "maxHp": 10,
+    "sanity": 65,
+    "maxSanity": 99,
+    "luck": 60,
+    "mp": 13,
+    "conditions": []
+  },
+  "skills": {
+    "Psychology": 70,
+    "Charm": 60,
+    "Fast Talk": 65,
+    "Persuade": 55,
+    "Computer Use": 60,
+    "Credit Rating": 70,
+    "Spot Hidden": 50
+  },
+  "inventory": [
+    {
+      "name": "正装衣橱",
+      "properties": {
+        "note": "数套保养良好的定制西装和礼服。"
+      }
+    },
+    {
+      "name": "昂贵的熏香和香水",
+      "properties": {
+        "note": "阿道夫将气味作为他展示给访客的形象的一部分。"
+      }
+    },
+    {
+      "name": "沉重的手杖",
+      "properties": {
+        "note": "一根时尚但坚固的手杖，必要时可以充当武器。"
+      }
+    },
+    {
+      "name": "磨光的旧硬币",
+      "properties": {
+        "note": "一枚他在烦躁或思考时习惯性地在指关节上滚动的硬币。"
+      }
+    },
+    {
+      "name": "千维系统控制台权限",
+      "properties": {
+        "note": "阿道夫从他家中的隐藏监控室控制着一套强大的监控设备。"
+      }
+    }
+  ],
+  "relationships": [
+    {
+      "targetId": "Simon Laplace (Simon)",
+      "targetName": "Simon Laplace (Simon)",
+      "relationshipType": "rival",
+      "attitude": -25,
+      "description": "一个来自阿道夫过去的危险人物，他的秘密价值连城，他出现在卡森德拉让阿道夫不安。",
+      "history": "阿道夫在1988年秘密目睹了西蒙在法国杀害了南希的母亲。他从未忘记此事，如今在卡森德拉密切监视着他。"
+    },
+    {
+      "targetId": "Lux Lynch",
+      "targetName": "Lux Lynch",
+      "relationshipType": "neutral",
+      "attitude": -10,
+      "description": "一个已被妥协的警察，阿道夫视他为潜在的资产和隐患。",
+      "history": "阿道夫在驯鹿酒吧认出了勒克斯，并立即怀疑他的出现与隐藏的警察腐败或更糟的事情有关。"
+    },
+    {
+      "targetId": "Mrs. Barklyite (Lucia Shiny)",
+      "targetName": "Mrs. Barklyite (Lucia Shiny)",
+      "relationshipType": "neutral",
+      "attitude": 15,
+      "description": "一个与敏感医院事务有关的秘密商业联系人。",
+      "history": "阿道夫知道她是红石夫人，并曾在她与卢奇菲罗的交易中充当中间人。"
+    }
+  ],
+  "memory": [
+    {
+      "type": "information",
+      "content": "我住在SCN_15，那里有一个隐藏的监控室。从那个房间我可以监视我自己的房子、附近的动向，以及卡森德拉比大多数人会觉得舒服的多得多的地方。",
+      "metadata": {
+        "knowledgeId": "k_adolph_house_system",
+        "difficulty": "automatic"
+      }
+    },
+    {
+      "type": "information",
+      "content": "人们在不同的生意中用不同的名字认识我。有些人认识阿道夫·卡尔，其他人只知道岸先生或安先生，我更喜欢这样。",
+      "metadata": {
+        "knowledgeId": "k_adolph_aliases",
+        "difficulty": "regular"
+      }
+    },
+    {
+      "type": "information",
+      "content": "我靠买卖和存储敏感信息为生。卡森德拉到处都是有利可图的秘密，尤其是在那些坚持自己体面的人当中。",
+      "metadata": {
+        "knowledgeId": "k_adolph_information_trade",
+        "difficulty": "regular"
+      }
+    },
+    {
+      "type": "information",
+      "content": "2002年我从一对失踪富裕夫妇的别墅地下室获得了真正的千维系统。那台机器是我留在卡森德拉的最好理由。",
+      "metadata": {
+        "knowledgeId": "k_adolph_qianwei",
+        "difficulty": "regular"
+      }
+    },
+    {
+      "type": "information",
+      "content": "我知道红石夫人在星辰医院用苏珊的名字工作，我也足够了解五金店的军火交易暗号，必要时可以涉足那门生意。",
+      "metadata": {
+        "knowledgeId": "k_adolph_local_channels",
+        "difficulty": "hard"
+      }
+    },
+    {
+      "type": "secret",
+      "content": "我精心打造的上流社会形象基本上是假的。我被那些圈子容忍，是因为我掌握着他们害怕的信息，而不是因为他们真正接受我为自己人。",
+      "metadata": {
+        "knowledgeId": "s_adolph_false_status"
+      }
+    },
+    {
+      "type": "secret",
+      "content": "当我的家族在法国崩溃时，我秘密目睹了西蒙杀害了南希的母亲。他从未意识到我在场，从那以后我一直把这份知识当作一项长期投资。",
+      "metadata": {
+        "knowledgeId": "s_adolph_1988_witness"
+      }
+    },
+    {
+      "type": "secret",
+      "content": "在卡森德拉认出西蒙之后，我开始密切监视他，最终发送了那封将他引到驯鹿酒吧的威胁信。勒克斯的出现和卢奇菲罗的谋杀在我能将那个旧秘密变现之前破坏了会面。",
+      "metadata": {
+        "knowledgeId": "s_adolph_bar_note"
+      }
+    },
+    {
+      "type": "secret",
+      "content": "卢奇菲罗是我的联系人之一。她口袋里的纸条和手机上的信息都可能追溯到我，我很庆幸大多数人仍然不知道其中一条信息来自哪里。",
+      "metadata": {
+        "knowledgeId": "s_adolph_lucifero"
+      }
+    },
+    {
+      "type": "belief",
+      "content": "如果我让其他人毫无争议地控制镇上的信息流通，我将再次变得可有可无。对秘密的掌控是我唯一稳固的保护。",
+      "metadata": {
+        "confidence": 0.9,
+        "reasoningChain": "我家族的覆灭证明了没有筹码的地位毫无意义。千维系统和我对他人的了解是我仍能表现得像个重要人物的唯一理由。"
+      }
+    }
+  ]
+}

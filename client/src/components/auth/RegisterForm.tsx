@@ -1,22 +1,25 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { useAuth } from '../../contexts/AuthContext';
-import { api } from '../../services/api';
-import { useNavigate } from 'react-router-dom';
+import type React from "react";
+import { useEffect, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "../../contexts/AuthContext";
+import { api } from "../../services/api";
 
 const RESEND_COOLDOWN_SECONDS = 60;
 
 export function RegisterForm() {
-  const [step, setStep] = useState<'form' | 'verify'>('form');
-  const [email, setEmail] = useState('');
-  const [username, setUsername] = useState('');
-  const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
-  const [referralCode, setReferralCode] = useState('');
-  const [verificationCode, setVerificationCode] = useState('');
-  const [error, setError] = useState('');
+  const { t } = useTranslation("auth");
+  const [step, setStep] = useState<"form" | "verify">("form");
+  const [email, setEmail] = useState("");
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [referralCode, setReferralCode] = useState("");
+  const [verificationCode, setVerificationCode] = useState("");
+  const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [resendMessage, setResendMessage] = useState('');
+  const [resendMessage, setResendMessage] = useState("");
   const [resendCooldown, setResendCooldown] = useState(0);
   const cooldownRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
@@ -48,15 +51,15 @@ export function RegisterForm() {
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError('');
+    setError("");
 
     if (password !== confirmPassword) {
-      setError('Passwords do not match');
+      setError(t("register.errors.passwordMismatch"));
       return;
     }
 
     if (password.length < 8) {
-      setError('Password must be at least 8 characters long');
+      setError(t("register.errors.passwordTooShort"));
       return;
     }
 
@@ -64,10 +67,12 @@ export function RegisterForm() {
 
     try {
       await register(email, password, username || undefined, referralCode);
-      setStep('verify');
+      setStep("verify");
       startCooldown();
     } catch (err: any) {
-      setError(err.response?.data?.error || 'Registration failed');
+      setError(
+        err.response?.data?.error || t("register.errors.registrationFailed")
+      );
     } finally {
       setLoading(false);
     }
@@ -75,33 +80,33 @@ export function RegisterForm() {
 
   const handleVerify = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError('');
-    setResendMessage('');
+    setError("");
+    setResendMessage("");
     setLoading(true);
 
     try {
-      await api.post('/auth/verify-code', { email, code: verificationCode });
+      await api.post("/auth/verify-code", { email, code: verificationCode });
       setSuccess(true);
-      setTimeout(() => navigate('/login'), 3000);
+      setTimeout(() => navigate("/login"), 3000);
     } catch (err: any) {
-      setError(err.response?.data?.error || 'Verification failed');
+      setError(err.response?.data?.error || t("register.verify.invalid"));
     } finally {
       setLoading(false);
     }
   };
 
   const handleResend = async () => {
-    setError('');
-    setResendMessage('');
+    setError("");
+    setResendMessage("");
     setLoading(true);
 
     try {
-      await api.post('/auth/resend-verification', { email });
-      setVerificationCode('');
-      setResendMessage('A new verification code has been sent.');
+      await api.post("/auth/resend-verification", { email });
+      setVerificationCode("");
+      setResendMessage(t("register.verify.resend"));
       startCooldown();
     } catch (err: any) {
-      setError(err.response?.data?.error || 'Failed to resend code');
+      setError(err.response?.data?.error || t("register.verify.invalid"));
     } finally {
       setLoading(false);
     }
@@ -110,57 +115,103 @@ export function RegisterForm() {
   if (success) {
     return (
       <div className="success-message-container">
-        <h2>Email Verified!</h2>
-        <p>Your account has been activated successfully.</p>
-        <p>Redirecting to login page...</p>
+        <h2>{t("register.verify.success")}</h2>
+        <p>{t("register.verify.successMessage")}</p>
+        <p>{t("common:loading.pleaseWait")}</p>
       </div>
     );
   }
 
-  if (step === 'verify') {
+  if (step === "verify") {
     return (
       <div className="register-form-container">
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '16px', marginBottom: '8px' }}>
-          <img src="/asset/icon.png" alt="Call of Cthulhu" style={{ width: '80px', height: '80px', filter: 'drop-shadow(2px 2px 4px rgba(0, 0, 0, 0.3))' }} />
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: "16px",
+            marginBottom: "8px",
+          }}
+        >
+          <img
+            src="/asset/icon.png"
+            alt={t("register.title")}
+            style={{
+              width: "80px",
+              height: "80px",
+              filter: "drop-shadow(2px 2px 4px rgba(0, 0, 0, 0.3))",
+            }}
+          />
         </div>
-        <h2>Verify Your Email</h2>
-        <p style={{ textAlign: 'center', color: '#aaa', marginBottom: '8px' }}>
-          We sent a 5-digit verification code to <strong>{email}</strong>
+        <h2>{t("register.verify.title")}</h2>
+        <p style={{ textAlign: "center", color: "#aaa", marginBottom: "8px" }}>
+          {t("register.verify.description", { email })}
         </p>
         <form onSubmit={handleVerify}>
           <div className="form-group">
-            <label htmlFor="verificationCode">Verification Code *</label>
+            <label htmlFor="verificationCode">
+              {t("register.verify.code")}
+            </label>
             <input
               id="verificationCode"
               type="text"
               inputMode="numeric"
               value={verificationCode}
-              onChange={(e) => setVerificationCode(e.target.value.replace(/\D/g, '').slice(0, 5))}
+              onChange={(e) =>
+                setVerificationCode(
+                  e.target.value.replace(/\D/g, "").slice(0, 5)
+                )
+              }
               required
               disabled={loading}
               maxLength={5}
               pattern="\d{5}"
-              placeholder="Enter 5-digit code"
+              placeholder={t("register.verify.codePlaceholder")}
               autoComplete="one-time-code"
               autoFocus
             />
           </div>
 
           {error && <div className="error-message">{error}</div>}
-          {resendMessage && <div style={{ color: '#6c757d', fontSize: '14px', textAlign: 'center', marginBottom: '8px' }}>{resendMessage}</div>}
+          {resendMessage && (
+            <div
+              style={{
+                color: "#6c757d",
+                fontSize: "14px",
+                textAlign: "center",
+                marginBottom: "8px",
+              }}
+            >
+              {resendMessage}
+            </div>
+          )}
 
-          <button type="submit" disabled={loading || verificationCode.length < 5}>
-            {loading ? 'Verifying...' : 'Verify'}
+          <button
+            type="submit"
+            disabled={loading || verificationCode.length < 5}
+          >
+            {loading
+              ? t("register.verify.submitting")
+              : t("register.verify.submit")}
           </button>
 
           <div className="form-links">
             {resendCooldown > 0 ? (
-              <span style={{ color: '#666' }}>
-                Resend code in {resendCooldown}s
+              <span style={{ color: "#666" }}>
+                {t("register.verify.resendCooldown", {
+                  seconds: resendCooldown,
+                })}
               </span>
             ) : (
-              <a href="#" onClick={(e) => { e.preventDefault(); handleResend(); }}>
-                Didn't receive the code? Resend
+              <a
+                href="#"
+                onClick={(e) => {
+                  e.preventDefault();
+                  handleResend();
+                }}
+              >
+                {t("register.verify.resend")}
               </a>
             )}
           </div>
@@ -171,13 +222,29 @@ export function RegisterForm() {
 
   return (
     <div className="register-form-container">
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '16px', marginBottom: '8px' }}>
-        <img src="/asset/icon.png" alt="Call of Cthulhu" style={{ width: '80px', height: '80px', filter: 'drop-shadow(2px 2px 4px rgba(0, 0, 0, 0.3))' }} />
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          gap: "16px",
+          marginBottom: "8px",
+        }}
+      >
+        <img
+          src="/asset/icon.png"
+          alt={t("register.title")}
+          style={{
+            width: "80px",
+            height: "80px",
+            filter: "drop-shadow(2px 2px 4px rgba(0, 0, 0, 0.3))",
+          }}
+        />
       </div>
-      <h2>Create Account</h2>
+      <h2>{t("register.title")}</h2>
       <form onSubmit={handleRegister}>
         <div className="form-group">
-          <label htmlFor="email">Email *</label>
+          <label htmlFor="email">{t("register.email")}</label>
           <input
             id="email"
             type="email"
@@ -189,7 +256,7 @@ export function RegisterForm() {
         </div>
 
         <div className="form-group">
-          <label htmlFor="username">Username (optional)</label>
+          <label htmlFor="username">{t("register.username")}</label>
           <input
             id="username"
             type="text"
@@ -201,7 +268,7 @@ export function RegisterForm() {
         </div>
 
         <div className="form-group">
-          <label htmlFor="password">Password *</label>
+          <label htmlFor="password">{t("register.password")}</label>
           <input
             id="password"
             type="password"
@@ -211,11 +278,13 @@ export function RegisterForm() {
             disabled={loading}
             minLength={8}
           />
-          <small>At least 8 characters with uppercase, lowercase, and numbers</small>
+          <small>{t("register.passwordHint")}</small>
         </div>
 
         <div className="form-group">
-          <label htmlFor="confirmPassword">Confirm Password *</label>
+          <label htmlFor="confirmPassword">
+            {t("register.confirmPassword")}
+          </label>
           <input
             id="confirmPassword"
             type="password"
@@ -227,28 +296,35 @@ export function RegisterForm() {
         </div>
 
         <div className="form-group">
-          <label htmlFor="referralCode">Referral Code *</label>
+          <label htmlFor="referralCode">{t("register.referralCode")}</label>
           <input
             id="referralCode"
             type="text"
             value={referralCode}
-            onChange={(e) => setReferralCode(e.target.value.replace(/[^A-Z0-9]/gi, '').toUpperCase().slice(0, 5))}
+            onChange={(e) =>
+              setReferralCode(
+                e.target.value
+                  .replace(/[^A-Z0-9]/gi, "")
+                  .toUpperCase()
+                  .slice(0, 5)
+              )
+            }
             required
             disabled={loading}
             maxLength={5}
             pattern="[A-Z0-9]{5}"
-            placeholder="Enter 5-character code"
+            placeholder={t("register.verify.codePlaceholder")}
           />
         </div>
 
         {error && <div className="error-message">{error}</div>}
 
         <button type="submit" disabled={loading}>
-          {loading ? 'Registering...' : 'Register'}
+          {loading ? t("register.submitting") : t("register.submit")}
         </button>
 
         <div className="form-links">
-          <a href="/login">Already have an account? Login</a>
+          <a href="/login">{t("register.haveAccount")}</a>
         </div>
       </form>
     </div>

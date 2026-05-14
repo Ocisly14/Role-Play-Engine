@@ -1,6 +1,7 @@
-import React from 'react';
-import { Navigate, useLocation } from 'react-router-dom';
-import { useAuth } from '../contexts/AuthContext';
+import type React from "react";
+import { useTranslation } from "react-i18next";
+import { Navigate, useLocation } from "react-router-dom";
+import { useAuth } from "../contexts/AuthContext";
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -11,13 +12,14 @@ interface ProtectedRouteProps {
 export function ProtectedRoute({
   children,
   requireEmailVerified = false,
-  requiredRoles = []
+  requiredRoles = [],
 }: ProtectedRouteProps) {
+  const { t } = useTranslation("common");
   const { user, loading } = useAuth();
   const location = useLocation();
 
   if (loading) {
-    return <div>Loading...</div>;
+    return <div>{t("loading.loading")}</div>;
   }
 
   if (!user) {

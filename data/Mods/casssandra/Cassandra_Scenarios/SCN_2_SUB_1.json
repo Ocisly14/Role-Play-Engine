@@ -1,0 +1,59 @@
+{
+  "id": "SCN_2_SUB_1",
+  "name": "焚化设施",
+  "description": "星辰大道的尽头延伸至一片荒凉的空地，镇上的焚化厂便坐落于此。这是一处极其简陋的设施，根本谈不上正规——一座锈迹斑斑的焚化炉孤零零地矗立在碎石与煤渣铺成的地面上，烟囱歪斜着指向灰蒙蒙的天空，表面的铁皮已被腐蚀得千疮百孔。炉口周围散落着厚厚一层灰烬，被风吹起时像灰白色的细雪般飘散。空气中弥漫着一股焦糊与腥臭交织的气味，呛人的烟尘似乎已经渗入了这里每一寸土壤。四周空旷而寂寥，枯黄的杂草从碎裂的水泥缝隙中顽强地冒出，远处可以看到一座半坍塌的建筑轮廓。整个场地没有围栏，没有看管，任何人都可以自由出入。偶尔一阵冷风掠过，带起炉灰沙沙作响，除此之外便只剩下令人不安的沉寂。这里远离镇中心的喧嚣，仿佛被整个卡森德拉遗忘在了尽头。",
+  "parentLocationId": "SCN_2",
+  "indoor": false,
+  "items": [
+    {
+      "id": "ITEM_SCN2_1",
+      "name": "焚化炉",
+      "description": "破旧的焚化炉，内部有近期使用过的痕迹，炉膛中残留着灰烬",
+      "type": "other"
+    },
+    {
+      "id": "ITEM_SCN2_2",
+      "name": "焚化记录",
+      "description": "焚化厂的简易记录簿，可能记载着近期焚化的物品和尸体信息",
+      "type": "document",
+      "category": "evidence",
+      "discoveryMethod": "inspect logbook"
+    }
+  ],
+  "conditions": [
+    {
+      "description": "空气中弥漫着焦糊的气味和某种不明的腥臭",
+      "mechanicalEffect": {
+        "skillPenalty": [
+          {
+            "skill": "Perception",
+            "delta": -10
+          }
+        ]
+      }
+    },
+    {
+      "description": "四周异常安静，偶尔从坍塌小楼方向传来令人不安的低沉声响",
+      "mechanicalEffect": {
+        "skillPenalty": [
+          {
+            "skill": "Listen",
+            "delta": 10
+          }
+        ]
+      }
+    },
+    {
+      "description": "这是一片危险区域，过去似乎有人在此进行过失控的危险试验，废墟深处现在可能仍潜伏着会被动静惊醒的未知生物。",
+      "mechanicalEffect": {
+        "skillPenalty": [
+          {
+            "skill": "Perception",
+            "delta": -10
+          }
+        ]
+      }
+    }
+  ],
+  "connections": ["SCN_2_SUB_2", "SCN_2_SUB_3", "JUNC_1"]
+}

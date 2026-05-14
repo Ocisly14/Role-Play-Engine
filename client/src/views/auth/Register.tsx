@@ -1,11 +1,13 @@
-import React from 'react';
-import { RegisterForm } from '../../components/auth/RegisterForm';
-import { FrameImage } from '../../components/FrameImage';
-import { useBackgroundImage } from '../../hooks/useBackgroundImage';
+import { FrameImage } from "../../components/FrameImage";
+import { RegisterForm } from "../../components/auth/RegisterForm";
+import { LanguageToggle } from "../../components/layout/LanguageToggle";
+import { useAppSettings } from "../../contexts/AppSettingsContext";
+import { useBackgroundImage } from "../../hooks/useBackgroundImage";
 
 export default function Register() {
   // Set background image supporting multiple formats (png, jpeg, jpg)
-  useBackgroundImage('background', true);
+  useBackgroundImage("background", true);
+  const { language, handleLanguageChange } = useAppSettings();
 
   return (
     <div className="auth-page">
@@ -15,6 +17,10 @@ export default function Register() {
           <RegisterForm />
         </div>
       </div>
+      <LanguageToggle
+        language={language}
+        onLanguageChange={handleLanguageChange}
+      />
     </div>
   );
 }

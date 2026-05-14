@@ -7,12 +7,15 @@
 import { config } from "dotenv";
 config();
 
+import { randomUUID } from "crypto";
 import fs from "fs";
 import path from "path";
-import { randomUUID } from "crypto";
-import { CoCDatabase } from "./dist/src/coc_multiagents_system/agents/memory/database/schema.js";
+import {
+  saveWorldToDatabase,
+  saveWorldToJSON,
+} from "./dist/src/dynamicworldagent/world_builder/persistence.js";
 import { ScenarioBuilderAgent } from "./dist/src/dynamicworldagent/world_builder/scenarioBuilderAgent.js";
-import { saveWorldToDatabase, saveWorldToJSON } from "./dist/src/dynamicworldagent/world_builder/persistence.js";
+import { CoCDatabase } from "./dist/src/shared/agents/memory/database/schema.js";
 
 const logger = {
   info: (msg) => console.log(`ℹ️  ${msg}`),
@@ -20,7 +23,7 @@ const logger = {
   error: (msg) => console.log(`❌ ${msg}`),
   warn: (msg) => console.log(`⚠️  ${msg}`),
   debug: (msg) => console.log(`🔍 ${msg}`),
-  section: (msg) => console.log(`\n📋 === ${msg} ===\n`)
+  section: (msg) => console.log(`\n📋 === ${msg} ===\n`),
 };
 
 const MODULE_NAME = process.argv[2] || "The White Silence Sings";
@@ -52,10 +55,19 @@ function ensureModuleBackground(db, title) {
     return;
   }
 
-  const moduleId = `module-${title.toLowerCase().replace(/\s+/g, "-").replace(/[^\w-]/g, "")}-${randomUUID().slice(0, 8)}`;
-  const hasInitialGameTime = db.hasColumn("module_backgrounds", "initial_game_time");
+  const moduleId = `module-${title
+    .toLowerCase()
+    .replace(/\s+/g, "-")
+    .replace(/[^\w-]/g, "")}-${randomUUID().slice(0, 8)}`;
+  const hasInitialGameTime = db.hasColumn(
+    "module_backgrounds",
+    "initial_game_time"
+  );
   const hasIntroduction = db.hasColumn("module_backgrounds", "introduction");
-  const hasInitialScenarioNPCs = db.hasColumn("module_backgrounds", "initial_scenario_npcs");
+  const hasInitialScenarioNPCs = db.hasColumn(
+    "module_backgrounds",
+    "initial_scenario_npcs"
+  );
 
   if (hasInitialGameTime && hasIntroduction && hasInitialScenarioNPCs) {
     database
@@ -127,16 +139,7 @@ function ensureModuleBackground(db, title) {
           keeper_guidance, module_limitations, tags
         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`
       )
-      .run(
-        moduleId,
-        title,
-        null,
-        null,
-        null,
-        null,
-        null,
-        JSON.stringify([])
-      );
+      .run(moduleId, title, null, null, null, null, null, JSON.stringify([]));
   }
 
   logger.success(`Inserted module_backgrounds row for "${title}"`);
@@ -146,7 +149,9 @@ async function testScenarioBuilder() {
   logger.section("Scenario Builder Test - Existing Module Bundle");
 
   if (!fs.existsSync(DIST_DIR)) {
-    logger.error("Missing dist output. Run `npm run build` before executing this script.");
+    logger.error(
+      "Missing dist output. Run `npm run build` before executing this script."
+    );
     return;
   }
 
@@ -154,11 +159,15 @@ async function testScenarioBuilder() {
   const hasOpenAiApi = !!process.env.OPENAI_API_KEY;
 
   if (!hasGoogleApi && !hasOpenAiApi) {
-    logger.error("No API keys found. Please set GOOGLE_API_KEY or OPENAI_API_KEY.");
+    logger.error(
+      "No API keys found. Please set GOOGLE_API_KEY or OPENAI_API_KEY."
+    );
     return;
   }
 
-  logger.success(`API Key available: ${hasGoogleApi ? "Google Gemini" : "OpenAI"}`);
+  logger.success(
+    `API Key available: ${hasGoogleApi ? "Google Gemini" : "OpenAI"}`
+  );
 
   if (!fs.existsSync(MODULE_DIR)) {
     logger.error(`Module directory not found: ${MODULE_DIR}`);

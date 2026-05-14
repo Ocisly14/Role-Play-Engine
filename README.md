@@ -1,549 +1,313 @@
-# CoC Multi-Agent System
+# LLM World Engine
 
-> AI-powered Call of Cthulhu (7th Edition) game master using LangGraph multi-agent architecture.
+> A tick-based world simulation where every NPC is an LLM agent with memory,
+> perception, and goals — inspired by the open-endedness of tabletop RPGs.
 
-**Note: This documentation is for the `weaktime` branch only.**
+```
+        World state ──▶ Render Layer ──▶ Role-Play Agent ──▶ Task Processor
+              ▲                                                     │
+              └─────────  Code Engine  ◀──┴──▶  LLM Engine  ◀───────┘
+                              (deterministic)      (open-ended)
+```
 
-## What is This?
+A traditional game engine updates the world deterministically when events
+fire. **An LLM world engine adds a second engine** that can handle
+open-ended state changes — characters disassembling items, reshaping scenes,
+having social interactions whose outcome depends on context. The two engines
+run side by side, fed by a task processor that routes each atomic step to
+whichever engine is right for the job.
 
-CoC Multi-Agent System is an AI framework that runs complete Call of Cthulhu tabletop RPG sessions. Instead of a human game master, **7 specialized AI agents** work together to:
-
-- 🎭 **Control intelligent NPCs** with memories, personalities, and secrets
-- 🎲 **Handle all game mechanics** (dice rolls, skill checks, combat, sanity)
-- 📖 **Generate immersive narratives** based on your actions
-- 🗺️ **Manage a persistent world** with 40+ locations and dynamic storytelling
-
-**Technology:** TypeScript + LangGraph + LangChain + SQLite + React
-
-**Supported AI Models:** OpenAI GPT-4, Google Gemini
+This repository is a working implementation of that idea.
 
 ---
 
-## Key Capabilities
+## Why this exists
 
-### 1. Multi-Agent Game Master
+A TTRPG session is, in essence, the act of *re-creating a world*. Players
+input actions, the world changes according to rules, environment, and
+events; NPCs react out of memory, relationships, and goals; scenes, items,
+weather, time, and storylines keep evolving. That made me wonder: if a
+TTRPG is already a dynamic world, can we build a **game engine driven by
+LLMs**?
 
-The system uses a **sequential pipeline** of specialized agents:
+Traditional engines are great at the deterministic core — math, physics,
+probability, time. They are not great at "the player just used the lamp oil
+to bribe the watchman, taking advantage of the rain." So this project
+combines them:
 
-```
-Player Input → Orchestrator → Memory → Action → Character → Director → Keeper → Output
-```
+- **Code engine** — deterministic outcomes (movement, time, weather, item
+  damage, stamina).
+- **LLM engine** — open-ended outcomes, constrained by per-skill schemas so
+  the result is still typed state changes.
+- **Task processor** — interprets free-form action text into atomic steps
+  and routes each to the right engine.
 
-| Agent | Role |
-|-------|------|
-| **Orchestrator** | Analyzes what you're trying to do |
-| **Memory** | Retrieves relevant rules and context |
-| **Action** | Rolls dice, updates character stats, manages inventory |
-| **Character** | Determines which NPCs respond and how |
-| **Director** | Decides when to change scenes or advance story |
-| **Keeper** | Generates the narrative description you read |
-
-### 2. Intelligent NPCs
-
-NPCs are not scripted—they **dynamically respond** based on:
-
-- **Personality & Background**: Each NPC has goals, secrets, and motivations
-- **Relationship Tracking**: Attitude ranges from -100 (hostile) to +100 (devoted)
-- **Knowledge System**: NPCs reveal clues based on trust level and skill checks
-- **Autonomous Behavior**: NPCs can initiate conversations, attack, or flee based on context
-
-**Example NPC Profile:**
-```json
-{
-  "name": "",
-  "personality": "",
-  "goals": ["", ""],
-  "secrets": [""],
-  "clues": [
-    {
-      "clueText": "",
-      "difficulty": "regular"
-    },
-    {
-      "clueText": "",
-      "difficulty": ""
-    }
-  ],
-  "relationships": [
-    {"character": "", "attitude":, "relationship": ""}
-  ]
-}
-```
-
-### 3. Complete CoC 7e Rules
-
-- **8 Action Types**: Exploration, Social, Combat, Stealth, Chase, Mental, Environmental, Narrative
-- **Skill System**: 40+ skills (Perception, Persuade, Brawling, Occult, etc.)
-- **Sanity Mechanics**: Cosmic horror encounters reduce sanity and cause madness
-- **Inventory Management**: Pick up items, use equipment, track resources
-- **Time Tracking**: In-game clock with day/night cycles
-
-### 4. Open-World Investigation
-
-- **Non-linear storytelling**: Choose which locations to visit and NPCs to interrogate
-- **40+ Scenarios**: Crime scenes, NPC homes, churches, hotels, wilderness areas
-- **Persistent Changes**: Actions have permanent consequences (NPCs remember, locations change)
-- **Multiple Solutions**: Different paths to solve the mystery
+The result is a world that can be both efficient and imaginative.
 
 ---
 
-## Installation & Setup
+## How it works
 
-### Prerequisites
+```mermaid
+flowchart LR
+    World[("World State<br/>(DGSM)")]
+    Render["Render Layer<br/>perception → narrative"]
+    Agent["Role-Play Agent<br/>memory + tools"]
+    Intake["Task Processor<br/>actionText → atomic steps"]
+    LLM["LLM Engine<br/>open-ended outcomes"]
+    Code["Code Engine<br/>deterministic outcomes"]
+    Apply["Applier"]
 
-- **Node.js** >= 18.0.0
-- **pnpm** >= 9.0.0
-- **API Key**: OpenAI or Google
+    World -- TickReport --> Render
+    Render --> Agent
+    Agent -- "act / continue" --> Intake
+    Intake -- "engine: llm" --> LLM
+    Intake -- "engine: code" --> Code
+    LLM --> Apply
+    Code --> Apply
+    Apply --> World
+    World -. next tick .-> World
+```
 
-### Quick Start
+Each tick is one in-world minute (configurable). One round trip per tick:
+
+1. The engine emits a `TickReport`.
+2. The controller picks the NPCs that need to act this tick — those whose
+   action ended, those affected by propagated events, and idle alive NPCs.
+3. The render layer turns each NPC's perceivable slice of the world into a
+   first-person narrative.
+4. The agent runs a short tool loop and returns one decision.
+5. `act` flows through the task processor, lands in the engine queue, and
+   the next tick consumes it.
+
+There is no central scheduler. The pipeline is one-way:
+**NPC AI → translation → queue → engine.**
+
+---
+
+## The three pillars
+
+### 1. The Hybrid World Engine — `src/engine/`
+
+The engine is the source of truth for world state. One `tick()` advances
+every in-flight action, runs passive systems, fires scripted/emergent
+events, applies state changes, and emits a `TickReport`. The `Applier` is
+the only writer to world state.
+
+**Composition** (`core/tickEngine.ts`):
+
+| Component              | Role                                                                  |
+| ---------------------- | --------------------------------------------------------------------- |
+| `Queue`                | Global ordered list of `ActionStep`s, indexed by actor                |
+| `ActionIntake`         | Accepts `ActionInput`, calls the interpreter, enqueues steps          |
+| `FeatureRunner`        | Per-tick passive systems (`weather`, `sun`, `fire`, `itemDamage`, `stamina`) |
+| `ScriptedEventRunner`  | Module-defined events that match on world state                       |
+| `EmergentEventEmitter` | Pluggable scanners (e.g. `EncounterScanner`)                          |
+| `Applier`              | Sole writer to `DynamicGameStateManager`                              |
+| `TickOrchestrator`     | Drives the per-tick phases and assembles `TickReport`                 |
+
+**Two execution paths per `ActionStep`:**
+
+- `engine: "llm"` — `stateResolver` (`resolver/stateResolver.ts`) makes one
+  LLM call, constrained by the action's `outputSchema`, and returns typed
+  `StateChange`s plus a planned duration.
+- `engine: "code"` — dispatched through `codeEngineRegistry` to a
+  deterministic subsystem. The current default is `movement`
+  (path-following across junctions and roads). Custom subsystems register
+  here.
+
+**Natural-language translation:** `gameInterpreter`
+(`interpreter/gameInterpreter.ts`) takes free-form `actionText` plus the
+registered `ActionDefinition`s and produces typed `InterpretedStep[]`.
+Skill-check definitions are split into opposed/single, `[Name]` citations
+are resolved against the entity directory, and impact hints flow through to
+downstream propagation.
+
+**Skills as the contract:** every action type is described by an
+`ActionDefinition` declaring which world state to read, which rules to
+honor, what the LLM is allowed to change, and what the typed output looks
+like. Adding a new domain (electrical repair, diving, social maneuver…) is
+a matter of writing a definition.
+
+---
+
+### 2. The Role-Play Agent — `src/roleSim/`
+
+A bare LLM is a blank super-brain. Give it a name, age, profession,
+history, personality, goal, and secret, and it becomes a *character*. But
+what really shapes a person's behavior is **memory** — and that is what
+turns the character into a continuing one.
+
+**Memory** (`src/memory/`) — seven types of memory plus a decay engine, a
+known-map memory, an embedding-based retriever (FastEmbed), and a daily
+summarization pass (`roleSim/dailySummarization.ts`). Recall is fuzzy by
+design: humans forget, misremember, and rationalize too.
+
+**`LLMRoleSimAgent.decideNext(ctx)`** — a bounded agent loop (≤14
+iterations per call):
+
+1. Build the prompt from the full `RoleSimContext` (profile, current scene,
+   current action, recent memory, long-term intent, the rendered
+   `perception.narrative`) plus the running tool transcript.
+2. One `generateText` round-trip on `ModelClass.MEDIUM` returns one JSON
+   tool call.
+3. Dispatch:
+   - **Terminal tools** (`act`, `continue`) end the loop and return a
+     decision to the controller.
+   - **Instant tools** (`writeMemory`, `recallMemory`, `getMapSnapshot`)
+     execute synchronously, append `→ Called` / `← Result` to the
+     transcript, and the loop continues.
+4. Per-tool budgets cap re-entry; the iteration cap is a hard fallback that
+   forces `continue`.
+
+The agent never sees engine handles or in-flight queue state. The engine is
+the source of truth; the controller queries it on demand.
+
+**`NpcActionController`** subscribes to one channel — `tickCompleted` —
+and per tick computes the NPCs that need a `decide()` call:
+
+1. Impact propagation via `findAffectedCharacters` for any in-flight action
+   that overlaps a `FeatureEvent`.
+2. NPCs whose action ended this tick (commit / interrupt / cancel).
+3. Alive NPCs with no in-flight step.
+
+Each affected NPC gets exactly one `decide()` per tick.
+
+**Tool surface:**
+
+| Tool             | Kind     | Effect                                                       |
+| ---------------- | -------- | ------------------------------------------------------------ |
+| `act`            | terminal | Submitted to the engine via `ActionIntake`                   |
+| `continue`       | terminal | Keep doing the in-flight action; no submission               |
+| `writeMemory`    | instant  | Append a typed memory through `NpcMemoryManager`             |
+| `recallMemory`   | instant  | Retrieve memory by query/type/date with embedding rerank     |
+| `getMapSnapshot` | instant  | Read-only view of the NPC's known topology                   |
+
+---
+
+### 3. The Render Layer — `src/roleSim/renderer/`
+
+In a traditional engine, the renderer turns world state into pixels. In an
+LLM world, it turns world state into **the words the NPC perceives** — the
+NPC's camera. Same role, different output.
+
+The agent never reads the structured world. It reads what its character
+*could see, hear, smell, and feel right now*. That is what the render layer
+produces.
+
+**`buildPerceivedBundle`** gathers the per-NPC slice:
+
+- `scene` — id, name, description, active scene conditions
+- `ownConditions` — the NPC's own character conditions (proprioceptive)
+- `ownAction` — `ongoing` / `ended { committed | interrupted | cancelled }` /
+  `idle`
+- `events` — the controller-filtered `FeatureEvent`s that propagated to
+  this NPC
+
+**`render`** runs one LLM round-trip on `ModelClass.SMALL` (Haiku-tier).
+The system prompt enforces:
+
+- **Format** — a `[narrative]` paragraph (first person, present tense,
+  sensory only) followed by a `[references]` block.
+- **Perception only** — render only what the viewpoint can sense right
+  now. No memory, no plot secrets, no hidden allegiances, no future plans.
+- **Citations** — `[N]` after named people, items, and scenes the first
+  time they appear; reuse the same `N` thereafter. Sub-locations, weather,
+  and generic nouns stay inline as plain prose.
+- **Identity** — for unknown people, use the description-based identifier
+  given in the input (`"the gaunt man"`); never invent canonical names.
+
+If the LLM call fails or returns empty, `render` falls back to
+`buildGodEyeFallback` — a deterministic, synchronous god-eye prose render
+of the same bundle. Tests exercise the deterministic path directly via
+`renderFallback`.
+
+If a 2D / 3D engine is wired in later, the render layer is the natural
+seam: replace the textual narrative with rendered pixels and feed both into
+a multimodal prompt.
+
+---
+
+## Tick = frame rate
+
+The world advances one tick at a time. A tick can be one in-world minute,
+five, or longer.
+
+In a traditional game, frame rate is bounded by how fast you can rasterize
+triangles. In an LLM world, the bound is **how fast the engines and the
+agents can think** — state-update throughput, inference latency, token
+generation speed. The faster the two engines and the agent loop run, the
+shorter each tick can be, and the smoother the world flows.
+
+GPUs once raced to draw triangles. In an LLM world, token throughput
+becomes its own kind of rendering budget.
+
+---
+
+## Quick start
+
+Prerequisites: **Node ≥ 18**, **pnpm** (enforced via `only-allow`),
+**PostgreSQL**, and an LLM API key (Anthropic / OpenAI / Google) configured
+via env vars.
 
 ```bash
-# Clone and install
-git clone <repository-url>
-cd CoC-AI-agent
-pnpm install
-
-# Configure API key
-cp .env.example .env
-# Edit .env and add: OPENAI_API_KEY=sk-...
-
-# Build
-pnpm build
+pnpm install                # also runs prisma generate
+pnpm prisma db push         # use db push, not migrate dev (see Notes)
+pnpm chat:dev               # API + WebSocket server + Vite frontend
 ```
 
----
-
-## How to Use
-
-### Option 1: Web Interface (Recommended)
-
-**Step 1: Start the backend server**
+Other useful commands:
 
 ```bash
-pnpm chat
+pnpm chat                   # backend only
+pnpm chat:frontend          # frontend only
+pnpm build                  # swc src -> dist
+pnpm build:tsc              # tsc -p tsconfig.json
+pnpm check                  # biome check --apply
+pnpm test                   # vitest (-- path/to/file or -t name to filter)
 ```
 
-You'll see:
-```
-Server running on http://localhost:3000
-Game initialized with session: abc123
-```
-
-**Step 2: Start the frontend (in a new terminal)**
-
-```bash
-pnpm chat:frontend
-```
-
-**Step 3: Open browser**
-
-Navigate to `http://localhost:5173`
-
-**Step 4: Play!**
-
-- Create your character or use the default investigator
-- Type actions in natural language: *"I search the crime scene for clues"*
-- The AI Keeper will respond with narrative descriptions
-- Track your inventory, HP, sanity, and discovered clues in the UI
-
+Path alias `@/*` → `src/*` is configured for vitest.
 
 ---
 
-## How to Upload Your Own Module
+## Repo layout
 
-A "module" is a complete mystery scenario with NPCs, locations, and clues. Here's how to add your own:
+```text
+src/
+  engine/      Tick engine, handlers, features, interpreter, resolver, codeEngine
+  roleSim/     Role-play agent, controller, render layer, tool dispatcher
+  simulation/  SimulationRunner, persistence, event emitter
+  state/       DynamicGameState, topology, gameClock, module loading
+  memory/      7-type NPC memory + decay + retriever
+  models/      LLM wrapper (ChatAnthropic / OpenAI / Google)
+  rag/         Discovery retrieval
+  i18n/        en / zh
 
-### Step 1: Create Module Structure
+client/
+  server/      Express + WebSocket entry and route modules
+  src/         React + Vite + Tailwind admin UI
 
-```bash
-mkdir -p "data/Mods/My Mystery/My Mystery_npc"
-mkdir -p "data/Mods/My Mystery/My Mystery_Scenarios"
-```
-
-### Step 2: Create Module Digest
-
-Create `data/Mods/My Mystery/module_digest.json`:
-
-```json
-{
-  "title": "My Mystery Name",
-  "background": "A dark secret lurks in the small town of...",
-  "storyOutline": "Players must investigate a series of disappearances...",
-  "keeperGuidance": "Start by having players discover the first body...",
-  "moduleLimitations": "Mystery must be solved within...",
-  "initialGameTime": "Day 1 18:00",
-  "tags": ["murder_mystery", "small_town", "cult"],
-  "introduction": "You arrive in town on a cold October evening..."
-}
-```
-
-### Step 3: Add NPCs
-
-Create JSON files in `My Mystery_npc/`:
-
-**Example: `My Mystery_npc/detective_miller.json`**
-
-*Small tips: You can use GPT or gemini to extract the npc files from the Module Document.
-
-```json
-{
-  "name": "Detective Miller",
-  "occupation": "Private Investigator",
-  "age": 42,
-  "appearance": "Weathered face, rumpled trench coat, always smoking",
-  "personality": "Cynical, determined, has a dark sense of humor",
-  "background": "Former police detective, left force after corruption scandal",
-  "goals": [
-    "Solve the current case",
-    "Redeem his reputation",
-    "Find evidence against the corrupt mayor"
-  ],
-  "secrets": [
-    "He was framed by the mayor",
-    "He knows the victims are connected to a cult"
-  ],
-  "clues": [
-    {
-      "clueText": "All three victims had the same tattoo—a strange spiral symbol",
-      "category": "knowledge",
-      "difficulty": "regular",
-      "relatedEntities": ["Mayor", "Cult Leader"]
-    },
-    {
-      "clueText": "The mayor was at the first crime scene before police arrived",
-      "category": "observation",
-      "difficulty": "hard",
-      "relatedEntities": ["Mayor Thompson"]
-    }
-  ],
-  "relationships": [
-    {
-      "character": "Mayor Thompson",
-      "attitude": -80,
-      "relationship": "enemy",
-      "notes": "The mayor framed Miller and forced him off the police force"
-    }
-  ],
-  "attributes": {
-    "STR": 60, "CON": 55, "DEX": 50, "APP": 45,
-    "POW": 65, "SIZ": 70, "INT": 75, "EDU": 65
-  },
-  "status": {
-    "hp": 12, "maxHp": 12,
-    "sanity": 45, "maxSanity": 65,
-    "luck": 50,
-    "conditions": []
-  },
-  "skills": {
-    "Perception": 70,
-    "Psychology": 60,
-    "Persuade": 55,
-    "Intimidate": 50,
-    "Brawling": 65,
-    "Pistol": 60,
-    "Law": 50
-  },
-  "inventory": [
-    {"name": "Revolver", "quantity": 1},
-    {"name": "Bullets", "quantity": 12},
-    {"name": "Badge (former)", "quantity": 1},
-    {"name": "Notebook", "quantity": 1}
-  ],
-  "currentLocation": "Detective Office",
-  "isNPC": true
-}
-```
-
-**Alternative: Use Documents**
-
-You can also write NPCs as `.docx` or `.pdf` files with structured text:
-
-```
-Name: Detective Miller
-Occupation: Private Investigator
-Age: 42
-Appearance: Weathered face, rumpled trench coat
-
-Personality:
-Cynical but determined. Has a dark sense of humor...
-
-Background:
-Former police detective who left the force after...
-
-Goals:
-- Solve the current case
-- Redeem his reputation
-
-Secrets:
-- He was framed by the mayor
-- He knows the victims are connected to a cult
-
-Clues:
-[Regular] All three victims had the same spiral tattoo
-[Hard] The mayor was at the crime scene before police
-```
-
-### Step 4: Add Scenarios (Locations)
-
-Create JSON files in `My Mystery_Scenarios/`:
-
-**Example: `My Mystery_Scenarios/crime_scene.json`**
-
-*Small tips: You can use GPT or gemini to extract the scenario files from the Module Document.
-
-```json
-{
-  "id": "crime_scene_alley",
-  "name": "Dark Alley Behind Hotel",
-  "location": "Downtown",
-  "description": "A narrow alley thick with shadows. The smell of rotting garbage mingles with something more sinister—the metallic tang of blood. Police tape flutters in the cold wind.",
-
-  "characters": [
-    {"name": "Detective Miller", "role": "investigating"},
-    {"name": "Officer Chen", "role": "guarding scene"}
-  ],
-
-  "clues": [
-    {
-      "id": "bloodstain_pattern",
-      "clueText": "Arterial spray suggests victim was standing when attacked",
-      "category": "physical",
-      "difficulty": "regular",
-      "location": "brick wall near dumpster",
-      "discoveryMethod": "Perception check or forensics knowledge",
-      "reveals": ["weapon_type", "killer_height"],
-      "discovered": false
-    },
-    {
-      "id": "cultist_symbol",
-      "clueText": "A spiral symbol drawn in the victim's blood",
-      "category": "physical",
-      "difficulty": "automatic",
-      "location": "ground near body outline",
-      "reveals": ["cult_connection"],
-      "discovered": false
-    }
-  ],
-
-  "conditions": [
-    {
-      "type": "lighting",
-      "description": "Dim streetlight, deep shadows",
-      "mechanicalEffect": "Perception checks at -20% penalty at night"
-    },
-    {
-      "type": "smell",
-      "description": "Overwhelming stench of decay",
-      "mechanicalEffect": "May trigger CON check to avoid nausea"
-    }
-  ],
-
-  "exits": [
-    {
-      "direction": "north",
-      "targetScenarioId": "main_street",
-      "description": "The alley opens onto Main Street"
-    },
-    {
-      "direction": "south",
-      "targetScenarioId": "hotel_back_entrance",
-      "description": "A rusty door leads to the hotel's service entrance"
-    }
-  ],
-
-  "permanentChanges": [],
-  "keeperNotes": "This is where the first victim was found. If players investigate thoroughly, they can connect this murder to the cult.",
-  "estimatedShortActions": 3
-}
-```
-
-### Step 5: Load Your Module
-
-**Option A: Auto-load on startup**
-
-The system automatically loads modules from `data/Mods/` when you start:
-
-```bash
-pnpm chat
-# Your module will be loaded automatically
-```
-
-**Option B: Specify module explicitly**
-
-Modify `src/coc_multiagents_system/index.ts` to load your specific module:
-
-```typescript
-const moduleDigest = await loadModuleDigest("My Mystery");
-```
-
-### Module File Formats
-
-You can use **JSON** or **documents** (.docx, .pdf):
-
-**JSON Format:**
-- Structured, easy to parse
-- Best for complex data (multiple NPCs, intricate relationships)
-- See examples above
-
-**Document Format:**
-- Write NPCs/scenarios as narrative text
-- System extracts information using AI
-- Good for rapid prototyping
-
-**Example .docx NPC:**
-```
-CHARACTER PROFILE: Sarah Chen
-
-Age: 28
-Occupation: Librarian
-Appearance: Short black hair, glasses, always wears cardigans
-
-Sarah is quiet and observant. She notices things others miss...
-
-CLUES:
-- [Automatic] She saw a suspicious man at the library three nights ago
-- [Regular] She found an old newspaper with articles about similar deaths
-- [Hard] She's been researching the cult in secret and has a hidden journal
-```
-
-### Tips for Good Modules
-
-1. **Start Small**: 3-5 NPCs and 5-10 locations is enough for a 4-6 hour mystery
-2. **Clear Clue Trails**: Make sure players can discover clues that lead to other clues
-3. **Varied Difficulties**: Mix automatic, regular, and hard clues
-4. **NPC Relationships**: Create tension with conflicting goals and hidden alliances
-5. **Multiple Paths**: Don't require a single solution—let players be creative
-
----
-
-## Project Structure
-
-```
-CoC-AI-agent/
-├── src/
-│   ├── agents/           # 7 specialized AI agents
-│   ├── database/         # SQLite schema and repositories
-│   ├── loaders/          # NPC/scenario loading from JSON/docs
-│   ├── rules/            # CoC 7e mechanics (8 action types)
-│   └── graph/            # LangGraph workflow
-│
-├── client/               # React web interface
-│   ├── components/       # GameChat, CharacterSheet
-│   └── server.ts         # Express API server
-│
-├── data/
-│   ├── coc_game.db       # SQLite database (auto-generated)
-│   └── Mods/
-│       └── Cassandra's Black Carnival/   # Example module
-│           ├── module_digest.json
-│           ├── Cassandra's_npc/          # 28 NPC profiles
-│           └── Cassandra's_Scenarios/     # 40+ locations
-│
-├── .env                  # Your API keys (create from .env.example)
-└── README.md
+prisma/
+  schema.prisma
+  migrations/
 ```
 
 ---
 
-## Configuration
+## Notes
 
-### Environment Variables
-
-Create `.env` file:
-
-```bash
-# Required: Choose provider
-MODEL_PROVIDER=openai
-
-# OpenAI
-OPENAI_API_KEY=sk-...
-SMALL_OPENAI_MODEL=gpt-4o-mini
-MEDIUM_OPENAI_MODEL=gpt-4o
-
-
-# Or use Google
-MODEL_PROVIDER=google
-GOOGLE_API_KEY=...
-SMALL_GOOGLE_MODEL=gemini-1.5-flash
-MEDIUM_GOOGLE_MODEL=gemini-1.5-pro
-
-# Optional
-DATABASE_PATH=./data/coc_game.db
-PORT=3000
-```
-
-### Model Selection Strategy
-
-- **SMALL models** (gpt-4o-mini, gemini-2.0-flash): Fast analysis, structured output
-- **MEDIUM models** (gpt-4o, gemini-2.5-flash): Creative storytelling, complex reasoning
-
-Only the **Keeper** agent use MEDIUM models—everything else uses SMALL for cost efficiency.
+- Use `pnpm prisma db push` rather than `migrate dev`. The
+  `reminder_embeddings` table has drift that makes `migrate dev` unsafe.
+  Scenarios use a compound unique key `(moduleId, scenarioId)`; query with
+  `findFirst`, not `findUnique`.
+- A single `gameDateTime` ISO 8601 string is the only time field. New code
+  must not split it back into separate day/time fields. See
+  `src/state/gameClock.ts`.
+- `CLAUDE.md` is the canonical developer reference for contributors.
+- Legacy single-player chat, turn polling, and memo paths have been
+  removed; only the simulation surface is active.
 
 ---
 
-## Current Limitations & Future Improvements
-
-### Known Limitations
-
-**Single Player Only**
-- The current version supports **single-player gameplay only**
-- Multiplayer functionality (multiple human players in one session) is **under development**
-- Planned features include:
-  - Multiple player characters in one game session
-  - Turn-based coordination between players
-  - Shared investigation and collaborative problem-solving
-
-**RAG System Under Improvement**
-- The Retrieval-Augmented Generation (RAG) system for knowledge retrieval is **currently being redesigned**
-- Current status: RAG is disabled by default (`SKIP_RAG = true`)
-- Improvements in progress:
-  - Better semantic search for scenario clues and NPC knowledge
-  - Optimized graph traversal for relationship discovery
-  - Enhanced context retrieval for more accurate rule application
-
-**Frontend UI Improvements**
-- The web interface user experience is **currently being enhanced**
-- Improvements in progress:
-  - Better game state visualization
-  - Improved character sheet and inventory management
-  - Enhanced clue tracking and relationship displays
-  - More intuitive action input and command suggestions
-
-### Roadmap
-
-We're actively working on:
-1. **Multiplayer Support** - Multiple players sharing one investigation
-2. **Enhanced RAG** - Smarter context retrieval and clue connections
-3. **Frontend UI/UX** - More intuitive and immersive web interface
-4. **Autonomous AI Players** - LLM agents that can play alongside or instead of humans
-5. **Additional Modules** - More Call of Cthulhu scenarios and mysteries
-
----
-
-## Troubleshooting
-
-### "Module not found"
-- Check that your module folder is in `data/Mods/`
-- Verify `module_digest.json` exists and is valid JSON
-
-
-### "API rate limit exceeded"
-- Use SMALL models for most agents (cheaper, faster)
-- Add delays between turns if needed
-
-### NPCs not responding
-- Check that NPC names match exactly (case-sensitive)
-- Verify NPC has `currentLocation` set to match scenario
-- Check NPC's `attitude` (below -50 may refuse to talk)
-
----
-
-## License
-
-MIT License
-
----
-
----
-
-**Start your investigation now!** 🎲🔍
+> Bring GPUs back to games. **Make Games Great Again.**

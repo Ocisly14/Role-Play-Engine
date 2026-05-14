@@ -1,0 +1,96 @@
+{
+  "id": "Moon Mirror Guardian, Mother of a Thousand Young in the Mountains (Avatar of Shub-Niggurath)",
+  "name": "Moon Mirror Guardian, Mother of a Thousand Young in the Mountains (Avatar of Shub-Niggurath)",
+  "occupation": "Outer God Avatar / Guardian Entity",
+  "age": 999999999,
+  "gender": "N/A",
+  "appearance": "A vast, grotesque being with a semi-translucent, gelatinous body crowned by a massive beak filled with countless teeth. Within its form, swallowed sacrifices can be seen slowly transforming.",
+  "personality": "A dark fertility deity avatar, demanding sacrifice and offering twisted blessings.",
+  "background": "The Moon Mirror Guardian is an avatar of Shub-Niggurath, worshipped by cultists as the Mother of a Thousand Young in the Mountains. It can only be summoned through the Moon Mirror during a full moon. Cultists offer living sacrifices to it, which are devoured whole and transformed within its body into servants blessed by Shub-Niggurath.",
+  "residence": "SCN_20",
+  "currentLocation": "SCN_20",
+  "longTermIntent": "Consume living sacrifices, transform what it can keep, and nurture new servants of Shub-Niggurath inside a body built for corruption.",
+  "attributes": {
+    "STR": 275,
+    "CON": 675,
+    "DEX": 80,
+    "APP": 0,
+    "POW": 350,
+    "SIZ": 485,
+    "INT": 105,
+    "EDU": 0
+  },
+  "status": {
+    "hp": 115,
+    "maxHp": 115,
+    "sanity": 0,
+    "maxSanity": 0,
+    "luck": 0,
+    "mp": 70,
+    "conditions": []
+  },
+  "skills": {
+    "Fighting": 90,
+    "Crush": 75
+  },
+  "inventory": [],
+  "relationships": [
+    {
+      "targetId": "Shub-Niggurath",
+      "targetName": "Shub-Niggurath",
+      "relationshipType": "ally",
+      "attitude": 100,
+      "description": "A physical manifestation of the Outer God's will on Earth.",
+      "history": "Exists as a conduit for Shub-Niggurath's power, summoned through ancient rituals."
+    },
+    {
+      "targetId": "Black Goat Cult",
+      "targetName": "Black Goat Cult",
+      "relationshipType": "ally",
+      "attitude": 0,
+      "description": "Cultists who perform the sacrifices needed to summon and feed the avatar.",
+      "history": "Wealthy families in Cassandra secretly maintain the ritual chain that brings it living prey."
+    }
+  ],
+  "memory": [
+    {
+      "type": "information",
+      "content": "The Moon Mirror is the ritual threshold. During a full moon, the mirror allows me to manifest and accept sacrifices.",
+      "metadata": {
+        "knowledgeId": "k_moonmirror_summon",
+        "difficulty": "automatic"
+      }
+    },
+    {
+      "type": "information",
+      "content": "Swallowed victims do not simply die. They are slowly altered inside my body until they can be remade as servants.",
+      "metadata": {
+        "knowledgeId": "k_moonmirror_transformation",
+        "difficulty": "hard"
+      }
+    },
+    {
+      "type": "secret",
+      "content": "The ritual depends on the mirror, the full moon, and cult discipline. Disrupting any one of those can delay manifestation.",
+      "metadata": {
+        "knowledgeId": "s_moonmirror_ritual"
+      }
+    },
+    {
+      "type": "belief",
+      "content": "Sacrifice is not loss. It is a fermentation of flesh into a better, stranger purpose.",
+      "metadata": {
+        "confidence": 0.9,
+        "reasoningChain": "What is swallowed can be transformed, and what is transformed can serve."
+      }
+    },
+    {
+      "type": "information",
+      "content": "I do not truly emerge unless the mirror, the moon, and the offering all align.",
+      "metadata": {
+        "knowledgeId": "k_moonmirror_alignment",
+        "difficulty": "hard"
+      }
+    }
+  ]
+}

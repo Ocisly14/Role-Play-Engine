@@ -1,0 +1,65 @@
+[
+  {
+    "id": "OTH_WARNING_SIGN",
+    "name": "警示牌",
+    "description": "用于提醒高温、危险区域、施工或禁止入内等信息的警示牌。",
+    "type": "other",
+    "era": "2000s"
+  },
+  {
+    "id": "OTH_DIRECTION_SIGN",
+    "name": "方向牌",
+    "description": "标注道路、建筑或公共设施方向的指示牌，常见于路口、站前和公共空间。",
+    "type": "other",
+    "era": "2000s"
+  },
+  {
+    "id": "OTH_NOTICE_BOARD",
+    "name": "告示栏",
+    "description": "用于张贴公告、通知、活动海报或通缉令的公共告示栏。",
+    "type": "other",
+    "era": "2000s"
+  },
+  {
+    "id": "OTH_PUBLIC_BENCH",
+    "name": "公共长椅",
+    "description": "设置在街角、站台、广场或候车处的公共长椅，供行人短暂休息。",
+    "type": "other",
+    "era": "2000s"
+  },
+  {
+    "id": "OTH_CONCRETE_BARRIER",
+    "name": "混凝土路障",
+    "description": "用于限制车辆通行、临时封锁路段或保护边界的混凝土路障。",
+    "type": "other",
+    "era": "2000s"
+  },
+  {
+    "id": "OTH_STATION_SIGN",
+    "name": "站牌",
+    "description": "标示车站、站台或停靠点名称的站牌，通常长期暴露在户外环境中。",
+    "type": "other",
+    "era": "2000s"
+  },
+  {
+    "id": "OTH_ELECTRIC_POLE",
+    "name": "电线杆",
+    "description": "承载供电、电话或网络线路的电线杆，表面常贴有编号、广告或临时通知。",
+    "type": "other",
+    "era": "2000s"
+  },
+  {
+    "id": "OTH_VENDING_MACHINE",
+    "name": "自动售货机",
+    "description": "用于售卖饮料、零食或小件用品的自动售货机，常见于医院、车站和办公场所。",
+    "type": "other",
+    "era": "2000s"
+  },
+  {
+    "id": "OTH_WAITING_CHAIR",
+    "name": "候诊椅",
+    "description": "医院、车站或办事大厅常见的连排候诊椅，供来访者或病人短暂等待时使用。",
+    "type": "other",
+    "era": "2000s"
+  }
+]

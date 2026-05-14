@@ -1,0 +1,89 @@
+{
+  "id": "Servant of Nyogtha",
+  "name": "Servant of Nyogtha",
+  "occupation": "Mythos Cult Servitor / Aberrant Hybrid",
+  "age": 0,
+  "gender": "N/A",
+  "appearance": "In human form, indistinguishable from an ordinary person. When partially revealed, black ichor seeps in place of blood. In full monstrous form, the body becomes a nauseating mass of cold gelatinous flesh, clawed limbs, fanged maw, and writhing worm-like tentacles.",
+  "personality": "Emotionally distant, obedient, and utterly inhuman beneath the surface. Displays minimal individuality, driven by devotion to Nyogtha and predatory instinct once transformed.",
+  "background": "The Servants of Nyogtha are humans bound to the Outer God Nyogtha. During adolescence they learn forbidden rites and begin a gradual transformation. Some retain a human facade for years, while others fully convert into monstrous forms steeped in Nyogtha's cold, abyssal essence.",
+  "residence": "SCN_7",
+  "currentLocation": "SCN_7",
+  "longTermIntent": "Serve Nyogtha, capture designated victims, and keep human suspicion low until a direct strike can be made.",
+  "attributes": {
+    "STR": 80,
+    "CON": 85,
+    "DEX": 50,
+    "APP": 10,
+    "POW": 80,
+    "SIZ": 65,
+    "INT": 60,
+    "EDU": 0
+  },
+  "status": {
+    "hp": 15,
+    "maxHp": 15,
+    "sanity": 0,
+    "maxSanity": 0,
+    "luck": 0,
+    "mp": 16,
+    "conditions": []
+  },
+  "skills": {
+    "Claw Attack": 65,
+    "Bite": 65,
+    "Grapple": 50
+  },
+  "inventory": [],
+  "relationships": [
+    {
+      "targetId": "Nyogtha",
+      "targetName": "Nyogtha",
+      "relationshipType": "ally",
+      "attitude": 100,
+      "description": "Outer God master worshipped and served without question.",
+      "history": "The servants exist solely to enact Nyogtha's will in the material world."
+    }
+  ],
+  "memory": [
+    {
+      "type": "information",
+      "content": "I can look human until I choose to stop pretending. That disguise is the first layer of the hunt.",
+      "metadata": {
+        "knowledgeId": "k_servant_human_form",
+        "difficulty": "automatic"
+      }
+    },
+    {
+      "type": "information",
+      "content": "All servants learn Contact Nyogtha during adolescence, and older or fully transformed servants may know more of the same abyssal repertoire.",
+      "metadata": {
+        "knowledgeId": "k_servant_spell",
+        "difficulty": "hard"
+      }
+    },
+    {
+      "type": "secret",
+      "content": "When I fully reveal myself, conventional weapons and panic matter less than pressure, suffocation, and the slow collapse of the victim's resistance.",
+      "metadata": {
+        "knowledgeId": "s_servant_form"
+      }
+    },
+    {
+      "type": "belief",
+      "content": "The best prey is the prey that does not realize the underground has already chosen it.",
+      "metadata": {
+        "confidence": 0.85,
+        "reasoningChain": "Deception shortens the distance between the surface and the abyss."
+      }
+    },
+    {
+      "type": "information",
+      "content": "I know every drain, crawlspace, and foundation crack that leads from one feeding ground to another.",
+      "metadata": {
+        "knowledgeId": "k_servant_routes",
+        "difficulty": "regular"
+      }
+    }
+  ]
+}

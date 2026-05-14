@@ -1,0 +1,180 @@
+{
+  "scenarios": [
+    {
+      "id": "SCN_1",
+      "name": "星辰医院",
+      "description": "这家医院设备不算精良，但也算的上是一家不错的医院，可惜的是缺乏正确的管理，人员显得比较松散。医院有监控设施，不过也有监控死角存在。",
+      "subSceneCount": 6,
+      "entrySceneId": "SCN_1_SUB_1",
+      "residents": ["文森特"]
+    },
+    {
+      "id": "SCN_2",
+      "name": "焚化厂",
+      "description": "星辰大道尽头的焚化厂，只是一个非常简陋的地方，根本谈不上正规。焚化厂伫立着已经坍塌了一半的二层小楼。这里是危险地区。",
+      "subSceneCount": 3,
+      "entrySceneId": "SCN_2_SUB_1"
+    },
+    {
+      "id": "SCN_3",
+      "name": "警察局",
+      "description": "卡森德拉的警察局，位于新月街A大道南的尽头。",
+      "subSceneCount": 3,
+      "entrySceneId": "SCN_3_SUB_1",
+      "residents": ["卢克斯"]
+    },
+    {
+      "id": "SCN_4",
+      "name": "帕拉迪尔大酒店",
+      "description": "新月街A大道北与石榴巷路口处的一座十分新的五层建筑，装修得富丽堂皇。正门在新月街A大道北这一侧。",
+      "subSceneCount": 4,
+      "entrySceneId": "SCN_4_SUB_1"
+    },
+    {
+      "id": "SCN_5",
+      "name": "马塞尔家",
+      "description": "新月街B大道的路口正对面，是马塞尔家，廉租房的一间。",
+      "subSceneCount": 1,
+      "entrySceneId": "SCN_5_SUB_1",
+      "residents": ["马塞尔"]
+    },
+    {
+      "id": "SCN_6",
+      "name": "二层木屋",
+      "description": "新月街B大道上的一间木屋，从外观上来看没有什么明显的特殊之处，大门前有一个走廊，一个短短的楼梯连接着门前的小路，旁边的花园杂草丛生。",
+      "subSceneCount": 3,
+      "entrySceneId": "SCN_6_SUB_1"
+    },
+    {
+      "id": "SCN_7",
+      "name": "下水道",
+      "description": "新月街B大道地下的下水道系统，入口在街面上。和普通的下水道一样，里面只有污水。",
+      "subSceneCount": 2,
+      "entrySceneId": "SCN_7_SUB_1"
+    },
+    {
+      "id": "SCN_8",
+      "name": "菲利普的家",
+      "description": "菲利普位于新月街C大道的住宅。",
+      "subSceneCount": 1,
+      "entrySceneId": "SCN_8_SUB_1",
+      "residents": ["菲利普"]
+    },
+    {
+      "id": "SCN_9",
+      "name": "花店·卡森德拉之花",
+      "description": "花店所在是一处两层建筑，下层外间是花店，内间是厨房、餐厅、午休的小隔间和洗手间，并附带有一个小酒窖。上层是西蒙的工作室、盥洗室和几间卧室。",
+      "subSceneCount": 3,
+      "entrySceneId": "SCN_9_SUB_1",
+      "residents": ["南希", "西蒙"]
+    },
+    {
+      "id": "SCN_10",
+      "name": "海伦的餐桌",
+      "description": "一家小餐厅，地方不大但生意不错，常常需要预约。店老板是一位性感的拉美裔女性，至少表面上给人的感觉十分热情。",
+      "subSceneCount": 1,
+      "entrySceneId": "SCN_10_SUB_1",
+      "residents": ["海伦"]
+    },
+    {
+      "id": "SCN_11",
+      "name": "占星师小铺",
+      "description": "花店旁有一间小小的占卜馆，大多数时候，门都是关着的。",
+      "subSceneCount": 1,
+      "entrySceneId": "SCN_11_SUB_1",
+      "residents": ["所罗门"]
+    },
+    {
+      "id": "SCN_12",
+      "name": "钟表店",
+      "description": "钟表店的主人叫做怀特，是个瘦小的老头，带着一副老花镜。店面不大，里面全都是各种各样的钟表，玻璃柜上展示着许多精致的怀表。",
+      "subSceneCount": 1,
+      "entrySceneId": "SCN_12_SUB_1",
+      "residents": ["怀特"]
+    },
+    {
+      "id": "SCN_13",
+      "name": "酒厂",
+      "description": "这家酒厂主要生产伏特加。规模看起来很大，但实际上这里有一多半的地方现在是空着的。",
+      "subSceneCount": 3,
+      "entrySceneId": "SCN_13_SUB_1",
+      "residents": ["威廉"]
+    },
+    {
+      "id": "SCN_14",
+      "name": "珊德拉的小屋",
+      "description": "卡森德拉旧街上珊德拉的住所。",
+      "subSceneCount": 2,
+      "entrySceneId": "SCN_14_SUB_1",
+      "residents": ["珊德拉"]
+    },
+    {
+      "id": "SCN_15",
+      "name": "阿道夫家",
+      "description": "阿道夫家有着千维系统和许多监控，无论阿道夫是否在家，他都会知道有人进来。",
+      "subSceneCount": 2,
+      "entrySceneId": "SCN_15_SUB_1",
+      "residents": ["阿道夫"]
+    },
+    {
+      "id": "SCN_16",
+      "name": "驯鹿酒吧",
+      "description": "案发地点。这个酒吧有上下两层，一层是大厅，二层是环绕式的小隔层，是当地非常有名的一个酒吧。",
+      "subSceneCount": 2,
+      "entrySceneId": "SCN_16_SUB_1",
+      "residents": ["塔兰", "卢泽"]
+    },
+    {
+      "id": "SCN_17",
+      "name": "教堂",
+      "description": "教堂不大，但是非常庄严，四米高的大门让人还未踏进这里便心存敬畏。整座教堂是一个十字型建筑，在教堂的最深处有一座耶稣受难的雕像，雕像后面是一个钟楼，钟楼后面是一个巨大的彩色玻璃。钟楼上方是圆顶结构。",
+      "subSceneCount": 4,
+      "entrySceneId": "SCN_17_SUB_1"
+    },
+    {
+      "id": "SCN_18",
+      "name": "五金店",
+      "description": "五金店的店主是一个中年男子，名字叫做哈里森。平时在店里他还喜欢捣鼓一些小发明，这些发明被标注成了非卖品放在陈列架的最上面。",
+      "subSceneCount": 1,
+      "entrySceneId": "SCN_18_SUB_1",
+      "residents": ["哈里森"]
+    },
+    {
+      "id": "SCN_19",
+      "name": "墓地",
+      "description": "前往伐木场的中途会路过卡森德拉公墓，这里离伐木场并不远。",
+      "subSceneCount": 1,
+      "entrySceneId": "SCN_19_SUB_1"
+    },
+    {
+      "id": "SCN_20",
+      "name": "伐木场",
+      "description": "日暮大道尽头是森林和废弃的伐木场。这里已经完全荒废了，残留的机器不多，满是锈迹，从磨损情况来看，有不少机器看起来从未真正运转过。",
+      "subSceneCount": 3,
+      "entrySceneId": "SCN_20_SUB_1"
+    },
+    {
+      "id": "SCN_21",
+      "name": "火车站",
+      "description": "卡森德拉的火车站，位于卡森德拉旧街最西端。",
+      "subSceneCount": 3,
+      "entrySceneId": "SCN_21_SUB_1",
+      "residents": ["哈兰"]
+    },
+    {
+      "id": "SCN_22",
+      "name": "镇长私宅",
+      "description": "石榴巷南段一栋低调而体面的私人住宅，窗帘常年紧闭，外观不张扬，却处处透着不愿被打扰的权力感。",
+      "subSceneCount": 3,
+      "entrySceneId": "SCN_22_SUB_1",
+      "residents": ["帕德里奇"]
+    },
+    {
+      "id": "OUTDOOR",
+      "name": "卡森德拉街道",
+      "description": "卡森德拉镇的街道和巷道网络，连接着镇上的各个建筑和场所。",
+      "subSceneCount": 10,
+      "entrySceneId": "ROAD_1"
+    }
+  ]
+}

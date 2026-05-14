@@ -1,0 +1,9 @@
+{
+  "dice": {
+    "roll": "投掷",
+    "success": "成功!",
+    "failure": "失败",
+    "critical": "大成功!",
+    "fumble": "大失败!"
+  }
+}

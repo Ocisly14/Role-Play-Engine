@@ -56,7 +56,11 @@ router.post(
   "/verify-code",
   [
     body("email").isEmail().normalizeEmail(),
-    body("code").notEmpty().trim().isLength({ min: 5, max: 5 }).matches(/^\d{5}$/),
+    body("code")
+      .notEmpty()
+      .trim()
+      .isLength({ min: 5, max: 5 })
+      .matches(/^\d{5}$/),
     validateRequest,
   ],
   authController.verifyCode

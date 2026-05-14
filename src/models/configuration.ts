@@ -3,7 +3,7 @@
  * Default model settings for different providers and sizes
  */
 
-import { ModelClass, ModelProviderName, Models } from "./types.js";
+import { ModelClass, ModelProviderName, type Models } from "./types.js";
 
 export const models: Models = {
   [ModelProviderName.OPENAI]: {
@@ -58,7 +58,8 @@ export const models: Models = {
         temperature: 0.7,
       },
       [ModelClass.MEDIUM]: {
-        name: process.env.MEDIUM_ANTHROPIC_MODEL || "claude-3-5-sonnet-20241022",
+        name:
+          process.env.MEDIUM_ANTHROPIC_MODEL || "claude-3-5-sonnet-20241022",
         stop: [],
         maxInputTokens: 200000,
         maxOutputTokens: 8192,
@@ -184,7 +185,9 @@ export const models: Models = {
     endpoint: "https://openrouter.ai/api/v1",
     model: {
       [ModelClass.SMALL]: {
-        name: process.env.SMALL_OPENROUTER_MODEL || "nousresearch/hermes-3-llama-3.1-405b",
+        name:
+          process.env.SMALL_OPENROUTER_MODEL ||
+          "nousresearch/hermes-3-llama-3.1-405b",
         stop: [],
         maxInputTokens: 128000,
         maxOutputTokens: 8192,
@@ -193,7 +196,9 @@ export const models: Models = {
         temperature: 0.7,
       },
       [ModelClass.MEDIUM]: {
-        name: process.env.MEDIUM_OPENROUTER_MODEL || "nousresearch/hermes-3-llama-3.1-405b",
+        name:
+          process.env.MEDIUM_OPENROUTER_MODEL ||
+          "nousresearch/hermes-3-llama-3.1-405b",
         stop: [],
         maxInputTokens: 128000,
         maxOutputTokens: 8192,
@@ -202,7 +207,9 @@ export const models: Models = {
         temperature: 0.7,
       },
       [ModelClass.LARGE]: {
-        name: process.env.LARGE_OPENROUTER_MODEL || "nousresearch/hermes-3-llama-3.1-405b",
+        name:
+          process.env.LARGE_OPENROUTER_MODEL ||
+          "nousresearch/hermes-3-llama-3.1-405b",
         stop: [],
         maxInputTokens: 128000,
         maxOutputTokens: 8192,

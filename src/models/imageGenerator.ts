@@ -1,6 +1,6 @@
 import { getEndpoint } from "./generator.js";
-import { ModelClass, ModelProviderName } from "./types.js";
 import { normalizeUsageMetadata, recordTokenUsage } from "./tokenUsage.js";
+import { ModelClass, ModelProviderName } from "./types.js";
 
 export interface GeneratedImage {
   mimeType: string;
@@ -10,9 +10,15 @@ export interface GeneratedImage {
   prompt: string;
 }
 
+export interface ImageInput {
+  mimeType: string;
+  base64Data: string;
+}
+
 export interface ImageGenerationOptions {
   model?: string;
   aspectRatio?: string;
+  referenceImages?: ImageInput[];
 }
 
 export async function generateGeminiImage(
@@ -24,17 +30,28 @@ export async function generateGeminiImage(
     throw new Error("Missing GOOGLE_API_KEY for Gemini image generation");
   }
 
-  const model = options.model || process.env.GOOGLE_IMAGE_MODEL || "gemini-2.5-flash-image";
+  const model =
+    options.model || process.env.GOOGLE_IMAGE_MODEL || "gemini-2.5-flash-image";
   const endpoint =
-    getEndpoint(ModelProviderName.GOOGLE) || "https://generativelanguage.googleapis.com";
+    getEndpoint(ModelProviderName.GOOGLE) ||
+    "https://generativelanguage.googleapis.com";
   const url = `${endpoint}/v1beta/models/${encodeURIComponent(model)}:generateContent`;
-  const aspectRatio = options.aspectRatio || process.env.GOOGLE_IMAGE_ASPECT_RATIO || "16:9";
+  const aspectRatio =
+    options.aspectRatio || process.env.GOOGLE_IMAGE_ASPECT_RATIO || "16:9";
+
+  const requestParts: any[] = [];
+  for (const img of options.referenceImages ?? []) {
+    requestParts.push({
+      inlineData: { mimeType: img.mimeType, data: img.base64Data },
+    });
+  }
+  requestParts.push({ text: prompt });
 
   const body = {
     contents: [
       {
         role: "user",
-        parts: [{ text: prompt }],
+        parts: requestParts,
       },
     ],
     generationConfig: {
@@ -54,7 +71,9 @@ export async function generateGeminiImage(
 
   if (!response.ok) {
     const errorText = await response.text();
-    throw new Error(`Gemini image generation failed: ${response.status} ${errorText}`);
+    throw new Error(
+      `Gemini image generation failed: ${response.status} ${errorText}`
+    );
   }
 
   const data = await response.json();
@@ -73,7 +92,9 @@ export async function generateGeminiImage(
     });
   }
   const parts = data?.candidates?.[0]?.content?.parts || [];
-  const imagePart = parts.find((part: any) => part?.inlineData?.data || part?.inline_data?.data);
+  const imagePart = parts.find(
+    (part: any) => part?.inlineData?.data || part?.inline_data?.data
+  );
 
   if (!imagePart) {
     throw new Error("Gemini image generation returned no image data");

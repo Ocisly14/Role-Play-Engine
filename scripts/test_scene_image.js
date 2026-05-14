@@ -1,7 +1,7 @@
 import "dotenv/config";
-import fs from "fs/promises";
 import path from "path";
 import { fileURLToPath } from "url";
+import fs from "fs/promises";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -62,7 +62,9 @@ async function generateGeminiImage(prompt) {
   }
 
   const model = process.env.GOOGLE_IMAGE_MODEL || "gemini-2.5-flash-image";
-  const endpoint = process.env.GOOGLE_API_ENDPOINT || "https://generativelanguage.googleapis.com";
+  const endpoint =
+    process.env.GOOGLE_API_ENDPOINT ||
+    "https://generativelanguage.googleapis.com";
   const aspectRatio = process.env.GOOGLE_IMAGE_ASPECT_RATIO || "16:9";
   const url = `${endpoint}/v1beta/models/${encodeURIComponent(model)}:generateContent`;
 
@@ -90,12 +92,16 @@ async function generateGeminiImage(prompt) {
 
   if (!response.ok) {
     const errorText = await response.text();
-    throw new Error(`Gemini image generation failed: ${response.status} ${errorText}`);
+    throw new Error(
+      `Gemini image generation failed: ${response.status} ${errorText}`
+    );
   }
 
   const data = await response.json();
   const parts = data?.candidates?.[0]?.content?.parts || [];
-  const imagePart = parts.find((part) => part?.inlineData?.data || part?.inline_data?.data);
+  const imagePart = parts.find(
+    (part) => part?.inlineData?.data || part?.inline_data?.data
+  );
 
   if (!imagePart) {
     throw new Error("Gemini image generation returned no image data");

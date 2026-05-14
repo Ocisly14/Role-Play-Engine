@@ -1,0 +1,66 @@
+{
+  "id": "SCN_1_SUB_4",
+  "name": "药品管理室",
+  "description": "药品管理室同样装有电子门禁，门禁面板旁的墙壁上贴着一张发黄的管理制度告示。推门进入后，首先感受到的是恒温系统带来的干燥凉意，以及冷藏设备持续运转的低频嗡鸣声，像是这个房间自身的呼吸。两侧的金属药架从地面一直延伸到天花板，整齐地码放着各种药品盒和试剂瓶，标签按字母顺序排列。药架之间的通道狭窄。靠里墙的玻璃门冷藏柜里存放着需要低温保存的药品，柜门上凝着一层薄薄的水雾。空气中弥漫着药品特有的清苦味道，混合着塑料包装和纸板箱的气息。天花板上的日光灯管照亮前半区域，但越往深处走光线越显昏暗——最里面的墙壁隐在一片不太分明的阴影中，几个大号储物柜紧贴后墙排列。整个房间安静得只听见冷藏柜的嗡鸣与自己的呼吸。",
+  "parentLocationId": "SCN_1",
+  "indoor": true,
+  "items": [
+    {
+      "id": "ITEM_SCN1_8",
+      "name": "药品货架",
+      "type": "container",
+      "containerStats": {
+        "capacity": 24,
+        "locked": false,
+        "contents": []
+      },
+      "description": "一组用于存放常规医疗药品的货架和冷藏柜。"
+    },
+    {
+      "id": "ITEM_SCN1_9",
+      "name": "暗门",
+      "type": "other",
+      "description": "药品管理室深处的一扇秘密小门，标注着需要Vincent Galenus的最高权限才能进入"
+    },
+    {
+      "id": "ITEM_SCN1_10",
+      "name": "魔鬼呼吸（东莨菪碱）",
+      "type": "consumable",
+      "category": "evidence",
+      "discoveryMethod": "inspect hidden box",
+      "description": "暗门后发现的危险药品，被小心翼翼地放在一个盒子里，周围标有危险标识。这种药物来自南美，从一种名为'波拉切洛'的植物中提取。一克的致幻效果相当于一克海洛因，毒性甚至比炭疽更强，过量服用可顷刻致命。更可怕的是，它能让服用者丧失自主意识，变得犹如人偶一样任人摆布，严重时甚至造成失忆。医院档案中没有此物品的任何记录。"
+    }
+  ],
+  "conditions": [
+    {
+      "description": "药品管理室温度恒定偏低，冷藏设备持续运转发出低沉的嗡鸣声",
+      "mechanicalEffect": {
+        "skillPenalty": [
+          {
+            "skill": "Perception",
+            "delta": -10
+          },
+          {
+            "skill": "Listen",
+            "delta": -10
+          }
+        ]
+      }
+    },
+    {
+      "description": "房间深处光线较暗，暗门所在位置不易被察觉",
+      "mechanicalEffect": {
+        "skillPenalty": [
+          {
+            "skill": "Perception",
+            "delta": -20
+          }
+        ]
+      }
+    }
+  ],
+  "connections": ["SCN_1_SUB_1", "SCN_1_SUB_5"],
+  "itemContexts": {
+    "ITEM_SCN1_8": "存放着各类常规医疗药品的货架和冷藏柜"
+  }
+}

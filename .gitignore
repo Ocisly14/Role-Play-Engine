@@ -38,7 +38,7 @@ logs
 *.db
 *.db-shm
 *.db-wal
-data/
+
 cache/
 
 # Cache directories
@@ -71,3 +71,6 @@ temp/
 *.pem
 deployment/.env.production
 client/coc-deploy.tar.gz
+/Asset
+
+/data/log

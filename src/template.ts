@@ -1,22 +1,85 @@
 import handlebars from "handlebars";
-import fs from "fs";
-import path from "path";
-import type { GameState } from "./coc_multiagents_system/state/index.js";
-import { initialGameState } from "./coc_multiagents_system/state/index.js";
-import type { DynamicGameState } from "./dynamicworldagent/state/index.js";
-import type { ImageInput } from "./models/types.js";
 import { names, uniqueNamesGenerator } from "unique-names-generator";
+import type { ImageInput } from "./models/types.js";
+import { stripModuleScope } from "./shared/agents/memory/database/moduleScope.js";
+import type { DynamicGameState } from "./state/index.js";
 
 type TemplateContext = Record<string, unknown>;
+const ID_LIKE_KEYS = new Set([
+  "id",
+  "sceneId",
+  "scenarioId",
+  "sceneId",
+  "characterId",
+  "clueId",
+  "conditionId",
+  "targetId",
+]);
+
+const uuidLike =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+const emailLike = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+const stripScopedIdIfNeeded = (value: string): string => {
+  const sep = value.indexOf("::");
+  if (sep <= 0) return value;
+  const prefix = value.slice(0, sep);
+  if (emailLike.test(prefix) || uuidLike.test(prefix)) {
+    return stripModuleScope(value);
+  }
+  return value;
+};
+
+const sanitizeTemplateValue = (
+  value: unknown,
+  key?: string,
+  seen: WeakSet<object> = new WeakSet()
+): unknown => {
+  if (typeof value === "string") {
+    return key && ID_LIKE_KEYS.has(key) ? stripScopedIdIfNeeded(value) : value;
+  }
+  if (value === null || value === undefined) return value;
+  if (typeof value !== "object") return value;
+  if (value instanceof Date) return value;
+  if (seen.has(value)) return value;
+  seen.add(value);
+
+  if (Array.isArray(value)) {
+    return value.map((item) => sanitizeTemplateValue(item, key, seen));
+  }
+
+  if (value instanceof Map) {
+    const sanitizedMap = new Map<unknown, unknown>();
+    for (const [k, v] of value.entries()) {
+      const nextKey = typeof k === "string" ? k : key;
+      sanitizedMap.set(k, sanitizeTemplateValue(v, nextKey, seen));
+    }
+    return sanitizedMap;
+  }
+
+  if (value instanceof Set) {
+    const sanitizedSet = new Set<unknown>();
+    for (const item of value.values()) {
+      sanitizedSet.add(sanitizeTemplateValue(item, key, seen));
+    }
+    return sanitizedSet;
+  }
+
+  const obj = value as Record<string, unknown>;
+  const out: Record<string, unknown> = {};
+  for (const [k, v] of Object.entries(obj)) {
+    out[k] = sanitizeTemplateValue(v, k, seen);
+  }
+  return out;
+};
 
 /**
  * CoC State type for template composition
- * Can be a GameState directly, DynamicGameState, or an object containing gameState/dynamicGameState
+ * Can be a DynamicGameState directly or an object containing dynamicGameState.
  */
-export type CoCState = 
-  | GameState 
+export type CoCState =
   | DynamicGameState
-  | { gameState?: GameState; dynamicGameState?: DynamicGameState; [key: string]: any };
+  | { dynamicGameState?: DynamicGameState; [key: string]: any };
 
 // Template function type for dynamic templates
 export type TemplateType = string | ((params: { state: CoCState }) => string);
@@ -46,57 +109,6 @@ const getValueAtPath = (context: TemplateContext, rawPath: string): unknown => {
   }, context);
 };
 
-const imageMimeTypes: Record<string, string> = {
-  ".png": "image/png",
-  ".jpg": "image/jpeg",
-  ".jpeg": "image/jpeg",
-  ".webp": "image/webp",
-};
-
-const inferMimeType = (filePath: string): string => {
-  const ext = path.extname(filePath).toLowerCase();
-  return imageMimeTypes[ext] || "image/png";
-};
-
-const resolveMapImage = (mapImagePath?: string): ImageInput | null => {
-  if (!mapImagePath) return null;
-
-  const normalized = mapImagePath.replace(/\\/g, path.sep);
-  const candidates = new Set<string>();
-
-  if (path.isAbsolute(normalized)) {
-    candidates.add(normalized);
-  }
-
-  candidates.add(path.join(process.cwd(), normalized));
-  candidates.add(path.join(process.cwd(), "data", normalized));
-
-  const modsDir = path.join(process.cwd(), "data", "Mods");
-  if (fs.existsSync(modsDir)) {
-    const moduleDirs = fs
-      .readdirSync(modsDir, { withFileTypes: true })
-      .filter((dirent) => dirent.isDirectory())
-      .map((dirent) => dirent.name);
-
-    for (const moduleDir of moduleDirs) {
-      candidates.add(path.join(modsDir, moduleDir, normalized));
-    }
-  }
-
-  for (const candidate of candidates) {
-    try {
-      if (fs.existsSync(candidate) && fs.statSync(candidate).isFile()) {
-        const data = fs.readFileSync(candidate);
-        return { data, mimeType: inferMimeType(candidate) };
-      }
-    } catch (error) {
-      console.warn(`Failed to load image at ${candidate}:`, error);
-    }
-  }
-
-  return null;
-};
-
 const isDynamicGameState = (state: unknown): state is DynamicGameState => {
   return Boolean(
     state &&
@@ -107,20 +119,11 @@ const isDynamicGameState = (state: unknown): state is DynamicGameState => {
   );
 };
 
-const isGameState = (state: unknown): state is GameState => {
-  return Boolean(
-    state && typeof state === "object" && "phase" in state && "playerCharacter" in state
-  );
-};
-
-const extractGameState = (state: CoCState): GameState | null => {
-  if ("gameState" in state && state.gameState) {
-    return state.gameState as GameState;
+const extractDynamicGameState = (state: CoCState): DynamicGameState | null => {
+  if ("dynamicGameState" in state && state.dynamicGameState) {
+    return state.dynamicGameState as DynamicGameState;
   }
   if (isDynamicGameState(state)) {
-    return null;
-  }
-  if (isGameState(state)) {
     return state;
   }
   return null;
@@ -128,26 +131,18 @@ const extractGameState = (state: CoCState): GameState | null => {
 
 /**
  * Collects scenario images (e.g., map) from the current game state.
+ * Current callers do not provide scoped scene image context, so this is a no-op.
  */
 export const collectScenarioImages = (state: CoCState): ImageInput[] => {
-  const gameState = extractGameState(state);
-  const mapImagePath = gameState?.currentScenario?.mapImagePath;
-  if (!mapImagePath) return [];
-
-  const resolved = resolveMapImage(mapImagePath);
-  if (!resolved) {
-    console.warn(`Map image path provided but file not found: ${mapImagePath}`);
-    return [];
-  }
-
-  return [resolved];
+  void state;
+  return [];
 };
 
 /**
  * Enhanced template composition with support for dynamic templates and handlebars.
  * Replaces `{{path.to.value}}` placeholders in a template using state-driven context.
  * This keeps prompts declarative while safely surfacing the latest state to the LLM.
- * 
+ *
  * @param template - Template string or function
  * @param state - CoC game state
  * @param extraContext - Additional context variables
@@ -160,41 +155,28 @@ export const composeTemplate = (
   extraContext: TemplateContext = {},
   templatingEngine?: "handlebars"
 ): string => {
-  // Handle both GameState directly and { gameState: GameState } object
-  // Also handle DynamicGameState
-  const gameState =
-    "gameState" in state && state.gameState
-      ? state.gameState
-      : isGameState(state)
-        ? (state as GameState)
-        : null;
+  const dynamicGameState = extractDynamicGameState(state);
 
-  const dynamicGameState =
-    "dynamicGameState" in state && state.dynamicGameState
-      ? state.dynamicGameState
-      : isDynamicGameState(state)
-        ? (state as DynamicGameState)
-        : null;
-  
   const context: TemplateContext = {
     ...state,
-    gameState: gameState ?? initialGameState,
     dynamicGameState: dynamicGameState ?? null,
     ...extraContext,
   };
+  const sanitizedContext = sanitizeTemplateValue(context) as TemplateContext;
 
   // Resolve template function to string
-  const templateStr = typeof template === "function" ? template({ state }) : template;
+  const templateStr =
+    typeof template === "function" ? template({ state }) : template;
 
   // Use handlebars if specified
   if (templatingEngine === "handlebars") {
     const templateFunction = handlebars.compile(templateStr);
-    return templateFunction(context);
+    return templateFunction(sanitizedContext);
   }
 
   // Default simple replacement
   return templateStr.replace(/{{\s*([^}]+?)\s*}}/g, (_match, rawPath) => {
-    const value = getValueAtPath(context, rawPath);
+    const value = getValueAtPath(sanitizedContext, rawPath);
     return renderValue(value);
   });
 };
@@ -208,7 +190,12 @@ export const composeTemplateWithImages = (
   extraContext: TemplateContext = {},
   templatingEngine?: "handlebars"
 ): ComposedPrompt => {
-  const content = composeTemplate(template, state, extraContext, templatingEngine);
+  const content = composeTemplate(
+    template,
+    state,
+    extraContext,
+    templatingEngine
+  );
   const images = collectScenarioImages(state);
   return { content, images };
 };
@@ -216,7 +203,7 @@ export const composeTemplateWithImages = (
 /**
  * Generates a string with random user names populated in a template.
  * Useful for creating examples with varied character names.
- * 
+ *
  * @param template - Template string containing {{user1}}, {{user2}}, etc. placeholders
  * @param length - Number of random user names to generate
  * @returns Template with user placeholders replaced by random names
@@ -225,7 +212,7 @@ export const composeRandomUser = (template: string, length: number): string => {
   const exampleNames = Array.from({ length }, () =>
     uniqueNamesGenerator({ dictionaries: [names] })
   );
-  
+
   let result = template;
   for (let i = 0; i < exampleNames.length; i++) {
     result = result.replaceAll(`{{user${i + 1}}}`, exampleNames[i]);
@@ -236,7 +223,7 @@ export const composeRandomUser = (template: string, length: number): string => {
 
 /**
  * Adds a header to a body of text with proper formatting.
- * 
+ *
  * @param header - Header text to prepend
  * @param body - Body text
  * @returns Formatted text with header
@@ -247,7 +234,7 @@ export const addHeader = (header: string, body: string): string => {
 
 /**
  * Composes context for CoC game scenarios with enhanced error handling and validation.
- * 
+ *
  * @param params - Object containing state, template, and optional templating engine
  * @returns Composed context string
  */
@@ -267,7 +254,8 @@ export const composeContext = ({
   } catch (error) {
     console.error("Error composing context:", error);
     // Fallback to simple template without dynamic features
-    const fallbackTemplate = typeof template === "string" ? template : "{{gameState}}";
+    const fallbackTemplate =
+      typeof template === "string" ? template : "{{dynamicGameState}}";
     return composeTemplate(fallbackTemplate, state, extraContext);
   }
 };

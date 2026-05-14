@@ -1,20 +1,9 @@
 /// <reference path="../types/express.d.ts" />
-import type { Request, Response, NextFunction } from 'express';
-import { generateAccessToken, verifyToken } from './jwt.js';
-import { runWithTokenContext } from '../../../src/models/index.js';
-import { authDbService } from './db-service.js';
-import Database from 'better-sqlite3';
-import { CoCDatabase } from '../../../src/coc_multiagents_system/agents/memory/database/schema.js';
-
-// Database instance
-let dbInstance: CoCDatabase | null = null;
-
-function getDB(): Database.Database {
-  if (!dbInstance) {
-    dbInstance = new CoCDatabase();
-  }
-  return dbInstance.getDatabase();
-}
+import type { NextFunction, Request, Response } from "express";
+import { runWithTokenContext } from "../../../src/models/index.js";
+import { getPrismaClient } from "../../../src/shared/agents/memory/database/prismaClient.js";
+import { authDbService } from "./db-service.js";
+import { generateAccessToken, verifyToken } from "./jwt.js";
 
 // Authentication middleware
 export async function authenticate(
@@ -25,32 +14,31 @@ export async function authenticate(
   try {
     // Get token from Header or Cookie
     const token =
-      req.headers.authorization?.replace('Bearer ', '') ||
+      req.headers.authorization?.replace("Bearer ", "") ||
       req.cookies?.accessToken;
 
     if (!token) {
-      return res.status(401).json({ error: 'No token provided' });
+      return res.status(401).json({ error: "No token provided" });
     }
 
     // Verify token
     const payload = verifyToken(token);
 
     // Check if user exists and is active
-    const db = getDB();
-    const user = db.prepare(`
-      SELECT id, email, role, is_active
-      FROM users
-      WHERE id = ?
-    `).get(payload.userId) as any;
+    const prisma = getPrismaClient();
+    const user = await prisma.user.findUnique({
+      where: { id: payload.userId },
+      select: { id: true, email: true, role: true, isActive: true },
+    });
 
-    if (!user || !user.is_active) {
-      return res.status(401).json({ error: 'Invalid user' });
+    if (!user || !user.isActive) {
+      return res.status(401).json({ error: "Invalid user" });
     }
 
     // Sliding session: touch refresh token if provided
-    const refreshTokenHeader = req.headers['x-refresh-token'];
-    if (typeof refreshTokenHeader === 'string' && refreshTokenHeader) {
-      authDbService.touchRefreshToken(refreshTokenHeader, payload.email);
+    const refreshTokenHeader = req.headers["x-refresh-token"];
+    if (typeof refreshTokenHeader === "string" && refreshTokenHeader) {
+      await authDbService.touchRefreshToken(refreshTokenHeader, user.id);
     }
 
     // Issue a fresh access token for sliding expiration
@@ -59,13 +47,13 @@ export async function authenticate(
       email: user.email,
       role: user.role,
     });
-    res.setHeader('x-access-token', nextAccessToken);
+    res.setHeader("x-access-token", nextAccessToken);
 
     // Attach user info to request
     req.user = payload;
     return runWithTokenContext({ email: payload.email }, () => next());
   } catch (error) {
-    return res.status(401).json({ error: 'Invalid or expired token' });
+    return res.status(401).json({ error: "Invalid or expired token" });
   }
 }
 
@@ -77,7 +65,7 @@ export async function optionalAuthenticate(
 ) {
   try {
     const token =
-      req.headers.authorization?.replace('Bearer ', '') ||
+      req.headers.authorization?.replace("Bearer ", "") ||
       req.cookies?.accessToken;
 
     if (token) {
@@ -95,11 +83,11 @@ export async function optionalAuthenticate(
 export function requireRole(...roles: string[]) {
   return (req: Request, res: Response, next: NextFunction) => {
     if (!req.user) {
-      return res.status(401).json({ error: 'Authentication required' });
+      return res.status(401).json({ error: "Authentication required" });
     }
 
     if (!roles.includes(req.user.role)) {
-      return res.status(403).json({ error: 'Insufficient permissions' });
+      return res.status(403).json({ error: "Insufficient permissions" });
     }
 
     next();

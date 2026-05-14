@@ -1,0 +1,1 @@
+ALTER TYPE "NpcMemoryType" ADD VALUE IF NOT EXISTS 'map';

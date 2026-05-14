@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { findAvailableImage } from '../utils/imageLoader';
+import { useEffect, useState } from "react";
+import { findAvailableImage } from "../utils/imageLoader";
 
 interface FrameImageProps {
   className?: string;
@@ -8,13 +8,13 @@ interface FrameImageProps {
   formats?: string[];
 }
 
-export function FrameImage({ 
-  className = 'frame-image', 
-  alt = 'TaleCraft Frame',
-  imageName = 'frame',
-  formats = ['png', 'jpeg', 'jpg']
+export function FrameImage({
+  className = "frame-image",
+  alt = "TaleCraft Frame",
+  imageName = "frame",
+  formats = ["png", "jpeg", "jpg"],
 }: FrameImageProps) {
-  const [imageSrc, setImageSrc] = useState<string>('');
+  const [imageSrc, setImageSrc] = useState<string>("");
 
   useEffect(() => {
     findAvailableImage(imageName, formats).then(setImageSrc);
@@ -24,11 +24,5 @@ export function FrameImage({
     return null; // Loading state
   }
 
-  return (
-    <img 
-      src={imageSrc} 
-      alt={alt} 
-      className={className}
-    />
-  );
+  return <img src={imageSrc} alt={alt} className={className} />;
 }

@@ -1,0 +1,152 @@
+{
+  "id": "Abel William",
+  "name": "Abel William",
+  "occupation": "Distillery owner",
+  "age": 40,
+  "gender": "male",
+  "appearance": "A square-faced man with a darker complexion than most of the town's white residents. He keeps a thick beard that is carefully groomed, though lately he looks pale, tense, and more worn down than he wants to admit.",
+  "personality": "Anxious, overworked, proud, and increasingly irritable under pressure. Abel tries to remain professional with visitors, but financial strain, isolation, and the strange situation at the distillery have left him exhausted and short-tempered.",
+  "background": "After Peter William died in 2002, Abel inherited the family distillery in Cassandra. The distillery still produces vodka, but shrinking business forced Abel to shut down large sections of the plant and dismiss part of the workforce. He now manages the place with minimal help, spending long hours in the office, factory floor, and cellar while trying to keep the business alive through a worsening winter and a growing spider problem he cannot explain.",
+  "residence": "SCN_13",
+  "currentLocation": "SCN_13_SUB_2",
+  "longTermIntent": "Keep the distillery operating through the winter, hide how badly the neck wound and spider infestation are affecting him, and find a practical way to stop the problem before the business finally collapses.",
+  "attributes": {
+    "STR": 50,
+    "CON": 55,
+    "DEX": 45,
+    "APP": 45,
+    "POW": 50,
+    "SIZ": 60,
+    "INT": 55,
+    "EDU": 50
+  },
+  "status": {
+    "hp": 9,
+    "maxHp": 11,
+    "sanity": 45,
+    "maxSanity": 50,
+    "luck": 55,
+    "mp": 10,
+    "conditions": ["fatigued", "neck wound", "cold spider infection"]
+  },
+  "skills": {
+    "Accounting": 45,
+    "Craft (Distilling)": 55,
+    "Spot Hidden": 40,
+    "Listen": 40,
+    "Mechanical Repair": 30,
+    "Persuade": 35
+  },
+  "inventory": [
+    {
+      "name": "Office Keys"
+    },
+    {
+      "name": "Neck Bandage",
+      "properties": {
+        "note": "Wrapped around a wound Abel dismisses as a workplace accident."
+      }
+    },
+    {
+      "name": "Insecticide Spray",
+      "properties": {
+        "note": "Used repeatedly in the cellar and storage areas, with little visible effect."
+      }
+    },
+    {
+      "name": "Ledger Notebook",
+      "properties": {
+        "note": "Tracks reduced production, payroll cuts, and day-to-day operating costs."
+      }
+    }
+  ],
+  "relationships": [
+    {
+      "targetId": "Peter William",
+      "targetName": "Peter William",
+      "relationshipType": "family",
+      "attitude": 72,
+      "description": "His late father and the previous owner of the distillery.",
+      "history": "Abel inherited the distillery after Peter's sudden death in 2002 and has been trying to preserve the family business ever since."
+    },
+    {
+      "targetId": "Marcel Gwynplaine",
+      "targetName": "Marcel Gwynplaine",
+      "relationshipType": "employee",
+      "attitude": -20,
+      "description": "A laid-off former worker who still resents Abel.",
+      "history": "Abel dismissed Marcel during downsizing when the distillery could no longer support its previous workforce."
+    },
+    {
+      "targetId": "Marks White",
+      "targetName": "Marks White",
+      "relationshipType": "neutral",
+      "attitude": 10,
+      "description": "A local craftsman Abel knows through old town connections and his father's generation.",
+      "history": "Marks knew Peter William, so Abel treats him as one of the few older locals tied to the family's past in Cassandra."
+    }
+  ],
+  "memory": [
+    {
+      "type": "information",
+      "content": "I took over the distillery after my father died in 2002, and now I spend most of my day moving between the office, the factory floor, and the cellar trying to keep the place alive.",
+      "metadata": {
+        "knowledgeId": "k_abel_distillery",
+        "difficulty": "automatic"
+      }
+    },
+    {
+      "type": "information",
+      "content": "Business has been shrinking for a while. I shut down large parts of the distillery and dismissed workers like Marcel Gwynplaine because I simply could not keep paying them.",
+      "metadata": {
+        "knowledgeId": "k_abel_layoffs",
+        "difficulty": "regular"
+      }
+    },
+    {
+      "type": "information",
+      "content": "The distillery is smaller than it used to be, but the vodka is still good. I take pride in that, and I hate hearing people speak as if this place is already finished.",
+      "metadata": {
+        "knowledgeId": "k_abel_pride",
+        "difficulty": "regular"
+      }
+    },
+    {
+      "type": "information",
+      "content": "I keep clipping books in the office the way my father did. His obituary is still in there, along with an old 1988 riot article and a newer paper about strange sea activity that ended up in the same stack.",
+      "metadata": {
+        "knowledgeId": "k_abel_office_papers",
+        "difficulty": "regular"
+      }
+    },
+    {
+      "type": "secret",
+      "content": "Something bit or tore into my neck around the distillery. I keep calling it a simple work accident because I do not want anyone deciding I am weak, sick, or no longer in control here.",
+      "metadata": {
+        "knowledgeId": "s_abel_neck_wound"
+      }
+    },
+    {
+      "type": "secret",
+      "content": "The spiders are worst in the cellar and the shut-down sections of the plant. I clear the webs, spray poison, and come back to find them there again as if the place is growing them.",
+      "metadata": {
+        "knowledgeId": "s_abel_spiders"
+      }
+    },
+    {
+      "type": "secret",
+      "content": "I have never felt right about how suddenly my father died in 2002. I cannot prove anything, but I do not believe it was as ordinary as people wanted me to accept.",
+      "metadata": {
+        "knowledgeId": "s_abel_father_death"
+      }
+    },
+    {
+      "type": "belief",
+      "content": "If I let this place slip, I lose more than a business. I lose the last solid thing my father left me, and I am not ready to surrender it to rot, debt, or spiders.",
+      "metadata": {
+        "confidence": 0.84,
+        "reasoningChain": "Sales are down, half the plant is empty, the webs keep returning, and my neck is getting worse, but abandoning the distillery would mean admitting the whole family line ended with me."
+      }
+    }
+  ]
+}

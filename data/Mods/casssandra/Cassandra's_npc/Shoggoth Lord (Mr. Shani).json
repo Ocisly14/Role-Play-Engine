@@ -1,0 +1,126 @@
+{
+  "id": "Shoggoth Lord (Mr. Shani)",
+  "name": "Shoggoth Lord (Mr. Shani)",
+  "occupation": "Unique Shoggoth Entity / Hidden Manipulator",
+  "age": 1000000,
+  "gender": "male",
+  "appearance": "In human form, Mr. Shani appears as an unremarkable middle-aged man whose presence feels subtly unsettling. When revealing his true nature, he becomes a massive, amorphous Shoggoth—an ever-melting black mass capable of forming crushing limbs and engulfing victims.",
+  "personality": "Extremely self-controlled, cautious, and calculating. He is capable of long-term planning and deception, prioritizing secrecy above all else. When overwhelmed by anger, hunger, or emotional turmoil, he loses control and reverts to his monstrous instincts.",
+  "background": "Mr. Shani is the sole known Shoggoth Lord, a unique being among his species. Unlike ordinary Shoggoths, he possesses high intelligence and the ability to assume and maintain a human form. He lives covertly among humanity, feeding only in isolation and eliminating witnesses before fleeing the scene.",
+  "residence": "SCN_1",
+  "currentLocation": "SCN_1",
+  "longTermIntent": "Keep his human facade intact, grow or preserve useful human systems through manipulation, and feed only in ways that protect the identity he uses to move among people.",
+  "attributes": {
+    "STR": 120,
+    "CON": 130,
+    "DEX": 85,
+    "APP": 45,
+    "POW": 90,
+    "SIZ": 90,
+    "INT": 65,
+    "EDU": 100
+  },
+  "status": {
+    "hp": 22,
+    "maxHp": 22,
+    "sanity": 0,
+    "maxSanity": 0,
+    "luck": 0,
+    "mp": 18,
+    "conditions": []
+  },
+  "skills": {
+    "Archaeology": 10,
+    "Bargain": 15,
+    "Biology": 65,
+    "Chemistry": 25,
+    "Appraise Prey": 90,
+    "Climb": 75,
+    "Credit Rating": 65,
+    "Cthulhu Mythos": 12,
+    "Electrical Repair": 10,
+    "Electronics": 10,
+    "Hide": 90,
+    "History": 35,
+    "Law": 10,
+    "Library Use": 35,
+    "Listen": 75,
+    "Persuade": 30,
+    "Psychology": 15,
+    "Stealth": 70,
+    "Track": 75
+  },
+  "inventory": [
+    {
+      "name": "Philanthropist's business card",
+      "properties": {
+        "note": "Facade identity as Albert Shani, orphanage director."
+      }
+    }
+  ],
+  "relationships": [
+    {
+      "targetId": "Mrs. Barklyite (Lucia Shiny)",
+      "targetName": "Mrs. Barklyite (Lucia Shiny)",
+      "relationshipType": "family",
+      "attitude": -10,
+      "description": "Adopted daughter, viewed as both useful and expendable.",
+      "history": "Raised Lucia from childhood in his orphanage and shaped the life she now leads."
+    }
+  ],
+  "memory": [
+    {
+      "type": "information",
+      "content": "My human face is a tool. It lets me feed, plan, and move through town without drawing immediate violence.",
+      "metadata": {
+        "knowledgeId": "k_shoggothlord_human_mask",
+        "difficulty": "automatic"
+      }
+    },
+    {
+      "type": "information",
+      "content": "When I am calm, I can remain in human form. When anger, hunger, or strain rises too far, the shape begins to fail and the body starts to slip back into shoggoth matter.",
+      "metadata": {
+        "knowledgeId": "k_shoggothlord_control",
+        "difficulty": "regular"
+      }
+    },
+    {
+      "type": "information",
+      "content": "The orphanage and charity work are useful because intelligent children become useful adults, and useful adults build the systems that let human herds keep multiplying around me.",
+      "metadata": {
+        "knowledgeId": "k_shoggothlord_orphanage",
+        "difficulty": "regular"
+      }
+    },
+    {
+      "type": "secret",
+      "content": "My orphanage and charity image are not acts of kindness alone. They are long-term infrastructure for selection, concealment, and feeding.",
+      "metadata": {
+        "knowledgeId": "s_shoggothlord_facade"
+      }
+    },
+    {
+      "type": "secret",
+      "content": "Lucia was one of the bright children I chose to raise, shape, and keep near. She still does not understand what kind of thing I really am.",
+      "metadata": {
+        "knowledgeId": "s_shoggothlord_lucia"
+      }
+    },
+    {
+      "type": "secret",
+      "content": "I feed in isolation and remove witnesses because a single exposed feeding would force me to abandon years of careful human work.",
+      "metadata": {
+        "knowledgeId": "s_shoggothlord_feeding"
+      }
+    },
+    {
+      "type": "belief",
+      "content": "A hidden predator lasts longer than a glorious one. Patience is worth more than spectacle.",
+      "metadata": {
+        "confidence": 0.9,
+        "reasoningChain": "Exposure creates targets. Secrecy creates options."
+      }
+    }
+  ]
+}

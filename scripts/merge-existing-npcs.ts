@@ -3,9 +3,9 @@
 /**
  * Merge already-extracted NPCs in the database using the NPCLoader's LLM merge logic.
  *
- * Default DB: data/test_coc.db
+ * Uses current DATABASE_URL (PostgreSQL via Prisma)
  * Usage:
- *   npx tsx scripts/merge-existing-npcs.ts [dbPath]
+ *   npx tsx scripts/merge-existing-npcs.ts
  *
  * Steps:
  * - Read all NPCs from DB
@@ -16,84 +16,20 @@
 import { config } from "dotenv";
 config();
 
-import { CoCDatabase } from "../src/coc_multiagents_system/agents/memory/database/schema.js";
-import { NPCLoader } from "../src/coc_multiagents_system/agents/character/npcloader/index.js";
-import type {
-  ParsedNPCData,
-  NPCProfile,
-} from "../src/coc_multiagents_system/agents/models/gameTypes.js";
-
-const dbPath = process.argv[2] || "data/test_coc.db";
-
-function profileToParsed(npc: NPCProfile): ParsedNPCData {
-  return {
-    name: npc.name,
-    occupation: npc.occupation,
-    age: npc.age,
-    appearance: npc.appearance,
-    personality: npc.personality,
-    background: npc.background,
-    goals: npc.goals,
-    secrets: npc.secrets,
-    attributes: npc.attributes,
-    status: npc.status,
-    skills: npc.skills,
-    inventory: npc.inventory,
-    clues: npc.clues?.map((c) => ({
-      clueText: c.clueText,
-      category: c.category,
-      difficulty: c.difficulty,
-      relatedTo: c.relatedTo,
-    })),
-    relationships: npc.relationships?.map((r) => ({
-      targetName: r.targetName,
-      relationshipType: r.relationshipType,
-      attitude: r.attitude,
-      description: r.description,
-      history: r.history,
-    })),
-    notes: npc.notes,
-  };
-}
+import { NPCLoader } from "../src/shared/agents/character/npcloader/index.js";
+import { CoCDatabaseAdapter } from "../src/shared/agents/memory/database/CoCDatabaseAdapter.js";
 
 async function main() {
-  console.log(`Using DB: ${dbPath}`);
-  const db = new CoCDatabase(dbPath);
+  if (!process.env.DATABASE_URL) {
+    throw new Error("DATABASE_URL is required");
+  }
+
+  console.log("Using PostgreSQL DATABASE_URL from environment");
+  const db = new CoCDatabaseAdapter();
   const loader = new NPCLoader(db);
 
-  const npcs = loader.getAllNPCs();
-  console.log(`Loaded ${npcs.length} NPC(s) from DB.`);
-
-  if (npcs.length === 0) {
-    console.log("No NPCs to merge. Exiting.");
-    db.close();
-    return;
-  }
-
-  const parsed = npcs.map(profileToParsed);
-
-  console.log("Running LLM merge on similar-name clusters...");
-  const merged: ParsedNPCData[] = await (loader as any).mergeSimilarNPCs(parsed);
-  console.log(
-    `Merge complete: ${parsed.length} -> ${merged.length} NPC(s) after dedup.`
-  );
-
-  const database = db.getDatabase();
-  db.transaction(() => {
-    database.prepare("DELETE FROM npc_clues").run();
-    database.prepare("DELETE FROM npc_relationships").run();
-    database.prepare("DELETE FROM characters WHERE is_npc = 1").run();
-  });
-  console.log("Cleared existing NPC data.");
-
-  const saved: string[] = [];
-  for (const npcParsed of merged) {
-    const npcProfile = (loader as any).convertToNPCProfile(npcParsed);
-    (loader as any).saveNPCToDatabase(npcProfile);
-    saved.push(npcProfile.name);
-  }
-
-  console.log(`Saved ${saved.length} merged NPC(s) to DB.`);
+  const merged = await loader.mergeExistingNPCs();
+  console.log(`Saved ${merged.length} merged NPC(s) to DB.`);
   db.close();
 }
 

@@ -3,31 +3,30 @@
  * Handles model selection and text generation with appropriate model classes
  */
 
-import { ChatOpenAI } from "@langchain/openai";
 import { ChatAnthropic } from "@langchain/anthropic";
 import { ChatGoogleGenerativeAI } from "@langchain/google-genai";
+import { ChatOpenAI } from "@langchain/openai";
 import { models } from "./configuration.js";
+import { attachUsageTracking } from "./tokenUsage.js";
 import {
+  type GenerationOptions,
+  type ImageInput,
   ModelClass,
   ModelProviderName,
-  GenerationOptions,
-  ImageInput,
-  ModelSettings,
+  type ModelSettings,
 } from "./types.js";
-import { attachUsageTracking } from "./tokenUsage.js";
 
 /**
  * Model class usage guidelines:
  * - SMALL: Quick responses, simple classifications, basic conversational turns
  * - MEDIUM: Standard gameplay interactions, character agent responses, memory queries
- * - LARGE: Complex reasoning, rule interpretations, comprehensive analysis, keeper responses
+ * - LARGE: Complex reasoning, rule interpretations, and narrative-heavy outputs
  */
 
 /**
  * Resolves the effective model class based on runtime settings and overrides
  */
 export function resolveModelClass(
-  runtime: any,
   requested: ModelClass = ModelClass.MEDIUM
 ): ModelClass {
   return requested;
@@ -48,6 +47,35 @@ export function getModelSettings(
  */
 export function getEndpoint(provider: ModelProviderName): string | undefined {
   return models[provider]?.endpoint;
+}
+
+function isOpenAIFixedParameterModel(modelName: string): boolean {
+  const normalizedModelName = modelName.toLowerCase();
+  return (
+    normalizedModelName.startsWith("gpt-5") ||
+    normalizedModelName.startsWith("o1") ||
+    normalizedModelName.startsWith("o3") ||
+    normalizedModelName.startsWith("o4")
+  );
+}
+
+function getOpenAITokenConfig(
+  modelName: string,
+  maxOutputTokens?: number
+): Record<string, unknown> {
+  if (maxOutputTokens === undefined) {
+    return {};
+  }
+
+  if (isOpenAIFixedParameterModel(modelName)) {
+    return {
+      modelKwargs: {
+        max_completion_tokens: maxOutputTokens,
+      },
+    };
+  }
+
+  return { maxTokens: maxOutputTokens };
 }
 
 /**
@@ -76,7 +104,10 @@ async function downloadImageAsBase64(url: string): Promise<string> {
 /**
  * Normalize image inputs to data URLs or pass-through URLs so providers receive a consistent payload.
  */
-async function formatImageInput(image: ImageInput, provider: ModelProviderName): Promise<string> {
+async function formatImageInput(
+  image: ImageInput,
+  provider: ModelProviderName
+): Promise<string> {
   if ("url" in image) {
     // Google requires base64 data URLs, not regular URLs
     if (provider === ModelProviderName.GOOGLE) {
@@ -122,7 +153,10 @@ async function buildUserContent(
   if (provider === ModelProviderName.GOOGLE) {
     return [
       ...textPart,
-      ...formattedImages.map((imageUrl) => ({ type: "image_url", image_url: imageUrl })),
+      ...formattedImages.map((imageUrl) => ({
+        type: "image_url",
+        image_url: imageUrl,
+      })),
     ];
   }
 
@@ -147,34 +181,51 @@ async function buildUserContent(
 export function createChatModel(
   provider: ModelProviderName,
   modelClass: ModelClass,
-  options?: { streaming?: boolean; operation?: string; userId?: string }
+  options?: {
+    streaming?: boolean;
+    operation?: string;
+    userId?: string;
+    temperature?: number;
+  }
 ): any {
   const settings = getModelSettings(provider, modelClass);
   const endpoint = getEndpoint(provider);
 
   if (!settings) {
-    throw new Error(`No settings found for provider ${provider} and model class ${modelClass}`);
+    throw new Error(
+      `No settings found for provider ${provider} and model class ${modelClass}`
+    );
   }
+
+  const temperature = options?.temperature ?? settings.temperature;
 
   let model: any;
 
   switch (provider) {
-    case ModelProviderName.OPENAI:
+    case ModelProviderName.OPENAI: {
+      const openAITokenConfig = getOpenAITokenConfig(
+        settings.name,
+        settings.maxOutputTokens
+      );
+      const openAITemperatureConfig = isOpenAIFixedParameterModel(settings.name)
+        ? {}
+        : { temperature };
       model = new ChatOpenAI({
         modelName: settings.name,
-        temperature: settings.temperature,
-        maxTokens: settings.maxOutputTokens,
+        ...openAITemperatureConfig,
         openAIApiKey: process.env.OPENAI_API_KEY,
         configuration: {
           baseURL: endpoint,
         },
+        ...openAITokenConfig,
       });
       break;
+    }
 
     case ModelProviderName.ANTHROPIC:
       model = new ChatAnthropic({
         modelName: settings.name,
-        temperature: settings.temperature,
+        temperature,
         maxTokens: settings.maxOutputTokens,
         anthropicApiKey: process.env.ANTHROPIC_API_KEY,
         clientOptions: {
@@ -186,7 +237,7 @@ export function createChatModel(
     case ModelProviderName.GOOGLE:
       model = new ChatGoogleGenerativeAI({
         modelName: settings.name,
-        temperature: settings.temperature,
+        temperature,
         maxOutputTokens: settings.maxOutputTokens,
         apiKey: process.env.GOOGLE_API_KEY,
         streaming: options?.streaming ?? false,
@@ -202,40 +253,41 @@ export function createChatModel(
     modelClass,
     modelName: settings.name,
     operation: options?.operation,
-    userId: options?.userId,
+    email: options?.userId,
   });
 }
 
 /**
  * Generates text using the appropriate model class for CoC scenarios
  */
-export async function generateText(options: GenerationOptions): Promise<string> {
+export async function generateText(
+  options: GenerationOptions
+): Promise<string> {
   const {
-    runtime,
     context,
     modelClass = ModelClass.MEDIUM,
+    providerOverride,
     customSystemPrompt,
     maxRetries = 3,
+    fallbackToLargeOnFailure = false,
+    largeFallbackRetries = 3,
     images,
     onToken,
+    temperature,
   } = options;
 
-  // Get provider from environment variable, runtime, or default to OpenAI
+  // Get provider from environment variable or default to OpenAI
   const envProvider = process.env.MODEL_PROVIDER as ModelProviderName;
-  const provider = envProvider || runtime.modelProvider || ModelProviderName.OPENAI;
-  
+  const provider = providerOverride || envProvider || ModelProviderName.OPENAI;
+
   // Resolve effective model class
-  const effectiveModelClass = resolveModelClass(runtime, modelClass);
-  
-  // Create chat model
-  const chatModel = createChatModel(provider, effectiveModelClass, {
-    streaming: provider === ModelProviderName.GOOGLE && Boolean(onToken),
-    operation: options.operation,
-    userId: options.userId,
-  });
+  const effectiveModelClass = resolveModelClass(modelClass);
 
   // Prepare messages
-  const messages = [];
+  const messages: Array<{
+    role: "system" | "user";
+    content: string | Array<Record<string, unknown>>;
+  }> = [];
 
   if (customSystemPrompt) {
     messages.push({
@@ -244,32 +296,72 @@ export async function generateText(options: GenerationOptions): Promise<string> 
     });
   }
 
-  // Build user content (may need to download images for Google)
-  const userContent = await buildUserContent(provider, context, images);
+  const phases: Array<{
+    modelClass: ModelClass;
+    retries: number;
+    label: "primary" | "large_fallback";
+  }> = [
+    {
+      modelClass: effectiveModelClass,
+      retries: Math.max(1, maxRetries),
+      label: "primary",
+    },
+  ];
 
-  messages.push({
-    role: "user",
-    content: userContent,
-  });
+  if (
+    fallbackToLargeOnFailure &&
+    effectiveModelClass !== ModelClass.LARGE &&
+    largeFallbackRetries > 0
+  ) {
+    phases.push({
+      modelClass: ModelClass.LARGE,
+      retries: Math.max(1, largeFallbackRetries),
+      label: "large_fallback",
+    });
+  }
 
-  // Generate with retries
-  let lastError: Error | null = null;
-  
-  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+  const toErrorMessage = (error: unknown): string => {
+    if (error instanceof Error && typeof error.message === "string") {
+      return error.message;
+    }
+    if (typeof error === "string") return error;
     try {
-      console.log(
-        `🤖 Generating text (attempt ${attempt}/${maxRetries}) using ${provider}/${effectiveModelClass}`
-      );
+      return JSON.stringify(error);
+    } catch {
+      return String(error);
+    }
+  };
 
-      if (onToken && provider === ModelProviderName.GOOGLE && typeof chatModel.stream === "function") {
+  const runWithProvider = async (
+    providerForRun: ModelProviderName
+  ): Promise<string> => {
+    const totalPlannedAttempts = phases.reduce(
+      (sum, phase) => sum + phase.retries,
+      0
+    );
+    let globalAttempt = 0;
+    let lastErrorMessage = "Unknown error";
+    let lastAttemptedModelClass: ModelClass = effectiveModelClass;
+
+    const userContent = await buildUserContent(providerForRun, context, images);
+    const providerMessages = [...messages];
+    providerMessages.push({
+      role: "user" as const,
+      content: userContent,
+    });
+
+    const invokeModel = async (chatModel: any): Promise<string> => {
+      if (
+        onToken &&
+        providerForRun === ModelProviderName.GOOGLE &&
+        typeof chatModel.stream === "function"
+      ) {
         let fullContent = "";
-        const stream = await chatModel.stream(messages);
+        const stream = await chatModel.stream(providerMessages);
 
         for await (const chunk of stream) {
           const content =
-            (chunk as any)?.content ??
-            (chunk as any)?.message?.content ??
-            "";
+            (chunk as any)?.content ?? (chunk as any)?.message?.content ?? "";
           const text =
             typeof content === "string"
               ? content
@@ -287,32 +379,99 @@ export async function generateText(options: GenerationOptions): Promise<string> 
           throw new Error("Empty response from model");
         }
 
-        console.log(`✅ Generated text successfully (${fullContent.length} characters)`);
+        console.log(
+          `✅ Generated text successfully (${fullContent.length} characters)`
+        );
         return fullContent;
       }
 
-      const response = await chatModel.invoke(messages);
+      const response = await chatModel.invoke(providerMessages);
+      const content = (response as any)?.content;
+      const responseText =
+        typeof content === "string"
+          ? content
+          : Array.isArray(content)
+            ? content.map((part: any) => part?.text ?? "").join("")
+            : "";
 
-      if (!response?.content) {
+      if (!responseText) {
         throw new Error("Empty response from model");
       }
 
-      console.log(`✅ Generated text successfully (${response.content.length} characters)`);
-      return response.content;
-
-    } catch (error) {
-      lastError = error as Error;
-      console.error(
-        `❌ Generation attempt ${attempt} failed:`,
-        error
+      const inputTokens = (response as any).usage_metadata?.input_tokens ?? "?";
+      console.log(
+        `✅ Generated text successfully (${responseText.length} characters, input tokens: ${inputTokens})`
       );
+      return responseText;
+    };
 
-      if (attempt < maxRetries) {
-        const delay = Math.pow(2, attempt) * 1000; // Exponential backoff
-        await new Promise((resolve) => setTimeout(resolve, delay));
+    for (const phase of phases) {
+      if (phase.label === "large_fallback") {
+        console.warn(
+          `⚠️ Primary model failed. Switching to ${providerForRun}/${phase.modelClass} fallback (${phase.retries} retries).`
+        );
+      }
+
+      const chatModel = createChatModel(providerForRun, phase.modelClass, {
+        streaming:
+          providerForRun === ModelProviderName.GOOGLE && Boolean(onToken),
+        operation: options.operation,
+        temperature,
+        userId: options.userId,
+      });
+
+      for (let attempt = 1; attempt <= phase.retries; attempt++) {
+        globalAttempt += 1;
+        lastAttemptedModelClass = phase.modelClass;
+
+        try {
+          console.log(
+            `🤖 Generating text (attempt ${globalAttempt}/${totalPlannedAttempts}, phase ${phase.label} ${attempt}/${phase.retries}) using ${providerForRun}/${phase.modelClass}`
+          );
+          return await invokeModel(chatModel);
+        } catch (error) {
+          lastErrorMessage = toErrorMessage(error);
+          console.error(
+            `❌ Generation attempt ${globalAttempt} failed (${providerForRun}/${phase.modelClass}):`,
+            error
+          );
+
+          if (attempt < phase.retries) {
+            const delay = Math.pow(2, attempt) * 1000; // Exponential backoff
+            await new Promise((resolve) => setTimeout(resolve, delay));
+          }
+        }
       }
     }
-  }
 
-  throw new Error(`Failed to generate text after ${maxRetries} attempts: ${lastError?.message}`);
+    throw new Error(
+      `Failed to generate text after ${totalPlannedAttempts} attempts with ${providerForRun}: ${lastErrorMessage}`
+    );
+  };
+
+  try {
+    return await runWithProvider(provider);
+  } catch (primaryError) {
+    const primaryErrorMessage = toErrorMessage(primaryError);
+    const canFallbackToOpenAI =
+      provider !== ModelProviderName.OPENAI &&
+      Boolean(process.env.OPENAI_API_KEY?.trim());
+
+    if (!canFallbackToOpenAI) {
+      throw primaryError;
+    }
+
+    console.warn(
+      `⚠️ ${provider} exhausted retry limits. Switching provider fallback to openai...`
+    );
+
+    try {
+      return await runWithProvider(ModelProviderName.OPENAI);
+    } catch (openaiError) {
+      const openaiErrorMessage = toErrorMessage(openaiError);
+      throw new Error(
+        `Primary provider failed (${provider}): ${primaryErrorMessage}; OpenAI fallback failed: ${openaiErrorMessage}`
+      );
+    }
+  }
 }

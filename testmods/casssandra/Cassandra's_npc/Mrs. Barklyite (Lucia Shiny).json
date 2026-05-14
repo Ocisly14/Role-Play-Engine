@@ -1,0 +1,133 @@
+{
+  "id": "Mrs. Barklyite (Lucia Shiny)",
+  "name": "Mrs. Barklyite (Lucia Shiny)",
+  "occupation": "Lawyer",
+  "age": 33,
+  "gender": "female",
+  "appearance": "An elegant and composed woman, often seen wearing a distinctive ruby brooch gifted by her adoptive father. Her attire is formal and professional, reflecting her status as a capable lawyer.",
+  "personality": "Intelligent, diligent, and conscientious. She carries a sense of guilt toward her benefactor and is driven by a desire to prove her worth, while remaining unaware of the darker forces surrounding her upbringing.",
+  "background": "Lucia Shiny, known as Mrs. Barklyite or the Red Stone Lady, was an orphan from the slums with no knowledge of her biological parents. She was adopted by Albert Shiny, who ran an orphanage and secretly was a Shoggoth Lord. Although his true intention was to increase the human population for predation, Lucia believed his motives were benevolent. She grew up to become a highly capable lawyer, though she feels she has not lived up to her adoptive father's expectations.",
+  "residence": "SCN_1",
+  "currentLocation": "SCN_1_SUB_1",
+  "longTermIntent": "Achieve greater success as a lawyer, repay her adoptive father's kindness, and keep her disguises and contacts viable.",
+  "attributes": {
+    "STR": 40,
+    "CON": 50,
+    "DEX": 55,
+    "APP": 65,
+    "POW": 60,
+    "SIZ": 50,
+    "INT": 75,
+    "EDU": 80
+  },
+  "status": {
+    "hp": 10,
+    "maxHp": 10,
+    "sanity": 60,
+    "maxSanity": 60,
+    "luck": 65,
+    "mp": 12,
+    "conditions": []
+  },
+  "skills": {
+    "Law": 80,
+    "Persuade": 70,
+    "Charm": 60,
+    "Psychology": 55,
+    "Credit Rating": 60
+  },
+  "inventory": [
+    {
+      "name": "Ruby brooch",
+      "properties": {
+        "note": "A distinctive ruby brooch gifted by her adoptive father Albert Shiny."
+      }
+    },
+    {
+      "name": "Legal documents",
+      "properties": {
+        "note": "Various legal case files and professional documents."
+      }
+    },
+    {
+      "name": "Handbag with personal effects",
+      "properties": {
+        "note": "Contains everyday items and disguise materials."
+      }
+    }
+  ],
+  "relationships": [
+    {
+      "targetId": "Albert Shiny",
+      "targetName": "Albert Shiny",
+      "relationshipType": "family",
+      "attitude": 60,
+      "description": "Her adoptive father, whom she respects deeply and feels indebted to.",
+      "history": "Albert Shiny adopted Lucia from an orphanage and supported her education, shaping her entire life."
+    },
+    {
+      "targetId": "Adolph Carl",
+      "targetName": "Adolph Carl",
+      "relationshipType": "neutral",
+      "attitude": 15,
+      "description": "A covert business contact connected to sensitive hospital matters.",
+      "history": "Lucia knows him as the Shore Master and has used him as an intermediary."
+    }
+  ],
+  "memory": [
+    {
+      "type": "information",
+      "content": "I was adopted by Albert Shiny and raised with strong expectations about responsibility and success.",
+      "metadata": {
+        "knowledgeId": "k_lucia_adoption",
+        "difficulty": "automatic"
+      }
+    },
+    {
+      "type": "information",
+      "content": "I worked under the alias Susan at Star Hospital to investigate Patrizio's activities.",
+      "metadata": {
+        "knowledgeId": "k_lucia_susan",
+        "difficulty": "regular"
+      }
+    },
+    {
+      "type": "secret",
+      "content": "I am watching for a clean opening to step into Isabela Smith's place once her departure creates the chance, because keeping the cover intact matters more than making a scene.",
+      "metadata": {
+        "knowledgeId": "s_lucia_isabela"
+      }
+    },
+    {
+      "type": "secret",
+      "content": "I conducted business with Lucifero through Adolph Carl and asked her to intercept Borrachero shipments.",
+      "metadata": {
+        "knowledgeId": "s_lucia_lucifero"
+      }
+    },
+    {
+      "type": "belief",
+      "content": "I owe Albert everything, but gratitude alone is not the same as understanding what kind of life I should build for myself.",
+      "metadata": {
+        "confidence": 0.85,
+        "reasoningChain": "I can honor what he gave me without becoming trapped by it."
+      }
+    },
+    {
+      "type": "information",
+      "content": "I learned that immaculate paperwork and a calm face are often more persuasive than authority itself.",
+      "metadata": {
+        "knowledgeId": "k_lucia_paperwork",
+        "difficulty": "regular"
+      }
+    },
+    {
+      "type": "information",
+      "content": "I have learned to change roles carefully enough that I can keep operating without losing the part of myself that still wants to do good.",
+      "metadata": {
+        "knowledgeId": "k_lucia_role_control",
+        "difficulty": "regular"
+      }
+    }
+  ]
+}

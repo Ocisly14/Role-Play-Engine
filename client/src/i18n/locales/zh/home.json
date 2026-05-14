@@ -1,0 +1,95 @@
+{
+  "menu": {
+    "manageModules": "管理模组",
+    "createCharacter": "创建角色",
+    "viewCharacters": "查看角色",
+    "newSimulation": "新模拟",
+    "continueSimulation": "继续模拟"
+  },
+  "characters": {
+    "title": "您的角色",
+    "count": "{{count}}个调查员",
+    "count_plural": "{{count}}个调查员",
+    "ready": "就绪",
+    "loading": "加载角色中...",
+    "empty": "还没有创建角色",
+    "emptyDescription": "创建您的第一个调查员,开始克苏鲁的呼唤之旅",
+    "viewSheet": "查看角色卡",
+    "unknownOccupation": "未知职业"
+  },
+  "selector": {
+    "title": "选择调查员",
+    "processing": "处理中...",
+    "importWait": "请稍候,这可能需要几秒钟...",
+    "retry": "重试",
+    "createFirst": "创建第一个调查员",
+    "age": "年龄:",
+    "createNew": "创建新角色",
+    "done": "完成",
+    "importing": "导入数据中...",
+    "startGame": "使用此角色开始游戏",
+    "loadError": "加载角色失败",
+    "networkError": "网络错误: 无法连接到服务器",
+    "moduleLoading": "模组加载中...",
+    "importFailed": "数据导入失败"
+  },
+  "analytics": {
+    "title": "数据看板",
+    "todaySummary": "今日汇总 ({{date}})",
+    "accumulatedSummary": "累计汇总",
+    "todayTopUsers": "今日新模拟最多的5个用户",
+    "recent48hSummary": "最近48小时 ({{start}} - {{end}})",
+    "actions": {
+      "refresh": "刷新",
+      "refreshing": "刷新中..."
+    },
+    "states": {
+      "loading": "正在加载统计数据...",
+      "empty": "暂无统计数据"
+    },
+    "metrics": {
+      "loginUsers": "登录用户",
+      "activeUsers": "活跃用户",
+      "newUsers": "新增用户",
+      "simulations": "模拟数",
+      "totalSimulations": "模拟总量",
+      "simulationEvents": "模拟事件数",
+      "accumulatedUsers": "累计用户",
+      "accumulatedSimulations": "累计模拟数",
+      "avgSimsPerUser": "人均模拟",
+      "newMods": "新增模组",
+      "newModsShort": "新增短篇模组",
+      "newModsMedium": "新增中篇模组",
+      "newModsLong": "新增长篇模组"
+    },
+    "charts": {
+      "userActivity": "用户活跃趋势",
+      "simulationActivity": "模拟活动",
+      "moduleGeneration": "按长度统计的模组生成数"
+    },
+    "length": {
+      "short": "短篇",
+      "medium": "中篇",
+      "long": "长篇"
+    },
+    "errors": {
+      "loadFailed": "加载统计数据失败",
+      "refreshFailed": "刷新统计数据失败"
+    },
+    "tabs": {
+      "usage": "使用统计",
+      "visitors": "访客统计"
+    },
+    "visitors": {
+      "todaySummary": "今日概览",
+      "totalVisits": "浏览总数",
+      "avgDuration": "平均浏览时长",
+      "hourlyChart": "每小时访客数",
+      "ipTable": "IP 访客详情",
+      "ip": "IP 地址",
+      "visitCount": "访问次数",
+      "avgDurationCol": "平均时长",
+      "noData": "暂无访客数据"
+    }
+  }
+}

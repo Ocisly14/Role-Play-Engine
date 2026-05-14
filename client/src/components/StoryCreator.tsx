@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 
 export interface StoryCreatorProps {
   apiBaseUrl?: string;
@@ -6,15 +7,41 @@ export interface StoryCreatorProps {
   onCancel: () => void;
 }
 
-type SettingType = 'small_town' | 'city' | 'academic' | 'isolated' | 'single_structure' | 'route';
+type SettingType =
+  | "small_town"
+  | "city"
+  | "academic"
+  | "isolated"
+  | "single_structure"
+  | "route";
 
 /** Story length: short / medium / long */
-export type StoryLength = 'short' | 'medium' | 'long';
+export type StoryLength = "short" | "medium" | "long";
 
-const STORY_LENGTH_OPTIONS: { value: StoryLength; label: string; description: string; icon: string }[] = [
-  { value: 'short', label: 'Short Story', description: 'Single thread, fewer scenes & NPCs (~10 total), 1–2 sessions', icon: '📖' },
-  { value: 'medium', label: 'Medium Story', description: 'Multiple threads, moderate scenes & characters (~15 total), 3–5 sessions', icon: '📚' },
-  { value: 'long', label: 'Long Story', description: 'Full campaign, rich scenes & NPCs (20+ total), many sessions', icon: '🗂️' }
+const STORY_LENGTH_OPTIONS: {
+  value: StoryLength;
+  labelKey: string;
+  descriptionKey: string;
+  icon: string;
+}[] = [
+  {
+    value: "short",
+    labelKey: "storyCreator.length.short.label",
+    descriptionKey: "storyCreator.length.short.description",
+    icon: "📖",
+  },
+  {
+    value: "medium",
+    labelKey: "storyCreator.length.medium.label",
+    descriptionKey: "storyCreator.length.medium.description",
+    icon: "📚",
+  },
+  {
+    value: "long",
+    labelKey: "storyCreator.length.long.label",
+    descriptionKey: "storyCreator.length.long.description",
+    icon: "🗂️",
+  },
 ];
 
 interface ProgressUpdate {
@@ -24,7 +51,7 @@ interface ProgressUpdate {
 }
 
 interface QuotaStatus {
-  phase: 'initial' | 'weekly';
+  phase: "initial" | "weekly";
   totalUsed: number;
   totalLimit: number;
   mediumUsed: number;
@@ -33,96 +60,110 @@ interface QuotaStatus {
   largeLimit: number;
 }
 
-const SETTING_TYPES: { value: SettingType; label: string; description: string; icon: string }[] = [
+const SETTING_TYPES: {
+  value: SettingType;
+  labelKey: string;
+  descriptionKey: string;
+  icon: string;
+}[] = [
   {
-    value: 'small_town',
-    label: 'Small Town',
-    description: 'A close-knit rural community where secrets run deep',
-    icon: '🏘️'
+    value: "small_town",
+    labelKey: "storyCreator.setting.small_town.label",
+    descriptionKey: "storyCreator.setting.small_town.description",
+    icon: "🏘️",
   },
   {
-    value: 'city',
-    label: 'City',
-    description: 'An urban sprawl where the strange hides in plain sight',
-    icon: '🌆'
+    value: "city",
+    labelKey: "storyCreator.setting.city.label",
+    descriptionKey: "storyCreator.setting.city.description",
+    icon: "🌆",
   },
   {
-    value: 'academic',
-    label: 'Academic',
-    description: 'A university or research facility harboring forbidden knowledge',
-    icon: '🎓'
+    value: "academic",
+    labelKey: "storyCreator.setting.academic.label",
+    descriptionKey: "storyCreator.setting.academic.description",
+    icon: "🎓",
   },
   {
-    value: 'isolated',
-    label: 'Isolated',
-    description: 'A remote location cut off from civilization',
-    icon: '🏔️'
+    value: "isolated",
+    labelKey: "storyCreator.setting.isolated.label",
+    descriptionKey: "storyCreator.setting.isolated.description",
+    icon: "🏔️",
   },
   {
-    value: 'single_structure',
-    label: 'Single Structure',
-    description: 'A mansion, hotel, or building with dark history',
-    icon: '🏰'
+    value: "single_structure",
+    labelKey: "storyCreator.setting.single_structure.label",
+    descriptionKey: "storyCreator.setting.single_structure.description",
+    icon: "🏰",
   },
   {
-    value: 'route',
-    label: 'Route',
-    description: 'A journey through dangerous or mysterious terrain',
-    icon: '🚂'
-  }
+    value: "route",
+    labelKey: "storyCreator.setting.route.label",
+    descriptionKey: "storyCreator.setting.route.description",
+    icon: "🚂",
+  },
 ];
 
 export function StoryCreator({
-  apiBaseUrl = '/api',
+  apiBaseUrl = "/api",
   onComplete,
-  onCancel
+  onCancel,
 }: StoryCreatorProps) {
-  const [creativePrompt, setCreativePrompt] = useState('');
-  const [settingType, setSettingType] = useState<SettingType>('small_town');
-  const [storyLength, setStoryLength] = useState<StoryLength>('medium');
+  const { t } = useTranslation("module");
+  const [creativePrompt, setCreativePrompt] = useState("");
+  const [settingType, setSettingType] = useState<SettingType>("small_town");
+  const [storyLength, setStoryLength] = useState<StoryLength>("medium");
   const [isGenerating, setIsGenerating] = useState(false);
   const [progress, setProgress] = useState<ProgressUpdate | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [quota, setQuota] = useState<QuotaStatus | null>(null);
 
   useEffect(() => {
-    const token = localStorage.getItem('accessToken');
+    const token = localStorage.getItem("accessToken");
     fetch(`${apiBaseUrl}/mods/quota`, {
       headers: token ? { Authorization: `Bearer ${token}` } : {},
     })
       .then((res) => res.json())
-      .then((data) => { if (data.quota) setQuota(data.quota); })
+      .then((data) => {
+        if (data.quota) setQuota(data.quota);
+      })
       .catch(() => {});
   }, [apiBaseUrl]);
 
   const isLengthDisabled = (value: StoryLength): boolean => {
     if (!quota) return false;
     if (quota.totalUsed >= quota.totalLimit) return true;
-    if (value === 'medium' && quota.mediumUsed >= quota.mediumLimit) return true;
-    if (value === 'long' && quota.largeUsed >= quota.largeLimit) return true;
+    if (value === "medium" && quota.mediumUsed >= quota.mediumLimit)
+      return true;
+    if (value === "long" && quota.largeUsed >= quota.largeLimit) return true;
     return false;
   };
 
-  const runGeneration = async (endpoint: string, payload: Record<string, string>) => {
-    const token = localStorage.getItem('accessToken');
+  const runGeneration = async (
+    endpoint: string,
+    payload: Record<string, string>
+  ) => {
+    const token = localStorage.getItem("accessToken");
     const response = await fetch(`${apiBaseUrl}${endpoint}`, {
-      method: 'POST',
+      method: "POST",
       headers: {
-        'Content-Type': 'application/json',
-        ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+        "Content-Type": "application/json",
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
       },
-      body: JSON.stringify(payload)
+      body: JSON.stringify(payload),
     });
 
     if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
+      throw new Error(
+        t("storyCreator.errors.http", { status: response.status })
+      );
     }
 
     const reader = response.body?.getReader();
     const decoder = new TextDecoder();
 
     if (!reader) {
-      throw new Error('No response body');
+      throw new Error(t("storyCreator.errors.noResponseBody"));
     }
 
     while (true) {
@@ -131,23 +172,25 @@ export function StoryCreator({
       if (done) break;
 
       const chunk = decoder.decode(value);
-      const lines = chunk.split('\n');
+      const lines = chunk.split("\n");
 
       for (const line of lines) {
-        if (line.startsWith('data: ')) {
+        if (line.startsWith("data: ")) {
           try {
             const data = JSON.parse(line.substring(6));
             setProgress(data);
 
-            if (data.stage === 'complete') {
+            if (data.stage === "complete") {
               return data;
             }
 
-            if (data.stage === 'error') {
-              throw new Error(data.message || 'Generation failed');
+            if (data.stage === "error") {
+              throw new Error(
+                data.message || t("storyCreator.errors.generationFailed")
+              );
             }
           } catch (parseError) {
-            console.error('Failed to parse SSE data:', parseError);
+            console.error("Failed to parse SSE data:", parseError);
           }
         }
       }
@@ -158,31 +201,38 @@ export function StoryCreator({
 
   const handleGenerateWorld = async () => {
     if (!creativePrompt.trim()) {
-      setError('Please enter your story idea');
+      setError(t("storyCreator.errors.ideaRequired"));
       return;
     }
 
     setError(null);
     setIsGenerating(true);
-    setProgress({ stage: 'starting', progress: 0, message: 'Starting world generation...' });
+    setProgress({
+      stage: "starting",
+      progress: 0,
+      message: t("storyCreator.progress.startingGeneration"),
+    });
 
     try {
-      const data = await runGeneration('/module/generate-world', {
+      const data = await runGeneration("/module/generate-world", {
         settingType,
         storyLength,
-        creativePrompt: creativePrompt.trim()
+        creativePrompt: creativePrompt.trim(),
       });
 
-      if (data?.stage === 'complete') {
-        const moduleName = data.result?.moduleName || 'Generated_Module';
+      if (data?.stage === "complete") {
+        const moduleName =
+          data.result?.moduleName || t("storyCreator.defaultModuleName");
         setIsGenerating(false);
         setTimeout(() => {
           onComplete(moduleName);
         }, 1000);
       }
     } catch (err) {
-      console.error('Error generating world:', err);
-      setError((err as Error).message || 'Failed to generate world');
+      console.error("Error generating world:", err);
+      setError(
+        (err as Error).message || t("storyCreator.errors.generationFailed")
+      );
       setIsGenerating(false);
     }
   };
@@ -194,12 +244,26 @@ export function StoryCreator({
 
   const getStageLabel = (stage: string) => {
     switch (stage) {
-      case 'macro_scene': return 'Building World Structure';
-      case 'npc_builder': return 'Creating Characters';
-      case 'persistence': return 'Saving Files';
-      case 'complete': return 'Complete!';
-      case 'error': return 'Error';
-      default: return 'Processing...';
+      case "macro_scene":
+        return t("storyCreator.progress.stages.macro_scene");
+      case "scenario_builder":
+        return t("storyCreator.progress.stages.scenario_builder");
+      case "npc_builder":
+        return t("storyCreator.progress.stages.npc_builder");
+      case "scenario_snapshot":
+        return t("storyCreator.progress.stages.scenario_snapshot");
+      case "map_generation":
+        return t("storyCreator.progress.stages.map_generation");
+      case "module_digest":
+        return t("storyCreator.progress.stages.module_digest");
+      case "persistence":
+        return t("storyCreator.progress.stages.persistence");
+      case "complete":
+        return t("storyCreator.progress.stages.complete");
+      case "error":
+        return t("storyCreator.progress.stages.error");
+      default:
+        return t("storyCreator.progress.stages.processing");
     }
   };
 
@@ -209,51 +273,86 @@ export function StoryCreator({
         <div className="story-creator-modal">
           <div className="modal-header">
             <div className="modal-header-content">
-              <img src="/asset/icon.png" alt="Create Story" className="header-icon" />
+              <img
+                src="/asset/icon.png"
+                alt={t("storyCreator.createStoryAlt")}
+                className="header-icon"
+              />
               <div className="header-text">
-                <h2>Create Your Own Story</h2>
-                <p className="header-subtitle">Design your own Call of Cthulhu adventure</p>
+                <h2>{t("storyCreator.title")}</h2>
+                <p className="header-subtitle">{t("storyCreator.subtitle")}</p>
               </div>
             </div>
-            <button onClick={onCancel} className="close-button" aria-label="Close" disabled={isGenerating}>×</button>
+            <button
+              onClick={onCancel}
+              className="close-button"
+              aria-label={t("storyCreator.closeAria")}
+              disabled={isGenerating}
+            >
+              ×
+            </button>
           </div>
 
           <div className="modal-content">
             {!isGenerating ? (
               <>
-                {error && (
-                  <div className="error-message">
-                    {error}
-                  </div>
-                )}
+                {error && <div className="error-message">{error}</div>}
 
                 {quota && (
-                  <div className={`quota-banner ${quota.totalUsed >= quota.totalLimit ? 'exhausted' : ''}`}>
+                  <div
+                    className={`quota-banner ${quota.totalUsed >= quota.totalLimit ? "exhausted" : ""}`}
+                  >
                     <div className="quota-row">
-                      <span className="quota-title">Generation Quota</span>
+                      <span className="quota-title">
+                        {t("storyCreator.quota.title")}
+                      </span>
                       <span className="quota-remaining">
                         {quota.totalUsed >= quota.totalLimit
-                          ? 'Quota Exhausted'
-                          : `${quota.totalLimit - quota.totalUsed} chances left`}
+                          ? t("storyCreator.quota.exhausted")
+                          : t("storyCreator.quota.chancesLeft", {
+                              count: quota.totalLimit - quota.totalUsed,
+                            })}
                       </span>
                     </div>
                     <p className="quota-rule">
-                      {quota.phase === 'initial'
-                        ? `You have ${quota.totalLimit} generation chances in total — Medium up to ${quota.mediumLimit} times, Long up to ${quota.largeLimit} time. Short has no extra limit.`
-                        : `You have ${quota.totalLimit} generation chances per week — Medium up to ${quota.mediumLimit} times, Long up to ${quota.largeLimit} time. Short has no extra limit.`}
+                      {quota.phase === "initial"
+                        ? t("storyCreator.quota.initialRule", {
+                            total: quota.totalLimit,
+                            medium: quota.mediumLimit,
+                            large: quota.largeLimit,
+                          })
+                        : t("storyCreator.quota.weeklyRule", {
+                            total: quota.totalLimit,
+                            medium: quota.mediumLimit,
+                            large: quota.largeLimit,
+                          })}
                     </p>
                     <div className="quota-details">
-                      <span className={`quota-tag ${quota.mediumUsed >= quota.mediumLimit ? 'used-up' : ''}`}>
-                        Medium: {quota.mediumUsed >= quota.mediumLimit ? 'Limit reached' : `${quota.mediumLimit - quota.mediumUsed} available`}
+                      <span
+                        className={`quota-tag ${quota.mediumUsed >= quota.mediumLimit ? "used-up" : ""}`}
+                      >
+                        {t("storyCreator.length.medium.label")}:{" "}
+                        {quota.mediumUsed >= quota.mediumLimit
+                          ? t("storyCreator.quota.limitReached")
+                          : t("storyCreator.quota.available", {
+                              count: quota.mediumLimit - quota.mediumUsed,
+                            })}
                       </span>
-                      <span className={`quota-tag ${quota.largeUsed >= quota.largeLimit ? 'used-up' : ''}`}>
-                        Long: {quota.largeUsed >= quota.largeLimit ? 'Limit reached' : `${quota.largeLimit - quota.largeUsed} available`}
+                      <span
+                        className={`quota-tag ${quota.largeUsed >= quota.largeLimit ? "used-up" : ""}`}
+                      >
+                        {t("storyCreator.length.long.label")}:{" "}
+                        {quota.largeUsed >= quota.largeLimit
+                          ? t("storyCreator.quota.limitReached")
+                          : t("storyCreator.quota.available", {
+                              count: quota.largeLimit - quota.largeUsed,
+                            })}
                       </span>
                     </div>
                     <div className="quota-refresh">
-                      {quota.phase === 'initial'
-                        ? 'Initial allowance · weekly quota (4/week) unlocks after'
-                        : 'Refreshes every 7 days'}
+                      {quota.phase === "initial"
+                        ? t("storyCreator.quota.initialRefresh")
+                        : t("storyCreator.quota.weeklyRefresh")}
                     </div>
                   </div>
                 )}
@@ -261,7 +360,7 @@ export function StoryCreator({
                 <>
                   <div className="form-section">
                     <label htmlFor="storyLength" className="form-label">
-                      Story Length
+                      {t("storyCreator.length.title")}
                     </label>
                     <div className="story-length-grid">
                       {STORY_LENGTH_OPTIONS.map((opt) => {
@@ -269,14 +368,24 @@ export function StoryCreator({
                         return (
                           <div
                             key={opt.value}
-                            className={`setting-card ${storyLength === opt.value ? 'selected' : ''} ${disabled ? 'disabled' : ''}`}
-                            onClick={() => !disabled && setStoryLength(opt.value)}
+                            className={`setting-card ${storyLength === opt.value ? "selected" : ""} ${disabled ? "disabled" : ""}`}
+                            onClick={() =>
+                              !disabled && setStoryLength(opt.value)
+                            }
                           >
                             <div className="setting-icon">{opt.icon}</div>
                             <div className="setting-content">
-                              <div className="setting-label">{opt.label}</div>
-                              <div className="setting-description">{opt.description}</div>
-                              {disabled && <div className="quota-limit-badge">Limit reached</div>}
+                              <div className="setting-label">
+                                {t(opt.labelKey)}
+                              </div>
+                              <div className="setting-description">
+                                {t(opt.descriptionKey)}
+                              </div>
+                              {disabled && (
+                                <div className="quota-limit-badge">
+                                  {t("storyCreator.quota.limitReached")}
+                                </div>
+                              )}
                             </div>
                             {storyLength === opt.value && !disabled && (
                               <div className="setting-checkmark">✓</div>
@@ -289,19 +398,23 @@ export function StoryCreator({
 
                   <div className="form-section">
                     <label htmlFor="settingType" className="form-label">
-                      Setting Type
+                      {t("storyCreator.setting.title")}
                     </label>
                     <div className="setting-grid">
                       {SETTING_TYPES.map((setting) => (
                         <div
                           key={setting.value}
-                          className={`setting-card ${settingType === setting.value ? 'selected' : ''}`}
+                          className={`setting-card ${settingType === setting.value ? "selected" : ""}`}
                           onClick={() => setSettingType(setting.value)}
                         >
                           <div className="setting-icon">{setting.icon}</div>
                           <div className="setting-content">
-                            <div className="setting-label">{setting.label}</div>
-                            <div className="setting-description">{setting.description}</div>
+                            <div className="setting-label">
+                              {t(setting.labelKey)}
+                            </div>
+                            <div className="setting-description">
+                              {t(setting.descriptionKey)}
+                            </div>
                           </div>
                           {settingType === setting.value && (
                             <div className="setting-checkmark">✓</div>
@@ -313,40 +426,47 @@ export function StoryCreator({
 
                   <div className="form-section">
                     <label htmlFor="creativePrompt" className="form-label">
-                      Your Story Idea <span className="required">*</span>
+                      {t("storyCreator.ideaLabel")}{" "}
+                      <span className="required">*</span>
                     </label>
                     <textarea
                       id="creativePrompt"
                       value={creativePrompt}
                       onChange={(e) => setCreativePrompt(e.target.value)}
-                      placeholder="Describe your story concept... What mysteries lurk beneath the surface? What horrors await the investigators? Be as detailed or as brief as you like."
+                      placeholder={t("storyCreator.ideaPlaceholder")}
                       className="form-textarea"
                       rows={8}
                     />
-                    <p className="form-hint">
-                      Create a unique world for your own story.
-                    </p>
+                    <p className="form-hint">{t("storyCreator.ideaHint")}</p>
                   </div>
                 </>
 
                 <div className="modal-footer">
                   <button onClick={onCancel} className="btn-secondary">
-                    Cancel
+                    {t("common:button.cancel")}
                   </button>
                   <button
                     onClick={handleGenerateWorld}
                     className="btn-primary"
-                    disabled={!creativePrompt.trim() || isLengthDisabled(storyLength)}
+                    disabled={
+                      !creativePrompt.trim() || isLengthDisabled(storyLength)
+                    }
                   >
-                    Generate World →
+                    {t("storyCreator.generateButton")} →
                   </button>
                 </div>
               </>
             ) : (
               <div className="generation-progress">
                 <div className="progress-header">
-                  <h3>{progress ? getStageLabel(progress.stage) : 'Generating...'}</h3>
-                  <div className="progress-percentage">{getProgressPercentage()}%</div>
+                  <h3>
+                    {progress
+                      ? getStageLabel(progress.stage)
+                      : t("storyCreator.progress.generating")}
+                  </h3>
+                  <div className="progress-percentage">
+                    {getProgressPercentage()}%
+                  </div>
                 </div>
 
                 <div className="progress-bar-container">
@@ -357,11 +477,11 @@ export function StoryCreator({
                 </div>
 
                 <div className="progress-message">
-                  {progress?.message || 'Starting generation...'}
+                  {progress?.message || t("storyCreator.progress.starting")}
                 </div>
 
                 <div className="progress-info">
-                  <p>This may take up to 10 minutes. Creating a unique world for your own story...</p>
+                  <p>{t("storyCreator.progress.mayTakeTime")}</p>
                 </div>
               </div>
             )}

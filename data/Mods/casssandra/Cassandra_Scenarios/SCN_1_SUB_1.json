@@ -1,0 +1,106 @@
+{
+  "id": "SCN_1_SUB_1",
+  "name": "医院大厅",
+  "description": "推开星辰医院的玻璃门，一股混合着消毒水和陈旧地板蜡的气味扑面而来。大厅不算宽敞，米白色的瓷砖地面上布满了细小的裂纹，头顶的日光灯管有一根在微微闪烁，发出若有若无的嗡嗡声。右侧是一排塑料候诊椅，扶手上的漆已经磨得发亮，靠墙立着一台老旧的自动售货机，玻璃面板后面的零食看起来已经在那里待了很久。前台的接待窗口半开着，桌上散落着几份表格和一只搪瓷杯。墙上挂着一幅褪色的加州风光海报和一块白板，上面用马克笔写着一些排班信息，字迹潦草。走廊通向医院深处，绿色的指示牌标注着各科室的方向。整座建筑透着一种小镇医院特有的松散气氛——不算破旧，但也谈不上精心打理，仿佛一切都在按照最低限度的惯性运转着。",
+  "parentLocationId": "SCN_1",
+  "indoor": true,
+  "items": [
+    {
+      "id": "ITEM_SCN1_1",
+      "name": "医院档案",
+      "type": "document",
+      "category": "evidence",
+      "discoveryMethod": "inspect records",
+      "description": "医院的患者与尸体档案记录系统，可以查阅尸体转运等信息。"
+    },
+    {
+      "id": "ITEM_SCN1_2",
+      "name": "监控屏幕",
+      "type": "tool",
+      "description": "一组用于查看院内走廊画面的监控屏幕，但部分区域存在明显的监控死角。"
+    },
+    {
+      "id": "ITEM_SCN1_15",
+      "name": "接待窗口",
+      "type": "other",
+      "description": "一扇半开放式接待窗口，玻璃下方的传递缝里塞着几张旧通知和表单。"
+    },
+    {
+      "id": "ITEM_SCN1_16",
+      "name": "候诊椅",
+      "type": "other",
+      "description": "一排塑料候诊椅，扶手漆面被长期频繁使用磨得发亮。"
+    },
+    {
+      "id": "ITEM_SCN1_17",
+      "name": "排班白板",
+      "type": "document",
+      "description": "一块写满值班姓名和班次调整的排班白板，字迹潦草并反复擦写。"
+    },
+    {
+      "id": "ITEM_SCN1_20",
+      "name": "来访登记表",
+      "type": "document",
+      "category": "evidence",
+      "discoveryMethod": "inspect desk",
+      "description": "几张用于记录访客姓名、来访事由和时间的纸质登记表，边角已经微微卷起。"
+    },
+    {
+      "id": "ITEM_SCN1_21",
+      "name": "自动售货机",
+      "type": "container",
+      "description": "一台老旧自动售货机，玻璃面板后摆着饮料和零食，投币口磨损明显。",
+      "containerStats": {
+        "capacity": 12,
+        "locked": false,
+        "contents": []
+      }
+    },
+    {
+      "id": "ITEM_SCN1_22",
+      "name": "科室指示牌",
+      "type": "other",
+      "description": "一组绿色科室指示牌，标注着停尸间、病房和实验室等区域方向。"
+    }
+  ],
+  "conditions": [
+    {
+      "description": "医院内部灯光明亮，走廊里弥漫着消毒水的气味",
+      "mechanicalEffect": {
+        "skillPenalty": [
+          {
+            "skill": "Perception",
+            "delta": 10
+          }
+        ]
+      }
+    },
+    {
+      "description": "医院管理松散，人员来往稀疏，伪装进入相对容易",
+      "mechanicalEffect": {
+        "skillPenalty": [
+          {
+            "skill": "Disguise",
+            "delta": 10
+          }
+        ]
+      }
+    }
+  ],
+  "connections": [
+    "SCN_1_SUB_2",
+    "SCN_1_SUB_3",
+    "SCN_1_SUB_4",
+    "SCN_1_SUB_5",
+    "SCN_1_SUB_6"
+  ],
+  "itemContexts": {
+    "ITEM_SCN1_2": "大厅角落的监控显示屏可以观察各处走廊画面，但存在若干监控死角。",
+    "ITEM_SCN1_15": "前台的接待窗口半开着，玻璃下方的缝隙里塞着几张折起的通知和旧表单。",
+    "ITEM_SCN1_16": "靠墙的一排塑料候诊椅扶手漆面发亮，显示它们被长期频繁使用。",
+    "ITEM_SCN1_17": "大厅墙上那块排班白板写满了潦草的值班名字和班次调整痕迹。",
+    "ITEM_SCN1_20": "接待窗口后散着几张来访登记表和签字板，边角因为反复翻动已经微微卷起。",
+    "ITEM_SCN1_21": "靠墙立着一台老旧自动售货机，玻璃面板后的零食和饮料看起来已经摆了不短时间。",
+    "ITEM_SCN1_22": "一组绿色指示牌悬在走廊口，分别指向停尸间、病房和实验室等区域。"
+  }
+}

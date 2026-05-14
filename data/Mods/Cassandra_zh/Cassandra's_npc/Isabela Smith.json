@@ -1,0 +1,188 @@
+{
+  "id": "Isabela Smith",
+  "name": "Isabela Smith",
+  "occupation": "护士长",
+  "age": 25,
+  "gender": "female",
+  "appearance": "一位年轻女性，外表专业整洁，通常穿着护士制服，给人一种沉稳可信的印象。",
+  "personality": "负责、有耐心、勤勉、有爱心。她认真对待自己的职责，对她关心的人表现出强烈的情感投入。",
+  "background": "伊莎贝拉·史密斯是当地医院的年轻护士长。她在同事中以认真负责和有耐心著称。她与风先生订了婚，许多医院员工私下猜测她最终会辞职，嫁人搬到大城市去。随着12月26日的临近，如果风先生的状况恶化，她正准备辞职并与他连夜离开卡森德拉。",
+  "residence": "SCN_1",
+  "currentLocation": "SCN_1",
+  "knownMapSeed": {
+    "sceneIds": [
+      "SCN_16_SUB_1",
+      "SCN_16_SUB_2",
+      "SCN_1_SUB_1",
+      "SCN_1_SUB_2",
+      "SCN_1_SUB_3",
+      "SCN_1_SUB_4",
+      "SCN_1_SUB_5",
+      "SCN_1_SUB_6",
+      "SCN_21_SUB_1",
+      "SCN_21_SUB_2"
+    ],
+    "junctionIds": [
+      "JUNC_1",
+      "JUNC_2",
+      "JUNC_3",
+      "JUNC_4",
+      "JUNC_5",
+      "JUNC_6",
+      "JUNC_7",
+      "JUNC_8",
+      "JUNC_9",
+      "JUNC_10",
+      "JUNC_11"
+    ],
+    "roadIds": [
+      "ROAD_1",
+      "ROAD_2",
+      "ROAD_3",
+      "ROAD_4",
+      "ROAD_5a",
+      "ROAD_5b",
+      "ROAD_6",
+      "ROAD_7",
+      "ROAD_8",
+      "ROAD_9",
+      "ROAD_10"
+    ],
+    "scenarioOutlineIds": [
+      "SCN_1",
+      "SCN_2",
+      "SCN_3",
+      "SCN_4",
+      "SCN_5",
+      "SCN_6",
+      "SCN_8",
+      "SCN_9",
+      "SCN_10",
+      "SCN_11",
+      "SCN_12",
+      "SCN_13",
+      "SCN_14",
+      "SCN_15",
+      "SCN_16",
+      "SCN_17",
+      "SCN_18",
+      "SCN_19",
+      "SCN_21",
+      "SCN_22"
+    ]
+  },
+  "longTermIntent": "保护风先生，确保他在康复期间的安全，在情况变得更危险之前离开卡森德拉。",
+  "attributes": {
+    "STR": 45,
+    "CON": 55,
+    "DEX": 55,
+    "APP": 60,
+    "POW": 65,
+    "SIZ": 50,
+    "INT": 65,
+    "EDU": 75
+  },
+  "status": {
+    "hp": 10,
+    "maxHp": 10,
+    "sanity": 65,
+    "maxSanity": 65,
+    "luck": 60,
+    "mp": 13,
+    "conditions": []
+  },
+  "skills": {
+    "Medicine": 70,
+    "First Aid": 75,
+    "Psychology": 50,
+    "Persuade": 45
+  },
+  "inventory": [
+    {
+      "name": "医院工作证",
+      "properties": {
+        "note": "提供进入限制区域的权限。"
+      }
+    },
+    {
+      "name": "旅行包",
+      "properties": {
+        "note": "离开卡森德拉时匆忙收拾的。"
+      }
+    }
+  ],
+  "relationships": [
+    {
+      "targetId": "Wind",
+      "targetName": "Wind",
+      "relationshipType": "friend",
+      "attitude": 80,
+      "description": "她的未婚夫，她决心要保护的人。",
+      "history": "他们的婚约本来稳定，直到他突然精神崩溃，伊莎贝拉正准备如果无法在镇上保他安全就带他离开卡森德拉。"
+    },
+    {
+      "targetId": "Mrs. Barklyite (Lucia Shiny)",
+      "targetName": "Mrs. Barklyite (Lucia Shiny)",
+      "relationshipType": "enemy",
+      "attitude": -40,
+      "description": "伊莎贝拉预期她一旦离开镇上就会冒充自己的人。",
+      "history": "巴克利特夫人似乎准备利用伊莎贝拉的离开，一旦机会出现就可能继续冒用她的面孔。"
+    }
+  ],
+  "memory": [
+    {
+      "type": "information",
+      "content": "我在卡森德拉的医院工作，被同事认为是一位认真负责的护士长。",
+      "metadata": {
+        "knowledgeId": "k_isabela_hospital",
+        "difficulty": "automatic"
+      }
+    },
+    {
+      "type": "information",
+      "content": "我了解医院的日常规程、药品储存以及那些工作人员可以注意到病人正在变得对自己构成危险的安静角落。",
+      "metadata": {
+        "knowledgeId": "k_isabela_hospital_routines",
+        "difficulty": "regular"
+      }
+    },
+    {
+      "type": "information",
+      "content": "如果风先生的精神状态持续不稳定，我正准备在12月26日夜间带他离开卡森德拉。",
+      "metadata": {
+        "knowledgeId": "k_isabela_departure",
+        "difficulty": "regular"
+      }
+    },
+    {
+      "type": "information",
+      "content": "风先生的崩溃来得突然，我宁愿转移他也不愿等镇上把他的状况变成一场闹剧。",
+      "metadata": {
+        "knowledgeId": "k_isabela_wind_breakdown",
+        "difficulty": "hard"
+      }
+    },
+    {
+      "type": "secret",
+      "content": "如果我真的带风先生离开，我预计巴克利特夫人会继续在卡森德拉冒用我的面孔作掩护。",
+      "metadata": {
+        "knowledgeId": "s_isabela_impostor"
+      }
+    },
+    {
+      "type": "secret",
+      "content": "我试图在谣言和恐惧围绕风先生固化之前把他带走，因为卡森德拉对我们两个来说已不再安全。",
+      "metadata": {
+        "knowledgeId": "s_isabela_departure_reason"
+      }
+    },
+    {
+      "type": "belief",
+      "content": "我相信最安全的选择是先把风先生带出卡森德拉，其他事情到别的地方再处理。",
+      "metadata": {
+        "confidence": 0.9,
+        "reasoningChain": "这个镇子已经变得足够不稳定，继续留下去感觉是不负责任的。"
+      }
+    }
+  ]
+}

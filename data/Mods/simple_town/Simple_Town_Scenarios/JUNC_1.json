@@ -1,0 +1,9 @@
+{
+  "id": "JUNC_1",
+  "name": "Residential Street Corner",
+  "description": "A quiet residential street corner near A's home. A few trees line the sidewalk.",
+  "parentLocationId": "OUTDOOR",
+  "items": [],
+  "conditions": [],
+  "connectedSceneIds": ["SCN_1_SUB_1"]
+}

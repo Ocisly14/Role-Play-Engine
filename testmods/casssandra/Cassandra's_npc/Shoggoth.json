@@ -1,0 +1,87 @@
+{
+  "id": "Shoggoth",
+  "name": "Shoggoth",
+  "occupation": "Servitor of the Elder Things",
+  "age": 1000000,
+  "gender": "N/A",
+  "appearance": "A massive, amorphous, black, gelatinous entity with a constantly shifting surface. It can spontaneously form tentacles, claws, pseudopods, or other crude appendages.",
+  "personality": "Alien, instinct-driven, and largely mindless. It follows ancient conditioning rather than conscious intent, showing no empathy or recognizable emotions.",
+  "background": "Shoggoths are ancient protoplasmic organisms engineered by the Elder Things as slave labor in a pre-human age. Over vast spans of time, some developed limited autonomy. They now lurk in deep underground ruins and forgotten places, remnants of a bygone cosmic civilization.",
+  "residence": "SCN_2",
+  "currentLocation": "SCN_2",
+  "longTermIntent": "Stay in dark, hidden places, consume whatever enters the wrong chamber, and obey whatever ancient conditioning remains strongest in the current body.",
+  "attributes": {
+    "STR": 315,
+    "CON": 210,
+    "DEX": 15,
+    "APP": 0,
+    "POW": 50,
+    "SIZ": 420,
+    "INT": 35,
+    "EDU": 0
+  },
+  "status": {
+    "hp": 63,
+    "maxHp": 63,
+    "sanity": 0,
+    "maxSanity": 0,
+    "luck": 0,
+    "mp": 10,
+    "conditions": []
+  },
+  "skills": {
+    "Fighting": 70,
+    "Dodge": 8
+  },
+  "inventory": [],
+  "relationships": [],
+  "memory": [
+    {
+      "type": "information",
+      "content": "I am most dangerous in dark, enclosed industrial ruins where there is space to engulf and nowhere for prey to run cleanly.",
+      "metadata": {
+        "knowledgeId": "k_shoggoth_territory",
+        "difficulty": "automatic"
+      }
+    },
+    {
+      "type": "information",
+      "content": "Loud movement and clumsy noise wake the mass to full hunting alert. Quiet prey lasts longer than noisy prey.",
+      "metadata": {
+        "knowledgeId": "k_shoggoth_noise",
+        "difficulty": "regular"
+      }
+    },
+    {
+      "type": "information",
+      "content": "Old control patterns and sacrificial handling can still tug at my kind for a time, but obedience is unstable and always close to breaking.",
+      "metadata": {
+        "knowledgeId": "k_shoggoth_control",
+        "difficulty": "hard"
+      }
+    },
+    {
+      "type": "information",
+      "content": "Fire and electricity are more effective against me than ordinary blades or bullets, which barely slow the mass.",
+      "metadata": {
+        "knowledgeId": "k_shoggoth_vulnerabilities",
+        "difficulty": "regular"
+      }
+    },
+    {
+      "type": "secret",
+      "content": "Even when damaged heavily, a shoggoth can keep reforming so long as enough of the mass remains active.",
+      "metadata": {
+        "knowledgeId": "s_shoggoth_regen"
+      }
+    },
+    {
+      "type": "belief",
+      "content": "Anything entering the chamber can become meat, obstacle, or part of the chamber itself.",
+      "metadata": {
+        "confidence": 0.8,
+        "reasoningChain": "The mass learns by absorbing and persists by covering space."
+      }
+    }
+  ]
+}

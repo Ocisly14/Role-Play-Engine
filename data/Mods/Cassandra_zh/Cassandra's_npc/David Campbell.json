@@ -1,0 +1,117 @@
+{
+  "id": "David Campbell",
+  "name": "David Campbell",
+  "occupation": "富有的投资者 / 邪教资助者",
+  "age": 50,
+  "gender": "male",
+  "appearance": "一个高大英俊的男人，身体保持着不自然的年轻光泽。即使在怪物般的衰变中，仍能看出他曾经精心打理的昂贵仪容和贵族般自信的痕迹。",
+  "personality": "务实、贪婪，在光鲜外表下冷酷无情。大卫把生存、影响力和利益置于道德之上，他适应恐怖的速度比他愿意公开承认的快得多。",
+  "background": "大卫·坎贝尔六年前与以赛亚·阿尔巴一起作为富有的投资者和神秘商业利益的前台来到卡森德拉。他们的妻子是黑山羊教团的成员，最初的恐惧在大卫参与仪式实践并饮用了黑暗之母的乳汁后变成了渴望。教团赐予他青春、力量和美貌，他和以赛亚利用这些恩赐牟利，同时在各国间流转寻找更安全的地方献祭受害者。在卡森德拉，他们躲在制药投资者和林业利益的形象背后，利用镇上薄弱的监管和周围的森林进行仪式活动。2002年，大卫在一次仪式中被献祭并发生了变异，从正常社会中消失，成为了一种现在更靠近沼泽和阴暗林线生存的存在。",
+  "residence": "SCN_20",
+  "currentLocation": "SCN_20_SUB_3",
+  "knownMapSeed": {
+    "sceneIds": [
+      "SCN_20_SUB_1",
+      "SCN_20_SUB_2",
+      "SCN_20_SUB_3",
+      "SCN_4_SUB_1",
+      "SCN_4_SUB_2"
+    ],
+    "junctionIds": ["JUNC_2", "JUNC_4", "JUNC_6", "JUNC_11"],
+    "roadIds": ["ROAD_5a", "ROAD_5b", "ROAD_10"],
+    "scenarioOutlineIds": ["SCN_4", "SCN_19", "SCN_20"]
+  },
+  "longTermIntent": "保住通过舒卜-尼古拉斯教团获得的神秘力量和改变后的生命力，在变异状态下生存，并在他仍有能力牟利和掠食的情况下继续利用超自然资源。",
+  "attributes": {
+    "STR": 68,
+    "CON": 72,
+    "DEX": 58,
+    "APP": 78,
+    "POW": 68,
+    "SIZ": 67,
+    "INT": 72,
+    "EDU": 78
+  },
+  "status": {
+    "hp": 14,
+    "maxHp": 14,
+    "sanity": 10,
+    "maxSanity": 68,
+    "luck": 35,
+    "mp": 14,
+    "conditions": ["已变异"]
+  },
+  "skills": {
+    "Occult": 55,
+    "Persuade": 60,
+    "Credit Rating": 80,
+    "Intimidate": 50
+  },
+  "inventory": [],
+  "relationships": [
+    {
+      "targetId": "Isaiah Arbar",
+      "targetName": "Isaiah Arbar",
+      "relationshipType": "ally",
+      "attitude": 70,
+      "description": "长期商业伙伴和邪教同谋。",
+      "history": "因与教团的婚姻纽带和共同的贪婪而联合，大卫和以赛亚在欧洲和美洲各地流转，同时资助献祭并从禁忌力量中获利。"
+    }
+  ],
+  "memory": [
+    {
+      "type": "information",
+      "content": "以赛亚和我以富有投资者的身份来到卡森德拉，用商业和医疗的幌子来证明我们的存在合理，同时在森林内外建立仪式机会。",
+      "metadata": {
+        "knowledgeId": "k_david_cassandra_front",
+        "difficulty": "automatic"
+      }
+    },
+    {
+      "type": "information",
+      "content": "在卡森德拉，我用制药和林业的掩护让我们最恶劣的行为看起来像普通生意，这让镇子比应有的时间更久地视而不见。",
+      "metadata": {
+        "knowledgeId": "k_david_front_cover",
+        "difficulty": "automatic"
+      }
+    },
+    {
+      "type": "information",
+      "content": "我了解到年轻女性是与黑山羊教团相关仪式中最好的祭品，但安全地获取这些祭品始终是工作中最危险的部分。",
+      "metadata": {
+        "knowledgeId": "k_david_sacrifice_logic",
+        "difficulty": "hard"
+      }
+    },
+    {
+      "type": "information",
+      "content": "自从2002年的仪式改变了我之后，我学会了待在沼泽和林线附近，因为开阔的街道会暴露我已经偏离人类生活多远。",
+      "metadata": {
+        "knowledgeId": "k_david_marsh_survival",
+        "difficulty": "hard"
+      }
+    },
+    {
+      "type": "secret",
+      "content": "我故意协助人祭，并在品尝了黑暗之母的乳汁对人体的作用后从教团力量中获利。",
+      "metadata": {
+        "knowledgeId": "s_david_cult_profit"
+      }
+    },
+    {
+      "type": "secret",
+      "content": "我知道使我变强的神秘变异也使我变得不那么像人了，我再也不能像从前那样在正常生活中行走。",
+      "metadata": {
+        "knowledgeId": "s_david_transformed"
+      }
+    },
+    {
+      "type": "belief",
+      "content": "我相信通过仪式获得的东西太有价值而不能放弃，即使它让我曾经看似体面的那个人荡然无存。",
+      "metadata": {
+        "confidence": 0.85,
+        "reasoningChain": "青春、力量和利润是正常世界永远不会还给我的恩赐。一旦一个人品尝过，退缩就是软弱。"
+      }
+    }
+  ]
+}

@@ -2,23 +2,20 @@
 
 /**
  * NPC merge helper
- * - Reads NPCs from a SQLite DB
+ * - Reads NPCs from PostgreSQL (via Prisma)
  * - Finds name-similar candidates
  * - Emits a merge prompt you can feed to an LLM
  *
  * Usage:
- *   npx tsx scripts/npc-merge-helper.ts [dbPath]
- *
- * Default dbPath: data/test_coc.db
+ *   npx tsx scripts/npc-merge-helper.ts
  */
 
 import fs from "fs";
 import path from "path";
-import { CoCDatabase } from "../src/coc_multiagents_system/agents/memory/database/schema.js";
-import { NPCLoader } from "../src/coc_multiagents_system/agents/character/npcloader/index.js";
-import type { NPCProfile } from "../src/coc_multiagents_system/agents/models/gameTypes.js";
+import { NPCLoader } from "../src/shared/agents/character/npcloader/index.js";
+import { CoCDatabaseAdapter } from "../src/shared/agents/memory/database/CoCDatabaseAdapter.js";
+import type { NPCProfile } from "../src/shared/agents/models/gameTypes.js";
 
-const dbPath = process.argv[2] || "data/test_coc.db";
 const outputPath = path.join("data", "npc_merge_prompt.txt");
 
 function normalizeName(name: string): string {
@@ -144,15 +141,14 @@ function buildPrompt(clusters: NPCProfile[][]): string {
   return lines.join("\n");
 }
 
-function main() {
-  if (!fs.existsSync(dbPath)) {
-    console.error(`DB not found at ${dbPath}`);
-    process.exit(1);
+async function main() {
+  if (!process.env.DATABASE_URL) {
+    throw new Error("DATABASE_URL is required");
   }
 
-  const db = new CoCDatabase(dbPath);
+  const db = new CoCDatabaseAdapter();
   const loader = new NPCLoader(db);
-  const npcs = loader.getAllNPCs();
+  const npcs = await loader.getAllNPCs();
 
   if (npcs.length === 0) {
     console.log("No NPCs found in database.");
@@ -169,7 +165,9 @@ function main() {
 
   const prompt = buildPrompt(clusters);
   fs.writeFileSync(outputPath, prompt, "utf8");
-  console.log(`Found ${clusters.length} candidate group(s). Prompt written to ${outputPath}`);
+  console.log(
+    `Found ${clusters.length} candidate group(s). Prompt written to ${outputPath}`
+  );
   db.close();
 }
 

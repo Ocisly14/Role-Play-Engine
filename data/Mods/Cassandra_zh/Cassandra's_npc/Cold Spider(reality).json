@@ -1,0 +1,89 @@
+{
+  "id": "Cold Spider(Reality)",
+  "name": "Cold Spider(Reality)",
+  "occupation": "神话生物",
+  "age": 0,
+  "gender": "N/A",
+  "appearance": "一只苍白的、几丁质外壳的蜘蛛，身体不自然地冰冷、毫无生气。在现实世界中大约有狗那么大，长着黑色光泽的眼睛和带倒刺的腿，能够攀附在墙壁和天花板上。",
+  "personality": "异质且具有掠食性。冷蜘蛛按照本能和蜘蛛之神的意志行事，没有同理心，除了确保成功繁殖之外几乎没有自我保护意识。",
+  "background": "冷蜘蛛起源于幻梦境，通过阿特拉克-纳克亚编织的巨网穿越到现实世界。它们的形态在现实中被削弱，但保留了最恐怖的特征：通过植入蜘蛛卵来感染人类，这可能杀死宿主或将其转变为蜘蛛人。",
+  "residence": "SCN_17",
+  "currentLocation": "SCN_17",
+  "knownMapSeed": {
+    "sceneIds": ["SCN_17_SUB_1", "SCN_17_SUB_2", "SCN_17_SUB_3"],
+    "junctionIds": ["JUNC_3", "JUNC_4"],
+    "roadIds": ["ROAD_3"],
+    "scenarioOutlineIds": ["SCN_17"]
+  },
+  "longTermIntent": "感染人类宿主，扩散冷蛛网，保持教堂侧通道足够长时间的开放，以便下一代孵化。",
+  "attributes": {
+    "STR": 28,
+    "CON": 18,
+    "DEX": 17,
+    "APP": 5,
+    "POW": 14,
+    "SIZ": 7,
+    "INT": 11,
+    "EDU": 0
+  },
+  "status": {
+    "hp": 5,
+    "maxHp": 5,
+    "sanity": 0,
+    "maxSanity": 0,
+    "luck": 0,
+    "mp": 3,
+    "conditions": []
+  },
+  "skills": { "Bite": 40, "Web Projection": 60, "Stealth": 50 },
+  "inventory": [],
+  "relationships": [
+    {
+      "targetId": "Atlach-Nacha, the Spider God",
+      "targetName": "Atlach-Nacha, the Spider God",
+      "relationshipType": "ally",
+      "attitude": 100,
+      "description": "蜘蛛之神，物种和感染最终的源头。",
+      "history": "冷蜘蛛是阿特拉克-纳克亚意志的延伸，在世界之间传播其影响力。"
+    }
+  ],
+  "memory": [
+    {
+      "type": "information",
+      "content": "我通过教堂下方的隐藏蛛网进入清醒世界。这一侧削弱了我，但也给了我温暖的墙壁、阴暗的角落和可以在其中繁殖的人类肉体。",
+      "metadata": {
+        "knowledgeId": "k_coldspider_reality_portal",
+        "difficulty": "regular"
+      }
+    },
+    {
+      "type": "information",
+      "content": "我的叮咬会在皮肤下植入一窝幼虫。如果宿主不及时被切开，幼虫就会成熟、撕裂而出，留下一片废墟。",
+      "metadata": {
+        "knowledgeId": "k_coldspider_infection",
+        "difficulty": "hard"
+      }
+    },
+    {
+      "type": "information",
+      "content": "那个穿黑袍的神父庇护着这个通道，容忍教堂周围的蛛群。那些服从他的半蜘蛛仆从是我的同类没有杀死的宿主。",
+      "metadata": {
+        "knowledgeId": "k_coldspider_priest_and_spiderhumans",
+        "difficulty": "hard"
+      }
+    },
+    {
+      "type": "secret",
+      "content": "一个宿主在我在体内生长的同时还能继续行走一段时间。肿胀、发热、变黑和疼痛只有在为时已晚时才会暴露巢穴。",
+      "metadata": { "knowledgeId": "s_coldspider_hidden_growth" }
+    },
+    {
+      "type": "belief",
+      "content": "清醒世界只不过是另一个可以攀附的表面，直到蛛网进一步打开。",
+      "metadata": {
+        "confidence": 0.8,
+        "reasoningChain": "现实不是家。它是一层薄膜，可以被刺穿、利用和抛弃。"
+      }
+    }
+  ]
+}

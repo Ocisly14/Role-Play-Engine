@@ -30,6 +30,15 @@ export const authController = {
 
       res.json(result);
     } catch (error: any) {
+      // Handle email not verified error specially
+      if (error.code === "EMAIL_NOT_VERIFIED") {
+        return res.status(403).json({
+          error: error.message,
+          code: "EMAIL_NOT_VERIFIED",
+          email: error.email,
+        });
+      }
+
       res.status(401).json({ error: error.message });
     }
   },

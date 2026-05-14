@@ -3,8 +3,9 @@
  * Displays available characters from database and allows user to select one
  */
 
-import { useState, useEffect } from 'react';
-import { authFetch } from '../utils/authFetch';
+import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
+import { authFetch } from "../utils/authFetch";
 
 interface Character {
   character_id: string;
@@ -22,16 +23,17 @@ interface CharacterSelectorProps {
   onCreateNew: () => void;
 }
 
-export function CharacterSelector({ 
-  apiBaseUrl = '/api',
+export function CharacterSelector({
+  apiBaseUrl = "/api",
   onSelectCharacter,
   onCancel,
-  onCreateNew
+  onCreateNew,
 }: CharacterSelectorProps) {
+  const { t } = useTranslation("home");
   const [characters, setCharacters] = useState<Character[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [selectedId, setSelectedId] = useState<string>('');
+  const [selectedId, setSelectedId] = useState<string>("");
   const [importing, setImporting] = useState(false);
   const [importMessage, setImportMessage] = useState<string | null>(null);
 
@@ -43,7 +45,7 @@ export function CharacterSelector({
     try {
       setLoading(true);
       setError(null);
-      
+
       const response = await authFetch(`${apiBaseUrl}/characters`);
       const data = await response.json();
 
@@ -53,11 +55,11 @@ export function CharacterSelector({
           setSelectedId(data.characters[0].character_id);
         }
       } else {
-        setError('Failed to load characters');
+        setError(t("selector.loadError"));
       }
     } catch (err) {
-      console.error('Error loading characters:', err);
-      setError('Network error: Unable to connect to server');
+      console.error("Error loading characters:", err);
+      setError(t("selector.networkError"));
     } finally {
       setLoading(false);
     }
@@ -65,14 +67,14 @@ export function CharacterSelector({
 
   const handleConfirm = async () => {
     if (!selectedId) return;
-    
-    const selectedChar = characters.find(c => c.character_id === selectedId);
+
+    const selectedChar = characters.find((c) => c.character_id === selectedId);
     if (!selectedChar) return;
 
     try {
       setImporting(true);
-      setImportMessage("Importing game data...");
-      
+      setImportMessage(t("selector.moduleLoading"));
+
       // Step 1: Import game data
       const importResponse = await authFetch(`${apiBaseUrl}/game/import-data`, {
         method: "POST",
@@ -82,21 +84,14 @@ export function CharacterSelector({
       const importData = await importResponse.json();
 
       if (!importResponse.ok) {
-        throw new Error(importData.error || "Data import failed");
+        throw new Error(importData.error || t("selector.importFailed"));
       }
 
-      setImportMessage(`Data import completed: ${importData.scenariosLoaded} scenarios, ${importData.npcsLoaded} NPCs`);
-      
-      // Small delay to show the message
-      await new Promise(resolve => setTimeout(resolve, 500));
-      
-      setImportMessage("Starting game...");
-      
       // Step 2: Call the parent handler which will start the game
       onSelectCharacter(selectedId, selectedChar.name);
     } catch (err) {
       console.error("Error importing data:", err);
-      setError(err instanceof Error ? err.message : "Data import failed");
+      setError(err instanceof Error ? err.message : t("selector.importFailed"));
       setImporting(false);
       setImportMessage(null);
     }
@@ -124,17 +119,29 @@ export function CharacterSelector({
     <div className="character-selector-overlay">
       <div className="character-selector-modal">
         <div className="modal-header">
-          <h2>Select Investigator</h2>
-          <button className="close-button" onClick={onCancel}>×</button>
+          <h2>{t("selector.title")}</h2>
+          <button className="close-button" onClick={onCancel}>
+            ×
+          </button>
         </div>
 
         <div className="modal-content">
           {(loading || importing) && (
             <div className="loading-state">
-              <p>{importing ? (importMessage || "Processing...") : "Loading characters..."}</p>
+              <p>
+                {importing
+                  ? importMessage || t("selector.processing")
+                  : t("characters.loading")}
+              </p>
               {importing && (
-                <div style={{ marginTop: "10px", fontSize: "0.9rem", color: "#666" }}>
-                  Please wait, this may take a few seconds...
+                <div
+                  style={{
+                    marginTop: "10px",
+                    fontSize: "0.9rem",
+                    color: "#666",
+                  }}
+                >
+                  {t("selector.importWait")}
                 </div>
               )}
             </div>
@@ -142,16 +149,16 @@ export function CharacterSelector({
 
           {error && !importing && (
             <div className="error-state">
-              <p style={{ color: '#dc3545' }}>{error}</p>
-              <button onClick={loadCharacters}>Retry</button>
+              <p style={{ color: "#dc3545" }}>{error}</p>
+              <button onClick={loadCharacters}>{t("selector.retry")}</button>
             </div>
           )}
 
           {!loading && !error && characters.length === 0 && (
             <div className="empty-state">
-              <p>No characters created yet</p>
+              <p>{t("characters.empty")}</p>
               <button className="primary" onClick={onCreateNew}>
-                Create First Investigator
+                {t("selector.createFirst")}
               </button>
             </div>
           )}
@@ -162,42 +169,46 @@ export function CharacterSelector({
                 {characters.map((char) => {
                   const attrs = parseAttributes(char.attributes);
                   const status = parseStatus(char.status);
-                  
+
                   return (
-                    <div 
+                    <div
                       key={char.character_id}
-                      className={`character-card ${selectedId === char.character_id ? 'selected' : ''}`}
+                      className={`character-card ${selectedId === char.character_id ? "selected" : ""}`}
                       onClick={() => setSelectedId(char.character_id)}
                     >
                       <div className="character-card-header">
                         <h3>{char.name}</h3>
                         <span className="character-occupation">
-                          {char.occupation || 'Unknown Occupation'}
+                          {char.occupation || t("characters.unknownOccupation")}
                         </span>
                       </div>
-                      
+
                       <div className="character-card-body">
-                        {char.age && <p>Age: {char.age}</p>}
-                        
+                        {char.age && (
+                          <p>
+                            {t("selector.age")} {char.age}
+                          </p>
+                        )}
+
                         {status && (
                           <div className="character-status">
-                            <span>HP: {status.hp || '?'}</span>
-                            <span>SAN: {status.sanity || '?'}</span>
-                            <span>MP: {status.mp || '?'}</span>
+                            <span>HP: {status.hp || "?"}</span>
+                            <span>SAN: {status.san || "?"}</span>
+                            <span>MP: {status.mp || "?"}</span>
                           </div>
                         )}
-                        
+
                         {attrs && (
                           <div className="character-attributes">
-                            <span>STR: {attrs.STR || '?'}</span>
-                            <span>CON: {attrs.CON || '?'}</span>
-                            <span>DEX: {attrs.DEX || '?'}</span>
-                            <span>INT: {attrs.INT || '?'}</span>
-                            <span>POW: {attrs.POW || '?'}</span>
+                            <span>STR: {attrs.STR || "?"}</span>
+                            <span>CON: {attrs.CON || "?"}</span>
+                            <span>DEX: {attrs.DEX || "?"}</span>
+                            <span>INT: {attrs.INT || "?"}</span>
+                            <span>POW: {attrs.POW || "?"}</span>
                           </div>
                         )}
                       </div>
-                      
+
                       {selectedId === char.character_id && (
                         <div className="selected-indicator">✓</div>
                       )}
@@ -208,20 +219,19 @@ export function CharacterSelector({
 
               <div className="modal-actions">
                 <button onClick={onCreateNew} className="secondary">
-                  Create New Character
+                  {t("selector.createNew")}
                 </button>
-                <button 
-                  onClick={onCancel} 
-                  className="tertiary"
-                >
-                  Done
+                <button onClick={onCancel} className="tertiary">
+                  {t("selector.done")}
                 </button>
-                <button 
-                  onClick={handleConfirm} 
+                <button
+                  onClick={handleConfirm}
                   className="primary"
                   disabled={!selectedId || importing}
                 >
-                  {importing ? "Importing data..." : "Start Game with This Character"}
+                  {importing
+                    ? t("selector.importing")
+                    : t("selector.startGame")}
                 </button>
               </div>
             </>

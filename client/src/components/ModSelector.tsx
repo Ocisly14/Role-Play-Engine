@@ -1,5 +1,6 @@
-import React, { useEffect, useState } from 'react';
-import { authFetch } from '../utils/authFetch';
+import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
+import { authFetch } from "../utils/authFetch";
 
 export interface Mod {
   name: string;
@@ -14,15 +15,16 @@ export interface ModSelectorProps {
 }
 
 export function ModSelector({
-  apiBaseUrl = '/api',
+  apiBaseUrl = "/api",
   onSelectMod,
   onCancel,
-  onCreateStory
+  onCreateStory,
 }: ModSelectorProps) {
+  const { t } = useTranslation("module");
   const [mods, setMods] = useState<Mod[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [selectedMod, setSelectedMod] = useState<string>('');
+  const [selectedMod, setSelectedMod] = useState<string>("");
 
   useEffect(() => {
     fetchMods();
@@ -41,11 +43,11 @@ export function ModSelector({
           setSelectedMod(data.mods[0].name);
         }
       } else {
-        setError(data.error || 'Failed to load mods');
+        setError(data.error || t("errors.loadFailed"));
       }
     } catch (err) {
-      console.error('Error fetching mods:', err);
-      setError('Network error, unable to connect to server');
+      console.error("Error fetching mods:", err);
+      setError(t("common:error.network"));
     } finally {
       setLoading(false);
     }
@@ -63,11 +65,11 @@ export function ModSelector({
         <div className="mod-selector-overlay">
           <div className="mod-selector-modal">
             <div className="modal-header">
-              <h2>Select Module</h2>
+              <h2>{t("select")}</h2>
             </div>
             <div className="modal-content">
               <div className="loading-state">
-                <p>Loading module list...</p>
+                <p>{t("loading")}</p>
               </div>
             </div>
           </div>
@@ -124,17 +126,31 @@ export function ModSelector({
         <div className="mod-selector-overlay">
           <div className="mod-selector-modal">
             <div className="modal-header">
-              <h2>Select Module</h2>
-              <button onClick={onCancel} className="close-button">×</button>
+              <h2>{t("select")}</h2>
+              <button onClick={onCancel} className="close-button">
+                ×
+              </button>
             </div>
             <div className="modal-content">
               <div className="error-state">
-                <div style={{ color: '#721c24', padding: '12px', backgroundColor: '#f8d7da', borderRadius: '4px', marginBottom: '16px' }}>
+                <div
+                  style={{
+                    color: "#721c24",
+                    padding: "12px",
+                    backgroundColor: "#f8d7da",
+                    borderRadius: "4px",
+                    marginBottom: "16px",
+                  }}
+                >
                   {error}
                 </div>
                 <div className="modal-actions">
-                  <button onClick={onCancel} className="secondary">Cancel</button>
-                  <button onClick={fetchMods} className="primary">Retry</button>
+                  <button onClick={onCancel} className="secondary">
+                    {t("common:button.cancel")}
+                  </button>
+                  <button onClick={fetchMods} className="primary">
+                    {t("common:button.retry")}
+                  </button>
                 </div>
               </div>
             </div>
@@ -191,13 +207,23 @@ export function ModSelector({
         <div className="mod-selector-modal">
           <div className="modal-header">
             <div className="modal-header-content">
-              <img src="/asset/icon.png" alt="Call of Cthulhu" className="header-icon" />
+              <img
+                src="/asset/icon.png"
+                alt={t("chooseAdventure")}
+                className="header-icon"
+              />
               <div className="header-text">
-                <h2>Choose Your Adventure</h2>
-                <p className="header-subtitle">Select a scenario to begin your investigation</p>
+                <h2>{t("chooseAdventure")}</h2>
+                <p className="header-subtitle">{t("selectScenario")}</p>
               </div>
             </div>
-            <button onClick={onCancel} className="close-button" aria-label="Close">×</button>
+            <button
+              onClick={onCancel}
+              className="close-button"
+              aria-label={t("common:button.close")}
+            >
+              ×
+            </button>
           </div>
           <div className="modal-content">
             <div className="mod-grid">
@@ -210,8 +236,10 @@ export function ModSelector({
                   <div className="mod-card-inner">
                     <div className="mod-card-icon">✨</div>
                     <div className="mod-card-content">
-                      <h3 className="mod-card-title">Create Your Own Story</h3>
-                      <p className="mod-card-subtitle">Design your own TaleCraft adventure with AI</p>
+                      <h3 className="mod-card-title">{t("createStory")}</h3>
+                      <p className="mod-card-subtitle">
+                        {t("createStoryDesc")}
+                      </p>
                     </div>
                   </div>
                 </div>
@@ -221,7 +249,7 @@ export function ModSelector({
               {mods.map((mod) => (
                 <div
                   key={mod.name}
-                  className={`mod-card ${selectedMod === mod.name ? 'selected' : ''}`}
+                  className={`mod-card ${selectedMod === mod.name ? "selected" : ""}`}
                   onClick={() => setSelectedMod(mod.name)}
                 >
                   <div className="mod-card-inner">
@@ -231,9 +259,27 @@ export function ModSelector({
                     </div>
                     {selectedMod === mod.name && (
                       <div className="mod-card-checkmark">
-                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-                          <circle cx="12" cy="12" r="11" stroke="currentColor" strokeWidth="2" fill="var(--accent)"/>
-                          <path d="M7 12L10.5 15.5L17 9" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
+                        <svg
+                          width="24"
+                          height="24"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                        >
+                          <circle
+                            cx="12"
+                            cy="12"
+                            r="11"
+                            stroke="currentColor"
+                            strokeWidth="2"
+                            fill="var(--accent)"
+                          />
+                          <path
+                            d="M7 12L10.5 15.5L17 9"
+                            stroke="white"
+                            strokeWidth="2.5"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                          />
                         </svg>
                       </div>
                     )}
@@ -242,13 +288,15 @@ export function ModSelector({
               ))}
             </div>
             <div className="modal-footer">
-              <button onClick={onCancel} className="btn-secondary">Cancel</button>
+              <button onClick={onCancel} className="btn-secondary">
+                {t("common:button.cancel")}
+              </button>
               <button
                 onClick={handleSelect}
                 className="btn-primary"
                 disabled={!selectedMod}
               >
-                Start Adventure →
+                {t("startAdventure")} →
               </button>
             </div>
           </div>

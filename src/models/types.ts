@@ -7,11 +7,11 @@
  * Model size/type classification for different tasks
  */
 export enum ModelClass {
-  SMALL = "small",   // Fast, lightweight models for simple tasks
+  SMALL = "small", // Fast, lightweight models for simple tasks
   MEDIUM = "medium", // Balanced models for general conversational tasks
-  LARGE = "large",   // Heavy models for complex reasoning and analysis
+  LARGE = "large", // Heavy models for complex reasoning and analysis
   EMBEDDING = "embedding", // Specialized for vector embeddings
-  IMAGE = "image"    // Image generation models
+  IMAGE = "image", // Image generation models
 }
 
 /**
@@ -23,7 +23,7 @@ export enum ModelProviderName {
   GOOGLE = "google",
   GROQ = "groq",
   OLLAMA = "ollama",
-  OPENROUTER = "openrouter"
+  OPENROUTER = "openrouter",
 }
 
 /**
@@ -91,13 +91,16 @@ export type ImageInput =
  * Generation options for AI calls
  */
 export interface GenerationOptions {
-  runtime: any; // CoC runtime interface
   context: string;
   modelClass?: ModelClass;
+  providerOverride?: ModelProviderName;
   customSystemPrompt?: string;
   maxRetries?: number;
+  fallbackToLargeOnFailure?: boolean;
+  largeFallbackRetries?: number;
   images?: ImageInput[];
   onToken?: (token: string) => void;
   userId?: string;
   operation?: string;
+  temperature?: number;
 }

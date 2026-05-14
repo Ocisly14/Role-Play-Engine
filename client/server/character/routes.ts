@@ -6,8 +6,8 @@ const router = Router();
 
 // Character management endpoints
 router.use(authenticate);
-router.post("/character/random-attributes", characterController.generateRandomAttrs);
 router.post("/character", characterController.createCharacter);
+router.put("/character/:characterId", characterController.updateCharacter);
 router.get("/characters", characterController.getAllCharacters);
 router.get("/character/:characterId", characterController.getCharacterById);
 

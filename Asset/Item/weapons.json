@@ -1,0 +1,1519 @@
+[
+  {
+    "id": "WPN_MELEE_UNARMED",
+    "name": "Unarmed",
+    "description": "徒手格斗，使用拳头、膝盖或头部进行攻击。",
+    "type": "weapon",
+    "weaponStats": {
+      "skill": "Brawling",
+      "damage": "1d3+DB",
+      "range": "touch",
+      "attacksPerRound": 1,
+      "era": "1920s,modern"
+    }
+  },
+  {
+    "id": "WPN_RANGED_BOW",
+    "name": "Bow",
+    "description": "传统弓箭，射程适中，需要一定臂力。",
+    "type": "weapon",
+    "weaponStats": {
+      "skill": "Bow",
+      "damage": "1d6+half DB",
+      "range": "30 yards",
+      "attacksPerRound": 1,
+      "ammo": 1,
+      "malfunction": 97,
+      "era": "1920s,modern"
+    }
+  },
+  {
+    "id": "WPN_MELEE_BRASS_KNUCKLES",
+    "name": "Brass Knuckles",
+    "description": "铜制指节套，增强拳击杀伤力。",
+    "type": "weapon",
+    "weaponStats": {
+      "skill": "Brawling",
+      "damage": "1d3+1+DB",
+      "range": "touch",
+      "attacksPerRound": 1,
+      "era": "1920s,modern"
+    }
+  },
+  {
+    "id": "WPN_MELEE_WHIP",
+    "name": "Whip",
+    "description": "皮质长鞭，可在一定距离外攻击。",
+    "type": "weapon",
+    "weaponStats": {
+      "skill": "Whip",
+      "damage": "1d3+half DB",
+      "range": "10 feet",
+      "attacksPerRound": 1,
+      "era": "1920s"
+    }
+  },
+  {
+    "id": "WPN_MELEE_BURNING_TORCH",
+    "name": "Burning Torch",
+    "description": "燃烧的火把，兼具照明与攻击功能，可造成烧伤。",
+    "type": "weapon",
+    "weaponStats": {
+      "skill": "Brawling",
+      "damage": "1d6+burn",
+      "range": "touch",
+      "attacksPerRound": 1,
+      "era": "1920s,modern"
+    }
+  },
+  {
+    "id": "WPN_MELEE_CHAINSAW",
+    "name": "Chainsaw",
+    "description": "电锯，极具破坏力的现代工具武器。",
+    "type": "weapon",
+    "weaponStats": {
+      "skill": "Brawling",
+      "damage": "2d8",
+      "range": "touch",
+      "attacksPerRound": 1,
+      "malfunction": 95,
+      "era": "modern"
+    }
+  },
+  {
+    "id": "WPN_MELEE_LEATHER_WRAPPED_CLUB",
+    "name": "Leather-wrapped Club",
+    "description": "皮革包裹的棍棒，坚固耐用的钝器。",
+    "type": "weapon",
+    "weaponStats": {
+      "skill": "Brawling",
+      "damage": "1d8+DB",
+      "range": "touch",
+      "attacksPerRound": 1,
+      "era": "1920s,modern"
+    }
+  },
+  {
+    "id": "WPN_MELEE_LARGE_CLUB",
+    "name": "Large Club",
+    "description": "大型棍棒，沉重有力的钝击武器。",
+    "type": "weapon",
+    "weaponStats": {
+      "skill": "Brawling",
+      "damage": "1d8+DB",
+      "range": "touch",
+      "attacksPerRound": 1,
+      "era": "1920s,modern"
+    }
+  },
+  {
+    "id": "WPN_MELEE_SMALL_CLUB",
+    "name": "Small Club",
+    "description": "小型棍棒，轻便的近战钝器。",
+    "type": "weapon",
+    "weaponStats": {
+      "skill": "Brawling",
+      "damage": "1d6+DB",
+      "range": "touch",
+      "attacksPerRound": 1,
+      "era": "1920s,modern"
+    }
+  },
+  {
+    "id": "WPN_RANGED_CROSSBOW",
+    "name": "Crossbow",
+    "description": "十字弩，射程较弓更远，穿透力强。",
+    "type": "weapon",
+    "weaponStats": {
+      "skill": "Bow",
+      "damage": "1d8+2",
+      "range": "50 yards",
+      "attacksPerRound": 1,
+      "ammo": 1,
+      "malfunction": 96,
+      "era": "1920s,modern"
+    }
+  },
+  {
+    "id": "WPN_MELEE_GARROTE",
+    "name": "Garrote",
+    "description": "绞索，用于从背后勒绞目标的暗杀武器。",
+    "type": "weapon",
+    "weaponStats": {
+      "skill": "Brawling",
+      "damage": "1d6+DB",
+      "range": "touch",
+      "attacksPerRound": 1,
+      "era": "1920s,modern"
+    }
+  },
+  {
+    "id": "WPN_MELEE_AXE_SICKLE",
+    "name": "Axe/Sickle",
+    "description": "手斧或镰刀，锋利的劈砍武器。",
+    "type": "weapon",
+    "weaponStats": {
+      "skill": "Axe",
+      "damage": "1d6+1+DB",
+      "range": "touch",
+      "attacksPerRound": 1,
+      "era": "1920s,modern"
+    }
+  },
+  {
+    "id": "WPN_MELEE_LARGE_KNIFE",
+    "name": "Large Knife",
+    "description": "大型刀具，如猎刀或砍刀，杀伤力可观。",
+    "type": "weapon",
+    "weaponStats": {
+      "skill": "Brawling",
+      "damage": "1d8+DB",
+      "range": "touch",
+      "attacksPerRound": 1,
+      "era": "1920s,modern"
+    }
+  },
+  {
+    "id": "WPN_MELEE_MEDIUM_KNIFE",
+    "name": "Medium Knife",
+    "description": "中型刀具，如匕首或折叠刀。",
+    "type": "weapon",
+    "weaponStats": {
+      "skill": "Brawling",
+      "damage": "1d4+2+DB",
+      "range": "touch",
+      "attacksPerRound": 1,
+      "era": "1920s,modern"
+    }
+  },
+  {
+    "id": "WPN_MELEE_SMALL_KNIFE",
+    "name": "Small Knife",
+    "description": "小型刀具，如小折刀或水果刀。",
+    "type": "weapon",
+    "weaponStats": {
+      "skill": "Brawling",
+      "damage": "1d4+DB",
+      "range": "touch",
+      "attacksPerRound": 1,
+      "era": "1920s,modern"
+    }
+  },
+  {
+    "id": "WPN_MELEE_220V_LIVE_WIRE",
+    "name": "220V Live Wire",
+    "description": "通电的220V电线，可造成电击和灼伤。",
+    "type": "weapon",
+    "weaponStats": {
+      "skill": "Brawling",
+      "damage": "2d8+stun",
+      "range": "touch",
+      "attacksPerRound": 1,
+      "malfunction": 95,
+      "era": "modern"
+    }
+  },
+  {
+    "id": "WPN_MELEE_TEAR_GAS",
+    "name": "Tear Gas",
+    "description": "催泪瓦斯喷射器，使目标暂时失去战斗力。",
+    "type": "weapon",
+    "weaponStats": {
+      "skill": "Brawling",
+      "damage": "stun",
+      "range": "6 feet",
+      "attacksPerRound": 1,
+      "ammo": 25,
+      "malfunction": 95,
+      "era": "1920s,modern"
+    }
+  },
+  {
+    "id": "WPN_MELEE_NUNCHAKU",
+    "name": "Nunchaku",
+    "description": "双截棍，灵活的东方武术武器。",
+    "type": "weapon",
+    "weaponStats": {
+      "skill": "Brawling",
+      "damage": "1d8+DB",
+      "range": "touch",
+      "attacksPerRound": 1,
+      "era": "1920s,modern"
+    }
+  },
+  {
+    "id": "WPN_THROWN_ROCK",
+    "name": "Thrown Rock",
+    "description": "投掷的石头，最原始的远程武器。",
+    "type": "weapon",
+    "weaponStats": {
+      "skill": "Throw",
+      "damage": "1d4+half DB",
+      "range": "STR feet",
+      "attacksPerRound": 1,
+      "era": "1920s,modern"
+    }
+  },
+  {
+    "id": "WPN_THROWN_SHURIKEN",
+    "name": "Shuriken",
+    "description": "手里剑，日本忍者使用的投掷暗器。",
+    "type": "weapon",
+    "weaponStats": {
+      "skill": "Throw",
+      "damage": "1d3+half DB",
+      "range": "20 yards",
+      "attacksPerRound": 2,
+      "malfunction": 100,
+      "era": "1920s,modern"
+    }
+  },
+  {
+    "id": "WPN_MELEE_LANCE_CAVALRY",
+    "name": "Lance (Cavalry)",
+    "description": "骑兵用长矛，在马背上冲锋时威力巨大。",
+    "type": "weapon",
+    "weaponStats": {
+      "skill": "Spear",
+      "damage": "1d8+1+DB",
+      "range": "touch",
+      "attacksPerRound": 1,
+      "era": "1920s,modern"
+    }
+  },
+  {
+    "id": "WPN_THROWN_SPEAR",
+    "name": "Thrown Spear",
+    "description": "投掷用标枪，古老而有效的远程武器。",
+    "type": "weapon",
+    "weaponStats": {
+      "skill": "Throw",
+      "damage": "1d8+half DB",
+      "range": "STR yards",
+      "attacksPerRound": 1,
+      "era": "rare"
+    }
+  },
+  {
+    "id": "WPN_MELEE_LARGE_SWORD",
+    "name": "Large Sword",
+    "description": "大型剑，如阔剑或太刀，需要双手使用。",
+    "type": "weapon",
+    "weaponStats": {
+      "skill": "Sword",
+      "damage": "1d8+1+DB",
+      "range": "touch",
+      "attacksPerRound": 1,
+      "era": "1920s,modern"
+    }
+  },
+  {
+    "id": "WPN_MELEE_MEDIUM_SWORD",
+    "name": "Medium Sword",
+    "description": "中型剑，如长剑或军刀，攻守兼备。",
+    "type": "weapon",
+    "weaponStats": {
+      "skill": "Sword",
+      "damage": "1d6+1+DB",
+      "range": "touch",
+      "attacksPerRound": 1,
+      "era": "1920s,modern"
+    }
+  },
+  {
+    "id": "WPN_MELEE_LIGHT_SWORD",
+    "name": "Light Sword",
+    "description": "轻型剑，如花剑或短剑，轻巧灵活。",
+    "type": "weapon",
+    "weaponStats": {
+      "skill": "Sword",
+      "damage": "1d6+DB",
+      "range": "touch",
+      "attacksPerRound": 1,
+      "era": "1920s,modern"
+    }
+  },
+  {
+    "id": "WPN_MELEE_STUN_BATON",
+    "name": "Stun Baton",
+    "description": "电击棍，通过电流使目标暂时瘫痪。",
+    "type": "weapon",
+    "weaponStats": {
+      "skill": "Brawling",
+      "damage": "1d3+stun",
+      "range": "touch",
+      "attacksPerRound": 1,
+      "malfunction": 97,
+      "era": "modern"
+    }
+  },
+  {
+    "id": "WPN_HANDGUN_TASER",
+    "name": "Taser",
+    "description": "电击枪，发射带电探针使目标失去行动能力。",
+    "type": "weapon",
+    "weaponStats": {
+      "skill": "Pistol",
+      "damage": "1d3+stun",
+      "range": "15 feet",
+      "attacksPerRound": 1,
+      "ammo": 3,
+      "malfunction": 95,
+      "era": "modern"
+    }
+  },
+  {
+    "id": "WPN_THROWN_BOOMERANG",
+    "name": "Throwing Blade Boomerang",
+    "description": "投掷用回旋镖，可造成切割伤害。",
+    "type": "weapon",
+    "weaponStats": {
+      "skill": "Throw",
+      "damage": "1d8+half DB",
+      "range": "STR yards",
+      "attacksPerRound": 1,
+      "era": "rare"
+    }
+  },
+  {
+    "id": "WPN_MELEE_WOOD_AXE",
+    "name": "Wood Axe",
+    "description": "伐木斧，沉重锋利，作为武器杀伤力极大。",
+    "type": "weapon",
+    "weaponStats": {
+      "skill": "Axe",
+      "damage": "1d8+2+DB",
+      "range": "touch",
+      "attacksPerRound": 1,
+      "era": "1920s,modern"
+    }
+  },
+  {
+    "id": "WPN_HANDGUN_FLINTLOCK_PISTOL",
+    "name": "Flintlock Pistol",
+    "description": "燧发手枪，古老的单发火器，装填缓慢。",
+    "type": "weapon",
+    "weaponStats": {
+      "skill": "Pistol",
+      "damage": "1d6+1",
+      "range": "10 yards",
+      "attacksPerRound": 1,
+      "ammo": 1,
+      "malfunction": 95,
+      "era": "rare"
+    }
+  },
+  {
+    "id": "WPN_HANDGUN_22_SHORT_AUTO",
+    "name": ".22 Short Auto Pistol",
+    "description": ".22口径小型自动手枪，后坐力小，适合隐蔽携带。",
+    "type": "weapon",
+    "weaponStats": {
+      "skill": "Pistol",
+      "damage": "1d6",
+      "range": "10 yards",
+      "attacksPerRound": 3,
+      "ammo": 6,
+      "malfunction": 100,
+      "era": "1920s,modern"
+    }
+  },
+  {
+    "id": "WPN_HANDGUN_25_DERRINGER",
+    "name": ".25 Short Pistol (Derringer)",
+    "description": ".25口径袖珍手枪，极小巧，仅一发弹药。",
+    "type": "weapon",
+    "weaponStats": {
+      "skill": "Pistol",
+      "damage": "1d6",
+      "range": "3 yards",
+      "attacksPerRound": 1,
+      "ammo": 1,
+      "malfunction": 100,
+      "era": "1920s"
+    }
+  },
+  {
+    "id": "WPN_HANDGUN_32_REVOLVER",
+    "name": ".32 or 7.65mm Revolver",
+    "description": ".32口径左轮手枪，可靠的中小型制式配枪。",
+    "type": "weapon",
+    "weaponStats": {
+      "skill": "Pistol",
+      "damage": "1d8",
+      "range": "15 yards",
+      "attacksPerRound": 3,
+      "ammo": 6,
+      "malfunction": 100,
+      "era": "1920s,modern"
+    }
+  },
+  {
+    "id": "WPN_HANDGUN_32_AUTO",
+    "name": ".32 or 7.65mm Auto Pistol",
+    "description": ".32口径自动手枪，弹匣容量比左轮更多。",
+    "type": "weapon",
+    "weaponStats": {
+      "skill": "Pistol",
+      "damage": "1d8",
+      "range": "15 yards",
+      "attacksPerRound": 3,
+      "ammo": 8,
+      "malfunction": 99,
+      "era": "1920s,modern"
+    }
+  },
+  {
+    "id": "WPN_HANDGUN_357_MAGNUM",
+    "name": ".357 Magnum Revolver",
+    "description": ".357马格南左轮，威力强大的现代手枪。",
+    "type": "weapon",
+    "weaponStats": {
+      "skill": "Pistol",
+      "damage": "1d8+1d4",
+      "range": "15 yards",
+      "attacksPerRound": 3,
+      "ammo": 6,
+      "malfunction": 100,
+      "era": "modern"
+    }
+  },
+  {
+    "id": "WPN_HANDGUN_38_REVOLVER",
+    "name": ".38 or 9mm Revolver",
+    "description": ".38口径左轮手枪，1920年代最常见的制式手枪。",
+    "type": "weapon",
+    "weaponStats": {
+      "skill": "Pistol",
+      "damage": "1d10",
+      "range": "15 yards",
+      "attacksPerRound": 3,
+      "ammo": 6,
+      "malfunction": 100,
+      "era": "1920s,modern"
+    }
+  },
+  {
+    "id": "WPN_HANDGUN_38_AUTO",
+    "name": ".38 Auto Pistol",
+    "description": ".38口径自动手枪，弹匣供弹，射速较快。",
+    "type": "weapon",
+    "weaponStats": {
+      "skill": "Pistol",
+      "damage": "1d10",
+      "range": "15 yards",
+      "attacksPerRound": 3,
+      "ammo": 8,
+      "malfunction": 99,
+      "era": "1920s,modern"
+    }
+  },
+  {
+    "id": "WPN_HANDGUN_BERETTA_M9",
+    "name": "Beretta M9",
+    "description": "贝瑞塔M9，9mm制式军用手枪，大弹匣容量。",
+    "type": "weapon",
+    "weaponStats": {
+      "skill": "Pistol",
+      "damage": "1d10",
+      "range": "15 yards",
+      "attacksPerRound": 3,
+      "ammo": 15,
+      "malfunction": 98,
+      "era": "modern"
+    }
+  },
+  {
+    "id": "WPN_HANDGUN_GLOCK_17",
+    "name": "Glock 17 9mm Auto",
+    "description": "格洛克17型9mm自动手枪，聚合物枪身，轻便可靠。",
+    "type": "weapon",
+    "weaponStats": {
+      "skill": "Pistol",
+      "damage": "1d10",
+      "range": "15 yards",
+      "attacksPerRound": 3,
+      "ammo": 17,
+      "malfunction": 98,
+      "era": "modern"
+    }
+  },
+  {
+    "id": "WPN_HANDGUN_LUGER_P08",
+    "name": "Luger P08",
+    "description": "鲁格P08手枪，德国经典军用手枪，做工精良。",
+    "type": "weapon",
+    "weaponStats": {
+      "skill": "Pistol",
+      "damage": "1d10",
+      "range": "15 yards",
+      "attacksPerRound": 3,
+      "ammo": 8,
+      "malfunction": 99,
+      "era": "1920s,modern"
+    }
+  },
+  {
+    "id": "WPN_HANDGUN_41_REVOLVER",
+    "name": ".41 Revolver",
+    "description": ".41口径左轮手枪，火力强劲的大口径手枪。",
+    "type": "weapon",
+    "weaponStats": {
+      "skill": "Pistol",
+      "damage": "1d10",
+      "range": "15 yards",
+      "attacksPerRound": 3,
+      "ammo": 8,
+      "malfunction": 100,
+      "era": "1920s,rare"
+    }
+  },
+  {
+    "id": "WPN_HANDGUN_44_MAGNUM",
+    "name": ".44 Magnum Revolver",
+    "description": ".44马格南左轮，极具威力的大口径手枪。",
+    "type": "weapon",
+    "weaponStats": {
+      "skill": "Pistol",
+      "damage": "1d10+1d4+2",
+      "range": "15 yards",
+      "attacksPerRound": 3,
+      "ammo": 6,
+      "malfunction": 100,
+      "era": "modern"
+    }
+  },
+  {
+    "id": "WPN_HANDGUN_45_REVOLVER",
+    "name": ".45 Revolver",
+    "description": ".45口径左轮手枪，经典的大威力制式手枪。",
+    "type": "weapon",
+    "weaponStats": {
+      "skill": "Pistol",
+      "damage": "1d10+2",
+      "range": "15 yards",
+      "attacksPerRound": 3,
+      "ammo": 6,
+      "malfunction": 100,
+      "era": "1920s,modern"
+    }
+  },
+  {
+    "id": "WPN_HANDGUN_45_AUTO",
+    "name": ".45 Auto Pistol",
+    "description": ".45口径自动手枪（如柯尔特M1911），美军制式配枪。",
+    "type": "weapon",
+    "weaponStats": {
+      "skill": "Pistol",
+      "damage": "1d10+2",
+      "range": "15 yards",
+      "attacksPerRound": 3,
+      "ammo": 7,
+      "malfunction": 100,
+      "era": "1920s,modern"
+    }
+  },
+  {
+    "id": "WPN_HANDGUN_DESERT_EAGLE",
+    "name": "Desert Eagle",
+    "description": "沙漠之鹰，.50口径半自动手枪，威力惊人。",
+    "type": "weapon",
+    "weaponStats": {
+      "skill": "Pistol",
+      "damage": "1d10+1d6+3",
+      "range": "15 yards",
+      "attacksPerRound": 3,
+      "ammo": 7,
+      "malfunction": 94,
+      "era": "modern"
+    }
+  },
+  {
+    "id": "WPN_RIFLE_58_SPRINGFIELD",
+    "name": ".58 Springfield Rifle",
+    "description": ".58口径斯普林菲尔德步枪，南北战争时期的前膛步枪。",
+    "type": "weapon",
+    "weaponStats": {
+      "skill": "Rifle",
+      "damage": "1d10+4",
+      "range": "60 yards",
+      "attacksPerRound": 1,
+      "ammo": 1,
+      "malfunction": 95,
+      "era": "rare"
+    }
+  },
+  {
+    "id": "WPN_RIFLE_22_LEVER_ACTION",
+    "name": ".22 Lever-action Rifle",
+    "description": ".22口径杠杆步枪，适合狩猎小型猎物和靶射。",
+    "type": "weapon",
+    "weaponStats": {
+      "skill": "Rifle",
+      "damage": "1d6+1",
+      "range": "30 yards",
+      "attacksPerRound": 1,
+      "ammo": 6,
+      "malfunction": 99,
+      "era": "1920s,modern"
+    }
+  },
+  {
+    "id": "WPN_RIFLE_30_CARBINE",
+    "name": ".30 Carbine",
+    "description": ".30口径卡宾枪，轻便的半自动步枪。",
+    "type": "weapon",
+    "weaponStats": {
+      "skill": "Rifle",
+      "damage": "2d6",
+      "range": "50 yards",
+      "attacksPerRound": 1,
+      "ammo": 6,
+      "malfunction": 98,
+      "era": "1920s,modern"
+    }
+  },
+  {
+    "id": "WPN_RIFLE_45_MARTINI_HENRY",
+    "name": ".45 Martini-Henry Rifle",
+    "description": ".45口径马提尼-亨利步枪，大英帝国的经典后膛步枪。",
+    "type": "weapon",
+    "weaponStats": {
+      "skill": "Rifle",
+      "damage": "1d8+1d6+3",
+      "range": "80 yards",
+      "attacksPerRound": 1,
+      "ammo": 1,
+      "malfunction": 100,
+      "era": "1920s"
+    }
+  },
+  {
+    "id": "WPN_RIFLE_MORAN_AIR_RIFLE",
+    "name": "Colonel Moran's Air Rifle",
+    "description": "莫兰上校的气步枪，无声的精密射击武器。",
+    "type": "weapon",
+    "weaponStats": {
+      "skill": "Rifle",
+      "damage": "2d6+1",
+      "range": "20 yards",
+      "attacksPerRound": 1,
+      "ammo": 1,
+      "malfunction": 88,
+      "era": "1920s"
+    }
+  },
+  {
+    "id": "WPN_RIFLE_GARAND_M1",
+    "name": "Garand M1/M2 Rifle",
+    "description": "M1加兰德半自动步枪，二战美军主力步枪。",
+    "type": "weapon",
+    "weaponStats": {
+      "skill": "Rifle",
+      "damage": "2d6+4",
+      "range": "110 yards",
+      "attacksPerRound": 1,
+      "ammo": 8,
+      "malfunction": 100,
+      "era": "WWII+"
+    }
+  },
+  {
+    "id": "WPN_RIFLE_SKS",
+    "name": "SKS Semi-Auto Rifle",
+    "description": "SKS半自动步枪，苏联设计的可靠半自动步枪。",
+    "type": "weapon",
+    "weaponStats": {
+      "skill": "Rifle",
+      "damage": "2d6+1",
+      "range": "90 yards",
+      "attacksPerRound": 2,
+      "ammo": 10,
+      "malfunction": 97,
+      "era": "modern"
+    }
+  },
+  {
+    "id": "WPN_RIFLE_303_LEE_ENFIELD",
+    "name": ".303 (7.7mm) Lee-Enfield",
+    "description": ".303口径李-恩菲尔德步枪，英军经典栓动步枪。",
+    "type": "weapon",
+    "weaponStats": {
+      "skill": "Rifle",
+      "damage": "2d6+4",
+      "range": "110 yards",
+      "attacksPerRound": 1,
+      "ammo": 5,
+      "malfunction": 100,
+      "era": "1920s,modern"
+    }
+  },
+  {
+    "id": "WPN_RIFLE_30_06_BOLT",
+    "name": ".30-06 (7.62mm) Bolt Rifle",
+    "description": ".30-06口径栓动步枪，广泛用于狩猎和军事。",
+    "type": "weapon",
+    "weaponStats": {
+      "skill": "Rifle",
+      "damage": "2d6+4",
+      "range": "110 yards",
+      "attacksPerRound": 1,
+      "ammo": 5,
+      "malfunction": 100,
+      "era": "1920s,modern"
+    }
+  },
+  {
+    "id": "WPN_RIFLE_30_06_SEMI_AUTO",
+    "name": ".30-06 (7.62mm) Semi-Auto",
+    "description": ".30-06口径半自动步枪，射速高于栓动步枪。",
+    "type": "weapon",
+    "weaponStats": {
+      "skill": "Rifle",
+      "damage": "2d6+4",
+      "range": "110 yards",
+      "attacksPerRound": 1,
+      "ammo": 5,
+      "malfunction": 100,
+      "era": "modern"
+    }
+  },
+  {
+    "id": "WPN_RIFLE_444_MARLIN",
+    "name": ".444 (11.28mm) Marlin Rifle",
+    "description": ".444马林步枪，大口径杠杆步枪，适合大型猎物。",
+    "type": "weapon",
+    "weaponStats": {
+      "skill": "Rifle",
+      "damage": "2d8+4",
+      "range": "110 yards",
+      "attacksPerRound": 1,
+      "ammo": 5,
+      "malfunction": 98,
+      "era": "modern"
+    }
+  },
+  {
+    "id": "WPN_RIFLE_ELEPHANT_GUN",
+    "name": "Elephant Gun (Double Barrel)",
+    "description": "象枪，双管大口径步枪，猎杀大型猛兽的利器。",
+    "type": "weapon",
+    "weaponStats": {
+      "skill": "Rifle",
+      "damage": "3d6+4",
+      "range": "100 yards",
+      "attacksPerRound": 2,
+      "ammo": 2,
+      "malfunction": 100,
+      "era": "1920s,modern"
+    }
+  },
+  {
+    "id": "WPN_SHOTGUN_20_GAUGE_DOUBLE",
+    "name": "20-gauge Shotgun (Double)",
+    "description": "20号口径双管霰弹枪，后坐力较小，适合体型较小的射手。",
+    "type": "weapon",
+    "weaponStats": {
+      "skill": "Rifle",
+      "damage": "2d6/1d6/1d3",
+      "range": "10/20/50 yards",
+      "attacksPerRound": 2,
+      "ammo": 2,
+      "malfunction": 100,
+      "era": "1920s"
+    }
+  },
+  {
+    "id": "WPN_SHOTGUN_16_GAUGE_DOUBLE",
+    "name": "16-gauge Shotgun (Double)",
+    "description": "16号口径双管霰弹枪，介于12号和20号之间的折中选择。",
+    "type": "weapon",
+    "weaponStats": {
+      "skill": "Rifle",
+      "damage": "2d6+2/1d6+1/1d4",
+      "range": "10/20/50 yards",
+      "attacksPerRound": 2,
+      "ammo": 2,
+      "malfunction": 100,
+      "era": "1920s"
+    }
+  },
+  {
+    "id": "WPN_SHOTGUN_12_GAUGE_DOUBLE",
+    "name": "12-gauge Shotgun (Double)",
+    "description": "12号口径双管霰弹枪，最常见的猎用/防御霰弹枪。",
+    "type": "weapon",
+    "weaponStats": {
+      "skill": "Rifle",
+      "damage": "4d6/2d6/1d6",
+      "range": "10/20/50 yards",
+      "attacksPerRound": 2,
+      "ammo": 2,
+      "malfunction": 100,
+      "era": "1920s,modern"
+    }
+  },
+  {
+    "id": "WPN_SHOTGUN_12_GAUGE_PUMP",
+    "name": "12-gauge Pump Shotgun",
+    "description": "12号口径泵动式霰弹枪，容弹量大，可靠性高。",
+    "type": "weapon",
+    "weaponStats": {
+      "skill": "Rifle",
+      "damage": "4d6/2d6/1d6",
+      "range": "10/20/50 yards",
+      "attacksPerRound": 1,
+      "ammo": 5,
+      "malfunction": 100,
+      "era": "modern"
+    }
+  },
+  {
+    "id": "WPN_SHOTGUN_12_GAUGE_SEMI_AUTO",
+    "name": "12-gauge Semi-Auto Shotgun",
+    "description": "12号口径半自动霰弹枪，射速快，火力猛。",
+    "type": "weapon",
+    "weaponStats": {
+      "skill": "Rifle",
+      "damage": "4d6/2d6/1d6",
+      "range": "10/20/50 yards",
+      "attacksPerRound": 2,
+      "ammo": 5,
+      "malfunction": 100,
+      "era": "modern"
+    }
+  },
+  {
+    "id": "WPN_SHOTGUN_SAWED_OFF_12",
+    "name": "Sawed-off 12-gauge Double",
+    "description": "锯短枪管的12号双管霰弹枪，近距离威力极大，可隐蔽携带。",
+    "type": "weapon",
+    "weaponStats": {
+      "skill": "Rifle",
+      "damage": "4d6/1d6",
+      "range": "5/10 yards",
+      "attacksPerRound": 2,
+      "ammo": 2,
+      "malfunction": 100,
+      "era": "1920s"
+    }
+  },
+  {
+    "id": "WPN_SHOTGUN_10_GAUGE_DOUBLE",
+    "name": "10-gauge Shotgun (Double)",
+    "description": "10号口径双管霰弹枪，大口径重型霰弹枪。",
+    "type": "weapon",
+    "weaponStats": {
+      "skill": "Rifle",
+      "damage": "4d6+2/2d6+1/1d4",
+      "range": "10/20/50 yards",
+      "attacksPerRound": 2,
+      "ammo": 2,
+      "malfunction": 100,
+      "era": "1920s,rare"
+    }
+  },
+  {
+    "id": "WPN_SHOTGUN_BENELLI_M3",
+    "name": "Benelli M3 12-gauge (Folding)",
+    "description": "贝内利M3折叠式霰弹枪，现代战术霰弹枪。",
+    "type": "weapon",
+    "weaponStats": {
+      "skill": "Rifle",
+      "damage": "4d6/2d6/1d6",
+      "range": "10/20/50 yards",
+      "attacksPerRound": 2,
+      "ammo": 7,
+      "malfunction": 100,
+      "era": "modern"
+    }
+  },
+  {
+    "id": "WPN_SHOTGUN_SPAS_12",
+    "name": "SPAS 12-gauge (Folding)",
+    "description": "SPAS-12折叠式霰弹枪，可切换泵动/半自动模式。",
+    "type": "weapon",
+    "weaponStats": {
+      "skill": "Rifle",
+      "damage": "4d6/2d6/1d6",
+      "range": "10/20/50 yards",
+      "attacksPerRound": 1,
+      "ammo": 8,
+      "malfunction": 98,
+      "era": "modern"
+    }
+  },
+  {
+    "id": "WPN_ASSAULT_AK47",
+    "name": "AK-47 or AKM",
+    "description": "AK-47/AKM突击步枪，全球最广泛使用的突击步枪。",
+    "type": "weapon",
+    "weaponStats": {
+      "skill": "Rifle",
+      "damage": "2d6+1",
+      "range": "100 yards",
+      "attacksPerRound": 3,
+      "ammo": 30,
+      "malfunction": 100,
+      "era": "modern"
+    }
+  },
+  {
+    "id": "WPN_ASSAULT_AK74",
+    "name": "AK-74",
+    "description": "AK-74突击步枪，AK-47的小口径改进型。",
+    "type": "weapon",
+    "weaponStats": {
+      "skill": "Rifle",
+      "damage": "2d6",
+      "range": "110 yards",
+      "attacksPerRound": 3,
+      "ammo": 30,
+      "malfunction": 97,
+      "era": "modern"
+    }
+  },
+  {
+    "id": "WPN_ASSAULT_BARRETT_M82",
+    "name": "Barrett M82",
+    "description": "巴雷特M82反器材步枪，.50 BMG口径，远程精确射击。",
+    "type": "weapon",
+    "weaponStats": {
+      "skill": "Rifle",
+      "damage": "2d10+1d8+6",
+      "range": "250 yards",
+      "attacksPerRound": 1,
+      "ammo": 11,
+      "malfunction": 96,
+      "era": "modern"
+    }
+  },
+  {
+    "id": "WPN_ASSAULT_FN_FAL",
+    "name": "FN FAL Light Automatic",
+    "description": "FN FAL轻型自动步枪，北约阵营的经典战斗步枪。",
+    "type": "weapon",
+    "weaponStats": {
+      "skill": "Rifle",
+      "damage": "2d6+4",
+      "range": "110 yards",
+      "attacksPerRound": 3,
+      "ammo": 20,
+      "malfunction": 97,
+      "era": "modern"
+    }
+  },
+  {
+    "id": "WPN_ASSAULT_GALIL",
+    "name": "Galil Assault Rifle",
+    "description": "加利尔突击步枪，以色列研制的可靠突击步枪。",
+    "type": "weapon",
+    "weaponStats": {
+      "skill": "Rifle",
+      "damage": "2d6",
+      "range": "110 yards",
+      "attacksPerRound": 3,
+      "ammo": 20,
+      "malfunction": 98,
+      "era": "modern"
+    }
+  },
+  {
+    "id": "WPN_ASSAULT_M16A2",
+    "name": "M16A2",
+    "description": "M16A2突击步枪，美军制式步枪，三发点射模式。",
+    "type": "weapon",
+    "weaponStats": {
+      "skill": "Rifle",
+      "damage": "2d6",
+      "range": "110 yards",
+      "attacksPerRound": 3,
+      "ammo": 30,
+      "malfunction": 97,
+      "era": "modern"
+    }
+  },
+  {
+    "id": "WPN_ASSAULT_M4",
+    "name": "M4",
+    "description": "M4卡宾枪，M16的短枪管版本，适合近战和室内作战。",
+    "type": "weapon",
+    "weaponStats": {
+      "skill": "Rifle",
+      "damage": "2d6",
+      "range": "90 yards",
+      "attacksPerRound": 3,
+      "ammo": 30,
+      "malfunction": 97,
+      "era": "modern"
+    }
+  },
+  {
+    "id": "WPN_ASSAULT_STEYR_AUG",
+    "name": "Steyr AUG",
+    "description": "斯太尔AUG无托突击步枪，奥地利设计，紧凑高效。",
+    "type": "weapon",
+    "weaponStats": {
+      "skill": "Rifle",
+      "damage": "2d6",
+      "range": "110 yards",
+      "attacksPerRound": 3,
+      "ammo": 30,
+      "malfunction": 99,
+      "era": "modern"
+    }
+  },
+  {
+    "id": "WPN_ASSAULT_BARRETT_M70_90",
+    "name": "Barrett M70/90",
+    "description": "巴雷特M70/90步枪，精准可靠的现代步枪。",
+    "type": "weapon",
+    "weaponStats": {
+      "skill": "Rifle",
+      "damage": "2d6",
+      "range": "110 yards",
+      "attacksPerRound": 3,
+      "ammo": 30,
+      "malfunction": 99,
+      "era": "modern"
+    }
+  },
+  {
+    "id": "WPN_SMG_BERGMANN_MP18",
+    "name": "Bergmann MP18/MP28",
+    "description": "伯格曼MP18/28冲锋枪，一战时期的先驱冲锋枪。",
+    "type": "weapon",
+    "weaponStats": {
+      "skill": "Submachine Gun",
+      "damage": "1d10",
+      "range": "20 yards",
+      "attacksPerRound": 3,
+      "ammo": 32,
+      "malfunction": 96,
+      "era": "1920s"
+    }
+  },
+  {
+    "id": "WPN_SMG_HK_MP5",
+    "name": "Heckler-Koch MP5",
+    "description": "HK MP5冲锋枪，全球特种部队首选的精密冲锋枪。",
+    "type": "weapon",
+    "weaponStats": {
+      "skill": "Submachine Gun",
+      "damage": "1d10",
+      "range": "20 yards",
+      "attacksPerRound": 3,
+      "ammo": 30,
+      "malfunction": 97,
+      "era": "modern"
+    }
+  },
+  {
+    "id": "WPN_SMG_MAC11",
+    "name": "MAC-11",
+    "description": "MAC-11微型冲锋枪，紧凑的全自动冲锋枪。",
+    "type": "weapon",
+    "weaponStats": {
+      "skill": "Submachine Gun",
+      "damage": "1d10",
+      "range": "15 yards",
+      "attacksPerRound": 3,
+      "ammo": 32,
+      "malfunction": 96,
+      "era": "modern"
+    }
+  },
+  {
+    "id": "WPN_SMG_SCORPION",
+    "name": "Scorpion SMG",
+    "description": "蝎式冲锋枪，捷克斯洛伐克产小型冲锋枪。",
+    "type": "weapon",
+    "weaponStats": {
+      "skill": "Submachine Gun",
+      "damage": "1d8",
+      "range": "15 yards",
+      "attacksPerRound": 3,
+      "ammo": 20,
+      "malfunction": 96,
+      "era": "modern"
+    }
+  },
+  {
+    "id": "WPN_SMG_THOMPSON",
+    "name": "Thompson SMG",
+    "description": "汤普森冲锋枪，\"芝加哥打字机\"，禁酒令时代的标志性武器。",
+    "type": "weapon",
+    "weaponStats": {
+      "skill": "Submachine Gun",
+      "damage": "1d10+2",
+      "range": "20 yards",
+      "attacksPerRound": 3,
+      "ammo": 30,
+      "malfunction": 96,
+      "era": "1920s"
+    }
+  },
+  {
+    "id": "WPN_SMG_UZI_MINI",
+    "name": "Uzi Mini SMG",
+    "description": "迷你乌兹冲锋枪，以色列设计的紧凑型冲锋枪。",
+    "type": "weapon",
+    "weaponStats": {
+      "skill": "Submachine Gun",
+      "damage": "1d10",
+      "range": "20 yards",
+      "attacksPerRound": 3,
+      "ammo": 32,
+      "malfunction": 98,
+      "era": "modern"
+    }
+  },
+  {
+    "id": "WPN_MG_GATLING",
+    "name": "M1882 Gatling Gun",
+    "description": "M1882加特林机枪，手摇式多管机枪，持续火力惊人。",
+    "type": "weapon",
+    "weaponStats": {
+      "skill": "Machine Gun",
+      "damage": "2d6+4",
+      "range": "100 yards",
+      "attacksPerRound": 999,
+      "ammo": 200,
+      "malfunction": 96,
+      "era": "1920s,rare"
+    }
+  },
+  {
+    "id": "WPN_MG_BROWNING_BAR",
+    "name": "M1918 Browning Auto Rifle",
+    "description": "M1918勃朗宁自动步枪（BAR），可全自动射击的步枪。",
+    "type": "weapon",
+    "weaponStats": {
+      "skill": "Machine Gun",
+      "damage": "2d6+4",
+      "range": "90 yards",
+      "attacksPerRound": 3,
+      "ammo": 20,
+      "malfunction": 100,
+      "era": "1920s"
+    }
+  },
+  {
+    "id": "WPN_MG_BROWNING_HEAVY",
+    "name": "M1917A1 Browning Heavy MG",
+    "description": "M1917A1勃朗宁重机枪，水冷式重机枪，持续射击能力强。",
+    "type": "weapon",
+    "weaponStats": {
+      "skill": "Machine Gun",
+      "damage": "2d6+4",
+      "range": "150 yards",
+      "attacksPerRound": 999,
+      "ammo": 250,
+      "malfunction": 96,
+      "era": "1920s"
+    }
+  },
+  {
+    "id": "WPN_MG_BREN",
+    "name": "Bren Light Machine Gun",
+    "description": "布伦轻机枪，英军标准轻机枪，精度出色。",
+    "type": "weapon",
+    "weaponStats": {
+      "skill": "Machine Gun",
+      "damage": "2d6+4",
+      "range": "110 yards",
+      "attacksPerRound": 3,
+      "ammo": 30,
+      "malfunction": 96,
+      "era": "1920s"
+    }
+  },
+  {
+    "id": "WPN_MG_LEWIS",
+    "name": "Lewis Light Machine Gun",
+    "description": "刘易斯轻机枪，一战经典轻机枪，使用圆盘弹匣。",
+    "type": "weapon",
+    "weaponStats": {
+      "skill": "Machine Gun",
+      "damage": "2d6+4",
+      "range": "110 yards",
+      "attacksPerRound": 999,
+      "ammo": 97,
+      "malfunction": 96,
+      "era": "1920s"
+    }
+  },
+  {
+    "id": "WPN_MG_MINIGUN",
+    "name": "Minigun",
+    "description": "迷你炮（M134），电动多管旋转机枪，火力极其恐怖。",
+    "type": "weapon",
+    "weaponStats": {
+      "skill": "Machine Gun",
+      "damage": "2d6+4",
+      "range": "200 yards",
+      "attacksPerRound": 999,
+      "ammo": 4000,
+      "malfunction": 98,
+      "era": "modern"
+    }
+  },
+  {
+    "id": "WPN_MG_FN_MINIMI",
+    "name": "FN Minimi 5.56mm LMG",
+    "description": "FN米尼米5.56mm轻机枪，北约标准班用轻机枪。",
+    "type": "weapon",
+    "weaponStats": {
+      "skill": "Machine Gun",
+      "damage": "2d6",
+      "range": "110 yards",
+      "attacksPerRound": 999,
+      "ammo": 200,
+      "malfunction": 99,
+      "era": "modern"
+    }
+  },
+  {
+    "id": "WPN_MG_VICKERS",
+    "name": "Vickers MK1 Machine Gun",
+    "description": "维克斯MK1重机枪，水冷式重机枪，一战至二战广泛使用。",
+    "type": "weapon",
+    "weaponStats": {
+      "skill": "Machine Gun",
+      "damage": "2d6+4",
+      "range": "110 yards",
+      "attacksPerRound": 999,
+      "ammo": 250,
+      "malfunction": 99,
+      "era": "1920s"
+    }
+  },
+  {
+    "id": "WPN_EXPLOSIVE_MOLOTOV",
+    "name": "Molotov Cocktail",
+    "description": "莫洛托夫鸡尾酒（燃烧瓶），简易的纵火武器。",
+    "type": "weapon",
+    "weaponStats": {
+      "skill": "Throw",
+      "damage": "2d6+burn",
+      "range": "STR yards",
+      "attacksPerRound": 1,
+      "malfunction": 95,
+      "era": "1920s,modern"
+    }
+  },
+  {
+    "id": "WPN_HANDGUN_FLARE_GUN",
+    "name": "Flare Gun",
+    "description": "信号枪，发射照明弹，也可作为近距离武器使用。",
+    "type": "weapon",
+    "weaponStats": {
+      "skill": "Pistol",
+      "damage": "1d10+1d3+burn",
+      "range": "10 yards",
+      "attacksPerRound": 1,
+      "ammo": 1,
+      "malfunction": 100,
+      "era": "1920s,modern"
+    }
+  },
+  {
+    "id": "WPN_EXPLOSIVE_M79_GRENADE_LAUNCHER",
+    "name": "M79 Grenade Launcher",
+    "description": "M79榴弹发射器，单发40mm榴弹发射器。",
+    "type": "weapon",
+    "weaponStats": {
+      "skill": "Heavy Weapon",
+      "damage": "3d10/2 yards",
+      "range": "20 yards",
+      "attacksPerRound": 1,
+      "ammo": 1,
+      "malfunction": 99,
+      "era": "modern"
+    }
+  },
+  {
+    "id": "WPN_EXPLOSIVE_IMPROVISED",
+    "name": "Improvised Explosive",
+    "description": "简易爆炸物，用常见材料制成的土制炸弹。",
+    "type": "weapon",
+    "weaponStats": {
+      "skill": "Throw",
+      "damage": "4d10/3 yards",
+      "range": "STR feet",
+      "attacksPerRound": 1,
+      "malfunction": 99,
+      "era": "1920s,modern"
+    }
+  },
+  {
+    "id": "WPN_EXPLOSIVE_BLASTING_CAP",
+    "name": "Blasting Cap",
+    "description": "雷管，用于引爆炸药的小型起爆装置。",
+    "type": "weapon",
+    "weaponStats": {
+      "skill": "Electrical Repair",
+      "damage": "2d10/1 yard",
+      "range": "placed",
+      "attacksPerRound": 1,
+      "malfunction": 100,
+      "era": "1920s,modern"
+    }
+  },
+  {
+    "id": "WPN_EXPLOSIVE_PIPE_BOMB",
+    "name": "Pipe Bomb",
+    "description": "管状炸弹，用金属管制成的简易爆炸装置。",
+    "type": "weapon",
+    "weaponStats": {
+      "skill": "Demolitions",
+      "damage": "1d10/3 yards",
+      "range": "placed",
+      "attacksPerRound": 1,
+      "malfunction": 95,
+      "era": "1920s,modern"
+    }
+  },
+  {
+    "id": "WPN_EXPLOSIVE_C4",
+    "name": "Plastic Explosive (C4) 100g",
+    "description": "C4塑性炸药（100克），军用高性能炸药。",
+    "type": "weapon",
+    "weaponStats": {
+      "skill": "Demolitions",
+      "damage": "6d10/3 yards",
+      "range": "placed",
+      "attacksPerRound": 1,
+      "malfunction": 99,
+      "era": "modern"
+    }
+  },
+  {
+    "id": "WPN_EXPLOSIVE_HAND_GRENADE",
+    "name": "Hand Grenade",
+    "description": "手雷，投掷后数秒爆炸，杀伤范围广。",
+    "type": "weapon",
+    "weaponStats": {
+      "skill": "Throw",
+      "damage": "4d10/3 yards",
+      "range": "STR feet",
+      "attacksPerRound": 1,
+      "malfunction": 99,
+      "era": "1920s,modern"
+    }
+  },
+  {
+    "id": "WPN_EXPLOSIVE_81MM_MORTAR",
+    "name": "81mm Mortar",
+    "description": "81mm迫击炮，曲射火力支援武器。",
+    "type": "weapon",
+    "weaponStats": {
+      "skill": "Artillery",
+      "damage": "6d10/6 yards",
+      "range": "500 yards",
+      "attacksPerRound": 2,
+      "malfunction": 100,
+      "era": "modern"
+    }
+  },
+  {
+    "id": "WPN_EXPLOSIVE_75MM_FIELD_GUN",
+    "name": "75mm Field Gun",
+    "description": "75mm野战炮，传统的直射/曲射野战火炮。",
+    "type": "weapon",
+    "weaponStats": {
+      "skill": "Artillery",
+      "damage": "10d10/2 yards",
+      "range": "500 yards",
+      "attacksPerRound": 1,
+      "malfunction": 99,
+      "era": "1920s,modern"
+    }
+  },
+  {
+    "id": "WPN_EXPLOSIVE_120MM_TANK_CANNON",
+    "name": "120mm Tank Cannon (Stabilized)",
+    "description": "120mm坦克炮（稳定式），现代主战坦克的主炮。",
+    "type": "weapon",
+    "weaponStats": {
+      "skill": "Artillery",
+      "damage": "15d10/4 yards",
+      "range": "2000 yards",
+      "attacksPerRound": 1,
+      "malfunction": 100,
+      "era": "modern"
+    }
+  },
+  {
+    "id": "WPN_EXPLOSIVE_5INCH_NAVAL_GUN",
+    "name": "5-inch Naval Gun (Stabilized)",
+    "description": "5英寸舰炮（稳定式），海军舰艇的主要武器系统。",
+    "type": "weapon",
+    "weaponStats": {
+      "skill": "Artillery",
+      "damage": "12d10/4 yards",
+      "range": "3000 yards",
+      "attacksPerRound": 2,
+      "malfunction": 98,
+      "era": "modern"
+    }
+  },
+  {
+    "id": "WPN_EXPLOSIVE_AP_MINE",
+    "name": "Anti-personnel Mine",
+    "description": "反步兵地雷，踩踏后触发爆炸。",
+    "type": "weapon",
+    "weaponStats": {
+      "skill": "Demolitions",
+      "damage": "4d10/5 yards",
+      "range": "placed",
+      "attacksPerRound": 1,
+      "malfunction": 99,
+      "era": "1920s,modern"
+    }
+  },
+  {
+    "id": "WPN_EXPLOSIVE_CLAYMORE",
+    "name": "Claymore Mine",
+    "description": "阔刀地雷（M18A1），定向杀伤的破片地雷。",
+    "type": "weapon",
+    "weaponStats": {
+      "skill": "Demolitions",
+      "damage": "6d6/20 yards",
+      "range": "placed",
+      "attacksPerRound": 1,
+      "malfunction": 99,
+      "era": "modern"
+    }
+  },
+  {
+    "id": "WPN_EXPLOSIVE_FLAMETHROWER",
+    "name": "Flamethrower",
+    "description": "火焰喷射器，喷射燃烧液体的恐怖武器。",
+    "type": "weapon",
+    "weaponStats": {
+      "skill": "Flamethrower",
+      "damage": "2d6+burn",
+      "range": "25 yards",
+      "attacksPerRound": 1,
+      "ammo": 10,
+      "malfunction": 93,
+      "era": "1920s,modern"
+    }
+  },
+  {
+    "id": "WPN_EXPLOSIVE_LAW",
+    "name": "Light Anti-tank Weapon",
+    "description": "轻型反坦克武器（LAW），一次性反装甲火箭筒。",
+    "type": "weapon",
+    "weaponStats": {
+      "skill": "Heavy Weapon",
+      "damage": "8d10/1 yard",
+      "range": "150 yards",
+      "attacksPerRound": 1,
+      "ammo": 1,
+      "malfunction": 98,
+      "era": "modern"
+    }
+  }
+]

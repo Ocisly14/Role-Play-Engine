@@ -1,0 +1,130 @@
+{
+  "npc": {
+    "backToList": "Back to list",
+    "profile": "Profile",
+    "hp": "HP",
+    "san": "SAN",
+    "location": "Location",
+    "currentAction": "In progress",
+    "inventory": "Inventory",
+    "zoomToLocation": "Zoom to location",
+    "noProfileInfo": "No profile info available",
+    "timelineTitle": "{{date}} Timeline",
+    "timelineLoading": "Loading timeline…",
+    "timelineEmpty": "No actions or sightings recorded yet",
+    "timelineError": "Failed to load timeline",
+    "timelineEvent": "Action",
+    "timelineWitness": "Witness"
+  },
+  "profile": {
+    "occupation": "Occupation",
+    "age": "Age",
+    "gender": "Gender",
+    "appearance": "Appearance",
+    "personality": "Personality",
+    "background": "Background",
+    "backstory": "Backstory",
+    "residence": "Residence",
+    "longTermIntent": "Long-term Intent"
+  },
+  "clock": {
+    "date": "{{date}}"
+  },
+  "control": {
+    "stepOneTick": "Step one tick",
+    "collapse": "Collapse",
+    "realTime": "Real-time",
+    "buffer": "Buffer",
+    "bufferUnit": "min",
+    "days": "Days",
+    "start": "Start",
+    "starting": "Starting...",
+    "pausing": "Pausing...",
+    "pauseFailed": "Failed to pause"
+  },
+  "config": {
+    "title": "Configure Simulation",
+    "tickSpeed": "Tick Speed",
+    "maxDays": "Max Days",
+    "weather": "Weather",
+    "back": "Back",
+    "startSimulation": "Start Simulation",
+    "creating": "Creating...",
+    "initializingSimulation": "Initializing simulation..."
+  },
+  "weather": {
+    "clear": "Clear",
+    "rain": "Rain",
+    "fog": "Fog",
+    "storm": "Storm",
+    "snow": "Snow",
+    "extreme_heat": "Extreme Heat",
+    "extreme_cold": "Extreme Cold"
+  },
+  "sidebar": {
+    "npcs": "NPCs",
+    "events": "Events",
+    "filters": "Filters",
+    "filtersActive": "Filters active",
+    "show": "Show",
+    "hide": "Hide",
+    "startDate": "Start Date",
+    "startTime": "Start Time",
+    "endDate": "End Date",
+    "endTime": "End Time",
+    "character": "Character",
+    "allCharacters": "All characters",
+    "locationFilter": "Location",
+    "allLocations": "All locations",
+    "apply": "Apply",
+    "clear": "Clear",
+    "loading": "Loading…",
+    "closeSidebar": "Close sidebar"
+  },
+  "events": {
+    "noEvents": "No events yet",
+    "date": "{{date}}",
+    "died": "{{name}} died",
+    "movedTo": "{{name}} moved to {{location}}",
+    "unknown": "Unknown",
+    "worldEvent": "World Event",
+    "legacyEncounteredOthers": "Encountered others in person: {{outcome}}",
+    "legacyActionFailed": "Action \"{{action}}\" at {{gameTime}} failed with {{reason}}."
+  },
+  "scenePanel": {
+    "description": "Description",
+    "conditions": "Conditions",
+    "connections": "Connections",
+    "noDescription": "No description available",
+    "noConditions": "Normal",
+    "noConnections": "No connections"
+  },
+  "page": {
+    "loadingSimulation": "Loading simulation...",
+    "error": "Error: {{message}}",
+    "title": "Town Simulation",
+    "backToSelection": "Back to selection",
+    "noImage": "No image available",
+    "preparing": "Preparing...",
+    "copyPublicLink": "Copy Public Link"
+  },
+  "selector": {
+    "continueSimulation": "Continue Simulation",
+    "loading": "Loading...",
+    "noSimulations": "No simulations found",
+    "confirm": "Confirm",
+    "cancel": "Cancel",
+    "done": "Done",
+    "multiSelect": "Multi-select",
+    "selectAll": "Select all",
+    "clearSelection": "Clear",
+    "deleteSelected": "Delete Selected ({{count}})",
+    "selectedCount": "{{count}} selected",
+    "deleting": "Deleting...",
+    "deleteSimulation": "Delete simulation",
+    "deleteFailed": "Failed to delete simulation",
+    "bulkDeleteFailed": "Failed to delete {{count}} simulation(s)",
+    "ticks": "{{count}} ticks",
+    "unknownModule": "Unknown Module"
+  }
+}

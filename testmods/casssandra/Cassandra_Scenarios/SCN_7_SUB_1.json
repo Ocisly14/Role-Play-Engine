@@ -1,0 +1,65 @@
+{
+  "id": "SCN_7_SUB_1",
+  "name": "下水道入口",
+  "description": "掀开新月街B大道路面上锈迹斑斑的铸铁井盖，一股浓烈的腐臭气息扑面而来，令人几乎窒息。顺着湿滑的铁梯向下攀爬，脚下踩到的每一级横档都覆满了黏腻的苔藓。下方是一条典型的城镇下水道通道——拱形砖壁上渗出暗色水渍，灰绿色的污水在脚下的沟渠中湍急流淌，发出沉闷的回响。潮湿的空气里混杂着铁锈与腐败的气味，黑暗在手电光柱的尽头密不透风地聚拢。这条下水道与城镇的其他排水管道别无二致，除了污水之外似乎什么也没有。要想深入探索，必须先设法关闭前方的污水闸门，否则湍急的水流将完全阻断去路。",
+  "parentLocationId": "SCN_7",
+  "items": [
+    {
+      "id": "ITEM_SCN7_4",
+      "name": "铸铁井盖",
+      "description": "新月街路面上的铸铁井盖沉重潮湿，边缘的锈色说明它很少被真正打开。",
+      "type": "other"
+    },
+    {
+      "id": "ITEM_SCN7_5",
+      "name": "湿滑铁梯",
+      "description": "一架覆着苔藓和水膜的铁梯，踏级表面滑腻难踩。",
+      "type": "other"
+    },
+    {
+      "id": "ITEM_SCN7_6",
+      "name": "污水闸门控制箱",
+      "description": "通道一侧嵌着一只金属控制箱，连接着更深处的污水闸门系统。",
+      "type": "tool"
+    }
+  ],
+  "conditions": [
+    {
+      "description": "下水道内弥漫着浓烈的污水臭味，令人作呕。",
+      "mechanicalEffect": {
+        "skillPenalty": [
+          {
+            "skill": "Perception",
+            "delta": -10
+          }
+        ]
+      }
+    },
+    {
+      "description": "下水道内几乎没有光源，必须自备照明工具。",
+      "mechanicalEffect": {
+        "skillPenalty": [
+          {
+            "skill": "Perception",
+            "delta": -40
+          }
+        ]
+      }
+    },
+    {
+      "description": "闸门未关闭时，污水湍急流过通道，无法安全深入。",
+      "mechanicalEffect": {
+        "skillPenalty": [
+          {
+            "skill": "Climb",
+            "delta": -20
+          }
+        ]
+      }
+    }
+  ],
+  "connections": ["SCN_7_SUB_2"],
+  "itemContexts": {
+    "ITEM_SCN7_5": "通往下方的铁梯每一级都覆着苔藓和水膜，踩上去带着让人不安的滑腻感。"
+  }
+}

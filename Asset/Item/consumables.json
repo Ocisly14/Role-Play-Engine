@@ -1,0 +1,531 @@
+[
+  {
+    "id": "CONS_FIRSTAID_KIT",
+    "name": "急救包",
+    "description": "标准急救包，包含绷带、消毒液和止痛药。",
+    "type": "consumable",
+    "consumableStats": {
+      "uses": 3,
+      "effect": "急救检定成功恢复 1d3 HP",
+      "duration": 0
+    }
+  },
+  {
+    "id": "CONS_BANDAGES",
+    "name": "绷带",
+    "description": "一卷医用纱布绷带，用于包扎伤口止血。",
+    "type": "consumable",
+    "consumableStats": {
+      "uses": 5,
+      "effect": "止血并防止伤口感染",
+      "duration": 0
+    }
+  },
+  {
+    "id": "CONS_MORPHINE",
+    "name": "吗啡/止痛药",
+    "description": "强效止痛药物，可暂时消除疼痛但会影响判断力。",
+    "type": "consumable",
+    "consumableStats": {
+      "uses": 1,
+      "effect": "忽略疼痛惩罚，DEX和INT检定-10%",
+      "duration": 240
+    }
+  },
+  {
+    "id": "CONS_ANTIDOTE",
+    "name": "解毒剂",
+    "description": "通用解毒药物，可缓解常见毒素的效果。",
+    "type": "consumable",
+    "consumableStats": {
+      "uses": 1,
+      "effect": "中和毒素，阻止毒性继续发作",
+      "duration": 0
+    }
+  },
+  {
+    "id": "CONS_SMELLING_SALTS",
+    "name": "嗅盐",
+    "description": "刺激性挥发盐，可用于唤醒昏迷者。",
+    "type": "consumable",
+    "consumableStats": {
+      "uses": 3,
+      "effect": "唤醒因昏厥而失去意识的角色",
+      "duration": 0
+    }
+  },
+  {
+    "id": "CONS_SURGICAL_KIT",
+    "name": "外科手术包",
+    "description": "包含手术刀、缝合针线、止血钳等专业医疗工具。",
+    "type": "consumable",
+    "consumableStats": {
+      "uses": 5,
+      "effect": "医学检定成功恢复 1d6 HP（需要医学技能）",
+      "duration": 0
+    }
+  },
+  {
+    "id": "CONS_BLOOD_TRANSFUSION",
+    "name": "输血套件",
+    "description": "包含输血管、针头和血袋的医疗套件。",
+    "type": "consumable",
+    "consumableStats": {
+      "uses": 1,
+      "effect": "恢复因大量失血导致的HP损失（需要医学检定）",
+      "duration": 0
+    }
+  },
+  {
+    "id": "CONS_HERBAL_REMEDY",
+    "name": "草药偏方",
+    "description": "民间草药配方，效果不稳定但在偏远地区可能是唯一选择。",
+    "type": "consumable",
+    "consumableStats": {
+      "uses": 1,
+      "effect": "急救检定成功恢复 1 HP",
+      "duration": 0
+    }
+  },
+  {
+    "id": "CONS_LAUDANUM",
+    "name": "鸦片酊",
+    "description": "含鸦片的酒精溶液，1920年代常见的止痛镇静药物，有成瘾性。",
+    "type": "consumable",
+    "consumableStats": {
+      "uses": 5,
+      "effect": "镇痛镇静，忽略疼痛惩罚，POW检定判断是否成瘾",
+      "duration": 360
+    }
+  },
+  {
+    "id": "CONS_SEDATIVES",
+    "name": "镇静剂",
+    "description": "安眠药或镇静类药物，服用后产生强烈困倦感。",
+    "type": "consumable",
+    "consumableStats": {
+      "uses": 3,
+      "effect": "使目标陷入沉睡（CON检定可抵抗）",
+      "duration": 480
+    }
+  },
+  {
+    "id": "CONS_STIMULANTS",
+    "name": "兴奋剂",
+    "description": "安非他命或咖啡因药片，可暂时提高警觉性和耐力。",
+    "type": "consumable",
+    "consumableStats": {
+      "uses": 3,
+      "effect": "抵消疲劳效果，+10% 意识检定，持续结束后疲劳加倍",
+      "duration": 360
+    }
+  },
+  {
+    "id": "CONS_POISON",
+    "name": "毒药",
+    "description": "致命的毒药瓶，可溶于饮料或涂抹在武器上。",
+    "type": "consumable",
+    "consumableStats": {
+      "uses": 1,
+      "effect": "中毒后每轮造成 1d6 伤害（CON检定减半），持续至解毒",
+      "duration": 0
+    }
+  },
+  {
+    "id": "CONS_AMMO_PISTOL",
+    "name": "手枪弹药盒",
+    "description": "一盒通用手枪弹药，约50发。",
+    "type": "consumable",
+    "consumableStats": {
+      "uses": 50,
+      "effect": "为手枪类武器补充弹药",
+      "duration": 0
+    }
+  },
+  {
+    "id": "CONS_AMMO_RIFLE",
+    "name": "步枪弹药盒",
+    "description": "一盒步枪弹药，约20发。",
+    "type": "consumable",
+    "consumableStats": {
+      "uses": 20,
+      "effect": "为步枪类武器补充弹药",
+      "duration": 0
+    }
+  },
+  {
+    "id": "CONS_AMMO_SHOTGUN",
+    "name": "霰弹枪弹药盒",
+    "description": "一盒12号霰弹，约25发。",
+    "type": "consumable",
+    "consumableStats": {
+      "uses": 25,
+      "effect": "为霰弹枪补充弹药",
+      "duration": 0
+    }
+  },
+  {
+    "id": "CONS_ARROWS",
+    "name": "箭矢",
+    "description": "一壶弓箭用箭矢，约12支。",
+    "type": "consumable",
+    "consumableStats": {
+      "uses": 12,
+      "effect": "为弓补充箭矢",
+      "duration": 0
+    }
+  },
+  {
+    "id": "CONS_CROSSBOW_BOLTS",
+    "name": "弩箭",
+    "description": "十字弩专用弩箭，约12支。",
+    "type": "consumable",
+    "consumableStats": {
+      "uses": 12,
+      "effect": "为十字弩补充弩箭",
+      "duration": 0
+    }
+  },
+  {
+    "id": "CONS_FLARE_ROUNDS",
+    "name": "信号弹",
+    "description": "信号枪专用照明弹，可发射高空照明信号。",
+    "type": "consumable",
+    "consumableStats": {
+      "uses": 6,
+      "effect": "为信号枪补充弹药，同时可用于照明",
+      "duration": 0
+    }
+  },
+  {
+    "id": "CONS_CHLOROFORM",
+    "name": "氯仿",
+    "description": "一小瓶氯仿麻醉剂，吸入后使人迅速昏迷。",
+    "type": "consumable",
+    "consumableStats": {
+      "uses": 3,
+      "effect": "使目标陷入昏迷（需要格斗检定将浸有氯仿的布捂住口鼻）",
+      "duration": 30
+    }
+  },
+  {
+    "id": "CONS_ETHER",
+    "name": "乙醚",
+    "description": "挥发性麻醉剂，可用于麻醉或作为溶剂。",
+    "type": "consumable",
+    "consumableStats": {
+      "uses": 3,
+      "effect": "吸入后麻醉目标（CON检定可抵抗），易燃",
+      "duration": 60
+    }
+  },
+  {
+    "id": "CONS_ACID_VIAL",
+    "name": "酸液瓶",
+    "description": "一小瓶腐蚀性酸液，可用于溶解锁具或造成化学烧伤。",
+    "type": "consumable",
+    "consumableStats": {
+      "uses": 1,
+      "effect": "造成 1d4 酸蚀伤害，或溶解金属锁具",
+      "duration": 0
+    }
+  },
+  {
+    "id": "CONS_FLASH_POWDER",
+    "name": "闪光粉",
+    "description": "镁粉混合物，点燃后产生刺目的强光。",
+    "type": "consumable",
+    "consumableStats": {
+      "uses": 3,
+      "effect": "致盲目标 1d3 轮（CON检定可减半）",
+      "duration": 0
+    }
+  },
+  {
+    "id": "CONS_SMOKE_BOMB",
+    "name": "烟雾弹",
+    "description": "释放浓烟的小型装置，用于制造掩护或逃跑。",
+    "type": "consumable",
+    "consumableStats": {
+      "uses": 1,
+      "effect": "制造 5 米半径烟雾区域，视线受阻",
+      "duration": 5
+    }
+  },
+  {
+    "id": "CONS_HOLY_WATER",
+    "name": "圣水",
+    "description": "经过神职人员祝圣的水，据说对邪恶存在有克制效果。",
+    "type": "consumable",
+    "consumableStats": {
+      "uses": 1,
+      "effect": "对部分超自然存在造成 1d6 伤害",
+      "duration": 0
+    }
+  },
+  {
+    "id": "CONS_KEROSENE",
+    "name": "煤油",
+    "description": "一罐煤油燃料，可为油灯和提灯补充燃料，也可用于纵火。",
+    "type": "consumable",
+    "consumableStats": {
+      "uses": 5,
+      "effect": "为油灯/提灯补充燃料，或泼洒后点燃造成火灾",
+      "duration": 0
+    }
+  },
+  {
+    "id": "CONS_CIGARETTES",
+    "name": "香烟",
+    "description": "一包香烟，1920年代常见的社交用品。",
+    "type": "consumable",
+    "consumableStats": {
+      "uses": 20,
+      "effect": "社交场合可增进关系，长期使用影响体质",
+      "duration": 10
+    }
+  },
+  {
+    "id": "CONS_PIPE_TOBACCO",
+    "name": "烟斗烟草",
+    "description": "一袋优质烟斗烟草，散发浓郁的烟草香气。",
+    "type": "consumable",
+    "consumableStats": {
+      "uses": 10,
+      "effect": "使用烟斗抽烟，有助于思考和社交",
+      "duration": 30
+    }
+  },
+  {
+    "id": "CONS_FIELD_RATIONS",
+    "name": "野外口粮",
+    "description": "压缩干粮和罐头食品，可维持一天的营养需求。",
+    "type": "consumable",
+    "consumableStats": {
+      "uses": 3,
+      "effect": "满足一餐的食物需求",
+      "duration": 0
+    }
+  },
+  {
+    "id": "CONS_WATER_CANTEEN",
+    "name": "水壶",
+    "description": "军用金属水壶，可携带约1升饮用水。",
+    "type": "consumable",
+    "consumableStats": {
+      "uses": 4,
+      "effect": "满足一次饮水需求",
+      "duration": 0
+    }
+  },
+  {
+    "id": "CONS_WHISKEY_FLASK",
+    "name": "威士忌酒壶",
+    "description": "金属酒壶，装有烈性威士忌，可壮胆或消毒伤口。",
+    "type": "consumable",
+    "consumableStats": {
+      "uses": 3,
+      "effect": "饮用后暂时获得 +5% 勇气检定，但 DEX 检定 -5%",
+      "duration": 60
+    }
+  },
+  {
+    "id": "CONS_COFFEE_THERMOS",
+    "name": "咖啡保温壶",
+    "description": "装满热咖啡的保温壶，有助于保持清醒。",
+    "type": "consumable",
+    "consumableStats": {
+      "uses": 4,
+      "effect": "抵消疲劳带来的意识检定惩罚",
+      "duration": 120
+    }
+  },
+  {
+    "id": "CONS_INK_BOTTLE",
+    "name": "墨水瓶",
+    "description": "一瓶黑色墨水，配合钢笔或蘸笔使用。",
+    "type": "consumable",
+    "consumableStats": {
+      "uses": 20,
+      "effect": "书写文件或留下标记",
+      "duration": 0
+    }
+  },
+  {
+    "id": "CONS_CHALK",
+    "name": "粉笔",
+    "description": "白色粉笔，可在墙壁或地面留下标记。",
+    "type": "consumable",
+    "consumableStats": {
+      "uses": 10,
+      "effect": "在表面留下标记或符号",
+      "duration": 0
+    }
+  },
+  {
+    "id": "CONS_INCENSE",
+    "name": "线香",
+    "description": "燃烧后散发芬芳气味的线香，常用于宗教仪式或驱虫。",
+    "type": "consumable",
+    "consumableStats": {
+      "uses": 5,
+      "effect": "散发香气，可用于仪式或掩盖异味",
+      "duration": 60
+    }
+  },
+  {
+    "id": "CONS_BATTERIES",
+    "name": "电池",
+    "description": "一组干电池，可为手电筒或收音机供电。",
+    "type": "consumable",
+    "consumableStats": {
+      "uses": 2,
+      "effect": "为电池供电设备补充电力",
+      "duration": 0
+    }
+  },
+  {
+    "id": "CONS_PHONE_BATTERY",
+    "name": "手机备用电池",
+    "description": "适用于翻盖手机或早期智能手机的备用锂电池，可在断电时快速更换。",
+    "type": "consumable",
+    "era": "2000s",
+    "consumableStats": {
+      "uses": 1,
+      "effect": "为兼容手机恢复一次完整续航",
+      "duration": 0
+    }
+  },
+  {
+    "id": "CONS_RECHARGEABLE_BATTERY_PACK",
+    "name": "充电电池组",
+    "description": "一组 AA 或 AAA 充电电池，常用于相机、录音笔和手电。",
+    "type": "consumable",
+    "era": "2000s",
+    "consumableStats": {
+      "uses": 2,
+      "effect": "为兼容电子设备提供备用电力",
+      "duration": 0
+    }
+  },
+  {
+    "id": "CONS_MEMORY_CARD",
+    "name": "存储卡",
+    "description": "用于数码相机、录音笔或手机的存储卡，可保存照片、录音和文件。",
+    "type": "consumable",
+    "era": "2000s",
+    "consumableStats": {
+      "uses": 1,
+      "effect": "为设备提供额外数据存储空间",
+      "duration": 0
+    }
+  },
+  {
+    "id": "CONS_PRINTER_PAPER",
+    "name": "打印纸",
+    "description": "一叠 A4 打印纸，可用于输出报告、邮件、账单或照片。",
+    "type": "consumable",
+    "era": "2000s",
+    "consumableStats": {
+      "uses": 100,
+      "effect": "打印文件、清单或图像",
+      "duration": 0
+    }
+  },
+  {
+    "id": "CONS_INK_CARTRIDGE",
+    "name": "墨盒",
+    "description": "喷墨打印机使用的替换墨盒，可恢复彩色或黑白打印能力。",
+    "type": "consumable",
+    "era": "2000s",
+    "consumableStats": {
+      "uses": 1,
+      "effect": "恢复打印设备的正常输出",
+      "duration": 0
+    }
+  },
+  {
+    "id": "CONS_RECORDABLE_DISC",
+    "name": "刻录光盘",
+    "description": "可写入数据的 CD-R 或 DVD-R 光盘，常用于备份文档、照片和监控录像。",
+    "type": "consumable",
+    "era": "2000s",
+    "consumableStats": {
+      "uses": 1,
+      "effect": "存储或转移数字资料",
+      "duration": 0
+    }
+  },
+  {
+    "id": "CONS_PREPAID_SIM_CARD",
+    "name": "预付费 SIM 卡",
+    "description": "可直接激活使用的手机 SIM 卡，适合短期联络或临时更换号码。",
+    "type": "consumable",
+    "era": "2000s",
+    "consumableStats": {
+      "uses": 1,
+      "effect": "为兼容手机提供临时号码与通讯功能",
+      "duration": 1440
+    }
+  },
+  {
+    "id": "CONS_DISINFECTING_WIPES",
+    "name": "消毒湿巾",
+    "description": "独立包装的消毒湿巾，可清洁双手、器材表面或轻微污渍。",
+    "type": "consumable",
+    "era": "2000s",
+    "consumableStats": {
+      "uses": 10,
+      "effect": "清洁表面或降低普通污染风险",
+      "duration": 0
+    }
+  },
+  {
+    "id": "CONS_ENERGY_DRINK",
+    "name": "能量饮料",
+    "description": "高咖啡因罐装饮料，可在短时间内提振精神并延缓困倦。",
+    "type": "consumable",
+    "era": "2000s",
+    "consumableStats": {
+      "uses": 1,
+      "effect": "短时间内提升警觉性，但结束后更易疲劳",
+      "duration": 90
+    }
+  },
+  {
+    "id": "CONS_INSTANT_NOODLES",
+    "name": "速食面",
+    "description": "只需热水即可食用的杯装或袋装速食面，常见于旅馆、办公室和通宵现场。",
+    "type": "consumable",
+    "era": "2000s",
+    "consumableStats": {
+      "uses": 1,
+      "effect": "满足一餐需求并短暂恢复体力",
+      "duration": 0
+    }
+  },
+  {
+    "id": "CONS_DISPOSABLE_GLOVES",
+    "name": "一次性手套",
+    "description": "一次性乳胶或丁腈手套，可减少直接接触污染物或留下指纹的风险。",
+    "type": "consumable",
+    "era": "2000s",
+    "consumableStats": {
+      "uses": 4,
+      "effect": "处理样本或脏污物品时保护双手并减少痕迹污染",
+      "duration": 30
+    }
+  },
+  {
+    "id": "CONS_CIGARS",
+    "name": "雪茄",
+    "description": "盒装或单支陈列的雪茄，常见于烟草店、酒吧包间或讲究排场的私人会客场所。",
+    "type": "consumable",
+    "era": "2000s",
+    "consumableStats": {
+      "uses": 5,
+      "effect": "可用于社交、贿赂或营造放松氛围",
+      "duration": 30
+    }
+  }
+]

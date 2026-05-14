@@ -1,0 +1,105 @@
+{
+  "id": "David Campbell",
+  "name": "David Campbell",
+  "occupation": "Wealthy investor / cult financier",
+  "age": 50,
+  "gender": "male",
+  "appearance": "A tall, handsome man whose body has retained an unnaturally youthful polish. Even in monstrous decline, there are traces of the expensive grooming and aristocratic confidence he once cultivated.",
+  "personality": "Pragmatic, greedy, and ruthless beneath a polished exterior. David values survival, influence, and gain over morality, and he adapts to horror faster than he would ever admit in public.",
+  "background": "David Campbell came to Cassandra six years ago with Isaiah Arbar as a wealthy investor and frontman for occult business interests. Their wives were members of the Black Goat cult, and what began as terror turned into appetite after David took part in ritual practice and consumed the Dark Mother's milk. The cult granted him youth, strength, and beauty, and he and Isaiah exploited those gifts for profit while moving from country to country in search of safer places to sacrifice victims. In Cassandra, they hid behind the image of pharmaceutical investors and forestry interests while using the town's weak oversight and surrounding forest for ritual work. In 2002, David was sacrificed and transformed during a ritual, disappearing from normal society and becoming something that now survives closer to the marsh and the dark tree line.",
+  "residence": "SCN_20",
+  "currentLocation": "SCN_20_SUB_3",
+  "longTermIntent": "Preserve the occult power and altered vitality he gained through Shub-Niggurath's cult, survive in his transformed state, and continue exploiting supernatural resources as long as he remains capable of profit and predation.",
+  "attributes": {
+    "STR": 68,
+    "CON": 72,
+    "DEX": 58,
+    "APP": 78,
+    "POW": 68,
+    "SIZ": 67,
+    "INT": 72,
+    "EDU": 78
+  },
+  "status": {
+    "hp": 14,
+    "maxHp": 14,
+    "sanity": 10,
+    "maxSanity": 68,
+    "luck": 35,
+    "mp": 14,
+    "conditions": ["transformed"]
+  },
+  "skills": {
+    "Occult": 55,
+    "Persuade": 60,
+    "Credit Rating": 80,
+    "Intimidate": 50
+  },
+  "inventory": [],
+  "relationships": [
+    {
+      "targetId": "Isaiah Arbar",
+      "targetName": "Isaiah Arbar",
+      "relationshipType": "ally",
+      "attitude": 70,
+      "description": "Long-term business partner and fellow cult collaborator.",
+      "history": "United by marriage ties to the cult and mutual greed, David and Isaiah traveled across Europe and America while financing sacrifice and profiting from forbidden power."
+    }
+  ],
+  "memory": [
+    {
+      "type": "information",
+      "content": "Isaiah and I came to Cassandra as wealthy investors, using business and medical fronts to justify our presence while we built ritual opportunities in and around the forest.",
+      "metadata": {
+        "knowledgeId": "k_david_cassandra_front",
+        "difficulty": "automatic"
+      }
+    },
+    {
+      "type": "information",
+      "content": "In Cassandra, I used pharmaceutical and forestry cover to make the worst of our work look like ordinary business, which kept the town looking away for longer than it should have.",
+      "metadata": {
+        "knowledgeId": "k_david_front_cover",
+        "difficulty": "automatic"
+      }
+    },
+    {
+      "type": "information",
+      "content": "I learned that young women made the best sacrifices for the rites tied to the Black Goat cult, but obtaining those offerings safely was always the most dangerous part of the work.",
+      "metadata": {
+        "knowledgeId": "k_david_sacrifice_logic",
+        "difficulty": "hard"
+      }
+    },
+    {
+      "type": "information",
+      "content": "Since the 2002 ritual changed me, I have learned to stay near the marsh and the treeline, because open streets would expose how far I have drifted from a human life.",
+      "metadata": {
+        "knowledgeId": "k_david_marsh_survival",
+        "difficulty": "hard"
+      }
+    },
+    {
+      "type": "secret",
+      "content": "I knowingly assisted in human sacrifice and profited from cult power after tasting what the Dark Mother's milk could do to a human body.",
+      "metadata": {
+        "knowledgeId": "s_david_cult_profit"
+      }
+    },
+    {
+      "type": "secret",
+      "content": "I know the occult transformation that made me stronger also made me less human, and I can no longer move through ordinary life the way I once did.",
+      "metadata": {
+        "knowledgeId": "s_david_transformed"
+      }
+    },
+    {
+      "type": "belief",
+      "content": "I believe what was gained through ritual is too valuable to surrender, even if it leaves nothing of the respectable man I used to appear to be.",
+      "metadata": {
+        "confidence": 0.85,
+        "reasoningChain": "Youth, strength, and profit were not gifts the normal world would ever have given back to me. Once a man tastes that, retreat becomes weakness."
+      }
+    }
+  ]
+}

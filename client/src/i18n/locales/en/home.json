@@ -1,0 +1,95 @@
+{
+  "menu": {
+    "manageModules": "Manage Modules",
+    "createCharacter": "Create Character",
+    "viewCharacters": "View Characters",
+    "newSimulation": "New Simulation",
+    "continueSimulation": "Continue Simulation"
+  },
+  "characters": {
+    "title": "Your Characters",
+    "count": "{{count}} investigator",
+    "count_plural": "{{count}} investigators",
+    "ready": "ready",
+    "loading": "Loading characters...",
+    "empty": "No characters created yet",
+    "emptyDescription": "Create your first investigator to begin your journey into the world of Call of Cthulhu",
+    "viewSheet": "View Sheet",
+    "unknownOccupation": "Unknown Occupation"
+  },
+  "selector": {
+    "title": "Select Investigator",
+    "processing": "Processing...",
+    "importWait": "Please wait, this may take a few seconds...",
+    "retry": "Retry",
+    "createFirst": "Create First Investigator",
+    "age": "Age:",
+    "createNew": "Create New Character",
+    "done": "Done",
+    "importing": "Importing data...",
+    "startGame": "Start Game with This Character",
+    "loadError": "Failed to load characters",
+    "networkError": "Network error: Unable to connect to server",
+    "moduleLoading": "Loading module...",
+    "importFailed": "Data import failed"
+  },
+  "analytics": {
+    "title": "Analytics Dashboard",
+    "todaySummary": "Today's Summary ({{date}})",
+    "accumulatedSummary": "All-Time Totals",
+    "todayTopUsers": "Today's Top 5 Users (by simulations)",
+    "recent48hSummary": "Recent 48 Hours ({{start}} - {{end}})",
+    "actions": {
+      "refresh": "Refresh",
+      "refreshing": "Refreshing..."
+    },
+    "states": {
+      "loading": "Loading analytics...",
+      "empty": "No analytics data available yet"
+    },
+    "metrics": {
+      "loginUsers": "Login Users",
+      "activeUsers": "Active Users",
+      "newUsers": "New Users",
+      "simulations": "Simulations",
+      "totalSimulations": "Total Simulations",
+      "simulationEvents": "Simulation Events",
+      "accumulatedUsers": "Accumulated Users",
+      "accumulatedSimulations": "Accumulated Simulations",
+      "avgSimsPerUser": "Avg Sims/User",
+      "newMods": "New Mods",
+      "newModsShort": "New Short Mods",
+      "newModsMedium": "New Medium Mods",
+      "newModsLong": "New Long Mods"
+    },
+    "charts": {
+      "userActivity": "User Activity Trends",
+      "simulationActivity": "Simulation Activity",
+      "moduleGeneration": "Module Generations by Length"
+    },
+    "length": {
+      "short": "Short",
+      "medium": "Medium",
+      "long": "Long"
+    },
+    "errors": {
+      "loadFailed": "Failed to load analytics",
+      "refreshFailed": "Failed to refresh analytics"
+    },
+    "tabs": {
+      "usage": "Usage Stats",
+      "visitors": "Visitor Stats"
+    },
+    "visitors": {
+      "todaySummary": "Today's Overview",
+      "totalVisits": "Total Visits",
+      "avgDuration": "Avg Duration",
+      "hourlyChart": "Hourly Visitors",
+      "ipTable": "Visitor Details by IP",
+      "ip": "IP Address",
+      "visitCount": "Visits",
+      "avgDurationCol": "Avg Duration",
+      "noData": "No visitor data yet"
+    }
+  }
+}

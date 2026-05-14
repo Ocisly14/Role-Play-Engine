@@ -17,8 +17,11 @@ export async function authFetch(
   input: RequestInfo | URL,
   init: RequestInit = {}
 ): Promise<Response> {
+  const method = (init.method ?? "GET").toUpperCase();
+  const isReadRequest = method === "GET" || method === "HEAD";
   const response = await fetch(input, {
     ...init,
+    cache: init.cache ?? (isReadRequest ? "no-store" : undefined),
     headers: withAuthHeaders(init.headers),
   });
 

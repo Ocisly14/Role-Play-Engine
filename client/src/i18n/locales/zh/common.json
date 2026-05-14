@@ -1,0 +1,61 @@
+{
+  "button": {
+    "save": "保存",
+    "cancel": "取消",
+    "delete": "删除",
+    "confirm": "确认",
+    "back": "返回",
+    "close": "关闭",
+    "continue": "继续",
+    "retry": "重试",
+    "done": "完成",
+    "edit": "编辑",
+    "create": "创建",
+    "submit": "提交",
+    "next": "下一步",
+    "previous": "上一步",
+    "ok": "确定",
+    "yes": "是",
+    "no": "否"
+  },
+  "error": {
+    "generic": "发生错误",
+    "network": "网络错误,无法连接服务器",
+    "unauthorized": "未授权访问",
+    "notFound": "资源未找到",
+    "serverError": "服务器错误",
+    "invalidInput": "输入无效",
+    "required": "此字段为必填项"
+  },
+  "confirmation": {
+    "delete": "确定要删除吗?",
+    "deleteMessage": "此操作无法撤销。",
+    "unsavedChanges": "您有未保存的更改。确定要离开吗?"
+  },
+  "loading": {
+    "pleaseWait": "请稍候...",
+    "loading": "加载中..."
+  },
+  "status": {
+    "success": "成功",
+    "failed": "失败",
+    "pending": "待处理",
+    "processing": "处理中..."
+  },
+  "validation": {
+    "emailInvalid": "请输入有效的电子邮件地址",
+    "passwordTooShort": "密码至少需要8个字符",
+    "passwordMismatch": "密码不匹配",
+    "required": "此字段为必填项"
+  },
+  "i18nTest": {
+    "title": "I18N测试组件",
+    "currentLanguage": "当前语言:",
+    "i18nLanguage": "i18n语言:",
+    "commonNamespace": "通用命名空间:",
+    "homeNamespace": "主页命名空间:",
+    "gameNamespace": "游戏命名空间:",
+    "successHint": "如果在选择ZH时看到中文，说明i18n工作正常!",
+    "failureHint": "如果看到类似\"button.save\"的英文键名，说明翻译缺失。"
+  }
+}

@@ -1,0 +1,60 @@
+---
+id: submachine_gun
+engine: llm
+title: Submachine Gun
+description: "Ranged attacks with submachine guns — single shots, burst fire, and suppressive automatic fire. Does NOT cover pistols, rifles, shotguns, bows, or any melee attack."
+
+skillCheck:
+  skill: Submachine Gun
+  difficulty: regular
+  type: single
+  failBehavior: abort
+
+stateDomains:
+  character:
+    inject: [actor, targets]
+    fields:
+      actor: [id, name, stats, conditions, inventory]
+      targets: [id, name, stats, conditions]
+  scene:
+    inject: [current]
+    fields: [id, name, description, conditions]
+
+outputSchema:
+  presets:
+    - default
+  use:
+    - character.hp
+    - character.condition
+  requireOnSuccess:
+    - character.hp
+  durationGuidance:
+    default: 1
+    range: "1-5"
+    notes: "single exchange ≈ 1 min; prolonged combat 2-5 min; pursuing a fleeing target longer"
+
+interpreter:
+  examples:
+    - "Squeeze the trigger on my Thompson and let loose a burst at the mob."
+    - "Hose down the corridor with suppressive fire to pin them back."
+    - "Fire a short controlled burst at the cultist rushing toward me."
+    - "Sweep the room with automatic fire as I back toward the exit."
+
+impactHint:
+  default: 4
+  range: "3-5"
+  examples: "short burst=3, sustained fire=4, in crowd=5"
+---
+
+# Submachine Gun Resolution Guidance
+
+## On Success
+- **Regular success**: A controlled burst connects — deal 1d10 damage per bullet that hits. A short burst (3 rounds) may strike the target 1-3 times; roll separately for each round or use the burst-fire rules to determine the number of hits. Total damage can be severe.
+- **Hard success**: A concentrated burst directed onto a single target — all rounds in the burst strike the same location, dealing accumulated 1d10 damage per hit with a strong chance of a major wound or knockdown from the volume of fire.
+- **Extreme success**: A devastating full-auto burst — the target is shredded by multiple rounds, taking maximum damage from each hit. Human-scale targets are effectively neutralized; structural cover may be chewed through as well.
+
+## On Failure
+- The burst goes wide — the actor fails to control the weapon's recoil, the target moves unpredictably, or poor aim scatters the rounds.
+- No hits are scored, and multiple rounds are wasted from the magazine.
+- The noise and muzzle flash make the actor's position immediately obvious to all in the area.
+- A fumble means the weapon jams mid-burst or the magazine is ejected — the actor must spend a full action clearing the jam or reloading before firing again.

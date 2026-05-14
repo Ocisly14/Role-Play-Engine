@@ -18,10 +18,10 @@ function tryLoadImage(src: string): Promise<string> {
  */
 export async function findAvailableImage(
   imageName: string,
-  formats: string[] = ['png', 'jpeg', 'jpg']
+  formats: string[] = ["png", "jpeg", "jpg"]
 ): Promise<string> {
   const basePath = `/asset/${imageName}`;
-  
+
   for (const format of formats) {
     const src = `${basePath}.${format}`;
     try {
@@ -32,7 +32,7 @@ export async function findAvailableImage(
       continue;
     }
   }
-  
+
   // Fallback to jpeg if all formats fail
   return `${basePath}.jpeg`;
 }
@@ -41,6 +41,6 @@ export async function findAvailableImage(
  * Synchronously returns a default image URL (for CSS or immediate use)
  * The actual format detection happens asynchronously
  */
-export function getDefaultImageUrl(imageName: string, format: string = 'png'): string {
+export function getDefaultImageUrl(imageName: string, format = "png"): string {
   return `/asset/${imageName}.${format}`;
 }

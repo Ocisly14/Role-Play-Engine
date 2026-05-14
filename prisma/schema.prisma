@@ -1,0 +1,325 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─── Auth & Users ────────────────────────────────────────────────
+
+model User {
+  id              String    @id @default(uuid()) @db.Uuid
+  email           String    @unique
+  username        String?
+  passwordHash    String    @map("password_hash")
+  isEmailVerified Boolean   @default(false) @map("is_email_verified")
+  isActive        Boolean   @default(true) @map("is_active")
+  role            String    @default("USER")
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
+  lastLoginAt     DateTime? @map("last_login_at")
+
+  refreshTokens      RefreshToken[]
+  emailVerifications EmailVerification[]
+  passwordResets     PasswordReset[]
+  referralCodeUses   ReferralCodeUse[]
+
+  @@map("users")
+}
+
+model RefreshToken {
+  id        String    @id @default(uuid()) @db.Uuid
+  userId    String    @map("user_id") @db.Uuid
+  token     String    @unique
+  expiresAt DateTime  @map("expires_at")
+  revokedAt DateTime? @map("revoked_at")
+  createdAt DateTime  @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("refresh_tokens")
+}
+
+model EmailVerification {
+  id        String   @id @default(uuid()) @db.Uuid
+  userId    String   @map("user_id") @db.Uuid
+  code      String
+  expiresAt DateTime @map("expires_at")
+  verified  Boolean  @default(false)
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("email_verifications")
+}
+
+model PasswordReset {
+  id        String    @id @default(uuid()) @db.Uuid
+  userId    String    @map("user_id") @db.Uuid
+  token     String    @unique
+  expiresAt DateTime  @map("expires_at")
+  used      Boolean   @default(false)
+  usedAt    DateTime? @map("used_at")
+  createdAt DateTime  @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("password_resets")
+}
+
+model ReferralCode {
+  id          String  @id @default(uuid()) @db.Uuid
+  code        String  @unique
+  maxUses     Int?    @map("max_uses")
+  description String?
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  uses ReferralCodeUse[]
+
+  @@map("referral_codes")
+}
+
+model ReferralCodeUse {
+  id             String   @id @default(uuid()) @db.Uuid
+  referralCodeId String   @map("referral_code_id") @db.Uuid
+  userId         String   @map("user_id") @db.Uuid
+  usedAt         DateTime @default(now()) @map("used_at")
+
+  referralCode ReferralCode @relation(fields: [referralCodeId], references: [id], onDelete: Cascade)
+  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("referral_code_uses")
+}
+
+model DisposableEmailDomain {
+  domain String @id
+
+  @@map("disposable_email_domains")
+}
+
+// ─── Core ────────────────────────────────────────────────────────
+
+model Module {
+  moduleId             String          @id @default(dbgenerated("gen_random_uuid()")) @map("module_id") @db.Uuid
+  moduleName           String          @map("module_name")
+  moduleNameNormalized String?         @map("module_name_normalized")
+  ownerEmailId         String          @default("__system__") @map("owner_email_id")
+  status               ModuleStatus    @default(active)
+  createdAt            DateTime        @default(now()) @map("created_at")
+  updatedAt            DateTime        @default(now()) @map("updated_at")
+
+  sessions           Session[]
+  npcMemories        NpcMemory[]
+  moduleNpcs         ModuleNpc[]
+  moduleScenes       ModuleScene[]
+  moduleSetup        ModuleSetup?
+
+  @@unique([ownerEmailId, moduleNameNormalized], name: "uq_modules_owner_name_normalized", map: "uq_modules_owner_name_normalized")
+  @@index([moduleNameNormalized], map: "idx_modules_name_normalized")
+  @@map("modules")
+}
+
+enum ModuleStatus {
+  active
+  archived
+}
+
+model Session {
+  sessionId       String             @id @map("session_id")
+  modName         String?            @map("mod_name")
+  startedAt       DateTime           @default(now()) @map("started_at")
+  lastActivityAt  DateTime           @default(now()) @map("last_activity_at")
+  status          String             @default("active")
+  metadata        Json?
+  createdAt       DateTime           @default(now()) @map("created_at")
+  moduleId        String?            @map("module_id") @db.Uuid
+  emailId         String?            @map("email_id")
+
+  module              Module?              @relation(fields: [moduleId], references: [moduleId])
+  npcShortTermIntents NpcShortTermIntent[]
+  npcMemories        NpcMemory[]
+  simulationEvents   SimulationEvent[]
+  simulationRuntime  SimulationRuntime?
+
+  @@index([status])
+  @@index([moduleId])
+  @@map("sessions")
+}
+
+// ─── Simulation Runtime ──────────────────────────────────────────
+
+model SimulationRuntime {
+  sessionId       String   @id @map("session_id")
+  tick            Int
+  simulationState String   @map("simulation_state")
+  stopReason      String?  @map("stop_reason")
+  language        String
+  moduleName      String?  @map("module_name")
+  config          Json
+  gameState       Json     @map("game_state")
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  session Session @relation(fields: [sessionId], references: [sessionId], onDelete: Cascade)
+
+  @@index([simulationState])
+  @@map("simulation_runtime")
+}
+
+// ─── NPC Planning ────────────────────────────────────────────────
+
+model NpcShortTermIntent {
+  id        String   @id @default(uuid()) @db.Uuid
+  sessionId String   @map("session_id")
+  npcId     String   @map("npc_id")
+  intent    String
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  session Session @relation(fields: [sessionId], references: [sessionId], onDelete: Cascade)
+
+  @@unique([sessionId, npcId])
+  @@index([sessionId])
+  @@map("npc_short_term_intents")
+}
+
+// ─── NPC Memory ──────────────────────────────────────────────────
+
+model NpcMemory {
+  id             String        @id @default(uuid()) @db.Uuid
+  sessionId      String        @map("session_id")
+  moduleId       String        @map("module_id") @db.Uuid
+  npcId          String        @map("npc_id")
+  type           NpcMemoryType
+
+  content        String
+  metadata       Json?
+  tags           String[]
+
+  gameDateTime   String        @map("game_datetime")
+  location       String?
+
+  importance     Float         @default(1.0)
+  baseImportance Float         @default(1.0) @map("base_importance")
+  accessCount    Int           @default(0)   @map("access_count")
+  lastAccessedAt DateTime      @default(now()) @map("last_accessed_at")
+
+  embedding      Bytes?
+
+  createdAt      DateTime      @default(now()) @map("created_at")
+  updatedAt      DateTime      @updatedAt      @map("updated_at")
+
+  session Session @relation(fields: [sessionId], references: [sessionId], onDelete: Cascade)
+  module  Module  @relation(fields: [moduleId], references: [moduleId], onDelete: Cascade)
+
+  @@index([sessionId, npcId])
+  @@index([sessionId, npcId, type])
+  @@index([sessionId, npcId, gameDateTime])
+  @@index([sessionId, createdAt])
+  @@map("npc_memories")
+}
+
+enum NpcMemoryType {
+  event
+  witness
+  information
+  map
+  belief
+  plan
+  secret
+  summary
+  long_term_intent
+}
+
+// ─── Simulation Events ───────────────────────────────────────────
+
+model SimulationEvent {
+  id          String   @id @default(uuid())
+  sessionId   String   @map("session_id")
+  tick        Int
+  gameDateTime String   @map("game_datetime")
+  type        String
+  actorNpcId  String   @map("actor_npc_id")
+  targetNpcId String?  @map("target_npc_id")
+  location    String
+  data        Json
+  timestamp   DateTime @default(now())
+
+  session Session @relation(fields: [sessionId], references: [sessionId], onDelete: Cascade)
+
+  @@index([sessionId])
+  @@index([sessionId, type])
+  @@index([sessionId, gameDateTime])
+  @@map("simulation_events")
+}
+
+// ─── Module Data (JSON blob storage) ─────────────────────────────
+
+model ModuleNpc {
+  moduleId String @map("module_id") @db.Uuid
+  npcId    String @map("npc_id")
+  data     Json
+
+  module Module @relation(fields: [moduleId], references: [moduleId], onDelete: Cascade)
+
+  @@id([moduleId, npcId])
+  @@map("module_npcs")
+}
+
+model ModuleScene {
+  moduleId String @map("module_id") @db.Uuid
+  entryId  String @map("entry_id")
+  data     Json
+
+  module Module @relation(fields: [moduleId], references: [moduleId], onDelete: Cascade)
+
+  @@id([moduleId, entryId])
+  @@map("module_scenes")
+}
+
+model ModuleSetup {
+  moduleId String @id @map("module_id") @db.Uuid
+  data     Json
+
+  module Module @relation(fields: [moduleId], references: [moduleId], onDelete: Cascade)
+
+  @@map("module_setups")
+}
+
+// ─── Visitor Analytics ───────────────────────────────────────────
+
+model VisitorSession {
+  id              String   @id @default(uuid())
+  sessionId       String   @unique @map("session_id")
+  ip              String
+  userAgent       String?  @map("user_agent")
+  startedAt       DateTime @default(now()) @map("started_at")
+  lastHeartbeatAt DateTime @default(now()) @map("last_heartbeat_at")
+
+  @@index([ip])
+  @@index([startedAt])
+  @@map("visitor_sessions")
+}
+
+// ─── Token Usage Tracking ─────────────────────────────────────────
+
+model UserTokenUsage {
+  id           String   @id @default(uuid())
+  emailId      String   @map("email_id")
+  provider     String
+  modelName    String   @map("model_name")
+  modelClass   String   @map("model_class")
+  operation    String
+  inputTokens  Int      @map("input_tokens")
+  outputTokens Int      @map("output_tokens")
+  totalTokens  Int      @map("total_tokens")
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  @@index([emailId])
+  @@map("user_token_usage")
+}

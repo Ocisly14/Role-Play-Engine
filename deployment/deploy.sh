@@ -168,8 +168,11 @@ ssh -i "$DEPLOY_KEY" "${DEPLOY_USER}@${DEPLOY_HOST}" << EOF
     echo "Installing production dependencies..."
     NODE_ENV=production pnpm install --prod
 
-    echo "Rebuilding native modules..."
-    pnpm rebuild better-sqlite3
+    echo "Generating Prisma client..."
+    pnpm prisma:generate
+
+    echo "Applying Prisma migrations..."
+    pnpm prisma:migrate:deploy
 
     echo "Reloading application with PM2..."
     pm2 reload ecosystem.config.cjs --update-env || pm2 start ecosystem.config.cjs

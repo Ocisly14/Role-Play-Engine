@@ -10,7 +10,8 @@
   --header-bg: #d4c4b0;
   --title: #3d2f1f;
   --mono: "Courier New", "Courier", monospace;
-  --serif: "Goudy Old Style", "Garamond", "Palatino Linotype", "Book Antiqua", "Times New Roman", serif;
+  --serif: "Goudy Old Style", "Garamond", "Palatino Linotype", "Book Antiqua",
+    "Times New Roman", serif;
   /* Tailwind primary colors for compatibility */
   --primary: 240 5.9% 10%;
   --primary-foreground: 0 0% 98%;
@@ -37,13 +38,13 @@ body {
 
 /* Background layer - current (bottom layer) */
 body::before {
-  content: '';
+  content: "";
   position: fixed;
   top: 0;
   left: 0;
   width: 100%;
   height: 100%;
-  background-image: var(--background-image, url('/asset/background.jpeg'));
+  background-image: var(--background-image, url("/asset/background.jpeg"));
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
@@ -54,7 +55,7 @@ body::before {
 
 /* Background layer - new (top layer) */
 body::after {
-  content: '';
+  content: "";
   position: fixed;
   top: 0;
   left: 0;
@@ -135,10 +136,8 @@ body.background-transitioning::after {
   border: 4px solid var(--border);
   border-radius: 12px;
   padding: 40px 36px;
-  box-shadow:
-    0 0 0 2px var(--accent),
-    0 20px 60px rgba(0, 0, 0, 0.4),
-    inset 0 1px 0 rgba(255, 255, 255, 0.5);
+  box-shadow: 0 0 0 2px var(--accent), 0 20px 60px rgba(0, 0, 0, 0.4), inset 0
+    1px 0 rgba(255, 255, 255, 0.5);
   text-align: center;
   animation: authContainerSlideIn 0.5s ease-out;
 }
@@ -155,7 +154,7 @@ body.background-transitioning::after {
 }
 
 .auth-container::before {
-  content: '';
+  content: "";
   position: absolute;
   top: 12px;
   left: 12px;
@@ -179,7 +178,7 @@ body.background-transitioning::after {
 }
 
 .auth-container h2::after {
-  content: '';
+  content: "";
   position: absolute;
   bottom: 0;
   left: 50%;
@@ -228,9 +227,8 @@ body.background-transitioning::after {
 .auth-container .form-group input:focus {
   outline: none;
   border-color: var(--accent);
-  box-shadow:
-    0 0 0 4px rgba(139, 115, 85, 0.2),
-    inset 0 2px 4px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 0 0 4px rgba(139, 115, 85, 0.2), inset 0 2px 4px
+    rgba(0, 0, 0, 0.05);
   transform: translateY(-1px);
 }
 
@@ -284,21 +282,25 @@ body.background-transitioning::after {
   color: var(--paper);
   cursor: pointer;
   transition: all 0.3s ease;
-  box-shadow:
-    0 4px 12px rgba(0, 0, 0, 0.3),
-    inset 0 1px 0 rgba(255, 255, 255, 0.3);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3), inset 0 1px 0
+    rgba(255, 255, 255, 0.3);
   position: relative;
   overflow: hidden;
 }
 
 .auth-container button[type="submit"]::before {
-  content: '';
+  content: "";
   position: absolute;
   top: 0;
   left: -100%;
   width: 100%;
   height: 100%;
-  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.3),
+    transparent
+  );
   transition: left 0.5s ease;
 }
 
@@ -309,17 +311,14 @@ body.background-transitioning::after {
 .auth-container button[type="submit"]:hover:not(:disabled) {
   background: linear-gradient(135deg, #6d5840 0%, #5a4633 100%);
   transform: translateY(-2px);
-  box-shadow:
-    0 6px 20px rgba(0, 0, 0, 0.4),
-    0 0 0 3px var(--accent),
-    inset 0 1px 0 rgba(255, 255, 255, 0.3);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4), 0 0 0 3px var(--accent), inset 0
+    1px 0 rgba(255, 255, 255, 0.3);
 }
 
 .auth-container button[type="submit"]:active:not(:disabled) {
   transform: translateY(0);
-  box-shadow:
-    0 2px 8px rgba(0, 0, 0, 0.3),
-    inset 0 1px 0 rgba(255, 255, 255, 0.3);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3), inset 0 1px 0
+    rgba(255, 255, 255, 0.3);
 }
 
 .auth-container button[type="submit"]:disabled {
@@ -344,9 +343,16 @@ body.background-transitioning::after {
 }
 
 @keyframes errorShake {
-  0%, 100% { transform: translateX(0); }
-  25% { transform: translateX(-10px); }
-  75% { transform: translateX(10px); }
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  25% {
+    transform: translateX(-10px);
+  }
+  75% {
+    transform: translateX(10px);
+  }
 }
 
 .auth-container .form-links {
@@ -405,7 +411,7 @@ body.background-transitioning::after {
 }
 
 .success-message-container h2::before {
-  content: '✓ ';
+  content: "✓ ";
   font-size: 2.5rem;
   display: block;
   margin-bottom: 16px;
@@ -442,9 +448,7 @@ body.background-transitioning::after {
   border: 3px solid var(--border);
   background: var(--paper);
   padding: 24px;
-  box-shadow: 
-    0 0 0 1px var(--accent),
-    0 8px 20px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 0 0 1px var(--accent), 0 8px 20px rgba(0, 0, 0, 0.3);
 }
 
 .eyebrow {
@@ -495,19 +499,23 @@ body.background-transitioning::after {
   border-radius: 8px;
   position: relative;
   overflow: hidden;
-  box-shadow:
-    0 4px 12px rgba(0, 0, 0, 0.3),
-    inset 0 1px 0 rgba(255, 255, 255, 0.3);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3), inset 0 1px 0
+    rgba(255, 255, 255, 0.3);
 }
 
 .home-actions button::before {
-  content: '';
+  content: "";
   position: absolute;
   top: 0;
   left: -100%;
   width: 100%;
   height: 100%;
-  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.2),
+    transparent
+  );
   transition: left 0.5s ease;
 }
 
@@ -523,7 +531,8 @@ body.background-transitioning::after {
   color: var(--title);
   font-weight: 700;
   letter-spacing: 1px;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px
+    rgba(0, 0, 0, 0.06);
   border-radius: 0.75rem;
   transition: all 0.2s ease-in-out;
 }
@@ -532,7 +541,8 @@ body.background-transitioning::after {
   background: rgba(255, 255, 255, 0.7);
   border-color: rgba(203, 213, 225, 1);
   transform: translateY(-2px);
-  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px
+    rgba(0, 0, 0, 0.05);
 }
 
 .home-actions button.secondary {
@@ -543,7 +553,8 @@ body.background-transitioning::after {
   color: var(--title);
   font-weight: 700;
   letter-spacing: 1px;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px
+    rgba(0, 0, 0, 0.06);
   border-radius: 0.75rem;
   transition: all 0.2s ease-in-out;
 }
@@ -552,7 +563,8 @@ body.background-transitioning::after {
   background: rgba(255, 255, 255, 0.7);
   border-color: rgba(203, 213, 225, 1);
   transform: translateY(-2px);
-  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px
+    rgba(0, 0, 0, 0.05);
 }
 
 .home-panels {
@@ -576,7 +588,8 @@ body.background-transitioning::after {
   letter-spacing: 1px;
 }
 
-button, .primary {
+button,
+.primary {
   backdrop-filter: blur(4px);
   -webkit-backdrop-filter: blur(4px);
   background: rgba(255, 255, 255, 0.5);
@@ -590,20 +603,25 @@ button, .primary {
   color: var(--title);
   text-transform: uppercase;
   font-size: 0.9rem;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px
+    rgba(0, 0, 0, 0.06);
   transition: all 0.2s ease-in-out;
 }
 
-button:hover, .primary:hover {
+button:hover,
+.primary:hover {
   background: rgba(255, 255, 255, 0.7);
   border-color: rgba(203, 213, 225, 1);
   transform: translateY(-2px);
-  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px
+    rgba(0, 0, 0, 0.05);
 }
 
-button:active, .primary:active {
+button:active,
+.primary:active {
   transform: translateY(0);
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px
+    rgba(0, 0, 0, 0.06);
 }
 
 button:disabled {
@@ -621,15 +639,13 @@ button:disabled {
   background: var(--paper);
   padding: 2rem;
   border: 8px solid var(--border);
-  box-shadow: 
-    0 0 0 2px var(--accent),
-    0 0 0 4px var(--border),
-    0 8px 30px rgba(0, 0, 0, 0.4);
+  box-shadow: 0 0 0 2px var(--accent), 0 0 0 4px var(--border), 0 8px 30px
+    rgba(0, 0, 0, 0.4);
   position: relative;
 }
 
 .sheet::before {
-  content: '';
+  content: "";
   position: absolute;
   top: 16px;
   left: 16px;
@@ -664,6 +680,48 @@ h1 {
   border-left: 4px solid var(--accent);
 }
 
+.attributes-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+
+.attributes-random-btn {
+  padding: 8px 16px;
+  background-color: #8b7355;
+  color: #f5f1e8;
+  border: 1px solid #705c45;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.attributes-random-btn:hover {
+  background-color: #7b654b;
+}
+
+.attributes-random-btn:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.mobile-attr-label {
+  display: none;
+  text-align: center;
+}
+
+.mobile-derived-label {
+  display: none;
+  text-align: center;
+}
+
+.mobile-weapon-label {
+  display: none;
+  text-align: center;
+}
+
 table {
   width: 100%;
   border-collapse: collapse;
@@ -688,6 +746,33 @@ th {
   text-transform: uppercase;
   font-size: 0.75rem;
   letter-spacing: 0.5px;
+}
+
+.sheet table thead tr:first-child th {
+  text-align: center;
+}
+
+.sheet table td {
+  text-align: center;
+}
+
+.sheet table td input,
+.sheet table td select {
+  text-align: center;
+}
+
+.sheet table td textarea {
+  text-align: left;
+}
+
+.attributes-main-table td,
+.attributes-derived-table td {
+  text-align: center;
+}
+
+.attributes-main-table input,
+.attributes-derived-table input {
+  text-align: center;
 }
 
 input,
@@ -735,6 +820,13 @@ textarea {
   margin-bottom: 12px;
 }
 
+.skills-two-columns {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 470px));
+  justify-content: center;
+  gap: 16px;
+}
+
 @media (max-width: 1200px) {
   .skills-three-columns {
     grid-template-columns: repeat(2, 1fr);
@@ -742,8 +834,197 @@ textarea {
 }
 
 @media (max-width: 768px) {
+  .skills-two-columns {
+    grid-template-columns: 1fr;
+  }
+
+  .attributes-header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .attributes-random-btn {
+    width: 100%;
+  }
+
+  .attributes-main-table {
+    border: none;
+    background: transparent;
+  }
+
+  .attributes-main-table thead {
+    display: none;
+  }
+
+  .attributes-main-table tbody {
+    display: block;
+  }
+
+  .attributes-main-table tbody tr {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 6px;
+  }
+
+  .attributes-main-table tbody td {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    border: 1px solid var(--accent);
+    background: #fff;
+    padding: 4px;
+  }
+
+  .attributes-main-table .mobile-attr-label {
+    display: block;
+    color: var(--title);
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.2px;
+    text-transform: uppercase;
+  }
+
+  .attributes-main-table input {
+    padding: 2px 4px;
+    font-size: 0.82rem;
+    line-height: 1.1;
+  }
+
+  .attributes-derived-table {
+    border: none;
+    background: transparent;
+  }
+
+  .attributes-derived-table thead {
+    display: none;
+  }
+
+  .attributes-derived-table tbody {
+    display: block;
+  }
+
+  .attributes-derived-table tbody tr {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 6px;
+  }
+
+  .attributes-derived-table tbody td {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    border: 1px solid var(--accent);
+    background: #fff;
+    padding: 4px;
+  }
+
+  .attributes-derived-table .mobile-derived-label {
+    display: block;
+    color: var(--title);
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.2px;
+    text-transform: uppercase;
+  }
+
+  .attributes-derived-table input {
+    padding: 2px 4px;
+    font-size: 0.82rem;
+    line-height: 1.1;
+  }
+
   .skills-three-columns {
     grid-template-columns: 1fr;
+  }
+
+  .weapons-table thead {
+    display: none;
+  }
+
+  .weapons-table tbody {
+    display: block;
+  }
+
+  .weapons-table .weapon-row {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 6px;
+    margin-bottom: 8px;
+    border-bottom: 1px dashed var(--accent);
+    padding-bottom: 8px;
+  }
+
+  .weapons-table .weapon-row td {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    border: 1px solid var(--accent);
+    background: #fff;
+    padding: 4px;
+  }
+
+  .weapons-table .mobile-weapon-label {
+    display: block;
+    color: var(--title);
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.2px;
+    text-transform: uppercase;
+  }
+
+  .weapons-table .weapon-row input,
+  .weapons-table .weapon-row select {
+    padding: 2px 4px;
+    font-size: 0.82rem;
+    line-height: 1.1;
+  }
+
+  .skill-category {
+    overflow-x: hidden;
+  }
+
+  .skills-table {
+    min-width: 0;
+    width: 100%;
+    font-size: 0.74rem;
+    table-layout: fixed;
+  }
+
+  .skills-table th,
+  .skills-table td {
+    padding: 3px 4px;
+    font-size: 0.72rem;
+  }
+
+  .skills-table th:nth-child(1),
+  .skills-table td:nth-child(1) {
+    width: 40%;
+  }
+
+  .skills-table th:nth-child(2),
+  .skills-table td:nth-child(2),
+  .skills-table th:nth-child(3),
+  .skills-table td:nth-child(3),
+  .skills-table th:nth-child(4),
+  .skills-table td:nth-child(4) {
+    width: 20%;
+  }
+
+  .skill-name-cell {
+    line-height: 1.1;
+  }
+
+  .skill-name-cell span {
+    word-break: break-word;
+  }
+
+  .skill-base {
+    font-size: 0.64rem;
+  }
+
+  .skill-value-cell input {
+    padding: 2px 0;
+    font-size: 0.74rem;
   }
 }
 
@@ -751,7 +1032,8 @@ textarea {
   background: white;
   border: 2px solid var(--border);
   border-radius: 4px;
-  overflow: hidden;
+  overflow-x: auto;
+  overflow-y: hidden;
 }
 
 .skill-category-title {
@@ -771,12 +1053,15 @@ textarea {
   font-size: 0.85rem;
   margin-bottom: 0;
   border: none;
+  table-layout: fixed;
+  min-width: 460px;
 }
 
 .skills-table td {
   padding: 4px 8px;
   border: none;
   border-bottom: 1px solid #eee;
+  text-align: center;
 }
 
 .skills-table tr:last-child td {
@@ -784,11 +1069,28 @@ textarea {
 }
 
 .skill-name-cell {
-  width: 70%;
+  width: auto;
+  min-width: 0;
+  text-align: center;
 }
 
 .skill-value-cell {
-  width: 30%;
+  width: auto;
+}
+
+.skills-table .skill-col-value {
+  width: 104px;
+  min-width: 104px;
+  white-space: nowrap;
+}
+
+.skills-table .skill-col-total {
+  width: 88px;
+  min-width: 88px;
+  white-space: nowrap;
+  text-align: center;
+  font-weight: 700;
+  background-color: #f0f0f0;
 }
 
 .skill-label {
@@ -799,6 +1101,7 @@ textarea {
 }
 
 .skill-base {
+  display: block;
   color: #888;
   font-size: 0.75rem;
 }
@@ -807,6 +1110,67 @@ textarea {
   width: 100%;
   text-align: center;
   font-weight: 600;
+}
+
+@media (max-width: 768px) {
+  .skills-three-columns {
+    grid-template-columns: 1fr;
+  }
+
+  .skill-category {
+    overflow-x: hidden;
+  }
+
+  .skills-table {
+    min-width: 0;
+    width: 100%;
+    font-size: 0.74rem;
+    table-layout: fixed;
+  }
+
+  .skills-table th,
+  .skills-table td {
+    padding: 3px 4px;
+    font-size: 0.72rem;
+  }
+
+  .skills-table th:nth-child(1),
+  .skills-table td:nth-child(1) {
+    width: 40%;
+  }
+
+  .skills-table th:nth-child(2),
+  .skills-table td:nth-child(2),
+  .skills-table th:nth-child(3),
+  .skills-table td:nth-child(3),
+  .skills-table th:nth-child(4),
+  .skills-table td:nth-child(4) {
+    width: 20%;
+  }
+
+  .skills-table .skill-col-value,
+  .skills-table .skill-col-total {
+    width: auto;
+    min-width: 0;
+    white-space: normal;
+  }
+
+  .skill-name-cell {
+    line-height: 1.1;
+  }
+
+  .skill-name-cell span {
+    word-break: break-word;
+  }
+
+  .skill-base {
+    font-size: 0.64rem;
+  }
+
+  .skill-value-cell input {
+    padding: 2px 0;
+    font-size: 0.74rem;
+  }
 }
 
 /* ──────────────────────────────────────
@@ -844,7 +1208,8 @@ textarea {
   font-family: var(--serif);
   color: var(--title);
   font-size: 0.9rem;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px
+    rgba(0, 0, 0, 0.06);
   transition: all 0.2s ease-in-out;
 }
 
@@ -852,12 +1217,14 @@ textarea {
   background: rgba(255, 255, 255, 0.7);
   border-color: rgba(203, 213, 225, 1);
   transform: translateY(-2px);
-  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px
+    rgba(0, 0, 0, 0.05);
 }
 
 .pill-btn:active {
   transform: translateY(0);
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px
+    rgba(0, 0, 0, 0.06);
 }
 
 .pill-btn:disabled {
@@ -881,7 +1248,7 @@ textarea {
 
 /* Decorative corners */
 .sheet::after {
-  content: '';
+  content: "";
   position: absolute;
   top: 8px;
   left: 8px;
@@ -909,9 +1276,10 @@ textarea {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 16px 24px;
-  /* background, border, box-shadow 已由 Tailwind 类名处理 */
+  padding: 12px 16px;
+  /* background, border, box-shadow handled by Tailwind classes */
   margin-bottom: 16px;
+  position: relative;
 }
 
 .game-header h1 {
@@ -919,12 +1287,26 @@ textarea {
   color: var(--title);
   margin: 0;
   font-family: var(--serif);
+  font-weight: 700;
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  max-width: 60%;
+  text-align: center;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .back-button {
-  padding: 10px 20px;
-  /* background, border, border-radius, box-shadow 已由 Tailwind 类名处理 */
+  /* background, border, border-radius, box-shadow handled by Tailwind classes */
   color: var(--title);
+  font-size: 1.2rem;
+  font-weight: 700;
+  min-width: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   cursor: pointer;
   font-size: 0.95rem;
   font-family: var(--serif);
@@ -959,7 +1341,7 @@ textarea {
   display: flex;
   flex-direction: column;
   flex: 2;
-  /* background, border, box-shadow 已由 Tailwind 类名处理 */
+  /* background, border, box-shadow handled by Tailwind classes */
   overflow: hidden;
 }
 
@@ -974,23 +1356,36 @@ textarea {
   font-size: 0.85rem;
 }
 
-.session-metadata, .character-info {
+.session-metadata,
+.character-info {
   display: flex;
   gap: 8px;
   align-items: center;
-  /* background, border, border-radius, box-shadow 已由 Tailwind 类名处理 */
+  /* background, border, border-radius, box-shadow handled by Tailwind classes */
 }
 
-.session-label, .character-label {
+.session-label,
+.character-label {
   color: #666;
   font-weight: bold;
 }
 
-.session-value, .character-value {
+.session-value,
+.character-value {
   color: var(--title);
-  /* background, border, border-radius 已由父元素的 Tailwind 类名处理 */
+  /* background, border, border-radius handled by parent element's Tailwind classes */
   padding: 0;
   font-weight: 600;
+}
+
+/* Save button - show both icon and text by default */
+.save-btn-icon {
+  display: inline;
+  margin-right: 4px;
+}
+
+.save-btn-text {
+  display: inline;
 }
 
 .view-character-btn {
@@ -1103,7 +1498,7 @@ textarea {
   white-space: pre-wrap;
   word-wrap: break-word;
   font-family: var(--serif);
-  /* padding, backdrop-filter, background, border, border-radius, box-shadow 已由 Tailwind 类名处理 */
+  /* padding, backdrop-filter, background, border, border-radius, box-shadow handled by Tailwind classes */
 }
 
 /* Markdown content styling */
@@ -1114,7 +1509,7 @@ textarea {
 }
 
 .markdown-content p {
-  margin: 0 0 0.5em 0;
+  margin: 0 0 0.2em 0;
 }
 
 .markdown-content p:last-child {
@@ -1262,9 +1657,17 @@ textarea {
 }
 
 @keyframes typingBlink {
-  0%, 20% { opacity: 0.3; }
-  40% { opacity: 1; }
-  60%, 100% { opacity: 0.3; }
+  0%,
+  20% {
+    opacity: 0.3;
+  }
+  40% {
+    opacity: 1;
+  }
+  60%,
+  100% {
+    opacity: 0.3;
+  }
 }
 
 /* Error Message */
@@ -1278,14 +1681,9 @@ textarea {
   font-family: var(--serif);
 }
 
-/* Input Area */
-.chat-input-area {
-  /* 已改为 fixed 定位的独立圆角矩形，样式由 Tailwind 类名处理 */
-}
-
 .action-input {
   padding: 12px 16px;
-  /* background, border, border-radius 已由 Tailwind 类名处理 */
+  /* background, border, border-radius handled by Tailwind classes */
   font-family: var(--serif);
   font-size: 0.875rem;
   line-height: 1.5;
@@ -1314,7 +1712,7 @@ textarea {
 }
 
 .submit-action-btn {
-  /* padding, background, border, border-radius, box-shadow 已由 Tailwind 类名处理 */
+  /* padding, background, border, border-radius, box-shadow handled by Tailwind classes */
   color: var(--title);
   font-family: var(--serif);
   font-size: 1rem;
@@ -1349,7 +1747,7 @@ textarea {
   display: flex;
   flex-direction: column;
   flex: 1;
-  /* background, border, box-shadow 已由 Tailwind 类名处理 */
+  /* background, border, box-shadow handled by Tailwind classes */
   overflow: hidden;
   min-width: 320px;
   max-width: 400px;
@@ -1360,13 +1758,13 @@ textarea {
   display: flex;
   gap: 8px;
   padding: 12px;
-  /* 移除背景和边框，让每个 tab 独立 */
+  /* Removed background and border to make each tab independent */
 }
 
 .sidebar-tab {
   flex: 1;
   padding: 8px 10px;
-  /* background, border, border-radius, box-shadow 已由 Tailwind 类名处理 */
+  /* background, border, border-radius, box-shadow handled by Tailwind classes */
   font-family: var(--serif);
   font-size: 0.8rem;
   font-weight: bold;
@@ -1535,6 +1933,47 @@ textarea {
   margin-bottom: 16px;
 }
 
+.memo-filters {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.memo-filter,
+.memo-search {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.memo-filter-label {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #6b7280;
+  font-weight: 600;
+}
+
+.memo-filter-select,
+.memo-filter-input {
+  width: 100%;
+  border: 1px solid rgba(226, 232, 240, 0.8);
+  border-radius: 0.5rem;
+  padding: 6px 10px;
+  font-family: var(--serif);
+  font-size: 0.85rem;
+  background: rgba(255, 255, 255, 0.7);
+  color: var(--ink);
+}
+
+.memo-filter-select:focus,
+.memo-filter-input:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px rgba(191, 149, 94, 0.2);
+}
+
 .memo-input {
   width: 100%;
   border: 1px solid rgba(226, 232, 240, 0.8);
@@ -1690,8 +2129,573 @@ textarea {
   text-align: right;
 }
 
-/* Responsive adjustments for smaller screens */
-@media (max-width: 1200px) {
+/* ──────────────────────────────────────
+   Mobile Sidebar Drawer
+────────────────────────────────────── */
+
+/* Backdrop Overlay */
+.sidebar-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  z-index: 999;
+  animation: backdropFadeIn 0.3s ease;
+}
+
+@keyframes backdropFadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* Toggle Button */
+.sidebar-toggle-btn {
+  backdrop-filter: blur(4px);
+  background: rgba(255, 255, 255, 0.5);
+  border: 1px solid rgba(226, 232, 240, 1);
+  border-radius: 0.75rem;
+  padding: 8px 12px;
+  cursor: pointer;
+  transition: all 0.2s;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--title);
+  font-family: var(--serif);
+}
+
+.sidebar-toggle-btn:hover {
+  background: rgba(255, 255, 255, 0.7);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+.sidebar-toggle-btn:active {
+  transform: translateY(0);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+/* Hamburger icon */
+.sidebar-toggle-icon {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  width: 20px;
+}
+
+.sidebar-toggle-icon span {
+  display: block;
+  height: 2px;
+  background: var(--title);
+  border-radius: 2px;
+  transition: all 0.3s;
+}
+
+/* Mobile-specific styles */
+@media (max-width: 768px) {
+  /* Keep flex-row for drawer overlay */
+  .game-main-layout {
+    flex-direction: row;
+    position: relative;
+  }
+
+  .game-chat-container {
+    flex: 1;
+    width: 100%;
+  }
+
+  /* Drawer positioning */
+  .game-sidebar {
+    position: fixed;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    width: 85vw;
+    max-width: 400px;
+    min-width: 0;
+    z-index: 1000;
+    transform: translateX(100%);
+    transition: transform 0.3s ease-in-out;
+    box-shadow: -4px 0 12px rgba(0, 0, 0, 0.3);
+    background: var(--paper);
+  }
+
+  .game-sidebar.sidebar-drawer-open {
+    transform: translateX(0);
+  }
+
+  .game-sidebar.sidebar-drawer-closed {
+    transform: translateX(100%);
+  }
+
+  /* Close button (mobile only) */
+  .sidebar-close-btn {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    width: 36px;
+    height: 36px;
+    backdrop-filter: blur(4px);
+    background: rgba(255, 255, 255, 0.5);
+    border: 1px solid rgba(226, 232, 240, 0.8);
+    border-radius: 0.75rem;
+    font-size: 24px;
+    line-height: 1;
+    color: var(--title);
+    cursor: pointer;
+    z-index: 10;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+  }
+
+  .sidebar-close-btn:hover {
+    background: rgba(255, 255, 255, 0.7);
+    transform: scale(1.05);
+  }
+
+  /* Compact SessionInfoBar on mobile */
+  .session-info-bar {
+    padding: 8px;
+    gap: 6px;
+    font-size: 0.75rem;
+  }
+
+  /* Hide "Playing as" label on mobile */
+  .character-label {
+    display: none;
+  }
+
+  .character-info {
+    gap: 0;
+    padding: 6px 10px !important;
+    height: auto !important;
+    min-height: 32px;
+  }
+
+  .character-value {
+    font-size: 0.8rem;
+  }
+
+  /* Save button - icon only on mobile */
+  .save-checkpoint-btn {
+    padding: 6px 10px !important;
+    height: auto !important;
+    min-height: 32px;
+    min-width: 32px;
+  }
+
+  .save-btn-text {
+    display: none;
+  }
+
+  .save-btn-icon {
+    display: inline-block;
+    font-size: 1rem;
+  }
+
+  /* Hide save message on mobile */
+  .save-message {
+    display: none !important;
+  }
+
+  /* Compact game header on mobile */
+  .game-header {
+    padding: 10px 12px !important;
+    margin-bottom: 10px;
+    gap: 8px;
+  }
+
+  .game-header h1 {
+    font-size: 1rem !important;
+    line-height: 1.2;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    flex: 1;
+    min-width: 0;
+  }
+
+  /* Compact buttons on mobile */
+  .back-button {
+    padding: 6px 10px !important;
+    font-size: 0.8rem;
+    white-space: nowrap;
+  }
+
+  .sidebar-toggle-btn {
+    padding: 6px 10px !important;
+    font-size: 0.8rem;
+  }
+
+  .sidebar-toggle-btn span:last-child {
+    display: none;
+  }
+
+  .sidebar-toggle-icon {
+    width: 18px;
+    gap: 2px;
+  }
+
+  /* Compact game container on mobile */
+  .game-container {
+    padding: 10px;
+  }
+
+  /* Hide user menu on mobile game page */
+  .hide-user-menu-mobile {
+    display: none;
+  }
+
+  /* Full width messages on mobile */
+  .chat-message.keeper,
+  .chat-message.character {
+    max-width: 100%;
+    margin-left: 0;
+    margin-right: 0;
+  }
+
+  /* Reduce message padding on mobile */
+  .message-text {
+    padding: 12px 14px !important;
+    font-size: 0.9rem;
+  }
+
+  .message-meta {
+    font-size: 0.75rem;
+  }
+
+  .sender-name {
+    font-size: 0.8rem;
+  }
+
+  .message-timestamp {
+    font-size: 0.7rem;
+  }
+}
+
+/* ──────────────────────────────────────
+   Simulation Page — Full-viewport game
+────────────────────────────────────── */
+.sim-page {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  z-index: 0;
+}
+
+.sim-canvas-layer {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 0;
+}
+
+.sim-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(4px);
+}
+
+.sim-header {
+  position: absolute;
+  top: 16px;
+  left: 16px;
+  right: 16px;
+  z-index: 10;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 16px;
+  min-height: 58px;
+  box-sizing: border-box;
+}
+
+.sim-header-center {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  white-space: nowrap;
+}
+
+.sim-header h1 {
+  font-size: 1.25rem;
+  color: var(--title);
+  margin: 0;
+  font-family: var(--serif);
+  font-weight: 700;
+}
+
+.sim-header-info {
+  font-size: 1.25rem;
+  font-family: var(--serif);
+  font-weight: 500;
+}
+
+.sim-header-separator {
+  font-size: 1.25rem;
+  color: var(--accent);
+  font-weight: 300;
+}
+
+.sim-header-spacer {
+  display: block;
+  flex: 0 0 auto;
+}
+
+.sim-header-spacer--back {
+  width: 42px;
+  min-width: 42px;
+  height: 40px;
+}
+
+.sim-header-spacer--menu {
+  width: 86px;
+  min-width: 86px;
+  height: 40px;
+}
+
+/* Sidebar — floating glass panel */
+.sim-sidebar {
+  position: fixed;
+  top: 120px;
+  right: 16px;
+  bottom: 40px;
+  width: 340px;
+  z-index: 20;
+  overflow-y: auto;
+  transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1), right 0.35s
+    cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.sim-sidebar.sim-sidebar-open {
+  transform: translateX(0);
+}
+
+.sim-sidebar.sim-sidebar-closed {
+  transform: translateX(calc(100% + 32px));
+}
+
+.sim-sidebar-close {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: 32px;
+  height: 32px;
+  backdrop-filter: blur(4px);
+  background: rgba(255, 255, 255, 0.5);
+  border: 1px solid rgba(226, 232, 240, 0.8);
+  border-radius: 0.5rem;
+  font-size: 20px;
+  line-height: 1;
+  color: var(--title);
+  cursor: pointer;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+}
+
+.sim-sidebar-close:hover {
+  background: rgba(255, 255, 255, 0.7);
+  transform: scale(1.05);
+}
+
+.sim-sidebar-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 15;
+}
+
+.sim-popup-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.7);
+  z-index: 2;
+}
+
+/* When popup is open, define shared layout vars so popup+sidebar center as a group */
+.sim-page--has-popup {
+  --popup-gap: 20px;
+  --sidebar-w: 340px;
+  --sidebar-total: calc(var(--popup-gap) + var(--sidebar-w)); /* 360px */
+  --popup-max-w: 1100px;
+  --group-max-w: calc(var(--popup-max-w) + var(--sidebar-total)); /* 1460px */
+  --group-w: min(calc(100vw - 64px), var(--group-max-w));
+  --popup-w: calc(var(--group-w) - var(--sidebar-total));
+  --side-margin: max(16px, calc((100vw - var(--group-w)) / 2));
+}
+
+.sim-page--has-popup .sim-sidebar.sim-sidebar-open {
+  right: var(--side-margin);
+}
+
+/* Scene image popup — gamechat-style glass panel */
+.sim-scene-popup {
+  position: fixed;
+  top: 120px;
+  bottom: 40px;
+  z-index: 30;
+  /* Explicit left+width centering (no margin:auto) so transitions always work */
+  --popup-solo-w: min(80vw, 1100px);
+  width: var(--popup-solo-w);
+  left: calc((100vw - var(--popup-solo-w)) / 2);
+  animation: simPopupIn 0.25s ease-out;
+  transition: left 0.35s cubic-bezier(0.4, 0, 0.2, 1), width 0.35s
+    cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.sim-scene-popup.sim-scene-popup-shifted {
+  left: var(--side-margin);
+  width: var(--popup-w);
+}
+
+.sim-scene-popup-content {
+  display: flex;
+  flex-direction: column;
+  max-height: 100%;
+}
+
+.sim-scene-popup-content img {
+  max-height: 100%;
+}
+
+/* Two-column body inside scene popup */
+.sim-scene-popup-body {
+  display: flex;
+  flex-direction: row;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.sim-scene-popup-info {
+  width: 280px;
+  min-width: 220px;
+  max-width: 320px;
+  border-right: 1px solid rgba(226, 232, 240, 0.6);
+  overflow-y: auto;
+  flex-shrink: 0;
+}
+
+.sim-scene-popup-image {
+  position: relative;
+  flex: 1;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+@keyframes simPopupIn {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (max-width: 768px) {
+  .sim-header {
+    top: 10px;
+    left: 10px;
+    right: 10px;
+    padding: 10px 12px;
+    min-height: 52px;
+  }
+
+  .sim-header h1 {
+    font-size: 0.9rem;
+  }
+
+  .sim-header-info,
+  .sim-header-separator {
+    font-size: 0.9rem;
+  }
+
+  .sim-header-center {
+    gap: 6px;
+  }
+
+  .sim-header-spacer--back {
+    width: 36px;
+    min-width: 36px;
+    height: 32px;
+  }
+
+  .sim-header-spacer--menu {
+    width: 42px;
+    min-width: 42px;
+    height: 32px;
+  }
+
+  .sim-sidebar {
+    width: 85vw;
+    max-width: 400px;
+    top: 10px;
+    right: 10px;
+    bottom: 10px;
+  }
+
+  .sim-scene-popup {
+    --popup-solo-w: 90vw;
+    top: 60px;
+  }
+
+  .sim-scene-popup.sim-scene-popup-shifted {
+    left: 5vw;
+    width: 90vw;
+  }
+
+  .sim-scene-popup-body {
+    flex-direction: column;
+  }
+
+  .sim-scene-popup-info {
+    width: 100%;
+    max-width: 100%;
+    min-width: unset;
+    max-height: 200px;
+    border-right: none;
+    border-bottom: 1px solid rgba(226, 232, 240, 0.6);
+  }
+
+  .sim-page--has-popup .sim-sidebar.sim-sidebar-open {
+    right: 10px;
+  }
+}
+
+/* Responsive adjustments for smaller screens (desktop) */
+@media (max-width: 1200px) and (min-width: 769px) {
   .game-main-layout {
     flex-direction: column;
   }
@@ -1713,7 +2717,7 @@ textarea {
 .map-display img {
   border: 2px solid var(--border);
   border-radius: 4px;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
   max-width: 100%;
   height: auto;
   transition: transform 0.2s ease, box-shadow 0.2s ease;
@@ -1721,7 +2725,7 @@ textarea {
 
 .map-display img:hover {
   transform: scale(1.02);
-  box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
 }
 
 .map-display .empty-state.hidden {
@@ -1872,7 +2876,8 @@ textarea {
 }
 
 @keyframes diceIconBounce {
-  0%, 100% {
+  0%,
+  100% {
     transform: translateY(0) rotate(0deg);
   }
   50% {
@@ -1957,6 +2962,12 @@ textarea {
   background: rgba(107, 32, 32, 0.18);
 }
 
+.dice-roll-check-detail {
+  color: #5b4630;
+  font-size: 0.8rem;
+  line-height: 1.3;
+}
+
 .dice-roll-values {
   display: flex;
   align-items: center;
@@ -2037,7 +3048,8 @@ textarea {
 }
 
 @keyframes diceFaceChange {
-  0%, 100% {
+  0%,
+  100% {
     opacity: 0.7;
     transform: scale(1);
   }

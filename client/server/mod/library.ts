@@ -1,69 +1,17 @@
-import type { CoCDatabase } from "../../../src/coc_multiagents_system/agents/memory/database/index.js";
-import path from "path";
-import fs from "fs";
-
-type ModCatalogRow = {
-  module_name: string;
-  owner_email: string;
-  shared: number;
-  deleted_at: string | null;
-};
-
-type CheckpointRow = {
-  checkpoint_id: string;
-  game_state: string;
-};
+import fs from "node:fs";
+import path from "node:path";
+import { getPrismaClient } from "../../../src/shared/agents/memory/database/prismaClient.js";
 
 const modsDir = path.join(process.cwd(), "data", "Mods");
+const SYSTEM_OWNER_EMAIL = "__system__";
+const TRASH_RETENTION_DAYS = 7;
 
 function normalizeModName(name: string): string {
   return name.trim();
 }
 
-function parseScenarioNames(moduleDir: string, moduleName: string): string[] {
-  const scenarioNames = new Set<string>();
-  const scenariosDir = path.join(moduleDir, `${moduleName}_Scenarios`);
-  const outlineFile = path.join(moduleDir, "scenarios_outline.json");
-
-  const readScenarioFile = (filePath: string) => {
-    try {
-      const raw = fs.readFileSync(filePath, "utf-8");
-      const json = JSON.parse(raw);
-      const items = Array.isArray(json) ? json : [json];
-      for (const item of items) {
-        const name = item?.name || item?.snapshot?.name;
-        if (typeof name === "string" && name.trim()) {
-          scenarioNames.add(name.trim());
-        }
-      }
-    } catch {
-      // ignore parse errors
-    }
-  };
-
-  if (fs.existsSync(outlineFile)) {
-    try {
-      const raw = fs.readFileSync(outlineFile, "utf-8");
-      const json = JSON.parse(raw);
-      const items = Array.isArray(json) ? json : [];
-      for (const item of items) {
-        if (item?.name && typeof item.name === "string") {
-          scenarioNames.add(item.name.trim());
-        }
-      }
-    } catch {
-      // ignore parse errors
-    }
-  }
-
-  if (fs.existsSync(scenariosDir)) {
-    const files = fs.readdirSync(scenariosDir).filter((f) => f.toLowerCase().endsWith(".json"));
-    for (const file of files) {
-      readScenarioFile(path.join(scenariosDir, file));
-    }
-  }
-
-  return Array.from(scenarioNames);
+function normalizeModuleNameKey(name: string): string {
+  return normalizeModName(name).toLowerCase();
 }
 
 function parseNpcNames(moduleDir: string, moduleName: string): string[] {
@@ -74,7 +22,9 @@ function parseNpcNames(moduleDir: string, moduleName: string): string[] {
     return [];
   }
 
-  const files = fs.readdirSync(npcDir).filter((f) => f.toLowerCase().endsWith(".json"));
+  const files = fs
+    .readdirSync(npcDir)
+    .filter((f) => f.toLowerCase().endsWith(".json"));
   for (const file of files) {
     try {
       const raw = fs.readFileSync(path.join(npcDir, file), "utf-8");
@@ -94,554 +44,773 @@ function parseNpcNames(moduleDir: string, moduleName: string): string[] {
   return Array.from(npcNames);
 }
 
-function deleteDynamicCheckpointsForModule(
-  db: CoCDatabase,
-  email: string,
-  modName: string
-): void {
-  const database = db.getDatabase();
-  const rows = database.prepare(
-    `
-      SELECT gc.checkpoint_id, gc.game_state
-      FROM game_checkpoints gc
-      JOIN sessions s ON s.session_id = gc.session_id
-      JOIN characters c ON c.character_id = s.character_id
-      WHERE c.email_id = ?
-    `
-  ).all(email) as CheckpointRow[];
-
-  const target = normalizeModName(modName).toLowerCase();
-  const toDelete: string[] = [];
-
-  for (const row of rows) {
-    try {
-      const state = JSON.parse(row.game_state);
-      const moduleName = typeof state?.moduleName === "string" ? state.moduleName.trim().toLowerCase() : "";
-      if (moduleName && moduleName === target) {
-        toDelete.push(row.checkpoint_id);
-      }
-    } catch {
-      // ignore malformed checkpoint payloads
-    }
-  }
-
-  if (toDelete.length === 0) {
-    return;
-  }
-
-  const placeholders = toDelete.map(() => "?").join(", ");
-  database.prepare(
-    `DELETE FROM game_checkpoints WHERE checkpoint_id IN (${placeholders})`
-  ).run(...toDelete);
-}
-
-function cleanModuleDataForOwner(
-  db: CoCDatabase,
-  ownerEmail: string,
-  modName: string
-): void {
-  const database = db.getDatabase();
-  const moduleDir = path.join(modsDir, modName);
-
-  const scenarioNames = parseScenarioNames(moduleDir, modName);
-  const npcNames = parseNpcNames(moduleDir, modName);
-
-  const hasScenarioEmailId = db.hasColumn("scenarios", "email_id");
-  const hasSnapshotEmailId = db.hasColumn("scenario_snapshots", "email_id");
-  const hasScenarioCharsEmailId = db.hasColumn("scenario_characters", "email_id");
-  const hasScenarioCluesEmailId = db.hasColumn("scenario_clues", "email_id");
-  const hasScenarioConditionsEmailId = db.hasColumn("scenario_conditions", "email_id");
-  const hasModuleEmailId = db.hasColumn("module_backgrounds", "email_id");
-  const hasCharactersEmailId = db.hasColumn("characters", "email_id");
-  const hasNpcCluesEmailId = db.hasColumn("npc_clues", "email_id");
-  const hasNpcRelEmailId = db.hasColumn("npc_relationships", "email_id");
-  const hasRelationshipsEmailId = db.hasColumn("relationships", "email_id");
-
-  db.transaction(() => {
-    if (hasModuleEmailId) {
-      database
-        .prepare("DELETE FROM module_backgrounds WHERE title = ? AND email_id = ?")
-        .run(modName, ownerEmail);
-    } else {
-      database.prepare("DELETE FROM module_backgrounds WHERE title = ?").run(modName);
-    }
-
-    if (scenarioNames.length > 0) {
-      const placeholders = scenarioNames.map(() => "?").join(", ");
-      const scenarioRows = database
-        .prepare(
-          `SELECT scenario_id FROM scenarios WHERE name IN (${placeholders})${
-            hasScenarioEmailId ? " AND email_id = ?" : ""
-          }`
-        )
-        .all(...scenarioNames, ...(hasScenarioEmailId ? [ownerEmail] : [])) as Array<{ scenario_id: string }>;
-
-      const scenarioIds = scenarioRows.map((row) => row.scenario_id);
-      if (scenarioIds.length > 0) {
-        const scenarioIdPlaceholders = scenarioIds.map(() => "?").join(", ");
-        const snapshotRows = database
-          .prepare(
-            `SELECT snapshot_id FROM scenario_snapshots WHERE scenario_id IN (${scenarioIdPlaceholders})${
-              hasSnapshotEmailId ? " AND email_id = ?" : ""
-            }`
-          )
-          .all(...scenarioIds, ...(hasSnapshotEmailId ? [ownerEmail] : [])) as Array<{ snapshot_id: string }>;
-
-        const snapshotIds = snapshotRows.map((row) => row.snapshot_id);
-        if (snapshotIds.length > 0) {
-          const snapshotPlaceholders = snapshotIds.map(() => "?").join(", ");
-          if (db.hasColumn("scenario_characters", "snapshot_id")) {
-            database
-              .prepare(
-                `DELETE FROM scenario_characters WHERE snapshot_id IN (${snapshotPlaceholders})${
-                  hasScenarioCharsEmailId ? " AND email_id = ?" : ""
-                }`
-              )
-              .run(...snapshotIds, ...(hasScenarioCharsEmailId ? [ownerEmail] : []));
-          }
-          if (db.hasColumn("scenario_clues", "snapshot_id")) {
-            database
-              .prepare(
-                `DELETE FROM scenario_clues WHERE snapshot_id IN (${snapshotPlaceholders})${
-                  hasScenarioCluesEmailId ? " AND email_id = ?" : ""
-                }`
-              )
-              .run(...snapshotIds, ...(hasScenarioCluesEmailId ? [ownerEmail] : []));
-          }
-          if (db.hasColumn("scenario_conditions", "snapshot_id")) {
-            database
-              .prepare(
-                `DELETE FROM scenario_conditions WHERE snapshot_id IN (${snapshotPlaceholders})${
-                  hasScenarioConditionsEmailId ? " AND email_id = ?" : ""
-                }`
-              )
-              .run(...snapshotIds, ...(hasScenarioConditionsEmailId ? [ownerEmail] : []));
-          }
-        }
-
-        database
-          .prepare(
-            `DELETE FROM scenario_snapshots WHERE scenario_id IN (${scenarioIdPlaceholders})${
-              hasSnapshotEmailId ? " AND email_id = ?" : ""
-            }`
-          )
-          .run(...scenarioIds, ...(hasSnapshotEmailId ? [ownerEmail] : []));
-
-        database
-          .prepare(
-            `DELETE FROM scenarios WHERE scenario_id IN (${scenarioIdPlaceholders})${
-              hasScenarioEmailId ? " AND email_id = ?" : ""
-            }`
-          )
-          .run(...scenarioIds, ...(hasScenarioEmailId ? [ownerEmail] : []));
-      }
-    }
-
-    if (npcNames.length > 0) {
-      const npcPlaceholders = npcNames.map(() => "?").join(", ");
-      const npcRows = database
-        .prepare(
-          `SELECT character_id FROM characters WHERE is_npc = 1 AND name IN (${npcPlaceholders})${
-            hasCharactersEmailId ? " AND email_id = ?" : ""
-          }`
-        )
-        .all(...npcNames, ...(hasCharactersEmailId ? [ownerEmail] : [])) as Array<{ character_id: string }>;
-
-      const npcIds = npcRows.map((row) => row.character_id);
-      if (npcIds.length > 0) {
-        const idPlaceholders = npcIds.map(() => "?").join(", ");
-        database
-          .prepare(
-            `DELETE FROM npc_clues WHERE npc_id IN (${idPlaceholders})${
-              hasNpcCluesEmailId ? " AND email_id = ?" : ""
-            }`
-          )
-          .run(...npcIds, ...(hasNpcCluesEmailId ? [ownerEmail] : []));
-        database
-          .prepare(
-            `DELETE FROM npc_relationships WHERE (source_id IN (${idPlaceholders}) OR target_id IN (${idPlaceholders}))${
-              hasNpcRelEmailId ? " AND email_id = ?" : ""
-            }`
-          )
-          .run(...npcIds, ...npcIds, ...(hasNpcRelEmailId ? [ownerEmail] : []));
-        database
-          .prepare(
-            `DELETE FROM relationships WHERE npc_id IN (${idPlaceholders})${
-              hasRelationshipsEmailId ? " AND email_id = ?" : ""
-            }`
-          )
-          .run(...npcIds, ...(hasRelationshipsEmailId ? [ownerEmail] : []));
-        database
-          .prepare(
-            `DELETE FROM characters WHERE character_id IN (${idPlaceholders}) AND is_npc = 1${
-              hasCharactersEmailId ? " AND email_id = ?" : ""
-            }`
-          )
-          .run(...npcIds, ...(hasCharactersEmailId ? [ownerEmail] : []));
-      }
-    }
+async function resolveOwnedModule(email: string, modName: string) {
+  const prisma = getPrismaClient();
+  return prisma.module.findFirst({
+    where: {
+      ownerEmailId: email,
+      moduleNameNormalized: normalizeModuleNameKey(modName),
+    },
+    orderBy: { createdAt: "desc" },
   });
 }
 
-function getCatalogEntry(db: CoCDatabase, modName: string): ModCatalogRow | null {
-  const database = db.getDatabase();
-  const row = database.prepare(
-    "SELECT module_name, owner_email, shared, deleted_at FROM mod_catalog WHERE lower(module_name) = lower(?)"
-  ).get(modName) as ModCatalogRow | undefined;
-  return row || null;
+async function resolveSharedModule(modName: string) {
+  const prisma = getPrismaClient();
+  return prisma.module.findFirst({
+    where: {
+      moduleNameNormalized: normalizeModuleNameKey(modName),
+      share: true,
+      status: "active",
+    },
+    orderBy: { createdAt: "desc" },
+  });
 }
 
-export function ensureModCatalogEntry(
-  db: CoCDatabase,
+async function resolveAccessibleModuleForUser(email: string, modName: string) {
+  const prisma = getPrismaClient();
+  const permission = await prisma.modulePermission.findFirst({
+    where: {
+      emailId: email,
+      module: {
+        moduleNameNormalized: normalizeModuleNameKey(modName),
+        status: "active",
+      },
+    },
+    include: { module: true },
+    orderBy: [{ canManage: "desc" }, { grantedAt: "desc" }],
+  });
+
+  return permission?.module || null;
+}
+
+async function resolveActiveModuleForAdminSelection(params: {
+  moduleId?: string;
+  modName?: string;
+}) {
+  const prisma = getPrismaClient();
+  const moduleId = params.moduleId?.trim();
+  const modName = params.modName?.trim();
+
+  if (moduleId) {
+    const byId = await prisma.module.findFirst({
+      where: {
+        moduleId,
+        status: "active",
+      },
+    });
+    if (!byId) {
+      throw new Error("Module not found or not active");
+    }
+    return byId;
+  }
+
+  if (!modName) {
+    throw new Error("moduleId or modName is required");
+  }
+
+  const normalized = normalizeModuleNameKey(modName);
+  const matched = await prisma.module.findMany({
+    where: {
+      moduleNameNormalized: normalized,
+      status: "active",
+    },
+    orderBy: { updatedAt: "desc" },
+    take: 2,
+  });
+
+  if (matched.length === 0) {
+    throw new Error("Module not found or not active");
+  }
+  if (matched.length > 1) {
+    throw new Error(
+      "Multiple modules share this name. Please specify moduleId."
+    );
+  }
+  return matched[0];
+}
+
+async function ensureModuleEntry(modName: string, ownerEmail: string) {
+  const prisma = getPrismaClient();
+  const normalized = normalizeModName(modName);
+  const normalizedKey = normalizeModuleNameKey(normalized);
+  const ownerEmailId = ownerEmail || SYSTEM_OWNER_EMAIL;
+
+  return prisma.module.upsert({
+    where: {
+      uq_modules_owner_name_normalized: {
+        ownerEmailId,
+        moduleNameNormalized: normalizedKey,
+      },
+    },
+    update: {
+      moduleName: normalized,
+      moduleNameNormalized: normalizedKey,
+      ownerEmailId,
+      status: "active",
+      updatedAt: new Date(),
+    },
+    create: {
+      moduleName: normalized,
+      moduleNameNormalized: normalizedKey,
+      ownerEmailId,
+      share: false,
+      status: "active",
+    },
+  });
+}
+
+async function ensureModulePermission(
+  moduleId: string,
+  emailId: string,
+  role: "owner" | "viewer"
+): Promise<void> {
+  const prisma = getPrismaClient();
+  const canManage = role === "owner";
+  await prisma.modulePermission.upsert({
+    where: { moduleId_emailId: { moduleId, emailId } },
+    update: {
+      role,
+      canPlay: true,
+      canManage,
+      grantedAt: new Date(),
+    },
+    create: {
+      moduleId,
+      emailId,
+      role,
+      canPlay: true,
+      canManage,
+      grantedAt: new Date(),
+    },
+  });
+}
+
+async function ensureUserModuleLibraryLink(
+  emailId: string,
+  moduleId: string,
+  source: "owned" | "shared_added"
+): Promise<void> {
+  const prisma = getPrismaClient();
+  await prisma.userModuleLibrary.upsert({
+    where: { emailId_moduleId: { emailId, moduleId } },
+    update: {
+      source,
+      addedAt: new Date(),
+    },
+    create: {
+      emailId,
+      moduleId,
+      source,
+      addedAt: new Date(),
+    },
+  });
+}
+
+async function markUserModuleDeleted(
+  emailId: string,
+  moduleId: string
+): Promise<void> {
+  const prisma = getPrismaClient();
+  await prisma.userModuleDeleted.upsert({
+    where: { emailId_moduleId: { emailId, moduleId } },
+    update: { deletedAt: new Date() },
+    create: {
+      emailId,
+      moduleId,
+      deletedAt: new Date(),
+    },
+  });
+}
+
+async function clearUserModuleDeleted(
+  emailId: string,
+  moduleId: string
+): Promise<void> {
+  const prisma = getPrismaClient();
+  await prisma.userModuleDeleted.deleteMany({
+    where: { emailId, moduleId },
+  });
+}
+
+async function cleanModuleDataForOwner(
+  ownerEmail: string,
+  modName: string,
+  moduleId: string
+): Promise<void> {
+  const prisma = getPrismaClient();
+  const moduleDir = path.join(modsDir, modName);
+
+  await prisma.moduleBackground.deleteMany({
+    where: { moduleId },
+  });
+
+  // Scenario base-content is module-scoped.
+  await prisma.scenarioCondition.deleteMany({ where: { moduleId } });
+  await prisma.scenario.deleteMany({ where: { moduleId } });
+
+  // Legacy cleanup for NPC data that is still keyed by email+name.
+  const npcNames = parseNpcNames(moduleDir, modName);
+
+  if (npcNames.length > 0) {
+    const npcRows = await prisma.character.findMany({
+      where: {
+        isNpc: true,
+        name: { in: npcNames },
+        emailId: ownerEmail,
+      },
+      select: { characterId: true },
+    });
+    const npcIds = npcRows.map((row) => row.characterId);
+    if (npcIds.length > 0) {
+      await prisma.npcRelationship.deleteMany({
+        where: {
+          OR: [{ sourceId: { in: npcIds } }, { targetId: { in: npcIds } }],
+          emailId: ownerEmail,
+        },
+      });
+      await prisma.character.deleteMany({
+        where: {
+          characterId: { in: npcIds },
+          isNpc: true,
+          emailId: ownerEmail,
+        },
+      });
+    }
+  }
+}
+
+export async function ensureModCatalogEntry(
   modName: string,
   ownerEmail: string
-): void {
-  const database = db.getDatabase();
-  const normalized = normalizeModName(modName);
-  const existing = getCatalogEntry(db, normalized);
+): Promise<void> {
+  const moduleEntry = await ensureModuleEntry(modName, ownerEmail);
+  await ensureModulePermission(moduleEntry.moduleId, ownerEmail, "owner");
+}
 
-  if (existing) {
-    if (existing.deleted_at && existing.owner_email === ownerEmail) {
-      database.prepare(
-        "UPDATE mod_catalog SET deleted_at = NULL WHERE lower(module_name) = lower(?)"
-      ).run(normalized);
-    }
+export async function ensureUserLibraryEntry(
+  email: string,
+  modName: string
+): Promise<void> {
+  const normalized = normalizeModName(modName);
+
+  const owned = await resolveOwnedModule(email, normalized);
+  if (owned) {
+    await ensureModulePermission(owned.moduleId, email, "owner");
+    await ensureUserModuleLibraryLink(email, owned.moduleId, "owned");
+    await clearUserModuleDeleted(email, owned.moduleId);
     return;
   }
 
-  database.prepare(
-    "INSERT INTO mod_catalog (module_name, owner_email, shared) VALUES (?, ?, 0)"
-  ).run(normalized, ownerEmail);
-}
-
-export function ensureUserLibraryEntry(
-  db: CoCDatabase,
-  email: string,
-  modName: string
-): void {
-  const database = db.getDatabase();
-  const normalized = normalizeModName(modName);
-  database.prepare(
-    "INSERT OR IGNORE INTO user_mods (email_id, module_name) VALUES (?, ?)"
-  ).run(email, normalized);
-  database.prepare(
-    "DELETE FROM user_mods_deleted WHERE email_id = ? AND lower(module_name) = lower(?)"
-  ).run(email, normalized);
-}
-
-export function registerModuleForUser(
-  db: CoCDatabase,
-  email: string,
-  modName: string
-): void {
-  ensureModCatalogEntry(db, modName, email);
-  ensureUserLibraryEntry(db, email, modName);
-}
-
-export function ensureLegacyLibraryEntries(db: CoCDatabase, email: string): void {
-  const database = db.getDatabase();
-  const bootstrapRow = database
-    .prepare("SELECT email_id FROM user_mods_bootstrap WHERE email_id = ?")
-    .get(email) as { email_id: string } | undefined;
-
-  if (bootstrapRow) {
+  const accessible = await resolveAccessibleModuleForUser(email, normalized);
+  if (accessible) {
+    const role = accessible.ownerEmailId === email ? "owner" : "viewer";
+    const source = accessible.ownerEmailId === email ? "owned" : "shared_added";
+    await ensureModulePermission(accessible.moduleId, email, role);
+    await ensureUserModuleLibraryLink(email, accessible.moduleId, source);
+    await clearUserModuleDeleted(email, accessible.moduleId);
     return;
   }
 
-  const rows = database.prepare(
-    "SELECT DISTINCT title FROM module_backgrounds WHERE email_id = ? AND title IS NOT NULL"
-  ).all(email) as Array<{ title: string }>;
+  const shared = await resolveSharedModule(normalized);
+  if (shared && shared.ownerEmailId !== email) {
+    await ensureModulePermission(shared.moduleId, email, "viewer");
+    await ensureUserModuleLibraryLink(email, shared.moduleId, "shared_added");
+    await clearUserModuleDeleted(email, shared.moduleId);
+    return;
+  }
+
+  const moduleEntry = await ensureModuleEntry(normalized, email);
+  await ensureModulePermission(moduleEntry.moduleId, email, "owner");
+  await ensureUserModuleLibraryLink(email, moduleEntry.moduleId, "owned");
+  await clearUserModuleDeleted(email, moduleEntry.moduleId);
+}
+
+export async function registerModuleForUser(
+  email: string,
+  modName: string
+): Promise<void> {
+  const moduleEntry = await ensureModuleEntry(modName, email);
+  await ensureModulePermission(moduleEntry.moduleId, email, "owner");
+  await ensureUserModuleLibraryLink(email, moduleEntry.moduleId, "owned");
+  await clearUserModuleDeleted(email, moduleEntry.moduleId);
+}
+
+export async function ensureLegacyLibraryEntries(email: string): Promise<void> {
+  const prisma = getPrismaClient();
+  const rows = await prisma.moduleBackground.findMany({
+    where: { emailId: email, title: { not: "" } },
+    select: { title: true },
+    distinct: ["title"],
+  });
 
   for (const row of rows) {
     const title = row.title?.trim();
-    if (!title) {
-      continue;
-    }
-    ensureModCatalogEntry(db, title, email);
-    ensureUserLibraryEntry(db, email, title);
+    if (!title) continue;
+    await registerModuleForUser(email, title);
   }
-
-  database.prepare(
-    "INSERT OR REPLACE INTO user_mods_bootstrap (email_id, bootstrapped_at) VALUES (?, datetime('now'))"
-  ).run(email);
 }
 
-export function cleanupExpiredDeletedMods(db: CoCDatabase): void {
-  const database = db.getDatabase();
-  const expired = database.prepare(
-    "SELECT module_name FROM mod_catalog WHERE shared = 0 AND deleted_at IS NOT NULL AND deleted_at <= datetime('now', '-7 days')"
-  ).all() as Array<{ module_name: string }>;
+export async function cleanupExpiredDeletedMods(): Promise<void> {
+  const prisma = getPrismaClient();
+  const cutoff = new Date(
+    Date.now() - TRASH_RETENTION_DAYS * 24 * 60 * 60 * 1000
+  );
 
-  for (const row of expired) {
-    const modName = row.module_name;
-    const usage = database.prepare(
-      "SELECT COUNT(*) as count FROM user_mods WHERE lower(module_name) = lower(?)"
-    ).get(modName) as { count: number } | undefined;
+  await prisma.userModuleDeleted.deleteMany({
+    where: { deletedAt: { lte: cutoff } },
+  });
 
-    if (usage && usage.count > 0) {
+  const archivedModules = await prisma.module.findMany({
+    where: {
+      status: "archived",
+      updatedAt: { lte: cutoff },
+    },
+    select: {
+      moduleId: true,
+      moduleName: true,
+      ownerEmailId: true,
+    },
+  });
+
+  for (const module of archivedModules) {
+    const [libraryCount, deletedCount] = await Promise.all([
+      prisma.userModuleLibrary.count({ where: { moduleId: module.moduleId } }),
+      prisma.userModuleDeleted.count({ where: { moduleId: module.moduleId } }),
+    ]);
+    if (libraryCount > 0 || deletedCount > 0) {
       continue;
     }
 
-    const catalog = getCatalogEntry(db, modName);
-    if (catalog?.owner_email) {
+    if (module.ownerEmailId && module.ownerEmailId !== SYSTEM_OWNER_EMAIL) {
       try {
-        cleanModuleDataForOwner(db, catalog.owner_email, modName);
+        await cleanModuleDataForOwner(
+          module.ownerEmailId,
+          module.moduleName,
+          module.moduleId
+        );
       } catch (error) {
-        console.warn(`[Mod Library] Failed to clean module data for ${modName}:`, error);
+        console.warn(
+          `[Mod Library] Failed to clean module data for ${module.moduleName}:`,
+          error
+        );
       }
     }
 
-    const modPath = path.join(modsDir, modName);
+    const modPath = path.join(modsDir, module.moduleName);
     try {
       if (fs.existsSync(modPath)) {
         fs.rmSync(modPath, { recursive: true, force: true });
       }
     } catch (error) {
-      console.warn(`[Mod Library] Failed to delete module folder: ${modPath}`, error);
+      console.warn(
+        `[Mod Library] Failed to delete module folder: ${modPath}`,
+        error
+      );
       continue;
     }
 
-    database.prepare(
-      "DELETE FROM user_mods WHERE lower(module_name) = lower(?)"
-    ).run(modName);
-    database.prepare(
-      "DELETE FROM user_mods_deleted WHERE lower(module_name) = lower(?)"
-    ).run(modName);
-    database.prepare(
-      "DELETE FROM mod_catalog WHERE lower(module_name) = lower(?)"
-    ).run(modName);
+    await prisma.module.delete({ where: { moduleId: module.moduleId } });
   }
 }
 
-export function listUserLibrary(db: CoCDatabase, email: string): Array<{
-  name: string;
-  shared: boolean;
-  ownerEmail: string | null;
-  isOwner: boolean;
-}> {
-  cleanupExpiredDeletedMods(db);
-  ensureLegacyLibraryEntries(db, email);
+export async function listUserLibrary(email: string): Promise<
+  Array<{
+    name: string;
+    shared: boolean;
+    ownerEmail: string | null;
+    isOwner: boolean;
+  }>
+> {
+  await cleanupExpiredDeletedMods();
+  await ensureLegacyLibraryEntries(email);
 
-  const database = db.getDatabase();
-  const rows = database.prepare(
-    `
-      SELECT um.module_name as module_name,
-             mc.owner_email as owner_email,
-             mc.shared as shared,
-             mc.deleted_at as deleted_at
-      FROM user_mods um
-      LEFT JOIN mod_catalog mc
-        ON lower(um.module_name) = lower(mc.module_name)
-      WHERE um.email_id = ?
-        AND (mc.deleted_at IS NULL OR mc.deleted_at = '')
-      ORDER BY um.module_name COLLATE NOCASE
-    `
-  ).all(email) as Array<{
-    module_name: string;
-    owner_email: string | null;
-    shared: number | null;
-  }>;
+  const prisma = getPrismaClient();
+  const rows = await prisma.userModuleLibrary.findMany({
+    where: {
+      emailId: email,
+      module: { status: "active" },
+    },
+    include: { module: true },
+    orderBy: { addedAt: "desc" },
+  });
 
-  return rows.map((row) => ({
-    name: row.module_name,
-    shared: Boolean(row.shared),
-    ownerEmail: row.owner_email,
-    isOwner: row.owner_email === email,
-  }));
+  const seen = new Set<string>();
+  return rows
+    .filter((row) => {
+      const key = row.module.moduleName.toLowerCase();
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    })
+    .map((row) => ({
+      name: row.module.moduleName,
+      shared: row.module.share,
+      ownerEmail:
+        row.module.ownerEmailId === SYSTEM_OWNER_EMAIL
+          ? null
+          : row.module.ownerEmailId,
+      isOwner: row.module.ownerEmailId === email,
+    }));
 }
 
-export function listSharedMods(
-  db: CoCDatabase,
+export async function listSharedMods(
   email: string,
   query?: string
-): Array<{ name: string; ownerEmail: string; inLibrary: boolean }> {
-  cleanupExpiredDeletedMods(db);
-  const database = db.getDatabase();
+): Promise<Array<{ name: string; ownerEmail: string; inLibrary: boolean }>> {
+  await cleanupExpiredDeletedMods();
+  const prisma = getPrismaClient();
   const normalizedQuery = query?.trim().toLowerCase();
-  const likeQuery = normalizedQuery ? `%${normalizedQuery}%` : null;
 
-  const rows = database.prepare(
-    `
-      SELECT mc.module_name as module_name,
-             mc.owner_email as owner_email,
-             CASE WHEN um.email_id IS NULL THEN 0 ELSE 1 END as in_library
-      FROM mod_catalog mc
-      LEFT JOIN user_mods um
-        ON lower(um.module_name) = lower(mc.module_name) AND um.email_id = ?
-      WHERE mc.shared = 1
-        AND mc.deleted_at IS NULL
-        ${likeQuery ? "AND lower(mc.module_name) LIKE ?" : ""}
-      ORDER BY mc.module_name COLLATE NOCASE
-    `
-  ).all(...(likeQuery ? [email, likeQuery] : [email])) as Array<{
-    module_name: string;
-    owner_email: string;
-    in_library: number;
-  }>;
+  const modules = await prisma.module.findMany({
+    where: {
+      share: true,
+      status: "active",
+      ...(normalizedQuery
+        ? { moduleNameNormalized: { contains: normalizedQuery } }
+        : {}),
+    },
+    orderBy: { updatedAt: "desc" },
+  });
 
-  return rows.map((row) => ({
-    name: row.module_name,
-    ownerEmail: row.owner_email,
-    inLibrary: Boolean(row.in_library),
+  if (modules.length === 0) return [];
+  const moduleIds = modules.map((m) => m.moduleId);
+  const inLibraryRows = await prisma.userModuleLibrary.findMany({
+    where: {
+      emailId: email,
+      moduleId: { in: moduleIds },
+    },
+    select: { moduleId: true },
+  });
+  const inLibrary = new Set(inLibraryRows.map((r) => r.moduleId));
+
+  return modules.map((m) => ({
+    name: m.moduleName,
+    ownerEmail: m.ownerEmailId === SYSTEM_OWNER_EMAIL ? "" : m.ownerEmailId,
+    inLibrary: inLibrary.has(m.moduleId),
   }));
 }
 
-export function shareModule(db: CoCDatabase, email: string, modName: string): void {
-  const database = db.getDatabase();
-  const normalized = normalizeModName(modName);
-  const catalog = getCatalogEntry(db, normalized);
+export async function listActiveModulesForAdmin(): Promise<
+  Array<{
+    moduleId: string;
+    name: string;
+    ownerEmail: string | null;
+    shared: boolean;
+    updatedAt: string;
+  }>
+> {
+  await cleanupExpiredDeletedMods();
+  const prisma = getPrismaClient();
+  const modules = await prisma.module.findMany({
+    where: { status: "active" },
+    select: {
+      moduleId: true,
+      moduleName: true,
+      ownerEmailId: true,
+      share: true,
+      updatedAt: true,
+    },
+    orderBy: [{ moduleNameNormalized: "asc" }, { updatedAt: "desc" }],
+  });
 
-  if (!catalog) {
-    throw new Error("Module not found in catalog");
-  }
-  if (catalog.owner_email !== email) {
-    throw new Error("Only the owner can share this module");
-  }
-
-  database.prepare(
-    "UPDATE mod_catalog SET shared = 1, deleted_at = NULL WHERE lower(module_name) = lower(?)"
-  ).run(normalized);
+  return modules.map((module) => ({
+    moduleId: module.moduleId,
+    name: module.moduleName,
+    ownerEmail:
+      module.ownerEmailId === SYSTEM_OWNER_EMAIL ? null : module.ownerEmailId,
+    shared: module.share,
+    updatedAt: module.updatedAt.toISOString(),
+  }));
 }
 
-export function unshareModule(db: CoCDatabase, email: string, modName: string): void {
-  const database = db.getDatabase();
-  const normalized = normalizeModName(modName);
-  const catalog = getCatalogEntry(db, normalized);
+export async function addModuleToAllUsers(params: {
+  moduleId?: string;
+  modName?: string;
+}): Promise<{
+  moduleId: string;
+  moduleName: string;
+  totalUsers: number;
+  affectedUsers: number;
+}> {
+  const prisma = getPrismaClient();
+  const module = await resolveActiveModuleForAdminSelection(params);
+  const users = await prisma.user.findMany({
+    where: { isActive: true },
+    select: { email: true },
+  });
 
-  if (!catalog) {
-    throw new Error("Module not found in catalog");
-  }
-  if (catalog.owner_email !== email) {
-    throw new Error("Only the owner can unshare this module");
-  }
+  await prisma.$transaction(async (tx) => {
+    for (const user of users) {
+      const isOwner = module.ownerEmailId === user.email;
+      const role = isOwner ? "owner" : "viewer";
+      const source = isOwner ? "owned" : "shared_added";
+      const now = new Date();
 
-  database.prepare(
-    "UPDATE mod_catalog SET shared = 0 WHERE lower(module_name) = lower(?)"
-  ).run(normalized);
+      await tx.modulePermission.upsert({
+        where: {
+          moduleId_emailId: {
+            moduleId: module.moduleId,
+            emailId: user.email,
+          },
+        },
+        update: {
+          role,
+          canPlay: true,
+          canManage: isOwner,
+          grantedAt: now,
+        },
+        create: {
+          moduleId: module.moduleId,
+          emailId: user.email,
+          role,
+          canPlay: true,
+          canManage: isOwner,
+          grantedAt: now,
+        },
+      });
+
+      await tx.userModuleLibrary.upsert({
+        where: {
+          emailId_moduleId: {
+            emailId: user.email,
+            moduleId: module.moduleId,
+          },
+        },
+        update: {
+          source,
+          addedAt: now,
+        },
+        create: {
+          emailId: user.email,
+          moduleId: module.moduleId,
+          source,
+          addedAt: now,
+        },
+      });
+
+      await tx.userModuleDeleted.deleteMany({
+        where: {
+          emailId: user.email,
+          moduleId: module.moduleId,
+        },
+      });
+    }
+  });
+
+  return {
+    moduleId: module.moduleId,
+    moduleName: module.moduleName,
+    totalUsers: users.length,
+    affectedUsers: users.length,
+  };
 }
 
-export function removeModuleFromLibrary(
-  db: CoCDatabase,
+export async function shareModule(
   email: string,
   modName: string
-): { trashed: boolean } {
-  const database = db.getDatabase();
+): Promise<void> {
+  const prisma = getPrismaClient();
   const normalized = normalizeModName(modName);
-  const catalog = getCatalogEntry(db, normalized);
+  let owned = await resolveOwnedModule(email, normalized);
 
-  if (catalog && catalog.shared) {
-    database.prepare(
-      "DELETE FROM user_mods WHERE email_id = ? AND lower(module_name) = lower(?)"
-    ).run(email, normalized);
-    database.prepare(
-      "INSERT OR REPLACE INTO user_mods_deleted (email_id, module_name, deleted_at) VALUES (?, ?, datetime('now'))"
-    ).run(email, normalized);
-    deleteDynamicCheckpointsForModule(db, email, normalized);
-    return { trashed: false };
+  // Generation-complete UI can race slightly ahead of library registration.
+  // If module files already exist, self-heal by registering first.
+  if (!owned) {
+    const moduleDir = path.join(modsDir, normalized);
+    if (fs.existsSync(moduleDir)) {
+      await registerModuleForUser(email, normalized);
+      owned = await resolveOwnedModule(email, normalized);
+    }
   }
 
-  if (catalog && catalog.owner_email !== email) {
-    throw new Error("Only the owner can remove this module");
+  if (!owned) {
+    throw new Error("Module not found in library");
   }
 
-  database.prepare(
-    "DELETE FROM user_mods WHERE email_id = ? AND lower(module_name) = lower(?)"
-  ).run(email, normalized);
-
-  if (catalog) {
-    database.prepare(
-      "UPDATE mod_catalog SET deleted_at = datetime('now') WHERE lower(module_name) = lower(?)"
-    ).run(normalized);
-  }
-
-  database.prepare(
-    "INSERT OR REPLACE INTO user_mods_deleted (email_id, module_name, deleted_at) VALUES (?, ?, datetime('now'))"
-  ).run(email, normalized);
-  deleteDynamicCheckpointsForModule(db, email, normalized);
-  return { trashed: true };
+  await prisma.module.update({
+    where: { moduleId: owned.moduleId },
+    data: {
+      share: true,
+      status: "active",
+      updatedAt: new Date(),
+    },
+  });
+  await ensureModulePermission(owned.moduleId, email, "owner");
+  await ensureUserModuleLibraryLink(email, owned.moduleId, "owned");
 }
 
-export function addSharedModuleToLibrary(
-  db: CoCDatabase,
+export async function unshareModule(
   email: string,
   modName: string
-): void {
-  const normalized = normalizeModName(modName);
-  const catalog = getCatalogEntry(db, normalized);
+): Promise<void> {
+  const prisma = getPrismaClient();
+  const owned = await resolveOwnedModule(email, modName);
+  if (!owned) {
+    throw new Error("Module not found in library");
+  }
 
-  if (!catalog || !catalog.shared || catalog.deleted_at) {
+  await prisma.module.update({
+    where: { moduleId: owned.moduleId },
+    data: {
+      share: false,
+      updatedAt: new Date(),
+    },
+  });
+  await ensureModulePermission(owned.moduleId, email, "owner");
+}
+
+export async function removeModuleFromLibrary(
+  email: string,
+  modName: string
+): Promise<{ trashed: boolean }> {
+  const prisma = getPrismaClient();
+  const normalized = normalizeModName(modName);
+
+  const owned = await resolveOwnedModule(email, normalized);
+  if (owned && owned.status === "active") {
+    await prisma.module.update({
+      where: { moduleId: owned.moduleId },
+      data: {
+        status: "archived",
+        share: false,
+        updatedAt: new Date(),
+      },
+    });
+
+    await prisma.userModuleLibrary.deleteMany({
+      where: { moduleId: owned.moduleId },
+    });
+    await prisma.modulePermission.deleteMany({
+      where: { moduleId: owned.moduleId, emailId: { not: email } },
+    });
+    await markUserModuleDeleted(email, owned.moduleId);
+    return { trashed: true };
+  }
+
+  const accessible = await resolveAccessibleModuleForUser(email, normalized);
+  if (!accessible) {
+    throw new Error("Module not found in library");
+  }
+
+  if (accessible.ownerEmailId === email) {
+    throw new Error("Module is not in removable state");
+  }
+
+  await prisma.userModuleLibrary.deleteMany({
+    where: {
+      emailId: email,
+      moduleId: accessible.moduleId,
+    },
+  });
+  await prisma.modulePermission.deleteMany({
+    where: {
+      moduleId: accessible.moduleId,
+      emailId: email,
+    },
+  });
+  await markUserModuleDeleted(email, accessible.moduleId);
+  return { trashed: false };
+}
+
+export async function addSharedModuleToLibrary(
+  email: string,
+  modName: string
+): Promise<void> {
+  const shared = await resolveSharedModule(modName);
+  if (!shared || shared.status !== "active") {
     throw new Error("Shared module not available");
   }
 
-  ensureUserLibraryEntry(db, email, normalized);
+  if (shared.ownerEmailId === email) {
+    await ensureModulePermission(shared.moduleId, email, "owner");
+    await ensureUserModuleLibraryLink(email, shared.moduleId, "owned");
+    await clearUserModuleDeleted(email, shared.moduleId);
+    return;
+  }
+
+  await ensureModulePermission(shared.moduleId, email, "viewer");
+  await ensureUserModuleLibraryLink(email, shared.moduleId, "shared_added");
+  await clearUserModuleDeleted(email, shared.moduleId);
 }
 
-export function listDeletedMods(
-  db: CoCDatabase,
-  email: string
-): Array<{ name: string; deletedAt: string; ownerEmail: string; daysLeft: number }> {
-  cleanupExpiredDeletedMods(db);
-  const database = db.getDatabase();
-  database.prepare(
-    "DELETE FROM user_mods_deleted WHERE deleted_at <= datetime('now', '-7 days')"
-  ).run();
-  const rows = database.prepare(
-    `
-      SELECT d.module_name, d.deleted_at, mc.owner_email
-      FROM user_mods_deleted d
-      LEFT JOIN mod_catalog mc
-        ON lower(d.module_name) = lower(mc.module_name)
-      WHERE d.email_id = ?
-      ORDER BY d.deleted_at DESC
-    `
-  ).all(email) as Array<{ module_name: string; owner_email: string | null; deleted_at: string }>;
+export async function listDeletedMods(email: string): Promise<
+  Array<{
+    name: string;
+    deletedAt: string;
+    ownerEmail: string;
+    daysLeft: number;
+  }>
+> {
+  await cleanupExpiredDeletedMods();
+  const prisma = getPrismaClient();
+  const rows = await prisma.userModuleDeleted.findMany({
+    where: { emailId: email },
+    include: { module: true },
+    orderBy: { deletedAt: "desc" },
+  });
 
   const now = Date.now();
+  const durationMs = TRASH_RETENTION_DAYS * 24 * 60 * 60 * 1000;
 
-  return rows.map((row) => {
-    const deletedAtMs = row.deleted_at ? Date.parse(row.deleted_at) : NaN;
-    const expiresAtMs = Number.isFinite(deletedAtMs)
-      ? deletedAtMs + 7 * 24 * 60 * 60 * 1000
-      : now;
-    const daysLeft = Math.max(0, Math.ceil((expiresAtMs - now) / (24 * 60 * 60 * 1000)));
+  return rows
+    .filter((row) => !!row.module)
+    .map((row) => {
+      const deletedAt = row.deletedAt.getTime();
+      const expiresAt = deletedAt + durationMs;
+      const daysLeft = Math.max(
+        0,
+        Math.ceil((expiresAt - now) / (24 * 60 * 60 * 1000))
+      );
 
-    return {
-      name: row.module_name,
-      ownerEmail: row.owner_email || email,
-      deletedAt: row.deleted_at,
-      daysLeft,
-    };
-  });
+      return {
+        name: row.module.moduleName,
+        ownerEmail:
+          row.module.ownerEmailId === SYSTEM_OWNER_EMAIL
+            ? ""
+            : row.module.ownerEmailId,
+        deletedAt: row.deletedAt.toISOString(),
+        daysLeft,
+      };
+    });
 }
 
-export function restoreDeletedModule(
-  db: CoCDatabase,
+export async function restoreDeletedModule(
   email: string,
   modName: string
-): void {
-  const database = db.getDatabase();
-  const normalized = normalizeModName(modName);
-  const deletedRow = database.prepare(
-    "SELECT module_name FROM user_mods_deleted WHERE email_id = ? AND lower(module_name) = lower(?)"
-  ).get(email, normalized) as { module_name: string } | undefined;
-  if (!deletedRow) {
+): Promise<void> {
+  const prisma = getPrismaClient();
+  const normalizedKey = normalizeModuleNameKey(modName);
+
+  const deletedRows = await prisma.userModuleDeleted.findMany({
+    where: {
+      emailId: email,
+      module: { moduleNameNormalized: normalizedKey },
+    },
+    include: { module: true },
+    orderBy: { deletedAt: "desc" },
+  });
+
+  const target = deletedRows.find((row) => !!row.module);
+  if (!target || !target.module) {
     throw new Error("Module not found in deleted list");
   }
 
-  const modPath = path.join(modsDir, normalized);
-  if (!fs.existsSync(modPath)) {
-    throw new Error("Module files no longer exist");
+  const module = target.module;
+  if (module.ownerEmailId === email) {
+    await prisma.module.update({
+      where: { moduleId: module.moduleId },
+      data: { status: "active", updatedAt: new Date() },
+    });
+    await ensureModulePermission(module.moduleId, email, "owner");
+    await ensureUserModuleLibraryLink(email, module.moduleId, "owned");
+  } else {
+    if (!module.share || module.status !== "active") {
+      throw new Error("Shared module not available");
+    }
+    await ensureModulePermission(module.moduleId, email, "viewer");
+    await ensureUserModuleLibraryLink(email, module.moduleId, "shared_added");
   }
 
-  const catalog = getCatalogEntry(db, normalized);
-  if (catalog && catalog.owner_email === email && catalog.deleted_at) {
-    database.prepare(
-      "UPDATE mod_catalog SET deleted_at = NULL WHERE lower(module_name) = lower(?)"
-    ).run(normalized);
-  }
-
-  database.prepare(
-    "DELETE FROM user_mods_deleted WHERE email_id = ? AND lower(module_name) = lower(?)"
-  ).run(email, normalized);
-  ensureUserLibraryEntry(db, email, normalized);
+  await clearUserModuleDeleted(email, module.moduleId);
 }
