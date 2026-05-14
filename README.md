@@ -21,28 +21,80 @@ This repository is a working implementation of that idea.
 
 ---
 
-## Why this exists
+## Why I built this
 
-A TTRPG session is, in essence, the act of *re-creating a world*. Players
-input actions, the world changes according to rules, environment, and
-events; NPCs react out of memory, relationships, and goals; scenes, items,
-weather, time, and storylines keep evolving. That made me wonder: if a
-TTRPG is already a dynamic world, can we build a **game engine driven by
-LLMs**?
+A TTRPG session, when you watch it carefully, is the act of *re-creating
+a world*. Players input actions; the world changes according to rules,
+environment, and events; NPCs react out of memory, relationships, and
+goals; scenes, items, weather, and storylines keep evolving. That made me
+ask: if a TTRPG is already a dynamic world, could I build a **game engine
+driven by LLMs**?
 
-Traditional engines are great at the deterministic core — math, physics,
-probability, time. They are not great at "the player just used the lamp oil
-to bribe the watchman, taking advantage of the rain." So this project
-combines them:
+A traditional engine is great at the deterministic core — math, physics,
+time, probability. It is not great at "the player just used the lamp oil
+to bribe the watchman, taking advantage of the rain." LLMs are the
+opposite. So the engine is a **hybrid**:
 
-- **Code engine** — deterministic outcomes (movement, time, weather, item
-  damage, stamina).
-- **LLM engine** — open-ended outcomes, constrained by per-skill schemas so
-  the result is still typed state changes.
-- **Task processor** — interprets free-form action text into atomic steps
-  and routes each to the right engine.
+- **Code engine** — deterministic outcomes (movement, time, weather,
+  item damage, stamina).
+- **LLM engine** — open-ended outcomes, constrained by per-skill schemas
+  so the result is still typed state changes.
+- **Task processor** — interprets free-form action text into atomic
+  steps and routes each to the right engine.
 
-The result is a world that can be both efficient and imaginative.
+One engine brings determinism, the other open-endedness; one brings
+efficiency, the other imagination. The skill layer itself borrows a
+pattern from Claude Code's Skill mechanism: every action category
+(electrical repair, driving, diving, climbing, investigation, social,
+combat…) declares what world state to read, what rules to honor, what it
+can change, and how the result writes back.
+
+Once the engine ran, the harder question was: **how does a character
+actually live inside this world?** An LLM is a blank super-brain. Give
+it a name, age, profession, history, personality, goal, and secret and
+it starts behaving like a *character*. But what shapes a person's
+behavior isn't the profile — it's the **memory**. So every NPC has
+short-term and long-term memory, a known-map of places, a relationship
+graph, and a forgetting curve. Recall is fuzzy on purpose: humans
+forget, misremember, and remember selectively too.
+
+And then: **how does the character perceive the world?** Not by reading
+the structured state. The way you read a paper — inline citations plus
+a reference block. The **render layer** does that, in words instead of
+pixels. If a 2D / 3D engine is wired in later, the same seam becomes
+"render a frame, attach it to the prompt, the NPC sees multimodally."
+
+The three pieces — hybrid engine, role-play agent, render layer — close
+the loop: world state → perception → decision → action → state.
+
+---
+
+## Design decisions I'd point at
+
+Four choices in this codebase that I thought about hard and want a
+reader to notice:
+
+- **Hybrid LLM / code engine routing.** Every `ActionStep` declares
+  `engine: "llm"` or `engine: "code"`. Open-ended outcomes (item
+  disassembly, social interaction, ambiguous reasoning) go to the LLM,
+  constrained by per-skill schemas. Deterministic outcomes (movement,
+  time, weather, math) go to code. Probability and rules to code;
+  narrative and semantics to the model. One queue, one applier.
+- **Citation contract.** A single `[Name]` syntax in `actionText`
+  carries through renderer → agent → interpreter → engine, replacing
+  parallel `targetCharacterIds` fields. Characters, items, and scenes
+  share one surface; the format aligns with how LLMs were pre-trained
+  to read references; persisted memories stay self-describing.
+- **Render-as-perception.** The render layer turns world state into the
+  words the NPC would perceive — first person, sensory only,
+  citation-annotated. Wire in a 2D / 3D engine later and the same seam
+  becomes "render a frame, attach it to the prompt, the NPC perceives
+  multimodally."
+- **Memory shaped like a human's, not a database's.** Seven memory
+  types with a decay curve, embedding-based recall, a daily
+  summarization pass. Retrieval is fuzzy *by design* — people forget,
+  misremember, and selectively recall. An NPC that remembers perfectly
+  stops feeling like a person.
 
 ---
 
