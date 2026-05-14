@@ -40,6 +40,14 @@ interface DecideOpts {
   eventsForNpc?: FeatureEvent[];
 }
 
+/** How many prior renderer narratives each NPC keeps as short-term memory. */
+const PERCEPTION_HISTORY_CAP = 5;
+
+interface PerceptionHistoryEntry {
+  gameDateTime: string;
+  narrative: string;
+}
+
 export class NpcActionController {
   private readonly engine: TickEngine;
   private readonly agent: RoleSimAgent;
@@ -48,6 +56,12 @@ export class NpcActionController {
   private readonly sessionId: string;
   private readonly moduleId: string;
   private readonly language: string;
+  /** Per-NPC ring buffer of recent renderer narratives (oldest first). Only
+   *  successful renders enter; failed renders leave the buffer untouched. */
+  private readonly perceptionHistory = new Map<
+    string,
+    PerceptionHistoryEntry[]
+  >();
 
   constructor(deps: NpcActionControllerDeps) {
     this.engine = deps.engine;
@@ -233,6 +247,11 @@ export class NpcActionController {
       return undefined;
     }
 
+    // Snapshot prior perceptions (excludes current tick); push current after.
+    const recentPerceptions =
+      this.perceptionHistory.get(npcId)?.slice() ?? [];
+    this.recordPerception(npcId, gameDateTime, rendered.narrative);
+
     return {
       npcId,
       currentTime: gameDateTime,
@@ -242,7 +261,21 @@ export class NpcActionController {
       longTermIntent,
       currentAction,
       perception: { narrative: rendered.narrative },
+      recentPerceptions,
     };
+  }
+
+  private recordPerception(
+    npcId: string,
+    gameDateTime: string,
+    narrative: string
+  ): void {
+    const buf = this.perceptionHistory.get(npcId) ?? [];
+    buf.push({ gameDateTime, narrative });
+    if (buf.length > PERCEPTION_HISTORY_CAP) {
+      buf.splice(0, buf.length - PERCEPTION_HISTORY_CAP);
+    }
+    this.perceptionHistory.set(npcId, buf);
   }
 
   private async loadLongTermIntent(npcId: string): Promise<string> {

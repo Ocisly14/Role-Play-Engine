@@ -1,6 +1,6 @@
-// src/roleSim/toolSkills/recallMemorySkill.ts
+// src/roleSim/tools/recallMemory.ts
 
-export const recallMemorySkill = `---
+export const recallMemoryDoc = `---
 name: recallMemory
 description: Query your past memories (across days). Doesn't consume a tick.
 ---

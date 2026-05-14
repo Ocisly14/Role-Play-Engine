@@ -4,11 +4,11 @@
 // import; cache-friendly (does not change per tick). Per-NPC facts live in
 // the user prompt (built each tick by userPromptBuilder.ts).
 
-import { actSkill } from "./toolSkills/actSkill.js";
-import { continueSkill } from "./toolSkills/continueSkill.js";
-import { getMapSnapshotSkill } from "./toolSkills/getMapSnapshotSkill.js";
-import { recallMemorySkill } from "./toolSkills/recallMemorySkill.js";
-import { writeMemorySkill } from "./toolSkills/writeMemorySkill.js";
+import { actDoc } from "./tools/act.js";
+import { continueDoc } from "./tools/continue.js";
+import { getMapSnapshotDoc } from "./tools/getMapSnapshot.js";
+import { recallMemoryDoc } from "./tools/recallMemory.js";
+import { writeMemoryDoc } from "./tools/writeMemory.js";
 
 const FRAMING = `You are this person, alive in your world. Each turn you receive your senses
 (profile, what you perceive, today's memories, things that just happened) and
@@ -21,11 +21,11 @@ action is fine.`;
 const TOOLS_SECTION =
   "## Tools\n\n" +
   [
-    actSkill,
-    continueSkill,
-    writeMemorySkill,
-    recallMemorySkill,
-    getMapSnapshotSkill,
+    actDoc,
+    continueDoc,
+    writeMemoryDoc,
+    recallMemoryDoc,
+    getMapSnapshotDoc,
   ].join("\n\n---\n\n");
 
 const PRINCIPLES = `## Decision Principles

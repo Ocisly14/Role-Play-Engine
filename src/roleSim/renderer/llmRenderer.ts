@@ -20,8 +20,8 @@ const RENDERER_OPERATION = "phase-g-perception-render";
 const SYSTEM_PROMPT = `You are the perception renderer for a tick-based simulation.
 
 Your only job: turn the events of one game tick into a first-person, sensory
-narrative for a single viewpoint character, then list the named entities the
-narrative mentions in a reference block.
+narrative for a single viewpoint character, then list the cited entities in a
+reference block with their canonical system ids.
 
 # Output format
 
@@ -31,9 +31,14 @@ Emit exactly two labeled sections, in this order:
 <one short paragraph in first-person present tense, sensory only>
 
 [references]
-[1] <Name>: <description>
-[2] <Name>: <description>
+[1] id: <entity-id>; kind: <character|item|scene>; <display name>: <description>
+[2] id: <entity-id>; kind: <character|item|scene>; <display name>: <description>
 ...
+
+The agent downstream copies "id: <X>; kind: <Y>" verbatim into its own
+references block to cite this entity, so getting id + kind exactly right is
+critical. The display name + description are for the agent's narrative
+understanding (what does the viewpoint actually see this entity as).
 
 # Hard rules
 
@@ -45,20 +50,42 @@ Emit exactly two labeled sections, in this order:
   manifestation. Do not leak plot secrets, hidden allegiances, or any condition
   the viewpoint cannot perceive.
 - Cite people, named items, and scenes by appending [N] immediately after the
-  name in the narrative — N is a 1-based number unique per entity in this
-  output. Reuse the same N if the same entity appears more than once.
+  name/description in the narrative — N is a 1-based number unique per entity
+  in this output. Reuse the same N if the same entity appears more than once.
 - Do NOT cite scene attributes (sub-locations like "east wall", scene
   conditions like "burning", weather, generic nouns such as "door"). Render
   those inline as plain prose.
 - The reference block has exactly one line per cited entity, sorted by first
-  appearance: "[N] <Name>: <description>".
-- Use the names exactly as given in the input. For people listed as UNKNOWN,
-  use the description-based identifier provided (e.g. "the gaunt man") as their
-  name everywhere. Do not invent canonical names for unknown people.
+  appearance.
+- **id and kind in the reference line MUST match the values given to you in
+  the prompt input.** The agent's citation will fail if id is invented or
+  misspelled.
+- **For people listed as UNKNOWN in the input, the narrative MUST refer to
+  them by the description-based identifier (e.g. "the tall pale man"), NEVER
+  by their canonical name** — even if the canonical name leaks into the
+  prompt via event text or your own prior actions. The reference block still
+  carries the canonical id, but the in-narrative display name for UNKNOWN
+  people is their description, not their name.
 - Do not invent new entities, items, or details that are not in the input.
 - If there are no events, describe scene + own state only.
 - Output the two sections only. No prose before [narrative], nothing after the
-  reference list.`;
+  reference list.
+
+# Example
+
+Input gives you:
+  Person (UNKNOWN): the tall pale man (id: npc_hollins)
+    Appearance: Tall, pale, with a long black overcoat and an ivory-handled cane.
+
+Correct output:
+  [narrative]
+  The tall pale man [1] steps into the room and inclines his head.
+  [references]
+  [1] id: npc_hollins; kind: character; the tall pale man: Tall, pale, with a long black overcoat and an ivory-handled cane.
+
+WRONG (leaks canonical name into narrative for UNKNOWN):
+  [narrative]
+  Professor Hollins [1] steps into the room...`;
 
 export interface RenderViaLLMParams {
   npcId: string;
@@ -93,7 +120,7 @@ function buildUserPrompt(params: RenderViaLLMParams): string {
   const sections: string[] = [];
 
   sections.push('# Viewpoint character (render in first person as "I")');
-  sections.push(formatViewpoint(viewpointName, viewpoint, bundle));
+  sections.push(formatViewpoint(npcId, viewpointName, viewpoint, bundle));
 
   sections.push("# Current scene");
   sections.push(formatScene(bundle, dgsm));
@@ -124,12 +151,13 @@ function buildUserPrompt(params: RenderViaLLMParams): string {
 }
 
 function formatViewpoint(
+  id: string,
   name: string,
   profile: DynamicNPCProfile | undefined,
   bundle: PerceivedBundle
 ): string {
   const lines: string[] = [];
-  lines.push(`Name: ${name}`);
+  lines.push(`Name: ${name}  (id: ${id})`);
   if (profile?.appearance) lines.push(`Appearance: ${profile.appearance}`);
   if (bundle.ownConditions.length > 0) {
     lines.push("Own conditions (proprioceptive — fully visible to self):");
@@ -146,7 +174,7 @@ function formatScene(
 ): string {
   const lines: string[] = [];
   const { scene } = bundle;
-  lines.push(`Name: ${scene.name}`);
+  lines.push(`Name: ${scene.name}  (id: ${scene.id})`);
   if (scene.description) lines.push(`Description: ${scene.description}`);
   if (scene.activeConditions.length > 0) {
     lines.push("Scene conditions (render as inline prose, do NOT cite):");
@@ -158,10 +186,10 @@ function formatScene(
     const fullScene = dgsm.getScene(scene.id);
     const items = fullScene?.items ?? [];
     if (items.length > 0) {
-      lines.push("Items visible in scene (citable):");
+      lines.push("Items visible in scene (cite by id):");
       for (const item of items) {
         const desc = item.description ? `: ${item.description}` : "";
-        lines.push(`  - ${item.name}${desc}`);
+        lines.push(`  - ${item.name} (id: ${item.id})${desc}`);
       }
     }
   }
@@ -195,7 +223,7 @@ function collectOtherEntities(
     const known = isKnownTo(viewpoint, charId);
     const identifier = known ? profile.name : descriptionIdentifier(profile);
     const knownTag = known ? "KNOWN" : "UNKNOWN";
-    lines.push(`Person (${knownTag}): ${identifier}`);
+    lines.push(`Person (${knownTag}): ${identifier}  (id: ${charId})`);
     if (profile.appearance) lines.push(`  Appearance: ${profile.appearance}`);
     const conds = profile.status?.conditions ?? [];
     if (conds.length > 0) {
@@ -209,7 +237,7 @@ function collectOtherEntities(
   for (const sceneId of sceneIds) {
     const scene = dgsm.getScene(sceneId);
     if (!scene) continue;
-    lines.push(`Adjacent scene: ${scene.name}`);
+    lines.push(`Adjacent scene: ${scene.name}  (id: ${scene.id})`);
     if (scene.description) lines.push(`  Description: ${scene.description}`);
   }
 

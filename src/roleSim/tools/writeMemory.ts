@@ -1,6 +1,6 @@
-// src/roleSim/toolSkills/writeMemorySkill.ts
+// src/roleSim/tools/writeMemory.ts
 
-export const writeMemorySkill = `---
+export const writeMemoryDoc = `---
 name: writeMemory
 description: Record a thought, plan, belief, secret, or new knowledge. Doesn't consume a tick.
 ---

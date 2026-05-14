@@ -1,6 +1,6 @@
-// src/roleSim/toolSkills/continueSkill.ts
+// src/roleSim/tools/continue.ts
 
-export const continueSkill = `---
+export const continueDoc = `---
 name: continue
 description: Keep doing your current action / let time pass. Terminates this decision.
 ---

@@ -1,6 +1,6 @@
-// src/roleSim/toolSkills/getMapSnapshotSkill.ts
+// src/roleSim/tools/getMapSnapshot.ts
 
-export const getMapSnapshotSkill = `---
+export const getMapSnapshotDoc = `---
 name: getMapSnapshot
 description: View your known map of places (scenes, junctions, roads). Doesn't consume a tick.
 ---

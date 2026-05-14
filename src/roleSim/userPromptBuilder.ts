@@ -31,6 +31,15 @@ export function buildUserPrompt(
     `## Right now\nToday: ${formatForPrompt(ctx.currentTime)}\nScene: ${ctx.currentScene}`
   );
 
+  if (ctx.recentPerceptions && ctx.recentPerceptions.length > 0) {
+    const block = ctx.recentPerceptions
+      .map((p) => `--- ${formatForPrompt(p.gameDateTime)} ---\n${p.narrative}`)
+      .join("\n\n");
+    sections.push(
+      `## Recently (short-term memory — last ${ctx.recentPerceptions.length} tick(s))\n${block}`
+    );
+  }
+
   if (ctx.perception?.narrative) {
     sections.push(`## What you perceive\n${ctx.perception.narrative}`);
   }

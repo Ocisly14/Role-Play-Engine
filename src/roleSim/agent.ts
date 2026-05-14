@@ -60,6 +60,14 @@ export interface RoleSimContext {
   perception?: {
     narrative: string;
   };
+  /** Short-term working memory: prior renderer narratives this NPC has seen,
+   *  in chronological order (oldest first). Excludes the current tick (which
+   *  is in `perception.narrative`). Controller maintains a per-NPC ring
+   *  buffer; only successful renders enter the buffer. */
+  recentPerceptions?: ReadonlyArray<{
+    gameDateTime: GameTime;
+    narrative: string;
+  }>;
 }
 
 export interface RoleSimAgent {
