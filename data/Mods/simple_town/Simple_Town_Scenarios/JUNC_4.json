@@ -1,9 +1,0 @@
-{
-  "id": "JUNC_4",
-  "name": "Apartment Corner",
-  "description": "A quieter corner at the far end of Willow Lane, just outside the building where Lisa's apartment is located.",
-  "parentLocationId": "OUTDOOR",
-  "items": [],
-  "conditions": [],
-  "connectedSceneIds": ["SCN_4_SUB_1"]
-}
