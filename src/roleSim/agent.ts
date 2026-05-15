@@ -51,6 +51,9 @@ export interface RoleSimContext {
     type: string;
     content: string;
     gameDateTime: string;
+    /** Human-readable location name (resolved from sceneId), if known.
+     *  Surfaced inline in the memory section to give spatial context. */
+    location?: string;
   }>;
   longTermIntent?: string;
   /** Renderer-layer perception output (G1 / G6). One first-person citation-
@@ -60,6 +63,14 @@ export interface RoleSimContext {
   perception?: {
     narrative: string;
   };
+  /** Short-term working memory: prior renderer narratives this NPC has seen,
+   *  in chronological order (oldest first). Excludes the current tick (which
+   *  is in `perception.narrative`). Controller maintains a per-NPC ring
+   *  buffer; only successful renders enter the buffer. */
+  recentPerceptions?: ReadonlyArray<{
+    gameDateTime: GameTime;
+    narrative: string;
+  }>;
 }
 
 export interface RoleSimAgent {

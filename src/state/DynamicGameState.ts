@@ -840,6 +840,168 @@ export class DynamicGameStateManager {
     return this.state.npcInventories[npcId].splice(idx, 1)[0];
   }
 
+  /** Mutate an item's name/description in place. Searches all scenes then
+   *  all NPC inventories for the matching id (item ids are globally unique).
+   *  Returns true on success, false (with warning) when no item matches. */
+  modifyItem(
+    itemId: string,
+    patch: { name?: string; description?: string }
+  ): boolean {
+    const target = this.findItemById(itemId);
+    if (!target) {
+      console.warn(`[DGSM] modifyItem: item id="${itemId}" not found`);
+      return false;
+    }
+    if (typeof patch.name === "string" && patch.name.trim().length > 0) {
+      target.name = patch.name;
+    }
+    if (typeof patch.description === "string") {
+      target.description = patch.description;
+    }
+    this.state.lastUpdated = new Date();
+    return true;
+  }
+
+  /** Create a new Item at the given location.
+   *  `location = "scene:<sceneId>"` puts it in scene.items.
+   *  `location = "<npcId>"` puts it in npcInventories[npcId].
+   *  Returns the created Item (id auto-generated from name slug + suffix when
+   *  needed). Returns undefined + warns when location can't be resolved. */
+  createItem(
+    name: string,
+    location: string,
+    properties?: Record<string, unknown>
+  ): Item | undefined {
+    const id = this.makeItemId(name);
+    const item: Item = { id, name };
+    if (location.startsWith("scene:")) {
+      const sceneId = location.slice("scene:".length);
+      const scene = this.state.scenes.get(sceneId);
+      if (!scene) {
+        console.warn(`[DGSM] createItem: scene "${sceneId}" not found`);
+        return undefined;
+      }
+      scene.items.push(item);
+    } else {
+      // Treat as NPC id.
+      if (!this.state.npcInventories[location])
+        this.state.npcInventories[location] = [];
+      this.state.npcInventories[location].push(item);
+    }
+    void properties; // resolver may emit opaque props; not surfaced on Item type
+    this.state.lastUpdated = new Date();
+    return item;
+  }
+
+  /** Move an item between locations. `from` and `to` accept the same
+   *  `"scene:<id>"` / `"<npcId>"` syntax as createItem. Returns true on success. */
+  moveItem(itemId: string, from: string, to: string): boolean {
+    const removed = this.removeItemFrom(itemId, from);
+    if (!removed) {
+      console.warn(
+        `[DGSM] moveItem: item id="${itemId}" not found at ${from}`
+      );
+      return false;
+    }
+    if (to.startsWith("scene:")) {
+      const sceneId = to.slice("scene:".length);
+      const scene = this.state.scenes.get(sceneId);
+      if (!scene) {
+        console.warn(`[DGSM] moveItem: destination scene "${sceneId}" not found`);
+        return false;
+      }
+      scene.items.push(removed);
+    } else {
+      if (!this.state.npcInventories[to])
+        this.state.npcInventories[to] = [];
+      this.state.npcInventories[to].push(removed);
+    }
+    this.state.lastUpdated = new Date();
+    return true;
+  }
+
+  /** Destroy an item, removing it from the world. Searches scenes then
+   *  inventories for the id. Returns true on removal. */
+  destroyItem(itemId: string): boolean {
+    for (const scene of this.state.scenes.values()) {
+      const idx = scene.items.findIndex((i) => i.id === itemId);
+      if (idx !== -1) {
+        scene.items.splice(idx, 1);
+        this.state.lastUpdated = new Date();
+        return true;
+      }
+    }
+    for (const npcId of Object.keys(this.state.npcInventories)) {
+      const inv = this.state.npcInventories[npcId];
+      const idx = inv.findIndex((i) => i.id === itemId);
+      if (idx !== -1) {
+        inv.splice(idx, 1);
+        this.state.lastUpdated = new Date();
+        return true;
+      }
+    }
+    console.warn(`[DGSM] destroyItem: item id="${itemId}" not found`);
+    return false;
+  }
+
+  /** Internal: pull an item out of a single location. */
+  private removeItemFrom(itemId: string, location: string): Item | undefined {
+    if (location.startsWith("scene:")) {
+      const sceneId = location.slice("scene:".length);
+      const scene = this.state.scenes.get(sceneId);
+      if (!scene) return undefined;
+      const idx = scene.items.findIndex((i) => i.id === itemId);
+      if (idx === -1) return undefined;
+      return scene.items.splice(idx, 1)[0];
+    }
+    const inv = this.state.npcInventories[location];
+    if (!inv) return undefined;
+    const idx = inv.findIndex((i) => i.id === itemId);
+    if (idx === -1) return undefined;
+    return inv.splice(idx, 1)[0];
+  }
+
+  /** Internal: deterministic item-id generator from a display name. */
+  private makeItemId(name: string): string {
+    const base =
+      "item_" +
+      name
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, "_")
+        .replace(/^_+|_+$/g, "")
+        .slice(0, 32);
+    if (!this.itemIdExists(base)) return base;
+    // Disambiguate via numeric suffix.
+    let i = 2;
+    while (this.itemIdExists(`${base}_${i}`)) i += 1;
+    return `${base}_${i}`;
+  }
+
+  private itemIdExists(itemId: string): boolean {
+    for (const scene of this.state.scenes.values()) {
+      if (scene.items.some((i) => i.id === itemId)) return true;
+    }
+    for (const inv of Object.values(this.state.npcInventories)) {
+      if (inv.some((i) => i.id === itemId)) return true;
+    }
+    return false;
+  }
+
+  /** Internal: find first Item matching id by scanning scenes then inventories. */
+  private findItemById(itemId: string): Item | undefined {
+    for (const scene of this.state.scenes.values()) {
+      for (const item of scene.items) {
+        if (item.id === itemId) return item;
+      }
+    }
+    for (const inv of Object.values(this.state.npcInventories)) {
+      for (const item of inv) {
+        if (item.id === itemId) return item;
+      }
+    }
+    return undefined;
+  }
+
   /** Damage an evidence item in the specified scene (e.g., on fumble) */
   damageEvidenceItem(
     itemId: string,

@@ -15,40 +15,156 @@ export class CitationResolutionError extends Error {
   }
 }
 
-const CITATION_REGEX = /\[([^\]]+)\]/g;
+export class ActionTextFormatError extends Error {
+  constructor(message: string, public readonly actionText: string) {
+    super(`${message} actionText: "${actionText}"`);
+    this.name = "ActionTextFormatError";
+  }
+}
 
-export function parseCitations(
+type RefKind = "character" | "item" | "scene";
+type ParsedRef = { id: string; kind: RefKind };
+
+const NARRATIVE_HEADER = /^\s*\[narrative\]\s*$/im;
+const REFERENCES_HEADER = /^\s*\[references\]\s*$/im;
+const NUMBER_CITATION_REGEX = /\[(\d+)\]/g;
+// Agent references: `[N] id: <entity-id>; kind: character|item|scene`.
+// Anything past `kind:` (e.g., trailing description on renderer output) is
+// ignored — agent-side only needs id + kind.
+const REF_LINE_REGEX =
+  /^\s*\[(\d+)\]\s+id:\s*(.+?)\s*;\s*kind:\s*(character|item|scene)\b/i;
+
+/**
+ * Parse the agent's actionText (two-block format: [narrative] + [references])
+ * into a cleaned narrative + resolved ReferencedEntity[]. Lenient on missing
+ * fences when there are no [N] citations.
+ */
+export function parseActionText(
   actionText: string,
   directory: PerceivableDirectory
-): ReferencedEntity[] {
-  const result: ReferencedEntity[] = [];
-  const seen = new Set<string>();
+): { narrative: string; referencedEntities: ReferencedEntity[] } {
+  const { narrative, refsBlock } = splitSections(actionText);
+  const refs = parseReferences(refsBlock, actionText);
+  const used = collectCitationNumbers(narrative);
+
+  for (const n of used) {
+    if (!refs.has(n)) {
+      throw new ActionTextFormatError(
+        `Citation [${n}] used in narrative but missing from [references] block.`,
+        actionText
+      );
+    }
+  }
+
+  const referencedEntities: ReferencedEntity[] = [];
+  const seen = new Set<number>();
+  // Iterate in narrative-appearance order for stable downstream ordering.
+  for (const n of used) {
+    if (seen.has(n)) continue;
+    seen.add(n);
+    const ref = refs.get(n)!;
+    referencedEntities.push(resolveRef(n, ref, directory, actionText));
+  }
+
+  return { narrative, referencedEntities };
+}
+
+function splitSections(actionText: string): {
+  narrative: string;
+  refsBlock: string;
+} {
+  const narrIdx = actionText.search(NARRATIVE_HEADER);
+  const refsIdx = actionText.search(REFERENCES_HEADER);
+
+  // No fences at all → entire text is narrative.
+  if (narrIdx < 0 && refsIdx < 0) {
+    return { narrative: actionText.trim(), refsBlock: "" };
+  }
+  // Only [references] without [narrative] is malformed.
+  if (narrIdx < 0 && refsIdx >= 0) {
+    throw new ActionTextFormatError(
+      "[references] header present without [narrative] header.",
+      actionText
+    );
+  }
+  // Slice narrative between [narrative] header and either [references] or EOF.
+  const narrEnd =
+    narrIdx >= 0
+      ? actionText.match(NARRATIVE_HEADER)![0].length + narrIdx
+      : 0;
+  const narrative =
+    refsIdx > narrEnd
+      ? actionText.slice(narrEnd, refsIdx).trim()
+      : actionText.slice(narrEnd).trim();
+
+  const refsBlock =
+    refsIdx >= 0
+      ? actionText
+          .slice(refsIdx + actionText.match(REFERENCES_HEADER)![0].length)
+          .trim()
+      : "";
+
+  return { narrative, refsBlock };
+}
+
+function parseReferences(
+  refsBlock: string,
+  actionText: string
+): Map<number, ParsedRef> {
+  const refs = new Map<number, ParsedRef>();
+  if (!refsBlock) return refs;
+
+  for (const raw of refsBlock.split(/\r?\n/)) {
+    const line = raw.trim();
+    if (!line) continue;
+    const m = line.match(REF_LINE_REGEX);
+    if (!m) {
+      throw new ActionTextFormatError(
+        `Malformed reference line: "${line}". Expected "[N] id: <entity-id>; kind: character|item|scene".`,
+        actionText
+      );
+    }
+    const n = Number.parseInt(m[1], 10);
+    if (refs.has(n)) {
+      throw new ActionTextFormatError(
+        `Duplicate reference number [${n}].`,
+        actionText
+      );
+    }
+    refs.set(n, { id: m[2], kind: m[3].toLowerCase() as RefKind });
+  }
+  return refs;
+}
+
+function collectCitationNumbers(narrative: string): number[] {
+  const result: number[] = [];
   let match: RegExpExecArray | null;
-  CITATION_REGEX.lastIndex = 0;
-  while ((match = CITATION_REGEX.exec(actionText)) !== null) {
-    const name = match[1];
-    if (seen.has(name)) continue;
-    seen.add(name);
-
-    const charId = directory.characters.get(name);
-    if (charId !== undefined) {
-      result.push({ id: charId, kind: "character" });
-      continue;
-    }
-    const itemId = directory.items.get(name);
-    if (itemId !== undefined) {
-      result.push({ id: itemId, kind: "item" });
-      continue;
-    }
-    const sceneId = directory.scenes.get(name);
-    if (sceneId !== undefined) {
-      result.push({ id: sceneId, kind: "scene" });
-      continue;
-    }
-
-    throw new CitationResolutionError(name, actionText);
+  NUMBER_CITATION_REGEX.lastIndex = 0;
+  while ((match = NUMBER_CITATION_REGEX.exec(narrative)) !== null) {
+    result.push(Number.parseInt(match[1], 10));
   }
   return result;
+}
+
+function resolveRef(
+  n: number,
+  ref: ParsedRef,
+  directory: PerceivableDirectory,
+  actionText: string
+): ReferencedEntity {
+  const scope =
+    ref.kind === "character"
+      ? directory.characters
+      : ref.kind === "item"
+        ? directory.items
+        : directory.scenes;
+  if (!scope.has(ref.id)) {
+    throw new CitationResolutionError(
+      `${ref.id} (kind=${ref.kind}, ref [${n}]) — not in perceivable scope`,
+      actionText
+    );
+  }
+  return { id: ref.id, kind: ref.kind };
 }
 
 export function buildInterpreterPrompt(
@@ -211,6 +327,10 @@ export async function interpretAction(
   language: string,
   directory: PerceivableDirectory
 ): Promise<InterpretedResult> {
+  // Strip [references] block; resolve citations once. The cleaned narrative is
+  // what the LLM definition-matcher sees, and what gets stored on ActionStep.
+  const { narrative, referencedEntities } = parseActionText(action, directory);
+
   const systemPrompt = buildInterpreterPrompt(definitions);
   const langInstruction =
     language === "zh"
@@ -219,15 +339,17 @@ export async function interpretAction(
 
   const text = await generateText({
     customSystemPrompt: systemPrompt,
-    context: `${langInstruction}\n\nAction: "${action}"`,
+    context: `${langInstruction}\n\nAction: "${narrative}"`,
     modelClass: ModelClass.SMALL,
     operation: "game-interpreter",
   });
 
   const parsed = parseInterpretedResult(text, definitions);
-  // Phase H: every step shares the same citations parsed from actionText.
-  const referencedEntities = parseCitations(action, directory);
   return {
-    steps: parsed.steps.map((s) => ({ ...s, referencedEntities })),
+    steps: parsed.steps.map((s) => ({
+      ...s,
+      actionText: narrative,
+      referencedEntities,
+    })),
   };
 }

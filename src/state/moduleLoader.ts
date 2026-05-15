@@ -402,17 +402,23 @@ export function initRuntime(params: {
         50,
     };
 
-    // Inventory
-    npcInventories[npc.id] = Array.isArray(npc.inventory)
+    // Inventory — normalize once so both npcInventories (runtime Item[]) and
+    // npc.inventory (profile InventoryItem[]) carry a stable `id`. The id is
+    // the citation handle used by PerceivableDirectory + interpreter.
+    const normalizedInventory = Array.isArray(npc.inventory)
       ? npc.inventory.map((item: any) => {
           if (typeof item === "string") return { id: item, name: item };
+          const id = item.id ?? item.name ?? String(item);
+          const name = item.name ?? id;
           return {
-            id: item.name ?? String(item),
-            name: item.name ?? String(item),
+            id,
+            name,
             ...(item.properties ?? {}),
           };
         })
       : [];
+    npcInventories[npc.id] = normalizedInventory;
+    npc.inventory = normalizedInventory;
 
     // Relationships
     const rels: Record<string, { score: number; note: string }> = {};

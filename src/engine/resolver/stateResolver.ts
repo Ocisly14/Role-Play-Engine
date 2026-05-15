@@ -6,6 +6,7 @@
  */
 
 import { ModelClass, generateText } from "../../models/index.js";
+import type { StateChange } from "../core/types.js";
 import { resolveOutputSchemaTypeIds } from "../outputSchema.js";
 import type {
   ActionDefinition,
@@ -179,6 +180,139 @@ export function validateResolution(
  */
 const RESOLVER_META_KEYS = ["elapsedMinutes"] as const;
 
+export interface ResolvedOutcome {
+  stateChanges: StateChange[];
+  elapsedMinutes: number;
+}
+
+/** Convert the resolver's flat dict
+ *  (`{"memory.event":[...], "item.modify":[...], "elapsedMinutes":N}`) into
+ *  the engine's typed `StateChange[]` discriminated union. Performs three
+ *  jobs: (1) skip meta keys (`elapsedMinutes`), (2) flatten typeId→array
+ *  entries into individually-tagged `{kind, ...}` records, (3) normalize
+ *  resolver-batched / resolver-shaped kinds into engine-atomic forms so the
+ *  Applier's `switch (c.kind)` dispatches cleanly without a second translation
+ *  layer. */
+function flattenToStateChanges(
+  resolution: Record<string, any>
+): StateChange[] {
+  const out: StateChange[] = [];
+  for (const [typeId, value] of Object.entries(resolution)) {
+    if ((RESOLVER_META_KEYS as readonly string[]).includes(typeId)) continue;
+    if (!Array.isArray(value)) continue;
+    for (const obj of value) {
+      if (!obj || typeof obj !== "object") continue;
+      const records = normalizeResolverEntry(typeId, obj);
+      out.push(...records);
+    }
+  }
+  return out;
+}
+
+/** Normalize one resolver-shaped entry into one or more engine-atomic
+ *  `StateChange` records. Returns [] for shapes the engine doesn't accept
+ *  (silently dropped — the validation pass that runs before this already
+ *  drops unauthorized kinds, so reaching this point with a bad shape is a
+ *  resolver-LLM bug, not a contract concern).
+ *
+ *  Conversions:
+ *  - `scene.condition {sceneId, add[], remove[]}` → multiple
+ *    `scene.addCondition` + `scene.removeCondition` records.
+ *  - `character.condition {characterId, add[], remove[]}` → multiple
+ *    `character.addCondition` + `character.removeCondition`.
+ *  - `character.position {characterId, sceneId, junction?}` → atomic with
+ *    typed `CharacterPosition` payload.
+ *  Pass-through (already engine-atomic): item.modify/create/move/destroy,
+ *  memory.event/witness, relationship.change, character.hp/san/fatigue. */
+function normalizeResolverEntry(
+  typeId: string,
+  obj: Record<string, any>
+): StateChange[] {
+  switch (typeId) {
+    case "scene.condition": {
+      const sceneId = String(obj.sceneId ?? "");
+      if (!sceneId) return [];
+      const out: StateChange[] = [];
+      for (const desc of (obj.add as unknown[]) ?? []) {
+        if (typeof desc !== "string" || !desc.trim()) continue;
+        out.push({
+          kind: "scene.addCondition",
+          sceneId,
+          condition: { description: desc },
+        });
+      }
+      for (const desc of (obj.remove as unknown[]) ?? []) {
+        if (typeof desc !== "string" || !desc.trim()) continue;
+        // The engine's removeCondition takes a featureId predicate, but
+        // resolver-emitted removals only carry a description. Use it as the
+        // featureId so `appendSceneCondition({description})` writes match
+        // `removeSceneConditionsByFeatureId(description)` reads.
+        out.push({
+          kind: "scene.removeCondition",
+          sceneId,
+          predicate: { featureId: desc },
+        });
+      }
+      return out;
+    }
+
+    case "character.condition": {
+      const characterId = String(obj.characterId ?? "");
+      if (!characterId) return [];
+      const out: StateChange[] = [];
+      for (const desc of (obj.add as unknown[]) ?? []) {
+        if (typeof desc !== "string" || !desc.trim()) continue;
+        out.push({
+          kind: "character.addCondition",
+          characterId,
+          condition: {
+            id: `${characterId}:${desc}:${Date.now()}`,
+            description: desc,
+          },
+        });
+      }
+      for (const condId of (obj.remove as unknown[]) ?? []) {
+        if (typeof condId !== "string" || !condId.trim()) continue;
+        out.push({
+          kind: "character.removeCondition",
+          characterId,
+          conditionId: condId,
+        });
+      }
+      return out;
+    }
+
+    case "character.position": {
+      const characterId = String(obj.characterId ?? "");
+      const sceneId = String(obj.sceneId ?? "");
+      if (!characterId || !sceneId) return [];
+      const junction =
+        typeof obj.junction === "string" && obj.junction
+          ? obj.junction
+          : undefined;
+      const position = junction
+        ? ({ type: "junction" as const, junctionId: junction })
+        : ({ type: "scene" as const, sceneId });
+      return [
+        {
+          kind: "character.position",
+          characterId,
+          position,
+          sourceSubsystem: "resolver",
+        },
+      ];
+    }
+
+    default:
+      // Engine-atomic kinds (item.modify, memory.event, relationship.change,
+      // character.hp/san/fatigue, etc.) pass through. The cast narrows the
+      // tagged record to a member of StateChange — TypeScript can't prove
+      // shape correctness from runtime data, so the union acts as the
+      // contract instead.
+      return [{ kind: typeId, ...obj } as StateChange];
+  }
+}
+
 function getAllowedResolutionKeys(config: OutputSchemaConfig): Set<string> {
   const allowed = new Set<string>(resolveOutputSchemaTypeIds(config));
   if (config.custom) {
@@ -196,9 +330,10 @@ function getAllowedResolutionKeys(config: OutputSchemaConfig): Set<string> {
 
 export async function resolveState(
   ctx: ResolverContext
-): Promise<Record<string, any>> {
+): Promise<ResolvedOutcome> {
   const prompt = buildResolverPrompt(ctx);
 
+  let raw: Record<string, any> = {};
   try {
     const text = await generateText({
       customSystemPrompt: prompt,
@@ -206,24 +341,28 @@ export async function resolveState(
       modelClass: ModelClass.MEDIUM,
       operation: "state-resolver",
     });
-
-    const resolution = parseStateResolution(text);
-
-    if (ctx.definition.outputSchema) {
-      if (!validateResolution(resolution, ctx.definition.outputSchema)) {
-        const allowed = getAllowedResolutionKeys(ctx.definition.outputSchema);
-        for (const key of Object.keys(resolution)) {
-          if (!allowed.has(key)) delete resolution[key];
-        }
-      }
-    }
-
-    return resolution;
+    raw = parseStateResolution(text);
   } catch (error) {
     console.warn(
       "[StateResolver] LLM call failed, returning empty resolution:",
       error instanceof Error ? error.message : error
     );
-    return {};
+    raw = {};
   }
+
+  if (ctx.definition.outputSchema) {
+    if (!validateResolution(raw, ctx.definition.outputSchema)) {
+      const allowed = getAllowedResolutionKeys(ctx.definition.outputSchema);
+      for (const key of Object.keys(raw)) {
+        if (!allowed.has(key)) delete raw[key];
+      }
+    }
+  }
+
+  const elapsedMinutes =
+    typeof raw.elapsedMinutes === "number" && raw.elapsedMinutes >= 0
+      ? raw.elapsedMinutes
+      : 0;
+  const stateChanges = flattenToStateChanges(raw);
+  return { stateChanges, elapsedMinutes };
 }

@@ -61,12 +61,10 @@ function formatInventoryLine(
     | undefined;
   if (!items || items.length === 0) return null;
   const parts = items.map((item) => {
-    if (item.quantity && item.quantity > 1) {
-      return `${item.name} (x${item.quantity})`;
-    }
-    return item.name;
+    const qty = item.quantity && item.quantity > 1 ? ` (x${item.quantity})` : "";
+    return `${item.name} [id: ${item.id}]${qty}`;
   });
-  return `Inventory: ${parts.join(", ")}`;
+  return `Inventory (cite items by id): ${parts.join(", ")}`;
 }
 
 function formatRelationshipsBlock(

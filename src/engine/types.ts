@@ -80,8 +80,12 @@ export interface InterpretedStep {
   engine: "code" | "llm";
   codeSubsystem?: string;
   overlayFields?: Record<string, unknown>;
-  /** Resolved [Name] citations from actionText (Phase H). Empty array if no
-   *  citations present. ActionIntake passes through to ActionStep. */
+  /** Cleaned narrative (without the agent's [references] block). When set,
+   *  ActionIntake stores this as ActionStep.actionText so downstream prompts
+   *  and logs see prose with [N] numbers but no reference metadata. */
+  actionText?: string;
+  /** Resolved citations from the agent's [references] block. Empty array if
+   *  no citations present. ActionIntake passes through to ActionStep. */
   referencedEntities?: import("./core/types.js").ReferencedEntity[];
 }
 

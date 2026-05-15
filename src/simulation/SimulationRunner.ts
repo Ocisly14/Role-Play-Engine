@@ -8,7 +8,6 @@ import type {
   ActionStep,
   CharacterAction as EngineCharacterAction,
   FeatureEvent,
-  InterruptReason,
   PlannedOutcome,
   TickReport,
 } from "../engine/core/types.js";
@@ -532,7 +531,8 @@ export class SimulationRunner {
       },
       resolve: async (
         step: ActionStep,
-        ctx: unknown
+        ctx: unknown,
+        cancel
       ): Promise<{ outcome: PlannedOutcome; plannedDuration: number }> => {
         const definition = this.definitions.get(step.definitionId);
         if (!definition) {
@@ -550,29 +550,33 @@ export class SimulationRunner {
           this.dgsm,
           step.executionSceneId
         );
-        const resolution = await resolveState({
-          action: step.actionText,
+        // On cancel, wrap actionText with prompt directive so the resolver LLM
+        // produces a partial-progress outcome.
+        const actionForResolver = cancel
+          ? [
+              `[CANCELLED at minute ${cancel.elapsedMinutes.toFixed(1)} of planned ${cancel.plannedDuration.toFixed(1)} due to: ${cancel.reason}]`,
+              `Original intent: "${step.actionText}"`,
+              cancel.plannedNarrative
+                ? `Original planned outcome (had it completed): ${cancel.plannedNarrative}`
+                : "",
+              `Produce a SHORT memory.event reflecting ONLY what actually happened in those ${cancel.elapsedMinutes.toFixed(1)} minutes before cancellation.`,
+            ]
+              .filter(Boolean)
+              .join("\n")
+          : step.actionText;
+
+        const resolved = await resolveState({
+          action: actionForResolver,
           definition,
           outcomeSection: definition.content,
           stateContext,
           language: this.language,
         });
-        const stateChanges = Array.isArray(resolution.stateChanges)
-          ? (resolution.stateChanges as PlannedOutcome["stateChanges"])
-          : [];
-        const elapsedMinutes =
-          typeof resolution.elapsedMinutes === "number"
-            ? resolution.elapsedMinutes
-            : 0;
-        const narrative =
-          typeof resolution.narrative === "string"
-            ? resolution.narrative
-            : undefined;
-        // Suppress unused-arg warning for ctx — orchestrator passes its own
-        // FeatureReadContext but the LLM resolver builds its own stateContext.
         void ctx;
+        // Engine is source of truth for elapsed time on cancel.
+        const elapsedMinutes = cancel ? cancel.elapsedMinutes : resolved.elapsedMinutes;
         return {
-          outcome: { stateChanges, elapsedMinutes, narrative },
+          outcome: { stateChanges: resolved.stateChanges, elapsedMinutes },
           plannedDuration: elapsedMinutes,
         };
       },
@@ -617,13 +621,9 @@ export class SimulationRunner {
     engine.on("actionCompleted", (a: EngineCharacterAction) => {
       this.events.actionsToEvents([a], "completed");
     });
-    engine.on(
-      "actionInterrupted",
-      (a: EngineCharacterAction, _r: InterruptReason) => {
-        this.events.actionsToEvents([a], "interrupted");
-      }
-    );
     engine.on("actionCancelled", (a: EngineCharacterAction) => {
+      // UI emits "interrupted" for cancellations too — they're indistinguishable
+      // from a user-visible standpoint (action stopped before natural end).
       this.events.actionsToEvents([a], "interrupted");
     });
     engine.on("featureEvent", (e: FeatureEvent) => {

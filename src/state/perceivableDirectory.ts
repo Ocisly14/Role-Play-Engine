@@ -1,26 +1,27 @@
 // src/state/perceivableDirectory.ts
 //
-// Phase H: shared directory used by GameInterpreter (citation resolution) and
-// llmRenderer (perception identity gate). One source of truth for "what
-// entities can this actor reference by name in this tick".
-//
-// Spec: docs/superpowers/specs/2026-05-07-agent-engine-citation-contract-design.md
-//   - D8 character scope (relationships ∪ in-scene with KNOWN/UNKNOWN gate)
-//   - OQ4 item scope (scene items ∪ actor inventory; scene wins conflicts)
+// Per-tick perception scope: which entity ids this actor may reference in
+// citations. Used by the LLM interpreter to reject out-of-scope references
+// and by the renderer to know which entities to surface in the perception
+// prompt. The directory holds raw ids only — name/description lookup is
+// always done via DGSM, so there is exactly one source of truth for entity
+// metadata.
 
 import type { DynamicGameStateManager } from "./DynamicGameState.js";
 import type { DynamicNPCProfile } from "./types.js";
 
 export interface PerceivableDirectory {
-  /** Display name → character ID. KNOWN: canonical name; UNKNOWN: descriptionIdentifier. */
-  characters: Map<string, string>;
-  /** Display name → item identifier. Scene items use Item.id; inventory items use name. */
-  items: Map<string, string>;
-  /** Display name → scene ID. Current scene + scenes reachable via 1-hop connections. */
-  scenes: Map<string, string>;
+  /** Character ids in scope: KNOWN via relationships ∪ in-scene. */
+  characters: Set<string>;
+  /** Item ids in scope: scene items ∪ actor inventory. */
+  items: Set<string>;
+  /** Scene ids in scope: current scene + scenes reachable via 1-hop connections. */
+  scenes: Set<string>;
 }
 
-/** Did `viewpoint` know `otherCharId` before this tick? Drives KNOWN/UNKNOWN gate. */
+/** Did `viewpoint` know `otherCharId` before this tick? Drives the renderer's
+ *  KNOWN/UNKNOWN gate (UNKNOWN people get rendered by description, not by
+ *  canonical name, even though their id is exposed for citation). */
 export function isKnownTo(
   viewpoint: DynamicNPCProfile | undefined,
   otherCharId: string
@@ -29,8 +30,8 @@ export function isKnownTo(
   return viewpoint.relationships.some((r) => r.targetId === otherCharId);
 }
 
-/** Description-based identifier for an UNKNOWN character. Stable for a given
- *  profile snapshot — renderer + interpreter must agree. */
+/** Description-based identifier for an UNKNOWN character. Used by the
+ *  renderer when rendering an unknown person in narrative prose. */
 export function descriptionIdentifier(profile: DynamicNPCProfile): string {
   const bits: string[] = [];
   if (profile.appearance) {
@@ -48,66 +49,52 @@ export function buildPerceivableDirectory(
   actorId: string,
   dgsm: DynamicGameStateManager
 ): PerceivableDirectory {
-  const actor = dgsm.getNpcProfile(actorId);
-  const characters = new Map<string, string>();
-  const items = new Map<string, string>();
-  const scenes = new Map<string, string>();
+  const characters = new Set<string>();
+  const items = new Set<string>();
+  const scenes = new Set<string>();
 
-  if (!actor) {
-    return { characters, items, scenes };
-  }
+  const actor = dgsm.getNpcProfile(actorId);
+  if (!actor) return { characters, items, scenes };
 
   // ── Characters: KNOWN via relationships ─────────────────────────
-  const knownIds = new Set<string>();
   for (const rel of actor.relationships ?? []) {
     if (rel.targetId === actorId) continue;
     if (!dgsm.isNpcAlive(rel.targetId)) continue;
-    const target = dgsm.getNpcProfile(rel.targetId);
-    if (!target) continue;
-    characters.set(target.name, target.id);
-    knownIds.add(target.id);
+    if (!dgsm.getNpcProfile(rel.targetId)) continue;
+    characters.add(rel.targetId);
   }
 
-  // ── Characters: UNKNOWN in-scene ─────────────────────────────────
+  // ── Characters: in-scene (incl. UNKNOWN strangers) ──────────────
   const actorPos = dgsm.getCharacterPosition(actorId);
   const sceneId =
     actorPos && actorPos.type === "scene" ? actorPos.sceneId : null;
   if (sceneId) {
-    const state = dgsm.getState();
-    for (const npc of state.npcCharacters) {
+    for (const npc of dgsm.getState().npcCharacters) {
       if (npc.id === actorId) continue;
-      if (knownIds.has(npc.id)) continue;
       if (!dgsm.isNpcAlive(npc.id)) continue;
-      const npcPos = dgsm.getCharacterPosition(npc.id);
-      const npcSceneId =
-        npcPos && npcPos.type === "scene" ? npcPos.sceneId : null;
-      if (npcSceneId !== sceneId) continue;
-      characters.set(descriptionIdentifier(npc), npc.id);
+      const pos = dgsm.getCharacterPosition(npc.id);
+      const npcSceneId = pos && pos.type === "scene" ? pos.sceneId : null;
+      if (npcSceneId === sceneId) characters.add(npc.id);
     }
   }
 
-  // ── Items: scene first (wins conflicts), then inventory ──────────
+  // ── Items: scene items ∪ actor inventory ────────────────────────
   if (sceneId) {
     const scene = dgsm.getScene(sceneId);
-    for (const item of scene?.items ?? []) {
-      items.set(item.name, item.id);
-    }
+    for (const item of scene?.items ?? []) items.add(item.id);
   }
-  for (const item of actor.inventory ?? []) {
-    if (!items.has(item.name)) {
-      items.set(item.name, item.name);
-    }
-  }
+  // Read inventory from runtime npcInventories (mutated by item.move /
+  // item.create / item.destroy). The static profile.inventory is loaded once
+  // from JSON and never updated by Applier paths — perception MUST reflect
+  // runtime state.
+  for (const item of dgsm.getNpcInventory(actorId)) items.add(item.id);
 
-  // ── Scenes: current + adjacent via connections ───────────────────
+  // ── Scenes: current + adjacent ──────────────────────────────────
   if (sceneId) {
+    scenes.add(sceneId);
     const currentScene = dgsm.getScene(sceneId);
-    if (currentScene) {
-      scenes.set(currentScene.name, currentScene.id);
-      for (const conn of currentScene.connections ?? []) {
-        const adj = dgsm.getScene(conn.targetId);
-        if (adj) scenes.set(adj.name, adj.id);
-      }
+    for (const conn of currentScene?.connections ?? []) {
+      if (dgsm.getScene(conn.targetId)) scenes.add(conn.targetId);
     }
   }
 

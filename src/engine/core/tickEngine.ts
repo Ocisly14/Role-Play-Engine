@@ -15,26 +15,19 @@ import type {
   CancelResult,
   CharacterAction,
   FeatureEvent,
-  InterruptReason,
-  InterruptResult,
   TickReport,
   Unsubscribe,
 } from "./types.js";
 
 export interface TickEngine {
   submitAction(input: ActionInput): Promise<ActionHandle>;
-  cancelAction(handle: ActionHandle): CancelResult;
-  interruptAction(
-    handle: ActionHandle,
-    reason: InterruptReason
-  ): InterruptResult;
+  /** Cancel all live steps on this handle. Optional `reason` is passed to the
+   *  resolver re-run on next tick (active steps only) so the partial
+   *  narrative reflects WHY the action stopped (e.g., "switching to: flee"). */
+  cancelAction(handle: ActionHandle, reason?: string): CancelResult;
   tick(): Promise<void>;
 
   on(ev: "actionCompleted", cb: (a: CharacterAction) => void): Unsubscribe;
-  on(
-    ev: "actionInterrupted",
-    cb: (a: CharacterAction, r: InterruptReason) => void
-  ): Unsubscribe;
   on(ev: "actionCancelled", cb: (a: CharacterAction) => void): Unsubscribe;
   on(ev: "featureEvent", cb: (e: FeatureEvent) => void): Unsubscribe;
   on(
@@ -120,58 +113,29 @@ export function createTickEngine(opts: CreateTickEngineOptions): TickEngine {
   return {
     submitAction: (input) => intake.submit(input),
 
-    cancelAction(handle) {
+    cancelAction(handle, reason) {
       const live = liveSteps(handle.id);
       if (live.length === 0) {
-        // Chain already finished or prior cancel/interrupt already marked
-        // every step terminal. Idempotent: repeat call = no-op.
+        // Chain already finished or prior cancel already marked every step
+        // terminal. Idempotent: repeat call = no-op.
         return { applied: false, remainingChainCancelled: 0 };
       }
       // Sync-mark every live step cancelled. Subsequent calls see no live
       // steps and return applied:false naturally (Option Y).
+      // For ACTIVE steps the orchestrator will re-run the resolver next tick
+      // with `reason` so the surfaced cancellation carries a partial
+      // narrative reflecting actual progress.
       const rep =
         live.find((s) => s.status === "active") ??
         [...live].sort((a, b) => a.stepIndex - b.stepIndex)[0];
       for (const s of live) queue.markCancelled(s.id);
-      orchestrator.recordCancelledStep(rep);
+      orchestrator.recordCancelledStep(rep, reason);
       return { applied: true, remainingChainCancelled: live.length };
-    },
-
-    interruptAction(handle, reason) {
-      const live = liveSteps(handle.id);
-      if (live.length === 0) {
-        return { applied: false, remainingChainCancelled: 0 };
-      }
-      const active = live.find((s) => s.status === "active");
-      const queuedSibs = live.filter((s) => s.status === "queued");
-
-      // Sync: cancel queued siblings (no resolver needed).
-      for (const s of queuedSibs) queue.markCancelled(s.id);
-
-      if (!active) {
-        // Spec §3 edge case: interrupt on queued-only handle behaves as cancel.
-        const rep = [...queuedSibs].sort(
-          (a, b) => a.stepIndex - b.stepIndex
-        )[0];
-        orchestrator.recordCancelledStep(rep);
-        return { applied: true, remainingChainCancelled: queuedSibs.length };
-      }
-
-      // Deferred: active step needs C-compromise next tick. Step stays in
-      // "active" status until then.
-      orchestrator.queuePendingInterrupt({
-        handleId: handle.id,
-        reason,
-        activeStepId: active.id,
-      });
-      return { applied: true, remainingChainCancelled: queuedSibs.length };
     },
 
     async tick() {
       const report = await orchestrator.tick();
       for (const a of report.commits) bus.emitActionCompleted(a);
-      for (const i of report.interruptions)
-        bus.emitActionInterrupted(i.action, i.reason);
       for (const c of report.cancellations) bus.emitActionCancelled(c);
       for (const e of report.featureEvents) bus.emitFeatureEvent(e);
       await bus.emitTickCompleted(report);

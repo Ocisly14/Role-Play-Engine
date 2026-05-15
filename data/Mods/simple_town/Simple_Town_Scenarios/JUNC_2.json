@@ -1,9 +1,0 @@
-{
-  "id": "JUNC_2",
-  "name": "Town Center Crossroads",
-  "description": "The main crossroads in the center of town, right next to the town square. Roads branch out in three directions.",
-  "parentLocationId": "OUTDOOR",
-  "items": [],
-  "conditions": [],
-  "connectedSceneIds": ["SCN_2_SUB_1"]
-}

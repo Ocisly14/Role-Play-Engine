@@ -16,7 +16,7 @@ export type OwnActionState =
   | {
       kind: "ended";
       actionText: string;
-      status: "committed" | "interrupted" | "cancelled";
+      status: "committed" | "cancelled";
     }
   | { kind: "idle" };
 

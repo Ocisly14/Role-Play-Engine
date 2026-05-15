@@ -76,11 +76,6 @@ function resolveOwnAction(
     const committed = report.commits.find((a) => a.characterId === npcId);
     if (committed) return endedFrom(committed, "committed");
 
-    const interrupted = report.interruptions.find(
-      (entry) => entry.action.characterId === npcId
-    );
-    if (interrupted) return endedFrom(interrupted.action, "interrupted");
-
     const cancelled = report.cancellations.find((a) => a.characterId === npcId);
     if (cancelled) return endedFrom(cancelled, "cancelled");
   }
@@ -96,7 +91,7 @@ function resolveOwnAction(
 
 function endedFrom(
   action: CharacterAction,
-  status: "committed" | "interrupted" | "cancelled"
+  status: "committed" | "cancelled"
 ): OwnActionState {
   return {
     kind: "ended",

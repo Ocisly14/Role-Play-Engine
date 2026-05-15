@@ -42,6 +42,7 @@ export interface CharacterStatus {
 }
 
 export interface InventoryItem {
+  id: string;
   name: string;
   quantity?: number;
   properties?: Record<string, any>;
@@ -90,6 +91,8 @@ export class InventoryUtils {
       (item) =>
         item &&
         typeof item === "object" &&
+        "id" in item &&
+        typeof item.id === "string" &&
         "name" in item &&
         typeof item.name === "string"
     );
@@ -137,6 +140,7 @@ export class InventoryUtils {
         };
       } else {
         newInventory.push({
+          id: itemToAdd.id,
           name: itemToAdd.name,
           quantity: itemToAdd.quantity || 1,
           properties: itemToAdd.properties,

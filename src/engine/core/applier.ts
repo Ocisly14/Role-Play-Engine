@@ -233,6 +233,43 @@ export class Applier {
           this.dgsm.setCharacterPosition(c.characterId, c.position);
           break;
         }
+        // ── Resolver-emitted item ops ──
+        case "item.modify": {
+          this.dgsm.modifyItem(c.itemId, {
+            ...(typeof c.name === "string" ? { name: c.name } : {}),
+            ...(typeof c.description === "string"
+              ? { description: c.description }
+              : {}),
+          });
+          break;
+        }
+        case "item.create": {
+          this.dgsm.createItem(c.name, c.location, c.properties);
+          break;
+        }
+        case "item.move": {
+          this.dgsm.moveItem(c.itemId, c.from, c.to);
+          break;
+        }
+        case "item.destroy": {
+          this.dgsm.destroyItem(c.itemId);
+          break;
+        }
+        // ── Resolver-emitted relationship op ──
+        case "relationship.change": {
+          this.dgsm.updateRelationship(
+            c.fromId,
+            c.toId,
+            typeof c.delta === "number" ? c.delta : 0,
+            typeof c.note === "string" ? c.note : ""
+          );
+          break;
+        }
+        // ── Memory entries: applier no-op; consumed by
+        //    NpcActionController.routeResolverMemories after applier.flush. ──
+        case "memory.event":
+        case "memory.witness":
+          break;
         default:
           break;
       }

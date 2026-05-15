@@ -11,21 +11,35 @@ import type {
   ActionStep,
   CharacterAction,
   GameTime,
-  InterruptReason,
   PlannedOutcome,
   StateChange,
   TickReport,
 } from "./types.js";
 
-export interface PendingInterrupt {
-  handleId: string;
-  reason: InterruptReason;
-  activeStepId: string;
+interface PendingCancellation {
+  step: ActionStep;
+  /** Optional caller-supplied reason — passed to the resolver so partial
+   *  narrative reflects WHY the action stopped (e.g., "switching to: flee"). */
+  reason?: string;
+}
+
+/** Optional context passed to the resolver when re-running mid-action because
+ *  the step is being cancelled. The resolver should produce an outcome
+ *  reflecting partial progress (narrative + any stateChanges that did land in
+ *  the elapsed window) rather than the original plannedOutcome. */
+export interface ResolveCancelContext {
+  elapsedMinutes: number;
+  plannedDuration: number;
+  reason: string;
+  /** The narrative the resolver produced at activation, for the LLM to use as
+   *  reference ("you were going to X, but only Y minutes passed before Z"). */
+  plannedNarrative?: string;
 }
 
 export type ResolveFn = (
   step: ActionStep,
-  ctx: unknown
+  ctx: unknown,
+  cancel?: ResolveCancelContext
 ) => Promise<{
   outcome: PlannedOutcome;
   plannedDuration: number;
@@ -49,14 +63,12 @@ export interface OrchestratorDeps {
 }
 
 export class TickOrchestrator {
-  // Pending interrupt requests — only "active step needs C-compromise" work.
-  // Queued-sibling cancels and full-chain cancels are applied synchronously by
-  // TickEngine.cancelAction / interruptAction (Option Y decision).
-  private pendingInterrupts: PendingInterrupt[] = [];
   // Sync-cancelled ActionSteps waiting to be surfaced as CharacterAction events.
   // TickEngine.cancelAction pushes here at call time; orchestrator drains into
-  // TickReport.cancellations at the start of the next tick.
-  private pendingCancelledSteps: ActionStep[] = [];
+  // TickReport.cancellations at the start of the next tick. For active steps
+  // the resolver is re-run during Phase 2a so the surfaced outcome carries a
+  // partial narrative.
+  private pendingCancellations: PendingCancellation[] = [];
   // Latched on first tick to skip any one-shot init on subsequent ticks.
   // Initialized from deps.hasInitialized so rehydrated sessions never re-run.
   private hasInitialized: boolean;
@@ -73,16 +85,12 @@ export class TickOrchestrator {
     this.hasInitialized = deps.hasInitialized;
   }
 
-  /** Called by TickEngine.interruptAction when the active step needs C-compromise
-   *  next tick. Queued siblings are cancelled synchronously by the caller. */
-  queuePendingInterrupt(req: PendingInterrupt): void {
-    this.pendingInterrupts.push(req);
-  }
-
-  /** Called by TickEngine.cancelAction (or interruptAction on a queued-only handle)
-   *  after marking the step cancelled. Surfaced next tick in TickReport.cancellations. */
-  recordCancelledStep(step: ActionStep): void {
-    this.pendingCancelledSteps.push(step);
+  /** Called by TickEngine.cancelAction after marking the step cancelled.
+   *  Surfaced next tick in TickReport.cancellations. For previously-active
+   *  steps Phase 2a re-runs the resolver with `reason` to produce a partial
+   *  narrative reflecting actual progress. */
+  recordCancelledStep(step: ActionStep, reason?: string): void {
+    this.pendingCancellations.push({ step, reason });
   }
 
   /** Enumerate anchor ids for a subsystem's anchor kind. */
@@ -205,21 +213,24 @@ export class TickOrchestrator {
     const nextTickTime = this.advanceClock();
 
     const buffer: StateChange[] = [];
-    const interruptions: TickReport["interruptions"] = [];
     const cancellations: CharacterAction[] = [];
     const commitsThisTick: CharacterAction[] = [];
+    const activationsThisTick: ActionStep[] = [];
 
-    // Phase 2a: surface sync-cancelled steps into TickReport.cancellations
-    for (const step of this.pendingCancelledSteps) {
-      cancellations.push(this.stepToAction(step, nextTickTime));
+    // Phase 2: process pending cancellations. For previously-active steps,
+    // re-run the resolver with cancel context so the surfaced outcome carries
+    // a partial narrative + any stateChanges that landed in the elapsed
+    // window. Queued-only cancels (never activated) just surface as-is.
+    for (const pend of this.pendingCancellations) {
+      await this.applyPendingCancellation(
+        pend,
+        nextTickTime,
+        buffer,
+        cancellations,
+        resolve
+      );
     }
-    this.pendingCancelledSteps = [];
-
-    // Phase 2b: apply deferred interrupts (active-step C-compromise)
-    for (const pend of this.pendingInterrupts) {
-      this.applyPendingInterrupt(pend, nextTickTime, buffer, interruptions);
-    }
-    this.pendingInterrupts = [];
+    this.pendingCancellations = [];
 
     // Phase 3: activate idle actors. Dispatch on `step.engine`:
     //   - "code" → call ActionSubsystem.onActivate; the result is
@@ -237,7 +248,8 @@ export class TickOrchestrator {
           next,
           nextTickTime,
           buffer,
-          commitsThisTick
+          commitsThisTick,
+          activationsThisTick
         );
         continue;
       }
@@ -253,6 +265,7 @@ export class TickOrchestrator {
         resolved.outcome as unknown as ActionStep["plannedOutcome"];
       next.completionTime = addMinutes(nextTickTime, resolved.plannedDuration);
       queue.markActive(next.id);
+      activationsThisTick.push(next);
     }
 
     // Phase 3.5: advance any active code-engine steps that did not terminate
@@ -339,8 +352,8 @@ export class TickOrchestrator {
     // Phase 10: build report (event emission is TickEngine + EventBus's job)
     return {
       gameDateTime: nextTickTime,
+      activations: activationsThisTick,
       commits: commitsThisTick,
-      interruptions,
       cancellations,
       featureEvents: [...applied.featureEvents],
       stateChanges: [...buffer],
@@ -363,7 +376,8 @@ export class TickOrchestrator {
     step: ActionStep,
     nextTickTime: GameTime,
     buffer: StateChange[],
-    commitsThisTick: CharacterAction[]
+    commitsThisTick: CharacterAction[],
+    activationsThisTick: ActionStep[]
   ): Promise<void> {
     const subsystem = step.codeSubsystem
       ? this.deps.subsystemRegistry.getActionSubsystem(step.codeSubsystem)
@@ -380,6 +394,7 @@ export class TickOrchestrator {
     buffer.push(...result.stateChanges);
     step.activatedAt = nextTickTime;
     this.deps.queue.markActive(step.id);
+    activationsThisTick.push(step);
     if (result.failed || result.completed) {
       step.completionTime = nextTickTime;
       this.deps.queue.markCompleted(step.id);
@@ -423,36 +438,58 @@ export class TickOrchestrator {
     return makeActionSubsystemContext(base, this.deps.dgsm);
   }
 
-  private applyPendingInterrupt(
-    req: PendingInterrupt,
+  private async applyPendingCancellation(
+    pend: PendingCancellation,
     nowTickTime: GameTime,
     buffer: StateChange[],
-    interruptions: TickReport["interruptions"]
-  ): void {
-    const active = this.deps.queue.get(req.activeStepId);
-    if (!active || active.status !== "active") {
-      // Step resolved between interruptAction call and this phase — drop silently.
-      return;
-    }
-    if (active.activatedAt === undefined) {
-      throw new Error(
-        `TickOrchestrator: active step ${active.id} has no activatedAt (queue corruption)`
-      );
-    }
+    cancellations: CharacterAction[],
+    resolve: ResolveFn
+  ): Promise<void> {
+    const step = pend.step;
+    const wasActivated =
+      step.activatedAt !== undefined && step.plannedOutcome !== undefined;
 
-    const elapsed = this.minutesBetween(active.activatedAt, nowTickTime);
-    const planned = active.plannedDuration ?? 1;
-    const ratio = elapsed / planned;
-    if (ratio >= 0.5 && active.plannedOutcome) {
-      // Partial commit: apply outcome stateChanges only (no feature hooks).
-      const outcome = active.plannedOutcome as unknown as PlannedOutcome;
-      buffer.push(...outcome.stateChanges);
+    if (wasActivated) {
+      // Re-run the resolver with cancel context to produce a partial outcome
+      // (narrative + stateChanges reflecting what actually happened in the
+      // elapsed window). On error, keep the original plannedOutcome so the
+      // surfaced cancellation still has SOMETHING; Controller will downgrade
+      // to actionText fallback if narrative is missing.
+      const elapsed = this.minutesBetween(step.activatedAt!, nowTickTime);
+      const planned = step.plannedDuration ?? 1;
+      // Derive `plannedNarrative` from the resolver's original memory.event
+      // content. `memory.event` is now a member of the StateChange
+      // discriminated union, so the .find narrows naturally.
+      const priorOutcome = step.plannedOutcome as unknown as
+        | PlannedOutcome
+        | undefined;
+      const plannedNarrative = priorOutcome?.stateChanges.find(
+        (s): s is Extract<StateChange, { kind: "memory.event" }> =>
+          s.kind === "memory.event" && s.characterId === step.characterId
+      )?.content;
+      try {
+        const readCtx = makeDGSMFeatureReadContext(this.deps.dgsm, {
+          callerFeatureId: "__resolver_cancel__",
+          callerScope: "global",
+        });
+        const reResolved = await resolve(step, readCtx, {
+          elapsedMinutes: elapsed,
+          plannedDuration: planned,
+          reason: pend.reason ?? "cancelled",
+          plannedNarrative,
+        });
+        buffer.push(...reResolved.outcome.stateChanges);
+        step.plannedOutcome =
+          reResolved.outcome as unknown as ActionStep["plannedOutcome"];
+      } catch (err) {
+        console.warn(
+          `[TickOrchestrator] cancel re-resolve failed for step ${step.id}; keeping plannedOutcome:`,
+          err
+        );
+      }
     }
-    this.deps.queue.markInterrupted(active.id);
-    interruptions.push({
-      action: this.stepToAction(active, nowTickTime),
-      reason: req.reason,
-    });
+    // Surface — stepToAction copies plannedOutcome onto CharacterAction.outcome.
+    cancellations.push(this.stepToAction(step, nowTickTime));
   }
 
   private stepToAction(step: ActionStep, now: GameTime): CharacterAction {
