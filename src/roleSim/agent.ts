@@ -51,6 +51,9 @@ export interface RoleSimContext {
     type: string;
     content: string;
     gameDateTime: string;
+    /** Human-readable location name (resolved from sceneId), if known.
+     *  Surfaced inline in the memory section to give spatial context. */
+    location?: string;
   }>;
   longTermIntent?: string;
   /** Renderer-layer perception output (G1 / G6). One first-person citation-

@@ -83,7 +83,11 @@ export function buildPerceivableDirectory(
     const scene = dgsm.getScene(sceneId);
     for (const item of scene?.items ?? []) items.add(item.id);
   }
-  for (const item of actor.inventory ?? []) items.add(item.id);
+  // Read inventory from runtime npcInventories (mutated by item.move /
+  // item.create / item.destroy). The static profile.inventory is loaded once
+  // from JSON and never updated by Applier paths — perception MUST reflect
+  // runtime state.
+  for (const item of dgsm.getNpcInventory(actorId)) items.add(item.id);
 
   // ── Scenes: current + adjacent ──────────────────────────────────
   if (sceneId) {

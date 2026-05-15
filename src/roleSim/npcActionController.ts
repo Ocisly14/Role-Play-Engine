@@ -116,7 +116,6 @@ export class NpcActionController {
     // 2. NPCs whose action ended this tick.
     const npcsWithEndedAction = new Set<string>([
       ...report.commits.map((a) => a.characterId),
-      ...report.interruptions.map((i) => i.action.characterId),
       ...report.cancellations.map((a) => a.characterId),
     ]);
 
@@ -128,14 +127,23 @@ export class NpcActionController {
       .filter((n) => !this.npcHasActiveStep(n.id))
       .map((n) => n.id);
 
-    // 4. Union of all NPCs that need decide() this tick.
+    // 4. Auto-write event/witness memories so the next decide() pass sees
+    //    them in `recentMemory`. The system prompt promises agents that the
+    //    engine logs events automatically; this is the actual writer.
+    //    `event`  — the actor remembers what they did (commit / interrupt /
+    //               cancel of their own action).
+    //    `witness` — bystanders remember what they perceived that they did
+    //                NOT cause themselves.
+    await this.writeAutoMemories(report, eventsByNpc);
+
+    // 5. Union of all NPCs that need decide() this tick.
     const allTargets = new Set<string>([
       ...eventsByNpc.keys(),
       ...npcsWithEndedAction,
       ...idleAlive,
     ]);
 
-    // 5. Sequential decide() — no concurrency, no race.
+    // 6. Sequential decide() — no concurrency, no race.
     for (const npcId of allTargets) {
       if (!this.dgsm.isNpcAlive(npcId)) continue;
       const eventsForNpc = eventsByNpc.get(npcId);
@@ -144,6 +152,121 @@ export class NpcActionController {
         eventsForNpc:
           eventsForNpc && eventsForNpc.length > 0 ? eventsForNpc : undefined,
       });
+    }
+  }
+
+  private async writeAutoMemories(
+    report: TickReport,
+    eventsByNpc: Map<string, FeatureEvent[]>
+  ): Promise<void> {
+    // Each action surfaces TWO event memories anchored at their true game-times:
+    //   begin  — written at activatedAt; content = `[begin] <actionText>` (intent)
+    //   result — written at completedAt; content = the resolver's `memory.event`
+    //            string flowing through report.stateChanges (what actually happened)
+
+    // (a) "begin" memories for actions that became active this tick.
+    for (const step of report.activations) {
+      if (!step.activatedAt) continue;
+      await this.writeMemoryEntry(
+        step.characterId,
+        "event",
+        `[begin] ${step.actionText}`,
+        step.activatedAt,
+        step.executionSceneId
+      );
+    }
+
+    // (b) Resolver-emitted event/witness memories for actions that ended this
+    //     tick (commits + cancellations). The `[begin]` writer above already
+    //     handles the start-time entry; this routes the resolver's memory.event /
+    //     memory.witness state changes into NpcMemoryManager.
+    await this.routeResolverMemories(report);
+
+    // Bystanders' perceived events → `witness` memory.
+    // FeatureEvent has no per-event timestamp, so we use the tick's gameDateTime.
+    // Location: where the event happened (event.sceneId), falling back to
+    // the witness's own scene for global/scene-less events.
+    const tickTime = this.dgsm.getGameDateTime();
+    for (const [npcId, events] of eventsByNpc) {
+      for (const ev of events) {
+        if (ev.characterId === npcId) continue;
+        await this.writeMemoryEntry(
+          npcId,
+          "witness",
+          ev.description,
+          tickTime,
+          ev.sceneId ?? this.resolveCurrentSceneId(npcId)
+        );
+      }
+    }
+  }
+
+  private async routeResolverMemories(report: TickReport): Promise<void> {
+    // Build a quick map: characterId → sceneId where they ran their action this
+    // tick (commit / cancellation). Used as `location` for the resolver-emitted
+    // memory entries.
+    const locByActor = new Map<string, string>();
+    for (const a of report.commits) {
+      locByActor.set(a.characterId, a.sceneId);
+    }
+    for (const c of report.cancellations) {
+      if (!locByActor.has(c.characterId)) locByActor.set(c.characterId, c.sceneId);
+    }
+
+    // Pick game-times from commits/cancellations; fall back to current tick.
+    const completedAtByActor = new Map<string, string>();
+    for (const a of report.commits) {
+      completedAtByActor.set(a.characterId, a.completedAt);
+    }
+    for (const c of report.cancellations) {
+      if (!completedAtByActor.has(c.characterId)) {
+        completedAtByActor.set(c.characterId, c.completedAt);
+      }
+    }
+    const tickTime = this.dgsm.getGameDateTime();
+
+    for (const change of report.stateChanges) {
+      if (change.kind !== "memory.event" && change.kind !== "memory.witness") {
+        continue;
+      }
+      const { characterId, content } = change;
+      const location =
+        locByActor.get(characterId) ?? this.resolveCurrentSceneId(characterId);
+      const gameDateTime = completedAtByActor.get(characterId) ?? tickTime;
+
+      await this.writeMemoryEntry(
+        characterId,
+        change.kind === "memory.event" ? "event" : "witness",
+        content,
+        gameDateTime,
+        location
+      );
+    }
+  }
+
+  private async writeMemoryEntry(
+    npcId: string,
+    type: "event" | "witness",
+    content: string,
+    gameDateTime: string,
+    location: string | undefined
+  ): Promise<void> {
+    if (!this.dgsm.isNpcAlive(npcId)) return;
+    try {
+      await this.memory.add({
+        npcId,
+        sessionId: this.sessionId,
+        moduleId: this.moduleId,
+        type,
+        content,
+        gameDateTime,
+        ...(location ? { location } : {}),
+      });
+    } catch (err) {
+      console.warn(
+        `[NpcActionController] Failed to write ${type} memory for ${npcId}:`,
+        err
+      );
     }
   }
 
@@ -169,17 +292,35 @@ export class NpcActionController {
       case "act": {
         // Decision 14: cancel current action first if any. Engine is the
         // source of truth for in-flight state — query it, do not mirror.
+        // Pass a `reason` so the orchestrator's resolver re-run produces a
+        // partial narrative reflecting why the agent switched.
         const queue = this.engine.getActorQueue(npcId);
         const live = queue.find(
           (s) => s.status === "active" || s.status === "queued"
         );
-        if (live) this.engine.cancelAction(live.handle);
+        if (live) {
+          this.engine.cancelAction(
+            live.handle,
+            `agent switched to: ${decision.actionText}`
+          );
+        }
 
-        await this.engine.submitAction({
-          characterId: npcId,
-          actionText: decision.actionText,
-          sceneId: this.resolveCurrentSceneId(npcId),
-        });
+        // Wrap submitAction so a single bad decision (e.g., the agent cited
+        // an entity that's no longer perceivable, malformed actionText, etc.)
+        // does NOT crash the entire tick's NPC loop. Log + skip; the agent
+        // gets another chance next tick.
+        try {
+          await this.engine.submitAction({
+            characterId: npcId,
+            actionText: decision.actionText,
+            sceneId: this.resolveCurrentSceneId(npcId),
+          });
+        } catch (err) {
+          console.warn(
+            `[NpcActionController] ${npcId} submitAction failed; dropping this decision:`,
+            err instanceof Error ? err.message : err
+          );
+        }
         return;
       }
       case "continue":
@@ -302,6 +443,9 @@ export class NpcActionController {
       type: r.type,
       content: r.content,
       gameDateTime: r.gameDateTime,
+      ...(r.location
+        ? { location: this.dgsm.getScene(r.location)?.name ?? r.location }
+        : {}),
     }));
   }
 }

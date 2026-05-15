@@ -33,7 +33,7 @@
 
 import "dotenv/config";
 
-import { mkdirSync, createWriteStream } from "node:fs";
+import { mkdirSync, createWriteStream, writeFileSync } from "node:fs";
 import { resolve as pathResolve } from "node:path";
 
 // === Engine ===
@@ -77,10 +77,9 @@ import type { NpcMemory, NpcMemoryType } from "@prisma/client";
 
 const LOG_DIR = pathResolve(process.cwd(), "logs");
 mkdirSync(LOG_DIR, { recursive: true });
-const LOG_PATH = pathResolve(
-  LOG_DIR,
-  `role-agent-test-${new Date().toISOString().replace(/[:.]/g, "-")}.log`
-);
+const RUN_TS = new Date().toISOString().replace(/[:.]/g, "-");
+const LOG_PATH = pathResolve(LOG_DIR, `role-agent-test-${RUN_TS}.log`);
+const JSON_PATH = pathResolve(LOG_DIR, `role-agent-test-${RUN_TS}.json`);
 const logStream = createWriteStream(LOG_PATH, { flags: "a" });
 
 function stripAnsi(s: string): string {
@@ -110,6 +109,7 @@ console.error = tee(console.error.bind(console), "[err]  ");
 process.on("exit", () => logStream.end());
 
 console.log(`(logging to ${LOG_PATH})`);
+console.log(`(structured run record → ${JSON_PATH})`);
 
 // =========================================================================
 // 1. WORLD: one scene + two NPCs (Marsh + Hollins)
@@ -293,6 +293,12 @@ const stubMemory: Pick<
       gameDateTime: params.gameDateTime,
     };
     writtenMemories.push(entry);
+    runRecord.memoryWrites.push({
+      npcId: params.npcId,
+      type: params.type,
+      content: params.content,
+      gameDateTime: params.gameDateTime,
+    });
     console.log(
       `   [memory.add] npc=${params.npcId} type=${params.type} content="${params.content.slice(0, 70)}${params.content.length > 70 ? "…" : ""}"`
     );
@@ -359,7 +365,8 @@ const engine = createTickEngine({
   },
   resolve: async (
     step: ActionStep,
-    ctx: unknown
+    ctx: unknown,
+    cancel
   ): Promise<{ outcome: PlannedOutcome; plannedDuration: number }> => {
     const definition = definitions.get(step.definitionId);
     if (!definition) {
@@ -377,27 +384,29 @@ const engine = createTickEngine({
       dgsm,
       step.executionSceneId
     );
-    const resolution = await resolveState({
-      action: step.actionText,
+    const actionForResolver = cancel
+      ? [
+          `[CANCELLED at minute ${cancel.elapsedMinutes.toFixed(1)} of planned ${cancel.plannedDuration.toFixed(1)} due to: ${cancel.reason}]`,
+          `Original intent: "${step.actionText}"`,
+          cancel.plannedNarrative
+            ? `Original planned outcome (had it completed): ${cancel.plannedNarrative}`
+            : "",
+          `Produce a SHORT memory.event reflecting ONLY what actually happened in those ${cancel.elapsedMinutes.toFixed(1)} minutes before cancellation.`,
+        ]
+          .filter(Boolean)
+          .join("\n")
+      : step.actionText;
+    const resolved = await resolveState({
+      action: actionForResolver,
       definition,
       outcomeSection: definition.content,
       stateContext,
       language: "en",
     });
-    void ctx; // orchestrator passes its own FeatureReadContext; not needed here
-    const stateChanges = Array.isArray(resolution.stateChanges)
-      ? (resolution.stateChanges as PlannedOutcome["stateChanges"])
-      : [];
-    const elapsedMinutes =
-      typeof resolution.elapsedMinutes === "number"
-        ? resolution.elapsedMinutes
-        : 0;
-    const narrative =
-      typeof resolution.narrative === "string"
-        ? resolution.narrative
-        : undefined;
+    void ctx;
+    const elapsedMinutes = cancel ? cancel.elapsedMinutes : resolved.elapsedMinutes;
     return {
-      outcome: { stateChanges, elapsedMinutes, narrative },
+      outcome: { stateChanges: resolved.stateChanges, elapsedMinutes },
       plannedDuration: elapsedMinutes,
     };
   },
@@ -427,6 +436,80 @@ const controller = new NpcActionController({
 // =========================================================================
 // 4. OBSERVERS — log everything that flows out of the engine
 // =========================================================================
+//
+// Two parallel sinks per tick: (a) human-readable console line via the tee
+// log, (b) structured entry in the run record that ends up in JSON_PATH.
+
+interface TickRecord {
+  tick: number;
+  gameDateTime: string;
+  commits: Array<{
+    characterId: string;
+    actionText: string;
+  }>;
+  cancellations: Array<{
+    characterId: string;
+    actionText: string;
+  }>;
+  featureEvents: Array<{
+    type: string;
+    impact: number;
+    description: string;
+    characterId?: string;
+    sceneId?: string;
+  }>;
+  /** Raw typed stateChanges that flowed through this tick's applier. Lets
+   *  e2e verification confirm resolver actually emitted memory.event +
+   *  item.modify entries. */
+  stateChanges: Array<{ kind: string; [k: string]: unknown }>;
+}
+
+interface RunRecord {
+  meta: {
+    startedAt: string;
+    endedAt?: string;
+    durationMs?: number;
+    provider: string;
+    npcs: Array<{ id: string; name: string }>;
+    scene: { id: string; name: string };
+    definitionsCount: number;
+    subsystemsCount: number;
+    nTicks: number;
+    logPath: string;
+    jsonPath: string;
+  };
+  ticks: TickRecord[];
+  memoryWrites: Array<{
+    npcId: string;
+    type: string;
+    content: string;
+    gameDateTime: string;
+  }>;
+  exitCode: number;
+  error?: { message: string; stack?: string };
+}
+
+const N_TICKS = 20;
+
+const runRecord: RunRecord = {
+  meta: {
+    startedAt: new Date().toISOString(),
+    provider: process.env.MODEL_PROVIDER ?? "(unset)",
+    npcs: [
+      { id: npc.id, name: npc.name },
+      { id: visitor.id, name: visitor.name },
+    ],
+    scene: { id: scene.id, name: scene.name },
+    definitionsCount: definitionList.length,
+    subsystemsCount: subsystemRegistry.getAll().length,
+    nTicks: N_TICKS,
+    logPath: LOG_PATH,
+    jsonPath: JSON_PATH,
+  },
+  ticks: [],
+  memoryWrites: [],
+  exitCode: 0,
+};
 
 let tickCount = 0;
 engine.on("tickCompleted", (report: TickReport) => {
@@ -437,17 +520,11 @@ engine.on("tickCompleted", (report: TickReport) => {
   );
   console.log("=".repeat(72));
   console.log(
-    `commits: ${report.commits.length}, interruptions: ${report.interruptions.length}, ` +
+    `commits: ${report.commits.length}, ` +
       `cancellations: ${report.cancellations.length}, featureEvents: ${report.featureEvents.length}`
   );
   for (const a of report.commits) {
     console.log(`  ✓ COMMITTED      ${a.characterId}: ${a.actionText}`);
-  }
-  for (const i of report.interruptions) {
-    console.log(
-      `  ⚠ INTERRUPTED    ${i.action.characterId}: ${i.action.actionText}` +
-        `   (reason: ${i.reason.description})`
-    );
   }
   for (const c of report.cancellations) {
     console.log(`  ✗ CANCELLED      ${c.characterId}: ${c.actionText}`);
@@ -456,11 +533,51 @@ engine.on("tickCompleted", (report: TickReport) => {
     const tag = `(${e.type}, impact=${e.impact}${e.characterId ? `, actor=${e.characterId}` : ""})`;
     console.log(`  · EVENT ${tag}  ${e.description}`);
   }
+
+  runRecord.ticks.push({
+    tick: tickCount,
+    gameDateTime: dgsm.getGameDateTime(),
+    commits: report.commits.map((a) => ({
+      characterId: a.characterId,
+      actionText: a.actionText,
+    })),
+    cancellations: report.cancellations.map((c) => ({
+      characterId: c.characterId,
+      actionText: c.actionText,
+    })),
+    featureEvents: report.featureEvents.map((e) => ({
+      type: e.type,
+      impact: e.impact,
+      description: e.description,
+      characterId: e.characterId,
+      sceneId: e.sceneId,
+    })),
+    stateChanges: report.stateChanges.map((s) => ({ ...s })),
+  });
 });
 
 // =========================================================================
 // 5. DRIVE — bootstrap + N ticks
 // =========================================================================
+
+function recordError(err: unknown) {
+  runRecord.exitCode = 1;
+  runRecord.error = {
+    message: err instanceof Error ? err.message : String(err),
+    stack: err instanceof Error ? err.stack : undefined,
+  };
+}
+
+function flushRunRecord(t0: number) {
+  runRecord.meta.endedAt = new Date().toISOString();
+  runRecord.meta.durationMs = Date.now() - t0;
+  try {
+    writeFileSync(JSON_PATH, JSON.stringify(runRecord, null, 2));
+    console.log(`\n(wrote run record → ${JSON_PATH})`);
+  } catch (writeErr) {
+    console.error(`Failed to write run record JSON:`, writeErr);
+  }
+}
 
 async function main() {
   console.log("\n=== test-role-agent (FULL E2E) ===");
@@ -472,34 +589,28 @@ async function main() {
 
   const t0 = Date.now();
 
-  console.log("\n--- Bootstrap (initial decide pass for all alive NPCs) ---");
   try {
+    console.log("\n--- Bootstrap (initial decide pass for all alive NPCs) ---");
     await controller.bootstrap();
-  } catch (err) {
-    console.error("Bootstrap threw:", err);
-    process.exitCode = 1;
-    return;
-  }
 
-  const N_TICKS = 3;
-  for (let i = 0; i < N_TICKS; i++) {
-    console.log(`\n--- Driving tick ${i + 1}/${N_TICKS} ---`);
-    try {
+    for (let i = 0; i < N_TICKS; i++) {
+      console.log(`\n--- Driving tick ${i + 1}/${N_TICKS} ---`);
       await engine.tick();
-    } catch (err) {
-      console.error(`engine.tick() threw on tick ${i + 1}:`, err);
-      process.exitCode = 1;
-      return;
     }
-  }
-
-  const ms = Date.now() - t0;
-  console.log(`\n=== Done in ${(ms / 1000).toFixed(1)}s ===`);
-  console.log(`Ticks observed: ${tickCount}`);
-  console.log(`Final game time: ${dgsm.getGameDateTime()}`);
-  console.log(`Memory writes during run: ${writtenMemories.length}`);
-  for (const m of writtenMemories) {
-    console.log(`  - npc=${m.npcId} (${m.type}) ${m.content.slice(0, 100)}`);
+  } catch (err) {
+    console.error("\nRun aborted:", err);
+    recordError(err);
+    process.exitCode = 1;
+  } finally {
+    const ms = Date.now() - t0;
+    console.log(`\n=== Done in ${(ms / 1000).toFixed(1)}s ===`);
+    console.log(`Ticks observed: ${tickCount}`);
+    console.log(`Final game time: ${dgsm.getGameDateTime()}`);
+    console.log(`Memory writes during run: ${writtenMemories.length}`);
+    for (const m of writtenMemories) {
+      console.log(`  - npc=${m.npcId} (${m.type}) ${m.content.slice(0, 100)}`);
+    }
+    flushRunRecord(t0);
   }
 }
 

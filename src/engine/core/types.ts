@@ -119,20 +119,9 @@ export interface ActionStep {
   status: ActionStatus;
 }
 
-export interface InterruptReason {
-  triggerKind: "perception" | "featureEvent" | "stateChange" | "other";
-  description: string;
-}
-
 export interface CancelResult {
   applied: boolean;
   remainingChainCancelled: number;
-}
-
-export interface InterruptResult {
-  applied: boolean;
-  remainingChainCancelled: number;
-  partialOutcome?: StateResolution;
 }
 
 export interface SceneCondition {
@@ -199,7 +188,6 @@ export const DEFAULT_ENVIRONMENT_READING: EnvironmentReading = Object.freeze({
 export interface PlannedOutcome {
   stateChanges: StateChange[];
   elapsedMinutes: number;
-  narrative?: string;
 }
 
 export type StateChange =
@@ -294,6 +282,50 @@ export type StateChange =
       characterId: string;
       position: CharacterPosition;
       sourceSubsystem: string;
+    }
+  // ── Resolver-emitted variants (flattened from resolver schemaTypes) ──
+  | {
+      kind: "item.modify";
+      itemId: string;
+      name?: string;
+      description?: string;
+    }
+  | {
+      kind: "item.create";
+      name: string;
+      location: string;
+      properties?: Record<string, unknown>;
+    }
+  | {
+      kind: "item.move";
+      itemId: string;
+      from: string;
+      to: string;
+    }
+  | {
+      kind: "item.destroy";
+      itemId: string;
+    }
+  | {
+      /** Resolver-emitted event memory. Applier no-op; consumed by
+       *  NpcActionController.routeResolverMemories. */
+      kind: "memory.event";
+      characterId: string;
+      content: string;
+    }
+  | {
+      /** Resolver-emitted witness memory. Applier no-op; consumed by
+       *  NpcActionController.routeResolverMemories. */
+      kind: "memory.witness";
+      characterId: string;
+      content: string;
+    }
+  | {
+      kind: "relationship.change";
+      fromId: string;
+      toId: string;
+      delta?: number;
+      note?: string;
     };
 
 export interface CharacterAction {
@@ -326,8 +358,11 @@ export interface DamageReport {
 
 export interface TickReport {
   gameDateTime: GameDateTime;
+  /** Steps that became `active` this tick (queued → active). Surfaced so the
+   *  controller can write "begin" event memory at activatedAt, paired with
+   *  the existing "result" memory from `commits` at completedAt. */
+  activations: ActionStep[];
   commits: CharacterAction[];
-  interruptions: Array<{ action: CharacterAction; reason: InterruptReason }>;
   cancellations: CharacterAction[];
   featureEvents: FeatureEvent[];
   stateChanges: StateChange[];

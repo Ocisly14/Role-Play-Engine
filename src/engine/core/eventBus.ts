@@ -1,7 +1,6 @@
 import type {
   CharacterAction,
   FeatureEvent,
-  InterruptReason,
   TickReport,
   Unsubscribe,
 } from "./types.js";
@@ -12,10 +11,6 @@ export class EventBus {
   private listeners: Record<string, Set<AnyCB>> = {};
 
   on(ev: "actionCompleted", cb: (a: CharacterAction) => void): Unsubscribe;
-  on(
-    ev: "actionInterrupted",
-    cb: (a: CharacterAction, r: InterruptReason) => void
-  ): Unsubscribe;
   on(ev: "actionCancelled", cb: (a: CharacterAction) => void): Unsubscribe;
   on(ev: "featureEvent", cb: (e: FeatureEvent) => void): Unsubscribe;
   on(
@@ -38,9 +33,6 @@ export class EventBus {
 
   emitActionCompleted(a: CharacterAction): void {
     for (const cb of this.snapshotListeners("actionCompleted")) cb(a);
-  }
-  emitActionInterrupted(a: CharacterAction, r: InterruptReason): void {
-    for (const cb of this.snapshotListeners("actionInterrupted")) cb(a, r);
   }
   emitActionCancelled(a: CharacterAction): void {
     for (const cb of this.snapshotListeners("actionCancelled")) cb(a);
