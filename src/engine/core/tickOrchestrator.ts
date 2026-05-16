@@ -3,6 +3,7 @@ import { addMinutes, diffDays, timePart } from "../../state/gameClock.js";
 import { makeActionSubsystemContext } from "../subsystem/actionContext.js";
 import type { SubsystemRegistry } from "../subsystem/registry.js";
 import type { AnchorSubsystem } from "../subsystem/types.js";
+import type { ToolResult } from "../types.js";
 import type { Applier } from "./applier.js";
 import { makeDGSMFeatureReadContext } from "./featureReadContext.js";
 import type { Queue } from "./queue.js";
@@ -39,11 +40,23 @@ export interface ResolveCancelContext {
 export type ResolveFn = (
   step: ActionStep,
   ctx: unknown,
-  cancel?: ResolveCancelContext
+  cancel?: ResolveCancelContext,
+  skillCheckResult?: ToolResult
 ) => Promise<{
   outcome: PlannedOutcome;
   plannedDuration: number;
 }>;
+
+/**
+ * Pre-resolver hook: given an LLM-engine step about to activate, run the
+ * action definition's skill check (opposed roll, difficulty band, scene /
+ * condition penalties) and return the verdict for the resolver to consume.
+ * Returns `undefined` to mean "no skill check" — resolver treats it as auto
+ * success, same as before. The returned ToolResult is also stashed on
+ * `ActionStep.skillCheckResult` so the cancel-time re-resolve sees the
+ * original roll.
+ */
+export type RunSkillCheckFn = (step: ActionStep) => ToolResult | undefined;
 
 export interface OrchestratorDeps {
   dgsm: DynamicGameStateManager;
@@ -51,6 +64,11 @@ export interface OrchestratorDeps {
   scriptedEventRunner: ScriptedEventRunner;
   applier: Applier;
   resolve: ResolveFn;
+  /** Optional skill-check hook. When set, the orchestrator calls it before
+   *  `resolve` at activation time and feeds the result to both the activation
+   *  and any later cancel-time re-resolve. Omit to keep the legacy "auto
+   *  success" path. */
+  runSkillCheck?: RunSkillCheckFn;
   /** Unified Subsystem registry — required. Drives all tick paths. */
   subsystemRegistry: SubsystemRegistry;
   tickDurationMinutes: number;
@@ -258,7 +276,12 @@ export class TickOrchestrator {
         callerFeatureId: "__resolver__",
         callerScope: "global",
       });
-      const resolved = await resolve(next, readCtx);
+      // Skill check happens FIRST so the resolver sees the verdict when it
+      // narrates / writes stateChanges. The result is also stashed on the
+      // step so a later cancel-time re-resolve can reuse the same roll.
+      const skillCheckResult = this.deps.runSkillCheck?.(next);
+      next.skillCheckResult = skillCheckResult;
+      const resolved = await resolve(next, readCtx, undefined, skillCheckResult);
       next.activatedAt = nextTickTime;
       next.plannedDuration = resolved.plannedDuration;
       next.plannedOutcome =
@@ -314,6 +337,7 @@ export class TickOrchestrator {
         actionText: step.actionText,
         sceneId: step.executionSceneId,
         referencedEntities: step.referencedEntities,
+        impact: step.impact,
         activatedAt: step.activatedAt!,
         completedAt: nextTickTime,
         outcome: step.plannedOutcome,
@@ -472,12 +496,20 @@ export class TickOrchestrator {
           callerFeatureId: "__resolver_cancel__",
           callerScope: "global",
         });
-        const reResolved = await resolve(step, readCtx, {
-          elapsedMinutes: elapsed,
-          plannedDuration: planned,
-          reason: pend.reason ?? "cancelled",
-          plannedNarrative,
-        });
+        const reResolved = await resolve(
+          step,
+          readCtx,
+          {
+            elapsedMinutes: elapsed,
+            plannedDuration: planned,
+            reason: pend.reason ?? "cancelled",
+            plannedNarrative,
+          },
+          // Reuse the original activation-time skill-check verdict so the
+          // partial outcome is consistent with the original roll (cancel
+          // doesn't re-roll the dice).
+          step.skillCheckResult
+        );
         buffer.push(...reResolved.outcome.stateChanges);
         step.plannedOutcome =
           reResolved.outcome as unknown as ActionStep["plannedOutcome"];
@@ -502,6 +534,7 @@ export class TickOrchestrator {
       actionText: step.actionText,
       sceneId: step.executionSceneId,
       referencedEntities: step.referencedEntities,
+      impact: step.impact,
       activatedAt: step.activatedAt ?? step.submittedAt,
       completedAt: now,
       outcome: step.plannedOutcome,

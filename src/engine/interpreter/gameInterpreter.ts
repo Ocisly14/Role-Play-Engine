@@ -340,7 +340,7 @@ export async function interpretAction(
   const text = await generateText({
     customSystemPrompt: systemPrompt,
     context: `${langInstruction}\n\nAction: "${narrative}"`,
-    modelClass: ModelClass.SMALL,
+    modelClass: ModelClass.MEDIUM,
     operation: "game-interpreter",
   });
 

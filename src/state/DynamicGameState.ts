@@ -840,24 +840,18 @@ export class DynamicGameStateManager {
     return this.state.npcInventories[npcId].splice(idx, 1)[0];
   }
 
-  /** Mutate an item's name/description in place. Searches all scenes then
-   *  all NPC inventories for the matching id (item ids are globally unique).
+  /** Update an item's description in place. Searches all scenes then all NPC
+   *  inventories for the matching id (item ids are globally unique). Name is
+   *  the item's stable identity and is NOT changed by this method — true
+   *  identity changes go through item.destroy + item.create.
    *  Returns true on success, false (with warning) when no item matches. */
-  modifyItem(
-    itemId: string,
-    patch: { name?: string; description?: string }
-  ): boolean {
+  modifyItem(itemId: string, patch: { description: string }): boolean {
     const target = this.findItemById(itemId);
     if (!target) {
       console.warn(`[DGSM] modifyItem: item id="${itemId}" not found`);
       return false;
     }
-    if (typeof patch.name === "string" && patch.name.trim().length > 0) {
-      target.name = patch.name;
-    }
-    if (typeof patch.description === "string") {
-      target.description = patch.description;
-    }
+    target.description = patch.description;
     this.state.lastUpdated = new Date();
     return true;
   }

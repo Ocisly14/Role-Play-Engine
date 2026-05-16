@@ -13,7 +13,11 @@
 // instead of mirroring it.
 
 import type { TickEngine } from "../engine/core/tickEngine.js";
-import type { FeatureEvent, TickReport } from "../engine/core/types.js";
+import type {
+  CharacterAction,
+  FeatureEvent,
+  TickReport,
+} from "../engine/core/types.js";
 import { findAffectedCharacters } from "../engine/shared/impactPropagation.js";
 import type { NpcMemoryManager } from "../memory/NpcMemoryManager.js";
 import type { DynamicGameStateManager } from "../state/DynamicGameState.js";
@@ -38,6 +42,8 @@ interface DecideOpts {
   report?: TickReport;
   /** Pre-filtered FeatureEvents that propagated to this NPC. */
   eventsForNpc?: FeatureEvent[];
+  /** Committed CharacterActions whose impact reached this NPC this tick. */
+  actionsForNpc?: CharacterAction[];
 }
 
 /** How many prior renderer narratives each NPC keeps as short-term memory. */
@@ -93,6 +99,10 @@ export class NpcActionController {
     //    intrinsic impact + description (Phase F1); the renderer turns the
     //    set into per-NPC first-person narrative downstream (Phase G).
     const eventsByNpc = new Map<string, FeatureEvent[]>();
+    // 1b. Per-NPC propagated actions — siblings of FeatureEvent on the
+    //     wake-up path. Carries the CharacterAction so the renderer can
+    //     describe what was perceived (who did what, where).
+    const actionsByNpc = new Map<string, CharacterAction[]>();
 
     for (const event of report.featureEvents) {
       if (!event.characterId && !event.sceneId) continue;
@@ -110,6 +120,29 @@ export class NpcActionController {
         const list = eventsByNpc.get(npcId) ?? [];
         list.push(event);
         eventsByNpc.set(npcId, list);
+      }
+    }
+
+    // 1c. Propagate committed actions by their interpreter-assigned impact.
+    //     Commits with impact 0 stay private (no propagation). Cancellations
+    //     are not propagated — a cancelled action's mid-flight effects are
+    //     surfaced via the resolver re-run's StateChanges and any explicit
+    //     event.emit it produced, not via the cancel itself.
+    for (const action of report.commits) {
+      if (action.impact <= 0) continue;
+      const affected = findAffectedCharacters(
+        {
+          characterId: action.characterId,
+          referencedEntities: action.referencedEntities,
+          location: action.sceneId,
+        },
+        action.impact,
+        this.dgsm
+      );
+      for (const [npcId] of affected) {
+        const list = actionsByNpc.get(npcId) ?? [];
+        list.push(action);
+        actionsByNpc.set(npcId, list);
       }
     }
 
@@ -139,6 +172,7 @@ export class NpcActionController {
     // 5. Union of all NPCs that need decide() this tick.
     const allTargets = new Set<string>([
       ...eventsByNpc.keys(),
+      ...actionsByNpc.keys(),
       ...npcsWithEndedAction,
       ...idleAlive,
     ]);
@@ -147,10 +181,13 @@ export class NpcActionController {
     for (const npcId of allTargets) {
       if (!this.dgsm.isNpcAlive(npcId)) continue;
       const eventsForNpc = eventsByNpc.get(npcId);
+      const actionsForNpc = actionsByNpc.get(npcId);
       await this.decide(npcId, {
         report,
         eventsForNpc:
           eventsForNpc && eventsForNpc.length > 0 ? eventsForNpc : undefined,
+        actionsForNpc:
+          actionsForNpc && actionsForNpc.length > 0 ? actionsForNpc : undefined,
       });
     }
   }
@@ -273,14 +310,14 @@ export class NpcActionController {
   async decide(npcId: string, opts?: DecideOpts): Promise<void> {
     if (!this.dgsm.isNpcAlive(npcId)) return;
 
-    // Skip if NPC is busy AND this tick had no propagated events for them —
-    // their action is already running and nothing has happened that warrants
-    // a wake-up. With events present, the agent gets a chance to switch
-    // action mid-flight (Decision 14 — `act` absorbs cancellation).
-    if (
-      this.npcHasActiveStep(npcId) &&
-      !(opts?.eventsForNpc && opts.eventsForNpc.length > 0)
-    ) {
+    // Skip if NPC is busy AND this tick had no propagated events OR actions
+    // for them — their action is already running and nothing has happened
+    // that warrants a wake-up. With perceived events OR actions present, the
+    // agent gets a chance to switch action mid-flight (Decision 14 — `act`
+    // absorbs cancellation).
+    const hasEvents = !!(opts?.eventsForNpc && opts.eventsForNpc.length > 0);
+    const hasActions = !!(opts?.actionsForNpc && opts.actionsForNpc.length > 0);
+    if (this.npcHasActiveStep(npcId) && !hasEvents && !hasActions) {
       return;
     }
 
@@ -370,6 +407,7 @@ export class NpcActionController {
       npcId,
       report: opts?.report,
       eventsForNpc: opts?.eventsForNpc,
+      actionsForNpc: opts?.actionsForNpc,
       dgsm: this.dgsm,
       engine: this.engine,
     });

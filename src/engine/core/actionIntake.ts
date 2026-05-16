@@ -70,6 +70,7 @@ export class ActionIntake {
         overlayFields: mergedOverlay,
         engine: s.engine,
         codeSubsystem: s.codeSubsystem,
+        impact: s.impact,
         submittedAt,
         status: "queued",
       };

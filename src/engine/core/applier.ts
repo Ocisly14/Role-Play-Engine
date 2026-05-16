@@ -235,12 +235,7 @@ export class Applier {
         }
         // ── Resolver-emitted item ops ──
         case "item.modify": {
-          this.dgsm.modifyItem(c.itemId, {
-            ...(typeof c.name === "string" ? { name: c.name } : {}),
-            ...(typeof c.description === "string"
-              ? { description: c.description }
-              : {}),
-          });
+          this.dgsm.modifyItem(c.itemId, { description: c.description });
           break;
         }
         case "item.create": {

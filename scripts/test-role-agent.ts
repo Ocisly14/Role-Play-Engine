@@ -45,11 +45,13 @@ import {
 import { interpretAction } from "../src/engine/interpreter/gameInterpreter.js";
 import { resolveState } from "../src/engine/resolver/stateResolver.js";
 import { buildStateContext } from "../src/engine/resolver/stateContextBuilder.js";
+import { executeSkillCheck } from "../src/engine/tools/skillCheckTool.js";
 import type {
   ActionStep,
   PlannedOutcome,
   TickReport,
 } from "../src/engine/core/types.js";
+import type { ToolResult } from "../src/engine/types.js";
 
 // === RoleSim (real controller + agent) ===
 import { LLMRoleSimAgent } from "../src/roleSim/llmAgent.js";
@@ -361,12 +363,35 @@ const engine = createTickEngine({
       "en",
       directory
     );
+    // Surface the LLM interpreter's per-step verdict (definitionId + impact
+    // + engine route) so we can audit propagation behavior without digging
+    // into engine internals.
+    const verdict = result.steps
+      .map(
+        (s, i) =>
+          `      step${i}: definitionId="${s.definitionId}" impact=${s.impact} engine=${s.engine}${s.codeSubsystem ? ` codeSubsystem=${s.codeSubsystem}` : ""}`
+      )
+      .join("\n");
+    console.log(
+      `   [interpreter] ${input.characterId} actionText="${input.actionText.slice(0, 80)}${input.actionText.length > 80 ? "…" : ""}"\n${verdict}`
+    );
+    runRecord.interpreterCalls.push({
+      characterId: input.characterId,
+      actionText: input.actionText,
+      steps: result.steps.map((s) => ({
+        definitionId: s.definitionId,
+        impact: s.impact,
+        engine: s.engine,
+        codeSubsystem: s.codeSubsystem,
+      })),
+    });
     return { steps: result.steps };
   },
   resolve: async (
     step: ActionStep,
     ctx: unknown,
-    cancel
+    cancel,
+    skillCheckResult
   ): Promise<{ outcome: PlannedOutcome; plannedDuration: number }> => {
     const definition = definitions.get(step.definitionId);
     if (!definition) {
@@ -401,6 +426,7 @@ const engine = createTickEngine({
       definition,
       outcomeSection: definition.content,
       stateContext,
+      skillCheckResult,
       language: "en",
     });
     void ctx;
@@ -409,6 +435,43 @@ const engine = createTickEngine({
       outcome: { stateChanges: resolved.stateChanges, elapsedMinutes },
       plannedDuration: elapsedMinutes,
     };
+  },
+  runSkillCheck: (step: ActionStep): ToolResult | undefined => {
+    const definition = definitions.get(step.definitionId);
+    if (!definition?.skillCheck) return undefined;
+    const targetIds = step.referencedEntities
+      .filter((r) => r.kind === "character")
+      .map((r) => r.id);
+    const result = executeSkillCheck(
+      definition.skillCheck,
+      step.characterId,
+      undefined,
+      dgsm,
+      step.executionSceneId,
+      targetIds.length > 0 ? targetIds : undefined
+    );
+    // Surface dice roll outcomes so we can audit whether skill checks actually
+    // gate the resolver's narrative (e.g. brawling hits vs misses, intimidate
+    // succeeds vs fails).
+    console.log(
+      `   [skillCheck] ${step.characterId} skill=${definition.skillCheck.skill} ` +
+        `difficulty=${definition.skillCheck.difficulty ?? "regular"} ` +
+        `type=${definition.skillCheck.type ?? "action"} ` +
+        `→ status=${result.status} level=${result.successLevel ?? "?"}` +
+        (result.rollDetail ? `  (${result.rollDetail})` : "")
+    );
+    runRecord.skillChecks.push({
+      characterId: step.characterId,
+      definitionId: step.definitionId,
+      skill: definition.skillCheck.skill ?? "",
+      difficulty: definition.skillCheck.difficulty ?? "regular",
+      type: definition.skillCheck.type ?? "action",
+      status: result.status,
+      successLevel: result.successLevel,
+      rollDetail: result.rollDetail,
+      perTargetResults: result.perTargetResults,
+    });
+    return result;
   },
   getActorDex: (id) => dgsm.getNpcProfile(id)?.attributes?.DEX ?? 50,
   tickDurationMinutes: 1,
@@ -446,10 +509,16 @@ interface TickRecord {
   commits: Array<{
     characterId: string;
     actionText: string;
+    /** Interpreter-assigned perceptibility level. Drives impactPropagation
+     *  on commit so co-located NPCs get woken into decide() this tick. */
+    impact: number;
+    definitionId: string;
   }>;
   cancellations: Array<{
     characterId: string;
     actionText: string;
+    impact: number;
+    definitionId: string;
   }>;
   featureEvents: Array<{
     type: string;
@@ -485,6 +554,35 @@ interface RunRecord {
     content: string;
     gameDateTime: string;
   }>;
+  /** Every interpreter call that ran during this session, with the LLM's
+   *  per-step verdict. Records what was sent in (actionText) and what the
+   *  interpreter judged (definitionId, impact, engine route) so we can audit
+   *  impact propagation behavior without re-running the LLM. */
+  interpreterCalls: Array<{
+    characterId: string;
+    actionText: string;
+    steps: Array<{
+      definitionId: string;
+      impact: number;
+      engine: "code" | "llm";
+      codeSubsystem?: string;
+    }>;
+  }>;
+  /** Every skill-check roll executed before resolver activation. Lets us see
+   *  whether the resolver's narrative actually respects the dice (e.g. did
+   *  the brawling attempt that hit really win, did the intimidate that
+   *  cowed the target really succeed). */
+  skillChecks: Array<{
+    characterId: string;
+    definitionId: string;
+    skill: string;
+    difficulty: string;
+    type: string;
+    status: string;
+    successLevel?: string;
+    rollDetail?: string;
+    perTargetResults?: Record<string, unknown>;
+  }>;
   exitCode: number;
   error?: { message: string; stack?: string };
 }
@@ -508,6 +606,8 @@ const runRecord: RunRecord = {
   },
   ticks: [],
   memoryWrites: [],
+  interpreterCalls: [],
+  skillChecks: [],
   exitCode: 0,
 };
 
@@ -524,10 +624,14 @@ engine.on("tickCompleted", (report: TickReport) => {
       `cancellations: ${report.cancellations.length}, featureEvents: ${report.featureEvents.length}`
   );
   for (const a of report.commits) {
-    console.log(`  ✓ COMMITTED      ${a.characterId}: ${a.actionText}`);
+    console.log(
+      `  ✓ COMMITTED  [impact=${a.impact}, def=${a.definitionId}]  ${a.characterId}: ${a.actionText}`
+    );
   }
   for (const c of report.cancellations) {
-    console.log(`  ✗ CANCELLED      ${c.characterId}: ${c.actionText}`);
+    console.log(
+      `  ✗ CANCELLED  [impact=${c.impact}, def=${c.definitionId}]  ${c.characterId}: ${c.actionText}`
+    );
   }
   for (const e of report.featureEvents) {
     const tag = `(${e.type}, impact=${e.impact}${e.characterId ? `, actor=${e.characterId}` : ""})`;
@@ -540,10 +644,14 @@ engine.on("tickCompleted", (report: TickReport) => {
     commits: report.commits.map((a) => ({
       characterId: a.characterId,
       actionText: a.actionText,
+      impact: a.impact,
+      definitionId: a.definitionId,
     })),
     cancellations: report.cancellations.map((c) => ({
       characterId: c.characterId,
       actionText: c.actionText,
+      impact: c.impact,
+      definitionId: c.definitionId,
     })),
     featureEvents: report.featureEvents.map((e) => ({
       type: e.type,

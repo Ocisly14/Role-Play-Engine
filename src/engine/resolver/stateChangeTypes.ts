@@ -245,12 +245,15 @@ export const STATE_CHANGE_TYPES: Record<string, StateChangeTypeDef> = {
 
   "item.modify": {
     description:
-      "Change an existing item's display name and/or description. The engine " +
+      "Update an existing item's description to reflect new state. The engine " +
       "looks it up by id (globally unique) — no location field is required. " +
-      "Use to surface state-progression in items the actor interacts with " +
-      "(seal broken, lamp lit, glass shattered, scroll unrolled). " +
-      "Example: {itemId: 'item_letter', name: 'opened letter', " +
-      "description: 'cream envelope with broken red wax seal; folded sheet visible'}.",
+      "NAME stays fixed as the item's stable identity ('letter', 'lamp', " +
+      "'cup'); DESCRIPTION carries the evolving state (sealed → broken seal → " +
+      "unfolded; unlit → lit → snuffed; empty → full → spilled). " +
+      "If the item's identity truly changes (a letter burns into ash), use " +
+      "`item.destroy` + `item.create` instead. " +
+      "Example: {itemId: 'item_letter', description: 'cream envelope with broken " +
+      "red wax seal; folded sheet visible inside'}.",
     schema: {
       type: "object",
       properties: {
@@ -259,18 +262,12 @@ export const STATE_CHANGE_TYPES: Record<string, StateChangeTypeDef> = {
           description:
             "ID of the item to modify; copy verbatim from perception (e.g., 'item_letter').",
         },
-        name: {
-          type: "string",
-          description:
-            "Optional new display name. Omit to leave unchanged.",
-        },
         description: {
           type: "string",
-          description:
-            "Optional new description. Omit to leave unchanged.",
+          description: "New description reflecting the item's current state.",
         },
       },
-      required: ["itemId"],
+      required: ["itemId", "description"],
     },
   },
 
@@ -285,7 +282,7 @@ export const STATE_CHANGE_TYPES: Record<string, StateChangeTypeDef> = {
       "(weather, lighting, smoke, temperature, sound). " +
       "Do NOT use this for state changes on a tracked item (a candle was lit, " +
       "the letter was opened) — that's `item.modify`, which updates the item's " +
-      "name/description so the renderer surfaces it inline with the item. " +
+      "description so the renderer surfaces it inline with the item. " +
       "Example: {sceneId: 'scene_study', add: ['smoke is beginning to seep under the door']}.",
     schema: {
       type: "object",
