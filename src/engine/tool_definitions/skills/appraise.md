@@ -2,7 +2,7 @@
 id: appraise
 engine: llm
 title: Appraise
-description: "Judging the monetary value, quality, and authenticity of trade goods, art, jewelry, antiques, and everyday items. Does NOT cover dating or identifying ancient artifacts (Archaeology), evaluating occult or ritual objects (Occult), or visual searching for hidden features (Perception/Spot Hidden)."
+description: "Judging the monetary value, quality, and authenticity of trade goods, art, jewelry, antiques, and everyday items. Does NOT cover dating or identifying ancient artifacts (Archaeology), evaluating occult or ritual objects (Occult), or visual searching for hidden features (Perception)."
 
 skillCheck:
   skill: Appraise

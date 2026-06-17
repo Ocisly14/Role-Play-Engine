@@ -2,7 +2,7 @@
 id: anthropology
 engine: llm
 title: Anthropology
-description: "Interpret the beliefs, rituals, and social structures of living or recently living human cultures through expert ethnographic analysis. Does NOT cover ancient or extinct cultures (Archaeology), passive observation (Spot Hidden), or document lookup (Research/Library Use)."
+description: "Interpret the beliefs, rituals, and social structures of living or recently living human cultures through expert ethnographic analysis. Does NOT cover ancient or extinct cultures (Archaeology), passive observation (Perception), or document lookup (Research/Library Use)."
 
 skillCheck:
   skill: Anthropology

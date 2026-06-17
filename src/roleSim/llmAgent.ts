@@ -24,12 +24,31 @@ import { buildUserPrompt } from "./userPromptBuilder.js";
 
 const MAX_TOTAL_ITERATIONS = 14;
 
+/** Observability event emitted once per agent-loop iteration before the
+ *  iteration's effect runs (instant tool dispatch / terminal return).
+ *  Lets tests capture the full chain of LLM reasoning for one decide(). */
+export interface AgentIterationEvent {
+  npcId: string;
+  /** 0-based iteration index inside this decide() loop. */
+  iteration: number;
+  /** Raw text emitted by the LLM for this iteration. */
+  responseText: string;
+  /** Parsed JSON tool call. Undefined if `parseError` is set. */
+  parsed?: { tool: string; [k: string]: unknown };
+  /** Set if parseJsonResponse threw. The agent will return `continue`. */
+  parseError?: string;
+}
+
 export interface LLMRoleSimAgentDeps {
   memory: NpcMemoryManager;
   dgsm: DynamicGameStateManager;
   sessionId: string;
   moduleId: string;
   language: string;
+  /** Optional iteration-level trace hook. Called after parsing each LLM
+   *  response, before dispatching the tool. Use it from tests/debuggers to
+   *  capture full agent reasoning without coupling to the model wrapper. */
+  onIteration?: (event: AgentIterationEvent) => void;
 }
 
 export class LLMRoleSimAgent implements RoleSimAgent {
@@ -58,12 +77,25 @@ export class LLMRoleSimAgent implements RoleSimAgent {
         parsed = parseJsonResponse<{ tool: string; [k: string]: unknown }>(
           responseText
         );
-      } catch {
+      } catch (err) {
+        this.deps.onIteration?.({
+          npcId: ctx.npcId,
+          iteration: i,
+          responseText,
+          parseError: err instanceof Error ? err.message : String(err),
+        });
         console.warn(
           `[LLMRoleSimAgent] ${ctx.npcId} returned non-JSON — falling back to continue`
         );
         return { tool: "continue", reason: "implicit (no JSON tool call)" };
       }
+
+      this.deps.onIteration?.({
+        npcId: ctx.npcId,
+        iteration: i,
+        responseText,
+        parsed,
+      });
 
       if (!parsed.tool || !VALID_TOOLS.has(parsed.tool)) {
         transcript.push(

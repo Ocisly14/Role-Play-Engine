@@ -222,18 +222,39 @@ ${defList}
 ## Rules
 - A simple action maps to a single step (e.g., "搜查房间" → [perception])
 - A composite action maps to multiple ordered steps (e.g., "撬开柜子然后搜查里面" → [locksmith, perception])
-- If the action involves going somewhere first, the first step should be "movement". For movement steps, ALWAYS include a \`destination\` string set to the target location ID exactly as it appears in the action text (e.g. "library", "JUNC_HARBOR", "SCN_42"). Do not paraphrase — preserve the literal location identifier.
 - If the action involves giving/receiving items without dialogue, use "item_exchange"
-- If no specific skill definition matches, use "action" (general no-skill action) for solo/environmental actions, or "character_interaction" for casual talk / greetings / asking questions / leading someone
+- For routine activities that don't need a die roll, use the umbrellas: "action" (solo/environmental) or "character_interaction" (casual talk / greetings / asking questions / leading someone). See the Definition Selection Priority section below for the skill-vs-umbrella threshold.
 
-## Definition Selection Priority
-When multiple definitions could match:
-1. **Prefer specific skill definitions** (perception, listen, first_aid, brawling, persuade, etc.) over umbrella definitions (action, character_interaction, item_exchange).
-2. Umbrella definitions are FALLBACKS — pick them only when no specific skill fits.
-3. Physical violence (punching, grappling, tackling, attacking with a weapon) is ALWAYS a combat skill (Brawling / Axe / Sword / Whip / Firearms / Throw), never character_interaction.
-4. Therapeutic giving (handing medicine with intent to treat) is Medicine / First Aid, not Item Exchange.
-5. Social manipulation (persuading, charming, intimidating, deceiving) is the specific social skill (Persuade / Charm / Intimidate / Bluff), not character_interaction.
-6. Long-term mental therapy (calming / treating SAN over sessions) is Psychoanalysis, not character_interaction.
+## Step granularity — fold trivial beats
+Each step you emit becomes a separate resolver call + memory entry. Reserve
+steps for beats that genuinely change state. Pure body language — clearing
+the throat, glancing, inclining a head, folding hands, leaning on a cane,
+"keeping a composed face" — is description, NOT a step. Roll those
+gestures into the \`text\` of the surrounding real beat (dialogue,
+manipulation, skill use, movement) instead of giving them their own step.
+
+A "real beat" qualifies for its own step when it:
+- includes spoken words (a line of dialogue),
+- moves the character through space,
+- manipulates / examines / uses an item,
+- exercises a skill (perception, listen, persuade, brawl, etc.),
+- visibly targets another character (intimidate, accuse, hand over, attack).
+
+Prefer fewer, more substantive steps. A two-sentence action like "我清清嗓子，
+颔首问对方信封是不是他的" is ONE step (\`character_interaction\` for the
+question) with the throat-clear baked into the step text — not two steps.
+
+## Definition Selection Priority — skill defs are for DIFFICULTY, not for description
+Skill definitions invoke a die roll. Use them ONLY when failure is a real possibility — when the outcome genuinely depends on whether the character is good enough. Routine activities anyone could complete go to the umbrellas (\`action\`, \`character_interaction\`, \`item_exchange\`).
+
+- "I walk over and pick up the visible letter" → \`action\` (no roll)
+- "I search the desk for hidden compartments" → \`perception\` (roll — might miss)
+- "I persuade the suspicious guard against orders" → \`persuade\` (roll — might refuse)
+
+Exceptions where a skill IS mandatory even if "easy" in flavor:
+1. Physical violence → combat skill (Brawling / Axe / Firearms / etc.), never character_interaction.
+2. Manipulative social pressure against resistance → the specific social skill (Persuade / Charm / Intimidate / Bluff), not character_interaction.
+3. Medical treatment (handing/applying medicine with intent to treat) → Medicine / First Aid, not Item Exchange.
 
 ## Impact Levels (per step)
 Each step gets its own impact value determining who perceives it:
@@ -245,13 +266,20 @@ Each step gets its own impact value determining who perceives it:
 - **5**: Global — town alarm, summoning ritual, earthquake
 Default to 0 unless the step clearly warrants higher. Use each definition's impact hints as guidance.
 
+## Per-Step Text
+Each step MUST include a \`text\` field with the **local fragment** of the narrative that belongs to *this step only* — not the whole action.
+- Keep wording from the original where possible (you may lightly trim connectors / pronouns so each fragment reads on its own).
+- Preserve all \`[N]\` citation markers from the source narrative — drop a citation only if its referent isn't relevant to this step.
+- Fragments should partition the action: every meaningful clause appears in exactly one step. Don't repeat the same sentence across steps.
+- If the entire action is genuinely a single beat (one step), the \`text\` is the whole narrative.
+
 ## Output Format
 Respond with ONLY a JSON object:
 {
   "steps": [
-    { "definitionId": "movement", "impact": 0, "destination": "library" },
-    { "definitionId": "locksmith", "impact": 1 },
-    { "definitionId": "perception", "impact": 0 }
+    { "definitionId": "movement", "impact": 0, "destination": "library", "text": "I walk to the library [1]" },
+    { "definitionId": "locksmith", "impact": 1, "text": "and pick the lock on the cabinet [2]" },
+    { "definitionId": "perception", "impact": 0, "text": "then search the shelves inside" }
   ]
 }`;
 }
@@ -282,6 +310,7 @@ export function parseInterpretedResult(
           definitionId?: string;
           impact?: number;
           destination?: string;
+          text?: string;
         }) => {
           const definitionId = s.definitionId ?? "generic";
           const { engine, codeSubsystem } = enrich(definitionId);
@@ -291,6 +320,10 @@ export function parseInterpretedResult(
           const overlayFields =
             codeSubsystem === "movement" && typeof s.destination === "string"
               ? { destination: s.destination }
+              : undefined;
+          const actionText =
+            typeof s.text === "string" && s.text.trim().length > 0
+              ? s.text.trim()
               : undefined;
           return {
             definitionId,
@@ -307,6 +340,7 @@ export function parseInterpretedResult(
             engine,
             codeSubsystem,
             overlayFields,
+            actionText,
           };
         }
       );
@@ -348,7 +382,9 @@ export async function interpretAction(
   return {
     steps: parsed.steps.map((s) => ({
       ...s,
-      actionText: narrative,
+      // Prefer the interpreter's per-step fragment; fall back to the full
+      // narrative if the LLM omitted `text` for this step.
+      actionText: s.actionText ?? narrative,
       referencedEntities,
     })),
   };

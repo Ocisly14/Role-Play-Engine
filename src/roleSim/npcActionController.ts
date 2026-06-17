@@ -196,27 +196,17 @@ export class NpcActionController {
     report: TickReport,
     eventsByNpc: Map<string, FeatureEvent[]>
   ): Promise<void> {
-    // Each action surfaces TWO event memories anchored at their true game-times:
-    //   begin  — written at activatedAt; content = `[begin] <actionText>` (intent)
-    //   result — written at completedAt; content = the resolver's `memory.event`
-    //            string flowing through report.stateChanges (what actually happened)
-
-    // (a) "begin" memories for actions that became active this tick.
-    for (const step of report.activations) {
-      if (!step.activatedAt) continue;
-      await this.writeMemoryEntry(
-        step.characterId,
-        "event",
-        `[begin] ${step.actionText}`,
-        step.activatedAt,
-        step.executionSceneId
-      );
-    }
-
-    // (b) Resolver-emitted event/witness memories for actions that ended this
-    //     tick (commits + cancellations). The `[begin]` writer above already
-    //     handles the start-time entry; this routes the resolver's memory.event /
-    //     memory.witness state changes into NpcMemoryManager.
+    // Memory is past-tense fact only. The resolver emits `memory.event` /
+    // `memory.witness` StateChanges at commit (and at cancel re-resolve)
+    // with the narrative of what actually happened; we route those below.
+    //
+    // We deliberately do NOT write a separate `[begin]` intent memory at
+    // activation: in-flight actions are surfaced via the action queue
+    // (self → userPromptBuilder "Currently doing", co-located peers →
+    // renderer.charactersInScene.currentActionText). Writing [begin] in
+    // addition produced duplicate "I will X" + "I did X" entries per
+    // tick × per step, and agents re-planned the same action after seeing
+    // the [begin] entry as if it hadn't happened.
     await this.routeResolverMemories(report);
 
     // Bystanders' perceived events → `witness` memory.

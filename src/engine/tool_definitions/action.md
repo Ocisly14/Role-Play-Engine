@@ -2,7 +2,7 @@
 id: action
 engine: llm
 title: Current-Location Action
-description: "A routine current-location action that needs no specialized skill — picking up an item, reading a visible note, operating a pre-existing device, resting, eating, waiting, or barricading with nearby furniture. FALLBACK: use a specific skill when one fits (Spot Hidden for searching hidden things, Listen for hearing through walls, Stealth for hiding in motion, Locksmith for picking locks, First Aid for treating wounds, Mechanical Repair / Electrical Repair for fixing gear)."
+description: "A routine current-location action that needs no specialized skill — picking up an item, reading a visible note, operating a pre-existing device, resting, eating, waiting, or barricading with nearby furniture. FALLBACK: use a specific skill when one fits (Perception for searching hidden things, Listen for hearing through walls, Stealth for hiding in motion, Locksmith for picking locks, First Aid for treating wounds, Mechanical Repair / Electrical Repair for fixing gear)."
 
 impactHint:
   default: 0
@@ -17,11 +17,6 @@ interpreter:
     - "Rest and catch my breath"
     - "Put the registry log into my pocket from the counter"
     - "Barricade the entrance with furniture"
-
-skillCheck:
-  difficulty: regular
-  type: single
-  failBehavior: partial
 
 stateDomains:
   character:

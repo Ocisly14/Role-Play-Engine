@@ -80,9 +80,11 @@ export interface InterpretedStep {
   engine: "code" | "llm";
   codeSubsystem?: string;
   overlayFields?: Record<string, unknown>;
-  /** Cleaned narrative (without the agent's [references] block). When set,
-   *  ActionIntake stores this as ActionStep.actionText so downstream prompts
-   *  and logs see prose with [N] numbers but no reference metadata. */
+  /** Per-step narrative fragment produced by the interpreter — the slice of
+   *  the cleaned narrative that belongs to *this step only*. Falls back to
+   *  the full cleaned narrative if the LLM didn't emit a per-step fragment.
+   *  ActionIntake stores this on ActionStep.actionText so each step's logs /
+   *  memory / resolver-prompt show just its own beat, not the entire action. */
   actionText?: string;
   /** Resolved citations from the agent's [references] block. Empty array if
    *  no citations present. ActionIntake passes through to ActionStep. */

@@ -18,11 +18,6 @@ interpreter:
     - "Lead the frightened witness to safety"
     - "Ask the shopkeeper what he knows about the neighborhood"
 
-skillCheck:
-  difficulty: regular
-  type: single
-  failBehavior: partial
-
 stateDomains:
   character:
     inject: [actor, targets]
