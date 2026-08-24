@@ -33,24 +33,29 @@
 
 import "dotenv/config";
 
-import { mkdirSync, createWriteStream, writeFileSync, readFileSync } from "node:fs";
+import {
+  createWriteStream,
+  mkdirSync,
+  readFileSync,
+  writeFileSync,
+} from "node:fs";
 import { resolve as pathResolve } from "node:path";
 
 // === Engine ===
 import { createTickEngine } from "../src/engine/core/tickEngine.js";
-import {
-  createDefaultDefinitions,
-  createDefaultSubsystemRegistry,
-} from "../src/engine/registerDefaults.js";
-import { interpretAction } from "../src/engine/interpreter/gameInterpreter.js";
-import { resolveState } from "../src/engine/resolver/stateResolver.js";
-import { buildStateContext } from "../src/engine/resolver/stateContextBuilder.js";
-import { executeSkillCheck } from "../src/engine/tools/skillCheckTool.js";
 import type {
   ActionStep,
   PlannedOutcome,
   TickReport,
 } from "../src/engine/core/types.js";
+import { interpretAction } from "../src/engine/interpreter/gameInterpreter.js";
+import {
+  createDefaultDefinitions,
+  createDefaultSubsystemRegistry,
+} from "../src/engine/registerDefaults.js";
+import { buildStateContext } from "../src/engine/resolver/stateContextBuilder.js";
+import { resolveState } from "../src/engine/resolver/stateResolver.js";
+import { executeSkillCheck } from "../src/engine/tools/skillCheckTool.js";
 import type { ToolResult } from "../src/engine/types.js";
 
 // === RoleSim (real controller + agent) ===
@@ -63,15 +68,20 @@ import {
   initialDynamicGameState,
 } from "../src/state/DynamicGameState.js";
 import { buildTopology } from "../src/state/topologyTypes.js";
-import type {
-  DynamicNPCProfile,
-  DynamicScene,
-} from "../src/state/types.js";
 import type { CharacterPosition } from "../src/state/topologyTypes.js";
+import type { DynamicNPCProfile, DynamicScene } from "../src/state/types.js";
 
+// === Token usage / prompt-cache observability ===
+import {
+  type UsageAggregate,
+  formatUsageReport,
+  getUsageStats,
+  resetUsageStats,
+} from "../src/models/index.js";
+
+import type { NpcMemory, NpcMemoryType } from "@prisma/client";
 // === Memory (stubbed) ===
 import type { NpcMemoryManager } from "../src/memory/NpcMemoryManager.js";
-import type { NpcMemory, NpcMemoryType } from "@prisma/client";
 
 // =========================================================================
 // 0. TEE LOG — mirror all console output into logs/role-agent-test-<ts>.log
@@ -137,9 +147,7 @@ function readJson<T>(file: string): T {
 
 /** Convert Cassandra `[{skill, delta}]` form into the engine's
  *  `Record<skill, delta>` shape. Idempotent on already-record input. */
-function adaptSkillPenalty(
-  raw: unknown
-): Record<string, number> | undefined {
+function adaptSkillPenalty(raw: unknown): Record<string, number> | undefined {
   if (!raw) return undefined;
   if (Array.isArray(raw)) {
     const out: Record<string, number> = {};
@@ -326,11 +334,7 @@ function toFakeNpcMemory(seed: SeedEntry, idx: number): NpcMemory {
 
 const stubMemory: Pick<
   NpcMemoryManager,
-  | "add"
-  | "query"
-  | "getMapSnapshot"
-  | "findLatestByType"
-  | "getForDateByTypes"
+  "add" | "query" | "getMapSnapshot" | "findLatestByType" | "getForDateByTypes"
 > = {
   async add(params) {
     const entry: SeedEntry = {
@@ -485,7 +489,9 @@ const engine = createTickEngine({
       language: "zh",
     });
     void ctx;
-    const elapsedMinutes = cancel ? cancel.elapsedMinutes : resolved.elapsedMinutes;
+    const elapsedMinutes = cancel
+      ? cancel.elapsedMinutes
+      : resolved.elapsedMinutes;
     // Audit every resolver round-trip so we can correlate (stepId, definition,
     // cancelled?, elapsedMinutes, kinds of stateChanges emitted) — useful for
     // diagnosing time inflation and movement-subsystem vs resolver-emitted
@@ -712,11 +718,20 @@ interface RunRecord {
     parsed?: { tool: string; [k: string]: unknown };
     parseError?: string;
   }>;
+  /** Per-(provider, model, operation) LLM token rollup for the run, including
+   *  prompt-cache counters. `cache_read_tokens` is the baseline to beat: with
+   *  no cache_control wired up it reflects only whatever the provider caches
+   *  automatically (OpenAI does; Anthropic does not without explicit
+   *  breakpoints). */
+  usage: UsageAggregate[];
   exitCode: number;
   error?: { message: string; stack?: string };
 }
 
-const N_TICKS = 20;
+const N_TICKS = (() => {
+  const raw = Number(process.env.N_TICKS);
+  return Number.isFinite(raw) && raw > 0 ? Math.floor(raw) : 20;
+})();
 
 const runRecord: RunRecord = {
   meta: {
@@ -739,6 +754,7 @@ const runRecord: RunRecord = {
   resolverCalls: [],
   skillChecks: [],
   agentIterations: [],
+  usage: [],
   exitCode: 0,
 };
 
@@ -826,6 +842,7 @@ function recordError(err: unknown) {
 function flushRunRecord(t0: number) {
   runRecord.meta.endedAt = new Date().toISOString();
   runRecord.meta.durationMs = Date.now() - t0;
+  runRecord.usage = getUsageStats();
   try {
     writeFileSync(JSON_PATH, JSON.stringify(runRecord, null, 2));
     console.log(`\n(wrote run record → ${JSON_PATH})`);
@@ -836,13 +853,16 @@ function flushRunRecord(t0: number) {
 
 async function main() {
   console.log("\n=== test-role-agent (FULL E2E) ===");
-  console.log(`NPCs: ${npc.name} (${npc.id}) + ${visitor.name} (${visitor.id})`);
+  console.log(
+    `NPCs: ${npc.name} (${npc.id}) + ${visitor.name} (${visitor.id})`
+  );
   console.log(`Scene: ${scene.name} (${scene.id})`);
   console.log(
     `Provider: ${process.env.MODEL_PROVIDER ?? "(unset — generator falls back)"}`
   );
 
   const t0 = Date.now();
+  resetUsageStats();
 
   try {
     console.log("\n--- Bootstrap (initial decide pass for all alive NPCs) ---");
@@ -878,6 +898,9 @@ async function main() {
         : "(unknown)";
       console.log(`  ${n.name} (${n.id}) → ${where}`);
     }
+    console.log("\n--- LLM token usage / prompt cache ---");
+    console.log(formatUsageReport());
+
     flushRunRecord(t0);
   }
 }

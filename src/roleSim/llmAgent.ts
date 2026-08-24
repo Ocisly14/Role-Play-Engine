@@ -20,7 +20,7 @@ import {
   VALID_TOOLS,
   dispatchInstantTool,
 } from "./toolDispatcher.js";
-import { buildUserPrompt } from "./userPromptBuilder.js";
+import { buildUserPromptSegments } from "./userPromptBuilder.js";
 
 const MAX_TOTAL_ITERATIONS = 14;
 
@@ -60,14 +60,25 @@ export class LLMRoleSimAgent implements RoleSimAgent {
     const transcript: string[] = [];
 
     for (let i = 0; i < MAX_TOTAL_ITERATIONS; i++) {
-      const userPrompt = buildUserPrompt(ctx, transcript, {
+      // Segmented so the tick-invariant prefix (system prompt + identity +
+      // situation) carries a prompt-cache breakpoint: this loop re-sends it
+      // unchanged on every iteration, and it is by far the largest part of
+      // the prompt. Concatenating the segments reproduces the old single
+      // string byte for byte, so non-Anthropic providers are unaffected.
+      const promptSegments = buildUserPromptSegments(ctx, transcript, {
         language: this.deps.language,
         dgsm: this.deps.dgsm,
       });
 
       const responseText = await generateText({
         customSystemPrompt: SYSTEM_PROMPT,
-        context: userPrompt,
+        // SYSTEM_PROMPT is assembled once at module import from constant tool
+        // docs — ~12k chars, byte-identical for every NPC on every tick, and
+        // the largest single block in this call site's ~6.9k-token prompt.
+        // Every agent call in the session reads this one cache entry.
+        cacheSystemPrompt: true,
+        context: "",
+        contextSegments: promptSegments,
         modelClass: ModelClass.MEDIUM,
         operation: "role-sim-agent",
       });

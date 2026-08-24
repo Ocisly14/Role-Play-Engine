@@ -16,7 +16,10 @@ export class CitationResolutionError extends Error {
 }
 
 export class ActionTextFormatError extends Error {
-  constructor(message: string, public readonly actionText: string) {
+  constructor(
+    message: string,
+    public readonly actionText: string
+  ) {
     super(`${message} actionText: "${actionText}"`);
     this.name = "ActionTextFormatError";
   }
@@ -89,9 +92,7 @@ function splitSections(actionText: string): {
   }
   // Slice narrative between [narrative] header and either [references] or EOF.
   const narrEnd =
-    narrIdx >= 0
-      ? actionText.match(NARRATIVE_HEADER)![0].length + narrIdx
-      : 0;
+    narrIdx >= 0 ? actionText.match(NARRATIVE_HEADER)![0].length + narrIdx : 0;
   const narrative =
     refsIdx > narrEnd
       ? actionText.slice(narrEnd, refsIdx).trim()
@@ -373,6 +374,11 @@ export async function interpretAction(
 
   const text = await generateText({
     customSystemPrompt: systemPrompt,
+    // The system prompt here is the full action-definition list — identical
+    // bytes on every interpreter call, for every NPC, for the whole session,
+    // and measured at ~8.9k tokens per call. It is the single largest stable
+    // prefix in the pipeline, so it carries the cache breakpoint.
+    cacheSystemPrompt: true,
     context: `${langInstruction}\n\nAction: "${narrative}"`,
     modelClass: ModelClass.MEDIUM,
     operation: "game-interpreter",

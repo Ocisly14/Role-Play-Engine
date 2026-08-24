@@ -57,7 +57,17 @@ function formatSkillCheckResult(result?: ToolResult): string {
 
 // ===== Prompt builder =====
 
-export function buildResolverPrompt(ctx: ResolverContext): string {
+/** Resolver prompt split into its cacheable prefix and its per-request tail. */
+export interface ResolverPromptParts {
+  /** Static rules + definition guidance + output schema. Stable per
+   *  (definition, skillSucceeded) — carries the cache breakpoint. */
+  stable: string;
+  /** Action text, skill-check verdict, world state, feature notes, language
+   *  instruction. Different on every call. */
+  request: string;
+}
+
+export function buildResolverPrompt(ctx: ResolverContext): ResolverPromptParts {
   const language = ctx.language ?? "en";
   const { definition, stateContext } = ctx;
 
@@ -123,10 +133,13 @@ export function buildResolverPrompt(ctx: ResolverContext): string {
     `Write all memory text in ${language}. Respond ONLY with the JSON object, no other text.`
   );
 
-  // Assembly order is cache-friendly: static prefix → per-definition middle
-  // → per-request tail. Prompt caching benefits grow as more calls reuse the
-  // same definition (e.g., many perception rolls within one session).
-  return [
+  // Split at the stability boundary: everything up to and including the
+  // definition's schema section is fixed for a given (definition,
+  // skillSucceeded) pair and goes in the system prompt, where it carries a
+  // cache breakpoint. The per-request tail (action text, dice result, world
+  // state) goes in the user turn, after the breakpoint, so it never
+  // invalidates the cached prefix.
+  const stable = [
     RESOLVER_STATIC_SYSTEM_PROMPT,
     "---",
     "",
@@ -137,11 +150,11 @@ export function buildResolverPrompt(ctx: ResolverContext): string {
     schemaSection || null,
     "",
     "---",
-    "",
-    requestSections.join("\n"),
   ]
     .filter((s) => s !== null)
     .join("\n");
+
+  return { stable, request: requestSections.join("\n") };
 }
 
 // ===== Parser =====
@@ -193,9 +206,7 @@ export interface ResolvedOutcome {
  *  resolver-batched / resolver-shaped kinds into engine-atomic forms so the
  *  Applier's `switch (c.kind)` dispatches cleanly without a second translation
  *  layer. */
-function flattenToStateChanges(
-  resolution: Record<string, any>
-): StateChange[] {
+function flattenToStateChanges(resolution: Record<string, any>): StateChange[] {
   const out: StateChange[] = [];
   for (const [typeId, value] of Object.entries(resolution)) {
     if ((RESOLVER_META_KEYS as readonly string[]).includes(typeId)) continue;
@@ -291,8 +302,8 @@ function normalizeResolverEntry(
           ? obj.junction
           : undefined;
       const position = junction
-        ? ({ type: "junction" as const, junctionId: junction })
-        : ({ type: "scene" as const, sceneId });
+        ? { type: "junction" as const, junctionId: junction }
+        : { type: "scene" as const, sceneId };
       return [
         {
           kind: "character.position",
@@ -331,13 +342,14 @@ function getAllowedResolutionKeys(config: OutputSchemaConfig): Set<string> {
 export async function resolveState(
   ctx: ResolverContext
 ): Promise<ResolvedOutcome> {
-  const prompt = buildResolverPrompt(ctx);
+  const { stable, request } = buildResolverPrompt(ctx);
 
   let raw: Record<string, any> = {};
   try {
     const text = await generateText({
-      customSystemPrompt: prompt,
-      context: "",
+      customSystemPrompt: stable,
+      cacheSystemPrompt: true,
+      context: request,
       modelClass: ModelClass.MEDIUM,
       operation: "state-resolver",
     });

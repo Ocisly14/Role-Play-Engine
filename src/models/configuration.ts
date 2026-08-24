@@ -49,7 +49,7 @@ export const models: Models = {
     endpoint: process.env.ANTHROPIC_API_URL || "https://api.anthropic.com/v1",
     model: {
       [ModelClass.SMALL]: {
-        name: process.env.SMALL_ANTHROPIC_MODEL || "claude-3-haiku-20240307",
+        name: process.env.SMALL_ANTHROPIC_MODEL || "claude-haiku-4-5-20251001",
         stop: [],
         maxInputTokens: 200000,
         maxOutputTokens: 8192,
@@ -58,8 +58,7 @@ export const models: Models = {
         temperature: 0.7,
       },
       [ModelClass.MEDIUM]: {
-        name:
-          process.env.MEDIUM_ANTHROPIC_MODEL || "claude-3-5-sonnet-20241022",
+        name: process.env.MEDIUM_ANTHROPIC_MODEL || "claude-sonnet-5",
         stop: [],
         maxInputTokens: 200000,
         maxOutputTokens: 8192,
@@ -68,7 +67,7 @@ export const models: Models = {
         temperature: 0.7,
       },
       [ModelClass.LARGE]: {
-        name: process.env.LARGE_ANTHROPIC_MODEL || "claude-3-opus-20240229",
+        name: process.env.LARGE_ANTHROPIC_MODEL || "claude-opus-5",
         stop: [],
         maxInputTokens: 200000,
         maxOutputTokens: 8192,

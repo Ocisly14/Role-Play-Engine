@@ -281,11 +281,15 @@ export class TickOrchestrator {
       // step so a later cancel-time re-resolve can reuse the same roll.
       const skillCheckResult = this.deps.runSkillCheck?.(next);
       next.skillCheckResult = skillCheckResult;
-      const resolved = await resolve(next, readCtx, undefined, skillCheckResult);
+      const resolved = await resolve(
+        next,
+        readCtx,
+        undefined,
+        skillCheckResult
+      );
       next.activatedAt = nextTickTime;
       next.plannedDuration = resolved.plannedDuration;
-      next.plannedOutcome =
-        resolved.outcome as unknown as ActionStep["plannedOutcome"];
+      next.plannedOutcome = resolved.outcome;
       next.completionTime = addMinutes(nextTickTime, resolved.plannedDuration);
       queue.markActive(next.id);
       activationsThisTick.push(next);
@@ -318,9 +322,7 @@ export class TickOrchestrator {
       );
 
     for (const step of due) {
-      const outcome = step.plannedOutcome as unknown as
-        | PlannedOutcome
-        | undefined;
+      const outcome = step.plannedOutcome;
       // plannedOutcome is set in Phase 3 before markActive; missing = programmer error.
       if (!outcome) {
         queue.markCompleted(step.id);
@@ -484,10 +486,7 @@ export class TickOrchestrator {
       // Derive `plannedNarrative` from the resolver's original memory.event
       // content. `memory.event` is now a member of the StateChange
       // discriminated union, so the .find narrows naturally.
-      const priorOutcome = step.plannedOutcome as unknown as
-        | PlannedOutcome
-        | undefined;
-      const plannedNarrative = priorOutcome?.stateChanges.find(
+      const plannedNarrative = step.plannedOutcome?.stateChanges.find(
         (s): s is Extract<StateChange, { kind: "memory.event" }> =>
           s.kind === "memory.event" && s.characterId === step.characterId
       )?.content;
@@ -511,8 +510,7 @@ export class TickOrchestrator {
           step.skillCheckResult
         );
         buffer.push(...reResolved.outcome.stateChanges);
-        step.plannedOutcome =
-          reResolved.outcome as unknown as ActionStep["plannedOutcome"];
+        step.plannedOutcome = reResolved.outcome;
       } catch (err) {
         console.warn(
           `[TickOrchestrator] cancel re-resolve failed for step ${step.id}; keeping plannedOutcome:`,

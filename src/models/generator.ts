@@ -14,6 +14,7 @@ import {
   ModelClass,
   ModelProviderName,
   type ModelSettings,
+  type PromptSegment,
 } from "./types.js";
 
 /**
@@ -57,6 +58,42 @@ function isOpenAIFixedParameterModel(modelName: string): boolean {
     normalizedModelName.startsWith("o3") ||
     normalizedModelName.startsWith("o4")
   );
+}
+
+/**
+ * Anthropic removed the sampling parameters (`temperature`, `top_p`, `top_k`)
+ * on the Claude 4.6+ generation — sending any of them returns a 400
+ * (`\`temperature\` is deprecated for this model`, `\`top_p\` cannot be set to
+ * -1 for this model`). Verified live: claude-sonnet-5 rejects,
+ * claude-haiku-4-5 accepts.
+ *
+ * Mirrors `isOpenAIFixedParameterModel` above. Matching is on the family
+ * prefix so dated snapshots (e.g. `claude-sonnet-5-20260115`) are covered.
+ */
+function isAnthropicFixedParameterModel(modelName: string): boolean {
+  const normalized = modelName.toLowerCase();
+  return (
+    normalized.startsWith("claude-opus-4-6") ||
+    normalized.startsWith("claude-opus-4-7") ||
+    normalized.startsWith("claude-opus-4-8") ||
+    normalized.startsWith("claude-opus-5") ||
+    normalized.startsWith("claude-sonnet-4-6") ||
+    normalized.startsWith("claude-sonnet-5") ||
+    normalized.startsWith("claude-fable-5") ||
+    normalized.startsWith("claude-mythos-5")
+  );
+}
+
+/**
+ * The Anthropic SDK appends its own `/v1/messages` to `baseURL`, so a
+ * configured endpoint that already ends in `/v1` produces `/v1/v1/messages`
+ * and a 404 `not_found_error` on every call. (OpenAI is the opposite — its
+ * SDK expects the `/v1` to be part of baseURL — which is why only this
+ * provider needs the trim.)
+ */
+function anthropicBaseUrl(endpoint: string | undefined): string | undefined {
+  if (!endpoint) return undefined;
+  return endpoint.replace(/\/+(v1)?\/*$/, "") || undefined;
 }
 
 function getOpenAITokenConfig(
@@ -131,6 +168,39 @@ async function formatImageInput(
 
   const sanitized = image.base64Data.replace(/^data:[^;]+;base64,/, "");
   return `data:${mimeType};base64,${sanitized}`;
+}
+
+/**
+ * Render segmented user content for providers with explicit prompt-cache
+ * breakpoints (Anthropic today).
+ *
+ * Each segment becomes its own `text` content block, and a segment marked
+ * `cache` carries `cache_control: {type: "ephemeral"}`, which caches
+ * everything before it — tools, system prompt, and preceding blocks.
+ * @langchain/anthropic forwards `cache_control` verbatim off the content part
+ * (see utils/message_inputs.js `_formatContent`).
+ *
+ * Anthropic allows at most 4 breakpoints per request; extra `cache` flags are
+ * dropped (keeping the earliest, which cover the longest-lived prefixes)
+ * rather than failing the request.
+ */
+const MAX_CACHE_BREAKPOINTS = 4;
+
+function buildSegmentedContent(
+  segments: PromptSegment[]
+): Array<Record<string, unknown>> {
+  let remaining = MAX_CACHE_BREAKPOINTS;
+  return segments
+    .filter((segment) => segment.text.length > 0)
+    .map((segment) => {
+      const useCache = segment.cache === true && remaining > 0;
+      if (useCache) remaining -= 1;
+      return {
+        type: "text",
+        text: segment.text,
+        ...(useCache ? { cache_control: { type: "ephemeral" } } : {}),
+      };
+    });
 }
 
 /**
@@ -222,17 +292,35 @@ export function createChatModel(
       break;
     }
 
-    case ModelProviderName.ANTHROPIC:
+    case ModelProviderName.ANTHROPIC: {
+      // LangChain's ChatAnthropic unconditionally sends temperature/top_k/top_p
+      // (class defaults 1 / -1 / -1) for models it doesn't recognize, and the
+      // 4.6+ generation rejects all three. `invocationKwargs` is spread last
+      // into the request body, so setting them to undefined there removes the
+      // keys (JSON.stringify drops undefined) — verified live against
+      // claude-sonnet-5.
+      const anthropicSamplingConfig = isAnthropicFixedParameterModel(
+        settings.name
+      )
+        ? {
+            invocationKwargs: {
+              temperature: undefined,
+              top_k: undefined,
+              top_p: undefined,
+            },
+          }
+        : { temperature };
       model = new ChatAnthropic({
         modelName: settings.name,
-        temperature,
+        ...anthropicSamplingConfig,
         maxTokens: settings.maxOutputTokens,
         anthropicApiKey: process.env.ANTHROPIC_API_KEY,
         clientOptions: {
-          baseURL: endpoint,
+          baseURL: anthropicBaseUrl(endpoint),
         },
       });
       break;
+    }
 
     case ModelProviderName.GOOGLE:
       model = new ChatGoogleGenerativeAI({
@@ -274,6 +362,8 @@ export async function generateText(
     images,
     onToken,
     temperature,
+    contextSegments,
+    cacheSystemPrompt,
   } = options;
 
   // Get provider from environment variable or default to OpenAI
@@ -289,10 +379,23 @@ export async function generateText(
     content: string | Array<Record<string, unknown>>;
   }> = [];
 
+  // The provider is resolved above; only Anthropic understands an explicit
+  // breakpoint, and only a block-shaped system message can carry one.
+  const systemPromptIsCached =
+    cacheSystemPrompt === true && provider === ModelProviderName.ANTHROPIC;
+
   if (customSystemPrompt) {
     messages.push({
       role: "system",
-      content: customSystemPrompt,
+      content: systemPromptIsCached
+        ? [
+            {
+              type: "text",
+              text: customSystemPrompt,
+              cache_control: { type: "ephemeral" },
+            },
+          ]
+        : customSystemPrompt,
     });
   }
 
@@ -343,7 +446,40 @@ export async function generateText(
     let lastErrorMessage = "Unknown error";
     let lastAttemptedModelClass: ModelClass = effectiveModelClass;
 
-    const userContent = await buildUserContent(providerForRun, context, images);
+    // Anthropic rejects an empty user turn outright
+    // (`messages.0: user messages must have non-empty content`), while OpenAI
+    // tolerates it. Callers that put the entire prompt in `customSystemPrompt`
+    // and pass `context: ""` (the state resolver does) would therefore fail on
+    // Anthropic only. Substitute a minimal instruction so every provider gets
+    // a valid turn. (The better long-term shape is to move each caller's
+    // volatile tail into the user turn — that also makes the system prefix
+    // cacheable — but that changes prompt content, so it is not done here.)
+    const segments =
+      contextSegments && contextSegments.length > 0
+        ? contextSegments
+        : undefined;
+    // Segments concatenate with no separator, so this is byte-identical to
+    // the `context` string the caller would otherwise have passed.
+    const joinedContext = segments
+      ? segments.map((segment) => segment.text).join("")
+      : context;
+    const effectiveContext =
+      joinedContext && joinedContext.trim().length > 0
+        ? joinedContext
+        : "Proceed with the instructions above.";
+
+    // Explicit cache breakpoints are Anthropic-only, and the segmented shape
+    // is incompatible with the image path (which builds its own block array),
+    // so every other case sends the plain joined string exactly as before.
+    const useSegmentedContent =
+      segments !== undefined &&
+      providerForRun === ModelProviderName.ANTHROPIC &&
+      (!images || images.length === 0) &&
+      segments.some((segment) => segment.cache === true);
+
+    const userContent = useSegmentedContent
+      ? buildSegmentedContent(segments)
+      : await buildUserContent(providerForRun, effectiveContext, images);
     const providerMessages = [...messages];
     providerMessages.push({
       role: "user" as const,

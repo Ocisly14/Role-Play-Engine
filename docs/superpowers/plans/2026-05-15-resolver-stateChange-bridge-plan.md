@@ -40,7 +40,7 @@ Implementation order is deliberate: state layer first (no callers yet), then sch
 **Files:**
 - Modify: `src/state/DynamicGameState.ts`
 
-- [ ] **Step 1: Add the method**
+- [x] **Step 1: Add the method**
 
 Find the existing item helper block (`getNpcInventory` / `findNpcItem` / `addItemToNpc` / `removeItemFromNpc`, around line 820-841) and insert `modifyItem` immediately after `removeItemFromNpc`. Match existing comment + warning style.
 
@@ -114,7 +114,7 @@ private locateItemCandidates(itemId: string, from?: string): Item[] {
 
 `Item` is already imported at the top of the file (used by other methods like `addItemToNpc`); no new import needed.
 
-- [ ] **Step 2: Type-check this file in isolation**
+- [x] **Step 2: Type-check this file in isolation**
 
 Run: `pnpm exec tsc --noEmit -p tsconfig.json 2>&1 | grep "DynamicGameState"`
 Expected: no errors mentioning DynamicGameState.ts.
@@ -126,7 +126,7 @@ Expected: no errors mentioning DynamicGameState.ts.
 **Files:**
 - Modify: `src/engine/resolver/stateChangeTypes.ts`
 
-- [ ] **Step 1: Replace the `item.modify` schema entry**
+- [x] **Step 1: Replace the `item.modify` schema entry**
 
 Find the existing block (~line 183-196) and replace with the extended version that exposes `name`, `description`, `from` to the resolver LLM:
 
@@ -171,7 +171,7 @@ The key change is dropping the old required `properties` object entirely and rep
 **Files:**
 - Modify: `src/engine/resolver/stateChangeAppliers.ts`
 
-- [ ] **Step 1: Replace the `item.modify` applier**
+- [x] **Step 1: Replace the `item.modify` applier**
 
 Find the existing entry (search for `"item.modify":`) and replace its body with a real call. Use the file's existing `(dgsm, changes)` signature pattern.
 
@@ -192,7 +192,7 @@ Find the existing entry (search for `"item.modify":`) and replace its body with 
 },
 ```
 
-- [ ] **Step 2: Update the memory.event / memory.witness comments**
+- [x] **Step 2: Update the memory.event / memory.witness comments**
 
 Find `"memory.event": (_dgsm, _changes) => {` (~line 235) and replace the `// No-op: memory writing is handled by the caller (tickProcessor)` comment with one that points to the actual current consumer:
 
@@ -215,7 +215,7 @@ Find `"memory.event": (_dgsm, _changes) => {` (~line 235) and replace the `// No
 **Files:**
 - Modify: `src/engine/resolver/stateResolver.ts`
 
-- [ ] **Step 1: Add the typed return type and helper**
+- [x] **Step 1: Add the typed return type and helper**
 
 Add the following near the top of the file (after the `RESOLVER_META_KEYS` constant declaration):
 
@@ -247,7 +247,7 @@ function flattenToStateChanges(
 }
 ```
 
-- [ ] **Step 2: Rewrite `resolveState` to return `ResolvedOutcome`**
+- [x] **Step 2: Rewrite `resolveState` to return `ResolvedOutcome`**
 
 Replace the current `resolveState` (lines ~197-229) with:
 
@@ -302,7 +302,7 @@ This collapses two responsibilities: (a) fetch + parse + validate the LLM output
 - Modify: `src/engine/core/types.ts`
 - Modify: `src/engine/core/tickOrchestrator.ts`
 
-- [ ] **Step 1: Delete `narrative` from `PlannedOutcome`**
+- [x] **Step 1: Delete `narrative` from `PlannedOutcome`**
 
 In `src/engine/core/types.ts`, find:
 
@@ -323,7 +323,7 @@ export interface PlannedOutcome {
 }
 ```
 
-- [ ] **Step 2: Update `applyPendingCancellation` to derive `plannedNarrative` from memory.event**
+- [x] **Step 2: Update `applyPendingCancellation` to derive `plannedNarrative` from memory.event**
 
 In `src/engine/core/tickOrchestrator.ts`, find the section in `applyPendingCancellation` that reads:
 
@@ -358,7 +358,7 @@ const plannedNarrative = priorOutcome?.stateChanges
 - Modify: `src/simulation/SimulationRunner.ts`
 - Modify: `scripts/test-role-agent.ts`
 
-- [ ] **Step 1: Update SimulationRunner's `resolve` closure**
+- [x] **Step 1: Update SimulationRunner's `resolve` closure**
 
 The closure currently re-implements flatten logic by reading `resolution.stateChanges` (which never existed). With `resolveState` returning typed `ResolvedOutcome`, the closure becomes a thin wrapper. Find the closure (~lines 533-580) and replace its body:
 
@@ -418,7 +418,7 @@ resolve: async (
 
 The body shrinks because `flattenToStateChanges` lives in `resolveState` now.
 
-- [ ] **Step 2: Mirror the closure change in the test script**
+- [x] **Step 2: Mirror the closure change in the test script**
 
 `scripts/test-role-agent.ts` has the same shape closure. Replace its body identically (the only differences from SimulationRunner are: `definitions` reference is the local const, `dgsm` is the local const, language is the literal `"en"`).
 
@@ -472,7 +472,7 @@ resolve: async (
 },
 ```
 
-- [ ] **Step 3: Enrich JSON `TickRecord` with stateChanges**
+- [x] **Step 3: Enrich JSON `TickRecord` with stateChanges**
 
 In `scripts/test-role-agent.ts`, find the `TickRecord` interface and add a `stateChanges` field:
 
@@ -538,7 +538,7 @@ runRecord.ticks.push({
 **Files:**
 - Modify: `src/roleSim/npcActionController.ts`
 
-- [ ] **Step 1: Replace the cancellation result-write block with `routeResolverMemories` call**
+- [x] **Step 1: Replace the cancellation result-write block with `routeResolverMemories` call**
 
 In `writeAutoMemories`, find the block that starts with `// (b) "result" memories for actions that ended this tick.` and the entire `for (const a of report.commits)` + `for (const c of report.cancellations)` blocks below it. Replace those two blocks with a single call:
 
@@ -550,7 +550,7 @@ In `writeAutoMemories`, find the block that starts with `// (b) "result" memorie
 await this.routeResolverMemories(report);
 ```
 
-- [ ] **Step 2: Implement `routeResolverMemories`**
+- [x] **Step 2: Implement `routeResolverMemories`**
 
 Add the new private method right after `writeAutoMemories` (or after the helper `writeMemoryEntry`). The location lookup walks commits then cancellations to find the actor's executionSceneId; falls back to the actor's current position.
 
@@ -603,7 +603,7 @@ private async routeResolverMemories(report: TickReport): Promise<void> {
 }
 ```
 
-- [ ] **Step 3: Confirm the `[begin]` block stays, the propagated-event witness block stays**
+- [x] **Step 3: Confirm the `[begin]` block stays, the propagated-event witness block stays**
 
 The existing `// (a) "begin" memories for actions that became active this tick.` block stays unchanged. The block at the bottom that writes witness memories from `eventsByNpc` (subsystem-emitted FeatureEvents propagating to bystanders) ALSO stays — that's a separate channel from resolver `memory.witness`.
 
@@ -619,7 +619,7 @@ After this task, `writeAutoMemories` body has three sections in order:
 **Files:**
 - Sweep: all of `src/` and `scripts/`
 
-- [ ] **Step 1: grep for residual narrative references**
+- [x] **Step 1: grep for residual narrative references**
 
 Run:
 ```bash
@@ -627,7 +627,7 @@ grep -rn "outcome?.narrative\|outcome\.narrative\|resolution\.narrative\|Planned
 ```
 Expected: zero matches (after Tasks 5-7).
 
-- [ ] **Step 2: grep for the dead `StateResolution` interface**
+- [x] **Step 2: grep for the dead `StateResolution` interface**
 
 Run:
 ```bash
@@ -636,13 +636,22 @@ grep -rn "StateResolution" src/engine/types.ts src/ scripts/ 2>/dev/null
 
 The interface in `src/engine/types.ts:139-148` is marked `@deprecated`. If grep shows zero IMPORTS (only the definition itself + `import type { StateResolution }` lines), delete the interface and all dead imports. If anything else references it as a type, leave it alone — separate cleanup.
 
+**Outcome:** the two remaining references (`ActionStep.plannedOutcome`,
+`CharacterAction.outcome` in `engine/core/types.ts`) were only *nominally*
+`StateResolution` — every call site cast through `as unknown as PlannedOutcome`.
+Retyped both fields to `PlannedOutcome` (their real runtime shape), deleted the
+four casts in `tickOrchestrator.ts`, then removed `StateResolution` and its dead
+sub-interfaces (`CharacterChange`, `ItemChange`, `SceneChange`, `MemoryEntry`,
+`RelationshipChange`) from `engine/types.ts` plus the `engine/index.ts` export.
+
+
 ---
 
 ## Task 9: Verification
 
 **Files:** none
 
-- [ ] **Step 1: Type check**
+- [x] **Step 1: Type check**
 
 Run:
 ```bash
@@ -650,7 +659,7 @@ pnpm exec tsc --noEmit -p tsconfig.json 2>&1 | grep -v node_modules | head -40
 ```
 Expected: zero output (clean).
 
-- [ ] **Step 2: Confirm dead refs are gone**
+- [x] **Step 2: Confirm dead refs are gone**
 
 Run the greps from Task 8 again. All should be empty.
 

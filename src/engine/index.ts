@@ -8,7 +8,6 @@ export type {
   ActionDefinition,
   StateDomainSpec,
   InterpretedResult,
-  StateResolution,
   ToolResult,
 } from "./types.js";
 export {

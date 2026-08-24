@@ -9,7 +9,7 @@ export type SuccessLevel = "critical" | "hard" | "regular" | "fail" | "fumble";
  * Phase E: legacy fat `CharacterAction` interface deleted. The canonical type
  * now lives in `src/engine/core/types.ts` and is re-exported here for any
  * straggling caller. Engine-core action shape is intentionally minimal —
- * `characterId`, `actionText`, `sceneId`, `outcome` (StateResolution), plus
+ * `characterId`, `actionText`, `sceneId`, `outcome` (PlannedOutcome), plus
  * step bookkeeping. UI-facing fields like `characterName`, narrative outcome
  * strings, and `successLevel` are derived from DGSM by
  * `SimulationEventEmitter` (see `actionsToEvents`).

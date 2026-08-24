@@ -1,8 +1,5 @@
-// StateResolution currently lives at src/engine/types.ts (marked @deprecated there).
-// Cleaning up resolver output types is out of scope for this refactor; we use
-// the type as-is for now.
 import type { CharacterPosition } from "../../state/topologyTypes.js";
-import type { StateResolution, ToolResult } from "../types.js";
+import type { ToolResult } from "../types.js";
 
 export type FeatureStateScope = "scene" | "region" | "character" | "global";
 
@@ -122,7 +119,7 @@ export interface ActionStep {
 
   activatedAt?: GameTime;
   plannedDuration?: number;
-  plannedOutcome?: StateResolution;
+  plannedOutcome?: PlannedOutcome;
   completionTime?: GameTime;
 
   /**
@@ -362,7 +359,7 @@ export interface CharacterAction {
   impact: 0 | 1 | 2 | 3 | 4 | 5;
   activatedAt: GameTime;
   completedAt: GameTime;
-  outcome?: StateResolution;
+  outcome?: PlannedOutcome;
 }
 
 export interface DamageReport {

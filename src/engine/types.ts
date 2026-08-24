@@ -95,60 +95,6 @@ export interface InterpretedResult {
   steps: InterpretedStep[];
 }
 
-// ===== StateResolution: structured state changes =====
-
-/** @deprecated Use state change types from resolver/stateChangeTypes.ts instead */
-export interface CharacterChange {
-  characterId: string;
-  hp?: number;
-  san?: number;
-  fatigue?: number;
-  addConditions?: string[];
-  removeConditions?: string[];
-  position?: import("../state/topologyTypes.js").CharacterPosition;
-}
-
-/** @deprecated Use state change types from resolver/stateChangeTypes.ts instead */
-export interface ItemChange {
-  itemId: string;
-  action: "move" | "destroy" | "create" | "modify";
-  from?: string;
-  to?: string;
-  properties?: Record<string, unknown>;
-}
-
-/** @deprecated Use state change types from resolver/stateChangeTypes.ts instead */
-export interface SceneChange {
-  sceneId: string;
-  addConditions?: string[];
-  removeConditions?: string[];
-}
-
-/** @deprecated Use state change types from resolver/stateChangeTypes.ts instead */
-export interface MemoryEntry {
-  characterId: string;
-  type: string;
-  content: string;
-}
-
-/** @deprecated Use state change types from resolver/stateChangeTypes.ts instead */
-export interface RelationshipChange {
-  from: string;
-  to: string;
-  change: string;
-}
-
-/** @deprecated Use state change types from resolver/stateChangeTypes.ts instead */
-export interface StateResolution {
-  characterChanges?: CharacterChange[];
-  itemChanges?: ItemChange[];
-  sceneChanges?: SceneChange[];
-  memories?: MemoryEntry[];
-  relationships?: RelationshipChange[];
-  featureOverlays?: Record<string, unknown>;
-  narrative: string;
-}
-
 // ===== Movement tick state =====
 
 export interface MovementTickState {

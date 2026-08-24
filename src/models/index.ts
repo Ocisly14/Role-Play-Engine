@@ -22,4 +22,10 @@ export {
   recordTokenUsage,
   getTokenContext,
   getCurrentUsageTotals,
+  resetUsageStats,
+  getUsageStats,
+  formatUsageReport,
+  uncachedInputTokens,
+  promptTokensSent,
 } from "./tokenUsage.js";
+export type { TokenUsageTotals, UsageAggregate } from "./tokenUsage.js";
