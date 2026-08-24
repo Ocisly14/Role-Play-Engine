@@ -29,6 +29,7 @@ func _process(_delta: float) -> void:
 func get_json(path: String) -> Variant:
 	var req := HTTPRequest.new()
 	add_child(req)
+	req.timeout = 10.0
 	if req.request(base_url + path) != OK:
 		req.queue_free()
 		return null
@@ -51,9 +52,10 @@ func resolve_session(module_name: String) -> String:
 
 func connect_ws(p_session_id: String) -> void:
 	disconnect_ws()
+	_ws = WebSocketPeer.new()
 	session_id = p_session_id
-	# http -> ws, https -> wss
-	var ws_url := base_url.replace("http", "ws") \
+	# http -> ws, https -> wss (replace only the scheme prefix)
+	var ws_url := "ws" + base_url.trim_prefix("http") \
 		+ "/ws?sessionId=%s&type=simulation" % session_id.uri_encode()
 	if _ws.connect_to_url(ws_url) == OK:
 		_ws_active = true

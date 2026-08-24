@@ -22,6 +22,8 @@ func _ready() -> void:
 	_connect_button.pressed.connect(_on_connect_pressed)
 	SimClient.sim_event.connect(_on_sim_event)
 	SimClient.position_snapshot.connect(_on_snapshot)
+	SimClient.ws_connected.connect(func(_session_id: String) -> void:
+		_status_label.text = "Live")
 	SimClient.ws_closed.connect(func() -> void:
 		_status_label.text = "Disconnected")
 
@@ -41,7 +43,7 @@ func _on_connect_pressed() -> void:
 	_status_label.text = "Connecting..."
 	SimClient.base_url = _host_edit.text.strip_edges().trim_suffix("/")
 	var ok := await _bootstrap(_module_edit.text.strip_edges())
-	_status_label.text = "Live" if ok else "Failed — check server/module name"
+	_status_label.text = "Connected — waiting for events" if ok else "Failed — check server/module name"
 	_connect_button.disabled = false
 
 
@@ -63,8 +65,11 @@ func _bootstrap(module_name: String) -> bool:
 
 	var map_config: Dictionary = {}
 	if status is Dictionary and status.get("mapsPrefix"):
+		var encoded_prefix := "/".join(
+			str(status["mapsPrefix"]).split("/").map(
+				func(part: String) -> String: return part.uri_encode()))
 		var config: Variant = await SimClient.get_json(
-			"/api/maps/%s/map_config.json" % str(status["mapsPrefix"]))
+			"/api/maps/%s/map_config.json" % encoded_prefix)
 		if config is Dictionary:
 			map_config = config
 

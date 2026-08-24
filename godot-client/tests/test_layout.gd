@@ -2,6 +2,8 @@ extends SceneTree
 ## Headless assertions for SimLayout. Run:
 ##   godot --headless --path godot-client --script tests/test_layout.gd
 
+const SimLayout := preload("res://scripts/sim_layout.gd")
+
 var failures := 0
 
 
