@@ -65,9 +65,10 @@ func _bootstrap(module_name: String) -> bool:
 
 	var map_config: Dictionary = {}
 	if status is Dictionary and status.get("mapsPrefix"):
-		var encoded_prefix := "/".join(
-			str(status["mapsPrefix"]).split("/").map(
-				func(part: String) -> String: return part.uri_encode()))
+		var encoded_parts: Array[String] = []
+		for part in str(status["mapsPrefix"]).split("/"):
+			encoded_parts.append(str(part).uri_encode())
+		var encoded_prefix := "/".join(encoded_parts)
 		var config: Variant = await SimClient.get_json(
 			"/api/maps/%s/map_config.json" % encoded_prefix)
 		if config is Dictionary:
