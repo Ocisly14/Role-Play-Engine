@@ -382,7 +382,10 @@ export class TickOrchestrator {
       commits: commitsThisTick,
       cancellations,
       featureEvents: [...applied.featureEvents],
-      stateChanges: [...buffer],
+      // The applier's filtered stream, not the raw buffer: no-op changes
+      // (unconditional removeCondition sweeps, unchanged feature.setState
+      // rewrites) are dropped in flush and must not resurface in the report.
+      stateChanges: applied.stateChanges,
       damageReports: applied.damageReports,
     };
   }

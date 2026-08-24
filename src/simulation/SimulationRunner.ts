@@ -17,6 +17,7 @@ import {
   createDefaultDefinitions,
   createDefaultSubsystemRegistry,
 } from "../engine/registerDefaults.js";
+import { buildCancelResolverAction } from "../engine/resolver/cancelPrompt.js";
 import { buildStateContext } from "../engine/resolver/stateContextBuilder.js";
 import { resolveState } from "../engine/resolver/stateResolver.js";
 import type { NpcMemoryManager } from "../memory/NpcMemoryManager.js";
@@ -553,16 +554,7 @@ export class SimulationRunner {
         // On cancel, wrap actionText with prompt directive so the resolver LLM
         // produces a partial-progress outcome.
         const actionForResolver = cancel
-          ? [
-              `[CANCELLED at minute ${cancel.elapsedMinutes.toFixed(1)} of planned ${cancel.plannedDuration.toFixed(1)} due to: ${cancel.reason}]`,
-              `Original intent: "${step.actionText}"`,
-              cancel.plannedNarrative
-                ? `Original planned outcome (had it completed): ${cancel.plannedNarrative}`
-                : "",
-              `Produce a SHORT memory.event reflecting ONLY what actually happened in those ${cancel.elapsedMinutes.toFixed(1)} minutes before cancellation.`,
-            ]
-              .filter(Boolean)
-              .join("\n")
+          ? buildCancelResolverAction(step.actionText, cancel)
           : step.actionText;
 
         const resolved = await resolveState({
@@ -574,7 +566,9 @@ export class SimulationRunner {
         });
         void ctx;
         // Engine is source of truth for elapsed time on cancel.
-        const elapsedMinutes = cancel ? cancel.elapsedMinutes : resolved.elapsedMinutes;
+        const elapsedMinutes = cancel
+          ? cancel.elapsedMinutes
+          : resolved.elapsedMinutes;
         return {
           outcome: { stateChanges: resolved.stateChanges, elapsedMinutes },
           plannedDuration: elapsedMinutes,

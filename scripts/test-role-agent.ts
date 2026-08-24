@@ -53,6 +53,7 @@ import {
   createDefaultDefinitions,
   createDefaultSubsystemRegistry,
 } from "../src/engine/registerDefaults.js";
+import { buildCancelResolverAction } from "../src/engine/resolver/cancelPrompt.js";
 import { buildStateContext } from "../src/engine/resolver/stateContextBuilder.js";
 import { resolveState } from "../src/engine/resolver/stateResolver.js";
 import { executeSkillCheck } from "../src/engine/tools/skillCheckTool.js";
@@ -469,16 +470,7 @@ const engine = createTickEngine({
       step.executionSceneId
     );
     const actionForResolver = cancel
-      ? [
-          `[CANCELLED at minute ${cancel.elapsedMinutes.toFixed(1)} of planned ${cancel.plannedDuration.toFixed(1)} due to: ${cancel.reason}]`,
-          `Original intent: "${step.actionText}"`,
-          cancel.plannedNarrative
-            ? `Original planned outcome (had it completed): ${cancel.plannedNarrative}`
-            : "",
-          `Produce a SHORT memory.event reflecting ONLY what actually happened in those ${cancel.elapsedMinutes.toFixed(1)} minutes before cancellation.`,
-        ]
-          .filter(Boolean)
-          .join("\n")
+      ? buildCancelResolverAction(step.actionText, cancel)
       : step.actionText;
     const resolved = await resolveState({
       action: actionForResolver,

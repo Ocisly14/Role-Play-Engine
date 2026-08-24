@@ -81,14 +81,14 @@ understanding (what does the viewpoint actually see this entity as).
 # Example
 
 Input gives you:
-  Person (UNKNOWN): the tall pale man (id: npc_hollins)
+  Person (UNKNOWN): the tall pale man (id: Hollins)
     Appearance: Tall, pale, with a long black overcoat and an ivory-handled cane.
 
 Correct output:
   [narrative]
   The tall pale man [1] steps into the room and inclines his head.
   [references]
-  [1] id: npc_hollins; kind: character; the tall pale man: Tall, pale, with a long black overcoat and an ivory-handled cane.
+  [1] id: Hollins; kind: character; the tall pale man: Tall, pale, with a long black overcoat and an ivory-handled cane.
 
 WRONG (leaks canonical name into narrative for UNKNOWN):
   [narrative]

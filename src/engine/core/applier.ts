@@ -48,6 +48,26 @@ type ConnectionVote = { featureId: string; reason: string };
  *               kinds (scene/character condition add/remove,
  *               feature scoped state set/remove).
  */
+/** Structural equality for plain feature-state objects. */
+function deepEqual(a: unknown, b: unknown): boolean {
+  if (a === b) return true;
+  if (typeof a !== typeof b || a === null || b === null) return false;
+  if (typeof a !== "object") return false;
+
+  if (Array.isArray(a) || Array.isArray(b)) {
+    if (!Array.isArray(a) || !Array.isArray(b) || a.length !== b.length) {
+      return false;
+    }
+    return a.every((item, i) => deepEqual(item, b[i]));
+  }
+
+  const aObj = a as Record<string, unknown>;
+  const bObj = b as Record<string, unknown>;
+  const aKeys = Object.keys(aObj);
+  if (aKeys.length !== Object.keys(bObj).length) return false;
+  return aKeys.every((key) => key in bObj && deepEqual(aObj[key], bObj[key]));
+}
+
 export class Applier {
   private connectionVotes = new Map<string, ConnectionVote[]>();
 
@@ -56,14 +76,102 @@ export class Applier {
     private readonly featureScopes: ReadonlyMap<string, FeatureStateScope>
   ) {}
 
+  /**
+   * True when applying `c` provably cannot change anything.
+   *
+   * Subsystems emit defensively — the sun observer pushes a
+   * `scene.removeCondition` on every tick "in case a stale [Lighting]
+   * condition lingers" without checking whether one does, and stamina
+   * re-writes an unchanged feature state every tick. Those land in the tick
+   * record and in `lastUpdated` churn while meaning nothing.
+   *
+   * Only kinds whose no-op condition is unambiguous are covered. Records that
+   * downstream consumers read (memory.*, relationship.change) and additive
+   * kinds are never filtered, and neither are the delta kinds, which are
+   * aggregated into DamageReports before being applied.
+   */
+  private isNoOp(c: StateChange): boolean {
+    switch (c.kind) {
+      case "scene.removeCondition":
+        return !this.dgsm
+          .getSceneConditions(c.sceneId)
+          .some((cond) => cond.featureId === c.predicate.featureId);
+
+      case "character.removeCondition": {
+        const conditions =
+          this.dgsm.getNpcProfile(c.characterId)?.status?.conditions ?? [];
+        return !conditions.some((cond) => cond.id === c.conditionId);
+      }
+
+      case "feature.setState": {
+        const scope = this.featureScopes.get(c.featureId) ?? "scene";
+        const current = this.dgsm.getScopedFeatureState(
+          c.featureId,
+          scope,
+          c.key
+        );
+        return current !== undefined && deepEqual(current, c.state);
+      }
+
+      default:
+        return false;
+    }
+  }
+
+  /**
+   * For kinds that reference characters by id, verify the id actually names
+   * a character. Returns the offending id, or null when the change is sound.
+   *
+   * The resolver's ids come from an LLM, and its schema examples used to
+   * show invented placeholder ids — observed live as a `relationship.change`
+   * from "npc_colleague", a character that does not exist, silently creating
+   * a ghost node in the relationship graph (updateRelationship auto-creates
+   * nodes for any string). The agent path validates its citations through
+   * parseActionText; this is the same guard for the resolver/subsystem path.
+   */
+  private invalidCharacterRef(c: StateChange): string | null {
+    const known = (id: string) =>
+      this.dgsm.getNpcProfile(id) !== undefined ? null : id;
+    switch (c.kind) {
+      case "character.hp":
+      case "character.san":
+      case "character.fatigue":
+      case "character.addCondition":
+      case "character.removeCondition":
+      case "character.position":
+      case "memory.event":
+      case "memory.witness":
+        return known(c.characterId);
+      case "relationship.change":
+        return known(c.fromId) ?? known(c.toId);
+      default:
+        return null;
+    }
+  }
+
   flush(
-    changes: readonly StateChange[],
+    inputChanges: readonly StateChange[],
     _gameDateTime: GameTime
   ): {
     damageReports: DamageReport[];
     featureEvents: FeatureEvent[];
     stateChanges: StateChange[];
   } {
+    // Filtered up front so no-ops are neither applied nor reported. Evaluated
+    // against the pre-flush state, which is correct because a change that is
+    // a no-op now can only be made non-no-op by another change in this same
+    // batch — and the kinds covered here are not emitted twice per tick.
+    const changes = inputChanges.filter((c) => {
+      const badId = this.invalidCharacterRef(c);
+      if (badId !== null) {
+        console.warn(
+          `[Applier] dropped ${c.kind}: unknown character id "${badId}"`
+        );
+        return false;
+      }
+      return !this.isNoOp(c);
+    });
+
     // Pass 1 — group order-independent kinds
     const hpBuckets = new Map<
       string,

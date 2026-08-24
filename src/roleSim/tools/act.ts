@@ -78,7 +78,7 @@ These serve different purposes:
   that — unless you've separately learned their name (heard it spoken,
   recalled from memory, etc.), in which case you may use it.
 - **References** is the system citation handle. \`id\` may "leak" the
-  canonical name (e.g. \`npc_hollins\`); that is meta-knowledge and must NOT
+  canonical name (e.g. \`Hollins\`); that is meta-knowledge and must NOT
   influence your in-character narrative.
 
 ## Output JSON
@@ -90,24 +90,24 @@ These serve different purposes:
 ### KNOWN character + item
 
 Perception had:
-  Person (KNOWN): Smith  (id: npc_smith)
-  Items in inventory: bound ledger [id: item_ledger]
+  Person (KNOWN): Smith  (id: Smith)
+  Items in inventory: bound ledger [id: ITEM_SCN2_3]
 
-{ "tool": "act", "actionText": "[narrative]\\nI hold up the ledger [1] and ask Smith [2] flatly, \\"What is the meaning of this?\\"\\n\\n[references]\\n[1] id: item_ledger; kind: item\\n[2] id: npc_smith; kind: character" }
+{ "tool": "act", "actionText": "[narrative]\\nI hold up the ledger [1] and ask Smith [2] flatly, \\"What is the meaning of this?\\"\\n\\n[references]\\n[1] id: ITEM_SCN2_3; kind: item\\n[2] id: Smith; kind: character" }
 
 ### UNKNOWN stranger you have never heard named
 
 Perception had:
-  Person (UNKNOWN): the tall pale man  (id: npc_hollins)
+  Person (UNKNOWN): the tall pale man  (id: Hollins)
 
 Narrative uses the description (in-character). References uses the id.
 
-{ "tool": "act", "actionText": "[narrative]\\nI rise and incline my head toward the tall pale man [1], 'Good evening — to what do I owe...'\\n\\n[references]\\n[1] id: npc_hollins; kind: character" }
+{ "tool": "act", "actionText": "[narrative]\\nI rise and incline my head toward the tall pale man [1], 'Good evening — to what do I owe...'\\n\\n[references]\\n[1] id: Hollins; kind: character" }
 
 ### UNKNOWN stranger whose name you DID just learn
 
 Same person, but last tick you heard your housekeeper announce "A Professor
 Hollins to see you, sir." You now know his name in-character.
 
-{ "tool": "act", "actionText": "[narrative]\\nI rise — Hollins, of all nights — and incline my head toward [1], 'Good evening, Professor.'\\n\\n[references]\\n[1] id: npc_hollins; kind: character" }
+{ "tool": "act", "actionText": "[narrative]\\nI rise — Hollins, of all nights — and incline my head toward [1], 'Good evening, Professor.'\\n\\n[references]\\n[1] id: Hollins; kind: character" }
 `;

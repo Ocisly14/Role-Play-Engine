@@ -327,9 +327,13 @@ export class NpcActionController {
           (s) => s.status === "active" || s.status === "queued"
         );
         if (live) {
+          // In-fiction phrasing: this string reaches the cancel re-resolve
+          // prompt (via buildCancelResolverAction, which strips the
+          // [narrative]/[references] scaffolding), and "agent switched to"
+          // is engine jargon a memory should never contain.
           this.engine.cancelAction(
             live.handle,
-            `agent switched to: ${decision.actionText}`
+            `the character turned to something else instead: ${decision.actionText}`
           );
         }
 
