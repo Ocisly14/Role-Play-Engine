@@ -2,7 +2,7 @@
 id: track
 engine: llm
 title: Track
-description: "Following physical trails left by people or animals — footprints, disturbed vegetation, blood drops, or other signs of passage through terrain. Does NOT cover stationary visual searching (Perception/Spot Hidden), identifying criminal methods (Criminology), or hearing movement (Listen)."
+description: "Following physical trails left by people or animals — footprints, disturbed vegetation, blood drops, or other signs of passage through terrain. Does NOT cover stationary visual searching (Perception), identifying criminal methods (Criminology), or hearing movement (Listen)."
 
 skillCheck:
   skill: Track

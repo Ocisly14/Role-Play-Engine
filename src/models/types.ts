@@ -21,9 +21,6 @@ export enum ModelProviderName {
   OPENAI = "openai",
   ANTHROPIC = "anthropic",
   GOOGLE = "google",
-  GROQ = "groq",
-  OLLAMA = "ollama",
-  OPENROUTER = "openrouter",
 }
 
 /**
@@ -88,10 +85,47 @@ export type ImageInput =
   | { data: Buffer; mimeType?: string };
 
 /**
+ * One piece of the user prompt, optionally ending at a prompt-cache
+ * breakpoint. Segments are concatenated with NO separator — a builder that
+ * emits them must embed its own separators — so the assembled prompt is
+ * byte-identical to the equivalent single `context` string.
+ */
+export interface PromptSegment {
+  text: string;
+  /**
+   * Place a provider-native prompt-cache breakpoint at the end of this
+   * segment, caching everything before it (system prompt included).
+   *
+   * Only meaningful for providers with explicit breakpoints (Anthropic).
+   * OpenAI caches long prefixes automatically and ignores this; other
+   * providers ignore it too. Mark only boundaries where the preceding text
+   * is genuinely stable across calls — a breakpoint whose prefix changes
+   * every request pays the write premium and is never read.
+   */
+  cache?: boolean;
+}
+
+/**
  * Generation options for AI calls
  */
 export interface GenerationOptions {
   context: string;
+  /**
+   * Segmented form of `context`, enabling prompt-cache breakpoints. When
+   * present this takes precedence over `context`, and the concatenation of
+   * all segment texts is what gets sent. Ignored when `images` are supplied.
+   */
+  contextSegments?: PromptSegment[];
+  /**
+   * Place a prompt-cache breakpoint at the end of `customSystemPrompt`,
+   * caching it (and any tool definitions) for later calls.
+   *
+   * Only set this when the system prompt is byte-identical across calls. A
+   * system prompt that interpolates per-request state is a new prefix every
+   * time: the breakpoint pays the write premium and is never read.
+   * Anthropic-only; other providers ignore it.
+   */
+  cacheSystemPrompt?: boolean;
   modelClass?: ModelClass;
   providerOverride?: ModelProviderName;
   customSystemPrompt?: string;
@@ -103,4 +137,36 @@ export interface GenerationOptions {
   userId?: string;
   operation?: string;
   temperature?: number;
+}
+
+/**
+ * Options for `generateToolCall`. Mirrors GenerationOptions' policy fields;
+ * the prompt itself arrives as `messages` rather than a context string.
+ */
+export interface ToolCallOptions {
+  messages: import("./providers/types.js").ModelMessage[];
+  tools: import("./providers/types.js").ToolSpec[];
+  /** `"any"` forces some tool; `{name}` forces one — the structured-output
+   *  case. Omitted lets the model reply with plain text instead. */
+  toolChoice?: "any" | { name: string };
+  /** Allow several calls in one turn; the caller must answer every one. */
+  allowParallelCalls?: boolean;
+  customSystemPrompt?: string;
+  cacheSystemPrompt?: boolean;
+  modelClass?: ModelClass;
+  providerOverride?: ModelProviderName;
+  maxRetries?: number;
+  fallbackToLargeOnFailure?: boolean;
+  largeFallbackRetries?: number;
+  temperature?: number;
+  userId?: string;
+  operation?: string;
+}
+
+export interface ToolCallResult {
+  /** Every call the model made this turn. The caller MUST answer all of them
+   *  in one `role: "tool"` message, or the next request is rejected. */
+  toolCalls: import("./providers/types.js").ToolCallRecord[];
+  /** Append to the message history, then the tool results. */
+  assistantMessage: import("./providers/types.js").ModelMessage;
 }

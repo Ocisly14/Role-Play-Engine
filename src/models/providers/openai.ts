@@ -1,0 +1,217 @@
+// src/models/providers/openai.ts
+
+import OpenAI from "openai";
+import { getEndpoint } from "../configuration.js";
+import { normalizeUsageMetadata } from "../tokenUsage.js";
+import { ModelProviderName } from "../types.js";
+import type {
+  ChatRequest,
+  ChatResponse,
+  ModelMessage,
+  ProviderAdapter,
+  ToolChatRequest,
+  ToolChatResponse,
+} from "./types.js";
+
+/**
+ * The reasoning-model family fixes `temperature` and takes the output cap as
+ * `max_completion_tokens` rather than `max_tokens`.
+ */
+export function isFixedParameterModel(modelName: string): boolean {
+  const normalized = modelName.toLowerCase();
+  return (
+    normalized.startsWith("gpt-5") ||
+    normalized.startsWith("o1") ||
+    normalized.startsWith("o3") ||
+    normalized.startsWith("o4")
+  );
+}
+
+/**
+ * OpenAI wants one `role: "tool"` message per tool_call_id, so a batch of
+ * results expands into several messages (Anthropic collapses them into one
+ * instead — see that adapter).
+ */
+function toOpenAIMessages(
+  message: ModelMessage
+): OpenAI.Chat.ChatCompletionMessageParam[] {
+  if (message.role === "tool") {
+    return message.results.map((result) => ({
+      role: "tool" as const,
+      tool_call_id: result.toolCallId,
+      content: result.content,
+    }));
+  }
+  return [toOpenAIMessage(message)];
+}
+
+function toOpenAIMessage(
+  message: ModelMessage
+): OpenAI.Chat.ChatCompletionMessageParam {
+  if (message.role === "assistant") {
+    return {
+      role: "assistant",
+      ...(message.text ? { content: message.text } : {}),
+      tool_calls: message.toolCalls.map((call) => ({
+        id: call.id,
+        type: "function" as const,
+        function: { name: call.name, arguments: JSON.stringify(call.args) },
+      })),
+    };
+  }
+
+  if (message.role === "tool") {
+    // Unreachable: toOpenAIMessages intercepts this variant.
+    throw new Error("tool results must go through toOpenAIMessages");
+  }
+
+  return {
+    role: "user",
+    content: message.content
+      .map((p) => (p.kind === "text" ? p.text : ""))
+      .join(""),
+  };
+}
+
+export class OpenAIAdapter implements ProviderAdapter {
+  readonly provider = ModelProviderName.OPENAI;
+
+  private client(): OpenAI {
+    return new OpenAI({
+      apiKey: process.env.OPENAI_API_KEY,
+      baseURL: getEndpoint(ModelProviderName.OPENAI),
+    });
+  }
+
+  async chat(req: ChatRequest): Promise<ChatResponse> {
+    // OpenAI caches long prefixes automatically; it has no explicit
+    // breakpoint, so cacheControl flags are simply not rendered here.
+    const messages: OpenAI.Chat.ChatCompletionMessageParam[] = [];
+
+    if (req.system && req.system.length > 0) {
+      messages.push({
+        role: "system",
+        content: req.system.map((b) => b.text).join(""),
+      });
+    }
+
+    const hasImages = req.content.some((p) => p.kind === "image");
+    if (hasImages) {
+      messages.push({
+        role: "user",
+        content: req.content.map((part) =>
+          part.kind === "text"
+            ? { type: "text" as const, text: part.text }
+            : { type: "image_url" as const, image_url: { url: part.dataUrl } }
+        ),
+      });
+    } else {
+      messages.push({
+        role: "user",
+        content: req.content
+          .map((p) => (p.kind === "text" ? p.text : ""))
+          .join(""),
+      });
+    }
+
+    const fixed = isFixedParameterModel(req.modelName);
+    const response = await this.client().chat.completions.create({
+      model: req.modelName,
+      messages,
+      ...(req.maxOutputTokens !== undefined
+        ? fixed
+          ? { max_completion_tokens: req.maxOutputTokens }
+          : { max_tokens: req.maxOutputTokens }
+        : {}),
+      ...(req.temperature !== undefined && !fixed
+        ? { temperature: req.temperature }
+        : {}),
+    });
+
+    return {
+      text: response.choices[0]?.message?.content ?? "",
+      usage: normalizeUsageMetadata(response.usage),
+    };
+  }
+
+  async chatWithTools(req: ToolChatRequest): Promise<ToolChatResponse> {
+    const messages: OpenAI.Chat.ChatCompletionMessageParam[] = [];
+    if (req.system && req.system.length > 0) {
+      messages.push({
+        role: "system",
+        content: req.system.map((b) => b.text).join(""),
+      });
+    }
+    messages.push(...req.messages.flatMap(toOpenAIMessages));
+
+    const fixed = isFixedParameterModel(req.modelName);
+    const response = await this.client().chat.completions.create({
+      model: req.modelName,
+      messages,
+      tools: req.tools.map((tool) => ({
+        type: "function" as const,
+        function: {
+          name: tool.name,
+          description: tool.description,
+          parameters: tool.inputSchema,
+          ...(tool.strict ? { strict: true } : {}),
+        },
+      })),
+      // See the Anthropic adapter: opt-in, and the caller must then answer
+      // every returned call or the next request fails.
+      parallel_tool_calls: req.allowParallelCalls === true,
+      ...(req.toolChoice
+        ? {
+            tool_choice:
+              req.toolChoice === "any"
+                ? ("required" as const)
+                : {
+                    type: "function" as const,
+                    function: { name: req.toolChoice.name },
+                  },
+          }
+        : {}),
+      ...(req.maxOutputTokens !== undefined
+        ? fixed
+          ? { max_completion_tokens: req.maxOutputTokens }
+          : { max_tokens: req.maxOutputTokens }
+        : {}),
+      ...(req.temperature !== undefined && !fixed
+        ? { temperature: req.temperature }
+        : {}),
+    });
+
+    const choice = response.choices[0]?.message;
+    const toolCalls = (choice?.tool_calls ?? []).flatMap((call) => {
+      if (call.type !== "function") return [];
+      let args: Record<string, unknown> = {};
+      try {
+        args = JSON.parse(call.function.arguments || "{}");
+      } catch {
+        // `strict: true` makes this near-impossible, but a malformed argument
+        // string must not take down the whole turn.
+        args = {};
+      }
+      return [{ id: call.id, name: call.function.name, args }];
+    });
+
+    return {
+      toolCalls,
+      text: choice?.content ?? "",
+      usage: normalizeUsageMetadata(response.usage),
+    };
+  }
+
+  async embed(
+    text: string,
+    modelName: string,
+    dimensions?: number
+  ): Promise<number[]> {
+    const response = await this.client().embeddings.create({
+      model: modelName,
+      input: text,
+      ...(dimensions !== undefined ? { dimensions } : {}),
+    });
+    return response.data[0]?.embedding ?? [];
+  }
+}

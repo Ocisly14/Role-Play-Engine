@@ -13,7 +13,11 @@
 // instead of mirroring it.
 
 import type { TickEngine } from "../engine/core/tickEngine.js";
-import type { FeatureEvent, TickReport } from "../engine/core/types.js";
+import type {
+  CharacterAction,
+  FeatureEvent,
+  TickReport,
+} from "../engine/core/types.js";
 import { findAffectedCharacters } from "../engine/shared/impactPropagation.js";
 import type { NpcMemoryManager } from "../memory/NpcMemoryManager.js";
 import type { DynamicGameStateManager } from "../state/DynamicGameState.js";
@@ -38,6 +42,8 @@ interface DecideOpts {
   report?: TickReport;
   /** Pre-filtered FeatureEvents that propagated to this NPC. */
   eventsForNpc?: FeatureEvent[];
+  /** Committed CharacterActions whose impact reached this NPC this tick. */
+  actionsForNpc?: CharacterAction[];
 }
 
 /** How many prior renderer narratives each NPC keeps as short-term memory. */
@@ -93,6 +99,10 @@ export class NpcActionController {
     //    intrinsic impact + description (Phase F1); the renderer turns the
     //    set into per-NPC first-person narrative downstream (Phase G).
     const eventsByNpc = new Map<string, FeatureEvent[]>();
+    // 1b. Per-NPC propagated actions — siblings of FeatureEvent on the
+    //     wake-up path. Carries the CharacterAction so the renderer can
+    //     describe what was perceived (who did what, where).
+    const actionsByNpc = new Map<string, CharacterAction[]>();
 
     for (const event of report.featureEvents) {
       if (!event.characterId && !event.sceneId) continue;
@@ -110,6 +120,29 @@ export class NpcActionController {
         const list = eventsByNpc.get(npcId) ?? [];
         list.push(event);
         eventsByNpc.set(npcId, list);
+      }
+    }
+
+    // 1c. Propagate committed actions by their interpreter-assigned impact.
+    //     Commits with impact 0 stay private (no propagation). Cancellations
+    //     are not propagated — a cancelled action's mid-flight effects are
+    //     surfaced via the resolver re-run's StateChanges and any explicit
+    //     event.emit it produced, not via the cancel itself.
+    for (const action of report.commits) {
+      if (action.impact <= 0) continue;
+      const affected = findAffectedCharacters(
+        {
+          characterId: action.characterId,
+          referencedEntities: action.referencedEntities,
+          location: action.sceneId,
+        },
+        action.impact,
+        this.dgsm
+      );
+      for (const [npcId] of affected) {
+        const list = actionsByNpc.get(npcId) ?? [];
+        list.push(action);
+        actionsByNpc.set(npcId, list);
       }
     }
 
@@ -139,6 +172,7 @@ export class NpcActionController {
     // 5. Union of all NPCs that need decide() this tick.
     const allTargets = new Set<string>([
       ...eventsByNpc.keys(),
+      ...actionsByNpc.keys(),
       ...npcsWithEndedAction,
       ...idleAlive,
     ]);
@@ -147,10 +181,13 @@ export class NpcActionController {
     for (const npcId of allTargets) {
       if (!this.dgsm.isNpcAlive(npcId)) continue;
       const eventsForNpc = eventsByNpc.get(npcId);
+      const actionsForNpc = actionsByNpc.get(npcId);
       await this.decide(npcId, {
         report,
         eventsForNpc:
           eventsForNpc && eventsForNpc.length > 0 ? eventsForNpc : undefined,
+        actionsForNpc:
+          actionsForNpc && actionsForNpc.length > 0 ? actionsForNpc : undefined,
       });
     }
   }
@@ -159,27 +196,17 @@ export class NpcActionController {
     report: TickReport,
     eventsByNpc: Map<string, FeatureEvent[]>
   ): Promise<void> {
-    // Each action surfaces TWO event memories anchored at their true game-times:
-    //   begin  — written at activatedAt; content = `[begin] <actionText>` (intent)
-    //   result — written at completedAt; content = the resolver's `memory.event`
-    //            string flowing through report.stateChanges (what actually happened)
-
-    // (a) "begin" memories for actions that became active this tick.
-    for (const step of report.activations) {
-      if (!step.activatedAt) continue;
-      await this.writeMemoryEntry(
-        step.characterId,
-        "event",
-        `[begin] ${step.actionText}`,
-        step.activatedAt,
-        step.executionSceneId
-      );
-    }
-
-    // (b) Resolver-emitted event/witness memories for actions that ended this
-    //     tick (commits + cancellations). The `[begin]` writer above already
-    //     handles the start-time entry; this routes the resolver's memory.event /
-    //     memory.witness state changes into NpcMemoryManager.
+    // Memory is past-tense fact only. The resolver emits `memory.event` /
+    // `memory.witness` StateChanges at commit (and at cancel re-resolve)
+    // with the narrative of what actually happened; we route those below.
+    //
+    // We deliberately do NOT write a separate `[begin]` intent memory at
+    // activation: in-flight actions are surfaced via the action queue
+    // (self → userPromptBuilder "Currently doing", co-located peers →
+    // renderer.charactersInScene.currentActionText). Writing [begin] in
+    // addition produced duplicate "I will X" + "I did X" entries per
+    // tick × per step, and agents re-planned the same action after seeing
+    // the [begin] entry as if it hadn't happened.
     await this.routeResolverMemories(report);
 
     // Bystanders' perceived events → `witness` memory.
@@ -210,7 +237,8 @@ export class NpcActionController {
       locByActor.set(a.characterId, a.sceneId);
     }
     for (const c of report.cancellations) {
-      if (!locByActor.has(c.characterId)) locByActor.set(c.characterId, c.sceneId);
+      if (!locByActor.has(c.characterId))
+        locByActor.set(c.characterId, c.sceneId);
     }
 
     // Pick game-times from commits/cancellations; fall back to current tick.
@@ -273,14 +301,14 @@ export class NpcActionController {
   async decide(npcId: string, opts?: DecideOpts): Promise<void> {
     if (!this.dgsm.isNpcAlive(npcId)) return;
 
-    // Skip if NPC is busy AND this tick had no propagated events for them —
-    // their action is already running and nothing has happened that warrants
-    // a wake-up. With events present, the agent gets a chance to switch
-    // action mid-flight (Decision 14 — `act` absorbs cancellation).
-    if (
-      this.npcHasActiveStep(npcId) &&
-      !(opts?.eventsForNpc && opts.eventsForNpc.length > 0)
-    ) {
+    // Skip if NPC is busy AND this tick had no propagated events OR actions
+    // for them — their action is already running and nothing has happened
+    // that warrants a wake-up. With perceived events OR actions present, the
+    // agent gets a chance to switch action mid-flight (Decision 14 — `act`
+    // absorbs cancellation).
+    const hasEvents = !!(opts?.eventsForNpc && opts.eventsForNpc.length > 0);
+    const hasActions = !!(opts?.actionsForNpc && opts.actionsForNpc.length > 0);
+    if (this.npcHasActiveStep(npcId) && !hasEvents && !hasActions) {
       return;
     }
 
@@ -299,9 +327,13 @@ export class NpcActionController {
           (s) => s.status === "active" || s.status === "queued"
         );
         if (live) {
+          // In-fiction phrasing: this string reaches the cancel re-resolve
+          // prompt (via buildCancelResolverAction, which strips the
+          // [narrative]/[references] scaffolding), and "agent switched to"
+          // is engine jargon a memory should never contain.
           this.engine.cancelAction(
             live.handle,
-            `agent switched to: ${decision.actionText}`
+            `the character turned to something else instead: ${decision.actionText}`
           );
         }
 
@@ -370,6 +402,7 @@ export class NpcActionController {
       npcId,
       report: opts?.report,
       eventsForNpc: opts?.eventsForNpc,
+      actionsForNpc: opts?.actionsForNpc,
       dgsm: this.dgsm,
       engine: this.engine,
     });
@@ -389,8 +422,7 @@ export class NpcActionController {
     }
 
     // Snapshot prior perceptions (excludes current tick); push current after.
-    const recentPerceptions =
-      this.perceptionHistory.get(npcId)?.slice() ?? [];
+    const recentPerceptions = this.perceptionHistory.get(npcId)?.slice() ?? [];
     this.recordPerception(npcId, gameDateTime, rendered.narrative);
 
     return {

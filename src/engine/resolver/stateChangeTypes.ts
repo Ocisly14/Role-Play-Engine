@@ -41,13 +41,14 @@ export const STATE_CHANGE_TYPES: Record<string, StateChangeTypeDef> = {
     description:
       "Apply a hit point delta to a character (positive = heal, negative = wound). " +
       "Use when an action causes physical damage or healing (combat hit, fall, first aid). " +
-      "Example: {characterId: 'npc_marsh', delta: -8} (Marsh takes 8 HP of damage).",
+      "Example: {characterId: 'Marsh', delta: -8} (Marsh takes 8 HP of damage).",
     schema: {
       type: "object",
       properties: {
         characterId: {
           type: "string",
-          description: "ID of the character to modify (e.g., 'npc_marsh').",
+          description:
+            "Exact id of the character to modify. Copy the exact character id from the Actor/Target sections of this prompt — never invent or abbreviate one.",
         },
         delta: {
           type: "number",
@@ -63,15 +64,16 @@ export const STATE_CHANGE_TYPES: Record<string, StateChangeTypeDef> = {
       "Apply a Sanity delta to a character (positive = recover, negative = lose). " +
       "Use when an action causes mental trauma (witnessing horror, reading forbidden " +
       "lore, surviving violence) or recovery (long rest, therapy, prayer). " +
-      "Example: {characterId: 'npc_marsh', delta: -5} (Marsh sees something " +
-      "deeply unsettling); {characterId: 'npc_marsh', delta: 2} (a long quiet " +
+      "Example: {characterId: 'Marsh', delta: -5} (Marsh sees something " +
+      "deeply unsettling); {characterId: 'Marsh', delta: 2} (a long quiet " +
       "evening of routine settles his nerves).",
     schema: {
       type: "object",
       properties: {
         characterId: {
           type: "string",
-          description: "ID of the character to modify (e.g., 'npc_marsh').",
+          description:
+            "Exact id of the character to modify. Copy the exact character id from the Actor/Target sections of this prompt — never invent or abbreviate one.",
         },
         delta: {
           type: "number",
@@ -88,18 +90,20 @@ export const STATE_CHANGE_TYPES: Record<string, StateChangeTypeDef> = {
       "negative = recover via rest/sleep). Range typically 0-10. " +
       "Use after sustained physical effort (positive), or after sleeping / sitting " +
       "down for a long break (negative). " +
-      "Example: {characterId: 'npc_marsh', delta: 2} (Marsh climbs three flights of stairs); " +
-      "{characterId: 'npc_marsh', delta: -3} (Marsh rests in his armchair for an hour).",
+      "Example: {characterId: 'Marsh', delta: 2} (Marsh climbs three flights of stairs); " +
+      "{characterId: 'Marsh', delta: -3} (Marsh rests in his armchair for an hour).",
     schema: {
       type: "object",
       properties: {
         characterId: {
           type: "string",
-          description: "ID of the character to modify (e.g., 'npc_marsh').",
+          description:
+            "Exact id of the character to modify. Copy the exact character id from the Actor/Target sections of this prompt — never invent or abbreviate one.",
         },
         delta: {
           type: "number",
-          description: "Fatigue change (positive = more tired, negative = recover).",
+          description:
+            "Fatigue change (positive = more tired, negative = recover).",
         },
       },
       required: ["characterId", "delta"],
@@ -112,13 +116,14 @@ export const STATE_CHANGE_TYPES: Record<string, StateChangeTypeDef> = {
       "free-text descriptions ('bleeding', 'dazed', 'scared'). To remove, the " +
       "string must match an existing condition's description exactly. " +
       "Use when a character gains a transient state from an action or recovers from one. " +
-      "Example: {characterId: 'npc_marsh', add: ['bleeding'], remove: ['alert']}.",
+      "Example: {characterId: 'Marsh', add: ['bleeding'], remove: ['alert']}.",
     schema: {
       type: "object",
       properties: {
         characterId: {
           type: "string",
-          description: "ID of the character to modify (e.g., 'npc_marsh').",
+          description:
+            "Exact id of the character to modify. Copy the exact character id from the Actor/Target sections of this prompt — never invent or abbreviate one.",
         },
         add: {
           type: "array",
@@ -128,7 +133,8 @@ export const STATE_CHANGE_TYPES: Record<string, StateChangeTypeDef> = {
         remove: {
           type: "array",
           items: { type: "string" },
-          description: "Existing condition descriptions to remove (exact match).",
+          description:
+            "Existing condition descriptions to remove (exact match).",
         },
       },
       required: ["characterId"],
@@ -144,17 +150,18 @@ export const STATE_CHANGE_TYPES: Record<string, StateChangeTypeDef> = {
       "The optional `junction` field names a topology junction id between " +
       "scenes (e.g., 'jct_main_st_x_oak_ave'); omit it unless the route " +
       "definitively crosses that junction. " +
-      "Example: {characterId: 'npc_marsh', sceneId: 'scene_study'} (Marsh enters his study).",
+      "Example: {characterId: 'Marsh', sceneId: 'SCN_2'} (Marsh enters his study).",
     schema: {
       type: "object",
       properties: {
         characterId: {
           type: "string",
-          description: "ID of the character to move (e.g., 'npc_marsh').",
+          description:
+            "Exact id of the character to move. Copy the exact character id from the Actor/Target sections of this prompt — never invent or abbreviate one.",
         },
         sceneId: {
           type: "string",
-          description: "Destination scene ID (e.g., 'scene_study').",
+          description: "Destination scene ID (e.g., 'SCN_2').",
         },
         junction: {
           type: "string",
@@ -173,14 +180,14 @@ export const STATE_CHANGE_TYPES: Record<string, StateChangeTypeDef> = {
       "Move an item between locations. Locations are written as 'scene:<sceneId>' " +
       "or '<npcId>' (NPC inventory). " +
       "Use when an action transfers possession (pick up, drop, hand over, steal). " +
-      "Example: {itemId: 'item_letter', from: 'scene:scene_study', to: 'npc_marsh'} " +
+      "Example: {itemId: 'ITEM_SCN2_5', from: 'scene:SCN_2', to: 'Marsh'} " +
       "(Marsh picks the letter up off the desk).",
     schema: {
       type: "object",
       properties: {
         itemId: {
           type: "string",
-          description: "ID of the item to move (e.g., 'item_letter').",
+          description: "ID of the item to move (e.g., 'ITEM_SCN2_5').",
         },
         from: {
           type: "string",
@@ -200,13 +207,13 @@ export const STATE_CHANGE_TYPES: Record<string, StateChangeTypeDef> = {
       "Destroy an item, removing it from the world entirely. The engine looks " +
       "it up by id (globally unique) and removes from wherever it lives. " +
       "Use when an item is consumed, broken beyond repair, or burned away. " +
-      "Example: {itemId: 'item_letter'} (the letter is thrown into the fire).",
+      "Example: {itemId: 'ITEM_SCN2_5'} (the letter is thrown into the fire).",
     schema: {
       type: "object",
       properties: {
         itemId: {
           type: "string",
-          description: "ID of the item to destroy (e.g., 'item_letter').",
+          description: "ID of the item to destroy (e.g., 'ITEM_SCN2_5').",
         },
       },
       required: ["itemId"],
@@ -222,7 +229,7 @@ export const STATE_CHANGE_TYPES: Record<string, StateChangeTypeDef> = {
       "produces a coin, brews tea). Do NOT use this for items that were " +
       "already in the world but the actor only now noticed — those are already " +
       "tracked, no new id needed. " +
-      "Example: {name: 'tea cup', location: 'scene:scene_study'} (Marsh sets out a fresh tea cup).",
+      "Example: {name: 'tea cup', location: 'scene:SCN_2'} (Marsh sets out a fresh tea cup).",
     schema: {
       type: "object",
       properties: {
@@ -245,32 +252,29 @@ export const STATE_CHANGE_TYPES: Record<string, StateChangeTypeDef> = {
 
   "item.modify": {
     description:
-      "Change an existing item's display name and/or description. The engine " +
+      "Update an existing item's description to reflect new state. The engine " +
       "looks it up by id (globally unique) — no location field is required. " +
-      "Use to surface state-progression in items the actor interacts with " +
-      "(seal broken, lamp lit, glass shattered, scroll unrolled). " +
-      "Example: {itemId: 'item_letter', name: 'opened letter', " +
-      "description: 'cream envelope with broken red wax seal; folded sheet visible'}.",
+      "NAME stays fixed as the item's stable identity ('letter', 'lamp', " +
+      "'cup'); DESCRIPTION carries the evolving state (sealed → broken seal → " +
+      "unfolded; unlit → lit → snuffed; empty → full → spilled). " +
+      "If the item's identity truly changes (a letter burns into ash), use " +
+      "`item.destroy` + `item.create` instead. " +
+      "Example: {itemId: 'ITEM_SCN2_5', description: 'cream envelope with broken " +
+      "red wax seal; folded sheet visible inside'}.",
     schema: {
       type: "object",
       properties: {
         itemId: {
           type: "string",
           description:
-            "ID of the item to modify; copy verbatim from perception (e.g., 'item_letter').",
-        },
-        name: {
-          type: "string",
-          description:
-            "Optional new display name. Omit to leave unchanged.",
+            "ID of the item to modify; copy verbatim from perception (e.g., 'ITEM_SCN2_5').",
         },
         description: {
           type: "string",
-          description:
-            "Optional new description. Omit to leave unchanged.",
+          description: "New description reflecting the item's current state.",
         },
       },
-      required: ["itemId"],
+      required: ["itemId", "description"],
     },
   },
 
@@ -285,14 +289,14 @@ export const STATE_CHANGE_TYPES: Record<string, StateChangeTypeDef> = {
       "(weather, lighting, smoke, temperature, sound). " +
       "Do NOT use this for state changes on a tracked item (a candle was lit, " +
       "the letter was opened) — that's `item.modify`, which updates the item's " +
-      "name/description so the renderer surfaces it inline with the item. " +
-      "Example: {sceneId: 'scene_study', add: ['smoke is beginning to seep under the door']}.",
+      "description so the renderer surfaces it inline with the item. " +
+      "Example: {sceneId: 'SCN_2', add: ['smoke is beginning to seep under the door']}.",
     schema: {
       type: "object",
       properties: {
         sceneId: {
           type: "string",
-          description: "ID of the scene to modify (e.g., 'scene_study').",
+          description: "ID of the scene to modify (e.g., 'SCN_2').",
         },
         add: {
           type: "array",
@@ -302,7 +306,8 @@ export const STATE_CHANGE_TYPES: Record<string, StateChangeTypeDef> = {
         remove: {
           type: "array",
           items: { type: "string" },
-          description: "Existing condition descriptions to remove (exact match).",
+          description:
+            "Existing condition descriptions to remove (exact match).",
         },
       },
       required: ["sceneId"],
@@ -317,7 +322,7 @@ export const STATE_CHANGE_TYPES: Record<string, StateChangeTypeDef> = {
       "just did and what came of it. Past tense, sensory, sized to one or two " +
       "sentences. UNIVERSALLY REQUIRED on every resolution (engine relies on this " +
       "as the canonical 'what happened' record). " +
-      "Example: {characterId: 'npc_marsh', " +
+      "Example: {characterId: 'Marsh', " +
       "content: 'I broke the red wax seal and slid the letter free. Hollins's hand, dated yesterday.'}.",
     schema: {
       type: "object",
@@ -325,7 +330,7 @@ export const STATE_CHANGE_TYPES: Record<string, StateChangeTypeDef> = {
         characterId: {
           type: "string",
           description:
-            "ID of the actor receiving the memory (usually the action's actor; e.g., 'npc_marsh').",
+            "Exact id of the actor receiving the memory (usually the action's actor). Copy the exact character id from the Actor/Target sections of this prompt — never invent or abbreviate one.",
         },
         content: {
           type: "string",
@@ -343,7 +348,7 @@ export const STATE_CHANGE_TYPES: Record<string, StateChangeTypeDef> = {
       "scene, or close enough that the action's impact reaches them). " +
       "Skip this entirely if no one else was present to see. memory.event " +
       "covers the actor's own first-person record. " +
-      "Example: {characterId: 'npc_hollins', " +
+      "Example: {characterId: 'Hollins', " +
       "content: 'Marsh broke the wax seal of the cream envelope and read the letter.'}.",
     schema: {
       type: "object",
@@ -351,7 +356,7 @@ export const STATE_CHANGE_TYPES: Record<string, StateChangeTypeDef> = {
         characterId: {
           type: "string",
           description:
-            "ID of the witness (NOT the actor; e.g., 'npc_hollins').",
+            "Exact id of the witness (NOT the actor). Copy the exact character id from the Actor/Target sections of this prompt — never invent or abbreviate one.",
         },
         content: {
           type: "string",
@@ -371,19 +376,21 @@ export const STATE_CHANGE_TYPES: Record<string, StateChangeTypeDef> = {
       "Score is clamped to -100..+100. " +
       "Use when an action shifts how A feels about B (insulted, helped, discovered " +
       "betrayal, shared confidence). " +
-      "Example: {fromId: 'npc_marsh', toId: 'npc_hollins', delta: -15, " +
-      "note: 'He was rude about my fieldwork.'}.",
+      "Example (ids here are illustrative — always use the real ids from " +
+      "this prompt's context): {fromId: 'Marsh', toId: 'Hollins', " +
+      "delta: -15, note: 'He was rude about my fieldwork.'}.",
     schema: {
       type: "object",
       properties: {
         fromId: {
           type: "string",
           description:
-            "ID of the character whose attitude is changing (e.g., 'npc_marsh').",
+            "Exact id of the character whose attitude is changing. Copy the exact character id from the Actor/Target sections of this prompt — never invent or abbreviate one.",
         },
         toId: {
           type: "string",
-          description: "ID of the target character (e.g., 'npc_hollins').",
+          description:
+            "Exact id of the target character. Copy the exact character id from the Actor/Target sections of this prompt — never invent or abbreviate one.",
         },
         delta: {
           type: "number",

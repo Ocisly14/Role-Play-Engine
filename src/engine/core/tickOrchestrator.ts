@@ -3,6 +3,7 @@ import { addMinutes, diffDays, timePart } from "../../state/gameClock.js";
 import { makeActionSubsystemContext } from "../subsystem/actionContext.js";
 import type { SubsystemRegistry } from "../subsystem/registry.js";
 import type { AnchorSubsystem } from "../subsystem/types.js";
+import type { ToolResult } from "../types.js";
 import type { Applier } from "./applier.js";
 import { makeDGSMFeatureReadContext } from "./featureReadContext.js";
 import type { Queue } from "./queue.js";
@@ -39,11 +40,23 @@ export interface ResolveCancelContext {
 export type ResolveFn = (
   step: ActionStep,
   ctx: unknown,
-  cancel?: ResolveCancelContext
+  cancel?: ResolveCancelContext,
+  skillCheckResult?: ToolResult
 ) => Promise<{
   outcome: PlannedOutcome;
   plannedDuration: number;
 }>;
+
+/**
+ * Pre-resolver hook: given an LLM-engine step about to activate, run the
+ * action definition's skill check (opposed roll, difficulty band, scene /
+ * condition penalties) and return the verdict for the resolver to consume.
+ * Returns `undefined` to mean "no skill check" — resolver treats it as auto
+ * success, same as before. The returned ToolResult is also stashed on
+ * `ActionStep.skillCheckResult` so the cancel-time re-resolve sees the
+ * original roll.
+ */
+export type RunSkillCheckFn = (step: ActionStep) => ToolResult | undefined;
 
 export interface OrchestratorDeps {
   dgsm: DynamicGameStateManager;
@@ -51,6 +64,11 @@ export interface OrchestratorDeps {
   scriptedEventRunner: ScriptedEventRunner;
   applier: Applier;
   resolve: ResolveFn;
+  /** Optional skill-check hook. When set, the orchestrator calls it before
+   *  `resolve` at activation time and feeds the result to both the activation
+   *  and any later cancel-time re-resolve. Omit to keep the legacy "auto
+   *  success" path. */
+  runSkillCheck?: RunSkillCheckFn;
   /** Unified Subsystem registry — required. Drives all tick paths. */
   subsystemRegistry: SubsystemRegistry;
   tickDurationMinutes: number;
@@ -258,11 +276,20 @@ export class TickOrchestrator {
         callerFeatureId: "__resolver__",
         callerScope: "global",
       });
-      const resolved = await resolve(next, readCtx);
+      // Skill check happens FIRST so the resolver sees the verdict when it
+      // narrates / writes stateChanges. The result is also stashed on the
+      // step so a later cancel-time re-resolve can reuse the same roll.
+      const skillCheckResult = this.deps.runSkillCheck?.(next);
+      next.skillCheckResult = skillCheckResult;
+      const resolved = await resolve(
+        next,
+        readCtx,
+        undefined,
+        skillCheckResult
+      );
       next.activatedAt = nextTickTime;
       next.plannedDuration = resolved.plannedDuration;
-      next.plannedOutcome =
-        resolved.outcome as unknown as ActionStep["plannedOutcome"];
+      next.plannedOutcome = resolved.outcome;
       next.completionTime = addMinutes(nextTickTime, resolved.plannedDuration);
       queue.markActive(next.id);
       activationsThisTick.push(next);
@@ -295,9 +322,7 @@ export class TickOrchestrator {
       );
 
     for (const step of due) {
-      const outcome = step.plannedOutcome as unknown as
-        | PlannedOutcome
-        | undefined;
+      const outcome = step.plannedOutcome;
       // plannedOutcome is set in Phase 3 before markActive; missing = programmer error.
       if (!outcome) {
         queue.markCompleted(step.id);
@@ -314,6 +339,7 @@ export class TickOrchestrator {
         actionText: step.actionText,
         sceneId: step.executionSceneId,
         referencedEntities: step.referencedEntities,
+        impact: step.impact,
         activatedAt: step.activatedAt!,
         completedAt: nextTickTime,
         outcome: step.plannedOutcome,
@@ -356,7 +382,10 @@ export class TickOrchestrator {
       commits: commitsThisTick,
       cancellations,
       featureEvents: [...applied.featureEvents],
-      stateChanges: [...buffer],
+      // The applier's filtered stream, not the raw buffer: no-op changes
+      // (unconditional removeCondition sweeps, unchanged feature.setState
+      // rewrites) are dropped in flush and must not resurface in the report.
+      stateChanges: applied.stateChanges,
       damageReports: applied.damageReports,
     };
   }
@@ -460,10 +489,7 @@ export class TickOrchestrator {
       // Derive `plannedNarrative` from the resolver's original memory.event
       // content. `memory.event` is now a member of the StateChange
       // discriminated union, so the .find narrows naturally.
-      const priorOutcome = step.plannedOutcome as unknown as
-        | PlannedOutcome
-        | undefined;
-      const plannedNarrative = priorOutcome?.stateChanges.find(
+      const plannedNarrative = step.plannedOutcome?.stateChanges.find(
         (s): s is Extract<StateChange, { kind: "memory.event" }> =>
           s.kind === "memory.event" && s.characterId === step.characterId
       )?.content;
@@ -472,15 +498,22 @@ export class TickOrchestrator {
           callerFeatureId: "__resolver_cancel__",
           callerScope: "global",
         });
-        const reResolved = await resolve(step, readCtx, {
-          elapsedMinutes: elapsed,
-          plannedDuration: planned,
-          reason: pend.reason ?? "cancelled",
-          plannedNarrative,
-        });
+        const reResolved = await resolve(
+          step,
+          readCtx,
+          {
+            elapsedMinutes: elapsed,
+            plannedDuration: planned,
+            reason: pend.reason ?? "cancelled",
+            plannedNarrative,
+          },
+          // Reuse the original activation-time skill-check verdict so the
+          // partial outcome is consistent with the original roll (cancel
+          // doesn't re-roll the dice).
+          step.skillCheckResult
+        );
         buffer.push(...reResolved.outcome.stateChanges);
-        step.plannedOutcome =
-          reResolved.outcome as unknown as ActionStep["plannedOutcome"];
+        step.plannedOutcome = reResolved.outcome;
       } catch (err) {
         console.warn(
           `[TickOrchestrator] cancel re-resolve failed for step ${step.id}; keeping plannedOutcome:`,
@@ -502,6 +535,7 @@ export class TickOrchestrator {
       actionText: step.actionText,
       sceneId: step.executionSceneId,
       referencedEntities: step.referencedEntities,
+      impact: step.impact,
       activatedAt: step.activatedAt ?? step.submittedAt,
       completedAt: now,
       outcome: step.plannedOutcome,

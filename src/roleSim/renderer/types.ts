@@ -5,6 +5,7 @@
 // `agent.decideNext`. See plan §G-decisions for the full contract.
 
 import type {
+  CharacterAction,
   CharacterCondition,
   FeatureEvent,
   SceneCondition,
@@ -35,6 +36,26 @@ export interface PerceivedBundle {
   ownAction: OwnActionState;
   /** Subset of TickReport.featureEvents that propagated to this NPC. May be empty. */
   events: FeatureEvent[];
+  /** Subset of TickReport.commits whose impact reached this NPC. May be empty.
+   *  Excludes the viewpoint NPC's own action (already in `ownAction`). */
+  perceivedActions: CharacterAction[];
+  /** Every other alive character standing in the viewpoint's scene right now,
+   *  whether or not they did anything this tick. Default perception: presence,
+   *  appearance, externally-visible conditions, and the actionText of their
+   *  currently-active step (if any). Excludes self. */
+  charactersInScene: ScenePresentCharacter[];
+}
+
+export interface ScenePresentCharacter {
+  id: string;
+  name: string;
+  appearance?: string;
+  /** Conditions on this character. Renderer downstream still filters to
+   *  externally-perceivable ones per the system-prompt rule. */
+  conditions: CharacterCondition[];
+  /** Current in-flight action text (from engine queue), if the character is
+   *  mid-action. Undefined = the character is idle / between actions. */
+  currentActionText?: string;
 }
 
 export interface RenderedPerception {

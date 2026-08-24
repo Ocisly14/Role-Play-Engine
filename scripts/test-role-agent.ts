@@ -33,23 +33,31 @@
 
 import "dotenv/config";
 
-import { mkdirSync, createWriteStream, writeFileSync } from "node:fs";
+import {
+  createWriteStream,
+  mkdirSync,
+  readFileSync,
+  writeFileSync,
+} from "node:fs";
 import { resolve as pathResolve } from "node:path";
 
 // === Engine ===
 import { createTickEngine } from "../src/engine/core/tickEngine.js";
-import {
-  createDefaultDefinitions,
-  createDefaultSubsystemRegistry,
-} from "../src/engine/registerDefaults.js";
-import { interpretAction } from "../src/engine/interpreter/gameInterpreter.js";
-import { resolveState } from "../src/engine/resolver/stateResolver.js";
-import { buildStateContext } from "../src/engine/resolver/stateContextBuilder.js";
 import type {
   ActionStep,
   PlannedOutcome,
   TickReport,
 } from "../src/engine/core/types.js";
+import { interpretAction } from "../src/engine/interpreter/gameInterpreter.js";
+import {
+  createDefaultDefinitions,
+  createDefaultSubsystemRegistry,
+} from "../src/engine/registerDefaults.js";
+import { buildCancelResolverAction } from "../src/engine/resolver/cancelPrompt.js";
+import { buildStateContext } from "../src/engine/resolver/stateContextBuilder.js";
+import { resolveState } from "../src/engine/resolver/stateResolver.js";
+import { executeSkillCheck } from "../src/engine/tools/skillCheckTool.js";
+import type { ToolResult } from "../src/engine/types.js";
 
 // === RoleSim (real controller + agent) ===
 import { LLMRoleSimAgent } from "../src/roleSim/llmAgent.js";
@@ -61,15 +69,20 @@ import {
   initialDynamicGameState,
 } from "../src/state/DynamicGameState.js";
 import { buildTopology } from "../src/state/topologyTypes.js";
-import type {
-  DynamicNPCProfile,
-  DynamicScene,
-} from "../src/state/types.js";
 import type { CharacterPosition } from "../src/state/topologyTypes.js";
+import type { DynamicNPCProfile, DynamicScene } from "../src/state/types.js";
 
+// === Token usage / prompt-cache observability ===
+import {
+  type UsageAggregate,
+  formatUsageReport,
+  getUsageStats,
+  resetUsageStats,
+} from "../src/models/index.js";
+
+import type { NpcMemory, NpcMemoryType } from "@prisma/client";
 // === Memory (stubbed) ===
 import type { NpcMemoryManager } from "../src/memory/NpcMemoryManager.js";
-import type { NpcMemory, NpcMemoryType } from "@prisma/client";
 
 // =========================================================================
 // 0. TEE LOG — mirror all console output into logs/role-agent-test-<ts>.log
@@ -112,113 +125,157 @@ console.log(`(logging to ${LOG_PATH})`);
 console.log(`(structured run record → ${JSON_PATH})`);
 
 // =========================================================================
-// 1. WORLD: one scene + two NPCs (Marsh + Hollins)
+// 1. WORLD: two NPCs from the Cassandra_zh module, placed in the police
+//    station lobby (SCN_3_SUB_1). Picked for natural tension:
+//      - Bruno Galilei (warden) — straight-arrow detective working a stalled
+//        case; trusts Lux loosely.
+//      - Lux Lynch     (warden) — corrupt cop secretly helping Bruno but
+//        terrified of being found out.
 // =========================================================================
 
-const scene: DynamicScene = {
-  id: "scene_study",
-  name: "Dr. Marsh's Study",
-  description:
-    "A wood-panelled study in a townhouse. A fire burns in the hearth. " +
-    "Bookshelves line the walls; a desk near the window holds papers and " +
-    "an unopened letter. Through the window, gas-lamps glow in the fog.",
-  parentLocationId: "loc_marsh_house",
-  items: [
-    {
-      id: "item_letter",
-      name: "unopened letter",
-      description: "A cream envelope on the desk, sealed with red wax.",
+const MOD_DIR = pathResolve(
+  process.cwd(),
+  "data/Mods/Cassandra_zh/Cassandra_Scenarios"
+);
+const NPC_DIR = pathResolve(
+  process.cwd(),
+  "data/Mods/Cassandra_zh/Cassandra's_npc"
+);
+
+function readJson<T>(file: string): T {
+  return JSON.parse(readFileSync(file, "utf8")) as T;
+}
+
+/** Convert Cassandra `[{skill, delta}]` form into the engine's
+ *  `Record<skill, delta>` shape. Idempotent on already-record input. */
+function adaptSkillPenalty(raw: unknown): Record<string, number> | undefined {
+  if (!raw) return undefined;
+  if (Array.isArray(raw)) {
+    const out: Record<string, number> = {};
+    for (const p of raw as Array<{ skill?: string; delta?: number }>) {
+      if (p?.skill) out[p.skill] = p.delta ?? 0;
+    }
+    return out;
+  }
+  return raw as Record<string, number>;
+}
+
+function loadCassandraScene(fileName: string): DynamicScene {
+  const raw = readJson<any>(pathResolve(MOD_DIR, fileName));
+  return {
+    id: raw.id,
+    name: raw.name,
+    description: raw.description ?? "",
+    parentLocationId: raw.parentLocationId ?? raw.id,
+    items: raw.items ?? [],
+    itemContexts: raw.itemContexts,
+    conditions: (raw.conditions ?? []).map((c: any) => ({
+      description: c.description ?? "",
+      featureId: c.featureId,
+      data: c.data,
+      mechanicalEffect: c.mechanicalEffect
+        ? {
+            skillPenalty: adaptSkillPenalty(c.mechanicalEffect.skillPenalty),
+            blockConnections: c.mechanicalEffect.blockConnections,
+          }
+        : undefined,
+    })),
+    connections: raw.connections ?? [],
+    indoor: raw.indoor,
+  };
+}
+
+function loadCassandraNpc(fileName: string): DynamicNPCProfile {
+  const raw = readJson<any>(pathResolve(NPC_DIR, fileName));
+  const s = raw.status ?? {};
+  return {
+    id: raw.id,
+    name: raw.name,
+    age: raw.age,
+    gender: raw.gender,
+    occupation: raw.occupation,
+    appearance: raw.appearance,
+    personality: raw.personality,
+    background: raw.background,
+    backstory: raw.backstory,
+    residence: raw.residence,
+    currentLocation: raw.currentLocation,
+    longTermIntent: raw.longTermIntent ?? "",
+    attributes: raw.attributes ?? {},
+    // Cassandra JSON uses `sanity` / `maxSanity` and omits fatigue; engine
+    // type expects `san` / `maxSan` / `fatigue` / `maxFatigue`.
+    status: {
+      hp: s.hp ?? 10,
+      maxHp: s.maxHp ?? s.hp ?? 10,
+      san: s.san ?? s.sanity ?? 50,
+      maxSan: s.maxSan ?? s.maxSanity ?? 99,
+      fatigue: s.fatigue ?? 0,
+      maxFatigue: s.maxFatigue ?? 10,
+      luck: s.luck ?? 50,
+      mp: s.mp,
+      conditions: s.conditions ?? [],
     },
-  ],
-  conditions: [],
-  connections: [],
-  indoor: true,
-};
+    // Cassandra inventory entries omit `id`; synthesize one per slot.
+    inventory: (raw.inventory ?? []).map((it: any, i: number) => ({
+      id: it.id ?? `${raw.id}_inv_${i}`,
+      name: it.name,
+      quantity: it.quantity,
+      properties: it.properties,
+    })),
+    skills: raw.skills ?? {},
+    relationships: raw.relationships ?? [],
+    memory: raw.memory ?? [],
+    knownMapSeed: raw.knownMapSeed,
+  };
+}
 
-const npc: DynamicNPCProfile = {
-  id: "npc_marsh",
-  name: "Dr. Henry Marsh",
-  age: 47,
-  gender: "male",
-  occupation: "Archaeologist",
-  appearance:
-    "Lean, slightly stooped, grey at the temples; reading-glasses on a chain.",
-  personality:
-    "Curious, methodical, privately anxious. Slow to act on hearsay; " +
-    "sharp once interested.",
-  background:
-    "Years of dig-site work in the Levant; recently returned to England " +
-    "with crates of artefacts from a controversial expedition.",
-  backstory:
-    "An old colleague died abroad under circumstances Marsh has not " +
-    "publicly explained.",
-  residence: "loc_marsh_house",
-  longTermIntent:
-    "Catalogue the new artefacts before any rival scholar can examine them.",
-  attributes: {
-    STR: 50, CON: 60, SIZ: 60, DEX: 55, APP: 55, INT: 80, POW: 65, EDU: 90,
-  },
-  status: {
-    hp: 11, maxHp: 12, san: 55, maxSan: 65, fatigue: 2, maxFatigue: 10,
-    luck: 60, conditions: [],
-  },
-  inventory: [],
-  skills: { Library_Use: 75, Archaeology: 70, Spot_Hidden: 50 },
-  relationships: [],
-};
+// Police-station-lobby + the two adjacent sub-scenes so PerceivableDirectory's
+// 1-hop adjacency resolves (its consumer is renderer/scene-listing).
+const sceneLobby = loadCassandraScene("SCN_3_SUB_1.json");
+const sceneAdj2 = loadCassandraScene("SCN_3_SUB_2.json");
+const sceneAdj3 = loadCassandraScene("SCN_3_SUB_3.json");
+const scene = sceneLobby; // primary scene where both NPCs are placed
 
-// `id: npc_<slug>` matches real module convention; per Approach A the id is a
-// system-level handle that may leak the canonical name, while in-character
-// info-hiding is enforced at the renderer layer (UNKNOWN characters render
-// by description in the narrative).
-const visitor: DynamicNPCProfile = {
-  id: "npc_hollins",
-  name: "Professor Hollins",
-  age: 52,
-  gender: "male",
-  occupation: "Comparative Religion scholar",
-  appearance: "Tall, pale, with a long black overcoat and an ivory-handled cane.",
-  personality:
-    "Ingratiating in public; uncompromising in private. Talkative when he " +
-    "wants something.",
-  longTermIntent:
-    "Press Marsh to let me see the Beirut crates tonight before he locks them up.",
-  attributes: {
-    STR: 40, CON: 55, SIZ: 70, DEX: 50, APP: 60, INT: 80, POW: 70, EDU: 85,
-  },
-  status: {
-    hp: 12, maxHp: 12, san: 60, maxSan: 70, fatigue: 0, maxFatigue: 10,
-    luck: 50, conditions: [],
-  },
-  inventory: [],
-  skills: { Persuade: 60, Psychology: 55 },
-  relationships: [],
-};
+const npc = loadCassandraNpc("Bruno Galilei.json");
+const visitor = loadCassandraNpc("Lux Lynch.json");
+
+// Override Lux's long-term intent for THIS test only, with a concrete
+// short-term goal that points at a real adjacent sub-scene (SCN_3_SUB_2 =
+// 法医工作室). This biases her toward cross-scene movement so we can verify
+// the movement subsystem fires through the same-building shortcut.
+visitor.longTermIntent =
+  "今晚必须把布鲁诺单独拉到法医工作室 (SCN_3_SUB_2)，避开大厅里其他人，让他亲眼看到尸检报告里关于 2003 年驯鹿酒吧案的几行被划掉的字。在前台说话太危险——必须先把他带走。";
 
 const initialState = initialDynamicGameState({
   sessionId: "test-session",
-  moduleName: "test-module",
-  gameDateTime: "1923-10-15T20:30:00",
+  moduleName: "cassandra_zh",
+  // Cassandra_zh setup: 2003-12-01 Day 1, 19:00 (see module_setup.json).
+  gameDateTime: "2003-12-01T19:00:00",
 });
-initialState.scenes.set(scene.id, scene);
+for (const sc of [sceneLobby, sceneAdj2, sceneAdj3]) {
+  initialState.scenes.set(sc.id, sc);
+}
 initialState.npcCharacters.push(npc, visitor);
 initialState.npcStats[npc.id] = { hp: npc.status.hp, san: npc.status.san };
 initialState.npcStats[visitor.id] = {
   hp: visitor.status.hp,
   san: visitor.status.san,
 };
-initialState.npcResidences[npc.id] = npc.residence!;
+if (npc.residence) initialState.npcResidences[npc.id] = npc.residence;
+if (visitor.residence)
+  initialState.npcResidences[visitor.id] = visitor.residence;
+// Force both NPCs into SCN_3_SUB_1 at session start (overrides each profile's
+// own currentLocation so we get them in the same scene).
 initialState.characterPositions[npc.id] = {
   type: "scene",
   sceneId: scene.id,
 } satisfies CharacterPosition;
-// Both NPCs in the same scene from the start so they perceive each other.
 initialState.characterPositions[visitor.id] = {
   type: "scene",
   sceneId: scene.id,
 } satisfies CharacterPosition;
-// Empty topology — no roads/junctions; movement subsystem will see no
-// pathing data but neither NPC needs to move.
+// Empty topology — no roads/junctions loaded; both NPCs stay inside the
+// police-station building during the test.
 initialState.topology = buildTopology(new Map(), new Map());
 
 const dgsm = new DynamicGameStateManager(initialState);
@@ -237,23 +294,22 @@ interface SeedEntry {
   gameDateTime: string;
 }
 
+// Seed memories pulled from each NPC profile's structured `memory[]` field.
+// Cassandra entries have type ∈ {information, secret, belief, event} which
+// matches the Prisma NpcMemoryType enum directly. Anchored a week before the
+// session start so they show up as `recallMemory` hits, not "today's events".
+const SEED_DATETIME = "2003-11-24T08:00:00";
+function profileSeed(profile: DynamicNPCProfile): SeedEntry[] {
+  return (profile.memory ?? []).map((m) => ({
+    npcId: profile.id,
+    type: m.type as NpcMemoryType,
+    content: m.content,
+    gameDateTime: SEED_DATETIME,
+  }));
+}
 const seedMemories: SeedEntry[] = [
-  {
-    npcId: npc.id,
-    type: "belief",
-    content:
-      "Professor Hollins of King's College has been quietly inquiring after " +
-      "the Beirut shipment. He must not examine the artefacts before I publish.",
-    gameDateTime: "1923-10-09T22:00:00",
-  },
-  {
-    npcId: npc.id,
-    type: "secret",
-    content:
-      "Dr. Whitcomb's death at the dig site was not the fever the consulate " +
-      "reported. The cuneiform tablet was missing from his tent that morning.",
-    gameDateTime: "1923-07-04T03:15:00",
-  },
+  ...profileSeed(npc),
+  ...profileSeed(visitor),
 ];
 
 const writtenMemories: SeedEntry[] = [];
@@ -279,11 +335,7 @@ function toFakeNpcMemory(seed: SeedEntry, idx: number): NpcMemory {
 
 const stubMemory: Pick<
   NpcMemoryManager,
-  | "add"
-  | "query"
-  | "getMapSnapshot"
-  | "findLatestByType"
-  | "getForDateByTypes"
+  "add" | "query" | "getMapSnapshot" | "findLatestByType" | "getForDateByTypes"
 > = {
   async add(params) {
     const entry: SeedEntry = {
@@ -358,15 +410,48 @@ const engine = createTickEngine({
     const result = await interpretAction(
       input.actionText,
       definitionList,
-      "en",
+      "zh",
       directory
     );
+    // Surface the LLM interpreter's per-step verdict (definitionId + impact
+    // + engine route) so we can audit propagation behavior without digging
+    // into engine internals.
+    const verdict = result.steps
+      .map((s, i) => {
+        const dest =
+          s.overlayFields &&
+          typeof (s.overlayFields as { destination?: unknown }).destination ===
+            "string"
+            ? ` destination="${(s.overlayFields as { destination: string }).destination}"`
+            : "";
+        const txt = s.actionText
+          ? ` text="${s.actionText.replace(/\n/g, " ").slice(0, 60)}${s.actionText.length > 60 ? "…" : ""}"`
+          : "";
+        return `      step${i}: definitionId="${s.definitionId}" impact=${s.impact} engine=${s.engine}${s.codeSubsystem ? ` codeSubsystem=${s.codeSubsystem}` : ""}${dest}${txt}`;
+      })
+      .join("\n");
+    console.log(
+      `   [interpreter] ${input.characterId} actionText="${input.actionText.slice(0, 80)}${input.actionText.length > 80 ? "…" : ""}"\n${verdict}`
+    );
+    runRecord.interpreterCalls.push({
+      characterId: input.characterId,
+      actionText: input.actionText,
+      steps: result.steps.map((s) => ({
+        definitionId: s.definitionId,
+        impact: s.impact,
+        engine: s.engine,
+        codeSubsystem: s.codeSubsystem,
+        actionText: s.actionText,
+        overlayFields: s.overlayFields,
+      })),
+    });
     return { steps: result.steps };
   },
   resolve: async (
     step: ActionStep,
     ctx: unknown,
-    cancel
+    cancel,
+    skillCheckResult
   ): Promise<{ outcome: PlannedOutcome; plannedDuration: number }> => {
     const definition = definitions.get(step.definitionId);
     if (!definition) {
@@ -385,42 +470,114 @@ const engine = createTickEngine({
       step.executionSceneId
     );
     const actionForResolver = cancel
-      ? [
-          `[CANCELLED at minute ${cancel.elapsedMinutes.toFixed(1)} of planned ${cancel.plannedDuration.toFixed(1)} due to: ${cancel.reason}]`,
-          `Original intent: "${step.actionText}"`,
-          cancel.plannedNarrative
-            ? `Original planned outcome (had it completed): ${cancel.plannedNarrative}`
-            : "",
-          `Produce a SHORT memory.event reflecting ONLY what actually happened in those ${cancel.elapsedMinutes.toFixed(1)} minutes before cancellation.`,
-        ]
-          .filter(Boolean)
-          .join("\n")
+      ? buildCancelResolverAction(step.actionText, cancel)
       : step.actionText;
     const resolved = await resolveState({
       action: actionForResolver,
       definition,
       outcomeSection: definition.content,
       stateContext,
-      language: "en",
+      skillCheckResult,
+      language: "zh",
     });
     void ctx;
-    const elapsedMinutes = cancel ? cancel.elapsedMinutes : resolved.elapsedMinutes;
+    const elapsedMinutes = cancel
+      ? cancel.elapsedMinutes
+      : resolved.elapsedMinutes;
+    // Audit every resolver round-trip so we can correlate (stepId, definition,
+    // cancelled?, elapsedMinutes, kinds of stateChanges emitted) — useful for
+    // diagnosing time inflation and movement-subsystem vs resolver-emitted
+    // position changes.
+    const stateChangeKinds = resolved.stateChanges.map((sc) => sc.kind);
+    console.log(
+      `   [resolver] ${step.characterId} step=${step.id} def=${step.definitionId} ` +
+        `cancel=${cancel ? "yes" : "no"} elapsed=${elapsedMinutes}min ` +
+        `stateChanges=[${stateChangeKinds.join(", ")}]`
+    );
+    runRecord.resolverCalls.push({
+      stepId: step.id,
+      characterId: step.characterId,
+      definitionId: step.definitionId,
+      cancelled: !!cancel,
+      cancelReason: cancel?.reason,
+      elapsedMinutes,
+      stateChanges: resolved.stateChanges.map((sc) => ({ ...sc })),
+      skillCheckStatus: skillCheckResult?.status,
+      skillCheckLevel: skillCheckResult?.successLevel,
+    });
     return {
       outcome: { stateChanges: resolved.stateChanges, elapsedMinutes },
       plannedDuration: elapsedMinutes,
     };
   },
+  runSkillCheck: (step: ActionStep): ToolResult | undefined => {
+    const definition = definitions.get(step.definitionId);
+    if (!definition?.skillCheck) return undefined;
+    const targetIds = step.referencedEntities
+      .filter((r) => r.kind === "character")
+      .map((r) => r.id);
+    const result = executeSkillCheck(
+      definition.skillCheck,
+      step.characterId,
+      undefined,
+      dgsm,
+      step.executionSceneId,
+      targetIds.length > 0 ? targetIds : undefined
+    );
+    // Surface dice roll outcomes so we can audit whether skill checks actually
+    // gate the resolver's narrative (e.g. brawling hits vs misses, intimidate
+    // succeeds vs fails).
+    console.log(
+      `   [skillCheck] ${step.characterId} skill=${definition.skillCheck.skill} ` +
+        `difficulty=${definition.skillCheck.difficulty ?? "regular"} ` +
+        `type=${definition.skillCheck.type ?? "action"} ` +
+        `→ status=${result.status} level=${result.successLevel ?? "?"}` +
+        (result.rollDetail ? `  (${result.rollDetail})` : "")
+    );
+    runRecord.skillChecks.push({
+      stepId: step.id,
+      characterId: step.characterId,
+      definitionId: step.definitionId,
+      skill: definition.skillCheck.skill ?? "",
+      difficulty: definition.skillCheck.difficulty ?? "regular",
+      type: definition.skillCheck.type ?? "action",
+      status: result.status,
+      successLevel: result.successLevel,
+      rollDetail: result.rollDetail,
+      perTargetResults: result.perTargetResults,
+    });
+    return result;
+  },
   getActorDex: (id) => dgsm.getNpcProfile(id)?.attributes?.DEX ?? 50,
   tickDurationMinutes: 1,
-  lang: "en",
+  lang: "zh",
 });
 
 const agent = new LLMRoleSimAgent({
   memory: stubMemory as unknown as NpcMemoryManager,
   dgsm,
   sessionId: "test-session",
-  moduleId: "test-module",
-  language: "en",
+  moduleId: "cassandra_zh",
+  language: "zh",
+  // Capture every LLM iteration of the agent loop — full raw output + parsed
+  // tool call. Lets us trace recall→write→act chains without coupling to the
+  // model wrapper. Console prints one line per iteration; JSON keeps full
+  // responseText so we can replay reasoning offline.
+  onIteration: (ev) => {
+    const summary = ev.parsed
+      ? `tool=${ev.parsed.tool}`
+      : `parseError=${ev.parseError}`;
+    console.log(
+      `   [agent] ${ev.npcId} iter=${ev.iteration} ${summary}  (raw ${ev.responseText.length} chars)`
+    );
+    runRecord.agentIterations.push({
+      npcId: ev.npcId,
+      iteration: ev.iteration,
+      responseText: ev.responseText,
+      parsed: ev.parsed,
+      parseError: ev.parseError,
+    });
+  },
 });
 
 const controller = new NpcActionController({
@@ -429,8 +586,8 @@ const controller = new NpcActionController({
   memory: stubMemory as unknown as NpcMemoryManager,
   dgsm,
   sessionId: "test-session",
-  moduleId: "test-module",
-  language: "en",
+  moduleId: "cassandra_zh",
+  language: "zh",
 });
 
 // =========================================================================
@@ -446,10 +603,16 @@ interface TickRecord {
   commits: Array<{
     characterId: string;
     actionText: string;
+    /** Interpreter-assigned perceptibility level. Drives impactPropagation
+     *  on commit so co-located NPCs get woken into decide() this tick. */
+    impact: number;
+    definitionId: string;
   }>;
   cancellations: Array<{
     characterId: string;
     actionText: string;
+    impact: number;
+    definitionId: string;
   }>;
   featureEvents: Array<{
     type: string;
@@ -485,11 +648,82 @@ interface RunRecord {
     content: string;
     gameDateTime: string;
   }>;
+  /** Every interpreter call that ran during this session, with the LLM's
+   *  per-step verdict. Records what was sent in (actionText) and what the
+   *  interpreter judged (definitionId, impact, engine route) so we can audit
+   *  impact propagation behavior without re-running the LLM. */
+  interpreterCalls: Array<{
+    characterId: string;
+    actionText: string;
+    steps: Array<{
+      definitionId: string;
+      impact: number;
+      engine: "code" | "llm";
+      codeSubsystem?: string;
+      /** Per-step localized actionText fragment (from interpreter's `text`
+       *  field). Useful to verify fold-trivial-beat shaped output. */
+      actionText?: string;
+      /** Subsystem-specific inputs the interpreter parsed out (notably
+       *  `destination` for movement steps — central for diagnosing why
+       *  cross-scene movement may not have fired). */
+      overlayFields?: Record<string, unknown>;
+    }>;
+  }>;
+  /** One entry per resolver round-trip (activation OR cancel re-resolve).
+   *  Records duration + emitted state-change kinds + which skill check (if
+   *  any) gated it. Lets us audit time inflation and resolver-vs-movement
+   *  position writes without re-running the LLM. */
+  resolverCalls: Array<{
+    stepId: string;
+    characterId: string;
+    definitionId: string;
+    cancelled: boolean;
+    cancelReason?: string;
+    elapsedMinutes: number;
+    stateChanges: Array<{ kind: string; [k: string]: unknown }>;
+    skillCheckStatus?: string;
+    skillCheckLevel?: string;
+  }>;
+  /** Every skill-check roll executed before resolver activation. Lets us see
+   *  whether the resolver's narrative actually respects the dice (e.g. did
+   *  the brawling attempt that hit really win, did the intimidate that
+   *  cowed the target really succeed). */
+  skillChecks: Array<{
+    stepId: string;
+    characterId: string;
+    definitionId: string;
+    skill: string;
+    difficulty: string;
+    type: string;
+    status: string;
+    successLevel?: string;
+    rollDetail?: string;
+    perTargetResults?: Record<string, unknown>;
+  }>;
+  /** One entry per agent decide()-loop iteration: raw LLM output + parsed
+   *  tool call. Captures the full reasoning chain (recallMemory →
+   *  writeMemory → act/continue) for every NPC, every tick. */
+  agentIterations: Array<{
+    npcId: string;
+    iteration: number;
+    responseText: string;
+    parsed?: { tool: string; [k: string]: unknown };
+    parseError?: string;
+  }>;
+  /** Per-(provider, model, operation) LLM token rollup for the run, including
+   *  prompt-cache counters. `cache_read_tokens` is the baseline to beat: with
+   *  no cache_control wired up it reflects only whatever the provider caches
+   *  automatically (OpenAI does; Anthropic does not without explicit
+   *  breakpoints). */
+  usage: UsageAggregate[];
   exitCode: number;
   error?: { message: string; stack?: string };
 }
 
-const N_TICKS = 20;
+const N_TICKS = (() => {
+  const raw = Number(process.env.N_TICKS);
+  return Number.isFinite(raw) && raw > 0 ? Math.floor(raw) : 20;
+})();
 
 const runRecord: RunRecord = {
   meta: {
@@ -508,6 +742,11 @@ const runRecord: RunRecord = {
   },
   ticks: [],
   memoryWrites: [],
+  interpreterCalls: [],
+  resolverCalls: [],
+  skillChecks: [],
+  agentIterations: [],
+  usage: [],
   exitCode: 0,
 };
 
@@ -524,14 +763,34 @@ engine.on("tickCompleted", (report: TickReport) => {
       `cancellations: ${report.cancellations.length}, featureEvents: ${report.featureEvents.length}`
   );
   for (const a of report.commits) {
-    console.log(`  ✓ COMMITTED      ${a.characterId}: ${a.actionText}`);
+    console.log(
+      `  ✓ COMMITTED  [impact=${a.impact}, def=${a.definitionId}]  ${a.characterId}: ${a.actionText}`
+    );
   }
   for (const c of report.cancellations) {
-    console.log(`  ✗ CANCELLED      ${c.characterId}: ${c.actionText}`);
+    console.log(
+      `  ✗ CANCELLED  [impact=${c.impact}, def=${c.definitionId}]  ${c.characterId}: ${c.actionText}`
+    );
   }
   for (const e of report.featureEvents) {
     const tag = `(${e.type}, impact=${e.impact}${e.characterId ? `, actor=${e.characterId}` : ""})`;
     console.log(`  · EVENT ${tag}  ${e.description}`);
+  }
+  // Surface character.position changes so we can see cross-scene movement
+  // actually firing (vs the agent merely narrating a destination).
+  for (const sc of report.stateChanges) {
+    if (sc.kind === "character.position") {
+      const pos = sc.position;
+      const where =
+        pos.type === "scene"
+          ? `scene:${pos.sceneId}`
+          : pos.type === "junction"
+            ? `junction:${pos.junctionId}`
+            : `road:${pos.roadId}`;
+      console.log(
+        `  → POSITION  ${sc.characterId} now at ${where}  (via ${sc.sourceSubsystem})`
+      );
+    }
   }
 
   runRecord.ticks.push({
@@ -540,10 +799,14 @@ engine.on("tickCompleted", (report: TickReport) => {
     commits: report.commits.map((a) => ({
       characterId: a.characterId,
       actionText: a.actionText,
+      impact: a.impact,
+      definitionId: a.definitionId,
     })),
     cancellations: report.cancellations.map((c) => ({
       characterId: c.characterId,
       actionText: c.actionText,
+      impact: c.impact,
+      definitionId: c.definitionId,
     })),
     featureEvents: report.featureEvents.map((e) => ({
       type: e.type,
@@ -571,6 +834,7 @@ function recordError(err: unknown) {
 function flushRunRecord(t0: number) {
   runRecord.meta.endedAt = new Date().toISOString();
   runRecord.meta.durationMs = Date.now() - t0;
+  runRecord.usage = getUsageStats();
   try {
     writeFileSync(JSON_PATH, JSON.stringify(runRecord, null, 2));
     console.log(`\n(wrote run record → ${JSON_PATH})`);
@@ -581,13 +845,16 @@ function flushRunRecord(t0: number) {
 
 async function main() {
   console.log("\n=== test-role-agent (FULL E2E) ===");
-  console.log(`NPCs: ${npc.name} (${npc.id}) + ${visitor.name} (${visitor.id})`);
+  console.log(
+    `NPCs: ${npc.name} (${npc.id}) + ${visitor.name} (${visitor.id})`
+  );
   console.log(`Scene: ${scene.name} (${scene.id})`);
   console.log(
     `Provider: ${process.env.MODEL_PROVIDER ?? "(unset — generator falls back)"}`
   );
 
   const t0 = Date.now();
+  resetUsageStats();
 
   try {
     console.log("\n--- Bootstrap (initial decide pass for all alive NPCs) ---");
@@ -610,6 +877,22 @@ async function main() {
     for (const m of writtenMemories) {
       console.log(`  - npc=${m.npcId} (${m.type}) ${m.content.slice(0, 100)}`);
     }
+    // Final positions — confirm whether cross-scene movement actually fired.
+    console.log("\nFinal positions:");
+    for (const n of [npc, visitor]) {
+      const pos = dgsm.getCharacterPosition(n.id);
+      const where = pos
+        ? pos.type === "scene"
+          ? `scene:${pos.sceneId}`
+          : pos.type === "junction"
+            ? `junction:${pos.junctionId}`
+            : `road:${pos.roadId}`
+        : "(unknown)";
+      console.log(`  ${n.name} (${n.id}) → ${where}`);
+    }
+    console.log("\n--- LLM token usage / prompt cache ---");
+    console.log(formatUsageReport());
+
     flushRunRecord(t0);
   }
 }

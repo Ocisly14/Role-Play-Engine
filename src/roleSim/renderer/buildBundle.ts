@@ -11,7 +11,11 @@ import type {
   TickReport,
 } from "../../engine/core/types.js";
 import type { DynamicGameStateManager } from "../../state/DynamicGameState.js";
-import type { OwnActionState, PerceivedBundle } from "./types.js";
+import type {
+  OwnActionState,
+  PerceivedBundle,
+  ScenePresentCharacter,
+} from "./types.js";
 
 export interface BuildBundleParams {
   npcId: string;
@@ -20,6 +24,9 @@ export interface BuildBundleParams {
   report?: TickReport;
   /** FeatureEvents that propagated to this NPC (controller-side filter). */
   eventsForNpc?: FeatureEvent[];
+  /** Committed CharacterActions whose impact reached this NPC this tick.
+   *  Always excludes the NPC's own action (already represented by ownAction). */
+  actionsForNpc?: CharacterAction[];
   dgsm: DynamicGameStateManager;
   engine: TickEngine;
 }
@@ -27,18 +34,55 @@ export interface BuildBundleParams {
 export function buildPerceivedBundle(
   params: BuildBundleParams
 ): PerceivedBundle {
-  const { npcId, report, eventsForNpc, dgsm, engine } = params;
+  const { npcId, report, eventsForNpc, actionsForNpc, dgsm, engine } = params;
 
   const scene = resolveScene(npcId, dgsm);
   const ownConditions = dgsm.getNpcProfile(npcId)?.status?.conditions ?? [];
   const ownAction = resolveOwnAction(npcId, report, engine);
+  const charactersInScene = resolveScenePresentCharacters(
+    npcId,
+    scene.id,
+    dgsm,
+    engine
+  );
 
   return {
     scene,
     ownConditions,
     ownAction,
     events: eventsForNpc ?? [],
+    perceivedActions: (actionsForNpc ?? []).filter(
+      (a) => a.characterId !== npcId
+    ),
+    charactersInScene,
   };
+}
+
+function resolveScenePresentCharacters(
+  viewpointId: string,
+  sceneId: string,
+  dgsm: DynamicGameStateManager,
+  engine: TickEngine
+): ScenePresentCharacter[] {
+  if (!sceneId) return [];
+  return dgsm
+    .getCharactersInScene(sceneId)
+    .filter((id) => id !== viewpointId && dgsm.isNpcAlive(id))
+    .map((id): ScenePresentCharacter | null => {
+      const profile = dgsm.getNpcProfile(id);
+      if (!profile) return null;
+      const activeStep = engine
+        .getActorQueue(id)
+        .find((s) => s.status === "active");
+      return {
+        id,
+        name: profile.name,
+        appearance: profile.appearance,
+        conditions: profile.status?.conditions ?? [],
+        currentActionText: activeStep?.actionText,
+      };
+    })
+    .filter((c): c is ScenePresentCharacter => c !== null);
 }
 
 function resolveScene(

@@ -11,9 +11,9 @@ export * from "./generator.js";
 export { ModelClass, ModelProviderName } from "./types.js";
 export {
   generateText,
+  generateToolCalls,
   resolveModelClass,
   getModelSettings,
-  createChatModel,
 } from "./generator.js";
 
 export {
@@ -22,4 +22,10 @@ export {
   recordTokenUsage,
   getTokenContext,
   getCurrentUsageTotals,
+  resetUsageStats,
+  getUsageStats,
+  formatUsageReport,
+  uncachedInputTokens,
+  promptTokensSent,
 } from "./tokenUsage.js";
+export type { TokenUsageTotals, UsageAggregate } from "./tokenUsage.js";

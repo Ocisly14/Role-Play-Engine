@@ -2,7 +2,7 @@
 id: psychology
 engine: llm
 title: Psychology
-description: "Reading a person's emotional state, detecting deception, and sensing hidden motivations through behavior and body language during direct interaction. Does NOT cover physical scene observation (Perception/Spot Hidden), therapy or trauma treatment (Psychoanalysis), or social persuasion (Persuade/Charm/Bluff)."
+description: "Reading a person's emotional state, detecting deception, and sensing hidden motivations through behavior and body language during direct interaction. Does NOT cover physical scene observation (Perception), therapy or trauma treatment (Psychoanalysis), or social persuasion (Persuade/Charm/Bluff)."
 
 skillCheck:
   skill: Psychology

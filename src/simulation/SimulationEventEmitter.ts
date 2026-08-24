@@ -10,7 +10,7 @@ import type { SimulationEvent, SimulationEventType } from "./types.js";
  * `SimulationEvent`s. After Phase E the engine-core action shape is
  * intentionally minimal (no `characterName`, `outcome` string, `successLevel`,
  * `discoveries`); this emitter derives the UI-facing fields from DGSM and
- * the engine `outcome` (`StateResolution`) at emit time.
+ * the engine `outcome` (`PlannedOutcome`) at emit time.
  */
 export class SimulationEventEmitter extends EventEmitter {
   private sessionId: string;

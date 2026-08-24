@@ -2,7 +2,7 @@
 id: listen
 engine: llm
 title: Listen
-description: "Detecting and interpreting sounds — overheard conversations, approaching footsteps, creatures moving in the dark, or noises through walls and doors. Does NOT cover visual observation (Perception/Spot Hidden), reading a person's emotional state (Psychology), or identifying what a sound means beyond its source."
+description: "Detecting and interpreting sounds — overheard conversations, approaching footsteps, creatures moving in the dark, or noises through walls and doors. Does NOT cover visual observation (Perception), reading a person's emotional state (Psychology), or identifying what a sound means beyond its source."
 
 skillCheck:
   skill: Listen

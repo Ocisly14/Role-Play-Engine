@@ -61,7 +61,8 @@ function formatInventoryLine(
     | undefined;
   if (!items || items.length === 0) return null;
   const parts = items.map((item) => {
-    const qty = item.quantity && item.quantity > 1 ? ` (x${item.quantity})` : "";
+    const qty =
+      item.quantity && item.quantity > 1 ? ` (x${item.quantity})` : "";
     return `${item.name} [id: ${item.id}]${qty}`;
   });
   return `Inventory (cite items by id): ${parts.join(", ")}`;

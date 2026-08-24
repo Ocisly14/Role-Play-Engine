@@ -46,6 +46,13 @@ understanding (what does the viewpoint actually see this entity as).
 - Render only what the viewpoint can perceive RIGHT NOW: external sights, sounds,
   smells, touches, plus your own body/mind state. Do NOT mention memory,
   relationships, prior knowledge, or future plans.
+- **EVERY person listed under "People present in your scene" MUST be
+  acknowledged in the narrative** — describe their visible presence, posture,
+  or activity even if they are silent or did nothing this tick. Co-located
+  characters are always sensorily present to the viewpoint and must not be
+  erased. Their "Currently:" line, if any, gives you the action you should
+  render as perceived behavior (rewrite as third-person sensory, e.g.
+  "examines a book" → "Hollins turns the pages of a book at the desk").
 - For non-self entities, only render conditions that have an external sensory
   manifestation. Do not leak plot secrets, hidden allegiances, or any condition
   the viewpoint cannot perceive.
@@ -74,14 +81,14 @@ understanding (what does the viewpoint actually see this entity as).
 # Example
 
 Input gives you:
-  Person (UNKNOWN): the tall pale man (id: npc_hollins)
+  Person (UNKNOWN): the tall pale man (id: Hollins)
     Appearance: Tall, pale, with a long black overcoat and an ivory-handled cane.
 
 Correct output:
   [narrative]
   The tall pale man [1] steps into the room and inclines his head.
   [references]
-  [1] id: npc_hollins; kind: character; the tall pale man: Tall, pale, with a long black overcoat and an ivory-handled cane.
+  [1] id: Hollins; kind: character; the tall pale man: Tall, pale, with a long black overcoat and an ivory-handled cane.
 
 WRONG (leaks canonical name into narrative for UNKNOWN):
   [narrative]
@@ -125,6 +132,13 @@ function buildUserPrompt(params: RenderViaLLMParams): string {
   sections.push("# Current scene");
   sections.push(formatScene(bundle, dgsm));
 
+  if (bundle.charactersInScene.length > 0) {
+    sections.push(
+      "# People present in your scene (must be acknowledged in narrative — silent or not)"
+    );
+    sections.push(formatScenePresentCharacters(bundle, viewpoint));
+  }
+
   const otherEntities = collectOtherEntities(npcId, bundle, dgsm, viewpoint);
   if (otherEntities) {
     sections.push("# Other entities involved in events");
@@ -136,12 +150,19 @@ function buildUserPrompt(params: RenderViaLLMParams): string {
     sections.push(formatOwnAction(bundle));
   }
 
+  if (bundle.perceivedActions.length > 0) {
+    sections.push(
+      "# Actions perceived this tick (other characters' acts whose impact reached you)"
+    );
+    sections.push(formatPerceivedActions(bundle));
+  }
+
   if (bundle.events.length > 0) {
     sections.push(
       "# Events this tick (already filtered to what propagated to you)"
     );
     sections.push(formatEvents(bundle));
-  } else {
+  } else if (bundle.perceivedActions.length === 0) {
     sections.push(
       "# Events this tick\n(none — describe scene and own state only)"
     );
@@ -202,15 +223,41 @@ function collectOtherEntities(
   dgsm: DynamicGameStateManager,
   viewpoint: DynamicNPCProfile | undefined
 ): string | null {
+  // Characters already enumerated in `# People present in your scene` —
+  // skip here to avoid duplicate prompt entries.
+  const scenePresent = new Set(bundle.charactersInScene.map((c) => c.id));
   const characterIds = new Set<string>();
   const sceneIds = new Set<string>();
 
   for (const ev of bundle.events) {
-    if (ev.characterId && ev.characterId !== viewpointId) {
+    if (
+      ev.characterId &&
+      ev.characterId !== viewpointId &&
+      !scenePresent.has(ev.characterId)
+    ) {
       characterIds.add(ev.characterId);
     }
     if (ev.sceneId && ev.sceneId !== bundle.scene.id) {
       sceneIds.add(ev.sceneId);
+    }
+  }
+
+  for (const a of bundle.perceivedActions) {
+    if (a.characterId !== viewpointId && !scenePresent.has(a.characterId)) {
+      characterIds.add(a.characterId);
+    }
+    if (a.sceneId && a.sceneId !== bundle.scene.id) sceneIds.add(a.sceneId);
+    for (const ref of a.referencedEntities) {
+      if (
+        ref.kind === "character" &&
+        ref.id !== viewpointId &&
+        !scenePresent.has(ref.id)
+      ) {
+        characterIds.add(ref.id);
+      }
+      if (ref.kind === "scene" && ref.id !== bundle.scene.id) {
+        sceneIds.add(ref.id);
+      }
     }
   }
 
@@ -263,4 +310,47 @@ function formatEvents(bundle: PerceivedBundle): string {
       return `- (type: ${e.type}, impact: ${e.impact}) ${e.description}${actor}${scene}`;
     })
     .join("\n");
+}
+
+function formatPerceivedActions(bundle: PerceivedBundle): string {
+  return bundle.perceivedActions
+    .map(
+      (a) =>
+        `- (impact: ${a.impact}) [actor: ${a.characterId}] [scene: ${a.sceneId}] ${a.actionText}`
+    )
+    .join("\n");
+}
+
+function formatScenePresentCharacters(
+  bundle: PerceivedBundle,
+  viewpoint: DynamicNPCProfile | undefined
+): string {
+  const lines: string[] = [];
+  for (const c of bundle.charactersInScene) {
+    const known = isKnownTo(viewpoint, c.id);
+    // For UNKNOWN, fall back to a description-based identifier built from
+    // appearance / occupation; for KNOWN, use the canonical name.
+    const identifier = known
+      ? c.name
+      : descriptionIdentifier({
+          id: c.id,
+          name: c.name,
+          appearance: c.appearance,
+        } as DynamicNPCProfile);
+    const knownTag = known ? "KNOWN" : "UNKNOWN";
+    lines.push(`Person (${knownTag}): ${identifier}  (id: ${c.id})`);
+    if (c.appearance) lines.push(`  Appearance: ${c.appearance}`);
+    if (c.currentActionText) {
+      lines.push(`  Currently: ${c.currentActionText}`);
+    } else {
+      lines.push("  Currently: idle (between actions).");
+    }
+    if (c.conditions.length > 0) {
+      lines.push("  Conditions (render only externally perceivable):");
+      for (const cond of c.conditions) {
+        if (cond.description) lines.push(`    - ${cond.description}`);
+      }
+    }
+  }
+  return lines.join("\n");
 }

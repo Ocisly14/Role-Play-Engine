@@ -1,8 +1,5 @@
-// StateResolution currently lives at src/engine/types.ts (marked @deprecated there).
-// Cleaning up resolver output types is out of scope for this refactor; we use
-// the type as-is for now.
 import type { CharacterPosition } from "../../state/topologyTypes.js";
-import type { StateResolution } from "../types.js";
+import type { ToolResult } from "../types.js";
 
 export type FeatureStateScope = "scene" | "region" | "character" | "global";
 
@@ -109,12 +106,31 @@ export interface ActionStep {
    */
   codeSubsystem?: string;
 
+  /**
+   * Per-step perceptibility level produced by GameInterpreter. Drives
+   * impactPropagation.findAffectedCharacters at commit time so co-located /
+   * neighbor / global NPCs get woken into decide() this tick.
+   *   0 private · 1 targeted · 2 same scene · 3 macro location ·
+   *   4 neighborhood · 5 global
+   */
+  impact: 0 | 1 | 2 | 3 | 4 | 5;
+
   submittedAt: GameTime;
 
   activatedAt?: GameTime;
   plannedDuration?: number;
-  plannedOutcome?: StateResolution;
+  plannedOutcome?: PlannedOutcome;
   completionTime?: GameTime;
+
+  /**
+   * Skill-check verdict produced at activation time (Phase 3) by
+   * `runSkillCheck(step)`. Set once when the LLM-engine step activates and
+   * carried for the rest of the step's lifetime so the cancel-time re-resolve
+   * can see the same roll outcome. `undefined` means no skill check ran (no
+   * `skillCheck:` in the ActionDefinition, or runSkillCheck not registered)
+   * — resolver falls back to "auto success" exactly as before.
+   */
+  skillCheckResult?: ToolResult;
 
   status: ActionStatus;
 }
@@ -287,8 +303,7 @@ export type StateChange =
   | {
       kind: "item.modify";
       itemId: string;
-      name?: string;
-      description?: string;
+      description: string;
     }
   | {
       kind: "item.create";
@@ -339,9 +354,12 @@ export interface CharacterAction {
   /** Citations from actionText resolved by interpreter — typed (id + kind).
    *  Phase H rename of `targetCharacterIds: string[]`. */
   referencedEntities: ReferencedEntity[];
+  /** Perceptibility level inherited from the originating ActionStep. Drives
+   *  impactPropagation when the controller processes the TickReport. */
+  impact: 0 | 1 | 2 | 3 | 4 | 5;
   activatedAt: GameTime;
   completedAt: GameTime;
-  outcome?: StateResolution;
+  outcome?: PlannedOutcome;
 }
 
 export interface DamageReport {

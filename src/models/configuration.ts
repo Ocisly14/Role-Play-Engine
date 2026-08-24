@@ -49,7 +49,7 @@ export const models: Models = {
     endpoint: process.env.ANTHROPIC_API_URL || "https://api.anthropic.com/v1",
     model: {
       [ModelClass.SMALL]: {
-        name: process.env.SMALL_ANTHROPIC_MODEL || "claude-3-haiku-20240307",
+        name: process.env.SMALL_ANTHROPIC_MODEL || "claude-haiku-4-5-20251001",
         stop: [],
         maxInputTokens: 200000,
         maxOutputTokens: 8192,
@@ -58,8 +58,7 @@ export const models: Models = {
         temperature: 0.7,
       },
       [ModelClass.MEDIUM]: {
-        name:
-          process.env.MEDIUM_ANTHROPIC_MODEL || "claude-3-5-sonnet-20241022",
+        name: process.env.MEDIUM_ANTHROPIC_MODEL || "claude-sonnet-5",
         stop: [],
         maxInputTokens: 200000,
         maxOutputTokens: 8192,
@@ -68,7 +67,7 @@ export const models: Models = {
         temperature: 0.7,
       },
       [ModelClass.LARGE]: {
-        name: process.env.LARGE_ANTHROPIC_MODEL || "claude-3-opus-20240229",
+        name: process.env.LARGE_ANTHROPIC_MODEL || "claude-opus-5",
         stop: [],
         maxInputTokens: 200000,
         maxOutputTokens: 8192,
@@ -113,110 +112,11 @@ export const models: Models = {
       },
     },
   },
-  [ModelProviderName.GROQ]: {
-    endpoint: "https://api.groq.com/openai/v1",
-    model: {
-      [ModelClass.SMALL]: {
-        name: process.env.SMALL_GROQ_MODEL || "llama-3.1-8b-instant",
-        stop: [],
-        maxInputTokens: 128000,
-        maxOutputTokens: 8000,
-        frequency_penalty: 0.4,
-        presence_penalty: 0.4,
-        temperature: 0.7,
-      },
-      [ModelClass.MEDIUM]: {
-        name: process.env.MEDIUM_GROQ_MODEL || "llama-3.3-70b-versatile",
-        stop: [],
-        maxInputTokens: 128000,
-        maxOutputTokens: 8000,
-        frequency_penalty: 0.4,
-        presence_penalty: 0.4,
-        temperature: 0.7,
-      },
-      [ModelClass.LARGE]: {
-        name: process.env.LARGE_GROQ_MODEL || "llama-3.2-90b-vision-preview",
-        stop: [],
-        maxInputTokens: 128000,
-        maxOutputTokens: 8000,
-        frequency_penalty: 0.4,
-        presence_penalty: 0.4,
-        temperature: 0.7,
-      },
-    },
-  },
-  [ModelProviderName.OLLAMA]: {
-    endpoint: process.env.OLLAMA_SERVER_URL || "http://localhost:11434",
-    model: {
-      [ModelClass.SMALL]: {
-        name: process.env.SMALL_OLLAMA_MODEL || "llama3.2:3b",
-        stop: [],
-        maxInputTokens: 128000,
-        maxOutputTokens: 8192,
-        frequency_penalty: 0.4,
-        presence_penalty: 0.4,
-        temperature: 0.7,
-      },
-      [ModelClass.MEDIUM]: {
-        name: process.env.MEDIUM_OLLAMA_MODEL || "hermes3:8b",
-        stop: [],
-        maxInputTokens: 128000,
-        maxOutputTokens: 8192,
-        frequency_penalty: 0.4,
-        presence_penalty: 0.4,
-        temperature: 0.7,
-      },
-      [ModelClass.LARGE]: {
-        name: process.env.LARGE_OLLAMA_MODEL || "hermes3:70b",
-        stop: [],
-        maxInputTokens: 128000,
-        maxOutputTokens: 8192,
-        frequency_penalty: 0.4,
-        presence_penalty: 0.4,
-        temperature: 0.7,
-      },
-      [ModelClass.EMBEDDING]: {
-        name: process.env.OLLAMA_EMBEDDING_MODEL || "mxbai-embed-large",
-        dimensions: 1024,
-      },
-    },
-  },
-  [ModelProviderName.OPENROUTER]: {
-    endpoint: "https://openrouter.ai/api/v1",
-    model: {
-      [ModelClass.SMALL]: {
-        name:
-          process.env.SMALL_OPENROUTER_MODEL ||
-          "nousresearch/hermes-3-llama-3.1-405b",
-        stop: [],
-        maxInputTokens: 128000,
-        maxOutputTokens: 8192,
-        frequency_penalty: 0.4,
-        presence_penalty: 0.4,
-        temperature: 0.7,
-      },
-      [ModelClass.MEDIUM]: {
-        name:
-          process.env.MEDIUM_OPENROUTER_MODEL ||
-          "nousresearch/hermes-3-llama-3.1-405b",
-        stop: [],
-        maxInputTokens: 128000,
-        maxOutputTokens: 8192,
-        frequency_penalty: 0.4,
-        presence_penalty: 0.4,
-        temperature: 0.7,
-      },
-      [ModelClass.LARGE]: {
-        name:
-          process.env.LARGE_OPENROUTER_MODEL ||
-          "nousresearch/hermes-3-llama-3.1-405b",
-        stop: [],
-        maxInputTokens: 128000,
-        maxOutputTokens: 8192,
-        frequency_penalty: 0.4,
-        presence_penalty: 0.4,
-        temperature: 0.7,
-      },
-    },
-  },
 };
+
+/**
+ * Gets the configured API endpoint for a provider.
+ */
+export function getEndpoint(provider: ModelProviderName): string | undefined {
+  return models[provider]?.endpoint;
+}

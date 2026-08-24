@@ -30,7 +30,7 @@
     "conditions": ["deceased"]
   },
   "skills": {
-    "Spot Hidden": 50,
+    "Perception": 50,
     "Library Use": 40,
     "Psychology": 35,
     "Persuade": 40

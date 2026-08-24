@@ -3,7 +3,12 @@ id: movement
 engine: code
 codeSubsystem: movement
 title: Movement
-description: Move a character to a different location via topology pathfinding. Handled by the CodeEngine movement subsystem (deterministic per-tick processor), not the LLM resolver.
+description: >
+  Move a character to a DIFFERENT scene / junction / road via topology pathfinding.
+  Handled by the CodeEngine movement subsystem, not the LLM resolver. Must include
+  a `destination` field with the target location id taken literally from the action
+  text. Intra-scene motion (approaching, stepping closer, leaning, walking within
+  the same room) is NOT movement — fold it into the surrounding beat's text.
 
 impactHint:
   default: 0

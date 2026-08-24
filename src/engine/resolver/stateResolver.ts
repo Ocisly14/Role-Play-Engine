@@ -5,7 +5,8 @@
  * and uses the definition's outputSchema to constrain output fields.
  */
 
-import { ModelClass, generateText } from "../../models/index.js";
+import { ModelClass, generateToolCalls } from "../../models/index.js";
+import type { ToolSpec } from "../../models/providers/types.js";
 import type { StateChange } from "../core/types.js";
 import { resolveOutputSchemaTypeIds } from "../outputSchema.js";
 import type {
@@ -57,7 +58,17 @@ function formatSkillCheckResult(result?: ToolResult): string {
 
 // ===== Prompt builder =====
 
-export function buildResolverPrompt(ctx: ResolverContext): string {
+/** Resolver prompt split into its cacheable prefix and its per-request tail. */
+export interface ResolverPromptParts {
+  /** Static rules + definition guidance + output schema. Stable per
+   *  (definition, skillSucceeded) — carries the cache breakpoint. */
+  stable: string;
+  /** Action text, skill-check verdict, world state, feature notes, language
+   *  instruction. Different on every call. */
+  request: string;
+}
+
+export function buildResolverPrompt(ctx: ResolverContext): ResolverPromptParts {
   const language = ctx.language ?? "en";
   const { definition, stateContext } = ctx;
 
@@ -123,10 +134,13 @@ export function buildResolverPrompt(ctx: ResolverContext): string {
     `Write all memory text in ${language}. Respond ONLY with the JSON object, no other text.`
   );
 
-  // Assembly order is cache-friendly: static prefix → per-definition middle
-  // → per-request tail. Prompt caching benefits grow as more calls reuse the
-  // same definition (e.g., many perception rolls within one session).
-  return [
+  // Split at the stability boundary: everything up to and including the
+  // definition's schema section is fixed for a given (definition,
+  // skillSucceeded) pair and goes in the system prompt, where it carries a
+  // cache breakpoint. The per-request tail (action text, dice result, world
+  // state) goes in the user turn, after the breakpoint, so it never
+  // invalidates the cached prefix.
+  const stable = [
     RESOLVER_STATIC_SYSTEM_PROMPT,
     "---",
     "",
@@ -137,11 +151,11 @@ export function buildResolverPrompt(ctx: ResolverContext): string {
     schemaSection || null,
     "",
     "---",
-    "",
-    requestSections.join("\n"),
   ]
     .filter((s) => s !== null)
     .join("\n");
+
+  return { stable, request: requestSections.join("\n") };
 }
 
 // ===== Parser =====
@@ -193,9 +207,7 @@ export interface ResolvedOutcome {
  *  resolver-batched / resolver-shaped kinds into engine-atomic forms so the
  *  Applier's `switch (c.kind)` dispatches cleanly without a second translation
  *  layer. */
-function flattenToStateChanges(
-  resolution: Record<string, any>
-): StateChange[] {
+function flattenToStateChanges(resolution: Record<string, any>): StateChange[] {
   const out: StateChange[] = [];
   for (const [typeId, value] of Object.entries(resolution)) {
     if ((RESOLVER_META_KEYS as readonly string[]).includes(typeId)) continue;
@@ -291,8 +303,8 @@ function normalizeResolverEntry(
           ? obj.junction
           : undefined;
       const position = junction
-        ? ({ type: "junction" as const, junctionId: junction })
-        : ({ type: "scene" as const, sceneId });
+        ? { type: "junction" as const, junctionId: junction }
+        : { type: "scene" as const, sceneId };
       return [
         {
           kind: "character.position",
@@ -326,22 +338,79 @@ function getAllowedResolutionKeys(config: OutputSchemaConfig): Set<string> {
   return allowed;
 }
 
+/**
+ * Builds the resolver's tool schema for one definition.
+ *
+ * The allowed top-level keys vary per definition (that is what
+ * `getAllowedResolutionKeys` computes), so the schema is built per call. The
+ * value shapes are left open — the individual state-change kinds are many and
+ * loosely typed, and `validateResolution` already polices them downstream.
+ * The win here is the envelope: a guaranteed, well-formed JSON object with no
+ * text parsing.
+ *
+ * Not `strict`: the resolver is explicitly told to omit keys with no changes,
+ * and OpenAI's strict mode would require every declared key on every call.
+ *
+ * Tool definitions render ahead of the system prompt, so this varying schema
+ * sits inside the cached prefix — at the same per-definition granularity the
+ * system prompt already had, so cache behaviour is unchanged.
+ */
+function buildResolverTool(ctx: ResolverContext): ToolSpec {
+  const properties: Record<string, unknown> = {
+    elapsedMinutes: {
+      type: "number",
+      description: "In-world minutes this action consumed.",
+    },
+  };
+
+  const allowed = ctx.definition.outputSchema
+    ? getAllowedResolutionKeys(ctx.definition.outputSchema)
+    : null;
+
+  if (allowed) {
+    for (const key of allowed) {
+      if (key === "elapsedMinutes") continue;
+      properties[key] = {
+        type: "array",
+        items: { type: "object", additionalProperties: true },
+      };
+    }
+  }
+
+  return {
+    name: "resolve_state",
+    description:
+      "Emit the state changes this action produces. Use only the fields declared for this action; omit any field with no changes.",
+    inputSchema: {
+      type: "object",
+      properties,
+      required: [],
+      // A definition without an outputSchema declares no key set, so anything
+      // the model emits has to be accepted and filtered downstream.
+      additionalProperties: allowed === null,
+    },
+  };
+}
+
 // ===== Async LLM call =====
 
 export async function resolveState(
   ctx: ResolverContext
 ): Promise<ResolvedOutcome> {
-  const prompt = buildResolverPrompt(ctx);
+  const { stable, request } = buildResolverPrompt(ctx);
 
   let raw: Record<string, any> = {};
   try {
-    const text = await generateText({
-      customSystemPrompt: prompt,
-      context: "",
+    const call = await generateToolCalls({
+      customSystemPrompt: stable,
+      cacheSystemPrompt: true,
+      messages: [{ role: "user", content: [{ kind: "text", text: request }] }],
+      tools: [buildResolverTool(ctx)],
+      toolChoice: { name: "resolve_state" },
       modelClass: ModelClass.MEDIUM,
       operation: "state-resolver",
     });
-    raw = parseStateResolution(text);
+    raw = call.toolCalls[0].args as Record<string, any>;
   } catch (error) {
     console.warn(
       "[StateResolver] LLM call failed, returning empty resolution:",

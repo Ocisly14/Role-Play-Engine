@@ -146,21 +146,6 @@ function getModelEnvVarNames(
         small: "SMALL_GOOGLE_MODEL",
         medium: "MEDIUM_GOOGLE_MODEL",
       };
-    case ModelProviderName.GROQ:
-      return {
-        small: "SMALL_GROQ_MODEL",
-        medium: "MEDIUM_GROQ_MODEL",
-      };
-    case ModelProviderName.OLLAMA:
-      return {
-        small: "SMALL_OLLAMA_MODEL",
-        medium: "MEDIUM_OLLAMA_MODEL",
-      };
-    case ModelProviderName.OPENROUTER:
-      return {
-        small: "SMALL_OPENROUTER_MODEL",
-        medium: "MEDIUM_OPENROUTER_MODEL",
-      };
     default:
       return null;
   }

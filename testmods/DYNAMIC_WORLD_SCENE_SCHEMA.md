@@ -206,7 +206,7 @@ Used in `SCN`, `JUNC`, and `ROAD` files.
   "mechanicalEffect": {
     "skillPenalty": [
       {
-        "skill": "Spot Hidden",
+        "skill": "Perception",
         "delta": -20
       }
     ],

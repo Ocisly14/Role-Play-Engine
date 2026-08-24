@@ -43,9 +43,21 @@ const PRINCIPLES = `## Decision Principles
 
 const OUTPUT_FORMAT = `## Output
 
-Respond with exactly ONE JSON object per turn — a single tool call. Each
-tool's JSON shape is documented in its \`## Output\` section above; pick one
-and emit it verbatim (no prose, no markdown fences, no multiple objects).
+Each turn is EITHER informational OR terminal — never both:
+
+- **Informational turn**: call \`recallMemory\`, \`writeMemory\` and/or
+  \`getMapSnapshot\`. You may call several at once when the questions are
+  independent — one turn, several calls, all answered together. The turn
+  loops back so you can read the results.
+- **Terminal turn**: call exactly one of \`act\` or \`continue\`. This ends
+  the decision and consumes a tick.
+
+Mixing the two in one turn does not work: the terminal call is rejected and
+you have to submit it again on its own. Finish your lookups first, then
+commit in a turn of its own.
+
+The argument shape for each tool is enforced by its schema; the sections
+above tell you when to reach for which.
 
 When emitting dates in any tool input or memory content, use ISO 8601
 ("YYYY-MM-DD" or "YYYY-MM-DDTHH:MM:SS"). Do not copy the readable form

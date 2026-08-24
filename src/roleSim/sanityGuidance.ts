@@ -178,7 +178,7 @@ For an investigator developing a persistent phobia of fire after a traumatic bur
     "id": "phobia:fire:1234",
     "featureId": "sanity",
     "description": "Phobia: fire — extreme distress and avoidance when near open flames",
-    "mechanicalEffect": { "skillPenalty": { "Spot Hidden": -10 } }
+    "mechanicalEffect": { "skillPenalty": { "Perception": -10 } }
   }
 }
 \`\`\`

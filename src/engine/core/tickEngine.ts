@@ -6,7 +6,11 @@ import { Applier } from "./applier.js";
 import { EventBus } from "./eventBus.js";
 import { Queue } from "./queue.js";
 import { ScriptedEventRunner } from "./scriptedEventRunner.js";
-import { type ResolveFn, TickOrchestrator } from "./tickOrchestrator.js";
+import {
+  type ResolveFn,
+  type RunSkillCheckFn,
+  TickOrchestrator,
+} from "./tickOrchestrator.js";
 import type {
   ActionHandle,
   ActionInput,
@@ -57,6 +61,11 @@ export interface CreateTickEngineOptions {
     ).PerceivableDirectory
   ) => Promise<{ steps: import("../types.js").InterpretedStep[] }>;
   resolve: ResolveFn;
+  /** Optional pre-resolver hook. When set, the orchestrator runs the action
+   *  definition's skill check before `resolve` at activation time, feeding
+   *  the verdict into both activation and any later cancel-time re-resolve.
+   *  Omit for legacy "auto success" behavior. */
+  runSkillCheck?: RunSkillCheckFn;
   getActorDex: (characterId: string) => number;
   tickDurationMinutes: number;
   /** Session language code (e.g., "en", "zh") — passed through to ScannerContext. */
@@ -93,6 +102,7 @@ export function createTickEngine(opts: CreateTickEngineOptions): TickEngine {
     scriptedEventRunner: scriptedRunner,
     applier,
     resolve: opts.resolve,
+    runSkillCheck: opts.runSkillCheck,
     tickDurationMinutes: opts.tickDurationMinutes,
     lang: opts.lang,
     hasInitialized: opts.persistedState !== undefined,
