@@ -76,13 +76,14 @@ describe("buildUserPromptSegments", () => {
 
   it("tells the model not to answer in the [narrative] shape", () => {
     // Regression guard for the ~50% no-tool-call rate: the perception blocks
-    // above are themselves [narrative]/[references], and without an explicit
-    // counter-instruction the model mirrors them instead of emitting JSON.
+    // above are themselves [narrative]/[references], and the model mirrored
+    // them instead of calling a tool. The API now enforces the envelope, but
+    // the narrative still has to land inside the `actionText` argument.
     const text = buildUserPrompt(makeCtx(), [], opts);
     const decide = text.slice(text.indexOf("## Decide"));
 
-    expect(decide).toContain("Do not\nanswer in that shape.");
-    expect(decide).toContain("must start with the\ncharacter `{`");
+    expect(decide).toContain("Do not\nanswer in that shape");
+    expect(decide).toContain("`actionText`");
     expect(decide).toContain("Write content in English.");
   });
 

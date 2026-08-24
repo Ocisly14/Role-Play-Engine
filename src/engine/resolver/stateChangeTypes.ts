@@ -99,7 +99,8 @@ export const STATE_CHANGE_TYPES: Record<string, StateChangeTypeDef> = {
         },
         delta: {
           type: "number",
-          description: "Fatigue change (positive = more tired, negative = recover).",
+          description:
+            "Fatigue change (positive = more tired, negative = recover).",
         },
       },
       required: ["characterId", "delta"],
@@ -128,7 +129,8 @@ export const STATE_CHANGE_TYPES: Record<string, StateChangeTypeDef> = {
         remove: {
           type: "array",
           items: { type: "string" },
-          description: "Existing condition descriptions to remove (exact match).",
+          description:
+            "Existing condition descriptions to remove (exact match).",
         },
       },
       required: ["characterId"],
@@ -299,7 +301,8 @@ export const STATE_CHANGE_TYPES: Record<string, StateChangeTypeDef> = {
         remove: {
           type: "array",
           items: { type: "string" },
-          description: "Existing condition descriptions to remove (exact match).",
+          description:
+            "Existing condition descriptions to remove (exact match).",
         },
       },
       required: ["sceneId"],

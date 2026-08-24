@@ -11,9 +11,9 @@ import {
 import { ModelClass, ModelProviderName } from "../types.js";
 
 describe("normalizeUsageMetadata — prompt cache counters", () => {
-  it("reads LangChain's normalized input_token_details (Anthropic shape)", () => {
-    // @langchain/anthropic passes Anthropic's raw usage through: input_tokens
-    // is the UNCACHED remainder, cache counters sit beside it.
+  it("reads the normalized input_token_details form (Anthropic shape)", () => {
+    // Anthropic's own shape: input_tokens is the UNCACHED remainder, with
+    // the cache counters reported beside it.
     const usage = normalizeUsageMetadata({
       input_tokens: 120,
       output_tokens: 40,
@@ -30,9 +30,9 @@ describe("normalizeUsageMetadata — prompt cache counters", () => {
     });
   });
 
-  it("reads LangChain's normalized input_token_details (OpenAI shape)", () => {
-    // @langchain/openai sets input_tokens = prompt_tokens, which INCLUDES
-    // cached_tokens, and reports no cache-write counter.
+  it("reads the normalized input_token_details form (OpenAI shape)", () => {
+    // OpenAI's shape: prompt_tokens INCLUDES cached_tokens, and there is no
+    // cache-write counter at all.
     const usage = normalizeUsageMetadata({
       input_tokens: 1500,
       output_tokens: 60,
@@ -44,7 +44,7 @@ describe("normalizeUsageMetadata — prompt cache counters", () => {
     expect(usage?.cache_creation_tokens).toBe(0);
   });
 
-  it("falls back to raw provider shapes when LangChain is bypassed", () => {
+  it("reads each provider's raw usage shape", () => {
     expect(
       normalizeUsageMetadata({
         input_tokens: 10,

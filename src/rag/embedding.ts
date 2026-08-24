@@ -1,6 +1,5 @@
-import { GoogleGenerativeAIEmbeddings } from "@langchain/google-genai";
-import { OpenAIEmbeddings } from "@langchain/openai";
 import { getModelSettings } from "../models/generator.js";
+import { getAdapter } from "../models/providers/index.js";
 import {
   type EmbeddingModelSettings,
   ModelClass,
@@ -10,6 +9,11 @@ import {
   type LocalEmbeddingLanguage,
   LocalEmbeddingManager,
 } from "./localEmbeddingManager.js";
+
+const DEFAULT_EMBEDDING_MODEL: Partial<Record<ModelProviderName, string>> = {
+  [ModelProviderName.GOOGLE]: "text-embedding-004",
+  [ModelProviderName.OPENAI]: "text-embedding-3-small",
+};
 
 export class EmbeddingClient {
   private provider: ModelProviderName;
@@ -42,20 +46,19 @@ export class EmbeddingClient {
       | EmbeddingModelSettings
       | undefined;
 
-    if (this.provider === ModelProviderName.GOOGLE) {
-      const model = new GoogleGenerativeAIEmbeddings({
-        model: settings?.name || "text-embedding-004",
-        apiKey: process.env.GOOGLE_API_KEY,
-      });
-      return model.embedQuery(normalized);
-    }
+    // Anthropic has no embeddings endpoint, so the remote fallback resolves to
+    // OpenAI unless Google is explicitly configured — same as before.
+    const provider =
+      this.provider === ModelProviderName.GOOGLE
+        ? ModelProviderName.GOOGLE
+        : ModelProviderName.OPENAI;
 
-    const model = new OpenAIEmbeddings({
-      model: settings?.name || "text-embedding-3-small",
-      apiKey: process.env.OPENAI_API_KEY,
-      dimensions: settings?.dimensions,
-    });
+    const modelName = settings?.name ?? DEFAULT_EMBEDDING_MODEL[provider] ?? "";
 
-    return model.embedQuery(normalized);
+    return getAdapter(provider).embed(
+      normalized,
+      modelName,
+      provider === ModelProviderName.OPENAI ? settings?.dimensions : undefined
+    );
   }
 }

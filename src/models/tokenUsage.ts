@@ -49,7 +49,6 @@ type TokenUsageRecord = TokenUsageTotals & {
 
 const storage = new AsyncLocalStorage<TokenUsageContext>();
 let tokenUsageDb: CoCDatabaseAdapter | null = null;
-const tokenUsageWrapped = Symbol.for("coc.tokenUsageWrapped");
 
 export function configureTokenUsageDatabase(db: CoCDatabaseAdapter): void {
   tokenUsageDb = db;
@@ -127,11 +126,12 @@ export function normalizeUsageMetadata(payload: any): TokenUsageTotals | null {
         payload.total_token_count
     ) ?? input + output;
 
-  // Prompt-cache counters. LangChain normalizes both providers into
-  // `usage_metadata.input_token_details` (verified against @langchain/anthropic
-  // utils/message_outputs.js and @langchain/openai chat_models.js); the raw
-  // provider shapes are kept as fallbacks for payloads that skip LangChain
-  // (e.g. imageGenerator's direct fetch).
+  // Prompt-cache counters. Adapters hand us each provider's raw usage object,
+  // so the raw shapes are the primary path: Anthropic reports
+  // `cache_read_input_tokens` / `cache_creation_input_tokens`, OpenAI reports
+  // `prompt_tokens_details.cached_tokens`. The normalized
+  // `input_token_details` form is still accepted for any caller that passes
+  // an already-normalized payload.
   const details = payload.input_token_details ?? payload.inputTokenDetails;
   const cacheRead =
     toNumber(
@@ -242,8 +242,8 @@ export function getUsageStats(): UsageAggregate[] {
 /**
  * Input tokens that were actually billed at full price.
  *
- * The two providers define `input_tokens` differently and LangChain passes
- * each through unchanged:
+ * The two providers define their input-token count differently, and adapters
+ * pass each through unchanged:
  *   - Anthropic: already the uncached remainder — cache_read and
  *     cache_creation are reported as separate counters alongside it.
  *   - OpenAI: `prompt_tokens` INCLUDES `cached_tokens`, so the cached portion
@@ -439,81 +439,4 @@ export function recordTokenUsage(params: TokenUsageRecord): void {
   } catch (error) {
     console.warn("[TokenUsage] Failed to record token usage:", error);
   }
-}
-
-export function attachUsageTracking<T extends { invoke: any; stream?: any }>(
-  model: T,
-  info: {
-    provider: ModelProviderName;
-    modelClass: ModelClass;
-    modelName?: string;
-    operation?: string;
-    email?: string;
-  }
-): T {
-  const marker = tokenUsageWrapped as unknown as keyof T;
-  if ((model as any)[marker]) {
-    return model;
-  }
-  (model as any)[marker] = true;
-
-  if (typeof model.invoke === "function") {
-    const originalInvoke = model.invoke.bind(model);
-    model.invoke = async (...args: any[]) => {
-      const response = await originalInvoke(...args);
-      const usage = extractUsageMetadata(response);
-      if (usage) {
-        recordTokenUsage({
-          email: info.email,
-          provider: info.provider,
-          modelClass: info.modelClass,
-          modelName: info.modelName,
-          operation: info.operation,
-          ...usage,
-        });
-      }
-      return response;
-    };
-  }
-
-  if (typeof model.stream === "function") {
-    const originalStream = model.stream.bind(model);
-    model.stream = async (...args: any[]) => {
-      const rawStream = await originalStream(...args);
-      const totals: TokenUsageTotals = {
-        input_tokens: 0,
-        output_tokens: 0,
-        total_tokens: 0,
-        cache_read_tokens: 0,
-        cache_creation_tokens: 0,
-      };
-
-      const wrapped = async function* () {
-        try {
-          for await (const chunk of rawStream) {
-            const usage = extractUsageMetadata(chunk);
-            if (usage) {
-              mergeUsageTotals(totals, usage);
-            }
-            yield chunk;
-          }
-        } finally {
-          if (totals.total_tokens > 0) {
-            recordTokenUsage({
-              email: info.email,
-              provider: info.provider,
-              modelClass: info.modelClass,
-              modelName: info.modelName,
-              operation: info.operation,
-              ...totals,
-            });
-          }
-        }
-      };
-
-      return wrapped();
-    };
-  }
-
-  return model;
 }

@@ -11,9 +11,9 @@ export * from "./generator.js";
 export { ModelClass, ModelProviderName } from "./types.js";
 export {
   generateText,
+  generateToolCalls,
   resolveModelClass,
   getModelSettings,
-  createChatModel,
 } from "./generator.js";
 
 export {

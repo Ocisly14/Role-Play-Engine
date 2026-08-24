@@ -21,9 +21,6 @@ export enum ModelProviderName {
   OPENAI = "openai",
   ANTHROPIC = "anthropic",
   GOOGLE = "google",
-  GROQ = "groq",
-  OLLAMA = "ollama",
-  OPENROUTER = "openrouter",
 }
 
 /**
@@ -140,4 +137,36 @@ export interface GenerationOptions {
   userId?: string;
   operation?: string;
   temperature?: number;
+}
+
+/**
+ * Options for `generateToolCall`. Mirrors GenerationOptions' policy fields;
+ * the prompt itself arrives as `messages` rather than a context string.
+ */
+export interface ToolCallOptions {
+  messages: import("./providers/types.js").ModelMessage[];
+  tools: import("./providers/types.js").ToolSpec[];
+  /** `"any"` forces some tool; `{name}` forces one — the structured-output
+   *  case. Omitted lets the model reply with plain text instead. */
+  toolChoice?: "any" | { name: string };
+  /** Allow several calls in one turn; the caller must answer every one. */
+  allowParallelCalls?: boolean;
+  customSystemPrompt?: string;
+  cacheSystemPrompt?: boolean;
+  modelClass?: ModelClass;
+  providerOverride?: ModelProviderName;
+  maxRetries?: number;
+  fallbackToLargeOnFailure?: boolean;
+  largeFallbackRetries?: number;
+  temperature?: number;
+  userId?: string;
+  operation?: string;
+}
+
+export interface ToolCallResult {
+  /** Every call the model made this turn. The caller MUST answer all of them
+   *  in one `role: "tool"` message, or the next request is rejected. */
+  toolCalls: import("./providers/types.js").ToolCallRecord[];
+  /** Append to the message history, then the tool results. */
+  assistantMessage: import("./providers/types.js").ModelMessage;
 }

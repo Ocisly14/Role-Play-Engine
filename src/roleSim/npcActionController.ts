@@ -237,7 +237,8 @@ export class NpcActionController {
       locByActor.set(a.characterId, a.sceneId);
     }
     for (const c of report.cancellations) {
-      if (!locByActor.has(c.characterId)) locByActor.set(c.characterId, c.sceneId);
+      if (!locByActor.has(c.characterId))
+        locByActor.set(c.characterId, c.sceneId);
     }
 
     // Pick game-times from commits/cancellations; fall back to current tick.
@@ -417,8 +418,7 @@ export class NpcActionController {
     }
 
     // Snapshot prior perceptions (excludes current tick); push current after.
-    const recentPerceptions =
-      this.perceptionHistory.get(npcId)?.slice() ?? [];
+    const recentPerceptions = this.perceptionHistory.get(npcId)?.slice() ?? [];
     this.recordPerception(npcId, gameDateTime, rendered.narrative);
 
     return {

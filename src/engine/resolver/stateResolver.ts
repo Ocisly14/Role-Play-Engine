@@ -5,7 +5,8 @@
  * and uses the definition's outputSchema to constrain output fields.
  */
 
-import { ModelClass, generateText } from "../../models/index.js";
+import { ModelClass, generateToolCalls } from "../../models/index.js";
+import type { ToolSpec } from "../../models/providers/types.js";
 import type { StateChange } from "../core/types.js";
 import { resolveOutputSchemaTypeIds } from "../outputSchema.js";
 import type {
@@ -337,6 +338,60 @@ function getAllowedResolutionKeys(config: OutputSchemaConfig): Set<string> {
   return allowed;
 }
 
+/**
+ * Builds the resolver's tool schema for one definition.
+ *
+ * The allowed top-level keys vary per definition (that is what
+ * `getAllowedResolutionKeys` computes), so the schema is built per call. The
+ * value shapes are left open — the individual state-change kinds are many and
+ * loosely typed, and `validateResolution` already polices them downstream.
+ * The win here is the envelope: a guaranteed, well-formed JSON object with no
+ * text parsing.
+ *
+ * Not `strict`: the resolver is explicitly told to omit keys with no changes,
+ * and OpenAI's strict mode would require every declared key on every call.
+ *
+ * Tool definitions render ahead of the system prompt, so this varying schema
+ * sits inside the cached prefix — at the same per-definition granularity the
+ * system prompt already had, so cache behaviour is unchanged.
+ */
+function buildResolverTool(ctx: ResolverContext): ToolSpec {
+  const properties: Record<string, unknown> = {
+    elapsedMinutes: {
+      type: "number",
+      description: "In-world minutes this action consumed.",
+    },
+  };
+
+  const allowed = ctx.definition.outputSchema
+    ? getAllowedResolutionKeys(ctx.definition.outputSchema)
+    : null;
+
+  if (allowed) {
+    for (const key of allowed) {
+      if (key === "elapsedMinutes") continue;
+      properties[key] = {
+        type: "array",
+        items: { type: "object", additionalProperties: true },
+      };
+    }
+  }
+
+  return {
+    name: "resolve_state",
+    description:
+      "Emit the state changes this action produces. Use only the fields declared for this action; omit any field with no changes.",
+    inputSchema: {
+      type: "object",
+      properties,
+      required: [],
+      // A definition without an outputSchema declares no key set, so anything
+      // the model emits has to be accepted and filtered downstream.
+      additionalProperties: allowed === null,
+    },
+  };
+}
+
 // ===== Async LLM call =====
 
 export async function resolveState(
@@ -346,14 +401,16 @@ export async function resolveState(
 
   let raw: Record<string, any> = {};
   try {
-    const text = await generateText({
+    const call = await generateToolCalls({
       customSystemPrompt: stable,
       cacheSystemPrompt: true,
-      context: request,
+      messages: [{ role: "user", content: [{ kind: "text", text: request }] }],
+      tools: [buildResolverTool(ctx)],
+      toolChoice: { name: "resolve_state" },
       modelClass: ModelClass.MEDIUM,
       operation: "state-resolver",
     });
-    raw = parseStateResolution(text);
+    raw = call.toolCalls[0].args as Record<string, any>;
   } catch (error) {
     console.warn(
       "[StateResolver] LLM call failed, returning empty resolution:",

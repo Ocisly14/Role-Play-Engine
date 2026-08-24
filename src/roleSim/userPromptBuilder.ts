@@ -93,23 +93,18 @@ export function buildUserPromptSegments(
   const langName = opts.language?.startsWith("zh") ? "Chinese" : "English";
   // The perception sections above are rendered as `[narrative]` /
   // `[references]` blocks, which is also the shape of `act`'s actionText.
-  // With a two-line instruction the model followed the dominant pattern and
-  // replied with a bare [narrative] block — no tool call at all — in roughly
-  // half of all decisions, which the agent then silently degraded to
-  // `continue`. Naming the trap explicitly and pinning the first character
-  // fixed 6/6 replays of real captured prompts.
+  // Naming that explicitly still matters: the model has to put the narrative
+  // INSIDE the tool argument rather than answering in that shape. The
+  // envelope itself is now enforced by the API (a tool call is required), so
+  // this no longer has to describe JSON.
   volatile.push(
     `## Decide
 Everything above is INPUT you have read — including any [narrative] /
 [references] blocks, which are the world describing itself TO you. Do not
-answer in that shape.
+answer in that shape: the narrative belongs inside the \`actionText\`
+argument of the \`act\` tool.
 
-Reply with exactly one JSON object and nothing else. It must start with the
-character \`{\`. The action prose goes INSIDE the "actionText" string:
-
-{ "tool": "act", "actionText": "[narrative]\\n...\\n\\n[references]\\n[1] id: ...; kind: ..." }
-
-Write content in ${langName}.`
+Call one tool now. Write content in ${langName}.`
   );
 
   // Drop empty groups before joining so the separator layout matches a plain

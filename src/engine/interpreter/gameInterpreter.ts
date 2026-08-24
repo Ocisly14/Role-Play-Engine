@@ -1,4 +1,5 @@
-import { ModelClass, generateText } from "../../models/index.js";
+import { ModelClass, generateToolCalls } from "../../models/index.js";
+import type { ToolSpec } from "../../models/providers/types.js";
 import type { PerceivableDirectory } from "../../state/perceivableDirectory.js";
 import type { ReferencedEntity } from "../core/types.js";
 import type { ActionDefinition, InterpretedResult } from "../types.js";
@@ -275,14 +276,12 @@ Each step MUST include a \`text\` field with the **local fragment** of the narra
 - If the entire action is genuinely a single beat (one step), the \`text\` is the whole narrative.
 
 ## Output Format
-Respond with ONLY a JSON object:
-{
-  "steps": [
-    { "definitionId": "movement", "impact": 0, "destination": "library", "text": "I walk to the library [1]" },
-    { "definitionId": "locksmith", "impact": 1, "text": "and pick the lock on the cabinet [2]" },
-    { "definitionId": "perception", "impact": 0, "text": "then search the shelves inside" }
-  ]
-}`;
+Call the \`interpret_action\` tool with the ordered steps, e.g.
+  steps: [
+    { definitionId: "movement", impact: 0, destination: "library", text: "I walk to the library [1]" },
+    { definitionId: "locksmith", impact: 1, text: "and pick the lock on the cabinet [2]" },
+    { definitionId: "perception", impact: 0, text: "then search the shelves inside" }
+  ]`;
 }
 
 export function parseInterpretedResult(
@@ -304,7 +303,37 @@ export function parseInterpretedResult(
   try {
     const jsonMatch = raw.match(/\{[\s\S]*\}/);
     if (!jsonMatch) throw new Error("No JSON found");
-    const parsed = JSON.parse(jsonMatch[0]);
+    return enrichInterpretedSteps(JSON.parse(jsonMatch[0]), definitions);
+  } catch {
+    const { engine, codeSubsystem } = enrich("generic");
+    return {
+      steps: [{ definitionId: "generic", impact: 0, engine, codeSubsystem }],
+    };
+  }
+}
+
+/**
+ * Turns the model's raw `{steps:[...]}` object into InterpretedSteps, filling
+ * in engine routing and clamping impact. Shared by the native tool-call path
+ * and the legacy text path.
+ */
+export function enrichInterpretedSteps(
+  parsed: { steps?: unknown },
+  definitions?: ActionDefinition[]
+): InterpretedResult {
+  const defMap = new Map<string, ActionDefinition>();
+  if (definitions) {
+    for (const def of definitions) defMap.set(def.id, def);
+  }
+  const enrich = (definitionId: string) => {
+    const def = defMap.get(definitionId);
+    return {
+      engine: (def?.engine ?? "llm") as "code" | "llm",
+      codeSubsystem: def?.codeSubsystem,
+    };
+  };
+
+  try {
     if (Array.isArray(parsed.steps) && parsed.steps.length > 0) {
       const steps = parsed.steps.map(
         (s: {
@@ -356,6 +385,55 @@ export function parseInterpretedResult(
   }
 }
 
+/**
+ * Mirrors the "Output Format" section of the prompt above. Not `strict`:
+ * `destination` only applies to movement steps, and OpenAI's strict mode
+ * would demand it on every step.
+ */
+export const INTERPRET_ACTION_TOOL: ToolSpec = {
+  name: "interpret_action",
+  description:
+    "Return the ordered steps this action decomposes into. See the system prompt for definition selection, step granularity, impact levels and per-step text rules.",
+  inputSchema: {
+    type: "object",
+    properties: {
+      steps: {
+        type: "array",
+        items: {
+          type: "object",
+          properties: {
+            definitionId: {
+              type: "string",
+              description: "id of one of the available definitions",
+            },
+            impact: {
+              type: "integer",
+              minimum: 0,
+              maximum: 5,
+              description:
+                "0 private, 1 targeted, 2 same scene, 3 macro location, 4 neighborhood, 5 global",
+            },
+            destination: {
+              type: "string",
+              description:
+                "Movement steps only: the target location id exactly as it appears in the action text.",
+            },
+            text: {
+              type: "string",
+              description:
+                "The fragment of the narrative belonging to this step, preserving its [N] citation markers.",
+            },
+          },
+          required: ["definitionId", "impact"],
+          additionalProperties: false,
+        },
+      },
+    },
+    required: ["steps"],
+    additionalProperties: false,
+  },
+};
+
 export async function interpretAction(
   action: string,
   definitions: ActionDefinition[],
@@ -372,19 +450,36 @@ export async function interpretAction(
       ? "The action is in Chinese."
       : "The action is in English.";
 
-  const text = await generateText({
+  const call = await generateToolCalls({
     customSystemPrompt: systemPrompt,
     // The system prompt here is the full action-definition list — identical
     // bytes on every interpreter call, for every NPC, for the whole session,
     // and measured at ~8.9k tokens per call. It is the single largest stable
     // prefix in the pipeline, so it carries the cache breakpoint.
     cacheSystemPrompt: true,
-    context: `${langInstruction}\n\nAction: "${narrative}"`,
+    messages: [
+      {
+        role: "user",
+        content: [
+          {
+            kind: "text",
+            text: `${langInstruction}\n\nAction: "${narrative}"`,
+          },
+        ],
+      },
+    ],
+    tools: [INTERPRET_ACTION_TOOL],
+    // One tool, forced by name: this is a fixed-schema structured output
+    // expressed through the tool mechanism, not a choice the model makes.
+    toolChoice: { name: INTERPRET_ACTION_TOOL.name },
     modelClass: ModelClass.MEDIUM,
     operation: "game-interpreter",
   });
 
-  const parsed = parseInterpretedResult(text, definitions);
+  const parsed = enrichInterpretedSteps(
+    call.toolCalls[0].args as { steps?: unknown },
+    definitions
+  );
   return {
     steps: parsed.steps.map((s) => ({
       ...s,
