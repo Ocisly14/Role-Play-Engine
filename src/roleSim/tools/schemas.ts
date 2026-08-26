@@ -49,7 +49,7 @@ export const actTool: ToolSpec = {
 export const continueTool: ToolSpec = {
   name: "continue",
   description:
-    "Keep doing what you are already doing. Terminates this decision and consumes a tick.",
+    "Keep your IN-FLIGHT action running (see 'Currently doing'). If you have no in-flight action, this does NOTHING — no event, no memory, others see you standing idle; declare routines with `act` instead. Terminates this decision and consumes a tick.",
   inputSchema: {
     type: "object",
     properties: {

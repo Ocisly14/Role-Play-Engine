@@ -18,7 +18,7 @@ import {
   RESOLVER_STATIC_SYSTEM_PROMPT,
   formatOutputSchemaPrompt,
 } from "./schemaBuilder.js";
-import type { StateContext } from "./stateContextBuilder.js";
+import type { ResolverValidRefs, StateContext } from "./stateContextBuilder.js";
 
 // ===== ResolverContext =====
 
@@ -325,6 +325,113 @@ function normalizeResolverEntry(
   }
 }
 
+// ===== Reference validation =====
+//
+// The resolver's ids come from an LLM. Observed live: `item.destroy` citing a
+// staged scene condition's featureId as an itemId, `relationship.change` /
+// `memory.witness` naming invented characters ("witness", "unknown_target"),
+// and `item.move` handing an item to a holder that does not exist (DGSM
+// auto-creates an inventory for ANY string, so that fabrication would
+// silently stick). The Applier drops what it can at commit time, but by then
+// the resolver call is long gone — so validate here, immediately after the
+// LLM output, and give the model ONE corrective retry with the errors spelled
+// out. Whatever is still invalid after the retry is dropped (the Applier's
+// own guard remains as the last line of defense).
+
+/** Human-readable violations in one state change; empty = clean. */
+export function invalidRefsOf(
+  c: StateChange,
+  refs: ResolverValidRefs
+): string[] {
+  const errs: string[] = [];
+  const chr = (id: string, field: string) => {
+    if (!refs.characterIds.has(id))
+      errs.push(`${field} "${id}" is not a real character`);
+  };
+  const itm = (id: string) => {
+    if (!refs.itemIds.has(id)) errs.push(`itemId "${id}" is not a real item`);
+  };
+  const scn = (id: string, field: string) => {
+    if (!refs.sceneIds.has(id))
+      errs.push(`${field} "${id}" is not a real scene`);
+  };
+  switch (c.kind) {
+    case "character.hp":
+    case "character.san":
+    case "character.fatigue":
+    case "character.addCondition":
+    case "character.removeCondition":
+    case "memory.event":
+    case "memory.witness":
+      chr(c.characterId, "characterId");
+      break;
+    case "character.position":
+      chr(c.characterId, "characterId");
+      if (c.position.type === "scene") scn(c.position.sceneId, "sceneId");
+      else if (
+        c.position.type === "junction" &&
+        !refs.junctionIds.has(c.position.junctionId)
+      )
+        errs.push(`junctionId "${c.position.junctionId}" is not real`);
+      break;
+    case "relationship.change": {
+      const rel = c as unknown as { fromId: string; toId: string };
+      chr(rel.fromId, "fromId");
+      chr(rel.toId, "toId");
+      break;
+    }
+    case "item.modify":
+    case "item.destroy":
+      itm(c.itemId);
+      break;
+    case "item.move":
+      itm(c.itemId);
+      if (c.to.startsWith("scene:")) scn(c.to.slice("scene:".length), "to");
+      else chr(c.to, "to");
+      break;
+    case "item.create":
+      scn(c.location, "location");
+      break;
+    case "scene.addCondition":
+    case "scene.removeCondition":
+      scn(c.sceneId, "sceneId");
+      break;
+    default:
+      // Subsystem-only kinds the resolver does not emit.
+      break;
+  }
+  return errs;
+}
+
+function buildRefErrorFeedback(
+  bad: Array<{ change: StateChange; errors: string[] }>,
+  refs: ResolverValidRefs,
+  previousRaw: Record<string, any>
+): string {
+  const list = (ids: Set<string>, cap = 60): string =>
+    [...ids].slice(0, cap).join(", ") || "(none)";
+  return [
+    "# Previous Attempt — REJECTED",
+    "",
+    "Your previous resolution was:",
+    "```json",
+    JSON.stringify(previousRaw),
+    "```",
+    "",
+    "It referenced entities that DO NOT EXIST:",
+    ...bad.map((b) => `- ${b.change.kind}: ${b.errors.join("; ")}`),
+    "",
+    "The world contains ONLY these entities — ids must be copied verbatim:",
+    `- Characters: ${list(refs.characterIds)}`,
+    `- Items: ${list(refs.itemIds)}`,
+    `- Current scene: ${refs.executionSceneId}`,
+    "",
+    "Re-emit the COMPLETE corrected resolution: keep every valid change,",
+    "and for each rejected change either re-express it with real ids or",
+    "omit it entirely. NEVER invent characters, items, or scenes.",
+  ].join("\n");
+}
+
 function getAllowedResolutionKeys(config: OutputSchemaConfig): Set<string> {
   const allowed = new Set<string>(resolveOutputSchemaTypeIds(config));
   if (config.custom) {
@@ -398,33 +505,73 @@ export async function resolveState(
   ctx: ResolverContext
 ): Promise<ResolvedOutcome> {
   const { stable, request } = buildResolverPrompt(ctx);
+  const tools = [buildResolverTool(ctx)];
 
-  let raw: Record<string, any> = {};
-  try {
-    const call = await generateToolCalls({
-      customSystemPrompt: stable,
-      cacheSystemPrompt: true,
-      messages: [{ role: "user", content: [{ kind: "text", text: request }] }],
-      tools: [buildResolverTool(ctx)],
-      toolChoice: { name: "resolve_state" },
-      modelClass: ModelClass.MEDIUM,
-      operation: "state-resolver",
-    });
-    raw = call.toolCalls[0].args as Record<string, any>;
-  } catch (error) {
-    console.warn(
-      "[StateResolver] LLM call failed, returning empty resolution:",
-      error instanceof Error ? error.message : error
-    );
-    raw = {};
-  }
+  const callOnce = async (userText: string): Promise<Record<string, any>> => {
+    try {
+      const call = await generateToolCalls({
+        customSystemPrompt: stable,
+        cacheSystemPrompt: true,
+        messages: [
+          { role: "user", content: [{ kind: "text", text: userText }] },
+        ],
+        tools,
+        toolChoice: { name: "resolve_state" },
+        modelClass: ModelClass.MEDIUM,
+        operation: "state-resolver",
+      });
+      return call.toolCalls[0].args as Record<string, any>;
+    } catch (error) {
+      console.warn(
+        "[StateResolver] LLM call failed, returning empty resolution:",
+        error instanceof Error ? error.message : error
+      );
+      return {};
+    }
+  };
 
-  if (ctx.definition.outputSchema) {
-    if (!validateResolution(raw, ctx.definition.outputSchema)) {
+  const filterAllowedKeys = (raw: Record<string, any>): Record<string, any> => {
+    if (
+      ctx.definition.outputSchema &&
+      !validateResolution(raw, ctx.definition.outputSchema)
+    ) {
       const allowed = getAllowedResolutionKeys(ctx.definition.outputSchema);
       for (const key of Object.keys(raw)) {
         if (!allowed.has(key)) delete raw[key];
       }
+    }
+    return raw;
+  };
+
+  let raw = filterAllowedKeys(await callOnce(request));
+  let stateChanges = flattenToStateChanges(raw);
+
+  // Reference validation + one corrective retry with the errors spelled out.
+  const refs = ctx.stateContext.validRefs;
+  if (refs) {
+    const bad = stateChanges
+      .map((change) => ({ change, errors: invalidRefsOf(change, refs) }))
+      .filter((b) => b.errors.length > 0);
+    if (bad.length > 0) {
+      console.warn(
+        `[StateResolver] ${bad.length} change(s) referenced non-existent entities; retrying once with error feedback`
+      );
+      raw = filterAllowedKeys(
+        await callOnce(`${request}\n\n${buildRefErrorFeedback(bad, refs, raw)}`)
+      );
+      stateChanges = flattenToStateChanges(raw);
+      // Whatever is still invalid gets dropped here (with the reason), so the
+      // Applier never sees it and the commit is clean.
+      stateChanges = stateChanges.filter((change) => {
+        const errors = invalidRefsOf(change, refs);
+        if (errors.length > 0) {
+          console.warn(
+            `[StateResolver] dropped ${change.kind} after retry: ${errors.join("; ")}`
+          );
+          return false;
+        }
+        return true;
+      });
     }
   }
 
@@ -432,6 +579,5 @@ export async function resolveState(
     typeof raw.elapsedMinutes === "number" && raw.elapsedMinutes >= 0
       ? raw.elapsedMinutes
       : 0;
-  const stateChanges = flattenToStateChanges(raw);
   return { stateChanges, elapsedMinutes };
 }

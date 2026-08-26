@@ -68,6 +68,11 @@ Rules:
 - Numbers are local to this action; reuse the same [N] for the same entity.
 - Every [N] in the narrative needs a matching reference line.
 - The references block is optional when no entity is cited.
+- Use REAL line breaks inside actionText. The \`\\n\` in the JSON examples
+  below is the JSON escape for a newline — never emit a literal backslash-n
+  character sequence in the string value.
+- Put \`[narrative]\` and \`[references]\` each at the start of their own
+  line, with the content on the following line(s).
 
 ## Two layers — narrative vs. references
 

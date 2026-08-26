@@ -90,6 +90,18 @@ export function buildUserPromptSegments(
     );
   }
 
+  if (ctx.formatErrorFeedback) {
+    volatile.push(
+      `## Your previous action was REJECTED (format error)
+The engine could not parse the actionText of your last \`act\` call:
+${ctx.formatErrorFeedback}
+
+Re-issue the SAME intended action with valid formatting: \`[narrative]\` on
+its own line, real line breaks (never a literal backslash-n), and one
+\`[references]\` line for every [N] cited.`
+    );
+  }
+
   const langName = opts.language?.startsWith("zh") ? "Chinese" : "English";
   // The perception sections above are rendered as `[narrative]` /
   // `[references]` blocks, which is also the shape of `act`'s actionText.

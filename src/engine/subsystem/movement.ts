@@ -119,7 +119,10 @@ export const movementSubsystem: ActionSubsystem = {
     const topology = dgsm.getTopology();
     const targetPosition = resolveTargetPosition(destination, topology, dgsm);
     if (!targetPosition) {
-      return failure("no path");
+      return failure(
+        "no path",
+        noPathMemory(step.characterId, destination)
+      );
     }
 
     const route = buildMovementRouteIgnoringBlocks(
@@ -129,7 +132,10 @@ export const movementSubsystem: ActionSubsystem = {
       dgsm
     );
     if (!route) {
-      return failure("no path");
+      return failure(
+        "no path",
+        noPathMemory(step.characterId, destination)
+      );
     }
 
     if (route.steps.length === 0) {
@@ -244,8 +250,24 @@ function readDestination(step: ActionStep): string | undefined {
   return typeof dest === "string" && dest.length > 0 ? dest : undefined;
 }
 
-function failure(reason: string): SubsystemStepResult {
-  return { stateChanges: [], completed: false, failed: { reason } };
+function failure(
+  reason: string,
+  stateChanges: StateChange[] = []
+): SubsystemStepResult {
+  return { stateChanges, completed: false, failed: { reason } };
+}
+
+/** memory.event feedback for an unroutable destination — without it the
+ *  agent never learns the move failed (its next perception still shows the
+ *  old scene) and re-issues the same departure every tick. */
+function noPathMemory(characterId: string, destination: string): StateChange[] {
+  return [
+    {
+      kind: "memory.event",
+      characterId,
+      content: `I tried to head for "${destination}" but couldn't work out a way to get there from here.`,
+    } as StateChange,
+  ];
 }
 
 /**

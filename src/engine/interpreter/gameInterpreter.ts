@@ -29,8 +29,11 @@ export class ActionTextFormatError extends Error {
 type RefKind = "character" | "item" | "scene";
 type ParsedRef = { id: string; kind: RefKind };
 
-const NARRATIVE_HEADER = /^\s*\[narrative\]\s*$/im;
-const REFERENCES_HEADER = /^\s*\[references\]\s*$/im;
+// Headers are matched at line start but do NOT require the rest of the line
+// to be empty: models frequently emit `[narrative]I walk...` inline, and
+// rejecting that wastes the whole decision.
+const NARRATIVE_HEADER = /^[ \t]*\[narrative\][ \t]*\r?\n?/im;
+const REFERENCES_HEADER = /^[ \t]*\[references\][ \t]*\r?\n?/im;
 const NUMBER_CITATION_REGEX = /\[(\d+)\]/g;
 // Agent references: `[N] id: <entity-id>; kind: character|item|scene`.
 // Anything past `kind:` (e.g., trailing description on renderer output) is
@@ -47,7 +50,8 @@ export function parseActionText(
   actionText: string,
   directory: PerceivableDirectory
 ): { narrative: string; referencedEntities: ReferencedEntity[] } {
-  const { narrative, refsBlock } = splitSections(actionText);
+  const normalized = normalizeEscapedNewlines(actionText);
+  const { narrative, refsBlock } = splitSections(normalized);
   const refs = parseReferences(refsBlock, actionText);
   const used = collectCitationNumbers(narrative);
 
@@ -71,6 +75,17 @@ export function parseActionText(
   }
 
   return { narrative, referencedEntities };
+}
+
+/**
+ * Models occasionally double-escape newlines inside the tool-call JSON, so
+ * the actionText arrives as one line containing literal `\n` sequences. When
+ * the text has no real newline but does contain escaped ones, decode them —
+ * otherwise the section headers never match and the whole decision is lost.
+ */
+function normalizeEscapedNewlines(text: string): string {
+  if (text.includes("\n") || !text.includes("\\n")) return text;
+  return text.replace(/\\r\\n|\\n/g, "\n");
 }
 
 function splitSections(actionText: string): {
@@ -169,8 +184,48 @@ function resolveRef(
   return { id: ref.id, kind: ref.kind };
 }
 
+/** A movement destination candidate surfaced to the interpreter LLM. The
+ *  id must be resolvable by `resolveTargetPosition` (scenario outline id,
+ *  topology scene id, junction id, or road id). */
+export interface KnownLocation {
+  id: string;
+  name: string;
+  kind: "building" | "scene" | "junction" | "road";
+}
+
+/** Collect every location the movement subsystem can path to, for the
+ *  interpreter's Known Locations list. Pure over plain collections so it is
+ *  trivially testable; SimulationRunner adapts from DGSM state. */
+export function collectKnownLocations(input: {
+  scenarioOutlines?: ReadonlyArray<{ id: string; name: string }>;
+  scenes?: ReadonlyMap<string, { name?: string }>;
+  junctions?: ReadonlyMap<string, { name?: string }>;
+  roads?: ReadonlyMap<string, { name?: string }>;
+}): KnownLocation[] {
+  const out: KnownLocation[] = [];
+  const seen = new Set<string>();
+  const push = (id: string, name: string | undefined, kind: KnownLocation["kind"]) => {
+    if (!id || seen.has(id)) return;
+    seen.add(id);
+    out.push({ id, name: name?.trim() || id, kind });
+  };
+  for (const o of input.scenarioOutlines ?? []) push(o.id, o.name, "building");
+  for (const [id, s] of input.scenes ?? []) push(id, s.name, "scene");
+  for (const [id, j] of input.junctions ?? []) push(id, j.name, "junction");
+  for (const [id, r] of input.roads ?? []) push(id, r.name, "road");
+  return out;
+}
+
+function formatKnownLocations(locations: KnownLocation[]): string {
+  const lines = locations.map((l) => `- ${l.id} — ${l.name} (${l.kind})`);
+  return `## Known Locations (movement destinations)
+For \`movement\` steps, \`destination\` MUST be one of the location ids below — output the id, never the display name. Pick the id whose name best matches where the narrative is heading (the narrative may use another language or an informal name for it). If no listed location plausibly matches, do NOT emit a movement step — classify that clause as \`action\` instead.
+${lines.join("\n")}`;
+}
+
 export function buildInterpreterPrompt(
-  definitions: ActionDefinition[]
+  definitions: ActionDefinition[],
+  knownLocations?: KnownLocation[]
 ): string {
   const generalDefs = definitions.filter((d) => !d.skillCheck);
   const skillDefs = definitions.filter((d) => d.skillCheck);
@@ -213,6 +268,10 @@ export function buildInterpreterPrompt(
   }
 
   const defList = sections.join("\n");
+  const locationsSection =
+    knownLocations && knownLocations.length > 0
+      ? `\n${formatKnownLocations(knownLocations)}\n`
+      : "";
 
   return `You are an action interpreter for a game simulation engine.
 
@@ -275,10 +334,10 @@ Each step MUST include a \`text\` field with the **local fragment** of the narra
 - Fragments should partition the action: every meaningful clause appears in exactly one step. Don't repeat the same sentence across steps.
 - If the entire action is genuinely a single beat (one step), the \`text\` is the whole narrative.
 
-## Output Format
+${locationsSection}## Output Format
 Call the \`interpret_action\` tool with the ordered steps, e.g.
   steps: [
-    { definitionId: "movement", impact: 0, destination: "library", text: "I walk to the library [1]" },
+    { definitionId: "movement", impact: 0, destination: "SCN_2", text: "I walk to the library [1]" },
     { definitionId: "locksmith", impact: 1, text: "and pick the lock on the cabinet [2]" },
     { definitionId: "perception", impact: 0, text: "then search the shelves inside" }
   ]`;
@@ -416,7 +475,7 @@ export const INTERPRET_ACTION_TOOL: ToolSpec = {
             destination: {
               type: "string",
               description:
-                "Movement steps only: the target location id exactly as it appears in the action text.",
+                "Movement steps only: a location id chosen from the Known Locations list in the system prompt (the id, never the display name).",
             },
             text: {
               type: "string",
@@ -438,13 +497,14 @@ export async function interpretAction(
   action: string,
   definitions: ActionDefinition[],
   language: string,
-  directory: PerceivableDirectory
+  directory: PerceivableDirectory,
+  knownLocations?: KnownLocation[]
 ): Promise<InterpretedResult> {
   // Strip [references] block; resolve citations once. The cleaned narrative is
   // what the LLM definition-matcher sees, and what gets stored on ActionStep.
   const { narrative, referencedEntities } = parseActionText(action, directory);
 
-  const systemPrompt = buildInterpreterPrompt(definitions);
+  const systemPrompt = buildInterpreterPrompt(definitions, knownLocations);
   const langInstruction =
     language === "zh"
       ? "The action is in Chinese."

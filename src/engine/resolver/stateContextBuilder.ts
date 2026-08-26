@@ -247,12 +247,62 @@ function buildItemSection(
 
 // ==================== Main builder ====================
 
+/**
+ * The complete universe of REAL entity ids for one resolution — everything the
+ * resolver may legally reference. Built alongside the prompt sections so
+ * `resolveState` can reject fabricated ids (invented witnesses, staged-scene
+ * featureIds cited as items, ghost inventories) and feed the errors back to
+ * the LLM for one corrective retry, instead of the Applier silently dropping
+ * them at commit time.
+ */
+export interface ResolverValidRefs {
+  characterIds: Set<string>;
+  itemIds: Set<string>;
+  sceneIds: Set<string>;
+  junctionIds: Set<string>;
+  /** The scene the action executes in — named in error feedback. */
+  executionSceneId: string;
+}
+
+function buildValidRefs(
+  node: ResolverContextNode,
+  dgsm: DynamicGameStateManager,
+  locationId: string
+): ResolverValidRefs {
+  const state = dgsm.getState();
+  const itemIds = new Set<string>();
+  for (const item of dgsm.getNpcInventory(node.characterId)) {
+    itemIds.add(item.id);
+  }
+  // Target inventories are rendered into the prompt (buildTargetSection), so
+  // their ids are legal references too.
+  for (const ref of node.referencedEntities ?? []) {
+    if (ref.kind === "character") {
+      for (const item of dgsm.getNpcInventory(ref.id)) itemIds.add(item.id);
+    }
+  }
+  const scene = dgsm.getScene(locationId);
+  for (const item of (scene as any)?.items ?? []) {
+    itemIds.add((item as { id: string }).id);
+  }
+  return {
+    characterIds: new Set(state.npcCharacters.map((n) => n.id)),
+    itemIds,
+    sceneIds: new Set(state.scenes.keys()),
+    junctionIds: new Set(state.junctions.keys()),
+    executionSceneId: locationId,
+  };
+}
+
 export interface StateContext {
   actorSection?: string;
   targetSections?: string;
   sceneSection?: string;
   itemSection?: string;
   worldStateSection?: string;
+  /** Real-entity universe for reference validation; absent on legacy callers
+   *  that build a StateContext by hand (validation is then skipped). */
+  validRefs?: ResolverValidRefs;
 }
 
 export function buildStateContext(
@@ -272,10 +322,13 @@ export function buildStateContext(
         node.characterId,
         locationId
       ),
+      validRefs: buildValidRefs(node, dgsm, locationId),
     };
   }
 
-  const result: StateContext = {};
+  const result: StateContext = {
+    validRefs: buildValidRefs(node, dgsm, locationId),
+  };
 
   // Character domain
   if (domains.character) {

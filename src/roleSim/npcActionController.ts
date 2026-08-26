@@ -18,6 +18,7 @@ import type {
   FeatureEvent,
   TickReport,
 } from "../engine/core/types.js";
+import { ActionTextFormatError } from "../engine/interpreter/gameInterpreter.js";
 import { findAffectedCharacters } from "../engine/shared/impactPropagation.js";
 import type { NpcMemoryManager } from "../memory/NpcMemoryManager.js";
 import type { DynamicGameStateManager } from "../state/DynamicGameState.js";
@@ -48,6 +49,53 @@ interface DecideOpts {
 
 /** How many prior renderer narratives each NPC keeps as short-term memory. */
 const PERCEPTION_HISTORY_CAP = 5;
+
+/** Max location groups deciding concurrently. Overridable for tuning. */
+const DECIDE_GROUP_CONCURRENCY = (() => {
+  const raw = Number(process.env.NPC_DECIDE_CONCURRENCY);
+  return Number.isInteger(raw) && raw > 0 ? raw : 8;
+})();
+
+/**
+ * Group ids by resolved location. Ids resolving to the same non-empty
+ * location share a group (order preserved); ids with no resolvable location
+ * each get their own group. Ids resolving to `null` are dropped (dead NPCs).
+ */
+export function groupByLocation(
+  ids: string[],
+  resolve: (id: string) => string | null
+): string[][] {
+  const byLocation = new Map<string, string[]>();
+  for (const id of ids) {
+    const location = resolve(id);
+    if (location === null) continue;
+    const key = location === "" ? `__solo:${id}` : location;
+    const group = byLocation.get(key);
+    if (group) group.push(id);
+    else byLocation.set(key, [id]);
+  }
+  return [...byLocation.values()];
+}
+
+/** Run `worker` over `items` with at most `limit` in flight. Rejections
+ *  propagate after all in-flight workers settle. */
+export async function runWithConcurrency<T>(
+  items: T[],
+  limit: number,
+  worker: (item: T) => Promise<void>
+): Promise<void> {
+  let next = 0;
+  const lanes = Array.from(
+    { length: Math.max(1, Math.min(limit, items.length)) },
+    async () => {
+      while (next < items.length) {
+        const item = items[next++];
+        await worker(item);
+      }
+    }
+  );
+  await Promise.all(lanes);
+}
 
 interface PerceptionHistoryEntry {
   gameDateTime: string;
@@ -177,19 +225,31 @@ export class NpcActionController {
       ...idleAlive,
     ]);
 
-    // 6. Sequential decide() — no concurrency, no race.
-    for (const npcId of allTargets) {
-      if (!this.dgsm.isNpcAlive(npcId)) continue;
-      const eventsForNpc = eventsByNpc.get(npcId);
-      const actionsForNpc = actionsByNpc.get(npcId);
-      await this.decide(npcId, {
-        report,
-        eventsForNpc:
-          eventsForNpc && eventsForNpc.length > 0 ? eventsForNpc : undefined,
-        actionsForNpc:
-          actionsForNpc && actionsForNpc.length > 0 ? actionsForNpc : undefined,
-      });
-    }
+    // 6. Location-grouped decide(). NPCs at the same location decide
+    //    sequentially so later deciders see earlier deciders' submissions
+    //    (same-scene interaction continuity, deterministic within a group).
+    //    NPCs at different locations cannot perceive each other within this
+    //    tick, so their groups run concurrently (capped, to respect provider
+    //    rate limits).
+    const groups = groupByLocation([...allTargets], (npcId) =>
+      this.dgsm.isNpcAlive(npcId) ? this.resolveCurrentSceneId(npcId) : null
+    );
+    await runWithConcurrency(groups, DECIDE_GROUP_CONCURRENCY, async (npcIds) => {
+      for (const npcId of npcIds) {
+        if (!this.dgsm.isNpcAlive(npcId)) continue;
+        const eventsForNpc = eventsByNpc.get(npcId);
+        const actionsForNpc = actionsByNpc.get(npcId);
+        await this.decide(npcId, {
+          report,
+          eventsForNpc:
+            eventsForNpc && eventsForNpc.length > 0 ? eventsForNpc : undefined,
+          actionsForNpc:
+            actionsForNpc && actionsForNpc.length > 0
+              ? actionsForNpc
+              : undefined,
+        });
+      }
+    });
   }
 
   private async writeAutoMemories(
@@ -315,52 +375,63 @@ export class NpcActionController {
     const ctx = await this.buildContext(npcId, opts);
     if (!ctx) return;
 
-    const decision = await this.agent.decideNext(ctx);
-    switch (decision.tool) {
-      case "act": {
-        // Decision 14: cancel current action first if any. Engine is the
-        // source of truth for in-flight state — query it, do not mirror.
-        // Pass a `reason` so the orchestrator's resolver re-run produces a
-        // partial narrative reflecting why the agent switched.
-        const queue = this.engine.getActorQueue(npcId);
-        const live = queue.find(
-          (s) => s.status === "active" || s.status === "queued"
-        );
-        if (live) {
-          // In-fiction phrasing: this string reaches the cancel re-resolve
-          // prompt (via buildCancelResolverAction, which strips the
-          // [narrative]/[references] scaffolding), and "agent switched to"
-          // is engine jargon a memory should never contain.
-          this.engine.cancelAction(
-            live.handle,
-            `the character turned to something else instead: ${decision.actionText}`
-          );
-        }
+    let decision = await this.agent.decideNext(ctx);
+    const maxFormatRetries = 1;
+    for (let attempt = 0; ; attempt++) {
+      // continue / (instant tools never reach here) — nothing to submit.
+      if (decision.tool !== "act") return;
 
-        // Wrap submitAction so a single bad decision (e.g., the agent cited
-        // an entity that's no longer perceivable, malformed actionText, etc.)
-        // does NOT crash the entire tick's NPC loop. Log + skip; the agent
-        // gets another chance next tick.
-        try {
-          await this.engine.submitAction({
-            characterId: npcId,
-            actionText: decision.actionText,
-            sceneId: this.resolveCurrentSceneId(npcId),
-          });
-        } catch (err) {
+      // Decision 14: cancel current action first if any. Engine is the
+      // source of truth for in-flight state — query it, do not mirror.
+      // Pass a `reason` so the orchestrator's resolver re-run produces a
+      // partial narrative reflecting why the agent switched. (Queried per
+      // attempt: the first attempt cancels, a format-retry finds none.)
+      const queue = this.engine.getActorQueue(npcId);
+      const live = queue.find(
+        (s) => s.status === "active" || s.status === "queued"
+      );
+      if (live) {
+        // In-fiction phrasing: this string reaches the cancel re-resolve
+        // prompt (via buildCancelResolverAction, which strips the
+        // [narrative]/[references] scaffolding), and "agent switched to"
+        // is engine jargon a memory should never contain.
+        this.engine.cancelAction(
+          live.handle,
+          `the character turned to something else instead: ${decision.actionText}`
+        );
+      }
+
+      // Wrap submitAction so a single bad decision (e.g., the agent cited
+      // an entity that's no longer perceivable, malformed actionText, etc.)
+      // does NOT crash the entire tick's NPC loop. A parse-format rejection
+      // gets one retry with the error fed back to the agent; anything else
+      // (or a failed retry) is logged + skipped, and the agent gets another
+      // chance next tick.
+      try {
+        await this.engine.submitAction({
+          characterId: npcId,
+          actionText: decision.actionText,
+          sceneId: this.resolveCurrentSceneId(npcId),
+        });
+        return;
+      } catch (err) {
+        if (err instanceof ActionTextFormatError && attempt < maxFormatRetries) {
           console.warn(
-            `[NpcActionController] ${npcId} submitAction failed; dropping this decision:`,
-            err instanceof Error ? err.message : err
+            `[NpcActionController] ${npcId} actionText rejected (format); retrying with feedback:`,
+            err.message
           );
+          decision = await this.agent.decideNext({
+            ...ctx,
+            formatErrorFeedback: err.message,
+          });
+          continue;
         }
+        console.warn(
+          `[NpcActionController] ${npcId} submitAction failed; dropping this decision:`,
+          err instanceof Error ? err.message : err
+        );
         return;
       }
-      case "continue":
-        return;
-      // writeMemory / recallMemory / getMapSnapshot are instant tools —
-      // dispatched inside agent.decideNext() and never reach this switch.
-      default:
-        return;
     }
   }
 

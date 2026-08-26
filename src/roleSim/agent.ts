@@ -71,6 +71,10 @@ export interface RoleSimContext {
     gameDateTime: GameTime;
     narrative: string;
   }>;
+  /** Set on a format-retry pass: the engine rejected the agent's previous
+   *  `act` actionText with this parse error. Rendered as corrective feedback
+   *  so the agent can re-emit the same intent in valid form. */
+  formatErrorFeedback?: string;
 }
 
 export interface RoleSimAgent {

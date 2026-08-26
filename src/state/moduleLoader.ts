@@ -26,6 +26,7 @@ import type {
   TownTopology,
 } from "./topologyTypes.js";
 import type {
+  CharacterStatus,
   DynamicNPCProfile,
   DynamicScene,
   ModuleSetup,
@@ -392,15 +393,30 @@ export function initRuntime(params: {
     }
     if (residence) npcResidences[npc.id] = residence;
 
-    // Stats
-    npcStats[npc.id] = {
-      hp: npc.status?.hp ?? npc.attributes?.CON ?? 10,
-      san:
-        npc.status?.san ??
-        (npc.status as unknown as { sanity?: number })?.sanity ??
-        npc.attributes?.POW ??
-        50,
+    // Stats — module NPC JSON uses CoC-sheet field names (`sanity` /
+    // `maxSanity`) and usually omits fatigue, while CharacterStatus and the
+    // Applier's clamp math read `san` / `maxSan` / `fatigue` / `maxFatigue`.
+    // Normalize the profile in place: without this, the first character.san
+    // or character.fatigue StateChange computes Math.min(undefined, …) and
+    // writes NaN into the profile. Defaults mirror characterInjection.ts.
+    const rawStatus = (npc.status ?? {}) as Partial<CharacterStatus> & {
+      sanity?: number;
+      maxSanity?: number;
     };
+    const hp = rawStatus.hp ?? npc.attributes?.CON ?? 10;
+    const san = rawStatus.san ?? rawStatus.sanity ?? npc.attributes?.POW ?? 50;
+    npc.status = {
+      ...rawStatus,
+      hp,
+      maxHp: rawStatus.maxHp ?? hp,
+      san,
+      maxSan: rawStatus.maxSan ?? rawStatus.maxSanity ?? 99,
+      fatigue: rawStatus.fatigue ?? 0,
+      maxFatigue: rawStatus.maxFatigue ?? 100,
+      luck: rawStatus.luck ?? 50,
+      conditions: rawStatus.conditions ?? [],
+    };
+    npcStats[npc.id] = { hp, san };
 
     // Inventory — normalize once so both npcInventories (runtime Item[]) and
     // npc.inventory (profile InventoryItem[]) carry a stable `id`. The id is

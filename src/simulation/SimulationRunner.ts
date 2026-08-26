@@ -12,7 +12,10 @@ import type {
   TickReport,
 } from "../engine/core/types.js";
 import type { ActionDefinitionRegistry } from "../engine/definitions/registry.js";
-import { interpretAction } from "../engine/interpreter/gameInterpreter.js";
+import {
+  collectKnownLocations,
+  interpretAction,
+} from "../engine/interpreter/gameInterpreter.js";
 import {
   createDefaultDefinitions,
   createDefaultSubsystemRegistry,
@@ -517,6 +520,17 @@ export class SimulationRunner {
 
     const definitionList = this.definitions.getAll();
 
+    // Movement destination candidates for the interpreter's Known Locations
+    // list. Session-stable, so it rides the cached system-prompt prefix.
+    const gameState = this.dgsm.getState();
+    const topology = this.dgsm.getTopology();
+    const knownLocations = collectKnownLocations({
+      scenarioOutlines: gameState.scenarioOutlines,
+      scenes: gameState.scenes,
+      junctions: topology.junctions,
+      roads: topology.roads,
+    });
+
     const engine = createTickEngine({
       dgsm: this.dgsm,
       subsystemRegistry,
@@ -526,7 +540,8 @@ export class SimulationRunner {
           input.actionText,
           definitionList,
           this.language,
-          directory
+          directory,
+          knownLocations
         );
         return { steps: result.steps };
       },
