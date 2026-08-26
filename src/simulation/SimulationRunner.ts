@@ -14,6 +14,7 @@ import type {
 import type { ActionDefinitionRegistry } from "../engine/definitions/registry.js";
 import {
   collectKnownLocations,
+  currentLocationOf,
   interpretAction,
 } from "../engine/interpreter/gameInterpreter.js";
 import {
@@ -541,7 +542,8 @@ export class SimulationRunner {
           definitionList,
           this.language,
           directory,
-          knownLocations
+          knownLocations,
+          currentLocationOf(this.dgsm, input.characterId)
         );
         return { steps: result.steps };
       },

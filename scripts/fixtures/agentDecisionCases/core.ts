@@ -15,7 +15,9 @@ export const CORE_SCENARIOS: SimScenario[] = [
     cases: [
       {
         label: "警探：调度让他去现场",
-        ticks: 6,
+        // 6 tick 只够看到出发；跨场景赶路要走完实际路径（拓扑寻路按分钟推进），
+        // 给够 9 tick 才能看到位移持续推进而不是只提交了一次 movement 决策。
+        ticks: 9,
         actors: [
           {
             npc: "Bruno Galilei",
@@ -30,7 +32,7 @@ export const CORE_SCENARIOS: SimScenario[] = [
       },
       {
         label: "毒贩：交货时间到了",
-        ticks: 6,
+        ticks: 9,
         actors: [
           {
             npc: "Angela",
@@ -40,7 +42,7 @@ export const CORE_SCENARIOS: SimScenario[] = [
       },
       {
         label: "老站务：交班后回住处",
-        ticks: 6,
+        ticks: 9,
         actors: [
           {
             npc: "Haran Greenwood",
@@ -50,17 +52,23 @@ export const CORE_SCENARIOS: SimScenario[] = [
       },
       {
         label: "花店少女：亲自送花过去",
-        ticks: 6,
+        ticks: 9,
         actors: [
           {
             npc: "Nancy Charlotte",
-            goal: "花已经扎好，收花人在{{destName}}等着；亲自把花送过去。",
+            // 原来写"花已经扎好"暗示台面上摆着一束可拿取的花，但现有 7 种
+            // PropKey 里没有花可布景——NPC 若在 actionText 里引用它会被
+            // "id 必须来自本 tick 感知"的防护拦截。改写成不点名具体物件的
+            // 送货承诺，动机不变，也不会诱使 NPC 去引用一个不存在的实体。
+            goal: "你答应亲自把花送到{{destName}}，对方还在等着；时间快到了，现在就动身，别让人白等。",
           },
         ],
       },
       {
         label: "打手：老板叫他过去",
-        ticks: 6,
+        // Philip 的目标是"等他走了再说"——要观察到 Kovind 真正离场（不只是
+        // 提交了移动决策），再给 Philip 留出反应的空间，比其他 case 多留 1 tick。
+        ticks: 10,
         actors: [
           { npc: "Kovind", goal: "老大让你现在就去{{destName}}，别让他等。" },
           { npc: "Philip Scaletta", goal: "别惹这个人，等他走了再说。" },
@@ -91,11 +99,15 @@ export const CORE_SCENARIOS: SimScenario[] = [
         actors: [
           {
             npc: "Solomon",
-            goal: "弄清他手上那本破旧的书是从哪儿来的，再决定收不收。",
+            goal: "弄清他手上那本笔记本是从哪儿来的，再决定收不收。",
           },
           {
             npc: "Marks White",
-            goal: "把手上这本旧书卖掉，但别说清它是从哪儿来的。",
+            // 原来写"破旧的书"没有对应道具——7 种 PropKey 里没有旧书，
+            // Marks White 若在 actionText 里引用手上的书会因为这个实体不在
+            // 本 tick 感知里而被拦截。改用 notebook 这个真实布景的道具。
+            goal: "把手上这本笔记本卖掉，但别说清它是从哪儿来的。",
+            items: ["notebook"],
           },
         ],
       },

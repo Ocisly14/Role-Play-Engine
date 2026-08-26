@@ -66,6 +66,7 @@ export const SKILL_SCENARIOS: SimScenario[] = [
             goal: "在动手修之前，先看清这只表被人做过什么手脚。",
           },
         ],
+        sceneItems: ["watch"],
         sceneConditions: [
           "台上那只怀表外壳锃亮，后盖螺丝口却有细微的滑丝痕迹，像被外行人拧开过",
         ],
@@ -1250,7 +1251,7 @@ export const SKILL_SCENARIOS: SimScenario[] = [
         sceneItems: ["notebook"],
       },
       {
-        label: "钟表匠：在客人眼皮底下藏零件",
+        label: "钟表匠：在客人眼皮底下藏钥匙",
         ticks: 4,
         actors: [
           {
@@ -1354,6 +1355,7 @@ export const SKILL_SCENARIOS: SimScenario[] = [
           },
           { npc: "Johnny", goal: "把那只怀表推到他面前，问他见没见过。" },
         ],
+        sceneItems: ["watch"],
       },
     ],
   },

@@ -140,6 +140,10 @@ const PROPS: Record<PropKey, { name: string; description: string }> = {
     name: "黄铜钥匙",
     description: "一把没有标记的黄铜钥匙，边缘磨得发亮。",
   },
+  watch: {
+    name: "金怀表",
+    description: "一只金壳怀表，表盖内侧刻着花体字母，垫在绒布上。",
+  },
 };
 
 /** Stable per-case seed. Deliberately NOT the position in the run: a case must

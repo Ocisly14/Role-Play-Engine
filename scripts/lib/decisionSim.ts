@@ -31,7 +31,10 @@ import type {
   PlannedOutcome,
   TickReport,
 } from "../../src/engine/core/types.js";
-import { interpretAction } from "../../src/engine/interpreter/gameInterpreter.js";
+import {
+  currentLocationOf,
+  interpretAction,
+} from "../../src/engine/interpreter/gameInterpreter.js";
 import type { KnownLocation } from "../../src/engine/interpreter/gameInterpreter.js";
 import { createDefaultSubsystemRegistry } from "../../src/engine/registerDefaults.js";
 import { buildCancelResolverAction } from "../../src/engine/resolver/cancelPrompt.js";
@@ -315,6 +318,40 @@ function makeStubMemory(
     },
   };
   return stub as unknown as NpcMemoryManager;
+}
+
+// =========================================================================
+// Shared console.warn interception
+//
+// Cases run CONCURRENTLY in one process, so a per-case monkey-patch of
+// console.warn both mis-restores (last finish wins) and mis-attributes:
+// observed live as one Philip submitAction failure filing an ERROR into two
+// unrelated cases. Patch once, keep a registry of active sinks, and let each
+// case's sink filter by its own staged actor names.
+// =========================================================================
+
+const warnSinks = new Set<(line: string) => void>();
+let realConsoleWarn: typeof console.warn | null = null;
+
+function pushWarnSink(sink: (line: string) => void): () => void {
+  if (warnSinks.size === 0) {
+    realConsoleWarn = console.warn;
+    console.warn = (...args: unknown[]) => {
+      const line = args
+        .map((a) => (a instanceof Error ? a.message : String(a)))
+        .join(" ");
+      for (const s of warnSinks) s(line);
+      realConsoleWarn?.(...args);
+    };
+  }
+  warnSinks.add(sink);
+  return () => {
+    warnSinks.delete(sink);
+    if (warnSinks.size === 0 && realConsoleWarn) {
+      console.warn = realConsoleWarn;
+      realConsoleWarn = null;
+    }
+  };
 }
 
 // =========================================================================
@@ -631,7 +668,8 @@ export async function runStagedCase(
         definitions,
         lang,
         directory,
-        knownLocations
+        knownLocations,
+        currentLocationOf(dgsm, inputAction.characterId)
       );
       observation.interpreted.push({
         tick: currentTick,
@@ -871,18 +909,18 @@ export async function runStagedCase(
   // NpcActionController and the renderer swallow their own failures with a
   // console.warn and carry on (renderer returned null → the NPC perceives
   // nothing and never decides; submitAction threw → the decision is dropped).
-  // Both reach the grader as "the agent chose not to act", so intercept those
-  // warnings and file them as what they are: infrastructure faults.
-  const realWarn = console.warn;
-  console.warn = (...args: unknown[]) => {
-    const line = args
-      .map((a) => (a instanceof Error ? a.message : String(a)))
-      .join(" ");
-    if (/\[NpcActionController\]|\[renderer\]|\[roleSim/.test(line)) {
-      observation.silentFailures.push(line.slice(0, 300));
-    }
-    realWarn(...args);
-  };
+  // Both reach the reader as "the agent chose not to act", so intercept those
+  // warnings and file them as what they are: infrastructure faults. The sink
+  // only files lines naming one of THIS case's actors — concurrent cases
+  // share the console, and an unfiltered sink bills every case for one
+  // case's fault. (A warning naming no actor is intentionally not filed:
+  // it cannot be attributed.)
+  const stagedNames = stage.actors.map((a) => a.npcId);
+  const popWarnSink = pushWarnSink((line) => {
+    if (!/\[NpcActionController\]|\[renderer\]|\[roleSim/.test(line)) return;
+    if (!stagedNames.some((name) => line.includes(name))) return;
+    observation.silentFailures.push(line.slice(0, 300));
+  });
 
   try {
     if (stage.bootstrap !== false) {
@@ -899,7 +937,7 @@ export async function runStagedCase(
       err instanceof Error ? err.message : String(err)
     );
   } finally {
-    console.warn = realWarn;
+    popWarnSink();
   }
 
   // ---- final readings ---------------------------------------------------

@@ -108,6 +108,39 @@ describe("invalidRefsOf", () => {
     ).toHaveLength(1);
   });
 
+  it("item.create accepts both holder forms and rejects fabricated ones", () => {
+    // Same holder grammar as item.move's `to`: "scene:<id>" or a character id.
+    expect(
+      errs({
+        kind: "item.create",
+        name: "x",
+        location: "scene:SCN_1",
+      } as StateChange)
+    ).toEqual([]);
+    expect(
+      errs({
+        kind: "item.create",
+        name: "x",
+        location: "Angela",
+      } as StateChange)
+    ).toEqual([]);
+    // Observed live: the resolver putting the item's NAME in `location`.
+    expect(
+      errs({
+        kind: "item.create",
+        name: "Modified Jacket",
+        location: "Modified Jacket",
+      } as StateChange)
+    ).toHaveLength(1);
+    expect(
+      errs({
+        kind: "item.create",
+        name: "x",
+        location: "scene:SCN_404",
+      } as StateChange)
+    ).toHaveLength(1);
+  });
+
   it("rejects fabricated scenes and reports multiple violations at once", () => {
     expect(
       errs({

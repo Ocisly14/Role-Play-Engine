@@ -1,5 +1,6 @@
 import { ModelClass, generateToolCalls } from "../../models/index.js";
 import type { ToolSpec } from "../../models/providers/types.js";
+import type { DynamicGameStateManager } from "../../state/DynamicGameState.js";
 import type { PerceivableDirectory } from "../../state/perceivableDirectory.js";
 import type { ReferencedEntity } from "../core/types.js";
 import type { ActionDefinition, InterpretedResult } from "../types.js";
@@ -204,7 +205,11 @@ export function collectKnownLocations(input: {
 }): KnownLocation[] {
   const out: KnownLocation[] = [];
   const seen = new Set<string>();
-  const push = (id: string, name: string | undefined, kind: KnownLocation["kind"]) => {
+  const push = (
+    id: string,
+    name: string | undefined,
+    kind: KnownLocation["kind"]
+  ) => {
     if (!id || seen.has(id)) return;
     seen.add(id);
     out.push({ id, name: name?.trim() || id, kind });
@@ -216,10 +221,41 @@ export function collectKnownLocations(input: {
   return out;
 }
 
+/** The actor's current location, rendered into the interpreter's user turn
+ *  so it can tell "walking to the desk here" from "traveling elsewhere".
+ *  Observed live without it: an in-room "走回办公桌" classified as movement
+ *  and fuzzy-matched to a room named 办公室 in a different building — the
+ *  actor was silently teleported across town. */
+export interface CurrentLocation {
+  id: string;
+  name: string;
+}
+
+export function currentLocationOf(
+  dgsm: DynamicGameStateManager,
+  characterId: string
+): CurrentLocation | undefined {
+  const pos = dgsm.getCharacterPosition(characterId);
+  if (!pos) return undefined;
+  const id = dgsm.resolveLocationId(pos);
+  const topology = dgsm.getTopology();
+  const name =
+    dgsm.getState().scenes.get(id)?.name ??
+    topology.junctions.get(id)?.name ??
+    topology.roads.get(id)?.name ??
+    id;
+  return { id, name };
+}
+
 function formatKnownLocations(locations: KnownLocation[]): string {
   const lines = locations.map((l) => `- ${l.id} — ${l.name} (${l.kind})`);
   return `## Known Locations (movement destinations)
 For \`movement\` steps, \`destination\` MUST be one of the location ids below — output the id, never the display name. Pick the id whose name best matches where the narrative is heading (the narrative may use another language or an informal name for it). If no listed location plausibly matches, do NOT emit a movement step — classify that clause as \`action\` instead.
+
+The request states the actor's CURRENT location. Movement means LEAVING it for a different listed place:
+- Motion toward furniture, objects, or people at the current location ("走到桌前", "step closer") is NOT movement — fold it into the surrounding beat.
+- Never output the current location's id as a destination.
+- Pick a destination in a different building only when the narrative clearly says the actor is going there. Sharing a generic word with a room's name (e.g. "办公桌" vs a room called "办公室") is NOT a match — when unsure, classify the clause as \`action\`.
 ${lines.join("\n")}`;
 }
 
@@ -498,7 +534,8 @@ export async function interpretAction(
   definitions: ActionDefinition[],
   language: string,
   directory: PerceivableDirectory,
-  knownLocations?: KnownLocation[]
+  knownLocations?: KnownLocation[],
+  currentLocation?: CurrentLocation
 ): Promise<InterpretedResult> {
   // Strip [references] block; resolve citations once. The cleaned narrative is
   // what the LLM definition-matcher sees, and what gets stored on ActionStep.
@@ -509,6 +546,11 @@ export async function interpretAction(
     language === "zh"
       ? "The action is in Chinese."
       : "The action is in English.";
+  // Varies per call, so it lives in the user turn — the system prompt is the
+  // pipeline's largest cached prefix and must stay byte-stable.
+  const locationLine = currentLocation
+    ? `\nActor's current location: ${currentLocation.id} — ${currentLocation.name}\n`
+    : "";
 
   const call = await generateToolCalls({
     customSystemPrompt: systemPrompt,
@@ -523,7 +565,7 @@ export async function interpretAction(
         content: [
           {
             kind: "text",
-            text: `${langInstruction}\n\nAction: "${narrative}"`,
+            text: `${langInstruction}\n${locationLine}\nAction: "${narrative}"`,
           },
         ],
       },
@@ -540,6 +582,12 @@ export async function interpretAction(
     call.toolCalls[0].args as { steps?: unknown },
     definitions
   );
+  sanitizeMovementSteps(parsed.steps, {
+    knownLocationIds: knownLocations
+      ? new Set(knownLocations.map((l) => l.id))
+      : undefined,
+    currentLocationId: currentLocation?.id,
+  });
   return {
     steps: parsed.steps.map((s) => ({
       ...s,
@@ -549,4 +597,56 @@ export async function interpretAction(
       referencedEntities,
     })),
   };
+}
+
+/** Mechanical backstop for the prompt rules above.
+ *
+ *  - destination == the actor's current location → downgrade to `action`:
+ *    an in-place beat, not travel — there is no failure to report.
+ *  - destination missing or absent from the Known Locations list (the model
+ *    echoed a display name, invented an id, or misspelled one) → the step is
+ *    deliberately KEPT as movement: it fails fast at movement activation,
+ *    which hands the character a "couldn't work out where that is" memory so
+ *    THEY re-decide with feedback. Downgrading here would narrate a beat
+ *    that hides the failure from the character. We only log for
+ *    observability.
+ *
+ *  Checks are skipped for whichever input the caller could not provide. */
+export function sanitizeMovementSteps(
+  steps: InterpretedResult["steps"],
+  opts: {
+    knownLocationIds?: ReadonlySet<string>;
+    currentLocationId?: string;
+  }
+): void {
+  for (const step of steps) {
+    if (step.codeSubsystem !== "movement") continue;
+    const dest = step.overlayFields?.destination;
+    // "ROAD_X@0.3" carries an explicit road position — membership is checked
+    // on the base id, matching resolveTargetPosition's parsing.
+    const baseId =
+      typeof dest === "string" && dest.length > 0
+        ? dest.split("@")[0]
+        : undefined;
+    if (
+      opts.currentLocationId !== undefined &&
+      baseId === opts.currentLocationId
+    ) {
+      step.definitionId = "action";
+      step.engine = "llm";
+      step.codeSubsystem = undefined;
+      step.overlayFields = undefined;
+      continue;
+    }
+    if (
+      opts.knownLocationIds !== undefined &&
+      (!baseId || !opts.knownLocationIds.has(baseId))
+    ) {
+      console.warn(
+        `[interpreter] movement destination ${
+          typeof dest === "string" ? `"${dest}"` : "(missing)"
+        } is not a known location — the move will fail fast and the character will be told`
+      );
+    }
+  }
 }

@@ -135,11 +135,14 @@ export const TOOL_SCENARIOS: SimScenario[] = [
         actors: [
           {
             npc: "Marks White",
-            goal: "今晚必须把这只拆到一半的怀表修好，客人明早就来取；手上的活不能停。",
+            goal: "今晚必须把客人这只金怀表修好，明早就来取；手上的活不能停。",
           },
         ],
+        // 怀表只写在目标文字里的话，agent 想继续摆弄它时只能自造一个 item id，
+        // 会被 citation 防护拦下（同 world-scene-destroy 里的教训）——真实布上场。
+        sceneItems: ["watch"],
         sceneConditions: [
-          "工作台上摊着拆开的机芯、镊子和放大镜，游丝还悬在镊子上",
+          "工作台上摆着镊子和放大镜，那只金怀表就搁在绒布上，刚拆开表盖",
         ],
         openingEvent: {
           description: "楼上传来两三下脚步声，随即没了动静",
@@ -329,7 +332,10 @@ export const TOOL_SCENARIOS: SimScenario[] = [
         actors: [
           {
             npc: "Bruno Galilei",
-            goal: "查清命案，同时留意身边人是否可信；一旦发现矛盾之处要记下自己的判断。",
+            // 原文写"发现矛盾要记下自己的判断"等于直接下令 writeMemory（参照
+            // skill-dodge 的注释精神），改成人格级动机，能不能自己认出该记下来
+            // 才是这个场景要观察的。
+            goal: "查清镇上的命案，同时留意谁的话信不过——尤其是嘴上信誓旦旦的人。",
             todayMemories: [
               {
                 type: "witness",
@@ -350,7 +356,7 @@ export const TOOL_SCENARIOS: SimScenario[] = [
         actors: [
           {
             npc: "Shandra Hernandez",
-            goal: "把这条时间线钉死再决定要不要摊牌；想通了什么要先记下来。",
+            goal: "把这条时间线钉死，再决定要不要当面跟他摊牌。",
             todayMemories: [
               {
                 type: "witness",
@@ -368,7 +374,7 @@ export const TOOL_SCENARIOS: SimScenario[] = [
         actors: [
           {
             npc: "Mrs. Barklyite (Lucia Shiny)",
-            goal: "在开庭前找出对方证据链上的漏洞，任何发现都要立刻记录备查。",
+            goal: "在开庭前找出对方证据链上能拿来用的漏洞，越细越好。",
             todayMemories: [
               {
                 type: "event",
@@ -389,7 +395,7 @@ export const TOOL_SCENARIOS: SimScenario[] = [
         actors: [
           {
             npc: "Vincent Galenus",
-            goal: "弄清那晚到底是谁下的医嘱，哪怕结果指向你自己；每一个发现都要记下来。",
+            goal: "弄清那晚到底是谁下的医嘱，哪怕结果指向你自己。",
             todayMemories: [
               {
                 type: "event",
@@ -400,7 +406,7 @@ export const TOOL_SCENARIOS: SimScenario[] = [
           },
           {
             npc: "Nancy Charlotte",
-            goal: "把花送到病房去，顺便看看有没有人需要帮忙。",
+            goal: "把花送到那间病房去，顺便问问病人这几天恢复得怎么样。",
           },
         ],
       },
@@ -410,7 +416,7 @@ export const TOOL_SCENARIOS: SimScenario[] = [
         actors: [
           {
             npc: "Lux Lynch",
-            goal: "别被查到；任何风吹草动都要先在心里记下来，再决定怎么应对。",
+            goal: "别被查到；他要是话里有话，你得先摸清他到底想套什么，再决定怎么应对。",
             todayMemories: [
               {
                 type: "witness",

@@ -390,7 +390,11 @@ export function invalidRefsOf(
       else chr(c.to, "to");
       break;
     case "item.create":
-      scn(c.location, "location");
+      // Same holder grammar as item.move's `to` (see DGSM.createItem):
+      // "scene:<id>" or a character id.
+      if (c.location.startsWith("scene:"))
+        scn(c.location.slice("scene:".length), "location");
+      else chr(c.location, "location");
       break;
     case "scene.addCondition":
     case "scene.removeCondition":

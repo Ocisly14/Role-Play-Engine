@@ -12,6 +12,7 @@ import type { FeatureReadContext } from "../core/featureReadContext.js";
 import type { ActionStep, MovementStep, StateChange } from "../core/types.js";
 import {
   buildMovementRouteIgnoringBlocks,
+  nearestRoadPosition,
   resolveTargetPosition,
 } from "../shared/pathfinding.js";
 import { getActionSubsystemDgsm } from "./actionContext.js";
@@ -64,7 +65,12 @@ export const movementSubsystem: ActionSubsystem = {
 
     const destination = readDestination(step);
     if (!destination) {
-      return failure("missing destination");
+      // Feedback matters as much as the failure: without a memory the
+      // character never learns the move went nowhere and re-issues it.
+      return failure(
+        "missing destination",
+        noPathMemory(step.characterId, undefined)
+      );
     }
 
     const currentPosition = dgsm.getCharacterPosition(step.characterId);
@@ -117,12 +123,23 @@ export const movementSubsystem: ActionSubsystem = {
     }
 
     const topology = dgsm.getTopology();
-    const targetPosition = resolveTargetPosition(destination, topology, dgsm);
+    let targetPosition = resolveTargetPosition(destination, topology, dgsm);
     if (!targetPosition) {
-      return failure(
-        "no path",
-        noPathMemory(step.characterId, destination)
-      );
+      return failure("no path", noPathMemory(step.characterId, destination));
+    }
+    // A road destination with no explicit "@position" ("去那条街" / an
+    // outline whose entry is a road) means "get onto that road" — snap to
+    // the end nearest to the mover instead of the default midpoint.
+    if (targetPosition.type === "road" && !destination.includes("@")) {
+      targetPosition = {
+        ...targetPosition,
+        position: nearestRoadPosition(
+          currentPosition,
+          targetPosition.roadId,
+          topology,
+          dgsm
+        ),
+      };
     }
 
     const route = buildMovementRouteIgnoringBlocks(
@@ -132,10 +149,7 @@ export const movementSubsystem: ActionSubsystem = {
       dgsm
     );
     if (!route) {
-      return failure(
-        "no path",
-        noPathMemory(step.characterId, destination)
-      );
+      return failure("no path", noPathMemory(step.characterId, destination));
     }
 
     if (route.steps.length === 0) {
@@ -257,15 +271,23 @@ function failure(
   return { stateChanges, completed: false, failed: { reason } };
 }
 
-/** memory.event feedback for an unroutable destination — without it the
- *  agent never learns the move failed (its next perception still shows the
- *  old scene) and re-issues the same departure every tick. */
-function noPathMemory(characterId: string, destination: string): StateChange[] {
+/** memory.event feedback for an unroutable (or unstated) destination —
+ *  without it the agent never learns the move failed (its next perception
+ *  still shows the old scene) and re-issues the same departure every tick.
+ *  The wording nudges the character toward re-deciding: name a different,
+ *  real place, or check the map first. */
+function noPathMemory(
+  characterId: string,
+  destination: string | undefined
+): StateChange[] {
+  const content = destination
+    ? `I tried to head for "${destination}" but couldn't work out a way to get there from here. That may not be an actual place I can walk to — I should pick a real destination, or check the map first.`
+    : "I meant to set off but never settled on where to go. I should decide on an actual destination first.";
   return [
     {
       kind: "memory.event",
       characterId,
-      content: `I tried to head for "${destination}" but couldn't work out a way to get there from here.`,
+      content,
     } as StateChange,
   ];
 }

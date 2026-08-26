@@ -49,8 +49,11 @@ export const WORLD_SCENARIOS: SimScenario[] = [
             goal: "柜子里那只金怀表值一个月的房钱。没钥匙没工具，砸开它，拿了就走。",
           },
         ],
+        // 怀表必须真实布上场：只写在场景条件的文字里的话，agent 想拿它时
+        // 只能自造一个 item id，被 citation 防护拦下（实测两轮都撞上）。
+        sceneItems: ["watch"],
         sceneConditions: [
-          "靠墙的玻璃展示柜锁着，里面一只金怀表垫在绒布上，屋里暂时没人",
+          "靠墙的玻璃展示柜锁着，那只金怀表就锁在柜中的绒布上，屋里暂时没人",
         ],
       },
       {
@@ -122,9 +125,11 @@ export const WORLD_SCENARIOS: SimScenario[] = [
             hp: 10,
           },
         ],
+        // 未布 kit：有意设计——观察这位循规蹈矩的老站务手头没有医疗资源时
+        // 怎么按流程处置自己的伤情（求助 vs 徒手应付），而不是默认给资源。
         openingEvent: {
           description:
-            "装满行李的推车顺着坡道冲下来，把他整个人撞翻在月台上，箱子散了一地",
+            "装满行李的推车顺着坡道冲下来，车角正撞在他的右腿上，把他整个人带倒摔在月台上，箱子散了一地",
           impact: 2,
           harm: {
             target: "Haran Greenwood",
@@ -143,7 +148,9 @@ export const WORLD_SCENARIOS: SimScenario[] = [
             hp: 9,
           },
         ],
-        sceneItems: ["kit"],
+        // 怀表是真实道具（watch）：goal 点名"这只怀表"，不布上场会让 agent
+        // 想接着手上的活时只能自造一个 item id，被 citation 拦下。
+        sceneItems: ["kit", "watch"],
         openingEvent: {
           description:
             "拆到一半的主发条突然崩开，钢条抽在他手背上，豁开一道往外渗血的口子",
@@ -188,6 +195,8 @@ export const WORLD_SCENARIOS: SimScenario[] = [
           },
         ],
         sceneConditions: ["这层楼的木地板到处发黑发软，踩上去咯吱作响"],
+        // 未布 kit：有意设计——这个角色的 goal 只盯着任务、没有自我照护的
+        // 语境，观察他是无视伤情硬撑，还是被迫先处理伤口。
         openingEvent: {
           description:
             "他脚下的朽木地板整块塌了下去，一条腿直接陷进洞里，断茬扎进小腿",
@@ -212,12 +221,15 @@ export const WORLD_SCENARIOS: SimScenario[] = [
         actors: [
           {
             npc: "Solomon",
-            goal: "把这本新收来的抄本逐页检视清楚，判断它的真伪和来路。",
+            // "抄本"没有对应道具；剪报是 notebook 本身就夹带的东西，把插图
+            // 挪到剪报上，避免 agent 细看时引用一个不存在的手抄本 item id。
+            goal: "把新到手的这沓剪报逐张核对清楚，判断线索的真伪和来路。",
+            items: ["notebook"],
           },
         ],
         openingEvent: {
           description:
-            "抄本夹页里那张插图上的东西缓缓转过头来，正对上他的视线——他清清楚楚看见它动了",
+            "笔记本里夹着的一张剪报配图上，那东西缓缓转过头来，正对上他的视线——他清清楚楚看见它动了",
           impact: 2,
           harm: { target: "Solomon", san: -4 },
         },
@@ -228,12 +240,14 @@ export const WORLD_SCENARIOS: SimScenario[] = [
         actors: [
           {
             npc: "Nancy Charlotte",
-            goal: "关店前把后巷的垃圾倒掉，早点回家。",
+            // 模组里花店周边没有"后巷"场景；改成她留在店内、透过临街玻璃
+            // 门目击对面的墙，不发明新场景。
+            goal: "打烊前把柜台账目核对完，锁门回家。",
           },
         ],
         openingEvent: {
           description:
-            "后巷的阴影里立着一个人形的东西，贴着墙一动不动；数到第三个呼吸，它沿着砖墙垂直向上爬走了",
+            "临街的玻璃门外，街对面墙根的阴影里蹲着一个人形的轮廓，一动不动；数到第三个呼吸，它贴着砖墙垂直爬了上去，消失在檐口后面",
           impact: 2,
           harm: { target: "Nancy Charlotte", san: -5 },
         },

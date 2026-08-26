@@ -13,7 +13,8 @@ export type PropKey =
   | "lockpick"
   | "pistol"
   | "kit"
-  | "key";
+  | "key"
+  | "watch";
 
 export interface CaseActor {
   /** NPC id from ACTOR_ROSTER. The FIRST actor is the protagonist the case is

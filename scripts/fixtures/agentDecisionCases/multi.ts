@@ -60,7 +60,7 @@ export const MULTI_SCENARIOS: SimScenario[] = [
           },
           {
             npc: "Haran Greenwood",
-            goal: "不想惹麻烦，谁的话都先听着，能不表态就不表态。",
+            goal: "两头都不想得罪，也怕真惹上麻烦——找个由头把这场谈话应付过去，别点头答应，也别把哪边惹毛了。",
           },
           {
             npc: "Philip Scaletta",
@@ -89,22 +89,23 @@ export const MULTI_SCENARIOS: SimScenario[] = [
         ],
       },
       {
-        label: "一本书两个买家",
+        label: "一块石板两个买家",
         ticks: 6,
         actors: [
           {
             npc: "Solomon",
-            goal: "决定这本书卖不卖、卖给谁——出高价的那位来路不明，压价的这位是老主顾。",
+            goal: "决定这块石板卖不卖、卖给谁——出高价的那位来路不明，压价的这位是老主顾。",
           },
           {
             npc: "Marks White",
-            goal: "用老交情把价压下来，这本书转手就是三倍利。",
+            goal: "用老交情把价压下来，这块石板转手就是三倍利。",
           },
           {
             npc: "Angela",
-            goal: "当场出三倍价买走那本书，别让那个钟表匠截走。",
+            goal: "当场出三倍价买下这块石板，别让那个钟表匠截走。",
           },
         ],
+        sceneItems: ["symbol"],
       },
     ],
   },
@@ -209,26 +210,26 @@ export const MULTI_SCENARIOS: SimScenario[] = [
         ],
       },
       {
-        label: "毒贩躲盘查",
+        label: "毒贩觉出被盯梢",
         ticks: 10,
         actors: [
           {
             npc: "Angela",
-            goal: "那个警察已经盯上你了。立刻动身去{{destName}}，把他甩开。",
+            goal: "街面上像是有人在盯你送货的路子，保不齐是市长那边的眼线。趁现在还没被咬住，把货送到{{destName}}，越快越好。",
           },
           {
             npc: "Lux Lynch",
-            goal: "跟住这个女人，看她把东西送到哪儿——跟丢了你没法交差。",
+            goal: "市长要你盯死这个女人，看她到底把货送到哪儿——这差事你不想接，但不能不办，交不出结果他饶不了你。",
           },
         ],
       },
       {
-        label: "猎人跟踪生人",
+        label: "猎人盯梢老对头",
         ticks: 10,
         actors: [
           {
             npc: "Johnny",
-            goal: "这个生面孔不对劲。他去哪你跟到哪，弄清他到底要干什么。",
+            goal: "又是这个混混——上次他敢骚扰海伦，这次躲躲闪闪的准没干净事。他去哪你跟到哪，弄清他到底在搞什么。",
           },
           {
             npc: "Philip Scaletta",
