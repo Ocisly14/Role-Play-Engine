@@ -21,7 +21,7 @@ Search your memories for something specific. Today's events / witness are alread
 - More than 10 times per decision — capped
 
 ## Output
-{ "tool": "recallMemory", "query": "<keyword phrase>", "types": ["<type>", ...], "gameDates": ["YYYY-MM-DD", ...], "limit": <1-20> }
+recallMemory({ "query": "<keyword phrase>", "types": ["<type>", ...], "gameDates": ["YYYY-MM-DD", ...], "limit": <1-20> })
 
 All fields optional:
 - \`query\`: semantic search string (omit for chronological dump)
@@ -35,14 +35,14 @@ Max 10 \`recallMemory\` calls per decision.
 ## Examples
 
 Recalling a past conversation:
-{ "tool": "recallMemory", "query": "Smith said about the harbor" }
+recallMemory({ "query": "Smith said about the harbor" })
 
 Listing your beliefs about a person:
-{ "tool": "recallMemory", "query": "Smith", "types": ["belief"] }
+recallMemory({ "query": "Smith", "types": ["belief"] })
 
 Recent plans:
-{ "tool": "recallMemory", "types": ["plan"], "limit": 5 }
+recallMemory({ "types": ["plan"], "limit": 5 })
 
 What happened over the weekend:
-{ "tool": "recallMemory", "gameDates": ["1923-10-14", "1923-10-15"] }
+recallMemory({ "gameDates": ["1923-10-14", "1923-10-15"] })
 `;

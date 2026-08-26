@@ -28,10 +28,10 @@ Use this for **internal mental events** that you wouldn't otherwise leave a trac
 - Routine observations ("the room is dim") — these are perception, not memory
 
 ## Output
-{ "tool": "writeMemory", "type": "<type>", "content": "<text>" }
+writeMemory({ "type": "<type>", "content": "<text>" })
 
 For \`type=map\`:
-{ "tool": "writeMemory", "type": "map", "mapAdd": { "sceneNames": ["library"], "junctionNames": [], "roadNames": [], "revealHiddenConnection": "" } }
+writeMemory({ "type": "map", "mapAdd": { "sceneNames": ["library"], "junctionNames": [], "roadNames": [], "revealHiddenConnection": "" } })
 
 ## Cap
 Max 3 \`writeMemory\` calls per decision.
@@ -39,14 +39,14 @@ Max 3 \`writeMemory\` calls per decision.
 ## Examples
 
 Forming a belief from observation:
-{ "tool": "writeMemory", "type": "belief", "content": "Smith was at the library when I asked, but his coat was wet. He must have been outside earlier." }
+writeMemory({ "type": "belief", "content": "Smith was at the library when I asked, but his coat was wet. He must have been outside earlier." })
 
 Recording a plan:
-{ "tool": "writeMemory", "type": "plan", "content": "Tomorrow morning, head to the harbor before anyone notices I'm gone." }
+writeMemory({ "type": "plan", "content": "Tomorrow morning, head to the harbor before anyone notices I'm gone." })
 
 Writing a dated summary-style memory:
-{ "tool": "writeMemory", "type": "summary", "content": "[1923-10-17] Today I realized Smith is afraid of the harbor." }
+writeMemory({ "type": "summary", "content": "[1923-10-17] Today I realized Smith is afraid of the harbor." })
 
 Recording a discovered location:
-{ "tool": "writeMemory", "type": "map", "mapAdd": { "sceneNames": ["abandoned warehouse"] } }
+writeMemory({ "type": "map", "mapAdd": { "sceneNames": ["abandoned warehouse"] } })
 `;

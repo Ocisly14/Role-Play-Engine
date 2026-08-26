@@ -75,7 +75,7 @@ export function buildUserPromptSegments(
   }
 
   if (ctx.currentAction) {
-    sections.push(`## Currently doing\n"${ctx.currentAction.actionText}"`);
+    sections.push(`## Currently doing\n"${ctx.currentAction.description}"`);
   }
 
   if (ctx.recentMemory.length > 0) {
@@ -90,31 +90,31 @@ export function buildUserPromptSegments(
     );
   }
 
-  if (ctx.formatErrorFeedback) {
+  if (ctx.rejectionFeedback) {
     volatile.push(
-      `## Your previous action was REJECTED (format error)
-The engine could not parse the actionText of your last \`act\` call:
-${ctx.formatErrorFeedback}
+      `## Your previous action was REJECTED
+The engine did not accept your last \`act\` call:
+${ctx.rejectionFeedback}
 
-Re-issue the SAME intended action with valid formatting: \`[narrative]\` on
-its own line, real line breaks (never a literal backslash-n), and one
-\`[references]\` line for every [N] cited.`
+This is factual feedback, not something that happened in the world. Decide
+again: fix the rejected field (use only entity ids listed in your
+perception, a positive tick count, a real skill name) or choose a
+different action.`
     );
   }
 
   const langName = opts.language?.startsWith("zh") ? "Chinese" : "English";
-  // The perception sections above are rendered as `[narrative]` /
-  // `[references]` blocks, which is also the shape of `act`'s actionText.
-  // Naming that explicitly still matters: the model has to put the narrative
-  // INSIDE the tool argument rather than answering in that shape. The
-  // envelope itself is now enforced by the API (a tool call is required), so
-  // this no longer has to describe JSON.
+  // The perception sections above may carry [narrative] / [references]
+  // scaffolding; the model must not answer in that shape. Its `act` output is
+  // structured fields — prose goes in `description`, entity ids in
+  // `objectRefs`. The envelope itself is enforced by the API (a tool call is
+  // required), so this doesn't have to describe JSON.
   volatile.push(
     `## Decide
-Everything above is INPUT you have read — including any [narrative] /
-[references] blocks, which are the world describing itself TO you. Do not
-answer in that shape: the narrative belongs inside the \`actionText\`
-argument of the \`act\` tool.
+Everything above is INPUT you have read — the world describing itself TO
+you. Any entity ids listed in your perception are the ONLY ids you may put
+in \`objectRefs\`. Your in-character prose goes in \`description\` (and the
+exact words you speak in \`utterance\`).
 
 Call one tool now. Write content in ${langName}.`
   );

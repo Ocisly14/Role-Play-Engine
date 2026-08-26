@@ -1,4 +1,12 @@
 import type { DynamicGameStateManager } from "../../state/DynamicGameState.js";
+import { ActionStore } from "../actions/actionStore.js";
+import { CommandInbox } from "../actions/commandInbox.js";
+import {
+  ACTION_SCHEMA_VERSION,
+  type ActionCommand,
+  type ActionReceipt,
+  type EngineAction,
+} from "../actions/types.js";
 import type { ScriptedEvent } from "../scriptedEvents/types.js";
 import type { SubsystemRegistry } from "../subsystem/registry.js";
 import { ActionIntake } from "./actionIntake.js";
@@ -24,6 +32,16 @@ import type {
 } from "./types.js";
 
 export interface TickEngine {
+  /** Submit a trusted ActionCommand (built by commandBuilder). Idempotent by
+   *  commandId: resubmitting the same command returns the same actionId and
+   *  never mints a second action. Returns a receipt, not a world outcome. */
+  submitCommand(command: ActionCommand): Promise<ActionReceipt>;
+  /** All EngineActions (any status) belonging to this actor. */
+  getActorActions(actorId: string): ReadonlyArray<EngineAction>;
+  getAction(actionId: string): EngineAction | undefined;
+
+  /** @deprecated Legacy interpreter path — dies with the tickOrchestrator
+   *  rewrite (plan Phase 8/11). No production caller remains. */
   submitAction(input: ActionInput): Promise<ActionHandle>;
   /** Cancel all live steps on this handle. Optional `reason` is passed to the
    *  resolver re-run on next tick (active steps only) so the partial
@@ -42,11 +60,19 @@ export interface TickEngine {
   getActionStatus(handle: ActionHandle): ActionStatus;
   getActorQueue(characterId: string): ReadonlyArray<ActionStep>;
 
-  serialize(): {
-    queue: ActionStep[];
-    dexByActor: Record<string, number>;
-    connectionVotes: Record<string, { featureId: string; reason: string }[]>;
-  };
+  serialize(): TickEnginePersistedState;
+}
+
+export interface TickEnginePersistedState {
+  /** Snapshots with a different (or absent) version are rejected outright —
+   *  no legacy read mode (decision 2026-08-26). */
+  actionSchemaVersion: number;
+  inbox: ActionCommand[];
+  actions: EngineAction[];
+  /** Legacy interpreter-path state; removed with plan Phase 8/11. */
+  queue: ActionStep[];
+  dexByActor: Record<string, number>;
+  connectionVotes: Record<string, { featureId: string; reason: string }[]>;
 }
 
 export interface CreateTickEngineOptions {
@@ -70,11 +96,7 @@ export interface CreateTickEngineOptions {
   tickDurationMinutes: number;
   /** Session language code (e.g., "en", "zh") — passed through to ScannerContext. */
   lang: string;
-  persistedState?: {
-    queue: ActionStep[];
-    dexByActor: Record<string, number>;
-    connectionVotes: Record<string, { featureId: string; reason: string }[]>;
-  };
+  persistedState?: TickEnginePersistedState;
 }
 
 export function createTickEngine(opts: CreateTickEngineOptions): TickEngine {
@@ -89,7 +111,18 @@ export function createTickEngine(opts: CreateTickEngineOptions): TickEngine {
     getActorDex: opts.getActorDex,
     getNow: () => opts.dgsm.getGameDateTime(),
   });
+  const inbox = new CommandInbox();
+  const actionStore = new ActionStore();
   if (opts.persistedState) {
+    if (opts.persistedState.actionSchemaVersion !== ACTION_SCHEMA_VERSION) {
+      throw new Error(
+        `TickEngine snapshot has actionSchemaVersion ${JSON.stringify(
+          opts.persistedState.actionSchemaVersion
+        )}, expected ${ACTION_SCHEMA_VERSION}. Legacy snapshots are not supported — start a fresh session.`
+      );
+    }
+    inbox.rehydrate(opts.persistedState.inbox);
+    actionStore.rehydrate(opts.persistedState.actions);
     queue.rehydrate(
       opts.persistedState.queue,
       new Map(Object.entries(opts.persistedState.dexByActor))
@@ -121,6 +154,41 @@ export function createTickEngine(opts: CreateTickEngineOptions): TickEngine {
   }
 
   return {
+    async submitCommand(command) {
+      // Idempotency: a command that already produced an action (drained or
+      // not) returns the original receipt shape — never a second action.
+      const existing = actionStore.getByCommandId(command.commandId);
+      if (existing) {
+        return {
+          accepted: true,
+          actionId: existing.id,
+          status: "queued",
+        };
+      }
+      // Boundary invariant (plan §4.3): declaredSkillId ⇔ skillRoll. A
+      // command violating it never came from the trusted builder.
+      if (
+        (command.declaredSkillId === undefined) !==
+        (command.skillRoll === undefined)
+      ) {
+        return {
+          accepted: false,
+          status: "rejected",
+          reason:
+            "declaredSkillId and skillRoll must both be present or both be absent",
+        };
+      }
+      const action = actionStore.createFromCommand(
+        command,
+        opts.dgsm.getGameDateTime()
+      );
+      inbox.add(command);
+      return { accepted: true, actionId: action.id, status: "queued" };
+    },
+
+    getActorActions: (actorId) => actionStore.getActorActions(actorId),
+    getAction: (actionId) => actionStore.get(actionId),
+
     submitAction: (input) => intake.submit(input),
 
     cancelAction(handle, reason) {
@@ -167,6 +235,9 @@ export function createTickEngine(opts: CreateTickEngineOptions): TickEngine {
 
     serialize() {
       return {
+        actionSchemaVersion: ACTION_SCHEMA_VERSION,
+        inbox: inbox.serialize(),
+        actions: actionStore.serialize(),
         queue: queue.serialize(),
         dexByActor: Object.fromEntries(queue.getDexSnapshot()),
         connectionVotes: applier.serializeConnectionVotes(),

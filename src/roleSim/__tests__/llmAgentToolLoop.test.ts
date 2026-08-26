@@ -97,12 +97,30 @@ describe("agent tool loop", () => {
 
   it("ends the decision on a clean terminal turn", async () => {
     queueTurns(
-      turn([{ id: "t1", name: "act", args: { actionText: "[narrative]\nHi" } }])
+      turn([
+        {
+          id: "t1",
+          name: "act",
+          args: {
+            description: "I greet the room.",
+            objectRefs: [],
+            proposedDurationTicks: 1,
+            utterance: "Hi",
+          },
+        },
+      ])
     );
 
     const decision = await makeAgent().decideNext(ctx);
 
-    expect(decision).toEqual({ tool: "act", actionText: "[narrative]\nHi" });
+    expect(decision).toEqual({
+      tool: "act",
+      description: "I greet the room.",
+      objectRefs: [],
+      proposedDurationTicks: 1,
+      skillId: undefined,
+      utterance: "Hi",
+    });
     expect(generateToolCalls).toHaveBeenCalledTimes(1);
   });
 
@@ -132,15 +150,40 @@ describe("agent tool loop", () => {
     queueTurns(
       turn([
         { id: "t1", name: "recallMemory", args: { query: "a" } },
-        { id: "t2", name: "act", args: { actionText: "too soon" } },
+        {
+          id: "t2",
+          name: "act",
+          args: {
+            description: "too soon",
+            objectRefs: [],
+            proposedDurationTicks: 1,
+          },
+        },
       ]),
-      turn([{ id: "t3", name: "act", args: { actionText: "now" } }])
+      turn([
+        {
+          id: "t3",
+          name: "act",
+          args: {
+            description: "now",
+            objectRefs: [],
+            proposedDurationTicks: 2,
+          },
+        },
+      ])
     );
 
     const decision = await makeAgent().decideNext(ctx);
 
     // The mixed turn did not terminate; the later clean turn did.
-    expect(decision).toEqual({ tool: "act", actionText: "now" });
+    expect(decision).toEqual({
+      tool: "act",
+      description: "now",
+      objectRefs: [],
+      proposedDurationTicks: 2,
+      skillId: undefined,
+      utterance: undefined,
+    });
     expect(dispatchInstantTool).toHaveBeenCalledTimes(1);
 
     const toolMessage = messagesOnCall(1).find((m) => m.role === "tool");

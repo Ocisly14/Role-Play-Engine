@@ -7,6 +7,7 @@
 // controller. No native Anthropic tool_use API — same generateText +
 // parseJsonResponse path as the rest of the project.
 
+import type { ActionObjectRef } from "../engine/actions/types.js";
 import type { NpcMemoryManager } from "../memory/NpcMemoryManager.js";
 import { ModelClass, generateToolCalls } from "../models/index.js";
 import type {
@@ -168,8 +169,25 @@ export class LLMRoleSimAgent implements RoleSimAgent {
     [k: string]: unknown;
   }): RoleSimDecision {
     if (parsed.tool === "act") {
-      const actionText = String(parsed.actionText ?? "");
-      return { tool: "act", actionText };
+      // Pass the raw args through with only light shape coercion. Real
+      // validation (ref scope, duration bounds, skill existence) is the
+      // trust boundary's job in commandBuilder/commandValidator — errors
+      // there come back to the agent as rejection feedback.
+      const refs = Array.isArray(parsed.objectRefs) ? parsed.objectRefs : [];
+      return {
+        tool: "act",
+        description: String(parsed.description ?? ""),
+        objectRefs: refs as ActionObjectRef[],
+        proposedDurationTicks: Number(parsed.proposedDurationTicks),
+        skillId:
+          typeof parsed.skillId === "string" && parsed.skillId.trim() !== ""
+            ? parsed.skillId
+            : undefined,
+        utterance:
+          typeof parsed.utterance === "string" && parsed.utterance !== ""
+            ? parsed.utterance
+            : undefined,
+      };
     }
     return {
       tool: "continue",

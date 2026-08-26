@@ -28,22 +28,55 @@ const MEMORY_TYPES = [
 export const actTool: ToolSpec = {
   name: "act",
   description:
-    "Take one minute-scale beat in the world. Terminates this decision and consumes a tick. See the act section of the system prompt for granularity rules and the actionText format.",
+    "Declare the ONE thing you now set out to do in the world (intent only — the engine decides outcomes and real duration). Terminates this decision and consumes a tick. See the act section of the system prompt for granularity rules.",
   inputSchema: {
     type: "object",
     properties: {
-      actionText: {
+      description: {
         type: "string",
         description:
-          "Two labeled sections in one string: a [narrative] block (one short in-character sentence with [N] citation markers) followed by an optional [references] block mapping each [N] to `id: <entity-id>; kind: <character|item|scene>`.",
+          "One or two in-character sentences describing what you attempt and how — never its outcome.",
+      },
+      objectRefs: {
+        type: "array",
+        description:
+          "Entities the action involves. Each id MUST come from this tick's perception. Use [] when no entity is involved.",
+        items: {
+          type: "object",
+          properties: {
+            kind: { type: "string", enum: ["character", "item", "scene"] },
+            id: { type: "string" },
+            role: {
+              type: "string",
+              enum: ["target", "tool", "destination", "recipient"],
+              description:
+                "How you use this entity: acted upon (target), used to act (tool), moved toward (destination), given/told something (recipient).",
+            },
+          },
+          required: ["kind", "id"],
+          additionalProperties: false,
+        },
+      },
+      proposedDurationTicks: {
+        type: "integer",
+        minimum: 1,
+        description:
+          "How many ticks (1 tick = 1 in-world minute) you expect or are willing to invest. Your estimate only — the engine sets the authoritative duration.",
+      },
+      skillId: {
+        type: "string",
+        description:
+          "Optional: the skill you consciously bring to bear (e.g. \"Locksmith\"). Only when the action genuinely runs through it. Never values, difficulties or rolls.",
+      },
+      utterance: {
+        type: "string",
+        description:
+          "Optional: the exact words you speak, verbatim. Omit when silent.",
       },
     },
-    required: ["actionText"],
+    required: ["description", "objectRefs", "proposedDurationTicks"],
     additionalProperties: false,
   },
-  // Every property is required here, so strict validation is expressible on
-  // both providers.
-  strict: true,
 };
 
 export const continueTool: ToolSpec = {

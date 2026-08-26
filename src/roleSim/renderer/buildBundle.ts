@@ -68,15 +68,15 @@ function resolveScenePresentCharacters(
     .map((id): ScenePresentCharacter | null => {
       const profile = dgsm.getNpcProfile(id);
       if (!profile) return null;
-      const activeStep = engine
-        .getActorQueue(id)
-        .find((s) => s.status === "active");
+      const activeAction = engine
+        .getActorActions(id)
+        .find((a) => a.status === "active");
       return {
         id,
         name: profile.name,
         appearance: profile.appearance,
         conditions: profile.status?.conditions ?? [],
-        currentActionText: activeStep?.actionText,
+        currentActionText: activeAction?.command.description,
       };
     })
     .filter((c): c is ScenePresentCharacter => c !== null);
@@ -122,10 +122,11 @@ function resolveOwnAction(
     if (cancelled) return endedFrom(cancelled, "cancelled");
   }
 
-  const queue = engine.getActorQueue(npcId);
-  const active = queue.find((s) => s.status === "active");
+  const active = engine
+    .getActorActions(npcId)
+    .find((a) => a.status === "active");
   if (active) {
-    return { kind: "ongoing", actionText: active.actionText };
+    return { kind: "ongoing", actionText: active.command.description };
   }
 
   return { kind: "idle" };

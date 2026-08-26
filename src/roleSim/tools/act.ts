@@ -2,117 +2,97 @@
 
 export const actDoc = `---
 name: act
-description: Take one minute-scale beat in the world (substantive action plus the body language and movement that go with it). Terminates this decision (consumes a tick).
+description: Declare the ONE thing you now set out to do in the world. Terminates this decision (consumes a tick).
 ---
 
 # act
 
-Take ONE complete **minute-scale beat** — what someone living through the
-scene would consider "the next thing you did." Each \`act\` occupies about
-one game minute. Multi-minute intentions (cross-town travel, an hour of
-research, a lengthy search) span multiple ticks; submit only the next beat.
+Declare what you now set out to do. You express INTENT — what you attempt,
+with what, on whom, roughly how long you expect it to take. The world engine
+alone decides what actually happens: whether you succeed, how long it truly
+takes, how others react, what gets damaged. Never narrate outcomes as facts.
 
-## Granularity — minute-scale, not second-scale
+## Fields
 
-A beat is the dramatic unit you'd write into a screenplay: a substantive
-action (speak, examine, manipulate, move with purpose, use a skill, target
-another character) PLUS the body language, framing, and gaze that
-naturally accompany it — all wrapped into one sentence.
+- \`description\` (required): one or two sentences, in-character, describing
+  the action you undertake. Open-ended and composite actions are fine
+  ("I wedge the crowbar under the lid while keeping my voice low to calm
+  the boy"). Describe your attempt and manner — NOT its result. Wrong:
+  "I pick the lock open." Right: "I try to pick the lock with my picks."
+- \`objectRefs\` (required, may be empty \`[]\`): the entities your action
+  involves, as structured references:
+  \`{ "kind": "character"|"item"|"scene", "id": "<id>", "role"?: "target"|"tool"|"destination"|"recipient" }\`
+  - \`id\` MUST come from this tick's perception (it lists every id you may
+    cite). Inventing an id gets the action rejected.
+  - \`role\` says how YOU use the entity: \`target\` (acted upon),
+    \`tool\` (used to act), \`destination\` (moved toward),
+    \`recipient\` (given/told something).
+- \`proposedDurationTicks\` (required): how many ticks (1 tick = 1 in-world
+  minute) you expect or are willing to invest. This is YOUR estimate only —
+  the engine sets the real duration and may shorten or extend it.
+- \`skillId\` (optional): the skill you consciously bring to bear (e.g.
+  "Locksmith", "Persuade", "Spot Hidden"). Declare it ONLY when the action
+  genuinely runs through that skill. Never pick an unrelated high skill for
+  advantage — the engine checks whether the skill fits and an unfitting
+  skill gives no benefit. You never supply values, difficulties or rolls.
+- \`utterance\` (optional): the EXACT words you speak, verbatim, in your
+  character's voice. Omit when you say nothing. Paraphrase goes in
+  \`description\`; the literal line goes here.
 
-Wrong (second-scale fragments — DO NOT submit):
-- "我拉了拉他的袖子。"  ← 1 second of body language, no real beat
-- "我向前走了一步。"      ← 2 seconds of motion, no destination or purpose
-- "我清清嗓子。"          ← 3 seconds of throat-clear, no action
+## Granularity
 
-Right (minute-scale beats — submit these):
-- "我拽住他的袖子凑近，压低声音问：'今晚到底发现了什么？地点和通报人？'"
-- "我跟着他穿过走廊走向问讯室 [1]，一边低声追问'这事跟卡森德拉有关吗？'"
-- "我从抽屉里抽出案件笔记 [1] 摊在桌上，指着上面的时间线问：'你看这一段。'"
+One \`act\` = one coherent undertaking, from a single glance up to a long
+task (search a room, walk across town, repair an engine). Don't slice an
+undertaking into per-minute fragments — declare it once with an honest
+\`proposedDurationTicks\` and let it run; the engine advances it and tells
+you when it ends or when something interrupts.
 
-Rule of thumb: if the action takes < 10 seconds in real life and has no
-dialogue, no item interaction, and no skill use, it is **NOT an act** —
-fold it into the description of your next real beat, or \`continue\`.
+A pure body-language twitch (clearing your throat, shifting weight) is not
+an act — fold it into your next real action's description, or \`continue\`.
 
-## Meaningfulness — required
+## In-flight actions
 
-An \`act\` MUST change something perceptible: speak meaningful words,
-change position with purpose, manipulate an item, use a skill, or visibly
-target / affect another character. Pure body language alone (clearing
-throat, fidgeting, glancing) is description; the engine narrates you as
-continuing your current stance automatically.
+Calling \`act\` while an action is in flight REPLACES it: the engine
+resolves the interruption of the old action (keeping partial progress) and
+the start of the new one together. You never need to cancel first.
 
-## When to use
-- Start something new, or react to something that just happened.
-- Calling \`act\` while an action is in-flight CANCELS it and starts the new one.
+## Names vs ids
 
-## When NOT to use
-- Your current action is fine → \`continue\`.
-- Internal-only (forming a belief, planning) → \`writeMemory\`.
-- Pure body language with no state change → \`continue\`.
-
-## actionText format
-
-Two labeled sections in one string:
-
-  [narrative]
-  <One short sentence. Free prose, in-character voice. Insert numbered
-   references [1], [2], ... right after the entity you point at.>
-
-  [references]
-  [1] id: <entity-id>; kind: <character|item|scene>
-  [2] id: <entity-id>; kind: <character|item|scene>
-
-Rules:
-- \`id\` and \`kind\` are required. \`id\` MUST come from this tick's perception
-  (its [references] block lists every id you may cite). Inventing one is rejected.
-- Numbers are local to this action; reuse the same [N] for the same entity.
-- Every [N] in the narrative needs a matching reference line.
-- The references block is optional when no entity is cited.
-- Use REAL line breaks inside actionText. The \`\\n\` in the JSON examples
-  below is the JSON escape for a newline — never emit a literal backslash-n
-  character sequence in the string value.
-- Put \`[narrative]\` and \`[references]\` each at the start of their own
-  line, with the content on the following line(s).
-
-## Two layers — narrative vs. references
-
-These serve different purposes:
-
-- **Narrative** is your in-character voice. Use only names you actually know
-  in-game. If perception calls a stranger "the tall pale man", call them
-  that — unless you've separately learned their name (heard it spoken,
-  recalled from memory, etc.), in which case you may use it.
-- **References** is the system citation handle. \`id\` may "leak" the
-  canonical name (e.g. \`Hollins\`); that is meta-knowledge and must NOT
-  influence your in-character narrative.
-
-## Output JSON
-
-{ "tool": "act", "actionText": "[narrative]\\n<sentence>\\n\\n[references]\\n[1] id: ...; kind: ..." }
+- \`description\`/\`utterance\` are your in-character voice: use only names
+  you actually know in-game. If perception calls a stranger "the tall pale
+  man", call them that.
+- \`objectRefs.id\` is the system handle. An id may "leak" a canonical name
+  (e.g. \`Hollins\`); that is meta-knowledge and must NOT surface in your
+  in-character wording.
 
 ## Examples
 
-### KNOWN character + item
+\`act\` is a function call — you invoke the tool with these arguments (no
+wrapper object, no "tool" field).
 
-Perception had:
-  Person (KNOWN): Smith  (id: Smith)
-  Items in inventory: bound ledger [id: ITEM_SCN2_3]
+Try a lock with a skill and a tool:
+act({
+  "description": "I kneel at the cabinet and work the lock with my picks, listening for the tumblers.",
+  "objectRefs": [
+    { "kind": "item", "id": "cabinet_lock", "role": "target" },
+    { "kind": "item", "id": "ITEM_SCN2_7", "role": "tool" }
+  ],
+  "proposedDurationTicks": 3,
+  "skillId": "Locksmith"
+})
 
-{ "tool": "act", "actionText": "[narrative]\\nI hold up the ledger [1] and ask Smith [2] flatly, \\"What is the meaning of this?\\"\\n\\n[references]\\n[1] id: ITEM_SCN2_3; kind: item\\n[2] id: Smith; kind: character" }
+Speak to someone present:
+act({
+  "description": "I lean toward the tall pale man and press him quietly about tonight's discovery.",
+  "objectRefs": [ { "kind": "character", "id": "Hollins", "role": "target" } ],
+  "proposedDurationTicks": 1,
+  "utterance": "今晚到底发现了什么？地点和通报人？"
+})
 
-### UNKNOWN stranger you have never heard named
-
-Perception had:
-  Person (UNKNOWN): the tall pale man  (id: Hollins)
-
-Narrative uses the description (in-character). References uses the id.
-
-{ "tool": "act", "actionText": "[narrative]\\nI rise and incline my head toward the tall pale man [1], 'Good evening — to what do I owe...'\\n\\n[references]\\n[1] id: Hollins; kind: character" }
-
-### UNKNOWN stranger whose name you DID just learn
-
-Same person, but last tick you heard your housekeeper announce "A Professor
-Hollins to see you, sir." You now know his name in-character.
-
-{ "tool": "act", "actionText": "[narrative]\\nI rise — Hollins, of all nights — and incline my head toward [1], 'Good evening, Professor.'\\n\\n[references]\\n[1] id: Hollins; kind: character" }
+Head somewhere:
+act({
+  "description": "I set off through the drizzle toward the library, keeping to the lit side of the street.",
+  "objectRefs": [ { "kind": "scene", "id": "SCN_LIBRARY", "role": "destination" } ],
+  "proposedDurationTicks": 12
+})
 `;

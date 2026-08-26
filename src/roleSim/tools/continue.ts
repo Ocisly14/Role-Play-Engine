@@ -29,19 +29,19 @@ watch") does NOT happen unless you declare it with \`act\`.
 - You want to reflect / record something — use \`writeMemory\` (then loop back to \`continue\` or \`act\` to terminate)
 
 ## Output
-{ "tool": "continue", "reason": "<optional one-line justification>" }
+continue({ "reason": "<optional one-line justification>" })
 
 - \`reason\`: optional. One sentence explaining why you're continuing. Useful for debugging your own decisions.
 
 ## Examples
 
 You're already walking to the library and the trigger event was distant:
-{ "tool": "continue", "reason": "still heading to the library; the noise was outside" }
+continue({ "reason": "still heading to the library; the noise was outside" })
 
 Idle shopkeeper on a quiet morning — WRONG:
-{ "tool": "continue", "reason": "quiet morning, I keep tending the counter" }
+continue({ "reason": "quiet morning, I keep tending the counter" })
 (you are not tending the counter — no such action exists; use \`act\` to actually do it)
 
 Idle and deliberately motionless (rare, e.g. hiding frozen in a closet):
-{ "tool": "continue", "reason": "staying perfectly still until the footsteps pass" }
+continue({ "reason": "staying perfectly still until the footsteps pass" })
 `;

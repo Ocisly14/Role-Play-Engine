@@ -19,7 +19,7 @@ Inspect your current map — what places you know exist, hidden connections you'
 - Routine — capped at 1 per decision
 
 ## Output
-{ "tool": "getMapSnapshot" }
+getMapSnapshot({})
 
 No arguments. Returns a list of known scenes, junctions, roads, and revealed hidden connections.
 
@@ -29,5 +29,5 @@ Max 1 \`getMapSnapshot\` call per decision.
 ## Example
 
 You want to check if you've ever been told about a back alley:
-{ "tool": "getMapSnapshot" }
+getMapSnapshot({})
 `;

@@ -6,6 +6,7 @@
 // agent-facing types: the engine is the source of truth for in-flight state;
 // controller queries it on demand instead of mirroring it.
 
+import type { ActionObjectRef } from "../engine/actions/types.js";
 import type { GameTime } from "../engine/core/types.js";
 import type { NpcMemoryType } from "../memory/types.js";
 import type { DynamicNPCProfile } from "../state/types.js";
@@ -13,9 +14,14 @@ import type { DynamicNPCProfile } from "../state/types.js";
 export type RoleSimDecision =
   | {
       tool: "act";
-      actionText: string;
-      // targetCharacterIds removed (Phase H D2) — agent emits citations [Name]
-      // in actionText; GameInterpreter resolves to ActionStep.referencedEntities.
+      /** Structured intent (plan 2026-08-26 D2). Untrusted model output —
+       *  the controller's commandBuilder validates and wraps it into a
+       *  trusted ActionCommand. */
+      description: string;
+      objectRefs: ActionObjectRef[];
+      proposedDurationTicks: number;
+      skillId?: string;
+      utterance?: string;
     }
   | { tool: "continue"; reason?: string }
   | {
@@ -43,10 +49,11 @@ export interface RoleSimContext {
   currentTime: GameTime;
   npcProfile: DynamicNPCProfile;
   currentScene: string;
-  /** In-flight action, if any. NO handle field — handle is engine-internal.
-   *  When agent decides `act` while currentAction is defined, the controller
-   *  queries the engine for the active handle and cancels it (Decision 14). */
-  currentAction?: { actionText: string };
+  /** In-flight action, if any. NO engine ids — the engine is the source of
+   *  truth for in-flight state. When the agent decides `act` while
+   *  currentAction is defined, the controller submits a replacement command
+   *  (old action is interrupted at resolution time, never pre-cancelled). */
+  currentAction?: { description: string };
   recentMemory: ReadonlyArray<{
     type: string;
     content: string;
@@ -71,10 +78,10 @@ export interface RoleSimContext {
     gameDateTime: GameTime;
     narrative: string;
   }>;
-  /** Set on a format-retry pass: the engine rejected the agent's previous
-   *  `act` actionText with this parse error. Rendered as corrective feedback
-   *  so the agent can re-emit the same intent in valid form. */
-  formatErrorFeedback?: string;
+  /** Set on a retry pass: the intake rejected the agent's previous `act`
+   *  command with this structured reason (invalid ref, bad duration, unknown
+   *  skill, …). Rendered as factual feedback so the agent can re-decide. */
+  rejectionFeedback?: string;
 }
 
 export interface RoleSimAgent {

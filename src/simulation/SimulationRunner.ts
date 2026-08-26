@@ -178,9 +178,10 @@ export class SimulationRunner {
         result[npc.id] = null;
         continue;
       }
-      const queue = this.tickEngine?.getActorQueue(npc.id) ?? [];
-      const active = queue.find((s) => s.status === "active");
-      result[npc.id] = active?.actionText ?? null;
+      const active = (this.tickEngine?.getActorActions(npc.id) ?? []).find(
+        (a) => a.status === "active"
+      );
+      result[npc.id] = active?.command.description ?? null;
     }
     return result;
   }
@@ -778,6 +779,9 @@ export class SimulationRunner {
       this.deadNpcIds.add(npc.id);
 
       // (1) Cancel any in-flight engine action(s) for this NPC.
+      // TODO(plan Phase 8): route through the new interruption trigger so the
+      // dying NPC's EngineAction gets a proper interrupted transition. The
+      // legacy queue below is always empty on the new path (no-op).
       if (this.tickEngine) {
         const queue = this.tickEngine.getActorQueue(npc.id);
         const live = queue.find(

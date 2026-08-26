@@ -47,7 +47,7 @@ describe("buildUserPromptSegments", () => {
     const ctx = makeCtx({
       longTermIntent: "Find the missing ledger",
       perception: { narrative: "Dust hangs in the lamplight." },
-      currentAction: { actionText: "searching the shelves" },
+      currentAction: { description: "searching the shelves" },
     });
     const transcript = ['{"tool":"recallMemory"} -> 2 hits'];
 
@@ -74,16 +74,17 @@ describe("buildUserPromptSegments", () => {
     );
   });
 
-  it("tells the model not to answer in the [narrative] shape", () => {
+  it("routes prose to description and entity ids to objectRefs", () => {
     // Regression guard for the ~50% no-tool-call rate: the perception blocks
-    // above are themselves [narrative]/[references], and the model mirrored
+    // above may carry narrative scaffolding, and the model used to mirror
     // them instead of calling a tool. The API now enforces the envelope, but
-    // the narrative still has to land inside the `actionText` argument.
+    // the instruction still has to route prose into `description` and ids
+    // into `objectRefs`.
     const text = buildUserPrompt(makeCtx(), [], opts);
     const decide = text.slice(text.indexOf("## Decide"));
 
-    expect(decide).toContain("Do not\nanswer in that shape");
-    expect(decide).toContain("`actionText`");
+    expect(decide).toContain("`description`");
+    expect(decide).toContain("`objectRefs`");
     expect(decide).toContain("Write content in English.");
   });
 

@@ -37,6 +37,9 @@ const PRINCIPLES = `## Decision Principles
 - Memory writes are reflection, not narration. Only \`writeMemory\` when you
   genuinely formed a new thought / plan / belief / secret. The engine logs
   events automatically.
+- You declare intent; the world decides outcomes. Never describe an action's
+  result (success, damage, another's reaction) as having happened — the
+  engine resolves that and tells you.
 - Tool caps exist (recallMemory ≤ 10, writeMemory ≤ 3, getMapSnapshot ≤ 1
   per decision). Use them sparingly.
 - End every decision with exactly one terminal call: \`act\` or \`continue\`.`;

@@ -12,13 +12,14 @@
 // source of truth for in-flight state; the controller queries it on demand
 // instead of mirroring it.
 
+import { buildActionCommand } from "../engine/actions/commandBuilder.js";
+import type { EngineAction } from "../engine/actions/types.js";
 import type { TickEngine } from "../engine/core/tickEngine.js";
 import type {
   CharacterAction,
   FeatureEvent,
   TickReport,
 } from "../engine/core/types.js";
-import { ActionTextFormatError } from "../engine/interpreter/gameInterpreter.js";
 import { findAffectedCharacters } from "../engine/shared/impactPropagation.js";
 import type { NpcMemoryManager } from "../memory/NpcMemoryManager.js";
 import type { DynamicGameStateManager } from "../state/DynamicGameState.js";
@@ -376,69 +377,86 @@ export class NpcActionController {
     if (!ctx) return;
 
     let decision = await this.agent.decideNext(ctx);
-    const maxFormatRetries = 1;
+    const maxRejectionRetries = 1;
     for (let attempt = 0; ; attempt++) {
       // continue / (instant tools never reach here) — nothing to submit.
       if (decision.tool !== "act") return;
 
-      // Decision 14: cancel current action first if any. Engine is the
-      // source of truth for in-flight state — query it, do not mirror.
-      // Pass a `reason` so the orchestrator's resolver re-run produces a
-      // partial narrative reflecting why the agent switched. (Queried per
-      // attempt: the first attempt cancels, a format-retry finds none.)
-      const queue = this.engine.getActorQueue(npcId);
-      const live = queue.find(
-        (s) => s.status === "active" || s.status === "queued"
+      // D4: never pre-cancel. A live action becomes `replacesActionId`; the
+      // engine resolves the interruption and the new start together on the
+      // next tick's snapshot.
+      const live = this.liveActionFor(npcId);
+
+      // A rejected command must not crash the tick's NPC loop: the intake
+      // returns a structured reason, the agent gets ONE retry with that
+      // reason as factual feedback, then the decision is dropped (the agent
+      // decides again next tick).
+      const built = buildActionCommand(
+        npcId,
+        {
+          description: decision.description,
+          objectRefs: decision.objectRefs,
+          proposedDurationTicks: decision.proposedDurationTicks,
+          ...(decision.skillId !== undefined
+            ? { skillId: decision.skillId }
+            : {}),
+          ...(decision.utterance !== undefined
+            ? { utterance: decision.utterance }
+            : {}),
+        },
+        {
+          dgsm: this.dgsm,
+          ...(live ? { replacesActionId: live.id } : {}),
+        }
       );
-      if (live) {
-        // In-fiction phrasing: this string reaches the cancel re-resolve
-        // prompt (via buildCancelResolverAction, which strips the
-        // [narrative]/[references] scaffolding), and "agent switched to"
-        // is engine jargon a memory should never contain.
-        this.engine.cancelAction(
-          live.handle,
-          `the character turned to something else instead: ${decision.actionText}`
-        );
+
+      let rejectionReason: string | undefined;
+      if (built.ok) {
+        try {
+          const receipt = await this.engine.submitCommand(built.command);
+          if (receipt.accepted) return;
+          rejectionReason = receipt.reason ?? "command rejected";
+        } catch (err) {
+          console.warn(
+            `[NpcActionController] ${npcId} submitCommand failed; dropping this decision:`,
+            err instanceof Error ? err.message : err
+          );
+          return;
+        }
+      } else {
+        rejectionReason = built.reason;
       }
 
-      // Wrap submitAction so a single bad decision (e.g., the agent cited
-      // an entity that's no longer perceivable, malformed actionText, etc.)
-      // does NOT crash the entire tick's NPC loop. A parse-format rejection
-      // gets one retry with the error fed back to the agent; anything else
-      // (or a failed retry) is logged + skipped, and the agent gets another
-      // chance next tick.
-      try {
-        await this.engine.submitAction({
-          characterId: npcId,
-          actionText: decision.actionText,
-          sceneId: this.resolveCurrentSceneId(npcId),
-        });
-        return;
-      } catch (err) {
-        if (err instanceof ActionTextFormatError && attempt < maxFormatRetries) {
-          console.warn(
-            `[NpcActionController] ${npcId} actionText rejected (format); retrying with feedback:`,
-            err.message
-          );
-          decision = await this.agent.decideNext({
-            ...ctx,
-            formatErrorFeedback: err.message,
-          });
-          continue;
-        }
+      if (attempt < maxRejectionRetries) {
         console.warn(
-          `[NpcActionController] ${npcId} submitAction failed; dropping this decision:`,
-          err instanceof Error ? err.message : err
+          `[NpcActionController] ${npcId} act command rejected; retrying with feedback:`,
+          rejectionReason
         );
-        return;
+        decision = await this.agent.decideNext({
+          ...ctx,
+          rejectionFeedback: rejectionReason,
+        });
+        continue;
       }
+      console.warn(
+        `[NpcActionController] ${npcId} act command rejected after retry; dropping this decision:`,
+        rejectionReason
+      );
+      return;
     }
   }
 
+  /** The NPC's single live (active preferred, else queued) EngineAction. */
+  private liveActionFor(npcId: string): EngineAction | undefined {
+    const actions = this.engine.getActorActions(npcId);
+    return (
+      actions.find((a) => a.status === "active") ??
+      actions.find((a) => a.status === "queued")
+    );
+  }
+
   private npcHasActiveStep(npcId: string): boolean {
-    return this.engine
-      .getActorQueue(npcId)
-      .some((s) => s.status === "active" || s.status === "queued");
+    return this.liveActionFor(npcId) !== undefined;
   }
 
   private resolveCurrentSceneId(npcId: string): string {
@@ -463,10 +481,9 @@ export class NpcActionController {
       datePart(gameDateTime)
     );
 
-    const queue = this.engine.getActorQueue(npcId);
-    const active = queue.find((s) => s.status === "active");
-    const currentAction = active
-      ? { actionText: active.actionText }
+    const live = this.liveActionFor(npcId);
+    const currentAction = live
+      ? { description: live.command.description }
       : undefined;
 
     const bundle = buildPerceivedBundle({
