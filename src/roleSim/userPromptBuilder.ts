@@ -75,7 +75,20 @@ export function buildUserPromptSegments(
   }
 
   if (ctx.currentAction) {
-    sections.push(`## Currently doing\n"${ctx.currentAction.description}"`);
+    const bits: string[] = [];
+    if (ctx.currentAction.startedAt) {
+      bits.push(`started ${formatForPrompt(ctx.currentAction.startedAt)}`);
+    }
+    if (typeof ctx.currentAction.progressMinutes === "number") {
+      bits.push(`~${ctx.currentAction.progressMinutes} min in`);
+    }
+    if (typeof ctx.currentAction.resolvedDurationTicks === "number") {
+      bits.push(`expected ~${ctx.currentAction.resolvedDurationTicks} min total`);
+    }
+    const suffix = bits.length > 0 ? `\n(${bits.join(", ")})` : "";
+    sections.push(
+      `## Currently doing\n"${ctx.currentAction.description}"${suffix}`
+    );
   }
 
   if (ctx.recentMemory.length > 0) {

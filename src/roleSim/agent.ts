@@ -49,11 +49,17 @@ export interface RoleSimContext {
   currentTime: GameTime;
   npcProfile: DynamicNPCProfile;
   currentScene: string;
-  /** In-flight action, if any. NO engine ids — the engine is the source of
-   *  truth for in-flight state. When the agent decides `act` while
+  /** In-flight action, if any. Intent + progress + timing only — NO engine
+   *  ids or runtime internals. When the agent decides `act` while
    *  currentAction is defined, the controller submits a replacement command
    *  (old action is interrupted at resolution time, never pre-cancelled). */
-  currentAction?: { description: string };
+  currentAction?: {
+    description: string;
+    startedAt?: GameTime;
+    progressMinutes?: number;
+    /** Engine-decided total duration in ticks (1 tick = 1 minute). */
+    resolvedDurationTicks?: number;
+  };
   recentMemory: ReadonlyArray<{
     type: string;
     content: string;

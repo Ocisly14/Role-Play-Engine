@@ -110,8 +110,8 @@ describe("inventoryValidationTool", () => {
     }),
   });
 
-  it("locates a scene item and answers actor reach", () => {
-    const out = inventoryValidationTool.execute(
+  it("locates a scene item and answers actor reach", async () => {
+    const out = await inventoryValidationTool.execute(
       { itemId: "lamp", actorId: "npc_1" },
       ctx(dgsm)
     );
@@ -123,23 +123,23 @@ describe("inventoryValidationTool", () => {
     });
   });
 
-  it("locates an inventory item held by the actor", () => {
-    const out = inventoryValidationTool.execute(
+  it("locates an inventory item held by the actor", async () => {
+    const out = await inventoryValidationTool.execute(
       { itemId: "ledger", actorId: "npc_1" },
       ctx(dgsm)
     );
     expect(out.actor).toEqual({ holdsItem: true, canReach: true });
   });
 
-  it("flags duplicate ownership as a violation", () => {
-    const out = inventoryValidationTool.execute({ itemId: "dup" }, ctx(dgsm));
+  it("flags duplicate ownership as a violation", async () => {
+    const out = await inventoryValidationTool.execute({ itemId: "dup" }, ctx(dgsm));
     expect(out.exists).toBe(true);
     expect(out.uniqueOwnership).toBe(false);
     expect(out.locations).toHaveLength(2);
   });
 
-  it("reports a nonexistent item", () => {
-    const out = inventoryValidationTool.execute(
+  it("reports a nonexistent item", async () => {
+    const out = await inventoryValidationTool.execute(
       { itemId: "ghost", actorId: "npc_1" },
       ctx(dgsm)
     );
@@ -153,8 +153,8 @@ describe("inventoryValidationTool", () => {
 });
 
 describe("damageRollTool", () => {
-  it("rolls NdM+K with pinned dice", () => {
-    const out = damageRollTool.execute(
+  it("rolls NdM+K with pinned dice", async () => {
+    const out = await damageRollTool.execute(
       { formula: "2d6+1", fixedRolls: [3, 5] },
       ctx()
     );
@@ -167,8 +167,8 @@ describe("damageRollTool", () => {
     });
   });
 
-  it("adds a dice damage bonus after the formula dice", () => {
-    const out = damageRollTool.execute(
+  it("adds a dice damage bonus after the formula dice", async () => {
+    const out = await damageRollTool.execute(
       { formula: "1d6", damageBonus: "+1d4", fixedRolls: [4, 2] },
       ctx()
     );
@@ -181,8 +181,8 @@ describe("damageRollTool", () => {
     });
   });
 
-  it("supports flat formulas and negative flat bonuses", () => {
-    const out = damageRollTool.execute(
+  it("supports flat formulas and negative flat bonuses", async () => {
+    const out = await damageRollTool.execute(
       { formula: "3", damageBonus: "-1" },
       ctx()
     );
@@ -197,8 +197,8 @@ describe("damageRollTool", () => {
 
   it.each(["", "d6", "2x6", "1d", "abc"])(
     "rejects malformed formula %j",
-    (formula) => {
-      expect(damageRollTool.execute({ formula }, ctx())).toEqual({
+    async (formula) => {
+      expect(await damageRollTool.execute({ formula }, ctx())).toEqual({
         ok: false,
         reason: "invalid_formula",
       });
@@ -207,7 +207,7 @@ describe("damageRollTool", () => {
 });
 
 describe("opposedRollTool", () => {
-  it("rolls the defender's penalty-adjusted trained value", () => {
+  it("rolls the defender's penalty-adjusted trained value", async () => {
     const dgsm = makeDgsm({
       getNpcProfile: () => ({
         skills: { Dodge: 50 },
@@ -222,7 +222,7 @@ describe("opposedRollTool", () => {
         },
       }),
     });
-    const out = opposedRollTool.execute(
+    const out = await opposedRollTool.execute(
       { characterId: "npc_1", skillId: "Dodge", fixedRoll: 30 },
       ctx(dgsm)
     );
@@ -233,9 +233,9 @@ describe("opposedRollTool", () => {
     expect(out.record.successLevel).toBe("regular");
   });
 
-  it("rejects an unknown defense skill", () => {
+  it("rejects an unknown defense skill", async () => {
     expect(
-      opposedRollTool.execute(
+      await opposedRollTool.execute(
         { characterId: "npc_1", skillId: "Not A Skill" },
         ctx()
       )
@@ -244,7 +244,7 @@ describe("opposedRollTool", () => {
 });
 
 describe("pathfinding/movementCost delegation", () => {
-  it("summarizes a planned route", () => {
+  it("summarizes a planned route", async () => {
     planMovementRoute.mockReturnValue({
       ok: true,
       totalMinutes: 7,
@@ -266,7 +266,7 @@ describe("pathfinding/movementCost delegation", () => {
       ],
     });
 
-    const out = pathfindingTool.execute(
+    const out = await pathfindingTool.execute(
       { characterId: "npc_1", destinationId: "SCN_2" },
       ctx()
     );
@@ -287,10 +287,10 @@ describe("pathfinding/movementCost delegation", () => {
     );
   });
 
-  it("propagates unreachability and converts minutes to ticks", () => {
+  it("propagates unreachability and converts minutes to ticks", async () => {
     planMovementRoute.mockReturnValue({ ok: false, reason: "no_path" });
     expect(
-      pathfindingTool.execute(
+      await pathfindingTool.execute(
         { characterId: "npc_1", destinationId: "SCN_X" },
         ctx()
       )
@@ -303,7 +303,7 @@ describe("pathfinding/movementCost delegation", () => {
       steps: [],
     });
     expect(
-      movementCostTool.execute(
+      await movementCostTool.execute(
         { characterId: "npc_1", destinationId: "SCN_2" },
         ctx()
       )
@@ -312,7 +312,7 @@ describe("pathfinding/movementCost delegation", () => {
 });
 
 describe("clampValue", () => {
-  it("clamps into the inclusive range", () => {
+  it("clamps into the inclusive range", async () => {
     expect(clampValue(5, 0, 10)).toBe(5);
     expect(clampValue(-1, 0, 10)).toBe(0);
     expect(clampValue(11, 0, 10)).toBe(10);

@@ -11,6 +11,7 @@
 
 import { randomUUID } from "node:crypto";
 import { COC_SKILL_BASE_VALUES } from "../../planning/cocSkillList.js";
+import { getSkillReference } from "../rules/skillReference.js";
 import { isFumble, rollD100 } from "../shared/dice.js";
 import type { SkillRollRecord, SkillSuccessLevel } from "./types.js";
 
@@ -55,6 +56,12 @@ export function resolveSkillValue(
   if (trained) return { canonicalSkillId: trained.name, value: trained.value };
   const base = lookupBaseValue(skillId);
   if (base) return { canonicalSkillId: base.name, value: base.value };
+  // Skills documented in the reference catalog (rules/skills) but absent
+  // from the base-value table are still declarable — the catalog is what
+  // the agent sees, so the two sources must not disagree on existence.
+  // Untrained value defaults to 1.
+  const ref = getSkillReference(skillId);
+  if (ref) return { canonicalSkillId: ref.title, value: 1 };
   return undefined;
 }
 

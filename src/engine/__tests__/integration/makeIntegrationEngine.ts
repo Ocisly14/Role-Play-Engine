@@ -7,8 +7,8 @@ import type { SubsystemRegistry } from "../../subsystem/registry.js";
 /**
  * Layer-2 integration harness — wires a real TickEngine with the default
  * subsystem registry (weather, sun, fire, stamina, itemDamage, movement,
- * condition expiry), a stub interpretAction that forwards `__definitionId` +
- * the rest of `overlayFields` onto the ActionStep, and a no-op resolver.
+ * condition expiry) and a stub World Action Engine that resolves nothing
+ * (idle clock ticks: zero model calls, deterministic subsystems only).
  * Mirrors the pattern in
  * `core/__tests__/scriptedEventRunner.integration.test.ts` but adds DGSM
  * convenience seeders so individual chain tests stay focused on the assertion
@@ -48,23 +48,22 @@ export function makeIntegrationEngine(
     subsystemRegistry:
       opts.subsystemRegistry ?? createDefaultSubsystemRegistry(),
     scriptedEvents: [],
-    interpretAction: async (input) => ({
-      steps: [
-        {
-          definitionId:
-            (input.overlayFields?.__definitionId as string) ?? "noop",
-          actionText: input.actionText,
-          impact: 0,
-        } as never,
-      ],
-    }),
-    resolve: async () => ({
-      outcome: { stateChanges: [], elapsedMinutes: 0 } as never,
-      plannedDuration: 0,
-    }),
-    getActorDex: () => 50,
     tickDurationMinutes: opts.tickDurationMinutes ?? 1,
-    lang: "en",
+    // Tests never hit the real LLM session: fail every triggered action
+    // deterministically. Idle ticks never call this at all.
+    resolveTickFn: async (context) => {
+      const { finalizeResolution } = await import(
+        "../../resolution/worldDeltaValidator.js"
+      );
+      const finalized = finalizeResolution({ actions: [] }, context, []);
+      return {
+        resolution: finalized.resolution,
+        droppedViolations: finalized.droppedViolations,
+        codeToolInvocations: [],
+        judgements: {},
+        movementInits: {},
+      };
+    },
   });
 
   return {

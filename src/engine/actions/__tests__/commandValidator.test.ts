@@ -258,7 +258,7 @@ describe("buildActionCommand", () => {
     } as never;
     const result = buildActionCommand(
       "npc_1",
-      args({ skillId: "Spot Hidden" }),
+      args({ skillId: "Listen" }),
       { dgsm: noSkills }
     );
     expect(result.ok).toBe(true);

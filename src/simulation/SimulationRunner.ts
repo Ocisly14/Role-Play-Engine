@@ -5,25 +5,11 @@ import {
   createTickEngine,
 } from "../engine/core/tickEngine.js";
 import type {
-  ActionStep,
   CharacterAction as EngineCharacterAction,
   FeatureEvent,
-  PlannedOutcome,
   TickReport,
 } from "../engine/core/types.js";
-import type { ActionDefinitionRegistry } from "../engine/definitions/registry.js";
-import {
-  collectKnownLocations,
-  currentLocationOf,
-  interpretAction,
-} from "../engine/interpreter/gameInterpreter.js";
-import {
-  createDefaultDefinitions,
-  createDefaultSubsystemRegistry,
-} from "../engine/registerDefaults.js";
-import { buildCancelResolverAction } from "../engine/resolver/cancelPrompt.js";
-import { buildStateContext } from "../engine/resolver/stateContextBuilder.js";
-import { resolveState } from "../engine/resolver/stateResolver.js";
+import { createDefaultSubsystemRegistry } from "../engine/registerDefaults.js";
 import type { NpcMemoryManager } from "../memory/NpcMemoryManager.js";
 import { summarizeAllNpcDayMemory } from "../roleSim/dailySummarization.js";
 import { LLMRoleSimAgent } from "../roleSim/llmAgent.js";
@@ -88,7 +74,6 @@ export class SimulationRunner {
   private readonly sessionId: string;
   private readonly config: SimulationConfig;
   private readonly dgsm: DynamicGameStateManager;
-  private definitions: ActionDefinitionRegistry;
   private readonly language: string;
   private readonly memoryManager?: NpcMemoryManager;
   private readonly prisma: PrismaClient;
@@ -120,7 +105,6 @@ export class SimulationRunner {
   constructor(params: {
     config: SimulationConfig;
     dgsm: DynamicGameStateManager;
-    definitions: ActionDefinitionRegistry;
     language: string;
     memoryManager?: NpcMemoryManager;
     prisma: PrismaClient;
@@ -128,7 +112,6 @@ export class SimulationRunner {
     this.config = params.config;
     this.sessionId = params.config.sessionId;
     this.dgsm = params.dgsm;
-    this.definitions = params.definitions;
     this.language = params.language;
     this.memoryManager = params.memoryManager;
     this.prisma = params.prisma;
@@ -511,90 +494,16 @@ export class SimulationRunner {
       return { engine: this.tickEngine, controller: this.npcController };
     }
 
-    if (this.definitions.getAll().length === 0) {
-      this.definitions = createDefaultDefinitions();
-    }
-
     const subsystemRegistry = createDefaultSubsystemRegistry();
     const scriptedEvents = this.moduleName
       ? loadScriptedEventsForModule(this.moduleName)
       : [];
 
-    const definitionList = this.definitions.getAll();
-
-    // Movement destination candidates for the interpreter's Known Locations
-    // list. Session-stable, so it rides the cached system-prompt prefix.
-    const gameState = this.dgsm.getState();
-    const topology = this.dgsm.getTopology();
-    const knownLocations = collectKnownLocations({
-      scenarioOutlines: gameState.scenarioOutlines,
-      scenes: gameState.scenes,
-      junctions: topology.junctions,
-      roads: topology.roads,
-    });
-
     const engine = createTickEngine({
       dgsm: this.dgsm,
       subsystemRegistry,
       scriptedEvents,
-      interpretAction: async (input, directory) => {
-        const result = await interpretAction(
-          input.actionText,
-          definitionList,
-          this.language,
-          directory,
-          knownLocations,
-          currentLocationOf(this.dgsm, input.characterId)
-        );
-        return { steps: result.steps };
-      },
-      resolve: async (
-        step: ActionStep,
-        ctx: unknown,
-        cancel
-      ): Promise<{ outcome: PlannedOutcome; plannedDuration: number }> => {
-        const definition = this.definitions.get(step.definitionId);
-        if (!definition) {
-          return {
-            outcome: { stateChanges: [], elapsedMinutes: 0 },
-            plannedDuration: 0,
-          };
-        }
-        const stateContext = buildStateContext(
-          definition,
-          {
-            characterId: step.characterId,
-            referencedEntities: step.referencedEntities,
-          },
-          this.dgsm,
-          step.executionSceneId
-        );
-        // On cancel, wrap actionText with prompt directive so the resolver LLM
-        // produces a partial-progress outcome.
-        const actionForResolver = cancel
-          ? buildCancelResolverAction(step.actionText, cancel)
-          : step.actionText;
-
-        const resolved = await resolveState({
-          action: actionForResolver,
-          definition,
-          outcomeSection: definition.content,
-          stateContext,
-          language: this.language,
-        });
-        void ctx;
-        // Engine is source of truth for elapsed time on cancel.
-        const elapsedMinutes = cancel
-          ? cancel.elapsedMinutes
-          : resolved.elapsedMinutes;
-        return {
-          outcome: { stateChanges: resolved.stateChanges, elapsedMinutes },
-          plannedDuration: elapsedMinutes,
-        };
-      },
-      getActorDex: (id) => this.dgsm.getNpcProfile(id)?.attributes?.DEX ?? 50,
       tickDurationMinutes: 1,
-      lang: this.language,
       persistedState: this.pendingTickEngineState ?? undefined,
     });
 
@@ -778,16 +687,15 @@ export class SimulationRunner {
 
       this.deadNpcIds.add(npc.id);
 
-      // (1) Cancel any in-flight engine action(s) for this NPC.
-      // TODO(plan Phase 8): route through the new interruption trigger so the
-      // dying NPC's EngineAction gets a proper interrupted transition. The
-      // legacy queue below is always empty on the new path (no-op).
+      // (1) Interrupt any in-flight engine action(s) for this NPC — the
+      // Engine resolves the interruption next tick (proper transition, no
+      // silent drop).
       if (this.tickEngine) {
-        const queue = this.tickEngine.getActorQueue(npc.id);
-        const live = queue.find(
-          (s) => s.status === "active" || s.status === "queued"
-        );
-        if (live) this.tickEngine.cancelAction(live.handle);
+        for (const action of this.tickEngine.getActorActions(npc.id)) {
+          if (action.status === "active" || action.status === "queued") {
+            this.tickEngine.requestInterruption(action.id, "actor died");
+          }
+        }
       }
 
       // (2) Write death event memory (Decision 26). Use scene/junction/road

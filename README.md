@@ -159,49 +159,51 @@ hunched at the table, turning over the bound ledger[2] in his hands.
 [2] the bound ledger: thick leather, brass clasp
 ```
 
-**Agent → Engine.** When the agent acts, it cites entities in
-`actionText` by name in square brackets — drawn verbatim from the
-reference block it just read:
+**Agent → Engine.** When the agent acts it calls the single structured
+`act` tool — intent only, never outcomes:
 
+```jsonc
+act({
+  "description": "I kneel at the cabinet and work the lock with my picks.",
+  "objectRefs": [
+    { "kind": "item", "id": "cabinet_lock", "role": "target" },
+    { "kind": "item", "id": "ITEM_SCN2_7", "role": "tool" }
+  ],
+  "proposedDurationTicks": 3,
+  "skillId": "Locksmith"        // optional; utterance? carries exact speech
+})
 ```
-"ask [Smith] about [the bound ledger]"
-"approach [the gaunt man]"
-"hand [the bound ledger] to [Helen Park]"
-```
 
-**Engine resolution.** The `GameInterpreter` builds a per-actor
-*perceivable directory* — KNOWN people from the actor's relationship
-graph, plus UNKNOWN people / items / scenes currently in view — and
-resolves each `[Name]` to a typed `{ id, kind }` reference. The action's
-`referencedEntities` field becomes the single source of truth for "who
-or what this action is about." There is no parallel `targetCharacterIds`
-list to drift.
+**Trusted Action Intake.** The controller validates every ref against the
+actor's per-tick perceivable directory, stamps the trusted envelope
+(commandId / actorId / issuedAt / issuedSceneId / replacesActionId — the
+model can forge none of them), and if a skill was declared rolls it
+IMMEDIATELY from the real character value into an immutable
+`SkillRollRecord`. The result is an `ActionCommand` — the single action
+boundary between RoleSim and the Engine.
 
-### Why this format
+**Engine resolution.** Commands queue in the Engine's inbox. On a tick with
+a resolution trigger (new command, an active action reaching its
+`nextWakeAt`, a replacement, or an interruption) the Engine builds ONE
+full-world `EngineResolutionContext` and runs ONE World Action Engine
+session for ALL new and in-flight actions together. The session may call
+deterministic code tools (pathfinding, movement cost, inventory
+validation, opposed roll, damage dice) and must submit a single
+`TickResolution`: per-action transitions with Engine-owned
+`resolvedDurationTicks` + timing reasons, sourced `WorldDelta`s grouped by
+character/scene/item, and objective `Occurrence`s with perceiver character
+ids. A code validator enforces references, invariants, single transitions
+and roll consistency; one corrective retry, then invalid output is dropped
+and the affected actions fail. Idle clock ticks make ZERO model calls —
+deterministic subsystems (movement interpolation, weather, fire, stamina)
+still advance.
 
-Several reasons converge:
-
-1. **Renderer output is a 1:1 mirror of a paper.** Inline `[N]` plus a
-   reference block is one of the most heavily attested structures in LLM
-   pretraining (arXiv, PubMed, Wikipedia). The model is fluent at
-   producing it without being taught.
-2. **`[Name]` in `actionText` is wiki / footnote–flavored** — also a
-   high-prior pattern (Wikipedia internal links, markdown footnotes,
-   legal citations). Brackets around a token are an unambiguous "this is
-   a named referent" signal the model has seen millions of times.
-3. **It composes with prose.** JSON or XML target fields would split the
-   narrative; brackets stay readable inline and survive being written to
-   memory — `"ask [Smith] about [the letter]"` is self-describing even
-   out of context.
-4. **Format gives the prior; strict naming gives the precision.** The
-   contract requires verbatim names from the reference block — no
-   abbreviations, no aliases. Brackets make the model good at this; the
-   naming rule makes it exact.
-
-The result is a symmetric, low-ambiguity contract: characters, items,
-and scenes all use the same citation surface, every layer reads the same
-text, and `actionText` alone tells you what the action is and who it's
-against.
+**Per-character rendering.** Occurrences route to each listed perceiver;
+the Renderer combines them with that character's own state to decide what
+they actually perceive (sight vs sound-only per signals, unknown identities
+by description) and produces the first-person narrative the agent reads.
+Subjective event/witness memories are written from this rendered
+perception — never from god-eye engine text.
 
 ---
 
@@ -218,36 +220,23 @@ the only writer to world state.
 
 | Component              | Role                                                                  |
 | ---------------------- | --------------------------------------------------------------------- |
-| `Queue`                | Global ordered list of `ActionStep`s, indexed by actor                |
-| `ActionIntake`         | Accepts `ActionInput`, calls the interpreter, enqueues steps          |
-| `FeatureRunner`        | Per-tick passive systems (`weather`, `sun`, `fire`, `itemDamage`, `stamina`) |
+| `CommandInbox`         | Pending `ActionCommand`s between submit and first resolution          |
+| `ActionStore`          | Persisted `EngineAction` lifecycle (idempotent per commandId)         |
+| `WorldActionEngine`    | One global semantic resolution session per triggered tick             |
+| `worldDeltaValidator`  | Code-side contract enforcement + finalization                         |
+| `CodeToolRegistry`     | Deterministic capabilities (pathfinding, rolls, inventory…), audited  |
+| `movementRuntime`      | Per-tick deterministic route execution on `EngineAction.runtime`      |
 | `ScriptedEventRunner`  | Module-defined events that match on world state                       |
-| `EmergentEventEmitter` | Pluggable scanners (e.g. `EncounterScanner`)                          |
-| `Applier`              | Sole writer to `DynamicGameStateManager`                              |
-| `TickOrchestrator`     | Drives the per-tick phases and assembles `TickReport`                 |
+| `Applier`              | Sole writer to `DynamicGameStateManager`; consumes WorldDeltas natively |
+| `TickOrchestrator`     | Drives the tick phases and assembles `TickReport`                     |
 
-**Two execution paths per `ActionStep`:**
-
-- `engine: "llm"` — `stateResolver` (`resolver/stateResolver.ts`) makes one
-  LLM call, constrained by the action's `outputSchema`, and returns typed
-  `StateChange`s plus a planned duration.
-- `engine: "code"` — dispatched through `codeEngineRegistry` to a
-  deterministic subsystem. The current default is `movement`
-  (path-following across junctions and roads). Custom subsystems register
-  here.
-
-**Natural-language translation:** `gameInterpreter`
-(`interpreter/gameInterpreter.ts`) takes free-form `actionText` plus the
-registered `ActionDefinition`s and produces typed `InterpretedStep[]`.
-Skill-check definitions are split into opposed/single, `[Name]` citations
-are resolved against the entity directory, and impact hints flow through to
-downstream propagation.
-
-**Skills as the contract:** every action type is described by an
-`ActionDefinition` declaring which world state to read, which rules to
-honor, what the LLM is allowed to change, and what the typed output looks
-like. Adding a new domain (electrical repair, diving, social maneuver…) is
-a matter of writing a definition.
+**One rule set, no action types:** there are no per-action definitions and
+no natural-language interpreter. Every open-ended or composite action is
+resolved under the single rule document
+`src/engine/rules/world-action-resolution.md` (causality, state
+constraints, locality, engine-owned timing, conservation, roll-first
+assessment, concurrency consistency, minimal change, fact/perception
+separation, action-driven triggering) and one `WorldDelta` schema.
 
 ---
 
@@ -395,7 +384,7 @@ Path alias `@/*` → `src/*` is configured for vitest.
 
 ```text
 src/
-  engine/      Tick engine, handlers, features, interpreter, resolver, codeEngine
+  engine/      Tick engine: actions, resolution, tools, subsystems, rules
   roleSim/     Role-play agent, controller, render layer, tool dispatcher
   simulation/  SimulationRunner, persistence, event emitter
   state/       DynamicGameState, topology, gameClock, module loading

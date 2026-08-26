@@ -43,7 +43,7 @@ There is **no central scheduler**. The pipeline is `NPC AI → Translation → Q
 
 ### Source layout (`src/`)
 
-- `engine/` — tick runtime: `core/`, `handlers/`, `features/`, `interpreter/`, `resolver/`, `tools/`, `scriptedEvents/`, `codeEngine/`, plus tool/`definitions`. Owns all world-state transitions.
+- `engine/` — tick runtime: `core/` (orchestrator/applier/tickEngine), `actions/` (ActionCommand intake, EngineAction store, skill adjudication, movement runtime), `resolution/` (World Action Engine + context builder + WorldDelta validator), `tools/` (deterministic code tools), `subsystem/`, `scriptedEvents/`, `rules/` (world-action-resolution.md). Owns all world-state transitions. No interpreter, no per-action definitions.
 - `planning/` — `NPCPlanningAgent`, prompt construction, `cocSkillList`, `sceneMapFormatter`, plan types. Daily plans + replanning.
 - `roleSim/` — LLM persona-simulation layer (`llmAgent`, `npcActionController`, `perceptionRenderer`, `profileFormatter`, `sanityGuidance`, `seedIntents`, `systemPrompt`, `toolDispatcher`, `toolSkills/`, `userPromptBuilder`, `dailySummarization`).
 - `simulation/` — `SimulationRunner`, `PlaybackScheduler`, `SimulationEventEmitter`, `runtimePersistence`, `characterInjection`. The driver layer between API and engine.

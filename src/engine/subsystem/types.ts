@@ -5,7 +5,7 @@
 // for design decisions.
 
 import type { FeatureReadContext } from "../core/featureReadContext.js";
-import type { ActionStep, StateChange } from "../core/types.js";
+import type { StateChange } from "../core/types.js";
 
 /**
  * Anchor kind for AnchorSubsystem instances. Matches `FeatureStateScope` in
@@ -65,28 +65,4 @@ export interface AnchorSubsystem extends SubsystemBase {
   onTick(anchorId: string, ctx: FeatureReadContext): StateChange[];
 }
 
-export interface SubsystemStepResult {
-  stateChanges: StateChange[];
-  completed: boolean;
-  failed?: { reason: string };
-}
-
-/**
- * Action-bound subsystem. Lifetime = ActionStep lifetime. Activated by
- * TickOrchestrator Phase 3 when an `engine: "code"` step is dequeued;
- * terminated when onTick returns { completed: true } or onInterrupt fires.
- */
-export interface ActionSubsystem extends SubsystemBase {
-  readonly kind: "action";
-
-  onActivate?(step: ActionStep, ctx: FeatureReadContext): SubsystemStepResult;
-
-  onTick(step: ActionStep, ctx: FeatureReadContext): SubsystemStepResult;
-
-  onInterrupt?(
-    step: ActionStep,
-    ctx: FeatureReadContext
-  ): { stateChanges: StateChange[] };
-}
-
-export type Subsystem = AnchorSubsystem | ActionSubsystem;
+export type Subsystem = AnchorSubsystem;

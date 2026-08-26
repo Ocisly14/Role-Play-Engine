@@ -6,6 +6,7 @@
 // owned by `generateText`'s `maxRetries` (set to 2 = initial + 1 retry per
 // G11). On failure the wrapper in index.ts returns null (D6 — no god-eye fallback).
 
+import type { Occurrence } from "../../engine/actions/types.js";
 import { ModelClass, generateText } from "../../models/index.js";
 import type { DynamicGameStateManager } from "../../state/DynamicGameState.js";
 import {
@@ -44,6 +45,15 @@ understanding (what does the viewpoint actually see this entity as).
 # Hard rules
 
 - Narrative is ONE paragraph (2-5 sentences). First person ("I"), present tense.
+- The "Occurrences" input lists OBJECTIVE facts of this tick with sensory
+  signals (visual/sound/smell/touch/direct). YOU decide what of each the
+  viewpoint actually perceives, from the signals, the viewpoint's location
+  and their senses: a sound-only signal from elsewhere renders as a heard
+  impression ("a sharp crack from the street"), never as if seen; a visual
+  signal in the same place renders as sight. When uncertain, stay vague.
+- Never add facts: no entities, actions, outcomes or causes that are not in
+  the occurrence facts or scene input. Facts you leave out are simply not
+  perceived — that is allowed; inventing is not.
 - Render only what the viewpoint can perceive RIGHT NOW: external sights, sounds,
   smells, touches, plus your own body/mind state. Do NOT mention memory,
   relationships, prior knowledge, or future plans.
@@ -151,21 +161,14 @@ function buildUserPrompt(params: RenderViaLLMParams): string {
     sections.push(formatOwnAction(bundle));
   }
 
-  if (bundle.perceivedActions.length > 0) {
+  if (bundle.occurrences.length > 0) {
     sections.push(
-      "# Actions perceived this tick (other characters' acts whose impact reached you)"
+      "# Occurrences this tick (objective facts + signals — YOU decide what the viewpoint perceives of each)"
     );
-    sections.push(formatPerceivedActions(bundle));
-  }
-
-  if (bundle.events.length > 0) {
+    sections.push(formatOccurrences(bundle, npcId));
+  } else {
     sections.push(
-      "# Events this tick (already filtered to what propagated to you)"
-    );
-    sections.push(formatEvents(bundle));
-  } else if (bundle.perceivedActions.length === 0) {
-    sections.push(
-      "# Events this tick\n(none — describe scene and own state only)"
+      "# Occurrences this tick\n(none — describe scene and own state only)"
     );
   }
 
@@ -231,34 +234,27 @@ function collectOtherEntities(
   const characterIds = new Set<string>();
   const sceneIds = new Set<string>();
 
-  for (const ev of bundle.events) {
-    if (
-      ev.characterId &&
-      ev.characterId !== viewpointId &&
-      !scenePresent.has(ev.characterId)
-    ) {
-      characterIds.add(ev.characterId);
+  for (const occ of bundle.occurrences) {
+    if (occ.locationId && occ.locationId !== bundle.scene.id) {
+      sceneIds.add(occ.locationId);
     }
-    if (ev.sceneId && ev.sceneId !== bundle.scene.id) {
-      sceneIds.add(ev.sceneId);
-    }
-  }
-
-  for (const a of bundle.perceivedActions) {
-    if (a.characterId !== viewpointId && !scenePresent.has(a.characterId)) {
-      characterIds.add(a.characterId);
-    }
-    if (a.sceneId && a.sceneId !== bundle.scene.id) sceneIds.add(a.sceneId);
-    for (const ref of a.referencedEntities) {
-      if (
-        ref.kind === "character" &&
-        ref.id !== viewpointId &&
-        !scenePresent.has(ref.id)
-      ) {
-        characterIds.add(ref.id);
+    for (const p of occ.participants) {
+      if (p.characterId !== viewpointId && !scenePresent.has(p.characterId)) {
+        characterIds.add(p.characterId);
       }
-      if (ref.kind === "scene" && ref.id !== bundle.scene.id) {
-        sceneIds.add(ref.id);
+    }
+    for (const fact of occ.facts) {
+      for (const ref of fact.entityRefs) {
+        if (
+          ref.kind === "character" &&
+          ref.id !== viewpointId &&
+          !scenePresent.has(ref.id)
+        ) {
+          characterIds.add(ref.id);
+        }
+        if (ref.kind === "scene" && ref.id !== bundle.scene.id) {
+          sceneIds.add(ref.id);
+        }
       }
     }
   }
@@ -294,33 +290,70 @@ function collectOtherEntities(
 }
 
 function formatOwnAction(bundle: PerceivedBundle): string {
-  switch (bundle.ownAction.kind) {
-    case "ongoing":
-      return `Ongoing: "${bundle.ownAction.actionText}"`;
-    case "ended":
-      return `Just ${bundle.ownAction.status}: "${bundle.ownAction.actionText}"`;
+  const own = bundle.ownAction;
+  switch (own.kind) {
+    case "ongoing": {
+      const bits = [`Ongoing: "${own.description}"`];
+      if (own.startedAt) bits.push(`started at ${own.startedAt}`);
+      bits.push(`~${own.progressMinutes} min in`);
+      if (own.resolvedDurationTicks !== undefined) {
+        bits.push(`expected ~${own.resolvedDurationTicks} min total`);
+      }
+      return bits.join("; ");
+    }
+    case "ended": {
+      const lines = [`Just ${own.status}: "${own.description}"`];
+      if (own.outcome) {
+        const reason = own.outcome.reason ? ` — ${own.outcome.reason}` : "";
+        lines.push(
+          `Result (objective; render as what the viewpoint experiences): ${own.outcome.outcome}${reason}`
+        );
+      }
+      return lines.join("\n");
+    }
     case "idle":
       return "Idle.";
   }
 }
 
-function formatEvents(bundle: PerceivedBundle): string {
-  return bundle.events
-    .map((e) => {
-      const actor = e.characterId ? ` [actor: ${e.characterId}]` : "";
-      const scene = e.sceneId ? ` [scene: ${e.sceneId}]` : "";
-      return `- (type: ${e.type}, impact: ${e.impact}) ${e.description}${actor}${scene}`;
-    })
+function formatOccurrences(bundle: PerceivedBundle, viewpointId: string): string {
+  return bundle.occurrences
+    .map((occ) => formatOccurrence(occ, bundle, viewpointId))
     .join("\n");
 }
 
-function formatPerceivedActions(bundle: PerceivedBundle): string {
-  return bundle.perceivedActions
-    .map(
-      (a) =>
-        `- (impact: ${a.impact}) [actor: ${a.characterId}] [scene: ${a.sceneId}] ${a.actionText}`
-    )
-    .join("\n");
+function formatOccurrence(
+  occ: Occurrence,
+  bundle: PerceivedBundle,
+  viewpointId: string
+): string {
+  const lines: string[] = [];
+  const where =
+    occ.locationId === bundle.scene.id
+      ? "here"
+      : occ.locationId
+        ? `at ${occ.locationId} (not your location)`
+        : "location unspecified";
+  const involved = occ.participants
+    .map((p) => `${p.characterId} (${p.role})`)
+    .join(", ");
+  lines.push(`- Occurrence ${where}${involved ? `; involved: ${involved}` : ""}`);
+  const selfInvolved = occ.participants.some(
+    (p) => p.characterId === viewpointId
+  );
+  if (selfInvolved) {
+    lines.push("  (the viewpoint is directly involved)");
+  }
+  for (const fact of occ.facts) {
+    lines.push(`  fact (${fact.type}): ${fact.content}`);
+  }
+  for (const signal of occ.signals) {
+    const bits = [`signal: ${signal.channel}`];
+    if (signal.originLocationId) bits.push(`from ${signal.originLocationId}`);
+    if (signal.intensity !== undefined) bits.push(`intensity ${signal.intensity}`);
+    lines.push(`  ${bits.join(", ")}`);
+  }
+  return lines.join("\n");
 }
 
 function formatScenePresentCharacters(

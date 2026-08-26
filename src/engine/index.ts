@@ -1,15 +1,7 @@
-export { ActionDefinitionRegistry } from "./definitions/registry.js";
 export {
-  createDefaultDefinitions,
+  createDefaultCodeToolRegistry,
   createDefaultSubsystemRegistry,
 } from "./registerDefaults.js";
-export type {
-  SkillRollResult,
-  ActionDefinition,
-  StateDomainSpec,
-  InterpretedResult,
-  ToolResult,
-} from "./types.js";
 export {
   findAffectedCharacters,
   findAffectedScenes,

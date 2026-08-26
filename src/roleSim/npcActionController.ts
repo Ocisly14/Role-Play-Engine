@@ -13,13 +13,9 @@
 // instead of mirroring it.
 
 import { buildActionCommand } from "../engine/actions/commandBuilder.js";
-import type { EngineAction } from "../engine/actions/types.js";
+import type { EngineAction, Occurrence } from "../engine/actions/types.js";
 import type { TickEngine } from "../engine/core/tickEngine.js";
-import type {
-  CharacterAction,
-  FeatureEvent,
-  TickReport,
-} from "../engine/core/types.js";
+import type { FeatureEvent, TickReport } from "../engine/core/types.js";
 import { findAffectedCharacters } from "../engine/shared/impactPropagation.js";
 import type { NpcMemoryManager } from "../memory/NpcMemoryManager.js";
 import type { DynamicGameStateManager } from "../state/DynamicGameState.js";
@@ -42,10 +38,11 @@ export interface NpcActionControllerDeps {
 interface DecideOpts {
   /** TickReport for this round (omit for bootstrap / pre-tick). */
   report?: TickReport;
-  /** Pre-filtered FeatureEvents that propagated to this NPC. */
-  eventsForNpc?: FeatureEvent[];
-  /** Committed CharacterActions whose impact reached this NPC this tick. */
-  actionsForNpc?: CharacterAction[];
+  /** Occurrences this NPC was listed as perceiver of (plan Phase 9). */
+  occurrencesForNpc?: Occurrence[];
+  /** Set when one of this NPC's actions reached a terminal status this tick
+   *  — drives the event-memory write after rendering. */
+  ownActionEnded?: boolean;
 }
 
 /** How many prior renderer narratives each NPC keeps as short-term memory. */
@@ -103,6 +100,16 @@ interface PerceptionHistoryEntry {
   narrative: string;
 }
 
+/** Memory stores the subjective narrative only — the [references] citation
+ *  scaffolding is agent-loop plumbing, not something a person remembers. */
+export function extractNarrative(rendered: string): string {
+  const narrativeMatch = rendered.match(
+    /\[narrative\]\s*\n([\s\S]*?)(?:\n\s*\[references\]|$)/
+  );
+  const body = narrativeMatch?.[1] ?? rendered;
+  return body.trim();
+}
+
 export class NpcActionController {
   private readonly engine: TickEngine;
   private readonly agent: RoleSimAgent;
@@ -144,191 +151,144 @@ export class NpcActionController {
   }
 
   private async processTickReport(report: TickReport): Promise<void> {
-    // 1. Build per-NPC propagated event list. FeatureEvent already carries
-    //    intrinsic impact + description (Phase F1); the renderer turns the
-    //    set into per-NPC first-person narrative downstream (Phase G).
-    const eventsByNpc = new Map<string, FeatureEvent[]>();
-    // 1b. Per-NPC propagated actions — siblings of FeatureEvent on the
-    //     wake-up path. Carries the CharacterAction so the renderer can
-    //     describe what was perceived (who did what, where).
-    const actionsByNpc = new Map<string, CharacterAction[]>();
+    // 1. Route occurrences by the Engine's perceiver lists (plan Phase 9).
+    //    The Engine already decided WHO can perceive each occurrence; the
+    //    renderer downstream decides WHAT each perceiver makes of it.
+    const occByNpc = new Map<string, Occurrence[]>();
+    const route = (npcId: string, occ: Occurrence): void => {
+      const list = occByNpc.get(npcId) ?? [];
+      list.push(occ);
+      occByNpc.set(npcId, list);
+    };
+    for (const occ of report.occurrences) {
+      for (const npcId of occ.perceiverCharacterIds) route(npcId, occ);
+    }
 
+    // 1b. Migration shim: subsystem/scripted FeatureEvents are adapted into
+    //     occurrence form via the legacy impact propagation, so the renderer
+    //     has ONE event intake. Dies when subsystems emit occurrences
+    //     natively (plan Phase 8 follow-up).
+    let syntheticCounter = 0;
     for (const event of report.featureEvents) {
       if (!event.characterId && !event.sceneId) continue;
-      const synthAction = {
-        characterId: event.characterId ?? "system",
-        referencedEntities: [],
-        location: event.sceneId ?? "",
-      };
       const affected = findAffectedCharacters(
-        synthAction,
+        {
+          characterId: event.characterId ?? "system",
+          referencedEntities: [],
+          location: event.sceneId ?? "",
+        },
         event.impact,
         this.dgsm
       );
-      for (const [npcId] of affected) {
-        const list = eventsByNpc.get(npcId) ?? [];
-        list.push(event);
-        eventsByNpc.set(npcId, list);
-      }
-    }
-
-    // 1c. Propagate committed actions by their interpreter-assigned impact.
-    //     Commits with impact 0 stay private (no propagation). Cancellations
-    //     are not propagated — a cancelled action's mid-flight effects are
-    //     surfaced via the resolver re-run's StateChanges and any explicit
-    //     event.emit it produced, not via the cancel itself.
-    for (const action of report.commits) {
-      if (action.impact <= 0) continue;
-      const affected = findAffectedCharacters(
-        {
-          characterId: action.characterId,
-          referencedEntities: action.referencedEntities,
-          location: action.sceneId,
-        },
-        action.impact,
-        this.dgsm
+      const perceivers = [...affected.keys()];
+      if (perceivers.length === 0) continue;
+      const occ = this.featureEventToOccurrence(
+        event,
+        perceivers,
+        report.gameDateTime,
+        syntheticCounter++
       );
-      for (const [npcId] of affected) {
-        const list = actionsByNpc.get(npcId) ?? [];
-        list.push(action);
-        actionsByNpc.set(npcId, list);
-      }
+      for (const npcId of perceivers) route(npcId, occ);
     }
 
-    // 2. NPCs whose action ended this tick.
-    const npcsWithEndedAction = new Set<string>([
-      ...report.commits.map((a) => a.characterId),
-      ...report.cancellations.map((a) => a.characterId),
-    ]);
+    // 2. NPCs whose action reached a terminal status this tick.
+    const endedActors = new Set(
+      report.transitions
+        .filter(
+          (t) =>
+            t.to === "completed" ||
+            t.to === "failed" ||
+            t.to === "interrupted" ||
+            t.to === "cancelled"
+        )
+        .map((t) => t.actorId)
+    );
 
-    // 3. Alive idle NPCs (no in-flight action). Replaces the per-tick
-    //    polling that used to live in SimulationRunner.executeTick.
+    // 3. Alive idle NPCs (no in-flight action).
     const idleAlive = this.dgsm
       .getState()
       .npcCharacters.filter((n) => this.dgsm.isNpcAlive(n.id))
       .filter((n) => !this.npcHasActiveStep(n.id))
       .map((n) => n.id);
 
-    // 4. Auto-write event/witness memories so the next decide() pass sees
-    //    them in `recentMemory`. The system prompt promises agents that the
-    //    engine logs events automatically; this is the actual writer.
-    //    `event`  — the actor remembers what they did (commit / interrupt /
-    //               cancel of their own action).
-    //    `witness` — bystanders remember what they perceived that they did
-    //                NOT cause themselves.
-    await this.writeAutoMemories(report, eventsByNpc);
+    // 3b. Subsystem-emitted memory StateChanges (rare) still route directly.
+    await this.routeStateChangeMemories(report);
 
-    // 5. Union of all NPCs that need decide() this tick.
+    // 4. Union of all NPCs that need decide() this tick. Perceivers, ended
+    //    actors and idle characters, deduplicated.
     const allTargets = new Set<string>([
-      ...eventsByNpc.keys(),
-      ...actionsByNpc.keys(),
-      ...npcsWithEndedAction,
+      ...occByNpc.keys(),
+      ...endedActors,
       ...idleAlive,
     ]);
 
-    // 6. Location-grouped decide(). NPCs at the same location decide
-    //    sequentially so later deciders see earlier deciders' submissions
-    //    (same-scene interaction continuity, deterministic within a group).
-    //    NPCs at different locations cannot perceive each other within this
-    //    tick, so their groups run concurrently (capped, to respect provider
-    //    rate limits).
+    // 5. Location-grouped decide(). NPCs at the same location decide
+    //    sequentially so later deciders see earlier deciders' submissions;
+    //    groups at different locations run concurrently (capped).
     const groups = groupByLocation([...allTargets], (npcId) =>
       this.dgsm.isNpcAlive(npcId) ? this.resolveCurrentSceneId(npcId) : null
     );
     await runWithConcurrency(groups, DECIDE_GROUP_CONCURRENCY, async (npcIds) => {
       for (const npcId of npcIds) {
         if (!this.dgsm.isNpcAlive(npcId)) continue;
-        const eventsForNpc = eventsByNpc.get(npcId);
-        const actionsForNpc = actionsByNpc.get(npcId);
+        const occurrencesForNpc = occByNpc.get(npcId);
         await this.decide(npcId, {
           report,
-          eventsForNpc:
-            eventsForNpc && eventsForNpc.length > 0 ? eventsForNpc : undefined,
-          actionsForNpc:
-            actionsForNpc && actionsForNpc.length > 0
-              ? actionsForNpc
+          occurrencesForNpc:
+            occurrencesForNpc && occurrencesForNpc.length > 0
+              ? occurrencesForNpc
               : undefined,
+          ownActionEnded: endedActors.has(npcId),
         });
       }
     });
   }
 
-  private async writeAutoMemories(
-    report: TickReport,
-    eventsByNpc: Map<string, FeatureEvent[]>
-  ): Promise<void> {
-    // Memory is past-tense fact only. The resolver emits `memory.event` /
-    // `memory.witness` StateChanges at commit (and at cancel re-resolve)
-    // with the narrative of what actually happened; we route those below.
-    //
-    // We deliberately do NOT write a separate `[begin]` intent memory at
-    // activation: in-flight actions are surfaced via the action queue
-    // (self → userPromptBuilder "Currently doing", co-located peers →
-    // renderer.charactersInScene.currentActionText). Writing [begin] in
-    // addition produced duplicate "I will X" + "I did X" entries per
-    // tick × per step, and agents re-planned the same action after seeing
-    // the [begin] entry as if it hadn't happened.
-    await this.routeResolverMemories(report);
-
-    // Bystanders' perceived events → `witness` memory.
-    // FeatureEvent has no per-event timestamp, so we use the tick's gameDateTime.
-    // Location: where the event happened (event.sceneId), falling back to
-    // the witness's own scene for global/scene-less events.
-    const tickTime = this.dgsm.getGameDateTime();
-    for (const [npcId, events] of eventsByNpc) {
-      for (const ev of events) {
-        if (ev.characterId === npcId) continue;
-        await this.writeMemoryEntry(
-          npcId,
-          "witness",
-          ev.description,
-          tickTime,
-          ev.sceneId ?? this.resolveCurrentSceneId(npcId)
-        );
-      }
-    }
+  /** Adapt one legacy FeatureEvent into occurrence form (migration shim). */
+  private featureEventToOccurrence(
+    event: FeatureEvent,
+    perceivers: string[],
+    tickId: string,
+    n: number
+  ): Occurrence {
+    const id = `occ_evt_${tickId}_${n}`;
+    return {
+      id,
+      tickId,
+      sourceActionIds: [],
+      ...(event.sceneId !== undefined ? { locationId: event.sceneId } : {}),
+      facts: [
+        {
+          id: `${id}#f0`,
+          type: event.type,
+          content: event.description,
+          entityRefs: event.characterId
+            ? [{ kind: "character", id: event.characterId }]
+            : [],
+        },
+      ],
+      participants: event.characterId
+        ? [{ characterId: event.characterId, role: "actor" }]
+        : [],
+      perceiverCharacterIds: perceivers,
+      signals: [{ factIds: [`${id}#f0`], channel: "visual" }],
+    };
   }
 
-  private async routeResolverMemories(report: TickReport): Promise<void> {
-    // Build a quick map: characterId → sceneId where they ran their action this
-    // tick (commit / cancellation). Used as `location` for the resolver-emitted
-    // memory entries.
-    const locByActor = new Map<string, string>();
-    for (const a of report.commits) {
-      locByActor.set(a.characterId, a.sceneId);
-    }
-    for (const c of report.cancellations) {
-      if (!locByActor.has(c.characterId))
-        locByActor.set(c.characterId, c.sceneId);
-    }
-
-    // Pick game-times from commits/cancellations; fall back to current tick.
-    const completedAtByActor = new Map<string, string>();
-    for (const a of report.commits) {
-      completedAtByActor.set(a.characterId, a.completedAt);
-    }
-    for (const c of report.cancellations) {
-      if (!completedAtByActor.has(c.characterId)) {
-        completedAtByActor.set(c.characterId, c.completedAt);
-      }
-    }
+  /** Subsystem-emitted memory.event / memory.witness StateChanges (rare on
+   *  the new path — the Engine itself never emits memories). */
+  private async routeStateChangeMemories(report: TickReport): Promise<void> {
     const tickTime = this.dgsm.getGameDateTime();
-
     for (const change of report.stateChanges) {
       if (change.kind !== "memory.event" && change.kind !== "memory.witness") {
         continue;
       }
-      const { characterId, content } = change;
-      const location =
-        locByActor.get(characterId) ?? this.resolveCurrentSceneId(characterId);
-      const gameDateTime = completedAtByActor.get(characterId) ?? tickTime;
-
       await this.writeMemoryEntry(
-        characterId,
+        change.characterId,
         change.kind === "memory.event" ? "event" : "witness",
-        content,
-        gameDateTime,
-        location
+        change.content,
+        tickTime,
+        this.resolveCurrentSceneId(change.characterId)
       );
     }
   }
@@ -362,14 +322,14 @@ export class NpcActionController {
   async decide(npcId: string, opts?: DecideOpts): Promise<void> {
     if (!this.dgsm.isNpcAlive(npcId)) return;
 
-    // Skip if NPC is busy AND this tick had no propagated events OR actions
-    // for them — their action is already running and nothing has happened
-    // that warrants a wake-up. With perceived events OR actions present, the
-    // agent gets a chance to switch action mid-flight (Decision 14 — `act`
-    // absorbs cancellation).
-    const hasEvents = !!(opts?.eventsForNpc && opts.eventsForNpc.length > 0);
-    const hasActions = !!(opts?.actionsForNpc && opts.actionsForNpc.length > 0);
-    if (this.npcHasActiveStep(npcId) && !hasEvents && !hasActions) {
+    // Skip if NPC is busy AND perceived nothing this tick — their action is
+    // already running and nothing has happened that warrants a wake-up. With
+    // occurrences present, the agent gets a chance to replace its in-flight
+    // action (the engine resolves the interruption, D4).
+    const hasOccurrences = !!(
+      opts?.occurrencesForNpc && opts.occurrencesForNpc.length > 0
+    );
+    if (this.npcHasActiveStep(npcId) && !hasOccurrences) {
       return;
     }
 
@@ -481,16 +441,25 @@ export class NpcActionController {
       datePart(gameDateTime)
     );
 
+    // Intent, progress and timing only — never engine runtime internals.
     const live = this.liveActionFor(npcId);
     const currentAction = live
-      ? { description: live.command.description }
+      ? {
+          description: live.command.description,
+          ...(live.startedAt !== undefined
+            ? { startedAt: live.startedAt }
+            : {}),
+          progressMinutes: live.progressMinutes,
+          ...(live.resolvedDurationTicks !== undefined
+            ? { resolvedDurationTicks: live.resolvedDurationTicks }
+            : {}),
+        }
       : undefined;
 
     const bundle = buildPerceivedBundle({
       npcId,
       report: opts?.report,
-      eventsForNpc: opts?.eventsForNpc,
-      actionsForNpc: opts?.actionsForNpc,
+      occurrencesForNpc: opts?.occurrencesForNpc,
       dgsm: this.dgsm,
       engine: this.engine,
     });
@@ -504,9 +473,37 @@ export class NpcActionController {
 
     if (rendered === null) {
       // Phase H D6: LLM render failed → NPC perceives nothing this tick.
-      // Skip decide() entirely; in-flight action continues. Events for this NPC
-      // are dropped (acceptable — render fail rate << 0.1%).
+      // Skip decide() entirely; in-flight action continues. Occurrences for
+      // this NPC are dropped (acceptable — render fail rate << 0.1%).
       return undefined;
+    }
+
+    // Subjective memory comes from the rendered perception (plan Phase 9):
+    // the actor whose action just ended writes an `event` memory; a mere
+    // perceiver writes `witness`. Idle-only wake-ups (nothing happened)
+    // write nothing.
+    if (opts?.report) {
+      const narrativeOnly = extractNarrative(rendered.narrative);
+      if (opts.ownActionEnded) {
+        await this.writeMemoryEntry(
+          npcId,
+          "event",
+          narrativeOnly,
+          gameDateTime,
+          currentScene
+        );
+      } else if (
+        opts.occurrencesForNpc &&
+        opts.occurrencesForNpc.length > 0
+      ) {
+        await this.writeMemoryEntry(
+          npcId,
+          "witness",
+          narrativeOnly,
+          gameDateTime,
+          currentScene
+        );
+      }
     }
 
     // Snapshot prior perceptions (excludes current tick); push current after.

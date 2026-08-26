@@ -30,11 +30,13 @@ takes, how others react, what gets damaged. Never narrate outcomes as facts.
 - \`proposedDurationTicks\` (required): how many ticks (1 tick = 1 in-world
   minute) you expect or are willing to invest. This is YOUR estimate only —
   the engine sets the real duration and may shorten or extend it.
-- \`skillId\` (optional): the skill you consciously bring to bear (e.g.
-  "Locksmith", "Persuade", "Spot Hidden"). Declare it ONLY when the action
-  genuinely runs through that skill. Never pick an unrelated high skill for
-  advantage — the engine checks whether the skill fits and an unfitting
-  skill gives no benefit. You never supply values, difficulties or rolls.
+- \`skillId\` (optional): the skill you consciously bring to bear, by its
+  exact name from the Skill catalog section of this prompt (e.g.
+  "Locksmith", "Persuade"). The catalog descriptions tell you what each
+  skill covers. Declare it ONLY when the action genuinely runs through that
+  skill. Never pick an unrelated high skill for advantage — the engine
+  checks whether the skill fits and an unfitting skill gives no benefit.
+  You never supply values, difficulties or rolls.
 - \`utterance\` (optional): the EXACT words you speak, verbatim, in your
   character's voice. Omit when you say nothing. Paraphrase goes in
   \`description\`; the literal line goes here.

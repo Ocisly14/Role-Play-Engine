@@ -3,7 +3,6 @@ import fs from "node:fs";
 import path from "node:path";
 import type { PrismaClient } from "@prisma/client";
 import { WebSocket } from "ws";
-import { createDefaultDefinitions } from "../../../src/engine/index.js";
 import {
   type WeatherType,
   computeSkillPenalties,
@@ -128,7 +127,6 @@ function buildSimulationBundle(params: {
 } {
   const db = DatabaseManager.getInstance().getDatabase();
   const dgsm = new DynamicGameStateManager(params.gameState, db);
-  const definitions = createDefaultDefinitions();
   const provider =
     (process.env.MODEL_PROVIDER as ModelProviderName) ??
     ModelProviderName.OPENAI;
@@ -142,7 +140,6 @@ function buildSimulationBundle(params: {
   const runner = new SimulationRunner({
     config: params.config,
     dgsm,
-    definitions,
     language: params.language,
     memoryManager,
     prisma: params.prisma,

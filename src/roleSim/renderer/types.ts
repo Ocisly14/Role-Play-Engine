@@ -1,27 +1,40 @@
 // src/roleSim/renderer/types.ts
 //
-// Phase G renderer types. The renderer turns a tick's events + DGSM state
-// into a per-NPC, first-person, citation-annotated narrative consumed by
-// `agent.decideNext`. See plan §G-decisions for the full contract.
+// Renderer contracts (plan Phase 9). The Engine emits objective Occurrences
+// with perceiver character ids; the controller groups them per character; the
+// renderer turns one character's occurrences + their own state into a
+// first-person, citation-annotated narrative. The renderer decides WHAT of
+// each occurrence this character actually perceives (per signals, location,
+// senses) — the Engine never provides per-character fact subsets.
 
+import type { Occurrence } from "../../engine/actions/types.js";
 import type {
-  CharacterAction,
   CharacterCondition,
-  FeatureEvent,
+  GameTime,
   SceneCondition,
 } from "../../engine/core/types.js";
 
-/** Posture of the viewpoint NPC's own action this tick (G10). */
+/** Posture of the viewpoint NPC's own action this tick. Read from the
+ *  EngineAction lifecycle — intent, progress and timing only, never engine
+ *  runtime internals. */
 export type OwnActionState =
-  | { kind: "ongoing"; actionText: string }
+  | {
+      kind: "ongoing";
+      description: string;
+      startedAt?: GameTime;
+      progressMinutes: number;
+      resolvedDurationTicks?: number;
+    }
   | {
       kind: "ended";
-      actionText: string;
-      status: "committed" | "cancelled";
+      description: string;
+      status: "completed" | "failed" | "interrupted" | "cancelled";
+      /** Engine judgement surface: objective outcome + reason, when known. */
+      outcome?: { outcome: string; reason?: string };
     }
   | { kind: "idle" };
 
-/** Per-NPC perception input handed to the renderer (G7 + G10). */
+/** Per-NPC perception input handed to the renderer. */
 export interface PerceivedBundle {
   /** Always present — scene the NPC currently inhabits. */
   scene: {
@@ -32,17 +45,16 @@ export interface PerceivedBundle {
   };
   /** Viewpoint NPC's own active conditions (proprioceptive — fully visible to self). */
   ownConditions: CharacterCondition[];
-  /** Action posture this tick (G10). */
+  /** Action posture this tick. */
   ownAction: OwnActionState;
-  /** Subset of TickReport.featureEvents that propagated to this NPC. May be empty. */
-  events: FeatureEvent[];
-  /** Subset of TickReport.commits whose impact reached this NPC. May be empty.
-   *  Excludes the viewpoint NPC's own action (already in `ownAction`). */
-  perceivedActions: CharacterAction[];
+  /** The tick's objective occurrences this character was listed as able to
+   *  perceive (plus subsystem/scripted events adapted into occurrence form).
+   *  The renderer decides what of each is actually perceived. May be empty. */
+  occurrences: Occurrence[];
   /** Every other alive character standing in the viewpoint's scene right now,
    *  whether or not they did anything this tick. Default perception: presence,
-   *  appearance, externally-visible conditions, and the actionText of their
-   *  currently-active step (if any). Excludes self. */
+   *  appearance, externally-visible conditions, and their in-flight action's
+   *  intent description (if any). Excludes self. */
   charactersInScene: ScenePresentCharacter[];
 }
 
@@ -53,8 +65,8 @@ export interface ScenePresentCharacter {
   /** Conditions on this character. Renderer downstream still filters to
    *  externally-perceivable ones per the system-prompt rule. */
   conditions: CharacterCondition[];
-  /** Current in-flight action text (from engine queue), if the character is
-   *  mid-action. Undefined = the character is idle / between actions. */
+  /** Current in-flight action intent (EngineAction.command.description), if
+   *  the character is mid-action. Undefined = idle. */
   currentActionText?: string;
 }
 

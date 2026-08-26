@@ -1,4 +1,5 @@
 import type { DynamicGameStateManager } from "../../state/DynamicGameState.js";
+import type { SourcedWorldDelta, WorldDelta } from "../actions/types.js";
 import type {
   DamageReport,
   EnvironmentReading,
@@ -122,12 +123,11 @@ export class Applier {
    * For kinds that reference characters by id, verify the id actually names
    * a character. Returns the offending id, or null when the change is sound.
    *
-   * The resolver's ids come from an LLM, and its schema examples used to
-   * show invented placeholder ids — observed live as a `relationship.change`
-   * from "npc_colleague", a character that does not exist, silently creating
-   * a ghost node in the relationship graph (updateRelationship auto-creates
-   * nodes for any string). The agent path validates its citations through
-   * parseActionText; this is the same guard for the resolver/subsystem path.
+   * Engine deltas are validated upstream (worldDeltaValidator), but
+   * subsystem-emitted StateChanges have no earlier gate — observed live as a
+   * `relationship.change` naming a character that does not exist, silently
+   * creating a ghost node in the relationship graph (updateRelationship
+   * auto-creates nodes for any string). This is the last-line guard.
    */
   private invalidCharacterRef(c: StateChange): string | null {
     const known = (id: string) =>
@@ -149,19 +149,195 @@ export class Applier {
     }
   }
 
+  /**
+   * Native intake for the World Action Engine's sourced deltas (plan Phase 8;
+   * decision 2026-08-26: the Applier consumes WorldDelta directly — no
+   * external adapter layer). Each delta is folded into the same two-pass
+   * pipeline as StateChanges, so hp/san/fatigue keep their aggregation and
+   * DamageReport semantics; the source actionId rides in the
+   * sourceFeatureId/sourceSubsystem slot as "action:<id>" for traceability.
+   */
+  private deltaToChanges(sourced: SourcedWorldDelta): StateChange[] {
+    const source =
+      sourced.source.kind === "action"
+        ? `action:${sourced.source.actionId}`
+        : sourced.source.kind === "subsystem"
+          ? `subsystem:${sourced.source.subsystemId}`
+          : `scriptedEvent:${sourced.source.eventId}`;
+    const delta = sourced.delta as WorldDelta;
+
+    if (delta.domain === "character") {
+      const { characterId, operation: op } = delta;
+      switch (op.kind) {
+        case "hp":
+        case "san":
+        case "fatigue":
+          return [
+            {
+              kind: `character.${op.kind}` as "character.hp",
+              characterId,
+              delta: op.delta,
+              sourceFeatureId: source,
+              reason: `${sourced.causalBasis} — ${op.reason}`,
+            },
+          ];
+        case "position":
+          return [
+            {
+              kind: "character.position",
+              characterId,
+              position: op.position,
+              sourceSubsystem: source,
+            },
+          ];
+        case "addCondition":
+          return [
+            { kind: "character.addCondition", characterId, condition: op.condition },
+          ];
+        case "removeCondition":
+          return [
+            {
+              kind: "character.removeCondition",
+              characterId,
+              conditionId: op.conditionId,
+            },
+          ];
+        case "relationship":
+          return [
+            {
+              kind: "relationship.change",
+              fromId: characterId,
+              toId: op.toCharacterId,
+              ...(op.delta !== undefined ? { delta: op.delta } : {}),
+              ...(op.note !== undefined ? { note: op.note } : {}),
+            },
+          ];
+      }
+    }
+
+    if (delta.domain === "scene") {
+      const { sceneId, operation: op } = delta;
+      switch (op.kind) {
+        case "addCondition":
+          return [{ kind: "scene.addCondition", sceneId, condition: op.condition }];
+        case "removeCondition":
+          return [
+            { kind: "scene.removeCondition", sceneId, predicate: op.predicate },
+          ];
+        case "connectionBlock":
+          return [
+            {
+              kind: "connection.setBlock",
+              connectionId: op.connectionId,
+              blocked: op.blocked,
+              sourceFeatureId: source,
+              reason: op.reason,
+            },
+          ];
+        case "environmentContribute":
+          return [
+            {
+              kind: "environment.contribute",
+              locationId: sceneId,
+              quantity: op.quantity,
+              value: op.value,
+              sourceFeatureId: source,
+            },
+          ];
+        case "environmentHazard":
+          return [
+            {
+              kind: "environment.hazard",
+              locationId: sceneId,
+              ...(op.add !== undefined ? { add: op.add } : {}),
+              ...(op.remove !== undefined ? { remove: op.remove } : {}),
+              sourceFeatureId: source,
+            },
+          ];
+      }
+    }
+
+    // Item domain
+    const { itemId, operation: op } = delta;
+    switch (op.kind) {
+      case "create":
+        return [
+          {
+            kind: "item.create",
+            name: op.name,
+            location: op.location,
+            ...(op.properties !== undefined
+              ? { properties: op.properties }
+              : {}),
+          },
+        ];
+      case "move":
+        return itemId
+          ? [{ kind: "item.move", itemId, from: op.from, to: op.to }]
+          : [];
+      case "modify":
+        return itemId
+          ? [{ kind: "item.modify", itemId, description: op.description }]
+          : [];
+      case "destroy":
+        return itemId ? [{ kind: "item.destroy", itemId }] : [];
+      case "damage": {
+        if (!itemId) return [];
+        // Scene-held items use the structured damage path; carried items get
+        // the damage folded into their description.
+        const sceneId = this.findItemSceneId(itemId);
+        if (sceneId) {
+          return [
+            {
+              kind: "scene.damageItem",
+              sceneId,
+              itemId,
+              damagedBy: op.damagedBy,
+              reason: op.reason,
+              sourceFeatureId: source,
+            },
+          ];
+        }
+        return [
+          {
+            kind: "item.modify",
+            itemId,
+            description: `damaged by ${op.damagedBy}: ${op.reason}`,
+          },
+        ];
+      }
+    }
+    return [];
+  }
+
+  private findItemSceneId(itemId: string): string | undefined {
+    for (const scene of this.dgsm.getState().scenes.values()) {
+      if ((scene.items ?? []).some((i) => i.id === itemId)) return scene.id;
+    }
+    return undefined;
+  }
+
   flush(
     inputChanges: readonly StateChange[],
-    _gameDateTime: GameTime
+    _gameDateTime: GameTime,
+    sourcedDeltas: readonly SourcedWorldDelta[] = []
   ): {
     damageReports: DamageReport[];
     featureEvents: FeatureEvent[];
     stateChanges: StateChange[];
   } {
+    // Engine deltas apply ahead of subsystem/scripted changes: semantic
+    // outcomes land first, ambient effects follow (same relative order the
+    // orchestrator's buffer had for action outcomes historically).
+    const combined = [
+      ...sourcedDeltas.flatMap((d) => this.deltaToChanges(d)),
+      ...inputChanges,
+    ];
     // Filtered up front so no-ops are neither applied nor reported. Evaluated
     // against the pre-flush state, which is correct because a change that is
     // a no-op now can only be made non-no-op by another change in this same
     // batch — and the kinds covered here are not emitted twice per tick.
-    const changes = inputChanges.filter((c) => {
+    const changes = combined.filter((c) => {
       const badId = this.invalidCharacterRef(c);
       if (badId !== null) {
         console.warn(
