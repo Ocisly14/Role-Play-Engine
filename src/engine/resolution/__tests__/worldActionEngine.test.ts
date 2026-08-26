@@ -109,7 +109,13 @@ function makeDeps() {
 }
 
 describe("resolveTick session loop", () => {
-  beforeEach(() => generateToolCalls.mockReset());
+  // Braces matter: `() => generateToolCalls.mockReset()` implicitly returns
+  // the mock, and vitest treats a function returned from a hook as a teardown
+  // callback — it would CALL the mock after each test, re-throwing whatever
+  // implementation the test installed.
+  beforeEach(() => {
+    generateToolCalls.mockReset();
+  });
 
   it("answers code-tool calls, then accepts the lone submission", async () => {
     generateToolCalls
@@ -210,9 +216,7 @@ describe("resolveTick session loop", () => {
   });
 
   it("fails every triggering action when the model call throws", async () => {
-    generateToolCalls.mockImplementation(() => {
-      throw new Error("provider down");
-    });
+    generateToolCalls.mockRejectedValue(new Error("provider down"));
 
     const result = await resolveTick(makeContext(), makeDeps());
 
