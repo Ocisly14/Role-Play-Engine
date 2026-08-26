@@ -8,14 +8,20 @@
 // metadata.
 
 import type { DynamicGameStateManager } from "./DynamicGameState.js";
+import {
+  charactersAtSameLocation,
+  resolvePerceivedLocation,
+} from "./perceivedLocation.js";
 import type { DynamicNPCProfile } from "./types.js";
 
 export interface PerceivableDirectory {
-  /** Character ids in scope: KNOWN via relationships ∪ in-scene. */
+  /** Character ids in scope: KNOWN via relationships ∪ co-located. */
   characters: Set<string>;
-  /** Item ids in scope: scene items ∪ actor inventory. */
+  /** Item ids in scope: items at the current location ∪ actor inventory. */
   items: Set<string>;
-  /** Scene ids in scope: current scene + scenes reachable via 1-hop connections. */
+  /** PLACE ids in scope — scenes, junctions and roads alike (the citation
+   *  grammar has one `scene` kind for "a place"): the actor's current
+   *  location plus everything one hop from it. */
   scenes: Set<string>;
 }
 
@@ -64,38 +70,27 @@ export function buildPerceivableDirectory(
     characters.add(rel.targetId);
   }
 
-  // ── Characters: in-scene (incl. UNKNOWN strangers) ──────────────
-  const actorPos = dgsm.getCharacterPosition(actorId);
-  const sceneId =
-    actorPos && actorPos.type === "scene" ? actorPos.sceneId : null;
-  if (sceneId) {
-    for (const npc of dgsm.getState().npcCharacters) {
-      if (npc.id === actorId) continue;
-      if (!dgsm.isNpcAlive(npc.id)) continue;
-      const pos = dgsm.getCharacterPosition(npc.id);
-      const npcSceneId = pos && pos.type === "scene" ? pos.sceneId : null;
-      if (npcSceneId === sceneId) characters.add(npc.id);
-    }
-  }
+  // ── Characters: co-located (incl. UNKNOWN strangers) ────────────
+  // Works on roads and at junctions too — a traveller must be able to see
+  // whoever is walking beside them.
+  for (const id of charactersAtSameLocation(actorId, dgsm)) characters.add(id);
 
-  // ── Items: scene items ∪ actor inventory ────────────────────────
-  if (sceneId) {
-    const scene = dgsm.getScene(sceneId);
-    for (const item of scene?.items ?? []) items.add(item.id);
-  }
+  // ── Items: items at the current location ∪ actor inventory ──────
+  const location = resolvePerceivedLocation(
+    dgsm.getCharacterPosition(actorId),
+    dgsm
+  );
+  for (const item of location?.items ?? []) items.add(item.id);
   // Read inventory from runtime npcInventories (mutated by item.move /
   // item.create / item.destroy). The static profile.inventory is loaded once
   // from JSON and never updated by Applier paths — perception MUST reflect
   // runtime state.
   for (const item of dgsm.getNpcInventory(actorId)) items.add(item.id);
 
-  // ── Scenes: current + adjacent ──────────────────────────────────
-  if (sceneId) {
-    scenes.add(sceneId);
-    const currentScene = dgsm.getScene(sceneId);
-    for (const conn of currentScene?.connections ?? []) {
-      if (dgsm.getScene(conn.targetId)) scenes.add(conn.targetId);
-    }
+  // ── Places: current + one hop ───────────────────────────────────
+  if (location) {
+    scenes.add(location.id);
+    for (const id of location.adjacentIds) scenes.add(id);
   }
 
   return { characters, items, scenes };

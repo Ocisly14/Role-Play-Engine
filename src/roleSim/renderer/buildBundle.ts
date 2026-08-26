@@ -11,6 +11,10 @@ import type {
   TickReport,
 } from "../../engine/core/types.js";
 import type { DynamicGameStateManager } from "../../state/DynamicGameState.js";
+import {
+  charactersAtSameLocation,
+  resolvePerceivedLocation,
+} from "../../state/perceivedLocation.js";
 import type {
   OwnActionState,
   PerceivedBundle,
@@ -39,12 +43,7 @@ export function buildPerceivedBundle(
   const scene = resolveScene(npcId, dgsm);
   const ownConditions = dgsm.getNpcProfile(npcId)?.status?.conditions ?? [];
   const ownAction = resolveOwnAction(npcId, report, engine);
-  const charactersInScene = resolveScenePresentCharacters(
-    npcId,
-    scene.id,
-    dgsm,
-    engine
-  );
+  const charactersInScene = resolveScenePresentCharacters(npcId, dgsm, engine);
 
   return {
     scene,
@@ -60,14 +59,12 @@ export function buildPerceivedBundle(
 
 function resolveScenePresentCharacters(
   viewpointId: string,
-  sceneId: string,
   dgsm: DynamicGameStateManager,
   engine: TickEngine
 ): ScenePresentCharacter[] {
-  if (!sceneId) return [];
-  return dgsm
-    .getCharactersInScene(sceneId)
-    .filter((id) => id !== viewpointId && dgsm.isNpcAlive(id))
+  // Co-location, not scene membership: two NPCs walking the same road are
+  // present to each other even though neither is "in a scene".
+  return charactersAtSameLocation(viewpointId, dgsm)
     .map((id): ScenePresentCharacter | null => {
       const profile = dgsm.getNpcProfile(id);
       if (!profile) return null;
@@ -89,22 +86,23 @@ function resolveScene(
   npcId: string,
   dgsm: DynamicGameStateManager
 ): PerceivedBundle["scene"] {
-  const position = dgsm.getCharacterPosition(npcId);
-  const sceneId =
-    position && position.type === "scene" ? position.sceneId : null;
-  const scene = sceneId ? dgsm.getScene(sceneId) : null;
-
-  if (scene) {
+  // Roads and junctions are places too — a traveller mid-route perceives the
+  // street they are on, not "an indistinct place".
+  const location = resolvePerceivedLocation(
+    dgsm.getCharacterPosition(npcId),
+    dgsm
+  );
+  if (location) {
     return {
-      id: scene.id,
-      name: scene.name,
-      description: scene.description,
-      activeConditions: scene.conditions ?? [],
+      id: location.id,
+      name: location.name,
+      description: location.description,
+      activeConditions: location.conditions,
     };
   }
 
   return {
-    id: sceneId ?? "",
+    id: "",
     name: "an indistinct place",
     description: "",
     activeConditions: [],

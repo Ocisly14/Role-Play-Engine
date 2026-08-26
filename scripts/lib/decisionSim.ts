@@ -918,7 +918,13 @@ export async function runStagedCase(
   const stagedNames = stage.actors.map((a) => a.npcId);
   const popWarnSink = pushWarnSink((line) => {
     if (!/\[NpcActionController\]|\[renderer\]|\[roleSim/.test(line)) return;
-    if (!stagedNames.some((name) => line.includes(name))) return;
+    // Match the name ONLY in the controller's own message, never in the
+    // echoed actionText that follows it: an NPC's narrative routinely names
+    // other people (a debtor pleading with his creditor cites the creditor),
+    // and matching the whole line filed that failure under the creditor's
+    // unrelated concurrent case.
+    const attribution = line.split("actionText:")[0];
+    if (!stagedNames.some((name) => attribution.includes(name))) return;
     observation.silentFailures.push(line.slice(0, 300));
   });
 

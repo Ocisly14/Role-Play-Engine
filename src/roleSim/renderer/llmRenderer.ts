@@ -12,6 +12,7 @@ import {
   descriptionIdentifier,
   isKnownTo,
 } from "../../state/perceivableDirectory.js";
+import { resolveLocationById } from "../../state/perceivedLocation.js";
 import type { DynamicNPCProfile } from "../../state/types.js";
 import type { PerceivedBundle } from "./types.js";
 
@@ -204,10 +205,11 @@ function formatScene(
     }
   }
   if (scene.id) {
-    const fullScene = dgsm.getScene(scene.id);
-    const items = fullScene?.items ?? [];
+    // By id, not getScene: the place may be a road or junction, which carry
+    // items of their own and are invisible to the scene lookup.
+    const items = resolveLocationById(scene.id, dgsm)?.items ?? [];
     if (items.length > 0) {
-      lines.push("Items visible in scene (cite by id):");
+      lines.push("Items visible here (cite by id):");
       for (const item of items) {
         const desc = item.description ? `: ${item.description}` : "";
         lines.push(`  - ${item.name} (id: ${item.id})${desc}`);
