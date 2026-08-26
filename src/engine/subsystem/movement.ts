@@ -41,6 +41,104 @@ const routes = new Map<string, MovementRouteState>();
 
 const SUBSYSTEM_ID = "movement";
 
+/** Result of planning a route without executing it. Extracted from
+ *  `onActivate` so the Engine's pathfinding/movement-cost code tools reuse
+ *  the exact mechanics the subsystem runs on (plan Phase 5: no copies). */
+export type PlannedRoute =
+  | {
+      ok: true;
+      steps: MovementStep[];
+      totalMinutes: number;
+      targetPosition: CharacterPosition;
+    }
+  | { ok: false; reason: "missing_destination" | "no_current_position" | "no_path" };
+
+/**
+ * Resolve a destination id and plan the movement route from `currentPosition`,
+ * applying the same policies `onActivate` uses: same-building shortcut,
+ * road-end snapping for bare road destinations, block-ignoring route build
+ * (blocks are enforced during execution, step by step).
+ */
+export function planMovementRoute(
+  dgsm: DynamicGameStateManager,
+  characterId: string,
+  destination: string | undefined
+): PlannedRoute {
+  if (!destination) return { ok: false, reason: "missing_destination" };
+
+  const currentPosition = dgsm.getCharacterPosition(characterId);
+  if (!currentPosition) return { ok: false, reason: "no_current_position" };
+
+  // Same-building shortcut: scene → scene within the same parent location.
+  const state = dgsm.getState();
+  if (currentPosition.type === "scene") {
+    const currentScene = state.scenes.get(currentPosition.sceneId);
+    const targetScene = state.scenes.get(destination);
+    if (
+      currentScene &&
+      targetScene &&
+      currentScene.parentLocationId === targetScene.parentLocationId &&
+      currentScene.parentLocationId !== "OUTDOOR" &&
+      currentPosition.sceneId !== destination
+    ) {
+      const targetPos: CharacterPosition = {
+        type: "scene",
+        sceneId: destination,
+      };
+      return {
+        ok: true,
+        steps: [
+          {
+            kind: "to_scene",
+            from: currentPosition,
+            to: targetPos,
+            durationMinutes: 1,
+            blockCheck: {
+              fromId: currentPosition.sceneId,
+              toId: destination,
+            },
+          },
+        ],
+        totalMinutes: 1,
+        targetPosition: targetPos,
+      };
+    }
+  }
+
+  const topology = dgsm.getTopology();
+  let targetPosition = resolveTargetPosition(destination, topology, dgsm);
+  if (!targetPosition) return { ok: false, reason: "no_path" };
+  // A road destination with no explicit "@position" ("去那条街" / an outline
+  // whose entry is a road) means "get onto that road" — snap to the end
+  // nearest to the mover instead of the default midpoint.
+  if (targetPosition.type === "road" && !destination.includes("@")) {
+    targetPosition = {
+      ...targetPosition,
+      position: nearestRoadPosition(
+        currentPosition,
+        targetPosition.roadId,
+        topology,
+        dgsm
+      ),
+    };
+  }
+
+  const route = buildMovementRouteIgnoringBlocks(
+    currentPosition,
+    targetPosition,
+    topology,
+    dgsm
+  );
+  if (!route) return { ok: false, reason: "no_path" };
+
+  return {
+    ok: true,
+    steps: route.steps,
+    totalMinutes: route.totalMinutes,
+    targetPosition,
+  };
+}
+
 export const movementSubsystem: ActionSubsystem = {
   id: SUBSYSTEM_ID,
   kind: "action",
@@ -64,105 +162,36 @@ export const movementSubsystem: ActionSubsystem = {
     }
 
     const destination = readDestination(step);
-    if (!destination) {
+    const planned = planMovementRoute(dgsm, step.characterId, destination);
+    if (!planned.ok) {
+      if (planned.reason === "no_current_position") {
+        return failure("no current position");
+      }
       // Feedback matters as much as the failure: without a memory the
       // character never learns the move went nowhere and re-issues it.
       return failure(
-        "missing destination",
-        noPathMemory(step.characterId, undefined)
+        planned.reason === "missing_destination"
+          ? "missing destination"
+          : "no path",
+        noPathMemory(
+          step.characterId,
+          planned.reason === "missing_destination" ? undefined : destination
+        )
       );
     }
 
-    const currentPosition = dgsm.getCharacterPosition(step.characterId);
-    if (!currentPosition) {
-      return failure("no current position");
-    }
-
-    // Same-building shortcut: scene → scene within the same parent location.
-    const state = dgsm.getState();
-    if (currentPosition.type === "scene") {
-      const currentScene = state.scenes.get(currentPosition.sceneId);
-      const targetScene = state.scenes.get(destination);
-      if (
-        currentScene &&
-        targetScene &&
-        currentScene.parentLocationId === targetScene.parentLocationId &&
-        currentScene.parentLocationId !== "OUTDOOR" &&
-        currentPosition.sceneId !== destination
-      ) {
-        const targetPos: CharacterPosition = {
-          type: "scene",
-          sceneId: destination,
-        };
-        // Single 1-minute step inside the building; the durationMinutes
-        // chosen here matches the legacy initializeMovementNode default
-        // (Math.max(1, remainingMinutes)). We don't have remainingMinutes
-        // at this layer, so we use 1 minute — consistent with the existing
-        // "to_scene" step duration in pathfinding.
-        const route: MovementStep[] = [
-          {
-            kind: "to_scene",
-            from: currentPosition,
-            to: targetPos,
-            durationMinutes: 1,
-            blockCheck: {
-              fromId: currentPosition.sceneId,
-              toId: destination,
-            },
-          },
-        ];
-        routes.set(step.id, {
-          routeSnapshot: route,
-          currentStepIndex: 0,
-          minutesIntoStep: 0,
-          lastReachablePosition: currentPosition,
-          targetPosition: targetPos,
-        });
-        return { stateChanges: [], completed: false };
-      }
-    }
-
-    const topology = dgsm.getTopology();
-    let targetPosition = resolveTargetPosition(destination, topology, dgsm);
-    if (!targetPosition) {
-      return failure("no path", noPathMemory(step.characterId, destination));
-    }
-    // A road destination with no explicit "@position" ("去那条街" / an
-    // outline whose entry is a road) means "get onto that road" — snap to
-    // the end nearest to the mover instead of the default midpoint.
-    if (targetPosition.type === "road" && !destination.includes("@")) {
-      targetPosition = {
-        ...targetPosition,
-        position: nearestRoadPosition(
-          currentPosition,
-          targetPosition.roadId,
-          topology,
-          dgsm
-        ),
-      };
-    }
-
-    const route = buildMovementRouteIgnoringBlocks(
-      currentPosition,
-      targetPosition,
-      topology,
-      dgsm
-    );
-    if (!route) {
-      return failure("no path", noPathMemory(step.characterId, destination));
-    }
-
-    if (route.steps.length === 0) {
+    if (planned.steps.length === 0) {
       // Already at destination — nothing to do.
       return { stateChanges: [], completed: true };
     }
 
+    const currentPosition = dgsm.getCharacterPosition(step.characterId);
     routes.set(step.id, {
-      routeSnapshot: route.steps,
+      routeSnapshot: planned.steps,
       currentStepIndex: 0,
       minutesIntoStep: 0,
-      lastReachablePosition: currentPosition,
-      targetPosition,
+      lastReachablePosition: currentPosition ?? planned.steps[0].from,
+      targetPosition: planned.targetPosition,
     });
     return { stateChanges: [], completed: false };
   },
