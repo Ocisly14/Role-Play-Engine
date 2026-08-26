@@ -145,16 +145,18 @@ describe("validateActArgs", () => {
 
 describe("skillRollService", () => {
   it("resolves a trained skill case-insensitively", () => {
-    expect(resolveSkillValue("locksmith", { Locksmith: 60 })).toEqual({
-      canonicalSkillId: "Locksmith",
+    expect(
+      resolveSkillValue("stealth & security", { "Stealth & Security": 60 })
+    ).toEqual({
+      canonicalSkillId: "Stealth & Security",
       value: 60,
     });
   });
 
-  it("falls back to the CoC base value for an untrained known skill", () => {
-    expect(resolveSkillValue("Locksmith", {})).toEqual({
-      canonicalSkillId: "Locksmith",
-      value: 1,
+  it("falls back to the base value for an untrained known domain", () => {
+    expect(resolveSkillValue("Stealth & Security", {})).toEqual({
+      canonicalSkillId: "Stealth & Security",
+      value: 10,
     });
   });
 
@@ -195,7 +197,7 @@ const dgsm = {
   getGameDateTime: () => "1923-04-02T09:15:00",
   getCharacterPosition: () => ({ kind: "scene", sceneId: "SCN_1" }),
   resolveLocationId: () => "SCN_1",
-  getNpcProfile: () => ({ skills: { Locksmith: 60 } }),
+  getNpcProfile: () => ({ skills: { "Stealth & Security": 60 } }),
 } as never;
 
 describe("buildActionCommand", () => {
@@ -235,30 +237,30 @@ describe("buildActionCommand", () => {
   it("rolls immediately for a declared trained skill", () => {
     const result = buildActionCommand(
       "npc_1",
-      args({ skillId: "locksmith" }),
+      args({ skillId: "stealth & security" }),
       { dgsm }
     );
     expect(result.ok).toBe(true);
     if (!result.ok) return;
-    expect(result.command.declaredSkillId).toBe("Locksmith");
+    expect(result.command.declaredSkillId).toBe("Stealth & Security");
     const roll = result.command.skillRoll;
     expect(roll).toBeDefined();
     if (!roll) return;
-    expect(roll.skillId).toBe("Locksmith");
+    expect(roll.skillId).toBe("Stealth & Security");
     expect(roll.skillValue).toBe(60);
     expect(roll.roll).toBeGreaterThanOrEqual(1);
     expect(roll.roll).toBeLessThanOrEqual(100);
     expect(roll.rollId).toBeTruthy();
   });
 
-  it("rolls with the base value for an untrained known skill", () => {
+  it("rolls with the base value for an untrained known domain", () => {
     const noSkills = {
       ...(dgsm as Record<string, unknown>),
       getNpcProfile: () => ({ skills: {} }),
     } as never;
     const result = buildActionCommand(
       "npc_1",
-      args({ skillId: "Listen" }),
+      args({ skillId: "Investigation" }),
       { dgsm: noSkills }
     );
     expect(result.ok).toBe(true);

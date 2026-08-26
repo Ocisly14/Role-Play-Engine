@@ -8,13 +8,11 @@
 //   - the ENGINE: applicability boundaries, objective duration guidance and
 //     success/failure shading, so post-roll assessment is grounded.
 //
-// The files keep their legacy frontmatter, but ONLY knowledge fields are
-// read: id, title, description, and outputSchema.durationGuidance (a
-// knowledge field that historically lived inside the schema block). The
-// routing machinery — skillCheck, stateDomains, output whitelists,
-// interpreter examples, engine dispatch — is deliberately ignored: there are
-// no per-action definitions in this architecture (plan D8), only skill
-// knowledge.
+// One document per broad skill domain, matching `SKILL_CATALOG` one-to-one
+// (pinned by rules/__tests__/skillCatalog.test.ts). Only knowledge fields are
+// read: id, title, description, and durationGuidance. Any routing machinery
+// left in a document's frontmatter is deliberately ignored — there are no
+// per-action definitions in this architecture (plan D8), only skill knowledge.
 
 import { existsSync, readFileSync, readdirSync } from "node:fs";
 import { dirname, join } from "node:path";
@@ -48,7 +46,10 @@ function skillsDir(): string | undefined {
   return candidates.find((dir) => existsSync(dir));
 }
 
-function parseSkillFile(path: string, fallbackId: string): SkillReference | null {
+function parseSkillFile(
+  path: string,
+  fallbackId: string
+): SkillReference | null {
   const raw = readFileSync(path, "utf-8");
   if (!raw.startsWith("---")) return null;
   const endIndex = raw.indexOf("\n---", 3);
@@ -60,17 +61,15 @@ function parseSkillFile(path: string, fallbackId: string): SkillReference | null
     return null;
   }
   const body = raw.slice(endIndex + 4).trim();
-  const id =
-    typeof frontmatter.id === "string" ? frontmatter.id : fallbackId;
-  const title =
-    typeof frontmatter.title === "string" ? frontmatter.title : id;
+  const id = typeof frontmatter.id === "string" ? frontmatter.id : fallbackId;
+  const title = typeof frontmatter.title === "string" ? frontmatter.title : id;
   const description =
     typeof frontmatter.description === "string" ? frontmatter.description : "";
-  const durationGuidance = (
-    frontmatter.outputSchema as
-      | { durationGuidance?: SkillDurationGuidance }
-      | undefined
-  )?.durationGuidance;
+  // Optional: a document may state how long its work typically takes, which
+  // grounds the Engine's authoritative resolvedDurationTicks.
+  const durationGuidance = frontmatter.durationGuidance as
+    | SkillDurationGuidance
+    | undefined;
 
   return {
     id,

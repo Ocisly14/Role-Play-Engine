@@ -11,6 +11,7 @@
 
 import { randomUUID } from "node:crypto";
 import { COC_SKILL_BASE_VALUES } from "../../planning/cocSkillList.js";
+import { canonicalSkillName } from "../rules/skillCatalog.js";
 import { getSkillReference } from "../rules/skillReference.js";
 import { isFumble, rollD100 } from "../shared/dice.js";
 import type { SkillRollRecord, SkillSuccessLevel } from "./types.js";
@@ -48,20 +49,46 @@ function lookupBaseValue(
  * otherwise. Returns undefined for a skill name the system does not know —
  * the command is then rejected at intake.
  */
+/**
+ * The catalog's canonical spelling for a declared skill. Goes through the
+ * legacy consolidation map first, then recovers the catalog's exact casing —
+ * the returned id is persisted on the command and the roll record and is what
+ * `renderSkillGuidance` looks up, so "stealth & security" must not survive as
+ * a distinct id from "Stealth & Security".
+ */
+function canonicalDisplayName(skillId: string): string {
+  const mapped = canonicalSkillName(skillId.trim());
+  const base = lookupBaseValue(mapped);
+  if (base) return base.name;
+  const ref = getSkillReference(mapped);
+  if (ref) return ref.title;
+  return mapped;
+}
+
 export function resolveSkillValue(
   skillId: string,
   actorSkills: Record<string, number>
 ): { canonicalSkillId: string; value: number } | undefined {
-  const trained = lookupIgnoreCase(actorSkills, skillId);
-  if (trained) return { canonicalSkillId: trained.name, value: trained.value };
-  const base = lookupBaseValue(skillId);
-  if (base) return { canonicalSkillId: base.name, value: base.value };
+  const canonicalSkillId = canonicalDisplayName(skillId);
+  const trained = lookupIgnoreCase(actorSkills, canonicalSkillId);
+  if (trained) return { canonicalSkillId, value: trained.value };
+
+  // Existing NPC and saved-character data may still use a pre-consolidation
+  // name. Use the strongest matching legacy specialty until it is resaved.
+  const legacyTrained = Object.entries(actorSkills)
+    .filter(([name]) => canonicalSkillName(name) === canonicalSkillId)
+    .map(([name, value]) => ({ name, value }))
+    .sort((a, b) => b.value - a.value)[0];
+  if (legacyTrained) return { canonicalSkillId, value: legacyTrained.value };
+
+  const base = lookupBaseValue(canonicalSkillId);
+  if (base) return { canonicalSkillId, value: base.value };
   // Skills documented in the reference catalog (rules/skills) but absent
   // from the base-value table are still declarable — the catalog is what
   // the agent sees, so the two sources must not disagree on existence.
   // Untrained value defaults to 1.
-  const ref = getSkillReference(skillId);
-  if (ref) return { canonicalSkillId: ref.title, value: 1 };
+  const ref = getSkillReference(canonicalSkillId);
+  if (ref) return { canonicalSkillId, value: 1 };
   return undefined;
 }
 
