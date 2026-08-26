@@ -169,14 +169,113 @@ export const LEGACY_SKILL_TO_CANONICAL: Readonly<
   "Language (Other)": "Languages",
   Occult: "Occult",
   "Forbidden Lore": "Occult",
+
+  // ── Names observed in module content (data/Mods/**/*.json) ──
+  "Fast Talk": "Social",
+  Bargain: "Social",
+  Diplomacy: "Social",
+  "Credit Rating": "Social",
+  Gambling: "Social",
+  "Library Use": "Investigation",
+  "Spot Hidden": "Investigation",
+  "Appraise Prey": "Investigation",
+  Religion: "Knowledge & Craft",
+  Bartending: "Knowledge & Craft",
+  Cryptography: "Knowledge & Craft",
+  Hide: "Stealth & Security",
+  "Computer Use": "Repair & Engineering",
+  Electronics: "Repair & Engineering",
+  Pharmacy: "Medicine & Psychology",
+  Grapple: "Melee Combat",
+  Bite: "Melee Combat",
+  "Claw Attack": "Melee Combat",
+  Crush: "Melee Combat",
+  "Head Butt": "Melee Combat",
+  "Web Projection": "Ranged Combat",
+  Latin: "Languages",
+  "Cthulhu Mythos": "Occult",
+
+  // Bare stems for the parenthetical-specialty rule in canonicalSkillName:
+  // "Fighting (Claw)", "Firearms (Rifle)", "Craft (Distilling)" and any
+  // future specialty resolve through these without a new entry each.
+  Fighting: "Melee Combat",
+  Firearms: "Ranged Combat",
+  Craft: "Knowledge & Craft",
+  "Art/Craft": "Knowledge & Craft",
+  Language: "Languages",
+  Survival: "Survival & Navigation",
+  Pilot: "Aircraft Operation",
 };
 
 export function canonicalSkillName(name: string): string {
-  if (LEGACY_SKILL_TO_CANONICAL[name]) return LEGACY_SKILL_TO_CANONICAL[name];
+  const direct = lookupLegacy(name);
+  if (direct) return direct;
+
+  // Specialties are written as "Stem (Specialty)" — "Fighting (Claw)",
+  // "Firearms (Rifle)", "Craft (Distilling)". The specialty is exactly the
+  // detail the Engine now judges from the action description, so the stem
+  // decides the domain and new specialties need no new entries.
+  const stem = name.match(/^([^(]+?)\s*\(/)?.[1];
+  if (stem) {
+    const viaStem = lookupLegacy(stem);
+    if (viaStem) return viaStem;
+    const canonical = SKILL_CATALOG.find(
+      (s) => s.name.toLowerCase() === stem.toLowerCase()
+    );
+    if (canonical) return canonical.name;
+  }
+
+  return name.trim();
+}
+
+function lookupLegacy(name: string): string | undefined {
+  const trimmed = name.trim();
+  if (LEGACY_SKILL_TO_CANONICAL[trimmed]) {
+    return LEGACY_SKILL_TO_CANONICAL[trimmed];
+  }
   const matchingLegacyName = Object.keys(LEGACY_SKILL_TO_CANONICAL).find(
-    (legacyName) => legacyName.toLowerCase() === name.toLowerCase()
+    (legacyName) => legacyName.toLowerCase() === trimmed.toLowerCase()
   );
   return matchingLegacyName
     ? LEGACY_SKILL_TO_CANONICAL[matchingLegacyName]
-    : name;
+    : undefined;
+}
+
+/**
+ * Fold a pre-consolidation skill map onto the broad domains, keeping the
+ * HIGHEST value among the specialties that merged into each domain — a
+ * character who trained Locksmith to 70 and Stealth to 40 is a 70 at
+ * Stealth & Security, not an average of the two.
+ *
+ * Returns the consolidated map plus any names that resolved to nothing in
+ * the catalog, so a migration can report them instead of dropping them.
+ */
+export function consolidateSkills(skills: Record<string, number>): {
+  consolidated: Record<string, number>;
+  unmapped: string[];
+} {
+  const catalogNames = new Set<string>(SKILL_CATALOG.map((s) => s.name));
+  const consolidated: Record<string, number> = {};
+  const unmapped: string[] = [];
+
+  for (const [rawName, value] of Object.entries(skills)) {
+    if (typeof value !== "number" || Number.isNaN(value)) continue;
+    const canonical = canonicalSkillName(rawName);
+    if (!catalogNames.has(canonical)) {
+      unmapped.push(rawName);
+      continue;
+    }
+    const current = consolidated[canonical];
+    consolidated[canonical] =
+      current === undefined ? value : Math.max(current, value);
+  }
+
+  // Stable catalog order so rewritten files diff cleanly.
+  const ordered: Record<string, number> = {};
+  for (const skill of SKILL_CATALOG) {
+    if (consolidated[skill.name] !== undefined) {
+      ordered[skill.name] = consolidated[skill.name];
+    }
+  }
+  return { consolidated: ordered, unmapped };
 }
