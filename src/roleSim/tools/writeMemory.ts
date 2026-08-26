@@ -2,51 +2,86 @@
 
 export const writeMemoryDoc = `---
 name: writeMemory
-description: Record a thought, plan, belief, secret, or new knowledge. Doesn't consume a tick.
+description: Keep something in long-term memory. Free — may be called alongside act/continue in the same turn.
 ---
 
 # writeMemory
 
-Record something to your memory. Doesn't consume a tick — you can chain other tool calls before terminating.
+**Nothing is remembered for you.** What you perceive reaches you as
+perception and stays in your prompt for a few minutes — then it is gone
+unless YOU wrote it down. The world no longer keeps a diary on your behalf.
 
-Use this for **internal mental events** that you wouldn't otherwise leave a trace of. Physical events you do (actions) and witness (other people's actions affecting you) are auto-logged by the engine — don't duplicate.
+So each turn, decide: is anything here worth carrying? Most minutes are
+not. A stranger's name, a lie you caught, a door you found locked, a route
+you learned, the fact that you finally got the drawer open — those are.
+The colour of the wallpaper is not.
 
-## Allowed types (you may ONLY use these 7)
-- \`plan\` — a new plan you formed: "I'll go to the library after dinner"
-- \`belief\` — something you came to believe: "Smith is lying"
-- \`secret\` — something hidden you realized: "X is the killer"
-- \`information\` — a fact you learned: "The library closes at 6 PM"
-- \`summary\` — an end-of-day reflection / dated diary entry
-- \`long_term_intent\` — your long-term goal genuinely shifted (rare)
-- \`map\` — a place / route you learned (use \`mapAdd\`, not \`content\`)
+## Cost
 
+Free. It does NOT consume a tick, and it may be called **in the same turn
+as \`act\` or \`continue\`** — decide your action and record your memory
+together. (\`recallMemory\` and \`getMapSnapshot\` still need a turn of
+their own, because you have to read their results before deciding.)
 
-## When NOT to use
-- To narrate what just happened — events / witness are auto-recorded by the engine
-- To rephrase something you already wrote this decision
-- "I think I should do X next" — that's just an action choice, use \`act\` directly
-- Routine observations ("the room is dim") — these are perception, not memory
+## Types
+
+- \`general\` — 普通记忆. The default. What you did and how it turned
+  out, what you saw someone else do, a conclusion you reached, a fact you
+  learned. One memory = one thing worth recalling later; do not dump a
+  whole minute of scenery into it.
+- \`plan\` — 计划. An intention you mean to hold beyond this minute:
+  "tomorrow morning, get to the harbour before anyone notices". Not your
+  next action — that is \`act\`.
+- \`secret\` — 秘密. Something hidden you worked out and would not say
+  aloud. These fade slowly; you will still be carrying them days later.
+- \`relationship\` — 角色关系. What you now think of a specific person.
+  Requires \`targetId\` (their entity id from your perception). Use it
+  when your read on someone changes: they lied, they helped, they
+  frightened you, you decided to trust them.
+- \`map\` — 地图记忆. A place or route you learned. Use \`mapAdd\`
+  instead of \`content\`.
+- \`long_term_intent\` — 长期目标. ONLY when the goal driving your whole
+  life here genuinely changes. Rare — an ordinary intention is a \`plan\`.
+
+## Writing well
+
+- First person, past tense, self-contained. "Hollins claimed he was at the
+  harbor all evening, but his coat was dry." — readable months later
+  without the surrounding scene.
+- One fact per call. Two unrelated things = two calls (max 3 per decision).
+- Write what it MEANS to you, not a transcript of what was said.
+- Do not record what you are about to do — that is your action, not a
+  memory. Use \`plan\` only for an intention that outlives this minute.
 
 ## Output
-writeMemory({ "type": "<type>", "content": "<text>" })
 
-For \`type=map\`:
+writeMemory({ "type": "general", "content": "<text>" })
+writeMemory({ "type": "relationship", "targetId": "<entity-id>", "content": "<text>" })
 writeMemory({ "type": "map", "mapAdd": { "sceneNames": ["library"], "junctionNames": [], "roadNames": [], "revealHiddenConnection": "" } })
 
 ## Cap
+
 Max 3 \`writeMemory\` calls per decision.
 
 ## Examples
 
-Forming a belief from observation:
-writeMemory({ "type": "belief", "content": "Smith was at the library when I asked, but his coat was wet. He must have been outside earlier." })
+You formed an intention for later:
+writeMemory({ "type": "plan", "content": "Tomorrow morning, reach the harbour before the constable's rounds." })
 
-Recording a plan:
-writeMemory({ "type": "plan", "content": "Tomorrow morning, head to the harbor before anyone notices I'm gone." })
+You worked something out you would not say aloud:
+writeMemory({ "type": "secret", "content": "The handwriting in the ledger is the professor's own. He forged the entries himself." })
 
-Writing a dated summary-style memory:
-writeMemory({ "type": "summary", "content": "[1923-10-17] Today I realized Smith is afraid of the harbor." })
+You just caught an inconsistency:
+writeMemory({ "type": "general", "content": "The professor said the ledger never left his office, but I saw it in the parlour an hour earlier." })
 
-Recording a discovered location:
-writeMemory({ "type": "map", "mapAdd": { "sceneNames": ["abandoned warehouse"] } })
+Your read on someone changed:
+writeMemory({ "type": "relationship", "targetId": "Hollins", "content": "He went pale when I mentioned the harbor. He knows something and he is afraid of it." })
+
+Your own action finally paid off:
+writeMemory({ "type": "general", "content": "The cabinet lock gave way after a few minutes of work. Inside: a bundle of letters tied with string." })
+
+You learned where something is:
+writeMemory({ "type": "map", "mapAdd": { "sceneNames": ["the back stairwell"] } })
+
+A quiet minute with nothing to keep — write nothing at all.
 `;

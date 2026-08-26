@@ -14,9 +14,7 @@ vi.mock("../renderer/index.js", () => ({
   buildPerceivedBundle: (...args: unknown[]) => buildPerceivedBundle(...args),
 }));
 
-const { NpcActionController, extractNarrative } = await import(
-  "../npcActionController.js"
-);
+const { NpcActionController } = await import("../npcActionController.js");
 
 function makeReport(overrides: Partial<TickReport> = {}): TickReport {
   return {
@@ -133,20 +131,6 @@ function liveAction(actorId: string): EngineAction {
   };
 }
 
-describe("extractNarrative", () => {
-  it("strips the [references] scaffolding", () => {
-    expect(
-      extractNarrative(
-        "[narrative]\nI hear a crash from the street.\n\n[references]\n[1] id: X; kind: item"
-      )
-    ).toBe("I hear a crash from the street.");
-  });
-
-  it("passes through plain text", () => {
-    expect(extractNarrative("just prose")).toBe("just prose");
-  });
-});
-
 describe("occurrence routing", () => {
   beforeEach(() => {
     render.mockReset();
@@ -176,26 +160,11 @@ describe("occurrence routing", () => {
     expect(h.decisions).toContain("npc_3");
   });
 
-  it("writes witness memory from the RENDERED narrative for perceivers", async () => {
+  it("writes NO memory itself — the character records its own via writeMemory", async () => {
+    // Perception is injected raw and fades; nothing is persisted on the
+    // character's behalf, whether they merely perceived something or their
+    // own action just ended.
     const h = harness({ liveActions: [liveAction("npc_3")] });
-    await h.fire(makeReport({ occurrences: [occurrence(["npc_2"])] }));
-
-    const witness = h.memoryAdds.filter((m) => m.type === "witness");
-    expect(witness).toEqual([
-      expect.objectContaining({
-        npcId: "npc_2",
-        content: "Something happens.",
-        gameDateTime: "1923-04-02T09:05:00",
-      }),
-    ]);
-    // Idle npc_1 perceived nothing → no memory.
-    expect(
-      h.memoryAdds.filter((m) => m.npcId === "npc_1")
-    ).toEqual([]);
-  });
-
-  it("writes event memory for the actor whose action ended", async () => {
-    const h = harness();
     await h.fire(
       makeReport({
         transitions: [
@@ -207,13 +176,12 @@ describe("occurrence routing", () => {
             progressDeltaMinutes: 3,
           },
         ],
-        occurrences: [occurrence(["npc_1"])],
+        occurrences: [occurrence(["npc_1", "npc_2"])],
       })
     );
-    const events = h.memoryAdds.filter((m) => m.type === "event");
-    expect(events).toEqual([
-      expect.objectContaining({ npcId: "npc_1", content: "Something happens." }),
-    ]);
+
+    expect(h.decisions.length).toBeGreaterThan(0);
+    expect(h.memoryAdds).toEqual([]);
   });
 
   it("adapts FeatureEvents into occurrence-shaped wake-ups (migration shim)", async () => {

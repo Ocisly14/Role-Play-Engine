@@ -13,16 +13,22 @@
 
 import type { ToolSpec } from "../../models/providers/types.js";
 
-const MEMORY_TYPES = [
-  "event",
-  "witness",
-  "information",
-  "map",
-  "belief",
+/** Types the character may write. `summary` is system-authored (end-of-day
+ *  diary) and deliberately absent. */
+const WRITABLE_MEMORY_TYPES = [
+  "general",
   "plan",
   "secret",
-  "summary",
+  "relationship",
+  "map",
   "long_term_intent",
+] as const;
+
+/** Types recallMemory may filter on — everything readable, including the
+ *  system-written daily summaries. */
+const READABLE_MEMORY_TYPES = [
+  ...WRITABLE_MEMORY_TYPES,
+  "summary",
 ] as const;
 
 export const actTool: ToolSpec = {
@@ -99,12 +105,17 @@ export const continueTool: ToolSpec = {
 export const writeMemoryTool: ToolSpec = {
   name: "writeMemory",
   description:
-    "Record a genuinely new thought, plan, belief or secret. Reflection, not narration — the engine logs events automatically.",
+    "Keep something in long-term memory — nothing is recorded for you. Free: may be called in the same turn as act/continue.",
   inputSchema: {
     type: "object",
     properties: {
-      type: { type: "string", enum: [...MEMORY_TYPES] },
+      type: { type: "string", enum: [...WRITABLE_MEMORY_TYPES] },
       content: { type: "string" },
+      targetId: {
+        type: "string",
+        description:
+          "Required for type=relationship: the entity id of the person this memory is about (from your perception).",
+      },
       mapAdd: {
         type: "object",
         properties: {
@@ -125,14 +136,14 @@ export const writeMemoryTool: ToolSpec = {
 export const recallMemoryTool: ToolSpec = {
   name: "recallMemory",
   description:
-    "Search your own memory. Does not consume a tick; you must still finish with act or continue.",
+    "Search your own memory. Needs a turn of its own (you must read the results), then finish with act or continue.",
   inputSchema: {
     type: "object",
     properties: {
       query: { type: "string" },
       types: {
         type: "array",
-        items: { type: "string", enum: [...MEMORY_TYPES] },
+        items: { type: "string", enum: [...READABLE_MEMORY_TYPES] },
       },
       gameDates: {
         type: "array",

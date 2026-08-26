@@ -16,49 +16,16 @@ export type NpcMemory = PrismaNpcMemory;
 
 // ===== Metadata Types (per memory type) =====
 
-export interface EventMetadata {
-  outcome?: string;
-  itemId?: string;
-  itemName?: string;
-  targetItemId?: string;
-  targetItemName?: string;
-}
-
-export interface WitnessMetadata {
-  sourceCharacterId: string;
-  sourceAction: string;
-  impact: number;
-}
-
-export interface KnowledgeMetadata {
-  knowledgeId: string;
-  difficulty?: string;
-  revealed?: boolean;
-}
-
-export interface BeliefMetadata {
-  confidence: number;
-  reasoningChain: string;
-}
-
-export interface EmotionMetadata {
-  emotionType: string;
-  intensity: number;
-  trigger?: string;
-  decayRate?: number;
-}
-
+/** `relationship` memories scope to one person so retrieval can answer
+ *  "what do I remember about X". Written by the character, so the score
+ *  fields are optional — a memory may be purely qualitative. */
 export interface RelationshipMetadata {
   targetId: string;
-  targetName: string;
-  scoreDelta: number;
-  newScore: number;
+  targetName?: string;
+  scoreDelta?: number;
+  newScore?: number;
 }
 
-export interface PlanMetadata {
-  planType: "long_term" | "daily" | "immediate";
-  priority?: number;
-}
 
 export interface KnownMapIds {
   sceneIds: string[];
@@ -88,15 +55,7 @@ export interface MapMetadata {
   snapshot: KnownMapSnapshot;
 }
 
-export type MemoryMetadata =
-  | EventMetadata
-  | WitnessMetadata
-  | KnowledgeMetadata
-  | BeliefMetadata
-  | EmotionMetadata
-  | RelationshipMetadata
-  | PlanMetadata
-  | MapMetadata;
+export type MemoryMetadata = RelationshipMetadata | MapMetadata;
 
 export interface EnsureMapSnapshotParams {
   npcId: string;
@@ -130,13 +89,6 @@ export interface ScoredMemory extends PrismaNpcMemory {
 
 export type ContextPurpose = "scheduling" | "reaction" | "detailing";
 
-export type ReasoningTrigger =
-  | "day_transition"
-  | "high_impact"
-  | "player_question"
-  | "information_discovered"
-  | "witness_major";
-
 // ===== Manager API Parameter Types =====
 
 export interface AddMemoryParams {
@@ -160,7 +112,7 @@ export interface QueryMemoryParams {
     types?: NpcMemoryType[];
     /** Single ISO date "YYYY-MM-DD" matches that day; array matches any of the listed days (OR-set). */
     gameDate?: string | string[];
-    /** When set, ephemeral types (event/witness/plan) are restricted to this day only. */
+    /** When set, ephemeral types are restricted to this day only. */
     currentGameDate?: string;
     location?: string;
     tags?: string[];
@@ -174,36 +126,8 @@ export interface GetContextParams {
   sessionId: string;
   purpose: ContextPurpose;
   query?: string;
-  /** Current game date — ephemeral memories (event/witness/plan) are restricted to this date. */
+  /** Current game date — ephemeral memories are restricted to this date. */
   currentGameDate?: string;
-}
-
-export interface TriggerReasoningParams {
-  npcId: string;
-  sessionId: string;
-  moduleId: string;
-  trigger: ReasoningTrigger;
-  context?: string;
-  gameDateTime: string;
-}
-
-// ===== Belief Reasoning Output =====
-
-export interface BeliefOutput {
-  belief: string;
-  confidence: number;
-  reasoningChain: string;
-}
-
-export interface BeliefUpdateOutput {
-  originalBelief: string;
-  newConfidence: number;
-  reason: string;
-}
-
-export interface ReasoningResult {
-  newBeliefs: BeliefOutput[];
-  updatedBeliefs: BeliefUpdateOutput[];
 }
 
 // ===== Context Profiles =====
@@ -218,32 +142,25 @@ export interface ContextProfile {
 export const CONTEXT_PROFILES: Record<ContextPurpose, ContextProfile> = {
   scheduling: {
     defaultTypes: [
-      "event",
-      "witness",
-      "information",
-      "belief",
+      "general",
+      "plan",
       "secret",
+      "relationship",
+      "map",
       "summary",
     ],
     defaultLimit: 20,
-    typeLimits: {
-      event: 0,
-      witness: 0,
-      summary: 10,
-      information: 0,
-      belief: 0,
-      secret: 10,
-    },
+    typeLimits: { summary: 10, general: 0, plan: 0, relationship: 0 },
   },
   reaction: {
-    defaultTypes: ["event", "witness", "belief", "secret", "information"],
+    defaultTypes: ["general", "plan", "secret", "relationship"],
     defaultLimit: 5,
-    typeLimits: { event: 0, witness: 0 },
+    typeLimits: { general: 0 },
   },
   detailing: {
-    defaultTypes: ["event", "witness", "belief", "secret", "information"],
+    defaultTypes: ["general", "plan", "secret", "relationship", "map"],
     defaultLimit: 5,
-    typeLimits: { event: 0, witness: 0 },
+    typeLimits: { general: 0 },
   },
 };
 

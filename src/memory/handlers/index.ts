@@ -1,37 +1,31 @@
 import type { NpcMemoryType } from "@prisma/client";
 import type { MemoryHandler } from "../types.js";
-import { BeliefHandler } from "./BeliefHandler.js";
-import { EventHandler } from "./EventHandler.js";
-import { InformationHandler } from "./InformationHandler.js";
+import { GeneralHandler } from "./GeneralHandler.js";
 import { LongTermIntentHandler } from "./LongTermIntentHandler.js";
 import { MapHandler } from "./MapHandler.js";
 import { PlanHandler } from "./PlanHandler.js";
+import { RelationshipHandler } from "./RelationshipHandler.js";
 import { SecretHandler } from "./SecretHandler.js";
 import { SummaryHandler } from "./SummaryHandler.js";
-import { WitnessHandler } from "./WitnessHandler.js";
 
 export {
-  EventHandler,
-  WitnessHandler,
-  InformationHandler,
+  GeneralHandler,
   LongTermIntentHandler,
   MapHandler,
-  BeliefHandler,
   PlanHandler,
+  RelationshipHandler,
   SecretHandler,
   SummaryHandler,
 };
 
 const HANDLERS: Record<NpcMemoryType, MemoryHandler> = {
-  event: new EventHandler(),
-  witness: new WitnessHandler(),
-  information: new InformationHandler(),
-  map: new MapHandler(),
-  belief: new BeliefHandler(),
+  general: new GeneralHandler(),
   plan: new PlanHandler(),
   secret: new SecretHandler(),
-  summary: new SummaryHandler(),
+  relationship: new RelationshipHandler(),
+  map: new MapHandler(),
   long_term_intent: new LongTermIntentHandler(),
+  summary: new SummaryHandler(),
 };
 
 export function getHandler(type: NpcMemoryType): MemoryHandler {

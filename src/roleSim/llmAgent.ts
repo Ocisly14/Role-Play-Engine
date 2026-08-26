@@ -19,6 +19,7 @@ import type { RoleSimAgent, RoleSimContext, RoleSimDecision } from "./agent.js";
 import { SYSTEM_PROMPT } from "./systemPrompt.js";
 import {
   type DispatcherDeps,
+  FREE_WITH_TERMINAL,
   TERMINAL_TOOLS,
   TOOL_CAPS,
   VALID_TOOLS,
@@ -113,10 +114,30 @@ export class LLMRoleSimAgent implements RoleSimAgent {
 
       const terminal = toolCalls.filter((c) => TERMINAL_TOOLS.has(c.name));
       const instant = toolCalls.filter((c) => !TERMINAL_TOOLS.has(c.name));
+      // writeMemory returns nothing the agent must read before deciding, so
+      // it may ride along with the terminal call — recording a memory costs
+      // no extra round trip. Blocking tools (recallMemory / getMapSnapshot)
+      // still need a turn of their own.
+      const blocking = instant.filter((c) => !FREE_WITH_TERMINAL.has(c.name));
+      const freeRiders = instant.filter((c) => FREE_WITH_TERMINAL.has(c.name));
 
-      // A clean terminal turn ends the decision. Nothing further is sent, so
-      // the tool call needs no result.
-      if (terminal.length > 0 && instant.length === 0) {
+      // A terminal turn ends the decision. Any free-riding writes are
+      // executed first so the memory lands before the tick advances; nothing
+      // further is sent, so the tool calls need no results.
+      if (terminal.length > 0 && blocking.length === 0) {
+        for (const call of freeRiders) {
+          const dispatched = await dispatchInstantTool(
+            call.name,
+            call.args,
+            caps,
+            dispatcherDeps
+          );
+          if (dispatched.result.startsWith("Error:")) {
+            console.warn(
+              `[LLMRoleSimAgent] ${ctx.npcId} ${call.name} rejected on the terminal turn: ${dispatched.result}`
+            );
+          }
+        }
         return this.buildTerminalDecision({
           tool: terminal[0].name,
           ...terminal[0].args,
@@ -133,7 +154,7 @@ export class LLMRoleSimAgent implements RoleSimAgent {
         if (TERMINAL_TOOLS.has(call.name)) {
           results.push({
             toolCallId: call.id,
-            content: `Error: "${call.name}" was NOT executed. A turn may contain either informational tools or one terminal tool (act/continue), never both. Finish your lookups, then commit in a turn of its own.`,
+            content: `Error: "${call.name}" was NOT executed. recallMemory and getMapSnapshot need a turn of their own — you have to read their results first. Finish those lookups, then commit with act/continue (writeMemory may ride along with it).`,
           });
           continue;
         }
@@ -216,6 +237,7 @@ export class LLMRoleSimAgent implements RoleSimAgent {
       sessionId: this.deps.sessionId,
       moduleId: this.deps.moduleId,
       gameDateTime: ctx.currentTime,
+      ...(ctx.currentScene ? { location: ctx.currentScene } : {}),
     };
   }
 }

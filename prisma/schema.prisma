@@ -225,15 +225,15 @@ model NpcMemory {
 }
 
 enum NpcMemoryType {
-  event
-  witness
-  information
-  map
-  belief
-  plan
-  secret
-  summary
-  long_term_intent
+  // Agent-authored (the character decides what is worth keeping):
+  general          // 普通记忆 — what happened, what was seen, conclusions, facts learned
+  plan             // 计划 — an intention held beyond this minute
+  secret           // 秘密 — something hidden the character realized; decays slowly
+  relationship     // 角色关系 — about a specific person (metadata.targetId)
+  map              // 地图记忆 — places and routes learned (structured mapAdd)
+  long_term_intent // 长期目标 — rare, replaces the standing goal
+  // System-authored:
+  summary          // end-of-day diary entry
 }
 
 // ─── Simulation Events ───────────────────────────────────────────

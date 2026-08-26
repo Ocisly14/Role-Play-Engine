@@ -75,12 +75,15 @@ export class MemoryStore {
     });
   }
 
-  /** Types that are ephemeral — only relevant for the current game day (past ones are covered by summary). */
-  private static EPHEMERAL_TYPES: NpcMemoryType[] = [
-    "event",
-    "witness",
-    "plan",
-  ];
+  /**
+   * Types restricted to the current game day when `currentGameDate` is set
+   * (older ones are represented by summaries instead).
+   *
+   * Empty since memory became agent-authored: the character now writes only
+   * what it judged worth keeping, so there is no per-tick auto-written bulk
+   * to age out. Importance + decay govern relevance instead.
+   */
+  private static EPHEMERAL_TYPES: NpcMemoryType[] = [];
 
   async findCandidates(params: {
     sessionId: string;
@@ -112,8 +115,11 @@ export class MemoryStore {
       return { gameDateTime: { startsWith: filters.gameDate } };
     })();
 
-    // When currentGameDate is set, ephemeral types (event/witness/plan) are restricted
-    // to the current date only; past dates are represented by summary memories.
+    // When currentGameDate is set, ephemeral types are restricted to the
+    // current date only; past dates are represented by summary memories.
+    // EPHEMERAL_TYPES is currently empty (see above), so this degenerates to
+    // the durable branch — kept because the day-scoping rule is still the
+    // intended behaviour if a short-lived type is ever reintroduced.
     if (
       filters?.currentGameDate !== undefined &&
       filters.gameDate === undefined
@@ -124,7 +130,14 @@ export class MemoryStore {
         : MemoryStore.EPHEMERAL_TYPES;
       const durableRequested = requestedTypes
         ? requestedTypes.filter((t) => !MemoryStore.EPHEMERAL_TYPES.includes(t))
-        : (["summary", "secret", "belief", "information"] as NpcMemoryType[]);
+        : ([
+            "summary",
+            "general",
+            "plan",
+            "secret",
+            "relationship",
+            "map",
+          ] as NpcMemoryType[]);
 
       const baseWhere = {
         sessionId: params.sessionId,

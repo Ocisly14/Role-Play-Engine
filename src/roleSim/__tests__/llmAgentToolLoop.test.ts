@@ -144,6 +144,63 @@ describe("agent tool loop", () => {
     expect(toolMessage.results.map((r) => r.toolCallId)).toEqual(["t1", "t2"]);
   });
 
+  it("lets writeMemory ride along with the terminal call — no extra round trip", async () => {
+    // Memory is agent-authored now: recording must not cost the character a
+    // turn, or it will simply stop writing.
+    queueTurns(
+      turn([
+        {
+          id: "t1",
+          name: "writeMemory",
+          args: { type: "general", content: "Hollins lied about the harbor." },
+        },
+        {
+          id: "t2",
+          name: "act",
+          args: {
+            description: "I press him further.",
+            objectRefs: [],
+            proposedDurationTicks: 1,
+          },
+        },
+      ])
+    );
+
+    const decision = await makeAgent().decideNext(ctx);
+
+    expect(decision).toMatchObject({ tool: "act", description: "I press him further." });
+    // The write executed...
+    expect(dispatchInstantTool).toHaveBeenCalledTimes(1);
+    expect(dispatchInstantTool.mock.calls[0][0]).toBe("writeMemory");
+    // ...and the decision still ended in ONE request.
+    expect(generateToolCalls).toHaveBeenCalledTimes(1);
+  });
+
+  it("still makes recallMemory take a turn of its own", async () => {
+    queueTurns(
+      turn([
+        { id: "t1", name: "recallMemory", args: { query: "harbor" } },
+        {
+          id: "t2",
+          name: "act",
+          args: {
+            description: "too soon",
+            objectRefs: [],
+            proposedDurationTicks: 1,
+          },
+        },
+      ]),
+      turn([{ id: "t3", name: "continue" }])
+    );
+
+    await makeAgent().decideNext(ctx);
+
+    const toolMessage = messagesOnCall(1).find((m) => m.role === "tool");
+    if (toolMessage?.role !== "tool") throw new Error("expected tool results");
+    const actResult = toolMessage.results.find((r) => r.toolCallId === "t2");
+    expect(actResult?.content).toMatch(/NOT executed/);
+  });
+
   it("rejects a mixed turn without dropping the terminal call", async () => {
     // Rule B: the terminal call is reported as NOT executed rather than
     // silently discarded, so the model can resubmit it on its own turn.

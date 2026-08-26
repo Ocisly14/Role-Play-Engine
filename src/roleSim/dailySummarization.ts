@@ -72,7 +72,7 @@ export async function summarizeDayMemory(params: {
     params.npcId,
     params.sessionId,
     params.gameDate,
-    ["event", "witness"]
+    ["general", "plan", "secret", "relationship"]
   );
   if (events.length === 0) return;
 

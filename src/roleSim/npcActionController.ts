@@ -40,9 +40,6 @@ interface DecideOpts {
   report?: TickReport;
   /** Occurrences this NPC was listed as perceiver of (plan Phase 9). */
   occurrencesForNpc?: Occurrence[];
-  /** Set when one of this NPC's actions reached a terminal status this tick
-   *  — drives the event-memory write after rendering. */
-  ownActionEnded?: boolean;
 }
 
 /** How many prior renderer narratives each NPC keeps as short-term memory. */
@@ -98,16 +95,6 @@ export async function runWithConcurrency<T>(
 interface PerceptionHistoryEntry {
   gameDateTime: string;
   narrative: string;
-}
-
-/** Memory stores the subjective narrative only — the [references] citation
- *  scaffolding is agent-loop plumbing, not something a person remembers. */
-export function extractNarrative(rendered: string): string {
-  const narrativeMatch = rendered.match(
-    /\[narrative\]\s*\n([\s\S]*?)(?:\n\s*\[references\]|$)/
-  );
-  const body = narrativeMatch?.[1] ?? rendered;
-  return body.trim();
 }
 
 export class NpcActionController {
@@ -211,9 +198,6 @@ export class NpcActionController {
       .filter((n) => !this.npcHasActiveStep(n.id))
       .map((n) => n.id);
 
-    // 3b. Subsystem-emitted memory StateChanges (rare) still route directly.
-    await this.routeStateChangeMemories(report);
-
     // 4. Union of all NPCs that need decide() this tick. Perceivers, ended
     //    actors and idle characters, deduplicated.
     const allTargets = new Set<string>([
@@ -238,7 +222,6 @@ export class NpcActionController {
             occurrencesForNpc && occurrencesForNpc.length > 0
               ? occurrencesForNpc
               : undefined,
-          ownActionEnded: endedActors.has(npcId),
         });
       }
     });
@@ -273,50 +256,6 @@ export class NpcActionController {
       perceiverCharacterIds: perceivers,
       signals: [{ factIds: [`${id}#f0`], channel: "visual" }],
     };
-  }
-
-  /** Subsystem-emitted memory.event / memory.witness StateChanges (rare on
-   *  the new path — the Engine itself never emits memories). */
-  private async routeStateChangeMemories(report: TickReport): Promise<void> {
-    const tickTime = this.dgsm.getGameDateTime();
-    for (const change of report.stateChanges) {
-      if (change.kind !== "memory.event" && change.kind !== "memory.witness") {
-        continue;
-      }
-      await this.writeMemoryEntry(
-        change.characterId,
-        change.kind === "memory.event" ? "event" : "witness",
-        change.content,
-        tickTime,
-        this.resolveCurrentSceneId(change.characterId)
-      );
-    }
-  }
-
-  private async writeMemoryEntry(
-    npcId: string,
-    type: "event" | "witness",
-    content: string,
-    gameDateTime: string,
-    location: string | undefined
-  ): Promise<void> {
-    if (!this.dgsm.isNpcAlive(npcId)) return;
-    try {
-      await this.memory.add({
-        npcId,
-        sessionId: this.sessionId,
-        moduleId: this.moduleId,
-        type,
-        content,
-        gameDateTime,
-        ...(location ? { location } : {}),
-      });
-    } catch (err) {
-      console.warn(
-        `[NpcActionController] Failed to write ${type} memory for ${npcId}:`,
-        err
-      );
-    }
   }
 
   async decide(npcId: string, opts?: DecideOpts): Promise<void> {
@@ -478,33 +417,10 @@ export class NpcActionController {
       return undefined;
     }
 
-    // Subjective memory comes from the rendered perception (plan Phase 9):
-    // the actor whose action just ended writes an `event` memory; a mere
-    // perceiver writes `witness`. Idle-only wake-ups (nothing happened)
-    // write nothing.
-    if (opts?.report) {
-      const narrativeOnly = extractNarrative(rendered.narrative);
-      if (opts.ownActionEnded) {
-        await this.writeMemoryEntry(
-          npcId,
-          "event",
-          narrativeOnly,
-          gameDateTime,
-          currentScene
-        );
-      } else if (
-        opts.occurrencesForNpc &&
-        opts.occurrencesForNpc.length > 0
-      ) {
-        await this.writeMemoryEntry(
-          npcId,
-          "witness",
-          narrativeOnly,
-          gameDateTime,
-          currentScene
-        );
-      }
-    }
+    // No memory is written here. Perception is injected raw (below, as
+    // `perception` + `recentPerceptions`); the character decides what — if
+    // anything — is worth keeping and writes it with `writeMemory`, which
+    // rides along with its terminal call at no extra round trip.
 
     // Snapshot prior perceptions (excludes current tick); push current after.
     const recentPerceptions = this.perceptionHistory.get(npcId)?.slice() ?? [];
@@ -553,7 +469,7 @@ export class NpcActionController {
       npcId,
       this.sessionId,
       gameDate,
-      ["event", "witness"],
+      ["general", "plan", "secret", "relationship"],
       20
     );
     return rows.map((r) => ({

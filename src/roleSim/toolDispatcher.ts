@@ -1,10 +1,14 @@
 // src/roleSim/toolDispatcher.ts
 //
-// Phase F instant-tool dispatcher. Executes the agent's non-terminal tools
+// Instant-tool dispatcher. Executes the agent's non-terminal tools
 // (writeMemory / recallMemory / getMapSnapshot) against the memory store and
 // DGSM. Terminal tools (act / continue) never flow through here — the agent
 // loop returns them to the controller, which is the single place engine
-// submission/cancellation happens.
+// submission happens.
+//
+// `writeMemory` is special: it returns nothing the agent must read before
+// deciding, so the agent loop lets it ride along in the same turn as a
+// terminal call (see FREE_WITH_TERMINAL in llmAgent).
 
 import type { NpcMemoryManager } from "../memory/NpcMemoryManager.js";
 import type { NpcMemoryType } from "../memory/types.js";
@@ -13,6 +17,10 @@ import { coerceIsoDate, formatForPrompt } from "../state/gameClock.js";
 
 /** Tools that consume a tick — calling one ends the agent loop. Decision 17. */
 export const TERMINAL_TOOLS = new Set<string>(["act", "continue"]);
+
+/** Tools that may share a turn with a terminal call: they produce no result
+ *  the agent needs to read back, so batching them costs no extra round trip. */
+export const FREE_WITH_TERMINAL = new Set<string>(["writeMemory"]);
 
 /** Per-tool call budget within a single decide() call. Decision 19. */
 export const TOOL_CAPS: Record<string, number> = {
@@ -37,6 +45,9 @@ export interface DispatcherDeps {
   sessionId: string;
   moduleId: string;
   gameDateTime: string;
+  /** Where the character is right now — stamped onto written memories so
+   *  recall can answer "what happened at the library". */
+  location?: string;
 }
 
 export interface DispatchResult {
@@ -47,6 +58,8 @@ export interface DispatchResult {
 interface WriteMemoryInput {
   type: NpcMemoryType;
   content?: string;
+  /** Required for type=relationship — who the memory is about. */
+  targetId?: string;
   mapAdd?: {
     sceneNames?: string[];
     junctionNames?: string[];
@@ -87,10 +100,9 @@ export async function dispatchInstantTool(
   }
 }
 
-const WRITE_MEMORY_DISALLOWED: ReadonlySet<string> = new Set([
-  "event",
-  "witness",
-]);
+/** The character writes its own memories; `summary` stays system-authored
+ *  (end-of-day diary). */
+const WRITE_MEMORY_DISALLOWED: ReadonlySet<string> = new Set(["summary"]);
 
 async function dispatchWriteMemory(
   input: WriteMemoryInput,
@@ -101,7 +113,7 @@ async function dispatchWriteMemory(
   }
   if (WRITE_MEMORY_DISALLOWED.has(input.type)) {
     return {
-      result: `Error: writeMemory cannot write type "${input.type}" — engine-only. Allowed types: plan, belief, secret, information, summary, long_term_intent, map.`,
+      result: `Error: "${input.type}" memories are written by the world at day's end, not by you. Allowed types: general, relationship, map, long_term_intent.`,
     };
   }
 
@@ -119,6 +131,26 @@ async function dispatchWriteMemory(
     };
   }
 
+  // A relationship memory without a subject cannot be retrieved as "what do
+  // I know about X" — reject rather than silently degrade it to general.
+  let metadata: Record<string, unknown> | undefined;
+  if (input.type === "relationship") {
+    const targetId = input.targetId?.trim();
+    if (!targetId) {
+      return {
+        result:
+          "Error: type=relationship requires 'targetId' — the entity id of the person the memory is about.",
+      };
+    }
+    const profile = deps.dgsm.getNpcProfile(targetId);
+    if (!profile) {
+      return {
+        result: `Error: targetId "${targetId}" is not a person in this world. Copy the id from your perception.`,
+      };
+    }
+    metadata = { targetId, targetName: profile.name };
+  }
+
   await deps.memory.add({
     npcId: deps.npcId,
     sessionId: deps.sessionId,
@@ -126,10 +158,12 @@ async function dispatchWriteMemory(
     type: input.type,
     content,
     gameDateTime: deps.gameDateTime,
+    ...(deps.location ? { location: deps.location } : {}),
+    ...(metadata ? { metadata } : {}),
   });
 
   return {
-    result: `Wrote ${input.type} memory: "${truncate(content, 80)}"`,
+    result: `Remembered (${input.type}): "${truncate(content, 80)}"`,
   };
 }
 

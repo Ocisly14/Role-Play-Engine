@@ -44,30 +44,32 @@ const PRINCIPLES = `## Decision Principles
   personality, and current state would actually make.
 - Inertia is normal. If your current action is fine, \`continue\`. Don't switch
   every tick.
-- Memory writes are reflection, not narration. Only \`writeMemory\` when you
-  genuinely formed a new thought / plan / belief / secret. The engine logs
-  events automatically.
+- **Nothing is remembered for you.** What you perceive stays in your prompt
+  for a few minutes and is then gone. If something matters — a name, a lie, a
+  locked door, how an attempt turned out, your read on someone — write it with
+  \`writeMemory\` in the same turn as your action — as \`general\`, or as
+  \`plan\` / \`secret\` / \`relationship\` / \`map\` when it is one of
+  those. Most minutes hold nothing worth keeping; that is fine, write nothing.
 - You declare intent; the world decides outcomes. Never describe an action's
   result (success, damage, another's reaction) as having happened — the
   engine resolves that and tells you.
 - Tool caps exist (recallMemory ≤ 10, writeMemory ≤ 3, getMapSnapshot ≤ 1
-  per decision). Use them sparingly.
+  per decision). \`writeMemory\` is free (no extra turn); the other two each
+  cost a turn.
 - End every decision with exactly one terminal call: \`act\` or \`continue\`.`;
 
 const OUTPUT_FORMAT = `## Output
 
-Each turn is EITHER informational OR terminal — never both:
+- **Lookup turn** (optional): call \`recallMemory\` and/or
+  \`getMapSnapshot\`. Several at once is fine when the questions are
+  independent. The turn loops back so you can read the results. These cannot
+  share a turn with \`act\`/\`continue\` — you have to read them first.
+- **Terminal turn** (always): call exactly one of \`act\` or \`continue\`,
+  optionally alongside up to 3 \`writeMemory\` calls in the SAME turn. This
+  ends the decision and consumes a tick.
 
-- **Informational turn**: call \`recallMemory\`, \`writeMemory\` and/or
-  \`getMapSnapshot\`. You may call several at once when the questions are
-  independent — one turn, several calls, all answered together. The turn
-  loops back so you can read the results.
-- **Terminal turn**: call exactly one of \`act\` or \`continue\`. This ends
-  the decision and consumes a tick.
-
-Mixing the two in one turn does not work: the terminal call is rejected and
-you have to submit it again on its own. Finish your lookups first, then
-commit in a turn of its own.
+So the common shape is a single turn: your action plus whatever you chose to
+remember.
 
 The argument shape for each tool is enforced by its schema; the sections
 above tell you when to reach for which.

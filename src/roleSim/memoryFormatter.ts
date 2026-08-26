@@ -1,7 +1,8 @@
 // src/roleSim/memoryFormatter.ts
 //
-// Renders today's memories (event + witness) into the user prompt's
-// "## Today's memories" section. Pure formatter — sorting + line mapping.
+// Renders the memories the character wrote today into the user prompt's
+// "## What you chose to remember today" section. Pure formatter — sorting +
+// line mapping.
 // The shape only requires the three fields actually rendered, so callers can
 // pass either a Prisma `NpcMemory` row or a slim `RoleSimContext.recentMemory`
 // item without coupling to the full Prisma type.

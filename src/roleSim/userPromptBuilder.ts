@@ -62,7 +62,8 @@ export function buildUserPromptSegments(
       .map((p) => `--- ${formatForPrompt(p.gameDateTime)} ---\n${p.narrative}`)
       .join("\n\n");
     sections.push(
-      `## Recently (short-term memory — last ${ctx.recentPerceptions.length} tick(s))\n${block}`
+      `## The last few minutes (fades — not remembered unless you write it down)
+${block}`
     );
   }
 
@@ -93,7 +94,7 @@ export function buildUserPromptSegments(
 
   if (ctx.recentMemory.length > 0) {
     sections.push(
-      `## Today's memories\n${formatTodayMemories(ctx.recentMemory)}`
+      `## What you chose to remember today\n${formatTodayMemories(ctx.recentMemory)}`
     );
   }
 
@@ -129,7 +130,8 @@ you. Any entity ids listed in your perception are the ONLY ids you may put
 in \`objectRefs\`. Your in-character prose goes in \`description\` (and the
 exact words you speak in \`utterance\`).
 
-Call one tool now. Write content in ${langName}.`
+Call one tool now — \`act\` or \`continue\`, plus any \`writeMemory\`
+worth keeping from what you just perceived. Write content in ${langName}.`
   );
 
   // Drop empty groups before joining so the separator layout matches a plain

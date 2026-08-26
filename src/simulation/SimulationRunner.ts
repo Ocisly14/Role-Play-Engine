@@ -713,7 +713,8 @@ export class SimulationRunner {
           npcId: npc.id,
           sessionId: this.sessionId,
           moduleId: this.config.moduleId,
-          type: "event",
+          // System-authored: the character cannot record their own death.
+          type: "general",
           content: `[${datePart(gameState.gameDateTime)}] Died at ${timePart(gameState.gameDateTime)} in ${locationName}`,
           gameDateTime: gameState.gameDateTime,
         });
