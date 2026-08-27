@@ -63,9 +63,10 @@ function makeDgsm(opts: { aliveIds?: string[] } = {}) {
   } as unknown as DynamicGameStateManager;
 }
 
-/** Honest stub engine: first resolution → active for 2 ticks; due → completed.
- *  Runs through the real finalizeResolution so ids/wake times are computed
- *  exactly like production. */
+/** Honest stub engine, speaking the two-moment contract: a starting action
+ *  gets a duration and nothing else; a due one gets a result. Lifecycle and
+ *  progress are never stated — code derives both — so this runs through the
+ *  real finalizeResolution exactly like production. */
 function stubResolve(opts: { withOccurrence?: boolean } = {}) {
   const calls: EngineResolutionContext[] = [];
   const fn = vi.fn(async (context: EngineResolutionContext) => {
@@ -76,27 +77,13 @@ function stubResolve(opts: { withOccurrence?: boolean } = {}) {
         if (t.reason === "new_action") {
           raw.actions.push({
             actionId,
-            to: "active",
-            progressDeltaMinutes: 0,
             resolvedDurationTicks: 2,
             timingReason: "stub: two minutes of work",
-            nextWakeInTicks: 2,
-            judgement: {
-              kind: "direct",
-              outcome: "continue",
-              reason: "stub start",
-            },
           });
         } else if (t.reason === "duration_reached") {
           raw.actions.push({
             actionId,
-            to: "completed",
-            progressDeltaMinutes: 2,
-            judgement: {
-              kind: "direct",
-              outcome: "success",
-              reason: "stub done",
-            },
+            result: { outcome: "success", reason: "stub done" },
           });
           if (opts.withOccurrence) {
             raw.occurrences = [
@@ -112,9 +99,7 @@ function stubResolve(opts: { withOccurrence?: boolean } = {}) {
         } else if (t.reason === "replacement" || t.reason === "interrupted") {
           raw.actions.push({
             actionId,
-            to: "interrupted",
-            progressDeltaMinutes: 1,
-            reason: "stub interruption",
+            result: { outcome: "blocked", reason: "stub interruption" },
           });
         }
       }
@@ -123,8 +108,8 @@ function stubResolve(opts: { withOccurrence?: boolean } = {}) {
     return {
       ok: true as const,
       resolution: finalized.resolution,
-      judgements: finalized.judgements,
       movementInits: finalized.movementInits,
+      checkInits: finalized.checkInits,
       codeToolInvocations: [],
     };
   });
@@ -187,7 +172,7 @@ describe("action-driven trigger gate", () => {
       startedAt: "1923-04-02T09:01:00",
       nextWakeAt: "1923-04-02T09:03:00",
     });
-    expect(action?.runtime?.judgement).toMatchObject({ outcome: "continue" });
+    expect(action?.status).toBe("active");
   });
 
   it("the active action re-triggers only at nextWakeAt, then completes", async () => {

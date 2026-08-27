@@ -12,7 +12,7 @@ import type { DynamicGameStateManager } from "../../state/DynamicGameState.js";
 import { buildPerceivableDirectory } from "../../state/perceivableDirectory.js";
 import type { CommandRejectionCode } from "./commandValidator.js";
 import { validateActArgs } from "./commandValidator.js";
-import { resolveSkillValue, rollSkill } from "./skillRollService.js";
+import { resolveSkillValue } from "./skillRollService.js";
 import type { ActionCommand } from "./types.js";
 
 export interface BuildCommandDeps {
@@ -65,10 +65,12 @@ export function buildActionCommand(
         reason: `"${args.skillId}" is not a skill this world knows — declare a real CoC skill name, or omit skillId`,
       };
     }
-    // Roll once, immediately, from the real value. declaredSkillId and
-    // skillRoll always travel together (schema invariant, plan §4.3).
+    // Only the NAME is settled here. The dice wait for the action to run
+    // its course: the Engine sets the bar when the action starts, before any
+    // roll exists, and code rolls against that bar when the duration is
+    // spent. Rolling at intake would hand the Engine the result while it is
+    // still choosing the difficulty.
     command.declaredSkillId = resolved.canonicalSkillId;
-    command.skillRoll = rollSkill(resolved.canonicalSkillId, resolved.value);
   }
 
   return { ok: true, command };

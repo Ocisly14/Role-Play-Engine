@@ -150,15 +150,8 @@ function entry(
 ): RawActionResolution {
   return {
     actionId: ACTION_ID,
-    to: "completed",
-    progressDeltaMinutes: 1,
     resolvedDurationTicks: 1,
     timingReason: "trivial action, one minute suffices",
-    judgement: {
-      kind: "direct",
-      outcome: "success",
-      reason: "the latch was unlocked",
-    },
     ...overrides,
   };
 }
@@ -201,17 +194,29 @@ describe("validateRawResolution — transitions", () => {
     // A failed move changes nothing the actor can see: same position, same
     // surroundings, so next tick's perception is identical and they re-issue
     // the same doomed action. Observed live as a seven-tick loop.
+    const context = makeContext({
+      newCommands: [],
+      activeActions: [activeAction()],
+      triggerActionIds: ["action_live"],
+    });
     const errors = validateRawResolution(
-      { actions: [entry({ to: "failed", reason: "no route from here" })] },
-      makeContext({}),
+      {
+        actions: [
+          {
+            actionId: "action_live",
+            result: { outcome: "failure", reason: "no route from here" },
+          },
+        ],
+      },
+      context,
       []
     );
     expect(text(errors)).toContain("no occurrence citing it");
 
     // Still running is not ended — nothing to report yet.
     const running = validateRawResolution(
-      { actions: [entry({ to: "active", nextWakeInTicks: 2 })] },
-      makeContext({}),
+      { actions: [{ actionId: "action_live" }] },
+      context,
       []
     );
     expect(text(running)).not.toContain("no occurrence citing it");
@@ -226,17 +231,11 @@ describe("validateRawResolution — transitions", () => {
     expect(text(errors)).toContain("duplicate transition");
   });
 
-  it("requires resolvedDurationTicks + timingReason + judgement on first resolution", () => {
+  it("requires a duration and its reason when an action starts", () => {
     const errors = validateRawResolution(
       {
         actions: [
-          entry({
-            resolvedDurationTicks: undefined,
-            timingReason: undefined,
-            judgement: undefined,
-            to: "active",
-            nextWakeInTicks: 3,
-          }),
+          entry({ resolvedDurationTicks: undefined, timingReason: undefined }),
         ],
       },
       makeContext({}),
@@ -244,22 +243,28 @@ describe("validateRawResolution — transitions", () => {
     );
     expect(text(errors)).toContain("resolvedDurationTicks");
     expect(text(errors)).toContain("timingReason");
-    expect(text(errors)).toContain("judgement");
   });
 
-  it("requires nextWakeInTicks when staying active", () => {
+  it("refuses a result on an action that is only starting", () => {
+    // Nothing has happened yet — reporting an outcome here would be the
+    // Engine deciding the future of a minute that has not been spent.
     const errors = validateRawResolution(
-      { actions: [entry({ to: "active" })] },
+      {
+        actions: [
+          entry({ result: { outcome: "success", reason: "opened it" } }),
+        ],
+        occurrences: trace(),
+      },
       makeContext({}),
       []
     );
-    expect(text(errors)).toContain("nextWakeInTicks");
+    expect(text(errors)).toContain("no result yet");
   });
 
-  it("rejects illegal status migrations", () => {
+  it("refuses to re-open an action that already ended", () => {
     const context = makeContext({
       newCommands: [],
-      activeActions: [activeAction()],
+      activeActions: [{ ...activeAction(), status: "completed" as const }],
       triggerActionIds: ["action_live"],
     });
     const errors = validateRawResolution(
@@ -267,8 +272,7 @@ describe("validateRawResolution — transitions", () => {
         actions: [
           {
             actionId: "action_live",
-            to: "cancelled",
-            progressDeltaMinutes: 0,
+            result: { outcome: "success", reason: "again?" },
           },
         ],
         occurrences: trace("action_live"),
@@ -276,151 +280,90 @@ describe("validateRawResolution — transitions", () => {
       context,
       []
     );
-    expect(errors).toEqual([]);
-    const bad = validateRawResolution(
-      {
-        actions: [
-          {
-            actionId: "action_live",
-            to: "queued" as never,
-            progressDeltaMinutes: 0,
-          },
-        ],
-      },
-      context,
-      []
-    );
-    expect(text(bad)).toContain("illegal transition");
+    expect(text(errors)).toContain("cannot be resolved again");
   });
 });
 
-describe("validateRawResolution — skill consistency", () => {
-  const skillCommand = command({
-    declaredSkillId: "Locksmith",
-    skillRoll: {
-      rollId: "r1",
-      skillId: "Locksmith",
-      skillValue: 60,
-      roll: 45,
-      successLevel: "regular",
-    },
-  });
+describe("validateRawResolution — the bar", () => {
+  const skillCommand = command({ declaredSkillId: "Locksmith" });
 
-  it("requires skill_assessed judgement for a skill command", () => {
-    const errors = validateRawResolution(
-      { actions: [entry()] },
-      makeContext({ newCommands: [skillCommand] }),
-      []
-    );
-    expect(text(errors)).toContain('must be kind "skill_assessed"');
-  });
-
-  it("rejects skill_assessed for a command without a roll", () => {
+  it("accepts a bar for the skill the actor declared", () => {
     const errors = validateRawResolution(
       {
         actions: [
           entry({
-            judgement: {
-              kind: "skill_assessed",
-              applicability: "accepted",
-              applicabilityBasis: "x",
+            check: {
               requiredLevel: "regular",
-              requiredLevelBasis: "y",
-              checkType: "single",
-              targetIds: [],
-              outcome: "success",
-              reason: "z",
+              basis: "a common pin lock in good light",
             },
           }),
+        ],
+      },
+      makeContext({ newCommands: [skillCommand] }),
+      []
+    );
+    expect(errors).toEqual([]);
+  });
+
+  it("rejects a bar when the actor declared no skill", () => {
+    const errors = validateRawResolution(
+      {
+        actions: [
+          entry({ check: { requiredLevel: "hard", basis: "invented" } }),
         ],
       },
       makeContext({}),
       []
     );
-    expect(text(errors)).toContain('must be kind "direct"');
+    expect(text(errors)).toContain("nothing to check");
   });
 
-  it("accepts a consistent met check and rejects a contradicted one", () => {
-    const base = entry({
-      judgement: {
-        kind: "skill_assessed",
-        applicability: "accepted",
-        applicabilityBasis: "picks on a pin lock",
-        requiredLevel: "regular",
-        requiredLevelBasis: "common lock, good light",
-        checkType: "single",
-        targetIds: [],
-        outcome: "success",
-        reason: "the lock yields",
-      },
-    });
-    expect(
-      validateRawResolution(
-        { actions: [base], occurrences: trace() },
-        makeContext({ newCommands: [skillCommand] }),
-        []
-      )
-    ).toEqual([]);
-
-    // regular roll vs extreme requirement claimed as success → contradiction.
-    const contradicted = entry({
-      judgement: {
-        ...(base.judgement as never as Record<string, unknown>),
-        requiredLevel: "extreme",
-        requiredLevelBasis: "hair-trigger mechanism",
-      } as never,
-    });
+  it("refuses to move the bar once the action is running", () => {
+    // The bar's whole value is that it was chosen before a roll existed.
     const errors = validateRawResolution(
-      { actions: [contradicted] },
-      makeContext({ newCommands: [skillCommand] }),
+      {
+        actions: [
+          {
+            actionId: "action_live",
+            check: { requiredLevel: "extreme", basis: "second thoughts" },
+          },
+        ],
+      },
+      makeContext({
+        newCommands: [],
+        activeActions: [activeAction()],
+        triggerActionIds: ["action_live"],
+      }),
       []
     );
-    expect(text(errors)).toContain("contradicts the deterministic check");
+    expect(text(errors)).toContain("cannot be changed mid-flight");
   });
 
-  it("requires an opposedRoll invocation for each named defender", () => {
-    const opposed = entry({
-      judgement: {
-        kind: "skill_assessed",
-        applicability: "accepted",
-        applicabilityBasis: "persuasion on a listener",
-        requiredLevel: "regular",
-        requiredLevelBasis: "no pressure",
-        checkType: "opposed",
-        targetIds: ["npc_2"],
-        opposedDefense: [{ characterId: "npc_2", skillId: "Psychology" }],
-        outcome: "success",
-        reason: "he relents",
+  it("requires a real defender and a bar for an opposed check", () => {
+    const unknown = validateRawResolution(
+      {
+        actions: [
+          entry({
+            check: { requiredLevel: "regular", basis: "he resists" },
+            opposedBy: [{ characterId: "npc_ghost", skillId: "Social" }],
+          }),
+        ],
       },
-    });
-    const noCall = validateRawResolution(
-      { actions: [opposed] },
       makeContext({ newCommands: [skillCommand] }),
       []
     );
-    expect(text(noCall)).toContain("no opposedRoll tool call recorded");
+    expect(text(unknown)).toContain("does not exist");
 
-    const withCall = validateRawResolution(
-      { actions: [opposed], occurrences: trace() },
+    const noBar = validateRawResolution(
+      {
+        actions: [
+          entry({ opposedBy: [{ characterId: "npc_2", skillId: "Social" }] }),
+        ],
+      },
       makeContext({ newCommands: [skillCommand] }),
-      [
-        {
-          toolName: "opposedRoll",
-          input: { characterId: "npc_2", skillId: "Psychology" },
-          output: {
-            ok: true,
-            record: {
-              rollId: "rd",
-              skillId: "Psychology",
-              skillValue: 40,
-              roll: 80,
-              successLevel: "failure",
-            },
-          },
-        },
-      ]
+      []
     );
-    expect(withCall).toEqual([]);
+    expect(text(noBar)).toContain("needs a check");
   });
 });
 
@@ -502,12 +445,12 @@ describe("finalizeResolution", () => {
   // it runs, the resolution has already passed validation. A resolution that
   // could not be repaired never reaches it — the tick applies nothing.
 
-  it("computes nextWakeAt from ticks and assigns occurrence/fact ids", () => {
+  it("derives the lifecycle and the wake time, and assigns ids", () => {
     const raw: RawTickResolution = {
       actions: [
         entry({
-          to: "active",
-          nextWakeInTicks: 5,
+          resolvedDurationTicks: 5,
+          timingReason: "five minutes at the keyway",
           movement: { destinationId: "SCN_1" },
         }),
       ],
@@ -530,14 +473,13 @@ describe("finalizeResolution", () => {
     };
     const finalized = finalizeResolution(raw, makeContext({}));
     const t = finalized.resolution.transitions[0];
+    // No result block, so the action is still running — code says so, not the
+    // Engine, which never mentioned a status at all.
     expect(t.to).toBe("active");
     expect(t.nextWakeAt).toBe("1923-04-02T09:20:00");
+    expect(t.progressDeltaMinutes).toBe(0);
     expect(finalized.movementInits[ACTION_ID]).toEqual({
       destinationId: "SCN_1",
-    });
-    expect(finalized.judgements[ACTION_ID]).toMatchObject({
-      kind: "direct",
-      outcome: "success",
     });
 
     const occ = finalized.resolution.occurrences[0];
@@ -562,12 +504,13 @@ describe("finalizeResolution", () => {
     });
     const raw: RawTickResolution = {
       actions: [
-        entry({ to: "active", nextWakeInTicks: 2 }),
+        entry({ resolvedDurationTicks: 2, timingReason: "two minutes" }),
         {
           actionId: "action_live",
-          to: "interrupted",
-          progressDeltaMinutes: 3,
-          reason: "abandoned for a new undertaking",
+          result: {
+            outcome: "blocked",
+            reason: "abandoned for a new undertaking",
+          },
         },
       ],
     };

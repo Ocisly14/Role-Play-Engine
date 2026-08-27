@@ -16,15 +16,10 @@
 
 import { addMinutes } from "../../state/gameClock.js";
 import { actionIdForCommand } from "../actions/actionStore.js";
-import {
-  adjudicateSkillAction,
-  meetsRequiredLevel,
-} from "../actions/adjudication/skillAdjudicator.js";
-import type { SkillAssessmentProposal } from "../actions/adjudication/types.js";
 import type {
   ActionCommand,
-  ActionJudgement,
   ActionTransition,
+  EngineAction,
   CharacterChange,
   EngineActionStatus,
   ItemChange,
@@ -38,7 +33,6 @@ import type { CodeToolInvocation } from "../tools/codeTool.js";
 import type { EngineResolutionContext, ResolutionError } from "./types.js";
 import type {
   RawActionResolution,
-  RawJudgement,
   RawOccurrence,
   RawResolutionRepair,
   RawSourcedDelta,
@@ -47,17 +41,24 @@ import type {
 
 // ==================== Shared lookup tables ====================
 
+export interface KnownAction {
+  status: EngineActionStatus;
+  command: ActionCommand;
+  progressMinutes: number;
+  resolvedDurationTicks?: number;
+  check?: EngineAction["check"];
+}
+
 interface Lookup {
   characterIds: Set<string>;
   aliveCharacterIds: Set<string>;
   sceneIds: Set<string>;
   locationIds: Set<string>;
   itemHolders: Map<string, string>;
-  /** All actions addressable this resolution (queued from commands + active). */
-  actionById: Map<
-    string,
-    { status: EngineActionStatus; command: ActionCommand }
-  >;
+  /** All actions addressable this resolution (queued from commands + active).
+   *  Active entries carry progress, duration and the bar set at start — all
+   *  code-owned facts the entry rules read. */
+  actionById: Map<string, KnownAction>;
   /** Actions that MUST receive exactly one transition. */
   requiredActionIds: Set<string>;
 }
@@ -75,19 +76,23 @@ export function buildLookup(context: EngineResolutionContext): Lookup {
   const itemHolders = new Map<string, string>();
   for (const item of context.state.items) itemHolders.set(item.id, item.holder);
 
-  const actionById = new Map<
-    string,
-    { status: EngineActionStatus; command: ActionCommand }
-  >();
+  const actionById = new Map<string, KnownAction>();
   for (const action of context.actions.activeActions) {
     actionById.set(action.id, {
       status: action.status,
       command: action.command,
+      progressMinutes: action.progressMinutes,
+      ...(action.resolvedDurationTicks !== undefined
+        ? { resolvedDurationTicks: action.resolvedDurationTicks }
+        : {}),
+      ...(action.check !== undefined ? { check: action.check } : {}),
     });
   }
   for (const command of context.actions.newCommands) {
     const id = actionIdForCommand(command.commandId);
-    if (!actionById.has(id)) actionById.set(id, { status: "queued", command });
+    if (!actionById.has(id)) {
+      actionById.set(id, { status: "queued", command, progressMinutes: 0 });
+    }
   }
 
   return {
@@ -103,232 +108,105 @@ export function buildLookup(context: EngineResolutionContext): Lookup {
 
 // ==================== Transition legality ====================
 
-const LEGAL_TRANSITIONS: Record<EngineActionStatus, Set<string>> = {
-  queued: new Set(["active", "completed", "failed", "cancelled"]),
-  active: new Set([
-    "active",
-    "completed",
-    "failed",
-    "interrupted",
-    "cancelled",
-  ]),
-  completed: new Set(),
-  failed: new Set(),
-  interrupted: new Set(),
-  cancelled: new Set(),
-};
+/** An action that has ended is out of the Engine's reach for good. */
+const TERMINAL_STATUSES: ReadonlySet<EngineActionStatus> = new Set([
+  "completed",
+  "failed",
+  "interrupted",
+  "cancelled",
+]);
 
 // ==================== Per-piece validation ====================
 
 function validateActionEntry(
   entry: RawActionResolution,
   lookup: Lookup,
-  invocations: CodeToolInvocation[]
+  _invocations: CodeToolInvocation[]
 ): string[] {
   const errs: string[] = [];
   const known = lookup.actionById.get(entry.actionId);
   if (!known) {
     return [`unknown actionId`];
   }
-  if (!LEGAL_TRANSITIONS[known.status].has(entry.to)) {
-    errs.push(
-      `illegal transition ${known.status} -> ${entry.to}`
-    );
+  if (TERMINAL_STATUSES.has(known.status)) {
+    return [`action already ${known.status} — it cannot be resolved again`];
   }
-  if (
-    typeof entry.progressDeltaMinutes !== "number" ||
-    entry.progressDeltaMinutes < 0
-  ) {
-    errs.push(
-      `progressDeltaMinutes must be a number >= 0`
-    );
-  }
-  if (entry.to === "active") {
-    if (
-      typeof entry.nextWakeInTicks !== "number" ||
-      !Number.isInteger(entry.nextWakeInTicks) ||
-      entry.nextWakeInTicks < 1
-    ) {
-      errs.push(
-        `transition to "active" requires integer nextWakeInTicks >= 1`
-      );
-    }
-  }
-  if (known.status === "queued") {
+
+  const starting = known.status === "queued";
+
+  if (starting) {
     if (
       typeof entry.resolvedDurationTicks !== "number" ||
       !Number.isInteger(entry.resolvedDurationTicks) ||
       entry.resolvedDurationTicks < 1
     ) {
       errs.push(
-        `first resolution requires integer resolvedDurationTicks >= 1 (the actor's proposal is advisory)`
+        `an action that is starting requires integer resolvedDurationTicks >= 1 (the actor's proposal is advisory)`
       );
     }
     if (!entry.timingReason?.trim()) {
+      errs.push(`an action that is starting requires a timingReason`);
+    }
+    if (entry.result) {
       errs.push(
-        `first resolution requires a timingReason`
+        `an action that is starting has no result yet — set the duration and the bar now; the outcome comes when its time is spent`
       );
     }
-    if (!entry.judgement) {
+  } else {
+    if (entry.check) {
       errs.push(
-        `first resolution requires a judgement`
+        `the bar was set when this action started and cannot be changed mid-flight`
       );
     }
-  } else if (
-    entry.resolvedDurationTicks !== undefined &&
-    !entry.timingReason?.trim()
-  ) {
+    if (entry.opposedBy) {
+      errs.push(
+        `opposition is named when the action starts, not while it runs`
+      );
+    }
+    if (
+      entry.resolvedDurationTicks !== undefined &&
+      !entry.timingReason?.trim()
+    ) {
+      errs.push(`revising resolvedDurationTicks requires a timingReason`);
+    }
+  }
+
+  if (entry.check && known.command.declaredSkillId === undefined) {
     errs.push(
-      `revising resolvedDurationTicks requires a timingReason`
+      `the actor declared no skill, so there is nothing to check — omit "check"`
     );
   }
 
-  if (entry.judgement) {
-    errs.push(...validateJudgement(entry, known.command, lookup, invocations));
+  for (const defender of entry.opposedBy ?? []) {
+    if (!lookup.characterIds.has(defender.characterId)) {
+      errs.push(`opposedBy character "${defender.characterId}" does not exist`);
+    }
   }
+  if (entry.opposedBy && !entry.check) {
+    errs.push(`opposedBy needs a check — name the bar the opposition is against`);
+  }
+
+  if (entry.result) {
+    if (!entry.result.reason?.trim()) {
+      errs.push(`a result requires a reason`);
+    }
+    // With a check, code already decided success from the roll against the
+    // bar; restating it is how the two can disagree.
+    const hadCheck = known.check !== undefined;
+    if (hadCheck && entry.result.outcome !== undefined) {
+      errs.push(
+        `this action was checked — code decides success from the roll against your bar; drop result.outcome`
+      );
+    }
+    if (!hadCheck && !entry.result.outcome) {
+      errs.push(
+        `an action with no check needs result.outcome — there is no roll to derive it from`
+      );
+    }
+  }
+
   return errs;
 }
-
-function validateJudgement(
-  entry: RawActionResolution,
-  command: ActionCommand,
-  lookup: Lookup,
-  invocations: CodeToolInvocation[]
-): string[] {
-  const errs: string[] = [];
-  const j = entry.judgement as RawJudgement;
-  const hasRoll = command.skillRoll !== undefined;
-
-  if (hasRoll && j.kind !== "skill_assessed") {
-    return [
-      `command declared skill "${command.declaredSkillId}" — judgement must be kind "skill_assessed"`,
-    ];
-  }
-  if (!hasRoll && j.kind === "skill_assessed") {
-    return [
-      `command declared no skill — judgement must be kind "direct" (never invent rolls)`,
-    ];
-  }
-  if (j.kind === "direct") {
-    if (!j.reason?.trim())
-      errs.push(`direct judgement needs a reason`);
-    return errs;
-  }
-
-  // skill_assessed — rebuild the deterministic adjudication and require the
-  // model's outcome to be consistent with it.
-  if (!j.applicabilityBasis?.trim()) {
-    errs.push(
-      `skill judgement requires applicabilityBasis`
-    );
-  }
-  for (const id of j.targetIds ?? []) {
-    if (!lookup.characterIds.has(id)) {
-      errs.push(`targetId "${id}" does not exist`);
-    }
-  }
-
-  const proposal = rawJudgementToProposal(j);
-  if (typeof proposal === "string") {
-    errs.push(`${proposal}`);
-    return errs;
-  }
-
-  // Defender rolls must come from the session's opposedRoll tool calls.
-  const adjudicated = adjudicateSkillAction(
-    command,
-    proposal,
-    (characterId, skillId) => {
-      const hit = invocations.find(
-        (inv) =>
-          inv.toolName === "opposedRoll" &&
-          (inv.input as { characterId?: string; skillId?: string })
-            ?.characterId === characterId &&
-          (inv.input as { skillId?: string })?.skillId === skillId &&
-          (inv.output as { ok?: boolean })?.ok === true
-      );
-      if (!hit) {
-        return {
-          ok: false,
-          reason:
-            "no opposedRoll tool call recorded for this defender — call the tool before submitting",
-        };
-      }
-      return {
-        ok: true,
-        record: (hit.output as { record: never }).record,
-      };
-    }
-  );
-  if (!adjudicated.ok) {
-    errs.push(`${adjudicated.error}`);
-    return errs;
-  }
-
-  // Consistency: a failed check cannot yield success; a met check cannot be
-  // narrated as failure. "continue" is only legal while the action stays
-  // active.
-  const deterministic = adjudicated.judgement.outcome;
-  const claimed = j.outcome;
-  const successish = new Set(["success", "partial"]);
-  const failish = new Set(["failure", "blocked"]);
-  const consistent =
-    claimed === "continue"
-      ? entry.to === "active"
-      : deterministic === "success"
-        ? successish.has(claimed)
-        : failish.has(claimed);
-  if (!consistent) {
-    errs.push(
-      `outcome "${claimed}" contradicts the deterministic check result "${deterministic}" (roll ${command.skillRoll?.roll}/${command.skillRoll?.skillValue} ${command.skillRoll?.successLevel}${proposal.applicability === "accepted" ? ` vs required ${proposal.requiredLevel}` : ", skill rejected"})`
-    );
-  }
-  return errs;
-}
-
-function rawJudgementToProposal(
-  j: Extract<RawJudgement, { kind: "skill_assessed" }>
-): SkillAssessmentProposal | string {
-  if (j.applicability === "rejected") {
-    return {
-      applicability: "rejected",
-      applicabilityBasis: j.applicabilityBasis ?? "",
-      targetIds: j.targetIds ?? [],
-      outcomeWithoutSkill: j.outcome === "continue" ? "continue" : j.outcome,
-      outcomeReason: j.reason ?? "",
-    };
-  }
-  if (!j.requiredLevel) {
-    return "accepted skill judgement requires requiredLevel";
-  }
-  if (!j.requiredLevelBasis?.trim()) {
-    return "accepted skill judgement requires requiredLevelBasis";
-  }
-  if (j.checkType === "opposed") {
-    if (!j.opposedDefense || j.opposedDefense.length === 0) {
-      return "opposed check requires opposedDefense entries";
-    }
-    return {
-      applicability: "accepted",
-      applicabilityBasis: j.applicabilityBasis ?? "",
-      requiredLevel: j.requiredLevel,
-      requiredLevelBasis: j.requiredLevelBasis,
-      checkType: "opposed",
-      targetIds: j.targetIds ?? [],
-      opposedDefense: j.opposedDefense,
-    };
-  }
-  return {
-    applicability: "accepted",
-    applicabilityBasis: j.applicabilityBasis ?? "",
-    requiredLevel: j.requiredLevel,
-    requiredLevelBasis: j.requiredLevelBasis,
-    checkType: "single",
-    targetIds: j.targetIds ?? [],
-  };
-}
-
-// ==================== Delta validation ====================
 
 const CHARACTER_OP_KINDS = new Set([
   "hp",
@@ -798,16 +676,15 @@ export function applyRepair(
  * perceivers include the actor.
  */
 function missingTerminalOccurrences(raw: RawTickResolution): string[] {
-  const ENDED = new Set(["completed", "failed", "interrupted", "cancelled"]);
   const cited = new Set<string>();
   for (const occ of raw.occurrences ?? []) {
     for (const id of occ.sourceActionIds ?? []) cited.add(id);
   }
   return (raw.actions ?? [])
-    .filter((entry) => ENDED.has(entry.to) && !cited.has(entry.actionId))
+    .filter((entry) => entry.result && !cited.has(entry.actionId))
     .map(
       (entry) =>
-        `occurrences: action "${entry.actionId}" ended as "${entry.to}" with no occurrence citing it — every action that ends leaves an objective trace, and without one the actor perceives no change and simply re-issues the same action. Emit at least an action_result fact listing the actor among perceiverCharacterIds.`
+        `occurrences: action "${entry.actionId}" produced a result with no occurrence citing it — every action that ends leaves an objective trace, and without one the actor perceives no change and simply re-issues the same action. Emit at least an action_result fact listing the actor among perceiverCharacterIds.`
     );
 }
 
@@ -815,10 +692,18 @@ function missingTerminalOccurrences(raw: RawTickResolution): string[] {
 
 export interface FinalizedResolution {
   resolution: TickResolution;
-  /** Engine judgements per action, for persistence on `action.runtime`. */
-  judgements: Record<string, ActionJudgement>;
   /** Movement-leg annotations per action (Engine-owned runtime init). */
   movementInits: Record<string, { destinationId: string }>;
+  /** The bar set for an action as it starts, per actionId. Written onto the
+   *  action once and never revised — code rolls against it later. */
+  checkInits: Record<
+    string,
+    {
+      requiredLevel: "regular" | "hard" | "extreme";
+      basis: string;
+      opposedBy?: Array<{ characterId: string; skillId: string }>;
+    }
+  >;
 }
 
 /**
@@ -829,7 +714,8 @@ export interface FinalizedResolution {
  * applies nothing instead.
  *
  * What code still owns rather than trusting the model: occurrence and fact
- * ids, nextWakeAt (computed from tick counts), and the judgement records.
+ * ids, how much time passed, and whether an action is now finished — the
+ * Engine says what happened, code says when and whether it is over.
  */
 export function finalizeResolution(
   raw: RawTickResolution,
@@ -837,40 +723,67 @@ export function finalizeResolution(
 ): FinalizedResolution {
   const lookup = buildLookup(context);
   const transitions: ActionTransition[] = [];
-  const judgements: Record<string, ActionJudgement> = {};
   const movementInits: Record<string, { destinationId: string }> = {};
+  const checkInits: FinalizedResolution["checkInits"] = {};
+  const tickMinutes = context.tick.durationMinutes;
 
   for (const entry of raw.actions ?? []) {
     const known = lookup.actionById.get(entry.actionId);
     if (!known) continue; // unreachable post-validation; keeps types honest
-    const judgement = judgementFromRaw(entry, known.command);
-    if (judgement) judgements[entry.actionId] = judgement;
     if (entry.movement?.destinationId) {
       movementInits[entry.actionId] = {
         destinationId: entry.movement.destinationId,
       };
     }
+    if (entry.check) {
+      checkInits[entry.actionId] = {
+        requiredLevel: entry.check.requiredLevel,
+        basis: entry.check.basis,
+        ...(entry.opposedBy ? { opposedBy: entry.opposedBy } : {}),
+      };
+    }
+
+    // Progress was already advanced from the clock this tick; the Engine has
+    // no say in it. What is left to decide is whether the action is over —
+    // and that follows from whether it produced a result and whether its time
+    // was actually spent.
+    const durationTicks =
+      entry.resolvedDurationTicks ?? known.resolvedDurationTicks;
+    const spent =
+      durationTicks !== undefined &&
+      known.progressMinutes >= durationTicks * tickMinutes;
+    const to: EngineActionStatus = entry.result
+      ? spent
+        ? "completed"
+        : "interrupted"
+      : "active";
+    const nextWakeAt =
+      to === "active" && durationTicks !== undefined
+        ? addMinutes(
+            context.tick.tickStartTime,
+            Math.max(
+              tickMinutes,
+              durationTicks * tickMinutes - known.progressMinutes
+            )
+          )
+        : undefined;
+
     transitions.push({
       actionId: entry.actionId,
       actorId: known.command.actorId,
       from: known.status,
-      to: entry.to,
-      progressDeltaMinutes: entry.progressDeltaMinutes,
+      to,
+      progressDeltaMinutes: 0,
       ...(entry.resolvedDurationTicks !== undefined
         ? { resolvedDurationTicks: entry.resolvedDurationTicks }
         : {}),
       ...(entry.timingReason !== undefined
         ? { timingReason: entry.timingReason }
         : {}),
-      ...(entry.to === "active" && entry.nextWakeInTicks !== undefined
-        ? {
-            nextWakeAt: addMinutes(
-              context.tick.tickStartTime,
-              entry.nextWakeInTicks * context.tick.durationMinutes
-            ),
-          }
+      ...(nextWakeAt !== undefined ? { nextWakeAt } : {}),
+      ...(entry.result?.reason !== undefined
+        ? { reason: entry.result.reason }
         : {}),
-      ...(entry.reason !== undefined ? { reason: entry.reason } : {}),
     });
   }
 
@@ -946,8 +859,8 @@ export function finalizeResolution(
       itemChanges,
       occurrences,
     },
-    judgements,
     movementInits,
+    checkInits,
   };
 }
 
@@ -961,47 +874,3 @@ function makeSourced<T extends WorldDelta>(
     delta,
   };
 }
-
-/** Re-exported for engine-level judgement persistence. */
-export function judgementFromRaw(
-  entry: RawActionResolution,
-  command: ActionCommand
-): ActionJudgement | undefined {
-  const j = entry.judgement;
-  if (!j) return undefined;
-  if (j.kind === "direct") {
-    return { kind: "direct", outcome: j.outcome, reason: j.reason };
-  }
-  const roll = command.skillRoll;
-  if (!roll) return undefined;
-  if (j.applicability === "rejected") {
-    return {
-      kind: "skill_assessed",
-      skillId: roll.skillId,
-      rollId: roll.rollId,
-      applicability: "rejected",
-      targetIds: j.targetIds ?? [],
-      outcome: j.outcome,
-      reason: j.reason,
-    };
-  }
-  return {
-    kind: "skill_assessed",
-    skillId: roll.skillId,
-    rollId: roll.rollId,
-    applicability: "accepted",
-    ...(j.requiredLevel !== undefined
-      ? { requiredLevel: j.requiredLevel }
-      : {}),
-    ...(j.checkType !== undefined ? { checkType: j.checkType } : {}),
-    targetIds: j.targetIds ?? [],
-    ...(j.opposedDefense !== undefined
-      ? { opposedDefenseIds: j.opposedDefense.map((d) => d.characterId) }
-      : {}),
-    outcome: j.outcome,
-    reason: j.reason,
-  };
-}
-
-// meetsRequiredLevel re-exported for tests that assert consistency rules.
-export { meetsRequiredLevel };

@@ -74,7 +74,10 @@ function harness(opts: { liveActions?: EngineAction[] } = {}) {
       memoryAdds.push(entry);
     }),
     findLatestByType: vi.fn(async () => undefined),
-    getForDateByTypes: vi.fn(async () => []),
+    // Memory is injected whole now — the controller reads everything the
+    // character holds, not just today.
+    getAllByTypes: vi.fn(async () => []),
+    ensureContextMemories: vi.fn(async () => 0),
   };
   const npcs = ["npc_1", "npc_2", "npc_3"];
   const dgsm = {

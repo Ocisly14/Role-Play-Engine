@@ -116,17 +116,16 @@ export function createTickEngine(opts: CreateTickEngineOptions): TickEngine {
           status: "queued",
         };
       }
-      // Boundary invariant (plan §4.3): declaredSkillId ⇔ skillRoll. A
-      // command violating it never came from the trusted builder.
-      if (
-        (command.declaredSkillId === undefined) !==
-        (command.skillRoll === undefined)
-      ) {
+      // Boundary invariant: a command names a skill, it never carries a
+      // roll. Dice happen when the action's time is spent, against the bar
+      // the Engine set at the start — a roll arriving here would mean
+      // something rolled before the difficulty existed.
+      if (command.skillRoll !== undefined) {
         return {
           accepted: false,
           status: "rejected",
           reason:
-            "declaredSkillId and skillRoll must both be present or both be absent",
+            "a command carries no roll — the check is rolled when the action resolves, against the bar set when it started",
         };
       }
       const action = actionStore.createFromCommand(

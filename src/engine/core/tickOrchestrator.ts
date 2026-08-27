@@ -19,6 +19,8 @@
 
 import type { DynamicGameStateManager } from "../../state/DynamicGameState.js";
 import { addMinutes, diffDays, timePart } from "../../state/gameClock.js";
+import { resolveCheck } from "../actions/adjudication/skillAdjudicator.js";
+import { resolveSkillValue, rollSkill } from "../actions/skillRollService.js";
 import type { ActionStore } from "../actions/actionStore.js";
 import { actionIdForCommand } from "../actions/actionStore.js";
 import type { CommandInbox } from "../actions/commandInbox.js";
@@ -114,7 +116,6 @@ export class TickOrchestrator {
       if (!movement) continue;
       const advanced = advanceMovement(dgsm, action.command.actorId, movement);
       buffer.push(...advanced.stateChanges);
-      action.lastAdvancedAt = nextTickTime;
       if (advanced.status === "blocked") {
         this.pendingInterruptions.push({
           actionId: action.id,
@@ -123,6 +124,16 @@ export class TickOrchestrator {
       } else if (advanced.status === "arrived") {
         arrivedActionIds.add(action.id);
       }
+    }
+
+    // Phase 2b — time. Every action in flight advances by exactly one tick,
+    // from the clock and nothing else. The Engine is never asked how much
+    // time passed and cannot say: it decides how long a thing SHOULD take,
+    // and this is where that estimate is spent, minute by minute.
+    for (const action of this.deps.actionStore.liveActions()) {
+      if (action.status !== "active") continue;
+      action.progressMinutes += this.deps.tickDurationMinutes;
+      action.lastAdvancedAt = nextTickTime;
     }
 
     // Phase 3 — drain inbox; dead actors get an immediate failed transition.
@@ -186,7 +197,9 @@ export class TickOrchestrator {
       .filter(
         (a) =>
           arrivedActionIds.has(a.id) ||
-          (a.nextWakeAt !== undefined && a.nextWakeAt <= nextTickTime)
+          (a.resolvedDurationTicks !== undefined &&
+            a.progressMinutes >=
+              a.resolvedDurationTicks * this.deps.tickDurationMinutes)
       )
       .map((a) => a.id);
     if (dueIds.length > 0) {
@@ -210,6 +223,10 @@ export class TickOrchestrator {
     // Phases 5-7 — conditional global resolution. No triggers → no model call.
     let engineResult: (WorldActionEngineResult & { ok: true }) | undefined;
     if (triggers.length > 0) {
+      // Dice, now that the bar is old news: the Engine set requiredLevel when
+      // the action started and has not seen a number since. Rolling here puts
+      // the result in the context it is about to read.
+      this.rollDueChecks(triggers.flatMap((t) => t.actionIds));
       const objectiveWorldEvents: ObjectiveWorldEvent[] = interruptions.map(
         (p) => ({
           kind: "interruption",
@@ -254,6 +271,19 @@ export class TickOrchestrator {
       ReturnType<typeof initMovementRuntime>
     >();
     if (engineResult) {
+      // The bar, written once as the action starts. It is not revisable: the
+      // whole point is that it was chosen before any roll existed.
+      for (const [actionId, bar] of Object.entries(engineResult.checkInits)) {
+        const action = this.deps.actionStore.get(actionId);
+        const skillId = action?.command.declaredSkillId;
+        if (!action || action.check || !skillId) continue;
+        action.check = {
+          skillId,
+          requiredLevel: bar.requiredLevel,
+          basis: bar.basis,
+          ...(bar.opposedBy ? { opposedBy: bar.opposedBy } : {}),
+        };
+      }
       for (const [actionId, init] of Object.entries(
         engineResult.movementInits
       )) {
@@ -391,6 +421,44 @@ export class TickOrchestrator {
     };
   }
 
+  /** Roll every declared-but-unrolled check among these actions. The record
+   *  is written once and reused by retries and rehydration — an action is
+   *  never rolled twice. */
+  private rollDueChecks(actionIds: string[]): void {
+    const { dgsm } = this.deps;
+    const skillsOf = (characterId: string): Record<string, number> =>
+      dgsm.getNpcProfile(characterId)?.skills ?? {};
+
+    for (const actionId of new Set(actionIds)) {
+      const action = this.deps.actionStore.get(actionId);
+      if (!action?.check || action.checkOutcome) continue;
+
+      const actorSkill = resolveSkillValue(
+        action.check.skillId,
+        skillsOf(action.command.actorId)
+      );
+      if (!actorSkill) continue;
+
+      const outcome = resolveCheck({
+        actorRoll: rollSkill(actorSkill.canonicalSkillId, actorSkill.value),
+        requiredLevel: action.check.requiredLevel,
+        ...(action.check.opposedBy
+          ? { opposedBy: action.check.opposedBy }
+          : {}),
+        rollDefender: (characterId, skillId) => {
+          const defense = resolveSkillValue(skillId, skillsOf(characterId));
+          return defense
+            ? {
+                ok: true,
+                record: rollSkill(defense.canonicalSkillId, defense.value),
+              }
+            : { ok: false, reason: `unknown defense skill "${skillId}"` };
+        },
+      });
+      if (outcome.ok) action.checkOutcome = outcome.check;
+    }
+  }
+
   // --- lifecycle helpers ---
 
   private applyTransition(
@@ -403,7 +471,6 @@ export class TickOrchestrator {
       action.startedAt = now;
     }
     action.status = t.to;
-    action.progressMinutes += t.progressDeltaMinutes;
     action.lastAdvancedAt = now;
     if (t.resolvedDurationTicks !== undefined) {
       action.resolvedDurationTicks = t.resolvedDurationTicks;
@@ -413,10 +480,7 @@ export class TickOrchestrator {
     } else {
       action.nextWakeAt = undefined;
     }
-    const judgement = engineResult?.judgements[action.id];
-    if (judgement) {
-      action.runtime = { ...(action.runtime ?? {}), judgement };
-    }
+
   }
 
   private toCharacterAction(
@@ -442,7 +506,7 @@ export class TickOrchestrator {
       completedAt: now,
       outcome: {
         stateChanges: [],
-        elapsedMinutes: action.progressMinutes + t.progressDeltaMinutes,
+        elapsedMinutes: action.progressMinutes,
       },
     };
   }

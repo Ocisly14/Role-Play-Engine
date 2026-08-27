@@ -270,8 +270,8 @@ export async function resolveTick(
         return {
           ok: true,
           resolution: finalized.resolution,
-          judgements: finalized.judgements,
           movementInits: finalized.movementInits,
+          checkInits: finalized.checkInits,
           codeToolInvocations: deps.codeTools.drainInvocations(),
         };
       }
@@ -307,8 +307,8 @@ export async function resolveTick(
         return {
           ok: true,
           resolution: finalized.resolution,
-          judgements: finalized.judgements,
           movementInits: finalized.movementInits,
+          checkInits: finalized.checkInits,
           codeToolInvocations: deps.codeTools.drainInvocations(),
         };
       }

@@ -199,10 +199,17 @@ export type WorldActionEngineResult =
   | {
       ok: true;
       resolution: TickResolution;
-      /** Engine judgements per actionId (persisted onto action runtime). */
-      judgements: Record<string, import("../actions/types.js").ActionJudgement>;
       /** Movement-leg runtime annotations per actionId. */
       movementInits: Record<string, { destinationId: string }>;
+      /** The bar the Engine set for an action as it starts, per actionId. */
+      checkInits: Record<
+        string,
+        {
+          requiredLevel: "regular" | "hard" | "extreme";
+          basis: string;
+          opposedBy?: Array<{ characterId: string; skillId: string }>;
+        }
+      >;
       /** Structured trace of the session's code-tool calls. */
       codeToolInvocations: import("../tools/codeTool.js").CodeToolInvocation[];
     }

@@ -59,8 +59,8 @@ export function makeIntegrationEngine(
       return {
         ok: true as const,
         resolution: finalized.resolution,
-        judgements: {},
         movementInits: {},
+        checkInits: {},
         codeToolInvocations: [],
       };
     },

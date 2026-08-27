@@ -261,7 +261,10 @@ describe("buildActionCommand", () => {
     expect(result.command.replacesActionId).toBe("action_live");
   });
 
-  it("rolls immediately for a declared trained skill", () => {
+  it("settles the skill's NAME at intake and rolls nothing", () => {
+    // The dice wait for the action to run its course. Rolling here would put
+    // a number in front of the Engine while it is still choosing the
+    // difficulty — the one thing the two-moment contract exists to prevent.
     const result = buildActionCommand(
       "npc_1",
       args({ skillId: "stealth & security" }),
@@ -270,17 +273,12 @@ describe("buildActionCommand", () => {
     expect(result.ok).toBe(true);
     if (!result.ok) return;
     expect(result.command.declaredSkillId).toBe("Stealth & Security");
-    const roll = result.command.skillRoll;
-    expect(roll).toBeDefined();
-    if (!roll) return;
-    expect(roll.skillId).toBe("Stealth & Security");
-    expect(roll.skillValue).toBe(60);
-    expect(roll.roll).toBeGreaterThanOrEqual(1);
-    expect(roll.roll).toBeLessThanOrEqual(100);
-    expect(roll.rollId).toBeTruthy();
+    expect(result.command.skillRoll).toBeUndefined();
   });
 
-  it("rolls with the base value for an untrained known domain", () => {
+  it("accepts an untrained but known domain", () => {
+    // Base values make every domain usable; whether it was trained only
+    // matters when code rolls it later.
     const noSkills = {
       ...(dgsm as Record<string, unknown>),
       getNpcProfile: () => ({ skills: {} }),
@@ -292,7 +290,7 @@ describe("buildActionCommand", () => {
     );
     expect(result.ok).toBe(true);
     if (!result.ok) return;
-    expect(result.command.skillRoll?.skillValue).toBeGreaterThan(0);
+    expect(result.command.declaredSkillId).toBe("Investigation");
   });
 
   it("rejects an unknown skill name without rolling", () => {

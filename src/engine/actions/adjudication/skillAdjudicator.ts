@@ -1,26 +1,20 @@
 // src/engine/actions/adjudication/skillAdjudicator.ts
 //
-// Deterministic half of "roll first, assess after" (plan Phase 6 / rules §6).
-// The command arrives with its immutable actor SkillRollRecord (made at
-// intake); the semantic Engine proposes applicability / required level /
-// opposed configuration with factual bases; this module executes the check
-// math and produces the persisted ActionJudgement. It never re-rolls the
-// actor, never rolls anything itself (defender rolls go through the injected
-// opposed-roll tool), and never fabricates requirement fields for a rejected
-// skill.
+// The deterministic half of "difficulty before dice".
+//
+// The Engine set the bar when the action STARTED, at a moment when no roll
+// existed — it cannot have chosen a difficulty to reach a result it had
+// already seen. This module is what happens at the other end: when the
+// action's time is spent, code rolls the skill the actor declared against
+// that stored bar, rolls whatever defenders the Engine named, and produces
+// the verdict. The Engine is then told the verdict and writes only its
+// consequences.
+//
+// Nothing here is semantic. It never chooses a skill, never chooses a
+// difficulty, never decides what the outcome means in the world.
 
-import type {
-  ActionCommand,
-  ActionJudgement,
-  SkillSuccessLevel,
-} from "../types.js";
-import type {
-  DefenderRollResult,
-  RequiredLevel,
-  RollDefenderFn,
-  SkillAssessmentProposal,
-  SkillCheckResult,
-} from "./types.js";
+import type { ResolvedCheck, SkillRollRecord, SkillSuccessLevel } from "../types.js";
+import type { RequiredLevel, RollDefenderFn } from "./types.js";
 
 /** Six-level ladder ranking (higher wins). */
 export const SKILL_SUCCESS_RANK: Record<SkillSuccessLevel, number> = {
@@ -48,173 +42,71 @@ export function meetsRequiredLevel(
   return SKILL_SUCCESS_RANK[level] >= REQUIRED_MIN_RANK[required];
 }
 
-export type SkillAdjudication =
-  | {
-      ok: true;
-      judgement: ActionJudgement & { kind: "skill_assessed" };
-      checkResult: SkillCheckResult;
-      defenderRolls: DefenderRollResult[];
-    }
+export interface ResolveCheckParams {
+  /** The actor's roll, already made by the caller from the real skill value. */
+  actorRoll: SkillRollRecord;
+  requiredLevel: RequiredLevel;
+  /** Defenders the Engine named when it set the bar. */
+  opposedBy?: Array<{ characterId: string; skillId: string }>;
+  /** Rolls one defender. Injected so dice stay pinnable in tests and every
+   *  roll goes through the same deterministic path. */
+  rollDefender?: RollDefenderFn;
+}
+
+export type ResolveCheckOutput =
+  | { ok: true; check: ResolvedCheck }
   | { ok: false; error: string };
 
 /**
- * Adjudicate a skill-declared command against the semantic proposal.
- * Deterministic given the command's roll record and the injected defender
- * roller; the same inputs always produce the same judgement (replay-safe).
+ * Roll the check the Engine declared and say whether it was met.
+ *
+ * Unopposed: the actor's level must reach the required level.
+ * Opposed: it must also beat every defender — strictly higher rank wins, the
+ * defender takes ties.
  */
-export function adjudicateSkillAction(
-  command: ActionCommand,
-  proposal: SkillAssessmentProposal,
-  rollDefender: RollDefenderFn
-): SkillAdjudication {
-  const roll = command.skillRoll;
-  if (command.declaredSkillId === undefined || roll === undefined) {
-    return {
-      ok: false,
-      error:
-        "adjudicateSkillAction requires a command with declaredSkillId + skillRoll; use a direct judgement for skill-less actions",
-    };
-  }
+export function resolveCheck(params: ResolveCheckParams): ResolveCheckOutput {
+  const { actorRoll, requiredLevel, opposedBy } = params;
+  const level = actorRoll.successLevel;
+  const fumble = level === "fumble";
+  const clearedBar = meetsRequiredLevel(level, requiredLevel);
 
-  // ── Rejected applicability: roll stays in the trace, grants nothing. ──
-  if (proposal.applicability === "rejected") {
+  if (!opposedBy || opposedBy.length === 0) {
     return {
       ok: true,
-      judgement: {
-        kind: "skill_assessed",
-        skillId: roll.skillId,
-        rollId: roll.rollId,
-        applicability: "rejected",
-        targetIds: proposal.targetIds,
-        outcome: proposal.outcomeWithoutSkill,
-        reason: `${proposal.applicabilityBasis} — ${proposal.outcomeReason}`,
-      },
-      checkResult: { kind: "no_benefit" },
-      defenderRolls: [],
+      check: { actor: actorRoll, requiredLevel, met: clearedBar, fumble },
     };
   }
 
-  // ── Accepted, single check: compare roll level to required level. ──
-  if (proposal.checkType === "single") {
-    const level = roll.successLevel;
-    const met = meetsRequiredLevel(level, proposal.requiredLevel);
-    const checkResult: SkillCheckResult =
-      level === "fumble"
-        ? { kind: "fumble" }
-        : met
-          ? { kind: "met", level }
-          : { kind: "not_met", level };
-    return {
-      ok: true,
-      judgement: {
-        kind: "skill_assessed",
-        skillId: roll.skillId,
-        rollId: roll.rollId,
-        applicability: "accepted",
-        requiredLevel: proposal.requiredLevel,
-        checkType: "single",
-        targetIds: proposal.targetIds,
-        outcome: met ? "success" : "failure",
-        reason: `${proposal.applicabilityBasis}; required ${proposal.requiredLevel} (${proposal.requiredLevelBasis}); rolled ${roll.roll}/${roll.skillValue} (${level})`,
-      },
-      checkResult,
-      defenderRolls: [],
-    };
+  if (!params.rollDefender) {
+    return { ok: false, error: "opposed check needs a defender roller" };
   }
 
-  // ── Accepted, opposed check: roll each chosen defender via the tool. ──
-  if (proposal.opposedDefense.length === 0) {
-    return {
-      ok: false,
-      error: "opposed check proposal must name at least one defender",
-    };
-  }
-  // The actor must clear the objective bar before opposition matters: on a
-  // failed/fumbled actor roll no defender dice are thrown at all (no
-  // pointless randomness in the replay trace) and the action simply fails.
-  const actorLevel = roll.successLevel;
-  if (!meetsRequiredLevel(actorLevel, proposal.requiredLevel)) {
-    return {
-      ok: true,
-      judgement: {
-        kind: "skill_assessed",
-        skillId: roll.skillId,
-        rollId: roll.rollId,
-        applicability: "accepted",
-        requiredLevel: proposal.requiredLevel,
-        checkType: "opposed",
-        targetIds: proposal.targetIds,
-        opposedDefenseIds: proposal.opposedDefense.map((d) => d.characterId),
-        outcome: "failure",
-        reason: `${proposal.applicabilityBasis}; required ${proposal.requiredLevel} (${proposal.requiredLevelBasis}); actor ${roll.roll}/${roll.skillValue} (${actorLevel}) failed before opposition`,
-      },
-      checkResult:
-        actorLevel === "fumble"
-          ? { kind: "fumble" }
-          : { kind: "not_met", level: actorLevel },
-      defenderRolls: [],
-    };
-  }
-
-  const defenderRolls: DefenderRollResult[] = [];
-  for (const defense of proposal.opposedDefense) {
-    const rolled = rollDefender(defense.characterId, defense.skillId);
+  const defenders: NonNullable<ResolvedCheck["defenders"]> = [];
+  for (const defender of opposedBy) {
+    const rolled = params.rollDefender(defender.characterId, defender.skillId);
     if (!rolled.ok) {
       return {
         ok: false,
-        error: `defender roll failed for ${defense.characterId} (${defense.skillId}): ${rolled.reason}`,
+        error: `defender ${defender.characterId} (${defender.skillId}): ${rolled.reason}`,
       };
     }
-    defenderRolls.push({
-      characterId: defense.characterId,
-      skillId: defense.skillId,
+    defenders.push({
+      characterId: defender.characterId,
       record: rolled.record,
-      // Higher rank wins; the defender wins ties (rules §Skill checks).
       actorWon:
-        SKILL_SUCCESS_RANK[actorLevel] >
+        SKILL_SUCCESS_RANK[level] >
         SKILL_SUCCESS_RANK[rolled.record.successLevel],
     });
   }
 
-  const anyDefeated = defenderRolls.some((d) => d.actorWon);
-  const checkResult: SkillCheckResult = {
-    kind: "opposed",
-    level: actorLevel,
-    defenders: defenderRolls,
-    anyDefeated,
-  };
-
-  const defenderSummary = defenderRolls
-    .map(
-      (d) =>
-        `${d.characterId} ${d.skillId} ${d.record.roll}/${d.record.skillValue} (${d.record.successLevel})${d.actorWon ? " beaten" : " held"}`
-    )
-    .join(", ");
-
   return {
     ok: true,
-    judgement: {
-      kind: "skill_assessed",
-      skillId: roll.skillId,
-      rollId: roll.rollId,
-      applicability: "accepted",
-      requiredLevel: proposal.requiredLevel,
-      checkType: "opposed",
-      targetIds: proposal.targetIds,
-      opposedDefenseIds: proposal.opposedDefense.map((d) => d.characterId),
-      outcome: anyDefeated ? "success" : "failure",
-      reason: `${proposal.applicabilityBasis}; required ${proposal.requiredLevel} (${proposal.requiredLevelBasis}); actor ${roll.roll}/${roll.skillValue} (${actorLevel}) vs ${defenderSummary}`,
+    check: {
+      actor: actorRoll,
+      requiredLevel,
+      defenders,
+      met: clearedBar && defenders.every((d) => d.actorWon),
+      fumble,
     },
-    checkResult,
-    defenderRolls,
   };
-}
-
-/** Direct judgement for skill-less commands — no roll exists and none is
- *  made. Thin, but kept here so Phase 7 has one entry point per path. */
-export function buildDirectJudgement(
-  outcome: "success" | "partial" | "failure" | "blocked" | "continue",
-  reason: string
-): ActionJudgement & { kind: "direct" } {
-  return { kind: "direct", outcome, reason };
 }

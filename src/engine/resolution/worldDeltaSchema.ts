@@ -13,43 +13,42 @@ import type { ToolSpec } from "../../models/providers/types.js";
 // ==================== Raw (model-shaped) resolution ====================
 
 /** What the model actually emits. Code turns this into a validated
- *  TickResolution: occurrence/fact ids are assigned by code, nextWakeAt is
- *  computed from tick counts, judgements are re-verified deterministically. */
+ *  TickResolution: occurrence/fact ids are assigned by code, progress and
+ *  lifecycle come from the clock, and every check is rolled and adjudicated
+ *  deterministically against the bar set here. */
 export interface RawActionResolution {
   actionId: string;
-  to: "active" | "completed" | "failed" | "interrupted" | "cancelled";
-  progressDeltaMinutes: number;
-  /** Required when a queued action is first resolved. */
+  /** Set when the action starts, or when the Engine revises how long it will
+   *  take. The actor's proposedDurationTicks is advisory. */
   resolvedDurationTicks?: number;
   timingReason?: string;
-  /** Required when `to` is "active": ticks from now until next resolution. */
-  nextWakeInTicks?: number;
-  reason?: string;
-  judgement?: RawJudgement;
+  /** The bar for the skill the actor declared, set BEFORE any roll exists.
+   *  Omitted when the declared skill does not fit, or no check is needed. */
+  check?: RawCheck;
+  /** Active resistance: who defends and with which skill. Code rolls both
+   *  sides and compares levels. */
+  opposedBy?: Array<{ characterId: string; skillId: string }>;
+  /** Present ONLY on the resolving call: what happened once the duration was
+   *  spent (or the world reached the action first). Its presence ends the
+   *  action — code labels it completed or interrupted from the progress. */
+  result?: RawActionResult;
   /** Engine-owned runtime annotation: set when this action has a movement leg
    *  the deterministic movement executor should advance tick by tick. The
    *  destination must have been checked with the pathfinding tool. */
   movement?: { destinationId: string };
 }
 
-export type RawJudgement =
-  | {
-      kind: "direct";
-      outcome: "success" | "partial" | "failure" | "blocked" | "continue";
-      reason: string;
-    }
-  | {
-      kind: "skill_assessed";
-      applicability: "accepted" | "rejected";
-      applicabilityBasis: string;
-      requiredLevel?: "regular" | "hard" | "extreme";
-      requiredLevelBasis?: string;
-      checkType?: "single" | "opposed";
-      targetIds?: string[];
-      opposedDefense?: Array<{ characterId: string; skillId: string }>;
-      outcome: "success" | "partial" | "failure" | "blocked" | "continue";
-      reason: string;
-    };
+export interface RawCheck {
+  requiredLevel: "regular" | "hard" | "extreme";
+  basis: string;
+}
+
+export interface RawActionResult {
+  /** Required only when the action carried no check — with a check, code
+   *  derives success from the roll against the bar. */
+  outcome?: "success" | "partial" | "failure" | "blocked";
+  reason: string;
+}
 
 export interface RawSourcedDelta {
   sourceActionId: string;
@@ -137,7 +136,7 @@ const sourcedDelta = (idField: string, idRequired: boolean) => ({
 export const submitResolutionTool: ToolSpec = {
   name: "submit_resolution",
   description:
-    "Terminal: submit the complete resolution of this tick — one transition per triggering action, sourced world deltas grouped by domain, and objective occurrences with perceiver character ids.",
+    "Terminal: submit the complete resolution of this tick — one entry per triggering action (its duration and difficulty when it starts, its result when it resolves), sourced world deltas grouped by domain, and objective occurrences with perceiver character ids.",
   inputSchema: {
     type: "object",
     properties: {
@@ -149,29 +148,65 @@ export const submitResolutionTool: ToolSpec = {
           type: "object",
           properties: {
             actionId: { type: "string" },
-            to: {
-              type: "string",
-              enum: ["active", "completed", "failed", "interrupted", "cancelled"],
-            },
-            progressDeltaMinutes: { type: "number", minimum: 0 },
             resolvedDurationTicks: {
               type: "integer",
               minimum: 1,
               description:
-                "Authoritative total duration. REQUIRED when first resolving a queued action; the actor's proposedDurationTicks is advisory only.",
+                "How long the action SHOULD take. REQUIRED when the action starts; send it again only to revise the estimate. You never state elapsed time — code advances progress from the clock.",
             },
             timingReason: {
               type: "string",
               description:
-                "Objective reason for the chosen/revised duration. Required with resolvedDurationTicks.",
+                "Objective reason for the chosen or revised duration. Required with resolvedDurationTicks.",
             },
-            nextWakeInTicks: {
-              type: "integer",
-              minimum: 1,
+            check: {
+              type: "object",
               description:
-                "Ticks from now until this action must be resolved again. Required when `to` is \"active\".",
+                "The bar for the skill the actor declared, set when the action STARTS — before any roll exists. Omit entirely when the declared skill does not fit the attempt or no check is needed: an omitted check means the skill grants nothing, and the action is settled on its own merits. Never raise the bar to punish a poor skill choice.",
+              properties: {
+                requiredLevel: {
+                  type: "string",
+                  enum: ["regular", "hard", "extreme"],
+                },
+                basis: {
+                  type: "string",
+                  description:
+                    "Factual reason this situation demands that level. No roll exists yet.",
+                },
+              },
+              required: ["requiredLevel", "basis"],
+              additionalProperties: false,
             },
-            reason: { type: "string" },
+            opposedBy: {
+              type: "array",
+              description:
+                "Set when someone actively resists: the character and the defense skill they resist with. Code rolls both sides and compares levels; you choose who defends and with what, never who wins.",
+              items: {
+                type: "object",
+                properties: {
+                  characterId: { type: "string" },
+                  skillId: { type: "string" },
+                },
+                required: ["characterId", "skillId"],
+                additionalProperties: false,
+              },
+            },
+            result: {
+              type: "object",
+              description:
+                "What happened, sent ONLY on the call where the action resolves. Its presence ends the action. The check result you were given is input: never restate or contradict it.",
+              properties: {
+                outcome: {
+                  type: "string",
+                  enum: ["success", "partial", "failure", "blocked"],
+                  description:
+                    "Required only for an action with NO check. With a check, code derives success from the roll against your bar.",
+                },
+                reason: { type: "string" },
+              },
+              required: ["reason"],
+              additionalProperties: false,
+            },
             movement: {
               type: "object",
               description:
@@ -180,47 +215,8 @@ export const submitResolutionTool: ToolSpec = {
               required: ["destinationId"],
               additionalProperties: false,
             },
-            judgement: {
-              type: "object",
-              description:
-                "Required for every newly resolved or completing/failing action. kind=\"direct\" when the command declared no skill; kind=\"skill_assessed\" when it did (assess the ALREADY-ROLLED record; never invent rolls).",
-              properties: {
-                kind: { type: "string", enum: ["direct", "skill_assessed"] },
-                outcome: {
-                  type: "string",
-                  enum: ["success", "partial", "failure", "blocked", "continue"],
-                },
-                reason: { type: "string" },
-                applicability: {
-                  type: "string",
-                  enum: ["accepted", "rejected"],
-                },
-                applicabilityBasis: { type: "string" },
-                requiredLevel: {
-                  type: "string",
-                  enum: ["regular", "hard", "extreme"],
-                },
-                requiredLevelBasis: { type: "string" },
-                checkType: { type: "string", enum: ["single", "opposed"] },
-                targetIds: { type: "array", items: { type: "string" } },
-                opposedDefense: {
-                  type: "array",
-                  items: {
-                    type: "object",
-                    properties: {
-                      characterId: { type: "string" },
-                      skillId: { type: "string" },
-                    },
-                    required: ["characterId", "skillId"],
-                    additionalProperties: false,
-                  },
-                },
-              },
-              required: ["kind", "outcome", "reason"],
-              additionalProperties: false,
-            },
           },
-          required: ["actionId", "to", "progressDeltaMinutes"],
+          required: ["actionId"],
           additionalProperties: false,
         },
       },
