@@ -14,6 +14,14 @@
 //   │   可带 harm 造成真实的 HP/SAN/状态伤害）
 //   └─ NpcActionController → 感知渲染 → agent 决策 → interpreter → 掷骰 → resolver
 //
+// Every case opens its OWN real session: production `createSession` (which
+// also seeds module-authored NPC memories), production `NpcMemoryManager`
+// (Prisma + embeddings), and the geography bootstrap `ensureContextMemories`
+// that gives the character what they already knew about the town. Nothing in
+// the pipeline is stubbed any more — a case IS a session, just a short one
+// with a staged opening. Sessions are kept for inspection unless
+// --drop-sessions.
+//
 // NO GRADING. Each case yields an objective per-actor record — tools used,
 // action definitions, dice, positions, HP/SAN, items, scene-state changes,
 // memory writes — for a human to read. The only per-case statuses are
@@ -40,6 +48,7 @@
 //   pnpm tsx scripts/test-agent-decisions.ts --cases 1         # first case of each scenario
 //   pnpm tsx scripts/test-agent-decisions.ts --actors Kovind   # only cases led by this NPC
 //   pnpm tsx scripts/test-agent-decisions.ts --trace           # full per-tick engine trace
+//   pnpm tsx scripts/test-agent-decisions.ts --dump-prompts     # every model call to logs/prompts-<ts>/
 //   pnpm tsx scripts/test-agent-decisions.ts                   # everything
 //   Flags: --module <name> --lang <zh|en> --ticks <n> (override every case)
 //          --concurrency <n> --repeat <n> --full
@@ -59,8 +68,16 @@ import { runWithConcurrency } from "../src/roleSim/npcActionController.js";
 import { getPrismaClient } from "../src/shared/agents/memory/database/prismaClient.js";
 import { DynamicGameStateManager } from "../src/state/DynamicGameState.js";
 import { makeDateTime } from "../src/state/gameClock.js";
+import { NpcMemoryManager } from "../src/memory/NpcMemoryManager.js";
+import { EmbeddingClient } from "../src/rag/embedding.js";
+import { ModelProviderName } from "../src/models/types.js";
 import { importModule } from "../src/state/moduleImporter.js";
-import { initRuntime, loadModule } from "../src/state/moduleLoader.js";
+import {
+  type ModuleData,
+  createSession,
+  initRuntime,
+  loadModule,
+} from "../src/state/moduleLoader.js";
 
 import {
   type SimObservation,
@@ -106,6 +123,21 @@ const CONCURRENCY = Math.max(1, Number(opt("concurrency", "3")) || 3);
 const FULL = has("full");
 const TRACE = has("trace");
 const LIST_ONLY = has("list");
+/** Each case is a real session row; keep them by default so a run can be
+ *  inspected afterwards (memories, events), drop them to leave no trace. */
+const DROP_SESSIONS = has("drop-sessions");
+/** Dump every model call (prompt in, answer out) for the run. Files are
+ *  numbered in call order across ALL cases, so pair it with --concurrency 1
+ *  when the point is to read one case's prompts end to end. */
+const DUMP_PROMPTS = has("dump-prompts");
+if (DUMP_PROMPTS && !process.env.LLM_TRACE_DIR) {
+  process.env.LLM_TRACE_DIR = path.resolve(
+    process.cwd(),
+    "logs",
+    `prompts-${new Date().toISOString().replace(/[:.]/g, "-")}`
+  );
+  console.log(`[run] model calls → ${process.env.LLM_TRACE_DIR}`);
+}
 
 const SESSION_ID = "agent_decision_sim";
 
@@ -176,6 +208,8 @@ function propItem(key: PropKey, seed: number, slot: number): StagedItem {
 interface BaseWorld {
   serializedState: unknown;
   moduleId: string;
+  /** Needed per case: every case opens its own real session row. */
+  moduleData: ModuleData;
   /** Scene each roster NPC natively stands in. */
   homeScene: Map<string, string>;
   sceneName: Map<string, string>;
@@ -227,6 +261,7 @@ async function buildBaseWorld(): Promise<BaseWorld> {
   return {
     serializedState: dgsm.serialize(),
     moduleId,
+    moduleData,
     homeScene,
     sceneName,
     sceneParent,
@@ -419,6 +454,8 @@ interface CaseResult {
   sceneName: string;
   ticks: number;
   status: Status;
+  /** This case's own session row — real memories live under it. */
+  sessionId: string;
   notes: string[];
   /** Objective record per staged actor, keyed by npc id (cast order). */
   actors: Record<string, ActorSummary>;
@@ -508,13 +545,7 @@ function summarize(
 // Report helpers
 // =========================================================================
 
-const AGENT_TOOL_LIST = [
-  "act",
-  "continue",
-  "writeMemory",
-  "recallMemory",
-  "getMapSnapshot",
-] as const;
+const AGENT_TOOL_LIST = ["act", "continue", "writeMemory"] as const;
 
 function icon(s: Status): string {
   return s === "OK" ? "▪️" : s === "SKIP" ? "⏭️ " : "❌";
@@ -673,6 +704,15 @@ async function main(): Promise<void> {
 
   resetUsageStats();
 
+  const prismaClient = getPrismaClient();
+  const embedClient = new EmbeddingClient(
+    (process.env.MODEL_PROVIDER as ModelProviderName) ??
+      ModelProviderName.ANTHROPIC
+  );
+  // The production store. Cases stay apart by session id, not by having
+  // separate stores — exactly how two real sessions coexist.
+  const memory = new NpcMemoryManager(prismaClient, embedClient, LANG);
+
   const results: CaseResult[] = [];
   let done = 0;
   await runWithConcurrency(prepared, CONCURRENCY, async (prep) => {
@@ -689,6 +729,7 @@ async function main(): Promise<void> {
       sceneName: prep.sceneName,
       ticks: prep.stage.ticks,
       status: "OK",
+      sessionId: "",
       notes: [],
       actors: {},
       committed: [],
@@ -716,14 +757,39 @@ async function main(): Promise<void> {
       return;
     }
 
+    // One real session per case: the row the memories hang off, created the
+    // way production creates it (which also seeds module-authored NPC
+    // memories from profile.memory[]).
+    const caseSessionId = `${SESSION_ID}__${prep.caseId}${
+      prep.run > 1 ? `__r${prep.run}` : ""
+    }`;
+    result.sessionId = caseSessionId;
+
     let obs: SimObservation;
     try {
+      // Re-running a case must start from the same blank slate as its first
+      // run: the session id is derived from the case id, so without this the
+      // previous run's memories (and its re-seeded goal) would still be in
+      // the store and the prompt would differ silently. Deleting cascades to
+      // every memory row under it.
+      // deleteMany, not delete: a first run has no row and `delete` treats
+      // that as an error (noisy, even when caught).
+      await prismaClient.session.deleteMany({
+        where: { sessionId: caseSessionId },
+      });
+      await createSession(prismaClient, {
+        sessionId: caseSessionId,
+        moduleId: base.moduleId,
+        moduleData: base.moduleData,
+        embedClient,
+      });
       obs = await runStagedCase({
         baseState: base.serializedState,
         stage: prep.stage,
         lang: LANG,
-        sessionId: SESSION_ID,
+        sessionId: caseSessionId,
         moduleId: base.moduleId,
+        memory,
         // Trace lines from concurrent cases interleave, so tag every one.
         ...(TRACE
           ? {
@@ -763,6 +829,14 @@ async function main(): Promise<void> {
     summarize(prep, obs, result);
     results.push(result);
     done += 1;
+
+    if (DROP_SESSIONS) {
+      await prismaClient.session
+        .delete({ where: { sessionId: caseSessionId } })
+        .catch(() => {
+          /* best effort — a failed case may never have created it */
+        });
+    }
 
     const lines = [
       `${icon(result.status)} [${String(done).padStart(3)}/${prepared.length}] ${result.caseId}${REPEAT > 1 ? `@${result.run}` : ""} — ${result.label}`,

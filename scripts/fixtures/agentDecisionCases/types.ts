@@ -28,7 +28,8 @@ export interface CaseActor {
   conditions?: string[];
   /** Props placed in this NPC's inventory. */
   items?: PropKey[];
-  /** Only reachable via recallMemory (older days). */
+  /** Written on an earlier day. Memory is injected whole, so these reach the
+   *  prompt like any other. */
   recallSeeds?: Array<{ type: NpcMemoryType; content: string; date: string }>;
   /** Shows up in "## Today's memories" from the first decision on. */
   todayMemories?: Array<{

@@ -71,7 +71,8 @@ export interface ScenePresentCharacter {
 }
 
 export interface RenderedPerception {
-  /** Narrative fed into the agent prompt. Prose only — the ids the actor
-   *  may cite are assembled separately by `pointableFormatter`. */
+  /** Narrative fed into the agent prompt. Prose with the citation tags
+   *  written into it (`the tall pale man [stranger_a]`): what the actor may
+   *  point at is whatever the paragraph tagged, and nothing else. */
   narrative: string;
 }

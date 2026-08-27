@@ -26,12 +26,7 @@ watch") does NOT happen unless you declare it with \`act\`.
   instead ("I tidy the shelves and keep an eye on the door"). A declared routine runs for many
   minutes on its own, is visible to others, and lands in your memory; imagined routines do none of that.
 - You want to start or switch to a new action — use \`act\`
-- You want to reflect / record something — use \`writeMemory\` (then loop back to \`continue\` or \`act\` to terminate)
-
-## Output
-continue({ "reason": "<optional one-line justification>" })
-
-- \`reason\`: optional. One sentence explaining why you're continuing. Useful for debugging your own decisions.
+- You want to reflect / record something — use \`writeMemory\`; it rides along in this same turn
 
 ## Examples
 

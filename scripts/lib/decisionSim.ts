@@ -49,7 +49,7 @@ import { DynamicGameStateManager } from "../../src/state/DynamicGameState.js";
 import { datePart } from "../../src/state/gameClock.js";
 import type { Item } from "../../src/state/types.js";
 
-import type { NpcMemory, NpcMemoryType } from "@prisma/client";
+import type { NpcMemoryType } from "@prisma/client";
 
 // =========================================================================
 // Stage description
@@ -73,7 +73,9 @@ export interface StagedActor {
   conditions?: string[];
   /** Items placed in this actor's inventory. */
   items?: StagedItem[];
-  /** Memories only reachable through recallMemory (older days). */
+  /** Memories written on earlier days. Every memory is injected whole now,
+   *  so these reach the prompt like any other — use them to stage what the
+   *  character already knows. */
   recallSeeds?: Array<{ type: NpcMemoryType; content: string; date: string }>;
   /** Rows that show up in "## Today's memories" from tick one. */
   todayMemories?: Array<{
@@ -254,105 +256,34 @@ export interface SimObservation {
 }
 
 // =========================================================================
-// Stub memory store
+// Memory write observation
+//
+// The store itself is the production one (Prisma + embeddings, real session
+// row): a case is a real session, so what the character writes has to land
+// where a real run would put it. Only the *reporting* is added here — the
+// wrapper records every `add` as it happens, which is what the per-tick trace
+// prints; the rows themselves are in the database afterwards.
 // =========================================================================
 
-interface Row {
-  npcId: string;
-  type: NpcMemoryType;
-  content: string;
-  gameDateTime: string;
-}
-
-function toNpcMemory(row: Row, i: number, sessionId: string): NpcMemory {
-  return {
-    id: `sim-${i}`,
-    npcId: row.npcId,
-    sessionId,
-    moduleId: "sim-module",
-    type: row.type,
-    content: row.content,
-    gameDateTime: row.gameDateTime,
-    location: null,
-    metadata: null,
-    baseImportance: 0.7,
-    accessCount: 0,
-    lastAccessedAt: new Date(),
-    createdAt: new Date(),
-    embedding: null,
-  } as unknown as NpcMemory;
-}
-
-function makeStubMemory(
-  sessionId: string,
-  rows: Row[],
-  mapSnapshot: unknown,
+function observeMemoryWrites(
+  real: NpcMemoryManager,
   onWrite: (npcId: string, type: string, content: string) => void
 ): NpcMemoryManager {
-  const stub = {
-    async add(params: {
-      npcId: string;
-      type: NpcMemoryType;
-      content: string;
-      gameDateTime: string;
-    }) {
-      const row: Row = {
-        npcId: params.npcId,
-        type: params.type,
-        content: params.content,
-        gameDateTime: params.gameDateTime,
+  return new Proxy(real, {
+    get(target, property, receiver) {
+      const value = Reflect.get(target, property, receiver);
+      if (property !== "add" || typeof value !== "function") return value;
+      return async (params: {
+        npcId: string;
+        type: NpcMemoryType;
+        content: string;
+      }) => {
+        const row = await (value as typeof real.add).call(target, params as never);
+        onWrite(params.npcId, params.type, params.content);
+        return row;
       };
-      rows.push(row);
-      onWrite(params.npcId, params.type, params.content);
-      return toNpcMemory(row, rows.length, sessionId);
     },
-    async query(params: {
-      npcId: string;
-      filters?: { types?: NpcMemoryType[] };
-      limit?: number;
-    }) {
-      // Retrieval quality is not what this harness measures: the seeds are the
-      // only memories this NPC has, so any query returns the type-matching set.
-      return rows
-        .filter((r) => r.npcId === params.npcId)
-        .filter(
-          (r) => !params.filters?.types || params.filters.types.includes(r.type)
-        )
-        .slice(0, params.limit ?? 5)
-        .map((r, i) => ({ ...toNpcMemory(r, i, sessionId), score: 0.8 }));
-    },
-    async findLatestByType(
-      _sessionId: string,
-      npcId: string,
-      type: NpcMemoryType
-    ) {
-      const hits = rows.filter((r) => r.npcId === npcId && r.type === type);
-      return hits.length > 0
-        ? toNpcMemory(hits[hits.length - 1], hits.length, sessionId)
-        : null;
-    },
-    async getForDateByTypes(
-      npcId: string,
-      _sessionId: string,
-      gameDate: string,
-      types: NpcMemoryType[],
-      limit?: number
-    ) {
-      return rows
-        .filter(
-          (r) =>
-            r.npcId === npcId &&
-            types.includes(r.type) &&
-            datePart(r.gameDateTime) === gameDate
-        )
-        .slice(-(limit ?? 20))
-        .map((r, i) => toNpcMemory(r, i, sessionId));
-    },
-    async getMapSnapshot() {
-      return mapSnapshot;
-    },
-  };
-  return stub as unknown as NpcMemoryManager;
+  });
 }
 
 // =========================================================================
@@ -394,6 +325,11 @@ function pushWarnSink(sink: (line: string) => void): () => void {
 // =========================================================================
 
 export interface RunStagedCaseInput {
+  /** Production memory store, already bound to this case's session row. The
+   *  case seeds its goal and staged memories through it, the bootstrap writes
+   *  the character's geography through it, and the character writes its own
+   *  memories through it — one store, the real one. */
+  memory: NpcMemoryManager;
   /** Serialized base state (DynamicGameStateManager.serialize()), deep-cloned
    *  per case so runs never share mutable world state. */
   baseState: unknown;
@@ -441,7 +377,6 @@ export async function runStagedCase(
   const scene = dgsm.getScene(stage.sceneId);
   if (!scene) throw new Error(`Staged scene ${stage.sceneId} not in module`);
 
-  const memoryRows: Row[] = [];
   const observation: SimObservation = {
     ticks: [],
     decisions: [],
@@ -460,6 +395,13 @@ export async function runStagedCase(
     llmErrors: [],
     elapsedMs: 0,
   };
+
+  // Every write — the staged seeds, the geography bootstrap, and whatever the
+  // character decides to keep — goes through the production store. The
+  // wrapper only mirrors them into the observation record.
+  const memory = observeMemoryWrites(input.memory, (npcId, type, content) => {
+    observation.memoryWrites.push({ npcId, type, content });
+  });
 
   // ---- stage the scene -------------------------------------------------
   // Two readers, two homes: the renderer (what the agent perceives) reads
@@ -512,24 +454,30 @@ export async function runStagedCase(
 
     // Goal → long_term_intent, the same row the controller reads each tick.
     if (actor.goal) {
-      memoryRows.push({
+      await memory.add({
         npcId: actor.npcId,
+        sessionId,
+        moduleId,
         type: "long_term_intent" as NpcMemoryType,
         content: actor.goal,
         gameDateTime,
       });
     }
     for (const seed of actor.recallSeeds ?? []) {
-      memoryRows.push({
+      await memory.add({
         npcId: actor.npcId,
+        sessionId,
+        moduleId,
         type: seed.type,
         content: seed.content,
         gameDateTime: `${seed.date}T09:00:00`,
       });
     }
     for (const m of actor.todayMemories ?? []) {
-      memoryRows.push({
+      await memory.add({
         npcId: actor.npcId,
+        sessionId,
+        moduleId,
         type: m.type as NpcMemoryType,
         content: m.content,
         gameDateTime,
@@ -606,6 +554,24 @@ export async function runStagedCase(
     if (!stagedIds.has(id)) delete positions[id];
   }
 
+  // What the character already knows about the town, written the way a real
+  // session writes it (DynamicGameStateLoader does exactly this at bootstrap).
+  // It has to come after the cast is pruned and the actors are standing where
+  // the case put them: the seed expands out of wherever they are, and a
+  // pruned NPC must not be described as a neighbour.
+  for (const actor of stage.actors) {
+    const written = await memory.ensureContextMemories({
+      npcId: actor.npcId,
+      sessionId,
+      moduleId,
+      gameDateTime,
+      dgsm,
+      seed: dgsm.getNpcProfile(actor.npcId)?.knownMapSeed,
+      language: lang,
+    });
+    log(`   [context] ${actor.npcId} knows ${written} place(s)`);
+  }
+
   // ---- opening event ---------------------------------------------------
   const scriptedEvents: ScriptedEvent[] = [];
   if (stage.openingEvent) {
@@ -661,31 +627,6 @@ export async function runStagedCase(
       onComplete,
     });
   }
-
-  // ---- map snapshot for getMapSnapshot ---------------------------------
-  const mapSnapshot = {
-    schemaVersion: 1,
-    updatedAt: gameDateTime,
-    knownIds: {
-      sceneIds: [...state.scenes.keys()],
-      junctionIds: [...state.junctions.keys()],
-      roadIds: [...state.roads.keys()],
-      scenarioOutlineIds: (state.scenarioOutlines ?? []).map((o) => o.id),
-    },
-    revealedHiddenConnections: [] as string[],
-    scenes: Object.fromEntries([...state.scenes.entries()]),
-    junctions: Object.fromEntries([...state.junctions.entries()]),
-    roads: Object.fromEntries([...state.roads.entries()]),
-  };
-
-  const memory = makeStubMemory(
-    sessionId,
-    memoryRows,
-    mapSnapshot,
-    (npcId, type, content) => {
-      observation.memoryWrites.push({ npcId, type, content });
-    }
-  );
 
   // ---- engine: real World Action Engine · real dice · real code tools ---
   // Nothing is stubbed. The Engine makes its own LLM call when (and only

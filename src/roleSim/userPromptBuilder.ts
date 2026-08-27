@@ -8,9 +8,9 @@
 import type { PromptSegment } from "../models/types.js";
 import type { DynamicGameStateManager } from "../state/DynamicGameState.js";
 import { formatForPrompt } from "../state/gameClock.js";
+import { resolveLocationById } from "../state/perceivedLocation.js";
 import type { RoleSimContext } from "./agent.js";
-import { formatTodayMemories } from "./memoryFormatter.js";
-import { formatPointables } from "./pointableFormatter.js";
+import { formatMemories } from "./memoryFormatter.js";
 import { formatProfile } from "./profileFormatter.js";
 
 export interface BuildUserPromptOptions {
@@ -31,17 +31,15 @@ export interface BuildUserPromptOptions {
  *     here would pay the write premium without ever being read. Kept as its
  *     own segment so that if the mutable status is ever lifted out of the
  *     profile block, enabling a session-lived breakpoint is a one-flag change.
- *  2. **situation** — time, scene, perceptions, goal, current action, today's
+ *  2. **situation** — time, scene, perceptions, goal, current action,
  *     memories. Frozen for the whole tick, so a breakpoint at its end (which
  *     caches the system prompt and the identity block along with it) is read
  *     by every later iteration of the same decide() loop.
- *  3. **volatile** — the tool-call transcript (grows every iteration) and the
- *     decide instruction. The instruction sits *after* the transcript, so one
- *     iteration's prompt is never a prefix of the next: no breakpoint.
+ *  3. **volatile** — rejection feedback (retry passes only) and the decide
+ *     instruction. No breakpoint: it is the tail of the prompt.
  */
 export function buildUserPromptSegments(
   ctx: RoleSimContext,
-  transcript: string[],
   opts: BuildUserPromptOptions
 ): PromptSegment[] {
   const identity: string[] = [];
@@ -54,30 +52,27 @@ export function buildUserPromptSegments(
 
   const sections = situation;
 
-  sections.push(
-    `## Right now\nToday: ${formatForPrompt(ctx.currentTime)}\nScene: ${ctx.currentScene}`
-  );
-
+  // Every perception is stamped with when and where it reached the character,
+  // so there is no separate "right now" block — the current perception below
+  // IS the present minute and the present place.
   if (ctx.recentPerceptions && ctx.recentPerceptions.length > 0) {
     const block = ctx.recentPerceptions
-      .map((p) => `--- ${formatForPrompt(p.gameDateTime)} ---\n${p.narrative}`)
+      .map(
+        (p) =>
+          `${stamp(p.gameDateTime, p.location, opts.dgsm)}\n${p.narrative}`
+      )
       .join("\n\n");
     sections.push(
-      `## The last few minutes (fades — not remembered unless you write it down)
+      `## What you have perceived so far (oldest first)
 ${block}`
     );
   }
 
   if (ctx.perception?.narrative) {
-    sections.push(`## What you perceive\n${ctx.perception.narrative}`);
-  }
-
-  // The narrative names things the way the character sees them; this names
-  // them the way the engine accepts them. Generated from the same directory
-  // the trust boundary validates against, so citing from it cannot fail.
-  const pointables = formatPointables(ctx.npcId, opts.dgsm);
-  if (pointables) {
-    sections.push(`## What you can point at\n${pointables}`);
+    const where = ctx.perception.location ?? ctx.currentScene;
+    sections.push(
+      `## What you perceive now\n${stamp(ctx.currentTime, where, opts.dgsm)}\n${ctx.perception.narrative}`
+    );
   }
 
   if (ctx.longTermIntent?.trim()) {
@@ -103,15 +98,9 @@ ${block}`
     );
   }
 
-  if (ctx.recentMemory.length > 0) {
+  if (ctx.memories.length > 0) {
     sections.push(
-      `## What you chose to remember today\n${formatTodayMemories(ctx.recentMemory)}`
-    );
-  }
-
-  if (transcript.length > 0) {
-    volatile.push(
-      `## Tool calls so far this decision\n${transcript.join("\n")}`
+      `## What you remember\n${formatMemories(ctx.memories)}`
     );
   }
 
@@ -122,8 +111,8 @@ The engine did not accept your last \`act\` call:
 ${ctx.rejectionFeedback}
 
 This is factual feedback, not something that happened in the world. Decide
-again: fix the rejected field (an id copied from "What you can point at", a
-positive tick count, a real skill name) or choose a different action.`
+again: fix the rejected field (a tag copied exactly from what you perceive,
+a positive tick count, a real skill name) or choose a different action.`
     );
   }
 
@@ -134,10 +123,12 @@ positive tick count, a real skill name) or choose a different action.`
   volatile.push(
     `## Decide
 Everything above is INPUT you have read — the world describing itself TO
-you. The ids under "What you can point at" are the ONLY ids you may put in
-\`objectRefs\`; the narrative is how those things look to you, not how you
-name them to the engine. Your in-character prose goes in \`description\`
-(and the exact words you speak in \`utterance\`).
+you. The bracketed tags in what you perceive — \`[stranger_a]\`,
+\`[ITEM_7]\`, \`[SCN_LIBRARY]\` — are the ONLY ids you may put in
+\`objectRefs\`; copy one exactly, without its brackets. Something you
+perceive with no tag is something you cannot act on this minute. Your
+in-character prose goes in \`description\` (and the exact words you speak
+in \`utterance\`) — never the tags.
 
 Call one tool now — \`act\` or \`continue\`, plus any \`writeMemory\`
 worth keeping from what you just perceived. Write content in ${langName}.`
@@ -147,17 +138,14 @@ worth keeping from what you just perceived. Write content in ${langName}.`
   // `sections.join("\n\n")` over the same non-empty sections. The trailing
   // separator rides on the end of each non-final segment, keeping the
   // concatenation separator-free.
-  // NOTE: no breakpoint is currently enabled here. The situation group is a
-  // perfect cross-iteration prefix, but a 5-tick Anthropic run measured 10
-  // decide() calls that ALL terminated at iteration 0 (terminal act/continue,
-  // or a non-JSON reply that returns early) — there is no second iteration to
-  // read the cache, so a breakpoint would pay the 1.25x write premium on
-  // every call and never be read. Enabling it needs one of:
-  //   - instant tools (recallMemory / writeMemory) actually
-  //     being used, which makes decide() multi-iteration; or
-  //   - the mutable status line (HP / SAN / fatigue) moving out of the
-  //     identity group into `situation`, which would make identity stable
-  //     across ticks and worth a session-lived breakpoint.
+  // NOTE: no breakpoint is currently enabled here. Now that `writeMemory`
+  // rides along with the terminal call, a well-formed decide() is ONE
+  // request — a second iteration only happens when the model failed to
+  // terminate — so a breakpoint would pay the 1.25x write premium on every
+  // call and essentially never be read. Enabling it needs the mutable status
+  // line (HP / SAN / fatigue) to move out of the identity group into
+  // `situation`, which would make identity stable across ticks and worth a
+  // session-lived breakpoint.
   const groups = [
     { text: identity.join("\n\n"), cache: false },
     { text: situation.join("\n\n"), cache: false },
@@ -170,12 +158,25 @@ worth keeping from what you just perceived. Write content in ${langName}.`
   }));
 }
 
+/** `--- 1923-04-02 09:15 · Miskatonic Library ---`: when and where this
+ *  reached the character. The scene id is shown only if the module has no
+ *  name for it — this line is read as prose, not cited as an id. */
+function stamp(
+  gameDateTime: string,
+  sceneId: string | undefined,
+  dgsm: DynamicGameStateManager
+): string {
+  const place = sceneId
+    ? (resolveLocationById(sceneId, dgsm)?.name ?? sceneId)
+    : undefined;
+  return `--- ${formatForPrompt(gameDateTime)}${place ? ` · ${place}` : ""} ---`;
+}
+
 export function buildUserPrompt(
   ctx: RoleSimContext,
-  transcript: string[],
   opts: BuildUserPromptOptions
 ): string {
-  return buildUserPromptSegments(ctx, transcript, opts)
+  return buildUserPromptSegments(ctx, opts)
     .map((segment) => segment.text)
     .join("");
 }

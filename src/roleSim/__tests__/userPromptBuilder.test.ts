@@ -6,14 +6,19 @@ import {
   buildUserPromptSegments,
 } from "../userPromptBuilder.js";
 
-// Minimal DGSM stand-in: formatProfile only reads npcInventories,
-// npcRelationshipGraph and npcCharacters off the state.
+// Minimal DGSM stand-in: formatProfile reads npcInventories,
+// npcRelationshipGraph and npcCharacters off the state; the pointable list
+// bails out on a viewpoint with no profile; and an unresolvable scene id
+// makes the perception stamp fall back to the raw id.
 const dgsm = {
   getState: () => ({
     npcInventories: {},
     npcRelationshipGraph: {},
     npcCharacters: [],
   }),
+  getNpcProfile: () => undefined,
+  getScene: () => undefined,
+  getTopology: () => ({ junctions: new Map(), roads: new Map() }),
 } as unknown as DynamicGameStateManager;
 
 function makeCtx(overrides: Partial<RoleSimContext> = {}): RoleSimContext {
@@ -35,7 +40,7 @@ function makeCtx(overrides: Partial<RoleSimContext> = {}): RoleSimContext {
         conditions: [],
       },
     },
-    recentMemory: [],
+    memories: [],
     ...overrides,
   } as unknown as RoleSimContext;
 }
@@ -49,29 +54,48 @@ describe("buildUserPromptSegments", () => {
       perception: { narrative: "Dust hangs in the lamplight." },
       currentAction: { description: "searching the shelves" },
     });
-    const transcript = ['{"tool":"recallMemory"} -> 2 hits'];
-
-    const joined = buildUserPromptSegments(ctx, transcript, opts)
+    const joined = buildUserPromptSegments(ctx, opts)
       .map((s) => s.text)
       .join("");
 
-    expect(joined).toBe(buildUserPrompt(ctx, transcript, opts));
+    expect(joined).toBe(buildUserPrompt(ctx, opts));
   });
 
   it("preserves the exact section layout and \\n\\n separators", () => {
     // Byte-level guard: segmentation must not shift a single separator.
     // Written out in full rather than derived, so a drift in either the
     // grouping or the join shows up here.
-    const text = buildUserPrompt(makeCtx(), [], opts);
+    const text = buildUserPrompt(makeCtx(), opts);
 
     expect(text).toBe(
       [
         "# You are Marsh",
         "## Who you are\nName: Marsh\nOccupation: Librarian\nStatus: HP 10/12, SAN 44/55, Fatigue 3/10",
-        "## Right now\nToday: 1923-04-02 09:15\nScene: SCN_library",
         text.slice(text.indexOf("## Decide")),
       ].join("\n\n")
     );
+  });
+
+  it("stamps each perception with when and where it reached the character", () => {
+    // There is no separate "right now" block any more — this line is the only
+    // thing telling the character what minute it is and where they stand.
+    const text = buildUserPrompt(
+      makeCtx({
+        perception: { narrative: "Dust hangs in the lamplight." },
+        recentPerceptions: [
+          {
+            gameDateTime: "1923-04-02T09:14:00",
+            location: "SCN_hall",
+            narrative: "A door closes somewhere behind you.",
+          },
+        ],
+      }),
+      opts
+    );
+
+    expect(text).toContain("--- 1923-04-02 09:14 · SCN_hall ---");
+    expect(text).toContain("--- 1923-04-02 09:15 · SCN_library ---");
+    expect(text).not.toContain("## Right now");
   });
 
   it("routes prose to description and entity ids to objectRefs", () => {
@@ -80,7 +104,7 @@ describe("buildUserPromptSegments", () => {
     // them instead of calling a tool. The API now enforces the envelope, but
     // the instruction still has to route prose into `description` and ids
     // into `objectRefs`.
-    const text = buildUserPrompt(makeCtx(), [], opts);
+    const text = buildUserPrompt(makeCtx(), opts);
     const decide = text.slice(text.indexOf("## Decide"));
 
     expect(decide).toContain("`description`");
@@ -93,29 +117,14 @@ describe("buildUserPromptSegments", () => {
     // nothing would ever read a breakpoint here and each one would cost a
     // 1.25x write. If this flips to true again, the loop must first be shown
     // to run multiple iterations (or identity must become tick-stable).
-    const segments = buildUserPromptSegments(makeCtx(), ["a", "b"], opts);
+    const segments = buildUserPromptSegments(makeCtx(), opts);
     expect(segments.every((s) => s.cache === false)).toBe(true);
   });
 
-  it("keeps the non-transcript prefix byte-identical as the transcript grows", () => {
-    // The property any future breakpoint here would rest on: within one
-    // decide() loop only the trailing segment changes. Guarding it now means
-    // the boundary stays valid until the loop is worth caching.
-    const ctx = makeCtx();
-    const prefix = (transcript: string[]) =>
-      buildUserPromptSegments(ctx, transcript, opts)
-        .slice(0, -1)
-        .map((s) => s.text)
-        .join("");
-
-    expect(prefix([])).toBe(prefix(["tool call 1"]));
-    expect(prefix(["tool call 1"])).toBe(prefix(["tool call 1", "tc 2"]));
-  });
-
   it("still round-trips when optional sections are absent", () => {
-    const segments = buildUserPromptSegments(makeCtx(), [], opts);
+    const segments = buildUserPromptSegments(makeCtx(), opts);
     expect(segments.map((s) => s.text).join("")).toBe(
-      buildUserPrompt(makeCtx(), [], opts)
+      buildUserPrompt(makeCtx(), opts)
     );
     expect(segments.some((s) => s.text.includes("\n\n\n"))).toBe(false);
   });

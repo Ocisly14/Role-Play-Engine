@@ -8,6 +8,55 @@ import type { KnownMapSeed } from "../state/types.js";
 export type { NpcMemoryType } from "@prisma/client";
 export type NpcMemory = PrismaNpcMemory;
 
+/**
+ * Module data is authored in the PRE-consolidation memory vocabulary
+ * (`NpcProfileMemoryEntry` in state/types.ts: information | secret | event |
+ * belief). The runtime enum no longer has three of those, and a raw
+ * passthrough reaches `getHandler` as `undefined` and dies on `.prepare` —
+ * which is exactly what happened to every session created from an existing
+ * module. Map at the ingestion boundary, the way skills go through
+ * `LEGACY_SKILL_TO_CANONICAL`, and leave the authoring vocabulary alone.
+ */
+const LEGACY_MEMORY_TYPE_TO_CANONICAL: Readonly<Record<string, NpcMemoryType>> =
+  {
+    information: "general",
+    event: "general",
+    // A belief is about someone often enough that `relationship` is tempting,
+    // but module entries carry no target id, so that conversion would invent
+    // a subject. `general` keeps the content and loses nothing real.
+    belief: "general",
+    knowledge: "general",
+    witness: "general",
+  };
+
+const CANONICAL_MEMORY_TYPES: ReadonlySet<string> = new Set<NpcMemoryType>([
+  "general",
+  "plan",
+  "secret",
+  "relationship",
+  "map",
+  "long_term_intent",
+  "summary",
+  "context",
+]);
+
+/** Fold an authored memory type onto the runtime enum. Anything unrecognized
+ *  keeps its content as `general` and says so — dropping module-authored
+ *  material silently is worse than filing it under the default. */
+export function canonicalMemoryType(
+  raw: string,
+  context?: string
+): NpcMemoryType {
+  const trimmed = raw?.trim() ?? "";
+  if (CANONICAL_MEMORY_TYPES.has(trimmed)) return trimmed as NpcMemoryType;
+  const mapped = LEGACY_MEMORY_TYPE_TO_CANONICAL[trimmed.toLowerCase()];
+  if (mapped) return mapped;
+  console.warn(
+    `[memory] unknown memory type "${raw}"${context ? ` (${context})` : ""} — stored as "general"`
+  );
+  return "general";
+}
+
 // ===== Metadata Types (per memory type) =====
 
 /** `relationship` memories scope to one person so retrieval can answer

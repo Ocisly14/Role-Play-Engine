@@ -50,7 +50,6 @@ describe("agent tool schemas", () => {
       "act",
       "continue",
       "writeMemory",
-      "recallMemory",
     ]);
   });
 

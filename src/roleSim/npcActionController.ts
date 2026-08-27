@@ -19,7 +19,6 @@ import type { FeatureEvent, TickReport } from "../engine/core/types.js";
 import { findAffectedCharacters } from "../engine/shared/impactPropagation.js";
 import type { NpcMemoryManager } from "../memory/NpcMemoryManager.js";
 import type { DynamicGameStateManager } from "../state/DynamicGameState.js";
-import { datePart } from "../state/gameClock.js";
 import type { RoleSimAgent, RoleSimContext } from "./agent.js";
 import { buildPerceivedBundle, render } from "./renderer/index.js";
 
@@ -41,9 +40,6 @@ interface DecideOpts {
   /** Occurrences this NPC was listed as perceiver of (plan Phase 9). */
   occurrencesForNpc?: Occurrence[];
 }
-
-/** How many prior renderer narratives each NPC keeps as short-term memory. */
-const PERCEPTION_HISTORY_CAP = 5;
 
 /** Max location groups deciding concurrently. Overridable for tuning. */
 const DECIDE_GROUP_CONCURRENCY = (() => {
@@ -94,6 +90,8 @@ export async function runWithConcurrency<T>(
 
 interface PerceptionHistoryEntry {
   gameDateTime: string;
+  /** Scene id the character was in when this reached them. */
+  location: string;
   narrative: string;
 }
 
@@ -105,8 +103,10 @@ export class NpcActionController {
   private readonly sessionId: string;
   private readonly moduleId: string;
   private readonly language: string;
-  /** Per-NPC ring buffer of recent renderer narratives (oldest first). Only
-   *  successful renders enter; failed renders leave the buffer untouched. */
+  /** Per-NPC log of every renderer narrative this session, oldest first —
+   *  injected whole, so nothing the character perceived scrolls out of reach.
+   *  Only successful renders enter; failed renders leave the log untouched.
+   *  In memory only: a process restart starts the log over. */
   private readonly perceptionHistory = new Map<
     string,
     PerceptionHistoryEntry[]
@@ -375,10 +375,7 @@ export class NpcActionController {
     const currentScene = position ? this.dgsm.resolveLocationId(position) : "";
 
     const longTermIntent = await this.loadLongTermIntent(npcId);
-    const recentMemory = await this.loadTodayMemories(
-      npcId,
-      datePart(gameDateTime)
-    );
+    const memories = await this.loadAllMemories(npcId);
 
     // Intent, progress and timing only — never engine runtime internals.
     const live = this.liveActionFor(npcId);
@@ -422,19 +419,20 @@ export class NpcActionController {
     // anything — is worth keeping and writes it with `writeMemory`, which
     // rides along with its terminal call at no extra round trip.
 
-    // Snapshot prior perceptions (excludes current tick); push current after.
+    // Snapshot every prior perception (excludes current tick); push current
+    // after.
     const recentPerceptions = this.perceptionHistory.get(npcId)?.slice() ?? [];
-    this.recordPerception(npcId, gameDateTime, rendered.narrative);
+    this.recordPerception(npcId, gameDateTime, currentScene, rendered.narrative);
 
     return {
       npcId,
       currentTime: gameDateTime,
       npcProfile: profile,
       currentScene,
-      recentMemory,
+      memories,
       longTermIntent,
       currentAction,
-      perception: { narrative: rendered.narrative },
+      perception: { narrative: rendered.narrative, location: currentScene },
       recentPerceptions,
     };
   }
@@ -442,13 +440,11 @@ export class NpcActionController {
   private recordPerception(
     npcId: string,
     gameDateTime: string,
+    location: string,
     narrative: string
   ): void {
     const buf = this.perceptionHistory.get(npcId) ?? [];
-    buf.push({ gameDateTime, narrative });
-    if (buf.length > PERCEPTION_HISTORY_CAP) {
-      buf.splice(0, buf.length - PERCEPTION_HISTORY_CAP);
-    }
+    buf.push({ gameDateTime, location, narrative });
     this.perceptionHistory.set(npcId, buf);
   }
 
@@ -461,16 +457,25 @@ export class NpcActionController {
     return entry?.content ?? "";
   }
 
-  private async loadTodayMemories(
-    npcId: string,
-    gameDate: string
-  ): Promise<RoleSimContext["recentMemory"]> {
-    const rows = await this.memory.getForDateByTypes(
+  /** Every memory this character holds, injected whole — there is no recall
+   *  tool, so what is not in the prompt does not exist for them. `limit` is a
+   *  runaway guard, not a curation policy. */
+  private async loadAllMemories(
+    npcId: string
+  ): Promise<RoleSimContext["memories"]> {
+    const rows = await this.memory.getAllByTypes(
       npcId,
       this.sessionId,
-      gameDate,
-      ["general", "plan", "secret", "relationship"],
-      20
+      [
+        "context",
+        "general",
+        "plan",
+        "secret",
+        "relationship",
+        "map",
+        "summary",
+      ],
+      2000
     );
     return rows.map((r) => ({
       type: r.type,

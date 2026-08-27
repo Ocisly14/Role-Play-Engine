@@ -205,7 +205,7 @@ export const TOOL_SCENARIOS: SimScenario[] = [
   {
     id: "tool-recall-past",
     group: "tool",
-    title: "被问到几天前的事 → 先查记忆（recallMemory）",
+    title: "被问到几天前的事 → 用注入的旧记忆作答（已无 recall 工具）",
     cases: [
       {
         label: "侦探：委托人追问上周的通话",
@@ -431,64 +431,6 @@ export const TOOL_SCENARIOS: SimScenario[] = [
           {
             npc: "Bruno Galilei",
             goal: "不动声色地摸清证物室那几天的排班和经手人。",
-          },
-        ],
-      },
-    ],
-  },
-  {
-    id: "tool-map-route",
-    group: "tool",
-    title: "去不熟的地方 → 先看地图（getMapSnapshot）再动身",
-    targetDefs: [],
-    cases: [
-      {
-        label: "猎人：夜里进城办事",
-        ticks: 5,
-        actors: [
-          {
-            npc: "Johnny",
-            goal: "二十分钟内赶到{{destName}}去见线人。你对镇里的路不熟，动身前先确认自己知不知道怎么走。",
-          },
-        ],
-      },
-      {
-        label: "混混：得绕开主路",
-        ticks: 5,
-        actors: [
-          {
-            npc: "Philip Scaletta",
-            goal: "有人在大街那头等着堵你。避开主路去{{destName}}，动身前先想清楚有哪几条路可走。",
-          },
-        ],
-      },
-      {
-        label: "花店少女：第一次去送货",
-        ticks: 5,
-        actors: [
-          {
-            npc: "Nancy Charlotte",
-            goal: "把这束花按时送到{{destName}}。你几乎没出过这条街，先弄清楚怎么走。",
-          },
-        ],
-      },
-      {
-        label: "毒贩：临时改了交货点",
-        ticks: 5,
-        actors: [
-          {
-            npc: "Angela",
-            goal: "对方临时把交货点改到{{destName}}，只给二十分钟。你在那一带走动不多，先确认路线再出发。",
-          },
-        ],
-      },
-      {
-        label: "钟表匠：上门取件",
-        ticks: 5,
-        actors: [
-          {
-            npc: "Marks White",
-            goal: "客人要你亲自去{{destName}}取一只座钟。你很多年没往那个方向走过了，出门前先把路想清楚。",
           },
         ],
       },

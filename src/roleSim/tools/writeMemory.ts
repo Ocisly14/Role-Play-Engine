@@ -7,9 +7,10 @@ description: Keep something in long-term memory. Free — may be called alongsid
 
 # writeMemory
 
-**Nothing is remembered for you.** What you perceive reaches you as
-perception and stays in your prompt for a few minutes — then it is gone
-unless YOU wrote it down. The world no longer keeps a diary on your behalf.
+**Nothing is remembered for you.** What you perceive is what reached your
+senses in the moment — it is not memory. Memory is what YOU decided was
+worth keeping: it comes back to you as your own words, and it is what
+remains of the day. The world no longer keeps a diary on your behalf.
 
 So each turn, decide: is anything here worth carrying? Most minutes are
 not. A stranger's name, a lie you caught, a door you found locked, a route
@@ -20,8 +21,7 @@ The colour of the wallpaper is not.
 
 Free. It does NOT consume a tick, and it may be called **in the same turn
 as \`act\` or \`continue\`** — decide your action and record your memory
-together. (\`recallMemory\` still needs a turn of its own, because you have
-to read its results before deciding.)
+together.
 
 ## Types
 
@@ -35,14 +35,13 @@ to read its results before deciding.)
 - \`secret\` — 秘密. Something hidden you worked out and would not say
   aloud. These fade slowly; you will still be carrying them days later.
 - \`relationship\` — 角色关系. What you now think of a specific person.
-  Requires \`targetId\` — copied from "What you can point at", exactly as
-  you would write it in \`objectRefs\`. Use it when your read on someone
+  Requires \`targetId\` — the tag beside that person in what you perceive,
+  exactly as you would write it in \`objectRefs\`. Use it when your read on someone
   changes: they lied, they helped, they frightened you, you decided to
   trust them.
 - \`map\` — 地图记忆. A place or route you learned *today* — a door you
   had never noticed, a shortcut, where someone actually lives. The town you
-  already knew before this morning is not this: you carry that anyway, and
-  \`recallMemory\` gets it back.
+  already knew before this morning is not this; only what today taught you.
 - \`long_term_intent\` — 长期目标. ONLY when the goal driving your whole
   life here genuinely changes. Rare — an ordinary intention is a \`plan\`.
 
@@ -55,11 +54,6 @@ to read its results before deciding.)
 - Write what it MEANS to you, not a transcript of what was said.
 - Do not record what you are about to do — that is your action, not a
   memory. Use \`plan\` only for an intention that outlives this minute.
-
-## Output
-
-writeMemory({ "type": "general", "content": "<text>" })
-writeMemory({ "type": "relationship", "targetId": "<id-or-alias>", "content": "<text>" })
 
 ## Cap
 

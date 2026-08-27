@@ -46,7 +46,7 @@ const ctx = {
       conditions: [],
     },
   },
-  recentMemory: [],
+  memories: [],
 } as never;
 
 function makeAgent() {
@@ -58,6 +58,9 @@ function makeAgent() {
         npcRelationshipGraph: {},
         npcCharacters: [],
       }),
+      getNpcProfile: () => undefined,
+      getScene: () => undefined,
+      getTopology: () => ({ junctions: new Map(), roads: new Map() }),
       getGameDateTime: () => "1923-04-02T09:15:00",
     } as never,
     sessionId: "s1",
@@ -92,7 +95,7 @@ describe("agent tool loop", () => {
     generateToolCalls.mockReset();
     dispatchInstantTool.mockReset();
     sent.length = 0;
-    dispatchInstantTool.mockResolvedValue({ result: "Found 2 memory(ies)." });
+    dispatchInstantTool.mockResolvedValue({ result: "Remembered (general)." });
   });
 
   it("ends the decision on a clean terminal turn", async () => {
@@ -124,11 +127,11 @@ describe("agent tool loop", () => {
     expect(generateToolCalls).toHaveBeenCalledTimes(1);
   });
 
-  it("answers every call in a parallel informational turn", async () => {
+  it("answers every call on a turn that failed to terminate", async () => {
     queueTurns(
       turn([
-        { id: "t1", name: "recallMemory", args: { query: "a" } },
-        { id: "t2", name: "recallMemory", args: { query: "b" } },
+        { id: "t1", name: "writeMemory", args: { type: "general", content: "a" } },
+        { id: "t2", name: "writeMemory", args: { type: "general", content: "b" } },
       ]),
       turn([{ id: "t3", name: "continue" }])
     );
@@ -176,55 +179,19 @@ describe("agent tool loop", () => {
     expect(generateToolCalls).toHaveBeenCalledTimes(1);
   });
 
-  it("still makes recallMemory take a turn of its own", async () => {
+  it("does not let an unknown tool block the terminal call", async () => {
+    // The dispatcher whitelist is the guard; a stray name must not cost the
+    // character its tick.
     queueTurns(
       turn([
-        { id: "t1", name: "recallMemory", args: { query: "harbor" } },
+        { id: "t1", name: "getMapSnapshot", args: {} },
         {
           id: "t2",
           name: "act",
           args: {
-            description: "too soon",
+            description: "I keep walking.",
             objectRefs: [],
             proposedDurationTicks: 1,
-          },
-        },
-      ]),
-      turn([{ id: "t3", name: "continue" }])
-    );
-
-    await makeAgent().decideNext(ctx);
-
-    const toolMessage = messagesOnCall(1).find((m) => m.role === "tool");
-    if (toolMessage?.role !== "tool") throw new Error("expected tool results");
-    const actResult = toolMessage.results.find((r) => r.toolCallId === "t2");
-    expect(actResult?.content).toMatch(/NOT executed/);
-  });
-
-  it("rejects a mixed turn without dropping the terminal call", async () => {
-    // Rule B: the terminal call is reported as NOT executed rather than
-    // silently discarded, so the model can resubmit it on its own turn.
-    queueTurns(
-      turn([
-        { id: "t1", name: "recallMemory", args: { query: "a" } },
-        {
-          id: "t2",
-          name: "act",
-          args: {
-            description: "too soon",
-            objectRefs: [],
-            proposedDurationTicks: 1,
-          },
-        },
-      ]),
-      turn([
-        {
-          id: "t3",
-          name: "act",
-          args: {
-            description: "now",
-            objectRefs: [],
-            proposedDurationTicks: 2,
           },
         },
       ])
@@ -232,28 +199,21 @@ describe("agent tool loop", () => {
 
     const decision = await makeAgent().decideNext(ctx);
 
-    // The mixed turn did not terminate; the later clean turn did.
-    expect(decision).toEqual({
-      tool: "act",
-      description: "now",
-      objectRefs: [],
-      proposedDurationTicks: 2,
-      skillId: undefined,
-      utterance: undefined,
-    });
-    expect(dispatchInstantTool).toHaveBeenCalledTimes(1);
-
-    const toolMessage = messagesOnCall(1).find((m) => m.role === "tool");
-    if (toolMessage?.role !== "tool") throw new Error("expected tool results");
-    expect(toolMessage.results).toHaveLength(2);
-    const actResult = toolMessage.results.find((r) => r.toolCallId === "t2");
-    expect(actResult?.content).toMatch(/NOT executed/);
+    expect(decision).toMatchObject({ tool: "act" });
+    expect(dispatchInstantTool).not.toHaveBeenCalled();
+    expect(generateToolCalls).toHaveBeenCalledTimes(1);
   });
 
   it("grows the history instead of rebuilding it", async () => {
     // The prefix must stay byte-identical across turns for the cache to hit.
     queueTurns(
-      turn([{ id: "t1", name: "recallMemory", args: { query: "the harbour" } }]),
+      turn([
+        {
+          id: "t1",
+          name: "writeMemory",
+          args: { type: "general", content: "the harbour was empty" },
+        },
+      ]),
       turn([{ id: "t2", name: "continue" }])
     );
 

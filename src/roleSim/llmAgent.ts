@@ -1,11 +1,10 @@
 // src/roleSim/llmAgent.ts
 //
-// Phase F LLM-driven RoleSimAgent. One decide() opens a fresh agent loop:
-// each iteration sends the full ctx + transcript-so-far as one user prompt,
-// the LLM emits a single JSON tool call, instant tools loop back, terminal
-// tools (act/continue) end the loop and return the decision to the
-// controller. No native Anthropic tool_use API — same generateText +
-// parseJsonResponse path as the rest of the project.
+// LLM-driven RoleSimAgent. One decide() opens a fresh agent loop: the opening
+// user turn carries the whole situation, the model answers with native tool
+// calls, and a terminal call (act/continue) ends the loop and returns the
+// decision to the controller. `writeMemory` is the only non-terminal tool and
+// it rides along in the terminal turn, so the common case is a single request.
 
 import type { ActionObjectRef } from "../engine/actions/types.js";
 import type { NpcMemoryManager } from "../memory/NpcMemoryManager.js";
@@ -19,7 +18,6 @@ import type { RoleSimAgent, RoleSimContext, RoleSimDecision } from "./agent.js";
 import { SYSTEM_PROMPT } from "./systemPrompt.js";
 import {
   type DispatcherDeps,
-  FREE_WITH_TERMINAL,
   TERMINAL_TOOLS,
   TOOL_CAPS,
   VALID_TOOLS,
@@ -66,13 +64,14 @@ export class LLMRoleSimAgent implements RoleSimAgent {
     const caps = { ...TOOL_CAPS };
     const dispatcherDeps = this.buildDispatcherDeps(ctx);
 
-    // The opening user turn holds the whole situation. Instant-tool rounds
-    // append an assistant turn plus its tool result, so the prefix only ever
-    // grows — every earlier turn stays byte-identical and stays cacheable.
+    // The opening user turn holds the whole situation. A turn that failed to
+    // terminate appends an assistant turn plus its tool results, so the
+    // prefix only ever grows — every earlier turn stays byte-identical and
+    // stays cacheable.
     const messages: ModelMessage[] = [
       {
         role: "user",
-        content: buildUserPromptSegments(ctx, [], {
+        content: buildUserPromptSegments(ctx, {
           language: this.deps.language,
           dgsm: this.deps.dgsm,
         }).map((segment) => ({
@@ -114,18 +113,19 @@ export class LLMRoleSimAgent implements RoleSimAgent {
 
       const terminal = toolCalls.filter((c) => TERMINAL_TOOLS.has(c.name));
       const instant = toolCalls.filter((c) => !TERMINAL_TOOLS.has(c.name));
-      // writeMemory returns nothing the agent must read before deciding, so
-      // it may ride along with the terminal call — recording a memory costs
-      // no extra round trip. Blocking tools (recallMemory) still need a turn
-      // of their own.
-      const blocking = instant.filter((c) => !FREE_WITH_TERMINAL.has(c.name));
-      const freeRiders = instant.filter((c) => FREE_WITH_TERMINAL.has(c.name));
 
-      // A terminal turn ends the decision. Any free-riding writes are
-      // executed first so the memory lands before the tick advances; nothing
-      // further is sent, so the tool calls need no results.
-      if (terminal.length > 0 && blocking.length === 0) {
-        for (const call of freeRiders) {
+      // A terminal turn ends the decision. Every non-terminal tool returns
+      // nothing the agent must read before deciding, so any that rode along
+      // are executed first — the memory lands before the tick advances — and
+      // nothing further is sent, so those calls need no results.
+      if (terminal.length > 0) {
+        for (const call of instant) {
+          if (!VALID_TOOLS.has(call.name)) {
+            console.warn(
+              `[LLMRoleSimAgent] ${ctx.npcId} called unknown tool "${call.name}" on the terminal turn`
+            );
+            continue;
+          }
           const dispatched = await dispatchInstantTool(
             call.name,
             call.args,
@@ -144,21 +144,13 @@ export class LLMRoleSimAgent implements RoleSimAgent {
         });
       }
 
-      // Otherwise every call must be answered — including a terminal one the
-      // model mixed in, which is reported as not executed rather than being
-      // silently dropped, so it can correct itself on the next turn.
+      // No terminal call this turn: answer every call the model made and loop
+      // back so it can commit. Anthropic rejects the next request unless each
+      // tool_use is answered.
       messages.push(assistantMessage);
       const results: ToolResultRecord[] = [];
 
-      for (const call of toolCalls) {
-        if (TERMINAL_TOOLS.has(call.name)) {
-          results.push({
-            toolCallId: call.id,
-            content: `Error: "${call.name}" was NOT executed. recallMemory needs a turn of its own — you have to read its results first. Finish those lookups, then commit with act/continue (writeMemory may ride along with it).`,
-          });
-          continue;
-        }
-
+      for (const call of instant) {
         if (!VALID_TOOLS.has(call.name)) {
           results.push({
             toolCallId: call.id,
@@ -214,19 +206,6 @@ export class LLMRoleSimAgent implements RoleSimAgent {
       tool: "continue",
       reason: typeof parsed.reason === "string" ? parsed.reason : undefined,
     };
-  }
-
-  private formatToolCall(parsed: {
-    tool: string;
-    [k: string]: unknown;
-  }): string {
-    return `→ Called: ${JSON.stringify(parsed)}`;
-  }
-  private formatToolResult(result: string): string {
-    return `← Result: ${result}`;
-  }
-  private formatToolError(toolName: unknown, msg: string): string {
-    return `← Error for "${String(toolName)}": ${msg}`;
   }
 
   private buildDispatcherDeps(ctx: RoleSimContext): DispatcherDeps {

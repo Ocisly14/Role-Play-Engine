@@ -32,7 +32,16 @@ const HANDLERS: Record<NpcMemoryType, MemoryHandler> = {
 };
 
 export function getHandler(type: NpcMemoryType): MemoryHandler {
-  return HANDLERS[type];
+  const handler = HANDLERS[type];
+  if (!handler) {
+    // Without this the caller dies on `undefined.prepare`, which names
+    // nothing. Every type that reaches the store must already have been
+    // folded onto the enum by `canonicalMemoryType`.
+    throw new Error(
+      `[memory] no handler for memory type "${type}" — fold it onto the runtime enum with canonicalMemoryType() before storing`
+    );
+  }
+  return handler;
 }
 
 export function getAllHandlers(): Record<NpcMemoryType, MemoryHandler> {

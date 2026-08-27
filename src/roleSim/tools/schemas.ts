@@ -24,15 +24,6 @@ const WRITABLE_MEMORY_TYPES = [
   "long_term_intent",
 ] as const;
 
-/** Types recallMemory may filter on — everything readable, including the
- *  system-written daily summaries and the `context` memories that hold what
- *  the character knew about the town before the first tick. */
-const READABLE_MEMORY_TYPES = [
-  ...WRITABLE_MEMORY_TYPES,
-  "summary",
-  "context",
-] as const;
-
 export const actTool: ToolSpec = {
   name: "act",
   description:
@@ -48,7 +39,7 @@ export const actTool: ToolSpec = {
       objectRefs: {
         type: "array",
         description:
-          'Entities the action involves. Each id MUST be copied from the "What you can point at" list in this tick\'s prompt (a stranger appears there under an alias). Use [] when no entity is involved.',
+          "Entities the action involves. Each id MUST be a bracketed tag from what you perceive this tick, copied exactly and without its brackets (a stranger appears as an alias like `stranger_a`). Use [] when no entity is involved.",
         items: {
           type: "object",
           properties: {
@@ -116,7 +107,7 @@ export const writeMemoryTool: ToolSpec = {
       targetId: {
         type: "string",
         description:
-          'Required for type=relationship: the person this memory is about, copied from "What you can point at".',
+          "Required for type=relationship: the person this memory is about, by the tag beside them in what you perceive.",
       },
     },
     required: ["type"],
@@ -124,37 +115,6 @@ export const writeMemoryTool: ToolSpec = {
   },
 };
 
-export const recallMemoryTool: ToolSpec = {
-  name: "recallMemory",
-  description:
-    "Search your own memory. Needs a turn of its own (you must read the results), then finish with act or continue.",
-  inputSchema: {
-    type: "object",
-    properties: {
-      query: { type: "string" },
-      types: {
-        type: "array",
-        items: { type: "string", enum: [...READABLE_MEMORY_TYPES] },
-      },
-      gameDates: {
-        type: "array",
-        items: {
-          type: "string",
-          description: 'ISO 8601 date, "YYYY-MM-DD".',
-        },
-      },
-      limit: { type: "integer" },
-    },
-    required: [],
-    additionalProperties: false,
-  },
-};
-
 /** Order is stable: tool definitions render ahead of the system prompt, so a
  *  reordering would invalidate the cached prefix on every call. */
-export const AGENT_TOOLS: ToolSpec[] = [
-  actTool,
-  continueTool,
-  writeMemoryTool,
-  recallMemoryTool,
-];
+export const AGENT_TOOLS: ToolSpec[] = [actTool, continueTool, writeMemoryTool];

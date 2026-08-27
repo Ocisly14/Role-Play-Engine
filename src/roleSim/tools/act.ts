@@ -22,8 +22,10 @@ takes, how others react, what gets damaged. Never narrate outcomes as facts.
 - \`objectRefs\` (required, may be empty \`[]\`): the entities your action
   involves, as structured references:
   \`{ "kind": "character"|"item"|"scene", "id": "<id>", "role"?: "target"|"tool"|"destination"|"recipient" }\`
-  - \`id\` MUST be copied from the "What you can point at" list in this
-    tick's prompt. Inventing one gets the action rejected.
+  - \`id\` MUST be a bracketed tag from what you perceive this tick, copied
+    exactly and without its brackets. Something you perceive with no tag is
+    something you cannot act on this minute; inventing an id gets the action
+    rejected.
   - \`role\` says how YOU use the entity: \`target\` (acted upon),
     \`tool\` (used to act), \`destination\` (moved toward),
     \`recipient\` (given/told something).
@@ -63,16 +65,13 @@ the start of the new one together. You never need to cancel first.
 - \`description\`/\`utterance\` are your in-character voice: use only names
   you actually know in-game. If perception calls a stranger "the tall pale
   man", call them that.
-- \`objectRefs.id\` is the system handle for the same thing. Someone you
-  know goes in by their own id; a stranger goes in as \`stranger_a\`, an
-  alias that means nothing on its own — the list beside it says which
-  stranger it stands for. Either way it belongs in \`objectRefs\` and never
-  in your prose.
+- \`objectRefs.id\` is the system handle for the same thing: the tag you
+  read in the narrative. Someone you know is tagged by their own id; a
+  stranger is tagged \`stranger_a\`, an alias that means nothing on its own
+  — the words it sits beside are what tell you which person it is. Either way
+  it belongs in \`objectRefs\` and never in your prose.
 
 ## Examples
-
-\`act\` is a function call — you invoke the tool with these arguments (no
-wrapper object, no "tool" field).
 
 Try a lock with a skill and a tool:
 act({

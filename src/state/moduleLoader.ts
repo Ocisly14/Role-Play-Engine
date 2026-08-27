@@ -12,6 +12,7 @@ import {
 } from "../engine/scriptedEvents/loader.js";
 import type { ScriptedEvent } from "../engine/scriptedEvents/types.js";
 import { NpcMemoryManager } from "../memory/NpcMemoryManager.js";
+import { canonicalMemoryType } from "../memory/types.js";
 import type { EmbeddingClient } from "../rag/embedding.js";
 import type { DynamicGameState } from "./DynamicGameState.js";
 import { ISO_DATE_RE, makeDateTime } from "./gameClock.js";
@@ -253,7 +254,9 @@ export async function createSession(
         npcId: npc.id,
         sessionId,
         moduleId,
-        type: entry.type as any,
+        // Authored in the module's own vocabulary; folded onto the runtime
+        // enum here, at the only boundary that reads it.
+        type: canonicalMemoryType(entry.type, `npc ${npc.id}`),
         content: entry.content.trim(),
         gameDateTime: makeDateTime(startDate, "00:00"),
         metadata: entry.metadata,

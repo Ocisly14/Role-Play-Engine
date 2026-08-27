@@ -10,6 +10,7 @@ import type { Occurrence } from "../../engine/actions/types.js";
 import { ModelClass, generateText } from "../../models/index.js";
 import type { DynamicGameStateManager } from "../../state/DynamicGameState.js";
 import {
+  buildPerceivableDirectory,
   descriptionIdentifier,
   isKnownTo,
 } from "../../state/perceivableDirectory.js";
@@ -29,11 +30,25 @@ narrative for a single viewpoint character.
 One short paragraph. Nothing else — no heading, no label, no list, no
 commentary before or after it.
 
-The ids in your input (SCN_LIBRARY, ITEM_7, Hollins) are machine handles. They
-exist so YOU know which entity is which. **Never write one in the narrative.**
-The character perceives a library, a brass key, a tall pale man — not a
-database row. The system tells them separately what they may point at; your
-paragraph is what they see, hear and feel.
+# Citation tags
+
+Entities in your input carry a tag in square brackets — \`[stranger_a]\`,
+\`[ITEM_7]\`, \`[SCN_LIBRARY]\`. Write the tag into the narrative, right
+after the words that name the thing:
+
+  The tall pale man [stranger_a] sets a brass key [ITEM_7] on the counter.
+
+This is the ONLY way the character can point at anything: they act by citing
+a tag they read in your paragraph. An entity you leave untagged is an entity
+they cannot touch, address or walk toward this minute.
+
+- Copy a tag EXACTLY as given. Never invent one, never guess at an id you
+  were not given, never reuse a tag for a different thing.
+- An entity with no tag in your input is written with no tag.
+- A tag is not a name and never replaces the prose: write
+  "the tall pale man [stranger_a]", never "stranger_a walks in".
+- Tag the things the character could plausibly act on this minute — the
+  people present, the items within reach.
 
 # Hard rules
 
@@ -70,18 +85,90 @@ paragraph is what they see, hear and feel.
 # Example
 
 Input gives you:
-  Person (UNKNOWN): the tall pale man (id: Hollins)
+  Person (UNKNOWN): the tall pale man  [stranger_a]
     Appearance: Tall, pale, with a long black overcoat and an ivory-handled cane.
 
 Correct output:
-  The tall pale man steps into the room and inclines his head, the ivory head
-  of his cane catching the lamplight.
+  The tall pale man [stranger_a] steps into the room and inclines his head,
+  the ivory head of his cane catching the lamplight.
 
 WRONG (leaks the canonical name of someone the viewpoint has never met):
   Professor Hollins steps into the room...
 
-WRONG (writes a machine id):
-  The tall pale man (Hollins) steps into the room...`;
+WRONG (leaks a machine id that is not the given tag):
+  The tall pale man (Hollins) steps into the room...
+
+WRONG (tag swallowed the prose):
+  stranger_a steps into the room...`;
+
+/** What the actor may cite this tick, in the shape the renderer needs:
+ *  real entity id → the tag to print. Characters go through
+ *  `characterHandles`, so a stranger is printed as `stranger_a` and their
+ *  canonical id never reaches the narrative (nor, therefore, the actor). */
+interface CitationTags {
+  characters: Map<string, string>;
+  places: Set<string>;
+  items: Set<string>;
+  /** Every tag the narrative may legally carry. */
+  allowed: Set<string>;
+}
+
+function buildCitationTags(
+  npcId: string,
+  dgsm: DynamicGameStateManager
+): CitationTags {
+  const directory = buildPerceivableDirectory(npcId, dgsm);
+  const characters = new Map<string, string>();
+  for (const [handle, realId] of directory.characterHandles) {
+    characters.set(realId, handle);
+  }
+  return {
+    characters,
+    places: directory.scenes,
+    items: directory.items,
+    allowed: new Set<string>([
+      ...directory.characterHandles.keys(),
+      ...directory.items,
+      ...directory.scenes,
+    ]),
+  };
+}
+
+/** `  [tag]` when the entity is citable, nothing when it is not — an
+ *  untagged entity is one the actor can perceive but not act on. */
+function tag(id: string, tags: CitationTags, kind: "character" | "other") {
+  const value =
+    kind === "character"
+      ? tags.characters.get(id)
+      : tags.items.has(id) || tags.places.has(id)
+        ? id
+        : undefined;
+  return value ? `  [${value}]` : "";
+}
+
+const TAG_PATTERN = /\s*\[([^\]\n]{1,64})\]/g;
+
+/** Drop any bracketed tag the actor could not legally cite. The renderer is a
+ *  SMALL model copying ids by hand: an invented or mistyped tag would sail
+ *  through here and die at the trust boundary a turn later, as a rejection
+ *  the character cannot act on. Stripping it costs them the citation and
+ *  leaves the prose intact, which is the same as never having been told. */
+export function stripUncitableTags(
+  narrative: string,
+  allowed: ReadonlySet<string>,
+  npcId: string
+): string {
+  return narrative
+    .replace(TAG_PATTERN, (_match, raw: string) => {
+      const candidate = raw.trim();
+      if (allowed.has(candidate)) return ` [${candidate}]`;
+      console.warn(
+        `[renderer] ${npcId}: dropped uncitable tag "${candidate}" from the narrative`
+      );
+      return "";
+    })
+    .trim();
+}
 
 export interface RenderViaLLMParams {
   npcId: string;
@@ -94,7 +181,8 @@ export interface RenderViaLLMParams {
 export async function renderViaLLM(
   params: RenderViaLLMParams
 ): Promise<string> {
-  const userPrompt = buildUserPrompt(params);
+  const tags = buildCitationTags(params.npcId, params.dgsm);
+  const userPrompt = buildUserPrompt(params, tags);
   const langName = params.language?.startsWith("zh") ? "Chinese" : "English";
 
   const response = await generateText({
@@ -105,10 +193,13 @@ export async function renderViaLLM(
     maxRetries: 2,
   });
 
-  return response.trim();
+  return stripUncitableTags(response.trim(), tags.allowed, params.npcId);
 }
 
-function buildUserPrompt(params: RenderViaLLMParams): string {
+function buildUserPrompt(
+  params: RenderViaLLMParams,
+  tags: CitationTags
+): string {
   const { npcId, bundle, dgsm } = params;
   const viewpoint = dgsm.getNpcProfile(npcId);
   const viewpointName = viewpoint?.name ?? "the viewpoint character";
@@ -116,19 +207,19 @@ function buildUserPrompt(params: RenderViaLLMParams): string {
   const sections: string[] = [];
 
   sections.push('# Viewpoint character (render in first person as "I")');
-  sections.push(formatViewpoint(npcId, viewpointName, viewpoint, bundle));
+  sections.push(formatViewpoint(viewpointName, viewpoint, bundle));
 
   sections.push("# Current scene");
-  sections.push(formatScene(bundle, dgsm));
+  sections.push(formatScene(bundle, dgsm, tags));
 
   if (bundle.charactersInScene.length > 0) {
     sections.push(
       "# People present in your scene (must be acknowledged in narrative — silent or not)"
     );
-    sections.push(formatScenePresentCharacters(bundle, npcId, dgsm));
+    sections.push(formatScenePresentCharacters(bundle, npcId, dgsm, tags));
   }
 
-  const otherEntities = collectOtherEntities(npcId, bundle, dgsm);
+  const otherEntities = collectOtherEntities(npcId, bundle, dgsm, tags);
   if (otherEntities) {
     sections.push("# Other entities involved in events");
     sections.push(otherEntities);
@@ -143,7 +234,7 @@ function buildUserPrompt(params: RenderViaLLMParams): string {
     sections.push(
       "# Occurrences this tick (objective facts + signals — YOU decide what the viewpoint perceives of each)"
     );
-    sections.push(formatOccurrences(bundle, npcId));
+    sections.push(formatOccurrences(bundle, npcId, tags));
   } else {
     sections.push(
       "# Occurrences this tick\n(none — describe scene and own state only)"
@@ -154,13 +245,12 @@ function buildUserPrompt(params: RenderViaLLMParams): string {
 }
 
 function formatViewpoint(
-  id: string,
   name: string,
   profile: DynamicNPCProfile | undefined,
   bundle: PerceivedBundle
 ): string {
   const lines: string[] = [];
-  lines.push(`Name: ${name}  (id: ${id})`);
+  lines.push(`Name: ${name}`);
   if (profile?.appearance) lines.push(`Appearance: ${profile.appearance}`);
   if (bundle.ownConditions.length > 0) {
     lines.push("Own conditions (proprioceptive — fully visible to self):");
@@ -173,11 +263,12 @@ function formatViewpoint(
 
 function formatScene(
   bundle: PerceivedBundle,
-  dgsm: DynamicGameStateManager
+  dgsm: DynamicGameStateManager,
+  tags: CitationTags
 ): string {
   const lines: string[] = [];
   const { scene } = bundle;
-  lines.push(`Name: ${scene.name}  (id: ${scene.id})`);
+  lines.push(`Name: ${scene.name}${tag(scene.id, tags, "other")}`);
   if (scene.description) lines.push(`Description: ${scene.description}`);
   if (scene.activeConditions.length > 0) {
     lines.push("Scene conditions (render as inline prose):");
@@ -193,7 +284,7 @@ function formatScene(
       lines.push("Items visible here:");
       for (const item of items) {
         const desc = item.description ? `: ${item.description}` : "";
-        lines.push(`  - ${item.name} (id: ${item.id})${desc}`);
+        lines.push(`  - ${item.name}${tag(item.id, tags, "other")}${desc}`);
       }
     }
   }
@@ -203,7 +294,8 @@ function formatScene(
 function collectOtherEntities(
   viewpointId: string,
   bundle: PerceivedBundle,
-  dgsm: DynamicGameStateManager
+  dgsm: DynamicGameStateManager,
+  tags: CitationTags
 ): string | null {
   // Characters already enumerated in `# People present in your scene` —
   // skip here to avoid duplicate prompt entries.
@@ -245,7 +337,9 @@ function collectOtherEntities(
     const known = isKnownTo(dgsm, viewpointId, charId);
     const identifier = known ? profile.name : descriptionIdentifier(profile);
     const knownTag = known ? "KNOWN" : "UNKNOWN";
-    lines.push(`Person (${knownTag}): ${identifier}  (id: ${charId})`);
+    lines.push(
+      `Person (${knownTag}): ${identifier}${tag(charId, tags, "character")}`
+    );
     if (profile.appearance) lines.push(`  Appearance: ${profile.appearance}`);
     const conds = profile.status?.conditions ?? [];
     if (conds.length > 0) {
@@ -259,7 +353,9 @@ function collectOtherEntities(
   for (const sceneId of sceneIds) {
     const scene = dgsm.getScene(sceneId);
     if (!scene) continue;
-    lines.push(`Adjacent scene: ${scene.name}  (id: ${scene.id})`);
+    lines.push(
+      `Adjacent scene: ${scene.name}${tag(scene.id, tags, "other")}`
+    );
     if (scene.description) lines.push(`  Description: ${scene.description}`);
   }
 
@@ -295,17 +391,19 @@ function formatOwnAction(bundle: PerceivedBundle): string {
 
 function formatOccurrences(
   bundle: PerceivedBundle,
-  viewpointId: string
+  viewpointId: string,
+  tags: CitationTags
 ): string {
   return bundle.occurrences
-    .map((occ) => formatOccurrence(occ, bundle, viewpointId))
+    .map((occ) => formatOccurrence(occ, bundle, viewpointId, tags))
     .join("\n");
 }
 
 function formatOccurrence(
   occ: Occurrence,
   bundle: PerceivedBundle,
-  viewpointId: string
+  viewpointId: string,
+  tags: CitationTags
 ): string {
   const lines: string[] = [];
   const where =
@@ -314,8 +412,14 @@ function formatOccurrence(
       : occ.locationId
         ? `at ${occ.locationId} (not your location)`
         : "location unspecified";
+  // By tag, never by real id: a participant the viewpoint does not know must
+  // reach the narrative as `stranger_a`, not as the name behind it.
   const involved = occ.participants
-    .map((p) => `${p.characterId} (${p.role})`)
+    .map((p) => {
+      if (p.characterId === viewpointId) return `you (${p.role})`;
+      const handle = tags.characters.get(p.characterId);
+      return `${handle ?? "someone"} (${p.role})`;
+    })
     .join(", ");
   lines.push(
     `- Occurrence ${where}${involved ? `; involved: ${involved}` : ""}`
@@ -342,7 +446,8 @@ function formatOccurrence(
 function formatScenePresentCharacters(
   bundle: PerceivedBundle,
   viewpointId: string,
-  dgsm: DynamicGameStateManager
+  dgsm: DynamicGameStateManager,
+  tags: CitationTags
 ): string {
   const lines: string[] = [];
   for (const c of bundle.charactersInScene) {
@@ -357,7 +462,9 @@ function formatScenePresentCharacters(
           appearance: c.appearance,
         } as DynamicNPCProfile);
     const knownTag = known ? "KNOWN" : "UNKNOWN";
-    lines.push(`Person (${knownTag}): ${identifier}  (id: ${c.id})`);
+    lines.push(
+      `Person (${knownTag}): ${identifier}${tag(c.id, tags, "character")}`
+    );
     if (c.appearance) lines.push(`  Appearance: ${c.appearance}`);
     if (c.currentActionText) {
       lines.push(`  Currently: ${c.currentActionText}`);

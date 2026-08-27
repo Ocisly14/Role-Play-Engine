@@ -257,15 +257,17 @@ iterations per call):
 
 1. Build the prompt from the full `RoleSimContext` (profile, current scene,
    current action, recent memory, long-term intent, the rendered
-   `perception.narrative`) plus the running tool transcript.
-2. One `generateText` round-trip on `ModelClass.MEDIUM` returns one JSON
-   tool call.
+   `perception.narrative` — whose bracketed tags are the ids the NPC may
+   cite).
+2. One `generateToolCalls` round-trip on `ModelClass.MEDIUM` returns native
+   tool calls (`toolChoice: "any"` — the model must call something).
 3. Dispatch:
    - **Terminal tools** (`act`, `continue`) end the loop and return a
      decision to the controller.
-   - **Instant tools** (`writeMemory`, `recallMemory`, `getMapSnapshot`)
-     execute synchronously, append `→ Called` / `← Result` to the
-     transcript, and the loop continues.
+   - **`writeMemory`** is the only non-terminal tool. It returns nothing the
+     agent must read back, so it rides along in the terminal turn and the
+     decision normally costs a single request. A turn with no terminal call
+     is answered and looped back.
 4. Per-tool budgets cap re-entry; the iteration cap is a hard fallback that
    forces `continue`.
 
@@ -284,13 +286,11 @@ Each affected NPC gets exactly one `decide()` per tick.
 
 **Tool surface:**
 
-| Tool             | Kind     | Effect                                                       |
-| ---------------- | -------- | ------------------------------------------------------------ |
-| `act`            | terminal | Submitted to the engine via `ActionIntake`                   |
-| `continue`       | terminal | Keep doing the in-flight action; no submission               |
-| `writeMemory`    | instant  | Append a typed memory through `NpcMemoryManager`             |
-| `recallMemory`   | instant  | Retrieve memory by query/type/date with embedding rerank     |
-| `getMapSnapshot` | instant  | Read-only view of the NPC's known topology                   |
+| Tool          | Kind     | Effect                                                        |
+| ------------- | -------- | ------------------------------------------------------------- |
+| `act`         | terminal | Submitted to the engine via `ActionIntake`                    |
+| `continue`    | terminal | Keep doing the in-flight action; no submission                |
+| `writeMemory` | free     | Append a typed memory through `NpcMemoryManager` (≤3/decision) |
 
 ---
 

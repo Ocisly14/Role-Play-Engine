@@ -88,6 +88,84 @@ describe("skill guidance documents", () => {
     }
   });
 
+  it("gives every skill duration guidance the Engine can ground timing on", () => {
+    // `renderSkillGuidance` prints this into the resolution request, and the
+    // Engine sets the authoritative resolvedDurationTicks from it. A missing
+    // block silently sends the Engine back to estimating.
+    for (const ref of refs) {
+      const guidance = ref.durationGuidance;
+      expect(guidance, `${ref.title} durationGuidance`).toBeDefined();
+      if (!guidance) continue;
+      expect(guidance.default, `${ref.title} default`).toBeGreaterThan(0);
+      expect(guidance.range, `${ref.title} range`).toMatch(/^\d+-\d+$/);
+      const [low, high] = (guidance.range ?? "").split("-").map(Number);
+      expect(low, `${ref.title} range low`).toBeLessThanOrEqual(
+        guidance.default
+      );
+      expect(high, `${ref.title} range high`).toBeGreaterThanOrEqual(
+        guidance.default
+      );
+    }
+  });
+
+  it("shades every success level and the fumble", () => {
+    // Post-roll assessment needs something to tell a regular success from an
+    // extreme one, and the rules document requires that a fumble be able to
+    // worsen the outcome. Without per-level shading the Engine has only the
+    // one-line description to work from.
+    for (const ref of refs) {
+      for (const marker of [
+        "**Regular**",
+        "**Hard**",
+        "**Extreme**",
+        "**Fumble**",
+      ]) {
+        expect(ref.guidanceBody, `${ref.title} ${marker}`).toContain(marker);
+      }
+    }
+  });
+
+  it("names only real WorldDelta operations in its state surface", () => {
+    // The guidance tells the Engine which deltas a domain typically produces.
+    // A made-up operation name (`item.condition`) reads as authoritative and
+    // then fails validation, costing a repair round for nothing. Mirrors the
+    // switches in engine/resolution/worldDeltaValidator.ts.
+    const OPERATIONS: Record<string, string[]> = {
+      character: [
+        "hp",
+        "san",
+        "fatigue",
+        "position",
+        "addCondition",
+        "removeCondition",
+        "relationship",
+      ],
+      scene: [
+        "addCondition",
+        "removeCondition",
+        "connectionBlock",
+        "environmentContribute",
+        "environmentHazard",
+      ],
+      item: ["create", "move", "modify", "damage", "destroy"],
+    };
+
+    for (const ref of refs) {
+      expect(ref.guidanceBody, `${ref.title} state surface`).toContain(
+        "## State surface"
+      );
+      const cited = ref.guidanceBody.matchAll(
+        /\b(character|scene|item)\.([A-Za-z]+)\b/g
+      );
+      for (const [token, domain, operation] of cited) {
+        expect(
+          OPERATIONS[domain],
+          `${ref.title} cites unknown operation ${token}`
+        ).toContain(operation);
+      }
+    }
+  });
+
   it("renders a catalog prompt naming every skill", () => {
     const prompt = buildSkillCatalogPrompt();
     for (const name of catalogNames) {

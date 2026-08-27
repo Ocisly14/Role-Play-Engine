@@ -63,9 +63,9 @@ function formatInventoryLine(
   const parts = items.map((item) => {
     const qty =
       item.quantity && item.quantity > 1 ? ` (x${item.quantity})` : "";
-    return `${item.name} [id: ${item.id}]${qty}`;
+    return `${item.name} [${item.id}]${qty}`;
   });
-  return `Inventory (cite items by id): ${parts.join(", ")}`;
+  return `Inventory (the bracketed tag is how you cite it): ${parts.join(", ")}`;
 }
 
 function formatRelationshipsBlock(

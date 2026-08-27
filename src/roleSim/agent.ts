@@ -29,13 +29,6 @@ export type RoleSimDecision =
       type: NpcMemoryType;
       content?: string;
       targetId?: string;
-    }
-  | {
-      tool: "recallMemory";
-      query?: string;
-      types?: NpcMemoryType[];
-      gameDates?: string[];
-      limit?: number;
     };
 
 export interface RoleSimContext {
@@ -54,7 +47,10 @@ export interface RoleSimContext {
     /** Engine-decided total duration in ticks (1 tick = 1 minute). */
     resolvedDurationTicks?: number;
   };
-  recentMemory: ReadonlyArray<{
+  /** Everything this character remembers, injected whole — there is no
+   *  recall tool, so a memory absent from the prompt does not exist for
+   *  them. Chronological order is applied by the formatter. */
+  memories: ReadonlyArray<{
     type: string;
     content: string;
     gameDateTime: string;
@@ -69,13 +65,17 @@ export interface RoleSimContext {
    *  not from a parallel structured trigger list. */
   perception?: {
     narrative: string;
+    /** Scene id it reached the character in. */
+    location?: string;
   };
-  /** Short-term working memory: prior renderer narratives this NPC has seen,
-   *  in chronological order (oldest first). Excludes the current tick (which
-   *  is in `perception.narrative`). Controller maintains a per-NPC ring
-   *  buffer; only successful renders enter the buffer. */
+  /** Everything this NPC has perceived before this tick, in chronological
+   *  order (oldest first) and uncapped — the current tick is in
+   *  `perception.narrative`. Controller maintains the per-NPC log; only
+   *  successful renders enter it. */
   recentPerceptions?: ReadonlyArray<{
     gameDateTime: GameTime;
+    /** Scene id the character was in when it reached them. */
+    location?: string;
     narrative: string;
   }>;
   /** Set on a retry pass: the intake rejected the agent's previous `act`

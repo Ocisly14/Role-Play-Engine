@@ -1,13 +1,14 @@
 // src/roleSim/memoryFormatter.ts
 //
-// Renders the memories the character wrote today into the user prompt's
-// "## What you chose to remember today" section. Pure formatter — sorting +
-// line mapping.
+// Renders everything the character remembers into the user prompt's
+// "## What you remember" section. Pure formatter — sorting + line mapping.
+// Timestamps carry the date as well as the time: the section spans every day
+// played, so a bare "09:15" would not say which morning.
 // The shape only requires the three fields actually rendered, so callers can
-// pass either a Prisma `NpcMemory` row or a slim `RoleSimContext.recentMemory`
+// pass either a Prisma `NpcMemory` row or a slim `RoleSimContext.memories`
 // item without coupling to the full Prisma type.
 
-import { timePart } from "../state/gameClock.js";
+import { formatForPrompt } from "../state/gameClock.js";
 
 export interface FormattableMemory {
   type: string;
@@ -17,14 +18,14 @@ export interface FormattableMemory {
   location?: string;
 }
 
-export function formatTodayMemories(
+export function formatMemories(
   rows: ReadonlyArray<FormattableMemory>
 ): string {
   return [...rows]
     .sort((a, b) => a.gameDateTime.localeCompare(b.gameDateTime))
     .map((m) => {
       const where = m.location ? ` at ${m.location}` : "";
-      return `- [${timePart(m.gameDateTime)}] (${m.type})${where} ${m.content}`;
+      return `- [${formatForPrompt(m.gameDateTime)}] (${m.type})${where} ${m.content}`;
     })
     .join("\n");
 }
