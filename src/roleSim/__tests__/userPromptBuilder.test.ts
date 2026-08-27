@@ -50,7 +50,6 @@ const opts = { language: "en", dgsm };
 describe("buildUserPromptSegments", () => {
   it("concatenates to exactly what buildUserPrompt returns", () => {
     const ctx = makeCtx({
-      longTermIntent: "Find the missing ledger",
       perception: { narrative: "Dust hangs in the lamplight." },
       currentAction: { description: "searching the shelves" },
     });
@@ -70,7 +69,8 @@ describe("buildUserPromptSegments", () => {
     expect(text).toBe(
       [
         "# You are Marsh",
-        "## Who you are\nName: Marsh\nOccupation: Librarian\nStatus: HP 10/12, SAN 44/55, Fatigue 3/10",
+        "## Who you are\nName: Marsh\nOccupation: Librarian",
+        "## How you are right now\nStatus: HP 10/12, SAN 44/55, Fatigue 3/10",
         text.slice(text.indexOf("## Decide")),
       ].join("\n\n")
     );
@@ -112,13 +112,94 @@ describe("buildUserPromptSegments", () => {
     expect(decide).toContain("Write content in English.");
   });
 
-  it("enables no breakpoint while decide() is single-iteration", () => {
-    // Measured: every decide() in a 5-tick run terminated at iteration 0, so
-    // nothing would ever read a breakpoint here and each one would cost a
-    // 1.25x write. If this flips to true again, the loop must first be shown
-    // to run multiple iterations (or identity must become tick-stable).
-    const segments = buildUserPromptSegments(makeCtx(), opts);
-    expect(segments.every((s) => s.cache === false)).toBe(true);
+  it("breakpoints only the part that does not move", () => {
+    // A breakpoint at the end of an append-only block still MOVES every tick,
+    // and the provider charges a cache write for the whole new prefix, not the
+    // increment. Measured: 343k read against 655k written — worse than not
+    // caching at all. So exactly one breakpoint, and it sits behind content
+    // that never changes.
+    const segments = buildUserPromptSegments(
+      makeCtx({
+        memories: [
+          {
+            id: "aaaaaaaa-1111-1111-1111-111111111111",
+            type: "context",
+            content: "The bakery is on Mill Street.",
+            gameDateTime: "1923-04-01T00:00:00",
+          },
+          {
+            id: "bbbbbbbb-2222-2222-2222-222222222222",
+            type: "general",
+            content: "Hollins lied about the harbour.",
+            gameDateTime: "1923-04-02T09:10:00",
+          },
+        ],
+      }),
+      opts
+    );
+
+    expect(segments.filter((s) => s.cache)).toHaveLength(1);
+    expect(segments[0].cache).toBe(true);
+    expect(segments[segments.length - 1].cache).toBe(false);
+  });
+
+  it("keeps written memory and perception OUT of the cached block", () => {
+    // Both grow every tick. Inside the breakpoint they would move it; outside,
+    // they ride at full price behind a block that is written once.
+    const segments = buildUserPromptSegments(
+      makeCtx({
+        memories: [
+          {
+            id: "aaaaaaaa-1111-1111-1111-111111111111",
+            type: "context",
+            content: "The bakery is on Mill Street.",
+            gameDateTime: "1923-04-01T00:00:00",
+          },
+          {
+            id: "bbbbbbbb-2222-2222-2222-222222222222",
+            type: "general",
+            content: "Hollins lied about the harbour.",
+            gameDateTime: "1923-04-02T09:10:00",
+          },
+        ],
+        recentPerceptions: [
+          {
+            gameDateTime: "1923-04-02T09:14:00",
+            location: "SCN_hall",
+            narrative: "A door closes behind you.",
+          },
+        ],
+      }),
+      opts
+    );
+    const cached = segments
+      .filter((s) => s.cache)
+      .map((s) => s.text)
+      .join("");
+
+    expect(cached).toContain("## Who you are");
+    expect(cached).toContain("The bakery is on Mill Street");
+    expect(cached).not.toContain("Hollins lied");
+    expect(cached).not.toContain("A door closes");
+  });
+
+  it("puts everything that changes every tick behind the breakpoint", () => {
+    // Prefix caching matches from byte 0: one volatile section placed early
+    // discards every stable byte behind it. Vitals move on most ticks (the
+    // stamina subsystem) and the perception is new by definition.
+    const segments = buildUserPromptSegments(
+      makeCtx({ perception: { narrative: "Dust hangs in the lamplight." } }),
+      opts
+    );
+    const cached = segments
+      .filter((s) => s.cache)
+      .map((s) => s.text)
+      .join("");
+
+    expect(cached).toContain("## Who you are");
+    expect(cached).not.toContain("## How you are right now");
+    expect(cached).not.toContain("## What you perceive now");
+    expect(cached).not.toContain("## Decide");
   });
 
   it("still round-trips when optional sections are absent", () => {
@@ -141,5 +222,43 @@ describe("SYSTEM_PROMPT — cacheability invariant", () => {
     expect(a).not.toMatch(/\d{4}-\d{2}-\d{2}T\d{2}:\d{2}/);
     // Comfortably over Sonnet 5's 1024-token minimum cacheable prefix.
     expect(a.length).toBeGreaterThan(4000);
+  });
+});
+
+describe("the life goal is a memory, not a section of its own", () => {
+  // It used to be fetched by its own `findLatestByType` query and rendered as
+  // `## Your long-term goal`. Now it rides in the memory block: one less
+  // query, and one less section whose presence depended on a separate lookup.
+  it("renders inside What you remember and nowhere else", () => {
+    const text = buildUserPrompt(
+      makeCtx({
+        memories: [
+          {
+            id: "aaaaaaaa-1111-1111-1111-111111111111",
+            type: "long_term_intent",
+            content: "Keep the shop open through the winter.",
+            gameDateTime: "1923-04-02T08:00:00",
+          },
+          {
+            id: "bbbbbbbb-2222-2222-2222-222222222222",
+            type: "secret",
+            content: "I owe Kovind money.",
+            gameDateTime: "1923-04-01T20:00:00",
+          },
+        ],
+      }),
+      opts
+    );
+
+    expect(text).not.toContain("## Your long-term goal");
+    const remembered = text.slice(
+      text.indexOf("## What you remember"),
+      text.indexOf("## How you are right now")
+    );
+    expect(remembered).toContain("(long_term_intent) Keep the shop open");
+    // Chronological with everything else — the older secret comes first.
+    expect(remembered.indexOf("I owe Kovind")).toBeLessThan(
+      remembered.indexOf("Keep the shop open")
+    );
   });
 });

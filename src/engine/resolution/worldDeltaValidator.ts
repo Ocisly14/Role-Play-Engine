@@ -19,8 +19,8 @@ import { actionIdForCommand } from "../actions/actionStore.js";
 import type {
   ActionCommand,
   ActionTransition,
-  EngineAction,
   CharacterChange,
+  EngineAction,
   EngineActionStatus,
   ItemChange,
   Occurrence,
@@ -31,8 +31,15 @@ import type {
 } from "../actions/types.js";
 import type { CodeToolInvocation } from "../tools/codeTool.js";
 import type { EngineResolutionContext, ResolutionError } from "./types.js";
+import {
+  CHARACTER_OPS,
+  ITEM_OPS,
+  SCENE_OPS,
+  opKinds,
+} from "./worldDeltaSchema.js";
 import type {
-  RawActionResolution,
+  RawActionEnd,
+  RawActionStart,
   RawOccurrence,
   RawResolutionRepair,
   RawSourcedDelta,
@@ -53,17 +60,86 @@ interface Lookup {
   characterIds: Set<string>;
   aliveCharacterIds: Set<string>;
   sceneIds: Set<string>;
+  /** Every place the Engine could legitimately name: scenes, the junctions and
+   *  roads characters stand on, and everything the scenes' own connections
+   *  point at. The context carries no junction/road tables, so this is built
+   *  from what the Engine was actually SHOWN — the same rule the `act`
+   *  boundary applies to a character: you may only point at what you saw. */
   locationIds: Set<string>;
   itemHolders: Map<string, string>;
   /** All actions addressable this resolution (queued from commands + active).
    *  Active entries carry progress, duration and the bar set at start — all
    *  code-owned facts the entry rules read. */
   actionById: Map<string, KnownAction>;
-  /** Actions that MUST receive exactly one transition. */
+  /** Actions the Engine is obliged to answer: the ones that have not begun,
+   *  and the ones whose time is spent. A triggered action that is merely
+   *  still running is not here — silence already means "keeps running". */
   requiredActionIds: Set<string>;
 }
 
+/**
+ * Which moment each triggered action is in, and which of them the Engine is
+ * actually obliged to answer.
+ *
+ * Shared by the prompt (which prints it as the trigger worklist) and the
+ * validator (which enforces coverage against it) so the two cannot drift —
+ * the Engine being told one thing and judged by another is what this whole
+ * split exists to stop.
+ *
+ * Only `starting` and `ending` are obligations, and they are the only two
+ * lists a submission has. An action that is merely still running takes no
+ * entry at all: "keeps running" is already what silence means, so an entry
+ * for it would be a sentence carrying no information.
+ */
+export interface ResolutionWorklist {
+  /** Queued: has not begun. Must appear in `starting`. */
+  starting: string[];
+  /** Its time is spent. Must appear in `ending`. The duration was set once,
+   *  when the action began; there is no way to ask for more time here, or the
+   *  Engine could postpone committing to an outcome indefinitely. */
+  ending: string[];
+  /** Triggered but still running. Informational only — the Engine owes these
+   *  nothing. Listed so every id in the trigger is accounted for. */
+  stillRunning: string[];
+  /** In-flight actions that carried no check, so nothing rolled. If one of
+   *  these ends, the Engine supplies `outcome`. */
+  endingNeedsOutcome: string[];
+}
+
+export function resolutionWorklist(
+  context: EngineResolutionContext
+): ResolutionWorklist {
+  const worklist: ResolutionWorklist = {
+    starting: [],
+    ending: [],
+    stillRunning: [],
+    endingNeedsOutcome: [],
+  };
+  const queued = new Set(
+    context.actions.newCommands.map((c) => actionIdForCommand(c.commandId))
+  );
+  for (const id of context.trigger.actionIds) {
+    if (queued.has(id)) {
+      worklist.starting.push(id);
+      continue;
+    }
+    const action = context.actions.activeActions.find((a) => a.id === id);
+    if (!action) continue;
+    const durationTicks = action.resolvedDurationTicks;
+    const due =
+      durationTicks !== undefined &&
+      action.progressMinutes >= durationTicks * context.tick.durationMinutes;
+    if (due) worklist.ending.push(id);
+    else worklist.stillRunning.push(id);
+    // Listed for every in-flight action, not just the due ones, because a
+    // still-running action may still be cut short here.
+    if (action.check === undefined) worklist.endingNeedsOutcome.push(id);
+  }
+  return worklist;
+}
+
 export function buildLookup(context: EngineResolutionContext): Lookup {
+  const worklist = resolutionWorklist(context);
   const characterIds = new Set(context.state.characters.map((c) => c.id));
   const aliveCharacterIds = new Set(
     context.state.characters.filter((c) => c.alive).map((c) => c.id)
@@ -72,6 +148,21 @@ export function buildLookup(context: EngineResolutionContext): Lookup {
   const locationIds = new Set<string>(sceneIds);
   for (const c of context.state.characters) {
     if (c.locationId) locationIds.add(c.locationId);
+    const position = c.position as
+      | { sceneId?: string; junctionId?: string; roadId?: string }
+      | undefined;
+    for (const id of [
+      position?.sceneId,
+      position?.junctionId,
+      position?.roadId,
+    ]) {
+      if (id) locationIds.add(id);
+    }
+  }
+  for (const scene of context.state.scenes) {
+    for (const connection of scene.connections ?? []) {
+      if (connection.targetId) locationIds.add(connection.targetId);
+    }
   }
   const itemHolders = new Map<string, string>();
   for (const item of context.state.items) itemHolders.set(item.id, item.holder);
@@ -102,7 +193,7 @@ export function buildLookup(context: EngineResolutionContext): Lookup {
     locationIds,
     itemHolders,
     actionById,
-    requiredActionIds: new Set(context.trigger.actionIds),
+    requiredActionIds: new Set([...worklist.starting, ...worklist.ending]),
   };
 }
 
@@ -118,124 +209,125 @@ const TERMINAL_STATUSES: ReadonlySet<EngineActionStatus> = new Set([
 
 // ==================== Per-piece validation ====================
 
-function validateActionEntry(
-  entry: RawActionResolution,
-  lookup: Lookup,
-  _invocations: CodeToolInvocation[]
-): string[] {
-  const errs: string[] = [];
-  const known = lookup.actionById.get(entry.actionId);
+/**
+ * Rules that survive the split.
+ *
+ * Everything the old single-shape `actions[]` needed a rule for — "a starting
+ * action has no result", "the bar cannot change mid-flight", "an ending needs
+ * an occurrence" — is now carried by the types themselves: those fields do not
+ * exist on the wrong moment, so they cannot be sent at all. What is left here
+ * is the handful of constraints a JSON Schema cannot express, and each one
+ * names the world fact it checks against.
+ */
+
+/** Whichever list it arrived in, an action has to be one this tick can
+ *  address, and not one already over. */
+function resolvableAction(
+  actionId: string,
+  lookup: Lookup
+): { known: KnownAction } | { error: string } {
+  const known = lookup.actionById.get(actionId);
   if (!known) {
-    return [`unknown actionId`];
+    // Name the addressable ids: a bare "unknown actionId" gives the repair
+    // round nothing to correct toward, so every round re-sends the same id.
+    return {
+      error: `unknown actionId — address one of: ${[...lookup.actionById.keys()].join(", ")}`,
+    };
   }
   if (TERMINAL_STATUSES.has(known.status)) {
-    return [`action already ${known.status} — it cannot be resolved again`];
+    return {
+      error: `action already ${known.status} — it cannot be resolved again`,
+    };
   }
+  return { known };
+}
 
-  const starting = known.status === "queued";
+function validateStart(entry: RawActionStart, lookup: Lookup): string[] {
+  const resolvable = resolvableAction(entry.actionId, lookup);
+  if ("error" in resolvable) return [resolvable.error];
+  const { known } = resolvable;
+  const errs: string[] = [];
 
-  if (starting) {
-    if (
-      typeof entry.resolvedDurationTicks !== "number" ||
-      !Number.isInteger(entry.resolvedDurationTicks) ||
-      entry.resolvedDurationTicks < 1
-    ) {
-      errs.push(
-        `an action that is starting requires integer resolvedDurationTicks >= 1 (the actor's proposal is advisory)`
-      );
-    }
-    if (!entry.timingReason?.trim()) {
-      errs.push(`an action that is starting requires a timingReason`);
-    }
-    if (entry.result) {
-      errs.push(
-        `an action that is starting has no result yet — set the duration and the bar now; the outcome comes when its time is spent`
-      );
-    }
-  } else {
-    if (entry.check) {
-      errs.push(
-        `the bar was set when this action started and cannot be changed mid-flight`
-      );
-    }
-    if (entry.opposedBy) {
-      errs.push(
-        `opposition is named when the action starts, not while it runs`
-      );
-    }
-    if (
-      entry.resolvedDurationTicks !== undefined &&
-      !entry.timingReason?.trim()
-    ) {
-      errs.push(`revising resolvedDurationTicks requires a timingReason`);
-    }
+  if (known.status !== "queued") {
+    errs.push(
+      `this action is already running — it belongs in "ending" if its time is spent, and needs no entry at all if it does not`
+    );
   }
-
   if (entry.check && known.command.declaredSkillId === undefined) {
     errs.push(
       `the actor declared no skill, so there is nothing to check — omit "check"`
     );
   }
-
   for (const defender of entry.opposedBy ?? []) {
     if (!lookup.characterIds.has(defender.characterId)) {
       errs.push(`opposedBy character "${defender.characterId}" does not exist`);
     }
   }
   if (entry.opposedBy && !entry.check) {
-    errs.push(`opposedBy needs a check — name the bar the opposition is against`);
+    errs.push(
+      `opposedBy needs a check — name the bar the opposition is against`
+    );
   }
-
-  if (entry.result) {
-    if (!entry.result.reason?.trim()) {
-      errs.push(`a result requires a reason`);
-    }
-    // With a check, code already decided success from the roll against the
-    // bar; restating it is how the two can disagree.
-    const hadCheck = known.check !== undefined;
-    if (hadCheck && entry.result.outcome !== undefined) {
+  // The destination goes straight to the movement runtime, which walks the
+  // character there tick by tick. An id nobody was shown sends them nowhere,
+  // silently, for as long as the action lasts.
+  if (entry.movement !== undefined) {
+    const destination = entry.movement.destinationId;
+    if (typeof destination !== "string" || !destination.trim()) {
+      errs.push(`movement requires a destinationId`);
+    } else if (!lookup.locationIds.has(destination)) {
       errs.push(
-        `this action was checked — code decides success from the roll against your bar; drop result.outcome`
-      );
-    }
-    if (!hadCheck && !entry.result.outcome) {
-      errs.push(
-        `an action with no check needs result.outcome — there is no roll to derive it from`
+        `movement.destinationId "${destination}" is not a place you were shown — check it with the pathfinding tool first`
       );
     }
   }
-
   return errs;
 }
 
-const CHARACTER_OP_KINDS = new Set([
-  "hp",
-  "san",
-  "fatigue",
-  "position",
-  "addCondition",
-  "removeCondition",
-  "relationship",
-]);
-const SCENE_OP_KINDS = new Set([
-  "addCondition",
-  "removeCondition",
-  "connectionBlock",
-  "environmentContribute",
-  "environmentHazard",
-]);
-const ITEM_OP_KINDS = new Set([
-  "create",
-  "move",
-  "modify",
-  "damage",
-  "destroy",
-]);
+function validateEnd(entry: RawActionEnd, lookup: Lookup): string[] {
+  const resolvable = resolvableAction(entry.actionId, lookup);
+  if ("error" in resolvable) return [resolvable.error];
+  const { known } = resolvable;
+  const errs: string[] = [];
 
-function validateCommonDelta(
-  delta: RawSourcedDelta,
-  lookup: Lookup
-): string[] {
+  if (known.status === "queued") {
+    errs.push(
+      `this action has not started yet — put it in "starting" with a duration and a bar; its outcome comes when its time is spent`
+    );
+  }
+  if (!entry.reason?.trim()) {
+    errs.push(`an ending requires a reason`);
+  }
+  // With a check, code already decided success from the roll against the bar;
+  // restating it is how the two can disagree.
+  const hadCheck = known.check !== undefined;
+  if (hadCheck && entry.outcome !== undefined) {
+    errs.push(
+      `this action was checked — code decides success from the roll against your bar; drop "outcome"`
+    );
+  }
+  if (!hadCheck && !entry.outcome) {
+    errs.push(
+      `this action carried no check, so nothing rolled — "outcome" is required (the trigger section lists it under endingNeedsOutcome)`
+    );
+  }
+  if (
+    entry.resolvedDurationTicks !== undefined &&
+    !entry.timingReason?.trim()
+  ) {
+    errs.push(`revising resolvedDurationTicks requires a timingReason`);
+  }
+  return errs;
+}
+
+// Same rows the model is shown: the accepted kinds and the advertised field
+// lists come from one table in the schema, so "unknown operation kind" can
+// never mean "we told it about a kind we then refused".
+const CHARACTER_OP_KINDS = opKinds(CHARACTER_OPS);
+const SCENE_OP_KINDS = opKinds(SCENE_OPS);
+const ITEM_OP_KINDS = opKinds(ITEM_OPS);
+
+function validateCommonDelta(delta: RawSourcedDelta, lookup: Lookup): string[] {
   const errs: string[] = [];
   if (!lookup.actionById.has(delta.sourceActionId)) {
     errs.push(`sourceActionId "${delta.sourceActionId}" is unknown`);
@@ -277,9 +369,7 @@ export function validateCharacterChange(
     case "fatigue": {
       const d = op.delta;
       if (typeof d !== "number" || !Number.isFinite(d) || Math.abs(d) > 500) {
-        errs.push(
-          `${op.kind}.delta must be a finite number (|d| <= 500)`
-        );
+        errs.push(`${op.kind}.delta must be a finite number (|d| <= 500)`);
       }
       if (typeof op.reason !== "string" || !op.reason.trim()) {
         errs.push(`${op.kind} requires a reason`);
@@ -287,6 +377,9 @@ export function validateCharacterChange(
       break;
     }
     case "position": {
+      // Only `type: "scene"` used to be checked, so a junction or road id was
+      // accepted unseen and reached the applier, which would happily stand the
+      // character on a place that does not exist.
       const p = op.position as
         | {
             type?: string;
@@ -295,10 +388,29 @@ export function validateCharacterChange(
             roadId?: string;
           }
         | undefined;
-      if (!p || typeof p !== "object" || typeof p.type !== "string") {
-        errs.push(`position.position must be a CharacterPosition`);
-      } else if (p.type === "scene" && !lookup.sceneIds.has(p.sceneId ?? "")) {
-        errs.push(`position sceneId "${p.sceneId}" does not exist`);
+      const idField = {
+        scene: "sceneId",
+        junction: "junctionId",
+        road: "roadId",
+      } as const;
+      if (!p || typeof p !== "object") {
+        errs.push(`position.position must be an object {type, <id>}`);
+      } else if (!p.type || !(p.type in idField)) {
+        errs.push(
+          `position.type must be "scene", "junction" or "road" — got ${JSON.stringify(p.type)}`
+        );
+      } else {
+        const field = idField[p.type as keyof typeof idField];
+        const id = p[field];
+        if (typeof id !== "string" || !id) {
+          errs.push(`position of type "${p.type}" requires ${field}`);
+        } else if (
+          p.type === "scene"
+            ? !lookup.sceneIds.has(id)
+            : !lookup.locationIds.has(id)
+        ) {
+          errs.push(`position ${field} "${id}" is not a place you were shown`);
+        }
       }
       break;
     }
@@ -306,9 +418,13 @@ export function validateCharacterChange(
       const c = op.condition as
         | { description?: string; id?: string }
         | undefined;
-      if (!c?.description || !c?.id) {
+      if (!c || typeof c !== "object") {
         errs.push(
-          `addCondition requires condition {id, description}`
+          `addCondition.condition must be an object {id, description} — got ${typeof c === "string" ? `the string ${JSON.stringify(c)}` : typeof c}`
+        );
+      } else if (!c.id || !c.description) {
+        errs.push(
+          `addCondition.condition is missing ${[!c.id && "id", !c.description && "description"].filter(Boolean).join(" and ")}`
         );
       }
       break;
@@ -319,10 +435,25 @@ export function validateCharacterChange(
       }
       break;
     case "relationship":
-      if (
-        typeof op.toCharacterId !== "string" ||
-        !lookup.characterIds.has(op.toCharacterId)
-      ) {
+      if (op.delta !== undefined && typeof op.delta !== "number") {
+        errs.push(`relationship.delta must be a number when present`);
+      }
+      if (op.note !== undefined && typeof op.note !== "string") {
+        errs.push(`relationship.note must be a string when present`);
+      }
+      if (typeof op.toCharacterId !== "string") {
+        // Distinguish "no such person" from "wrong field name" — the model
+        // reaches for targetCharacterId / targetId, and being told a
+        // character named "undefined" does not exist sends it hunting for
+        // the wrong bug.
+        errs.push(
+          `relationship requires toCharacterId (that exact field name)${
+            op.targetCharacterId || op.targetId || op.characterId
+              ? " — you sent it under a different name"
+              : ""
+          }`
+        );
+      } else if (!lookup.characterIds.has(op.toCharacterId)) {
         errs.push(
           `relationship.toCharacterId "${op.toCharacterId}" does not exist`
         );
@@ -385,8 +516,29 @@ export function validateSceneChange(
         errs.push(`environmentContribute requires numeric value`);
       }
       break;
-    case "environmentHazard":
+    case "environmentHazard": {
+      // It used to accept anything, including an operation that hazards
+      // nothing — which applies cleanly and changes the world not at all, so
+      // the actor perceives no consequence and tries again.
+      const lists = (["add", "remove"] as const).filter(
+        (k) => op[k] !== undefined
+      );
+      if (lists.length === 0) {
+        errs.push(`environmentHazard needs "add" or "remove" (or both)`);
+      }
+      for (const key of lists) {
+        const list = op[key];
+        if (
+          !Array.isArray(list) ||
+          list.some((h) => typeof h !== "string" || !h.trim())
+        ) {
+          errs.push(
+            `environmentHazard.${key} must be an array of hazard names`
+          );
+        }
+      }
       break;
+    }
   }
   return errs;
 }
@@ -545,32 +697,40 @@ export function validateRawResolution(
   // here, which is the only place that knows WHICH element is being checked.
   // That address is what lets the Engine repair one element instead of
   // rewriting the whole resolution.
-  const at = (
-    target: ResolutionError["target"],
-    messages: string[]
-  ): void => {
+  const at = (target: ResolutionError["target"], messages: string[]): void => {
     for (const message of messages) errors.push({ target, message });
   };
 
+  // One entry per triggering action, in exactly one of the three lists. The
+  // list an action lands in IS the decision about what happens to it, so
+  // appearing twice is a contradiction rather than a duplicate.
   const seen = new Set<string>();
-  for (const entry of raw.actions ?? []) {
-    const target: ResolutionError["target"] = {
-      kind: "action",
-      actionId: entry.actionId,
-    };
-    if (seen.has(entry.actionId)) {
-      at(target, [
-        `duplicate transition for "${entry.actionId}" — each action gets at most one per resolution`,
-      ]);
-      continue;
+  const moments: Array<
+    [string, Array<{ actionId: string }>, (e: never, l: Lookup) => string[]]
+  > = [
+    ["starting", raw.starting ?? [], validateStart as never],
+    ["ending", raw.ending ?? [], validateEnd as never],
+  ];
+  for (const [moment, entries, validate] of moments) {
+    for (const entry of entries) {
+      const target: ResolutionError["target"] = {
+        kind: "action",
+        actionId: entry.actionId,
+      };
+      if (seen.has(entry.actionId)) {
+        at(target, [
+          `appears more than once — an action is either starting or ending, not both (found again in "${moment}")`,
+        ]);
+        continue;
+      }
+      seen.add(entry.actionId);
+      at(target, validate(entry as never, lookup));
     }
-    seen.add(entry.actionId);
-    at(target, validateActionEntry(entry, lookup, invocations));
   }
   for (const required of lookup.requiredActionIds) {
     if (!seen.has(required)) {
       at({ kind: "resolution" }, [
-        `triggering action "${required}" received no transition — every action that triggered this resolution needs exactly one`,
+        `triggering action "${required}" was not answered — it is either starting or ending this tick, and needs an entry in that list`,
       ]);
     }
   }
@@ -578,7 +738,10 @@ export function validateRawResolution(
   const movedItemIds = new Set<string>();
   (raw.characterChanges ?? []).forEach((d, i) => {
     if (d === null) return;
-    at({ kind: "characterChange", index: i }, validateCharacterChange(i, d, lookup));
+    at(
+      { kind: "characterChange", index: i },
+      validateCharacterChange(i, d, lookup)
+    );
   });
   (raw.sceneChanges ?? []).forEach((d, i) => {
     if (d === null) return;
@@ -595,9 +758,19 @@ export function validateRawResolution(
     if (o === null) return;
     at({ kind: "occurrence", index: i }, validateOccurrence(i, o, lookup));
   });
-
-  for (const message of missingTerminalOccurrences(raw)) {
-    errors.push({ target: { kind: "resolution" }, message });
+  // An ending's own occurrence gets the same checks, addressed at the action
+  // it belongs to. "Every ending leaves a trace" needs no rule any more: the
+  // occurrence is a required field of the ending.
+  for (const entry of raw.ending ?? []) {
+    if (!entry?.occurrence) continue;
+    at(
+      { kind: "action", actionId: entry.actionId },
+      validateOccurrence(
+        0,
+        { ...entry.occurrence, sourceActionIds: [entry.actionId] },
+        lookup
+      )
+    );
   }
 
   return errors;
@@ -611,81 +784,145 @@ export function validateRawResolution(
  * Withdrawn elements become holes rather than being spliced out, so an index
  * quoted in one round still addresses the same element in the next.
  */
+/**
+ * Make a model-shaped resolution safe to read.
+ *
+ * Every list here is declared as an array in the schema, but the repair tool
+ * next door takes index-keyed OBJECTS for the same fields, and the model
+ * mixes them up. A `{"0": {...}}` where an array belongs used to reach
+ * `.filter` and take the whole tick down with a TypeError — a malformed
+ * submission must be a repairable error, never a crash. Object form means
+ * exactly what the array form means, so read it and move on.
+ */
+export function normalizeList<T>(value: unknown, field = "field"): T[] {
+  if (value === undefined || value === null) return [];
+  if (Array.isArray(value)) return value as T[];
+  if (typeof value === "object") {
+    // Legacy index-keyed object. Every field is an array now, so this only
+    // catches a model still writing the old patch shape.
+    console.warn(
+      `[WorldActionEngine] ${field} arrived as an object rather than an array — reading its values in key order`
+    );
+    return Object.entries(value as Record<string, T>)
+      .sort(([a], [b]) => Number(a) - Number(b))
+      .map(([, item]) => item);
+  }
+  console.warn(
+    `[WorldActionEngine] ${field} arrived as ${typeof value} — ignored`
+  );
+  return [];
+}
+
+export function normalizeRawResolution(
+  raw: RawTickResolution | undefined
+): RawTickResolution {
+  const source = (raw ?? {}) as Record<string, unknown>;
+  return {
+    starting: normalizeList(source.starting, "starting"),
+    ending: normalizeList(source.ending, "ending"),
+    characterChanges: normalizeList(
+      source.characterChanges,
+      "characterChanges"
+    ),
+    sceneChanges: normalizeList(source.sceneChanges, "sceneChanges"),
+    itemChanges: normalizeList(source.itemChanges, "itemChanges"),
+    occurrences: normalizeList(source.occurrences, "occurrences"),
+  } as RawTickResolution;
+}
+
 export function applyRepair(
   raw: RawTickResolution,
   repair: RawResolutionRepair
 ): RawTickResolution {
+  // One shape for everything: an array whose items carry their own address.
   const patchList = <T>(
     list: Array<T | null> | undefined,
-    patch: Record<string, T | null> | undefined,
-    additions: T[] | undefined
+    patches: unknown
   ): Array<T | null> => {
     const out = [...(list ?? [])];
-    for (const [key, value] of Object.entries(patch ?? {})) {
-      const index = Number(key);
-      if (!Number.isInteger(index) || index < 0 || index >= out.length) continue;
-      out[index] = value;
+    // In the retired shape the KEY was the address, so keep it when reading
+    // one: dropping it would turn a replacement into an append.
+    const items: Array<Record<string, unknown>> =
+      patches && typeof patches === "object" && !Array.isArray(patches)
+        ? Object.entries(patches as Record<string, unknown>).map(
+            ([key, value]) =>
+              value === null
+                ? { index: Number(key), remove: true }
+                : { index: Number(key), ...(value as Record<string, unknown>) }
+          )
+        : normalizeList<Record<string, unknown>>(patches);
+    for (const raw of items) {
+      if (!raw || typeof raw !== "object") continue;
+      const { index, remove, ...value } = raw as {
+        index?: number;
+        remove?: boolean;
+      } & Record<string, unknown>;
+      const addressed =
+        typeof index === "number" &&
+        Number.isInteger(index) &&
+        index >= 0 &&
+        index < out.length;
+      if (addressed) {
+        out[index as number] = remove === true ? null : (value as T);
+      } else if (remove !== true) {
+        out.push(value as T);
+      }
     }
-    out.push(...(additions ?? []));
     return out;
   };
 
-  const actions = [...(raw.actions ?? [])];
-  for (const replacement of repair.actions ?? []) {
-    const index = actions.findIndex((a) => a.actionId === replacement.actionId);
-    if (index >= 0) actions[index] = replacement;
-    else actions.push(replacement);
+  // Actions are addressed by id, not by index — and the list an action sits
+  // in is itself the decision, so a repair that moves one between moments has
+  // to drop it from the other. Otherwise "this belongs in ending" would
+  // leave the wrong entry behind and the next round would reject both.
+  const base = normalizeRawResolution(raw);
+  const moved = new Set<string>();
+  const repaired = {
+    starting: [...(base.starting ?? [])],
+    ending: [...(base.ending ?? [])],
+  };
+  for (const moment of ["starting", "ending"] as const) {
+    for (const replacement of normalizeList<{ actionId: string }>(
+      repair[moment],
+      `repair.${moment}`
+    )) {
+      moved.add(replacement.actionId);
+      const list = repaired[moment] as Array<{ actionId: string }>;
+      const index = list.findIndex((a) => a.actionId === replacement.actionId);
+      if (index >= 0) list[index] = replacement;
+      else list.push(replacement as never);
+    }
+  }
+  for (const moment of ["starting", "ending"] as const) {
+    const sentHere = new Set(
+      normalizeList<{ actionId: string }>(repair[moment], moment).map(
+        (a) => a.actionId
+      )
+    );
+    repaired[moment] = (repaired[moment] as Array<{ actionId: string }>).filter(
+      (a) => !moved.has(a.actionId) || sentHere.has(a.actionId)
+    ) as never;
   }
 
   return {
-    actions,
+    ...repaired,
     characterChanges: patchList(
       raw.characterChanges,
-      repair.characterChanges,
-      repair.addCharacterChanges
+      repair.characterChanges
     ) as RawTickResolution["characterChanges"],
     sceneChanges: patchList(
       raw.sceneChanges,
-      repair.sceneChanges,
-      repair.addSceneChanges
+      repair.sceneChanges
     ) as RawTickResolution["sceneChanges"],
     itemChanges: patchList(
       raw.itemChanges,
-      repair.itemChanges,
-      repair.addItemChanges
+      repair.itemChanges
     ) as RawTickResolution["itemChanges"],
     occurrences: patchList(
       raw.occurrences,
-      repair.occurrences,
-      repair.addOccurrences
+      repair.occurrences
     ) as RawTickResolution["occurrences"],
   };
-}
-
-/**
- * An action that ended must leave an objective trace, even when it changed no
- * world state.
- *
- * Failure is the case that matters. A failed move changes nothing the actor
- * can see — their position is identical, so next tick's perception is
- * identical, so they decide the same thing again. Observed live: a detective
- * re-issued "run to the car park" for seven straight ticks because nothing
- * ever told him there was no route. The old movement subsystem closed that
- * loop by writing the character a memory; memory is the character's own now,
- * so the trace has to arrive as perception instead — an occurrence whose
- * perceivers include the actor.
- */
-function missingTerminalOccurrences(raw: RawTickResolution): string[] {
-  const cited = new Set<string>();
-  for (const occ of raw.occurrences ?? []) {
-    for (const id of occ.sourceActionIds ?? []) cited.add(id);
-  }
-  return (raw.actions ?? [])
-    .filter((entry) => entry.result && !cited.has(entry.actionId))
-    .map(
-      (entry) =>
-        `occurrences: action "${entry.actionId}" produced a result with no occurrence citing it — every action that ends leaves an objective trace, and without one the actor perceives no change and simply re-issues the same action. Emit at least an action_result fact listing the actor among perceiverCharacterIds.`
-    );
 }
 
 // ==================== Finalization ====================
@@ -727,7 +964,11 @@ export function finalizeResolution(
   const checkInits: FinalizedResolution["checkInits"] = {};
   const tickMinutes = context.tick.durationMinutes;
 
-  for (const entry of raw.actions ?? []) {
+  // Which list an entry arrived in already says what happens to it, so the
+  // status no longer has to be inferred from whether a `result` was present.
+  // What is still derived: whether an ending completed or was cut short, which
+  // follows from the clock, not from anything the Engine said.
+  for (const entry of raw.starting ?? []) {
     const known = lookup.actionById.get(entry.actionId);
     if (!known) continue; // unreachable post-validation; keeps types honest
     if (entry.movement?.destinationId) {
@@ -742,37 +983,11 @@ export function finalizeResolution(
         ...(entry.opposedBy ? { opposedBy: entry.opposedBy } : {}),
       };
     }
-
-    // Progress was already advanced from the clock this tick; the Engine has
-    // no say in it. What is left to decide is whether the action is over —
-    // and that follows from whether it produced a result and whether its time
-    // was actually spent.
-    const durationTicks =
-      entry.resolvedDurationTicks ?? known.resolvedDurationTicks;
-    const spent =
-      durationTicks !== undefined &&
-      known.progressMinutes >= durationTicks * tickMinutes;
-    const to: EngineActionStatus = entry.result
-      ? spent
-        ? "completed"
-        : "interrupted"
-      : "active";
-    const nextWakeAt =
-      to === "active" && durationTicks !== undefined
-        ? addMinutes(
-            context.tick.tickStartTime,
-            Math.max(
-              tickMinutes,
-              durationTicks * tickMinutes - known.progressMinutes
-            )
-          )
-        : undefined;
-
     transitions.push({
       actionId: entry.actionId,
       actorId: known.command.actorId,
       from: known.status,
-      to,
+      to: "active",
       progressDeltaMinutes: 0,
       ...(entry.resolvedDurationTicks !== undefined
         ? { resolvedDurationTicks: entry.resolvedDurationTicks }
@@ -780,10 +995,44 @@ export function finalizeResolution(
       ...(entry.timingReason !== undefined
         ? { timingReason: entry.timingReason }
         : {}),
-      ...(nextWakeAt !== undefined ? { nextWakeAt } : {}),
-      ...(entry.result?.reason !== undefined
-        ? { reason: entry.result.reason }
+      ...(entry.resolvedDurationTicks !== undefined
+        ? {
+            nextWakeAt: addMinutes(
+              context.tick.tickStartTime,
+              Math.max(
+                tickMinutes,
+                entry.resolvedDurationTicks * tickMinutes -
+                  known.progressMinutes
+              )
+            ),
+          }
         : {}),
+    });
+  }
+
+  for (const entry of raw.ending ?? []) {
+    const known = lookup.actionById.get(entry.actionId);
+    if (!known) continue;
+    const durationTicks =
+      entry.resolvedDurationTicks ?? known.resolvedDurationTicks;
+    // Completed only if its time was actually spent; otherwise the world
+    // reached it first and it was cut short.
+    const spent =
+      durationTicks !== undefined &&
+      known.progressMinutes >= durationTicks * tickMinutes;
+    transitions.push({
+      actionId: entry.actionId,
+      actorId: known.command.actorId,
+      from: known.status,
+      to: spent ? "completed" : "interrupted",
+      progressDeltaMinutes: 0,
+      ...(entry.resolvedDurationTicks !== undefined
+        ? { resolvedDurationTicks: entry.resolvedDurationTicks }
+        : {}),
+      ...(entry.timingReason !== undefined
+        ? { timingReason: entry.timingReason }
+        : {}),
+      ...(entry.reason !== undefined ? { reason: entry.reason } : {}),
     });
   }
 
@@ -820,8 +1069,18 @@ export function finalizeResolution(
         }) as SourcedWorldDelta<ItemChange>
     );
 
+  // An ending's own occurrence is the same thing as a standalone one, just
+  // authored where it cannot be forgotten. Fold them in before building, with
+  // the ending's action as their source.
+  const rawOccurrences: RawOccurrence[] = [
+    ...(raw.occurrences ?? []).filter((o): o is RawOccurrence => o != null),
+    ...(raw.ending ?? [])
+      .filter((e) => e?.occurrence)
+      .map((e) => ({ ...e.occurrence, sourceActionIds: [e.actionId] })),
+  ];
+
   const occurrences: Occurrence[] = [];
-  (raw.occurrences ?? []).forEach((o, i) => {
+  rawOccurrences.forEach((o, i) => {
     if (o == null) return;
     const occurrenceId = `occ_${context.tick.tickId}_${i}`;
     const factIds = (o.facts ?? []).map((_, fi) => `${occurrenceId}#f${fi}`);

@@ -17,6 +17,37 @@ not. A stranger's name, a lie you caught, a door you found locked, a route
 you learned, the fact that you finally got the drawer open — those are.
 The colour of the wallpaper is not.
 
+## Three things you can do
+
+- \`op: "add"\` (the default) — keep something new. Needs \`type\` and
+  \`content\`.
+- \`op: "replace"\` — you were wrong, and now you know better. Needs
+  \`ref\` and \`content\`.
+- \`op: "delete"\` — retract something you recorded that turned out to be
+  false or worthless. Needs \`ref\`.
+
+\`ref\` is the tag at the start of the line in **what you remember**:
+
+    - [M3f9a2c] [12-01 09:20] (general) Hollins said he was at the harbour all evening.
+
+Copy \`M3f9a2c\` exactly. Only your own memories carry a tag you can use —
+what you already knew before this morning, and the account of your day, are
+not yours to rewrite.
+
+### Correct, do not pile up
+
+If you learn that something you recorded is wrong, **replace it**. Adding a
+second, contradicting memory leaves both in your head, and later you will not
+know which one you believe. \`content\` on a replace is the whole corrected
+memory, not a note about what changed:
+
+    writeMemory({ "op": "replace", "ref": "M3f9a2c",
+      "content": "Hollins lied about the harbour — he was covering for his sister, who was at the house." })
+
+Retract only what should not have been recorded at all — a rumour that proved
+baseless, a name you misheard. **Something that merely turned out badly is
+still something that happened to you**, and you keep it.
+
 ## Cost
 
 Free. It does NOT consume a tick, and it may be called **in the same turn
@@ -44,6 +75,12 @@ together.
   already knew before this morning is not this; only what today taught you.
 - \`long_term_intent\` — 长期目标. ONLY when the goal driving your whole
   life here genuinely changes. Rare — an ordinary intention is a \`plan\`.
+  Add rather than replace: both stay in what you remember, dated, and the most
+  recent is the one driving you now — so the earlier goal reads as what you
+  used to want, which is worth having. Write the new goal as the goal itself,
+  not as the change ("I want to get my sister out of this town", not "I no
+  longer care about the shop"); if WHY it changed matters, that is a separate
+  \`general\` memory.
 
 ## Writing well
 
@@ -57,7 +94,8 @@ together.
 
 ## Cap
 
-Max 3 \`writeMemory\` calls per decision.
+Max 3 \`writeMemory\` calls per decision — adds, replaces and deletes all
+count against the same 3.
 
 ## Examples
 
@@ -78,6 +116,15 @@ writeMemory({ "type": "general", "content": "The cabinet lock gave way after a f
 
 You learned where something is:
 writeMemory({ "type": "map", "content": "There is a back stairwell behind the kitchen at the boarding house — it comes out on the alley, not the street." })
+
+What you are living for changed:
+writeMemory({ "type": "long_term_intent", "content": "Getting Mary out of Cassandra before the winter ends matters more to me now than keeping the shop open." })
+
+You found out you had it wrong:
+writeMemory({ "op": "replace", "ref": "M3f9a2c", "content": "The ledger entries are in the professor's hand, but the dates were added later by someone else." })
+
+Something you wrote down proved baseless:
+writeMemory({ "op": "delete", "ref": "Mb71e04" })
 
 A quiet minute with nothing to keep — write nothing at all.
 `;

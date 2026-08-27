@@ -233,7 +233,6 @@ enum NpcMemoryType {
   map              // 地图记忆 — a place or route the character learned in play
   long_term_intent // 长期目标 — rare, replaces the standing goal
   // System-authored:
-  summary          // end-of-day diary entry
   context          // 地理常识 — the world as the character already knows it at
                    // session start: one memory per macro location, one per
                    // scene inside it, and one for how the streets connect

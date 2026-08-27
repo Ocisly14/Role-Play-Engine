@@ -11,7 +11,7 @@ import { formatForPrompt } from "../state/gameClock.js";
 import { resolveLocationById } from "../state/perceivedLocation.js";
 import type { RoleSimContext } from "./agent.js";
 import { formatMemories } from "./memoryFormatter.js";
-import { formatProfile } from "./profileFormatter.js";
+import { formatCondition, formatProfile } from "./profileFormatter.js";
 
 export interface BuildUserPromptOptions {
   language: string;
@@ -19,38 +19,69 @@ export interface BuildUserPromptOptions {
 }
 
 /**
- * Segmented form of {@link buildUserPrompt}, split at the two points where
- * prompt stability changes. Concatenating the segment texts reproduces
- * `buildUserPrompt`'s output byte for byte.
+ * Segmented form of {@link buildUserPrompt}. Concatenating the segment texts
+ * reproduces `buildUserPrompt`'s output byte for byte.
  *
- * The groups, outermost-lived first:
- *  1. **identity** — name + profile. NOT currently breakpointed: `formatProfile`
- *     embeds the live status line (HP / SAN / fatigue / conditions) plus
- *     inventory and relationships, and the stamina subsystem moves fatigue on
- *     most ticks — so these bytes change nearly every tick and a breakpoint
- *     here would pay the write premium without ever being read. Kept as its
- *     own segment so that if the mutable status is ever lifted out of the
- *     profile block, enabling a session-lived breakpoint is a one-flag change.
- *  2. **situation** — time, scene, perceptions, goal, current action,
- *     memories. Frozen for the whole tick, so a breakpoint at its end (which
- *     caches the system prompt and the identity block along with it) is read
- *     by every later iteration of the same decide() loop.
- *  3. **volatile** — rejection feedback (retry passes only) and the decide
- *     instruction. No breakpoint: it is the tail of the prompt.
+ * The order is chosen for the prompt cache, which matches a prefix from the
+ * very first byte of the request. Two rules, and the second one cost a full
+ * measured run to learn:
+ *
+ *  1. Anything that changes every tick, placed early, invalidates everything
+ *     behind it however stable that is.
+ *  2. A breakpoint must sit after content that does not MOVE, not merely
+ *     after content that only grows at its tail.
+ *
+ * Rule 2 is the counter-intuitive one. An append-only block looks ideal —
+ * the prefix is intact, so surely the cache reads it? It does, and then it
+ * writes the now-longer prefix as a new entry, and the provider charges a
+ * cache WRITE for the whole thing, not for the increment. Measured over 37
+ * calls with the breakpoint at the end of the growing block: 343k tokens read
+ * against 655k written, an effective 1.35x on content that costs 1.0x
+ * uncached. A breakpoint that moves every tick is worse than no breakpoint.
+ *
+ * So the three groups are cut by whether they MOVE, not by topic:
+ *
+ *  1. **frozen** — name, profile, and the `context` memories: the world as the
+ *     character already knew it walking in. Written once at session bootstrap
+ *     and never touched again — `writeMemory` refuses to change them, which
+ *     is exactly the property that makes them cacheable. The one breakpoint
+ *     sits here, is written once, and is read by every later tick.
+ *  2. **growing** — what the character has written and perceived since. Its
+ *     prefix is stable but its end moves every tick, so it gets no breakpoint
+ *     of its own; it rides at full price behind the cached block.
+ *  3. **volatile** — vitals, the action in progress, this minute's
+ *     perception, rejection feedback, the decide instruction.
+ *
+ * Reading order survives: who you are -> what you already knew -> what you
+ * have learned since -> how you are now -> what you sense -> decide.
  */
 export function buildUserPromptSegments(
   ctx: RoleSimContext,
   opts: BuildUserPromptOptions
 ): PromptSegment[] {
-  const identity: string[] = [];
-  const situation: string[] = [];
+  const frozen: string[] = [];
+  const growing: string[] = [];
   const volatile: string[] = [];
 
-  identity.push(`# You are ${ctx.npcProfile.name}`);
+  frozen.push(`# You are ${ctx.npcProfile.name}`);
+  frozen.push(`## Who you are\n${formatProfile(ctx.npcProfile)}`);
 
-  identity.push(`## Who you are\n${formatProfile(ctx.npcProfile, opts.dgsm)}`);
+  // `context` is the one memory type written FOR the character — the geography
+  // seeded at session start — and correspondingly the one type they may not
+  // rewrite. That makes it the only part of their memory that is genuinely
+  // frozen, so it is what the breakpoint gets to sit behind.
+  const knownAlready = ctx.memories.filter((m) => m.type === "context");
+  const learnedSince = ctx.memories.filter((m) => m.type !== "context");
 
-  const sections = situation;
+  if (knownAlready.length > 0) {
+    frozen.push(
+      `## What you already knew before today\n${formatMemories(knownAlready)}`
+    );
+  }
+
+  if (learnedSince.length > 0) {
+    growing.push(`## What you remember\n${formatMemories(learnedSince)}`);
+  }
 
   // Every perception is stamped with when and where it reached the character,
   // so there is no separate "right now" block — the current perception below
@@ -58,26 +89,20 @@ export function buildUserPromptSegments(
   if (ctx.recentPerceptions && ctx.recentPerceptions.length > 0) {
     const block = ctx.recentPerceptions
       .map(
-        (p) =>
-          `${stamp(p.gameDateTime, p.location, opts.dgsm)}\n${p.narrative}`
+        (p) => `${stamp(p.gameDateTime, p.location, opts.dgsm)}\n${p.narrative}`
       )
       .join("\n\n");
-    sections.push(
+    growing.push(
       `## What you have perceived so far (oldest first)
 ${block}`
     );
   }
 
-  if (ctx.perception?.narrative) {
-    const where = ctx.perception.location ?? ctx.currentScene;
-    sections.push(
-      `## What you perceive now\n${stamp(ctx.currentTime, where, opts.dgsm)}\n${ctx.perception.narrative}`
-    );
-  }
+  // ---- everything below is expected to differ from last tick --------------
 
-  if (ctx.longTermIntent?.trim()) {
-    sections.push(`## Your long-term goal\n${ctx.longTermIntent}`);
-  }
+  volatile.push(
+    `## How you are right now\n${formatCondition(ctx.npcProfile, opts.dgsm)}`
+  );
 
   if (ctx.currentAction) {
     const bits: string[] = [];
@@ -93,14 +118,15 @@ ${block}`
       );
     }
     const suffix = bits.length > 0 ? `\n(${bits.join(", ")})` : "";
-    sections.push(
+    volatile.push(
       `## Currently doing\n"${ctx.currentAction.description}"${suffix}`
     );
   }
 
-  if (ctx.memories.length > 0) {
-    sections.push(
-      `## What you remember\n${formatMemories(ctx.memories)}`
+  if (ctx.perception?.narrative) {
+    const where = ctx.perception.location ?? ctx.currentScene;
+    volatile.push(
+      `## What you perceive now\n${stamp(ctx.currentTime, where, opts.dgsm)}\n${ctx.perception.narrative}`
     );
   }
 
@@ -138,22 +164,17 @@ worth keeping from what you just perceived. Write content in ${langName}.`
   // `sections.join("\n\n")` over the same non-empty sections. The trailing
   // separator rides on the end of each non-final segment, keeping the
   // concatenation separator-free.
-  // NOTE: no breakpoint is currently enabled here. Now that `writeMemory`
-  // rides along with the terminal call, a well-formed decide() is ONE
-  // request — a second iteration only happens when the model failed to
-  // terminate — so a breakpoint would pay the 1.25x write premium on every
-  // call and essentially never be read. Enabling it needs the mutable status
-  // line (HP / SAN / fatigue) to move out of the identity group into
-  // `situation`, which would make identity stable across ticks and worth a
-  // session-lived breakpoint.
   const groups = [
-    { text: identity.join("\n\n"), cache: false },
-    { text: situation.join("\n\n"), cache: false },
+    { text: frozen.join("\n\n"), cache: true },
+    { text: growing.join("\n\n"), cache: false },
     { text: volatile.join("\n\n"), cache: false },
   ].filter((group) => group.text.length > 0);
 
   return groups.map((group, i) => ({
     text: i < groups.length - 1 ? `${group.text}\n\n` : group.text,
+    // A breakpoint on the LAST segment would cache a prefix nothing ever
+    // reads again — the tail is what changes. Only interior boundaries get
+    // one.
     cache: group.cache && i < groups.length - 1,
   }));
 }

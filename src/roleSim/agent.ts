@@ -51,6 +51,9 @@ export interface RoleSimContext {
    *  recall tool, so a memory absent from the prompt does not exist for
    *  them. Chronological order is applied by the formatter. */
   memories: ReadonlyArray<{
+    /** Store row id. Never shown raw — the formatter derives the short tag
+     *  the character cites when revising or retracting this memory. */
+    id: string;
     type: string;
     content: string;
     gameDateTime: string;
@@ -58,7 +61,6 @@ export interface RoleSimContext {
      *  Surfaced inline in the memory section to give spatial context. */
     location?: string;
   }>;
-  longTermIntent?: string;
   /** Renderer-layer perception output (G1 / G6). One first-person citation-
    *  annotated paragraph that subsumes the prior `reviseTriggers` god-eye
    *  list — the agent reads what just happened from the rendered narrative,

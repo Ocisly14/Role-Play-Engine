@@ -36,7 +36,6 @@ const CANONICAL_MEMORY_TYPES: ReadonlySet<string> = new Set<NpcMemoryType>([
   "relationship",
   "map",
   "long_term_intent",
-  "summary",
   "context",
 ]);
 
@@ -167,10 +166,9 @@ export const CONTEXT_PROFILES: Record<ContextPurpose, ContextProfile> = {
       "relationship",
       "map",
       "context",
-      "summary",
     ],
     defaultLimit: 20,
-    typeLimits: { summary: 10, general: 0, plan: 0, relationship: 0 },
+    typeLimits: { general: 0, plan: 0, relationship: 0 },
   },
   reaction: {
     defaultTypes: ["general", "plan", "secret", "relationship"],

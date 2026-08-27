@@ -7,8 +7,8 @@ import { describe, expect, it, vi } from "vitest";
 import type { DynamicGameStateManager } from "../../../state/DynamicGameState.js";
 import type { ActionCommand } from "../../actions/types.js";
 import type { EngineResolutionContext } from "../../resolution/types.js";
-import { finalizeResolution } from "../../resolution/worldDeltaValidator.js";
 import type { RawTickResolution } from "../../resolution/worldDeltaSchema.js";
+import { finalizeResolution } from "../../resolution/worldDeltaValidator.js";
 import { SubsystemRegistry } from "../../subsystem/registry.js";
 import { CodeToolRegistry } from "../../tools/codeTool.js";
 import { type TickEngine, createTickEngine } from "../tickEngine.js";
@@ -67,39 +67,38 @@ function makeDgsm(opts: { aliveIds?: string[] } = {}) {
  *  gets a duration and nothing else; a due one gets a result. Lifecycle and
  *  progress are never stated — code derives both — so this runs through the
  *  real finalizeResolution exactly like production. */
-function stubResolve(opts: { withOccurrence?: boolean } = {}) {
+function stubResolve() {
   const calls: EngineResolutionContext[] = [];
   const fn = vi.fn(async (context: EngineResolutionContext) => {
     calls.push(context);
-    const raw: RawTickResolution = { actions: [] };
+    const raw: Required<Pick<RawTickResolution, "starting" | "ending">> &
+      RawTickResolution = { starting: [], ending: [] };
+    const stubOccurrence = {
+      facts: [{ type: "action_result", content: "stub fact" }],
+      participants: [{ characterId: "npc_1", role: "actor" as const }],
+      perceiverCharacterIds: ["npc_1"],
+    };
     for (const t of context.trigger.triggers) {
       for (const actionId of t.actionIds) {
         if (t.reason === "new_action") {
-          raw.actions.push({
+          raw.starting.push({
             actionId,
             resolvedDurationTicks: 2,
             timingReason: "stub: two minutes of work",
           });
         } else if (t.reason === "duration_reached") {
-          raw.actions.push({
+          raw.ending.push({
             actionId,
-            result: { outcome: "success", reason: "stub done" },
+            outcome: "success",
+            reason: "stub done",
+            occurrence: stubOccurrence,
           });
-          if (opts.withOccurrence) {
-            raw.occurrences = [
-              ...(raw.occurrences ?? []),
-              {
-                sourceActionIds: [actionId],
-                facts: [{ type: "action_result", content: "stub fact" }],
-                participants: [{ characterId: "npc_1", role: "actor" }],
-                perceiverCharacterIds: ["npc_1"],
-              },
-            ];
-          }
         } else if (t.reason === "replacement" || t.reason === "interrupted") {
-          raw.actions.push({
+          raw.ending.push({
             actionId,
-            result: { outcome: "blocked", reason: "stub interruption" },
+            outcome: "blocked",
+            reason: "stub interruption",
+            occurrence: stubOccurrence,
           });
         }
       }
@@ -119,7 +118,11 @@ function stubResolve(opts: { withOccurrence?: boolean } = {}) {
 function makeEngine(
   dgsm = makeDgsm(),
   resolve = stubResolve()
-): { engine: TickEngine; resolve: typeof resolve; dgsm: DynamicGameStateManager } {
+): {
+  engine: TickEngine;
+  resolve: typeof resolve;
+  dgsm: DynamicGameStateManager;
+} {
   const engine = createTickEngine({
     dgsm,
     scriptedEvents: [],
@@ -240,7 +243,9 @@ describe("replacement and interruption", () => {
     expect(reasons).toContain("replacement");
 
     expect(engine.getAction(first.actionId!)?.status).toBe("interrupted");
-    const second = engine.getActorActions("npc_1").find((a) => a.status === "active");
+    const second = engine
+      .getActorActions("npc_1")
+      .find((a) => a.status === "active");
     expect(second?.command.commandId).toBe("c2");
   });
 
@@ -308,8 +313,11 @@ describe("an ended action always leaves something to perceive", () => {
     expect(occurrences[0].facts[0].content).toContain("actor is dead");
   });
 
-  it("leaves the Engine's own occurrence alone when it emitted one", async () => {
-    const resolve = stubResolve({ withOccurrence: true });
+  it("leaves the Engine's own occurrence alone rather than doubling up", async () => {
+    // Every ending now carries its occurrence as a required field, so the
+    // fallback below should never fire for an Engine-resolved ending. It still
+    // exists for terminal transitions that never reach the Engine at all.
+    const resolve = stubResolve();
     const { engine } = makeEngine(makeDgsm(), resolve);
     await engine.submitCommand(command());
 

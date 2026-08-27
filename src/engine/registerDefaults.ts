@@ -9,7 +9,7 @@ import { staminaSubsystem } from "./subsystem/stamina.js";
 import { sunSubsystem } from "./subsystem/sun.js";
 import { weatherSubsystem } from "./subsystem/weather.js";
 import { CodeToolRegistry } from "./tools/codeTool.js";
-import { damageRollTool, opposedRollTool } from "./tools/diceTools.js";
+import { damageRollTool } from "./tools/diceTools.js";
 import { inventoryValidationTool } from "./tools/inventoryValidationTool.js";
 import { movementCostTool } from "./tools/movementCostTool.js";
 import { pathfindingTool } from "./tools/pathfindingTool.js";
@@ -33,7 +33,6 @@ export function createDefaultCodeToolRegistry(): CodeToolRegistry {
   reg.register(pathfindingTool);
   reg.register(movementCostTool);
   reg.register(inventoryValidationTool);
-  reg.register(opposedRollTool);
   reg.register(damageRollTool);
   return reg;
 }

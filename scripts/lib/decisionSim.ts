@@ -225,7 +225,13 @@ export interface SimObservation {
   /** Memories the CHARACTER chose to write. Nothing is recorded on its
    *  behalf any more, so an empty list is a real finding, not a plumbing
    *  gap. */
-  memoryWrites: Array<{ npcId: string; type: string; content: string }>;
+  memoryWrites: Array<{
+    npcId: string;
+    type: string;
+    content: string;
+    /** "add" unless the character corrected or retracted an existing memory. */
+    op?: "replace" | "delete";
+  }>;
   /** Per NPC: where they started and where they ended. */
   positions: Record<string, { from: string; to: string }>;
   /** Per NPC: HP / SAN before and after. */
@@ -267,21 +273,55 @@ export interface SimObservation {
 
 function observeMemoryWrites(
   real: NpcMemoryManager,
-  onWrite: (npcId: string, type: string, content: string) => void
+  onWrite: (
+    npcId: string,
+    type: string,
+    content: string,
+    op?: "replace" | "delete"
+  ) => void
 ): NpcMemoryManager {
   return new Proxy(real, {
     get(target, property, receiver) {
       const value = Reflect.get(target, property, receiver);
-      if (property !== "add" || typeof value !== "function") return value;
-      return async (params: {
-        npcId: string;
-        type: NpcMemoryType;
-        content: string;
-      }) => {
-        const row = await (value as typeof real.add).call(target, params as never);
-        onWrite(params.npcId, params.type, params.content);
-        return row;
-      };
+      if (typeof value !== "function") return value;
+
+      if (property === "add") {
+        return async (params: {
+          npcId: string;
+          type: NpcMemoryType;
+          content: string;
+        }) => {
+          const row = await (value as typeof real.add).call(
+            target,
+            params as never
+          );
+          onWrite(params.npcId, params.type, params.content);
+          return row;
+        };
+      }
+
+      // A correction or a retraction is a decision the character made, and
+      // the case report exists to show those — counting only `add` would
+      // report a character who fixed a wrong belief as having done nothing.
+      if (property === "reviseOwn" || property === "retractOwn") {
+        const op = property === "reviseOwn" ? "replace" : "delete";
+        return async (params: {
+          npcId: string;
+          memoryId: string;
+          content?: string;
+        }) => {
+          const ok = await (value as (p: unknown) => Promise<boolean>).call(
+            target,
+            params
+          );
+          if (ok) {
+            onWrite(params.npcId, op, params.content ?? params.memoryId, op);
+          }
+          return ok;
+        };
+      }
+
+      return value;
     },
   });
 }
@@ -399,8 +439,13 @@ export async function runStagedCase(
   // Every write — the staged seeds, the geography bootstrap, and whatever the
   // character decides to keep — goes through the production store. The
   // wrapper only mirrors them into the observation record.
-  const memory = observeMemoryWrites(input.memory, (npcId, type, content) => {
-    observation.memoryWrites.push({ npcId, type, content });
+  const memory = observeMemoryWrites(input.memory, (npcId, type, content, op) => {
+    observation.memoryWrites.push({
+      npcId,
+      type,
+      content,
+      ...(op ? { op } : {}),
+    });
   });
 
   // ---- stage the scene -------------------------------------------------
@@ -452,7 +497,9 @@ export async function runStagedCase(
       dgsm.addItemToNpc(actor.npcId, { ...item } as Item);
     }
 
-    // Goal → long_term_intent, the same row the controller reads each tick.
+    // Goal → long_term_intent, which reaches the prompt as one more line in
+    // the character's memory block (no separate query since it stopped being
+    // its own prompt section).
     if (actor.goal) {
       await memory.add({
         npcId: actor.npcId,

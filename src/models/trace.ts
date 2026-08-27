@@ -43,6 +43,15 @@ export interface ModelCallTrace {
   request: unknown;
   /** What the model returned. */
   response: unknown;
+  /** Provider-reported usage for this call. Recorded so a trace is
+   *  self-contained: the per-block budget report needs a real token total to
+   *  scale its estimate against, and pairing files back to console lines by
+   *  order is fragile the moment anything runs concurrently. */
+  usage?: unknown;
+  /** Tool schemas sent with the call. They render ahead of the system prompt
+   *  and are billed like any other input, so a budget report that omits them
+   *  is wrong by exactly their size. */
+  tools?: unknown;
 }
 
 export function traceModelCall(entry: ModelCallTrace): void {

@@ -98,19 +98,38 @@ export const continueTool: ToolSpec = {
 export const writeMemoryTool: ToolSpec = {
   name: "writeMemory",
   description:
-    "Keep something in long-term memory — nothing is recorded for you. Free: may be called in the same turn as act/continue.",
+    "Keep, correct or retract a long-term memory — nothing is recorded for you. Free: may be called in the same turn as act/continue.",
   inputSchema: {
     type: "object",
     properties: {
-      type: { type: "string", enum: [...WRITABLE_MEMORY_TYPES] },
-      content: { type: "string" },
+      op: {
+        type: "string",
+        enum: ["add", "replace", "delete"],
+        description:
+          "add (default) keeps something new. replace corrects a memory you already hold. delete retracts one. replace and delete need `ref`.",
+      },
+      type: {
+        type: "string",
+        enum: [...WRITABLE_MEMORY_TYPES],
+        description: "Required for op=add. Ignored for replace and delete.",
+      },
+      content: {
+        type: "string",
+        description:
+          "Required for op=add and op=replace. For replace this is the whole corrected memory, not a diff.",
+      },
+      ref: {
+        type: "string",
+        description:
+          "Required for op=replace and op=delete: the tag shown at the start of that line in what you remember, e.g. M3f9a2c.",
+      },
       targetId: {
         type: "string",
         description:
           "Required for type=relationship: the person this memory is about, by the tag beside them in what you perceive.",
       },
     },
-    required: ["type"],
+    required: [],
     additionalProperties: false,
   },
 };

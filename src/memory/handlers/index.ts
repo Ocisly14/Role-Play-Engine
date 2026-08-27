@@ -7,7 +7,6 @@ import { MapHandler } from "./MapHandler.js";
 import { PlanHandler } from "./PlanHandler.js";
 import { RelationshipHandler } from "./RelationshipHandler.js";
 import { SecretHandler } from "./SecretHandler.js";
-import { SummaryHandler } from "./SummaryHandler.js";
 
 export {
   ContextHandler,
@@ -17,7 +16,6 @@ export {
   PlanHandler,
   RelationshipHandler,
   SecretHandler,
-  SummaryHandler,
 };
 
 const HANDLERS: Record<NpcMemoryType, MemoryHandler> = {
@@ -27,7 +25,6 @@ const HANDLERS: Record<NpcMemoryType, MemoryHandler> = {
   relationship: new RelationshipHandler(),
   map: new MapHandler(),
   long_term_intent: new LongTermIntentHandler(),
-  summary: new SummaryHandler(),
   context: new ContextHandler(),
 };
 

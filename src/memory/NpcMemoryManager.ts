@@ -134,21 +134,6 @@ export class NpcMemoryManager {
     });
   }
 
-  /** Fetch memories for a specific NPC, game date, and set of memory types (no scoring/semantic filtering). */
-  async getForDateByTypes(
-    npcId: string,
-    sessionId: string,
-    gameDate: string,
-    types: NpcMemoryType[],
-    limit = 500
-  ): Promise<NpcMemory[]> {
-    return this.store.findCandidates({
-      sessionId,
-      npcId,
-      filters: { gameDate, types },
-      limit,
-    });
-  }
 
   // ===== Context Building =====
 
@@ -246,6 +231,32 @@ export class NpcMemoryManager {
     cutoffCreatedAt: Date
   ): Promise<void> {
     await this.store.deleteAfterTime(sessionId, cutoffCreatedAt);
+  }
+
+  // ===== Character-authored revision =====
+
+  /** Revise one of this character's own memories in place. Returns false when
+   *  no such memory belongs to them. The row keeps its id and its
+   *  `gameDateTime`: the character is correcting a record, not forming a new
+   *  memory, so it stays where it sits in their history. */
+  async reviseOwn(params: {
+    memoryId: string;
+    sessionId: string;
+    npcId: string;
+    content: string;
+    metadata?: Record<string, unknown>;
+  }): Promise<boolean> {
+    return (await this.store.updateOwnContent(params)) > 0;
+  }
+
+  /** Retract one of this character's own memories. Returns false when no such
+   *  memory belongs to them. */
+  async retractOwn(params: {
+    memoryId: string;
+    sessionId: string;
+    npcId: string;
+  }): Promise<boolean> {
+    return (await this.store.deleteOwn(params)) > 0;
   }
 
   // ===== Belief Update =====

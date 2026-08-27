@@ -213,6 +213,9 @@ export class LLMRoleSimAgent implements RoleSimAgent {
       memory: this.deps.memory,
       dgsm: this.deps.dgsm,
       npcId: ctx.npcId,
+      // `ref` resolves against exactly what the prompt showed, so the
+      // dispatcher gets the same list the formatter tagged.
+      memories: ctx.memories,
       sessionId: this.deps.sessionId,
       moduleId: this.deps.moduleId,
       gameDateTime: ctx.currentTime,

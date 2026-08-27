@@ -11,10 +11,12 @@ import {
   formatErrorTarget,
 } from "../types.js";
 import type {
-  RawActionResolution,
+  RawActionEnd,
+  RawActionStart,
   RawTickResolution,
 } from "../worldDeltaSchema.js";
 import {
+  applyRepair,
   finalizeResolution,
   validateRawResolution,
 } from "../worldDeltaValidator.js";
@@ -145,9 +147,7 @@ function makeContext(opts: {
   };
 }
 
-function entry(
-  overrides: Partial<RawActionResolution> = {}
-): RawActionResolution {
+function start(overrides: Partial<RawActionStart> = {}): RawActionStart {
   return {
     actionId: ACTION_ID,
     resolvedDurationTicks: 1,
@@ -156,142 +156,207 @@ function entry(
   };
 }
 
-/** The objective trace an ended action must leave. Tests below are about
- *  transition legality and roll consistency, so they carry one rather than
- *  tripping the separate "ended action leaves a trace" rule. */
-function trace(actionId: string = ACTION_ID): RawTickResolution["occurrences"] {
-  return [
-    {
-      sourceActionIds: [actionId],
-      facts: [{ type: "action_result", content: "the latch gives" }],
-      participants: [{ characterId: "npc_1", role: "actor" }],
-      perceiverCharacterIds: ["npc_1"],
-    },
-  ];
+/** The objective trace every ending carries. It is a required field of the
+ *  ending now, not a separate array to cross-reference — which is why the old
+ *  "an ended action left no trace" rule has no test any more: it cannot be
+ *  expressed. */
+function occurrence(): RawActionEnd["occurrence"] {
+  return {
+    facts: [{ type: "action_result", content: "the latch gives" }],
+    participants: [{ characterId: "npc_1", role: "actor" }],
+    perceiverCharacterIds: ["npc_1"],
+  };
 }
 
-describe("validateRawResolution — transitions", () => {
-  it("accepts a well-formed first resolution", () => {
+function end(overrides: Partial<RawActionEnd> = {}): RawActionEnd {
+  return {
+    actionId: "action_live",
+    outcome: "success",
+    reason: "the latch gives",
+    occurrence: occurrence(),
+    ...overrides,
+  };
+}
+
+/** A standalone occurrence, for the cases that are about the array itself. */
+function trace(actionId: string = ACTION_ID): RawTickResolution["occurrences"] {
+  return [{ ...occurrence(), sourceActionIds: [actionId] }];
+}
+
+describe("validateRawResolution — the three moments", () => {
+  it("accepts a well-formed start", () => {
     const errors = validateRawResolution(
-      { actions: [entry()], occurrences: trace() },
+      { starting: [start()] },
       makeContext({}),
       []
     );
     expect(errors).toEqual([]);
   });
 
-  it("rejects an unknown actionId and reports the missing trigger", () => {
+  it("rejects an unknown actionId and reports the unanswered trigger", () => {
     const errors = validateRawResolution(
-      { actions: [entry({ actionId: "action_ghost" })] },
+      { starting: [start({ actionId: "action_ghost" })] },
       makeContext({}),
       []
     );
     expect(text(errors)).toContain("unknown actionId");
-    expect(text(errors)).toContain("received no transition");
+    expect(text(errors)).toContain("was not answered");
   });
 
-  it("requires an ended action to leave an objective trace", () => {
-    // A failed move changes nothing the actor can see: same position, same
-    // surroundings, so next tick's perception is identical and they re-issue
-    // the same doomed action. Observed live as a seven-tick loop.
-    const context = makeContext({
-      newCommands: [],
-      activeActions: [activeAction()],
-      triggerActionIds: ["action_live"],
-    });
+  it("rejects an action that appears in two moments at once", () => {
+    // The list an action sits in IS the decision about what happens to it, so
+    // two lists is a contradiction rather than a duplicate.
     const errors = validateRawResolution(
       {
-        actions: [
-          {
-            actionId: "action_live",
-            result: { outcome: "failure", reason: "no route from here" },
-          },
-        ],
-      },
-      context,
-      []
-    );
-    expect(text(errors)).toContain("no occurrence citing it");
-
-    // Still running is not ended — nothing to report yet.
-    const running = validateRawResolution(
-      { actions: [{ actionId: "action_live" }] },
-      context,
-      []
-    );
-    expect(text(running)).not.toContain("no occurrence citing it");
-  });
-
-  it("rejects duplicate transitions (single-transition invariant)", () => {
-    const errors = validateRawResolution(
-      { actions: [entry(), entry()] },
-      makeContext({}),
-      []
-    );
-    expect(text(errors)).toContain("duplicate transition");
-  });
-
-  it("requires a duration and its reason when an action starts", () => {
-    const errors = validateRawResolution(
-      {
-        actions: [
-          entry({ resolvedDurationTicks: undefined, timingReason: undefined }),
-        ],
+        starting: [start()],
+        ending: [end({ actionId: ACTION_ID })],
       },
       makeContext({}),
       []
     );
-    expect(text(errors)).toContain("resolvedDurationTicks");
-    expect(text(errors)).toContain("timingReason");
+    expect(text(errors)).toContain("appears more than once");
   });
 
-  it("refuses a result on an action that is only starting", () => {
-    // Nothing has happened yet — reporting an outcome here would be the
-    // Engine deciding the future of a minute that has not been spent.
+  it("refuses to end an action that has not started", () => {
+    // Its minute has not been spent. Under the old single-shape entry this was
+    // a `result` on a queued action; now it is a queued action in the wrong
+    // list, and the error says which list it belongs in.
     const errors = validateRawResolution(
-      {
-        actions: [
-          entry({ result: { outcome: "success", reason: "opened it" } }),
-        ],
-        occurrences: trace(),
-      },
+      { ending: [end({ actionId: ACTION_ID })] },
       makeContext({}),
       []
     );
-    expect(text(errors)).toContain("no result yet");
+    expect(text(errors)).toContain("has not started yet");
+    expect(text(errors)).toContain('"starting"');
+  });
+
+  it("refuses to start an action that is already running", () => {
+    const errors = validateRawResolution(
+      { starting: [start({ actionId: "action_live" })] },
+      makeContext({
+        newCommands: [],
+        activeActions: [activeAction()],
+        triggerActionIds: ["action_live"],
+      }),
+      []
+    );
+    expect(text(errors)).toContain("already running");
   });
 
   it("refuses to re-open an action that already ended", () => {
-    const context = makeContext({
-      newCommands: [],
-      activeActions: [{ ...activeAction(), status: "completed" as const }],
-      triggerActionIds: ["action_live"],
-    });
     const errors = validateRawResolution(
-      {
-        actions: [
-          {
-            actionId: "action_live",
-            result: { outcome: "success", reason: "again?" },
-          },
-        ],
-        occurrences: trace("action_live"),
-      },
-      context,
+      { ending: [end()] },
+      makeContext({
+        newCommands: [],
+        activeActions: [{ ...activeAction(), status: "completed" as const }],
+        triggerActionIds: ["action_live"],
+      }),
       []
     );
     expect(text(errors)).toContain("cannot be resolved again");
   });
+
+  it("asks nothing at all of an action that is merely still running", () => {
+    // Silence already means "keeps running", so requiring an entry would be
+    // asking for a sentence that carries no information. Coverage is only
+    // about actions that have not begun and actions whose time is spent.
+    const stillRunning = makeContext({
+      newCommands: [],
+      // 5 of 10 minutes — triggered (say, by an interruption) but not due.
+      activeActions: [activeAction()],
+      triggerActionIds: ["action_live"],
+    });
+    expect(validateRawResolution({}, stillRunning, [])).toEqual([]);
+  });
+
+  it("still demands an answer for an action whose time is spent", () => {
+    const due = makeContext({
+      newCommands: [],
+      activeActions: [activeAction({ progressMinutes: 10 })],
+      triggerActionIds: ["action_live"],
+    });
+    expect(text(validateRawResolution({}, due, []))).toContain(
+      "was not answered"
+    );
+    // The duration was set once, when it began. There is no list to move it
+    // to and no way to ask for more time: the only answer is what happened.
+    expect(validateRawResolution({ ending: [end()] }, due, [])).toEqual([]);
+  });
+
+  it("checks the occurrence carried by an ending", () => {
+    // It is a field of the ending rather than a cross-referenced array entry,
+    // but it is the same thing and gets the same objectivity rules.
+    const errors = validateRawResolution(
+      {
+        ending: [
+          end({
+            occurrence: {
+              ...occurrence(),
+              facts: [{ type: "action_result", content: "I feel it give" }],
+            },
+          }),
+        ],
+      },
+      makeContext({
+        newCommands: [],
+        activeActions: [activeAction()],
+        triggerActionIds: ["action_live"],
+      }),
+      []
+    );
+    expect(text(errors)).toContain("action:action_live");
+  });
 });
 
-describe("validateRawResolution — the bar", () => {
+describe("validateRawResolution — outcome and the bar", () => {
   const skillCommand = command({ declaredSkillId: "Locksmith" });
+  const runningContext = (overrides: Partial<EngineAction> = {}) =>
+    makeContext({
+      newCommands: [],
+      activeActions: [activeAction(overrides)],
+      triggerActionIds: ["action_live"],
+    });
+
+  it("requires outcome when the action carried no check", () => {
+    // Nothing rolled, so there is nothing to derive it from. This was the
+    // single most common rejection in a measured run — the schema said the
+    // field was optional while the validator required it.
+    const errors = validateRawResolution(
+      { ending: [end({ outcome: undefined })] },
+      runningContext(),
+      []
+    );
+    expect(text(errors)).toContain("carried no check");
+    expect(text(errors)).toContain("endingNeedsOutcome");
+  });
+
+  it("refuses outcome when a check already decided it", () => {
+    const errors = validateRawResolution(
+      { ending: [end({ outcome: "success" })] },
+      runningContext({
+        check: { skillId: "Locksmith", requiredLevel: "regular", basis: "…" },
+      }),
+      []
+    );
+    expect(text(errors)).toContain("code decides success from the roll");
+  });
+
+  it("accepts an ending that leaves the checked outcome to code", () => {
+    const errors = validateRawResolution(
+      { ending: [end({ outcome: undefined })] },
+      runningContext({
+        check: { skillId: "Locksmith", requiredLevel: "regular", basis: "…" },
+      }),
+      []
+    );
+    expect(errors).toEqual([]);
+  });
 
   it("accepts a bar for the skill the actor declared", () => {
     const errors = validateRawResolution(
       {
-        actions: [
-          entry({
+        starting: [
+          start({
             check: {
               requiredLevel: "regular",
               basis: "a common pin lock in good light",
@@ -308,8 +373,8 @@ describe("validateRawResolution — the bar", () => {
   it("rejects a bar when the actor declared no skill", () => {
     const errors = validateRawResolution(
       {
-        actions: [
-          entry({ check: { requiredLevel: "hard", basis: "invented" } }),
+        starting: [
+          start({ check: { requiredLevel: "hard", basis: "invented" } }),
         ],
       },
       makeContext({}),
@@ -318,32 +383,11 @@ describe("validateRawResolution — the bar", () => {
     expect(text(errors)).toContain("nothing to check");
   });
 
-  it("refuses to move the bar once the action is running", () => {
-    // The bar's whole value is that it was chosen before a roll existed.
-    const errors = validateRawResolution(
-      {
-        actions: [
-          {
-            actionId: "action_live",
-            check: { requiredLevel: "extreme", basis: "second thoughts" },
-          },
-        ],
-      },
-      makeContext({
-        newCommands: [],
-        activeActions: [activeAction()],
-        triggerActionIds: ["action_live"],
-      }),
-      []
-    );
-    expect(text(errors)).toContain("cannot be changed mid-flight");
-  });
-
   it("requires a real defender and a bar for an opposed check", () => {
     const unknown = validateRawResolution(
       {
-        actions: [
-          entry({
+        starting: [
+          start({
             check: { requiredLevel: "regular", basis: "he resists" },
             opposedBy: [{ characterId: "npc_ghost", skillId: "Social" }],
           }),
@@ -356,8 +400,8 @@ describe("validateRawResolution — the bar", () => {
 
     const noBar = validateRawResolution(
       {
-        actions: [
-          entry({ opposedBy: [{ characterId: "npc_2", skillId: "Social" }] }),
+        starting: [
+          start({ opposedBy: [{ characterId: "npc_2", skillId: "Social" }] }),
         ],
       },
       makeContext({ newCommands: [skillCommand] }),
@@ -371,7 +415,7 @@ describe("validateRawResolution — deltas and occurrences", () => {
   it("rejects unknown entities, missing causalBasis and unknown source actions", () => {
     const errors = validateRawResolution(
       {
-        actions: [entry()],
+        starting: [start()],
         characterChanges: [
           {
             sourceActionId: "action_ghost",
@@ -398,7 +442,7 @@ describe("validateRawResolution — deltas and occurrences", () => {
       operation: { kind: "move", from, to: "npc_1" },
     });
     const wrongFrom = validateRawResolution(
-      { actions: [entry()], itemChanges: [move("npc_2")] },
+      { starting: [start()], itemChanges: [move("npc_2")] },
       makeContext({}),
       []
     );
@@ -408,7 +452,7 @@ describe("validateRawResolution — deltas and occurrences", () => {
 
     const doubleMove = validateRawResolution(
       {
-        actions: [entry()],
+        starting: [start()],
         itemChanges: [move("scene:SCN_1"), move("scene:SCN_1")],
       },
       makeContext({}),
@@ -420,7 +464,7 @@ describe("validateRawResolution — deltas and occurrences", () => {
   it("rejects perspective wording and unknown perceivers in occurrences", () => {
     const errors = validateRawResolution(
       {
-        actions: [entry()],
+        starting: [start()],
         occurrences: [
           {
             sourceActionIds: [ACTION_ID],
@@ -447,8 +491,8 @@ describe("finalizeResolution", () => {
 
   it("derives the lifecycle and the wake time, and assigns ids", () => {
     const raw: RawTickResolution = {
-      actions: [
-        entry({
+      starting: [
+        start({
           resolvedDurationTicks: 5,
           timingReason: "five minutes at the keyway",
           movement: { destinationId: "SCN_1" },
@@ -473,8 +517,8 @@ describe("finalizeResolution", () => {
     };
     const finalized = finalizeResolution(raw, makeContext({}));
     const t = finalized.resolution.transitions[0];
-    // No result block, so the action is still running — code says so, not the
-    // Engine, which never mentioned a status at all.
+    // It arrived in `starting`, so it is running — code says so, not the
+    // Engine, which never mentions a status at all.
     expect(t.to).toBe("active");
     expect(t.nextWakeAt).toBe("1923-04-02T09:20:00");
     expect(t.progressDeltaMinutes).toBe(0);
@@ -503,14 +547,15 @@ describe("finalizeResolution", () => {
       triggerActionIds: [ACTION_ID, "action_live"],
     });
     const raw: RawTickResolution = {
-      actions: [
-        entry({ resolvedDurationTicks: 2, timingReason: "two minutes" }),
+      starting: [
+        start({ resolvedDurationTicks: 2, timingReason: "two minutes" }),
+      ],
+      ending: [
         {
           actionId: "action_live",
-          result: {
-            outcome: "blocked",
-            reason: "abandoned for a new undertaking",
-          },
+          outcome: "blocked",
+          reason: "abandoned for a new undertaking",
+          occurrence: occurrence(),
         },
       ],
     };
@@ -523,5 +568,203 @@ describe("finalizeResolution", () => {
       [ACTION_ID]: "active",
       action_live: "interrupted",
     });
+  });
+});
+
+describe("applyRepair — one shape for every field", () => {
+  // The repair tool used to take index-keyed OBJECTS for deltas and an ARRAY
+  // for actions. The model mixed them up and sent an object where the
+  // submission's array belonged, which reached `.filter` and took the tick
+  // down. Now every field is an array whose items carry their own address.
+  const base = (): RawTickResolution => ({
+    starting: [start()],
+    characterChanges: [
+      {
+        sourceActionId: ACTION_ID,
+        causalBasis: "first",
+        characterId: "npc_1",
+        operation: { kind: "hp", delta: -1, reason: "scrape" },
+      },
+      {
+        sourceActionId: ACTION_ID,
+        causalBasis: "second",
+        characterId: "npc_2",
+        operation: { kind: "hp", delta: -2, reason: "graze" },
+      },
+    ],
+  });
+
+  it("replaces the element at the quoted index", () => {
+    const out = applyRepair(base(), {
+      characterChanges: [
+        {
+          index: 1,
+          sourceActionId: ACTION_ID,
+          causalBasis: "fixed",
+          characterId: "npc_2",
+          operation: { kind: "hp", delta: -5, reason: "corrected" },
+        },
+      ],
+    });
+    expect(out.characterChanges?.[0]?.causalBasis).toBe("first");
+    expect(out.characterChanges?.[1]?.causalBasis).toBe("fixed");
+    expect(out.characterChanges?.[1]?.operation).not.toHaveProperty("index");
+  });
+
+  it("appends an item that carries no index", () => {
+    const out = applyRepair(base(), {
+      characterChanges: [
+        {
+          sourceActionId: ACTION_ID,
+          causalBasis: "the one that was missing",
+          characterId: "npc_1",
+          operation: { kind: "fatigue", delta: 2, reason: "exertion" },
+        },
+      ],
+    });
+    expect(out.characterChanges).toHaveLength(3);
+    expect(out.characterChanges?.[2]?.causalBasis).toBe(
+      "the one that was missing"
+    );
+  });
+
+  it("withdraws with remove, and never resurrects it as an addition", () => {
+    const out = applyRepair(base(), {
+      characterChanges: [{ index: 0, remove: true }],
+    });
+    expect(out.characterChanges?.[0]).toBeNull();
+    expect(out.characterChanges).toHaveLength(2);
+  });
+
+  it("still reads a stale index-keyed object rather than throwing", () => {
+    const out = applyRepair(base(), {
+      characterChanges: {
+        "1": {
+          sourceActionId: ACTION_ID,
+          causalBasis: "old shape",
+          characterId: "npc_2",
+          operation: { kind: "hp", delta: -3, reason: "legacy" },
+        },
+      } as never,
+    });
+    expect(out.characterChanges?.[1]?.causalBasis).toBe("old shape");
+  });
+
+  it("replaces an action by its own id, within its own moment", () => {
+    const out = applyRepair(base(), {
+      starting: [
+        {
+          actionId: ACTION_ID,
+          resolvedDurationTicks: 9,
+          timingReason: "revised",
+        },
+      ],
+    });
+    expect(out.starting).toHaveLength(1);
+    expect(out.starting?.[0].resolvedDurationTicks).toBe(9);
+  });
+
+  it("moves an action between moments, leaving nothing behind", () => {
+    // "this belongs in ending, not starting" has to remove it from starting as
+    // well, or the next round rejects both copies as one action in two moments.
+    const out = applyRepair(base(), {
+      ending: [
+        {
+          actionId: ACTION_ID,
+          outcome: "failure",
+          reason: "it was over before it began",
+          occurrence: occurrence(),
+        },
+      ],
+    });
+    expect(out.starting).toHaveLength(0);
+    expect(out.ending).toHaveLength(1);
+    expect(out.ending?.[0].actionId).toBe(ACTION_ID);
+  });
+});
+
+describe("operations are checked against the fields they advertise", () => {
+  // Each of these passed validation before and reached the applier, where a
+  // bad value either did nothing or wrote nonsense into the world. A delta
+  // that applies cleanly and changes nothing is the worst kind: the actor
+  // perceives no consequence and re-issues the same action.
+  const delta = (operation: Record<string, unknown>) => ({
+    sourceActionId: ACTION_ID,
+    causalBasis: "it follows",
+    characterId: "npc_1",
+    operation: operation as never,
+  });
+  const errorsFor = (operation: Record<string, unknown>) =>
+    text(
+      validateRawResolution(
+        { starting: [start()], characterChanges: [delta(operation)] },
+        makeContext({}),
+        []
+      )
+    );
+
+  it("rejects a position type outside the three real kinds", () => {
+    expect(
+      errorsFor({ kind: "position", position: { type: "teleport" } })
+    ).toContain('position.type must be "scene", "junction" or "road"');
+  });
+
+  it("rejects a position whose id field is missing for its type", () => {
+    expect(
+      errorsFor({ kind: "position", position: { type: "junction" } })
+    ).toContain("requires junctionId");
+  });
+
+  it("rejects a junction or road nobody was shown", () => {
+    // Only scenes used to be checked, so any junction id at all was accepted
+    // and the character was stood somewhere that does not exist.
+    expect(
+      errorsFor({
+        kind: "position",
+        position: { type: "junction", junctionId: "JUNC_NOWHERE" },
+      })
+    ).toContain("is not a place you were shown");
+  });
+
+  it("rejects a relationship whose delta is not a number", () => {
+    expect(
+      errorsFor({
+        kind: "relationship",
+        toCharacterId: "npc_2",
+        delta: "much worse",
+      })
+    ).toContain("relationship.delta must be a number");
+  });
+
+  it("rejects an environmentHazard that hazards nothing", () => {
+    const errors = text(
+      validateRawResolution(
+        {
+          starting: [start()],
+          sceneChanges: [
+            {
+              sourceActionId: ACTION_ID,
+              causalBasis: "the fire is out",
+              sceneId: "SCN_1",
+              operation: { kind: "environmentHazard" } as never,
+            },
+          ],
+        },
+        makeContext({}),
+        []
+      )
+    );
+    expect(errors).toContain('environmentHazard needs "add" or "remove"');
+  });
+
+  it("rejects a movement destination nobody was shown", () => {
+    const errors = text(
+      validateRawResolution(
+        { starting: [start({ movement: { destinationId: "SCN_ATLANTIS" } })] },
+        makeContext({}),
+        []
+      )
+    );
+    expect(errors).toContain("is not a place you were shown");
   });
 });

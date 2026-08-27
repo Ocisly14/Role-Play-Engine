@@ -11,15 +11,17 @@
 
 import { readFileSync } from "node:fs";
 import { ModelClass, generateToolCalls } from "../../models/index.js";
-import {
-  buildSkillCatalogPrompt,
-  renderSkillGuidance,
-} from "../rules/skillReference.js";
 import type {
   ModelMessage,
   ToolResultRecord,
 } from "../../models/providers/types.js";
 import type { DynamicGameStateManager } from "../../state/DynamicGameState.js";
+import { actionIdForCommand } from "../actions/actionStore.js";
+import type { ActionCommand } from "../actions/types.js";
+import {
+  buildSkillCatalogPrompt,
+  renderSkillGuidance,
+} from "../rules/skillReference.js";
 import type { CodeToolRegistry } from "../tools/codeTool.js";
 import {
   type EngineResolutionContext,
@@ -28,17 +30,19 @@ import {
   formatErrorTarget,
 } from "./types.js";
 import {
-  applyRepair,
-  finalizeResolution,
-  validateRawResolution,
-} from "./worldDeltaValidator.js";
-import {
   CODE_TOOL_SPECS,
   type RawResolutionRepair,
   type RawTickResolution,
   repairResolutionTool,
   submitResolutionTool,
 } from "./worldDeltaSchema.js";
+import {
+  applyRepair,
+  finalizeResolution,
+  normalizeRawResolution,
+  resolutionWorklist,
+  validateRawResolution,
+} from "./worldDeltaValidator.js";
 
 const MAX_ITERATIONS = 8;
 /**
@@ -83,33 +87,44 @@ const RULES_DOC = loadRulesDoc();
 
 const SYSTEM_PROMPT = `You are the World Action Engine of a tick-based Call of Cthulhu world
 simulation. You are the sole authority on what actually happens: characters
-submitted intent (ActionCommands); you decide acceptance, real duration,
-progress, conflicts and outcomes for ALL new and in-flight actions on one
-shared world snapshot.
+submitted intent (ActionCommands). You decide how long each action should
+take, how hard it is, and what it does to the world — for ALL new and
+in-flight actions on one shared world snapshot. You do not decide how much
+time passed, whether an action is finished, or whether a check was passed:
+code owns the clock and the dice, and hands you their results.
 
 ${RULES_DOC}
 
 ## Session protocol
 
 - You may call the deterministic tools (pathfinding, movementCost,
-  inventoryValidation, opposedRoll, damageRoll) to ground your resolution.
-  Movement feasibility/duration MUST come from pathfinding/movementCost, not
-  estimation. Opposed defense rolls MUST come from opposedRoll — the actor's
-  own roll already exists on the command and is never re-rolled.
+  inventoryValidation, damageRoll) to ground your resolution. Movement
+  feasibility/duration MUST come from pathfinding/movementCost, not
+  estimation. You never roll a skill check yourself — you name the bar and
+  the opposition when the action starts, and code rolls both sides when its
+  time is spent.
 - Finish with exactly one \`submit_resolution\` call containing the complete
   resolution. Do not mix it with other tool calls in the same turn.
+- Answer every id the trigger's \`resolve\` worklist puts under
+  \`starting\` and \`ending\`, in that list. The list an action goes in IS the
+  decision about what happens to it, and each list carries only the fields
+  that moment allows. Ids under \`stillRunning\` need nothing from you.
+- \`repair_resolution\` is listed for the whole session but is only valid
+  AFTER a submission comes back rejected. Never open with it.
 - Facts and reasons are objective and third-person. Perceiver lists follow
   physical/sensory reach (same location; adjacent for loud signals).
 - The actor's proposedDurationTicks is advisory. You output
-  resolvedDurationTicks + timingReason (first resolution) and nextWakeInTicks
-  (whenever an action stays active).
+  resolvedDurationTicks + timingReason when the action starts, and again only
+  if you revise the estimate. There is no status field and no progress field:
+  saying nothing about an in-flight action leaves it running.
 
 ## Skill catalog
 
-What each declarable skill covers — the boundary knowledge for judging
-applicability (an action outside a skill's coverage is
-applicability: "rejected"). Declared skills additionally get full guidance
-in the request context.
+What each declarable skill covers — the boundary knowledge for deciding
+whether to check the skill the actor declared at all. An action outside a
+skill's coverage simply gets no \`check\`: the skill grants nothing and the
+action is settled on its own merits. Never raise the bar instead. Declared
+skills additionally get full guidance in the request context.
 
 ${buildSkillCatalogPrompt()}`;
 
@@ -118,11 +133,54 @@ export interface WorldActionEngineDeps {
   codeTools: CodeToolRegistry;
 }
 
-/** Render the full context as the session's user prompt. Straight JSON —
- *  verifiable, replayable, nothing filtered. */
-export function renderContext(context: EngineResolutionContext): string {
+/**
+ * One id per action, and it is the one the schema addresses.
+ *
+ * `actionId` is `action_<commandId>`, and the Trigger section lists exactly
+ * those. Printing the raw `commandId` alongside puts a SECOND id for the same
+ * action in the same prompt — and the model reasonably echoes the one printed
+ * next to the action it is resolving, which then fails lookup as "unknown
+ * actionId" and burns every repair round on a mismatch it cannot see. So the
+ * commandId never reaches the prompt.
+ */
+function commandForPrompt(command: ActionCommand): Record<string, unknown> {
+  const { commandId: _commandId, ...rest } = command;
+  return rest;
+}
+
+/**
+ * The context split at the point where its stability changes.
+ *
+ * Prompt caching matches a prefix from the first byte of the request, so the
+ * order here is the whole game. `## Tick` is 114 characters — a tick id and a
+ * timestamp — and it used to sit at offset 360 of a 116,000-character prompt.
+ * Everything behind it (all 53 scenes, all 295 items: 94% of the request) was
+ * byte-identical from tick to tick and got thrown away anyway, because those
+ * 114 characters changed. Measured cross-tick common prefix: 0.3%.
+ *
+ * So the world description goes FIRST and everything about this particular
+ * minute goes LAST. Characters are volatile too — the stamina subsystem moves
+ * fatigue on most ticks — and at ~1.8k characters they are cheap to re-send,
+ * so they lead the volatile half rather than poisoning the stable one.
+ *
+ * The model reads titled JSON sections, so nothing about the resolution
+ * depends on this order.
+ */
+export function renderContextSegments(context: EngineResolutionContext): {
+  stable: string;
+  volatile: string;
+} {
   const section = (title: string, data: unknown): string =>
     `## ${title}\n${JSON.stringify(data, null, 1)}`;
+
+  const newCommands = context.actions.newCommands.map((command) => ({
+    actionId: actionIdForCommand(command.commandId),
+    ...commandForPrompt(command),
+  }));
+  const activeActions = context.actions.activeActions.map((action) => {
+    const { id, command, ...rest } = action;
+    return { actionId: id, ...rest, command: commandForPrompt(command) };
+  });
 
   // Full guidance for exactly the skills declared this tick (deduplicated):
   // duration guidance and outcome shading ground the assessment.
@@ -140,22 +198,45 @@ export function renderContext(context: EngineResolutionContext): string {
     .map((skillId) => renderSkillGuidance(skillId))
     .filter((g): g is string => g !== null);
 
-  return [
+  // The trigger section names the moment each action is in rather than leaving
+  // the Engine to look up `status` in another section and infer it. That
+  // inference was the single largest source of rejected submissions. Computed
+  // by the same function the validator judges against, so the two cannot drift.
+  const worklist = resolutionWorklist(context);
+
+  const stable = [
     "# Tick Resolution Request",
-    section("Trigger", context.trigger),
-    section("Tick", context.tick),
     section("World Invariants", context.rules.worldInvariants),
     section("Scenes", context.state.scenes),
     section("Items", context.state.items),
+  ].join("\n\n");
+
+  const volatile = [
     section("Characters", context.state.characters),
-    section("New Commands (this tick)", context.actions.newCommands),
-    section("Active Actions (in flight)", context.actions.activeActions),
+    section("Trigger", {
+      ...context.trigger,
+      resolve: {
+        ...worklist,
+        note: "`starting` and `ending` are the ids you must answer, in those lists, and they are the only ones. `stillRunning` is FYI: those actions keep running by themselves and take no entry. `endingNeedsOutcome` lists in-flight actions that carried no check — if one ends, you supply `outcome`.",
+      },
+    }),
+    section("Tick", context.tick),
+    section("New Commands (this tick)", newCommands),
+    section("Active Actions (in flight)", activeActions),
     section("Objective Events (already effective)", context.events),
     ...(skillGuidance.length > 0
       ? [`## Declared Skill Guidance\n\n${skillGuidance.join("\n\n---\n\n")}`]
       : []),
-    "Resolve now. Consult tools as needed, then call submit_resolution once.",
+    "Resolve now. Consult tools as needed, then call submit_resolution once — every id under the trigger's `resolve.starting` and `resolve.ending` placed in that list.",
   ].join("\n\n");
+
+  return { stable: `${stable}\n\n`, volatile };
+}
+
+/** The whole user prompt as one string. */
+export function renderContext(context: EngineResolutionContext): string {
+  const { stable, volatile } = renderContextSegments(context);
+  return stable + volatile;
 }
 
 /** The session produced nothing usable. The tick applies no transition, no
@@ -178,9 +259,10 @@ function renderErrors(errors: ResolutionError[]): string {
     "REJECTED. Fix ONLY these, with repair_resolution:",
     ...errors.map((e) => `- ${formatErrorTarget(e.target)} — ${e.message}`),
     "",
-    "Send only the elements listed above. Everything you do not mention stays",
-    "as you submitted it — do not re-send the parts that are already correct,",
-    "and do not re-send the whole resolution.",
+    "Send only the elements listed above, as arrays in the same shape you",
+    "submitted — each item carrying the `index` quoted above (an action",
+    "carries its actionId instead). Everything you do not mention stays as",
+    "you submitted it: do not re-send correct parts or the whole resolution.",
   ].join("\n");
 }
 
@@ -188,14 +270,37 @@ export async function resolveTick(
   context: EngineResolutionContext,
   deps: WorldActionEngineDeps
 ): Promise<WorldActionEngineResult> {
+  // Two breakpoints on the opening turn, because it is reused on two
+  // different timescales:
+  //   - after the world description: read by the NEXT tick, whose world is
+  //     usually the same one.
+  //   - after the whole turn: read by every later round of THIS session. A
+  //     tick that needs a repair round or a tool lookup re-sends this same
+  //     116k-character turn verbatim, and used to re-pay for it in full.
+  // The growing tail (assistant turns + tool results) is left uncached: it is
+  // ~1.5k characters a round against a 116k prefix, and the tool-result path
+  // carries no cacheControl field anyway.
+  const { stable, volatile } = renderContextSegments(context);
   const messages: ModelMessage[] = [
     {
       role: "user",
-      content: [{ kind: "text", text: renderContext(context) }],
+      content: [
+        { kind: "text", text: stable, cacheControl: true },
+        { kind: "text", text: volatile, cacheControl: true },
+      ],
     },
   ];
-  const tools = [...CODE_TOOL_SPECS, submitResolutionTool];
-  let correctiveRetryUsed = false;
+  // ONE tool list for the whole session. Tools render ahead of the system
+  // prompt in the cached prefix, so swapping the array between rounds threw
+  // away the system-prompt cache as well — `cacheSystemPrompt` was doing
+  // nothing from the first repair round on. Which tool the model MUST call is
+  // steered by toolChoice below, which is what was actually doing the work.
+  const tools = [
+    ...CODE_TOOL_SPECS,
+    submitResolutionTool,
+    repairResolutionTool,
+  ];
+  const correctiveRetryUsed = false;
 
   // The submission under repair, and how many repair rounds it has had.
   let pending: RawTickResolution | undefined;
@@ -218,11 +323,7 @@ export async function resolveTick(
         customSystemPrompt: SYSTEM_PROMPT,
         cacheSystemPrompt: true,
         messages,
-        tools: repairing
-          ? [repairResolutionTool]
-          : mustSubmit
-            ? [submitResolutionTool]
-            : tools,
+        tools,
         toolChoice: repairing
           ? { name: "repair_resolution" }
           : mustSubmit
@@ -248,9 +349,7 @@ export async function resolveTick(
 
     // ---- repair round ----------------------------------------------------
     if (repairing && pending) {
-      const repairCall = toolCalls.find(
-        (c) => c.name === "repair_resolution"
-      );
+      const repairCall = toolCalls.find((c) => c.name === "repair_resolution");
       if (!repairCall) {
         return unusable(
           `${context.tick.tickId}: expected a repair, got none — nothing applied`,
@@ -286,9 +385,7 @@ export async function resolveTick(
       messages.push(assistantMessage);
       messages.push({
         role: "tool",
-        results: [
-          { toolCallId: repairCall.id, content: renderErrors(errors) },
-        ],
+        results: [{ toolCallId: repairCall.id, content: renderErrors(errors) }],
       });
       continue;
     }
@@ -298,7 +395,9 @@ export async function resolveTick(
 
     // ---- first clean submission -----------------------------------------
     if (submits.length === 1 && codeCalls.length === 0) {
-      const raw = submits[0].args as unknown as RawTickResolution;
+      const raw = normalizeRawResolution(
+        submits[0].args as unknown as RawTickResolution
+      );
       const invocationsSoFar = deps.codeTools.drainInvocations();
       const errors = validateRawResolution(raw, context, invocationsSoFar);
       requeueInvocations(deps.codeTools, invocationsSoFar);
@@ -331,6 +430,17 @@ export async function resolveTick(
           toolCallId: call.id,
           content:
             "Error: submit_resolution was NOT accepted — it must be the only tool call in its turn. Finish tool lookups first, then submit alone.",
+        });
+        continue;
+      }
+      if (call.name === "repair_resolution") {
+        // Present in every round's tool list so the list stays cacheable, but
+        // only meaningful once a submission has been rejected.
+        results.push({
+          toolCallId: call.id,
+          content:
+            "Error: repair_resolution only applies to a submission that was " +
+            "rejected. Nothing has been submitted yet — call submit_resolution.",
         });
         continue;
       }

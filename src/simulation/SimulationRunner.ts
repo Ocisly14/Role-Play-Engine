@@ -11,7 +11,6 @@ import type {
 } from "../engine/core/types.js";
 import { createDefaultSubsystemRegistry } from "../engine/registerDefaults.js";
 import type { NpcMemoryManager } from "../memory/NpcMemoryManager.js";
-import { summarizeAllNpcDayMemory } from "../roleSim/dailySummarization.js";
 import { LLMRoleSimAgent } from "../roleSim/llmAgent.js";
 import { NpcActionController } from "../roleSim/npcActionController.js";
 import type { DynamicGameStateManager } from "../state/DynamicGameState.js";
@@ -601,21 +600,9 @@ export class SimulationRunner {
             newDate: datePart(stateAfter.gameDateTime),
           }
         );
-
-        // Daily summarization (Decision 25) — system writes [date]-prefixed
-        // summary memories for every alive NPC. Schedule generation (the
-        // legacy second half of onNewDay) is deleted with the planner.
-        if (this.memoryManager) {
-          await summarizeAllNpcDayMemory({
-            dgsm: this.dgsm,
-            memoryManager: this.memoryManager,
-            sessionId: this.sessionId,
-            moduleId: this.config.moduleId,
-            // summarize the date that JUST ended.
-            gameDate: dateBefore,
-            language: this.language,
-          });
-        }
+        // Nothing else happens on a day boundary. The end-of-day diary is
+        // gone: it was the last thing written on a character's behalf, and
+        // what they keep of a day is now only what they chose to write.
       }
 
       await this.checkDerivedEvents();

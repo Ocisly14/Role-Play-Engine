@@ -12,6 +12,7 @@
 import type { NpcMemoryManager } from "../memory/NpcMemoryManager.js";
 import type { NpcMemoryType } from "../memory/types.js";
 import type { DynamicGameStateManager } from "../state/DynamicGameState.js";
+import { buildMemoryTags } from "./memoryFormatter.js";
 import {
   buildPerceivableDirectory,
   descriptionIdentifier,
@@ -38,6 +39,11 @@ export interface DispatcherDeps {
   gameDateTime: string;
   /** Where the character is right now — stamped onto written memories. */
   location?: string;
+  /** Exactly the memories that were rendered into this decision's prompt.
+   *  `ref` resolves against THIS list and nothing else — the same rule the
+   *  `act` boundary applies to objectRefs: a character may only point at what
+   *  they were shown. */
+  memories: ReadonlyArray<{ id: string; type: string; content: string }>;
 }
 
 export interface DispatchResult {
@@ -46,8 +52,11 @@ export interface DispatchResult {
 }
 
 interface WriteMemoryInput {
-  type: NpcMemoryType;
+  op?: "add" | "replace" | "delete";
+  type?: NpcMemoryType;
   content?: string;
+  /** Required for op=replace / op=delete — the tag of the memory to act on. */
+  ref?: string;
   /** Required for type=relationship — who the memory is about. */
   targetId?: string;
 }
@@ -73,19 +82,23 @@ export async function dispatchInstantTool(
   }
 }
 
-/** The character writes its own memories. `summary` (end-of-day diary) and
- *  `context` (the geography they started the session knowing) stay
- *  system-authored. */
-const WRITE_MEMORY_DISALLOWED: ReadonlySet<string> = new Set([
-  "summary",
-  "context",
-]);
+/** The character writes its own memories. `context` — the geography they
+ *  started the session knowing — is the one thing written for them, so it is
+ *  the one thing they may not rewrite. */
+const WRITE_MEMORY_DISALLOWED: ReadonlySet<string> = new Set(["context"]);
 
 async function dispatchWriteMemory(
   input: WriteMemoryInput,
   deps: DispatcherDeps
 ): Promise<DispatchResult> {
-  if (!input || typeof input.type !== "string") {
+  if (!input) {
+    return { result: "Error: writeMemory requires arguments." };
+  }
+  const op = input.op ?? "add";
+  if (op === "replace" || op === "delete") {
+    return await dispatchReviseMemory(op, input, deps);
+  }
+  if (typeof input.type !== "string") {
     return { result: "Error: writeMemory requires a 'type' field." };
   }
   if (WRITE_MEMORY_DISALLOWED.has(input.type)) {
@@ -152,6 +165,81 @@ async function dispatchWriteMemory(
 
   return {
     result: `Remembered (${input.type}): "${truncate(content, 80)}"`,
+  };
+}
+
+/**
+ * Correct or retract a memory the character already holds.
+ *
+ * Two gates, in this order:
+ *  1. `ref` must name a memory that was IN THIS DECISION'S PROMPT. Resolving
+ *     against the rendered list — not against the store — is the same rule
+ *     `act` applies to objectRefs: a character can only point at what they
+ *     were shown. It also makes a truncated-tag collision resolvable, since
+ *     both sides derive tags from the same list.
+ *  2. The row must still belong to this character in this session. That is
+ *     enforced inside the query, so even a leaked id changes nothing.
+ *
+ * The geography they started with and the diary written for them are not
+ * theirs to rewrite — same list as for writing.
+ */
+async function dispatchReviseMemory(
+  op: "replace" | "delete",
+  input: WriteMemoryInput,
+  deps: DispatcherDeps
+): Promise<DispatchResult> {
+  const ref = input.ref?.trim();
+  if (!ref) {
+    return {
+      result: `Error: op="${op}" requires 'ref' — the tag at the start of that line in what you remember, e.g. M3f9a2c.`,
+    };
+  }
+
+  const tagById = buildMemoryTags(deps.memories);
+  const target = deps.memories.find((m) => tagById.get(m.id) === ref);
+  if (!target) {
+    return {
+      result: `Error: "${ref}" is not a memory of yours. Copy the tag exactly as it appears at the start of the line in what you remember.`,
+    };
+  }
+  if (WRITE_MEMORY_DISALLOWED.has(target.type)) {
+    return {
+      result: `Error: "${target.type}" memories are not yours to change — that is what you already knew coming in. Write a new memory of your own instead.`,
+    };
+  }
+
+  if (op === "delete") {
+    const done = await deps.memory.retractOwn({
+      memoryId: target.id,
+      sessionId: deps.sessionId,
+      npcId: deps.npcId,
+    });
+    return {
+      result: done
+        ? `Forgotten: "${truncate(target.content, 80)}"`
+        : `Error: "${ref}" is no longer in your memory.`,
+    };
+  }
+
+  const content = typeof input.content === "string" ? input.content : "";
+  if (!content.trim()) {
+    return {
+      result:
+        'Error: op="replace" requires \'content\' — the whole corrected memory, not just what changed.',
+    };
+  }
+
+  const done = await deps.memory.reviseOwn({
+    memoryId: target.id,
+    sessionId: deps.sessionId,
+    npcId: deps.npcId,
+    content,
+    metadata: { revisedAt: deps.gameDateTime },
+  });
+  return {
+    result: done
+      ? `Corrected (${target.type}): "${truncate(content, 80)}"`
+      : `Error: "${ref}" is no longer in your memory.`,
   };
 }
 

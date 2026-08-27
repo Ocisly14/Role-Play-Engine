@@ -1,16 +1,20 @@
 // src/roleSim/profileFormatter.ts
 //
-// Formats the 12-field profile block for the user prompt's "## Who you are"
-// section. Inventory and relationships come from runtime DGSM (not the
-// profile's static fields), so this helper takes both.
+// Formats the character's own description, split by how long each part stays
+// true:
+//
+//  - `formatProfile` — who they are. Module-authored, never moves for the
+//    life of the session, so it can sit inside the prompt's cached prefix.
+//  - `formatCondition` — how they are RIGHT NOW: vitals, conditions, what
+//    they carry, who they know. The stamina subsystem moves fatigue on most
+//    ticks and items change hands, so this must sit AFTER the breakpoint.
+//    Mixed in with the profile it invalidated the whole prefix every tick.
 
 import type { DynamicGameStateManager } from "../state/DynamicGameState.js";
 import type { DynamicNPCProfile, InventoryItem } from "../state/types.js";
 
-export function formatProfile(
-  npc: DynamicNPCProfile,
-  dgsm: DynamicGameStateManager
-): string {
+/** Who they are. Nothing here changes while the session runs. */
+export function formatProfile(npc: DynamicNPCProfile): string {
   const lines: string[] = [];
   lines.push(`Name: ${npc.name}`);
 
@@ -26,7 +30,15 @@ export function formatProfile(
   if (npc.backstory) lines.push(`Backstory: ${npc.backstory}`);
   if (npc.residence) lines.push(`Residence: ${npc.residence}`);
 
-  lines.push(formatStatusLine(npc));
+  return lines.join("\n");
+}
+
+/** How they are this minute. Expected to differ from the previous tick. */
+export function formatCondition(
+  npc: DynamicNPCProfile,
+  dgsm: DynamicGameStateManager
+): string {
+  const lines: string[] = [formatStatusLine(npc)];
 
   const inventoryLine = formatInventoryLine(dgsm, npc.id);
   if (inventoryLine) lines.push(inventoryLine);

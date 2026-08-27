@@ -411,6 +411,7 @@ export async function generateText(
       system,
       request: content,
       response: response.text,
+      usage: response.usage,
     });
     console.log(
       `✅ Generated text successfully (${response.text.length} characters, input tokens: ${response.usage?.input_tokens ?? "?"})`
@@ -473,6 +474,8 @@ export async function generateToolCalls(
       system,
       request: options.messages,
       response: { text: response.text, toolCalls },
+      usage: response.usage,
+      tools: options.tools,
     });
     console.log(
       `✅ Tool call ${toolCalls.map((c) => c.name).join(", ")} (input tokens: ${response.usage?.input_tokens ?? "?"})`

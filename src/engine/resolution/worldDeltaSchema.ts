@@ -16,7 +16,9 @@ import type { ToolSpec } from "../../models/providers/types.js";
  *  TickResolution: occurrence/fact ids are assigned by code, progress and
  *  lifecycle come from the clock, and every check is rolled and adjudicated
  *  deterministically against the bar set here. */
-export interface RawActionResolution {
+/** An action that BEGINS this tick: how long it should take, and how hard it
+ *  is. Never its outcome — that comes when its time is spent. */
+export interface RawActionStart {
   actionId: string;
   /** Set when the action starts, or when the Engine revises how long it will
    *  take. The actor's proposedDurationTicks is advisory. */
@@ -28,10 +30,6 @@ export interface RawActionResolution {
   /** Active resistance: who defends and with which skill. Code rolls both
    *  sides and compares levels. */
   opposedBy?: Array<{ characterId: string; skillId: string }>;
-  /** Present ONLY on the resolving call: what happened once the duration was
-   *  spent (or the world reached the action first). Its presence ends the
-   *  action — code labels it completed or interrupted from the progress. */
-  result?: RawActionResult;
   /** Engine-owned runtime annotation: set when this action has a movement leg
    *  the deterministic movement executor should advance tick by tick. The
    *  destination must have been checked with the pathfinding tool. */
@@ -43,11 +41,35 @@ export interface RawCheck {
   basis: string;
 }
 
-export interface RawActionResult {
-  /** Required only when the action carried no check — with a check, code
-   *  derives success from the roll against the bar. */
+/**
+ * An action that FINISHES this tick.
+ *
+ * Split from {@link RawActionStart} rather than sharing one optional-everything
+ * shape, because the shape is what the model reasons from. When both moments
+ * were one type, "an action that is starting has no result yet" and "the bar
+ * cannot change mid-flight" were rules the validator enforced against a type
+ * that permitted exactly what it then rejected — the model had to look up the
+ * action's status in a DIFFERENT section of the prompt to know which half of
+ * the type it was allowed to fill in. Six of sixteen rejections in one
+ * measured run were that lookup going wrong.
+ */
+export interface RawActionEnd {
+  actionId: string;
+  /** REQUIRED when the action carried no check. When it did, code has already
+   *  decided success from the roll and this field is refused. The trigger
+   *  section names exactly which ids need it. */
   outcome?: "success" | "partial" | "failure" | "blocked";
+  /** What happened, objectively. */
   reason: string;
+  /** The trace this ending leaves in the world. Required here rather than
+   *  cross-referenced from the `occurrences` array: "every action that ends
+   *  leaves an occurrence" is unenforceable in a schema when the two live in
+   *  different arrays, and it was the third-most-common rejection. The source
+   *  is this action, so it is not restated. */
+  occurrence: Omit<RawOccurrence, "sourceActionIds">;
+  /** Revised estimate, when the Engine now knows it ran longer or shorter. */
+  resolvedDurationTicks?: number;
+  timingReason?: string;
 }
 
 export interface RawSourcedDelta {
@@ -89,7 +111,12 @@ export interface RawOccurrence {
 }
 
 export interface RawTickResolution {
-  actions: RawActionResolution[];
+  /** The two moments. Both optional on the wire — a tick with nothing ending
+   *  simply omits `ending` — and `normalizeRawResolution` fills the gaps
+   *  before anything reads them. An action that is merely still running
+   *  appears in neither: silence already means "keeps running". */
+  starting?: RawActionStart[];
+  ending?: RawActionEnd[];
   characterChanges?: RawCharacterChange[];
   sceneChanges?: RawSceneChange[];
   itemChanges?: RawItemChange[];
@@ -97,6 +124,98 @@ export interface RawTickResolution {
 }
 
 // ==================== Terminal tool schema ====================
+
+/**
+ * The `operation` contract, per domain, in one place.
+ *
+ * `operation` cannot be a proper discriminated union in the tool schema — it is
+ * declared `additionalProperties: true` with only `kind` required — so the
+ * field names reach the model as prose. That prose and the validator's list of
+ * accepted kinds used to be written out separately, which is the same
+ * arrangement that let `result.outcome` be optional in one place and mandatory
+ * in the other. Both now come from these rows.
+ *
+ * The per-field checks stay in the validator: those are judgements about the
+ * world (does this character exist, does the holder match), not declarations.
+ */
+export interface OperationSpec {
+  /** Kinds sharing one field list. */
+  kinds: string[];
+  /** Field list exactly as the model should write it, `kind` excluded. */
+  fields: string;
+}
+
+export const CHARACTER_OPS: OperationSpec[] = [
+  { kinds: ["hp", "san", "fatigue"], fields: "delta:number, reason:string" },
+  {
+    kinds: ["position"],
+    fields:
+      'position:{type:"scene"|"junction"|"road", sceneId|junctionId|roadId}',
+  },
+  {
+    kinds: ["addCondition"],
+    fields: "condition:{id:string, description:string}",
+  },
+  { kinds: ["removeCondition"], fields: "conditionId:string" },
+  {
+    kinds: ["relationship"],
+    fields: "toCharacterId:string, delta?:number, note?:string",
+  },
+];
+
+export const SCENE_OPS: OperationSpec[] = [
+  {
+    kinds: ["addCondition"],
+    fields:
+      "condition:{description:string, featureId?:string, mechanicalEffect?:object}",
+  },
+  { kinds: ["removeCondition"], fields: "predicate:{featureId:string}" },
+  {
+    kinds: ["connectionBlock"],
+    fields: "connectionId:string, blocked:boolean, reason:string",
+  },
+  {
+    kinds: ["environmentContribute"],
+    fields:
+      'quantity:"temperature"|"illumination"|"oxygen"|"noise", value:number',
+  },
+  {
+    kinds: ["environmentHazard"],
+    fields: "add?:string[], remove?:string[]",
+  },
+];
+
+export const ITEM_OPS: OperationSpec[] = [
+  {
+    kinds: ["create"],
+    fields:
+      "name:string, location:<sceneId or characterId>, properties?:object",
+  },
+  {
+    kinds: ["move"],
+    fields: "from:<current holder>, to:<sceneId or characterId>",
+  },
+  { kinds: ["modify"], fields: "description:string" },
+  { kinds: ["damage"], fields: "damagedBy:string, reason:string" },
+  { kinds: ["destroy"], fields: "" },
+];
+
+/** The prose the model reads. */
+function renderOps(ops: OperationSpec[]): string {
+  return ops
+    .map(
+      (op) =>
+        `{kind:${op.kinds.map((k) => `"${k}"`).join("|")}${
+          op.fields ? `, ${op.fields}` : ""
+        }}`
+    )
+    .join(" · ");
+}
+
+/** The set the validator accepts. Same rows, so they cannot disagree. */
+export function opKinds(ops: OperationSpec[]): ReadonlySet<string> {
+  return new Set(ops.flatMap((op) => op.kinds));
+}
 
 const ENTITY_REF = {
   type: "object",
@@ -119,6 +238,8 @@ const sourcedDelta = (idField: string, idRequired: boolean) => ({
     [idField]: { type: "string" },
     operation: {
       type: "object",
+      description:
+        "Shape depends on `kind` — see the exact field list on the array this delta belongs to. Field names are literal: a wrong one is a rejection, not a synonym.",
       properties: { kind: { type: "string" } },
       required: ["kind"],
       additionalProperties: true,
@@ -133,6 +254,65 @@ const sourcedDelta = (idField: string, idRequired: boolean) => ({
   additionalProperties: false,
 });
 
+/** Everything an occurrence is, minus who caused it. Hoisted so the same
+ *  shape can be embedded in an ending (where the cause is the action itself)
+ *  and listed standalone (where it has to be named). */
+const OCCURRENCE_BODY = {
+  locationId: { type: "string" },
+  facts: {
+    type: "array",
+    minItems: 1,
+    items: {
+      type: "object",
+      properties: {
+        type: {
+          type: "string",
+          description: 'e.g. "speech", "sound", "movement", "action_result"',
+        },
+        content: { type: "string" },
+        entityRefs: { type: "array", items: ENTITY_REF },
+      },
+      required: ["type", "content"],
+      additionalProperties: false,
+    },
+  },
+  participants: {
+    type: "array",
+    items: {
+      type: "object",
+      properties: {
+        characterId: { type: "string" },
+        role: {
+          type: "string",
+          enum: ["actor", "target", "directly_affected"],
+        },
+      },
+      required: ["characterId", "role"],
+      additionalProperties: false,
+    },
+  },
+  perceiverCharacterIds: { type: "array", items: { type: "string" } },
+  signals: {
+    type: "array",
+    items: {
+      type: "object",
+      properties: {
+        factIndexes: { type: "array", items: { type: "integer" } },
+        channel: {
+          type: "string",
+          enum: ["visual", "sound", "smell", "touch", "direct"],
+        },
+        originLocationId: { type: "string" },
+        intensity: { type: "number" },
+      },
+      required: ["channel"],
+      additionalProperties: false,
+    },
+  },
+} as const;
+
+const OCCURRENCE_REQUIRED = ["facts", "participants", "perceiverCharacterIds"];
+
 export const submitResolutionTool: ToolSpec = {
   name: "submit_resolution",
   description:
@@ -140,10 +320,10 @@ export const submitResolutionTool: ToolSpec = {
   inputSchema: {
     type: "object",
     properties: {
-      actions: {
+      starting: {
         type: "array",
         description:
-          "Exactly one entry per triggering action (new commands and due/affected active actions).",
+          "Actions that BEGIN this tick — the ids the trigger section lists under `starting`. How long each should take and how hard it is. Never an outcome: its time has not been spent yet.",
         items: {
           type: "object",
           properties: {
@@ -152,17 +332,16 @@ export const submitResolutionTool: ToolSpec = {
               type: "integer",
               minimum: 1,
               description:
-                "How long the action SHOULD take. REQUIRED when the action starts; send it again only to revise the estimate. You never state elapsed time — code advances progress from the clock.",
+                "How long the action SHOULD take. You never state elapsed time — code advances progress from the clock.",
             },
             timingReason: {
               type: "string",
-              description:
-                "Objective reason for the chosen or revised duration. Required with resolvedDurationTicks.",
+              description: "Objective reason for the chosen duration.",
             },
             check: {
               type: "object",
               description:
-                "The bar for the skill the actor declared, set when the action STARTS — before any roll exists. Omit entirely when the declared skill does not fit the attempt or no check is needed: an omitted check means the skill grants nothing, and the action is settled on its own merits. Never raise the bar to punish a poor skill choice.",
+                "The bar for the skill the actor declared, set BEFORE any roll exists. Omit entirely when the declared skill does not fit the attempt or no check is needed: an omitted check means the skill grants nothing, and the action is settled on its own merits. Never raise the bar to punish a poor skill choice. An actor who declared NO skill cannot be checked at all.",
               properties: {
                 requiredLevel: {
                   type: "string",
@@ -180,7 +359,7 @@ export const submitResolutionTool: ToolSpec = {
             opposedBy: {
               type: "array",
               description:
-                "Set when someone actively resists: the character and the defense skill they resist with. Code rolls both sides and compares levels; you choose who defends and with what, never who wins.",
+                "Set when someone actively resists: the character and the defense skill they resist with. Code rolls both sides and compares levels; you choose who defends and with what, never who wins. Needs `check`.",
               items: {
                 type: "object",
                 properties: {
@@ -191,22 +370,6 @@ export const submitResolutionTool: ToolSpec = {
                 additionalProperties: false,
               },
             },
-            result: {
-              type: "object",
-              description:
-                "What happened, sent ONLY on the call where the action resolves. Its presence ends the action. The check result you were given is input: never restate or contradict it.",
-              properties: {
-                outcome: {
-                  type: "string",
-                  enum: ["success", "partial", "failure", "blocked"],
-                  description:
-                    "Required only for an action with NO check. With a check, code derives success from the roll against your bar.",
-                },
-                reason: { type: "string" },
-              },
-              required: ["reason"],
-              additionalProperties: false,
-            },
             movement: {
               type: "object",
               description:
@@ -216,103 +379,79 @@ export const submitResolutionTool: ToolSpec = {
               additionalProperties: false,
             },
           },
-          required: ["actionId"],
+          required: ["actionId", "resolvedDurationTicks", "timingReason"],
+          additionalProperties: false,
+        },
+      },
+      ending: {
+        type: "array",
+        description:
+          "Actions that FINISH this tick — the ids the trigger section lists under `ending`. What happened, and the trace it leaves. The bar was set when the action started and cannot be revisited here.",
+        items: {
+          type: "object",
+          properties: {
+            actionId: { type: "string" },
+            outcome: {
+              type: "string",
+              enum: ["success", "partial", "failure", "blocked"],
+              description:
+                "REQUIRED for every id the trigger section lists under `endingNeedsOutcome` — those actions carried no check, so there is no roll to derive success from and you decide it. For any other ending, code has already decided success from the roll against your bar and this field is refused.",
+            },
+            reason: {
+              type: "string",
+              description:
+                "What happened, objectively. The check result you were given is input: never restate or contradict it.",
+            },
+            occurrence: {
+              type: "object",
+              description:
+                "The objective trace this ending leaves. Every action that ends leaves one — that is why it lives here rather than in the `occurrences` array.",
+              properties: { ...OCCURRENCE_BODY },
+              required: OCCURRENCE_REQUIRED,
+              additionalProperties: false,
+            },
+            resolvedDurationTicks: {
+              type: "integer",
+              minimum: 1,
+              description:
+                "Only to revise the estimate — say so in timingReason.",
+            },
+            timingReason: { type: "string" },
+          },
+          required: ["actionId", "reason", "occurrence"],
           additionalProperties: false,
         },
       },
       characterChanges: {
         type: "array",
-        description:
-          "Persistent character-state changes only (hp/san/fatigue/position/addCondition/removeCondition/relationship). Descriptive results belong in occurrences.",
+        description: `Persistent character-state changes only; descriptive results belong in occurrences. \`operation\` is one of, with exactly these fields: ${renderOps(CHARACTER_OPS)}.`,
         items: sourcedDelta("characterId", true),
       },
       sceneChanges: {
         type: "array",
-        description:
-          "Scene-state changes (addCondition/removeCondition/connectionBlock/environmentContribute/environmentHazard).",
+        description: `Scene-state changes. \`operation\` is one of, with exactly these fields: ${renderOps(SCENE_OPS)}.`,
         items: sourcedDelta("sceneId", true),
       },
       itemChanges: {
         type: "array",
-        description:
-          "Item changes (create/move/modify/damage/destroy). itemId required except for create.",
+        description: `Item changes; itemId is required except for create. \`operation\` is one of, with exactly these fields: ${renderOps(ITEM_OPS)}.`,
         items: sourcedDelta("itemId", false),
       },
       occurrences: {
         type: "array",
         description:
-          "Objective things that happened this tick (speech, noises, visible attempts, action results). Facts are world-true, third-person, no character-perspective wording. perceiverCharacterIds = every character physically/sensorially able to perceive it.",
+          "Objective things that happened this tick that are NOT an action ending — speech, noises, a visible attempt in progress. An ending's trace goes on the ending itself. Facts are world-true, third-person, no character-perspective wording. perceiverCharacterIds = every character physically/sensorially able to perceive it.",
         items: {
           type: "object",
           properties: {
             sourceActionIds: { type: "array", items: { type: "string" } },
-            locationId: { type: "string" },
-            facts: {
-              type: "array",
-              minItems: 1,
-              items: {
-                type: "object",
-                properties: {
-                  type: {
-                    type: "string",
-                    description:
-                      'e.g. "speech", "sound", "movement", "action_result"',
-                  },
-                  content: { type: "string" },
-                  entityRefs: { type: "array", items: ENTITY_REF },
-                },
-                required: ["type", "content"],
-                additionalProperties: false,
-              },
-            },
-            participants: {
-              type: "array",
-              items: {
-                type: "object",
-                properties: {
-                  characterId: { type: "string" },
-                  role: {
-                    type: "string",
-                    enum: ["actor", "target", "directly_affected"],
-                  },
-                },
-                required: ["characterId", "role"],
-                additionalProperties: false,
-              },
-            },
-            perceiverCharacterIds: {
-              type: "array",
-              items: { type: "string" },
-            },
-            signals: {
-              type: "array",
-              items: {
-                type: "object",
-                properties: {
-                  factIndexes: { type: "array", items: { type: "integer" } },
-                  channel: {
-                    type: "string",
-                    enum: ["visual", "sound", "smell", "touch", "direct"],
-                  },
-                  originLocationId: { type: "string" },
-                  intensity: { type: "number" },
-                },
-                required: ["channel"],
-                additionalProperties: false,
-              },
-            },
+            ...OCCURRENCE_BODY,
           },
-          required: [
-            "sourceActionIds",
-            "facts",
-            "participants",
-            "perceiverCharacterIds",
-          ],
+          required: ["sourceActionIds", ...OCCURRENCE_REQUIRED],
           additionalProperties: false,
         },
       },
     },
-    required: ["actions"],
     additionalProperties: false,
   },
 };
@@ -328,26 +467,64 @@ export const submitResolutionTool: ToolSpec = {
  * compacting the array, so an address quoted in round 1 still means the same
  * element in round 2.
  */
-export interface RawResolutionRepair {
-  /** Replaces the transition with the same actionId. */
-  actions?: RawActionResolution[];
-  /** index (as a string key) → replacement, or null to withdraw. */
-  characterChanges?: Record<string, RawCharacterChange | null>;
-  sceneChanges?: Record<string, RawSceneChange | null>;
-  itemChanges?: Record<string, RawItemChange | null>;
-  occurrences?: Record<string, RawOccurrence | null>;
-  /** Appended, for elements the resolution was missing entirely. */
-  addCharacterChanges?: RawCharacterChange[];
-  addSceneChanges?: RawSceneChange[];
-  addItemChanges?: RawItemChange[];
-  addOccurrences?: RawOccurrence[];
+/** Where a repair item lands. Carried INSIDE the item, so every field of the
+ *  repair tool is a plain array exactly like the submission it repairs —
+ *  index-keyed objects next to arrays is what made the model send one where
+ *  the other belonged. */
+export interface RepairAddress {
+  /** Replaces the element the error quoted (`characterChange:2` → 2). Absent
+   *  means this is a new element to append. */
+  index?: number;
+  /** With `index`, withdraws that element instead of replacing it. */
+  remove?: boolean;
 }
 
-const patchMap = (itemSchema: unknown, what: string) => ({
-  type: "object",
-  description: `${what} to replace, keyed by the index quoted in the error (e.g. "2"). Use null to withdraw one.`,
-  additionalProperties: itemSchema,
-});
+/** Partial: a withdrawal carries only `index` and `remove`, and every
+ *  replacement is re-validated against the real contract after the merge. */
+export type RepairItem<T> = Partial<T> & RepairAddress;
+
+export interface RawResolutionRepair {
+  /** Each replaces the entry with the same actionId in its own list; a new
+   *  actionId appends. Moving an action between lists is done by sending it
+   *  in the list it belongs in — the merge drops it from the others. */
+  starting?: RawActionStart[];
+  ending?: RawActionEnd[];
+  characterChanges?: Array<RepairItem<RawCharacterChange>>;
+  sceneChanges?: Array<RepairItem<RawSceneChange>>;
+  itemChanges?: Array<RepairItem<RawItemChange>>;
+  occurrences?: Array<RepairItem<RawOccurrence>>;
+}
+
+/** Same array shape as the submission, plus the address fields. `required` is
+ *  dropped: a withdrawal carries only `index` and `remove`, and every
+ *  replacement is re-validated against the real contract anyway. */
+const repairable = (itemSchema: unknown, what: string) => {
+  const item = itemSchema as {
+    type: string;
+    properties: Record<string, unknown>;
+  };
+  return {
+    type: "array",
+    description: `${what} to fix. Each item says where it goes: "index" replaces the element the error quoted (characterChange:2 → index 2); no "index" appends a new element; "remove": true withdraws the one at "index".`,
+    items: {
+      ...item,
+      properties: {
+        ...item.properties,
+        index: {
+          type: "integer",
+          minimum: 0,
+          description: "The index quoted in the error. Omit to append.",
+        },
+        remove: {
+          type: "boolean",
+          description: "With index: withdraw that element.",
+        },
+      },
+      required: [],
+      additionalProperties: false,
+    },
+  };
+};
 
 export const repairResolutionTool: ToolSpec = {
   name: "repair_resolution",
@@ -356,48 +533,34 @@ export const repairResolutionTool: ToolSpec = {
   inputSchema: {
     type: "object",
     properties: {
-      actions: {
-        type: "array",
-        description:
-          "Corrected transitions. Each replaces the existing transition with the same actionId.",
-        items: (submitResolutionTool.inputSchema as {
-          properties: { actions: { items: unknown } };
-        }).properties.actions.items,
-      },
-      characterChanges: patchMap(
+      ...Object.fromEntries(
+        (["starting", "ending"] as const).map((moment) => [
+          moment,
+          {
+            type: "array",
+            description: `Corrected \`${moment}\` entries. Each replaces the one with the same actionId; sending an action here also removes it from the other list, which is how an action moves between moments.`,
+            items: (
+              submitResolutionTool.inputSchema as {
+                properties: Record<string, { items: unknown }>;
+              }
+            ).properties[moment].items,
+          },
+        ])
+      ),
+      characterChanges: repairable(
         sourcedDelta("characterId", true),
         "Character changes"
       ),
-      sceneChanges: patchMap(sourcedDelta("sceneId", true), "Scene changes"),
-      itemChanges: patchMap(sourcedDelta("itemId", false), "Item changes"),
-      occurrences: patchMap(
-        (submitResolutionTool.inputSchema as {
-          properties: { occurrences: { items: unknown } };
-        }).properties.occurrences.items,
+      sceneChanges: repairable(sourcedDelta("sceneId", true), "Scene changes"),
+      itemChanges: repairable(sourcedDelta("itemId", false), "Item changes"),
+      occurrences: repairable(
+        (
+          submitResolutionTool.inputSchema as {
+            properties: { occurrences: { items: unknown } };
+          }
+        ).properties.occurrences.items,
         "Occurrences"
       ),
-      addCharacterChanges: {
-        type: "array",
-        description: "New character changes the resolution was missing.",
-        items: sourcedDelta("characterId", true),
-      },
-      addSceneChanges: {
-        type: "array",
-        description: "New scene changes the resolution was missing.",
-        items: sourcedDelta("sceneId", true),
-      },
-      addItemChanges: {
-        type: "array",
-        description: "New item changes the resolution was missing.",
-        items: sourcedDelta("itemId", false),
-      },
-      addOccurrences: {
-        type: "array",
-        description: "New occurrences the resolution was missing.",
-        items: (submitResolutionTool.inputSchema as {
-          properties: { occurrences: { items: unknown } };
-        }).properties.occurrences.items,
-      },
     },
     required: [],
     additionalProperties: false,
@@ -448,20 +611,6 @@ export const CODE_TOOL_SPECS: ToolSpec[] = [
         actorId: { type: "string" },
       },
       required: ["itemId"],
-      additionalProperties: false,
-    },
-  },
-  {
-    name: "opposedRoll",
-    description:
-      "Roll a DEFENDER's chosen defense skill for an opposed check (real value, penalties applied). The actor's roll already exists on the command — never re-roll it.",
-    inputSchema: {
-      type: "object",
-      properties: {
-        characterId: { type: "string" },
-        skillId: { type: "string" },
-      },
-      required: ["characterId", "skillId"],
       additionalProperties: false,
     },
   },

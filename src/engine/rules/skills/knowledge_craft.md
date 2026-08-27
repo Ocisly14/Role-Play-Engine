@@ -23,7 +23,7 @@ knows or can build is bounded by their background and what is in front of them.
   source in the first place (Investigation), for reading a language the actor
   does not have (Languages), and for repairing machinery (Repair & Engineering).
 - Knowledge the setting has no record of cannot be recalled at any success
-  level. Say so in `applicabilityBasis` rather than inventing a source.
+  level. Say so in the check's `basis` rather than inventing a source.
 
 ## Success levels
 

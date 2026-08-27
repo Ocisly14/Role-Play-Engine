@@ -23,8 +23,8 @@ already wants — not the label on the approach.
   cannot hear or understand the actor (that is Languages), and when nothing
   is actually asked of anyone.
 - A target with a standing reason to refuse is not persuaded by a good roll
-  alone: state the basis in `applicabilityBasis` and let the required level
-  carry the difficulty.
+  alone: say so in the check's `basis` and let the required level carry the
+  difficulty.
 
 ## Success levels
 

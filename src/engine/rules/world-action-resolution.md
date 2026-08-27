@@ -69,9 +69,12 @@ rules and the same output shape apply to everything.
 ## The two moments you are called
 
 An action reaches you exactly twice, and the two calls ask for different
-things. Never mix them.
+things. You do not have to work out which call you are on: the trigger section
+lists every action under `starting` or `ending`, and the submission has one
+array per moment. Put each action in its list, and the fields you are allowed
+to send are the fields that exist there.
 
-### 1. It starts (a queued command)
+### `starting` — the action begins (a queued command)
 
 Say how long it takes and how hard it is. Nothing has happened yet, so there
 is no outcome to report and no world change to make.
@@ -82,7 +85,10 @@ is no outcome to report and no world change to make.
 - `check` — the difficulty for the skill the actor declared:
   `requiredLevel` (regular / hard / extreme) plus a factual `basis`. No roll
   exists yet; you are setting the bar blind, which is the point.
-  - OMIT `check` entirely when the declared skill does not fit what is being
+  - There is a check ONLY when the actor declared a skill. If they declared
+    none, there is nothing to check and you must omit `check` — you do not
+    get to decide that an action "obviously needs" one and invent it.
+  - OMIT `check` too when the declared skill does not fit what is being
     attempted, or when the action needs no check at all. An omitted check
     means the skill grants nothing — the action is settled on its own merits.
     Never raise the bar to punish a bad skill choice; simply do not check it.
@@ -90,16 +96,36 @@ is no outcome to report and no world change to make.
   skill they resist with. Code rolls both sides and compares; you choose who
   defends and with what, not who wins.
 
-### 2. Its time is spent (or the world reaches it first)
+### `ending` — its time is spent, or the world reached it first
 
 Code has already rolled every check you declared, compared it to your bar, and
 handed you the result. Now say what happened to the world.
 
-- The check result is INPUT, not something to restate or contradict. A check
-  that was not met cannot produce the outcome of one that was; a fumble may
-  make things worse than a plain miss.
-- Emit the world changes and occurrences that follow. This is the only moment
-  an action produces state.
+- `reason` — what happened, objectively. The check result is INPUT, not
+  something to restate or contradict. A check that was not met cannot produce
+  the outcome of one that was; a fumble may make things worse than a plain
+  miss.
+- `outcome` — REQUIRED for the ids listed under `endingNeedsOutcome`, and
+  refused for every other ending. Those actions carried no check, so nothing
+  rolled and there is no result to derive: you decide. When a check DID run,
+  code has already decided from the roll against your bar, and saying it again
+  is only a chance to disagree with it.
+- `occurrence` — REQUIRED, on the ending itself. Without one the actor
+  perceives nothing, concludes nothing happened, and re-issues the same action
+  next minute — the loop this rule exists to prevent. List the actor among
+  `perceiverCharacterIds`.
+- Emit the world changes that follow in `characterChanges` / `sceneChanges` /
+  `itemChanges`. This is the only moment an action produces state.
+
+### Nothing else
+
+An action that is still running takes no entry at all — saying nothing about it
+is already what keeps it running, and the trigger lists those under
+`stillRunning` only so that every id is accounted for.
+
+There is no way to ask for more time. The duration is set once, when the action
+begins, and from then on the clock is code's. If its time is spent, the answer
+is what happened — not a longer estimate.
 - An action with no check is settled on its merits: state the outcome and why.
 - Producing this block ENDS the action. Code labels it `completed` when the
   duration was spent and `interrupted` when it was cut short — you do not

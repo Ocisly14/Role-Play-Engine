@@ -59,18 +59,21 @@ import { mkdirSync, writeFileSync } from "node:fs";
 import path from "node:path";
 
 import { SKILL_CATALOG } from "../src/engine/rules/skillCatalog.js";
+import { NpcMemoryManager } from "../src/memory/NpcMemoryManager.js";
 import {
+  type UsageAggregate,
+  formatUsageLine,
   formatUsageReport,
   getUsageStats,
+  measureUsage,
   resetUsageStats,
 } from "../src/models/index.js";
+import { ModelProviderName } from "../src/models/types.js";
+import { EmbeddingClient } from "../src/rag/embedding.js";
 import { runWithConcurrency } from "../src/roleSim/npcActionController.js";
 import { getPrismaClient } from "../src/shared/agents/memory/database/prismaClient.js";
 import { DynamicGameStateManager } from "../src/state/DynamicGameState.js";
 import { makeDateTime } from "../src/state/gameClock.js";
-import { NpcMemoryManager } from "../src/memory/NpcMemoryManager.js";
-import { EmbeddingClient } from "../src/rag/embedding.js";
-import { ModelProviderName } from "../src/models/types.js";
 import { importModule } from "../src/state/moduleImporter.js";
 import {
   type ModuleData,
@@ -477,6 +480,9 @@ interface CaseResult {
   itemOwners: SimObservation["itemOwners"];
   llmErrors: string[];
   elapsedMs: number;
+  /** What THIS case spent, per (model, operation). Bound to the case's async
+   *  context, so it stays correct at --concurrency > 1. */
+  usage: UsageAggregate[];
 }
 
 function summarize(
@@ -744,6 +750,7 @@ async function main(): Promise<void> {
       itemOwners: {},
       llmErrors: [],
       elapsedMs: 0,
+      usage: [],
     };
 
     if (prep.skipped) {
@@ -765,46 +772,63 @@ async function main(): Promise<void> {
     }`;
     result.sessionId = caseSessionId;
 
-    let obs: SimObservation;
-    try {
-      // Re-running a case must start from the same blank slate as its first
-      // run: the session id is derived from the case id, so without this the
-      // previous run's memories (and its re-seeded goal) would still be in
-      // the store and the prompt would differ silently. Deleting cascades to
-      // every memory row under it.
-      // deleteMany, not delete: a first run has no row and `delete` treats
-      // that as an error (noisy, even when caught).
-      await prismaClient.session.deleteMany({
-        where: { sessionId: caseSessionId },
-      });
-      await createSession(prismaClient, {
-        sessionId: caseSessionId,
-        moduleId: base.moduleId,
-        moduleData: base.moduleData,
-        embedClient,
-      });
-      obs = await runStagedCase({
-        baseState: base.serializedState,
-        stage: prep.stage,
-        lang: LANG,
-        sessionId: caseSessionId,
-        moduleId: base.moduleId,
-        memory,
-        // Trace lines from concurrent cases interleave, so tag every one.
-        ...(TRACE
-          ? {
-              log: (line: string) =>
-                console.log(`      [${prep.caseId}] ${line.trim()}`),
-            }
-          : {}),
-      });
-    } catch (err) {
+    // Re-running a case must start from the same blank slate as its first
+    // run: the session id is derived from the case id, so without this the
+    // previous run's memories (and its re-seeded goal) would still be in
+    // the store and the prompt would differ silently. Deleting cascades to
+    // every memory row under it.
+    // deleteMany, not delete: a first run has no row and `delete` treats
+    // that as an error (noisy, even when caught).
+    await prismaClient.session.deleteMany({
+      where: { sessionId: caseSessionId },
+    });
+
+    let obs: SimObservation | undefined;
+    let failure: unknown;
+    // The catch sits INSIDE the usage scope so a case that dies halfway still
+    // reports what it burned on the way down — that number is the whole point
+    // of an ERROR row.
+    const measured = await measureUsage(async () => {
+      try {
+        await createSession(prismaClient, {
+          sessionId: caseSessionId,
+          moduleId: base.moduleId,
+          moduleData: base.moduleData,
+          embedClient,
+        });
+        obs = await runStagedCase({
+          baseState: base.serializedState,
+          stage: prep.stage,
+          lang: LANG,
+          sessionId: caseSessionId,
+          moduleId: base.moduleId,
+          memory,
+          // Trace lines from concurrent cases interleave, so tag every one.
+          ...(TRACE
+            ? {
+                log: (line: string) =>
+                  console.log(`      [${prep.caseId}] ${line.trim()}`),
+              }
+            : {}),
+        });
+      } catch (err) {
+        failure = err;
+      }
+    });
+    result.usage = measured.usage;
+
+    if (failure || !obs) {
       result.status = "ERROR";
-      result.notes.push(err instanceof Error ? err.message : String(err));
+      result.notes.push(
+        failure instanceof Error
+          ? failure.message
+          : String(failure ?? "case produced no observation")
+      );
       results.push(result);
       done += 1;
       console.log(
-        `${icon("ERROR")} [${done}/${prepared.length}] ${prep.caseId} — ${result.notes[0]}`
+        `${icon("ERROR")} [${done}/${prepared.length}] ${prep.caseId} — ${result.notes[0]}\n` +
+          `      LLM ${formatUsageLine(result.usage)}`
       );
       return;
     }
@@ -841,6 +865,7 @@ async function main(): Promise<void> {
     const lines = [
       `${icon(result.status)} [${String(done).padStart(3)}/${prepared.length}] ${result.caseId}${REPEAT > 1 ? `@${result.run}` : ""} — ${result.label}`,
       `      舞台 : ${result.sceneName} · ${result.cast.join(" + ")} · ${result.ticks} tick · ${(result.elapsedMs / 1000).toFixed(0)}s`,
+      `      LLM  : ${formatUsageLine(result.usage)}`,
     ];
     for (const [npcId, a] of Object.entries(result.actors)) {
       lines.push(
@@ -1048,6 +1073,24 @@ async function main(): Promise<void> {
   }
 
   try {
+    // Per-case first: each case ran inside its own usage scope, so these
+    // numbers are attributed by async context, not by wall-clock slicing —
+    // they stay correct under --concurrency > 1.
+    const measured = results.filter((r) => r.usage.length > 0);
+    if (measured.length === 1) {
+      console.log(
+        `\n--- 本 case 的 LLM 花费 ---\n${formatUsageReport(measured[0].usage, "  ")}`
+      );
+    } else if (measured.length > 1) {
+      console.log("\n--- 每个 case 的 LLM 花费 ---");
+      for (const r of measured) {
+        console.log(`  ${pad(r.caseId, 26)} ${formatUsageLine(r.usage)}`);
+      }
+    }
+    // Run-wide. NOTE the two do not have to agree on cached%: the system
+    // prompt is shared across every case, so a second case reads a prefix the
+    // first one paid to write. That cross-case reuse is real caching, but it
+    // is not what one case in isolation would see.
     console.log(`\n${formatUsageReport(getUsageStats())}`);
   } catch {
     /* usage reporting is best-effort */

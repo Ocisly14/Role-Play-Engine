@@ -232,11 +232,43 @@ export function resetUsageStats(): void {
   usageAggregates.clear();
 }
 
-/** Snapshot of the in-process aggregates, heaviest (by total tokens) first. */
-export function getUsageStats(): UsageAggregate[] {
-  return [...usageAggregates.values()]
+/** Copy out, heaviest (by total tokens) first. Copies, so a caller holding a
+ *  snapshot never sees it grow under them. */
+function snapshot(source: Map<string, UsageAggregate>): UsageAggregate[] {
+  return [...source.values()]
     .map((entry) => ({ ...entry }))
     .sort((a, b) => b.total_tokens - a.total_tokens);
+}
+
+/** Snapshot of the in-process aggregates, heaviest (by total tokens) first. */
+export function getUsageStats(): UsageAggregate[] {
+  return snapshot(usageAggregates);
+}
+
+// ===== Scoped aggregation =====
+//
+// The map above answers "what did this process spend". Measuring ONE case in a
+// harness that runs several needs "what did this case spend" — and a case is an
+// async call tree, not a time range. Hence a bucket bound to the async context
+// rather than a before/after diff of the global map: diffing would hand a case
+// every token a concurrently running case happened to spend in the same
+// window, and there is no way to tell afterwards that it did.
+
+type UsageScope = { aggregates: Map<string, UsageAggregate> };
+
+const scopeStorage = new AsyncLocalStorage<UsageScope>();
+
+/**
+ * Run `fn` with its own usage bucket and return both its value and what it
+ * spent. Everything still lands in the global aggregate too, so the run-wide
+ * report is unchanged. Nested scopes attribute to the innermost one only.
+ */
+export async function measureUsage<T>(
+  fn: () => Promise<T>
+): Promise<{ value: T; usage: UsageAggregate[] }> {
+  const scope: UsageScope = { aggregates: new Map() };
+  const value = await scopeStorage.run(scope, fn);
+  return { value, usage: snapshot(scope.aggregates) };
 }
 
 /**
@@ -277,12 +309,14 @@ export function promptTokensSent(
   );
 }
 
-function accumulateUsageStats(params: TokenUsageRecord): void {
-  const modelName = params.modelName ?? "unknown";
-  const operation = params.operation ?? "chat";
-  const key = aggregateKey(params.provider, modelName, operation);
-
-  let entry = usageAggregates.get(key);
+function bump(
+  target: Map<string, UsageAggregate>,
+  key: string,
+  modelName: string,
+  operation: string,
+  params: TokenUsageRecord
+): void {
+  let entry = target.get(key);
   if (!entry) {
     entry = {
       provider: params.provider,
@@ -295,7 +329,7 @@ function accumulateUsageStats(params: TokenUsageRecord): void {
       cache_read_tokens: 0,
       cache_creation_tokens: 0,
     };
-    usageAggregates.set(key, entry);
+    target.set(key, entry);
   }
 
   entry.calls += 1;
@@ -308,16 +342,69 @@ function accumulateUsageStats(params: TokenUsageRecord): void {
   entry.cache_creation_tokens += params.cache_creation_tokens ?? 0;
 }
 
+function accumulateUsageStats(params: TokenUsageRecord): void {
+  const modelName = params.modelName ?? "unknown";
+  const operation = params.operation ?? "chat";
+  const key = aggregateKey(params.provider, modelName, operation);
+
+  bump(usageAggregates, key, modelName, operation, params);
+  const scope = scopeStorage.getStore();
+  if (scope) bump(scope.aggregates, key, modelName, operation, params);
+}
+
+/** Roll a set of per-(model, operation) rows up into one line's worth of
+ *  numbers. `sent` goes through `promptTokensSent` per row because the two
+ *  providers count input differently — summing raw `input_tokens` across a
+ *  mixed-provider run would be wrong. */
+export function usageTotals(stats: UsageAggregate[]): {
+  calls: number;
+  sent: number;
+  cacheRead: number;
+  cacheWrite: number;
+  out: number;
+  cachedPct: number;
+} {
+  const acc = { calls: 0, sent: 0, cacheRead: 0, cacheWrite: 0, out: 0 };
+  for (const entry of stats) {
+    acc.calls += entry.calls;
+    acc.sent += promptTokensSent(entry, entry.provider);
+    acc.cacheRead += entry.cache_read_tokens;
+    acc.cacheWrite += entry.cache_creation_tokens;
+    acc.out += entry.output_tokens;
+  }
+  return {
+    ...acc,
+    cachedPct: acc.sent > 0 ? (acc.cacheRead / acc.sent) * 100 : 0,
+  };
+}
+
+function compact(n: number): string {
+  return n >= 10000 ? `${(n / 1000).toFixed(1)}k` : String(n);
+}
+
+/** One-line usage summary, for printing next to a case as it finishes. */
+export function formatUsageLine(stats: UsageAggregate[]): string {
+  const t = usageTotals(stats);
+  if (t.calls === 0) return "0 calls";
+  return (
+    `${t.calls} calls · in ${compact(t.sent)} ` +
+    `(cache_r ${compact(t.cacheRead)} ${t.cachedPct.toFixed(1)}%` +
+    `${t.cacheWrite > 0 ? ` / cache_w ${compact(t.cacheWrite)}` : ""}) · ` +
+    `out ${compact(t.out)}`
+  );
+}
+
 /**
  * Printable cache report. `cached%` is cache_read / prompt tokens sent — the
  * share of the prompt that was served from cache. A run with no caching wired
  * up shows 0% everywhere, which is the point: it is the baseline to beat.
  */
 export function formatUsageReport(
-  stats: UsageAggregate[] = getUsageStats()
+  stats: UsageAggregate[] = getUsageStats(),
+  indent = ""
 ): string {
   if (stats.length === 0) {
-    return "No LLM usage recorded.";
+    return `${indent}No LLM usage recorded.`;
   }
 
   const rows = stats.map((entry) => {
@@ -355,6 +442,7 @@ export function formatUsageReport(
     );
   }
   const line = (cells: Record<keyof typeof headers, string>) =>
+    indent +
     columns
       .map((col) =>
         col === "operation" || col === "model"
@@ -363,18 +451,7 @@ export function formatUsageReport(
       )
       .join("  ");
 
-  const totals = stats.reduce(
-    (acc, entry) => {
-      acc.calls += entry.calls;
-      acc.sent += promptTokensSent(entry, entry.provider);
-      acc.cacheRead += entry.cache_read_tokens;
-      acc.cacheWrite += entry.cache_creation_tokens;
-      acc.out += entry.output_tokens;
-      return acc;
-    },
-    { calls: 0, sent: 0, cacheRead: 0, cacheWrite: 0, out: 0 }
-  );
-  const totalPct = totals.sent > 0 ? (totals.cacheRead / totals.sent) * 100 : 0;
+  const totals = usageTotals(stats);
 
   return [
     line(headers),
@@ -386,7 +463,7 @@ export function formatUsageReport(
       cacheRead: String(totals.cacheRead),
       cacheWrite: String(totals.cacheWrite),
       out: String(totals.out),
-      cached: `${totalPct.toFixed(1)}%`,
+      cached: `${totals.cachedPct.toFixed(1)}%`,
     }),
     ...rows.map(line),
   ].join("\n");

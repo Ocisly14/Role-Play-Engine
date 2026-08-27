@@ -26,6 +26,7 @@
     "test:coverage": "vitest --coverage",
     "test:agent-decisions": "tsx scripts/test-agent-decisions.ts",
     "lint:agent-cases": "tsx scripts/lint-agent-decision-cases.ts",
+    "prompt:budget": "tsx scripts/analyze-prompt-budget.ts",
     "verify:module-migration": "node --import tsx scripts/verify-module-migration.ts"
   },
   "keywords": [

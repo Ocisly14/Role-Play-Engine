@@ -374,7 +374,6 @@ export class NpcActionController {
     const position = this.dgsm.getCharacterPosition(npcId);
     const currentScene = position ? this.dgsm.resolveLocationId(position) : "";
 
-    const longTermIntent = await this.loadLongTermIntent(npcId);
     const memories = await this.loadAllMemories(npcId);
 
     // Intent, progress and timing only — never engine runtime internals.
@@ -430,7 +429,6 @@ export class NpcActionController {
       npcProfile: profile,
       currentScene,
       memories,
-      longTermIntent,
       currentAction,
       perception: { narrative: rendered.narrative, location: currentScene },
       recentPerceptions,
@@ -446,15 +444,6 @@ export class NpcActionController {
     const buf = this.perceptionHistory.get(npcId) ?? [];
     buf.push({ gameDateTime, location, narrative });
     this.perceptionHistory.set(npcId, buf);
-  }
-
-  private async loadLongTermIntent(npcId: string): Promise<string> {
-    const entry = await this.memory.findLatestByType(
-      this.sessionId,
-      npcId,
-      "long_term_intent"
-    );
-    return entry?.content ?? "";
   }
 
   /** Every memory this character holds, injected whole — there is no recall
@@ -473,11 +462,16 @@ export class NpcActionController {
         "secret",
         "relationship",
         "map",
-        "summary",
+        // The life goal is a memory like any other, not a separate prompt
+        // field fetched by its own query. Writing a new one does not erase
+        // the old: the character remembers what they used to want, and the
+        // timestamps say which one is current.
+        "long_term_intent",
       ],
       2000
     );
     return rows.map((r) => ({
+      id: r.id,
       type: r.type,
       content: r.content,
       gameDateTime: r.gameDateTime,
