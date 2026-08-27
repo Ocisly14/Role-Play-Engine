@@ -17,10 +17,10 @@
 // re-resolve: replacement and interruption are resolved by the Engine on the
 // same snapshot as everything else.
 
-import { randomUUID } from "node:crypto";
 import type { DynamicGameStateManager } from "../../state/DynamicGameState.js";
 import { addMinutes, diffDays, timePart } from "../../state/gameClock.js";
 import type { ActionStore } from "../actions/actionStore.js";
+import { actionIdForCommand } from "../actions/actionStore.js";
 import type { CommandInbox } from "../actions/commandInbox.js";
 import {
   advanceMovement,
@@ -32,18 +32,17 @@ import type {
   ActionTransition,
   EngineAction,
 } from "../actions/types.js";
-import { actionIdForCommand } from "../actions/actionStore.js";
 import { buildEngineResolutionContext } from "../resolution/contextBuilder.js";
 import type {
   ObjectiveWorldEvent,
   ResolutionTrigger,
   WorldActionEngineResult,
 } from "../resolution/types.js";
+import type { EngineResolutionContext } from "../resolution/types.js";
 import {
   type WorldActionEngineDeps,
   resolveTick,
 } from "../resolution/worldActionEngine.js";
-import type { EngineResolutionContext } from "../resolution/types.js";
 import type { SubsystemRegistry } from "../subsystem/registry.js";
 import type { AnchorSubsystem } from "../subsystem/types.js";
 import type { CodeToolRegistry } from "../tools/codeTool.js";
@@ -113,11 +112,7 @@ export class TickOrchestrator {
       if (action.status !== "active") continue;
       const movement = getMovementRuntime(action);
       if (!movement) continue;
-      const advanced = advanceMovement(
-        dgsm,
-        action.command.actorId,
-        movement
-      );
+      const advanced = advanceMovement(dgsm, action.command.actorId, movement);
       buffer.push(...advanced.stateChanges);
       action.lastAdvancedAt = nextTickTime;
       if (advanced.status === "blocked") {
@@ -227,8 +222,6 @@ export class TickOrchestrator {
         tickId: `tick_${this.tickCounter}_${nextTickTime}`,
         tickStartTime: nextTickTime,
         durationMinutes: this.deps.tickDurationMinutes,
-        worldVersion: `${nextTickTime}#${this.tickCounter}`,
-        randomSeed: randomUUID(),
         triggers,
         newCommands,
         activeActions,
@@ -251,9 +244,7 @@ export class TickOrchestrator {
       for (const [actionId, init] of Object.entries(
         engineResult.movementInits
       )) {
-        const action =
-          this.deps.actionStore.get(actionId) ??
-          undefined;
+        const action = this.deps.actionStore.get(actionId) ?? undefined;
         const actorId = action?.command.actorId;
         if (!actorId) continue;
         movementStates.set(
@@ -275,6 +266,45 @@ export class TickOrchestrator {
       ...preTransitions,
       ...(engineResult?.resolution.transitions ?? []),
     ];
+
+    // Every action that ended must leave the actor something to perceive.
+    // The validator asks the Engine for this, but some terminal transitions
+    // never reach the Engine at all — a command failed here because the actor
+    // is dead, a movement leg whose route could not be planned, a resolution
+    // the Engine could not deliver. Those would end silently, and a silent
+    // failure is invisible: the actor's position and surroundings are
+    // unchanged, so next tick's perception is identical and they re-issue the
+    // same doomed action. Observed live as a seven-tick loop.
+    const occurrences = [...(engineResult?.resolution.occurrences ?? [])];
+    const traced = new Set(occurrences.flatMap((occ) => occ.sourceActionIds));
+    for (const t of transitions) {
+      if (t.to === "active" || traced.has(t.actionId)) continue;
+      const action = this.deps.actionStore.get(t.actionId);
+      if (!action) continue;
+      const occurrenceId = `occ_${nextTickTime}_fallback_${t.actionId}`;
+      occurrences.push({
+        id: occurrenceId,
+        tickId: nextTickTime,
+        sourceActionIds: [t.actionId],
+        ...(action.command.issuedSceneId
+          ? { locationId: action.command.issuedSceneId }
+          : {}),
+        facts: [
+          {
+            id: `${occurrenceId}#f0`,
+            type: "action_result",
+            content: `${t.actorId} 的行动「${action.command.description}」${
+              t.to === "completed" ? "结束了" : `没有进行下去（${t.to}）`
+            }${t.reason ? `：${t.reason}` : "，没有留下可见的变化"}`,
+            entityRefs: [{ kind: "character", id: t.actorId }],
+          },
+        ],
+        participants: [{ characterId: t.actorId, role: "actor" }],
+        // Only the actor: a failure nobody else could see stays private.
+        perceiverCharacterIds: [t.actorId],
+        signals: [{ factIds: [`${occurrenceId}#f0`], channel: "direct" }],
+      });
+    }
     const commits: CharacterAction[] = [];
     const cancellations: CharacterAction[] = [];
     for (const t of transitions) {
@@ -339,7 +369,7 @@ export class TickOrchestrator {
     return {
       gameDateTime: nextTickTime,
       transitions,
-      occurrences: engineResult?.resolution.occurrences ?? [],
+      occurrences,
       commits,
       cancellations,
       featureEvents: [...applied.featureEvents],

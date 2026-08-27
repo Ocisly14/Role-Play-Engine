@@ -1,6 +1,6 @@
 // D7 full-context guarantee: every scene, item, character, new command and
 // active action appears in the context — nothing is filtered for perceived
-// relevance — and all state carries the same tick-start worldVersion fields.
+// relevance — and every snapshot is read from the one tick-start state.
 
 import { describe, expect, it } from "vitest";
 import type { DynamicGameStateManager } from "../../../state/DynamicGameState.js";
@@ -73,7 +73,6 @@ function makeNpc(id: string, scene: string) {
       maxFatigue: 10,
       conditions: [],
     },
-    relationships: [{ targetId: "npc_2" }],
   };
 }
 
@@ -101,8 +100,6 @@ describe("buildEngineResolutionContext", () => {
     tickId: "tick_9",
     tickStartTime: "1923-04-02T09:15:00",
     durationMinutes: 1,
-    worldVersion: "v9",
-    randomSeed: "seed",
     triggers: [
       { actionIds: ["action_c1"], reason: "new_action" },
       { actionIds: ["action_live"], reason: "duration_reached" },
@@ -141,7 +138,7 @@ describe("buildEngineResolutionContext", () => {
     expect(scn1?.presentCharacterIds).toEqual(["npc_1"]);
   });
 
-  it("unions trigger action ids and stamps tick/version/seed", () => {
+  it("unions trigger action ids and stamps the tick frame", () => {
     expect(context.trigger.actionIds.sort()).toEqual([
       "action_c1",
       "action_live",
@@ -150,8 +147,6 @@ describe("buildEngineResolutionContext", () => {
       tickId: "tick_9",
       tickStartTime: "1923-04-02T09:15:00",
       durationMinutes: 1,
-      worldVersion: "v9",
-      randomSeed: "seed",
     });
     expect(context.rules.worldInvariants.length).toBeGreaterThan(0);
     expect(context.actions.newCommands).toEqual([cmd]);

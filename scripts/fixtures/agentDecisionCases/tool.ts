@@ -26,8 +26,11 @@ export const TOOL_SCENARIOS: SimScenario[] = [
           },
         ],
         openingEvent: {
+          // 原文写"楼下停车场"，但全模组没有停车场这个地点：角色无 id 可引用、
+          // 寻路无处可去，实跑时连续 7 个 tick 反复发同一个到不了的行动。改到
+          // 门外街口 JUNC_8，那里真有 ITEM_JUNC8_1 警车与 ITEM_JUNC8_2 明亮路灯。
           description:
-            "楼下停车场发现一具尸体，血还是温的，有人在楼道里大声喊人",
+            "警察局门口那盏路灯下、停着的警车旁边倒着一具尸体，血还是温的，门厅里有人在大声喊人",
           impact: 3,
         },
       },
@@ -213,13 +216,13 @@ export const TOOL_SCENARIOS: SimScenario[] = [
             goal: "查清这桩案子，同时绝不说没把握的话——被问到细节要先想清楚再回答。",
             recallSeeds: [
               {
-                type: "information",
+                type: "general",
                 content:
                   "上周三凌晨1点17分接到一通匿名电话，男声，说“钟楼下面有东西被埋着”，通话十一秒后挂断，来电显示是公用电话亭。",
                 date: "2003-11-26",
               },
               {
-                type: "belief",
+                type: "general",
                 content: "打匿名电话的人认识死者，而且怕被认出声音。",
                 date: "2003-11-26",
               },
@@ -262,7 +265,7 @@ export const TOOL_SCENARIOS: SimScenario[] = [
             goal: "在没弄清对方底牌之前绝不承认任何事；先在心里核实他说的会面到底发生过什么。",
             recallSeeds: [
               {
-                type: "event",
+                type: "general",
                 content:
                   "11月20日下午在市政厅办公室会见一名自称受托人的男子，他要求把河滨那块地的评估推迟到明年春天，我只说“再看看”，没有答应。",
                 date: "2003-11-20",
@@ -284,7 +287,7 @@ export const TOOL_SCENARIOS: SimScenario[] = [
             goal: "先别挨打，能拖一天是一天；被问到日期数目必须答得上来。",
             recallSeeds: [
               {
-                type: "event",
+                type: "general",
                 content:
                   "11月29日下午在台球厅借了四百块，说好一周内还，多一天加五十。",
                 date: "2003-11-29",
@@ -306,7 +309,7 @@ export const TOOL_SCENARIOS: SimScenario[] = [
             goal: "保护买家的隐私，但也别平白得罪出得起价的人；回答之前先把当年的交易想清楚。",
             recallSeeds: [
               {
-                type: "information",
+                type: "general",
                 content:
                   "9月14日把那本1897年拉丁文抄本卖给了一位自称替教会办事的年轻男子，付现金，没留姓名，只留了一个邮政信箱号。",
                 date: "2003-09-14",
@@ -338,15 +341,15 @@ export const TOOL_SCENARIOS: SimScenario[] = [
             goal: "查清镇上的命案，同时留意谁的话信不过——尤其是嘴上信誓旦旦的人。",
             todayMemories: [
               {
-                type: "witness",
+                type: "general",
                 content:
-                  "他一口咬定整晚都在三楼值班室没离开过，可他袖口沾着还没干的泥点，鞋跟里嵌着松针——楼里没有一棵松树。",
+                  "他一口咬定整晚都在档案室清卷宗没离开过，可他袖口沾着还没干的泥点，鞋跟里嵌着松针——警局里外没有一棵松树。",
               },
             ],
           },
           {
             npc: "Lux Lynch",
-            goal: "坚持说自己整晚都在值班室，别让他看出破绽。",
+            goal: "坚持说自己整晚都在档案室清卷宗，别让他看出破绽。",
           },
         ],
       },
@@ -359,7 +362,7 @@ export const TOOL_SCENARIOS: SimScenario[] = [
             goal: "把这条时间线钉死，再决定要不要当面跟他摊牌。",
             todayMemories: [
               {
-                type: "witness",
+                type: "general",
                 content:
                   "他说九点就锁门走了，可我今早在门口捡到的收据打印时间是九点四十一分，收银机就在他背后。",
               },
@@ -377,7 +380,7 @@ export const TOOL_SCENARIOS: SimScenario[] = [
             goal: "在开庭前找出对方证据链上能拿来用的漏洞，越细越好。",
             todayMemories: [
               {
-                type: "event",
+                type: "general",
                 content:
                   "我翻到附件第三页，转让日期写着11月2日，可主合同签署页是11月9日——附件不可能早于主合同生效。",
               },
@@ -398,7 +401,7 @@ export const TOOL_SCENARIOS: SimScenario[] = [
             goal: "弄清那晚到底是谁下的医嘱，哪怕结果指向你自己。",
             todayMemories: [
               {
-                type: "event",
+                type: "general",
                 content:
                   "护理记录上那一栏的字迹和上下行不一样，墨色更新，剂量被人从原来的数字改成了现在这个，而且没有签名。",
               },
@@ -419,7 +422,7 @@ export const TOOL_SCENARIOS: SimScenario[] = [
             goal: "别被查到；他要是话里有话，你得先摸清他到底想套什么，再决定怎么应对。",
             todayMemories: [
               {
-                type: "witness",
+                type: "general",
                 content:
                   "他今天第三次“随口”提起证物室的排班，每次都问得像闲聊，可他从来不管那块的事。",
               },
@@ -437,7 +440,7 @@ export const TOOL_SCENARIOS: SimScenario[] = [
     id: "tool-map-route",
     group: "tool",
     title: "去不熟的地方 → 先看地图（getMapSnapshot）再动身",
-    targetDefs: ["movement"],
+    targetDefs: [],
     cases: [
       {
         label: "猎人：夜里进城办事",

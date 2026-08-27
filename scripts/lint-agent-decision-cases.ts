@@ -33,14 +33,15 @@ const MODULE =
     : "casssandra";
 
 import { readFileSync, readdirSync } from "node:fs";
-import { loadActionDefinitions } from "../src/engine/tool_definitions/loader.js";
+import { SKILL_CATALOG } from "../src/engine/rules/skillCatalog.js";
+import { getSkillReference } from "../src/engine/rules/skillReference.js";
 import {
   ACTOR_ROSTER,
   ALL_SCENARIOS,
 } from "./fixtures/agentDecisionCases/index.js";
 
 const roster = new Set(ACTOR_ROSTER.map((r) => r.id));
-const defs = new Map(loadActionDefinitions().map((d) => [d.id, d]));
+const skillNames = new Set<string>(SKILL_CATALOG.map((sk) => sk.name));
 const problems: string[] = [];
 const hints: string[] = [];
 const lead = new Map<string, number>();
@@ -50,11 +51,10 @@ let ticks = 0;
 let slots = 0;
 
 for (const sc of ALL_SCENARIOS) {
-  if (sc.cases.length < 5) problems.push(`${sc.id}: ${sc.cases.length} cases`);
-  for (const d of sc.targetDefs ?? []) {
-    if (!defs.has(d))
-      problems.push(`${sc.id}: targetDefs "${d}" not a definition`);
-  }
+  // Three personas per scenario is the floor: one the domain is second
+  // nature to, one reaching for it untrained, one whose instincts may point
+  // elsewhere. Fewer than that and a scenario cannot show contrast.
+  if (sc.cases.length < 3) problems.push(`${sc.id}: ${sc.cases.length} cases`);
   const seen = new Set<string>();
   for (const c of sc.cases) {
     cases++;
@@ -114,16 +114,24 @@ for (const sc of ALL_SCENARIOS) {
       }
     }
   }
-  // tick budget vs the PRIMARY target definition's durationGuidance — a hint,
-  // not a failure: commit lands at tick 2 + elapsedMinutes, so a short case
+  // `targetDefs` now names skill DOMAINS. A name outside the catalog can
+  // never be reached, so the scenario's coverage claim would be permanently
+  // unmet — worth flagging, but not fatal (a case may target a domain
+  // deliberately renamed).
+  for (const target of sc.targetDefs ?? []) {
+    if (!skillNames.has(target)) {
+      hints.push(
+        `${sc.id}: targetDefs "${target}" 不是技能域名，覆盖率永远统计不到`
+      );
+    }
+  }
+  // tick budget vs the PRIMARY target skill's durationGuidance — a hint, not
+  // a failure: the Engine sets the authoritative duration, so a short case
   // simply ends with the action "仍在途" in the record.
   const primary = (sc.targetDefs ?? [])[0];
-  const dg =
-    (
-      defs.get(primary ?? "")?.outputSchema as {
-        durationGuidance?: { default?: number };
-      }
-    )?.durationGuidance?.default ?? 1;
+  const dg = primary
+    ? (getSkillReference(primary)?.durationGuidance?.default ?? 1)
+    : 1;
   const need = 2 + Math.max(1, dg);
   if (need > 3) {
     const short = sc.cases.filter((c) => (c.ticks ?? 3) < need).length;

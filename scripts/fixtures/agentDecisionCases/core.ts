@@ -11,7 +11,7 @@ export const CORE_SCENARIOS: SimScenario[] = [
     id: "def-movement",
     group: "core",
     title: "跨场景赶路 → movement",
-    targetDefs: ["movement"],
+    targetDefs: [],
     cases: [
       {
         label: "警探：调度让他去现场",
@@ -46,7 +46,10 @@ export const CORE_SCENARIOS: SimScenario[] = [
         actors: [
           {
             npc: "Haran Greenwood",
-            goal: "接班的人已经到了，值班簿也签了字，现在动身回{{destName}}，别在外面多待。",
+            // 原文写"回{{destName}}"，但 scenarios_outline 里 SCN_21 火车站的
+            // 居民就是哈兰——他的住处正是他站着的地方，而 {{destName}} 必然
+            // 抽到别处。改成不依赖归属关系的出行理由。
+            goal: "接班的人已经到了，值班簿也签了字，现在动身去{{destName}}，答应了人家今晚一定到；别在路上多耽搁。",
           },
         ],
       },
@@ -80,7 +83,7 @@ export const CORE_SCENARIOS: SimScenario[] = [
     id: "def-character_interaction",
     group: "core",
     title: "向同场景的人问话 → character_interaction",
-    targetDefs: ["character_interaction", "charm"],
+    targetDefs: ["Social"],
     cases: [
       {
         label: "侦探：赶在对方走之前问话",
@@ -159,7 +162,7 @@ export const CORE_SCENARIOS: SimScenario[] = [
     // item_exchange 是唯一 outputSchema 带 item.move 的定义；若 interpreter 把
     // 这类意图归到 character_interaction，物品不会真的换手——总结里会显示成
     // "说了但世界没动"，那是引擎侧值得注意的现象，不是布景问题。
-    targetDefs: ["item_exchange"],
+    targetDefs: [],
     cases: [
       {
         label: "钟表匠：把钥匙交出去",
@@ -223,10 +226,15 @@ export const CORE_SCENARIOS: SimScenario[] = [
         actors: [
           {
             npc: "Nancy Charlotte",
-            goal: "客人把黄铜钥匙落在柜台上了，他就站在面前，把钥匙还给他。",
+            // 钥匙用 items 布在 Nancy 身上，所以散文不能说它"落在柜台上"：
+            // 柜台上并没有这个实体，照着散文去够的人只会引用到不存在的 id。
+            goal: "客人的黄铜钥匙还在你手里，他就站在面前，把钥匙还给他。",
             items: ["key"],
           },
-          { npc: "Haran Greenwood", goal: "取回落在花店柜台上的钥匙。" },
+          {
+            npc: "Haran Greenwood",
+            goal: "从花店老板手里取回自己的黄铜钥匙。",
+          },
         ],
       },
     ],
@@ -235,7 +243,7 @@ export const CORE_SCENARIOS: SimScenario[] = [
     id: "def-action",
     group: "core",
     title: "就地摆弄/阅读物件 → action",
-    targetDefs: ["action", "movement"],
+    targetDefs: [],
     cases: [
       {
         label: "书商：读桌上那本笔记",

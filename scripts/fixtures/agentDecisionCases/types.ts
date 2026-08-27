@@ -31,7 +31,10 @@ export interface CaseActor {
   /** Only reachable via recallMemory (older days). */
   recallSeeds?: Array<{ type: NpcMemoryType; content: string; date: string }>;
   /** Shows up in "## Today's memories" from the first decision on. */
-  todayMemories?: Array<{ type: "event" | "witness"; content: string }>;
+  todayMemories?: Array<{
+    type: "general" | "plan" | "secret" | "relationship";
+    content: string;
+  }>;
 }
 
 export interface SimCase {

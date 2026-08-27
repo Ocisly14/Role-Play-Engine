@@ -38,8 +38,6 @@ function makeContext(): EngineResolutionContext {
       tickId: "tick_1",
       tickStartTime: "1923-04-02T09:15:00",
       durationMinutes: 1,
-      worldVersion: "v1",
-      randomSeed: "s",
     },
     rules: {
       resolutionGuide: "src/engine/rules/world-action-resolution.md",
@@ -66,7 +64,6 @@ function makeContext(): EngineResolutionContext {
           locationId: "",
           conditions: [],
           inventoryItemIds: [],
-          relationships: [],
         },
       ],
     },

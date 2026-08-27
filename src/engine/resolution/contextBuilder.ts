@@ -60,8 +60,6 @@ export interface BuildContextParams {
   tickId: string;
   tickStartTime: GameTime;
   durationMinutes: number;
-  worldVersion: string;
-  randomSeed: string;
   triggers: ResolutionTrigger[];
   newCommands: ActionCommand[];
   activeActions: EngineAction[];
@@ -143,15 +141,12 @@ export function buildEngineResolutionContext(
       locationId: position ? dgsm.resolveLocationId(position) : "",
       conditions: npc.status.conditions ?? [],
       inventoryItemIds: dgsm.getNpcInventory(npc.id).map((i) => i.id),
-      relationships: (npc.relationships ?? []).map((r) => ({
-        targetId: r.targetId,
-        ...("score" in r && typeof r.score === "number"
-          ? { score: r.score }
-          : {}),
-        ...("note" in r && typeof (r as { note?: unknown }).note === "string"
-          ? { note: (r as { note: string }).note }
-          : {}),
-      })),
+      // Relationships are deliberately absent. They are subjective reading,
+      // not world state: the Renderer uses them to decide whether a viewer
+      // knows a face, and the character keeps their own `relationship`
+      // memories. Putting affinity in front of the adjudicator invites
+      // outcomes that turn on who likes whom rather than on objective
+      // constraints.
     };
   });
 
@@ -164,8 +159,6 @@ export function buildEngineResolutionContext(
       tickId: params.tickId,
       tickStartTime: params.tickStartTime,
       durationMinutes: params.durationMinutes,
-      worldVersion: params.worldVersion,
-      randomSeed: params.randomSeed,
     },
     rules: {
       resolutionGuide: "src/engine/rules/world-action-resolution.md",

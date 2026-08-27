@@ -33,6 +33,14 @@ import {
 } from "./worldDeltaSchema.js";
 
 const MAX_ITERATIONS = 8;
+/**
+ * After this many turns the session stops offering the code tools and demands
+ * the terminal submission. Without it a model that keeps consulting tools —
+ * or keeps re-submitting alongside them — burns every iteration and every
+ * triggering action fails, at full-world context cost per turn. Observed
+ * live before this guard existed.
+ */
+const FORCE_SUBMIT_AFTER = 4;
 const CODE_TOOL_NAMES = new Set(CODE_TOOL_SPECS.map((t) => t.name));
 
 // ── Rules document: loaded once. The build ships TS only, so fall back to
@@ -174,12 +182,21 @@ export async function resolveTick(
     let toolCalls: Awaited<ReturnType<typeof generateToolCalls>>["toolCalls"];
     let assistantMessage: ModelMessage;
     try {
+      const mustSubmit = i >= FORCE_SUBMIT_AFTER;
+      if (mustSubmit && i === FORCE_SUBMIT_AFTER) {
+        console.warn(
+          `[WorldActionEngine] ${context.tick.tickId}: ${i} turns without a ` +
+            "submission — withdrawing the code tools and demanding one now"
+        );
+      }
       const res = await generateToolCalls({
         customSystemPrompt: SYSTEM_PROMPT,
         cacheSystemPrompt: true,
         messages,
-        tools,
-        toolChoice: "any",
+        tools: mustSubmit ? [submitResolutionTool] : tools,
+        toolChoice: mustSubmit
+          ? { name: "submit_resolution" }
+          : "any",
         allowParallelCalls: true,
         modelClass: ModelClass.MEDIUM,
         operation: "world-action-engine",

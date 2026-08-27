@@ -26,7 +26,6 @@ import type {
   ActionJudgement,
   ActionTransition,
   CharacterChange,
-  EngineAction,
   EngineActionStatus,
   ItemChange,
   Occurrence,
@@ -105,7 +104,13 @@ export function buildLookup(context: EngineResolutionContext): Lookup {
 
 const LEGAL_TRANSITIONS: Record<EngineActionStatus, Set<string>> = {
   queued: new Set(["active", "completed", "failed", "cancelled"]),
-  active: new Set(["active", "completed", "failed", "interrupted", "cancelled"]),
+  active: new Set([
+    "active",
+    "completed",
+    "failed",
+    "interrupted",
+    "cancelled",
+  ]),
   completed: new Set(),
   failed: new Set(),
   interrupted: new Set(),
@@ -178,9 +183,7 @@ function validateActionEntry(
   }
 
   if (entry.judgement) {
-    errs.push(
-      ...validateJudgement(entry, known.command, lookup, invocations)
-    );
+    errs.push(...validateJudgement(entry, known.command, lookup, invocations));
   }
   return errs;
 }
@@ -342,7 +345,13 @@ const SCENE_OP_KINDS = new Set([
   "environmentContribute",
   "environmentHazard",
 ]);
-const ITEM_OP_KINDS = new Set(["create", "move", "modify", "damage", "destroy"]);
+const ITEM_OP_KINDS = new Set([
+  "create",
+  "move",
+  "modify",
+  "damage",
+  "destroy",
+]);
 
 function validateCommonDelta(
   label: string,
@@ -391,7 +400,9 @@ export function validateCharacterChange(
     case "fatigue": {
       const d = op.delta;
       if (typeof d !== "number" || !Number.isFinite(d) || Math.abs(d) > 500) {
-        errs.push(`${label}: ${op.kind}.delta must be a finite number (|d| <= 500)`);
+        errs.push(
+          `${label}: ${op.kind}.delta must be a finite number (|d| <= 500)`
+        );
       }
       if (typeof op.reason !== "string" || !op.reason.trim()) {
         errs.push(`${label}: ${op.kind} requires a reason`);
@@ -400,7 +411,12 @@ export function validateCharacterChange(
     }
     case "position": {
       const p = op.position as
-        | { type?: string; sceneId?: string; junctionId?: string; roadId?: string }
+        | {
+            type?: string;
+            sceneId?: string;
+            junctionId?: string;
+            roadId?: string;
+          }
         | undefined;
       if (!p || typeof p !== "object" || typeof p.type !== "string") {
         errs.push(`${label}: position.position must be a CharacterPosition`);
@@ -410,9 +426,13 @@ export function validateCharacterChange(
       break;
     }
     case "addCondition": {
-      const c = op.condition as { description?: string; id?: string } | undefined;
+      const c = op.condition as
+        | { description?: string; id?: string }
+        | undefined;
       if (!c?.description || !c?.id) {
-        errs.push(`${label}: addCondition requires condition {id, description}`);
+        errs.push(
+          `${label}: addCondition requires condition {id, description}`
+        );
       }
       break;
     }
@@ -567,7 +587,11 @@ export function validateItemChange(
   return errs;
 }
 
-const PERSPECTIVE_PATTERNS = [/\bI\s+(see|hear|feel|notice|recognize)\b/i, /令我/, /我(看见|听见|认出|感到)/];
+const PERSPECTIVE_PATTERNS = [
+  /\bI\s+(see|hear|feel|notice|recognize)\b/i,
+  /令我/,
+  /我(看见|听见|认出|感到)/,
+];
 
 export function validateOccurrence(
   index: number,
@@ -676,7 +700,36 @@ export function validateRawResolution(
     errs.push(...validateOccurrence(i, o, lookup))
   );
 
+  errs.push(...missingTerminalOccurrences(raw));
+
   return errs;
+}
+
+/**
+ * An action that ended must leave an objective trace, even when it changed no
+ * world state.
+ *
+ * Failure is the case that matters. A failed move changes nothing the actor
+ * can see — their position is identical, so next tick's perception is
+ * identical, so they decide the same thing again. Observed live: a detective
+ * re-issued "run to the car park" for seven straight ticks because nothing
+ * ever told him there was no route. The old movement subsystem closed that
+ * loop by writing the character a memory; memory is the character's own now,
+ * so the trace has to arrive as perception instead — an occurrence whose
+ * perceivers include the actor.
+ */
+function missingTerminalOccurrences(raw: RawTickResolution): string[] {
+  const ENDED = new Set(["completed", "failed", "interrupted", "cancelled"]);
+  const cited = new Set<string>();
+  for (const occ of raw.occurrences ?? []) {
+    for (const id of occ.sourceActionIds ?? []) cited.add(id);
+  }
+  return (raw.actions ?? [])
+    .filter((entry) => ENDED.has(entry.to) && !cited.has(entry.actionId))
+    .map(
+      (entry) =>
+        `occurrences: action "${entry.actionId}" ended as "${entry.to}" with no occurrence citing it — every action that ends leaves an objective trace, and without one the actor perceives no change and simply re-issues the same action. Emit at least an action_result fact listing the actor among perceiverCharacterIds.`
+    );
 }
 
 // ==================== Finalization ====================
@@ -778,7 +831,9 @@ export function finalizeResolution(
   }
 
   const failedActionIds = new Set(
-    transitions.filter((t) => t.to === "failed" && t.reason).map((t) => t.actionId)
+    transitions
+      .filter((t) => t.to === "failed" && t.reason)
+      .map((t) => t.actionId)
   );
   const keepSource = (id: string): boolean =>
     lookup.actionById.has(id) && !failedActionIds.has(id);

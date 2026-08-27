@@ -65,8 +65,6 @@ function makeContext(opts: {
       tickId: "tick_1",
       tickStartTime: "1923-04-02T09:15:00",
       durationMinutes: 1,
-      worldVersion: "v1",
-      randomSeed: "seed",
     },
     rules: {
       resolutionGuide: "src/engine/rules/world-action-resolution.md",
@@ -114,7 +112,6 @@ function makeContext(opts: {
           locationId: "SCN_1",
           conditions: [],
           inventoryItemIds: ["pick_1"],
-          relationships: [],
         },
         {
           id: "npc_2",
@@ -132,7 +129,6 @@ function makeContext(opts: {
           locationId: "SCN_1",
           conditions: [],
           inventoryItemIds: [],
-          relationships: [],
         },
       ],
     },
@@ -141,7 +137,9 @@ function makeContext(opts: {
   };
 }
 
-function entry(overrides: Partial<RawActionResolution> = {}): RawActionResolution {
+function entry(
+  overrides: Partial<RawActionResolution> = {}
+): RawActionResolution {
   return {
     actionId: ACTION_ID,
     to: "completed",
@@ -157,10 +155,24 @@ function entry(overrides: Partial<RawActionResolution> = {}): RawActionResolutio
   };
 }
 
+/** The objective trace an ended action must leave. Tests below are about
+ *  transition legality and roll consistency, so they carry one rather than
+ *  tripping the separate "ended action leaves a trace" rule. */
+function trace(actionId: string = ACTION_ID): RawTickResolution["occurrences"] {
+  return [
+    {
+      sourceActionIds: [actionId],
+      facts: [{ type: "action_result", content: "the latch gives" }],
+      participants: [{ characterId: "npc_1", role: "actor" }],
+      perceiverCharacterIds: ["npc_1"],
+    },
+  ];
+}
+
 describe("validateRawResolution — transitions", () => {
   it("accepts a well-formed first resolution", () => {
     const errors = validateRawResolution(
-      { actions: [entry()] },
+      { actions: [entry()], occurrences: trace() },
       makeContext({}),
       []
     );
@@ -175,6 +187,26 @@ describe("validateRawResolution — transitions", () => {
     );
     expect(errors.join("\n")).toContain("unknown actionId");
     expect(errors.join("\n")).toContain("received no transition");
+  });
+
+  it("requires an ended action to leave an objective trace", () => {
+    // A failed move changes nothing the actor can see: same position, same
+    // surroundings, so next tick's perception is identical and they re-issue
+    // the same doomed action. Observed live as a seven-tick loop.
+    const errors = validateRawResolution(
+      { actions: [entry({ to: "failed", reason: "no route from here" })] },
+      makeContext({}),
+      []
+    );
+    expect(errors.join("\n")).toContain("no occurrence citing it");
+
+    // Still running is not ended — nothing to report yet.
+    const running = validateRawResolution(
+      { actions: [entry({ to: "active", nextWakeInTicks: 2 })] },
+      makeContext({}),
+      []
+    );
+    expect(running.join("\n")).not.toContain("no occurrence citing it");
   });
 
   it("rejects duplicate transitions (single-transition invariant)", () => {
@@ -231,6 +263,7 @@ describe("validateRawResolution — transitions", () => {
             progressDeltaMinutes: 0,
           },
         ],
+        occurrences: trace("action_live"),
       },
       context,
       []
@@ -239,7 +272,11 @@ describe("validateRawResolution — transitions", () => {
     const bad = validateRawResolution(
       {
         actions: [
-          { actionId: "action_live", to: "queued" as never, progressDeltaMinutes: 0 },
+          {
+            actionId: "action_live",
+            to: "queued" as never,
+            progressDeltaMinutes: 0,
+          },
         ],
       },
       context,
@@ -311,7 +348,7 @@ describe("validateRawResolution — skill consistency", () => {
     });
     expect(
       validateRawResolution(
-        { actions: [base] },
+        { actions: [base], occurrences: trace() },
         makeContext({ newCommands: [skillCommand] }),
         []
       )
@@ -356,7 +393,7 @@ describe("validateRawResolution — skill consistency", () => {
     expect(noCall.join("\n")).toContain("no opposedRoll tool call recorded");
 
     const withCall = validateRawResolution(
-      { actions: [opposed] },
+      { actions: [opposed], occurrences: trace() },
       makeContext({ newCommands: [skillCommand] }),
       [
         {
@@ -414,7 +451,9 @@ describe("validateRawResolution — deltas and occurrences", () => {
       makeContext({}),
       []
     );
-    expect(wrongFrom.join("\n")).toContain("does not match the item's actual holder");
+    expect(wrongFrom.join("\n")).toContain(
+      "does not match the item's actual holder"
+    );
 
     const doubleMove = validateRawResolution(
       {
@@ -505,7 +544,10 @@ describe("finalizeResolution", () => {
           locationId: "SCN_1",
           facts: [
             { type: "sound", content: "metal scraping inside the lock" },
-            { type: "action_result", content: "the pick slips out of the keyway" },
+            {
+              type: "action_result",
+              content: "the pick slips out of the keyway",
+            },
           ],
           participants: [{ characterId: "npc_1", role: "actor" }],
           perceiverCharacterIds: ["npc_1", "npc_2", "npc_2"],

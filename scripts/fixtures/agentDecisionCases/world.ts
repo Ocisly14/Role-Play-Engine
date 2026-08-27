@@ -12,19 +12,23 @@ export const WORLD_SCENARIOS: SimScenario[] = [
     id: "world-scene-destroy",
     group: "world",
     title: "对场景动手：砸、烧、拆——世界状态该跟着变",
-    targetDefs: ["action", "brawling"],
+    targetDefs: ["Melee Combat"],
     cases: [
       {
         label: "打手砸开钉死的门",
         ticks: 6,
+        // 原来没写 scene，舞台落在 Kovind 自己的地下赌场——那是无窗砖石地窖，
+        // 唯一的连接是往上通教堂主殿，没有"里屋"可砸开。教堂主殿旁边真有一扇
+        // 通往 SCN_17_SUB_3 暗门·蛛网 的隐藏门，门砸开之后角色真能进去。
+        scene: "教堂主殿",
         actors: [
           {
             npc: "Kovind",
-            goal: "里屋有人敲墙。把那扇钉死的门砸开，看看里面到底关着什么。",
+            goal: "雕像后方那扇暗门后面有人敲墙。把钉死的门板砸开，看看里面到底关着什么。",
           },
         ],
         sceneConditions: [
-          "里屋的门被几条木板从外面钉死了，门后每隔一阵传来两下闷闷的敲击",
+          "雕像后方那扇石板暗门被几条木板从外面钉死了，门后每隔一阵传来两下闷闷的敲击",
         ],
       },
       {
@@ -43,6 +47,10 @@ export const WORLD_SCENARIOS: SimScenario[] = [
       {
         label: "混混砸玻璃柜",
         ticks: 6,
+        // 原来没写 scene，舞台落在 Philip 自己的廉租房——沙发、电视、小冰箱，
+        // 没有上锁的玻璃展柜，"趁屋里没人"在自家客厅也讲不通。这段文字本来
+        // 就是给钟表店写的：那里真有 ITEM_SCN12_1 精致怀表展柜。
+        scene: "怀特的钟表店",
         actors: [
           {
             npc: "Philip Scaletta",
@@ -53,7 +61,7 @@ export const WORLD_SCENARIOS: SimScenario[] = [
         // 只能自造一个 item id，被 citation 防护拦下（实测两轮都撞上）。
         sceneItems: ["watch"],
         sceneConditions: [
-          "靠墙的玻璃展示柜锁着，那只金怀表就锁在柜中的绒布上，屋里暂时没人",
+          "靠墙的精致怀表展柜锁着，那只金怀表就锁在柜中的绒布上，店里暂时没人",
         ],
       },
       {
@@ -91,7 +99,7 @@ export const WORLD_SCENARIOS: SimScenario[] = [
     id: "world-harm-react",
     group: "world",
     title: "场景真的伤到人：openingEvent 带 harm，看伤者怎么处置",
-    targetDefs: ["first_aid", "dodge"],
+    targetDefs: ["Medicine & Psychology", "Athletics"],
     cases: [
       {
         label: "花店少女被花盆砸中",
@@ -187,10 +195,14 @@ export const WORLD_SCENARIOS: SimScenario[] = [
       {
         label: "打手踩穿朽地板",
         ticks: 8,
+        // 原来没写 scene，舞台落在地下赌场——砖石砌的无窗地窖，既没有木地板
+        // 也没有可以踩塌下去的下层。坍塌小楼(SCN_2_SUB_2)是真的半塌两层楼，
+        // 有断裂木梁，头顶还会不时传来木料的响声。
+        scene: "坍塌小楼",
         actors: [
           {
             npc: "Kovind",
-            goal: "把楼上翻完就走，别在这栋破楼里耽搁。",
+            goal: "把这半边没塌的楼翻完就走，别在这栋随时会再塌的破楼里耽搁。",
             hp: 11,
           },
         ],
@@ -271,6 +283,10 @@ export const WORLD_SCENARIOS: SimScenario[] = [
       {
         label: "院长看见死者睁眼",
         ticks: 5,
+        // 原来没写 scene，舞台落在 Vincent 的药品管理室——刷卡进出的药房，
+        // 没有尸体、没有停尸台，家属也不可能被领进去。停尸间(SCN_1_SUB_2)
+        // 才是这一幕的地方，那里有不锈钢解剖台与冷藏柜。
+        scene: "停尸间",
         actors: [
           {
             npc: "Vincent Galenus",
@@ -279,7 +295,7 @@ export const WORLD_SCENARIOS: SimScenario[] = [
         ],
         openingEvent: {
           description:
-            "死亡两个小时、你亲手宣布死亡的病人睁开了眼睛，转头看着他，然后又缓缓闭上",
+            "解剖台上那位死亡两个小时、你亲手宣布死亡的病人睁开了眼睛，转头看着他，然后又缓缓闭上",
           impact: 2,
           harm: { target: "Vincent Galenus", san: -5 },
         },

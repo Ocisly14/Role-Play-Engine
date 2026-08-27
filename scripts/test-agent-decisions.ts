@@ -49,9 +49,7 @@ import "dotenv/config";
 import { mkdirSync, writeFileSync } from "node:fs";
 import path from "node:path";
 
-import { collectKnownLocations } from "../src/engine/interpreter/gameInterpreter.js";
-import { createDefaultDefinitions } from "../src/engine/registerDefaults.js";
-import type { ActionDefinition } from "../src/engine/types.js";
+import { SKILL_CATALOG } from "../src/engine/rules/skillCatalog.js";
 import {
   formatUsageReport,
   getUsageStats,
@@ -178,7 +176,6 @@ function propItem(key: PropKey, seed: number, slot: number): StagedItem {
 interface BaseWorld {
   serializedState: unknown;
   moduleId: string;
-  knownLocations: ReturnType<typeof collectKnownLocations>;
   /** Scene each roster NPC natively stands in. */
   homeScene: Map<string, string>;
   sceneName: Map<string, string>;
@@ -227,16 +224,9 @@ async function buildBaseWorld(): Promise<BaseWorld> {
     sceneParent.set(id, s.parentLocationId);
   }
 
-  const topology = dgsm.getTopology();
   return {
     serializedState: dgsm.serialize(),
     moduleId,
-    knownLocations: collectKnownLocations({
-      scenarioOutlines: state.scenarioOutlines,
-      scenes: state.scenes,
-      junctions: topology.junctions,
-      roads: topology.roads,
-    }),
     homeScene,
     sceneName,
     sceneParent,
@@ -402,8 +392,14 @@ interface ActorSummary {
   terminalTools: string[];
   /** Instant tools from the raw iteration stream (their only home). */
   instantTools: string[];
-  /** Definitions this actor's actions were interpreted into. */
-  definitionIds: string[];
+  /** Skills the character chose to declare on `act`. */
+  declaredSkills: string[];
+  /** Engine verdicts on this actor's actions, in order. */
+  outcomes: string[];
+  /** Occurrences this actor was listed as able to perceive. */
+  perceived: number;
+  /** Memories the character wrote for itself. */
+  memoriesWritten: number;
   cancelled: number;
   moved?: { from: string; to: string };
   vitals?: { hp: [number, number]; san: [number, number] };
@@ -429,15 +425,17 @@ interface CaseResult {
   committed: Array<{
     tick: number;
     npcId: string;
-    definitionId: string;
     text: string;
   }>;
   /** Scene-state mutations (conditions, item damage/destruction, blocks). */
   sceneChanges: Array<{ tick: number; kind: string; description: string }>;
   sceneConditionsAtEnd: string[];
-  queueAtEnd: SimObservation["queueAtEnd"];
+  actionsAtEnd: SimObservation["actionsAtEnd"];
   silentFailures: string[];
-  skillChecks: SimObservation["skillChecks"];
+  /** Rolls made at intake, before the Engine assessed applicability. */
+  commands: SimObservation["commands"];
+  transitions: SimObservation["transitions"];
+  occurrences: SimObservation["occurrences"];
   memoryWrites: SimObservation["memoryWrites"];
   itemOwners: SimObservation["itemOwners"];
   llmErrors: string[];
@@ -463,11 +461,18 @@ function summarize(
           (d) => d.npcId === id && d.tool !== "act" && d.tool !== "continue"
         )
         .map((d) => d.tool),
-      definitionIds: obs.interpreted
-        .filter((i) => i.npcId === id)
-        .flatMap((i) => i.definitionIds),
+      declaredSkills: obs.decisions
+        .filter((d) => d.npcId === id && d.skillId)
+        .map((d) => d.skillId as string),
+      outcomes: obs.transitions
+        .filter((t) => t.npcId === id && t.judgement)
+        .map((t) => `${t.to}/${t.judgement?.outcome}`),
+      perceived: obs.occurrences.filter((o) =>
+        o.perceiverCharacterIds.includes(id)
+      ).length,
+      memoriesWritten: obs.memoryWrites.filter((m) => m.npcId === id).length,
       cancelled: obs.ticks.reduce(
-        (n, t) => n + t.cancellations.filter((c) => c.npcId === id).length,
+        (n, t) => n + t.terminations.filter((c) => c.npcId === id).length,
         0
       ),
       ...(pos ? { moved: pos } : {}),
@@ -534,8 +539,13 @@ function topCounts(values: string[], limit = 3): string {
 }
 
 // =========================================================================
-// Auto-generated scenarios for definitions no authored case targets
+// Auto-generated scenarios for skill domains no authored case targets
 // =========================================================================
+//
+// There are no action definitions any more, so coverage is measured against
+// the 17 skill domains: a domain no authored case exercises gets a generated
+// case that puts an actor in a situation calling for it. The Engine still
+// decides whether the declared skill actually applies.
 
 function firstSentence(text: string): string {
   const clean = text.replace(/\s+/g, " ").trim();
@@ -543,30 +553,29 @@ function firstSentence(text: string): string {
   return cut > 0 ? clean.slice(0, cut + 1) : clean;
 }
 
-function autoScenario(def: ActionDefinition, defIndex: number): SimScenario {
-  const examples = def.interpreter?.examples ?? [];
-  const gist = firstSentence(def.description ?? def.title);
+function autoScenario(
+  skill: { name: string; description: string },
+  index: number
+): SimScenario {
+  const gist = firstSentence(skill.description);
   return {
-    id: `auto-${def.id}`,
+    id: `auto-${skill.name.toLowerCase().replace(/[^a-z0-9]+/g, "_")}`,
     group: "skill",
-    title: `${def.title} → ${def.id}（自动生成）`,
-    targetDefs: [def.id],
-    cases: Array.from({ length: 5 }, (_, i) => {
-      const roster = ACTOR_ROSTER[(defIndex * 5 + i) % ACTOR_ROSTER.length];
-      const example = examples[i % Math.max(1, examples.length)];
+    title: `${skill.name}（自动生成）`,
+    targetDefs: [skill.name],
+    cases: Array.from({ length: 3 }, (_, i) => {
+      const roster = ACTOR_ROSTER[(index * 3 + i) % ACTOR_ROSTER.length];
       return {
         label: `${roster.id}｜自动生成 #${i + 1}`,
         ticks: 3,
         actors: [
           {
             npc: roster.id,
-            goal: example
-              ? `你现在必须亲自动手做这件事：${example}（${def.title}）。`
-              : `你现在必须亲自动手，用「${def.title}」处理眼前的情况：${gist}`,
+            goal: `你现在必须亲自动手处理眼前的情况，这需要「${skill.name}」这类本事：${gist}`,
           },
         ],
         sceneConditions: [
-          `眼前的情况正需要「${def.title}」这类本事才能处理：${gist}`,
+          `眼前的情况正需要「${skill.name}」这类本事才能处理：${gist}`,
         ],
       } satisfies SimCase;
     }),
@@ -578,14 +587,12 @@ function autoScenario(def: ActionDefinition, defIndex: number): SimScenario {
 // =========================================================================
 
 async function main(): Promise<void> {
-  const definitionList = createDefaultDefinitions().getAll();
-
   const authoredDefs = new Set(
     ALL_SCENARIOS.flatMap((s) => s.targetDefs ?? [])
   );
-  const autoScenarios = definitionList
-    .filter((d) => !authoredDefs.has(d.id))
-    .map((d, i) => autoScenario(d, i));
+  const autoScenarios = SKILL_CATALOG.filter(
+    (skill) => !authoredDefs.has(skill.name)
+  ).map((skill, i) => autoScenario(skill, i));
 
   let scenarios = FULL
     ? [...ALL_SCENARIOS, ...autoScenarios]
@@ -615,7 +622,7 @@ async function main(): Promise<void> {
     console.log(
       `${scenarios.length} 个场景 · ${totalCases} 个 case · 合计 ${totalTicks} tick\n` +
         `粗估 LLM 调用量：约 ${actorTicks * 3}-${actorTicks * 4} 次（角色·tick = ${actorTicks}）\n` +
-        `花名册 ${ACTOR_ROSTER.length} 人 · 动作定义 ${definitionList.length} 个` +
+        `花名册 ${ACTOR_ROSTER.length} 人 · 技能域 ${SKILL_CATALOG.length} 个` +
         `（--full 会另外生成 ${autoScenarios.length} 个场景）\n`
     );
     for (const s of scenarios) {
@@ -635,7 +642,7 @@ async function main(): Promise<void> {
   const base = await buildBaseWorld();
   console.log(
     `[world] module=${MODULE_NAME} lang=${LANG} scenes=${base.sceneName.size} ` +
-      `npcs=${base.presentNpcs.size} definitions=${definitionList.length}`
+      `npcs=${base.presentNpcs.size} skills=${SKILL_CATALOG.length}`
   );
 
   // ---- prepare every case -------------------------------------------------
@@ -687,9 +694,11 @@ async function main(): Promise<void> {
       committed: [],
       sceneChanges: [],
       sceneConditionsAtEnd: [],
-      queueAtEnd: [],
+      actionsAtEnd: [],
       silentFailures: [],
-      skillChecks: [],
+      commands: [],
+      transitions: [],
+      occurrences: [],
       memoryWrites: [],
       itemOwners: {},
       llmErrors: [],
@@ -712,8 +721,6 @@ async function main(): Promise<void> {
       obs = await runStagedCase({
         baseState: base.serializedState,
         stage: prep.stage,
-        definitions: definitionList,
-        knownLocations: base.knownLocations,
         lang: LANG,
         sessionId: SESSION_ID,
         moduleId: base.moduleId,
@@ -737,16 +744,17 @@ async function main(): Promise<void> {
     }
 
     result.committed = obs.ticks.flatMap((t) =>
-      t.commits.map((c) => ({
+      t.completions.map((c) => ({
         tick: t.tick,
         npcId: c.npcId,
-        definitionId: c.definitionId,
-        text: c.actionText.replace(/\s+/g, " ").slice(0, 90),
+        text: c.description.replace(/\s+/g, " ").slice(0, 90),
       }))
     );
-    result.queueAtEnd = obs.queueAtEnd;
+    result.actionsAtEnd = obs.actionsAtEnd;
     result.silentFailures = obs.silentFailures;
-    result.skillChecks = obs.skillChecks;
+    result.commands = obs.commands;
+    result.transitions = obs.transitions;
+    result.occurrences = obs.occurrences;
     result.memoryWrites = obs.memoryWrites;
     result.itemOwners = obs.itemOwners;
     result.llmErrors = obs.llmErrors;
@@ -762,17 +770,53 @@ async function main(): Promise<void> {
     ];
     for (const [npcId, a] of Object.entries(result.actors)) {
       lines.push(
-        `      ${pad(npcId, 22)} 工具 [${[...a.instantTools, ...a.terminalTools].join(" → ") || "无"}] · 定义 [${a.definitionIds.join(",") || "-"}]${a.cancelled > 0 ? ` · 中断自己的动作 ${a.cancelled} 次` : ""}`
+        `      ${pad(npcId, 22)} 工具 [${
+          [...a.instantTools, ...a.terminalTools].join(" → ") || "无"
+        }] · 技能 [${a.declaredSkills.join(",") || "-"}] · 结果 [${
+          a.outcomes.join(",") || "-"
+        }] · 感知 ${a.perceived} · 记忆 ${a.memoriesWritten}${
+          a.cancelled > 0 ? ` · 中断自己的动作 ${a.cancelled} 次` : ""
+        }`
       );
     }
     for (const c of result.committed) {
+      lines.push(`      完成 : t${c.tick} ${pad(c.npcId, 22)} ${c.text}`);
+    }
+    // The roll happens at intake, BEFORE the Engine judges applicability —
+    // showing both together is how "看到骰点后迁就结果" becomes visible.
+    for (const cmd of result.commands) {
+      if (!cmd.roll) continue;
+      const verdict = result.transitions.find(
+        (t) => t.actionId === cmd.actionId && t.judgement
+      )?.judgement;
+      const assessed =
+        verdict && verdict.kind === "skill_assessed"
+          ? ` → Engine ${verdict.applicability}${
+              verdict.requiredLevel ? `/需要${verdict.requiredLevel}` : ""
+            }/${verdict.outcome}`
+          : "";
       lines.push(
-        `      t${c.tick} ${pad(c.npcId, 22)} ${pad(c.definitionId, 20)} ${c.text}`
+        `      掷骰 : ${cmd.npcId} ${cmd.roll.skillId} ` +
+          `${cmd.roll.roll}/${cmd.roll.skillValue} → ${cmd.roll.successLevel}${assessed}`
       );
     }
-    for (const s of result.skillChecks) {
+    for (const cmd of result.commands) {
+      if (cmd.accepted) continue;
+      lines.push(`      拒绝 : ${cmd.npcId} — ${cmd.reason ?? "?"}`);
+    }
+    for (const t of result.transitions) {
+      if (t.resolvedDurationTicks === undefined) continue;
       lines.push(
-        `      掷骰 : ${s.npcId} ${s.skill} → ${s.status}/${s.successLevel ?? "?"}`
+        `      时长 : ${t.npcId} Engine 定 ${t.resolvedDurationTicks} tick${
+          t.timingReason ? ` — ${t.timingReason.slice(0, 60)}` : ""
+        }`
+      );
+    }
+    for (const o of result.occurrences) {
+      lines.push(
+        `      事实 : t${o.tick} [${o.facts.map((f) => f.type).join(",")}] ` +
+          `${o.facts[0]?.content.replace(/\s+/g, " ").slice(0, 50) ?? ""} ` +
+          `→ 感知者 [${o.perceiverCharacterIds.join(",") || "无"}]`
       );
     }
     for (const [npcId, a] of Object.entries(result.actors)) {
@@ -801,9 +845,11 @@ async function main(): Promise<void> {
         `      记忆 : ${w.npcId} (${w.type}) ${w.content.replace(/\s+/g, " ").slice(0, 60)}`
       );
     }
-    for (const q of result.queueAtEnd) {
+    for (const q of result.actionsAtEnd) {
       lines.push(
-        `      在途 : ${q.npcId} ${q.definitionId} (${q.status}) — 结束时未完成，tick 不够，非未行动`
+        `      在途 : ${q.npcId} "${q.description}" (${q.status}, ${
+          q.progressMinutes
+        }/${q.resolvedDurationTicks ?? "?"}分钟) — 结束时未完成，tick 不够，非未行动`
       );
     }
     if (result.notes.length > 0)
@@ -844,8 +890,8 @@ async function main(): Promise<void> {
           rows.flatMap((r) => actorRows(r).flatMap(([, a]) => a.terminalTools)),
           2
         )}  ` +
-        `定义=${topCounts(
-          rows.flatMap((r) => actorRows(r).flatMap(([, a]) => a.definitionIds))
+        `技能=${topCounts(
+          rows.flatMap((r) => actorRows(r).flatMap(([, a]) => a.declaredSkills))
         )}`
     );
   }
@@ -899,21 +945,22 @@ async function main(): Promise<void> {
     );
   }
 
-  // Coverage counts every staged actor — a definition exercised end-to-end by
-  // a supporting actor was still reached through the real pipeline.
+  // Coverage counts every staged actor — a skill exercised end-to-end by a
+  // supporting actor was still reached through the real pipeline. Only skills
+  // the CHARACTER chose to declare count; the Engine may still have rejected
+  // them as inapplicable, which is itself worth seeing.
   const reached = new Set(
-    results.flatMap((r) => actorRows(r).flatMap(([, a]) => a.definitionIds))
+    results.flatMap((r) => actorRows(r).flatMap(([, a]) => a.declaredSkills))
   );
-  const missing = definitionList
-    .map((d) => d.id)
-    .filter((id) => !reached.has(id));
-  console.log(
-    `\n--- 动作定义覆盖：${reached.size}/${definitionList.length} ---`
+  const missing = SKILL_CATALOG.map((sk) => sk.name).filter(
+    (name) => !reached.has(name)
   );
-  console.log(`  已触及: ${[...reached].sort().join(", ") || "(无)"}`);
+  console.log(`\n--- 技能域覆盖：${reached.size}/${SKILL_CATALOG.length} ---`);
+  console.log(`  已声明: ${[...reached].sort().join(", ") || "(无)"}`);
   if (missing.length > 0) {
-    console.log(`  未触及 (${missing.length}): ${missing.sort().join(", ")}`);
-    if (!FULL) console.log("  （加 --full 可为每个未触及的定义生成 5 个案例）");
+    console.log(`  未声明 (${missing.length}): ${missing.sort().join(", ")}`);
+    if (!FULL)
+      console.log("  （加 --full 可为每个未触及的技能域生成 3 个案例）");
   }
 
   const bad = results.filter((r) => r.status !== "OK");
@@ -974,10 +1021,10 @@ async function main(): Promise<void> {
           skip: skipped,
           total: results.length,
         },
-        definitionCoverage: {
+        skillCoverage: {
           reached: [...reached].sort(),
           missing: missing.sort(),
-          total: definitionList.length,
+          total: SKILL_CATALOG.length,
         },
         results,
       },

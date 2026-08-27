@@ -66,7 +66,7 @@ function makeDgsm(opts: { aliveIds?: string[] } = {}) {
 /** Honest stub engine: first resolution → active for 2 ticks; due → completed.
  *  Runs through the real finalizeResolution so ids/wake times are computed
  *  exactly like production. */
-function stubResolve() {
+function stubResolve(opts: { withOccurrence?: boolean } = {}) {
   const calls: EngineResolutionContext[] = [];
   const fn = vi.fn(async (context: EngineResolutionContext) => {
     calls.push(context);
@@ -98,6 +98,17 @@ function stubResolve() {
               reason: "stub done",
             },
           });
+          if (opts.withOccurrence) {
+            raw.occurrences = [
+              ...(raw.occurrences ?? []),
+              {
+                sourceActionIds: [actionId],
+                facts: [{ type: "action_result", content: "stub fact" }],
+                participants: [{ characterId: "npc_1", role: "actor" }],
+                perceiverCharacterIds: ["npc_1"],
+              },
+            ];
+          }
         } else if (t.reason === "replacement" || t.reason === "interrupted") {
           raw.actions.push({
             actionId,
@@ -278,6 +289,72 @@ describe("replacement and interruption", () => {
       to: "failed",
       reason: "actor is dead",
     });
+  });
+});
+
+describe("an ended action always leaves something to perceive", () => {
+  // The regression this guards: a failed move changes nothing the actor can
+  // see, so without an objective trace their next perception is identical and
+  // they re-issue the same doomed action. Observed live as a seven-tick loop
+  // after the old movement subsystem's "couldn't work out a way to get there"
+  // feedback was removed. Memory is the character's own now, so the trace has
+  // to arrive as perception.
+  it("synthesizes an occurrence for a transition the Engine never saw", async () => {
+    // A dead actor's command fails in the orchestrator itself — the Engine is
+    // never called, so no submission could have carried the occurrence.
+    const dgsm = makeDgsm({ aliveIds: ["npc_2"] });
+    const resolve = stubResolve();
+    const { engine } = makeEngine(dgsm, resolve);
+    const receipt = await engine.submitCommand(command());
+
+    const reports: import("../types.js").TickReport[] = [];
+    engine.on("tickCompleted", (r) => {
+      reports.push(r);
+    });
+    await engine.tick();
+
+    expect(resolve.fn).not.toHaveBeenCalled();
+    const occurrences = reports[0].occurrences;
+    expect(occurrences).toHaveLength(1);
+    expect(occurrences[0].sourceActionIds).toEqual([receipt.actionId]);
+    // The actor perceives their own failure; nobody else necessarily could.
+    expect(occurrences[0].perceiverCharacterIds).toEqual(["npc_1"]);
+    expect(occurrences[0].facts[0].type).toBe("action_result");
+    expect(occurrences[0].facts[0].content).toContain("actor is dead");
+  });
+
+  it("leaves the Engine's own occurrence alone when it emitted one", async () => {
+    const resolve = stubResolve({ withOccurrence: true });
+    const { engine } = makeEngine(makeDgsm(), resolve);
+    await engine.submitCommand(command());
+
+    const reports: import("../types.js").TickReport[] = [];
+    engine.on("tickCompleted", (r) => {
+      reports.push(r);
+    });
+    await engine.tick(); // active
+    await engine.tick();
+    await engine.tick(); // due → completed, engine emits its own occurrence
+
+    const completedTick = reports[2];
+    expect(completedTick.transitions[0].to).toBe("completed");
+    // Exactly one — the fallback must not double up on the Engine's fact.
+    expect(completedTick.occurrences).toHaveLength(1);
+    expect(completedTick.occurrences[0].facts[0].content).toBe("stub fact");
+  });
+
+  it("does not synthesize for an action that is merely still running", async () => {
+    const { engine } = makeEngine();
+    await engine.submitCommand(command());
+
+    const reports: import("../types.js").TickReport[] = [];
+    engine.on("tickCompleted", (r) => {
+      reports.push(r);
+    });
+    await engine.tick(); // queued → active, nothing has ended yet
+
+    expect(reports[0].transitions[0].to).toBe("active");
+    expect(reports[0].occurrences).toEqual([]);
   });
 });
 

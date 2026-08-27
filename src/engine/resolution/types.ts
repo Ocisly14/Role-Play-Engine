@@ -75,7 +75,6 @@ export interface CharacterSnapshot {
   locationId: string;
   conditions: CharacterCondition[];
   inventoryItemIds: string[];
-  relationships: Array<{ targetId: string; score?: number; note?: string }>;
 }
 
 // ==================== Context ====================
@@ -123,8 +122,6 @@ export interface EngineResolutionContext {
     tickId: string;
     tickStartTime: GameTime;
     durationMinutes: number;
-    worldVersion: string;
-    randomSeed: string;
   };
 
   rules: {

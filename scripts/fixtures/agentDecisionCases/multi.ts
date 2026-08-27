@@ -71,6 +71,10 @@ export const MULTI_SCENARIOS: SimScenario[] = [
       {
         label: "处置伤员，家属不让碰",
         ticks: 6,
+        // 原来没写 scene，舞台落在 Vincent 的药品管理室——刷卡进出、只有药架
+        // 和冷藏柜，没有床可挡。走廊与病房区(SCN_1_SUB_5)有病床、推床和输液架，
+        // 也是家属真能站进来的公共区域。
+        scene: "病房",
         actors: [
           {
             npc: "Vincent Galenus",
@@ -113,7 +117,7 @@ export const MULTI_SCENARIOS: SimScenario[] = [
     id: "multi-move-together",
     group: "multi",
     title: "两人同行：目标绑定彼此，一起赶到另一栋楼",
-    targetDefs: ["movement"],
+    targetDefs: [],
     cases: [
       {
         label: "院长送伤员转院",
@@ -121,11 +125,14 @@ export const MULTI_SCENARIOS: SimScenario[] = [
         actors: [
           {
             npc: "Vincent Galenus",
-            goal: "这里的设备处理不了她的伤，亲自把她送到{{destName}}，路上一步都不能离开她。",
+            // {{destName}} 是从真实地点里随机抽的，且会排除舞台自身的父地点。
+            // Vincent 本就在模组唯一的医院里，所以"设备更好的地方"永远抽不到
+            // （本次抽到五金店）。动机改成与目的地属性无关的那种。
+            goal: "有人在这栋楼里对她动过手，医院已经不安全了。亲自把她送到{{destName}}交给可靠的人，路上一步都不能离开她。",
           },
           {
             npc: "Nancy Charlotte",
-            goal: "跟着院长去{{destName}}处理伤口，路上别掉队。",
+            goal: "跟着院长离开医院去{{destName}}，路上别掉队。",
             hp: 8,
             conditions: ["右手掌割伤，缠着绷带，还能走路"],
           },
@@ -165,11 +172,14 @@ export const MULTI_SCENARIOS: SimScenario[] = [
         actors: [
           {
             npc: "Haran Greenwood",
-            goal: "这位客人不认路，亲自把他领到{{destName}}，交到人手里再回来。",
+            goal: "这位客人不认路，亲自把他领到{{destName}}，看着他进了门再回来。",
           },
           {
             npc: "Marks White",
-            goal: "跟着站务去{{destName}}取那只座钟，别自己乱走。",
+            // 原文写"去{{destName}}取那只座钟"，但座钟在钟表匠自己店里
+            // (ITEM_SCN12_6 座钟陈列架)，而目的地是随机抽的——散文不能断言
+            // 目的地有什么。
+            goal: "跟着站务去{{destName}}，你对镇里的路一点不熟，别自己乱走。",
           },
         ],
       },
@@ -193,7 +203,7 @@ export const MULTI_SCENARIOS: SimScenario[] = [
     id: "multi-move-chase",
     group: "multi",
     title: "一追一逃：一个要走，一个要跟住",
-    targetDefs: ["movement", "track", "stealth"],
+    targetDefs: ["Investigation", "Stealth & Security"],
     cases: [
       {
         label: "混混甩债主",

@@ -7,45 +7,40 @@
 // This is the engine half of scripts/test-agent-decisions.ts. Every layer is
 // production code:
 //
-//   createTickEngine (queue · applier · scriptedEventRunner · 8 subsystems)
-//     ├─ interpretAction   (LLM: narrative → ActionDefinition steps)
-//     ├─ executeSkillCheck (real dice against the NPC's real skills)
-//     └─ resolveState      (LLM: step → StateChange[])
-//   NpcActionController  (tickCompleted → perception → decide → submitAction)
-//     └─ LLMRoleSimAgent (the agent loop under test)
+//   LLMRoleSimAgent        act(description, objectRefs, ticks, skill?)
+//     ├─ commandBuilder    trusted envelope + immediate skill roll
+//     ↓
+//   createTickEngine       inbox · action store · applier · subsystems
+//     └─ WorldActionEngine one global resolution per triggered tick
+//          ├─ deterministic code tools (pathfinding, opposed rolls, …)
+//          └─ transitions + WorldDeltas + Occurrences
+//     ↓
+//   NpcActionController    occurrence routing → per-character render → decide
 //
-// Only the memory store is stubbed: an in-memory implementation that honours
-// the same contract (long_term_intent is how a staged goal reaches the NPC —
-// exactly the production path — and today's event/witness rows written by the
-// controller feed the next tick's prompt).
+// The chain this harness exists to observe, stage by stage:
+//   act → command → engine resolution → occurrence → render → memory
+//
+// Only the memory store is stubbed: an in-memory implementation honouring the
+// same contract (long_term_intent is how a staged goal reaches the NPC —
+// exactly the production path — and rows the CHARACTER writes with
+// `writeMemory` feed the next tick's prompt).
 //
 // Each call gets its OWN DynamicGameState, deep-cloned from a serialized base
 // snapshot, so ticks in one case can never leak into another and cases can run
 // concurrently.
 
+import type { ActionJudgement } from "../../src/engine/actions/types.js";
 import { createTickEngine } from "../../src/engine/core/tickEngine.js";
 import type {
-  ActionStep,
   CharacterCondition,
   FeatureEvent,
-  PlannedOutcome,
   TickReport,
 } from "../../src/engine/core/types.js";
-import {
-  currentLocationOf,
-  interpretAction,
-} from "../../src/engine/interpreter/gameInterpreter.js";
-import type { KnownLocation } from "../../src/engine/interpreter/gameInterpreter.js";
 import { createDefaultSubsystemRegistry } from "../../src/engine/registerDefaults.js";
-import { buildCancelResolverAction } from "../../src/engine/resolver/cancelPrompt.js";
-import { buildStateContext } from "../../src/engine/resolver/stateContextBuilder.js";
-import { resolveState } from "../../src/engine/resolver/stateResolver.js";
 import type {
   Effect,
   ScriptedEvent,
 } from "../../src/engine/scriptedEvents/types.js";
-import { executeSkillCheck } from "../../src/engine/tools/skillCheckTool.js";
-import type { ActionDefinition, ToolResult } from "../../src/engine/types.js";
 import type { NpcMemoryManager } from "../../src/memory/NpcMemoryManager.js";
 import type { RoleSimAgent, RoleSimDecision } from "../../src/roleSim/agent.js";
 import { LLMRoleSimAgent } from "../../src/roleSim/llmAgent.js";
@@ -81,7 +76,10 @@ export interface StagedActor {
   /** Memories only reachable through recallMemory (older days). */
   recallSeeds?: Array<{ type: NpcMemoryType; content: string; date: string }>;
   /** Rows that show up in "## Today's memories" from tick one. */
-  todayMemories?: Array<{ type: "event" | "witness"; content: string }>;
+  todayMemories?: Array<{
+    type: "general" | "plan" | "secret" | "relationship";
+    content: string;
+  }>;
 }
 
 export interface StageSpec {
@@ -128,14 +126,20 @@ export interface StageSpec {
 // Observation
 // =========================================================================
 
-/** What `decideNext` actually returned — one row per completed decision. */
+/** What `decideNext` actually returned — one row per completed decision.
+ *  The agent now emits structured intent, so the record keeps the fields
+ *  separately: prose that reads well can still cite a nonexistent id. */
 export interface DecisionRecord {
   tick: number;
   npcId: string;
   /** In practice always a terminal tool; typed off the decision union so a
    *  future non-terminal return would not silently mis-record. */
   tool: RoleSimDecision["tool"];
-  actionText?: string;
+  description?: string;
+  objectRefs?: Array<{ kind: string; id: string; role?: string }>;
+  proposedDurationTicks?: number;
+  skillId?: string;
+  utterance?: string;
   reason?: string;
 }
 
@@ -147,28 +151,60 @@ export interface IterationRecord {
   args?: Record<string, unknown>;
 }
 
-export interface InterpretRecord {
+/** The trusted command the intake actually built from a decision — proof the
+ *  trust boundary ran, and where a rejection shows up. */
+export interface CommandRecord {
   tick: number;
   npcId: string;
-  actionText: string;
-  definitionIds: string[];
-  destinations: string[];
+  accepted: boolean;
+  actionId?: string;
+  /** Rejection reason from the validator/intake, when not accepted. */
+  reason?: string;
+  /** Set when the character declared a skill: the roll made AT INTAKE,
+   *  before any semantic assessment ("先骰后审"). */
+  roll?: {
+    skillId: string;
+    skillValue: number;
+    roll: number;
+    successLevel: string;
+  };
+}
+
+/** One action's lifecycle step, as decided by the World Action Engine. */
+export interface TransitionRecord {
+  tick: number;
+  npcId: string;
+  actionId: string;
+  from: string;
+  to: string;
+  progressDeltaMinutes: number;
+  /** Engine-owned authoritative duration + why (never the actor's proposal). */
+  resolvedDurationTicks?: number;
+  timingReason?: string;
+  nextWakeAt?: string;
+  reason?: string;
+  /** The Engine's post-roll verdict, persisted on the action runtime. */
+  judgement?: ActionJudgement;
+}
+
+/** An objective occurrence and who the Engine said could perceive it. */
+export interface OccurrenceRecord {
+  tick: number;
+  locationId?: string;
+  facts: Array<{ type: string; content: string }>;
+  participants: Array<{ characterId: string; role: string }>;
+  perceiverCharacterIds: string[];
+  signals: Array<{ channel: string; originLocationId?: string }>;
 }
 
 export interface TickRecord {
   tick: number;
   gameDateTime: string;
-  commits: Array<{
-    npcId: string;
-    definitionId: string;
-    actionText: string;
-    impact: number;
-  }>;
-  cancellations: Array<{
-    npcId: string;
-    definitionId: string;
-    actionText: string;
-  }>;
+  /** True when this tick had a resolution trigger. An idle tick MUST show
+   *  false and cost zero World Action Engine calls. */
+  engineRan: boolean;
+  completions: Array<{ npcId: string; description: string }>;
+  terminations: Array<{ npcId: string; description: string; to: string }>;
   featureEvents: Array<{ type: string; impact: number; description: string }>;
   positionChanges: Array<{ npcId: string; to: string; via: string }>;
   /** Scene-state mutations this tick (conditions added/removed, items damaged,
@@ -181,15 +217,12 @@ export interface SimObservation {
   ticks: TickRecord[];
   decisions: DecisionRecord[];
   iterations: IterationRecord[];
-  interpreted: InterpretRecord[];
-  skillChecks: Array<{
-    npcId: string;
-    definitionId: string;
-    skill: string;
-    status: string;
-    successLevel?: string;
-    rollDetail?: string;
-  }>;
+  commands: CommandRecord[];
+  transitions: TransitionRecord[];
+  occurrences: OccurrenceRecord[];
+  /** Memories the CHARACTER chose to write. Nothing is recorded on its
+   *  behalf any more, so an empty list is a real finding, not a plumbing
+   *  gap. */
   memoryWrites: Array<{ npcId: string; type: string; content: string }>;
   /** Per NPC: where they started and where they ended. */
   positions: Record<string, { from: string; to: string }>;
@@ -201,17 +234,19 @@ export interface SimObservation {
   conditionsAtEnd: Record<string, string[]>;
   /** Conditions on the staged scene at the end (staged ones included). */
   sceneConditionsAtEnd: string[];
-  /** Steps still queued or active when the run ended. Without this, "the agent
-   *  decided correctly but the action had not finished yet" is indistinguishable
-   *  from "the agent never did anything". */
-  queueAtEnd: Array<{
+  /** Actions still queued or active when the run ended. Without this, "the
+   *  agent decided correctly but the action had not finished yet" is
+   *  indistinguishable from "the agent never did anything". */
+  actionsAtEnd: Array<{
     npcId: string;
-    definitionId: string;
+    actionId: string;
     status: string;
-    actionText: string;
+    description: string;
+    progressMinutes: number;
+    resolvedDurationTicks?: number;
   }>;
-  /** Failures the controller swallows (renderer returned null, submitAction
-   *  dropped) — otherwise they reach the grader as "the agent chose not to
+  /** Failures the controller swallows (renderer returned null, command
+   *  rejected) — otherwise they reach the reader as "the agent chose not to
    *  act", billing an infrastructure fault to the agent. */
   silentFailures: string[];
   llmErrors: string[];
@@ -363,8 +398,6 @@ export interface RunStagedCaseInput {
    *  per case so runs never share mutable world state. */
   baseState: unknown;
   stage: StageSpec;
-  definitions: ActionDefinition[];
-  knownLocations: KnownLocation[];
   lang: string;
   sessionId: string;
   moduleId: string;
@@ -392,8 +425,7 @@ export async function runStagedCase(
   input: RunStagedCaseInput
 ): Promise<SimObservation> {
   const started = Date.now();
-  const { stage, definitions, knownLocations, lang, sessionId, moduleId } =
-    input;
+  const { stage, lang, sessionId, moduleId } = input;
   const log = input.log ?? (() => {});
   if (stage.actors.length === 0) {
     throw new Error("StageSpec.actors is empty — a case needs a protagonist");
@@ -414,15 +446,16 @@ export async function runStagedCase(
     ticks: [],
     decisions: [],
     iterations: [],
-    interpreted: [],
-    skillChecks: [],
+    commands: [],
+    transitions: [],
+    occurrences: [],
     memoryWrites: [],
     positions: {},
     vitals: {},
     itemOwners: {},
     conditionsAtEnd: {},
     sceneConditionsAtEnd: [],
-    queueAtEnd: [],
+    actionsAtEnd: [],
     silentFailures: [],
     llmErrors: [],
     elapsedMs: 0,
@@ -537,7 +570,7 @@ export async function runStagedCase(
   // profileFormatter.formatRelationshipsBlock renders every row of
   // npcRelationshipGraph[npcId] and falls back to the raw target id when the
   // name cannot be resolved from npcCharacters — which, after pruning, is every
-  // off-stage NPC. The model then writes that id into actionText as if it were
+  // off-stage NPC. The model then cites that id in objectRefs as if it were
   // a person's name. Prune the graph to the staged cast.
   const graph = mutable.npcRelationshipGraph;
   if (graph) {
@@ -654,115 +687,56 @@ export async function runStagedCase(
     }
   );
 
-  // ---- engine: real interpreter · real dice · real resolver ------------
+  // ---- engine: real World Action Engine · real dice · real code tools ---
+  // Nothing is stubbed. The Engine makes its own LLM call when (and only
+  // when) a tick carries an action resolution trigger.
   let currentTick = 0;
-  const defsById = new Map(definitions.map((d) => [d.id, d]));
 
-  const engine = createTickEngine({
+  const realEngine = createTickEngine({
     dgsm,
     subsystemRegistry: createDefaultSubsystemRegistry(),
     scriptedEvents,
-    interpretAction: async (inputAction, directory) => {
-      const result = await interpretAction(
-        inputAction.actionText,
-        definitions,
-        lang,
-        directory,
-        knownLocations,
-        currentLocationOf(dgsm, inputAction.characterId)
-      );
-      observation.interpreted.push({
-        tick: currentTick,
-        npcId: inputAction.characterId,
-        actionText: inputAction.actionText,
-        definitionIds: result.steps.map((s) => s.definitionId),
-        destinations: result.steps
-          .map(
-            (s) => (s.overlayFields as { destination?: string })?.destination
-          )
-          .filter((d): d is string => !!d),
-      });
-      log(
-        `   [interpreter] ${inputAction.characterId} → ${result.steps.map((s) => s.definitionId).join(",")}`
-      );
-      return { steps: result.steps };
-    },
-    resolve: async (
-      step: ActionStep,
-      _ctx: unknown,
-      cancel,
-      skillCheckResult
-    ): Promise<{ outcome: PlannedOutcome; plannedDuration: number }> => {
-      const definition = defsById.get(step.definitionId);
-      if (!definition) {
-        return {
-          outcome: { stateChanges: [], elapsedMinutes: 0 },
-          plannedDuration: 0,
-        };
-      }
-      const stateContext = buildStateContext(
-        definition,
-        {
-          characterId: step.characterId,
-          referencedEntities: step.referencedEntities,
-        },
-        dgsm,
-        step.executionSceneId
-      );
-      const resolved = await resolveState({
-        action: cancel
-          ? buildCancelResolverAction(step.actionText, cancel)
-          : step.actionText,
-        definition,
-        outcomeSection: definition.content,
-        stateContext,
-        skillCheckResult,
-        language: lang,
-      });
-      const elapsedMinutes = cancel
-        ? cancel.elapsedMinutes
-        : resolved.elapsedMinutes;
-      log(
-        `   [resolver] ${step.characterId} def=${step.definitionId} ` +
-          `elapsed=${elapsedMinutes}min changes=[${resolved.stateChanges.map((s) => s.kind).join(",")}]`
-      );
-      return {
-        outcome: { stateChanges: resolved.stateChanges, elapsedMinutes },
-        plannedDuration: elapsedMinutes,
-      };
-    },
-    runSkillCheck: (step: ActionStep): ToolResult | undefined => {
-      const definition = defsById.get(step.definitionId);
-      if (!definition?.skillCheck) return undefined;
-      const targetIds = step.referencedEntities
-        .filter((r) => r.kind === "character")
-        .map((r) => r.id);
-      const result = executeSkillCheck(
-        definition.skillCheck,
-        step.characterId,
-        undefined,
-        dgsm,
-        step.executionSceneId,
-        targetIds.length > 0 ? targetIds : undefined
-      );
-      observation.skillChecks.push({
-        npcId: step.characterId,
-        definitionId: step.definitionId,
-        skill: definition.skillCheck.skill ?? "",
-        status: result.status,
-        successLevel: result.successLevel,
-        rollDetail: result.rollDetail,
-      });
-      log(
-        `   [skillCheck] ${step.characterId} ${definition.skillCheck.skill} → ` +
-          `${result.status}/${result.successLevel ?? "?"}${result.rollDetail ? ` (${result.rollDetail})` : ""}`
-      );
-      return result;
-    },
-    getActorDex: (id) => dgsm.getNpcProfile(id)?.attributes?.DEX ?? 50,
     tickDurationMinutes: 1,
-    lang,
   });
+
+  // Record what actually crossed the trust boundary. The command carries the
+  // envelope the controller stamped and — when the character declared a skill
+  // — the roll deterministic code already made at intake, before the Engine
+  // has seen the action at all. Wrapping keeps production code untouched.
+  const engine: typeof realEngine = {
+    ...realEngine,
+    on: realEngine.on.bind(realEngine),
+    submitCommand: async (command) => {
+      const receipt = await realEngine.submitCommand(command);
+      observation.commands.push({
+        tick: currentTick,
+        npcId: command.actorId,
+        accepted: receipt.accepted,
+        ...(receipt.actionId ? { actionId: receipt.actionId } : {}),
+        ...(receipt.reason ? { reason: receipt.reason } : {}),
+        ...(command.skillRoll
+          ? {
+              roll: {
+                skillId: command.skillRoll.skillId,
+                skillValue: command.skillRoll.skillValue,
+                roll: command.skillRoll.roll,
+                successLevel: command.skillRoll.successLevel,
+              },
+            }
+          : {}),
+      });
+      log(
+        `   [command] ${command.actorId} ${
+          receipt.accepted ? "accepted" : `REJECTED (${receipt.reason})`
+        }${
+          command.skillRoll
+            ? ` roll=${command.skillRoll.roll}/${command.skillRoll.skillValue} ${command.skillRoll.skillId}→${command.skillRoll.successLevel}`
+            : ""
+        }`
+      );
+      return receipt;
+    },
+  };
 
   // Register the observation listener BEFORE the controller. EventBus awaits
   // listeners in registration order and the controller runs its entire decide
@@ -771,55 +745,142 @@ export async function runStagedCase(
   // already flushed that tick's state changes, so the report would claim
   // "nothing happened" while positions and HP had visibly moved.
   engine.on("tickCompleted", (report: TickReport) => {
+    // Transitions are the authoritative lifecycle record; `commits` /
+    // `cancellations` are derived views kept for the migration window.
+    for (const t of report.transitions) {
+      const action = engine.getAction(t.actionId);
+      const judgement = action?.runtime?.judgement as
+        | ActionJudgement
+        | undefined;
+      observation.transitions.push({
+        tick: currentTick,
+        npcId: t.actorId,
+        actionId: t.actionId,
+        from: t.from,
+        to: t.to,
+        progressDeltaMinutes: t.progressDeltaMinutes,
+        ...(t.resolvedDurationTicks !== undefined
+          ? { resolvedDurationTicks: t.resolvedDurationTicks }
+          : {}),
+        ...(t.timingReason ? { timingReason: t.timingReason } : {}),
+        ...(t.nextWakeAt ? { nextWakeAt: t.nextWakeAt } : {}),
+        ...(t.reason ? { reason: t.reason } : {}),
+        ...(judgement ? { judgement } : {}),
+      });
+      log(
+        `   [engine] ${t.actorId} ${t.from}→${t.to}${
+          t.resolvedDurationTicks !== undefined
+            ? ` dur=${t.resolvedDurationTicks}t (${t.timingReason ?? "?"})`
+            : ""
+        }${judgement ? ` outcome=${judgement.outcome}` : ""}`
+      );
+    }
+
+    for (const occ of report.occurrences) {
+      observation.occurrences.push({
+        tick: currentTick,
+        ...(occ.locationId ? { locationId: occ.locationId } : {}),
+        facts: occ.facts.map((f) => ({ type: f.type, content: f.content })),
+        participants: occ.participants.map((p) => ({
+          characterId: p.characterId,
+          role: p.role,
+        })),
+        perceiverCharacterIds: [...occ.perceiverCharacterIds],
+        signals: occ.signals.map((sig) => ({
+          channel: sig.channel,
+          ...(sig.originLocationId
+            ? { originLocationId: sig.originLocationId }
+            : {}),
+        })),
+      });
+      log(
+        `   [occurrence] ${occ.facts.map((f) => f.type).join(",")} → ` +
+          `perceivers=[${occ.perceiverCharacterIds.join(",")}]`
+      );
+    }
+
+    const ended = new Set(["completed", "failed", "interrupted", "cancelled"]);
     observation.ticks.push({
       tick: currentTick,
       gameDateTime: dgsm.getGameDateTime(),
-      commits: report.commits.map((a) => ({
-        npcId: a.characterId,
-        definitionId: a.definitionId,
-        actionText: a.actionText,
-        impact: a.impact,
-      })),
-      cancellations: report.cancellations.map((c) => ({
-        npcId: c.characterId,
-        definitionId: c.definitionId,
-        actionText: c.actionText,
-      })),
+      // A tick with no transitions and no occurrences had no resolution
+      // trigger — the Engine was never called, which is the intended
+      // behaviour and worth showing per tick.
+      engineRan: report.transitions.length > 0 || report.occurrences.length > 0,
+      completions: report.transitions
+        .filter((t) => t.to === "completed")
+        .map((t) => ({
+          npcId: t.actorId,
+          description: engine.getAction(t.actionId)?.command.description ?? "",
+        })),
+      terminations: report.transitions
+        .filter((t) => ended.has(t.to) && t.to !== "completed")
+        .map((t) => ({
+          npcId: t.actorId,
+          description: engine.getAction(t.actionId)?.command.description ?? "",
+          to: t.to,
+        })),
       featureEvents: report.featureEvents.map((e) => ({
         type: e.type,
         impact: e.impact,
         description: e.description,
       })),
       sceneChanges: report.stateChanges.flatMap(
-        (s): Array<{ kind: string; description: string }> => {
-          switch (s.kind) {
+        (sc): Array<{ kind: string; description: string }> => {
+          switch (sc.kind) {
             case "scene.addCondition":
-              return [{ kind: s.kind, description: s.condition.description }];
+              return [{ kind: sc.kind, description: sc.condition.description }];
             case "scene.removeCondition":
               return [
                 {
-                  kind: s.kind,
-                  description: `removed condition (${JSON.stringify(s.predicate)})`,
+                  kind: sc.kind,
+                  description: `removed condition (${JSON.stringify(sc.predicate)})`,
                 },
               ];
             case "scene.damageItem":
               return [
                 {
-                  kind: s.kind,
-                  description: `${s.itemId} damaged by ${s.damagedBy}: ${s.reason}`,
+                  kind: sc.kind,
+                  description: `${sc.itemId} damaged by ${sc.damagedBy}: ${sc.reason}`,
                 },
               ];
             case "item.modify":
               return [
-                { kind: s.kind, description: `${s.itemId}: ${s.description}` },
+                {
+                  kind: sc.kind,
+                  description: `${sc.itemId}: ${sc.description}`,
+                },
+              ];
+            case "item.move":
+              return [
+                {
+                  kind: sc.kind,
+                  description: `${sc.itemId}: ${sc.from} → ${sc.to}`,
+                },
               ];
             case "item.destroy":
-              return [{ kind: s.kind, description: `${s.itemId} destroyed` }];
+              return [{ kind: sc.kind, description: `${sc.itemId} destroyed` }];
+            case "character.hp":
+            case "character.san":
+            case "character.fatigue":
+              return [
+                {
+                  kind: sc.kind,
+                  description: `${sc.characterId} ${sc.delta >= 0 ? "+" : ""}${sc.delta} (${sc.reason})`,
+                },
+              ];
+            case "character.addCondition":
+              return [
+                {
+                  kind: sc.kind,
+                  description: `${sc.characterId}: ${sc.condition.description}`,
+                },
+              ];
             case "connection.setBlock":
               return [
                 {
-                  kind: s.kind,
-                  description: `${s.connectionId} ${s.blocked ? "blocked" : "unblocked"}: ${s.reason}`,
+                  kind: sc.kind,
+                  description: `${sc.connectionId} ${sc.blocked ? "blocked" : "unblocked"}: ${sc.reason}`,
                 },
               ];
             default:
@@ -828,9 +889,9 @@ export async function runStagedCase(
         }
       ),
       positionChanges: report.stateChanges
-        .filter((s) => s.kind === "character.position")
-        .map((s) => {
-          const c = s as {
+        .filter((sc) => sc.kind === "character.position")
+        .map((sc) => {
+          const c = sc as {
             characterId: string;
             position: {
               type: string;
@@ -840,15 +901,15 @@ export async function runStagedCase(
             };
             sourceSubsystem?: string;
           };
-          const p = c.position;
+          const pos = c.position;
           return {
             npcId: c.characterId,
             to:
-              p.type === "scene"
-                ? `scene:${p.sceneId}`
-                : p.type === "junction"
-                  ? `junction:${p.junctionId}`
-                  : `road:${p.roadId}`,
+              pos.type === "scene"
+                ? `scene:${pos.sceneId}`
+                : pos.type === "junction"
+                  ? `junction:${pos.junctionId}`
+                  : `road:${pos.roadId}`,
             via: c.sourceSubsystem ?? "?",
           };
         }),
@@ -885,11 +946,32 @@ export async function runStagedCase(
         tick: currentTick,
         npcId: ctx.npcId,
         tool: decision.tool,
-        ...(decision.tool === "act" ? { actionText: decision.actionText } : {}),
+        ...(decision.tool === "act"
+          ? {
+              description: decision.description,
+              objectRefs: decision.objectRefs.map((r) => ({
+                kind: r.kind,
+                id: r.id,
+                ...(r.role ? { role: r.role } : {}),
+              })),
+              proposedDurationTicks: decision.proposedDurationTicks,
+              ...(decision.skillId ? { skillId: decision.skillId } : {}),
+              ...(decision.utterance ? { utterance: decision.utterance } : {}),
+            }
+          : {}),
         ...(decision.tool === "continue" && decision.reason
           ? { reason: decision.reason }
           : {}),
       });
+      if (decision.tool === "act") {
+        log(
+          `   [decide] ${ctx.npcId} act "${decision.description.slice(0, 60)}" refs=${
+            decision.objectRefs.length
+          } ticks=${decision.proposedDurationTicks}${
+            decision.skillId ? ` skill=${decision.skillId}` : ""
+          }`
+        );
+      }
       return decision;
     },
   };
@@ -919,11 +1001,11 @@ export async function runStagedCase(
   const popWarnSink = pushWarnSink((line) => {
     if (!/\[NpcActionController\]|\[renderer\]|\[roleSim/.test(line)) return;
     // Match the name ONLY in the controller's own message, never in the
-    // echoed actionText that follows it: an NPC's narrative routinely names
+    // echoed description that follows it: an NPC's prose routinely names
     // other people (a debtor pleading with his creditor cites the creditor),
     // and matching the whole line filed that failure under the creditor's
     // unrelated concurrent case.
-    const attribution = line.split("actionText:")[0];
+    const attribution = line.split("description:")[0];
     if (!stagedNames.some((name) => attribution.includes(name))) return;
     observation.silentFailures.push(line.slice(0, 300));
   });
@@ -962,19 +1044,23 @@ export async function runStagedCase(
   observation.sceneConditionsAtEnd = (
     dgsm.getScene(stage.sceneId)?.conditions ?? []
   ).map((c) => c.description);
-  // A step still queued/active at the end means the agent decided but the
-  // resolver's elapsedMinutes outlasted the run — a different thing entirely
-  // from the agent never acting.
+  // An action still queued/active at the end means the agent decided but the
+  // Engine's resolvedDurationTicks outlasted the run — a different thing
+  // entirely from the agent never acting.
   for (const actor of stage.actors) {
-    for (const step of engine.getActorQueue(actor.npcId)) {
-      if (step.status === "queued" || step.status === "active") {
-        observation.queueAtEnd.push({
+    for (const action of engine.getActorActions(actor.npcId)) {
+      if (action.status === "queued" || action.status === "active") {
+        observation.actionsAtEnd.push({
           npcId: actor.npcId,
-          definitionId: step.definitionId,
-          status: step.status,
-          actionText: (step.actionText ?? "")
+          actionId: action.id,
+          status: action.status,
+          description: action.command.description
             .replace(/\s+/g, " ")
             .slice(0, 120),
+          progressMinutes: action.progressMinutes,
+          ...(action.resolvedDurationTicks !== undefined
+            ? { resolvedDurationTicks: action.resolvedDurationTicks }
+            : {}),
         });
       }
     }
