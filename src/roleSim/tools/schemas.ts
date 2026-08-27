@@ -25,10 +25,12 @@ const WRITABLE_MEMORY_TYPES = [
 ] as const;
 
 /** Types recallMemory may filter on — everything readable, including the
- *  system-written daily summaries. */
+ *  system-written daily summaries and the `context` memories that hold what
+ *  the character knew about the town before the first tick. */
 const READABLE_MEMORY_TYPES = [
   ...WRITABLE_MEMORY_TYPES,
   "summary",
+  "context",
 ] as const;
 
 export const actTool: ToolSpec = {
@@ -46,7 +48,7 @@ export const actTool: ToolSpec = {
       objectRefs: {
         type: "array",
         description:
-          "Entities the action involves. Each id MUST come from this tick's perception. Use [] when no entity is involved.",
+          'Entities the action involves. Each id MUST be copied from the "What you can point at" list in this tick\'s prompt (a stranger appears there under an alias). Use [] when no entity is involved.',
         items: {
           type: "object",
           properties: {
@@ -72,7 +74,7 @@ export const actTool: ToolSpec = {
       skillId: {
         type: "string",
         description:
-          "Optional: the skill you consciously bring to bear (e.g. \"Locksmith\"). Only when the action genuinely runs through it. Never values, difficulties or rolls.",
+          'Optional: the skill you consciously bring to bear (e.g. "Locksmith"). Only when the action genuinely runs through it. Never values, difficulties or rolls.',
       },
       utterance: {
         type: "string",
@@ -114,18 +116,7 @@ export const writeMemoryTool: ToolSpec = {
       targetId: {
         type: "string",
         description:
-          "Required for type=relationship: the entity id of the person this memory is about (from your perception).",
-      },
-      mapAdd: {
-        type: "object",
-        properties: {
-          sceneNames: { type: "array", items: { type: "string" } },
-          junctionNames: { type: "array", items: { type: "string" } },
-          roadNames: { type: "array", items: { type: "string" } },
-          revealHiddenConnection: { type: "string" },
-        },
-        required: [],
-        additionalProperties: false,
+          'Required for type=relationship: the person this memory is about, copied from "What you can point at".',
       },
     },
     required: ["type"],
@@ -159,18 +150,6 @@ export const recallMemoryTool: ToolSpec = {
   },
 };
 
-export const getMapSnapshotTool: ToolSpec = {
-  name: "getMapSnapshot",
-  description:
-    "Read your current map knowledge. Does not consume a tick; you must still finish with act or continue.",
-  inputSchema: {
-    type: "object",
-    properties: {},
-    required: [],
-    additionalProperties: false,
-  },
-};
-
 /** Order is stable: tool definitions render ahead of the system prompt, so a
  *  reordering would invalidate the cached prefix on every call. */
 export const AGENT_TOOLS: ToolSpec[] = [
@@ -178,5 +157,4 @@ export const AGENT_TOOLS: ToolSpec[] = [
   continueTool,
   writeMemoryTool,
   recallMemoryTool,
-  getMapSnapshotTool,
 ];

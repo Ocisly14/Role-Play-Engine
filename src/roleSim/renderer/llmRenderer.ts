@@ -1,7 +1,7 @@
 // src/roleSim/renderer/llmRenderer.ts
 //
 // Phase G renderer LLM call. Turns a PerceivedBundle into a first-person
-// citation-annotated narrative per §G-decisions G2/G4/G5/G7/G8. Uses
+// sensory narrative per §G-decisions G2/G4/G5/G7/G8. Uses
 // ModelClass.SMALL (Haiku-tier per G6). One LLM round-trip; retry budget is
 // owned by `generateText`'s `maxRetries` (set to 2 = initial + 1 retry per
 // G11). On failure the wrapper in index.ts returns null (D6 — no god-eye fallback).
@@ -22,25 +22,18 @@ const RENDERER_OPERATION = "phase-g-perception-render";
 const SYSTEM_PROMPT = `You are the perception renderer for a tick-based simulation.
 
 Your only job: turn the events of one game tick into a first-person, sensory
-narrative for a single viewpoint character, then list the cited entities in a
-reference block with their canonical system ids.
+narrative for a single viewpoint character.
 
 # Output format
 
-Emit exactly two labeled sections, in this order:
+One short paragraph. Nothing else — no heading, no label, no list, no
+commentary before or after it.
 
-[narrative]
-<one short paragraph in first-person present tense, sensory only>
-
-[references]
-[1] id: <entity-id>; kind: <character|item|scene>; <display name>: <description>
-[2] id: <entity-id>; kind: <character|item|scene>; <display name>: <description>
-...
-
-The agent downstream copies "id: <X>; kind: <Y>" verbatim into its own
-references block to cite this entity, so getting id + kind exactly right is
-critical. The display name + description are for the agent's narrative
-understanding (what does the viewpoint actually see this entity as).
+The ids in your input (SCN_LIBRARY, ITEM_7, Hollins) are machine handles. They
+exist so YOU know which entity is which. **Never write one in the narrative.**
+The character perceives a library, a brass key, a tall pale man — not a
+database row. The system tells them separately what they may point at; your
+paragraph is what they see, hear and feel.
 
 # Hard rules
 
@@ -67,27 +60,12 @@ understanding (what does the viewpoint actually see this entity as).
 - For non-self entities, only render conditions that have an external sensory
   manifestation. Do not leak plot secrets, hidden allegiances, or any condition
   the viewpoint cannot perceive.
-- Cite people, named items, and scenes by appending [N] immediately after the
-  name/description in the narrative — N is a 1-based number unique per entity
-  in this output. Reuse the same N if the same entity appears more than once.
-- Do NOT cite scene attributes (sub-locations like "east wall", scene
-  conditions like "burning", weather, generic nouns such as "door"). Render
-  those inline as plain prose.
-- The reference block has exactly one line per cited entity, sorted by first
-  appearance.
-- **id and kind in the reference line MUST match the values given to you in
-  the prompt input.** The agent's citation will fail if id is invented or
-  misspelled.
 - **For people listed as UNKNOWN in the input, the narrative MUST refer to
   them by the description-based identifier (e.g. "the tall pale man"), NEVER
   by their canonical name** — even if the canonical name leaks into the
-  prompt via event text or your own prior actions. The reference block still
-  carries the canonical id, but the in-narrative display name for UNKNOWN
-  people is their description, not their name.
+  prompt via event text or your own prior actions.
 - Do not invent new entities, items, or details that are not in the input.
 - If there are no events, describe scene + own state only.
-- Output the two sections only. No prose before [narrative], nothing after the
-  reference list.
 
 # Example
 
@@ -96,14 +74,14 @@ Input gives you:
     Appearance: Tall, pale, with a long black overcoat and an ivory-handled cane.
 
 Correct output:
-  [narrative]
-  The tall pale man [1] steps into the room and inclines his head.
-  [references]
-  [1] id: Hollins; kind: character; the tall pale man: Tall, pale, with a long black overcoat and an ivory-handled cane.
+  The tall pale man steps into the room and inclines his head, the ivory head
+  of his cane catching the lamplight.
 
-WRONG (leaks canonical name into narrative for UNKNOWN):
-  [narrative]
-  Professor Hollins [1] steps into the room...`;
+WRONG (leaks the canonical name of someone the viewpoint has never met):
+  Professor Hollins steps into the room...
+
+WRONG (writes a machine id):
+  The tall pale man (Hollins) steps into the room...`;
 
 export interface RenderViaLLMParams {
   npcId: string;
@@ -121,7 +99,7 @@ export async function renderViaLLM(
 
   const response = await generateText({
     customSystemPrompt: SYSTEM_PROMPT,
-    context: `${userPrompt}\n\n# Decide\nRender the [narrative] and [references] sections now. Write content in ${langName}.`,
+    context: `${userPrompt}\n\n# Decide\nWrite the paragraph now, in ${langName}.`,
     modelClass: ModelClass.SMALL,
     operation: RENDERER_OPERATION,
     maxRetries: 2,
@@ -147,10 +125,10 @@ function buildUserPrompt(params: RenderViaLLMParams): string {
     sections.push(
       "# People present in your scene (must be acknowledged in narrative — silent or not)"
     );
-    sections.push(formatScenePresentCharacters(bundle, viewpoint));
+    sections.push(formatScenePresentCharacters(bundle, npcId, dgsm));
   }
 
-  const otherEntities = collectOtherEntities(npcId, bundle, dgsm, viewpoint);
+  const otherEntities = collectOtherEntities(npcId, bundle, dgsm);
   if (otherEntities) {
     sections.push("# Other entities involved in events");
     sections.push(otherEntities);
@@ -202,7 +180,7 @@ function formatScene(
   lines.push(`Name: ${scene.name}  (id: ${scene.id})`);
   if (scene.description) lines.push(`Description: ${scene.description}`);
   if (scene.activeConditions.length > 0) {
-    lines.push("Scene conditions (render as inline prose, do NOT cite):");
+    lines.push("Scene conditions (render as inline prose):");
     for (const c of scene.activeConditions) {
       if (c.description) lines.push(`  - ${c.description}`);
     }
@@ -212,7 +190,7 @@ function formatScene(
     // items of their own and are invisible to the scene lookup.
     const items = resolveLocationById(scene.id, dgsm)?.items ?? [];
     if (items.length > 0) {
-      lines.push("Items visible here (cite by id):");
+      lines.push("Items visible here:");
       for (const item of items) {
         const desc = item.description ? `: ${item.description}` : "";
         lines.push(`  - ${item.name} (id: ${item.id})${desc}`);
@@ -225,8 +203,7 @@ function formatScene(
 function collectOtherEntities(
   viewpointId: string,
   bundle: PerceivedBundle,
-  dgsm: DynamicGameStateManager,
-  viewpoint: DynamicNPCProfile | undefined
+  dgsm: DynamicGameStateManager
 ): string | null {
   // Characters already enumerated in `# People present in your scene` —
   // skip here to avoid duplicate prompt entries.
@@ -265,7 +242,7 @@ function collectOtherEntities(
   for (const charId of characterIds) {
     const profile = dgsm.getNpcProfile(charId);
     if (!profile) continue;
-    const known = isKnownTo(viewpoint, charId);
+    const known = isKnownTo(dgsm, viewpointId, charId);
     const identifier = known ? profile.name : descriptionIdentifier(profile);
     const knownTag = known ? "KNOWN" : "UNKNOWN";
     lines.push(`Person (${knownTag}): ${identifier}  (id: ${charId})`);
@@ -316,7 +293,10 @@ function formatOwnAction(bundle: PerceivedBundle): string {
   }
 }
 
-function formatOccurrences(bundle: PerceivedBundle, viewpointId: string): string {
+function formatOccurrences(
+  bundle: PerceivedBundle,
+  viewpointId: string
+): string {
   return bundle.occurrences
     .map((occ) => formatOccurrence(occ, bundle, viewpointId))
     .join("\n");
@@ -337,7 +317,9 @@ function formatOccurrence(
   const involved = occ.participants
     .map((p) => `${p.characterId} (${p.role})`)
     .join(", ");
-  lines.push(`- Occurrence ${where}${involved ? `; involved: ${involved}` : ""}`);
+  lines.push(
+    `- Occurrence ${where}${involved ? `; involved: ${involved}` : ""}`
+  );
   const selfInvolved = occ.participants.some(
     (p) => p.characterId === viewpointId
   );
@@ -350,7 +332,8 @@ function formatOccurrence(
   for (const signal of occ.signals) {
     const bits = [`signal: ${signal.channel}`];
     if (signal.originLocationId) bits.push(`from ${signal.originLocationId}`);
-    if (signal.intensity !== undefined) bits.push(`intensity ${signal.intensity}`);
+    if (signal.intensity !== undefined)
+      bits.push(`intensity ${signal.intensity}`);
     lines.push(`  ${bits.join(", ")}`);
   }
   return lines.join("\n");
@@ -358,11 +341,12 @@ function formatOccurrence(
 
 function formatScenePresentCharacters(
   bundle: PerceivedBundle,
-  viewpoint: DynamicNPCProfile | undefined
+  viewpointId: string,
+  dgsm: DynamicGameStateManager
 ): string {
   const lines: string[] = [];
   for (const c of bundle.charactersInScene) {
-    const known = isKnownTo(viewpoint, c.id);
+    const known = isKnownTo(dgsm, viewpointId, c.id);
     // For UNKNOWN, fall back to a description-based identifier built from
     // appearance / occupation; for KNOWN, use the canonical name.
     const identifier = known

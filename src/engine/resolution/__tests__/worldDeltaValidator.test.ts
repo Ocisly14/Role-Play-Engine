@@ -5,7 +5,11 @@
 
 import { describe, expect, it } from "vitest";
 import type { ActionCommand, EngineAction } from "../../actions/types.js";
-import type { EngineResolutionContext } from "../types.js";
+import {
+  type EngineResolutionContext,
+  type ResolutionError,
+  formatErrorTarget,
+} from "../types.js";
 import type {
   RawActionResolution,
   RawTickResolution,
@@ -29,6 +33,10 @@ function command(overrides: Partial<ActionCommand> = {}): ActionCommand {
 }
 
 const ACTION_ID = "action_c1";
+
+/** Errors carry an address now; most assertions only care about the text. */
+const text = (errors: ResolutionError[]): string =>
+  errors.map((e) => `${formatErrorTarget(e.target)} ${e.message}`).join("\n");
 
 function activeAction(overrides: Partial<EngineAction> = {}): EngineAction {
   return {
@@ -185,8 +193,8 @@ describe("validateRawResolution — transitions", () => {
       makeContext({}),
       []
     );
-    expect(errors.join("\n")).toContain("unknown actionId");
-    expect(errors.join("\n")).toContain("received no transition");
+    expect(text(errors)).toContain("unknown actionId");
+    expect(text(errors)).toContain("received no transition");
   });
 
   it("requires an ended action to leave an objective trace", () => {
@@ -198,7 +206,7 @@ describe("validateRawResolution — transitions", () => {
       makeContext({}),
       []
     );
-    expect(errors.join("\n")).toContain("no occurrence citing it");
+    expect(text(errors)).toContain("no occurrence citing it");
 
     // Still running is not ended — nothing to report yet.
     const running = validateRawResolution(
@@ -206,7 +214,7 @@ describe("validateRawResolution — transitions", () => {
       makeContext({}),
       []
     );
-    expect(running.join("\n")).not.toContain("no occurrence citing it");
+    expect(text(running)).not.toContain("no occurrence citing it");
   });
 
   it("rejects duplicate transitions (single-transition invariant)", () => {
@@ -215,7 +223,7 @@ describe("validateRawResolution — transitions", () => {
       makeContext({}),
       []
     );
-    expect(errors.join("\n")).toContain("duplicate transition");
+    expect(text(errors)).toContain("duplicate transition");
   });
 
   it("requires resolvedDurationTicks + timingReason + judgement on first resolution", () => {
@@ -234,9 +242,9 @@ describe("validateRawResolution — transitions", () => {
       makeContext({}),
       []
     );
-    expect(errors.join("\n")).toContain("resolvedDurationTicks");
-    expect(errors.join("\n")).toContain("timingReason");
-    expect(errors.join("\n")).toContain("judgement");
+    expect(text(errors)).toContain("resolvedDurationTicks");
+    expect(text(errors)).toContain("timingReason");
+    expect(text(errors)).toContain("judgement");
   });
 
   it("requires nextWakeInTicks when staying active", () => {
@@ -245,7 +253,7 @@ describe("validateRawResolution — transitions", () => {
       makeContext({}),
       []
     );
-    expect(errors.join("\n")).toContain("nextWakeInTicks");
+    expect(text(errors)).toContain("nextWakeInTicks");
   });
 
   it("rejects illegal status migrations", () => {
@@ -282,7 +290,7 @@ describe("validateRawResolution — transitions", () => {
       context,
       []
     );
-    expect(bad.join("\n")).toContain("illegal transition");
+    expect(text(bad)).toContain("illegal transition");
   });
 });
 
@@ -304,7 +312,7 @@ describe("validateRawResolution — skill consistency", () => {
       makeContext({ newCommands: [skillCommand] }),
       []
     );
-    expect(errors.join("\n")).toContain('must be kind "skill_assessed"');
+    expect(text(errors)).toContain('must be kind "skill_assessed"');
   });
 
   it("rejects skill_assessed for a command without a roll", () => {
@@ -329,7 +337,7 @@ describe("validateRawResolution — skill consistency", () => {
       makeContext({}),
       []
     );
-    expect(errors.join("\n")).toContain('must be kind "direct"');
+    expect(text(errors)).toContain('must be kind "direct"');
   });
 
   it("accepts a consistent met check and rejects a contradicted one", () => {
@@ -367,7 +375,7 @@ describe("validateRawResolution — skill consistency", () => {
       makeContext({ newCommands: [skillCommand] }),
       []
     );
-    expect(errors.join("\n")).toContain("contradicts the deterministic check");
+    expect(text(errors)).toContain("contradicts the deterministic check");
   });
 
   it("requires an opposedRoll invocation for each named defender", () => {
@@ -390,7 +398,7 @@ describe("validateRawResolution — skill consistency", () => {
       makeContext({ newCommands: [skillCommand] }),
       []
     );
-    expect(noCall.join("\n")).toContain("no opposedRoll tool call recorded");
+    expect(text(noCall)).toContain("no opposedRoll tool call recorded");
 
     const withCall = validateRawResolution(
       { actions: [opposed], occurrences: trace() },
@@ -433,10 +441,10 @@ describe("validateRawResolution — deltas and occurrences", () => {
       makeContext({}),
       []
     );
-    const text = errors.join("\n");
-    expect(text).toContain('sourceActionId "action_ghost" is unknown');
-    expect(text).toContain("causalBasis is required");
-    expect(text).toContain('characterId "npc_ghost" does not exist');
+    const joined = text(errors);
+    expect(joined).toContain('sourceActionId "action_ghost" is unknown');
+    expect(joined).toContain("causalBasis is required");
+    expect(joined).toContain('characterId "npc_ghost" does not exist');
   });
 
   it("rejects an item move whose `from` mismatches the real holder, and double moves", () => {
@@ -451,7 +459,7 @@ describe("validateRawResolution — deltas and occurrences", () => {
       makeContext({}),
       []
     );
-    expect(wrongFrom.join("\n")).toContain(
+    expect(text(wrongFrom)).toContain(
       "does not match the item's actual holder"
     );
 
@@ -463,7 +471,7 @@ describe("validateRawResolution — deltas and occurrences", () => {
       makeContext({}),
       []
     );
-    expect(doubleMove.join("\n")).toContain("unique-ownership conflict");
+    expect(text(doubleMove)).toContain("unique-ownership conflict");
   });
 
   it("rejects perspective wording and unknown perceivers in occurrences", () => {
@@ -483,51 +491,16 @@ describe("validateRawResolution — deltas and occurrences", () => {
       makeContext({}),
       []
     );
-    const text = errors.join("\n");
-    expect(text).toContain("character-perspective wording");
-    expect(text).toContain('perceiver "npc_ghost" does not exist');
+    const joined = text(errors);
+    expect(joined).toContain("character-perspective wording");
+    expect(joined).toContain('perceiver "npc_ghost" does not exist');
   });
 });
 
 describe("finalizeResolution", () => {
-  it("synthesizes failed transitions for unaddressed triggering actions", () => {
-    const { resolution, droppedViolations } = finalizeResolution(
-      { actions: [] },
-      makeContext({}),
-      []
-    );
-    expect(resolution.transitions).toEqual([
-      expect.objectContaining({
-        actionId: ACTION_ID,
-        actorId: "npc_1",
-        from: "queued",
-        to: "failed",
-      }),
-    ]);
-    expect(droppedViolations.join("\n")).toContain("received no transition");
-  });
-
-  it("drops deltas whose source action failed validation", () => {
-    const raw: RawTickResolution = {
-      actions: [
-        entry({
-          to: "active",
-          // missing nextWakeInTicks → invalid → forced failure
-        }),
-      ],
-      characterChanges: [
-        {
-          sourceActionId: ACTION_ID,
-          causalBasis: "strain",
-          characterId: "npc_1",
-          operation: { kind: "fatigue", delta: 1, reason: "effort" },
-        },
-      ],
-    };
-    const { resolution } = finalizeResolution(raw, makeContext({}), []);
-    expect(resolution.transitions[0].to).toBe("failed");
-    expect(resolution.characterChanges).toEqual([]);
-  });
+  // finalize no longer validates, drops or synthesizes anything: by the time
+  // it runs, the resolution has already passed validation. A resolution that
+  // could not be repaired never reaches it — the tick applies nothing.
 
   it("computes nextWakeAt from ticks and assigns occurrence/fact ids", () => {
     const raw: RawTickResolution = {
@@ -555,7 +528,7 @@ describe("finalizeResolution", () => {
         },
       ],
     };
-    const finalized = finalizeResolution(raw, makeContext({}), []);
+    const finalized = finalizeResolution(raw, makeContext({}));
     const t = finalized.resolution.transitions[0];
     expect(t.to).toBe("active");
     expect(t.nextWakeAt).toBe("1923-04-02T09:20:00");
@@ -598,12 +571,7 @@ describe("finalizeResolution", () => {
         },
       ],
     };
-    const { resolution, droppedViolations } = finalizeResolution(
-      raw,
-      context,
-      []
-    );
-    expect(droppedViolations).toEqual([]);
+    const { resolution } = finalizeResolution(raw, context);
     expect(resolution.transitions).toHaveLength(2);
     const statuses = Object.fromEntries(
       resolution.transitions.map((t) => [t.actionId, t.to])

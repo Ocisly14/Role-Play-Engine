@@ -51,7 +51,6 @@ describe("agent tool schemas", () => {
       "continue",
       "writeMemory",
       "recallMemory",
-      "getMapSnapshot",
     ]);
   });
 

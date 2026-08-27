@@ -50,7 +50,7 @@ describe("generateToolCalls", () => {
     chatWithTools.mockResolvedValue({
       toolCalls: [
         { id: "t1", name: "recallMemory", args: {} },
-        { id: "t2", name: "getMapSnapshot", args: {} },
+        { id: "t2", name: "writeMemory", args: {} },
       ],
       text: "",
       usage: null,

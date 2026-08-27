@@ -39,6 +39,9 @@ const ROLE_SET = new Set<string>(OBJECT_REF_ROLES);
  * Validate untrusted `act` args: shape, enums, duration bounds, and every
  * objectRef being inside the actor's perceivable scope this tick. Returns a
  * normalized copy on success (trimmed strings, integral duration).
+ *
+ * Character refs arrive as opaque handles and leave as real ids — this is the
+ * one place the two id spaces meet.
  */
 export function validateActArgs(
   raw: unknown,
@@ -157,24 +160,34 @@ function validateRef(
     }
   }
 
-  const scope =
-    kind === "character"
-      ? directory.characters
-      : kind === "item"
-        ? directory.items
-        : directory.scenes;
-  if (!scope.has(id)) {
-    return reject(
-      "unknown_ref",
-      `objectRefs[${index}] cites ${kind} "${id}", which is not in your current perception — only ids listed this tick may be cited`
-    );
+  // Characters are cited by opaque handle; this is where the handle becomes a
+  // real id. Everything downstream — the command, the Engine, the world —
+  // sees only real ids, and the actor never saw one.
+  let resolvedId = id;
+  if (kind === "character") {
+    const real = directory.characterHandles.get(id);
+    if (real === undefined) {
+      return reject(
+        "unknown_ref",
+        `objectRefs[${index}] cites character "${id}", which is not someone you can point at right now — use a handle listed in your perception this tick`
+      );
+    }
+    resolvedId = real;
+  } else {
+    const scope = kind === "item" ? directory.items : directory.scenes;
+    if (!scope.has(id)) {
+      return reject(
+        "unknown_ref",
+        `objectRefs[${index}] cites ${kind} "${id}", which is not in your current perception — only ids listed this tick may be cited`
+      );
+    }
   }
 
   return {
     ok: true,
     ref: {
       kind: kind as ActionObjectRef["kind"],
-      id,
+      id: resolvedId,
       ...(ref.role !== undefined
         ? { role: ref.role as ActionObjectRef["role"] }
         : {}),

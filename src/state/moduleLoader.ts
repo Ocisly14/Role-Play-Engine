@@ -420,7 +420,7 @@ export function initRuntime(params: {
 
     // Inventory — normalize once so both npcInventories (runtime Item[]) and
     // npc.inventory (profile InventoryItem[]) carry a stable `id`. The id is
-    // the citation handle used by PerceivableDirectory + interpreter.
+    // the id used by PerceivableDirectory + the trust boundary.
     const normalizedInventory = Array.isArray(npc.inventory)
       ? npc.inventory.map((item: any) => {
           if (typeof item === "string") return { id: item, name: item };

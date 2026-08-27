@@ -2,13 +2,7 @@ import type {
   NpcMemoryType,
   NpcMemory as PrismaNpcMemory,
 } from "@prisma/client";
-import type { JunctionNode, RoadNode } from "../state/topologyTypes.js";
-import type {
-  DynamicScene,
-  KnownMapSeed,
-  ScenarioOutline,
-  TransportEdge,
-} from "../state/types.js";
+import type { KnownMapSeed } from "../state/types.js";
 
 // Re-export Prisma types
 export type { NpcMemoryType } from "@prisma/client";
@@ -34,50 +28,26 @@ export interface KnownMapIds {
   scenarioOutlineIds: string[];
 }
 
-export interface KnownMapScene extends DynamicScene {
-  detailLevel?: "full" | "name_only";
+/** `context` memories are the character's standing knowledge of a place —
+ *  which one, and at what altitude. See contextMemory.ts. */
+export interface ContextMetadata {
+  scope: "macro" | "interior" | "topology";
+  /** Outline id for `macro`, scene id for `interior`, absent for `topology`. */
+  locationId?: string;
 }
 
-export interface KnownMapSnapshot {
-  schemaVersion: number;
-  updatedAt: string;
-  knownIds: KnownMapIds;
-  revealedHiddenConnections: string[];
-  scenes: Record<string, KnownMapScene>;
-  junctions: Record<string, JunctionNode>;
-  roads: Record<string, RoadNode>;
-  scenarioOutlines: ScenarioOutline[];
-  transportEdges: TransportEdge[];
-  blockedConnections: Record<string, string>;
-}
+export type MemoryMetadata = RelationshipMetadata | ContextMetadata;
 
-export interface MapMetadata {
-  snapshot: KnownMapSnapshot;
-}
-
-export type MemoryMetadata = RelationshipMetadata | MapMetadata;
-
-export interface EnsureMapSnapshotParams {
+export interface EnsureContextMemoriesParams {
   npcId: string;
   sessionId: string;
   moduleId: string;
   gameDateTime: string;
-  location?: string;
   dgsm: import("../state/DynamicGameState.js").DynamicGameStateManager;
+  /** Absent means the character knows the whole map. */
   seed?: KnownMapSeed;
-}
-
-export interface RefreshMapSnapshotParams {
-  npcId: string;
-  sessionId: string;
-  moduleId: string;
-  gameDateTime: string;
-  location?: string;
-  dgsm: import("../state/DynamicGameState.js").DynamicGameStateManager;
-}
-
-export interface RevealMapLocationsParams extends RefreshMapSnapshotParams {
-  locationIds: string[];
+  /** Module language ("en" | "zh") — drives the glue between descriptions. */
+  language?: string;
 }
 
 // ===== Query & Retrieval Types =====
@@ -147,6 +117,7 @@ export const CONTEXT_PROFILES: Record<ContextPurpose, ContextProfile> = {
       "secret",
       "relationship",
       "map",
+      "context",
       "summary",
     ],
     defaultLimit: 20,
@@ -158,7 +129,7 @@ export const CONTEXT_PROFILES: Record<ContextPurpose, ContextProfile> = {
     typeLimits: { general: 0 },
   },
   detailing: {
-    defaultTypes: ["general", "plan", "secret", "relationship", "map"],
+    defaultTypes: ["general", "plan", "secret", "relationship", "map", "context"],
     defaultLimit: 5,
     typeLimits: { general: 0 },
   },

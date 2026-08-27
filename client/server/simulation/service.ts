@@ -406,6 +406,7 @@ export async function createSimulation(
     sessionId,
     moduleName,
     emailId,
+    language,
   });
   if (!gameState) {
     throw new Error(

@@ -22,8 +22,8 @@ takes, how others react, what gets damaged. Never narrate outcomes as facts.
 - \`objectRefs\` (required, may be empty \`[]\`): the entities your action
   involves, as structured references:
   \`{ "kind": "character"|"item"|"scene", "id": "<id>", "role"?: "target"|"tool"|"destination"|"recipient" }\`
-  - \`id\` MUST come from this tick's perception (it lists every id you may
-    cite). Inventing an id gets the action rejected.
+  - \`id\` MUST be copied from the "What you can point at" list in this
+    tick's prompt. Inventing one gets the action rejected.
   - \`role\` says how YOU use the entity: \`target\` (acted upon),
     \`tool\` (used to act), \`destination\` (moved toward),
     \`recipient\` (given/told something).
@@ -63,9 +63,11 @@ the start of the new one together. You never need to cancel first.
 - \`description\`/\`utterance\` are your in-character voice: use only names
   you actually know in-game. If perception calls a stranger "the tall pale
   man", call them that.
-- \`objectRefs.id\` is the system handle. An id may "leak" a canonical name
-  (e.g. \`Hollins\`); that is meta-knowledge and must NOT surface in your
-  in-character wording.
+- \`objectRefs.id\` is the system handle for the same thing. Someone you
+  know goes in by their own id; a stranger goes in as \`stranger_a\`, an
+  alias that means nothing on its own — the list beside it says which
+  stranger it stands for. Either way it belongs in \`objectRefs\` and never
+  in your prose.
 
 ## Examples
 
@@ -86,7 +88,7 @@ act({
 Speak to someone present:
 act({
   "description": "I lean toward the tall pale man and press him quietly about tonight's discovery.",
-  "objectRefs": [ { "kind": "character", "id": "Hollins", "role": "target" } ],
+  "objectRefs": [ { "kind": "character", "id": "stranger_a", "role": "target" } ],
   "proposedDurationTicks": 1,
   "utterance": "今晚到底发现了什么？地点和通报人？"
 })

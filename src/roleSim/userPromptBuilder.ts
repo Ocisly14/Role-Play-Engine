@@ -10,6 +10,7 @@ import type { DynamicGameStateManager } from "../state/DynamicGameState.js";
 import { formatForPrompt } from "../state/gameClock.js";
 import type { RoleSimContext } from "./agent.js";
 import { formatTodayMemories } from "./memoryFormatter.js";
+import { formatPointables } from "./pointableFormatter.js";
 import { formatProfile } from "./profileFormatter.js";
 
 export interface BuildUserPromptOptions {
@@ -71,6 +72,14 @@ ${block}`
     sections.push(`## What you perceive\n${ctx.perception.narrative}`);
   }
 
+  // The narrative names things the way the character sees them; this names
+  // them the way the engine accepts them. Generated from the same directory
+  // the trust boundary validates against, so citing from it cannot fail.
+  const pointables = formatPointables(ctx.npcId, opts.dgsm);
+  if (pointables) {
+    sections.push(`## What you can point at\n${pointables}`);
+  }
+
   if (ctx.longTermIntent?.trim()) {
     sections.push(`## Your long-term goal\n${ctx.longTermIntent}`);
   }
@@ -84,7 +93,9 @@ ${block}`
       bits.push(`~${ctx.currentAction.progressMinutes} min in`);
     }
     if (typeof ctx.currentAction.resolvedDurationTicks === "number") {
-      bits.push(`expected ~${ctx.currentAction.resolvedDurationTicks} min total`);
+      bits.push(
+        `expected ~${ctx.currentAction.resolvedDurationTicks} min total`
+      );
     }
     const suffix = bits.length > 0 ? `\n(${bits.join(", ")})` : "";
     sections.push(
@@ -111,24 +122,22 @@ The engine did not accept your last \`act\` call:
 ${ctx.rejectionFeedback}
 
 This is factual feedback, not something that happened in the world. Decide
-again: fix the rejected field (use only entity ids listed in your
-perception, a positive tick count, a real skill name) or choose a
-different action.`
+again: fix the rejected field (an id copied from "What you can point at", a
+positive tick count, a real skill name) or choose a different action.`
     );
   }
 
   const langName = opts.language?.startsWith("zh") ? "Chinese" : "English";
-  // The perception sections above may carry [narrative] / [references]
-  // scaffolding; the model must not answer in that shape. Its `act` output is
-  // structured fields — prose goes in `description`, entity ids in
+  // `act` output is structured fields — prose goes in `description`, ids in
   // `objectRefs`. The envelope itself is enforced by the API (a tool call is
   // required), so this doesn't have to describe JSON.
   volatile.push(
     `## Decide
 Everything above is INPUT you have read — the world describing itself TO
-you. Any entity ids listed in your perception are the ONLY ids you may put
-in \`objectRefs\`. Your in-character prose goes in \`description\` (and the
-exact words you speak in \`utterance\`).
+you. The ids under "What you can point at" are the ONLY ids you may put in
+\`objectRefs\`; the narrative is how those things look to you, not how you
+name them to the engine. Your in-character prose goes in \`description\`
+(and the exact words you speak in \`utterance\`).
 
 Call one tool now — \`act\` or \`continue\`, plus any \`writeMemory\`
 worth keeping from what you just perceived. Write content in ${langName}.`
@@ -144,7 +153,7 @@ worth keeping from what you just perceived. Write content in ${langName}.`
   // or a non-JSON reply that returns early) — there is no second iteration to
   // read the cache, so a breakpoint would pay the 1.25x write premium on
   // every call and never be read. Enabling it needs one of:
-  //   - instant tools (recallMemory / writeMemory / getMapSnapshot) actually
+  //   - instant tools (recallMemory / writeMemory) actually
   //     being used, which makes decide() multi-iteration; or
   //   - the mutable status line (HP / SAN / fatigue) moving out of the
   //     identity group into `situation`, which would make identity stable

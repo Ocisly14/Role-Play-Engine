@@ -32,5 +32,20 @@
   "outcome_item": "(item: {{item}})",
   "outcome_connection_block": "(block connection to {{target}})",
   "outcome_connection_unblock": "(unblock connection to {{target}})",
-  "fallback_mirror_memory": "{{name}} {{action}} — result: {{outcome}}"
+  "fallback_mirror_memory": "{{name}} {{action}} — result: {{outcome}}",
+  "context_macro": "{{name}} — {{description}}",
+  "context_macro_inside": "Inside: {{scenes}}",
+  "context_interior": "{{name}} (inside {{macro}}) — {{description}}",
+  "context_interior_outdoor": "{{name}} — {{description}}",
+  "context_interior_exits": "Ways through: {{exits}}",
+  "context_exit": "{{description}} → {{target}}",
+  "context_exit_plain": "→ {{target}}",
+  "context_topology_header": "How the streets fit together:",
+  "context_topology_road": "{{road}} runs between {{from}} and {{to}} (~{{minutes}} min on foot).",
+  "context_topology_road_only": "{{road}} (~{{minutes}} min on foot).",
+  "context_topology_road_along": "On it: {{buildings}}",
+  "context_topology_junction": "Streets at {{junction}}: {{roads}}.",
+  "context_topology_junction_buildings": "At the junction: {{buildings}}",
+  "context_list_sep": ", ",
+  "context_clause_sep": "; "
 }

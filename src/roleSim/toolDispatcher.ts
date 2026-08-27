@@ -1,8 +1,7 @@
 // src/roleSim/toolDispatcher.ts
 //
 // Instant-tool dispatcher. Executes the agent's non-terminal tools
-// (writeMemory / recallMemory / getMapSnapshot) against the memory store and
-// DGSM. Terminal tools (act / continue) never flow through here — the agent
+// (writeMemory / recallMemory) against the memory store and DGSM. Terminal tools (act / continue) never flow through here — the agent
 // loop returns them to the controller, which is the single place engine
 // submission happens.
 //
@@ -14,6 +13,11 @@ import type { NpcMemoryManager } from "../memory/NpcMemoryManager.js";
 import type { NpcMemoryType } from "../memory/types.js";
 import type { DynamicGameStateManager } from "../state/DynamicGameState.js";
 import { coerceIsoDate, formatForPrompt } from "../state/gameClock.js";
+import {
+  buildPerceivableDirectory,
+  descriptionIdentifier,
+  isKnownTo,
+} from "../state/perceivableDirectory.js";
 
 /** Tools that consume a tick — calling one ends the agent loop. Decision 17. */
 export const TERMINAL_TOOLS = new Set<string>(["act", "continue"]);
@@ -26,7 +30,6 @@ export const FREE_WITH_TERMINAL = new Set<string>(["writeMemory"]);
 export const TOOL_CAPS: Record<string, number> = {
   recallMemory: 10,
   writeMemory: 3,
-  getMapSnapshot: 1,
 };
 
 /** Whitelist of valid tool names — used for LLM output validation. */
@@ -35,7 +38,6 @@ export const VALID_TOOLS = new Set<string>([
   "continue",
   "writeMemory",
   "recallMemory",
-  "getMapSnapshot",
 ]);
 
 export interface DispatcherDeps {
@@ -60,12 +62,6 @@ interface WriteMemoryInput {
   content?: string;
   /** Required for type=relationship — who the memory is about. */
   targetId?: string;
-  mapAdd?: {
-    sceneNames?: string[];
-    junctionNames?: string[];
-    roadNames?: string[];
-    revealHiddenConnection?: string;
-  };
 }
 
 interface RecallMemoryInput {
@@ -93,16 +89,18 @@ export async function dispatchInstantTool(
       return await dispatchWriteMemory(input as WriteMemoryInput, deps);
     case "recallMemory":
       return await dispatchRecallMemory(input as RecallMemoryInput, deps);
-    case "getMapSnapshot":
-      return await dispatchGetMapSnapshot(deps);
     default:
       return { result: `Unknown instant tool: ${toolName}` };
   }
 }
 
-/** The character writes its own memories; `summary` stays system-authored
- *  (end-of-day diary). */
-const WRITE_MEMORY_DISALLOWED: ReadonlySet<string> = new Set(["summary"]);
+/** The character writes its own memories. `summary` (end-of-day diary) and
+ *  `context` (the geography they started the session knowing) stay
+ *  system-authored. */
+const WRITE_MEMORY_DISALLOWED: ReadonlySet<string> = new Set([
+  "summary",
+  "context",
+]);
 
 async function dispatchWriteMemory(
   input: WriteMemoryInput,
@@ -113,21 +111,15 @@ async function dispatchWriteMemory(
   }
   if (WRITE_MEMORY_DISALLOWED.has(input.type)) {
     return {
-      result: `Error: "${input.type}" memories are written by the world at day's end, not by you. Allowed types: general, relationship, map, long_term_intent.`,
+      result: `Error: "${input.type}" memories are not yours to write. Allowed types: general, plan, secret, relationship, map, long_term_intent.`,
     };
   }
 
-  let content = typeof input.content === "string" ? input.content : "";
-
-  if (input.type === "map" && input.mapAdd) {
-    const summary = renderMapAddSummary(input.mapAdd, deps.dgsm);
-    content = content ? `${content}\n${summary}` : summary;
-  }
+  const content = typeof input.content === "string" ? input.content : "";
 
   if (!content.trim()) {
     return {
-      result:
-        "Error: writeMemory requires non-empty 'content' (or 'mapAdd' for type=map).",
+      result: "Error: writeMemory requires non-empty 'content'.",
     };
   }
 
@@ -139,16 +131,33 @@ async function dispatchWriteMemory(
     if (!targetId) {
       return {
         result:
-          "Error: type=relationship requires 'targetId' — the entity id of the person the memory is about.",
+          "Error: type=relationship requires 'targetId' — the handle of the person the memory is about.",
       };
     }
-    const profile = deps.dgsm.getNpcProfile(targetId);
-    if (!profile) {
+    // What the agent wrote is what it may cite — an alias for a stranger, a
+    // real id for someone it knows. Resolve through the same directory the
+    // `act` boundary uses, so exactly the same names work in both tools.
+    const realId = buildPerceivableDirectory(
+      deps.npcId,
+      deps.dgsm
+    ).characterHandles.get(targetId);
+    const profile = realId ? deps.dgsm.getNpcProfile(realId) : undefined;
+    if (!realId || !profile) {
       return {
-        result: `Error: targetId "${targetId}" is not a person in this world. Copy the id from your perception.`,
+        result: `Error: targetId "${targetId}" is not someone you can point at right now. Copy a name from "What you can point at".`,
       };
     }
-    metadata = { targetId, targetName: profile.name };
+    // Store the REAL id. It never reaches the character — the handler renders
+    // `targetName`, and nothing puts `targetId` in a prompt — so there is no
+    // leak, and the key stays joinable instead of drifting with a per-tick
+    // alias. `targetName` is how THEY refer to this person, "the tall pale
+    // man" until the day they learn better.
+    metadata = {
+      targetId: realId,
+      targetName: isKnownTo(deps.dgsm, deps.npcId, realId)
+        ? profile.name
+        : descriptionIdentifier(profile),
+    };
   }
 
   await deps.memory.add({
@@ -165,71 +174,6 @@ async function dispatchWriteMemory(
   return {
     result: `Remembered (${input.type}): "${truncate(content, 80)}"`,
   };
-}
-
-function renderMapAddSummary(
-  mapAdd: NonNullable<WriteMemoryInput["mapAdd"]>,
-  dgsm: DynamicGameStateManager
-): string {
-  const state = dgsm.getState();
-  const lines: string[] = [];
-
-  for (const name of mapAdd.sceneNames ?? []) {
-    const scene = findByName(state.scenes, name);
-    lines.push(
-      scene
-        ? `Learned scene: ${scene.name} (${scene.id})`
-        : `Noted unknown scene: ${name}`
-    );
-    if (!scene) {
-      console.warn(
-        `[toolDispatcher] writeMemory.mapAdd.sceneNames: no scene matched "${name}"`
-      );
-    }
-  }
-  for (const name of mapAdd.junctionNames ?? []) {
-    const junction = findByName(state.junctions, name);
-    lines.push(
-      junction
-        ? `Learned junction: ${junction.name} (${junction.id})`
-        : `Noted unknown junction: ${name}`
-    );
-    if (!junction) {
-      console.warn(
-        `[toolDispatcher] writeMemory.mapAdd.junctionNames: no junction matched "${name}"`
-      );
-    }
-  }
-  for (const name of mapAdd.roadNames ?? []) {
-    const road = findByName(state.roads, name);
-    lines.push(
-      road
-        ? `Learned road: ${road.name} (${road.id})`
-        : `Noted unknown road: ${name}`
-    );
-    if (!road) {
-      console.warn(
-        `[toolDispatcher] writeMemory.mapAdd.roadNames: no road matched "${name}"`
-      );
-    }
-  }
-  if (mapAdd.revealHiddenConnection) {
-    lines.push(
-      `Discovered hidden connection: ${mapAdd.revealHiddenConnection}`
-    );
-  }
-  return lines.join("\n");
-}
-
-function findByName<T extends { id: string; name: string }>(
-  map: Map<string, T>,
-  name: string
-): T | undefined {
-  const needle = name.trim().toLowerCase();
-  for (const value of map.values()) {
-    if (value.name.toLowerCase() === needle) return value;
-  }
-  return undefined;
 }
 
 async function dispatchRecallMemory(
@@ -283,41 +227,6 @@ async function dispatchRecallMemory(
   return {
     result: `Found ${memories.length} memory(ies):\n${lines.join("\n")}`,
   };
-}
-
-async function dispatchGetMapSnapshot(
-  deps: DispatcherDeps
-): Promise<DispatchResult> {
-  const snapshot = await deps.memory.getMapSnapshot(deps.npcId, deps.sessionId);
-  if (!snapshot) {
-    return { result: "No map known yet." };
-  }
-
-  const sceneList = Object.values(snapshot.scenes)
-    .map(
-      (s) =>
-        `- ${s.name} (${s.id})${s.detailLevel === "name_only" ? " [name only]" : ""}`
-    )
-    .join("\n");
-  const junctionList = Object.values(snapshot.junctions)
-    .map((j) => `- ${j.name} (${j.id})`)
-    .join("\n");
-  const roadList = Object.values(snapshot.roads)
-    .map((r) => `- ${r.name} (${r.id})`)
-    .join("\n");
-
-  const sections: string[] = [];
-  if (sceneList) sections.push(`Scenes:\n${sceneList}`);
-  if (junctionList) sections.push(`Junctions:\n${junctionList}`);
-  if (roadList) sections.push(`Roads:\n${roadList}`);
-  if (snapshot.revealedHiddenConnections.length > 0) {
-    sections.push(
-      `Revealed hidden connections:\n${snapshot.revealedHiddenConnections
-        .map((c) => `- ${c}`)
-        .join("\n")}`
-    );
-  }
-  return { result: sections.join("\n\n") || "Empty map." };
 }
 
 function clampLimit(value: unknown, fallback: number, max: number): number {

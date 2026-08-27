@@ -147,17 +147,71 @@ export interface EngineResolutionContext {
   };
 }
 
+// ==================== Errors ====================
+
+/**
+ * One thing the Engine got wrong, addressed at the element that must change.
+ *
+ * The address is what makes repair incremental: the Engine is told "fix
+ * characterChanges[2]" rather than "this submission is bad, write the whole
+ * thing again". Re-emitting a whole resolution wastes the parts that were
+ * already correct and invites the model to break them.
+ */
+export interface ResolutionError {
+  target:
+    | { kind: "action"; actionId: string }
+    | { kind: "characterChange"; index: number }
+    | { kind: "sceneChange"; index: number }
+    | { kind: "itemChange"; index: number }
+    | { kind: "occurrence"; index: number }
+    /** Wrong about the submission as a whole — a triggering action with no
+     *  transition, an ended action with no occurrence citing it. */
+    | { kind: "resolution" };
+  /** What is wrong, stated as fact, and what would make it right. */
+  message: string;
+}
+
+/** How a ResolutionError is addressed in the repair call. */
+export function formatErrorTarget(target: ResolutionError["target"]): string {
+  switch (target.kind) {
+    case "action":
+      return `action:${target.actionId}`;
+    case "resolution":
+      return "resolution";
+    default:
+      return `${target.kind}:${target.index}`;
+  }
+}
+
 // ==================== Engine output ====================
 
-export interface WorldActionEngineResult {
-  resolution: TickResolution;
-  /** Validation problems that survived the corrective retry; the offending
-   *  deltas were dropped and the named actions failed. */
-  droppedViolations: string[];
-  /** Structured trace of the session's code-tool calls. */
-  codeToolInvocations: import("../tools/codeTool.js").CodeToolInvocation[];
-  /** Engine judgements per actionId (persisted onto action runtime). */
-  judgements: Record<string, import("../actions/types.js").ActionJudgement>;
-  /** Movement-leg runtime annotations per actionId. */
-  movementInits: Record<string, { destinationId: string }>;
-}
+/**
+ * Either the Engine produced a resolution that satisfies every contract, or
+ * it produced nothing at all.
+ *
+ * There is no partial application. A resolution that still violates the
+ * contract after repair is an ENGINE fault, not an event in the world:
+ * dropping the invalid parts and keeping the rest writes a half-true world
+ * and hides the fault. The tick applies nothing instead, the actions keep the
+ * state they had, and the failure stays loud.
+ */
+export type WorldActionEngineResult =
+  | {
+      ok: true;
+      resolution: TickResolution;
+      /** Engine judgements per actionId (persisted onto action runtime). */
+      judgements: Record<string, import("../actions/types.js").ActionJudgement>;
+      /** Movement-leg runtime annotations per actionId. */
+      movementInits: Record<string, { destinationId: string }>;
+      /** Structured trace of the session's code-tool calls. */
+      codeToolInvocations: import("../tools/codeTool.js").CodeToolInvocation[];
+    }
+  | {
+      ok: false;
+      /** Why the session produced nothing usable. */
+      failure: string;
+      /** Whatever was still wrong when the repair budget ran out; empty when
+       *  the session failed before any submission (model error). */
+      errors: ResolutionError[];
+      codeToolInvocations: import("../tools/codeTool.js").CodeToolInvocation[];
+    };

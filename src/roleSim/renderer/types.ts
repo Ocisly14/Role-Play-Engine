@@ -3,7 +3,7 @@
 // Renderer contracts (plan Phase 9). The Engine emits objective Occurrences
 // with perceiver character ids; the controller groups them per character; the
 // renderer turns one character's occurrences + their own state into a
-// first-person, citation-annotated narrative. The renderer decides WHAT of
+// first-person sensory narrative. The renderer decides WHAT of
 // each occurrence this character actually perceives (per signals, location,
 // senses) — the Engine never provides per-character fact subsets.
 
@@ -71,6 +71,7 @@ export interface ScenePresentCharacter {
 }
 
 export interface RenderedPerception {
-  /** Final narrative + reference text fed into the agent prompt. */
+  /** Narrative fed into the agent prompt. Prose only — the ids the actor
+   *  may cite are assembled separately by `pointableFormatter`. */
   narrative: string;
 }

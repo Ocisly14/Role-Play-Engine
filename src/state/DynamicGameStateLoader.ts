@@ -27,6 +27,8 @@ export async function initializeCompleteDynamicGameState(
     sessionId: string;
     moduleName: string;
     emailId?: string;
+    /** Module language ("en" | "zh") — drives bootstrap memory wording. */
+    language?: string;
   }
 ): Promise<DynamicGameState | null> {
   const prisma = getPrismaClient();
@@ -102,60 +104,26 @@ export async function initializeCompleteDynamicGameState(
   });
 
   const dgsm = new DynamicGameStateManager(state);
-  const memoryManager = new NpcMemoryManager(prisma, embedClient);
+  const memoryManager = new NpcMemoryManager(
+    prisma,
+    embedClient,
+    params.language
+  );
+  // Every NPC starts the session knowing the town the way a person knows the
+  // town they live in: the buildings, the rooms inside them, and how the
+  // streets connect. Written once, from module data (see contextMemory.ts).
   await Promise.all(
-    state.npcCharacters.map(async (npc) => {
-      const position = dgsm.getCharacterPosition(npc.id);
-      const location = position ? dgsm.resolveLocationId(position) : undefined;
-      const seed = npc.knownMapSeed;
-      const seedWithCurrentLocation = (() => {
-        if (!position) return seed;
-
-        switch (position.type) {
-          case "scene":
-            return {
-              ...seed,
-              sceneIds: [
-                ...new Set([...(seed?.sceneIds ?? []), position.sceneId]),
-              ],
-            };
-          case "junction":
-            return {
-              ...seed,
-              junctionIds: [
-                ...new Set([...(seed?.junctionIds ?? []), position.junctionId]),
-              ],
-            };
-          case "road":
-            return {
-              ...seed,
-              roadIds: [
-                ...new Set([...(seed?.roadIds ?? []), position.roadId]),
-              ],
-            };
-        }
-      })();
-
-      await memoryManager.ensureMapSnapshot({
+    state.npcCharacters.map((npc) =>
+      memoryManager.ensureContextMemories({
         npcId: npc.id,
         sessionId: params.sessionId,
         moduleId,
         gameDateTime,
-        location,
         dgsm,
-        seed: seedWithCurrentLocation,
-      });
-      if (location) {
-        await memoryManager.ensureCurrentLocationInMap({
-          npcId: npc.id,
-          sessionId: params.sessionId,
-          moduleId,
-          gameDateTime,
-          location,
-          dgsm,
-        });
-      }
-    })
+        seed: npc.knownMapSeed,
+        language: params.language,
+      })
+    )
   );
 
   console.log(

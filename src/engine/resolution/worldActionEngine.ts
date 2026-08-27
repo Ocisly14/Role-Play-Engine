@@ -21,14 +21,22 @@ import type {
 } from "../../models/providers/types.js";
 import type { DynamicGameStateManager } from "../../state/DynamicGameState.js";
 import type { CodeToolRegistry } from "../tools/codeTool.js";
-import type {
-  EngineResolutionContext,
-  WorldActionEngineResult,
+import {
+  type EngineResolutionContext,
+  type ResolutionError,
+  type WorldActionEngineResult,
+  formatErrorTarget,
 } from "./types.js";
-import { finalizeResolution, validateRawResolution } from "./worldDeltaValidator.js";
+import {
+  applyRepair,
+  finalizeResolution,
+  validateRawResolution,
+} from "./worldDeltaValidator.js";
 import {
   CODE_TOOL_SPECS,
+  type RawResolutionRepair,
   type RawTickResolution,
+  repairResolutionTool,
   submitResolutionTool,
 } from "./worldDeltaSchema.js";
 
@@ -41,6 +49,14 @@ const MAX_ITERATIONS = 8;
  * live before this guard existed.
  */
 const FORCE_SUBMIT_AFTER = 4;
+/**
+ * How many repair rounds a submission gets before the session gives up.
+ *
+ * Each round is a full-world request, so this is a real cost ceiling — but a
+ * contract the Engine cannot satisfy in a few targeted fixes is a fault to
+ * surface, not something to grind at.
+ */
+const MAX_REPAIR_ROUNDS = 3;
 const CODE_TOOL_NAMES = new Set(CODE_TOOL_SPECS.map((t) => t.name));
 
 // ── Rules document: loaded once. The build ships TS only, so fall back to
@@ -142,27 +158,30 @@ export function renderContext(context: EngineResolutionContext): string {
   ].join("\n\n");
 }
 
-/** Fail-everything fallback used when the model never produces a usable
- *  resolution (LLM error / iteration cap). */
-function failAll(
-  context: EngineResolutionContext,
-  invocations: WorldActionEngineResult["codeToolInvocations"],
-  reason: string
+/** The session produced nothing usable. The tick applies no transition, no
+ *  delta and no occurrence — actions keep the state they had. */
+function unusable(
+  failure: string,
+  errors: ResolutionError[],
+  invocations: WorldActionEngineResult["codeToolInvocations"]
 ): WorldActionEngineResult {
-  const finalized = finalizeResolution({ actions: [] }, context, invocations);
-  return {
-    resolution: {
-      ...finalized.resolution,
-      transitions: finalized.resolution.transitions.map((t) => ({
-        ...t,
-        reason: reason,
-      })),
-    },
-    droppedViolations: [...finalized.droppedViolations, reason],
-    codeToolInvocations: invocations,
-    judgements: {},
-    movementInits: {},
-  };
+  console.warn(`[WorldActionEngine] ${failure}`);
+  for (const e of errors.slice(0, 10)) {
+    console.warn(`    ${formatErrorTarget(e.target)} — ${e.message}`);
+  }
+  return { ok: false, failure, errors, codeToolInvocations: invocations };
+}
+
+/** The errors, addressed, plus the instruction that repair is incremental. */
+function renderErrors(errors: ResolutionError[]): string {
+  return [
+    "REJECTED. Fix ONLY these, with repair_resolution:",
+    ...errors.map((e) => `- ${formatErrorTarget(e.target)} — ${e.message}`),
+    "",
+    "Send only the elements listed above. Everything you do not mention stays",
+    "as you submitted it — do not re-send the parts that are already correct,",
+    "and do not re-send the whole resolution.",
+  ].join("\n");
 }
 
 export async function resolveTick(
@@ -178,11 +197,17 @@ export async function resolveTick(
   const tools = [...CODE_TOOL_SPECS, submitResolutionTool];
   let correctiveRetryUsed = false;
 
+  // The submission under repair, and how many repair rounds it has had.
+  let pending: RawTickResolution | undefined;
+  let repairRounds = 0;
+
   for (let i = 0; i < MAX_ITERATIONS; i++) {
+    const repairing = pending !== undefined;
     let toolCalls: Awaited<ReturnType<typeof generateToolCalls>>["toolCalls"];
     let assistantMessage: ModelMessage;
     try {
-      const mustSubmit = i >= FORCE_SUBMIT_AFTER;
+      // Once a submission exists, the only move left is to patch it.
+      const mustSubmit = !repairing && i >= FORCE_SUBMIT_AFTER;
       if (mustSubmit && i === FORCE_SUBMIT_AFTER) {
         console.warn(
           `[WorldActionEngine] ${context.tick.tickId}: ${i} turns without a ` +
@@ -193,11 +218,17 @@ export async function resolveTick(
         customSystemPrompt: SYSTEM_PROMPT,
         cacheSystemPrompt: true,
         messages,
-        tools: mustSubmit ? [submitResolutionTool] : tools,
-        toolChoice: mustSubmit
-          ? { name: "submit_resolution" }
-          : "any",
-        allowParallelCalls: true,
+        tools: repairing
+          ? [repairResolutionTool]
+          : mustSubmit
+            ? [submitResolutionTool]
+            : tools,
+        toolChoice: repairing
+          ? { name: "repair_resolution" }
+          : mustSubmit
+            ? { name: "submit_resolution" }
+            : "any",
+        allowParallelCalls: !repairing,
         modelClass: ModelClass.MEDIUM,
         operation: "world-action-engine",
       });
@@ -205,58 +236,89 @@ export async function resolveTick(
       assistantMessage = res.assistantMessage;
     } catch (err) {
       console.warn(
-        "[WorldActionEngine] LLM call failed; failing triggered actions:",
+        "[WorldActionEngine] LLM call failed:",
         err instanceof Error ? err.message : err
       );
-      return failAll(
-        context,
-        deps.codeTools.drainInvocations(),
-        "engine resolution unavailable (model error)"
+      return unusable(
+        `${context.tick.tickId}: model error, nothing applied`,
+        [],
+        deps.codeTools.drainInvocations()
       );
+    }
+
+    // ---- repair round ----------------------------------------------------
+    if (repairing && pending) {
+      const repairCall = toolCalls.find(
+        (c) => c.name === "repair_resolution"
+      );
+      if (!repairCall) {
+        return unusable(
+          `${context.tick.tickId}: expected a repair, got none — nothing applied`,
+          [],
+          deps.codeTools.drainInvocations()
+        );
+      }
+      pending = applyRepair(
+        pending,
+        repairCall.args as unknown as RawResolutionRepair
+      );
+      const invocationsSoFar = deps.codeTools.drainInvocations();
+      const errors = validateRawResolution(pending, context, invocationsSoFar);
+      requeueInvocations(deps.codeTools, invocationsSoFar);
+      if (errors.length === 0) {
+        const finalized = finalizeResolution(pending, context);
+        return {
+          ok: true,
+          resolution: finalized.resolution,
+          judgements: finalized.judgements,
+          movementInits: finalized.movementInits,
+          codeToolInvocations: deps.codeTools.drainInvocations(),
+        };
+      }
+      repairRounds += 1;
+      if (repairRounds >= MAX_REPAIR_ROUNDS) {
+        return unusable(
+          `${context.tick.tickId}: still invalid after ${repairRounds} repair round(s), nothing applied`,
+          errors,
+          deps.codeTools.drainInvocations()
+        );
+      }
+      messages.push(assistantMessage);
+      messages.push({
+        role: "tool",
+        results: [
+          { toolCallId: repairCall.id, content: renderErrors(errors) },
+        ],
+      });
+      continue;
     }
 
     const submits = toolCalls.filter((c) => c.name === "submit_resolution");
     const codeCalls = toolCalls.filter((c) => CODE_TOOL_NAMES.has(c.name));
 
-    // Clean terminal turn: validate, maybe retry once, then finalize.
+    // ---- first clean submission -----------------------------------------
     if (submits.length === 1 && codeCalls.length === 0) {
       const raw = submits[0].args as unknown as RawTickResolution;
       const invocationsSoFar = deps.codeTools.drainInvocations();
       const errors = validateRawResolution(raw, context, invocationsSoFar);
-      if (errors.length > 0 && !correctiveRetryUsed) {
-        correctiveRetryUsed = true;
-        // Re-queue the invocations so the retry's validation still sees them.
-        requeueInvocations(deps.codeTools, invocationsSoFar);
-        messages.push(assistantMessage);
-        messages.push({
-          role: "tool",
-          results: [
-            {
-              toolCallId: submits[0].id,
-              content: [
-                "REJECTED — fix these violations and call submit_resolution again with the COMPLETE corrected resolution:",
-                ...errors.map((e) => `- ${e}`),
-                "Keep every valid part; correct or remove the invalid parts. Never invent entities or rolls.",
-              ].join("\n"),
-            },
-          ],
-        });
-        continue;
+      requeueInvocations(deps.codeTools, invocationsSoFar);
+      if (errors.length === 0) {
+        const finalized = finalizeResolution(raw, context);
+        return {
+          ok: true,
+          resolution: finalized.resolution,
+          judgements: finalized.judgements,
+          movementInits: finalized.movementInits,
+          codeToolInvocations: deps.codeTools.drainInvocations(),
+        };
       }
-      const finalized = finalizeResolution(raw, context, invocationsSoFar);
-      if (finalized.droppedViolations.length > 0) {
-        console.warn(
-          `[WorldActionEngine] dropped ${finalized.droppedViolations.length} invalid output element(s) after retry:`,
-          finalized.droppedViolations.slice(0, 5)
-        );
-      }
-      return {
-        resolution: finalized.resolution,
-        droppedViolations: finalized.droppedViolations,
-        codeToolInvocations: invocationsSoFar,
-        judgements: finalized.judgements,
-        movementInits: finalized.movementInits,
-      };
+      pending = raw;
+      messages.push(assistantMessage);
+      messages.push({
+        role: "tool",
+        results: [{ toolCallId: submits[0].id, content: renderErrors(errors) }],
+      });
+      continue;
     }
 
     // Otherwise: answer every call; code tools execute, a mixed-in submit is
@@ -294,13 +356,10 @@ export async function resolveTick(
     messages.push({ role: "tool", results });
   }
 
-  console.warn(
-    "[WorldActionEngine] iteration cap reached without a valid submission"
-  );
-  return failAll(
-    context,
-    deps.codeTools.drainInvocations(),
-    "engine resolution unavailable (iteration cap)"
+  return unusable(
+    `${context.tick.tickId}: iteration cap reached without a valid resolution, nothing applied`,
+    [],
+    deps.codeTools.drainInvocations()
   );
 }
 

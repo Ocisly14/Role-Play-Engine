@@ -253,7 +253,7 @@ describe("agent tool loop", () => {
   it("grows the history instead of rebuilding it", async () => {
     // The prefix must stay byte-identical across turns for the cache to hit.
     queueTurns(
-      turn([{ id: "t1", name: "getMapSnapshot" }]),
+      turn([{ id: "t1", name: "recallMemory", args: { query: "the harbour" } }]),
       turn([{ id: "t2", name: "continue" }])
     );
 

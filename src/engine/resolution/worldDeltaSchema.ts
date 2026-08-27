@@ -321,6 +321,93 @@ export const submitResolutionTool: ToolSpec = {
   },
 };
 
+// ==================== Incremental repair ====================
+
+/**
+ * A patch over the previous submission, addressed by the same targets the
+ * errors used. Only the flagged elements are re-sent; everything else stands.
+ *
+ * Deltas and occurrences are addressed by index, and indexes stay stable
+ * across repair rounds — a withdrawn element leaves a hole rather than
+ * compacting the array, so an address quoted in round 1 still means the same
+ * element in round 2.
+ */
+export interface RawResolutionRepair {
+  /** Replaces the transition with the same actionId. */
+  actions?: RawActionResolution[];
+  /** index (as a string key) → replacement, or null to withdraw. */
+  characterChanges?: Record<string, RawCharacterChange | null>;
+  sceneChanges?: Record<string, RawSceneChange | null>;
+  itemChanges?: Record<string, RawItemChange | null>;
+  occurrences?: Record<string, RawOccurrence | null>;
+  /** Appended, for elements the resolution was missing entirely. */
+  addCharacterChanges?: RawCharacterChange[];
+  addSceneChanges?: RawSceneChange[];
+  addItemChanges?: RawItemChange[];
+  addOccurrences?: RawOccurrence[];
+}
+
+const patchMap = (itemSchema: unknown, what: string) => ({
+  type: "object",
+  description: `${what} to replace, keyed by the index quoted in the error (e.g. "2"). Use null to withdraw one.`,
+  additionalProperties: itemSchema,
+});
+
+export const repairResolutionTool: ToolSpec = {
+  name: "repair_resolution",
+  description:
+    "Fix ONLY the elements named in the errors. Everything you do not mention stays exactly as you submitted it — do not re-send correct parts, and do not re-send the whole resolution.",
+  inputSchema: {
+    type: "object",
+    properties: {
+      actions: {
+        type: "array",
+        description:
+          "Corrected transitions. Each replaces the existing transition with the same actionId.",
+        items: (submitResolutionTool.inputSchema as {
+          properties: { actions: { items: unknown } };
+        }).properties.actions.items,
+      },
+      characterChanges: patchMap(
+        sourcedDelta("characterId", true),
+        "Character changes"
+      ),
+      sceneChanges: patchMap(sourcedDelta("sceneId", true), "Scene changes"),
+      itemChanges: patchMap(sourcedDelta("itemId", false), "Item changes"),
+      occurrences: patchMap(
+        (submitResolutionTool.inputSchema as {
+          properties: { occurrences: { items: unknown } };
+        }).properties.occurrences.items,
+        "Occurrences"
+      ),
+      addCharacterChanges: {
+        type: "array",
+        description: "New character changes the resolution was missing.",
+        items: sourcedDelta("characterId", true),
+      },
+      addSceneChanges: {
+        type: "array",
+        description: "New scene changes the resolution was missing.",
+        items: sourcedDelta("sceneId", true),
+      },
+      addItemChanges: {
+        type: "array",
+        description: "New item changes the resolution was missing.",
+        items: sourcedDelta("itemId", false),
+      },
+      addOccurrences: {
+        type: "array",
+        description: "New occurrences the resolution was missing.",
+        items: (submitResolutionTool.inputSchema as {
+          properties: { occurrences: { items: unknown } };
+        }).properties.occurrences.items,
+      },
+    },
+    required: [],
+    additionalProperties: false,
+  },
+};
+
 // ==================== Code-tool schemas for the session ====================
 
 /** LLM-facing declarations of the deterministic code tools. Execution runs

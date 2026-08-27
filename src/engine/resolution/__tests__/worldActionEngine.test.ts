@@ -1,6 +1,7 @@
 // Phase 7 session loop: code tools answered mid-session, terminal
-// submit_resolution accepted alone, one corrective retry on validation
-// errors, and fail-all fallbacks on model failure / iteration cap.
+// submit_resolution accepted alone, addressed errors repaired INCREMENTALLY
+// via repair_resolution, and — when repair cannot converge or the model
+// fails — a result that applies nothing at all.
 
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { DynamicGameStateManager } from "../../../state/DynamicGameState.js";
@@ -131,6 +132,8 @@ describe("resolveTick session loop", () => {
 
     const result = await resolveTick(makeContext(), makeDeps());
 
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
     expect(result.resolution.transitions).toEqual([
       expect.objectContaining({
         actionId: "action_c1",
@@ -147,7 +150,6 @@ describe("resolveTick session loop", () => {
       toolName: "movementCost",
       output: { reachable: true, totalMinutes: 5, totalTicks: 5 },
     });
-    expect(result.droppedViolations).toEqual([]);
 
     // The second request carried the tool result back to the model.
     const secondCall = generateToolCalls.mock.calls[1][0];
@@ -155,36 +157,6 @@ describe("resolveTick session loop", () => {
       (m: { role: string }) => m.role === "tool"
     );
     expect(toolMsg.results[0].content).toContain("reachable");
-  });
-
-  it("gives one corrective retry with the violations spelled out", async () => {
-    const invalid = {
-      actions: [
-        {
-          actionId: "action_c1",
-          to: "active",
-          progressDeltaMinutes: 0,
-          // missing duration/timing/judgement/nextWake
-        },
-      ],
-    };
-    generateToolCalls
-      .mockResolvedValueOnce(
-        turn([{ id: "t1", name: "submit_resolution", args: invalid }])
-      )
-      .mockResolvedValueOnce(
-        turn([{ id: "t2", name: "submit_resolution", args: validSubmission }])
-      );
-
-    const result = await resolveTick(makeContext(), makeDeps());
-
-    expect(result.resolution.transitions[0].to).toBe("active");
-    const retryCall = generateToolCalls.mock.calls[1][0];
-    const rejection = retryCall.messages.find(
-      (m: { role: string }) => m.role === "tool"
-    );
-    expect(rejection.results[0].content).toContain("REJECTED");
-    expect(rejection.results[0].content).toContain("resolvedDurationTicks");
   });
 
   it("rejects a mixed submit+tool turn without losing the session", async () => {
@@ -200,6 +172,8 @@ describe("resolveTick session loop", () => {
       );
 
     const result = await resolveTick(makeContext(), makeDeps());
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
     expect(result.resolution.transitions[0].to).toBe("active");
 
     const secondCall = generateToolCalls.mock.calls[1][0];
@@ -212,18 +186,20 @@ describe("resolveTick session loop", () => {
     expect(submitResult.content).toContain("NOT accepted");
   });
 
-  it("fails every triggering action when the model call throws", async () => {
+  it("applies nothing when the model call throws", async () => {
+    // An engine that cannot answer is a fault, not an event in the world:
+    // the actions keep the state they had rather than being marked failed.
     generateToolCalls.mockRejectedValue(new Error("provider down"));
 
     const result = await resolveTick(makeContext(), makeDeps());
 
-    expect(result.resolution.transitions).toEqual([
-      expect.objectContaining({ actionId: "action_c1", to: "failed" }),
-    ]);
-    expect(result.droppedViolations.join("\n")).toContain("model error");
+    expect(result.ok).toBe(false);
+    if (result.ok) return;
+    expect(result.failure).toContain("model error");
   });
 
-  it("still-invalid output after the retry drops the bad parts and fails the action", async () => {
+  it("repairs incrementally: only the flagged element is re-sent", async () => {
+    // Missing duration/timing/judgement/nextWake on the one transition.
     const invalid = {
       actions: [
         { actionId: "action_c1", to: "active", progressDeltaMinutes: 0 },
@@ -234,14 +210,73 @@ describe("resolveTick session loop", () => {
         turn([{ id: "t1", name: "submit_resolution", args: invalid }])
       )
       .mockResolvedValueOnce(
-        turn([{ id: "t2", name: "submit_resolution", args: invalid }])
+        turn([
+          {
+            id: "t2",
+            name: "repair_resolution",
+            // Only the transition — no deltas, no occurrences, nothing else.
+            args: { actions: validSubmission.actions },
+          },
+        ])
       );
 
     const result = await resolveTick(makeContext(), makeDeps());
+
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
     expect(result.resolution.transitions[0]).toMatchObject({
       actionId: "action_c1",
-      to: "failed",
+      to: "active",
+      resolvedDurationTicks: 5,
     });
-    expect(result.droppedViolations.length).toBeGreaterThan(0);
+
+    // The rejection addressed the element, and demanded a patch not a rewrite.
+    const repairCall = generateToolCalls.mock.calls[1][0];
+    const rejection = repairCall.messages.find(
+      (m: { role: string }) => m.role === "tool"
+    );
+    expect(rejection.results[0].content).toContain("action:action_c1");
+    expect(rejection.results[0].content).toContain("resolvedDurationTicks");
+    expect(rejection.results[0].content).toContain(
+      "do not re-send the whole resolution"
+    );
+    // Only the repair tool is on the table once a submission exists.
+    expect(repairCall.tools.map((t: { name: string }) => t.name)).toEqual([
+      "repair_resolution",
+    ]);
+  });
+
+  it("applies nothing when repair cannot converge", async () => {
+    const invalid = {
+      actions: [
+        { actionId: "action_c1", to: "active", progressDeltaMinutes: 0 },
+      ],
+    };
+    generateToolCalls.mockResolvedValue(
+      turn([{ id: "t1", name: "submit_resolution", args: invalid }])
+    );
+    // Every repair round re-sends the same broken transition.
+    generateToolCalls.mockResolvedValueOnce(
+      turn([{ id: "t0", name: "submit_resolution", args: invalid }])
+    );
+    for (let i = 0; i < 5; i++) {
+      generateToolCalls.mockResolvedValueOnce(
+        turn([
+          {
+            id: `r${i}`,
+            name: "repair_resolution",
+            args: { actions: invalid.actions },
+          },
+        ])
+      );
+    }
+
+    const result = await resolveTick(makeContext(), makeDeps());
+
+    expect(result.ok).toBe(false);
+    if (result.ok) return;
+    expect(result.failure).toContain("repair round");
+    // The errors still name what was wrong, addressed.
+    expect(result.errors.some((e) => e.target.kind === "action")).toBe(true);
   });
 });

@@ -98,8 +98,21 @@ export function injectCharacterIntoState(
   // Initialise empty inventory record
   state.npcInventories[profile.id] = [];
 
-  // Initialise empty relationship graph entry
-  state.npcRelationshipGraph[profile.id] = {};
+  // Seed the relationship graph from the profile, exactly as moduleLoader
+  // does for module-authored NPCs. The graph — not `profile.relationships` —
+  // is what decides whether this character may call someone by name, so
+  // dropping the seed here would leave an injected character unable to
+  // recognise people they arrive already knowing.
+  const rels: Record<string, { score: number; note: string }> = {};
+  for (const rel of profile.relationships ?? []) {
+    if (!rel.targetId || rel.targetId === profile.id) continue;
+    const r = rel as { score?: number; attitude?: number; note?: string };
+    rels[rel.targetId] = {
+      score: r.score ?? r.attitude ?? 0,
+      note: r.note ?? "",
+    };
+  }
+  state.npcRelationshipGraph[profile.id] = rels;
 }
 
 /**

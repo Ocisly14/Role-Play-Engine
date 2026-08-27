@@ -1,5 +1,6 @@
 import type { NpcMemoryType } from "@prisma/client";
 import type { MemoryHandler } from "../types.js";
+import { ContextHandler } from "./ContextHandler.js";
 import { GeneralHandler } from "./GeneralHandler.js";
 import { LongTermIntentHandler } from "./LongTermIntentHandler.js";
 import { MapHandler } from "./MapHandler.js";
@@ -9,6 +10,7 @@ import { SecretHandler } from "./SecretHandler.js";
 import { SummaryHandler } from "./SummaryHandler.js";
 
 export {
+  ContextHandler,
   GeneralHandler,
   LongTermIntentHandler,
   MapHandler,
@@ -26,6 +28,7 @@ const HANDLERS: Record<NpcMemoryType, MemoryHandler> = {
   map: new MapHandler(),
   long_term_intent: new LongTermIntentHandler(),
   summary: new SummaryHandler(),
+  context: new ContextHandler(),
 };
 
 export function getHandler(type: NpcMemoryType): MemoryHandler {

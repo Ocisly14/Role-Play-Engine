@@ -32,5 +32,20 @@
   "outcome_item": "（物品：{{item}}）",
   "outcome_connection_block": "（封锁通往 {{target}} 的路径）",
   "outcome_connection_unblock": "（解封通往 {{target}} 的路径）",
-  "fallback_mirror_memory": "{{name}} {{action}}——结果：{{outcome}}"
+  "fallback_mirror_memory": "{{name}} {{action}}——结果：{{outcome}}",
+  "context_macro": "{{name}} —— {{description}}",
+  "context_macro_inside": "内部：{{scenes}}",
+  "context_interior": "{{name}}（{{macro}}内）—— {{description}}",
+  "context_interior_outdoor": "{{name}} —— {{description}}",
+  "context_interior_exits": "出入口：{{exits}}",
+  "context_exit": "{{description}} → {{target}}",
+  "context_exit_plain": "→ {{target}}",
+  "context_topology_header": "街道方位：",
+  "context_topology_road": "{{road}}连接{{from}}与{{to}}（步行约 {{minutes}} 分钟）。",
+  "context_topology_road_only": "{{road}}（步行约 {{minutes}} 分钟）。",
+  "context_topology_road_along": "沿街：{{buildings}}",
+  "context_topology_junction": "{{junction}} 的街道：{{roads}}。",
+  "context_topology_junction_buildings": "路口处：{{buildings}}",
+  "context_list_sep": "、",
+  "context_clause_sep": "；"
 }

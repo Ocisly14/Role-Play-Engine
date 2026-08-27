@@ -116,8 +116,8 @@ export class LLMRoleSimAgent implements RoleSimAgent {
       const instant = toolCalls.filter((c) => !TERMINAL_TOOLS.has(c.name));
       // writeMemory returns nothing the agent must read before deciding, so
       // it may ride along with the terminal call — recording a memory costs
-      // no extra round trip. Blocking tools (recallMemory / getMapSnapshot)
-      // still need a turn of their own.
+      // no extra round trip. Blocking tools (recallMemory) still need a turn
+      // of their own.
       const blocking = instant.filter((c) => !FREE_WITH_TERMINAL.has(c.name));
       const freeRiders = instant.filter((c) => FREE_WITH_TERMINAL.has(c.name));
 
@@ -154,7 +154,7 @@ export class LLMRoleSimAgent implements RoleSimAgent {
         if (TERMINAL_TOOLS.has(call.name)) {
           results.push({
             toolCallId: call.id,
-            content: `Error: "${call.name}" was NOT executed. recallMemory and getMapSnapshot need a turn of their own — you have to read their results first. Finish those lookups, then commit with act/continue (writeMemory may ride along with it).`,
+            content: `Error: "${call.name}" was NOT executed. recallMemory needs a turn of its own — you have to read its results first. Finish those lookups, then commit with act/continue (writeMemory may ride along with it).`,
           });
           continue;
         }

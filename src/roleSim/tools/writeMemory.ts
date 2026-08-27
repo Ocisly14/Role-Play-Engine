@@ -20,8 +20,8 @@ The colour of the wallpaper is not.
 
 Free. It does NOT consume a tick, and it may be called **in the same turn
 as \`act\` or \`continue\`** — decide your action and record your memory
-together. (\`recallMemory\` and \`getMapSnapshot\` still need a turn of
-their own, because you have to read their results before deciding.)
+together. (\`recallMemory\` still needs a turn of its own, because you have
+to read its results before deciding.)
 
 ## Types
 
@@ -35,11 +35,14 @@ their own, because you have to read their results before deciding.)
 - \`secret\` — 秘密. Something hidden you worked out and would not say
   aloud. These fade slowly; you will still be carrying them days later.
 - \`relationship\` — 角色关系. What you now think of a specific person.
-  Requires \`targetId\` (their entity id from your perception). Use it
-  when your read on someone changes: they lied, they helped, they
-  frightened you, you decided to trust them.
-- \`map\` — 地图记忆. A place or route you learned. Use \`mapAdd\`
-  instead of \`content\`.
+  Requires \`targetId\` — copied from "What you can point at", exactly as
+  you would write it in \`objectRefs\`. Use it when your read on someone
+  changes: they lied, they helped, they frightened you, you decided to
+  trust them.
+- \`map\` — 地图记忆. A place or route you learned *today* — a door you
+  had never noticed, a shortcut, where someone actually lives. The town you
+  already knew before this morning is not this: you carry that anyway, and
+  \`recallMemory\` gets it back.
 - \`long_term_intent\` — 长期目标. ONLY when the goal driving your whole
   life here genuinely changes. Rare — an ordinary intention is a \`plan\`.
 
@@ -56,8 +59,7 @@ their own, because you have to read their results before deciding.)
 ## Output
 
 writeMemory({ "type": "general", "content": "<text>" })
-writeMemory({ "type": "relationship", "targetId": "<entity-id>", "content": "<text>" })
-writeMemory({ "type": "map", "mapAdd": { "sceneNames": ["library"], "junctionNames": [], "roadNames": [], "revealHiddenConnection": "" } })
+writeMemory({ "type": "relationship", "targetId": "<id-or-alias>", "content": "<text>" })
 
 ## Cap
 
@@ -75,13 +77,13 @@ You just caught an inconsistency:
 writeMemory({ "type": "general", "content": "The professor said the ledger never left his office, but I saw it in the parlour an hour earlier." })
 
 Your read on someone changed:
-writeMemory({ "type": "relationship", "targetId": "Hollins", "content": "He went pale when I mentioned the harbor. He knows something and he is afraid of it." })
+writeMemory({ "type": "relationship", "targetId": "stranger_a", "content": "He went pale when I mentioned the harbor. He knows something and he is afraid of it." })
 
 Your own action finally paid off:
 writeMemory({ "type": "general", "content": "The cabinet lock gave way after a few minutes of work. Inside: a bundle of letters tied with string." })
 
 You learned where something is:
-writeMemory({ "type": "map", "mapAdd": { "sceneNames": ["the back stairwell"] } })
+writeMemory({ "type": "map", "content": "There is a back stairwell behind the kitchen at the boarding house — it comes out on the alley, not the street." })
 
 A quiet minute with nothing to keep — write nothing at all.
 `;

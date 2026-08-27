@@ -208,7 +208,7 @@ export class TickOrchestrator {
     }
 
     // Phases 5-7 — conditional global resolution. No triggers → no model call.
-    let engineResult: WorldActionEngineResult | undefined;
+    let engineResult: (WorldActionEngineResult & { ok: true }) | undefined;
     if (triggers.length > 0) {
       const objectiveWorldEvents: ObjectiveWorldEvent[] = interruptions.map(
         (p) => ({
@@ -228,10 +228,23 @@ export class TickOrchestrator {
         objectiveWorldEvents,
       });
       const resolveFn = this.deps.resolveTickFn ?? resolveTick;
-      engineResult = await resolveFn(context, {
+      const result = await resolveFn(context, {
         dgsm,
         codeTools: this.deps.codeTools,
       });
+
+      if (result.ok) {
+        engineResult = result;
+      } else {
+        // The Engine produced nothing usable. Nothing it would have changed
+        // is applied — and the inputs it consumed go back, or they vanish:
+        // drained commands have queued actions that no trigger would pick up
+        // again, and a swallowed interruption never fires twice. Putting them
+        // back is what makes "nothing happened this tick" true rather than
+        // "this tick silently ate two commands".
+        for (const command of newCommands) this.deps.inbox.add(command);
+        this.pendingInterruptions.push(...interruptions);
+      }
     }
 
     // Movement runtime init for newly-resolved movement legs. Read-only
@@ -384,7 +397,7 @@ export class TickOrchestrator {
     action: EngineAction,
     t: ActionTransition,
     now: GameTime,
-    engineResult: WorldActionEngineResult | undefined
+    engineResult: (WorldActionEngineResult & { ok: true }) | undefined
   ): void {
     if (action.status === "queued" && t.to !== "queued") {
       action.startedAt = now;

@@ -135,9 +135,7 @@ describe("occurrence routing", () => {
   beforeEach(() => {
     render.mockReset();
     buildPerceivedBundle.mockClear();
-    render.mockResolvedValue({
-      narrative: "[narrative]\nSomething happens.\n\n[references]",
-    });
+    render.mockResolvedValue({ narrative: "Something happens." });
   });
 
   it("wakes exactly the listed perceivers (plus idle NPCs) and hands them their occurrences", async () => {

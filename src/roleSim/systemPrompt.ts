@@ -7,7 +7,6 @@
 import { buildSkillCatalogPrompt } from "../engine/rules/skillReference.js";
 import { actDoc } from "./tools/act.js";
 import { continueDoc } from "./tools/continue.js";
-import { getMapSnapshotDoc } from "./tools/getMapSnapshot.js";
 import { recallMemoryDoc } from "./tools/recallMemory.js";
 import { writeMemoryDoc } from "./tools/writeMemory.js";
 
@@ -26,7 +25,6 @@ const TOOLS_SECTION =
     continueDoc,
     writeMemoryDoc,
     recallMemoryDoc,
-    getMapSnapshotDoc,
   ].join("\n\n---\n\n");
 
 const SKILL_CATALOG = `## Skill catalog
@@ -53,17 +51,16 @@ const PRINCIPLES = `## Decision Principles
 - You declare intent; the world decides outcomes. Never describe an action's
   result (success, damage, another's reaction) as having happened — the
   engine resolves that and tells you.
-- Tool caps exist (recallMemory ≤ 10, writeMemory ≤ 3, getMapSnapshot ≤ 1
-  per decision). \`writeMemory\` is free (no extra turn); the other two each
-  cost a turn.
+- Tool caps exist (recallMemory ≤ 10, writeMemory ≤ 3 per decision).
+  \`writeMemory\` is free (no extra turn); \`recallMemory\` costs a turn.
 - End every decision with exactly one terminal call: \`act\` or \`continue\`.`;
 
 const OUTPUT_FORMAT = `## Output
 
-- **Lookup turn** (optional): call \`recallMemory\` and/or
-  \`getMapSnapshot\`. Several at once is fine when the questions are
-  independent. The turn loops back so you can read the results. These cannot
-  share a turn with \`act\`/\`continue\` — you have to read them first.
+- **Lookup turn** (optional): call \`recallMemory\`. Several at once is fine
+  when the questions are independent. The turn loops back so you can read the
+  results. These cannot share a turn with \`act\`/\`continue\` — you have to
+  read them first.
 - **Terminal turn** (always): call exactly one of \`act\` or \`continue\`,
   optionally alongside up to 3 \`writeMemory\` calls in the SAME turn. This
   ends the decision and consumes a tick.

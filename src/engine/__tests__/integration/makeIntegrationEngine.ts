@@ -55,13 +55,13 @@ export function makeIntegrationEngine(
       const { finalizeResolution } = await import(
         "../../resolution/worldDeltaValidator.js"
       );
-      const finalized = finalizeResolution({ actions: [] }, context, []);
+      const finalized = finalizeResolution({ actions: [] }, context);
       return {
+        ok: true as const,
         resolution: finalized.resolution,
-        droppedViolations: finalized.droppedViolations,
-        codeToolInvocations: [],
         judgements: {},
         movementInits: {},
+        codeToolInvocations: [],
       };
     },
   });

@@ -28,12 +28,7 @@ export type RoleSimDecision =
       tool: "writeMemory";
       type: NpcMemoryType;
       content?: string;
-      mapAdd?: {
-        sceneNames?: string[];
-        junctionNames?: string[];
-        roadNames?: string[];
-        revealHiddenConnection?: string;
-      };
+      targetId?: string;
     }
   | {
       tool: "recallMemory";
@@ -41,8 +36,7 @@ export type RoleSimDecision =
       types?: NpcMemoryType[];
       gameDates?: string[];
       limit?: number;
-    }
-  | { tool: "getMapSnapshot" };
+    };
 
 export interface RoleSimContext {
   npcId: string;

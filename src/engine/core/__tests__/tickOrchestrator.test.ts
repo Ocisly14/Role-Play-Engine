@@ -119,13 +119,13 @@ function stubResolve(opts: { withOccurrence?: boolean } = {}) {
         }
       }
     }
-    const finalized = finalizeResolution(raw, context, []);
+    const finalized = finalizeResolution(raw, context);
     return {
+      ok: true as const,
       resolution: finalized.resolution,
-      droppedViolations: finalized.droppedViolations,
-      codeToolInvocations: [],
       judgements: finalized.judgements,
       movementInits: finalized.movementInits,
+      codeToolInvocations: [],
     };
   });
   return { fn, calls };

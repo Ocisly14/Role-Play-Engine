@@ -12,8 +12,12 @@ import {
 } from "../commandValidator.js";
 import { resolveSkillValue, successLevelFor } from "../skillRollService.js";
 
+/** A stranger is cited by alias; only the directory knows the real id. */
+const HOLLINS_ALIAS = "stranger_a";
+
 const directory: PerceivableDirectory = {
   characters: new Set(["Hollins"]),
+  characterHandles: new Map([[HOLLINS_ALIAS, "Hollins"]]),
   items: new Set(["ITEM_1", "cabinet_lock"]),
   scenes: new Set(["SCN_1", "SCN_2"]),
 };
@@ -111,6 +115,28 @@ describe("validateActArgs", () => {
     expect(result).toMatchObject({ ok: false, code: "unknown_ref" });
   });
 
+  it("resolves a stranger's alias to the real id", () => {
+    const result = validateActArgs(
+      args({
+        objectRefs: [{ kind: "character", id: HOLLINS_ALIAS, role: "target" }],
+      }),
+      directory
+    );
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.args.objectRefs).toEqual([
+      { kind: "character", id: "Hollins", role: "target" },
+    ]);
+  });
+
+  it("rejects the real character id — the actor is never given it", () => {
+    const result = validateActArgs(
+      args({ objectRefs: [{ kind: "character", id: "Hollins" }] }),
+      directory
+    );
+    expect(result).toMatchObject({ ok: false, code: "unknown_ref" });
+  });
+
   it.each([
     ["zero", 0],
     ["negative", -3],
@@ -187,6 +213,7 @@ vi.mock("../../../state/perceivableDirectory.js", async () => {
     ...actual,
     buildPerceivableDirectory: () => ({
       characters: new Set(["Hollins"]),
+      characterHandles: new Map([[HOLLINS_ALIAS, "Hollins"]]),
       items: new Set(["ITEM_1", "cabinet_lock"]),
       scenes: new Set(["SCN_1", "SCN_2"]),
     }),

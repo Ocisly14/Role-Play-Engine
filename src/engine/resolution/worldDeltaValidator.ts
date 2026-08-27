@@ -35,11 +35,12 @@ import type {
   WorldDelta,
 } from "../actions/types.js";
 import type { CodeToolInvocation } from "../tools/codeTool.js";
-import type { EngineResolutionContext } from "./types.js";
+import type { EngineResolutionContext, ResolutionError } from "./types.js";
 import type {
   RawActionResolution,
   RawJudgement,
   RawOccurrence,
+  RawResolutionRepair,
   RawSourcedDelta,
   RawTickResolution,
 } from "./worldDeltaSchema.js";
@@ -127,11 +128,11 @@ function validateActionEntry(
   const errs: string[] = [];
   const known = lookup.actionById.get(entry.actionId);
   if (!known) {
-    return [`actions[${entry.actionId}]: unknown actionId`];
+    return [`unknown actionId`];
   }
   if (!LEGAL_TRANSITIONS[known.status].has(entry.to)) {
     errs.push(
-      `actions[${entry.actionId}]: illegal transition ${known.status} -> ${entry.to}`
+      `illegal transition ${known.status} -> ${entry.to}`
     );
   }
   if (
@@ -139,7 +140,7 @@ function validateActionEntry(
     entry.progressDeltaMinutes < 0
   ) {
     errs.push(
-      `actions[${entry.actionId}]: progressDeltaMinutes must be a number >= 0`
+      `progressDeltaMinutes must be a number >= 0`
     );
   }
   if (entry.to === "active") {
@@ -149,7 +150,7 @@ function validateActionEntry(
       entry.nextWakeInTicks < 1
     ) {
       errs.push(
-        `actions[${entry.actionId}]: transition to "active" requires integer nextWakeInTicks >= 1`
+        `transition to "active" requires integer nextWakeInTicks >= 1`
       );
     }
   }
@@ -160,17 +161,17 @@ function validateActionEntry(
       entry.resolvedDurationTicks < 1
     ) {
       errs.push(
-        `actions[${entry.actionId}]: first resolution requires integer resolvedDurationTicks >= 1 (the actor's proposal is advisory)`
+        `first resolution requires integer resolvedDurationTicks >= 1 (the actor's proposal is advisory)`
       );
     }
     if (!entry.timingReason?.trim()) {
       errs.push(
-        `actions[${entry.actionId}]: first resolution requires a timingReason`
+        `first resolution requires a timingReason`
       );
     }
     if (!entry.judgement) {
       errs.push(
-        `actions[${entry.actionId}]: first resolution requires a judgement`
+        `first resolution requires a judgement`
       );
     }
   } else if (
@@ -178,7 +179,7 @@ function validateActionEntry(
     !entry.timingReason?.trim()
   ) {
     errs.push(
-      `actions[${entry.actionId}]: revising resolvedDurationTicks requires a timingReason`
+      `revising resolvedDurationTicks requires a timingReason`
     );
   }
 
@@ -200,17 +201,17 @@ function validateJudgement(
 
   if (hasRoll && j.kind !== "skill_assessed") {
     return [
-      `actions[${entry.actionId}]: command declared skill "${command.declaredSkillId}" — judgement must be kind "skill_assessed"`,
+      `command declared skill "${command.declaredSkillId}" — judgement must be kind "skill_assessed"`,
     ];
   }
   if (!hasRoll && j.kind === "skill_assessed") {
     return [
-      `actions[${entry.actionId}]: command declared no skill — judgement must be kind "direct" (never invent rolls)`,
+      `command declared no skill — judgement must be kind "direct" (never invent rolls)`,
     ];
   }
   if (j.kind === "direct") {
     if (!j.reason?.trim())
-      errs.push(`actions[${entry.actionId}]: direct judgement needs a reason`);
+      errs.push(`direct judgement needs a reason`);
     return errs;
   }
 
@@ -218,18 +219,18 @@ function validateJudgement(
   // model's outcome to be consistent with it.
   if (!j.applicabilityBasis?.trim()) {
     errs.push(
-      `actions[${entry.actionId}]: skill judgement requires applicabilityBasis`
+      `skill judgement requires applicabilityBasis`
     );
   }
   for (const id of j.targetIds ?? []) {
     if (!lookup.characterIds.has(id)) {
-      errs.push(`actions[${entry.actionId}]: targetId "${id}" does not exist`);
+      errs.push(`targetId "${id}" does not exist`);
     }
   }
 
   const proposal = rawJudgementToProposal(j);
   if (typeof proposal === "string") {
-    errs.push(`actions[${entry.actionId}]: ${proposal}`);
+    errs.push(`${proposal}`);
     return errs;
   }
 
@@ -260,7 +261,7 @@ function validateJudgement(
     }
   );
   if (!adjudicated.ok) {
-    errs.push(`actions[${entry.actionId}]: ${adjudicated.error}`);
+    errs.push(`${adjudicated.error}`);
     return errs;
   }
 
@@ -279,7 +280,7 @@ function validateJudgement(
         : failish.has(claimed);
   if (!consistent) {
     errs.push(
-      `actions[${entry.actionId}]: outcome "${claimed}" contradicts the deterministic check result "${deterministic}" (roll ${command.skillRoll?.roll}/${command.skillRoll?.skillValue} ${command.skillRoll?.successLevel}${proposal.applicability === "accepted" ? ` vs required ${proposal.requiredLevel}` : ", skill rejected"})`
+      `outcome "${claimed}" contradicts the deterministic check result "${deterministic}" (roll ${command.skillRoll?.roll}/${command.skillRoll?.skillValue} ${command.skillRoll?.successLevel}${proposal.applicability === "accepted" ? ` vs required ${proposal.requiredLevel}` : ", skill rejected"})`
     );
   }
   return errs;
@@ -354,19 +355,18 @@ const ITEM_OP_KINDS = new Set([
 ]);
 
 function validateCommonDelta(
-  label: string,
   delta: RawSourcedDelta,
   lookup: Lookup
 ): string[] {
   const errs: string[] = [];
   if (!lookup.actionById.has(delta.sourceActionId)) {
-    errs.push(`${label}: sourceActionId "${delta.sourceActionId}" is unknown`);
+    errs.push(`sourceActionId "${delta.sourceActionId}" is unknown`);
   }
   if (!delta.causalBasis?.trim()) {
-    errs.push(`${label}: causalBasis is required`);
+    errs.push(`causalBasis is required`);
   }
   if (!delta.operation || typeof delta.operation.kind !== "string") {
-    errs.push(`${label}: operation.kind is required`);
+    errs.push(`operation.kind is required`);
   }
   return errs;
 }
@@ -383,15 +383,14 @@ export function validateCharacterChange(
   delta: RawSourcedDelta & { characterId?: string },
   lookup: Lookup
 ): string[] {
-  const label = `characterChanges[${index}]`;
-  const errs = validateCommonDelta(label, delta, lookup);
+  const errs = validateCommonDelta(delta, lookup);
   if (!delta.characterId || !lookup.characterIds.has(delta.characterId)) {
-    errs.push(`${label}: characterId "${delta.characterId}" does not exist`);
+    errs.push(`characterId "${delta.characterId}" does not exist`);
     return errs;
   }
   const op = delta.operation;
   if (!op?.kind || !CHARACTER_OP_KINDS.has(op.kind)) {
-    errs.push(`${label}: unknown character operation kind "${op?.kind}"`);
+    errs.push(`unknown character operation kind "${op?.kind}"`);
     return errs;
   }
   switch (op.kind) {
@@ -401,11 +400,11 @@ export function validateCharacterChange(
       const d = op.delta;
       if (typeof d !== "number" || !Number.isFinite(d) || Math.abs(d) > 500) {
         errs.push(
-          `${label}: ${op.kind}.delta must be a finite number (|d| <= 500)`
+          `${op.kind}.delta must be a finite number (|d| <= 500)`
         );
       }
       if (typeof op.reason !== "string" || !op.reason.trim()) {
-        errs.push(`${label}: ${op.kind} requires a reason`);
+        errs.push(`${op.kind} requires a reason`);
       }
       break;
     }
@@ -419,9 +418,9 @@ export function validateCharacterChange(
           }
         | undefined;
       if (!p || typeof p !== "object" || typeof p.type !== "string") {
-        errs.push(`${label}: position.position must be a CharacterPosition`);
+        errs.push(`position.position must be a CharacterPosition`);
       } else if (p.type === "scene" && !lookup.sceneIds.has(p.sceneId ?? "")) {
-        errs.push(`${label}: position sceneId "${p.sceneId}" does not exist`);
+        errs.push(`position sceneId "${p.sceneId}" does not exist`);
       }
       break;
     }
@@ -431,14 +430,14 @@ export function validateCharacterChange(
         | undefined;
       if (!c?.description || !c?.id) {
         errs.push(
-          `${label}: addCondition requires condition {id, description}`
+          `addCondition requires condition {id, description}`
         );
       }
       break;
     }
     case "removeCondition":
       if (typeof op.conditionId !== "string" || !op.conditionId) {
-        errs.push(`${label}: removeCondition requires conditionId`);
+        errs.push(`removeCondition requires conditionId`);
       }
       break;
     case "relationship":
@@ -447,7 +446,7 @@ export function validateCharacterChange(
         !lookup.characterIds.has(op.toCharacterId)
       ) {
         errs.push(
-          `${label}: relationship.toCharacterId "${op.toCharacterId}" does not exist`
+          `relationship.toCharacterId "${op.toCharacterId}" does not exist`
         );
       }
       break;
@@ -460,41 +459,40 @@ export function validateSceneChange(
   delta: RawSourcedDelta & { sceneId?: string },
   lookup: Lookup
 ): string[] {
-  const label = `sceneChanges[${index}]`;
-  const errs = validateCommonDelta(label, delta, lookup);
+  const errs = validateCommonDelta(delta, lookup);
   if (!delta.sceneId || !lookup.sceneIds.has(delta.sceneId)) {
-    errs.push(`${label}: sceneId "${delta.sceneId}" does not exist`);
+    errs.push(`sceneId "${delta.sceneId}" does not exist`);
     return errs;
   }
   const op = delta.operation;
   if (!op?.kind || !SCENE_OP_KINDS.has(op.kind)) {
-    errs.push(`${label}: unknown scene operation kind "${op?.kind}"`);
+    errs.push(`unknown scene operation kind "${op?.kind}"`);
     return errs;
   }
   switch (op.kind) {
     case "addCondition": {
       const c = op.condition as { description?: string } | undefined;
       if (!c?.description) {
-        errs.push(`${label}: addCondition requires condition.description`);
+        errs.push(`addCondition requires condition.description`);
       }
       break;
     }
     case "removeCondition": {
       const p = op.predicate as { featureId?: string } | undefined;
       if (!p?.featureId) {
-        errs.push(`${label}: removeCondition requires predicate.featureId`);
+        errs.push(`removeCondition requires predicate.featureId`);
       }
       break;
     }
     case "connectionBlock":
       if (typeof op.connectionId !== "string" || !op.connectionId) {
-        errs.push(`${label}: connectionBlock requires connectionId`);
+        errs.push(`connectionBlock requires connectionId`);
       }
       if (typeof op.blocked !== "boolean") {
-        errs.push(`${label}: connectionBlock requires blocked boolean`);
+        errs.push(`connectionBlock requires blocked boolean`);
       }
       if (typeof op.reason !== "string" || !op.reason.trim()) {
-        errs.push(`${label}: connectionBlock requires a reason`);
+        errs.push(`connectionBlock requires a reason`);
       }
       break;
     case "environmentContribute":
@@ -503,10 +501,10 @@ export function validateSceneChange(
           op.quantity as string
         )
       ) {
-        errs.push(`${label}: environmentContribute has invalid quantity`);
+        errs.push(`environmentContribute has invalid quantity`);
       }
       if (typeof op.value !== "number" || !Number.isFinite(op.value)) {
-        errs.push(`${label}: environmentContribute requires numeric value`);
+        errs.push(`environmentContribute requires numeric value`);
       }
       break;
     case "environmentHazard":
@@ -521,26 +519,25 @@ export function validateItemChange(
   lookup: Lookup,
   movedItemIds: Set<string>
 ): string[] {
-  const label = `itemChanges[${index}]`;
-  const errs = validateCommonDelta(label, delta, lookup);
+  const errs = validateCommonDelta(delta, lookup);
   const op = delta.operation;
   if (!op?.kind || !ITEM_OP_KINDS.has(op.kind)) {
-    errs.push(`${label}: unknown item operation kind "${op?.kind}"`);
+    errs.push(`unknown item operation kind "${op?.kind}"`);
     return errs;
   }
   if (op.kind === "create") {
     if (typeof op.name !== "string" || !op.name.trim()) {
-      errs.push(`${label}: create requires a name`);
+      errs.push(`create requires a name`);
     }
     if (typeof op.location !== "string" || !validHolder(op.location, lookup)) {
       errs.push(
-        `${label}: create.location "${op.location}" must be "scene:<realSceneId>" or a real character id`
+        `create.location "${op.location}" must be "scene:<realSceneId>" or a real character id`
       );
     }
     return errs;
   }
   if (!delta.itemId || !lookup.itemHolders.has(delta.itemId)) {
-    errs.push(`${label}: itemId "${delta.itemId}" does not exist`);
+    errs.push(`itemId "${delta.itemId}" does not exist`);
     return errs;
   }
   switch (op.kind) {
@@ -548,15 +545,15 @@ export function validateItemChange(
       const currentHolder = lookup.itemHolders.get(delta.itemId);
       if (typeof op.from !== "string" || op.from !== currentHolder) {
         errs.push(
-          `${label}: move.from "${op.from}" does not match the item's actual holder "${currentHolder}"`
+          `move.from "${op.from}" does not match the item's actual holder "${currentHolder}"`
         );
       }
       if (typeof op.to !== "string" || !validHolder(op.to, lookup)) {
-        errs.push(`${label}: move.to "${op.to}" is not a valid holder`);
+        errs.push(`move.to "${op.to}" is not a valid holder`);
       }
       if (movedItemIds.has(delta.itemId)) {
         errs.push(
-          `${label}: item "${delta.itemId}" is moved/destroyed more than once this tick (unique-ownership conflict — resolve one atomic winner)`
+          `item "${delta.itemId}" is moved/destroyed more than once this tick (unique-ownership conflict — resolve one atomic winner)`
         );
       }
       movedItemIds.add(delta.itemId);
@@ -565,22 +562,22 @@ export function validateItemChange(
     case "destroy":
       if (movedItemIds.has(delta.itemId)) {
         errs.push(
-          `${label}: item "${delta.itemId}" is moved/destroyed more than once this tick`
+          `item "${delta.itemId}" is moved/destroyed more than once this tick`
         );
       }
       movedItemIds.add(delta.itemId);
       break;
     case "modify":
       if (typeof op.description !== "string" || !op.description.trim()) {
-        errs.push(`${label}: modify requires a description`);
+        errs.push(`modify requires a description`);
       }
       break;
     case "damage":
       if (typeof op.damagedBy !== "string" || !op.damagedBy.trim()) {
-        errs.push(`${label}: damage requires damagedBy`);
+        errs.push(`damage requires damagedBy`);
       }
       if (typeof op.reason !== "string" || !op.reason.trim()) {
-        errs.push(`${label}: damage requires a reason`);
+        errs.push(`damage requires a reason`);
       }
       break;
   }
@@ -598,25 +595,24 @@ export function validateOccurrence(
   occ: RawOccurrence,
   lookup: Lookup
 ): string[] {
-  const label = `occurrences[${index}]`;
   const errs: string[] = [];
   for (const id of occ.sourceActionIds ?? []) {
     if (!lookup.actionById.has(id)) {
-      errs.push(`${label}: sourceActionId "${id}" is unknown`);
+      errs.push(`sourceActionId "${id}" is unknown`);
     }
   }
   if (occ.locationId && !lookup.locationIds.has(occ.locationId)) {
-    errs.push(`${label}: locationId "${occ.locationId}" does not exist`);
+    errs.push(`locationId "${occ.locationId}" does not exist`);
   }
   if (!occ.facts || occ.facts.length === 0) {
-    errs.push(`${label}: at least one fact is required`);
+    errs.push(`at least one fact is required`);
   }
   for (const [fi, fact] of (occ.facts ?? []).entries()) {
     if (!fact.content?.trim()) {
-      errs.push(`${label}.facts[${fi}]: content is required`);
+      errs.push(`facts[${fi}]: content is required`);
     } else if (PERSPECTIVE_PATTERNS.some((re) => re.test(fact.content))) {
       errs.push(
-        `${label}.facts[${fi}]: character-perspective wording detected — facts must be objective and third-person`
+        `facts[${fi}]: character-perspective wording detected — facts must be objective and third-person`
       );
     }
     for (const ref of fact.entityRefs ?? []) {
@@ -632,25 +628,25 @@ export function validateOccurrence(
           : (pool as Set<string>).has(ref.id);
       if (!exists) {
         errs.push(
-          `${label}.facts[${fi}]: entityRef ${ref.kind} "${ref.id}" does not exist`
+          `facts[${fi}]: entityRef ${ref.kind} "${ref.id}" does not exist`
         );
       }
     }
   }
   for (const p of occ.participants ?? []) {
     if (!lookup.characterIds.has(p.characterId)) {
-      errs.push(`${label}: participant "${p.characterId}" does not exist`);
+      errs.push(`participant "${p.characterId}" does not exist`);
     }
   }
   for (const id of occ.perceiverCharacterIds ?? []) {
     if (!lookup.characterIds.has(id)) {
-      errs.push(`${label}: perceiver "${id}" does not exist`);
+      errs.push(`perceiver "${id}" does not exist`);
     }
   }
   for (const [si, signal] of (occ.signals ?? []).entries()) {
     for (const fi of signal.factIndexes ?? []) {
       if (!Number.isInteger(fi) || fi < 0 || fi >= (occ.facts?.length ?? 0)) {
-        errs.push(`${label}.signals[${si}]: factIndex ${fi} out of range`);
+        errs.push(`signals[${si}]: factIndex ${fi} out of range`);
       }
     }
   }
@@ -663,46 +659,129 @@ export function validateRawResolution(
   raw: RawTickResolution,
   context: EngineResolutionContext,
   invocations: CodeToolInvocation[]
-): string[] {
+): ResolutionError[] {
   const lookup = buildLookup(context);
-  const errs: string[] = [];
+  const errors: ResolutionError[] = [];
+
+  // The per-piece validators return plain messages; the address comes from
+  // here, which is the only place that knows WHICH element is being checked.
+  // That address is what lets the Engine repair one element instead of
+  // rewriting the whole resolution.
+  const at = (
+    target: ResolutionError["target"],
+    messages: string[]
+  ): void => {
+    for (const message of messages) errors.push({ target, message });
+  };
 
   const seen = new Set<string>();
   for (const entry of raw.actions ?? []) {
+    const target: ResolutionError["target"] = {
+      kind: "action",
+      actionId: entry.actionId,
+    };
     if (seen.has(entry.actionId)) {
-      errs.push(
-        `actions[${entry.actionId}]: duplicate transition (single-transition invariant)`
-      );
+      at(target, [
+        `duplicate transition for "${entry.actionId}" — each action gets at most one per resolution`,
+      ]);
       continue;
     }
     seen.add(entry.actionId);
-    errs.push(...validateActionEntry(entry, lookup, invocations));
+    at(target, validateActionEntry(entry, lookup, invocations));
   }
   for (const required of lookup.requiredActionIds) {
     if (!seen.has(required)) {
-      errs.push(
-        `actions: triggering action "${required}" received no transition`
-      );
+      at({ kind: "resolution" }, [
+        `triggering action "${required}" received no transition — every action that triggered this resolution needs exactly one`,
+      ]);
     }
   }
 
   const movedItemIds = new Set<string>();
-  (raw.characterChanges ?? []).forEach((d, i) =>
-    errs.push(...validateCharacterChange(i, d, lookup))
-  );
-  (raw.sceneChanges ?? []).forEach((d, i) =>
-    errs.push(...validateSceneChange(i, d, lookup))
-  );
-  (raw.itemChanges ?? []).forEach((d, i) =>
-    errs.push(...validateItemChange(i, d, lookup, movedItemIds))
-  );
-  (raw.occurrences ?? []).forEach((o, i) =>
-    errs.push(...validateOccurrence(i, o, lookup))
-  );
+  (raw.characterChanges ?? []).forEach((d, i) => {
+    if (d === null) return;
+    at({ kind: "characterChange", index: i }, validateCharacterChange(i, d, lookup));
+  });
+  (raw.sceneChanges ?? []).forEach((d, i) => {
+    if (d === null) return;
+    at({ kind: "sceneChange", index: i }, validateSceneChange(i, d, lookup));
+  });
+  (raw.itemChanges ?? []).forEach((d, i) => {
+    if (d === null) return;
+    at(
+      { kind: "itemChange", index: i },
+      validateItemChange(i, d, lookup, movedItemIds)
+    );
+  });
+  (raw.occurrences ?? []).forEach((o, i) => {
+    if (o === null) return;
+    at({ kind: "occurrence", index: i }, validateOccurrence(i, o, lookup));
+  });
 
-  errs.push(...missingTerminalOccurrences(raw));
+  for (const message of missingTerminalOccurrences(raw)) {
+    errors.push({ target: { kind: "resolution" }, message });
+  }
 
-  return errs;
+  return errors;
+}
+
+/**
+ * Merge a repair over the previous submission. Only the addressed elements
+ * change; everything else stands exactly as it was, which is the whole point
+ * — a model asked to re-send a correct delta will sometimes "improve" it.
+ *
+ * Withdrawn elements become holes rather than being spliced out, so an index
+ * quoted in one round still addresses the same element in the next.
+ */
+export function applyRepair(
+  raw: RawTickResolution,
+  repair: RawResolutionRepair
+): RawTickResolution {
+  const patchList = <T>(
+    list: Array<T | null> | undefined,
+    patch: Record<string, T | null> | undefined,
+    additions: T[] | undefined
+  ): Array<T | null> => {
+    const out = [...(list ?? [])];
+    for (const [key, value] of Object.entries(patch ?? {})) {
+      const index = Number(key);
+      if (!Number.isInteger(index) || index < 0 || index >= out.length) continue;
+      out[index] = value;
+    }
+    out.push(...(additions ?? []));
+    return out;
+  };
+
+  const actions = [...(raw.actions ?? [])];
+  for (const replacement of repair.actions ?? []) {
+    const index = actions.findIndex((a) => a.actionId === replacement.actionId);
+    if (index >= 0) actions[index] = replacement;
+    else actions.push(replacement);
+  }
+
+  return {
+    actions,
+    characterChanges: patchList(
+      raw.characterChanges,
+      repair.characterChanges,
+      repair.addCharacterChanges
+    ) as RawTickResolution["characterChanges"],
+    sceneChanges: patchList(
+      raw.sceneChanges,
+      repair.sceneChanges,
+      repair.addSceneChanges
+    ) as RawTickResolution["sceneChanges"],
+    itemChanges: patchList(
+      raw.itemChanges,
+      repair.itemChanges,
+      repair.addItemChanges
+    ) as RawTickResolution["itemChanges"],
+    occurrences: patchList(
+      raw.occurrences,
+      repair.occurrences,
+      repair.addOccurrences
+    ) as RawTickResolution["occurrences"],
+  };
 }
 
 /**
@@ -736,53 +815,34 @@ function missingTerminalOccurrences(raw: RawTickResolution): string[] {
 
 export interface FinalizedResolution {
   resolution: TickResolution;
-  droppedViolations: string[];
   /** Engine judgements per action, for persistence on `action.runtime`. */
   judgements: Record<string, ActionJudgement>;
   /** Movement-leg annotations per action (Engine-owned runtime init). */
   movementInits: Record<string, { destinationId: string }>;
 }
 
-/** Convert raw output to a typed TickResolution, dropping whatever is still
- *  invalid after the corrective retry. Missing/illegal transitions for
- *  triggering actions become synthesized `failed` transitions so no action is
- *  ever silently stuck. */
+/**
+ * Convert a resolution that has ALREADY passed validation into its typed
+ * form. It drops nothing and invents nothing: by the time this runs, every
+ * transition is legal, every reference is real and every ended action has its
+ * trace. Anything that could not be repaired never reaches here — the tick
+ * applies nothing instead.
+ *
+ * What code still owns rather than trusting the model: occurrence and fact
+ * ids, nextWakeAt (computed from tick counts), and the judgement records.
+ */
 export function finalizeResolution(
   raw: RawTickResolution,
-  context: EngineResolutionContext,
-  invocations: CodeToolInvocation[]
+  context: EngineResolutionContext
 ): FinalizedResolution {
   const lookup = buildLookup(context);
-  const dropped: string[] = [];
   const transitions: ActionTransition[] = [];
-  const handled = new Set<string>();
   const judgements: Record<string, ActionJudgement> = {};
   const movementInits: Record<string, { destinationId: string }> = {};
 
   for (const entry of raw.actions ?? []) {
-    if (handled.has(entry.actionId)) {
-      dropped.push(`duplicate transition for ${entry.actionId} dropped`);
-      continue;
-    }
-    const entryErrors = validateActionEntry(entry, lookup, invocations);
     const known = lookup.actionById.get(entry.actionId);
-    if (!known) {
-      dropped.push(entryErrors.join("; "));
-      continue;
-    }
-    handled.add(entry.actionId);
-    if (entryErrors.length > 0) {
-      dropped.push(...entryErrors);
-      transitions.push({
-        actionId: entry.actionId,
-        actorId: known.command.actorId,
-        from: known.status,
-        to: "failed",
-        progressDeltaMinutes: 0,
-        reason: `resolution output invalid after retry: ${entryErrors[0]}`,
-      });
-      continue;
-    }
+    if (!known) continue; // unreachable post-validation; keeps types honest
     const judgement = judgementFromRaw(entry, known.command);
     if (judgement) judgements[entry.actionId] = judgement;
     if (entry.movement?.destinationId) {
@@ -814,98 +874,42 @@ export function finalizeResolution(
     });
   }
 
-  // Triggering actions the model never addressed: fail them explicitly.
-  for (const required of lookup.requiredActionIds) {
-    if (handled.has(required)) continue;
-    const known = lookup.actionById.get(required);
-    if (!known) continue;
-    dropped.push(`triggering action "${required}" received no transition`);
-    transitions.push({
-      actionId: required,
-      actorId: known.command.actorId,
-      from: known.status,
-      to: "failed",
-      progressDeltaMinutes: 0,
-      reason: "engine did not resolve this action",
-    });
-  }
-
-  const failedActionIds = new Set(
-    transitions
-      .filter((t) => t.to === "failed" && t.reason)
-      .map((t) => t.actionId)
-  );
-  const keepSource = (id: string): boolean =>
-    lookup.actionById.has(id) && !failedActionIds.has(id);
-
-  const characterChanges: SourcedWorldDelta<CharacterChange>[] = [];
-  const movedItemIds = new Set<string>();
-  (raw.characterChanges ?? []).forEach((d, i) => {
-    const errors = validateCharacterChange(i, d, lookup);
-    if (errors.length > 0 || !keepSource(d.sourceActionId)) {
-      dropped.push(
-        ...(errors.length > 0
-          ? errors
-          : [`characterChanges[${i}]: source action failed validation`])
-      );
-      return;
-    }
-    characterChanges.push(
-      makeSourced(d, {
-        domain: "character",
-        characterId: d.characterId as string,
-        operation: d.operation as never,
-      }) as SourcedWorldDelta<CharacterChange>
+  const characterChanges = (raw.characterChanges ?? [])
+    .filter((d): d is NonNullable<typeof d> => d != null)
+    .map(
+      (d) =>
+        makeSourced(d, {
+          domain: "character",
+          characterId: d.characterId,
+          operation: d.operation as never,
+        }) as SourcedWorldDelta<CharacterChange>
     );
-  });
 
-  const sceneChanges: SourcedWorldDelta<SceneChange>[] = [];
-  (raw.sceneChanges ?? []).forEach((d, i) => {
-    const errors = validateSceneChange(i, d, lookup);
-    if (errors.length > 0 || !keepSource(d.sourceActionId)) {
-      dropped.push(
-        ...(errors.length > 0
-          ? errors
-          : [`sceneChanges[${i}]: source action failed validation`])
-      );
-      return;
-    }
-    sceneChanges.push(
-      makeSourced(d, {
-        domain: "scene",
-        sceneId: d.sceneId as string,
-        operation: d.operation as never,
-      }) as SourcedWorldDelta<SceneChange>
+  const sceneChanges = (raw.sceneChanges ?? [])
+    .filter((d): d is NonNullable<typeof d> => d != null)
+    .map(
+      (d) =>
+        makeSourced(d, {
+          domain: "scene",
+          sceneId: d.sceneId,
+          operation: d.operation as never,
+        }) as SourcedWorldDelta<SceneChange>
     );
-  });
 
-  const itemChanges: SourcedWorldDelta<ItemChange>[] = [];
-  (raw.itemChanges ?? []).forEach((d, i) => {
-    const errors = validateItemChange(i, d, lookup, movedItemIds);
-    if (errors.length > 0 || !keepSource(d.sourceActionId)) {
-      dropped.push(
-        ...(errors.length > 0
-          ? errors
-          : [`itemChanges[${i}]: source action failed validation`])
-      );
-      return;
-    }
-    itemChanges.push(
-      makeSourced(d, {
-        domain: "item",
-        ...(d.itemId !== undefined ? { itemId: d.itemId } : {}),
-        operation: d.operation as never,
-      }) as SourcedWorldDelta<ItemChange>
+  const itemChanges = (raw.itemChanges ?? [])
+    .filter((d): d is NonNullable<typeof d> => d != null)
+    .map(
+      (d) =>
+        makeSourced(d, {
+          domain: "item",
+          ...(d.itemId !== undefined ? { itemId: d.itemId } : {}),
+          operation: d.operation as never,
+        }) as SourcedWorldDelta<ItemChange>
     );
-  });
 
   const occurrences: Occurrence[] = [];
   (raw.occurrences ?? []).forEach((o, i) => {
-    const errors = validateOccurrence(i, o, lookup);
-    if (errors.length > 0) {
-      dropped.push(...errors);
-      return;
-    }
+    if (o == null) return;
     const occurrenceId = `occ_${context.tick.tickId}_${i}`;
     const factIds = (o.facts ?? []).map((_, fi) => `${occurrenceId}#f${fi}`);
     occurrences.push({
@@ -921,15 +925,15 @@ export function finalizeResolution(
       })),
       participants: o.participants ?? [],
       perceiverCharacterIds: [...new Set(o.perceiverCharacterIds ?? [])],
-      signals: (o.signals ?? []).map((s) => ({
-        factIds: (s.factIndexes ?? o.facts.map((_, fi) => fi)).map(
+      signals: (o.signals ?? []).map((sig) => ({
+        factIds: (sig.factIndexes ?? o.facts.map((_, fi) => fi)).map(
           (fi) => factIds[fi]
         ),
-        channel: s.channel,
-        ...(s.originLocationId !== undefined
-          ? { originLocationId: s.originLocationId }
+        channel: sig.channel,
+        ...(sig.originLocationId !== undefined
+          ? { originLocationId: sig.originLocationId }
           : {}),
-        ...(s.intensity !== undefined ? { intensity: s.intensity } : {}),
+        ...(sig.intensity !== undefined ? { intensity: sig.intensity } : {}),
       })),
     });
   });
@@ -942,7 +946,6 @@ export function finalizeResolution(
       itemChanges,
       occurrences,
     },
-    droppedViolations: dropped,
     judgements,
     movementInits,
   };
