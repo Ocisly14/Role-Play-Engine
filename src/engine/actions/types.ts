@@ -58,6 +58,9 @@ export interface ActToolArgs {
   /** Skill the actor consciously employs. Any known CoC skill name is
    *  acceptable (trained value from the profile, base value otherwise). */
   skillId?: string;
+  /** Which tongue, required when `skillId` is "Languages" and meaningless
+   *  otherwise. */
+  language?: string;
   /** Exact words spoken, verbatim. Omitted for silent actions. */
   utterance?: string;
 }
@@ -87,6 +90,10 @@ export interface ActionCommand extends TrustedActionEnvelope {
    *  is the skill that gets checked; the Engine sets its difficulty when the
    *  action starts and code rolls it when the action's time is spent. */
   declaredSkillId?: string;
+  /** Which tongue, when `declaredSkillId` is "Languages". Set only for a
+   *  language the actor has actually learned: a native tongue needs no skill
+   *  and the boundary drops the declaration entirely. */
+  declaredLanguage?: string;
   /** Never set at intake. Kept for snapshots written before dice moved to
    *  resolution time; the live roll lives on `EngineAction.checkOutcome`. */
   skillRoll?: SkillRollRecord;
@@ -181,6 +188,9 @@ export interface EngineAction {
    *  existed. Immutable once written. */
   check?: {
     skillId: string;
+    /** Carried through from the command so the roll finds the right fluency:
+     *  "Languages" is a domain, not a number. */
+    language?: string;
     requiredLevel: "regular" | "hard" | "extreme";
     basis: string;
     /** Who resists and with what, when the Engine named an opposition. */
@@ -240,8 +250,7 @@ export type CharacterStateOperation =
   | { kind: "fatigue"; delta: number; reason: string }
   | { kind: "position"; position: CharacterPosition }
   | { kind: "addCondition"; condition: CharacterCondition }
-  | { kind: "removeCondition"; conditionId: string }
-  | { kind: "relationship"; toCharacterId: string; delta?: number; note?: string };
+  | { kind: "removeCondition"; conditionId: string };
 
 export type SceneStateOperation =
   | { kind: "addCondition"; condition: SceneCondition }
@@ -260,7 +269,12 @@ export type SceneStateOperation =
   | { kind: "environmentHazard"; add?: string[]; remove?: string[] };
 
 export type ItemStateOperation =
-  | { kind: "create"; name: string; location: string; properties?: Record<string, unknown> }
+  | {
+      kind: "create";
+      name: string;
+      location: string;
+      properties?: Record<string, unknown>;
+    }
   | { kind: "move"; from: string; to: string }
   | { kind: "modify"; description: string }
   | { kind: "damage"; damagedBy: string; reason: string }

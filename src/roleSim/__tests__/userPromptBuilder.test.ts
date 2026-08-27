@@ -60,20 +60,20 @@ describe("buildUserPromptSegments", () => {
     expect(joined).toBe(buildUserPrompt(ctx, opts));
   });
 
-  it("preserves the exact section layout and \\n\\n separators", () => {
-    // Byte-level guard: segmentation must not shift a single separator.
-    // Written out in full rather than derived, so a drift in either the
-    // grouping or the join shows up here.
+  it("preserves the exact section order and \\n\\n separators", () => {
+    // Guards the grouping and the join, not the content: a drift in either
+    // shows up as a section out of order or a doubled separator. What each
+    // section SAYS is asserted where that section is tested.
     const text = buildUserPrompt(makeCtx(), opts);
 
-    expect(text).toBe(
-      [
-        "# You are Marsh",
-        "## Who you are\nName: Marsh\nOccupation: Librarian",
-        "## How you are right now\nStatus: HP 10/12, SAN 44/55, Fatigue 3/10",
-        text.slice(text.indexOf("## Decide")),
-      ].join("\n\n")
-    );
+    expect(text.startsWith("# You are Marsh\n\n")).toBe(true);
+    expect([...text.matchAll(/^## .+$/gm)].map((m) => m[0])).toEqual([
+      "## Who you are",
+      "## What you can do",
+      "## How you are right now",
+      "## Decide",
+    ]);
+    expect(text).not.toContain("\n\n\n");
   });
 
   it("stamps each perception with when and where it reached the character", () => {
@@ -123,12 +123,14 @@ describe("buildUserPromptSegments", () => {
         memories: [
           {
             id: "aaaaaaaa-1111-1111-1111-111111111111",
+            handle: "Maaaaaaaa",
             type: "context",
             content: "The bakery is on Mill Street.",
             gameDateTime: "1923-04-01T00:00:00",
           },
           {
             id: "bbbbbbbb-2222-2222-2222-222222222222",
+            handle: "Mbbbbbbbb",
             type: "general",
             content: "Hollins lied about the harbour.",
             gameDateTime: "1923-04-02T09:10:00",
@@ -151,12 +153,14 @@ describe("buildUserPromptSegments", () => {
         memories: [
           {
             id: "aaaaaaaa-1111-1111-1111-111111111111",
+            handle: "Maaaaaaaa",
             type: "context",
             content: "The bakery is on Mill Street.",
             gameDateTime: "1923-04-01T00:00:00",
           },
           {
             id: "bbbbbbbb-2222-2222-2222-222222222222",
+            handle: "Mbbbbbbbb",
             type: "general",
             content: "Hollins lied about the harbour.",
             gameDateTime: "1923-04-02T09:10:00",
@@ -235,12 +239,14 @@ describe("the life goal is a memory, not a section of its own", () => {
         memories: [
           {
             id: "aaaaaaaa-1111-1111-1111-111111111111",
+            handle: "Maaaaaaaa",
             type: "long_term_intent",
             content: "Keep the shop open through the winter.",
             gameDateTime: "1923-04-02T08:00:00",
           },
           {
             id: "bbbbbbbb-2222-2222-2222-222222222222",
+            handle: "Mbbbbbbbb",
             type: "secret",
             content: "I owe Kovind money.",
             gameDateTime: "1923-04-01T20:00:00",
@@ -260,5 +266,96 @@ describe("the life goal is a memory, not a section of its own", () => {
     expect(remembered.indexOf("I owe Kovind")).toBeLessThan(
       remembered.indexOf("Keep the shop open")
     );
+  });
+});
+
+describe("a character knows their own hands", () => {
+  // Withholding the numbers left the agent deciding whether to declare a skill
+  // with no idea whether it was a strength. It declared none: 25 of 25.
+  it("lists every domain, best first, inside the cached block", () => {
+    const segments = buildUserPromptSegments(makeCtx(), opts);
+    const cached = segments
+      .filter((s) => s.cache)
+      .map((s) => s.text)
+      .join("");
+
+    expect(cached).toContain("## What you can do");
+    const listed = [...cached.matchAll(/^- (.+?) (\d+)$/gm)].map((m) => [
+      m[1],
+      Number(m[2]),
+    ]) as Array<[string, number]>;
+    // 16, not 17: Languages has no single value and is listed separately, by
+    // tongue, when the character has any.
+    expect(listed).toHaveLength(16);
+    expect(listed.map(([name]) => name)).not.toContain("Languages");
+    expect(listed.map(([, v]) => v)).toEqual(
+      [...listed.map(([, v]) => v)].sort((a, b) => b - a)
+    );
+  });
+
+  it("shows the values the dice will actually use", () => {
+    // Two sources for one number is how the prompt ends up promising
+    // something the roll then contradicts, so this reads the intake's own
+    // resolver rather than recomputing.
+    const text = buildUserPrompt(
+      makeCtx({
+        npcProfile: {
+          ...makeCtx().npcProfile,
+          skills: { Social: 65 },
+        },
+      } as never),
+      opts
+    );
+    expect(text).toContain("- Social 65");
+    // Untrained domains fall back to the catalog's base, not to zero.
+    expect(text).toContain("- Investigation 20");
+  });
+
+  it("keeps skills in the frozen block — no delta operation can change them", () => {
+    const segments = buildUserPromptSegments(makeCtx(), opts);
+    expect(segments[0].cache).toBe(true);
+    expect(segments[0].text).toContain("## What you can do");
+  });
+});
+
+describe("splitting the memory block cannot disturb the handles", () => {
+  // The block is rendered in two pieces so the frozen half can sit behind the
+  // cache breakpoint. When handles were derived at render time this quietly
+  // broke them — each half was tagged against itself, so a collision spanning
+  // the halves printed one handle on two memories and the resolver, which saw
+  // the whole set, recognised neither. Stored handles make the split a
+  // non-event.
+  const colliding = [
+    {
+      id: "aaaaaaaa-0000-0000-0000-000000000001",
+      handle: "Maaaaaaaa",
+      type: "context",
+      content: "The bakery is on Mill Street.",
+      gameDateTime: "1923-04-01T00:00:00",
+    },
+    {
+      id: "aaaaaaaa-0000-0000-0000-000000000002",
+      handle: "Maaaaaaaa00",
+      type: "general",
+      content: "Hollins lied about the harbour.",
+      gameDateTime: "1923-04-02T09:10:00",
+    },
+  ];
+
+  it("prints each half's stored handle, distinct across the split", () => {
+    const text = buildUserPrompt(makeCtx({ memories: colliding }), opts);
+    const handles = [...text.matchAll(/^- \[(M[0-9a-f]+)\]/gm)].map((m) => m[1]);
+
+    expect(handles).toEqual(["Maaaaaaaa", "Maaaaaaaa00"]);
+    // And each sits in the half it belongs to.
+    const frozen = buildUserPromptSegments(
+      makeCtx({ memories: colliding }),
+      opts
+    )
+      .filter((s) => s.cache)
+      .map((s) => s.text)
+      .join("");
+    expect(frozen).toContain("Maaaaaaaa]");
+    expect(frozen).not.toContain("Maaaaaaaa00");
   });
 });

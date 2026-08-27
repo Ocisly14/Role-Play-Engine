@@ -11,6 +11,7 @@
 
 import { randomUUID } from "node:crypto";
 import { COC_SKILL_BASE_VALUES } from "../../planning/cocSkillList.js";
+import type { CharacterLanguages } from "../../state/types.js";
 import { canonicalSkillName } from "../rules/skillCatalog.js";
 import { getSkillReference } from "../rules/skillReference.js";
 import { isFumble, rollD100 } from "../shared/dice.js";
@@ -56,7 +57,7 @@ function lookupBaseValue(
  * `renderSkillGuidance` looks up, so "stealth & security" must not survive as
  * a distinct id from "Stealth & Security".
  */
-function canonicalDisplayName(skillId: string): string {
+export function canonicalDisplayName(skillId: string): string {
   const mapped = canonicalSkillName(skillId.trim());
   const base = lookupBaseValue(mapped);
   if (base) return base.name;
@@ -67,9 +68,27 @@ function canonicalDisplayName(skillId: string): string {
 
 export function resolveSkillValue(
   skillId: string,
-  actorSkills: Record<string, number>
+  actorSkills: Record<string, number>,
+  /** For "Languages" only: which tongue. The domain has no single value —
+   *  a character reads Latin haltingly and speaks their own perfectly — so
+   *  the fluency comes from the named language, and the flat `Languages`
+   *  entry (if any legacy sheet still carries one) is never used. */
+  languages?: CharacterLanguages,
+  language?: string
 ): { canonicalSkillId: string; value: number } | undefined {
   const canonicalSkillId = canonicalDisplayName(skillId);
+
+  if (canonicalSkillId === "Languages") {
+    if (!language) return undefined;
+    const learned = Object.entries(languages?.learned ?? {}).find(
+      ([tongue]) => tongue.toLowerCase() === language.toLowerCase()
+    );
+    // A native tongue never reaches here — the boundary drops the declaration
+    // — and a tongue the character never learned is rejected there too. So an
+    // unresolvable language at this point is a bug, not a hard attempt.
+    return learned ? { canonicalSkillId, value: learned[1] } : undefined;
+  }
+
   const trained = lookupIgnoreCase(actorSkills, canonicalSkillId);
   if (trained) return { canonicalSkillId, value: trained.value };
 

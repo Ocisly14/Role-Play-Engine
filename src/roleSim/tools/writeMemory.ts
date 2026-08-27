@@ -67,9 +67,16 @@ together.
   aloud. These fade slowly; you will still be carrying them days later.
 - \`relationship\` — 角色关系. What you now think of a specific person.
   Requires \`targetId\` — the tag beside that person in what you perceive,
-  exactly as you would write it in \`objectRefs\`. Use it when your read on someone
-  changes: they lied, they helped, they frightened you, you decided to
-  trust them.
+  exactly as you would write it in \`objectRefs\`. Use it when your read on
+  someone changes: they lied, they helped, they frightened you, you decided
+  to trust them. This is the ONLY way anyone comes to hold a view of anyone —
+  nothing and nobody records one for you, and the world will not decide on
+  your behalf that you have warmed to someone.
+  Set \`knownAs\` the first time you learn what to CALL them: a name they
+  gave, or that someone used in front of you. Until you do, they stay a
+  description to you — "the thin young man" — however sure you are of what
+  they are. That is not a formality: **you do not know a name nobody has said
+  in your hearing**, and writing one down would be inventing it.
 - \`map\` — 地图记忆. A place or route you learned *today* — a door you
   had never noticed, a shortcut, where someone actually lives. The town you
   already knew before this morning is not this; only what today taught you.
@@ -110,6 +117,9 @@ writeMemory({ "type": "general", "content": "The professor said the ledger never
 
 Your read on someone changed:
 writeMemory({ "type": "relationship", "targetId": "stranger_a", "content": "He went pale when I mentioned the harbor. He knows something and he is afraid of it." })
+
+You caught their name:
+writeMemory({ "type": "relationship", "targetId": "stranger_a", "knownAs": "Hollins", "content": "He gave his name as Hollins, and offered it a little too quickly." })
 
 Your own action finally paid off:
 writeMemory({ "type": "general", "content": "The cabinet lock gave way after a few minutes of work. Inside: a bundle of letters tied with string." })

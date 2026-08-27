@@ -47,5 +47,21 @@
   "context_topology_junction": "{{junction}} 的街道：{{roads}}。",
   "context_topology_junction_buildings": "路口处：{{buildings}}",
   "context_list_sep": "、",
-  "context_clause_sep": "；"
+  "context_clause_sep": "；",
+  "relationship_seed": "{{name}} —— {{stance}}。{{account}}",
+  "relationship_seed_bare": "{{name}} —— {{stance}}。",
+  "relationship_stance_ally": "是我的盟友",
+  "relationship_stance_enemy": "是我的敌人",
+  "relationship_stance_neutral": "我认得，仅此而已",
+  "relationship_stance_family": "是我的家人",
+  "relationship_stance_friend": "是我的朋友",
+  "relationship_stance_rival": "是我的对手",
+  "relationship_stance_employer": "是我的雇主",
+  "relationship_stance_employee": "为我做事",
+  "relationship_stance_stranger": "我几乎不认识",
+  "relationship_warmth_devoted": "什么事我都可以托付",
+  "relationship_warmth_warm": "我很庆幸有这个人在",
+  "relationship_warmth_even": "但我保持着距离",
+  "relationship_warmth_cool": "我并不怎么喜欢",
+  "relationship_warmth_hostile": "我无法忍受"
 }

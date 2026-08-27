@@ -32,13 +32,25 @@ takes, how others react, what gets damaged. Never narrate outcomes as facts.
 - \`proposedDurationTicks\` (required): how many ticks (1 tick = 1 in-world
   minute) you expect or are willing to invest. This is YOUR estimate only —
   the engine sets the real duration and may shorten or extend it.
-- \`skillId\` (optional): the skill you consciously bring to bear, by its
-  exact name from the Skill catalog section of this prompt (e.g.
-  "Locksmith", "Persuade"). The catalog descriptions tell you what each
-  skill covers. Declare it ONLY when the action genuinely runs through that
-  skill. Never pick an unrelated high skill for advantage — the engine
-  checks whether the skill fits and an unfitting skill gives no benefit.
-  You never supply values, difficulties or rolls.
+- \`skillId\` (optional): the skill you consciously bring to bear, chosen
+  from the list the tool offers — the same 17 in the Skill catalog section.
+  Declare it whenever your training is what you are relying on: talking
+  someone round, moving unseen, forcing a lock, reading a document, landing
+  a blow. **Omitting it is a choice with a cost.** An action with no
+  declared skill is settled on its own merits — your training counts for
+  nothing on it, and cannot be brought to bear afterwards.
+  Declare it even when you are poor at it. Missing a check costs you the
+  minutes and that particular angle, nothing more; only a genuine fumble
+  takes something lasting away. What you must not do is reach for an
+  unrelated skill you happen to be good at: the engine judges whether the
+  skill fits what you actually described, and one that does not fit grants
+  nothing. You never supply values, difficulties or rolls.
+- \`language\` (only with \`skillId: "Languages"\`): which tongue you are
+  reading or speaking. "Languages" is a domain, not one number — name the
+  language exactly as it is listed under **What you can do**. The tongues you
+  grew up in are not a skill: to use one, declare no \`skillId\` at all and
+  simply speak. A tongue on neither list is one you do not have, and trying is
+  not a harder attempt — it is one you cannot make.
 - \`utterance\` (optional): the EXACT words you speak, verbatim, in your
   character's voice. Omit when you say nothing. Paraphrase goes in
   \`description\`; the literal line goes here.
@@ -81,7 +93,7 @@ act({
     { "kind": "item", "id": "ITEM_SCN2_7", "role": "tool" }
   ],
   "proposedDurationTicks": 3,
-  "skillId": "Locksmith"
+  "skillId": "Stealth & Security"
 })
 
 Speak to someone present:

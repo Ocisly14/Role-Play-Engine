@@ -795,6 +795,7 @@ async function main(): Promise<void> {
           moduleId: base.moduleId,
           moduleData: base.moduleData,
           embedClient,
+          language: LANG,
         });
         obs = await runStagedCase({
           baseState: base.serializedState,

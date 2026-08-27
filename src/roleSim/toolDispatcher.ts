@@ -12,11 +12,10 @@
 import type { NpcMemoryManager } from "../memory/NpcMemoryManager.js";
 import type { NpcMemoryType } from "../memory/types.js";
 import type { DynamicGameStateManager } from "../state/DynamicGameState.js";
-import { buildMemoryTags } from "./memoryFormatter.js";
 import {
-  buildPerceivableDirectory,
+  aliasFor,
   descriptionIdentifier,
-  isKnownTo,
+  knownAs,
 } from "../state/perceivableDirectory.js";
 
 /** Tools that consume a tick — calling one ends the agent loop. Decision 17. */
@@ -43,7 +42,12 @@ export interface DispatcherDeps {
    *  `ref` resolves against THIS list and nothing else — the same rule the
    *  `act` boundary applies to objectRefs: a character may only point at what
    *  they were shown. */
-  memories: ReadonlyArray<{ id: string; type: string; content: string }>;
+  memories: ReadonlyArray<{
+    id: string;
+    handle: string;
+    type: string;
+    content: string;
+  }>;
 }
 
 export interface DispatchResult {
@@ -59,6 +63,8 @@ interface WriteMemoryInput {
   ref?: string;
   /** Required for type=relationship — who the memory is about. */
   targetId?: string;
+  /** With type=relationship — what the character now calls them. */
+  knownAs?: string;
 }
 
 export async function dispatchInstantTool(
@@ -126,30 +132,45 @@ async function dispatchWriteMemory(
           "Error: type=relationship requires 'targetId' — the handle of the person the memory is about.",
       };
     }
-    // What the agent wrote is what it may cite — an alias for a stranger, a
-    // real id for someone it knows. Resolve through the same directory the
-    // `act` boundary uses, so exactly the same names work in both tools.
-    const realId = buildPerceivableDirectory(
-      deps.npcId,
-      deps.dgsm
-    ).characterHandles.get(targetId);
+    // An alias for a stranger, or a real id for someone they know. Resolved
+    // against every character in the world, not only those in the room: a
+    // character's sharpest read on someone is usually formed just after that
+    // person walks out, and the alias means the same person either way.
+    const realId = deps.dgsm
+      .getState()
+      .npcCharacters.map((npc) => npc.id)
+      .find((id) => id === targetId || aliasFor(deps.npcId, id) === targetId);
     const profile = realId ? deps.dgsm.getNpcProfile(realId) : undefined;
     if (!realId || !profile) {
       return {
-        result: `Error: targetId "${targetId}" is not someone you can point at right now. Copy the tag shown beside them in what you perceive.`,
+        result: `Error: targetId "${targetId}" is nobody in this world. Copy the tag shown beside them in what you perceive.`,
       };
     }
     // Store the REAL id. It never reaches the character — the handler renders
     // `targetName`, and nothing puts `targetId` in a prompt — so there is no
-    // leak, and the key stays joinable instead of drifting with a per-tick
-    // alias. `targetName` is how THEY refer to this person, "the tall pale
+    // leak, and the key stays joinable. `targetName` is how THEY refer to this person, "the tall pale
     // man" until the day they learn better.
     metadata = {
       targetId: realId,
-      targetName: isKnownTo(deps.dgsm, deps.npcId, realId)
-        ? profile.name
-        : descriptionIdentifier(profile),
+      targetName:
+        knownAs(deps.dgsm, deps.npcId, realId) ??
+        descriptionIdentifier(profile),
     };
+
+    // The relationship graph is the same fact as this memory, indexed for
+    // lookup — so the character writes both, and nothing writes either on
+    // their behalf. The Engine used to keep the graph, deciding for a
+    // character what they now thought of someone; that operation is gone.
+    //
+    // One direction only. That the shopkeeper has taken a view of the customer
+    // says nothing about what he makes of her.
+    deps.dgsm.updateRelationship(
+      deps.npcId,
+      realId,
+      0,
+      content.trim(),
+      input.knownAs?.trim() || undefined
+    );
   }
 
   await deps.memory.add({
@@ -195,8 +216,9 @@ async function dispatchReviseMemory(
     };
   }
 
-  const tagById = buildMemoryTags(deps.memories);
-  const target = deps.memories.find((m) => tagById.get(m.id) === ref);
+  // The handle is stored on the row, so resolving is a lookup and not a
+  // recomputation — which is what used to make this disagree with the prompt.
+  const target = deps.memories.find((m) => m.handle === ref);
   if (!target) {
     return {
       result: `Error: "${ref}" is not a memory of yours. Copy the tag exactly as it appears at the start of the line in what you remember.`,
@@ -225,7 +247,7 @@ async function dispatchReviseMemory(
   if (!content.trim()) {
     return {
       result:
-        'Error: op="replace" requires \'content\' — the whole corrected memory, not just what changed.',
+        "Error: op=\"replace\" requires 'content' — the whole corrected memory, not just what changed.",
     };
   }
 

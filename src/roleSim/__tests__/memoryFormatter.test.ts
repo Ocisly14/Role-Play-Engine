@@ -4,29 +4,33 @@
 // head of each line is what the character cites to correct or retract it.
 
 import { describe, expect, it } from "vitest";
-import { buildMemoryTags, formatMemories } from "../memoryFormatter.js";
+import { formatMemories } from "../memoryFormatter.js";
 
 const rows = [
   {
     id: "11111111-1111-1111-1111-111111111111",
+    handle: "M11111111",
     type: "context",
     content: "The bakery is on Mill Street.",
     gameDateTime: "2003-12-01T00:00:00",
   },
   {
     id: "22222222-2222-2222-2222-222222222222",
+    handle: "M22222222",
     type: "context",
     content: "A footbridge crosses the creek.",
     gameDateTime: "2003-12-01T00:00:00",
   },
   {
     id: "33333333-3333-3333-3333-333333333333",
+    handle: "M33333333",
     type: "secret",
     content: "I owe Kovind money.",
     gameDateTime: "2003-12-01T00:00:00",
   },
   {
     id: "44444444-4444-4444-4444-444444444444",
+    handle: "M44444444",
     type: "general",
     content: "Simon came by at noon.",
     gameDateTime: "2003-12-01T12:00:00",
@@ -64,26 +68,17 @@ describe("formatMemories", () => {
   });
 });
 
-describe("memory tags", () => {
-  it("derives from the row id, so insertion and retraction never repoint one", () => {
-    // A positional scheme would renumber everything after a retracted memory,
-    // silently aiming a tag the character read last minute at a different one.
-    const before = lineFor("Simon came by").slice(0, 13);
-    const after = lineFor(
-      "Simon came by",
-      rows.filter((r) => r.type !== "context")
-    ).slice(0, 13);
+describe("handles", () => {
+  it("prints the handle stored on the row, not one derived from the company", () => {
+    // Derived handles changed when the set changed: writing a new memory
+    // could rename an old one, and rendering the block in two halves gave the
+    // same handle to two different memories.
+    const line = lineFor("Simon came by");
+    expect(line.startsWith("- [M44444444]")).toBe(true);
 
-    expect(before).toBe(after);
-    expect(before).toMatch(/^- \[M[0-9a-f]{8}\]$/);
+    // Same row, rendered among a different set — same handle.
+    const alone = formatMemories([rows[3]]);
+    expect(alone.startsWith("- [M44444444]")).toBe(true);
   });
 
-  it("falls back to the untruncated id when two tags would collide", () => {
-    const a = "aaaaaaaa-0000-0000-0000-000000000001";
-    const b = "aaaaaaaa-0000-0000-0000-000000000002";
-    const tags = buildMemoryTags([{ id: a }, { id: b }]);
-
-    expect(tags.get(a)).not.toBe(tags.get(b));
-    expect(tags.get(a)).toBe("Maaaaaaaa000000000000000000000001");
-  });
 });

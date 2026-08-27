@@ -248,13 +248,6 @@ export type StateChange =
       kind: "memory.witness";
       characterId: string;
       content: string;
-    }
-  | {
-      kind: "relationship.change";
-      fromId: string;
-      toId: string;
-      delta?: number;
-      note?: string;
     };
 
 export interface CharacterAction {

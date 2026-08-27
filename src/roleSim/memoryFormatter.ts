@@ -1,8 +1,9 @@
 // src/roleSim/memoryFormatter.ts
 //
 // Renders everything the character remembers into the user prompt's
-// "## What you remember" section, and mints the tag each line is cited by.
-// Pure formatter — sorting, tagging and line mapping; no store access.
+// "## What you remember" section. Pure formatter — sorting and line mapping,
+// no store access and no id arithmetic: the handle each line is cited by was
+// decided when the memory was written.
 //
 // Timestamps carry the date as well as the time: the section spans every day
 // played, so a bare "09:15" would not say which morning.
@@ -14,7 +15,12 @@
 import { formatForPrompt } from "../state/gameClock.js";
 
 export interface FormattableMemory {
-  /** Store row id. Never rendered raw — `memoryTag` derives the cited tag. */
+  /** The short name this memory answers to, minted once when it was written
+   *  and stored on the row. Nothing here derives it: a handle computed from
+   *  the set it happens to be rendered with is a handle that changes when the
+   *  company does, and twice already it did. */
+  handle: string;
+  /** Store row id. Never shown — the handle is what the character cites. */
   id: string;
   type: string;
   content: string;
@@ -23,50 +29,7 @@ export interface FormattableMemory {
   location?: string;
 }
 
-/**
- * The tag a character cites to revise or retract one of their own memories.
- *
- * Derived from the row id, not from the memory's position in the list, so it
- * is stable for the life of the row: writing or retracting a memory never
- * renumbers the ones around it. A positional scheme would silently repoint a
- * tag the character read last minute at a different memory, and would rewrite
- * the whole (cached) memory block on every retraction.
- */
-export function memoryTag(id: string, length = 8): string {
-  return `M${id.replace(/-/g, "").slice(0, length)}`;
-}
-
-/**
- * Tags for a whole set, guaranteed distinct within it.
- *
- * A truncated id can collide — at eight hex characters, roughly one run in two
- * thousand. Rather than assume it away, colliding ids get the untruncated tag.
- * The resolver reads this same map, so both sides always agree on what a tag
- * means.
- */
-export function buildMemoryTags(
-  rows: ReadonlyArray<Pick<FormattableMemory, "id">>
-): Map<string, string> {
-  const idsByTag = new Map<string, string[]>();
-  for (const row of rows) {
-    const tag = memoryTag(row.id);
-    idsByTag.set(tag, [...(idsByTag.get(tag) ?? []), row.id]);
-  }
-
-  const tagById = new Map<string, string>();
-  for (const [tag, ids] of idsByTag) {
-    if (ids.length === 1) {
-      tagById.set(ids[0], tag);
-      continue;
-    }
-    for (const id of ids) tagById.set(id, memoryTag(id, 32));
-  }
-  return tagById;
-}
-
 export function formatMemories(rows: ReadonlyArray<FormattableMemory>): string {
-  const tagById = buildMemoryTags(rows);
-
   // Render first, then sort on (time, rendered line). Sorting on time alone
   // is not a TOTAL order — every `context` memory is stamped at session start,
   // so a character's whole geography ties — and `Array.sort` is stable, which
@@ -79,10 +42,10 @@ export function formatMemories(rows: ReadonlyArray<FormattableMemory>): string {
   return [...rows]
     .map((m) => {
       const where = m.location ? ` at ${m.location}` : "";
-      const tag = tagById.get(m.id) ?? memoryTag(m.id);
+
       return {
         at: m.gameDateTime,
-        line: `- [${tag}] [${formatForPrompt(m.gameDateTime)}] (${m.type})${where} ${m.content}`,
+        line: `- [${m.handle}] [${formatForPrompt(m.gameDateTime)}] (${m.type})${where} ${m.content}`,
       };
     })
     .sort((a, b) => a.at.localeCompare(b.at) || a.line.localeCompare(b.line))

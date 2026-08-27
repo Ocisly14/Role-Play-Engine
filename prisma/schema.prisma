@@ -200,6 +200,11 @@ model NpcMemory {
   content        String
   metadata       Json?
   tags           String[]
+  /// The short name the character cites to revise or retract this memory
+  /// ("M3f9a2c"). Minted once at write time against the handles that
+  /// character already holds — see src/memory/memoryHandle.ts. Stored rather
+  /// than derived so it can never change under a character who has read it.
+  handle         String
 
   gameDateTime   String        @map("game_datetime")
   location       String?
@@ -217,6 +222,7 @@ model NpcMemory {
   session Session @relation(fields: [sessionId], references: [sessionId], onDelete: Cascade)
   module  Module  @relation(fields: [moduleId], references: [moduleId], onDelete: Cascade)
 
+  @@unique([sessionId, npcId, handle])
   @@index([sessionId, npcId])
   @@index([sessionId, npcId, type])
   @@index([sessionId, npcId, gameDateTime])

@@ -47,22 +47,37 @@ rules and the same output shape apply to everything.
    code reading character state. The actor cannot submit values, difficulties,
    defenses or roll results.
 
-8. **Concurrency consistency.** Conflicting actions on the same snapshot are
+8. **Only a fumble costs more than the attempt.** A plain miss means the
+   attempt did not work: the door stayed shut, the lie was not believed, the
+   shot went wide. Time is spent and that particular approach is now used up
+   — a second try at the same angle is harder, not equal — but nothing
+   lasting is taken away. Injury, exposure, a broken tool, a ruined
+   relationship, a raised alarm: those belong to a FUMBLE, and only to a
+   fumble.
+
+   This is not softness, it is what makes declaring a skill safe. A character
+   who must fear disaster every time they name a skill will name none, act
+   vaguely, and be adjudicated on prose alone. Read the declared skill's
+   `## Failure` section: it tells you what a miss costs in that domain, and
+   separately what a fumble costs. Do not promote one to the other because
+   the moment felt dramatic.
+
+9. **Concurrency consistency.** Conflicting actions on the same snapshot are
    judged jointly. An exclusive resource (one item, one doorway, one victim
    of a grab) cannot yield mutually contradictory results. One atomic winner,
    or an explicit conflict outcome.
 
-9. **Minimal sufficient change.** Output only fields that actually changed.
+10. **Minimal sufficient change.** Output only fields that actually changed.
    Do not invent unrelated state to enrich the narrative.
 
-10. **Fact/perception separation.** The Engine outputs objective Occurrences
+11. **Fact/perception separation.** The Engine outputs objective Occurrences
     (facts, participants, signals) plus the IDs of characters able to
     perceive them — determined by position, topology, distance, occlusion,
     signal strength, direct involvement and sensory state. It never outputs
     per-character fact subsets, subjective wording ("I see…", "it terrifies
     me"), or interpretation; that is the Renderer's job downstream.
 
-11. **Action-driven triggering.** With no new action, no due in-flight
+12. **Action-driven triggering.** With no new action, no due in-flight
     action, and no replacement/interruption, the Engine is not called. A
     plain clock tick is not a semantic resolution trigger.
 
@@ -103,8 +118,16 @@ handed you the result. Now say what happened to the world.
 
 - `reason` — what happened, objectively. The check result is INPUT, not
   something to restate or contradict. A check that was not met cannot produce
-  the outcome of one that was; a fumble may make things worse than a plain
-  miss.
+  the outcome of one that was.
+- Shade the consequence to the level code handed you, and no further:
+  - **extreme / hard / regular** — it worked, with the margin showing in how
+    cleanly. Read the skill's `## Success levels`.
+  - **failure** — it did not work. Spend the time, close off that approach,
+    and stop there. Do not add an injury, an alarm, a broken tool or a
+    soured relationship to a plain miss.
+  - **fumble** — this is the only level that takes something lasting away,
+    and the skill's `## Failure` section says what. Use it fully when it
+    comes up; do not reach for it when it did not.
 - `outcome` — REQUIRED for the ids listed under `endingNeedsOutcome`, and
   refused for every other ending. Those actions carried no check, so nothing
   rolled and there is no result to derive: you decide. When a check DID run,

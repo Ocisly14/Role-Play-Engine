@@ -53,10 +53,12 @@ Typical deltas this domain produces. Not a requirement and never a substitute
 for what actually happened — a one-off descriptive result is an occurrence
 fact, not a state change.
 
-- `character.relationship` — the target's disposition actually moved. An
-  extreme success belongs here; a regular success usually does not.
+- A moved disposition is NOT yours to write. Emit what the target saw and
+  heard as an occurrence; what they now think of the speaker is a memory only
+  they can author. This is the domain where that temptation is strongest.
 - `character.addCondition` — cowed, rattled, or emboldened in a way that
-  outlasts the exchange. Not for a passing mood.
+  outlasts the exchange, and that others could observe. Not for a passing
+  mood, and not as a back door to the opinion above.
 - `character.san` — only where what was said genuinely breaks something.
 - Most exchanges produce NO delta at all: what was said, and how it landed,
   is an occurrence with the participants as perceivers. Talking someone into

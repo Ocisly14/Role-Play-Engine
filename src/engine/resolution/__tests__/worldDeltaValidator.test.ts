@@ -726,14 +726,15 @@ describe("operations are checked against the fields they advertise", () => {
     ).toContain("is not a place you were shown");
   });
 
-  it("rejects a relationship whose delta is not a number", () => {
+  it("has no relationship operation to check", () => {
+    // What one character thinks of another is theirs to write, through
+    // `writeMemory`. The Engine used to have an operation for it, and it did
+    // exactly the damage that rule exists to prevent — told to record that
+    // Nancy had grown wary of Philip, the applier wrote the same score and
+    // the same note onto Philip's row as well.
     expect(
-      errorsFor({
-        kind: "relationship",
-        toCharacterId: "npc_2",
-        delta: "much worse",
-      })
-    ).toContain("relationship.delta must be a number");
+      errorsFor({ kind: "relationship", toCharacterId: "npc_2", delta: -5 })
+    ).toContain("unknown character operation kind");
   });
 
   it("rejects an environmentHazard that hazards nothing", () => {

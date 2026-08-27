@@ -89,9 +89,12 @@ export interface DynamicGameState {
   // === NPC Planning System Runtime State ===
   npcStats: Record<string, { hp: number; san: number }>;
   npcInventories: Record<string, Item[]>; // npcId -> items
+  /** What each character holds about another. `knownAs` is what they CALL
+   *  them — present only once they have actually learned it, which is what
+   *  makes someone "known" rather than a face they have an opinion about. */
   npcRelationshipGraph: Record<
     string,
-    Record<string, { score: number; note: string }>
+    Record<string, { score: number; note: string; knownAs?: string }>
   >;
   scenarioConditions: Record<
     string,
@@ -892,22 +895,21 @@ export class DynamicGameStateManager {
   moveItem(itemId: string, from: string, to: string): boolean {
     const removed = this.removeItemFrom(itemId, from);
     if (!removed) {
-      console.warn(
-        `[DGSM] moveItem: item id="${itemId}" not found at ${from}`
-      );
+      console.warn(`[DGSM] moveItem: item id="${itemId}" not found at ${from}`);
       return false;
     }
     if (to.startsWith("scene:")) {
       const sceneId = to.slice("scene:".length);
       const scene = this.state.scenes.get(sceneId);
       if (!scene) {
-        console.warn(`[DGSM] moveItem: destination scene "${sceneId}" not found`);
+        console.warn(
+          `[DGSM] moveItem: destination scene "${sceneId}" not found`
+        );
         return false;
       }
       scene.items.push(removed);
     } else {
-      if (!this.state.npcInventories[to])
-        this.state.npcInventories[to] = [];
+      if (!this.state.npcInventories[to]) this.state.npcInventories[to] = [];
       this.state.npcInventories[to].push(removed);
     }
     this.state.lastUpdated = new Date();
@@ -1047,7 +1049,7 @@ export class DynamicGameStateManager {
   getRelationship(
     npcId: string,
     targetId: string
-  ): { score: number; note: string } | undefined {
+  ): { score: number; note: string; knownAs?: string } | undefined {
     return this.state.npcRelationshipGraph[npcId]?.[targetId];
   }
 
@@ -1055,11 +1057,15 @@ export class DynamicGameStateManager {
     npcId: string,
     targetId: string,
     scoreDelta: number,
-    note: string
+    note: string,
+    /** What the holder now calls this person. Sticky: learning a name is not
+     *  undone by later revising the opinion. */
+    knownAs?: string
   ): void {
     if (!this.state.npcRelationshipGraph[npcId])
       this.state.npcRelationshipGraph[npcId] = {};
-    const current = this.state.npcRelationshipGraph[npcId][targetId] ?? {
+    const current: { score: number; note: string; knownAs?: string } = this
+      .state.npcRelationshipGraph[npcId][targetId] ?? {
       score: 0,
       note: "",
     };
@@ -1067,13 +1073,15 @@ export class DynamicGameStateManager {
     this.state.npcRelationshipGraph[npcId][targetId] = {
       score: newScore,
       note,
+      ...((knownAs ?? current.knownAs)
+        ? { knownAs: knownAs ?? current.knownAs }
+        : {}),
     };
-    if (!this.state.npcRelationshipGraph[targetId])
-      this.state.npcRelationshipGraph[targetId] = {};
-    this.state.npcRelationshipGraph[targetId][npcId] = {
-      score: newScore,
-      note,
-    };
+    // Deliberately one-directional. This used to mirror the write onto the
+    // target's row with the same score and the SAME NOTE, which fabricated one
+    // character's opinion out of another's: "Nancy grew wary of Philip" became
+    // Philip's stated view of Nancy, in her words. A relationship is a private
+    // reading, and B forms no view of A merely because A formed one of B.
   }
 
   getSceneConditions(

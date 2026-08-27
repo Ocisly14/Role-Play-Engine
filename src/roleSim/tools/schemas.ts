@@ -11,6 +11,7 @@
 // Every schema sets `additionalProperties: false` and lists `required`, which
 // is what `strict: true` demands on both providers.
 
+import { SKILL_CATALOG } from "../../engine/rules/skillCatalog.js";
 import type { ToolSpec } from "../../models/providers/types.js";
 
 /** Types the character may write. `summary` is system-authored (end-of-day
@@ -63,9 +64,20 @@ export const actTool: ToolSpec = {
           "How many ticks (1 tick = 1 in-world minute) you expect or are willing to invest. Your estimate only — the engine sets the authoritative duration.",
       },
       skillId: {
+        // Enumerated rather than free text, for two reasons found in one run
+        // where 25 of 25 actions declared nothing at all: the only example the
+        // model was shown ("Locksmith") is a pre-consolidation name that no
+        // character sheet carries any more, and the list of real skills lived
+        // only in the system prompt, far from the moment of choosing.
+        type: "string",
+        enum: SKILL_CATALOG.map((skill) => skill.name),
+        description:
+          "The skill you consciously bring to bear. Declare it whenever your training is what you are relying on — talking someone round, moving unseen, forcing a lock, reading a document, landing a blow — and declare it even when you are poor at it: missing a check costs the minutes and that approach, nothing more. Omitting it is a real choice and not a default: an action with no declared skill is settled on its own merits and your training counts for nothing. Never values, difficulties or rolls — only which skill.",
+      },
+      language: {
         type: "string",
         description:
-          'Optional: the skill you consciously bring to bear (e.g. "Locksmith"). Only when the action genuinely runs through it. Never values, difficulties or rolls.',
+          'Required with skillId "Languages", and meaningless without it: name the tongue you are reading or speaking, exactly as it appears under "What you can do". A language you grew up with needs no skillId at all — you simply speak it.',
       },
       utterance: {
         type: "string",
@@ -127,6 +139,11 @@ export const writeMemoryTool: ToolSpec = {
         type: "string",
         description:
           "Required for type=relationship: the person this memory is about, by the tag beside them in what you perceive.",
+      },
+      knownAs: {
+        type: "string",
+        description:
+          "With type=relationship: what you now CALL this person, once you have actually been told — a name you heard them give, or that someone used in front of you. Until you set it they stay a description to you, however strong your opinion. Never guess it, and never put down a name nobody said.",
       },
     },
     required: [],

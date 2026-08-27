@@ -64,9 +64,11 @@ There is **no central scheduler** and **no planning agent**. The pipeline is `pe
 
 ### Trust boundary
 
-Agent output is **untrusted**. `engine/actions/commandValidator.ts` checks shape, enums, duration bounds, and that every `objectRef` is inside the actor's perceivable scope this tick; `commandBuilder.ts` then wraps the result into a trusted `ActionCommand`. Rejections carry a structured reason the agent reads as feedback next decision. No semantic judgement happens at the boundary — feasibility, skill fit, and resistance are the Engine's job in full context.
+Agent output is **untrusted**. `engine/actions/commandValidator.ts` checks shape, enums, duration bounds, and that every `objectRef` names something real; `commandBuilder.ts` then wraps the result into a trusted `ActionCommand`. Rejections carry a structured reason the agent reads as feedback next decision. No semantic judgement happens at the boundary — feasibility, skill fit, and resistance are the Engine's job in full context.
 
 `state/perceivableDirectory.ts` defines what an actor may point at. Unknown characters are addressed by a **per-tick alias** (`stranger_a`); the boundary swaps in the real id before the Engine sees the command, so canonical names never enter the actor's context. Known people, items, and scenes keep their real ids.
+
+The alias is derived from (viewer, target), so it is stable: the same stranger wears the same tag for the same actor for as long as they stay unknown. Every id space is therefore stable, and the boundary asks only one thing of a citation — **does it name something real**. Whether the thing is still within reach is the Engine's question, and it can answer it as something the actor perceives ("the display where the daisies were is empty") instead of a rejection the actor never sees.
 
 ### Perception / render layer
 
@@ -96,6 +98,8 @@ The 57 CoC skills were consolidated into **17 broad ability domains** (`engine/r
 Seven memory types (`NpcMemoryType` in `prisma/schema.prisma`). Six are **character-authored** via `writeMemory` — `general`, `plan`, `secret`, `relationship`, `map`, `long_term_intent`. One is **system-authored**: `context` (the world as the character already knows it at session start: one per macro location, one per interior scene, one for topology). Nothing else is recorded on the character's behalf — there is no end-of-day diary, so what remains of a day is only what the character chose to write.
 
 There is **no recall tool**: memories are injected whole into the user prompt, so a memory absent from the prompt does not exist for that character. Decay lives in `DecayEngine`.
+
+A character's view of another is a `relationship` memory they write themselves, and writing one is also what updates `npcRelationshipGraph` — one author, two indexes. Knowing WHO someone is is a separate fact: the graph node's `knownAs` (what this viewer calls them), set by the character when a name is said in their hearing, and the only thing `isKnownTo` reads. Having an opinion about a face is not an introduction — conflating the two used to hand every character the canonical name of anyone they had merely noticed. The Engine has **no** relationship operation: it reports what happened, and what anyone makes of it is theirs to record. (It had one; told to note that a shopkeeper had grown wary of a customer, the applier wrote the same score and the same note onto the customer's row too, inventing his opinion of her out of hers of him.)
 
 `writeMemory` carries an `op` — `add` (default), `replace`, `delete`. `replace`/`delete` address a memory by the tag `memoryFormatter.ts` renders at the head of each line (`M3f9a2c`, derived from the row id so it never repoints). The tag resolves only against the memories that were in THAT decision's prompt, and the store call scopes on `(id, sessionId, npcId)` — the same "you may only point at what you were shown" rule the `act` boundary applies to objectRefs. System-authored types stay unwritable through all three ops. The character's own long-term goal is a `long_term_intent` memory in the same block, not a prompt section of its own.
 

@@ -11,7 +11,11 @@ import { formatForPrompt } from "../state/gameClock.js";
 import { resolveLocationById } from "../state/perceivedLocation.js";
 import type { RoleSimContext } from "./agent.js";
 import { formatMemories } from "./memoryFormatter.js";
-import { formatCondition, formatProfile } from "./profileFormatter.js";
+import {
+  formatCondition,
+  formatProfile,
+  formatSkills,
+} from "./profileFormatter.js";
 
 export interface BuildUserPromptOptions {
   language: string;
@@ -41,8 +45,8 @@ export interface BuildUserPromptOptions {
  *
  * So the three groups are cut by whether they MOVE, not by topic:
  *
- *  1. **frozen** — name, profile, and the `context` memories: the world as the
- *     character already knew it walking in. Written once at session bootstrap
+ *  1. **frozen** — name, profile, skill values, and the `context` memories:
+ *     the world as the character already knew it walking in. Written once at session bootstrap
  *     and never touched again — `writeMemory` refuses to change them, which
  *     is exactly the property that makes them cacheable. The one breakpoint
  *     sits here, is written once, and is read by every later tick.
@@ -65,6 +69,7 @@ export function buildUserPromptSegments(
 
   frozen.push(`# You are ${ctx.npcProfile.name}`);
   frozen.push(`## Who you are\n${formatProfile(ctx.npcProfile)}`);
+  frozen.push(`## What you can do\n${formatSkills(ctx.npcProfile)}`);
 
   // `context` is the one memory type written FOR the character — the geography
   // seeded at session start — and correspondingly the one type they may not
@@ -83,9 +88,11 @@ export function buildUserPromptSegments(
     growing.push(`## What you remember\n${formatMemories(learnedSince)}`);
   }
 
-  // Every perception is stamped with when and where it reached the character,
-  // so there is no separate "right now" block — the current perception below
-  // IS the present minute and the present place.
+  // The character's day as they lived it, not a sensor log: this is the whole
+  // uncurated stream, against which `## What you remember` is the part they
+  // chose to keep. Every entry is stamped with when and where it reached them,
+  // so the order needs no annotation and there is no separate "right now"
+  // block — the current perception below IS the present minute and place.
   if (ctx.recentPerceptions && ctx.recentPerceptions.length > 0) {
     const block = ctx.recentPerceptions
       .map(
@@ -93,7 +100,7 @@ export function buildUserPromptSegments(
       )
       .join("\n\n");
     growing.push(
-      `## What you have perceived so far (oldest first)
+      `## What you have lived through so far
 ${block}`
     );
   }

@@ -9,10 +9,13 @@
 
 import { randomUUID } from "node:crypto";
 import type { DynamicGameStateManager } from "../../state/DynamicGameState.js";
-import { buildPerceivableDirectory } from "../../state/perceivableDirectory.js";
+import {
+  aliasFor,
+  buildPerceivableDirectory,
+} from "../../state/perceivableDirectory.js";
 import type { CommandRejectionCode } from "./commandValidator.js";
 import { validateActArgs } from "./commandValidator.js";
-import { resolveSkillValue } from "./skillRollService.js";
+import { canonicalDisplayName, resolveSkillValue } from "./skillRollService.js";
 import type { ActionCommand } from "./types.js";
 
 export interface BuildCommandDeps {
@@ -34,7 +37,14 @@ export function buildActionCommand(
   const { dgsm } = deps;
 
   const directory = buildPerceivableDirectory(actorId, dgsm);
-  const validated = validateActArgs(rawArgs, directory);
+  const validated = validateActArgs(rawArgs, directory, {
+    resolveCharacter: (handle) => resolveCharacterHandle(handle, actorId, dgsm),
+    hasItem: (id) => itemExists(id, dgsm),
+    hasPlace: (id) =>
+      dgsm.getScene(id) !== null ||
+      dgsm.getJunction(id) !== null ||
+      dgsm.getRoad(id) !== null,
+  });
   if (!validated.ok) return validated;
   const args = validated.args;
 
@@ -56,7 +66,60 @@ export function buildActionCommand(
   };
 
   if (args.skillId !== undefined) {
-    const actorSkills = dgsm.getNpcProfile(actorId)?.skills ?? {};
+    const profile = dgsm.getNpcProfile(actorId);
+    const actorSkills = profile?.skills ?? {};
+
+    // Languages is settled first: it is the one domain with no single value,
+    // so "which tongue" has to be answered before there is anything to
+    // resolve, and its failures deserve their own reasons rather than the
+    // generic "not a skill this world knows".
+    if (canonicalDisplayName(args.skillId) === "Languages") {
+      const languages = profile?.languages;
+      const spoken = languages?.native ?? [];
+      const learned = languages?.learned ?? {};
+      const named = args.language?.trim();
+
+      if (!named) {
+        return {
+          ok: false,
+          code: "invalid_skill",
+          reason:
+            "Languages is a domain, not a single fluency — name the tongue in `language`, or omit `skillId` if you are using one you grew up with",
+        };
+      }
+      const isNative = spoken.some(
+        (tongue) => tongue.toLowerCase() === named.toLowerCase()
+      );
+      if (isNative) {
+        // Not an error, so not a rejection: nobody rolls to speak their own
+        // language. Drop the declaration and let the action be settled on its
+        // merits. Rejecting would cost a retry to teach a rule that changes
+        // nothing about what the actor was trying to do.
+        return { ok: true, command };
+      }
+      const match = Object.entries(learned).find(
+        ([tongue]) => tongue.toLowerCase() === named.toLowerCase()
+      );
+      if (!match) {
+        const have = [
+          spoken.length > 0 ? `speak ${spoken.join(", ")}` : "",
+          Object.keys(learned).length > 0
+            ? `have learned ${Object.keys(learned).join(", ")}`
+            : "",
+        ]
+          .filter(Boolean)
+          .join(" and ");
+        return {
+          ok: false,
+          code: "invalid_skill",
+          reason: `you have no ${named} — you ${have || "have no languages recorded"}. A tongue you never learned is not a harder attempt, it is one you cannot make.`,
+        };
+      }
+      command.declaredSkillId = "Languages";
+      command.declaredLanguage = match[0];
+      return { ok: true, command };
+    }
+
     const resolved = resolveSkillValue(args.skillId, actorSkills);
     if (!resolved) {
       return {
@@ -74,4 +137,35 @@ export function buildActionCommand(
   }
 
   return { ok: true, command };
+}
+
+/** Anywhere in the world: on the floor of some scene, or in someone's hands.
+ *  Not "here" — that is the Engine's question, and it can answer it as
+ *  something the actor finds out. */
+function itemExists(itemId: string, dgsm: DynamicGameStateManager): boolean {
+  const state = dgsm.getState();
+  for (const scene of state.scenes.values()) {
+    if ((scene.items ?? []).some((item) => item.id === itemId)) return true;
+  }
+  for (const inventory of Object.values(state.npcInventories ?? {})) {
+    if ((inventory ?? []).some((item) => item.id === itemId)) return true;
+  }
+  return false;
+}
+
+/** A handle back to a real character: their own id if the actor knows them,
+ *  otherwise the stable alias this actor sees them under. Searched across
+ *  every character in the world rather than only those in scope — the alias
+ *  is stable, so it resolves the same wherever the person has wandered off
+ *  to, and whether they are still HERE is the Engine's question. */
+function resolveCharacterHandle(
+  handle: string,
+  actorId: string,
+  dgsm: DynamicGameStateManager
+): string | undefined {
+  for (const npc of dgsm.getState().npcCharacters) {
+    if (npc.id === handle) return npc.id;
+    if (aliasFor(actorId, npc.id) === handle) return npc.id;
+  }
+  return undefined;
 }

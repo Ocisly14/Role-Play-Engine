@@ -13,6 +13,7 @@ import {
   buildPerceivableDirectory,
   descriptionIdentifier,
   isKnownTo,
+  knownAs,
 } from "../../state/perceivableDirectory.js";
 import { resolveLocationById } from "../../state/perceivedLocation.js";
 import type { DynamicNPCProfile } from "../../state/types.js";
@@ -65,6 +66,16 @@ they cannot touch, address or walk toward this minute.
 - Render only what the viewpoint can perceive RIGHT NOW: external sights, sounds,
   smells, touches, plus your own body/mind state. Do NOT mention memory,
   relationships, prior knowledge, or future plans.
+- **When "Own action this tick" is present, the narrative MUST render it.**
+  It is the one thing the viewpoint cannot fail to notice — their own hands.
+  \`Ongoing:\` renders as what they are doing at this moment of it ("my knife
+  is half through the twine"), using the elapsed/expected minutes to place
+  them early or late in it. \`Just completed/failed/interrupted/cancelled:\`
+  renders BOTH the moment it ended and what came of it: the \`Result:\` line is
+  the objective outcome, rewrite it as what they experience ("the lock gives",
+  "the wire will not budge"), never as a status word or a verdict. Never drop
+  an ended action's result — this paragraph is the only place the outcome
+  reaches them.
 - **EVERY person listed under "People present in your scene" MUST be
   acknowledged in the narrative** — describe their visible presence, posture,
   or activity even if they are silent or did nothing this tick. Co-located
@@ -99,12 +110,25 @@ WRONG (leaks a machine id that is not the given tag):
   The tall pale man (Hollins) steps into the room...
 
 WRONG (tag swallowed the prose):
-  stranger_a steps into the room...`;
+  stranger_a steps into the room...
 
-/** What the actor may cite this tick, in the shape the renderer needs:
- *  real entity id → the tag to print. Characters go through
- *  `characterHandles`, so a stranger is printed as `stranger_a` and their
- *  canonical id never reaches the narrative (nor, therefore, the actor). */
+WRONG (prose swallowed by the tag — the bracket holds an id and NOTHING else,
+no description, no punctuation, no words of your own, in any language):
+  我猛拽那位老工人[ITEM_SCN21_3旁的同伴]的手臂...
+  The old man [stranger_a, the one by the door] catches my arm...
+
+Right: name the thing in your prose, then the bare id in a bracket after it.
+Nothing to cite? Then write it with no bracket — an entity the actor can see
+but not act on is a normal thing, and inventing a tag for it is not.`;
+
+/** What the actor can see right now, in the shape the renderer needs: real
+ *  entity id → the tag to print. Characters go through `characterHandles`, so
+ *  a stranger is printed under the stable alias they wear for THIS viewer and
+ *  their canonical id never reaches the narrative (nor, therefore, the actor).
+ *
+ *  Note this is about what can be TAGGED, which is narrower than what can be
+ *  cited: a tag is only printed for something in front of the actor, but a tag
+ *  they read a while ago still resolves, because every id space is stable. */
 interface CitationTags {
   characters: Map<string, string>;
   places: Set<string>;
@@ -170,6 +194,21 @@ export function stripUncitableTags(
     .trim();
 }
 
+/** Bracketed things the actor could not legally cite. Stripping one costs the
+ *  character an entity they can see but cannot act on, so it is worth one more
+ *  call before settling for that. */
+export function uncitableTags(
+  narrative: string,
+  allowed: ReadonlySet<string>
+): string[] {
+  const bad: string[] = [];
+  for (const match of narrative.matchAll(TAG_PATTERN)) {
+    const candidate = match[1].trim();
+    if (!allowed.has(candidate)) bad.push(candidate);
+  }
+  return [...new Set(bad)];
+}
+
 export interface RenderViaLLMParams {
   npcId: string;
   bundle: PerceivedBundle;
@@ -185,15 +224,48 @@ export async function renderViaLLM(
   const userPrompt = buildUserPrompt(params, tags);
   const langName = params.language?.startsWith("zh") ? "Chinese" : "English";
 
-  const response = await generateText({
-    customSystemPrompt: SYSTEM_PROMPT,
-    context: `${userPrompt}\n\n# Decide\nWrite the paragraph now, in ${langName}.`,
-    modelClass: ModelClass.SMALL,
-    operation: RENDERER_OPERATION,
-    maxRetries: 2,
-  });
+  const decide = `\n\n# Decide\nWrite the paragraph now, in ${langName}.`;
+  const ask = (extra = "") =>
+    generateText({
+      customSystemPrompt: SYSTEM_PROMPT,
+      context: `${userPrompt}${extra}${decide}`,
+      modelClass: ModelClass.SMALL,
+      operation: RENDERER_OPERATION,
+      maxRetries: 2,
+    });
 
-  return stripUncitableTags(response.trim(), tags.allowed, params.npcId);
+  let narrative = (await ask()).trim();
+  const bad = uncitableTags(narrative, tags.allowed);
+
+  // One corrective pass before falling back to stripping. A stripped tag is
+  // not a broken tick — the prose survives — but it silently costs the
+  // character an entity they can see and now cannot act on, and the mistake
+  // is one a small model corrects readily once it is shown the exact string
+  // it invented. Observed: `[ITEM_SCN21_3旁的同伴]`, an id with a phrase of
+  // narrative welded onto it, which no amount of re-reading the rules would
+  // have caught but naming it plainly does.
+  if (bad.length > 0) {
+    console.warn(
+      `[renderer] ${params.npcId}: uncitable ${bad.map((t) => `"${t}"`).join(", ")} — asking again`
+    );
+    narrative = (
+      await ask(
+        [
+          "\n\n# Your last attempt was rejected",
+          "You wrote " +
+            bad.map((t) => `[${t}]`).join(", ") +
+            " — not a citable id. A bracket holds an id and NOTHING else: no",
+          "description, no punctuation, no words of your own, in any language.",
+          "Name the thing in your prose and put the bare id in the bracket after",
+          "it, copied exactly from the address book above — or, if none of them",
+          "is the thing you mean, write it with no bracket at all.",
+          "Rewrite the whole paragraph.",
+        ].join("\n")
+      )
+    ).trim();
+  }
+
+  return stripUncitableTags(narrative, tags.allowed, params.npcId);
 }
 
 function buildUserPrompt(
@@ -226,7 +298,7 @@ function buildUserPrompt(
   }
 
   if (bundle.ownAction.kind !== "idle") {
-    sections.push("# Own action this tick");
+    sections.push("# Own action this tick (must be rendered)");
     sections.push(formatOwnAction(bundle));
   }
 
@@ -334,8 +406,11 @@ function collectOtherEntities(
   for (const charId of characterIds) {
     const profile = dgsm.getNpcProfile(charId);
     if (!profile) continue;
+    // The name THIS viewer knows them by, which is not necessarily the name
+    // on their papers — "Nan" to one person, "the florist" to another.
+    const identifier =
+      knownAs(dgsm, viewpointId, charId) ?? descriptionIdentifier(profile);
     const known = isKnownTo(dgsm, viewpointId, charId);
-    const identifier = known ? profile.name : descriptionIdentifier(profile);
     const knownTag = known ? "KNOWN" : "UNKNOWN";
     lines.push(
       `Person (${knownTag}): ${identifier}${tag(charId, tags, "character")}`
@@ -353,9 +428,7 @@ function collectOtherEntities(
   for (const sceneId of sceneIds) {
     const scene = dgsm.getScene(sceneId);
     if (!scene) continue;
-    lines.push(
-      `Adjacent scene: ${scene.name}${tag(scene.id, tags, "other")}`
-    );
+    lines.push(`Adjacent scene: ${scene.name}${tag(scene.id, tags, "other")}`);
     if (scene.description) lines.push(`  Description: ${scene.description}`);
   }
 
@@ -452,15 +525,15 @@ function formatScenePresentCharacters(
   const lines: string[] = [];
   for (const c of bundle.charactersInScene) {
     const known = isKnownTo(dgsm, viewpointId, c.id);
-    // For UNKNOWN, fall back to a description-based identifier built from
-    // appearance / occupation; for KNOWN, use the canonical name.
-    const identifier = known
-      ? c.name
-      : descriptionIdentifier({
-          id: c.id,
-          name: c.name,
-          appearance: c.appearance,
-        } as DynamicNPCProfile);
+    // Whatever this viewer calls them; a description built from appearance or
+    // occupation until they have been told a name.
+    const identifier =
+      knownAs(dgsm, viewpointId, c.id) ??
+      descriptionIdentifier({
+        id: c.id,
+        name: c.name,
+        appearance: c.appearance,
+      } as DynamicNPCProfile);
     const knownTag = known ? "KNOWN" : "UNKNOWN";
     lines.push(
       `Person (${knownTag}): ${identifier}${tag(c.id, tags, "character")}`

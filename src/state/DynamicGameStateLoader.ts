@@ -83,6 +83,7 @@ export async function initializeCompleteDynamicGameState(
     moduleData,
     embedClient,
     emailId: resolvedEmailId,
+    language: params.language,
   });
 
   // Parse initial game time from module setup data

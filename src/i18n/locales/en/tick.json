@@ -47,5 +47,21 @@
   "context_topology_junction": "Streets at {{junction}}: {{roads}}.",
   "context_topology_junction_buildings": "At the junction: {{buildings}}",
   "context_list_sep": ", ",
-  "context_clause_sep": "; "
+  "context_clause_sep": "; ",
+  "relationship_seed": "{{name}} — {{stance}}. {{account}}",
+  "relationship_seed_bare": "{{name}} — {{stance}}.",
+  "relationship_stance_ally": "an ally of mine",
+  "relationship_stance_enemy": "an enemy",
+  "relationship_stance_neutral": "someone I know, no more",
+  "relationship_stance_family": "family",
+  "relationship_stance_friend": "a friend",
+  "relationship_stance_rival": "a rival",
+  "relationship_stance_employer": "the person I work for",
+  "relationship_stance_employee": "someone who works for me",
+  "relationship_stance_stranger": "barely known to me",
+  "relationship_warmth_devoted": "and I would trust them with anything",
+  "relationship_warmth_warm": "and I am glad of them",
+  "relationship_warmth_even": "but I keep my distance",
+  "relationship_warmth_cool": "and I do not much like them",
+  "relationship_warmth_hostile": "and I cannot stand them"
 }

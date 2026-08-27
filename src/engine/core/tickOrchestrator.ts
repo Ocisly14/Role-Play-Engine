@@ -19,16 +19,16 @@
 
 import type { DynamicGameStateManager } from "../../state/DynamicGameState.js";
 import { addMinutes, diffDays, timePart } from "../../state/gameClock.js";
-import { resolveCheck } from "../actions/adjudication/skillAdjudicator.js";
-import { resolveSkillValue, rollSkill } from "../actions/skillRollService.js";
 import type { ActionStore } from "../actions/actionStore.js";
 import { actionIdForCommand } from "../actions/actionStore.js";
+import { resolveCheck } from "../actions/adjudication/skillAdjudicator.js";
 import type { CommandInbox } from "../actions/commandInbox.js";
 import {
   advanceMovement,
   getMovementRuntime,
   initMovementRuntime,
 } from "../actions/movementRuntime.js";
+import { resolveSkillValue, rollSkill } from "../actions/skillRollService.js";
 import type {
   ActionCommand,
   ActionTransition,
@@ -279,6 +279,9 @@ export class TickOrchestrator {
         if (!action || action.check || !skillId) continue;
         action.check = {
           skillId,
+          ...(action.command.declaredLanguage !== undefined
+            ? { language: action.command.declaredLanguage }
+            : {}),
           requiredLevel: bar.requiredLevel,
           basis: bar.basis,
           ...(bar.opposedBy ? { opposedBy: bar.opposedBy } : {}),
@@ -435,7 +438,9 @@ export class TickOrchestrator {
 
       const actorSkill = resolveSkillValue(
         action.check.skillId,
-        skillsOf(action.command.actorId)
+        skillsOf(action.command.actorId),
+        dgsm.getNpcProfile(action.command.actorId)?.languages,
+        action.check.language
       );
       if (!actorSkill) continue;
 
@@ -446,6 +451,8 @@ export class TickOrchestrator {
           ? { opposedBy: action.check.opposedBy }
           : {}),
         rollDefender: (characterId, skillId) => {
+          // A defender is never asked to defend in a language, so no tongue
+          // is threaded here: an opposed Languages check is not a thing.
           const defense = resolveSkillValue(skillId, skillsOf(characterId));
           return defense
             ? {
@@ -480,7 +487,6 @@ export class TickOrchestrator {
     } else {
       action.nextWakeAt = undefined;
     }
-
   }
 
   private toCharacterAction(

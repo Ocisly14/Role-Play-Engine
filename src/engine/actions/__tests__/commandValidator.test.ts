@@ -22,6 +22,20 @@ const directory: PerceivableDirectory = {
   scenes: new Set(["SCN_1", "SCN_2"]),
 };
 
+/** The world beyond what the actor can currently see. `ITEM_FAR` and
+ *  `SCN_FAR` exist but are nowhere near them — the boundary lets those
+ *  through now, because "still within reach?" is the Engine's question. */
+const world = {
+  resolveCharacter: (handle: string) =>
+    handle === HOLLINS_ALIAS
+      ? "Hollins"
+      : handle === "stranger_faraway"
+        ? "Marsh"
+        : undefined,
+  hasItem: (id: string) => ["ITEM_1", "cabinet_lock", "ITEM_FAR"].includes(id),
+  hasPlace: (id: string) => ["SCN_1", "SCN_2", "SCN_FAR"].includes(id),
+};
+
 function args(overrides: Record<string, unknown> = {}) {
   return {
     description: "I try to pick the lock with my picks.",
@@ -35,7 +49,8 @@ describe("validateActArgs", () => {
   it("accepts a well-formed command and normalizes strings", () => {
     const result = validateActArgs(
       args({ description: "  padded  ", utterance: "hello" }),
-      directory
+      directory,
+      world
     );
     expect(result.ok).toBe(true);
     if (!result.ok) return;
@@ -47,7 +62,7 @@ describe("validateActArgs", () => {
   });
 
   it("accepts an empty objectRefs array", () => {
-    const result = validateActArgs(args({ objectRefs: [] }), directory);
+    const result = validateActArgs(args({ objectRefs: [] }), directory, world);
     expect(result.ok).toBe(true);
   });
 
@@ -57,19 +72,24 @@ describe("validateActArgs", () => {
     ["whitespace", "   "],
     ["non-string", 42],
   ])("rejects %s description", (_label, description) => {
-    const result = validateActArgs(args({ description }), directory);
+    const result = validateActArgs(args({ description }), directory, world);
     expect(result).toMatchObject({ ok: false, code: "invalid_description" });
   });
 
   it("rejects missing objectRefs (must be [] when none)", () => {
-    const result = validateActArgs(args({ objectRefs: undefined }), directory);
+    const result = validateActArgs(
+      args({ objectRefs: undefined }),
+      directory,
+      world
+    );
     expect(result).toMatchObject({ ok: false, code: "invalid_object_refs" });
   });
 
   it("rejects a ref with an invalid kind", () => {
     const result = validateActArgs(
       args({ objectRefs: [{ kind: "monster", id: "x" }] }),
-      directory
+      directory,
+      world
     );
     expect(result).toMatchObject({ ok: false, code: "invalid_object_refs" });
   });
@@ -77,7 +97,8 @@ describe("validateActArgs", () => {
   it("rejects a ref with an invalid role", () => {
     const result = validateActArgs(
       args({ objectRefs: [{ kind: "item", id: "ITEM_1", role: "weapon" }] }),
-      directory
+      directory,
+      world
     );
     expect(result).toMatchObject({ ok: false, code: "invalid_object_refs" });
   });
@@ -86,13 +107,15 @@ describe("validateActArgs", () => {
     for (const role of ["target", "tool", "destination", "recipient"]) {
       const result = validateActArgs(
         args({ objectRefs: [{ kind: "item", id: "ITEM_1", role }] }),
-        directory
+        directory,
+        world
       );
       expect(result.ok).toBe(true);
     }
     const bare = validateActArgs(
       args({ objectRefs: [{ kind: "item", id: "ITEM_1" }] }),
-      directory
+      directory,
+      world
     );
     expect(bare.ok).toBe(true);
   });
@@ -100,7 +123,8 @@ describe("validateActArgs", () => {
   it("rejects a ref outside the perceivable scope", () => {
     const result = validateActArgs(
       args({ objectRefs: [{ kind: "character", id: "Nyarlathotep" }] }),
-      directory
+      directory,
+      world
     );
     expect(result).toMatchObject({ ok: false, code: "unknown_ref" });
     if (result.ok) return;
@@ -110,7 +134,8 @@ describe("validateActArgs", () => {
   it("checks scope per kind — an item id cited as a character is rejected", () => {
     const result = validateActArgs(
       args({ objectRefs: [{ kind: "character", id: "ITEM_1" }] }),
-      directory
+      directory,
+      world
     );
     expect(result).toMatchObject({ ok: false, code: "unknown_ref" });
   });
@@ -120,7 +145,8 @@ describe("validateActArgs", () => {
       args({
         objectRefs: [{ kind: "character", id: HOLLINS_ALIAS, role: "target" }],
       }),
-      directory
+      directory,
+      world
     );
     expect(result.ok).toBe(true);
     if (!result.ok) return;
@@ -132,7 +158,8 @@ describe("validateActArgs", () => {
   it("rejects the real character id — the actor is never given it", () => {
     const result = validateActArgs(
       args({ objectRefs: [{ kind: "character", id: "Hollins" }] }),
-      directory
+      directory,
+      world
     );
     expect(result).toMatchObject({ ok: false, code: "unknown_ref" });
   });
@@ -145,24 +172,29 @@ describe("validateActArgs", () => {
     ["missing", undefined],
     ["string", "3"],
   ])("rejects %s proposedDurationTicks", (_label, proposedDurationTicks) => {
-    const result = validateActArgs(args({ proposedDurationTicks }), directory);
+    const result = validateActArgs(
+      args({ proposedDurationTicks }),
+      directory,
+      world
+    );
     expect(result).toMatchObject({ ok: false, code: "invalid_duration" });
   });
 
   it("accepts the duration boundaries", () => {
     expect(
-      validateActArgs(args({ proposedDurationTicks: 1 }), directory).ok
+      validateActArgs(args({ proposedDurationTicks: 1 }), directory, world).ok
     ).toBe(true);
     expect(
       validateActArgs(
         args({ proposedDurationTicks: MAX_PROPOSED_DURATION_TICKS }),
-        directory
+        directory,
+        world
       ).ok
     ).toBe(true);
   });
 
   it("drops an empty skillId instead of failing", () => {
-    const result = validateActArgs(args({ skillId: "  " }), directory);
+    const result = validateActArgs(args({ skillId: "  " }), directory, world);
     expect(result.ok).toBe(true);
     if (!result.ok) return;
     expect(result.args.skillId).toBeUndefined();
@@ -225,6 +257,15 @@ const dgsm = {
   getCharacterPosition: () => ({ kind: "scene", sceneId: "SCN_1" }),
   resolveLocationId: () => "SCN_1",
   getNpcProfile: () => ({ skills: { "Stealth & Security": 60 } }),
+  getState: () => ({
+    scenes: new Map([
+      ["SCN_1", { items: [{ id: "cabinet_lock" }, { id: "ITEM_1" }] }],
+    ]),
+    npcInventories: {},
+  }),
+  getScene: (id: string) => (id === "SCN_1" || id === "SCN_2" ? {} : null),
+  getJunction: () => null,
+  getRoad: () => null,
 } as never;
 
 describe("buildActionCommand", () => {
@@ -317,5 +358,68 @@ describe("buildActionCommand", () => {
       { dgsm }
     );
     expect(result).toMatchObject({ ok: false, code: "unknown_ref" });
+  });
+});
+
+describe("what a citation is scoped to", () => {
+  // The boundary used to refuse any id outside the actor's perception this
+  // tick. That treated "is it still within reach?" as an id-validity question,
+  // and it is not: a florist reaching for a bouquet sold ten minutes ago
+  // should be told by the WORLD that the display is empty — an occurrence she
+  // learns from — rather than by a rejection she cannot act on and cannot see.
+  it("accepts an item that exists but is nowhere near the actor", () => {
+    const result = validateActArgs(
+      args({ objectRefs: [{ kind: "item", id: "ITEM_FAR", role: "target" }] }),
+      directory,
+      world
+    );
+    expect(result.ok).toBe(true);
+  });
+
+  it("accepts a place that exists but is not adjacent", () => {
+    const result = validateActArgs(
+      args({
+        objectRefs: [{ kind: "scene", id: "SCN_FAR", role: "destination" }],
+      }),
+      directory,
+      world
+    );
+    expect(result.ok).toBe(true);
+  });
+
+  it("still refuses an id that names nothing at all", () => {
+    const result = validateActArgs(
+      args({ objectRefs: [{ kind: "item", id: "ITEM_INVENTED" }] }),
+      directory,
+      world
+    );
+    expect(result.ok).toBe(false);
+    if (result.ok) return;
+    expect(result.reason).toContain("not a item in this world");
+  });
+
+  it("accepts a stranger who has since walked out of the room", () => {
+    // The alias is derived from (viewer, target), so it means the same person
+    // whenever it is cited — including out of the actor's own perception
+    // history. Whether they are still here is the Engine's to answer.
+    const result = validateActArgs(
+      args({ objectRefs: [{ kind: "character", id: "stranger_faraway" }] }),
+      directory,
+      world
+    );
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.args.objectRefs[0].id).toBe("Marsh");
+  });
+
+  it("still refuses a handle that resolves to nobody", () => {
+    const result = validateActArgs(
+      args({ objectRefs: [{ kind: "character", id: "stranger_nobody" }] }),
+      directory,
+      world
+    );
+    expect(result.ok).toBe(false);
+    if (result.ok) return;
+    expect(result.reason).toContain("nobody in this world");
   });
 });

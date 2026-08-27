@@ -12,6 +12,7 @@ import {
 } from "../engine/scriptedEvents/loader.js";
 import type { ScriptedEvent } from "../engine/scriptedEvents/types.js";
 import { NpcMemoryManager } from "../memory/NpcMemoryManager.js";
+import { buildRelationshipMemory } from "../memory/relationshipMemory.js";
 import { canonicalMemoryType } from "../memory/types.js";
 import type { EmbeddingClient } from "../rag/embedding.js";
 import type { DynamicGameState } from "./DynamicGameState.js";
@@ -203,9 +204,13 @@ export async function createSession(
     moduleData: ModuleData;
     embedClient: EmbeddingClient;
     emailId?: string;
+    /** Module language; the seeded relationship memories are the character's
+     *  own words, so they are written in the language they think in. */
+    language?: string;
   }
 ): Promise<void> {
   const { sessionId, moduleId, moduleData, embedClient, emailId } = params;
+  const language = params.language ?? "en";
   const startDate = moduleData.setup?.startDate;
   if (!startDate) {
     throw new Error(
@@ -240,7 +245,13 @@ export async function createSession(
   );
 
   for (const npc of simulatedNpcs) {
-    if (!npc.memory || npc.memory.length === 0) continue;
+    const relationships = npc.relationships ?? [];
+    if (
+      (!npc.memory || npc.memory.length === 0) &&
+      relationships.length === 0
+    ) {
+      continue;
+    }
 
     // Idempotent: skip if NPC already has memories
     const existing = await prisma.npcMemory.count({
@@ -248,7 +259,29 @@ export async function createSession(
     });
     if (existing > 0) continue;
 
-    for (const entry of npc.memory) {
+    // Who they already know, written from their own side. The graph is the
+    // index; this is what actually reaches the prompt, and without it a
+    // character walks in with no idea who their oldest friend is. From the
+    // first tick on these are ordinary `relationship` memories that each side
+    // revises for themselves.
+    for (const rel of relationships) {
+      const seeded = buildRelationshipMemory(rel, language);
+      if (!seeded) continue;
+      await memoryManager.add({
+        npcId: npc.id,
+        sessionId,
+        moduleId,
+        type: "relationship",
+        content: seeded.content,
+        gameDateTime: makeDateTime(startDate, "00:00"),
+        metadata: {
+          targetId: seeded.targetId,
+          targetName: seeded.targetName,
+        },
+      });
+    }
+
+    for (const entry of npc.memory ?? []) {
       if (!entry.content || entry.content.trim() === "") continue;
       await memoryManager.add({
         npcId: npc.id,
@@ -396,6 +429,14 @@ export function initRuntime(params: {
     }
     if (residence) npcResidences[npc.id] = residence;
 
+    // A sheet that says nothing about languages means "speaks what everyone
+    // here speaks" — not "has no tongue at all". Without this every character
+    // would be unable to name a language they obviously have.
+    const commonLanguage = moduleData.setup?.commonLanguage;
+    if (!npc.languages && commonLanguage) {
+      npc.languages = { native: [commonLanguage] };
+    }
+
     // Stats — module NPC JSON uses CoC-sheet field names (`sanity` /
     // `maxSanity`) and usually omits fatigue, while CharacterStatus and the
     // Applier's clamp math read `san` / `maxSan` / `fatigue` / `maxFatigue`.
@@ -439,13 +480,20 @@ export function initRuntime(params: {
     npcInventories[npc.id] = normalizedInventory;
     npc.inventory = normalizedInventory;
 
-    // Relationships
-    const rels: Record<string, { score: number; note: string }> = {};
+    // Relationships. `knownAs` is what this character CALLS the other one, and
+    // its presence is what makes them known rather than a face with a history:
+    // a module-authored relationship means they already know each other, so
+    // the authored name is the one they use.
+    const rels: Record<
+      string,
+      { score: number; note: string; knownAs?: string }
+    > = {};
     for (const rel of npc.relationships ?? []) {
       if (rel.targetId) {
         rels[rel.targetId] = {
           score: (rel as any).score ?? rel.attitude ?? 0,
           note: (rel as any).note ?? "",
+          knownAs: rel.targetName?.trim() || rel.targetId,
         };
       }
     }

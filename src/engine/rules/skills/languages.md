@@ -10,19 +10,38 @@ durationGuidance:
 
 # Languages guidance
 
-Use for reading, writing, speaking, translating, and interpreting —
-foreign tongues, dead tongues, dialects, jargon, and specialized registers.
-Fluency is what the actor's value represents; text condition and subject
-matter set the difficulty.
+Use for reading, writing, speaking, translating, and interpreting — foreign
+tongues, dead tongues, dialects, jargon, and specialized registers.
+
+This domain has no single value. A character carries a list of tongues: the
+ones they grew up in, and the ones they learned, each with its own fluency.
+The command names which one is in play (`declaredLanguage`), and code rolls
+that language's number.
+
+## A native tongue is never checked
+
+Nobody rolls to speak the language they think in. An action carried out in a
+character's own tongue reaches you with NO declared skill and no check, and
+that is correct — settle it on its merits like any other unskilled action.
+Do not reach for a bar because speech was involved.
+
+What a native speaker can still fail at is not the language: persuading
+(Social), noticing a slip (Investigation), knowing what the words mean in
+their field (Knowledge & Craft, Science & Nature, Occult). Check that instead,
+if the actor declared it.
 
 ## Applicability
 
 - Accepted for translation, comprehension of speech or text, passing as a
-  speaker, and reading a technical register the actor is not trained in.
+  speaker, and reading a technical register the actor is not trained in —
+  always in a NAMED language the actor has learned.
 - Rejected for what the text MEANS in its field once translated — that is
   Knowledge & Craft, Science & Nature, or Occult by subject.
-- A language the character has no exposure to is a rejection, not a hard
-  check. Say which language and why.
+- A tongue the character does not have never reaches you: the boundary
+  refuses it, because that is not a harder attempt but an impossible one.
+- Fluency is the actor's number and is not yours to set. What you set is the
+  difficulty of THIS passage: condition of the text, archaism, dialect, noise,
+  speed of speech, how much hangs on precision.
 
 ## Success levels
 
@@ -51,5 +70,6 @@ fact, not a state change.
   listener as perceiver.
 - `item.create` — a written translation or transcription that now exists;
   `item.modify` when the actor annotates the original.
-- `character.relationship` — a register that offends, or a fluency that opens
-  someone up.
+- A register that offends, or a fluency that opens someone up, is an
+  OCCURRENCE the other party perceives — what they now make of the speaker is
+  theirs to write, not yours to assert.

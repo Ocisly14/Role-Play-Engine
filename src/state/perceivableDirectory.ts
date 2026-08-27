@@ -14,17 +14,20 @@
 // real id before the Engine sees the command, and the name never enters the
 // actor's context at all.
 //
-// Aliases are per-tick and carry no meaning of their own — the address book
-// prints the description beside each one. Nothing downstream stores an alias:
-// both `act` and `writeMemory` resolve to real ids at the boundary, so an
-// alias never has to mean the same thing tomorrow that it means today. That
-// is why they can be short and legible instead of a stable hash.
+// An alias is derived from (viewer, target) and is therefore STABLE: the same
+// stranger is the same tag to the same actor, this minute and next week. It
+// has to be. A citation can reach the boundary from the actor's own
+// perception history, minutes after it was written, and a positional alias
+// would by then name whoever else had walked in. Nothing downstream stores an
+// alias — `act` and `writeMemory` both resolve to real ids at the boundary —
+// but it must still mean tomorrow what it meant today.
 //
 // People the viewpoint DOES know, and all items and places, keep their real
 // ids. `SCN_LIBRARY` tells the actor it is a library, which they can see;
 // `ITEM_SCN2_7` tells them nothing. There is no identity to protect, so there
 // is no indirection to pay for.
 
+import { createHash } from "node:crypto";
 import type { DynamicGameStateManager } from "./DynamicGameState.js";
 import {
   charactersAtSameLocation,
@@ -61,12 +64,33 @@ export interface PerceivableDirectory {
  * "Hollins" by name while the address book still called him "the tall pale
  * man", which both leaked the name and contradicted itself inside one prompt.
  */
+/**
+ * Does the viewpoint know WHO this is — not merely have a view of them.
+ *
+ * These are different things, and conflating them leaked every canonical name
+ * in the world. It used to be "has a relationship entry", so the moment a
+ * shopkeeper wrote down that a customer made her uneasy, the renderer began
+ * calling him by his full legal name — which she had never been told. She then
+ * recorded that she had "learned his name", believing she had heard it.
+ *
+ * A name arrives one way: somebody says it where the character can hear, and
+ * the character writes it down. Until then they have opinions about a face.
+ */
 export function isKnownTo(
   dgsm: DynamicGameStateManager,
   viewpointId: string,
   otherCharId: string
 ): boolean {
-  return dgsm.getRelationship(viewpointId, otherCharId) !== undefined;
+  return dgsm.getRelationship(viewpointId, otherCharId)?.knownAs !== undefined;
+}
+
+/** What this viewpoint calls that person, when they know. */
+export function knownAs(
+  dgsm: DynamicGameStateManager,
+  viewpointId: string,
+  otherCharId: string
+): string | undefined {
+  return dgsm.getRelationship(viewpointId, otherCharId)?.knownAs;
 }
 
 /** Description-based identifier for an UNKNOWN character. Used by the
@@ -130,36 +154,39 @@ export function buildPerceivableDirectory(
   }
 
   // ── What the actor may cite, per character in scope ─────────────
-  // Sorted by real id so aliases fall the same way for the same cast, which
-  // keeps the address book byte-stable across the ticks of an unchanged scene.
-  const sorted = [...characters].sort();
+  // Sorted by real id so the address book is byte-stable for the same cast.
   const characterHandles = new Map<string, string>();
-  // People they know go in first: their real id is citable as-is, and
-  // registering it up front stops an alias from ever shadowing one.
-  const strangers: string[] = [];
-  for (const id of sorted) {
-    if (isKnownTo(dgsm, actorId, id)) characterHandles.set(id, id);
-    else strangers.push(id);
-  }
-  let n = 0;
-  for (const id of strangers) {
-    let alias = strangerAlias(n++);
-    while (characterHandles.has(alias)) alias = strangerAlias(n++);
-    characterHandles.set(alias, id);
+  for (const id of [...characters].sort()) {
+    // People they know are citable by their real id — no identity to protect.
+    characterHandles.set(
+      isKnownTo(dgsm, actorId, id) ? id : aliasFor(actorId, id),
+      id
+    );
   }
 
   return { characters, characterHandles, items, scenes };
 }
 
-/** `stranger_a`, `stranger_b`, … `stranger_z`, `stranger_aa`. Short enough to
- *  copy without slipping, and meaningless on its own — the address book
- *  carries the description that tells the actor which stranger this is. */
-function strangerAlias(index: number): string {
-  let n = index;
-  let label = "";
-  do {
-    label = String.fromCharCode(97 + (n % 26)) + label;
-    n = Math.floor(n / 26) - 1;
-  } while (n >= 0);
-  return `stranger_${label}`;
+/**
+ * A stable, opaque name for someone this actor does not know.
+ *
+ * Derived from (viewer, target) rather than from position in the current
+ * cast, and that difference is the whole point. Positional aliases —
+ * `stranger_a` for whoever sorts first among the strangers present — mean
+ * different people on different ticks, so a citation copied out of the
+ * actor's own perception history resolves, silently, to somebody else. The
+ * boundary could not catch it either: the alias was well-formed, it just
+ * meant the wrong person.
+ *
+ * Keyed on the viewer as well as the target so two characters never learn
+ * they are looking at the same stranger by comparing tags, and hashed so the
+ * canonical name ("Hollins") never reaches an actor who only knows a tall
+ * pale man. The renderer prints the description beside it, which is where the
+ * legibility a letter used to give now comes from.
+ */
+export function aliasFor(actorId: string, targetId: string): string {
+  return `stranger_${createHash("sha256")
+    .update(`${actorId}\u0000${targetId}`)
+    .digest("hex")
+    .slice(0, 6)}`;
 }

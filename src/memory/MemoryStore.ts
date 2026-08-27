@@ -1,3 +1,5 @@
+import { randomUUID } from "node:crypto";
+import { mintMemoryHandle } from "./memoryHandle.js";
 import type { NpcMemory, NpcMemoryType, PrismaClient } from "@prisma/client";
 import type { EmbeddingClient } from "../rag/embedding.js";
 import { getHandler } from "./handlers/index.js";
@@ -54,8 +56,31 @@ export class MemoryStore {
     };
   }
 
+  /**
+   * The handle this memory will answer to, decided here and never again.
+   *
+   * The id is generated in application code rather than by the database
+   * because the handle is derived from it: it has to exist before the row
+   * does. Minted against the handles this character already holds, so a
+   * collision lengthens the newcomer and leaves every handle the character
+   * may already have read exactly as it was.
+   */
+  private async mintHandle(
+    id: string,
+    sessionId: string,
+    npcId: string
+  ): Promise<string> {
+    const held = await this.prisma.npcMemory.findMany({
+      where: { sessionId, npcId },
+      select: { handle: true },
+    });
+    return mintMemoryHandle(id, new Set(held.map((row) => row.handle)));
+  }
+
   async create(params: AddMemoryParams): Promise<NpcMemory> {
     const prepared = this.prepareMemoryRecord(params);
+    const id = randomUUID();
+    const handle = await this.mintHandle(id, params.sessionId, params.npcId);
 
     let embeddingBuffer: Uint8Array<ArrayBuffer> | undefined = undefined;
     try {
@@ -73,6 +98,8 @@ export class MemoryStore {
 
     return this.prisma.npcMemory.create({
       data: {
+        id,
+        handle,
         sessionId: params.sessionId,
         moduleId: params.moduleId,
         npcId: params.npcId,

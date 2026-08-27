@@ -66,7 +66,15 @@ describe("agent tool schemas", () => {
     ]);
     const props = Object.keys(schema.properties ?? {});
     expect(props.sort()).toEqual(
-      ["description", "objectRefs", "proposedDurationTicks", "skillId", "utterance"].sort()
+      [
+        "description",
+        "objectRefs",
+        "proposedDurationTicks",
+        "skillId",
+        // Which tongue, for the one domain that has no single value.
+        "language",
+        "utterance",
+      ].sort()
     );
     // No authoritative fields: skill values, difficulty, rolls, outcomes,
     // resolved durations.

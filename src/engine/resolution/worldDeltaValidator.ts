@@ -104,6 +104,13 @@ export interface ResolutionWorklist {
   /** In-flight actions that carried no check, so nothing rolled. If one of
    *  these ends, the Engine supplies `outcome`. */
   endingNeedsOutcome: string[];
+  /** Starting actions whose actor declared NO skill. There is nothing to
+   *  check, so `check` is refused on these — and the Engine should not have to
+   *  go find `declaredSkillId` in another section to work that out. Every
+   *  remaining rejection in one measured run was this lookup going wrong, and
+   *  always on the same kind of action: a described deception with no skill
+   *  behind it, where a bar feels obviously right and is not allowed. */
+  startingWithoutSkill: string[];
 }
 
 export function resolutionWorklist(
@@ -114,13 +121,20 @@ export function resolutionWorklist(
     ending: [],
     stillRunning: [],
     endingNeedsOutcome: [],
+    startingWithoutSkill: [],
   };
   const queued = new Set(
     context.actions.newCommands.map((c) => actionIdForCommand(c.commandId))
   );
+  const commandById = new Map(
+    context.actions.newCommands.map((c) => [actionIdForCommand(c.commandId), c])
+  );
   for (const id of context.trigger.actionIds) {
     if (queued.has(id)) {
       worklist.starting.push(id);
+      if (commandById.get(id)?.declaredSkillId === undefined) {
+        worklist.startingWithoutSkill.push(id);
+      }
       continue;
     }
     const action = context.actions.activeActions.find((a) => a.id === id);
@@ -432,31 +446,6 @@ export function validateCharacterChange(
     case "removeCondition":
       if (typeof op.conditionId !== "string" || !op.conditionId) {
         errs.push(`removeCondition requires conditionId`);
-      }
-      break;
-    case "relationship":
-      if (op.delta !== undefined && typeof op.delta !== "number") {
-        errs.push(`relationship.delta must be a number when present`);
-      }
-      if (op.note !== undefined && typeof op.note !== "string") {
-        errs.push(`relationship.note must be a string when present`);
-      }
-      if (typeof op.toCharacterId !== "string") {
-        // Distinguish "no such person" from "wrong field name" — the model
-        // reaches for targetCharacterId / targetId, and being told a
-        // character named "undefined" does not exist sends it hunting for
-        // the wrong bug.
-        errs.push(
-          `relationship requires toCharacterId (that exact field name)${
-            op.targetCharacterId || op.targetId || op.characterId
-              ? " — you sent it under a different name"
-              : ""
-          }`
-        );
-      } else if (!lookup.characterIds.has(op.toCharacterId)) {
-        errs.push(
-          `relationship.toCharacterId "${op.toCharacterId}" does not exist`
-        );
       }
       break;
   }

@@ -87,7 +87,7 @@ export class Applier {
    * record and in `lastUpdated` churn while meaning nothing.
    *
    * Only kinds whose no-op condition is unambiguous are covered. Records that
-   * downstream consumers read (memory.*, relationship.change) and additive
+   * downstream consumers read (memory.*) and additive
    * kinds are never filtered, and neither are the delta kinds, which are
    * aggregated into DamageReports before being applied.
    */
@@ -125,9 +125,8 @@ export class Applier {
    *
    * Engine deltas are validated upstream (worldDeltaValidator), but
    * subsystem-emitted StateChanges have no earlier gate — observed live as a
-   * `relationship.change` naming a character that does not exist, silently
-   * creating a ghost node in the relationship graph (updateRelationship
-   * auto-creates nodes for any string). This is the last-line guard.
+   * a change naming a character that does not exist, which downstream setters
+   * would happily auto-create as a ghost node. This is the last-line guard.
    */
   private invalidCharacterRef(c: StateChange): string | null {
     const known = (id: string) =>
@@ -142,8 +141,6 @@ export class Applier {
       case "memory.event":
       case "memory.witness":
         return known(c.characterId);
-      case "relationship.change":
-        return known(c.fromId) ?? known(c.toId);
       default:
         return null;
     }
@@ -192,7 +189,11 @@ export class Applier {
           ];
         case "addCondition":
           return [
-            { kind: "character.addCondition", characterId, condition: op.condition },
+            {
+              kind: "character.addCondition",
+              characterId,
+              condition: op.condition,
+            },
           ];
         case "removeCondition":
           return [
@@ -202,16 +203,6 @@ export class Applier {
               conditionId: op.conditionId,
             },
           ];
-        case "relationship":
-          return [
-            {
-              kind: "relationship.change",
-              fromId: characterId,
-              toId: op.toCharacterId,
-              ...(op.delta !== undefined ? { delta: op.delta } : {}),
-              ...(op.note !== undefined ? { note: op.note } : {}),
-            },
-          ];
       }
     }
 
@@ -219,7 +210,9 @@ export class Applier {
       const { sceneId, operation: op } = delta;
       switch (op.kind) {
         case "addCondition":
-          return [{ kind: "scene.addCondition", sceneId, condition: op.condition }];
+          return [
+            { kind: "scene.addCondition", sceneId, condition: op.condition },
+          ];
         case "removeCondition":
           return [
             { kind: "scene.removeCondition", sceneId, predicate: op.predicate },
@@ -532,16 +525,6 @@ export class Applier {
         }
         case "item.destroy": {
           this.dgsm.destroyItem(c.itemId);
-          break;
-        }
-        // ── Resolver-emitted relationship op ──
-        case "relationship.change": {
-          this.dgsm.updateRelationship(
-            c.fromId,
-            c.toId,
-            typeof c.delta === "number" ? c.delta : 0,
-            typeof c.note === "string" ? c.note : ""
-          );
           break;
         }
         // ── Memory entries: applier no-op; consumed by

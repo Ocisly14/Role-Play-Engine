@@ -28,6 +28,18 @@ export type CommandRejectionCode =
   | "invalid_skill"
   | "invalid_utterance";
 
+/** What the world contains, for the two id spaces that are global and stable.
+ *  Only existence: reachability is not a boundary question. */
+export interface WorldRefs {
+  /** A real character id, or an alias any actor could have been given. The
+   *  alias space is stable, so this needs no notion of "this tick". */
+  resolveCharacter(handle: string): string | undefined;
+  hasItem(id: string): boolean;
+  /** Scene, junction or road — the citation grammar has one `scene` kind for
+   *  "a place". */
+  hasPlace(id: string): boolean;
+}
+
 export type ValidateActArgsResult =
   | { ok: true; args: ActToolArgs }
   | { ok: false; code: CommandRejectionCode; reason: string };
@@ -37,15 +49,18 @@ const ROLE_SET = new Set<string>(OBJECT_REF_ROLES);
 
 /**
  * Validate untrusted `act` args: shape, enums, duration bounds, and every
- * objectRef being inside the actor's perceivable scope this tick. Returns a
- * normalized copy on success (trimmed strings, integral duration).
+ * objectRef naming something real. Returns a normalized copy on success
+ * (trimmed strings, integral duration).
  *
  * Character refs arrive as opaque handles and leave as real ids — this is the
- * one place the two id spaces meet.
+ * one place the two id spaces meet. Nothing here asks whether the thing is
+ * still within reach: every id space is stable, so that is a question about
+ * the world, and the Engine answers it as something the actor finds out.
  */
 export function validateActArgs(
   raw: unknown,
-  directory: PerceivableDirectory
+  directory: PerceivableDirectory,
+  world: WorldRefs
 ): ValidateActArgsResult {
   if (typeof raw !== "object" || raw === null) {
     return reject("invalid_description", "act args must be an object");
@@ -69,7 +84,7 @@ export function validateActArgs(
   }
   const refs: ActionObjectRef[] = [];
   for (const [i, entry] of args.objectRefs.entries()) {
-    const ref = validateRef(entry, i, directory);
+    const ref = validateRef(entry, i, directory, world);
     if (!ref.ok) return ref;
     refs.push(ref.ref);
   }
@@ -98,6 +113,20 @@ export function validateActArgs(
       ? args.skillId.trim()
       : undefined;
 
+  if (args.language !== undefined && typeof args.language !== "string") {
+    return reject("invalid_skill", "`language` must be a string when present");
+  }
+  const language =
+    typeof args.language === "string" && args.language.trim() !== ""
+      ? args.language.trim()
+      : undefined;
+  if (language !== undefined && skillId === undefined) {
+    return reject(
+      "invalid_skill",
+      '`language` only means something with `skillId: "Languages"` — drop it, or declare the skill'
+    );
+  }
+
   if (args.utterance !== undefined && typeof args.utterance !== "string") {
     return reject(
       "invalid_utterance",
@@ -116,6 +145,7 @@ export function validateActArgs(
       objectRefs: refs,
       proposedDurationTicks: duration,
       ...(skillId !== undefined ? { skillId } : {}),
+      ...(language !== undefined ? { language } : {}),
       ...(utterance !== undefined ? { utterance } : {}),
     },
   };
@@ -128,7 +158,8 @@ type ValidateRefResult =
 function validateRef(
   entry: unknown,
   index: number,
-  directory: PerceivableDirectory
+  directory: PerceivableDirectory,
+  world: WorldRefs
 ): ValidateRefResult {
   if (typeof entry !== "object" || entry === null) {
     return reject(
@@ -165,20 +196,33 @@ function validateRef(
   // sees only real ids, and the actor never saw one.
   let resolvedId = id;
   if (kind === "character") {
-    const real = directory.characterHandles.get(id);
+    // An alias is stable per (viewer, target), so it can be resolved whenever
+    // it is cited — including out of the actor's own perception history, ten
+    // minutes after the person walked away. Whether they are still HERE is a
+    // question about the world, and the Engine answers it in the fiction.
+    const real = world.resolveCharacter(id);
     if (real === undefined) {
       return reject(
         "unknown_ref",
-        `objectRefs[${index}] cites character "${id}", which is not someone you can point at right now — use a handle listed in your perception this tick`
+        `objectRefs[${index}] cites character "${id}", which is nobody in this world — cite the tag exactly as it appears in brackets in what you perceive`
       );
     }
     resolvedId = real;
   } else {
-    const scope = kind === "item" ? directory.items : directory.scenes;
-    if (!scope.has(id)) {
+    // Items and places keep their real ids, which are global and stable, so
+    // there is nothing here to expire. Whether the thing is still WITHIN REACH
+    // is a question about the world, and the world is the Engine's to read —
+    // it can answer "she reaches for the display and finds the gap where the
+    // daisies were", which is an occurrence the actor learns from. Rejecting
+    // instead taught her nothing and cost a retry.
+    //
+    // What is still refused is an id that names nothing at all: an invented or
+    // mistyped reference the Engine could only guess at.
+    const exists = kind === "item" ? world.hasItem(id) : world.hasPlace(id);
+    if (!exists) {
       return reject(
         "unknown_ref",
-        `objectRefs[${index}] cites ${kind} "${id}", which is not in your current perception — only ids listed this tick may be cited`
+        `objectRefs[${index}] cites ${kind} "${id}", which is not a ${kind} in this world — cite the id exactly as it appears in brackets in what you perceive`
       );
     }
   }

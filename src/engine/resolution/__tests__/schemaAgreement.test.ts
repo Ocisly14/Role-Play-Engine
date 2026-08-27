@@ -246,3 +246,47 @@ describe("operation kinds have one source", () => {
     }
   });
 });
+
+describe("the trigger worklist answers what the Engine would otherwise infer", () => {
+  it("names the starts that cannot carry a check", async () => {
+    // The rule is "no declared skill, no check". Working that out means
+    // finding `declaredSkillId` in the New Commands section — a cross-section
+    // lookup, and the last one left. Every remaining rejection in a measured
+    // run was it going wrong, always on a described deception where a bar
+    // feels obviously right and is not allowed.
+    const { resolutionWorklist } = await import("../worldDeltaValidator.js");
+    const command = (commandId: string, declaredSkillId?: string) => ({
+      commandId,
+      actorId: "npc_1",
+      issuedAt: "1923-04-02T09:15:00",
+      issuedSceneId: "SCN_1",
+      description: "I pretend to browse.",
+      objectRefs: [],
+      proposedDurationTicks: 2,
+      ...(declaredSkillId ? { declaredSkillId } : {}),
+    });
+
+    const worklist = resolutionWorklist({
+      trigger: { triggers: [], actionIds: ["action_bare", "action_skilled"] },
+      tick: {
+        tickId: "t",
+        tickStartTime: "1923-04-02T09:15:00",
+        durationMinutes: 1,
+      },
+      rules: {
+        resolutionGuide: "",
+        outputSchemaVersion: 1,
+        worldInvariants: [],
+      },
+      state: { scenes: [], items: [], characters: [] },
+      actions: {
+        newCommands: [command("bare"), command("skilled", "Social")],
+        activeActions: [],
+      },
+      events: { objectiveWorldEvents: [], deterministicResults: [] },
+    } as never);
+
+    expect(worklist.starting).toEqual(["action_bare", "action_skilled"]);
+    expect(worklist.startingWithoutSkill).toEqual(["action_bare"]);
+  });
+});

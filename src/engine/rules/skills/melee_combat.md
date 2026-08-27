@@ -58,5 +58,5 @@ fact, not a state change.
 - `item.move` — a weapon knocked away; `item.damage` / `item.destroy` when it
   breaks in the exchange.
 - `character.fatigue` — every exchange costs it.
-- `character.relationship` — being attacked is a disposition change on the
-  target, not merely an event.
+- Being attacked is an occurrence the target perceives, vividly. What it does
+  to their view of the attacker is theirs to write.

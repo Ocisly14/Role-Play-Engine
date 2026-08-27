@@ -51,9 +51,11 @@ export interface RoleSimContext {
    *  recall tool, so a memory absent from the prompt does not exist for
    *  them. Chronological order is applied by the formatter. */
   memories: ReadonlyArray<{
-    /** Store row id. Never shown raw — the formatter derives the short tag
-     *  the character cites when revising or retracting this memory. */
+    /** Store row id — what the revise/retract path addresses. */
     id: string;
+    /** The short name the character cites, minted when the memory was
+     *  written and stored on the row. */
+    handle: string;
     type: string;
     content: string;
     gameDateTime: string;

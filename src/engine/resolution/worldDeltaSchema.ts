@@ -157,10 +157,12 @@ export const CHARACTER_OPS: OperationSpec[] = [
     fields: "condition:{id:string, description:string}",
   },
   { kinds: ["removeCondition"], fields: "conditionId:string" },
-  {
-    kinds: ["relationship"],
-    fields: "toCharacterId:string, delta?:number, note?:string",
-  },
+  // No `relationship`. What one character thinks of another is theirs to
+  // write, through `writeMemory`, and nothing is recorded on their behalf.
+  // The Engine had an operation for it, and it did exactly the damage that
+  // rule exists to prevent: told to record that Nancy had grown wary of
+  // Philip, the code wrote the same score and the SAME NOTE onto Philip's
+  // row, inventing his opinion of her out of hers of him.
 ];
 
 export const SCENE_OPS: OperationSpec[] = [

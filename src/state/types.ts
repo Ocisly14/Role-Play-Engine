@@ -78,6 +78,13 @@ export interface NPCRelationship {
   attitude: number;
   description?: string;
   history?: string;
+  /** The same relationship in the holder's own voice. `description` and
+   *  `history` are authored as a dossier — third person, ABOUT the character
+   *  rather than by them — which reads as somebody else's notes once it sits
+   *  in a memory block among sentences the character wrote themselves. When
+   *  this is present it is what they remember; the other two stay as the
+   *  author's reference. */
+  firstPerson?: string;
 }
 
 // ─── Inventory utilities ───────────────────────────────────────────
@@ -183,6 +190,17 @@ export class InventoryUtils {
  * DynamicWorld NPC Profile — flat character type for the simulation engine.
  * Location is tracked via characterPositions, not on the profile.
  */
+export interface CharacterLanguages {
+  /** Grew up in it. Never checked: a person does not roll to speak their own
+   *  language, and treating it as a skill makes every ordinary sentence a
+   *  gamble. */
+  native: string[];
+  /** Everything else, by fluency 1-99. A tongue absent from both lists is one
+   *  the character simply does not have — a rejection at the boundary, not a
+   *  harder check. */
+  learned?: Record<string, number>;
+}
+
 export interface DynamicNPCProfile {
   id: string;
   name: string;
@@ -190,6 +208,11 @@ export interface DynamicNPCProfile {
   status: CharacterStatus;
   inventory: InventoryItem[];
   skills: Record<string, number>;
+  /** Which tongues, not how good at "languages" in general. A single
+   *  fluency number cannot say that a character reads Latin haltingly and
+   *  speaks their own language perfectly, and the difference is the whole
+   *  of what this domain adjudicates. */
+  languages?: CharacterLanguages;
 
   // Character descriptors (used in LLM planning prompts)
   occupation?: string;
@@ -326,6 +349,11 @@ export interface ModuleSetup {
   introduction?: string;
   /** In-world calendar start date in ISO 8601 (YYYY-MM-DD). */
   startDate: string;
+  /** The tongue everyone in this setting grew up speaking, unless their own
+   *  profile says otherwise. Without it a character has no native language at
+   *  all and every ordinary sentence would want a check — so the loader gives
+   *  it to any NPC whose sheet is silent. */
+  commonLanguage?: string;
   initialGameTime?: string;
   tags?: string[];
   weatherPresets?: Array<{

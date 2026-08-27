@@ -212,19 +212,23 @@ export class NpcActionController {
     const groups = groupByLocation([...allTargets], (npcId) =>
       this.dgsm.isNpcAlive(npcId) ? this.resolveCurrentSceneId(npcId) : null
     );
-    await runWithConcurrency(groups, DECIDE_GROUP_CONCURRENCY, async (npcIds) => {
-      for (const npcId of npcIds) {
-        if (!this.dgsm.isNpcAlive(npcId)) continue;
-        const occurrencesForNpc = occByNpc.get(npcId);
-        await this.decide(npcId, {
-          report,
-          occurrencesForNpc:
-            occurrencesForNpc && occurrencesForNpc.length > 0
-              ? occurrencesForNpc
-              : undefined,
-        });
+    await runWithConcurrency(
+      groups,
+      DECIDE_GROUP_CONCURRENCY,
+      async (npcIds) => {
+        for (const npcId of npcIds) {
+          if (!this.dgsm.isNpcAlive(npcId)) continue;
+          const occurrencesForNpc = occByNpc.get(npcId);
+          await this.decide(npcId, {
+            report,
+            occurrencesForNpc:
+              occurrencesForNpc && occurrencesForNpc.length > 0
+                ? occurrencesForNpc
+                : undefined,
+          });
+        }
       }
-    });
+    );
   }
 
   /** Adapt one legacy FeatureEvent into occurrence form (migration shim). */
@@ -421,7 +425,12 @@ export class NpcActionController {
     // Snapshot every prior perception (excludes current tick); push current
     // after.
     const recentPerceptions = this.perceptionHistory.get(npcId)?.slice() ?? [];
-    this.recordPerception(npcId, gameDateTime, currentScene, rendered.narrative);
+    this.recordPerception(
+      npcId,
+      gameDateTime,
+      currentScene,
+      rendered.narrative
+    );
 
     return {
       npcId,
@@ -472,6 +481,7 @@ export class NpcActionController {
     );
     return rows.map((r) => ({
       id: r.id,
+      handle: r.handle,
       type: r.type,
       content: r.content,
       gameDateTime: r.gameDateTime,
