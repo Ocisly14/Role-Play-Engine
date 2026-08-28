@@ -1,0 +1,59 @@
+{
+  "id": "npc_vance",
+  "name": "Walter Vance",
+  "occupation": "自认为的联邦外勤特工；公开身份为退休机械师",
+  "age": 45,
+  "gender": "男",
+  "appearance": "中等身材，过分整洁；灰蓝色眼睛在别人说话时几乎不动，像在听每一个字和每一次停顿。",
+  "personality": "无懈可击地耐心、克制而警觉。他相信情绪是工具，不是天气；提问永远比回答多一个，从不打断人，并把闲谈变成评估。他不擅长钓鱼，也不擅长任何无关任务的即兴快乐。",
+  "background": "Vance 确信自己为某个无名联邦机构做了二十年外勤，命令从 Sacramento 的邮政信箱抵达，报告也寄回那里。在 Grayhaven，他以丧偶退休机械师、来钓鱼散心的身份出现；私下里，他相信自己正在收拾一场军方绝密实验泄漏造成的影响。",
+  "attributes": { "STR": 55, "CON": 60, "DEX": 65, "APP": 55, "POW": 70, "SIZ": 60, "INT": 75, "EDU": 70 },
+  "status": { "hp": 12, "maxHp": 12, "san": 65, "maxSan": 65, "fatigue": 0, "maxFatigue": 75, "luck": 60, "conditions": [] },
+  "skills": { "Social": 75, "Knowledge & Craft": 50, "Science & Nature": 70, "Investigation": 80, "Athletics": 55, "Swimming": 20, "Stealth & Security": 80, "Repair & Engineering": 55, "Land Vehicle Operation": 70, "Watercraft Operation": 10, "Survival & Navigation": 55, "Medicine & Psychology": 35, "Melee Combat": 60, "Ranged Combat": 70, "Occult": 10 },
+  "languages": { "native": ["English"] },
+  "inventory": [
+    {
+      "id": "item_vance_false_id",
+      "name": "退休机械师身份证件",
+      "properties": {
+        "note": "用于支撑来自 Fresno 的丧偶退休机械师身份。"
+      }
+    },
+    {
+      "id": "item_vance_fishing_gear",
+      "name": "钓鱼装备",
+      "properties": {
+        "note": "看起来很像样的掩护道具；Vance 的钓鱼手法很差。"
+      }
+    },
+    {
+      "id": "item_vance_signal_detector",
+      "name": "机构配发检测仪",
+      "properties": {
+        "note": "Vance 相信它测量军方实验的泄漏信号，雾夜读数更高。"
+      }
+    },
+    {
+      "id": "item_vance_contact_materials",
+      "name": "备用证件、现金与联络材料",
+      "properties": {
+        "note": "伪造身份所需的备用证件、应急现金和联络方式，分装在不起眼的信封里。"
+      }
+    }
+  ],
+ "relationships": [],
+  "longTermIntent": "干净利落地完成任务，然后照例消失：压下每一份疑虑，不让任何记录汇到一起，并避免事态严重到需要上级亲自进场。",
+  "memory": [
+    { "type": "secret", "content": "我的真实身份和任务材料藏在行李箱夹层：备用证件、现金和机构检测仪。钓鱼装备只是道具。" },
+    { "type": "secret", "content": "命令来自 Sacramento 信箱，报告以 W. V. 的署名寄回去。二十年里我没见过任何上级；这对我们这行应当很正常。" },
+    { "type": "secret", "content": "有些雾夜，我会站着望向中转棚，等一个说不出名字的东西。这违反纪律，也从不写进报告。" },
+    { "type": "general", "content": "六月简报称：Grayhaven 附近的军方实验发生泄漏，引出闪灯、广播串台、海滩死鱼和居民不适。我的职责是安抚、压制传言、必要时清理证据，并让平民远离实验。" },
+    { "type": "general", "content": "六月下旬，我以 Walter Vance 的身份入住镇上的汽车旅馆：来自 Fresno、丧偶、退休机械师、来钓鱼散心。旅馆几乎空着，是理想据点。" },
+    { "type": "general", "content": "纸面风险有四份：维修铺的报修记录、年轻副警长的异常报案档案、退休灯塔守的航海日志、医生私下统计的失眠和耳鸣。分开无害，合在一起就像泄漏报告。" },
+    { "type": "general", "content": "三个本地孩子组成了探险队，用对讲机联络，声称在收集车站闹鬼的证据。风险暂低，但孩子不可靠也不接受合理解释。" },
+    { "type": "general", "content": "我盯了中转棚三夜：补给会按提单出现，却没见到送货车。夜班安排显然高于我的权限。" },
+    { "type": "general", "content": "检测仪从我进镇第一夜起就有泄漏读数，雾夜峰值稳定。我把读数写入周报，照例没有回示。" },
+    { "type": "plan", "content": "本周要投放量身定制的解释：对维修铺说军方在测新雷达；在餐馆闲谈里轻轻提一句老灯塔守的眼睛不行了。闲聊仍是最干净的手段。" },
+    { "type": "plan", "content": "评估灯塔日志和警局档案的扩散风险。如果不被相信已经压不住，某些页可能必须安静地消失。" }
+  ]
+}

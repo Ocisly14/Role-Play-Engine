@@ -4,7 +4,7 @@
 //
 // The answer is a set of ids, resolved once at session bootstrap from the
 // module's per-NPC `knownMapSeed`, and it decides exactly one thing: which
-// `context` memories get written for them (see contextMemory.ts). Nothing is
+// generated `map` memories get written for them (see contextMemory.ts). Nothing is
 // persisted in this shape — there is no snapshot of the map hanging off a
 // memory row any more. What the character knows in play is what they wrote
 // down themselves.

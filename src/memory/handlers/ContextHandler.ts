@@ -2,10 +2,8 @@ import type { NpcMemory as PrismaNpcMemory } from "@prisma/client";
 import type { MemoryHandler } from "../types.js";
 
 /**
- * 地理常识 — the world as the character already knows it before the first
- * tick. Written once at session bootstrap by `buildContextMemoryEntries`,
- * never by the character (`map` is the type they write when they learn a
- * place in play).
+ * Compatibility handler for sessions persisted before map knowledge was
+ * unified under `map`. New sessions never create `context` rows.
  *
  * Three scopes, in the order they are generated: `macro` (one per building
  * or macro location), `interior` (one per scene inside it), and a single
@@ -37,7 +35,7 @@ export class ContextHandler implements MemoryHandler {
   }
 
   format(memory: PrismaNpcMemory): string {
-    return `[context] ${memory.content}`;
+    return `[map] ${memory.content}`;
   }
 
   customDecayRate(): number {

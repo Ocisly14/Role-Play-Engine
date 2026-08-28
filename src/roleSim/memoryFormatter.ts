@@ -12,7 +12,7 @@
 // thing everywhere else in this prompt — a citable entity in the world — and
 // a handle that wore them was a handle an actor would cite as an objectRef.
 // Observed live: asked to name the church nave he was standing in, a
-// character cited `M999df02a`, the handle of his own context memory OF that
+// character cited `M999df02a`, the handle of his own map memory OF that
 // nave, which renders on a line reading "at 教堂主殿". Two id spaces, one
 // surface form, and only the section heading to tell them apart.
 //
@@ -39,7 +39,7 @@ export interface FormattableMemory {
 
 export function formatMemories(rows: ReadonlyArray<FormattableMemory>): string {
   // Render first, then sort on (time, rendered line). Sorting on time alone
-  // is not a TOTAL order — every `context` memory is stamped at session start,
+  // is not a TOTAL order — generated map memories share a session-start stamp,
   // so a character's whole geography ties — and `Array.sort` is stable, which
   // means ties silently inherit whatever order the caller happened to pass.
   // This block is ~90% of the user prompt and sits inside its cached prefix,

@@ -77,7 +77,7 @@ function harness(opts: { liveActions?: EngineAction[] } = {}) {
     // Memory is injected whole now — the controller reads everything the
     // character holds, not just today.
     getAllByTypes: vi.fn(async () => []),
-    ensureContextMemories: vi.fn(async () => 0),
+    ensureMapMemories: vi.fn(async () => 0),
   };
   const npcs = ["npc_1", "npc_2", "npc_3"];
   const dgsm = {

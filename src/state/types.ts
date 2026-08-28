@@ -48,9 +48,24 @@ export interface InventoryItem {
   properties?: Record<string, any>;
 }
 
+/**
+ * Memory categories a module may author for an NPC at session start.
+ *
+ * Starting geography is generated as `map` from `knownMapSeed`. Relationships
+ * and long-term intentions have dedicated profile fields, but remain accepted
+ * here for an explicitly authored memory.
+ */
+export type NpcProfileMemoryType =
+  | "general"
+  | "plan"
+  | "secret"
+  | "relationship"
+  | "map"
+  | "long_term_intent";
+
 /** Memory entry defined in NPC profile JSON, bootstrapped into NpcMemory at session init. */
 export interface NpcProfileMemoryEntry {
-  type: "information" | "secret" | "event" | "belief";
+  type: NpcProfileMemoryType;
   content: string;
   metadata?: Record<string, any>;
 }

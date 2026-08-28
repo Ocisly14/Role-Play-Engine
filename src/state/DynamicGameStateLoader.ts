@@ -115,7 +115,7 @@ export async function initializeCompleteDynamicGameState(
   // streets connect. Written once, from module data (see contextMemory.ts).
   await Promise.all(
     state.npcCharacters.map((npc) =>
-      memoryManager.ensureContextMemories({
+      memoryManager.ensureMapMemories({
         npcId: npc.id,
         sessionId: params.sessionId,
         moduleId,

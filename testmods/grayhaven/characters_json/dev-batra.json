@@ -1,0 +1,201 @@
+{
+  "id": "npc_dev_batra",
+  "name": "Dev Batra",
+  "occupation": "电视维修铺老板",
+  "age": 42,
+  "gender": "男",
+  "appearance": "戴金丝眼镜，衬衫口袋总插着三支不同颜色的笔，袖口有一排整齐的烙铁烫痕。",
+  "personality": "方法论者，只信测量和维修记录。说话总先报参数再下结论，幽默干燥而慢半拍；看似耿直，其实很在意家人和铺子的体面。",
+  "background": "生于孟买，无线电学校毕业后赴美，在弗里蒙特电视装配线工作四年。1972 年和 Anita 迁到灰港，接手倒闭的老五金行开电视维修铺。他靠手艺和记账把一家人留在镇上，也无意间保存了异常报修潮最完整的记录。",
+  "attributes": {
+    "STR": 50,
+    "CON": 55,
+    "DEX": 55,
+    "APP": 50,
+    "POW": 60,
+    "SIZ": 55,
+    "INT": 75,
+    "EDU": 80
+  },
+  "status": {
+    "hp": 11,
+    "maxHp": 11,
+    "san": 62,
+    "maxSan": 62,
+    "fatigue": 18,
+    "maxFatigue": 100,
+    "luck": 50,
+    "conditions": []
+  },
+  "skills": {
+    "Electronics": 80,
+    "Electrical Repair": 75,
+    "Mechanical Repair": 55,
+    "Science (Physics)": 60,
+    "Accounting": 50,
+    "Spot Hidden": 45,
+    "Persuade": 35
+  },
+  "languages": {
+    "native": ["English", "Gujarati", "Hindi"],
+    "learned": {}
+  },
+  "inventory": [
+    {
+      "id": "dev_service_ledger",
+      "name": "维修记录本",
+      "properties": {
+        "note": "逐单记录日期、机型、症状和根因；近来的根因栏空得越来越多。"
+      }
+    },
+    {
+      "id": "dev_portable_oscilloscope",
+      "name": "便携示波器",
+      "properties": {
+        "note": "用来追查异常干扰的精密仪器。"
+      }
+    },
+    {
+      "id": "dev_signal_generator",
+      "name": "信号发生器",
+      "properties": {
+        "note": "维修铺工作台上的校准设备。"
+      }
+    },
+    {
+      "id": "dev_repair_toolcase",
+      "name": "维修工具箱",
+      "properties": {
+        "note": "分类极严，连备用螺丝都按尺寸收纳。"
+      }
+    },
+    {
+      "id": "dev_colored_pens",
+      "name": "三支彩色笔",
+      "properties": {
+        "note": "用于区分报修症状、已排除原因和待复查项目。"
+      }
+    }
+  ],
+  "relationships": [
+    {
+      "targetId": "npc_anita_batra",
+      "targetName": "Anita Batra",
+      "relationshipType": "family",
+      "attitude": 85,
+      "firstPerson": "我们家能在灰港站稳，一半靠我的烙铁，一半靠 Anita 的烤箱；后一半大概更多。"
+    },
+    {
+      "targetId": "npc_priya_batra",
+      "targetName": "Priya Batra",
+      "relationshipType": "family",
+      "attitude": 80,
+      "firstPerson": "Priya 的焊点比我十三岁时漂亮。她把报废机箱当零件库，我知道；她也许不接铺子，但她知道怎样把事情记清楚。"
+    },
+    {
+      "targetId": "npc_dolores_medeiros",
+      "targetName": "Dolores Medeiros",
+      "relationshipType": "friend",
+      "attitude": 70,
+      "firstPerson": "Dolores 当年收下 Anita 的曲奇，这份情我记着。她的收音机我修了十二年不收钱，她也从不让我空手走。"
+    },
+    {
+      "targetId": "npc_marisol_reyes",
+      "targetName": "Marisol Reyes",
+      "relationshipType": "neutral",
+      "attitude": 50,
+      "firstPerson": "Marisol 跟我们一样，把日子算到小数点后两位。她店里的灯也在闪，旧线路不是完整解释。"
+    },
+    {
+      "targetId": "npc_doc_weaver",
+      "targetName": "Doc Weaver",
+      "relationshipType": "friend",
+      "attitude": 65,
+      "firstPerson": "Doc 是镇上少数先要数据再下结论的人。他管我的血压，我管他的留声机。"
+    },
+    {
+      "targetId": "npc_ray_holt",
+      "targetName": "Ray Holt",
+      "relationshipType": "neutral",
+      "attitude": 35,
+      "firstPerson": "Ray 警长对警局收音机的串台只说能响就行；这不是一个维护问题应有的回答。"
+    },
+    {
+      "targetId": "npc_cole_baxter",
+      "targetName": "Cole Baxter",
+      "relationshipType": "neutral",
+      "attitude": 50,
+      "firstPerson": "Cole 取修好的机器总会签字留副本，做事很有章法。"
+    },
+    {
+      "targetId": "npc_earl_pruitt",
+      "targetName": "Earl Pruitt",
+      "relationshipType": "neutral",
+      "attitude": 55,
+      "firstPerson": "Earl 保养灯塔机械三十年，手艺是真的。能做到那种程度的人，眼睛和脑子不至于像大家说的那样坏。"
+    },
+    {
+      "targetId": "npc_frank_holt",
+      "targetName": "Frank Holt",
+      "relationshipType": "neutral",
+      "attitude": 45,
+      "firstPerson": "Frank 的货车保养得比全镇任何电视都好。他对工作守合同，我也不逼他谈不愿谈的事。"
+    },
+    {
+      "targetId": "npc_susan_holt",
+      "targetName": "Susan Holt",
+      "relationshipType": "neutral",
+      "attitude": 55,
+      "firstPerson": "Susan 能把一整间候诊室安顿下来，是个妥帖的人。"
+    },
+    {
+      "targetId": "npc_tommy_reyes",
+      "targetName": "Tommy Reyes",
+      "relationshipType": "neutral",
+      "attitude": 40,
+      "firstPerson": "Tommy 胆子太大；只要他别把我的万用表带走，我不干涉孩子们的暑假。"
+    },
+    {
+      "targetId": "npc_denny_holt",
+      "targetName": "Denny Holt",
+      "relationshipType": "neutral",
+      "attitude": 45,
+      "firstPerson": "Denny 爱读书，也该学会有些东西不能只从书里解决。"
+    }
+  ],
+  "longTermIntent": "把电视维修铺体面地传下去，同时找出这波报修潮的干扰源头。",
+  "memory": [
+    {
+      "type": "secret",
+      "content": "维修记录本最后有一张我另画的报修数量曲线。从去年冬天起它一直在爬，我没给任何人看过，连 Anita 也没有。"
+    },
+    {
+      "type": "general",
+      "content": "从去年冬天起，雪花屏和串台的报修单多得反常；每单的根因栏空着的越来越多。"
+    },
+    {
+      "type": "general",
+      "content": "我校过铺里的信号发生器和示波器，仪器没有问题。问题像是某种来源不明的外部干扰。"
+    },
+    {
+      "type": "general",
+      "content": "有七台电视在客户家症状持续、搬回店里却一切正常；天线、馈线和元件都查不出毛病。"
+    },
+    {
+      "type": "general",
+      "content": "店里的 KGRV 收音机也出现杂音。Priya 说那不是普通嗡嗡声，而是 60 赫兹底下叠了扫频；她说得对。"
+    },
+    {
+      "type": "general",
+      "content": "1972 年接手老五金行时，半条街的橱窗还钉着木板。十三年后铺子和这个家都还在，这是值得守住的事。"
+    },
+    {
+      "type": "plan",
+      "content": "在串台最严重的夜晚带便携示波器逐户测量，把干扰强度和时间写进表里。"
+    },
+    {
+      "type": "plan",
+      "content": "在周二邮件车到前给 Fort Anne 的供应商下单补一批中周变压器，以免报修潮耗尽备件。"
+    }
+  ]
+}

@@ -9,16 +9,14 @@ export type { NpcMemoryType } from "@prisma/client";
 export type NpcMemory = PrismaNpcMemory;
 
 /**
- * Module data is authored in the PRE-consolidation memory vocabulary
- * (`NpcProfileMemoryEntry` in state/types.ts: information | secret | event |
- * belief). The runtime enum no longer has three of those, and a raw
- * passthrough reaches `getHandler` as `undefined` and dies on `.prepare` —
- * which is exactly what happened to every session created from an existing
- * module. Map at the ingestion boundary, the way skills go through
- * `LEGACY_SKILL_TO_CANONICAL`, and leave the authoring vocabulary alone.
+ * NPC profile JSON now uses the canonical runtime vocabulary. Keep this map
+ * at the ingestion boundary solely for already-published modules that still
+ * carry the old information/event/belief vocabulary; raw passthrough would
+ * reach `getHandler` as `undefined` and fail on `.prepare`.
  */
 const LEGACY_MEMORY_TYPE_TO_CANONICAL: Readonly<Record<string, NpcMemoryType>> =
   {
+    context: "map",
     information: "general",
     event: "general",
     // A belief is about someone often enough that `relationship` is tempting,
@@ -36,7 +34,6 @@ const CANONICAL_MEMORY_TYPES: ReadonlySet<string> = new Set<NpcMemoryType>([
   "relationship",
   "map",
   "long_term_intent",
-  "context",
 ]);
 
 /** Fold an authored memory type onto the runtime enum. Anything unrecognized
@@ -76,17 +73,16 @@ export interface KnownMapIds {
   scenarioOutlineIds: string[];
 }
 
-/** `context` memories are the character's standing knowledge of a place —
- *  which one, and at what altitude. See contextMemory.ts. */
-export interface ContextMetadata {
+/** A generated map memory's standing knowledge of a place and its altitude. */
+export interface MapMetadata {
   scope: "macro" | "interior" | "topology";
   /** Outline id for `macro`, scene id for `interior`, absent for `topology`. */
   locationId?: string;
 }
 
-export type MemoryMetadata = RelationshipMetadata | ContextMetadata;
+export type MemoryMetadata = RelationshipMetadata | MapMetadata;
 
-export interface EnsureContextMemoriesParams {
+export interface EnsureMapMemoriesParams {
   npcId: string;
   sessionId: string;
   moduleId: string;
@@ -165,7 +161,6 @@ export const CONTEXT_PROFILES: Record<ContextPurpose, ContextProfile> = {
       "secret",
       "relationship",
       "map",
-      "context",
     ],
     defaultLimit: 20,
     typeLimits: { general: 0, plan: 0, relationship: 0 },
@@ -176,7 +171,7 @@ export const CONTEXT_PROFILES: Record<ContextPurpose, ContextProfile> = {
     typeLimits: { general: 0 },
   },
   detailing: {
-    defaultTypes: ["general", "plan", "secret", "relationship", "map", "context"],
+    defaultTypes: ["general", "plan", "secret", "relationship", "map"],
     defaultLimit: 5,
     typeLimits: { general: 0 },
   },

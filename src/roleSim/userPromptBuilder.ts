@@ -45,19 +45,16 @@ export interface BuildUserPromptOptions {
  *
  * So the three groups are cut by whether they MOVE, not by topic:
  *
- *  1. **frozen** — name, profile, skill values, and the `context` memories:
- *     the world as the character already knew it walking in. Written once at session bootstrap
- *     and never touched again — `writeMemory` refuses to change them, which
- *     is exactly the property that makes them cacheable. The one breakpoint
- *     sits here, is written once, and is read by every later tick.
- *  2. **growing** — what the character has written and perceived since. Its
+ *  1. **frozen** — name, profile, and skill values. These do not move during
+ *     a session, so the one breakpoint sits here.
+ *  2. **growing** — memory and what the character has perceived. Its
  *     prefix is stable but its end moves every tick, so it gets no breakpoint
  *     of its own; it rides at full price behind the cached block.
  *  3. **volatile** — vitals, the action in progress, this minute's
  *     perception, rejection feedback, the decide instruction.
  *
- * Reading order survives: who you are -> what you already knew -> what you
- * have learned since -> how you are now -> what you sense -> decide.
+ * Reading order is: who you are -> what you remember -> how you are now ->
+ * what you sense -> decide.
  */
 export function buildUserPromptSegments(
   ctx: RoleSimContext,
@@ -71,21 +68,8 @@ export function buildUserPromptSegments(
   frozen.push(`## Who you are\n${formatProfile(ctx.npcProfile)}`);
   frozen.push(`## What you can do\n${formatSkills(ctx.npcProfile)}`);
 
-  // `context` is the one memory type written FOR the character — the geography
-  // seeded at session start — and correspondingly the one type they may not
-  // rewrite. That makes it the only part of their memory that is genuinely
-  // frozen, so it is what the breakpoint gets to sit behind.
-  const knownAlready = ctx.memories.filter((m) => m.type === "context");
-  const learnedSince = ctx.memories.filter((m) => m.type !== "context");
-
-  if (knownAlready.length > 0) {
-    frozen.push(
-      `## What you already knew before today\n${formatMemories(knownAlready)}`
-    );
-  }
-
-  if (learnedSince.length > 0) {
-    growing.push(`## What you remember\n${formatMemories(learnedSince)}`);
+  if (ctx.memories.length > 0) {
+    growing.push(`## What you remember\n${formatMemories(ctx.memories)}`);
   }
 
   // The character's day as they lived it, not a sensor log: this is the whole

@@ -9,7 +9,7 @@ import { memoryHandle } from "../../memory/memoryHandle.js";
 import { dispatchInstantTool } from "../toolDispatcher.js";
 
 const MINE = "11111111-1111-1111-1111-111111111111";
-const CONTEXT = "22222222-2222-2222-2222-222222222222";
+const MAP = "22222222-2222-2222-2222-222222222222";
 
 const add = vi.fn(async () => ({}));
 const updateRelationship = vi.fn();
@@ -41,9 +41,9 @@ function deps() {
         content: "Hollins was at the harbour.",
       },
       {
-        id: CONTEXT,
-        handle: memoryHandle(CONTEXT),
-        type: "context",
+        id: MAP,
+        handle: memoryHandle(MAP),
+        type: "map",
         content: "The bakery is on Mill Street.",
       },
     ],
@@ -90,16 +90,22 @@ describe("writeMemory op=replace", () => {
     expect(result).toContain("not a memory of yours");
   });
 
-  it("refuses to rewrite a system-authored memory", async () => {
+  it("allows a starting-map memory to be corrected", async () => {
     const { result } = await dispatchInstantTool(
       "writeMemory",
-      { op: "replace", ref: memoryHandle(CONTEXT), content: "..." },
+      { op: "replace", ref: memoryHandle(MAP), content: "..." },
       caps(),
       deps()
     );
 
-    expect(reviseOwn).not.toHaveBeenCalled();
-    expect(result).toContain("not yours to change");
+    expect(reviseOwn).toHaveBeenCalledWith({
+      memoryId: MAP,
+      sessionId: "sess_1",
+      npcId: "npc_1",
+      content: "...",
+      metadata: { revisedAt: "1923-04-02T09:15:00" },
+    });
+    expect(result).toContain("Corrected");
   });
 
   it("requires the whole corrected memory, not a diff", async () => {

@@ -10,14 +10,14 @@ const rows = [
   {
     id: "11111111-1111-1111-1111-111111111111",
     handle: "M11111111",
-    type: "context",
+    type: "map",
     content: "The bakery is on Mill Street.",
     gameDateTime: "2003-12-01T00:00:00",
   },
   {
     id: "22222222-2222-2222-2222-222222222222",
     handle: "M22222222",
-    type: "context",
+    type: "map",
     content: "A footbridge crosses the creek.",
     gameDateTime: "2003-12-01T00:00:00",
   },
@@ -50,7 +50,7 @@ describe("formatMemories", () => {
   });
 
   it("is byte-identical however the store ordered the rows", () => {
-    // Every `context` memory is stamped at session start, so sorting on time
+    // Starting-map memories are stamped at session start, so sorting on time
     // alone leaves them tied — and a stable sort keeps ties in input order.
     // The store's own ordering used to be a non-unique key, which made that
     // input order a coin flip between ticks.
@@ -64,7 +64,7 @@ describe("formatMemories", () => {
 
   it("keeps the location suffix out of the way of the ordering", () => {
     const withPlace = formatMemories([{ ...rows[0], location: "Mill Street" }]);
-    expect(withPlace).toContain("(context) at Mill Street The bakery");
+    expect(withPlace).toContain("(map) at Mill Street The bakery");
   });
 });
 

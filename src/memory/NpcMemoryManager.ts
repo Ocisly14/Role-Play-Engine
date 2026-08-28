@@ -4,12 +4,12 @@ import { DecayEngine } from "./DecayEngine.js";
 import { MemoryRetriever } from "./MemoryRetriever.js";
 import { MemoryStore } from "./MemoryStore.js";
 import { getAllHandlers, getHandler } from "./handlers/index.js";
-import { buildContextMemoryEntries } from "./contextMemory.js";
+import { buildMapMemoryEntries } from "./contextMemory.js";
 import { resolveKnownLocationIds } from "./knownLocations.js";
 import {
   type AddMemoryParams,
   CONTEXT_PROFILES,
-  type EnsureContextMemoriesParams,
+  type EnsureMapMemoriesParams,
   type GetContextParams,
   type QueryMemoryParams,
   type ScoredMemory,
@@ -45,29 +45,28 @@ export class NpcMemoryManager {
   }
 
   /**
-   * Write this character's standing knowledge of the world — one memory per
-   * macro location, one per scene inside it, and one for how the streets
-   * connect (see contextMemory.ts). Idempotent per session: if any `context`
-   * memory already exists for this character, nothing is written.
+   * Write this character's starting map knowledge — one memory per macro
+   * location, one per scene inside it, and one for how the streets connect.
+   * New rows use the unified `map` type. A legacy `context` row still
+   * suppresses a duplicate bootstrap when resuming an older session.
    *
    * Returns how many memories were created.
    */
-  async ensureContextMemories(
-    params: EnsureContextMemoriesParams
+  async ensureMapMemories(
+    params: EnsureMapMemoriesParams
   ): Promise<number> {
-    const existing = await this.store.findLatestByType(
-      params.sessionId,
-      params.npcId,
-      "context"
-    );
-    if (existing) return 0;
+    const [existingMap, legacyContext] = await Promise.all([
+      this.store.findLatestByType(params.sessionId, params.npcId, "map"),
+      this.store.findLatestByType(params.sessionId, params.npcId, "context"),
+    ]);
+    if (existingMap || legacyContext) return 0;
 
     const knownIds = resolveKnownLocationIds(
       params.dgsm,
       params.seed,
       params.dgsm.getCharacterPosition(params.npcId)
     );
-    const entries = buildContextMemoryEntries(
+    const entries = buildMapMemoryEntries(
       params.dgsm,
       knownIds,
       params.language
@@ -79,7 +78,7 @@ export class NpcMemoryManager {
           npcId: params.npcId,
           sessionId: params.sessionId,
           moduleId: params.moduleId,
-          type: "context",
+          type: "map",
           content: entry.content,
           gameDateTime: params.gameDateTime,
           // `location` is a scene the memory happened at; only an interior

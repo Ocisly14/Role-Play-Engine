@@ -1,6 +1,6 @@
 # Dynamic World Scene Schema
 
-This document describes the scene-related JSON structures currently consumed by the Dynamic World runtime loader in `src/dynamicworldagent/state/worldModuleLoader.ts`.
+This document describes the scene-related JSON structures consumed by `src/state/moduleLoader.ts`.
 
 ## Runtime Files
 
@@ -33,6 +33,11 @@ Optional module-level runtime setup. It currently carries module introduction te
 ```json
 {
   "introduction": "A rural mystery unfolds under gathering storm clouds.",
+  "map": {
+    "htmlPath": "map.html",
+    "imagePath": "map.png",
+    "imageMimeType": "image/png"
+  },
   "weatherPresets": [
     {
       "regionId": "LOC_downtown",
@@ -43,102 +48,76 @@ Optional module-level runtime setup. It currently carries module introduction te
 }
 ```
 
-## 2. SCN_*.json
+When `map.htmlPath` is configured, every macro id in `scenarios_outline.json`
+must occur exactly once in `map.html` as `data-location-id="<outline-id>"`.
+The HTML is for UI rendering; `imagePath` is the optional raster vision asset.
 
-Represents a normal playable scene/building/interior node.
+## 2. Schema v2 place files
+
+`SCN_*.json`, `JUNC_*.json`, and `ROAD_*.json` all use a prose-first authoring
+format. `description` is complete natural-language scene text; every visible
+object, exit, and condition is cited with a stable `[reference-id]`. The
+corresponding machine-readable objects live in the same file under
+`references`.
 
 ```json
 {
+  "schemaVersion": 2,
   "id": "SCN_library",
   "name": "Town Library",
-  "description": "A quiet public library with dusty archives.",
+  "description": "Dusty archives fill the reading room [item.library.archives]. A stairway rises to the stacks [exit.library.stacks]. The unlit back row is hard to examine [condition.library.dim].",
   "parentLocationId": "LOC_downtown",
-  "items": [],
-  "conditions": [],
-  "connections": ["SCN_square", "SCN_archive"],
-  "sceneImage": {
-    "path": "Map/library.png"
+  "references": {
+    "items": [
+      {
+        "id": "item.library.archives",
+        "name": "Archive shelves",
+        "description": "Tall shelves of local newspapers and municipal records."
+      }
+    ],
+    "connections": [
+      {
+        "id": "exit.library.stacks",
+        "targetId": "SCN_library_stacks",
+        "name": "Stairway to stacks",
+        "description": "A narrow stairway behind the circulation desk."
+      }
+    ],
+    "conditions": [
+      {
+        "id": "condition.library.dim",
+        "description": "The rear shelves are poorly lit.",
+        "mechanicalEffect": { "skillPenalty": { "Perception": -10 } }
+      }
+    ]
   }
 }
 ```
 
-### Fields
+### Common fields
 
-- `id: string`
-- `name: string`
-- `description: string`
-- `parentLocationId: string`
-- `items: Item[]`
-- `itemContexts?: ItemContexts`
-- `conditions: SceneCondition[]`
-- `connections: string[]`
-- `sceneImage?: { path: string; mimeType?: string; generatedAt?: string }`
-- `indoor?: boolean`
+- `schemaVersion: 2`
+- `id`, `name`, `description`, `parentLocationId`
+- `references.items: Item[]`
+- `references.connections: Array<{ id, targetId, name?, description?, hidden? }>`
+- `references.conditions: Array<{ id, description, mechanicalEffect?, featureId?, data? }>`
 
-## 3. JUNC_*.json
+All reference ids must be module-unique. Every visible reference must occur in
+the description as `[id]`; every citation must resolve to one reference in that
+place. Hidden exits are excluded from the initial citation requirement.
 
-Represents an outdoor junction/intersection node.
+### JUNC_*.json
 
-```json
-{
-  "id": "JUNC_square_north",
-  "name": "North Square Junction",
-  "description": "A cobblestone intersection with a dead streetlamp.",
-  "parentLocationId": "OUTDOOR",
-  "items": [],
-  "conditions": [],
-  "connectedSceneIds": ["SCN_library", "SCN_post_office"]
-}
-```
+Junction connections use the common `references.connections` array. Each
+connection targets an enterable `SCN_*`; the loader derives the runtime
+`connectedSceneIds` list.
 
-### Fields
+### ROAD_*.json
 
-- `id: string`
-- `name: string`
-- `description: string`
-- `parentLocationId: string`
-- `items: Item[]`
-- `itemContexts?: ItemContexts`
-- `conditions: SceneCondition[]`
-- `connectedSceneIds: string[]`
-
-## 4. ROAD_*.json
-
-Represents a road/path segment between two junctions.
-
-```json
-{
-  "id": "ROAD_market_lane",
-  "name": "Market Lane",
-  "description": "A narrow street lined with old brick storefronts.",
-  "parentLocationId": "OUTDOOR",
-  "endpointA": "JUNC_square_north",
-  "endpointB": "JUNC_square_south",
-  "travelTimeMinutes": 8,
-  "alongConnections": [
-    {
-      "sceneId": "SCN_bookshop",
-      "position": 0.35
-    }
-  ],
-  "items": [],
-  "conditions": []
-}
-```
-
-### Fields
-
-- `id: string`
-- `name: string`
-- `description: string`
-- `parentLocationId: string`
-- `endpointA: string`
-- `endpointB: string`
-- `travelTimeMinutes: number`
-- `alongConnections: Array<{ sceneId: string; position: number }>`
-- `items: Item[]`
-- `itemContexts?: ItemContexts`
-- `conditions: SceneCondition[]`
+Roads also use the common references array plus `travelTimeMinutes`. Their
+connections add a required role: exactly one `endpointA`, one `endpointB`, and
+zero or more `access` entries. Each `access` entry also has `position` from 0
+to 1. The loader derives `endpointA`, `endpointB`, and `alongConnections`.
 
 ## 5. scenarios_outline.json
 

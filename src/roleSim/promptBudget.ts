@@ -3,7 +3,7 @@
 // How much of the character's prompt each part is spending.
 //
 // Measurement only — nothing here evicts anything yet. The quotas come after
-// the numbers, not before: the biggest consumer today is `context` memory,
+// the numbers, not before: the biggest consumer today is `map` memory,
 // and the `knownMapSeed` fix is about to change its size by a large factor.
 //
 // ── On estimating tokens without a tokenizer ───────────────────────────────

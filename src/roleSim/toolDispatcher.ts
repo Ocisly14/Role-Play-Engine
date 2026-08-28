@@ -88,11 +88,6 @@ export async function dispatchInstantTool(
   }
 }
 
-/** The character writes its own memories. `context` — the geography they
- *  started the session knowing — is the one thing written for them, so it is
- *  the one thing they may not rewrite. */
-const WRITE_MEMORY_DISALLOWED: ReadonlySet<string> = new Set(["context"]);
-
 async function dispatchWriteMemory(
   input: WriteMemoryInput,
   deps: DispatcherDeps
@@ -107,12 +102,6 @@ async function dispatchWriteMemory(
   if (typeof input.type !== "string") {
     return { result: "Error: writeMemory requires a 'type' field." };
   }
-  if (WRITE_MEMORY_DISALLOWED.has(input.type)) {
-    return {
-      result: `Error: "${input.type}" memories are not yours to write. Allowed types: general, plan, secret, relationship, map, long_term_intent.`,
-    };
-  }
-
   const content = typeof input.content === "string" ? input.content : "";
 
   if (!content.trim()) {
@@ -227,12 +216,6 @@ async function dispatchReviseMemory(
       result: `Error: "${ref}" is not a memory of yours. Copy the tag exactly as it appears at the start of the line in what you remember.`,
     };
   }
-  if (WRITE_MEMORY_DISALLOWED.has(target.type)) {
-    return {
-      result: `Error: "${target.type}" memories are not yours to change — that is what you already knew coming in. Write a new memory of your own instead.`,
-    };
-  }
-
   if (op === "delete") {
     const done = await deps.memory.retractOwn({
       memoryId: target.id,

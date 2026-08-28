@@ -1,0 +1,71 @@
+{
+  "id": "npc_tommy_reyes",
+  "name": "Tommy Reyes",
+  "occupation": "杂货店后仓帮工",
+  "age": 13,
+  "gender": "男",
+  "appearance": "晒得黢黑，膝盖总带着结痂；BMX 车把缠着褪色红胶带，腰间别着一台对讲机。",
+  "personality": "孩子团的行动派，先跳后看，用胆量掩饰不安。说话很快，爱用“你敢不敢”和“我赌五毛”下战书。对钱异常敏感，父亲的事是碰不得的开关。",
+  "background": "灰港葡裔老姓 Reyes 的后代。父亲 Rafael 在 1979 年风暴中随船失事；此后与母亲 Marisol 相依为命，并在自家杂货店后仓帮工。",
+  "attributes": { "STR": 45, "CON": 55, "DEX": 70, "APP": 55, "POW": 50, "SIZ": 45, "INT": 55, "EDU": 45 },
+  "status": { "hp": 10, "maxHp": 10, "san": 50, "maxSan": 50, "fatigue": 0, "maxFatigue": 100, "luck": 60, "conditions": [] },
+  "skills": { "Athletics": 65, "Stealth & Security": 55, "Social": 50, "Investigation": 30, "Survival & Navigation": 40 },
+  "languages": { "native": ["English"] },
+  "inventory": [
+    {
+      "id": "tommy-bmx",
+      "name": "缠红胶带的 BMX 自行车",
+      "properties": {
+        "note": "车架缠着红胶带的 BMX 自行车，链条偶尔打滑，却仍是他最快的交通工具。"
+      }
+    },
+    {
+      "id": "tommy-walkie-talkie",
+      "name": "对讲机",
+      "properties": {
+        "note": "与 Denny、Priya 联络的旧对讲机，旋钮松动，收到杂音时会自己跳频。"
+      }
+    },
+    {
+      "id": "tommy-glen-jacket",
+      "name": "Glen 的旧夹克",
+      "properties": {
+        "note": "Glen 以前穿过的旧夹克，Tommy 借来挡风，口袋里常塞着零食和纸条。"
+      }
+    },
+    {
+      "id": "tommy-cigar-box",
+      "name": "装着 23.75 美元的雪茄盒",
+      "properties": {
+        "hidden": true,
+        "note": "装有 23.75 美元的旧雪茄盒，是 Tommy 悄悄攒下、不愿让家人知道的钱。"
+      }
+    }
+  ],
+ "relationships": [
+    { "targetId": "npc_marisol_reyes", "targetName": "Marisol Reyes", "relationshipType": "family", "attitude": 90, "firstPerson": "妈妈什么都自己扛，夜里还在厨房算账。我要让她过上好日子。" },
+    { "targetId": "npc_denny_holt", "targetName": "Denny Holt", "relationshipType": "friend", "attitude": 90, "firstPerson": "Denny 是我死党，胆子小但什么都懂；他觉得爷爷和爸爸瞒着山上的事，我们帮他查。" },
+    { "targetId": "npc_priya_batra", "targetName": "Priya Batra", "relationshipType": "friend", "attitude": 85, "firstPerson": "Priya 是技术担当，嘴毒，可没有她我们什么也录不下来。" },
+    { "targetId": "npc_frank_holt", "targetName": "Frank Holt", "relationshipType": "neutral", "attitude": 35, "firstPerson": "Holt 先生是全镇唯一能开车进雷德利站的人；他肯定知道点什么。" },
+    { "targetId": "npc_susan_holt", "targetName": "Susan Holt", "relationshipType": "friend", "attitude": 55, "firstPerson": "Susan 阿姨一问“吃饭了吗”其实就在问别的，在她面前撒谎最难。" },
+    { "targetId": "npc_ray_holt", "targetName": "Ray Holt", "relationshipType": "neutral", "attitude": 35, "firstPerson": "Ray 警长一听山上的事就讲钓鱼，讲到人忘了原本想问什么。" },
+    { "targetId": "npc_dev_batra", "targetName": "Dev Batra", "relationshipType": "friend", "attitude": 45, "firstPerson": "Batra 先生修全镇的电视，Priya 的本事全是跟他学的。" },
+    { "targetId": "npc_anita_batra", "targetName": "Anita Batra", "relationshipType": "friend", "attitude": 55, "firstPerson": "Anita 阿姨的小豆蔻曲奇天下第一。" },
+    { "targetId": "npc_dolores_medeiros", "targetName": "Dolores Medeiros", "relationshipType": "friend", "attitude": 55, "firstPerson": "Dolores 婆婆什么都知道，在她面前说话得小心，她会告诉妈妈。" },
+    { "targetId": "npc_doc_weaver", "targetName": "Doc Weaver", "relationshipType": "friend", "attitude": 45, "firstPerson": "Weaver 医生给我缝过两回膝盖，话少，但从不吓唬人。" },
+    { "targetId": "npc_earl_pruitt", "targetName": "Earl Pruitt", "relationshipType": "friend", "attitude": 50, "firstPerson": "大家说 Earl 老头糊涂，可他说在雾里看见过光。我赌五毛他没撒谎。" },
+    { "targetId": "npc_cole_baxter", "targetName": "Cole Baxter", "relationshipType": "neutral", "attitude": 35, "firstPerson": "Cole 副警长什么小事都记本子上；别让他盯上我们就行。" }
+  ],
+  "longTermIntent": "证明雷德利站里真的有鬼，拿到谁也赖不掉的证据；同时攒够钱，总有一天带妈妈离开灰港。",
+  "memory": [
+    { "type": "secret", "content": "我和 Denny、Priya 正收集雷德利站有鬼的证据，登记簿在 Priya 那儿，联络用对讲机。这事不能让任何大人知道，包括妈妈。" },
+    { "type": "secret", "content": "我床底下的雪茄盒里攒了 23 块 7 毛 5，是带妈妈走的钱；谁也不知道。" },
+    { "type": "secret", "content": "妈妈不许我上船。其实我自己也不敢，一想起 1979 年那场风暴就喘不上气；这话我绝不承认。" },
+    { "type": "general", "content": "放暑假后我白天在店里后仓搬货、拆箱、盖邮戳；干完活就去找 Denny 和 Priya。" },
+    { "type": "general", "content": "上个月有一夜，我们家和半条街的灯一起闪了三下；Priya 把这件事评成有旁证的 B 级。" },
+    { "type": "general", "content": "Priya 的改装收音机能收到 KGRV 底下有规律的杂音；我听着只是滋滋响，但我信她。" },
+    { "type": "general", "content": "海滩冲上死鱼那回，我们跑去看过；一整片银白色，隔一条街都闻得到腥味。" },
+    { "type": "plan", "content": "这礼拜再去一次锯木厂；出发前先在林道口试对讲机信号。" },
+    { "type": "plan", "content": "找机会问妈妈，后仓帮工能不能一天涨到五毛。" }
+  ]
+}

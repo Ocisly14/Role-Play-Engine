@@ -509,12 +509,14 @@ export class NpcActionController {
       npcId,
       this.sessionId,
       [
-        "context",
         "general",
         "plan",
         "secret",
         "relationship",
         "map",
+        // Read context only from sessions saved before map knowledge was
+        // unified under `map`.
+        "context",
         // The life goal is a memory like any other, not a separate prompt
         // field fetched by its own query. Writing a new one does not erase
         // the old: the character remembers what they used to want, and the

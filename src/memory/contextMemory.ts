@@ -24,10 +24,11 @@ import type { DynamicScene, ScenarioOutline } from "../state/types.js";
 import { junctionSceneLinks } from "./knownLocations.js";
 import type { KnownMapIds } from "./types.js";
 
-export type ContextMemoryScope = "macro" | "interior" | "topology";
+/** Structural detail attached to generated map memories. */
+export type MapMemoryScope = "macro" | "interior" | "topology";
 
-export interface ContextMemoryEntry {
-  scope: ContextMemoryScope;
+export interface MapMemoryEntry {
+  scope: MapMemoryScope;
   /** Outline id for `macro`, scene id for `interior`, absent for `topology`. */
   locationId?: string;
   content: string;
@@ -37,11 +38,11 @@ export interface ContextMemoryEntry {
  *  the open air. It is a bucket, not a place, so it gets no macro memory. */
 const OUTDOOR = "OUTDOOR";
 
-export function buildContextMemoryEntries(
+export function buildMapMemoryEntries(
   dgsm: DynamicGameStateManager,
   knownIds: KnownMapIds,
   language = "en"
-): ContextMemoryEntry[] {
+): MapMemoryEntry[] {
   const state = dgsm.getState();
   const topology = dgsm.getTopology();
 
@@ -129,7 +130,7 @@ export function buildContextMemoryEntries(
     return lines.join("\n");
   };
 
-  const entries: ContextMemoryEntry[] = [];
+  const entries: MapMemoryEntry[] = [];
   const placedScenes = new Set<string>();
 
   // ── Macro location, then the scenes inside it ──

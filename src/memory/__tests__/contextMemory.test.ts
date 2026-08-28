@@ -7,7 +7,7 @@
 
 import { describe, expect, it } from "vitest";
 import type { DynamicGameStateManager } from "../../state/DynamicGameState.js";
-import { buildContextMemoryEntries } from "../contextMemory.js";
+import { buildMapMemoryEntries } from "../contextMemory.js";
 import type { KnownMapIds } from "../types.js";
 
 const scenarioOutlines = [
@@ -160,8 +160,8 @@ const knownIds: KnownMapIds = {
   scenarioOutlineIds: ["B_HOSP", "B_MILL", "OUTDOOR"],
 };
 
-describe("buildContextMemoryEntries", () => {
-  const entries = buildContextMemoryEntries(dgsm, knownIds, "en");
+describe("buildMapMemoryEntries", () => {
+  const entries = buildMapMemoryEntries(dgsm, knownIds, "en");
 
   it("writes one macro memory per building, listing the rooms inside it", () => {
     const macro = entries.filter((e) => e.scope === "macro");

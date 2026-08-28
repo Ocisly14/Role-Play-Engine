@@ -1,0 +1,63 @@
+{
+  "id": "npc_earl_pruitt",
+  "name": "Earl Pruitt",
+  "occupation": "退休灯塔守",
+  "age": 72,
+  "gender": "男",
+  "appearance": "风干般瘦高，花白胡茬，浅色的海员眼睛；油布雨衣四季不离身。",
+  "personality": "寡言、毒舌、骄傲得近乎固执。他信观测胜过安慰，厌恶别人把他当老糊涂；说话总从天气开始，被质疑雾里的灯光时绝不退让。",
+  "background": "Earl 是灰港人，1952 年接任灯塔守，守了三十年，直到 1982 年灯塔自动化。妻子 Nora 于 1968 年病逝，两人没有孩子。他独居在码头边，仍每天走去灯塔崖，并在学生练习本上记风向、能见度与船只。",
+  "attributes": { "STR": 35, "CON": 45, "DEX": 40, "APP": 35, "POW": 60, "SIZ": 60, "INT": 70, "EDU": 60 },
+  "status": { "hp": 10, "maxHp": 10, "san": 58, "maxSan": 60, "fatigue": 10, "maxFatigue": 60, "luck": 45, "conditions": [] },
+  "skills": { "Social": 30, "Knowledge & Craft": 55, "Science & Nature": 20, "Investigation": 45, "Athletics": 35, "Swimming": 60, "Stealth & Security": 20, "Repair & Engineering": 65, "Land Vehicle Operation": 30, "Watercraft Operation": 75, "Survival & Navigation": 80, "Medicine & Psychology": 15, "Melee Combat": 35, "Ranged Combat": 40, "Occult": 55 },
+  "languages": { "native": ["English"] },
+  "inventory": [
+    {
+      "id": "item_earl_maritime_log",
+      "name": "航海日志练习本",
+      "properties": {
+        "note": "一天一页，记录风、能见度和船只；其中三页记着雾中固定的灯光。"
+      }
+    },
+    {
+      "id": "item_earl_lighthouse_key",
+      "name": "未上交的灯塔钥匙",
+      "properties": {
+        "note": "1982 年交还官方钥匙时私配留下的一把。"
+      }
+    },
+    {
+      "id": "item_earl_oilskin_coat",
+      "name": "旧油布雨衣",
+      "properties": {
+        "note": "多次补缀的黄色油布雨衣，仍带着盐雾、机油和旧码头的味道。"
+      }
+    }
+  ],
+ "relationships": [
+    { "targetId": "npc_dolores_medeiros", "targetName": "Dolores Medeiros", "relationshipType": "friend", "attitude": 55, "firstPerson": "Dolores 还记得老雾灯故事；她说的和我家饭桌上听来的版本对得上。" },
+    { "targetId": "npc_ray_holt", "targetName": "Ray Holt", "relationshipType": "neutral", "attitude": -30, "firstPerson": "Ray 连头都没抬就驳回我的灯光报案；他以前没这么擅长装作没看见。" },
+    { "targetId": "npc_cole_baxter", "targetName": "Cole Baxter", "relationshipType": "friend", "attitude": 45, "firstPerson": "年轻副警长把方位和持续时间都写下来了。信不信另说，这才叫警察办事。" },
+    { "targetId": "npc_doc_weaver", "targetName": "Doc Weaver", "relationshipType": "friend", "attitude": 30, "firstPerson": "Weaver 叫我少抽烟多睡觉；他不信那盏灯，却从没笑话我。" },
+    { "targetId": "npc_marisol_reyes", "targetName": "Marisol Reyes", "relationshipType": "friend", "attitude": 25, "firstPerson": "Marisol 会给我留练习本和罐头；她最近看上去比账本还沉。" },
+    { "targetId": "npc_tommy_reyes", "targetName": "Tommy Reyes", "relationshipType": "neutral", "attitude": 10, "firstPerson": "Tommy 骑车太快，又总往林子边上跑；那孩子该把勇气留给真正值得的事。" },
+    { "targetId": "npc_frank_holt", "targetName": "Frank Holt", "relationshipType": "neutral", "attitude": 25, "firstPerson": "Frank 懂绳索和货物，是干过真活的人；他往山上送货又不谈，这是他的事。" },
+    { "targetId": "npc_susan_holt", "targetName": "Susan Holt", "relationshipType": "friend", "attitude": 25, "firstPerson": "Susan 总问我吃没吃饭；她护士的眼睛在数镇上的人，她也察觉到不对。" },
+    { "targetId": "npc_denny_holt", "targetName": "Denny Holt", "relationshipType": "friend", "attitude": 35, "firstPerson": "Denny 问灯塔是因为真想知道，不是来听笑话；这已经胜过多数大人。" },
+    { "targetId": "npc_dev_batra", "targetName": "Dev Batra", "relationshipType": "friend", "attitude": 30, "firstPerson": "Dev 修我的收音机时先说故障再动手；信仪器多过信嘴巴的人，我看得顺眼。" },
+    { "targetId": "npc_anita_batra", "targetName": "Anita Batra", "relationshipType": "friend", "attitude": 35, "firstPerson": "Anita 的葡式蛋挞味道正；有些老灰港人家的配方都做不出那个味。" },
+    { "targetId": "npc_priya_batra", "targetName": "Priya Batra", "relationshipType": "friend", "attitude": 25, "firstPerson": "Priya 对收音机有真耳朵；别人不信她时，她脸上的神情我认得。" }
+  ],
+  "longTermIntent": "在我死去，或再也无法相信自己眼睛之前，弄清雾里的灯光究竟是什么。",
+  "memory": [
+    { "type": "secret", "content": "1982 年交还灯塔钥匙时，我私下留了一把配钥匙。里面还是我的地方，我没告诉任何人。" },
+    { "type": "secret", "content": "有时我害怕那灯不是新怪事，而是老雾灯传说回来了；也怕是我的眼睛或脑子出了问题。这话我绝不说出口。" },
+    { "type": "general", "content": "我祖父从 Leonor 号沉船活下来。他说船曾跟着一盏岸上根本没点的灯进港。家里的规矩是：雾中见陌生灯，记下，别跟。" },
+    { "type": "general", "content": "我守灯塔三十年，现在仍每天写一页日志：风、能见度、看见的每条船。该记的事，记下来就有意义。" },
+    { "type": "general", "content": "六月十二日的雾夜，我在南偏西南约两英里处见到一盏稳定灯光，不是浮标也不是船，持续约四分钟；后来又在相近方位见过两次。" },
+    { "type": "general", "content": "旅馆来了个说自己从 Fresno 来钓鱼的男人。我看过他绑钩子；真钓了一辈子鱼的人不会那么摆弄鱼线。" },
+    { "type": "general", "content": "自动灯塔不需要我，但我每天仍得去看它一眼。" },
+    { "type": "plan", "content": "下一次起雾，我会守着海面，把灯光的方位和持续时间同日志里的三次记录对照。" },
+    { "type": "plan", "content": "我要问 Dolores 记得的老故事里，那盏灯是什么颜色、烧多久。" }
+  ]
+}
