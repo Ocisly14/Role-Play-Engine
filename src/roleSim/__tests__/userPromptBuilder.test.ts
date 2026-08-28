@@ -387,7 +387,7 @@ describe("splitting the memory block cannot disturb the handles", () => {
 
   it("prints each half's stored handle, distinct across the split", () => {
     const text = buildUserPrompt(makeCtx({ memories: colliding }), opts);
-    const handles = [...text.matchAll(/^- \[(M[0-9a-f]+)\]/gm)].map(
+    const handles = [...text.matchAll(/^- #(M[0-9a-f]+)/gm)].map(
       (m) => m[1]
     );
 
@@ -400,7 +400,7 @@ describe("splitting the memory block cannot disturb the handles", () => {
       .filter((s) => s.cache)
       .map((s) => s.text)
       .join("");
-    expect(frozen).toContain("Maaaaaaaa]");
+    expect(frozen).toContain("#Maaaaaaaa ");
     expect(frozen).not.toContain("Maaaaaaaa00");
   });
 });

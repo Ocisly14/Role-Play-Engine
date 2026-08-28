@@ -873,24 +873,38 @@ export class DynamicGameStateManager {
    *  the item's stable identity and is NOT changed by this method — true
    *  identity changes go through item.destroy + item.create.
    *  Returns true on success, false (with warning) when no item matches. */
-  /** Rewrite an item's description. Now that an item IS its description —
-   *  damage included — `append` adds a sentence to what is already there
-   *  instead of replacing it. Damage used to take the replacing path and
-   *  overwrite the entire description with "damaged by fire: ...", losing
-   *  everything the object was. */
-  modifyItem(
+  /** Change what an item is LIKE. Its description is its state, so `append`
+   *  adds a sentence rather than replacing everything the object was — damage
+   *  used to take the replacing path and overwrite the whole description with
+   *  "damaged by fire: ...". The lighting pair is here too because it is the
+   *  one part of an item a deterministic subsystem reads: a lamp that is
+   *  smashed has to stop lighting the room in the same breath that says so. */
+  setItem(
     itemId: string,
-    patch: { description: string; append?: boolean }
+    patch: {
+      description?: string;
+      appendDescription?: string;
+      isLightSource?: boolean;
+      lightLevel?: number;
+    }
   ): boolean {
     const target = this.findItemById(itemId);
     if (!target) {
-      console.warn(`[DGSM] modifyItem: item id="${itemId}" not found`);
+      console.warn(`[DGSM] setItem: item id="${itemId}" not found`);
       return false;
     }
-    target.description =
-      patch.append && target.description?.trim()
-        ? `${target.description.trim()} ${patch.description}`
-        : patch.description;
+    if (patch.description !== undefined) {
+      target.description = patch.description;
+    } else if (patch.appendDescription?.trim()) {
+      const existing = target.description?.trim();
+      target.description = existing
+        ? `${existing} ${patch.appendDescription.trim()}`
+        : patch.appendDescription.trim();
+    }
+    if (patch.isLightSource !== undefined) {
+      target.isLightSource = patch.isLightSource;
+    }
+    if (patch.lightLevel !== undefined) target.lightLevel = patch.lightLevel;
     this.state.lastUpdated = new Date();
     return true;
   }
@@ -903,10 +917,11 @@ export class DynamicGameStateManager {
   createItem(
     name: string,
     location: string,
-    properties?: Record<string, unknown>
+    description?: string
   ): Item | undefined {
     const id = this.makeItemId(name);
     const item: Item = { id, name };
+    if (description?.trim()) item.description = description;
     if (location.startsWith("scene:")) {
       const sceneId = location.slice("scene:".length);
       const scene = this.state.scenes.get(sceneId);
@@ -921,7 +936,6 @@ export class DynamicGameStateManager {
         this.state.npcInventories[location] = [];
       this.state.npcInventories[location].push(item);
     }
-    void properties; // resolver may emit opaque props; not surfaced on Item type
     this.state.lastUpdated = new Date();
     return item;
   }

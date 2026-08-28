@@ -280,8 +280,8 @@ export class Applier {
             kind: "item.create",
             name: op.name,
             location: op.location,
-            ...(op.properties !== undefined
-              ? { properties: op.properties }
+            ...(typeof op.description === "string"
+              ? { description: op.description }
               : {}),
           },
         ];
@@ -289,29 +289,29 @@ export class Applier {
         return itemId
           ? [{ kind: "item.move", itemId, from: op.from, to: op.to }]
           : [];
-      case "modify":
+      case "set":
         return itemId
-          ? [{ kind: "item.modify", itemId, description: op.description }]
+          ? [
+              {
+                kind: "item.set",
+                itemId,
+                ...(typeof op.description === "string"
+                  ? { description: op.description }
+                  : {}),
+                ...(typeof op.appendDescription === "string"
+                  ? { appendDescription: op.appendDescription }
+                  : {}),
+                ...(typeof op.isLightSource === "boolean"
+                  ? { isLightSource: op.isLightSource }
+                  : {}),
+                ...(typeof op.lightLevel === "number"
+                  ? { lightLevel: op.lightLevel }
+                  : {}),
+              },
+            ]
           : [];
       case "destroy":
         return itemId ? [{ kind: "item.destroy", itemId }] : [];
-      case "damage": {
-        if (!itemId) return [];
-        // One path, not two. This used to branch on WHERE the item was —
-        // scene-held items got a structured `damaged` flag, carried ones got
-        // the damage written into their description — so the same event was
-        // recorded two different ways depending on whose hands it was in.
-        // An item is its description now, so damage is a sentence appended to
-        // it, wherever it sits.
-        return [
-          {
-            kind: "item.modify",
-            itemId,
-            description: `Damaged by ${op.damagedBy}: ${op.reason}`,
-            append: true,
-          },
-        ];
-      }
     }
     return [];
   }
@@ -525,15 +525,23 @@ export class Applier {
           break;
         }
         // ── Resolver-emitted item ops ──
-        case "item.modify": {
-          this.dgsm.modifyItem(c.itemId, {
-            description: c.description,
-            ...(c.append ? { append: true } : {}),
+        case "item.set": {
+          this.dgsm.setItem(c.itemId, {
+            ...(c.description !== undefined
+              ? { description: c.description }
+              : {}),
+            ...(c.appendDescription !== undefined
+              ? { appendDescription: c.appendDescription }
+              : {}),
+            ...(c.isLightSource !== undefined
+              ? { isLightSource: c.isLightSource }
+              : {}),
+            ...(c.lightLevel !== undefined ? { lightLevel: c.lightLevel } : {}),
           });
           break;
         }
         case "item.create": {
-          this.dgsm.createItem(c.name, c.location, c.properties);
+          this.dgsm.createItem(c.name, c.location, c.description);
           break;
         }
         case "item.move": {

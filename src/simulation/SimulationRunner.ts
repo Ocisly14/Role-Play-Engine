@@ -1,3 +1,4 @@
+import { randomUUID } from "node:crypto";
 import * as path from "node:path";
 import type { PrismaClient } from "@prisma/client";
 import {
@@ -29,6 +30,7 @@ import {
   resolveEntryScene,
 } from "./characterInjection.js";
 import {
+  loadPerceptionHistory,
   persistSimulationEvents,
   persistSimulationRuntime,
 } from "./runtimePersistence.js";
@@ -523,12 +525,19 @@ export class SimulationRunner {
       sessionId: this.sessionId,
       moduleId: this.config.moduleId,
       language: this.language,
+      // Buffered here and flushed once per tick: one row per character per
+      // tick, written in a single createMany rather than a query per paragraph.
+      onPerception: (entry) => this.pendingPerceptions.push(entry),
     });
 
     this.wireEngineEvents(engine);
 
     this.tickEngine = engine;
     this.npcController = controller;
+    // Before the first decide(): a character resumed with an empty stream
+    // reintroduces the room as if they had just walked in, and their own
+    // prompt loses the day they lived.
+    await this.restorePerceptions(controller);
     return { engine, controller };
   }
 
@@ -633,6 +642,10 @@ export class SimulationRunner {
       }
 
       await this.persistAndBroadcastEvents(emittedEvents);
+      // Separate from the broadcast path on purpose: these are per-character
+      // paragraphs, and pushing every one of them to every client would swamp
+      // the socket for a view that is not per-character anyway.
+      await this.persistPerceptions();
       await this.saveRuntime();
     } catch (error) {
       console.error(
@@ -788,6 +801,60 @@ export class SimulationRunner {
     this.stopReason = reason;
     this.state = reason === "manual" ? "stopped" : "completed";
     return this.emitStateChange();
+  }
+
+  /** Paragraphs rendered since the last flush. Persisted, never broadcast. */
+  private pendingPerceptions: Array<{
+    npcId: string;
+    gameDateTime: string;
+    location: string;
+    narrative: string;
+  }> = [];
+
+  /** Hand a freshly built controller the paragraphs this session already
+   *  produced. Failure is non-fatal: the run continues with characters who
+   *  simply do not remember having looked around, which is worse narration but
+   *  not a broken tick. */
+  private async restorePerceptions(
+    controller: NpcActionController
+  ): Promise<void> {
+    try {
+      const prior = await loadPerceptionHistory(this.prisma, this.sessionId);
+      if (prior.length > 0) {
+        controller.restorePerceptionHistory(prior);
+        console.log(
+          `[SimulationRunner] restored ${prior.length} rendered paragraphs for ${this.sessionId}`
+        );
+      }
+    } catch (err) {
+      console.warn(
+        `[SimulationRunner] could not restore perception history: ${String(err)}`
+      );
+    }
+  }
+
+  /** Write the tick's rendered paragraphs as `npc_perceived` rows. They ride
+   *  the SimulationEvent table rather than a table of their own: it is already
+   *  the per-session, per-tick, append-only stream, indexed on
+   *  (sessionId, gameDateTime) and cascade-deleted with the session. */
+  private async persistPerceptions(): Promise<void> {
+    const pending = this.pendingPerceptions;
+    if (pending.length === 0) return;
+    this.pendingPerceptions = [];
+    await persistSimulationEvents(
+      this.prisma,
+      pending.map((p) => ({
+        id: randomUUID(),
+        sessionId: this.sessionId,
+        tick: this.ticksExecuted,
+        gameDateTime: p.gameDateTime,
+        type: "npc_perceived" as const,
+        actorNpcId: p.npcId,
+        location: p.location,
+        data: { narrative: p.narrative },
+        timestamp: new Date(),
+      }))
+    );
   }
 
   private async persistEvents(events: SimulationEvent[]): Promise<void> {

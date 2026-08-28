@@ -602,19 +602,29 @@ export function validateItemChange(
       }
       movedItemIds.add(delta.itemId);
       break;
-    case "modify":
-      if (typeof op.description !== "string" || !op.description.trim()) {
-        errs.push(`modify requires a description`);
+    case "set": {
+      const hasDescription =
+        typeof op.description === "string" && op.description.trim().length > 0;
+      const hasAppend =
+        typeof op.appendDescription === "string" &&
+        op.appendDescription.trim().length > 0;
+      const hasLight =
+        typeof op.isLightSource === "boolean" ||
+        typeof op.lightLevel === "number";
+      if (!hasDescription && !hasAppend && !hasLight) {
+        errs.push(
+          `set needs at least one of description, appendDescription, isLightSource, lightLevel`
+        );
+      }
+      // Replacing and appending in the same breath does not say which text
+      // wins, and the two orders give different results.
+      if (hasDescription && hasAppend) {
+        errs.push(
+          `set cannot carry both description and appendDescription — replace or append, not both`
+        );
       }
       break;
-    case "damage":
-      if (typeof op.damagedBy !== "string" || !op.damagedBy.trim()) {
-        errs.push(`damage requires damagedBy`);
-      }
-      if (typeof op.reason !== "string" || !op.reason.trim()) {
-        errs.push(`damage requires a reason`);
-      }
-      break;
+    }
   }
   return errs;
 }

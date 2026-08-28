@@ -32,6 +32,16 @@ export interface NpcActionControllerDeps {
   moduleId: string;
   /** Module language ("en" | "zh"). Drives renderer output language. */
   language?: string;
+  /** Called for every paragraph rendered, in order. The controller keeps the
+   *  stream in memory because both prompts need all of it; whoever owns
+   *  durability subscribes here rather than reaching into the buffer. Left
+   *  unset (the harness) the stream simply stays in memory for the run. */
+  onPerception?: (entry: {
+    npcId: string;
+    gameDateTime: string;
+    location: string;
+    narrative: string;
+  }) => void;
 }
 
 interface DecideOpts {
@@ -111,6 +121,7 @@ export class NpcActionController {
     string,
     PerceptionHistoryEntry[]
   >();
+  private readonly onPerception?: NpcActionControllerDeps["onPerception"];
 
   constructor(deps: NpcActionControllerDeps) {
     this.engine = deps.engine;
@@ -118,6 +129,7 @@ export class NpcActionController {
     this.memory = deps.memory;
     this.dgsm = deps.dgsm;
     this.sessionId = deps.sessionId;
+    this.onPerception = deps.onPerception;
     this.moduleId = deps.moduleId;
     this.language = deps.language ?? "en";
 
@@ -403,11 +415,17 @@ export class NpcActionController {
       engine: this.engine,
     });
 
+    // Snapshot BEFORE this tick's paragraph is recorded: the renderer is being
+    // told what it has already said, which cannot include what it is about to
+    // say. The same buffer feeds the character's own prompt below.
+    const priorPerceptions = this.perceptionHistory.get(npcId)?.slice() ?? [];
+
     const rendered = await render({
       npcId,
       bundle,
       dgsm: this.dgsm,
       language: this.language,
+      recentPerceptions: priorPerceptions,
     });
 
     if (rendered === null) {
@@ -424,7 +442,7 @@ export class NpcActionController {
 
     // Snapshot every prior perception (excludes current tick); push current
     // after.
-    const recentPerceptions = this.perceptionHistory.get(npcId)?.slice() ?? [];
+    const recentPerceptions = priorPerceptions;
     this.recordPerception(
       npcId,
       gameDateTime,
@@ -453,6 +471,32 @@ export class NpcActionController {
     const buf = this.perceptionHistory.get(npcId) ?? [];
     buf.push({ gameDateTime, location, narrative });
     this.perceptionHistory.set(npcId, buf);
+    this.onPerception?.({ npcId, gameDateTime, location, narrative });
+  }
+
+  /** Seed the stream from storage when a session resumes. Replaces whatever is
+   *  buffered for those characters, so it must run before the first decide():
+   *  a character who resumes with an empty stream reintroduces the room as if
+   *  they had just walked in, and their own prompt loses the day they lived. */
+  restorePerceptionHistory(
+    entries: ReadonlyArray<{
+      npcId: string;
+      gameDateTime: string;
+      location: string;
+      narrative: string;
+    }>
+  ): void {
+    const byNpc = new Map<string, PerceptionHistoryEntry[]>();
+    for (const e of entries) {
+      const buf = byNpc.get(e.npcId) ?? [];
+      buf.push({
+        gameDateTime: e.gameDateTime,
+        location: e.location,
+        narrative: e.narrative,
+      });
+      byNpc.set(e.npcId, buf);
+    }
+    for (const [npcId, buf] of byNpc) this.perceptionHistory.set(npcId, buf);
   }
 
   /** Every memory this character holds, injected whole — there is no recall

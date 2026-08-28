@@ -192,19 +192,34 @@ export const SCENE_OPS: OperationSpec[] = [
   },
 ];
 
+/** Two questions, and they are not the same question.
+ *
+ *  WHERE an item is and WHETHER it exists are structural: perception lists the
+ *  ids in `scene.items` and an inventory, and the citation boundary accepts
+ *  exactly those ids. A destroyed thing written up only in prose stays in both
+ *  lists — visible, citable, actable — which is the failure this codebase has
+ *  already paid for elsewhere. So `create` · `move` · `destroy` stay.
+ *
+ *  WHAT an item is like is prose plus, for now, two lighting numbers, and
+ *  `set` covers all of it. It replaces `modify` and `damage`: damage was only
+ *  ever a sentence appended to a description, and it had no way to put out a
+ *  lamp it had just smashed — `sun.ts` went on counting the light. */
 export const ITEM_OPS: OperationSpec[] = [
   {
     kinds: ["create"],
     fields:
-      "name:string, location:<sceneId or characterId>, properties?:object",
+      "name:string, location:<sceneId or characterId>, description?:string",
   },
   {
     kinds: ["move"],
     fields: "from:<current holder>, to:<sceneId or characterId>",
   },
-  { kinds: ["modify"], fields: "description:string" },
-  { kinds: ["damage"], fields: "damagedBy:string, reason:string" },
   { kinds: ["destroy"], fields: "" },
+  {
+    kinds: ["set"],
+    fields:
+      "any of — description:string (REPLACES the whole description; write everything still true of the thing) · appendDescription:string (adds one sentence to what is there; how damage is recorded — say who or what did it, and do not repeat what the description already says) · isLightSource:boolean (false when it no longer lights the room, e.g. smashed) · lightLevel:number",
+  },
 ];
 
 /** The prose the model reads. */

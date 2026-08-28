@@ -64,7 +64,11 @@ const dgsm = {
       : id === "S_SHOP"
         ? { id: "S_SHOP", name: "Shop", conditions: [], items: [] }
         : undefined,
-  getSceneConditions: () => [],
+  // Mirrors the real implementation: conditions live on the place object,
+  // and `getScene` resolves scenes, junctions and roads alike.
+  getSceneConditions: (id: string) =>
+    (junctions.get(id) ?? roads.get(id))?.conditions ??
+    (id === "S_HOME" || id === "S_SHOP" ? [] : []),
   getCharacterPosition: (id: string) => positions[id] ?? null,
   getState: () => ({
     npcCharacters: [{ id: "A" }, { id: "B" }, { id: "C" }],

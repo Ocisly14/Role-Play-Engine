@@ -284,6 +284,9 @@ const dgsm = {
       ["SCN_1", { items: [{ id: "cabinet_lock" }, { id: "ITEM_1" }] }],
     ]),
     npcInventories: {},
+    // Every ref is probed against all three id spaces now, so even an item
+    // citation reaches the character resolver.
+    npcCharacters: [],
   }),
   getScene: (id: string) => (id === "SCN_1" || id === "SCN_2" ? {} : null),
   getJunction: () => null,
@@ -442,6 +445,8 @@ describe("what a citation is scoped to", () => {
     );
     expect(result.ok).toBe(false);
     if (result.ok) return;
-    expect(result.reason).toContain("nobody in this world");
+    // One message for all three spaces: the actor no longer declares what
+    // kind of thing it meant, so the boundary cannot say "nobody" specifically.
+    expect(result.reason).toContain("nothing in this world");
   });
 });

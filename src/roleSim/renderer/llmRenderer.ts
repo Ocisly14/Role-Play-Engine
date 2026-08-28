@@ -10,6 +10,7 @@
 
 import type { Occurrence } from "../../engine/actions/types.js";
 import { ModelClass, generateText } from "../../models/index.js";
+import type { PromptSegment } from "../../models/types.js";
 import type { DynamicGameStateManager } from "../../state/DynamicGameState.js";
 import {
   buildPerceivableDirectory,
@@ -17,6 +18,7 @@ import {
   isKnownTo,
   knownAs,
 } from "../../state/perceivableDirectory.js";
+import { formatForPrompt } from "../../state/gameClock.js";
 import { resolveLocationById } from "../../state/perceivedLocation.js";
 import type { DynamicNPCProfile } from "../../state/types.js";
 import type { PerceivedBundle } from "./types.js";
@@ -232,13 +234,20 @@ export interface RenderViaLLMParams {
   dgsm: DynamicGameStateManager;
   /** Module language ("en" | "zh"). Drives narrative language. */
   language?: string;
+  /** Every paragraph already rendered for this character, oldest first and
+   *  EXCLUDING this tick. Append-only on purpose — see buildUserPromptSegments. */
+  recentPerceptions?: ReadonlyArray<{
+    gameDateTime: string;
+    location: string;
+    narrative: string;
+  }>;
 }
 
 export async function renderViaLLM(
   params: RenderViaLLMParams
 ): Promise<string> {
   const tags = buildCitationTags(params.npcId, params.dgsm);
-  const userPrompt = buildUserPrompt(params, tags);
+  const segments = buildUserPromptSegments(params, tags);
   const langName = params.language?.startsWith("zh") ? "Chinese" : "English";
 
   const decide = `\n\n# Decide\nWrite the paragraph now, in ${langName}.`;
@@ -251,7 +260,14 @@ export async function renderViaLLM(
       // most frequent call site in the system was the only one paying full
       // price for its own instructions. MEDIUM's floor is 1024.
       cacheSystemPrompt: true,
-      context: `${userPrompt}${extra}${decide}`,
+      // Segmented so the breakpoint can sit at the end of the history. `extra`
+      // is retry feedback and `decide` the instruction — both belong after
+      // everything cacheable.
+      contextSegments: [
+        ...segments,
+        { text: `${extra}${decide}`, cache: false },
+      ],
+      context: segments.map((seg) => seg.text).join("\n\n") + extra + decide,
       // MEDIUM, not SMALL. The small model kept citing the right KIND of
       // thing with the wrong id — street lamps tagged with the scene's id,
       // a train whistle tagged as a place — which is well-formed and passes
@@ -297,62 +313,128 @@ export async function renderViaLLM(
   return stripUncitableTags(narrative, tags.allowed, params.npcId);
 }
 
-function buildUserPrompt(
+/** Three tiers, ordered so the cacheable prefix grows and never rewrites:
+ *
+ *   frozen   identity — byte-identical every tick this character renders
+ *   growing  everything they have already been told they perceived, APPENDED
+ *   volatile this minute
+ *
+ * The history is deliberately append-only rather than a sliding window. A
+ * window of the last N moves its own first byte every tick, which invalidates
+ * itself AND everything after it; an append-only list keeps the prefix of
+ * length N byte-identical to what it was last tick, so the breakpoint at its
+ * end is read rather than rewritten.
+ */
+/** `--- 12-01 19:05 · 教堂主殿 ---`, the same stamp the character's own prompt
+ *  uses, so a paragraph reads the same in both places. */
+function stamp(
+  gameDateTime: string,
+  sceneId: string | undefined,
+  dgsm: DynamicGameStateManager
+): string {
+  const place = sceneId
+    ? (resolveLocationById(sceneId, dgsm)?.name ?? sceneId)
+    : undefined;
+  return `--- ${formatForPrompt(gameDateTime)}${place ? ` · ${place}` : ""} ---`;
+}
+
+function buildUserPromptSegments(
   params: RenderViaLLMParams,
   tags: CitationTags
-): string {
+): PromptSegment[] {
   const { npcId, bundle, dgsm } = params;
   const viewpoint = dgsm.getNpcProfile(npcId);
   const viewpointName = viewpoint?.name ?? "the viewpoint character";
 
-  const sections: string[] = [];
+  const frozen: string[] = [];
+  const growing: string[] = [];
+  const volatileParts: string[] = [];
 
-  sections.push('# Viewpoint character (render in first person as "I")');
-  sections.push(formatViewpoint(viewpointName, viewpoint, bundle));
+  frozen.push('# Viewpoint character (render in first person as "I")');
+  frozen.push(formatIdentity(viewpointName, viewpoint));
 
-  sections.push("# Current scene");
-  sections.push(formatScene(bundle, dgsm, tags));
+  // What this character has already been told they perceived. Without it the
+  // renderer reintroduces the room from scratch every minute — the oak doors,
+  // the candle smoke, the ticking — because it cannot know it said all that
+  // two ticks ago.
+  const history = params.recentPerceptions ?? [];
+  if (history.length > 0) {
+    const block = history
+      .map((p) => `${stamp(p.gameDateTime, p.location, dgsm)}\n${p.narrative}`)
+      .join("\n\n");
+    growing.push(
+      `# What you have already described\n${block}\n\nThe standing furniture of this place has been said. Write what CHANGED, what is new, and what you are doing now — do not re-introduce what is unchanged.`
+    );
+  }
+
+  const selfNow = formatSelfNow(bundle);
+  if (selfNow) {
+    volatileParts.push("# How you are right now");
+    volatileParts.push(selfNow);
+  }
+
+  volatileParts.push("# Current scene");
+  volatileParts.push(formatScene(bundle, dgsm, tags));
 
   if (bundle.charactersInScene.length > 0) {
-    sections.push(
+    volatileParts.push(
       "# People present in your scene (must be acknowledged in narrative — silent or not)"
     );
-    sections.push(formatScenePresentCharacters(bundle, npcId, dgsm, tags));
+    volatileParts.push(formatScenePresentCharacters(bundle, npcId, dgsm, tags));
   }
 
   const otherEntities = collectOtherEntities(npcId, bundle, dgsm, tags);
   if (otherEntities) {
-    sections.push("# Other entities involved in events");
-    sections.push(otherEntities);
+    volatileParts.push("# Other entities involved in events");
+    volatileParts.push(otherEntities);
   }
 
   if (bundle.ownAction.kind !== "idle") {
-    sections.push("# Own action this tick (must be rendered)");
-    sections.push(formatOwnAction(bundle));
+    volatileParts.push("# Own action this tick (must be rendered)");
+    volatileParts.push(formatOwnAction(bundle));
   }
 
   if (bundle.occurrences.length > 0) {
-    sections.push(
+    volatileParts.push(
       "# Occurrences this tick (objective facts + signals — YOU decide what the viewpoint perceives of each)"
     );
-    sections.push(formatOccurrences(bundle, npcId, tags));
+    volatileParts.push(formatOccurrences(bundle, npcId, tags));
   } else {
-    sections.push(
+    volatileParts.push(
       "# Occurrences this tick\n(none — describe scene and own state only)"
     );
   }
 
-  return sections.join("\n\n");
+  const segments: PromptSegment[] = [];
+  // No breakpoint on `frozen` alone: identity is ~2 lines, far under any
+  // provider's minimum cacheable prefix, and the system prompt already carries
+  // one. The breakpoint goes at the end of the history, where the prefix is
+  // both stable and worth caching.
+  segments.push({ text: frozen.join("\n\n"), cache: growing.length === 0 });
+  if (growing.length > 0) {
+    segments.push({ text: growing.join("\n\n"), cache: true });
+  }
+  segments.push({ text: volatileParts.join("\n\n"), cache: false });
+  return segments;
 }
 
-function formatViewpoint(
+/** Name and appearance — the same bytes on every tick this character renders,
+ *  which is what lets a cache breakpoint sit behind it. Anything that moves
+ *  belongs in `formatSelfNow`; mixing the two here made the whole prefix
+ *  change every minute and the breakpoint never read. */
+function formatIdentity(
   name: string,
-  profile: DynamicNPCProfile | undefined,
-  bundle: PerceivedBundle
+  profile: DynamicNPCProfile | undefined
 ): string {
-  const lines: string[] = [];
-  lines.push(`Name: ${name}`);
+  const lines: string[] = [`Name: ${name}`];
   if (profile?.appearance) lines.push(`Appearance: ${profile.appearance}`);
+  return lines.join("\n");
+}
+
+/** Where the character is standing and what their body is telling them —
+ *  both change tick to tick, so this sits after the breakpoint. */
+function formatSelfNow(bundle: PerceivedBundle): string {
+  const lines: string[] = [];
   if (bundle.ownSpot) {
     lines.push(`Where you are in this place: ${bundle.ownSpot}`);
   }

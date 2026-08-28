@@ -27,7 +27,7 @@ export const itemDamageSubsystem: AnchorSubsystem = {
     "Damages items in scenes exposed to extreme heat (env.temperature > 200°C).",
   effectSummary:
     "20% of undamaged items per tick take fire damage when scene env.temperature > 200°C.",
-  affectedKinds: ["item.modify"],
+  affectedKinds: ["item.set"],
   priority: 350,
 
   shouldExist(anchorId: string, ctx: FeatureReadContext): boolean {
@@ -60,10 +60,9 @@ export const itemDamageSubsystem: AnchorSubsystem = {
     const out: StateChange[] = [];
     for (let i = 0; i < sampleCount; i++) {
       out.push({
-        kind: "item.modify",
+        kind: "item.set",
         itemId: shuffled[i].id,
-        description: reason,
-        append: true,
+        appendDescription: reason,
         sourceFeatureId: SUBSYSTEM_ID,
       });
     }

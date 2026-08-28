@@ -273,17 +273,31 @@ export type SceneStateOperation =
     }
   | { kind: "environmentHazard"; add?: string[]; remove?: string[] };
 
+/** `create` · `move` · `destroy` answer WHERE an item is and WHETHER it is —
+ *  structural, because perception lists the ids held by a place or a pocket and
+ *  the citation boundary accepts exactly those. `set` answers what it is LIKE,
+ *  which is its description plus the two lighting numbers a deterministic
+ *  subsystem reads. It replaced `modify` and `damage`: damage was only ever a
+ *  sentence appended to a description, and had no way to put out the lamp it
+ *  had just smashed. */
 export type ItemStateOperation =
   | {
       kind: "create";
       name: string;
       location: string;
-      properties?: Record<string, unknown>;
+      description?: string;
     }
   | { kind: "move"; from: string; to: string }
-  | { kind: "modify"; description: string }
-  | { kind: "damage"; damagedBy: string; reason: string }
-  | { kind: "destroy" };
+  | { kind: "destroy" }
+  | {
+      kind: "set";
+      /** Replaces the description wholesale. */
+      description?: string;
+      /** Adds one sentence to the description instead of replacing it. */
+      appendDescription?: string;
+      isLightSource?: boolean;
+      lightLevel?: number;
+    };
 
 export type CharacterChange = {
   domain: "character";

@@ -218,11 +218,16 @@ export type StateChange =
     }
   // ── Resolver-emitted variants (flattened from resolver schemaTypes) ──
   | {
-      kind: "item.modify";
+      /** Everything about an item that can change while it exists. Its
+       *  description is its state; the two lighting fields are the only part
+       *  a deterministic subsystem reads rather than a model (sun.ts). */
+      kind: "item.set";
       itemId: string;
-      description: string;
-      /** Append to the existing description instead of replacing it. */
-      append?: boolean;
+      description?: string;
+      /** Appended as one sentence instead of replacing. How damage lands. */
+      appendDescription?: string;
+      isLightSource?: boolean;
+      lightLevel?: number;
       /** Set when a subsystem emitted this rather than the resolver. */
       sourceFeatureId?: string;
     }
@@ -230,7 +235,7 @@ export type StateChange =
       kind: "item.create";
       name: string;
       location: string;
-      properties?: Record<string, unknown>;
+      description?: string;
     }
   | {
       kind: "item.move";

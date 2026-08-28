@@ -21,6 +21,14 @@ export interface RenderParams {
   bundle: PerceivedBundle;
   dgsm: DynamicGameStateManager;
   language?: string;
+  /** Everything already rendered for this character, oldest first, excluding
+   *  this tick. Lets the renderer say what CHANGED instead of reintroducing
+   *  the room every minute. */
+  recentPerceptions?: ReadonlyArray<{
+    gameDateTime: string;
+    location: string;
+    narrative: string;
+  }>;
 }
 
 /**

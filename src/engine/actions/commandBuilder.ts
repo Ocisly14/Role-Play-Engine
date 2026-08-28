@@ -163,7 +163,9 @@ function resolveCharacterHandle(
   actorId: string,
   dgsm: DynamicGameStateManager
 ): string | undefined {
-  for (const npc of dgsm.getState().npcCharacters) {
+  // Probed for EVERY objectRef now that the boundary derives the kind from
+  // the id, so it is no longer a cold path only character citations reach.
+  for (const npc of dgsm.getState().npcCharacters ?? []) {
     if (npc.id === handle) return npc.id;
     if (aliasFor(actorId, npc.id) === handle) return npc.id;
   }
