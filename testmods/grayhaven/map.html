@@ -1,0 +1,391 @@
+<title>灰港镇测绘图</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+  :root {
+    --ground: #edf0ec;
+    --panel: #e3e8e2;
+    --ink: #2a3238;
+    --muted: #66736c;
+    --line: #9aa8a0;
+    --accent: #b06f1e;
+    --restrict: #a8452f;
+    --water: #cddad7;
+    --water-line: #a9bfbb;
+    --home: #5b7263;
+    --card: #f4f6f2;
+    --fog: #d8ded6;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --ground: #151a1e;
+      --panel: #1b2126;
+      --ink: #d8dfda;
+      --muted: #8a968f;
+      --line: #4a5650;
+      --accent: #dfa04a;
+      --restrict: #d0705a;
+      --water: #1c272b;
+      --water-line: #32444a;
+      --home: #7fa08c;
+      --card: #1d2429;
+      --fog: #222a2c;
+    }
+  }
+  :root[data-theme="dark"] {
+    --ground: #151a1e;
+    --panel: #1b2126;
+    --ink: #d8dfda;
+    --muted: #8a968f;
+    --line: #4a5650;
+    --accent: #dfa04a;
+    --restrict: #d0705a;
+    --water: #1c272b;
+    --water-line: #32444a;
+    --home: #7fa08c;
+    --card: #1d2429;
+    --fog: #222a2c;
+  }
+  * { box-sizing: border-box; }
+  body {
+    background: var(--ground);
+    color: var(--ink);
+    font-family: -apple-system, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Segoe UI", sans-serif;
+    line-height: 1.65;
+    margin: 0;
+  }
+  .wrap { max-width: 1060px; margin: 0 auto; padding: 40px 24px 72px; }
+  .kicker {
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 12px; letter-spacing: .18em; text-transform: uppercase;
+    color: var(--muted);
+  }
+  h1 {
+    font-family: "Fraunces", "PingFang SC", serif;
+    font-size: clamp(30px, 5vw, 44px);
+    font-weight: 700; margin: 6px 0 4px; text-wrap: balance;
+  }
+  .sub { color: var(--muted); margin: 0 0 22px; max-width: 66ch; }
+  .mapbox {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    overflow-x: auto;
+    margin-bottom: 14px;
+  }
+  .mapbox svg { display: block; min-width: 880px; width: 100%; height: auto; }
+
+  svg text { font-family: -apple-system, "PingFang SC", "Hiragino Sans GB", sans-serif; fill: var(--ink); }
+  .nname { font-size: 15px; font-weight: 600; }
+  .nname-s { font-size: 13px; font-weight: 600; }
+  .nsub { font-size: 11px; fill: var(--muted); }
+  .elabel { font-family: "IBM Plex Mono", monospace; font-size: 12px; fill: var(--accent); font-weight: 500; }
+  .elabel-note { font-family: "IBM Plex Mono", monospace; font-size: 10.5px; fill: var(--muted); }
+  .region { font-family: "IBM Plex Mono", monospace; font-size: 11px; letter-spacing: .25em; fill: var(--muted); }
+  .edge { stroke: var(--line); stroke-width: 1.6; fill: none; }
+  .edge-road { stroke: var(--muted); stroke-width: 2.2; fill: none; }
+  .edge-drive { stroke: var(--muted); stroke-width: 2; stroke-dasharray: 2 5; stroke-linecap: round; fill: none; }
+  .edge-fence { stroke: var(--restrict); stroke-width: 1.8; stroke-dasharray: 7 4; fill: none; }
+  .edge-trail { stroke: var(--line); stroke-width: 1.4; stroke-dasharray: 5 4; fill: none; }
+  .npublic { fill: var(--card); stroke: var(--ink); stroke-width: 1.4; }
+  .nhome { fill: var(--card); stroke: var(--home); stroke-width: 1.8; }
+  .nwood { fill: var(--panel); stroke: var(--muted); stroke-width: 1.4; stroke-dasharray: 4 3; }
+  .nrestrict { fill: none; stroke: var(--restrict); stroke-width: 1.8; }
+  .street-spine { fill: var(--card); stroke: var(--ink); stroke-width: 1.8; }
+  .water-fill { fill: var(--water); }
+  .water-line { stroke: var(--water-line); stroke-width: 1.2; fill: none; }
+  .fogzone { fill: var(--fog); opacity: .55; }
+
+  h2 {
+    font-family: "Fraunces", "PingFang SC", serif;
+    font-size: 24px; font-weight: 600; margin: 44px 0 14px;
+  }
+  h3 { font-size: 15px; margin: 22px 0 8px; }
+  table { border-collapse: collapse; width: 100%; font-size: 14.5px; }
+  th, td { text-align: left; padding: 8px 14px 8px 0; border-bottom: 1px solid var(--line); vertical-align: top; }
+  th { font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+  td.min { font-family: "IBM Plex Mono", monospace; color: var(--accent); white-space: nowrap; font-variant-numeric: tabular-nums; }
+  .tablebox { overflow-x: auto; }
+
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; }
+  .qcard {
+    background: var(--card); border: 1px solid var(--line); border-radius: 6px;
+    padding: 18px 20px;
+  }
+  .qcard .qn {
+    font-family: "IBM Plex Mono", monospace; font-size: 12px; color: var(--accent);
+    letter-spacing: .12em; display: block; margin-bottom: 6px;
+  }
+  .qcard h3 { margin: 0 0 8px; font-size: 16px; }
+  .qcard p { margin: 0; font-size: 14px; color: var(--muted); }
+  .why li { margin-bottom: 10px; max-width: 72ch; }
+  .why b { color: var(--accent); font-weight: 600; }
+  .legend {
+    display: flex; flex-wrap: wrap; gap: 18px; align-items: center;
+    font-size: 13px; color: var(--muted); margin: 0 2px 34px;
+  }
+  .legend span { display: inline-flex; align-items: center; gap: 8px; }
+  .sw { width: 26px; height: 0; border-top: 2px solid var(--line); display: inline-block; }
+  .sw.drive { border-top: 2px dotted var(--muted); }
+  .sw.fence { border-top: 2px dashed var(--restrict); }
+  .sw.trail { border-top: 2px dashed var(--line); }
+  .dot { width: 12px; height: 12px; border-radius: 3px; display: inline-block; }
+  .dot.pub { background: var(--card); border: 1.5px solid var(--ink); }
+  .dot.home { background: var(--card); border: 1.8px solid var(--home); }
+  .dot.wood { border: 1.4px dashed var(--muted); }
+  .dot.res { border: 1.8px solid var(--restrict); }
+  .mono { font-family: "IBM Plex Mono", monospace; }
+</style>
+
+<div class="wrap">
+  <header>
+    <span class="kicker">Grayhaven · 1985 · 拓扑草案 v2</span>
+    <h1>灰港镇测绘图</h1>
+    <p class="sub">16 个大场景(含站前自动大门)+ 6 个林区节点。边上的数字是<b>步行分钟</b>(= tick 数);圆点虚线为车行道,灰虚线为林径,红色虚线为围栏。主街南北贯穿约 30′,雷德利站步行单程约 6 小时。示意图,非等比 —— 距离以标注分钟为准。</p>
+  </header>
+
+  <div class="mapbox">
+  <svg viewBox="0 0 1000 860" role="img" aria-label="灰港镇场景连接图">
+    <!-- ocean -->
+    <path class="water-fill" d="M0,0 L212,0 C198,200 232,460 202,600 C188,700 214,790 228,860 L0,860 Z"/>
+    <path class="water-line" d="M60,140 C90,170 70,220 95,255"/>
+    <path class="water-line" d="M40,360 C75,390 55,440 85,480"/>
+    <path class="water-line" d="M70,600 C100,630 85,680 110,720"/>
+    <text class="region" x="52" y="90">太 平 洋</text>
+    <text class="region" x="742" y="30">北 山</text>
+    <text class="region" x="380" y="828">镇 南 海 崖</text>
+
+    <!-- fog zone over forest network -->
+    <ellipse class="fogzone" cx="800" cy="340" rx="195" ry="215"/>
+    <text class="region" x="905" y="530">林 区 · 迷 雾</text>
+
+    <!-- ===== edges: town ===== -->
+    <!-- north-south street connector -->
+    <path class="edge-road" d="M443,375 L443,430"/>
+    <text class="elabel" x="452" y="407">15′</text>
+    <!-- north seg to Holt -->
+    <path class="edge-road" d="M440,250 C448,222 462,200 476,184"/>
+    <text class="elabel" x="408" y="215">20′</text>
+    <!-- north seg to motel (old coast road) -->
+    <path class="edge-road" d="M458,252 C505,215 560,182 600,164"/>
+    <text class="elabel" x="512" y="185">25′</text>
+    <text class="elabel-note" x="500" y="170">旧海岸公路</text>
+    <!-- motel to gate (service road) -->
+    <path class="edge-drive" d="M702,148 C718,152 732,155 748,157"/>
+    <text class="elabel" x="700" y="176">车 30′</text>
+    <!-- gate to station -->
+    <path class="edge-drive" d="M798,140 C812,124 822,110 834,100"/>
+    <text class="elabel" x="820" y="132">车 5′</text>
+    <!-- shops connectors, north -->
+    <path class="edge" d="M466,270 L513,266"/>
+    <path class="edge" d="M466,320 L510,320"/>
+    <path class="edge" d="M420,278 L364,272"/>
+    <!-- shops connectors, south -->
+    <path class="edge" d="M466,450 L513,448"/>
+    <path class="edge" d="M466,505 L509,505"/>
+    <path class="edge" d="M420,460 L359,458"/>
+    <text class="elabel-note" x="472" y="242">临街店铺 各 2′</text>
+    <!-- south seg to reyes -->
+    <path class="edge" d="M462,548 C490,568 515,578 537,583"/>
+    <text class="elabel" x="490" y="596">8′</text>
+    <!-- south seg to dock -->
+    <path class="edge-road" d="M420,545 C382,530 340,520 305,512"/>
+    <text class="elabel" x="352" y="502">15′</text>
+    <!-- dock to earl -->
+    <path class="edge" d="M262,555 C266,570 271,580 276,590"/>
+    <text class="elabel" x="238" y="578">5′</text>
+    <!-- dock to lighthouse -->
+    <path class="edge" d="M268,555 C288,640 305,690 328,742"/>
+    <text class="elabel" x="302" y="668">30′</text>
+    <text class="elabel-note" x="312" y="684">崖间小径</text>
+
+    <!-- ===== edges: forest ===== -->
+    <!-- north seg to trailhead -->
+    <path class="edge" d="M466,282 C540,290 600,296 648,300"/>
+    <text class="elabel" x="555" y="316">10′</text>
+    <!-- holt gap joins trail -->
+    <path class="edge-trail" d="M540,172 C590,210 630,255 662,288"/>
+    <text class="elabel-note" x="590" y="238">后院豁口 · 10′处汇入</text>
+    <!-- trailhead to creek -->
+    <path class="edge-trail" d="M700,318 C715,348 728,378 738,400"/>
+    <text class="elabel" x="680" y="366">70′</text>
+    <!-- creek to sawmill -->
+    <path class="edge-trail" d="M764,418 C792,398 820,372 840,356"/>
+    <text class="elabel" x="796" y="404">90′</text>
+    <!-- trailhead to railgrade -->
+    <path class="edge-trail" d="M708,286 C732,268 756,250 774,238"/>
+    <text class="elabel" x="712" y="256">60′</text>
+    <!-- railgrade to sawmill -->
+    <path class="edge-trail" d="M800,242 C822,272 838,300 848,322"/>
+    <text class="elabel" x="836" y="286">120′</text>
+    <!-- sawmill to redwood ring -->
+    <path class="edge-trail" d="M862,322 C876,290 888,258 896,234"/>
+    <text class="elabel" x="890" y="282">70′</text>
+    <!-- sawmill to fog hollow -->
+    <path class="edge-trail" d="M858,360 C860,392 861,424 861,450"/>
+    <text class="elabel" x="868" y="410">60′</text>
+    <!-- fog hollow to redwood ring (loop) -->
+    <path class="edge-trail" d="M878,456 C930,420 946,330 916,236"/>
+    <text class="elabel" x="936" y="352">50′</text>
+    <text class="elabel-note" x="920" y="368">环</text>
+    <!-- fog hollow to creek ford (swamp detour) -->
+    <path class="edge-trail" d="M822,462 C806,450 792,440 780,432"/>
+    <text class="elabel" x="784" y="456">110′</text>
+    <text class="elabel-note" x="770" y="470">沼泽绕行</text>
+    <!-- fog hollow to rail grade (through brush, west of sawmill) -->
+    <path class="edge-trail" d="M826,454 C778,414 770,320 784,248"/>
+    <text class="elabel" x="756" y="316">120′</text>
+    <text class="elabel-note" x="742" y="300">灌木密</text>
+    <!-- redwood ring to fence -->
+    <path class="edge-fence" d="M898,200 C892,170 884,135 878,112"/>
+    <text class="elabel" x="852" y="160" fill="var(--restrict)">130′</text>
+    <text class="elabel-note" x="890" y="146">围栏 · 不可通行</text>
+
+    <!-- ===== nodes: town ===== -->
+    <rect class="npublic" x="598" y="118" width="104" height="46" rx="5"/>
+    <text class="nname" x="650" y="138" text-anchor="middle">汽车旅馆</text>
+    <text class="nsub" x="650" y="154" text-anchor="middle">Vance · 望得见岔路</text>
+
+    <rect class="nhome" x="444" y="140" width="96" height="44" rx="5"/>
+    <text class="nname" x="492" y="160" text-anchor="middle">Holt 家</text>
+    <text class="nsub" x="492" y="176" text-anchor="middle">三代同堂</text>
+
+    <rect class="street-spine" x="420" y="250" width="46" height="125" rx="10"/>
+    <text class="nname-s" x="443" y="313" text-anchor="middle" transform="rotate(-90 443 313)">主街北段</text>
+    <rect class="street-spine" x="420" y="430" width="46" height="125" rx="10"/>
+    <text class="nname-s" x="443" y="493" text-anchor="middle" transform="rotate(-90 443 493)">主街南段</text>
+
+    <rect class="npublic" x="260" y="252" width="104" height="36" rx="5"/>
+    <text class="nname" x="312" y="275" text-anchor="middle">警长办公室</text>
+    <rect class="npublic" x="513" y="248" width="104" height="36" rx="5"/>
+    <text class="nname" x="565" y="271" text-anchor="middle">蓝鸟餐馆</text>
+    <rect class="npublic" x="510" y="302" width="130" height="36" rx="5"/>
+    <text class="nname" x="575" y="325" text-anchor="middle">杂货店兼邮局</text>
+
+    <rect class="npublic" x="277" y="440" width="82" height="36" rx="5"/>
+    <text class="nname" x="318" y="463" text-anchor="middle">诊所</text>
+    <rect class="npublic" x="513" y="430" width="104" height="36" rx="5"/>
+    <text class="nname" x="565" y="453" text-anchor="middle">街机厅</text>
+    <rect class="npublic" x="509" y="480" width="122" height="50" rx="5"/>
+    <text class="nname" x="570" y="500" text-anchor="middle">电视维修铺</text>
+    <text class="nsub" x="570" y="517" text-anchor="middle">Batra 家在楼上</text>
+
+    <rect class="nhome" x="537" y="566" width="96" height="40" rx="5"/>
+    <text class="nname" x="585" y="586" text-anchor="middle">Reyes 家</text>
+    <text class="nsub" x="585" y="600" text-anchor="middle">后街</text>
+
+    <rect class="npublic" x="205" y="505" width="100" height="50" rx="5"/>
+    <text class="nname" x="255" y="525" text-anchor="middle">码头 / 海滩</text>
+    <text class="nsub" x="255" y="543" text-anchor="middle">死鱼冲上处</text>
+
+    <rect class="nhome" x="231" y="590" width="98" height="40" rx="5"/>
+    <text class="nname" x="280" y="610" text-anchor="middle">Earl 的小屋</text>
+    <text class="nsub" x="280" y="624" text-anchor="middle">独居</text>
+
+    <rect class="npublic" x="284" y="742" width="92" height="48" rx="5"/>
+    <text class="nname" x="330" y="762" text-anchor="middle">灯塔崖</text>
+    <text class="nsub" x="330" y="779" text-anchor="middle">制高点 · 已自动化</text>
+
+    <!-- ===== nodes: forest ===== -->
+    <rect class="nwood" x="648" y="286" width="76" height="32" rx="5"/>
+    <text class="nname-s" x="686" y="307" text-anchor="middle">林道口</text>
+
+    <rect class="nwood" x="702" y="400" width="86" height="36" rx="5"/>
+    <text class="nname-s" x="745" y="418" text-anchor="middle">灰溪渡口</text>
+    <text class="nsub" x="745" y="431" text-anchor="middle">涨水封路</text>
+
+    <rect class="nwood" x="740" y="208" width="100" height="36" rx="5"/>
+    <text class="nname-s" x="790" y="226" text-anchor="middle">旧铁路路基</text>
+    <text class="nsub" x="790" y="239" text-anchor="middle">笔直好认</text>
+
+    <rect class="nwood" x="806" y="322" width="90" height="38" rx="5"/>
+    <text class="nname-s" x="851" y="340" text-anchor="middle">旧锯木厂</text>
+    <text class="nsub" x="851" y="354" text-anchor="middle">前进营地 · ~2.5h</text>
+
+    <rect class="nwood" x="822" y="450" width="76" height="36" rx="5"/>
+    <text class="nname-s" x="860" y="468" text-anchor="middle">雾谷</text>
+    <text class="nsub" x="860" y="481" text-anchor="middle">四路交汇 · 迷雾枢纽</text>
+
+    <rect class="nwood" x="862" y="200" width="76" height="34" rx="5"/>
+    <text class="nname-s" x="900" y="222" text-anchor="middle">红杉环</text>
+
+    <!-- gate -->
+    <rect class="nrestrict" x="748" y="140" width="76" height="34" rx="4"/>
+    <text class="nname-s" x="786" y="155" text-anchor="middle">自动大门</text>
+    <text class="nsub" x="786" y="168" text-anchor="middle">无人岗哨</text>
+
+    <!-- station -->
+    <rect class="nrestrict" x="830" y="42" width="145" height="58" rx="4"/>
+    <text class="nname" x="902" y="68" text-anchor="middle">雷德利站</text>
+    <text class="nsub" x="902" y="86" text-anchor="middle">无人 · 步行 6h · Frank 车 35′</text>
+  </svg>
+  </div>
+
+  <div class="legend">
+    <span><i class="dot pub"></i>公共场景</span>
+    <span><i class="dot home"></i>住宅</span>
+    <span><i class="dot wood"></i>林区节点(不在初始拓扑记忆中)</span>
+    <span><i class="dot res"></i>受限区域</span>
+    <span><i class="sw"></i>道路</span>
+    <span><i class="sw trail"></i>林径</span>
+    <span><i class="sw drive"></i>车行道</span>
+    <span><i class="sw fence"></i>围栏(不可通行)</span>
+    <span class="mono">N′ = 步行分钟(tick)</span>
+  </div>
+
+  <h2>连接边表</h2>
+  <h3>镇区</h3>
+  <div class="tablebox">
+  <table>
+    <thead><tr><th>连接</th><th>步行</th><th>备注</th></tr></thead>
+    <tbody>
+      <tr><td>主街北段 ↔ 主街南段</td><td class="min">15′</td><td>两段各有约 15′ 街面,端到端 30′+</td></tr>
+      <tr><td>临街店铺 ↔ 所在街段(北:餐馆 / 杂货店 / 警长办公室;南:街机厅 / 维修铺 / 诊所)</td><td class="min">各 2′</td><td></td></tr>
+      <tr><td>主街南段 ↔ Reyes 家</td><td class="min">8′</td><td>后街小巷</td></tr>
+      <tr><td>主街南段 ↔ 码头 / 海滩</td><td class="min">15′</td><td>下坡道</td></tr>
+      <tr><td>码头 ↔ Earl 的小屋</td><td class="min">5′</td><td></td></tr>
+      <tr><td>码头 / 海滩 ↔ 灯塔崖</td><td class="min">30′</td><td>崖间小径,唯一通路;Earl 的每日仪式</td></tr>
+      <tr><td>主街北段 ↔ Holt 家</td><td class="min">20′</td><td>镇北边缘</td></tr>
+      <tr><td>主街北段 ↔ 汽车旅馆</td><td class="min">25′</td><td>旧海岸公路,镇北入口</td></tr>
+      <tr><td>汽车旅馆 ↔ 自动大门</td><td class="min">车 30′</td><td>车行道,步行约 4.5h;Frank 的送货路线;与林区不相连</td></tr>
+      <tr><td>自动大门 ↔ 雷德利站(装卸区)</td><td class="min">车 5′</td><td>步行 15′;大门感应到 Frank 的货车自动开启 —— 无人岗哨,普通镇民的合法世界到此为止</td></tr>
+    </tbody>
+  </table>
+  </div>
+  <h3>林区(最短路镇端 → 围栏 = 10′+70′+90′+70′+130′ ≈ 6h)</h3>
+  <div class="tablebox">
+  <table>
+    <thead><tr><th>连接</th><th>步行</th><th>备注</th></tr></thead>
+    <tbody>
+      <tr><td>主街北段 ↔ 林道口</td><td class="min">10′</td><td>全镇人人知道的唯一入口;Holt 家后院豁口在林道 10′ 处汇入</td></tr>
+      <tr><td>林道口 ↔ 灰溪渡口</td><td class="min">70′</td><td>踏石过溪;<b>暴雨后涨水不可通行</b></td></tr>
+      <tr><td>灰溪渡口 ↔ 旧锯木厂</td><td class="min">90′</td><td>主路线,沿老集材道</td></tr>
+      <tr><td>林道口 ↔ 旧铁路路基</td><td class="min">60′</td><td>废弃伐木铁路,笔直好认</td></tr>
+      <tr><td>旧铁路路基 ↔ 旧锯木厂</td><td class="min">120′</td><td>绕远但不迷路的"安全路线"</td></tr>
+      <tr><td>旧锯木厂 ↔ 红杉环</td><td class="min">70′</td><td></td></tr>
+      <tr><td>旧锯木厂 ↔ 雾谷</td><td class="min">60′</td><td>看似近路</td></tr>
+      <tr><td>雾谷 ↔ 红杉环</td><td class="min">50′</td><td>成环 —— 最容易"走了很久回到原地"的地方</td></tr>
+      <tr><td>雾谷 ↔ 灰溪渡口</td><td class="min">110′</td><td>沼泽绕行</td></tr>
+      <tr><td>雾谷 ↔ 旧铁路路基</td><td class="min">120′</td><td>灌木密,几乎无路</td></tr>
+      <tr><td>红杉环 ↔ 雷德利站围栏</td><td class="min">130′</td><td><b>围栏,不可通行</b> —— 只能走到铁丝网前</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <h2>布局依据</h2>
+  <ul class="why">
+    <li><b>尺度是真实小镇级的</b>:主街纵贯 30′,镇核心任意两点 30–45′,灯塔单程 45′,雷德利站步行 6h —— 距离本身成为叙事资源(远征、迟归、错过)。</li>
+    <li><b>林区是迷宫,不是房间</b>:6 个节点、11 条边、多重环路,雾谷是四路交汇的迷路枢纽;锯木厂线与雾谷线到围栏同为 370′ —— 两条六小时的路,谁也说不清哪条更快。内部节点不写入镇民的初始拓扑记忆 —— 认路知识靠角色自己写 <span class="mono">map</span> 记忆积累;孩子们画的探险地图就是字面意义上的 map 记忆。例外:Earl、Ray 这辈人(伐木时代)记得路网,Frank 只认车行道。</li>
+    <li><b>旧锯木厂是"前进营地"</b>(单程约 2.5h):孩子们够得着的冒险极限,他们的"证据收集"大多发生在此。<b>围栏则是传说</b> —— 单程 6h,他们从未真正到过,是"总有一天"的远征。</li>
+    <li><b>两条进站路性质不同</b>:车行道(合法,尽头是感应自动开启的无人大门,只有 Frank 走)与林区围栏(不可通行)。"受限可进"与"完全不可进"各占一条路 —— 而雷德利站本身是<b>无人的</b>:Frank 八年送货从没见过一个人。</li>
+    <li><b>汽车旅馆在北入口</b>:上山岔路从旅馆旁经过 —— Vance 选这家旅馆,就是为了数每一辆去雷德利站的车。</li>
+    <li><b>Holt 家后院豁口</b>汇入林道:最胆小的 Denny 反而住得离林子最近,爷爷 Ray 的家正对着他压了三十年的方向。</li>
+  </ul>
+
+  <h2>待讨论</h2>
+  <div class="grid">
+    <div class="qcard"><span class="qn">Q1</span><h3>林区密度</h3><p>6 个节点、11 条边、多重环路。节点数还要不要再加(废弃瞭望塔、老矿洞)?</p></div>
+    <div class="qcard"><span class="qn">Q2</span><h3>动态封边怎么做</h3><p>灰溪涨水、浓雾锁谷:用 blockedConnections 动态封,还是保留边、由 Engine 在移动裁决时拦截并叙述?</p></div>
+    <div class="qcard"><span class="qn">Q3</span><h3>围栏建模</h3><p>红杉环—围栏这条边:blockedConnections 封死,还是保留、由 Engine 裁决拦截(能演出"翻围栏"的尝试)?</p></div>
+    <div class="qcard"><span class="qn">Q4</span><h3>初始拓扑知情名单</h3><p>Earl、Ray 记得林区路网;Frank 只认车行道;其余人只知林道口与"锯木厂在林子深处"的传闻。这份名单确认吗?</p></div>
+  </div>
+</div>
