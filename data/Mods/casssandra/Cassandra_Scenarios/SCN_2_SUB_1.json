@@ -8,16 +8,12 @@
     {
       "id": "ITEM_SCN2_1",
       "name": "焚化炉",
-      "description": "破旧的焚化炉，内部有近期使用过的痕迹，炉膛中残留着灰烬",
-      "type": "other"
+      "description": "破旧的焚化炉，内部有近期使用过的痕迹，炉膛中残留着灰烬"
     },
     {
       "id": "ITEM_SCN2_2",
       "name": "焚化记录",
-      "description": "焚化厂的简易记录簿，可能记载着近期焚化的物品和尸体信息",
-      "type": "document",
-      "category": "evidence",
-      "discoveryMethod": "inspect logbook"
+      "description": "焚化厂的简易记录簿，可能记载着近期焚化的物品和尸体信息"
     }
   ],
   "conditions": [

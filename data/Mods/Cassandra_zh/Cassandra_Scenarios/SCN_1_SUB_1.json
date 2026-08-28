@@ -8,59 +8,37 @@
     {
       "id": "ITEM_SCN1_1",
       "name": "医院档案",
-      "type": "document",
-      "category": "evidence",
-      "discoveryMethod": "inspect records",
       "description": "医院的患者与尸体档案记录系统，可以查阅尸体转运等信息。"
     },
     {
       "id": "ITEM_SCN1_2",
       "name": "监控屏幕",
-      "type": "tool",
-      "description": "一组用于查看院内走廊画面的监控屏幕，但部分区域存在明显的监控死角。"
-    },
-    {
-      "id": "ITEM_SCN1_15",
-      "name": "接待窗口",
-      "type": "other",
-      "description": "一扇半开放式接待窗口，玻璃下方的传递缝里塞着几张旧通知和表单。"
+      "description": "大厅角落的一组监控屏幕可以查看院内各处走廊的画面，但部分区域存在明显的监控死角。"
     },
     {
       "id": "ITEM_SCN1_16",
       "name": "候诊椅",
-      "type": "other",
-      "description": "一排塑料候诊椅，扶手漆面被长期频繁使用磨得发亮。"
+      "description": "靠墙的一排塑料候诊椅，扶手漆面被长期频繁使用磨得发亮。"
     },
     {
       "id": "ITEM_SCN1_17",
       "name": "排班白板",
-      "type": "document",
-      "description": "一块写满值班姓名和班次调整的排班白板，字迹潦草并反复擦写。"
+      "description": "大厅墙上那块排班白板写满了值班姓名和班次调整，字迹潦草并反复擦写。"
     },
     {
       "id": "ITEM_SCN1_20",
       "name": "来访登记表",
-      "type": "document",
-      "category": "evidence",
-      "discoveryMethod": "inspect desk",
-      "description": "几张用于记录访客姓名、来访事由和时间的纸质登记表，边角已经微微卷起。"
+      "description": "接待窗口后散着几张纸质来访登记表和一块签字板，登记表上记录着访客姓名、来访事由和时间，边角因反复翻动已经微微卷起。"
     },
     {
       "id": "ITEM_SCN1_21",
       "name": "自动售货机",
-      "type": "container",
-      "description": "一台老旧自动售货机，玻璃面板后摆着饮料和零食，投币口磨损明显。",
-      "containerStats": {
-        "capacity": 12,
-        "locked": false,
-        "contents": []
-      }
+      "description": "靠墙立着一台老旧自动售货机，玻璃面板后的饮料和零食看起来已经摆了不短时间，投币口磨损明显。"
     },
     {
       "id": "ITEM_SCN1_22",
       "name": "科室指示牌",
-      "type": "other",
-      "description": "一组绿色科室指示牌，标注着停尸间、病房和实验室等区域方向。"
+      "description": "一组绿色科室指示牌悬在走廊口，分别标注着停尸间、病房和实验室等区域的方向。"
     }
   ],
   "conditions": [
@@ -108,14 +86,5 @@
       "targetId": "SCN_1_SUB_6",
       "description": "走廊中段设有半开放式环形柜台的护士站，位于楼层交通枢纽位置"
     }
-  ],
-  "itemContexts": {
-    "ITEM_SCN1_2": "大厅角落的监控显示屏可以观察各处走廊画面，但存在若干监控死角。",
-    "ITEM_SCN1_15": "前台的接待窗口半开着，玻璃下方的缝隙里塞着几张折起的通知和旧表单。",
-    "ITEM_SCN1_16": "靠墙的一排塑料候诊椅扶手漆面发亮，显示它们被长期频繁使用。",
-    "ITEM_SCN1_17": "大厅墙上那块排班白板写满了潦草的值班名字和班次调整痕迹。",
-    "ITEM_SCN1_20": "接待窗口后散着几张来访登记表和签字板，边角因为反复翻动已经微微卷起。",
-    "ITEM_SCN1_21": "靠墙立着一台老旧自动售货机，玻璃面板后的零食和饮料看起来已经摆了不短时间。",
-    "ITEM_SCN1_22": "一组绿色指示牌悬在走廊口，分别指向停尸间、病房和实验室等区域。"
-  }
+  ]
 }

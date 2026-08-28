@@ -11,20 +11,17 @@
     {
       "id": "ITEM_ROAD7_1",
       "name": "警局停车标识",
-      "description": "靠近警察局一端的路牌标着“警用车辆优先”，牌面边角有新近擦过的痕迹。",
-      "type": "other"
+      "description": "靠近警察局一端的路牌标着“警用车辆优先”，牌面边角有新近擦过的痕迹。"
     },
     {
       "id": "ITEM_ROAD7_2",
       "name": "混凝土路障",
-      "description": "两块混凝土路障，必要时可以拖到路中央封锁车道。",
-      "type": "other"
+      "description": "路边摆着两块混凝土路障，必要时可以拖到路中央封锁车道。"
     },
     {
       "id": "ITEM_ROAD7_3",
       "name": "白色路灯",
       "description": "这段大道的路灯明显比镇上其他地方更亮，冷白色灯光带着公家设施的刻板气息。",
-      "type": "lighting",
       "isLightSource": true,
       "lightLevel": 4
     }
@@ -41,8 +38,5 @@
         ]
       }
     }
-  ],
-  "itemContexts": {
-    "ITEM_ROAD7_2": "路边摆着两块混凝土路障，必要时可以拖到路中央封锁车道。"
-  }
+  ]
 }

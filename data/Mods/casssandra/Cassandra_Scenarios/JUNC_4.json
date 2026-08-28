@@ -7,20 +7,17 @@
     {
       "id": "ITEM_JUNC4_1",
       "name": "镇中心方向牌",
-      "description": "一块金属方向牌，标示镇内主要公共地点的方向。",
-      "type": "document"
+      "description": "一块金属方向牌，立在路口中央偏北的位置，标示镇内主要公共地点的方向，指向酒店、警察局和教堂。"
     },
     {
       "id": "ITEM_JUNC4_2",
       "name": "公共告示栏",
-      "description": "一块玻璃面的公共告示栏，里面夹着通知、海报和社区公告。",
-      "type": "document"
+      "description": "一块玻璃面的公共告示栏镶在墙边，里面夹着镇公所通知、节庆海报和各类社区公告。"
     },
     {
       "id": "ITEM_JUNC4_3",
       "name": "街角长椅",
-      "description": "石基木面的长椅摆在街角，椅面被来往行人磨得发亮。",
-      "type": "other"
+      "description": "石基木面的长椅摆在街角，椅面被来往行人磨得发亮。"
     }
   ],
   "conditions": [
@@ -28,9 +25,5 @@
       "description": "镇中心区域，稍显热闹。"
     }
   ],
-  "connectedSceneIds": [],
-  "itemContexts": {
-    "ITEM_JUNC4_1": "金属方向牌立在路口中央偏北的位置，指示酒店、警察局和教堂的大致方向。",
-    "ITEM_JUNC4_2": "一块玻璃面公共告示栏镶在墙边，里面夹着镇公所通知和节庆海报。"
-  }
+  "connectedSceneIds": []
 }

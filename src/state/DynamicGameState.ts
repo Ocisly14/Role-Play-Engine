@@ -873,13 +873,24 @@ export class DynamicGameStateManager {
    *  the item's stable identity and is NOT changed by this method — true
    *  identity changes go through item.destroy + item.create.
    *  Returns true on success, false (with warning) when no item matches. */
-  modifyItem(itemId: string, patch: { description: string }): boolean {
+  /** Rewrite an item's description. Now that an item IS its description —
+   *  damage included — `append` adds a sentence to what is already there
+   *  instead of replacing it. Damage used to take the replacing path and
+   *  overwrite the entire description with "damaged by fire: ...", losing
+   *  everything the object was. */
+  modifyItem(
+    itemId: string,
+    patch: { description: string; append?: boolean }
+  ): boolean {
     const target = this.findItemById(itemId);
     if (!target) {
       console.warn(`[DGSM] modifyItem: item id="${itemId}" not found`);
       return false;
     }
-    target.description = patch.description;
+    target.description =
+      patch.append && target.description?.trim()
+        ? `${target.description.trim()} ${patch.description}`
+        : patch.description;
     this.state.lastUpdated = new Date();
     return true;
   }
@@ -1021,54 +1032,6 @@ export class DynamicGameStateManager {
       }
     }
     return undefined;
-  }
-
-  /** Damage an evidence item in the specified scene (e.g., on fumble) */
-  damageEvidenceItem(
-    itemId: string,
-    damagedBy: string,
-    reason: string,
-    sceneId: string
-  ): void {
-    const scene = this.getScene(sceneId);
-    if (!scene?.items) return;
-    const item = scene.items.find(
-      (i) => i.id === itemId && i.category === "evidence"
-    );
-    if (item && !item.damaged) {
-      item.damaged = true;
-      item.damageDetails = {
-        damagedBy,
-        damagedAt: new Date().toISOString(),
-        reason,
-      };
-    }
-  }
-
-  /**
-   * Generic item damage helper used by the Applier for `scene.damageItem`
-   * StateChanges. Unlike `damageEvidenceItem`, this targets ANY item in the
-   * scene (not just evidence). Idempotent: a second call on an already-damaged
-   * item is a no-op.
-   */
-  markItemDamaged(
-    sceneId: string,
-    itemId: string,
-    damagedBy: string,
-    reason: string
-  ): void {
-    const scene = this.getScene(sceneId);
-    if (!scene?.items) return;
-    const item = scene.items.find((i) => i.id === itemId);
-    if (!item) return;
-    if (item.damaged) return;
-    item.damaged = true;
-    item.damageDetails = {
-      damagedBy,
-      damagedAt: new Date().toISOString(),
-      reason,
-    };
-    this.state.lastUpdated = new Date();
   }
 
   getRelationship(

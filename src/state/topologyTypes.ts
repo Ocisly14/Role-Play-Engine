@@ -11,7 +11,6 @@ export interface JunctionNode {
   description: string;
   parentLocationId: string; // typically "OUTDOOR"
   items: Item[];
-  itemContexts?: Record<string, string>;
   conditions: SceneCondition[];
   /** Scene IDs directly accessible from this junction (buildings at the intersection) */
   connectedSceneIds: string[];
@@ -44,7 +43,6 @@ export interface RoadNode {
   /** Buildings accessible along this road */
   alongConnections: AlongConnection[];
   items: Item[];
-  itemContexts?: Record<string, string>;
   conditions: SceneCondition[];
 }
 

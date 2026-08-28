@@ -24,28 +24,19 @@
     {
       "id": "ITEM_ROAD3_1",
       "name": "教堂告示栏",
-      "description": "路边的教堂告示栏里夹着本周弥撒时间与慈善募捐通知。",
-      "type": "document"
+      "description": "路边的教堂告示栏里夹着本周弥撒时间与慈善募捐通知。"
     },
     {
       "id": "ITEM_ROAD3_2",
       "name": "酒吧霓虹牌",
-      "description": "一块鹿角形霓虹招牌，部分灯管已经不亮。",
-      "type": "lighting",
-      "isLightSource": true,
-      "lightLevel": 3,
-      "damaged": true
+      "description": "一块从驯鹿酒吧外墙伸出的鹿角形霓虹招牌，白天也能看清轮廓，部分灯管已经不亮。",
+      "isLightSource": false,
+      "lightLevel": 3
     },
     {
       "id": "ITEM_ROAD3_3",
       "name": "店外钉锯木箱",
-      "description": "几只装着钉子和锯条的木箱，箱盖边缘磨得发毛，与哈里森五金店门外的堆放一致。",
-      "type": "container",
-      "containerStats": {
-        "capacity": 10,
-        "locked": false,
-        "contents": []
-      }
+      "description": "几只装着钉子和锯条的木箱，箱盖边缘磨得发毛，与哈里森五金店门外的堆放一致。"
     }
   ],
   "conditions": [
@@ -64,9 +55,5 @@
         ]
       }
     }
-  ],
-  "itemContexts": {
-    "ITEM_ROAD3_2": "从驯鹿酒吧外墙伸出的霓虹牌白天也能看见轮廓，鹿角形状的灯管有几段已经不亮。",
-    "ITEM_ROAD3_3": "五金店门外堆着几只装钉子和锯条的木箱，箱盖边缘磨得发毛。"
-  }
+  ]
 }

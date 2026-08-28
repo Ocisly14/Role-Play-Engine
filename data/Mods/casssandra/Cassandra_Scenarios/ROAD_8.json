@@ -16,20 +16,17 @@
     {
       "id": "ITEM_ROAD8_1",
       "name": "铸铁井盖",
-      "description": "路面上几块沉重的铸铁井盖沿街排布，其中一块边缘的锈迹最深。",
-      "type": "other"
+      "description": "路面上几块沉重的铸铁井盖沿街排布，其中一块边缘的锈迹最深。"
     },
     {
       "id": "ITEM_ROAD8_2",
       "name": "排水栅栏",
-      "description": "人行道边的排水栅里卡着烟头、枯叶和干涸的泥块。",
-      "type": "other"
+      "description": "人行道边的排水栅里卡着烟头、枯叶和干涸的泥块。"
     },
     {
       "id": "ITEM_ROAD8_3",
       "name": "电线杆",
-      "description": "街边电线杆上缠着电话线与网线，底部被人用白漆简单涂过编号。",
-      "type": "other"
+      "description": "街边电线杆上缠着电话线与网线，底部被人用白漆简单涂过编号。"
     }
   ],
   "conditions": [

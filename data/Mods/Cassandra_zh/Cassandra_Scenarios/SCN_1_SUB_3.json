@@ -8,34 +8,21 @@
     {
       "id": "ITEM_SCN1_5",
       "name": "新型医疗器械",
-      "type": "tool",
       "description": "一批崭新的医疗器械，机身印着波士顿产地标识，与小镇医院的常规配置明显不符。"
     },
     {
       "id": "ITEM_SCN1_6",
       "name": "注射器",
-      "type": "tool",
-      "description": "几支尚未处理的注射器，透明针筒和金属针头在冷白灯下反着惨白微光。"
+      "description": "工作台上散着几支尚未处理的注射器，透明针筒和金属针头在冷白灯下反着惨白微光。"
     },
     {
       "id": "ITEM_SCN1_23",
       "name": "蜘蛛样本容器",
-      "type": "container",
-      "category": "evidence",
-      "discoveryMethod": "inspect samples",
-      "containerStats": {
-        "capacity": 3,
-        "locked": false,
-        "contents": []
-      },
-      "description": "几只密封样本容器，里面装着蜘蛛标本和组织样本，标签格式十分正式。"
+      "description": "几只密封样本容器，里面装着蜘蛛标本和组织样本，标签格式十分正式，明显不是临时采集物。"
     },
     {
       "id": "ITEM_SCN1_7",
       "name": "实验档案",
-      "type": "document",
-      "category": "evidence",
-      "discoveryMethod": "inspect files",
       "description": "一份记录实验数据和进度的实验档案。"
     }
   ],
@@ -72,11 +59,5 @@
       "targetId": "SCN_1_SUB_5",
       "description": "防火门外走廊右侧方向通往L型走廊与病房区，两侧排列着病房门"
     }
-  ],
-  "itemContexts": {
-    "ITEM_SCN1_5": "一批崭新的医疗器械，上面印着产地来自波士顿，与这家偏远小镇医院的规模极不相称",
-    "ITEM_SCN1_6": "工作台上散着几支尚未处理的注射器，针头反射出实验灯下惨白的光。",
-    "ITEM_SCN1_23": "几只密封样本容器里装着蜘蛛标本和组织样本，标签写法过于正式，明显不是临时采集物。",
-    "ITEM_SCN1_7": "一份实验相关的档案，记载着实验数据和进度"
-  }
+  ]
 }

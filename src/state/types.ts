@@ -267,7 +267,6 @@ export interface DynamicScene {
   description: string;
   parentLocationId: string;
   items: Item[];
-  itemContexts?: Record<string, string>;
   conditions: SceneCondition[];
   connections: SceneConnection[];
   sceneImage?: SceneImage;
@@ -284,48 +283,26 @@ export interface WeaponStats {
   era?: string;
 }
 
-export interface ConsumableStats {
-  uses?: number;
-  effect?: string;
-  duration?: number;
-}
-
-export interface ContainerStats {
-  capacity?: number;
-  locked?: boolean;
-  lockDifficulty?: "easy" | "regular" | "hard" | "extreme";
-  contents?: string[];
-  storedItems?: Item[];
-}
-
+/**
+ * An object in the world. A name and a paragraph — nothing else, because
+ * nothing else was ever read: `type`, `category`, `reveals`, `discoveryMethod`,
+ * `era`, `weaponStats`, `consumableStats` and `containerStats` had no consumer
+ * anywhere in src/ or client/, and `damaged` was a second way of saying what
+ * every damaged item's description already said in words ("残破", "部分灯管已经
+ * 不亮", "被砸毁"). The Engine reads the description and judges; a field that
+ * repeats the prose is a field that can disagree with it.
+ *
+ * `isLightSource`/`lightLevel` stay because they are NOT judged by a model:
+ * `subsystem/sun.ts` sums them in code to compute a scene's illumination. A
+ * lamp that stops working stops being a light source — one flag, not two.
+ */
 export interface Item {
   id: string;
   name: string;
   description?: string;
-  type?:
-    | "weapon"
-    | "consumable"
-    | "tool"
-    | "lighting"
-    | "container"
-    | "key"
-    | "document"
-    | "other";
-  category?: "evidence" | "mundane";
-  reveals?: string[];
-  discoveryMethod?: string;
-  era?: string;
-  damaged?: boolean;
-  damageDetails?: {
-    damagedBy: string;
-    damagedAt: string;
-    reason: string;
-  };
+  /** Contributes to scene illumination — read by subsystem/sun.ts. */
   isLightSource?: boolean;
   lightLevel?: number;
-  weaponStats?: WeaponStats;
-  consumableStats?: ConsumableStats;
-  containerStats?: ContainerStats;
 }
 
 export interface SceneImage {

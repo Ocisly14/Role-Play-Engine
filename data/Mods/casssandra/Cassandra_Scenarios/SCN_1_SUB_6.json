@@ -8,39 +8,27 @@
     {
       "id": "ITEM_SCN1_13",
       "name": "排班表",
-      "type": "document",
-      "category": "evidence",
-      "discoveryMethod": "inspect whiteboard",
       "description": "护士站白板上的排班表，记录着医护人员的值班安排"
     },
     {
       "id": "ITEM_SCN1_14",
       "name": "病历档案架",
-      "type": "container",
-      "containerStats": {
-        "capacity": 40,
-        "locked": false,
-        "contents": []
-      },
-      "description": "一组存放病历和医疗记录表格的档案架。"
+      "description": "柜台后方的一组档案架，存放着各类病历和医疗记录表格。"
     },
     {
       "id": "ITEM_SCN1_25",
       "name": "台式电脑",
-      "type": "tool",
-      "description": "两台笨重的台式电脑，CRT显示器散发着微弱的电子嗡鸣，屏幕上跳动着旧式界面。"
+      "description": "柜台后方摆放着两台笨重的台式电脑，CRT显示器散发着微弱的电子嗡鸣，屏幕上跳动着旧式系统界面。"
     },
     {
       "id": "ITEM_SCN1_26",
       "name": "传真机",
-      "type": "tool",
-      "description": "一台老旧的传真机，出纸口边缘泛黄，偶尔自动吐出空白纸页。"
+      "description": "柜台上一台老旧的传真机，出纸口边缘泛黄，偶尔自动吐出空白纸页。"
     },
     {
       "id": "ITEM_SCN1_27",
       "name": "座机电话",
-      "type": "tool",
-      "description": "一部米色座机电话，电话线绕成了一团，听筒上留有长期使用的磨损。"
+      "description": "传真机旁边是一部米色座机电话，电话线已经绕成了一团乱麻，听筒上留有长期使用的磨损。"
     }
   ],
   "conditions": [
@@ -80,11 +68,5 @@
       "targetId": "SCN_1_SUB_5",
       "description": "柜台后方走廊两旁病房门半掩，延伸至日光灯下的L型走廊与病房区"
     }
-  ],
-  "itemContexts": {
-    "ITEM_SCN1_14": "柜台后方的文件架，存放着各类病历和医疗记录表格",
-    "ITEM_SCN1_25": "柜台后方摆放着两台笨重的CRT显示器台式电脑，屏幕上跳动着旧式系统界面。",
-    "ITEM_SCN1_26": "柜台上一台老旧的传真机，出纸口边缘泛黄，偶尔自动吐出空白纸页。",
-    "ITEM_SCN1_27": "传真机旁边是一部米色座机电话，电话线已经绕成了一团乱麻。"
-  }
+  ]
 }

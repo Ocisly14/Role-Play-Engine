@@ -11,27 +11,19 @@
     {
       "id": "ITEM_ROAD5A_1",
       "name": "墙面壁灯",
-      "description": "几盏旧壁灯，灯罩和底座都蒙着一层薄尘。",
-      "type": "lighting",
+      "description": "几盏装在巷道两侧建筑外墙上的旧壁灯，灯罩和底座在白天看去都蒙着一层薄尘。",
       "isLightSource": true,
       "lightLevel": 2
     },
     {
       "id": "ITEM_ROAD5A_2",
       "name": "排水沟铁盖",
-      "description": "巷边狭长的排水沟盖板被鞋底与车轮反复碾压，边角已经有些翘起。",
-      "type": "other"
+      "description": "巷边狭长的排水沟盖板被鞋底与车轮反复碾压，边角已经有些翘起。"
     },
     {
       "id": "ITEM_ROAD5A_3",
       "name": "堆叠垃圾桶",
-      "description": "几只深色垃圾桶挤在墙角，桶身被风雪和脏水刷出一道道发白的痕迹。",
-      "type": "container",
-      "containerStats": {
-        "capacity": 3,
-        "locked": false,
-        "contents": []
-      }
+      "description": "几只深色垃圾桶挤在墙角，桶身被风雪和脏水刷出一道道发白的痕迹。"
     }
   ],
   "conditions": [
@@ -57,8 +49,5 @@
         ]
       }
     }
-  ],
-  "itemContexts": {
-    "ITEM_ROAD5A_1": "巷道两侧建筑外墙上装着几盏旧壁灯，白天看去全都蒙着一层薄尘。"
-  }
+  ]
 }

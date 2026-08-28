@@ -9,27 +9,17 @@
     {
       "id": "ITEM_SCN7_1",
       "name": "烧了一半的照片",
-      "description": "一张被火烧去一半的旧照片，残留部分还能辨认出模糊人像和背面的数字。",
-      "type": "document",
-      "category": "evidence",
-      "discoveryMethod": "inspect burnt photo"
+      "description": "一张被火烧去一半的旧照片，残留的部分可以辨认出人像是驯鹿酒吧的受害人Jenny Florence（卢奇菲罗），照片里是少女时期的她和一个女人，看起来像是家庭合照的一部分；照片背面写着一串数字：54816871。"
     },
     {
       "id": "ITEM_SCN7_2",
       "name": "暗格中的魔鬼呼吸",
-      "description": "通过更仔细的搜索可以发现墙壁上的一个隐藏暗格。暗格里写着一个人名——Martin Gin，以及一包粉末状的物质。经检查，这就是'魔鬼呼吸'——一种从南美植物'波拉切洛'中提取的强效致幻药物，具有使人丧失自主意识的可怕功效。",
-      "type": "consumable",
-      "category": "evidence",
-      "discoveryMethod": "search hidden compartment"
+      "description": "通过更仔细的搜索可以发现墙壁上的一个隐藏暗格。暗格里写着一个人名——Martin Gin，以及一包粉末状的物质。经检查，这就是'魔鬼呼吸'——一种从南美植物'波拉切洛'中提取的强效致幻药物，具有使人丧失自主意识的可怕功效。"
     },
     {
       "id": "ITEM_SCN7_3",
       "name": "被砸毁的电子设备残骸",
-      "description": "散落在地面的被砸坏烧毁的电子设备碎片——显示器碎片、扭曲的键盘、烧焦的硬盘和服务器机箱、缠成一团的网线。这些设备曾经组成了一个功能强大的黑客工作站。",
-      "type": "tool",
-      "category": "evidence",
-      "discoveryMethod": "inspect smashed equipment",
-      "damaged": true
+      "description": "散落在地面的被砸坏烧毁的电子设备碎片——显示器碎片、扭曲的键盘、烧焦的硬盘和服务器机箱、缠成一团的网线。这些设备曾经组成了一个功能强大的黑客工作站。"
     }
   ],
   "conditions": [
@@ -72,8 +62,5 @@
       "targetId": "SCN_7_SUB_1",
       "description": "暗门外连通拱形砖壁通道，通道另一端是铸铁铁梯下方的下水道入口"
     }
-  ],
-  "itemContexts": {
-    "ITEM_SCN7_1": "一张被火烧去了一半的照片。残留的部分可以辨认出上面的人像是驯鹿酒吧的受害人Jenny Florence（卢奇菲罗），照片中是少女时期的她和一个女人，看起来像是家庭合照的一部分。照片背面写着一串数字：54816871。"
-  }
+  ]
 }

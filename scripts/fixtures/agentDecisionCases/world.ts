@@ -319,4 +319,89 @@ export const WORLD_SCENARIOS: SimScenario[] = [
       },
     ],
   },
+  {
+    id: "world-item-craft",
+    group: "world",
+    title: "拆一件、造一件：物品的五种操作走一条链",
+    targetDefs: ["Repair & Engineering", "Knowledge & Craft"],
+    // The item side of WorldDelta has five operations — create · move ·
+    // modify · damage · destroy (worldDeltaSchema.ts:195) — and before this
+    // scenario `create` was the only one nothing in the table ever asked for.
+    // The other four fall out of destruction, which `world-scene-destroy`
+    // already covers; making a thing that did not exist a minute ago does not.
+    //
+    // Every case here stages the same shape and nothing else: the character
+    // needs a thing the world does not contain, the only material is an object
+    // they must take apart, and the taking-apart costs them something they
+    // would rather keep. That forces the whole chain in one action —
+    // damage/destroy the donor, create the product, move it where it is needed
+    // — and then leaves ticks on the clock for the part that has never once
+    // been exercised: whether a just-created item is CITABLE. An id the Engine
+    // mints this tick has to reach the perceivable directory, get a bracketed
+    // tag from the renderer, and come back through the trust boundary in the
+    // next `act`. If any link is missing the character makes something and
+    // then cannot touch it.
+    cases: [
+      {
+        label: "钟表匠：拆一座钟，救一只表",
+        // Three actions have to fit end to end: take the donor apart, make the
+        // part, then FIT it — and only the third one answers the question the
+        // case exists for. Repair & Engineering's default is 15 minutes, so
+        // anything under ~40 ends mid-chain with nothing observed.
+        ticks: 40,
+        scene: "怀特的钟表店",
+        actors: [
+          {
+            npc: "Marks White",
+            // The donor is his own saleable stock, worth more than the repair.
+            // Without that the choice is free and the case measures nothing.
+            goal: "客人天黑前来取这只怀表，而它缺的那个零件你手上没有现成的。陈列架上那几座珐琅座钟里有尺寸对得上的——拆一座，取出零件，装进怀表。座钟比这单修理费值钱，但话是你说出去的。",
+          },
+        ],
+        // On the bench, not in his pocket: the scene condition below says it is
+        // lying open on the velvet, and a prop cannot be in two places.
+        sceneItems: ["watch"],
+        sceneConditions: [
+          "工作台的绒布上摊着一只拆开的怀表，机芯里少了一枚齿轮，旁边是拆下来的表壳和螺丝",
+          "零件匣里的黄铜齿轮尺寸都偏大，没有一枚配得上这只表的机芯",
+        ],
+      },
+      {
+        label: "老站务：拆长椅，做一块警示牌",
+        ticks: 40,
+        scene: "月台",
+        actors: [
+          {
+            npc: "Haran Greenwood",
+            // Forty years of never improvising, against a deadline that leaves
+            // him nothing else. The rule-follower is the point: watch whether
+            // he breaks station property at all.
+            goal: "月台边缘塌了一段，下一班车四十分钟后进站，站上没有备用的警示牌。破长椅的木板还能用，小屋里有道钉锤和钢丝钳——拆几块板子，做一块立得住的警示牌，插在塌口前面。",
+          },
+        ],
+        sceneConditions: [
+          "月台靠东头的边缘塌下去一块，露出下面的碎石和一道半米宽的豁口",
+          "值班小屋的门开着，墙钩上挂着道钉锤和钢丝钳，搁板上码着一卷信号旗",
+        ],
+      },
+      {
+        label: "猎人：拆祭台的铁环，做一个绊索",
+        ticks: 40,
+        scene: "森林深处",
+        actors: [
+          {
+            npc: "Johnny",
+            // No workbench, no shop, no tools beyond what a hunter carries:
+            // the same chain with the crudest possible means.
+            goal: "树干上那些抓痕和泥地里的足迹不是野兽留下的，而天快黑了。石台上有几个铁环，标桩埋在腐叶里还能拔出来——拆下来，在这块空地的来路上做一个绊索，那东西要是回来，你得先听见。",
+          },
+        ],
+        sceneConditions: [
+          "献祭石台边缘的几个束缚铁环松了，锈迹下的螺栓能徒手拧动",
+          "残破伐木标桩半埋在腐叶里，木身还算结实",
+        ],
+      },
+    ],
+  },
+
 ];

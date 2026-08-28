@@ -8,39 +8,26 @@
     {
       "id": "ITEM_SCN3_1",
       "name": "办公桌",
-      "description": "几张胡桃木贴面办公桌，桌面堆着日常文件、通讯记录和喝空的纸杯。",
-      "type": "other"
+      "description": "大厅接待区摆放着几张胡桃木贴面办公桌，桌面堆着日常文件、通讯记录和几只喝空的纸杯。"
     },
     {
       "id": "ITEM_SCN3_11",
       "name": "文件柜",
-      "description": "几只金属文件柜，抽屉把手被常年拉拽得漆面斑驳。",
-      "type": "container",
-      "containerStats": {
-        "capacity": 20,
-        "locked": true,
-        "lockDifficulty": "regular",
-        "contents": []
-      }
+      "description": "办公桌后方竖着几只金属文件柜，抽屉把手被常年拉拽得漆面斑驳。"
     },
     {
       "id": "ITEM_SCN3_2",
       "name": "辖区地图",
-      "description": "一幅卡森德拉辖区地图，标注了主要街道、建筑和分区。",
-      "type": "document",
-      "category": "evidence",
-      "discoveryMethod": "inspect map"
+      "description": "墙上挂着一幅卡森德拉辖区地图，标注了主要街道、建筑和分区。"
     },
     {
       "id": "ITEM_SCN3_12",
       "name": "咖啡机",
-      "type": "other",
       "description": "角落里的咖啡机发出轻微的咕嘟声，玻璃壶底凝着一层焦黑的咖啡渍。"
     },
     {
       "id": "ITEM_SCN3_13",
       "name": "软木公告板",
-      "type": "other",
       "description": "墙上钉着一块软木公告板，用图钉别满了排班表、安全通告和几张泛黄的寻人启事。"
     }
   ],
@@ -85,12 +72,5 @@
       "targetId": "JUNC_8",
       "description": "正门沉重的玻璃门外即是新月街A大道南西端的路口"
     }
-  ],
-  "itemContexts": {
-    "ITEM_SCN3_1": "大厅接待区摆放着几张办公桌，桌面堆着日常文件、通讯记录和几只喝空的纸杯。",
-    "ITEM_SCN3_11": "办公桌后方竖着几只金属文件柜，抽屉把手被常年拉拽得漆面斑驳。",
-    "ITEM_SCN3_2": "墙上挂着的卡森德拉辖区地图，标注了主要街道和建筑",
-    "ITEM_SCN3_12": "角落里一台咖啡机在咕嘟作响，玻璃壶底凝着一层焦黑的咖啡渍。",
-    "ITEM_SCN3_13": "墙上的软木公告板别满了排班表、安全通告和泛黄的寻人启事。"
-  }
+  ]
 }

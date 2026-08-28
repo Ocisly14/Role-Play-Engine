@@ -297,26 +297,18 @@ export class Applier {
         return itemId ? [{ kind: "item.destroy", itemId }] : [];
       case "damage": {
         if (!itemId) return [];
-        // Scene-held items use the structured damage path; carried items get
-        // the damage folded into their description.
-        const sceneId = this.findItemSceneId(itemId);
-        if (sceneId) {
-          return [
-            {
-              kind: "scene.damageItem",
-              sceneId,
-              itemId,
-              damagedBy: op.damagedBy,
-              reason: op.reason,
-              sourceFeatureId: source,
-            },
-          ];
-        }
+        // One path, not two. This used to branch on WHERE the item was —
+        // scene-held items got a structured `damaged` flag, carried ones got
+        // the damage written into their description — so the same event was
+        // recorded two different ways depending on whose hands it was in.
+        // An item is its description now, so damage is a sentence appended to
+        // it, wherever it sits.
         return [
           {
             kind: "item.modify",
             itemId,
-            description: `damaged by ${op.damagedBy}: ${op.reason}`,
+            description: `Damaged by ${op.damagedBy}: ${op.reason}`,
+            append: true,
           },
         ];
       }
@@ -528,17 +520,16 @@ export class Applier {
           this.dgsm.removeScopedFeatureState(c.featureId, scope, c.key);
           break;
         }
-        case "scene.damageItem": {
-          this.dgsm.markItemDamaged(c.sceneId, c.itemId, c.damagedBy, c.reason);
-          break;
-        }
         case "character.position": {
           this.dgsm.setCharacterPosition(c.characterId, c.position);
           break;
         }
         // ── Resolver-emitted item ops ──
         case "item.modify": {
-          this.dgsm.modifyItem(c.itemId, { description: c.description });
+          this.dgsm.modifyItem(c.itemId, {
+            description: c.description,
+            ...(c.append ? { append: true } : {}),
+          });
           break;
         }
         case "item.create": {

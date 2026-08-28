@@ -195,14 +195,6 @@ export type StateChange =
       sourceFeatureId: string;
     }
   | {
-      kind: "scene.damageItem";
-      sceneId: string;
-      itemId: string;
-      damagedBy: string; // "fire" | "moisture" | "weapon" | ...
-      reason: string;
-      sourceFeatureId: string;
-    }
-  | {
       /**
        * Move a character to a new topology position. Emitted by the CodeEngine
        * movement subsystem each tick as it interpolates along a route.
@@ -229,6 +221,10 @@ export type StateChange =
       kind: "item.modify";
       itemId: string;
       description: string;
+      /** Append to the existing description instead of replacing it. */
+      append?: boolean;
+      /** Set when a subsystem emitted this rather than the resolver. */
+      sourceFeatureId?: string;
     }
   | {
       kind: "item.create";

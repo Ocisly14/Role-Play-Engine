@@ -8,32 +8,18 @@
     {
       "id": "ITEM_SCN4_9",
       "name": "大型商用冷藏柜",
-      "description": "储藏室最深处并排矗立的两台银灰色大型商用冷藏柜，外壳上凝结着薄薄的水雾。打开柜门会涌出一股刺骨的冷气，内部空间足以容纳大量食材。",
-      "type": "container",
-      "containerStats": {
-        "capacity": 40,
-        "locked": false,
-        "contents": []
-      }
+      "description": "储藏室最深处并排矗立的两台银灰色大型商用冷藏柜，外壳上凝结着薄薄的水雾。打开柜门会涌出一股刺骨的冷气，内部空间足以容纳大量食材。"
     },
     {
       "id": "ITEM_SCN4_10",
       "name": "金属货架",
-      "description": "几组灰色金属货架，上面分区堆放着酒水、食品、清洁用品和备用布草。",
-      "type": "container",
-      "containerStats": {
-        "capacity": 30,
-        "locked": false,
-        "contents": []
-      }
+      "description": "几组简易的灰色金属货架将储藏室隔成几个区域，上面分门别类地堆放着酒水饮料、罐头食品、清洁用品和备用的酒店布草。"
     },
     {
       "id": "ITEM_SCN4_11",
       "name": "闪烁的荧光灯管",
       "description": "天花板上的荧光灯管有一根接触不良，不时闪烁几下，在水泥墙面上投射出跳动的光影。",
-      "type": "lighting",
-      "damaged": true,
-      "isLightSource": true,
+      "isLightSource": false,
       "lightLevel": 2
     }
   ],
@@ -88,8 +74,5 @@
       "targetId": "SCN_4_SUB_2",
       "description": "储藏室一侧陡峭的水泥楼梯向上延伸，顶部金属门连通一楼后厨与餐厅"
     }
-  ],
-  "itemContexts": {
-    "ITEM_SCN4_10": "简易的灰色金属货架将储藏室隔成几个区域，上面分门别类地堆放着酒水饮料、罐头食品、清洁用品和备用的酒店布草。"
-  }
+  ]
 }

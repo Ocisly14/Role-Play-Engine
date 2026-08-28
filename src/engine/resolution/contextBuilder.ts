@@ -197,8 +197,6 @@ function snapshotItem(
     ...(item.description !== undefined
       ? { description: item.description }
       : {}),
-    ...(item.type !== undefined ? { type: item.type } : {}),
     holder,
-    ...(item.damaged !== undefined ? { damaged: item.damaged } : {}),
   };
 }

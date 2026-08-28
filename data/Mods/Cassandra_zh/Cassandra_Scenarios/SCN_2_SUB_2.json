@@ -8,9 +8,7 @@
     {
       "id": "ITEM_SCN2_3",
       "name": "坍塌的建筑残骸",
-      "description": "半坍塌的二层小楼，部分房间尚且完好，但结构极不稳定",
-      "type": "other",
-      "damaged": true
+      "description": "半坍塌的二层小楼，部分房间尚且完好，但结构极不稳定"
     }
   ],
   "conditions": [

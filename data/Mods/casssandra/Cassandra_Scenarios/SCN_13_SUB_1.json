@@ -8,25 +8,17 @@
     {
       "id": "ITEM_SCN13_1",
       "name": "伏特加酿造设备",
-      "description": "厂区内残留的酿酒设备，一部分仍在运转，另一部分已经停用并落满灰尘",
-      "type": "tool"
+      "description": "厂区内残留的酿酒设备，一部分仍在运转，另一部分已经停用并落满灰尘"
     },
     {
       "id": "ITEM_SCN13_3",
       "name": "空置厂房",
-      "description": "酒厂有一多半的厂房处于空置状态，灰尘弥漫，设备已被搬走或停用。",
-      "type": "other"
+      "description": "酒厂有一多半的厂房处于空置状态，灰尘弥漫，设备已被搬走或停用。"
     },
     {
       "id": "ITEM_SCN13_10",
       "name": "空置木质酒桶",
-      "type": "container",
-      "description": "角落里堆放着四五只空置的木质酒桶，桶身箍着生锈的铁环。",
-      "containerStats": {
-        "capacity": 8,
-        "locked": false,
-        "contents": []
-      }
+      "description": "角落里堆放着四五只空置的木质酒桶和一些塑料周转箱，桶身箍着已经锈蚀的铁环。"
     }
   ],
   "conditions": [
@@ -62,8 +54,5 @@
       "targetId": "SCN_13_SUB_3",
       "description": "厂区角落有一道狭窄的石砌台阶，向下通往地下的阴冷酒窖"
     }
-  ],
-  "itemContexts": {
-    "ITEM_SCN13_10": "角落里堆放着空置的木质酒桶和塑料周转箱，桶身的铁环已经锈蚀。"
-  }
+  ]
 }

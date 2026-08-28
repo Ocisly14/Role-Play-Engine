@@ -12,12 +12,7 @@
     {
       "id": "ITEM_S3_2",
       "name": "Filing Cabinet",
-      "description": "A metal filing cabinet containing company documents and invoices. The bottom drawer has a separate lock.",
-      "category": "evidence",
-      "discoveryMethod": "The bottom drawer is locked with a small key that Victor keeps on his person.",
-      "reveals": [
-        "The petty cash records show discrepancies — several entries are crossed out and rewritten with lower amounts."
-      ]
+      "description": "A metal filing cabinet containing company documents and invoices. The bottom drawer has a separate lock."
     },
     {
       "id": "ITEM_S3_3",
@@ -27,17 +22,12 @@
     {
       "id": "ITEM_S3_6",
       "name": "Petty Cash Box",
-      "description": "A small metal cash box in Victor's desk drawer. It should contain the company's petty cash fund.",
-      "category": "evidence",
-      "reveals": [
-        "The cash box is nearly empty. According to the ledger it should have $800, but there's only about $150 inside."
-      ]
+      "description": "A small metal cash box in Victor's desk drawer. It should contain the company's petty cash fund."
     },
     {
       "id": "ITEM_S3_7",
       "name": "Overtime Request Form",
-      "description": "A stack of blank overtime request forms on Victor's desk. Several recent ones are marked 'DENIED' in red ink.",
-      "category": "mundane"
+      "description": "A stack of blank overtime request forms on Victor's desk. Several recent ones are marked 'DENIED' in red ink."
     }
   ],
   "conditions": [
@@ -45,5 +35,8 @@
       "description": "A standard office environment with fluorescent lighting and the hum of computers. Victor's private office corner has blinds that he often keeps half-closed."
     }
   ],
-  "connections": ["SCN_3_SUB_2", "JUNC_3"]
+  "connections": [
+    "SCN_3_SUB_2",
+    "JUNC_3"
+  ]
 }

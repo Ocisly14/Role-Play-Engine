@@ -8,18 +8,12 @@
     {
       "id": "ITEM_SCN13_2",
       "name": "酒窖酒架",
-      "description": "沿墙排列的木质酒架，存放着大量伏特加成品，瓶身上积着薄灰。",
-      "type": "container",
-      "containerStats": {
-        "capacity": 30,
-        "locked": false
-      }
+      "description": "沿墙排列的木质酒架，存放着大量伏特加成品，瓶身上积着薄灰。"
     },
     {
       "id": "ITEM_SCN13_7",
       "name": "密集的蜘蛛网",
-      "description": "酒窖各处布满了异常密集的蜘蛛网，从酒架缝隙蔓延到墙角和天花板砖缝之间",
-      "type": "other"
+      "description": "酒窖各处布满了异常密集的蜘蛛网，从酒架缝隙蔓延到墙角和天花板砖缝之间"
     }
   ],
   "conditions": [
@@ -62,8 +56,5 @@
       "targetId": "SCN_13_SUB_1",
       "description": "狭窄的石砌台阶向上通往地面层空旷的酒厂厂区车间"
     }
-  ],
-  "itemContexts": {
-    "ITEM_SCN13_2": "沿墙排列的木质酒架，存放着大量伏特加成品，瓶身上积着薄灰"
-  }
+  ]
 }

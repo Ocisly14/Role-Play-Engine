@@ -24,22 +24,19 @@
     {
       "id": "ITEM_ROAD4_1",
       "name": "火车站方向标",
-      "description": "一块指向火车站的金属方向标，箭头边缘已经锈出深色斑点。",
-      "type": "other"
+      "description": "一块立在老街口的金属方向标，指向火车站，箭头边缘已经锈出深色斑点。"
     },
     {
       "id": "ITEM_ROAD4_2",
       "name": "老式路灯",
       "description": "旧街的路灯样式比镇上其他地方更老，灯柱底座还保留着铸造厂铭牌。",
-      "type": "lighting",
       "isLightSource": true,
       "lightLevel": 3
     },
     {
       "id": "ITEM_ROAD4_3",
       "name": "石基长椅",
-      "description": "一张石基木面的长椅，椅面被风沙磨得粗糙发灰。",
-      "type": "other"
+      "description": "一张石基木面的长椅靠墙摆放，椅面被风沙磨得粗糙发灰。"
     }
   ],
   "conditions": [
@@ -58,9 +55,5 @@
         ]
       }
     }
-  ],
-  "itemContexts": {
-    "ITEM_ROAD4_1": "老街口立着一块指向火车站的金属方向标，箭头边缘已经锈出深色斑点。",
-    "ITEM_ROAD4_3": "一张石基木面的长椅靠墙摆放，椅面被风沙磨得粗糙发灰。"
-  }
+  ]
 }

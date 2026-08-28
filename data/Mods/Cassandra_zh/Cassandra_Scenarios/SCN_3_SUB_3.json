@@ -8,44 +8,24 @@
     {
       "id": "ITEM_SCN3_4",
       "name": "卷宗档案柜",
-      "description": "按年份排列的大量卷宗档案柜挤满了房间，抽屉边缘都贴着褪色卷曲的标签。",
-      "type": "container",
-      "containerStats": {
-        "capacity": 40,
-        "locked": false,
-        "contents": []
-      }
+      "description": "按年份排列的大量卷宗档案柜挤满了房间，抽屉边缘都贴着褪色卷曲的标签。"
     },
     {
       "id": "ITEM_SCN3_8",
       "name": "敞口纸箱",
-      "description": "几只敞口纸箱，里面塞满尚未来得及归档的文件袋与零散卷宗。",
-      "type": "container",
-      "containerStats": {
-        "capacity": 10,
-        "locked": false,
-        "contents": []
-      }
+      "description": "角落里堆着几只敞口纸箱，里面塞满尚未来得及归档的文件袋与零散卷宗。"
     },
     {
       "id": "ITEM_SCN3_9",
       "name": "半坏的荧光灯管",
       "description": "头顶那根老旧荧光灯管时亮时暗，把狭窄通道切成一段段忽明忽暗的光影。",
-      "type": "lighting",
-      "damaged": true,
-      "isLightSource": true,
+      "isLightSource": false,
       "lightLevel": 2
     },
     {
       "id": "ITEM_SCN3_10",
       "name": "索引卡抽屉",
-      "description": "靠门的小抽屉柜里塞满了手写索引卡，用来按年份和案件名检索纸质档案。",
-      "type": "container",
-      "containerStats": {
-        "capacity": 20,
-        "locked": false,
-        "contents": []
-      }
+      "description": "靠门的小抽屉柜里塞满了手写索引卡，用来按年份和案件名检索纸质档案。"
     }
   ],
   "conditions": [
@@ -77,8 +57,5 @@
       "targetId": "SCN_3_SUB_1",
       "description": "档案室入口外的侧翼短廊连通警察局大厅，大厅方向灯光明亮"
     }
-  ],
-  "itemContexts": {
-    "ITEM_SCN3_8": "角落里堆着几只敞口纸箱，里面塞满了尚未来得及归档的文件袋与零散卷宗。"
-  }
+  ]
 }

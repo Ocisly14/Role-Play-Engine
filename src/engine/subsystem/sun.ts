@@ -177,7 +177,9 @@ Dark environments impose skill penalties; blinding light also impairs vision.`,
       const scene = ctx.getScene(sceneId);
       if (!scene?.items) continue;
       for (const item of scene.items) {
-        if (!item.isLightSource || item.damaged) continue;
+        // A lamp that stops working stops being a light source: there is no
+        // separate damaged flag any more, so breaking one clears this.
+        if (!item.isLightSource) continue;
         const level = item.lightLevel ?? DEFAULT_ITEM_LIGHT_LEVEL;
         out.push(contributeIllumination(sceneId, level));
       }

@@ -7,20 +7,17 @@
     {
       "id": "ITEM_JUNC7_1",
       "name": "火车时刻牌",
-      "description": "站前一块黑底白字的时刻牌钉在柱子上，列着少得可怜的到发车时间。",
-      "type": "document"
+      "description": "站前一块黑底白字的时刻牌钉在柱子上，列着少得可怜的到发车时间。"
     },
     {
       "id": "ITEM_JUNC7_2",
       "name": "行李推车",
-      "description": "一辆掉漆的铁制行李推车停在站前广场边，轮子转动时会发出刺耳声响。",
-      "type": "other"
+      "description": "一辆掉漆的铁制行李推车停在站前广场边，轮子转动时会发出刺耳声响。"
     },
     {
       "id": "ITEM_JUNC7_3",
       "name": "候车长椅",
-      "description": "一张木质候车长椅，椅背上刻着多年前旅客留下的名字缩写。",
-      "type": "other"
+      "description": "站前摆着一张木质候车长椅，椅背上刻着多年前旅客留下的名字缩写。"
     }
   ],
   "conditions": [
@@ -42,8 +39,5 @@
   ],
   "connectedSceneIds": [
     "SCN_21_SUB_1"
-  ],
-  "itemContexts": {
-    "ITEM_JUNC7_3": "站前摆着一张木质长椅，椅背上刻着多年前旅客留下的名字缩写。"
-  }
+  ]
 }

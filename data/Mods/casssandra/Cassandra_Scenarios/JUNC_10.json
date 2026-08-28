@@ -7,30 +7,17 @@
     {
       "id": "ITEM_JUNC10_1",
       "name": "路边垃圾桶",
-      "description": "两个并排的塑料垃圾桶，桶盖边缘有长期风吹日晒留下的磨损。",
-      "type": "container",
-      "containerStats": {
-        "capacity": 2,
-        "locked": false,
-        "contents": []
-      }
+      "description": "两个塑料垃圾桶并排放在街道尽头附近，桶盖边缘有长期风吹日晒留下的磨损，在风里轻轻颤动。"
     },
     {
       "id": "ITEM_JUNC10_2",
       "name": "住户邮箱",
-      "description": "一只漆面剥落的住户邮箱钉在木栏杆旁，盖口被反复开合得有些变形。",
-      "type": "container",
-      "containerStats": {
-        "capacity": 1,
-        "locked": false,
-        "contents": []
-      }
+      "description": "一只漆面剥落的住户邮箱钉在木栏杆旁，盖口被反复开合得有些变形。"
     },
     {
       "id": "ITEM_JUNC10_3",
       "name": "门前小灯",
       "description": "旁边住宅门廊的小灯白天熄着，灯罩里凝着一层薄薄的水汽。",
-      "type": "lighting",
       "isLightSource": true,
       "lightLevel": 2
     }
@@ -52,8 +39,7 @@
       }
     }
   ],
-  "connectedSceneIds": ["SCN_8_SUB_1"],
-  "itemContexts": {
-    "ITEM_JUNC10_1": "终点附近并排放着两个塑料垃圾桶，桶盖在风里轻轻颤动。"
-  }
+  "connectedSceneIds": [
+    "SCN_8_SUB_1"
+  ]
 }

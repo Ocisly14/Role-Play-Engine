@@ -9,18 +9,12 @@
     {
       "id": "ITEM_SCN2_4",
       "name": "古老壁刻",
-      "description": "洞穴墙壁上布满古老文字与符文浮雕，明显出自远早于卡森德拉镇史的文明之手。",
-      "type": "document",
-      "category": "evidence",
-      "discoveryMethod": "inspect wall"
+      "description": "洞穴墙壁上布满古老文字与符文浮雕，明显出自远早于卡森德拉镇史的文明之手。"
     },
     {
       "id": "ITEM_SCN2_5",
       "name": "改造后的仪式祭坛",
-      "description": "一座被后人反复改动过的石质祭坛，古老石面上叠压着较新的刻痕、烛泪和干涸污迹。",
-      "type": "other",
-      "category": "evidence",
-      "discoveryMethod": "inspect altar"
+      "description": "一座被后人反复改动过的石质祭坛，古老石面上叠压着较新的刻痕、烛泪和干涸污迹。"
     }
   ],
   "conditions": [

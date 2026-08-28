@@ -7,23 +7,19 @@
     {
       "id": "ITEM_JUNC11_1",
       "name": "森林警示牌",
-      "description": "一块钉在木桩上的警示牌提醒来人不要在夜间独自进入森林深处。",
-      "type": "document"
+      "description": "一块钉在木桩上的警示牌提醒来人不要在夜间独自进入森林深处。"
     },
     {
       "id": "ITEM_JUNC11_2",
       "name": "步道标记桩",
-      "description": "几根矮木质步道标记桩，用来勉强标出原有步道边界。",
-      "type": "other"
+      "description": "几根矮木质步道标记桩，立在泥泞小路的起点处，勉强标出原有步道边界。"
     },
     {
       "id": "ITEM_JUNC11_3",
       "name": "坏掉的路灯",
       "description": "森林入口旁的路灯灯罩裂了一角，夜里几乎起不到照明作用。",
-      "type": "lighting",
-      "isLightSource": true,
-      "lightLevel": 3,
-      "damaged": true
+      "isLightSource": false,
+      "lightLevel": 3
     }
   ],
   "conditions": [
@@ -54,8 +50,5 @@
       }
     }
   ],
-  "connectedSceneIds": [],
-  "itemContexts": {
-    "ITEM_JUNC11_2": "泥泞小路起点处立着几根矮木桩，勉强标出原本的步道边界。"
-  }
+  "connectedSceneIds": []
 }

@@ -12,12 +12,7 @@
     {
       "id": "ITEM_S3_5",
       "name": "Business Planner",
-      "description": "A leather-bound business planner on the dining table with Victor's schedule and notes. Some pages have angry scribbles and crossed-out entries.",
-      "category": "evidence",
-      "discoveryMethod": "Reading the notes carefully",
-      "reveals": [
-        "Several notes reference 'cash adjustment' and 'accounting correction' — euphemisms that don't match standard bookkeeping."
-      ]
+      "description": "A leather-bound business planner on the dining table with Victor's schedule and notes. Some pages have angry scribbles and crossed-out entries."
     },
     {
       "id": "ITEM_S3_8",
@@ -27,21 +22,12 @@
     {
       "id": "ITEM_S3_9",
       "name": "Divorce Papers",
-      "description": "A folder stuffed behind books on the shelf. Contains finalized divorce papers and several bitter handwritten letters never sent.",
-      "category": "evidence",
-      "discoveryMethod": "Searching behind the books on the shelf",
-      "reveals": [
-        "The divorce filing cites 'emotional abuse and controlling behavior' as grounds. Victor's unsent letters are defensive and blame his ex-wife for everything."
-      ]
+      "description": "A folder stuffed behind books on the shelf. Contains finalized divorce papers and several bitter handwritten letters never sent."
     },
     {
       "id": "ITEM_S3_10",
       "name": "Phone with Call History",
-      "description": "Victor's personal phone left on the nightstand, screen unlocked.",
-      "category": "evidence",
-      "reveals": [
-        "Recent call history shows multiple late-night calls to a liquor delivery service and a contact labeled 'Cash pickup' — both odd for someone insisting the company finances are under control."
-      ]
+      "description": "Victor's personal phone left on the nightstand, screen unlocked."
     }
   ],
   "conditions": [
@@ -49,5 +35,7 @@
       "description": "A well-furnished private residence, but with signs of lonely drinking habits. The air smells faintly of whiskey."
     }
   ],
-  "connections": ["SCN_3_SUB_1"]
+  "connections": [
+    "SCN_3_SUB_1"
+  ]
 }

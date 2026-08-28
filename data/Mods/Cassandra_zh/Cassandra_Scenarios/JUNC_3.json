@@ -7,22 +7,19 @@
     {
       "id": "ITEM_JUNC3_1",
       "name": "昏暗路灯",
-      "description": "一盏老式路灯，发出偏黄光线，灯罩内壁积着不少飞虫尸体。",
-      "type": "lighting",
+      "description": "一盏立在角落里的老式路灯，发出偏黄光线，灯罩内壁积着不少飞虫尸体。",
       "isLightSource": true,
       "lightLevel": 2
     },
     {
       "id": "ITEM_JUNC3_2",
       "name": "碎石路界碑",
-      "description": "一块半埋在地里的界碑标明这里是北新街、南新街与旧街的交汇点。",
-      "type": "other"
+      "description": "一块半埋在地里的界碑标明这里是北新街、南新街与旧街的交汇点。"
     },
     {
       "id": "ITEM_JUNC3_3",
       "name": "公告木板",
-      "description": "钉在电线杆旁的公告木板贴着几张卷边的寻人启事和商店传单。",
-      "type": "document"
+      "description": "钉在电线杆旁的公告木板贴着几张卷边的寻人启事和商店传单。"
     }
   ],
   "conditions": [
@@ -30,8 +27,5 @@
       "description": "三岔口位置风大。"
     }
   ],
-  "connectedSceneIds": [],
-  "itemContexts": {
-    "ITEM_JUNC3_1": "角落里的老式路灯发出偏黄的光，灯罩内壁积着不少飞虫尸体。"
-  }
+  "connectedSceneIds": []
 }
