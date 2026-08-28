@@ -249,6 +249,11 @@ export type CharacterStateOperation =
   | { kind: "san"; delta: number; reason: string }
   | { kind: "fatigue"; delta: number; reason: string }
   | { kind: "position"; position: CharacterPosition }
+  /**
+   * Where they now are WITHIN their location, as prose. Empty string clears
+   * it; a location change clears it in code, without being asked.
+   */
+  | { kind: "spot"; spot: string }
   | { kind: "addCondition"; condition: CharacterCondition }
   | { kind: "removeCondition"; conditionId: string };
 

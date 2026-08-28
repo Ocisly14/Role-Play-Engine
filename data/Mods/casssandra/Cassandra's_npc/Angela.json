@@ -1,0 +1,182 @@
+{
+  "id": "Angela",
+  "name": "Angela",
+  "occupation": "Drug Dealer",
+  "age": 34,
+  "gender": "female",
+  "appearance": "A woman of ordinary build and forgettable appearance who dresses plainly enough to disappear into a crowd. Nothing about her presentation invites a second look unless she wants it to.",
+  "personality": "Cautious, practical, emotionally detached, and profit-driven. Angela prefers low-risk transactions, short conversations, and keeping herself useful without becoming visible.",
+  "background": "Angela operates on the edges of Cassandra's local underground economy. She has maintained a long-running trade relationship with Lux Lynch, supplying marijuana, Arabian tea, and a handful of psychoactive drugs such as methylphenidate. She avoids the town's larger conspiracies on purpose and survives by staying mobile, keeping her circles small, and never pretending loyalty is worth more than caution.",
+  "residence": "OUTDOOR",
+  "currentLocation": "JUNC_2",
+  "spot": "in the lee of the dead oak at the fork, watching all three roads",
+  "knownMapSeed": {
+    "sceneIds": [
+      "SCN_16_SUB_1",
+      "SCN_16_SUB_2",
+      "SCN_21_SUB_1",
+      "SCN_21_SUB_2"
+    ],
+    "junctionIds": [
+      "JUNC_1",
+      "JUNC_2",
+      "JUNC_3",
+      "JUNC_4",
+      "JUNC_5",
+      "JUNC_6",
+      "JUNC_7",
+      "JUNC_8",
+      "JUNC_9",
+      "JUNC_10",
+      "JUNC_11"
+    ],
+    "roadIds": [
+      "ROAD_1",
+      "ROAD_2",
+      "ROAD_3",
+      "ROAD_4",
+      "ROAD_5a",
+      "ROAD_5b",
+      "ROAD_6",
+      "ROAD_7",
+      "ROAD_8",
+      "ROAD_9",
+      "ROAD_10"
+    ],
+    "scenarioOutlineIds": [
+      "SCN_1",
+      "SCN_2",
+      "SCN_3",
+      "SCN_4",
+      "SCN_5",
+      "SCN_6",
+      "SCN_8",
+      "SCN_9",
+      "SCN_10",
+      "SCN_11",
+      "SCN_12",
+      "SCN_13",
+      "SCN_14",
+      "SCN_15",
+      "SCN_16",
+      "SCN_17",
+      "SCN_18",
+      "SCN_19",
+      "SCN_21",
+      "SCN_22"
+    ]
+  },
+  "longTermIntent": "Keep her street-level drug trade running without drawing sustained police pressure, preserve her arrangement with Lux Lynch as long as it remains profitable, and stay far away from Cassandra's more dangerous power struggles.",
+  "attributes": {
+    "STR": 50,
+    "CON": 55,
+    "DEX": 50,
+    "APP": 55,
+    "POW": 50,
+    "SIZ": 60,
+    "INT": 55,
+    "EDU": 65
+  },
+  "status": {
+    "hp": 12,
+    "maxHp": 12,
+    "sanity": 50,
+    "maxSanity": 50,
+    "luck": 50,
+    "mp": 10,
+    "conditions": []
+  },
+  "skills": {
+    "Social": 60,
+    "Science & Nature": 55,
+    "Stealth & Security": 50,
+    "Medicine & Psychology": 70,
+    "Ranged Combat": 50
+  },
+  "inventory": [
+    {
+      "name": "Street Satchel",
+      "properties": {
+        "note": "A plain carry bag used to move small quantities of product without attracting attention."
+      }
+    },
+    {
+      "name": "Drug Samples",
+      "properties": {
+        "note": "Small amounts of marijuana, Arabian tea, and a few controlled stimulants for regular buyers."
+      }
+    },
+    {
+      "name": "Disposable Packaging",
+      "properties": {
+        "note": "Simple wraps, envelopes, and small containers for quick handoffs."
+      }
+    }
+  ],
+  "relationships": [
+    {
+      "targetId": "Lux Lynch",
+      "targetName": "Lux Lynch",
+      "relationshipType": "ally",
+      "attitude": 40,
+      "description": "A regular buyer and useful corrupt contact in the police world.",
+      "history": "Angela has done steady business with Lux for a long time and understands that the relationship works only as long as both sides keep the risk manageable.",
+      "firstPerson": "Lux has been buying from me for a long time, and a bought policeman in my book is worth more than what he pays. It works only while neither of us lets the risk get out of hand."
+    }
+  ],
+  "memory": [
+    {
+      "type": "information",
+      "content": "I make money by quietly dealing marijuana, Arabian tea, and a few psychoactive drugs to people who know how to keep their mouths shut.",
+      "metadata": {
+        "knowledgeId": "k_angela_trade",
+        "difficulty": "automatic"
+      }
+    },
+    {
+      "type": "information",
+      "content": "I move around Cassandra rather than staying attached to one obvious location. Streets, corners, and short meetings suit me better than fixed territory.",
+      "metadata": {
+        "knowledgeId": "k_angela_mobile",
+        "difficulty": "regular"
+      }
+    },
+    {
+      "type": "information",
+      "content": "I do not ask buyers why they want what they want. Small trade survives because everyone agrees not to turn a handoff into a confession.",
+      "metadata": {
+        "knowledgeId": "k_angela_no_questions",
+        "difficulty": "regular"
+      }
+    },
+    {
+      "type": "secret",
+      "content": "Lux Lynch has been one of my regular trading partners for a long time. He is useful because he wears a badge and still wants things he should not be buying.",
+      "metadata": {
+        "knowledgeId": "s_angela_lux"
+      }
+    },
+    {
+      "type": "secret",
+      "content": "I know more about the town's small-scale underground traffic than I ever say aloud, including who pays, who uses couriers, and which people in uniform prefer not to notice certain exchanges.",
+      "metadata": {
+        "knowledgeId": "s_angela_underworld"
+      }
+    },
+    {
+      "type": "secret",
+      "content": "I keep my product, money, and contacts separated on purpose. No single buyer or stash is important enough to ruin me if someone gets greedy or arrested.",
+      "metadata": {
+        "knowledgeId": "s_angela_split_risk"
+      }
+    },
+    {
+      "type": "belief",
+      "content": "People in Cassandra who ask too many questions about the wrong networks end up frightened, dead, or bought. Small business and low visibility are safer than ambition.",
+      "metadata": {
+        "confidence": 0.8,
+        "reasoningChain": "Every profitable contact eventually touches something larger and dirtier. The people who survive are the ones who keep their role narrow and know when to disappear."
+      }
+    }
+  ]
+}

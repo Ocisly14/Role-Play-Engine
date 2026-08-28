@@ -54,13 +54,12 @@ export interface FeatureReadContext {
   getAllRegionIds(): string[];
 
   /**
-   * Read runtime SceneConditions added to a scene via the `scene.addCondition`
-   * StateChange. These live in `dgsm.scenarioConditions` (NOT in the static
-   * `DynamicScene.conditions` field, which is the module-loaded baseline).
-   * AnchorSubsystem.shouldExist predicates that key off runtime conditions
-   * (e.g. fire watching for `burning`) MUST read through this method, not
-   * `getScene(...).conditions`. Returns `[]` when no runtime conditions exist
-   * for the scene.
+   * Read a scene's conditions — the module-loaded baseline and everything
+   * added since via the `scene.addCondition` StateChange, which are the same
+   * list: conditions have one home, `conditions` on the place object.
+   * AnchorSubsystem.shouldExist predicates that key off conditions (e.g. fire
+   * watching for `burning`) read through this method. Returns `[]` for a
+   * scene with none.
    */
   getSceneConditions(sceneId: string): SceneCondition[];
 

@@ -1,0 +1,183 @@
+{
+  "id": "Lutz Emilion",
+  "name": "Lutz Emilion",
+  "occupation": "Bar owner / staff",
+  "age": 34,
+  "gender": "male",
+  "appearance": "A well-groomed man with a professional, approachable look typical of an experienced bartender.",
+  "personality": "Sociable, observant, discreet, and emotionally perceptive. He knows how to keep conversations flowing without revealing too much himself.",
+  "background": "Lutz Emilion works as a bartender and bar owner alongside his partner Taran. Through daily interactions with patrons, he has developed strong people-reading skills and a habit of quietly collecting information. His work has made him familiar with local rumors, personal dramas, and subtle changes in the town's atmosphere. Lutz primarily handles cleaning, charging customers, and delivering drinks in the main hall.",
+  "residence": "SCN_16",
+  "currentLocation": "SCN_16_SUB_1",
+  "spot": "wiping down an empty booth near the restroom corridor",
+  "knownMapSeed": {
+    "sceneIds": [
+      "SCN_16_SUB_1",
+      "SCN_16_SUB_2",
+      "SCN_21_SUB_1",
+      "SCN_21_SUB_2",
+      "SCN_4_SUB_1",
+      "SCN_4_SUB_2"
+    ],
+    "junctionIds": [
+      "JUNC_1",
+      "JUNC_2",
+      "JUNC_3",
+      "JUNC_4",
+      "JUNC_5",
+      "JUNC_6",
+      "JUNC_7",
+      "JUNC_8",
+      "JUNC_9",
+      "JUNC_10",
+      "JUNC_11"
+    ],
+    "roadIds": [
+      "ROAD_1",
+      "ROAD_2",
+      "ROAD_3",
+      "ROAD_4",
+      "ROAD_5a",
+      "ROAD_5b",
+      "ROAD_6",
+      "ROAD_7",
+      "ROAD_8",
+      "ROAD_9",
+      "ROAD_10"
+    ],
+    "scenarioOutlineIds": [
+      "SCN_1",
+      "SCN_2",
+      "SCN_3",
+      "SCN_4",
+      "SCN_5",
+      "SCN_6",
+      "SCN_8",
+      "SCN_9",
+      "SCN_10",
+      "SCN_11",
+      "SCN_12",
+      "SCN_13",
+      "SCN_14",
+      "SCN_15",
+      "SCN_16",
+      "SCN_17",
+      "SCN_18",
+      "SCN_19",
+      "SCN_21",
+      "SCN_22"
+    ]
+  },
+  "longTermIntent": "Keep the Reindeer Bar running smoothly, protect his partner and staff, and avoid getting dragged into dangerous affairs.",
+  "attributes": {
+    "STR": 50,
+    "CON": 55,
+    "DEX": 50,
+    "APP": 55,
+    "POW": 50,
+    "SIZ": 60,
+    "INT": 55,
+    "EDU": 65
+  },
+  "status": {
+    "hp": 12,
+    "maxHp": 12,
+    "sanity": 50,
+    "maxSanity": 99,
+    "luck": 50,
+    "mp": 10,
+    "conditions": []
+  },
+  "skills": {
+    "Social": 60,
+    "Knowledge & Craft": 70,
+    "Investigation": 50
+  },
+  "inventory": [
+    {
+      "name": "Bartending tools"
+    },
+    {
+      "name": "Cash register"
+    },
+    {
+      "name": "Bar ledger"
+    }
+  ],
+  "relationships": [
+    {
+      "targetId": "Taran Emilion",
+      "targetName": "Taran Emilion",
+      "relationshipType": "friend",
+      "attitude": 70,
+      "description": "Business partner and co-owner of the bar.",
+      "history": "They work together to operate the Reindeer Bar.",
+      "firstPerson": "Taran and I own the Reindeer between us, and it runs because neither drops his half."
+    },
+    {
+      "targetId": "Ben Cleo",
+      "targetName": "Ben Cleo",
+      "relationshipType": "employer",
+      "attitude": 50,
+      "description": "The bar operates under Ben Cleo's protection.",
+      "history": "The bar is protected by the local mafia boss.",
+      "firstPerson": "Ben's protection keeps trouble out of my bar, and I mean to stay worth it."
+    }
+  ],
+  "memory": [
+    {
+      "type": "information",
+      "content": "I work the Reindeer Bar's main hall, handling cleaning, customer service, drink delivery, and everyday operations.",
+      "metadata": {
+        "knowledgeId": "k_lutz_work",
+        "difficulty": "automatic"
+      }
+    },
+    {
+      "type": "information",
+      "content": "The bar's surveillance system has blind spots that Ben Cleo and his people know about.",
+      "metadata": {
+        "knowledgeId": "k_lutz_blindspots",
+        "difficulty": "regular"
+      }
+    },
+    {
+      "type": "secret",
+      "content": "Martin Gin broke the surveillance system, not Ben Cleo.",
+      "metadata": {
+        "knowledgeId": "s_lutz_martin_break"
+      }
+    },
+    {
+      "type": "secret",
+      "content": "I can testify that Philip Scaletta lost his folding knife during a fight at the bar on the day of the murder.",
+      "metadata": {
+        "knowledgeId": "s_lutz_philip_knife"
+      }
+    },
+    {
+      "type": "belief",
+      "content": "The bar survives by staying useful to powerful people and not asking questions they do not want answered.",
+      "metadata": {
+        "confidence": 0.85,
+        "reasoningChain": "A bar that becomes a battlefield stops being a business."
+      }
+    },
+    {
+      "type": "information",
+      "content": "I know Ben Cleo's protection keeps open violence out of the bar, but every favor in this town still has a price.",
+      "metadata": {
+        "knowledgeId": "k_lutz_ben_price",
+        "difficulty": "regular"
+      }
+    },
+    {
+      "type": "information",
+      "content": "Years behind the bar have taught me to remember who is angry, who is afraid, and who can still be talked down before a fight starts.",
+      "metadata": {
+        "knowledgeId": "k_lutz_reading_room",
+        "difficulty": "regular"
+      }
+    }
+  ]
+}

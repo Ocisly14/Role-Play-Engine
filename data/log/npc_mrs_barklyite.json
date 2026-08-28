@@ -1,0 +1,17 @@
+{
+  "npcId": "npc_mrs_barklyite",
+  "memories": [
+    {
+      "type": "event",
+      "content": "我不在医院大厅，未与Vincent见面，也不知道他曾来找我。",
+      "gameDay": 1,
+      "gameTime": "19:32",
+      "location": "SCN_1_SUB_1",
+      "metadata": {
+        "outcome": "礼貌地与 Mrs. Barklyite 打招呼并试探性询问她今晚来医院的来意，同时把话题尽快转回医院日常与值班安排以确认与护士站相关的信息"
+      }
+    }
+  ],
+  "plans": [],
+  "intents": []
+}

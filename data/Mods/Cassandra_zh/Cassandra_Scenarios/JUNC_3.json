@@ -1,0 +1,37 @@
+{
+  "id": "JUNC_3",
+  "name": "北新街端点三岔口",
+  "description": "北新街的尽头，三条道路在此交汇。向东北是北新街，向东是南新街，向西是旧街。路口铺着碎石，角落有一盏昏暗的路灯。",
+  "parentLocationId": "OUTDOOR",
+  "items": [
+    {
+      "id": "ITEM_JUNC3_1",
+      "name": "昏暗路灯",
+      "description": "一盏老式路灯，发出偏黄光线，灯罩内壁积着不少飞虫尸体。",
+      "type": "lighting",
+      "isLightSource": true,
+      "lightLevel": 2
+    },
+    {
+      "id": "ITEM_JUNC3_2",
+      "name": "碎石路界碑",
+      "description": "一块半埋在地里的界碑标明这里是北新街、南新街与旧街的交汇点。",
+      "type": "other"
+    },
+    {
+      "id": "ITEM_JUNC3_3",
+      "name": "公告木板",
+      "description": "钉在电线杆旁的公告木板贴着几张卷边的寻人启事和商店传单。",
+      "type": "document"
+    }
+  ],
+  "conditions": [
+    {
+      "description": "三岔口位置风大。"
+    }
+  ],
+  "connectedSceneIds": [],
+  "itemContexts": {
+    "ITEM_JUNC3_1": "角落里的老式路灯发出偏黄的光，灯罩内壁积着不少飞虫尸体。"
+  }
+}

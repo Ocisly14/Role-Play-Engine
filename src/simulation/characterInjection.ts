@@ -73,6 +73,11 @@ export function injectCharacterIntoState(
     sceneId: entrySceneId,
   });
 
+  // Player-created characters carry a starting spot the same way module NPCs
+  // do. The setter normalizes and drops it if it is empty. Safe after the
+  // position write: the clear only fires when a PREVIOUS position existed.
+  if (profile.spot) dgsm.setCharacterSpot(profile.id, profile.spot);
+
   // Cast readonly away for the shallow Record maps (Readonly is shallow in TypeScript)
   const state = dgsm.getState() as ReturnType<typeof dgsm.getState> & {
     npcStats: Record<string, { hp: number; san: number }>;
@@ -140,6 +145,7 @@ export async function removeCharacterFromState(
       string,
       import("../state/topologyTypes.js").CharacterPosition
     >;
+    characterSpots: Record<string, string>;
   };
 
   // Remove from npcCharacters array
@@ -151,6 +157,9 @@ export async function removeCharacterFromState(
   delete state.npcResidences[characterId];
   delete state.npcInventories[characterId];
   delete state.characterPositions[characterId];
+  // Otherwise a removed id leaves a spot behind that a later reuse of the
+  // same id would inherit.
+  delete state.characterSpots[characterId];
 
   // Bidirectional relationship graph cleanup
   // 1. Delete the character's own relationship entry

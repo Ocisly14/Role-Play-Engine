@@ -1,0 +1,111 @@
+{
+  "id": "Gofern Hupadego of Shub-Niggurath",
+  "name": "Gofern Hupadego of Shub-Niggurath",
+  "occupation": "Transformed cult creature (former human merchant)",
+  "age": 45,
+  "gender": "N/A",
+  "appearance": "A grotesque hybrid creature born from human flesh and the influence of Shub-Niggurath. Its body shows distorted humanoid features mixed with bestial traits such as claws, hooves, horns, or fangs.",
+  "personality": "Bestial, predatory, and driven by instinct. Retains fragments of human cunning but is dominated by hunger, aggression, and obedience to Shub-Niggurath.",
+  "background": "Once a wealthy merchant who participated in forbidden rituals dedicated to Shub-Niggurath. During a failed or excessive ritual, he was transformed into a monstrous servitor doomed to live in the damp forests and swamps as a creature of the Dark Mother.",
+  "residence": "SCN_20",
+  "currentLocation": "SCN_20",
+  "spot": "crouched low in the weeds between the rusted machine bases",
+  "knownMapSeed": {
+    "junctionIds": [],
+    "roadIds": [],
+    "scenarioOutlineIds": [
+      "SCN_20"
+    ],
+    "sceneIds": [
+      "SCN_20_SUB_1",
+      "SCN_20_SUB_2",
+      "SCN_20_SUB_3"
+    ]
+  },
+  "longTermIntent": "Feed, survive, and continue serving Shub-Niggurath from the margins of the swamp until either prey or hunger finally destroys this body.",
+  "attributes": {
+    "STR": 55,
+    "CON": 85,
+    "DEX": 55,
+    "APP": 10,
+    "POW": 85,
+    "SIZ": 65,
+    "INT": 50,
+    "EDU": 40
+  },
+  "status": {
+    "hp": 12,
+    "maxHp": 12,
+    "sanity": 0,
+    "maxSanity": 0,
+    "luck": 60,
+    "mp": 17,
+    "conditions": [
+      "Regeneration"
+    ]
+  },
+  "skills": {
+    "Stealth & Security": 90,
+    "Melee Combat": 40
+  },
+  "inventory": [],
+  "relationships": [
+    {
+      "targetId": "Shub-Niggurath",
+      "targetName": "Shub-Niggurath",
+      "relationshipType": "ally",
+      "attitude": 100,
+      "description": "Utter devotion to the Dark Mother.",
+      "history": "Transformation occurred during a ritual dedicated to Shub-Niggurath.",
+      "firstPerson": "The Dark Mother unmade my shape in her rite and gave me this one. All of me bleats for her."
+    }
+  ],
+  "memory": [
+    {
+      "type": "information",
+      "content": "I was once human and still remember enough to recognize greed, fear, and ritual hunger in others.",
+      "metadata": {
+        "knowledgeId": "k_gofern_origin",
+        "difficulty": "automatic"
+      }
+    },
+    {
+      "type": "information",
+      "content": "The swamp and forest are the safest places for me to remain hidden, because they let me feed without drawing attention.",
+      "metadata": {
+        "knowledgeId": "k_gofern_territory",
+        "difficulty": "regular"
+      }
+    },
+    {
+      "type": "information",
+      "content": "I still remember how human bargains worked, and I use that old knowledge to choose prey that will not fight too hard.",
+      "metadata": {
+        "knowledgeId": "k_gofern_human_memory",
+        "difficulty": "regular"
+      }
+    },
+    {
+      "type": "secret",
+      "content": "I regenerate unnaturally unless I am destroyed completely. Wounds are delays, not endings.",
+      "metadata": {
+        "knowledgeId": "s_gofern_regeneration"
+      }
+    },
+    {
+      "type": "secret",
+      "content": "I stay in the swamp because hunters, roads, and bright lights make it harder to hide what I have become.",
+      "metadata": {
+        "knowledgeId": "s_gofern_hunters"
+      }
+    },
+    {
+      "type": "belief",
+      "content": "For me, hunger is the clearest prayer. Shub-Niggurath answers through what survives feeding.",
+      "metadata": {
+        "confidence": 0.9,
+        "reasoningChain": "The body that feeds is the body that continues."
+      }
+    }
+  ]
+}

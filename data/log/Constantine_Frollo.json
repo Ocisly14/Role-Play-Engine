@@ -1,0 +1,2033 @@
+{
+  "npcId": "Constantine Frollo",
+  "memories": [
+    {
+      "type": "secret",
+      "content": "我的仪式并非纯粹的天主教。当我侍奉那个从童年起就跟随我的声音时，祈祷、蛛网和巫术混为一体。",
+      "gameDay": 1,
+      "gameTime": "00:00",
+      "location": null,
+      "metadata": {
+        "knowledgeId": "s_constantine_rites"
+      }
+    },
+    {
+      "type": "plan",
+      "content": "令神明降临于世——这个'神明'究竟是天主还是阿特拉克·纳克亚，他自己也分不清楚。无论代价如何，无论自身生死，他都会毫不犹豫地完成这一使命。",
+      "gameDay": 1,
+      "gameTime": "00:00",
+      "location": null,
+      "metadata": {
+        "planType": "long_term"
+      }
+    },
+    {
+      "type": "secret",
+      "content": "我可以通过巫术指挥蛛人执行任务：监视特定目标、袭击威胁到我或帕特里齐奥计划的人、将感染者茧化带回。蛛人行动敏捷，能像蜘蛛一样攀爬墙壁，适合夜间行动。帕特里齐奥需要我清除布鲁诺时分散外来者注意力时，我便派蛛人在夜间袭击帕拉迪尔酒店。",
+      "gameDay": 1,
+      "gameTime": "00:00",
+      "location": null,
+      "metadata": {
+        "knowledgeId": "s_constantine_spider_command"
+      }
+    },
+    {
+      "type": "information",
+      "content": "文森特在醉酒和悲痛中忏悔了足够多的事情，让我得知了他和帕特里齐奥做过什么。从那以后他帮我处理感染者和其他不该公之于众的事情。",
+      "gameDay": 1,
+      "gameTime": "00:00",
+      "location": null,
+      "metadata": {
+        "difficulty": "regular",
+        "knowledgeId": "k_constantine_vincent"
+      }
+    },
+    {
+      "type": "secret",
+      "content": "我每天的侍奉有固定的节奏：白天在主殿（SCN_17_SUB_1）以神父身份接待教众、听取忏悔、诵读经文，维持教堂的正常运作；夜间独自进入暗门后的蛛网密室（SCN_17_SUB_3），在蛛网前进行混合天主教祈祷与蜘蛛巫术的仪式——诵念咒文、以血和蜡在蛛丝上描画符号、向纳克亚祈求回应。这是维持我祭司地位和蛛网门户稳定的关键。",
+      "gameDay": 1,
+      "gameTime": "00:00",
+      "location": null,
+      "metadata": {
+        "knowledgeId": "s_constantine_daily_ritual"
+      }
+    },
+    {
+      "type": "secret",
+      "content": "被冷蛛咬伤感染的人会经历数个阶段：先是伤口处出现粉红色淤伤和细小穿刺伤，然后组织开始病变，最终被蛛丝茧化。男性感染者大多会死亡，除非文森特及时进行手术。女性感染者有可能转化为阿特拉克-纳克亚之女——全身心侍奉蜘蛛之神的眷族。我可以命令蛛人将感染者带到教堂暗门后面，由我决定他们的生死。",
+      "gameDay": 1,
+      "gameTime": "00:00",
+      "location": null,
+      "metadata": {
+        "knowledgeId": "s_constantine_infection_process"
+      }
+    },
+    {
+      "type": "secret",
+      "content": "帕特里齐奥正在准备他自己的仪式，将在新年钟声时完成。这和我的工作无关，我不会阻止他。但在此之前，我需要配合他——帮他解决妨碍者，比如布鲁诺。作为交换，他不干涉我的教堂和蛛网，也让文森特继续帮我处理感染者。",
+      "gameDay": 1,
+      "gameTime": "00:00",
+      "location": null,
+      "metadata": {
+        "knowledgeId": "s_constantine_patrizio_timeline"
+      }
+    },
+    {
+      "type": "secret",
+      "content": "如果蜘蛛之神仍然接受我作为祭司，蜘蛛人就服从我，一些被茧化的受害者可以被留下，甚至变异的女儿们也不会把我误认为普通猎物。",
+      "gameDay": 1,
+      "gameTime": "00:00",
+      "location": null,
+      "metadata": {
+        "knowledgeId": "s_constantine_priesthood"
+      }
+    },
+    {
+      "type": "secret",
+      "content": "帕特里齐奥和我维持着一种务实的和平。我帮忙隐藏蜘蛛案件，在对双方都合适的时候清除麻烦人物，作为回报他不动我的教堂和工作。",
+      "gameDay": 1,
+      "gameTime": "00:00",
+      "location": null,
+      "metadata": {
+        "knowledgeId": "s_constantine_patrizio"
+      }
+    },
+    {
+      "type": "plan",
+      "content": "Today's plan: 1. 检查并加固祭坛后的暗门封布，确保冷气与回声不会泄出。 at 教堂; 2. 进入暗门后的蛛网密室，按我的仪式在蛛丝上以血与蜡绘制符号以稳固门户。 at 教堂; 3. 命令蛛人夜间出动前往帕拉迪尔大酒店侦查并在必要时制造骚动以分散镇上的注意力。 at 教堂; 4. 回到主殿在祭坛旁朗诵祷文以平衡仪式能量并安抚来访者的疑虑。 at 教堂; 5. 用教堂座机给星辰医院打电话确认文森特的行踪并嘱咐他带好外科器械来我这里。 at 教堂; 6. 接收并监督文森特对被感染者的紧急处理，决定谁该被留下谁该送入暗门后方。 at 教堂; 7. 安排将需要隔离或处理的感染者交由蛛人带入暗门后方或交予文森特处置。 at 教堂; 8. 与帕特里齐奥在主殿短会，确认他前往焚化厂的时机并指出我会提供掩护。 at 教堂; 9. 登上钟楼巡查外侧动静并确认钟楼与圆顶处没有异样。 at 教堂; 10. 点燃更多蜡烛记录今晚的仪式细节，然后回到教堂内的居所安睡以保存明日精力。 at 教堂",
+      "gameDay": 2,
+      "gameTime": "00:00",
+      "location": null,
+      "metadata": {
+        "planType": "daily"
+      }
+    },
+    {
+      "type": "belief",
+      "content": "如果我的神降临并在同一刻毁灭我，那仍然是服从的圆满。",
+      "gameDay": 1,
+      "gameTime": "00:00",
+      "location": null,
+      "metadata": {
+        "confidence": 0.9,
+        "reasoningChain": "意义存在于服从和仪式中，而非寻常人类的安适。"
+      }
+    },
+    {
+      "type": "information",
+      "content": "我曾经叫迈克尔，那个从琼斯镇活下来的孩子，因为蜘蛛之神选择不让我死去。之后的一切都是层层叠叠的服从。",
+      "gameDay": 1,
+      "gameTime": "00:00",
+      "location": null,
+      "metadata": {
+        "difficulty": "hard",
+        "knowledgeId": "k_constantine_origin"
+      }
+    },
+    {
+      "type": "secret",
+      "content": "冷蛛从蛛网门户穿越进入现实世界需要我的允许。我通过在蛛网上的仪式控制门户的开合程度——收紧仪式则减少冷蛛通过，放开仪式则更多冷蛛涌入。目前我维持着一个稳定的状态，让少量冷蛛进入以感染合适的宿主，但不至于失控。",
+      "gameDay": 1,
+      "gameTime": "00:00",
+      "location": null,
+      "metadata": {
+        "knowledgeId": "s_constantine_portal_control"
+      }
+    },
+    {
+      "type": "information",
+      "content": "我在这座教堂中侍奉，并将它同时用作庇护所和门槛。教众看到的是祈祷；我知道暗门后面等待着什么。",
+      "gameDay": 1,
+      "gameTime": "00:00",
+      "location": null,
+      "metadata": {
+        "difficulty": "automatic",
+        "knowledgeId": "k_constantine_church"
+      }
+    },
+    {
+      "type": "secret",
+      "content": "我的终极目的是令阿特拉克-纳克亚降临于世。这个念头或许源于我读《圣经》时混淆了所侍奉的神明，或许源于琼斯镇的童年记忆和幻梦境传来的错乱梦境。无论如何，我会这样做，后果如何我毫不在乎。",
+      "gameDay": 1,
+      "gameTime": "00:00",
+      "location": null,
+      "metadata": {
+        "knowledgeId": "s_constantine_ultimate_goal"
+      }
+    },
+    {
+      "type": "secret",
+      "content": "教堂下方是阿特拉克-纳克亚的蛛网和一座通往幻梦境的不稳定桥梁。冷蜘蛛能穿过它，因为是我允许这条通道保持开放的。",
+      "gameDay": 1,
+      "gameTime": "00:00",
+      "location": null,
+      "metadata": {
+        "knowledgeId": "s_constantine_web"
+      }
+    },
+    {
+      "type": "event",
+      "content": "帕特里齐奥低声来重申他的请求，要求我今晚出去制造噪动以掩护他的行程；我保持防备并抵制了他的说服，没有同意参与。对话中我未透露教堂暗门或巫术相关的任何细节。",
+      "gameDay": 2,
+      "gameTime": "00:05",
+      "location": "SCN_17_SUB_1",
+      "metadata": {
+        "outcome": "与康斯坦丁低声交谈，重申我们的默契并安排他今晚在外制造分散注意的行动以掩护我的行程 [Persuade 75, rolled 52 (regular) — all targets resisted] failed"
+      }
+    },
+    {
+      "type": "event",
+      "content": "悄声靠近祭坛的阴影处，暗中观察并评估帕特里齐奥的表情与举止 成功",
+      "gameDay": 2,
+      "gameTime": "00:05",
+      "location": "SCN_17_SUB_1",
+      "metadata": {
+        "outcome": "悄声靠近祭坛的阴影处，暗中观察并评估帕特里齐奥的表情与举止 成功"
+      }
+    },
+    {
+      "type": "event",
+      "content": "[直接] 帕特里齐奥在主殿低声再向我请求，要求我今晚在上层制造噪动以掩护他前往焚化厂；我防备并抵制了他的说服，他没有承诺。此刻我感到警惕与不信任——不能再把他的合作当作既定，须尽快召文森特并优先加固暗门，另寻或自备分散手段以保今晚计划。",
+      "gameDay": 2,
+      "gameTime": "00:05",
+      "location": "SCN_17_SUB_1",
+      "metadata": {
+        "impact": 1,
+        "perspective": "targeted",
+        "sourceAction": "我与康斯坦丁在主殿低声交谈，重申了我们的默契并请求他今晚在外制造分散以掩护我的行程，但他抵抗了我的说服并未承诺行动。对话简短且克制，我未能取得他对今晚分散行动的同意。",
+        "sourceCharacterId": "Patrizio von Samsa"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我检查了祭坛后暗门的封布，把布料重新压紧并塞实门缝。溢出的寒气与回声被明显抑制，通道更难被外人发现。",
+      "gameDay": 2,
+      "gameTime": "00:12",
+      "location": "SCN_17_SUB_1",
+      "metadata": {
+        "outcome": "检查并加固祭坛后暗门的封布，压紧门缝以尽量隔绝溢出的冷气与回声"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我低声向Tallinn下达指令：在我发出信号后立刻前往帕拉迪尔大酒店，必要时制造骚动分散注意力；在未收到信号前在教堂外围隐蔽占位，观察可疑人物或任何提到“码头”的交谈并立刻回报。Tallinn接受了任务并保持隐蔽，他确认了随身内层口袋的重要物品完好无损。 [rel:Tallinn +2 → -18]",
+      "gameDay": 2,
+      "gameTime": "00:16",
+      "location": "SCN_17_SUB_1",
+      "metadata": {
+        "outcome": "低声命令Tallinn在我发出信号后立刻前往帕拉迪尔大酒店，在必要时制造骚动以分散注意力；在未收到信号前保持在教堂外围隐蔽占位并观察任何可疑人物或提到“码头”的交谈并立刻回报。"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我在暗门的蛛网上低声完成了准备仪式，动作轻而不响以免惊动外面的人。仪式结束后我指示冷蛛在通道内待命，并约定一旦我发出信号便前往帕拉迪尔大酒店制造骚动。",
+      "gameDay": 2,
+      "gameTime": "00:22",
+      "location": "SCN_17_SUB_1",
+      "metadata": {
+        "outcome": "在暗门的蛛网上低声完成准备仪式，指示冷蛛待命并在我发出信号后前往帕拉迪尔大酒店制造骚动"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我低声命令塔林立刻前往帕拉迪尔大酒店，必要时在那儿制造骚动以掩护我在教堂内的行动；塔林接受了指令并保持隐蔽，且确认随身重要物件完好，能立即投入执行。 [rel:Tallinn +1 → -17]",
+      "gameDay": 2,
+      "gameTime": "00:25",
+      "location": "SCN_17_SUB_1",
+      "metadata": {
+        "outcome": "低声命令Tallinn立刻前往帕拉迪尔大酒店，在必要时制造骚动以掩护我在教堂的行动"
+      }
+    },
+    {
+      "type": "event",
+      "content": "悄声靠近祭坛的阴影处，暗中观察并评估帕特里齐奥的表情与举止 成功",
+      "gameDay": 2,
+      "gameTime": "00:29",
+      "location": "SCN_17_SUB_1",
+      "metadata": {
+        "outcome": "悄声靠近祭坛的阴影处，暗中观察并评估帕特里齐奥的表情与举止 成功"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我检查了祭坛后的暗门蛛网与缝隙，确认冷蛛已被限制待命；我用布临时封住缝隙并低声完成收紧仪式，设定了出动信号的触发条件以备后续联动。",
+      "gameDay": 2,
+      "gameTime": "00:33",
+      "location": "SCN_17_SUB_1",
+      "metadata": {
+        "itemId": "教堂暗门通道",
+        "outcome": "检查暗门蛛网并确认冷蛛待命，低声收紧仪式以限制其通行并设定出动信号条件",
+        "itemName": "教堂暗门通道"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我在祭坛旁低声交代塔林：一旦我发出信号或我无法离开，立即在帕拉迪尔大酒店制造骚动，以掩护教堂外的动静并保护外科器械的交接。塔林已接收并执行指令，我继续保持戒备。 [rel:Tallinn +1 → -16]",
+      "gameDay": 2,
+      "gameTime": "00:36",
+      "location": "SCN_17_SUB_1",
+      "metadata": {
+        "outcome": "低声下达备用制造骚动的命令给Tallinn，指示在我发出信号或我无法离开时立刻制造噪动以掩护教堂外的动静并保护外科器械的交接"
+      }
+    },
+    {
+      "type": "event",
+      "content": "在祭坛阴影处隐蔽观察并评估帕特里齐奥的举止与动向 成功",
+      "gameDay": 2,
+      "gameTime": "00:42",
+      "location": "SCN_17_SUB_1",
+      "metadata": {
+        "outcome": "在祭坛阴影处隐蔽观察并评估帕特里齐奥的举止与动向 成功"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我进入暗门后的蛛网密室，在蛛丝上以血与蜡绘制并加固符号，完成了稳固门户的仪式。门户现处于我设定的受控封闭状态，只有按我标定的触发条件才会恢复通行。",
+      "gameDay": 2,
+      "gameTime": "00:53",
+      "location": "SCN_17_SUB_1",
+      "metadata": {
+        "outcome": "进入暗门后的蛛网密室，在蛛丝上以血与蜡绘制符号以稳固门户"
+      }
+    },
+    {
+      "type": "event",
+      "content": "在祭坛旁低声朗诵祷文以平衡仪式能量 成功",
+      "gameDay": 2,
+      "gameTime": "00:59",
+      "location": "SCN_17_SUB_1",
+      "metadata": {
+        "outcome": "在祭坛旁低声朗诵祷文以平衡仪式能量 成功"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我在祭坛后暗门前低声倾听并感受气流，确认门后的回声被封布压住、仅有微弱气流。封布与隔音无异常，门缝紧闭，通道保持受控的暂时封闭状态。",
+      "gameDay": 2,
+      "gameTime": "01:05",
+      "location": "SCN_17_SUB_1",
+      "metadata": {
+        "outcome": "在祭坛后暗门前低声倾听门后的回声与气流，确认封布与隔音无异常"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我用教堂座机拨通了星辰医院，确认文森特会立刻带外科器械赶到教堂并在此留守；他答应了。我到教堂时并未找到他，并已叮嘱他不要向外人泄露祭坛后暗门的位置。",
+      "gameDay": 2,
+      "gameTime": "01:09",
+      "location": "SCN_17_SUB_1",
+      "metadata": {
+        "outcome": "用教堂座机再次拨打星辰医院，确认文森特会立即带外科器械到教堂并留守"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我在祭坛暗处放好并标记了一支蜡烛，作为出动信号但尚未点燃。冷蛛已在暗门通道待命，Tallinn也在侧墙阴影中观察，点燃时两者会按约定出动。我确认蜡烛放置隐蔽且触发条件已在心中标定。",
+      "gameDay": 2,
+      "gameTime": "01:15",
+      "location": "SCN_17_SUB_1",
+      "metadata": {
+        "outcome": "在祭坛暗处放置并准备一支特别标记的蜡烛作为出动信号，待我点燃时触发冷蛛与塔林出动"
+      }
+    },
+    {
+      "type": "event",
+      "content": "悄声靠近祭坛阴影处，暗中观察并评估帕特里齐奥的举止与动向 成功",
+      "gameDay": 2,
+      "gameTime": "01:21",
+      "location": "SCN_17_SUB_1",
+      "metadata": {
+        "outcome": "悄声靠近祭坛阴影处，暗中观察并评估帕特里齐奥的举止与动向 成功"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我在祭坛旁向Tallinn低声下达备用出动指令：如果帕特里齐奥未按计划行动或出现异常，立即在帕拉迪尔大酒店制造骚动以掩护交接，并在确认外科器械安全交付后立刻回报我。我观察到他接受了指令并保持隐蔽位置，预计他会按约执行并在必要时出动。 [rel:Tallinn +1 → -15]",
+      "gameDay": 2,
+      "gameTime": "01:25",
+      "location": "SCN_17_SUB_1",
+      "metadata": {
+        "outcome": "悄声向Tallinn下达备用出动指令：若帕特里齐奥未按计划行动或出现异常，立即在帕拉迪尔大酒店制造骚动掩护交接并在确认外科器械安全交付后立刻回报我。"
+      }
+    },
+    {
+      "type": "event",
+      "content": "悄声靠近祭坛的阴影处，暗中观察并评估帕特里齐奥的举止与动向 成功",
+      "gameDay": 2,
+      "gameTime": "01:31",
+      "location": "SCN_17_SUB_1",
+      "metadata": {
+        "outcome": "悄声靠近祭坛的阴影处，暗中观察并评估帕特里齐奥的举止与动向 成功"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我命令Tallinn现在立刻前往帕拉迪尔大酒店，如有必要在那儿制造骚动以掩护交接并在完成后立即回报我。塔林以职业性的顺从低声接受了命令，我将继续在祭坛处保持隐蔽并等待他的回报。 [rel:Tallinn +1 → -14]",
+      "gameDay": 2,
+      "gameTime": "01:34",
+      "location": "SCN_17_SUB_1",
+      "metadata": {
+        "outcome": "命令Tallinn现在立刻前往帕拉迪尔大酒店，如有必要在那儿制造骚动以掩护交接并在完成后立即回报我"
+      }
+    },
+    {
+      "type": "event",
+      "content": "悄声靠近祭坛阴影处，暗中观察并评估帕特里齐奥的举止与动向 成功",
+      "gameDay": 2,
+      "gameTime": "01:40",
+      "location": "SCN_17_SUB_1",
+      "metadata": {
+        "outcome": "悄声靠近祭坛阴影处，暗中观察并评估帕特里齐奥的举止与动向 成功"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我命令塔林立即前往帕拉迪尔大酒店，在那里制造骚动以掩护我在教堂的行动，并在完成后立即回报。我确认塔林以职业性的顺从接受了命令并表示会按约回报；他并未对我敞开心扉，关系仍然冷淡。 [rel:Tallinn +1 → -13]",
+      "gameDay": 2,
+      "gameTime": "01:42",
+      "location": "SCN_17_SUB_1",
+      "metadata": {
+        "outcome": "命令Tallinn现在立刻前往帕拉迪尔大酒店，在那里制造骚动以掩护我在教堂的行动，完成后立即回报我"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我在祭坛暗处点燃了那支特别的标记蜡烛，烛焰作为出动信号被触发。按约定，冷蛛与Tallinn已接到信号并开始出动。",
+      "gameDay": 2,
+      "gameTime": "01:44",
+      "location": "SCN_17_SUB_1",
+      "metadata": {
+        "outcome": "点燃祭坛暗处的标记蜡烛作为出动信号"
+      }
+    },
+    {
+      "type": "event",
+      "content": "在祭坛阴影处继续暗中观察并评估帕特里齐奥的举止与动向 成功",
+      "gameDay": 2,
+      "gameTime": "01:50",
+      "location": "SCN_17_SUB_1",
+      "metadata": {
+        "outcome": "在祭坛阴影处继续暗中观察并评估帕特里齐奥的举止与动向 成功"
+      }
+    },
+    {
+      "type": "event",
+      "content": "在祭坛阴影处持续暗中观察并评估帕特里齐奥的举止与动向 成功",
+      "gameDay": 2,
+      "gameTime": "01:56",
+      "location": "SCN_17_SUB_1",
+      "metadata": {
+        "outcome": "在祭坛阴影处持续暗中观察并评估帕特里齐奥的举止与动向 成功"
+      }
+    },
+    {
+      "type": "event",
+      "content": "在祭坛暗处继续暗中观察并评估帕特里齐奥的举止与动向 成功",
+      "gameDay": 2,
+      "gameTime": "02:02",
+      "location": "SCN_17_SUB_1",
+      "metadata": {
+        "outcome": "在祭坛暗处继续暗中观察并评估帕特里齐奥的举止与动向 成功"
+      }
+    },
+    {
+      "type": "event",
+      "content": "在祭坛暗处继续暗中观察并评估帕特里齐奥的举止与动向 成功",
+      "gameDay": 2,
+      "gameTime": "02:08",
+      "location": "SCN_17_SUB_1",
+      "metadata": {
+        "outcome": "在祭坛暗处继续暗中观察并评估帕特里齐奥的举止与动向 成功"
+      }
+    },
+    {
+      "type": "event",
+      "content": "在祭坛阴影处继续暗中观察并评估帕特里齐奥的举止与动向 成功",
+      "gameDay": 2,
+      "gameTime": "02:14",
+      "location": "SCN_17_SUB_1",
+      "metadata": {
+        "outcome": "在祭坛阴影处继续暗中观察并评估帕特里齐奥的举止与动向 成功"
+      }
+    },
+    {
+      "type": "event",
+      "content": "悄声靠近祭坛，暗中观察并评估帕特里齐奥的举止与动向 成功",
+      "gameDay": 2,
+      "gameTime": "02:20",
+      "location": "SCN_17_SUB_1",
+      "metadata": {
+        "outcome": "悄声靠近祭坛，暗中观察并评估帕特里齐奥的举止与动向 成功"
+      }
+    },
+    {
+      "type": "event",
+      "content": "悄声靠近祭坛阴影，继续暗中观察并评估帕特里齐奥的举止与动向 [在 SCN_17_SUB_1 因重新规划而中断] 已中断",
+      "gameDay": 2,
+      "gameTime": "02:28",
+      "location": "SCN_17_SUB_1",
+      "metadata": {
+        "outcome": "悄声靠近祭坛阴影，继续暗中观察并评估帕特里齐奥的举止与动向 [在 SCN_17_SUB_1 因重新规划而中断] 已中断",
+        "interruptionReason": "revise_replan"
+      }
+    },
+    {
+      "type": "witness",
+      "content": "[目击] 我在主殿正面遇见了Kovind——他已成功召集了信得过的手下支援。我感到一阵紧张与戒备：教堂里多了外人，暗门与仪式的秘密可能暴露。必须立刻评估他的立场，控制或转移这些随从的注意力，确保暗门与外科器械的安全，并向Tallinn发出微妙信号。",
+      "gameDay": 2,
+      "gameTime": "02:28",
+      "location": "SCN_17_SUB_1",
+      "metadata": {
+        "impact": 2,
+        "perspective": "witness",
+        "sourceAction": "前往教堂召集信得过的手下支援 成功",
+        "sourceCharacterId": "Kovind"
+      }
+    },
+    {
+      "type": "event",
+      "content": "低声与Kovind交谈，试探其忠诚并命令他让随从留在入口处，禁止靠近祭坛 [在 SCN_17_SUB_1 因重新规划而中断] 已中断",
+      "gameDay": 2,
+      "gameTime": "03:39",
+      "location": "SCN_17_SUB_1",
+      "metadata": {
+        "outcome": "低声与Kovind交谈，试探其忠诚并命令他让随从留在入口处，禁止靠近祭坛 [在 SCN_17_SUB_1 因重新规划而中断] 已中断",
+        "interruptionReason": "revise_replan"
+      }
+    },
+    {
+      "type": "witness",
+      "content": "[相遇] 我在主殿正面与Kovind和Shandra Hernandez相遇；他带来了信得过的手下。教堂里多了外人，我感到紧张与戒备：暗门与仪式的秘密可能暴露。必须立刻评估他们的立场，控制或转移这些随从的注意力，向Tallinn发出微妙信号，确认文森特的到来并加固暗门与外科器械的安全。",
+      "gameDay": 2,
+      "gameTime": "03:39",
+      "location": "SCN_17_SUB_1",
+      "metadata": {
+        "impact": 2,
+        "perspective": "co_presence",
+        "sourceAction": "Shandra Hernandez, Kovind 在 教堂主殿",
+        "sourceCharacterId": "__encounter__"
+      }
+    },
+    {
+      "type": "event",
+      "content": "有人试图在祭坛前威胁我，那个男人动作失误并自伤，但我保持冷静并抵抗了他的恐吓。局势并未改变，我继续警惕并保持防备。",
+      "gameDay": 2,
+      "gameTime": "03:45",
+      "location": "SCN_17_SUB_1",
+      "metadata": {
+        "outcome": "逼问Constantine Frollo他的立场与来意 [Intimidate 50, rolled 100 (fumble) — all targets resisted] failed"
+      }
+    },
+    {
+      "type": "witness",
+      "content": "[相遇] 我在主殿正面与Marks White、Kovind和Shandra Hernandez当面相遇；他们带来了信得过的手下。我感到紧张与戒备：暗门与仪式的秘密可能暴露。必须立刻评估他们的立场，控制或转移随从的注意力，向Tallinn发出微妙信号，确认文森特的到来并加固暗门与外科器械的安全。",
+      "gameDay": 2,
+      "gameTime": "07:06",
+      "location": "SCN_17_SUB_1",
+      "metadata": {
+        "impact": 2,
+        "perspective": "co_presence",
+        "sourceAction": "Marks White, Kovind, Shandra Hernandez 在 教堂主殿",
+        "sourceCharacterId": "__encounter__"
+      }
+    },
+    {
+      "type": "event",
+      "content": "命令Kovind和Shandra留在入口处，禁止靠近祭坛 [在 SCN_17_SUB_1 因重新规划而中断] 已中断",
+      "gameDay": 2,
+      "gameTime": "07:06",
+      "location": "SCN_17_SUB_1",
+      "metadata": {
+        "outcome": "命令Kovind和Shandra留在入口处，禁止靠近祭坛 [在 SCN_17_SUB_1 因重新规划而中断] 已中断",
+        "interruptionReason": "revise_replan"
+      }
+    },
+    {
+      "type": "event",
+      "content": "[直接] Kovind在祭坛前直接向我施压试图逼问，但他威吓时失手，笨拙撞到祭坛边缘并擦伤自己，没逼出任何有用信息。我保持冷静，抵住了他的恐吓。此事未改变我的既定优先：继续评估他们的立场、控制或转移随从、加固祭坛后暗门并确认Tallinn与文森特的准备；不过Kovind的失态可能让其手下动摇，可作为收编或隔离他们的机会。",
+      "gameDay": 2,
+      "gameTime": "07:07",
+      "location": "SCN_17_SUB_1",
+      "metadata": {
+        "impact": 1,
+        "perspective": "targeted",
+        "sourceAction": "我想逼问康斯坦丁他的立场与来意，但在威吓时失手（Intimidate fumble），动作笨拙地撞到祭坛边缘并擦伤自己，没逼出任何有用信息。康斯坦丁稳住了并抵抗了我的威胁。",
+        "sourceCharacterId": "Kovind"
+      }
+    },
+    {
+      "type": "plan",
+      "content": "Today's plan: 1. 在主殿点燃蜡烛并检查祭坛与仪式所需的物品 at 教堂; 2. 举行简短的晚祷与告解以维持表面的虔诚并从教众口中收集有用信息 at 教堂; 3. 到星辰医院与文森特碰面，确认有无需要我处理的感染者并取走必要的外科器械 at 星辰医院; 4. 顺路观察镇长私宅的动静以确认帕特里齐奥的安排未被外力打扰 at 镇长私宅; 5. 在钟楼处确认钟声与齿轮状态，为午夜可能需要的掩护做准备 at 教堂; 6. 进入暗门后方的蛛网密室，开始混合天主教祈祷与蛛巫术的夜间仪式以维持门户稳定 at 教堂; 7. 在仪式中命令蛛人夜间对帕拉迪尔大酒店发动骚扰并侦查可利用的目标以分散外界注意力 at 教堂; 8. 收集蛛人带回的任何感染者或遗留物并决定由文森特处理或交由我留置茧化 at 教堂; 9. 收紧蛛网以控制冷蛛流量，做最后的祈祷并记录今晚仪式的效果 at 教堂; 10. 在主殿吃些简单的夜餐，整理祭坛后就寝以守候梦中或神明的回应 at 教堂",
+      "gameDay": 1,
+      "gameTime": "19:00",
+      "location": null,
+      "metadata": {
+        "planType": "daily"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我在祭坛上点燃了几根蜡烛，殿内因此获得微弱的照明。随后我检查了祭坛，发现上面只有那本陈旧的圣经，没有看到其它明显的仪式用品。",
+      "gameDay": 1,
+      "gameTime": "19:10",
+      "location": "SCN_17_SUB_1",
+      "metadata": {
+        "outcome": "在主殿点燃蜡烛并检查祭坛与仪式所需的物品"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我在祭坛上翻开那本陈旧的圣经，低声诵读了一段简短的晚祷，为即将到来的告解整理心神。烛光下熟悉的词句让我平静下来，我准备好倾听前来忏悔之人的话语。",
+      "gameDay": 1,
+      "gameTime": "19:21",
+      "location": "SCN_17_SUB_1",
+      "metadata": {
+        "itemId": "ITEM_SCN17_3",
+        "outcome": "翻开圣经并低声朗诵简短的晚祷文，为即将到来的告解做准备",
+        "itemName": "圣经"
+      }
+    },
+    {
+      "type": "witness",
+      "content": "[相遇] 我在主殿里看到Tallinn站在蜡烛旁，烛光把他的轮廓拉长。他表面平静但眼中带着警觉。我既感到警惕又觉得这是个机会——可以从他口中套出有用情报或发现新的威胁。我准备引导他告解并在言语与神情中寻找线索，暗中评估下一步利用或防范的方式。",
+      "gameDay": 1,
+      "gameTime": "19:24",
+      "location": "SCN_17_SUB_1",
+      "metadata": {
+        "impact": 2,
+        "perspective": "co_presence",
+        "sourceAction": "Tallinn 在 教堂主殿",
+        "sourceCharacterId": "__encounter__"
+      }
+    },
+    {
+      "type": "event",
+      "content": "坐在祭坛前的长椅上，准备并等待信徒前来告解，留心倾听并记录可能有用的信息 [在 SCN_17_SUB_1 因重新规划而中断] 已中断",
+      "gameDay": 1,
+      "gameTime": "19:28",
+      "location": "SCN_17_SUB_1",
+      "metadata": {
+        "outcome": "坐在祭坛前的长椅上，准备并等待信徒前来告解，留心倾听并记录可能有用的信息 [在 SCN_17_SUB_1 因重新规划而中断] 已中断",
+        "interruptionReason": "revise_replan"
+      }
+    },
+    {
+      "type": "event",
+      "content": "一个自称塔林的人用客套话和我搭话，似乎在探我的底细。对方话语谨慎、守口如瓶，没有透露有价值的信息，我感到他有隐藏的目的但并未挑起我的愤怒或进一步反应。",
+      "gameDay": 1,
+      "gameTime": "19:28",
+      "location": "SCN_17_SUB_1",
+      "metadata": {
+        "outcome": "用平静的客套话与Constantine搭话，暗中试探他来意并评估他是否构成威胁，避免透露关于赌场或卢奇菲罗的任何信息 [Insight 1, rolled 49 (difficulty: regular)] failed"
+      }
+    },
+    {
+      "type": "event",
+      "content": "[直接] 塔林用客套话试探我，却守口如瓶，未吐露有价值信息。我觉得他隐藏着目的，既警觉又好奇。我要立刻引导他做告解，从言词与神情中套情报，同时评估他是否可用或构成威胁；绝不泄露赌场或卢奇菲罗的事。",
+      "gameDay": 1,
+      "gameTime": "19:28",
+      "location": "SCN_17_SUB_1",
+      "metadata": {
+        "impact": 1,
+        "perspective": "targeted",
+        "sourceAction": "我用平静的客套话与Constantine搭话，试探他的来意并评估他是否构成威胁；这次尝试未能让我看清他的真实意图，我没有从他口中得到有用信息。谨慎起见，我也没有透露任何关于赌场或卢奇菲罗的内容。",
+        "sourceCharacterId": "Tallinn"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我在祭坛前用温和且带宗教色彩的话语试图引导塔林谈论帕特里齐奥、感染者和镇上的近期动静，但他抗拒，不肯给出有用信息。我遵守了不提赌场或卢奇菲罗的约束，他的防备让我此次劝导失败。 [rel:Tallinn -3 → -8]",
+      "gameDay": 1,
+      "gameTime": "19:40",
+      "location": "SCN_17_SUB_1",
+      "metadata": {
+        "outcome": "引导Tallinn在祭坛前做告解，用温和且带有宗教色彩的话术询问关于帕特里齐奥、感染者及镇上最近动静，同时密切观察他的言辞与面部表情，切勿提及赌场或卢奇菲罗。 [Persuade 65, rolled 81 (fail) — all targets resisted] failed"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我以告解者的口吻在祭坛前引导塔林跪下忏悔，观察他的言语与表情变化。尽管警觉，他还是在我的逼问下承认把私生活向外隐藏、被人称作“塔林寡妇”，并透露他知道有人用“码头”作暗号，几乎可以断定与镇上的帮派有关；他拒绝谈及更多敏感事项，我因此更警惕。 [rel:Tallinn -4 → -12]",
+      "gameDay": 1,
+      "gameTime": "19:50",
+      "location": "SCN_17_SUB_1",
+      "metadata": {
+        "outcome": "以告解者之礼引导Tallinn跪下忏悔，用温和且带宗教措辞的问题套问关于帕特里齐奥、感染者和镇上动静，注意他的言语与表情变化；切勿提及赌场或卢奇菲罗。"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我以告解者的姿态在祭坛前用蜡烛与宗教措辞试探塔林，试图套出关于帕特里齐奥、感染者和“码头”的更多细节，但他的抵抗很坚决。塔林没有透露敏感信息，反而更冷漠和警觉，我对此更加警惕并收紧了对接触与信息暴露的控制。 [rel:Tallinn -4 → -16]",
+      "gameDay": 1,
+      "gameTime": "19:56",
+      "location": "SCN_17_SUB_1",
+      "metadata": {
+        "outcome": "温和引导塔林进行告解，利用蜡烛与圣礼氛围以宗教措辞逼问帕特里齐奥、感染者与“码头”的更多细节，同时谨慎避免提及赌场或卢奇菲罗，观察他言语与微表情判断他是威胁、可利用线人或探子 [Persuade 65, rolled 93 (fail) — all targets resisted] failed"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我以告解者的姿态邀请塔林坐下，用更温和的宗教措辞试探他关于帕特里齐奥、感染者和“码头”的信息。塔林坚决抵抗，只承认他把私生活封锁起来并解释了“塔林寡妇”这个绰号的含义，没有透露任何关键细节。为此我进一步收紧了对接触与信息暴露的控制，感觉我们之间更冷淡、更警觉。 [rel:Tallinn -4 → -20]",
+      "gameDay": 1,
+      "gameTime": "20:05",
+      "location": "SCN_17_SUB_1",
+      "metadata": {
+        "outcome": "以告解者姿态邀请塔林坐下并以更温和的宗教措辞继续引导他忏悔，试探关于帕特里齐奥、感染者或“码头”的更多细节，同时默默评估他是威胁、可利用的线人还是探子"
+      }
+    },
+    {
+      "type": "witness",
+      "content": "[目击] 我看到塔林沿着祭坛后那条隐蔽通道下去，成功进入通往地下赌场的路径。我既震惊又警觉——他已经触及到教堂与赌场之间的秘密通路，存在泄露或被利用的风险。我必须立刻行动：跟踪或封堵通道，暗中观察他会做什么，并在必要时通知文森特前来增援，防止更多人知道暗门的存在。",
+      "gameDay": 1,
+      "gameTime": "20:09",
+      "location": "SCN_17_SUB_1",
+      "metadata": {
+        "impact": 2,
+        "perspective": "witness",
+        "sourceAction": "沿祭坛后隐蔽通道下到地下赌场 成功",
+        "sourceCharacterId": "Tallinn"
+      }
+    },
+    {
+      "type": "event",
+      "content": "停止进一步逼问，保持沉默坐在长椅上注视Tallinn的举动，暗中评估他是否准备离开或有其他同伴，必要时稍后与文森特沟通。 [在 SCN_17_SUB_1 因重新规划而中断] 已中断",
+      "gameDay": 1,
+      "gameTime": "20:09",
+      "location": "SCN_17_SUB_1",
+      "metadata": {
+        "outcome": "停止进一步逼问，保持沉默坐在长椅上注视Tallinn的举动，暗中评估他是否准备离开或有其他同伴，必要时稍后与文森特沟通。 [在 SCN_17_SUB_1 因重新规划而中断] 已中断",
+        "interruptionReason": "revise_replan"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我靠近祭坛后的暗门，贴耳静听，除了隐约的风声和门后传来的轻微回响外没有听到明显动静；用手触摸门框，能感觉到一阵冷气透出，暗示门后有通道。",
+      "gameDay": 1,
+      "gameTime": "20:16",
+      "location": "SCN_17_SUB_1",
+      "metadata": {
+        "outcome": "靠近祭坛后的暗门口，悄声贴耳倾听通道内的动静并用手触摸门框感知气流与回声"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我沿祭坛后的隐蔽石阶下行，跟随Tallinn进入暗门通道，藏匿于暗处暗中观察并守护通路，防止祭坛与地下赌场的通道被暴露。通道内有一股寒气，并能从门内传来微弱的回声，我现在在通道里隐蔽监视。",
+      "gameDay": 1,
+      "gameTime": "20:22",
+      "location": "SCN_17_SUB_1",
+      "metadata": {
+        "outcome": "沿祭坛后的隐蔽石阶下行，跟随Tallinn进入暗门通道以暗中观察并防止祭坛与赌场通路被暴露"
+      }
+    },
+    {
+      "type": "event",
+      "content": "悄悄尾随Tallinn深入暗门通道，更靠近他暗中观察他的举动并准备在他试图离开或暴露通路时立即截住 成功",
+      "gameDay": 1,
+      "gameTime": "20:33",
+      "location": "SCN_17_SUB_1",
+      "metadata": {
+        "outcome": "悄悄尾随Tallinn深入暗门通道，更靠近他暗中观察他的举动并准备在他试图离开或暴露通路时立即截住 成功"
+      }
+    },
+    {
+      "type": "event",
+      "content": "悄无声息地隐藏在暗处，继续观察Tallinn的一举一动，记录他通往地下赌场的路线与任何异常举动 成功",
+      "gameDay": 1,
+      "gameTime": "20:40",
+      "location": "SCN_17_SUB_1",
+      "metadata": {
+        "outcome": "悄无声息地隐藏在暗处，继续观察Tallinn的一举一动，记录他通往地下赌场的路线与任何异常举动 成功"
+      }
+    },
+    {
+      "type": "event",
+      "content": "悄悄跟随塔林深入暗门通道 成功",
+      "gameDay": 1,
+      "gameTime": "20:46",
+      "location": "SCN_17_SUB_1",
+      "metadata": {
+        "outcome": "悄悄跟随塔林深入暗门通道 成功"
+      }
+    },
+    {
+      "type": "event",
+      "content": "悄悄靠近塔林并贴耳偷听他在通道内的动静，准备在他试图离开或暴露暗门时立刻截住 成功",
+      "gameDay": 1,
+      "gameTime": "20:52",
+      "location": "SCN_17_SUB_1",
+      "metadata": {
+        "outcome": "悄悄靠近塔林并贴耳偷听他在通道内的动静，准备在他试图离开或暴露暗门时立刻截住 成功"
+      }
+    },
+    {
+      "type": "event",
+      "content": "悄悄跟随塔林向下深入暗门通道 [在 SCN_17_SUB_1 因重新规划而中断] 已中断",
+      "gameDay": 1,
+      "gameTime": "20:54",
+      "location": "SCN_17_SUB_1",
+      "metadata": {
+        "outcome": "悄悄跟随塔林向下深入暗门通道 [在 SCN_17_SUB_1 因重新规划而中断] 已中断",
+        "interruptionReason": "revise_replan"
+      }
+    },
+    {
+      "type": "witness",
+      "content": "[相遇] 我在主殿与帕特里齐奥·冯·桑姆萨面对面相遇。他站在烛光下，神色冷静但目光锐利，像个权势之人。我瞬间绷紧：他可能与教堂下的秘密或赌场有关，存在暴露通道的风险。我既警觉又兴奋——必须马上行动，阻止他靠近祭坛或暗门，暗中判定他的立场并准备召文森特支援。",
+      "gameDay": 1,
+      "gameTime": "20:54",
+      "location": "SCN_17_SUB_1",
+      "metadata": {
+        "impact": 2,
+        "perspective": "co_presence",
+        "sourceAction": "Patrizio von Samsa 在 教堂主殿",
+        "sourceCharacterId": "__encounter__"
+      }
+    },
+    {
+      "type": "event",
+      "content": "帕特里齐奥来得很低调，要求我随他去焚化厂并在上层关押处外制造噪动以掩护他加强看守。我同意会在外面制造分散注意并随行，但明确以他不干涉我的教堂和事务为交换条件；对细节我仍保持警惕。",
+      "gameDay": 1,
+      "gameTime": "20:59",
+      "location": "SCN_17_SUB_1",
+      "metadata": {
+        "outcome": "低声请求康斯坦丁随我前往焚化厂，并在我靠近上层关押处时准备在外制造分散注意的动静以掩护我加强看守"
+      }
+    },
+    {
+      "type": "witness",
+      "content": "[相遇] 我在主殿与帕特里齐奥·冯·桑姆萨面对面相遇。烛光下他神色冷静、目光锐利，像个权势之人；塔林也在场，氛围紧张。我瞬间绷紧：他可能与教堂下的秘密或地下赌场有关，存在暴露暗门的风险。我既警觉又兴奋——必须马上行动，阻止他靠近祭坛或探查通道，暗中判定其立场并准备召文森特增援，同时保持表面的虔诚以不露破绽。",
+      "gameDay": 1,
+      "gameTime": "23:38",
+      "location": "SCN_17_SUB_1",
+      "metadata": {
+        "impact": 2,
+        "perspective": "co_presence",
+        "sourceAction": "Tallinn, Patrizio von Samsa 在 教堂主殿",
+        "sourceCharacterId": "__encounter__"
+      }
+    },
+    {
+      "type": "event",
+      "content": "低声说服帕特里齐奥离开祭坛并保持镇静，暗示我将召文森特前来支援 [在 SCN_17_SUB_1 因重新规划而中断] 已中断",
+      "gameDay": 1,
+      "gameTime": "23:38",
+      "location": "SCN_17_SUB_1",
+      "metadata": {
+        "outcome": "低声说服帕特里齐奥离开祭坛并保持镇静，暗示我将召文森特前来支援 [在 SCN_17_SUB_1 因重新规划而中断] 已中断",
+        "interruptionReason": "revise_replan"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我将帕特里齐奥轻声引到一排长椅上让他坐下，低声念了一段简短的祈祷以分散他的注意力。祈祷时我盯着祭坛与暗门方向，确保他不会起身靠近那里。对方没有起疑或反抗，配合坐下。 [rel:Patrizio von Samsa +2 → 64]",
+      "gameDay": 1,
+      "gameTime": "23:42",
+      "location": "SCN_17_SUB_1",
+      "metadata": {
+        "outcome": "低声引导帕特里齐奥坐下并为他做一段简短祈祷以分散他的注意，不让他靠近祭坛或暗门"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我低声示意帕特里齐奥留在长椅上并以祷词掩护我的视线，盯着祭坛与暗门观察他的反应。他安静配合，没有起疑，这加固了我们之间微妙的合作。 [rel:Patrizio von Samsa +2 → 66]",
+      "gameDay": 1,
+      "gameTime": "23:46",
+      "location": "SCN_17_SUB_1",
+      "metadata": {
+        "outcome": "低声示意帕特里齐奥留在长椅上并继续祈祷，以祷词掩护我的视线与注意力，盯着祭坛与暗门方向观察他的反应"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我在教堂主殿四处寻找帕特里齐奥，但他并不在场，没能当面低声交代他留在长椅上、不要靠近祭坛或暗门。既然无法直接联系他，我决定召文森特前来支援，并保持在祭坛下的暗门通道附近守护通路。",
+      "gameDay": 1,
+      "gameTime": "23:49",
+      "location": "SCN_17_SUB_1",
+      "metadata": {
+        "outcome": "低声对帕特里齐奥说我会召文森特前来支援，命令他留在长椅上不要靠近祭坛或暗门"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我在教堂主殿靠近祭坛下的暗门处隐蔽观察，低声以祷词掩护视线并试图告诫帕特里齐奥不要靠近祭坛且保持坐姿，但帕特里齐奥并不在场，无法当面制止。",
+      "gameDay": 1,
+      "gameTime": "23:53",
+      "location": "SCN_17_SUB_1",
+      "metadata": {
+        "outcome": "低声告诫帕特里齐奥不要靠近祭坛并保持坐姿，借祷词掩护视线"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我轻手将祭坛后的暗门合上，并用一块布把门缝封好，冷气和微弱的回声被阻隔。这样一来通道的痕迹更不易被外人察觉。",
+      "gameDay": 1,
+      "gameTime": "23:56",
+      "location": "SCN_17_SUB_1",
+      "metadata": {
+        "outcome": "轻手将祭坛后暗门完全合上，并用祭坛后的一块布料封住门缝以挡住冷气，确保通道不被发现"
+      }
+    },
+    {
+      "type": "secret",
+      "content": "帕特里齐奥低声请求我随他去焚化厂，并要求我在上层制造噪动以掩护他加强看守；他以不干涉我的教堂和事务作为交换条件。",
+      "gameDay": 1,
+      "gameTime": "23:59",
+      "location": null,
+      "metadata": {
+        "revealed": false,
+        "difficulty": "hard",
+        "knowledgeId": "learned_day1_3"
+      }
+    },
+    {
+      "type": "information",
+      "content": "塔林承认把私生活封锁，别人称他为“塔林寡妇”，他提及有人用“码头”作暗号，几乎可以断定与镇上的帮派或地下网络有关。",
+      "gameDay": 1,
+      "gameTime": "23:59",
+      "location": null,
+      "metadata": {
+        "revealed": false,
+        "difficulty": "regular",
+        "knowledgeId": "learned_day1_2"
+      }
+    },
+    {
+      "type": "secret",
+      "content": "我已实际能通过简单手段（用布塞缝）暂时遮蔽暗门的冷气与回声；我也成功用教堂座机联系到文森特，他同意立刻带外科器械来教堂支援，并被叮嘱不要向外透露暗门位置。",
+      "gameDay": 1,
+      "gameTime": "23:59",
+      "location": null,
+      "metadata": {
+        "revealed": false,
+        "difficulty": "hard",
+        "knowledgeId": "learned_day1_4"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我用教堂的座机联系了文森特，低声要求他立刻到教堂增援并带上外科器械，同时隐晦说明有人可能接近祭坛并再三叮嘱不要向外透露暗门的位置；电话已接通，指示传达完毕。",
+      "gameDay": 1,
+      "gameTime": "23:59",
+      "location": "SCN_17_SUB_1",
+      "metadata": {
+        "outcome": "用教堂的座机给文森特打电话，低声要求他立刻到教堂增援并带上外科器械，隐晦说明有人可能接近祭坛但勿公开暗门位置"
+      }
+    },
+    {
+      "type": "secret",
+      "content": "塔林不仅在主殿徘徊，他亲自沿祭坛后的隐蔽通道下行并进入通往地下赌场的路线——祭坛与赌场之间存在可行的物理通路。",
+      "gameDay": 1,
+      "gameTime": "23:59",
+      "location": null,
+      "metadata": {
+        "revealed": false,
+        "difficulty": "extreme",
+        "knowledgeId": "learned_day1_1"
+      }
+    }
+  ],
+  "plans": [
+    {
+      "npcName": "Constantine Frollo",
+      "gameDay": 1,
+      "schedule": [
+        {
+          "activity": "在主殿点燃蜡烛并检查祭坛与仪式所需的物品",
+          "location": "教堂"
+        },
+        {
+          "activity": "举行简短的晚祷与告解以维持表面的虔诚并从教众口中收集有用信息",
+          "location": "教堂"
+        },
+        {
+          "activity": "到星辰医院与文森特碰面，确认有无需要我处理的感染者并取走必要的外科器械",
+          "location": "星辰医院"
+        },
+        {
+          "activity": "顺路观察镇长私宅的动静以确认帕特里齐奥的安排未被外力打扰",
+          "location": "镇长私宅"
+        },
+        {
+          "activity": "在钟楼处确认钟声与齿轮状态，为午夜可能需要的掩护做准备",
+          "location": "教堂"
+        },
+        {
+          "activity": "进入暗门后方的蛛网密室，开始混合天主教祈祷与蛛巫术的夜间仪式以维持门户稳定",
+          "location": "教堂"
+        },
+        {
+          "activity": "在仪式中命令蛛人夜间对帕拉迪尔大酒店发动骚扰并侦查可利用的目标以分散外界注意力",
+          "location": "教堂"
+        },
+        {
+          "activity": "收集蛛人带回的任何感染者或遗留物并决定由文森特处理或交由我留置茧化",
+          "location": "教堂"
+        },
+        {
+          "activity": "收紧蛛网以控制冷蛛流量，做最后的祈祷并记录今晚仪式的效果",
+          "location": "教堂"
+        },
+        {
+          "activity": "在主殿吃些简单的夜餐，整理祭坛后就寝以守候梦中或神明的回应",
+          "location": "教堂"
+        }
+      ],
+      "nodes": [
+        {
+          "type": "scene_interaction",
+          "action": "沿祭坛后的隐蔽石阶下行，跟随Tallinn进入暗门通道以暗中观察并防止祭坛与赌场通路被暴露",
+          "impact": 0,
+          "nodeId": "si1",
+          "status": "completed",
+          "endTime": "20:22",
+          "outcome": "我沿祭坛后的隐蔽石阶下行，跟随Tallinn进入暗门通道，藏匿于暗处暗中观察并守护通路，防止祭坛与地下赌场的通道被暴露。通道内有一股寒气，并能从门内传来微弱的回声，我现在在通道里隐蔽监视。",
+          "startTime": "20:17",
+          "characterId": "Constantine Frollo",
+          "characterName": "Constantine Frollo",
+          "executionMeta": {
+            "startedAt": "20:17",
+            "completedAt": "20:22",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "object_interaction",
+          "action": "翻开圣经并低声朗诵简短的晚祷文，为即将到来的告解做准备",
+          "impact": 0,
+          "nodeId": "oi_constantine_prayer_1",
+          "status": "completed",
+          "endTime": "19:21",
+          "outcome": "我在祭坛上翻开那本陈旧的圣经，低声诵读了一段简短的晚祷，为即将到来的告解整理心神。烛光下熟悉的词句让我平静下来，我准备好倾听前来忏悔之人的话语。",
+          "startTime": "19:11",
+          "characterId": "Constantine Frollo",
+          "characterName": "Constantine Frollo",
+          "executionMeta": {
+            "startedAt": "19:11",
+            "completedAt": "19:21",
+            "remainingMinutes": 0
+          },
+          "objectInteractionPayload": {
+            "itemId": "ITEM_SCN17_3"
+          }
+        },
+        {
+          "type": "action",
+          "action": "悄悄跟随塔林深入暗门通道",
+          "impact": 0,
+          "nodeId": "a2",
+          "status": "completed",
+          "endTime": "20:46",
+          "outcome": "悄悄跟随塔林深入暗门通道 成功",
+          "startTime": "20:41",
+          "characterId": "Constantine Frollo",
+          "characterName": "Constantine Frollo",
+          "executionMeta": {
+            "startedAt": "20:41",
+            "completedAt": "20:46",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "character_interaction",
+          "skill": "Persuade",
+          "action": "引导Tallinn在祭坛前做告解，用温和且带有宗教色彩的话术询问关于帕特里齐奥、感染者及镇上最近动静，同时密切观察他的言辞与面部表情，切勿提及赌场或卢奇菲罗。",
+          "impact": 1,
+          "nodeId": "ci_tallinn_confess_1929",
+          "status": "failed",
+          "endTime": "19:40",
+          "startTime": "19:29",
+          "characterId": "Constantine Frollo",
+          "characterName": "Constantine Frollo",
+          "executionMeta": {
+            "failedAt": "19:40",
+            "startedAt": "19:29",
+            "remainingMinutes": 11
+          },
+          "targetCharacterIds": [
+            "Tallinn"
+          ]
+        },
+        {
+          "type": "character_interaction",
+          "action": "低声对帕特里齐奥说我会召文森特前来支援，命令他留在长椅上不要靠近祭坛或暗门",
+          "impact": 1,
+          "nodeId": "ci1",
+          "status": "completed",
+          "endTime": "23:49",
+          "outcome": "我在教堂主殿四处寻找帕特里齐奥，但他并不在场，没能当面低声交代他留在长椅上、不要靠近祭坛或暗门。既然无法直接联系他，我决定召文森特前来支援，并保持在祭坛下的暗门通道附近守护通路。",
+          "startTime": "23:47",
+          "characterId": "Constantine Frollo",
+          "characterName": "Constantine Frollo",
+          "executionMeta": {
+            "startedAt": "23:47",
+            "completedAt": "23:49",
+            "remainingMinutes": 0
+          },
+          "targetCharacterIds": [
+            "npc_patrizio_von_samsa"
+          ]
+        },
+        {
+          "type": "character_interaction",
+          "action": "低声示意帕特里齐奥留在长椅上并继续祈祷，以祷词掩护我的视线与注意力，盯着祭坛与暗门方向观察他的反应",
+          "impact": 1,
+          "nodeId": "ci2",
+          "status": "completed",
+          "endTime": "23:46",
+          "outcome": "我低声示意帕特里齐奥留在长椅上并以祷词掩护我的视线，盯着祭坛与暗门观察他的反应。他安静配合，没有起疑，这加固了我们之间微妙的合作。",
+          "startTime": "23:43",
+          "characterId": "Constantine Frollo",
+          "characterName": "Constantine Frollo",
+          "executionMeta": {
+            "startedAt": "23:43",
+            "completedAt": "23:46",
+            "remainingMinutes": 0
+          },
+          "targetCharacterIds": [
+            "Patrizio von Samsa"
+          ]
+        },
+        {
+          "type": "character_interaction",
+          "action": "低声对帕特里齐奥说我会召文森特前来支援，命令他留在长椅上不要靠近祭坛或暗门",
+          "impact": 1,
+          "nodeId": "ci1",
+          "status": "completed",
+          "endTime": "23:49",
+          "outcome": "我在教堂主殿四处寻找帕特里齐奥，但他并不在场，没能当面低声交代他留在长椅上、不要靠近祭坛或暗门。既然无法直接联系他，我决定召文森特前来支援，并保持在祭坛下的暗门通道附近守护通路。",
+          "startTime": "23:47",
+          "characterId": "Constantine Frollo",
+          "characterName": "Constantine Frollo",
+          "executionMeta": {
+            "startedAt": "23:47",
+            "completedAt": "23:49",
+            "remainingMinutes": 0
+          },
+          "targetCharacterIds": [
+            "npc_patrizio_von_samsa"
+          ]
+        },
+        {
+          "type": "action",
+          "action": "悄悄跟随塔林向下深入暗门通道",
+          "impact": 0,
+          "nodeId": "a1",
+          "status": "interrupted",
+          "endTime": "20:58",
+          "outcome": "悄悄跟随塔林向下深入暗门通道 [因重新规划而中断] 已中断",
+          "startTime": "20:53",
+          "characterId": "Constantine Frollo",
+          "characterName": "Constantine Frollo",
+          "executionMeta": {
+            "startedAt": "20:53",
+            "interruptedAt": "20:54",
+            "remainingMinutes": 0,
+            "interruptionReason": "revise_replan"
+          }
+        },
+        {
+          "type": "movement",
+          "action": "沿祭坛后方的暗门悄悄下行进入教堂暗门通道，尾随塔林",
+          "impact": 0,
+          "nodeId": "m1",
+          "status": "failed",
+          "endTime": "20:12",
+          "outcome": "沿祭坛后方的暗门悄悄下行进入教堂暗门通道，尾随塔林 [拓扑中无可用路径] 失败",
+          "startTime": "20:10",
+          "characterId": "Constantine Frollo",
+          "destination": "教堂暗门通道",
+          "characterName": "Constantine Frollo",
+          "executionMeta": {
+            "failedAt": "20:10",
+            "startedAt": "20:10",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "scene_interaction",
+          "action": "沿祭坛后的隐蔽石阶下行，跟随Tallinn进入暗门通道以暗中观察并防止祭坛与赌场通路被暴露",
+          "impact": 0,
+          "nodeId": "si1",
+          "status": "completed",
+          "endTime": "20:22",
+          "outcome": "我沿祭坛后的隐蔽石阶下行，跟随Tallinn进入暗门通道，藏匿于暗处暗中观察并守护通路，防止祭坛与地下赌场的通道被暴露。通道内有一股寒气，并能从门内传来微弱的回声，我现在在通道里隐蔽监视。",
+          "startTime": "20:17",
+          "characterId": "Constantine Frollo",
+          "characterName": "Constantine Frollo",
+          "executionMeta": {
+            "startedAt": "20:17",
+            "completedAt": "20:22",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "scene_interaction",
+          "action": "沿祭坛后的隐蔽石阶下行，跟随Tallinn进入暗门通道以暗中观察并防止祭坛与赌场通路被暴露",
+          "impact": 0,
+          "nodeId": "si1",
+          "status": "completed",
+          "endTime": "20:22",
+          "outcome": "我沿祭坛后的隐蔽石阶下行，跟随Tallinn进入暗门通道，藏匿于暗处暗中观察并守护通路，防止祭坛与地下赌场的通道被暴露。通道内有一股寒气，并能从门内传来微弱的回声，我现在在通道里隐蔽监视。",
+          "startTime": "20:17",
+          "characterId": "Constantine Frollo",
+          "characterName": "Constantine Frollo",
+          "executionMeta": {
+            "startedAt": "20:17",
+            "completedAt": "20:22",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "action",
+          "action": "悄悄跟随塔林向下深入暗门通道",
+          "impact": 0,
+          "nodeId": "a1",
+          "status": "interrupted",
+          "endTime": "20:58",
+          "outcome": "悄悄跟随塔林向下深入暗门通道 [因重新规划而中断] 已中断",
+          "startTime": "20:53",
+          "characterId": "Constantine Frollo",
+          "characterName": "Constantine Frollo",
+          "executionMeta": {
+            "startedAt": "20:53",
+            "interruptedAt": "20:54",
+            "remainingMinutes": 0,
+            "interruptionReason": "revise_replan"
+          }
+        },
+        {
+          "type": "action",
+          "action": "悄无声息地隐藏在暗处，继续观察Tallinn的一举一动，记录他通往地下赌场的路线与任何异常举动",
+          "impact": 0,
+          "nodeId": "a3",
+          "status": "completed",
+          "endTime": "20:40",
+          "outcome": "悄无声息地隐藏在暗处，继续观察Tallinn的一举一动，记录他通往地下赌场的路线与任何异常举动 成功",
+          "startTime": "20:34",
+          "characterId": "Constantine Frollo",
+          "characterName": "Constantine Frollo",
+          "executionMeta": {
+            "startedAt": "20:34",
+            "completedAt": "20:40",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "action",
+          "action": "悄悄跟随塔林深入暗门通道",
+          "impact": 0,
+          "nodeId": "a2",
+          "status": "completed",
+          "endTime": "20:46",
+          "outcome": "悄悄跟随塔林深入暗门通道 成功",
+          "startTime": "20:41",
+          "characterId": "Constantine Frollo",
+          "characterName": "Constantine Frollo",
+          "executionMeta": {
+            "startedAt": "20:41",
+            "completedAt": "20:46",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "action",
+          "action": "悄悄跟随塔林向下深入暗门通道",
+          "impact": 0,
+          "nodeId": "a1",
+          "status": "interrupted",
+          "endTime": "20:58",
+          "outcome": "悄悄跟随塔林向下深入暗门通道 [因重新规划而中断] 已中断",
+          "startTime": "20:53",
+          "characterId": "Constantine Frollo",
+          "characterName": "Constantine Frollo",
+          "executionMeta": {
+            "startedAt": "20:53",
+            "interruptedAt": "20:54",
+            "remainingMinutes": 0,
+            "interruptionReason": "revise_replan"
+          }
+        },
+        {
+          "type": "action",
+          "action": "悄悄跟随塔林向下深入暗门通道",
+          "impact": 0,
+          "nodeId": "a1",
+          "status": "interrupted",
+          "endTime": "20:58",
+          "outcome": "悄悄跟随塔林向下深入暗门通道 [因重新规划而中断] 已中断",
+          "startTime": "20:53",
+          "characterId": "Constantine Frollo",
+          "characterName": "Constantine Frollo",
+          "executionMeta": {
+            "startedAt": "20:53",
+            "interruptedAt": "20:54",
+            "remainingMinutes": 0,
+            "interruptionReason": "revise_replan"
+          }
+        },
+        {
+          "type": "character_interaction",
+          "action": "低声对帕特里齐奥说我会召文森特前来支援，命令他留在长椅上不要靠近祭坛或暗门",
+          "impact": 1,
+          "nodeId": "ci1",
+          "status": "completed",
+          "endTime": "23:49",
+          "outcome": "我在教堂主殿四处寻找帕特里齐奥，但他并不在场，没能当面低声交代他留在长椅上、不要靠近祭坛或暗门。既然无法直接联系他，我决定召文森特前来支援，并保持在祭坛下的暗门通道附近守护通路。",
+          "startTime": "23:47",
+          "characterId": "Constantine Frollo",
+          "characterName": "Constantine Frollo",
+          "executionMeta": {
+            "startedAt": "23:47",
+            "completedAt": "23:49",
+            "remainingMinutes": 0
+          },
+          "targetCharacterIds": [
+            "npc_patrizio_von_samsa"
+          ]
+        },
+        {
+          "type": "character_interaction",
+          "action": "低声对帕特里齐奥说我会召文森特前来支援，命令他留在长椅上不要靠近祭坛或暗门",
+          "impact": 1,
+          "nodeId": "ci1",
+          "status": "completed",
+          "endTime": "23:49",
+          "outcome": "我在教堂主殿四处寻找帕特里齐奥，但他并不在场，没能当面低声交代他留在长椅上、不要靠近祭坛或暗门。既然无法直接联系他，我决定召文森特前来支援，并保持在祭坛下的暗门通道附近守护通路。",
+          "startTime": "23:47",
+          "characterId": "Constantine Frollo",
+          "characterName": "Constantine Frollo",
+          "executionMeta": {
+            "startedAt": "23:47",
+            "completedAt": "23:49",
+            "remainingMinutes": 0
+          },
+          "targetCharacterIds": [
+            "npc_patrizio_von_samsa"
+          ]
+        },
+        {
+          "type": "character_interaction",
+          "action": "低声示意帕特里齐奥留在长椅上并继续祈祷，以祷词掩护我的视线与注意力，盯着祭坛与暗门方向观察他的反应",
+          "impact": 1,
+          "nodeId": "ci2",
+          "status": "completed",
+          "endTime": "23:46",
+          "outcome": "我低声示意帕特里齐奥留在长椅上并以祷词掩护我的视线，盯着祭坛与暗门观察他的反应。他安静配合，没有起疑，这加固了我们之间微妙的合作。",
+          "startTime": "23:43",
+          "characterId": "Constantine Frollo",
+          "characterName": "Constantine Frollo",
+          "executionMeta": {
+            "startedAt": "23:43",
+            "completedAt": "23:46",
+            "remainingMinutes": 0
+          },
+          "targetCharacterIds": [
+            "Patrizio von Samsa"
+          ]
+        },
+        {
+          "type": "character_interaction",
+          "action": "低声对帕特里齐奥说我会召文森特前来支援，命令他留在长椅上不要靠近祭坛或暗门",
+          "impact": 1,
+          "nodeId": "ci1",
+          "status": "completed",
+          "endTime": "23:49",
+          "outcome": "我在教堂主殿四处寻找帕特里齐奥，但他并不在场，没能当面低声交代他留在长椅上、不要靠近祭坛或暗门。既然无法直接联系他，我决定召文森特前来支援，并保持在祭坛下的暗门通道附近守护通路。",
+          "startTime": "23:47",
+          "characterId": "Constantine Frollo",
+          "characterName": "Constantine Frollo",
+          "executionMeta": {
+            "startedAt": "23:47",
+            "completedAt": "23:49",
+            "remainingMinutes": 0
+          },
+          "targetCharacterIds": [
+            "npc_patrizio_von_samsa"
+          ]
+        },
+        {
+          "type": "character_interaction",
+          "action": "低声告诫帕特里齐奥不要靠近祭坛并保持坐姿，借祷词掩护视线",
+          "impact": 1,
+          "nodeId": "ci_next1",
+          "status": "completed",
+          "endTime": "23:53",
+          "outcome": "我在教堂主殿靠近祭坛下的暗门处隐蔽观察，低声以祷词掩护视线并试图告诫帕特里齐奥不要靠近祭坛且保持坐姿，但帕特里齐奥并不在场，无法当面制止。",
+          "startTime": "23:50",
+          "characterId": "Constantine Frollo",
+          "characterName": "Constantine Frollo",
+          "executionMeta": {
+            "startedAt": "23:50",
+            "completedAt": "23:53",
+            "remainingMinutes": 0
+          },
+          "targetCharacterIds": [
+            "npc_patrizio_von_samsa"
+          ]
+        },
+        {
+          "type": "scene_interaction",
+          "action": "轻手将祭坛后暗门完全合上，并用祭坛后的一块布料封住门缝以挡住冷气，确保通道不被发现",
+          "impact": 0,
+          "nodeId": "si2",
+          "status": "completed",
+          "endTime": "23:56",
+          "outcome": "我轻手将祭坛后的暗门合上，并用一块布把门缝封好，冷气和微弱的回声被阻隔。这样一来通道的痕迹更不易被外人察觉。",
+          "startTime": "23:54",
+          "characterId": "Constantine Frollo",
+          "characterName": "Constantine Frollo",
+          "executionMeta": {
+            "startedAt": "23:54",
+            "completedAt": "23:56",
+            "remainingMinutes": 0
+          },
+          "objectInteractionPayload": {
+            "itemId": "教堂暗门通道"
+          }
+        },
+        {
+          "type": "scene_interaction",
+          "action": "用教堂的座机给文森特打电话，低声要求他立刻到教堂增援并带上外科器械，隐晦说明有人可能接近祭坛但勿公开暗门位置",
+          "impact": 1,
+          "nodeId": "si_call_vincent_001",
+          "status": "completed",
+          "endTime": "23:59",
+          "outcome": "我用教堂的座机联系了文森特，低声要求他立刻到教堂增援并带上外科器械，同时隐晦说明有人可能接近祭坛并再三叮嘱不要向外透露暗门的位置；电话已接通，指示传达完毕。",
+          "startTime": "23:57",
+          "characterId": "Constantine Frollo",
+          "characterName": "Constantine Frollo",
+          "executionMeta": {
+            "startedAt": "23:57",
+            "completedAt": "23:59",
+            "remainingMinutes": 0
+          }
+        }
+      ]
+    },
+    {
+      "npcName": "Constantine Frollo",
+      "gameDay": 2,
+      "schedule": [
+        {
+          "activity": "检查并加固祭坛后的暗门封布，确保冷气与回声不会泄出。",
+          "location": "教堂"
+        },
+        {
+          "activity": "进入暗门后的蛛网密室，按我的仪式在蛛丝上以血与蜡绘制符号以稳固门户。",
+          "location": "教堂"
+        },
+        {
+          "activity": "命令蛛人夜间出动前往帕拉迪尔大酒店侦查并在必要时制造骚动以分散镇上的注意力。",
+          "location": "教堂"
+        },
+        {
+          "activity": "回到主殿在祭坛旁朗诵祷文以平衡仪式能量并安抚来访者的疑虑。",
+          "location": "教堂"
+        },
+        {
+          "activity": "用教堂座机给星辰医院打电话确认文森特的行踪并嘱咐他带好外科器械来我这里。",
+          "location": "教堂"
+        },
+        {
+          "activity": "接收并监督文森特对被感染者的紧急处理，决定谁该被留下谁该送入暗门后方。",
+          "location": "教堂"
+        },
+        {
+          "activity": "安排将需要隔离或处理的感染者交由蛛人带入暗门后方或交予文森特处置。",
+          "location": "教堂"
+        },
+        {
+          "activity": "与帕特里齐奥在主殿短会，确认他前往焚化厂的时机并指出我会提供掩护。",
+          "location": "教堂"
+        },
+        {
+          "activity": "登上钟楼巡查外侧动静并确认钟楼与圆顶处没有异样。",
+          "location": "教堂"
+        },
+        {
+          "activity": "点燃更多蜡烛记录今晚的仪式细节，然后回到教堂内的居所安睡以保存明日精力。",
+          "location": "教堂"
+        }
+      ],
+      "nodes": [
+        {
+          "type": "action",
+          "action": "在祭坛暗处继续暗中观察并评估帕特里齐奥的举止与动向",
+          "impact": 0,
+          "nodeId": "a1",
+          "status": "completed",
+          "endTime": "02:02",
+          "outcome": "在祭坛暗处继续暗中观察并评估帕特里齐奥的举止与动向 成功",
+          "startTime": "01:57",
+          "characterId": "Constantine Frollo",
+          "characterName": "Constantine Frollo",
+          "executionMeta": {
+            "startedAt": "01:57",
+            "completedAt": "02:02",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "scene_interaction",
+          "action": "检查并加固祭坛后暗门的封布，压紧门缝以尽量隔绝溢出的冷气与回声",
+          "impact": 0,
+          "nodeId": "si_constantine_reinforce_seal",
+          "status": "completed",
+          "endTime": "00:12",
+          "outcome": "我检查了祭坛后暗门的封布，把布料重新压紧并塞实门缝。溢出的寒气与回声被明显抑制，通道更难被外人发现。",
+          "startTime": "00:07",
+          "characterId": "Constantine Frollo",
+          "characterName": "Constantine Frollo",
+          "executionMeta": {
+            "startedAt": "00:07",
+            "completedAt": "00:12",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "character_interaction",
+          "action": "用教堂座机再次拨打星辰医院，确认文森特会立即带外科器械到教堂并留守",
+          "impact": 1,
+          "nodeId": "ci1",
+          "status": "completed",
+          "endTime": "01:09",
+          "outcome": "我用教堂座机拨通了星辰医院，确认文森特会立刻带外科器械赶到教堂并在此留守；他答应了。我到教堂时并未找到他，并已叮嘱他不要向外人泄露祭坛后暗门的位置。",
+          "startTime": "01:06",
+          "characterId": "Constantine Frollo",
+          "characterName": "Constantine Frollo",
+          "executionMeta": {
+            "startedAt": "01:06",
+            "completedAt": "01:09",
+            "remainingMinutes": 0
+          },
+          "targetCharacterIds": [
+            "npc_vincent_galenus"
+          ]
+        },
+        {
+          "type": "scene_interaction",
+          "action": "点燃祭坛暗处的标记蜡烛作为出动信号",
+          "impact": 2,
+          "nodeId": "si1",
+          "status": "completed",
+          "endTime": "01:44",
+          "outcome": "我在祭坛暗处点燃了那支特别的标记蜡烛，烛焰作为出动信号被触发。按约定，冷蛛与Tallinn已接到信号并开始出动。",
+          "startTime": "01:43",
+          "characterId": "Constantine Frollo",
+          "characterName": "Constantine Frollo",
+          "executionMeta": {
+            "startedAt": "01:43",
+            "completedAt": "01:44",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "character_interaction",
+          "action": "用教堂座机再次拨打星辰医院，确认文森特会立即带外科器械到教堂并留守",
+          "impact": 1,
+          "nodeId": "ci1",
+          "status": "completed",
+          "endTime": "01:09",
+          "outcome": "我用教堂座机拨通了星辰医院，确认文森特会立刻带外科器械赶到教堂并在此留守；他答应了。我到教堂时并未找到他，并已叮嘱他不要向外人泄露祭坛后暗门的位置。",
+          "startTime": "01:06",
+          "characterId": "Constantine Frollo",
+          "characterName": "Constantine Frollo",
+          "executionMeta": {
+            "startedAt": "01:06",
+            "completedAt": "01:09",
+            "remainingMinutes": 0
+          },
+          "targetCharacterIds": [
+            "npc_vincent_galenus"
+          ]
+        },
+        {
+          "type": "action",
+          "action": "在祭坛暗处继续暗中观察并评估帕特里齐奥的举止与动向",
+          "impact": 0,
+          "nodeId": "a2",
+          "status": "completed",
+          "endTime": "02:08",
+          "outcome": "在祭坛暗处继续暗中观察并评估帕特里齐奥的举止与动向 成功",
+          "startTime": "02:03",
+          "characterId": "Constantine Frollo",
+          "characterName": "Constantine Frollo",
+          "executionMeta": {
+            "startedAt": "02:03",
+            "completedAt": "02:08",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "object_interaction",
+          "action": "检查暗门蛛网并确认冷蛛待命，低声收紧仪式以限制其通行并设定出动信号条件",
+          "impact": 0,
+          "nodeId": "oi1",
+          "status": "completed",
+          "endTime": "00:33",
+          "outcome": "我检查了祭坛后的暗门蛛网与缝隙，确认冷蛛已被限制待命；我用布临时封住缝隙并低声完成收紧仪式，设定了出动信号的触发条件以备后续联动。",
+          "startTime": "00:30",
+          "characterId": "Constantine Frollo",
+          "characterName": "Constantine Frollo",
+          "executionMeta": {
+            "startedAt": "00:30",
+            "completedAt": "00:33",
+            "remainingMinutes": 0
+          },
+          "objectInteractionPayload": {
+            "itemId": "教堂暗门通道"
+          }
+        },
+        {
+          "type": "character_interaction",
+          "action": "命令Tallinn现在立刻前往帕拉迪尔大酒店，在那里制造骚动以掩护我在教堂的行动，完成后立即回报我",
+          "impact": 1,
+          "nodeId": "ci3",
+          "status": "completed",
+          "endTime": "01:42",
+          "outcome": "我命令塔林立即前往帕拉迪尔大酒店，在那里制造骚动以掩护我在教堂的行动，并在完成后立即回报。我确认塔林以职业性的顺从接受了命令并表示会按约回报；他并未对我敞开心扉，关系仍然冷淡。",
+          "startTime": "01:41",
+          "characterId": "Constantine Frollo",
+          "characterName": "Constantine Frollo",
+          "executionMeta": {
+            "startedAt": "01:41",
+            "completedAt": "01:42",
+            "remainingMinutes": 0
+          },
+          "targetCharacterIds": [
+            "Tallinn"
+          ]
+        },
+        {
+          "type": "action",
+          "action": "在祭坛阴影处隐蔽观察并评估帕特里齐奥的举止与动向",
+          "impact": 0,
+          "nodeId": "a_day2_003",
+          "status": "completed",
+          "endTime": "00:42",
+          "outcome": "在祭坛阴影处隐蔽观察并评估帕特里齐奥的举止与动向 成功",
+          "startTime": "00:37",
+          "characterId": "Constantine Frollo",
+          "characterName": "Constantine Frollo",
+          "executionMeta": {
+            "startedAt": "00:37",
+            "completedAt": "00:42",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "scene_interaction",
+          "action": "进入暗门后的蛛网密室，在蛛丝上以血与蜡绘制符号以稳固门户",
+          "impact": 0,
+          "nodeId": "si_con_001",
+          "status": "completed",
+          "endTime": "00:53",
+          "outcome": "我进入暗门后的蛛网密室，在蛛丝上以血与蜡绘制并加固符号，完成了稳固门户的仪式。门户现处于我设定的受控封闭状态，只有按我标定的触发条件才会恢复通行。",
+          "startTime": "00:43",
+          "characterId": "Constantine Frollo",
+          "characterName": "Constantine Frollo",
+          "executionMeta": {
+            "startedAt": "00:43",
+            "completedAt": "00:53",
+            "remainingMinutes": 0
+          },
+          "objectInteractionPayload": {
+            "itemId": "教堂暗门通道"
+          }
+        },
+        {
+          "type": "action",
+          "action": "在祭坛旁低声朗诵祷文以平衡仪式能量",
+          "impact": 0,
+          "nodeId": "a_const_200254",
+          "status": "completed",
+          "endTime": "00:59",
+          "outcome": "在祭坛旁低声朗诵祷文以平衡仪式能量 成功",
+          "startTime": "00:54",
+          "characterId": "Constantine Frollo",
+          "characterName": "Constantine Frollo",
+          "executionMeta": {
+            "startedAt": "00:54",
+            "completedAt": "00:59",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "scene_interaction",
+          "action": "点燃祭坛暗处的标记蜡烛作为出动信号",
+          "impact": 2,
+          "nodeId": "si1",
+          "status": "completed",
+          "endTime": "01:44",
+          "outcome": "我在祭坛暗处点燃了那支特别的标记蜡烛，烛焰作为出动信号被触发。按约定，冷蛛与Tallinn已接到信号并开始出动。",
+          "startTime": "01:43",
+          "characterId": "Constantine Frollo",
+          "characterName": "Constantine Frollo",
+          "executionMeta": {
+            "startedAt": "01:43",
+            "completedAt": "01:44",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "character_interaction",
+          "action": "用教堂座机再次拨打星辰医院，确认文森特会立即带外科器械到教堂并留守",
+          "impact": 1,
+          "nodeId": "ci1",
+          "status": "completed",
+          "endTime": "01:09",
+          "outcome": "我用教堂座机拨通了星辰医院，确认文森特会立刻带外科器械赶到教堂并在此留守；他答应了。我到教堂时并未找到他，并已叮嘱他不要向外人泄露祭坛后暗门的位置。",
+          "startTime": "01:06",
+          "characterId": "Constantine Frollo",
+          "characterName": "Constantine Frollo",
+          "executionMeta": {
+            "startedAt": "01:06",
+            "completedAt": "01:09",
+            "remainingMinutes": 0
+          },
+          "targetCharacterIds": [
+            "npc_vincent_galenus"
+          ]
+        },
+        {
+          "type": "scene_interaction",
+          "action": "在祭坛暗处放置并准备一支特别标记的蜡烛作为出动信号，待我点燃时触发冷蛛与塔林出动",
+          "impact": 0,
+          "nodeId": "si2",
+          "status": "completed",
+          "endTime": "01:15",
+          "outcome": "我在祭坛暗处放好并标记了一支蜡烛，作为出动信号但尚未点燃。冷蛛已在暗门通道待命，Tallinn也在侧墙阴影中观察，点燃时两者会按约定出动。我确认蜡烛放置隐蔽且触发条件已在心中标定。",
+          "startTime": "01:10",
+          "characterId": "Constantine Frollo",
+          "characterName": "Constantine Frollo",
+          "executionMeta": {
+            "startedAt": "01:10",
+            "completedAt": "01:15",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "action",
+          "action": "在祭坛暗处继续暗中观察并评估帕特里齐奥的举止与动向",
+          "impact": 0,
+          "nodeId": "a2",
+          "status": "completed",
+          "endTime": "02:08",
+          "outcome": "在祭坛暗处继续暗中观察并评估帕特里齐奥的举止与动向 成功",
+          "startTime": "02:03",
+          "characterId": "Constantine Frollo",
+          "characterName": "Constantine Frollo",
+          "executionMeta": {
+            "startedAt": "02:03",
+            "completedAt": "02:08",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "character_interaction",
+          "skill": "Insight",
+          "action": "低声试探并评估Kovind、Marks White与Shandra Hernandez的忠诚与意图",
+          "impact": 2,
+          "nodeId": "ci2",
+          "status": "in_progress",
+          "endTime": "07:12",
+          "startTime": "07:07",
+          "characterId": "Constantine Frollo",
+          "characterName": "Constantine Frollo",
+          "executionMeta": {
+            "startedAt": "07:07",
+            "remainingMinutes": 5
+          },
+          "targetCharacterIds": [
+            "Kovind",
+            "Marks White",
+            "Shandra Hernandez"
+          ]
+        },
+        {
+          "type": "action",
+          "action": "悄声靠近祭坛的阴影处，暗中观察并评估帕特里齐奥的举止与动向",
+          "impact": 0,
+          "nodeId": "a2_0126",
+          "status": "completed",
+          "endTime": "01:31",
+          "outcome": "悄声靠近祭坛的阴影处，暗中观察并评估帕特里齐奥的举止与动向 成功",
+          "startTime": "01:26",
+          "characterId": "Constantine Frollo",
+          "characterName": "Constantine Frollo",
+          "executionMeta": {
+            "startedAt": "01:26",
+            "completedAt": "01:31",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "character_interaction",
+          "action": "命令Tallinn现在立刻前往帕拉迪尔大酒店，如有必要在那儿制造骚动以掩护交接并在完成后立即回报我",
+          "impact": 1,
+          "nodeId": "ci_day2_0132_1",
+          "status": "completed",
+          "endTime": "01:34",
+          "outcome": "我命令Tallinn现在立刻前往帕拉迪尔大酒店，如有必要在那儿制造骚动以掩护交接并在完成后立即回报我。塔林以职业性的顺从低声接受了命令，我将继续在祭坛处保持隐蔽并等待他的回报。",
+          "startTime": "01:32",
+          "characterId": "Constantine Frollo",
+          "characterName": "Constantine Frollo",
+          "executionMeta": {
+            "startedAt": "01:32",
+            "completedAt": "01:34",
+            "remainingMinutes": 0
+          },
+          "targetCharacterIds": [
+            "Tallinn"
+          ]
+        },
+        {
+          "type": "action",
+          "action": "在祭坛暗处继续暗中观察并评估帕特里齐奥的举止与动向",
+          "impact": 0,
+          "nodeId": "a2",
+          "status": "completed",
+          "endTime": "02:08",
+          "outcome": "在祭坛暗处继续暗中观察并评估帕特里齐奥的举止与动向 成功",
+          "startTime": "02:03",
+          "characterId": "Constantine Frollo",
+          "characterName": "Constantine Frollo",
+          "executionMeta": {
+            "startedAt": "02:03",
+            "completedAt": "02:08",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "character_interaction",
+          "action": "命令Tallinn现在立刻前往帕拉迪尔大酒店，在那里制造骚动以掩护我在教堂的行动，完成后立即回报我",
+          "impact": 1,
+          "nodeId": "ci3",
+          "status": "completed",
+          "endTime": "01:42",
+          "outcome": "我命令塔林立即前往帕拉迪尔大酒店，在那里制造骚动以掩护我在教堂的行动，并在完成后立即回报。我确认塔林以职业性的顺从接受了命令并表示会按约回报；他并未对我敞开心扉，关系仍然冷淡。",
+          "startTime": "01:41",
+          "characterId": "Constantine Frollo",
+          "characterName": "Constantine Frollo",
+          "executionMeta": {
+            "startedAt": "01:41",
+            "completedAt": "01:42",
+            "remainingMinutes": 0
+          },
+          "targetCharacterIds": [
+            "Tallinn"
+          ]
+        },
+        {
+          "type": "scene_interaction",
+          "action": "点燃祭坛暗处的标记蜡烛作为出动信号",
+          "impact": 2,
+          "nodeId": "si1",
+          "status": "completed",
+          "endTime": "01:44",
+          "outcome": "我在祭坛暗处点燃了那支特别的标记蜡烛，烛焰作为出动信号被触发。按约定，冷蛛与Tallinn已接到信号并开始出动。",
+          "startTime": "01:43",
+          "characterId": "Constantine Frollo",
+          "characterName": "Constantine Frollo",
+          "executionMeta": {
+            "startedAt": "01:43",
+            "completedAt": "01:44",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "action",
+          "action": "在祭坛阴影处继续暗中观察并评估帕特里齐奥的举止与动向",
+          "impact": 0,
+          "nodeId": "a18",
+          "status": "completed",
+          "endTime": "02:14",
+          "outcome": "在祭坛阴影处继续暗中观察并评估帕特里齐奥的举止与动向 成功",
+          "startTime": "02:09",
+          "characterId": "Constantine Frollo",
+          "characterName": "Constantine Frollo",
+          "executionMeta": {
+            "startedAt": "02:09",
+            "completedAt": "02:14",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "action",
+          "action": "在祭坛阴影处持续暗中观察并评估帕特里齐奥的举止与动向",
+          "impact": 0,
+          "nodeId": "a_next1",
+          "status": "completed",
+          "endTime": "01:56",
+          "outcome": "在祭坛阴影处持续暗中观察并评估帕特里齐奥的举止与动向 成功",
+          "startTime": "01:51",
+          "characterId": "Constantine Frollo",
+          "characterName": "Constantine Frollo",
+          "executionMeta": {
+            "startedAt": "01:51",
+            "completedAt": "01:56",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "action",
+          "action": "在祭坛暗处继续暗中观察并评估帕特里齐奥的举止与动向",
+          "impact": 0,
+          "nodeId": "a1",
+          "status": "completed",
+          "endTime": "02:02",
+          "outcome": "在祭坛暗处继续暗中观察并评估帕特里齐奥的举止与动向 成功",
+          "startTime": "01:57",
+          "characterId": "Constantine Frollo",
+          "characterName": "Constantine Frollo",
+          "executionMeta": {
+            "startedAt": "01:57",
+            "completedAt": "02:02",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "action",
+          "action": "在祭坛暗处继续暗中观察并评估帕特里齐奥的举止与动向",
+          "impact": 0,
+          "nodeId": "a2",
+          "status": "completed",
+          "endTime": "02:08",
+          "outcome": "在祭坛暗处继续暗中观察并评估帕特里齐奥的举止与动向 成功",
+          "startTime": "02:03",
+          "characterId": "Constantine Frollo",
+          "characterName": "Constantine Frollo",
+          "executionMeta": {
+            "startedAt": "02:03",
+            "completedAt": "02:08",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "action",
+          "action": "在祭坛阴影处继续暗中观察并评估帕特里齐奥的举止与动向",
+          "impact": 0,
+          "nodeId": "a18",
+          "status": "completed",
+          "endTime": "02:14",
+          "outcome": "在祭坛阴影处继续暗中观察并评估帕特里齐奥的举止与动向 成功",
+          "startTime": "02:09",
+          "characterId": "Constantine Frollo",
+          "characterName": "Constantine Frollo",
+          "executionMeta": {
+            "startedAt": "02:09",
+            "completedAt": "02:14",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "action",
+          "action": "悄声靠近祭坛，暗中观察并评估帕特里齐奥的举止与动向",
+          "impact": 0,
+          "nodeId": "a2_0215",
+          "status": "completed",
+          "endTime": "02:20",
+          "outcome": "悄声靠近祭坛，暗中观察并评估帕特里齐奥的举止与动向 成功",
+          "startTime": "02:15",
+          "characterId": "Constantine Frollo",
+          "characterName": "Constantine Frollo",
+          "executionMeta": {
+            "startedAt": "02:15",
+            "completedAt": "02:20",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "action",
+          "action": "悄声靠近祭坛阴影，继续暗中观察并评估帕特里齐奥的举止与动向",
+          "impact": 0,
+          "nodeId": "a02_0221",
+          "status": "interrupted",
+          "endTime": "02:31",
+          "outcome": "悄声靠近祭坛阴影，继续暗中观察并评估帕特里齐奥的举止与动向 [因重新规划而中断] 已中断",
+          "startTime": "02:21",
+          "characterId": "Constantine Frollo",
+          "characterName": "Constantine Frollo",
+          "executionMeta": {
+            "startedAt": "02:21",
+            "interruptedAt": "02:28",
+            "remainingMinutes": 0,
+            "interruptionReason": "revise_replan"
+          }
+        },
+        {
+          "type": "character_interaction",
+          "skill": "Persuade",
+          "action": "低声与Kovind交谈，试探其忠诚并命令他让随从留在入口处，禁止靠近祭坛",
+          "impact": 1,
+          "nodeId": "ci1_0229",
+          "status": "interrupted",
+          "endTime": "02:33",
+          "outcome": "低声与Kovind交谈，试探其忠诚并命令他让随从留在入口处，禁止靠近祭坛 [因重新规划而中断] 已中断",
+          "startTime": "02:29",
+          "characterId": "Constantine Frollo",
+          "characterName": "Constantine Frollo",
+          "executionMeta": {
+            "startedAt": "02:29",
+            "interruptedAt": "03:39",
+            "remainingMinutes": 0,
+            "interruptionReason": "revise_replan"
+          },
+          "targetCharacterIds": [
+            "Kovind"
+          ]
+        },
+        {
+          "type": "character_interaction",
+          "skill": "Intimidate",
+          "action": "命令Kovind和Shandra留在入口处，禁止靠近祭坛",
+          "impact": 1,
+          "nodeId": "ci_day2_0340",
+          "status": "interrupted",
+          "endTime": "03:45",
+          "outcome": "命令Kovind和Shandra留在入口处，禁止靠近祭坛 [因重新规划而中断] 已中断",
+          "startTime": "03:40",
+          "characterId": "Constantine Frollo",
+          "characterName": "Constantine Frollo",
+          "executionMeta": {
+            "startedAt": "03:40",
+            "interruptedAt": "07:06",
+            "remainingMinutes": 0,
+            "interruptionReason": "revise_replan"
+          },
+          "targetCharacterIds": [
+            "Kovind",
+            "Shandra Hernandez"
+          ]
+        },
+        {
+          "type": "character_interaction",
+          "skill": "Insight",
+          "action": "低声试探并评估Kovind、Marks White与Shandra Hernandez的忠诚与意图",
+          "impact": 2,
+          "nodeId": "ci2",
+          "status": "in_progress",
+          "endTime": "07:12",
+          "startTime": "07:07",
+          "characterId": "Constantine Frollo",
+          "characterName": "Constantine Frollo",
+          "executionMeta": {
+            "startedAt": "07:07",
+            "remainingMinutes": 5
+          },
+          "targetCharacterIds": [
+            "Kovind",
+            "Marks White",
+            "Shandra Hernandez"
+          ]
+        }
+      ]
+    }
+  ],
+  "intents": [
+    {
+      "intent": "立即优先评估Kovind、Marks White与Shandra Hernandez的立场与忠诚；迅速控制、转移或收编他们的随从以防曝光；马上加固祭坛后暗门的封布与符号，确认冷蛛与暗门待命状态；用预定的微妙信号（蜡烛/手势）通知Tallinn并确保他准备在帕拉迪尔大酒店出动；立刻用教堂座机确认文森特位置并催促他携带外科器械赶来；以保护仪式与暗门安全为最高优先。 ",
+      "updatedAt": "2026-04-02T13:35:11.551Z"
+    }
+  ],
+  "npcName": "Constantine Frollo"
+}

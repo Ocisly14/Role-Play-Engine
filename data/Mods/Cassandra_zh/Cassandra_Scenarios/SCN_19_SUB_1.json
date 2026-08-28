@@ -1,0 +1,71 @@
+{
+  "id": "SCN_19_SUB_1",
+  "name": "卡森德拉公墓",
+  "description": "前往伐木场的途中，路旁出现一片不大的墓地——卡森德拉公墓。一圈锈迹斑驳的铁栅栏将其与外界隔开，入口处的铁门半掩着，铰链锈蚀严重，风一吹便发出尖锐的吱呀声。十二月的寒风裹挟着泥土与枯叶的气息穿过栅栏缝隙，带来一股潮湿而冰冷的腐朽味道。墓碑高低错落地散布在枯黄的杂草间，年代久远的石碑上铭文已被风雨侵蚀得难以辨认，较新的墓碑前偶尔还能看到褪色干枯的花束。几棵落光了叶子的老橡树伸展着扭曲黝黑的枝干，像枯瘦的手指刺向灰蒙蒙的天空。脚下的碎石小径覆满落叶，踩上去发出沉闷的沙沙声。四周寂静无人，唯有风声在墓碑间低低呜咽，为这片加州小镇边缘的荒凉角落平添几分说不出的压抑与不安。",
+  "parentLocationId": "SCN_19",
+  "indoor": false,
+  "items": [
+    {
+      "id": "ITEM_SCN19_1",
+      "name": "Vincent Galenus妻子的墓碑",
+      "description": "一块相对较新的墓碑，上面刻着Vincent Galenus妻子的名字和生卒年份。墓碑前偶尔能看到枯萎的花束，显示有人曾来此祭拜。",
+      "type": "other"
+    },
+    {
+      "id": "ITEM_SCN19_2",
+      "name": "锈蚀铁门",
+      "type": "other",
+      "description": "入口处半掩着的锈蚀铁门，铰链锈蚀严重，推动时发出刺耳的金属摩擦声。"
+    },
+    {
+      "id": "ITEM_SCN19_3",
+      "name": "风化墓碑群",
+      "type": "other",
+      "description": "年代久远的石碑散布在荒草间，铭文已被风雨侵蚀得难以辨认。"
+    }
+  ],
+  "conditions": [
+    {
+      "description": "墓地位于开阔地带，冬季的寒风在墓碑间呼啸而过，枯黄的野草随风摇摆。天空常年笼罩着灰色的阴云。",
+      "mechanicalEffect": {
+        "skillPenalty": [
+          {
+            "skill": "Perception",
+            "delta": -10
+          },
+          {
+            "skill": "Listen",
+            "delta": -10
+          }
+        ]
+      }
+    },
+    {
+      "description": "墓地没有照明设施，白天依靠自然光线。傍晚和夜间光线昏暗，老树的枝干在地面投下怪异的阴影。",
+      "mechanicalEffect": {
+        "skillPenalty": [
+          {
+            "skill": "Perception",
+            "delta": -20
+          }
+        ]
+      }
+    },
+    {
+      "description": "墓地的氛围萧索压抑，枯树、残碑和呼啸的风声交织在一起，令人不由自主地感到一丝不安。",
+      "mechanicalEffect": {
+        "skillPenalty": [
+          {
+            "skill": "Perception",
+            "delta": -10
+          }
+        ]
+      }
+    }
+  ],
+  "connections": [],
+  "itemContexts": {
+    "ITEM_SCN19_2": "公墓入口的铁门半掩着，铰链锈蚀严重，轻推便发出刺耳的金属摩擦声。",
+    "ITEM_SCN19_3": "大片年代久远的石碑散布在荒草间，铭文被风雨侵蚀得模糊不清，记录着小镇几代人的名字。"
+  }
+}

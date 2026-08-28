@@ -1,0 +1,2897 @@
+{
+  "npcId": "Lux Lynch",
+  "memories": [
+    {
+      "type": "belief",
+      "content": "帕特里齐奥足够危险，以至于保持服从感觉比试图脱身更安全。",
+      "gameDay": 1,
+      "gameTime": "00:00",
+      "location": null,
+      "metadata": {
+        "confidence": 0.95,
+        "reasoningChain": "维托开始注意我并记录询问，布鲁诺手里已有我承认的笔录，帕特里齐奥对我压案的期待仍在；这些证据让我更相信服从帕特里齐奥暂时比试图脱身更安全。"
+      }
+    },
+    {
+      "type": "secret",
+      "content": "布鲁诺曾是个正直并信任我的人，但今晚他当面盘问我并记录了我承认释放马丁·金、栽赃折刀和转运尸体的供述。现在布鲁诺手里有可能暴露我的笔录，我必须设法控制或收回这些记录，生存压力和道德良知的冲突变得更加紧迫。",
+      "gameDay": 1,
+      "gameTime": "00:00",
+      "location": null,
+      "metadata": {
+        "knowledgeId": "s_lux_bruno_dilemma",
+        "lastUpdated": "2026-04-02T08:02:53.988Z"
+      }
+    },
+    {
+      "type": "plan",
+      "content": "在安全与良知之间苟且求生，内心深处渴望有朝一日能摆脱帕德里奇的控制，过上不需要出卖灵魂的自由生活——就像年轻时那个相信正义的自己曾经期望的那样。",
+      "gameDay": 1,
+      "gameTime": "00:00",
+      "location": null,
+      "metadata": {
+        "planType": "long_term"
+      }
+    },
+    {
+      "type": "secret",
+      "content": "我奉命释放了马丁·金，间接让珍妮·弗洛伦斯的凶手逃脱了。",
+      "gameDay": 1,
+      "gameTime": "00:00",
+      "location": null,
+      "metadata": {
+        "knowledgeId": "s_lux_martin_release"
+      }
+    },
+    {
+      "type": "plan",
+      "content": "Today's plan: 1. 继续查看并比对监控回放的截图和时间戳，确认布鲁诺的最新行进路线以更新拦截点。 at 警察局大厅; 2. 到档案室翻找与珍妮·弗洛伦斯案及2002年帕拉迪尔大酒店案相关的卷宗，记录任何遗漏或被整封掉的档案。 at 警察局大厅; 3. 与维托短暂会面，核实他是否按我指挥前往拦截点并安排接下来的无线电联络细节。 at 警察局大厅; 4. 检查警局外的摄像头和门口足迹，确认外部是否有人监视或安插了监听装置。 at 新月街A南西端·警察局前; 5. 以便衣身份低调进入酒吧，观察当晚情况并寻找此前未被记录的目击者或遗留物证。 at 驯鹿酒吧; 6. 与哈里森会面并提醒他按计划明天检查老文件柜的锁并保持绝对保密。 at 五金店; 7. 调查2002年死亡案相关线索，向前台和保安套话以确认过去出入记录和可疑人物。 at 帕拉迪尔大酒店; 8. 在餐厅吃午饭并借机暗中观察常客，寻找可能与驯鹿酒吧或酒店有关的线索或传闻。 at 海伦的餐桌; 9. 到花店附近探听小镇传闻并留下一个暗号信息给可能的线人以便日后联络。 at 花店·卡森德拉之花; 10. 如有必要，前往珊德拉的小屋核实她是否记得与案发人物有关的细节或夜间异常经过。 at 珊德拉的小屋; 11. 回到警局整理收集到的证据与便签，将重要文件加密隐藏并修改必要的记录以保护自己。 at 警察局大厅; 12. 在值班台检查无线电和监控最后一次回放，写下明天要执行的行动计划后在办公椅上睡觉以便随时应对突发事件。 at 警察局大厅",
+      "gameDay": 2,
+      "gameTime": "00:00",
+      "location": null,
+      "metadata": {
+        "planType": "daily"
+      }
+    },
+    {
+      "type": "information",
+      "content": "我收受过贿赂，并记录了那些我帮忙掩盖小问题的人。",
+      "gameDay": 1,
+      "gameTime": "00:00",
+      "location": null,
+      "metadata": {
+        "difficulty": "automatic",
+        "knowledgeId": "k_lux_corruption"
+      }
+    },
+    {
+      "type": "information",
+      "content": "我能活到现在，靠的是让上面的人觉得可靠，让其他所有人觉得我不起眼。",
+      "gameDay": 1,
+      "gameTime": "00:00",
+      "location": null,
+      "metadata": {
+        "difficulty": "regular",
+        "knowledgeId": "k_lux_survival_pattern"
+      }
+    },
+    {
+      "type": "secret",
+      "content": "珍妮·弗洛伦斯（卢奇菲罗）的死压在我的良心上。我奉命释放了马丁·金，间接让她的凶手逃脱了。她的鬼魂和那把被栽赃的折叠刀是我夜里最常想起的东西。",
+      "gameDay": 1,
+      "gameTime": "00:00",
+      "location": null,
+      "metadata": {
+        "knowledgeId": "s_lux_jenny_guilt"
+      }
+    },
+    {
+      "type": "information",
+      "content": "帕特里齐奥期望我平息投诉、让文件消失、阻止逮捕变成人们反复谈论的故事。",
+      "gameDay": 1,
+      "gameTime": "00:00",
+      "location": null,
+      "metadata": {
+        "difficulty": "regular",
+        "knowledgeId": "k_lux_patrol_duties"
+      }
+    },
+    {
+      "type": "secret",
+      "content": "我奉命将折叠刀栽赃到卢奇菲罗的尸体上，并转运了她的尸体。",
+      "gameDay": 1,
+      "gameTime": "00:00",
+      "location": null,
+      "metadata": {
+        "knowledgeId": "s_lux_knife_body"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我把大厅的照明开关打开，日光灯恢复并稳定发光，大厅不再漆黑。",
+      "gameDay": 2,
+      "gameTime": "00:03",
+      "location": "SCN_3_SUB_1",
+      "metadata": {
+        "outcome": "打开大厅的照明开关恢复灯光"
+      }
+    },
+    {
+      "type": "event",
+      "content": "走向档案室准备翻找与珍妮·弗洛伦斯案及2002年帕拉迪尔大酒店案相关的卷宗 成功",
+      "gameDay": 2,
+      "gameTime": "00:05",
+      "location": "SCN_3_SUB_3",
+      "metadata": {
+        "outcome": "走向档案室准备翻找与珍妮·弗洛伦斯案及2002年帕拉迪尔大酒店案相关的卷宗 成功",
+        "blockedReason": "",
+        "failureReason": ""
+      }
+    },
+    {
+      "type": "witness",
+      "content": "[相遇] 00:05 在档案室与维托和布鲁诺面对面相遇。看到布鲁诺手里有他记录的笔录，我立刻紧张——那些记录可能暴露我参与的敏感事情；维托在场让我更不安，因为他之前问过我们来局里的原因。我感到必须立刻控制局面、掩盖痕迹并设法回收或模糊布鲁诺的文件。",
+      "gameDay": 2,
+      "gameTime": "00:05",
+      "location": "SCN_3_SUB_3",
+      "metadata": {
+        "impact": 2,
+        "perspective": "co_presence",
+        "sourceAction": "Vito, Bruno Galilei 在 档案室",
+        "sourceCharacterId": "__encounter__"
+      }
+    },
+    {
+      "type": "event",
+      "content": "借口与布鲁诺低声交谈并在靠近时悄悄从他手中抽走笔录，迅速把笔录塞进衣内口袋里 [在 SCN_3_SUB_3 因重新规划而中断] 已中断",
+      "gameDay": 2,
+      "gameTime": "00:10",
+      "location": "SCN_3_SUB_3",
+      "metadata": {
+        "outcome": "借口与布鲁诺低声交谈并在靠近时悄悄从他手中抽走笔录，迅速把笔录塞进衣内口袋里 [在 SCN_3_SUB_3 因重新规划而中断] 已中断",
+        "interruptionReason": "revise_replan"
+      }
+    },
+    {
+      "type": "event",
+      "content": "[直接] 布鲁诺当着我的面把我拘留，命令我不得触碰或移走任何卷宗并原地等支援——他手里有我供述的笔录。我感到惊恐、无力且紧张，那份记录会暴露我与拦截行动及几起敏感事件的牵连。现在必须立刻控制档案室内的风险，设法收回或模糊布鲁诺手中的笔录，并用配合之姿寻找机会化解或转移注意力，暂时推迟当天其他计划。",
+      "gameDay": 2,
+      "gameTime": "00:10",
+      "location": "SCN_3_SUB_3",
+      "metadata": {
+        "impact": 2,
+        "perspective": "targeted",
+        "sourceAction": "我当场将卢克斯拘留，命令他不得触碰或移走任何卷宗并原地等待支援。我已有他的供述记录在案，不能允许他接触证物或试图销毁任何可能暴露其牵连的材料。",
+        "sourceCharacterId": "Bruno Galilei"
+      }
+    },
+    {
+      "type": "event",
+      "content": "布鲁诺当着我的面把我拘留，命令我别动任何卷宗并等支援，我感到惊恐且无力反抗。我明白他已经把我的供述记下了——那份记录必须想办法收回或隐匿，否则我会有危险。",
+      "gameDay": 2,
+      "gameTime": "00:10",
+      "location": "SCN_3_SUB_3",
+      "metadata": {
+        "outcome": "将卢克斯拘留，命令他原地不准触碰或移走任何卷宗并等候支援"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我低声表现出顺从，恳求查看布鲁诺手中的笔录并试图趁他靠近时悄悄取回，但我的欺骗失败了。布鲁诺看清了我的动作并阻止了我，我没能拿到笔录，只能继续被拘留，心里更害怕和绝望。 [rel:Bruno Galilei -12 → -4]",
+      "gameDay": 2,
+      "gameTime": "00:13",
+      "location": "SCN_3_SUB_3",
+      "metadata": {
+        "outcome": "低声向Bruno表现出顺从，恳求查看并核对他手中的笔录以确认细节，趁其靠近时从他手中悄悄取回笔录。 [Deception 1, rolled 72 (difficulty: regular)] failed"
+      }
+    },
+    {
+      "type": "event",
+      "content": "低声说服维托去查看外部监控回放并按暗号前往拦截点，借此把布鲁诺从档案室引开 [在 SCN_3_SUB_3 因重新规划而中断] 已中断",
+      "gameDay": 2,
+      "gameTime": "00:16",
+      "location": "SCN_3_SUB_3",
+      "metadata": {
+        "outcome": "低声说服维托去查看外部监控回放并按暗号前往拦截点，借此把布鲁诺从档案室引开 [在 SCN_3_SUB_3 因重新规划而中断] 已中断",
+        "interruptionReason": "revise_replan"
+      }
+    },
+    {
+      "type": "witness",
+      "content": "[目击] 我看到布鲁诺用档案室钥匙把放有帕拉迪尔大酒店和驯鹿酒吧案卷的档案柜上了锁，并在折叠的案件笔记上记录了上锁时间和他当时在档案室的位置。我感到慌乱、紧张且受限制——这直接阻断了我接触文件的计划，也增加了他提交我供述的可能性。必须立刻设法夺回钥匙或笔录、制造转移注意力并优先处理这一风险，暂缓其他计划。",
+      "gameDay": 2,
+      "gameTime": "00:16",
+      "location": "SCN_3_SUB_3",
+      "metadata": {
+        "impact": 2,
+        "perspective": "witness",
+        "sourceAction": "我用档案柜与法医室钥匙把放有帕拉迪尔大酒店和驯鹿酒吧案卷的卷宗档案柜上锁，并把所有抽屉合上，确保卢克斯无法接触任何文件；我在折叠案件笔记上记录了锁定时间和我当时所在的档案室位置。",
+        "sourceCharacterId": "Bruno Galilei"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我通过无线电向维托发出既定暗号，简短确认他是否已到拦截点并请求他马上在档案室入口制造一个小干扰；他在通话中应道会去办。 [rel:Vito +2 → 6]",
+      "gameDay": 2,
+      "gameTime": "00:18",
+      "location": "SCN_3_SUB_3",
+      "metadata": {
+        "outcome": "通过无线电向维托发出既定暗号，短促确认他是否已前往拦截点并请求立即在档案室入口制造分散注意力的小干扰"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我迅速从索引卡抽屉里抽出几张可能与布鲁诺笔录相关的纸卡，塞进口袋里藏好。抽屉里剩下的索引卡有被匆忙翻找过的痕迹，但动作没有引起注意。",
+      "gameDay": 2,
+      "gameTime": "00:21",
+      "location": "SCN_3_SUB_3",
+      "metadata": {
+        "itemId": "ITEM_SCN3_10",
+        "outcome": "从索引卡抽屉迅速取出可能与笔录相关的纸卡并塞进口袋以隐藏",
+        "itemName": "索引卡抽屉"
+      }
+    },
+    {
+      "type": "event",
+      "content": "低声假意配合布鲁诺，靠近并在他不注意时试图迅速抽走他手中的笔录或钥匙 [在 SCN_3_SUB_3 因重新规划而中断] 已中断",
+      "gameDay": 2,
+      "gameTime": "00:25",
+      "location": "SCN_3_SUB_3",
+      "metadata": {
+        "outcome": "低声假意配合布鲁诺，靠近并在他不注意时试图迅速抽走他手中的笔录或钥匙 [在 SCN_3_SUB_3 因重新规划而中断] 已中断",
+        "interruptionReason": "revise_replan"
+      }
+    },
+    {
+      "type": "event",
+      "content": "维托在档案室拦住了我，从我身上取走了一张索引卡并将它登记为证物；我被搜身并留下了被没收证物的记录。",
+      "gameDay": 2,
+      "gameTime": "00:25",
+      "location": "SCN_3_SUB_3",
+      "metadata": {
+        "outcome": "拦住Lux并从他身上取回被藏的索引卡，现场盘点并记录为证物"
+      }
+    },
+    {
+      "type": "event",
+      "content": "[直接] 维托在档案室拦住了我，从我身上取走了一张我藏着的索引卡并当场登记为证物，还注意到抽屉里确实少了几张卡片并在笔记本里做了备注。我感到震惊、恐惧并高度紧张——他的记录会把我暴露得更清楚。这件事大大提升了紧迫性，我必须立刻采取行动来阻断或模糊证据链，设法回收剩余卡片并控制布鲁诺和维托对笔录与卡片的处理。",
+      "gameDay": 2,
+      "gameTime": "00:25",
+      "location": "SCN_3_SUB_3",
+      "metadata": {
+        "impact": 2,
+        "perspective": "targeted",
+        "sourceAction": "我在档案室拦住了Lux，并从他身上取回了一张被藏的索引卡；我当场清点并在笔记本里将该卡记录为证物，注意到索引卡抽屉确实少了几张卡片并写下了备注。",
+        "sourceCharacterId": "Vito"
+      }
+    },
+    {
+      "type": "event",
+      "content": "布鲁诺当场搜查了我的随身物品，拿走了我的“记录非法人情的笔记本”。我感到恐惧和绝望——这本笔记本可能会暴露我收受贿赂和掩盖事情的记录。",
+      "gameDay": 2,
+      "gameTime": "00:31",
+      "location": "SCN_3_SUB_3",
+      "metadata": {
+        "outcome": "搜查卢克斯的衣物和随身物品，查找并取出所有可能的索引卡或相关纸张，现场记录并交接给证据包"
+      }
+    },
+    {
+      "type": "event",
+      "content": "通过无线电低声向维托确认他是否已按暗号到达拦截点，并指示他现在在档案室入口制造小干扰以吸引布鲁诺离开 [在 SCN_3_SUB_3 因重新规划而中断] 已中断",
+      "gameDay": 2,
+      "gameTime": "00:51",
+      "location": "SCN_3_SUB_3",
+      "metadata": {
+        "outcome": "通过无线电低声向维托确认他是否已按暗号到达拦截点，并指示他现在在档案室入口制造小干扰以吸引布鲁诺离开 [在 SCN_3_SUB_3 因重新规划而中断] 已中断",
+        "interruptionReason": "revise_replan"
+      }
+    },
+    {
+      "type": "witness",
+      "content": "[目击] 我看到布鲁诺把抽屉内现存与缺失的索引卡序号逐一清点并记入折叠案件笔记，还在抽屉边缘用铅笔做了标记以保留翻动痕迹。我感到恐慌和紧迫——他的记录会把我偷走卡片的事实钉死，必须立刻阻止他继续登记并设法收回或毁掉剩余卡片。",
+      "gameDay": 2,
+      "gameTime": "00:51",
+      "location": "SCN_3_SUB_3",
+      "metadata": {
+        "impact": 2,
+        "perspective": "witness",
+        "sourceAction": "我清点并记录了索引卡抽屉内现存纸卡的序号与缺失情况，内容记入折叠案件笔记里，并在抽屉边缘用铅笔做了标记以保留翻动痕迹。",
+        "sourceCharacterId": "Bruno Galilei"
+      }
+    },
+    {
+      "type": "plan",
+      "content": "Today's plan: 1. 在警察局大厅吃点简单晚饭并检查帕特里齐奥今晚交代的任务与未处理的通报。 at 警察局大厅; 2. 到档案室翻找与珍妮·弗洛伦斯案和马丁·金释放相关的卷宗，找出可能威胁到我的记录或对帕特里齐奥不利的证据。 at 档案室; 3. 去五金店找哈里森，请他明天帮忙检查一个老旧文件柜的锁并顺便帮我保密解决办法。 at 五金店; 4. 在海伦的餐桌吃一顿正经的晚餐，顺便听听镇上的闲话以掌握风声。 at 海伦的餐桌; 5. 去驯鹿酒吧与布鲁诺低声碰面，确认他在调查中的立场并试探是否能保持距离或得到他的帮助。 at 驯鹿酒吧; 6. 回到警察局把在档案室找到的重要线索抄录或拍照存档，并把原件放回原处以避免引人注意。 at 警察局; 7. 在值班台整理今晚的笔记，写出一个能交代给帕特里齐奥的版本并准备明早的借口。 at 警察局大厅; 8. 在警察局过夜，尽量休息并保持警觉，为明天一早继续行动做准备。 at 警察局大厅",
+      "gameDay": 1,
+      "gameTime": "19:00",
+      "location": null,
+      "metadata": {
+        "planType": "daily"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我在办公桌上吃了简单的晚饭，同时把帕特里齐奥今晚交代的任务和未处理的通报逐一翻阅。没有发现需要立刻上报的意外证据；我圈出几项要明早处理的事项，并把文件按原样放回桌面，喝空的纸杯放在一旁。",
+      "gameDay": 1,
+      "gameTime": "19:15",
+      "location": "SCN_3_SUB_1",
+      "metadata": {
+        "itemId": "ITEM_SCN3_1",
+        "outcome": "在办公桌上吃简单晚饭，并翻阅帕特里齐奥今晚交代的任务与未处理的通报",
+        "itemName": "办公桌"
+      }
+    },
+    {
+      "type": "event",
+      "content": "走到档案室去翻找与珍妮·弗洛伦斯案和马丁·金释放相关的卷宗 成功",
+      "gameDay": 1,
+      "gameTime": "19:19",
+      "location": "SCN_3_SUB_3",
+      "metadata": {
+        "outcome": "走到档案室去翻找与珍妮·弗洛伦斯案和马丁·金释放相关的卷宗 成功",
+        "blockedReason": "",
+        "failureReason": ""
+      }
+    },
+    {
+      "type": "event",
+      "content": "走出档案室并前往警察局大厅 成功",
+      "gameDay": 1,
+      "gameTime": "19:23",
+      "location": "SCN_3_SUB_1",
+      "metadata": {
+        "outcome": "走出档案室并前往警察局大厅 成功",
+        "blockedReason": "",
+        "failureReason": ""
+      }
+    },
+    {
+      "type": "witness",
+      "content": "[相遇] 我在警察局大厅突然与Vito和布鲁诺·加利里面对面相遇。胸口一紧，脑子里迅速过过种种可能性——Vito的出现尤其令人警觉，仿佛把我今晚的行动置于放大镜下。我感到焦虑但必须装作镇静，立刻调整语气和表情，试图把谈话引向安全的话题，同时在心里盘算是否要立刻撤离或向帕特里齐奥求证。",
+      "gameDay": 1,
+      "gameTime": "19:23",
+      "location": "SCN_3_SUB_1",
+      "metadata": {
+        "impact": 2,
+        "perspective": "co_presence",
+        "sourceAction": "Vito, Bruno Galilei 在 警察局大厅",
+        "sourceCharacterId": "__encounter__"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我低声问了Vito和布鲁诺今晚来此的目的。Vito说他是作为辅助警察在值班，负责小事务并帮忙处理局里的日常事宜。布鲁诺低声告诉我他在局里过夜，带着受害者的手机、证人笔录和旧冷冻柜案的材料守着这些证据，并且他认为2002年帕拉迪尔酒店的死亡案和2003年驯鹿酒吧的谋杀案是同一人所为。 [rel:Vito +10 → 10] [rel:Bruno Galilei +5 → 25]",
+      "gameDay": 1,
+      "gameTime": "19:26",
+      "location": "SCN_3_SUB_1",
+      "metadata": {
+        "outcome": "低声询问Vito和布鲁诺他们今晚来此的目的"
+      }
+    },
+    {
+      "type": "event",
+      "content": "I tried to move to JUNC_8 but the path was blocked.",
+      "gameDay": 1,
+      "gameTime": "19:30",
+      "location": "SCN_3_SUB_1",
+      "metadata": {}
+    },
+    {
+      "type": "event",
+      "content": "我用轻声闲聊掩饰真实意图，聊了外面的大雪和值班安排，把话题带到无害的方向，然后找了个借口离开警局大厅，走到正门外的新月街路口。没有透露关于旧案或我的牵连的任何信息。 [rel:Vito +1 → 11] [rel:Bruno Galilei -4 → 21]",
+      "gameDay": 1,
+      "gameTime": "19:30",
+      "location": "SCN_3_SUB_1",
+      "metadata": {
+        "outcome": "以轻声闲聊掩饰真实意图，向Vito和布鲁诺谈论外面的大雪和值班安排，试图把话题带到无害的方向并寻找借口离开。"
+      }
+    },
+    {
+      "type": "witness",
+      "content": "[目击] 我注意到维托来到警察局当面询问我和布鲁诺来此的原因，并试图核实布鲁诺与珊德拉的关系，但两人均不在场。因为找不到当事人，他把这次未果的询问记录下来，打算通过其他渠道联系我们或等进一步线索。听到这事我感到紧张和警觉——维托在留意我们，说明我们的行动可能被放大，我得更小心行事。",
+      "gameDay": 1,
+      "gameTime": "19:31",
+      "location": "SCN_3_SUB_1",
+      "metadata": {
+        "impact": 2,
+        "perspective": "witness",
+        "sourceAction": "我来到警察局当面询问Lux Lynch和Bruno Galilei他们来此的原因，并试图核实布鲁诺与珊德拉的关系，但两人均不在场。因为找不到当事人，我也无法评估是否需要立即对海伦或珊德拉采取保护或调查措施。我要把这次未果的询问记录下来，等待通过其他渠道联系他们或得到进一步线索。",
+        "sourceCharacterId": "Vito"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我用警局内务钥匙串把后方的金属文件柜打开，按名称和案卷夹迅速翻找与珍妮·弗洛伦斯案和马丁·金释放相关的卷宗。抽屉里并没有这些案卷，没法抄录原件；我在笔记本上记下需要继续追查的要点，然后把抽屉合上并复位。",
+      "gameDay": 1,
+      "gameTime": "19:42",
+      "location": "SCN_3_SUB_1",
+      "metadata": {
+        "itemId": "ITEM_SCN3_11",
+        "outcome": "用钥匙打开文件柜，取出与珍妮·弗洛伦斯案和马丁·金释放相关的卷宗，快速把关键内容抄到我的笔记本上，然后把卷宗放回原处",
+        "itemName": "文件柜"
+      }
+    },
+    {
+      "type": "event",
+      "content": "维托通过值班无线电让我对布鲁诺做巡逻并在他离开后跟踪，我已接受，会前往新月街路口监视他的行踪。暂时在局内做例行值勤以便伺机离开，没有当场透露任何旧案或私人牵连。",
+      "gameDay": 1,
+      "gameTime": "19:45",
+      "location": "SCN_3_SUB_1",
+      "metadata": {
+        "outcome": "通过值班无线电请求Lux对布鲁诺进行巡逻检查，并在布鲁诺离开警局后对其行踪进行跟踪监视"
+      }
+    },
+    {
+      "type": "event",
+      "content": "I tried to move to JUNC_8 but the path was blocked.",
+      "gameDay": 1,
+      "gameTime": "19:45",
+      "location": "SCN_3_SUB_1",
+      "metadata": {}
+    },
+    {
+      "type": "event",
+      "content": "[直接] 布鲁诺当面盘问我，我在他的劝说下承认自己奉命释放马丁·金、把折叠刀栽到珍妮·弗洛伦斯（卢奇菲罗）尸体上并转运尸体，同时承认帕特里齐奥希望我平息投诉并让文件消失。我把这些话记下来了。现在感到深深的内疚和恐惧，意识到帕特里齐奥可能是幕后主使，担心布鲁诺手里的记录会暴露我，必须立即采取措施控制局面。",
+      "gameDay": 1,
+      "gameTime": "19:48",
+      "location": "SCN_3_SUB_1",
+      "metadata": {
+        "impact": 1,
+        "perspective": "targeted",
+        "sourceAction": "我当面盘问了勒克斯，询问他为何在档案柜里寻找珍妮·弗洛伦斯与马丁·金的案卷。勒克斯在我的劝说下承认：他奉命释放马丁·金、把一把折叠刀栽赃到卢奇菲罗（珍妮·弗洛伦斯）的尸体上并转运了她的尸体，同时帕特里齐奥也期望他平息投诉、让文件消失。我记下了这些供述，并意识到帕特里齐奥可能是幕后指使者。",
+        "sourceCharacterId": "Bruno Galilei"
+      }
+    },
+    {
+      "type": "event",
+      "content": "在布鲁诺的劝说下，我承认了自己所做的事情：我奉命释放了马丁·金，曾把折叠刀栽赃到卢奇菲罗（珍妮·弗洛伦斯）的尸体上并转运了她的尸体；帕特里齐奥也确实期望我平息投诉并让文件消失。我说出这些话时感到内疚和恐惧，知道自己是被上面的人裹挟着做了这些事。",
+      "gameDay": 1,
+      "gameTime": "19:48",
+      "location": "SCN_3_SUB_1",
+      "metadata": {
+        "outcome": "当面盘问Lux Lynch，询问他为何在档案柜中寻找珍妮·弗洛伦斯与马丁·金案卷，是否知道原件去向或谁指示他这样做"
+      }
+    },
+    {
+      "type": "event",
+      "content": "前往五金店与哈里森见面，安排明天检查老文件柜的锁并嘱咐保密 [在 SCN_3_SUB_1 因重新规划而中断] 已中断",
+      "gameDay": 1,
+      "gameTime": "19:48",
+      "location": "SCN_3_SUB_1",
+      "metadata": {
+        "outcome": "前往五金店与哈里森见面，安排明天检查老文件柜的锁并嘱咐保密 [在 SCN_3_SUB_1 因重新规划而中断] 已中断",
+        "interruptionReason": "revise_replan"
+      }
+    },
+    {
+      "type": "event",
+      "content": "维托当面问我为什么在档案柜里查那些案卷，我承认帕特里齐奥要我压下投诉、让文件消失，并承认我收受过贿赂并有记录；我没有向他承认关于释放马丁·金或栽赃折刀的那些更严重的事，回答时我尽量谨慎并带着恐惧。",
+      "gameDay": 1,
+      "gameTime": "19:50",
+      "location": "SCN_3_SUB_1",
+      "metadata": {
+        "outcome": "当面询问Lux为何在档案柜中查找“珍妮·弗洛伦斯”和“马丁·金释放”案的卷宗，并请他说明是谁授权以及是否发现任何异常或文件被移走"
+      }
+    },
+    {
+      "type": "event",
+      "content": "走到警察局正门外的新月街路口去监视布鲁诺的动向 [在 SCN_3_SUB_1 因重新规划而中断] 已中断",
+      "gameDay": 1,
+      "gameTime": "19:53",
+      "location": "SCN_3_SUB_1",
+      "metadata": {
+        "outcome": "走到警察局正门外的新月街路口去监视布鲁诺的动向 [在 SCN_3_SUB_1 因重新规划而中断] 已中断",
+        "interruptionReason": "revise_replan"
+      }
+    },
+    {
+      "type": "witness",
+      "content": "[相遇] 我在警察局大厅突然与维托面对面相遇，胸口一紧，感觉被放在显微镜下。维托的出现让我既紧张又害怕——他已经开始留意我们并记录询问，布鲁诺手里的笔录可能会暴露我。我感到愧疚和恐惧，但必须装作镇定；现在最紧急的是立刻跟踪监视布鲁诺、设法控制或收回他手里的记录，并对维托保持警觉，暂时推迟不必要的会面。",
+      "gameDay": 1,
+      "gameTime": "19:53",
+      "location": "SCN_3_SUB_1",
+      "metadata": {
+        "impact": 2,
+        "perspective": "co_presence",
+        "sourceAction": "Vito 在 警察局大厅",
+        "sourceCharacterId": "__encounter__"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我用警局内务钥匙串把正门的沉重玻璃门打开，门现在敞开，通向新月街A大道南西端的路口。外面正下着大雪。",
+      "gameDay": 1,
+      "gameTime": "19:57",
+      "location": "SCN_3_SUB_1",
+      "metadata": {
+        "outcome": "用内务钥匙串打开警察局正门的沉重玻璃门"
+      }
+    },
+    {
+      "type": "event",
+      "content": "在值班台整理记录非法人情的笔记本，写下布鲁诺手中记录可能的要点并拟一份能交代给帕特里齐奥的掩饰说辞 成功",
+      "gameDay": 1,
+      "gameTime": "20:38",
+      "location": "SCN_3_SUB_1",
+      "metadata": {
+        "outcome": "在值班台整理记录非法人情的笔记本，写下布鲁诺手中记录可能的要点并拟一份能交代给帕特里齐奥的掩饰说辞 成功"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我把大厅的沉重玻璃正门关上，并用内务钥匙串把门上了锁。门现在被锁住，通往新月街的出口被挡住了。",
+      "gameDay": 1,
+      "gameTime": "20:42",
+      "location": "SCN_3_SUB_1",
+      "metadata": {
+        "outcome": "把警局正门的沉重玻璃门关上并用内务钥匙串把门上锁"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我打开了大厅的照明灯，灯光稳定亮起，之前的昏暗和漆黑消失了，我现在能清楚地看见办公桌、公告板和周围环境。",
+      "gameDay": 1,
+      "gameTime": "20:45",
+      "location": "SCN_3_SUB_1",
+      "metadata": {
+        "outcome": "打开大厅的照明灯以恢复光线"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我用内务钥匙串解开并打开了大厅的沉重玻璃正门。门现在已开，我可以出到新月街去监视布鲁诺。",
+      "gameDay": 1,
+      "gameTime": "20:48",
+      "location": "SCN_3_SUB_1",
+      "metadata": {
+        "outcome": "用内务钥匙串打开并解锁大厅正门的沉重玻璃门，以便出去监视布鲁诺"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我用值班无线电联系维托，询问布鲁诺是否还在局里，并交代他若有动静要立即通知我。维托此刻并不在局里，我没能当面找到他，只能等他回话或外勤时提醒我。",
+      "gameDay": 1,
+      "gameTime": "20:56",
+      "location": "SCN_3_SUB_1",
+      "metadata": {
+        "outcome": "用值班无线电联系维托，确认布鲁诺是否还在局里并要求他如果有动静立即通知我"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我用值班无线电联系布鲁诺，假装例行询问并邀请他到大厅来谈话；到场后没能在局里找到他，无法当面交谈，已通过无线电发出呼叫但他并未出现在大厅。",
+      "gameDay": 1,
+      "gameTime": "21:02",
+      "location": "SCN_3_SUB_1",
+      "metadata": {
+        "outcome": "用值班无线电联系布鲁诺，假装例行询问确认他是否仍在局里并邀请他到大厅来谈话"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我通过值班无线电低声呼叫布鲁诺，假装例行询问并邀请他到大厅来单独谈话。但他不在现场，我找不到他，也没有收到他到达或回应的任何回音。",
+      "gameDay": 1,
+      "gameTime": "21:07",
+      "location": "SCN_3_SUB_1",
+      "metadata": {
+        "outcome": "通过值班无线电低声呼叫布鲁诺，假装例行询问并邀请他到大厅来单独谈话"
+      }
+    },
+    {
+      "type": "event",
+      "content": "在值班台静默监听无线电频道，查找布鲁诺或维托的通话与位置信息 成功",
+      "gameDay": 1,
+      "gameTime": "21:13",
+      "location": "SCN_3_SUB_1",
+      "metadata": {
+        "outcome": "在值班台静默监听无线电频道，查找布鲁诺或维托的通话与位置信息 成功"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我把办公桌的抽屉掀开，翻出并把几份日常文件和通讯记录摆到自己面前逐一查看；抽屉里只有常规文档和一个喝空的纸杯，没找到明显属于布鲁诺的笔录。",
+      "gameDay": 1,
+      "gameTime": "21:20",
+      "location": "SCN_3_SUB_1",
+      "metadata": {
+        "itemId": "ITEM_SCN3_1",
+        "outcome": "检查办公桌抽屉，寻找布鲁诺可能遗留的文件或物品并拿到自己面前查看",
+        "itemName": "办公桌"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我在办公桌上的老式CRT显示器上把屏保切掉，调出了外门与大厅的实时监控画面；画面显示了前门和接待区，目前没有看到布鲁诺的身影。",
+      "gameDay": 1,
+      "gameTime": "21:27",
+      "location": "SCN_3_SUB_1",
+      "metadata": {
+        "itemId": "ITEM_SCN3_1",
+        "outcome": "检查办公桌上的CRT显示器以查看外门和大厅的监控录像，确认布鲁诺是否离开或回到局里",
+        "itemName": "办公桌"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我在值班台的监控系统里调出并放大了新月街A大道路口和驯鹿酒吧附近的摄像头回放。回放成功，画面带有清晰的时间戳并已标记出几个可回溯的时间点；目前还未在回放中确认布鲁诺的身影，需要将这些时间点与其他线索比对。",
+      "gameDay": 1,
+      "gameTime": "21:33",
+      "location": "SCN_3_SUB_1",
+      "metadata": {
+        "outcome": "查看大厅监控，回放并放大新月街路口与驯鹿酒吧附近的摄像头录像，寻找布鲁诺的身影或他最近通过的时间点"
+      }
+    },
+    {
+      "type": "event",
+      "content": "在监控回放上逐一核对标记的时间点，播放对应片段并把每个时间点的画面描述和可能的位置写入笔记本，以便定位布鲁诺的去向。 成功",
+      "gameDay": 1,
+      "gameTime": "21:39",
+      "location": "SCN_3_SUB_1",
+      "metadata": {
+        "outcome": "在监控回放上逐一核对标记的时间点，播放对应片段并把每个时间点的画面描述和可能的位置写入笔记本，以便定位布鲁诺的去向。 成功"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我逐帧播放并停在数处可能出现布鲁诺的画面，按时间戳在靠近显示器的文件和便签上圈出并记录了每处画面与他可能的移动方向。现在有几处时间点可以用来追踪他沿A大道或靠近驯鹿酒吧的去向。",
+      "gameDay": 1,
+      "gameTime": "21:51",
+      "location": "SCN_3_SUB_1",
+      "metadata": {
+        "outcome": "逐帧播放监控回放，仔细核对并在笔记本上标注每处可能出现布鲁诺的画面以确认他的去向"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我继续放映并放大监控回放，按时间戳追踪布鲁诺在新月街A大道与驯鹿酒吧附近的移动方向。把每个清晰画面的准确时间点和可能去向圈写在笔记本和便签上，便于后续比对和追踪。",
+      "gameDay": 1,
+      "gameTime": "21:58",
+      "location": "SCN_3_SUB_1",
+      "metadata": {
+        "outcome": "继续播放并放大监控回放以追踪布鲁诺的移动方向，并在笔记本上标注每个清晰画面的准确时间点和可能去向"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我在CRT回放上逐帧放大并截取了多处疑似布鲁诺的画面，把每张截图与便签和笔记本上的时间戳对应记录并保存，留作证据和后续比对。",
+      "gameDay": 1,
+      "gameTime": "22:10",
+      "location": "SCN_3_SUB_1",
+      "metadata": {
+        "outcome": "逐帧放大并截取监控回放中疑似布鲁诺的画面以保存为证据"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我到达警局大厅并未找到维托，他不在现场；我通过值班无线电再次低声联系了他，要求他立刻查找并报告布鲁诺的当前位置，叮嘱他不要向任何人透漏或留话，等我确认后再做进一步行动。维托在无线电中应诺会隐秘搜寻并及时回报。",
+      "gameDay": 1,
+      "gameTime": "22:13",
+      "location": "SCN_3_SUB_1",
+      "metadata": {
+        "outcome": "通过值班无线电再次低声联系维托，要求他立刻查找并报告布鲁诺的当前位置，叮嘱他不要向任何人透漏或留话，等我确认后再做进一步行动"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我继续逐帧核对驯鹿酒吧附近的监控回放，确认了几处最可信的疑似布鲁诺画面，并把这些时间点圈出记录在笔记本和便签上，作为制定追踪路线的依据。",
+      "gameDay": 1,
+      "gameTime": "22:20",
+      "location": "SCN_3_SUB_1",
+      "metadata": {
+        "outcome": "继续逐帧核对监控回放，重点确认驯鹿酒吧附近最后几处疑似布鲁诺的画面并把最可信的时间点圈出以制定追踪路线"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我在CRT上再次回放并放大驯鹿酒吧附近的监控，逐帧确认了几处最可信的布鲁诺画面，并在便签和笔记本上圈注并归档了相应的时间点与截图位置作为追踪线索。",
+      "gameDay": 1,
+      "gameTime": "22:32",
+      "location": "SCN_3_SUB_1",
+      "metadata": {
+        "outcome": "再次放映并放大驯鹿酒吧附近的监控回放，确认并把最可信的布鲁诺画面时间点用便签和笔记本标注归档"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我再次逐帧放大并比对了关键监控截图，确认了布鲁诺最可能的去向，并在辖区地图上圈出并标注了几处拦截点；截图与时间戳已对应保存，便于后续部署拦截。",
+      "gameDay": 1,
+      "gameTime": "22:40",
+      "location": "SCN_3_SUB_1",
+      "metadata": {
+        "outcome": "再次逐帧放大并比对最关键的监控截图，标注布鲁诺可能的确切去向并在辖区地图上圈出拦截点"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我通过值班无线电低声指示维托前往新月街A大道、驯鹿酒吧附近我圈出的拦截点，强调用预定暗号确认并秘密跟踪布鲁诺，不得向任何人透漏此行动。但我在警局内查找时发现维托并不在场，无法当面确认他是否收到或理解指示；我将继续尝试联系。",
+      "gameDay": 1,
+      "gameTime": "22:46",
+      "location": "SCN_3_SUB_1",
+      "metadata": {
+        "outcome": "通过值班无线电低声指示维托前往新月街A大道与驯鹿酒吧附近我圈出的拦截点，用预定暗号确认并秘密跟踪布鲁诺，切勿向任何人透漏此行动"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我在CRT上继续逐帧放大并比对驯鹿酒吧附近的录像，筛出并保存最后几个可疑画面，并在便签和笔记本上标注了对应的时间戳与可能去向，作为后续比对和证据。",
+      "gameDay": 1,
+      "gameTime": "22:58",
+      "location": "SCN_3_SUB_1",
+      "metadata": {
+        "outcome": "在CRT监控上继续逐帧放大并比对驯鹿酒吧附近的录像，保存并标注最后几个可疑画面"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我通过值班无线电低声联系了维托，确认他收到拦截指示并要求他立即前往我在辖区地图上标出的拦截点，特别强调不要向任何人透漏，并用约定的暗号与他确认。他在通话中用暗号回报已收到并答应立刻前往。",
+      "gameDay": 1,
+      "gameTime": "23:05",
+      "location": "SCN_3_SUB_1",
+      "metadata": {
+        "outcome": "通过值班无线电低声联系维托，确认他是否收到拦截指示并让他立即前往我标注的拦截点，强调不要向任何人透漏并用暗号确认"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我继续逐帧放大并回放驯鹿酒吧与新月街A大道的监控，确认了布鲁诺最后出现的时间点和他的移动方向。随后我在辖区地图上更新并圈出了拦截点，相关截图与时间戳已保存以便后续比对。",
+      "gameDay": 1,
+      "gameTime": "23:18",
+      "location": "SCN_3_SUB_1",
+      "metadata": {
+        "outcome": "继续逐帧放大并回放驯鹿酒吧与新月街A大道附近的监控，重点确认布鲁诺的最新出现时间和移动方向，并在辖区地图上更新拦截点标注"
+      }
+    },
+    {
+      "type": "event",
+      "content": "静静监听值班无线电频道，留意维托关于拦截点的回报与布鲁诺的动向 成功",
+      "gameDay": 1,
+      "gameTime": "23:25",
+      "location": "SCN_3_SUB_1",
+      "metadata": {
+        "outcome": "静静监听值班无线电频道，留意维托关于拦截点的回报与布鲁诺的动向 成功"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我通过值班无线电低声联系了维托，要求他在拦截布鲁诺时用我们约定的暗号确认并立刻回报。无线电通话接通后，维托表示已收到并会按约行事，有任何回报会马上通知我。",
+      "gameDay": 1,
+      "gameTime": "23:30",
+      "location": "SCN_3_SUB_1",
+      "metadata": {
+        "outcome": "通过值班无线电低声再次联系维托，要求他用约定暗号确认布鲁诺是否已被拦截并立即回报"
+      }
+    },
+    {
+      "type": "event",
+      "content": "继续在值班台监视驯鹿酒吧与新月街A大道的监控回放，密切留意布鲁诺的出现并记录任何异常动向 成功",
+      "gameDay": 1,
+      "gameTime": "23:41",
+      "location": "SCN_3_SUB_1",
+      "metadata": {
+        "outcome": "继续在值班台监视驯鹿酒吧与新月街A大道的监控回放，密切留意布鲁诺的出现并记录任何异常动向 成功"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我把CRT上最后几处疑似布鲁诺的画面时间戳逐一抄写到笔记本，并在辖区地图上重新圈注、确认并更新了拦截点。现在便签、笔记本和地图上都标明了最新时间点与可能行进方向，便于后续部署拦截。",
+      "gameDay": 1,
+      "gameTime": "23:50",
+      "location": "SCN_3_SUB_1",
+      "metadata": {
+        "outcome": "把CRT上最后几处疑似布鲁诺的画面时间戳抄写到笔记本，并在辖区地图上重新标注并确认拦截点位置"
+      }
+    },
+    {
+      "type": "event",
+      "content": "把监控回放切换为实时模式，盯着驯鹿酒吧与新月街A大道的实时画面寻找布鲁诺的动向 成功",
+      "gameDay": 1,
+      "gameTime": "23:56",
+      "location": "SCN_3_SUB_1",
+      "metadata": {
+        "outcome": "把监控回放切换为实时模式，盯着驯鹿酒吧与新月街A大道的实时画面寻找布鲁诺的动向 成功"
+      }
+    },
+    {
+      "type": "information",
+      "content": "我原本安排与哈里森在五金店见面，计划明天检查老文件柜的锁并嘱咐他保密，但这次会面在重新规划时被中断，仍需重新安排。",
+      "gameDay": 1,
+      "gameTime": "23:59",
+      "location": null,
+      "metadata": {
+        "revealed": false,
+        "difficulty": "regular",
+        "knowledgeId": "learned_day1_4"
+      }
+    },
+    {
+      "type": "secret",
+      "content": "布鲁诺把我所说的话记了下来——他手里有可能暴露我参与释放马丁·金、栽赃折刀和转运尸体的笔录。这一点必须极力隐匿或设法收回。",
+      "gameDay": 1,
+      "gameTime": "23:59",
+      "location": null,
+      "metadata": {
+        "revealed": false,
+        "difficulty": "extreme",
+        "knowledgeId": "learned_day1_5"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我通过值班无线电低声询问维托是否发现或拦截到布鲁诺，并要求他立刻汇报布鲁诺的所在与动向；我在大厅内找了维托，但他并不在这里。CRT回放和便签已经标注了布鲁诺最近出现的时间戳与可能去向，我已把这些情况通过无线电转达给值班的维托（待回报）。",
+      "gameDay": 1,
+      "gameTime": "23:59",
+      "location": "SCN_3_SUB_1",
+      "metadata": {
+        "outcome": "通过值班无线电低声询问维托是否发现或拦截到布鲁诺，并要求立刻汇报其位置和动向"
+      }
+    },
+    {
+      "type": "information",
+      "content": "布鲁诺认为2002年帕拉迪尔酒店的死亡案和2003年驯鹿酒吧的谋杀案是同一人所为，他带着受害者的手机、证人笔录和旧冷冻柜案的材料在局里守着这些证据。",
+      "gameDay": 1,
+      "gameTime": "23:59",
+      "location": null,
+      "metadata": {
+        "revealed": false,
+        "difficulty": "regular",
+        "knowledgeId": "learned_day1_1"
+      }
+    },
+    {
+      "type": "information",
+      "content": "维托当面询问我和布鲁诺来局里的原因，并把这次未果的询问记录下来；他会通过其他渠道或等待进一步线索来联系我们。",
+      "gameDay": 1,
+      "gameTime": "23:59",
+      "location": null,
+      "metadata": {
+        "revealed": false,
+        "difficulty": "regular",
+        "knowledgeId": "learned_day1_2"
+      }
+    },
+    {
+      "type": "secret",
+      "content": "我通过无线电向维托下达了去我圈定拦截点行动的指令，并用约定暗号与他确认——维托在通话中用暗号回报已收到并答应立刻前往。这是一个必须对外保密的秘密行动细节。",
+      "gameDay": 1,
+      "gameTime": "23:59",
+      "location": null,
+      "metadata": {
+        "revealed": false,
+        "difficulty": "hard",
+        "knowledgeId": "learned_day1_3"
+      }
+    }
+  ],
+  "plans": [
+    {
+      "npcName": "Lux Lynch",
+      "gameDay": 2,
+      "schedule": [
+        {
+          "activity": "立刻阻止布鲁诺继续登记抽屉内索引卡与铅笔标记，设法夺回或销毁他已记录的笔录、索引卡与档案柜钥匙；若无法直接夺回，至少破坏或模糊其笔记以阻断清晰的证据链；同时通过无线电用既定暗号指示维托立刻在档案室入口制造干扰并前来支援。",
+          "location": "档案室"
+        },
+        {
+          "activity": "在确保现场相对安全后，迅速将剩余抽屉整理并重新上锁，擦除或修改铅笔标记以减少可追溯痕迹；把收回的纸卡藏于更隐蔽处并记下只有我知道的新存放位置；如无法夺回证物，拍照记录布鲁诺已登记的内容以便后续反制与情报比对。",
+          "location": "档案室"
+        },
+        {
+          "activity": "通过局内监控核对新月街A大道路口与驯鹿酒吧附近的回放时间点，确认布鲁诺已记录的时间线与可能去向；同时用无线电短促确认维托位置并协调他优先到档案室入口支援或按暗号调整干扰方案。",
+          "location": "新月街A南西端·警察局前"
+        },
+        {
+          "activity": "推迟今晚以便衣身份进入酒吧的计划；除非能确认安全离开警局且布鲁诺不在监控范围内，否则今晚不外出。",
+          "location": "驯鹿酒吧"
+        },
+        {
+          "activity": "将与哈里森的会面改为重新安排并通过更安全的方式联系，今晚暂缓前往并在明早根据局内情况另行确认时间。",
+          "location": "五金店"
+        },
+        {
+          "activity": "推迟前往酒店的现场调查；先通过监控回放和电话查询出入记录与保安口供，待局里情况稳定且我能安全离开时再实地走访。",
+          "location": "帕拉迪尔大酒店"
+        },
+        {
+          "activity": "取消/推迟今晚外出就餐并借机暗中观察的计划；目前优先在局内处理眼前风险，避免引起额外注意。",
+          "location": "海伦的餐桌"
+        },
+        {
+          "activity": "推迟前往花店探听小镇传闻与留下暗号的计划；改为通过信任的中间人或无线电等待暗号回传。",
+          "location": "花店·卡森德拉之花"
+        },
+        {
+          "activity": "如非紧急，暂缓前往珊德拉家中核实；先通过电话或无线电尝试联系她并确认是否有重要信息，必要时待局内情况允许再前往。",
+          "location": "珊德拉的小屋"
+        },
+        {
+          "activity": "表面上整理并翻阅收集到的证据与便签以掩饰紧张，实际上在布鲁诺不注意时标记并准备隐藏或模糊可能暴露我的敏感记录（争取在他离开或被干扰时迅速完成）。",
+          "location": "警察局大厅"
+        },
+        {
+          "activity": "在值班台保持配合，等待维托或其他支援到达；同时检查无线电与监控的最后回放，记录明天要执行的优先行动计划，并尽量保持清醒以随时应对突发状况。",
+          "location": "警察局大厅"
+        },
+        {
+          "activity": "若局势暂时稳定，回到档案室彻底查证那些与帕拉迪尔大酒店和驯鹿酒吧相关的卷宗位置（优先仅定位，不大范围翻找），并准备把关键线索转移到更安全的藏匿处以备后用。",
+          "location": "档案室"
+        }
+      ],
+      "nodes": [
+        {
+          "type": "movement",
+          "action": "走向档案室准备翻找与珍妮·弗洛伦斯案及2002年帕拉迪尔大酒店案相关的卷宗",
+          "impact": 0,
+          "nodeId": "m1",
+          "status": "completed",
+          "endTime": "00:06",
+          "outcome": "走向档案室准备翻找与珍妮·弗洛伦斯案及2002年帕拉迪尔大酒店案相关的卷宗 成功",
+          "startTime": "00:04",
+          "characterId": "Lux Lynch",
+          "destination": "SCN_3_SUB_3",
+          "characterName": "Lux Lynch",
+          "executionMeta": {
+            "movement": {
+              "routeSnapshot": [
+                {
+                  "to": {
+                    "type": "scene",
+                    "sceneId": "SCN_3_SUB_3"
+                  },
+                  "from": {
+                    "type": "scene",
+                    "sceneId": "SCN_3_SUB_1"
+                  },
+                  "kind": "to_scene",
+                  "blockCheck": {
+                    "toId": "SCN_3_SUB_3",
+                    "fromId": "SCN_3_SUB_1"
+                  },
+                  "durationMinutes": 2
+                }
+              ],
+              "targetPosition": {
+                "type": "scene",
+                "sceneId": "SCN_3_SUB_3"
+              },
+              "minutesIntoStep": 0,
+              "currentStepIndex": 1,
+              "lastReachablePosition": {
+                "type": "scene",
+                "sceneId": "SCN_3_SUB_3"
+              }
+            },
+            "startedAt": "00:04",
+            "completedAt": "00:05",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "scene_interaction",
+          "action": "打开大厅的照明开关恢复灯光",
+          "impact": 0,
+          "nodeId": "si_open_lights_0001",
+          "status": "completed",
+          "endTime": "00:03",
+          "outcome": "我把大厅的照明开关打开，日光灯恢复并稳定发光，大厅不再漆黑。",
+          "startTime": "00:01",
+          "characterId": "Lux Lynch",
+          "characterName": "Lux Lynch",
+          "executionMeta": {
+            "startedAt": "00:01",
+            "completedAt": "00:03",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "movement",
+          "action": "走向档案室准备翻找与珍妮·弗洛伦斯案及2002年帕拉迪尔大酒店案相关的卷宗",
+          "impact": 0,
+          "nodeId": "m1",
+          "status": "completed",
+          "endTime": "00:06",
+          "outcome": "走向档案室准备翻找与珍妮·弗洛伦斯案及2002年帕拉迪尔大酒店案相关的卷宗 成功",
+          "startTime": "00:04",
+          "characterId": "Lux Lynch",
+          "destination": "SCN_3_SUB_3",
+          "characterName": "Lux Lynch",
+          "executionMeta": {
+            "movement": {
+              "routeSnapshot": [
+                {
+                  "to": {
+                    "type": "scene",
+                    "sceneId": "SCN_3_SUB_3"
+                  },
+                  "from": {
+                    "type": "scene",
+                    "sceneId": "SCN_3_SUB_1"
+                  },
+                  "kind": "to_scene",
+                  "blockCheck": {
+                    "toId": "SCN_3_SUB_3",
+                    "fromId": "SCN_3_SUB_1"
+                  },
+                  "durationMinutes": 2
+                }
+              ],
+              "targetPosition": {
+                "type": "scene",
+                "sceneId": "SCN_3_SUB_3"
+              },
+              "minutesIntoStep": 0,
+              "currentStepIndex": 1,
+              "lastReachablePosition": {
+                "type": "scene",
+                "sceneId": "SCN_3_SUB_3"
+              }
+            },
+            "startedAt": "00:04",
+            "completedAt": "00:05",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "character_interaction",
+          "skill": "Sleight of Hand",
+          "action": "借口与布鲁诺低声交谈并在靠近时悄悄从他手中抽走笔录，迅速把笔录塞进衣内口袋里",
+          "impact": 1,
+          "nodeId": "ci_take_bruno_notes_0001",
+          "status": "interrupted",
+          "endTime": "00:09",
+          "outcome": "借口与布鲁诺低声交谈并在靠近时悄悄从他手中抽走笔录，迅速把笔录塞进衣内口袋里 [因重新规划而中断] 已中断",
+          "startTime": "00:06",
+          "characterId": "Lux Lynch",
+          "characterName": "Lux Lynch",
+          "executionMeta": {
+            "startedAt": "00:06",
+            "interruptedAt": "00:10",
+            "remainingMinutes": 0,
+            "interruptionReason": "revise_replan"
+          },
+          "targetCharacterIds": [
+            "Bruno_Galilei"
+          ]
+        },
+        {
+          "type": "character_interaction",
+          "skill": "Deception",
+          "action": "低声向Bruno表现出顺从，恳求查看并核对他手中的笔录以确认细节，趁其靠近时从他手中悄悄取回笔录。",
+          "impact": 1,
+          "nodeId": "ci_day2_001",
+          "status": "failed",
+          "endTime": "00:13",
+          "startTime": "00:11",
+          "characterId": "Lux Lynch",
+          "characterName": "Lux Lynch",
+          "executionMeta": {
+            "failedAt": "00:13",
+            "startedAt": "00:11",
+            "remainingMinutes": 2
+          },
+          "targetCharacterIds": [
+            "Bruno Galilei"
+          ]
+        },
+        {
+          "type": "character_interaction",
+          "skill": "Persuade",
+          "action": "用无线电低声向维托发出既定暗号，示意他立刻在档案室入口制造小干扰以吸引布鲁诺离开",
+          "impact": 1,
+          "nodeId": "ci1",
+          "status": "in_progress",
+          "endTime": "00:54",
+          "startTime": "00:52",
+          "characterId": "Lux Lynch",
+          "characterName": "Lux Lynch",
+          "executionMeta": {
+            "startedAt": "00:52",
+            "remainingMinutes": 2
+          },
+          "targetCharacterIds": [
+            "Vito"
+          ]
+        },
+        {
+          "type": "character_interaction",
+          "skill": "Persuade",
+          "action": "用无线电低声向维托发出既定暗号，示意他立刻在档案室入口制造小干扰以吸引布鲁诺离开",
+          "impact": 1,
+          "nodeId": "ci1",
+          "status": "in_progress",
+          "endTime": "00:54",
+          "startTime": "00:52",
+          "characterId": "Lux Lynch",
+          "characterName": "Lux Lynch",
+          "executionMeta": {
+            "startedAt": "00:52",
+            "remainingMinutes": 2
+          },
+          "targetCharacterIds": [
+            "Vito"
+          ]
+        },
+        {
+          "type": "object_interaction",
+          "action": "从索引卡抽屉迅速取出可能与笔录相关的纸卡并塞进口袋以隐藏",
+          "impact": 2,
+          "nodeId": "oi_sc3_01",
+          "status": "completed",
+          "endTime": "00:21",
+          "outcome": "我迅速从索引卡抽屉里抽出几张可能与布鲁诺笔录相关的纸卡，塞进口袋里藏好。抽屉里剩下的索引卡有被匆忙翻找过的痕迹，但动作没有引起注意。",
+          "startTime": "00:19",
+          "characterId": "Lux Lynch",
+          "characterName": "Lux Lynch",
+          "executionMeta": {
+            "startedAt": "00:19",
+            "completedAt": "00:21",
+            "remainingMinutes": 0
+          },
+          "objectInteractionPayload": {
+            "itemId": "ITEM_SCN3_10"
+          }
+        },
+        {
+          "type": "character_interaction",
+          "skill": "Sleight of Hand",
+          "action": "低声假意配合布鲁诺，靠近并在他不注意时试图迅速抽走他手中的笔录或钥匙",
+          "impact": 1,
+          "nodeId": "ci_lux_001",
+          "status": "interrupted",
+          "endTime": "00:24",
+          "outcome": "低声假意配合布鲁诺，靠近并在他不注意时试图迅速抽走他手中的笔录或钥匙 [因重新规划而中断] 已中断",
+          "startTime": "00:22",
+          "characterId": "Lux Lynch",
+          "characterName": "Lux Lynch",
+          "executionMeta": {
+            "startedAt": "00:22",
+            "interruptedAt": "00:25",
+            "remainingMinutes": 0,
+            "interruptionReason": "revise_replan"
+          },
+          "targetCharacterIds": [
+            "Bruno_Galilei"
+          ]
+        },
+        {
+          "type": "character_interaction",
+          "action": "通过无线电低声向维托确认他是否已按暗号到达拦截点，并指示他现在在档案室入口制造小干扰以吸引布鲁诺离开",
+          "impact": 1,
+          "nodeId": "ci_day2_00_26",
+          "status": "interrupted",
+          "endTime": "00:28",
+          "outcome": "通过无线电低声向维托确认他是否已按暗号到达拦截点，并指示他现在在档案室入口制造小干扰以吸引布鲁诺离开 [因重新规划而中断] 已中断",
+          "startTime": "00:26",
+          "characterId": "Lux Lynch",
+          "characterName": "Lux Lynch",
+          "executionMeta": {
+            "startedAt": "00:26",
+            "interruptedAt": "00:51",
+            "remainingMinutes": 0,
+            "interruptionReason": "revise_replan"
+          },
+          "targetCharacterIds": [
+            "Vito"
+          ]
+        },
+        {
+          "type": "character_interaction",
+          "skill": "Persuade",
+          "action": "用无线电低声向维托发出既定暗号，示意他立刻在档案室入口制造小干扰以吸引布鲁诺离开",
+          "impact": 1,
+          "nodeId": "ci1",
+          "status": "in_progress",
+          "endTime": "00:54",
+          "startTime": "00:52",
+          "characterId": "Lux Lynch",
+          "characterName": "Lux Lynch",
+          "executionMeta": {
+            "startedAt": "00:52",
+            "remainingMinutes": 2
+          },
+          "targetCharacterIds": [
+            "Vito"
+          ]
+        }
+      ]
+    },
+    {
+      "npcName": "Lux Lynch",
+      "gameDay": 1,
+      "schedule": [
+        {
+          "activity": "在警察局大厅吃点简单晚饭并检查帕特里齐奥今晚交代的任务与未处理的通报。",
+          "location": "警察局大厅"
+        },
+        {
+          "activity": "到档案室翻找与珍妮·弗洛伦斯案和马丁·金释放相关的卷宗，找出可能威胁到我的记录或对帕特里齐奥不利的证据。",
+          "location": "档案室"
+        },
+        {
+          "activity": "去五金店找哈里森，请他明天帮忙检查一个老旧文件柜的锁并顺便帮我保密解决办法。",
+          "location": "五金店"
+        },
+        {
+          "activity": "在海伦的餐桌吃一顿正经的晚餐，顺便听听镇上的闲话以掌握风声。",
+          "location": "海伦的餐桌"
+        },
+        {
+          "activity": "去驯鹿酒吧与布鲁诺低声碰面，确认他在调查中的立场并试探是否能保持距离或得到他的帮助。",
+          "location": "驯鹿酒吧"
+        },
+        {
+          "activity": "回到警察局把在档案室找到的重要线索抄录或拍照存档，并把原件放回原处以避免引人注意。",
+          "location": "警察局"
+        },
+        {
+          "activity": "在值班台整理今晚的笔记，写出一个能交代给帕特里齐奥的版本并准备明早的借口。",
+          "location": "警察局大厅"
+        },
+        {
+          "activity": "在警察局过夜，尽量休息并保持警觉，为明天一早继续行动做准备。",
+          "location": "警察局大厅"
+        }
+      ],
+      "nodes": [
+        {
+          "type": "object_interaction",
+          "action": "检查办公桌抽屉，寻找布鲁诺可能遗留的文件或物品并拿到自己面前查看",
+          "impact": 0,
+          "nodeId": "oi1",
+          "status": "completed",
+          "endTime": "21:20",
+          "outcome": "我把办公桌的抽屉掀开，翻出并把几份日常文件和通讯记录摆到自己面前逐一查看；抽屉里只有常规文档和一个喝空的纸杯，没找到明显属于布鲁诺的笔录。",
+          "startTime": "21:15",
+          "characterId": "Lux Lynch",
+          "characterName": "Lux Lynch",
+          "executionMeta": {
+            "startedAt": "21:15",
+            "completedAt": "21:20",
+            "remainingMinutes": 0
+          },
+          "objectInteractionPayload": {
+            "itemId": "ITEM_SCN3_1"
+          }
+        },
+        {
+          "type": "movement",
+          "action": "步行前往驯鹿酒吧",
+          "impact": 0,
+          "nodeId": "m1",
+          "status": "failed",
+          "endTime": "23:34",
+          "outcome": "步行前往驯鹿酒吧 [拓扑中无可用路径] 失败",
+          "startTime": "23:26",
+          "characterId": "Lux Lynch",
+          "destination": "SCN_16_SUB_1",
+          "characterName": "Lux Lynch",
+          "executionMeta": {
+            "failedAt": "23:26",
+            "startedAt": "23:26",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "movement",
+          "action": "步行前往驯鹿酒吧",
+          "impact": 0,
+          "nodeId": "m1",
+          "status": "failed",
+          "endTime": "23:34",
+          "outcome": "步行前往驯鹿酒吧 [拓扑中无可用路径] 失败",
+          "startTime": "23:26",
+          "characterId": "Lux Lynch",
+          "destination": "SCN_16_SUB_1",
+          "characterName": "Lux Lynch",
+          "executionMeta": {
+            "failedAt": "23:26",
+            "startedAt": "23:26",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "movement",
+          "action": "步行前往驯鹿酒吧",
+          "impact": 0,
+          "nodeId": "m1",
+          "status": "failed",
+          "endTime": "23:34",
+          "outcome": "步行前往驯鹿酒吧 [拓扑中无可用路径] 失败",
+          "startTime": "23:26",
+          "characterId": "Lux Lynch",
+          "destination": "SCN_16_SUB_1",
+          "characterName": "Lux Lynch",
+          "executionMeta": {
+            "failedAt": "23:26",
+            "startedAt": "23:26",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "character_interaction",
+          "action": "用值班无线电联系布鲁诺，假装例行询问确认他是否仍在局里并邀请他到大厅来谈话",
+          "impact": 1,
+          "nodeId": "ci1",
+          "status": "completed",
+          "endTime": "21:02",
+          "outcome": "我用值班无线电联系布鲁诺，假装例行询问并邀请他到大厅来谈话；到场后没能在局里找到他，无法当面交谈，已通过无线电发出呼叫但他并未出现在大厅。",
+          "startTime": "20:59",
+          "characterId": "Lux Lynch",
+          "characterName": "Lux Lynch",
+          "executionMeta": {
+            "startedAt": "20:59",
+            "completedAt": "21:02",
+            "remainingMinutes": 0
+          },
+          "targetCharacterIds": [
+            "npc_bruno_galilei"
+          ]
+        },
+        {
+          "type": "character_interaction",
+          "action": "用值班无线电联系布鲁诺，假装例行询问确认他是否仍在局里并邀请他到大厅来谈话",
+          "impact": 1,
+          "nodeId": "ci1",
+          "status": "completed",
+          "endTime": "21:02",
+          "outcome": "我用值班无线电联系布鲁诺，假装例行询问并邀请他到大厅来谈话；到场后没能在局里找到他，无法当面交谈，已通过无线电发出呼叫但他并未出现在大厅。",
+          "startTime": "20:59",
+          "characterId": "Lux Lynch",
+          "characterName": "Lux Lynch",
+          "executionMeta": {
+            "startedAt": "20:59",
+            "completedAt": "21:02",
+            "remainingMinutes": 0
+          },
+          "targetCharacterIds": [
+            "npc_bruno_galilei"
+          ]
+        },
+        {
+          "type": "movement",
+          "action": "步行前往驯鹿酒吧",
+          "impact": 0,
+          "nodeId": "m1",
+          "status": "failed",
+          "endTime": "23:34",
+          "outcome": "步行前往驯鹿酒吧 [拓扑中无可用路径] 失败",
+          "startTime": "23:26",
+          "characterId": "Lux Lynch",
+          "destination": "SCN_16_SUB_1",
+          "characterName": "Lux Lynch",
+          "executionMeta": {
+            "failedAt": "23:26",
+            "startedAt": "23:26",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "object_interaction",
+          "action": "检查办公桌抽屉，寻找布鲁诺可能遗留的文件或物品并拿到自己面前查看",
+          "impact": 0,
+          "nodeId": "oi1",
+          "status": "completed",
+          "endTime": "21:20",
+          "outcome": "我把办公桌的抽屉掀开，翻出并把几份日常文件和通讯记录摆到自己面前逐一查看；抽屉里只有常规文档和一个喝空的纸杯，没找到明显属于布鲁诺的笔录。",
+          "startTime": "21:15",
+          "characterId": "Lux Lynch",
+          "characterName": "Lux Lynch",
+          "executionMeta": {
+            "startedAt": "21:15",
+            "completedAt": "21:20",
+            "remainingMinutes": 0
+          },
+          "objectInteractionPayload": {
+            "itemId": "ITEM_SCN3_1"
+          }
+        },
+        {
+          "type": "movement",
+          "action": "走到警察局正门外的新月街A大道南西端路口去监视门外动静",
+          "impact": 0,
+          "nodeId": "m_lux_001",
+          "status": "failed",
+          "endTime": "23:32",
+          "outcome": "走到警察局正门外的新月街A大道南西端路口去监视门外动静 [拓扑中无可用路径] 失败",
+          "startTime": "23:27",
+          "characterId": "Lux Lynch",
+          "destination": "JUNC_8",
+          "characterName": "Lux Lynch",
+          "executionMeta": {
+            "failedAt": "23:27",
+            "startedAt": "23:27",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "movement",
+          "action": "步行前往驯鹿酒吧",
+          "impact": 0,
+          "nodeId": "m1",
+          "status": "failed",
+          "endTime": "23:34",
+          "outcome": "步行前往驯鹿酒吧 [拓扑中无可用路径] 失败",
+          "startTime": "23:26",
+          "characterId": "Lux Lynch",
+          "destination": "SCN_16_SUB_1",
+          "characterName": "Lux Lynch",
+          "executionMeta": {
+            "failedAt": "23:26",
+            "startedAt": "23:26",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "movement",
+          "action": "走到警察局正门外的新月街A大道南西端路口去监视门外动静",
+          "impact": 0,
+          "nodeId": "m_lux_001",
+          "status": "failed",
+          "endTime": "23:32",
+          "outcome": "走到警察局正门外的新月街A大道南西端路口去监视门外动静 [拓扑中无可用路径] 失败",
+          "startTime": "23:27",
+          "characterId": "Lux Lynch",
+          "destination": "JUNC_8",
+          "characterName": "Lux Lynch",
+          "executionMeta": {
+            "failedAt": "23:27",
+            "startedAt": "23:27",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "scene_interaction",
+          "action": "用内务钥匙串打开警察局正门的沉重玻璃门",
+          "impact": 2,
+          "nodeId": "si_lux_open_frontdoor_1955",
+          "status": "completed",
+          "endTime": "19:57",
+          "outcome": "我用警局内务钥匙串把正门的沉重玻璃门打开，门现在敞开，通向新月街A大道南西端的路口。外面正下着大雪。",
+          "startTime": "19:55",
+          "characterId": "Lux Lynch",
+          "characterName": "Lux Lynch",
+          "executionMeta": {
+            "startedAt": "19:55",
+            "completedAt": "19:57",
+            "remainingMinutes": 0
+          },
+          "objectInteractionPayload": {
+            "itemId": "警局内务钥匙串"
+          }
+        },
+        {
+          "type": "movement",
+          "action": "步行前往驯鹿酒吧",
+          "impact": 0,
+          "nodeId": "m1",
+          "status": "failed",
+          "endTime": "23:34",
+          "outcome": "步行前往驯鹿酒吧 [拓扑中无可用路径] 失败",
+          "startTime": "23:26",
+          "characterId": "Lux Lynch",
+          "destination": "SCN_16_SUB_1",
+          "characterName": "Lux Lynch",
+          "executionMeta": {
+            "failedAt": "23:26",
+            "startedAt": "23:26",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "movement",
+          "action": "走到新月街A南西端·警察局前监视布鲁诺",
+          "impact": 0,
+          "nodeId": "m_lux_follow_bruno_1959",
+          "status": "failed",
+          "endTime": "20:02",
+          "outcome": "走到新月街A南西端·警察局前监视布鲁诺 [拓扑中无可用路径] 失败",
+          "startTime": "19:59",
+          "characterId": "Lux Lynch",
+          "destination": "JUNC_8",
+          "characterName": "Lux Lynch",
+          "executionMeta": {
+            "failedAt": "19:59",
+            "startedAt": "19:59",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "movement",
+          "action": "走到新月街A南西端·警察局前",
+          "impact": 0,
+          "nodeId": "m_newmoon_2000",
+          "status": "failed",
+          "endTime": "20:03",
+          "outcome": "走到新月街A南西端·警察局前 [拓扑中无可用路径] 失败",
+          "startTime": "20:00",
+          "characterId": "Lux Lynch",
+          "destination": "JUNC_8",
+          "characterName": "Lux Lynch",
+          "executionMeta": {
+            "failedAt": "20:00",
+            "startedAt": "20:00",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "movement",
+          "action": "步行前往驯鹿酒吧",
+          "impact": 0,
+          "nodeId": "m1",
+          "status": "failed",
+          "endTime": "23:34",
+          "outcome": "步行前往驯鹿酒吧 [拓扑中无可用路径] 失败",
+          "startTime": "23:26",
+          "characterId": "Lux Lynch",
+          "destination": "SCN_16_SUB_1",
+          "characterName": "Lux Lynch",
+          "executionMeta": {
+            "failedAt": "23:26",
+            "startedAt": "23:26",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "movement",
+          "action": "走到警察局正门外的新月街A大道南西端路口去监视门外动静",
+          "impact": 0,
+          "nodeId": "m_lux_001",
+          "status": "failed",
+          "endTime": "23:32",
+          "outcome": "走到警察局正门外的新月街A大道南西端路口去监视门外动静 [拓扑中无可用路径] 失败",
+          "startTime": "23:27",
+          "characterId": "Lux Lynch",
+          "destination": "JUNC_8",
+          "characterName": "Lux Lynch",
+          "executionMeta": {
+            "failedAt": "23:27",
+            "startedAt": "23:27",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "movement",
+          "action": "走到警察局正门外的新月街A大道南西端路口去监视门外动静",
+          "impact": 0,
+          "nodeId": "m_lux_001",
+          "status": "failed",
+          "endTime": "23:32",
+          "outcome": "走到警察局正门外的新月街A大道南西端路口去监视门外动静 [拓扑中无可用路径] 失败",
+          "startTime": "23:27",
+          "characterId": "Lux Lynch",
+          "destination": "JUNC_8",
+          "characterName": "Lux Lynch",
+          "executionMeta": {
+            "failedAt": "23:27",
+            "startedAt": "23:27",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "movement",
+          "action": "走到警察局正门外的新月街A大道南西端路口去监视门外动静",
+          "impact": 0,
+          "nodeId": "m_lux_001",
+          "status": "failed",
+          "endTime": "23:32",
+          "outcome": "走到警察局正门外的新月街A大道南西端路口去监视门外动静 [拓扑中无可用路径] 失败",
+          "startTime": "23:27",
+          "characterId": "Lux Lynch",
+          "destination": "JUNC_8",
+          "characterName": "Lux Lynch",
+          "executionMeta": {
+            "failedAt": "23:27",
+            "startedAt": "23:27",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "movement",
+          "action": "步行前往驯鹿酒吧",
+          "impact": 0,
+          "nodeId": "m1",
+          "status": "failed",
+          "endTime": "23:34",
+          "outcome": "步行前往驯鹿酒吧 [拓扑中无可用路径] 失败",
+          "startTime": "23:26",
+          "characterId": "Lux Lynch",
+          "destination": "SCN_16_SUB_1",
+          "characterName": "Lux Lynch",
+          "executionMeta": {
+            "failedAt": "23:26",
+            "startedAt": "23:26",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "movement",
+          "action": "走出大厅，前往新月街A南西端·警察局前去监视布鲁诺",
+          "impact": 0,
+          "nodeId": "m_lux_follow_bruno_01",
+          "status": "failed",
+          "endTime": "20:09",
+          "outcome": "走出大厅，前往新月街A南西端·警察局前去监视布鲁诺 [拓扑中无可用路径] 失败",
+          "startTime": "20:06",
+          "characterId": "Lux Lynch",
+          "destination": "JUNC_8",
+          "characterName": "Lux Lynch",
+          "executionMeta": {
+            "failedAt": "20:06",
+            "startedAt": "20:06",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "movement",
+          "action": "走出警察局，前往新月街A南西端·警察局前去监视布鲁诺的动向",
+          "impact": 0,
+          "nodeId": "m_next_001",
+          "status": "failed",
+          "endTime": "20:09",
+          "outcome": "走出警察局，前往新月街A南西端·警察局前去监视布鲁诺的动向 [拓扑中无可用路径] 失败",
+          "startTime": "20:07",
+          "characterId": "Lux Lynch",
+          "destination": "JUNC_8",
+          "characterName": "Lux Lynch",
+          "executionMeta": {
+            "failedAt": "20:07",
+            "startedAt": "20:07",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "movement",
+          "action": "步行前往驯鹿酒吧",
+          "impact": 0,
+          "nodeId": "m1",
+          "status": "failed",
+          "endTime": "23:34",
+          "outcome": "步行前往驯鹿酒吧 [拓扑中无可用路径] 失败",
+          "startTime": "23:26",
+          "characterId": "Lux Lynch",
+          "destination": "SCN_16_SUB_1",
+          "characterName": "Lux Lynch",
+          "executionMeta": {
+            "failedAt": "23:26",
+            "startedAt": "23:26",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "movement",
+          "action": "走出警察局，到新月街A南西端·警察局前监视布鲁诺",
+          "impact": 0,
+          "nodeId": "m_next",
+          "status": "failed",
+          "endTime": "20:12",
+          "outcome": "走出警察局，到新月街A南西端·警察局前监视布鲁诺 [拓扑中无可用路径] 失败",
+          "startTime": "20:09",
+          "characterId": "Lux Lynch",
+          "destination": "JUNC_8",
+          "characterName": "Lux Lynch",
+          "executionMeta": {
+            "failedAt": "20:09",
+            "startedAt": "20:09",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "movement",
+          "action": "步行前往驯鹿酒吧",
+          "impact": 0,
+          "nodeId": "m1",
+          "status": "failed",
+          "endTime": "23:34",
+          "outcome": "步行前往驯鹿酒吧 [拓扑中无可用路径] 失败",
+          "startTime": "23:26",
+          "characterId": "Lux Lynch",
+          "destination": "SCN_16_SUB_1",
+          "characterName": "Lux Lynch",
+          "executionMeta": {
+            "failedAt": "23:26",
+            "startedAt": "23:26",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "movement",
+          "action": "走到警察局正门外的新月街A大道南西端路口去监视门外动静",
+          "impact": 0,
+          "nodeId": "m_lux_001",
+          "status": "failed",
+          "endTime": "23:32",
+          "outcome": "走到警察局正门外的新月街A大道南西端路口去监视门外动静 [拓扑中无可用路径] 失败",
+          "startTime": "23:27",
+          "characterId": "Lux Lynch",
+          "destination": "JUNC_8",
+          "characterName": "Lux Lynch",
+          "executionMeta": {
+            "failedAt": "23:27",
+            "startedAt": "23:27",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "movement",
+          "action": "步行前往驯鹿酒吧",
+          "impact": 0,
+          "nodeId": "m1",
+          "status": "failed",
+          "endTime": "23:34",
+          "outcome": "步行前往驯鹿酒吧 [拓扑中无可用路径] 失败",
+          "startTime": "23:26",
+          "characterId": "Lux Lynch",
+          "destination": "SCN_16_SUB_1",
+          "characterName": "Lux Lynch",
+          "executionMeta": {
+            "failedAt": "23:26",
+            "startedAt": "23:26",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "movement",
+          "action": "走到新月街A南西端·警察局前以监视布鲁诺的动向",
+          "impact": 0,
+          "nodeId": "m_newmoon_001",
+          "status": "failed",
+          "endTime": "20:18",
+          "outcome": "走到新月街A南西端·警察局前以监视布鲁诺的动向 [拓扑中无可用路径] 失败",
+          "startTime": "20:13",
+          "characterId": "Lux Lynch",
+          "destination": "JUNC_8",
+          "characterName": "Lux Lynch",
+          "executionMeta": {
+            "failedAt": "20:13",
+            "startedAt": "20:13",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "movement",
+          "action": "走到警察局正门外的新月街A大道南西端路口去监视门外动静",
+          "impact": 0,
+          "nodeId": "m_lux_001",
+          "status": "failed",
+          "endTime": "23:32",
+          "outcome": "走到警察局正门外的新月街A大道南西端路口去监视门外动静 [拓扑中无可用路径] 失败",
+          "startTime": "23:27",
+          "characterId": "Lux Lynch",
+          "destination": "JUNC_8",
+          "characterName": "Lux Lynch",
+          "executionMeta": {
+            "failedAt": "23:27",
+            "startedAt": "23:27",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "movement",
+          "action": "走到警察局正门外的新月街A大道南西端路口去监视门外动静",
+          "impact": 0,
+          "nodeId": "m_lux_001",
+          "status": "failed",
+          "endTime": "23:32",
+          "outcome": "走到警察局正门外的新月街A大道南西端路口去监视门外动静 [拓扑中无可用路径] 失败",
+          "startTime": "23:27",
+          "characterId": "Lux Lynch",
+          "destination": "JUNC_8",
+          "characterName": "Lux Lynch",
+          "executionMeta": {
+            "failedAt": "23:27",
+            "startedAt": "23:27",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "movement",
+          "action": "步行前往驯鹿酒吧",
+          "impact": 0,
+          "nodeId": "m1",
+          "status": "failed",
+          "endTime": "23:34",
+          "outcome": "步行前往驯鹿酒吧 [拓扑中无可用路径] 失败",
+          "startTime": "23:26",
+          "characterId": "Lux Lynch",
+          "destination": "SCN_16_SUB_1",
+          "characterName": "Lux Lynch",
+          "executionMeta": {
+            "failedAt": "23:26",
+            "startedAt": "23:26",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "movement",
+          "action": "走到警察局正门外的新月街A大道南西端路口去监视门外动静",
+          "impact": 0,
+          "nodeId": "m_lux_001",
+          "status": "failed",
+          "endTime": "23:32",
+          "outcome": "走到警察局正门外的新月街A大道南西端路口去监视门外动静 [拓扑中无可用路径] 失败",
+          "startTime": "23:27",
+          "characterId": "Lux Lynch",
+          "destination": "JUNC_8",
+          "characterName": "Lux Lynch",
+          "executionMeta": {
+            "failedAt": "23:27",
+            "startedAt": "23:27",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "movement",
+          "action": "步行前往驯鹿酒吧",
+          "impact": 0,
+          "nodeId": "m1",
+          "status": "failed",
+          "endTime": "23:34",
+          "outcome": "步行前往驯鹿酒吧 [拓扑中无可用路径] 失败",
+          "startTime": "23:26",
+          "characterId": "Lux Lynch",
+          "destination": "SCN_16_SUB_1",
+          "characterName": "Lux Lynch",
+          "executionMeta": {
+            "failedAt": "23:26",
+            "startedAt": "23:26",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "movement",
+          "action": "走到警察局正门外的新月街A大道南西端路口去监视门外动静",
+          "impact": 0,
+          "nodeId": "m_lux_001",
+          "status": "failed",
+          "endTime": "23:32",
+          "outcome": "走到警察局正门外的新月街A大道南西端路口去监视门外动静 [拓扑中无可用路径] 失败",
+          "startTime": "23:27",
+          "characterId": "Lux Lynch",
+          "destination": "JUNC_8",
+          "characterName": "Lux Lynch",
+          "executionMeta": {
+            "failedAt": "23:27",
+            "startedAt": "23:27",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "movement",
+          "action": "步行前往驯鹿酒吧",
+          "impact": 0,
+          "nodeId": "m1",
+          "status": "failed",
+          "endTime": "23:34",
+          "outcome": "步行前往驯鹿酒吧 [拓扑中无可用路径] 失败",
+          "startTime": "23:26",
+          "characterId": "Lux Lynch",
+          "destination": "SCN_16_SUB_1",
+          "characterName": "Lux Lynch",
+          "executionMeta": {
+            "failedAt": "23:26",
+            "startedAt": "23:26",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "movement",
+          "action": "步行前往驯鹿酒吧",
+          "impact": 0,
+          "nodeId": "m1",
+          "status": "failed",
+          "endTime": "23:34",
+          "outcome": "步行前往驯鹿酒吧 [拓扑中无可用路径] 失败",
+          "startTime": "23:26",
+          "characterId": "Lux Lynch",
+          "destination": "SCN_16_SUB_1",
+          "characterName": "Lux Lynch",
+          "executionMeta": {
+            "failedAt": "23:26",
+            "startedAt": "23:26",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "movement",
+          "action": "走到警察局正门外的新月街A大道南西端路口去监视门外动静",
+          "impact": 0,
+          "nodeId": "m_lux_001",
+          "status": "failed",
+          "endTime": "23:32",
+          "outcome": "走到警察局正门外的新月街A大道南西端路口去监视门外动静 [拓扑中无可用路径] 失败",
+          "startTime": "23:27",
+          "characterId": "Lux Lynch",
+          "destination": "JUNC_8",
+          "characterName": "Lux Lynch",
+          "executionMeta": {
+            "failedAt": "23:27",
+            "startedAt": "23:27",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "action",
+          "action": "在值班台整理记录非法人情的笔记本，写下布鲁诺手中记录可能的要点并拟一份能交代给帕特里齐奥的掩饰说辞",
+          "impact": 0,
+          "nodeId": "a_day1_20_23_001",
+          "status": "completed",
+          "endTime": "20:38",
+          "outcome": "在值班台整理记录非法人情的笔记本，写下布鲁诺手中记录可能的要点并拟一份能交代给帕特里齐奥的掩饰说辞 成功",
+          "startTime": "20:23",
+          "characterId": "Lux Lynch",
+          "characterName": "Lux Lynch",
+          "executionMeta": {
+            "startedAt": "20:23",
+            "completedAt": "20:38",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "movement",
+          "action": "走出警察局到新月街A南西端·警察局前监视布鲁诺的动向",
+          "impact": 0,
+          "nodeId": "m_lux_002",
+          "status": "failed",
+          "endTime": "20:44",
+          "outcome": "走出警察局到新月街A南西端·警察局前监视布鲁诺的动向 [拓扑中无可用路径] 失败",
+          "startTime": "20:39",
+          "characterId": "Lux Lynch",
+          "destination": "JUNC_8",
+          "characterName": "Lux Lynch",
+          "executionMeta": {
+            "failedAt": "20:39",
+            "startedAt": "20:39",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "scene_interaction",
+          "action": "再次放映并放大驯鹿酒吧附近的监控回放，确认并把最可信的布鲁诺画面时间点用便签和笔记本标注归档",
+          "impact": 0,
+          "nodeId": "si1",
+          "status": "completed",
+          "endTime": "22:32",
+          "outcome": "我在CRT上再次回放并放大驯鹿酒吧附近的监控，逐帧确认了几处最可信的布鲁诺画面，并在便签和笔记本上圈注并归档了相应的时间点与截图位置作为追踪线索。",
+          "startTime": "22:22",
+          "characterId": "Lux Lynch",
+          "characterName": "Lux Lynch",
+          "executionMeta": {
+            "startedAt": "22:22",
+            "completedAt": "22:32",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "scene_interaction",
+          "action": "打开大厅的照明灯以恢复光线",
+          "impact": 0,
+          "nodeId": "si_day1_2043",
+          "status": "completed",
+          "endTime": "20:45",
+          "outcome": "我打开了大厅的照明灯，灯光稳定亮起，之前的昏暗和漆黑消失了，我现在能清楚地看见办公桌、公告板和周围环境。",
+          "startTime": "20:43",
+          "characterId": "Lux Lynch",
+          "characterName": "Lux Lynch",
+          "executionMeta": {
+            "startedAt": "20:43",
+            "completedAt": "20:45",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "scene_interaction",
+          "action": "继续逐帧核对监控回放，重点确认驯鹿酒吧附近最后几处疑似布鲁诺的画面并把最可信的时间点圈出以制定追踪路线",
+          "impact": 0,
+          "nodeId": "si2",
+          "status": "completed",
+          "endTime": "22:20",
+          "outcome": "我继续逐帧核对驯鹿酒吧附近的监控回放，确认了几处最可信的疑似布鲁诺画面，并把这些时间点圈出记录在笔记本和便签上，作为制定追踪路线的依据。",
+          "startTime": "22:14",
+          "characterId": "Lux Lynch",
+          "characterName": "Lux Lynch",
+          "executionMeta": {
+            "startedAt": "22:14",
+            "completedAt": "22:20",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "movement",
+          "action": "走到警察局正门外的新月街A大道南西端路口去监视门外动静",
+          "impact": 0,
+          "nodeId": "m_lux_001",
+          "status": "failed",
+          "endTime": "23:32",
+          "outcome": "走到警察局正门外的新月街A大道南西端路口去监视门外动静 [拓扑中无可用路径] 失败",
+          "startTime": "23:27",
+          "characterId": "Lux Lynch",
+          "destination": "JUNC_8",
+          "characterName": "Lux Lynch",
+          "executionMeta": {
+            "failedAt": "23:27",
+            "startedAt": "23:27",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "movement",
+          "action": "走出大厅，走到警察局前的新月街路口，在门外的阴影处观察街道以监视布鲁诺的动向",
+          "impact": 0,
+          "nodeId": "m2",
+          "status": "failed",
+          "endTime": "21:33",
+          "outcome": "走出大厅，走到警察局前的新月街路口，在门外的阴影处观察街道以监视布鲁诺的动向 [拓扑中无可用路径] 失败",
+          "startTime": "21:28",
+          "characterId": "Lux Lynch",
+          "destination": "JUNC_8",
+          "characterName": "Lux Lynch",
+          "executionMeta": {
+            "failedAt": "21:28",
+            "startedAt": "21:28",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "movement",
+          "action": "走到警察局正门外的新月街A大道南西端路口去监视门外动静",
+          "impact": 0,
+          "nodeId": "m_lux_001",
+          "status": "failed",
+          "endTime": "23:32",
+          "outcome": "走到警察局正门外的新月街A大道南西端路口去监视门外动静 [拓扑中无可用路径] 失败",
+          "startTime": "23:27",
+          "characterId": "Lux Lynch",
+          "destination": "JUNC_8",
+          "characterName": "Lux Lynch",
+          "executionMeta": {
+            "failedAt": "23:27",
+            "startedAt": "23:27",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "movement",
+          "action": "走到警察局正门外的新月街A大道南西端路口去监视门外动静",
+          "impact": 0,
+          "nodeId": "m_lux_001",
+          "status": "failed",
+          "endTime": "23:32",
+          "outcome": "走到警察局正门外的新月街A大道南西端路口去监视门外动静 [拓扑中无可用路径] 失败",
+          "startTime": "23:27",
+          "characterId": "Lux Lynch",
+          "destination": "JUNC_8",
+          "characterName": "Lux Lynch",
+          "executionMeta": {
+            "failedAt": "23:27",
+            "startedAt": "23:27",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "movement",
+          "action": "走到新月街A南西端·警察局前监视布鲁诺的动向",
+          "impact": 0,
+          "nodeId": "m_lux_2053",
+          "status": "failed",
+          "endTime": "20:56",
+          "outcome": "走到新月街A南西端·警察局前监视布鲁诺的动向 [拓扑中无可用路径] 失败",
+          "startTime": "20:53",
+          "characterId": "Lux Lynch",
+          "destination": "JUNC_8",
+          "characterName": "Lux Lynch",
+          "executionMeta": {
+            "failedAt": "20:53",
+            "startedAt": "20:53",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "character_interaction",
+          "action": "通过值班无线电低声再次联系维托，要求他用约定暗号确认布鲁诺是否已被拦截并立即回报",
+          "impact": 1,
+          "nodeId": "ci_lux_001",
+          "status": "completed",
+          "endTime": "23:30",
+          "outcome": "我通过值班无线电低声联系了维托，要求他在拦截布鲁诺时用我们约定的暗号确认并立刻回报。无线电通话接通后，维托表示已收到并会按约行事，有任何回报会马上通知我。",
+          "startTime": "23:28",
+          "characterId": "Lux Lynch",
+          "characterName": "Lux Lynch",
+          "executionMeta": {
+            "startedAt": "23:28",
+            "completedAt": "23:30",
+            "remainingMinutes": 0
+          },
+          "targetCharacterIds": [
+            "npc_vito"
+          ]
+        },
+        {
+          "type": "movement",
+          "action": "走到警察局正门外的新月街A大道南西端路口去监视门外动静",
+          "impact": 0,
+          "nodeId": "m_lux_001",
+          "status": "failed",
+          "endTime": "23:32",
+          "outcome": "走到警察局正门外的新月街A大道南西端路口去监视门外动静 [拓扑中无可用路径] 失败",
+          "startTime": "23:27",
+          "characterId": "Lux Lynch",
+          "destination": "JUNC_8",
+          "characterName": "Lux Lynch",
+          "executionMeta": {
+            "failedAt": "23:27",
+            "startedAt": "23:27",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "movement",
+          "action": "走到警察局正门外的新月街A大道南西端路口去监视门外动静",
+          "impact": 0,
+          "nodeId": "m_lux_001",
+          "status": "failed",
+          "endTime": "23:32",
+          "outcome": "走到警察局正门外的新月街A大道南西端路口去监视门外动静 [拓扑中无可用路径] 失败",
+          "startTime": "23:27",
+          "characterId": "Lux Lynch",
+          "destination": "JUNC_8",
+          "characterName": "Lux Lynch",
+          "executionMeta": {
+            "failedAt": "23:27",
+            "startedAt": "23:27",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "character_interaction",
+          "action": "用值班无线电联系布鲁诺，假装例行询问确认他是否仍在局里并邀请他到大厅来谈话",
+          "impact": 1,
+          "nodeId": "ci1",
+          "status": "completed",
+          "endTime": "21:02",
+          "outcome": "我用值班无线电联系布鲁诺，假装例行询问并邀请他到大厅来谈话；到场后没能在局里找到他，无法当面交谈，已通过无线电发出呼叫但他并未出现在大厅。",
+          "startTime": "20:59",
+          "characterId": "Lux Lynch",
+          "characterName": "Lux Lynch",
+          "executionMeta": {
+            "startedAt": "20:59",
+            "completedAt": "21:02",
+            "remainingMinutes": 0
+          },
+          "targetCharacterIds": [
+            "npc_bruno_galilei"
+          ]
+        },
+        {
+          "type": "movement",
+          "action": "步行前往驯鹿酒吧",
+          "impact": 0,
+          "nodeId": "m1",
+          "status": "failed",
+          "endTime": "23:34",
+          "outcome": "步行前往驯鹿酒吧 [拓扑中无可用路径] 失败",
+          "startTime": "23:26",
+          "characterId": "Lux Lynch",
+          "destination": "SCN_16_SUB_1",
+          "characterName": "Lux Lynch",
+          "executionMeta": {
+            "failedAt": "23:26",
+            "startedAt": "23:26",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "character_interaction",
+          "action": "通过值班无线电低声呼叫布鲁诺，假装例行询问并邀请他到大厅来单独谈话",
+          "impact": 1,
+          "nodeId": "ci_day1_2104_001",
+          "status": "completed",
+          "endTime": "21:07",
+          "outcome": "我通过值班无线电低声呼叫布鲁诺，假装例行询问并邀请他到大厅来单独谈话。但他不在现场，我找不到他，也没有收到他到达或回应的任何回音。",
+          "startTime": "21:04",
+          "characterId": "Lux Lynch",
+          "characterName": "Lux Lynch",
+          "executionMeta": {
+            "startedAt": "21:04",
+            "completedAt": "21:07",
+            "remainingMinutes": 0
+          },
+          "targetCharacterIds": [
+            "npc_bruno_galilei"
+          ]
+        },
+        {
+          "type": "movement",
+          "action": "步行前往驯鹿酒吧",
+          "impact": 0,
+          "nodeId": "m1",
+          "status": "failed",
+          "endTime": "23:34",
+          "outcome": "步行前往驯鹿酒吧 [拓扑中无可用路径] 失败",
+          "startTime": "23:26",
+          "characterId": "Lux Lynch",
+          "destination": "SCN_16_SUB_1",
+          "characterName": "Lux Lynch",
+          "executionMeta": {
+            "failedAt": "23:26",
+            "startedAt": "23:26",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "action",
+          "action": "在值班台静默监听无线电频道，查找布鲁诺或维托的通话与位置信息",
+          "impact": 0,
+          "nodeId": "a_day1_2109_01",
+          "status": "completed",
+          "endTime": "21:13",
+          "outcome": "在值班台静默监听无线电频道，查找布鲁诺或维托的通话与位置信息 成功",
+          "startTime": "21:09",
+          "characterId": "Lux Lynch",
+          "characterName": "Lux Lynch",
+          "executionMeta": {
+            "startedAt": "21:09",
+            "completedAt": "21:13",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "movement",
+          "action": "步行前往驯鹿酒吧",
+          "impact": 0,
+          "nodeId": "m1",
+          "status": "failed",
+          "endTime": "23:34",
+          "outcome": "步行前往驯鹿酒吧 [拓扑中无可用路径] 失败",
+          "startTime": "23:26",
+          "characterId": "Lux Lynch",
+          "destination": "SCN_16_SUB_1",
+          "characterName": "Lux Lynch",
+          "executionMeta": {
+            "failedAt": "23:26",
+            "startedAt": "23:26",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "object_interaction",
+          "action": "检查办公桌抽屉，寻找布鲁诺可能遗留的文件或物品并拿到自己面前查看",
+          "impact": 0,
+          "nodeId": "oi1",
+          "status": "completed",
+          "endTime": "21:20",
+          "outcome": "我把办公桌的抽屉掀开，翻出并把几份日常文件和通讯记录摆到自己面前逐一查看；抽屉里只有常规文档和一个喝空的纸杯，没找到明显属于布鲁诺的笔录。",
+          "startTime": "21:15",
+          "characterId": "Lux Lynch",
+          "characterName": "Lux Lynch",
+          "executionMeta": {
+            "startedAt": "21:15",
+            "completedAt": "21:20",
+            "remainingMinutes": 0
+          },
+          "objectInteractionPayload": {
+            "itemId": "ITEM_SCN3_1"
+          }
+        },
+        {
+          "type": "movement",
+          "action": "走到警察局正门外的新月街A大道南西端路口去监视门外动静",
+          "impact": 0,
+          "nodeId": "m_lux_001",
+          "status": "failed",
+          "endTime": "23:32",
+          "outcome": "走到警察局正门外的新月街A大道南西端路口去监视门外动静 [拓扑中无可用路径] 失败",
+          "startTime": "23:27",
+          "characterId": "Lux Lynch",
+          "destination": "JUNC_8",
+          "characterName": "Lux Lynch",
+          "executionMeta": {
+            "failedAt": "23:27",
+            "startedAt": "23:27",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "object_interaction",
+          "action": "检查办公桌上的CRT显示器以查看外门和大厅的监控录像，确认布鲁诺是否离开或回到局里",
+          "impact": 0,
+          "nodeId": "oi2",
+          "status": "completed",
+          "endTime": "21:27",
+          "outcome": "我在办公桌上的老式CRT显示器上把屏保切掉，调出了外门与大厅的实时监控画面；画面显示了前门和接待区，目前没有看到布鲁诺的身影。",
+          "startTime": "21:22",
+          "characterId": "Lux Lynch",
+          "characterName": "Lux Lynch",
+          "executionMeta": {
+            "startedAt": "21:22",
+            "completedAt": "21:27",
+            "remainingMinutes": 0
+          },
+          "objectInteractionPayload": {
+            "itemId": "ITEM_SCN3_1"
+          }
+        },
+        {
+          "type": "movement",
+          "action": "走出大厅，走到警察局前的新月街路口，在门外的阴影处观察街道以监视布鲁诺的动向",
+          "impact": 0,
+          "nodeId": "m2",
+          "status": "failed",
+          "endTime": "21:33",
+          "outcome": "走出大厅，走到警察局前的新月街路口，在门外的阴影处观察街道以监视布鲁诺的动向 [拓扑中无可用路径] 失败",
+          "startTime": "21:28",
+          "characterId": "Lux Lynch",
+          "destination": "JUNC_8",
+          "characterName": "Lux Lynch",
+          "executionMeta": {
+            "failedAt": "21:28",
+            "startedAt": "21:28",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "scene_interaction",
+          "action": "查看大厅监控，回放并放大新月街路口与驯鹿酒吧附近的摄像头录像，寻找布鲁诺的身影或他最近通过的时间点",
+          "impact": 0,
+          "nodeId": "si_day1_2129",
+          "status": "completed",
+          "endTime": "21:33",
+          "outcome": "我在值班台的监控系统里调出并放大了新月街A大道路口和驯鹿酒吧附近的摄像头回放。回放成功，画面带有清晰的时间戳并已标记出几个可回溯的时间点；目前还未在回放中确认布鲁诺的身影，需要将这些时间点与其他线索比对。",
+          "startTime": "21:29",
+          "characterId": "Lux Lynch",
+          "characterName": "Lux Lynch",
+          "executionMeta": {
+            "startedAt": "21:29",
+            "completedAt": "21:33",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "action",
+          "action": "在监控回放上逐一核对标记的时间点，播放对应片段并把每个时间点的画面描述和可能的位置写入笔记本，以便定位布鲁诺的去向。",
+          "impact": 0,
+          "nodeId": "a_day1_2134_001",
+          "status": "completed",
+          "endTime": "21:39",
+          "outcome": "在监控回放上逐一核对标记的时间点，播放对应片段并把每个时间点的画面描述和可能的位置写入笔记本，以便定位布鲁诺的去向。 成功",
+          "startTime": "21:34",
+          "characterId": "Lux Lynch",
+          "characterName": "Lux Lynch",
+          "executionMeta": {
+            "startedAt": "21:34",
+            "completedAt": "21:39",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "movement",
+          "action": "步行前往驯鹿酒吧",
+          "impact": 0,
+          "nodeId": "m1",
+          "status": "failed",
+          "endTime": "23:34",
+          "outcome": "步行前往驯鹿酒吧 [拓扑中无可用路径] 失败",
+          "startTime": "23:26",
+          "characterId": "Lux Lynch",
+          "destination": "SCN_16_SUB_1",
+          "characterName": "Lux Lynch",
+          "executionMeta": {
+            "failedAt": "23:26",
+            "startedAt": "23:26",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "scene_interaction",
+          "action": "继续逐帧核对监控回放，重点确认驯鹿酒吧附近最后几处疑似布鲁诺的画面并把最可信的时间点圈出以制定追踪路线",
+          "impact": 0,
+          "nodeId": "si2",
+          "status": "completed",
+          "endTime": "22:20",
+          "outcome": "我继续逐帧核对驯鹿酒吧附近的监控回放，确认了几处最可信的疑似布鲁诺画面，并把这些时间点圈出记录在笔记本和便签上，作为制定追踪路线的依据。",
+          "startTime": "22:14",
+          "characterId": "Lux Lynch",
+          "characterName": "Lux Lynch",
+          "executionMeta": {
+            "startedAt": "22:14",
+            "completedAt": "22:20",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "movement",
+          "action": "走到新月街A南西端·警察局前并隐蔽观察驯鹿酒吧方向，留意布鲁诺的动向",
+          "impact": 0,
+          "nodeId": "m1_lux_2152",
+          "status": "failed",
+          "endTime": "21:57",
+          "outcome": "走到新月街A南西端·警察局前并隐蔽观察驯鹿酒吧方向，留意布鲁诺的动向 [拓扑中无可用路径] 失败",
+          "startTime": "21:52",
+          "characterId": "Lux Lynch",
+          "destination": "JUNC_8",
+          "characterName": "Lux Lynch",
+          "executionMeta": {
+            "failedAt": "21:52",
+            "startedAt": "21:52",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "scene_interaction",
+          "action": "继续逐帧核对监控回放，重点确认驯鹿酒吧附近最后几处疑似布鲁诺的画面并把最可信的时间点圈出以制定追踪路线",
+          "impact": 0,
+          "nodeId": "si2",
+          "status": "completed",
+          "endTime": "22:20",
+          "outcome": "我继续逐帧核对驯鹿酒吧附近的监控回放，确认了几处最可信的疑似布鲁诺画面，并把这些时间点圈出记录在笔记本和便签上，作为制定追踪路线的依据。",
+          "startTime": "22:14",
+          "characterId": "Lux Lynch",
+          "characterName": "Lux Lynch",
+          "executionMeta": {
+            "startedAt": "22:14",
+            "completedAt": "22:20",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "movement",
+          "action": "步行前往驯鹿酒吧",
+          "impact": 0,
+          "nodeId": "m1",
+          "status": "failed",
+          "endTime": "23:34",
+          "outcome": "步行前往驯鹿酒吧 [拓扑中无可用路径] 失败",
+          "startTime": "23:26",
+          "characterId": "Lux Lynch",
+          "destination": "SCN_16_SUB_1",
+          "characterName": "Lux Lynch",
+          "executionMeta": {
+            "failedAt": "23:26",
+            "startedAt": "23:26",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "scene_interaction",
+          "action": "逐帧放大并截取监控回放中疑似布鲁诺的画面以保存为证据",
+          "impact": 0,
+          "nodeId": "si1_2200",
+          "status": "completed",
+          "endTime": "22:10",
+          "outcome": "我在CRT回放上逐帧放大并截取了多处疑似布鲁诺的画面，把每张截图与便签和笔记本上的时间戳对应记录并保存，留作证据和后续比对。",
+          "startTime": "22:00",
+          "characterId": "Lux Lynch",
+          "characterName": "Lux Lynch",
+          "executionMeta": {
+            "startedAt": "22:00",
+            "completedAt": "22:10",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "character_interaction",
+          "action": "通过值班无线电再次低声联系维托，要求他立刻查找并报告布鲁诺的当前位置，叮嘱他不要向任何人透漏或留话，等我确认后再做进一步行动",
+          "impact": 1,
+          "nodeId": "ci2",
+          "status": "completed",
+          "endTime": "22:13",
+          "outcome": "我到达警局大厅并未找到维托，他不在现场；我通过值班无线电再次低声联系了他，要求他立刻查找并报告布鲁诺的当前位置，叮嘱他不要向任何人透漏或留话，等我确认后再做进一步行动。维托在无线电中应诺会隐秘搜寻并及时回报。",
+          "startTime": "22:11",
+          "characterId": "Lux Lynch",
+          "characterName": "Lux Lynch",
+          "executionMeta": {
+            "startedAt": "22:11",
+            "completedAt": "22:13",
+            "remainingMinutes": 0
+          },
+          "targetCharacterIds": [
+            "npc_vito"
+          ]
+        },
+        {
+          "type": "scene_interaction",
+          "action": "继续逐帧核对监控回放，重点确认驯鹿酒吧附近最后几处疑似布鲁诺的画面并把最可信的时间点圈出以制定追踪路线",
+          "impact": 0,
+          "nodeId": "si2",
+          "status": "completed",
+          "endTime": "22:20",
+          "outcome": "我继续逐帧核对驯鹿酒吧附近的监控回放，确认了几处最可信的疑似布鲁诺画面，并把这些时间点圈出记录在笔记本和便签上，作为制定追踪路线的依据。",
+          "startTime": "22:14",
+          "characterId": "Lux Lynch",
+          "characterName": "Lux Lynch",
+          "executionMeta": {
+            "startedAt": "22:14",
+            "completedAt": "22:20",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "movement",
+          "action": "步行前往驯鹿酒吧",
+          "impact": 0,
+          "nodeId": "m1",
+          "status": "failed",
+          "endTime": "23:34",
+          "outcome": "步行前往驯鹿酒吧 [拓扑中无可用路径] 失败",
+          "startTime": "23:26",
+          "characterId": "Lux Lynch",
+          "destination": "SCN_16_SUB_1",
+          "characterName": "Lux Lynch",
+          "executionMeta": {
+            "failedAt": "23:26",
+            "startedAt": "23:26",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "scene_interaction",
+          "action": "再次放映并放大驯鹿酒吧附近的监控回放，确认并把最可信的布鲁诺画面时间点用便签和笔记本标注归档",
+          "impact": 0,
+          "nodeId": "si1",
+          "status": "completed",
+          "endTime": "22:32",
+          "outcome": "我在CRT上再次回放并放大驯鹿酒吧附近的监控，逐帧确认了几处最可信的布鲁诺画面，并在便签和笔记本上圈注并归档了相应的时间点与截图位置作为追踪线索。",
+          "startTime": "22:22",
+          "characterId": "Lux Lynch",
+          "characterName": "Lux Lynch",
+          "executionMeta": {
+            "startedAt": "22:22",
+            "completedAt": "22:32",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "movement",
+          "action": "步行前往驯鹿酒吧",
+          "impact": 0,
+          "nodeId": "m1",
+          "status": "failed",
+          "endTime": "23:34",
+          "outcome": "步行前往驯鹿酒吧 [拓扑中无可用路径] 失败",
+          "startTime": "23:26",
+          "characterId": "Lux Lynch",
+          "destination": "SCN_16_SUB_1",
+          "characterName": "Lux Lynch",
+          "executionMeta": {
+            "failedAt": "23:26",
+            "startedAt": "23:26",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "scene_interaction",
+          "action": "再次逐帧放大并比对最关键的监控截图，标注布鲁诺可能的确切去向并在辖区地图上圈出拦截点",
+          "impact": 0,
+          "nodeId": "si_day1_2234",
+          "status": "completed",
+          "endTime": "22:40",
+          "outcome": "我再次逐帧放大并比对了关键监控截图，确认了布鲁诺最可能的去向，并在辖区地图上圈出并标注了几处拦截点；截图与时间戳已对应保存，便于后续部署拦截。",
+          "startTime": "22:34",
+          "characterId": "Lux Lynch",
+          "characterName": "Lux Lynch",
+          "executionMeta": {
+            "startedAt": "22:34",
+            "completedAt": "22:40",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "movement",
+          "action": "步行前往驯鹿酒吧",
+          "impact": 0,
+          "nodeId": "m1",
+          "status": "failed",
+          "endTime": "23:34",
+          "outcome": "步行前往驯鹿酒吧 [拓扑中无可用路径] 失败",
+          "startTime": "23:26",
+          "characterId": "Lux Lynch",
+          "destination": "SCN_16_SUB_1",
+          "characterName": "Lux Lynch",
+          "executionMeta": {
+            "failedAt": "23:26",
+            "startedAt": "23:26",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "character_interaction",
+          "action": "通过值班无线电低声指示维托前往新月街A大道与驯鹿酒吧附近我圈出的拦截点，用预定暗号确认并秘密跟踪布鲁诺，切勿向任何人透漏此行动",
+          "impact": 1,
+          "nodeId": "ci_next1",
+          "status": "completed",
+          "endTime": "22:46",
+          "outcome": "我通过值班无线电低声指示维托前往新月街A大道、驯鹿酒吧附近我圈出的拦截点，强调用预定暗号确认并秘密跟踪布鲁诺，不得向任何人透漏此行动。但我在警局内查找时发现维托并不在场，无法当面确认他是否收到或理解指示；我将继续尝试联系。",
+          "startTime": "22:42",
+          "characterId": "Lux Lynch",
+          "characterName": "Lux Lynch",
+          "executionMeta": {
+            "startedAt": "22:42",
+            "completedAt": "22:46",
+            "remainingMinutes": 0
+          },
+          "targetCharacterIds": [
+            "npc_vito"
+          ]
+        },
+        {
+          "type": "movement",
+          "action": "步行前往驯鹿酒吧",
+          "impact": 0,
+          "nodeId": "m1",
+          "status": "failed",
+          "endTime": "23:34",
+          "outcome": "步行前往驯鹿酒吧 [拓扑中无可用路径] 失败",
+          "startTime": "23:26",
+          "characterId": "Lux Lynch",
+          "destination": "SCN_16_SUB_1",
+          "characterName": "Lux Lynch",
+          "executionMeta": {
+            "failedAt": "23:26",
+            "startedAt": "23:26",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "scene_interaction",
+          "action": "继续逐帧放大并回放驯鹿酒吧与新月街A大道附近的监控，重点确认布鲁诺的最新出现时间和移动方向，并在辖区地图上更新拦截点标注",
+          "impact": 0,
+          "nodeId": "si_lux_001",
+          "status": "completed",
+          "endTime": "23:18",
+          "outcome": "我继续逐帧放大并回放驯鹿酒吧与新月街A大道的监控，确认了布鲁诺最后出现的时间点和他的移动方向。随后我在辖区地图上更新并圈出了拦截点，相关截图与时间戳已保存以便后续比对。",
+          "startTime": "23:08",
+          "characterId": "Lux Lynch",
+          "characterName": "Lux Lynch",
+          "executionMeta": {
+            "startedAt": "23:08",
+            "completedAt": "23:18",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "movement",
+          "action": "走到警察局正门外的新月街A大道南西端路口去监视门外动静",
+          "impact": 0,
+          "nodeId": "m_lux_001",
+          "status": "failed",
+          "endTime": "23:32",
+          "outcome": "走到警察局正门外的新月街A大道南西端路口去监视门外动静 [拓扑中无可用路径] 失败",
+          "startTime": "23:27",
+          "characterId": "Lux Lynch",
+          "destination": "JUNC_8",
+          "characterName": "Lux Lynch",
+          "executionMeta": {
+            "failedAt": "23:27",
+            "startedAt": "23:27",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "character_interaction",
+          "action": "通过值班无线电低声再次联系维托，要求他用约定暗号确认布鲁诺是否已被拦截并立即回报",
+          "impact": 1,
+          "nodeId": "ci_lux_001",
+          "status": "completed",
+          "endTime": "23:30",
+          "outcome": "我通过值班无线电低声联系了维托，要求他在拦截布鲁诺时用我们约定的暗号确认并立刻回报。无线电通话接通后，维托表示已收到并会按约行事，有任何回报会马上通知我。",
+          "startTime": "23:28",
+          "characterId": "Lux Lynch",
+          "characterName": "Lux Lynch",
+          "executionMeta": {
+            "startedAt": "23:28",
+            "completedAt": "23:30",
+            "remainingMinutes": 0
+          },
+          "targetCharacterIds": [
+            "npc_vito"
+          ]
+        },
+        {
+          "type": "movement",
+          "action": "步行前往驯鹿酒吧",
+          "impact": 0,
+          "nodeId": "m1",
+          "status": "failed",
+          "endTime": "23:34",
+          "outcome": "步行前往驯鹿酒吧 [拓扑中无可用路径] 失败",
+          "startTime": "23:26",
+          "characterId": "Lux Lynch",
+          "destination": "SCN_16_SUB_1",
+          "characterName": "Lux Lynch",
+          "executionMeta": {
+            "failedAt": "23:26",
+            "startedAt": "23:26",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "movement",
+          "action": "走到警察局正门外的新月街A大道南西端路口去监视门外动静",
+          "impact": 0,
+          "nodeId": "m_lux_001",
+          "status": "failed",
+          "endTime": "23:32",
+          "outcome": "走到警察局正门外的新月街A大道南西端路口去监视门外动静 [拓扑中无可用路径] 失败",
+          "startTime": "23:27",
+          "characterId": "Lux Lynch",
+          "destination": "JUNC_8",
+          "characterName": "Lux Lynch",
+          "executionMeta": {
+            "failedAt": "23:27",
+            "startedAt": "23:27",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "scene_interaction",
+          "action": "继续逐帧放大并回放驯鹿酒吧与新月街A大道附近的监控，重点确认布鲁诺的最新出现时间和移动方向，并在辖区地图上更新拦截点标注",
+          "impact": 0,
+          "nodeId": "si_lux_001",
+          "status": "completed",
+          "endTime": "23:18",
+          "outcome": "我继续逐帧放大并回放驯鹿酒吧与新月街A大道的监控，确认了布鲁诺最后出现的时间点和他的移动方向。随后我在辖区地图上更新并圈出了拦截点，相关截图与时间戳已保存以便后续比对。",
+          "startTime": "23:08",
+          "characterId": "Lux Lynch",
+          "characterName": "Lux Lynch",
+          "executionMeta": {
+            "startedAt": "23:08",
+            "completedAt": "23:18",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "action",
+          "action": "静静监听值班无线电频道，留意维托关于拦截点的回报与布鲁诺的动向",
+          "impact": 0,
+          "nodeId": "a24",
+          "status": "completed",
+          "endTime": "23:25",
+          "outcome": "静静监听值班无线电频道，留意维托关于拦截点的回报与布鲁诺的动向 成功",
+          "startTime": "23:19",
+          "characterId": "Lux Lynch",
+          "characterName": "Lux Lynch",
+          "executionMeta": {
+            "startedAt": "23:19",
+            "completedAt": "23:25",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "movement",
+          "action": "步行前往驯鹿酒吧",
+          "impact": 0,
+          "nodeId": "m1",
+          "status": "failed",
+          "endTime": "23:34",
+          "outcome": "步行前往驯鹿酒吧 [拓扑中无可用路径] 失败",
+          "startTime": "23:26",
+          "characterId": "Lux Lynch",
+          "destination": "SCN_16_SUB_1",
+          "characterName": "Lux Lynch",
+          "executionMeta": {
+            "failedAt": "23:26",
+            "startedAt": "23:26",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "movement",
+          "action": "走到警察局正门外的新月街A大道南西端路口去监视门外动静",
+          "impact": 0,
+          "nodeId": "m_lux_001",
+          "status": "failed",
+          "endTime": "23:32",
+          "outcome": "走到警察局正门外的新月街A大道南西端路口去监视门外动静 [拓扑中无可用路径] 失败",
+          "startTime": "23:27",
+          "characterId": "Lux Lynch",
+          "destination": "JUNC_8",
+          "characterName": "Lux Lynch",
+          "executionMeta": {
+            "failedAt": "23:27",
+            "startedAt": "23:27",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "character_interaction",
+          "action": "通过值班无线电低声再次联系维托，要求他用约定暗号确认布鲁诺是否已被拦截并立即回报",
+          "impact": 1,
+          "nodeId": "ci_lux_001",
+          "status": "completed",
+          "endTime": "23:30",
+          "outcome": "我通过值班无线电低声联系了维托，要求他在拦截布鲁诺时用我们约定的暗号确认并立刻回报。无线电通话接通后，维托表示已收到并会按约行事，有任何回报会马上通知我。",
+          "startTime": "23:28",
+          "characterId": "Lux Lynch",
+          "characterName": "Lux Lynch",
+          "executionMeta": {
+            "startedAt": "23:28",
+            "completedAt": "23:30",
+            "remainingMinutes": 0
+          },
+          "targetCharacterIds": [
+            "npc_vito"
+          ]
+        },
+        {
+          "type": "action",
+          "action": "继续在值班台监视驯鹿酒吧与新月街A大道的监控回放，密切留意布鲁诺的出现并记录任何异常动向",
+          "impact": 0,
+          "nodeId": "a1",
+          "status": "completed",
+          "endTime": "23:41",
+          "outcome": "继续在值班台监视驯鹿酒吧与新月街A大道的监控回放，密切留意布鲁诺的出现并记录任何异常动向 成功",
+          "startTime": "23:31",
+          "characterId": "Lux Lynch",
+          "characterName": "Lux Lynch",
+          "executionMeta": {
+            "startedAt": "23:31",
+            "completedAt": "23:41",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "scene_interaction",
+          "action": "把CRT上最后几处疑似布鲁诺的画面时间戳抄写到笔记本，并在辖区地图上重新标注并确认拦截点位置",
+          "impact": 0,
+          "nodeId": "a23_42_1",
+          "status": "completed",
+          "endTime": "23:50",
+          "outcome": "我把CRT上最后几处疑似布鲁诺的画面时间戳逐一抄写到笔记本，并在辖区地图上重新圈注、确认并更新了拦截点。现在便签、笔记本和地图上都标明了最新时间点与可能行进方向，便于后续部署拦截。",
+          "startTime": "23:42",
+          "characterId": "Lux Lynch",
+          "characterName": "Lux Lynch",
+          "executionMeta": {
+            "startedAt": "23:42",
+            "completedAt": "23:50",
+            "remainingMinutes": 0
+          },
+          "objectInteractionPayload": {
+            "itemId": "ITEM_SCN3_2"
+          }
+        },
+        {
+          "type": "action",
+          "action": "把监控回放切换为实时模式，盯着驯鹿酒吧与新月街A大道的实时画面寻找布鲁诺的动向",
+          "impact": 0,
+          "nodeId": "a23_51_01",
+          "status": "completed",
+          "endTime": "23:56",
+          "outcome": "把监控回放切换为实时模式，盯着驯鹿酒吧与新月街A大道的实时画面寻找布鲁诺的动向 成功",
+          "startTime": "23:51",
+          "characterId": "Lux Lynch",
+          "characterName": "Lux Lynch",
+          "executionMeta": {
+            "startedAt": "23:51",
+            "completedAt": "23:56",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "character_interaction",
+          "action": "通过值班无线电低声询问维托是否发现或拦截到布鲁诺，并要求立刻汇报其位置和动向",
+          "impact": 1,
+          "nodeId": "node_001",
+          "status": "completed",
+          "endTime": "23:59",
+          "outcome": "我通过值班无线电低声询问维托是否发现或拦截到布鲁诺，并要求他立刻汇报布鲁诺的所在与动向；我在大厅内找了维托，但他并不在这里。CRT回放和便签已经标注了布鲁诺最近出现的时间戳与可能去向，我已把这些情况通过无线电转达给值班的维托（待回报）。",
+          "startTime": "23:57",
+          "characterId": "Lux Lynch",
+          "characterName": "Lux Lynch",
+          "executionMeta": {
+            "startedAt": "23:57",
+            "completedAt": "23:59",
+            "remainingMinutes": 0
+          },
+          "targetCharacterIds": [
+            "npc_vito"
+          ]
+        }
+      ]
+    }
+  ],
+  "intents": [
+    {
+      "intent": "Immediately prioritize stopping Bruno from turning my missing-index-card evidence into formal records: prevent further logging/marking, retrieve or destroy the remaining missing cards and any copies, stop Vito from formally registering more cards (or corrupt his records), secure or neutralize Bruno's written notes and the archive key, and, if possible, tamper with or check for backups/monitoring to break the evidence chain. Use radio to cue Vito for an immediate diversion and feign compliance to buy opportunities for seizure or destruction of documents.",
+      "updatedAt": "2026-04-02T09:02:00.669Z"
+    }
+  ],
+  "npcName": "Lux Lynch"
+}

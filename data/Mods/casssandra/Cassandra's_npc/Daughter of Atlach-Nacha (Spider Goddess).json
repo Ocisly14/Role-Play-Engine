@@ -1,0 +1,109 @@
+{
+  "id": "Daughter of Atlach-Nacha (Spider Goddess)",
+  "name": "Daughter of Atlach-Nacha (Spider Goddess)",
+  "occupation": "Mythos Entity / Servant of the Spider God",
+  "age": 0,
+  "gender": "female",
+  "appearance": "A terrifying spider-goddess hybrid with a vaguely humanoid female outline and monstrous arachnid features. Her body is covered with chitin and coarse hair, her eyes are predatory and inhuman, and her fanged mouth drips with paralytic venom.",
+  "personality": "Cruel, instinct-driven, and utterly devoted to the Spider God. She shows no empathy toward humans and treats prey as livestock, acting with ritualistic patience and divine entitlement.",
+  "background": "The Daughters of Atlach-Nacha are transformed beings, possibly once human females, elevated into sacred servants of the Spider God. They act as favored predators and executioners, feeding upon paralyzed victims and spreading the god's influence through terror and consumption.",
+  "residence": "SCN_17",
+  "currentLocation": "SCN_17",
+  "spot": "crouched behind the crucifix statue, half in its shadow",
+  "knownMapSeed": {
+    "sceneIds": [
+      "SCN_17_SUB_1",
+      "SCN_17_SUB_2",
+      "SCN_17_SUB_3"
+    ],
+    "junctionIds": [],
+    "roadIds": [],
+    "scenarioOutlineIds": [
+      "SCN_17"
+    ]
+  },
+  "longTermIntent": "Serve Atlach-Nacha with absolute devotion, hunt chosen victims, and feed the web with bodies that can be made into further servants.",
+  "attributes": {
+    "STR": 113,
+    "CON": 93,
+    "DEX": 65,
+    "APP": 5,
+    "POW": 65,
+    "SIZ": 93,
+    "INT": 55,
+    "EDU": 0
+  },
+  "status": {
+    "hp": 19,
+    "maxHp": 19,
+    "sanity": 0,
+    "maxSanity": 0,
+    "luck": 0,
+    "mp": 13,
+    "conditions": []
+  },
+  "skills": {
+    "Melee Combat": 75
+  },
+  "inventory": [],
+  "relationships": [
+    {
+      "targetId": "Atlach-Nacha, the Spider God",
+      "targetName": "Atlach-Nacha, the Spider God",
+      "relationshipType": "ally",
+      "attitude": 100,
+      "description": "Divine progenitor and object of absolute worship.",
+      "history": "The Daughters exist solely to enact the will and hunger of the Spider God.",
+      "firstPerson": "The Spider God made me and I am nothing beside it. Its hunger moves my legs; every body I still and open is given up to it."
+    },
+    {
+      "targetId": "Spider-Human",
+      "targetName": "Spider-Human",
+      "relationshipType": "ally",
+      "attitude": 70,
+      "description": "Lesser transformed servants that help spread the web's influence.",
+      "history": "Spider-humans act as hunters and attendants within the Spider God's domain.",
+      "firstPerson": "The lesser spun things hunt at the edges of the web and drag back what they catch. Useful. Not daughters."
+    }
+  ],
+  "memory": [
+    {
+      "type": "information",
+      "content": "I still my prey with venom before I feed. The paralysis is not mercy; it is part of the worship.",
+      "metadata": {
+        "knowledgeId": "k_daughter_bite",
+        "difficulty": "regular"
+      }
+    },
+    {
+      "type": "information",
+      "content": "A body wrapped or half-consumed does not always die at once. Some flesh is kept for brood, some for transformation, and some simply because the web is not finished with it yet.",
+      "metadata": {
+        "knowledgeId": "k_daughter_feeding",
+        "difficulty": "hard"
+      }
+    },
+    {
+      "type": "secret",
+      "content": "Some of us remember the outline of being women only as a fading irritation beneath the chitin.",
+      "metadata": {
+        "knowledgeId": "s_daughter_origin"
+      }
+    },
+    {
+      "type": "secret",
+      "content": "The priest may command lesser spider-things, but we daughters answer the Spider God first and do not owe him love or obedience.",
+      "metadata": {
+        "knowledgeId": "s_daughter_priest_distance"
+      }
+    },
+    {
+      "type": "belief",
+      "content": "Prey is only raw material. What matters is whether the web can still use it.",
+      "metadata": {
+        "confidence": 0.9,
+        "reasoningChain": "The web turns suffering into structure, and structure is what endures."
+      }
+    }
+  ]
+}

@@ -1,0 +1,1609 @@
+{
+  "npcId": "Mrs. Barklyite (Lucia Shiny)",
+  "memories": [
+    {
+      "type": "plan",
+      "content": "通过合法的、程序正义的方式将本·克莱奥绳之以法，为自己曾帮助一个杀人犯逃脱法律制裁的过错赎罪。她坚信程序正义，但也懂得在灰色地带中灵活行事。",
+      "gameDay": 1,
+      "gameTime": "00:00",
+      "location": null,
+      "metadata": {
+        "planType": "long_term"
+      }
+    },
+    {
+      "type": "information",
+      "content": "我在星辰医院用苏珊的化名工作，调查帕特里齐奥的活动。",
+      "gameDay": 1,
+      "gameTime": "00:00",
+      "location": null,
+      "metadata": {
+        "difficulty": "regular",
+        "knowledgeId": "k_lucia_susan"
+      }
+    },
+    {
+      "type": "information",
+      "content": "我学会了足够谨慎地切换角色，这样我可以继续行动而不失去自己仍想做好事的那部分。",
+      "gameDay": 1,
+      "gameTime": "00:00",
+      "location": null,
+      "metadata": {
+        "difficulty": "regular",
+        "knowledgeId": "k_lucia_role_control"
+      }
+    },
+    {
+      "type": "secret",
+      "content": "我已经以'苏珊'的化名在星辰医院站稳了脚跟，目前担任普通护士。保持掩护完整比制造动静更重要——我需要在不引起怀疑的前提下继续收集帕特里齐奥在医院里活动的证据。",
+      "gameDay": 1,
+      "gameTime": "00:00",
+      "location": null,
+      "metadata": {
+        "knowledgeId": "s_lucia_cover_established"
+      }
+    },
+    {
+      "type": "information",
+      "content": "我被阿尔伯特·闪亮收养，从小就被寄予关于责任和成功的高期望。",
+      "gameDay": 1,
+      "gameTime": "00:00",
+      "location": null,
+      "metadata": {
+        "difficulty": "automatic",
+        "knowledgeId": "k_lucia_adoption"
+      }
+    },
+    {
+      "type": "plan",
+      "content": "Today's plan: 1. 在护士站继续监听并回放便携录音，转写监控与音频以完善证据时间线。 at 星辰医院; 2. 前往实验室确认并再次拍照封存四支编号离心管的证据袋和登记表以防篡改。 at 星辰医院; 3. 检查药品管理室的冷藏设备和暗门记录，核对东莨菪碱的库存异常并记录异常条目。 at 星辰医院; 4. 在停尸间外核对温控与存放记录，确认证据链不中断并避免触碰冷藏柜内容以保合法性。 at 星辰医院; 5. 在接待处将监控截图和关键时间戳备份到安全位置并写下下一步的法律行动要点。 at 星辰医院; 6. 与值班护士低调交接，维持“苏珊”身份并在对话中试探文森特的近期行踪与精神状态。 at 星辰医院; 7. 在休息室小睡两小时以保持清醒继续夜间巡查并为白天外出准备体力。 at 星辰医院; 8. 白天以访客身份走访酒吧，观察并向酒保试探性打听关于本·克莱奥与帕特里齐奥的近期来客与交易线索。 at 驯鹿酒吧; 9. 走访花店并与西蒙或店主寒暄，试探是否有人近期为医院或某位黑帮人物下过特殊订购或送货安排。 at 花店·卡森德拉之花; 10. 返院整理白天获得的线索，更新档案并拟定向阿尔伯特或警方提交的正式证据清单与辩护预案。 at 星辰医院; 11. 在护士站完成班次交接记录并将所有证物和电子备份妥善锁入安全柜，随后在值班床上入睡以守住掩护。 at 星辰医院",
+      "gameDay": 2,
+      "gameTime": "00:00",
+      "location": null,
+      "metadata": {
+        "planType": "daily"
+      }
+    },
+    {
+      "type": "secret",
+      "content": "我通过阿道夫·卡尔与卢奇菲罗做生意，并要求她截获东莨菪碱的货物。",
+      "gameDay": 1,
+      "gameTime": "00:00",
+      "location": null,
+      "metadata": {
+        "knowledgeId": "s_lucia_lucifero"
+      }
+    },
+    {
+      "type": "belief",
+      "content": "我欠阿尔伯特一切，但感恩本身并不等同于理解我应该为自己建立怎样的生活。",
+      "gameDay": 1,
+      "gameTime": "00:00",
+      "location": null,
+      "metadata": {
+        "confidence": 0.85,
+        "reasoningChain": "我可以在不被困于此的情况下尊重他给予我的一切。"
+      }
+    },
+    {
+      "type": "information",
+      "content": "我学到了无可挑剔的文件工作和冷静的面孔往往比权威本身更有说服力。",
+      "gameDay": 1,
+      "gameTime": "00:00",
+      "location": null,
+      "metadata": {
+        "difficulty": "regular",
+        "knowledgeId": "k_lucia_paperwork"
+      }
+    },
+    {
+      "type": "plan",
+      "content": "Today's plan: 1. 在护士站报到并接手夜班以维持苏珊的掩护并观察病房动态。 at 星辰医院; 2. 在走廊和监控死角巡视，留意帕特里齐奥可能的可疑人员和物品进出。 at 星辰医院; 3. 趁夜色检查药品管理室的库存与记录，重点核对东莨菪碱等受控药物的来货信息。 at 星辰医院; 4. 查看停尸间的最近入殓记录和尸体外伤说明，寻找可能指向黑帮活动的异常痕迹。 at 星辰医院; 5. 吃一顿晚餐并与老板和常客寒暄以套取关于驯鹿酒吧与本·克莱奥的传闻。 at 海伦的餐桌; 6. 到案发地点打听目击者与当晚细节，观察现场关系网与熟客的反应。 at 驯鹿酒吧; 7. 与阿道夫会面确认关于截获货物的安排并交换情报，同时谨慎防范监控与陷阱。 at 阿道夫家; 8. 返回护士站整理当晚收集到的证据与笔记，并做好书面与物证的保护性备份。 at 星辰医院; 9. 准备并草拟明日要提交给警方或检方的文书要点，为通过程序正义追查本·克莱奥铺路。 at 星辰医院; 10. 在员工宿舍休息就寝，同时设定夜间巡查计划并保持警觉以应对突发状况。 at 星辰医院",
+      "gameDay": 1,
+      "gameTime": "19:00",
+      "location": null,
+      "metadata": {
+        "planType": "daily"
+      }
+    },
+    {
+      "type": "event",
+      "content": "前往护士站报到并接手夜班 成功",
+      "gameDay": 1,
+      "gameTime": "19:00",
+      "location": "SCN_1_SUB_1",
+      "metadata": {
+        "outcome": "前往护士站报到并接手夜班 成功",
+        "blockedReason": "",
+        "failureReason": ""
+      }
+    },
+    {
+      "type": "event",
+      "content": "我查看了大厅的监控屏幕，逐一核对摄像头覆盖范围，确认了几处明显的死角，并在排班白板上标出了需要夜间重点巡视的盲点。",
+      "gameDay": 1,
+      "gameTime": "19:10",
+      "location": "SCN_1_SUB_1",
+      "metadata": {
+        "itemId": "ITEM_SCN1_2",
+        "outcome": "查看监控屏幕，核对摄像头分布并标记监控死角以便后续巡视",
+        "itemName": "监控屏幕"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我沿着走廊逐一巡视，按排班白板和监控记录重点检查了先前标注的监控死角，现场逐项核实并做了记录，未发现异常。",
+      "gameDay": 1,
+      "gameTime": "19:25",
+      "location": "SCN_1_SUB_1",
+      "metadata": {
+        "outcome": "沿走廊巡视并重点检查先前标注的监控死角"
+      }
+    },
+    {
+      "type": "event",
+      "content": "打开药品管理室的电子门并检查库存与来货记录，重点核对东莨菪碱的登记信息 [在 SCN_1_SUB_1 因重新规划而中断] 已中断",
+      "gameDay": 1,
+      "gameTime": "19:26",
+      "location": "SCN_1_SUB_1",
+      "metadata": {
+        "outcome": "打开药品管理室的电子门并检查库存与来货记录，重点核对东莨菪碱的登记信息 [在 SCN_1_SUB_1 因重新规划而中断] 已中断",
+        "interruptionReason": "revise_replan"
+      }
+    },
+    {
+      "type": "witness",
+      "content": "[相遇] 我刚在医院大厅与Vincent Galenus面对面相遇。他的出现让我吃了一惊，也立刻警觉起来——心跳微快，注意力立刻收窄。现在我会先守住苏珊的身份，礼貌应对同时观察他的仪态、言辞和去向，判断他是普通来访者、病人关联人，还是来巡查或有其他目的。若他看起来可疑或可能暴露我的掩护，我会尽量避免独处接触并用监控/尾随记录他的动向；若他表现随和且有利于套取情报，我会尝试通过寒暄获取信息。短期内把注意力转到他身上。",
+      "gameDay": 1,
+      "gameTime": "19:26",
+      "location": "SCN_1_SUB_1",
+      "metadata": {
+        "impact": 2,
+        "perspective": "co_presence",
+        "sourceAction": "Vincent Galenus 在 医院大厅",
+        "sourceCharacterId": "__encounter__"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我以“苏珊”的身份对Vincent礼貌寒暄并询问他的来意。他告诉我他来卡森德拉是为了钱和那些富人的药，期望能让妻子活下去，并提到医院有药品储存室、实验室以及指向不应该在这里进行的工作的记录；我注意到他手抖、面色苍白，明显有酗酒和愧疚的迹象。 [rel:Vincent Galenus +5 → 5]",
+      "gameDay": 1,
+      "gameTime": "19:32",
+      "location": "SCN_1_SUB_1",
+      "metadata": {
+        "outcome": "以“苏珊”身份礼貌寒暄并询问Vincent在医院的来意，仔细观察他的言行与去向以判断是否可疑"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我以“苏珊”身份礼貌询问文森特的到院时间、接触人员与有关实验室和药品储存的线索，文森特在愧疚和酒精影响下向我坦白：他来卡森德拉是为了钱和那些富人的“奇迹药”，并提到医院确实有药品储存室/药品管理室、一个实验室以及指向不该进行工作的记录。我注意到他手抖、面色苍白，对他生出同情但仍保持戒备，尽力维持专业不暴露掩护。 [rel:Vincent Galenus +3 → 8]",
+      "gameDay": 1,
+      "gameTime": "19:38",
+      "location": "SCN_1_SUB_1",
+      "metadata": {
+        "outcome": "以“苏珊”身份与Vincent交谈，礼貌盘问他到院的时间、曾接触的医院工作人员与关于实验室和药品储存室的具体线索，同时维持专业友善以避免暴露掩护"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我在监控屏上回放了Vincent Galenus到院的录像，逐帧核对并记录了他与谁接触以及他进入的科室与走廊的时间点。已把关键时间戳和相关人员记录归档，便于后续尾随与核查。",
+      "gameDay": 1,
+      "gameTime": "19:44",
+      "location": "SCN_1_SUB_1",
+      "metadata": {
+        "itemId": "ITEM_SCN1_2",
+        "outcome": "在监控屏幕上回放并查看文森特到院的监控录像，记录他与谁接触以及进入的区域",
+        "itemName": "监控屏幕"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我翻阅了接待处的来访登记表，找到了与Vincent Galenus相关的登记条目并核对了到院时间；经与监控回放的时间戳比对，两者一致，我已将确认结果记录归档以便后续核查。",
+      "gameDay": 1,
+      "gameTime": "19:50",
+      "location": "SCN_1_SUB_1",
+      "metadata": {
+        "itemId": "ITEM_SCN1_20",
+        "outcome": "检查并核对来访登记表，确认文森特到院时间与登记信息以核实监控记录",
+        "itemName": "来访登记表"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我进入药品管理室，检查了库存与来货记录，重点核对了东莨菪碱的登记信息，并把核对情况记录在案。",
+      "gameDay": 1,
+      "gameTime": "20:05",
+      "location": "SCN_1_SUB_1",
+      "metadata": {
+        "outcome": "进入药品管理室并检查库存与来货记录，重点核对东莨菪碱的登记信息"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我在医院档案中查阅了关于 Vincent Galenus 的病历与入院记录，逐项核对了病史、他接触的人员与入院时间，并将时间戳与监控回放和来访登记表对照。档案与监控与登记表记录一致，未发现立即表明他来院有明确不良目的的证据；他的在院动机仍需通过尾随与继续观察来判断。相关确认结果已记录归档备查。",
+      "gameDay": 1,
+      "gameTime": "20:16",
+      "location": "SCN_1_SUB_1",
+      "metadata": {
+        "itemId": "ITEM_SCN1_1",
+        "outcome": "查看医院档案中关于Vincent Galenus的病历与入院记录，核对他的病史、接触人员与入院时间以判断他在院的真实目的",
+        "itemName": "医院档案"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我把接待处的监控屏切到实时画面，开始跟踪并在画面上标注Vincent Galenus的实时位置；我录下了新的时间戳与他的移动路径并保存了记录，便于后续尾随与核查。",
+      "gameDay": 1,
+      "gameTime": "20:27",
+      "location": "SCN_1_SUB_1",
+      "metadata": {
+        "itemId": "ITEM_SCN1_2",
+        "outcome": "在接待处的监控屏上切换到实时画面并跟踪标记Vincent Galenus的位置，录下新的时间戳与移动路径",
+        "itemName": "监控屏幕"
+      }
+    },
+    {
+      "type": "event",
+      "content": "通过接待处的监控屏继续远程跟踪Vincent Galenus的实时位置，切换到关键摄像头并保存一份录制备份以便后续核查（在不暴露“苏珊”身份的情况下收集更多情报） 成功",
+      "gameDay": 1,
+      "gameTime": "20:35",
+      "location": "SCN_1_SUB_1",
+      "metadata": {
+        "outcome": "通过接待处的监控屏继续远程跟踪Vincent Galenus的实时位置，切换到关键摄像头并保存一份录制备份以便后续核查（在不暴露“苏珊”身份的情况下收集更多情报） 成功"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我把监控屏切到覆盖文森特所在路线的所有摄像头，开始同步录制并为实验室、药品管理室和停尸间设置了入侵/区域进入提醒；我在录制中标注并保存了关键时间戳和他的移动路径，便于后续核查。",
+      "gameDay": 1,
+      "gameTime": "20:40",
+      "location": "SCN_1_SUB_1",
+      "metadata": {
+        "itemId": "ITEM_SCN1_2",
+        "outcome": "在监控屏上切换到覆盖文森特所在路线的所有摄像头，开始同时录制并设置入侵/区域进入提醒（针对实验室、药品管理室和停尸间），并在录制中标注关键时间戳以备用查证",
+        "itemName": "监控屏幕"
+      }
+    },
+    {
+      "type": "event",
+      "content": "前往病房走廊口以便尾随Vincent Galenus 成功",
+      "gameDay": 1,
+      "gameTime": "20:41",
+      "location": "SCN_1_SUB_1",
+      "metadata": {
+        "outcome": "前往病房走廊口以便尾随Vincent Galenus 成功",
+        "blockedReason": "",
+        "failureReason": ""
+      }
+    },
+    {
+      "type": "event",
+      "content": "以“苏珊”的身份尾随文森特沿病房走廊前进，保持低调的两步距离，观察并记录他是否试图进入实验室、药品管理室或停尸间 成功",
+      "gameDay": 1,
+      "gameTime": "20:47",
+      "location": "SCN_1_SUB_1",
+      "metadata": {
+        "outcome": "以“苏珊”的身份尾随文森特沿病房走廊前进，保持低调的两步距离，观察并记录他是否试图进入实验室、药品管理室或停尸间 成功"
+      }
+    },
+    {
+      "type": "event",
+      "content": "继续以苏珊身份尾随文森特，保持低调的两步距离，观察并记录他是否试图进入实验室、药品管理室或停尸间 成功",
+      "gameDay": 1,
+      "gameTime": "21:00",
+      "location": "SCN_1_SUB_1",
+      "metadata": {
+        "outcome": "继续以苏珊身份尾随文森特，保持低调的两步距离，观察并记录他是否试图进入实验室、药品管理室或停尸间 成功"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我以“苏珊”的身份在医院大厅寻找并试图向Vincent探询他提到的实验室、药品储存位置及涉事人员，但找不到Vincent，没能从他那里得到任何信息。",
+      "gameDay": 1,
+      "gameTime": "21:05",
+      "location": "SCN_1_SUB_1",
+      "metadata": {
+        "outcome": "以“苏珊”的身份轻声向Vincent询问他刚才提到的实验室和药品储存的具体位置与涉事人员，装作关心并观察他的言行反应以评估可信度"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我走到护士站的监控屏前，把画面切到实时并跟踪Vincent Galenus——屏幕上已标出他的实时位置，我开始同步录制并保存了带有关键时间戳的移动路径，同时为实验室、药品管理室和停尸间设立了入侵提醒。",
+      "gameDay": 1,
+      "gameTime": "21:11",
+      "location": "SCN_1_SUB_1",
+      "metadata": {
+        "itemId": "ITEM_SCN1_2",
+        "outcome": "走向护士站并查看监控屏的实时画面以定位Vincent Galenus",
+        "itemName": "监控屏幕"
+      }
+    },
+    {
+      "type": "event",
+      "content": "把监控画面切到覆盖文森特当前路线的近景摄像头，放大并持续观察实验室、药品管理室和停尸间的门口，记录他的一举一动并在必要时触发入侵提醒。 成功",
+      "gameDay": 1,
+      "gameTime": "21:17",
+      "location": "SCN_1_SUB_1",
+      "metadata": {
+        "outcome": "把监控画面切到覆盖文森特当前路线的近景摄像头，放大并持续观察实验室、药品管理室和停尸间的门口，记录他的一举一动并在必要时触发入侵提醒。 成功"
+      }
+    },
+    {
+      "type": "event",
+      "content": "走到通往实验室的电子门口，保持隐蔽观察并准备在文森特接近时以“苏珊”身份应对 成功",
+      "gameDay": 1,
+      "gameTime": "21:23",
+      "location": "SCN_1_SUB_1",
+      "metadata": {
+        "outcome": "走到通往实验室的电子门口，保持隐蔽观察并准备在文森特接近时以“苏珊”身份应对 成功"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我靠近通往实验室的电子门，侧耳倾听门内的声音。门内没有明显动静，没听到文森特或其他人的声音。",
+      "gameDay": 1,
+      "gameTime": "21:28",
+      "location": "SCN_1_SUB_1",
+      "metadata": {
+        "outcome": "靠近实验室电子门并侧耳倾听门内的声音，确认文森特是否已进入或有人在里面"
+      }
+    },
+    {
+      "type": "event",
+      "content": "在实验室电子门口隐蔽侧耳继续监听门内的动静，同时在附近的监控屏上再次确认并标注Vincent Galenus的实时位置 成功",
+      "gameDay": 1,
+      "gameTime": "21:34",
+      "location": "SCN_1_SUB_1",
+      "metadata": {
+        "outcome": "在实验室电子门口隐蔽侧耳继续监听门内的动静，同时在附近的监控屏上再次确认并标注Vincent Galenus的实时位置 成功"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我从手提包里拿出便携录音器并开启，开始录下实验室门外与大厅的环境声——能听到头顶日光灯微弱的嗡嗡声和大厅的背景杂音，录音在运作中。",
+      "gameDay": 1,
+      "gameTime": "21:38",
+      "location": "SCN_1_SUB_1",
+      "metadata": {
+        "itemId": "装有个人物品的手提包",
+        "outcome": "从手提包取出录音设备并开启录音，记录实验室门外的任何声音",
+        "itemName": "装有个人物品的手提包"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我从实验室电子门的门缝向里窥视，仔细查看是否有人或有可疑设备、药品存放。没看见任何人，也未发现明显的可疑设备或药品。",
+      "gameDay": 1,
+      "gameTime": "21:42",
+      "location": "SCN_1_SUB_1",
+      "metadata": {
+        "outcome": "从实验室电子门的门缝向内窥视，确认是否有人、可疑设备或药品存放"
+      }
+    },
+    {
+      "type": "event",
+      "content": "悄悄走进实验室 成功",
+      "gameDay": 1,
+      "gameTime": "21:44",
+      "location": "SCN_1_SUB_3",
+      "metadata": {
+        "outcome": "悄悄走进实验室 成功",
+        "blockedReason": "",
+        "failureReason": ""
+      }
+    },
+    {
+      "type": "event",
+      "content": "我把便携录音器保持开启并放在包口，在显微镜前准备检查载玻片上的上清样本并口述记录。显微镜台上没有已制备的载玻片可供观察；离心机盖已合上并锁好、机器稳定运转，内部有四支无菌离心管，无法取出样本。于是我用录音器口述记录了我能观察到的内容——仪器状态、实验室的刺鼻气味和持续的机械运转声。",
+      "gameDay": 1,
+      "gameTime": "21:55",
+      "location": "SCN_1_SUB_3",
+      "metadata": {
+        "itemId": "ITEM_SCN1_5",
+        "outcome": "在显微镜下仔细检查载玻片上的上清样本，记录可见的微观特征并用便携录音器口述观察结果",
+        "itemName": "新型医疗器械"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我把便携录音器放在包口并开启录音，走到显微镜前口述观察：显微镜台上没有已制备的载玻片可供观察；离心机盖已合上并锁好，机器在设定转速下稳定运转。空气中有刺鼻的化学味和一丝腥味，我记录了仪器状态、持续的机械声以及无法取得离心管样本的情况。",
+      "gameDay": 1,
+      "gameTime": "22:01",
+      "location": "SCN_1_SUB_3",
+      "metadata": {
+        "itemId": "ITEM_SCN1_5",
+        "outcome": "在显微镜下检查载玻片并口述记录观察结果",
+        "itemName": "新型医疗器械"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我在显微镜下对载玻片进行了详细检查，口述记录了所见的微生物形态、颗粒分布与任何异常痕迹；口述记录已保存入实验档案，待后续转写与分析。",
+      "gameDay": 1,
+      "gameTime": "22:12",
+      "location": "SCN_1_SUB_3",
+      "metadata": {
+        "outcome": "在显微镜下详细检查载玻片并口述记录我所见的微生物形态、颗粒与任何异常痕迹"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我从工作台上取下四支编号无菌离心管，放入证据袋并封存，贴上标签后将证据袋暂放在实验档案旁，待移交。",
+      "gameDay": 1,
+      "gameTime": "22:20",
+      "location": "SCN_1_SUB_3",
+      "metadata": {
+        "outcome": "取下工作台上的四支编号无菌离心管并放入证据袋封存"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我将已封存的无菌离心管证据袋放入实验档案，并在档案上登记了证据编号与链述，确认编号与记录相符，登记完成。",
+      "gameDay": 1,
+      "gameTime": "22:26",
+      "location": "SCN_1_SUB_3",
+      "metadata": {
+        "itemId": "ITEM_SCN1_7",
+        "outcome": "将已封存的无菌离心管证据袋放入实验档案并在记录上做登记，确认编号与链述记录完整",
+        "itemName": "实验档案"
+      }
+    },
+    {
+      "type": "event",
+      "content": "离开实验室，前往护士站整理证据与笔记，并切换监控画面继续实时跟踪Vincent Galenus以保护掩护并收集情报 成功",
+      "gameDay": 1,
+      "gameTime": "22:31",
+      "location": "SCN_1_SUB_1",
+      "metadata": {
+        "outcome": "离开实验室，前往护士站整理证据与笔记，并切换监控画面继续实时跟踪Vincent Galenus以保护掩护并收集情报 成功",
+        "blockedReason": "",
+        "failureReason": ""
+      }
+    },
+    {
+      "type": "event",
+      "content": "我从手提包里取出便携录音器并回放了在实验室录下的音轨，能听到头顶日光灯的嗡嗡声和大厅的背景杂音。边听我在医院档案中添加了关键时间戳并口述转录，重点已归档以便后续核查。",
+      "gameDay": 1,
+      "gameTime": "22:37",
+      "location": "SCN_1_SUB_1",
+      "metadata": {
+        "itemId": "装有个人物品的手提包",
+        "outcome": "从装有个人物品的手提包里取出便携录音器并回放刚才在实验室录下的录音，边听边在档案中做关键时间戳与口述转录以整理证据",
+        "itemName": "装有个人物品的手提包"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我把接待处的监控屏放大并切到实时画面，标出文森特的当前位置，保存了截图和时间戳，并开始同步录制他的路线，同时为实验室、药品管理室与停尸间设立了入侵提醒，记录已保存以便后续尾随或介入判断。",
+      "gameDay": 1,
+      "gameTime": "22:43",
+      "location": "SCN_1_SUB_1",
+      "metadata": {
+        "itemId": "ITEM_SCN1_2",
+        "outcome": "在接待处监控屏上放大并实时跟踪覆盖文森特的摄像头画面，标注当前位置并保存截图与时间戳以便后续尾随或介入判断",
+        "itemName": "监控屏幕"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我在接待处的监控屏上把文森特当前摄像头的高清截图保存并标注了位置与时间戳，并将该截图导出存入医院档案，作为影像证据备用。",
+      "gameDay": 1,
+      "gameTime": "22:47",
+      "location": "SCN_1_SUB_1",
+      "metadata": {
+        "itemId": "ITEM_SCN1_2",
+        "outcome": "在接待处监控屏上保存并标注文森特当前摄像头的高清截图以作档案证据",
+        "itemName": "监控屏幕"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我以“苏珊”身份走到医院大厅，礼貌寒暄并打算询问文森特是否需要帮助及“奇迹药”的来源，但文森特并不在场。接待处的监控画面已有他的实时位置截图与移动路径并保存为证据，我确认这些截图与时间戳已并入医院档案并保持掩护与专业态度。",
+      "gameDay": 1,
+      "gameTime": "22:52",
+      "location": "SCN_1_SUB_1",
+      "metadata": {
+        "outcome": "以“苏珊”身份走向文森特并礼貌寒暄，询问他目前是否需要帮助及他刚才提到的“奇迹药”来源，保持专业与谨慎以不暴露掩护。"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我把监控屏回放了过去五分钟的画面，逐帧核对并在屏幕上标注了Vincent Galenus的移动路线与建议的尾随路线，保存了关键时间戳与高清截图并导出存入医院档案，同时为实验室、药品管理室和停尸间设置了入侵提醒。",
+      "gameDay": 1,
+      "gameTime": "22:58",
+      "location": "SCN_1_SUB_1",
+      "metadata": {
+        "itemId": "ITEM_SCN1_2",
+        "outcome": "在接待处的监控屏上回放并快速审查过去五分钟的录像，确认Vincent Galenus的最新动向并标注下一步尾随路线",
+        "itemName": "监控屏幕"
+      }
+    },
+    {
+      "type": "event",
+      "content": "在接待处监控屏上实时放大并持续跟踪文森特·加勒纳斯的摄像头画面，记录他任何靠近实验室、药品管理室或停尸间的动向 成功",
+      "gameDay": 1,
+      "gameTime": "23:04",
+      "location": "SCN_1_SUB_1",
+      "metadata": {
+        "outcome": "在接待处监控屏上实时放大并持续跟踪文森特·加勒纳斯的摄像头画面，记录他任何靠近实验室、药品管理室或停尸间的动向 成功"
+      }
+    },
+    {
+      "type": "event",
+      "content": "走到通往实验室的走廊口，保持隐蔽以便在不暴露苏珊身份的情况下尾随文森特 成功",
+      "gameDay": 1,
+      "gameTime": "23:05",
+      "location": "SCN_1_SUB_1",
+      "metadata": {
+        "outcome": "走到通往实验室的走廊口，保持隐蔽以便在不暴露苏珊身份的情况下尾随文森特 成功",
+        "blockedReason": "",
+        "failureReason": ""
+      }
+    },
+    {
+      "type": "witness",
+      "content": "[相遇] 刚在医院大厅与Vincent Galenus面对面相遇，吃了一惊并立刻警觉——心跳加快、注意力收窄。我会守住“苏珊”的身份，礼貌应对同时观察他的仪态、言辞和去向；若安全会试探性套话获取情报，若有暴露或危险迹象则避免独处并依赖监控与尾随继续跟踪。短期内把注意力放在他身上，但这并不改变今晚的整体计划。",
+      "gameDay": 1,
+      "gameTime": "23:09",
+      "location": "SCN_1_SUB_1",
+      "metadata": {
+        "impact": 2,
+        "perspective": "co_presence",
+        "sourceAction": "Vincent Galenus 在 医院大厅",
+        "sourceCharacterId": "__encounter__"
+      }
+    },
+    {
+      "type": "event",
+      "content": "尾随文森特，保持低档距离并贴着走廊墙边隐蔽观察，以便随时以“苏珊”身份介入或转回监控位保持掩护 成功",
+      "gameDay": 1,
+      "gameTime": "23:11",
+      "location": "SCN_1_SUB_1",
+      "metadata": {
+        "outcome": "尾随文森特，保持低档距离并贴着走廊墙边隐蔽观察，以便随时以“苏珊”身份介入或转回监控位保持掩护 成功"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我以“苏珊”的身份悄声接近文森特，低声问他“奇迹药”具体来源和他接下来要去的地方。他在酒意与愧疚中告诉我他来是为了钱和那些富人的药，并承认医院有一个药品管理室和一个实验室，暗示他要去其中之一。我注意到他手抖面色苍白，对他生出同情但仍保持戒备，记录下这些信息以便后续核实。 [rel:Vincent Galenus +3 → 11]",
+      "gameDay": 1,
+      "gameTime": "23:17",
+      "location": "SCN_1_SUB_1",
+      "metadata": {
+        "outcome": "以“苏珊”的身份悄声走近文森特，低声询问他关于“奇迹药”的具体来源以及他接下来要去的地方，保持专业语气以不暴露掩护"
+      }
+    },
+    {
+      "type": "information",
+      "content": "医院监控存在若干明显的死角，我已标注这些盲点并在排班白板上列为夜间重点巡查区域，以便后续加强监控与尾随计划。",
+      "gameDay": 1,
+      "gameTime": "23:59",
+      "location": null,
+      "metadata": {
+        "revealed": false,
+        "difficulty": "automatic",
+        "knowledgeId": "learned_day1_3"
+      }
+    },
+    {
+      "type": "information",
+      "content": "实验室内有正在运转的离心机，离心机内放有四支编号的无菌离心管；室内没有已制备的载玻片，但空气中有刺鼻的化学气味和一丝腥味，离心机处于上锁状态且样本暂时无法直接取出。",
+      "gameDay": 1,
+      "gameTime": "23:59",
+      "location": null,
+      "metadata": {
+        "revealed": false,
+        "difficulty": "hard",
+        "knowledgeId": "learned_day1_2"
+      }
+    },
+    {
+      "type": "information",
+      "content": "我核对了文森特的来访登记、病历记录与监控时间戳，三者时间线一致，表面上没有明确的非法入院记录，但这并不排除他有其他隐秘目的。",
+      "gameDay": 1,
+      "gameTime": "23:59",
+      "location": null,
+      "metadata": {
+        "revealed": false,
+        "difficulty": "regular",
+        "knowledgeId": "learned_day1_5"
+      }
+    },
+    {
+      "type": "secret",
+      "content": "我已私自取下并封存了实验室内的四支编号无菌离心管，按证据流程贴标并登记链述——这些样本现由我个人暂存，作为后续调查的重要物证。",
+      "gameDay": 1,
+      "gameTime": "23:59",
+      "location": null,
+      "metadata": {
+        "revealed": false,
+        "difficulty": "extreme",
+        "knowledgeId": "learned_day1_4"
+      }
+    },
+    {
+      "type": "information",
+      "content": "文森特·加勒纳斯来院是为了钱和给他妻子寻找所谓的“奇迹药”，他言语中提到医院有药品储存室和实验室；他有酗酒史并表现出愧疚与紧张，可能愿意冒险接触药品或设备以换取金钱。",
+      "gameDay": 1,
+      "gameTime": "23:59",
+      "location": null,
+      "metadata": {
+        "revealed": false,
+        "difficulty": "regular",
+        "knowledgeId": "learned_day1_1"
+      }
+    }
+  ],
+  "plans": [
+    {
+      "npcName": "Mrs. Barklyite (Lucia Shiny)",
+      "gameDay": 1,
+      "schedule": [
+        {
+          "activity": "在护士站报到并接手夜班以维持苏珊的掩护并观察病房动态。",
+          "location": "星辰医院"
+        },
+        {
+          "activity": "在走廊和监控死角巡视，留意帕特里齐奥可能的可疑人员和物品进出。",
+          "location": "星辰医院"
+        },
+        {
+          "activity": "趁夜色检查药品管理室的库存与记录，重点核对东莨菪碱等受控药物的来货信息。",
+          "location": "星辰医院"
+        },
+        {
+          "activity": "查看停尸间的最近入殓记录和尸体外伤说明，寻找可能指向黑帮活动的异常痕迹。",
+          "location": "星辰医院"
+        },
+        {
+          "activity": "吃一顿晚餐并与老板和常客寒暄以套取关于驯鹿酒吧与本·克莱奥的传闻。",
+          "location": "海伦的餐桌"
+        },
+        {
+          "activity": "到案发地点打听目击者与当晚细节，观察现场关系网与熟客的反应。",
+          "location": "驯鹿酒吧"
+        },
+        {
+          "activity": "与阿道夫会面确认关于截获货物的安排并交换情报，同时谨慎防范监控与陷阱。",
+          "location": "阿道夫家"
+        },
+        {
+          "activity": "返回护士站整理当晚收集到的证据与笔记，并做好书面与物证的保护性备份。",
+          "location": "星辰医院"
+        },
+        {
+          "activity": "准备并草拟明日要提交给警方或检方的文书要点，为通过程序正义追查本·克莱奥铺路。",
+          "location": "星辰医院"
+        },
+        {
+          "activity": "在员工宿舍休息就寝，同时设定夜间巡查计划并保持警觉以应对突发状况。",
+          "location": "星辰医院"
+        }
+      ],
+      "nodes": [
+        {
+          "type": "movement",
+          "action": "走到通往实验室的走廊口，保持隐蔽以便在不暴露苏珊身份的情况下尾随文森特",
+          "impact": 0,
+          "nodeId": "m1",
+          "status": "completed",
+          "endTime": "23:10",
+          "outcome": "走到通往实验室的走廊口，保持隐蔽以便在不暴露苏珊身份的情况下尾随文森特 成功",
+          "startTime": "23:05",
+          "characterId": "Mrs. Barklyite (Lucia Shiny)",
+          "destination": "SCN_1_SUB_1",
+          "characterName": "Mrs. Barklyite (Lucia Shiny)",
+          "executionMeta": {
+            "movement": {
+              "routeSnapshot": [],
+              "targetPosition": {
+                "type": "scene",
+                "sceneId": "SCN_1_SUB_1"
+              },
+              "minutesIntoStep": 0,
+              "currentStepIndex": 0,
+              "lastReachablePosition": {
+                "type": "scene",
+                "sceneId": "SCN_1_SUB_1"
+              }
+            },
+            "startedAt": "23:05",
+            "completedAt": "23:05",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "object_interaction",
+          "action": "在接待处监控屏上保存并标注文森特当前摄像头的高清截图以作档案证据",
+          "impact": 0,
+          "nodeId": "oi1",
+          "status": "completed",
+          "endTime": "22:47",
+          "outcome": "我在接待处的监控屏上把文森特当前摄像头的高清截图保存并标注了位置与时间戳，并将该截图导出存入医院档案，作为影像证据备用。",
+          "startTime": "22:44",
+          "characterId": "Mrs. Barklyite (Lucia Shiny)",
+          "characterName": "Mrs. Barklyite (Lucia Shiny)",
+          "executionMeta": {
+            "startedAt": "22:44",
+            "completedAt": "22:47",
+            "remainingMinutes": 0
+          },
+          "objectInteractionPayload": {
+            "itemId": "ITEM_SCN1_2"
+          }
+        },
+        {
+          "type": "scene_interaction",
+          "action": "取下工作台上的四支编号无菌离心管并放入证据袋封存",
+          "impact": 0,
+          "nodeId": "si1",
+          "status": "completed",
+          "endTime": "22:20",
+          "outcome": "我从工作台上取下四支编号无菌离心管，放入证据袋并封存，贴上标签后将证据袋暂放在实验档案旁，待移交。",
+          "startTime": "22:13",
+          "characterId": "Mrs. Barklyite (Lucia Shiny)",
+          "characterName": "Mrs. Barklyite (Lucia Shiny)",
+          "executionMeta": {
+            "startedAt": "22:13",
+            "completedAt": "22:20",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "scene_interaction",
+          "action": "在显微镜下详细检查载玻片并口述记录我所见的微生物形态、颗粒与任何异常痕迹",
+          "impact": 0,
+          "nodeId": "si2",
+          "status": "completed",
+          "endTime": "22:12",
+          "outcome": "我在显微镜下对载玻片进行了详细检查，口述记录了所见的微生物形态、颗粒分布与任何异常痕迹；口述记录已保存入实验档案，待后续转写与分析。",
+          "startTime": "22:02",
+          "characterId": "Mrs. Barklyite (Lucia Shiny)",
+          "characterName": "Mrs. Barklyite (Lucia Shiny)",
+          "executionMeta": {
+            "startedAt": "22:02",
+            "completedAt": "22:12",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "character_interaction",
+          "action": "以“苏珊”身份礼貌寒暄并询问Vincent在医院的来意，仔细观察他的言行与去向以判断是否可疑",
+          "impact": 1,
+          "nodeId": "ci_vincent_1927",
+          "status": "completed",
+          "endTime": "19:32",
+          "outcome": "我以“苏珊”的身份对Vincent礼貌寒暄并询问他的来意。他告诉我他来卡森德拉是为了钱和那些富人的药，期望能让妻子活下去，并提到医院有药品储存室、实验室以及指向不应该在这里进行的工作的记录；我注意到他手抖、面色苍白，明显有酗酒和愧疚的迹象。",
+          "startTime": "19:27",
+          "characterId": "Mrs. Barklyite (Lucia Shiny)",
+          "characterName": "Mrs. Barklyite (Lucia Shiny)",
+          "executionMeta": {
+            "startedAt": "19:27",
+            "completedAt": "19:32",
+            "remainingMinutes": 0
+          },
+          "targetCharacterIds": [
+            "Vincent Galenus"
+          ]
+        },
+        {
+          "type": "character_interaction",
+          "action": "以“苏珊”身份与Vincent交谈，礼貌盘问他到院的时间、曾接触的医院工作人员与关于实验室和药品储存室的具体线索，同时维持专业友善以避免暴露掩护",
+          "impact": 1,
+          "nodeId": "ci_vincent_1933",
+          "status": "completed",
+          "endTime": "19:38",
+          "outcome": "我以“苏珊”身份礼貌询问文森特的到院时间、接触人员与有关实验室和药品储存的线索，文森特在愧疚和酒精影响下向我坦白：他来卡森德拉是为了钱和那些富人的“奇迹药”，并提到医院确实有药品储存室/药品管理室、一个实验室以及指向不该进行工作的记录。我注意到他手抖、面色苍白，对他生出同情但仍保持戒备，尽力维持专业不暴露掩护。",
+          "startTime": "19:33",
+          "characterId": "Mrs. Barklyite (Lucia Shiny)",
+          "characterName": "Mrs. Barklyite (Lucia Shiny)",
+          "executionMeta": {
+            "startedAt": "19:33",
+            "completedAt": "19:38",
+            "remainingMinutes": 0
+          },
+          "targetCharacterIds": [
+            "Vincent Galenus"
+          ]
+        },
+        {
+          "type": "object_interaction",
+          "action": "在显微镜下检查载玻片并口述记录观察结果",
+          "impact": 0,
+          "nodeId": "oi2",
+          "status": "completed",
+          "endTime": "22:01",
+          "outcome": "我把便携录音器放在包口并开启录音，走到显微镜前口述观察：显微镜台上没有已制备的载玻片可供观察；离心机盖已合上并锁好，机器在设定转速下稳定运转。空气中有刺鼻的化学味和一丝腥味，我记录了仪器状态、持续的机械声以及无法取得离心管样本的情况。",
+          "startTime": "21:56",
+          "characterId": "Mrs. Barklyite (Lucia Shiny)",
+          "characterName": "Mrs. Barklyite (Lucia Shiny)",
+          "executionMeta": {
+            "startedAt": "21:56",
+            "completedAt": "22:01",
+            "remainingMinutes": 0
+          },
+          "objectInteractionPayload": {
+            "itemId": "ITEM_SCN1_5"
+          }
+        },
+        {
+          "type": "object_interaction",
+          "action": "在接待处监控屏上保存并标注文森特当前摄像头的高清截图以作档案证据",
+          "impact": 0,
+          "nodeId": "oi1",
+          "status": "completed",
+          "endTime": "22:47",
+          "outcome": "我在接待处的监控屏上把文森特当前摄像头的高清截图保存并标注了位置与时间戳，并将该截图导出存入医院档案，作为影像证据备用。",
+          "startTime": "22:44",
+          "characterId": "Mrs. Barklyite (Lucia Shiny)",
+          "characterName": "Mrs. Barklyite (Lucia Shiny)",
+          "executionMeta": {
+            "startedAt": "22:44",
+            "completedAt": "22:47",
+            "remainingMinutes": 0
+          },
+          "objectInteractionPayload": {
+            "itemId": "ITEM_SCN1_2"
+          }
+        },
+        {
+          "type": "scene_interaction",
+          "action": "取下工作台上的四支编号无菌离心管并放入证据袋封存",
+          "impact": 0,
+          "nodeId": "si1",
+          "status": "completed",
+          "endTime": "22:20",
+          "outcome": "我从工作台上取下四支编号无菌离心管，放入证据袋并封存，贴上标签后将证据袋暂放在实验档案旁，待移交。",
+          "startTime": "22:13",
+          "characterId": "Mrs. Barklyite (Lucia Shiny)",
+          "characterName": "Mrs. Barklyite (Lucia Shiny)",
+          "executionMeta": {
+            "startedAt": "22:13",
+            "completedAt": "22:20",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "object_interaction",
+          "action": "在接待处监控屏上保存并标注文森特当前摄像头的高清截图以作档案证据",
+          "impact": 0,
+          "nodeId": "oi1",
+          "status": "completed",
+          "endTime": "22:47",
+          "outcome": "我在接待处的监控屏上把文森特当前摄像头的高清截图保存并标注了位置与时间戳，并将该截图导出存入医院档案，作为影像证据备用。",
+          "startTime": "22:44",
+          "characterId": "Mrs. Barklyite (Lucia Shiny)",
+          "characterName": "Mrs. Barklyite (Lucia Shiny)",
+          "executionMeta": {
+            "startedAt": "22:44",
+            "completedAt": "22:47",
+            "remainingMinutes": 0
+          },
+          "objectInteractionPayload": {
+            "itemId": "ITEM_SCN1_2"
+          }
+        },
+        {
+          "type": "object_interaction",
+          "action": "在显微镜下检查载玻片并口述记录观察结果",
+          "impact": 0,
+          "nodeId": "oi2",
+          "status": "completed",
+          "endTime": "22:01",
+          "outcome": "我把便携录音器放在包口并开启录音，走到显微镜前口述观察：显微镜台上没有已制备的载玻片可供观察；离心机盖已合上并锁好，机器在设定转速下稳定运转。空气中有刺鼻的化学味和一丝腥味，我记录了仪器状态、持续的机械声以及无法取得离心管样本的情况。",
+          "startTime": "21:56",
+          "characterId": "Mrs. Barklyite (Lucia Shiny)",
+          "characterName": "Mrs. Barklyite (Lucia Shiny)",
+          "executionMeta": {
+            "startedAt": "21:56",
+            "completedAt": "22:01",
+            "remainingMinutes": 0
+          },
+          "objectInteractionPayload": {
+            "itemId": "ITEM_SCN1_5"
+          }
+        },
+        {
+          "type": "action",
+          "action": "在接待处监控屏上实时放大并持续跟踪文森特·加勒纳斯的摄像头画面，记录他任何靠近实验室、药品管理室或停尸间的动向",
+          "impact": 0,
+          "nodeId": "a2",
+          "status": "completed",
+          "endTime": "23:04",
+          "outcome": "在接待处监控屏上实时放大并持续跟踪文森特·加勒纳斯的摄像头画面，记录他任何靠近实验室、药品管理室或停尸间的动向 成功",
+          "startTime": "22:59",
+          "characterId": "Mrs. Barklyite (Lucia Shiny)",
+          "characterName": "Mrs. Barklyite (Lucia Shiny)",
+          "executionMeta": {
+            "startedAt": "22:59",
+            "completedAt": "23:04",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "object_interaction",
+          "action": "在监控屏上切换到覆盖文森特所在路线的所有摄像头，开始同时录制并设置入侵/区域进入提醒（针对实验室、药品管理室和停尸间），并在录制中标注关键时间戳以备用查证",
+          "impact": 0,
+          "nodeId": "oi_lucia_001",
+          "status": "completed",
+          "endTime": "20:40",
+          "outcome": "我把监控屏切到覆盖文森特所在路线的所有摄像头，开始同步录制并为实验室、药品管理室和停尸间设置了入侵/区域进入提醒；我在录制中标注并保存了关键时间戳和他的移动路径，便于后续核查。",
+          "startTime": "20:36",
+          "characterId": "Mrs. Barklyite (Lucia Shiny)",
+          "characterName": "Mrs. Barklyite (Lucia Shiny)",
+          "executionMeta": {
+            "startedAt": "20:36",
+            "completedAt": "20:40",
+            "remainingMinutes": 0
+          },
+          "objectInteractionPayload": {
+            "itemId": "ITEM_SCN1_2"
+          }
+        },
+        {
+          "type": "movement",
+          "action": "走到通往实验室的走廊口，保持隐蔽以便在不暴露苏珊身份的情况下尾随文森特",
+          "impact": 0,
+          "nodeId": "m1",
+          "status": "completed",
+          "endTime": "23:10",
+          "outcome": "走到通往实验室的走廊口，保持隐蔽以便在不暴露苏珊身份的情况下尾随文森特 成功",
+          "startTime": "23:05",
+          "characterId": "Mrs. Barklyite (Lucia Shiny)",
+          "destination": "SCN_1_SUB_1",
+          "characterName": "Mrs. Barklyite (Lucia Shiny)",
+          "executionMeta": {
+            "movement": {
+              "routeSnapshot": [],
+              "targetPosition": {
+                "type": "scene",
+                "sceneId": "SCN_1_SUB_1"
+              },
+              "minutesIntoStep": 0,
+              "currentStepIndex": 0,
+              "lastReachablePosition": {
+                "type": "scene",
+                "sceneId": "SCN_1_SUB_1"
+              }
+            },
+            "startedAt": "23:05",
+            "completedAt": "23:05",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "action",
+          "action": "把监控画面切到覆盖文森特当前路线的近景摄像头，放大并持续观察实验室、药品管理室和停尸间的门口，记录他的一举一动并在必要时触发入侵提醒。",
+          "impact": 0,
+          "nodeId": "a1",
+          "status": "completed",
+          "endTime": "21:17",
+          "outcome": "把监控画面切到覆盖文森特当前路线的近景摄像头，放大并持续观察实验室、药品管理室和停尸间的门口，记录他的一举一动并在必要时触发入侵提醒。 成功",
+          "startTime": "21:12",
+          "characterId": "Mrs. Barklyite (Lucia Shiny)",
+          "characterName": "Mrs. Barklyite (Lucia Shiny)",
+          "executionMeta": {
+            "startedAt": "21:12",
+            "completedAt": "21:17",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "action",
+          "action": "在接待处监控屏上实时放大并持续跟踪文森特·加勒纳斯的摄像头画面，记录他任何靠近实验室、药品管理室或停尸间的动向",
+          "impact": 0,
+          "nodeId": "a2",
+          "status": "completed",
+          "endTime": "23:04",
+          "outcome": "在接待处监控屏上实时放大并持续跟踪文森特·加勒纳斯的摄像头画面，记录他任何靠近实验室、药品管理室或停尸间的动向 成功",
+          "startTime": "22:59",
+          "characterId": "Mrs. Barklyite (Lucia Shiny)",
+          "characterName": "Mrs. Barklyite (Lucia Shiny)",
+          "executionMeta": {
+            "startedAt": "22:59",
+            "completedAt": "23:04",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "character_interaction",
+          "action": "以“苏珊”的身份悄声走近文森特，低声询问他关于“奇迹药”的具体来源以及他接下来要去的地方，保持专业语气以不暴露掩护",
+          "impact": 1,
+          "nodeId": "ci1",
+          "status": "completed",
+          "endTime": "23:17",
+          "outcome": "我以“苏珊”的身份悄声接近文森特，低声问他“奇迹药”具体来源和他接下来要去的地方。他在酒意与愧疚中告诉我他来是为了钱和那些富人的药，并承认医院有一个药品管理室和一个实验室，暗示他要去其中之一。我注意到他手抖面色苍白，对他生出同情但仍保持戒备，记录下这些信息以便后续核实。",
+          "startTime": "23:12",
+          "characterId": "Mrs. Barklyite (Lucia Shiny)",
+          "characterName": "Mrs. Barklyite (Lucia Shiny)",
+          "executionMeta": {
+            "startedAt": "23:12",
+            "completedAt": "23:17",
+            "remainingMinutes": 0
+          },
+          "targetCharacterIds": [
+            "Vincent Galenus"
+          ]
+        },
+        {
+          "type": "object_interaction",
+          "action": "在显微镜下检查载玻片并口述记录观察结果",
+          "impact": 0,
+          "nodeId": "oi2",
+          "status": "completed",
+          "endTime": "22:01",
+          "outcome": "我把便携录音器放在包口并开启录音，走到显微镜前口述观察：显微镜台上没有已制备的载玻片可供观察；离心机盖已合上并锁好，机器在设定转速下稳定运转。空气中有刺鼻的化学味和一丝腥味，我记录了仪器状态、持续的机械声以及无法取得离心管样本的情况。",
+          "startTime": "21:56",
+          "characterId": "Mrs. Barklyite (Lucia Shiny)",
+          "characterName": "Mrs. Barklyite (Lucia Shiny)",
+          "executionMeta": {
+            "startedAt": "21:56",
+            "completedAt": "22:01",
+            "remainingMinutes": 0
+          },
+          "objectInteractionPayload": {
+            "itemId": "ITEM_SCN1_5"
+          }
+        },
+        {
+          "type": "action",
+          "action": "把监控画面切到覆盖文森特当前路线的近景摄像头，放大并持续观察实验室、药品管理室和停尸间的门口，记录他的一举一动并在必要时触发入侵提醒。",
+          "impact": 0,
+          "nodeId": "a1",
+          "status": "completed",
+          "endTime": "21:17",
+          "outcome": "把监控画面切到覆盖文森特当前路线的近景摄像头，放大并持续观察实验室、药品管理室和停尸间的门口，记录他的一举一动并在必要时触发入侵提醒。 成功",
+          "startTime": "21:12",
+          "characterId": "Mrs. Barklyite (Lucia Shiny)",
+          "characterName": "Mrs. Barklyite (Lucia Shiny)",
+          "executionMeta": {
+            "startedAt": "21:12",
+            "completedAt": "21:17",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "action",
+          "action": "在接待处监控屏上实时放大并持续跟踪文森特·加勒纳斯的摄像头画面，记录他任何靠近实验室、药品管理室或停尸间的动向",
+          "impact": 0,
+          "nodeId": "a2",
+          "status": "completed",
+          "endTime": "23:04",
+          "outcome": "在接待处监控屏上实时放大并持续跟踪文森特·加勒纳斯的摄像头画面，记录他任何靠近实验室、药品管理室或停尸间的动向 成功",
+          "startTime": "22:59",
+          "characterId": "Mrs. Barklyite (Lucia Shiny)",
+          "characterName": "Mrs. Barklyite (Lucia Shiny)",
+          "executionMeta": {
+            "startedAt": "22:59",
+            "completedAt": "23:04",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "scene_interaction",
+          "action": "在显微镜下详细检查载玻片并口述记录我所见的微生物形态、颗粒与任何异常痕迹",
+          "impact": 0,
+          "nodeId": "si2",
+          "status": "completed",
+          "endTime": "22:12",
+          "outcome": "我在显微镜下对载玻片进行了详细检查，口述记录了所见的微生物形态、颗粒分布与任何异常痕迹；口述记录已保存入实验档案，待后续转写与分析。",
+          "startTime": "22:02",
+          "characterId": "Mrs. Barklyite (Lucia Shiny)",
+          "characterName": "Mrs. Barklyite (Lucia Shiny)",
+          "executionMeta": {
+            "startedAt": "22:02",
+            "completedAt": "22:12",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "action",
+          "action": "在接待处监控屏上实时放大并持续跟踪文森特·加勒纳斯的摄像头画面，记录他任何靠近实验室、药品管理室或停尸间的动向",
+          "impact": 0,
+          "nodeId": "a2",
+          "status": "completed",
+          "endTime": "23:04",
+          "outcome": "在接待处监控屏上实时放大并持续跟踪文森特·加勒纳斯的摄像头画面，记录他任何靠近实验室、药品管理室或停尸间的动向 成功",
+          "startTime": "22:59",
+          "characterId": "Mrs. Barklyite (Lucia Shiny)",
+          "characterName": "Mrs. Barklyite (Lucia Shiny)",
+          "executionMeta": {
+            "startedAt": "22:59",
+            "completedAt": "23:04",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "object_interaction",
+          "action": "从手提包取出录音设备并开启录音，记录实验室门外的任何声音",
+          "impact": 0,
+          "nodeId": "oi_day1_2135",
+          "status": "completed",
+          "endTime": "21:38",
+          "outcome": "我从手提包里拿出便携录音器并开启，开始录下实验室门外与大厅的环境声——能听到头顶日光灯微弱的嗡嗡声和大厅的背景杂音，录音在运作中。",
+          "startTime": "21:35",
+          "characterId": "Mrs. Barklyite (Lucia Shiny)",
+          "characterName": "Mrs. Barklyite (Lucia Shiny)",
+          "executionMeta": {
+            "startedAt": "21:35",
+            "completedAt": "21:38",
+            "remainingMinutes": 0
+          },
+          "objectInteractionPayload": {
+            "itemId": "装有个人物品的手提包"
+          }
+        },
+        {
+          "type": "scene_interaction",
+          "action": "从实验室电子门的门缝向内窥视，确认是否有人、可疑设备或药品存放",
+          "impact": 0,
+          "nodeId": "si_day1_2139",
+          "status": "completed",
+          "endTime": "21:42",
+          "outcome": "我从实验室电子门的门缝向里窥视，仔细查看是否有人或有可疑设备、药品存放。没看见任何人，也未发现明显的可疑设备或药品。",
+          "startTime": "21:39",
+          "characterId": "Mrs. Barklyite (Lucia Shiny)",
+          "characterName": "Mrs. Barklyite (Lucia Shiny)",
+          "executionMeta": {
+            "startedAt": "21:39",
+            "completedAt": "21:42",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "movement",
+          "action": "走到通往实验室的走廊口，保持隐蔽以便在不暴露苏珊身份的情况下尾随文森特",
+          "impact": 0,
+          "nodeId": "m1",
+          "status": "completed",
+          "endTime": "23:10",
+          "outcome": "走到通往实验室的走廊口，保持隐蔽以便在不暴露苏珊身份的情况下尾随文森特 成功",
+          "startTime": "23:05",
+          "characterId": "Mrs. Barklyite (Lucia Shiny)",
+          "destination": "SCN_1_SUB_1",
+          "characterName": "Mrs. Barklyite (Lucia Shiny)",
+          "executionMeta": {
+            "movement": {
+              "routeSnapshot": [],
+              "targetPosition": {
+                "type": "scene",
+                "sceneId": "SCN_1_SUB_1"
+              },
+              "minutesIntoStep": 0,
+              "currentStepIndex": 0,
+              "lastReachablePosition": {
+                "type": "scene",
+                "sceneId": "SCN_1_SUB_1"
+              }
+            },
+            "startedAt": "23:05",
+            "completedAt": "23:05",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "object_interaction",
+          "action": "在显微镜下仔细检查载玻片上的上清样本，记录可见的微观特征并用便携录音器口述观察结果",
+          "impact": 0,
+          "nodeId": "oi_lab_exam_01",
+          "status": "completed",
+          "endTime": "21:55",
+          "outcome": "我把便携录音器保持开启并放在包口，在显微镜前准备检查载玻片上的上清样本并口述记录。显微镜台上没有已制备的载玻片可供观察；离心机盖已合上并锁好、机器稳定运转，内部有四支无菌离心管，无法取出样本。于是我用录音器口述记录了我能观察到的内容——仪器状态、实验室的刺鼻气味和持续的机械运转声。",
+          "startTime": "21:45",
+          "characterId": "Mrs. Barklyite (Lucia Shiny)",
+          "characterName": "Mrs. Barklyite (Lucia Shiny)",
+          "executionMeta": {
+            "startedAt": "21:45",
+            "completedAt": "21:55",
+            "remainingMinutes": 0
+          },
+          "objectInteractionPayload": {
+            "itemId": "ITEM_SCN1_5"
+          }
+        },
+        {
+          "type": "object_interaction",
+          "action": "在显微镜下检查载玻片并口述记录观察结果",
+          "impact": 0,
+          "nodeId": "oi2",
+          "status": "completed",
+          "endTime": "22:01",
+          "outcome": "我把便携录音器放在包口并开启录音，走到显微镜前口述观察：显微镜台上没有已制备的载玻片可供观察；离心机盖已合上并锁好，机器在设定转速下稳定运转。空气中有刺鼻的化学味和一丝腥味，我记录了仪器状态、持续的机械声以及无法取得离心管样本的情况。",
+          "startTime": "21:56",
+          "characterId": "Mrs. Barklyite (Lucia Shiny)",
+          "characterName": "Mrs. Barklyite (Lucia Shiny)",
+          "executionMeta": {
+            "startedAt": "21:56",
+            "completedAt": "22:01",
+            "remainingMinutes": 0
+          },
+          "objectInteractionPayload": {
+            "itemId": "ITEM_SCN1_5"
+          }
+        },
+        {
+          "type": "scene_interaction",
+          "action": "在显微镜下详细检查载玻片并口述记录我所见的微生物形态、颗粒与任何异常痕迹",
+          "impact": 0,
+          "nodeId": "si2",
+          "status": "completed",
+          "endTime": "22:12",
+          "outcome": "我在显微镜下对载玻片进行了详细检查，口述记录了所见的微生物形态、颗粒分布与任何异常痕迹；口述记录已保存入实验档案，待后续转写与分析。",
+          "startTime": "22:02",
+          "characterId": "Mrs. Barklyite (Lucia Shiny)",
+          "characterName": "Mrs. Barklyite (Lucia Shiny)",
+          "executionMeta": {
+            "startedAt": "22:02",
+            "completedAt": "22:12",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "scene_interaction",
+          "action": "取下工作台上的四支编号无菌离心管并放入证据袋封存",
+          "impact": 0,
+          "nodeId": "si1",
+          "status": "completed",
+          "endTime": "22:20",
+          "outcome": "我从工作台上取下四支编号无菌离心管，放入证据袋并封存，贴上标签后将证据袋暂放在实验档案旁，待移交。",
+          "startTime": "22:13",
+          "characterId": "Mrs. Barklyite (Lucia Shiny)",
+          "characterName": "Mrs. Barklyite (Lucia Shiny)",
+          "executionMeta": {
+            "startedAt": "22:13",
+            "completedAt": "22:20",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "object_interaction",
+          "action": "在接待处监控屏上保存并标注文森特当前摄像头的高清截图以作档案证据",
+          "impact": 0,
+          "nodeId": "oi1",
+          "status": "completed",
+          "endTime": "22:47",
+          "outcome": "我在接待处的监控屏上把文森特当前摄像头的高清截图保存并标注了位置与时间戳，并将该截图导出存入医院档案，作为影像证据备用。",
+          "startTime": "22:44",
+          "characterId": "Mrs. Barklyite (Lucia Shiny)",
+          "characterName": "Mrs. Barklyite (Lucia Shiny)",
+          "executionMeta": {
+            "startedAt": "22:44",
+            "completedAt": "22:47",
+            "remainingMinutes": 0
+          },
+          "objectInteractionPayload": {
+            "itemId": "ITEM_SCN1_2"
+          }
+        },
+        {
+          "type": "movement",
+          "action": "离开实验室，前往护士站整理证据与笔记，并切换监控画面继续实时跟踪Vincent Galenus以保护掩护并收集情报",
+          "impact": 0,
+          "nodeId": "m2",
+          "status": "completed",
+          "endTime": "22:32",
+          "outcome": "离开实验室，前往护士站整理证据与笔记，并切换监控画面继续实时跟踪Vincent Galenus以保护掩护并收集情报 成功",
+          "startTime": "22:27",
+          "characterId": "Mrs. Barklyite (Lucia Shiny)",
+          "destination": "SCN_1_SUB_1",
+          "characterName": "Mrs. Barklyite (Lucia Shiny)",
+          "executionMeta": {
+            "movement": {
+              "routeSnapshot": [
+                {
+                  "to": {
+                    "type": "scene",
+                    "sceneId": "SCN_1_SUB_1"
+                  },
+                  "from": {
+                    "type": "scene",
+                    "sceneId": "SCN_1_SUB_3"
+                  },
+                  "kind": "to_scene",
+                  "blockCheck": {
+                    "toId": "SCN_1_SUB_1",
+                    "fromId": "SCN_1_SUB_3"
+                  },
+                  "durationMinutes": 5
+                }
+              ],
+              "targetPosition": {
+                "type": "scene",
+                "sceneId": "SCN_1_SUB_1"
+              },
+              "minutesIntoStep": 0,
+              "currentStepIndex": 1,
+              "lastReachablePosition": {
+                "type": "scene",
+                "sceneId": "SCN_1_SUB_1"
+              }
+            },
+            "startedAt": "22:27",
+            "completedAt": "22:31",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "object_interaction",
+          "action": "在接待处监控屏上保存并标注文森特当前摄像头的高清截图以作档案证据",
+          "impact": 0,
+          "nodeId": "oi1",
+          "status": "completed",
+          "endTime": "22:47",
+          "outcome": "我在接待处的监控屏上把文森特当前摄像头的高清截图保存并标注了位置与时间戳，并将该截图导出存入医院档案，作为影像证据备用。",
+          "startTime": "22:44",
+          "characterId": "Mrs. Barklyite (Lucia Shiny)",
+          "characterName": "Mrs. Barklyite (Lucia Shiny)",
+          "executionMeta": {
+            "startedAt": "22:44",
+            "completedAt": "22:47",
+            "remainingMinutes": 0
+          },
+          "objectInteractionPayload": {
+            "itemId": "ITEM_SCN1_2"
+          }
+        },
+        {
+          "type": "object_interaction",
+          "action": "在接待处监控屏上放大并实时跟踪覆盖文森特的摄像头画面，标注当前位置并保存截图与时间戳以便后续尾随或介入判断",
+          "impact": 0,
+          "nodeId": "oi_next_001",
+          "status": "completed",
+          "endTime": "22:43",
+          "outcome": "我把接待处的监控屏放大并切到实时画面，标出文森特的当前位置，保存了截图和时间戳，并开始同步录制他的路线，同时为实验室、药品管理室与停尸间设立了入侵提醒，记录已保存以便后续尾随或介入判断。",
+          "startTime": "22:38",
+          "characterId": "Mrs. Barklyite (Lucia Shiny)",
+          "characterName": "Mrs. Barklyite (Lucia Shiny)",
+          "executionMeta": {
+            "startedAt": "22:38",
+            "completedAt": "22:43",
+            "remainingMinutes": 0
+          },
+          "objectInteractionPayload": {
+            "itemId": "ITEM_SCN1_2"
+          }
+        },
+        {
+          "type": "object_interaction",
+          "action": "在接待处监控屏上保存并标注文森特当前摄像头的高清截图以作档案证据",
+          "impact": 0,
+          "nodeId": "oi1",
+          "status": "completed",
+          "endTime": "22:47",
+          "outcome": "我在接待处的监控屏上把文森特当前摄像头的高清截图保存并标注了位置与时间戳，并将该截图导出存入医院档案，作为影像证据备用。",
+          "startTime": "22:44",
+          "characterId": "Mrs. Barklyite (Lucia Shiny)",
+          "characterName": "Mrs. Barklyite (Lucia Shiny)",
+          "executionMeta": {
+            "startedAt": "22:44",
+            "completedAt": "22:47",
+            "remainingMinutes": 0
+          },
+          "objectInteractionPayload": {
+            "itemId": "ITEM_SCN1_2"
+          }
+        },
+        {
+          "type": "character_interaction",
+          "action": "以“苏珊”的身份悄声走近文森特，低声询问他关于“奇迹药”的具体来源以及他接下来要去的地方，保持专业语气以不暴露掩护",
+          "impact": 1,
+          "nodeId": "ci1",
+          "status": "completed",
+          "endTime": "23:17",
+          "outcome": "我以“苏珊”的身份悄声接近文森特，低声问他“奇迹药”具体来源和他接下来要去的地方。他在酒意与愧疚中告诉我他来是为了钱和那些富人的药，并承认医院有一个药品管理室和一个实验室，暗示他要去其中之一。我注意到他手抖面色苍白，对他生出同情但仍保持戒备，记录下这些信息以便后续核实。",
+          "startTime": "23:12",
+          "characterId": "Mrs. Barklyite (Lucia Shiny)",
+          "characterName": "Mrs. Barklyite (Lucia Shiny)",
+          "executionMeta": {
+            "startedAt": "23:12",
+            "completedAt": "23:17",
+            "remainingMinutes": 0
+          },
+          "targetCharacterIds": [
+            "Vincent Galenus"
+          ]
+        },
+        {
+          "type": "object_interaction",
+          "action": "在接待处的监控屏上回放并快速审查过去五分钟的录像，确认Vincent Galenus的最新动向并标注下一步尾随路线",
+          "impact": 0,
+          "nodeId": "oi_day1_2253",
+          "status": "completed",
+          "endTime": "22:58",
+          "outcome": "我把监控屏回放了过去五分钟的画面，逐帧核对并在屏幕上标注了Vincent Galenus的移动路线与建议的尾随路线，保存了关键时间戳与高清截图并导出存入医院档案，同时为实验室、药品管理室和停尸间设置了入侵提醒。",
+          "startTime": "22:53",
+          "characterId": "Mrs. Barklyite (Lucia Shiny)",
+          "characterName": "Mrs. Barklyite (Lucia Shiny)",
+          "executionMeta": {
+            "startedAt": "22:53",
+            "completedAt": "22:58",
+            "remainingMinutes": 0
+          },
+          "objectInteractionPayload": {
+            "itemId": "ITEM_SCN1_2"
+          }
+        },
+        {
+          "type": "action",
+          "action": "在接待处监控屏上实时放大并持续跟踪文森特·加勒纳斯的摄像头画面，记录他任何靠近实验室、药品管理室或停尸间的动向",
+          "impact": 0,
+          "nodeId": "a2",
+          "status": "completed",
+          "endTime": "23:04",
+          "outcome": "在接待处监控屏上实时放大并持续跟踪文森特·加勒纳斯的摄像头画面，记录他任何靠近实验室、药品管理室或停尸间的动向 成功",
+          "startTime": "22:59",
+          "characterId": "Mrs. Barklyite (Lucia Shiny)",
+          "characterName": "Mrs. Barklyite (Lucia Shiny)",
+          "executionMeta": {
+            "startedAt": "22:59",
+            "completedAt": "23:04",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "movement",
+          "action": "走到通往实验室的走廊口，保持隐蔽以便在不暴露苏珊身份的情况下尾随文森特",
+          "impact": 0,
+          "nodeId": "m1",
+          "status": "completed",
+          "endTime": "23:10",
+          "outcome": "走到通往实验室的走廊口，保持隐蔽以便在不暴露苏珊身份的情况下尾随文森特 成功",
+          "startTime": "23:05",
+          "characterId": "Mrs. Barklyite (Lucia Shiny)",
+          "destination": "SCN_1_SUB_1",
+          "characterName": "Mrs. Barklyite (Lucia Shiny)",
+          "executionMeta": {
+            "movement": {
+              "routeSnapshot": [],
+              "targetPosition": {
+                "type": "scene",
+                "sceneId": "SCN_1_SUB_1"
+              },
+              "minutesIntoStep": 0,
+              "currentStepIndex": 0,
+              "lastReachablePosition": {
+                "type": "scene",
+                "sceneId": "SCN_1_SUB_1"
+              }
+            },
+            "startedAt": "23:05",
+            "completedAt": "23:05",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "action",
+          "action": "尾随文森特，保持低档距离并贴着走廊墙边隐蔽观察，以便随时以“苏珊”身份介入或转回监控位保持掩护",
+          "impact": 0,
+          "nodeId": "a_02306_follow",
+          "status": "completed",
+          "endTime": "23:11",
+          "outcome": "尾随文森特，保持低档距离并贴着走廊墙边隐蔽观察，以便随时以“苏珊”身份介入或转回监控位保持掩护 成功",
+          "startTime": "23:06",
+          "characterId": "Mrs. Barklyite (Lucia Shiny)",
+          "characterName": "Mrs. Barklyite (Lucia Shiny)",
+          "executionMeta": {
+            "startedAt": "23:06",
+            "completedAt": "23:11",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "character_interaction",
+          "action": "以“苏珊”的身份悄声走近文森特，低声询问他关于“奇迹药”的具体来源以及他接下来要去的地方，保持专业语气以不暴露掩护",
+          "impact": 1,
+          "nodeId": "ci1",
+          "status": "completed",
+          "endTime": "23:17",
+          "outcome": "我以“苏珊”的身份悄声接近文森特，低声问他“奇迹药”具体来源和他接下来要去的地方。他在酒意与愧疚中告诉我他来是为了钱和那些富人的药，并承认医院有一个药品管理室和一个实验室，暗示他要去其中之一。我注意到他手抖面色苍白，对他生出同情但仍保持戒备，记录下这些信息以便后续核实。",
+          "startTime": "23:12",
+          "characterId": "Mrs. Barklyite (Lucia Shiny)",
+          "characterName": "Mrs. Barklyite (Lucia Shiny)",
+          "executionMeta": {
+            "startedAt": "23:12",
+            "completedAt": "23:17",
+            "remainingMinutes": 0
+          },
+          "targetCharacterIds": [
+            "Vincent Galenus"
+          ]
+        },
+        {
+          "type": "character_interaction",
+          "action": "以“苏珊”身份低声询问文森特现在要去哪个房间，是否需要我陪同或帮忙，以便在不暴露掩护的情况下进一步评估他的目的",
+          "impact": 1,
+          "nodeId": "ci_vincent_2318",
+          "status": "in_progress",
+          "endTime": "23:21",
+          "startTime": "23:18",
+          "characterId": "Mrs. Barklyite (Lucia Shiny)",
+          "characterName": "Mrs. Barklyite (Lucia Shiny)",
+          "executionMeta": {
+            "startedAt": "23:18",
+            "remainingMinutes": 3
+          },
+          "targetCharacterIds": [
+            "Vincent Galenus"
+          ]
+        }
+      ]
+    },
+    {
+      "npcName": "Mrs. Barklyite (Lucia Shiny)",
+      "gameDay": 2,
+      "schedule": [
+        {
+          "activity": "在护士站继续监听并回放便携录音，转写监控与音频以完善证据时间线。",
+          "location": "星辰医院"
+        },
+        {
+          "activity": "前往实验室确认并再次拍照封存四支编号离心管的证据袋和登记表以防篡改。",
+          "location": "星辰医院"
+        },
+        {
+          "activity": "检查药品管理室的冷藏设备和暗门记录，核对东莨菪碱的库存异常并记录异常条目。",
+          "location": "星辰医院"
+        },
+        {
+          "activity": "在停尸间外核对温控与存放记录，确认证据链不中断并避免触碰冷藏柜内容以保合法性。",
+          "location": "星辰医院"
+        },
+        {
+          "activity": "在接待处将监控截图和关键时间戳备份到安全位置并写下下一步的法律行动要点。",
+          "location": "星辰医院"
+        },
+        {
+          "activity": "与值班护士低调交接，维持“苏珊”身份并在对话中试探文森特的近期行踪与精神状态。",
+          "location": "星辰医院"
+        },
+        {
+          "activity": "在休息室小睡两小时以保持清醒继续夜间巡查并为白天外出准备体力。",
+          "location": "星辰医院"
+        },
+        {
+          "activity": "白天以访客身份走访酒吧，观察并向酒保试探性打听关于本·克莱奥与帕特里齐奥的近期来客与交易线索。",
+          "location": "驯鹿酒吧"
+        },
+        {
+          "activity": "走访花店并与西蒙或店主寒暄，试探是否有人近期为医院或某位黑帮人物下过特殊订购或送货安排。",
+          "location": "花店·卡森德拉之花"
+        },
+        {
+          "activity": "返院整理白天获得的线索，更新档案并拟定向阿尔伯特或警方提交的正式证据清单与辩护预案。",
+          "location": "星辰医院"
+        },
+        {
+          "activity": "在护士站完成班次交接记录并将所有证物和电子备份妥善锁入安全柜，随后在值班床上入睡以守住掩护。",
+          "location": "星辰医院"
+        }
+      ],
+      "nodes": [
+        {
+          "type": "character_interaction",
+          "action": "以“苏珊”身份低声与文森特交谈，探问他为何住院、最近去向以及是否与实验室或药品有关，同时注意其反应以维护掩护并收集情报",
+          "impact": 1,
+          "nodeId": "ci1",
+          "status": "in_progress",
+          "endTime": "00:10",
+          "startTime": "00:00",
+          "characterId": "Mrs. Barklyite (Lucia Shiny)",
+          "characterName": "Mrs. Barklyite (Lucia Shiny)",
+          "executionMeta": {
+            "startedAt": "00:00",
+            "remainingMinutes": 10
+          },
+          "targetCharacterIds": [
+            "Vincent Galenus"
+          ]
+        }
+      ]
+    }
+  ],
+  "intents": [
+    {
+      "intent": "Prioritize assessing Vincent Galenus: determine why he's in the hospital, preserve my 'Susan' cover, gather intel if it's safe (casual questions/observe), or else avoid direct contact and monitor him (CCTV/tail) to see if he's linked to Patrizio/Ben Cleo or the drug shipments.",
+      "updatedAt": "2026-04-02T04:12:37.502Z"
+    }
+  ],
+  "npcName": "Mrs. Barklyite (Lucia Shiny)"
+}

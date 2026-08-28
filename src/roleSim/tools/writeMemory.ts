@@ -28,11 +28,11 @@ The colour of the wallpaper is not.
 
 \`ref\` is the tag at the start of the line in **what you remember**:
 
-    - [M3f9a2c] [12-01 09:20] (general) Hollins said he was at the harbour all evening.
+    - #M3f9a2c [12-01 09:20] (general) Hollins said he was at the harbour all evening.
 
-Copy \`M3f9a2c\` exactly. Only your own memories carry a tag you can use —
-what you already knew before this morning, and the account of your day, are
-not yours to rewrite.
+Copy \`M3f9a2c\` exactly, without the \`#\`. Only your own memories carry a tag
+you can use — what you already knew before this morning, and the account of
+your day, are not yours to rewrite.
 
 ### Correct, do not pile up
 

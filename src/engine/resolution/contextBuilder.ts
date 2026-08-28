@@ -104,7 +104,9 @@ export function buildEngineResolutionContext(
         );
         return {
           targetId: c.targetId,
-          ...(c.description !== undefined ? { description: c.description } : {}),
+          ...(c.description !== undefined
+            ? { description: c.description }
+            : {}),
           ...(c.hidden !== undefined ? { hidden: c.hidden } : {}),
           ...(blockedReason !== undefined ? { blockedReason } : {}),
         };
@@ -123,6 +125,7 @@ export function buildEngineResolutionContext(
   // ── Characters: ALL characters, real values (skills, stats, knowledge). ──
   const characters: CharacterSnapshot[] = state.npcCharacters.map((npc) => {
     const position = dgsm.getCharacterPosition(npc.id);
+    const spot = dgsm.getCharacterSpot(npc.id);
     return {
       id: npc.id,
       name: npc.name,
@@ -139,6 +142,7 @@ export function buildEngineResolutionContext(
       maxFatigue: npc.status.maxFatigue,
       position,
       locationId: position ? dgsm.resolveLocationId(position) : "",
+      ...(spot ? { spot } : {}),
       conditions: npc.status.conditions ?? [],
       inventoryItemIds: dgsm.getNpcInventory(npc.id).map((i) => i.id),
       // Relationships are deliberately absent. They are subjective reading,

@@ -51,16 +51,13 @@ export function resolvePerceivedLocation(
       kind: "scene",
       name: scene.name,
       description: scene.description ?? "",
-      // Conditions live in two places: on the scene object (module-authored)
-      // and in scenarioConditions (runtime-appended). Readers need both.
-      conditions: mergeConditions(
-        scene.conditions,
-        dgsm.getSceneConditions(scene.id)
-      ),
+      conditions: dgsm.getSceneConditions(scene.id),
       items: scene.items ?? [],
+      // `getScene` answers null, not undefined, for an id it does not know —
+      // so the old `!== undefined` test kept everything it meant to drop.
       adjacentIds: (scene.connections ?? [])
         .map((c) => c.targetId)
-        .filter((id) => dgsm.getScene(id) !== undefined),
+        .filter((id) => dgsm.getScene(id) != null),
     };
   }
 
@@ -72,10 +69,7 @@ export function resolvePerceivedLocation(
       kind: "junction",
       name: junction.name,
       description: junction.description ?? "",
-      conditions: mergeConditions(
-        junction.conditions,
-        dgsm.getSceneConditions(junction.id)
-      ),
+      conditions: dgsm.getSceneConditions(junction.id),
       items: junction.items ?? [],
       adjacentIds: [
         ...junction.connectedSceneIds,
@@ -91,10 +85,7 @@ export function resolvePerceivedLocation(
     kind: "road",
     name: road.name,
     description: road.description ?? "",
-    conditions: mergeConditions(
-      road.conditions,
-      dgsm.getSceneConditions(road.id)
-    ),
+    conditions: dgsm.getSceneConditions(road.id),
     items: road.items ?? [],
     adjacentIds: [
       road.endpointA,
@@ -165,13 +156,3 @@ export function charactersAtSameLocation(
   return out;
 }
 
-function mergeConditions(
-  own: SceneCondition[] | undefined,
-  runtime: SceneCondition[]
-): SceneCondition[] {
-  const out = [...(own ?? [])];
-  for (const c of runtime) {
-    if (!out.some((existing) => existing === c)) out.push(c);
-  }
-  return out;
-}

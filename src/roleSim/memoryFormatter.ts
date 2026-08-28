@@ -8,6 +8,14 @@
 // Timestamps carry the date as well as the time: the section spans every day
 // played, so a bare "09:15" would not say which morning.
 //
+// The handle is written `#M3f9a2c`, NOT in brackets. Square brackets mean one
+// thing everywhere else in this prompt — a citable entity in the world — and
+// a handle that wore them was a handle an actor would cite as an objectRef.
+// Observed live: asked to name the church nave he was standing in, a
+// character cited `M999df02a`, the handle of his own context memory OF that
+// nave, which renders on a line reading "at 教堂主殿". Two id spaces, one
+// surface form, and only the section heading to tell them apart.
+//
 // The shape only requires the fields actually rendered, so callers can pass
 // either a Prisma `NpcMemory` row or a slim `RoleSimContext.memories` item
 // without coupling to the full Prisma type.
@@ -45,7 +53,7 @@ export function formatMemories(rows: ReadonlyArray<FormattableMemory>): string {
 
       return {
         at: m.gameDateTime,
-        line: `- [${m.handle}] [${formatForPrompt(m.gameDateTime)}] (${m.type})${where} ${m.content}`,
+        line: `- #${m.handle} [${formatForPrompt(m.gameDateTime)}] (${m.type})${where} ${m.content}`,
       };
     })
     .sort((a, b) => a.at.localeCompare(b.at) || a.line.localeCompare(b.line))

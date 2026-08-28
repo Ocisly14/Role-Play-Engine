@@ -57,6 +57,7 @@ function makeDgsm(opts: { aliveIds?: string[] } = {}) {
     getConnectionBlockReason: () => undefined,
     getCharactersInScene: () => [],
     getCharacterPosition: () => ({ type: "scene", sceneId: "SCN_1" }),
+    getCharacterSpot: () => null,
     resolveLocationId: () => "SCN_1",
     getNpcInventory: () => [],
     getNpcProfile: (id: string) => (alive.has(id) ? npc(id) : npc(id)),

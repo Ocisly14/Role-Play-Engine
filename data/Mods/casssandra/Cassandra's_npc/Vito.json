@@ -1,0 +1,197 @@
+{
+  "id": "Vito",
+  "name": "Vito",
+  "occupation": "Auxiliary Police Officer",
+  "age": 30,
+  "gender": "male",
+  "appearance": "A sturdy man of Latin American descent in a plain auxiliary police uniform, with a friendly but slightly clumsy look.",
+  "personality": "Honest, good-natured, and simple-minded. He means well but is not the sharpest observer in the room.",
+  "background": "Vito is a local auxiliary police officer in Cassandra. He is dependable, kind-hearted, and not especially suspicious by nature.",
+  "residence": "SCN_3",
+  "currentLocation": "SCN_3_SUB_1",
+  "spot": "at the reception desk just inside the front door",
+  "knownMapSeed": {
+    "sceneIds": [
+      "SCN_16_SUB_1",
+      "SCN_16_SUB_2",
+      "SCN_1_SUB_1",
+      "SCN_1_SUB_5",
+      "SCN_21_SUB_1",
+      "SCN_21_SUB_2",
+      "SCN_3_SUB_1",
+      "SCN_3_SUB_2",
+      "SCN_3_SUB_3",
+      "SCN_4_SUB_1",
+      "SCN_4_SUB_2"
+    ],
+    "junctionIds": [
+      "JUNC_1",
+      "JUNC_2",
+      "JUNC_3",
+      "JUNC_4",
+      "JUNC_5",
+      "JUNC_6",
+      "JUNC_7",
+      "JUNC_8",
+      "JUNC_9",
+      "JUNC_10",
+      "JUNC_11"
+    ],
+    "roadIds": [
+      "ROAD_1",
+      "ROAD_2",
+      "ROAD_3",
+      "ROAD_4",
+      "ROAD_5a",
+      "ROAD_5b",
+      "ROAD_6",
+      "ROAD_7",
+      "ROAD_8",
+      "ROAD_9",
+      "ROAD_10"
+    ],
+    "scenarioOutlineIds": [
+      "SCN_1",
+      "SCN_2",
+      "SCN_3",
+      "SCN_4",
+      "SCN_5",
+      "SCN_6",
+      "SCN_8",
+      "SCN_9",
+      "SCN_10",
+      "SCN_11",
+      "SCN_12",
+      "SCN_13",
+      "SCN_14",
+      "SCN_15",
+      "SCN_16",
+      "SCN_17",
+      "SCN_18",
+      "SCN_19",
+      "SCN_21",
+      "SCN_22"
+    ]
+  },
+  "longTermIntent": "Keep peace in town, do his job honestly, and make sure Helen is safe.",
+  "attributes": {
+    "STR": 60,
+    "CON": 65,
+    "DEX": 50,
+    "APP": 45,
+    "POW": 50,
+    "SIZ": 65,
+    "INT": 45,
+    "EDU": 40
+  },
+  "status": {
+    "hp": 13,
+    "maxHp": 13,
+    "sanity": 50,
+    "maxSanity": 50,
+    "luck": 55,
+    "mp": 10,
+    "conditions": []
+  },
+  "skills": {
+    "Social": 35,
+    "Knowledge & Craft": 30,
+    "Investigation": 40,
+    "Ranged Combat": 30
+  },
+  "inventory": [
+    {
+      "name": "Auxiliary police badge"
+    },
+    {
+      "name": "Service handgun"
+    },
+    {
+      "name": "Notebook"
+    }
+  ],
+  "relationships": [
+    {
+      "targetId": "Helen",
+      "targetName": "Helen",
+      "relationshipType": "friend",
+      "attitude": 90,
+      "description": "His girlfriend and the person he cares about most.",
+      "history": "They started dating recently.",
+      "firstPerson": "Helen and I have only been together a little while, and already she is the first person I think of when anything in this town goes wrong. Whatever else I get wrong, I want her safe."
+    },
+    {
+      "targetId": "Bruno Galilei",
+      "targetName": "Bruno Galilei",
+      "relationshipType": "friend",
+      "attitude": 70,
+      "description": "Fellow officer he respected.",
+      "history": "They worked together at the police station.",
+      "firstPerson": "Bruno and I stood the same watches at the station, and I always thought he was the better officer of the two of us. I still catch myself wondering what he would have done."
+    },
+    {
+      "targetId": "Shandra Hernandez",
+      "targetName": "Shandra Hernandez",
+      "relationshipType": "neutral",
+      "attitude": 40,
+      "description": "Shop owner Bruno frequently visited.",
+      "history": "Vito asked after Bruno at her shop more than once.",
+      "firstPerson": "Shandra keeps the shop Bruno was always dropping into, so I went by more than once to ask after him. She was decent enough about the questions; the trouble was me explaining to Helen why I kept turning up there."
+    }
+  ],
+  "memory": [
+    {
+      "type": "information",
+      "content": "I am a local auxiliary officer, but I am better at small jobs, repairs, and helping ordinary people than I am at reading politics or hidden motives.",
+      "metadata": {
+        "knowledgeId": "k_vito_local",
+        "difficulty": "automatic"
+      }
+    },
+    {
+      "type": "information",
+      "content": "Last year before Christmas, I met the unknown Black girl who later became the 2002 Paradil Hotel murder victim.",
+      "metadata": {
+        "knowledgeId": "k_vito_victim",
+        "difficulty": "regular"
+      }
+    },
+    {
+      "type": "information",
+      "content": "Helen was the woman Philip tried to flirt with at the Reindeer Bar.",
+      "metadata": {
+        "knowledgeId": "k_vito_helen",
+        "difficulty": "regular"
+      }
+    },
+    {
+      "type": "secret",
+      "content": "I said I did not know of any cheap rooms for rent, and the next day the girl I spoke to was murdered.",
+      "metadata": {
+        "knowledgeId": "s_vito_rooms"
+      }
+    },
+    {
+      "type": "secret",
+      "content": "I meant to mention that girl to the police, but the case was shelved so quickly that I convinced myself my memory would not help. Then I forgot about it, and that still sits badly with me.",
+      "metadata": {
+        "knowledgeId": "s_vito_shelved_case"
+      }
+    },
+    {
+      "type": "secret",
+      "content": "I went to Shandra's place more than once because Bruno spent time there, and my lousy way of explaining that caused trouble with Helen before we finally cleared it up.",
+      "metadata": {
+        "knowledgeId": "s_vito_shandra"
+      }
+    },
+    {
+      "type": "belief",
+      "content": "Doing the right thing should be straightforward, even if I am not always smart enough to see every angle.",
+      "metadata": {
+        "confidence": 0.8,
+        "reasoningChain": "I may miss details, but I know the difference between helping people and making their lives worse."
+      }
+    }
+  ]
+}

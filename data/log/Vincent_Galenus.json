@@ -1,0 +1,2059 @@
+{
+  "npcId": "Vincent Galenus",
+  "memories": [
+    {
+      "type": "information",
+      "content": "如果来自上面的压力继续，我可能会被命令亲自把卢奇菲罗的尸体搬到火化厂，而我讨厌自己多半会服从这一点。",
+      "gameDay": 1,
+      "gameTime": "00:00",
+      "location": null,
+      "metadata": {
+        "difficulty": "hard",
+        "knowledgeId": "k_vincent_lucifero"
+      }
+    },
+    {
+      "type": "plan",
+      "content": "Today's plan: 1. 在大厅继续回放并核对监控录像与便携录音，确认已标注的时间戳与监控死角记录。 at 星辰医院; 2. 前往实验室实地检查昨夜的样本与显微镜口述记录，确认四支已封存离心管的标签与登记无误。 at 星辰医院; 3. 到药品管理室核对冷藏柜内的药品与来货记录，重点查找并确认东莨菪碱相关线索及暗门是否被人为触碰。 at 星辰医院; 4. 进入停尸间巡视并记录任何异常状况，确认没有未经登记的样本或尸体被调动。 at 星辰医院; 5. 回到办公室整理并备份今日夜间的监控截图和实验档案，写下下一步实验的风险评估与操作要点。 at 星辰医院; 6. 在接待处悄悄调整排班白板与监控入侵提醒的设置，以掩护我接下来必须外出的时间段并保护实验室安全。 at 星辰医院; 7. 深夜前往墓地悄悄查看妻子的遗体状态并用便携设备记录任何可能用于继续研究的生物特征。 at 墓地; 8. 在妻子的墓前低声交谈并试图从内心找到继续研究与赎罪的动力，记录情绪与观察结果以备后用。 at 墓地; 9. 回到医院将墓地采集的记录封存入证物袋并放入办公室保险柜，更新实验计划与优先事项清单。 at 星辰医院; 10. 在办公室吃一碗简单的热汤以补充体力并简短休息，清理思绪准备白天工作。 at 星辰医院; 11. 天亮后再次检查实验室里的离心管与显微镜记录，配制白天需要使用的染色剂与载玻片。 at 星辰医院; 12. 去海伦的餐桌吃早午餐并试探性打听镇上的流言与今晨有人提及医院的事情，同时尽量回避敏感话题。 at 海伦的餐桌; 13. 回到医院在药品管理室接收并登记今早到货的常规试剂，核对清单以防有人替换或调包药品。 at 星辰医院; 14. 下午到驯鹿酒吧观察案发现场并向常客简短打听当晚细节，记录任何可能与医院事件有关的线索。 at 驯鹿酒吧; 15. 傍晚回到医院在实验室进行下一阶段的小规模试验并详细记录每一步与任何异常，随时准备终止实验以防失控。 at 星辰医院; 16. 将今晚的所有记录与证据上锁备份，指示护工和保安按照更新后的排班巡查监控盲点，然后在办公室床上休息以恢复体力准备明天继续工作。 at 星辰医院",
+      "gameDay": 2,
+      "gameTime": "00:00",
+      "location": null,
+      "metadata": {
+        "planType": "daily"
+      }
+    },
+    {
+      "type": "information",
+      "content": "我管理着星辰医院，知道如何在里面的人被妥协、害怕或互相撒谎的情况下保持其运转。",
+      "gameDay": 1,
+      "gameTime": "00:00",
+      "location": null,
+      "metadata": {
+        "difficulty": "automatic",
+        "knowledgeId": "k_vincent_hospital"
+      }
+    },
+    {
+      "type": "information",
+      "content": "我来卡森德拉是为了钱和那些富人的药，那些药承诺能让我的妻子活下去。那是第一次妥协，足以让后面的一切成为可能。",
+      "gameDay": 1,
+      "gameTime": "00:00",
+      "location": null,
+      "metadata": {
+        "difficulty": "regular",
+        "knowledgeId": "k_vincent_arrival"
+      }
+    },
+    {
+      "type": "secret",
+      "content": "妻子去世后我喝了太多酒，跌跌撞撞地在康斯坦丁面前做了忏悔，感觉好像真的有什么在倾听。从那以后，我为他治疗被蜘蛛咬伤的受害者，并尽量不去问那让我变成了什么。",
+      "gameDay": 1,
+      "gameTime": "00:00",
+      "location": null,
+      "metadata": {
+        "knowledgeId": "s_vincent_constantine"
+      }
+    },
+    {
+      "type": "information",
+      "content": "医院有一个药品储存室、一个实验室，以及指向不应该在这里进行的工作的记录。",
+      "gameDay": 1,
+      "gameTime": "00:00",
+      "location": null,
+      "metadata": {
+        "difficulty": "regular",
+        "knowledgeId": "k_vincent_facilities"
+      }
+    },
+    {
+      "type": "secret",
+      "content": "我的妻子以一种类食尸鬼的形态被带了回来，我一直假装那个交易仍然有意义。我们在墓地吵过架，从那以后我一直太害怕而不敢面对她。",
+      "gameDay": 1,
+      "gameTime": "00:00",
+      "location": null,
+      "metadata": {
+        "knowledgeId": "s_vincent_wife"
+      }
+    },
+    {
+      "type": "belief",
+      "content": "如果我承认我的交易没有带来任何结果，那我就必须承认我选择了自己的毁灭。",
+      "gameDay": 1,
+      "gameTime": "00:00",
+      "location": null,
+      "metadata": {
+        "confidence": 0.9,
+        "reasoningChain": "今晚我又两次差点说漏嘴（一位自称苏珊的人和露西亚的短暂相遇），酒意和愧疚让我更清楚地感到：承认交易无效等同承认我亲手毁了自己。被他人看见颤抖和懦弱更加强化了我不愿直面这一事实的信念。"
+      }
+    },
+    {
+      "type": "secret",
+      "content": "我知道马丁·金为帕特里齐奥工作并使用医院资源，但我不知道他就是幽灵之手。",
+      "gameDay": 1,
+      "gameTime": "00:00",
+      "location": null,
+      "metadata": {
+        "knowledgeId": "s_vincent_martin"
+      }
+    },
+    {
+      "type": "secret",
+      "content": "我帮助进行人体实验，因为帕特里齐奥答应我有办法让我的妻子留在我身边。",
+      "gameDay": 1,
+      "gameTime": "00:00",
+      "location": null,
+      "metadata": {
+        "knowledgeId": "s_vincent_experiment"
+      }
+    },
+    {
+      "type": "plan",
+      "content": "让妻子真正地“活过来”——这个执念是支撑他活下去的唯一动力。他已经背离了学医的初心和誓言，如果妻子最终也没能因此好起来，那么他将被自己抛弃良知却一无所获的事实彻底击溃。",
+      "gameDay": 1,
+      "gameTime": "00:00",
+      "location": null,
+      "metadata": {
+        "planType": "long_term"
+      }
+    },
+    {
+      "type": "plan",
+      "content": "Today's plan: 1. 检查冷藏柜、样本和库存记录，确认今晚可用的试剂和任何异常 at 药品管理室; 2. 到护士站向值班护士交代晚间巡查并确认今晚无人会注意我的行动 at 星辰医院; 3. 在医院的实验区域查看之前的实验记录并准备必要的设备与防护用品以便夜间进行试验 at 星辰医院; 4. 前往停尸间查阅与我妻子或相关样本的档案，寻找被遗漏的生物材料或记录 at 星辰医院; 5. 回到办公室整理笔记，拟定今晚的实验步骤并评估可行性与潜在风险以备记录 at 星辰医院; 6. 冒雪出门走到外面透口气并顺路去海伦的餐桌取些热饭以暖身 at 星辰大道南端三岔口; 7. 取餐并顺便打听镇上的近况，收集可能影响我计划的零碎情报 at 海伦的餐桌; 8. 在教堂短暂停留，向康斯坦丁默默祈祷并做一次忏悔以换取片刻内心的平静 at 教堂; 9. 返回医院，在药品管理室内开始按照计划准备试验的第一步并详细记录每一项操作 at 星辰医院; 10. 结束当晚工作后锁好药品管理室，在办公隔间尽力休息，为明天继续努力保存体力 at 星辰医院",
+      "gameDay": 1,
+      "gameTime": "19:00",
+      "location": null,
+      "metadata": {
+        "planType": "daily"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我检查了冷藏柜、样本及库存记录，确认今晚常规试剂在记录中标注为可用。我注意到后墙有一扇标注需我最高权限才能进入的暗门，且医院档案中没有任何关于“魔鬼呼吸（东莨菪碱）”的记录。",
+      "gameDay": 1,
+      "gameTime": "19:20",
+      "location": "SCN_1_SUB_4",
+      "metadata": {
+        "outcome": "检查冷藏柜、样本和库存记录，确认今晚可用的试剂和任何异常"
+      }
+    },
+    {
+      "type": "event",
+      "content": "前往护士站 成功",
+      "gameDay": 1,
+      "gameTime": "19:26",
+      "location": "SCN_1_SUB_1",
+      "metadata": {
+        "outcome": "前往护士站 成功",
+        "blockedReason": "",
+        "failureReason": ""
+      }
+    },
+    {
+      "type": "witness",
+      "content": "[相遇] 19:26 在医院大厅与 Mrs. Barklyite（Lucia Shiny）面对面相遇。她看起来平静但警觉，我瞬间感到紧张——怕被问到不该说的话，也意识到这是个试探她立场和获取值班/医院动态信息的机会。我要先应付这次对话，保持正常、隐蔽，然后再去做晚间的检查和准备。",
+      "gameDay": 1,
+      "gameTime": "19:26",
+      "location": "SCN_1_SUB_1",
+      "metadata": {
+        "impact": 2,
+        "perspective": "co_presence",
+        "sourceAction": "Mrs. Barklyite (Lucia Shiny) 在 医院大厅",
+        "sourceCharacterId": "__encounter__"
+      }
+    },
+    {
+      "type": "event",
+      "content": "一位自称苏珊的女士礼貌地问我来医院的原因，我如实说我来卡森德拉是为了钱和那些承诺能让我妻子活下去的药，并提到医院有药品储存室、实验室和显示不该在此进行工作的记录。我感到内疚且手在发抖，虽未隐瞒这些事，但也没有说出更隐秘的细节。",
+      "gameDay": 1,
+      "gameTime": "19:32",
+      "location": "SCN_1_SUB_1",
+      "metadata": {
+        "outcome": "以“苏珊”身份礼貌寒暄并询问Vincent在医院的来意，仔细观察他的言行与去向以判断是否可疑"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我到达医院大厅，礼貌地向Mrs. Barklyite打招呼并试探性询问她今晚来院的来意，但她不在场。我查看了接待窗口和排班白板，没能从她那里确认与护士站或值班安排相关的信息，会去护士站或登记表处进一步核实。",
+      "gameDay": 1,
+      "gameTime": "19:32",
+      "location": "SCN_1_SUB_1",
+      "metadata": {
+        "outcome": "礼貌地与 Mrs. Barklyite 打招呼并试探性询问她今晚来医院的来意，同时把话题尽快转回医院日常与值班安排以确认与护士站相关的信息"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我在酒精和愧疚的驱使下向自称苏珊的人吐露了秘密：我来卡森德拉是为了钱和那些富人的药，医院里有药品储存室、一个实验室以及一些不该存在的工作记录。我感到懊悔，但还是把这些事情说了出来，向她显露了我的脆弱。",
+      "gameDay": 1,
+      "gameTime": "19:38",
+      "location": "SCN_1_SUB_1",
+      "metadata": {
+        "outcome": "以“苏珊”身份与Vincent交谈，礼貌盘问他到院的时间、曾接触的医院工作人员与关于实验室和药品储存室的具体线索，同时维持专业友善以避免暴露掩护"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我走到护士站，仔细检查了墙上的排班白板和接待台的来访登记表。白板上有今晚值班人员名单和用马克笔标注的监控盲点，登记表没有显示会在我夜间行动时引人注意的访客。确认今晚值班安排与盲点后，我认为无人会注意我的夜间行动，准备按计划继续行动。",
+      "gameDay": 1,
+      "gameTime": "19:39",
+      "location": "SCN_1_SUB_1",
+      "metadata": {
+        "itemId": "ITEM_SCN1_17",
+        "outcome": "走向护士站并检查排班白板与来访登记表，确认今晚值班人员与监控盲点，确保今晚无人会注意我的夜间行动",
+        "itemName": "排班白板"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我用医院工作证在防火门旁的读卡器上刷卡，电子门应声解锁并打开。门框旁的生化警告标识依旧在，我随后通过门进入了实验室。",
+      "gameDay": 1,
+      "gameTime": "19:45",
+      "location": "SCN_1_SUB_1",
+      "metadata": {
+        "outcome": "用医院工作证刷开通往实验室的电子门并进入实验室"
+      }
+    },
+    {
+      "type": "event",
+      "content": "进入实验室 成功",
+      "gameDay": 1,
+      "gameTime": "19:47",
+      "location": "SCN_1_SUB_3",
+      "metadata": {
+        "outcome": "进入实验室 成功",
+        "blockedReason": "",
+        "failureReason": ""
+      }
+    },
+    {
+      "type": "event",
+      "content": "我打开了实验室的主照明，刺眼的惨白灯光亮起，能够清楚地查看实验档案和周围的设备。",
+      "gameDay": 1,
+      "gameTime": "19:50",
+      "location": "SCN_1_SUB_3",
+      "metadata": {
+        "outcome": "打开实验室的主照明灯以便查看实验档案和设备"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我把实验档案逐页翻阅，核对了先前的实验步骤，并把今晚需要准备的设备与防护用品列了出来：离心机、显微镜、注射器、密封样本容器，以及一次性手套、护目镜和呼吸防护。档案记录与实验台上的器械（包括新型医疗器械和样本容器）相符，并未出现医院总档案里没有的新增化学品记录。",
+      "gameDay": 1,
+      "gameTime": "19:56",
+      "location": "SCN_1_SUB_3",
+      "metadata": {
+        "itemId": "ITEM_SCN1_7",
+        "outcome": "翻阅实验档案以确认先前实验步骤并列出今晚所需的设备与防护用品",
+        "itemName": "实验档案"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我检查了标着波士顿产地的新型医疗器械，找到并接通了工作中的离心机，启动了短自检；自检完成后机器平稳运转，未显示异常。我注意到这批设备的来历与医院格格不入。",
+      "gameDay": 1,
+      "gameTime": "20:05",
+      "location": "SCN_1_SUB_3",
+      "metadata": {
+        "itemId": "ITEM_SCN1_5",
+        "outcome": "检查新型医疗器械（离心机）的运行状况并启动短自检",
+        "itemName": "新型医疗器械"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我取起一只蜘蛛样本容器，检查了封签与标签：封签完好、标签格式正规，容器外观没有破损或渗漏。根据外观和标签判断，样本保存状况良好，可以用于今晚的试验，于是我把容器收进口袋带走。",
+      "gameDay": 1,
+      "gameTime": "20:12",
+      "location": "SCN_1_SUB_3",
+      "metadata": {
+        "itemId": "ITEM_SCN1_23",
+        "outcome": "取起蜘蛛样本容器，检查封签和标签，确认样本状态与保存条件以决定是否可用于今晚的试验",
+        "itemName": "蜘蛛样本容器"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我从工作台上拿起一支注射器，在冷白灯下检查针筒与金属针头，确认外包装封口完好、未被破损，看起来保持无菌，于是把这支注射器收进了随身物品。",
+      "gameDay": 1,
+      "gameTime": "20:15",
+      "location": "SCN_1_SUB_3",
+      "metadata": {
+        "itemId": "ITEM_SCN1_6",
+        "outcome": "拿起注射器检查其完整性与无菌包装",
+        "itemName": "注射器"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我检查并戴好一次性手套、护目镜和呼吸防护，确认贴合与密封，完成个人防护准备；佩戴后化学/生物气味对我感知的干扰明显减弱。",
+      "gameDay": 1,
+      "gameTime": "20:25",
+      "location": "SCN_1_SUB_3",
+      "metadata": {
+        "outcome": "检查并穿戴一次性手套、护目镜和呼吸防护，完成个人防护准备"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我将蜘蛛样本从原容器中分装成四支无菌离心管，按顺序贴好标签编号，并把它们放在离心机转子处准备处理；原样本容器已被分装为空，放回随身处等待后续处置。",
+      "gameDay": 1,
+      "gameTime": "20:35",
+      "location": "SCN_1_SUB_3",
+      "metadata": {
+        "itemId": "ITEM_SCN1_23",
+        "outcome": "将蜘蛛样本从容器中分装到多个无菌离心管并贴上标签编号，准备入离心机处理",
+        "itemName": "蜘蛛样本容器"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我合上并锁好离心机的盖子，按档案上记录设定好转速和时间后启动机器。离心机稳定运转，四支标记好的无菌离心管已被放入转子并开始分离，样本出现了上清与沉淀分层的迹象。",
+      "gameDay": 1,
+      "gameTime": "20:46",
+      "location": "SCN_1_SUB_3",
+      "metadata": {
+        "itemId": "ITEM_SCN1_5",
+        "outcome": "合上并锁好离心机盖，设定转速与时间后启动离心机以分离四支样本管",
+        "itemName": "新型医疗器械"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我在工作台旁把显微镜准备就位，并将载玻片、盖玻片和需要的染色剂摆放好，所有东西整齐就绪，方便离心结束后立即检查上清。",
+      "gameDay": 1,
+      "gameTime": "20:52",
+      "location": "SCN_1_SUB_3",
+      "metadata": {
+        "itemId": "ITEM_SCN1_5",
+        "outcome": "取出显微镜并准备载玻片、盖玻片和必要染色剂，摆放在工作台以便离心完成后立即检查上清",
+        "itemName": "新型医疗器械"
+      }
+    },
+    {
+      "type": "event",
+      "content": "检查离心机运行状态，确认离心程序剩余时间并准备在完成后取出离心管 成功",
+      "gameDay": 1,
+      "gameTime": "20:58",
+      "location": "SCN_1_SUB_3",
+      "metadata": {
+        "outcome": "检查离心机运行状态，确认离心程序剩余时间并准备在完成后取出离心管 成功"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我用工作台上已有的染色剂和器具按常规配比配制了显微镜用染色液，并将其放回工作台一角以备用。",
+      "gameDay": 1,
+      "gameTime": "21:10",
+      "location": "SCN_1_SUB_3",
+      "metadata": {
+        "outcome": "配制显微镜用染色剂溶液"
+      }
+    },
+    {
+      "type": "event",
+      "content": "检查离心机剩余运行时间并确认转子稳定 成功",
+      "gameDay": 1,
+      "gameTime": "21:13",
+      "location": "SCN_1_SUB_3",
+      "metadata": {
+        "outcome": "检查离心机剩余运行时间并确认转子稳定 成功"
+      }
+    },
+    {
+      "type": "event",
+      "content": "在离心机旁监视直到离心程序完成 成功",
+      "gameDay": 1,
+      "gameTime": "21:20",
+      "location": "SCN_1_SUB_3",
+      "metadata": {
+        "outcome": "在离心机旁监视直到离心程序完成 成功"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我停下离心机并打开盖子，取出四支编号的无菌离心管放在工作台上。用移液器将上清小心滴在载玻片上并盖上盖玻片，然后把载玻片放到显微镜下进行了初步观察，过程顺利。",
+      "gameDay": 1,
+      "gameTime": "21:30",
+      "location": "SCN_1_SUB_3",
+      "metadata": {
+        "outcome": "从离心机中取出离心管，将上清小心滴到载玻片上并在显微镜下进行初步观察"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我打开了实验室的应急照明，房间不再漆黑，能看清仪器和工作台的轮廓，但光线仍然比平常柔弱，细节略显模糊。",
+      "gameDay": 1,
+      "gameTime": "21:33",
+      "location": "SCN_1_SUB_3",
+      "metadata": {
+        "outcome": "打开实验室应急照明"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我打开了实验室的主照明，刺眼的医用白光立刻恢复，能在合适的光线下用显微镜详细检查载玻片。",
+      "gameDay": 1,
+      "gameTime": "21:39",
+      "location": "SCN_1_SUB_3",
+      "metadata": {
+        "outcome": "打开实验室主照明以便在合适的光线下详细检查载玻片"
+      }
+    },
+    {
+      "type": "event",
+      "content": "穿过走廊前往停尸间，查阅与我妻子或相关样本的档案 成功",
+      "gameDay": 1,
+      "gameTime": "21:44",
+      "location": "SCN_1_SUB_1",
+      "metadata": {
+        "outcome": "穿过走廊前往停尸间，查阅与我妻子或相关样本的档案 成功",
+        "blockedReason": "",
+        "failureReason": ""
+      }
+    },
+    {
+      "type": "event",
+      "content": "回到我的办公室整理笔记，拟定今晚的实验步骤并评估可行性与潜在风险以备记录 成功",
+      "gameDay": 1,
+      "gameTime": "22:15",
+      "location": "SCN_1_SUB_1",
+      "metadata": {
+        "outcome": "回到我的办公室整理笔记，拟定今晚的实验步骤并评估可行性与潜在风险以备记录 成功"
+      }
+    },
+    {
+      "type": "event",
+      "content": "步行前往星辰大道南端三岔口 成功",
+      "gameDay": 1,
+      "gameTime": "22:18",
+      "location": "JUNC_2",
+      "metadata": {
+        "outcome": "步行前往星辰大道南端三岔口 成功",
+        "blockedReason": "",
+        "failureReason": ""
+      }
+    },
+    {
+      "type": "witness",
+      "content": "[相遇] 我在卡森德拉北新街与海伦面对面相遇。她看起来平静但警觉，我一方面松了口气——能早点拿到热饭取暖，另一方面又紧张，怕她无意中问到会暴露我的秘密的问题。这次偶遇既是暖身的机会也是收集镇上与医院动态情报的良机。我决心以友好、低调的姿态应对：先接受食物以示感谢，再小心引导话题套近乎，注意她的话里是否有关于值班、医院异动或可利用线索，同时避免暴露与我妻子、药品或实验相关的敏感信息。",
+      "gameDay": 1,
+      "gameTime": "22:19",
+      "location": "ROAD_2",
+      "metadata": {
+        "impact": 2,
+        "perspective": "co_presence",
+        "sourceAction": "Helen 在 卡森德拉北新街",
+        "sourceCharacterId": "__encounter__"
+      }
+    },
+    {
+      "type": "witness",
+      "content": "[相遇] 我在小餐厅与海伦面对面相遇。她看起来平静但警觉，我一方面松了口气——能早点拿到热饭取暖，另一方面又紧张，怕她无意中问到会暴露我的秘密。我要以友好、低调的姿态接受她的热饭，借机小心引导话题套近乎，留意关于医院值班、异常或其它可利用线索的言语，同时避免提及我妻子、药物或实验相关的敏感细节。",
+      "gameDay": 1,
+      "gameTime": "22:22",
+      "location": "SCN_10_SUB_1",
+      "metadata": {
+        "impact": 2,
+        "perspective": "co_presence",
+        "sourceAction": "Helen 在 小餐厅",
+        "sourceCharacterId": "__encounter__"
+      }
+    },
+    {
+      "type": "event",
+      "content": "步行前往海伦的餐桌 成功",
+      "gameDay": 1,
+      "gameTime": "22:22",
+      "location": "SCN_10_SUB_1",
+      "metadata": {
+        "outcome": "步行前往海伦的餐桌 成功",
+        "blockedReason": "",
+        "failureReason": ""
+      }
+    },
+    {
+      "type": "event",
+      "content": "我接过海伦递来的热饭，轻声感谢并试探性询问镇上近况与医院今晚的值班安排，刻意不提实验或我妻子的事。海伦告诉我她在镇上经营一家餐厅，并提到她记得约翰尼在驯鹿酒吧那晚以与菲利普的打斗收场，不希望那件事被进一步夸大。她的态度平静，但并未给出医院值班的具体细节。 [rel:Helen +5 → 5]",
+      "gameDay": 1,
+      "gameTime": "22:28",
+      "location": "SCN_10_SUB_1",
+      "metadata": {
+        "outcome": "接受海伦递来的热饭并小声与海伦交谈，感谢她的好意并试探性询问镇上与医院的近况及今晚的值班安排，同时避免提及医院实验或我妻子的任何细节"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我低声向海伦打听今晚星辰医院的值班安排和监控死角的事，但她明确没有回应；我的试探没有得到任何有用信息，反而被礼貌地回避，令我更感到孤立和不安。 [rel:Helen -2 → 3]",
+      "gameDay": 1,
+      "gameTime": "22:32",
+      "location": "SCN_10_SUB_1",
+      "metadata": {
+        "outcome": "低声向海伦询问今晚星辰医院的值班安排和是否有人提到监控死角或异常动静 [Persuade 10, rolled 62 (fail) — all targets resisted] failed"
+      }
+    },
+    {
+      "type": "witness",
+      "content": "[相遇] 我在小餐厅遇到海伦和约翰尼。海伦一如既往地平静但有戒备，见到她我松了口气——能拿到热饭暖身；但约翰尼的在场让我紧张，害怕他会问出会暴露我的敏感信息或挑起麻烦。我打算保持友好且谨慎的态度，接受食物并小心套话留意关于医院值班或镇上异动的线索，同时绝不提及妻子、实验或药物。若约翰尼看起来危险或多事，我会尽快找借口脱身。",
+      "gameDay": 1,
+      "gameTime": "22:32",
+      "location": "SCN_10_SUB_1",
+      "metadata": {
+        "impact": 2,
+        "perspective": "co_presence",
+        "sourceAction": "Johnny, Helen 在 小餐厅",
+        "sourceCharacterId": "__encounter__"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我与约翰尼寒暄并低声问起他最近在镇上的见闻和那晚在驯鹿酒吧的事。约翰尼说菲利普那晚骚扰了海伦，他在一场激烈争吵后把菲利普赶走了，并确认2003年12月22日他去过驯鹿酒吧，想向海伦表白。我注意到他语气紧张、情绪带有明显的占有欲和愤怒，但他没有提及维托、医院或药物。 [rel:Johnny +3 → 3]",
+      "gameDay": 1,
+      "gameTime": "22:36",
+      "location": "SCN_10_SUB_1",
+      "metadata": {
+        "outcome": "与约翰尼寒暄，低声询问他最近在镇上的见闻和那晚在驯鹿酒吧的事，同时注意观察他的语气、表情与肢体语言，避免提及医院、药物或我妻子的事。"
+      }
+    },
+    {
+      "type": "witness",
+      "content": "[相遇] 刚在小餐厅见到海伦、约翰尼，还有一名我不熟悉的哈里森·洛克希德。海伦依旧平静但戒备，约翰尼让我紧张——现在多了哈里森，我感觉更不安，担心多了目击者或有人会问到敏感话题。我要保持礼貌接受热饭，但更加谨慎地观察他们三人的言行，把话题压到小镇琐事；若有人试探医院或药物的事，马上找借口脱身并回医院。",
+      "gameDay": 1,
+      "gameTime": "22:37",
+      "location": "SCN_10_SUB_1",
+      "metadata": {
+        "impact": 2,
+        "perspective": "co_presence",
+        "sourceAction": "Harrison Lockheed, Helen, Johnny 在 小餐厅",
+        "sourceCharacterId": "__encounter__"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我低声和约翰尼在餐厅随意寒暄，刻意回避了医院、药物和海伦的话题。他说他熟悉卡森德拉周围的林地，确认2003年12月22日去过驯鹿酒吧，并且那晚菲利普骚扰了海伦，他把菲利普赶走了。交谈让气氛比预期更缓和，感觉他对我略微开放了一些。 [rel:Johnny +2 → 5]",
+      "gameDay": 1,
+      "gameTime": "22:42",
+      "location": "SCN_10_SUB_1",
+      "metadata": {
+        "outcome": "低声与约翰尼继续寒暄并随意询问他对小镇近况和常去场所的看法，避免提及医院、药物或我妻子的事"
+      }
+    },
+    {
+      "type": "event",
+      "content": "观察哈里森·洛克希德与约翰尼和海伦的互动 成功",
+      "gameDay": 1,
+      "gameTime": "22:48",
+      "location": "SCN_10_SUB_1",
+      "metadata": {
+        "outcome": "观察哈里森·洛克希德与约翰尼和海伦的互动 成功"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我去了海伦的餐桌找哈里森·洛克希德，想问他在镇上做什么并顺便打听五金店有没有人买过特殊工具或与医院/医疗设备有关的东西，但他不在餐厅，没能和他谈话。",
+      "gameDay": 1,
+      "gameTime": "22:52",
+      "location": "SCN_10_SUB_1",
+      "metadata": {
+        "outcome": "向哈里森·洛克希德搭话，问他在镇上做什么并顺便提及五金店最近有没有人买过特殊工具或设备，注意他对医院或医疗设备相关话题的反应"
+      }
+    },
+    {
+      "type": "event",
+      "content": "在海伦的餐桌坐下，假装用餐并观察餐厅内的动静，尤其注意哈里森是否出现以及他与约翰尼、海伦的互动 成功",
+      "gameDay": 1,
+      "gameTime": "22:58",
+      "location": "SCN_10_SUB_1",
+      "metadata": {
+        "outcome": "在海伦的餐桌坐下，假装用餐并观察餐厅内的动静，尤其注意哈里森是否出现以及他与约翰尼、海伦的互动 成功"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我环顾了餐厅的门口、吧台和二楼休息区，确认海伦确实在二楼静坐。未见到哈里森·洛克希德或约翰尼在场，也没有观察到他们与海伦有任何互动。",
+      "gameDay": 1,
+      "gameTime": "23:02",
+      "location": "SCN_10_SUB_1",
+      "metadata": {
+        "outcome": "环顾餐厅并悄悄观察门口、吧台和二楼休息区，寻找并确认哈里森·洛克希德是否在场以及他与约翰尼和海伦的互动"
+      }
+    },
+    {
+      "type": "witness",
+      "content": "[相遇] 我在医院大厅与Mrs. Barklyite（Lucia Shiny）面对面相遇。她看上去平静但戒备，这让我顿时紧张，害怕被问到会暴露我秘密的事情。不过这也是个试探她立场和套取值班/监控信息的机会。我计划以礼貌、低调的方式应对，绝不提及妻子、药物或实验，尽量从她话里获取与值班或监控盲点有关的线索，随后尽快带着食物离开回到实验室继续今晚的准备。",
+      "gameDay": 1,
+      "gameTime": "23:09",
+      "location": "SCN_1_SUB_1",
+      "metadata": {
+        "impact": 2,
+        "perspective": "co_presence",
+        "sourceAction": "Mrs. Barklyite (Lucia Shiny) 在 医院大厅",
+        "sourceCharacterId": "__encounter__"
+      }
+    },
+    {
+      "type": "event",
+      "content": "步行回星辰医院，带着海伦给的热饭 成功",
+      "gameDay": 1,
+      "gameTime": "23:09",
+      "location": "SCN_1_SUB_1",
+      "metadata": {
+        "outcome": "步行回星辰医院，带着海伦给的热饭 成功",
+        "blockedReason": "",
+        "failureReason": ""
+      }
+    },
+    {
+      "type": "event",
+      "content": "我到医院大厅找露西亚但她不在。顺手看了排班白板，上面标有今晚需重点巡视的监控盲点并作了笔记，随即道谢拿着饭离开并回到实验室。",
+      "gameDay": 1,
+      "gameTime": "23:15",
+      "location": "SCN_1_SUB_1",
+      "metadata": {
+        "outcome": "以平静、低调的语气与露西亚短促交谈，试探性询问今晚医院的值班安排与监控盲点，避免提及妻子、药物或实验，然后道谢带着饭离开回实验室。"
+      }
+    },
+    {
+      "type": "event",
+      "content": "一个自称“苏珊”的女子悄声问我关于“奇迹药”的来源和我要去哪里。我酒意未散、愧疚压在心头，向她承认我来是为钱和那些富人的药，并说医院有药品管理室和一个实验室，我打算去那儿。她看见我手抖和面色苍白，似乎同情我但没有完全放下戒心。",
+      "gameDay": 1,
+      "gameTime": "23:17",
+      "location": "SCN_1_SUB_1",
+      "metadata": {
+        "outcome": "以“苏珊”的身份悄声走近文森特，低声询问他关于“奇迹药”的具体来源以及他接下来要去的地方，保持专业语气以不暴露掩护"
+      }
+    },
+    {
+      "type": "information",
+      "content": "实验室后墙有一扇标注需我最高权限才能进入的暗门，档案里没有对该区域的说明或记录。",
+      "gameDay": 1,
+      "gameTime": "23:59",
+      "location": null,
+      "metadata": {
+        "revealed": false,
+        "difficulty": "hard",
+        "knowledgeId": "learned_day1_1"
+      }
+    },
+    {
+      "type": "information",
+      "content": "医院档案中没有任何关于“魔鬼呼吸（东莨菪碱）”的记录——这个化学名目在正式文书里被空白或隐去。",
+      "gameDay": 1,
+      "gameTime": "23:59",
+      "location": null,
+      "metadata": {
+        "revealed": false,
+        "difficulty": "hard",
+        "knowledgeId": "learned_day1_2"
+      }
+    },
+    {
+      "type": "information",
+      "content": "实验室里有一批标注为波士顿产的新型医疗器械，与医院以往设备来历明显不一致，来源可疑。",
+      "gameDay": 1,
+      "gameTime": "23:59",
+      "location": null,
+      "metadata": {
+        "revealed": false,
+        "difficulty": "regular",
+        "knowledgeId": "learned_day1_3"
+      }
+    },
+    {
+      "type": "information",
+      "content": "接待处的排班白板上有人用马克笔标注了今晚需要重点巡视的监控盲点，这表明有人刻意记载或利用这些死角。",
+      "gameDay": 1,
+      "gameTime": "23:59",
+      "location": null,
+      "metadata": {
+        "revealed": false,
+        "difficulty": "regular",
+        "knowledgeId": "learned_day1_4"
+      }
+    },
+    {
+      "type": "information",
+      "content": "海伦在镇上经营餐馆并给了我热饭，但她会回避关于医院值班或监控的任何问题；约翰尼承认在2003-12-22那晚去过驯鹿酒吧并赶走了骚扰海伦的菲利普。",
+      "gameDay": 1,
+      "gameTime": "23:59",
+      "location": null,
+      "metadata": {
+        "revealed": false,
+        "difficulty": "automatic",
+        "knowledgeId": "learned_day1_5"
+      }
+    }
+  ],
+  "plans": [
+    {
+      "npcName": "Vincent Galenus",
+      "gameDay": 1,
+      "schedule": [
+        {
+          "activity": "检查冷藏柜、样本和库存记录，确认今晚可用的试剂和任何异常",
+          "location": "药品管理室"
+        },
+        {
+          "activity": "到护士站向值班护士交代晚间巡查并确认今晚无人会注意我的行动",
+          "location": "星辰医院"
+        },
+        {
+          "activity": "在医院的实验区域查看之前的实验记录并准备必要的设备与防护用品以便夜间进行试验",
+          "location": "星辰医院"
+        },
+        {
+          "activity": "前往停尸间查阅与我妻子或相关样本的档案，寻找被遗漏的生物材料或记录",
+          "location": "星辰医院"
+        },
+        {
+          "activity": "回到办公室整理笔记，拟定今晚的实验步骤并评估可行性与潜在风险以备记录",
+          "location": "星辰医院"
+        },
+        {
+          "activity": "冒雪出门走到外面透口气并顺路去海伦的餐桌取些热饭以暖身",
+          "location": "星辰大道南端三岔口"
+        },
+        {
+          "activity": "取餐并顺便打听镇上的近况，收集可能影响我计划的零碎情报",
+          "location": "海伦的餐桌"
+        },
+        {
+          "activity": "在教堂短暂停留，向康斯坦丁默默祈祷并做一次忏悔以换取片刻内心的平静",
+          "location": "教堂"
+        },
+        {
+          "activity": "返回医院，在药品管理室内开始按照计划准备试验的第一步并详细记录每一项操作",
+          "location": "星辰医院"
+        },
+        {
+          "activity": "结束当晚工作后锁好药品管理室，在办公隔间尽力休息，为明天继续努力保存体力",
+          "location": "星辰医院"
+        }
+      ],
+      "nodes": [
+        {
+          "type": "scene_interaction",
+          "action": "检查冷藏柜、样本和库存记录，确认今晚可用的试剂和任何异常",
+          "impact": 0,
+          "nodeId": "si_vincent_check_01",
+          "status": "completed",
+          "endTime": "19:20",
+          "outcome": "我检查了冷藏柜、样本及库存记录，确认今晚常规试剂在记录中标注为可用。我注意到后墙有一扇标注需我最高权限才能进入的暗门，且医院档案中没有任何关于“魔鬼呼吸（东莨菪碱）”的记录。",
+          "startTime": "19:00",
+          "characterId": "Vincent Galenus",
+          "characterName": "Vincent Galenus",
+          "executionMeta": {
+            "startedAt": "19:00",
+            "completedAt": "19:20",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "movement",
+          "action": "步行回星辰医院，带着海伦给的热饭",
+          "impact": 0,
+          "nodeId": "m1",
+          "status": "completed",
+          "endTime": "23:13",
+          "outcome": "步行回星辰医院，带着海伦给的热饭 成功",
+          "startTime": "23:03",
+          "characterId": "Vincent Galenus",
+          "destination": "SCN_1_SUB_1",
+          "characterName": "Vincent Galenus",
+          "executionMeta": {
+            "movement": {
+              "routeSnapshot": [
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_2",
+                    "position": 0.28
+                  },
+                  "from": {
+                    "type": "scene",
+                    "sceneId": "SCN_10_SUB_1"
+                  },
+                  "kind": "along_road",
+                  "roadId": "ROAD_2",
+                  "blockCheck": {
+                    "toId": "ROAD_2",
+                    "fromId": "SCN_10_SUB_1"
+                  },
+                  "durationMinutes": 1
+                },
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_2",
+                    "position": 0
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_2",
+                    "position": 0.28
+                  },
+                  "kind": "along_road",
+                  "roadId": "ROAD_2",
+                  "durationMinutes": 2.8
+                },
+                {
+                  "to": {
+                    "type": "junction",
+                    "junctionId": "JUNC_2"
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_2",
+                    "position": 0
+                  },
+                  "kind": "to_junction",
+                  "blockCheck": {
+                    "toId": "JUNC_2",
+                    "fromId": "ROAD_2"
+                  },
+                  "durationMinutes": 0
+                },
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_1",
+                    "position": 1
+                  },
+                  "from": {
+                    "type": "junction",
+                    "junctionId": "JUNC_2"
+                  },
+                  "kind": "to_junction",
+                  "blockCheck": {
+                    "toId": "ROAD_1",
+                    "fromId": "JUNC_2"
+                  },
+                  "durationMinutes": 0
+                },
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_1",
+                    "position": 0.75
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_1",
+                    "position": 1
+                  },
+                  "kind": "along_road",
+                  "roadId": "ROAD_1",
+                  "durationMinutes": 1.5
+                },
+                {
+                  "to": {
+                    "type": "scene",
+                    "sceneId": "SCN_1_SUB_1"
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_1",
+                    "position": 0.75
+                  },
+                  "kind": "to_scene",
+                  "blockCheck": {
+                    "toId": "SCN_1_SUB_1",
+                    "fromId": "ROAD_1"
+                  },
+                  "durationMinutes": 1
+                }
+              ],
+              "targetPosition": {
+                "type": "scene",
+                "sceneId": "SCN_1_SUB_1"
+              },
+              "minutesIntoStep": 0,
+              "currentStepIndex": 6,
+              "lastReachablePosition": {
+                "type": "scene",
+                "sceneId": "SCN_1_SUB_1"
+              }
+            },
+            "startedAt": "23:03",
+            "completedAt": "23:09",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "character_interaction",
+          "action": "礼貌地与 Mrs. Barklyite 打招呼并试探性询问她今晚来医院的来意，同时把话题尽快转回医院日常与值班安排以确认与护士站相关的信息",
+          "impact": 1,
+          "nodeId": "ci_vincent_mrsb_1927",
+          "status": "completed",
+          "endTime": "19:32",
+          "outcome": "我到达医院大厅，礼貌地向Mrs. Barklyite打招呼并试探性询问她今晚来院的来意，但她不在场。我查看了接待窗口和排班白板，没能从她那里确认与护士站或值班安排相关的信息，会去护士站或登记表处进一步核实。",
+          "startTime": "19:27",
+          "characterId": "Vincent Galenus",
+          "characterName": "Vincent Galenus",
+          "executionMeta": {
+            "startedAt": "19:27",
+            "completedAt": "19:32",
+            "remainingMinutes": 0
+          },
+          "targetCharacterIds": [
+            "npc_mrs_barklyite"
+          ]
+        },
+        {
+          "type": "object_interaction",
+          "action": "走向护士站并检查排班白板与来访登记表，确认今晚值班人员与监控盲点，确保今晚无人会注意我的夜间行动",
+          "impact": 0,
+          "nodeId": "oi_vincent_001",
+          "status": "completed",
+          "endTime": "19:39",
+          "outcome": "我走到护士站，仔细检查了墙上的排班白板和接待台的来访登记表。白板上有今晚值班人员名单和用马克笔标注的监控盲点，登记表没有显示会在我夜间行动时引人注意的访客。确认今晚值班安排与盲点后，我认为无人会注意我的夜间行动，准备按计划继续行动。",
+          "startTime": "19:34",
+          "characterId": "Vincent Galenus",
+          "characterName": "Vincent Galenus",
+          "executionMeta": {
+            "startedAt": "19:34",
+            "completedAt": "19:39",
+            "remainingMinutes": 0
+          },
+          "objectInteractionPayload": {
+            "itemId": "ITEM_SCN1_17"
+          }
+        },
+        {
+          "type": "scene_interaction",
+          "action": "环顾餐厅并悄悄观察门口、吧台和二楼休息区，寻找并确认哈里森·洛克希德是否在场以及他与约翰尼和海伦的互动",
+          "impact": 0,
+          "nodeId": "si1",
+          "status": "completed",
+          "endTime": "23:02",
+          "outcome": "我环顾了餐厅的门口、吧台和二楼休息区，确认海伦确实在二楼静坐。未见到哈里森·洛克希德或约翰尼在场，也没有观察到他们与海伦有任何互动。",
+          "startTime": "22:59",
+          "characterId": "Vincent Galenus",
+          "characterName": "Vincent Galenus",
+          "executionMeta": {
+            "startedAt": "22:59",
+            "completedAt": "23:02",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "movement",
+          "action": "进入实验室",
+          "impact": 0,
+          "nodeId": "m2",
+          "status": "completed",
+          "endTime": "19:48",
+          "outcome": "进入实验室 成功",
+          "startTime": "19:46",
+          "characterId": "Vincent Galenus",
+          "destination": "SCN_1_SUB_3",
+          "characterName": "Vincent Galenus",
+          "executionMeta": {
+            "movement": {
+              "routeSnapshot": [
+                {
+                  "to": {
+                    "type": "scene",
+                    "sceneId": "SCN_1_SUB_3"
+                  },
+                  "from": {
+                    "type": "scene",
+                    "sceneId": "SCN_1_SUB_1"
+                  },
+                  "kind": "to_scene",
+                  "blockCheck": {
+                    "toId": "SCN_1_SUB_3",
+                    "fromId": "SCN_1_SUB_1"
+                  },
+                  "durationMinutes": 2
+                }
+              ],
+              "targetPosition": {
+                "type": "scene",
+                "sceneId": "SCN_1_SUB_3"
+              },
+              "minutesIntoStep": 0,
+              "currentStepIndex": 1,
+              "lastReachablePosition": {
+                "type": "scene",
+                "sceneId": "SCN_1_SUB_3"
+              }
+            },
+            "startedAt": "19:46",
+            "completedAt": "19:47",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "scene_interaction",
+          "action": "环顾餐厅并悄悄观察门口、吧台和二楼休息区，寻找并确认哈里森·洛克希德是否在场以及他与约翰尼和海伦的互动",
+          "impact": 0,
+          "nodeId": "si1",
+          "status": "completed",
+          "endTime": "23:02",
+          "outcome": "我环顾了餐厅的门口、吧台和二楼休息区，确认海伦确实在二楼静坐。未见到哈里森·洛克希德或约翰尼在场，也没有观察到他们与海伦有任何互动。",
+          "startTime": "22:59",
+          "characterId": "Vincent Galenus",
+          "characterName": "Vincent Galenus",
+          "executionMeta": {
+            "startedAt": "22:59",
+            "completedAt": "23:02",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "object_interaction",
+          "action": "翻阅实验档案以确认先前实验步骤并列出今晚所需的设备与防护用品",
+          "impact": 0,
+          "nodeId": "oi_lab_read_records_1951",
+          "status": "completed",
+          "endTime": "19:56",
+          "outcome": "我把实验档案逐页翻阅，核对了先前的实验步骤，并把今晚需要准备的设备与防护用品列了出来：离心机、显微镜、注射器、密封样本容器，以及一次性手套、护目镜和呼吸防护。档案记录与实验台上的器械（包括新型医疗器械和样本容器）相符，并未出现医院总档案里没有的新增化学品记录。",
+          "startTime": "19:51",
+          "characterId": "Vincent Galenus",
+          "characterName": "Vincent Galenus",
+          "executionMeta": {
+            "startedAt": "19:51",
+            "completedAt": "19:56",
+            "remainingMinutes": 0
+          },
+          "objectInteractionPayload": {
+            "itemId": "ITEM_SCN1_7"
+          }
+        },
+        {
+          "type": "object_interaction",
+          "action": "合上并锁好离心机盖，设定转速与时间后启动离心机以分离四支样本管",
+          "impact": 0,
+          "nodeId": "oi1",
+          "status": "completed",
+          "endTime": "20:46",
+          "outcome": "我合上并锁好离心机的盖子，按档案上记录设定好转速和时间后启动机器。离心机稳定运转，四支标记好的无菌离心管已被放入转子并开始分离，样本出现了上清与沉淀分层的迹象。",
+          "startTime": "20:36",
+          "characterId": "Vincent Galenus",
+          "characterName": "Vincent Galenus",
+          "executionMeta": {
+            "startedAt": "20:36",
+            "completedAt": "20:46",
+            "remainingMinutes": 0
+          },
+          "objectInteractionPayload": {
+            "itemId": "ITEM_SCN1_5"
+          }
+        },
+        {
+          "type": "object_interaction",
+          "action": "取起蜘蛛样本容器，检查封签和标签，确认样本状态与保存条件以决定是否可用于今晚的试验",
+          "impact": 0,
+          "nodeId": "oi_vin_001",
+          "status": "completed",
+          "endTime": "20:12",
+          "outcome": "我取起一只蜘蛛样本容器，检查了封签与标签：封签完好、标签格式正规，容器外观没有破损或渗漏。根据外观和标签判断，样本保存状况良好，可以用于今晚的试验，于是我把容器收进口袋带走。",
+          "startTime": "20:06",
+          "characterId": "Vincent Galenus",
+          "characterName": "Vincent Galenus",
+          "executionMeta": {
+            "startedAt": "20:06",
+            "completedAt": "20:12",
+            "remainingMinutes": 0
+          },
+          "objectInteractionPayload": {
+            "itemId": "ITEM_SCN1_23"
+          }
+        },
+        {
+          "type": "object_interaction",
+          "action": "拿起注射器检查其完整性与无菌包装",
+          "impact": 0,
+          "nodeId": "oi_next_001",
+          "status": "completed",
+          "endTime": "20:15",
+          "outcome": "我从工作台上拿起一支注射器，在冷白灯下检查针筒与金属针头，确认外包装封口完好、未被破损，看起来保持无菌，于是把这支注射器收进了随身物品。",
+          "startTime": "20:13",
+          "characterId": "Vincent Galenus",
+          "characterName": "Vincent Galenus",
+          "executionMeta": {
+            "startedAt": "20:13",
+            "completedAt": "20:15",
+            "remainingMinutes": 0
+          },
+          "objectInteractionPayload": {
+            "itemId": "ITEM_SCN1_6"
+          }
+        },
+        {
+          "type": "scene_interaction",
+          "action": "打开实验室应急照明",
+          "impact": 2,
+          "nodeId": "si2",
+          "status": "completed",
+          "endTime": "21:33",
+          "outcome": "我打开了实验室的应急照明，房间不再漆黑，能看清仪器和工作台的轮廓，但光线仍然比平常柔弱，细节略显模糊。",
+          "startTime": "21:31",
+          "characterId": "Vincent Galenus",
+          "characterName": "Vincent Galenus",
+          "executionMeta": {
+            "startedAt": "21:31",
+            "completedAt": "21:33",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "object_interaction",
+          "action": "合上并锁好离心机盖，设定转速与时间后启动离心机以分离四支样本管",
+          "impact": 0,
+          "nodeId": "oi1",
+          "status": "completed",
+          "endTime": "20:46",
+          "outcome": "我合上并锁好离心机的盖子，按档案上记录设定好转速和时间后启动机器。离心机稳定运转，四支标记好的无菌离心管已被放入转子并开始分离，样本出现了上清与沉淀分层的迹象。",
+          "startTime": "20:36",
+          "characterId": "Vincent Galenus",
+          "characterName": "Vincent Galenus",
+          "executionMeta": {
+            "startedAt": "20:36",
+            "completedAt": "20:46",
+            "remainingMinutes": 0
+          },
+          "objectInteractionPayload": {
+            "itemId": "ITEM_SCN1_5"
+          }
+        },
+        {
+          "type": "object_interaction",
+          "action": "合上并锁好离心机盖，设定转速与时间后启动离心机以分离四支样本管",
+          "impact": 0,
+          "nodeId": "oi1",
+          "status": "completed",
+          "endTime": "20:46",
+          "outcome": "我合上并锁好离心机的盖子，按档案上记录设定好转速和时间后启动机器。离心机稳定运转，四支标记好的无菌离心管已被放入转子并开始分离，样本出现了上清与沉淀分层的迹象。",
+          "startTime": "20:36",
+          "characterId": "Vincent Galenus",
+          "characterName": "Vincent Galenus",
+          "executionMeta": {
+            "startedAt": "20:36",
+            "completedAt": "20:46",
+            "remainingMinutes": 0
+          },
+          "objectInteractionPayload": {
+            "itemId": "ITEM_SCN1_5"
+          }
+        },
+        {
+          "type": "object_interaction",
+          "action": "取出显微镜并准备载玻片、盖玻片和必要染色剂，摆放在工作台以便离心完成后立即检查上清",
+          "impact": 0,
+          "nodeId": "oi2",
+          "status": "completed",
+          "endTime": "20:52",
+          "outcome": "我在工作台旁把显微镜准备就位，并将载玻片、盖玻片和需要的染色剂摆放好，所有东西整齐就绪，方便离心结束后立即检查上清。",
+          "startTime": "20:47",
+          "characterId": "Vincent Galenus",
+          "characterName": "Vincent Galenus",
+          "executionMeta": {
+            "startedAt": "20:47",
+            "completedAt": "20:52",
+            "remainingMinutes": 0
+          },
+          "objectInteractionPayload": {
+            "itemId": "ITEM_SCN1_5"
+          }
+        },
+        {
+          "type": "action",
+          "action": "检查离心机运行状态，确认离心程序剩余时间并准备在完成后取出离心管",
+          "impact": 0,
+          "nodeId": "a1",
+          "status": "completed",
+          "endTime": "20:58",
+          "outcome": "检查离心机运行状态，确认离心程序剩余时间并准备在完成后取出离心管 成功",
+          "startTime": "20:53",
+          "characterId": "Vincent Galenus",
+          "characterName": "Vincent Galenus",
+          "executionMeta": {
+            "startedAt": "20:53",
+            "completedAt": "20:58",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "scene_interaction",
+          "action": "打开实验室应急照明",
+          "impact": 2,
+          "nodeId": "si2",
+          "status": "completed",
+          "endTime": "21:33",
+          "outcome": "我打开了实验室的应急照明，房间不再漆黑，能看清仪器和工作台的轮廓，但光线仍然比平常柔弱，细节略显模糊。",
+          "startTime": "21:31",
+          "characterId": "Vincent Galenus",
+          "characterName": "Vincent Galenus",
+          "executionMeta": {
+            "startedAt": "21:31",
+            "completedAt": "21:33",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "action",
+          "action": "检查离心机剩余运行时间并确认转子稳定",
+          "impact": 0,
+          "nodeId": "a2",
+          "status": "completed",
+          "endTime": "21:13",
+          "outcome": "检查离心机剩余运行时间并确认转子稳定 成功",
+          "startTime": "21:11",
+          "characterId": "Vincent Galenus",
+          "characterName": "Vincent Galenus",
+          "executionMeta": {
+            "startedAt": "21:11",
+            "completedAt": "21:13",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "action",
+          "action": "在离心机旁监视直到离心程序完成",
+          "impact": 0,
+          "nodeId": "a_vin_001",
+          "status": "completed",
+          "endTime": "21:20",
+          "outcome": "在离心机旁监视直到离心程序完成 成功",
+          "startTime": "21:14",
+          "characterId": "Vincent Galenus",
+          "characterName": "Vincent Galenus",
+          "executionMeta": {
+            "startedAt": "21:14",
+            "completedAt": "21:20",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "scene_interaction",
+          "action": "从离心机中取出离心管，将上清小心滴到载玻片上并在显微镜下进行初步观察",
+          "impact": 0,
+          "nodeId": "si3",
+          "status": "completed",
+          "endTime": "21:30",
+          "outcome": "我停下离心机并打开盖子，取出四支编号的无菌离心管放在工作台上。用移液器将上清小心滴在载玻片上并盖上盖玻片，然后把载玻片放到显微镜下进行了初步观察，过程顺利。",
+          "startTime": "21:21",
+          "characterId": "Vincent Galenus",
+          "characterName": "Vincent Galenus",
+          "executionMeta": {
+            "startedAt": "21:21",
+            "completedAt": "21:30",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "scene_interaction",
+          "action": "打开实验室应急照明",
+          "impact": 2,
+          "nodeId": "si2",
+          "status": "completed",
+          "endTime": "21:33",
+          "outcome": "我打开了实验室的应急照明，房间不再漆黑，能看清仪器和工作台的轮廓，但光线仍然比平常柔弱，细节略显模糊。",
+          "startTime": "21:31",
+          "characterId": "Vincent Galenus",
+          "characterName": "Vincent Galenus",
+          "executionMeta": {
+            "startedAt": "21:31",
+            "completedAt": "21:33",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "scene_interaction",
+          "action": "环顾餐厅并悄悄观察门口、吧台和二楼休息区，寻找并确认哈里森·洛克希德是否在场以及他与约翰尼和海伦的互动",
+          "impact": 0,
+          "nodeId": "si1",
+          "status": "completed",
+          "endTime": "23:02",
+          "outcome": "我环顾了餐厅的门口、吧台和二楼休息区，确认海伦确实在二楼静坐。未见到哈里森·洛克希德或约翰尼在场，也没有观察到他们与海伦有任何互动。",
+          "startTime": "22:59",
+          "characterId": "Vincent Galenus",
+          "characterName": "Vincent Galenus",
+          "executionMeta": {
+            "startedAt": "22:59",
+            "completedAt": "23:02",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "movement",
+          "action": "步行回星辰医院，带着海伦给的热饭",
+          "impact": 0,
+          "nodeId": "m1",
+          "status": "completed",
+          "endTime": "23:13",
+          "outcome": "步行回星辰医院，带着海伦给的热饭 成功",
+          "startTime": "23:03",
+          "characterId": "Vincent Galenus",
+          "destination": "SCN_1_SUB_1",
+          "characterName": "Vincent Galenus",
+          "executionMeta": {
+            "movement": {
+              "routeSnapshot": [
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_2",
+                    "position": 0.28
+                  },
+                  "from": {
+                    "type": "scene",
+                    "sceneId": "SCN_10_SUB_1"
+                  },
+                  "kind": "along_road",
+                  "roadId": "ROAD_2",
+                  "blockCheck": {
+                    "toId": "ROAD_2",
+                    "fromId": "SCN_10_SUB_1"
+                  },
+                  "durationMinutes": 1
+                },
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_2",
+                    "position": 0
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_2",
+                    "position": 0.28
+                  },
+                  "kind": "along_road",
+                  "roadId": "ROAD_2",
+                  "durationMinutes": 2.8
+                },
+                {
+                  "to": {
+                    "type": "junction",
+                    "junctionId": "JUNC_2"
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_2",
+                    "position": 0
+                  },
+                  "kind": "to_junction",
+                  "blockCheck": {
+                    "toId": "JUNC_2",
+                    "fromId": "ROAD_2"
+                  },
+                  "durationMinutes": 0
+                },
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_1",
+                    "position": 1
+                  },
+                  "from": {
+                    "type": "junction",
+                    "junctionId": "JUNC_2"
+                  },
+                  "kind": "to_junction",
+                  "blockCheck": {
+                    "toId": "ROAD_1",
+                    "fromId": "JUNC_2"
+                  },
+                  "durationMinutes": 0
+                },
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_1",
+                    "position": 0.75
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_1",
+                    "position": 1
+                  },
+                  "kind": "along_road",
+                  "roadId": "ROAD_1",
+                  "durationMinutes": 1.5
+                },
+                {
+                  "to": {
+                    "type": "scene",
+                    "sceneId": "SCN_1_SUB_1"
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_1",
+                    "position": 0.75
+                  },
+                  "kind": "to_scene",
+                  "blockCheck": {
+                    "toId": "SCN_1_SUB_1",
+                    "fromId": "ROAD_1"
+                  },
+                  "durationMinutes": 1
+                }
+              ],
+              "targetPosition": {
+                "type": "scene",
+                "sceneId": "SCN_1_SUB_1"
+              },
+              "minutesIntoStep": 0,
+              "currentStepIndex": 6,
+              "lastReachablePosition": {
+                "type": "scene",
+                "sceneId": "SCN_1_SUB_1"
+              }
+            },
+            "startedAt": "23:03",
+            "completedAt": "23:09",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "action",
+          "action": "回到我的办公室整理笔记，拟定今晚的实验步骤并评估可行性与潜在风险以备记录",
+          "impact": 0,
+          "nodeId": "a1_vincent_return_office",
+          "status": "completed",
+          "endTime": "22:15",
+          "outcome": "回到我的办公室整理笔记，拟定今晚的实验步骤并评估可行性与潜在风险以备记录 成功",
+          "startTime": "21:45",
+          "characterId": "Vincent Galenus",
+          "characterName": "Vincent Galenus",
+          "executionMeta": {
+            "startedAt": "21:45",
+            "completedAt": "22:15",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "movement",
+          "action": "步行回星辰医院，带着海伦给的热饭",
+          "impact": 0,
+          "nodeId": "m1",
+          "status": "completed",
+          "endTime": "23:13",
+          "outcome": "步行回星辰医院，带着海伦给的热饭 成功",
+          "startTime": "23:03",
+          "characterId": "Vincent Galenus",
+          "destination": "SCN_1_SUB_1",
+          "characterName": "Vincent Galenus",
+          "executionMeta": {
+            "movement": {
+              "routeSnapshot": [
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_2",
+                    "position": 0.28
+                  },
+                  "from": {
+                    "type": "scene",
+                    "sceneId": "SCN_10_SUB_1"
+                  },
+                  "kind": "along_road",
+                  "roadId": "ROAD_2",
+                  "blockCheck": {
+                    "toId": "ROAD_2",
+                    "fromId": "SCN_10_SUB_1"
+                  },
+                  "durationMinutes": 1
+                },
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_2",
+                    "position": 0
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_2",
+                    "position": 0.28
+                  },
+                  "kind": "along_road",
+                  "roadId": "ROAD_2",
+                  "durationMinutes": 2.8
+                },
+                {
+                  "to": {
+                    "type": "junction",
+                    "junctionId": "JUNC_2"
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_2",
+                    "position": 0
+                  },
+                  "kind": "to_junction",
+                  "blockCheck": {
+                    "toId": "JUNC_2",
+                    "fromId": "ROAD_2"
+                  },
+                  "durationMinutes": 0
+                },
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_1",
+                    "position": 1
+                  },
+                  "from": {
+                    "type": "junction",
+                    "junctionId": "JUNC_2"
+                  },
+                  "kind": "to_junction",
+                  "blockCheck": {
+                    "toId": "ROAD_1",
+                    "fromId": "JUNC_2"
+                  },
+                  "durationMinutes": 0
+                },
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_1",
+                    "position": 0.75
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_1",
+                    "position": 1
+                  },
+                  "kind": "along_road",
+                  "roadId": "ROAD_1",
+                  "durationMinutes": 1.5
+                },
+                {
+                  "to": {
+                    "type": "scene",
+                    "sceneId": "SCN_1_SUB_1"
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_1",
+                    "position": 0.75
+                  },
+                  "kind": "to_scene",
+                  "blockCheck": {
+                    "toId": "SCN_1_SUB_1",
+                    "fromId": "ROAD_1"
+                  },
+                  "durationMinutes": 1
+                }
+              ],
+              "targetPosition": {
+                "type": "scene",
+                "sceneId": "SCN_1_SUB_1"
+              },
+              "minutesIntoStep": 0,
+              "currentStepIndex": 6,
+              "lastReachablePosition": {
+                "type": "scene",
+                "sceneId": "SCN_1_SUB_1"
+              }
+            },
+            "startedAt": "23:03",
+            "completedAt": "23:09",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "movement",
+          "action": "步行前往海伦的餐桌",
+          "impact": 0,
+          "nodeId": "m_vincent_01",
+          "status": "completed",
+          "endTime": "22:29",
+          "outcome": "步行前往海伦的餐桌 成功",
+          "startTime": "22:19",
+          "characterId": "Vincent Galenus",
+          "destination": "SCN_10_SUB_1",
+          "characterName": "Vincent Galenus",
+          "executionMeta": {
+            "movement": {
+              "routeSnapshot": [
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_2",
+                    "position": 0
+                  },
+                  "from": {
+                    "type": "junction",
+                    "junctionId": "JUNC_2"
+                  },
+                  "kind": "to_junction",
+                  "blockCheck": {
+                    "toId": "ROAD_2",
+                    "fromId": "JUNC_2"
+                  },
+                  "durationMinutes": 0
+                },
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_2",
+                    "position": 0.28
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_2",
+                    "position": 0
+                  },
+                  "kind": "along_road",
+                  "roadId": "ROAD_2",
+                  "durationMinutes": 2.8
+                },
+                {
+                  "to": {
+                    "type": "scene",
+                    "sceneId": "SCN_10_SUB_1"
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_2",
+                    "position": 0.28
+                  },
+                  "kind": "to_scene",
+                  "blockCheck": {
+                    "toId": "SCN_10_SUB_1",
+                    "fromId": "ROAD_2"
+                  },
+                  "durationMinutes": 1
+                }
+              ],
+              "targetPosition": {
+                "type": "scene",
+                "sceneId": "SCN_10_SUB_1"
+              },
+              "minutesIntoStep": 0,
+              "currentStepIndex": 3,
+              "lastReachablePosition": {
+                "type": "scene",
+                "sceneId": "SCN_10_SUB_1"
+              }
+            },
+            "startedAt": "22:19",
+            "completedAt": "22:22",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "character_interaction",
+          "action": "以平静、低调的语气与露西亚短促交谈，试探性询问今晚医院的值班安排与监控盲点，避免提及妻子、药物或实验，然后道谢带着饭离开回实验室。",
+          "impact": 1,
+          "nodeId": "ci1",
+          "status": "completed",
+          "endTime": "23:15",
+          "outcome": "我到医院大厅找露西亚但她不在。顺手看了排班白板，上面标有今晚需重点巡视的监控盲点并作了笔记，随即道谢拿着饭离开并回到实验室。",
+          "startTime": "23:10",
+          "characterId": "Vincent Galenus",
+          "characterName": "Vincent Galenus",
+          "executionMeta": {
+            "startedAt": "23:10",
+            "completedAt": "23:15",
+            "remainingMinutes": 0
+          },
+          "targetCharacterIds": [
+            "npc_lucia_shiny"
+          ]
+        },
+        {
+          "type": "character_interaction",
+          "skill": "Persuade",
+          "action": "低声向海伦询问今晚星辰医院的值班安排和是否有人提到监控死角或异常动静",
+          "impact": 1,
+          "nodeId": "ci1_vincent_helena_2229",
+          "status": "failed",
+          "endTime": "22:32",
+          "startTime": "22:29",
+          "characterId": "Vincent Galenus",
+          "characterName": "Vincent Galenus",
+          "executionMeta": {
+            "failedAt": "22:32",
+            "startedAt": "22:29",
+            "remainingMinutes": 3
+          },
+          "targetCharacterIds": [
+            "Helen"
+          ]
+        },
+        {
+          "type": "character_interaction",
+          "action": "以平静、低调的语气与露西亚短促交谈，试探性询问今晚医院的值班安排与监控盲点，避免提及妻子、药物或实验，然后道谢带着饭离开回实验室。",
+          "impact": 1,
+          "nodeId": "ci1",
+          "status": "completed",
+          "endTime": "23:15",
+          "outcome": "我到医院大厅找露西亚但她不在。顺手看了排班白板，上面标有今晚需重点巡视的监控盲点并作了笔记，随即道谢拿着饭离开并回到实验室。",
+          "startTime": "23:10",
+          "characterId": "Vincent Galenus",
+          "characterName": "Vincent Galenus",
+          "executionMeta": {
+            "startedAt": "23:10",
+            "completedAt": "23:15",
+            "remainingMinutes": 0
+          },
+          "targetCharacterIds": [
+            "npc_lucia_shiny"
+          ]
+        },
+        {
+          "type": "character_interaction",
+          "action": "低声与约翰尼继续寒暄并随意询问他对小镇近况和常去场所的看法，避免提及医院、药物或我妻子的事",
+          "impact": 1,
+          "nodeId": "ci2",
+          "status": "completed",
+          "endTime": "22:42",
+          "outcome": "我低声和约翰尼在餐厅随意寒暄，刻意回避了医院、药物和海伦的话题。他说他熟悉卡森德拉周围的林地，确认2003年12月22日去过驯鹿酒吧，并且那晚菲利普骚扰了海伦，他把菲利普赶走了。交谈让气氛比预期更缓和，感觉他对我略微开放了一些。",
+          "startTime": "22:37",
+          "characterId": "Vincent Galenus",
+          "characterName": "Vincent Galenus",
+          "executionMeta": {
+            "startedAt": "22:37",
+            "completedAt": "22:42",
+            "remainingMinutes": 0
+          },
+          "targetCharacterIds": [
+            "Johnny"
+          ]
+        },
+        {
+          "type": "action",
+          "action": "观察哈里森·洛克希德与约翰尼和海伦的互动",
+          "impact": 0,
+          "nodeId": "a_next_001",
+          "status": "completed",
+          "endTime": "22:48",
+          "outcome": "观察哈里森·洛克希德与约翰尼和海伦的互动 成功",
+          "startTime": "22:43",
+          "characterId": "Vincent Galenus",
+          "characterName": "Vincent Galenus",
+          "executionMeta": {
+            "startedAt": "22:43",
+            "completedAt": "22:48",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "character_interaction",
+          "action": "以平静、低调的语气与露西亚短促交谈，试探性询问今晚医院的值班安排与监控盲点，避免提及妻子、药物或实验，然后道谢带着饭离开回实验室。",
+          "impact": 1,
+          "nodeId": "ci1",
+          "status": "completed",
+          "endTime": "23:15",
+          "outcome": "我到医院大厅找露西亚但她不在。顺手看了排班白板，上面标有今晚需重点巡视的监控盲点并作了笔记，随即道谢拿着饭离开并回到实验室。",
+          "startTime": "23:10",
+          "characterId": "Vincent Galenus",
+          "characterName": "Vincent Galenus",
+          "executionMeta": {
+            "startedAt": "23:10",
+            "completedAt": "23:15",
+            "remainingMinutes": 0
+          },
+          "targetCharacterIds": [
+            "npc_lucia_shiny"
+          ]
+        },
+        {
+          "type": "action",
+          "action": "在海伦的餐桌坐下，假装用餐并观察餐厅内的动静，尤其注意哈里森是否出现以及他与约翰尼、海伦的互动",
+          "impact": 0,
+          "nodeId": "a_vincent_2253_01",
+          "status": "completed",
+          "endTime": "22:58",
+          "outcome": "在海伦的餐桌坐下，假装用餐并观察餐厅内的动静，尤其注意哈里森是否出现以及他与约翰尼、海伦的互动 成功",
+          "startTime": "22:53",
+          "characterId": "Vincent Galenus",
+          "characterName": "Vincent Galenus",
+          "executionMeta": {
+            "startedAt": "22:53",
+            "completedAt": "22:58",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "scene_interaction",
+          "action": "环顾餐厅并悄悄观察门口、吧台和二楼休息区，寻找并确认哈里森·洛克希德是否在场以及他与约翰尼和海伦的互动",
+          "impact": 0,
+          "nodeId": "si1",
+          "status": "completed",
+          "endTime": "23:02",
+          "outcome": "我环顾了餐厅的门口、吧台和二楼休息区，确认海伦确实在二楼静坐。未见到哈里森·洛克希德或约翰尼在场，也没有观察到他们与海伦有任何互动。",
+          "startTime": "22:59",
+          "characterId": "Vincent Galenus",
+          "characterName": "Vincent Galenus",
+          "executionMeta": {
+            "startedAt": "22:59",
+            "completedAt": "23:02",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "movement",
+          "action": "步行回星辰医院，带着海伦给的热饭",
+          "impact": 0,
+          "nodeId": "m1",
+          "status": "completed",
+          "endTime": "23:13",
+          "outcome": "步行回星辰医院，带着海伦给的热饭 成功",
+          "startTime": "23:03",
+          "characterId": "Vincent Galenus",
+          "destination": "SCN_1_SUB_1",
+          "characterName": "Vincent Galenus",
+          "executionMeta": {
+            "movement": {
+              "routeSnapshot": [
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_2",
+                    "position": 0.28
+                  },
+                  "from": {
+                    "type": "scene",
+                    "sceneId": "SCN_10_SUB_1"
+                  },
+                  "kind": "along_road",
+                  "roadId": "ROAD_2",
+                  "blockCheck": {
+                    "toId": "ROAD_2",
+                    "fromId": "SCN_10_SUB_1"
+                  },
+                  "durationMinutes": 1
+                },
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_2",
+                    "position": 0
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_2",
+                    "position": 0.28
+                  },
+                  "kind": "along_road",
+                  "roadId": "ROAD_2",
+                  "durationMinutes": 2.8
+                },
+                {
+                  "to": {
+                    "type": "junction",
+                    "junctionId": "JUNC_2"
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_2",
+                    "position": 0
+                  },
+                  "kind": "to_junction",
+                  "blockCheck": {
+                    "toId": "JUNC_2",
+                    "fromId": "ROAD_2"
+                  },
+                  "durationMinutes": 0
+                },
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_1",
+                    "position": 1
+                  },
+                  "from": {
+                    "type": "junction",
+                    "junctionId": "JUNC_2"
+                  },
+                  "kind": "to_junction",
+                  "blockCheck": {
+                    "toId": "ROAD_1",
+                    "fromId": "JUNC_2"
+                  },
+                  "durationMinutes": 0
+                },
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_1",
+                    "position": 0.75
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_1",
+                    "position": 1
+                  },
+                  "kind": "along_road",
+                  "roadId": "ROAD_1",
+                  "durationMinutes": 1.5
+                },
+                {
+                  "to": {
+                    "type": "scene",
+                    "sceneId": "SCN_1_SUB_1"
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_1",
+                    "position": 0.75
+                  },
+                  "kind": "to_scene",
+                  "blockCheck": {
+                    "toId": "SCN_1_SUB_1",
+                    "fromId": "ROAD_1"
+                  },
+                  "durationMinutes": 1
+                }
+              ],
+              "targetPosition": {
+                "type": "scene",
+                "sceneId": "SCN_1_SUB_1"
+              },
+              "minutesIntoStep": 0,
+              "currentStepIndex": 6,
+              "lastReachablePosition": {
+                "type": "scene",
+                "sceneId": "SCN_1_SUB_1"
+              }
+            },
+            "startedAt": "23:03",
+            "completedAt": "23:09",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "character_interaction",
+          "action": "以平静、低调的语气与露西亚短促交谈，试探性询问今晚医院的值班安排与监控盲点，避免提及妻子、药物或实验，然后道谢带着饭离开回实验室。",
+          "impact": 1,
+          "nodeId": "ci1",
+          "status": "completed",
+          "endTime": "23:15",
+          "outcome": "我到医院大厅找露西亚但她不在。顺手看了排班白板，上面标有今晚需重点巡视的监控盲点并作了笔记，随即道谢拿着饭离开并回到实验室。",
+          "startTime": "23:10",
+          "characterId": "Vincent Galenus",
+          "characterName": "Vincent Galenus",
+          "executionMeta": {
+            "startedAt": "23:10",
+            "completedAt": "23:15",
+            "remainingMinutes": 0
+          },
+          "targetCharacterIds": [
+            "npc_lucia_shiny"
+          ]
+        },
+        {
+          "type": "character_interaction",
+          "action": "与露西亚低声寒暄，保持冷静并简短询问今晚值班与监控盲点是否有变动，避免提及妻子、药物或实验，感谢她的配合后带着饭尽快离开回实验室",
+          "impact": 1,
+          "nodeId": "ci_vincent_01",
+          "status": "in_progress",
+          "endTime": "23:22",
+          "startTime": "23:19",
+          "characterId": "Vincent Galenus",
+          "characterName": "Vincent Galenus",
+          "executionMeta": {
+            "startedAt": "23:19",
+            "remainingMinutes": 3
+          },
+          "targetCharacterIds": [
+            "Mrs. Barklyite (Lucia Shiny)"
+          ]
+        }
+      ]
+    },
+    {
+      "npcName": "Vincent Galenus",
+      "gameDay": 2,
+      "schedule": [
+        {
+          "activity": "在大厅继续回放并核对监控录像与便携录音，确认已标注的时间戳与监控死角记录。",
+          "location": "星辰医院"
+        },
+        {
+          "activity": "前往实验室实地检查昨夜的样本与显微镜口述记录，确认四支已封存离心管的标签与登记无误。",
+          "location": "星辰医院"
+        },
+        {
+          "activity": "到药品管理室核对冷藏柜内的药品与来货记录，重点查找并确认东莨菪碱相关线索及暗门是否被人为触碰。",
+          "location": "星辰医院"
+        },
+        {
+          "activity": "进入停尸间巡视并记录任何异常状况，确认没有未经登记的样本或尸体被调动。",
+          "location": "星辰医院"
+        },
+        {
+          "activity": "回到办公室整理并备份今日夜间的监控截图和实验档案，写下下一步实验的风险评估与操作要点。",
+          "location": "星辰医院"
+        },
+        {
+          "activity": "在接待处悄悄调整排班白板与监控入侵提醒的设置，以掩护我接下来必须外出的时间段并保护实验室安全。",
+          "location": "星辰医院"
+        },
+        {
+          "activity": "深夜前往墓地悄悄查看妻子的遗体状态并用便携设备记录任何可能用于继续研究的生物特征。",
+          "location": "墓地"
+        },
+        {
+          "activity": "在妻子的墓前低声交谈并试图从内心找到继续研究与赎罪的动力，记录情绪与观察结果以备后用。",
+          "location": "墓地"
+        },
+        {
+          "activity": "回到医院将墓地采集的记录封存入证物袋并放入办公室保险柜，更新实验计划与优先事项清单。",
+          "location": "星辰医院"
+        },
+        {
+          "activity": "在办公室吃一碗简单的热汤以补充体力并简短休息，清理思绪准备白天工作。",
+          "location": "星辰医院"
+        },
+        {
+          "activity": "天亮后再次检查实验室里的离心管与显微镜记录，配制白天需要使用的染色剂与载玻片。",
+          "location": "星辰医院"
+        },
+        {
+          "activity": "去海伦的餐桌吃早午餐并试探性打听镇上的流言与今晨有人提及医院的事情，同时尽量回避敏感话题。",
+          "location": "海伦的餐桌"
+        },
+        {
+          "activity": "回到医院在药品管理室接收并登记今早到货的常规试剂，核对清单以防有人替换或调包药品。",
+          "location": "星辰医院"
+        },
+        {
+          "activity": "下午到驯鹿酒吧观察案发现场并向常客简短打听当晚细节，记录任何可能与医院事件有关的线索。",
+          "location": "驯鹿酒吧"
+        },
+        {
+          "activity": "傍晚回到医院在实验室进行下一阶段的小规模试验并详细记录每一步与任何异常，随时准备终止实验以防失控。",
+          "location": "星辰医院"
+        },
+        {
+          "activity": "将今晚的所有记录与证据上锁备份，指示护工和保安按照更新后的排班巡查监控盲点，然后在办公室床上休息以恢复体力准备明天继续工作。",
+          "location": "星辰医院"
+        }
+      ],
+      "nodes": [
+        {
+          "type": "character_interaction",
+          "action": "以平静、不引人注意的语气向露西亚（Mrs. Barklyite）询问今晚的值班与监护安排，试探谁会巡视监控盲点；简短道别并接受她递来的一份食物作为离开的借口。",
+          "impact": 1,
+          "nodeId": "ci1",
+          "status": "in_progress",
+          "endTime": "00:05",
+          "startTime": "00:00",
+          "characterId": "Vincent Galenus",
+          "characterName": "Vincent Galenus",
+          "executionMeta": {
+            "startedAt": "00:00",
+            "remainingMinutes": 5
+          },
+          "targetCharacterIds": [
+            "Mrs. Barklyite (Lucia Shiny)"
+          ]
+        }
+      ]
+    }
+  ],
+  "intents": [
+    {
+      "intent": "Handle the face-to-face with Mrs. Barklyite (Lucia Shiny): stay calm and unobtrusive, avoid revealing anything about my wife, drugs, or experiments; attempt to gently probe for tonight's staffing/monitoring or any hospital dynamics that could affect my movements; keep the interaction short and depart with food so I can return to the lab and resume preparation.",
+      "updatedAt": "2026-04-02T07:21:08.021Z"
+    }
+  ],
+  "npcName": "Vincent Galenus"
+}

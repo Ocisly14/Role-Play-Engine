@@ -1,0 +1,17 @@
+{
+  "npcId": "npc_lucia_shiny",
+  "memories": [
+    {
+      "type": "event",
+      "content": "我今天不在医院大厅，未与文森特接触，也没有收到任何询问或信息。",
+      "gameDay": 1,
+      "gameTime": "23:15",
+      "location": "SCN_1_SUB_1",
+      "metadata": {
+        "outcome": "以平静、低调的语气与露西亚短促交谈，试探性询问今晚医院的值班安排与监控盲点，避免提及妻子、药物或实验，然后道谢带着饭离开回实验室。"
+      }
+    }
+  ],
+  "plans": [],
+  "intents": []
+}

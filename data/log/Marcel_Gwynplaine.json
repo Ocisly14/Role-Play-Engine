@@ -1,0 +1,2200 @@
+{
+  "npcId": "Marcel Gwynplaine",
+  "memories": [
+    {
+      "type": "information",
+      "content": "12月22日在驯鹿酒吧，我看到一个男人从洗手间旁走过，我听到卢奇菲罗在被杀前打电话。",
+      "gameDay": 1,
+      "gameTime": "00:00",
+      "location": null,
+      "metadata": {
+        "difficulty": "regular",
+        "knowledgeId": "k_marcel_bar_witness"
+      }
+    },
+    {
+      "type": "information",
+      "content": "我是生意不好时被酒厂解雇的工人之一。",
+      "gameDay": 1,
+      "gameTime": "00:00",
+      "location": null,
+      "metadata": {
+        "difficulty": "automatic",
+        "knowledgeId": "k_marcel_fired"
+      }
+    },
+    {
+      "type": "secret",
+      "content": "我是第一个在洗手间发现卢奇菲罗尸体的人，但我因为害怕被怪罪而试图溜走。",
+      "gameDay": 1,
+      "gameTime": "00:00",
+      "location": null,
+      "metadata": {
+        "knowledgeId": "s_marcel_body_first"
+      }
+    },
+    {
+      "type": "belief",
+      "content": "如果我低调行事、保持令人厌烦的无趣，人们就会忘记把任何重要的事情怪到我头上。",
+      "gameDay": 1,
+      "gameTime": "00:00",
+      "location": null,
+      "metadata": {
+        "confidence": 0.42,
+        "reasoningChain": "我以为低调会让人忘记我，但今天仍然被Patrizio和市长盯上并被逼问，说明低调并不能保证不被牵连，信心下降。"
+      }
+    },
+    {
+      "type": "plan",
+      "content": "在卡森德拉找到一份能糊口的稳定工作，重新过上不至于如此落魄的生活。尽管嘴上永远在怨天尤人、借酒消愁，但内心深处他渴望得到他人的认可，证明自己并非一无是处。",
+      "gameDay": 1,
+      "gameTime": "00:00",
+      "location": null,
+      "metadata": {
+        "planType": "long_term"
+      }
+    },
+    {
+      "type": "plan",
+      "content": "Today's plan: 1. 再过一遍检查门窗和旧牛仔夹克是否堵好缝隙，确认欠费单藏好后尽量让自己休息一下 at 马塞尔家; 2. 凌晨醒来准备一份简短的自我介绍和请求信，整理好衣物和零钱为白天出门做准备 at 马塞尔家; 3. 早上去海伦的餐桌询问是否有洗碗或厨房帮工的临时职位并留下自己的联系方式 at 海伦的餐桌; 4. 到五金店找哈里森打听有没有小修小活或临时雇工的机会并表示愿意马上上手 at 五金店; 5. 到酒厂去见曾经的同事或管理层，恳求有没有零工活或重新雇我的可能性 at 酒厂; 6. 傍晚去驯鹿酒吧找卢茨搭话以维持关系并顺便打听镇上有没有雇人或工作信息 at 驯鹿酒吧; 7. 回到家里把今天的交谈和线索记下来，收拾好再尽量睡一觉为明天做准备 at 马塞尔家",
+      "gameDay": 2,
+      "gameTime": "00:00",
+      "location": null,
+      "metadata": {
+        "planType": "daily"
+      }
+    },
+    {
+      "type": "secret",
+      "content": "我习惯在问题变得更尖锐之前溜走，因为待太久就是像我这样的人被怪罪的方式。",
+      "gameDay": 1,
+      "gameTime": "00:00",
+      "location": null,
+      "metadata": {
+        "knowledgeId": "s_marcel_exit_early"
+      }
+    },
+    {
+      "type": "secret",
+      "content": "我看到一个脸上有明显疤痕或胎记的男人在谋杀案发生前从新月街B大道的下水道口出来。",
+      "gameDay": 1,
+      "gameTime": "00:00",
+      "location": null,
+      "metadata": {
+        "knowledgeId": "s_marcel_sewer_sighting"
+      }
+    },
+    {
+      "type": "information",
+      "content": "我知道酒厂的人和酒吧的常客都觉得我可有可无，所以在有权威的人面前我说话很小心。",
+      "gameDay": 1,
+      "gameTime": "00:00",
+      "location": null,
+      "metadata": {
+        "difficulty": "regular",
+        "knowledgeId": "k_marcel_caution"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我把塞在窗缝的旧牛仔夹克拉出来，掏开内侧口袋检查——欠费单还在，和那点零钱一起，折好塞回去，窗缝也重新塞紧了。",
+      "gameDay": 2,
+      "gameTime": "00:05",
+      "location": "SCN_5_SUB_1",
+      "metadata": {
+        "itemId": "旧牛仔夹克",
+        "outcome": "检查旧牛仔夹克口袋确认欠费单藏好",
+        "itemName": "旧牛仔夹克"
+      }
+    },
+    {
+      "type": "event",
+      "content": "躺回床上尝试睡觉，尽量休息恢复体力并保持警觉 成功",
+      "gameDay": 2,
+      "gameTime": "06:30",
+      "location": "SCN_5_SUB_1",
+      "metadata": {
+        "outcome": "躺回床上尝试睡觉，尽量休息恢复体力并保持警觉 成功"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我从塞在窗缝的旧牛仔夹克里掏出那张欠费单，在单子背面草草写下简短的自我介绍和求职请求，然后把单子折好连同那点零钱一起塞回内侧口袋，整理好夹克后又把它重新塞紧在窗缝挡风。",
+      "gameDay": 2,
+      "gameTime": "06:45",
+      "location": "SCN_5_SUB_1",
+      "metadata": {
+        "itemId": "旧牛仔夹克",
+        "outcome": "从旧牛仔夹克口袋取出欠费单，在单子背面草草写下简短自我介绍和求职请求，然后把单子折好塞回口袋并把夹克及零钱整理好备用",
+        "itemName": "旧牛仔夹克"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我从旧牛仔夹克内侧口袋取出欠费单，把它撕成碎片并在水槽里把碎片冲入下水道；口袋里只剩下那点零钱，随后把夹克整理好又塞回窗缝。",
+      "gameDay": 2,
+      "gameTime": "06:48",
+      "location": "SCN_5_SUB_1",
+      "metadata": {
+        "itemId": "旧牛仔夹克",
+        "outcome": "从旧牛仔夹克口袋里取出欠费单，撕成碎片并把碎片冲进马桶",
+        "itemName": "旧牛仔夹克"
+      }
+    },
+    {
+      "type": "event",
+      "content": "躺回床上尝试再睡一会儿以恢复体力并保持警觉 成功",
+      "gameDay": 2,
+      "gameTime": "07:20",
+      "location": "SCN_5_SUB_1",
+      "metadata": {
+        "outcome": "躺回床上尝试再睡一会儿以恢复体力并保持警觉 成功"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我检查了门把和窗锁，确认都扣紧了；翻看了旧牛仔夹克的口袋，欠费单已经被处理（已被撕碎并冲走），然后把夹克按牢在窗缝，冷风明显减弱。",
+      "gameDay": 2,
+      "gameTime": "07:26",
+      "location": "SCN_5_SUB_1",
+      "metadata": {
+        "outcome": "检查门把、窗锁和旧牛仔夹克口袋，确认欠费单已被处理并把夹克按牢以堵住缝隙"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我把旧牛仔夹克从窗缝里拉出来穿上，掏了掏内侧口袋，把里头那点零钱整理得整齐些。穿上夹克后窗缝又露出缝隙，冷风和那微弱的窸窣声又回来了。",
+      "gameDay": 2,
+      "gameTime": "07:30",
+      "location": "SCN_5_SUB_1",
+      "metadata": {
+        "itemId": "旧牛仔夹克",
+        "outcome": "穿上旧牛仔夹克并把口袋里的零钱整理好",
+        "itemName": "旧牛仔夹克"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我把旧牛仔夹克重新塞回窗缝，压实并按牢固定住。冷风明显减弱，窗边的报纸不再随风发出窸窣声。",
+      "gameDay": 2,
+      "gameTime": "07:33",
+      "location": "SCN_5_SUB_1",
+      "metadata": {
+        "outcome": "重新塞紧旧牛仔夹克以堵住窗缝，压实固定防止风声和缝隙再次露出"
+      }
+    },
+    {
+      "type": "event",
+      "content": "躺回床上尝试再睡一会儿以恢复体力并保持警觉 成功",
+      "gameDay": 2,
+      "gameTime": "07:54",
+      "location": "SCN_5_SUB_1",
+      "metadata": {
+        "outcome": "躺回床上尝试再睡一会儿以恢复体力并保持警觉 成功"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我把旧牛仔夹克脱下，掏了掏内侧口袋，把里头的零钱整理得整齐，然后把夹克叠好放在床上，准备白天出门。",
+      "gameDay": 2,
+      "gameTime": "08:05",
+      "location": "SCN_5_SUB_1",
+      "metadata": {
+        "itemId": "旧牛仔夹克",
+        "outcome": "整理旧牛仔夹克内的零钱并把衣物叠好，为白天出门做准备",
+        "itemName": "旧牛仔夹克"
+      }
+    },
+    {
+      "type": "plan",
+      "content": "Today's plan: 1. 在昏暗的廉租房里把自己暖和起来，吃点简单的晚饭并清醒头脑。 at 马塞尔家; 2. 把一张纸写成简短的自我介绍和在酒厂的工作经历，准备出去找活时用。 at 马塞尔家; 3. 冒着大雪去驯鹿酒吧，点一杯酒并低调打听有没有临时工或能介绍工作的机会。 at 驯鹿酒吧; 4. 留意常客和酒保的谈话，顺便留心任何与谋杀案有关的线索，但如果有人盯上我就悄悄离开。 at 驯鹿酒吧; 5. 回家把今晚记下的线索和联系记录整理好，锁好门窗，尽量早点睡为明天继续找工作做准备。 at 马塞尔家",
+      "gameDay": 1,
+      "gameTime": "19:00",
+      "location": null,
+      "metadata": {
+        "planType": "daily"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我把那件旧牛仔夹克套在身上，粗糙的布料挡住了从窗缝里钻进的寒风，身体暖和了些。现在我可以先吃点简单的晚饭，接着写那份自我介绍和工作经历。",
+      "gameDay": 1,
+      "gameTime": "19:02",
+      "location": "SCN_5_SUB_1",
+      "metadata": {
+        "itemId": "旧牛仔夹克",
+        "outcome": "穿上旧牛仔夹克取暖",
+        "itemName": "旧牛仔夹克"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我把堆在水槽边的碗碟用水洗干净，擦了擦水槽周围，然后把碗碟整齐地摆在一边晾干。屋里虽然没变得干净华丽，但清理过后心里安稳了些，能坐下来写那份自我介绍了。",
+      "gameDay": 1,
+      "gameTime": "19:15",
+      "location": "SCN_5_SUB_1",
+      "metadata": {
+        "itemId": "ITEM_SCN5_9",
+        "outcome": "清洗未洗餐具并把水槽周围收拾干净",
+        "itemName": "未洗餐具"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我把一张电话号码便签的背面写上了简短的自我介绍和我在酒厂的工作经历，把便签叠好放进了旧牛仔夹克的口袋，准备出门时递给可能的雇主。",
+      "gameDay": 1,
+      "gameTime": "19:30",
+      "location": "SCN_5_SUB_1",
+      "metadata": {
+        "itemId": "ITEM_SCN5_7",
+        "outcome": "在电话号码便签上写下简短的自我介绍和我在酒厂的工作经历，方便外出找活时递给人看",
+        "itemName": "电话号码便签"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我把那盏老旧的台灯打开了，屋里的漆黑被一圈昏黄的光驱散，能看清折叠桌和床铺的轮廓，但房间仍然偏暗。",
+      "gameDay": 1,
+      "gameTime": "19:34",
+      "location": "SCN_5_SUB_1",
+      "metadata": {
+        "outcome": "打开老旧台灯"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我把窗缝里发黑的旧报纸理顺并塞紧，然后把那件旧牛仔夹克塞进较大的缝隙里当挡风布。冷风变弱了，窗缝的窸窣声也小很多。",
+      "gameDay": 1,
+      "gameTime": "19:40",
+      "location": "SCN_5_SUB_1",
+      "metadata": {
+        "outcome": "把窗缝的旧报纸整理塞紧，并用旧牛仔夹克堵住缝隙以挡住冷风"
+      }
+    },
+    {
+      "type": "event",
+      "content": "吃一顿简单的晚饭 成功",
+      "gameDay": 1,
+      "gameTime": "20:00",
+      "location": "SCN_5_SUB_1",
+      "metadata": {
+        "outcome": "吃一顿简单的晚饭 成功"
+      }
+    },
+    {
+      "type": "witness",
+      "content": "[相遇] 我在一层大厅和 Kovind、Lutz Emilion、Taran Emilion 当面碰上了。心里一紧，意识到在权威或熟客面前我得格外小心——话里话外都要轻声细语。我现在更想躲得远点，观察他们是否注意到我，必要时趁机早早离开，别把自己扯进麻烦里。",
+      "gameDay": 1,
+      "gameTime": "20:07",
+      "location": "SCN_16_SUB_1",
+      "metadata": {
+        "impact": 2,
+        "perspective": "co_presence",
+        "sourceAction": "Kovind, Lutz Emilion, Taran Emilion 在 一层大厅",
+        "sourceCharacterId": "__encounter__"
+      }
+    },
+    {
+      "type": "event",
+      "content": "冒着大雪走到驯鹿酒吧 成功",
+      "gameDay": 1,
+      "gameTime": "20:07",
+      "location": "SCN_16_SUB_1",
+      "metadata": {
+        "outcome": "冒着大雪走到驯鹿酒吧 成功",
+        "blockedReason": "",
+        "failureReason": ""
+      }
+    },
+    {
+      "type": "event",
+      "content": "悄悄观察 Kovind、Lutz Emilion 和 Taran Emilion 的举止，注意他们是否留意到我并记住他们的神情与对话要点 成功",
+      "gameDay": 1,
+      "gameTime": "20:15",
+      "location": "SCN_16_SUB_1",
+      "metadata": {
+        "outcome": "悄悄观察 Kovind、Lutz Emilion 和 Taran Emilion 的举止，注意他们是否留意到我并记住他们的神情与对话要点 成功"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我悄声替 Lutz 点了一杯酒，压低声音尽量不引人注意。他点了点头接受，这小小的举动让我心里稍微放松了一些。 [rel:Lutz Emilion +5 → 5]",
+      "gameDay": 1,
+      "gameTime": "20:20",
+      "location": "SCN_16_SUB_1",
+      "metadata": {
+        "outcome": "向 Lutz Emilion 低声点一杯酒"
+      }
+    },
+    {
+      "type": "event",
+      "content": "低声倾听 Kovind、Lutz 和 Taran 的谈话 成功",
+      "gameDay": 1,
+      "gameTime": "20:31",
+      "location": "SCN_16_SUB_1",
+      "metadata": {
+        "outcome": "低声倾听 Kovind、Lutz 和 Taran 的谈话 成功"
+      }
+    },
+    {
+      "type": "witness",
+      "content": "[相遇] 我在卡森德拉南新街正面碰到了 Patrizio von Samsa。对方目光锐利，让我一紧——不确定他是来找茬还是只是路过，但我本能地想躲避麻烦。心里有些慌，低着头往旁边退了几步，决定赶紧回家锁好门窗，再把今晚的线索和联系人整理好；如果他开口问话，我会尽量礼貌回避或装作没看见。",
+      "gameDay": 1,
+      "gameTime": "20:34",
+      "location": "ROAD_3",
+      "metadata": {
+        "impact": 2,
+        "perspective": "co_presence",
+        "sourceAction": "Patrizio von Samsa 在 卡森德拉南新街",
+        "sourceCharacterId": "__encounter__"
+      }
+    },
+    {
+      "type": "event",
+      "content": "悄悄离开驯鹿酒吧回马塞尔家 [在 ROAD_3 因重新规划而中断] 已中断",
+      "gameDay": 1,
+      "gameTime": "20:34",
+      "location": "ROAD_3",
+      "metadata": {
+        "outcome": "悄悄离开驯鹿酒吧回马塞尔家 [在 ROAD_3 因重新规划而中断] 已中断",
+        "interruptionReason": "revise_replan"
+      }
+    },
+    {
+      "type": "event",
+      "content": "离开卡森德拉南新街，径直回马塞尔家 [在 ROAD_6 因重新规划而中断] 已中断",
+      "gameDay": 1,
+      "gameTime": "20:40",
+      "location": "ROAD_6",
+      "metadata": {
+        "outcome": "离开卡森德拉南新街，径直回马塞尔家 [在 ROAD_6 因重新规划而中断] 已中断",
+        "interruptionReason": "revise_replan"
+      }
+    },
+    {
+      "type": "event",
+      "content": "[直接] 刚在南新街正面碰到Patrizio von Samsa——他目光锐利，让我立刻紧张起来，好像想试探我为什么在这儿。我本能地低头后退，心里有些慌，决定立刻离开回家，锁好门窗，回去再整理今晚的线索；尽量记住了他的长相与举止以便日后辨认。",
+      "gameDay": 1,
+      "gameTime": "20:40",
+      "location": "ROAD_6",
+      "metadata": {
+        "impact": 1,
+        "perspective": "targeted",
+        "sourceAction": "与Marcel搭话，询问他今晚为什么在南新街，观察他的反应以判断他是否构成威胁；不透露关于我或今晚安排的任何信息，必要时以匆忙前往教堂为由结束谈话 [target Marcel Gwynplaine not present] failed",
+        "sourceCharacterId": "Patrizio von Samsa"
+      }
+    },
+    {
+      "type": "witness",
+      "content": "[相遇] 我在新月街A大道北与Patrizio von Samsa当面相遇。他目光锐利，让我立刻紧张起来，像是在试探我为什么在这儿。我感到慌，立刻决定躲避麻烦——马上回家并锁好门窗，等回去再把今晚的线索和联系人整理好；尽量记下他的长相与举止以便日后辨认。如果他开口，我会尽力礼貌回避或装作没看见。",
+      "gameDay": 1,
+      "gameTime": "20:41",
+      "location": "ROAD_6",
+      "metadata": {
+        "impact": 2,
+        "perspective": "co_presence",
+        "sourceAction": "Patrizio von Samsa 在 新月街A大道北",
+        "sourceCharacterId": "__encounter__"
+      }
+    },
+    {
+      "type": "event",
+      "content": "回马塞尔家 [在 ROAD_6 因重新规划而中断] 已中断",
+      "gameDay": 1,
+      "gameTime": "20:41",
+      "location": "ROAD_6",
+      "metadata": {
+        "outcome": "回马塞尔家 [在 ROAD_6 因重新规划而中断] 已中断",
+        "interruptionReason": "revise_replan"
+      }
+    },
+    {
+      "type": "event",
+      "content": "市长以要去教堂为由和我说话，警告我别跟着或就敏感事找他。在压力下我说了实情：12月22日在驯鹿酒吧我看到过异常，曾在新月街B大道下水道口看到一个脸上有疤痕或胎记的男人，也承认我是第一个在洗手间发现卢奇菲罗尸体但因为害怕曾想溜走。我答应不跟随他，也不会就那些敏感话题去联系他。",
+      "gameDay": 1,
+      "gameTime": "20:46",
+      "location": "ROAD_6",
+      "metadata": {
+        "outcome": "以匆忙前往教堂参加短会为由与马塞尔搭话，试探他今晚为何出现在新月街；在不透露今晚安排或布鲁诺事宜的情况下警告他不要跟随或就敏感话题联系我，若他表现出可疑或执着立刻礼貌收场离开。"
+      }
+    },
+    {
+      "type": "event",
+      "content": "[直接] Patrizio当面盘问我并警告不要跟着或就敏感话题联系他。被逼问下我承认12月22日在驯鹿酒吧见过异常，曾在新月街B大道下水道口看到一个脸上有疤痕或胎记的男人，也承认我是第一个在洗手间发现卢奇菲罗尸体但因害怕想溜走。我答应不会跟随或联系他。整个人很紧张、害怕被牵连，决定立刻回家并锁好门窗，暂时不再追查或与人讨论此事。",
+      "gameDay": 1,
+      "gameTime": "20:46",
+      "location": "ROAD_6",
+      "metadata": {
+        "impact": 1,
+        "perspective": "targeted",
+        "sourceAction": "我以匆忙去教堂为由与马塞尔搭话，试探他今晚为何出现在新月街并警告他不要跟随或就敏感话题联系我。经过施压后，他承认在12月22日于驯鹿酒吧见过异常，并说曾在新月街B大道的下水道口看到一名脸上有明显疤痕或胎记的男人；他也承认曾是第一个在洗手间发现卢奇菲罗尸体但因害怕试图溜走。他明确同意不会跟随我或就敏感话题联系我。",
+        "sourceCharacterId": "Patrizio von Samsa"
+      }
+    },
+    {
+      "type": "event",
+      "content": "不与Patrizio交谈，低头快步离开回马塞尔家 成功",
+      "gameDay": 1,
+      "gameTime": "20:49",
+      "location": "SCN_5_SUB_1",
+      "metadata": {
+        "outcome": "不与Patrizio交谈，低头快步离开回马塞尔家 成功",
+        "blockedReason": "",
+        "failureReason": ""
+      }
+    },
+    {
+      "type": "event",
+      "content": "我把门反锁好，又把窗户的锁扣确认并扣上，检查了塞缝的旧牛仔夹克仍在原位并牢固挡风。门窗现在都已锁好，外面直接闯入变得困难。",
+      "gameDay": 1,
+      "gameTime": "20:52",
+      "location": "SCN_5_SUB_1",
+      "metadata": {
+        "outcome": "锁上门并锁好窗户"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我把那张写有自我介绍和工作经历的电话号码便签撕成小碎片，塞进桌边满是烟蒂的烟灰缸里，并在上面轻轻压了几下。纸屑和烟蒂混在一起，字迹已经很难辨认，应该没人能从中拼出原样。",
+      "gameDay": 1,
+      "gameTime": "20:56",
+      "location": "SCN_5_SUB_1",
+      "metadata": {
+        "itemId": "ITEM_SCN5_7",
+        "outcome": "撕碎并销毁电话号码便签，然后把碎片塞进烟灰缸里",
+        "itemName": "电话号码便签"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我把烟灰缸里的便签碎片全都倒进马桶，反复冲了几次，检查烟灰缸确认没有能还原的痕迹。",
+      "gameDay": 1,
+      "gameTime": "21:02",
+      "location": "SCN_5_SUB_1",
+      "metadata": {
+        "itemId": "ITEM_SCN5_3",
+        "outcome": "把烟灰缸里的便签碎片全都倒进马桶并冲掉，确认没有能还原的痕迹",
+        "itemName": "烟灰缸"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我在欠费单背面写了简短的自我介绍和在酒厂的工作经历，把纸折好塞进窗缝里挡风的旧牛仔夹克内侧口袋里藏好，心里稍微踏实了一些。",
+      "gameDay": 1,
+      "gameTime": "21:13",
+      "location": "SCN_5_SUB_1",
+      "metadata": {
+        "itemId": "ITEM_SCN5_4",
+        "outcome": "在欠费单背面把简短的自我介绍和我在酒厂的工作经历写下来，然后把纸折好塞进旧牛仔夹克的口袋里藏好",
+        "itemName": "欠费单"
+      }
+    },
+    {
+      "type": "event",
+      "content": "整理今晚的线索和联系记录，确认已藏好的纸条位置并记清重要细节 成功",
+      "gameDay": 1,
+      "gameTime": "21:25",
+      "location": "SCN_5_SUB_1",
+      "metadata": {
+        "outcome": "整理今晚的线索和联系记录，确认已藏好的纸条位置并记清重要细节 成功"
+      }
+    },
+    {
+      "type": "event",
+      "content": "躺下睡觉以恢复精神并保持警觉 成功",
+      "gameDay": 1,
+      "gameTime": "22:30",
+      "location": "SCN_5_SUB_1",
+      "metadata": {
+        "outcome": "躺下睡觉以恢复精神并保持警觉 成功"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我掏出旧牛仔夹克检查了内侧口袋——那张折叠好的欠费单还在原位。然后把夹克塞回窗缝里并把它按牢，挡风效果恢复，缝隙的窸窣声也小了。",
+      "gameDay": 1,
+      "gameTime": "22:35",
+      "location": "SCN_5_SUB_1",
+      "metadata": {
+        "itemId": "旧牛仔夹克",
+        "outcome": "检查旧牛仔夹克口袋里藏着的欠费单是否还在，并把夹克摆回窗缝里固定好",
+        "itemName": "旧牛仔夹克"
+      }
+    },
+    {
+      "type": "event",
+      "content": "睡觉以恢复精神并保持警觉 成功",
+      "gameDay": 1,
+      "gameTime": "22:41",
+      "location": "SCN_5_SUB_1",
+      "metadata": {
+        "outcome": "睡觉以恢复精神并保持警觉 成功"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我掏出夹克内侧口袋里的折叠欠费单，纸张完好，字迹可辨。然后把夹克重新塞回窗缝并按牢，冷风和窸窣声都明显减弱了。",
+      "gameDay": 1,
+      "gameTime": "22:47",
+      "location": "SCN_5_SUB_1",
+      "metadata": {
+        "itemId": "旧牛仔夹克",
+        "outcome": "检查窗缝里旧牛仔夹克内侧口袋里折叠的欠费单是否完好并把夹克重新固定好以确保藏匿安全",
+        "itemName": "旧牛仔夹克"
+      }
+    },
+    {
+      "type": "event",
+      "content": "睡觉以恢复精神并保持警觉 成功",
+      "gameDay": 1,
+      "gameTime": "22:53",
+      "location": "SCN_5_SUB_1",
+      "metadata": {
+        "outcome": "睡觉以恢复精神并保持警觉 成功"
+      }
+    },
+    {
+      "type": "event",
+      "content": "整夜睡觉以恢复精神并保持警觉 成功",
+      "gameDay": 1,
+      "gameTime": "22:59",
+      "location": "SCN_5_SUB_1",
+      "metadata": {
+        "outcome": "整夜睡觉以恢复精神并保持警觉 成功"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我把台灯打开，房间局部被照亮。检查了门与窗，门已上锁，窗户也被固定且窗缝的旧牛仔夹克被按牢挡风。旧牛仔夹克内侧口袋里的那张折叠欠费单仍在，完好无损。",
+      "gameDay": 1,
+      "gameTime": "23:02",
+      "location": "SCN_5_SUB_1",
+      "metadata": {
+        "outcome": "打开台灯以查看房间并确认门窗和藏匿的纸条是否完好无损"
+      }
+    },
+    {
+      "type": "event",
+      "content": "上床睡觉以恢复精神并保持警觉 成功",
+      "gameDay": 1,
+      "gameTime": "23:08",
+      "location": "SCN_5_SUB_1",
+      "metadata": {
+        "outcome": "上床睡觉以恢复精神并保持警觉 成功"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我检查了房门，试了门把手，门果然已上锁，外面无法从外面推开进入。我确认了这一点，暂时没有发现异常。",
+      "gameDay": 1,
+      "gameTime": "23:10",
+      "location": "SCN_5_SUB_1",
+      "metadata": {
+        "outcome": "检查并确认房门已上锁"
+      }
+    },
+    {
+      "type": "event",
+      "content": "躺下睡觉以恢复精神并保持警觉 成功",
+      "gameDay": 1,
+      "gameTime": "23:16",
+      "location": "SCN_5_SUB_1",
+      "metadata": {
+        "outcome": "躺下睡觉以恢复精神并保持警觉 成功"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我再次检查了门把与窗锁，确认它们都已扣紧，门窗无法从外面开启。",
+      "gameDay": 1,
+      "gameTime": "23:20",
+      "location": "SCN_5_SUB_1",
+      "metadata": {
+        "outcome": "再次检查门窗并确认门把和窗锁已扣紧"
+      }
+    },
+    {
+      "type": "event",
+      "content": "上床睡觉以恢复精神并保持警觉 成功",
+      "gameDay": 1,
+      "gameTime": "23:26",
+      "location": "SCN_5_SUB_1",
+      "metadata": {
+        "outcome": "上床睡觉以恢复精神并保持警觉 成功"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我从旧牛仔夹克的内侧口袋掏出那张折叠的欠费单，把它撕成碎片，然后把碎片丢进水槽并开水冲洗，直到看不见纸屑为止。",
+      "gameDay": 1,
+      "gameTime": "23:30",
+      "location": "SCN_5_SUB_1",
+      "metadata": {
+        "itemId": "旧牛仔夹克",
+        "outcome": "从旧牛仔夹克内侧口袋取出那张折叠的欠费单，撕成碎片并把碎片丢进马桶冲掉",
+        "itemName": "旧牛仔夹克"
+      }
+    },
+    {
+      "type": "event",
+      "content": "上床睡觉以恢复精神并保持警觉 成功",
+      "gameDay": 1,
+      "gameTime": "23:36",
+      "location": "SCN_5_SUB_1",
+      "metadata": {
+        "outcome": "上床睡觉以恢复精神并保持警觉 成功"
+      }
+    },
+    {
+      "type": "event",
+      "content": "睡觉直到天亮以恢复体力并保持警觉 成功",
+      "gameDay": 1,
+      "gameTime": "23:42",
+      "location": "SCN_5_SUB_1",
+      "metadata": {
+        "outcome": "睡觉直到天亮以恢复体力并保持警觉 成功"
+      }
+    },
+    {
+      "type": "event",
+      "content": "上床睡觉以恢复体力并保持警觉 成功",
+      "gameDay": 1,
+      "gameTime": "23:48",
+      "location": "SCN_5_SUB_1",
+      "metadata": {
+        "outcome": "上床睡觉以恢复体力并保持警觉 成功"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我把那点钱塞进旧牛仔夹克的内侧口袋，然后把夹克重新塞回窗缝并按牢，好挡住寒风并把钱藏好。",
+      "gameDay": 1,
+      "gameTime": "23:52",
+      "location": "SCN_5_SUB_1",
+      "metadata": {
+        "itemId": "少量现金",
+        "outcome": "把少量现金塞进旧牛仔夹克的内侧口袋，并把夹克重新塞回窗缝里按牢以便藏好和挡风",
+        "itemName": "少量现金"
+      }
+    },
+    {
+      "type": "event",
+      "content": "上床睡觉以恢复精力并保持警觉 成功",
+      "gameDay": 1,
+      "gameTime": "23:58",
+      "location": "SCN_5_SUB_1",
+      "metadata": {
+        "outcome": "上床睡觉以恢复精力并保持警觉 成功"
+      }
+    },
+    {
+      "type": "information",
+      "content": "给Lutz悄悄点酒的那个小动作起了作用——他的态度对我有了些许好转（关系值上升）。",
+      "gameDay": 1,
+      "gameTime": "23:59",
+      "location": null,
+      "metadata": {
+        "revealed": false,
+        "difficulty": "automatic",
+        "knowledgeId": "learned_day1_3"
+      }
+    },
+    {
+      "type": "secret",
+      "content": "Patrizio von Samsa当面盘问我并警告我不要跟着或就敏感话题联系他；在压力下我向他承认了自己在新月街B大道下水道口看到有疤痕的男人，并承认我是第一个在洗手间发现卢奇菲罗尸体。",
+      "gameDay": 1,
+      "gameTime": "23:59",
+      "location": null,
+      "metadata": {
+        "revealed": false,
+        "difficulty": "hard",
+        "knowledgeId": "learned_day1_1"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我把塞在窗缝的旧牛仔夹克掏出来，翻看了内侧口袋——里面的少量现金还在原位。随后把夹克重新塞回窗缝并按牢，挡风效果恢复。",
+      "gameDay": 1,
+      "gameTime": "23:59",
+      "location": "SCN_5_SUB_1",
+      "metadata": {
+        "itemId": "旧牛仔夹克",
+        "outcome": "检查旧牛仔夹克内侧口袋确认藏钱仍在",
+        "itemName": "旧牛仔夹克"
+      }
+    },
+    {
+      "type": "information",
+      "content": "市长（或某位以市长自居的人）以要去教堂为由找到我，警告我别跟着或就敏感事找他，这表明镇上有权威人物在关注这件事并试图压制跟进。",
+      "gameDay": 1,
+      "gameTime": "23:59",
+      "location": null,
+      "metadata": {
+        "revealed": false,
+        "difficulty": "regular",
+        "knowledgeId": "learned_day1_2"
+      }
+    }
+  ],
+  "plans": [
+    {
+      "npcName": "Marcel Gwynplaine",
+      "gameDay": 1,
+      "schedule": [
+        {
+          "activity": "在昏暗的廉租房里把自己暖和起来，吃点简单的晚饭并清醒头脑。",
+          "location": "马塞尔家"
+        },
+        {
+          "activity": "把一张纸写成简短的自我介绍和在酒厂的工作经历，准备出去找活时用。",
+          "location": "马塞尔家"
+        },
+        {
+          "activity": "冒着大雪去驯鹿酒吧，点一杯酒并低调打听有没有临时工或能介绍工作的机会。",
+          "location": "驯鹿酒吧"
+        },
+        {
+          "activity": "留意常客和酒保的谈话，顺便留心任何与谋杀案有关的线索，但如果有人盯上我就悄悄离开。",
+          "location": "驯鹿酒吧"
+        },
+        {
+          "activity": "回家把今晚记下的线索和联系记录整理好，锁好门窗，尽量早点睡为明天继续找工作做准备。",
+          "location": "马塞尔家"
+        }
+      ],
+      "nodes": [
+        {
+          "type": "object_interaction",
+          "action": "从旧牛仔夹克内侧口袋取出那张折叠的欠费单，撕成碎片并把碎片丢进马桶冲掉",
+          "impact": 0,
+          "nodeId": "oi1",
+          "status": "completed",
+          "endTime": "23:30",
+          "outcome": "我从旧牛仔夹克的内侧口袋掏出那张折叠的欠费单，把它撕成碎片，然后把碎片丢进水槽并开水冲洗，直到看不见纸屑为止。",
+          "startTime": "23:27",
+          "characterId": "Marcel Gwynplaine",
+          "characterName": "Marcel Gwynplaine",
+          "executionMeta": {
+            "startedAt": "23:27",
+            "completedAt": "23:30",
+            "remainingMinutes": 0
+          },
+          "objectInteractionPayload": {
+            "itemId": "旧牛仔夹克"
+          }
+        },
+        {
+          "type": "object_interaction",
+          "action": "清洗未洗餐具并把水槽周围收拾干净",
+          "impact": 0,
+          "nodeId": "oi_marcel_wash_dishes_1903",
+          "status": "completed",
+          "endTime": "19:15",
+          "outcome": "我把堆在水槽边的碗碟用水洗干净，擦了擦水槽周围，然后把碗碟整齐地摆在一边晾干。屋里虽然没变得干净华丽，但清理过后心里安稳了些，能坐下来写那份自我介绍了。",
+          "startTime": "19:03",
+          "characterId": "Marcel Gwynplaine",
+          "characterName": "Marcel Gwynplaine",
+          "executionMeta": {
+            "startedAt": "19:03",
+            "completedAt": "19:15",
+            "remainingMinutes": 0
+          },
+          "objectInteractionPayload": {
+            "itemId": "ITEM_SCN5_9"
+          }
+        },
+        {
+          "type": "object_interaction",
+          "action": "从旧牛仔夹克内侧口袋取出那张折叠的欠费单，撕成碎片并把碎片丢进马桶冲掉",
+          "impact": 0,
+          "nodeId": "oi1",
+          "status": "completed",
+          "endTime": "23:30",
+          "outcome": "我从旧牛仔夹克的内侧口袋掏出那张折叠的欠费单，把它撕成碎片，然后把碎片丢进水槽并开水冲洗，直到看不见纸屑为止。",
+          "startTime": "23:27",
+          "characterId": "Marcel Gwynplaine",
+          "characterName": "Marcel Gwynplaine",
+          "executionMeta": {
+            "startedAt": "23:27",
+            "completedAt": "23:30",
+            "remainingMinutes": 0
+          },
+          "objectInteractionPayload": {
+            "itemId": "旧牛仔夹克"
+          }
+        },
+        {
+          "type": "scene_interaction",
+          "action": "检查并确认房门已上锁",
+          "impact": 0,
+          "nodeId": "si1",
+          "status": "completed",
+          "endTime": "23:10",
+          "outcome": "我检查了房门，试了门把手，门果然已上锁，外面无法从外面推开进入。我确认了这一点，暂时没有发现异常。",
+          "startTime": "23:09",
+          "characterId": "Marcel Gwynplaine",
+          "characterName": "Marcel Gwynplaine",
+          "executionMeta": {
+            "startedAt": "23:09",
+            "completedAt": "23:10",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "scene_interaction",
+          "action": "检查并确认房门已上锁",
+          "impact": 0,
+          "nodeId": "si1",
+          "status": "completed",
+          "endTime": "23:10",
+          "outcome": "我检查了房门，试了门把手，门果然已上锁，外面无法从外面推开进入。我确认了这一点，暂时没有发现异常。",
+          "startTime": "23:09",
+          "characterId": "Marcel Gwynplaine",
+          "characterName": "Marcel Gwynplaine",
+          "executionMeta": {
+            "startedAt": "23:09",
+            "completedAt": "23:10",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "action",
+          "action": "睡觉直到天亮以恢复体力并保持警觉",
+          "impact": 0,
+          "nodeId": "a1",
+          "status": "completed",
+          "endTime": "23:42",
+          "outcome": "睡觉直到天亮以恢复体力并保持警觉 成功",
+          "startTime": "23:37",
+          "characterId": "Marcel Gwynplaine",
+          "characterName": "Marcel Gwynplaine",
+          "executionMeta": {
+            "startedAt": "23:37",
+            "completedAt": "23:42",
+            "remainingMinutes": 0
+          },
+          "routineSubtype": "rest"
+        },
+        {
+          "type": "movement",
+          "action": "回马塞尔家",
+          "impact": 0,
+          "nodeId": "m1",
+          "status": "interrupted",
+          "endTime": "20:44",
+          "outcome": "回马塞尔家 [因重新规划而中断] 已中断",
+          "startTime": "20:41",
+          "characterId": "Marcel Gwynplaine",
+          "destination": "SCN_5_SUB_1",
+          "characterName": "Marcel Gwynplaine",
+          "executionMeta": {
+            "movement": {
+              "routeSnapshot": [
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_6",
+                    "position": 0
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_6",
+                    "position": 0
+                  },
+                  "kind": "along_road",
+                  "roadId": "ROAD_6",
+                  "durationMinutes": 0
+                },
+                {
+                  "to": {
+                    "type": "junction",
+                    "junctionId": "JUNC_4"
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_6",
+                    "position": 0
+                  },
+                  "kind": "to_junction",
+                  "blockCheck": {
+                    "toId": "JUNC_4",
+                    "fromId": "ROAD_6"
+                  },
+                  "durationMinutes": 0
+                },
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_6",
+                    "position": 0
+                  },
+                  "from": {
+                    "type": "junction",
+                    "junctionId": "JUNC_4"
+                  },
+                  "kind": "to_junction",
+                  "blockCheck": {
+                    "toId": "ROAD_6",
+                    "fromId": "JUNC_4"
+                  },
+                  "durationMinutes": 0
+                },
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_6",
+                    "position": 0.47
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_6",
+                    "position": 0
+                  },
+                  "kind": "along_road",
+                  "roadId": "ROAD_6",
+                  "durationMinutes": 1.41
+                },
+                {
+                  "to": {
+                    "type": "scene",
+                    "sceneId": "SCN_5_SUB_1"
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_6",
+                    "position": 0.47
+                  },
+                  "kind": "to_scene",
+                  "blockCheck": {
+                    "toId": "SCN_5_SUB_1",
+                    "fromId": "ROAD_6"
+                  },
+                  "durationMinutes": 1
+                }
+              ],
+              "targetPosition": {
+                "type": "scene",
+                "sceneId": "SCN_5_SUB_1"
+              },
+              "minutesIntoStep": 1,
+              "currentStepIndex": 3,
+              "lastReachablePosition": {
+                "type": "road",
+                "roadId": "ROAD_6",
+                "position": 0.3333333333333333
+              }
+            },
+            "startedAt": "20:41",
+            "interruptedAt": "20:41",
+            "remainingMinutes": 0,
+            "interruptionReason": "revise_replan"
+          }
+        },
+        {
+          "type": "action",
+          "action": "悄悄观察 Kovind、Lutz Emilion 和 Taran Emilion 的举止，注意他们是否留意到我并记住他们的神情与对话要点",
+          "impact": 0,
+          "nodeId": "a_next1",
+          "status": "completed",
+          "endTime": "20:15",
+          "outcome": "悄悄观察 Kovind、Lutz Emilion 和 Taran Emilion 的举止，注意他们是否留意到我并记住他们的神情与对话要点 成功",
+          "startTime": "20:08",
+          "characterId": "Marcel Gwynplaine",
+          "characterName": "Marcel Gwynplaine",
+          "executionMeta": {
+            "startedAt": "20:08",
+            "completedAt": "20:15",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "character_interaction",
+          "action": "向 Lutz Emilion 低声点一杯酒",
+          "impact": 1,
+          "nodeId": "ci1",
+          "status": "completed",
+          "endTime": "20:20",
+          "outcome": "我悄声替 Lutz 点了一杯酒，压低声音尽量不引人注意。他点了点头接受，这小小的举动让我心里稍微放松了一些。",
+          "startTime": "20:16",
+          "characterId": "Marcel Gwynplaine",
+          "characterName": "Marcel Gwynplaine",
+          "executionMeta": {
+            "startedAt": "20:16",
+            "completedAt": "20:20",
+            "remainingMinutes": 0
+          },
+          "targetCharacterIds": [
+            "Lutz Emilion"
+          ]
+        },
+        {
+          "type": "action",
+          "action": "低声倾听 Kovind、Lutz 和 Taran 的谈话",
+          "impact": 0,
+          "nodeId": "a3",
+          "status": "completed",
+          "endTime": "20:31",
+          "outcome": "低声倾听 Kovind、Lutz 和 Taran 的谈话 成功",
+          "startTime": "20:21",
+          "characterId": "Marcel Gwynplaine",
+          "characterName": "Marcel Gwynplaine",
+          "executionMeta": {
+            "startedAt": "20:21",
+            "completedAt": "20:31",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "movement",
+          "action": "回马塞尔家",
+          "impact": 0,
+          "nodeId": "m1",
+          "status": "interrupted",
+          "endTime": "20:44",
+          "outcome": "回马塞尔家 [因重新规划而中断] 已中断",
+          "startTime": "20:41",
+          "characterId": "Marcel Gwynplaine",
+          "destination": "SCN_5_SUB_1",
+          "characterName": "Marcel Gwynplaine",
+          "executionMeta": {
+            "movement": {
+              "routeSnapshot": [
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_6",
+                    "position": 0
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_6",
+                    "position": 0
+                  },
+                  "kind": "along_road",
+                  "roadId": "ROAD_6",
+                  "durationMinutes": 0
+                },
+                {
+                  "to": {
+                    "type": "junction",
+                    "junctionId": "JUNC_4"
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_6",
+                    "position": 0
+                  },
+                  "kind": "to_junction",
+                  "blockCheck": {
+                    "toId": "JUNC_4",
+                    "fromId": "ROAD_6"
+                  },
+                  "durationMinutes": 0
+                },
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_6",
+                    "position": 0
+                  },
+                  "from": {
+                    "type": "junction",
+                    "junctionId": "JUNC_4"
+                  },
+                  "kind": "to_junction",
+                  "blockCheck": {
+                    "toId": "ROAD_6",
+                    "fromId": "JUNC_4"
+                  },
+                  "durationMinutes": 0
+                },
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_6",
+                    "position": 0.47
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_6",
+                    "position": 0
+                  },
+                  "kind": "along_road",
+                  "roadId": "ROAD_6",
+                  "durationMinutes": 1.41
+                },
+                {
+                  "to": {
+                    "type": "scene",
+                    "sceneId": "SCN_5_SUB_1"
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_6",
+                    "position": 0.47
+                  },
+                  "kind": "to_scene",
+                  "blockCheck": {
+                    "toId": "SCN_5_SUB_1",
+                    "fromId": "ROAD_6"
+                  },
+                  "durationMinutes": 1
+                }
+              ],
+              "targetPosition": {
+                "type": "scene",
+                "sceneId": "SCN_5_SUB_1"
+              },
+              "minutesIntoStep": 1,
+              "currentStepIndex": 3,
+              "lastReachablePosition": {
+                "type": "road",
+                "roadId": "ROAD_6",
+                "position": 0.3333333333333333
+              }
+            },
+            "startedAt": "20:41",
+            "interruptedAt": "20:41",
+            "remainingMinutes": 0,
+            "interruptionReason": "revise_replan"
+          }
+        },
+        {
+          "type": "movement",
+          "action": "回马塞尔家",
+          "impact": 0,
+          "nodeId": "m1",
+          "status": "interrupted",
+          "endTime": "20:44",
+          "outcome": "回马塞尔家 [因重新规划而中断] 已中断",
+          "startTime": "20:41",
+          "characterId": "Marcel Gwynplaine",
+          "destination": "SCN_5_SUB_1",
+          "characterName": "Marcel Gwynplaine",
+          "executionMeta": {
+            "movement": {
+              "routeSnapshot": [
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_6",
+                    "position": 0
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_6",
+                    "position": 0
+                  },
+                  "kind": "along_road",
+                  "roadId": "ROAD_6",
+                  "durationMinutes": 0
+                },
+                {
+                  "to": {
+                    "type": "junction",
+                    "junctionId": "JUNC_4"
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_6",
+                    "position": 0
+                  },
+                  "kind": "to_junction",
+                  "blockCheck": {
+                    "toId": "JUNC_4",
+                    "fromId": "ROAD_6"
+                  },
+                  "durationMinutes": 0
+                },
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_6",
+                    "position": 0
+                  },
+                  "from": {
+                    "type": "junction",
+                    "junctionId": "JUNC_4"
+                  },
+                  "kind": "to_junction",
+                  "blockCheck": {
+                    "toId": "ROAD_6",
+                    "fromId": "JUNC_4"
+                  },
+                  "durationMinutes": 0
+                },
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_6",
+                    "position": 0.47
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_6",
+                    "position": 0
+                  },
+                  "kind": "along_road",
+                  "roadId": "ROAD_6",
+                  "durationMinutes": 1.41
+                },
+                {
+                  "to": {
+                    "type": "scene",
+                    "sceneId": "SCN_5_SUB_1"
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_6",
+                    "position": 0.47
+                  },
+                  "kind": "to_scene",
+                  "blockCheck": {
+                    "toId": "SCN_5_SUB_1",
+                    "fromId": "ROAD_6"
+                  },
+                  "durationMinutes": 1
+                }
+              ],
+              "targetPosition": {
+                "type": "scene",
+                "sceneId": "SCN_5_SUB_1"
+              },
+              "minutesIntoStep": 1,
+              "currentStepIndex": 3,
+              "lastReachablePosition": {
+                "type": "road",
+                "roadId": "ROAD_6",
+                "position": 0.3333333333333333
+              }
+            },
+            "startedAt": "20:41",
+            "interruptedAt": "20:41",
+            "remainingMinutes": 0,
+            "interruptionReason": "revise_replan"
+          }
+        },
+        {
+          "type": "movement",
+          "action": "回马塞尔家",
+          "impact": 0,
+          "nodeId": "m1",
+          "status": "interrupted",
+          "endTime": "20:44",
+          "outcome": "回马塞尔家 [因重新规划而中断] 已中断",
+          "startTime": "20:41",
+          "characterId": "Marcel Gwynplaine",
+          "destination": "SCN_5_SUB_1",
+          "characterName": "Marcel Gwynplaine",
+          "executionMeta": {
+            "movement": {
+              "routeSnapshot": [
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_6",
+                    "position": 0
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_6",
+                    "position": 0
+                  },
+                  "kind": "along_road",
+                  "roadId": "ROAD_6",
+                  "durationMinutes": 0
+                },
+                {
+                  "to": {
+                    "type": "junction",
+                    "junctionId": "JUNC_4"
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_6",
+                    "position": 0
+                  },
+                  "kind": "to_junction",
+                  "blockCheck": {
+                    "toId": "JUNC_4",
+                    "fromId": "ROAD_6"
+                  },
+                  "durationMinutes": 0
+                },
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_6",
+                    "position": 0
+                  },
+                  "from": {
+                    "type": "junction",
+                    "junctionId": "JUNC_4"
+                  },
+                  "kind": "to_junction",
+                  "blockCheck": {
+                    "toId": "ROAD_6",
+                    "fromId": "JUNC_4"
+                  },
+                  "durationMinutes": 0
+                },
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_6",
+                    "position": 0.47
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_6",
+                    "position": 0
+                  },
+                  "kind": "along_road",
+                  "roadId": "ROAD_6",
+                  "durationMinutes": 1.41
+                },
+                {
+                  "to": {
+                    "type": "scene",
+                    "sceneId": "SCN_5_SUB_1"
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_6",
+                    "position": 0.47
+                  },
+                  "kind": "to_scene",
+                  "blockCheck": {
+                    "toId": "SCN_5_SUB_1",
+                    "fromId": "ROAD_6"
+                  },
+                  "durationMinutes": 1
+                }
+              ],
+              "targetPosition": {
+                "type": "scene",
+                "sceneId": "SCN_5_SUB_1"
+              },
+              "minutesIntoStep": 1,
+              "currentStepIndex": 3,
+              "lastReachablePosition": {
+                "type": "road",
+                "roadId": "ROAD_6",
+                "position": 0.3333333333333333
+              }
+            },
+            "startedAt": "20:41",
+            "interruptedAt": "20:41",
+            "remainingMinutes": 0,
+            "interruptionReason": "revise_replan"
+          }
+        },
+        {
+          "type": "movement",
+          "action": "不与Patrizio交谈，低头快步离开回马塞尔家",
+          "impact": 1,
+          "nodeId": "m1_marcel_return_home",
+          "status": "completed",
+          "endTime": "20:45",
+          "outcome": "不与Patrizio交谈，低头快步离开回马塞尔家 成功",
+          "startTime": "20:42",
+          "characterId": "Marcel Gwynplaine",
+          "destination": "SCN_5_SUB_1",
+          "characterName": "Marcel Gwynplaine",
+          "executionMeta": {
+            "movement": {
+              "routeSnapshot": [
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_6",
+                    "position": 0
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_6",
+                    "position": 0.3333333333333333
+                  },
+                  "kind": "along_road",
+                  "roadId": "ROAD_6",
+                  "durationMinutes": 1
+                },
+                {
+                  "to": {
+                    "type": "junction",
+                    "junctionId": "JUNC_4"
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_6",
+                    "position": 0
+                  },
+                  "kind": "to_junction",
+                  "blockCheck": {
+                    "toId": "JUNC_4",
+                    "fromId": "ROAD_6"
+                  },
+                  "durationMinutes": 0
+                },
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_6",
+                    "position": 0
+                  },
+                  "from": {
+                    "type": "junction",
+                    "junctionId": "JUNC_4"
+                  },
+                  "kind": "to_junction",
+                  "blockCheck": {
+                    "toId": "ROAD_6",
+                    "fromId": "JUNC_4"
+                  },
+                  "durationMinutes": 0
+                },
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_6",
+                    "position": 0.47
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_6",
+                    "position": 0
+                  },
+                  "kind": "along_road",
+                  "roadId": "ROAD_6",
+                  "durationMinutes": 1.41
+                },
+                {
+                  "to": {
+                    "type": "scene",
+                    "sceneId": "SCN_5_SUB_1"
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_6",
+                    "position": 0.47
+                  },
+                  "kind": "to_scene",
+                  "blockCheck": {
+                    "toId": "SCN_5_SUB_1",
+                    "fromId": "ROAD_6"
+                  },
+                  "durationMinutes": 1
+                }
+              ],
+              "targetPosition": {
+                "type": "scene",
+                "sceneId": "SCN_5_SUB_1"
+              },
+              "minutesIntoStep": 0,
+              "currentStepIndex": 5,
+              "lastReachablePosition": {
+                "type": "scene",
+                "sceneId": "SCN_5_SUB_1"
+              }
+            },
+            "startedAt": "20:42",
+            "completedAt": "20:49",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "scene_interaction",
+          "action": "检查并确认房门已上锁",
+          "impact": 0,
+          "nodeId": "si1",
+          "status": "completed",
+          "endTime": "23:10",
+          "outcome": "我检查了房门，试了门把手，门果然已上锁，外面无法从外面推开进入。我确认了这一点，暂时没有发现异常。",
+          "startTime": "23:09",
+          "characterId": "Marcel Gwynplaine",
+          "characterName": "Marcel Gwynplaine",
+          "executionMeta": {
+            "startedAt": "23:09",
+            "completedAt": "23:10",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "object_interaction",
+          "action": "从旧牛仔夹克内侧口袋取出那张折叠的欠费单，撕成碎片并把碎片丢进马桶冲掉",
+          "impact": 0,
+          "nodeId": "oi1",
+          "status": "completed",
+          "endTime": "23:30",
+          "outcome": "我从旧牛仔夹克的内侧口袋掏出那张折叠的欠费单，把它撕成碎片，然后把碎片丢进水槽并开水冲洗，直到看不见纸屑为止。",
+          "startTime": "23:27",
+          "characterId": "Marcel Gwynplaine",
+          "characterName": "Marcel Gwynplaine",
+          "executionMeta": {
+            "startedAt": "23:27",
+            "completedAt": "23:30",
+            "remainingMinutes": 0
+          },
+          "objectInteractionPayload": {
+            "itemId": "旧牛仔夹克"
+          }
+        },
+        {
+          "type": "object_interaction",
+          "action": "把烟灰缸里的便签碎片全都倒进马桶并冲掉，确认没有能还原的痕迹",
+          "impact": 0,
+          "nodeId": "oi_marcel_1",
+          "status": "completed",
+          "endTime": "21:02",
+          "outcome": "我把烟灰缸里的便签碎片全都倒进马桶，反复冲了几次，检查烟灰缸确认没有能还原的痕迹。",
+          "startTime": "20:57",
+          "characterId": "Marcel Gwynplaine",
+          "characterName": "Marcel Gwynplaine",
+          "executionMeta": {
+            "startedAt": "20:57",
+            "completedAt": "21:02",
+            "remainingMinutes": 0
+          },
+          "objectInteractionPayload": {
+            "itemId": "ITEM_SCN5_3"
+          }
+        },
+        {
+          "type": "object_interaction",
+          "action": "检查旧牛仔夹克口袋里藏着的欠费单是否还在，并把夹克摆回窗缝里固定好",
+          "impact": 0,
+          "nodeId": "oi2",
+          "status": "completed",
+          "endTime": "22:35",
+          "outcome": "我掏出旧牛仔夹克检查了内侧口袋——那张折叠好的欠费单还在原位。然后把夹克塞回窗缝里并把它按牢，挡风效果恢复，缝隙的窸窣声也小了。",
+          "startTime": "22:31",
+          "characterId": "Marcel Gwynplaine",
+          "characterName": "Marcel Gwynplaine",
+          "executionMeta": {
+            "startedAt": "22:31",
+            "completedAt": "22:35",
+            "remainingMinutes": 0
+          },
+          "objectInteractionPayload": {
+            "itemId": "旧牛仔夹克"
+          }
+        },
+        {
+          "type": "action",
+          "action": "整理今晚的线索和联系记录，确认已藏好的纸条位置并记清重要细节",
+          "impact": 0,
+          "nodeId": "a2",
+          "status": "completed",
+          "endTime": "21:25",
+          "outcome": "整理今晚的线索和联系记录，确认已藏好的纸条位置并记清重要细节 成功",
+          "startTime": "21:14",
+          "characterId": "Marcel Gwynplaine",
+          "characterName": "Marcel Gwynplaine",
+          "executionMeta": {
+            "startedAt": "21:14",
+            "completedAt": "21:25",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "action",
+          "action": "躺下睡觉以恢复精神并保持警觉",
+          "impact": 0,
+          "nodeId": "a_marcel_2126_sleep",
+          "status": "completed",
+          "endTime": "22:30",
+          "outcome": "躺下睡觉以恢复精神并保持警觉 成功",
+          "startTime": "21:26",
+          "characterId": "Marcel Gwynplaine",
+          "characterName": "Marcel Gwynplaine",
+          "executionMeta": {
+            "startedAt": "21:26",
+            "completedAt": "22:30",
+            "remainingMinutes": 0
+          },
+          "routineSubtype": "rest"
+        },
+        {
+          "type": "object_interaction",
+          "action": "检查旧牛仔夹克口袋里藏着的欠费单是否还在，并把夹克摆回窗缝里固定好",
+          "impact": 0,
+          "nodeId": "oi2",
+          "status": "completed",
+          "endTime": "22:35",
+          "outcome": "我掏出旧牛仔夹克检查了内侧口袋——那张折叠好的欠费单还在原位。然后把夹克塞回窗缝里并把它按牢，挡风效果恢复，缝隙的窸窣声也小了。",
+          "startTime": "22:31",
+          "characterId": "Marcel Gwynplaine",
+          "characterName": "Marcel Gwynplaine",
+          "executionMeta": {
+            "startedAt": "22:31",
+            "completedAt": "22:35",
+            "remainingMinutes": 0
+          },
+          "objectInteractionPayload": {
+            "itemId": "旧牛仔夹克"
+          }
+        },
+        {
+          "type": "action",
+          "action": "睡觉以恢复精神并保持警觉",
+          "impact": 0,
+          "nodeId": "a_day1_sleep_01",
+          "status": "completed",
+          "endTime": "22:41",
+          "outcome": "睡觉以恢复精神并保持警觉 成功",
+          "startTime": "22:36",
+          "characterId": "Marcel Gwynplaine",
+          "characterName": "Marcel Gwynplaine",
+          "executionMeta": {
+            "startedAt": "22:36",
+            "completedAt": "22:41",
+            "remainingMinutes": 0
+          },
+          "routineSubtype": "rest"
+        },
+        {
+          "type": "object_interaction",
+          "action": "检查窗缝里旧牛仔夹克内侧口袋里折叠的欠费单是否完好并把夹克重新固定好以确保藏匿安全",
+          "impact": 0,
+          "nodeId": "oi_marcel_check_jacket_2242",
+          "status": "completed",
+          "endTime": "22:47",
+          "outcome": "我掏出夹克内侧口袋里的折叠欠费单，纸张完好，字迹可辨。然后把夹克重新塞回窗缝并按牢，冷风和窸窣声都明显减弱了。",
+          "startTime": "22:42",
+          "characterId": "Marcel Gwynplaine",
+          "characterName": "Marcel Gwynplaine",
+          "executionMeta": {
+            "startedAt": "22:42",
+            "completedAt": "22:47",
+            "remainingMinutes": 0
+          },
+          "objectInteractionPayload": {
+            "itemId": "旧牛仔夹克"
+          }
+        },
+        {
+          "type": "action",
+          "action": "睡觉以恢复精神并保持警觉",
+          "impact": 0,
+          "nodeId": "a1_marcel_sleep",
+          "status": "completed",
+          "endTime": "22:53",
+          "outcome": "睡觉以恢复精神并保持警觉 成功",
+          "startTime": "22:48",
+          "characterId": "Marcel Gwynplaine",
+          "characterName": "Marcel Gwynplaine",
+          "executionMeta": {
+            "startedAt": "22:48",
+            "completedAt": "22:53",
+            "remainingMinutes": 0
+          },
+          "routineSubtype": "rest"
+        },
+        {
+          "type": "action",
+          "action": "整夜睡觉以恢复精神并保持警觉",
+          "impact": 0,
+          "nodeId": "a_day1_2254",
+          "status": "completed",
+          "endTime": "22:59",
+          "outcome": "整夜睡觉以恢复精神并保持警觉 成功",
+          "startTime": "22:54",
+          "characterId": "Marcel Gwynplaine",
+          "characterName": "Marcel Gwynplaine",
+          "executionMeta": {
+            "startedAt": "22:54",
+            "completedAt": "22:59",
+            "remainingMinutes": 0
+          },
+          "routineSubtype": "rest"
+        },
+        {
+          "type": "scene_interaction",
+          "action": "打开台灯以查看房间并确认门窗和藏匿的纸条是否完好无损",
+          "impact": 0,
+          "nodeId": "si_day1_2300",
+          "status": "completed",
+          "endTime": "23:02",
+          "outcome": "我把台灯打开，房间局部被照亮。检查了门与窗，门已上锁，窗户也被固定且窗缝的旧牛仔夹克被按牢挡风。旧牛仔夹克内侧口袋里的那张折叠欠费单仍在，完好无损。",
+          "startTime": "23:00",
+          "characterId": "Marcel Gwynplaine",
+          "characterName": "Marcel Gwynplaine",
+          "executionMeta": {
+            "startedAt": "23:00",
+            "completedAt": "23:02",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "action",
+          "action": "上床睡觉以恢复精神并保持警觉",
+          "impact": 0,
+          "nodeId": "a1_2003_2303",
+          "status": "completed",
+          "endTime": "23:08",
+          "outcome": "上床睡觉以恢复精神并保持警觉 成功",
+          "startTime": "23:03",
+          "characterId": "Marcel Gwynplaine",
+          "characterName": "Marcel Gwynplaine",
+          "executionMeta": {
+            "startedAt": "23:03",
+            "completedAt": "23:08",
+            "remainingMinutes": 0
+          },
+          "routineSubtype": "rest"
+        },
+        {
+          "type": "scene_interaction",
+          "action": "检查并确认房门已上锁",
+          "impact": 0,
+          "nodeId": "si1",
+          "status": "completed",
+          "endTime": "23:10",
+          "outcome": "我检查了房门，试了门把手，门果然已上锁，外面无法从外面推开进入。我确认了这一点，暂时没有发现异常。",
+          "startTime": "23:09",
+          "characterId": "Marcel Gwynplaine",
+          "characterName": "Marcel Gwynplaine",
+          "executionMeta": {
+            "startedAt": "23:09",
+            "completedAt": "23:10",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "action",
+          "action": "睡觉直到天亮以恢复体力并保持警觉",
+          "impact": 0,
+          "nodeId": "a1",
+          "status": "completed",
+          "endTime": "23:42",
+          "outcome": "睡觉直到天亮以恢复体力并保持警觉 成功",
+          "startTime": "23:37",
+          "characterId": "Marcel Gwynplaine",
+          "characterName": "Marcel Gwynplaine",
+          "executionMeta": {
+            "startedAt": "23:37",
+            "completedAt": "23:42",
+            "remainingMinutes": 0
+          },
+          "routineSubtype": "rest"
+        },
+        {
+          "type": "scene_interaction",
+          "action": "再次检查门窗并确认门把和窗锁已扣紧",
+          "impact": 0,
+          "nodeId": "si_next_001",
+          "status": "completed",
+          "endTime": "23:20",
+          "outcome": "我再次检查了门把与窗锁，确认它们都已扣紧，门窗无法从外面开启。",
+          "startTime": "23:17",
+          "characterId": "Marcel Gwynplaine",
+          "characterName": "Marcel Gwynplaine",
+          "executionMeta": {
+            "startedAt": "23:17",
+            "completedAt": "23:20",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "action",
+          "action": "上床睡觉以恢复精神并保持警觉",
+          "impact": 0,
+          "nodeId": "a19",
+          "status": "completed",
+          "endTime": "23:26",
+          "outcome": "上床睡觉以恢复精神并保持警觉 成功",
+          "startTime": "23:21",
+          "characterId": "Marcel Gwynplaine",
+          "characterName": "Marcel Gwynplaine",
+          "executionMeta": {
+            "startedAt": "23:21",
+            "completedAt": "23:26",
+            "remainingMinutes": 0
+          },
+          "routineSubtype": "rest"
+        },
+        {
+          "type": "object_interaction",
+          "action": "从旧牛仔夹克内侧口袋取出那张折叠的欠费单，撕成碎片并把碎片丢进马桶冲掉",
+          "impact": 0,
+          "nodeId": "oi1",
+          "status": "completed",
+          "endTime": "23:30",
+          "outcome": "我从旧牛仔夹克的内侧口袋掏出那张折叠的欠费单，把它撕成碎片，然后把碎片丢进水槽并开水冲洗，直到看不见纸屑为止。",
+          "startTime": "23:27",
+          "characterId": "Marcel Gwynplaine",
+          "characterName": "Marcel Gwynplaine",
+          "executionMeta": {
+            "startedAt": "23:27",
+            "completedAt": "23:30",
+            "remainingMinutes": 0
+          },
+          "objectInteractionPayload": {
+            "itemId": "旧牛仔夹克"
+          }
+        },
+        {
+          "type": "action",
+          "action": "上床睡觉以恢复精神并保持警觉",
+          "impact": 0,
+          "nodeId": "a_next_sleep",
+          "status": "completed",
+          "endTime": "23:36",
+          "outcome": "上床睡觉以恢复精神并保持警觉 成功",
+          "startTime": "23:31",
+          "characterId": "Marcel Gwynplaine",
+          "characterName": "Marcel Gwynplaine",
+          "executionMeta": {
+            "startedAt": "23:31",
+            "completedAt": "23:36",
+            "remainingMinutes": 0
+          },
+          "routineSubtype": "rest"
+        },
+        {
+          "type": "action",
+          "action": "睡觉直到天亮以恢复体力并保持警觉",
+          "impact": 0,
+          "nodeId": "a1",
+          "status": "completed",
+          "endTime": "23:42",
+          "outcome": "睡觉直到天亮以恢复体力并保持警觉 成功",
+          "startTime": "23:37",
+          "characterId": "Marcel Gwynplaine",
+          "characterName": "Marcel Gwynplaine",
+          "executionMeta": {
+            "startedAt": "23:37",
+            "completedAt": "23:42",
+            "remainingMinutes": 0
+          },
+          "routineSubtype": "rest"
+        },
+        {
+          "type": "action",
+          "action": "上床睡觉以恢复体力并保持警觉",
+          "impact": 0,
+          "nodeId": "a_marcel_sleep_2343",
+          "status": "completed",
+          "endTime": "23:48",
+          "outcome": "上床睡觉以恢复体力并保持警觉 成功",
+          "startTime": "23:43",
+          "characterId": "Marcel Gwynplaine",
+          "characterName": "Marcel Gwynplaine",
+          "executionMeta": {
+            "startedAt": "23:43",
+            "completedAt": "23:48",
+            "remainingMinutes": 0
+          },
+          "routineSubtype": "rest"
+        },
+        {
+          "type": "object_interaction",
+          "action": "把少量现金塞进旧牛仔夹克的内侧口袋，并把夹克重新塞回窗缝里按牢以便藏好和挡风",
+          "impact": 0,
+          "nodeId": "oi_marcel_001",
+          "status": "completed",
+          "endTime": "23:52",
+          "outcome": "我把那点钱塞进旧牛仔夹克的内侧口袋，然后把夹克重新塞回窗缝并按牢，好挡住寒风并把钱藏好。",
+          "startTime": "23:49",
+          "characterId": "Marcel Gwynplaine",
+          "characterName": "Marcel Gwynplaine",
+          "executionMeta": {
+            "startedAt": "23:49",
+            "completedAt": "23:52",
+            "remainingMinutes": 0
+          },
+          "objectInteractionPayload": {
+            "itemId": "少量现金"
+          }
+        },
+        {
+          "type": "action",
+          "action": "上床睡觉以恢复精力并保持警觉",
+          "impact": 0,
+          "nodeId": "a_marcel_sleep_2353",
+          "status": "completed",
+          "endTime": "23:58",
+          "outcome": "上床睡觉以恢复精力并保持警觉 成功",
+          "startTime": "23:53",
+          "characterId": "Marcel Gwynplaine",
+          "characterName": "Marcel Gwynplaine",
+          "executionMeta": {
+            "startedAt": "23:53",
+            "completedAt": "23:58",
+            "remainingMinutes": 0
+          },
+          "routineSubtype": "rest"
+        },
+        {
+          "type": "object_interaction",
+          "action": "检查旧牛仔夹克内侧口袋确认藏钱仍在",
+          "impact": 0,
+          "nodeId": "oi_day1_2359_1",
+          "status": "completed",
+          "endTime": "23:59",
+          "outcome": "我把塞在窗缝的旧牛仔夹克掏出来，翻看了内侧口袋——里面的少量现金还在原位。随后把夹克重新塞回窗缝并按牢，挡风效果恢复。",
+          "startTime": "23:59",
+          "characterId": "Marcel Gwynplaine",
+          "characterName": "Marcel Gwynplaine",
+          "executionMeta": {
+            "completedAt": "23:59",
+            "remainingMinutes": 0
+          },
+          "objectInteractionPayload": {
+            "itemId": "旧牛仔夹克"
+          }
+        }
+      ]
+    },
+    {
+      "npcName": "Marcel Gwynplaine",
+      "gameDay": 2,
+      "schedule": [
+        {
+          "activity": "再过一遍检查门窗和旧牛仔夹克是否堵好缝隙，确认欠费单藏好后尽量让自己休息一下",
+          "location": "马塞尔家"
+        },
+        {
+          "activity": "凌晨醒来准备一份简短的自我介绍和请求信，整理好衣物和零钱为白天出门做准备",
+          "location": "马塞尔家"
+        },
+        {
+          "activity": "早上去海伦的餐桌询问是否有洗碗或厨房帮工的临时职位并留下自己的联系方式",
+          "location": "海伦的餐桌"
+        },
+        {
+          "activity": "到五金店找哈里森打听有没有小修小活或临时雇工的机会并表示愿意马上上手",
+          "location": "五金店"
+        },
+        {
+          "activity": "到酒厂去见曾经的同事或管理层，恳求有没有零工活或重新雇我的可能性",
+          "location": "酒厂"
+        },
+        {
+          "activity": "傍晚去驯鹿酒吧找卢茨搭话以维持关系并顺便打听镇上有没有雇人或工作信息",
+          "location": "驯鹿酒吧"
+        },
+        {
+          "activity": "回到家里把今天的交谈和线索记下来，收拾好再尽量睡一觉为明天做准备",
+          "location": "马塞尔家"
+        }
+      ],
+      "nodes": [
+        {
+          "type": "object_interaction",
+          "action": "检查旧牛仔夹克口袋确认欠费单藏好",
+          "impact": 0,
+          "nodeId": "oi_m01",
+          "status": "completed",
+          "endTime": "00:05",
+          "outcome": "我把塞在窗缝的旧牛仔夹克拉出来，掏开内侧口袋检查——欠费单还在，和那点零钱一起，折好塞回去，窗缝也重新塞紧了。",
+          "startTime": "00:00",
+          "characterId": "Marcel Gwynplaine",
+          "characterName": "Marcel Gwynplaine",
+          "executionMeta": {
+            "startedAt": "00:00",
+            "completedAt": "00:05",
+            "remainingMinutes": 0
+          },
+          "objectInteractionPayload": {
+            "itemId": "旧牛仔夹克"
+          }
+        },
+        {
+          "type": "action",
+          "action": "躺回床上尝试睡觉，尽量休息恢复体力并保持警觉",
+          "impact": 0,
+          "nodeId": "a1",
+          "status": "completed",
+          "endTime": "06:30",
+          "outcome": "躺回床上尝试睡觉，尽量休息恢复体力并保持警觉 成功",
+          "startTime": "00:06",
+          "characterId": "Marcel Gwynplaine",
+          "characterName": "Marcel Gwynplaine",
+          "executionMeta": {
+            "startedAt": "00:06",
+            "completedAt": "06:30",
+            "remainingMinutes": 0
+          },
+          "routineSubtype": "rest"
+        },
+        {
+          "type": "object_interaction",
+          "action": "从旧牛仔夹克口袋取出欠费单，在单子背面草草写下简短自我介绍和求职请求，然后把单子折好塞回口袋并把夹克及零钱整理好备用",
+          "impact": 0,
+          "nodeId": "oi1",
+          "status": "completed",
+          "endTime": "06:45",
+          "outcome": "我从塞在窗缝的旧牛仔夹克里掏出那张欠费单，在单子背面草草写下简短的自我介绍和求职请求，然后把单子折好连同那点零钱一起塞回内侧口袋，整理好夹克后又把它重新塞紧在窗缝挡风。",
+          "startTime": "06:31",
+          "characterId": "Marcel Gwynplaine",
+          "characterName": "Marcel Gwynplaine",
+          "executionMeta": {
+            "startedAt": "06:31",
+            "completedAt": "06:45",
+            "remainingMinutes": 0
+          },
+          "objectInteractionPayload": {
+            "itemId": "旧牛仔夹克"
+          }
+        },
+        {
+          "type": "object_interaction",
+          "action": "从旧牛仔夹克口袋里取出欠费单，撕成碎片并把碎片冲进马桶",
+          "impact": 0,
+          "nodeId": "oi_marcel_0001",
+          "status": "completed",
+          "endTime": "06:48",
+          "outcome": "我从旧牛仔夹克内侧口袋取出欠费单，把它撕成碎片并在水槽里把碎片冲入下水道；口袋里只剩下那点零钱，随后把夹克整理好又塞回窗缝。",
+          "startTime": "06:46",
+          "characterId": "Marcel Gwynplaine",
+          "characterName": "Marcel Gwynplaine",
+          "executionMeta": {
+            "startedAt": "06:46",
+            "completedAt": "06:48",
+            "remainingMinutes": 0
+          },
+          "objectInteractionPayload": {
+            "itemId": "旧牛仔夹克"
+          }
+        },
+        {
+          "type": "action",
+          "action": "躺回床上尝试再睡一会儿以恢复体力并保持警觉",
+          "impact": 0,
+          "nodeId": "a2",
+          "status": "completed",
+          "endTime": "07:20",
+          "outcome": "躺回床上尝试再睡一会儿以恢复体力并保持警觉 成功",
+          "startTime": "06:49",
+          "characterId": "Marcel Gwynplaine",
+          "characterName": "Marcel Gwynplaine",
+          "executionMeta": {
+            "startedAt": "06:49",
+            "completedAt": "07:20",
+            "remainingMinutes": 0
+          },
+          "routineSubtype": "rest"
+        },
+        {
+          "type": "scene_interaction",
+          "action": "检查门把、窗锁和旧牛仔夹克口袋，确认欠费单已被处理并把夹克按牢以堵住缝隙",
+          "impact": 0,
+          "nodeId": "si_day2_0721_check1",
+          "status": "completed",
+          "endTime": "07:26",
+          "outcome": "我检查了门把和窗锁，确认都扣紧了；翻看了旧牛仔夹克的口袋，欠费单已经被处理（已被撕碎并冲走），然后把夹克按牢在窗缝，冷风明显减弱。",
+          "startTime": "07:21",
+          "characterId": "Marcel Gwynplaine",
+          "characterName": "Marcel Gwynplaine",
+          "executionMeta": {
+            "startedAt": "07:21",
+            "completedAt": "07:26",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "object_interaction",
+          "action": "穿上旧牛仔夹克并把口袋里的零钱整理好",
+          "impact": 0,
+          "nodeId": "oi_day2_07_27",
+          "status": "completed",
+          "endTime": "07:30",
+          "outcome": "我把旧牛仔夹克从窗缝里拉出来穿上，掏了掏内侧口袋，把里头那点零钱整理得整齐些。穿上夹克后窗缝又露出缝隙，冷风和那微弱的窸窣声又回来了。",
+          "startTime": "07:27",
+          "characterId": "Marcel Gwynplaine",
+          "characterName": "Marcel Gwynplaine",
+          "executionMeta": {
+            "startedAt": "07:27",
+            "completedAt": "07:30",
+            "remainingMinutes": 0
+          },
+          "objectInteractionPayload": {
+            "itemId": "旧牛仔夹克"
+          }
+        },
+        {
+          "type": "scene_interaction",
+          "action": "重新塞紧旧牛仔夹克以堵住窗缝，压实固定防止风声和缝隙再次露出",
+          "impact": 0,
+          "nodeId": "si1",
+          "status": "completed",
+          "endTime": "07:33",
+          "outcome": "我把旧牛仔夹克重新塞回窗缝，压实并按牢固定住。冷风明显减弱，窗边的报纸不再随风发出窸窣声。",
+          "startTime": "07:31",
+          "characterId": "Marcel Gwynplaine",
+          "characterName": "Marcel Gwynplaine",
+          "executionMeta": {
+            "startedAt": "07:31",
+            "completedAt": "07:33",
+            "remainingMinutes": 0
+          },
+          "objectInteractionPayload": {
+            "itemId": "旧牛仔夹克"
+          }
+        },
+        {
+          "type": "action",
+          "action": "躺回床上尝试再睡一会儿以恢复体力并保持警觉",
+          "impact": 0,
+          "nodeId": "a_day2_rest1",
+          "status": "completed",
+          "endTime": "07:54",
+          "outcome": "躺回床上尝试再睡一会儿以恢复体力并保持警觉 成功",
+          "startTime": "07:34",
+          "characterId": "Marcel Gwynplaine",
+          "characterName": "Marcel Gwynplaine",
+          "executionMeta": {
+            "startedAt": "07:34",
+            "completedAt": "07:54",
+            "remainingMinutes": 0
+          },
+          "routineSubtype": "rest"
+        },
+        {
+          "type": "object_interaction",
+          "action": "整理旧牛仔夹克内的零钱并把衣物叠好，为白天出门做准备",
+          "impact": 0,
+          "nodeId": "oi_day2_0755_1",
+          "status": "completed",
+          "endTime": "08:05",
+          "outcome": "我把旧牛仔夹克脱下，掏了掏内侧口袋，把里头的零钱整理得整齐，然后把夹克叠好放在床上，准备白天出门。",
+          "startTime": "07:55",
+          "characterId": "Marcel Gwynplaine",
+          "characterName": "Marcel Gwynplaine",
+          "executionMeta": {
+            "startedAt": "07:55",
+            "completedAt": "08:05",
+            "remainingMinutes": 0
+          },
+          "objectInteractionPayload": {
+            "itemId": "旧牛仔夹克"
+          }
+        },
+        {
+          "type": "action",
+          "action": "尝试小睡一会儿以恢复体力并保持警觉",
+          "impact": 0,
+          "nodeId": "a_rest_0806",
+          "status": "in_progress",
+          "endTime": "08:36",
+          "startTime": "08:06",
+          "characterId": "Marcel Gwynplaine",
+          "characterName": "Marcel Gwynplaine",
+          "executionMeta": {
+            "startedAt": "08:06",
+            "remainingMinutes": 30
+          },
+          "routineSubtype": "rest"
+        }
+      ]
+    }
+  ],
+  "intents": [
+    {
+      "intent": "Prioritize personal safety and secrecy: go home immediately, lock doors and windows, avoid contacting anyone about the murder or following Patrizio, hide or destroy any notes that could incriminate me, and postpone any further investigation or outreach until I feel safe.",
+      "updatedAt": "2026-04-02T05:25:20.828Z"
+    }
+  ],
+  "npcName": "Marcel Gwynplaine"
+}

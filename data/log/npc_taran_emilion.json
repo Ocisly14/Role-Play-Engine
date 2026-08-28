@@ -1,0 +1,27 @@
+{
+  "npcId": "npc_taran_emilion",
+  "memories": [
+    {
+      "type": "event",
+      "content": "我不在场，没接到帕特里齐奥的命令，后来是否有人执行我不得而知。",
+      "gameDay": 2,
+      "gameTime": "01:13",
+      "location": "SCN_16_SUB_1",
+      "metadata": {
+        "outcome": "低声命令卢茨和塔兰现在立刻制服并搜身科温德，取回他的相机与存储卡，解除并收回猎枪并锁回吧台后方储物柜，把钥匙交给我，封锁所有出入口并控制监控设备周围的人员，务必保持低调以维护镇长身份。"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我不在那间大厅，Johnny来过但没有碰到我，因此我没有听到也没有回答他的问题。",
+      "gameDay": 1,
+      "gameTime": "19:16",
+      "location": "SCN_16_SUB_1",
+      "metadata": {
+        "outcome": "低声问卢茨和塔兰：海伦刚才往哪个方向离开？菲利普还在镇上吗？"
+      }
+    }
+  ],
+  "plans": [],
+  "intents": []
+}

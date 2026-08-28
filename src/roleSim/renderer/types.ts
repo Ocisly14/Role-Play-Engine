@@ -43,6 +43,10 @@ export interface PerceivedBundle {
     description: string;
     activeConditions: SceneCondition[];
   };
+  /** Where the viewpoint has put themselves inside that place, as prose —
+   *  "at the workbench, back to the door". Proprioceptive: you always know
+   *  where you sat down. Absent = nothing worth saying. */
+  ownSpot?: string;
   /** Viewpoint NPC's own active conditions (proprioceptive — fully visible to self). */
   ownConditions: CharacterCondition[];
   /** Action posture this tick. */
@@ -65,6 +69,9 @@ export interface ScenePresentCharacter {
   /** Conditions on this character. Renderer downstream still filters to
    *  externally-perceivable ones per the system-prompt rule. */
   conditions: CharacterCondition[];
+  /** Where they are standing within the shared place. Always perceivable — if
+   *  you can see the person you can see the armchair they are in. */
+  spot?: string;
   /** Current in-flight action intent (EngineAction.command.description), if
    *  the character is mid-action. Undefined = idle. */
   currentActionText?: string;

@@ -46,6 +46,7 @@ function makeDgsm(): DynamicGameStateManager {
       from === "SCN_1" && to === "SCN_2" ? "rubble" : undefined,
     getCharactersInScene: (sceneId: string) =>
       npcs.filter((n) => n.__scene === sceneId).map((n) => n.id),
+    getCharacterSpot: () => null,
     getCharacterPosition: (id: string) => {
       const npc = npcs.find((n) => n.id === id);
       return npc ? { type: "scene", sceneId: npc.__scene } : null;

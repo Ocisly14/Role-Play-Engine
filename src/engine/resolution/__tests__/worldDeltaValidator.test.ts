@@ -726,6 +726,25 @@ describe("operations are checked against the fields they advertise", () => {
     ).toContain("is not a place you were shown");
   });
 
+  it("accepts a spot, and accepts the empty string as the clear", () => {
+    // Free text by design: whether "behind the counter" is a sensible place
+    // to be is a judgement in full context, which is the Engine's job.
+    expect(errorsFor({ kind: "spot", spot: "at the workbench" })).toBe("");
+    expect(errorsFor({ kind: "spot", spot: "" })).toBe("");
+  });
+
+  it("rejects a spot that is not a string", () => {
+    expect(errorsFor({ kind: "spot", spot: { at: "workbench" } })).toContain(
+      "spot requires a spot string"
+    );
+  });
+
+  it("rejects a spot long enough to crowd out the block it sits in", () => {
+    expect(errorsFor({ kind: "spot", spot: "a".repeat(500) })).toContain(
+      "it is a phrase, not a description"
+    );
+  });
+
   it("has no relationship operation to check", () => {
     // What one character thinks of another is theirs to write, through
     // `writeMemory`. The Engine used to have an operation for it, and it did

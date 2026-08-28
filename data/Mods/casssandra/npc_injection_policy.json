@@ -1,0 +1,59 @@
+{
+  "moduleId": "casssandra",
+  "moduleStartDate": "2003-12-25",
+  "description": "Recommended NPC injection policy for simulation startup. daily_sim NPCs should receive regular town-life planning and social behavior. investigator_sim NPCs should be active, mobile, and clue-driven, but run with stronger investigation goals and tighter pacing than ordinary residents. limited_sim NPCs should stay mostly scene-bound or constrained. scene_only entries should be instantiated as encounter, evidence, or hazard objects rather than daily autonomous NPCs. cosmic_not_sim entries should be handled by director/event systems instead of normal NPC simulation.",
+  "tiers": {
+    "daily_sim": [
+      "Patrizio von Samsa",
+      "Lux Lynch",
+      "Ben Cleo",
+      "Shandra Hernandez",
+      "Simon Laplace (Simon)",
+      "Anatole Laplace (Anatole)",
+      "Adolph Carl",
+      "Mrs. Barklyite (Lucia Shiny)",
+      "Constantine Frollo",
+      "Vincent Galenus",
+      "Martin Gin (Cleo)",
+      "Nancy Charlotte",
+      "Philip Scaletta",
+      "Tallinn",
+      "Kovind",
+      "Solomon",
+      "Abel William",
+      "Vito",
+      "Helen",
+      "Harrison Lockheed",
+      "Marks White",
+      "Haran Greenwood",
+      "Lutz Emilion",
+      "Taran Emilion",
+      "Marcel Gwynplaine",
+      "Johnny",
+      "Angela"
+    ],
+    "investigator_sim": ["Bruno Galilei"],
+    "limited_sim": ["Isabela Smith", "Wind", "Unknow"],
+    "scene_only": [
+      "Jenny Florence(berforth Locefern)",
+      "David Campbell",
+      "Isaiah Arbar",
+      "Gofern Hupadego of Shub-Niggurath",
+      "Shoggoth Lord (Mr. Shani)",
+      "Shoggoth",
+      "Deep One",
+      "Deep One Hybrid (Bearer of the Innsmouth Taint)",
+      "Spider-human",
+      "Cold Spider (Dreamlands)",
+      "Cold Spider(reality)",
+      "Servant of Nyogtha",
+      "Daughter of Atlach-Nacha (Spider Goddess)"
+    ],
+    "cosmic_not_sim": [
+      "Atlach-Nacha, the Spider God",
+      "Nyogtha",
+      "Cthulhu",
+      "Moon Mirror Guardian, Mother of a Thousand Young in the Mountains (Avatar of Shub-Niggurath)"
+    ]
+  }
+}

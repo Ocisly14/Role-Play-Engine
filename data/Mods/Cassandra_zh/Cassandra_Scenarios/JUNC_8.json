@@ -1,0 +1,48 @@
+{
+  "id": "JUNC_8",
+  "name": "新月街A南西端·警察局前",
+  "description": "新月街A大道南的西端尽头，正对面是卡森德拉警察局。路口有一盏明亮的路灯，警察局门前停着一辆警车。",
+  "parentLocationId": "OUTDOOR",
+  "items": [
+    {
+      "id": "ITEM_JUNC8_1",
+      "name": "警车",
+      "description": "警察局门前停着一辆黑白涂装的警车，车身侧面反射着路灯的冷光。",
+      "type": "other"
+    },
+    {
+      "id": "ITEM_JUNC8_2",
+      "name": "明亮路灯",
+      "description": "一盏高杆路灯，照明过强时会把近处地面照得几乎没有阴影。",
+      "type": "lighting",
+      "isLightSource": true,
+      "lightLevel": 4
+    },
+    {
+      "id": "ITEM_JUNC8_3",
+      "name": "警局公告牌",
+      "description": "一块警局公告牌，上面贴着通缉令、社区提醒和停车规定。",
+      "type": "document"
+    }
+  ],
+  "conditions": [
+    {
+      "description": "露天路口，受天气影响。警察局前照明较好。",
+      "mechanicalEffect": {
+        "skillPenalty": [
+          {
+            "skill": "Perception",
+            "delta": 10
+          }
+        ]
+      }
+    }
+  ],
+  "connectedSceneIds": [
+    "SCN_3_SUB_1"
+  ],
+  "itemContexts": {
+    "ITEM_JUNC8_2": "路口的高杆路灯亮得过分，把警察局门前一小块区域照得几乎没有阴影。",
+    "ITEM_JUNC8_3": "警察局外墙边立着公告牌，上面贴着通缉令、社区提醒和临时停车规定。"
+  }
+}

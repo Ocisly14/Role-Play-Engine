@@ -4,8 +4,8 @@
 // All constants, types, and helpers are copied/adapted from
 // src/engine/features/fireFeature.ts — no core logic changes except:
 //   1. `propagationCountdown` added to FireSceneState (replaces onPropagate hook).
-//   2. `shouldExist` reads runtime scenarioConditions via ctx.getSceneConditions
-//      (fromFeature "fire") — invariant per spec D6; not the static scene.conditions.
+//   2. `shouldExist` reads scene conditions via ctx.getSceneConditions
+//      (fromFeature "fire") — invariant per spec D6.
 //   3. `onTick` operates on ONE scene (not iterating all) and inlines the
 //      propagation countdown logic from the old onPropagate hook.
 //   4. `initialState` seeds the DGSM bucket with default values.
@@ -361,9 +361,9 @@ export const fireSubsystem: AnchorSubsystem = {
    * bucket, to avoid cyclic spawn-destroy oscillations.
    *
    * `ctx.getSceneConditions(sceneId)` delegates to `dgsm.getSceneConditions`,
-   * which reads `scenarioConditions` — the runtime layer written by the Applier
-   * when it processes `scene.addCondition` StateChanges. This correctly reflects
-   * conditions added at runtime by an ignite action.
+   * which reads the place's own `conditions` — the same list the Applier
+   * writes when it processes `scene.addCondition` StateChanges, so this
+   * reflects conditions added at runtime by an ignite action.
    */
   shouldExist(sceneId: string, ctx: FeatureReadContext): boolean {
     return ctx

@@ -1,0 +1,124 @@
+{
+  "id": "SCN_22_SUB_2",
+  "name": "私人书房",
+  "description": "会客室后方是一间上锁的私人书房。房间不大，却压抑得像一只被打磨过的盒子：四壁书架塞满了法学、心理学、地方史和少量装帧古怪的外文旧书，厚实书脊在暖黄台灯下投出整齐阴影。靠窗的写字桌上摊着几份镇务文件、未封口的来信和一只墨水瓶，旁边是一把高背扶手椅，椅背磨痕显示它被长期使用。炉膛里留有薄薄一层灰烬，像是不久前才烧过什么。空气里有纸张、旧木和淡淡药味混在一起的气息，整间屋子散发出一种既理智又不安的控制欲。",
+  "parentLocationId": "SCN_22",
+  "indoor": true,
+  "items": [
+    {
+      "id": "ITEM_SCN22_4",
+      "name": "镇务文件",
+      "description": "桌面上摊着的镇务文件与预算纸张，边角压得整整齐齐。",
+      "type": "document",
+      "category": "evidence",
+      "discoveryMethod": "inspect desk"
+    },
+    {
+      "id": "ITEM_SCN22_5",
+      "name": "带锁抽屉",
+      "description": "写字桌右侧的抽屉上着锁，抽屉缝里夹着几页折叠过的便笺。",
+      "type": "container",
+      "containerStats": {
+        "capacity": 4,
+        "locked": true,
+        "lockDifficulty": "regular",
+        "contents": []
+      }
+    },
+    {
+      "id": "ITEM_SCN22_10",
+      "name": "嵌墙保险箱",
+      "description": "书架后方的暗格里嵌着一只沉重的钢制保险箱，外层包着防潮毡和一块常年覆盖其上的黑布。",
+      "type": "container",
+      "containerStats": {
+        "capacity": 3,
+        "locked": true,
+        "lockDifficulty": "hard",
+        "contents": ["梦王会仪式手稿", "加塔诺托亚的诅咒画像"],
+        "storedItems": [
+          {
+            "id": "ITEM_SCN22_10_A",
+            "name": "梦王会仪式手稿",
+            "description": "从梦王会获得的古老魔法文本抄本，记载了开启通向旧日支配者沉睡之地的门户仪式。手稿以拉丁文和一种未知语言混写，边缘留有帕特里齐奥多年解读时写下的细密批注。",
+            "type": "document",
+            "category": "evidence",
+            "discoveryMethod": "unlock safe"
+          },
+          {
+            "id": "ITEM_SCN22_10_B",
+            "name": "加塔诺托亚的诅咒画像",
+            "description": "一幅平时用黑布严密包裹的古老画像，描绘外神格赫罗斯（加塔诺托亚）的形象。凝视画像本体的人可能遭遇石化或精神崩溃，因此平时被长期锁在保险箱中。",
+            "type": "other",
+            "category": "evidence",
+            "discoveryMethod": "unlock safe"
+          }
+        ]
+      }
+    },
+    {
+      "id": "ITEM_SCN22_6",
+      "name": "壁炉灰烬",
+      "description": "炉膛里残留着尚未完全清理的薄灰，里面混着几片烧焦纸页。",
+      "type": "other",
+      "category": "evidence",
+      "discoveryMethod": "search fireplace"
+    },
+    {
+      "id": "ITEM_SCN22_13",
+      "name": "外文旧书",
+      "type": "other",
+      "category": "evidence",
+      "discoveryMethod": "inspect bookshelf",
+      "description": "书架上混在法学和心理学书籍间的少量装帧古怪的外文旧书，散发着一种陈旧而诡异的气息。"
+    },
+    {
+      "id": "ITEM_SCN22_14",
+      "name": "未封口的来信",
+      "type": "document",
+      "category": "evidence",
+      "discoveryMethod": "inspect desk",
+      "description": "书桌上散落的几封未封口的来信，信纸上的笔迹工整而克制。"
+    }
+  ],
+  "conditions": [
+    {
+      "description": "书房只开着一盏台灯和壁灯，光线集中在桌面，其余角落显得更暗。",
+      "mechanicalEffect": {
+        "skillPenalty": [
+          {
+            "skill": "Perception",
+            "delta": -15
+          }
+        ]
+      }
+    },
+    {
+      "description": "木地板保养得很好，但踩上去仍会发出细微声响。",
+      "mechanicalEffect": {
+        "skillPenalty": [
+          {
+            "skill": "Stealth",
+            "delta": -10
+          }
+        ]
+      }
+    }
+  ],
+  "connections": [
+    {
+      "targetId": "SCN_22_SUB_1",
+      "description": "书房门外短走道连通前方铺着黑白石砖的门厅与会客室"
+    },
+    {
+      "targetId": "SCN_22_SUB_3",
+      "description": "书房靠墙书架后隐藏着一道暗门，狭窄台阶向下通往地下储藏室"
+    }
+  ],
+  "itemContexts": {
+    "ITEM_SCN22_5": "抽屉锁孔被使用得很频繁，周围木料留下了细小擦痕。",
+    "ITEM_SCN22_10": "保险箱被书架与黑布双重遮住，只有熟悉房间布局的人才会立刻注意到它的存在。",
+    "ITEM_SCN22_6": "炉膛里的灰烬还没有彻底冷透，像是近期才烧掉过不想留下的纸张。",
+    "ITEM_SCN22_13": "书架上混在常规书籍间的几本外文旧书装帧古怪，封面上的文字既非英语也非已知的欧洲语言。",
+    "ITEM_SCN22_14": "书桌上散落着几封未封口的来信，信纸上的笔迹工整而克制。"
+  }
+}

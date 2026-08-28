@@ -14,6 +14,7 @@
 // references, invariants, transition legality, timing ownership and
 // roll-consistency (via the deterministic adjudicator).
 
+import { MAX_SPOT_LENGTH } from "../../state/characterSpot.js";
 import { addMinutes } from "../../state/gameClock.js";
 import { actionIdForCommand } from "../actions/actionStore.js";
 import type {
@@ -425,6 +426,21 @@ export function validateCharacterChange(
         ) {
           errs.push(`position ${field} "${id}" is not a place you were shown`);
         }
+      }
+      break;
+    }
+    case "spot": {
+      // Free text by design. Whether "behind the counter" is a sensible place
+      // to be is a judgement in full context, which is what the Engine is;
+      // the only thing code can judge is whether the string is one a prompt
+      // line can carry. No emptiness check — `""` IS the clear.
+      const spot = op.spot;
+      if (typeof spot !== "string") {
+        errs.push(`spot requires a spot string ("" clears it)`);
+      } else if (spot.length > MAX_SPOT_LENGTH) {
+        errs.push(
+          `spot must be at most ${MAX_SPOT_LENGTH} characters — got ${spot.length}; it is a phrase, not a description`
+        );
       }
       break;
     }

@@ -74,11 +74,11 @@ describe("handles", () => {
     // could rename an old one, and rendering the block in two halves gave the
     // same handle to two different memories.
     const line = lineFor("Simon came by");
-    expect(line.startsWith("- [M44444444]")).toBe(true);
+    expect(line.startsWith("- #M44444444")).toBe(true);
 
     // Same row, rendered among a different set — same handle.
     const alone = formatMemories([rows[3]]);
-    expect(alone.startsWith("- [M44444444]")).toBe(true);
+    expect(alone.startsWith("- #M44444444")).toBe(true);
   });
 
 });

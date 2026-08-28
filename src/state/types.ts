@@ -62,19 +62,30 @@ export interface KnownMapSeed {
   scenarioOutlineIds?: string[];
 }
 
+/** The stances a module may author. One list, so the compile-time union and
+ *  every runtime check are the same thing: this used to be a bare union with
+ *  no runtime counterpart, and module JSON carrying `partner`, `acquaintance`
+ *  and `colleague` sailed past a cast into the prompt — `relationship_stance_
+ *  partner` has no translation, so the i18n key itself was rendered into
+ *  characters' memories as if it were prose. */
+export const RELATIONSHIP_TYPES = [
+  "ally",
+  "enemy",
+  "neutral",
+  "family",
+  "friend",
+  "rival",
+  "employer",
+  "employee",
+  "stranger",
+] as const;
+
+export type RelationshipType = (typeof RELATIONSHIP_TYPES)[number];
+
 export interface NPCRelationship {
   targetId: string;
   targetName: string;
-  relationshipType:
-    | "ally"
-    | "enemy"
-    | "neutral"
-    | "family"
-    | "friend"
-    | "rival"
-    | "employer"
-    | "employee"
-    | "stranger";
+  relationshipType: RelationshipType;
   attitude: number;
   description?: string;
   history?: string;
@@ -224,6 +235,13 @@ export interface DynamicNPCProfile {
   backstory?: string;
   residence?: string;
   currentLocation?: string;
+  /**
+   * Seed only, read once at load exactly like `currentLocation`: where in that
+   * location they start — "在工作台旁，背对着门". The live value lives in
+   * `characterSpots` on the state and is never written back here, so DO NOT
+   * render this field in any prompt: it goes stale the first time they move.
+   */
+  spot?: string;
 
   // Simulation data
   longTermIntent: string;

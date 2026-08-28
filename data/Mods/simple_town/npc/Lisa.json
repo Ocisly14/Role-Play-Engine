@@ -1,0 +1,121 @@
+{
+  "id": "npc_lisa",
+  "name": "Lisa Chen",
+  "occupation": "Office Worker / Junior Accountant",
+  "age": 26,
+  "gender": "female",
+  "appearance": "A slender young woman with dark hair tied in a loose ponytail. Dresses neatly but simply — blouse and slacks. Has an observant, quiet demeanor.",
+  "personality": "Intelligent, perceptive, and quietly ambitious. She notices details others miss. Reserved at first but warm once comfortable. Dislikes confrontation but won't ignore wrongdoing. Enjoys art, coffee, and long walks.",
+  "background": "Lisa joined Victor's company six months ago as a junior accountant. She's good at her job and has started noticing discrepancies in the financial records that don't add up. She lives alone in a small apartment across town. She's friendly with Tom — they're the only two employees and often eat lunch together in the town square. She finds Tom kind and dependable, though she hasn't told him about the accounting issues she's found.",
+  "residence": "SCN_4",
+  "longTermIntent": "Do well at her job, figure out what's going on with the company finances, and build a comfortable life in this town. She'd like to get closer to Tom but doesn't want to make things awkward at work.",
+  "attributes": {
+    "STR": 40,
+    "CON": 50,
+    "DEX": 55,
+    "APP": 65,
+    "POW": 55,
+    "SIZ": 45,
+    "INT": 70,
+    "EDU": 70
+  },
+  "status": {
+    "hp": 9,
+    "maxHp": 9,
+    "sanity": 55,
+    "maxSanity": 55,
+    "luck": 60,
+    "mp": 11,
+    "conditions": []
+  },
+  "skills": {
+    "Social": 45,
+    "Knowledge & Craft": 65,
+    "Investigation": 55,
+    "Repair & Engineering": 60,
+    "Survival & Navigation": 35
+  },
+  "inventory": [
+    {
+      "name": "Wallet",
+      "properties": {
+        "cash": 180
+      }
+    },
+    {
+      "name": "Apartment Keys"
+    },
+    {
+      "name": "Notebook",
+      "properties": {
+        "note": "Small notebook for work notes"
+      }
+    }
+  ],
+  "relationships": [
+    {
+      "targetId": "npc_tom",
+      "targetName": "Tom Harris",
+      "relationshipType": "friend",
+      "attitude": 72,
+      "description": "My colleague at Victor's company. He's kind, reliable, and easy to talk to. I enjoy our lunch breaks together.",
+      "history": "We've worked together for six months. He showed me around on my first day and has been helpful ever since. I feel comfortable around him."
+    },
+    {
+      "targetId": "npc_victor",
+      "targetName": "Victor Kane",
+      "relationshipType": "employer",
+      "attitude": 35,
+      "description": "My boss. He's polished on the surface but something about him feels off. I've noticed irregularities in the accounts he manages.",
+      "history": "He hired me six months ago. At first he seemed charming, but I've started to see his controlling side. He watches my work closely and gets tense when I ask questions about finances."
+    }
+  ],
+  "memory": [
+    {
+      "type": "information",
+      "content": "I work at Victor's company at SCN_3 as a junior accountant. My working hours are 9:00-17:00.",
+      "metadata": {
+        "knowledgeId": "k_lisa_work",
+        "difficulty": "automatic"
+      }
+    },
+    {
+      "type": "information",
+      "content": "Tom Harris is my colleague. We often eat lunch together at the town square. He's been very kind to me since I started.",
+      "metadata": {
+        "knowledgeId": "k_lisa_about_tom",
+        "difficulty": "automatic"
+      }
+    },
+    {
+      "type": "information",
+      "content": "My apartment is at SCN_4. I live alone.",
+      "metadata": {
+        "knowledgeId": "k_lisa_home",
+        "difficulty": "automatic"
+      }
+    },
+    {
+      "type": "secret",
+      "content": "I've noticed discrepancies in the company's petty cash records. The numbers don't add up — about $200 per month is unaccounted for. I haven't reported this to anyone yet.",
+      "metadata": {
+        "knowledgeId": "s_lisa_accounting"
+      }
+    },
+    {
+      "type": "secret",
+      "content": "I have a crush on Tom. I look forward to our lunch breaks together and sometimes find excuses to talk to him at work. I haven't told anyone.",
+      "metadata": {
+        "knowledgeId": "s_lisa_crush"
+      }
+    },
+    {
+      "type": "belief",
+      "content": "Victor is hiding something about the company's finances. The discrepancies I found are too consistent to be mistakes.",
+      "metadata": {
+        "confidence": 0.75,
+        "reasoningChain": "Monthly petty cash shortfall of ~$200, combined with Victor's defensiveness when I asked about the accounts."
+      }
+    }
+  ]
+}

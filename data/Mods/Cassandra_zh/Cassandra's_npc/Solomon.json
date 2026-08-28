@@ -1,0 +1,182 @@
+{
+  "id": "Solomon",
+  "name": "Solomon",
+  "occupation": "神秘学书籍收藏家 / 占卜师",
+  "age": 50,
+  "gender": "male",
+  "appearance": "一个安静、举止沉稳的男人，即使注意力在别处也能保持面容平静。他看起来像是在符号、书籍和私人仪式中度过了多年的人。",
+  "personality": "沉思、内敛、好奇、对谁能接触他的兴趣有选择性。所罗门对他知道的事情不会鲁莽行事，他不喜欢被推着走。",
+  "background": "所罗门长期被神秘学和珍本书籍所吸引，有段时间他甚至似乎有一点真正的预言能力，直到年龄和经验关闭了那扇门。他现在在花店旁经营一家神秘学商店，像保护危险可能性的私人档案馆一样保护他的收藏。他在来卡森德拉之前买了《黄衣之王》，这本书仍然是他不会随便交给任何人的少数东西之一。",
+  "residence": "SCN_11",
+  "currentLocation": "SCN_11_SUB_1",
+  "spot": "坐在门边的躺椅上，靠近那只小炭盆",
+  "knownMapSeed": {
+    "sceneIds": [
+      "SCN_16_SUB_1",
+      "SCN_16_SUB_2",
+      "SCN_21_SUB_1",
+      "SCN_21_SUB_2"
+    ],
+    "junctionIds": [
+      "JUNC_1",
+      "JUNC_2",
+      "JUNC_3",
+      "JUNC_4",
+      "JUNC_5",
+      "JUNC_6",
+      "JUNC_7",
+      "JUNC_8",
+      "JUNC_9",
+      "JUNC_10",
+      "JUNC_11"
+    ],
+    "roadIds": [
+      "ROAD_1",
+      "ROAD_2",
+      "ROAD_3",
+      "ROAD_4",
+      "ROAD_5a",
+      "ROAD_5b",
+      "ROAD_6",
+      "ROAD_7",
+      "ROAD_8",
+      "ROAD_9",
+      "ROAD_10"
+    ],
+    "scenarioOutlineIds": [
+      "SCN_1",
+      "SCN_2",
+      "SCN_3",
+      "SCN_4",
+      "SCN_5",
+      "SCN_6",
+      "SCN_8",
+      "SCN_9",
+      "SCN_10",
+      "SCN_11",
+      "SCN_12",
+      "SCN_13",
+      "SCN_14",
+      "SCN_15",
+      "SCN_16",
+      "SCN_17",
+      "SCN_18",
+      "SCN_19",
+      "SCN_20",
+      "SCN_21",
+      "SCN_22"
+    ]
+  },
+  "longTermIntent": "穷尽一生探索神秘学的真谛，收集和守护那些常人不应触碰的禁忌知识。他相信这个世界远比表面所见更加深邃和危险，而理解这些隐秘的真相是他存在的意义。",
+  "attributes": {
+    "STR": 35,
+    "CON": 45,
+    "DEX": 45,
+    "APP": 50,
+    "POW": 65,
+    "SIZ": 45,
+    "INT": 75,
+    "EDU": 70
+  },
+  "status": {
+    "hp": 9,
+    "maxHp": 9,
+    "sanity": 65,
+    "maxSanity": 65,
+    "luck": 50,
+    "mp": 13,
+    "conditions": []
+  },
+  "skills": {
+    "Social": 55,
+    "Investigation": 70,
+    "Occult": 75
+  },
+  "inventory": [
+    {
+      "name": "神秘学书籍",
+      "properties": {
+        "note": "一批虽小但精心挑选的珍本书籍和笔记。"
+      }
+    },
+    {
+      "name": "塔罗牌",
+      "properties": {
+        "note": "一副磨损的牌组，用于占卜和需要时的社交挡箭牌。"
+      }
+    },
+    {
+      "name": "《黄衣之王》",
+      "properties": {
+        "note": "一本他不让大多数人阅读的书。"
+      }
+    }
+  ],
+  "relationships": [
+    {
+      "targetId": "Nancy Charlotte",
+      "targetName": "Nancy Charlotte",
+      "relationshipType": "neutral",
+      "attitude": 30,
+      "description": "隔壁花店的年轻女店员，偶尔会到店里翻看几本无害的占星书籍。",
+      "history": "南希在花店工作，所罗门的神秘学商店就在旁边。他们是点头之交，所罗门觉得她善良但脆弱。",
+      "firstPerson": "隔壁花店那姑娘偶尔进来翻几本星象的书，都是些无害的东西，我便由她翻。南希心是善的，只是太薄——这条街上有些书，我不打算让她碰见。"
+    },
+    {
+      "targetId": "Simon Laplace (Simon)",
+      "targetName": "Simon Laplace (Simon)",
+      "relationshipType": "neutral",
+      "attitude": 10,
+      "description": "花店楼上的住客，一个安静而警觉的年轻人，所罗门注意到他深夜的异常活动但从不过问。",
+      "history": "所罗门和西蒙共享同一条街道，彼此心照不宣地保持距离和礼貌。",
+      "firstPerson": "花店楼上那个年轻人深夜进出，脚步很轻，眼睛却一直是醒着的。我不问西蒙在忙什么，他也从不问我柜台后头锁着些什么——这条街上讲究的就是这点分寸。"
+    }
+  ],
+  "memory": [
+    {
+      "type": "information",
+      "content": "我在花店旁经营神秘学商店，把我的书放在我可以亲自看管的地方。",
+      "metadata": {
+        "knowledgeId": "k_solomon_shop",
+        "difficulty": "automatic"
+      }
+    },
+    {
+      "type": "information",
+      "content": "我在来卡森德拉之前买了《黄衣之王》，我对它了解得足够多，知道为什么不会让陌生人随便翻阅它。",
+      "metadata": {
+        "knowledgeId": "k_solomon_yellow_book",
+        "difficulty": "regular"
+      }
+    },
+    {
+      "type": "secret",
+      "content": "我曾经有比现在更强的预言感知，我不喜欢承认那有多少已经消退了。",
+      "metadata": {
+        "knowledgeId": "s_solomon_prophecy"
+      }
+    },
+    {
+      "type": "secret",
+      "content": "《黄衣之王》的前任主人不仅留给我一本危险的书。我还学到了一个在错误天空下仍然有效的哈斯塔之歌的版本，尽管代价是丑陋的。",
+      "metadata": {
+        "knowledgeId": "s_solomon_hastur_song"
+      }
+    },
+    {
+      "type": "secret",
+      "content": "我不认识本，凭原则不喜欢他。我曾有一位叫薄荷的朋友，他开始调查与本有关的事情后精神崩溃，不得不被送走。另一位帮忙照顾薄荷的朋友罗宾随后也离开了卡森德拉。自那以后，我变得更加孤僻，不再主动与人建立深层联系。",
+      "metadata": {
+        "knowledgeId": "s_solomon_bohe"
+      }
+    },
+    {
+      "type": "belief",
+      "content": "有些知识作为私人负担比作为公开事实处理得更好。",
+      "metadata": {
+        "confidence": 0.87,
+        "reasoningChain": "如果错误的人得到了正确的书，他们可以把好奇心变成灾难。控制危险文本比假装它们无害更安全。"
+      }
+    }
+  ]
+}

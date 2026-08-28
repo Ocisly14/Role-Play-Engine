@@ -47,7 +47,7 @@ SimulationRunner
                  │
                  ├─▶ SimulationEventEmitter ──▶ WebSocket broadcast
                  └─▶ NpcActionController
-                        ├─ buildPerceivedBundle → renderer (SMALL model)
+                        ├─ buildPerceivedBundle → renderer (MEDIUM model)
                         │     → first-person, citation-tagged narrative
                         ├─ RoleSimAgent.decide()  → act | continue | writeMemory
                         └─ trust boundary (commandValidator + commandBuilder)
@@ -72,7 +72,7 @@ The alias is derived from (viewer, target), so it is stable: the same stranger w
 
 ### Perception / render layer
 
-`roleSim/renderer/` turns a `PerceivedBundle` (scene, own conditions, own action posture, the tick's occurrences this character perceives) into **one first-person paragraph** via a SMALL-model call. Entities carry bracketed citation tags — `[stranger_a]`, `[ITEM_7]` — and citing a tag is the only way a character can point at anything. `stripUncitableTags` drops tags the renderer invented before the paragraph reaches the actor. On renderer failure the wrapper returns null; there is deliberately **no god-eye fallback**.
+`roleSim/renderer/` turns a `PerceivedBundle` (scene, own conditions, own action posture, the tick's occurrences this character perceives) into **one first-person paragraph** via a MEDIUM-model call. Entities carry bracketed citation tags — `[stranger_a]`, `[ITEM_7]` — and citing a tag is the only way a character can point at anything. A paragraph carrying a tag the actor could not cite is sent back once, quoting the exact string it invented; `stripUncitableTags` then drops whatever is still uncitable before the paragraph reaches the actor. On renderer failure the wrapper returns null; there is deliberately **no god-eye fallback**.
 
 ### Skills
 

@@ -1,0 +1,67 @@
+{
+  "id": "SCN_2_SUB_3",
+  "name": "地下仪式场",
+  "description": "焚化厂的地面之下隐藏着一处出人意料的地下空间。沿着一条狭窄的、向下倾斜的通道深入，周围的环境发生了显著的变化——现代的水泥和砖石逐渐让位于一种完全不同的建筑风格。通道两侧的墙壁由巨大的、切割精密的灰黑色石块砌成，石缝之间没有使用任何可辨认的粘合材料，却严丝合缝，工艺精湛得令人费解。墙面上密密麻麻地刻满了符文与浮雕，这些图案线条流畅而诡异，既不像任何已知的文字体系，也不像纯粹的装饰纹样，仿佛在记述某种古老而陌生的事物。洞穴的顶部拱起很高，在手电的光束中只能隐约辨出轮廓，回声在石壁之间反复折叠，赋予这片空间一种空旷的、大教堂般的压迫感。空气冰冷刺骨，带着石头深处渗出的潮湿与一丝矿物质的苦涩气味。地面中央有一座由同样材质的石块堆砌而成的平台，表面被磨得极为光滑，上面残留着蜡烛的凝结物和某种干涸的黑色液体痕迹。整个空间弥漫着一种远超其物理深度的古老气息，让人确信这里的历史远比地面上的焚化厂、甚至比卡森德拉这座小镇本身都要久远得多。",
+  "parentLocationId": "SCN_2",
+  "indoor": true,
+  "items": [
+    {
+      "id": "ITEM_SCN2_4",
+      "name": "古老壁刻",
+      "description": "洞穴墙壁上布满古老文字与符文浮雕，明显出自远早于卡森德拉镇史的文明之手。",
+      "type": "document",
+      "category": "evidence",
+      "discoveryMethod": "inspect wall"
+    },
+    {
+      "id": "ITEM_SCN2_5",
+      "name": "改造后的仪式祭坛",
+      "description": "一座被后人反复改动过的石质祭坛，古老石面上叠压着较新的刻痕、烛泪和干涸污迹。",
+      "type": "other",
+      "category": "evidence",
+      "discoveryMethod": "inspect altar"
+    }
+  ],
+  "conditions": [
+    {
+      "description": "地下空间一片漆黑，需要自备光源。古老的符文在光线照射下似乎微微泛着幽光。",
+      "mechanicalEffect": {
+        "skillPenalty": [
+          {
+            "skill": "Perception",
+            "delta": -40
+          }
+        ]
+      }
+    },
+    {
+      "description": "地下深处寒气逼人，温度远低于地面",
+      "mechanicalEffect": {
+        "skillPenalty": [
+          {
+            "skill": "Perception",
+            "delta": -10
+          }
+        ]
+      }
+    },
+    {
+      "description": "这里弥漫着一种令人不安的压迫感，空气中仿佛残留着某种难以名状的古老力量。",
+      "mechanicalEffect": {
+        "skillPenalty": [
+          {
+            "skill": "Perception",
+            "delta": -10
+          }
+        ]
+      }
+    }
+  ],
+  "connections": [
+    {
+      "targetId": "SCN_2_SUB_1",
+      "description": "灰黑石壁间的狭窄通道连接倾斜石阶，向上通往地面层焚化炉旁的碎石空地"
+    }
+  ],
+  "hidden": true
+}

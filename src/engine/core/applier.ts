@@ -1,4 +1,5 @@
 import type { DynamicGameStateManager } from "../../state/DynamicGameState.js";
+import { normalizeSpot } from "../../state/characterSpot.js";
 import type { SourcedWorldDelta, WorldDelta } from "../actions/types.js";
 import type {
   DamageReport,
@@ -104,6 +105,17 @@ export class Applier {
         return !conditions.some((cond) => cond.id === c.conditionId);
       }
 
+      case "character.spot":
+        // Only the empty clear, and only when there is nothing to clear. A
+        // repeat of the same phrase is NOT a no-op: this is evaluated against
+        // the PRE-flush state, and a position change later in the same flush
+        // can clear the spot in between — dropping the repeat here would
+        // leave the character with nothing.
+        return (
+          normalizeSpot(c.spot) === "" &&
+          this.dgsm.getCharacterSpot(c.characterId) === null
+        );
+
       case "feature.setState": {
         const scope = this.featureScopes.get(c.featureId) ?? "scene";
         const current = this.dgsm.getScopedFeatureState(
@@ -138,6 +150,7 @@ export class Applier {
       case "character.addCondition":
       case "character.removeCondition":
       case "character.position":
+      case "character.spot":
       case "memory.event":
       case "memory.witness":
         return known(c.characterId);
@@ -185,6 +198,14 @@ export class Applier {
               characterId,
               position: op.position,
               sourceSubsystem: source,
+            },
+          ];
+        case "spot":
+          return [
+            {
+              kind: "character.spot",
+              characterId,
+              spot: op.spot,
             },
           ];
         case "addCondition":
@@ -361,6 +382,8 @@ export class Applier {
       reason: string;
     }> = [];
     const featureEmissions: FeatureEvent[] = [];
+    // Last write wins: a spot is one slot, not an accumulation.
+    const spotWrites = new Map<string, string>();
     const envBuckets = new Map<string, EnvBucket>();
     const ensureEnvBucket = (locationId: string): EnvBucket => {
       let b = envBuckets.get(locationId);
@@ -389,6 +412,9 @@ export class Applier {
             featureId: c.sourceFeatureId,
             reason: c.reason,
           });
+          break;
+        case "character.spot":
+          spotWrites.set(c.characterId, c.spot);
           break;
         case "event.emit":
           featureEmissions.push(c.event);
@@ -535,6 +561,17 @@ export class Applier {
         default:
           break;
       }
+    }
+
+    // AFTER the replay loop, deliberately. Engine deltas apply ahead of the
+    // buffered StateChanges (see the `combined` array above), and the movement
+    // runtime's final `character.position` of a walk sits in that buffer — so
+    // a spot applied in delta order would be set, then wiped by
+    // `setCharacterPosition` clearing on the very arrival it was describing.
+    // Position first, always; the spot is what is true once everyone has
+    // finished moving.
+    for (const [characterId, spot] of spotWrites) {
+      this.dgsm.setCharacterSpot(characterId, spot);
     }
 
     const synthesizedDeaths: FeatureEvent[] = damageReports

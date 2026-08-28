@@ -1,0 +1,82 @@
+{
+  "id": "SCN_1_SUB_3",
+  "name": "实验室",
+  "description": "实验室的门是一扇带有电子门禁的厚重防火门，门框边缘嵌着刷卡感应器，上方指示灯闪烁着红色。室内灯光是医用级别的惨白色，将每件物品的轮廓都勾勒得异常清晰。靠墙排列着几台大型仪器，外壳崭新锃亮，与这座老旧医院格格不入。一个玻璃隔间占据了房间一角，玻璃门上贴着醒目的黄黑色生化标识。实验台是厚实的不锈钢材质，台面上摆放着试管架、离心机和显微镜，旁边散落着注射器和密封的样本容器。空气中飘浮着化学药剂的刺鼻气味，混杂着某种难以辨识的、略带腥气的生物味道。通风管道在天花板上方发出细微的气流声。地面铺着防静电地砖，干净得近乎刻意。整间实验室给人一种与这座小镇医院完全不匹配的精密感。",
+  "parentLocationId": "SCN_1",
+  "indoor": true,
+  "items": [
+    {
+      "id": "ITEM_SCN1_5",
+      "name": "新型医疗器械",
+      "type": "tool",
+      "description": "一批崭新的医疗器械，机身印着波士顿产地标识，与小镇医院的常规配置明显不符。"
+    },
+    {
+      "id": "ITEM_SCN1_6",
+      "name": "注射器",
+      "type": "tool",
+      "description": "几支尚未处理的注射器，透明针筒和金属针头在冷白灯下反着惨白微光。"
+    },
+    {
+      "id": "ITEM_SCN1_23",
+      "name": "蜘蛛样本容器",
+      "type": "container",
+      "category": "evidence",
+      "discoveryMethod": "inspect samples",
+      "containerStats": {
+        "capacity": 3,
+        "locked": false,
+        "contents": []
+      },
+      "description": "几只密封样本容器，里面装着蜘蛛标本和组织样本，标签格式十分正式。"
+    },
+    {
+      "id": "ITEM_SCN1_7",
+      "name": "实验档案",
+      "type": "document",
+      "category": "evidence",
+      "discoveryMethod": "inspect files",
+      "description": "一份记录实验数据和进度的实验档案。"
+    }
+  ],
+  "conditions": [
+    {
+      "description": "实验室内灯光惨白，生化标识在玻璃门上格外醒目",
+      "mechanicalEffect": {
+        "skillPenalty": [
+          {
+            "skill": "Perception",
+            "delta": 5
+          }
+        ]
+      }
+    },
+    {
+      "description": "空气中混合着化学药剂和某种奇异的生物气味",
+      "mechanicalEffect": {
+        "skillPenalty": [
+          {
+            "skill": "Perception",
+            "delta": -10
+          }
+        ]
+      }
+    }
+  ],
+  "connections": [
+    {
+      "targetId": "SCN_1_SUB_1",
+      "description": "贴有生化标识的厚重防火门外即走廊，前方走廊口连通米白瓷砖地面的医院大厅"
+    },
+    {
+      "targetId": "SCN_1_SUB_5",
+      "description": "防火门外走廊右侧方向通往L型走廊与病房区，两侧排列着病房门"
+    }
+  ],
+  "itemContexts": {
+    "ITEM_SCN1_5": "一批崭新的医疗器械，上面印着产地来自波士顿，与这家偏远小镇医院的规模极不相称",
+    "ITEM_SCN1_6": "工作台上散着几支尚未处理的注射器，针头反射出实验灯下惨白的光。",
+    "ITEM_SCN1_23": "几只密封样本容器里装着蜘蛛标本和组织样本，标签写法过于正式，明显不是临时采集物。",
+    "ITEM_SCN1_7": "一份实验相关的档案，记载着实验数据和进度"
+  }
+}

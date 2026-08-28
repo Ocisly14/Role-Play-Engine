@@ -1,0 +1,219 @@
+{
+  "id": "Bruno Galilei",
+  "name": "Bruno Galilei",
+  "occupation": "Police detective (former private investigator)",
+  "age": 33,
+  "gender": "male",
+  "appearance": "A tall, powerfully built man with Russian ancestry. He has silver-gray hair, very pale eyes, and a rugged, straightforward demeanor that reflects his physical strength and honest nature.",
+  "personality": "Sincere, upright, patient, and deeply driven by a sense of justice. Reliable and trustworthy, with a calm surface that hides strong inner determination and a willingness for self-sacrifice.",
+  "background": "Bruno once ran a private detective agency with friends, but it failed because he refused unethical or illegal commissions and even turned corrupt clients over to the authorities. After the agency collapsed, he continued working as a police detective. For over a year, he persistently investigated an unresolved murder case that his superiors ignored, unknowingly drawing the attention of dangerous forces in Cassandra.",
+  "residence": "SCN_3",
+  "currentLocation": "SCN_3",
+  "spot": "at his own desk at the far wall, case folders spread open",
+  "knownMapSeed": {
+    "sceneIds": [
+      "SCN_14_SUB_1",
+      "SCN_14_SUB_2",
+      "SCN_16_SUB_1",
+      "SCN_16_SUB_2",
+      "SCN_1_SUB_1",
+      "SCN_1_SUB_5",
+      "SCN_21_SUB_1",
+      "SCN_21_SUB_2",
+      "SCN_3_SUB_1",
+      "SCN_3_SUB_2",
+      "SCN_3_SUB_3",
+      "SCN_4_SUB_1",
+      "SCN_4_SUB_2"
+    ],
+    "junctionIds": [
+      "JUNC_1",
+      "JUNC_2",
+      "JUNC_3",
+      "JUNC_4",
+      "JUNC_5",
+      "JUNC_6",
+      "JUNC_7",
+      "JUNC_8",
+      "JUNC_9",
+      "JUNC_10",
+      "JUNC_11"
+    ],
+    "roadIds": [
+      "ROAD_1",
+      "ROAD_2",
+      "ROAD_3",
+      "ROAD_4",
+      "ROAD_5a",
+      "ROAD_5b",
+      "ROAD_6",
+      "ROAD_7",
+      "ROAD_8",
+      "ROAD_9",
+      "ROAD_10"
+    ],
+    "scenarioOutlineIds": [
+      "SCN_1",
+      "SCN_2",
+      "SCN_3",
+      "SCN_4",
+      "SCN_5",
+      "SCN_6",
+      "SCN_8",
+      "SCN_9",
+      "SCN_10",
+      "SCN_11",
+      "SCN_12",
+      "SCN_13",
+      "SCN_14",
+      "SCN_15",
+      "SCN_16",
+      "SCN_17",
+      "SCN_18",
+      "SCN_19",
+      "SCN_20",
+      "SCN_21",
+      "SCN_22"
+    ]
+  },
+  "longTermIntent": "Uncover the truth behind the old and new murder cases, protect Cassandra, and force the people hiding behind those crimes into the light even if it costs him everything.",
+  "attributes": {
+    "STR": 75,
+    "CON": 70,
+    "DEX": 55,
+    "APP": 50,
+    "POW": 60,
+    "SIZ": 70,
+    "INT": 65,
+    "EDU": 60
+  },
+  "status": {
+    "hp": 14,
+    "maxHp": 14,
+    "sanity": 60,
+    "maxSanity": 99,
+    "luck": 65,
+    "mp": 12,
+    "conditions": []
+  },
+  "skills": {
+    "Social": 55,
+    "Knowledge & Craft": 60,
+    "Investigation": 65,
+    "Land Vehicle Operation": 55,
+    "Melee Combat": 65,
+    "Ranged Combat": 60
+  },
+  "inventory": [
+    {
+      "name": "Case evidence package",
+      "properties": {
+        "note": "Physical evidence he keeps together and shows to investigators when needed."
+      }
+    },
+    {
+      "name": "Victim's phone",
+      "properties": {
+        "note": "Lucifero's phone from the 2003 Reindeer Bar case, containing a few crucial fragments of information."
+      }
+    },
+    {
+      "name": "Folded case notes",
+      "properties": {
+        "note": "Working notes for both murder cases and his own follow-up questions."
+      }
+    }
+  ],
+  "relationships": [
+    {
+      "targetId": "Shandra Hernandez",
+      "targetName": "Shandra Hernandez",
+      "relationshipType": "friend",
+      "attitude": 70,
+      "description": "A close confidant and emotional refuge.",
+      "history": "Bruno often spent his free time at her shop, trusting her enough to confide his worries.",
+      "firstPerson": "I spend what free hours I have at Shandra's shop. She is the one person I trust with my worries, and that is the nearest thing to rest I get."
+    },
+    {
+      "targetId": "Lux Lynch",
+      "targetName": "Lux Lynch",
+      "relationshipType": "ally",
+      "attitude": 60,
+      "description": "A trusted colleague within the police force.",
+      "history": "Lux respects Bruno and discreetly protects his investigation materials.",
+      "firstPerson": "Lux is the one at the station I can count on. He keeps my case files safe without ever being asked."
+    },
+    {
+      "targetId": "Patrizio von Samsa",
+      "targetName": "Patrizio von Samsa",
+      "relationshipType": "enemy",
+      "attitude": -60,
+      "description": "An authority figure Bruno believes is obstructing justice.",
+      "history": "Bruno suspects Patrizio's influence reaches into the cases he has been investigating.",
+      "firstPerson": "Every road in these cases bends before it reaches Patrizio, and I do not believe that is chance. He is standing between me and the truth."
+    }
+  ],
+  "memory": [
+    {
+      "type": "information",
+      "content": "I am treating the 2002 Paradil Hotel freezer death and the 2003 Reindeer Bar murder as the same hand. Two Black female victims, freezing, and official indifference are too much to dismiss as coincidence.",
+      "metadata": {
+        "knowledgeId": "k_bruno_cases",
+        "difficulty": "automatic"
+      }
+    },
+    {
+      "type": "information",
+      "content": "When the work starts to choke me, I go to Shandra's shop. I trust her judgment and her discretion, even though I know almost nothing about who she really is outside that room.",
+      "metadata": {
+        "knowledgeId": "k_bruno_shandra",
+        "difficulty": "regular"
+      }
+    },
+    {
+      "type": "information",
+      "content": "I keep the victim's phone, witness notes, and the old freezer-case material close because too many people in this town would rather these murders stay unsolved.",
+      "metadata": {
+        "knowledgeId": "k_bruno_case_materials",
+        "difficulty": "regular"
+      }
+    },
+    {
+      "type": "information",
+      "content": "I spend so many nights at the station that it feels more like home than any apartment. If something happens to me, most of my work will still be there.",
+      "metadata": {
+        "knowledgeId": "k_bruno_station_habit",
+        "difficulty": "automatic"
+      }
+    },
+    {
+      "type": "secret",
+      "content": "An anonymous text warned me not to trust my superiors, especially Patrizio, and said Constantine Frollo has no right to serve God.",
+      "metadata": {
+        "knowledgeId": "s_bruno_warning"
+      }
+    },
+    {
+      "type": "secret",
+      "content": "I still do not know who sent that warning, but the sender knew about my old case, the pressure from above, and the exact people I had begun to fear.",
+      "metadata": {
+        "knowledgeId": "s_bruno_sms"
+      }
+    },
+    {
+      "type": "secret",
+      "content": "I called my old friends in from outside Cassandra because I no longer trust local support enough to finish this alone. If I disappear, I need someone honest to keep digging.",
+      "metadata": {
+        "knowledgeId": "s_bruno_outside_help"
+      }
+    },
+    {
+      "type": "belief",
+      "content": "The truth is more important than my comfort or my career, and someone has to keep pushing until Cassandra's lies break open.",
+      "metadata": {
+        "confidence": 0.95,
+        "reasoningChain": "The town has already buried too many bodies and too many excuses."
+      }
+    }
+  ]
+}

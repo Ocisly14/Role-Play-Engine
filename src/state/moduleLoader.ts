@@ -16,6 +16,7 @@ import { buildRelationshipMemory } from "../memory/relationshipMemory.js";
 import { canonicalMemoryType } from "../memory/types.js";
 import type { EmbeddingClient } from "../rag/embedding.js";
 import type { DynamicGameState } from "./DynamicGameState.js";
+import { normalizeSpot } from "./characterSpot.js";
 import { ISO_DATE_RE, makeDateTime } from "./gameClock.js";
 import {
   buildTopology,
@@ -74,6 +75,27 @@ export interface ModuleData {
  * directory exists) and attaches the validated event list. Disk access here is
  * intentional: scripted-events are not (yet) persisted to the DB.
  */
+/**
+ * Module JSON writes a scene's connections either way — `["SCN_2"]` in one
+ * module, `[{ "targetId": "SCN_2", "description": ... }]` in the next — and
+ * the row was cast straight to `DynamicScene`, so the string form sailed
+ * past the type system and every reader that reaches for `c.targetId` got
+ * `undefined`. Silently: the World Action Engine's world snapshot listed a
+ * scene's exits as `[{}, {}, {}]`, `perceivedLocation` produced no adjacent
+ * places at all — so an actor could cite no place but the room it stood in —
+ * and fire and weather propagated to nowhere. Normalize once, here, and every
+ * consumer downstream sees one shape.
+ */
+function normalizeScene(scene: DynamicScene): DynamicScene {
+  if (!Array.isArray(scene.connections)) return scene;
+  return {
+    ...scene,
+    connections: scene.connections.map((c) =>
+      typeof c === "string" ? { targetId: c } : c
+    ),
+  };
+}
+
 export async function loadModule(
   prisma: PrismaClient,
   moduleId: string,
@@ -124,7 +146,7 @@ export async function loadModule(
     } else if (row.entryId.startsWith("ROAD_")) {
       roads.set(row.entryId, data as RoadNode);
     } else {
-      scenes.set(row.entryId, data as DynamicScene);
+      scenes.set(row.entryId, normalizeScene(data as DynamicScene));
     }
   }
 
@@ -372,6 +394,7 @@ export function initRuntime(params: {
   > = {};
   const npcResidences: Record<string, string> = {};
   const characterPositions: Record<string, CharacterPosition> = {};
+  const characterSpots: Record<string, string> = {};
 
   // Build residence lookup from scenarioOutlines
   const residentToLocation: Record<string, string> = {};
@@ -525,24 +548,12 @@ export function initRuntime(params: {
         sceneId: defaultSceneId,
       };
     }
-  }
 
-  // Build scenarioConditions from scenes, junctions, and roads
-  const scenarioConditions: Record<string, any[]> = {};
-  for (const [sceneId, scene] of moduleData.scenes) {
-    if (scene.conditions && scene.conditions.length > 0) {
-      scenarioConditions[sceneId] = [...scene.conditions];
-    }
-  }
-  for (const [id, junc] of moduleData.junctions) {
-    if (junc.conditions && junc.conditions.length > 0) {
-      scenarioConditions[id] = [...junc.conditions];
-    }
-  }
-  for (const [id, road] of moduleData.roads) {
-    if (road.conditions && road.conditions.length > 0) {
-      scenarioConditions[id] = [...road.conditions];
-    }
+    // Where in that location they start. Same one-shot read as
+    // `currentLocation`, normalized once so no prompt ever sees a stray
+    // bracket or a second line.
+    const seededSpot = normalizeSpot(npc.spot);
+    if (seededSpot) characterSpots[npc.id] = seededSpot;
   }
 
   // Passthrough: surface module-level feature init configs onto moduleSetup.
@@ -582,12 +593,12 @@ export function initRuntime(params: {
     npcStats,
     npcInventories,
     npcRelationshipGraph,
-    scenarioConditions,
     blockedConnections: new Map(),
     npcResidences,
     transportEdges: moduleData.transportEdges,
     topology,
     characterPositions,
+    characterSpots,
     npcInjectionPolicy: moduleData.npcInjectionPolicy,
     loadedAt: new Date(),
     lastUpdated: new Date(),

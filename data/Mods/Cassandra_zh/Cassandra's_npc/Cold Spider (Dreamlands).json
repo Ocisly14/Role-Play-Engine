@@ -1,0 +1,102 @@
+{
+  "id": "Cold Spider (Dreamlands)",
+  "name": "Cold Spider (Dreamlands)",
+  "occupation": "神话生物",
+  "age": 0,
+  "gender": "N/A",
+  "appearance": "一种巨大的、苍白的蜘蛛状实体，原生于幻梦境，比其在现实世界中弱化的同类要大得多、丑陋得多。它的身体覆盖着厚实的几丁质外壳，众多眼睛闪烁着不自然的智慧，动作既有意识又令人不安。",
+  "personality": "异质、独居、凶残。尽管拥有智慧，冷蜘蛛之间不会互相合作，甚至可能捕食同类。它们完全按照掠食本能和自身利益行事。",
+  "background": "冷蜘蛛起源于幻梦境，与蜘蛛之神阿特拉克-纳克亚有关。在这个领域中，它们以更强大、更原始的形态存在。有些传说提到真正巨大的个体，比普通的幻梦境冷蜘蛛还要大得多。",
+  "residence": "SCN_17",
+  "currentLocation": "SCN_17",
+  "spot": "蜷伏在北侧廊道的立柱阴影里",
+  "knownMapSeed": {
+    "sceneIds": [
+      "SCN_17_SUB_1",
+      "SCN_17_SUB_2",
+      "SCN_17_SUB_3"
+    ],
+    "junctionIds": [],
+    "roadIds": [],
+    "scenarioOutlineIds": [
+      "SCN_17"
+    ]
+  },
+  "longTermIntent": "在幻梦境中猎食，通过统治地位在蛛网的政治中生存，并在不被竞争者吞食的情况下继续服务于阿特拉克-纳克亚的宏大计划。",
+  "attributes": {
+    "STR": 140,
+    "CON": 90,
+    "DEX": 85,
+    "APP": 5,
+    "POW": 70,
+    "SIZ": 175,
+    "INT": 55,
+    "EDU": 0
+  },
+  "status": {
+    "hp": 27,
+    "maxHp": 27,
+    "sanity": 0,
+    "maxSanity": 0,
+    "luck": 0,
+    "mp": 14,
+    "conditions": []
+  },
+  "skills": {
+    "Melee Combat": 40,
+    "Ranged Combat": 60
+  },
+  "inventory": [],
+  "relationships": [
+    {
+      "targetId": "Atlach-Nacha, the Spider God",
+      "targetName": "Atlach-Nacha, the Spider God",
+      "relationshipType": "ally",
+      "attitude": 80,
+      "description": "一个遥远但绝对的庇护者，与蜘蛛族的存在息息相关。",
+      "history": "冷蜘蛛是与幻梦境中阿特拉克-纳克亚的蛛网和计划相关的生物。",
+      "firstPerson": "我爬过的每一根丝，都是照着比我的饥饿更古老的图样纺出来的。织网者远在天边，一言不发，却依然拥有我。"
+    }
+  ],
+  "memory": [
+    {
+      "type": "information",
+      "content": "在幻梦境中，我更大、更坚硬、更完整，远非穿越清醒现实爬行的那个虚弱猎杀形态可比。",
+      "metadata": {
+        "knowledgeId": "k_coldspider_dreamlands_strength",
+        "difficulty": "regular"
+      }
+    },
+    {
+      "type": "information",
+      "content": "巨网可以将我的同类带入清醒世界，但穿越会剥夺我们的力量。现实只不过是一层更薄的狩猎外皮。",
+      "metadata": {
+        "knowledgeId": "k_coldspider_crossing",
+        "difficulty": "regular"
+      }
+    },
+    {
+      "type": "information",
+      "content": "我的同类中有些膨胀成连蜘蛛都恐惧的庞然大物。我很清楚不要踏入那些长老所占据的丝线领地。",
+      "metadata": {
+        "knowledgeId": "k_coldspider_gigantic",
+        "difficulty": "hard"
+      }
+    },
+    {
+      "type": "secret",
+      "content": "我不信任其他冷蜘蛛。饥饿会把网友变成对手，而当猎物或网域空间变得稀缺时，竞争很快就会变成同类相食。",
+      "metadata": {
+        "knowledgeId": "s_coldspider_cannibalism"
+      }
+    },
+    {
+      "type": "belief",
+      "content": "只有最强的猎手才配拥有最安全的丝线和最柔软的猎物。",
+      "metadata": {
+        "confidence": 0.85,
+        "reasoningChain": "幻梦境大到足以容纳许多猎手，但只有统治地位才能让一只蜘蛛活下去。"
+      }
+    }
+  ]
+}

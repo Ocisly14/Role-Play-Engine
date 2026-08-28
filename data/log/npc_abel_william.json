@@ -1,0 +1,17 @@
+{
+  "npcId": "npc_abel_william",
+  "memories": [
+    {
+      "type": "event",
+      "content": "我当时不在花店，未与Simon见面或回应他要求我出示身份证明与说明来意的请求（他在店内寻我未果）。",
+      "gameDay": 2,
+      "gameTime": "05:18",
+      "location": "SCN_9_SUB_1",
+      "metadata": {
+        "outcome": "低声要求Abel出示身份证明并说明他此刻在店内的来意"
+      }
+    }
+  ],
+  "plans": [],
+  "intents": []
+}

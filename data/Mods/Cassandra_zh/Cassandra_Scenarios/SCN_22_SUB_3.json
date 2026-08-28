@@ -1,0 +1,95 @@
+{
+  "id": "SCN_22_SUB_3",
+  "name": "地下储藏室",
+  "description": "书房里一道隐藏在书架后的窄门通向地下。沿着狭窄台阶往下，空气立刻变得阴凉潮湿。地下储藏室的墙面是裸露砖石，拱形天花板压得很低，几盏金属护罩灯把成排木架照得发黄。架子上整齐码着封蜡的文件盒、备用煤油、旧报纸、红酒和几只上锁的小木箱。角落里有一张窄工作台，台面铺着棕色油布，旁边放着碎纸盆和一把铁铲。这里不像秘密祭坛，更像一个习惯为最坏情况做准备的人保留退路、备份与不可公开材料的地方。",
+  "parentLocationId": "SCN_22",
+  "indoor": true,
+  "hidden": true,
+  "items": [
+    {
+      "id": "ITEM_SCN22_7",
+      "name": "封蜡文件盒",
+      "description": "几只厚纸文件盒外侧贴着日期标签，盒盖边缘用旧式封蜡加固。",
+      "type": "container",
+      "containerStats": {
+        "capacity": 8,
+        "locked": true,
+        "lockDifficulty": "regular",
+        "contents": []
+      }
+    },
+    {
+      "id": "ITEM_SCN22_8",
+      "name": "上锁木箱",
+      "description": "两只沉重的木箱紧靠墙角，上着黄铜挂锁，箱盖有长期搬动留下的擦痕。",
+      "type": "container",
+      "containerStats": {
+        "capacity": 10,
+        "locked": true,
+        "lockDifficulty": "hard",
+        "contents": []
+      }
+    },
+    {
+      "id": "ITEM_SCN22_9",
+      "name": "碎纸盆",
+      "description": "金属碎纸盆里堆着未完全烧净的纸屑和发黑纸边。",
+      "type": "container",
+      "category": "evidence",
+      "discoveryMethod": "inspect shred bin",
+      "containerStats": {
+        "capacity": 3,
+        "locked": false,
+        "contents": []
+      }
+    },
+    {
+      "id": "ITEM_SCN22_15",
+      "name": "备用煤油",
+      "type": "consumable",
+      "description": "架子上码着的几罐备用煤油，铁皮罐身上贴着手写标签。"
+    },
+    {
+      "id": "ITEM_SCN22_16",
+      "name": "铁铲",
+      "type": "tool",
+      "description": "窄工作台旁的一把铁铲，铲面有使用磨损的痕迹。"
+    }
+  ],
+  "conditions": [
+    {
+      "description": "地下室空气阴冷潮湿，光线有限，远离地面街道动静。",
+      "mechanicalEffect": {
+        "skillPenalty": [
+          {
+            "skill": "Perception",
+            "delta": -15
+          }
+        ]
+      }
+    },
+    {
+      "description": "狭窄台阶和砖地让行动更不方便，重物与箱柜增加碰撞风险。",
+      "mechanicalEffect": {
+        "skillPenalty": [
+          {
+            "skill": "Stealth",
+            "delta": -10
+          }
+        ]
+      }
+    }
+  ],
+  "connections": [
+    {
+      "targetId": "SCN_22_SUB_2",
+      "description": "拱顶砖壁间有狭窄台阶向上，暗门连通地面层的私人书房"
+    }
+  ],
+  "itemContexts": {
+    "ITEM_SCN22_7": "文件盒外侧的日期标签按年份排列，摆放方式带着近乎病态的整齐。",
+    "ITEM_SCN22_9": "碎纸盆里压着几片没有完全烧透的纸角，像是被反复确认过内容才处理掉。",
+    "ITEM_SCN22_15": "架子上整齐码着几罐备用煤油，铁皮罐身上贴着手写的日期标签。",
+    "ITEM_SCN22_16": "工作台旁靠着一把铁铲，铲面磨损明显，铲刃沾着干燥的土渍。"
+  }
+}

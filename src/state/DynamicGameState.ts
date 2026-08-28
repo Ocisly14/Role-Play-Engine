@@ -16,6 +16,7 @@ import {
   makeBlockedConnectionKey,
   resolveBlockedConnectionNodeRef,
 } from "./blockedConnections.js";
+import { normalizeSpot } from "./characterSpot.js";
 import { addMinutes, datePart, isSameDay, makeDateTime } from "./gameClock.js";
 import type {
   CharacterPosition,
@@ -31,6 +32,8 @@ import {
   InventoryUtils,
   type ModuleSetup,
   type NPCRelationship,
+  RELATIONSHIP_TYPES,
+  type RelationshipType,
   type ScenarioOutline,
 } from "./types.js";
 import type {
@@ -96,10 +99,6 @@ export interface DynamicGameState {
     string,
     Record<string, { score: number; note: string; knownAs?: string }>
   >;
-  scenarioConditions: Record<
-    string,
-    import("../engine/core/types.js").SceneCondition[]
-  >;
   blockedConnections: Map<string, string>; // "scene:id::road:id" typed canonical edge key -> reason
   npcResidences: Record<string, string>; // npcId -> macroLocationId
   transportEdges: TransportEdge[];
@@ -109,6 +108,12 @@ export interface DynamicGameState {
 
   // === Character Positions (NPC) ===
   characterPositions: Record<string, CharacterPosition>;
+  /**
+   * characterId → where they are WITHIN their location, as prose. Absent =
+   * nothing worth saying, which is the normal case. Narrative only: nothing
+   * is computed from it and nobody is stopped by it.
+   */
+  characterSpots: Record<string, string>;
   hiddenCharacterIds?: string[];
 
   // === NPC Injection Policy ===
@@ -143,12 +148,12 @@ export const initialDynamicGameState = (params: {
   npcStats: {},
   npcInventories: {},
   npcRelationshipGraph: {},
-  scenarioConditions: {},
   blockedConnections: new Map(),
   npcResidences: {},
   transportEdges: [],
   topology: null as unknown as TownTopology,
   characterPositions: {},
+  characterSpots: {},
   hiddenCharacterIds: [],
   npcInjectionPolicy: null,
   loadedAt: new Date(),
@@ -159,6 +164,9 @@ export const initialDynamicGameState = (params: {
  * Dynamic Game State Manager
  * Provides methods to manage DynamicWorld-specific state
  */
+/** Membership test for the authored stances — see RELATIONSHIP_TYPES. */
+const RELATIONSHIP_TYPE_SET: ReadonlySet<string> = new Set(RELATIONSHIP_TYPES);
+
 export class DynamicGameStateManager {
   private state: DynamicGameState;
   private db: any;
@@ -340,6 +348,7 @@ export class DynamicGameStateManager {
       blockedConnections: blockedConnsObj,
       topology: topologyObj,
       characterPositions: this.state.characterPositions,
+      characterSpots: this.state.characterSpots,
       hiddenCharacterIds: Array.from(this.hiddenCharacterIds),
       npcResidences: this.state.npcResidences,
       transportEdges: this.state.transportEdges,
@@ -467,7 +476,6 @@ export class DynamicGameStateManager {
       npcStats: data.npcStats ?? {},
       npcInventories: data.npcInventories ?? {},
       npcRelationshipGraph: data.npcRelationshipGraph ?? {},
-      scenarioConditions: data.scenarioConditions ?? {},
       npcResidences: data.npcResidences ?? {},
       transportEdges: data.transportEdges ?? [],
       npcInjectionPolicy: data.npcInjectionPolicy ?? null,
@@ -489,6 +497,13 @@ export class DynamicGameStateManager {
         }
         return {};
       })(),
+      // Absent on every runtime row written before spots existed; an empty
+      // map is exactly right for those — nobody was standing anywhere in
+      // particular. No legacy conversion: there is no old field to migrate.
+      characterSpots:
+        data.characterSpots && typeof data.characterSpots === "object"
+          ? (data.characterSpots as Record<string, string>)
+          : {},
       hiddenCharacterIds: Array.isArray(data.hiddenCharacterIds)
         ? data.hiddenCharacterIds.filter(
             (characterId: unknown): characterId is string =>
@@ -720,6 +735,15 @@ export class DynamicGameStateManager {
         ) {
           continue;
         }
+        // A stance outside the authored set used to be cast straight through
+        // and only surfaced at the far end, as an untranslated i18n key sitting
+        // in a character's memory. Name it here, where it can still be traced
+        // to whoever sent it, and fall back rather than drop the relationship.
+        if (!RELATIONSHIP_TYPE_SET.has(relationshipType)) {
+          console.warn(
+            `[DynamicGameState] ${character?.id ?? "?"} → ${targetId}: unknown relationshipType "${relationshipType}" — recorded as "neutral" (valid: ${RELATIONSHIP_TYPES.join(", ")})`
+          );
+        }
 
         const clampedAttitude = Math.max(
           -100,
@@ -728,8 +752,9 @@ export class DynamicGameStateManager {
         sanitizedRelationships.push({
           targetId,
           targetName,
-          relationshipType:
-            relationshipType as NPCRelationship["relationshipType"],
+          relationshipType: RELATIONSHIP_TYPE_SET.has(relationshipType)
+            ? (relationshipType as RelationshipType)
+            : "neutral",
           attitude: clampedAttitude,
           ...(typeof (rel as any).description === "string"
             ? { description: (rel as any).description }
@@ -1084,19 +1109,42 @@ export class DynamicGameStateManager {
     // reading, and B forms no view of A merely because A formed one of B.
   }
 
+  /**
+   * Conditions live on the place itself — `conditions` on the scene, junction
+   * or road object, reached through `getScene`, which resolves all three
+   * kinds. One home, mutated in place, the way `scene.items` has always
+   * worked.
+   *
+   * They used to be mirrored into a `scenarioConditions` side-table seeded
+   * from the module at load, with the perception path merging both lists.
+   * One fact, two homes, and only one of them known to these mutators: a
+   * `scene.removeCondition` emptied the side-table while the copy on the
+   * place survived the merge. Observed live — a door the Engine had already
+   * smashed open went on being rendered as nailed shut for the rest of the
+   * run, and the character kept re-attacking it. The merge also deduped by
+   * object identity, which held only until something serialized the state,
+   * after which every module-authored condition rendered twice.
+   */
   getSceneConditions(
     scenarioId: string
   ): import("../engine/core/types.js").SceneCondition[] {
-    return this.state.scenarioConditions[scenarioId] ?? [];
+    return this.getScene(scenarioId)?.conditions ?? [];
   }
 
   appendSceneCondition(
     scenarioId: string,
     condition: import("../engine/core/types.js").SceneCondition
   ): void {
-    if (!this.state.scenarioConditions[scenarioId])
-      this.state.scenarioConditions[scenarioId] = [];
-    this.state.scenarioConditions[scenarioId].push(condition);
+    const place = this.getScene(scenarioId);
+    if (!place) {
+      console.warn(
+        `[DynamicGameState] appendSceneCondition: no scene/junction/road "${scenarioId}" — condition dropped`
+      );
+      return;
+    }
+    // Module JSON omits the field entirely on places that start with none.
+    if (!place.conditions) place.conditions = [];
+    place.conditions.push(condition);
     this.state.lastUpdated = new Date();
   }
 
@@ -1109,9 +1157,9 @@ export class DynamicGameStateManager {
     scenarioId: string,
     featureId: string
   ): void {
-    const existing = this.state.scenarioConditions[scenarioId];
-    if (!existing) return;
-    this.state.scenarioConditions[scenarioId] = existing.filter(
+    const place = this.getScene(scenarioId);
+    if (!place?.conditions) return;
+    place.conditions = place.conditions.filter(
       (c) => c.featureId !== featureId
     );
     this.state.lastUpdated = new Date();
@@ -1121,7 +1169,14 @@ export class DynamicGameStateManager {
     scenarioId: string,
     conditions: import("../engine/core/types.js").SceneCondition[]
   ): void {
-    this.state.scenarioConditions[scenarioId] = conditions;
+    const place = this.getScene(scenarioId);
+    if (!place) {
+      console.warn(
+        `[DynamicGameState] replaceSceneConditions: no scene/junction/road "${scenarioId}" — ignored`
+      );
+      return;
+    }
+    place.conditions = conditions;
     this.state.lastUpdated = new Date();
   }
 
@@ -1452,7 +1507,50 @@ export class DynamicGameStateManager {
   }
 
   setCharacterPosition(characterId: string, position: CharacterPosition): void {
+    // A spot describes a place inside ONE location, so it cannot survive
+    // leaving it: without this, someone who walks to the next room is still
+    // "at the workbench, back to the door" — in a room that has no workbench.
+    // Cleared here rather than in the movement runtime because the runtime is
+    // not the only writer: the Engine's `position` delta repositions people
+    // too, and one of the two paths would always be the one that forgot.
+    //
+    // Walking ALONG a road keeps roadId constant, so a spot set on a road
+    // survives the leg; scene->road and road->scene both clear. A reposition
+    // into the location you are already in keeps the spot — that delta said
+    // nothing about where in the room.
+    const previous = this.state.characterPositions[characterId];
+    if (
+      previous &&
+      this.resolveLocationId(previous) !== this.resolveLocationId(position)
+    ) {
+      delete this.state.characterSpots[characterId];
+    }
     this.state.characterPositions[characterId] = position;
+    this.state.lastUpdated = new Date();
+  }
+
+  // === Character Spot (where inside the location) ===
+
+  /**
+   * Where they are WITHIN their location, as prose. `null` = nothing worth
+   * saying.
+   */
+  getCharacterSpot(characterId: string): string | null {
+    return this.state.characterSpots[characterId] ?? null;
+  }
+
+  /**
+   * Empty (or whitespace-only, or bracket-only) clears it. Normalized here so
+   * every reader — three prompts and one Engine snapshot — sees the same
+   * bounded one-line string.
+   */
+  setCharacterSpot(characterId: string, spot: string): void {
+    const normalized = normalizeSpot(spot);
+    if (normalized) {
+      this.state.characterSpots[characterId] = normalized;
+    } else {
+      delete this.state.characterSpots[characterId];
+    }
     this.state.lastUpdated = new Date();
   }
 

@@ -1,0 +1,217 @@
+{
+  "id": "Jenny Florence (berforth Locefern)",
+  "name": "Jenny Florence (berforth Locefern)",
+  "occupation": "黑客",
+  "age": 21,
+  "gender": "female",
+  "appearance": "一位年轻的黑人女性，自信迷人，面容姣好。",
+  "personality": "高度聪明、独立、谨慎，受强烈的个人道德准则驱动。她可能骄傲，但在做她认为正确的事情上也很固执。",
+  "background": "珍妮·弗洛伦斯是一名天才黑客，在一个贫穷的黑人家庭长大。她在学校第一次接触电脑，很快就对编程着迷。为了养家而辍学后，她在麻省理工学院附近工作，尽可能地学习，最终在阿布弗斯·卢奇菲罗的化名下伪造了新身份，然后来到加利福尼亚。在驯鹿酒吧事件发生时，她已经深入地下黑客工作，并携带着关于卡森德拉犯罪的证据。",
+  "residence": "SCN_16",
+  "currentLocation": "SCN_16",
+  "spot": "在角落的卡座里，背靠墙壁，笔记本电脑半开着",
+  "knownMapSeed": {
+    "sceneIds": [
+      "SCN_16_SUB_1",
+      "SCN_16_SUB_2",
+      "SCN_17_SUB_1",
+      "SCN_17_SUB_4",
+      "SCN_21_SUB_1",
+      "SCN_21_SUB_2",
+      "SCN_4_SUB_1",
+      "SCN_4_SUB_2"
+    ],
+    "junctionIds": [
+      "JUNC_1",
+      "JUNC_2",
+      "JUNC_3",
+      "JUNC_4",
+      "JUNC_5",
+      "JUNC_6",
+      "JUNC_7",
+      "JUNC_8",
+      "JUNC_9",
+      "JUNC_10",
+      "JUNC_11"
+    ],
+    "roadIds": [
+      "ROAD_1",
+      "ROAD_2",
+      "ROAD_3",
+      "ROAD_4",
+      "ROAD_5a",
+      "ROAD_5b",
+      "ROAD_6",
+      "ROAD_7",
+      "ROAD_8",
+      "ROAD_9",
+      "ROAD_10"
+    ],
+    "scenarioOutlineIds": [
+      "SCN_1",
+      "SCN_2",
+      "SCN_3",
+      "SCN_4",
+      "SCN_5",
+      "SCN_6",
+      "SCN_8",
+      "SCN_9",
+      "SCN_10",
+      "SCN_11",
+      "SCN_12",
+      "SCN_13",
+      "SCN_14",
+      "SCN_15",
+      "SCN_16",
+      "SCN_17",
+      "SCN_18",
+      "SCN_19",
+      "SCN_21",
+      "SCN_22"
+    ]
+  },
+  "longTermIntent": "用自己的黑客才能在地下世界站稳脚跟，过上自由富足、不被出身所定义的生活。她从贫穷的黑人家庭中挣脱出来，靠聪明和努力重塑了自己，绝不允许任何人将她打回原形。",
+  "attributes": {
+    "STR": 40,
+    "CON": 50,
+    "DEX": 60,
+    "APP": 65,
+    "POW": 55,
+    "SIZ": 50,
+    "INT": 80,
+    "EDU": 70
+  },
+  "status": {
+    "hp": 0,
+    "maxHp": 10,
+    "sanity": 55,
+    "maxSanity": 99,
+    "luck": 65,
+    "mp": 11,
+    "conditions": [
+      "已死亡"
+    ]
+  },
+  "skills": {
+    "Social": 45,
+    "Investigation": 60,
+    "Stealth & Security": 50,
+    "Repair & Engineering": 90
+  },
+  "inventory": [
+    {
+      "name": "智能手机",
+      "properties": {
+        "note": "携带着她试图发给布鲁诺的未完成线索。"
+      }
+    },
+    {
+      "name": "钱包",
+      "properties": {
+        "note": "里面有假身份证件和她用于业务的记录。"
+      }
+    },
+    {
+      "name": "折叠刀",
+      "properties": {
+        "note": "插在她背上的犯罪现场证据。"
+      }
+    },
+    {
+      "name": "昂贵的蓝色外套",
+      "properties": {
+        "note": "她死亡时穿着的外套。"
+      }
+    },
+    {
+      "name": "毯子",
+      "properties": {
+        "note": "她从冷藏室逃出后裹在身上的东西。"
+      }
+    }
+  ],
+  "relationships": [
+    {
+      "targetId": "Bruno Galilei",
+      "targetName": "Bruno Galilei",
+      "relationshipType": "friend",
+      "attitude": 60,
+      "description": "她想帮助他揭开旧谋杀案真相的警探。",
+      "history": "被布鲁诺的执着所打动，她计划在圣诞节期间向他提供关键证据。",
+      "firstPerson": "所有人都任那桩旧命案烂在那儿的时候，布鲁诺还在往下挖，这股固执打动了我。我本打算圣诞节把证据亲手交到他手上。"
+    },
+    {
+      "targetId": "Martin Gin (Cleo)",
+      "targetName": "Martin Gin (Cleo)",
+      "relationshipType": "enemy",
+      "attitude": -80,
+      "description": "她一直在调查的黑客和杀手。",
+      "history": "他们在黑客工作中交叉，她后来目睹了他犯下谋杀。",
+      "firstPerson": "我和马丁在地下的活儿里撞过线；后来我亲眼看着他杀了人。现在他就是我正在立的那个案子。"
+    },
+    {
+      "targetId": "Adolph Carl",
+      "targetName": "Adolph Carl",
+      "relationshipType": "neutral",
+      "attitude": 10,
+      "description": "她在某些交易中使用的中间人。",
+      "history": "在需要谨慎时她通过他来做生意。",
+      "firstPerson": "需要谨慎的时候，我就把阿道夫这个名字垫在我和交易之间。有用，仅此而已。"
+    }
+  ],
+  "memory": [
+    {
+      "type": "information",
+      "content": "我的真名是珍妮·弗洛伦斯，贝福斯·卢奇菲罗是我为了继续工作和隐藏自己而创造的虚构身份。",
+      "metadata": {
+        "knowledgeId": "k_jenny_identity",
+        "difficulty": "automatic"
+      }
+    },
+    {
+      "type": "information",
+      "content": "每当我需要在不直接关联真实姓名的情况下传递信息时，我就用阿道夫·卡尔作为谨慎的中间人。",
+      "metadata": {
+        "knowledgeId": "k_jenny_adolph_middleman",
+        "difficulty": "regular"
+      }
+    },
+    {
+      "type": "information",
+      "content": "我知道2002年帕拉迪尔酒店谋杀案与马丁·金有关，尽管我从未清楚地看到他的脸。",
+      "metadata": {
+        "knowledgeId": "k_jenny_murder_case",
+        "difficulty": "hard"
+      }
+    },
+    {
+      "type": "secret",
+      "content": "我为布鲁诺设置了自动短信，这样即使我无法亲自传递，旧案的真相也能传到他手中。",
+      "metadata": {
+        "knowledgeId": "s_jenny_sms"
+      }
+    },
+    {
+      "type": "secret",
+      "content": "我截获了勒克斯从码头取走的东莨菪碱包裹，这让我比预期的暴露了更多。",
+      "metadata": {
+        "knowledgeId": "s_jenny_borrachero"
+      }
+    },
+    {
+      "type": "secret",
+      "content": "我在驯鹿酒吧被杀，是因为马丁把我误认为窃取了帕特里齐奥秘密的黑客。",
+      "metadata": {
+        "knowledgeId": "s_jenny_death"
+      }
+    },
+    {
+      "type": "belief",
+      "content": "我相信真相值得留下，即使我无法带着它全身而退。",
+      "metadata": {
+        "confidence": 0.95,
+        "reasoningChain": "有些案件比自我保全更重要。"
+      }
+    }
+  ]
+}

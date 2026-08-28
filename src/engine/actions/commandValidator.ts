@@ -168,13 +168,10 @@ function validateRef(
     );
   }
   const ref = entry as Record<string, unknown>;
-  const kind = typeof ref.kind === "string" ? ref.kind : "";
-  if (!KIND_SET.has(kind)) {
-    return reject(
-      "invalid_object_refs",
-      `objectRefs[${index}].kind must be one of ${ACTION_ENTITY_KINDS.join("|")} (got: ${JSON.stringify(ref.kind)})`
-    );
-  }
+  // `kind` is no longer asked for, and is only a tiebreak when one supplied
+  // id somehow names two things. See the resolution block below.
+  const declaredKind =
+    typeof ref.kind === "string" && KIND_SET.has(ref.kind) ? ref.kind : "";
   const id = typeof ref.id === "string" ? ref.id.trim() : "";
   if (id === "") {
     return reject(
@@ -191,46 +188,56 @@ function validateRef(
     }
   }
 
+  // The three id spaces are disjoint, so the id itself says which one it
+  // belongs to and the actor is not asked to declare it. It used to be, and
+  // declaring it was the only thing it could get wrong: shown a door tagged
+  // with the id of the room the door is in, an actor cited that id as an
+  // `item`. The id existed — as a scene — but the check keyed off the
+  // declared kind and answered "not an item in this world", so the actor
+  // read the id itself as bogus, abandoned the door, and re-pointed the same
+  // action at an unrelated statue. That command passed. A wrong label on a
+  // real id is not worth a rejection when the id alone settles the label.
+  //
   // Characters are cited by opaque handle; this is where the handle becomes a
   // real id. Everything downstream — the command, the Engine, the world —
-  // sees only real ids, and the actor never saw one.
-  let resolvedId = id;
-  if (kind === "character") {
-    // An alias is stable per (viewer, target), so it can be resolved whenever
-    // it is cited — including out of the actor's own perception history, ten
-    // minutes after the person walked away. Whether they are still HERE is a
-    // question about the world, and the Engine answers it in the fiction.
-    const real = world.resolveCharacter(id);
-    if (real === undefined) {
-      return reject(
-        "unknown_ref",
-        `objectRefs[${index}] cites character "${id}", which is nobody in this world — cite the tag exactly as it appears in brackets in what you perceive`
-      );
-    }
-    resolvedId = real;
-  } else {
-    // Items and places keep their real ids, which are global and stable, so
-    // there is nothing here to expire. Whether the thing is still WITHIN REACH
-    // is a question about the world, and the world is the Engine's to read —
-    // it can answer "she reaches for the display and finds the gap where the
-    // daisies were", which is an occurrence the actor learns from. Rejecting
-    // instead taught her nothing and cost a retry.
-    //
-    // What is still refused is an id that names nothing at all: an invented or
-    // mistyped reference the Engine could only guess at.
-    const exists = kind === "item" ? world.hasItem(id) : world.hasPlace(id);
-    if (!exists) {
-      return reject(
-        "unknown_ref",
-        `objectRefs[${index}] cites ${kind} "${id}", which is not a ${kind} in this world — cite the id exactly as it appears in brackets in what you perceive`
-      );
-    }
+  // sees only real ids, and the actor never saw one. An alias is stable per
+  // (viewer, target), so it resolves whenever it is cited — including out of
+  // the actor's own perception history, ten minutes after the person walked
+  // away.
+  //
+  // Items and places keep their real ids, which are global and stable, so
+  // there is nothing here to expire. Whether the thing is still WITHIN REACH
+  // is a question about the world, and the world is the Engine's to read —
+  // it can answer "she reaches for the display and finds the gap where the
+  // daisies were", which is an occurrence the actor learns from. Rejecting
+  // instead taught her nothing and cost a retry.
+  //
+  // What is still refused is an id that names nothing at all: an invented or
+  // mistyped reference the Engine could only guess at.
+  const asCharacter = world.resolveCharacter(id);
+  const matches: ActionObjectRef["kind"][] = [];
+  if (asCharacter !== undefined) matches.push("character");
+  if (world.hasItem(id)) matches.push("item");
+  if (world.hasPlace(id)) matches.push("scene");
+
+  if (matches.length === 0) {
+    return reject(
+      "unknown_ref",
+      `objectRefs[${index}] cites "${id}", which is nothing in this world — no character, item or place answers to that id. Cite a tag exactly as it appears in brackets in what you perceive.`
+    );
   }
+  // One id naming two things is not a thing this world does; if it ever
+  // happens, the actor's own reading of what it was pointing at breaks the tie.
+  const resolvedKind =
+    matches.length === 1
+      ? matches[0]
+      : matches.find((k) => k === declaredKind) ?? matches[0];
+  const resolvedId = resolvedKind === "character" ? (asCharacter as string) : id;
 
   return {
     ok: true,
     ref: {
-      kind: kind as ActionObjectRef["kind"],
+      kind: resolvedKind,
       id: resolvedId,
       ...(ref.role !== undefined
         ? { role: ref.role as ActionObjectRef["role"] }

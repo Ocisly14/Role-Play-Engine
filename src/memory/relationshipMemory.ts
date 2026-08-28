@@ -39,6 +39,28 @@ function warmth(attitude: number | undefined, language: string): string | null {
   return t("relationship_warmth_hostile", language);
 }
 
+/** The authored stance as a phrase, or null when it has no translation.
+ *
+ *  `t` falls back locale → en → THE KEY ITSELF, which is the right default for
+ *  a missing UI string and exactly wrong here: whatever comes back is written
+ *  verbatim into a memory the character then reads as their own thought. A
+ *  module carrying a stance outside `RELATIONSHIP_TYPES` put the literal text
+ *  `relationship_stance_partner` into six characters' heads. Warmth still
+ *  carries the attitude, so dropping the clause degrades; printing the key
+ *  does not. */
+function stance(
+  relationshipType: string,
+  language: string
+): string | null {
+  const key = `relationship_stance_${relationshipType}`;
+  const phrase = t(key, language);
+  if (phrase !== key) return phrase;
+  console.warn(
+    `[relationshipMemory] no translation for "${key}" — stance omitted from the seed memory`
+  );
+  return null;
+}
+
 export function buildRelationshipMemory(
   relationship: NPCRelationship,
   language = "en"
@@ -47,7 +69,7 @@ export function buildRelationshipMemory(
 
   const name = relationship.targetName?.trim() || relationship.targetId;
   const stanceParts = [
-    t(`relationship_stance_${relationship.relationshipType}`, language),
+    stance(relationship.relationshipType, language),
     warmth(relationship.attitude, language),
   ].filter((part): part is string => Boolean(part));
   if (stanceParts.length === 0) return null;

@@ -1,0 +1,149 @@
+{
+  "id": "Unknown",
+  "name": "Unknown",
+  "occupation": "旅行者 / 调查者（非官方）",
+  "age": 19,
+  "gender": "female",
+  "appearance": "一位带着旅途疲惫和长期寻找亲人造成的情感压力痕迹的年轻黑人女性。",
+  "personality": "坚定、焦虑、执着。她被家庭忠诚和担忧所驱动，而非出于好奇心本身。",
+  "background": "她并非卡森德拉本地人。她来到这里是为了调查离家出走后失踪的妹妹。证据显示妹妹最后的已知目的地是卡森德拉，此后便彻底消失了踪影。事实上，她的妹妹在前一年已被两名富商献祭给了莎布·尼古拉斯。她入住帕拉迪尔酒店展开调查，最终却被发现死在酒店地下室的冷藏柜中，身上没有任何身份证明。",
+  "residence": "SCN_4",
+  "currentLocation": "SCN_4_SUB_4",
+  "spot": "在后侧金属货架的另一头，靠近嗡嗡作响的冷藏柜",
+  "knownMapSeed": {
+    "sceneIds": [
+      "SCN_16_SUB_1",
+      "SCN_16_SUB_2",
+      "SCN_21_SUB_1",
+      "SCN_21_SUB_2",
+      "SCN_4_SUB_1",
+      "SCN_4_SUB_2",
+      "SCN_4_SUB_3",
+      "SCN_4_SUB_4"
+    ],
+    "junctionIds": [
+      "JUNC_2",
+      "JUNC_3",
+      "JUNC_4",
+      "JUNC_5",
+      "JUNC_7"
+    ],
+    "roadIds": [
+      "ROAD_2",
+      "ROAD_3",
+      "ROAD_6"
+    ],
+    "scenarioOutlineIds": [
+      "SCN_4",
+      "SCN_9",
+      "SCN_10",
+      "SCN_16",
+      "SCN_17",
+      "SCN_21"
+    ]
+  },
+  "longTermIntent": "找到离家出走后失踪的妹妹，把她平安带回家。她不知道妹妹早已在前一年被献祭给了莎布·尼古拉斯，而她自己也将步上同样的命运。",
+  "attributes": {
+    "STR": 45,
+    "CON": 55,
+    "DEX": 50,
+    "APP": 50,
+    "POW": 60,
+    "SIZ": 50,
+    "INT": 65,
+    "EDU": 60
+  },
+  "status": {
+    "hp": 10,
+    "maxHp": 10,
+    "sanity": 60,
+    "maxSanity": 60,
+    "luck": 55,
+    "mp": 12,
+    "conditions": [
+      "已死亡"
+    ]
+  },
+  "skills": {
+    "Social": 40,
+    "Investigation": 50
+  },
+  "inventory": [
+    {
+      "name": "旅行包",
+      "properties": {
+        "note": "个人物品被留下了。"
+      }
+    },
+    {
+      "name": "关于姐妹失踪的笔记",
+      "properties": {
+        "note": "卡森德拉是她姐妹最后已知目的地的证据。"
+      }
+    },
+    {
+      "name": "酒店收据",
+      "properties": {
+        "note": "她在帕拉迪尔酒店住宿的证明。"
+      }
+    }
+  ],
+  "relationships": [
+    {
+      "targetId": "Unknown Sister",
+      "targetName": "Unknown Sister",
+      "relationshipType": "family",
+      "attitude": 80,
+      "description": "她的妹妹，她来卡森德拉的原因。",
+      "history": "她前来寻找妹妹，不知道邪教已经吞没了她的踪迹。",
+      "firstPerson": "我来这个镇子只有一个理由，就是我妹妹；她的踪迹断在这里，我就跟着找了过来，却不知道那踪迹早已被吞掉了。"
+    }
+  ],
+  "memory": [
+    {
+      "type": "information",
+      "content": "我来到卡森德拉是因为我的妹妹在她的踪迹指向这里后消失了。",
+      "metadata": {
+        "knowledgeId": "k_unknown_sister",
+        "difficulty": "automatic"
+      }
+    },
+    {
+      "type": "information",
+      "content": "我不是卡森德拉人，这意味着这里没人认识我的脸，如果我也消失了，也没有当地人会为我报失踪。",
+      "metadata": {
+        "knowledgeId": "k_unknown_outsider",
+        "difficulty": "regular"
+      }
+    },
+    {
+      "type": "secret",
+      "content": "我在酒店的住宿、笔记和几张收据是我来这里寻找姐妹的唯一证据。我保留记录是因为我害怕我的搜寻会随我一起消失。",
+      "metadata": {
+        "knowledgeId": "s_unknown_hotel"
+      }
+    },
+    {
+      "type": "secret",
+      "content": "当我到达时，卡森德拉已经有人想要掩埋我姐妹的踪迹了。我从未找出是谁，只知道这里的每条线索都感觉不对。",
+      "metadata": {
+        "knowledgeId": "s_unknown_sister"
+      }
+    },
+    {
+      "type": "secret",
+      "content": "我变成了帕拉迪尔酒店冷藏柜里那个无名女孩，镇上让这个案子凉得几乎和我的尸体一样快。",
+      "metadata": {
+        "knowledgeId": "s_unknown_death"
+      }
+    },
+    {
+      "type": "belief",
+      "content": "一个失踪的人在每条线索都被穷尽之前不算真正消失了。",
+      "metadata": {
+        "confidence": 0.85,
+        "reasoningChain": "她走了这么远是因为放弃就意味着抛弃她的姐妹。即使现在，那种决心仍然是她故事的核心。"
+      }
+    }
+  ]
+}

@@ -1,0 +1,713 @@
+{
+  "npcId": "Ben Cleo",
+  "memories": [
+    {
+      "type": "plan",
+      "content": "巩固克莱奥家族在卡森德拉的根基，并在解决帕德里奇的威胁后，将家族势力扩展到卡森德拉之外。他只相信自己和手中的枪，对家族血脉中隐藏的诅咒刻意回避，不愿面对。",
+      "gameDay": 1,
+      "gameTime": "00:00",
+      "location": null,
+      "metadata": {
+        "planType": "long_term"
+      }
+    },
+    {
+      "type": "secret",
+      "content": "我知道帕特里齐奥有一个以\"幽灵之手\"为代号的人为他工作，但我从未与那个特工面对面见过，也不知道他真正的身份。",
+      "gameDay": 1,
+      "gameTime": "00:00",
+      "location": null,
+      "metadata": {
+        "knowledgeId": "s_ben_ghost_hand"
+      }
+    },
+    {
+      "type": "information",
+      "content": "家族的生存之道是将生意与对客户动机的追问彻底分开。我期望手下的每个人都能做到自律、沉默和高效。",
+      "gameDay": 1,
+      "gameTime": "00:00",
+      "location": null,
+      "metadata": {
+        "difficulty": "regular",
+        "knowledgeId": "k_ben_rule"
+      }
+    },
+    {
+      "type": "information",
+      "content": "我十七岁时在父亲失踪后接管了家族。从那以后，我通过奖励纪律、在犹豫长出獠牙之前将其扼杀来维持权力。",
+      "gameDay": 1,
+      "gameTime": "00:00",
+      "location": null,
+      "metadata": {
+        "difficulty": "regular",
+        "knowledgeId": "k_ben_inherited_power"
+      }
+    },
+    {
+      "type": "plan",
+      "content": "Today's plan: 1. 巡视月台、检验门锁与监控并确认今晚的巡逻与货物记录无异常。 at 月台; 2. 检查旧街西端站门的备用链条与撤退路线，评估是否需要调整加固方式。 at 旧街西端·火车站前; 3. 打开父亲留下的保险柜，快速浏览笔记与神秘学书籍以寻找与镇内局势相关的线索。 at 月台; 4. 与酒吧管理层和可靠线人面谈，核实昨夜谋杀案的未解细节并打听帕德里齐奥的动向。 at 驯鹿酒吧; 5. 在海伦的餐桌吃一顿简单的午餐并与哈兰或另一名中层商讨白天的巡逻与情报布置。 at 海伦的餐桌; 6. 在帕拉迪尔大酒店外围观察，确认是否有重要人物或可疑人员出入并记录可疑车牌。 at 帕拉迪尔大酒店; 7. 在镇长私宅附近安排侦查与监视，必要时派人收集帕德里齐奥的具体把柄。 at 镇长私宅; 8. 到五金店与哈里森谈话并检查或购置一批加固与监控用的工具与零件。 at 五金店; 9. 检查酒厂的出货记录与人手安排，确保走私线路安全并排查潜在内鬼。 at 酒厂; 10. 回到月台重新调整守夜值班表、下达今晚到明晨的命令，然后小憩休息为夜间巡逻保存体力。 at 月台",
+      "gameDay": 2,
+      "gameTime": "00:00",
+      "location": null,
+      "metadata": {
+        "planType": "daily"
+      }
+    },
+    {
+      "type": "belief",
+      "content": "帕特里齐奥只在他的野心被控制在范围内时才有用。如果他开始把卡森德拉本身置于危险之中，他就变成了一个隐患，而我不会让他毁掉我赖以生存的这个镇子。",
+      "gameDay": 1,
+      "gameTime": "00:00",
+      "location": null,
+      "metadata": {
+        "confidence": 0.86,
+        "reasoningChain": "我帮他爬上去的，但他一直在做暗示他想要的不仅仅是合作关系的举动。我不是圣人，但任何毁掉卡森德拉的人也会毁掉我的生计。"
+      }
+    },
+    {
+      "type": "secret",
+      "content": "我那把镀金沙漠之鹰是稀有的1981年定制版.357口径，我很清楚那看起来多可疑。我也清楚卢奇菲罗被枪杀时我不在案发现场。",
+      "gameDay": 1,
+      "gameTime": "00:00",
+      "location": null,
+      "metadata": {
+        "knowledgeId": "s_ben_gun_and_alibi"
+      }
+    },
+    {
+      "type": "secret",
+      "content": "我父亲的笔记和神秘学书籍锁在一个保险柜里。我并不公开相信那些书中描述的东西，但我没有销毁它们，因为我内心的某个部分怀疑它们解释的事情比我希望被解释的更多。",
+      "gameDay": 1,
+      "gameTime": "00:00",
+      "location": null,
+      "metadata": {
+        "knowledgeId": "s_ben_safe"
+      }
+    },
+    {
+      "type": "information",
+      "content": "我通过SCN_21管理克莱奥家族的运营，把火车站当作我们生意的实际中心。",
+      "gameDay": 1,
+      "gameTime": "00:00",
+      "location": null,
+      "metadata": {
+        "difficulty": "automatic",
+        "knowledgeId": "k_ben_station_front"
+      }
+    },
+    {
+      "type": "secret",
+      "content": "2003年驯鹿酒吧谋杀案发生时，我正在教堂地下室参加一个秘密赌局，我无意主动透露这个事实。",
+      "gameDay": 1,
+      "gameTime": "00:00",
+      "location": null,
+      "metadata": {
+        "knowledgeId": "s_ben_gambling"
+      }
+    },
+    {
+      "type": "plan",
+      "content": "Today's plan: 1. 检查今晚的走私货物与守夜安排，确认站内监控和逃生路线没有破绽。 at 月台; 2. 与Haran在海伦的餐桌共进晚餐并听取来自街区与酒吧的最新情报。 at 海伦的餐桌; 3. 低调巡视驯鹿酒吧，确认常客和库房动向并派人盯梢可疑人物。 at 驯鹿酒吧; 4. 到五金店与哈里森短会取回必须的工具和零件以便修缮与掩护货物。 at 五金店; 5. 在镇长私宅外围布置监视点，指示手下收集关于‘幽灵之手’和帕特里齐奥一切可用情报。 at 镇长私宅; 6. 在帕拉迪尔大酒店周边侦察，确认帕特里齐奥的支持者或可疑会面是否有集结迹象。 at 帕拉迪尔大酒店; 7. 回到火车站检查保险柜与账本，调整账目并安排今晚的最后一轮巡逻与通讯值班。 at 火车站; 8. 在火车站的卧室休息并保持警觉，直到夜深确认镇内局势稳定后入睡。 at 火车站",
+      "gameDay": 1,
+      "gameTime": "19:00",
+      "location": null,
+      "metadata": {
+        "planType": "daily"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我在值班小屋和月台周边逐一核对了守夜排班与巡逻路线，查看了可供观察的点位，确认监视与逃生路线暂时没有明显破绽，也未发现被动过或破坏的痕迹。",
+      "gameDay": 1,
+      "gameTime": "19:15",
+      "location": "SCN_21_SUB_1",
+      "metadata": {
+        "outcome": "检查今晚的走私货物与守夜安排，确认站内监控和逃生路线没有破绽。"
+      }
+    },
+    {
+      "type": "witness",
+      "content": "[目击] 我注意到 Haran Greenwood 在月台逐箱对照今晚的进出货物与我的交易记录，检查了可见的箱子和单据；未发现未登记或明显可疑的箱子，监视与巡逻记录也没有异常。我对这一发现稍感安心——货物和守夜安排暂时没有破绽——但仍然保持警惕，帕特里齐奥和“幽灵之手”的威胁没有消失，今晚的其他计划照常进行。",
+      "gameDay": 1,
+      "gameTime": "19:20",
+      "location": "SCN_21_SUB_1",
+      "metadata": {
+        "impact": 2,
+        "perspective": "witness",
+        "sourceAction": "我在月台逐箱对照了今晚进出货物与我的货物交易记录，检查了可见的箱子和单据；未发现未登记或明显可疑的箱子，监视与巡逻记录也没有异常。",
+        "sourceCharacterId": "Haran Greenwood"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我去了月台的值班小屋，打算请Haran共进晚饭并打听街区与酒吧的最新情报，但他不在现场。小屋窗玻璃蒙着灰尘，外面大雪纷飞，没能进行会面或得到任何情报。",
+      "gameDay": 1,
+      "gameTime": "19:27",
+      "location": "SCN_21_SUB_1",
+      "metadata": {
+        "outcome": "在值班小屋请Haran共进晚餐并询问街区与酒吧的最新情报"
+      }
+    },
+    {
+      "type": "witness",
+      "content": "[目击] 我看到 Haran Greenwood 在车站门口检查并试着打开大门，门能被打开，通往旧街西端的出入口没有被堵住或上锁，暂时可以通行。我对逃生路线畅通感到宽慰，但也有些不安——这同样意味着他人可能轻易进出。我要他盯紧这个出入口，然后按原计划继续检查货物与巡逻。",
+      "gameDay": 1,
+      "gameTime": "19:27",
+      "location": "SCN_21_SUB_1",
+      "metadata": {
+        "impact": 2,
+        "perspective": "witness",
+        "sourceAction": "我检查了火车站大门并试着打开，门能被打开，通往旧街西端的出入口没有被堵住或上锁，暂时可以通行。",
+        "sourceCharacterId": "Haran Greenwood"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我指示哈兰整晚盯守并加固通往旧街西端的站门，发现任何异常要立刻向我汇报。哈兰接受命令并会按安排执行。 [rel:Haran Greenwood +1 → 71]",
+      "gameDay": 1,
+      "gameTime": "19:31",
+      "location": "SCN_21_SUB_1",
+      "metadata": {
+        "outcome": "指示 Haran 盯守并加固通往旧街西端的站门，负责整晚哨位并在发现任何异常时立刻向我报告"
+      }
+    },
+    {
+      "type": "witness",
+      "content": "[目击] 我走到大门前试着把门推开/拉开，门能顺利开启，通向旧街西端的出入口没有被阻隔或封闭。我对逃生路线畅通感到宽慰，但也为这同样意味着他人能轻易进出而感到不安。按原计划让哈兰继续盯守此门，并继续对走私货物与巡逻点逐一检查。",
+      "gameDay": 1,
+      "gameTime": "19:41",
+      "location": "SCN_21_SUB_1",
+      "metadata": {
+        "impact": 2,
+        "perspective": "witness",
+        "sourceAction": "我走到大门前试着把门推开/拉开，门能顺利开启，通向旧街西端的出入口没有被阻隔或封闭。我没有发现其他异常。",
+        "sourceCharacterId": "Haran Greenwood"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我在值班小屋逐箱对照货物清单并检查搁板上的调度记录，所有单据与箱子均与清单相符，未见被篡改的痕迹；哈兰不在，我把情况记下并继续按计划巡查。",
+      "gameDay": 1,
+      "gameTime": "19:42",
+      "location": "SCN_21_SUB_1",
+      "metadata": {
+        "itemId": "ITEM_SCN21_3",
+        "outcome": "检查值班小屋内剩余的箱子与单据，逐项核对货物清单并确认未被篡改",
+        "itemName": "Haran的工作小屋"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我在月台上低声询问哈兰今晚从酒吧和街区听到的情报，并确认他守门期间是否发现可疑人物或异常。哈兰汇报一切正常：货物与单据逐项核对无误，值班小屋与监视点未见被篡改或破坏的迹象，通往旧街西端的站门畅通，未见可疑人物，所以我对此感到放心。 [rel:Haran Greenwood +1 → 72]",
+      "gameDay": 1,
+      "gameTime": "19:50",
+      "location": "SCN_21_SUB_1",
+      "metadata": {
+        "outcome": "在月台与Haran低声交谈，询问他从酒吧和街区听到的最新情报，并确认守门期间是否发现可疑人物或异常活动"
+      }
+    },
+    {
+      "type": "event",
+      "content": "让哈兰下班后到海伦的餐桌与我会面，带来今晚在街区与驯鹿酒吧听到的任何细节情报 [在 SCN_21_SUB_1 因重新规划而中断] 已中断",
+      "gameDay": 1,
+      "gameTime": "19:51",
+      "location": "SCN_21_SUB_1",
+      "metadata": {
+        "outcome": "让哈兰下班后到海伦的餐桌与我会面，带来今晚在街区与驯鹿酒吧听到的任何细节情报 [在 SCN_21_SUB_1 因重新规划而中断] 已中断",
+        "interruptionReason": "revise_replan"
+      }
+    },
+    {
+      "type": "witness",
+      "content": "[目击] 我看到哈兰在旧街西端的大门处用备用链条加固门栓，逐一检查所有锁点，确认这扇门已被我方暂时封锁、短期内无法通行。我对他这么做有些宽慰（更难被他人轻易进出），但也很警觉——这同样堵住了逃生和巡逻的通道。我打算立刻去现场亲自查看并问明缘由，重新评估逃生路线并调整守夜部署。",
+      "gameDay": 1,
+      "gameTime": "19:51",
+      "location": "SCN_21_SUB_1",
+      "metadata": {
+        "impact": 2,
+        "perspective": "witness",
+        "sourceAction": "我把通往旧街西端的大门在门栓处套上备用链条并加固，逐一检查了所有锁点，确认都牢固。现在这扇门已被我暂时封锁，短期内无法通行。",
+        "sourceCharacterId": "Haran Greenwood"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我问了哈兰为什么把旧街西端的站门加固。哈兰向我汇报今晚货物与单据已逐项核对无误，但有几批较为敏感的货物，所以他用备用链条和门栓把出口封锁以防擅自出入，并未发现可疑人物；我因此放心，决定信任他的处置。 [rel:Haran Greenwood +1 → 73]",
+      "gameDay": 1,
+      "gameTime": "19:55",
+      "location": "SCN_21_SUB_1",
+      "metadata": {
+        "outcome": "询问哈兰加固旧街西端大门的原因"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我检查并试探了哈兰在大门上加的备用链条与门栓，确认它们相当牢固，短时间内难以从外侧强行打开。我判断这会封锁通往旧街西端（JUNC_7）的出路，需要据此调整巡逻部署和撤离路线。",
+      "gameDay": 1,
+      "gameTime": "19:59",
+      "location": "SCN_21_SUB_1",
+      "metadata": {
+        "outcome": "检查旧街西端大门上哈兰加固的备用链条与门栓，试探其牢固度并评估封门对逃生路线与巡逻部署的影响"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我让哈兰来到值班小屋，要求他当面说明为何加固旧街西端的大门并展示备用链条、门栓与备用钥匙或工具。他当场在墙钩与搁板处取出并演示了备用链条、门栓、手电与无线电，门已锁好且短时间内无法从外侧打开。我检查确认了这些措施并接受了他的解释。 [rel:Haran Greenwood +1 → 74]",
+      "gameDay": 1,
+      "gameTime": "20:06",
+      "location": "SCN_21_SUB_1",
+      "metadata": {
+        "outcome": "叫哈兰到值班小屋来当面说明他加固旧街西端大门的具体原因，并让他当面展示备用链条、门栓的位置与备用钥匙或工具"
+      }
+    },
+    {
+      "type": "witness",
+      "content": "[目击] 我沿着月台仔细巡视了雪地踏印、货物放置痕迹和值班小屋侧面的隐蔽入口。雪与风吹拂下未发现新鲜脚印或被移动的货物，隐蔽入口也没有近期被使用的迹象。我对此略感宽慰，但仍保持警惕——原先准备立刻去核查被加固的旧街西端大门并评估其对逃生路线与守夜部署的影响的计划不变。",
+      "gameDay": 1,
+      "gameTime": "20:07",
+      "location": "SCN_21_SUB_1",
+      "metadata": {
+        "impact": 2,
+        "perspective": "witness",
+        "sourceAction": "我沿着月台仔细巡视了雪地踏印、货物放置痕迹和值班小屋侧面的隐蔽入口。雪与风吹拂下未发现新鲜脚印或被移动的货物，隐蔽入口也没有近期被使用的迹象。",
+        "sourceCharacterId": "Haran Greenwood"
+      }
+    },
+    {
+      "type": "information",
+      "content": "哈兰当场展示并取出备用链条、门栓、手电与无线电，说明他对守夜器材和应急工具掌握良好并会按命令执行。",
+      "gameDay": 1,
+      "gameTime": "23:59",
+      "location": null,
+      "metadata": {
+        "revealed": false,
+        "difficulty": "regular",
+        "knowledgeId": "learned_day1_5"
+      }
+    },
+    {
+      "type": "information",
+      "content": "值班小屋侧的隐蔽入口没有近期被使用的迹象，雪地上也未见新鲜脚印或可疑来往路线。",
+      "gameDay": 1,
+      "gameTime": "23:59",
+      "location": null,
+      "metadata": {
+        "revealed": false,
+        "difficulty": "regular",
+        "knowledgeId": "learned_day1_3"
+      }
+    },
+    {
+      "type": "secret",
+      "content": "我原计划让哈兰下班后到海伦的餐桌与我会面并带回街区与驯鹿酒吧的情报，但这一安排在重新规划中被中断，情报交流未发生。",
+      "gameDay": 1,
+      "gameTime": "23:59",
+      "location": null,
+      "metadata": {
+        "revealed": false,
+        "difficulty": "hard",
+        "knowledgeId": "learned_day1_4"
+      }
+    },
+    {
+      "type": "information",
+      "content": "我核对的今晚货物和单据逐箱一致，未发现未登记或被篡改的箱子，监视与巡逻记录也没有异常。",
+      "gameDay": 1,
+      "gameTime": "23:59",
+      "location": null,
+      "metadata": {
+        "revealed": false,
+        "difficulty": "regular",
+        "knowledgeId": "learned_day1_1"
+      }
+    },
+    {
+      "type": "information",
+      "content": "旧街西端的站门最初可以打开，但哈兰用备用链条和门栓将其加固并暂时封锁，短时间内难以从外侧强行打开。",
+      "gameDay": 1,
+      "gameTime": "23:59",
+      "location": null,
+      "metadata": {
+        "revealed": false,
+        "difficulty": "hard",
+        "knowledgeId": "learned_day1_2"
+      }
+    }
+  ],
+  "plans": [
+    {
+      "npcName": "Ben Cleo",
+      "gameDay": 2,
+      "schedule": [
+        {
+          "activity": "巡视月台、检验门锁与监控并确认今晚的巡逻与货物记录无异常。",
+          "location": "月台"
+        },
+        {
+          "activity": "检查旧街西端站门的备用链条与撤退路线，评估是否需要调整加固方式。",
+          "location": "旧街西端·火车站前"
+        },
+        {
+          "activity": "打开父亲留下的保险柜，快速浏览笔记与神秘学书籍以寻找与镇内局势相关的线索。",
+          "location": "月台"
+        },
+        {
+          "activity": "与酒吧管理层和可靠线人面谈，核实昨夜谋杀案的未解细节并打听帕德里齐奥的动向。",
+          "location": "驯鹿酒吧"
+        },
+        {
+          "activity": "在海伦的餐桌吃一顿简单的午餐并与哈兰或另一名中层商讨白天的巡逻与情报布置。",
+          "location": "海伦的餐桌"
+        },
+        {
+          "activity": "在帕拉迪尔大酒店外围观察，确认是否有重要人物或可疑人员出入并记录可疑车牌。",
+          "location": "帕拉迪尔大酒店"
+        },
+        {
+          "activity": "在镇长私宅附近安排侦查与监视，必要时派人收集帕德里齐奥的具体把柄。",
+          "location": "镇长私宅"
+        },
+        {
+          "activity": "到五金店与哈里森谈话并检查或购置一批加固与监控用的工具与零件。",
+          "location": "五金店"
+        },
+        {
+          "activity": "检查酒厂的出货记录与人手安排，确保走私线路安全并排查潜在内鬼。",
+          "location": "酒厂"
+        },
+        {
+          "activity": "回到月台重新调整守夜值班表、下达今晚到明晨的命令，然后小憩休息为夜间巡逻保存体力。",
+          "location": "月台"
+        }
+      ],
+      "nodes": [
+        {
+          "type": "character_interaction",
+          "action": "指示哈兰重新调整守夜部署，封门后设立替代撤退路线、重新分配观察点并更换无线电频道以保持联系",
+          "impact": 1,
+          "nodeId": "ci1",
+          "status": "in_progress",
+          "endTime": "00:05",
+          "startTime": "00:00",
+          "characterId": "Ben Cleo",
+          "characterName": "Ben Cleo",
+          "executionMeta": {
+            "startedAt": "00:00",
+            "remainingMinutes": 5
+          },
+          "targetCharacterIds": [
+            "Haran Greenwood"
+          ]
+        }
+      ]
+    },
+    {
+      "npcName": "Ben Cleo",
+      "gameDay": 1,
+      "schedule": [
+        {
+          "activity": "检查今晚的走私货物与守夜安排，确认站内监控和逃生路线没有破绽。",
+          "location": "月台"
+        },
+        {
+          "activity": "与Haran在海伦的餐桌共进晚餐并听取来自街区与酒吧的最新情报。",
+          "location": "海伦的餐桌"
+        },
+        {
+          "activity": "低调巡视驯鹿酒吧，确认常客和库房动向并派人盯梢可疑人物。",
+          "location": "驯鹿酒吧"
+        },
+        {
+          "activity": "到五金店与哈里森短会取回必须的工具和零件以便修缮与掩护货物。",
+          "location": "五金店"
+        },
+        {
+          "activity": "在镇长私宅外围布置监视点，指示手下收集关于‘幽灵之手’和帕特里齐奥一切可用情报。",
+          "location": "镇长私宅"
+        },
+        {
+          "activity": "在帕拉迪尔大酒店周边侦察，确认帕特里齐奥的支持者或可疑会面是否有集结迹象。",
+          "location": "帕拉迪尔大酒店"
+        },
+        {
+          "activity": "回到火车站检查保险柜与账本，调整账目并安排今晚的最后一轮巡逻与通讯值班。",
+          "location": "火车站"
+        },
+        {
+          "activity": "在火车站的卧室休息并保持警觉，直到夜深确认镇内局势稳定后入睡。",
+          "location": "火车站"
+        }
+      ],
+      "nodes": [
+        {
+          "type": "scene_interaction",
+          "action": "检查今晚的走私货物与守夜安排，确认站内监控和逃生路线没有破绽。",
+          "impact": 2,
+          "nodeId": "si_ben_01",
+          "status": "completed",
+          "endTime": "19:15",
+          "outcome": "我在值班小屋和月台周边逐一核对了守夜排班与巡逻路线，查看了可供观察的点位，确认监视与逃生路线暂时没有明显破绽，也未发现被动过或破坏的痕迹。",
+          "startTime": "19:00",
+          "characterId": "Ben Cleo",
+          "characterName": "Ben Cleo",
+          "executionMeta": {
+            "startedAt": "19:00",
+            "completedAt": "19:15",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "movement",
+          "action": "走到旧街西端·火车站前检查大门",
+          "impact": 0,
+          "nodeId": "m1",
+          "status": "failed",
+          "endTime": "20:10",
+          "outcome": "走到旧街西端·火车站前检查大门 [拓扑中无可用路径] 失败",
+          "startTime": "20:07",
+          "characterId": "Ben Cleo",
+          "destination": "JUNC_7",
+          "characterName": "Ben Cleo",
+          "executionMeta": {
+            "failedAt": "20:07",
+            "startedAt": "20:07",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "character_interaction",
+          "action": "在月台与Haran低声交谈，询问他从酒吧和街区听到的最新情报，并确认守门期间是否发现可疑人物或异常活动",
+          "impact": 1,
+          "nodeId": "ci1",
+          "status": "completed",
+          "endTime": "19:50",
+          "outcome": "我在月台上低声询问哈兰今晚从酒吧和街区听到的情报，并确认他守门期间是否发现可疑人物或异常。哈兰汇报一切正常：货物与单据逐项核对无误，值班小屋与监视点未见被篡改或破坏的迹象，通往旧街西端的站门畅通，未见可疑人物，所以我对此感到放心。",
+          "startTime": "19:44",
+          "characterId": "Ben Cleo",
+          "characterName": "Ben Cleo",
+          "executionMeta": {
+            "startedAt": "19:44",
+            "completedAt": "19:50",
+            "remainingMinutes": 0
+          },
+          "targetCharacterIds": [
+            "Haran Greenwood"
+          ]
+        },
+        {
+          "type": "character_interaction",
+          "action": "在月台与Haran低声交谈，询问他从酒吧和街区听到的最新情报，并确认守门期间是否发现可疑人物或异常活动",
+          "impact": 1,
+          "nodeId": "ci1",
+          "status": "completed",
+          "endTime": "19:50",
+          "outcome": "我在月台上低声询问哈兰今晚从酒吧和街区听到的情报，并确认他守门期间是否发现可疑人物或异常。哈兰汇报一切正常：货物与单据逐项核对无误，值班小屋与监视点未见被篡改或破坏的迹象，通往旧街西端的站门畅通，未见可疑人物，所以我对此感到放心。",
+          "startTime": "19:44",
+          "characterId": "Ben Cleo",
+          "characterName": "Ben Cleo",
+          "executionMeta": {
+            "startedAt": "19:44",
+            "completedAt": "19:50",
+            "remainingMinutes": 0
+          },
+          "targetCharacterIds": [
+            "Haran Greenwood"
+          ]
+        },
+        {
+          "type": "object_interaction",
+          "action": "检查值班小屋内剩余的箱子与单据，逐项核对货物清单并确认未被篡改",
+          "impact": 0,
+          "nodeId": "oi_ben_1932",
+          "status": "completed",
+          "endTime": "19:42",
+          "outcome": "我在值班小屋逐箱对照货物清单并检查搁板上的调度记录，所有单据与箱子均与清单相符，未见被篡改的痕迹；哈兰不在，我把情况记下并继续按计划巡查。",
+          "startTime": "19:32",
+          "characterId": "Ben Cleo",
+          "characterName": "Ben Cleo",
+          "executionMeta": {
+            "startedAt": "19:32",
+            "completedAt": "19:42",
+            "remainingMinutes": 0
+          },
+          "objectInteractionPayload": {
+            "itemId": "ITEM_SCN21_3"
+          }
+        },
+        {
+          "type": "movement",
+          "action": "步行前往海伦的餐桌与Haran共进晚餐并打听街区与酒吧的最新情报",
+          "impact": 0,
+          "nodeId": "m_ben_001",
+          "status": "failed",
+          "endTime": "19:53",
+          "outcome": "步行前往海伦的餐桌与Haran共进晚餐并打听街区与酒吧的最新情报 [拓扑中无可用路径] 失败",
+          "startTime": "19:43",
+          "characterId": "Ben Cleo",
+          "destination": "SCN_10_SUB_1",
+          "characterName": "Ben Cleo",
+          "executionMeta": {
+            "failedAt": "19:43",
+            "startedAt": "19:43",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "character_interaction",
+          "action": "在月台与Haran低声交谈，询问他从酒吧和街区听到的最新情报，并确认守门期间是否发现可疑人物或异常活动",
+          "impact": 1,
+          "nodeId": "ci1",
+          "status": "completed",
+          "endTime": "19:50",
+          "outcome": "我在月台上低声询问哈兰今晚从酒吧和街区听到的情报，并确认他守门期间是否发现可疑人物或异常。哈兰汇报一切正常：货物与单据逐项核对无误，值班小屋与监视点未见被篡改或破坏的迹象，通往旧街西端的站门畅通，未见可疑人物，所以我对此感到放心。",
+          "startTime": "19:44",
+          "characterId": "Ben Cleo",
+          "characterName": "Ben Cleo",
+          "executionMeta": {
+            "startedAt": "19:44",
+            "completedAt": "19:50",
+            "remainingMinutes": 0
+          },
+          "targetCharacterIds": [
+            "Haran Greenwood"
+          ]
+        },
+        {
+          "type": "character_interaction",
+          "action": "让哈兰下班后到海伦的餐桌与我会面，带来今晚在街区与驯鹿酒吧听到的任何细节情报",
+          "impact": 1,
+          "nodeId": "ci2",
+          "status": "interrupted",
+          "endTime": "19:55",
+          "outcome": "让哈兰下班后到海伦的餐桌与我会面，带来今晚在街区与驯鹿酒吧听到的任何细节情报 [因重新规划而中断] 已中断",
+          "startTime": "19:51",
+          "characterId": "Ben Cleo",
+          "characterName": "Ben Cleo",
+          "executionMeta": {
+            "startedAt": "19:51",
+            "interruptedAt": "19:51",
+            "remainingMinutes": 0,
+            "interruptionReason": "revise_replan"
+          },
+          "targetCharacterIds": [
+            "npc_haran_greenwood"
+          ]
+        },
+        {
+          "type": "character_interaction",
+          "action": "指示哈兰调整今晚的守夜部署：封锁旧街西端门后重新规划撤离路线，重新分配观察点与巡逻时段，确认两条备用逃生路线并设定备用无线电频率与联络呼号，要求他马上将变更通报给所有值班员并回报确认情况",
+          "impact": 1,
+          "nodeId": "ci_ben_001",
+          "status": "in_progress",
+          "endTime": "20:13",
+          "startTime": "20:08",
+          "characterId": "Ben Cleo",
+          "characterName": "Ben Cleo",
+          "executionMeta": {
+            "startedAt": "20:08",
+            "remainingMinutes": 5
+          },
+          "targetCharacterIds": [
+            "Haran Greenwood"
+          ]
+        },
+        {
+          "type": "scene_interaction",
+          "action": "检查旧街西端大门上哈兰加固的备用链条与门栓，试探其牢固度并评估封门对逃生路线与巡逻部署的影响",
+          "impact": 2,
+          "nodeId": "si1",
+          "status": "completed",
+          "endTime": "19:59",
+          "outcome": "我检查并试探了哈兰在大门上加的备用链条与门栓，确认它们相当牢固，短时间内难以从外侧强行打开。我判断这会封锁通往旧街西端（JUNC_7）的出路，需要据此调整巡逻部署和撤离路线。",
+          "startTime": "19:56",
+          "characterId": "Ben Cleo",
+          "characterName": "Ben Cleo",
+          "executionMeta": {
+            "startedAt": "19:56",
+            "completedAt": "19:59",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "movement",
+          "action": "走到旧街西端·火车站前检查大门",
+          "impact": 0,
+          "nodeId": "m1",
+          "status": "failed",
+          "endTime": "20:10",
+          "outcome": "走到旧街西端·火车站前检查大门 [拓扑中无可用路径] 失败",
+          "startTime": "20:07",
+          "characterId": "Ben Cleo",
+          "destination": "JUNC_7",
+          "characterName": "Ben Cleo",
+          "executionMeta": {
+            "failedAt": "20:07",
+            "startedAt": "20:07",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "character_interaction",
+          "action": "指示哈兰调整今晚的守夜部署：封锁旧街西端门后重新规划撤离路线，重新分配观察点与巡逻时段，确认两条备用逃生路线并设定备用无线电频率与联络呼号，要求他马上将变更通报给所有值班员并回报确认情况",
+          "impact": 1,
+          "nodeId": "ci_ben_001",
+          "status": "in_progress",
+          "endTime": "20:13",
+          "startTime": "20:08",
+          "characterId": "Ben Cleo",
+          "characterName": "Ben Cleo",
+          "executionMeta": {
+            "startedAt": "20:08",
+            "remainingMinutes": 5
+          },
+          "targetCharacterIds": [
+            "Haran Greenwood"
+          ]
+        },
+        {
+          "type": "movement",
+          "action": "走到旧街西端·火车站前检查大门",
+          "impact": 0,
+          "nodeId": "m1",
+          "status": "failed",
+          "endTime": "20:10",
+          "outcome": "走到旧街西端·火车站前检查大门 [拓扑中无可用路径] 失败",
+          "startTime": "20:07",
+          "characterId": "Ben Cleo",
+          "destination": "JUNC_7",
+          "characterName": "Ben Cleo",
+          "executionMeta": {
+            "failedAt": "20:07",
+            "startedAt": "20:07",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "character_interaction",
+          "action": "指示哈兰调整今晚的守夜部署：封锁旧街西端门后重新规划撤离路线，重新分配观察点与巡逻时段，确认两条备用逃生路线并设定备用无线电频率与联络呼号，要求他马上将变更通报给所有值班员并回报确认情况",
+          "impact": 1,
+          "nodeId": "ci_ben_001",
+          "status": "in_progress",
+          "endTime": "20:13",
+          "startTime": "20:08",
+          "characterId": "Ben Cleo",
+          "characterName": "Ben Cleo",
+          "executionMeta": {
+            "startedAt": "20:08",
+            "remainingMinutes": 5
+          },
+          "targetCharacterIds": [
+            "Haran Greenwood"
+          ]
+        }
+      ]
+    }
+  ],
+  "intents": [
+    {
+      "intent": "打开父亲留下的保险柜，快速浏览笔记与神秘学书籍以寻找与镇内局势相关的线索",
+      "updatedAt": "2026-04-02T08:05:25.575Z"
+    }
+  ],
+  "npcName": "Ben Cleo"
+}

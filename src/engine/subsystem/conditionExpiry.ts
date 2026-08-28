@@ -84,8 +84,6 @@ export const sceneConditionExpirySubsystem: AnchorSubsystem = {
   },
 
   onTick(anchorId: string, ctx: FeatureReadContext): StateChange[] {
-    // Read runtime conditions via getSceneConditions — NOT scene.conditions
-    // (static), because runtime conditions live in dgsm.scenarioConditions.
     const conditions = ctx.getSceneConditions(anchorId);
     if (conditions.length === 0) return [];
     const now = ctx.gameDateTime;

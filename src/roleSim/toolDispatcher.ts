@@ -209,7 +209,10 @@ async function dispatchReviseMemory(
   input: WriteMemoryInput,
   deps: DispatcherDeps
 ): Promise<DispatchResult> {
-  const ref = input.ref?.trim();
+  // Rendered as `#M3f9a2c`; the handle itself is the part after the '#'.
+  // Accept either, rather than spend a round trip rejecting the form the
+  // character was shown.
+  const ref = input.ref?.trim().replace(/^#/, "");
   if (!ref) {
     return {
       result: `Error: op="${op}" requires 'ref' — the tag at the start of that line in what you remember, e.g. M3f9a2c.`,

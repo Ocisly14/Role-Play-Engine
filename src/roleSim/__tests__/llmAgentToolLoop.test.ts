@@ -59,6 +59,7 @@ function makeAgent() {
         npcCharacters: [],
       }),
       getNpcProfile: () => undefined,
+      getCharacterSpot: () => null,
       getScene: () => undefined,
       getTopology: () => ({ junctions: new Map(), roads: new Map() }),
       getGameDateTime: () => "1923-04-02T09:15:00",
@@ -130,8 +131,16 @@ describe("agent tool loop", () => {
   it("answers every call on a turn that failed to terminate", async () => {
     queueTurns(
       turn([
-        { id: "t1", name: "writeMemory", args: { type: "general", content: "a" } },
-        { id: "t2", name: "writeMemory", args: { type: "general", content: "b" } },
+        {
+          id: "t1",
+          name: "writeMemory",
+          args: { type: "general", content: "a" },
+        },
+        {
+          id: "t2",
+          name: "writeMemory",
+          args: { type: "general", content: "b" },
+        },
       ]),
       turn([{ id: "t3", name: "continue" }])
     );
@@ -171,7 +180,10 @@ describe("agent tool loop", () => {
 
     const decision = await makeAgent().decideNext(ctx);
 
-    expect(decision).toMatchObject({ tool: "act", description: "I press him further." });
+    expect(decision).toMatchObject({
+      tool: "act",
+      description: "I press him further.",
+    });
     // The write executed...
     expect(dispatchInstantTool).toHaveBeenCalledTimes(1);
     expect(dispatchInstantTool.mock.calls[0][0]).toBe("writeMemory");

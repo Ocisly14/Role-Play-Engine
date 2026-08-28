@@ -1,0 +1,225 @@
+{
+  "id": "Bruno Galilei",
+  "name": "Bruno Galilei",
+  "occupation": "警探（前私家侦探）",
+  "age": 33,
+  "gender": "male",
+  "appearance": "一个高大、体格健壮的男人，有着俄罗斯血统。银灰色头发，极浅的眼睛，粗犷直率的举止反映了他的体力和正直本性。",
+  "personality": "真诚、正直、有耐心，被强烈的正义感驱动。可靠且值得信赖，平静的表面下隐藏着坚定的内在决心和自我牺牲的意愿。",
+  "background": "布鲁诺曾与朋友们经营一家私人侦探事务所，但由于他拒绝不道德或违法的委托，甚至将腐败客户交给当局，事务所倒闭了。事务所解散后，他继续担任警探。一年多来，他锲而不舍地调查一桩被上级忽视的悬案，不知不觉间引起了卡森德拉危险势力的注意。",
+  "residence": "SCN_3",
+  "currentLocation": "SCN_3",
+  "spot": "在靠里侧墙的那张办公桌前，卷宗摊开着",
+  "knownMapSeed": {
+    "sceneIds": [
+      "SCN_14_SUB_1",
+      "SCN_14_SUB_2",
+      "SCN_16_SUB_1",
+      "SCN_16_SUB_2",
+      "SCN_1_SUB_1",
+      "SCN_1_SUB_5",
+      "SCN_21_SUB_1",
+      "SCN_21_SUB_2",
+      "SCN_3_SUB_1",
+      "SCN_3_SUB_2",
+      "SCN_3_SUB_3",
+      "SCN_4_SUB_1",
+      "SCN_4_SUB_2"
+    ],
+    "junctionIds": [
+      "JUNC_1",
+      "JUNC_2",
+      "JUNC_3",
+      "JUNC_4",
+      "JUNC_5",
+      "JUNC_6",
+      "JUNC_7",
+      "JUNC_8",
+      "JUNC_9",
+      "JUNC_10",
+      "JUNC_11"
+    ],
+    "roadIds": [
+      "ROAD_1",
+      "ROAD_2",
+      "ROAD_3",
+      "ROAD_4",
+      "ROAD_5a",
+      "ROAD_5b",
+      "ROAD_6",
+      "ROAD_7",
+      "ROAD_8",
+      "ROAD_9",
+      "ROAD_10"
+    ],
+    "scenarioOutlineIds": [
+      "SCN_1",
+      "SCN_2",
+      "SCN_3",
+      "SCN_4",
+      "SCN_5",
+      "SCN_6",
+      "SCN_8",
+      "SCN_9",
+      "SCN_10",
+      "SCN_11",
+      "SCN_12",
+      "SCN_13",
+      "SCN_14",
+      "SCN_15",
+      "SCN_16",
+      "SCN_17",
+      "SCN_18",
+      "SCN_19",
+      "SCN_20",
+      "SCN_21",
+      "SCN_22"
+    ]
+  },
+  "longTermIntent": "揭开新旧谋杀案背后的真相，保护卡森德拉，迫使隐藏在这些罪行背后的人浮出水面，即使要付出一切代价。",
+  "attributes": {
+    "STR": 75,
+    "CON": 70,
+    "DEX": 55,
+    "APP": 50,
+    "POW": 60,
+    "SIZ": 70,
+    "INT": 65,
+    "EDU": 60
+  },
+  "status": {
+    "hp": 14,
+    "maxHp": 14,
+    "sanity": 60,
+    "maxSanity": 99,
+    "luck": 65,
+    "mp": 12,
+    "conditions": []
+  },
+  "skills": {
+    "Social": 55,
+    "Knowledge & Craft": 60,
+    "Investigation": 65,
+    "Land Vehicle Operation": 55,
+    "Melee Combat": 65,
+    "Ranged Combat": 60
+  },
+  "inventory": [
+    {
+      "name": "案件证据包",
+      "properties": {
+        "note": "他保存在一起的实物证据，需要时出示给相关人员。"
+      }
+    },
+    {
+      "name": "受害者手机",
+      "properties": {
+        "note": "2003年驯鹿酒吧案中卢奇菲罗的手机，包含几条关键信息片段。"
+      }
+    },
+    {
+      "name": "折叠案件笔记",
+      "properties": {
+        "note": "两起谋杀案的工作笔记和他自己的后续问题。"
+      }
+    },
+    {
+      "name": "档案柜与法医室钥匙",
+      "properties": {
+        "note": "布鲁诺长期保管的一串调查用钥匙，能打开警局大厅文件柜，并进入法医工作室处理需要亲自核对的旧案材料和工具柜。"
+      }
+    }
+  ],
+  "relationships": [
+    {
+      "targetId": "Shandra Hernandez",
+      "targetName": "Shandra Hernandez",
+      "relationshipType": "friend",
+      "attitude": 70,
+      "description": "一位亲密的知己和情感寄托。",
+      "history": "布鲁诺经常在空闲时间去她的店里，足够信任她来倾诉自己的烦恼。",
+      "firstPerson": "我那点空闲时间都耗在珊德拉的店里。她是唯一一个我肯把心事说出口的人，对我来说，这已经是最接近休息的东西了。"
+    },
+    {
+      "targetId": "Lux Lynch",
+      "targetName": "Lux Lynch",
+      "relationshipType": "ally",
+      "attitude": 60,
+      "description": "警队中一位值得信赖的同事。",
+      "history": "勒克斯尊重布鲁诺，并暗中保护他的调查资料。",
+      "firstPerson": "在局里，勒克斯是我能指望的那一个。我从没开口求过他，他却一直替我把案卷收得好好的。"
+    },
+    {
+      "targetId": "Patrizio von Samsa",
+      "targetName": "Patrizio von Samsa",
+      "relationshipType": "enemy",
+      "attitude": -60,
+      "description": "一个布鲁诺认为在阻挠正义的权势人物。",
+      "history": "布鲁诺怀疑帕特里齐奥的影响力已经渗透到了他一直在调查的案件中。",
+      "firstPerson": "这些案子的每一条线，走到帕特里齐奥跟前就拐弯了，我不信这是巧合。他就横在我和真相中间。"
+    }
+  ],
+  "memory": [
+    {
+      "type": "information",
+      "content": "我把2002年帕拉迪尔酒店冷冻室的死亡案和2003年驯鹿酒吧的谋杀案视为同一人所为。两名黑人女性受害者、冷冻手法和官方的漠不关心，不可能仅仅是巧合。",
+      "metadata": {
+        "knowledgeId": "k_bruno_cases",
+        "difficulty": "automatic"
+      }
+    },
+    {
+      "type": "information",
+      "content": "当工作让我喘不过气时，我会去珊德拉的店里。我信任她的判断和谨慎，即使我几乎不了解她在那个房间之外到底是什么人。",
+      "metadata": {
+        "knowledgeId": "k_bruno_shandra",
+        "difficulty": "regular"
+      }
+    },
+    {
+      "type": "information",
+      "content": "我把受害者的手机、证人笔录和旧冷冻柜案的材料放在身边，因为这个镇上有太多人宁愿这些谋杀案永远悬而未决。",
+      "metadata": {
+        "knowledgeId": "k_bruno_case_materials",
+        "difficulty": "regular"
+      }
+    },
+    {
+      "type": "information",
+      "content": "我在警局过夜的次数太多了，那里比任何公寓都更像家。如果我出了什么事，我的大部分工作资料仍然会在那里。",
+      "metadata": {
+        "knowledgeId": "k_bruno_station_habit",
+        "difficulty": "automatic"
+      }
+    },
+    {
+      "type": "secret",
+      "content": "一条匿名短信警告我不要信任我的上级，特别是帕特里齐奥，还说康斯坦丁·弗罗洛没有资格侍奉上帝。",
+      "metadata": {
+        "knowledgeId": "s_bruno_warning"
+      }
+    },
+    {
+      "type": "secret",
+      "content": "我仍然不知道是谁发出了那个警告，但发送者知道我的旧案、来自上面的压力，以及我已经开始害怕的那些人。",
+      "metadata": {
+        "knowledgeId": "s_bruno_sms"
+      }
+    },
+    {
+      "type": "secret",
+      "content": "我从卡森德拉以外找来了老朋友们，因为我不再足够信任当地的支持来独自完成这件事。如果我消失了，我需要有正直的人继续挖掘。",
+      "metadata": {
+        "knowledgeId": "s_bruno_outside_help"
+      }
+    },
+    {
+      "type": "belief",
+      "content": "真相比我的舒适或职业生涯更重要，必须有人不断推进，直到卡森德拉的谎言被彻底揭开。",
+      "metadata": {
+        "confidence": 0.95,
+        "reasoningChain": "这个镇子已经埋葬了太多尸体和太多借口。"
+      }
+    }
+  ]
+}

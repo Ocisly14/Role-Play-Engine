@@ -1,10 +1,12 @@
 // src/roleSim/renderer/llmRenderer.ts
 //
 // Phase G renderer LLM call. Turns a PerceivedBundle into a first-person
-// sensory narrative per §G-decisions G2/G4/G5/G7/G8. Uses
-// ModelClass.SMALL (Haiku-tier per G6). One LLM round-trip; retry budget is
-// owned by `generateText`'s `maxRetries` (set to 2 = initial + 1 retry per
-// G11). On failure the wrapper in index.ts returns null (D6 — no god-eye fallback).
+// sensory narrative per §G-decisions G2/G4/G5/G7/G8.
+//
+// ModelClass.MEDIUM: one round-trip, plus one corrective pass when the
+// paragraph comes back carrying a tag the actor could not cite. Transport
+// retries are `generateText`'s `maxRetries` (2 = initial + 1, per G11). On
+// failure the wrapper in index.ts returns null (D6 — no god-eye fallback).
 
 import type { Occurrence } from "../../engine/actions/types.js";
 import { ModelClass, generateText } from "../../models/index.js";
@@ -45,6 +47,10 @@ they cannot touch, address or walk toward this minute.
 
 - Copy a tag EXACTLY as given. Never invent one, never guess at an id you
   were not given, never reuse a tag for a different thing.
+- A tag belongs to the ONE entity it was issued for, and to nothing else. A
+  door, a shelf, a window, a stairway — a part or fixture of the room is not
+  the room, so it never wears the room's tag. Nor does a lamp wear the tag of
+  the street it stands on, or a wheel the tag of the cart.
 - An entity with no tag in your input is written with no tag.
 - A tag is not a name and never replaces the prose: write
   "the tall pale man [stranger_a]", never "stranger_a walks in".
@@ -83,6 +89,12 @@ they cannot touch, address or walk toward this minute.
   erased. Their "Currently:" line, if any, gives you the action you should
   render as perceived behavior (rewrite as third-person sensory, e.g.
   "examines a book" → "Hollins turns the pages of a book at the desk").
+- A \`Where you are in this place\` / \`Where they are in this place\` line is a
+  position INSIDE the current place, given to you by the world. Render it as
+  what it looks like from where the viewpoint stands ("I have not moved out of
+  the corner armchair", "he is still bent over the workbench"), never as a
+  restated label, and never contradict it — do not put someone at the window
+  who is at the workbench. It carries no bracket and never gets one.
 - For non-self entities, only render conditions that have an external sensory
   manifestation. Do not leak plot secrets, hidden allegiances, or any condition
   the viewpoint cannot perceive.
@@ -116,6 +128,11 @@ WRONG (prose swallowed by the tag — the bracket holds an id and NOTHING else,
 no description, no punctuation, no words of your own, in any language):
   我猛拽那位老工人[ITEM_SCN21_3旁的同伴]的手臂...
   The old man [stranger_a, the one by the door] catches my arm...
+
+WRONG (the room's own tag hung on a fixture inside the room — the door is not
+the nave, and the actor who copies this points at the wrong thing):
+  探头凑近那道被钉死的暗门 [SCN_17_SUB_1]...
+  I lean toward the boarded-up door [SCN_17_SUB_1]...
 
 Right: name the thing in your prose, then the bare id in a bracket after it.
 Nothing to cite? Then write it with no bracket — an entity the actor can see
@@ -228,8 +245,20 @@ export async function renderViaLLM(
   const ask = (extra = "") =>
     generateText({
       customSystemPrompt: SYSTEM_PROMPT,
+      // Assembled once at module import and byte-identical for every NPC on
+      // every tick. Under SMALL this breakpoint did nothing — Haiku will not
+      // cache a prefix below 2048 tokens and this one is about 1,550 — so the
+      // most frequent call site in the system was the only one paying full
+      // price for its own instructions. MEDIUM's floor is 1024.
+      cacheSystemPrompt: true,
       context: `${userPrompt}${extra}${decide}`,
-      modelClass: ModelClass.SMALL,
+      // MEDIUM, not SMALL. The small model kept citing the right KIND of
+      // thing with the wrong id — street lamps tagged with the scene's id,
+      // a train whistle tagged as a place — which is well-formed and passes
+      // every check we can write, then points the actor at the wrong entity.
+      // Judging which id names which thing is not something a cheaper model
+      // was getting right.
+      modelClass: ModelClass.MEDIUM,
       operation: RENDERER_OPERATION,
       maxRetries: 2,
     });
@@ -324,6 +353,9 @@ function formatViewpoint(
   const lines: string[] = [];
   lines.push(`Name: ${name}`);
   if (profile?.appearance) lines.push(`Appearance: ${profile.appearance}`);
+  if (bundle.ownSpot) {
+    lines.push(`Where you are in this place: ${bundle.ownSpot}`);
+  }
   if (bundle.ownConditions.length > 0) {
     lines.push("Own conditions (proprioceptive — fully visible to self):");
     for (const c of bundle.ownConditions) {
@@ -539,6 +571,7 @@ function formatScenePresentCharacters(
       `Person (${knownTag}): ${identifier}${tag(c.id, tags, "character")}`
     );
     if (c.appearance) lines.push(`  Appearance: ${c.appearance}`);
+    if (c.spot) lines.push(`  Where they are in this place: ${c.spot}`);
     if (c.currentActionText) {
       lines.push(`  Currently: ${c.currentActionText}`);
     } else {

@@ -73,6 +73,13 @@ export interface CharacterSnapshot {
   position: CharacterPosition | null;
   /** Resolved location id ("" when position is unknown). */
   locationId: string;
+  /**
+   * Free text: where they are WITHIN `locationId` — "at the workbench, back
+   * to the door". Narrative only. No reachability is computed from it and
+   * nobody is stopped by it; you weigh it like everything else. Absent =
+   * nothing worth saying.
+   */
+  spot?: string;
   conditions: CharacterCondition[];
   inventoryItemIds: string[];
 }

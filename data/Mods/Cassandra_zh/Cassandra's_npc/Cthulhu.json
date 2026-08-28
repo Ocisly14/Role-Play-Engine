@@ -1,0 +1,101 @@
+{
+  "id": "Cthulhu",
+  "name": "Cthulhu",
+  "occupation": "旧日支配者",
+  "age": 999999999,
+  "gender": "N/A",
+  "appearance": "一个巨大的、异质的实体，有着模糊的人形轮廓、覆满蠕动触手的章鱼状头部、巨大的翅膀和由超凡肉体构成的庞大臃肿躯体。",
+  "personality": "一个不可理解的宇宙实体，仅凭其沉睡中的存在就能将敏感的心灵逼入疯狂。",
+  "background": "克苏鲁是一位旧日支配者，以类死亡的沉睡状态躺在太平洋下沉没的拉莱耶城中。当群星归位时，它可能苏醒并为世界带来疯狂和毁灭。即使在沉睡中，它的存在也影响着梦境、邪教和宇宙事件。",
+  "residence": "SCN_20",
+  "currentLocation": "SCN_20",
+  "spot": "半陷在锈蚀的伐木机器之外的湿软泥地里，一动不动",
+  "knownMapSeed": {
+    "junctionIds": [],
+    "roadIds": [],
+    "scenarioOutlineIds": [
+      "SCN_20"
+    ],
+    "sceneIds": [
+      "SCN_20_SUB_1",
+      "SCN_20_SUB_2",
+      "SCN_20_SUB_3"
+    ]
+  },
+  "longTermIntent": "保持沉睡直到群星归位，然后在一个已被梦境、邪教仪式和恐惧所软化的世界中苏醒。",
+  "attributes": {
+    "STR": 700,
+    "CON": 550,
+    "DEX": 105,
+    "APP": 0,
+    "POW": 210,
+    "SIZ": 1050,
+    "INT": 210,
+    "EDU": 0
+  },
+  "status": {
+    "hp": 160,
+    "maxHp": 160,
+    "sanity": 0,
+    "maxSanity": 0,
+    "luck": 0,
+    "mp": 42,
+    "conditions": []
+  },
+  "skills": {
+    "Melee Combat": 100
+  },
+  "inventory": [],
+  "relationships": [
+    {
+      "targetId": "Patrizio von Samsa",
+      "targetName": "Patrizio von Samsa",
+      "relationshipType": "ally",
+      "attitude": 0,
+      "description": "一个试图围绕克苏鲁的回归来塑造小镇的人类信徒。",
+      "history": "帕特里齐奥通过梦境之王结社了解到克苏鲁，并围绕这种执念建立了仪式。",
+      "firstPerson": "帕特里齐奥通过梦王会触到了我最微弱的一丝边缘，如今把他的仪式一层层折叠在那丝边缘周围。他并不明白自己在为什么做准备。"
+    }
+  ],
+  "memory": [
+    {
+      "type": "information",
+      "content": "即使在沉睡中，我也压迫着凡人的梦境。海底的重压、不可能的建筑和恐惧只是我注意力最微弱的边缘。",
+      "metadata": {
+        "knowledgeId": "k_cthulhu_dreams",
+        "difficulty": "regular"
+      }
+    },
+    {
+      "type": "information",
+      "content": "我不需要苏醒就能让人类为我的回归做准备。恐惧、仪式和少数坚定的崇拜者通常就足以软化一个地方。",
+      "metadata": {
+        "knowledgeId": "k_cthulhu_cult_pressure",
+        "difficulty": "regular"
+      }
+    },
+    {
+      "type": "information",
+      "content": "帕特里齐奥那样的人以我的名义行事，却不理解他们所招来之物的规模。他们的虔诚比他们的理解力更重要。",
+      "metadata": {
+        "knowledgeId": "k_cthulhu_human_cultists",
+        "difficulty": "hard"
+      }
+    },
+    {
+      "type": "secret",
+      "content": "我的一个破碎形态并不等同于我的终结。我会回归、重塑，继续在世界之下和梦境之中等待。",
+      "metadata": {
+        "knowledgeId": "s_cthulhu_regeneration"
+      }
+    },
+    {
+      "type": "belief",
+      "content": "恰当的梦境已经足以将一个小镇推向毁灭。清醒的生活只需要再多失败一点，群星就会完成剩下的一切。",
+      "metadata": {
+        "confidence": 0.9,
+        "reasoningChain": "人类是脆弱的。他们的仪式、恐惧和野心在我的肉身搅动之前很久就已经完成了工作。"
+      }
+    }
+  ]
+}

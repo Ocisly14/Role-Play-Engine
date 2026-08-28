@@ -1,0 +1,17 @@
+{
+  "npcId": "npc_cold_spider",
+  "memories": [
+    {
+      "type": "event",
+      "content": "我那会儿并不在大堂；塔林来找我确认掩护信号与交接细节，但没有见到我，所以交接未发生。",
+      "gameDay": 2,
+      "gameTime": "01:56",
+      "location": "SCN_4_SUB_1",
+      "metadata": {
+        "outcome": "低声与冷蛛确认掩护骚动的信号与交接细节"
+      }
+    }
+  ],
+  "plans": [],
+  "intents": []
+}

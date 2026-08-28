@@ -1,0 +1,2994 @@
+{
+  "npcId": "Kovind",
+  "memories": [
+    {
+      "type": "information",
+      "content": "赌场之所以能存活，是因为人们害怕在那里丢脸胜过害怕警察，而我确保这种恐惧保持有用。",
+      "gameDay": 1,
+      "gameTime": "00:00",
+      "location": null,
+      "metadata": {
+        "difficulty": "regular",
+        "knowledgeId": "k_kovind_casino_pressure"
+      }
+    },
+    {
+      "type": "plan",
+      "content": "在本的庇护下维持赌场生意的兴隆，积累更多的人脉和把柄以巩固自己在地下世界的地位，过上奢靡享乐的生活。",
+      "gameDay": 1,
+      "gameTime": "00:00",
+      "location": null,
+      "metadata": {
+        "planType": "long_term"
+      }
+    },
+    {
+      "type": "information",
+      "content": "我把卢奇菲罗当作有用的收债人，因为他看起来没我那么有威胁性，这在钱需要悄悄流动时有帮助。",
+      "gameDay": 1,
+      "gameTime": "00:00",
+      "location": null,
+      "metadata": {
+        "difficulty": "regular",
+        "knowledgeId": "k_kovind_lucifero"
+      }
+    },
+    {
+      "type": "secret",
+      "content": "我持有南希·夏洛特的不雅照片，并将其作为她赌债的抵押品。",
+      "gameDay": 1,
+      "gameTime": "00:00",
+      "location": null,
+      "metadata": {
+        "knowledgeId": "s_kovind_nancy_photos"
+      }
+    },
+    {
+      "type": "secret",
+      "content": "我派卢奇菲罗去收南希的债，并保留了一些照片作为筹码。",
+      "gameDay": 1,
+      "gameTime": "00:00",
+      "location": null,
+      "metadata": {
+        "knowledgeId": "s_kovind_lucifero"
+      }
+    },
+    {
+      "type": "plan",
+      "content": "Today's plan: 1. 在一层大厅检查被拆开的监控设备和盲区书面记录，确定哪些点要优先修复或利用。 at 驯鹿酒吧; 2. 上到二层隔层近距离观察卢茨、塔兰和Johnny的反应并试图从他们口中撬出今晚的真实目的。 at 驯鹿酒吧; 3. 把手枪和其他武器收拢安置好，并命令吧台看守注意任何可疑动作以稳住局面。 at 驯鹿酒吧; 4. 召集几个信得过的手下分配夜间巡逻、封门和外援联络的职责，标注重点盲区加强盯守。 at 驯鹿酒吧; 5. 下到教堂下的地下赌场巡视赌桌和账本，确认账务安全并检查是否有人动过手脚。 at 教堂; 6. 去找南希·夏洛特逼她交出一部分赌债并提醒她不雅照片的后果以确保她保持听话。 at 花店·卡森德拉之花; 7. 回到教堂整理今晚的所得、安排明日的收债与人脉维护，然后休息睡觉为明晚做准备。 at 教堂",
+      "gameDay": 2,
+      "gameTime": "00:00",
+      "location": null,
+      "metadata": {
+        "planType": "daily"
+      }
+    },
+    {
+      "type": "belief",
+      "content": "当我想让人们遵守承诺时，我更信任恐惧和债务而非仁慈。",
+      "gameDay": 1,
+      "gameTime": "00:00",
+      "location": null,
+      "metadata": {
+        "confidence": 0.7,
+        "reasoningChain": "今晚我虽然在赌场维持了秩序，但对卢茨、塔兰和Johnny的多次威慑未能逼出实质情报，说明恐惧和债务并非对所有人总是有效，有时需要其他手段或更周全的布局。"
+      }
+    },
+    {
+      "type": "information",
+      "content": "我与塔林一起在教堂下方的地下赌场工作，当欠债者不配合时负责施压。",
+      "gameDay": 1,
+      "gameTime": "00:00",
+      "location": null,
+      "metadata": {
+        "difficulty": "automatic",
+        "knowledgeId": "k_kovind_casino"
+      }
+    },
+    {
+      "type": "witness",
+      "content": "[目击] 我注意到Johnny把猎枪放在吧台台面上，双手摊开示意放下武器。酒吧里的人都能看见枪不在我手上，气氛比刚才缓和了一些。我心里稍微放松，但依然戒备——还不能确定这是诚意还是演戏，继续按原计划观察并收拢武器、拖延与卢奇菲罗的会面。",
+      "gameDay": 2,
+      "gameTime": "00:02",
+      "location": "SCN_16_SUB_1",
+      "metadata": {
+        "impact": 2,
+        "perspective": "witness",
+        "sourceAction": "我把猎枪放在吧台台面上，双手摊开示意放下以表无威胁。酒吧里的人可以看见枪不在我手上，气氛稍微缓和了一些。",
+        "sourceCharacterId": "Johnny"
+      }
+    },
+    {
+      "type": "event",
+      "content": "卢茨递来一杯热威士忌并低声劝我把枪放一旁坐下，但我没有答应；我保持戒备，手枪没有上交，也没透露任何有用的信息。",
+      "gameDay": 2,
+      "gameTime": "00:03",
+      "location": "SCN_16_SUB_1",
+      "metadata": {
+        "outcome": "递上一杯热威士忌并低声安抚柯文德，劝他把武器放到一旁坐下，语气平稳以缓和局势 [Persuade 10, rolled 87 (fail) — all targets resisted] failed"
+      }
+    },
+    {
+      "type": "event",
+      "content": "[直接] 卢茨递来一杯热威士忌，低声劝我把枪放到一旁坐下以示和解。我没有答应，保持戒备，手枪没交出。表面上他的安抚让我有些放松，但我更怀疑这是演戏——警惕性上升，会继续按原计划收拢武器、盯盯盲区并拖延与卢奇菲罗的会面。",
+      "gameDay": 2,
+      "gameTime": "00:03",
+      "location": "SCN_16_SUB_1",
+      "metadata": {
+        "impact": 1,
+        "perspective": "targeted",
+        "sourceAction": "我递上一杯热威士忌，低声安抚并劝他把武器放到一旁坐下，但说服未果；柯文德拒绝配合，仍然警惕地关注周围并保持防备。",
+        "sourceCharacterId": "Lutz Emilion"
+      }
+    },
+    {
+      "type": "event",
+      "content": "塔兰低声劝我平息情绪并保证众人安全，但我没有接受他的劝说，保持防备。吧台上的手枪显而易见，他和他们没有交出监控或账本，我把这种沉默当作对抗，警惕和不信任进一步加深。",
+      "gameDay": 2,
+      "gameTime": "00:05",
+      "location": "SCN_16_SUB_1",
+      "metadata": {
+        "outcome": "低声安抚科文德，尽量平息他的敌意并保证卢茨与顾客的安全 [Persuade 10, rolled 88 (fail) — all targets resisted] failed"
+      }
+    },
+    {
+      "type": "event",
+      "content": "[直接] 00:06 我听到塔兰低声劝我平息情绪并保证卢茨和顾客的安全，但我没有接受他的劝说，仍然保持戒备。吧台上的手枪显得很刺眼，他把我保持沉默和不交出监控或账本视为对抗，我感觉他的戒心和不信任比之前更重了。现在我更倾向于立刻收拢武器、命人盯紧盲区和封门，拖延与卢奇菲罗的会面，先弄清Johnny和Marcel到底站在哪一边。",
+      "gameDay": 2,
+      "gameTime": "00:06",
+      "location": "SCN_16_SUB_1",
+      "metadata": {
+        "impact": 1,
+        "perspective": "targeted",
+        "sourceAction": "我低声试图安抚科文德，保证卢茨和顾客的安全，但说服未果；科文德抵抗我的劝说并保持防备。吧台上的手枪依旧显眼，他把我的沉默和未交出监控或账本视为对抗信号，我注意到他的戒心和不信任更深。",
+        "sourceCharacterId": "Taran Emilion"
+      }
+    },
+    {
+      "type": "event",
+      "content": "检查被拆开的监控设备并查看盲区书面记录，确定优先修复或利用的点 [在 SCN_16_SUB_1 因重新规划而中断] 已中断",
+      "gameDay": 2,
+      "gameTime": "00:06",
+      "location": "SCN_16_SUB_1",
+      "metadata": {
+        "outcome": "检查被拆开的监控设备并查看盲区书面记录，确定优先修复或利用的点 [在 SCN_16_SUB_1 因重新规划而中断] 已中断",
+        "interruptionReason": "revise_replan"
+      }
+    },
+    {
+      "type": "witness",
+      "content": "[目击] 我注意到Johnny打开并检查了已损坏的监控设备，确认内部线路裸露且有多个摄像头存在盲区，并对外露线路和破损外壳进行了拍照取证。我感到警觉和不安——有人在收集可能会暴露我们弱点的证据，必须立刻阻止照片外流、查明Johnny的立场并夺回或销毁这些证物，然后再继续按原计划处理盲区和武器。",
+      "gameDay": 2,
+      "gameTime": "00:08",
+      "location": "SCN_16_SUB_1",
+      "metadata": {
+        "impact": 2,
+        "perspective": "witness",
+        "sourceAction": "我打开并检查了已损坏的监控设备，确认内部线路裸露且有多个摄像头存在盲区，并对外露线路和破损外壳进行了拍照记录以作取证。",
+        "sourceCharacterId": "Johnny"
+      }
+    },
+    {
+      "type": "event",
+      "content": "收起吧台上的猎枪 [在 SCN_16_SUB_1 因重新规划而中断] 已中断",
+      "gameDay": 2,
+      "gameTime": "00:08",
+      "location": "SCN_16_SUB_1",
+      "metadata": {
+        "outcome": "收起吧台上的猎枪 [在 SCN_16_SUB_1 因重新规划而中断] 已中断",
+        "interruptionReason": "revise_replan"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我按住约翰尼的胳膊，威胁他交出照片和存储卡。约翰尼在压力下退缩并说酒吧的监控设备损坏，那晚菲利普骚扰了海伦并被他赶走了，他还提到我在23:13拿起过一把手枪并朝我们示威。约翰尼虽然不情愿，但被迫说出了这些事实。 [rel:Johnny -20 → -30]",
+      "gameDay": 2,
+      "gameTime": "00:11",
+      "location": "SCN_16_SUB_1",
+      "metadata": {
+        "outcome": "抢夺Johnny的相机和存储卡，按住他胳膊威胁他交出所有照片"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我在一层大厅试图搜查约翰尼，想夺走他身上的相机和存储卡，但他在压力下拒绝配合并成功抵抗。我没拿到任何东西，局势因此更紧张，我继续保持戒备。 [rel:Johnny -15 → -45]",
+      "gameDay": 2,
+      "gameTime": "00:15",
+      "location": "SCN_16_SUB_1",
+      "metadata": {
+        "outcome": "搜查约翰尼的随身物品并夺取相机和存储卡 [Intimidate 60, rolled 16 (hard) — all targets resisted] failed"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我在一层对约翰尼进行了强行搜查，试图夺走他的相机和存储卡，但约翰尼抵抗成功，我未能拿到任何东西。现场气氛因此更紧张，他明显更敌对。 [rel:Johnny -10 → -55]",
+      "gameDay": 2,
+      "gameTime": "00:18",
+      "location": "SCN_16_SUB_1",
+      "metadata": {
+        "outcome": "强行搜查并从约翰尼身上夺取相机和存储卡 [Intimidate 60, rolled 57 (regular) — all targets resisted] failed"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我扑向约翰尼，试图强行搜身并夺走他的相机和存储卡，但动作失败，没能拿走任何东西。约翰尼反抗成功，现场气氛立刻变得更紧张，我会把他视为更大的隐患并考虑更强硬的后续手段。 [rel:Johnny -10 → -65]",
+      "gameDay": 2,
+      "gameTime": "00:22",
+      "location": "SCN_16_SUB_1",
+      "metadata": {
+        "outcome": "扑向约翰尼，强行搜身并夺走他的相机和存储卡 [Brawl 65, rolled 68 (difficulty: regular)] failed"
+      }
+    },
+    {
+      "type": "event",
+      "content": "用手枪威胁约翰尼，逼他交出相机和存储卡 [在 SCN_16_SUB_1 因重新规划而中断] 已中断",
+      "gameDay": 2,
+      "gameTime": "00:27",
+      "location": "SCN_16_SUB_1",
+      "metadata": {
+        "outcome": "用手枪威胁约翰尼，逼他交出相机和存储卡 [在 SCN_16_SUB_1 因重新规划而中断] 已中断",
+        "interruptionReason": "revise_replan"
+      }
+    },
+    {
+      "type": "witness",
+      "content": "[相遇] 我在一层大厅与Shandra Hernandez、Johnny、Lutz Emilion和Taran Emilion面对面相遇。四人同时在场让我更警觉——Johnny更可能借助同伙把相机或存储卡带走或藏匿证据。我感到紧张且戒备，必须立刻控制证据、查清Shandra的立场并命令封门与盯盯盲区。",
+      "gameDay": 2,
+      "gameTime": "00:27",
+      "location": "SCN_16_SUB_1",
+      "metadata": {
+        "impact": 2,
+        "perspective": "co_presence",
+        "sourceAction": "Shandra Hernandez, Johnny, Lutz Emilion, Taran Emilion 在 一层大厅",
+        "sourceCharacterId": "__encounter__"
+      }
+    },
+    {
+      "type": "event",
+      "content": "塔兰走过来威胁要叫警察，命令我交出手枪并远离约翰尼和监控。我没有交枪，继续把手枪放在吧台上以示威胁并保持警惕，没被吓住，对塔兰更不信任。",
+      "gameDay": 2,
+      "gameTime": "00:30",
+      "location": "SCN_16_SUB_1",
+      "metadata": {
+        "outcome": "当面要求科文德放下并上交任何武器，立即后退并远离约翰尼与受损的监控设备，否则我将叫警察干预 [Intimidate 15, rolled 96 (fail) — all targets resisted] failed"
+      }
+    },
+    {
+      "type": "event",
+      "content": "命令卢茨和塔兰立即封锁出入口并盯守监控盲区，禁止任何人离开酒吧 [在 SCN_16_SUB_1 因重新规划而中断] 已中断",
+      "gameDay": 2,
+      "gameTime": "00:47",
+      "location": "SCN_16_SUB_1",
+      "metadata": {
+        "outcome": "命令卢茨和塔兰立即封锁出入口并盯守监控盲区，禁止任何人离开酒吧 [在 SCN_16_SUB_1 因重新规划而中断] 已中断",
+        "interruptionReason": "revise_replan"
+      }
+    },
+    {
+      "type": "witness",
+      "content": "[目击] 我看到Patrizio von Samsa走进驯鹿酒吧，坐在吧台一角假装随意观察，明显在等待珊德拉出现。随即我在一层大厅与Patrizio、Johnny、Lutz、Shandra和Taran面对面相遇。现场让我更紧张和警觉——有人新加入可能改变力量平衡。我感到必须立刻行动：封门、盯盯盲区、夺回或销毁证物并迅速查明Patrizio和Shandra的立场。",
+      "gameDay": 2,
+      "gameTime": "00:47",
+      "location": "SCN_16_SUB_1",
+      "metadata": {
+        "impact": 2,
+        "perspective": "witness",
+        "sourceAction": "走进驯鹿酒吧并坐在吧台一角，装作随意地观察周围并留意珊德拉的出现 成功",
+        "sourceCharacterId": "Patrizio von Samsa"
+      }
+    },
+    {
+      "type": "event",
+      "content": "[直接] 00:48 — 塔兰当面命令我把任何武器放下并后退远离约翰尼和受损的监控，威胁要叫警察干预。我没有服从，手枪仍放在吧台上，氛围更紧张。我感到愤怒与不信任，最担心的是他会真去报警——必须立刻阻止通讯并封锁出入口，先控制证物再考虑下一步。",
+      "gameDay": 2,
+      "gameTime": "00:48",
+      "location": "SCN_16_SUB_1",
+      "metadata": {
+        "impact": 1,
+        "perspective": "targeted",
+        "sourceAction": "我当面命令科文德把任何武器放下并上交，立即后退并远离约翰尼与受损的监控，否则我会叫警察干预。他没有服从，明确拒绝交出手枪并保持戒备，气氛因此更紧张，我的威吓未能奏效。",
+        "sourceCharacterId": "Taran Emilion"
+      }
+    },
+    {
+      "type": "event",
+      "content": "命令卢茨和塔兰立即封锁所有出入口并盯守监控盲区，禁止任何人离开酒吧，特别关注并拦截试图靠近吧台或悄然离开的帕特里齐奥和约翰尼 [在 SCN_16_SUB_1 因重新规划而中断] 已中断",
+      "gameDay": 2,
+      "gameTime": "00:48",
+      "location": "SCN_16_SUB_1",
+      "metadata": {
+        "outcome": "命令卢茨和塔兰立即封锁所有出入口并盯守监控盲区，禁止任何人离开酒吧，特别关注并拦截试图靠近吧台或悄然离开的帕特里齐奥和约翰尼 [在 SCN_16_SUB_1 因重新规划而中断] 已中断",
+        "interruptionReason": "revise_replan"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我命令卢茨和塔兰立刻封锁所有出入口、查扣所有手机并拦截试图离开的帕特里齐奥和约翰尼；他们表示会照办。为了确保服从，我保持强硬姿态并让自己的手枪显眼摆放在吧台上。 [rel:Lutz Emilion +2 → -8] [rel:Taran Emilion -4 → -32]",
+      "gameDay": 2,
+      "gameTime": "00:51",
+      "location": "SCN_16_SUB_1",
+      "metadata": {
+        "outcome": "命令卢茨和塔兰立即封锁所有出入口，查扣所有手机并拦截试图离开的帕特里齐奥和约翰尼，禁止任何人离开酒吧"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我当着两人的面命令卢茨和塔兰彻底搜查约翰尼，夺走他的相机与存储卡并在场销毁存储卡，必要时用力控制他以防抵抗。他们立刻执行，封锁出入口并开始搜查与查扣，现场气氛因此更加紧张。 [rel:Lutz Emilion -3 → -11] [rel:Taran Emilion -5 → -37]",
+      "gameDay": 2,
+      "gameTime": "00:54",
+      "location": "SCN_16_SUB_1",
+      "metadata": {
+        "outcome": "命令卢茨和塔兰当着我的面彻底搜查约翰尼，夺走他的相机与存储卡并当场销毁存储卡，必要时用力控制约翰尼以防抵抗"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我当众逼迫约翰尼交出相机与存储卡，并命令卢茨和塔兰在我面前当场销毁存储卡，以我放在吧台上的手枪威胁他们。但他们都拒绝服从，搜身和没收未能奏效，现场气氛因此更紧张，我必须对他们的抵抗保持警惕并考虑下一步更强硬的手段。 [rel:Johnny -10 → -75] [rel:Lutz Emilion -12 → -23] [rel:Taran Emilion -6 → -43]",
+      "gameDay": 2,
+      "gameTime": "00:57",
+      "location": "SCN_16_SUB_1",
+      "metadata": {
+        "outcome": "当众逼迫约翰尼交出相机与存储卡，并命令卢茨和塔兰在我面前当场销毁存储卡；若有人反抗立即用手枪示威性开火 [Intimidate 60, rolled 88 (fail) — all targets resisted] failed"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我从吧台后方的储物柜里把那把猎枪取了出来，举起以示威吓阻；储物柜门敞开，猎枪现在在我手里。",
+      "gameDay": 2,
+      "gameTime": "00:59",
+      "location": "SCN_16_SUB_1",
+      "metadata": {
+        "itemId": "猎枪",
+        "outcome": "从吧台后方储物柜取出猎枪并举起以示威吓阻",
+        "itemName": "猎枪"
+      }
+    },
+    {
+      "type": "event",
+      "content": "封锁主入口，将一张圆桌和几把椅子推到门口并把门反锁，阻止任何人离开 [在 SCN_16_SUB_1 因重新规划而中断] 已中断",
+      "gameDay": 2,
+      "gameTime": "01:03",
+      "location": "SCN_16_SUB_1",
+      "metadata": {
+        "outcome": "封锁主入口，将一张圆桌和几把椅子推到门口并把门反锁，阻止任何人离开 [在 SCN_16_SUB_1 因重新规划而中断] 已中断",
+        "interruptionReason": "revise_replan"
+      }
+    },
+    {
+      "type": "event",
+      "content": "[直接] 卢茨走到我和约翰尼中间把两人分开，低声但坚定地命令我把猎枪放下并坐到一边，同时示意塔兰立刻封锁所有出入口、把收银机抽屉钥匙随身保管并加派人手重点巡查监控盲区，遇到任何人试图接近监控或抽屉立即阻止并向我报告。我感到被威胁和背叛——他在当众试图剥夺我的武器与权威，但他说出的封门和盯盯盲区正好契合我的优先事项。我必须马上回应，不能被当众解除武装，要迅速恢复对局面的控制并确保证物和通讯不外流。",
+      "gameDay": 2,
+      "gameTime": "01:03",
+      "location": "SCN_16_SUB_1",
+      "metadata": {
+        "impact": 2,
+        "perspective": "targeted",
+        "sourceAction": "走到科文德和约翰尼中间把两人分开，低声但坚定地命令科文德把猎枪放下并坐到一边，同时示意塔兰立刻封锁所有出入口、把收银机抽屉钥匙随身保管并加派人手重点巡查监控盲区，遇到任何人试图接近监控或抽屉立即阻止并向我报告 [target Johnny not present] failed",
+        "sourceCharacterId": "Lutz Emilion"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我用猎枪指着卢茨和塔兰，命令他们把收银机抽屉钥匙和所有手机交出来并封锁所有出入口；他们都拒绝了，现场没有交出任何物品，气氛更紧张。 [rel:Lutz Emilion -10 → -33] [rel:Taran Emilion -4 → -47]",
+      "gameDay": 2,
+      "gameTime": "01:06",
+      "location": "SCN_16_SUB_1",
+      "metadata": {
+        "outcome": "用猎枪指着卢茨和塔兰，怒吼命令他们立刻把收银机抽屉钥匙和所有手机交到我手里并当场封锁所有出入口；任何人靠近监控或抽屉就当场开枪示警 [Intimidate 60, rolled 40 (regular) — all targets resisted] failed"
+      }
+    },
+    {
+      "type": "event",
+      "content": "走上通往二层的楼梯，进入二层隔层俯视大厅观察卢茨、塔兰与帕特里齐奥的动向 成功",
+      "gameDay": 2,
+      "gameTime": "01:07",
+      "location": "SCN_16_SUB_1",
+      "metadata": {
+        "outcome": "走上通往二层的楼梯，进入二层隔层俯视大厅观察卢茨、塔兰与帕特里齐奥的动向 成功",
+        "blockedReason": "",
+        "failureReason": ""
+      }
+    },
+    {
+      "type": "event",
+      "content": "下到一层大厅靠近约翰尼并试图当众夺取他的相机和存储卡 成功",
+      "gameDay": 2,
+      "gameTime": "01:08",
+      "location": "SCN_16_SUB_1",
+      "metadata": {
+        "outcome": "下到一层大厅靠近约翰尼并试图当众夺取他的相机和存储卡 成功",
+        "blockedReason": "",
+        "failureReason": ""
+      }
+    },
+    {
+      "type": "event",
+      "content": "威胁并命令卢茨和塔兰当场把收银机抽屉钥匙和所有手机交出来，立即封锁所有出入口并拦截任何靠近监控或收银抽屉的人，违命者开枪处理 [在 SCN_16_SUB_1 因重新规划而中断] 已中断",
+      "gameDay": 2,
+      "gameTime": "01:10",
+      "location": "SCN_16_SUB_1",
+      "metadata": {
+        "outcome": "威胁并命令卢茨和塔兰当场把收银机抽屉钥匙和所有手机交出来，立即封锁所有出入口并拦截任何靠近监控或收银抽屉的人，违命者开枪处理 [在 SCN_16_SUB_1 因重新规划而中断] 已中断",
+        "interruptionReason": "revise_replan"
+      }
+    },
+    {
+      "type": "witness",
+      "content": "[相遇] 我在一层大厅与Johnny、Lutz Emilion、Patrizio von Samsa和Taran Emilion面对面相遇。Patrizio的出现让力量平衡可能改变，我感到紧张且高度戒备，怀疑有人会趁机带走或记录证据。必须立刻采取行动：封门、查扣手机、夺回或销毁约翰尼的相机与存储卡，密切盯防卢茨的动向，并保持武器以维持威慑。",
+      "gameDay": 2,
+      "gameTime": "01:10",
+      "location": "SCN_16_SUB_1",
+      "metadata": {
+        "impact": 2,
+        "perspective": "co_presence",
+        "sourceAction": "Johnny, Lutz Emilion, Patrizio von Samsa, Taran Emilion 在 一层大厅",
+        "sourceCharacterId": "__encounter__"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我猛扑向约翰尼，试图强行夺走他的相机与存储卡，但动作失败；约翰尼当场反抗并保住了物件。酒吧气氛因此更紧张，监控损坏和吧台上的武器仍然显眼。 [rel:Johnny -7 → -82]",
+      "gameDay": 2,
+      "gameTime": "01:13",
+      "location": "SCN_16_SUB_1",
+      "metadata": {
+        "outcome": "猛扑向约翰尼，强行夺取他的相机与存储卡 [STR 1, rolled 51 (difficulty: regular)] failed"
+      }
+    },
+    {
+      "type": "event",
+      "content": "帕特里齐奥以镇长的气势突然上前把我按住搜身，夺走了我的相机和存储卡，并把我的猎枪收走，无法再使用。被当场制服让我无可奈何，但我记住了他的手段和态度。",
+      "gameDay": 2,
+      "gameTime": "01:16",
+      "location": "SCN_16_SUB_1",
+      "metadata": {
+        "outcome": "以镇长的语气与姿态迅速上前制服并搜身科温德，夺回其手中的相机与存储卡，解除并控制其武装以防其使用猎枪"
+      }
+    },
+    {
+      "type": "event",
+      "content": "用手枪指着约翰尼，命令他当场交出相机和存储卡 [在 SCN_16_SUB_1 因重新规划而中断] 已中断",
+      "gameDay": 2,
+      "gameTime": "01:16",
+      "location": "SCN_16_SUB_1",
+      "metadata": {
+        "outcome": "用手枪指着约翰尼，命令他当场交出相机和存储卡 [在 SCN_16_SUB_1 因重新规划而中断] 已中断",
+        "interruptionReason": "revise_replan"
+      }
+    },
+    {
+      "type": "event",
+      "content": "[直接] 帕特里齐奥以镇长的气势突然上前把我按住搜身，夺走了我的相机和存储卡，并收缴了我的猎枪，当场解除我的武装并控制了酒吧局势。我感到被羞辱、愤怒且措手不及——必须立刻想办法夺回这些物品并恢复对场面的控制，同时记住他的手段和立场。",
+      "gameDay": 2,
+      "gameTime": "01:16",
+      "location": "SCN_16_SUB_1",
+      "metadata": {
+        "impact": 2,
+        "perspective": "targeted",
+        "sourceAction": "我以镇长特有的语气与姿态迅速上前，将科温德制服并当场搜身，夺回他手中的相机与存储卡，并解除并收缴了他的猎枪以防其使用。整个过程稳健而果断，酒吧内的局势被我控制住。",
+        "sourceCharacterId": "Patrizio von Samsa"
+      }
+    },
+    {
+      "type": "event",
+      "content": "命令卢茨与塔兰立刻封锁所有出入口、查扣所有手机并回收我的相机、存储卡与猎枪；违命者立即开枪处理。 [在 SCN_16_SUB_1 因重新规划而中断] 已中断",
+      "gameDay": 2,
+      "gameTime": "01:19",
+      "location": "SCN_16_SUB_1",
+      "metadata": {
+        "outcome": "命令卢茨与塔兰立刻封锁所有出入口、查扣所有手机并回收我的相机、存储卡与猎枪；违命者立即开枪处理。 [在 SCN_16_SUB_1 因重新规划而中断] 已中断",
+        "interruptionReason": "revise_replan"
+      }
+    },
+    {
+      "type": "witness",
+      "content": "[目击] 我上前用强硬语气逼问帕特里齐奥把相机和存储卡交出来或当场出示物证。帕特里齐奥冷静抵抗，没有交出任何东西，拒绝配合，酒吧内气氛变得更紧张。我感到被挑衅和警觉——必须马上封门、查封通讯并想办法夺回证物以重建威慑。",
+      "gameDay": 2,
+      "gameTime": "01:19",
+      "location": "SCN_16_SUB_1",
+      "metadata": {
+        "impact": 2,
+        "perspective": "witness",
+        "sourceAction": "我上前用强硬语气逼问帕特里齐奥把相机和存储卡交出来或当场出示物证。帕特里齐奥冷静抵抗，没有交出任何东西，拒绝配合，酒吧内气氛变得更紧张。",
+        "sourceCharacterId": "Johnny"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我当众命令卢茨与塔兰立刻封锁所有出入口、没收所有手机并把帕特里齐奥和约翰尼围住，禁止任何人接近或带走相机与存储卡，并声明违命开枪处理。命令被执行起来，尽管他们明显不情愿，但我暂时恢复了对现场的控制。 [rel:Lutz Emilion +4 → -29] [rel:Taran Emilion -5 → -52]",
+      "gameDay": 2,
+      "gameTime": "01:22",
+      "location": "SCN_16_SUB_1",
+      "metadata": {
+        "outcome": "命令卢茨与塔兰立刻封锁所有出入口、没收所有手机并带人围住帕特里齐奥和约翰尼，阻止任何人接近或带走相机与存储卡；违命者开枪处理"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我当众威胁卢茨和塔兰：立刻搜身帕特里齐奥和约翰尼，把相机与存储卡夺回来，违命就开枪。塔兰不情愿地开始搜查，卢茨拒绝配合，场面因此暂时由我恢复控制，但敌意更深了。 [rel:Lutz Emilion +2 → -27] [rel:Taran Emilion -5 → -57]",
+      "gameDay": 2,
+      "gameTime": "01:25",
+      "location": "SCN_16_SUB_1",
+      "metadata": {
+        "outcome": "命令卢茨和塔兰当众立即搜身帕特里齐奥和约翰尼，夺回相机与存储卡，违命者开枪处理"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我把手枪指向卢茨，逼他立刻交出收银机抽屉钥匙和所有手机，否则就开枪。但卢茨当场拒绝，没有交出钥匙，表面服从但明显在抵抗，我的威吓没有达到预期效果。 [rel:Lutz Emilion -5 → -32]",
+      "gameDay": 2,
+      "gameTime": "01:28",
+      "location": "SCN_16_SUB_1",
+      "metadata": {
+        "outcome": "把手枪指向卢茨，逼他立刻交出收银机抽屉钥匙和所有手机，否则开枪 [Intimidate 60, rolled 81 (fail) — all targets resisted] failed"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我试图逼迫卢茨和塔兰交出相机与存储卡并封锁出口，但我的恐吓未能整体奏效；在对卢茨的对峙中我失手自伤（意外擦伤），没有因此取得决定性控制。塔兰拒绝屈服，场面仍然紧张。 [rel:Lutz Emilion -4 → -36] [rel:Taran Emilion -6 → -63]",
+      "gameDay": 2,
+      "gameTime": "01:31",
+      "location": "SCN_16_SUB_1",
+      "metadata": {
+        "outcome": "命令卢茨和塔兰立刻封锁所有出入口、包围帕特里齐奥与约翰尼并当场搜身，查扣所有手机；要求他们把相机与存储卡交出来，否则立即当场销毁并以武力强制执行"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我命令卢茨和塔兰立刻搜身帕特里齐奥与约翰尼，夺回相机与存储卡，查扣所有手机并封锁监控盲区。卢茨不情愿地把酒吧账本交给了我，账本里有盲区和夜间巡逻的具体安排，塔兰在压力下配合。行动达成，但现场更紧张，我要警惕他们日后的暗中反抗。 [rel:Lutz Emilion -9 → -45] [rel:Taran Emilion -4 → -67]",
+      "gameDay": 2,
+      "gameTime": "01:34",
+      "location": "SCN_16_SUB_1",
+      "metadata": {
+        "outcome": "命令卢茨和塔兰立刻搜身帕特里齐奥与约翰尼，夺回相机与存储卡，查扣所有手机并封锁监控盲区"
+      }
+    },
+    {
+      "type": "witness",
+      "content": "[相遇] 我在一层大厅与Shandra Hernandez、Lutz Emilion、Patrizio von Samsa和Taran Emilion面对面相遇。看到帕特里齐奥和珊德拉让我非常紧张——我记得帕特里齐奥之前曾当众解除我的武装并夺走我的相机和存储卡，局势对我极为不利。我感到被威胁和羞辱，必须立刻采取行动：夺回武器与证物、封锁出入口、查扣通讯设备并弄清珊德拉的立场以恢复对场面的控制。",
+      "gameDay": 2,
+      "gameTime": "01:35",
+      "location": "SCN_16_SUB_1",
+      "metadata": {
+        "impact": 2,
+        "perspective": "co_presence",
+        "sourceAction": "Shandra Hernandez, Lutz Emilion, Patrizio von Samsa, Taran Emilion 在 一层大厅",
+        "sourceCharacterId": "__encounter__"
+      }
+    },
+    {
+      "type": "event",
+      "content": "命令卢茨与塔兰立刻在主入口和后门布置人手封锁出入口、查扣并集中保管所有通讯设备，重点盯守监控盲区，违命者开枪处理 [在 SCN_16_SUB_1 因重新规划而中断] 已中断",
+      "gameDay": 2,
+      "gameTime": "01:35",
+      "location": "SCN_16_SUB_1",
+      "metadata": {
+        "outcome": "命令卢茨与塔兰立刻在主入口和后门布置人手封锁出入口、查扣并集中保管所有通讯设备，重点盯守监控盲区，违命者开枪处理 [在 SCN_16_SUB_1 因重新规划而中断] 已中断",
+        "interruptionReason": "revise_replan"
+      }
+    },
+    {
+      "type": "witness",
+      "content": "[目击] 我看到卢茨检查了吧台后方的储物柜，确认柜里有一把猎枪，然后把柜门关上上了锁，把钥匙揣在身上。我感到警觉和愤怒——卢茨现在掌握了通往武器的钥匙，可能会阻碍我夺回枪支或利用武器恢复威慑，必须立刻出手把钥匙和枪掌控在我手里。",
+      "gameDay": 2,
+      "gameTime": "01:38",
+      "location": "SCN_16_SUB_1",
+      "metadata": {
+        "impact": 2,
+        "perspective": "witness",
+        "sourceAction": "我检查了吧台后方的储物柜，确认柜内有一把猎枪；随后将柜门关上并上锁，把钥匙揣在身上。",
+        "sourceCharacterId": "Lutz Emilion"
+      }
+    },
+    {
+      "type": "event",
+      "content": "强行搜身帕特里齐奥，逼他当场交出并归还我的猎枪与相机 [在 SCN_16_SUB_1 因重新规划而中断] 已中断",
+      "gameDay": 2,
+      "gameTime": "01:38",
+      "location": "SCN_16_SUB_1",
+      "metadata": {
+        "outcome": "强行搜身帕特里齐奥，逼他当场交出并归还我的猎枪与相机 [在 SCN_16_SUB_1 因重新规划而中断] 已中断",
+        "interruptionReason": "revise_replan"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我从卢茨手中抢走了吧台后方储物柜的钥匙，确保他现在无法取出储物柜里的猎枪。卢茨表面服从但愤怒且戒备。 [rel:Lutz Emilion -7 → -52]",
+      "gameDay": 2,
+      "gameTime": "01:40",
+      "location": "SCN_16_SUB_1",
+      "metadata": {
+        "outcome": "从卢茨手中抢夺储物柜钥匙，确保他无法取出猎枪"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我用手中的储物柜钥匙打开了吧台后方的储物柜，从里面把猎枪取出来并握在手中，控制住了武器。",
+      "gameDay": 2,
+      "gameTime": "01:43",
+      "location": "SCN_16_SUB_1",
+      "metadata": {
+        "outcome": "用手中的储物柜钥匙打开吧台后方储物柜并把猎枪从柜内取出，握在手中控制住武器"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我感觉到有人悄无声息地从我手中掠走了储物柜的钥匙，抬头一看是镇长帕特里齐奥，他把钥匙揣进口袋。我为此感到羞辱和愤怒，但当时无法反抗。",
+      "gameDay": 2,
+      "gameTime": "01:43",
+      "location": "SCN_16_SUB_1",
+      "metadata": {
+        "outcome": "悄声上前，从科温德手中夺回吧台后方储物柜的钥匙并迅速将其收进口袋以确保我掌握钥匙"
+      }
+    },
+    {
+      "type": "witness",
+      "content": "[目击] 我看到帕特里齐奥把那把猎枪放回吧台后方的储物柜，关上柜门并用随身钥匙上了锁。枪又被他锁在柜里，短时间内无法被他人取出。我既恼怒又警觉——这人现在掌握了通往武器的控制权，必须立刻出手夺回钥匙并防止他带走或隐匿钥匙，否则我恢复威慑的计划会被彻底破坏。",
+      "gameDay": 2,
+      "gameTime": "01:47",
+      "location": "SCN_16_SUB_1",
+      "metadata": {
+        "impact": 2,
+        "perspective": "witness",
+        "sourceAction": "我把那把猎枪放回吧台后方的储物柜，关上柜门并用随身钥匙上了锁。枪支再次被锁在柜内，短时间内无法被他人取出。",
+        "sourceCharacterId": "Patrizio von Samsa"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我举起猎枪指着卢茨，命令他把储物柜钥匙和所有手机交出来，但我的威吓未能奏效；卢茨抵抗并拒绝配合。我仍然握着猎枪并持有储物柜钥匙，现场气氛因此更加紧张。 [rel:Lutz Emilion -9 → -61]",
+      "gameDay": 2,
+      "gameTime": "01:47",
+      "location": "SCN_16_SUB_1",
+      "metadata": {
+        "outcome": "举起猎枪指向卢茨，按住他不要靠近吧台并命令他把储物柜钥匙和所有手机交出来 [Intimidate 60, rolled 61 (fail) — all targets resisted] failed"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我试图上前搜查帕特里齐奥，强行夺取他的钥匙和通讯装置，但我在行动中发生了重大失误（fumble），动作弄糟了还自伤受了两下，没能拿到任何东西。帕特里齐奥冷静地抵抗住了，我感到既羞辱又恼怒。 [rel:Patrizio von Samsa -5 → -45]",
+      "gameDay": 2,
+      "gameTime": "01:50",
+      "location": "SCN_16_SUB_1",
+      "metadata": {
+        "outcome": "上前搜查帕特里齐奥，强行夺取他身上的钥匙和任何通讯设备 [Intimidate 60, rolled 98 (fumble) — all targets resisted] failed"
+      }
+    },
+    {
+      "type": "event",
+      "content": "命令卢茨与塔兰立刻封锁所有出入口、查扣并集中保管所有通讯设备，立即将帕特里齐奥控制在吧台附近不得离开，违命开枪处理 [在 SCN_16_SUB_1 因重新规划而中断] 已中断",
+      "gameDay": 2,
+      "gameTime": "01:53",
+      "location": "SCN_16_SUB_1",
+      "metadata": {
+        "outcome": "命令卢茨与塔兰立刻封锁所有出入口、查扣并集中保管所有通讯设备，立即将帕特里齐奥控制在吧台附近不得离开，违命开枪处理 [在 SCN_16_SUB_1 因重新规划而中断] 已中断",
+        "interruptionReason": "revise_replan"
+      }
+    },
+    {
+      "type": "event",
+      "content": "帕特里齐奥悄无声息地上前把我按倒，从我手里夺走了猎枪。我头脑有点晕、愤怒但无法反抗，记住他现在掌控了局面，会寻找机会报复。",
+      "gameDay": 2,
+      "gameTime": "01:53",
+      "location": "SCN_16_SUB_1",
+      "metadata": {
+        "outcome": "悄声上前将科温德制服并夺下他手中的猎枪以解除武装"
+      }
+    },
+    {
+      "type": "event",
+      "content": "[直接] 帕特里齐奥悄无声息地上前把我按倒，从我手里夺走了猎枪，把我当场解除武装。我感到头脑有点晕、既愤怒又羞辱——局势瞬间对我不利。现在必须立刻想办法夺回武器和钥匙、封门查通讯并调动手下支援，防止证物被带走或局面被彻底掌控。",
+      "gameDay": 2,
+      "gameTime": "01:53",
+      "location": "SCN_16_SUB_1",
+      "metadata": {
+        "impact": 2,
+        "perspective": "targeted",
+        "sourceAction": "我悄声靠近科温德，迅速将他制服并从他手中夺下那把猎枪，解除他的武装。我把枪收好，确保他暂时无法反击。",
+        "sourceCharacterId": "Patrizio von Samsa"
+      }
+    },
+    {
+      "type": "witness",
+      "content": "[目击] 我看到帕特里齐奥把猎枪放回吧台后方的储物柜，关上柜门并用随身钥匙上了锁——枪被他锁在柜里，钥匙在他手上。听到这一幕我又气又羞，感到局势瞬间对我不利：他现在掌握了武器的出入管控，必须立即出手夺回钥匙和枪、封门查通讯并调动手下，不能拖延。",
+      "gameDay": 2,
+      "gameTime": "01:56",
+      "location": "SCN_16_SUB_1",
+      "metadata": {
+        "impact": 2,
+        "perspective": "witness",
+        "sourceAction": "我把猎枪放回吧台后方的储物柜里，并用随身的钥匙把柜门上了锁。现在猎枪在柜内，钥匙在我手里，柜门已关且上锁。",
+        "sourceCharacterId": "Patrizio von Samsa"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我命令卢茨和塔兰立刻把帕特里齐奥制伏并搜身，他们照办并把任何通讯设备和可疑物品移交给我；帕特里齐奥被控制住，猎枪与储物柜钥匙继续由我掌握。现场秩序暂被维持，但气氛更紧张。 [rel:Lutz Emilion +3 → -58] [rel:Taran Emilion -6 → -73]",
+      "gameDay": 2,
+      "gameTime": "01:56",
+      "location": "SCN_16_SUB_1",
+      "metadata": {
+        "outcome": "命令卢茨和塔兰立刻把帕特里齐奥制伏并搜身，夺回猎枪与储物柜钥匙，查扣他的通讯设备以防证据外流"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我命令卢茨和塔兰立刻封锁所有出入口、查扣并集中保管所有通讯设备，紧盯并控制帕特里齐奥不得离开，并派人巡查监控盲区与后门。他们在胁迫下照办，现场气氛依旧紧张，我暂时收回了对局势的控制，但仍警惕他们的态度。 [rel:Lutz Emilion +3 → -55] [rel:Taran Emilion -4 → -77]",
+      "gameDay": 2,
+      "gameTime": "01:59",
+      "location": "SCN_16_SUB_1",
+      "metadata": {
+        "outcome": "命令卢茨和塔兰立刻封锁所有出入口、查扣并集中保管所有通讯设备，紧盯并控制帕特里齐奥不得离开，派人巡查监控盲区与后门"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我用强硬的威胁从帕特里齐奥手里夺回了吧台储物柜的钥匙；他在压力下顺从地交出钥匙并告诉我他已把猎枪放回储物柜并上了锁。拿到钥匙后我感觉局势更掌控了。 [rel:Patrizio von Samsa -5 → -56]",
+      "gameDay": 2,
+      "gameTime": "02:02",
+      "location": "SCN_16_SUB_1",
+      "metadata": {
+        "outcome": "从帕特里齐奥身上强行夺回吧台储物柜的钥匙"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我用随身的钥匙打开了吧台后方被锁住的储物柜，把里面的猎枪取了出来，现在握在手里以示威吓阻。",
+      "gameDay": 2,
+      "gameTime": "02:04",
+      "location": "SCN_16_SUB_1",
+      "metadata": {
+        "itemId": "猎枪",
+        "outcome": "用钥匙打开吧台后方的储物柜并取出猎枪",
+        "itemName": "猎枪"
+      }
+    },
+    {
+      "type": "witness",
+      "content": "[相遇] 我在卡森德拉南新街与Shandra Hernandez面对面相遇。她的出现让我高度警觉——担心她可能与Johnny等人合谋带走或隐匿相机与存储卡。我感到紧张且戒备，必须立刻回到驯鹿酒吧封门、查扣通讯并弄清她的立场。",
+      "gameDay": 2,
+      "gameTime": "02:05",
+      "location": "ROAD_3",
+      "metadata": {
+        "impact": 2,
+        "perspective": "co_presence",
+        "sourceAction": "Shandra Hernandez 在 卡森德拉南新街",
+        "sourceCharacterId": "__encounter__"
+      }
+    },
+    {
+      "type": "event",
+      "content": "前往教堂召集信得过的手下支援 [在 ROAD_3 因重新规划而中断] 已中断",
+      "gameDay": 2,
+      "gameTime": "02:05",
+      "location": "ROAD_3",
+      "metadata": {
+        "outcome": "前往教堂召集信得过的手下支援 [在 ROAD_3 因重新规划而中断] 已中断",
+        "interruptionReason": "revise_replan"
+      }
+    },
+    {
+      "type": "event",
+      "content": "赶回驯鹿酒吧 [在 ROAD_3 因重新规划而中断] 已中断",
+      "gameDay": 2,
+      "gameTime": "02:09",
+      "location": "ROAD_3",
+      "metadata": {
+        "outcome": "赶回驯鹿酒吧 [在 ROAD_3 因重新规划而中断] 已中断",
+        "interruptionReason": "revise_replan"
+      }
+    },
+    {
+      "type": "witness",
+      "content": "[相遇] 我在卡森德拉南新街与Adolph Carl和Shandra Hernandez面对面相遇。珊德拉的出现让我高度警觉——担心她可能和约翰尼等人勾结把相机或存储卡带走或外传证据。我感到紧张、戒备，必须立刻行动：马上折返回驯鹿酒吧封门、召信得过的手下查扣通讯并当面查清珊德拉的立场，优先夺回或销毁任何证物。",
+      "gameDay": 2,
+      "gameTime": "02:09",
+      "location": "ROAD_3",
+      "metadata": {
+        "impact": 2,
+        "perspective": "co_presence",
+        "sourceAction": "Adolph Carl, Shandra Hernandez 在 卡森德拉南新街",
+        "sourceCharacterId": "__encounter__"
+      }
+    },
+    {
+      "type": "witness",
+      "content": "[相遇] 我在一层大厅与卢茨、帕特里齐奥和塔兰面对面相遇。帕特里齐奥此前曾当众解除我的武装，我感到被威胁、羞辱且愤怒。现在必须马上采取行动：夺回武器与钥匙、封锁出入口、查扣通讯并优先夺回或销毁约翰尼的相机与存储卡，同时召回并指挥信得过的手下，警惕卢茨与塔兰的反抗。",
+      "gameDay": 2,
+      "gameTime": "02:14",
+      "location": "SCN_16_SUB_1",
+      "metadata": {
+        "impact": 2,
+        "perspective": "co_presence",
+        "sourceAction": "Lutz Emilion, Patrizio von Samsa, Taran Emilion 在 一层大厅",
+        "sourceCharacterId": "__encounter__"
+      }
+    },
+    {
+      "type": "event",
+      "content": "赶回驯鹿酒吧 成功",
+      "gameDay": 2,
+      "gameTime": "02:14",
+      "location": "SCN_16_SUB_1",
+      "metadata": {
+        "outcome": "赶回驯鹿酒吧 成功",
+        "blockedReason": "",
+        "failureReason": ""
+      }
+    },
+    {
+      "type": "event",
+      "content": "我当众搜身帕特里齐奥，彻底检查了他的衣物和随身夹层，没搜到相机、存储卡或任何通讯设备；在众人面前这样做既令他窘迫，也再次巩固了我的威慑。 [rel:Patrizio von Samsa -4 → -60]",
+      "gameDay": 2,
+      "gameTime": "02:17",
+      "location": "SCN_16_SUB_1",
+      "metadata": {
+        "outcome": "当众搜身帕特里齐奥，彻底检查并夺走任何相机、存储卡和通讯设备"
+      }
+    },
+    {
+      "type": "event",
+      "content": "前往教堂召集信得过的手下支援 成功",
+      "gameDay": 2,
+      "gameTime": "02:28",
+      "location": "SCN_17_SUB_1",
+      "metadata": {
+        "outcome": "前往教堂召集信得过的手下支援 成功",
+        "blockedReason": "",
+        "failureReason": ""
+      }
+    },
+    {
+      "type": "witness",
+      "content": "[相遇] 我在教堂主殿与Constantine Frollo面对面相遇。看到他让我高度警觉——不知道他来意，怀疑会干扰我召集手下或与对方勾结。我感到戒备与不安，必须立刻确认他的立场并准备召唤支援或采取强硬手段。",
+      "gameDay": 2,
+      "gameTime": "02:28",
+      "location": "SCN_17_SUB_1",
+      "metadata": {
+        "impact": 2,
+        "perspective": "co_presence",
+        "sourceAction": "Constantine Frollo 在 教堂主殿",
+        "sourceCharacterId": "__encounter__"
+      }
+    },
+    {
+      "type": "event",
+      "content": "命令康斯坦丁从暗门通道中出来并当面说明他的立场与来意 [在 SCN_17_SUB_1 因重新规划而中断] 已中断",
+      "gameDay": 2,
+      "gameTime": "03:39",
+      "location": "SCN_17_SUB_1",
+      "metadata": {
+        "outcome": "命令康斯坦丁从暗门通道中出来并当面说明他的立场与来意 [在 SCN_17_SUB_1 因重新规划而中断] 已中断",
+        "interruptionReason": "revise_replan"
+      }
+    },
+    {
+      "type": "witness",
+      "content": "[相遇] 我在教堂主殿与Constantine Frollo和Shandra Hernandez面对面相遇。看到他们我立刻高度警觉——不确定来意，怀疑会干扰我召集手下或与约翰尼一伙勾结带走证物。我感到不安与戒备，必须当面摸清Constantine的立场并准备立刻召唤支援或采取强硬手段，同时继续把夺回武器、钥匙与查扣通讯设备列为优先事项。",
+      "gameDay": 2,
+      "gameTime": "03:39",
+      "location": "SCN_17_SUB_1",
+      "metadata": {
+        "impact": 2,
+        "perspective": "co_presence",
+        "sourceAction": "Shandra Hernandez, Constantine Frollo 在 教堂主殿",
+        "sourceCharacterId": "__encounter__"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我想逼问康斯坦丁他的立场与来意，但在威吓时失手（Intimidate fumble），动作笨拙地撞到祭坛边缘并擦伤自己，没逼出任何有用信息。康斯坦丁稳住了并抵抗了我的威胁。 [rel:Constantine Frollo -10 → -10]",
+      "gameDay": 2,
+      "gameTime": "03:45",
+      "location": "SCN_17_SUB_1",
+      "metadata": {
+        "outcome": "逼问Constantine Frollo他的立场与来意 [Intimidate 50, rolled 100 (fumble) — all targets resisted] failed"
+      }
+    },
+    {
+      "type": "witness",
+      "content": "[相遇] 我在教堂主殿与Constantine Frollo、Shandra Hernandez和一个新面孔Marks White当面相遇。看到他们让我高度警觉和不安——怀疑有人会干扰我召集手下或与约翰尼一伙勾结带走证物。我感到戒备与愤怒，必须当面摸清他们的立场并准备召唤支援或采取强硬手段，同时继续优先考虑夺回武器、钥匙与查扣通讯设备。",
+      "gameDay": 2,
+      "gameTime": "07:06",
+      "location": "SCN_17_SUB_1",
+      "metadata": {
+        "impact": 2,
+        "perspective": "co_presence",
+        "sourceAction": "Marks White, Constantine Frollo, Shandra Hernandez 在 教堂主殿",
+        "sourceCharacterId": "__encounter__"
+      }
+    },
+    {
+      "type": "plan",
+      "content": "Today's plan: 1. 在教堂地下赌场监督开场，布置赌桌并交代手下分工。 at 教堂; 2. 盯住几位高风险赌客，制造机会让他们下更重的赌注以扩大债务。 at 教堂; 3. 和卢奇菲罗碰面，核对今晚收来的欠款并安排对几名顽固债务人的后续施压。 at 驯鹿酒吧; 4. 到南希家里当面提醒她赌债和不雅照片，用威胁换取第一笔还款或口头承诺。 at 花店·卡森德拉之花; 5. 把从南希和其他人收来的钱交给账房并重新分配筹码以维持赌场现金流。 at 教堂; 6. 去五金店找哈里森拿一件能用来遮蔽监控或修理赌场设备的小工具。 at 五金店; 7. 数清当日收入，整理把柄记录，安排明日轮班，然后在教堂后室休息睡觉。 at 教堂",
+      "gameDay": 1,
+      "gameTime": "19:00",
+      "location": null,
+      "metadata": {
+        "planType": "daily"
+      }
+    },
+    {
+      "type": "event",
+      "content": "监督地下赌场开场，指挥布置赌桌并交代手下分工，确认筹码与酒水到位 成功",
+      "gameDay": 1,
+      "gameTime": "19:10",
+      "location": "SCN_17_SUB_4",
+      "metadata": {
+        "outcome": "监督地下赌场开场，指挥布置赌桌并交代手下分工，确认筹码与酒水到位 成功"
+      }
+    },
+    {
+      "type": "witness",
+      "content": "[目击] 我在地下赌场巡视并接管了一张赌桌，塔林在旁维持秩序。我警告了几位冲动的赌客，注意每个进来的人，场内平稳无纠纷。感觉掌控在手，继续按原计划盯紧高风险赌客并拓展把柄。",
+      "gameDay": 1,
+      "gameTime": "19:20",
+      "location": "SCN_17_SUB_4",
+      "metadata": {
+        "impact": 2,
+        "perspective": "witness",
+        "sourceAction": "我在地下赌场里巡视并接管了一张赌桌，在旁边维持秩序，向几位有冲动的赌客发出警告，同时留意每个进来的人。场内没有因此爆发纠纷。",
+        "sourceCharacterId": "Tallinn"
+      }
+    },
+    {
+      "type": "event",
+      "content": "观察几位高风险赌客的下注和情绪，寻找让他们下更重赌注的机会 成功",
+      "gameDay": 1,
+      "gameTime": "19:25",
+      "location": "SCN_17_SUB_4",
+      "metadata": {
+        "outcome": "观察几位高风险赌客的下注和情绪，寻找让他们下更重赌注的机会 成功"
+      }
+    },
+    {
+      "type": "event",
+      "content": "前往驯鹿酒吧 成功",
+      "gameDay": 1,
+      "gameTime": "19:36",
+      "location": "SCN_16_SUB_1",
+      "metadata": {
+        "outcome": "前往驯鹿酒吧 成功",
+        "blockedReason": "",
+        "failureReason": ""
+      }
+    },
+    {
+      "type": "witness",
+      "content": "[相遇] 我在一层大厅与Lutz Emilion和Taran Emilion面对面相遇。塔林看起来和之前在地下赌场时一样稳重在旁，但Lutz我不熟，神情有点耐人寻味。我警觉起来，感觉有必要先问清他们的来意，确认这会不会影响今晚我和卢奇菲罗的收款与对欠债人的后续处理。",
+      "gameDay": 1,
+      "gameTime": "19:36",
+      "location": "SCN_16_SUB_1",
+      "metadata": {
+        "impact": 2,
+        "perspective": "co_presence",
+        "sourceAction": "Lutz Emilion, Taran Emilion 在 一层大厅",
+        "sourceCharacterId": "__encounter__"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我在驯鹿酒吧一层对卢茨和塔兰进行了盘问，试图用强硬态度弄清他们来意和是否构成威胁或机会。两人都抵抗了我的施压：卢茨用圆滑的敷衍化解，塔兰则保持缄默。没从他们那里得到有用情报。 [rel:Lutz Emilion -5 → -5] [rel:Taran Emilion -10 → -10]",
+      "gameDay": 1,
+      "gameTime": "19:42",
+      "location": "SCN_16_SUB_1",
+      "metadata": {
+        "outcome": "盘问Lutz Emilion和Taran Emilion，弄清他们来意并评估是否构成威胁或机会 [Intimidate 60, rolled 44 (regular) — all targets resisted] failed"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我把手枪从大衣里掏出来，重重地放在吧台台面上，让卢茨和塔兰看见，示威性地盯着他们。",
+      "gameDay": 1,
+      "gameTime": "19:46",
+      "location": "SCN_16_SUB_1",
+      "metadata": {
+        "itemId": "手枪",
+        "outcome": "把手枪从大衣里掏出来，重重地放在吧台上，让卢茨和塔兰看到，示威性地盯着他们",
+        "itemName": "手枪"
+      }
+    },
+    {
+      "type": "event",
+      "content": "有人在低声安抚我，声称愿意合作但不说监控或账本的事。我没有上当，保持警惕并拒绝透露任何相关信息。",
+      "gameDay": 1,
+      "gameTime": "19:50",
+      "location": "SCN_16_SUB_1",
+      "metadata": {
+        "outcome": "低声安抚科温德，语气平静表示愿意合作但不提供有关监控或账本的信息；同时朝卢茨做出暗示，让他立即派人盯住已标注的盲区并准备在必要时封门或拨打外援电话"
+      }
+    },
+    {
+      "type": "witness",
+      "content": "[相遇] 20:07 在一层大厅我看到Marcel Gwynplaine和Lutz、Taran面对面站着。Marcel我不熟，他的出现让我警觉——Lutz之前就很耐人寻味，塔兰依旧冷静沉默。感觉这可能会影响今晚对欠债人的收款安排或与卢奇菲罗的碰面。我要先摸清Marcel的来意和关系，再决定接下来的威慑和收款步骤。",
+      "gameDay": 1,
+      "gameTime": "20:07",
+      "location": "SCN_16_SUB_1",
+      "metadata": {
+        "impact": 2,
+        "perspective": "co_presence",
+        "sourceAction": "Marcel Gwynplaine, Lutz Emilion, Taran Emilion 在 一层大厅",
+        "sourceCharacterId": "__encounter__"
+      }
+    },
+    {
+      "type": "witness",
+      "content": "[相遇] 23:04 我在一层大厅与Johnny、Lutz Emilion 和 Taran Emilion 面对面相遇。见到Johnny让我警觉——他和卢茨、塔兰站在一起的意味不明。我感到紧张且戒备，必须马上弄清Johnny的身份和他们的来意，评估这会不会影响今晚的收款安排。准备上前盘问并以威慑手段探出有用情报，暂缓与卢奇菲罗的会面，直到弄清楚局势。",
+      "gameDay": 1,
+      "gameTime": "23:04",
+      "location": "SCN_16_SUB_1",
+      "metadata": {
+        "impact": 2,
+        "perspective": "co_presence",
+        "sourceAction": "Johnny, Lutz Emilion, Taran Emilion 在 一层大厅",
+        "sourceCharacterId": "__encounter__"
+      }
+    },
+    {
+      "type": "event",
+      "content": "威胁卢茨和塔兰，逼他们当场说出今晚的来意和有无隐情 [在 SCN_16_SUB_1 因重新规划而中断] 已中断",
+      "gameDay": 1,
+      "gameTime": "23:04",
+      "location": "SCN_16_SUB_1",
+      "metadata": {
+        "outcome": "威胁卢茨和塔兰，逼他们当场说出今晚的来意和有无隐情 [在 SCN_16_SUB_1 因重新规划而中断] 已中断",
+        "interruptionReason": "revise_replan"
+      }
+    },
+    {
+      "type": "event",
+      "content": "[直接] 23:05 — 塔兰低声安抚我，说愿意合作但不肯交代监控或账本的事，我保持抵抗，什么也没说。与此同时，我朝卢茨做了暗示，要求他立刻派人盯住已标注的盲区并在必要时封门或拨打外援，卢茨当场点头答应。感觉对塔兰更警惕，怀疑他在试探或拖时间；对卢茨的反应略感安心，但也警觉可能引起更大动作，需要继续盯住Johnny、Marcel和两人的关系。",
+      "gameDay": 1,
+      "gameTime": "23:05",
+      "location": "SCN_16_SUB_1",
+      "metadata": {
+        "impact": 1,
+        "perspective": "targeted",
+        "sourceAction": "我低声安抚科温德，表示愿意合作但不提供有关监控或账本的信息，科温德保持抵抗，没透露任何东西。我同时朝卢茨做了暗示，要求他立刻派人盯住已标注的盲区并在必要时封门或拨打外援，卢茨当场点头答应。",
+        "sourceCharacterId": "Taran Emilion"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我上前以威慑口吻盘问Johnny、Lutz和Taran，强硬追问他们今晚的来意与相互关系，想查清是否会妨碍今晚的收款。但他们都抵抗了我的逼问，我没得到任何有用情报。对他们的抵抗我更生不满，也提高了警觉。 [rel:Johnny -10 → -10] [rel:Lutz Emilion -6 → -11] [rel:Taran Emilion -4 → -19]",
+      "gameDay": 1,
+      "gameTime": "23:10",
+      "location": "SCN_16_SUB_1",
+      "metadata": {
+        "outcome": "上前盘问Johnny、Lutz和Taran，强硬追问他们今晚的来意与相互关系，探查是否会妨碍今晚的收款并以威慑口吻试探他们的反应 [Intimidate 60, rolled 86 (fail) — all targets resisted] failed"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我从吧台上拿起那把手枪，举向Johnny、卢茨和塔兰示威，盯着他们以震慑。保持着姿态等待他们的反应，准备在必要时先发制人。",
+      "gameDay": 1,
+      "gameTime": "23:13",
+      "location": "SCN_16_SUB_1",
+      "metadata": {
+        "itemId": "手枪",
+        "outcome": "从吧台上拿起手枪并朝Johnny、卢茨和塔兰亮出以震慑他们",
+        "itemName": "手枪"
+      }
+    },
+    {
+      "type": "event",
+      "content": "卢茨以低而平静的语气跟我说话，我接过酒杯并把手枪放在吧台上以示暂时不想惹事。虽然我没有立刻动手，但我仍然怀疑他可能和塔兰有默契，保持防备。",
+      "gameDay": 1,
+      "gameTime": "23:16",
+      "location": "SCN_16_SUB_1",
+      "metadata": {
+        "outcome": "用低而平静的语气对科温德说：'请冷静，咱们都不想惹事，先把枪放下，我们会配合你。'并将一杯酒悄悄推到吧台上示意缓和"
+      }
+    },
+    {
+      "type": "event",
+      "content": "塔兰低声安抚我，想让我放下武器，但我没有软下来，也没有交出枪。虽然枪放在吧台上显眼摆着，我仍保持戒备，并对塔兰更不信任。",
+      "gameDay": 1,
+      "gameTime": "23:17",
+      "location": "SCN_16_SUB_1",
+      "metadata": {
+        "outcome": "低声安抚科温德，试图平息他的怒气并让他放下武器 [Persuade 10, rolled 71 (fail) — all targets resisted] failed"
+      }
+    },
+    {
+      "type": "event",
+      "content": "[直接] 23:17 — 塔兰低声对我劝说，试图平息我的怒气并让我放下手枪，但我没有被说服，劝说失败。气氛仍然紧张，手枪显眼地摆在吧台上。我感到恼怒、戒备并更不信任塔兰，会保持防备，继续推迟与卢奇菲罗的碰面，先摸清Johnny和Marcel的来意。",
+      "gameDay": 1,
+      "gameTime": "23:17",
+      "location": "SCN_16_SUB_1",
+      "metadata": {
+        "impact": 1,
+        "perspective": "targeted",
+        "sourceAction": "我低声对科温德说话，试图平息他的怒气并让他放下手枪，但劝说失败——他抵抗并没有被说服。气氛依旧紧张，我注意到手枪仍显眼地放在吧台上，科温德保持警惕。",
+        "sourceCharacterId": "Taran Emilion"
+      }
+    },
+    {
+      "type": "secret",
+      "content": "卢茨在我暗示后当场点头，同意立刻派人盯住我标注的盲区，并在必要时封门或拨打外援。这给了我一些暂时的安心，但我怀疑这是表面服从而非诚心配合。",
+      "gameDay": 1,
+      "gameTime": "23:59",
+      "location": null,
+      "metadata": {
+        "revealed": false,
+        "difficulty": "hard",
+        "knowledgeId": "learned_day1_1"
+      }
+    },
+    {
+      "type": "information",
+      "content": "Johnny、卢茨、塔兰和Marcel今晚曾在一层大厅同时出现并站在一起，他们对我的盘问采取了联合抵抗的态度，拒绝透露实质信息。",
+      "gameDay": 1,
+      "gameTime": "23:59",
+      "location": null,
+      "metadata": {
+        "revealed": false,
+        "difficulty": "regular",
+        "knowledgeId": "learned_day1_2"
+      }
+    },
+    {
+      "type": "information",
+      "content": "有人在劝说时低声表示愿意合作，但明确拒绝交出监控或账本相关信息——他们愿意安抚我却不愿付出关键情报。",
+      "gameDay": 1,
+      "gameTime": "23:59",
+      "location": null,
+      "metadata": {
+        "revealed": false,
+        "difficulty": "regular",
+        "knowledgeId": "learned_day1_3"
+      }
+    }
+  ],
+  "plans": [
+    {
+      "npcName": "Kovind",
+      "gameDay": 1,
+      "schedule": [
+        {
+          "activity": "在教堂地下赌场监督开场，布置赌桌并交代手下分工。",
+          "location": "教堂"
+        },
+        {
+          "activity": "盯住几位高风险赌客，制造机会让他们下更重的赌注以扩大债务。",
+          "location": "教堂"
+        },
+        {
+          "activity": "和卢奇菲罗碰面，核对今晚收来的欠款并安排对几名顽固债务人的后续施压。",
+          "location": "驯鹿酒吧"
+        },
+        {
+          "activity": "到南希家里当面提醒她赌债和不雅照片，用威胁换取第一笔还款或口头承诺。",
+          "location": "花店·卡森德拉之花"
+        },
+        {
+          "activity": "把从南希和其他人收来的钱交给账房并重新分配筹码以维持赌场现金流。",
+          "location": "教堂"
+        },
+        {
+          "activity": "去五金店找哈里森拿一件能用来遮蔽监控或修理赌场设备的小工具。",
+          "location": "五金店"
+        },
+        {
+          "activity": "数清当日收入，整理把柄记录，安排明日轮班，然后在教堂后室休息睡觉。",
+          "location": "教堂"
+        }
+      ],
+      "nodes": [
+        {
+          "type": "action",
+          "action": "监督地下赌场开场，指挥布置赌桌并交代手下分工，确认筹码与酒水到位",
+          "impact": 2,
+          "nodeId": "a_kovind_001",
+          "status": "completed",
+          "endTime": "19:10",
+          "outcome": "监督地下赌场开场，指挥布置赌桌并交代手下分工，确认筹码与酒水到位 成功",
+          "startTime": "19:00",
+          "characterId": "Kovind",
+          "characterName": "Kovind",
+          "executionMeta": {
+            "startedAt": "19:00",
+            "completedAt": "19:10",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "action",
+          "action": "观察几位高风险赌客的下注和情绪，寻找让他们下更重赌注的机会",
+          "impact": 0,
+          "nodeId": "a2",
+          "status": "completed",
+          "endTime": "19:25",
+          "outcome": "观察几位高风险赌客的下注和情绪，寻找让他们下更重赌注的机会 成功",
+          "startTime": "19:11",
+          "characterId": "Kovind",
+          "characterName": "Kovind",
+          "executionMeta": {
+            "startedAt": "19:11",
+            "completedAt": "19:25",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "movement",
+          "action": "前往驯鹿酒吧",
+          "impact": 0,
+          "nodeId": "m_kovind_1926",
+          "status": "completed",
+          "endTime": "19:30",
+          "outcome": "前往驯鹿酒吧 成功",
+          "startTime": "19:26",
+          "characterId": "Kovind",
+          "destination": "SCN_16_SUB_1",
+          "characterName": "Kovind",
+          "executionMeta": {
+            "movement": {
+              "routeSnapshot": [
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_3",
+                    "position": 0.49
+                  },
+                  "from": {
+                    "type": "scene",
+                    "sceneId": "SCN_17_SUB_1"
+                  },
+                  "kind": "along_road",
+                  "roadId": "ROAD_3",
+                  "blockCheck": {
+                    "toId": "ROAD_3",
+                    "fromId": "SCN_17_SUB_1"
+                  },
+                  "durationMinutes": 1
+                },
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_3",
+                    "position": 1
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_3",
+                    "position": 0.49
+                  },
+                  "kind": "along_road",
+                  "roadId": "ROAD_3",
+                  "durationMinutes": 5.1
+                },
+                {
+                  "to": {
+                    "type": "junction",
+                    "junctionId": "JUNC_4"
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_3",
+                    "position": 1
+                  },
+                  "kind": "to_junction",
+                  "blockCheck": {
+                    "toId": "JUNC_4",
+                    "fromId": "ROAD_3"
+                  },
+                  "durationMinutes": 0
+                },
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_3",
+                    "position": 1
+                  },
+                  "from": {
+                    "type": "junction",
+                    "junctionId": "JUNC_4"
+                  },
+                  "kind": "to_junction",
+                  "blockCheck": {
+                    "toId": "ROAD_3",
+                    "fromId": "JUNC_4"
+                  },
+                  "durationMinutes": 0
+                },
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_3",
+                    "position": 0.76
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_3",
+                    "position": 1
+                  },
+                  "kind": "along_road",
+                  "roadId": "ROAD_3",
+                  "durationMinutes": 2.4
+                },
+                {
+                  "to": {
+                    "type": "scene",
+                    "sceneId": "SCN_16_SUB_1"
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_3",
+                    "position": 0.76
+                  },
+                  "kind": "to_scene",
+                  "blockCheck": {
+                    "toId": "SCN_16_SUB_1",
+                    "fromId": "ROAD_3"
+                  },
+                  "durationMinutes": 1
+                }
+              ],
+              "targetPosition": {
+                "type": "scene",
+                "sceneId": "SCN_16_SUB_1"
+              },
+              "minutesIntoStep": 0,
+              "currentStepIndex": 6,
+              "lastReachablePosition": {
+                "type": "scene",
+                "sceneId": "SCN_16_SUB_1"
+              }
+            },
+            "startedAt": "19:26",
+            "completedAt": "19:36",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "character_interaction",
+          "skill": "Intimidate",
+          "action": "以威胁口吻逼问Johnny他与卢茨、塔兰和Marcel的关系以及今晚的来意",
+          "impact": 2,
+          "nodeId": "ci_kovind_001",
+          "status": "in_progress",
+          "endTime": "23:17",
+          "startTime": "23:14",
+          "characterId": "Kovind",
+          "characterName": "Kovind",
+          "executionMeta": {
+            "startedAt": "23:14",
+            "remainingMinutes": 3
+          },
+          "targetCharacterIds": [
+            "Johnny"
+          ]
+        },
+        {
+          "type": "object_interaction",
+          "action": "从吧台上拿起手枪并朝Johnny、卢茨和塔兰亮出以震慑他们",
+          "impact": 2,
+          "nodeId": "oi_kovind_001",
+          "status": "completed",
+          "endTime": "23:13",
+          "outcome": "我从吧台上拿起那把手枪，举向Johnny、卢茨和塔兰示威，盯着他们以震慑。保持着姿态等待他们的反应，准备在必要时先发制人。",
+          "startTime": "23:11",
+          "characterId": "Kovind",
+          "characterName": "Kovind",
+          "executionMeta": {
+            "startedAt": "23:11",
+            "completedAt": "23:13",
+            "remainingMinutes": 0
+          },
+          "objectInteractionPayload": {
+            "itemId": "手枪"
+          }
+        },
+        {
+          "type": "character_interaction",
+          "skill": "Intimidate",
+          "action": "威胁卢茨和塔兰，逼他们当场说出今晚的来意和有无隐情",
+          "impact": 2,
+          "nodeId": "ci1",
+          "status": "interrupted",
+          "endTime": "19:50",
+          "outcome": "威胁卢茨和塔兰，逼他们当场说出今晚的来意和有无隐情 [因重新规划而中断] 已中断",
+          "startTime": "19:47",
+          "characterId": "Kovind",
+          "characterName": "Kovind",
+          "executionMeta": {
+            "startedAt": "19:47",
+            "interruptedAt": "23:04",
+            "remainingMinutes": 0,
+            "interruptionReason": "revise_replan"
+          },
+          "targetCharacterIds": [
+            "Lutz Emilion",
+            "Taran Emilion"
+          ]
+        },
+        {
+          "type": "character_interaction",
+          "skill": "Intimidate",
+          "action": "上前盘问Johnny、Lutz和Taran，强硬追问他们今晚的来意与相互关系，探查是否会妨碍今晚的收款并以威慑口吻试探他们的反应",
+          "impact": 2,
+          "nodeId": "ci_day1_2305",
+          "status": "failed",
+          "endTime": "23:10",
+          "startTime": "23:05",
+          "characterId": "Kovind",
+          "characterName": "Kovind",
+          "executionMeta": {
+            "failedAt": "23:10",
+            "startedAt": "23:05",
+            "remainingMinutes": 5
+          },
+          "targetCharacterIds": [
+            "Johnny",
+            "Lutz Emilion",
+            "Taran Emilion"
+          ]
+        },
+        {
+          "type": "object_interaction",
+          "action": "从吧台上拿起手枪并朝Johnny、卢茨和塔兰亮出以震慑他们",
+          "impact": 2,
+          "nodeId": "oi_kovind_001",
+          "status": "completed",
+          "endTime": "23:13",
+          "outcome": "我从吧台上拿起那把手枪，举向Johnny、卢茨和塔兰示威，盯着他们以震慑。保持着姿态等待他们的反应，准备在必要时先发制人。",
+          "startTime": "23:11",
+          "characterId": "Kovind",
+          "characterName": "Kovind",
+          "executionMeta": {
+            "startedAt": "23:11",
+            "completedAt": "23:13",
+            "remainingMinutes": 0
+          },
+          "objectInteractionPayload": {
+            "itemId": "手枪"
+          }
+        },
+        {
+          "type": "character_interaction",
+          "skill": "Intimidate",
+          "action": "以威胁口吻逼问Johnny他与卢茨、塔兰和Marcel的关系以及今晚的来意",
+          "impact": 2,
+          "nodeId": "ci_kovind_001",
+          "status": "in_progress",
+          "endTime": "23:17",
+          "startTime": "23:14",
+          "characterId": "Kovind",
+          "characterName": "Kovind",
+          "executionMeta": {
+            "startedAt": "23:14",
+            "remainingMinutes": 3
+          },
+          "targetCharacterIds": [
+            "Johnny"
+          ]
+        }
+      ]
+    },
+    {
+      "npcName": "Kovind",
+      "gameDay": 2,
+      "schedule": [
+        {
+          "activity": "在一层大厅检查被拆开的监控设备和盲区书面记录，确定哪些点要优先修复或利用。",
+          "location": "驯鹿酒吧"
+        },
+        {
+          "activity": "上到二层隔层近距离观察卢茨、塔兰和Johnny的反应并试图从他们口中撬出今晚的真实目的。",
+          "location": "驯鹿酒吧"
+        },
+        {
+          "activity": "把手枪和其他武器收拢安置好，并命令吧台看守注意任何可疑动作以稳住局面。",
+          "location": "驯鹿酒吧"
+        },
+        {
+          "activity": "召集几个信得过的手下分配夜间巡逻、封门和外援联络的职责，标注重点盲区加强盯守。",
+          "location": "驯鹿酒吧"
+        },
+        {
+          "activity": "下到教堂下的地下赌场巡视赌桌和账本，确认账务安全并检查是否有人动过手脚。",
+          "location": "教堂"
+        },
+        {
+          "activity": "去找南希·夏洛特逼她交出一部分赌债并提醒她不雅照片的后果以确保她保持听话。",
+          "location": "花店·卡森德拉之花"
+        },
+        {
+          "activity": "回到教堂整理今晚的所得、安排明日的收债与人脉维护，然后休息睡觉为明晚做准备。",
+          "location": "教堂"
+        }
+      ],
+      "nodes": [
+        {
+          "type": "scene_interaction",
+          "action": "用手中的储物柜钥匙打开吧台后方储物柜并把猎枪从柜内取出，握在手中控制住武器",
+          "impact": 2,
+          "nodeId": "si1",
+          "status": "completed",
+          "endTime": "01:43",
+          "outcome": "我用手中的储物柜钥匙打开了吧台后方的储物柜，从里面把猎枪取出来并握在手中，控制住了武器。",
+          "startTime": "01:41",
+          "characterId": "Kovind",
+          "characterName": "Kovind",
+          "executionMeta": {
+            "startedAt": "01:41",
+            "completedAt": "01:43",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "object_interaction",
+          "action": "收起吧台上的猎枪",
+          "impact": 2,
+          "nodeId": "oi_kovind_0001",
+          "status": "interrupted",
+          "endTime": "00:09",
+          "outcome": "收起吧台上的猎枪 [因重新规划而中断] 已中断",
+          "startTime": "00:07",
+          "characterId": "Kovind",
+          "characterName": "Kovind",
+          "executionMeta": {
+            "startedAt": "00:07",
+            "interruptedAt": "00:08",
+            "remainingMinutes": 0,
+            "interruptionReason": "revise_replan"
+          },
+          "objectInteractionPayload": {
+            "itemId": "猎枪"
+          }
+        },
+        {
+          "type": "character_interaction",
+          "action": "命令卢茨与塔兰立刻封锁所有出入口、查扣并集中保管所有通讯设备，立即将帕特里齐奥控制在吧台附近不得离开，违命开枪处理",
+          "impact": 2,
+          "nodeId": "ci1",
+          "status": "interrupted",
+          "endTime": "01:53",
+          "outcome": "命令卢茨与塔兰立刻封锁所有出入口、查扣并集中保管所有通讯设备，立即将帕特里齐奥控制在吧台附近不得离开，违命开枪处理 [因重新规划而中断] 已中断",
+          "startTime": "01:51",
+          "characterId": "Kovind",
+          "characterName": "Kovind",
+          "executionMeta": {
+            "startedAt": "01:51",
+            "interruptedAt": "01:53",
+            "remainingMinutes": 0,
+            "interruptionReason": "revise_replan"
+          },
+          "targetCharacterIds": [
+            "Lutz Emilion",
+            "Taran Emilion"
+          ]
+        },
+        {
+          "type": "character_interaction",
+          "action": "命令卢茨与塔兰立刻封锁所有出入口、查扣并集中保管所有通讯设备，立即将帕特里齐奥控制在吧台附近不得离开，违命开枪处理",
+          "impact": 2,
+          "nodeId": "ci1",
+          "status": "interrupted",
+          "endTime": "01:53",
+          "outcome": "命令卢茨与塔兰立刻封锁所有出入口、查扣并集中保管所有通讯设备，立即将帕特里齐奥控制在吧台附近不得离开，违命开枪处理 [因重新规划而中断] 已中断",
+          "startTime": "01:51",
+          "characterId": "Kovind",
+          "characterName": "Kovind",
+          "executionMeta": {
+            "startedAt": "01:51",
+            "interruptedAt": "01:53",
+            "remainingMinutes": 0,
+            "interruptionReason": "revise_replan"
+          },
+          "targetCharacterIds": [
+            "Lutz Emilion",
+            "Taran Emilion"
+          ]
+        },
+        {
+          "type": "character_interaction",
+          "skill": "Intimidate",
+          "action": "逼问Constantine Frollo他的立场与来意",
+          "impact": 1,
+          "nodeId": "ci_kovind_01",
+          "status": "failed",
+          "endTime": "03:45",
+          "startTime": "03:40",
+          "characterId": "Kovind",
+          "characterName": "Kovind",
+          "executionMeta": {
+            "failedAt": "03:45",
+            "startedAt": "03:40",
+            "remainingMinutes": 5
+          },
+          "targetCharacterIds": [
+            "Constantine Frollo"
+          ]
+        },
+        {
+          "type": "character_interaction",
+          "action": "命令卢茨和塔兰立即封锁所有出入口，查扣所有手机并拦截试图离开的帕特里齐奥和约翰尼，禁止任何人离开酒吧",
+          "impact": 1,
+          "nodeId": "ci_kovind_001",
+          "status": "completed",
+          "endTime": "00:51",
+          "outcome": "我命令卢茨和塔兰立刻封锁所有出入口、查扣所有手机并拦截试图离开的帕特里齐奥和约翰尼；他们表示会照办。为了确保服从，我保持强硬姿态并让自己的手枪显眼摆放在吧台上。",
+          "startTime": "00:49",
+          "characterId": "Kovind",
+          "characterName": "Kovind",
+          "executionMeta": {
+            "startedAt": "00:49",
+            "completedAt": "00:51",
+            "remainingMinutes": 0
+          },
+          "targetCharacterIds": [
+            "Lutz Emilion",
+            "Taran Emilion"
+          ]
+        },
+        {
+          "type": "character_interaction",
+          "action": "命令卢茨与塔兰立刻封锁所有出入口、查扣并集中保管所有通讯设备，立即将帕特里齐奥控制在吧台附近不得离开，违命开枪处理",
+          "impact": 2,
+          "nodeId": "ci1",
+          "status": "interrupted",
+          "endTime": "01:53",
+          "outcome": "命令卢茨与塔兰立刻封锁所有出入口、查扣并集中保管所有通讯设备，立即将帕特里齐奥控制在吧台附近不得离开，违命开枪处理 [因重新规划而中断] 已中断",
+          "startTime": "01:51",
+          "characterId": "Kovind",
+          "characterName": "Kovind",
+          "executionMeta": {
+            "startedAt": "01:51",
+            "interruptedAt": "01:53",
+            "remainingMinutes": 0,
+            "interruptionReason": "revise_replan"
+          },
+          "targetCharacterIds": [
+            "Lutz Emilion",
+            "Taran Emilion"
+          ]
+        },
+        {
+          "type": "character_interaction",
+          "action": "命令卢茨和塔兰立即封锁所有出入口，查扣所有手机并拦截试图离开的帕特里齐奥和约翰尼，禁止任何人离开酒吧",
+          "impact": 1,
+          "nodeId": "ci_kovind_001",
+          "status": "completed",
+          "endTime": "00:51",
+          "outcome": "我命令卢茨和塔兰立刻封锁所有出入口、查扣所有手机并拦截试图离开的帕特里齐奥和约翰尼；他们表示会照办。为了确保服从，我保持强硬姿态并让自己的手枪显眼摆放在吧台上。",
+          "startTime": "00:49",
+          "characterId": "Kovind",
+          "characterName": "Kovind",
+          "executionMeta": {
+            "startedAt": "00:49",
+            "completedAt": "00:51",
+            "remainingMinutes": 0
+          },
+          "targetCharacterIds": [
+            "Lutz Emilion",
+            "Taran Emilion"
+          ]
+        },
+        {
+          "type": "character_interaction",
+          "action": "命令卢茨和塔兰立即封锁所有出入口，查扣所有手机并拦截试图离开的帕特里齐奥和约翰尼，禁止任何人离开酒吧",
+          "impact": 1,
+          "nodeId": "ci_kovind_001",
+          "status": "completed",
+          "endTime": "00:51",
+          "outcome": "我命令卢茨和塔兰立刻封锁所有出入口、查扣所有手机并拦截试图离开的帕特里齐奥和约翰尼；他们表示会照办。为了确保服从，我保持强硬姿态并让自己的手枪显眼摆放在吧台上。",
+          "startTime": "00:49",
+          "characterId": "Kovind",
+          "characterName": "Kovind",
+          "executionMeta": {
+            "startedAt": "00:49",
+            "completedAt": "00:51",
+            "remainingMinutes": 0
+          },
+          "targetCharacterIds": [
+            "Lutz Emilion",
+            "Taran Emilion"
+          ]
+        },
+        {
+          "type": "character_interaction",
+          "action": "命令卢茨和塔兰立即封锁所有出入口，查扣所有手机并拦截试图离开的帕特里齐奥和约翰尼，禁止任何人离开酒吧",
+          "impact": 1,
+          "nodeId": "ci_kovind_001",
+          "status": "completed",
+          "endTime": "00:51",
+          "outcome": "我命令卢茨和塔兰立刻封锁所有出入口、查扣所有手机并拦截试图离开的帕特里齐奥和约翰尼；他们表示会照办。为了确保服从，我保持强硬姿态并让自己的手枪显眼摆放在吧台上。",
+          "startTime": "00:49",
+          "characterId": "Kovind",
+          "characterName": "Kovind",
+          "executionMeta": {
+            "startedAt": "00:49",
+            "completedAt": "00:51",
+            "remainingMinutes": 0
+          },
+          "targetCharacterIds": [
+            "Lutz Emilion",
+            "Taran Emilion"
+          ]
+        },
+        {
+          "type": "character_interaction",
+          "skill": "Intimidate",
+          "action": "命令卢茨与塔兰立刻封锁所有出入口、查扣所有手机并回收我的相机、存储卡与猎枪；违命者立即开枪处理。",
+          "impact": 2,
+          "nodeId": "ci2",
+          "status": "interrupted",
+          "endTime": "01:20",
+          "outcome": "命令卢茨与塔兰立刻封锁所有出入口、查扣所有手机并回收我的相机、存储卡与猎枪；违命者立即开枪处理。 [因重新规划而中断] 已中断",
+          "startTime": "01:17",
+          "characterId": "Kovind",
+          "characterName": "Kovind",
+          "executionMeta": {
+            "startedAt": "01:17",
+            "interruptedAt": "01:19",
+            "remainingMinutes": 0,
+            "interruptionReason": "revise_replan"
+          },
+          "targetCharacterIds": [
+            "Lutz Emilion",
+            "Taran Emilion"
+          ]
+        },
+        {
+          "type": "character_interaction",
+          "skill": "Intimidate",
+          "action": "命令卢茨与塔兰立刻封锁所有出入口、查扣所有手机并回收我的相机、存储卡与猎枪；违命者立即开枪处理。",
+          "impact": 2,
+          "nodeId": "ci2",
+          "status": "interrupted",
+          "endTime": "01:20",
+          "outcome": "命令卢茨与塔兰立刻封锁所有出入口、查扣所有手机并回收我的相机、存储卡与猎枪；违命者立即开枪处理。 [因重新规划而中断] 已中断",
+          "startTime": "01:17",
+          "characterId": "Kovind",
+          "characterName": "Kovind",
+          "executionMeta": {
+            "startedAt": "01:17",
+            "interruptedAt": "01:19",
+            "remainingMinutes": 0,
+            "interruptionReason": "revise_replan"
+          },
+          "targetCharacterIds": [
+            "Lutz Emilion",
+            "Taran Emilion"
+          ]
+        },
+        {
+          "type": "object_interaction",
+          "action": "从吧台后方储物柜取出猎枪并举起以示威吓阻",
+          "impact": 2,
+          "nodeId": "oi_kovind_001",
+          "status": "completed",
+          "endTime": "00:59",
+          "outcome": "我从吧台后方的储物柜里把那把猎枪取了出来，举起以示威吓阻；储物柜门敞开，猎枪现在在我手里。",
+          "startTime": "00:58",
+          "characterId": "Kovind",
+          "characterName": "Kovind",
+          "executionMeta": {
+            "startedAt": "00:58",
+            "completedAt": "00:59",
+            "remainingMinutes": 0
+          },
+          "objectInteractionPayload": {
+            "itemId": "猎枪"
+          }
+        },
+        {
+          "type": "scene_interaction",
+          "action": "封锁主入口，将一张圆桌和几把椅子推到门口并把门反锁，阻止任何人离开",
+          "impact": 2,
+          "nodeId": "si_kovind_lockdoor_0100",
+          "status": "interrupted",
+          "endTime": "01:02",
+          "outcome": "封锁主入口，将一张圆桌和几把椅子推到门口并把门反锁，阻止任何人离开 [因重新规划而中断] 已中断",
+          "startTime": "01:00",
+          "characterId": "Kovind",
+          "characterName": "Kovind",
+          "executionMeta": {
+            "startedAt": "01:00",
+            "interruptedAt": "01:03",
+            "remainingMinutes": 0,
+            "interruptionReason": "revise_replan"
+          }
+        },
+        {
+          "type": "character_interaction",
+          "skill": "Intimidate",
+          "action": "逼问Constantine Frollo他的立场与来意",
+          "impact": 1,
+          "nodeId": "ci_kovind_01",
+          "status": "failed",
+          "endTime": "03:45",
+          "startTime": "03:40",
+          "characterId": "Kovind",
+          "characterName": "Kovind",
+          "executionMeta": {
+            "failedAt": "03:45",
+            "startedAt": "03:40",
+            "remainingMinutes": 5
+          },
+          "targetCharacterIds": [
+            "Constantine Frollo"
+          ]
+        },
+        {
+          "type": "movement",
+          "action": "前往教堂召集信得过的手下支援",
+          "impact": 2,
+          "nodeId": "m_kovind_01",
+          "status": "interrupted",
+          "endTime": "02:08",
+          "outcome": "前往教堂召集信得过的手下支援 [因重新规划而中断] 已中断",
+          "startTime": "02:05",
+          "characterId": "Kovind",
+          "destination": "SCN_17_SUB_1",
+          "characterName": "Kovind",
+          "executionMeta": {
+            "movement": {
+              "routeSnapshot": [
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_3",
+                    "position": 0.76
+                  },
+                  "from": {
+                    "type": "scene",
+                    "sceneId": "SCN_16_SUB_1"
+                  },
+                  "kind": "along_road",
+                  "roadId": "ROAD_3",
+                  "blockCheck": {
+                    "toId": "ROAD_3",
+                    "fromId": "SCN_16_SUB_1"
+                  },
+                  "durationMinutes": 1
+                },
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_3",
+                    "position": 1
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_3",
+                    "position": 0.76
+                  },
+                  "kind": "along_road",
+                  "roadId": "ROAD_3",
+                  "durationMinutes": 2.4
+                },
+                {
+                  "to": {
+                    "type": "junction",
+                    "junctionId": "JUNC_4"
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_3",
+                    "position": 1
+                  },
+                  "kind": "to_junction",
+                  "blockCheck": {
+                    "toId": "JUNC_4",
+                    "fromId": "ROAD_3"
+                  },
+                  "durationMinutes": 0
+                },
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_3",
+                    "position": 1
+                  },
+                  "from": {
+                    "type": "junction",
+                    "junctionId": "JUNC_4"
+                  },
+                  "kind": "to_junction",
+                  "blockCheck": {
+                    "toId": "ROAD_3",
+                    "fromId": "JUNC_4"
+                  },
+                  "durationMinutes": 0
+                },
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_3",
+                    "position": 0.49
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_3",
+                    "position": 1
+                  },
+                  "kind": "along_road",
+                  "roadId": "ROAD_3",
+                  "durationMinutes": 5.1
+                },
+                {
+                  "to": {
+                    "type": "scene",
+                    "sceneId": "SCN_17_SUB_1"
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_3",
+                    "position": 0.49
+                  },
+                  "kind": "to_scene",
+                  "blockCheck": {
+                    "toId": "SCN_17_SUB_1",
+                    "fromId": "ROAD_3"
+                  },
+                  "durationMinutes": 1
+                }
+              ],
+              "targetPosition": {
+                "type": "scene",
+                "sceneId": "SCN_17_SUB_1"
+              },
+              "minutesIntoStep": 0,
+              "currentStepIndex": 1,
+              "lastReachablePosition": {
+                "type": "road",
+                "roadId": "ROAD_3",
+                "position": 0.76
+              }
+            },
+            "startedAt": "02:05",
+            "interruptedAt": "02:05",
+            "remainingMinutes": 0,
+            "interruptionReason": "revise_replan"
+          }
+        },
+        {
+          "type": "movement",
+          "action": "下到一层大厅靠近约翰尼并试图当众夺取他的相机和存储卡",
+          "impact": 2,
+          "nodeId": "m2",
+          "status": "completed",
+          "endTime": "01:10",
+          "outcome": "下到一层大厅靠近约翰尼并试图当众夺取他的相机和存储卡 成功",
+          "startTime": "01:08",
+          "characterId": "Kovind",
+          "destination": "SCN_16_SUB_1",
+          "characterName": "Kovind",
+          "executionMeta": {
+            "movement": {
+              "routeSnapshot": [],
+              "targetPosition": {
+                "type": "scene",
+                "sceneId": "SCN_16_SUB_1"
+              },
+              "minutesIntoStep": 0,
+              "currentStepIndex": 0,
+              "lastReachablePosition": {
+                "type": "scene",
+                "sceneId": "SCN_16_SUB_1"
+              }
+            },
+            "startedAt": "01:08",
+            "completedAt": "01:08",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "character_interaction",
+          "skill": "Intimidate",
+          "action": "威胁并命令卢茨和塔兰当场把收银机抽屉钥匙和所有手机交出来，立即封锁所有出入口并拦截任何靠近监控或收银抽屉的人，违命者开枪处理",
+          "impact": 1,
+          "nodeId": "ci1_kovind_0109",
+          "status": "interrupted",
+          "endTime": "01:11",
+          "outcome": "威胁并命令卢茨和塔兰当场把收银机抽屉钥匙和所有手机交出来，立即封锁所有出入口并拦截任何靠近监控或收银抽屉的人，违命者开枪处理 [因重新规划而中断] 已中断",
+          "startTime": "01:09",
+          "characterId": "Kovind",
+          "characterName": "Kovind",
+          "executionMeta": {
+            "startedAt": "01:09",
+            "interruptedAt": "01:10",
+            "remainingMinutes": 0,
+            "interruptionReason": "revise_replan"
+          },
+          "targetCharacterIds": [
+            "Lutz Emilion",
+            "Taran Emilion"
+          ]
+        },
+        {
+          "type": "character_interaction",
+          "skill": "STR",
+          "action": "猛扑向约翰尼，强行夺取他的相机与存储卡",
+          "impact": 2,
+          "nodeId": "ci_kov_0111_1",
+          "status": "failed",
+          "endTime": "01:13",
+          "startTime": "01:11",
+          "characterId": "Kovind",
+          "characterName": "Kovind",
+          "executionMeta": {
+            "failedAt": "01:13",
+            "startedAt": "01:11",
+            "remainingMinutes": 2
+          },
+          "targetCharacterIds": [
+            "Johnny"
+          ]
+        },
+        {
+          "type": "character_interaction",
+          "skill": "Intimidate",
+          "action": "用手枪指着约翰尼，命令他当场交出相机和存储卡",
+          "impact": 2,
+          "nodeId": "ci1_kovind_0114",
+          "status": "interrupted",
+          "endTime": "01:16",
+          "outcome": "用手枪指着约翰尼，命令他当场交出相机和存储卡 [因重新规划而中断] 已中断",
+          "startTime": "01:14",
+          "characterId": "Kovind",
+          "characterName": "Kovind",
+          "executionMeta": {
+            "startedAt": "01:14",
+            "interruptedAt": "01:16",
+            "remainingMinutes": 0,
+            "interruptionReason": "revise_replan"
+          },
+          "targetCharacterIds": [
+            "Johnny"
+          ]
+        },
+        {
+          "type": "character_interaction",
+          "skill": "Intimidate",
+          "action": "命令卢茨与塔兰立刻封锁所有出入口、查扣所有手机并回收我的相机、存储卡与猎枪；违命者立即开枪处理。",
+          "impact": 2,
+          "nodeId": "ci2",
+          "status": "interrupted",
+          "endTime": "01:20",
+          "outcome": "命令卢茨与塔兰立刻封锁所有出入口、查扣所有手机并回收我的相机、存储卡与猎枪；违命者立即开枪处理。 [因重新规划而中断] 已中断",
+          "startTime": "01:17",
+          "characterId": "Kovind",
+          "characterName": "Kovind",
+          "executionMeta": {
+            "startedAt": "01:17",
+            "interruptedAt": "01:19",
+            "remainingMinutes": 0,
+            "interruptionReason": "revise_replan"
+          },
+          "targetCharacterIds": [
+            "Lutz Emilion",
+            "Taran Emilion"
+          ]
+        },
+        {
+          "type": "character_interaction",
+          "action": "命令卢茨与塔兰立刻封锁所有出入口、没收所有手机并带人围住帕特里齐奥和约翰尼，阻止任何人接近或带走相机与存储卡；违命者开枪处理",
+          "impact": 2,
+          "nodeId": "ci_kovind_0120",
+          "status": "completed",
+          "endTime": "01:22",
+          "outcome": "我当众命令卢茨与塔兰立刻封锁所有出入口、没收所有手机并把帕特里齐奥和约翰尼围住，禁止任何人接近或带走相机与存储卡，并声明违命开枪处理。命令被执行起来，尽管他们明显不情愿，但我暂时恢复了对现场的控制。",
+          "startTime": "01:20",
+          "characterId": "Kovind",
+          "characterName": "Kovind",
+          "executionMeta": {
+            "startedAt": "01:20",
+            "completedAt": "01:22",
+            "remainingMinutes": 0
+          },
+          "targetCharacterIds": [
+            "Lutz Emilion",
+            "Taran Emilion"
+          ]
+        },
+        {
+          "type": "character_interaction",
+          "skill": "Intimidate",
+          "action": "逼问Constantine Frollo他的立场与来意",
+          "impact": 1,
+          "nodeId": "ci_kovind_01",
+          "status": "failed",
+          "endTime": "03:45",
+          "startTime": "03:40",
+          "characterId": "Kovind",
+          "characterName": "Kovind",
+          "executionMeta": {
+            "failedAt": "03:45",
+            "startedAt": "03:40",
+            "remainingMinutes": 5
+          },
+          "targetCharacterIds": [
+            "Constantine Frollo"
+          ]
+        },
+        {
+          "type": "character_interaction",
+          "skill": "Intimidate",
+          "action": "逼问Constantine Frollo他的立场与来意",
+          "impact": 1,
+          "nodeId": "ci_kovind_01",
+          "status": "failed",
+          "endTime": "03:45",
+          "startTime": "03:40",
+          "characterId": "Kovind",
+          "characterName": "Kovind",
+          "executionMeta": {
+            "failedAt": "03:45",
+            "startedAt": "03:40",
+            "remainingMinutes": 5
+          },
+          "targetCharacterIds": [
+            "Constantine Frollo"
+          ]
+        },
+        {
+          "type": "character_interaction",
+          "skill": "Intimidate",
+          "action": "逼问Constantine Frollo他的立场与来意",
+          "impact": 1,
+          "nodeId": "ci_kovind_01",
+          "status": "failed",
+          "endTime": "03:45",
+          "startTime": "03:40",
+          "characterId": "Kovind",
+          "characterName": "Kovind",
+          "executionMeta": {
+            "failedAt": "03:45",
+            "startedAt": "03:40",
+            "remainingMinutes": 5
+          },
+          "targetCharacterIds": [
+            "Constantine Frollo"
+          ]
+        },
+        {
+          "type": "character_interaction",
+          "action": "命令卢茨和塔兰立刻搜身帕特里齐奥与约翰尼，夺回相机与存储卡，查扣所有手机并封锁监控盲区",
+          "impact": 2,
+          "nodeId": "ci_kovind_0132",
+          "status": "completed",
+          "endTime": "01:34",
+          "outcome": "我命令卢茨和塔兰立刻搜身帕特里齐奥与约翰尼，夺回相机与存储卡，查扣所有手机并封锁监控盲区。卢茨不情愿地把酒吧账本交给了我，账本里有盲区和夜间巡逻的具体安排，塔兰在压力下配合。行动达成，但现场更紧张，我要警惕他们日后的暗中反抗。",
+          "startTime": "01:32",
+          "characterId": "Kovind",
+          "characterName": "Kovind",
+          "executionMeta": {
+            "startedAt": "01:32",
+            "completedAt": "01:34",
+            "remainingMinutes": 0
+          },
+          "targetCharacterIds": [
+            "Lutz Emilion",
+            "Taran Emilion"
+          ]
+        },
+        {
+          "type": "character_interaction",
+          "skill": "Intimidate",
+          "action": "逼问Constantine Frollo他的立场与来意",
+          "impact": 1,
+          "nodeId": "ci_kovind_01",
+          "status": "failed",
+          "endTime": "03:45",
+          "startTime": "03:40",
+          "characterId": "Kovind",
+          "characterName": "Kovind",
+          "executionMeta": {
+            "failedAt": "03:45",
+            "startedAt": "03:40",
+            "remainingMinutes": 5
+          },
+          "targetCharacterIds": [
+            "Constantine Frollo"
+          ]
+        },
+        {
+          "type": "character_interaction",
+          "skill": "Intimidate",
+          "action": "强行搜身帕特里齐奥，逼他当场交出并归还我的猎枪与相机",
+          "impact": 2,
+          "nodeId": "ci_kov_01",
+          "status": "interrupted",
+          "endTime": "01:39",
+          "outcome": "强行搜身帕特里齐奥，逼他当场交出并归还我的猎枪与相机 [因重新规划而中断] 已中断",
+          "startTime": "01:36",
+          "characterId": "Kovind",
+          "characterName": "Kovind",
+          "executionMeta": {
+            "startedAt": "01:36",
+            "interruptedAt": "01:38",
+            "remainingMinutes": 0,
+            "interruptionReason": "revise_replan"
+          },
+          "targetCharacterIds": [
+            "Patrizio von Samsa"
+          ]
+        },
+        {
+          "type": "character_interaction",
+          "action": "从卢茨手中抢夺储物柜钥匙，确保他无法取出猎枪",
+          "impact": 2,
+          "nodeId": "ci_kovind_grab_key_01",
+          "status": "completed",
+          "endTime": "01:40",
+          "outcome": "我从卢茨手中抢走了吧台后方储物柜的钥匙，确保他现在无法取出储物柜里的猎枪。卢茨表面服从但愤怒且戒备。",
+          "startTime": "01:39",
+          "characterId": "Kovind",
+          "characterName": "Kovind",
+          "executionMeta": {
+            "startedAt": "01:39",
+            "completedAt": "01:40",
+            "remainingMinutes": 0
+          },
+          "targetCharacterIds": [
+            "Lutz Emilion"
+          ]
+        },
+        {
+          "type": "scene_interaction",
+          "action": "用手中的储物柜钥匙打开吧台后方储物柜并把猎枪从柜内取出，握在手中控制住武器",
+          "impact": 2,
+          "nodeId": "si1",
+          "status": "completed",
+          "endTime": "01:43",
+          "outcome": "我用手中的储物柜钥匙打开了吧台后方的储物柜，从里面把猎枪取出来并握在手中，控制住了武器。",
+          "startTime": "01:41",
+          "characterId": "Kovind",
+          "characterName": "Kovind",
+          "executionMeta": {
+            "startedAt": "01:41",
+            "completedAt": "01:43",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "character_interaction",
+          "action": "命令卢茨与塔兰立刻封锁所有出入口、查扣并集中保管所有通讯设备，立即将帕特里齐奥控制在吧台附近不得离开，违命开枪处理",
+          "impact": 2,
+          "nodeId": "ci1",
+          "status": "interrupted",
+          "endTime": "01:53",
+          "outcome": "命令卢茨与塔兰立刻封锁所有出入口、查扣并集中保管所有通讯设备，立即将帕特里齐奥控制在吧台附近不得离开，违命开枪处理 [因重新规划而中断] 已中断",
+          "startTime": "01:51",
+          "characterId": "Kovind",
+          "characterName": "Kovind",
+          "executionMeta": {
+            "startedAt": "01:51",
+            "interruptedAt": "01:53",
+            "remainingMinutes": 0,
+            "interruptionReason": "revise_replan"
+          },
+          "targetCharacterIds": [
+            "Lutz Emilion",
+            "Taran Emilion"
+          ]
+        },
+        {
+          "type": "character_interaction",
+          "skill": "Intimidate",
+          "action": "逼问Constantine Frollo他的立场与来意",
+          "impact": 1,
+          "nodeId": "ci_kovind_01",
+          "status": "failed",
+          "endTime": "03:45",
+          "startTime": "03:40",
+          "characterId": "Kovind",
+          "characterName": "Kovind",
+          "executionMeta": {
+            "failedAt": "03:45",
+            "startedAt": "03:40",
+            "remainingMinutes": 5
+          },
+          "targetCharacterIds": [
+            "Constantine Frollo"
+          ]
+        },
+        {
+          "type": "character_interaction",
+          "action": "命令卢茨与塔兰立刻封锁所有出入口、查扣并集中保管所有通讯设备，立即将帕特里齐奥控制在吧台附近不得离开，违命开枪处理",
+          "impact": 2,
+          "nodeId": "ci1",
+          "status": "interrupted",
+          "endTime": "01:53",
+          "outcome": "命令卢茨与塔兰立刻封锁所有出入口、查扣并集中保管所有通讯设备，立即将帕特里齐奥控制在吧台附近不得离开，违命开枪处理 [因重新规划而中断] 已中断",
+          "startTime": "01:51",
+          "characterId": "Kovind",
+          "characterName": "Kovind",
+          "executionMeta": {
+            "startedAt": "01:51",
+            "interruptedAt": "01:53",
+            "remainingMinutes": 0,
+            "interruptionReason": "revise_replan"
+          },
+          "targetCharacterIds": [
+            "Lutz Emilion",
+            "Taran Emilion"
+          ]
+        },
+        {
+          "type": "character_interaction",
+          "action": "当众搜身帕特里齐奥，彻底检查并夺走任何相机、存储卡和通讯设备",
+          "impact": 2,
+          "nodeId": "ci_kov_001",
+          "status": "completed",
+          "endTime": "02:17",
+          "outcome": "我当众搜身帕特里齐奥，彻底检查了他的衣物和随身夹层，没搜到相机、存储卡或任何通讯设备；在众人面前这样做既令他窘迫，也再次巩固了我的威慑。",
+          "startTime": "02:15",
+          "characterId": "Kovind",
+          "characterName": "Kovind",
+          "executionMeta": {
+            "startedAt": "02:15",
+            "completedAt": "02:17",
+            "remainingMinutes": 0
+          },
+          "targetCharacterIds": [
+            "Patrizio von Samsa"
+          ]
+        },
+        {
+          "type": "character_interaction",
+          "action": "命令卢茨和塔兰立刻封锁所有出入口、查扣并集中保管所有通讯设备，紧盯并控制帕特里齐奥不得离开，派人巡查监控盲区与后门",
+          "impact": 2,
+          "nodeId": "ci1_0157",
+          "status": "completed",
+          "endTime": "01:59",
+          "outcome": "我命令卢茨和塔兰立刻封锁所有出入口、查扣并集中保管所有通讯设备，紧盯并控制帕特里齐奥不得离开，并派人巡查监控盲区与后门。他们在胁迫下照办，现场气氛依旧紧张，我暂时收回了对局势的控制，但仍警惕他们的态度。",
+          "startTime": "01:57",
+          "characterId": "Kovind",
+          "characterName": "Kovind",
+          "executionMeta": {
+            "startedAt": "01:57",
+            "completedAt": "01:59",
+            "remainingMinutes": 0
+          },
+          "targetCharacterIds": [
+            "Lutz Emilion",
+            "Taran Emilion"
+          ]
+        },
+        {
+          "type": "character_interaction",
+          "skill": "Intimidate",
+          "action": "从帕特里齐奥身上强行夺回吧台储物柜的钥匙",
+          "impact": 2,
+          "nodeId": "ci_kovind_0200",
+          "status": "completed",
+          "endTime": "02:02",
+          "outcome": "我用强硬的威胁从帕特里齐奥手里夺回了吧台储物柜的钥匙；他在压力下顺从地交出钥匙并告诉我他已把猎枪放回储物柜并上了锁。拿到钥匙后我感觉局势更掌控了。",
+          "startTime": "02:00",
+          "characterId": "Kovind",
+          "characterName": "Kovind",
+          "executionMeta": {
+            "startedAt": "02:00",
+            "completedAt": "02:02",
+            "remainingMinutes": 0
+          },
+          "targetCharacterIds": [
+            "Patrizio von Samsa"
+          ]
+        },
+        {
+          "type": "object_interaction",
+          "action": "用钥匙打开吧台后方的储物柜并取出猎枪",
+          "impact": 2,
+          "nodeId": "oi_kovind_retrieve_rifle_0203",
+          "status": "completed",
+          "endTime": "02:04",
+          "outcome": "我用随身的钥匙打开了吧台后方被锁住的储物柜，把里面的猎枪取了出来，现在握在手里以示威吓阻。",
+          "startTime": "02:03",
+          "characterId": "Kovind",
+          "characterName": "Kovind",
+          "executionMeta": {
+            "startedAt": "02:03",
+            "completedAt": "02:04",
+            "remainingMinutes": 0
+          },
+          "objectInteractionPayload": {
+            "itemId": "猎枪"
+          }
+        },
+        {
+          "type": "movement",
+          "action": "前往教堂召集信得过的手下支援",
+          "impact": 2,
+          "nodeId": "m_kovind_01",
+          "status": "interrupted",
+          "endTime": "02:08",
+          "outcome": "前往教堂召集信得过的手下支援 [因重新规划而中断] 已中断",
+          "startTime": "02:05",
+          "characterId": "Kovind",
+          "destination": "SCN_17_SUB_1",
+          "characterName": "Kovind",
+          "executionMeta": {
+            "movement": {
+              "routeSnapshot": [
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_3",
+                    "position": 0.76
+                  },
+                  "from": {
+                    "type": "scene",
+                    "sceneId": "SCN_16_SUB_1"
+                  },
+                  "kind": "along_road",
+                  "roadId": "ROAD_3",
+                  "blockCheck": {
+                    "toId": "ROAD_3",
+                    "fromId": "SCN_16_SUB_1"
+                  },
+                  "durationMinutes": 1
+                },
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_3",
+                    "position": 1
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_3",
+                    "position": 0.76
+                  },
+                  "kind": "along_road",
+                  "roadId": "ROAD_3",
+                  "durationMinutes": 2.4
+                },
+                {
+                  "to": {
+                    "type": "junction",
+                    "junctionId": "JUNC_4"
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_3",
+                    "position": 1
+                  },
+                  "kind": "to_junction",
+                  "blockCheck": {
+                    "toId": "JUNC_4",
+                    "fromId": "ROAD_3"
+                  },
+                  "durationMinutes": 0
+                },
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_3",
+                    "position": 1
+                  },
+                  "from": {
+                    "type": "junction",
+                    "junctionId": "JUNC_4"
+                  },
+                  "kind": "to_junction",
+                  "blockCheck": {
+                    "toId": "ROAD_3",
+                    "fromId": "JUNC_4"
+                  },
+                  "durationMinutes": 0
+                },
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_3",
+                    "position": 0.49
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_3",
+                    "position": 1
+                  },
+                  "kind": "along_road",
+                  "roadId": "ROAD_3",
+                  "durationMinutes": 5.1
+                },
+                {
+                  "to": {
+                    "type": "scene",
+                    "sceneId": "SCN_17_SUB_1"
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_3",
+                    "position": 0.49
+                  },
+                  "kind": "to_scene",
+                  "blockCheck": {
+                    "toId": "SCN_17_SUB_1",
+                    "fromId": "ROAD_3"
+                  },
+                  "durationMinutes": 1
+                }
+              ],
+              "targetPosition": {
+                "type": "scene",
+                "sceneId": "SCN_17_SUB_1"
+              },
+              "minutesIntoStep": 0,
+              "currentStepIndex": 1,
+              "lastReachablePosition": {
+                "type": "road",
+                "roadId": "ROAD_3",
+                "position": 0.76
+              }
+            },
+            "startedAt": "02:05",
+            "interruptedAt": "02:05",
+            "remainingMinutes": 0,
+            "interruptionReason": "revise_replan"
+          }
+        },
+        {
+          "type": "movement",
+          "action": "赶回驯鹿酒吧",
+          "impact": 0,
+          "nodeId": "m_kovind_return_tavern_0206",
+          "status": "interrupted",
+          "endTime": "02:16",
+          "outcome": "赶回驯鹿酒吧 [因重新规划而中断] 已中断",
+          "startTime": "02:06",
+          "characterId": "Kovind",
+          "destination": "SCN_16_SUB_1",
+          "characterName": "Kovind",
+          "executionMeta": {
+            "movement": {
+              "routeSnapshot": [
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_3",
+                    "position": 1
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_3",
+                    "position": 0.76
+                  },
+                  "kind": "along_road",
+                  "roadId": "ROAD_3",
+                  "durationMinutes": 2.4
+                },
+                {
+                  "to": {
+                    "type": "junction",
+                    "junctionId": "JUNC_4"
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_3",
+                    "position": 1
+                  },
+                  "kind": "to_junction",
+                  "blockCheck": {
+                    "toId": "JUNC_4",
+                    "fromId": "ROAD_3"
+                  },
+                  "durationMinutes": 0
+                },
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_3",
+                    "position": 1
+                  },
+                  "from": {
+                    "type": "junction",
+                    "junctionId": "JUNC_4"
+                  },
+                  "kind": "to_junction",
+                  "blockCheck": {
+                    "toId": "ROAD_3",
+                    "fromId": "JUNC_4"
+                  },
+                  "durationMinutes": 0
+                },
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_3",
+                    "position": 0.76
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_3",
+                    "position": 1
+                  },
+                  "kind": "along_road",
+                  "roadId": "ROAD_3",
+                  "durationMinutes": 2.4
+                },
+                {
+                  "to": {
+                    "type": "scene",
+                    "sceneId": "SCN_16_SUB_1"
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_3",
+                    "position": 0.76
+                  },
+                  "kind": "to_scene",
+                  "blockCheck": {
+                    "toId": "SCN_16_SUB_1",
+                    "fromId": "ROAD_3"
+                  },
+                  "durationMinutes": 1
+                }
+              ],
+              "targetPosition": {
+                "type": "scene",
+                "sceneId": "SCN_16_SUB_1"
+              },
+              "minutesIntoStep": 1,
+              "currentStepIndex": 3,
+              "lastReachablePosition": {
+                "type": "road",
+                "roadId": "ROAD_3",
+                "position": 0.9
+              }
+            },
+            "startedAt": "02:06",
+            "interruptedAt": "02:09",
+            "remainingMinutes": 0,
+            "interruptionReason": "revise_replan"
+          }
+        },
+        {
+          "type": "movement",
+          "action": "前往教堂召集信得过的手下支援",
+          "impact": 2,
+          "nodeId": "m_kovind_001",
+          "status": "completed",
+          "endTime": "02:22",
+          "outcome": "前往教堂召集信得过的手下支援 成功",
+          "startTime": "02:18",
+          "characterId": "Kovind",
+          "destination": "SCN_17_SUB_1",
+          "characterName": "Kovind",
+          "executionMeta": {
+            "movement": {
+              "routeSnapshot": [
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_3",
+                    "position": 0.76
+                  },
+                  "from": {
+                    "type": "scene",
+                    "sceneId": "SCN_16_SUB_1"
+                  },
+                  "kind": "along_road",
+                  "roadId": "ROAD_3",
+                  "blockCheck": {
+                    "toId": "ROAD_3",
+                    "fromId": "SCN_16_SUB_1"
+                  },
+                  "durationMinutes": 1
+                },
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_3",
+                    "position": 1
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_3",
+                    "position": 0.76
+                  },
+                  "kind": "along_road",
+                  "roadId": "ROAD_3",
+                  "durationMinutes": 2.4
+                },
+                {
+                  "to": {
+                    "type": "junction",
+                    "junctionId": "JUNC_4"
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_3",
+                    "position": 1
+                  },
+                  "kind": "to_junction",
+                  "blockCheck": {
+                    "toId": "JUNC_4",
+                    "fromId": "ROAD_3"
+                  },
+                  "durationMinutes": 0
+                },
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_3",
+                    "position": 1
+                  },
+                  "from": {
+                    "type": "junction",
+                    "junctionId": "JUNC_4"
+                  },
+                  "kind": "to_junction",
+                  "blockCheck": {
+                    "toId": "ROAD_3",
+                    "fromId": "JUNC_4"
+                  },
+                  "durationMinutes": 0
+                },
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_3",
+                    "position": 0.49
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_3",
+                    "position": 1
+                  },
+                  "kind": "along_road",
+                  "roadId": "ROAD_3",
+                  "durationMinutes": 5.1
+                },
+                {
+                  "to": {
+                    "type": "scene",
+                    "sceneId": "SCN_17_SUB_1"
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_3",
+                    "position": 0.49
+                  },
+                  "kind": "to_scene",
+                  "blockCheck": {
+                    "toId": "SCN_17_SUB_1",
+                    "fromId": "ROAD_3"
+                  },
+                  "durationMinutes": 1
+                }
+              ],
+              "targetPosition": {
+                "type": "scene",
+                "sceneId": "SCN_17_SUB_1"
+              },
+              "minutesIntoStep": 0,
+              "currentStepIndex": 6,
+              "lastReachablePosition": {
+                "type": "scene",
+                "sceneId": "SCN_17_SUB_1"
+              }
+            },
+            "startedAt": "02:18",
+            "completedAt": "02:28",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "character_interaction",
+          "action": "当众搜身帕特里齐奥，彻底检查并夺走任何相机、存储卡和通讯设备",
+          "impact": 2,
+          "nodeId": "ci_kov_001",
+          "status": "completed",
+          "endTime": "02:17",
+          "outcome": "我当众搜身帕特里齐奥，彻底检查了他的衣物和随身夹层，没搜到相机、存储卡或任何通讯设备；在众人面前这样做既令他窘迫，也再次巩固了我的威慑。",
+          "startTime": "02:15",
+          "characterId": "Kovind",
+          "characterName": "Kovind",
+          "executionMeta": {
+            "startedAt": "02:15",
+            "completedAt": "02:17",
+            "remainingMinutes": 0
+          },
+          "targetCharacterIds": [
+            "Patrizio von Samsa"
+          ]
+        },
+        {
+          "type": "movement",
+          "action": "前往教堂召集信得过的手下支援",
+          "impact": 2,
+          "nodeId": "m_kovind_001",
+          "status": "completed",
+          "endTime": "02:22",
+          "outcome": "前往教堂召集信得过的手下支援 成功",
+          "startTime": "02:18",
+          "characterId": "Kovind",
+          "destination": "SCN_17_SUB_1",
+          "characterName": "Kovind",
+          "executionMeta": {
+            "movement": {
+              "routeSnapshot": [
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_3",
+                    "position": 0.76
+                  },
+                  "from": {
+                    "type": "scene",
+                    "sceneId": "SCN_16_SUB_1"
+                  },
+                  "kind": "along_road",
+                  "roadId": "ROAD_3",
+                  "blockCheck": {
+                    "toId": "ROAD_3",
+                    "fromId": "SCN_16_SUB_1"
+                  },
+                  "durationMinutes": 1
+                },
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_3",
+                    "position": 1
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_3",
+                    "position": 0.76
+                  },
+                  "kind": "along_road",
+                  "roadId": "ROAD_3",
+                  "durationMinutes": 2.4
+                },
+                {
+                  "to": {
+                    "type": "junction",
+                    "junctionId": "JUNC_4"
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_3",
+                    "position": 1
+                  },
+                  "kind": "to_junction",
+                  "blockCheck": {
+                    "toId": "JUNC_4",
+                    "fromId": "ROAD_3"
+                  },
+                  "durationMinutes": 0
+                },
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_3",
+                    "position": 1
+                  },
+                  "from": {
+                    "type": "junction",
+                    "junctionId": "JUNC_4"
+                  },
+                  "kind": "to_junction",
+                  "blockCheck": {
+                    "toId": "ROAD_3",
+                    "fromId": "JUNC_4"
+                  },
+                  "durationMinutes": 0
+                },
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_3",
+                    "position": 0.49
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_3",
+                    "position": 1
+                  },
+                  "kind": "along_road",
+                  "roadId": "ROAD_3",
+                  "durationMinutes": 5.1
+                },
+                {
+                  "to": {
+                    "type": "scene",
+                    "sceneId": "SCN_17_SUB_1"
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_3",
+                    "position": 0.49
+                  },
+                  "kind": "to_scene",
+                  "blockCheck": {
+                    "toId": "SCN_17_SUB_1",
+                    "fromId": "ROAD_3"
+                  },
+                  "durationMinutes": 1
+                }
+              ],
+              "targetPosition": {
+                "type": "scene",
+                "sceneId": "SCN_17_SUB_1"
+              },
+              "minutesIntoStep": 0,
+              "currentStepIndex": 6,
+              "lastReachablePosition": {
+                "type": "scene",
+                "sceneId": "SCN_17_SUB_1"
+              }
+            },
+            "startedAt": "02:18",
+            "completedAt": "02:28",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "character_interaction",
+          "action": "命令康斯坦丁从暗门通道中出来并当面说明他的立场与来意",
+          "impact": 1,
+          "nodeId": "ci_kovind_02",
+          "status": "interrupted",
+          "endTime": "02:31",
+          "outcome": "命令康斯坦丁从暗门通道中出来并当面说明他的立场与来意 [因重新规划而中断] 已中断",
+          "startTime": "02:29",
+          "characterId": "Kovind",
+          "characterName": "Kovind",
+          "executionMeta": {
+            "startedAt": "02:29",
+            "interruptedAt": "03:39",
+            "remainingMinutes": 0,
+            "interruptionReason": "revise_replan"
+          },
+          "targetCharacterIds": [
+            "Constantine Frollo"
+          ]
+        },
+        {
+          "type": "character_interaction",
+          "skill": "Intimidate",
+          "action": "逼问Constantine Frollo他的立场与来意",
+          "impact": 1,
+          "nodeId": "ci_kovind_01",
+          "status": "failed",
+          "endTime": "03:45",
+          "startTime": "03:40",
+          "characterId": "Kovind",
+          "characterName": "Kovind",
+          "executionMeta": {
+            "failedAt": "03:45",
+            "startedAt": "03:40",
+            "remainingMinutes": 5
+          },
+          "targetCharacterIds": [
+            "Constantine Frollo"
+          ]
+        },
+        {
+          "type": "character_interaction",
+          "action": "当面逼问Constantine Frollo、Shandra Hernandez与Marks White他们此刻的立场与来意，要求他们说明是否会干扰我在教堂召集手下或协助约翰尼一伙带走证物；警告若不立刻坦白我将召回手下封门、查扣通讯并控制证物。",
+          "impact": 2,
+          "nodeId": "ci_kovind_0708",
+          "status": "in_progress",
+          "endTime": "07:12",
+          "startTime": "07:08",
+          "characterId": "Kovind",
+          "characterName": "Kovind",
+          "executionMeta": {
+            "startedAt": "07:08",
+            "remainingMinutes": 4
+          },
+          "targetCharacterIds": [
+            "Constantine Frollo",
+            "Shandra Hernandez",
+            "Marks White"
+          ]
+        }
+      ]
+    }
+  ],
+  "intents": [
+    {
+      "intent": "当面确认Constantine Frollo、Shandra Hernandez与Marks White的立场与动机；评估他们是否会干扰我在教堂召集手下或与驯鹿酒吧的证物流向。若有威胁，立刻召回并指挥信得过的手下在教堂封门、查扣通讯并控制证物与通路；若可拉拢或暂时中立，则尝试拉拢或以威慑稳住局面。同时继续把夺回武器、储物柜钥匙与查扣通讯设备列为最高优先级，暂缓返回驯鹿酒吧，直到教堂局势受控。",
+      "updatedAt": "2026-04-02T13:35:16.248Z"
+    }
+  ],
+  "npcName": "Kovind"
+}

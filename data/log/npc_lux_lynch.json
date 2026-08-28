@@ -1,0 +1,27 @@
+{
+  "npcId": "npc_lux_lynch",
+  "memories": [
+    {
+      "type": "event",
+      "content": "我当时不在档案室，没被Vito当面找到；后来得知他有人到档案室来要求交出记载被指示人员的笔记本并警告不要接触档案，我没有同意那样的要求（抵抗了）。",
+      "gameDay": 2,
+      "gameTime": "00:14",
+      "location": "SCN_3_SUB_3",
+      "metadata": {
+        "outcome": "当面对Lux确认他已被控制不得触碰证物，并当场要求他交出记载被指示人员的笔记本或说明保存地点，同时警告Bruno不得离开或接触档案 [Persuade 35, rolled 65 (fail) — all targets resisted] failed"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我今天没有出现在警察局；有人来找我但没遇到我。",
+      "gameDay": 1,
+      "gameTime": "19:29",
+      "location": "SCN_3_SUB_1",
+      "metadata": {
+        "outcome": "当面询问Lux Lynch和Bruno Galilei他们来到警局的原因，核实布鲁诺与珊德拉的关系，并评估是否需要立即对海伦或珊德拉采取保护或调查措施"
+      }
+    }
+  ],
+  "plans": [],
+  "intents": []
+}

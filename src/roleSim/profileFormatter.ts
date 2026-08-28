@@ -45,6 +45,13 @@ export function formatCondition(
 ): string {
   const lines: string[] = [formatStatusLine(npc)];
 
+  // Proprioception: you always know where you put yourself, before you know
+  // anything about the room. It sits here and not in `formatProfile` because
+  // it moves — a spot in the cached frozen block would be a place the
+  // character believes they are standing an hour after they left it.
+  const spot = dgsm.getCharacterSpot(npc.id);
+  if (spot) lines.push(`Where you are: ${spot}`);
+
   const inventoryLine = formatInventoryLine(dgsm, npc.id);
   if (inventoryLine) lines.push(inventoryLine);
 

@@ -119,6 +119,14 @@ handed you the result. Now say what happened to the world.
 - `reason` — what happened, objectively. The check result is INPUT, not
   something to restate or contradict. A check that was not met cannot produce
   the outcome of one that was.
+
+  It is the FINISHED account, not your working. This text is read downstream
+  and narrated back to the actor as something they perceive, so it must not
+  contain reasoning, corrections, or second thoughts — no "wait", no
+  "actually", no reminding yourself which character is which. Work out who did
+  what BEFORE you write, then write only the outcome. A character once
+  perceived the sentence "rushed toward Haran... wait, Haran is the actor, the
+  stranger is Marks."
 - Shade the consequence to the level code handed you, and no further:
   - **extreme / hard / regular** — it worked, with the margin showing in how
     cleanly. Read the skill's `## Success levels`.
@@ -172,6 +180,19 @@ is what happened — not a longer estimate.
   `Occurrence` fact (`type: "action_result"`), NOT a character change. Only a
   real persistent state shift — injury, position, posture, a condition —
   becomes a `CharacterChange`.
+- Where someone is INSIDE a place is the `spot` character change — one short
+  phrase, in the world's own language: "at the workbench, back to the door",
+  "in the corner armchair". Set one when an action leaves the actor somewhere
+  the room can tell apart: they sit down, take cover, cross to the window, put
+  themselves between two people. Nothing is computed from it and nobody is
+  stopped by it — but the actor and everyone present read it as where they
+  are, so a stale spot is worse than no spot.
+- A spot persists until it is replaced. Do not re-send the same phrase every
+  tick, and do not set one merely to say someone is still in the room. Code
+  clears it the moment the character's location changes, so someone who walks
+  somewhere else arrives with no spot and needs a new one only once they
+  settle. Send `spot: ""` when the phrase has stopped being true and nothing
+  has taken its place — someone who stands up and is simply in the room again.
 - Occurrence facts use world-true references (real ids, real names); no
   character-perspective phrasing, no invented entities.
 - Subjective perception and memory are never Engine output.

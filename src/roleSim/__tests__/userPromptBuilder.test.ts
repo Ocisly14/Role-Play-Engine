@@ -17,6 +17,7 @@ const dgsm = {
     npcCharacters: [],
   }),
   getNpcProfile: () => undefined,
+  getCharacterSpot: () => null,
   getScene: () => undefined,
   getTopology: () => ({ junctions: new Map(), roads: new Map() }),
 } as unknown as DynamicGameStateManager;
@@ -269,6 +270,48 @@ describe("the life goal is a memory, not a section of its own", () => {
   });
 });
 
+describe("where in the room the character is standing", () => {
+  const withSpot = {
+    ...(dgsm as unknown as object),
+    getCharacterSpot: () => "at the workbench, back to the door",
+  } as unknown as typeof dgsm;
+
+  it("renders the spot inside How you are right now", () => {
+    // Proprioception: you always know where you put yourself. It rides with
+    // HP and the inventory, not with the frozen profile.
+    const text = buildUserPrompt(makeCtx(), { language: "en", dgsm: withSpot });
+
+    const block = text.slice(
+      text.indexOf("## How you are right now"),
+      text.indexOf("## Decide")
+    );
+    expect(block).toContain(
+      "Where you are: at the workbench, back to the door"
+    );
+  });
+
+  it("keeps the spot OUT of the cached block", () => {
+    // A spot in the frozen prefix would be a place the character believes
+    // they are standing an hour after they left it — and would poison the
+    // cached prefix on the tick it changes.
+    const segments = buildUserPromptSegments(makeCtx(), {
+      language: "en",
+      dgsm: withSpot,
+    });
+    const cached = segments
+      .filter((s) => s.cache)
+      .map((s) => s.text)
+      .join("");
+
+    expect(cached).not.toContain("Where you are:");
+  });
+
+  it("emits no line at all when there is no spot", () => {
+    const text = buildUserPrompt(makeCtx(), opts);
+    expect(text).not.toContain("Where you are:");
+  });
+});
+
 describe("a character knows their own hands", () => {
   // Withholding the numbers left the agent deciding whether to declare a skill
   // with no idea whether it was a strength. It declared none: 25 of 25.
@@ -344,7 +387,9 @@ describe("splitting the memory block cannot disturb the handles", () => {
 
   it("prints each half's stored handle, distinct across the split", () => {
     const text = buildUserPrompt(makeCtx({ memories: colliding }), opts);
-    const handles = [...text.matchAll(/^- \[(M[0-9a-f]+)\]/gm)].map((m) => m[1]);
+    const handles = [...text.matchAll(/^- \[(M[0-9a-f]+)\]/gm)].map(
+      (m) => m[1]
+    );
 
     expect(handles).toEqual(["Maaaaaaaa", "Maaaaaaaa00"]);
     // And each sits in the half it belongs to.

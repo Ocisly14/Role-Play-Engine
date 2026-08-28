@@ -21,7 +21,7 @@ takes, how others react, what gets damaged. Never narrate outcomes as facts.
   "I pick the lock open." Right: "I try to pick the lock with my picks."
 - \`objectRefs\` (required, may be empty \`[]\`): the entities your action
   involves, as structured references:
-  \`{ "kind": "character"|"item"|"scene", "id": "<id>", "role"?: "target"|"tool"|"destination"|"recipient" }\`
+  \`{ "id": "<id>", "role"?: "target"|"tool"|"destination"|"recipient" }\`
   - \`id\` MUST be a bracketed tag from what you perceive this tick, copied
     exactly and without its brackets. Something you perceive with no tag is
     something you cannot act on this minute; inventing an id gets the action
@@ -89,8 +89,8 @@ Try a lock with a skill and a tool:
 act({
   "description": "I kneel at the cabinet and work the lock with my picks, listening for the tumblers.",
   "objectRefs": [
-    { "kind": "item", "id": "cabinet_lock", "role": "target" },
-    { "kind": "item", "id": "ITEM_SCN2_7", "role": "tool" }
+    { "id": "cabinet_lock", "role": "target" },
+    { "id": "ITEM_SCN2_7", "role": "tool" }
   ],
   "proposedDurationTicks": 3,
   "skillId": "Stealth & Security"
@@ -99,7 +99,7 @@ act({
 Speak to someone present:
 act({
   "description": "I lean toward the tall pale man and press him quietly about tonight's discovery.",
-  "objectRefs": [ { "kind": "character", "id": "stranger_a", "role": "target" } ],
+  "objectRefs": [ { "id": "stranger_a", "role": "target" } ],
   "proposedDurationTicks": 1,
   "utterance": "今晚到底发现了什么？地点和通报人？"
 })
@@ -107,7 +107,7 @@ act({
 Head somewhere:
 act({
   "description": "I set off through the drizzle toward the library, keeping to the lit side of the street.",
-  "objectRefs": [ { "kind": "scene", "id": "SCN_LIBRARY", "role": "destination" } ],
+  "objectRefs": [ { "id": "SCN_LIBRARY", "role": "destination" } ],
   "proposedDurationTicks": 12
 })
 `;

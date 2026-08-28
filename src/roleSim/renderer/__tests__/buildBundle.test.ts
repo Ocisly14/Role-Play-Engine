@@ -3,7 +3,10 @@
 // progress; neither → idle) and occurrence passthrough.
 
 import { describe, expect, it } from "vitest";
-import type { EngineAction, Occurrence } from "../../../engine/actions/types.js";
+import type {
+  EngineAction,
+  Occurrence,
+} from "../../../engine/actions/types.js";
 import type { TickEngine } from "../../../engine/core/tickEngine.js";
 import type { TickReport } from "../../../engine/core/types.js";
 import type { DynamicGameStateManager } from "../../../state/DynamicGameState.js";
@@ -24,6 +27,7 @@ const dgsm = {
     status: { conditions: [] },
   }),
   getCharacterPosition: () => ({ type: "scene", sceneId: "SCN_1" }),
+  getCharacterSpot: () => null,
   getState: () => ({
     scenes: new Map([
       [
@@ -177,7 +181,9 @@ describe("buildPerceivedBundle", () => {
       id: "occ_1",
       tickId: "t",
       sourceActionIds: [],
-      facts: [{ id: "occ_1#f0", type: "sound", content: "a crash", entityRefs: [] }],
+      facts: [
+        { id: "occ_1#f0", type: "sound", content: "a crash", entityRefs: [] },
+      ],
       participants: [],
       perceiverCharacterIds: ["npc_1"],
       signals: [{ factIds: ["occ_1#f0"], channel: "sound" }],
@@ -190,5 +196,41 @@ describe("buildPerceivedBundle", () => {
     });
     expect(bundle.occurrences).toEqual([occ]);
     expect(bundle.ownAction).toEqual({ kind: "idle" });
+  });
+
+  it("carries the viewpoint's own spot and a co-located character's", () => {
+    // Both reach the renderer prompt: your own is proprioceptive, theirs is
+    // as visible as the armchair they are sitting in.
+    const base = dgsm as unknown as { getState: () => Record<string, unknown> };
+    const spotted = {
+      ...dgsm,
+      getCharacterSpot: (id: string) =>
+        id === "npc_1" ? "at the workbench" : "in the corner armchair",
+      isNpcAlive: () => true,
+      getState: () => ({
+        ...base.getState(),
+        npcCharacters: [{ id: "npc_1" }, { id: "npc_2" }],
+      }),
+    } as unknown as DynamicGameStateManager;
+
+    const bundle = buildPerceivedBundle({
+      npcId: "npc_1",
+      dgsm: spotted,
+      engine: makeEngine([]),
+    });
+
+    expect(bundle.ownSpot).toBe("at the workbench");
+    expect(bundle.charactersInScene.map((c) => c.spot)).toEqual([
+      "in the corner armchair",
+    ]);
+  });
+
+  it("omits the spot entirely when there is none", () => {
+    const bundle = buildPerceivedBundle({
+      npcId: "npc_1",
+      dgsm,
+      engine: makeEngine([]),
+    });
+    expect(bundle.ownSpot).toBeUndefined();
   });
 });

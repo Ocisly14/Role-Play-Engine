@@ -5,7 +5,7 @@
 // tick's transitions first, live action otherwise), and packages the
 // occurrence slice the controller routed to this perceiver.
 
-import type { Occurrence, EngineAction } from "../../engine/actions/types.js";
+import type { EngineAction, Occurrence } from "../../engine/actions/types.js";
 import type { TickEngine } from "../../engine/core/tickEngine.js";
 import type { TickReport } from "../../engine/core/types.js";
 import type { DynamicGameStateManager } from "../../state/DynamicGameState.js";
@@ -36,12 +36,14 @@ export function buildPerceivedBundle(
   const { npcId, report, occurrencesForNpc, dgsm, engine } = params;
 
   const scene = resolveScene(npcId, dgsm);
+  const ownSpot = dgsm.getCharacterSpot(npcId);
   const ownConditions = dgsm.getNpcProfile(npcId)?.status?.conditions ?? [];
   const ownAction = resolveOwnAction(npcId, report, engine);
   const charactersInScene = resolveScenePresentCharacters(npcId, dgsm, engine);
 
   return {
     scene,
+    ...(ownSpot ? { ownSpot } : {}),
     ownConditions,
     ownAction,
     occurrences: occurrencesForNpc ?? [],
@@ -63,10 +65,12 @@ function resolveScenePresentCharacters(
       const activeAction = engine
         .getActorActions(id)
         .find((a) => a.status === "active");
+      const spot = dgsm.getCharacterSpot(id);
       return {
         id,
         name: profile.name,
         appearance: profile.appearance,
+        ...(spot ? { spot } : {}),
         conditions: profile.status?.conditions ?? [],
         currentActionText: activeAction?.command.description,
       };
@@ -116,8 +120,7 @@ export function resolveOwnAction(
 ): OwnActionState {
   if (report) {
     const ended = report.transitions.find(
-      (t) =>
-        t.actorId === npcId && ENDED_STATUSES.has(t.to as EndedStatus)
+      (t) => t.actorId === npcId && ENDED_STATUSES.has(t.to as EndedStatus)
     );
     if (ended) {
       const action = engine.getAction(ended.actionId);
@@ -130,7 +133,7 @@ export function resolveOwnAction(
           ? {
               outcome: {
                 outcome: judgement?.outcome ?? ended.to,
-                ...(judgement?.reason ?? ended.reason
+                ...((judgement?.reason ?? ended.reason)
                   ? { reason: judgement?.reason ?? ended.reason }
                   : {}),
               },

@@ -449,15 +449,11 @@ export async function runStagedCase(
   });
 
   // ---- stage the scene -------------------------------------------------
-  // Two readers, two homes: the renderer (what the agent perceives) reads
-  // `scene.conditions`, while the resolver's state context reads
-  // `dgsm.getSceneConditions(locationId)`. A staged condition has to land in
-  // both or half the pipeline is blind to it.
   for (const desc of stage.sceneConditions ?? []) {
-    const condition = { featureId: "sim_stage", description: desc };
-    if (!scene.conditions) scene.conditions = [];
-    scene.conditions.push(condition);
-    dgsm.appendSceneCondition(stage.sceneId, condition);
+    dgsm.appendSceneCondition(stage.sceneId, {
+      featureId: "sim_stage",
+      description: desc,
+    });
   }
   // `DynamicScene.items` is typed as required, but scenes come straight out of
   // module JSON with no normalize step, and production reads it everywhere as

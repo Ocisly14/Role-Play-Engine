@@ -153,6 +153,11 @@ export const CHARACTER_OPS: OperationSpec[] = [
       'position:{type:"scene"|"junction"|"road", sceneId|junctionId|roadId}',
   },
   {
+    kinds: ["spot"],
+    fields:
+      'spot:string — where in the place they now are, one short phrase; "" clears it',
+  },
+  {
     kinds: ["addCondition"],
     fields: "condition:{id:string, description:string}",
   },
@@ -271,7 +276,11 @@ const OCCURRENCE_BODY = {
           type: "string",
           description: 'e.g. "speech", "sound", "movement", "action_result"',
         },
-        content: { type: "string" },
+        content: {
+          type: "string",
+          description:
+            "The finished fact, third person and world-true. Read by characters, so it carries no reasoning and no corrections — settle who did what before writing it.",
+        },
         entityRefs: { type: "array", items: ENTITY_REF },
       },
       required: ["type", "content"],
@@ -402,7 +411,7 @@ export const submitResolutionTool: ToolSpec = {
             reason: {
               type: "string",
               description:
-                "What happened, objectively. The check result you were given is input: never restate or contradict it.",
+                'What happened, objectively — the FINISHED account, not your working. It is read downstream and narrated to the actor, so it carries no reasoning, no corrections, no second thoughts, no addressing yourself: never "wait", "actually", "let me reconsider", or a note about which character is which. Settle all of that before you write, then write only the outcome. The check result you were given is input: never restate or contradict it.',
             },
             occurrence: {
               type: "object",

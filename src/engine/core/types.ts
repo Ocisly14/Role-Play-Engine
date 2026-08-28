@@ -213,6 +213,17 @@ export type StateChange =
       position: CharacterPosition;
       sourceSubsystem: string;
     }
+  | {
+      /**
+       * Where a character now is WITHIN their location, as prose. Narrative
+       * only — nothing reads it but prompts. Empty string clears it, and
+       * `setCharacterPosition` clears it on its own whenever the location id
+       * actually changes.
+       */
+      kind: "character.spot";
+      characterId: string;
+      spot: string;
+    }
   // ── Resolver-emitted variants (flattened from resolver schemaTypes) ──
   | {
       kind: "item.modify";

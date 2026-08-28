@@ -85,13 +85,26 @@ describe("validateActArgs", () => {
     expect(result).toMatchObject({ ok: false, code: "invalid_object_refs" });
   });
 
-  it("rejects a ref with an invalid kind", () => {
-    const result = validateActArgs(
-      args({ objectRefs: [{ kind: "monster", id: "x" }] }),
+  it("ignores the kind label entirely — the id decides", () => {
+    // A nonsense label on a real id costs nothing.
+    const labelled = validateActArgs(
+      args({ objectRefs: [{ kind: "monster", id: "ITEM_1" }] }),
       directory,
       world
     );
-    expect(result).toMatchObject({ ok: false, code: "invalid_object_refs" });
+    expect(labelled.ok).toBe(true);
+    if (!labelled.ok) return;
+    expect(labelled.args.objectRefs[0].kind).toBe("item");
+
+    // And no label at all is fine too.
+    const bare = validateActArgs(
+      args({ objectRefs: [{ id: "SCN_1", role: "destination" }] }),
+      directory,
+      world
+    );
+    expect(bare.ok).toBe(true);
+    if (!bare.ok) return;
+    expect(bare.args.objectRefs[0].kind).toBe("scene");
   });
 
   it("rejects a ref with an invalid role", () => {
@@ -131,13 +144,22 @@ describe("validateActArgs", () => {
     expect(result.reason).toContain("Nyarlathotep");
   });
 
-  it("checks scope per kind — an item id cited as a character is rejected", () => {
+  it("resolves a mislabelled real id by the id, not the label", () => {
+    // The door tagged with the id of the room it stands in came back as an
+    // `item`, was refused as "not an item in this world" — it was a scene,
+    // and it existed — and the retry re-pointed the action at an unrelated
+    // statue. The label is a guess about a real thing; the id is the thing.
     const result = validateActArgs(
       args({ objectRefs: [{ kind: "character", id: "ITEM_1" }] }),
       directory,
       world
     );
-    expect(result).toMatchObject({ ok: false, code: "unknown_ref" });
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.args.objectRefs[0]).toMatchObject({
+      kind: "item",
+      id: "ITEM_1",
+    });
   });
 
   it("resolves a stranger's alias to the real id", () => {
@@ -395,7 +417,7 @@ describe("what a citation is scoped to", () => {
     );
     expect(result.ok).toBe(false);
     if (result.ok) return;
-    expect(result.reason).toContain("not a item in this world");
+    expect(result.reason).toContain("nothing in this world");
   });
 
   it("accepts a stranger who has since walked out of the room", () => {

@@ -1,0 +1,102 @@
+{
+  "id": "Shoggoth",
+  "name": "Shoggoth",
+  "occupation": "古老者的仆从",
+  "age": 1000000,
+  "gender": "N/A",
+  "appearance": "一个巨大的、无定形的、黑色的凝胶状实体，表面不断变化。它可以自发形成触手、爪子、伪足或其他粗糙的附属物。",
+  "personality": "异质、本能驱动、基本没有心智。它遵循古老的调教而非有意识的意图，不表现同理心或可识别的情感。",
+  "background": "修格斯是古老者在前人类时代设计用作奴隶劳动力的原始原生质生物。经过漫长的时间，一些发展出了有限的自主性。它们现在潜伏在深层地下遗迹和被遗忘的地方，是已逝宇宙文明的遗迹。",
+  "residence": "SCN_2",
+  "currentLocation": "SCN_2",
+  "spot": "在最远端那栋半塌建筑的阴影里积成一滩",
+  "knownMapSeed": {
+    "junctionIds": [
+      "JUNC_1"
+    ],
+    "roadIds": [],
+    "scenarioOutlineIds": [
+      "SCN_2"
+    ],
+    "sceneIds": [
+      "SCN_2_SUB_1",
+      "SCN_2_SUB_2",
+      "SCN_2_SUB_3"
+    ]
+  },
+  "longTermIntent": "待在黑暗隐蔽的地方，吞噬任何进入错误房间的东西，服从当前躯体中最强的古老调教。",
+  "attributes": {
+    "STR": 315,
+    "CON": 210,
+    "DEX": 15,
+    "APP": 0,
+    "POW": 50,
+    "SIZ": 420,
+    "INT": 35,
+    "EDU": 0
+  },
+  "status": {
+    "hp": 63,
+    "maxHp": 63,
+    "sanity": 0,
+    "maxSanity": 0,
+    "luck": 0,
+    "mp": 10,
+    "conditions": []
+  },
+  "skills": {
+    "Athletics": 8,
+    "Melee Combat": 70
+  },
+  "inventory": [],
+  "relationships": [],
+  "memory": [
+    {
+      "type": "information",
+      "content": "我在黑暗、封闭的工业废墟中最为危险，那里有空间吞没猎物而猎物无处干净地逃跑。",
+      "metadata": {
+        "knowledgeId": "k_shoggoth_territory",
+        "difficulty": "automatic"
+      }
+    },
+    {
+      "type": "information",
+      "content": "大声的移动和笨拙的噪音会唤醒躯体进入完全狩猎警戒。安静的猎物比喧闹的猎物活得更久。",
+      "metadata": {
+        "knowledgeId": "k_shoggoth_noise",
+        "difficulty": "regular"
+      }
+    },
+    {
+      "type": "information",
+      "content": "旧的控制模式和献祭操控仍然可以暂时牵引我的同类，但服从是不稳定的，总是接近崩溃边缘。",
+      "metadata": {
+        "knowledgeId": "k_shoggoth_control",
+        "difficulty": "hard"
+      }
+    },
+    {
+      "type": "information",
+      "content": "火和电对我的效果比普通的刀刃或子弹更好，后者几乎无法减慢躯体。",
+      "metadata": {
+        "knowledgeId": "k_shoggoth_vulnerabilities",
+        "difficulty": "regular"
+      }
+    },
+    {
+      "type": "secret",
+      "content": "即使受到严重损伤，只要足够多的躯体保持活跃，修格斯就能继续重组。",
+      "metadata": {
+        "knowledgeId": "s_shoggoth_regen"
+      }
+    },
+    {
+      "type": "belief",
+      "content": "任何进入这个房间的东西都可以变成肉、障碍或房间本身的一部分。",
+      "metadata": {
+        "confidence": 0.8,
+        "reasoningChain": "躯体通过吸收来学习，通过覆盖空间来持续。"
+      }
+    }
+  ]
+}

@@ -292,13 +292,12 @@ function clearWeatherConditions(
   dgsm: DynamicGameStateManager,
   locationId: string
 ): void {
-  const state = dgsm.getState();
-  const conditions = state.scenarioConditions[locationId];
-  if (!conditions) return;
+  const conditions = dgsm.getSceneConditions(locationId);
+  if (conditions.length === 0) return;
   dgsm.replaceSceneConditions(
     locationId,
     conditions.filter(
-      (condition: any) => !condition.description.startsWith("[Weather]")
+      (condition) => !condition.description.startsWith("[Weather]")
     )
   );
 }
