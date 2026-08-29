@@ -1,9 +1,8 @@
 {
   "schemaVersion": 2,
-  "id": "JUNC_main_south",
+  "id": "SCN_main_south",
   "name": "主街南段",
   "description": "主街的南半段,比北段更冷清,人行道的裂缝里长着草。街机厅「星港」的霓虹招牌白天也亮着,玻璃门上贴满游戏海报 [exit.main_south.arcade_door];巴特拉电视维修铺的橱窗里摞着待修的电视机,店门上挂着手写的营业时间牌 [exit.main_south.batra_door];再往南是诊所的磨砂玻璃门,门边钉着诊疗时间的铜牌 [exit.main_south.clinic_door]。一条窄窄的后街从两栋房子之间拐进去,尽头是雷耶斯家的小房子 [exit.main_south.reyes_backstreet]。南端的下坡道通向码头,风里已经闻得到海。",
-  "parentLocationId": "LOC_main_south",
   "references": {
     "items": [],
     "connections": [

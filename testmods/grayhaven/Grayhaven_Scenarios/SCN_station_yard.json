@@ -1,9 +1,8 @@
 {
   "schemaVersion": 2,
-  "id": "JUNC_station_yard",
+  "id": "SCN_station_yard",
   "name": "雷德利站场院",
   "description": "铁丝网围出的一片水泥场院,属于山里的这座海军气象观测站。场院扫得很干净,却看不见一个人影,只有屋顶的天线阵在雾里发出轻微的嗡鸣。装卸区的卷帘门开在主楼一侧,门轴上了新油 [exit.station_yard.dock_rollup]。进出场院的只有一条路,通向山下的自动大门。",
-  "parentLocationId": "LOC_station",
   "references": {
     "items": [],
     "connections": [

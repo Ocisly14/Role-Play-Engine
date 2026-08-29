@@ -22,7 +22,7 @@
     "connections": [
       {
         "id": "exit.sheriff_front.street_door",
-        "targetId": "JUNC_main_north",
+        "targetId": "SCN_main_north",
         "name": "临街门",
         "description": "磨砂玻璃上漆着「警长办公室」的临街门,通向主街北段。"
       },

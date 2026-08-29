@@ -13,7 +13,6 @@
 import type { SceneCondition } from "../engine/core/types.js";
 import type {
   AlongConnection,
-  JunctionNode,
   RoadConnection,
   RoadNode,
 } from "./topologyTypes.js";
@@ -51,7 +50,7 @@ const ROAD_CONNECTION_ROLES: readonly RoadConnectionRole[] = [
 ];
 
 /** A connection as authored in a v2 place file. `role`/`position` are only
- *  legal on ROAD_* files (rejected by buildSceneV2/buildJunctionV2). */
+ *  legal on ROAD_* files (rejected by buildSceneV2). */
 export interface PlaceFileV2Connection extends SceneConnection {
   role?: RoadConnectionRole;
   position?: number;
@@ -68,13 +67,15 @@ export interface PlaceFileV2References {
   conditions: PlaceFileV2Condition[];
 }
 
-/** The parsed, fully type-checked shape of a `SCN_*` / `JUNC_*` / `ROAD_*` file. */
+/** The parsed, fully type-checked shape of a `SCN_*` / `ROAD_*` file. */
 export interface PlaceFileV2 {
   schemaVersion: 2;
   id: string;
   name: string;
   description: string;
-  parentLocationId: string;
+  /** Absent on a TOP-LEVEL scene — a geography node (street, crossroads,
+   *  yard) that the road network runs between. */
+  parentLocationId?: string;
   indoor?: boolean;
   /** Required for ROAD_* files (enforced by buildRoadV2). */
   travelTimeMinutes?: number;
@@ -353,13 +354,23 @@ function parseReferenceArray<T>(
 // ─── parsePlaceFileV2 ──────────────────────────────────────────────
 
 /**
- * Full type-guard parse of one `SCN_*` / `JUNC_*` / `ROAD_*` entry.
+ * Full type-guard parse of one `SCN_*` / `ROAD_*` entry.
  * Aggregates every problem in the file into one ModuleSchemaError.
  */
 export function parsePlaceFileV2(entryId: string, data: unknown): PlaceFileV2 {
   if (!isRecord(data)) {
     throw new ModuleSchemaError(entryId, [
       "entry data: expected a JSON object",
+    ]);
+  }
+  if (
+    entryId.startsWith("JUNC_") ||
+    (isRecord(data) &&
+      typeof data.id === "string" &&
+      data.id.startsWith("JUNC_"))
+  ) {
+    throw new ModuleSchemaError(entryId, [
+      "JUNC_* 节点已移除:路口/院子等地理节点请改写为无 parentLocationId 的顶层 SCN_* 场景(道路端点直接指向它)",
     ]);
   }
   if (data.schemaVersion !== 2) {
@@ -379,7 +390,7 @@ export function parsePlaceFileV2(entryId: string, data: unknown): PlaceFileV2 {
     entryId,
     problems
   );
-  const parentLocationId = checkRequiredString(
+  const parentLocationId = checkOptionalString(
     data,
     "parentLocationId",
     entryId,
@@ -425,8 +436,7 @@ export function parsePlaceFileV2(entryId: string, data: unknown): PlaceFileV2 {
     problems.length > 0 ||
     id === undefined ||
     name === undefined ||
-    description === undefined ||
-    parentLocationId === undefined
+    description === undefined
   ) {
     throw new ModuleSchemaError(entryId, problems);
   }
@@ -436,9 +446,11 @@ export function parsePlaceFileV2(entryId: string, data: unknown): PlaceFileV2 {
     id,
     name,
     description,
-    parentLocationId,
     references: { items, connections, conditions },
   };
+  if (parentLocationId !== undefined) {
+    parsed.parentLocationId = parentLocationId;
+  }
   if (indoor !== undefined) parsed.indoor = indoor;
   if (travelTimeMinutes !== undefined) {
     parsed.travelTimeMinutes = travelTimeMinutes;
@@ -480,39 +492,22 @@ export function buildSceneV2(file: PlaceFileV2): DynamicScene {
     id: file.id,
     name: file.name,
     description: file.description,
-    parentLocationId: file.parentLocationId,
     items: file.references.items,
     conditions: file.references.conditions,
     connections,
   };
+  if (file.parentLocationId !== undefined) {
+    scene.parentLocationId = file.parentLocationId;
+  }
   if (file.indoor !== undefined) scene.indoor = file.indoor;
   return scene;
 }
 
-/** Derive a runtime JunctionNode from a parsed JUNC_* file.
- *  `connectedSceneIds` is derived from connections (hidden included —
- *  visibility is the perception layer's job, not the loader's). */
-export function buildJunctionV2(file: PlaceFileV2): JunctionNode {
-  const problems: string[] = [];
-  const connections = rejectRoadOnlyFields(file, problems);
-  if (problems.length > 0) {
-    throw new ModuleSchemaError(file.id, problems);
-  }
-  return {
-    id: file.id,
-    name: file.name,
-    description: file.description,
-    parentLocationId: file.parentLocationId,
-    items: file.references.items,
-    conditions: file.references.conditions,
-    connections,
-    connectedSceneIds: connections.map((c) => c.targetId),
-  };
-}
-
 /** Derive a runtime RoadNode from a parsed ROAD_* file. Requires exactly one
- *  endpointA and one endpointB (both targeting JUNC_*), `position` in [0,1]
- *  on every access connection, and a positive `travelTimeMinutes`. */
+ *  endpointA and one endpointB (both targeting SCN_* node scenes; that the
+ *  target is TOP-LEVEL is checked cross-file in validateModuleReferences),
+ *  `position` in [0,1] on every access connection, and a positive
+ *  `travelTimeMinutes`. */
 export function buildRoadV2(file: PlaceFileV2): RoadNode {
   const problems: string[] = [];
   const connections: RoadConnection[] = [];
@@ -530,9 +525,9 @@ export function buildRoadV2(file: PlaceFileV2): RoadNode {
       continue;
     }
     if (c.role === "endpointA" || c.role === "endpointB") {
-      if (!c.targetId.startsWith("JUNC_")) {
+      if (!c.targetId.startsWith("SCN_")) {
         problems.push(
-          `connection "${c.id}": ${c.role} must target a JUNC_* node, got "${c.targetId}"`
+          `connection "${c.id}": ${c.role} must target a top-level SCN_* node scene, got "${c.targetId}"`
         );
       }
       endpoints[c.role].push(c.targetId);
@@ -580,11 +575,10 @@ export function buildRoadV2(file: PlaceFileV2): RoadNode {
   if (problems.length > 0 || travelTimeMinutes === undefined) {
     throw new ModuleSchemaError(file.id, problems);
   }
-  return {
+  const road: RoadNode = {
     id: file.id,
     name: file.name,
     description: file.description,
-    parentLocationId: file.parentLocationId,
     connections,
     endpointA: endpoints.endpointA[0],
     endpointB: endpoints.endpointB[0],
@@ -593,6 +587,10 @@ export function buildRoadV2(file: PlaceFileV2): RoadNode {
     items: file.references.items,
     conditions: file.references.conditions,
   };
+  if (file.parentLocationId !== undefined) {
+    road.parentLocationId = file.parentLocationId;
+  }
+  return road;
 }
 
 // ─── Module-wide reference validation ──────────────────────────────
@@ -604,7 +602,7 @@ export const MODULE_REFERENCES_ENTRY_ID = "__module_references__";
 
 interface PlaceForValidation {
   id: string;
-  kind: "scene" | "junction" | "road";
+  kind: "scene" | "road";
   description: string;
   items: Item[];
   connections: SceneConnection[];
@@ -624,7 +622,6 @@ interface PlaceForValidation {
  */
 export function validateModuleReferences(module: {
   scenes: Map<string, DynamicScene>;
-  junctions: Map<string, JunctionNode>;
   roads: Map<string, RoadNode>;
 }): void {
   const problems: string[] = [];
@@ -632,11 +629,20 @@ export function validateModuleReferences(module: {
   for (const scene of module.scenes.values()) {
     places.push({ kind: "scene", ...scene });
   }
-  for (const junction of module.junctions.values()) {
-    places.push({ kind: "junction", ...junction });
-  }
   for (const road of module.roads.values()) {
     places.push({ kind: "road", ...road });
+  }
+
+  // Road endpoints must land on TOP-LEVEL node scenes.
+  for (const road of module.roads.values()) {
+    for (const endpoint of [road.endpointA, road.endpointB]) {
+      const target = module.scenes.get(endpoint);
+      if (target?.parentLocationId) {
+        problems.push(
+          `${road.id}: endpoint "${endpoint}" must be a top-level scene (it has parentLocationId "${target.parentLocationId}")`
+        );
+      }
+    }
   }
 
   // One namespace: place ids + all reference ids.
@@ -744,15 +750,14 @@ export function validateModuleReferences(module: {
 
 /**
  * Validate the scenarios_outline entry. Each outline requires
- * id/name/description/subSceneCount; `entrySceneId`, when present, must be an
- * enterable place (scenes ∪ junctions).
+ * id/name/description/subSceneCount; `entrySceneId`, when present, must be a
+ * loaded scene.
  */
 export function validateScenarioOutlines(
   entryId: string,
   data: unknown,
   module: {
     scenes: Map<string, DynamicScene>;
-    junctions: Map<string, JunctionNode>;
   }
 ): ScenarioOutline[] {
   const raw = Array.isArray(data)
@@ -814,13 +819,9 @@ export function validateScenarioOutlines(
         problems.push(`${path}.residents: expected an array of strings`);
       }
     }
-    if (
-      entrySceneId !== undefined &&
-      !module.scenes.has(entrySceneId) &&
-      !module.junctions.has(entrySceneId)
-    ) {
+    if (entrySceneId !== undefined && !module.scenes.has(entrySceneId)) {
       problems.push(
-        `${path}.entrySceneId: "${entrySceneId}" is not a known scene or junction`
+        `${path}.entrySceneId: "${entrySceneId}" is not a known scene`
       );
     }
     if (

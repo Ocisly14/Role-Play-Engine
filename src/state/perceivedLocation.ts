@@ -1,18 +1,18 @@
 // src/state/perceivedLocation.ts
 //
 // One resolver for "where is this character, and what can they perceive from
-// there" — covering all three CharacterPosition kinds.
+// there" — covering both CharacterPosition kinds.
 //
 // Both the perceivable directory and the renderer used to compute this as
 // `position.type === "scene" ? position.sceneId : null`, which made a
-// character on a road or at a junction perceive NOTHING: no citable place, no
-// co-located people, no items underfoot, no local conditions. Since every
-// cross-scene trip spends its whole duration on roads and junctions, a
-// traveller was effectively blind for the entire walk — observed live as an
-// NPC citing the road he was standing on and having the decision rejected.
+// character on a road perceive NOTHING: no citable place, no co-located
+// people, no items underfoot, no local conditions. Since every cross-scene
+// trip spends its whole duration on roads, a traveller was effectively blind
+// for the entire walk — observed live as an NPC citing the road he was
+// standing on and having the decision rejected.
 //
-// Roads and junctions carry the same `items` / `conditions` / connection data
-// scenes do, so one uniform view serves all three.
+// Roads carry the same `items` / `conditions` / connection data scenes do,
+// so one uniform view serves both.
 //
 // This resolver is also the single choke point for `hidden`: an item or
 // connection flagged hidden exists in the world (the Engine sees it, the
@@ -28,7 +28,7 @@ import type { Item } from "./types.js";
 /** A location as perceived from inside it, regardless of its topology kind. */
 export interface PerceivedLocation {
   id: string;
-  kind: "scene" | "junction" | "road";
+  kind: "scene" | "road";
   name: string;
   description: string;
   conditions: SceneCondition[];
@@ -62,33 +62,14 @@ export function resolvePerceivedLocation(
       // `getScene` answers null, not undefined, for an id it does not know —
       // so the old `!== undefined` test kept everything it meant to drop.
       // Hidden connections stay out until revealed: an unfound door must not
-      // enter the citable set.
-      adjacentIds: (scene.connections ?? [])
-        .filter((c) => !c.hidden)
-        .map((c) => c.targetId)
-        .filter((id) => dgsm.getScene(id) != null),
-    };
-  }
-
-  if (position.type === "junction") {
-    const junction = topology.junctions.get(position.junctionId);
-    if (!junction) return null;
-    return {
-      id: junction.id,
-      kind: "junction",
-      name: junction.name,
-      description: junction.description ?? "",
-      conditions: dgsm.getSceneConditions(junction.id),
-      items: visibleItems(junction.items),
-      // Adjacency derives from the authored connections, not the raw
-      // `connectedSceneIds` (which is derived WITH hidden entries included —
-      // visibility is this layer's job). Incident roads are always visible:
-      // a road has no hidden flag of its own.
+      // enter the citable set. A node scene (street, yard) additionally sees
+      // its incident roads — a road has no hidden flag of its own.
       adjacentIds: [
-        ...(junction.connections ?? [])
+        ...(scene.connections ?? [])
           .filter((c) => !c.hidden)
-          .map((c) => c.targetId),
-        ...(topology.junctionToRoads.get(junction.id) ?? []).map((r) => r.id),
+          .map((c) => c.targetId)
+          .filter((id) => dgsm.getScene(id) != null),
+        ...(topology.sceneToRoads.get(scene.id) ?? []).map((r) => r.id),
       ],
     };
   }
@@ -97,7 +78,7 @@ export function resolvePerceivedLocation(
   if (!road) return null;
   // `alongConnections` is derived with hidden entries included; the hidden
   // flag lives on the authored `access` connection, matched by sceneId. The
-  // two endpoint junctions are always visible — you can see where a road
+  // two endpoint node scenes are always visible — you can see where a road
   // leads even before you have found every doorway along it.
   const hiddenAccessIds = new Set(
     (road.connections ?? [])
@@ -134,15 +115,9 @@ export function resolveLocationById(
 ): PerceivedLocation | null {
   if (!locationId) return null;
   const topology = dgsm.getTopology();
-  if (dgsm.getScene(locationId)) {
+  if (dgsm.getScene(locationId) && !topology.roads.has(locationId)) {
     return resolvePerceivedLocation(
       { type: "scene", sceneId: locationId },
-      dgsm
-    );
-  }
-  if (topology.junctions.has(locationId)) {
-    return resolvePerceivedLocation(
-      { type: "junction", junctionId: locationId },
       dgsm
     );
   }
@@ -155,8 +130,8 @@ export function resolveLocationById(
   return null;
 }
 
-/** Ids of the living characters sharing this actor's location — scene,
- *  junction, or a nearby stretch of the same road. Excludes the actor. */
+/** Ids of the living characters sharing this actor's location — scene, or a
+ *  nearby stretch of the same road. Excludes the actor. */
 export function charactersAtSameLocation(
   actorId: string,
   dgsm: DynamicGameStateManager
@@ -174,8 +149,6 @@ export function charactersAtSameLocation(
 
     if (actorPos.type === "scene" && pos.type === "scene") {
       if (pos.sceneId === actorPos.sceneId) out.push(npc.id);
-    } else if (actorPos.type === "junction" && pos.type === "junction") {
-      if (pos.junctionId === actorPos.junctionId) out.push(npc.id);
     } else if (actorPos.type === "road" && pos.type === "road") {
       if (pos.roadId !== actorPos.roadId) continue;
       const travel =

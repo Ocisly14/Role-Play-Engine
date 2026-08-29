@@ -22,7 +22,7 @@
     "connections": [
       {
         "id": "exit.clinic_waiting.street_door",
-        "targetId": "JUNC_main_south",
+        "targetId": "SCN_main_south",
         "name": "临街门",
         "description": "装着门铃的临街门,通向主街南段。"
       },

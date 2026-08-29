@@ -1,4 +1,4 @@
-export type BlockedConnectionNodeType = "scene" | "junction" | "road";
+export type BlockedConnectionNodeType = "scene" | "road";
 
 export interface BlockedConnectionNodeRef {
   type: BlockedConnectionNodeType;
@@ -7,7 +7,6 @@ export interface BlockedConnectionNodeRef {
 
 export interface BlockedConnectionLookup {
   scenes?: Map<string, unknown>;
-  junctions?: Map<string, unknown>;
   roads?: Map<string, unknown>;
 }
 
@@ -48,9 +47,6 @@ export function resolveBlockedConnectionNodeRef(
 ): BlockedConnectionNodeRef | null {
   if (lookup.scenes?.has(id)) {
     return { type: "scene", id };
-  }
-  if (lookup.junctions?.has(id)) {
-    return { type: "junction", id };
   }
   if (lookup.roads?.has(id)) {
     return { type: "road", id };

@@ -21,7 +21,7 @@
     "connections": [
       {
         "id": "exit.arcade.street_door",
-        "targetId": "JUNC_main_south",
+        "targetId": "SCN_main_south",
         "name": "临街玻璃门",
         "description": "蒙着屏幕辉光的玻璃门,通向主街南段。"
       }

@@ -10,13 +10,11 @@ The runtime scene layer currently uses these files:
 2. `scenarios_outline.json`
 3. `transport_edges.json` (optional)
 4. `SCN_*.json`
-5. `JUNC_*.json`
-6. `ROAD_*.json`
+5. `ROAD_*.json`
 
 These files are loaded into:
 
 - `DynamicScene`
-- `JunctionNode`
 - `RoadNode`
 - `ScenarioOutline`
 - `TransportEdge`
@@ -54,8 +52,11 @@ The HTML is for UI rendering; `imagePath` is the optional raster vision asset.
 
 ## 2. Schema v2 place files
 
-`SCN_*.json`, `JUNC_*.json`, and `ROAD_*.json` all use a prose-first authoring
-format. `description` is complete natural-language scene text; every visible
+`SCN_*.json` and `ROAD_*.json` use a prose-first authoring format. There is
+no junction type any more: a street stretch, crossroads or yard is a
+**top-level scene** — an `SCN_*` file with NO `parentLocationId` — and the
+road network runs between top-level scenes. `JUNC_*` files are rejected by
+the loader. `description` is complete natural-language scene text; every visible
 object, exit, and condition is cited with a stable `[reference-id]`. The
 corresponding machine-readable objects live in the same file under
 `references`.
@@ -97,7 +98,9 @@ corresponding machine-readable objects live in the same file under
 ### Common fields
 
 - `schemaVersion: 2`
-- `id`, `name`, `description`, `parentLocationId`
+- `id`, `name`, `description`
+- `parentLocationId` (optional): the containing macro location (outline id)
+  or node scene. Omit it to make the scene a TOP-LEVEL geography node.
 - `references.items: Item[]`
 - `references.connections: Array<{ id, targetId, name?, description?, hidden? }>`
 - `references.conditions: Array<{ id, description, mechanicalEffect?, featureId?, data? }>`
@@ -106,18 +109,13 @@ All reference ids must be module-unique. Every visible reference must occur in
 the description as `[id]`; every citation must resolve to one reference in that
 place. Hidden exits are excluded from the initial citation requirement.
 
-### JUNC_*.json
-
-Junction connections use the common `references.connections` array. Each
-connection targets an enterable `SCN_*`; the loader derives the runtime
-`connectedSceneIds` list.
-
 ### ROAD_*.json
 
 Roads also use the common references array plus `travelTimeMinutes`. Their
-connections add a required role: exactly one `endpointA`, one `endpointB`, and
-zero or more `access` entries. Each `access` entry also has `position` from 0
-to 1. The loader derives `endpointA`, `endpointB`, and `alongConnections`.
+connections add a required role: exactly one `endpointA`, one `endpointB`
+(both targeting TOP-LEVEL `SCN_*` node scenes), and zero or more `access`
+entries. Each `access` entry also has `position` from 0 to 1. The loader
+derives `endpointA`, `endpointB`, and `alongConnections`.
 
 ## 5. scenarios_outline.json
 
@@ -177,7 +175,7 @@ Optional macro travel graph used by non-topology movement fallback.
 
 ## SceneCondition
 
-Used in the `references.conditions` block of `SCN`, `JUNC`, and `ROAD` files.
+Used in the `references.conditions` block of `SCN` and `ROAD` files.
 
 ```json
 {
@@ -203,7 +201,7 @@ Used in the `references.conditions` block of `SCN`, `JUNC`, and `ROAD` files.
 
 ## Item
 
-`references.items` entries in scenes, junctions, and roads match the runtime
+`references.items` entries in scenes and roads match the runtime
 `Item` type in `src/state/types.ts`: an object is a name and a paragraph —
 the Engine reads the description and judges, so there are no mechanical
 sub-typed fields.

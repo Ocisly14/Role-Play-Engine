@@ -698,7 +698,7 @@ export class SimulationRunner {
         }
       }
 
-      // (2) Write death event memory (Decision 26). Use scene/junction/road
+      // (2) Write death event memory (Decision 26). Use scene/road
       // *name* in the memory text so it reads naturally to the agent.
       const position = gameState.characterPositions[npc.id];
       const locationId = position

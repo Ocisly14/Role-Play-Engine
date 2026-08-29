@@ -23,7 +23,7 @@
     "connections": [
       {
         "id": "exit.station_dock.rollup_door",
-        "targetId": "JUNC_station_yard",
+        "targetId": "SCN_station_yard",
         "name": "卷帘门",
         "description": "装卸区的卷帘门,感应到货车会自行升起,通向站前场地。"
       }

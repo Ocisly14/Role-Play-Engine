@@ -463,7 +463,7 @@ function formatScene(
     }
   }
   if (scene.id) {
-    // By id, not getScene: the place may be a road or junction, which carry
+    // By id, not getScene: the place may be a road, which carries
     // items of their own and are invisible to the scene lookup.
     const items = resolveLocationById(scene.id, dgsm)?.items ?? [];
     if (items.length > 0) {

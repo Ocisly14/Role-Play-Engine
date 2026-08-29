@@ -26,7 +26,6 @@ import {
 import { addMinutes, datePart, isSameDay, makeDateTime } from "./gameClock.js";
 import type {
   CharacterPosition,
-  JunctionNode,
   RoadNode,
   TownTopology,
 } from "./topologyTypes.js";
@@ -58,8 +57,9 @@ export interface DynamicGameState {
   sessionId: string;
 
   // === Scenes & Topology Nodes ===
+  // Top-level scenes (no parentLocationId) are the geography nodes the road
+  // network runs between; there is no separate junction type.
   scenes: Map<string, DynamicScene>;
-  junctions: Map<string, JunctionNode>;
   roads: Map<string, RoadNode>;
 
   // === Time ===
@@ -109,7 +109,7 @@ export interface DynamicGameState {
   npcResidences: Record<string, string>; // npcId -> macroLocationId
   transportEdges: TransportEdge[];
 
-  // === Road & Junction Topology (required) ===
+  // === Road Topology (required) ===
   topology: TownTopology;
 
   // === Character Positions (NPC) ===
@@ -141,7 +141,6 @@ export const initialDynamicGameState = (params: {
 }): DynamicGameState => ({
   sessionId: params.sessionId,
   scenes: new Map(),
-  junctions: new Map(),
   roads: new Map(),
   gameDateTime: params.gameDateTime ?? "1900-01-01T08:00:00",
   npcCharacters: [],
@@ -268,13 +267,11 @@ export class DynamicGameStateManager {
   // === Scene Helpers ===
 
   /**
-   * Get a scene, junction, or road by ID.
-   * Searches scenes first, then junctions, then roads.
+   * Get a scene or road by ID. Searches scenes first, then roads.
    */
   getScene(sceneId: string): DynamicScene | null {
     return (
       this.state.scenes.get(sceneId) ??
-      (this.state.junctions.get(sceneId) as unknown as DynamicScene) ??
       (this.state.roads.get(sceneId) as unknown as DynamicScene) ??
       null
     );
@@ -312,14 +309,10 @@ export class DynamicGameStateManager {
    * Serialize state for storage (converts Maps to Objects, Dates to ISO strings)
    */
   serialize(): any {
-    // Convert scenes/junctions/roads Maps to plain objects
+    // Convert scenes/roads Maps to plain objects
     const scenesObj: Record<string, DynamicScene> = {};
     this.state.scenes.forEach((scene, id) => {
       scenesObj[id] = scene;
-    });
-    const junctionsObj: Record<string, any> = {};
-    this.state.junctions.forEach((j, id) => {
-      junctionsObj[id] = j;
     });
     const roadsObj: Record<string, any> = {};
     this.state.roads.forEach((r, id) => {
@@ -332,27 +325,13 @@ export class DynamicGameStateManager {
       blockedConnsObj[key] = reason;
     });
 
-    // Convert topology Maps to plain objects
-    let topologyObj: any = null;
-    if (this.state.topology) {
-      const junctionsObj: Record<string, any> = {};
-      this.state.topology.junctions.forEach((j, id) => {
-        junctionsObj[id] = j;
-      });
-      const roadsObj: Record<string, any> = {};
-      this.state.topology.roads.forEach((r, id) => {
-        roadsObj[id] = r;
-      });
-      topologyObj = { junctions: junctionsObj, roads: roadsObj };
-    }
-
     return {
       ...this.state,
       scenes: scenesObj,
-      junctions: junctionsObj,
       roads: roadsObj,
       blockedConnections: blockedConnsObj,
-      topology: topologyObj,
+      // Topology is fully derivable from scenes + roads; rebuilt on load.
+      topology: null,
       characterPositions: this.state.characterPositions,
       characterSpots: this.state.characterSpots,
       hiddenCharacterIds: Array.from(this.hiddenCharacterIds),
@@ -396,20 +375,6 @@ export class DynamicGameStateManager {
       }
     }
 
-    // Reconstruct junctions Map
-    const junctions = new Map<string, JunctionNode>();
-    if (data.junctions) {
-      if (data.junctions instanceof Map) {
-        data.junctions.forEach((j: JunctionNode, id: string) =>
-          junctions.set(id, j)
-        );
-      } else {
-        Object.entries(data.junctions).forEach(([id, j]) =>
-          junctions.set(id, j as JunctionNode)
-        );
-      }
-    }
-
     // Reconstruct roads Map
     const roads = new Map<string, RoadNode>();
     if (data.roads) {
@@ -422,21 +387,10 @@ export class DynamicGameStateManager {
       }
     }
 
-    // Reconstruct topology from junctions/roads
+    // Reconstruct topology from scenes/roads (always derivable)
     let topology: TownTopology | null = null;
-    if (junctions.size > 0 || roads.size > 0) {
-      topology = buildTopology(junctions, roads);
-    } else if (data.topology?.junctions && data.topology?.roads) {
-      // Fallback: old serialization format stored topology separately
-      const topoJunctions = new Map<string, JunctionNode>();
-      Object.entries(data.topology.junctions).forEach(([id, j]) =>
-        topoJunctions.set(id, j as JunctionNode)
-      );
-      const topoRoads = new Map<string, RoadNode>();
-      Object.entries(data.topology.roads).forEach(([id, r]) =>
-        topoRoads.set(id, r as RoadNode)
-      );
-      topology = buildTopology(topoJunctions, topoRoads);
+    if (scenes.size > 0 || roads.size > 0) {
+      topology = buildTopology(scenes, roads);
     }
 
     // Enrich topology with interior sub-scenes so pathfinding works for them
@@ -456,7 +410,6 @@ export class DynamicGameStateManager {
       npcCharacters: data.npcCharacters ?? [],
       scenarioOutlines: data.scenarioOutlines ?? [],
       scenes,
-      junctions,
       roads,
       blockedConnections,
       scopedFeatureStates: (() => {
@@ -536,7 +489,6 @@ export class DynamicGameStateManager {
     return {
       ...this.state,
       scenes: new Map(this.state.scenes),
-      junctions: new Map(this.state.junctions),
       roads: new Map(this.state.roads),
       blockedConnections: new Map(this.state.blockedConnections),
       hiddenCharacterIds: [...(this.state.hiddenCharacterIds ?? [])],
@@ -918,8 +870,8 @@ export class DynamicGameStateManager {
   }
 
   /** Internal: resolve an item-holding container.
-   *  `"scene:<id>"` resolves scene → junction → road (same fallthrough as
-   *  `getScene` — all three kinds of place hold items); anything else is
+   *  `"scene:<id>"` resolves scene → road (same fallthrough as
+   *  `getScene` — both kinds of place hold items); anything else is
    *  treated as an npcId. `createIfMissing` applies to the write direction:
    *  an NPC inventory is created on demand, a missing place never is. */
   private resolveItemContainer(
@@ -929,9 +881,7 @@ export class DynamicGameStateManager {
     if (location.startsWith("scene:")) {
       const placeId = location.slice("scene:".length);
       const place =
-        this.state.scenes.get(placeId) ??
-        this.state.junctions.get(placeId) ??
-        this.state.roads.get(placeId);
+        this.state.scenes.get(placeId) ?? this.state.roads.get(placeId);
       if (!place) return undefined;
       // Module JSON may omit the field on places that start with none.
       if (!place.items) place.items = [];
@@ -945,14 +895,11 @@ export class DynamicGameStateManager {
   }
 
   /** Internal: every item container in the world, in stable order —
-   *  scenes, junctions, roads, then NPC inventories. `holder` is
+   *  scenes, roads, then NPC inventories. `holder` is
    *  `"scene:<placeId>"` for places and the bare npcId for inventories. */
   private *allItemContainers(): Iterable<{ holder: string; items: Item[] }> {
     for (const scene of this.state.scenes.values()) {
       yield { holder: `scene:${scene.id}`, items: scene.items ?? [] };
-    }
-    for (const junction of this.state.junctions.values()) {
-      yield { holder: `scene:${junction.id}`, items: junction.items ?? [] };
     }
     for (const road of this.state.roads.values()) {
       yield { holder: `scene:${road.id}`, items: road.items ?? [] };
@@ -1151,7 +1098,7 @@ export class DynamicGameStateManager {
     const place = this.getScene(scenarioId);
     if (!place) {
       console.warn(
-        `[DynamicGameState] appendSceneCondition: no scene/junction/road "${scenarioId}" — condition dropped`
+        `[DynamicGameState] appendSceneCondition: no scene/road "${scenarioId}" — condition dropped`
       );
       return;
     }
@@ -1208,7 +1155,7 @@ export class DynamicGameStateManager {
   }
 
   /**
-   * Rewrite a place's prose wholesale (scene, junction or road — the same
+   * Rewrite a place's prose wholesale (scene or road — the same
    * fallthrough `getScene` uses). Returns false + warn when the id names no
    * place.
    */
@@ -1216,7 +1163,7 @@ export class DynamicGameStateManager {
     const place = this.getScene(placeId);
     if (!place) {
       console.warn(
-        `[DynamicGameState] setPlaceDescription: no scene/junction/road "${placeId}" — ignored`
+        `[DynamicGameState] setPlaceDescription: no scene/road "${placeId}" — ignored`
       );
       return false;
     }
@@ -1232,7 +1179,7 @@ export class DynamicGameStateManager {
     const place = this.getScene(scenarioId);
     if (!place) {
       console.warn(
-        `[DynamicGameState] replaceSceneConditions: no scene/junction/road "${scenarioId}" — ignored`
+        `[DynamicGameState] replaceSceneConditions: no scene/road "${scenarioId}" — ignored`
       );
       return;
     }
@@ -1450,7 +1397,7 @@ export class DynamicGameStateManager {
   // === Connection Registry ===
 
   /**
-   * Id-addressed index over every authored connection (scenes, junctions,
+   * Id-addressed index over every authored connection (scenes,
    * roads). Built once on first use — runtime never adds or removes
    * connections, it only flips flags on them.
    */
@@ -1458,7 +1405,6 @@ export class DynamicGameStateManager {
     if (!this.connectionRegistry) {
       this.connectionRegistry = buildConnectionRegistry({
         scenes: this.state.scenes,
-        junctions: this.state.junctions,
         roads: this.state.roads,
       });
     }
@@ -1483,9 +1429,7 @@ export class DynamicGameStateManager {
     const owner = entry
       ? entry.ownerKind === "scene"
         ? this.state.scenes.get(entry.ownerId)
-        : entry.ownerKind === "junction"
-          ? this.state.junctions.get(entry.ownerId)
-          : this.state.roads.get(entry.ownerId)
+        : this.state.roads.get(entry.ownerId)
       : undefined;
     const connection = owner?.connections?.find((c) => c.id === connectionId);
     if (!connection) {
@@ -1540,10 +1484,6 @@ export class DynamicGameStateManager {
   }
 
   // === Topology ===
-
-  getJunction(junctionId: string): JunctionNode | null {
-    return this.state.topology?.junctions.get(junctionId) ?? null;
-  }
 
   getRoad(roadId: string): RoadNode | null {
     return this.state.topology?.roads.get(roadId) ?? null;
@@ -1612,14 +1552,6 @@ export class DynamicGameStateManager {
     this.state.lastUpdated = new Date();
   }
 
-  getCharactersAtJunction(junctionId: string): string[] {
-    return Object.entries(this.state.characterPositions)
-      .filter(
-        ([_, pos]) => pos.type === "junction" && pos.junctionId === junctionId
-      )
-      .map(([id]) => id);
-  }
-
   getCharactersOnRoad(
     roadId: string
   ): Array<{ characterId: string; position: number }> {
@@ -1640,12 +1572,10 @@ export class DynamicGameStateManager {
 
   /**
    * Resolve the "location ID" for a character position, for backward compatibility.
-   * Returns the scene/junction/road ID the character is at.
+   * Returns the scene/road ID the character is at.
    */
   resolveLocationId(position: CharacterPosition): string {
     switch (position.type) {
-      case "junction":
-        return position.junctionId;
       case "road":
         return position.roadId;
       case "scene":

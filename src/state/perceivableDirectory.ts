@@ -46,7 +46,7 @@ export interface PerceivableDirectory {
   characterHandles: Map<string, string>;
   /** Item ids in scope: items at the current location ∪ actor inventory. */
   items: Set<string>;
-  /** PLACE ids in scope — scenes, junctions and roads alike (the citation
+  /** PLACE ids in scope — scenes and roads alike (the citation
    *  grammar has one `scene` kind for "a place"): the actor's current
    *  location plus everything one hop from it. */
   scenes: Set<string>;
@@ -131,7 +131,7 @@ export function buildPerceivableDirectory(
   }
 
   // ── Characters: co-located (incl. UNKNOWN strangers) ────────────
-  // Works on roads and at junctions too — a traveller must be able to see
+  // Works on roads too — a traveller must be able to see
   // whoever is walking beside them.
   for (const id of charactersAtSameLocation(actorId, dgsm)) characters.add(id);
 

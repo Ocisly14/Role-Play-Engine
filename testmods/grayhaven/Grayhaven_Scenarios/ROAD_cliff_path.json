@@ -10,13 +10,13 @@
     "connections": [
       {
         "id": "exit.cliff_path.dock_end",
-        "targetId": "JUNC_dock",
+        "targetId": "SCN_dock",
         "name": "小径北端(码头)",
         "role": "endpointA"
       },
       {
         "id": "exit.cliff_path.cliff_end",
-        "targetId": "JUNC_lighthouse_cliff",
+        "targetId": "SCN_lighthouse_cliff",
         "name": "小径南端(灯塔崖)",
         "role": "endpointB"
       },

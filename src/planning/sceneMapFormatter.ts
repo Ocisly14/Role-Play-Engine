@@ -43,9 +43,6 @@ function resolveDisplayLocationNameFromState(
   }
 
   if (state.topology) {
-    const junction = state.topology.junctions.get(locationId);
-    if (junction) return junction.name;
-
     const road = state.topology.roads.get(locationId);
     if (road) return road.name;
   }

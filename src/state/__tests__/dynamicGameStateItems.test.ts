@@ -3,14 +3,14 @@ import {
   DynamicGameStateManager,
   initialDynamicGameState,
 } from "../DynamicGameState.js";
-import type { JunctionNode, RoadNode } from "../topologyTypes.js";
+import type { RoadNode } from "../topologyTypes.js";
 import type { DynamicScene } from "../types.js";
 
 // Items used to live only in scenes as far as the mutators were concerned:
 // a glove dropped on a road was perceivable but could never be picked up,
 // because five write paths scanned `state.scenes` alone. These tests pin the
-// unified container primitives: scene, junction, road and NPC inventory are
-// all one id-space of holders.
+// unified container primitives: scene, road and NPC inventory are all one
+// id-space of holders.
 
 function makeFixture() {
   const state = initialDynamicGameState({
@@ -31,36 +31,32 @@ function makeFixture() {
     ],
   };
 
-  const junction: JunctionNode = {
+  // Top-level scenes (no parentLocationId): geography nodes.
+  const junction: DynamicScene = {
     id: "J_A",
     name: "Crossing",
     description: "A windswept crossing.",
-    parentLocationId: "OUTDOOR",
     items: [{ id: "item_lamppost", name: "a lamppost" }],
     conditions: [],
     connections: [
       { id: "exit.junc.home", targetId: "S_HOME" },
       { id: "exit.junc.road", targetId: "R_MAIN" },
     ],
-    connectedSceneIds: ["S_HOME"],
   };
 
-  const junctionB: JunctionNode = {
+  const junctionB: DynamicScene = {
     id: "J_B",
     name: "Far Corner",
     description: "The far corner.",
-    parentLocationId: "OUTDOOR",
     items: [],
     conditions: [],
     connections: [],
-    connectedSceneIds: [],
   };
 
   const road: RoadNode = {
     id: "R_MAIN",
     name: "Star Avenue",
     description: "A long avenue.",
-    parentLocationId: "OUTDOOR",
     connections: [
       { id: "exit.road.a", targetId: "J_A", role: "endpointA" },
       { id: "exit.road.b", targetId: "J_B", role: "endpointB" },
@@ -74,8 +70,8 @@ function makeFixture() {
   };
 
   state.scenes.set(scene.id, scene);
-  state.junctions.set(junction.id, junction);
-  state.junctions.set(junctionB.id, junctionB);
+  state.scenes.set(junction.id, junction);
+  state.scenes.set(junctionB.id, junctionB);
   state.roads.set(road.id, road);
   state.npcInventories = { npc_ann: [{ id: "item_coin", name: "a coin" }] };
 
@@ -84,7 +80,7 @@ function makeFixture() {
 
 let dgsm: DynamicGameStateManager;
 let scene: DynamicScene;
-let junction: JunctionNode;
+let junction: DynamicScene;
 let road: RoadNode;
 let warnSpy: ReturnType<typeof vi.spyOn>;
 
@@ -98,7 +94,7 @@ afterEach(() => {
 });
 
 describe("item containers across place kinds and inventories", () => {
-  it("finds items held by scenes, junctions, roads and NPCs", () => {
+  it("finds items held by scenes (node scenes included), roads and NPCs", () => {
     expect(dgsm.hasItem("item_chair")).toBe(true);
     expect(dgsm.hasItem("item_lamppost")).toBe(true);
     expect(dgsm.hasItem("item_glove")).toBe(true);
@@ -278,7 +274,7 @@ describe("setConnectionHiddenById", () => {
     expect(conn?.hidden).toBe(false);
   });
 
-  it("hides a junction connection", () => {
+  it("hides a node-scene connection", () => {
     expect(dgsm.setConnectionHiddenById("exit.junc.road", true)).toBe(true);
     const conn = junction.connections.find((c) => c.id === "exit.junc.road");
     expect(conn?.hidden).toBe(true);

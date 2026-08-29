@@ -1,7 +1,6 @@
 import fs from "node:fs";
 import path from "node:path";
 import {
-  buildJunctionV2,
   buildRoadV2,
   buildSceneV2,
   parsePlaceFileV2,
@@ -9,7 +8,7 @@ import {
   validateScenarioOutlines,
 } from "@/state/moduleSchemaV2.js";
 import { buildTopology } from "@/state/topologyTypes.js";
-import type { JunctionNode, RoadNode } from "@/state/topologyTypes.js";
+import type { RoadNode } from "@/state/topologyTypes.js";
 import type { DynamicScene } from "@/state/types.js";
 import { describe, expect, it } from "vitest";
 
@@ -20,7 +19,6 @@ const SCENARIOS_DIR = path.join(MODULE_DIR, "Grayhaven_Scenarios");
 
 function loadModuleFromDisk() {
   const scenes = new Map<string, DynamicScene>();
-  const junctions = new Map<string, JunctionNode>();
   const roads = new Map<string, RoadNode>();
   for (const file of fs.readdirSync(SCENARIOS_DIR).sort()) {
     if (!file.endsWith(".json")) continue;
@@ -28,23 +26,23 @@ function loadModuleFromDisk() {
       fs.readFileSync(path.join(SCENARIOS_DIR, file), "utf8")
     );
     const parsed = parsePlaceFileV2(path.basename(file, ".json"), data);
-    if (parsed.id.startsWith("JUNC_")) {
-      junctions.set(parsed.id, buildJunctionV2(parsed));
-    } else if (parsed.id.startsWith("ROAD_")) {
+    if (parsed.id.startsWith("ROAD_")) {
       roads.set(parsed.id, buildRoadV2(parsed));
     } else {
       scenes.set(parsed.id, buildSceneV2(parsed));
     }
   }
-  return { scenes, junctions, roads };
+  return { scenes, roads };
 }
 
 describe("grayhaven module data", () => {
   const module = loadModuleFromDisk();
+  const topology = buildTopology(module.scenes, module.roads);
 
   it("has the designed place counts", () => {
-    expect(module.scenes.size).toBe(31);
-    expect(module.junctions.size).toBe(15);
+    // 31 interior scenes + 15 former junctions, now top-level node scenes.
+    expect(module.scenes.size).toBe(46);
+    expect(topology.nodeSceneIds.size).toBe(15);
     expect(module.roads.size).toBe(18);
   });
 
@@ -53,23 +51,31 @@ describe("grayhaven module data", () => {
   });
 
   it("assembles a topology", () => {
-    const topology = buildTopology(module.junctions, module.roads);
-    expect(topology.junctionToRoads.size).toBeGreaterThan(0);
-    // Every interior scene attached to a junction or road is resolvable.
-    expect(topology.sceneToParent.get("SCN_bluebird_dining")).toBeTruthy();
+    expect(topology.sceneToRoads.size).toBeGreaterThan(0);
+    // Interior scenes attach to their street node or road access point.
+    expect(topology.sceneToParent.get("SCN_bluebird_dining")).toEqual({
+      type: "scene",
+      sceneId: "SCN_main_north",
+    });
     expect(topology.sceneToParent.get("SCN_earl_cabin")).toEqual({
       type: "road",
       roadId: "ROAD_cliff_path",
       position: 0.15,
     });
+    // The lighthouse interior hangs off the cliff node scene.
+    expect(topology.sceneToParent.get("SCN_lighthouse_interior")).toEqual({
+      type: "scene",
+      sceneId: "SCN_lighthouse_cliff",
+    });
   });
 
   it("keeps the fence a dead end (no edge into the station)", () => {
-    const fence = module.junctions.get("JUNC_fence");
+    const fence = module.scenes.get("SCN_fence");
     expect(fence).toBeTruthy();
+    expect(fence?.parentLocationId).toBeUndefined();
     expect(fence?.connections ?? []).toHaveLength(0);
-    const fenceRoads = buildTopology(module.junctions, module.roads)
-      .junctionToRoads.get("JUNC_fence")
+    const fenceRoads = topology.sceneToRoads
+      .get("SCN_fence")
       ?.map((r: RoadNode) => r.id);
     expect(fenceRoads).toEqual(["ROAD_redwood_fence"]);
   });
@@ -93,7 +99,7 @@ describe("grayhaven module data", () => {
   it("station dock's inner door stays pure prose (no exit reference)", () => {
     const dock = module.scenes.get("SCN_station_dock");
     expect(dock?.connections).toHaveLength(1);
-    expect(dock?.connections[0]?.targetId).toBe("JUNC_station_yard");
+    expect(dock?.connections[0]?.targetId).toBe("SCN_station_yard");
   });
 
   it("validates the scenario outline against loaded places", () => {
@@ -103,11 +109,10 @@ describe("grayhaven module data", () => {
     const outlines = validateScenarioOutlines(
       "__scenarios_outline__",
       outline,
-      {
-        scenes: module.scenes,
-        junctions: module.junctions,
-      }
+      { scenes: module.scenes }
     );
-    expect(outlines).toHaveLength(16);
+    // The four street/gate wrapper locations and the lighthouse container
+    // were dissolved into top-level node scenes: 16 → 11.
+    expect(outlines).toHaveLength(11);
   });
 });

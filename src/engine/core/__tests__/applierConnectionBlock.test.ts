@@ -10,12 +10,8 @@ import {
   DynamicGameStateManager,
   initialDynamicGameState,
 } from "../../../state/DynamicGameState.js";
-import {
-  type JunctionNode,
-  type RoadNode,
-  buildTopology,
-} from "../../../state/topologyTypes.js";
-import type { DynamicScene } from "../../../state/types.js";
+import { type RoadNode, buildTopology } from "../../../state/topologyTypes.js";
+import type { DynamicScene, SceneConnection } from "../../../state/types.js";
 import type { SourcedWorldDelta } from "../../actions/types.js";
 import { findTopologyPath } from "../../shared/pathfinding.js";
 import { Applier } from "../applier.js";
@@ -38,19 +34,17 @@ function makeFixture() {
     connections: [{ id: "exit.home.junc", targetId: "J_A" }],
   };
 
+  // Top-level scenes (no parentLocationId) are the geography nodes.
   const junction = (
     id: string,
-    connections: JunctionNode["connections"],
-    connectedSceneIds: string[] = []
-  ): JunctionNode => ({
+    connections: SceneConnection[]
+  ): DynamicScene => ({
     id,
     name: id,
     description: `${id} crossing`,
-    parentLocationId: "OUTDOOR",
     items: [],
     conditions: [],
     connections,
-    connectedSceneIds,
   });
 
   const road = (
@@ -75,15 +69,11 @@ function makeFixture() {
     conditions: [],
   });
 
-  const jA = junction(
-    "J_A",
-    [
-      { id: "exit.junc.home", targetId: "S_HOME" },
-      { id: "exit.ja.rmain", targetId: "R_MAIN" },
-      { id: "exit.ja.rac", targetId: "R_A_C" },
-    ],
-    ["S_HOME"]
-  );
+  const jA = junction("J_A", [
+    { id: "exit.junc.home", targetId: "S_HOME" },
+    { id: "exit.ja.rmain", targetId: "R_MAIN" },
+    { id: "exit.ja.rac", targetId: "R_A_C" },
+  ]);
   const jB = junction("J_B", [
     { id: "exit.jb.rmain", targetId: "R_MAIN" },
     { id: "exit.jb.rcb", targetId: "R_C_B" },
@@ -97,11 +87,11 @@ function makeFixture() {
   const rCB = road("R_C_B", "J_C", "J_B", 9);
 
   state.scenes.set(scene.id, scene);
-  for (const j of [jA, jB, jC]) state.junctions.set(j.id, j);
+  for (const j of [jA, jB, jC]) state.scenes.set(j.id, j);
   for (const r of [rMain, rAC, rCB]) state.roads.set(r.id, r);
 
   const dgsm = new DynamicGameStateManager(state);
-  const topology = buildTopology(state.junctions, state.roads);
+  const topology = buildTopology(state.scenes, state.roads);
   const applier = new Applier(dgsm, new Map());
   return { dgsm, applier, topology, state };
 }
@@ -145,7 +135,7 @@ describe("connectionBlock lands in state.blockedConnections", () => {
       blockDelta("a1", "exit.ja.rmain", true, "a felled tree"),
     ]);
 
-    expect(state.blockedConnections.get("junction:J_A::road:R_MAIN")).toBe(
+    expect(state.blockedConnections.get("road:R_MAIN::scene:J_A")).toBe(
       "a felled tree"
     );
     expect(dgsm.getConnectionBlockReason("J_A", "R_MAIN")).toBe(
@@ -169,8 +159,8 @@ describe("connectionBlock lands in state.blockedConnections", () => {
 });
 
 describe("pathfinding refuses the blocked edge and detours", () => {
-  const from = { type: "junction", junctionId: "J_A" } as const;
-  const to = { type: "junction", junctionId: "J_B" } as const;
+  const from = { type: "scene", sceneId: "J_A" } as const;
+  const to = { type: "scene", sceneId: "J_B" } as const;
 
   it("takes the direct road while it is open", () => {
     const { topology, state, dgsm } = fixture;
@@ -254,8 +244,8 @@ describe("vote table serialization", () => {
     ]);
 
     const serialized = applier.serializeConnectionVotes();
-    expect(Object.keys(serialized)).toEqual(["junction:J_A::road:R_MAIN"]);
-    expect(serialized["junction:J_A::road:R_MAIN"]).toHaveLength(2);
+    expect(Object.keys(serialized)).toEqual(["road:R_MAIN::scene:J_A"]);
+    expect(serialized["road:R_MAIN::scene:J_A"]).toHaveLength(2);
 
     // A fresh applier (post-restart) picks the votes back up.
     const revived = new Applier(dgsm, new Map());

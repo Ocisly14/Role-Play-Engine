@@ -213,10 +213,10 @@ export function renderWorldGraph(graph: WorldGraph): string {
       lines.push(...nodeLines(loc.id, loc.name, loc.description));
     }
   }
-  for (const kind of ["junction", "road"] as const) {
+  for (const kind of ["scene", "road"] as const) {
     const nodes = graph.places.filter((p) => p.kind === kind);
     if (nodes.length === 0) continue;
-    lines.push(kind === "junction" ? "Junctions:" : "Roads:");
+    lines.push(kind === "scene" ? "Outdoor node scenes:" : "Roads:");
     for (const node of nodes) {
       lines.push(...nodeLines(node.id, node.name, node.description));
     }

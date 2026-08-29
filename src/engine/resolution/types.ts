@@ -38,27 +38,28 @@ export interface ItemSnapshot {
   properties?: Record<string, unknown>;
 }
 
-export type PlaceKind = "scene" | "junction" | "road";
+export type PlaceKind = "scene" | "road";
 
-/** Tier 1: the world SKELETON — macro locations plus geography (junctions and
- *  roads), no interior scenes and no prose. Interior scenes appear only in the
- *  Tier-2 snapshots; an edge whose authored endpoint is an interior scene is
- *  lifted to that scene's macro location (the connectionId stays the authored
- *  one), and edges between two scenes of the same location are omitted.
- *  Static by construction: blocked state travels separately (volatile), so
- *  this section stays byte-identical across ticks for prompt caching. */
+/** Tier 1: the world SKELETON — macro locations plus geography (top-level
+ *  node scenes and roads), no interior scenes. An edge whose authored
+ *  endpoint is an interior scene is lifted to that scene's parent (the
+ *  connectionId stays the authored one), and edges between two scenes of the
+ *  same parent are omitted. Static by construction: blocked state travels
+ *  separately (volatile), so this section stays byte-identical across ticks
+ *  for prompt caching. */
 export interface WorldGraph {
   /** `description` is the outline's macro prose. */
   macroLocations: Array<{ id: string; name: string; description?: string }>;
-  /** Geography nodes only. `description` is the authored v2 prose — it
-   *  already cites its `[exit.*]` references, so the skeleton renders in the
-   *  same description-plus-references shape as every place file. */
+  /** Geography nodes only: top-level scenes (kind "scene") and roads.
+   *  `description` is the authored v2 prose — it already cites its `[exit.*]`
+   *  references, so the skeleton renders in the same
+   *  description-plus-references shape as every place file. */
   places: Array<{
     id: string;
-    kind: "junction" | "road";
+    kind: PlaceKind;
     name: string;
     description?: string;
-    parentLocationId: string;
+    parentLocationId?: string;
   }>;
   edges: Array<{
     /** The authored connection id (`exit.*`) — the handle connectionBlock /
@@ -84,14 +85,14 @@ export interface BlockedEdge {
   reason: string;
 }
 
-/** Tier 2: the full snapshot of one INVOLVED place — a scene, junction or
- *  road an action touches this tick. */
+/** Tier 2: the full snapshot of one INVOLVED place — a scene or road an
+ *  action touches this tick. */
 export interface PlaceSnapshot {
   id: string;
   kind: PlaceKind;
   name: string;
   description: string;
-  parentLocationId: string;
+  parentLocationId?: string;
   indoor?: boolean;
   conditions: SceneCondition[];
   itemIds: string[];

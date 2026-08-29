@@ -68,7 +68,6 @@ export interface RelationshipMetadata {
 
 export interface KnownMapIds {
   sceneIds: string[];
-  junctionIds: string[];
   roadIds: string[];
   scenarioOutlineIds: string[];
 }

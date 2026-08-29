@@ -21,7 +21,7 @@
 import { t } from "../i18n/t.js";
 import type { DynamicGameStateManager } from "../state/DynamicGameState.js";
 import type { DynamicScene, ScenarioOutline } from "../state/types.js";
-import { junctionSceneLinks } from "./knownLocations.js";
+import { nodeSceneLinks } from "./knownLocations.js";
 import type { KnownMapIds } from "./types.js";
 
 /** Structural detail attached to generated map memories. */
@@ -47,7 +47,6 @@ export function buildMapMemoryEntries(
   const topology = dgsm.getTopology();
 
   const knownScenes = new Set(knownIds.sceneIds);
-  const knownJunctions = new Set(knownIds.junctionIds);
   const knownRoads = new Set(knownIds.roadIds);
   const knownOutlines = new Set(knownIds.scenarioOutlineIds);
 
@@ -80,9 +79,6 @@ export function buildMapMemoryEntries(
   /** Where an exit leads, named as the character would name it. */
   const exitTargetName = (targetId: string): string | null => {
     if (knownScenes.has(targetId)) return buildingName(targetId);
-    if (knownJunctions.has(targetId)) {
-      return state.junctions.get(targetId)?.name ?? null;
-    }
     if (knownRoads.has(targetId)) {
       return state.roads.get(targetId)?.name ?? null;
     }
@@ -90,7 +86,9 @@ export function buildMapMemoryEntries(
   };
 
   const describeScene = (scene: DynamicScene): string => {
-    const parent = outlinesById.get(scene.parentLocationId);
+    const parent = scene.parentLocationId
+      ? outlinesById.get(scene.parentLocationId)
+      : undefined;
     const macroName =
       parent && parent.id !== OUTDOOR && knownOutlines.has(parent.id)
         ? parent.name
@@ -194,11 +192,11 @@ export function buildMapMemoryEntries(
     const road = state.roads.get(roadId);
     if (!road) continue;
 
-    const from = knownJunctions.has(road.endpointA)
-      ? state.junctions.get(road.endpointA)?.name
+    const from = knownScenes.has(road.endpointA)
+      ? state.scenes.get(road.endpointA)?.name
       : undefined;
-    const to = knownJunctions.has(road.endpointB)
-      ? state.junctions.get(road.endpointB)?.name
+    const to = knownScenes.has(road.endpointB)
+      ? state.scenes.get(road.endpointB)?.name
       : undefined;
 
     const line =
@@ -226,21 +224,22 @@ export function buildMapMemoryEntries(
     );
   }
 
-  for (const junctionId of knownIds.junctionIds) {
-    const junction = state.junctions.get(junctionId);
-    if (!junction) continue;
+  for (const nodeSceneId of knownIds.sceneIds) {
+    if (!topology.nodeSceneIds.has(nodeSceneId)) continue;
+    const node = state.scenes.get(nodeSceneId);
+    if (!node) continue;
 
-    const roadNames = (topology.junctionToRoads.get(junctionId) ?? [])
+    const roadNames = (topology.sceneToRoads.get(nodeSceneId) ?? [])
       .filter((road) => knownRoads.has(road.id))
       .map((road) => road.name);
     if (roadNames.length === 0) continue;
 
     const line = t("context_topology_junction", language, {
-      junction: junction.name,
+      junction: node.name,
       roads: roadNames.join(listSep),
     });
 
-    const buildings = junctionSceneLinks(junction)
+    const buildings = nodeSceneLinks(node)
       .filter((link) => knownScenes.has(link.targetId))
       .map((link) => buildingName(link.targetId))
       .filter((name): name is string => Boolean(name));

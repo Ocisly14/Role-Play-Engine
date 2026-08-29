@@ -1,9 +1,8 @@
 {
   "schemaVersion": 2,
-  "id": "JUNC_sawmill",
+  "id": "SCN_sawmill",
   "name": "旧锯木厂",
   "description": "1974 年关闭的锯木厂废墟。塌了半边的主棚下,一副锈死的带锯架还立在原地 [item.sawmill.rusted_saw_frame],锯台上的苔藓厚得能按出指印,空地边缘的锯末堆早已腐成黑土。林径在废墟前分岔,分别通向溪谷、旧路基、雾谷和更北面的红杉环——站在空地中央,每个方向看起来都像来时的路。",
-  "parentLocationId": "OUTDOOR",
   "references": {
     "items": [
       {

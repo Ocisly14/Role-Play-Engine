@@ -10,13 +10,13 @@
     "connections": [
       {
         "id": "exit.redwood_fence.redwood_end",
-        "targetId": "JUNC_redwood_ring",
+        "targetId": "SCN_redwood_ring",
         "name": "南端(红杉环)",
         "role": "endpointA"
       },
       {
         "id": "exit.redwood_fence.fence_end",
-        "targetId": "JUNC_fence",
+        "targetId": "SCN_fence",
         "name": "北端(围栏)",
         "role": "endpointB"
       }

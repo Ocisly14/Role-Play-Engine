@@ -10,13 +10,13 @@
     "connections": [
       {
         "id": "exit.trail_railbed.trailhead_end",
-        "targetId": "JUNC_trailhead",
+        "targetId": "SCN_trailhead",
         "name": "西端(林道口)",
         "role": "endpointA"
       },
       {
         "id": "exit.trail_railbed.railbed_end",
-        "targetId": "JUNC_railbed",
+        "targetId": "SCN_railbed",
         "name": "东端(旧路基)",
         "role": "endpointB"
       }

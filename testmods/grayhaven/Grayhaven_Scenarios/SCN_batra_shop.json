@@ -27,7 +27,7 @@
     "connections": [
       {
         "id": "exit.batra_shop.street_door",
-        "targetId": "JUNC_main_south",
+        "targetId": "SCN_main_south",
         "name": "临街门",
         "description": "老五金行传下的临街门,通向主街南段。"
       },

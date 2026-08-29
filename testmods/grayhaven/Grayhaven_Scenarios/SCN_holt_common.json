@@ -47,7 +47,7 @@
       },
       {
         "id": "exit.holt_common.front_door",
-        "targetId": "JUNC_holt_gate",
+        "targetId": "SCN_holt_gate",
         "name": "前门",
         "description": "正对院门的前门,出去穿过前院就是 Holt 家的院门。"
       }

@@ -82,7 +82,7 @@ function resolveScene(
   npcId: string,
   dgsm: DynamicGameStateManager
 ): PerceivedBundle["scene"] {
-  // Roads and junctions are places too — a traveller mid-route perceives the
+  // Roads are places too — a traveller mid-route perceives the
   // street they are on, not "an indistinct place".
   const location = resolvePerceivedLocation(
     dgsm.getCharacterPosition(npcId),

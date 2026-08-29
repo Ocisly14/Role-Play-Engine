@@ -1,9 +1,8 @@
 {
   "schemaVersion": 2,
-  "id": "JUNC_fog_hollow",
+  "id": "SCN_fog_hollow",
   "name": "雾谷",
   "description": "一片低洼的谷地,四条林径在此交汇。海雾顺着地势灌进来就再也出不去,常年淤在谷底,十步之外只剩下树影的轮廓 [cond.fog_hollow.pooled_fog]。谷里没有任何标志物,四个出口在雾里看起来一模一样——在灰港的林子里,没有比这里更容易转向的地方。",
-  "parentLocationId": "OUTDOOR",
   "references": {
     "items": [],
     "connections": [],

@@ -22,7 +22,7 @@
       },
       {
         "id": "exit.holt_backyard.fence_gap",
-        "targetId": "JUNC_trailhead",
+        "targetId": "SCN_trailhead",
         "name": "院墙豁口",
         "description": "栅栏缺了两块板的豁口,草被踩出一条浅道,汇入通往林道口的小径。"
       }

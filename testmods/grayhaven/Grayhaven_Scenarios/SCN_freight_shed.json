@@ -23,7 +23,7 @@
     "connections": [
       {
         "id": "exit.freight_shed.shed_door",
-        "targetId": "JUNC_motel",
+        "targetId": "SCN_motel",
         "name": "棚门",
         "description": "铁皮棚门,开向旅馆旁的公路岔路口。挂锁扣着,从来没锁上过。"
       }

@@ -149,8 +149,7 @@ export const CHARACTER_OPS: OperationSpec[] = [
   { kinds: ["hp", "san", "fatigue"], fields: "delta:number, reason:string" },
   {
     kinds: ["position"],
-    fields:
-      'position:{type:"scene"|"junction"|"road", sceneId|junctionId|roadId}',
+    fields: 'position:{type:"scene"|"road", sceneId|roadId}',
   },
   {
     kinds: ["spot"],
@@ -615,7 +614,7 @@ export const CODE_TOOL_SPECS: ToolSpec[] = [
   {
     name: "pathfinding",
     description:
-      "Plan the route from a character's current position to a destination id (scene/junction/road). Returns reachability, leg summary and total minutes.",
+      "Plan the route from a character's current position to a destination id (scene/road). Returns reachability, leg summary and total minutes.",
     inputSchema: {
       type: "object",
       properties: {

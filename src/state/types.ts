@@ -72,6 +72,8 @@ export interface NpcProfileMemoryEntry {
 
 export interface KnownMapSeed {
   sceneIds?: string[];
+  /** Legacy field from the junction era — accepted and folded into sceneIds
+   *  (the former junctions are top-level scenes now). */
   junctionIds?: string[];
   roadIds?: string[];
   scenarioOutlineIds?: string[];
@@ -283,7 +285,9 @@ export interface DynamicScene {
   id: string;
   name: string;
   description: string;
-  parentLocationId: string;
+  /** The containing macro location (outline id) or node scene. Absent on a
+   *  TOP-LEVEL scene — a geography node: street stretch, crossroads, yard. */
+  parentLocationId?: string;
   items: Item[];
   conditions: SceneCondition[];
   connections: SceneConnection[];

@@ -10,13 +10,13 @@
     "connections": [
       {
         "id": "exit.main_street.north_end",
-        "targetId": "JUNC_main_north",
+        "targetId": "SCN_main_north",
         "name": "主街北端",
         "role": "endpointA"
       },
       {
         "id": "exit.main_street.south_end",
-        "targetId": "JUNC_main_south",
+        "targetId": "SCN_main_south",
         "name": "主街南端",
         "role": "endpointB"
       }

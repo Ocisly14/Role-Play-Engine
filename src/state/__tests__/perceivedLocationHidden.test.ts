@@ -1,8 +1,8 @@
 // Hidden things must not reach perception until revealed — not the perceived
 // location (what the renderer narrates) and not the perceivable directory
 // (what the actor may cite). `resolvePerceivedLocation` is the single choke
-// point: all three location kinds filter `hidden` items, and each kind's
-// adjacency filters hidden connections (scene exits, junction connections,
+// point: both location kinds filter `hidden` items, and each kind's
+// adjacency filters hidden connections (scene exits, node-scene connections,
 // road access points). Flipping the flag on the object is the whole reveal —
 // the next resolve sees it, and the directory follows.
 
@@ -15,7 +15,6 @@ import {
 } from "../perceivedLocation.js";
 import {
   type CharacterPosition,
-  type JunctionNode,
   type RoadNode,
   buildTopology,
 } from "../topologyTypes.js";
@@ -24,7 +23,7 @@ import type { DynamicScene } from "../types.js";
 interface World {
   dgsm: DynamicGameStateManager;
   scene: DynamicScene;
-  junction: JunctionNode;
+  junction: DynamicScene;
   road: RoadNode;
   setActorPosition(position: CharacterPosition): void;
 }
@@ -58,11 +57,11 @@ function makeWorld(): World {
     })
   );
 
-  const junction: JunctionNode = {
+  // Top-level scene (no parentLocationId): a geography node.
+  const junction: DynamicScene = {
     id: "J_X",
     name: "Crossing",
     description: "A crossing.",
-    parentLocationId: "OUTDOOR",
     items: [
       { id: "ITEM_LAMP", name: "a lamppost" },
       { id: "ITEM_COIN", name: "a buried coin", hidden: true },
@@ -72,16 +71,12 @@ function makeWorld(): World {
       { id: "exit.junc_x.shop", targetId: "S_SHOP" },
       { id: "exit.junc_x.cellar", targetId: "S_CELLAR", hidden: true },
     ],
-    // Derived list keeps hidden targets — visibility is the perception
-    // layer's job, and adjacency must NOT read this raw list.
-    connectedSceneIds: ["S_SHOP", "S_CELLAR"],
   };
 
   const road: RoadNode = {
     id: "R_MAIN",
     name: "Star Avenue",
     description: "A long avenue.",
-    parentLocationId: "OUTDOOR",
     connections: [
       { id: "exit.r_main.a", targetId: "J_X", role: "endpointA" },
       { id: "exit.r_main.b", targetId: "J_Y", role: "endpointB" },
@@ -114,12 +109,11 @@ function makeWorld(): World {
     conditions: [],
   };
 
-  const junctions = new Map([[junction.id, junction]]);
   const roads = new Map([[road.id, road]]);
-  const topology = buildTopology(junctions, roads);
   const scenesById = new Map<string, DynamicScene>(
-    [scene, ...otherScenes].map((s) => [s.id, s])
+    [scene, junction, ...otherScenes].map((s) => [s.id, s])
   );
+  const topology = buildTopology(scenesById, roads);
 
   let actorPosition: CharacterPosition = { type: "scene", sceneId: scene.id };
   const dgsm = {
@@ -150,7 +144,7 @@ function makeWorld(): World {
 }
 
 describe("hidden items stay out of perception", () => {
-  it("filters hidden items in all three location kinds", () => {
+  it("filters hidden items in both location kinds", () => {
     const { dgsm } = makeWorld();
     const atScene = resolvePerceivedLocation(
       { type: "scene", sceneId: "S_PARLOR" },
@@ -159,7 +153,7 @@ describe("hidden items stay out of perception", () => {
     expect(atScene?.items.map((i) => i.id)).toEqual(["ITEM_CHAIR"]);
 
     const atJunction = resolvePerceivedLocation(
-      { type: "junction", junctionId: "J_X" },
+      { type: "scene", sceneId: "J_X" },
       dgsm
     );
     expect(atJunction?.items.map((i) => i.id)).toEqual(["ITEM_LAMP"]);
@@ -179,7 +173,7 @@ describe("hidden items stay out of perception", () => {
       new Set(["ITEM_CHAIR"])
     );
 
-    setActorPosition({ type: "junction", junctionId: "J_X" });
+    setActorPosition({ type: "scene", sceneId: "J_X" });
     expect(buildPerceivableDirectory("actor", dgsm).items).toEqual(
       new Set(["ITEM_LAMP"])
     );
@@ -201,13 +195,13 @@ describe("hidden connections stay out of adjacency", () => {
     expect(loc?.adjacentIds).toEqual(["S_SHOP"]);
   });
 
-  it("derives junction adjacency from non-hidden connections, keeping roads", () => {
+  it("derives node-scene adjacency from non-hidden connections, keeping roads", () => {
     const { dgsm } = makeWorld();
     const loc = resolvePerceivedLocation(
-      { type: "junction", junctionId: "J_X" },
+      { type: "scene", sceneId: "J_X" },
       dgsm
     );
-    // S_CELLAR is in the raw connectedSceneIds but its connection is hidden.
+    // S_CELLAR's connection is hidden, so it stays out of adjacency.
     expect(loc?.adjacentIds.sort()).toEqual(["R_MAIN", "S_SHOP"]);
   });
 
@@ -257,7 +251,7 @@ describe("revealing (flipping the hidden flag) restores visibility", () => {
     ).toEqual(["ITEM_CHAIR", "ITEM_DAGGER"]);
     expect(
       resolvePerceivedLocation(
-        { type: "junction", junctionId: "J_X" },
+        { type: "scene", sceneId: "J_X" },
         dgsm
       )?.items.map((i) => i.id)
     ).toEqual(["ITEM_LAMP", "ITEM_COIN"]);
@@ -294,7 +288,7 @@ describe("revealing (flipping the hidden flag) restores visibility", () => {
     ).toEqual(["S_SHOP", "S_CELLAR"]);
     expect(
       resolvePerceivedLocation(
-        { type: "junction", junctionId: "J_X" },
+        { type: "scene", sceneId: "J_X" },
         dgsm
       )?.adjacentIds.sort()
     ).toEqual(["R_MAIN", "S_CELLAR", "S_SHOP"]);

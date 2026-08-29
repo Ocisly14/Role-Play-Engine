@@ -158,17 +158,11 @@ Dark environments impose skill penalties; blinding light also impairs vision.`,
       }
     }
 
-    // Roads/junctions are always outdoor — contribute unconditionally.
+    // Roads are always outdoor — contribute unconditionally.
     for (const roadId of ctx.getRoadIds()) {
       out.push(contributeIllumination(roadId, sunLevel));
       if (isNight) {
         out.push(contributeIllumination(roadId, MOONLIGHT_LEVEL));
-      }
-    }
-    for (const juncId of ctx.getJunctionIds()) {
-      out.push(contributeIllumination(juncId, sunLevel));
-      if (isNight) {
-        out.push(contributeIllumination(juncId, MOONLIGHT_LEVEL));
       }
     }
 
@@ -191,11 +185,7 @@ Dark environments impose skill penalties; blinding light also impairs vision.`,
     // On the very first tick, env.illumination returns the default baseline (3),
     // so no scene conditions are written; conditions appear from tick 2 onward.
     // This matches the documented D2 1-tick-lag pattern.
-    const observerTargets = [
-      ...ctx.getSceneIds(),
-      ...ctx.getRoadIds(),
-      ...ctx.getJunctionIds(),
-    ];
+    const observerTargets = [...ctx.getSceneIds(), ...ctx.getRoadIds()];
     for (const locationId of observerTargets) {
       const reading = ctx.getEnvironmentReading(locationId);
       const illum = reading.illumination;

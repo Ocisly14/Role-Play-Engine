@@ -2,7 +2,7 @@
 // are load-bearing: the memories are cut to what this character knows (an
 // unknown building must not be named, not even as somewhere a door leads),
 // the topology memory comes last because it is the layer that only makes
-// sense once the places have names, and a junction's buildings are derived
+// sense once the places have names, and a node scene's buildings are derived
 // from its authored (non-hidden) connections.
 
 import { describe, expect, it } from "vitest";
@@ -94,18 +94,16 @@ const scenes = new Map<string, Record<string, unknown>>([
   ],
 ]);
 
-const junctions = new Map<string, Record<string, unknown>>([
+// Top-level scenes (no parentLocationId): geography nodes.
+const nodeScenes: Array<[string, Record<string, unknown>]> = [
   [
     "JUNC_N",
     {
       id: "JUNC_N",
       name: "North Corner",
       description: "",
-      parentLocationId: "OUTDOOR",
       items: [],
       conditions: [],
-      // Authored connections are the source of truth; `connectedSceneIds`
-      // is derived from them (hidden entries included).
       connections: [
         {
           id: "exit.junc_n.mill",
@@ -118,7 +116,6 @@ const junctions = new Map<string, Record<string, unknown>>([
           description: "an iron gate",
         },
       ],
-      connectedSceneIds: ["SCN_MILL_FLOOR", "SCN_VAULT"],
     },
   ],
   [
@@ -127,14 +124,15 @@ const junctions = new Map<string, Record<string, unknown>>([
       id: "JUNC_S",
       name: "South Corner",
       description: "",
-      parentLocationId: "OUTDOOR",
       items: [],
       conditions: [],
       connections: [],
-      connectedSceneIds: [],
     },
   ],
-]);
+];
+for (const [id, node] of nodeScenes) {
+  scenes.set(id, node as never);
+}
 
 const roads = new Map<string, Record<string, unknown>>([
   [
@@ -155,11 +153,11 @@ const roads = new Map<string, Record<string, unknown>>([
 ]);
 
 const dgsm = {
-  getState: () => ({ scenes, junctions, roads, scenarioOutlines }),
+  getState: () => ({ scenes, roads, scenarioOutlines }),
   getTopology: () => ({
-    junctions,
+    nodeSceneIds: new Set(["JUNC_N", "JUNC_S"]),
     roads,
-    junctionToRoads: new Map([
+    sceneToRoads: new Map([
       ["JUNC_N", [roads.get("ROAD_1")]],
       ["JUNC_S", [roads.get("ROAD_1")]],
     ]),
@@ -169,8 +167,13 @@ const dgsm = {
 
 /** Everything except the Vault — which the character has never heard of. */
 const knownIds: KnownMapIds = {
-  sceneIds: ["SCN_HOSP_LOBBY", "SCN_HOSP_WARD", "SCN_MILL_FLOOR"],
-  junctionIds: ["JUNC_N", "JUNC_S"],
+  sceneIds: [
+    "SCN_HOSP_LOBBY",
+    "SCN_HOSP_WARD",
+    "SCN_MILL_FLOOR",
+    "JUNC_N",
+    "JUNC_S",
+  ],
   roadIds: ["ROAD_1"],
   scenarioOutlineIds: ["B_HOSP", "B_MILL", "OUTDOOR"],
 };
@@ -227,9 +230,7 @@ describe("buildMapMemoryEntries", () => {
     expect(topology).toContain("Streets at North Corner: Chapel Street.");
   });
 
-  it("reads a junction's buildings from its authored connections", () => {
-    // Adjacency derives from `connections` (non-hidden), not from the raw
-    // derived `connectedSceneIds` list.
+  it("reads a node scene's buildings from its authored connections", () => {
     const topology = entries[entries.length - 1].content;
     expect(topology).toContain("At the junction: The Mill");
   });

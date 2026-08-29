@@ -19,7 +19,6 @@ import type { DynamicGameState } from "./DynamicGameState.js";
 import { normalizeSpot } from "./characterSpot.js";
 import { ISO_DATE_RE, makeDateTime } from "./gameClock.js";
 import {
-  buildJunctionV2,
   buildRoadV2,
   buildSceneV2,
   parsePlaceFileV2,
@@ -33,7 +32,6 @@ import {
 } from "./topologyTypes.js";
 import type {
   CharacterPosition,
-  JunctionNode,
   RoadNode,
   TownTopology,
 } from "./topologyTypes.js";
@@ -68,7 +66,6 @@ export interface ModuleData {
   setup: ModuleSetup | null;
   npcs: DynamicNPCProfile[];
   scenes: Map<string, DynamicScene>;
-  junctions: Map<string, JunctionNode>;
   roads: Map<string, RoadNode>;
   scenarioOutlines: ScenarioOutline[];
   transportEdges: TransportEdge[];
@@ -109,7 +106,6 @@ export async function loadModule(
   });
 
   const scenes = new Map<string, DynamicScene>();
-  const junctions = new Map<string, JunctionNode>();
   const roads = new Map<string, RoadNode>();
   let rawScenarioOutlines: unknown;
   let rawTransportEdges: unknown;
@@ -123,11 +119,6 @@ export async function loadModule(
       rawTransportEdges = data;
     } else if (row.entryId === "__npc_injection_policy__") {
       npcInjectionPolicy = data as NpcInjectionPolicy;
-    } else if (row.entryId.startsWith("JUNC_")) {
-      junctions.set(
-        row.entryId,
-        buildJunctionV2(parsePlaceFileV2(row.entryId, data))
-      );
     } else if (row.entryId.startsWith("ROAD_")) {
       roads.set(row.entryId, buildRoadV2(parsePlaceFileV2(row.entryId, data)));
     } else {
@@ -140,21 +131,16 @@ export async function loadModule(
 
   // Cross-file checks over the fully parsed module: one id namespace, citation
   // completeness, connection targets. Throws ModuleSchemaError on violation.
-  validateModuleReferences({ scenes, junctions, roads });
+  validateModuleReferences({ scenes, roads });
 
   const scenarioOutlines: ScenarioOutline[] =
     rawScenarioOutlines === undefined
       ? []
       : validateScenarioOutlines("__scenarios_outline__", rawScenarioOutlines, {
           scenes,
-          junctions,
         });
 
-  const placeIds = new Set<string>([
-    ...scenes.keys(),
-    ...junctions.keys(),
-    ...roads.keys(),
-  ]);
+  const placeIds = new Set<string>([...scenes.keys(), ...roads.keys()]);
   const transportEdges: TransportEdge[] =
     rawTransportEdges === undefined
       ? []
@@ -180,7 +166,6 @@ export async function loadModule(
     setup,
     npcs,
     scenes,
-    junctions,
     roads,
     scenarioOutlines,
     transportEdges,
@@ -372,8 +357,8 @@ export function initRuntime(params: {
 
   // Build topology
   const topology: TownTopology | null =
-    moduleData.junctions.size > 0 || moduleData.roads.size > 0
-      ? buildTopology(moduleData.junctions, moduleData.roads)
+    moduleData.scenes.size > 0 || moduleData.roads.size > 0
+      ? buildTopology(moduleData.scenes, moduleData.roads)
       : null;
 
   if (!topology) {
@@ -434,20 +419,18 @@ export function initRuntime(params: {
     if (
       npc.currentLocation &&
       (moduleData.scenes.has(npc.currentLocation) ||
-        moduleData.junctions.has(npc.currentLocation) ||
         moduleData.roads.has(npc.currentLocation))
     ) {
-      // NPC profile specifies a valid scene, junction, or road directly
+      // NPC profile specifies a valid scene or road directly
       resolvedLocation = npc.currentLocation;
     } else if (residence) {
       resolvedLocation = macroToEntry[residence] ?? residence;
     } else {
       resolvedLocation = defaultSceneId;
     }
-    // Validate: if resolvedLocation is a macro ID (not in scenes/junctions/roads), map to entry scene
+    // Validate: if resolvedLocation is a macro ID (not in scenes/roads), map to entry scene
     if (
       !moduleData.scenes.has(resolvedLocation) &&
-      !moduleData.junctions.has(resolvedLocation) &&
       !moduleData.roads.has(resolvedLocation)
     ) {
       const fallback = macroToEntry[resolvedLocation];
@@ -541,11 +524,6 @@ export function initRuntime(params: {
         type: "scene",
         sceneId: resolvedLocation,
       };
-    } else if (moduleData.junctions.has(resolvedLocation)) {
-      characterPositions[npc.id] = {
-        type: "junction",
-        junctionId: resolvedLocation,
-      };
     } else if (moduleData.roads.has(resolvedLocation)) {
       characterPositions[npc.id] = {
         type: "road",
@@ -593,7 +571,6 @@ export function initRuntime(params: {
   return {
     sessionId,
     scenes: moduleData.scenes,
-    junctions: moduleData.junctions,
     roads: moduleData.roads,
     gameDateTime,
     npcCharacters: simulatedNpcs,

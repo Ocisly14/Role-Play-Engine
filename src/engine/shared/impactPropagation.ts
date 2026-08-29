@@ -183,9 +183,6 @@ export function findAffectedScenes(
       for (const [id, scene] of state.scenes) {
         if (scene.parentLocationId === parent) scenes.add(id);
       }
-      for (const [id, junc] of state.junctions) {
-        if (junc.parentLocationId === parent) scenes.add(id);
-      }
       for (const [id, road] of state.roads) {
         if (road.parentLocationId === parent) scenes.add(id);
       }
@@ -209,14 +206,6 @@ export function findAffectedScenes(
           scenes.add(id);
         }
       }
-      for (const [id, junc] of state.junctions) {
-        if (
-          junc.parentLocationId &&
-          neighbors.includes(junc.parentLocationId)
-        ) {
-          scenes.add(id);
-        }
-      }
       for (const [id, road] of state.roads) {
         if (
           road.parentLocationId &&
@@ -231,9 +220,6 @@ export function findAffectedScenes(
   // Level 5: global
   if (scopeLevel >= 5) {
     for (const id of state.scenes.keys()) {
-      scenes.add(id);
-    }
-    for (const id of state.junctions.keys()) {
       scenes.add(id);
     }
     for (const id of state.roads.keys()) {

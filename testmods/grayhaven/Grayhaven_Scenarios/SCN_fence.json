@@ -1,9 +1,8 @@
 {
   "schemaVersion": 2,
-  "id": "JUNC_fence",
+  "id": "SCN_fence",
   "name": "围栏",
   "description": "爬升的林径在这里被一道链网围栏拦腰截断。围栏比人高,顶上斜拉着三道铁丝,向林子两头延伸到看不见的地方。网上每隔几十步挂着一块锈蚀的金属牌,字迹还认得出:「美国政府财产 · 禁止入内」 [item.fence.warning_sign]。围栏之后没有路,也没有声音,只有一样的红杉和一样的雾。回头,是走了六个小时才走完的林子。",
-  "parentLocationId": "OUTDOOR",
   "references": {
     "items": [
       {

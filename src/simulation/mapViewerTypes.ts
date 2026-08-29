@@ -29,6 +29,7 @@ export interface NpcStatusInfo {
 }
 
 export interface TopologyResponse {
+  /** Geography nodes (top-level scenes). Field name kept for viewer compat. */
   junctions: Array<{
     id: string;
     name: string;
@@ -38,7 +39,7 @@ export interface TopologyResponse {
   roads: Array<{
     id: string;
     name: string;
-    parentLocationId: string;
+    parentLocationId?: string;
     endpointA: string;
     endpointB: string;
     travelTimeMinutes: number;
@@ -48,7 +49,7 @@ export interface TopologyResponse {
     id: string;
     name: string;
     description: string;
-    parentLocationId: string;
+    parentLocationId?: string;
     conditions: SceneCondition[];
     connections: SceneConnection[];
   }>;

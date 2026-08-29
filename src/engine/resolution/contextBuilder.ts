@@ -7,8 +7,8 @@
 //
 // Two tiers:
 //   Tier 1 (`state.graph`)  — the world SKELETON: macro locations plus
-//     geography (junctions, roads) and the edges between them. An edge
-//     authored on an interior scene is lifted to that scene's macro location;
+//     geography (top-level node scenes, roads) and the edges between them. An
+//     edge authored on an interior scene is lifted to that scene's parent;
 //     interior edges within one location are omitted. Static — blocked state
 //     rides separately in `state.blockedEdges` (volatile).
 //   Tier 2 (`state.places`) — full snapshots of only the INVOLVED places:
@@ -21,7 +21,7 @@
 // reference. They are never rendered into the prompt.
 
 import type { DynamicGameStateManager } from "../../state/DynamicGameState.js";
-import type { JunctionNode, RoadNode } from "../../state/topologyTypes.js";
+import type { RoadNode } from "../../state/topologyTypes.js";
 import type { DynamicScene, Item, SceneConnection } from "../../state/types.js";
 import type { ActionCommand, EngineAction } from "../actions/types.js";
 import { ACTION_SCHEMA_VERSION } from "../actions/types.js";
@@ -88,7 +88,7 @@ export interface BuildContextParams {
 
 interface PlaceEntry {
   kind: PlaceKind;
-  place: DynamicScene | JunctionNode | RoadNode;
+  place: DynamicScene | RoadNode;
 }
 
 export function buildEngineResolutionContext(
@@ -97,16 +97,12 @@ export function buildEngineResolutionContext(
   const { dgsm } = params;
   const state = dgsm.getState();
   const scenes: Map<string, DynamicScene> = state.scenes ?? new Map();
-  const junctions: Map<string, JunctionNode> = state.junctions ?? new Map();
   const roads: Map<string, RoadNode> = state.roads ?? new Map();
 
   // ── One id-addressed index over every place, kind attached. ──
   const placeById = new Map<string, PlaceEntry>();
   for (const scene of scenes.values()) {
     placeById.set(scene.id, { kind: "scene", place: scene });
-  }
-  for (const junction of junctions.values()) {
-    placeById.set(junction.id, { kind: "junction", place: junction });
   }
   for (const road of roads.values()) {
     placeById.set(road.id, { kind: "road", place: road });
@@ -138,11 +134,13 @@ export function buildEngineResolutionContext(
   }
 
   // ── Tier 1: the skeleton graph, plus the volatile blocked-edge list. ──
-  // An interior scene's edge is lifted to its macro location; interior edges
-  // within one location vanish from the skeleton (they live in Tier 2).
+  // An interior scene's edge is lifted to its parent (macro location or node
+  // scene); interior edges within one location vanish from the skeleton (they
+  // live in Tier 2). Top-level scenes and roads stand for themselves.
   const liftToSkeleton = (id: string): string => {
     const entry = placeById.get(id);
-    return entry?.kind === "scene" ? entry.place.parentLocationId : id;
+    if (entry?.kind !== "scene") return id;
+    return (entry.place as DynamicScene).parentLocationId ?? id;
   };
   const edges: WorldGraph["edges"] = [];
   const blockedEdges: BlockedEdge[] = [];
@@ -187,11 +185,6 @@ export function buildEngineResolutionContext(
       pushEdge(scene.id, connection);
     }
   }
-  for (const junction of junctions.values()) {
-    for (const connection of junction.connections ?? []) {
-      pushEdge(junction.id, connection);
-    }
-  }
   for (const road of roads.values()) {
     for (const connection of road.connections ?? []) {
       // Endpoint edges carry the full-length walk time; an access point is a
@@ -211,8 +204,9 @@ export function buildEngineResolutionContext(
     })),
     places: [...placeById.entries()]
       .filter(
-        (pair): pair is [string, PlaceEntry & { kind: "junction" | "road" }] =>
-          pair[1].kind !== "scene"
+        ([, entry]) =>
+          entry.kind === "road" ||
+          !(entry.place as DynamicScene).parentLocationId
       )
       .map(([id, entry]) => ({
         id,
@@ -221,7 +215,9 @@ export function buildEngineResolutionContext(
         ...(entry.place.description
           ? { description: entry.place.description }
           : {}),
-        parentLocationId: entry.place.parentLocationId,
+        ...(entry.place.parentLocationId !== undefined
+          ? { parentLocationId: entry.place.parentLocationId }
+          : {}),
       })),
     edges,
   };
@@ -351,15 +347,15 @@ function snapshotPlace(
   const presentCharacterIds =
     kind === "scene"
       ? dgsm.getCharactersInScene(placeId)
-      : kind === "junction"
-        ? dgsm.getCharactersAtJunction(placeId)
-        : dgsm.getCharactersOnRoad(placeId).map((c) => c.characterId);
+      : dgsm.getCharactersOnRoad(placeId).map((c) => c.characterId);
   return {
     id: placeId,
     kind,
     name: place.name,
     description: place.description,
-    parentLocationId: place.parentLocationId,
+    ...(place.parentLocationId !== undefined
+      ? { parentLocationId: place.parentLocationId }
+      : {}),
     ...(scene?.indoor !== undefined ? { indoor: scene.indoor } : {}),
     conditions: dgsm.getSceneConditions(placeId),
     itemIds: (place.items ?? []).map((i) => i.id),

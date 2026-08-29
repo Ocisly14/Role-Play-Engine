@@ -21,7 +21,7 @@
     "connections": [
       {
         "id": "exit.bluebird_dining.street_door",
-        "targetId": "JUNC_main_north",
+        "targetId": "SCN_main_north",
         "name": "临街玻璃门",
         "description": "挂着手写营业木牌的玻璃门,通向主街北段。"
       },

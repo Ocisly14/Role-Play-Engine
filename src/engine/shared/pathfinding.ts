@@ -9,17 +9,17 @@ import type { MovementStep } from "../core/types.js";
 
 /**
  * Convert a location ID string to a CharacterPosition using topology and dgsm state.
- * Checks: junctions → sceneToParent → roads → outline fallback → interior sub-scene fallback.
+ * Checks: node scenes → sceneToParent → roads → outline fallback → interior sub-scene fallback.
  */
 export function resolveTargetPosition(
   locationId: string,
   topology: TownTopology,
   dgsm?: DynamicGameStateManager
 ): CharacterPosition | null {
-  if (topology.junctions.has(locationId)) {
-    return { type: "junction", junctionId: locationId };
-  }
-  if (topology.sceneToParent.has(locationId)) {
+  if (
+    topology.nodeSceneIds.has(locationId) ||
+    topology.sceneToParent.has(locationId)
+  ) {
     return { type: "scene", sceneId: locationId };
   }
   const atIdx = locationId.indexOf("@");
@@ -38,23 +38,23 @@ export function resolveTargetPosition(
     const outline = (state.scenarioOutlines ?? []).find(
       (o) => o.id === locationId
     );
-    // The entry may itself be a scene, junction, or road (the OUTDOOR
-    // region's entry is ROAD_1) — resolve it through the same rules instead
-    // of demanding a scene, which stranded every road-entry outline as
-    // "no path" (observed live: interpreter legally picked the listed
-    // OUTDOOR id and the mover looped on "couldn't work out a way").
+    // The entry may itself be a scene or a road — resolve it through the same
+    // rules instead of demanding a scene, which stranded every road-entry
+    // outline as "no path" (observed live: interpreter legally picked the
+    // listed OUTDOOR id and the mover looped on "couldn't work out a way").
     if (outline?.entrySceneId && outline.entrySceneId !== locationId) {
       const entry = resolveTargetPosition(outline.entrySceneId, topology, dgsm);
       if (entry) return entry;
     }
     const scene = state.scenes.get(locationId);
-    if (scene) {
+    if (scene?.parentLocationId) {
       const parentOutline = (state.scenarioOutlines ?? []).find(
         (o) => o.id === scene.parentLocationId
       );
       if (
         parentOutline?.entrySceneId &&
-        topology.sceneToParent.has(parentOutline.entrySceneId)
+        (topology.nodeSceneIds.has(parentOutline.entrySceneId) ||
+          topology.sceneToParent.has(parentOutline.entrySceneId))
       ) {
         return { type: "scene", sceneId: parentOutline.entrySceneId };
       }
@@ -64,36 +64,42 @@ export function resolveTargetPosition(
 }
 
 /**
- * If a scene is not in sceneToParent (interior sub-scene),
- * find its building's entry scene which IS in the topology.
+ * If a scene is neither a node scene nor in sceneToParent (interior
+ * sub-scene), find its building's entry scene which IS in the topology.
  */
 function resolveToEntryScene(
   sceneId: string,
   topology: TownTopology,
   dgsm?: DynamicGameStateManager
 ): string | null {
-  if (topology.sceneToParent.has(sceneId)) return sceneId;
+  if (
+    topology.nodeSceneIds.has(sceneId) ||
+    topology.sceneToParent.has(sceneId)
+  ) {
+    return sceneId;
+  }
   if (!dgsm) return null;
   const state = dgsm.getState();
   const scene = state.scenes.get(sceneId);
-  if (!scene) return null;
+  if (!scene?.parentLocationId) return null;
   const outline = (state.scenarioOutlines ?? []).find(
     (o) => o.id === scene.parentLocationId
   );
   if (
     outline?.entrySceneId &&
-    topology.sceneToParent.has(outline.entrySceneId)
+    (topology.nodeSceneIds.has(outline.entrySceneId) ||
+      topology.sceneToParent.has(outline.entrySceneId))
   ) {
     return outline.entrySceneId;
   }
   return null;
 }
 
-// ===== Topology-aware pathfinding (Junction-Road graph) =====
+// ===== Topology-aware pathfinding (node-scene / road graph) =====
 
 /** A step in a topology path */
 export interface TopologyPathStep {
-  type: "road" | "enter_scene" | "exit_scene" | "junction";
+  type: "road" | "enter_scene" | "exit_scene" | "node";
   id: string;
   /** Travel time for this step in minutes */
   minutes: number;
@@ -105,15 +111,15 @@ export interface TopologyPath {
   totalMinutes: number;
 }
 
-interface RouteJunctionEntry {
-  junctionId: string;
+interface RouteNodeEntry {
+  nodeSceneId: string;
   transitionSteps: MovementStep[];
   transitionMinutes: number;
 }
 
-/** Internal: entry/exit info for resolving a CharacterPosition to junction(s) */
-interface JunctionEntry {
-  junctionId: string;
+/** Internal: entry/exit info for resolving a CharacterPosition to node scene(s) */
+interface NodeEntry {
+  nodeSceneId: string;
   initialSteps: TopologyPathStep[];
   initialMinutes: number;
   finalSteps: TopologyPathStep[];
@@ -121,8 +127,9 @@ interface JunctionEntry {
 }
 
 /**
- * BFS pathfinding on the Junction-Road topology graph.
- * Supports starting/ending at junctions, roads (with position), or scenes.
+ * BFS pathfinding on the node-scene/road topology graph.
+ * Supports starting/ending at node scenes, roads (with position), or
+ * attached scenes.
  */
 export function findTopologyPath(
   from: CharacterPosition,
@@ -136,28 +143,23 @@ export function findTopologyPath(
     return { steps: [], totalMinutes: 0 };
   }
 
-  const startInfo = resolveToJunctions(
-    from,
-    topology,
-    blockedConnections,
-    dgsm
-  );
-  const endInfo = resolveToJunctions(to, topology, blockedConnections, dgsm);
+  const startInfo = resolveToNodes(from, topology, blockedConnections, dgsm);
+  const endInfo = resolveToNodes(to, topology, blockedConnections, dgsm);
 
   if (!startInfo || !endInfo) return null;
 
-  // BFS on junctions
+  // BFS on node scenes
   const visited = new Set<string>();
   const queue: Array<{
-    junctionId: string;
+    nodeSceneId: string;
     steps: TopologyPathStep[];
     minutes: number;
   }> = [];
 
-  // Seed queue with start junction(s)
+  // Seed queue with start node(s)
   for (const entry of startInfo) {
     queue.push({
-      junctionId: entry.junctionId,
+      nodeSceneId: entry.nodeSceneId,
       steps: entry.initialSteps,
       minutes: entry.initialMinutes,
     });
@@ -165,30 +167,32 @@ export function findTopologyPath(
 
   while (queue.length > 0) {
     const current = queue.shift()!;
-    if (visited.has(current.junctionId)) continue;
-    visited.add(current.junctionId);
+    if (visited.has(current.nodeSceneId)) continue;
+    visited.add(current.nodeSceneId);
 
-    // Check if we reached any end junction
+    // Check if we reached any end node
     for (const end of endInfo) {
-      if (current.junctionId === end.junctionId) {
+      if (current.nodeSceneId === end.nodeSceneId) {
         const finalSteps = [...current.steps, ...end.finalSteps];
         const finalMinutes = current.minutes + end.finalMinutes;
         return { steps: finalSteps, totalMinutes: finalMinutes };
       }
     }
 
-    // Expand: find all roads connected to this junction
-    const roads = topology.junctionToRoads.get(current.junctionId) ?? [];
+    // Expand: find all roads connected to this node
+    const roads = topology.sceneToRoads.get(current.nodeSceneId) ?? [];
     for (const road of roads) {
-      const otherJunctionId =
-        road.endpointA === current.junctionId ? road.endpointB : road.endpointA;
+      const otherNodeId =
+        road.endpointA === current.nodeSceneId
+          ? road.endpointB
+          : road.endpointA;
 
-      if (visited.has(otherJunctionId)) continue;
+      if (visited.has(otherNodeId)) continue;
 
       if (
         hasBlockedConnection(
           blockedConnections,
-          { type: "junction", id: current.junctionId },
+          { type: "scene", id: current.nodeSceneId },
           { type: "road", id: road.id }
         )
       ) {
@@ -202,7 +206,7 @@ export function findTopologyPath(
       };
 
       queue.push({
-        junctionId: otherJunctionId,
+        nodeSceneId: otherNodeId,
         steps: [...current.steps, roadStep],
         minutes: current.minutes + road.travelTimeMinutes,
       });
@@ -250,23 +254,23 @@ export function buildMovementRouteIgnoringBlocks(
     return { steps: [], totalMinutes: 0 };
   }
 
-  const startEntries = resolveToRouteJunctions(from, topology, dgsm);
-  const endEntries = resolveToRouteJunctionsFromTarget(to, topology);
+  const startEntries = resolveToRouteNodes(from, topology, dgsm);
+  const endEntries = resolveToRouteNodesFromTarget(to, topology);
   if (!startEntries || !endEntries) return null;
 
   let bestRoute:
     | {
-        startEntry: RouteJunctionEntry;
-        endEntry: RouteJunctionEntry;
+        startEntry: RouteNodeEntry;
+        endEntry: RouteNodeEntry;
         roadPath: RoadNode[];
         totalMinutes: number;
       }
     | undefined;
 
   for (const startEntry of startEntries) {
-    const dijkstra = computeShortestRoadPaths(startEntry.junctionId, topology);
+    const dijkstra = computeShortestRoadPaths(startEntry.nodeSceneId, topology);
     for (const endEntry of endEntries) {
-      const roadMinutes = dijkstra.distances.get(endEntry.junctionId);
+      const roadMinutes = dijkstra.distances.get(endEntry.nodeSceneId);
       if (roadMinutes === undefined) continue;
       const totalMinutes =
         startEntry.transitionMinutes + roadMinutes + endEntry.transitionMinutes;
@@ -275,8 +279,8 @@ export function buildMovementRouteIgnoringBlocks(
           startEntry,
           endEntry,
           roadPath: reconstructRoadPath(
-            startEntry.junctionId,
-            endEntry.junctionId,
+            startEntry.nodeSceneId,
+            endEntry.nodeSceneId,
             dijkstra.previous,
             topology
           ),
@@ -289,11 +293,11 @@ export function buildMovementRouteIgnoringBlocks(
   if (!bestRoute) return null;
 
   const roadSteps: MovementStep[] = [];
-  let currentJunctionId = bestRoute.startEntry.junctionId;
+  let currentNodeId = bestRoute.startEntry.nodeSceneId;
   for (const road of bestRoute.roadPath) {
-    roadSteps.push(...buildRoadTraversalSteps(currentJunctionId, road));
-    currentJunctionId =
-      road.endpointA === currentJunctionId ? road.endpointB : road.endpointA;
+    roadSteps.push(...buildRoadTraversalSteps(currentNodeId, road));
+    currentNodeId =
+      road.endpointA === currentNodeId ? road.endpointB : road.endpointA;
   }
 
   return {
@@ -306,41 +310,30 @@ export function buildMovementRouteIgnoringBlocks(
   };
 }
 
-/** Resolve a CharacterPosition to reachable junction(s) with initial travel cost */
-function resolveToJunctions(
+/** Resolve a CharacterPosition to reachable node scene(s) with initial travel cost */
+function resolveToNodes(
   pos: CharacterPosition,
   topology: TownTopology,
   blockedConnections: Map<string, string>,
   dgsm?: DynamicGameStateManager
-): JunctionEntry[] | null {
+): NodeEntry[] | null {
   switch (pos.type) {
-    case "junction":
-      return [
-        {
-          junctionId: pos.junctionId,
-          initialSteps: [],
-          initialMinutes: 0,
-          finalSteps: [],
-          finalMinutes: 0,
-        },
-      ];
-
     case "road": {
       const road = topology.roads.get(pos.roadId);
       if (!road) return null;
       const toA = pos.position * road.travelTimeMinutes;
       const toB = (1 - pos.position) * road.travelTimeMinutes;
-      const entries: JunctionEntry[] = [];
+      const entries: NodeEntry[] = [];
 
       if (
         !hasBlockedConnection(
           blockedConnections,
           { type: "road", id: road.id },
-          { type: "junction", id: road.endpointA }
+          { type: "scene", id: road.endpointA }
         )
       ) {
         entries.push({
-          junctionId: road.endpointA,
+          nodeSceneId: road.endpointA,
           initialSteps: [{ type: "road", id: road.id, minutes: toA }],
           initialMinutes: toA,
           finalSteps: [{ type: "road", id: road.id, minutes: toA }],
@@ -352,11 +345,11 @@ function resolveToJunctions(
         !hasBlockedConnection(
           blockedConnections,
           { type: "road", id: road.id },
-          { type: "junction", id: road.endpointB }
+          { type: "scene", id: road.endpointB }
         )
       ) {
         entries.push({
-          junctionId: road.endpointB,
+          nodeSceneId: road.endpointB,
           initialSteps: [{ type: "road", id: road.id, minutes: toB }],
           initialMinutes: toB,
           finalSteps: [{ type: "road", id: road.id, minutes: toB }],
@@ -368,6 +361,19 @@ function resolveToJunctions(
     }
 
     case "scene": {
+      // A node scene is itself a graph node.
+      if (topology.nodeSceneIds.has(pos.sceneId)) {
+        return [
+          {
+            nodeSceneId: pos.sceneId,
+            initialSteps: [],
+            initialMinutes: 0,
+            finalSteps: [],
+            finalMinutes: 0,
+          },
+        ];
+      }
+
       let sceneId = pos.sceneId;
       let parent = topology.sceneToParent.get(sceneId);
       // Interior sub-scene → resolve to building entry scene
@@ -375,16 +381,27 @@ function resolveToJunctions(
         const entryId = resolveToEntryScene(pos.sceneId, topology, dgsm);
         if (!entryId) return null;
         sceneId = entryId;
+        if (topology.nodeSceneIds.has(sceneId)) {
+          return [
+            {
+              nodeSceneId: sceneId,
+              initialSteps: [],
+              initialMinutes: 0,
+              finalSteps: [],
+              finalMinutes: 0,
+            },
+          ];
+        }
         parent = topology.sceneToParent.get(sceneId);
         if (!parent) return null;
       }
 
-      if (parent.type === "junction") {
+      if (parent.type === "scene") {
         if (
           hasBlockedConnection(
             blockedConnections,
             { type: "scene", id: sceneId },
-            { type: "junction", id: parent.junctionId }
+            { type: "scene", id: parent.sceneId }
           )
         ) {
           return null;
@@ -392,7 +409,7 @@ function resolveToJunctions(
 
         return [
           {
-            junctionId: parent.junctionId,
+            nodeSceneId: parent.sceneId,
             initialSteps: [{ type: "exit_scene", id: sceneId, minutes: 1 }],
             initialMinutes: 1,
             finalSteps: [{ type: "enter_scene", id: sceneId, minutes: 1 }],
@@ -401,7 +418,7 @@ function resolveToJunctions(
         ];
       }
 
-      // Scene on a road — can reach either junction
+      // Scene on a road — can reach either endpoint node
       const road = topology.roads.get(parent.roadId);
       if (!road) return null;
       if (
@@ -416,17 +433,17 @@ function resolveToJunctions(
 
       const toA = parent.position * road.travelTimeMinutes;
       const toB = (1 - parent.position) * road.travelTimeMinutes;
-      const entries: JunctionEntry[] = [];
+      const entries: NodeEntry[] = [];
 
       if (
         !hasBlockedConnection(
           blockedConnections,
           { type: "road", id: road.id },
-          { type: "junction", id: road.endpointA }
+          { type: "scene", id: road.endpointA }
         )
       ) {
         entries.push({
-          junctionId: road.endpointA,
+          nodeSceneId: road.endpointA,
           initialSteps: [
             { type: "exit_scene", id: sceneId, minutes: 1 },
             { type: "road", id: road.id, minutes: toA },
@@ -444,11 +461,11 @@ function resolveToJunctions(
         !hasBlockedConnection(
           blockedConnections,
           { type: "road", id: road.id },
-          { type: "junction", id: road.endpointB }
+          { type: "scene", id: road.endpointB }
         )
       ) {
         entries.push({
-          junctionId: road.endpointB,
+          nodeSceneId: road.endpointB,
           initialSteps: [
             { type: "exit_scene", id: sceneId, minutes: 1 },
             { type: "road", id: road.id, minutes: toB },
@@ -470,8 +487,6 @@ function resolveToJunctions(
 function positionsEqual(a: CharacterPosition, b: CharacterPosition): boolean {
   if (a.type !== b.type) return false;
   switch (a.type) {
-    case "junction":
-      return a.junctionId === (b as typeof a).junctionId;
     case "road":
       return (
         a.roadId === (b as typeof a).roadId &&
@@ -482,27 +497,19 @@ function positionsEqual(a: CharacterPosition, b: CharacterPosition): boolean {
   }
 }
 
-function resolveToRouteJunctions(
+function resolveToRouteNodes(
   pos: CharacterPosition,
   topology: TownTopology,
   dgsm?: DynamicGameStateManager
-): RouteJunctionEntry[] | null {
+): RouteNodeEntry[] | null {
   switch (pos.type) {
-    case "junction":
-      return [
-        {
-          junctionId: pos.junctionId,
-          transitionSteps: [],
-          transitionMinutes: 0,
-        },
-      ];
     case "road": {
       const road = topology.roads.get(pos.roadId);
       if (!road) return null;
       return [
         {
-          junctionId: road.endpointA,
-          transitionSteps: buildRoadPositionToJunctionSteps(
+          nodeSceneId: road.endpointA,
+          transitionSteps: buildRoadPositionToNodeSteps(
             pos,
             road,
             road.endpointA
@@ -510,8 +517,8 @@ function resolveToRouteJunctions(
           transitionMinutes: pos.position * road.travelTimeMinutes,
         },
         {
-          junctionId: road.endpointB,
-          transitionSteps: buildRoadPositionToJunctionSteps(
+          nodeSceneId: road.endpointB,
+          transitionSteps: buildRoadPositionToNodeSteps(
             pos,
             road,
             road.endpointB
@@ -521,29 +528,48 @@ function resolveToRouteJunctions(
       ];
     }
     case "scene": {
+      if (topology.nodeSceneIds.has(pos.sceneId)) {
+        return [
+          {
+            nodeSceneId: pos.sceneId,
+            transitionSteps: [],
+            transitionMinutes: 0,
+          },
+        ];
+      }
+
       let sceneId = pos.sceneId;
       let parent = topology.sceneToParent.get(sceneId);
       if (!parent) {
         const entryId = resolveToEntryScene(pos.sceneId, topology, dgsm);
         if (!entryId) return null;
         sceneId = entryId;
+        if (topology.nodeSceneIds.has(sceneId)) {
+          return [
+            {
+              nodeSceneId: sceneId,
+              transitionSteps: [],
+              transitionMinutes: 0,
+            },
+          ];
+        }
         parent = topology.sceneToParent.get(sceneId);
         if (!parent) return null;
       }
       const effectivePos: CharacterPosition = { type: "scene", sceneId };
-      if (parent.type === "junction") {
+      if (parent.type === "scene") {
         return [
           {
-            junctionId: parent.junctionId,
+            nodeSceneId: parent.sceneId,
             transitionSteps: [
               {
-                kind: "to_junction",
+                kind: "to_scene",
                 from: effectivePos,
-                to: { type: "junction", junctionId: parent.junctionId },
+                to: { type: "scene", sceneId: parent.sceneId },
                 durationMinutes: 1,
                 blockCheck: {
                   fromId: sceneId,
-                  toId: parent.junctionId,
+                  toId: parent.sceneId,
                 },
               },
             ],
@@ -561,7 +587,7 @@ function resolveToRouteJunctions(
       };
       return [
         {
-          junctionId: road.endpointA,
+          nodeSceneId: road.endpointA,
           transitionSteps: [
             {
               kind: "along_road",
@@ -574,12 +600,12 @@ function resolveToRouteJunctions(
                 toId: road.id,
               },
             },
-            ...buildRoadPositionToJunctionSteps(roadPos, road, road.endpointA),
+            ...buildRoadPositionToNodeSteps(roadPos, road, road.endpointA),
           ],
           transitionMinutes: 1 + parent.position * road.travelTimeMinutes,
         },
         {
-          junctionId: road.endpointB,
+          nodeSceneId: road.endpointB,
           transitionSteps: [
             {
               kind: "along_road",
@@ -592,7 +618,7 @@ function resolveToRouteJunctions(
                 toId: road.id,
               },
             },
-            ...buildRoadPositionToJunctionSteps(roadPos, road, road.endpointB),
+            ...buildRoadPositionToNodeSteps(roadPos, road, road.endpointB),
           ],
           transitionMinutes: 1 + (1 - parent.position) * road.travelTimeMinutes,
         },
@@ -601,26 +627,18 @@ function resolveToRouteJunctions(
   }
 }
 
-function resolveToRouteJunctionsFromTarget(
+function resolveToRouteNodesFromTarget(
   pos: CharacterPosition,
   topology: TownTopology
-): RouteJunctionEntry[] | null {
+): RouteNodeEntry[] | null {
   switch (pos.type) {
-    case "junction":
-      return [
-        {
-          junctionId: pos.junctionId,
-          transitionSteps: [],
-          transitionMinutes: 0,
-        },
-      ];
     case "road": {
       const road = topology.roads.get(pos.roadId);
       if (!road) return null;
       return [
         {
-          junctionId: road.endpointA,
-          transitionSteps: buildJunctionToRoadPositionSteps(
+          nodeSceneId: road.endpointA,
+          transitionSteps: buildNodeToRoadPositionSteps(
             road.endpointA,
             road,
             pos
@@ -628,8 +646,8 @@ function resolveToRouteJunctionsFromTarget(
           transitionMinutes: pos.position * road.travelTimeMinutes,
         },
         {
-          junctionId: road.endpointB,
-          transitionSteps: buildJunctionToRoadPositionSteps(
+          nodeSceneId: road.endpointB,
+          transitionSteps: buildNodeToRoadPositionSteps(
             road.endpointB,
             road,
             pos
@@ -639,20 +657,29 @@ function resolveToRouteJunctionsFromTarget(
       ];
     }
     case "scene": {
-      const parent = topology.sceneToParent.get(pos.sceneId);
-      if (!parent) return null;
-      if (parent.type === "junction") {
+      if (topology.nodeSceneIds.has(pos.sceneId)) {
         return [
           {
-            junctionId: parent.junctionId,
+            nodeSceneId: pos.sceneId,
+            transitionSteps: [],
+            transitionMinutes: 0,
+          },
+        ];
+      }
+      const parent = topology.sceneToParent.get(pos.sceneId);
+      if (!parent) return null;
+      if (parent.type === "scene") {
+        return [
+          {
+            nodeSceneId: parent.sceneId,
             transitionSteps: [
               {
                 kind: "to_scene",
-                from: { type: "junction", junctionId: parent.junctionId },
+                from: { type: "scene", sceneId: parent.sceneId },
                 to: pos,
                 durationMinutes: 1,
                 blockCheck: {
-                  fromId: parent.junctionId,
+                  fromId: parent.sceneId,
                   toId: pos.sceneId,
                 },
               },
@@ -671,9 +698,9 @@ function resolveToRouteJunctionsFromTarget(
       };
       return [
         {
-          junctionId: road.endpointA,
+          nodeSceneId: road.endpointA,
           transitionSteps: [
-            ...buildJunctionToRoadPositionSteps(road.endpointA, road, roadPos),
+            ...buildNodeToRoadPositionSteps(road.endpointA, road, roadPos),
             {
               kind: "to_scene",
               from: roadPos,
@@ -688,9 +715,9 @@ function resolveToRouteJunctionsFromTarget(
           transitionMinutes: parent.position * road.travelTimeMinutes + 1,
         },
         {
-          junctionId: road.endpointB,
+          nodeSceneId: road.endpointB,
           transitionSteps: [
-            ...buildJunctionToRoadPositionSteps(road.endpointB, road, roadPos),
+            ...buildNodeToRoadPositionSteps(road.endpointB, road, roadPos),
             {
               kind: "to_scene",
               from: roadPos,
@@ -709,12 +736,12 @@ function resolveToRouteJunctionsFromTarget(
   }
 }
 
-function buildRoadPositionToJunctionSteps(
+function buildRoadPositionToNodeSteps(
   from: { type: "road"; roadId: string; position: number },
   road: RoadNode,
-  junctionId: string
+  nodeSceneId: string
 ): MovementStep[] {
-  const targetPosition = junctionId === road.endpointA ? 0 : 1;
+  const targetPosition = nodeSceneId === road.endpointA ? 0 : 1;
   return [
     {
       kind: "along_road",
@@ -725,32 +752,32 @@ function buildRoadPositionToJunctionSteps(
         Math.abs(targetPosition - from.position) * road.travelTimeMinutes,
     },
     {
-      kind: "to_junction",
+      kind: "to_scene",
       from: { type: "road", roadId: road.id, position: targetPosition },
-      to: { type: "junction", junctionId },
+      to: { type: "scene", sceneId: nodeSceneId },
       durationMinutes: 0,
       blockCheck: {
         fromId: road.id,
-        toId: junctionId,
+        toId: nodeSceneId,
       },
     },
   ];
 }
 
-function buildJunctionToRoadPositionSteps(
-  junctionId: string,
+function buildNodeToRoadPositionSteps(
+  nodeSceneId: string,
   road: RoadNode,
   to: { type: "road"; roadId: string; position: number }
 ): MovementStep[] {
-  const startPosition = junctionId === road.endpointA ? 0 : 1;
+  const startPosition = nodeSceneId === road.endpointA ? 0 : 1;
   return [
     {
-      kind: "to_junction",
-      from: { type: "junction", junctionId },
+      kind: "to_scene",
+      from: { type: "scene", sceneId: nodeSceneId },
       to: { type: "road", roadId: road.id, position: startPosition },
       durationMinutes: 0,
       blockCheck: {
-        fromId: junctionId,
+        fromId: nodeSceneId,
         toId: road.id,
       },
     },
@@ -766,22 +793,22 @@ function buildJunctionToRoadPositionSteps(
 }
 
 function buildRoadTraversalSteps(
-  fromJunctionId: string,
+  fromNodeSceneId: string,
   road: RoadNode
 ): MovementStep[] {
-  const startPosition = fromJunctionId === road.endpointA ? 0 : 1;
-  const targetJunctionId =
-    fromJunctionId === road.endpointA ? road.endpointB : road.endpointA;
-  const targetPosition = targetJunctionId === road.endpointA ? 0 : 1;
+  const startPosition = fromNodeSceneId === road.endpointA ? 0 : 1;
+  const targetNodeSceneId =
+    fromNodeSceneId === road.endpointA ? road.endpointB : road.endpointA;
+  const targetPosition = targetNodeSceneId === road.endpointA ? 0 : 1;
 
   return [
     {
-      kind: "to_junction",
-      from: { type: "junction", junctionId: fromJunctionId },
+      kind: "to_scene",
+      from: { type: "scene", sceneId: fromNodeSceneId },
       to: { type: "road", roadId: road.id, position: startPosition },
       durationMinutes: 0,
       blockCheck: {
-        fromId: fromJunctionId,
+        fromId: fromNodeSceneId,
         toId: road.id,
       },
     },
@@ -793,47 +820,47 @@ function buildRoadTraversalSteps(
       durationMinutes: road.travelTimeMinutes,
     },
     {
-      kind: "to_junction",
+      kind: "to_scene",
       from: { type: "road", roadId: road.id, position: targetPosition },
-      to: { type: "junction", junctionId: targetJunctionId },
+      to: { type: "scene", sceneId: targetNodeSceneId },
       durationMinutes: 0,
       blockCheck: {
         fromId: road.id,
-        toId: targetJunctionId,
+        toId: targetNodeSceneId,
       },
     },
   ];
 }
 
 function computeShortestRoadPaths(
-  startJunctionId: string,
+  startNodeSceneId: string,
   topology: TownTopology
 ): {
   distances: Map<string, number>;
-  previous: Map<string, { junctionId: string; roadId: string }>;
+  previous: Map<string, { nodeSceneId: string; roadId: string }>;
 } {
   const distances = new Map<string, number>();
-  const previous = new Map<string, { junctionId: string; roadId: string }>();
-  const unvisited = new Set<string>(topology.junctions.keys());
+  const previous = new Map<string, { nodeSceneId: string; roadId: string }>();
+  const unvisited = new Set<string>(topology.nodeSceneIds);
 
-  distances.set(startJunctionId, 0);
+  distances.set(startNodeSceneId, 0);
 
   while (unvisited.size > 0) {
     let currentId: string | null = null;
     let currentDist = Number.POSITIVE_INFINITY;
 
-    for (const junctionId of unvisited) {
-      const dist = distances.get(junctionId) ?? Number.POSITIVE_INFINITY;
+    for (const nodeSceneId of unvisited) {
+      const dist = distances.get(nodeSceneId) ?? Number.POSITIVE_INFINITY;
       if (dist < currentDist) {
         currentDist = dist;
-        currentId = junctionId;
+        currentId = nodeSceneId;
       }
     }
 
     if (!currentId || currentDist === Number.POSITIVE_INFINITY) break;
     unvisited.delete(currentId);
 
-    const roads = topology.junctionToRoads.get(currentId) ?? [];
+    const roads = topology.sceneToRoads.get(currentId) ?? [];
     for (const road of roads) {
       const neighborId =
         road.endpointA === currentId ? road.endpointB : road.endpointA;
@@ -841,7 +868,7 @@ function computeShortestRoadPaths(
       const candidate = currentDist + road.travelTimeMinutes;
       if (candidate < (distances.get(neighborId) ?? Number.POSITIVE_INFINITY)) {
         distances.set(neighborId, candidate);
-        previous.set(neighborId, { junctionId: currentId, roadId: road.id });
+        previous.set(neighborId, { nodeSceneId: currentId, roadId: road.id });
       }
     }
   }
@@ -850,20 +877,20 @@ function computeShortestRoadPaths(
 }
 
 function reconstructRoadPath(
-  startJunctionId: string,
-  endJunctionId: string,
-  previous: Map<string, { junctionId: string; roadId: string }>,
+  startNodeSceneId: string,
+  endNodeSceneId: string,
+  previous: Map<string, { nodeSceneId: string; roadId: string }>,
   topology: TownTopology
 ): RoadNode[] {
   const roads: RoadNode[] = [];
-  let current = endJunctionId;
-  while (current !== startJunctionId) {
+  let current = endNodeSceneId;
+  while (current !== startNodeSceneId) {
     const prev = previous.get(current);
     if (!prev) return [];
     const road = topology.roads.get(prev.roadId);
     if (!road) return [];
     roads.unshift(road);
-    current = prev.junctionId;
+    current = prev.nodeSceneId;
   }
   return roads;
 }

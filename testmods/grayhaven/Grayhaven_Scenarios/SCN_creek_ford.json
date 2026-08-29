@@ -1,9 +1,8 @@
 {
   "schemaVersion": 2,
-  "id": "JUNC_creek_ford",
+  "id": "SCN_creek_ford",
   "name": "灰溪渡口",
   "description": "灰溪在这里变宽变浅,一排被磨圆的踏石排到对岸,是过溪的唯一办法 [cond.creek_ford.stepping_stones]。溪水平时只到脚踝,暴雨之后会涨到没过踏石,湍得站不住人。两岸的林子长得一模一样,过了溪回头看一眼,来路和去路几乎分不出彼此。",
-  "parentLocationId": "OUTDOOR",
   "references": {
     "items": [],
     "connections": [],

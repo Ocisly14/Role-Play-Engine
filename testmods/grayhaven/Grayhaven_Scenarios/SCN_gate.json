@@ -1,9 +1,8 @@
 {
   "schemaVersion": 2,
-  "id": "JUNC_gate",
+  "id": "SCN_gate",
   "name": "自动大门",
   "description": "车行道的终点横着一道链网大门,没有岗哨,也没有灯。门柱上挂着一块白底黑字的告示牌:「美国政府财产 · 禁止入内」 [item.gate.property_sign]。大门偶尔会自己滑开,放行获准的车辆,随后又无声地合上——附近找不到任何操作它的人。门后的水泥路继续向站区延伸;门外,碎石车行道退回山下的公路岔口。普通镇民的合法世界到此为止。",
-  "parentLocationId": "LOC_gate",
   "references": {
     "items": [
       {

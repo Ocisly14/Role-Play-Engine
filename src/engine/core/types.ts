@@ -3,13 +3,13 @@ import type { CharacterPosition } from "../../state/topologyTypes.js";
 export type FeatureStateScope = "scene" | "region" | "character" | "global";
 
 /**
- * One leg of a movement route — junction-to-junction segments produced by
+ * One leg of a movement route — node-to-node segments produced by
  * pathfinding. Used by the CodeEngine movement subsystem (and re-exported from
  * `planning/types.ts` for any straggling caller still on the legacy
  * PlanNode.executionMeta.movement shape).
  */
 export interface MovementStep {
-  kind: "to_junction" | "along_road" | "to_scene";
+  kind: "along_road" | "to_scene";
   from: CharacterPosition;
   to: CharacterPosition;
   durationMinutes: number;

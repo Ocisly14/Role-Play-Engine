@@ -1,5 +1,5 @@
 // M3 validator surface: the lookup is built from the FULL state (Tier-1 graph
-// + full-world itemHolders), so junctions and roads are first-class places —
+// + full-world itemHolders), so node scenes and roads are first-class places —
 // their items are movable, their conditions removable — and connection ids
 // are checked against the registry-backed edge list. New operations:
 // setDescription, connectionHidden, removeCondition-by-id, item.create with a
@@ -51,15 +51,13 @@ function makeContext(): EngineResolutionContext {
         places: [
           {
             id: "J_A",
-            kind: "junction",
+            kind: "scene",
             name: "Crossing",
-            parentLocationId: "OUTDOOR",
           },
           {
             id: "R_MAIN",
             kind: "road",
             name: "Star Avenue",
-            parentLocationId: "OUTDOOR",
           },
         ],
         edges: [
@@ -74,7 +72,7 @@ function makeContext(): EngineResolutionContext {
         ],
       },
       blockedEdges: [],
-      placeKinds: { SCN_1: "scene", J_A: "junction", R_MAIN: "road" },
+      placeKinds: { SCN_1: "scene", J_A: "scene", R_MAIN: "road" },
       connectionIds: ["exit.home.junc", "exit.junc.home", "exit.rmain.a"],
       places: [],
       items: [],
@@ -97,7 +95,7 @@ function makeContext(): EngineResolutionContext {
           maxSan: 60,
           fatigue: 0,
           maxFatigue: 10,
-          position: { type: "junction", junctionId: "J_A" },
+          position: { type: "scene", sceneId: "J_A" },
           locationId: "J_A",
           conditions: [],
           inventoryItemIds: ["item_coin"],
@@ -126,8 +124,8 @@ function validate(partial: Partial<RawTickResolution>): string {
 
 const sourced = { sourceActionId: ACTION_ID, causalBasis: "it follows" };
 
-describe("junctions and roads are first-class item holders", () => {
-  it("accepts moving an item off a junction and off a road", () => {
+describe("node scenes and roads are first-class item holders", () => {
+  it("accepts moving an item off a node scene and off a road", () => {
     expect(
       validate({
         itemChanges: [
@@ -168,8 +166,8 @@ describe("junctions and roads are first-class item holders", () => {
   });
 });
 
-describe("scene operations reach junctions and roads", () => {
-  it("accepts addCondition on a junction and removeCondition {id} on a road", () => {
+describe("scene operations reach node scenes and roads", () => {
+  it("accepts addCondition on a node scene and removeCondition {id} on a road", () => {
     expect(
       validate({
         sceneChanges: [

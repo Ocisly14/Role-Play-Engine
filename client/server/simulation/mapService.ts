@@ -34,12 +34,18 @@ export async function getTopology(
   const topology = dgsm.getTopology();
   if (!topology) return null;
 
-  const junctions = Array.from(topology.junctions.values()).map((j) => ({
-    id: j.id,
-    name: j.name,
-    parentLocationId: j.parentLocationId,
-    connectedSceneIds: j.connectedSceneIds,
-  }));
+  const stateForNodes = dgsm.getState();
+  // Wire compat: the viewer still calls the geography nodes "junctions".
+  // They are top-level scenes now; synthesize the same shape.
+  const junctions = Array.from(topology.nodeSceneIds)
+    .map((id) => stateForNodes.scenes.get(id))
+    .filter((s): s is NonNullable<typeof s> => s !== undefined)
+    .map((s) => ({
+      id: s.id,
+      name: s.name,
+      parentLocationId: s.parentLocationId ?? "OUTDOOR",
+      connectedSceneIds: (s.connections ?? []).map((c) => c.targetId),
+    }));
   const roads = Array.from(topology.roads.values()).map((r) => ({
     id: r.id,
     name: r.name,

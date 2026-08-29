@@ -1,8 +1,8 @@
 // Two-tier context against a REAL DynamicGameStateManager: Tier 1 is the
-// SKELETON — macro locations + junctions/roads, interior-scene edges lifted
-// to their macro location, blocked state split out into the volatile
+// SKELETON — macro locations + top-level node scenes/roads, interior-scene
+// edges lifted to their parent, blocked state split out into the volatile
 // blockedEdges list; Tier 2 carries full snapshots of only the involved
-// places, junctions/roads included, with hidden items and connection ids
+// places, node scenes/roads included, with hidden items and connection ids
 // visible to the all-knowing Engine. Full-world validation lookups
 // (placeKinds/connectionIds/itemHolders) stay untrimmed by either tier.
 
@@ -11,7 +11,7 @@ import {
   DynamicGameStateManager,
   initialDynamicGameState,
 } from "../../../state/DynamicGameState.js";
-import type { JunctionNode, RoadNode } from "../../../state/topologyTypes.js";
+import type { RoadNode } from "../../../state/topologyTypes.js";
 import type { DynamicScene } from "../../../state/types.js";
 import type { ActionCommand, EngineAction } from "../../actions/types.js";
 import { buildEngineResolutionContext } from "../contextBuilder.js";
@@ -51,36 +51,32 @@ function makeDgsm(): DynamicGameStateManager {
     connections: [{ id: "exit.far.junc", targetId: "J_A" }],
   };
 
-  const junction: JunctionNode = {
+  // Top-level scenes (no parentLocationId): geography nodes.
+  const junction: DynamicScene = {
     id: "J_A",
     name: "Crossing",
     description: "A windswept crossing.",
-    parentLocationId: "OUTDOOR",
     items: [{ id: "item_lamppost", name: "a lamppost" }],
     conditions: [],
     connections: [
       { id: "exit.junc.home", targetId: "S_HOME" },
       { id: "exit.junc.road", targetId: "R_MAIN" },
     ],
-    connectedSceneIds: ["S_HOME"],
   };
 
-  const junctionB: JunctionNode = {
+  const junctionB: DynamicScene = {
     id: "J_B",
     name: "Far Corner",
     description: "The far corner.",
-    parentLocationId: "OUTDOOR",
     items: [],
     conditions: [],
     connections: [],
-    connectedSceneIds: [],
   };
 
   const road: RoadNode = {
     id: "R_MAIN",
     name: "Star Avenue",
     description: "A long avenue.",
-    parentLocationId: "OUTDOOR",
     connections: [
       { id: "exit.road.a", targetId: "J_A", role: "endpointA" },
       { id: "exit.road.b", targetId: "J_B", role: "endpointB" },
@@ -95,8 +91,8 @@ function makeDgsm(): DynamicGameStateManager {
 
   state.scenes.set(home.id, home);
   state.scenes.set(far.id, far);
-  state.junctions.set(junction.id, junction);
-  state.junctions.set(junctionB.id, junctionB);
+  state.scenes.set(junction.id, junction);
+  state.scenes.set(junctionB.id, junctionB);
   state.roads.set(road.id, road);
   state.scenarioOutlines = [
     {
@@ -200,11 +196,11 @@ describe("Tier 1 — the skeleton: macro locations + geography", () => {
   const state = build().state;
   const { graph } = state;
 
-  it("lists only junctions and roads beside the macro locations, with their prose", () => {
+  it("lists only top-level scenes and roads beside the macro locations, with their prose", () => {
     expect(graph.places.map((p) => `${p.kind}:${p.id}`).sort()).toEqual([
-      "junction:J_A",
-      "junction:J_B",
       "road:R_MAIN",
+      "scene:J_A",
+      "scene:J_B",
     ]);
     // Each node carries its authored description: the skeleton renders in the
     // same description-plus-references shape as the v2 place files.
@@ -266,8 +262,8 @@ describe("Tier 1 — the skeleton: macro locations + geography", () => {
     expect(state.placeKinds).toEqual({
       S_HOME: "scene",
       S_FAR: "scene",
-      J_A: "junction",
-      J_B: "junction",
+      J_A: "scene",
+      J_B: "scene",
       R_MAIN: "road",
     });
     // The dropped interior edge is still a real connection to the validator.
@@ -283,19 +279,19 @@ describe("Tier 2 — full snapshots of the involved places only", () => {
     // npc_home stands in S_HOME; npc_walker stands ON the road; the command's
     // objectRef points at the lamppost held by J_A. S_FAR is uninvolved.
     expect(state.places.map((p) => `${p.kind}:${p.id}`).sort()).toEqual([
-      "junction:J_A",
       "road:R_MAIN",
+      "scene:J_A",
       "scene:S_HOME",
     ]);
   });
 
-  it("snapshots junctions and roads with the same detail as scenes", () => {
+  it("snapshots node scenes and roads with the same detail as scenes", () => {
     const road = state.places.find((p) => p.id === "R_MAIN");
     expect(road?.kind).toBe("road");
     expect(road?.itemIds).toEqual(["item_glove"]);
     expect(road?.presentCharacterIds).toEqual(["npc_walker"]);
     const junction = state.places.find((p) => p.id === "J_A");
-    expect(junction?.kind).toBe("junction");
+    expect(junction?.kind).toBe("scene");
     expect(junction?.connections.map((c) => c.connectionId).sort()).toEqual([
       "exit.junc.home",
       "exit.junc.road",

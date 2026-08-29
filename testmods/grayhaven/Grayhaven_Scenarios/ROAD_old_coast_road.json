@@ -10,13 +10,13 @@
     "connections": [
       {
         "id": "exit.old_coast_road.town_end",
-        "targetId": "JUNC_main_north",
+        "targetId": "SCN_main_north",
         "name": "公路南头(镇端)",
         "role": "endpointA"
       },
       {
         "id": "exit.old_coast_road.motel_end",
-        "targetId": "JUNC_motel",
+        "targetId": "SCN_motel",
         "name": "公路北头(旅馆)",
         "role": "endpointB"
       }

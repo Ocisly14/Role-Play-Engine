@@ -1,9 +1,8 @@
 {
   "schemaVersion": 2,
-  "id": "JUNC_main_north",
+  "id": "SCN_main_north",
   "name": "主街北段",
   "description": "主街的北半段。繁荣年代留下的假立面商铺楼在雾里显得过分气派,一半橱窗钉着木板,电线上停着不肯挪窝的海鸥。蓝鸟餐馆的玻璃门上挂着营业的木牌,门缝里飘出咖啡和烤面包的气味 [exit.main_north.bluebird_door];隔壁杂货店兼邮局的纱门里传出收音机的声音,门口钉着邮件车时刻表 [exit.main_north.grocery_door];街对面,警长办公室的大门上嵌着一枚擦得发亮的铜星 [exit.main_north.sheriff_door]。街道向北出镇,接上旧海岸公路和进山的土路;向南走一刻钟,是主街更冷清的另一半。",
-  "parentLocationId": "LOC_main_north",
   "references": {
     "items": [],
     "connections": [

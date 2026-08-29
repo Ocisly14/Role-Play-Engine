@@ -35,7 +35,7 @@
       },
       {
         "id": "exit.reyes_living.lane_door",
-        "targetId": "JUNC_main_south",
+        "targetId": "SCN_main_south",
         "name": "后街小门",
         "description": "临后街的小门,穿过窄巷通向主街南段。"
       }

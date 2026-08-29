@@ -709,25 +709,29 @@ describe("operations are checked against the fields they advertise", () => {
       )
     );
 
-  it("rejects a position type outside the three real kinds", () => {
+  it("rejects a position type outside the two real kinds", () => {
     expect(
       errorsFor({ kind: "position", position: { type: "teleport" } })
-    ).toContain('position.type must be "scene", "junction" or "road"');
+    ).toContain('position.type must be "scene" or "road"');
+    // The junction kind is gone: geography nodes are scenes now.
+    expect(
+      errorsFor({ kind: "position", position: { type: "junction" } })
+    ).toContain('position.type must be "scene" or "road"');
   });
 
   it("rejects a position whose id field is missing for its type", () => {
     expect(
-      errorsFor({ kind: "position", position: { type: "junction" } })
-    ).toContain("requires junctionId");
+      errorsFor({ kind: "position", position: { type: "road" } })
+    ).toContain("requires roadId");
   });
 
-  it("rejects a junction or road nobody was shown", () => {
-    // Only scenes used to be checked, so any junction id at all was accepted
+  it("rejects a road nobody was shown", () => {
+    // Only scenes used to be checked, so any road id at all was accepted
     // and the character was stood somewhere that does not exist.
     expect(
       errorsFor({
         kind: "position",
-        position: { type: "junction", junctionId: "JUNC_NOWHERE" },
+        position: { type: "road", roadId: "ROAD_NOWHERE" },
       })
     ).toContain("is not a place you were shown");
   });

@@ -60,9 +60,9 @@ export interface KnownAction {
 interface Lookup {
   characterIds: Set<string>;
   aliveCharacterIds: Set<string>;
-  /** Interior/detail scenes only (placeKinds entries of kind "scene"). */
+  /** Every scene (interior and top-level node scenes alike). */
   sceneIds: Set<string>;
-  /** EVERY place in the world — scene, junction or road — from
+  /** EVERY place in the world — scene or road — from
    *  `state.placeKinds`, the full-world lookup. Never the skeleton graph
    *  (which drops interior scenes) and never the trimmed Tier-2 snapshots:
    *  prompt layering must not narrow what counts as a real reference. */
@@ -175,13 +175,9 @@ export function buildLookup(context: EngineResolutionContext): Lookup {
   for (const c of context.state.characters) {
     if (c.locationId) locationIds.add(c.locationId);
     const position = c.position as
-      | { sceneId?: string; junctionId?: string; roadId?: string }
+      | { sceneId?: string; roadId?: string }
       | undefined;
-    for (const id of [
-      position?.sceneId,
-      position?.junctionId,
-      position?.roadId,
-    ]) {
+    for (const id of [position?.sceneId, position?.roadId]) {
       if (id) locationIds.add(id);
     }
   }
@@ -402,27 +398,25 @@ export function validateCharacterChange(
       break;
     }
     case "position": {
-      // Only `type: "scene"` used to be checked, so a junction or road id was
-      // accepted unseen and reached the applier, which would happily stand the
+      // Only `type: "scene"` used to be checked, so a road id was accepted
+      // unseen and reached the applier, which would happily stand the
       // character on a place that does not exist.
       const p = op.position as
         | {
             type?: string;
             sceneId?: string;
-            junctionId?: string;
             roadId?: string;
           }
         | undefined;
       const idField = {
         scene: "sceneId",
-        junction: "junctionId",
         road: "roadId",
       } as const;
       if (!p || typeof p !== "object") {
         errs.push(`position.position must be an object {type, <id>}`);
       } else if (!p.type || !(p.type in idField)) {
         errs.push(
-          `position.type must be "scene", "junction" or "road" — got ${JSON.stringify(p.type)}`
+          `position.type must be "scene" or "road" — got ${JSON.stringify(p.type)}`
         );
       } else {
         const field = idField[p.type as keyof typeof idField];
@@ -484,7 +478,7 @@ export function validateSceneChange(
   lookup: Lookup
 ): string[] {
   const errs = validateCommonDelta(delta, lookup);
-  // Scene operations apply to every place kind — junctions and roads carry
+  // Scene operations apply to every place kind — roads carry
   // conditions, descriptions and connections exactly like interior scenes.
   if (!delta.sceneId || !lookup.placeIds.has(delta.sceneId)) {
     errs.push(`sceneId "${delta.sceneId}" does not exist`);

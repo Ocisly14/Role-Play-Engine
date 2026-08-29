@@ -1,6 +1,6 @@
 /**
  * Connection registry — the id-addressed index over every authored connection
- * in the world (scenes, junctions, roads). Derivable from state, so it is
+ * in the world (scenes and roads). Derivable from state, so it is
  * never serialized; build it lazily where needed.
  *
  * `resolveConnectionEdge` maps a connection id onto the same symmetric edge
@@ -12,10 +12,10 @@ import {
   type BlockedConnectionNodeRef,
   makeBlockedConnectionKey,
 } from "./blockedConnections.js";
-import type { JunctionNode, RoadNode } from "./topologyTypes.js";
+import type { RoadNode } from "./topologyTypes.js";
 import type { DynamicScene } from "./types.js";
 
-export type ConnectionOwnerKind = "scene" | "junction" | "road";
+export type ConnectionOwnerKind = "scene" | "road";
 
 export interface ConnectionRegistryEntry {
   /** The connection's own id (`exit.<place>.<slug>`). */
@@ -32,7 +32,6 @@ export type ConnectionRegistry = Map<string, ConnectionRegistryEntry>;
 
 export interface ConnectionRegistryState {
   scenes: Map<string, DynamicScene>;
-  junctions: Map<string, JunctionNode>;
   roads: Map<string, RoadNode>;
 }
 
@@ -41,7 +40,6 @@ function resolveTargetKind(
   state: ConnectionRegistryState
 ): ConnectionOwnerKind | null {
   if (state.scenes.has(targetId)) return "scene";
-  if (state.junctions.has(targetId)) return "junction";
   if (state.roads.has(targetId)) return "road";
   return null;
 }
@@ -75,9 +73,6 @@ export function buildConnectionRegistry(
   };
   for (const scene of state.scenes.values()) {
     add(scene.id, "scene", scene.connections ?? []);
-  }
-  for (const junction of state.junctions.values()) {
-    add(junction.id, "junction", junction.connections ?? []);
   }
   for (const road of state.roads.values()) {
     add(road.id, "road", road.connections ?? []);

@@ -1,11 +1,11 @@
 // Schema v2 place files: parse guards, v1 rejection, per-kind derivation
-// (SCN/JUNC/ROAD), and module-wide reference integrity. The loader supports
+// (SCN/ROAD — junctions are gone: geography nodes are top-level scenes), and
+// module-wide reference integrity. The loader supports
 // ONLY v2 — the whole migration strategy for v1 modules is the error message.
 
 import {
   ModuleSchemaError,
   type PlaceFileV2,
-  buildJunctionV2,
   buildRoadV2,
   buildSceneV2,
   parsePlaceFileV2,
@@ -13,7 +13,7 @@ import {
   validateScenarioOutlines,
   validateTransportEdges,
 } from "@/state/moduleSchemaV2.js";
-import type { JunctionNode, RoadNode } from "@/state/topologyTypes.js";
+import type { RoadNode } from "@/state/topologyTypes.js";
 import type { DynamicScene } from "@/state/types.js";
 import { describe, expect, it } from "vitest";
 
@@ -57,15 +57,15 @@ function rawScene(overrides: Record<string, unknown> = {}) {
   };
 }
 
-function rawJunction(overrides: Record<string, unknown> = {}) {
+/** A top-level node scene (street corner) — no parentLocationId. */
+function rawNodeScene(overrides: Record<string, unknown> = {}) {
   return {
     schemaVersion: 2,
-    id: "JUNC_main_north",
+    id: "SCN_main_north",
     name: "North Corner",
     description:
       "The library door faces the corner [exit.main_north.library]. " +
       "A cellar hatch hides under leaves.",
-    parentLocationId: "OUTDOOR",
     references: {
       connections: [
         { id: "exit.main_north.library", targetId: "SCN_library" },
@@ -95,12 +95,12 @@ function rawRoad(overrides: Record<string, unknown> = {}) {
       connections: [
         {
           id: "exit.main_street.north",
-          targetId: "JUNC_main_north",
+          targetId: "SCN_main_north",
           role: "endpointA",
         },
         {
           id: "exit.main_street.south",
-          targetId: "JUNC_main_south",
+          targetId: "SCN_main_south",
           role: "endpointB",
         },
         {
@@ -131,12 +131,10 @@ function roadWithConnections(
 function builtModule(
   mutate?: (module: {
     scenes: Map<string, DynamicScene>;
-    junctions: Map<string, JunctionNode>;
     roads: Map<string, RoadNode>;
   }) => void
 ) {
   const scenes = new Map<string, DynamicScene>();
-  const junctions = new Map<string, JunctionNode>();
   const roads = new Map<string, RoadNode>();
 
   const library = buildSceneV2(parsePlaceFileV2("SCN_library", rawScene()));
@@ -157,10 +155,10 @@ function builtModule(
   scenes.set(library.id, library);
   scenes.set(stacks.id, stacks);
 
-  const junction = buildJunctionV2(
-    parsePlaceFileV2("JUNC_main_north", rawJunction())
+  const corner = buildSceneV2(
+    parsePlaceFileV2("SCN_main_north", rawNodeScene())
   );
-  junctions.set(junction.id, junction);
+  scenes.set(corner.id, corner);
   const cellar = buildSceneV2(
     parsePlaceFileV2(
       "SCN_cellar",
@@ -174,7 +172,7 @@ function builtModule(
   );
   scenes.set(cellar.id, cellar);
 
-  const module = { scenes, junctions, roads };
+  const module = { scenes, roads };
   mutate?.(module);
   return module;
 }
@@ -218,10 +216,25 @@ describe("parsePlaceFileV2", () => {
     expect(error.problems[0]).toContain("v1 不再支持");
   });
 
+  it("rejects a JUNC_* file — geography nodes are top-level scenes now", () => {
+    const error = expectSchemaError(() =>
+      parsePlaceFileV2(
+        "JUNC_old_corner",
+        rawNodeScene({ id: "JUNC_old_corner" })
+      )
+    );
+    expect(error.problems.join("\n")).toContain("JUNC_");
+  });
+
+  it("parses a top-level scene with no parentLocationId", () => {
+    const parsed = parsePlaceFileV2("SCN_main_north", rawNodeScene());
+    expect(parsed.parentLocationId).toBeUndefined();
+  });
+
   it("aggregates every problem in the file into one error", () => {
     const bad = rawScene({
       name: 42,
-      parentLocationId: undefined,
+      parentLocationId: 7,
       references: {
         items: [{ id: "item.x" }], // missing name
         connections: [{ id: "exit.x" }], // missing targetId
@@ -253,7 +266,7 @@ describe("parsePlaceFileV2", () => {
 
 // ─── derivation ────────────────────────────────────────────────────
 
-describe("buildSceneV2 / buildJunctionV2", () => {
+describe("buildSceneV2", () => {
   it("derives a DynamicScene carrying items, conditions and connections", () => {
     const scene = buildSceneV2(parsePlaceFileV2("SCN_library", rawScene()));
     expect(scene.connections).toEqual([
@@ -285,36 +298,20 @@ describe("buildSceneV2 / buildJunctionV2", () => {
     expect(error.problems[0]).toContain("role/position");
   });
 
-  it("derives connectedSceneIds from junction connections, hidden included", () => {
-    const junction = buildJunctionV2(
-      parsePlaceFileV2("JUNC_main_north", rawJunction())
+  it("keeps a node scene's connections, hidden included, with no parent", () => {
+    const corner = buildSceneV2(
+      parsePlaceFileV2("SCN_main_north", rawNodeScene())
     );
-    expect(junction.connections).toHaveLength(2);
-    expect(junction.connectedSceneIds).toEqual(["SCN_library", "SCN_cellar"]);
-  });
-
-  it("rejects role/position on JUNC connections", () => {
-    const bad = rawJunction();
-    (bad.references as { connections: Record<string, unknown>[] }).connections =
-      [
-        {
-          id: "exit.main_north.library",
-          targetId: "SCN_library",
-          role: "endpointA",
-        },
-      ];
-    const error = expectSchemaError(() =>
-      buildJunctionV2(parsePlaceFileV2("JUNC_main_north", bad))
-    );
-    expect(error.problems[0]).toContain("role/position");
+    expect(corner.connections).toHaveLength(2);
+    expect(corner.parentLocationId).toBeUndefined();
   });
 });
 
 describe("buildRoadV2", () => {
   it("derives endpointA/endpointB/alongConnections and keeps connections", () => {
     const road = buildRoadV2(parsePlaceFileV2("ROAD_main_street", rawRoad()));
-    expect(road.endpointA).toBe("JUNC_main_north");
-    expect(road.endpointB).toBe("JUNC_main_south");
+    expect(road.endpointA).toBe("SCN_main_north");
+    expect(road.endpointB).toBe("SCN_main_south");
     expect(road.travelTimeMinutes).toBe(15);
     expect(road.alongConnections).toEqual([
       { sceneId: "SCN_diner", position: 0.4 },
@@ -334,7 +331,7 @@ describe("buildRoadV2", () => {
           roadWithConnections([
             {
               id: "exit.main_street.south",
-              targetId: "JUNC_main_south",
+              targetId: "SCN_main_south",
               role: "endpointB",
             },
           ])
@@ -352,17 +349,17 @@ describe("buildRoadV2", () => {
           roadWithConnections([
             {
               id: "exit.main_street.north",
-              targetId: "JUNC_main_north",
+              targetId: "SCN_main_north",
               role: "endpointA",
             },
             {
               id: "exit.main_street.north2",
-              targetId: "JUNC_main_south",
+              targetId: "SCN_main_south",
               role: "endpointA",
             },
             {
               id: "exit.main_street.south",
-              targetId: "JUNC_main_south",
+              targetId: "SCN_main_south",
               role: "endpointB",
             },
           ])
@@ -372,7 +369,7 @@ describe("buildRoadV2", () => {
     expect(error.problems.join("\n")).toContain("exactly one endpointA");
   });
 
-  it("rejects an endpoint targeting a SCN_* node", () => {
+  it("rejects an endpoint targeting a non-scene id", () => {
     const error = expectSchemaError(() =>
       buildRoadV2(
         parsePlaceFileV2(
@@ -380,19 +377,21 @@ describe("buildRoadV2", () => {
           roadWithConnections([
             {
               id: "exit.main_street.north",
-              targetId: "SCN_diner",
+              targetId: "ROAD_other",
               role: "endpointA",
             },
             {
               id: "exit.main_street.south",
-              targetId: "JUNC_main_south",
+              targetId: "SCN_main_south",
               role: "endpointB",
             },
           ])
         )
       )
     );
-    expect(error.problems.join("\n")).toContain("must target a JUNC_*");
+    expect(error.problems.join("\n")).toContain(
+      "must target a top-level SCN_*"
+    );
   });
 
   it("rejects an access connection without a position", () => {
@@ -432,10 +431,10 @@ describe("buildRoadV2", () => {
         parsePlaceFileV2(
           "ROAD_main_street",
           roadWithConnections([
-            { id: "exit.main_street.north", targetId: "JUNC_main_north" },
+            { id: "exit.main_street.north", targetId: "SCN_main_north" },
             {
               id: "exit.main_street.south",
-              targetId: "JUNC_main_south",
+              targetId: "SCN_main_south",
               role: "endpointB",
             },
           ])
@@ -533,9 +532,9 @@ describe("validateModuleReferences", () => {
 
   it("rejects a hidden reference that the prose cites (leak)", () => {
     const module = builtModule((m) => {
-      const junction = m.junctions.get("JUNC_main_north");
-      if (!junction) throw new Error("fixture broke");
-      junction.description += " A hatch [exit.main_north.cellar].";
+      const corner = m.scenes.get("SCN_main_north");
+      if (!corner) throw new Error("fixture broke");
+      corner.description += " A hatch [exit.main_north.cellar].";
     });
     const error = expectSchemaError(() => validateModuleReferences(module));
     expect(error.problems.join("\n")).toContain(
@@ -588,6 +587,29 @@ describe("validateModuleReferences", () => {
     });
     const error = expectSchemaError(() => validateModuleReferences(module));
     expect(error.problems.join("\n")).toContain("targets its own place");
+  });
+
+  it("rejects a road endpoint landing on an interior scene", () => {
+    const module = builtModule((m) => {
+      m.roads.set("ROAD_main_street", {
+        id: "ROAD_main_street",
+        name: "Main Street",
+        description:
+          "North to the corner [exit.ms.n], south into the library [exit.ms.s].",
+        connections: [
+          { id: "exit.ms.n", targetId: "SCN_main_north", role: "endpointA" },
+          { id: "exit.ms.s", targetId: "SCN_library", role: "endpointB" },
+        ],
+        endpointA: "SCN_main_north",
+        endpointB: "SCN_library",
+        travelTimeMinutes: 5,
+        alongConnections: [],
+        items: [],
+        conditions: [],
+      });
+    });
+    const error = expectSchemaError(() => validateModuleReferences(module));
+    expect(error.problems.join("\n")).toContain("must be a top-level scene");
   });
 
   it("does not require exits to be bidirectional", () => {
@@ -643,7 +665,7 @@ describe("validateScenarioOutlines", () => {
     expect(error.problems.join("\n")).toContain("subSceneCount");
   });
 
-  it("rejects an entrySceneId that is not a scene or junction", () => {
+  it("rejects an entrySceneId that is not a loaded scene", () => {
     const error = expectSchemaError(() =>
       validateScenarioOutlines(
         "__scenarios_outline__",
@@ -662,7 +684,7 @@ describe("validateScenarioOutlines", () => {
     expect(error.problems.join("\n")).toContain("SCN_missing");
   });
 
-  it("accepts a junction as entrySceneId", () => {
+  it("accepts a top-level node scene as entrySceneId", () => {
     expect(() =>
       validateScenarioOutlines(
         "__scenarios_outline__",
@@ -672,7 +694,7 @@ describe("validateScenarioOutlines", () => {
             name: "Downtown",
             description: "x",
             subSceneCount: 1,
-            entrySceneId: "JUNC_main_north",
+            entrySceneId: "SCN_main_north",
           },
         ],
         module

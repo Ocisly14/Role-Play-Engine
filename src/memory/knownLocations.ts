@@ -10,9 +10,10 @@
 // down themselves.
 //
 // A seed names starting points, not an exhaustive list. Knowing a building
-// means knowing the street it stands on, the junctions that street runs
-// between, and the other buildings visible from there — so each seeded id is
-// expanded across its neighbourhood before the set is final.
+// means knowing the street it stands on (a top-level node scene), the roads
+// that street runs between, and the other buildings visible from there — so
+// each seeded id is expanded across its neighbourhood before the set is
+// final.
 
 import type { DynamicGameStateManager } from "../state/DynamicGameState.js";
 import type { CharacterPosition } from "../state/topologyTypes.js";
@@ -21,7 +22,6 @@ import type { KnownMapIds } from "./types.js";
 
 interface MutableKnownMapIds {
   sceneIds: Set<string>;
-  junctionIds: Set<string>;
   roadIds: Set<string>;
   scenarioOutlineIds: Set<string>;
 }
@@ -29,7 +29,6 @@ interface MutableKnownMapIds {
 function emptyKnownMapIds(): MutableKnownMapIds {
   return {
     sceneIds: new Set<string>(),
-    junctionIds: new Set<string>(),
     roadIds: new Set<string>(),
     scenarioOutlineIds: new Set<string>(),
   };
@@ -38,7 +37,6 @@ function emptyKnownMapIds(): MutableKnownMapIds {
 function toMutable(ids?: Partial<KnownMapIds>): MutableKnownMapIds {
   return {
     sceneIds: new Set(ids?.sceneIds ?? []),
-    junctionIds: new Set(ids?.junctionIds ?? []),
     roadIds: new Set(ids?.roadIds ?? []),
     scenarioOutlineIds: new Set(ids?.scenarioOutlineIds ?? []),
   };
@@ -47,7 +45,6 @@ function toMutable(ids?: Partial<KnownMapIds>): MutableKnownMapIds {
 function serializeKnownMapIds(ids: MutableKnownMapIds): KnownMapIds {
   return {
     sceneIds: [...ids.sceneIds].sort(),
-    junctionIds: [...ids.junctionIds].sort(),
     roadIds: [...ids.roadIds].sort(),
     scenarioOutlineIds: [...ids.scenarioOutlineIds].sort(),
   };
@@ -58,7 +55,6 @@ function createFullKnownMapIds(dgsm: DynamicGameStateManager): KnownMapIds {
   const state = dgsm.getState();
   return {
     sceneIds: [...state.scenes.keys()].sort(),
-    junctionIds: [...state.junctions.keys()].sort(),
     roadIds: [...state.roads.keys()].sort(),
     scenarioOutlineIds: (state.scenarioOutlines ?? [])
       .map((outline) => outline.id)
@@ -80,16 +76,6 @@ function addSceneBase(
   if (outline) knownIds.scenarioOutlineIds.add(outline.id);
 }
 
-function addJunctionBase(
-  dgsm: DynamicGameStateManager,
-  knownIds: MutableKnownMapIds,
-  junctionId: string
-): void {
-  if (dgsm.getState().junctions.has(junctionId)) {
-    knownIds.junctionIds.add(junctionId);
-  }
-}
-
 function addRoadBase(
   dgsm: DynamicGameStateManager,
   knownIds: MutableKnownMapIds,
@@ -109,29 +95,10 @@ function revealRoadNeighborhood(
   if (!road) return;
 
   addRoadBase(dgsm, knownIds, roadId);
-  addJunctionBase(dgsm, knownIds, road.endpointA);
-  addJunctionBase(dgsm, knownIds, road.endpointB);
+  addSceneBase(dgsm, knownIds, road.endpointA);
+  addSceneBase(dgsm, knownIds, road.endpointB);
   for (const along of road.alongConnections ?? []) {
     addSceneBase(dgsm, knownIds, along.sceneId);
-  }
-}
-
-function revealJunctionNeighborhood(
-  dgsm: DynamicGameStateManager,
-  knownIds: MutableKnownMapIds,
-  junctionId: string
-): void {
-  const topology = dgsm.getTopology();
-  const junction = topology.junctions.get(junctionId);
-  if (!junction) return;
-
-  addJunctionBase(dgsm, knownIds, junctionId);
-  for (const sceneId of junctionSceneIds(junction)) {
-    addSceneBase(dgsm, knownIds, sceneId);
-  }
-
-  for (const road of topology.junctionToRoads.get(junctionId) ?? []) {
-    revealRoadNeighborhood(dgsm, knownIds, road.id);
   }
 }
 
@@ -152,18 +119,21 @@ function revealSceneNeighborhood(
     const targetId = connection.targetId;
     if (state.scenes.has(targetId)) {
       addSceneBase(dgsm, knownIds, targetId);
-    } else if (state.junctions.has(targetId)) {
-      addJunctionBase(dgsm, knownIds, targetId);
     } else if (state.roads.has(targetId)) {
       addRoadBase(dgsm, knownIds, targetId);
     }
   }
 
+  // A node scene (street, yard) also knows the roads that meet there.
+  for (const road of topology.sceneToRoads.get(sceneId) ?? []) {
+    revealRoadNeighborhood(dgsm, knownIds, road.id);
+  }
+
   const parent = topology.sceneToParent.get(sceneId);
   if (!parent) return;
 
-  if (parent.type === "junction") {
-    revealJunctionNeighborhood(dgsm, knownIds, parent.junctionId);
+  if (parent.type === "scene") {
+    revealSceneNeighborhood(dgsm, knownIds, parent.sceneId);
     return;
   }
 
@@ -200,10 +170,6 @@ function revealKnownMapLocations(
       revealSceneNeighborhood(dgsm, knownIds, locationId);
       continue;
     }
-    if (state.junctions.has(locationId)) {
-      revealJunctionNeighborhood(dgsm, knownIds, locationId);
-      continue;
-    }
     if (state.roads.has(locationId)) {
       revealRoadNeighborhood(dgsm, knownIds, locationId);
       continue;
@@ -227,17 +193,9 @@ function normalizeKnownMapIds(
   for (const sceneId of ids.sceneIds) {
     if (!state.scenes.has(sceneId)) continue;
     normalized.sceneIds.add(sceneId);
-    const scene = state.scenes.get(sceneId);
-    const outline = scene
-      ? outlinesById.get(scene.parentLocationId)
-      : undefined;
+    const parentId = state.scenes.get(sceneId)?.parentLocationId;
+    const outline = parentId ? outlinesById.get(parentId) : undefined;
     if (outline) normalized.scenarioOutlineIds.add(outline.id);
-  }
-
-  for (const junctionId of ids.junctionIds) {
-    if (state.junctions.has(junctionId)) {
-      normalized.junctionIds.add(junctionId);
-    }
   }
 
   for (const roadId of ids.roadIds) {
@@ -261,7 +219,9 @@ function normalizeKnownMapIds(
 /**
  * Resolve a module's per-NPC seed into the full set of places that character
  * starts out knowing. `position` is folded in because wherever they are when
- * the session opens is, trivially, somewhere they know.
+ * the session opens is, trivially, somewhere they know. A seed's legacy
+ * `junctionIds` are treated as scene ids (former junctions are top-level
+ * scenes now).
  */
 export function resolveKnownLocationIds(
   dgsm: DynamicGameStateManager,
@@ -275,15 +235,13 @@ export function resolveKnownLocationIds(
   }
 
   const base = normalizeKnownMapIds(dgsm, {
-    sceneIds: seed.sceneIds ?? [],
-    junctionIds: seed.junctionIds ?? [],
+    sceneIds: [...(seed.sceneIds ?? []), ...(seed.junctionIds ?? [])],
     roadIds: seed.roadIds ?? [],
     scenarioOutlineIds: seed.scenarioOutlineIds ?? [],
   });
 
   const seeded = [
     ...base.sceneIds,
-    ...base.junctionIds,
     ...base.roadIds,
     ...base.scenarioOutlineIds,
     ...currentIds,
@@ -299,29 +257,26 @@ function getKnownMapLocationIdsFromPosition(
   switch (position.type) {
     case "scene":
       return [position.sceneId];
-    case "junction":
-      return [position.junctionId];
     case "road":
       return [position.roadId];
   }
 }
 
-export interface JunctionSceneLink {
+export interface NodeSceneLink {
   targetId: string;
   description?: string;
 }
 
 /**
- * A junction's scenes, read from the authored `connections` (the source of
- * truth; `connectedSceneIds` is derived from it WITH hidden entries included).
+ * A node scene's attached scenes, read from the authored `connections`.
  * Hidden connections are skipped here for the same reason the scene side
  * skips them: an exit nobody has found yet is not part of what a character
  * knows about the corner.
  */
-export function junctionSceneLinks(junction: {
+export function nodeSceneLinks(node: {
   connections?: SceneConnection[];
-}): JunctionSceneLink[] {
-  return (junction.connections ?? [])
+}): NodeSceneLink[] {
+  return (node.connections ?? [])
     .filter((connection) => !connection.hidden)
     .map((connection) => ({
       targetId: connection.targetId,
@@ -329,10 +284,4 @@ export function junctionSceneLinks(junction: {
         ? { description: connection.description }
         : {}),
     }));
-}
-
-function junctionSceneIds(junction: {
-  connections?: SceneConnection[];
-}): string[] {
-  return junctionSceneLinks(junction).map((link) => link.targetId);
 }

@@ -421,16 +421,14 @@ describe("renderWorldGraph", () => {
       places: [
         {
           id: "J_A",
-          kind: "junction",
+          kind: "scene",
           name: "Crossing",
           description: "A windswept\ncrossing.",
-          parentLocationId: "OUTDOOR",
         },
         {
           id: "R_MAIN",
           kind: "road",
           name: "Star Avenue",
-          parentLocationId: "OUTDOOR",
         },
       ],
       edges: [
@@ -453,7 +451,7 @@ describe("renderWorldGraph", () => {
       "Macro locations:",
       "- LOC_TOWN (Grayhaven): A fog-bound coastal town.",
       "  connections: [exit.home.junc] -> J_A; [exit.home.secret] -> R_MAIN (hidden)",
-      "Junctions:",
+      "Outdoor node scenes:",
       // Authored prose rides along, newlines flattened.
       "- J_A (Crossing): A windswept crossing.",
       "Roads:",

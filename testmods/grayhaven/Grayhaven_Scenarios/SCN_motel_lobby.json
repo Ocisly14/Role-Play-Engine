@@ -23,7 +23,7 @@
     "connections": [
       {
         "id": "exit.motel_lobby.front_door",
-        "targetId": "JUNC_motel",
+        "targetId": "SCN_motel",
         "name": "临街玻璃门",
         "description": "装着铃铛的玻璃门,出去是旧海岸公路旁的旅馆路口。"
       },

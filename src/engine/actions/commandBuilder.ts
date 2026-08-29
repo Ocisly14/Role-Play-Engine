@@ -40,10 +40,7 @@ export function buildActionCommand(
   const validated = validateActArgs(rawArgs, directory, {
     resolveCharacter: (handle) => resolveCharacterHandle(handle, actorId, dgsm),
     hasItem: (id) => itemExists(id, dgsm),
-    hasPlace: (id) =>
-      dgsm.getScene(id) !== null ||
-      dgsm.getJunction(id) !== null ||
-      dgsm.getRoad(id) !== null,
+    hasPlace: (id) => dgsm.getScene(id) !== null || dgsm.getRoad(id) !== null,
   });
   if (!validated.ok) return validated;
   const args = validated.args;

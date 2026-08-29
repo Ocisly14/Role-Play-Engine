@@ -91,7 +91,7 @@ export async function importModule(params: {
     });
   }
 
-  // 5. Import scene/junction/road files
+  // 5. Import scene/road files
   const scenarioDirs = fs.readdirSync(moduleDir).filter((d) => {
     const full = path.join(moduleDir, d);
     return fs.statSync(full).isDirectory() && d.endsWith("_Scenarios");

@@ -48,10 +48,9 @@ export function planMovementRoute(
     const currentScene = state.scenes.get(currentPosition.sceneId);
     const targetScene = state.scenes.get(destination);
     if (
-      currentScene &&
+      currentScene?.parentLocationId &&
       targetScene &&
       currentScene.parentLocationId === targetScene.parentLocationId &&
-      currentScene.parentLocationId !== "OUTDOOR" &&
       currentPosition.sceneId !== destination
     ) {
       const targetPos: CharacterPosition = {
