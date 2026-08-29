@@ -60,17 +60,17 @@ export interface KnownAction {
 interface Lookup {
   characterIds: Set<string>;
   aliveCharacterIds: Set<string>;
-  /** Interior/detail scenes only (graph places of kind "scene"). */
+  /** Interior/detail scenes only (placeKinds entries of kind "scene"). */
   sceneIds: Set<string>;
-  /** EVERY place in the world — scene, junction or road — from the Tier-1
-   *  graph, which is always complete. Built from the full state, never from
-   *  the trimmed Tier-2 snapshots: prompt layering must not narrow what
-   *  counts as a real reference. */
+  /** EVERY place in the world — scene, junction or road — from
+   *  `state.placeKinds`, the full-world lookup. Never the skeleton graph
+   *  (which drops interior scenes) and never the trimmed Tier-2 snapshots:
+   *  prompt layering must not narrow what counts as a real reference. */
   placeIds: Set<string>;
   /** placeIds plus wherever a character actually stands (defensive: a
    *  position outside the graph is still a real location). */
   locationIds: Set<string>;
-  /** Every authored connection id (`exit.*`), from the Tier-1 graph edges. */
+  /** Every authored connection id (`exit.*`), from `state.connectionIds`. */
   connectionIds: Set<string>;
   /** FULL-world item→holder map (context.state.itemHolders). */
   itemHolders: Map<string, string>;
@@ -165,12 +165,12 @@ export function buildLookup(context: EngineResolutionContext): Lookup {
   const aliveCharacterIds = new Set(
     context.state.characters.filter((c) => c.alive).map((c) => c.id)
   );
-  const graph = context.state.graph;
+  const placeKinds = Object.entries(context.state.placeKinds);
   const sceneIds = new Set(
-    graph.places.filter((p) => p.kind === "scene").map((p) => p.id)
+    placeKinds.filter(([, kind]) => kind === "scene").map(([id]) => id)
   );
-  const placeIds = new Set(graph.places.map((p) => p.id));
-  const connectionIds = new Set(graph.edges.map((e) => e.connectionId));
+  const placeIds = new Set(placeKinds.map(([id]) => id));
+  const connectionIds = new Set(context.state.connectionIds);
   const locationIds = new Set<string>(placeIds);
   for (const c of context.state.characters) {
     if (c.locationId) locationIds.add(c.locationId);

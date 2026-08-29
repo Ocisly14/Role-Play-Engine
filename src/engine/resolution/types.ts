@@ -40,29 +40,48 @@ export interface ItemSnapshot {
 
 export type PlaceKind = "scene" | "junction" | "road";
 
-/** Tier 1: the world as a graph — every place and every authored connection,
- *  no prose. Always injected whole, so the Engine can reason about reach and
- *  routing anywhere even when only a few places carry full snapshots. */
+/** Tier 1: the world SKELETON — macro locations plus geography (junctions and
+ *  roads), no interior scenes and no prose. Interior scenes appear only in the
+ *  Tier-2 snapshots; an edge whose authored endpoint is an interior scene is
+ *  lifted to that scene's macro location (the connectionId stays the authored
+ *  one), and edges between two scenes of the same location are omitted.
+ *  Static by construction: blocked state travels separately (volatile), so
+ *  this section stays byte-identical across ticks for prompt caching. */
 export interface WorldGraph {
-  macroLocations: Array<{ id: string; name: string }>;
+  /** `description` is the outline's macro prose. */
+  macroLocations: Array<{ id: string; name: string; description?: string }>;
+  /** Geography nodes only. `description` is the authored v2 prose — it
+   *  already cites its `[exit.*]` references, so the skeleton renders in the
+   *  same description-plus-references shape as every place file. */
   places: Array<{
     id: string;
-    kind: PlaceKind;
+    kind: "junction" | "road";
     name: string;
+    description?: string;
     parentLocationId: string;
   }>;
   edges: Array<{
     /** The authored connection id (`exit.*`) — the handle connectionBlock /
      *  connectionHidden operations take. */
     connectionId: string;
-    /** The place whose file declares the connection. */
+    /** Skeleton node: the declaring place, lifted to its macro location when
+     *  the declaring place is an interior scene. */
     from: string;
     to: string;
     /** Full-length walk time; set on road endpoint edges. */
     travelTimeMinutes?: number;
     hidden?: boolean;
-    blockedReason?: string;
   }>;
+}
+
+/** A currently impassable edge, addressed by the authored ids (volatile —
+ *  rendered outside the cached graph so blocking a road does not invalidate
+ *  the stable prompt half). */
+export interface BlockedEdge {
+  connectionId: string;
+  from: string;
+  to: string;
+  reason: string;
 }
 
 /** Tier 2: the full snapshot of one INVOLVED place — a scene, junction or
@@ -175,8 +194,10 @@ export interface EngineResolutionContext {
   };
 
   state: {
-    /** Tier 1 — the whole world, as a graph. */
+    /** Tier 1 — the world skeleton: macro locations + geography. Static. */
     graph: WorldGraph;
+    /** Currently blocked edges, world-wide. Volatile companion to `graph`. */
+    blockedEdges: BlockedEdge[];
     /** Tier 2 — full snapshots of the involved places only. */
     places: PlaceSnapshot[];
     /** Items at the involved places plus the involved actors' inventories. */
@@ -185,6 +206,12 @@ export interface EngineResolutionContext {
      *  trimmed `items` list), so an item at an uninvolved place is still a
      *  real reference. Not rendered into the prompt. */
     itemHolders: Record<string, string>;
+    /** FULL-world place-id → kind map. Validation reads this (never the
+     *  skeleton graph, which carries no interior scenes). Not rendered. */
+    placeKinds: Record<string, PlaceKind>;
+    /** Every authored connection id in the world. Validation lookup for
+     *  connectionBlock/connectionHidden targets. Not rendered. */
+    connectionIds: string[];
     /** ALL characters, untrimmed. */
     characters: CharacterSnapshot[];
   };

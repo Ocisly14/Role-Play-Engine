@@ -6,16 +6,19 @@
 // thoughts, unflushed deltas) simply have no path in.
 //
 // Two tiers:
-//   Tier 1 (`state.graph`)  — the WHOLE world as a graph: every macro
-//     location, every place (scene/junction/road) and every authored
-//     connection, with travel times and blocked/hidden flags. No prose.
+//   Tier 1 (`state.graph`)  — the world SKELETON: macro locations plus
+//     geography (junctions, roads) and the edges between them. An edge
+//     authored on an interior scene is lifted to that scene's macro location;
+//     interior edges within one location are omitted. Static — blocked state
+//     rides separately in `state.blockedEdges` (volatile).
 //   Tier 2 (`state.places`) — full snapshots of only the INVOLVED places:
 //     where a triggering actor stands, what an objectRef points at, and where
-//     a referenced item is held.
+//     a referenced item is held. Interior scenes appear only here.
 //
-// `state.itemHolders` is the FULL-world item→holder map: the validator reads
-// it (and the graph) rather than the trimmed prompt lists, so prompt
-// trimming never narrows what counts as a real reference.
+// `state.itemHolders`, `state.placeKinds` and `state.connectionIds` are
+// FULL-world lookup maps: the validator reads them rather than the trimmed
+// prompt sections, so prompt trimming never narrows what counts as a real
+// reference. They are never rendered into the prompt.
 
 import type { DynamicGameStateManager } from "../../state/DynamicGameState.js";
 import type { JunctionNode, RoadNode } from "../../state/topologyTypes.js";
@@ -24,6 +27,7 @@ import type { ActionCommand, EngineAction } from "../actions/types.js";
 import { ACTION_SCHEMA_VERSION } from "../actions/types.js";
 import type { GameTime } from "../core/types.js";
 import type {
+  BlockedEdge,
   CharacterSnapshot,
   DeterministicResult,
   EngineResolutionContext,
@@ -47,7 +51,7 @@ export const WORLD_INVARIANTS: WorldInvariant[] = [
   {
     id: "real-references",
     description:
-      "Every characterId/sceneId/itemId in a delta or occurrence must exist in the world (the graph lists every place; items may also sit at places without a detailed snapshot).",
+      "Every characterId/sceneId/itemId in a delta or occurrence must exist in the world (the graph is a skeleton: interior scenes and their contents are real even when only their macro location is drawn; the involved ones appear under Detailed Places).",
   },
   {
     id: "dead-actors-act-no-more",
@@ -121,24 +125,61 @@ export function buildEngineResolutionContext(
     }
   }
 
-  // ── Tier 1: the world graph. ──
+  // ── Full-world validation lookups (never trimmed, never rendered). ──
+  const placeKinds: Record<string, PlaceKind> = {};
+  for (const [placeId, entry] of placeById) {
+    placeKinds[placeId] = entry.kind;
+  }
+  const connectionIds: string[] = [];
+  for (const entry of placeById.values()) {
+    for (const connection of entry.place.connections ?? []) {
+      connectionIds.push(connection.id);
+    }
+  }
+
+  // ── Tier 1: the skeleton graph, plus the volatile blocked-edge list. ──
+  // An interior scene's edge is lifted to its macro location; interior edges
+  // within one location vanish from the skeleton (they live in Tier 2).
+  const liftToSkeleton = (id: string): string => {
+    const entry = placeById.get(id);
+    return entry?.kind === "scene" ? entry.place.parentLocationId : id;
+  };
   const edges: WorldGraph["edges"] = [];
+  const blockedEdges: BlockedEdge[] = [];
+  const seenBlockedPairs = new Set<string>();
   const pushEdge = (
     ownerId: string,
     connection: SceneConnection,
     travelTimeMinutes?: number
   ): void => {
+    // Blocked state is collected over the AUTHORED endpoints (every
+    // connection, including interior ones the skeleton drops), deduplicated
+    // on the symmetric pair so a two-way exit reports once.
     const blockedReason = dgsm.getConnectionBlockReason(
       ownerId,
       connection.targetId
     );
+    if (blockedReason !== undefined) {
+      const pairKey = [ownerId, connection.targetId].sort().join("::");
+      if (!seenBlockedPairs.has(pairKey)) {
+        seenBlockedPairs.add(pairKey);
+        blockedEdges.push({
+          connectionId: connection.id,
+          from: ownerId,
+          to: connection.targetId,
+          reason: blockedReason,
+        });
+      }
+    }
+    const from = liftToSkeleton(ownerId);
+    const to = liftToSkeleton(connection.targetId);
+    if (from === to) return;
     edges.push({
       connectionId: connection.id,
-      from: ownerId,
-      to: connection.targetId,
+      from,
+      to,
       ...(travelTimeMinutes !== undefined ? { travelTimeMinutes } : {}),
       ...(connection.hidden !== undefined ? { hidden: connection.hidden } : {}),
-      ...(blockedReason !== undefined ? { blockedReason } : {}),
     });
   };
   for (const scene of scenes.values()) {
@@ -166,13 +207,22 @@ export function buildEngineResolutionContext(
     macroLocations: (state.scenarioOutlines ?? []).map((outline) => ({
       id: outline.id,
       name: outline.name,
+      ...(outline.description ? { description: outline.description } : {}),
     })),
-    places: [...placeById.entries()].map(([id, entry]) => ({
-      id,
-      kind: entry.kind,
-      name: entry.place.name,
-      parentLocationId: entry.place.parentLocationId,
-    })),
+    places: [...placeById.entries()]
+      .filter(
+        (pair): pair is [string, PlaceEntry & { kind: "junction" | "road" }] =>
+          pair[1].kind !== "scene"
+      )
+      .map(([id, entry]) => ({
+        id,
+        kind: entry.kind,
+        name: entry.place.name,
+        ...(entry.place.description
+          ? { description: entry.place.description }
+          : {}),
+        parentLocationId: entry.place.parentLocationId,
+      })),
     edges,
   };
 
@@ -269,7 +319,16 @@ export function buildEngineResolutionContext(
       outputSchemaVersion: ACTION_SCHEMA_VERSION,
       worldInvariants: WORLD_INVARIANTS,
     },
-    state: { graph, places, items, itemHolders, characters },
+    state: {
+      graph,
+      blockedEdges,
+      places,
+      items,
+      itemHolders,
+      placeKinds,
+      connectionIds,
+      characters,
+    },
     actions: {
       newCommands: params.newCommands,
       activeActions: params.activeActions,

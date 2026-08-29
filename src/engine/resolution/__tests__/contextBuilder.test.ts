@@ -1,7 +1,7 @@
-// Two-tier context (M3): Tier 1 carries EVERY place and connection as a
-// graph; Tier 2 carries full snapshots of only the involved places; the
-// full-world lookup surfaces (itemHolders) are never trimmed; characters stay
-// complete.
+// Two-tier context: Tier 1 is the macro skeleton (interior edges within one
+// location vanish from it); Tier 2 carries full snapshots of only the
+// involved places; the full-world lookup surfaces (itemHolders, placeKinds,
+// connectionIds) are never trimmed; characters stay complete.
 
 import { describe, expect, it } from "vitest";
 import type { DynamicGameStateManager } from "../../../state/DynamicGameState.js";
@@ -121,15 +121,19 @@ describe("buildEngineResolutionContext", () => {
     activeActions: [active],
   });
 
-  it("puts EVERY place and character in Tier 1 / the character list", () => {
-    expect(context.state.graph.places.map((p) => p.id).sort()).toEqual([
-      "SCN_1",
-      "SCN_2",
-      "SCN_FAR",
-    ]);
+  it("keeps interior scenes out of the skeleton but in the full-world lookups", () => {
+    // No junctions or roads here, so the skeleton lists no geography nodes —
+    // the interior scenes live under placeKinds, not in the graph.
+    expect(context.state.graph.places).toEqual([]);
     expect(context.state.graph.macroLocations).toEqual([
       { id: "L1", name: "The Manor" },
     ]);
+    expect(context.state.placeKinds).toEqual({
+      SCN_1: "scene",
+      SCN_2: "scene",
+      SCN_FAR: "scene",
+    });
+    expect(context.state.connectionIds).toEqual(["exit.scn1.door"]);
     // The far-away idle character is present too.
     expect(context.state.characters.map((c) => c.id).sort()).toEqual([
       "npc_1",
@@ -168,13 +172,16 @@ describe("buildEngineResolutionContext", () => {
       blockedReason: "rubble",
     });
     expect(scn1?.presentCharacterIds).toEqual(["npc_1"]);
-    // The graph edge carries the same connection id and block reason.
-    expect(context.state.graph.edges).toEqual([
+    // The interior SCN_1→SCN_2 edge (both in L1) is dropped from the
+    // skeleton; its blocked state still surfaces in the volatile list,
+    // addressed by the authored endpoints.
+    expect(context.state.graph.edges).toEqual([]);
+    expect(context.state.blockedEdges).toEqual([
       {
         connectionId: "exit.scn1.door",
         from: "SCN_1",
         to: "SCN_2",
-        blockedReason: "rubble",
+        reason: "rubble",
       },
     ]);
   });

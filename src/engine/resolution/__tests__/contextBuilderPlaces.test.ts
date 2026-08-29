@@ -1,8 +1,10 @@
-// M3 two-tier context against a REAL DynamicGameStateManager: Tier 1 carries
-// every place (scenes, junctions, roads) and every authored edge — connection
-// ids, road travel times, block reasons; Tier 2 carries full snapshots of
-// only the involved places, junctions/roads included, with hidden items and
-// connection ids visible to the all-knowing Engine.
+// Two-tier context against a REAL DynamicGameStateManager: Tier 1 is the
+// SKELETON — macro locations + junctions/roads, interior-scene edges lifted
+// to their macro location, blocked state split out into the volatile
+// blockedEdges list; Tier 2 carries full snapshots of only the involved
+// places, junctions/roads included, with hidden items and connection ids
+// visible to the all-knowing Engine. Full-world validation lookups
+// (placeKinds/connectionIds/itemHolders) stay untrimmed by either tier.
 
 import { describe, expect, it } from "vitest";
 import {
@@ -33,6 +35,8 @@ function makeDgsm(): DynamicGameStateManager {
     connections: [
       { id: "exit.home.junc", targetId: "J_A" },
       { id: "exit.home.secret", targetId: "R_MAIN", hidden: true },
+      // Interior edge within LOC_TOWN — must vanish from the skeleton.
+      { id: "exit.home.far", targetId: "S_FAR" },
     ],
     indoor: true,
   };
@@ -98,7 +102,7 @@ function makeDgsm(): DynamicGameStateManager {
     {
       id: "LOC_TOWN",
       name: "Grayhaven",
-      description: "",
+      description: "A fog-bound town.",
       subSceneCount: 2,
     },
   ];
@@ -192,24 +196,29 @@ function build() {
   });
 }
 
-describe("Tier 1 — the whole world as a graph", () => {
-  const { graph } = build().state;
+describe("Tier 1 — the skeleton: macro locations + geography", () => {
+  const state = build().state;
+  const { graph } = state;
 
-  it("lists every place with its kind, and the macro locations", () => {
+  it("lists only junctions and roads beside the macro locations, with their prose", () => {
     expect(graph.places.map((p) => `${p.kind}:${p.id}`).sort()).toEqual([
       "junction:J_A",
       "junction:J_B",
       "road:R_MAIN",
-      "scene:S_FAR",
-      "scene:S_HOME",
     ]);
+    // Each node carries its authored description: the skeleton renders in the
+    // same description-plus-references shape as the v2 place files.
+    expect(graph.places.find((p) => p.id === "J_A")?.description).toBe(
+      "A windswept crossing."
+    );
     expect(graph.macroLocations).toEqual([
-      { id: "LOC_TOWN", name: "Grayhaven" },
+      { id: "LOC_TOWN", name: "Grayhaven", description: "A fog-bound town." },
     ]);
   });
 
-  it("lists every authored edge with connectionId, travel time and block reason", () => {
+  it("lifts interior-scene endpoints to their macro location and drops interior edges", () => {
     const byId = new Map(graph.edges.map((e) => [e.connectionId, e]));
+    // exit.home.far (S_HOME → S_FAR, both in LOC_TOWN) is not a skeleton edge.
     expect([...byId.keys()].sort()).toEqual([
       "exit.far.junc",
       "exit.home.junc",
@@ -219,17 +228,51 @@ describe("Tier 1 — the whole world as a graph", () => {
       "exit.road.a",
       "exit.road.b",
     ]);
+    // Scene-authored edges surface as LOC edges, keeping the authored id.
+    expect(byId.get("exit.home.junc")).toMatchObject({
+      from: "LOC_TOWN",
+      to: "J_A",
+    });
+    expect(byId.get("exit.junc.home")).toMatchObject({
+      from: "J_A",
+      to: "LOC_TOWN",
+    });
     // Road endpoint edges carry the full walk time.
     expect(byId.get("exit.road.a")).toMatchObject({
       from: "R_MAIN",
       to: "J_A",
       travelTimeMinutes: 15,
     });
-    // The blocked junction↔road edge names its reason, seen from both sides.
-    expect(byId.get("exit.junc.road")?.blockedReason).toBe("a felled tree");
-    expect(byId.get("exit.road.a")?.blockedReason).toBe("a felled tree");
     // Hidden connections stay in the graph, flagged: the Engine is all-knowing.
     expect(byId.get("exit.home.secret")?.hidden).toBe(true);
+    // Blocked state never rides on the (cached) skeleton.
+    for (const edge of graph.edges) {
+      expect(edge).not.toHaveProperty("blockedReason");
+    }
+  });
+
+  it("reports blocked edges in the volatile list, one entry per symmetric edge", () => {
+    expect(state.blockedEdges).toEqual([
+      {
+        connectionId: "exit.junc.road",
+        from: "J_A",
+        to: "R_MAIN",
+        reason: "a felled tree",
+      },
+    ]);
+  });
+
+  it("keeps the full-world validation lookups untrimmed", () => {
+    expect(state.placeKinds).toEqual({
+      S_HOME: "scene",
+      S_FAR: "scene",
+      J_A: "junction",
+      J_B: "junction",
+      R_MAIN: "road",
+    });
+    // The dropped interior edge is still a real connection to the validator.
+    expect(state.connectionIds).toContain("exit.home.far");
+    expect([...state.connectionIds].sort()).toHaveLength(8);
   });
 });
 

@@ -44,15 +44,11 @@ function makeContext(): EngineResolutionContext {
       worldInvariants: [],
     },
     state: {
+      // Prompt tiers are material for the model; the validator reads only the
+      // full-world lookups below (placeKinds/connectionIds/itemHolders).
       graph: {
         macroLocations: [{ id: "LOC_TOWN", name: "Town" }],
         places: [
-          {
-            id: "SCN_1",
-            kind: "scene",
-            name: "Home",
-            parentLocationId: "LOC_TOWN",
-          },
           {
             id: "J_A",
             kind: "junction",
@@ -67,8 +63,8 @@ function makeContext(): EngineResolutionContext {
           },
         ],
         edges: [
-          { connectionId: "exit.home.junc", from: "SCN_1", to: "J_A" },
-          { connectionId: "exit.junc.home", from: "J_A", to: "SCN_1" },
+          { connectionId: "exit.home.junc", from: "LOC_TOWN", to: "J_A" },
+          { connectionId: "exit.junc.home", from: "J_A", to: "LOC_TOWN" },
           {
             connectionId: "exit.rmain.a",
             from: "R_MAIN",
@@ -77,7 +73,9 @@ function makeContext(): EngineResolutionContext {
           },
         ],
       },
-      // Tier 2 is prompt material; the validator never reads it.
+      blockedEdges: [],
+      placeKinds: { SCN_1: "scene", J_A: "junction", R_MAIN: "road" },
+      connectionIds: ["exit.home.junc", "exit.junc.home", "exit.rmain.a"],
       places: [],
       items: [],
       itemHolders: {

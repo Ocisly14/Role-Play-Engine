@@ -27,6 +27,7 @@ import {
   type EngineResolutionContext,
   type ResolutionError,
   type WorldActionEngineResult,
+  type WorldGraph,
   formatErrorTarget,
 } from "./types.js";
 import {
@@ -160,15 +161,69 @@ function commandForPrompt(command: ActionCommand): Record<string, unknown> {
  *
  * So the world description goes FIRST and everything about this particular
  * minute goes LAST. Since the two-tier context (M3) the stable half is the
- * world GRAPH — every place and connection, no prose — which only changes
- * when something blocks, hides or reveals an edge. The detailed place
- * snapshots and the item list depend on which places this tick's actions
- * involve, so they live in the volatile half with the characters (whom the
- * stamina subsystem moves on most ticks anyway).
+ * world SKELETON — macro locations + geography as a compact adjacency list,
+ * no prose — which only changes when an edge is revealed or authored anew;
+ * blocked state was moved OUT of it into the volatile Blocked Connections
+ * section precisely so a felled tree does not invalidate the cached prefix.
+ * The detailed place snapshots and the item list depend on which places this
+ * tick's actions involve, so they live in the volatile half with the
+ * characters (whom the stamina subsystem moves on most ticks anyway).
  *
  * The model reads titled JSON sections, so nothing about the resolution
  * depends on this order.
  */
+/**
+ * The skeleton graph in the module's own authoring shape: each node is its
+ * prose description plus a `connections:` reference line — the same
+ * description-and-references format as the v2 place files and the Tier-2
+ * snapshots, so the Engine reads one format everywhere. Junction/road prose
+ * is the authored text and already cites its `[exit.*]` ids; the reference
+ * line resolves each id to its (lifted) target and travel time.
+ */
+export function renderWorldGraph(graph: WorldGraph): string {
+  const edgesByFrom = new Map<string, WorldGraph["edges"]>();
+  for (const edge of graph.edges) {
+    const list = edgesByFrom.get(edge.from);
+    if (list) list.push(edge);
+    else edgesByFrom.set(edge.from, [edge]);
+  }
+  const renderEdge = (edge: WorldGraph["edges"][number]): string =>
+    [
+      `[${edge.connectionId}] -> ${edge.to}`,
+      ...(edge.travelTimeMinutes !== undefined
+        ? [`${edge.travelTimeMinutes}min`]
+        : []),
+      ...(edge.hidden ? ["(hidden)"] : []),
+    ].join(" ");
+  const nodeLines = (
+    id: string,
+    name: string,
+    description: string | undefined
+  ): string[] => {
+    const prose = description?.replace(/\s*\n\s*/g, " ").trim();
+    const head = `- ${id} (${name})${prose ? `: ${prose}` : ""}`;
+    const edges = edgesByFrom.get(id);
+    if (!edges) return [head];
+    return [head, `  connections: ${edges.map(renderEdge).join("; ")}`];
+  };
+  const lines: string[] = [];
+  if (graph.macroLocations.length > 0) {
+    lines.push("Macro locations:");
+    for (const loc of graph.macroLocations) {
+      lines.push(...nodeLines(loc.id, loc.name, loc.description));
+    }
+  }
+  for (const kind of ["junction", "road"] as const) {
+    const nodes = graph.places.filter((p) => p.kind === kind);
+    if (nodes.length === 0) continue;
+    lines.push(kind === "junction" ? "Junctions:" : "Roads:");
+    for (const node of nodes) {
+      lines.push(...nodeLines(node.id, node.name, node.description));
+    }
+  }
+  return lines.join("\n");
+}
+
 export function renderContextSegments(context: EngineResolutionContext): {
   stable: string;
   volatile: string;
@@ -210,13 +265,14 @@ export function renderContextSegments(context: EngineResolutionContext): {
   const stable = [
     "# Tick Resolution Request",
     section("World Invariants", context.rules.worldInvariants),
-    section(
-      "World Graph (every place and connection; edges carry the connectionId that connectionBlock/connectionHidden take)",
-      context.state.graph
-    ),
+    `## World Graph (skeleton: macro locations + geography, each as description + connection references; interior scenes appear only under Detailed Places; the [connectionId] references are what connectionBlock/connectionHidden take)\n${renderWorldGraph(context.state.graph)}`,
   ].join("\n\n");
 
   const volatile = [
+    section(
+      "Blocked Connections (currently impassable edges, world-wide; empty means everything is passable)",
+      context.state.blockedEdges
+    ),
     section(
       "Detailed Places (the places involved this tick; hidden items/exits are invisible to characters until revealed)",
       context.state.places

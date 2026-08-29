@@ -17,9 +17,8 @@ vi.mock("../../../models/index.js", async () => {
   return { ...actual, generateToolCalls };
 });
 
-const { renderContext, renderContextSegments, resolveTick } = await import(
-  "../worldActionEngine.js"
-);
+const { renderContext, renderContextSegments, renderWorldGraph, resolveTick } =
+  await import("../worldActionEngine.js");
 
 const cmd: ActionCommand = {
   commandId: "c1",
@@ -48,28 +47,17 @@ function makeContext(): EngineResolutionContext {
       worldInvariants: [],
     },
     state: {
-      // The scene the actor stands in, and the one it connects to. The
-      // movement destination has to be somewhere the Engine was shown.
+      // The skeleton carries only the macro location; the scenes the actor
+      // stands in / moves to are real via placeKinds (the validator's
+      // full-world lookup), and the involved one is snapshotted below.
       graph: {
-        macroLocations: [],
-        places: [
-          {
-            id: "SCN_1",
-            kind: "scene",
-            name: "Reading room",
-            parentLocationId: "OUTDOOR",
-          },
-          {
-            id: "SCN_FAR",
-            kind: "scene",
-            name: "Far room",
-            parentLocationId: "OUTDOOR",
-          },
-        ],
-        edges: [
-          { connectionId: "exit.scn1.far", from: "SCN_1", to: "SCN_FAR" },
-        ],
+        macroLocations: [{ id: "OUTDOOR", name: "Outdoors" }],
+        places: [],
+        edges: [],
       },
+      blockedEdges: [],
+      placeKinds: { SCN_1: "scene", SCN_FAR: "scene" },
+      connectionIds: ["exit.scn1.far"],
       places: [
         {
           id: "SCN_1",
@@ -390,12 +378,17 @@ describe("renderContextSegments caching layout", () => {
 
     expect(stable).toContain("## World Graph");
     expect(stable).toContain("## World Invariants");
+    // The skeleton renders as a compact adjacency list, not JSON.
+    expect(stable).toContain("- OUTDOOR (Outdoors)");
+    expect(stable).not.toContain('"macroLocations"');
 
-    // Detailed places and items depend on which places this tick's actions
-    // involve, so they live in the volatile half.
+    // Detailed places, items and blocked state depend on this tick, so they
+    // live in the volatile half — blocking an edge must not invalidate the
+    // cached stable prefix.
     for (const section of [
       "## Tick",
       "## Trigger",
+      "## Blocked Connections",
       "## Detailed Places",
       "## Items",
       "## Characters",
@@ -412,5 +405,61 @@ describe("renderContextSegments caching layout", () => {
     const { stable, volatile } = renderContextSegments(context);
     expect(stable + volatile).toBe(renderContext(context));
     expect(stable + volatile).not.toContain("\n\n\n");
+  });
+});
+
+describe("renderWorldGraph", () => {
+  it("renders each node as description + connection references", () => {
+    const text = renderWorldGraph({
+      macroLocations: [
+        {
+          id: "LOC_TOWN",
+          name: "Grayhaven",
+          description: "A fog-bound coastal town.",
+        },
+      ],
+      places: [
+        {
+          id: "J_A",
+          kind: "junction",
+          name: "Crossing",
+          description: "A windswept\ncrossing.",
+          parentLocationId: "OUTDOOR",
+        },
+        {
+          id: "R_MAIN",
+          kind: "road",
+          name: "Star Avenue",
+          parentLocationId: "OUTDOOR",
+        },
+      ],
+      edges: [
+        { connectionId: "exit.home.junc", from: "LOC_TOWN", to: "J_A" },
+        {
+          connectionId: "exit.home.secret",
+          from: "LOC_TOWN",
+          to: "R_MAIN",
+          hidden: true,
+        },
+        {
+          connectionId: "exit.road.a",
+          from: "R_MAIN",
+          to: "J_A",
+          travelTimeMinutes: 15,
+        },
+      ],
+    });
+    expect(text.split("\n")).toEqual([
+      "Macro locations:",
+      "- LOC_TOWN (Grayhaven): A fog-bound coastal town.",
+      "  connections: [exit.home.junc] -> J_A; [exit.home.secret] -> R_MAIN (hidden)",
+      "Junctions:",
+      // Authored prose rides along, newlines flattened.
+      "- J_A (Crossing): A windswept crossing.",
+      "Roads:",
+      // No description and no prose — the node line stands alone.
+      "- R_MAIN (Star Avenue)",
+      "  connections: [exit.road.a] -> J_A 15min",
+    ]);
   });
 });

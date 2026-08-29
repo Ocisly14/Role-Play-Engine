@@ -82,13 +82,10 @@ function makeContext(opts: {
       worldInvariants: [],
     },
     state: {
-      graph: {
-        macroLocations: [],
-        places: [
-          { id: "SCN_1", kind: "scene", name: "Study", parentLocationId: "L1" },
-        ],
-        edges: [],
-      },
+      graph: { macroLocations: [], places: [], edges: [] },
+      blockedEdges: [],
+      placeKinds: { SCN_1: "scene" },
+      connectionIds: [],
       places: [
         {
           id: "SCN_1",
