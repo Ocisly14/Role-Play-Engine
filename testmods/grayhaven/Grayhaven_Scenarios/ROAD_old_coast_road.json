@@ -1,0 +1,26 @@
+{
+  "schemaVersion": 2,
+  "id": "ROAD_old_coast_road",
+  "name": "旧海岸公路",
+  "description": "高速改线前的旧海岸公路,如今路面开裂,黄色中线褪成了灰白,步行二十五分钟。南头接着主街北段 [exit.old_coast_road.town_end],向北的尽头是汽车旅馆的院子 [exit.old_coast_road.motel_end]。偶尔有一辆车驶过,引擎声在雾里传得很远,然后是更长的安静。",
+  "parentLocationId": "OUTDOOR",
+  "travelTimeMinutes": 25,
+  "references": {
+    "items": [],
+    "connections": [
+      {
+        "id": "exit.old_coast_road.town_end",
+        "targetId": "JUNC_main_north",
+        "name": "公路南头(镇端)",
+        "role": "endpointA"
+      },
+      {
+        "id": "exit.old_coast_road.motel_end",
+        "targetId": "JUNC_motel",
+        "name": "公路北头(旅馆)",
+        "role": "endpointB"
+      }
+    ],
+    "conditions": []
+  }
+}

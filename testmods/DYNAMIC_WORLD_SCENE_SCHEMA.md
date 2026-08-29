@@ -65,7 +65,7 @@ corresponding machine-readable objects live in the same file under
   "schemaVersion": 2,
   "id": "SCN_library",
   "name": "Town Library",
-  "description": "Dusty archives fill the reading room [item.library.archives]. A stairway rises to the stacks [exit.library.stacks]. The unlit back row is hard to examine [condition.library.dim].",
+  "description": "Dusty archives fill the reading room [item.library.archives]. A stairway rises to the stacks [exit.library.stacks]. The unlit back row is hard to examine [cond.library.dim].",
   "parentLocationId": "LOC_downtown",
   "references": {
     "items": [
@@ -85,7 +85,7 @@ corresponding machine-readable objects live in the same file under
     ],
     "conditions": [
       {
-        "id": "condition.library.dim",
+        "id": "cond.library.dim",
         "description": "The rear shelves are poorly lit.",
         "mechanicalEffect": { "skillPenalty": { "Perception": -10 } }
       }
@@ -177,158 +177,50 @@ Optional macro travel graph used by non-topology movement fallback.
 
 ## SceneCondition
 
-Used in `SCN`, `JUNC`, and `ROAD` files.
+Used in the `references.conditions` block of `SCN`, `JUNC`, and `ROAD` files.
 
 ```json
 {
-  "description": "Heavy smoke reduces visibility.",
+  "id": "cond.library.dim",
+  "description": "The rear shelves are poorly lit.",
   "mechanicalEffect": {
-    "skillPenalty": [
-      {
-        "skill": "Perception",
-        "delta": -20
-      }
-    ],
-    "blocked": false
+    "skillPenalty": { "Perception": -10 },
+    "blockConnections": false
   }
 }
 ```
 
 ### Fields
 
+- `id: string` — module-unique, cited in the description as `[id]`
 - `description: string`
-- `mechanicalEffect?: { skillPenalty?: Array<{ skill: string; delta: number }>; blocked?: boolean }`
+- `featureId?: string`
+- `data?: Record<string, unknown>`
+- `mechanicalEffect?: { skillPenalty?: Record<string, number>; blockConnections?: boolean }`
+
+`skillPenalty` is a `Record<skillName, number>`; the old array shape
+(`[{ "skill": ..., "delta": ... }]`) is rejected by the loader.
 
 ## Item
 
-`items` in scenes, junctions, and roads use this structure.
-
-```json
-{
-  "id": "itm_note_001",
-  "name": "Blood-stained Note",
-  "description": "A torn note with occult symbols.",
-  "type": "document",
-  "category": "evidence",
-  "reveals": ["clue_ritual_site"]
-}
-```
-
-Actual supported shape:
+`references.items` entries in scenes, junctions, and roads match the runtime
+`Item` type in `src/state/types.ts`: an object is a name and a paragraph —
+the Engine reads the description and judges, so there are no mechanical
+sub-typed fields.
 
 ```ts
 interface Item {
-  id: string;
+  id: string;               // module-unique, cited in the description as [id]
   name: string;
   description?: string;
-  type?: "weapon" | "consumable" | "tool" | "lighting" | "container" | "key" | "document" | "other";
-  category?: "evidence" | "mundane";
-  reveals?: string[];
-  discoveryMethod?: string;
-  era?: string;
-  damaged?: boolean;
-  damageDetails?: {
-    damagedBy: string;
-    damagedAt: string;
-    reason: string;
-  };
-  isLightSource?: boolean;
+  hidden?: boolean;         // not visible to NPCs until revealed; hidden items
+                            // must NOT be cited in the description
+  isLightSource?: boolean;  // contributes to scene illumination (subsystem/sun.ts)
   lightLevel?: number;
-  weaponStats?: {
-    skill: string;
-    damage: string;
-    range: string;
-    attacksPerRound: number;
-    ammo?: number;
-    malfunction?: number;
-    era?: string;
-  };
-  consumableStats?: {
-    uses?: number;
-    effect?: string;
-    duration?: number;
-  };
-  containerStats?: {
-    capacity?: number;
-    locked?: boolean;
-    lockDifficulty?: "easy" | "regular" | "hard" | "extreme";
-    contents?: string[];
-  };
-}
-```
-
-### Minimal item
-
-```json
-{
-  "id": "itm_note_001",
-  "name": "Blood-stained Note"
-}
-```
-
-### Evidence item
-
-```json
-{
-  "id": "itm_note_001",
-  "name": "Blood-stained Note",
-  "description": "A torn note with occult symbols.",
-  "type": "document",
-  "category": "evidence",
-  "discoveryMethod": "search desk",
-  "reveals": ["clue_ritual_site"]
-}
-```
-
-### Lighting item
-
-```json
-{
-  "id": "itm_lantern_001",
-  "name": "Oil Lantern",
-  "type": "lighting",
-  "isLightSource": true,
-  "lightLevel": 2
-}
-```
-
-### Container item
-
-```json
-{
-  "id": "itm_box_001",
-  "name": "Locked Metal Box",
-  "type": "container",
-  "containerStats": {
-    "capacity": 10,
-    "locked": true,
-    "lockDifficulty": "hard",
-    "contents": ["itm_key_001", "itm_letter_003"]
-  }
-}
-```
-
-### Weapon item
-
-```json
-{
-  "id": "itm_revolver_001",
-  "name": "Service Revolver",
-  "type": "weapon",
-  "weaponStats": {
-    "skill": "Handgun",
-    "damage": "1d10",
-    "range": "15 yd",
-    "attacksPerRound": 1,
-    "ammo": 6,
-    "malfunction": 100
-  }
 }
 ```
 
 ## Notes
 
-- `category: "evidence"` is special-cased by discovery logic in the tick processor.
-- `damaged` and `damageDetails` are used by evidence/fire-related logic.
 - `transport_edges.json` is optional; if absent, runtime falls back to an empty transport graph.
 - The current loader reads `transport_edges.json`. If a test module still uses `transport_network.json`, it should be renamed or adapted.

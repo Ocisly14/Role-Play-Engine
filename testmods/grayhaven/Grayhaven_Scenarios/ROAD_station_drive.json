@@ -1,0 +1,31 @@
+{
+  "schemaVersion": 2,
+  "id": "ROAD_station_drive",
+  "name": "车行道",
+  "description": "从旅馆旁的岔路口爬向北山的车行道,碎石铺面,坡度是为卡车修的。步行走完要四个半小时——这条路从来不是为脚修的,走在上面的人只会觉得它没有尽头。路边每隔一段就立着一块白底黑字的告示牌:「美国政府财产 · 禁止入内」,一块比一块新 [cond.station_drive.no_trespass_signs]。山下的一头接着旧海岸公路的岔口 [exit.station_drive.motel_end],山上的尽头横着一道自动大门 [exit.station_drive.gate_end]。车行道与林子平行,却从头到尾不与任何林径相通;全程只有风声,和自己的脚步声。",
+  "parentLocationId": "OUTDOOR",
+  "travelTimeMinutes": 270,
+  "references": {
+    "items": [],
+    "connections": [
+      {
+        "id": "exit.station_drive.motel_end",
+        "targetId": "JUNC_motel",
+        "name": "车行道下端(公路岔口)",
+        "role": "endpointA"
+      },
+      {
+        "id": "exit.station_drive.gate_end",
+        "targetId": "JUNC_gate",
+        "name": "车行道上端(自动大门)",
+        "role": "endpointB"
+      }
+    ],
+    "conditions": [
+      {
+        "id": "cond.station_drive.no_trespass_signs",
+        "description": "沿路成排的「美国政府财产 · 禁止入内」告示牌,提醒着这条路的归属。"
+      }
+    ]
+  }
+}

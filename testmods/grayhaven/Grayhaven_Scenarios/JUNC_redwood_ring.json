@@ -1,0 +1,12 @@
+{
+  "schemaVersion": 2,
+  "id": "JUNC_redwood_ring",
+  "name": "红杉环",
+  "description": "十几棵环生的老红杉围出一片教堂似的空地,树冠在头顶合拢,连雾都只能从缝隙里渗进来。当年的伐木工绕开了这圈树,没人说得清是出于敬畏还是别的什么。空地里安静得能听见自己的呼吸。从这里向北,地势开始一路爬升。",
+  "parentLocationId": "OUTDOOR",
+  "references": {
+    "items": [],
+    "connections": [],
+    "conditions": []
+  }
+}

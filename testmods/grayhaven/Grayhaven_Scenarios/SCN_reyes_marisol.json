@@ -1,0 +1,33 @@
+{
+  "schemaVersion": 2,
+  "id": "SCN_reyes_marisol",
+  "name": "Marisol 的卧室",
+  "description": "一间收拾得一丝不苟的小卧室:床罩绷得平整,窗帘洗得发白,梳妆台上的东西按大小排成一列。床头柜上立着一张相框 [item.reyes_marisol.rafael_photo]——Rafael 站在渔船甲板上眯眼笑着,相框每天都被擦过。柜子最上层放着一只针线盒 [item.reyes_marisol.sewing_box],里面除了线轴还压着几张按月份叠好的收据。整间屋子唯一的门通回客厅 [exit.reyes_marisol.door],门轴上了油,推起来没有声音。",
+  "parentLocationId": "LOC_reyes_house",
+  "indoor": true,
+  "references": {
+    "items": [
+      {
+        "id": "item.reyes_marisol.rafael_photo",
+        "name": "Rafael 的相片",
+        "description": "木相框里的黑白照片:Rafael Reyes 在渔船甲板上,身后是 1970 年代的灰港码头。玻璃擦得很亮。",
+        "type": "other"
+      },
+      {
+        "id": "item.reyes_marisol.sewing_box",
+        "name": "针线盒",
+        "description": "铁皮饼干盒改的针线盒,线轴底下压着按月份叠好的店铺收据。",
+        "type": "container"
+      }
+    ],
+    "connections": [
+      {
+        "id": "exit.reyes_marisol.door",
+        "targetId": "SCN_reyes_living",
+        "name": "卧室门",
+        "description": "通回客厅的木门,门轴上过油,没有声音。"
+      }
+    ],
+    "conditions": []
+  }
+}

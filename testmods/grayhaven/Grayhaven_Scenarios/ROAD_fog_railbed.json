@@ -1,0 +1,26 @@
+{
+  "schemaVersion": 2,
+  "id": "ROAD_fog_railbed",
+  "name": "灌木穿径",
+  "description": "雾谷通往旧路基的两小时,几乎全程在齐肩的灌木里钻。谷侧的入口 [exit.fog_railbed.hollow_end] 与路基侧的出口 [exit.fog_railbed.railbed_end] 之间没有一段舒展的路:树枝抽脸,方向感在灌木里被磨得一点不剩——直到那条笔直的路基突然出现在脚下。",
+  "parentLocationId": "OUTDOOR",
+  "travelTimeMinutes": 120,
+  "references": {
+    "items": [],
+    "connections": [
+      {
+        "id": "exit.fog_railbed.hollow_end",
+        "targetId": "JUNC_fog_hollow",
+        "name": "西端(雾谷)",
+        "role": "endpointA"
+      },
+      {
+        "id": "exit.fog_railbed.railbed_end",
+        "targetId": "JUNC_railbed",
+        "name": "东端(旧路基)",
+        "role": "endpointB"
+      }
+    ],
+    "conditions": []
+  }
+}

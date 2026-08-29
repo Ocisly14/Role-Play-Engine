@@ -1,0 +1,26 @@
+{
+  "schemaVersion": 2,
+  "id": "ROAD_railbed_sawmill",
+  "name": "路基北段",
+  "description": "沿旧路基向北的两小时,是林区里最远、也最稳妥的一条路:笔直,不分岔,迷不了路。南端从路基的接入点算起 [exit.railbed_sawmill.railbed_end],北端在锯木厂废墟的装料场收尾 [exit.railbed_sawmill.sawmill_end]。当年运原木的铁轨就铺在这条线上,如今只剩碎道砟硌脚,和两旁一动不动的红杉。",
+  "parentLocationId": "OUTDOOR",
+  "travelTimeMinutes": 120,
+  "references": {
+    "items": [],
+    "connections": [
+      {
+        "id": "exit.railbed_sawmill.railbed_end",
+        "targetId": "JUNC_railbed",
+        "name": "南端(旧路基)",
+        "role": "endpointA"
+      },
+      {
+        "id": "exit.railbed_sawmill.sawmill_end",
+        "targetId": "JUNC_sawmill",
+        "name": "北端(锯木厂)",
+        "role": "endpointB"
+      }
+    ],
+    "conditions": []
+  }
+}

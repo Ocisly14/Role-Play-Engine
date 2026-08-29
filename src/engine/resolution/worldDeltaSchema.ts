@@ -176,10 +176,24 @@ export const SCENE_OPS: OperationSpec[] = [
     fields:
       "condition:{description:string, featureId?:string, mechanicalEffect?:object}",
   },
-  { kinds: ["removeCondition"], fields: "predicate:{featureId:string}" },
+  {
+    kinds: ["removeCondition"],
+    fields:
+      "predicate:{id?:string, featureId?:string} — at least one; id removes that one condition, featureId removes every condition that feature owns",
+  },
+  {
+    kinds: ["setDescription"],
+    fields:
+      "description:string — REPLACES the place's whole prose; keep every still-true [reference-id] citation, drop citations to things no longer visibly here",
+  },
   {
     kinds: ["connectionBlock"],
     fields: "connectionId:string, blocked:boolean, reason:string",
+  },
+  {
+    kinds: ["connectionHidden"],
+    fields:
+      "connectionId:string, hidden:boolean — false reveals a concealed exit, true conceals one",
   },
   {
     kinds: ["environmentContribute"],
@@ -208,7 +222,7 @@ export const ITEM_OPS: OperationSpec[] = [
   {
     kinds: ["create"],
     fields:
-      "name:string, location:<sceneId or characterId>, description?:string",
+      'name:string, location:<"scene:<placeId>" or characterId>, description?:string, id?:string — stable id; must be unused; omit to auto-generate; ALWAYS pass one for non-Latin names',
   },
   {
     kinds: ["move"],
@@ -218,7 +232,7 @@ export const ITEM_OPS: OperationSpec[] = [
   {
     kinds: ["set"],
     fields:
-      "any of — description:string (REPLACES the whole description; write everything still true of the thing) · appendDescription:string (adds one sentence to what is there; how damage is recorded — say who or what did it, and do not repeat what the description already says) · isLightSource:boolean (false when it no longer lights the room, e.g. smashed) · lightLevel:number",
+      "any of — description:string (REPLACES the whole description; write everything still true of the thing) · appendDescription:string (adds one sentence to what is there; how damage is recorded — say who or what did it, and do not repeat what the description already says) · hidden:boolean (false REVEALS a concealed item to characters, true conceals it) · isLightSource:boolean (false when it no longer lights the room, e.g. smashed) · lightLevel:number",
   },
 ];
 

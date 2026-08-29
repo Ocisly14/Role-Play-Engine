@@ -50,15 +50,42 @@ function makeContext(): EngineResolutionContext {
     state: {
       // The scene the actor stands in, and the one it connects to. The
       // movement destination has to be somewhere the Engine was shown.
-      scenes: [
+      graph: {
+        macroLocations: [],
+        places: [
+          {
+            id: "SCN_1",
+            kind: "scene",
+            name: "Reading room",
+            parentLocationId: "OUTDOOR",
+          },
+          {
+            id: "SCN_FAR",
+            kind: "scene",
+            name: "Far room",
+            parentLocationId: "OUTDOOR",
+          },
+        ],
+        edges: [
+          { connectionId: "exit.scn1.far", from: "SCN_1", to: "SCN_FAR" },
+        ],
+      },
+      places: [
         {
           id: "SCN_1",
+          kind: "scene",
           name: "Reading room",
           description: "Shelves and a long table.",
           parentLocationId: "OUTDOOR",
           conditions: [],
           itemIds: [],
-          connections: [{ targetId: "SCN_FAR", description: "a far door" }],
+          connections: [
+            {
+              connectionId: "exit.scn1.far",
+              targetId: "SCN_FAR",
+              description: "a far door",
+            },
+          ],
           environment: {
             temperature: 18,
             illumination: 60,
@@ -70,6 +97,7 @@ function makeContext(): EngineResolutionContext {
         },
       ],
       items: [],
+      itemHolders: {},
       characters: [
         {
           id: "npc_1",
@@ -360,13 +388,16 @@ describe("renderContextSegments caching layout", () => {
   it("keeps the world in the stable half and the minute in the volatile half", () => {
     const { stable, volatile } = renderContextSegments(makeContext());
 
-    expect(stable).toContain("## Scenes");
-    expect(stable).toContain("## Items");
+    expect(stable).toContain("## World Graph");
     expect(stable).toContain("## World Invariants");
 
+    // Detailed places and items depend on which places this tick's actions
+    // involve, so they live in the volatile half.
     for (const section of [
       "## Tick",
       "## Trigger",
+      "## Detailed Places",
+      "## Items",
       "## Characters",
       "## New Commands",
       "## Active Actions",

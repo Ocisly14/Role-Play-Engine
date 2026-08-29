@@ -16,7 +16,7 @@
 
 import type { DynamicGameStateManager } from "../state/DynamicGameState.js";
 import type { CharacterPosition } from "../state/topologyTypes.js";
-import type { KnownMapSeed } from "../state/types.js";
+import type { KnownMapSeed, SceneConnection } from "../state/types.js";
 import type { KnownMapIds } from "./types.js";
 
 interface MutableKnownMapIds {
@@ -54,9 +54,7 @@ function serializeKnownMapIds(ids: MutableKnownMapIds): KnownMapIds {
 }
 
 /** No seed at all means the character grew up here: they know the whole map. */
-function createFullKnownMapIds(
-  dgsm: DynamicGameStateManager
-): KnownMapIds {
+function createFullKnownMapIds(dgsm: DynamicGameStateManager): KnownMapIds {
   const state = dgsm.getState();
   return {
     sceneIds: [...state.scenes.keys()].sort(),
@@ -314,38 +312,27 @@ export interface JunctionSceneLink {
 }
 
 /**
- * A junction's `connectedSceneIds` is typed `string[]`, but modules author it
- * both ways: bare ids in the older modules, `{ targetId, description }`
- * objects in the newer ones. Read it through here — everything downstream
- * (including `buildTopology`) assumes the bare-id shape and silently sees
- * nothing when handed the object shape.
+ * A junction's scenes, read from the authored `connections` (the source of
+ * truth; `connectedSceneIds` is derived from it WITH hidden entries included).
+ * Hidden connections are skipped here for the same reason the scene side
+ * skips them: an exit nobody has found yet is not part of what a character
+ * knows about the corner.
  */
 export function junctionSceneLinks(junction: {
-  connectedSceneIds?: unknown;
+  connections?: SceneConnection[];
 }): JunctionSceneLink[] {
-  const raw = junction.connectedSceneIds;
-  if (!Array.isArray(raw)) return [];
-  const links: JunctionSceneLink[] = [];
-  for (const entry of raw) {
-    if (typeof entry === "string") {
-      links.push({ targetId: entry });
-      continue;
-    }
-    const candidate = entry as { targetId?: unknown; description?: unknown };
-    if (typeof candidate?.targetId === "string") {
-      links.push({
-        targetId: candidate.targetId,
-        ...(typeof candidate.description === "string"
-          ? { description: candidate.description }
-          : {}),
-      });
-    }
-  }
-  return links;
+  return (junction.connections ?? [])
+    .filter((connection) => !connection.hidden)
+    .map((connection) => ({
+      targetId: connection.targetId,
+      ...(connection.description !== undefined
+        ? { description: connection.description }
+        : {}),
+    }));
 }
 
 function junctionSceneIds(junction: {
-  connectedSceneIds?: unknown;
+  connections?: SceneConnection[];
 }): string[] {
   return junctionSceneLinks(junction).map((link) => link.targetId);
 }

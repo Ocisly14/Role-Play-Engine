@@ -270,7 +270,10 @@ export interface DynamicNPCProfile {
 // ─── Scene types ───────────────────────────────────────────────────
 
 export interface SceneConnection {
+  /** Stable module-unique connection id (authoring convention: `exit.<place>.<slug>`). */
+  id: string;
   targetId: string;
+  name?: string;
   description?: string;
   /** When true, this connection is not visible to NPCs until revealed */
   hidden?: boolean;
@@ -315,6 +318,8 @@ export interface Item {
   id: string;
   name: string;
   description?: string;
+  /** When true, this item is not visible to NPCs until revealed. */
+  hidden?: boolean;
   /** Contributes to scene illumination — read by subsystem/sun.ts. */
   isLightSource?: boolean;
   lightLevel?: number;

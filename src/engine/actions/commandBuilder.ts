@@ -139,18 +139,11 @@ export function buildActionCommand(
   return { ok: true, command };
 }
 
-/** Anywhere in the world: on the floor of some scene, or in someone's hands.
- *  Not "here" — that is the Engine's question, and it can answer it as
- *  something the actor finds out. */
+/** Anywhere in the world: on the ground of any scene, junction or road, or in
+ *  someone's hands. Not "here" — that is the Engine's question, and it can
+ *  answer it as something the actor finds out. */
 function itemExists(itemId: string, dgsm: DynamicGameStateManager): boolean {
-  const state = dgsm.getState();
-  for (const scene of state.scenes.values()) {
-    if ((scene.items ?? []).some((item) => item.id === itemId)) return true;
-  }
-  for (const inventory of Object.values(state.npcInventories ?? {})) {
-    if ((inventory ?? []).some((item) => item.id === itemId)) return true;
-  }
-  return false;
+  return dgsm.hasItem(itemId);
 }
 
 /** A handle back to a real character: their own id if the actor knows them,

@@ -278,7 +278,13 @@ describe("the trigger worklist answers what the Engine would otherwise infer", (
         outputSchemaVersion: 1,
         worldInvariants: [],
       },
-      state: { scenes: [], items: [], characters: [] },
+      state: {
+        graph: { macroLocations: [], places: [], edges: [] },
+        places: [],
+        items: [],
+        itemHolders: {},
+        characters: [],
+      },
       actions: {
         newCommands: [command("bare"), command("skilled", "Social")],
         activeActions: [],

@@ -1,0 +1,26 @@
+{
+  "schemaVersion": 2,
+  "id": "ROAD_station_approach",
+  "name": "站前引道",
+  "description": "自动大门之后的最后一段路,十五分钟的缓坡,碎石在这里换成了平整的水泥。一头是那道大门 [exit.station_approach.gate_end],另一头进入铁丝网围着的站区场院 [exit.station_approach.yard_end]。这段路修得比镇里任何一条街都好,却见不到一个用它的人。",
+  "parentLocationId": "OUTDOOR",
+  "travelTimeMinutes": 15,
+  "references": {
+    "items": [],
+    "connections": [
+      {
+        "id": "exit.station_approach.gate_end",
+        "targetId": "JUNC_gate",
+        "name": "引道下端(大门)",
+        "role": "endpointA"
+      },
+      {
+        "id": "exit.station_approach.yard_end",
+        "targetId": "JUNC_station_yard",
+        "name": "引道上端(站区场院)",
+        "role": "endpointB"
+      }
+    ],
+    "conditions": []
+  }
+}

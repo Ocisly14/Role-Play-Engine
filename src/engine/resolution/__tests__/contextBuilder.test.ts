@@ -1,6 +1,7 @@
-// D7 full-context guarantee: every scene, item, character, new command and
-// active action appears in the context — nothing is filtered for perceived
-// relevance — and every snapshot is read from the one tick-start state.
+// Two-tier context (M3): Tier 1 carries EVERY place and connection as a
+// graph; Tier 2 carries full snapshots of only the involved places; the
+// full-world lookup surfaces (itemHolders) are never trimmed; characters stay
+// complete.
 
 import { describe, expect, it } from "vitest";
 import type { DynamicGameStateManager } from "../../../state/DynamicGameState.js";
@@ -19,7 +20,15 @@ function makeDgsm(): DynamicGameStateManager {
         items: id === "SCN_1" ? [{ id: "lamp", name: "lamp" }] : [],
         conditions: [],
         connections:
-          id === "SCN_1" ? [{ targetId: "SCN_2", description: "a door" }] : [],
+          id === "SCN_1"
+            ? [
+                {
+                  id: "exit.scn1.door",
+                  targetId: "SCN_2",
+                  description: "a door",
+                },
+              ]
+            : [],
       },
     ])
   );
@@ -33,6 +42,9 @@ function makeDgsm(): DynamicGameStateManager {
       scenes,
       npcCharacters: npcs,
       npcInventories: { npc_1: [{ id: "pick", name: "lockpicks" }] },
+      scenarioOutlines: [
+        { id: "L1", name: "The Manor", description: "", subSceneCount: 3 },
+      ],
     }),
     getEnvironmentReading: () => ({
       temperature: 20,
@@ -109,11 +121,14 @@ describe("buildEngineResolutionContext", () => {
     activeActions: [active],
   });
 
-  it("includes EVERY scene, item and character — no relevance trimming", () => {
-    expect(context.state.scenes.map((s) => s.id).sort()).toEqual([
+  it("puts EVERY place and character in Tier 1 / the character list", () => {
+    expect(context.state.graph.places.map((p) => p.id).sort()).toEqual([
       "SCN_1",
       "SCN_2",
       "SCN_FAR",
+    ]);
+    expect(context.state.graph.macroLocations).toEqual([
+      { id: "L1", name: "The Manor" },
     ]);
     // The far-away idle character is present too.
     expect(context.state.characters.map((c) => c.id).sort()).toEqual([
@@ -121,7 +136,21 @@ describe("buildEngineResolutionContext", () => {
       "npc_2",
       "npc_far",
     ]);
-    // Items from scenes AND inventories, with holders.
+    // The full-world holder map is never trimmed.
+    expect(context.state.itemHolders).toEqual({
+      lamp: "scene:SCN_1",
+      pick: "npc_1",
+    });
+  });
+
+  it("snapshots only the involved places in Tier 2", () => {
+    // npc_1 (new command) stands in SCN_1; npc_2 (active action) in SCN_2.
+    // SCN_FAR involves no action and gets no detailed snapshot.
+    expect(context.state.places.map((p) => p.id).sort()).toEqual([
+      "SCN_1",
+      "SCN_2",
+    ]);
+    // Items: the involved places' floors plus the involved actors' pockets.
     expect(
       context.state.items.map((i) => `${i.id}@${i.holder}`).sort()
     ).toEqual(["lamp@scene:SCN_1", "pick@npc_1"]);
@@ -131,12 +160,23 @@ describe("buildEngineResolutionContext", () => {
     const npc1 = context.state.characters.find((c) => c.id === "npc_1");
     expect(npc1?.skills.Locksmith).toBe(60);
     expect(npc1?.locationId).toBe("SCN_1");
-    const scn1 = context.state.scenes.find((s) => s.id === "SCN_1");
+    const scn1 = context.state.places.find((s) => s.id === "SCN_1");
+    expect(scn1?.kind).toBe("scene");
     expect(scn1?.connections[0]).toMatchObject({
+      connectionId: "exit.scn1.door",
       targetId: "SCN_2",
       blockedReason: "rubble",
     });
     expect(scn1?.presentCharacterIds).toEqual(["npc_1"]);
+    // The graph edge carries the same connection id and block reason.
+    expect(context.state.graph.edges).toEqual([
+      {
+        connectionId: "exit.scn1.door",
+        from: "SCN_1",
+        to: "SCN_2",
+        blockedReason: "rubble",
+      },
+    ]);
   });
 
   it("unions trigger action ids and stamps the tick frame", () => {

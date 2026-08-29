@@ -1,0 +1,26 @@
+{
+  "schemaVersion": 2,
+  "id": "ROAD_fog_redwood",
+  "name": "雾谷北径",
+  "description": "雾谷通往红杉环的五十分钟上坡。谷底的一头常年泡在雾里 [exit.fog_redwood.hollow_end],爬出雾线之后,红杉环的树冠就在前方合拢 [exit.fog_redwood.redwood_end]。回头望,来路只是一片白——很多人就是在这里开始怀疑自己刚才走的方向。",
+  "parentLocationId": "OUTDOOR",
+  "travelTimeMinutes": 50,
+  "references": {
+    "items": [],
+    "connections": [
+      {
+        "id": "exit.fog_redwood.hollow_end",
+        "targetId": "JUNC_fog_hollow",
+        "name": "南端(雾谷)",
+        "role": "endpointA"
+      },
+      {
+        "id": "exit.fog_redwood.redwood_end",
+        "targetId": "JUNC_redwood_ring",
+        "name": "北端(红杉环)",
+        "role": "endpointB"
+      }
+    ],
+    "conditions": []
+  }
+}

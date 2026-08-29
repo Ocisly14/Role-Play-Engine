@@ -1,0 +1,44 @@
+{
+  "schemaVersion": 2,
+  "id": "SCN_sheriff_front",
+  "name": "警长办公室·前厅",
+  "description": "前厅一半是公务,一半是习惯:布告板上钉着褪色的通缉照和渔汛节的旧海报,墙边挂钩上一件备用制服熨出笔直的棱线——不用问也知道是谁的。Cole 的办公桌收拾得像检阅前的营房,笔按长短排列,咖啡杯里三块糖正在化。桌后的调度电台[item.sheriff_front.dispatch_radio]大多数时候只应之以杂音。靠墙立着一组档案柜[item.sheriff_front.incident_files],抽屉标签写着「事件报告」——Cole 按规程归档的每一起「怪事报案」都在里面,按日期码得整整齐齐,全镇没有第二个人翻过。临街门通向主街北段[exit.sheriff_front.street_door];里间的门后是警长办公室[exit.sheriff_front.office_door];走廊尽头是拘留室[exit.sheriff_front.cell_door]。",
+  "parentLocationId": "LOC_sheriff_office",
+  "indoor": true,
+  "references": {
+    "items": [
+      {
+        "id": "item.sheriff_front.dispatch_radio",
+        "name": "调度电台",
+        "description": "警用调度电台,天线擦得锃亮。灰港的频道大多数时候只有杂音——最近的杂音似乎比往常多。"
+      },
+      {
+        "id": "item.sheriff_front.incident_files",
+        "name": "事件报告档案柜",
+        "description": "Cole 的档案柜:一年来全镇每一起「怪事报案」——闪灯、串台、死鱼、雾里的光——都按日期与报案人归档在案。他自己还没意识到这摞纸连起来是什么。",
+        "type": "container"
+      }
+    ],
+    "connections": [
+      {
+        "id": "exit.sheriff_front.street_door",
+        "targetId": "JUNC_main_north",
+        "name": "临街门",
+        "description": "磨砂玻璃上漆着「警长办公室」的临街门,通向主街北段。"
+      },
+      {
+        "id": "exit.sheriff_front.office_door",
+        "targetId": "SCN_sheriff_office",
+        "name": "里间门",
+        "description": "通向警长里间办公室的门,常年半掩。"
+      },
+      {
+        "id": "exit.sheriff_front.cell_door",
+        "targetId": "SCN_sheriff_cell",
+        "name": "拘留室通道",
+        "description": "走廊尽头通向拘留室的铁框门。"
+      }
+    ],
+    "conditions": []
+  }
+}

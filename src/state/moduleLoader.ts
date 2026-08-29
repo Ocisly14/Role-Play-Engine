@@ -19,6 +19,15 @@ import type { DynamicGameState } from "./DynamicGameState.js";
 import { normalizeSpot } from "./characterSpot.js";
 import { ISO_DATE_RE, makeDateTime } from "./gameClock.js";
 import {
+  buildJunctionV2,
+  buildRoadV2,
+  buildSceneV2,
+  parsePlaceFileV2,
+  validateModuleReferences,
+  validateScenarioOutlines,
+  validateTransportEdges,
+} from "./moduleSchemaV2.js";
+import {
   buildTopology,
   enrichTopologyWithInteriorScenes,
 } from "./topologyTypes.js";
@@ -75,27 +84,6 @@ export interface ModuleData {
  * directory exists) and attaches the validated event list. Disk access here is
  * intentional: scripted-events are not (yet) persisted to the DB.
  */
-/**
- * Module JSON writes a scene's connections either way — `["SCN_2"]` in one
- * module, `[{ "targetId": "SCN_2", "description": ... }]` in the next — and
- * the row was cast straight to `DynamicScene`, so the string form sailed
- * past the type system and every reader that reaches for `c.targetId` got
- * `undefined`. Silently: the World Action Engine's world snapshot listed a
- * scene's exits as `[{}, {}, {}]`, `perceivedLocation` produced no adjacent
- * places at all — so an actor could cite no place but the room it stood in —
- * and fire and weather propagated to nowhere. Normalize once, here, and every
- * consumer downstream sees one shape.
- */
-function normalizeScene(scene: DynamicScene): DynamicScene {
-  if (!Array.isArray(scene.connections)) return scene;
-  return {
-    ...scene,
-    connections: scene.connections.map((c) =>
-      typeof c === "string" ? { targetId: c } : c
-    ),
-  };
-}
-
 export async function loadModule(
   prisma: PrismaClient,
   moduleId: string,
@@ -123,32 +111,57 @@ export async function loadModule(
   const scenes = new Map<string, DynamicScene>();
   const junctions = new Map<string, JunctionNode>();
   const roads = new Map<string, RoadNode>();
-  let scenarioOutlines: ScenarioOutline[] = [];
-  let transportEdges: TransportEdge[] = [];
+  let rawScenarioOutlines: unknown;
+  let rawTransportEdges: unknown;
   let npcInjectionPolicy: NpcInjectionPolicy | null = null;
 
   for (const row of sceneRows) {
-    const data = row.data as any;
+    const data: unknown = row.data;
     if (row.entryId === "__scenarios_outline__") {
-      scenarioOutlines = Array.isArray(data)
-        ? data
-        : Array.isArray(data?.scenarios)
-          ? data.scenarios
-          : [];
+      rawScenarioOutlines = data;
     } else if (row.entryId === "__transport_edges__") {
-      transportEdges = Array.isArray(data)
-        ? data
-        : (data?.transportEdges ?? []);
+      rawTransportEdges = data;
     } else if (row.entryId === "__npc_injection_policy__") {
       npcInjectionPolicy = data as NpcInjectionPolicy;
     } else if (row.entryId.startsWith("JUNC_")) {
-      junctions.set(row.entryId, data as JunctionNode);
+      junctions.set(
+        row.entryId,
+        buildJunctionV2(parsePlaceFileV2(row.entryId, data))
+      );
     } else if (row.entryId.startsWith("ROAD_")) {
-      roads.set(row.entryId, data as RoadNode);
+      roads.set(row.entryId, buildRoadV2(parsePlaceFileV2(row.entryId, data)));
     } else {
-      scenes.set(row.entryId, normalizeScene(data as DynamicScene));
+      scenes.set(
+        row.entryId,
+        buildSceneV2(parsePlaceFileV2(row.entryId, data))
+      );
     }
   }
+
+  // Cross-file checks over the fully parsed module: one id namespace, citation
+  // completeness, connection targets. Throws ModuleSchemaError on violation.
+  validateModuleReferences({ scenes, junctions, roads });
+
+  const scenarioOutlines: ScenarioOutline[] =
+    rawScenarioOutlines === undefined
+      ? []
+      : validateScenarioOutlines("__scenarios_outline__", rawScenarioOutlines, {
+          scenes,
+          junctions,
+        });
+
+  const placeIds = new Set<string>([
+    ...scenes.keys(),
+    ...junctions.keys(),
+    ...roads.keys(),
+  ]);
+  const transportEdges: TransportEdge[] =
+    rawTransportEdges === undefined
+      ? []
+      : validateTransportEdges("__transport_edges__", rawTransportEdges, {
+          outlineIds: new Set(scenarioOutlines.map((o) => o.id)),
+          placeIds,
+        });
 
   // Load NPCs
   const npcRows = await prisma.moduleNpc.findMany({

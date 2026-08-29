@@ -1,0 +1,12 @@
+{
+  "schemaVersion": 2,
+  "id": "JUNC_railbed",
+  "name": "旧铁路路基",
+  "description": "伐木铁路拆走铁轨后留下的路基,笔直地切过林子,枕木的印子还嵌在道砟里。这是林区里唯一不会让人迷路的地形——只要沿着它走,总能走到头。路基两侧的排水沟里积着黑色的落叶水,偶尔能踢到一枚锈成一团的道钉。",
+  "parentLocationId": "OUTDOOR",
+  "references": {
+    "items": [],
+    "connections": [],
+    "conditions": []
+  }
+}

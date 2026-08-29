@@ -55,6 +55,8 @@ export interface CharacterCondition {
 }
 
 export interface SceneCondition {
+  /** Stable condition id (v2 modules always author one; subsystems may omit). */
+  id?: string;
   featureId?: string;
   data?: Record<string, unknown>;
   mechanicalEffect?: {
@@ -64,7 +66,9 @@ export interface SceneCondition {
   description: string;
 }
 
-export type ConditionPredicate = { featureId: string };
+/** Addresses scene conditions for removal. At least one of `id` / `featureId`
+ *  must be present (semantic requirement; both are optional at the type level). */
+export type ConditionPredicate = { id?: string; featureId?: string };
 
 export interface FeatureEvent {
   type: string;
@@ -166,6 +170,21 @@ export type StateChange =
       reason: string;
     }
   | {
+      /** Reveal/hide a connection by its authored id (`exit.*`). Routed to
+       *  DGSM.setConnectionHiddenById, which mutates the owning place's
+       *  SceneConnection in place. */
+      kind: "connection.setHidden";
+      connectionId: string;
+      hidden: boolean;
+    }
+  | {
+      /** Rewrite a place's whole prose (scene, junction or road — the same
+       *  three-way fallthrough every scene.* setter uses). */
+      kind: "scene.setDescription";
+      sceneId: string;
+      description: string;
+    }
+  | {
       kind: "feature.setState";
       featureId: string;
       key: string;
@@ -226,6 +245,8 @@ export type StateChange =
       description?: string;
       /** Appended as one sentence instead of replacing. How damage lands. */
       appendDescription?: string;
+      /** Conceal from / reveal to characters. `false` is the reveal. */
+      hidden?: boolean;
       isLightSource?: boolean;
       lightLevel?: number;
       /** Set when a subsystem emitted this rather than the resolver. */
@@ -236,6 +257,9 @@ export type StateChange =
       name: string;
       location: string;
       description?: string;
+      /** Stable id to use verbatim when free (DGSM falls back to a generated
+       *  one on conflict, with a warning). */
+      id?: string;
     }
   | {
       kind: "item.move";

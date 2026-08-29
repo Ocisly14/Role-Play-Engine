@@ -279,6 +279,7 @@ const dgsm = {
   getCharacterPosition: () => ({ kind: "scene", sceneId: "SCN_1" }),
   resolveLocationId: () => "SCN_1",
   getNpcProfile: () => ({ skills: { "Stealth & Security": 60 } }),
+  hasItem: (id: string) => ["ITEM_1", "cabinet_lock"].includes(id),
   getState: () => ({
     scenes: new Map([
       ["SCN_1", { items: [{ id: "cabinet_lock" }, { id: "ITEM_1" }] }],

@@ -1,0 +1,19 @@
+{
+  "schemaVersion": 2,
+  "id": "JUNC_trailhead",
+  "name": "林道口",
+  "description": "主街北段尽头的步道口,全镇人人知道的进山入口。一块褪色的州立公园木牌歪在草里,林道从这里扎进红杉的阴影,气温立刻低了几度。霍尔特家后院的树篱上有一道豁口,正好在林道起点旁汇入 [exit.trailhead.holt_backyard_gap]。再往里,林径分向灰溪和旧铁路路基两个方向,岔口没有任何路标。",
+  "parentLocationId": "OUTDOOR",
+  "references": {
+    "items": [],
+    "connections": [
+      {
+        "id": "exit.trailhead.holt_backyard_gap",
+        "targetId": "SCN_holt_backyard",
+        "name": "霍尔特家后院豁口",
+        "description": "树篱上的一道豁口,钻过去就是霍尔特家的后院。"
+      }
+    ],
+    "conditions": []
+  }
+}

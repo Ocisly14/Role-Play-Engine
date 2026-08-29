@@ -1,12 +1,25 @@
 // src/engine/resolution/contextBuilder.ts
 //
-// Builds the single full-world EngineResolutionContext (plan D7). Called only
-// when an action resolution trigger exists. Everything comes from the same
-// tick-start DGSM state; nothing is filtered for "relevance" — the Engine
-// judges causal reach itself. Forbidden inputs (renderer text, RoleSim
-// thoughts, interpreter output, unflushed deltas) simply have no path in.
+// Builds the single EngineResolutionContext (plan D7, two-tier since M3).
+// Called only when an action resolution trigger exists. Everything comes from
+// the same tick-start DGSM state; forbidden inputs (renderer text, RoleSim
+// thoughts, unflushed deltas) simply have no path in.
+//
+// Two tiers:
+//   Tier 1 (`state.graph`)  — the WHOLE world as a graph: every macro
+//     location, every place (scene/junction/road) and every authored
+//     connection, with travel times and blocked/hidden flags. No prose.
+//   Tier 2 (`state.places`) — full snapshots of only the INVOLVED places:
+//     where a triggering actor stands, what an objectRef points at, and where
+//     a referenced item is held.
+//
+// `state.itemHolders` is the FULL-world item→holder map: the validator reads
+// it (and the graph) rather than the trimmed prompt lists, so prompt
+// trimming never narrows what counts as a real reference.
 
 import type { DynamicGameStateManager } from "../../state/DynamicGameState.js";
+import type { JunctionNode, RoadNode } from "../../state/topologyTypes.js";
+import type { DynamicScene, Item, SceneConnection } from "../../state/types.js";
 import type { ActionCommand, EngineAction } from "../actions/types.js";
 import { ACTION_SCHEMA_VERSION } from "../actions/types.js";
 import type { GameTime } from "../core/types.js";
@@ -16,8 +29,10 @@ import type {
   EngineResolutionContext,
   ItemSnapshot,
   ObjectiveWorldEvent,
+  PlaceKind,
+  PlaceSnapshot,
   ResolutionTrigger,
-  SceneSnapshot,
+  WorldGraph,
   WorldInvariant,
 } from "./types.js";
 
@@ -32,7 +47,7 @@ export const WORLD_INVARIANTS: WorldInvariant[] = [
   {
     id: "real-references",
     description:
-      "Every characterId/sceneId/itemId in a delta or occurrence must exist in the snapshot.",
+      "Every characterId/sceneId/itemId in a delta or occurrence must exist in the world (the graph lists every place; items may also sit at places without a detailed snapshot).",
   },
   {
     id: "dead-actors-act-no-more",
@@ -67,60 +82,145 @@ export interface BuildContextParams {
   deterministicResults?: DeterministicResult[];
 }
 
+interface PlaceEntry {
+  kind: PlaceKind;
+  place: DynamicScene | JunctionNode | RoadNode;
+}
+
 export function buildEngineResolutionContext(
   params: BuildContextParams
 ): EngineResolutionContext {
   const { dgsm } = params;
   const state = dgsm.getState();
+  const scenes: Map<string, DynamicScene> = state.scenes ?? new Map();
+  const junctions: Map<string, JunctionNode> = state.junctions ?? new Map();
+  const roads: Map<string, RoadNode> = state.roads ?? new Map();
 
-  // ── Items: flat list across scenes + inventories, with holder refs. ──
-  const items: ItemSnapshot[] = [];
-  for (const scene of state.scenes.values()) {
-    for (const item of scene.items ?? []) {
-      items.push(snapshotItem(item, `scene:${scene.id}`));
+  // ── One id-addressed index over every place, kind attached. ──
+  const placeById = new Map<string, PlaceEntry>();
+  for (const scene of scenes.values()) {
+    placeById.set(scene.id, { kind: "scene", place: scene });
+  }
+  for (const junction of junctions.values()) {
+    placeById.set(junction.id, { kind: "junction", place: junction });
+  }
+  for (const road of roads.values()) {
+    placeById.set(road.id, { kind: "road", place: road });
+  }
+
+  // ── Full-world item→holder map (validation lookup, never trimmed). ──
+  const itemHolders: Record<string, string> = {};
+  for (const [placeId, entry] of placeById) {
+    for (const item of entry.place.items ?? []) {
+      itemHolders[item.id] = `scene:${placeId}`;
     }
   }
-  for (const [npcId, inventory] of Object.entries(state.npcInventories)) {
+  for (const [npcId, inventory] of Object.entries(state.npcInventories ?? {})) {
     for (const item of inventory ?? []) {
-      items.push(snapshotItem(item, npcId));
+      itemHolders[item.id] = npcId;
     }
   }
 
-  // ── Scenes: ALL scenes, objective state only. ──
-  const scenes: SceneSnapshot[] = [...state.scenes.values()].map((scene) => {
-    const env = dgsm.getEnvironmentReading(scene.id);
-    return {
-      id: scene.id,
-      name: scene.name,
-      description: scene.description,
-      parentLocationId: scene.parentLocationId,
-      ...(scene.indoor !== undefined ? { indoor: scene.indoor } : {}),
-      conditions: dgsm.getSceneConditions(scene.id),
-      itemIds: (scene.items ?? []).map((i) => i.id),
-      connections: (scene.connections ?? []).map((c) => {
-        const blockedReason = dgsm.getConnectionBlockReason(
-          scene.id,
-          c.targetId
-        );
-        return {
-          targetId: c.targetId,
-          ...(c.description !== undefined
-            ? { description: c.description }
-            : {}),
-          ...(c.hidden !== undefined ? { hidden: c.hidden } : {}),
-          ...(blockedReason !== undefined ? { blockedReason } : {}),
-        };
-      }),
-      environment: {
-        temperature: env.temperature,
-        illumination: env.illumination,
-        oxygen: env.oxygen,
-        noise: env.noise,
-        airborneHazards: [...env.airborneHazards],
-      },
-      presentCharacterIds: dgsm.getCharactersInScene(scene.id),
-    };
-  });
+  // ── Tier 1: the world graph. ──
+  const edges: WorldGraph["edges"] = [];
+  const pushEdge = (
+    ownerId: string,
+    connection: SceneConnection,
+    travelTimeMinutes?: number
+  ): void => {
+    const blockedReason = dgsm.getConnectionBlockReason(
+      ownerId,
+      connection.targetId
+    );
+    edges.push({
+      connectionId: connection.id,
+      from: ownerId,
+      to: connection.targetId,
+      ...(travelTimeMinutes !== undefined ? { travelTimeMinutes } : {}),
+      ...(connection.hidden !== undefined ? { hidden: connection.hidden } : {}),
+      ...(blockedReason !== undefined ? { blockedReason } : {}),
+    });
+  };
+  for (const scene of scenes.values()) {
+    for (const connection of scene.connections ?? []) {
+      pushEdge(scene.id, connection);
+    }
+  }
+  for (const junction of junctions.values()) {
+    for (const connection of junction.connections ?? []) {
+      pushEdge(junction.id, connection);
+    }
+  }
+  for (const road of roads.values()) {
+    for (const connection of road.connections ?? []) {
+      // Endpoint edges carry the full-length walk time; an access point is a
+      // step off the road, not the road.
+      pushEdge(
+        road.id,
+        connection,
+        connection.role === "access" ? undefined : road.travelTimeMinutes
+      );
+    }
+  }
+  const graph: WorldGraph = {
+    macroLocations: (state.scenarioOutlines ?? []).map((outline) => ({
+      id: outline.id,
+      name: outline.name,
+    })),
+    places: [...placeById.entries()].map(([id, entry]) => ({
+      id,
+      kind: entry.kind,
+      name: entry.place.name,
+      parentLocationId: entry.place.parentLocationId,
+    })),
+    edges,
+  };
+
+  // ── The involved set: the triggering actors' places, the places their
+  //    objectRefs point at, and the holder places of referenced items. ──
+  const commands: ActionCommand[] = [
+    ...params.newCommands,
+    ...params.activeActions.map((action) => action.command),
+  ];
+  const involvedPlaceIds = new Set<string>();
+  const involvedActorIds = new Set<string>();
+  for (const command of commands) {
+    involvedActorIds.add(command.actorId);
+    const position = dgsm.getCharacterPosition(command.actorId);
+    if (position) involvedPlaceIds.add(dgsm.resolveLocationId(position));
+    for (const ref of command.objectRefs ?? []) {
+      if (ref.kind === "scene") {
+        involvedPlaceIds.add(ref.id);
+      } else if (ref.kind === "item") {
+        const holder = itemHolders[ref.id];
+        if (holder?.startsWith("scene:")) {
+          involvedPlaceIds.add(holder.slice("scene:".length));
+        }
+      }
+    }
+  }
+
+  // ── Tier 2: full snapshots of the involved places. ──
+  const places: PlaceSnapshot[] = [];
+  for (const placeId of involvedPlaceIds) {
+    const entry = placeById.get(placeId);
+    if (!entry) continue;
+    places.push(snapshotPlace(dgsm, placeId, entry));
+  }
+
+  // ── Items: the involved places' items + the involved actors' pockets. ──
+  const items: ItemSnapshot[] = [];
+  for (const placeId of involvedPlaceIds) {
+    const entry = placeById.get(placeId);
+    for (const item of entry?.place.items ?? []) {
+      items.push(snapshotItem(item, `scene:${placeId}`));
+    }
+  }
+  for (const actorId of involvedActorIds) {
+    for (const item of state.npcInventories?.[actorId] ?? []) {
+      items.push(snapshotItem(item, actorId));
+    }
+  }
 
   // ── Characters: ALL characters, real values (skills, stats, knowledge). ──
   const characters: CharacterSnapshot[] = state.npcCharacters.map((npc) => {
@@ -169,7 +269,7 @@ export function buildEngineResolutionContext(
       outputSchemaVersion: ACTION_SCHEMA_VERSION,
       worldInvariants: WORLD_INVARIANTS,
     },
-    state: { scenes, items, characters },
+    state: { graph, places, items, itemHolders, characters },
     actions: {
       newCommands: params.newCommands,
       activeActions: params.activeActions,
@@ -181,16 +281,51 @@ export function buildEngineResolutionContext(
   };
 }
 
-function snapshotItem(
-  item: {
-    id: string;
-    name: string;
-    description?: string;
-    type?: string;
-    damaged?: boolean;
-  },
-  holder: string
-): ItemSnapshot {
+function snapshotPlace(
+  dgsm: DynamicGameStateManager,
+  placeId: string,
+  entry: PlaceEntry
+): PlaceSnapshot {
+  const { kind, place } = entry;
+  const env = dgsm.getEnvironmentReading(placeId);
+  const scene = kind === "scene" ? (place as DynamicScene) : undefined;
+  const presentCharacterIds =
+    kind === "scene"
+      ? dgsm.getCharactersInScene(placeId)
+      : kind === "junction"
+        ? dgsm.getCharactersAtJunction(placeId)
+        : dgsm.getCharactersOnRoad(placeId).map((c) => c.characterId);
+  return {
+    id: placeId,
+    kind,
+    name: place.name,
+    description: place.description,
+    parentLocationId: place.parentLocationId,
+    ...(scene?.indoor !== undefined ? { indoor: scene.indoor } : {}),
+    conditions: dgsm.getSceneConditions(placeId),
+    itemIds: (place.items ?? []).map((i) => i.id),
+    connections: (place.connections ?? []).map((c) => {
+      const blockedReason = dgsm.getConnectionBlockReason(placeId, c.targetId);
+      return {
+        connectionId: c.id,
+        targetId: c.targetId,
+        ...(c.description !== undefined ? { description: c.description } : {}),
+        ...(c.hidden !== undefined ? { hidden: c.hidden } : {}),
+        ...(blockedReason !== undefined ? { blockedReason } : {}),
+      };
+    }),
+    environment: {
+      temperature: env.temperature,
+      illumination: env.illumination,
+      oxygen: env.oxygen,
+      noise: env.noise,
+      airborneHazards: [...env.airborneHazards],
+    },
+    presentCharacterIds,
+  };
+}
+
+function snapshotItem(item: Item, holder: string): ItemSnapshot {
   return {
     id: item.id,
     name: item.name,
@@ -198,5 +333,6 @@ function snapshotItem(
       ? { description: item.description }
       : {}),
     holder,
+    ...(item.hidden !== undefined ? { hidden: item.hidden } : {}),
   };
 }

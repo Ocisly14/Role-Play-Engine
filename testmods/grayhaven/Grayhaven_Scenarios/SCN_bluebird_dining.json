@@ -1,0 +1,37 @@
+{
+  "schemaVersion": 2,
+  "id": "SCN_bluebird_dining",
+  "name": "蓝鸟餐馆·堂座",
+  "description": "堂座还留着繁荣年代的底子:绿皮卡座磨得发亮,柜台前一排转凳,咖啡和烤面包的香气从清早一直暖到打烊。玻璃点心柜里摆着每天现烤的葡式蛋挞[item.bluebird_dining.pastry_case],旁边的小黑板用粉笔写着今日的炖鱼汤。柜台尽头那台旧收音机永远调在 KGRV 频道[item.bluebird_dining.counter_radio],音量不大,正好垫在满堂闲谈的底下。临街的玻璃门上挂着手写的营业木牌,推开就是雾气未散的主街北段[exit.bluebird_dining.street_door];柜台后一扇弹簧双开门通向后厨[exit.bluebird_dining.kitchen_door],Dolores 端盘进出时,那扇门总要咣当两声。",
+  "parentLocationId": "LOC_bluebird_diner",
+  "indoor": true,
+  "references": {
+    "items": [
+      {
+        "id": "item.bluebird_dining.pastry_case",
+        "name": "玻璃点心柜",
+        "description": "柜台上的玻璃点心柜,里面码着 Anita 每天现烤的葡式蛋挞,黄澄澄的挞心上是恰到好处的焦斑。"
+      },
+      {
+        "id": "item.bluebird_dining.counter_radio",
+        "name": "柜台收音机",
+        "description": "一台木壳旧收音机,旋钮常年停在 KGRV 的频率上,机身被咖啡蒸汽熏出一层温润的包浆。"
+      }
+    ],
+    "connections": [
+      {
+        "id": "exit.bluebird_dining.street_door",
+        "targetId": "JUNC_main_north",
+        "name": "临街玻璃门",
+        "description": "挂着手写营业木牌的玻璃门,通向主街北段。"
+      },
+      {
+        "id": "exit.bluebird_dining.kitchen_door",
+        "targetId": "SCN_bluebird_kitchen",
+        "name": "后厨弹簧门",
+        "description": "柜台后的弹簧双开门,通向后厨。"
+      }
+    ],
+    "conditions": []
+  }
+}

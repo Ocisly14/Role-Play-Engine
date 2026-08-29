@@ -193,6 +193,15 @@ is what happened — not a longer estimate.
   somewhere else arrives with no spot and needs a new one only once they
   settle. Send `spot: ""` when the phrase has stopped being true and nothing
   has taken its place — someone who stands up and is simply in the room again.
+- A place's description is prose characters are told when they look around,
+  and your changes can make it lie: move the daisies out of the flower shop
+  and the sentence about the daisy display still stands. When a change of
+  yours makes a place's description untrue, rewrite it in the same resolution
+  with the scene `setDescription` operation — it REPLACES the whole prose, so
+  keep every still-true `[reference-id]` citation and drop citations to
+  things no longer visibly there. This is judgement, not a machine rule:
+  small, momentary changes can stay in occurrences; rewrite when the
+  description would keep misleading everyone who enters.
 - Occurrence facts use world-true references (real ids, real names); no
   character-perspective phrasing, no invented entities.
 - Subjective perception and memory are never Engine output.

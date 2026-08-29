@@ -17,6 +17,12 @@ import {
   resolveBlockedConnectionNodeRef,
 } from "./blockedConnections.js";
 import { normalizeSpot } from "./characterSpot.js";
+import {
+  type ConnectionEdge,
+  type ConnectionRegistry,
+  buildConnectionRegistry,
+  resolveConnectionEdge,
+} from "./connectionRegistry.js";
 import { addMinutes, datePart, isSameDay, makeDateTime } from "./gameClock.js";
 import type {
   CharacterPosition,
@@ -173,12 +179,12 @@ export class DynamicGameStateManager {
   private hiddenCharacterIds = new Set<string>();
 
   /**
-   * Tracks per-connection refcount-based block votes for the Applier.
-   * Keyed by connectionId; value true means at least one feature is voting blocked.
-   * This is an engine-refactor path, separate from the legacy two-id
-   * blockedConnections Map used by pathfinding.
+   * Lazily built id-addressed index over every authored connection.
+   * Topology never gains or loses connections at runtime (only flags like
+   * `hidden`/blocked flip), so building it once is enough. Derivable from
+   * state — never serialized.
    */
-  private blockedConnectionsById = new Map<string, boolean>();
+  private connectionRegistry: ConnectionRegistry | null = null;
 
   constructor(state?: DynamicGameState, db?: any) {
     this.state =
@@ -884,6 +890,7 @@ export class DynamicGameStateManager {
     patch: {
       description?: string;
       appendDescription?: string;
+      hidden?: boolean;
       isLightSource?: boolean;
       lightLevel?: number;
     }
@@ -901,6 +908,7 @@ export class DynamicGameStateManager {
         ? `${existing} ${patch.appendDescription.trim()}`
         : patch.appendDescription.trim();
     }
+    if (patch.hidden !== undefined) target.hidden = patch.hidden;
     if (patch.isLightSource !== undefined) {
       target.isLightSource = patch.isLightSource;
     }
@@ -909,79 +917,112 @@ export class DynamicGameStateManager {
     return true;
   }
 
+  /** Internal: resolve an item-holding container.
+   *  `"scene:<id>"` resolves scene → junction → road (same fallthrough as
+   *  `getScene` — all three kinds of place hold items); anything else is
+   *  treated as an npcId. `createIfMissing` applies to the write direction:
+   *  an NPC inventory is created on demand, a missing place never is. */
+  private resolveItemContainer(
+    location: string,
+    createIfMissing = false
+  ): Item[] | undefined {
+    if (location.startsWith("scene:")) {
+      const placeId = location.slice("scene:".length);
+      const place =
+        this.state.scenes.get(placeId) ??
+        this.state.junctions.get(placeId) ??
+        this.state.roads.get(placeId);
+      if (!place) return undefined;
+      // Module JSON may omit the field on places that start with none.
+      if (!place.items) place.items = [];
+      return place.items;
+    }
+    const inventory = this.state.npcInventories[location];
+    if (inventory) return inventory;
+    if (!createIfMissing) return undefined;
+    this.state.npcInventories[location] = [];
+    return this.state.npcInventories[location];
+  }
+
+  /** Internal: every item container in the world, in stable order —
+   *  scenes, junctions, roads, then NPC inventories. `holder` is
+   *  `"scene:<placeId>"` for places and the bare npcId for inventories. */
+  private *allItemContainers(): Iterable<{ holder: string; items: Item[] }> {
+    for (const scene of this.state.scenes.values()) {
+      yield { holder: `scene:${scene.id}`, items: scene.items ?? [] };
+    }
+    for (const junction of this.state.junctions.values()) {
+      yield { holder: `scene:${junction.id}`, items: junction.items ?? [] };
+    }
+    for (const road of this.state.roads.values()) {
+      yield { holder: `scene:${road.id}`, items: road.items ?? [] };
+    }
+    for (const [npcId, items] of Object.entries(this.state.npcInventories)) {
+      yield { holder: npcId, items };
+    }
+  }
+
   /** Create a new Item at the given location.
-   *  `location = "scene:<sceneId>"` puts it in scene.items.
+   *  `location = "scene:<placeId>"` puts it in that scene/junction/road's items.
    *  `location = "<npcId>"` puts it in npcInventories[npcId].
-   *  Returns the created Item (id auto-generated from name slug + suffix when
-   *  needed). Returns undefined + warns when location can't be resolved. */
+   *  `id` (optional) is used verbatim when free; on conflict it warns and
+   *  falls back to the generated id. Returns the created Item, or
+   *  undefined + warns when the location can't be resolved. */
   createItem(
     name: string,
     location: string,
-    description?: string
+    description?: string,
+    id?: string
   ): Item | undefined {
-    const id = this.makeItemId(name);
-    const item: Item = { id, name };
-    if (description?.trim()) item.description = description;
-    if (location.startsWith("scene:")) {
-      const sceneId = location.slice("scene:".length);
-      const scene = this.state.scenes.get(sceneId);
-      if (!scene) {
-        console.warn(`[DGSM] createItem: scene "${sceneId}" not found`);
-        return undefined;
-      }
-      scene.items.push(item);
-    } else {
-      // Treat as NPC id.
-      if (!this.state.npcInventories[location])
-        this.state.npcInventories[location] = [];
-      this.state.npcInventories[location].push(item);
+    const container = this.resolveItemContainer(location, true);
+    if (!container) {
+      console.warn(`[DGSM] createItem: location "${location}" not found`);
+      return undefined;
     }
+    let itemId: string;
+    if (id !== undefined && this.itemIdExists(id)) {
+      console.warn(
+        `[DGSM] createItem: id "${id}" already exists — falling back to a generated id`
+      );
+      itemId = this.makeItemId(name);
+    } else {
+      itemId = id ?? this.makeItemId(name);
+    }
+    const item: Item = { id: itemId, name };
+    if (description?.trim()) item.description = description;
+    container.push(item);
     this.state.lastUpdated = new Date();
     return item;
   }
 
   /** Move an item between locations. `from` and `to` accept the same
-   *  `"scene:<id>"` / `"<npcId>"` syntax as createItem. Returns true on success. */
+   *  `"scene:<id>"` / `"<npcId>"` syntax as createItem. The moved Item keeps
+   *  its object identity. Returns true on success. */
   moveItem(itemId: string, from: string, to: string): boolean {
+    // Resolve the destination BEFORE pulling the item out, so a bad `to`
+    // cannot vanish the item.
+    const destination = this.resolveItemContainer(to, true);
+    if (!destination) {
+      console.warn(`[DGSM] moveItem: destination "${to}" not found`);
+      return false;
+    }
     const removed = this.removeItemFrom(itemId, from);
     if (!removed) {
       console.warn(`[DGSM] moveItem: item id="${itemId}" not found at ${from}`);
       return false;
     }
-    if (to.startsWith("scene:")) {
-      const sceneId = to.slice("scene:".length);
-      const scene = this.state.scenes.get(sceneId);
-      if (!scene) {
-        console.warn(
-          `[DGSM] moveItem: destination scene "${sceneId}" not found`
-        );
-        return false;
-      }
-      scene.items.push(removed);
-    } else {
-      if (!this.state.npcInventories[to]) this.state.npcInventories[to] = [];
-      this.state.npcInventories[to].push(removed);
-    }
+    destination.push(removed);
     this.state.lastUpdated = new Date();
     return true;
   }
 
-  /** Destroy an item, removing it from the world. Searches scenes then
-   *  inventories for the id. Returns true on removal. */
+  /** Destroy an item, removing it from the world wherever it is held.
+   *  Returns true on removal. */
   destroyItem(itemId: string): boolean {
-    for (const scene of this.state.scenes.values()) {
-      const idx = scene.items.findIndex((i) => i.id === itemId);
+    for (const { items } of this.allItemContainers()) {
+      const idx = items.findIndex((i) => i.id === itemId);
       if (idx !== -1) {
-        scene.items.splice(idx, 1);
-        this.state.lastUpdated = new Date();
-        return true;
-      }
-    }
-    for (const npcId of Object.keys(this.state.npcInventories)) {
-      const inv = this.state.npcInventories[npcId];
-      const idx = inv.findIndex((i) => i.id === itemId);
-      if (idx !== -1) {
-        inv.splice(idx, 1);
+        items.splice(idx, 1);
         this.state.lastUpdated = new Date();
         return true;
       }
@@ -992,19 +1033,11 @@ export class DynamicGameStateManager {
 
   /** Internal: pull an item out of a single location. */
   private removeItemFrom(itemId: string, location: string): Item | undefined {
-    if (location.startsWith("scene:")) {
-      const sceneId = location.slice("scene:".length);
-      const scene = this.state.scenes.get(sceneId);
-      if (!scene) return undefined;
-      const idx = scene.items.findIndex((i) => i.id === itemId);
-      if (idx === -1) return undefined;
-      return scene.items.splice(idx, 1)[0];
-    }
-    const inv = this.state.npcInventories[location];
-    if (!inv) return undefined;
-    const idx = inv.findIndex((i) => i.id === itemId);
+    const container = this.resolveItemContainer(location);
+    if (!container) return undefined;
+    const idx = container.findIndex((i) => i.id === itemId);
     if (idx === -1) return undefined;
-    return inv.splice(idx, 1)[0];
+    return container.splice(idx, 1)[0];
   }
 
   /** Internal: deterministic item-id generator from a display name. */
@@ -1024,26 +1057,29 @@ export class DynamicGameStateManager {
   }
 
   private itemIdExists(itemId: string): boolean {
-    for (const scene of this.state.scenes.values()) {
-      if (scene.items.some((i) => i.id === itemId)) return true;
-    }
-    for (const inv of Object.values(this.state.npcInventories)) {
-      if (inv.some((i) => i.id === itemId)) return true;
-    }
-    return false;
+    return this.getItemHolder(itemId) !== undefined;
   }
 
-  /** Internal: find first Item matching id by scanning scenes then inventories. */
-  private findItemById(itemId: string): Item | undefined {
-    for (const scene of this.state.scenes.values()) {
-      for (const item of scene.items) {
-        if (item.id === itemId) return item;
-      }
+  /** Does this id name a real item anywhere in the world — on the ground of
+   *  any scene/junction/road, or in anyone's hands? Hidden items count. */
+  hasItem(itemId: string): boolean {
+    return this.getItemHolder(itemId) !== undefined;
+  }
+
+  /** Where an item is held: `"scene:<placeId>"` or the holder's npcId.
+   *  Undefined when no container holds the id. */
+  getItemHolder(itemId: string): string | undefined {
+    for (const { holder, items } of this.allItemContainers()) {
+      if (items.some((i) => i.id === itemId)) return holder;
     }
-    for (const inv of Object.values(this.state.npcInventories)) {
-      for (const item of inv) {
-        if (item.id === itemId) return item;
-      }
+    return undefined;
+  }
+
+  /** Internal: find first Item matching id across every container. */
+  private findItemById(itemId: string): Item | undefined {
+    for (const { items } of this.allItemContainers()) {
+      const found = items.find((i) => i.id === itemId);
+      if (found) return found;
     }
     return undefined;
   }
@@ -1121,8 +1157,37 @@ export class DynamicGameStateManager {
     }
     // Module JSON omits the field entirely on places that start with none.
     if (!place.conditions) place.conditions = [];
-    place.conditions.push(condition);
+    let toAppend = condition;
+    if (toAppend.id === undefined) {
+      // Single choke point for condition ids: subsystems (fire/weather/sun)
+      // omit them, so mint `cond_<featureId ?? "engine">_<n>` here, unique
+      // within the place.
+      const prefix = `cond_${toAppend.featureId ?? "engine"}_`;
+      let n =
+        place.conditions.filter((c) => c.id?.startsWith(prefix)).length + 1;
+      while (place.conditions.some((c) => c.id === `${prefix}${n}`)) n += 1;
+      toAppend = { ...condition, id: `${prefix}${n}` };
+    } else if (place.conditions.some((c) => c.id === toAppend.id)) {
+      console.warn(
+        `[DynamicGameState] appendSceneCondition: duplicate condition id "${toAppend.id}" at "${scenarioId}" — condition dropped`
+      );
+      return;
+    }
+    place.conditions.push(toAppend);
     this.state.lastUpdated = new Date();
+  }
+
+  /**
+   * Remove a single condition by its id. Returns true when one was removed.
+   */
+  removeSceneConditionById(placeId: string, conditionId: string): boolean {
+    const place = this.getScene(placeId);
+    if (!place?.conditions) return false;
+    const idx = place.conditions.findIndex((c) => c.id === conditionId);
+    if (idx === -1) return false;
+    place.conditions.splice(idx, 1);
+    this.state.lastUpdated = new Date();
+    return true;
   }
 
   /**
@@ -1140,6 +1205,24 @@ export class DynamicGameStateManager {
       (c) => c.featureId !== featureId
     );
     this.state.lastUpdated = new Date();
+  }
+
+  /**
+   * Rewrite a place's prose wholesale (scene, junction or road — the same
+   * fallthrough `getScene` uses). Returns false + warn when the id names no
+   * place.
+   */
+  setPlaceDescription(placeId: string, description: string): boolean {
+    const place = this.getScene(placeId);
+    if (!place) {
+      console.warn(
+        `[DynamicGameState] setPlaceDescription: no scene/junction/road "${placeId}" — ignored`
+      );
+      return false;
+    }
+    place.description = description;
+    this.state.lastUpdated = new Date();
+    return true;
   }
 
   replaceSceneConditions(
@@ -1364,24 +1447,61 @@ export class DynamicGameStateManager {
     this.state.lastUpdated = new Date();
   }
 
+  // === Connection Registry ===
+
   /**
-   * Ensure a connection id is known to the refcount-based block store.
-   * Current impl is a no-op: setConnectionBlocked/isConnectionBlocked
-   * (single-id variants) already handle missing keys safely.
+   * Id-addressed index over every authored connection (scenes, junctions,
+   * roads). Built once on first use — runtime never adds or removes
+   * connections, it only flips flags on them.
    */
-  ensureConnection(_connectionId: string): void {
-    // no-op placeholder; single-id block store tolerates missing keys
+  getConnectionRegistry(): ConnectionRegistry {
+    if (!this.connectionRegistry) {
+      this.connectionRegistry = buildConnectionRegistry({
+        scenes: this.state.scenes,
+        junctions: this.state.junctions,
+        roads: this.state.roads,
+      });
+    }
+    return this.connectionRegistry;
+  }
+
+  /**
+   * Resolve a connection id to its canonical symmetric edge (the same key
+   * scheme `state.blockedConnections` uses). Null for unknown ids.
+   */
+  resolveConnectionEdgeById(connectionId: string): ConnectionEdge | null {
+    return resolveConnectionEdge(connectionId, this.getConnectionRegistry());
+  }
+
+  /**
+   * Reveal/hide a connection by its id, mutating the owning place's
+   * SceneConnection in place (serializes with state). False + warn when the
+   * id resolves to nothing.
+   */
+  setConnectionHiddenById(connectionId: string, hidden: boolean): boolean {
+    const entry = this.getConnectionRegistry().get(connectionId);
+    const owner = entry
+      ? entry.ownerKind === "scene"
+        ? this.state.scenes.get(entry.ownerId)
+        : entry.ownerKind === "junction"
+          ? this.state.junctions.get(entry.ownerId)
+          : this.state.roads.get(entry.ownerId)
+      : undefined;
+    const connection = owner?.connections?.find((c) => c.id === connectionId);
+    if (!connection) {
+      console.warn(
+        `[DynamicGameState] setConnectionHiddenById: unknown connection id "${connectionId}"`
+      );
+      return false;
+    }
+    connection.hidden = hidden;
+    this.state.lastUpdated = new Date();
+    return true;
   }
 
   // === Blocked Connections ===
 
-  isConnectionBlocked(fromId: string, toId: string): boolean;
-  isConnectionBlocked(connectionId: string): boolean;
-  isConnectionBlocked(fromId: string, toId?: string): boolean {
-    if (toId === undefined) {
-      // Single-id form: consult the refcount-based store
-      return this.blockedConnectionsById.get(fromId) === true;
-    }
+  isConnectionBlocked(fromId: string, toId: string): boolean {
     return this.getConnectionBlockReason(fromId, toId) !== undefined;
   }
 
@@ -1401,32 +1521,7 @@ export class DynamicGameStateManager {
     toId: string,
     blocked: boolean,
     reason: string
-  ): void;
-  setConnectionBlocked(connectionId: string, blocked: boolean): void;
-  setConnectionBlocked(
-    arg1: string,
-    arg2: string | boolean,
-    arg3?: boolean,
-    arg4?: string
   ): void {
-    // Single-id form: (connectionId, blocked)
-    if (typeof arg2 === "boolean") {
-      const connectionId = arg1;
-      const blocked = arg2;
-      if (blocked) {
-        this.blockedConnectionsById.set(connectionId, true);
-      } else {
-        this.blockedConnectionsById.delete(connectionId);
-      }
-      this.state.lastUpdated = new Date();
-      return;
-    }
-
-    // Two-id form: (fromId, toId, blocked, reason) — legacy pathfinding store
-    const fromId = arg1;
-    const toId = arg2;
-    const blocked = arg3 ?? false;
-    const reason = arg4 ?? "";
     const fromRef = resolveBlockedConnectionNodeRef(fromId, this.state);
     const toRef = resolveBlockedConnectionNodeRef(toId, this.state);
     if (!fromRef || !toRef) {
@@ -1442,20 +1537,6 @@ export class DynamicGameStateManager {
       this.state.blockedConnections.delete(key);
     }
     this.state.lastUpdated = new Date();
-  }
-
-  setConnectionHidden(
-    sceneId: string,
-    targetId: string,
-    hidden: boolean
-  ): void {
-    const scene = this.state.scenes.get(sceneId);
-    if (!scene) return;
-    const conn = scene.connections.find((c) => c.targetId === targetId);
-    if (conn) {
-      conn.hidden = hidden;
-      this.state.lastUpdated = new Date();
-    }
   }
 
   // === Topology ===

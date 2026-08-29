@@ -1,0 +1,57 @@
+{
+  "schemaVersion": 2,
+  "id": "SCN_holt_common",
+  "name": "Holt 家起居餐厨",
+  "description": "老房子的心脏:起居、吃饭、做饭挤在一个大开间里,一张能坐下六个人的橡木长桌占了中间——如今常坐的只有四个。壁炉台上摆着一张镶框的海军新兵照 [item.holt_common.glen_photo],Glen 穿着水兵服笑得拘谨,相框前搁着他寄回来的明信片。角落里一台木壳电视机 [item.holt_common.television] 顶上搭着蕾丝罩布,屏幕最近偶尔会无缘无故起雪花。屋里有四扇内门:Ray 的房间 [exit.holt_common.ray_door]、Frank 和 Susan 的主卧 [exit.holt_common.master_door]、Denny 的小房间 [exit.holt_common.denny_door],以及通后院的纱门 [exit.holt_common.backyard_door]。正对院门的前门 [exit.holt_common.front_door] 出去是带栅栏的前院和 Holt 家的院门。",
+  "parentLocationId": "LOC_holt_house",
+  "indoor": true,
+  "references": {
+    "items": [
+      {
+        "id": "item.holt_common.glen_photo",
+        "name": "Glen 的海军新兵照",
+        "description": "镶框的黑白新兵照,Glen Holt 穿水兵服站得笔直,相框前搁着几张寄自军港的明信片。",
+        "type": "other"
+      },
+      {
+        "id": "item.holt_common.television",
+        "name": "木壳电视机",
+        "description": "1970 年代的木壳电视机,顶上搭着蕾丝罩布,最近偶尔无缘无故起雪花。",
+        "type": "other"
+      }
+    ],
+    "connections": [
+      {
+        "id": "exit.holt_common.ray_door",
+        "targetId": "SCN_holt_ray",
+        "name": "Ray 的房间门",
+        "description": "走廊尽头的门,门后是老警长的房间。"
+      },
+      {
+        "id": "exit.holt_common.master_door",
+        "targetId": "SCN_holt_master",
+        "name": "主卧门",
+        "description": "Frank 和 Susan 的主卧房门。"
+      },
+      {
+        "id": "exit.holt_common.denny_door",
+        "targetId": "SCN_holt_denny",
+        "name": "Denny 的房间门",
+        "description": "贴着火箭贴纸的小房间门。"
+      },
+      {
+        "id": "exit.holt_common.backyard_door",
+        "targetId": "SCN_holt_backyard",
+        "name": "后院纱门",
+        "description": "厨房一侧的纱门,弹簧一松就砰的一声,通向后院。"
+      },
+      {
+        "id": "exit.holt_common.front_door",
+        "targetId": "JUNC_holt_gate",
+        "name": "前门",
+        "description": "正对院门的前门,出去穿过前院就是 Holt 家的院门。"
+      }
+    ],
+    "conditions": []
+  }
+}

@@ -94,10 +94,18 @@ export class Applier {
    */
   private isNoOp(c: StateChange): boolean {
     switch (c.kind) {
-      case "scene.removeCondition":
-        return !this.dgsm
-          .getSceneConditions(c.sceneId)
-          .some((cond) => cond.featureId === c.predicate.featureId);
+      case "scene.removeCondition": {
+        // The predicate carries an id, a featureId, or both; the change is a
+        // no-op only when nothing at the place matches either address.
+        const conditions = this.dgsm.getSceneConditions(c.sceneId);
+        const idMatches =
+          c.predicate.id !== undefined &&
+          conditions.some((cond) => cond.id === c.predicate.id);
+        const featureMatches =
+          c.predicate.featureId !== undefined &&
+          conditions.some((cond) => cond.featureId === c.predicate.featureId);
+        return !idMatches && !featureMatches;
+      }
 
       case "character.removeCondition": {
         const conditions =
@@ -238,6 +246,14 @@ export class Applier {
           return [
             { kind: "scene.removeCondition", sceneId, predicate: op.predicate },
           ];
+        case "setDescription":
+          return [
+            {
+              kind: "scene.setDescription",
+              sceneId,
+              description: op.description,
+            },
+          ];
         case "connectionBlock":
           return [
             {
@@ -246,6 +262,14 @@ export class Applier {
               blocked: op.blocked,
               sourceFeatureId: source,
               reason: op.reason,
+            },
+          ];
+        case "connectionHidden":
+          return [
+            {
+              kind: "connection.setHidden",
+              connectionId: op.connectionId,
+              hidden: op.hidden,
             },
           ];
         case "environmentContribute":
@@ -283,6 +307,7 @@ export class Applier {
             ...(typeof op.description === "string"
               ? { description: op.description }
               : {}),
+            ...(typeof op.id === "string" ? { id: op.id } : {}),
           },
         ];
       case "move":
@@ -301,6 +326,9 @@ export class Applier {
                 ...(typeof op.appendDescription === "string"
                   ? { appendDescription: op.appendDescription }
                   : {}),
+                ...(typeof op.hidden === "boolean"
+                  ? { hidden: op.hidden }
+                  : {}),
                 ...(typeof op.isLightSource === "boolean"
                   ? { isLightSource: op.isLightSource }
                   : {}),
@@ -314,13 +342,6 @@ export class Applier {
         return itemId ? [{ kind: "item.destroy", itemId }] : [];
     }
     return [];
-  }
-
-  private findItemSceneId(itemId: string): string | undefined {
-    for (const scene of this.dgsm.getState().scenes.values()) {
-      if ((scene.items ?? []).some((i) => i.id === itemId)) return scene.id;
-    }
-    return undefined;
   }
 
   flush(
@@ -499,10 +520,23 @@ export class Applier {
           this.dgsm.appendSceneCondition(c.sceneId, c.condition);
           break;
         case "scene.removeCondition":
-          this.dgsm.removeSceneConditionsByFeatureId(
-            c.sceneId,
-            c.predicate.featureId
-          );
+          // The predicate addresses by id, by featureId, or both — both means
+          // both removals run.
+          if (c.predicate.id !== undefined) {
+            this.dgsm.removeSceneConditionById(c.sceneId, c.predicate.id);
+          }
+          if (c.predicate.featureId !== undefined) {
+            this.dgsm.removeSceneConditionsByFeatureId(
+              c.sceneId,
+              c.predicate.featureId
+            );
+          }
+          break;
+        case "scene.setDescription":
+          this.dgsm.setPlaceDescription(c.sceneId, c.description);
+          break;
+        case "connection.setHidden":
+          this.dgsm.setConnectionHiddenById(c.connectionId, c.hidden);
           break;
         case "character.addCondition":
           this.dgsm.addCharacterCondition(c.characterId, c.condition);
@@ -533,6 +567,7 @@ export class Applier {
             ...(c.appendDescription !== undefined
               ? { appendDescription: c.appendDescription }
               : {}),
+            ...(c.hidden !== undefined ? { hidden: c.hidden } : {}),
             ...(c.isLightSource !== undefined
               ? { isLightSource: c.isLightSource }
               : {}),
@@ -541,7 +576,7 @@ export class Applier {
           break;
         }
         case "item.create": {
-          this.dgsm.createItem(c.name, c.location, c.description);
+          this.dgsm.createItem(c.name, c.location, c.description, c.id);
           break;
         }
         case "item.move": {
@@ -639,16 +674,32 @@ export class Applier {
     };
   }
 
+  /**
+   * Votes are keyed by the CANONICAL EDGE, not by the connection id: a passage
+   * authored as two one-way exit ids (one in each direction) is one edge, and
+   * a block voted through one id must be liftable through the other. The vote
+   * table therefore shares the key scheme of `state.blockedConnections`.
+   */
   private applySetBlockVote(vote: {
     connectionId: string;
     blocked: boolean;
     featureId: string;
     reason: string;
   }): void {
-    if (!this.connectionVotes.has(vote.connectionId)) {
-      this.connectionVotes.set(vote.connectionId, []);
+    const edge = this.dgsm.resolveConnectionEdgeById(vote.connectionId);
+    if (!edge) {
+      // The validator refuses unknown connection ids upstream, so a miss here
+      // means stale runtime state. Never a throw: one bad vote must not take
+      // the whole flush down.
+      console.warn(
+        `[Applier] connection.setBlock dropped: connection id "${vote.connectionId}" resolves to no edge`
+      );
+      return;
     }
-    const votes = this.connectionVotes.get(vote.connectionId)!;
+    if (!this.connectionVotes.has(edge.key)) {
+      this.connectionVotes.set(edge.key, []);
+    }
+    const votes = this.connectionVotes.get(edge.key)!;
     const existingIdx = votes.findIndex(
       (v) => v.featureId === vote.featureId && v.reason === vote.reason
     );
@@ -659,12 +710,18 @@ export class Applier {
     } else if (existingIdx !== -1) {
       votes.splice(existingIdx, 1);
     }
-    this.dgsm.setConnectionBlocked(vote.connectionId, votes.length > 0);
+    this.dgsm.setConnectionBlocked(
+      edge.a.id,
+      edge.b.id,
+      votes.length > 0,
+      votes.map((v) => v.reason).join("; ")
+    );
   }
 
   /**
-   * Serialize the refcount vote table so simulation snapshots survive
-   * session restarts. Pairs with rehydrateConnectionVotes.
+   * Serialize the refcount vote table (keyed by canonical edge key) so
+   * simulation snapshots survive session restarts. Pairs with
+   * rehydrateConnectionVotes.
    */
   serializeConnectionVotes(): Record<string, ConnectionVote[]> {
     const out: Record<string, ConnectionVote[]> = {};

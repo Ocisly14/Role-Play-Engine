@@ -1,0 +1,37 @@
+{
+  "schemaVersion": 2,
+  "id": "SCN_holt_master",
+  "name": "Holt 家主卧",
+  "description": "Frank 和 Susan 的卧室干净得像两个人在各自值班:床铺是 Susan 的整齐,衣柜是 Frank 的整齐——衬衫按颜色码好,像装箱清单。五斗柜最底层的抽屉里放着一只上了小挂锁的铁皮文件盒 [item.holt_master.document_box],Frank 说那是『合同和税单』,说完就不再说了。Susan 那侧的床头柜上放着她的毛线篮 [item.holt_master.knitting_basket],毛线底下压着一本翻旧的护理手册,页边有她随手记的小字。窗子朝着后院,起雾的夜里能听见远处的雾号。房门 [exit.holt_master.door] 通向起居的大开间。",
+  "parentLocationId": "LOC_holt_house",
+  "indoor": true,
+  "references": {
+    "items": [
+      {
+        "id": "item.holt_master.document_box",
+        "name": "铁皮文件盒",
+        "description": "上了小挂锁的铁皮盒,Frank 只说里面是合同和税单。",
+        "type": "container",
+        "containerStats": {
+          "locked": true,
+          "lockDifficulty": "easy"
+        }
+      },
+      {
+        "id": "item.holt_master.knitting_basket",
+        "name": "Susan 的毛线篮",
+        "description": "藤编毛线篮,毛线底下压着一本翻旧的护理手册,页边有随手记的小字。",
+        "type": "container"
+      }
+    ],
+    "connections": [
+      {
+        "id": "exit.holt_master.door",
+        "targetId": "SCN_holt_common",
+        "name": "主卧门",
+        "description": "通向起居大开间的房门。"
+      }
+    ],
+    "conditions": []
+  }
+}

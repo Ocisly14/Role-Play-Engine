@@ -159,9 +159,12 @@ function commandForPrompt(command: ActionCommand): Record<string, unknown> {
  * 114 characters changed. Measured cross-tick common prefix: 0.3%.
  *
  * So the world description goes FIRST and everything about this particular
- * minute goes LAST. Characters are volatile too — the stamina subsystem moves
- * fatigue on most ticks — and at ~1.8k characters they are cheap to re-send,
- * so they lead the volatile half rather than poisoning the stable one.
+ * minute goes LAST. Since the two-tier context (M3) the stable half is the
+ * world GRAPH — every place and connection, no prose — which only changes
+ * when something blocks, hides or reveals an edge. The detailed place
+ * snapshots and the item list depend on which places this tick's actions
+ * involve, so they live in the volatile half with the characters (whom the
+ * stamina subsystem moves on most ticks anyway).
  *
  * The model reads titled JSON sections, so nothing about the resolution
  * depends on this order.
@@ -207,11 +210,21 @@ export function renderContextSegments(context: EngineResolutionContext): {
   const stable = [
     "# Tick Resolution Request",
     section("World Invariants", context.rules.worldInvariants),
-    section("Scenes", context.state.scenes),
-    section("Items", context.state.items),
+    section(
+      "World Graph (every place and connection; edges carry the connectionId that connectionBlock/connectionHidden take)",
+      context.state.graph
+    ),
   ].join("\n\n");
 
   const volatile = [
+    section(
+      "Detailed Places (the places involved this tick; hidden items/exits are invisible to characters until revealed)",
+      context.state.places
+    ),
+    section(
+      "Items (at the involved places and in the actors' hands)",
+      context.state.items
+    ),
     section("Characters", context.state.characters),
     section("Trigger", {
       ...context.trigger,

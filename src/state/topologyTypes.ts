@@ -1,5 +1,5 @@
 import type { SceneCondition } from "../engine/core/types.js";
-import type { Item } from "./types.js";
+import type { Item, SceneConnection } from "./types.js";
 
 /**
  * Junction — a first-class intersection/endpoint node.
@@ -12,8 +12,20 @@ export interface JunctionNode {
   parentLocationId: string; // typically "OUTDOOR"
   items: Item[];
   conditions: SceneCondition[];
-  /** Scene IDs directly accessible from this junction (buildings at the intersection) */
+  /** Authored connections (source of truth; carries id/hidden/description). */
+  connections: SceneConnection[];
+  /** Derived from `connections` (targetIds, hidden included) — kept for readers. */
   connectedSceneIds: string[];
+}
+
+/**
+ * A road's connection carries a role: the two junction endpoints, or an
+ * `access` point somewhere along the length (with a 0-1 position).
+ */
+export interface RoadConnection extends SceneConnection {
+  role: "endpointA" | "endpointB" | "access";
+  /** 0.0 = endpointA side, 1.0 = endpointB side. Required for role "access". */
+  position?: number;
 }
 
 /**
@@ -34,13 +46,15 @@ export interface RoadNode {
   name: string;
   description: string;
   parentLocationId: string; // typically "OUTDOOR"
-  /** Junction ID at the start */
+  /** Authored connections (source of truth; carries id/role/position/hidden). */
+  connections: RoadConnection[];
+  /** Junction ID at the start (derived from the `endpointA` connection) */
   endpointA: string;
-  /** Junction ID at the end */
+  /** Junction ID at the end (derived from the `endpointB` connection) */
   endpointB: string;
   /** Minutes to walk the full length */
   travelTimeMinutes: number;
-  /** Buildings accessible along this road */
+  /** Buildings accessible along this road (derived from `access` connections) */
   alongConnections: AlongConnection[];
   items: Item[];
   conditions: SceneCondition[];

@@ -26,6 +26,9 @@ const junctions = new Map<string, JunctionNode>([
       description: "A windswept crossing.",
       items: [{ id: "ITEM_J", name: "a lamppost" }],
       conditions: [{ featureId: "weather", description: "sleet" }],
+      // Junction adjacency derives from `connections`; `connectedSceneIds`
+      // is only the derived convenience list.
+      connections: [{ id: "exit.junc_a.home", targetId: "S_HOME" }],
       connectedSceneIds: ["S_HOME"],
     } as unknown as JunctionNode,
   ],
@@ -37,6 +40,7 @@ const roads = new Map<string, RoadNode>([
       id: "R_MAIN",
       name: "Star Avenue",
       description: "A long avenue.",
+      connections: [],
       endpointA: "J_A",
       endpointB: "J_B",
       travelTimeMinutes: 10,
@@ -59,7 +63,7 @@ const dgsm = {
           description: "A parlour.",
           conditions: [],
           items: [{ id: "ITEM_S", name: "a chair" }],
-          connections: [{ targetId: "S_SHOP" }],
+          connections: [{ id: "exit.home.shop", targetId: "S_SHOP" }],
         }
       : id === "S_SHOP"
         ? { id: "S_SHOP", name: "Shop", conditions: [], items: [] }

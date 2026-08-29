@@ -2,8 +2,8 @@
 // are load-bearing: the memories are cut to what this character knows (an
 // unknown building must not be named, not even as somewhere a door leads),
 // the topology memory comes last because it is the layer that only makes
-// sense once the places have names, and a junction's connections are read
-// through the accessor that tolerates both shapes modules author them in.
+// sense once the places have names, and a junction's buildings are derived
+// from its authored (non-hidden) connections.
 
 import { describe, expect, it } from "vitest";
 import type { DynamicGameStateManager } from "../../state/DynamicGameState.js";
@@ -48,7 +48,11 @@ const scenes = new Map<string, Record<string, unknown>>([
       connections: [
         { targetId: "SCN_HOSP_WARD", description: "double doors" },
         { targetId: "ROAD_1", description: "the front steps" },
-        { targetId: "SCN_VAULT", description: "a locked side door", hidden: true },
+        {
+          targetId: "SCN_VAULT",
+          description: "a locked side door",
+          hidden: true,
+        },
       ],
     },
   ],
@@ -100,11 +104,21 @@ const junctions = new Map<string, Record<string, unknown>>([
       parentLocationId: "OUTDOOR",
       items: [],
       conditions: [],
-      // Newer modules author this as objects rather than bare ids.
-      connectedSceneIds: [
-        { targetId: "SCN_MILL_FLOOR", description: "gravel track west" },
-        { targetId: "SCN_VAULT", description: "an iron gate" },
+      // Authored connections are the source of truth; `connectedSceneIds`
+      // is derived from them (hidden entries included).
+      connections: [
+        {
+          id: "exit.junc_n.mill",
+          targetId: "SCN_MILL_FLOOR",
+          description: "gravel track west",
+        },
+        {
+          id: "exit.junc_n.vault",
+          targetId: "SCN_VAULT",
+          description: "an iron gate",
+        },
       ],
+      connectedSceneIds: ["SCN_MILL_FLOOR", "SCN_VAULT"],
     },
   ],
   [
@@ -116,6 +130,7 @@ const junctions = new Map<string, Record<string, unknown>>([
       parentLocationId: "OUTDOOR",
       items: [],
       conditions: [],
+      connections: [],
       connectedSceneIds: [],
     },
   ],
@@ -212,10 +227,9 @@ describe("buildMapMemoryEntries", () => {
     expect(topology).toContain("Streets at North Corner: Chapel Street.");
   });
 
-  it("reads a junction authored as objects, not bare ids", () => {
-    // buildTopology and everything downstream assume `string[]`; a module
-    // using the `{ targetId }` shape would otherwise lose every building at
-    // the corner.
+  it("reads a junction's buildings from its authored connections", () => {
+    // Adjacency derives from `connections` (non-hidden), not from the raw
+    // derived `connectedSceneIds` list.
     const topology = entries[entries.length - 1].content;
     expect(topology).toContain("At the junction: The Mill");
   });

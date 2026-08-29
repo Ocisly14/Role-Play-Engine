@@ -13,6 +13,12 @@
 //
 // Roads and junctions carry the same `items` / `conditions` / connection data
 // scenes do, so one uniform view serves all three.
+//
+// This resolver is also the single choke point for `hidden`: an item or
+// connection flagged hidden exists in the world (the Engine sees it, the
+// trust boundary counts it as real) but must not reach perception — not the
+// rendered narrative, not the citable directory. All three branches filter
+// here so no caller can leak an unrevealed thing by reading the raw node.
 
 import type { SceneCondition } from "../engine/core/types.js";
 import type { DynamicGameStateManager } from "./DynamicGameState.js";
@@ -52,10 +58,13 @@ export function resolvePerceivedLocation(
       name: scene.name,
       description: scene.description ?? "",
       conditions: dgsm.getSceneConditions(scene.id),
-      items: scene.items ?? [],
+      items: visibleItems(scene.items),
       // `getScene` answers null, not undefined, for an id it does not know —
       // so the old `!== undefined` test kept everything it meant to drop.
+      // Hidden connections stay out until revealed: an unfound door must not
+      // enter the citable set.
       adjacentIds: (scene.connections ?? [])
+        .filter((c) => !c.hidden)
         .map((c) => c.targetId)
         .filter((id) => dgsm.getScene(id) != null),
     };
@@ -70,9 +79,15 @@ export function resolvePerceivedLocation(
       name: junction.name,
       description: junction.description ?? "",
       conditions: dgsm.getSceneConditions(junction.id),
-      items: junction.items ?? [],
+      items: visibleItems(junction.items),
+      // Adjacency derives from the authored connections, not the raw
+      // `connectedSceneIds` (which is derived WITH hidden entries included —
+      // visibility is this layer's job). Incident roads are always visible:
+      // a road has no hidden flag of its own.
       adjacentIds: [
-        ...junction.connectedSceneIds,
+        ...(junction.connections ?? [])
+          .filter((c) => !c.hidden)
+          .map((c) => c.targetId),
         ...(topology.junctionToRoads.get(junction.id) ?? []).map((r) => r.id),
       ],
     };
@@ -80,19 +95,35 @@ export function resolvePerceivedLocation(
 
   const road = topology.roads.get(position.roadId);
   if (!road) return null;
+  // `alongConnections` is derived with hidden entries included; the hidden
+  // flag lives on the authored `access` connection, matched by sceneId. The
+  // two endpoint junctions are always visible — you can see where a road
+  // leads even before you have found every doorway along it.
+  const hiddenAccessIds = new Set(
+    (road.connections ?? [])
+      .filter((c) => c.role === "access" && c.hidden)
+      .map((c) => c.targetId)
+  );
   return {
     id: road.id,
     kind: "road",
     name: road.name,
     description: road.description ?? "",
     conditions: dgsm.getSceneConditions(road.id),
-    items: road.items ?? [],
+    items: visibleItems(road.items),
     adjacentIds: [
       road.endpointA,
       road.endpointB,
-      ...road.alongConnections.map((a) => a.sceneId),
+      ...road.alongConnections
+        .filter((a) => !hiddenAccessIds.has(a.sceneId))
+        .map((a) => a.sceneId),
     ],
   };
+}
+
+/** Items minus the ones not yet revealed. */
+function visibleItems(items: Item[] | undefined): Item[] {
+  return (items ?? []).filter((item) => !item.hidden);
 }
 
 /** Same view, addressed by id — for callers holding only a location id
@@ -155,4 +186,3 @@ export function charactersAtSameLocation(
   }
   return out;
 }
-

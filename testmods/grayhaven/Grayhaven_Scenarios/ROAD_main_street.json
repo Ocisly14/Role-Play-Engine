@@ -1,0 +1,26 @@
+{
+  "schemaVersion": 2,
+  "id": "ROAD_main_street",
+  "name": "主街",
+  "description": "贯穿灰港的主街,从北端走到南端要一刻钟。街两侧是繁荣年代留下的假立面商铺楼,一半橱窗钉着木板,电线在雾里下垂。北端连着镇子还算热闹的北半 [exit.main_street.north_end],南端通向更冷清的南半 [exit.main_street.south_end]。傍晚雾漫进街口的时候,路灯会一盏接一盏亮起来——最近,它们时不时会闪。",
+  "parentLocationId": "OUTDOOR",
+  "travelTimeMinutes": 15,
+  "references": {
+    "items": [],
+    "connections": [
+      {
+        "id": "exit.main_street.north_end",
+        "targetId": "JUNC_main_north",
+        "name": "主街北端",
+        "role": "endpointA"
+      },
+      {
+        "id": "exit.main_street.south_end",
+        "targetId": "JUNC_main_south",
+        "name": "主街南端",
+        "role": "endpointB"
+      }
+    ],
+    "conditions": []
+  }
+}

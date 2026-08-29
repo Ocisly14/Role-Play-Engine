@@ -82,9 +82,17 @@ function makeContext(opts: {
       worldInvariants: [],
     },
     state: {
-      scenes: [
+      graph: {
+        macroLocations: [],
+        places: [
+          { id: "SCN_1", kind: "scene", name: "Study", parentLocationId: "L1" },
+        ],
+        edges: [],
+      },
+      places: [
         {
           id: "SCN_1",
+          kind: "scene",
           name: "Study",
           description: "",
           parentLocationId: "L1",
@@ -105,6 +113,7 @@ function makeContext(opts: {
         { id: "lock_1", name: "cabinet lock", holder: "scene:SCN_1" },
         { id: "pick_1", name: "lockpicks", holder: "npc_1" },
       ],
+      itemHolders: { lock_1: "scene:SCN_1", pick_1: "npc_1" },
       characters: [
         {
           id: "npc_1",

@@ -1,0 +1,26 @@
+{
+  "schemaVersion": 2,
+  "id": "ROAD_sawmill_redwood",
+  "name": "锯木厂北径",
+  "description": "从锯木厂后场向北的林径,一小时十分钟。起点在废墟边缘 [exit.sawmill_redwood.sawmill_end],尽头钻进那圈环生的老红杉 [exit.sawmill_redwood.redwood_end]。越往北树越粗,林子越静,人声在这里显得又小又多余。",
+  "parentLocationId": "OUTDOOR",
+  "travelTimeMinutes": 70,
+  "references": {
+    "items": [],
+    "connections": [
+      {
+        "id": "exit.sawmill_redwood.sawmill_end",
+        "targetId": "JUNC_sawmill",
+        "name": "南端(锯木厂)",
+        "role": "endpointA"
+      },
+      {
+        "id": "exit.sawmill_redwood.redwood_end",
+        "targetId": "JUNC_redwood_ring",
+        "name": "北端(红杉环)",
+        "role": "endpointB"
+      }
+    ],
+    "conditions": []
+  }
+}

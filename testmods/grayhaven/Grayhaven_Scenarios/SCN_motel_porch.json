@@ -1,0 +1,37 @@
+{
+  "schemaVersion": 2,
+  "id": "SCN_motel_porch",
+  "name": "汽车旅馆外廊",
+  "description": "一条带顶的水泥外廊沿着客房一字排开,漆皮剥落的立柱数过去有八根,大多数房门后面是拉死的窗帘。廊下摆着几把褪色的折叠躺椅 [item.motel_porch.deck_chairs],帆布被海风吹得发脆——偶尔有人在雾夜里坐在那儿,朝公路岔口的方向望着。整条外廊常年挂着海雾的湿气 [cond.motel_porch.sea_damp],栏杆摸上去总是潮的,水泥地上一圈圈返着盐霜。一头的木门 [exit.motel_porch.lobby_door] 通回前台;4 号房的房门 [exit.motel_porch.room4_door] 在外廊中段,正对着前台方向的视线。",
+  "parentLocationId": "LOC_motel",
+  "references": {
+    "items": [
+      {
+        "id": "item.motel_porch.deck_chairs",
+        "name": "折叠躺椅",
+        "description": "几把帆布褪色的折叠躺椅,被海风吹得发脆,其中一把明显最近常有人坐。",
+        "type": "other"
+      }
+    ],
+    "connections": [
+      {
+        "id": "exit.motel_porch.lobby_door",
+        "targetId": "SCN_motel_lobby",
+        "name": "前台门",
+        "description": "外廊一头的木门,通回前台。"
+      },
+      {
+        "id": "exit.motel_porch.room4_door",
+        "targetId": "SCN_motel_room4",
+        "name": "4 号房房门",
+        "description": "外廊中段的 4 号房门,门牌的铜字擦得很亮。"
+      }
+    ],
+    "conditions": [
+      {
+        "id": "cond.motel_porch.sea_damp",
+        "description": "常年不散的海雾湿气,栏杆总是潮的,水泥地返着盐霜。"
+      }
+    ]
+  }
+}

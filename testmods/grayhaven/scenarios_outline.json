@@ -1,0 +1,146 @@
+{
+  "scenarios": [
+    {
+      "id": "LOC_main_north",
+      "name": "主街北段",
+      "description": "主街靠北的一段,灰港还算有人气的地方:蓝鸟餐馆、杂货店兼邮局和警长办公室都临着这段街。假立面商铺楼是繁荣年代的遗物,一半橱窗钉着木板。",
+      "subSceneCount": 1,
+      "entrySceneId": "JUNC_main_north"
+    },
+    {
+      "id": "LOC_main_south",
+      "name": "主街南段",
+      "description": "主街冷清的南半段:街机厅、电视维修铺和诊所临街,后街通向雷耶斯家,南端的下坡道通向码头。",
+      "subSceneCount": 1,
+      "entrySceneId": "JUNC_main_south"
+    },
+    {
+      "id": "LOC_bluebird_diner",
+      "name": "蓝鸟餐馆",
+      "description": "灰港白天的社交中心,前身是葡式咖啡馆。多数镇民每天至少来一次;老板娘多洛蕾丝住在楼上,收音机永远调在 KGRV。",
+      "residents": [
+        "npc_dolores_medeiros"
+      ],
+      "subSceneCount": 3,
+      "entrySceneId": "SCN_bluebird_dining"
+    },
+    {
+      "id": "LOC_grocery_store",
+      "name": "杂货店兼邮局",
+      "description": "全镇最老的字号,店堂里带着邮政柜台,是买东西、寄信和听小道消息的地方。玛丽索尔·雷耶斯经营,她的儿子在后仓帮工。",
+      "subSceneCount": 2,
+      "entrySceneId": "SCN_grocery_store"
+    },
+    {
+      "id": "LOC_arcade",
+      "name": "街机厅「星港」",
+      "description": "去年才开张的街机厅,空店面二十年来的第一位新租客,整日轰鸣着电子音——孩子们的据点。",
+      "subSceneCount": 1,
+      "entrySceneId": "SCN_arcade"
+    },
+    {
+      "id": "LOC_batra_shop",
+      "name": "电视维修铺(巴特拉家)",
+      "description": "全镇唯一懂电子设备的地方,德夫·巴特拉经营;楼上就是巴特拉家的住处,店与家由室内楼梯相连。",
+      "residents": [
+        "npc_dev_batra",
+        "npc_anita_batra",
+        "npc_priya_batra"
+      ],
+      "subSceneCount": 4,
+      "entrySceneId": "SCN_batra_shop"
+    },
+    {
+      "id": "LOC_sheriff_office",
+      "name": "警长办公室",
+      "description": "雷·霍尔特警长与科尔副警长的工作场所。前厅是科尔的桌子和档案柜,里间是警长的办公室,拘留室空着。",
+      "residents": [
+        "npc_cole_baxter"
+      ],
+      "subSceneCount": 3,
+      "entrySceneId": "SCN_sheriff_front"
+    },
+    {
+      "id": "LOC_clinic",
+      "name": "诊所",
+      "description": "韦弗医生坐诊兼居住的镇诊所,苏珊·霍尔特任护士。候诊室是镇上又一个闲聊节点。",
+      "residents": [
+        "npc_doc_weaver"
+      ],
+      "subSceneCount": 3,
+      "entrySceneId": "SCN_clinic_waiting"
+    },
+    {
+      "id": "LOC_dock",
+      "name": "码头与海滩",
+      "description": "灰港的木码头和灰沙海滩,渔船、盐雾和葡语旧船名。雾从海上来的时候,这里最先被吞掉。",
+      "subSceneCount": 1,
+      "entrySceneId": "JUNC_dock"
+    },
+    {
+      "id": "LOC_reyes_house",
+      "name": "雷耶斯家",
+      "description": "主街后的小房子,玛丽索尔和儿子汤米的家。",
+      "residents": [
+        "npc_marisol_reyes",
+        "npc_tommy_reyes"
+      ],
+      "subSceneCount": 3,
+      "entrySceneId": "SCN_reyes_living"
+    },
+    {
+      "id": "LOC_holt_house",
+      "name": "霍尔特家",
+      "description": "镇边带院子的老房子,霍尔特家三代同堂:警长雷、承包商弗兰克、护士苏珊和小儿子丹尼。后院的树篱豁口正对林道口。",
+      "residents": [
+        "npc_ray_holt",
+        "npc_frank_holt",
+        "npc_susan_holt",
+        "npc_denny_holt"
+      ],
+      "subSceneCount": 6,
+      "entrySceneId": "JUNC_holt_gate"
+    },
+    {
+      "id": "LOC_earl_cabin",
+      "name": "厄尔的小屋",
+      "description": "码头边崖径旁的独居小屋,退休灯塔守厄尔·普鲁伊特的住处,一间屋就是他的一生。",
+      "residents": [
+        "npc_earl_pruitt"
+      ],
+      "subSceneCount": 1,
+      "entrySceneId": "SCN_earl_cabin"
+    },
+    {
+      "id": "LOC_motel",
+      "name": "汽车旅馆",
+      "description": "镇北旧海岸公路旁的汽车旅馆,1959 年赌高速穿镇而建,从此半空置。外来客的落脚点;公路岔口旁有货运中转棚。",
+      "residents": [
+        "npc_vance"
+      ],
+      "subSceneCount": 5,
+      "entrySceneId": "JUNC_motel"
+    },
+    {
+      "id": "LOC_lighthouse_cliff",
+      "name": "灯塔崖",
+      "description": "镇南海崖上的老灯塔,1982 年起自动运转,铁门常年上锁。俯瞰全镇的制高点,风从不停歇。",
+      "subSceneCount": 2,
+      "entrySceneId": "JUNC_lighthouse_cliff"
+    },
+    {
+      "id": "LOC_gate",
+      "name": "自动大门",
+      "description": "北山车行道终点的无人大门,挂着「美国政府财产 · 禁止入内」的告示。普通镇民的合法世界到此为止。",
+      "subSceneCount": 1,
+      "entrySceneId": "JUNC_gate"
+    },
+    {
+      "id": "LOC_station",
+      "name": "雷德利站",
+      "description": "深处北山的海军气象观测站,铁丝网、天线阵和一片看不见人影的场院。全镇只有送货的卡车定期进出。",
+      "subSceneCount": 2,
+      "entrySceneId": "JUNC_station_yard"
+    }
+  ]
+}

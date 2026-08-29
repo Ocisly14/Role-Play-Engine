@@ -1,10 +1,13 @@
 // src/engine/resolution/types.ts
 //
 // Contracts of the unified World Action Engine resolution phase (plan D7 /
-// Phase 7). The Engine receives one verifiable, replayable
-// EngineResolutionContext per triggered tick — always the FULL world
-// authoritative snapshot, never a pre-trimmed "relevant" subset — plus all
-// new commands and all active actions, and returns one TickResolution.
+// Phase 7, two-tier context since M3). The Engine receives one verifiable,
+// replayable EngineResolutionContext per triggered tick: Tier 1 is the whole
+// world as a graph (every place and every connection, no prose), Tier 2 is
+// the full snapshot of only the places this tick's actions touch. Characters
+// stay complete, and the validation lookup (`state.itemHolders` plus the
+// graph) is built from the FULL state, so what the prompt trims never
+// narrows what the validator accepts.
 
 import type { CharacterPosition } from "../../state/topologyTypes.js";
 import type {
@@ -26,14 +29,47 @@ export interface ItemSnapshot {
   name: string;
   description?: string;
   type?: string;
-  /** "scene:<sceneId>" or a character id — same grammar as DGSM item moves. */
+  /** "scene:<placeId>" or a character id — same grammar as DGSM item moves. */
   holder: string;
+  /** The Engine is all-knowing: hidden items appear here (that is what makes
+   *  revealing them possible), flagged so it knows characters cannot see them. */
+  hidden?: boolean;
   damaged?: boolean;
   properties?: Record<string, unknown>;
 }
 
-export interface SceneSnapshot {
+export type PlaceKind = "scene" | "junction" | "road";
+
+/** Tier 1: the world as a graph — every place and every authored connection,
+ *  no prose. Always injected whole, so the Engine can reason about reach and
+ *  routing anywhere even when only a few places carry full snapshots. */
+export interface WorldGraph {
+  macroLocations: Array<{ id: string; name: string }>;
+  places: Array<{
+    id: string;
+    kind: PlaceKind;
+    name: string;
+    parentLocationId: string;
+  }>;
+  edges: Array<{
+    /** The authored connection id (`exit.*`) — the handle connectionBlock /
+     *  connectionHidden operations take. */
+    connectionId: string;
+    /** The place whose file declares the connection. */
+    from: string;
+    to: string;
+    /** Full-length walk time; set on road endpoint edges. */
+    travelTimeMinutes?: number;
+    hidden?: boolean;
+    blockedReason?: string;
+  }>;
+}
+
+/** Tier 2: the full snapshot of one INVOLVED place — a scene, junction or
+ *  road an action touches this tick. */
+export interface PlaceSnapshot {
   id: string;
+  kind: PlaceKind;
   name: string;
   description: string;
   parentLocationId: string;
@@ -41,6 +77,7 @@ export interface SceneSnapshot {
   conditions: SceneCondition[];
   itemIds: string[];
   connections: Array<{
+    connectionId: string;
     targetId: string;
     description?: string;
     hidden?: boolean;
@@ -138,8 +175,17 @@ export interface EngineResolutionContext {
   };
 
   state: {
-    scenes: SceneSnapshot[];
+    /** Tier 1 — the whole world, as a graph. */
+    graph: WorldGraph;
+    /** Tier 2 — full snapshots of the involved places only. */
+    places: PlaceSnapshot[];
+    /** Items at the involved places plus the involved actors' inventories. */
     items: ItemSnapshot[];
+    /** FULL-world item-id → holder map. Validation reads this (never the
+     *  trimmed `items` list), so an item at an uninvolved place is still a
+     *  real reference. Not rendered into the prompt. */
+    itemHolders: Record<string, string>;
+    /** ALL characters, untrimmed. */
     characters: CharacterSnapshot[];
   };
 
