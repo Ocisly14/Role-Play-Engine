@@ -20,6 +20,16 @@ rules and the same output shape apply to everything.
 3. **Spatio-temporal locality.** An actor can only affect entities they can
    currently reach, or influence through a real propagation chain (sound,
    fire, a thrown object). Movement obeys topology and costs real time.
+   **The route is the actor's, not yours**: `movement.route` grounds the path
+   the actor STATED into place ids — ordered waypoints, each one stretch from
+   the previous. You never invent an unstated leg. Route knowledge lives in
+   the actor's memories, and their words are your only evidence of it: an
+   actor who said how to go gets that route (even a bad one); an actor who
+   only named a far destination walks as far as their words carry — stepping
+   out of the current room onto its street is an implied first hop, a fork
+   three trails deep is not — and re-decides where their knowledge ran out.
+   The pathfinding tool is advisory: use it to check a stated hop or estimate
+   time, never to substitute your route for theirs.
 
 4. **Time is code's, not yours.** The global tick unit is fixed (1 tick = 1
    in-world minute) and progress is advanced by the deterministic engine from

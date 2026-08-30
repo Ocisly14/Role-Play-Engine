@@ -280,7 +280,7 @@ export type WorldActionEngineResult =
       ok: true;
       resolution: TickResolution;
       /** Movement-leg runtime annotations per actionId. */
-      movementInits: Record<string, { destinationId: string }>;
+      movementInits: Record<string, { route: string[] }>;
       /** The bar the Engine set for an action as it starts, per actionId. */
       checkInits: Record<
         string,

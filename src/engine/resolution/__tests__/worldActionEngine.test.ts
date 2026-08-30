@@ -124,7 +124,7 @@ const validSubmission = {
       actionId: "action_c1",
       resolvedDurationTicks: 5,
       timingReason: "route takes five minutes",
-      movement: { destinationId: "SCN_FAR" },
+      movement: { route: ["SCN_FAR"] },
     },
   ],
 };
@@ -176,7 +176,7 @@ describe("resolveTick session loop", () => {
       }),
     ]);
     expect(result.movementInits.action_c1).toEqual({
-      destinationId: "SCN_FAR",
+      route: ["SCN_FAR"],
     });
     expect(result.codeToolInvocations).toHaveLength(1);
     expect(result.codeToolInvocations[0]).toMatchObject({

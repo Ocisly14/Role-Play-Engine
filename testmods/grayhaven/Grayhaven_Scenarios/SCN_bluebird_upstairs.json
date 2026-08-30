@@ -2,7 +2,7 @@
   "schemaVersion": 2,
   "id": "SCN_bluebird_upstairs",
   "name": "蓝鸟餐馆·楼上住处",
-  "description": "楼上是 Dolores 的住处:小客厅连着卧室,窗子朝着主街,雾天里能听见楼下门铃每一次响动。屋里浆洗过的桌布铺得笔挺,处处是几十年攒下的体面。一整面墙的相框[item.bluebird_upstairs.photo_wall]从外祖父母的葡式咖啡馆一路排到儿女的毕业照,Manny 的渔船照片挂在正中,擦得最亮。五斗柜上摊着一本手抄食谱[item.bluebird_upstairs.recipe_book],葡语写就,页边叠着几代人的批注。楼梯下去就是后厨[SCN_bluebird_kitchen],蛋挞出炉的香气会顺着楼梯爬上来。",
+  "description": "楼上是 Dolores 的住处:小客厅连着卧室,窗子朝着主街,一张摇椅[item.bluebird_upstairs.rocking_chair]正对着窗,雾天里她常坐在那儿,能听见楼下门铃每一次响动。屋里浆洗过的桌布[item.bluebird_upstairs.tablecloth]铺得笔挺,处处是几十年攒下的体面。一整面墙的相框[item.bluebird_upstairs.photo_wall]从外祖父母的葡式咖啡馆一路排到儿女的毕业照,Manny 的渔船照片挂在正中,擦得最亮。五斗柜上摊着一本手抄食谱[item.bluebird_upstairs.recipe_book],葡语写就,页边叠着几代人的批注。楼梯下去就是后厨[SCN_bluebird_kitchen],蛋挞出炉的香气会顺着楼梯爬上来。",
   "parentLocationId": "LOC_bluebird_diner",
   "indoor": true,
   "references": {
@@ -15,8 +15,17 @@
       {
         "id": "item.bluebird_upstairs.recipe_book",
         "name": "手抄食谱",
-        "description": "外祖母传下的葡语手抄食谱,纸页发脆,页边是几代人不同笔迹的批注。蛋挞那一页被翻得最旧。",
-        "type": "document"
+        "description": "外祖母传下的葡语手抄食谱,纸页发脆,页边是几代人不同笔迹的批注。蛋挞那一页被翻得最旧。"
+      },
+      {
+        "id": "item.bluebird_upstairs.rocking_chair",
+        "name": "窗边摇椅",
+        "description": "一张对着主街窗的旧摇椅,扶手漆面磨得露出木色,坐垫压出了常年一个人的形状。"
+      },
+      {
+        "id": "item.bluebird_upstairs.tablecloth",
+        "name": "浆洗桌布",
+        "description": "浆得笔挺的白桌布,边角绣着细密的葡式花纹,洗得发白却没有一丝褶皱。"
       }
     ],
     "connections": [

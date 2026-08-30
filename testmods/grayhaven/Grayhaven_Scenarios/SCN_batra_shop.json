@@ -10,8 +10,7 @@
       {
         "id": "item.batra_shop.repair_ledger",
         "name": "维修记录本",
-        "description": "Dev 的维修记录本:蓝笔记日期与机型,黑笔记症状,红笔记根因,一单不落。翻到近几个月,雪花屏和串台的条目密得挤成一片。",
-        "type": "document"
+        "description": "Dev 的维修记录本:蓝笔记日期与机型,黑笔记症状,红笔记根因,一单不落。翻到近几个月,雪花屏和串台的条目密得挤成一片。"
       },
       {
         "id": "item.batra_shop.tv_wall",

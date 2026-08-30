@@ -2,9 +2,25 @@
   "schemaVersion": 2,
   "id": "SCN_creek_ford",
   "name": "灰溪渡口",
-  "description": "灰溪在这里变宽变浅,一排被磨圆的踏石排到对岸,是过溪的唯一办法 [cond.creek_ford.stepping_stones]。溪水平时只到脚踝,暴雨之后会涨到没过踏石,湍得站不住人。两岸的林子长得一模一样,过了溪回头看一眼,来路和去路几乎分不出彼此。",
+  "description": "灰溪在这里变宽变浅,一排被磨圆的踏石排到对岸,是过溪的唯一办法 [cond.creek_ford.stepping_stones]。溪水平时只到脚踝,暴雨之后会涨到没过踏石,湍得站不住人。近岸的浅滩上堆着一片卵石,被水磨得又圆又滑,顺手捡一颗贴着水面甩出去,能连着跳出好几个水漂 [item.creek_ford.smooth_pebbles]。岸边一截倒伏的浮木架在两块石头之间,树皮早被水泡得发黑发软 [item.creek_ford.driftwood_snag]。石缝里钻出一丛水薄荷,踩过去就是一股清凉的气味 [item.creek_ford.wild_mint]。两岸的林子长得一模一样,过了溪回头看一眼,来路和去路几乎分不出彼此。",
   "references": {
-    "items": [],
+    "items": [
+      {
+        "id": "item.creek_ford.smooth_pebbles",
+        "name": "溪滩卵石",
+        "description": "堆在浅滩上的一片卵石,被常年的溪水磨得又圆又滑,是打水漂的好料。"
+      },
+      {
+        "id": "item.creek_ford.driftwood_snag",
+        "name": "浮木",
+        "description": "一截倒伏的浮木架在两块石头之间,树皮被水泡得发黑发软。"
+      },
+      {
+        "id": "item.creek_ford.wild_mint",
+        "name": "水薄荷",
+        "description": "石缝里钻出的一丛野生薄荷,踩过去会散出一股清凉的气味。"
+      }
+    ],
     "connections": [],
     "conditions": [
       {

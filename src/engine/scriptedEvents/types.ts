@@ -9,6 +9,18 @@ export interface ScriptedEvent {
   id: string;
   label: string; // human-readable, debug/log only
   initialStatus?: "active" | "disabled"; // default "active"
+  /** A recurring event re-arms instead of completing terminally: on
+   *  completion it returns to "active" with its trackers reset, and is
+   *  barred from re-firing within the same tick (see
+   *  `recurringCooldownTicks`). failWhen on a recurring event also
+   *  re-arms (runs onFail, back to "active", no cooldown stamp) instead
+   *  of failing terminally. Pair with a `timeOfDay` predicate for daily
+   *  schedules (the stage-set economy's restock). */
+  recurring?: boolean;
+  /** Recurring events only: minimum ticks between completions. Lets a
+   *  fireWhen WINDOW (timeOfDay gte/lte) fire once per day instead of
+   *  every minute of the window. Default: same-tick guard only. */
+  recurringCooldownTicks?: number;
 
   // Timing — DSL distinguishes "delay before event manifests" vs "duration the
   // event takes". Runtime collapses both into one `pending` phase whose
@@ -67,6 +79,23 @@ export type Predicate =
   | { op: "characterHasItem"; characterId: string; itemName: string }
   | { op: "sceneHasConditionFromFeature"; sceneId: string; featureId: string }
   | { op: "gameDate"; cmp: "gte" | "lte" | "eq"; value: string }
+  // Time-of-day, compared as "HH:MM" (lexicographic == chronological).
+  // With one-minute ticks, `eq` fires exactly once per day — the natural
+  // trigger for a recurring daily event.
+  | { op: "timeOfDay"; cmp: "gte" | "lte" | "eq"; value: string }
+  // Any living NPC standing in the scene. The stage-set economy's witness
+  // guard: wrap in `not` so a refill only happens while nobody watches.
+  | { op: "sceneOccupied"; sceneId: string }
+  // Current weather in a region (reads the weather subsystem's state
+  // directly — featureId-based scene conditions cannot tell rain from fog).
+  | {
+      op: "regionWeather";
+      regionId: string;
+      /** Match any of these types. */
+      types: string[];
+      /** Minimum intensity (1-5), default 1. */
+      minIntensity?: number;
+    }
   // ── Cross-event (D) ────────────────────────────────────
   | {
       op: "eventStatus";
@@ -136,6 +165,39 @@ export type Effect =
       connectionId: string;
       blocked: boolean;
       reason: string;
+      /** Vote identity override. The Applier's block table refcounts on
+       *  (featureId, reason); by default a scripted effect votes as
+       *  `scripted:<event id>`, which a DIFFERENT event cannot withdraw.
+       *  Give the raise-event and the lift-event the same featureId so a
+       *  flood laid by one event can recede by another. */
+      featureId?: string;
+    }
+  | {
+      kind: "connection.setHidden";
+      connectionId: string;
+      hidden: boolean;
+    }
+  | {
+      kind: "item.create";
+      /** Scene/road id the item appears in. */
+      location: string;
+      name: string;
+      description?: string;
+      /** Stable id to use verbatim when free (DGSM falls back to a
+       *  generated one on conflict, with a warning). Required when
+       *  `skipIfExists` is set. */
+      id?: string;
+      /** Restock semantics: create only if no item with this `id` is
+       *  currently AT `location` (location-scoped — a crate someone
+       *  carried away does not block the refill). */
+      skipIfExists?: boolean;
+    }
+  | {
+      kind: "item.move";
+      itemId: string;
+      /** Holder strings, e.g. "scene:SCN_x" or "npc:<id>". */
+      from: string;
+      to: string;
     }
   | { kind: "event.emit"; event: FeatureEvent }
   // Cross-event (D)
@@ -163,6 +225,9 @@ export interface ScriptedEventState {
   status: ScriptedEventStatus;
   scheduledCompleteTick: number | null; // set when status = "pending"; null otherwise
   trackerStates: Record<string, TrackerState>; // keyed by Tracker.id
+  /** Recurring events only: the tick of the last completion. Guards a
+   *  re-armed event from firing again inside the same tick's cascade. */
+  lastCompletedTick?: number | null;
 }
 
 export type TrackerState =

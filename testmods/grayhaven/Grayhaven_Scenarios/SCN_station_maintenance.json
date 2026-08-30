@@ -1,0 +1,36 @@
+{
+  "schemaVersion": 2,
+  "id": "SCN_station_maintenance",
+  "name": "雷德利站·维护间",
+  "description": "一个窄小的房间,像一间更衣室,又像一条传送线的末端。一根金属轨道横贯左右、一端没入墙上的方口 [item.station_maintenance.rail_hatch],轨道上挂着一排黑西装 [item.station_maintenance.black_suits],尺寸各异,从瘦小到魁梧,其间散着几只空衣架。西装下方,一排同款黑皮鞋沿墙根摆开 [item.station_maintenance.black_shoes],鞋号对着上方每一套衣服。没有镜子,没有长凳,没有别的。门在身后,通回控制大厅 [SCN_station_hall]。",
+  "parentLocationId": "LOC_station",
+  "indoor": true,
+  "references": {
+    "items": [
+      {
+        "id": "item.station_maintenance.rail_hatch",
+        "name": "轨道与墙口",
+        "description": "挂衣轨道是传动的,一端没入墙上一个不大不小的方口,口内一片黑。轨道偶尔极轻地颤一下,像远处有什么走上了这条线——衣架之间的间距始终均匀,看不出是取走了几件,还是送来了几件。"
+      },
+      {
+        "id": "item.station_maintenance.black_suits",
+        "name": "一排黑西装",
+        "description": "同一种黑,同一种剪裁,只有尺寸不同。面料没有一丝褶皱,袖口没有磨痕,内袋里什么都没有——没有标签,没有线头,像从来没被穿过,又像随时会被穿上。"
+      },
+      {
+        "id": "item.station_maintenance.black_shoes",
+        "name": "一排黑皮鞋",
+        "description": "沿墙根摆开的黑皮鞋,鞋头一条线,亮得能照出天花板的灯。每一双的尺码正对上方那套西装。鞋底干干净净——从来没沾过灰港的泥。"
+      }
+    ],
+    "connections": [
+      {
+        "id": "exit.station_maintenance.hall_door",
+        "targetId": "SCN_station_hall",
+        "name": "维护间门",
+        "description": "通回控制大厅的窄门。"
+      }
+    ],
+    "conditions": []
+  }
+}

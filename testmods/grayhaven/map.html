@@ -138,9 +138,9 @@
 
 <div class="wrap">
   <header>
-    <span class="kicker">Grayhaven · 1985 · 拓扑草案 v2</span>
+    <span class="kicker">Grayhaven · 1985 · 拓扑草案 v3</span>
     <h1>灰港镇测绘图</h1>
-    <p class="sub">16 个大场景(含站前自动大门)+ 6 个林区节点。边上的数字是<b>步行分钟</b>(= tick 数);圆点虚线为车行道,灰虚线为林径,红色虚线为围栏。主街南北贯穿约 30′,雷德利站步行单程约 6 小时。示意图,非等比 —— 距离以标注分钟为准。</p>
+    <p class="sub">主街是一条 <b>15′ 的道路</b>,六家临街店铺按位置(@0–1)挂在沿线,两端是主街北口/南口两个路口节点;加 6 个林区节点与站前自动大门。边上的数字是<b>步行分钟</b>(= tick 数);圆点虚线为车行道,灰虚线为林径,红色虚线为围栏。雷德利站步行单程约 6 小时。示意图,非等比 —— 距离以标注分钟为准。</p>
   </header>
 
   <div class="mapbox">
@@ -159,9 +159,6 @@
     <text class="region" x="905" y="530">林 区 · 迷 雾</text>
 
     <!-- ===== edges: town ===== -->
-    <!-- north-south street connector -->
-    <path class="edge-road" d="M443,375 L443,430"/>
-    <text class="elabel" x="452" y="407">15′</text>
     <!-- north seg to Holt -->
     <path class="edge-road" d="M440,250 C448,222 462,200 476,184"/>
     <text class="elabel" x="408" y="215">20′</text>
@@ -183,10 +180,17 @@
     <path class="edge" d="M466,450 L513,448"/>
     <path class="edge" d="M466,505 L509,505"/>
     <path class="edge" d="M420,460 L359,458"/>
-    <text class="elabel-note" x="472" y="242">临街店铺 各 2′</text>
-    <!-- south seg to reyes -->
-    <path class="edge" d="M462,548 C490,568 515,578 537,583"/>
-    <text class="elabel" x="490" y="596">8′</text>
+    <text class="elabel-note" x="474" y="262">餐馆 @.10</text>
+    <text class="elabel-note" x="474" y="334">杂货 @.18</text>
+    <text class="elabel-note" x="370" y="296">警局 @.25</text>
+    <text class="elabel-note" x="474" y="442">街机 @.62</text>
+    <text class="elabel-note" x="474" y="524">维修 @.72</text>
+    <text class="elabel-note" x="366" y="482">诊所 @.82</text>
+    <text class="elabel-note" x="248" y="402">街面锚点:路灯 · 长椅 · 邮筒 · 公告栏</text>
+    <!-- south crossroads to reyes gate (backstreet) -->
+    <path class="edge" d="M478,552 C500,568 518,578 537,583"/>
+    <text class="elabel" x="496" y="598">8′</text>
+    <text class="elabel-note" x="508" y="612">后巷</text>
     <!-- south seg to dock -->
     <path class="edge-road" d="M420,545 C382,530 340,520 305,512"/>
     <text class="elabel" x="352" y="502">15′</text>
@@ -249,10 +253,12 @@
     <text class="nname" x="492" y="160" text-anchor="middle">Holt 家</text>
     <text class="nsub" x="492" y="176" text-anchor="middle">三代同堂</text>
 
-    <rect class="street-spine" x="420" y="250" width="46" height="125" rx="10"/>
-    <text class="nname-s" x="443" y="313" text-anchor="middle" transform="rotate(-90 443 313)">主街北段</text>
-    <rect class="street-spine" x="420" y="430" width="46" height="125" rx="10"/>
-    <text class="nname-s" x="443" y="493" text-anchor="middle" transform="rotate(-90 443 493)">主街南段</text>
+    <rect class="street-spine" x="420" y="272" width="46" height="256" rx="10"/>
+    <text class="nname-s" x="443" y="400" text-anchor="middle" transform="rotate(-90 443 400)">主街 · 15′</text>
+    <rect class="npublic" x="408" y="238" width="70" height="30" rx="5"/>
+    <text class="nname-s" x="443" y="258" text-anchor="middle">主街北口</text>
+    <rect class="npublic" x="408" y="532" width="70" height="30" rx="5"/>
+    <text class="nname-s" x="443" y="552" text-anchor="middle">主街南口</text>
 
     <rect class="npublic" x="260" y="252" width="104" height="36" rx="5"/>
     <text class="nname" x="312" y="275" text-anchor="middle">警长办公室</text>
@@ -271,7 +277,7 @@
 
     <rect class="nhome" x="537" y="566" width="96" height="40" rx="5"/>
     <text class="nname" x="585" y="586" text-anchor="middle">Reyes 家</text>
-    <text class="nsub" x="585" y="600" text-anchor="middle">后街</text>
+    <text class="nsub" x="585" y="600" text-anchor="middle">后巷尽头 · 门口小院</text>
 
     <rect class="npublic" x="205" y="505" width="100" height="50" rx="5"/>
     <text class="nname" x="255" y="525" text-anchor="middle">码头 / 海滩</text>
@@ -323,13 +329,13 @@
   <div class="legend">
     <span><i class="dot pub"></i>公共场景</span>
     <span><i class="dot home"></i>住宅</span>
-    <span><i class="dot wood"></i>林区节点(不在初始拓扑记忆中)</span>
+    <span><i class="dot wood"></i>林区节点(多数角色的档案记忆里没有)</span>
     <span><i class="dot res"></i>受限区域</span>
     <span><i class="sw"></i>道路</span>
     <span><i class="sw trail"></i>林径</span>
     <span><i class="sw drive"></i>车行道</span>
     <span><i class="sw fence"></i>围栏(不可通行)</span>
-    <span class="mono">N′ = 步行分钟(tick)</span>
+    <span class="mono">N′ = 步行分钟(tick) · @x = 沿主街位置(0=北口)</span>
   </div>
 
   <h2>连接边表</h2>
@@ -338,14 +344,13 @@
   <table>
     <thead><tr><th>连接</th><th>步行</th><th>备注</th></tr></thead>
     <tbody>
-      <tr><td>主街北段 ↔ 主街南段</td><td class="min">15′</td><td>两段各有约 15′ 街面,端到端 30′+</td></tr>
-      <tr><td>临街店铺 ↔ 所在街段(北:餐馆 / 杂货店 / 警长办公室;南:街机厅 / 维修铺 / 诊所)</td><td class="min">各 2′</td><td></td></tr>
-      <tr><td>主街南段 ↔ Reyes 家</td><td class="min">8′</td><td>后街小巷</td></tr>
-      <tr><td>主街南段 ↔ 码头 / 海滩</td><td class="min">15′</td><td>下坡道</td></tr>
+      <tr><td>主街北口 ↔ 主街南口</td><td class="min">15′</td><td>主街(一条 ROAD);店铺挂沿线:餐馆 @0.10 / 杂货店 @0.18 / 警长办 @0.25 / 街机厅 @0.62 / 维修铺 @0.72 / 诊所 @0.82;街面锚点:路灯 @0.05、长椅、邮筒、公告栏</td></tr>
+      <tr><td>主街南口 ↔ Reyes 家门口</td><td class="min">8′</td><td>后巷(ROAD_backstreet)</td></tr>
+      <tr><td>主街南口 ↔ 码头 / 海滩</td><td class="min">15′</td><td>下坡道</td></tr>
       <tr><td>码头 ↔ Earl 的小屋</td><td class="min">5′</td><td></td></tr>
       <tr><td>码头 / 海滩 ↔ 灯塔崖</td><td class="min">30′</td><td>崖间小径,唯一通路;Earl 的每日仪式</td></tr>
-      <tr><td>主街北段 ↔ Holt 家</td><td class="min">20′</td><td>镇北边缘</td></tr>
-      <tr><td>主街北段 ↔ 汽车旅馆</td><td class="min">25′</td><td>旧海岸公路,镇北入口</td></tr>
+      <tr><td>主街北口 ↔ Holt 家</td><td class="min">20′</td><td>镇北边缘</td></tr>
+      <tr><td>主街北口 ↔ 汽车旅馆</td><td class="min">25′</td><td>旧海岸公路,镇北入口</td></tr>
       <tr><td>汽车旅馆 ↔ 自动大门</td><td class="min">车 30′</td><td>车行道,步行约 4.5h;Frank 的送货路线;与林区不相连</td></tr>
       <tr><td>自动大门 ↔ 雷德利站(装卸区)</td><td class="min">车 5′</td><td>步行 15′;大门感应到 Frank 的货车自动开启 —— 无人岗哨,普通镇民的合法世界到此为止</td></tr>
     </tbody>
@@ -356,7 +361,7 @@
   <table>
     <thead><tr><th>连接</th><th>步行</th><th>备注</th></tr></thead>
     <tbody>
-      <tr><td>主街北段 ↔ 林道口</td><td class="min">10′</td><td>全镇人人知道的唯一入口;Holt 家后院豁口在林道 10′ 处汇入</td></tr>
+      <tr><td>主街北口 ↔ 林道口</td><td class="min">10′</td><td>全镇人人知道的唯一入口;Holt 家后院豁口在林道 10′ 处汇入</td></tr>
       <tr><td>林道口 ↔ 灰溪渡口</td><td class="min">70′</td><td>踏石过溪;<b>暴雨后涨水不可通行</b></td></tr>
       <tr><td>灰溪渡口 ↔ 旧锯木厂</td><td class="min">90′</td><td>主路线,沿老集材道</td></tr>
       <tr><td>林道口 ↔ 旧铁路路基</td><td class="min">60′</td><td>废弃伐木铁路,笔直好认</td></tr>
@@ -373,8 +378,8 @@
 
   <h2>布局依据</h2>
   <ul class="why">
-    <li><b>尺度是真实小镇级的</b>:主街纵贯 30′,镇核心任意两点 30–45′,灯塔单程 45′,雷德利站步行 6h —— 距离本身成为叙事资源(远征、迟归、错过)。</li>
-    <li><b>林区是迷宫,不是房间</b>:6 个节点、11 条边、多重环路,雾谷是四路交汇的迷路枢纽;锯木厂线与雾谷线到围栏同为 370′ —— 两条六小时的路,谁也说不清哪条更快。内部节点不写入镇民的初始拓扑记忆 —— 认路知识靠角色自己写 <span class="mono">map</span> 记忆积累;孩子们画的探险地图就是字面意义上的 map 记忆。例外:Earl、Ray 这辈人(伐木时代)记得路网,Frank 只认车行道。</li>
+    <li><b>尺度是真实小镇级的</b>:主街纵贯 15′(距离真实存在于街上 —— 走在街上能看见走到哪家门口),镇核心任意两点 10–45′,灯塔单程 45′,雷德利站步行 6h —— 距离本身成为叙事资源(远征、迟归、错过)。</li>
+    <li><b>林区是迷宫,不是房间</b>:6 个节点、11 条边、多重环路,雾谷是四路交汇的迷路枢纽;锯木厂线与雾谷线到围栏同为 370′ —— 两条六小时的路,谁也说不清哪条更快。认路知识全部是记忆:开局那份按认知分层写在各角色档案里(Earl、Ray 全路网;孩子团到锯木厂;Frank 只认车行道;其余仅林道口),之后靠角色自己写 <span class="mono">map</span> 记忆积累 —— 孩子们画的探险地图就是字面意义上的 map 记忆。</li>
     <li><b>旧锯木厂是"前进营地"</b>(单程约 2.5h):孩子们够得着的冒险极限,他们的"证据收集"大多发生在此。<b>围栏则是传说</b> —— 单程 6h,他们从未真正到过,是"总有一天"的远征。</li>
     <li><b>两条进站路性质不同</b>:车行道(合法,尽头是感应自动开启的无人大门,只有 Frank 走)与林区围栏(不可通行)。"受限可进"与"完全不可进"各占一条路 —— 而雷德利站本身是<b>无人的</b>:Frank 八年送货从没见过一个人。</li>
     <li><b>汽车旅馆在北入口</b>:上山岔路从旅馆旁经过 —— Vance 选这家旅馆,就是为了数每一辆去雷德利站的车。</li>
@@ -386,6 +391,6 @@
     <div class="qcard"><span class="qn">Q1</span><h3>林区密度</h3><p>6 个节点、11 条边、多重环路。节点数还要不要再加(废弃瞭望塔、老矿洞)?</p></div>
     <div class="qcard"><span class="qn">Q2</span><h3>动态封边怎么做</h3><p>灰溪涨水、浓雾锁谷:用 blockedConnections 动态封,还是保留边、由 Engine 在移动裁决时拦截并叙述?</p></div>
     <div class="qcard"><span class="qn">Q3</span><h3>围栏建模</h3><p>红杉环—围栏这条边:blockedConnections 封死,还是保留、由 Engine 裁决拦截(能演出"翻围栏"的尝试)?</p></div>
-    <div class="qcard"><span class="qn">Q4</span><h3>车辆速度档</h3><p>Frank 的货车走车行道 35′(步行同程约 5h)。移动运行时目前只有步行速度 —— 需要引擎侧支持非步行速度档。(初始拓扑知情名单已定稿,见 characters/ 各文件。)</p></div>
+    <div class="qcard"><span class="qn">Q4</span><h3>车辆速度档</h3><p>Frank 的货车走车行道 35′(步行同程约 5h)。移动运行时目前只有步行速度 —— 需要引擎侧支持非步行速度档。(知情名单已落进 grayhaven_npc/ 各档案的 map 记忆。)</p></div>
   </div>
 </div>

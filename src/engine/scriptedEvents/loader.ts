@@ -152,6 +152,9 @@ const PREDICATE_OPS = [
   "characterHasItem",
   "sceneHasConditionFromFeature",
   "gameDate",
+  "timeOfDay",
+  "sceneOccupied",
+  "regionWeather",
   "eventStatus",
   "and",
   "or",
@@ -183,6 +186,9 @@ const EFFECT_KINDS = [
   "scene.addCondition",
   "scene.removeCondition",
   "connection.setBlock",
+  "connection.setHidden",
+  "item.create",
+  "item.move",
   "event.emit",
   "event.transition",
 ];
@@ -229,6 +235,17 @@ export function validateScriptedEvent(
   // Optional: durationTicks
   if (item.durationTicks !== undefined && !isNumber(item.durationTicks)) {
     pushErr(errors, file, `${path}.durationTicks`, "must be a number");
+  }
+  // Optional: recurring
+  if (item.recurring !== undefined && !isBoolean(item.recurring)) {
+    pushErr(errors, file, `${path}.recurring`, "must be a boolean");
+  }
+  // Optional: recurringCooldownTicks
+  if (
+    item.recurringCooldownTicks !== undefined &&
+    !isNumber(item.recurringCooldownTicks)
+  ) {
+    pushErr(errors, file, `${path}.recurringCooldownTicks`, "must be a number");
   }
 
   // Optional: trackers
@@ -436,6 +453,47 @@ function validatePredicate(
       }
       if (!isString(item.value)) {
         pushErr(errors, file, `${path}.value`, "required ISO date string");
+      }
+      return;
+    }
+    case "timeOfDay": {
+      if (!isString(item.cmp) || !VALID_CMP.has(item.cmp)) {
+        pushErr(
+          errors,
+          file,
+          `${path}.cmp`,
+          `must be one of: ${[...VALID_CMP].join(", ")}`
+        );
+      }
+      if (!isString(item.value) || !/^\d{2}:\d{2}$/.test(item.value)) {
+        pushErr(errors, file, `${path}.value`, 'required "HH:MM" string');
+      }
+      return;
+    }
+    case "sceneOccupied": {
+      if (!isString(item.sceneId)) {
+        pushErr(errors, file, `${path}.sceneId`, "required string");
+      }
+      return;
+    }
+    case "regionWeather": {
+      if (!isString(item.regionId)) {
+        pushErr(errors, file, `${path}.regionId`, "required string");
+      }
+      if (
+        !isArray(item.types) ||
+        item.types.length === 0 ||
+        !item.types.every((t) => isString(t))
+      ) {
+        pushErr(
+          errors,
+          file,
+          `${path}.types`,
+          "required non-empty string array"
+        );
+      }
+      if (item.minIntensity !== undefined && !isNumber(item.minIntensity)) {
+        pushErr(errors, file, `${path}.minIntensity`, "must be a number");
       }
       return;
     }
@@ -761,6 +819,56 @@ function validateEffect(
       }
       if (!isString(item.reason)) {
         pushErr(errors, file, `${path}.reason`, "required string");
+      }
+      if (item.featureId !== undefined && !isString(item.featureId)) {
+        pushErr(errors, file, `${path}.featureId`, "must be a string");
+      }
+      return;
+    }
+    case "connection.setHidden": {
+      if (!isString(item.connectionId)) {
+        pushErr(errors, file, `${path}.connectionId`, "required string");
+      }
+      if (!isBoolean(item.hidden)) {
+        pushErr(errors, file, `${path}.hidden`, "required boolean");
+      }
+      return;
+    }
+    case "item.create": {
+      if (!isString(item.location)) {
+        pushErr(errors, file, `${path}.location`, "required string (place id)");
+      }
+      if (!isString(item.name)) {
+        pushErr(errors, file, `${path}.name`, "required string");
+      }
+      if (item.description !== undefined && !isString(item.description)) {
+        pushErr(errors, file, `${path}.description`, "must be a string");
+      }
+      if (item.id !== undefined && !isString(item.id)) {
+        pushErr(errors, file, `${path}.id`, "must be a string");
+      }
+      if (item.skipIfExists !== undefined && !isBoolean(item.skipIfExists)) {
+        pushErr(errors, file, `${path}.skipIfExists`, "must be a boolean");
+      }
+      if (item.skipIfExists === true && !isString(item.id)) {
+        pushErr(
+          errors,
+          file,
+          `${path}.id`,
+          "required when skipIfExists is set (the guard matches by id)"
+        );
+      }
+      return;
+    }
+    case "item.move": {
+      if (!isString(item.itemId)) {
+        pushErr(errors, file, `${path}.itemId`, "required string");
+      }
+      if (!isString(item.from)) {
+        pushErr(errors, file, `${path}.from`, "required holder string");
+      }
+      if (!isString(item.to)) {
+        pushErr(errors, file, `${path}.to`, "required holder string");
       }
       return;
     }

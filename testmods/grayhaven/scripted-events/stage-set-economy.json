@@ -1,0 +1,83 @@
+[
+  {
+    "id": "evt_restock_grocery",
+    "label": "布景经济 · 杂货店后仓补货",
+    "recurring": true,
+    "recurringCooldownTicks": 1440,
+    "fireWhen": {
+      "op": "and",
+      "children": [
+        { "op": "timeOfDay", "cmp": "gte", "value": "02:00" },
+        { "op": "timeOfDay", "cmp": "lte", "value": "05:00" },
+        {
+          "op": "not",
+          "child": { "op": "sceneOccupied", "sceneId": "SCN_grocery_backroom" }
+        }
+      ]
+    },
+    "onComplete": [
+      {
+        "kind": "item.create",
+        "location": "SCN_grocery_backroom",
+        "id": "item.grocery_backroom.stock_crates",
+        "name": "新到的存货",
+        "description": "后仓墙边码着几只新到的存货纸箱:罐头、面粉、火柴、灯油——店堂货架缺什么,这里就有什么。封箱胶带还没起毛,码放的方式和 Marisol 的习惯一模一样。",
+        "skipIfExists": true
+      }
+    ]
+  },
+  {
+    "id": "evt_restock_bluebird",
+    "label": "布景经济 · 蓝鸟后厨食材",
+    "recurring": true,
+    "recurringCooldownTicks": 1440,
+    "fireWhen": {
+      "op": "and",
+      "children": [
+        { "op": "timeOfDay", "cmp": "gte", "value": "03:00" },
+        { "op": "timeOfDay", "cmp": "lte", "value": "05:00" },
+        {
+          "op": "not",
+          "child": { "op": "sceneOccupied", "sceneId": "SCN_bluebird_kitchen" }
+        }
+      ]
+    },
+    "onComplete": [
+      {
+        "kind": "item.create",
+        "location": "SCN_bluebird_kitchen",
+        "id": "item.bluebird_kitchen.fresh_supplies",
+        "name": "当日的食材",
+        "description": "案台边的当日食材:一箱带冰的鲜鱼、鸡蛋、黄油、两袋面粉,按后厨的习惯靠墙摆开,冰还没有开始化。",
+        "skipIfExists": true
+      }
+    ]
+  },
+  {
+    "id": "evt_restock_freight_shed",
+    "label": "布景经济 · 中转棚夜班货运",
+    "recurring": true,
+    "recurringCooldownTicks": 1440,
+    "fireWhen": {
+      "op": "and",
+      "children": [
+        { "op": "timeOfDay", "cmp": "gte", "value": "00:30" },
+        { "op": "timeOfDay", "cmp": "lte", "value": "04:00" },
+        {
+          "op": "not",
+          "child": { "op": "sceneOccupied", "sceneId": "SCN_freight_shed" }
+        }
+      ]
+    },
+    "onComplete": [
+      {
+        "kind": "item.create",
+        "location": "SCN_freight_shed",
+        "id": "item.freight_shed.crates",
+        "name": "待运板条箱",
+        "description": "几只钉好的板条箱,封条完好,唛头只有编号没有发货人,等着 Frank 的货车。",
+        "skipIfExists": true
+      }
+    ]
+  }
+]

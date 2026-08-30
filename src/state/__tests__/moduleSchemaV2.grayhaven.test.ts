@@ -6,6 +6,7 @@ import {
   parsePlaceFileV2,
   validateModuleReferences,
 } from "@/state/moduleSchemaV2.js";
+import { loadScriptedEvents } from "@/engine/scriptedEvents/loader.js";
 import { buildTopology } from "@/state/topologyTypes.js";
 import type { RoadNode } from "@/state/topologyTypes.js";
 import type { DynamicScene } from "@/state/types.js";
@@ -39,9 +40,9 @@ describe("grayhaven module data", () => {
   const topology = buildTopology(module.scenes, module.roads);
 
   it("has the designed place counts", () => {
-    // 31 interior scenes + 16 top-level node scenes (incl. the two main
-    // street crossroads and the Reyes gate).
-    expect(module.scenes.size).toBe(47);
+    // 34 interior scenes (incl. the three closed truth-space rooms behind
+    // the station's inner door) + 16 top-level node scenes.
+    expect(module.scenes.size).toBe(50);
     expect(topology.nodeSceneIds.size).toBe(16);
     expect(module.roads.size).toBe(19);
   });
@@ -102,10 +103,59 @@ describe("grayhaven module data", () => {
     expect(bills?.hidden).toBe(true);
   });
 
-  it("station dock's inner door stays pure prose (no exit reference)", () => {
+  it("scripted events load through the real loader and point at real places", () => {
+    const eventsDir = path.join(MODULE_DIR, "scripted-events");
+    const files = fs
+      .readdirSync(eventsDir)
+      .filter((f) => f.endsWith(".json"))
+      .sort()
+      .map((f) => ({
+        file: f,
+        raw: JSON.parse(fs.readFileSync(path.join(eventsDir, f), "utf8")),
+      }));
+    const events = loadScriptedEvents(files);
+    expect(events.length).toBeGreaterThanOrEqual(3);
+    // Every place a restock writes into, and every witness-guard scene,
+    // must exist in the module.
+    for (const event of events) {
+      for (const effect of event.onComplete) {
+        if (effect.kind === "item.create") {
+          expect(module.scenes.has(effect.location)).toBe(true);
+        }
+      }
+      const stack = [event.fireWhen, ...(event.failWhen ? [event.failWhen] : [])];
+      while (stack.length > 0) {
+        const pred = stack.pop();
+        if (!pred) continue;
+        if (pred.op === "sceneOccupied") {
+          expect(module.scenes.has(pred.sceneId)).toBe(true);
+        } else if (pred.op === "and" || pred.op === "or") {
+          stack.push(...pred.children);
+        } else if (pred.op === "not") {
+          stack.push(pred.child);
+        }
+      }
+    }
+  });
+
+  it("the truth space exists but stays sealed behind a hidden connection", () => {
     const dock = module.scenes.get("SCN_station_dock");
-    expect(dock?.connections).toHaveLength(1);
-    expect(dock?.connections[0]?.targetId).toBe("SCN_station_yard");
+    expect(dock?.connections).toHaveLength(2);
+    const inner = dock?.connections.find(
+      (c) => c.targetId === "SCN_station_hall"
+    );
+    // The door is a VISIBLE item (Frank can point at it); the passage is
+    // hidden — filtered from perception, uncitable, unciteable in prose.
+    expect(inner?.hidden).toBe(true);
+    expect(dock?.items.some((i) => i.id === "item.station_dock.inner_door" && !i.hidden)).toBe(true);
+    // The three base rooms are real scenes, closed at start.
+    for (const id of [
+      "SCN_station_hall",
+      "SCN_station_archive",
+      "SCN_station_maintenance",
+    ]) {
+      expect(module.scenes.get(id)).toBeTruthy();
+    }
   });
 
 });

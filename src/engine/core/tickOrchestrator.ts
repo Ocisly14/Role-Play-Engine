@@ -295,7 +295,7 @@ export class TickOrchestrator {
         if (!actorId) continue;
         movementStates.set(
           actionId,
-          initMovementRuntime(dgsm, actorId, init.destinationId)
+          initMovementRuntime(dgsm, actorId, init.route)
         );
       }
       for (const transition of engineResult.resolution.transitions) {

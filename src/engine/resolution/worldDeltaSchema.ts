@@ -30,10 +30,13 @@ export interface RawActionStart {
   /** Active resistance: who defends and with which skill. Code rolls both
    *  sides and compares levels. */
   opposedBy?: Array<{ characterId: string; skillId: string }>;
-  /** Engine-owned runtime annotation: set when this action has a movement leg
-   *  the deterministic movement executor should advance tick by tick. The
-   *  destination must have been checked with the pathfinding tool. */
-  movement?: { destinationId: string };
+  /** Engine-owned runtime annotation: set when this action has a movement
+   *  leg. `route` is the path THE ACTOR STATED, grounded to place ids —
+   *  ordered waypoints, each topologically adjacent to the previous, the
+   *  last being the destination. The Engine never invents an unstated leg:
+   *  a character who did not say how to get somewhere has not chosen a way,
+   *  and their walk ends where their words end. */
+  movement?: { route: string[] };
 }
 
 export interface RawCheck {
@@ -418,9 +421,15 @@ export const submitResolutionTool: ToolSpec = {
             movement: {
               type: "object",
               description:
-                "Set when the action has a movement leg: the deterministic movement executor will walk the character there tick by tick. Verify the destination with the pathfinding tool first.",
-              properties: { destinationId: { type: "string" } },
-              required: ["destinationId"],
+                "Set when the action has a movement leg. `route` = the path the ACTOR STATED, grounded to place ids: ordered waypoints, each adjacent to the previous, last = destination. Ground only what their words carry (stepping out of the current room onto its street is an implied first hop). NEVER invent an unstated leg — a character who did not say how to get somewhere walks only as far as their words go, and re-decides there.",
+              properties: {
+                route: {
+                  type: "array",
+                  items: { type: "string" },
+                  minItems: 1,
+                },
+              },
+              required: ["route"],
               additionalProperties: false,
             },
           },

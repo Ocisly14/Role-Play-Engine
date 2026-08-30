@@ -2,22 +2,25 @@
   "schemaVersion": 2,
   "id": "SCN_holt_common",
   "name": "Holt 家起居餐厨",
-  "description": "老房子的心脏:起居、吃饭、做饭挤在一个大开间里,一张能坐下六个人的橡木长桌占了中间——如今常坐的只有四个。壁炉台上摆着一张镶框的海军新兵照 [item.holt_common.glen_photo],Glen 穿着水兵服笑得拘谨,相框前搁着他寄回来的明信片。角落里一台木壳电视机 [item.holt_common.television] 顶上搭着蕾丝罩布,屏幕最近偶尔会无缘无故起雪花。屋里有四扇内门:Ray 的房间 [SCN_holt_ray]、Frank 和 Susan 的主卧 [SCN_holt_master]、Denny 的小房间 [SCN_holt_denny],以及通后院的纱门 [SCN_holt_backyard]。正对院门的前门 [SCN_holt_gate] 出去是带栅栏的前院和 Holt 家的院门。",
+  "description": "老房子的心脏:起居、吃饭、做饭挤在一个大开间里,一张能坐下六个人的橡木长桌 [item.holt_common.dining_table] 占了中间——如今常坐的只有四个。壁炉台上摆着一张镶框的海军新兵照 [item.holt_common.glen_photo],Glen 穿着水兵服笑得拘谨,相框前搁着他寄回来的明信片。角落里一台木壳电视机 [item.holt_common.television] 顶上搭着蕾丝罩布,屏幕最近偶尔会无缘无故起雪花。屋里有四扇内门:Ray 的房间 [SCN_holt_ray]、Frank 和 Susan 的主卧 [SCN_holt_master]、Denny 的小房间 [SCN_holt_denny],以及通后院的纱门 [SCN_holt_backyard]。正对院门的前门 [SCN_holt_gate] 出去是带栅栏的前院和 Holt 家的院门。",
   "parentLocationId": "LOC_holt_house",
   "indoor": true,
   "references": {
     "items": [
       {
+        "id": "item.holt_common.dining_table",
+        "name": "橡木长桌",
+        "description": "能坐下六个人的橡木长桌,桌面被经年累月的杯垫烫痕和小刀刻痕磨得发亮,靠窗那两个位子如今常年空着。"
+      },
+      {
         "id": "item.holt_common.glen_photo",
         "name": "Glen 的海军新兵照",
-        "description": "镶框的黑白新兵照,Glen Holt 穿水兵服站得笔直,相框前搁着几张寄自军港的明信片。",
-        "type": "other"
+        "description": "镶框的黑白新兵照,Glen Holt 穿水兵服站得笔直,相框前搁着几张寄自军港的明信片。"
       },
       {
         "id": "item.holt_common.television",
         "name": "木壳电视机",
-        "description": "1970 年代的木壳电视机,顶上搭着蕾丝罩布,最近偶尔无缘无故起雪花。",
-        "type": "other"
+        "description": "1970 年代的木壳电视机,顶上搭着蕾丝罩布,最近偶尔无缘无故起雪花。"
       }
     ],
     "connections": [

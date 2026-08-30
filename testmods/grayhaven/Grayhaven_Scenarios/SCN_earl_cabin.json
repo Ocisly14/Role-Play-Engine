@@ -2,7 +2,7 @@
   "schemaVersion": 2,
   "id": "SCN_earl_cabin",
   "name": "Earl 的小屋",
-  "description": "一间屋就是他的一生:行军床叠得像船铺,铸铁炉子上坐着咖啡壶,油布雨衣挂在门后滴着水汽。靠窗的桌子擦得最干净——桌上按日期码着一摞学生练习本 [item.earl_cabin.log_notebooks],一天一页,天气、潮位、船只、以及他看见的那些光,字迹克制得像仍在当班。搁板上立着一张镶银边的相片 [item.earl_cabin.nora_photo],Nora 在灯塔平台上迎风按着帽子。屋里常年带着一股海雾渗进木头的潮气 [cond.earl_cabin.sea_damp],纸页都有点发软。唯一的门 [ROAD_cliff_path] 开出去就是崖径,往上走是灯塔崖,往下几分钟就到码头。",
+  "description": "一间屋就是他的一生:行军床叠得像船铺,铸铁炉子上坐着咖啡壶,灶台边一排腌货架 [item.earl_cabin.pantry_shelf] 码着自家腌的鱼和腌菜罐头,标签是他一笔一划写的日期。油布雨衣挂在门后滴着水汽。靠窗的桌子擦得最干净——桌上按日期码着一摞学生练习本 [item.earl_cabin.log_notebooks],一天一页,天气、潮位、船只、以及他看见的那些光,字迹克制得像仍在当班。搁板上立着一张镶银边的相片 [item.earl_cabin.nora_photo],Nora 在灯塔平台上迎风按着帽子。屋里常年带着一股海雾渗进木头的潮气 [cond.earl_cabin.sea_damp],纸页都有点发软。唯一的门 [ROAD_cliff_path] 开出去就是崖径,往上走是灯塔崖,往下几分钟就到码头。",
   "parentLocationId": "LOC_earl_cabin",
   "indoor": true,
   "references": {
@@ -10,14 +10,17 @@
       {
         "id": "item.earl_cabin.log_notebooks",
         "name": "Earl 的日志练习本",
-        "description": "按日期码放的学生练习本,退休后的航海日志:一天一页,记着天气、潮位、船只,和他在雾里看见的光。记录克制而精确。",
-        "type": "document"
+        "description": "按日期码放的学生练习本,退休后的航海日志:一天一页,记着天气、潮位、船只,和他在雾里看见的光。记录克制而精确。"
       },
       {
         "id": "item.earl_cabin.nora_photo",
         "name": "Nora 的相片",
-        "description": "镶银边的旧相片,Nora 站在灯塔平台上迎风按着帽子,背面有一行褪色的字。",
-        "type": "other"
+        "description": "镶银边的旧相片,Nora 站在灯塔平台上迎风按着帽子,背面有一行褪色的字。"
+      },
+      {
+        "id": "item.earl_cabin.pantry_shelf",
+        "name": "腌货架",
+        "description": "灶台边一排搁板,码着自家腌的鱼罐头和腌菜坛子,玻璃罐上贴着手写的日期标签,最老的一批比退休还早。"
       }
     ],
     "connections": [

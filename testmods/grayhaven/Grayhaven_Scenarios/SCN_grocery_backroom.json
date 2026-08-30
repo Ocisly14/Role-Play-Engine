@@ -2,16 +2,20 @@
   "schemaVersion": 2,
   "id": "SCN_grocery_backroom",
   "name": "杂货店兼邮局·后仓",
-  "description": "后仓只有一扇小高窗透光,白天也昏暗[cond.grocery_backroom.dim],空气里是纸箱、麻绳和陈年木架的味道。成箱的存货靠墙码到齐肩高,每摞箱子侧面都用粉笔标着到货日期——Tommy 暑假在这里帮工,搬箱和偷懒各占一半。门边挂着盘点夹板[item.grocery_backroom.inventory_clipboard],纸页翻卷,是母子俩交接的凭据。最里面单独搁着一箱罐头[item.grocery_backroom.unordered_crate]:Marisol 翻遍了订货单也对不上它的来路,便让它一直单独搁在那儿,谁也没动。仓门通回店堂[SCN_grocery_store]。",
+  "description": "后仓只有一扇小高窗透光,白天也昏暗[cond.grocery_backroom.dim],空气里是纸箱、陈年木架和墙钉上那卷粗麻绳[item.grocery_backroom.twine_spool]混着的味道。成箱的存货靠墙码到齐肩高,每摞箱子侧面都用粉笔标着到货日期——Tommy 暑假在这里帮工,搬箱和偷懒各占一半。门边挂着盘点夹板[item.grocery_backroom.inventory_clipboard],纸页翻卷,是母子俩交接的凭据。最里面单独搁着一箱罐头[item.grocery_backroom.unordered_crate]:Marisol 翻遍了订货单也对不上它的来路,便让它一直单独搁在那儿,谁也没动。仓门通回店堂[SCN_grocery_store]。",
   "parentLocationId": "LOC_grocery_store",
   "indoor": true,
   "references": {
     "items": [
       {
+        "id": "item.grocery_backroom.twine_spool",
+        "name": "麻绳卷",
+        "description": "钉在墙上的一卷粗麻绳,用来捆扎邮包和存货箱,绳头常年被摩挲得起了毛,拽下来时还带着一点松香味。"
+      },
+      {
         "id": "item.grocery_backroom.inventory_clipboard",
         "name": "盘点夹板",
-        "description": "挂在门边的木夹板,夹着卷了角的盘点单,Marisol 的铅笔字和 Tommy 潦草的勾划混在一页上。",
-        "type": "document"
+        "description": "挂在门边的木夹板,夹着卷了角的盘点单,Marisol 的铅笔字和 Tommy 潦草的勾划混在一页上。"
       },
       {
         "id": "item.grocery_backroom.unordered_crate",

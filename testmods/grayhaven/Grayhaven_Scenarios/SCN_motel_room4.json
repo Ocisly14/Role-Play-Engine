@@ -2,32 +2,30 @@
   "schemaVersion": 2,
   "id": "SCN_motel_room4",
   "name": "4 号房",
-  "description": "一间过分整洁的旅馆客房——整洁得不像住了人:床罩的折角是军毯式的,烟灰缸干净,垃圾篓空着,连肥皂都摆回了出厂的角度。墙角立着一根崭新的钓竿 [item.motel_room4.fishing_rod],卷线器上连一点盐渍都没有。行李架上放着一只硬壳行李箱 [item.motel_room4.suitcase],锁扣是好东西,和这间九块钱一晚的房间不太相称。窗帘拉开一道两指宽的缝,正好看得见外廊和公路岔口的方向。房门 [SCN_motel_porch] 开向外廊。",
+  "description": "一间过分整洁的旅馆客房——整洁得不像住了人:床铺得一丝不苟 [item.motel_room4.made_bed],床罩折角是军毯式的;烟灰缸干净,垃圾篓空着,连肥皂都摆回了出厂的角度。墙角立着一根崭新的钓竿 [item.motel_room4.fishing_rod],卷线器上连一点盐渍都没有。行李架上放着一只硬壳行李箱 [item.motel_room4.suitcase],锁扣是好东西,和这间九块钱一晚的房间不太相称。窗帘拉开一道两指宽的缝,正好看得见外廊和公路岔口的方向。房门 [SCN_motel_porch] 开向外廊。",
   "parentLocationId": "LOC_motel",
   "indoor": true,
   "references": {
     "items": [
       {
+        "id": "item.motel_room4.made_bed",
+        "name": "铺得一丝不苟的床",
+        "description": "床罩绷得能弹起硬币,四角折成标准的军毯角。清洁工都铺不出这种床——这是每天早晨自己动手、几十年改不掉的手法。"
+      },
+      {
         "id": "item.motel_room4.fishing_rod",
         "name": "崭新的钓竿",
-        "description": "一根几乎没下过水的钓竿,卷线器上没有盐渍,线结绑得教科书般标准——却是左撇子的绑法换了手。",
-        "type": "tool"
+        "description": "一根几乎没下过水的钓竿,卷线器上没有盐渍,线结绑得教科书般标准——却是左撇子的绑法换了手。"
       },
       {
         "id": "item.motel_room4.suitcase",
         "name": "硬壳行李箱",
-        "description": "旅行磨痕分布得过分均匀的硬壳行李箱,锁扣的做工和这间客房不太相称。",
-        "type": "container",
-        "containerStats": {
-          "locked": true,
-          "lockDifficulty": "hard"
-        }
+        "description": "旅行磨痕分布得过分均匀的硬壳行李箱,锁扣的做工和这间客房不太相称。"
       },
       {
         "id": "item.motel_room4.suitcase_liner",
         "name": "行李箱夹层",
         "description": "行李箱底衬下的暗层:几台没有厂牌的仪表,一册用速记符号写的笔记,一沓不同名字的证件。",
-        "type": "container",
         "hidden": true
       }
     ],

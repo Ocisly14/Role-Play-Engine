@@ -509,7 +509,7 @@ describe("finalizeResolution", () => {
         start({
           resolvedDurationTicks: 5,
           timingReason: "five minutes at the keyway",
-          movement: { destinationId: "SCN_1" },
+          movement: { route: ["SCN_1"] },
         }),
       ],
       occurrences: [
@@ -537,7 +537,7 @@ describe("finalizeResolution", () => {
     expect(t.nextWakeAt).toBe("1923-04-02T09:20:00");
     expect(t.progressDeltaMinutes).toBe(0);
     expect(finalized.movementInits[ACTION_ID]).toEqual({
-      destinationId: "SCN_1",
+      route: ["SCN_1"],
     });
 
     const occ = finalized.resolution.occurrences[0];
@@ -795,14 +795,14 @@ describe("operations are checked against the fields they advertise", () => {
     expect(errors).toContain('environmentHazard needs "add" or "remove"');
   });
 
-  it("rejects a movement destination nobody was shown", () => {
+  it("rejects a movement waypoint nobody was shown", () => {
     const errors = text(
       validateRawResolution(
-        { starting: [start({ movement: { destinationId: "SCN_ATLANTIS" } })] },
+        { starting: [start({ movement: { route: ["SCN_ATLANTIS"] } })] },
         makeContext({}),
         []
       )
     );
-    expect(errors).toContain("is not a place you were shown");
+    expect(errors).toContain("is not a place in this world");
   });
 });

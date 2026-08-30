@@ -288,17 +288,26 @@ function validateStart(entry: RawActionStart, lookup: Lookup): string[] {
       `opposedBy needs a check — name the bar the opposition is against`
     );
   }
-  // The destination goes straight to the movement runtime, which walks the
-  // character there tick by tick. An id nobody was shown sends them nowhere,
-  // silently, for as long as the action lasts.
+  // The route goes straight to the movement runtime, which walks the
+  // character leg by leg. Every waypoint must name a real place; adjacency
+  // between consecutive waypoints is enforced at movement init, which fails
+  // the action with a route-shaped reason the actor can learn from.
   if (entry.movement !== undefined) {
-    const destination = entry.movement.destinationId;
-    if (typeof destination !== "string" || !destination.trim()) {
-      errs.push(`movement requires a destinationId`);
-    } else if (!lookup.locationIds.has(destination)) {
+    const route = entry.movement.route;
+    if (!Array.isArray(route) || route.length === 0) {
       errs.push(
-        `movement.destinationId "${destination}" is not a place you were shown — check it with the pathfinding tool first`
+        `movement requires a non-empty route array (the waypoints the actor stated, grounded to place ids)`
       );
+    } else {
+      for (const waypoint of route) {
+        if (typeof waypoint !== "string" || !waypoint.trim()) {
+          errs.push(`movement.route entries must be place id strings`);
+        } else if (!lookup.locationIds.has(waypoint)) {
+          errs.push(
+            `movement.route waypoint "${waypoint}" is not a place in this world`
+          );
+        }
+      }
     }
   }
   return errs;
@@ -1002,7 +1011,7 @@ export function applyRepair(
 export interface FinalizedResolution {
   resolution: TickResolution;
   /** Movement-leg annotations per action (Engine-owned runtime init). */
-  movementInits: Record<string, { destinationId: string }>;
+  movementInits: Record<string, { route: string[] }>;
   /** The bar set for an action as it starts, per actionId. Written onto the
    *  action once and never revised — code rolls against it later. */
   checkInits: Record<
@@ -1032,7 +1041,7 @@ export function finalizeResolution(
 ): FinalizedResolution {
   const lookup = buildLookup(context);
   const transitions: ActionTransition[] = [];
-  const movementInits: Record<string, { destinationId: string }> = {};
+  const movementInits: Record<string, { route: string[] }> = {};
   const checkInits: FinalizedResolution["checkInits"] = {};
   const tickMinutes = context.tick.durationMinutes;
 
@@ -1043,10 +1052,8 @@ export function finalizeResolution(
   for (const entry of raw.starting ?? []) {
     const known = lookup.actionById.get(entry.actionId);
     if (!known) continue; // unreachable post-validation; keeps types honest
-    if (entry.movement?.destinationId) {
-      movementInits[entry.actionId] = {
-        destinationId: entry.movement.destinationId,
-      };
+    if (entry.movement?.route?.length) {
+      movementInits[entry.actionId] = { route: [...entry.movement.route] };
     }
     if (entry.check) {
       checkInits[entry.actionId] = {

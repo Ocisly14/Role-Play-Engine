@@ -2,9 +2,25 @@
   "schemaVersion": 2,
   "id": "SCN_station_yard",
   "name": "雷德利站场院",
-  "description": "铁丝网围出的一片水泥场院,属于山里的这座海军气象观测站。场院扫得很干净,却看不见一个人影,只有屋顶的天线阵在雾里发出轻微的嗡鸣。装卸区的卷帘门开在主楼一侧,门轴上了新油 [SCN_station_dock]。进出场院的只有一条路,通向山下的自动大门。",
+  "description": "铁丝网围出的一片水泥场院,属于山里的这座海军气象观测站。场院扫得很干净,却看不见一个人影,只有屋顶的天线阵在雾里发出轻微的嗡鸣 [item.station_yard.antenna_array]。场院一角立着一只标准的白色气象百叶箱 [item.station_yard.instrument_shelter],旁边的雨量计擦得锃亮;旗杆上没有旗 [item.station_yard.flagpole],升降索在风里一下一下拍着杆身。装卸区的卷帘门开在主楼一侧,门轴上了新油 [SCN_station_dock]。进出场院的只有一条路,通向山下的自动大门。",
   "references": {
-    "items": [],
+    "items": [
+      {
+        "id": "item.station_yard.antenna_array",
+        "name": "天线阵",
+        "description": "主楼屋顶的一排天线:碟形的、鞭状的、还有几件叫不出名字的。不论晴雨,它们始终朝着各自的方向,在雾里发出一种低得几乎听不见的嗡鸣——离得越近,越说不清那声音是从哪儿来的。"
+      },
+      {
+        "id": "item.station_yard.instrument_shelter",
+        "name": "气象百叶箱",
+        "description": "场院一角的标准白色百叶箱,漆面新得晃眼,旁边的雨量计和风速杆都擦得锃亮。仪器显然一直在运转、一直有人维护——只是从没有人见过维护它的人。"
+      },
+      {
+        "id": "item.station_yard.flagpole",
+        "name": "旗杆",
+        "description": "一根漆成银灰色的旗杆,顶上空着,没有旗。升降索没有收紧,风一过就一下一下拍在杆身上,哐、哐、哐——整个场院唯一的声音,除了天线的嗡鸣。"
+      }
+    ],
     "connections": [
       {
         "id": "exit.station_yard.dock_rollup",

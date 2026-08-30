@@ -2,11 +2,16 @@
   "schemaVersion": 2,
   "id": "SCN_sheriff_front",
   "name": "警长办公室·前厅",
-  "description": "前厅一半是公务,一半是习惯:布告板上钉着褪色的通缉照和渔汛节的旧海报,墙边挂钩上一件备用制服熨出笔直的棱线——不用问也知道是谁的。Cole 的办公桌收拾得像检阅前的营房,笔按长短排列,咖啡杯里三块糖正在化。桌后的调度电台[item.sheriff_front.dispatch_radio]大多数时候只应之以杂音。靠墙立着一组档案柜[item.sheriff_front.incident_files],抽屉标签写着「事件报告」——Cole 按规程归档的每一起「怪事报案」都在里面,按日期码得整整齐齐,全镇没有第二个人翻过。临街门通向主街[ROAD_main_street];里间的门后是警长办公室[SCN_sheriff_office];走廊尽头是拘留室[SCN_sheriff_cell]。",
+  "description": "前厅一半是公务,一半是习惯:布告板上钉着褪色的通缉照和渔汛节的旧海报,墙边挂钩上一件备用制服熨出笔直的棱线——不用问也知道是谁的。Cole 的办公桌收拾得像检阅前的营房,笔按长短排列,咖啡壶[item.sheriff_front.coffee_pot]续着新一壶,他杯里三块糖正在化。桌后的调度电台[item.sheriff_front.dispatch_radio]大多数时候只应之以杂音。靠墙立着一组档案柜[item.sheriff_front.incident_files],抽屉标签写着「事件报告」——Cole 按规程归档的每一起「怪事报案」都在里面,按日期码得整整齐齐,全镇没有第二个人翻过。临街门通向主街[ROAD_main_street];里间的门后是警长办公室[SCN_sheriff_office];走廊尽头是拘留室[SCN_sheriff_cell]。",
   "parentLocationId": "LOC_sheriff_office",
   "indoor": true,
   "references": {
     "items": [
+      {
+        "id": "item.sheriff_front.coffee_pot",
+        "name": "咖啡壶",
+        "description": "办公桌旁小架上的电热咖啡壶,壶身结着一圈常年的水垢;糖罐永远续得满满的,谁都知道那是续给谁的。"
+      },
       {
         "id": "item.sheriff_front.dispatch_radio",
         "name": "调度电台",
@@ -15,8 +20,7 @@
       {
         "id": "item.sheriff_front.incident_files",
         "name": "事件报告档案柜",
-        "description": "Cole 的档案柜:一年来全镇每一起「怪事报案」——闪灯、串台、死鱼、雾里的光——都按日期与报案人归档在案。他自己还没意识到这摞纸连起来是什么。",
-        "type": "container"
+        "description": "Cole 的档案柜:一年来全镇每一起「怪事报案」——闪灯、串台、死鱼、雾里的光——都按日期与报案人归档在案。他自己还没意识到这摞纸连起来是什么。"
       }
     ],
     "connections": [

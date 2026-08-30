@@ -2,9 +2,25 @@
   "schemaVersion": 2,
   "id": "SCN_redwood_ring",
   "name": "红杉环",
-  "description": "十几棵环生的老红杉围出一片教堂似的空地,树冠在头顶合拢,连雾都只能从缝隙里渗进来。当年的伐木工绕开了这圈树,没人说得清是出于敬畏还是别的什么。空地里安静得能听见自己的呼吸。从这里向北,地势开始一路爬升。",
+  "description": "十几棵环生的老红杉围出一片教堂似的空地,树冠在头顶合拢,连雾都只能从缝隙里渗进来。沿着其中一棵的根基,一圈小伞菌齐整地冒出来,踩碎了留下一股土腥味 [item.redwood_ring.mushroom_ring]。圈边另一棵树皮上留着几道早已愈合的旧斧痕,痕迹中间刻着一对模糊的姓名缩写,像是当年的伐木工绕开这圈树之前留下的最后手笔 [item.redwood_ring.axe_scarred_trunk]——没人说得清绕开的理由,是出于敬畏还是别的什么。空地一侧躺着一根倒伏多年的朽木,长满厚苔藓,顶上钻出一排细小的新苗 [item.redwood_ring.nurse_log]。空地里安静得能听见自己的呼吸。从这里向北,地势开始一路爬升。",
   "references": {
-    "items": [],
+    "items": [
+      {
+        "id": "item.redwood_ring.mushroom_ring",
+        "name": "蘑菇圈",
+        "description": "沿着一棵老红杉根基长出的一圈小伞菌,雨后尤其密,踩碎了有股土腥味。"
+      },
+      {
+        "id": "item.redwood_ring.axe_scarred_trunk",
+        "name": "带斧痕的红杉",
+        "description": "树皮上留着几道早已愈合的旧斧痕,中间刻着一对模糊的姓名缩写。"
+      },
+      {
+        "id": "item.redwood_ring.nurse_log",
+        "name": "倒伏的朽木",
+        "description": "倒伏多年的红杉朽木,长满厚苔藓,顶上钻出一排细小的新苗。"
+      }
+    ],
     "connections": [],
     "conditions": []
   }

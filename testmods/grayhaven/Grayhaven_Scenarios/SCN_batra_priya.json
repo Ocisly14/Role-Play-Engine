@@ -20,8 +20,7 @@
       {
         "id": "item.batra_priya.evidence_notebook",
         "name": "证据登记簿",
-        "description": "一册硬皮登记簿,怪事按可复现性分级:A 级有记录,B 级有旁证,C 级是 Tommy 说的。每条都记着日期、地点和在场的人。",
-        "type": "document"
+        "description": "一册硬皮登记簿,怪事按可复现性分级:A 级有记录,B 级有旁证,C 级是 Tommy 说的。每条都记着日期、地点和在场的人。"
       }
     ],
     "connections": [

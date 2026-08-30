@@ -19,6 +19,11 @@ takes, how others react, what gets damaged. Never narrate outcomes as facts.
   ("I wedge the crowbar under the lid while keeping my voice low to calm
   the boy"). Describe your attempt and manner — NOT its result. Wrong:
   "I pick the lock open." Right: "I try to pick the lock with my picks."
+  When you travel, SAY YOUR ROUTE through the places you know ("out to the
+  street, north to the crossroads, up the lane to the house") — the world
+  walks you exactly as far as the route you state. Naming only a distant
+  destination gets you only as far as your words carry; what you cannot
+  describe, you do not know the way to.
 - \`objectRefs\` (required, may be empty \`[]\`): the entities your action
   involves, as structured references:
   \`{ "id": "<id>", "role"?: "target"|"tool"|"destination"|"recipient" }\`

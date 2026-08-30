@@ -2,11 +2,16 @@
   "schemaVersion": 2,
   "id": "SCN_arcade",
   "name": "街机厅「星港」",
-  "description": "「星港」占着一间空置多年的假立面店面,是二十年来主街上开张的第一家新店。十来台机柜沿墙排开,屏幕的辉光把昏暗的大厅染成深蓝,电子音效、按键声和孩子们的喊叫终日轰鸣不歇[cond.arcade.din]——在这儿说话得凑到耳边喊,这正是它的好处:谁来了,全场都看得见。正中的招牌机台《星港巡逻》[item.arcade.starport_cabinet]滚动着高分榜,榜首的三组缩写常年是同三个孩子换着排。门边立着换币机[item.arcade.change_machine],吞两毛五,吐出一把铜色代币。临街的玻璃门蒙着一层机柜辉光,推开就是主街[ROAD_main_street]。",
+  "description": "「星港」占着一间空置多年的假立面店面,是二十年来主街上开张的第一家新店。十来台机柜沿墙排开,墙角那台弹珠台[item.arcade.pinball_machine]的玻璃台面被无数只手肘磨得发亮,屏幕的辉光把昏暗的大厅染成深蓝,电子音效、按键声和孩子们的喊叫终日轰鸣不歇[cond.arcade.din]——在这儿说话得凑到耳边喊,这正是它的好处:谁来了,全场都看得见。正中的招牌机台《星港巡逻》[item.arcade.starport_cabinet]滚动着高分榜,榜首的三组缩写常年是同三个孩子换着排。门边立着换币机[item.arcade.change_machine],吞两毛五,吐出一把铜色代币。临街的玻璃门蒙着一层机柜辉光,推开就是主街[ROAD_main_street]。",
   "parentLocationId": "LOC_arcade",
   "indoor": true,
   "references": {
     "items": [
+      {
+        "id": "item.arcade.pinball_machine",
+        "name": "弹珠台",
+        "description": "墙角一台弹珠台,玻璃台面被无数只手肘磨得发亮,机身歪得比别的机柜都厉害,总有孩子伸手托一把,不让它判'倾斜'。"
+      },
       {
         "id": "item.arcade.starport_cabinet",
         "name": "《星港巡逻》机台",

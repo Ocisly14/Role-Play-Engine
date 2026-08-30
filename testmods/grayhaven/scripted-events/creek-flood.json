@@ -1,0 +1,133 @@
+[
+  {
+    "id": "evt_creek_flood_rise",
+    "label": "灰溪涨水",
+    "recurring": true,
+    "fireDelayTicks": 120,
+    "fireWhen": {
+      "op": "and",
+      "children": [
+        {
+          "op": "regionWeather",
+          "regionId": "OUTDOOR",
+          "types": [
+            "rain",
+            "storm"
+          ],
+          "minIntensity": 3
+        },
+        {
+          "op": "not",
+          "child": {
+            "op": "sceneHasConditionFromFeature",
+            "sceneId": "SCN_creek_ford",
+            "featureId": "creek_flood"
+          }
+        }
+      ]
+    },
+    "failWhen": {
+      "op": "not",
+      "child": {
+        "op": "regionWeather",
+        "regionId": "OUTDOOR",
+        "types": [
+          "rain",
+          "storm"
+        ],
+        "minIntensity": 2
+      }
+    },
+    "onComplete": [
+      {
+        "kind": "scene.addCondition",
+        "sceneFilter": {
+          "op": "is",
+          "sceneId": "SCN_creek_ford"
+        },
+        "condition": {
+          "featureId": "creek_flood",
+          "description": "灰溪涨水了:踏石全部没顶,浑浊的溪水打着旋从上面滚过去,水声盖过林子里的一切。这种水流,人站进去就站不住。",
+          "id": "cond.creek_ford.flood"
+        }
+      },
+      {
+        "kind": "connection.setBlock",
+        "connectionId": "exit.creek_sawmill.creek_end",
+        "blocked": true,
+        "reason": "洪水没过踏石",
+        "featureId": "creek_flood"
+      },
+      {
+        "kind": "connection.setBlock",
+        "connectionId": "exit.fog_creek.creek_end",
+        "blocked": true,
+        "reason": "洪水没过踏石",
+        "featureId": "creek_flood"
+      }
+    ]
+  },
+  {
+    "id": "evt_creek_flood_recede",
+    "label": "灰溪退水",
+    "recurring": true,
+    "fireDelayTicks": 360,
+    "fireWhen": {
+      "op": "and",
+      "children": [
+        {
+          "op": "sceneHasConditionFromFeature",
+          "sceneId": "SCN_creek_ford",
+          "featureId": "creek_flood"
+        },
+        {
+          "op": "not",
+          "child": {
+            "op": "regionWeather",
+            "regionId": "OUTDOOR",
+            "types": [
+              "rain",
+              "storm"
+            ],
+            "minIntensity": 1
+          }
+        }
+      ]
+    },
+    "failWhen": {
+      "op": "regionWeather",
+      "regionId": "OUTDOOR",
+      "types": [
+        "rain",
+        "storm"
+      ],
+      "minIntensity": 2
+    },
+    "onComplete": [
+      {
+        "kind": "scene.removeCondition",
+        "sceneFilter": {
+          "op": "is",
+          "sceneId": "SCN_creek_ford"
+        },
+        "predicate": {
+          "featureId": "creek_flood"
+        }
+      },
+      {
+        "kind": "connection.setBlock",
+        "connectionId": "exit.creek_sawmill.creek_end",
+        "blocked": false,
+        "reason": "洪水没过踏石",
+        "featureId": "creek_flood"
+      },
+      {
+        "kind": "connection.setBlock",
+        "connectionId": "exit.fog_creek.creek_end",
+        "blocked": false,
+        "reason": "洪水没过踏石",
+        "featureId": "creek_flood"
+      }
+    ]
+  }
+]

@@ -2,22 +2,25 @@
   "schemaVersion": 2,
   "id": "SCN_reyes_tommy",
   "name": "Tommy 的房间",
-  "description": "十三岁男孩的房间该有的乱这里都有:床没铺,地板上散着运动鞋和缠了红胶带的备用车把握把,墙上钉着从杂志撕下来的 BMX 特技页。窗台内侧藏着一只旧果酱罐 [item.reyes_tommy.savings_jar],里面的硬币和皱钞票码得意外整齐——罐子上用胶布写着一个只有他自己懂的数字。床底下拖出半箱翻烂的漫画 [item.reyes_tommy.comic_stack],封面卷了角,页边有铅笔画的雷德利站铁丝网。房门 [SCN_reyes_living] 通向客厅,门内侧贴着一张手画的『禁止入内』告示,妈妈从来不理它。",
+  "description": "十三岁男孩的房间该有的乱这里都有:床没铺,地板上散着运动鞋和一副缠了红胶带的备用车把握把 [item.reyes_tommy.spare_grips],墙上钉着从杂志撕下来的 BMX 特技页。窗台内侧藏着一只旧果酱罐 [item.reyes_tommy.savings_jar],里面的硬币和皱钞票码得意外整齐——罐子上用胶布写着一个只有他自己懂的数字。床底下拖出半箱翻烂的漫画 [item.reyes_tommy.comic_stack],封面卷了角,页边有铅笔画的雷德利站铁丝网。房门 [SCN_reyes_living] 通向客厅,门内侧贴着一张手画的『禁止入内』告示,妈妈从来不理它。",
   "parentLocationId": "LOC_reyes_house",
   "indoor": true,
   "references": {
     "items": [
       {
+        "id": "item.reyes_tommy.spare_grips",
+        "name": "备用车把握把",
+        "description": "一副缠着褪色红胶带的旧车把套,是摔坏那副的替换件,一直没装上,团在鞋堆里落灰。"
+      },
+      {
         "id": "item.reyes_tommy.savings_jar",
         "name": "攒钱罐",
-        "description": "旧果酱罐,硬币和皱钞票码得很整齐,胶布上写着一个目标数字。",
-        "type": "container"
+        "description": "旧果酱罐,硬币和皱钞票码得很整齐,胶布上写着一个目标数字。"
       },
       {
         "id": "item.reyes_tommy.comic_stack",
         "name": "漫画堆",
-        "description": "半箱翻烂的漫画书,页边空白处有铅笔画的铁丝网和探险路线。",
-        "type": "other"
+        "description": "半箱翻烂的漫画书,页边空白处有铅笔画的铁丝网和探险路线。"
       }
     ],
     "connections": [

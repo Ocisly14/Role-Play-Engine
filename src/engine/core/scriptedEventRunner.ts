@@ -1,5 +1,5 @@
 import type { DynamicGameStateManager } from "../../state/DynamicGameState.js";
-import { datePart } from "../../state/gameClock.js";
+import { datePart, timePart } from "../../state/gameClock.js";
 import type { DynamicNPCProfile, DynamicScene } from "../../state/types.js";
 import type {
   ActionMatch,
@@ -87,6 +87,24 @@ export class ScriptedEventRunner {
   }
 
   // ─────────────────── helpers ───────────────────
+
+  /** Terminal completion, or — for a recurring event — re-arm: back to
+   *  "active" with trackers reset and this tick recorded so the cascade
+   *  cannot re-fire it before the next tick. */
+  private settleCompletion(
+    event: ScriptedEvent,
+    state: ScriptedEventState,
+    currentTick: number
+  ): void {
+    state.scheduledCompleteTick = null;
+    if (event.recurring) {
+      state.status = "active";
+      state.trackerStates = this.initEventState(event).trackerStates;
+      state.lastCompletedTick = currentTick;
+    } else {
+      state.status = "completed";
+    }
+  }
 
   private initEventState(event: ScriptedEvent): ScriptedEventState {
     const trackerStates: Record<string, TrackerState> = {};
@@ -186,9 +204,15 @@ export class ScriptedEventRunner {
 
     const ctx = this.makeEvaluatorContext(input);
 
-    // failWhen has priority; can interrupt pending events.
+    // failWhen has priority; can interrupt pending events. A recurring
+    // event re-arms on failure (a rain squall canceling one recede must not
+    // disable receding forever); it fires onFail but takes no cooldown
+    // stamp, so it may retry as soon as conditions allow.
     if (event.failWhen && this.evaluatePredicate(event.failWhen, ctx, state)) {
-      state.status = "failed";
+      // An armed recurring event with nothing in flight has nothing to
+      // cancel — do not spin fail transitions every tick the predicate holds.
+      if (event.recurring && state.status === "active") return false;
+      state.status = event.recurring ? "active" : "failed";
       state.scheduledCompleteTick = null;
       out.push(...this.expandEffects(event.onFail ?? [], event, ctx));
       this.applyTransitionEffects(event.onFail ?? [], ctx, out, 0);
@@ -197,6 +221,18 @@ export class ScriptedEventRunner {
     }
 
     if (state.status === "active") {
+      // A recurring event that completed this very tick has re-armed but must
+      // not fire again inside the same tick's cascade; a cooldown widens the
+      // guard so a fireWhen window fires once per period, not every minute.
+      if (
+        event.recurring &&
+        state.lastCompletedTick !== undefined &&
+        state.lastCompletedTick !== null &&
+        input.currentTick - state.lastCompletedTick <
+          Math.max(1, event.recurringCooldownTicks ?? 1)
+      ) {
+        return false;
+      }
       if (this.evaluatePredicate(event.fireWhen, ctx, state)) {
         const totalWait =
           (event.fireDelayTicks ?? 0) + (event.durationTicks ?? 0);
@@ -204,10 +240,9 @@ export class ScriptedEventRunner {
           state.status = "pending";
           state.scheduledCompleteTick = input.currentTick + totalWait;
         } else {
-          state.status = "completed";
-          state.scheduledCompleteTick = null;
           out.push(...this.expandEffects(event.onComplete, event, ctx));
           this.applyTransitionEffects(event.onComplete, ctx, out, 0);
+          this.settleCompletion(event, state, input.currentTick);
         }
         input.dgsm.setScriptedEventState(eventId, state);
         return true;
@@ -220,10 +255,9 @@ export class ScriptedEventRunner {
         state.scheduledCompleteTick !== null &&
         input.currentTick >= state.scheduledCompleteTick
       ) {
-        state.status = "completed";
-        state.scheduledCompleteTick = null;
         out.push(...this.expandEffects(event.onComplete, event, ctx));
         this.applyTransitionEffects(event.onComplete, ctx, out, 0);
+        this.settleCompletion(event, state, input.currentTick);
         input.dgsm.setScriptedEventState(eventId, state);
         return true;
       }
@@ -407,8 +441,46 @@ export class ScriptedEventRunner {
             kind: "connection.setBlock",
             connectionId: effect.connectionId,
             blocked: effect.blocked,
-            sourceFeatureId,
+            sourceFeatureId: effect.featureId ?? sourceFeatureId,
             reason: effect.reason,
+          });
+          break;
+        }
+        case "connection.setHidden": {
+          out.push({
+            kind: "connection.setHidden",
+            connectionId: effect.connectionId,
+            hidden: effect.hidden,
+          });
+          break;
+        }
+        case "item.create": {
+          if (effect.skipIfExists && effect.id !== undefined) {
+            // Restock guard, location-scoped: an id still on the shelf
+            // blocks the refill; the same id carried elsewhere does not.
+            const place = ctx.dgsm.getScene(effect.location);
+            const already = (place?.items ?? []).some(
+              (i) => i.id === effect.id
+            );
+            if (already) break;
+          }
+          out.push({
+            kind: "item.create",
+            name: effect.name,
+            location: effect.location,
+            ...(effect.description !== undefined
+              ? { description: effect.description }
+              : {}),
+            ...(effect.id !== undefined ? { id: effect.id } : {}),
+          });
+          break;
+        }
+        case "item.move": {
+          out.push({
+            kind: "item.move",
+            itemId: effect.itemId,
+            from: effect.from,
+            to: effect.to,
           });
           break;
         }
@@ -488,6 +560,35 @@ export class ScriptedEventRunner {
       }
       case "gameDate": {
         return cmpString(datePart(ctx.gameDateTime), pred.cmp, pred.value);
+      }
+      case "timeOfDay": {
+        // "HH:MM" compares lexicographically == chronologically.
+        return cmpString(
+          timePart(ctx.gameDateTime).slice(0, 5),
+          pred.cmp,
+          pred.value
+        );
+      }
+      case "regionWeather": {
+        const weather = ctx.dgsm.getScopedFeatureState<{
+          weatherType: string;
+          intensity: number;
+        }>("weather", "region", pred.regionId);
+        if (!weather) return false;
+        return (
+          pred.types.includes(weather.weatherType) &&
+          weather.intensity >= (pred.minIntensity ?? 1)
+        );
+      }
+      case "sceneOccupied": {
+        for (const npc of ctx.dgsm.getState().npcCharacters) {
+          if (!ctx.dgsm.isNpcAlive(npc.id)) continue;
+          const pos = ctx.dgsm.getCharacterPosition(npc.id);
+          if (pos?.type === "scene" && pos.sceneId === pred.sceneId) {
+            return true;
+          }
+        }
+        return false;
       }
       case "eventStatus": {
         const target = ctx.getEventState(pred.otherEventId);

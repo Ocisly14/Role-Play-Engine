@@ -2,9 +2,25 @@
   "schemaVersion": 2,
   "id": "SCN_holt_gate",
   "name": "霍尔特家院门",
-  "description": "霍尔特家老宅前的院门和一小片院子。木栅栏刷过太多遍漆,院里的草地上压着两道深深的货车车辙,晾衣绳从门廊拉到苹果树。纱门后面就是这家人的起居空间 [SCN_holt_common]。一条安静的小巷从院门口通回主街北口,巷子里多半只有这家人自己的脚印。",
+  "description": "霍尔特家老宅前的院门和一小片院子。木栅栏刷过太多遍漆,院里的草地上压着两道深深的货车车辙 [item.holt_gate.truck_ruts],晾衣绳 [item.holt_gate.clothesline] 从门廊拉到苹果树 [item.holt_gate.apple_tree]。纱门后面就是这家人的起居空间 [SCN_holt_common]。一条安静的小巷从院门口通回主街北口,巷子里多半只有这家人自己的脚印。",
   "references": {
-    "items": [],
+    "items": [
+      {
+        "id": "item.holt_gate.apple_tree",
+        "name": "苹果树",
+        "description": "院子角落一棵老苹果树,树皮皴裂,秋天总挂着一树没摘干净的果子,风一吹掉一地,踩上去有股发酵的甜味。"
+      },
+      {
+        "id": "item.holt_gate.clothesline",
+        "name": "晾衣绳",
+        "description": "一根从门廊拉到苹果树的晾衣绳,常年绷得笔直,几个衣夹留在绳上没摘,风一吹哗啦响。"
+      },
+      {
+        "id": "item.holt_gate.truck_ruts",
+        "name": "货车车辙",
+        "description": "草地上压出的两道深辙,常年被同一辆车轧过,车轮印硬得踩不塌,雨后也总积着水。"
+      }
+    ],
     "connections": [
       {
         "id": "exit.holt_gate.front_door",

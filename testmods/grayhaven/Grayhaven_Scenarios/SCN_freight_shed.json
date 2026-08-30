@@ -2,7 +2,7 @@
   "schemaVersion": 2,
   "id": "SCN_freight_shed",
   "name": "货运中转棚",
-  "description": "公路岔路口旁的铁皮棚,海风把波纹铁皮吹得嗡嗡作响。棚里靠墙码着几只待运的板条箱 [item.freight_shed.crates],封条完好,唛头只有编号没有发货人;门边的钉子上挂着一块提单夹板 [item.freight_shed.manifest],单据打得工整,抬头是萨克拉门托的一个邮政信箱。地面的轮胎印只有一种花纹——Frank 那辆货车的。棚里只有门缝和铁皮接缝透进来的光,昏暗得看不清箱子背面的字 [cond.freight_shed.dim]。唯一的门 [SCN_motel] 开向旅馆旁的公路岔路口,挂锁扣着,但锁从来没锁上过。",
+  "description": "公路岔路口旁的铁皮棚,海风把波纹铁皮吹得嗡嗡作响。棚里靠墙码着几只待运的板条箱 [item.freight_shed.crates],封条完好,唛头只有编号没有发货人;门边的钉子上挂着一块提单夹板 [item.freight_shed.manifest],单据打得工整,抬头是萨克拉门托的一个邮政信箱。墙角一台老式台秤 [item.freight_shed.scale] 的指针锈死在刻度中间,秤盘边缘掉漆见了底铁。地面的轮胎印只有一种花纹——Frank 那辆货车的。棚里只有门缝和铁皮接缝透进来的光,昏暗得看不清箱子背面的字 [cond.freight_shed.dim]。唯一的门 [SCN_motel] 开向旅馆旁的公路岔路口,挂锁扣着,但锁从来没锁上过。",
   "parentLocationId": "LOC_motel",
   "indoor": true,
   "references": {
@@ -10,14 +10,17 @@
       {
         "id": "item.freight_shed.crates",
         "name": "待运板条箱",
-        "description": "几只钉好的板条箱,封条完好,唛头只有编号没有发货人,等着 Frank 的货车。",
-        "type": "container"
+        "description": "几只钉好的板条箱,封条完好,唛头只有编号没有发货人,等着 Frank 的货车。"
+      },
+      {
+        "id": "item.freight_shed.scale",
+        "name": "老式台秤",
+        "description": "墙角一台老式台秤,指针锈死在刻度中间,秤盘边缘掉漆见了底铁。"
       },
       {
         "id": "item.freight_shed.manifest",
         "name": "提单夹板",
-        "description": "挂在钉子上的夹板,打字工整的提货单,抬头是萨克拉门托的一个邮政信箱,签收栏永远空着。",
-        "type": "document"
+        "description": "挂在钉子上的夹板,打字工整的提货单,抬头是萨克拉门托的一个邮政信箱,签收栏永远空着。"
       }
     ],
     "connections": [
