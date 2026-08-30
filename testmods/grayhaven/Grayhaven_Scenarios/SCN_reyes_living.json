@@ -2,7 +2,7 @@
   "schemaVersion": 2,
   "id": "SCN_reyes_living",
   "name": "Reyes 家客厅",
-  "description": "客厅和厨房挤在同一间屋里:一张吃饭兼记账的木桌,两把不成对的椅子,灶台上的水壶擦得发亮。桌角摊着一本用橡皮筋捆住的账本 [item.reyes_living.account_ledger],铅笔就别在封皮里——打烊后的深夜,Marisol 常在这盏灯下把数字一遍遍重新加。窗台上一台老收音机 [item.reyes_living.radio] 调在 KGRV 的频段,音量拧得很小。墙上挂着渔村老照片和一枚褪色的圣像。屋子有三扇门:一扇贴着车辙贴纸的门通向 Tommy 的房间 [exit.reyes_living.tommy_door],另一扇虚掩的门是 Marisol 的卧室 [exit.reyes_living.marisol_door],临后街的小门 [exit.reyes_living.lane_door] 出去就是通往主街南段的窄巷,门边钉着一排挂钥匙和围裙的挂钩。",
+  "description": "客厅和厨房挤在同一间屋里:一张吃饭兼记账的木桌,两把不成对的椅子,灶台上的水壶擦得发亮。桌角摊着一本用橡皮筋捆住的账本 [item.reyes_living.account_ledger],铅笔就别在封皮里——打烊后的深夜,Marisol 常在这盏灯下把数字一遍遍重新加。窗台上一台老收音机 [item.reyes_living.radio] 调在 KGRV 的频段,音量拧得很小。墙上挂着渔村老照片和一枚褪色的圣像。屋子有三扇门:一扇贴着车辙贴纸的门通向 Tommy 的房间 [SCN_reyes_tommy],另一扇虚掩的门是 Marisol 的卧室 [SCN_reyes_marisol],临后巷的小门 [SCN_reyes_gate] 出去就是自家门口的空地,门边钉着一排挂钥匙和围裙的挂钩。",
   "parentLocationId": "LOC_reyes_house",
   "indoor": true,
   "references": {
@@ -35,9 +35,9 @@
       },
       {
         "id": "exit.reyes_living.lane_door",
-        "targetId": "SCN_main_south",
+        "targetId": "SCN_reyes_gate",
         "name": "后街小门",
-        "description": "临后街的小门,穿过窄巷通向主街南段。"
+        "description": "临后巷的小门,出去是自家门口的空地。"
       }
     ],
     "conditions": []

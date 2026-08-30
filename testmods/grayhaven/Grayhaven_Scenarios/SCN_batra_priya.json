@@ -2,7 +2,7 @@
   "schemaVersion": 2,
   "id": "SCN_batra_priya",
   "name": "Batra 家·Priya 的房间",
-  "description": "房间一半是床铺,一半是工作台,分界线泾渭分明——床上乱,台上齐。台面正中是一台改装过的收音机[item.batra_priya.modified_radio],旋钮换过、外壳打了新孔,天线用晾衣铁丝接长,直伸到窗框外。旁边的焊台[item.batra_priya.soldering_station]收拾得和她父亲的一样规矩,烙铁架上还留着松香的余味。台角摊着那册「证据登记簿」[item.batra_priya.evidence_notebook],条目按 A、B、C 三级分类,字迹精确得像仪表读数。墙上钉着一张她手画的 KGRV 频段刻度表,铅笔标着几个打问号的位置。房门通向起居厨房[exit.batra_priya.living_door]。",
+  "description": "房间一半是床铺,一半是工作台,分界线泾渭分明——床上乱,台上齐。台面正中是一台改装过的收音机[item.batra_priya.modified_radio],旋钮换过、外壳打了新孔,天线用晾衣铁丝接长,直伸到窗框外。旁边的焊台[item.batra_priya.soldering_station]收拾得和她父亲的一样规矩,烙铁架上还留着松香的余味。台角摊着那册「证据登记簿」[item.batra_priya.evidence_notebook],条目按 A、B、C 三级分类,字迹精确得像仪表读数。墙上钉着一张她手画的 KGRV 频段刻度表,铅笔标着几个打问号的位置。房门通向起居厨房[SCN_batra_living]。",
   "parentLocationId": "LOC_batra_shop",
   "indoor": true,
   "references": {

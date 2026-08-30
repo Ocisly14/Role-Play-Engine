@@ -80,11 +80,6 @@ function resolveTopLevelLocationId(
   const road = topology?.roads.get(locationId);
   if (road?.parentLocationId) return road.parentLocationId;
 
-  const outline = dgsm
-    .getState()
-    .scenarioOutlines.find((candidate) => candidate.id === locationId);
-  if (outline?.id) return outline.id;
-
   if (locationId === "OUTDOOR") return locationId;
   return null;
 }

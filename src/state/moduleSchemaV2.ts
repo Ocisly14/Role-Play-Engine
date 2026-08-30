@@ -19,7 +19,6 @@ import type {
 import type {
   DynamicScene,
   Item,
-  ScenarioOutline,
   SceneConnection,
   TransportEdge,
 } from "./types.js";
@@ -234,6 +233,10 @@ function parseItem(
     problems
   );
   const lightLevel = checkOptionalNumber(value, "lightLevel", path, problems);
+  const position = checkOptionalNumber(value, "position", path, problems);
+  if (position !== undefined && (position < 0 || position > 1)) {
+    problems.push(`${path}.position: must be in [0, 1], got ${position}`);
+  }
   if (problems.length > before || id === undefined || name === undefined) {
     return null;
   }
@@ -242,6 +245,7 @@ function parseItem(
   if (hidden !== undefined) item.hidden = hidden;
   if (isLightSource !== undefined) item.isLightSource = isLightSource;
   if (lightLevel !== undefined) item.lightLevel = lightLevel;
+  if (position !== undefined) item.position = position;
   return item;
 }
 
@@ -485,6 +489,13 @@ function rejectRoadOnlyFields(
 export function buildSceneV2(file: PlaceFileV2): DynamicScene {
   const problems: string[] = [];
   const connections = rejectRoadOnlyFields(file, problems);
+  for (const item of file.references.items) {
+    if (item.position !== undefined) {
+      problems.push(
+        `item "${item.id}": position is only valid on ROAD_* files (a scene has no interior distance)`
+      );
+    }
+  }
   if (problems.length > 0) {
     throw new ModuleSchemaError(file.id, problems);
   }
@@ -612,11 +623,16 @@ interface PlaceForValidation {
 /**
  * Cross-file validation over all loaded places:
  * - every place id and reference id shares one module-wide namespace (no dupes);
- * - every `[citation]` in a description resolves to a reference in that file;
- * - every non-hidden reference is cited exactly once;
- * - hidden items/connections are exempt from the citation requirement and
+ * - every `[citation]` in a description resolves to a local item/condition or
+ *   to the target place of one of this place's connections;
+ * - every non-hidden item is cited exactly once; hidden items are exempt and
  *   must NOT be cited (the prose would leak them);
  * - conditions must always be cited;
+ * - connections are topology bookkeeping, never citable by their own id: the
+ *   prose points at the PLACE a passage leads to, not at the passage. Every
+ *   non-hidden connection's targetId must be cited exactly once; a hidden
+ *   connection's target must NOT be cited. (A door that matters as an object
+ *   — lockable, breakable — is authored as an item.)
  * - every connection targetId exists and is not the owner itself.
  * Exit symmetry (a reverse connection) is deliberately NOT required.
  */
@@ -684,11 +700,6 @@ export function validateModuleReferences(module: {
     for (const item of place.items) {
       localReferences.set(item.id, { hidden: item.hidden === true });
     }
-    for (const connection of place.connections) {
-      localReferences.set(connection.id, {
-        hidden: connection.hidden === true,
-      });
-    }
     for (const condition of place.conditions) {
       if (condition.id !== undefined) {
         // Conditions cannot be hidden — always require a citation.
@@ -696,16 +707,38 @@ export function validateModuleReferences(module: {
       }
     }
 
-    // Every citation must resolve to a reference in THIS file.
+    // Where can you go from here — cited by TARGET place id, never by the
+    // connection's own id. A target reachable both hidden and visibly counts
+    // as visible.
+    const visibleTargets = new Set<string>();
+    const hiddenTargets = new Set<string>();
+    for (const connection of place.connections) {
+      (connection.hidden === true ? hiddenTargets : visibleTargets).add(
+        connection.targetId
+      );
+    }
+    for (const target of visibleTargets) hiddenTargets.delete(target);
+
+    // Every citation must resolve to a local item/condition or a connection
+    // target of THIS place.
     for (const cited of citationCounts.keys()) {
-      if (!localReferences.has(cited)) {
+      if (localReferences.has(cited) || visibleTargets.has(cited)) continue;
+      if (hiddenTargets.has(cited)) {
+        problems.push(
+          `${place.id}: description cites [${cited}], the target of a hidden connection (the prose would reveal it)`
+        );
+      } else if (placeIds.has(cited)) {
+        problems.push(
+          `${place.id}: description cites [${cited}], a place this file has no connection to`
+        );
+      } else {
         problems.push(
           `${place.id}: description cites [${cited}], which is not declared in this file's references`
         );
       }
     }
 
-    // Every reference: hidden must not be cited; visible must be cited exactly once.
+    // Every item/condition: hidden must not be cited; visible must be cited exactly once.
     for (const [refId, { hidden }] of localReferences) {
       const count = citationCounts.get(refId) ?? 0;
       if (hidden) {
@@ -723,6 +756,21 @@ export function validateModuleReferences(module: {
       } else if (count > 1) {
         problems.push(
           `${place.id}: reference "${refId}" is cited ${count} times (expected exactly once)`
+        );
+      }
+    }
+
+    // Every reachable place must be cited exactly once — the prose is the
+    // only map the reader gets.
+    for (const target of visibleTargets) {
+      const count = citationCounts.get(target) ?? 0;
+      if (count === 0) {
+        problems.push(
+          `${place.id}: connection target "${target}" is never cited in the description (the prose must say where you can go, as [${target}])`
+        );
+      } else if (count > 1) {
+        problems.push(
+          `${place.id}: connection target "${target}" is cited ${count} times (expected exactly once)`
         );
       }
     }
@@ -747,107 +795,6 @@ export function validateModuleReferences(module: {
 }
 
 // ─── scenarios_outline / transport_edges validators ────────────────
-
-/**
- * Validate the scenarios_outline entry. Each outline requires
- * id/name/description/subSceneCount; `entrySceneId`, when present, must be a
- * loaded scene.
- */
-export function validateScenarioOutlines(
-  entryId: string,
-  data: unknown,
-  module: {
-    scenes: Map<string, DynamicScene>;
-  }
-): ScenarioOutline[] {
-  const raw = Array.isArray(data)
-    ? data
-    : isRecord(data) && Array.isArray(data.scenarios)
-      ? data.scenarios
-      : null;
-  if (raw === null) {
-    throw new ModuleSchemaError(entryId, [
-      "expected an array of outlines or an object with a `scenarios` array",
-    ]);
-  }
-
-  const problems: string[] = [];
-  const outlines: ScenarioOutline[] = [];
-  raw.forEach((entry: unknown, index: number) => {
-    const path = `scenarios[${index}]`;
-    if (!isRecord(entry)) {
-      problems.push(`${path}: expected an object`);
-      return;
-    }
-    const before = problems.length;
-    const id = checkRequiredString(entry, "id", path, problems);
-    const name = checkRequiredString(entry, "name", path, problems);
-    const description = entry.description;
-    if (typeof description !== "string") {
-      problems.push(`${path}.description: required string`);
-    }
-    const subSceneCount = entry.subSceneCount;
-    if (typeof subSceneCount !== "number" || Number.isNaN(subSceneCount)) {
-      problems.push(`${path}.subSceneCount: required number`);
-    }
-    const sourcePlaceId = checkOptionalString(
-      entry,
-      "sourcePlaceId",
-      path,
-      problems
-    );
-    const sourcePlaceName = checkOptionalString(
-      entry,
-      "sourcePlaceName",
-      path,
-      problems
-    );
-    const entrySceneId = checkOptionalString(
-      entry,
-      "entrySceneId",
-      path,
-      problems
-    );
-    let residents: string[] | undefined;
-    if (entry.residents !== undefined) {
-      if (
-        Array.isArray(entry.residents) &&
-        entry.residents.every((r: unknown) => typeof r === "string")
-      ) {
-        residents = entry.residents;
-      } else {
-        problems.push(`${path}.residents: expected an array of strings`);
-      }
-    }
-    if (entrySceneId !== undefined && !module.scenes.has(entrySceneId)) {
-      problems.push(
-        `${path}.entrySceneId: "${entrySceneId}" is not a known scene`
-      );
-    }
-    if (
-      problems.length > before ||
-      id === undefined ||
-      name === undefined ||
-      typeof description !== "string" ||
-      typeof subSceneCount !== "number"
-    ) {
-      return;
-    }
-    const outline: ScenarioOutline = { id, name, description, subSceneCount };
-    if (sourcePlaceId !== undefined) outline.sourcePlaceId = sourcePlaceId;
-    if (sourcePlaceName !== undefined) {
-      outline.sourcePlaceName = sourcePlaceName;
-    }
-    if (residents !== undefined) outline.residents = residents;
-    if (entrySceneId !== undefined) outline.entrySceneId = entrySceneId;
-    outlines.push(outline);
-  });
-
-  if (problems.length > 0) {
-    throw new ModuleSchemaError(entryId, problems);
-  }
-  return outlines;
-}
 
 /**
  * Validate the transport_edges entry. Every referenced id must exist:

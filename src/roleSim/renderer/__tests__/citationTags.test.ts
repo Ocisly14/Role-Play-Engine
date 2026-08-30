@@ -1,7 +1,12 @@
 import { describe, expect, it, vi } from "vitest";
 import { stripUncitableTags } from "../llmRenderer.js";
 
-const allowed = new Set(["stranger_a", "ITEM_7", "SCN_LIBRARY"]);
+const allowed = new Set([
+  "stranger_a",
+  "ITEM_7",
+  "SCN_LIBRARY",
+  "exit.library.stacks",
+]);
 
 describe("stripUncitableTags", () => {
   it("keeps tags the actor may cite", () => {
@@ -24,6 +29,12 @@ describe("stripUncitableTags", () => {
     expect(out).toBe("The tall pale man sets a brass key [ITEM_7] down.");
     expect(warn).toHaveBeenCalledOnce();
     warn.mockRestore();
+  });
+
+  it("keeps an exit tag — doors are citable as themselves", () => {
+    const text =
+      "A stairway rises behind the desk [exit.library.stacks], its rail worn smooth.";
+    expect(stripUncitableTags(text, allowed, "npc_1")).toBe(text);
   });
 
   it("leaves a narrative with no tags untouched", () => {

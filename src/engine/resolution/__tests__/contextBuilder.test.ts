@@ -3,6 +3,7 @@
 // involved places; the full-world lookup surfaces (itemHolders, placeKinds,
 // connectionIds) are never trimmed; characters stay complete.
 
+import { buildTopology } from "@/state/topologyTypes.js";
 import { describe, expect, it } from "vitest";
 import type { DynamicGameStateManager } from "../../../state/DynamicGameState.js";
 import type { ActionCommand, EngineAction } from "../../actions/types.js";
@@ -42,9 +43,6 @@ function makeDgsm(): DynamicGameStateManager {
       scenes,
       npcCharacters: npcs,
       npcInventories: { npc_1: [{ id: "pick", name: "lockpicks" }] },
-      scenarioOutlines: [
-        { id: "L1", name: "The Manor", description: "", subSceneCount: 3 },
-      ],
     }),
     getEnvironmentReading: () => ({
       temperature: 20,
@@ -54,6 +52,7 @@ function makeDgsm(): DynamicGameStateManager {
       airborneHazards: [],
     }),
     getSceneConditions: () => [],
+    getTopology: () => buildTopology(scenes, new Map()),
     getConnectionBlockReason: (from: string, to: string) =>
       from === "SCN_1" && to === "SCN_2" ? "rubble" : undefined,
     getCharactersInScene: (sceneId: string) =>
@@ -125,9 +124,6 @@ describe("buildEngineResolutionContext", () => {
     // No junctions or roads here, so the skeleton lists no geography nodes —
     // the interior scenes live under placeKinds, not in the graph.
     expect(context.state.graph.places).toEqual([]);
-    expect(context.state.graph.macroLocations).toEqual([
-      { id: "L1", name: "The Manor" },
-    ]);
     expect(context.state.placeKinds).toEqual({
       SCN_1: "scene",
       SCN_2: "scene",

@@ -2,7 +2,7 @@
   "schemaVersion": 2,
   "id": "ROAD_station_approach",
   "name": "站前引道",
-  "description": "自动大门之后的最后一段路,十五分钟的缓坡,碎石在这里换成了平整的水泥。一头是那道大门 [exit.station_approach.gate_end],另一头进入铁丝网围着的站区场院 [exit.station_approach.yard_end]。这段路修得比镇里任何一条街都好,却见不到一个用它的人。",
+  "description": "自动大门之后的最后一段路,十五分钟的缓坡,碎石在这里换成了平整的水泥。一头是那道大门 [SCN_gate],另一头进入铁丝网围着的站区场院 [SCN_station_yard]。这段路修得比镇里任何一条街都好,却见不到一个用它的人。",
   "parentLocationId": "OUTDOOR",
   "travelTimeMinutes": 15,
   "references": {

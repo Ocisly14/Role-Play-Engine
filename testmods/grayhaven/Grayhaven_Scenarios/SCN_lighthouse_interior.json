@@ -2,7 +2,7 @@
   "schemaVersion": 2,
   "id": "SCN_lighthouse_interior",
   "name": "灯塔内部",
-  "description": "螺旋铁梯绕着塔壁一圈圈盘上去,脚步声在塔筒里回响很久。自动化的灯机在塔顶自顾自地转,继电器每隔几秒咔哒一响——这座塔如今不需要人,可它曾经被人守了三十年:值班桌还在老位置,桌旁的档案柜里排着三十年的守塔日志 [item.lighthouse_interior.keeper_logs],从 1952 到 1982,一册不缺。墙上的工具架 [item.lighthouse_interior.maintenance_tools] 上,黄铜和钢的保养工具按尺寸挂得一丝不苟,擦过油——有人仍在照料它们。1982 年之后,楼梯和栏杆积起了薄薄一层灰 [cond.lighthouse_interior.dust],只有一条被脚步磨出的窄道是干净的。塔底的铁门 [exit.lighthouse_interior.tower_door] 通向崖顶平台,门外侧挂着海岸警卫队换上的官方挂锁——照规矩,谁也进不来。",
+  "description": "螺旋铁梯绕着塔壁一圈圈盘上去,脚步声在塔筒里回响很久。自动化的灯机在塔顶自顾自地转,继电器每隔几秒咔哒一响——这座塔如今不需要人,可它曾经被人守了三十年:值班桌还在老位置,桌旁的档案柜里排着三十年的守塔日志 [item.lighthouse_interior.keeper_logs],从 1952 到 1982,一册不缺。墙上的工具架 [item.lighthouse_interior.maintenance_tools] 上,黄铜和钢的保养工具按尺寸挂得一丝不苟,擦过油——有人仍在照料它们。1982 年之后,楼梯和栏杆积起了薄薄一层灰 [cond.lighthouse_interior.dust],只有一条被脚步磨出的窄道是干净的。塔底的铁门 [SCN_lighthouse_cliff] 通向崖顶平台,门外侧挂着海岸警卫队换上的官方挂锁——照规矩,谁也进不来。",
   "parentLocationId": "SCN_lighthouse_cliff",
   "indoor": true,
   "references": {

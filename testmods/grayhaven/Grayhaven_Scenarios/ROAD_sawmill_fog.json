@@ -2,7 +2,7 @@
   "schemaVersion": 2,
   "id": "ROAD_sawmill_fog",
   "name": "雾谷东径",
-  "description": "从锯木厂向西北下行的一小时林径。一头在废墟空地 [exit.sawmill_fog.sawmill_end],另一头沉进雾谷 [exit.sawmill_fog.hollow_end]。走到后半段,雾会先于谷地出现:先漫过脚踝,然后是膝盖,最后是整个人。",
+  "description": "从锯木厂向西北下行的一小时林径。一头在废墟空地 [SCN_sawmill],另一头沉进雾谷 [SCN_fog_hollow]。走到后半段,雾会先于谷地出现:先漫过脚踝,然后是膝盖,最后是整个人。",
   "parentLocationId": "OUTDOOR",
   "travelTimeMinutes": 60,
   "references": {

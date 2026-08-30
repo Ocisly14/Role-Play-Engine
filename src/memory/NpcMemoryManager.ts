@@ -4,12 +4,9 @@ import { DecayEngine } from "./DecayEngine.js";
 import { MemoryRetriever } from "./MemoryRetriever.js";
 import { MemoryStore } from "./MemoryStore.js";
 import { getAllHandlers, getHandler } from "./handlers/index.js";
-import { buildMapMemoryEntries } from "./contextMemory.js";
-import { resolveKnownLocationIds } from "./knownLocations.js";
 import {
   type AddMemoryParams,
   CONTEXT_PROFILES,
-  type EnsureMapMemoriesParams,
   type GetContextParams,
   type QueryMemoryParams,
   type ScoredMemory,
@@ -43,60 +40,6 @@ export class NpcMemoryManager {
   ): Promise<NpcMemory | null> {
     return this.store.findLatestByType(sessionId, npcId, type);
   }
-
-  /**
-   * Write this character's starting map knowledge — one memory per macro
-   * location, one per scene inside it, and one for how the streets connect.
-   * New rows use the unified `map` type. A legacy `context` row still
-   * suppresses a duplicate bootstrap when resuming an older session.
-   *
-   * Returns how many memories were created.
-   */
-  async ensureMapMemories(
-    params: EnsureMapMemoriesParams
-  ): Promise<number> {
-    const [existingMap, legacyContext] = await Promise.all([
-      this.store.findLatestByType(params.sessionId, params.npcId, "map"),
-      this.store.findLatestByType(params.sessionId, params.npcId, "context"),
-    ]);
-    if (existingMap || legacyContext) return 0;
-
-    const knownIds = resolveKnownLocationIds(
-      params.dgsm,
-      params.seed,
-      params.dgsm.getCharacterPosition(params.npcId)
-    );
-    const entries = buildMapMemoryEntries(
-      params.dgsm,
-      knownIds,
-      params.language
-    );
-
-    await Promise.all(
-      entries.map((entry) =>
-        this.add({
-          npcId: params.npcId,
-          sessionId: params.sessionId,
-          moduleId: params.moduleId,
-          type: "map",
-          content: entry.content,
-          gameDateTime: params.gameDateTime,
-          // `location` is a scene the memory happened at; only an interior
-          // entry has one. Macro and topology ids live in metadata/tags.
-          ...(entry.scope === "interior" && entry.locationId
-            ? { location: entry.locationId }
-            : {}),
-          metadata: {
-            scope: entry.scope,
-            ...(entry.locationId ? { locationId: entry.locationId } : {}),
-          },
-        })
-      )
-    );
-
-    return entries.length;
-  }
-
 
   // ===== Retrieve =====
 
@@ -132,7 +75,6 @@ export class NpcMemoryManager {
       limit,
     });
   }
-
 
   // ===== Context Building =====
 

@@ -134,14 +134,26 @@ export function buildEngineResolutionContext(
   }
 
   // ── Tier 1: the skeleton graph, plus the volatile blocked-edge list. ──
-  // An interior scene's edge is lifted to its parent (macro location or node
-  // scene); interior edges within one location vanish from the skeleton (they
-  // live in Tier 2). Top-level scenes and roads stand for themselves.
+  // An interior scene's edge is lifted to its topology attachment (the node
+  // scene or road its building hangs off); edges that collapse into a
+  // self-edge vanish from the skeleton — a building's own doorway onto its
+  // street is already carried by the street's prose and by Tier 2.
+  // Top-level scenes and roads stand for themselves.
+  const topology = dgsm.getTopology?.() ?? null;
   const liftToSkeleton = (id: string): string => {
     const entry = placeById.get(id);
     if (entry?.kind !== "scene") return id;
-    return (entry.place as DynamicScene).parentLocationId ?? id;
+    if (!topology || topology.nodeSceneIds.has(id)) return id;
+    const attachment = topology.sceneToParent.get(id);
+    if (!attachment) return id;
+    return attachment.type === "scene" ? attachment.sceneId : attachment.roadId;
   };
+  // Skeleton edges run between skeleton nodes only — roads and geography
+  // node scenes. An edge still touching an interior scene after lifting is
+  // Tier 2 detail, not skeleton.
+  const isSkeletonNode = (id: string): boolean =>
+    placeById.get(id)?.kind === "road" ||
+    (topology?.nodeSceneIds.has(id) ?? false);
   const edges: WorldGraph["edges"] = [];
   const blockedEdges: BlockedEdge[] = [];
   const seenBlockedPairs = new Set<string>();
@@ -172,6 +184,7 @@ export function buildEngineResolutionContext(
     const from = liftToSkeleton(ownerId);
     const to = liftToSkeleton(connection.targetId);
     if (from === to) return;
+    if (!isSkeletonNode(from) || !isSkeletonNode(to)) return;
     edges.push({
       connectionId: connection.id,
       from,
@@ -197,11 +210,6 @@ export function buildEngineResolutionContext(
     }
   }
   const graph: WorldGraph = {
-    macroLocations: (state.scenarioOutlines ?? []).map((outline) => ({
-      id: outline.id,
-      name: outline.name,
-      ...(outline.description ? { description: outline.description } : {}),
-    })),
     places: [...placeById.entries()]
       .filter(
         ([, entry]) =>

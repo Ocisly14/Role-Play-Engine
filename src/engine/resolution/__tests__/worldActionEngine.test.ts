@@ -51,8 +51,7 @@ function makeContext(): EngineResolutionContext {
       // stands in / moves to are real via placeKinds (the validator's
       // full-world lookup), and the involved one is snapshotted below.
       graph: {
-        macroLocations: [{ id: "OUTDOOR", name: "Outdoors" }],
-        places: [],
+        places: [{ id: "J_A", kind: "scene" as const, name: "Crossing" }],
         edges: [],
       },
       blockedEdges: [],
@@ -379,8 +378,8 @@ describe("renderContextSegments caching layout", () => {
     expect(stable).toContain("## World Graph");
     expect(stable).toContain("## World Invariants");
     // The skeleton renders as a compact adjacency list, not JSON.
-    expect(stable).toContain("- OUTDOOR (Outdoors)");
-    expect(stable).not.toContain('"macroLocations"');
+    expect(stable).toContain("- J_A (Crossing)");
+    expect(stable).not.toContain('"places"');
 
     // Detailed places, items and blocked state depend on this tick, so they
     // live in the volatile half — blocking an edge must not invalidate the
@@ -411,13 +410,6 @@ describe("renderContextSegments caching layout", () => {
 describe("renderWorldGraph", () => {
   it("renders each node as description + connection references", () => {
     const text = renderWorldGraph({
-      macroLocations: [
-        {
-          id: "LOC_TOWN",
-          name: "Grayhaven",
-          description: "A fog-bound coastal town.",
-        },
-      ],
       places: [
         {
           id: "J_A",
@@ -432,10 +424,9 @@ describe("renderWorldGraph", () => {
         },
       ],
       edges: [
-        { connectionId: "exit.home.junc", from: "LOC_TOWN", to: "J_A" },
         {
           connectionId: "exit.home.secret",
-          from: "LOC_TOWN",
+          from: "J_A",
           to: "R_MAIN",
           hidden: true,
         },
@@ -448,12 +439,10 @@ describe("renderWorldGraph", () => {
       ],
     });
     expect(text.split("\n")).toEqual([
-      "Macro locations:",
-      "- LOC_TOWN (Grayhaven): A fog-bound coastal town.",
-      "  connections: [exit.home.junc] -> J_A; [exit.home.secret] -> R_MAIN (hidden)",
       "Outdoor node scenes:",
       // Authored prose rides along, newlines flattened.
       "- J_A (Crossing): A windswept crossing.",
+      "  connections: [exit.home.secret] -> R_MAIN (hidden)",
       "Roads:",
       // No description and no prose — the node line stands alone.
       "- R_MAIN (Star Avenue)",

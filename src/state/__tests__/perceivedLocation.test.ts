@@ -63,7 +63,11 @@ const roads = new Map<string, RoadNode>([
       endpointB: "J_B",
       travelTimeMinutes: 10,
       alongConnections: [{ sceneId: "S_SHOP", position: 0.4 }],
-      items: [{ id: "ITEM_R", name: "a dropped glove" }],
+      items: [
+        { id: "ITEM_R", name: "a dropped glove" },
+        { id: "ITEM_NEAR", name: "a fallen sign", position: 0.6 },
+        { id: "ITEM_FAR", name: "a mile marker", position: 1.0 },
+      ],
       conditions: [{ featureId: "weather", description: "fog" }],
     } as unknown as RoadNode,
   ],
@@ -96,10 +100,37 @@ describe("resolvePerceivedLocation", () => {
       kind: "road",
       name: "Star Avenue",
     });
-    expect(loc?.items.map((i) => i.id)).toEqual(["ITEM_R"]);
+    // From the midpoint of a 10-minute road, ±ROAD_ITEM_REACH_MINUTES
+    // covers the whole length — ambient and positioned items alike.
+    expect(loc?.items.map((i) => i.id)).toEqual([
+      "ITEM_R",
+      "ITEM_NEAR",
+      "ITEM_FAR",
+    ]);
     expect(loc?.conditions[0].description).toBe("fog");
+    expect(loc?.selfPosition).toBe(0.5);
+    expect(loc?.travelTimeMinutes).toBe(10);
     // Both endpoints and every building along the road are one hop away.
     expect(loc?.adjacentIds.sort()).toEqual(["J_A", "J_B", "S_SHOP"]);
+  });
+
+  it("walking closer brings a positioned road item into perception", () => {
+    // From the very start of the road, both positioned items (6 and 10
+    // minutes off) are beyond reach; only the ambient item remains.
+    const far = resolvePerceivedLocation(
+      { type: "road", roadId: "R_MAIN", position: 0.0 },
+      dgsm
+    );
+    expect(far?.items.map((i) => i.id)).toEqual(["ITEM_R"]);
+    const near = resolvePerceivedLocation(
+      { type: "road", roadId: "R_MAIN", position: 0.95 },
+      dgsm
+    );
+    expect(near?.items.map((i) => i.id)).toEqual([
+      "ITEM_R",
+      "ITEM_NEAR",
+      "ITEM_FAR",
+    ]);
   });
 
   it("resolves a node scene, exposing its scenes and roads", () => {

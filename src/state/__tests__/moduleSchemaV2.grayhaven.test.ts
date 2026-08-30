@@ -5,7 +5,6 @@ import {
   buildSceneV2,
   parsePlaceFileV2,
   validateModuleReferences,
-  validateScenarioOutlines,
 } from "@/state/moduleSchemaV2.js";
 import { buildTopology } from "@/state/topologyTypes.js";
 import type { RoadNode } from "@/state/topologyTypes.js";
@@ -40,10 +39,11 @@ describe("grayhaven module data", () => {
   const topology = buildTopology(module.scenes, module.roads);
 
   it("has the designed place counts", () => {
-    // 31 interior scenes + 15 former junctions, now top-level node scenes.
-    expect(module.scenes.size).toBe(46);
-    expect(topology.nodeSceneIds.size).toBe(15);
-    expect(module.roads.size).toBe(18);
+    // 31 interior scenes + 16 top-level node scenes (incl. the two main
+    // street crossroads and the Reyes gate).
+    expect(module.scenes.size).toBe(47);
+    expect(topology.nodeSceneIds.size).toBe(16);
+    expect(module.roads.size).toBe(19);
   });
 
   it("passes cross-file reference validation", () => {
@@ -52,10 +52,16 @@ describe("grayhaven module data", () => {
 
   it("assembles a topology", () => {
     expect(topology.sceneToRoads.size).toBeGreaterThan(0);
-    // Interior scenes attach to their street node or road access point.
+    // Storefronts hang off the main street at their access positions.
     expect(topology.sceneToParent.get("SCN_bluebird_dining")).toEqual({
-      type: "scene",
-      sceneId: "SCN_main_north",
+      type: "road",
+      roadId: "ROAD_main_street",
+      position: 0.1,
+    });
+    expect(topology.sceneToParent.get("SCN_clinic_waiting")).toEqual({
+      type: "road",
+      roadId: "ROAD_main_street",
+      position: 0.82,
     });
     expect(topology.sceneToParent.get("SCN_earl_cabin")).toEqual({
       type: "road",
@@ -102,17 +108,4 @@ describe("grayhaven module data", () => {
     expect(dock?.connections[0]?.targetId).toBe("SCN_station_yard");
   });
 
-  it("validates the scenario outline against loaded places", () => {
-    const outline = JSON.parse(
-      fs.readFileSync(path.join(MODULE_DIR, "scenarios_outline.json"), "utf8")
-    );
-    const outlines = validateScenarioOutlines(
-      "__scenarios_outline__",
-      outline,
-      { scenes: module.scenes }
-    );
-    // The four street/gate wrapper locations and the lighthouse container
-    // were dissolved into top-level node scenes: 16 → 11.
-    expect(outlines).toHaveLength(11);
-  });
 });

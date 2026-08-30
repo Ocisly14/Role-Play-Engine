@@ -1,36 +1,11 @@
 {
   "schemaVersion": 2,
   "id": "SCN_main_south",
-  "name": "主街南段",
-  "description": "主街的南半段,比北段更冷清,人行道的裂缝里长着草。街机厅「星港」的霓虹招牌白天也亮着,玻璃门上贴满游戏海报 [exit.main_south.arcade_door];巴特拉电视维修铺的橱窗里摞着待修的电视机,店门上挂着手写的营业时间牌 [exit.main_south.batra_door];再往南是诊所的磨砂玻璃门,门边钉着诊疗时间的铜牌 [exit.main_south.clinic_door]。一条窄窄的后街从两栋房子之间拐进去,尽头是雷耶斯家的小房子 [exit.main_south.reyes_backstreet]。南端的下坡道通向码头,风里已经闻得到海。",
+  "name": "主街南口",
+  "description": "主街南端的路口。铺装到这里变成碎石,下坡道折向码头,咸腥味和柴油味顺着坡爬上来;一条窄窄的后巷从两栋房子之间拐进去,通向雷耶斯家。站在口上能听见海——雾天听得更清楚,像整个镇子都被推到了水边。",
   "references": {
     "items": [],
-    "connections": [
-      {
-        "id": "exit.main_south.arcade_door",
-        "targetId": "SCN_arcade",
-        "name": "街机厅「星港」大门",
-        "description": "贴满海报的玻璃门,门里是整厅的电子音。"
-      },
-      {
-        "id": "exit.main_south.batra_door",
-        "targetId": "SCN_batra_shop",
-        "name": "巴特拉电视维修铺店门",
-        "description": "挂着手写营业时间牌的店门,通向一楼工作台。"
-      },
-      {
-        "id": "exit.main_south.clinic_door",
-        "targetId": "SCN_clinic_waiting",
-        "name": "诊所大门",
-        "description": "磨砂玻璃门,通向候诊室。"
-      },
-      {
-        "id": "exit.main_south.reyes_backstreet",
-        "targetId": "SCN_reyes_living",
-        "name": "通往雷耶斯家的后街",
-        "description": "两栋房子之间的窄巷,步行八分钟到雷耶斯家门口。"
-      }
-    ],
+    "connections": [],
     "conditions": []
   }
 }

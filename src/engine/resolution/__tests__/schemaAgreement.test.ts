@@ -279,7 +279,7 @@ describe("the trigger worklist answers what the Engine would otherwise infer", (
         worldInvariants: [],
       },
       state: {
-        graph: { macroLocations: [], places: [], edges: [] },
+        graph: { places: [], edges: [] },
         places: [],
         items: [],
         itemHolders: {},

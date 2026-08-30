@@ -29,17 +29,13 @@ import type {
   RoadNode,
   TownTopology,
 } from "./topologyTypes.js";
-import {
-  buildTopology,
-  enrichTopologyWithInteriorScenes,
-} from "./topologyTypes.js";
+import { buildTopology } from "./topologyTypes.js";
 import {
   InventoryUtils,
   type ModuleSetup,
   type NPCRelationship,
   RELATIONSHIP_TYPES,
   type RelationshipType,
-  type ScenarioOutline,
 } from "./types.js";
 import type {
   DynamicNPCProfile,
@@ -71,7 +67,6 @@ export interface DynamicGameState {
   // === Module Metadata ===
   moduleName: string;
   moduleSetup: ModuleSetup | null;
-  scenarioOutlines: ScenarioOutline[];
 
   // === World Feature Runtime State ===
   // Scope-aware buckets: scope -> featureId -> key -> feature-defined data.
@@ -146,7 +141,6 @@ export const initialDynamicGameState = (params: {
   npcCharacters: [],
   moduleName: params.moduleName,
   moduleSetup: null,
-  scenarioOutlines: [],
   scopedFeatureStates: { scene: {}, region: {}, character: {}, global: {} },
   scriptedEventStates: {},
   environmentReadings: {},
@@ -291,13 +285,9 @@ export class DynamicGameStateManager {
    */
   loadWorldData(data: {
     moduleSetup?: ModuleSetup;
-    scenarioOutlines?: ScenarioOutline[];
   }): void {
     if (data.moduleSetup) {
       this.state.moduleSetup = data.moduleSetup;
-    }
-    if (data.scenarioOutlines) {
-      this.state.scenarioOutlines = data.scenarioOutlines;
     }
 
     this.state.lastUpdated = new Date();
@@ -393,12 +383,6 @@ export class DynamicGameStateManager {
       topology = buildTopology(scenes, roads);
     }
 
-    // Enrich topology with interior sub-scenes so pathfinding works for them
-    const outlines = data.scenarioOutlines ?? [];
-    if (topology && (scenes.size > 0 || outlines.length > 0)) {
-      enrichTopologyWithInteriorScenes(topology, scenes, outlines);
-    }
-
     return {
       sessionId: data.sessionId ?? "",
       moduleName: data.moduleName ?? "",
@@ -408,7 +392,6 @@ export class DynamicGameStateManager {
           ? data.gameDateTime
           : makeDateTime(data.moduleSetup?.startDate ?? "1900-01-01", "08:00"),
       npcCharacters: data.npcCharacters ?? [],
-      scenarioOutlines: data.scenarioOutlines ?? [],
       scenes,
       roads,
       blockedConnections,

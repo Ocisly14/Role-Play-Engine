@@ -2,7 +2,7 @@
   "schemaVersion": 2,
   "id": "SCN_batra_living",
   "name": "Batra 家·起居厨房",
-  "description": "楼上的起居室与厨房合为一间,是这栋楼里最暖的地方:炉上常年温着茶,小豆蔻和烤黄油的香气盖过了楼下飘上来的松香味。灶边一排香料架[item.batra_living.spice_shelf]按 Anita 的次序排列,谁动过她一闻就知道。墙上一排相框[item.batra_living.family_photos]:孟买的婚礼、弗里蒙特装配线前的合影、Priya 在 Fort Anne 医院的满月照——一家人十三年的西迁史挂成一行。楼梯下到店堂[exit.batra_living.stairs_down];走廊尽头两扇门,一扇通主卧[exit.batra_living.master_door],另一扇贴着手写的「闲人免进」,是 Priya 的房间[exit.batra_living.priya_door]。",
+  "description": "楼上的起居室与厨房合为一间,是这栋楼里最暖的地方:炉上常年温着茶,小豆蔻和烤黄油的香气盖过了楼下飘上来的松香味。灶边一排香料架[item.batra_living.spice_shelf]按 Anita 的次序排列,谁动过她一闻就知道。墙上一排相框[item.batra_living.family_photos]:孟买的婚礼、弗里蒙特装配线前的合影、Priya 在 Fort Anne 医院的满月照——一家人十三年的西迁史挂成一行。楼梯下到店堂[SCN_batra_shop];走廊尽头两扇门,一扇通主卧[SCN_batra_master],另一扇贴着手写的「闲人免进」,是 Priya 的房间[SCN_batra_priya]。",
   "parentLocationId": "LOC_batra_shop",
   "indoor": true,
   "references": {

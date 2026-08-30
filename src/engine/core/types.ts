@@ -27,8 +27,8 @@ export type Unsubscribe = () => void;
 
 /** Kind of entity referenced by an action. Downstream routing
  *  (scriptedEventRunner.matchTarget, impactPropagation level-1) filters by
- *  kind === "character". */
-export type EntityKind = "character" | "item" | "scene";
+ *  kind === "character". `connection` names an authored exit (`exit.*`). */
+export type EntityKind = "character" | "item" | "scene" | "connection";
 
 /** A typed entity reference (id + kind) carried on CharacterAction. */
 export interface ReferencedEntity {

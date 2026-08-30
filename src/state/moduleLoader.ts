@@ -23,13 +23,9 @@ import {
   buildSceneV2,
   parsePlaceFileV2,
   validateModuleReferences,
-  validateScenarioOutlines,
   validateTransportEdges,
 } from "./moduleSchemaV2.js";
-import {
-  buildTopology,
-  enrichTopologyWithInteriorScenes,
-} from "./topologyTypes.js";
+import { buildTopology } from "./topologyTypes.js";
 import type {
   CharacterPosition,
   RoadNode,
@@ -40,7 +36,6 @@ import type {
   DynamicNPCProfile,
   DynamicScene,
   ModuleSetup,
-  ScenarioOutline,
   TransportEdge,
 } from "./types.js";
 
@@ -67,7 +62,6 @@ export interface ModuleData {
   npcs: DynamicNPCProfile[];
   scenes: Map<string, DynamicScene>;
   roads: Map<string, RoadNode>;
-  scenarioOutlines: ScenarioOutline[];
   transportEdges: TransportEdge[];
   npcInjectionPolicy: NpcInjectionPolicy | null;
   /** Loaded+validated scripted events (may be empty if module has no scripted-events/ dir). */
@@ -107,14 +101,15 @@ export async function loadModule(
 
   const scenes = new Map<string, DynamicScene>();
   const roads = new Map<string, RoadNode>();
-  let rawScenarioOutlines: unknown;
   let rawTransportEdges: unknown;
   let npcInjectionPolicy: NpcInjectionPolicy | null = null;
 
   for (const row of sceneRows) {
     const data: unknown = row.data;
     if (row.entryId === "__scenarios_outline__") {
-      rawScenarioOutlines = data;
+      // Retired: scenario outlines are no longer part of the runtime — NPC
+      // geographic knowledge is authored per-profile, placement uses scene
+      // ids. Rows from older imports are ignored.
     } else if (row.entryId === "__transport_edges__") {
       rawTransportEdges = data;
     } else if (row.entryId === "__npc_injection_policy__") {
@@ -133,19 +128,12 @@ export async function loadModule(
   // completeness, connection targets. Throws ModuleSchemaError on violation.
   validateModuleReferences({ scenes, roads });
 
-  const scenarioOutlines: ScenarioOutline[] =
-    rawScenarioOutlines === undefined
-      ? []
-      : validateScenarioOutlines("__scenarios_outline__", rawScenarioOutlines, {
-          scenes,
-        });
-
   const placeIds = new Set<string>([...scenes.keys(), ...roads.keys()]);
   const transportEdges: TransportEdge[] =
     rawTransportEdges === undefined
       ? []
       : validateTransportEdges("__transport_edges__", rawTransportEdges, {
-          outlineIds: new Set(scenarioOutlines.map((o) => o.id)),
+          outlineIds: new Set<string>(),
           placeIds,
         });
 
@@ -167,7 +155,6 @@ export async function loadModule(
     npcs,
     scenes,
     roads,
-    scenarioOutlines,
     transportEdges,
     npcInjectionPolicy,
     scriptedEvents,
@@ -367,21 +354,8 @@ export function initRuntime(params: {
     );
   }
 
-  // Enrich topology with interior sub-scenes
-  if (moduleData.scenes.size > 0 || moduleData.scenarioOutlines?.length) {
-    enrichTopologyWithInteriorScenes(
-      topology,
-      moduleData.scenes,
-      moduleData.scenarioOutlines ?? []
-    );
-  }
-
   // Determine default starting scene
-  const defaultSceneId =
-    moduleData.scenarioOutlines?.[0]?.entrySceneId ??
-    moduleData.scenarioOutlines?.[0]?.id ??
-    moduleData.scenes.keys().next().value ??
-    "unknown";
+  const defaultSceneId = moduleData.scenes.keys().next().value ?? "unknown";
 
   // Initialize runtime NPC state
   const npcStats: Record<string, { hp: number; san: number }> = {};
@@ -394,59 +368,24 @@ export function initRuntime(params: {
   const characterPositions: Record<string, CharacterPosition> = {};
   const characterSpots: Record<string, string> = {};
 
-  // Build residence lookup from scenarioOutlines
-  const residentToLocation: Record<string, string> = {};
-  for (const outline of moduleData.scenarioOutlines) {
-    if (outline.residents) {
-      for (const residentId of outline.residents as string[]) {
-        residentToLocation[residentId] = outline.id;
-      }
-    }
-  }
-
-  // Build macro location → entry scene lookup
-  const macroToEntry: Record<string, string> = {};
-  for (const outline of moduleData.scenarioOutlines) {
-    if (outline.entrySceneId) {
-      macroToEntry[outline.id] = outline.entrySceneId;
-    }
-  }
-
   for (const npc of simulatedNpcs) {
-    // Location: prefer explicit currentLocation from NPC profile
-    const residence = npc.residence ?? residentToLocation[npc.id];
+    // Placement is scene-id addressed: `currentLocation` (where they stand at
+    // session start), falling back to `residence` (where they live). Both
+    // name a scene or road directly — there is no macro-location indirection.
+    const isPlace = (id: string | undefined): id is string =>
+      !!id && (moduleData.scenes.has(id) || moduleData.roads.has(id));
     let resolvedLocation: string;
-    if (
-      npc.currentLocation &&
-      (moduleData.scenes.has(npc.currentLocation) ||
-        moduleData.roads.has(npc.currentLocation))
-    ) {
-      // NPC profile specifies a valid scene or road directly
+    if (isPlace(npc.currentLocation)) {
       resolvedLocation = npc.currentLocation;
-    } else if (residence) {
-      resolvedLocation = macroToEntry[residence] ?? residence;
+    } else if (isPlace(npc.residence)) {
+      resolvedLocation = npc.residence;
     } else {
+      console.warn(
+        `[moduleLoader] NPC ${npc.id} has no valid currentLocation/residence, using default ${defaultSceneId}`
+      );
       resolvedLocation = defaultSceneId;
     }
-    // Validate: if resolvedLocation is a macro ID (not in scenes/roads), map to entry scene
-    if (
-      !moduleData.scenes.has(resolvedLocation) &&
-      !moduleData.roads.has(resolvedLocation)
-    ) {
-      const fallback = macroToEntry[resolvedLocation];
-      if (fallback) {
-        console.warn(
-          `[moduleLoader] NPC ${npc.id} resolved to macro location ${resolvedLocation}, mapping to entry scene ${fallback}`
-        );
-        resolvedLocation = fallback;
-      } else {
-        console.warn(
-          `[moduleLoader] NPC ${npc.id} resolved to unknown location ${resolvedLocation}, using default ${defaultSceneId}`
-        );
-        resolvedLocation = defaultSceneId;
-      }
-    }
-    if (residence) npcResidences[npc.id] = residence;
+    if (npc.residence) npcResidences[npc.id] = npc.residence;
 
     // A sheet that says nothing about languages means "speaks what everyone
     // here speaks" — not "has no tongue at all". Without this every character
@@ -576,7 +515,6 @@ export function initRuntime(params: {
     npcCharacters: simulatedNpcs,
     moduleName: moduleData.moduleName,
     moduleSetup: moduleSetupWithInit,
-    scenarioOutlines: moduleData.scenarioOutlines,
     scopedFeatureStates: { scene: {}, region: {}, character: {}, global: {} },
     scriptedEventStates: {},
     environmentReadings: {},

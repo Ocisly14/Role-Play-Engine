@@ -2,7 +2,7 @@
   "schemaVersion": 2,
   "id": "SCN_holt_ray",
   "name": "Ray 的房间",
-  "description": "老警长的房间有一种懒得体面、又懒得不体面的气味:烟斗丝、旧皮革、晒过的报纸。窗边一把陷出人形的扶手椅,椅子扶手上摊着一摞填了一半的填字游戏册 [item.holt_ray.crossword_stack],铅笔头就卡在页缝里。衣柜顶上横着一副落了灰的钓具箱 [item.holt_ray.tackle_box]——他嘴上总说退休了就天天去钓鱼,箱子却好几年没开过。制服外套挂在门后,警徽擦得很亮,和屋里其余的一切格格不入。房门 [exit.holt_ray.door] 通向起居的大开间。",
+  "description": "老警长的房间有一种懒得体面、又懒得不体面的气味:烟斗丝、旧皮革、晒过的报纸。窗边一把陷出人形的扶手椅,椅子扶手上摊着一摞填了一半的填字游戏册 [item.holt_ray.crossword_stack],铅笔头就卡在页缝里。衣柜顶上横着一副落了灰的钓具箱 [item.holt_ray.tackle_box]——他嘴上总说退休了就天天去钓鱼,箱子却好几年没开过。制服外套挂在门后,警徽擦得很亮,和屋里其余的一切格格不入。房门 [SCN_holt_common] 通向起居的大开间。",
   "parentLocationId": "LOC_holt_house",
   "indoor": true,
   "references": {

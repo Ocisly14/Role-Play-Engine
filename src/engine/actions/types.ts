@@ -10,6 +10,7 @@ import type { CharacterPosition } from "../../state/topologyTypes.js";
 import type {
   CharacterCondition,
   ConditionPredicate,
+  EntityKind,
   GameTime,
   SceneCondition,
 } from "../core/types.js";
@@ -367,7 +368,10 @@ export interface Occurrence {
     id: string;
     type: string;
     content: string;
-    entityRefs: ActionEntityRef[];
+    /** Engine vocabulary, not the actor citation grammar: an occurrence may
+     *  reference a connection edge ("the pass is blocked") even though actors
+     *  cannot cite one — such a ref renders untagged. */
+    entityRefs: Array<{ kind: EntityKind; id: string }>;
   }>;
   participants: Array<{
     characterId: string;

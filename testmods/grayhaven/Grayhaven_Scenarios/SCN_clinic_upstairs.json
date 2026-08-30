@@ -2,7 +2,7 @@
   "schemaVersion": 2,
   "id": "SCN_clinic_upstairs",
   "name": "诊所·楼上住处",
-  "description": "楼上是 Weaver 的住处,一目了然的单身汉整洁:一把扶手椅、一架读了半辈子的书、灰毛衣搭在椅背上,和白大褂下那件是同一款。窗边小桌上摆着一副国际象棋[item.clinic_upstairs.chess_set],棋局下到一半——执黑执白都是他自己,周日下午的老习惯。角落的留声机[item.clinic_upstairs.gramophone]旁码着歌剧唱片,它和 KGRV 的歌剧转播轮着占据这间屋子的安静。窗外是主街南段的屋顶和更远处灰白的海。楼梯下去是候诊室[exit.clinic_upstairs.stairs_down],楼板薄,楼下门铃一响他就听得见。",
+  "description": "楼上是 Weaver 的住处,一目了然的单身汉整洁:一把扶手椅、一架读了半辈子的书、灰毛衣搭在椅背上,和白大褂下那件是同一款。窗边小桌上摆着一副国际象棋[item.clinic_upstairs.chess_set],棋局下到一半——执黑执白都是他自己,周日下午的老习惯。角落的留声机[item.clinic_upstairs.gramophone]旁码着歌剧唱片,它和 KGRV 的歌剧转播轮着占据这间屋子的安静。窗外是主街南口的屋顶和更远处灰白的海。楼梯下去是候诊室[SCN_clinic_waiting],楼板薄,楼下门铃一响他就听得见。",
   "parentLocationId": "LOC_clinic",
   "indoor": true,
   "references": {

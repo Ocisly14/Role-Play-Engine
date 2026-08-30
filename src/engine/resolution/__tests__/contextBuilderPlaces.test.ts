@@ -12,6 +12,7 @@ import {
   initialDynamicGameState,
 } from "../../../state/DynamicGameState.js";
 import type { RoadNode } from "../../../state/topologyTypes.js";
+import { buildTopology } from "../../../state/topologyTypes.js";
 import type { DynamicScene } from "../../../state/types.js";
 import type { ActionCommand, EngineAction } from "../../actions/types.js";
 import { buildEngineResolutionContext } from "../contextBuilder.js";
@@ -94,17 +95,10 @@ function makeDgsm(): DynamicGameStateManager {
   state.scenes.set(junction.id, junction);
   state.scenes.set(junctionB.id, junctionB);
   state.roads.set(road.id, road);
-  state.scenarioOutlines = [
-    {
-      id: "LOC_TOWN",
-      name: "Grayhaven",
-      description: "A fog-bound town.",
-      subSceneCount: 2,
-    },
-  ];
   state.npcInventories = { npc_home: [{ id: "item_coin", name: "a coin" }] };
 
   const dgsm = new DynamicGameStateManager(state);
+  dgsm.setTopology(buildTopology(state.scenes, state.roads));
   for (const [id, sceneId] of [
     ["npc_home", "S_HOME"],
     ["npc_far", "S_FAR"],
@@ -207,31 +201,25 @@ describe("Tier 1 — the skeleton: macro locations + geography", () => {
     expect(graph.places.find((p) => p.id === "J_A")?.description).toBe(
       "A windswept crossing."
     );
-    expect(graph.macroLocations).toEqual([
-      { id: "LOC_TOWN", name: "Grayhaven", description: "A fog-bound town." },
-    ]);
   });
 
-  it("lifts interior-scene endpoints to their macro location and drops interior edges", () => {
+  it("lifts interior-scene endpoints to their topology attachment and keeps only skeleton edges", () => {
     const byId = new Map(graph.edges.map((e) => [e.connectionId, e]));
-    // exit.home.far (S_HOME → S_FAR, both in LOC_TOWN) is not a skeleton edge.
+    // Edges that collapse into a building's own street (self-edges after
+    // lifting) and interior-to-interior edges are Tier 2 detail, not
+    // skeleton: exit.home.junc / exit.junc.home / exit.far.junc /
+    // exit.home.far all vanish.
     expect([...byId.keys()].sort()).toEqual([
-      "exit.far.junc",
-      "exit.home.junc",
       "exit.home.secret",
-      "exit.junc.home",
       "exit.junc.road",
       "exit.road.a",
       "exit.road.b",
     ]);
-    // Scene-authored edges surface as LOC edges, keeping the authored id.
-    expect(byId.get("exit.home.junc")).toMatchObject({
-      from: "LOC_TOWN",
-      to: "J_A",
-    });
-    expect(byId.get("exit.junc.home")).toMatchObject({
+    // An interior scene's edge to a DIFFERENT skeleton node survives, lifted
+    // to the scene's attachment and keeping the authored id.
+    expect(byId.get("exit.home.secret")).toMatchObject({
       from: "J_A",
-      to: "LOC_TOWN",
+      to: "R_MAIN",
     });
     // Road endpoint edges carry the full walk time.
     expect(byId.get("exit.road.a")).toMatchObject({

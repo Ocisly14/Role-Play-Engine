@@ -2,7 +2,7 @@
   "schemaVersion": 2,
   "id": "ROAD_holt_lane",
   "name": "霍尔特巷",
-  "description": "从主街北段通往镇边的一条小巷,两侧是荒了一半的果园和歪斜的栅栏,步行二十分钟。一头接在主街北段 [exit.holt_lane.street_end],另一头止于霍尔特家的院门 [exit.holt_lane.holt_end]。巷子里常年只有这一家人的脚印和车辙,清晨有时能听见一辆货车低沉地驶出去。",
+  "description": "从主街北口通往镇边的一条小巷,两侧是荒了一半的果园和歪斜的栅栏,步行二十分钟。一头接在主街北口 [SCN_main_north],另一头止于霍尔特家的院门 [SCN_holt_gate]。巷子里常年只有这一家人的脚印和车辙,清晨有时能听见一辆货车低沉地驶出去。",
   "parentLocationId": "OUTDOOR",
   "travelTimeMinutes": 20,
   "references": {

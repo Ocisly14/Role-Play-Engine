@@ -2,7 +2,7 @@
   "schemaVersion": 2,
   "id": "SCN_motel_room4",
   "name": "4 号房",
-  "description": "一间过分整洁的旅馆客房——整洁得不像住了人:床罩的折角是军毯式的,烟灰缸干净,垃圾篓空着,连肥皂都摆回了出厂的角度。墙角立着一根崭新的钓竿 [item.motel_room4.fishing_rod],卷线器上连一点盐渍都没有。行李架上放着一只硬壳行李箱 [item.motel_room4.suitcase],锁扣是好东西,和这间九块钱一晚的房间不太相称。窗帘拉开一道两指宽的缝,正好看得见外廊和公路岔口的方向。房门 [exit.motel_room4.door] 开向外廊。",
+  "description": "一间过分整洁的旅馆客房——整洁得不像住了人:床罩的折角是军毯式的,烟灰缸干净,垃圾篓空着,连肥皂都摆回了出厂的角度。墙角立着一根崭新的钓竿 [item.motel_room4.fishing_rod],卷线器上连一点盐渍都没有。行李架上放着一只硬壳行李箱 [item.motel_room4.suitcase],锁扣是好东西,和这间九块钱一晚的房间不太相称。窗帘拉开一道两指宽的缝,正好看得见外廊和公路岔口的方向。房门 [SCN_motel_porch] 开向外廊。",
   "parentLocationId": "LOC_motel",
   "indoor": true,
   "references": {

@@ -2,7 +2,7 @@
   "schemaVersion": 2,
   "id": "SCN_arcade",
   "name": "街机厅「星港」",
-  "description": "「星港」占着一间空置多年的假立面店面,是二十年来主街上开张的第一家新店。十来台机柜沿墙排开,屏幕的辉光把昏暗的大厅染成深蓝,电子音效、按键声和孩子们的喊叫终日轰鸣不歇[cond.arcade.din]——在这儿说话得凑到耳边喊,这正是它的好处:谁来了,全场都看得见。正中的招牌机台《星港巡逻》[item.arcade.starport_cabinet]滚动着高分榜,榜首的三组缩写常年是同三个孩子换着排。门边立着换币机[item.arcade.change_machine],吞两毛五,吐出一把铜色代币。临街的玻璃门蒙着一层机柜辉光,推开就是主街南段[exit.arcade.street_door]。",
+  "description": "「星港」占着一间空置多年的假立面店面,是二十年来主街上开张的第一家新店。十来台机柜沿墙排开,屏幕的辉光把昏暗的大厅染成深蓝,电子音效、按键声和孩子们的喊叫终日轰鸣不歇[cond.arcade.din]——在这儿说话得凑到耳边喊,这正是它的好处:谁来了,全场都看得见。正中的招牌机台《星港巡逻》[item.arcade.starport_cabinet]滚动着高分榜,榜首的三组缩写常年是同三个孩子换着排。门边立着换币机[item.arcade.change_machine],吞两毛五,吐出一把铜色代币。临街的玻璃门蒙着一层机柜辉光,推开就是主街[ROAD_main_street]。",
   "parentLocationId": "LOC_arcade",
   "indoor": true,
   "references": {
@@ -21,7 +21,7 @@
     "connections": [
       {
         "id": "exit.arcade.street_door",
-        "targetId": "SCN_main_south",
+        "targetId": "ROAD_main_street",
         "name": "临街玻璃门",
         "description": "蒙着屏幕辉光的玻璃门,通向主街南段。"
       }
@@ -30,7 +30,11 @@
       {
         "id": "cond.arcade.din",
         "description": "机柜音效与人声终日轰鸣,厅内很难听清细语,也不容易留意到细微的动静。",
-        "mechanicalEffect": { "skillPenalty": { "Investigation": -10 } }
+        "mechanicalEffect": {
+          "skillPenalty": {
+            "Investigation": -10
+          }
+        }
       }
     ]
   }

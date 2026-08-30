@@ -2,7 +2,7 @@
   "schemaVersion": 2,
   "id": "SCN_grocery_store",
   "name": "杂货店兼邮局·店堂",
-  "description": "店堂是全镇最老的字号,从 Reis 时代传到今天:木地板被一个世纪的脚步磨出浅沟,货架排得整整齐齐,罐头标签一律朝外。靠里一角是邮政柜台,铜栅栏后挂着邮资表和分信格——邮件车每周二来,这里就是灰港与外界的全部往来。收银台上那台黄铜收银机也是老铺传下的物件,按键的脆响半条街都认得。收银机旁摊着 Marisol 的账本[item.grocery_store.account_ledger],铅笔字一路算到小数点后两位。临街的门上挂着铃铛,出去便是主街北段[exit.grocery_store.street_door];柜台后一扇门通向后仓[exit.grocery_store.backroom_door],门框上钉着历年身高刻痕,最高的一道写着 Tommy。",
+  "description": "店堂是全镇最老的字号,从 Reis 时代传到今天:木地板被一个世纪的脚步磨出浅沟,货架排得整整齐齐,罐头标签一律朝外。靠里一角是邮政柜台,铜栅栏后挂着邮资表和分信格——邮件车每周二来,这里就是灰港与外界的全部往来。收银台上那台黄铜收银机也是老铺传下的物件,按键的脆响半条街都认得。收银机旁摊着 Marisol 的账本[item.grocery_store.account_ledger],铅笔字一路算到小数点后两位。临街的门上挂着铃铛,出去便是主街[ROAD_main_street];柜台后一扇门通向后仓[SCN_grocery_backroom],门框上钉着历年身高刻痕,最高的一道写着 Tommy。",
   "parentLocationId": "LOC_grocery_store",
   "indoor": true,
   "references": {
@@ -23,7 +23,7 @@
     "connections": [
       {
         "id": "exit.grocery_store.street_door",
-        "targetId": "SCN_main_north",
+        "targetId": "ROAD_main_street",
         "name": "临街门",
         "description": "挂着铃铛的临街门,通向主街北段。"
       },

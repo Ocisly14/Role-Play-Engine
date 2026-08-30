@@ -33,33 +33,8 @@ export function resolveTargetPosition(
       : 0.5;
     return { type: "road", roadId: road.id, position };
   }
-  if (dgsm) {
-    const state = dgsm.getState();
-    const outline = (state.scenarioOutlines ?? []).find(
-      (o) => o.id === locationId
-    );
-    // The entry may itself be a scene or a road — resolve it through the same
-    // rules instead of demanding a scene, which stranded every road-entry
-    // outline as "no path" (observed live: interpreter legally picked the
-    // listed OUTDOOR id and the mover looped on "couldn't work out a way").
-    if (outline?.entrySceneId && outline.entrySceneId !== locationId) {
-      const entry = resolveTargetPosition(outline.entrySceneId, topology, dgsm);
-      if (entry) return entry;
-    }
-    const scene = state.scenes.get(locationId);
-    if (scene?.parentLocationId) {
-      const parentOutline = (state.scenarioOutlines ?? []).find(
-        (o) => o.id === scene.parentLocationId
-      );
-      if (
-        parentOutline?.entrySceneId &&
-        (topology.nodeSceneIds.has(parentOutline.entrySceneId) ||
-          topology.sceneToParent.has(parentOutline.entrySceneId))
-      ) {
-        return { type: "scene", sceneId: parentOutline.entrySceneId };
-      }
-    }
-  }
+  // Every reachable scene is in the topology (attachment is transitive), so
+  // an id that resolves to nothing here names a place no walker can stand.
   return null;
 }
 
@@ -69,28 +44,13 @@ export function resolveTargetPosition(
  */
 function resolveToEntryScene(
   sceneId: string,
-  topology: TownTopology,
-  dgsm?: DynamicGameStateManager
+  topology: TownTopology
 ): string | null {
   if (
     topology.nodeSceneIds.has(sceneId) ||
     topology.sceneToParent.has(sceneId)
   ) {
     return sceneId;
-  }
-  if (!dgsm) return null;
-  const state = dgsm.getState();
-  const scene = state.scenes.get(sceneId);
-  if (!scene?.parentLocationId) return null;
-  const outline = (state.scenarioOutlines ?? []).find(
-    (o) => o.id === scene.parentLocationId
-  );
-  if (
-    outline?.entrySceneId &&
-    (topology.nodeSceneIds.has(outline.entrySceneId) ||
-      topology.sceneToParent.has(outline.entrySceneId))
-  ) {
-    return outline.entrySceneId;
   }
   return null;
 }
@@ -378,7 +338,7 @@ function resolveToNodes(
       let parent = topology.sceneToParent.get(sceneId);
       // Interior sub-scene → resolve to building entry scene
       if (!parent) {
-        const entryId = resolveToEntryScene(pos.sceneId, topology, dgsm);
+        const entryId = resolveToEntryScene(pos.sceneId, topology);
         if (!entryId) return null;
         sceneId = entryId;
         if (topology.nodeSceneIds.has(sceneId)) {
@@ -541,7 +501,7 @@ function resolveToRouteNodes(
       let sceneId = pos.sceneId;
       let parent = topology.sceneToParent.get(sceneId);
       if (!parent) {
-        const entryId = resolveToEntryScene(pos.sceneId, topology, dgsm);
+        const entryId = resolveToEntryScene(pos.sceneId, topology);
         if (!entryId) return null;
         sceneId = entryId;
         if (topology.nodeSceneIds.has(sceneId)) {

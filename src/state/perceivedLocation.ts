@@ -35,12 +35,23 @@ export interface PerceivedLocation {
   items: Item[];
   /** Place ids one hop away — the citation scope beyond the current place. */
   adjacentIds: string[];
+  /** Road only: where along the length this view is taken from (0-1). */
+  selfPosition?: number;
+  /** Road only: the full walking length in minutes. */
+  travelTimeMinutes?: number;
 }
 
 /** Two travellers count as together while within this many minutes' walk of
  *  each other along the same road. Without a bound, everyone strung out along
  *  a long street would perceive each other as co-present. */
 const ROAD_PROXIMITY_MINUTES = 1;
+
+/** A road item with a `position` is perceivable only within this many
+ *  minutes' walk of it along the road. A positionless road item is ambient —
+ *  visible anywhere along the length. The trust boundary and the renderer
+ *  both read perception through this resolver, so what is rendered and what
+ *  is citable stay one set. */
+export const ROAD_ITEM_REACH_MINUTES = 5;
 
 export function resolvePerceivedLocation(
   position: CharacterPosition | null | undefined,
@@ -91,7 +102,12 @@ export function resolvePerceivedLocation(
     name: road.name,
     description: road.description ?? "",
     conditions: dgsm.getSceneConditions(road.id),
-    items: visibleItems(road.items),
+    items: visibleItems(road.items).filter(
+      (item) =>
+        item.position === undefined ||
+        Math.abs(item.position - position.position) * road.travelTimeMinutes <=
+          ROAD_ITEM_REACH_MINUTES
+    ),
     adjacentIds: [
       road.endpointA,
       road.endpointB,
@@ -99,6 +115,8 @@ export function resolvePerceivedLocation(
         .filter((a) => !hiddenAccessIds.has(a.sceneId))
         .map((a) => a.sceneId),
     ],
+    selfPosition: position.position,
+    travelTimeMinutes: road.travelTimeMinutes,
   };
 }
 

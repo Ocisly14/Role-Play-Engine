@@ -2,7 +2,7 @@
   "schemaVersion": 2,
   "id": "SCN_bluebird_upstairs",
   "name": "蓝鸟餐馆·楼上住处",
-  "description": "楼上是 Dolores 的住处:小客厅连着卧室,窗子朝着主街,雾天里能听见楼下门铃每一次响动。屋里浆洗过的桌布铺得笔挺,处处是几十年攒下的体面。一整面墙的相框[item.bluebird_upstairs.photo_wall]从外祖父母的葡式咖啡馆一路排到儿女的毕业照,Manny 的渔船照片挂在正中,擦得最亮。五斗柜上摊着一本手抄食谱[item.bluebird_upstairs.recipe_book],葡语写就,页边叠着几代人的批注。楼梯下去就是后厨[exit.bluebird_upstairs.stairs_down],蛋挞出炉的香气会顺着楼梯爬上来。",
+  "description": "楼上是 Dolores 的住处:小客厅连着卧室,窗子朝着主街,雾天里能听见楼下门铃每一次响动。屋里浆洗过的桌布铺得笔挺,处处是几十年攒下的体面。一整面墙的相框[item.bluebird_upstairs.photo_wall]从外祖父母的葡式咖啡馆一路排到儿女的毕业照,Manny 的渔船照片挂在正中,擦得最亮。五斗柜上摊着一本手抄食谱[item.bluebird_upstairs.recipe_book],葡语写就,页边叠着几代人的批注。楼梯下去就是后厨[SCN_bluebird_kitchen],蛋挞出炉的香气会顺着楼梯爬上来。",
   "parentLocationId": "LOC_bluebird_diner",
   "indoor": true,
   "references": {

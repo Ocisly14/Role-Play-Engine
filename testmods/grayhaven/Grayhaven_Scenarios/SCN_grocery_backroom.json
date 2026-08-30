@@ -2,7 +2,7 @@
   "schemaVersion": 2,
   "id": "SCN_grocery_backroom",
   "name": "杂货店兼邮局·后仓",
-  "description": "后仓只有一扇小高窗透光,白天也昏暗[cond.grocery_backroom.dim],空气里是纸箱、麻绳和陈年木架的味道。成箱的存货靠墙码到齐肩高,每摞箱子侧面都用粉笔标着到货日期——Tommy 暑假在这里帮工,搬箱和偷懒各占一半。门边挂着盘点夹板[item.grocery_backroom.inventory_clipboard],纸页翻卷,是母子俩交接的凭据。最里面单独搁着一箱罐头[item.grocery_backroom.unordered_crate]:Marisol 翻遍了订货单也对不上它的来路,便让它一直单独搁在那儿,谁也没动。仓门通回店堂[exit.grocery_backroom.store_door]。",
+  "description": "后仓只有一扇小高窗透光,白天也昏暗[cond.grocery_backroom.dim],空气里是纸箱、麻绳和陈年木架的味道。成箱的存货靠墙码到齐肩高,每摞箱子侧面都用粉笔标着到货日期——Tommy 暑假在这里帮工,搬箱和偷懒各占一半。门边挂着盘点夹板[item.grocery_backroom.inventory_clipboard],纸页翻卷,是母子俩交接的凭据。最里面单独搁着一箱罐头[item.grocery_backroom.unordered_crate]:Marisol 翻遍了订货单也对不上它的来路,便让它一直单独搁在那儿,谁也没动。仓门通回店堂[SCN_grocery_store]。",
   "parentLocationId": "LOC_grocery_store",
   "indoor": true,
   "references": {
@@ -31,7 +31,11 @@
       {
         "id": "cond.grocery_backroom.dim",
         "description": "只有一扇小高窗透光,后仓即使白天也昏暗,看清标签和细节都费劲。",
-        "mechanicalEffect": { "skillPenalty": { "Investigation": -10 } }
+        "mechanicalEffect": {
+          "skillPenalty": {
+            "Investigation": -10
+          }
+        }
       }
     ]
   }

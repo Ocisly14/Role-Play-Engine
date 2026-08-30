@@ -2,7 +2,7 @@
   "schemaVersion": 2,
   "id": "SCN_holt_backyard",
   "name": "Holt 家后院",
-  "description": "被海雾泡了几十年的后院:草长得随性,晾衣绳在两根歪柱子之间松松地荡着,Frank 的格子衬衫和 Susan 的护士服一起在雾气里半干不干。墙根码着一垛劈好的柴火 [item.holt_backyard.firewood_pile],码得横平竖直,是 Frank 的手笔。厨房一侧的纱门 [exit.holt_backyard.house_door] 通回屋里的起居餐厨。院子尽头的旧木栅栏缺了两块板,豁口 [exit.holt_backyard.fence_gap] 后面就是往林道口去的小径——草被踩出了一条浅浅的道,不知道被这家的哪一代人踩出来的。",
+  "description": "被海雾泡了几十年的后院:草长得随性,晾衣绳在两根歪柱子之间松松地荡着,Frank 的格子衬衫和 Susan 的护士服一起在雾气里半干不干。墙根码着一垛劈好的柴火 [item.holt_backyard.firewood_pile],码得横平竖直,是 Frank 的手笔。厨房一侧的纱门 [SCN_holt_common] 通回屋里的起居餐厨。院子尽头的旧木栅栏缺了两块板,豁口 [SCN_trailhead] 后面就是往林道口去的小径——草被踩出了一条浅浅的道,不知道被这家的哪一代人踩出来的。",
   "parentLocationId": "LOC_holt_house",
   "references": {
     "items": [

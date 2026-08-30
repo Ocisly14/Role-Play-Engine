@@ -2,7 +2,7 @@
   "schemaVersion": 2,
   "id": "ROAD_redwood_fence",
   "name": "围栏爬径",
-  "description": "从红杉环向北的最后一段爬升,两小时十分钟。起点在红杉环的北缘 [exit.redwood_fence.redwood_end],尽头撞上一道链网围栏 [exit.redwood_fence.fence_end]。越靠北,林子越静;鸟叫在某个说不清的位置停下之后,就再没有响起过。",
+  "description": "从红杉环向北的最后一段爬升,两小时十分钟。起点在红杉环的北缘 [SCN_redwood_ring],尽头撞上一道链网围栏 [SCN_fence]。越靠北,林子越静;鸟叫在某个说不清的位置停下之后,就再没有响起过。",
   "parentLocationId": "OUTDOOR",
   "travelTimeMinutes": 130,
   "references": {

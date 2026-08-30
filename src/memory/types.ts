@@ -2,7 +2,6 @@ import type {
   NpcMemoryType,
   NpcMemory as PrismaNpcMemory,
 } from "@prisma/client";
-import type { KnownMapSeed } from "../state/types.js";
 
 // Re-export Prisma types
 export type { NpcMemoryType } from "@prisma/client";
@@ -65,33 +64,13 @@ export interface RelationshipMetadata {
   newScore?: number;
 }
 
-
-export interface KnownMapIds {
-  sceneIds: string[];
-  roadIds: string[];
-  scenarioOutlineIds: string[];
-}
-
-/** A generated map memory's standing knowledge of a place and its altitude. */
+/** A map memory's standing knowledge of a place. */
 export interface MapMetadata {
-  scope: "macro" | "interior" | "topology";
-  /** Outline id for `macro`, scene id for `interior`, absent for `topology`. */
+  /** Scene/road id the knowledge is about, when it is about one place. */
   locationId?: string;
 }
 
 export type MemoryMetadata = RelationshipMetadata | MapMetadata;
-
-export interface EnsureMapMemoriesParams {
-  npcId: string;
-  sessionId: string;
-  moduleId: string;
-  gameDateTime: string;
-  dgsm: import("../state/DynamicGameState.js").DynamicGameStateManager;
-  /** Absent means the character knows the whole map. */
-  seed?: KnownMapSeed;
-  /** Module language ("en" | "zh") — drives the glue between descriptions. */
-  language?: string;
-}
 
 // ===== Query & Retrieval Types =====
 
@@ -154,13 +133,7 @@ export interface ContextProfile {
 
 export const CONTEXT_PROFILES: Record<ContextPurpose, ContextProfile> = {
   scheduling: {
-    defaultTypes: [
-      "general",
-      "plan",
-      "secret",
-      "relationship",
-      "map",
-    ],
+    defaultTypes: ["general", "plan", "secret", "relationship", "map"],
     defaultLimit: 20,
     typeLimits: { general: 0, plan: 0, relationship: 0 },
   },

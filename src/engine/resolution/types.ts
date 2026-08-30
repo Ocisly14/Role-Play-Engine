@@ -48,12 +48,11 @@ export type PlaceKind = "scene" | "road";
  *  separately (volatile), so this section stays byte-identical across ticks
  *  for prompt caching. */
 export interface WorldGraph {
-  /** `description` is the outline's macro prose. */
-  macroLocations: Array<{ id: string; name: string; description?: string }>;
   /** Geography nodes only: top-level scenes (kind "scene") and roads.
-   *  `description` is the authored v2 prose — it already cites its `[exit.*]`
-   *  references, so the skeleton renders in the same
-   *  description-plus-references shape as every place file. */
+   *  `description` is the authored v2 prose — it cites local items,
+   *  conditions and the places its passages lead to, so the skeleton
+   *  renders in the same description-plus-references shape as every
+   *  place file. */
   places: Array<{
     id: string;
     kind: PlaceKind;

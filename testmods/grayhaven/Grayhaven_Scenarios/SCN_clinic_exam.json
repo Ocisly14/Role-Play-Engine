@@ -2,7 +2,7 @@
   "schemaVersion": 2,
   "id": "SCN_clinic_exam",
   "name": "诊所·诊室",
-  "description": "诊室里消毒水味压过一切:诊查床铺着换新的白纸,视力表和体重秤靠墙,窗子磨砂,雾天里透进一片均匀的灰光。玻璃门药柜[item.clinic_exam.medicine_cabinet]上着锁,药瓶按字母排列。书桌上摊着 Weaver 的病例记录本[item.clinic_exam.case_notes],处方式的短句一行一个病人——他不声张,只是把最近的条目越写越细。桌角立着他用了二十二年没换过的听诊器架。磨砂玻璃门通回候诊室[exit.clinic_exam.waiting_door],门一关,这里说的话就只属于医生和病人。",
+  "description": "诊室里消毒水味压过一切:诊查床铺着换新的白纸,视力表和体重秤靠墙,窗子磨砂,雾天里透进一片均匀的灰光。玻璃门药柜[item.clinic_exam.medicine_cabinet]上着锁,药瓶按字母排列。书桌上摊着 Weaver 的病例记录本[item.clinic_exam.case_notes],处方式的短句一行一个病人——他不声张,只是把最近的条目越写越细。桌角立着他用了二十二年没换过的听诊器架。磨砂玻璃门通回候诊室[SCN_clinic_waiting],门一关,这里说的话就只属于医生和病人。",
   "parentLocationId": "LOC_clinic",
   "indoor": true,
   "references": {
@@ -18,7 +18,10 @@
         "name": "药柜",
         "description": "带玻璃门的药柜,上着锁,药瓶按字母排列,账目分毫不差。",
         "type": "container",
-        "containerStats": { "locked": true, "lockDifficulty": "easy" }
+        "containerStats": {
+          "locked": true,
+          "lockDifficulty": "easy"
+        }
       }
     ],
     "connections": [

@@ -1,0 +1,26 @@
+{
+  "schemaVersion": 2,
+  "id": "ROAD_backstreet",
+  "name": "后巷",
+  "description": "从主街南口 [SCN_main_south] 拐进来的窄巷,两侧是商铺楼的背面:后门、垃圾桶、一段爬满牵牛花的破篱笆。巷子只容两人并肩,走到头是雷耶斯家的门口 [SCN_reyes_gate]。晚归的 Tommy 摸黑也能骑车穿过这条巷——每一道坑他闭着眼都记得。",
+  "parentLocationId": "OUTDOOR",
+  "travelTimeMinutes": 8,
+  "references": {
+    "items": [],
+    "connections": [
+      {
+        "id": "exit.backstreet.street_end",
+        "targetId": "SCN_main_south",
+        "name": "巷口(主街南口)",
+        "role": "endpointA"
+      },
+      {
+        "id": "exit.backstreet.reyes_end",
+        "targetId": "SCN_reyes_gate",
+        "name": "巷尾(雷耶斯家门口)",
+        "role": "endpointB"
+      }
+    ],
+    "conditions": []
+  }
+}

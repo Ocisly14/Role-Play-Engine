@@ -10,7 +10,6 @@ import {
   buildSceneV2,
   parsePlaceFileV2,
   validateModuleReferences,
-  validateScenarioOutlines,
   validateTransportEdges,
 } from "@/state/moduleSchemaV2.js";
 import type { RoadNode } from "@/state/topologyTypes.js";
@@ -26,7 +25,7 @@ function rawScene(overrides: Record<string, unknown> = {}) {
     name: "Town Library",
     description:
       "Dusty archives fill the reading room [item.library.archives]. " +
-      "A stairway rises to the stacks [exit.library.stacks]. " +
+      "A stairway rises to the stacks [SCN_library_stacks]. " +
       "The unlit back row is hard to examine [cond.library.dim].",
     parentLocationId: "LOC_downtown",
     references: {
@@ -64,7 +63,7 @@ function rawNodeScene(overrides: Record<string, unknown> = {}) {
     id: "SCN_main_north",
     name: "North Corner",
     description:
-      "The library door faces the corner [exit.main_north.library]. " +
+      "The library door faces the corner [SCN_library]. " +
       "A cellar hatch hides under leaves.",
     references: {
       connections: [
@@ -86,9 +85,9 @@ function rawRoad(overrides: Record<string, unknown> = {}) {
     id: "ROAD_main_street",
     name: "Main Street",
     description:
-      "The street runs from the north corner [exit.main_street.north] " +
-      "to the south corner [exit.main_street.south], past the diner " +
-      "[exit.main_street.diner].",
+      "The street runs from the north corner [SCN_main_north] " +
+      "to the south corner [SCN_main_south], past the diner " +
+      "[SCN_diner].",
     parentLocationId: "OUTDOOR",
     travelTimeMinutes: 15,
     references: {
@@ -144,8 +143,7 @@ function builtModule(
       rawScene({
         id: "SCN_library_stacks",
         name: "Stacks",
-        description:
-          "Rows of shelves, and the stairway down [exit.stacks.down].",
+        description: "Rows of shelves, and the stairway down [SCN_library].",
         references: {
           connections: [{ id: "exit.stacks.down", targetId: "SCN_library" }],
         },
@@ -444,6 +442,27 @@ describe("buildRoadV2", () => {
     expect(error.problems.join("\n")).toContain("require a role");
   });
 
+  it("accepts a road item with a position and rejects one out of range", () => {
+    const road = rawRoad();
+    (road.references as Record<string, unknown>).items = [
+      { id: "item.main_street.lamp", name: "Street lamp", position: 0.25 },
+    ];
+    road.description =
+      "The street runs from the north corner [SCN_main_north] " +
+      "to the south corner [SCN_main_south], past the diner [SCN_diner]. " +
+      "A lamp leans at the corner [item.main_street.lamp].";
+    const built = buildRoadV2(parsePlaceFileV2("ROAD_main_street", road));
+    expect(built.items[0].position).toBe(0.25);
+
+    (road.references as Record<string, unknown>).items = [
+      { id: "item.main_street.lamp", name: "Street lamp", position: 1.5 },
+    ];
+    const error = expectSchemaError(() =>
+      parsePlaceFileV2("ROAD_main_street", road)
+    );
+    expect(error.problems.join("\n")).toContain("must be in [0, 1]");
+  });
+
   it("rejects a missing or non-positive travelTimeMinutes", () => {
     const { travelTimeMinutes: _dropped, ...road } = rawRoad();
     const missing = expectSchemaError(() =>
@@ -457,6 +476,25 @@ describe("buildRoadV2", () => {
       )
     );
     expect(zero.problems.join("\n")).toContain("travelTimeMinutes");
+  });
+});
+
+describe("buildSceneV2 item position", () => {
+  it("rejects an item position on a scene — a scene has no interior distance", () => {
+    const scene = rawScene();
+    (scene.references as Record<string, unknown>).items = [
+      {
+        id: "item.library.archives",
+        name: "Archive shelves",
+        position: 0.5,
+      },
+    ];
+    const error = expectSchemaError(() =>
+      buildSceneV2(parsePlaceFileV2("SCN_library", scene))
+    );
+    expect(error.problems.join("\n")).toContain(
+      "position is only valid on ROAD_*"
+    );
   });
 });
 
@@ -493,7 +531,7 @@ describe("validateModuleReferences", () => {
     );
   });
 
-  it("rejects a visible connection that is never cited", () => {
+  it("rejects a connection whose target place is never cited", () => {
     const module = builtModule((m) => {
       const cellar = m.scenes.get("SCN_cellar");
       if (!cellar) throw new Error("fixture broke");
@@ -501,7 +539,33 @@ describe("validateModuleReferences", () => {
     });
     const error = expectSchemaError(() => validateModuleReferences(module));
     expect(error.problems.join("\n")).toContain(
-      '"exit.cellar.up" is never cited'
+      'connection target "SCN_library" is never cited'
+    );
+  });
+
+  it("rejects citing a connection by its own id — passages are not references", () => {
+    const module = builtModule((m) => {
+      const stacks = m.scenes.get("SCN_library_stacks");
+      if (!stacks) throw new Error("fixture broke");
+      stacks.description =
+        "Rows of shelves, and the stairway down [exit.stacks.down].";
+    });
+    const error = expectSchemaError(() => validateModuleReferences(module));
+    const text = error.problems.join("\n");
+    expect(text).toContain("cites [exit.stacks.down], which is not declared");
+    expect(text).toContain('connection target "SCN_library" is never cited');
+  });
+
+  it("rejects citing a place this file has no connection to", () => {
+    const module = builtModule((m) => {
+      const cellar = m.scenes.get("SCN_cellar");
+      if (!cellar) throw new Error("fixture broke");
+      cellar.description =
+        "A dirt-floored cellar. Somehow the corner is visible [SCN_main_north].";
+    });
+    const error = expectSchemaError(() => validateModuleReferences(module));
+    expect(error.problems.join("\n")).toContain(
+      "cites [SCN_main_north], a place this file has no connection to"
     );
   });
 
@@ -530,15 +594,15 @@ describe("validateModuleReferences", () => {
     );
   });
 
-  it("rejects a hidden reference that the prose cites (leak)", () => {
+  it("rejects citing the target of a hidden connection (leak)", () => {
     const module = builtModule((m) => {
       const corner = m.scenes.get("SCN_main_north");
       if (!corner) throw new Error("fixture broke");
-      corner.description += " A hatch [exit.main_north.cellar].";
+      corner.description += " A hatch [SCN_cellar].";
     });
     const error = expectSchemaError(() => validateModuleReferences(module));
     expect(error.problems.join("\n")).toContain(
-      'hidden reference "exit.main_north.cellar" must not be cited'
+      "cites [SCN_cellar], the target of a hidden connection"
     );
   });
 
@@ -625,83 +689,6 @@ describe("validateModuleReferences", () => {
 });
 
 // ─── outline / transport edge validators ───────────────────────────
-
-describe("validateScenarioOutlines", () => {
-  const module = builtModule();
-
-  it("accepts valid outlines (array or wrapped)", () => {
-    const outlines = [
-      {
-        id: "LOC_downtown",
-        name: "Downtown",
-        description: "The center of town.",
-        subSceneCount: 2,
-        entrySceneId: "SCN_library",
-      },
-    ];
-    expect(
-      validateScenarioOutlines("__scenarios_outline__", outlines, module)
-    ).toHaveLength(1);
-    expect(
-      validateScenarioOutlines(
-        "__scenarios_outline__",
-        { scenarios: outlines },
-        module
-      )
-    ).toHaveLength(1);
-  });
-
-  it("rejects missing required fields", () => {
-    const error = expectSchemaError(() =>
-      validateScenarioOutlines(
-        "__scenarios_outline__",
-        [{ id: "LOC_downtown" }],
-        module
-      )
-    );
-    expect(error.entryId).toBe("__scenarios_outline__");
-    expect(error.problems.join("\n")).toContain("name");
-    expect(error.problems.join("\n")).toContain("description");
-    expect(error.problems.join("\n")).toContain("subSceneCount");
-  });
-
-  it("rejects an entrySceneId that is not a loaded scene", () => {
-    const error = expectSchemaError(() =>
-      validateScenarioOutlines(
-        "__scenarios_outline__",
-        [
-          {
-            id: "LOC_downtown",
-            name: "Downtown",
-            description: "x",
-            subSceneCount: 1,
-            entrySceneId: "SCN_missing",
-          },
-        ],
-        module
-      )
-    );
-    expect(error.problems.join("\n")).toContain("SCN_missing");
-  });
-
-  it("accepts a top-level node scene as entrySceneId", () => {
-    expect(() =>
-      validateScenarioOutlines(
-        "__scenarios_outline__",
-        [
-          {
-            id: "LOC_downtown",
-            name: "Downtown",
-            description: "x",
-            subSceneCount: 1,
-            entrySceneId: "SCN_main_north",
-          },
-        ],
-        module
-      )
-    ).not.toThrow();
-  });
-});
 
 describe("validateTransportEdges", () => {
   const lookup = {

@@ -47,7 +47,6 @@ function makeContext(): EngineResolutionContext {
       // Prompt tiers are material for the model; the validator reads only the
       // full-world lookups below (placeKinds/connectionIds/itemHolders).
       graph: {
-        macroLocations: [{ id: "LOC_TOWN", name: "Town" }],
         places: [
           {
             id: "J_A",

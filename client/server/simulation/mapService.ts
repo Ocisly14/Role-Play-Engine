@@ -69,16 +69,27 @@ export async function getTopology(
       })),
     };
   });
-  const scenarioOutlines = (state.scenarioOutlines ?? [])
-    .filter((o) => o.id !== "OUTDOOR")
-    .map((o) => ({
-      id: o.id,
-      name: o.name,
-      description: o.description,
-      entrySceneId: o.entrySceneId,
-      residents: o.residents,
-      subSceneCount: o.subSceneCount,
-    }));
+  // Viewer-only building groups, derived from the parentLocationId labels
+  // scenes still carry. Scenario outlines are gone as a runtime concept; the
+  // town map just needs "which rooms are one building" and a display name.
+  const groups = new Map<string, { names: string[]; count: number }>();
+  for (const s of state.scenes.values()) {
+    const label = s.parentLocationId;
+    if (!label || label === "OUTDOOR") continue;
+    const g = groups.get(label) ?? { names: [], count: 0 };
+    g.names.push(s.name);
+    g.count += 1;
+    groups.set(label, g);
+  }
+  const scenarioOutlines = [...groups.entries()].map(([id, g]) => {
+    const prefixes = new Set(g.names.map((n) => n.split("·")[0]));
+    return {
+      id,
+      name: prefixes.size === 1 ? [...prefixes][0] : id,
+      description: "",
+      subSceneCount: g.count,
+    };
+  });
   const transportEdges = (state.transportEdges ?? []).map((e) => ({
     fromLocationId: e.fromLocationId,
     toLocationId: e.toLocationId,
@@ -168,14 +179,11 @@ function resolveResidenceName(
 ): string | undefined {
   if (!residenceId) return undefined;
   const state = dgsm.getState();
-  // Check scenarioOutlines first (macro locations like buildings)
-  const outline = (state.scenarioOutlines ?? []).find(
-    (o) => o.id === residenceId
-  );
-  if (outline) return outline.name;
-  // Check scenes
+  // Residence names a scene or road directly.
   const scene = state.scenes.get(residenceId);
   if (scene) return scene.name;
+  const road = state.roads?.get?.(residenceId);
+  if (road) return road.name;
   return residenceId;
 }
 

@@ -94,7 +94,10 @@ export interface RawOccurrence {
   facts: Array<{
     type: string;
     content: string;
-    entityRefs?: Array<{ kind: "character" | "item" | "scene"; id: string }>;
+    entityRefs?: Array<{
+      kind: "character" | "item" | "scene" | "connection";
+      id: string;
+    }>;
   }>;
   participants: Array<{
     characterId: string;
@@ -255,7 +258,10 @@ export function opKinds(ops: OperationSpec[]): ReadonlySet<string> {
 const ENTITY_REF = {
   type: "object",
   properties: {
-    kind: { type: "string", enum: ["character", "item", "scene"] },
+    kind: {
+      type: "string",
+      enum: ["character", "item", "scene", "connection"],
+    },
     id: { type: "string" },
   },
   required: ["kind", "id"],

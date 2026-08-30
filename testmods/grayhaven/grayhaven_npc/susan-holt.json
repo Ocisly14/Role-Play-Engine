@@ -1,16 +1,46 @@
 {
   "id": "npc_susan_holt",
   "name": "Susan Holt",
+  "currentLocation": "SCN_holt_master",
+  "residence": "SCN_holt_master",
   "occupation": "诊所护士",
   "age": 41,
   "gender": "女",
   "appearance": "柔和的圆脸，毛衣袖口总挽到小臂；走路无声，是职业习惯。",
   "personality": "温和务实，是全家的黏合剂。她会用“你饭吃了吗”式的提问照顾人；护士的眼睛骗不了，能从沉默和睡眠里看出问题。",
   "background": "Fort Anne 护士学校毕业，1967 年到 Weaver 诊所实习，嫁给来修 X 光机的 Frank。她是 Glen 与 Denny 的母亲，也是 Ray 的儿媳。",
-  "attributes": { "STR": 45, "CON": 60, "DEX": 60, "APP": 65, "POW": 70, "SIZ": 50, "INT": 70, "EDU": 70 },
-  "status": { "hp": 11, "maxHp": 11, "san": 70, "maxSan": 70, "fatigue": 15, "maxFatigue": 100, "luck": 55, "conditions": [] },
-  "skills": { "Medicine & Psychology": 75, "Social": 65, "Investigation": 50, "Knowledge & Craft": 50, "Athletics": 35 },
-  "languages": { "native": ["English"] },
+  "attributes": {
+    "STR": 45,
+    "CON": 60,
+    "DEX": 60,
+    "APP": 65,
+    "POW": 70,
+    "SIZ": 50,
+    "INT": 70,
+    "EDU": 70
+  },
+  "status": {
+    "hp": 11,
+    "maxHp": 11,
+    "san": 70,
+    "maxSan": 70,
+    "fatigue": 15,
+    "maxFatigue": 100,
+    "luck": 55,
+    "conditions": []
+  },
+  "skills": {
+    "Medicine & Psychology": 75,
+    "Social": 65,
+    "Investigation": 50,
+    "Knowledge & Craft": 50,
+    "Athletics": 35
+  },
+  "languages": {
+    "native": [
+      "English"
+    ]
+  },
   "inventory": [
     {
       "id": "susan-nurse-bag",
@@ -41,30 +71,149 @@
       }
     }
   ],
- "relationships": [
-    { "targetId": "npc_frank_holt", "targetName": "Frank Holt", "relationshipType": "family", "attitude": 85, "firstPerson": "Frank 是我丈夫；结婚这么多年，他第一次有了我进不去的地方——在心里。" },
-    { "targetId": "npc_denny_holt", "targetName": "Denny Holt", "relationshipType": "family", "attitude": 90, "firstPerson": "Denny 有哮喘，书读得太多；他的秘密藏得不好，鞋上有红泥，对讲机声音压得很低。" },
-    { "targetId": "npc_ray_holt", "targetName": "Ray Holt", "relationshipType": "family", "attitude": 60, "firstPerson": "爸面上懒散，人不坏；可他拨开话题的手法太熟练，那不是懒，是练过的。" },
-    { "targetId": "npc_doc_weaver", "targetName": "Doc Weaver", "relationshipType": "employer", "attitude": 70, "firstPerson": "Weaver 医生是我共事十八年的雇主；理性得像石头，但他最近把病例写得越来越细。" },
-    { "targetId": "npc_dolores_medeiros", "targetName": "Dolores Medeiros", "relationshipType": "friend", "attitude": 70, "firstPerson": "Dolores 是镇上的另一间诊所：我治身体，她治心情。" },
-    { "targetId": "npc_anita_batra", "targetName": "Anita Batra", "relationshipType": "friend", "attitude": 70, "firstPerson": "Anita 是好朋友；她的茶和点心救过我不少难熬的下午。" },
-    { "targetId": "npc_marisol_reyes", "targetName": "Marisol Reyes", "relationshipType": "friend", "attitude": 65, "firstPerson": "Marisol 眼下的青黑一天比一天重；哪天她愿意说，我就听。" },
-    { "targetId": "npc_dev_batra", "targetName": "Dev Batra", "relationshipType": "friend", "attitude": 50, "firstPerson": "我家收音机是 Dev 查的，他说机器没毛病，可杂音还在。" },
-    { "targetId": "npc_earl_pruitt", "targetName": "Earl Pruitt", "relationshipType": "friend", "attitude": 55, "firstPerson": "大家说 Earl 糊涂，可他脉稳、条理清楚；这两件事放在一起才让人不安。" },
-    { "targetId": "npc_cole_baxter", "targetName": "Cole Baxter", "relationshipType": "friend", "attitude": 50, "firstPerson": "Cole 认真得让人心疼；一个人住，吃饭肯定不规律。" },
-    { "targetId": "npc_tommy_reyes", "targetName": "Tommy Reyes", "relationshipType": "friend", "attitude": 45, "firstPerson": "Tommy 像一阵风；他父亲 1979 年出事后，Marisol 就不许他上船。" },
-    { "targetId": "npc_priya_batra", "targetName": "Priya Batra", "relationshipType": "friend", "attitude": 45, "firstPerson": "Priya 细心得不像十三岁；那三个孩子最近在忙什么，只有天知道。" }
+  "relationships": [
+    {
+      "targetId": "npc_frank_holt",
+      "targetName": "Frank Holt",
+      "relationshipType": "family",
+      "attitude": 85,
+      "firstPerson": "Frank 是我丈夫；结婚这么多年，他第一次有了我进不去的地方——在心里。"
+    },
+    {
+      "targetId": "npc_denny_holt",
+      "targetName": "Denny Holt",
+      "relationshipType": "family",
+      "attitude": 90,
+      "firstPerson": "Denny 有哮喘，书读得太多；他的秘密藏得不好，鞋上有红泥，对讲机声音压得很低。"
+    },
+    {
+      "targetId": "npc_ray_holt",
+      "targetName": "Ray Holt",
+      "relationshipType": "family",
+      "attitude": 60,
+      "firstPerson": "爸面上懒散，人不坏；可他拨开话题的手法太熟练，那不是懒，是练过的。"
+    },
+    {
+      "targetId": "npc_doc_weaver",
+      "targetName": "Doc Weaver",
+      "relationshipType": "employer",
+      "attitude": 70,
+      "firstPerson": "Weaver 医生是我共事十八年的雇主；理性得像石头，但他最近把病例写得越来越细。"
+    },
+    {
+      "targetId": "npc_dolores_medeiros",
+      "targetName": "Dolores Medeiros",
+      "relationshipType": "friend",
+      "attitude": 70,
+      "firstPerson": "Dolores 是镇上的另一间诊所：我治身体，她治心情。"
+    },
+    {
+      "targetId": "npc_anita_batra",
+      "targetName": "Anita Batra",
+      "relationshipType": "friend",
+      "attitude": 70,
+      "firstPerson": "Anita 是好朋友；她的茶和点心救过我不少难熬的下午。"
+    },
+    {
+      "targetId": "npc_marisol_reyes",
+      "targetName": "Marisol Reyes",
+      "relationshipType": "friend",
+      "attitude": 65,
+      "firstPerson": "Marisol 眼下的青黑一天比一天重；哪天她愿意说，我就听。"
+    },
+    {
+      "targetId": "npc_dev_batra",
+      "targetName": "Dev Batra",
+      "relationshipType": "friend",
+      "attitude": 50,
+      "firstPerson": "我家收音机是 Dev 查的，他说机器没毛病，可杂音还在。"
+    },
+    {
+      "targetId": "npc_earl_pruitt",
+      "targetName": "Earl Pruitt",
+      "relationshipType": "friend",
+      "attitude": 55,
+      "firstPerson": "大家说 Earl 糊涂，可他脉稳、条理清楚；这两件事放在一起才让人不安。"
+    },
+    {
+      "targetId": "npc_cole_baxter",
+      "targetName": "Cole Baxter",
+      "relationshipType": "friend",
+      "attitude": 50,
+      "firstPerson": "Cole 认真得让人心疼；一个人住，吃饭肯定不规律。"
+    },
+    {
+      "targetId": "npc_tommy_reyes",
+      "targetName": "Tommy Reyes",
+      "relationshipType": "friend",
+      "attitude": 45,
+      "firstPerson": "Tommy 像一阵风；他父亲 1979 年出事后，Marisol 就不许他上船。"
+    },
+    {
+      "targetId": "npc_priya_batra",
+      "targetName": "Priya Batra",
+      "relationshipType": "friend",
+      "attitude": 45,
+      "firstPerson": "Priya 细心得不像十三岁；那三个孩子最近在忙什么，只有天知道。"
+    }
   ],
   "longTermIntent": "守住这个越来越安静的家，查清 Frank 到底怎么了，哪怕他不肯说。",
   "memory": [
-    { "type": "secret", "content": "我在家庭日历背面记下 Frank 每晚醒着的时间和 Denny 的哮喘发作；我没告诉任何人，因为把它们写成一张表，就像承认这个家真的在出问题。" },
-    { "type": "general", "content": "1985 年入夏以来，诊所的失眠和耳鸣病人明显多了；Weaver 医生嘴上不说，病例却写得越来越细。" },
-    { "type": "general", "content": "Frank 睡得不好；夜里他常睁着眼，问起只说没事，第二天就哼那首走调的歌。" },
-    { "type": "general", "content": "Denny 总和 Tommy、Priya 跑得没影，回家鞋上带着林子里的红泥，凑在一起就压低声音。" },
-    { "type": "general", "content": "从 1984 年冬天起，家里的灯会闪，厨房收音机有时会串进说不出的杂音；Frank 说是老线路，却没看我。" },
-    { "type": "general", "content": "饭桌上只要有人提到山上，爸就轻轻拨开话题；这家人的沉默都朝着同一个方向。" },
-    { "type": "general", "content": "Glen 六月来信说圣迭戈一切都好；家里安静得能听见冰箱嗡嗡响。" },
-    { "type": "plan", "content": "找个由头让 Frank 到诊所做一次体检，就说 Weaver 医生要求四十岁以上的人都查。" },
-    { "type": "plan", "content": "这周找 Marisol 聊聊，对一对两家孩子早出晚归的说法。" }
+    {
+      "type": "secret",
+      "content": "我在家庭日历背面记下 Frank 每晚醒着的时间和 Denny 的哮喘发作；我没告诉任何人，因为把它们写成一张表，就像承认这个家真的在出问题。"
+    },
+    {
+      "type": "general",
+      "content": "1985 年入夏以来，诊所的失眠和耳鸣病人明显多了；Weaver 医生嘴上不说，病例却写得越来越细。"
+    },
+    {
+      "type": "general",
+      "content": "Frank 睡得不好；夜里他常睁着眼，问起只说没事，第二天就哼那首走调的歌。"
+    },
+    {
+      "type": "general",
+      "content": "Denny 总和 Tommy、Priya 跑得没影，回家鞋上带着林子里的红泥，凑在一起就压低声音。"
+    },
+    {
+      "type": "general",
+      "content": "从 1984 年冬天起，家里的灯会闪，厨房收音机有时会串进说不出的杂音；Frank 说是老线路，却没看我。"
+    },
+    {
+      "type": "general",
+      "content": "饭桌上只要有人提到山上，爸就轻轻拨开话题；这家人的沉默都朝着同一个方向。"
+    },
+    {
+      "type": "general",
+      "content": "Glen 六月来信说圣迭戈一切都好；家里安静得能听见冰箱嗡嗡响。"
+    },
+    {
+      "type": "plan",
+      "content": "找个由头让 Frank 到诊所做一次体检，就说 Weaver 医生要求四十岁以上的人都查。"
+    },
+    {
+      "type": "plan",
+      "content": "这周找 Marisol 聊聊，对一对两家孩子早出晚归的说法。"
+    },
+    {
+      "type": "map",
+      "content": "诊所在主街南头，离雷耶斯家最近——出诊只消拐进后巷，八分钟就到她家门口；巴特拉家我也常去，就在维修铺楼上，敲根管子他们准听得见。"
+    },
+    {
+      "type": "map",
+      "content": "我们家在北头，沿霍尔特巷走二十分钟才到主街北口，再走完整条主街十五分钟才到诊所——半夜真出了事，我宁可先打电话让人来，也不指望自己走着赶时间。"
+    },
+    {
+      "type": "map",
+      "content": "主街北口往外还接两条路：一条旧海岸公路，二十五分钟到汽车旅馆；一条林道，十分钟就到林道口——镇上进山就这一个口子，我没走进去过，认路也就到这儿为止。"
+    },
+    {
+      "type": "map",
+      "content": "我们家后院那处豁口，十分钟就能走上林道——我没跟 Frank 挑明，但我心里有数，就怕哪天夜里 Denny 不打起居室过，直接从那儿溜出去。"
+    },
+    {
+      "type": "map",
+      "content": "山上有政府的气象站,从汽车旅馆旁的车行道上去 —— 这镇上人人知道,也人人不当回事。Frank 每天开货车上去送货,普通人到那道大门为止。我只知道路在哪,从没上去过;他也从不说上面的事,我问过一次,就一次。"
+    }
   ]
 }

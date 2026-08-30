@@ -2,7 +2,7 @@
   "schemaVersion": 2,
   "id": "SCN_reyes_marisol",
   "name": "Marisol 的卧室",
-  "description": "一间收拾得一丝不苟的小卧室:床罩绷得平整,窗帘洗得发白,梳妆台上的东西按大小排成一列。床头柜上立着一张相框 [item.reyes_marisol.rafael_photo]——Rafael 站在渔船甲板上眯眼笑着,相框每天都被擦过。柜子最上层放着一只针线盒 [item.reyes_marisol.sewing_box],里面除了线轴还压着几张按月份叠好的收据。整间屋子唯一的门通回客厅 [exit.reyes_marisol.door],门轴上了油,推起来没有声音。",
+  "description": "一间收拾得一丝不苟的小卧室:床罩绷得平整,窗帘洗得发白,梳妆台上的东西按大小排成一列。床头柜上立着一张相框 [item.reyes_marisol.rafael_photo]——Rafael 站在渔船甲板上眯眼笑着,相框每天都被擦过。柜子最上层放着一只针线盒 [item.reyes_marisol.sewing_box],里面除了线轴还压着几张按月份叠好的收据。整间屋子唯一的门通回客厅 [SCN_reyes_living],门轴上了油,推起来没有声音。",
   "parentLocationId": "LOC_reyes_house",
   "indoor": true,
   "references": {

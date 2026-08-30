@@ -51,9 +51,10 @@ export interface InventoryItem {
 /**
  * Memory categories a module may author for an NPC at session start.
  *
- * Starting geography is generated as `map` from `knownMapSeed`. Relationships
- * and long-term intentions have dedicated profile fields, but remain accepted
- * here for an explicitly authored memory.
+ * Geographic knowledge is authored here as `map` memories like everything
+ * else — nothing is generated at bootstrap. Relationships and long-term
+ * intentions have dedicated profile fields, but remain accepted here for an
+ * explicitly authored memory.
  */
 export type NpcProfileMemoryType =
   | "general"
@@ -68,15 +69,6 @@ export interface NpcProfileMemoryEntry {
   type: NpcProfileMemoryType;
   content: string;
   metadata?: Record<string, any>;
-}
-
-export interface KnownMapSeed {
-  sceneIds?: string[];
-  /** Legacy field from the junction era — accepted and folded into sceneIds
-   *  (the former junctions are top-level scenes now). */
-  junctionIds?: string[];
-  roadIds?: string[];
-  scenarioOutlineIds?: string[];
 }
 
 /** The stances a module may author. One list, so the compile-time union and
@@ -264,7 +256,6 @@ export interface DynamicNPCProfile {
   longTermIntent: string;
   relationships: NPCRelationship[];
   memory?: NpcProfileMemoryEntry[];
-  knownMapSeed?: KnownMapSeed;
 
   isPlayerInjected?: boolean;
 }
@@ -327,6 +318,12 @@ export interface Item {
   /** Contributes to scene illumination — read by subsystem/sun.ts. */
   isLightSource?: boolean;
   lightLevel?: number;
+  /** ROAD items only: where along the road's length the item sits
+   *  (0.0 = endpointA side, 1.0 = endpointB side). Perception applies
+   *  ROAD_ITEM_REACH_MINUTES around the walker; a positionless road item
+   *  is ambient — visible anywhere along the length. Invalid on scenes:
+   *  a scene has no interior distance. */
+  position?: number;
 }
 
 export interface SceneImage {
@@ -336,20 +333,6 @@ export interface SceneImage {
 }
 
 // ─── World structure types ─────────────────────────────────────────
-
-/**
- * Scenario Outline - Macro location container for sub-scenes
- */
-export interface ScenarioOutline {
-  id: string;
-  name: string;
-  description: string;
-  sourcePlaceId?: string;
-  sourcePlaceName?: string;
-  residents?: string[];
-  subSceneCount: number;
-  entrySceneId?: string;
-}
 
 /**
  * Transport Edge - Connects two macro locations via a street/outdoor scene

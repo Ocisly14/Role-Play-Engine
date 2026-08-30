@@ -2,9 +2,15 @@
   "schemaVersion": 2,
   "id": "SCN_lighthouse_cliff",
   "name": "灯塔崖",
-  "description": "镇南海崖的顶端,俯瞰全镇与海面的制高点,风从不停歇。老灯塔立在崖缘,白漆剥落成斑;1982 年自动化之后,它的铁门就一直锁着,锁是那年新换的 [exit.lighthouse_cliff.lighthouse_door]。灯还亮,只是不再需要人。唯一的下山路是通回码头的崖间小径。",
+  "description": "镇南海崖的顶端,俯瞰全镇与海面的制高点,风从不停歇。老灯塔立在崖缘,白漆剥落成斑;1982 年自动化之后,塔身那扇铁门 [item.lighthouse_cliff.iron_door] 就一直锁着,锁是那年新换的。门后是守了三十年灯的塔内 [SCN_lighthouse_interior]。灯还亮,只是不再需要人。唯一的下山路是通回码头的崖间小径。",
   "references": {
-    "items": [],
+    "items": [
+      {
+        "id": "item.lighthouse_cliff.iron_door",
+        "name": "灯塔铁门",
+        "description": "灯塔底座的铁门,漆皮锈成深褐色,唯独锁眼锃亮——1982 年自动化时海岸警卫队换的新锁。门上没有告示,只有锁本身在说:这里不再欢迎任何人。"
+      }
+    ],
     "connections": [
       {
         "id": "exit.lighthouse_cliff.lighthouse_door",

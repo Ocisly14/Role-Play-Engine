@@ -718,7 +718,9 @@ export function validateOccurrence(
           ? lookup.itemHolders.has(ref.id) || createdItemIds.has(ref.id)
           : ref.kind === "character"
             ? lookup.characterIds.has(ref.id)
-            : lookup.locationIds.has(ref.id);
+            : ref.kind === "connection"
+              ? lookup.connectionIds.has(ref.id)
+              : lookup.locationIds.has(ref.id);
       if (!exists) {
         errs.push(
           `facts[${fi}]: entityRef ${ref.kind} "${ref.id}" does not exist`

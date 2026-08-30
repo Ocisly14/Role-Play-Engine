@@ -9,10 +9,7 @@
 
 import { randomUUID } from "node:crypto";
 import type { DynamicGameStateManager } from "../../state/DynamicGameState.js";
-import {
-  aliasFor,
-  buildPerceivableDirectory,
-} from "../../state/perceivableDirectory.js";
+import { aliasFor } from "../../state/perceivableDirectory.js";
 import type { CommandRejectionCode } from "./commandValidator.js";
 import { validateActArgs } from "./commandValidator.js";
 import { canonicalDisplayName, resolveSkillValue } from "./skillRollService.js";
@@ -36,8 +33,7 @@ export function buildActionCommand(
 ): BuildCommandResult {
   const { dgsm } = deps;
 
-  const directory = buildPerceivableDirectory(actorId, dgsm);
-  const validated = validateActArgs(rawArgs, directory, {
+  const validated = validateActArgs(rawArgs, {
     resolveCharacter: (handle) => resolveCharacterHandle(handle, actorId, dgsm),
     hasItem: (id) => itemExists(id, dgsm),
     hasPlace: (id) => dgsm.getScene(id) !== null || dgsm.getRoad(id) !== null,

@@ -53,24 +53,12 @@ const dgsm = {
   }),
 } as unknown as DynamicGameStateManager;
 
-describe("resolveTargetPosition — outline entry recursion", () => {
-  it("resolves an outline whose entry is a road", () => {
-    expect(resolveTargetPosition("OUTDOOR", topology, dgsm)).toEqual({
-      type: "road",
-      roadId: "R_MAIN",
-      position: 0.5,
-    });
-  });
-
-  it("still resolves an outline whose entry is a scene", () => {
-    expect(resolveTargetPosition("B_SHOP", topology, dgsm)).toEqual({
-      type: "scene",
-      sceneId: "S_HOME",
-    });
-  });
-
-  it("does not recurse into a self-referencing outline", () => {
-    expect(resolveTargetPosition("LOOP", topology, dgsm)).toBeNull();
+describe("resolveTargetPosition — retired macro-location ids", () => {
+  it("answers null for an id that names no scene or road", () => {
+    // Outline indirection is gone: a movement target must name a place in
+    // the topology directly.
+    expect(resolveTargetPosition("OUTDOOR", topology, dgsm)).toBeNull();
+    expect(resolveTargetPosition("B_SHOP", topology, dgsm)).toBeNull();
   });
 });
 

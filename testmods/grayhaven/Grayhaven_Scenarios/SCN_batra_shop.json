@@ -2,7 +2,7 @@
   "schemaVersion": 2,
   "id": "SCN_batra_shop",
   "name": "电视维修铺·店堂工作台",
-  "description": "店堂还留着老五金行的骨架:通顶的木架、柜台上的黄铜秤痕,只是如今架上摆的全是显像管和真空管。工作台占了半间屋,台面上示波器、烙铁架、万用表各归其位——Dev 的秩序不容商量。台面正中摊着他的维修记录本[item.batra_shop.repair_ledger],三色笔迹分记日期、机型、症状与根因,近几个月的页数厚得反常。靠墙的架子上排着待修的电视机[item.batra_shop.tv_wall],每台贴着写有户主姓氏的纸签。窗台上一台收音机开着 KGRV[item.batra_shop.shop_radio],陪着烙铁的松香味从早响到晚。临街门通向主街南段[exit.batra_shop.street_door];店堂后侧一段室内楼梯通向楼上的住家[exit.batra_shop.stairs_up]。",
+  "description": "店堂还留着老五金行的骨架:通顶的木架、柜台上的黄铜秤痕,只是如今架上摆的全是显像管和真空管。工作台占了半间屋,台面上示波器、烙铁架、万用表各归其位——Dev 的秩序不容商量。台面正中摊着他的维修记录本[item.batra_shop.repair_ledger],三色笔迹分记日期、机型、症状与根因,近几个月的页数厚得反常。靠墙的架子上排着待修的电视机[item.batra_shop.tv_wall],每台贴着写有户主姓氏的纸签。窗台上一台收音机开着 KGRV[item.batra_shop.shop_radio],陪着烙铁的松香味从早响到晚。临街门通向主街[ROAD_main_street];店堂后侧一段室内楼梯通向楼上的住家[SCN_batra_living]。",
   "parentLocationId": "LOC_batra_shop",
   "indoor": true,
   "references": {
@@ -27,7 +27,7 @@
     "connections": [
       {
         "id": "exit.batra_shop.street_door",
-        "targetId": "SCN_main_south",
+        "targetId": "ROAD_main_street",
         "name": "临街门",
         "description": "老五金行传下的临街门,通向主街南段。"
       },

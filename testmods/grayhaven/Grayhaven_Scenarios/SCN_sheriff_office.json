@@ -2,7 +2,7 @@
   "schemaVersion": 2,
   "id": "SCN_sheriff_office",
   "name": "警长办公室·里间",
-  "description": "里间是 Ray 的地盘:办公椅向后仰出固定的弧度,窗台上摆着钓具目录,百叶窗把雾天的光切成一条条。桌上摊着填了一半的填字游戏[item.sheriff_office.crossword],杯垫上的咖啡渍叠着咖啡渍,警徽倒是擦得很亮。墙角立着一组旧档案柜[item.sheriff_office.old_case_cabinet],柜顶落着薄灰——灰港三十多年的旧案卷宗锁在里面,钥匙就在抽屉里,Ray 从不去开。门通回前厅[exit.sheriff_office.front_door],门轴的吱呀声足够提前两秒通报来人。",
+  "description": "里间是 Ray 的地盘:办公椅向后仰出固定的弧度,窗台上摆着钓具目录,百叶窗把雾天的光切成一条条。桌上摊着填了一半的填字游戏[item.sheriff_office.crossword],杯垫上的咖啡渍叠着咖啡渍,警徽倒是擦得很亮。墙角立着一组旧档案柜[item.sheriff_office.old_case_cabinet],柜顶落着薄灰——灰港三十多年的旧案卷宗锁在里面,钥匙就在抽屉里,Ray 从不去开。门通回前厅[SCN_sheriff_front],门轴的吱呀声足够提前两秒通报来人。",
   "parentLocationId": "LOC_sheriff_office",
   "indoor": true,
   "references": {
@@ -18,7 +18,10 @@
         "name": "旧案档案柜",
         "description": "上锁的旧档案柜,柜顶落灰。灰港三十六年治安史的另一半锁在里面——包括那些 Ray 决定不再看的年份。",
         "type": "container",
-        "containerStats": { "locked": true, "lockDifficulty": "regular" }
+        "containerStats": {
+          "locked": true,
+          "lockDifficulty": "regular"
+        }
       }
     ],
     "connections": [

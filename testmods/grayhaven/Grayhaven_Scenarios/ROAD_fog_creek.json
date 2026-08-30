@@ -2,7 +2,7 @@
   "schemaVersion": 2,
   "id": "ROAD_fog_creek",
   "name": "沼泽绕径",
-  "description": "雾谷与灰溪渡口之间的林径,要绕开一大片黑水沼泽,单程近两小时。谷侧的入口没在雾里 [exit.fog_creek.hollow_end],溪侧的出口开在渡口下游的柳丛后 [exit.fog_creek.creek_end]。绕行段横着倒木,泥浆能吞掉半只靴子,是整片林区最招人咒骂的一段路。",
+  "description": "雾谷与灰溪渡口之间的林径,要绕开一大片黑水沼泽,单程近两小时。谷侧的入口没在雾里 [SCN_fog_hollow],溪侧的出口开在渡口下游的柳丛后 [SCN_creek_ford]。绕行段横着倒木,泥浆能吞掉半只靴子,是整片林区最招人咒骂的一段路。",
   "parentLocationId": "OUTDOOR",
   "travelTimeMinutes": 110,
   "references": {

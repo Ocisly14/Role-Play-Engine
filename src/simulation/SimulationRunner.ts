@@ -343,7 +343,7 @@ export class SimulationRunner {
       : null;
     if (!entrySceneId) {
       throw new Error(
-        `Cannot resolve entry scene for residence "${profile.residence}". Check scenarioOutlines.`
+        `Cannot resolve entry scene for residence "${profile.residence}" — it must name a scene or road in this module.`
       );
     }
 

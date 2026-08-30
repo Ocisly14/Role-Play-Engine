@@ -207,12 +207,6 @@ export function renderWorldGraph(graph: WorldGraph): string {
     return [head, `  connections: ${edges.map(renderEdge).join("; ")}`];
   };
   const lines: string[] = [];
-  if (graph.macroLocations.length > 0) {
-    lines.push("Macro locations:");
-    for (const loc of graph.macroLocations) {
-      lines.push(...nodeLines(loc.id, loc.name, loc.description));
-    }
-  }
   for (const kind of ["scene", "road"] as const) {
     const nodes = graph.places.filter((p) => p.kind === kind);
     if (nodes.length === 0) continue;

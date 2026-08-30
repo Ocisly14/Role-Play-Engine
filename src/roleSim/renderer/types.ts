@@ -34,6 +34,15 @@ export type OwnActionState =
     }
   | { kind: "idle" };
 
+export interface PerceivedSceneItem {
+  id: string;
+  name: string;
+  description?: string;
+  /** Road items with a position: minutes' walk between viewpoint and item.
+   *  Absent for scene items and ambient road items. */
+  distanceMinutes?: number;
+}
+
 /** Per-NPC perception input handed to the renderer. */
 export interface PerceivedBundle {
   /** Always present — scene the NPC currently inhabits. */
@@ -42,6 +51,10 @@ export interface PerceivedBundle {
     name: string;
     description: string;
     activeConditions: SceneCondition[];
+    /** Items perceivable from the viewpoint's exact position — the same set
+     *  the trust boundary lets the actor cite. `distanceMinutes` is set for
+     *  a road item with a position: minutes' walk from the viewpoint. */
+    items: PerceivedSceneItem[];
   };
   /** Where the viewpoint has put themselves inside that place, as prose —
    *  "at the workbench, back to the door". Proprioceptive: you always know

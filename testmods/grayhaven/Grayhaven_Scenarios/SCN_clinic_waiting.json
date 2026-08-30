@@ -2,7 +2,7 @@
   "schemaVersion": 2,
   "id": "SCN_clinic_waiting",
   "name": "诊所·候诊室",
-  "description": "候诊室不大,却是主街南段又一个闲聊的去处:靠墙两条长椅,坐垫凹陷的位置说明常客都有各自的座。Susan 的护士台正对着门,台面一尘不染,台上摊着预约簿[item.clinic_waiting.appointment_book],她的圆体字排得像药品标签一样清楚。茶几上一摞旧杂志[item.clinic_waiting.magazine_stack],最新的一本也是去年的。墙上的体检宣传画从六十年代挂到今天。临街门通向主街南段[exit.clinic_waiting.street_door];诊室的门[exit.clinic_waiting.exam_door]关着时,候诊的人自觉压低声音;楼梯口挂着「私人」的小木牌,通向楼上 Weaver 医生的住处[exit.clinic_waiting.stairs_up]。",
+  "description": "候诊室不大,却是主街南口又一个闲聊的去处:靠墙两条长椅,坐垫凹陷的位置说明常客都有各自的座。Susan 的护士台正对着门,台面一尘不染,台上摊着预约簿[item.clinic_waiting.appointment_book],她的圆体字排得像药品标签一样清楚。茶几上一摞旧杂志[item.clinic_waiting.magazine_stack],最新的一本也是去年的。墙上的体检宣传画从六十年代挂到今天。临街门通向主街[ROAD_main_street];诊室的门[SCN_clinic_exam]关着时,候诊的人自觉压低声音;楼梯口挂着「私人」的小木牌,通向楼上 Weaver 医生的住处[SCN_clinic_upstairs]。",
   "parentLocationId": "LOC_clinic",
   "indoor": true,
   "references": {
@@ -22,7 +22,7 @@
     "connections": [
       {
         "id": "exit.clinic_waiting.street_door",
-        "targetId": "SCN_main_south",
+        "targetId": "ROAD_main_street",
         "name": "临街门",
         "description": "装着门铃的临街门,通向主街南段。"
       },

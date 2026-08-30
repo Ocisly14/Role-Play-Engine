@@ -141,58 +141,44 @@ export function buildTopology(
     }
   }
 
+  // Deep interiors attach transitively: a kitchen reached only through the
+  // dining room inherits the dining room's attachment, an upstairs room the
+  // kitchen's, until every scene reachable from the topology has a root.
+  // This is purely structural — derived from connections, no outline data —
+  // so the topology is self-contained.
+  let grew = true;
+  while (grew) {
+    grew = false;
+    for (const scene of scenes.values()) {
+      const attachment = nodeSceneIds.has(scene.id)
+        ? { type: "scene" as const, sceneId: scene.id }
+        : sceneToParent.get(scene.id);
+      if (attachment) {
+        // Forward: rooms reached through this one inherit its root.
+        for (const connection of scene.connections ?? []) {
+          const target = scenes.get(connection.targetId);
+          if (!target || nodeSceneIds.has(target.id)) continue;
+          if (sceneToParent.has(target.id)) continue;
+          sceneToParent.set(target.id, attachment);
+          grew = true;
+        }
+        continue;
+      }
+      // Reverse: an unattached room whose own door opens onto an attached
+      // place (or a node) stands there too — a one-way authored exit must
+      // not strand the room outside the topology.
+      for (const connection of scene.connections ?? []) {
+        const targetId = connection.targetId;
+        const viaNode = nodeSceneIds.has(targetId)
+          ? { type: "scene" as const, sceneId: targetId }
+          : sceneToParent.get(targetId);
+        if (!viaNode) continue;
+        sceneToParent.set(scene.id, viaNode);
+        grew = true;
+        break;
+      }
+    }
+  }
+
   return { nodeSceneIds, roads, sceneToRoads, sceneToParent };
-}
-
-/**
- * Enrich a topology by adding interior sub-scenes to `sceneToParent`.
- *
- * Interior sub-scenes (e.g. a 2nd-floor room) are not directly connected to
- * node scenes/roads but belong to a building whose entry scene IS. This
- * function gives every sub-scene the same topology attachment as its
- * building's entry scene, so pathfinding can route to/from them.
- */
-export function enrichTopologyWithInteriorScenes(
-  topology: TownTopology,
-  scenes: Map<string, { id: string; parentLocationId?: string }>,
-  outlines: Array<{ id: string; entrySceneId?: string }>
-): void {
-  // Build outline lookup: outlineId → entrySceneId
-  const outlineEntryMap = new Map<string, string>();
-  for (const outline of outlines) {
-    if (outline.entrySceneId) {
-      outlineEntryMap.set(outline.id, outline.entrySceneId);
-    }
-  }
-
-  for (const scene of scenes.values()) {
-    // Skip scenes already indexed, and geography nodes.
-    if (topology.sceneToParent.has(scene.id)) continue;
-    if (!scene.parentLocationId) continue;
-
-    // The parent may itself be a node scene (a cabin off a yard) …
-    if (topology.nodeSceneIds.has(scene.parentLocationId)) {
-      topology.sceneToParent.set(scene.id, {
-        type: "scene",
-        sceneId: scene.parentLocationId,
-      });
-      continue;
-    }
-
-    // … or an outline (building) whose entry scene carries the attachment.
-    const entrySceneId = outlineEntryMap.get(scene.parentLocationId);
-    if (!entrySceneId) continue;
-
-    if (topology.nodeSceneIds.has(entrySceneId)) {
-      topology.sceneToParent.set(scene.id, {
-        type: "scene",
-        sceneId: entrySceneId,
-      });
-      continue;
-    }
-    const parentEntry = topology.sceneToParent.get(entrySceneId);
-    if (!parentEntry) continue;
-
-    topology.sceneToParent.set(scene.id, parentEntry);
-  }
 }

@@ -52,18 +52,12 @@ export async function importModule(params: {
     });
   }
 
-  // 3. Import scenarios_outline.json
-  const outlinesPath = path.join(moduleDir, "scenarios_outline.json");
-  if (fs.existsSync(outlinesPath)) {
-    const data = JSON.parse(fs.readFileSync(outlinesPath, "utf8"));
-    await prisma.moduleScene.upsert({
-      where: {
-        moduleId_entryId: { moduleId, entryId: "__scenarios_outline__" },
-      },
-      create: { moduleId, entryId: "__scenarios_outline__", data },
-      update: { data },
-    });
-  }
+  // 3. Retired: scenarios_outline.json is no longer imported — geographic
+  // knowledge is authored per-NPC, placement names scenes directly. Stale
+  // __scenarios_outline__ rows from older imports are removed.
+  await prisma.moduleScene.deleteMany({
+    where: { moduleId, entryId: "__scenarios_outline__" },
+  });
 
   // 4. Import transport_edges.json
   const edgesPath = path.join(moduleDir, "transport_edges.json");

@@ -53,6 +53,7 @@ export interface TopologyResponse {
     conditions: SceneCondition[];
     connections: SceneConnection[];
   }>;
+  /** Viewer-only building groups, derived from parentLocationId labels. */
   scenarioOutlines: Array<{
     id: string;
     name: string;

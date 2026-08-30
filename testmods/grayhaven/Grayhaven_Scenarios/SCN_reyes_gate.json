@@ -1,0 +1,18 @@
+{
+  "schemaVersion": 2,
+  "id": "SCN_reyes_gate",
+  "name": "雷耶斯家门口",
+  "description": "后巷尽头的一小片门前空地。木门漆成早已褪色的蓝,门边一小畦香草长得倒精神,一辆 BMX 单车斜靠在墙根,车把上缠着褪色的红胶带。小门后就是母子俩的客厅兼厨房 [SCN_reyes_living]。巷子里安静,主街的声音传到这里只剩个底子。",
+  "references": {
+    "items": [],
+    "connections": [
+      {
+        "id": "exit.reyes_gate.front_door",
+        "targetId": "SCN_reyes_living",
+        "name": "雷耶斯家小门",
+        "description": "褪色的蓝漆木门,通向客厅兼厨房。"
+      }
+    ],
+    "conditions": []
+  }
+}

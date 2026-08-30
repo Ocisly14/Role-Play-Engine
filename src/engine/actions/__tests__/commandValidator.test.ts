@@ -4,7 +4,6 @@
 // the immediate-skill-roll invariant (declaredSkillId ⇔ skillRoll).
 
 import { describe, expect, it, vi } from "vitest";
-import type { PerceivableDirectory } from "../../../state/perceivableDirectory.js";
 import { buildActionCommand } from "../commandBuilder.js";
 import {
   MAX_PROPOSED_DURATION_TICKS,
@@ -12,15 +11,8 @@ import {
 } from "../commandValidator.js";
 import { resolveSkillValue, successLevelFor } from "../skillRollService.js";
 
-/** A stranger is cited by alias; only the directory knows the real id. */
+/** A stranger is cited by alias; only the world resolver knows the real id. */
 const HOLLINS_ALIAS = "stranger_a";
-
-const directory: PerceivableDirectory = {
-  characters: new Set(["Hollins"]),
-  characterHandles: new Map([[HOLLINS_ALIAS, "Hollins"]]),
-  items: new Set(["ITEM_1", "cabinet_lock"]),
-  scenes: new Set(["SCN_1", "SCN_2"]),
-};
 
 /** The world beyond what the actor can currently see. `ITEM_FAR` and
  *  `SCN_FAR` exist but are nowhere near them — the boundary lets those
@@ -49,7 +41,6 @@ describe("validateActArgs", () => {
   it("accepts a well-formed command and normalizes strings", () => {
     const result = validateActArgs(
       args({ description: "  padded  ", utterance: "hello" }),
-      directory,
       world
     );
     expect(result.ok).toBe(true);
@@ -62,7 +53,7 @@ describe("validateActArgs", () => {
   });
 
   it("accepts an empty objectRefs array", () => {
-    const result = validateActArgs(args({ objectRefs: [] }), directory, world);
+    const result = validateActArgs(args({ objectRefs: [] }), world);
     expect(result.ok).toBe(true);
   });
 
@@ -72,16 +63,12 @@ describe("validateActArgs", () => {
     ["whitespace", "   "],
     ["non-string", 42],
   ])("rejects %s description", (_label, description) => {
-    const result = validateActArgs(args({ description }), directory, world);
+    const result = validateActArgs(args({ description }), world);
     expect(result).toMatchObject({ ok: false, code: "invalid_description" });
   });
 
   it("rejects missing objectRefs (must be [] when none)", () => {
-    const result = validateActArgs(
-      args({ objectRefs: undefined }),
-      directory,
-      world
-    );
+    const result = validateActArgs(args({ objectRefs: undefined }), world);
     expect(result).toMatchObject({ ok: false, code: "invalid_object_refs" });
   });
 
@@ -89,7 +76,6 @@ describe("validateActArgs", () => {
     // A nonsense label on a real id costs nothing.
     const labelled = validateActArgs(
       args({ objectRefs: [{ kind: "monster", id: "ITEM_1" }] }),
-      directory,
       world
     );
     expect(labelled.ok).toBe(true);
@@ -99,7 +85,6 @@ describe("validateActArgs", () => {
     // And no label at all is fine too.
     const bare = validateActArgs(
       args({ objectRefs: [{ id: "SCN_1", role: "destination" }] }),
-      directory,
       world
     );
     expect(bare.ok).toBe(true);
@@ -110,7 +95,6 @@ describe("validateActArgs", () => {
   it("rejects a ref with an invalid role", () => {
     const result = validateActArgs(
       args({ objectRefs: [{ kind: "item", id: "ITEM_1", role: "weapon" }] }),
-      directory,
       world
     );
     expect(result).toMatchObject({ ok: false, code: "invalid_object_refs" });
@@ -120,14 +104,12 @@ describe("validateActArgs", () => {
     for (const role of ["target", "tool", "destination", "recipient"]) {
       const result = validateActArgs(
         args({ objectRefs: [{ kind: "item", id: "ITEM_1", role }] }),
-        directory,
         world
       );
       expect(result.ok).toBe(true);
     }
     const bare = validateActArgs(
       args({ objectRefs: [{ kind: "item", id: "ITEM_1" }] }),
-      directory,
       world
     );
     expect(bare.ok).toBe(true);
@@ -136,12 +118,22 @@ describe("validateActArgs", () => {
   it("rejects a ref outside the perceivable scope", () => {
     const result = validateActArgs(
       args({ objectRefs: [{ kind: "character", id: "Nyarlathotep" }] }),
-      directory,
       world
     );
     expect(result).toMatchObject({ ok: false, code: "unknown_ref" });
     if (result.ok) return;
     expect(result.reason).toContain("Nyarlathotep");
+  });
+
+  it("rejects an exit id — connections are not a citable space", () => {
+    // A passage is topology bookkeeping: the prose points at the place a
+    // door leads to, and a door that matters as an object is an item. An
+    // `exit.*` id therefore names nothing an actor may cite.
+    const result = validateActArgs(
+      args({ objectRefs: [{ id: "exit.scn1.door", role: "destination" }] }),
+      world
+    );
+    expect(result).toMatchObject({ ok: false, code: "unknown_ref" });
   });
 
   it("resolves a mislabelled real id by the id, not the label", () => {
@@ -151,7 +143,6 @@ describe("validateActArgs", () => {
     // statue. The label is a guess about a real thing; the id is the thing.
     const result = validateActArgs(
       args({ objectRefs: [{ kind: "character", id: "ITEM_1" }] }),
-      directory,
       world
     );
     expect(result.ok).toBe(true);
@@ -167,7 +158,6 @@ describe("validateActArgs", () => {
       args({
         objectRefs: [{ kind: "character", id: HOLLINS_ALIAS, role: "target" }],
       }),
-      directory,
       world
     );
     expect(result.ok).toBe(true);
@@ -180,7 +170,6 @@ describe("validateActArgs", () => {
   it("rejects the real character id — the actor is never given it", () => {
     const result = validateActArgs(
       args({ objectRefs: [{ kind: "character", id: "Hollins" }] }),
-      directory,
       world
     );
     expect(result).toMatchObject({ ok: false, code: "unknown_ref" });
@@ -194,29 +183,24 @@ describe("validateActArgs", () => {
     ["missing", undefined],
     ["string", "3"],
   ])("rejects %s proposedDurationTicks", (_label, proposedDurationTicks) => {
-    const result = validateActArgs(
-      args({ proposedDurationTicks }),
-      directory,
-      world
-    );
+    const result = validateActArgs(args({ proposedDurationTicks }), world);
     expect(result).toMatchObject({ ok: false, code: "invalid_duration" });
   });
 
   it("accepts the duration boundaries", () => {
-    expect(
-      validateActArgs(args({ proposedDurationTicks: 1 }), directory, world).ok
-    ).toBe(true);
+    expect(validateActArgs(args({ proposedDurationTicks: 1 }), world).ok).toBe(
+      true
+    );
     expect(
       validateActArgs(
         args({ proposedDurationTicks: MAX_PROPOSED_DURATION_TICKS }),
-        directory,
         world
       ).ok
     ).toBe(true);
   });
 
   it("drops an empty skillId instead of failing", () => {
-    const result = validateActArgs(args({ skillId: "  " }), directory, world);
+    const result = validateActArgs(args({ skillId: "  " }), world);
     expect(result.ok).toBe(true);
     if (!result.ok) return;
     expect(result.args.skillId).toBeUndefined();
@@ -396,7 +380,6 @@ describe("what a citation is scoped to", () => {
   it("accepts an item that exists but is nowhere near the actor", () => {
     const result = validateActArgs(
       args({ objectRefs: [{ kind: "item", id: "ITEM_FAR", role: "target" }] }),
-      directory,
       world
     );
     expect(result.ok).toBe(true);
@@ -407,7 +390,6 @@ describe("what a citation is scoped to", () => {
       args({
         objectRefs: [{ kind: "scene", id: "SCN_FAR", role: "destination" }],
       }),
-      directory,
       world
     );
     expect(result.ok).toBe(true);
@@ -416,7 +398,6 @@ describe("what a citation is scoped to", () => {
   it("still refuses an id that names nothing at all", () => {
     const result = validateActArgs(
       args({ objectRefs: [{ kind: "item", id: "ITEM_INVENTED" }] }),
-      directory,
       world
     );
     expect(result.ok).toBe(false);
@@ -430,7 +411,6 @@ describe("what a citation is scoped to", () => {
     // history. Whether they are still here is the Engine's to answer.
     const result = validateActArgs(
       args({ objectRefs: [{ kind: "character", id: "stranger_faraway" }] }),
-      directory,
       world
     );
     expect(result.ok).toBe(true);
@@ -441,7 +421,6 @@ describe("what a citation is scoped to", () => {
   it("still refuses a handle that resolves to nobody", () => {
     const result = validateActArgs(
       args({ objectRefs: [{ kind: "character", id: "stranger_nobody" }] }),
-      directory,
       world
     );
     expect(result.ok).toBe(false);

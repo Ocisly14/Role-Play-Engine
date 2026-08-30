@@ -2,7 +2,7 @@
   "schemaVersion": 2,
   "id": "ROAD_trail_railbed",
   "name": "路基接径",
-  "description": "从林道口偏东走一小时,可以接上旧铁路的路基。起点在林道口 [exit.trail_railbed.trailhead_end],与路基相接的地方还留着一截烂枕木 [exit.trail_railbed.railbed_end]。这条林径本身并不好认——好认的是它的尽头,那条笔直得不像林子里该有的路基。",
+  "description": "从林道口偏东走一小时,可以接上旧铁路的路基。起点在林道口 [SCN_trailhead],与路基相接的地方还留着一截烂枕木 [SCN_railbed]。这条林径本身并不好认——好认的是它的尽头,那条笔直得不像林子里该有的路基。",
   "parentLocationId": "OUTDOOR",
   "travelTimeMinutes": 60,
   "references": {
