@@ -46,13 +46,13 @@ describe("CommandInbox", () => {
     const inbox = new CommandInbox();
     const roll = {
       rollId: "roll_1",
-      skillId: "Locksmith",
+      skillId: "Stealth & Security",
       skillValue: 60,
       roll: 42,
       successLevel: "regular" as const,
     };
     inbox.add(
-      command({ declaredSkillId: "Locksmith", skillRoll: roll })
+      command({ declaredSkillId: "Stealth & Security", skillRoll: roll })
     );
 
     const restored = new CommandInbox();
@@ -108,10 +108,10 @@ describe("ActionStore", () => {
     const store = new ActionStore();
     const action = store.createFromCommand(
       command({
-        declaredSkillId: "Locksmith",
+        declaredSkillId: "Stealth & Security",
         skillRoll: {
           rollId: "roll_1",
-          skillId: "Locksmith",
+          skillId: "Stealth & Security",
           skillValue: 60,
           roll: 42,
           successLevel: "regular",

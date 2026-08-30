@@ -28,17 +28,16 @@
     "conditions": []
   },
   "skills": {
-    "Electronics": 65,
-    "Electrical Repair": 60,
+    "Science & Nature": 50,
     "Investigation": 65,
-    "Science (Physics)": 50,
-    "Library Use": 45,
-    "Spot Hidden": 55,
-    "Listen": 50,
-    "Athletics": 35
+    "Athletics": 35,
+    "Repair & Engineering": 65
   },
   "languages": {
-    "native": ["English", "Gujarati"],
+    "native": [
+      "English",
+      "Gujarati"
+    ],
     "learned": {
       "Hindi": 35
     }

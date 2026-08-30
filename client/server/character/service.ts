@@ -1,6 +1,6 @@
 // Type import - not used in this file
 // import type { CoCDatabase } from "../../../src/shared/agents/memory/database/index.js";
-import { canonicalSkillName } from "../../../src/engine/rules/skillCatalog.js";
+import { catalogSkillName } from "../../../src/engine/rules/skillCatalog.js";
 
 /**
  * Prepare character data for database insertion
@@ -62,7 +62,7 @@ export function prepareCharacterForDB(characterData: any): any {
     skills: JSON.stringify(
       Object.entries(characterData.skills || {}).reduce(
         (acc: any, [name, data]: [string, any]) => {
-          const canonicalName = canonicalSkillName(name);
+          const canonicalName = catalogSkillName(name) ?? name;
           let normalizedData: any;
           // Support both old format (data.value) and new format (data.total with breakdown)
           if (typeof data === "object" && data.total !== undefined) {
@@ -176,7 +176,7 @@ export function parseCharacterFromDB(character: any): any {
           ? explicitTotal
           : computedTotal;
 
-        const canonicalName = canonicalSkillName(skillName);
+        const canonicalName = catalogSkillName(skillName) ?? skillName;
         processedSkills[canonicalName] = Math.max(
           Number(processedSkills[canonicalName]) || 0,
           total
@@ -190,7 +190,7 @@ export function parseCharacterFromDB(character: any): any {
           total,
         };
       } else {
-        const canonicalName = canonicalSkillName(skillName);
+        const canonicalName = catalogSkillName(skillName) ?? skillName;
         processedSkills[canonicalName] = Math.max(
           Number(processedSkills[canonicalName]) || 0,
           Number(skillData) || 0

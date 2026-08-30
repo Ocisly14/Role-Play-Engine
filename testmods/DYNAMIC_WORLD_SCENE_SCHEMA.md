@@ -88,7 +88,7 @@ corresponding machine-readable objects live in the same file under
       {
         "id": "cond.library.dim",
         "description": "The rear shelves are poorly lit.",
-        "mechanicalEffect": { "skillPenalty": { "Perception": -10 } }
+        "mechanicalEffect": { "skillPenalty": { "Investigation": -10 } }
       }
     ]
   }
@@ -182,7 +182,7 @@ Used in the `references.conditions` block of `SCN` and `ROAD` files.
   "id": "cond.library.dim",
   "description": "The rear shelves are poorly lit.",
   "mechanicalEffect": {
-    "skillPenalty": { "Perception": -10 },
+    "skillPenalty": { "Investigation": -10 },
     "blockConnections": false
   }
 }

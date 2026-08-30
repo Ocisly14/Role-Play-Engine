@@ -28,16 +28,18 @@
     "conditions": []
   },
   "skills": {
-    "Electronics": 80,
-    "Electrical Repair": 75,
-    "Mechanical Repair": 55,
-    "Science (Physics)": 60,
-    "Accounting": 50,
-    "Spot Hidden": 45,
-    "Persuade": 35
+    "Social": 35,
+    "Knowledge & Craft": 50,
+    "Science & Nature": 60,
+    "Investigation": 45,
+    "Repair & Engineering": 80
   },
   "languages": {
-    "native": ["English", "Gujarati", "Hindi"],
+    "native": [
+      "English",
+      "Gujarati",
+      "Hindi"
+    ],
     "learned": {}
   },
   "inventory": [

@@ -1,16 +1,15 @@
-// The skill model has three sources that must agree: the catalog (names +
-// base values), the per-skill guidance documents both prompts inject, and the
-// legacy consolidation map that carries pre-consolidation character data onto
-// the broad domains. A drift between them is silent in production — an agent
-// declares a skill the Engine has no guidance for, or a character's trained
-// value stops resolving — so it is pinned here.
+// The skill model has two sources that must agree: the catalog (names +
+// base values) and the per-skill guidance documents both prompts inject.
+// A drift between them is silent in production — an agent declares a skill
+// the Engine has no guidance for, or a character's trained value stops
+// resolving — so it is pinned here. There is no legacy-name mapping any
+// more: profiles and module data must use the 17 canonical names.
 
 import { describe, expect, it } from "vitest";
-import { COC_SKILL_BASE_VALUES } from "../../../planning/cocSkillList.js";
 import {
-  LEGACY_SKILL_TO_CANONICAL,
+  SKILL_BASE_VALUES,
   SKILL_CATALOG,
-  canonicalSkillName,
+  catalogSkillName,
 } from "../skillCatalog.js";
 import {
   buildSkillCatalogPrompt,
@@ -32,32 +31,23 @@ describe("skill catalog", () => {
 
   it("exposes every catalog entry as a base value", () => {
     for (const skill of SKILL_CATALOG) {
-      expect(COC_SKILL_BASE_VALUES.get(skill.name)).toBe(skill.base);
+      expect(SKILL_BASE_VALUES.get(skill.name)).toBe(skill.base);
     }
   });
 });
 
-describe("legacy consolidation map", () => {
-  it("only maps onto real catalog names", () => {
-    const badTargets = [
-      ...new Set(Object.values(LEGACY_SKILL_TO_CANONICAL)),
-    ].filter((target) => !catalogNames.has(target));
-    expect(badTargets).toEqual([]);
-  });
-
-  it("leaves canonical names untouched", () => {
+describe("catalogSkillName", () => {
+  it("recovers exact casing for the canonical names", () => {
     for (const name of catalogNames) {
-      expect(canonicalSkillName(name)).toBe(name);
+      expect(catalogSkillName(name)).toBe(name);
+      expect(catalogSkillName(name.toLowerCase())).toBe(name);
+      expect(catalogSkillName(` ${name} `)).toBe(name);
     }
   });
 
-  it("never maps a legacy name onto itself as a no-op entry", () => {
-    // A self-mapping entry that is NOT a catalog name would silently keep a
-    // dead skill alive.
-    for (const [legacy, canonical] of Object.entries(
-      LEGACY_SKILL_TO_CANONICAL
-    )) {
-      if (legacy === canonical) expect(catalogNames.has(legacy)).toBe(true);
+  it("answers undefined for pre-consolidation names — no legacy fallback", () => {
+    for (const legacy of ["Locksmith", "Spot Hidden", "First Aid", "Cooking"]) {
+      expect(catalogSkillName(legacy)).toBeUndefined();
     }
   });
 });

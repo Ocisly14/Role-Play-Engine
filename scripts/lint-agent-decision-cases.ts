@@ -36,11 +36,25 @@ import { readFileSync, readdirSync } from "node:fs";
 import { SKILL_CATALOG } from "../src/engine/rules/skillCatalog.js";
 import { getSkillReference } from "../src/engine/rules/skillReference.js";
 import {
+  GRAYHAVEN_ROSTER,
+  GRAYHAVEN_SCENARIOS,
+} from "./fixtures/agentDecisionCases/grayhaven.js";
+import {
   ACTOR_ROSTER,
   ALL_SCENARIOS,
 } from "./fixtures/agentDecisionCases/index.js";
 
-const roster = new Set(ACTOR_ROSTER.map((r) => r.id));
+// Per-module table — mirrors test-agent-decisions.ts. The grayhaven table is
+// a deliberately compact smoke suite (one case per scenario), so the
+// three-persona floor only applies to the full casssandra table.
+const GRAYHAVEN = MODULE === "grayhaven";
+const SCENARIOS = GRAYHAVEN ? GRAYHAVEN_SCENARIOS : ALL_SCENARIOS;
+const TABLE_ROSTER = GRAYHAVEN ? GRAYHAVEN_ROSTER : ACTOR_ROSTER;
+const SCENARIO_DIR = GRAYHAVEN
+  ? path.join(process.cwd(), "testmods", MODULE, "Grayhaven_Scenarios")
+  : path.join(process.cwd(), "data", "Mods", MODULE, "Cassandra_Scenarios");
+
+const roster = new Set(TABLE_ROSTER.map((r) => r.id));
 const skillNames = new Set<string>(SKILL_CATALOG.map((sk) => sk.name));
 const problems: string[] = [];
 const hints: string[] = [];
@@ -50,11 +64,13 @@ let cases = 0;
 let ticks = 0;
 let slots = 0;
 
-for (const sc of ALL_SCENARIOS) {
+for (const sc of SCENARIOS) {
   // Three personas per scenario is the floor: one the domain is second
   // nature to, one reaching for it untrained, one whose instincts may point
-  // elsewhere. Fewer than that and a scenario cannot show contrast.
-  if (sc.cases.length < 3) problems.push(`${sc.id}: ${sc.cases.length} cases`);
+  // elsewhere. Fewer than that and a scenario cannot show contrast. The
+  // grayhaven smoke table trades contrast for cost on purpose.
+  if (!GRAYHAVEN && sc.cases.length < 3)
+    problems.push(`${sc.id}: ${sc.cases.length} cases`);
   const seen = new Set<string>();
   for (const c of sc.cases) {
     cases++;
@@ -144,13 +160,7 @@ for (const sc of ALL_SCENARIOS) {
 
 // scene hints must resolve against the real module
 
-const dir = path.join(
-  process.cwd(),
-  "data",
-  "Mods",
-  MODULE,
-  "Cassandra_Scenarios"
-);
+const dir = SCENARIO_DIR;
 const names: string[] = [];
 for (const f of readdirSync(dir)) {
   if (!f.endsWith(".json")) continue;
@@ -159,7 +169,7 @@ for (const f of readdirSync(dir)) {
     if (j.name) names.push(String(j.name));
   } catch {}
 }
-for (const sc of ALL_SCENARIOS)
+for (const sc of SCENARIOS)
   for (const c of sc.cases) {
     const hint = c.scene;
     if (!hint) continue;
@@ -177,7 +187,7 @@ for (const sc of ALL_SCENARIOS)
   }
 
 console.log(
-  `${ALL_SCENARIOS.length} 场景 · ${cases} case · ${ticks} tick · ${slots} 角色席位`
+  `${SCENARIOS.length} 场景 · ${cases} case · ${ticks} tick · ${slots} 角色席位`
 );
 console.log(`成本估算：约 ${slots * 7}-${slots * 9} 次 LLM 调用`);
 console.log(

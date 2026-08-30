@@ -28,16 +28,15 @@
     "conditions": []
   },
   "skills": {
-    "Charm": 70,
-    "Persuade": 65,
-    "Psychology": 55,
-    "Cooking": 85,
-    "Accounting": 45,
-    "Listen": 65,
-    "Spot Hidden": 45
+    "Social": 70,
+    "Knowledge & Craft": 85,
+    "Investigation": 65
   },
   "languages": {
-    "native": ["English", "Gujarati"],
+    "native": [
+      "English",
+      "Gujarati"
+    ],
     "learned": {
       "Hindi": 60,
       "Portuguese": 35

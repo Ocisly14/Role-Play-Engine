@@ -28,17 +28,16 @@
     "conditions": []
   },
   "skills": {
-    "Charm": 75,
-    "Persuade": 65,
-    "Psychology": 65,
-    "Cooking": 80,
-    "Accounting": 55,
-    "Listen": 70,
-    "Occult": 45,
-    "Spot Hidden": 60
+    "Social": 75,
+    "Knowledge & Craft": 80,
+    "Investigation": 70,
+    "Occult": 45
   },
   "languages": {
-    "native": ["English", "Portuguese"],
+    "native": [
+      "English",
+      "Portuguese"
+    ],
     "learned": {}
   },
   "inventory": [

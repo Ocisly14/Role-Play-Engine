@@ -28,17 +28,15 @@
     "conditions": []
   },
   "skills": {
-    "Medicine": 85,
-    "First Aid": 80,
-    "Psychology": 70,
-    "Science (Biology)": 70,
-    "Science (Chemistry)": 55,
+    "Social": 70,
+    "Science & Nature": 70,
     "Investigation": 60,
-    "Spot Hidden": 50,
-    "Persuade": 50
+    "Medicine & Psychology": 85
   },
   "languages": {
-    "native": ["English"],
+    "native": [
+      "English"
+    ],
     "learned": {
       "Latin": 55
     }

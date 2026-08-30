@@ -2,7 +2,7 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-The package is **`role-play-engine`** ("LLM World Engine"); the checkout directory is still `CoC-AI-agent` for historical reasons. Call of Cthulhu IP references were scrubbed — don't reintroduce named-setting terminology. A few `coc*` identifiers survive as leftovers (`src/planning/cocSkillList.ts`, `DEBUG=coc:*`); treat them as vestigial, not as a naming convention.
+The package is **`role-play-engine`** ("LLM World Engine"); the checkout directory is still `CoC-AI-agent` for historical reasons. Call of Cthulhu IP references were scrubbed — don't reintroduce named-setting terminology. A few `coc*` identifiers survive as leftovers (`DEBUG=coc:*`); treat them as vestigial, not as a naming convention.
 
 ## Commands
 
@@ -87,7 +87,7 @@ The 57 CoC skills were consolidated into **17 broad ability domains** (`engine/r
 - `memory/` — `MemoryStore`, `MemoryRetriever`, `NpcMemoryManager`, `DecayEngine`, `contextMemory`, `knownLocations`, plus per-type `handlers/`. Embeddings via FastEmbed (`rag/localEmbeddingManager`).
 - `models/` — in-house LLM layer. `providers/` holds one thin adapter per vendor (`anthropic`, `openai`, `google`); policy (retries, model-class fallback, usage accounting) lives in `generator.ts`, and `tokenUsage.ts` tracks spend. Supports native tool calls and provider prompt-cache breakpoints (`SystemBlock.cacheControl`). **LangChain has been removed — don't reintroduce it.**
 - `shared/agents/memory/database/` — Prisma client, module scoping, seed data.
-- `planning/` — nearly gutted; only `cocSkillList.ts` (base values), `sceneMapFormatter.ts`, and a few types remain, still imported by the engine and server. Its README is stale. The module is on its way out — don't add to it.
+- `planning/` — nearly gutted; only `sceneMapFormatter.ts` and a few types remain, still imported by the engine and server. Its README is stale. The module is on its way out — don't add to it.
 - `rag/` — `localEmbeddingManager` (used by memory) and a Discovery-RAG service under `session/` that is currently unwired.
 - `i18n/` — en/zh.
 

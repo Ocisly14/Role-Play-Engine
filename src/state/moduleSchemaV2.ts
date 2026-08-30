@@ -161,7 +161,7 @@ function parseSkillPenalty(
   if (value === undefined) return undefined;
   if (Array.isArray(value)) {
     problems.push(
-      `${path}: array form ([{ skill, delta }]) is no longer supported — use a Record<skillName, number> (e.g. { "Perception": -10 })`
+      `${path}: array form ([{ skill, delta }]) is no longer supported — use a Record<skillName, number> (e.g. { "Investigation": -10 })`
     );
     return undefined;
   }

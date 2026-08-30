@@ -603,7 +603,7 @@ export async function runStagedCase(
   // the case put them: the seed expands out of wherever they are, and a
   // pruned NPC must not be described as a neighbour.
   for (const actor of stage.actors) {
-    const written = await memory.ensureContextMemories({
+    const written = await memory.ensureMapMemories({
       npcId: actor.npcId,
       sessionId,
       moduleId,
@@ -821,18 +821,29 @@ export async function runStagedCase(
                   description: `removed condition (${JSON.stringify(sc.predicate)})`,
                 },
               ];
-            case "scene.damageItem":
+            case "scene.setDescription":
               return [
                 {
                   kind: sc.kind,
-                  description: `${sc.itemId} damaged by ${sc.damagedBy}: ${sc.reason}`,
+                  description: `${sc.sceneId} description rewritten`,
                 },
               ];
-            case "item.modify":
+            case "item.set":
               return [
                 {
                   kind: sc.kind,
-                  description: `${sc.itemId}: ${sc.description}`,
+                  description: `${sc.itemId}: ${
+                    sc.hidden === false
+                      ? "revealed"
+                      : (sc.description ?? sc.appendDescription ?? "updated")
+                  }`,
+                },
+              ];
+            case "item.create":
+              return [
+                {
+                  kind: sc.kind,
+                  description: `${sc.name} created at ${sc.location}`,
                 },
               ];
             case "item.move":

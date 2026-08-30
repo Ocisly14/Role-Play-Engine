@@ -31,6 +31,9 @@
 // The case table (14 dissimilar NPCs) lives in
 // scripts/fixtures/agentDecisionCases/ (one file per scenario group); the
 // staging + tick machinery lives in scripts/lib/decisionSim.ts.
+// `--module grayhaven` switches to the compact Grayhaven table
+// (fixtures/agentDecisionCases/grayhaven.ts) and loads the module from
+// testmods/ instead of data/Mods/.
 //
 // Cost scales with actor SLOTS, not actor·ticks: a busy NPC is skipped entirely
 // by NpcActionController, so extra ticks in the middle of a long action are
@@ -90,6 +93,10 @@ import {
 } from "./lib/decisionSim.js";
 
 import {
+  GRAYHAVEN_ROSTER,
+  GRAYHAVEN_SCENARIOS,
+} from "./fixtures/agentDecisionCases/grayhaven.js";
+import {
   ACTOR_ROSTER,
   ALL_SCENARIOS,
   type PropKey,
@@ -143,6 +150,27 @@ if (DUMP_PROMPTS && !process.env.LLM_TRACE_DIR) {
 }
 
 const SESSION_ID = "agent_decision_sim";
+
+// =========================================================================
+// Per-module case tables — the harness itself is module-agnostic.
+// =========================================================================
+
+const TABLE: {
+  scenarios: SimScenario[];
+  roster: Array<{ id: string; note: string }>;
+  moduleDir: string;
+} =
+  MODULE_NAME === "grayhaven"
+    ? {
+        scenarios: GRAYHAVEN_SCENARIOS,
+        roster: GRAYHAVEN_ROSTER,
+        moduleDir: path.join(process.cwd(), "testmods", MODULE_NAME),
+      }
+    : {
+        scenarios: ALL_SCENARIOS,
+        roster: ACTOR_ROSTER,
+        moduleDir: path.join(process.cwd(), "data", "Mods", MODULE_NAME),
+      };
 
 // =========================================================================
 // Props — the objects a case can put on the table or in a pocket
@@ -223,13 +251,15 @@ interface BaseWorld {
 
 async function buildBaseWorld(): Promise<BaseWorld> {
   const prisma = getPrismaClient();
-  const moduleDir = path.join(process.cwd(), "data", "Mods", MODULE_NAME);
+  const moduleDir = TABLE.moduleDir;
   const moduleId = await importModule({
     prisma,
     moduleDir,
     moduleName: MODULE_NAME,
   });
-  const moduleData = await loadModule(prisma, moduleId);
+  const moduleData = await loadModule(prisma, moduleId, {
+    modsDir: path.dirname(TABLE.moduleDir),
+  });
   if (!moduleData?.setup?.startDate) {
     throw new Error(`Module ${MODULE_NAME} not loadable or missing startDate`);
   }
@@ -601,7 +631,7 @@ function autoScenario(
     title: `${skill.name}（自动生成）`,
     targetDefs: [skill.name],
     cases: Array.from({ length: 3 }, (_, i) => {
-      const roster = ACTOR_ROSTER[(index * 3 + i) % ACTOR_ROSTER.length];
+      const roster = TABLE.roster[(index * 3 + i) % TABLE.roster.length];
       return {
         label: `${roster.id}｜自动生成 #${i + 1}`,
         ticks: 3,
@@ -625,15 +655,15 @@ function autoScenario(
 
 async function main(): Promise<void> {
   const authoredDefs = new Set(
-    ALL_SCENARIOS.flatMap((s) => s.targetDefs ?? [])
+    TABLE.scenarios.flatMap((s) => s.targetDefs ?? [])
   );
   const autoScenarios = SKILL_CATALOG.filter(
     (skill) => !authoredDefs.has(skill.name)
   ).map((skill, i) => autoScenario(skill, i));
 
   let scenarios = FULL
-    ? [...ALL_SCENARIOS, ...autoScenarios]
-    : [...ALL_SCENARIOS];
+    ? [...TABLE.scenarios, ...autoScenarios]
+    : [...TABLE.scenarios];
   if (ONLY.length > 0) {
     scenarios = scenarios.filter((s) =>
       ONLY.some((f) => s.id === f || s.id.startsWith(f) || s.group === f)
@@ -659,7 +689,7 @@ async function main(): Promise<void> {
     console.log(
       `${scenarios.length} 个场景 · ${totalCases} 个 case · 合计 ${totalTicks} tick\n` +
         `粗估 LLM 调用量：约 ${actorTicks * 3}-${actorTicks * 4} 次（角色·tick = ${actorTicks}）\n` +
-        `花名册 ${ACTOR_ROSTER.length} 人 · 技能域 ${SKILL_CATALOG.length} 个` +
+        `花名册 ${TABLE.roster.length} 人 · 技能域 ${SKILL_CATALOG.length} 个` +
         `（--full 会另外生成 ${autoScenarios.length} 个场景）\n`
     );
     for (const s of scenarios) {
@@ -672,7 +702,7 @@ async function main(): Promise<void> {
       }
     }
     console.log("\n--- 花名册 ---");
-    for (const r of ACTOR_ROSTER) console.log(`  ${pad(r.id, 30)} ${r.note}`);
+    for (const r of TABLE.roster) console.log(`  ${pad(r.id, 30)} ${r.note}`);
     return;
   }
 

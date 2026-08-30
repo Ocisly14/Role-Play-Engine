@@ -117,7 +117,7 @@ function makeContext(opts: {
           name: "Marsh",
           alive: true,
           attributes: {},
-          skills: { Locksmith: 60 },
+          skills: { "Stealth & Security": 60 },
           hp: 10,
           maxHp: 12,
           san: 40,
@@ -315,7 +315,7 @@ describe("validateRawResolution — the three moments", () => {
 });
 
 describe("validateRawResolution — outcome and the bar", () => {
-  const skillCommand = command({ declaredSkillId: "Locksmith" });
+  const skillCommand = command({ declaredSkillId: "Stealth & Security" });
   const runningContext = (overrides: Partial<EngineAction> = {}) =>
     makeContext({
       newCommands: [],
@@ -340,7 +340,11 @@ describe("validateRawResolution — outcome and the bar", () => {
     const errors = validateRawResolution(
       { ending: [end({ outcome: "success" })] },
       runningContext({
-        check: { skillId: "Locksmith", requiredLevel: "regular", basis: "…" },
+        check: {
+          skillId: "Stealth & Security",
+          requiredLevel: "regular",
+          basis: "…",
+        },
       }),
       []
     );
@@ -351,7 +355,11 @@ describe("validateRawResolution — outcome and the bar", () => {
     const errors = validateRawResolution(
       { ending: [end({ outcome: undefined })] },
       runningContext({
-        check: { skillId: "Locksmith", requiredLevel: "regular", basis: "…" },
+        check: {
+          skillId: "Stealth & Security",
+          requiredLevel: "regular",
+          basis: "…",
+        },
       }),
       []
     );

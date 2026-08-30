@@ -49,7 +49,7 @@ function rawScene(overrides: Record<string, unknown> = {}) {
         {
           id: "cond.library.dim",
           description: "The rear shelves are poorly lit.",
-          mechanicalEffect: { skillPenalty: { Perception: -10 } },
+          mechanicalEffect: { skillPenalty: { Investigation: -10 } },
         },
       ],
     },
@@ -196,7 +196,7 @@ describe("parsePlaceFileV2", () => {
     expect(parsed.references.items).toHaveLength(1);
     expect(parsed.references.connections).toHaveLength(1);
     expect(parsed.references.conditions[0].mechanicalEffect).toEqual({
-      skillPenalty: { Perception: -10 },
+      skillPenalty: { Investigation: -10 },
     });
   });
 
@@ -254,7 +254,7 @@ describe("parsePlaceFileV2", () => {
         id: "cond.library.dim",
         description: "dim",
         mechanicalEffect: {
-          skillPenalty: [{ skill: "Perception", delta: -20 }],
+          skillPenalty: [{ skill: "Investigation", delta: -20 }],
         },
       },
     ];

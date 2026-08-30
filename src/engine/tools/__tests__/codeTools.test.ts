@@ -210,20 +210,20 @@ describe("opposedRollTool", () => {
   it("rolls the defender's penalty-adjusted trained value", async () => {
     const dgsm = makeDgsm({
       getNpcProfile: () => ({
-        skills: { Dodge: 50 },
+        skills: { Athletics: 50 },
         status: {
           conditions: [
             {
               id: "c1",
               description: "sprained ankle",
-              mechanicalEffect: { skillPenalty: { Dodge: -20 } },
+              mechanicalEffect: { skillPenalty: { Athletics: -20 } },
             },
           ],
         },
       }),
     });
     const out = await opposedRollTool.execute(
-      { characterId: "npc_1", skillId: "Dodge", fixedRoll: 30 },
+      { characterId: "npc_1", skillId: "Athletics", fixedRoll: 30 },
       ctx(dgsm)
     );
     expect(out.ok).toBe(true);
