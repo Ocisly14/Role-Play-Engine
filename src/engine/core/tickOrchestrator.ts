@@ -295,15 +295,32 @@ export class TickOrchestrator {
         if (!actorId) continue;
         movementStates.set(
           actionId,
-          initMovementRuntime(dgsm, actorId, init.route)
+          initMovementRuntime(dgsm, actorId, init.route, init.vehicleId)
         );
       }
       for (const transition of engineResult.resolution.transitions) {
         const planned = movementStates.get(transition.actionId);
-        if (planned && !planned.ok && transition.to === "active") {
+        if (!planned) continue;
+        if (!planned.ok && transition.to === "active") {
           transition.to = "failed";
           transition.reason = planned.reason;
           transition.nextWakeAt = undefined;
+          continue;
+        }
+        if (planned.ok && transition.to === "active") {
+          // Movement time is DERIVED, never the Engine's: the stated route
+          // (and vehicle) determine it. Whatever duration the Engine set —
+          // or omitted — the plan's own minutes are the action's clock.
+          const minutes = Math.max(
+            this.deps.tickDurationMinutes,
+            planned.totalMinutes
+          );
+          transition.resolvedDurationTicks = Math.ceil(
+            minutes / this.deps.tickDurationMinutes
+          );
+          transition.timingReason =
+            transition.timingReason ?? "movement time derived from the route";
+          transition.nextWakeAt = addMinutes(nextTickTime, minutes);
         }
       }
     }

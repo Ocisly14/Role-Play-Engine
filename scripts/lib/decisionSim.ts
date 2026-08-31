@@ -597,23 +597,9 @@ export async function runStagedCase(
     if (!stagedIds.has(id)) delete positions[id];
   }
 
-  // What the character already knows about the town, written the way a real
-  // session writes it (DynamicGameStateLoader does exactly this at bootstrap).
-  // It has to come after the cast is pruned and the actors are standing where
-  // the case put them: the seed expands out of wherever they are, and a
-  // pruned NPC must not be described as a neighbour.
-  for (const actor of stage.actors) {
-    const written = await memory.ensureMapMemories({
-      npcId: actor.npcId,
-      sessionId,
-      moduleId,
-      gameDateTime,
-      dgsm,
-      seed: dgsm.getNpcProfile(actor.npcId)?.knownMapSeed,
-      language: lang,
-    });
-    log(`   [context] ${actor.npcId} knows ${written} place(s)`);
-  }
+  // Geographic knowledge needs no staging step any more: createSession
+  // seeded every actor's authored map memories straight from their profile,
+  // the same way a real session gets them.
 
   // ---- opening event ---------------------------------------------------
   const scriptedEvents: ScriptedEvent[] = [];

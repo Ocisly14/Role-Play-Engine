@@ -36,7 +36,7 @@ export interface RawActionStart {
    *  last being the destination. The Engine never invents an unstated leg:
    *  a character who did not say how to get somewhere has not chosen a way,
    *  and their walk ends where their words end. */
-  movement?: { route: string[] };
+  movement?: { route: string[]; vehicleId?: string };
 }
 
 export interface RawCheck {
@@ -231,7 +231,8 @@ export const ITEM_OPS: OperationSpec[] = [
   },
   {
     kinds: ["move"],
-    fields: "from:<current holder>, to:<sceneId or characterId>",
+    fields:
+      'from:<current holder, exactly as the Items section shows it>, to:<"scene:<placeId>" for a place — a vehicle interior scene included — or a bare characterId> (one holder grammar, same as create.location)',
   },
   { kinds: ["destroy"], fields: "" },
   {
@@ -371,7 +372,7 @@ export const submitResolutionTool: ToolSpec = {
       starting: {
         type: "array",
         description:
-          "Actions that BEGIN this tick — the ids the trigger section lists under `starting`. How long each should take and how hard it is. Never an outcome: its time has not been spent yet.",
+          "Actions that BEGIN this tick — the ids the trigger section lists under `starting`. For a non-travel action: how long it should take and how hard it is. For travel: only the route (and vehicle) — the clock is derived from it. Never an outcome: its time has not been spent yet.",
         items: {
           type: "object",
           properties: {
@@ -380,7 +381,7 @@ export const submitResolutionTool: ToolSpec = {
               type: "integer",
               minimum: 1,
               description:
-                "How long the action SHOULD take. You never state elapsed time — code advances progress from the clock.",
+                "How long the action SHOULD take. REQUIRED for a non-travel action; OMIT when `movement` is set — travel time is derived from the route and anything you write here is overridden. You never state elapsed time — code advances progress from the clock.",
             },
             timingReason: {
               type: "string",
@@ -421,19 +422,24 @@ export const submitResolutionTool: ToolSpec = {
             movement: {
               type: "object",
               description:
-                "Set when the action has a movement leg. `route` = the path the ACTOR STATED, grounded to place ids: ordered waypoints, each adjacent to the previous, last = destination. Ground only what their words carry (stepping out of the current room onto its street is an implied first hop). NEVER invent an unstated leg — a character who did not say how to get somewhere walks only as far as their words go, and re-decides there.",
+                "REQUIRED whenever the action crosses a scene boundary — a 40-minute haul or one step into the next room alike; a single adjacent waypoint is a complete route. A duration alone moves nobody, and facts must not put hands on what the position cannot reach. `route` = the path the ACTOR STATED, grounded to place ids: ordered waypoints, each adjacent to the previous, last = destination. Ground only what their words carry (stepping out of the current room onto its street is an implied first hop). NEVER invent an unstated leg — a character who did not say how to get somewhere walks only as far as their words go, and re-decides there. Code derives the travel time from the route (walk or drive) and sets the clock itself: omit resolvedDurationTicks for pure travel.",
               properties: {
                 route: {
                   type: "array",
                   items: { type: "string" },
                   minItems: 1,
                 },
+                vehicleId: {
+                  type: "string",
+                  description:
+                    "Set when the actor DRIVES: the vehicle moves along the route (drivable roads only) and everyone in its interior scene rides along. The driver must be inside the vehicle; whether they may drive it is yours to judge.",
+                },
               },
               required: ["route"],
               additionalProperties: false,
             },
           },
-          required: ["actionId", "resolvedDurationTicks", "timingReason"],
+          required: ["actionId"],
           additionalProperties: false,
         },
       },
@@ -629,7 +635,7 @@ export const CODE_TOOL_SPECS: ToolSpec[] = [
   {
     name: "pathfinding",
     description:
-      "Plan the route from a character's current position to a destination id (scene/road). Returns reachability, leg summary and total minutes.",
+      "Plan the route from a character's current position to a destination id (scene/road). Returns reachability, leg summary and total WALKING minutes. Advisory only — a movement action's clock is derived by code from its route (drive speeds included); you never need this number for a duration.",
     inputSchema: {
       type: "object",
       properties: {
@@ -643,7 +649,7 @@ export const CODE_TOOL_SPECS: ToolSpec[] = [
   {
     name: "movementCost",
     description:
-      "Estimate travel time (minutes/ticks) from a character's current position to a destination id.",
+      "Estimate WALKING time (minutes/ticks) from a character's current position to a destination id. Advisory only — never needed for a movement action's duration, which code derives from the route (drive speeds included).",
     inputSchema: {
       type: "object",
       properties: {

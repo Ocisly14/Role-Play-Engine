@@ -558,6 +558,10 @@ export class Applier {
           this.dgsm.setCharacterPosition(c.characterId, c.position);
           break;
         }
+        case "vehicle.position": {
+          this.dgsm.setVehiclePosition(c.vehicleId, c.position);
+          break;
+        }
         // ── Resolver-emitted item ops ──
         case "item.set": {
           this.dgsm.setItem(c.itemId, {

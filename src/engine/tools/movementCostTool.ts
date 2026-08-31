@@ -17,7 +17,7 @@ export type MovementCostOutput =
   | { reachable: true; totalMinutes: number; totalTicks: number }
   | {
       reachable: false;
-      reason: "missing_destination" | "no_current_position" | "no_path";
+      reason: string;
     };
 
 export const movementCostTool: EngineCodeTool<

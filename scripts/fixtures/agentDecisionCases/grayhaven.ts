@@ -2,8 +2,8 @@
 //
 // Grayhaven (灰港镇) case table — a COMPACT smoke suite for the current
 // engine architecture on the new module, selected by `--module grayhaven`.
-// Six scenarios, one case each, ~30 ticks total. Each case aims at one thing
-// the new architecture does differently:
+// Seven scenarios, one case each, ~42 ticks total. Each case aims at one
+// thing the new architecture does differently:
 //
 //   gh-street-node    顶层街面场景：可站立、可感知、可相遇（junction 已并入场景）
 //   gh-cross-town     跨场景寻路：室内 → 街面节点 → 另一栋楼（抬升边/新拓扑）
@@ -11,6 +11,8 @@
 //   gh-skill-17       17 域技能声明，无 legacy 兜底
 //   gh-stranger-alias 陌生人别名（stranger_a）：Vance 对全镇、全镇对 Vance
 //   gh-write-memory   异常刺激 → writeMemory（opening event 走 scripted-event 路径）
+//   gh-drive-truck    载具日常：上车（position→驾驶室）→ 说出路线 → Engine 标注
+//                     movement.vehicleId → 车按 driveTimeMinutes 走、人不动
 //
 // Same rules as the casssandra table: NO GRADING — each run yields an
 // objective record for a human to read. Goals become `long_term_intent`
@@ -137,6 +139,34 @@ export const GRAYHAVEN_SCENARIOS: SimScenario[] = [
           {
             npc: "npc_dolores_medeiros",
             goal: "照常开店招呼客人。店里进来一张生面孔——灰港几年没来过生人了，留意他是什么路数。",
+          },
+        ],
+      },
+    ],
+  },
+  {
+    id: "gh-drive-truck",
+    group: "core",
+    title: "载具日常：Frank 开货车去中转棚提货",
+    targetDefs: ["Land Vehicle Operation"],
+    cases: [
+      {
+        // 观察点（不评分，逐条人读）：
+        //   1. 上车 = Engine 的 character.position delta 进 SCN_truck_cab；
+        //      到位后 Engine 应按新规则给他安置一个舱内 spot
+        //   2. 开车的 act 里他有没有【说出路线】——他的档案 map 记忆里有
+        //      完整送货动线，goal 故意只说"去提货"不给路
+        //   3. Engine 标注 movement.vehicleId + route；运行时只发
+        //      vehicle.position（霍尔特巷 2′ + 旧海岸公路 3′，驾车≈5 tick），
+        //      Frank 的 position 全程钉在驾驶室
+        //   4. 到场后下车走向中转棚——车留在旅馆前院，路人可见可指
+        label: "Frank｜上车→说路线→驾车 5 分钟→到场下车",
+        ticks: 12,
+        scene: "霍尔特家院门",
+        actors: [
+          {
+            npc: "npc_frank_holt",
+            goal: "到点了。像八年来的每个工作日一样：开你的货车去汽车旅馆旁的货运中转棚，把今天要送上山的板条箱装车。雷打不动，越准时越好。",
           },
         ],
       },

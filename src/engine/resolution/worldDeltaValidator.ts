@@ -72,6 +72,9 @@ interface Lookup {
   locationIds: Set<string>;
   /** Every authored connection id (`exit.*`), from `state.connectionIds`. */
   connectionIds: Set<string>;
+  vehicleIds: Set<string>;
+  vehicleInteriors: Map<string, string>;
+  characterSceneIds: Map<string, string | undefined>;
   /** FULL-world item→holder map (context.state.itemHolders). */
   itemHolders: Map<string, string>;
   /** All actions addressable this resolution (queued from commands + active).
@@ -171,6 +174,16 @@ export function buildLookup(context: EngineResolutionContext): Lookup {
   );
   const placeIds = new Set(placeKinds.map(([id]) => id));
   const connectionIds = new Set(context.state.connectionIds);
+  const vehicleIds = new Set((context.state.vehicles ?? []).map((v) => v.id));
+  const vehicleInteriors = new Map(
+    (context.state.vehicles ?? []).map((v) => [v.id, v.interiorSceneId])
+  );
+  const characterSceneIds = new Map(
+    context.state.characters.map((c) => {
+      const position = c.position as { sceneId?: string } | null;
+      return [c.id, position?.sceneId];
+    })
+  );
   const locationIds = new Set<string>(placeIds);
   for (const c of context.state.characters) {
     if (c.locationId) locationIds.add(c.locationId);
@@ -211,6 +224,9 @@ export function buildLookup(context: EngineResolutionContext): Lookup {
     placeIds,
     locationIds,
     connectionIds,
+    vehicleIds,
+    vehicleInteriors,
+    characterSceneIds,
     itemHolders,
     actionById,
     requiredActionIds: new Set([...worklist.starting, ...worklist.ending]),
@@ -301,13 +317,33 @@ function validateStart(entry: RawActionStart, lookup: Lookup): string[] {
     } else {
       for (const waypoint of route) {
         if (typeof waypoint !== "string" || !waypoint.trim()) {
-          errs.push(`movement.route entries must be place id strings`);
+          errs.push("movement.route entries must be place id strings");
         } else if (!lookup.locationIds.has(waypoint)) {
           errs.push(
             `movement.route waypoint "${waypoint}" is not a place in this world`
           );
         }
       }
+    }
+    if (
+      entry.movement.vehicleId !== undefined &&
+      !lookup.vehicleIds.has(entry.movement.vehicleId)
+    ) {
+      errs.push(
+        `movement.vehicleId "${entry.movement.vehicleId}" is not a vehicle in this world`
+      );
+    }
+  }
+  // Duration is conditionally required: a non-travel action must say how
+  // long it takes (and why); a travel action must NOT be clocked by hand —
+  // code derives its time from the route.
+  if (entry.movement === undefined) {
+    if (entry.resolvedDurationTicks === undefined) {
+      errs.push(
+        `a non-travel action needs resolvedDurationTicks (with a timingReason); only movement actions derive their clock from the route`
+      );
+    } else if (!entry.timingReason?.trim()) {
+      errs.push(`resolvedDurationTicks requires a timingReason`);
     }
   }
   return errs;
@@ -641,7 +677,9 @@ export function validateItemChange(
         );
       }
       if (typeof op.to !== "string" || !validHolder(op.to, lookup)) {
-        errs.push(`move.to "${op.to}" is not a valid holder`);
+        errs.push(
+          `move.to "${op.to}" is not a valid holder — write "scene:<placeId>" for a place (a vehicle interior scene included) or a bare characterId for a person`
+        );
       }
       if (movedItemIds.has(delta.itemId)) {
         errs.push(
@@ -724,7 +762,11 @@ export function validateOccurrence(
     for (const ref of fact.entityRefs ?? []) {
       const exists =
         ref.kind === "item"
-          ? lookup.itemHolders.has(ref.id) || createdItemIds.has(ref.id)
+          ? lookup.itemHolders.has(ref.id) ||
+            createdItemIds.has(ref.id) ||
+            // A vehicle's exterior is item-like: an occurrence may point at
+            // the truck itself.
+            lookup.vehicleIds.has(ref.id)
           : ref.kind === "character"
             ? lookup.characterIds.has(ref.id)
             : ref.kind === "connection"
@@ -799,6 +841,40 @@ export function validateRawResolution(
       }
       seen.add(entry.actionId);
       at(target, validate(entry as never, lookup));
+    }
+    if (moment === "starting") {
+      // The wheels will not turn for someone standing beside the vehicle:
+      // a drive is only settled when the driver is IN the interior scene —
+      // already, or moved there by a position change in this same
+      // submission. Mechanical (position vs scene id), so it can live here
+      // rather than in the rules prose alone.
+      for (const entry of entries as RawActionStart[]) {
+        const vehicleId = entry.movement?.vehicleId;
+        if (vehicleId === undefined) continue;
+        const interior = lookup.vehicleInteriors.get(vehicleId);
+        if (interior === undefined) continue; // unknown vehicle already reported
+        const actorId = lookup.actionById.get(entry.actionId)?.command.actorId;
+        if (actorId === undefined) continue;
+        const alreadyInside =
+          lookup.characterSceneIds.get(actorId) === interior;
+        const boardedThisSubmission = (raw.characterChanges ?? []).some(
+          (change) =>
+            change.characterId === actorId &&
+            (
+              change.operation as {
+                kind?: string;
+                position?: { sceneId?: string };
+              }
+            )?.kind === "position" &&
+            (change.operation as { position?: { sceneId?: string } }).position
+              ?.sceneId === interior
+        );
+        if (!alreadyInside && !boardedThisSubmission) {
+          at({ kind: "action", actionId: entry.actionId }, [
+            `movement.vehicleId "${vehicleId}": the driver ${actorId} is not in its interior scene "${interior}" — add a characterChange position into "${interior}" in this submission (boarding), or drop the vehicle and walk`,
+          ]);
+        }
+      }
     }
   }
   for (const required of lookup.requiredActionIds) {
@@ -1011,7 +1087,7 @@ export function applyRepair(
 export interface FinalizedResolution {
   resolution: TickResolution;
   /** Movement-leg annotations per action (Engine-owned runtime init). */
-  movementInits: Record<string, { route: string[] }>;
+  movementInits: Record<string, { route: string[]; vehicleId?: string }>;
   /** The bar set for an action as it starts, per actionId. Written onto the
    *  action once and never revised — code rolls against it later. */
   checkInits: Record<
@@ -1041,7 +1117,8 @@ export function finalizeResolution(
 ): FinalizedResolution {
   const lookup = buildLookup(context);
   const transitions: ActionTransition[] = [];
-  const movementInits: Record<string, { route: string[] }> = {};
+  const movementInits: Record<string, { route: string[]; vehicleId?: string }> =
+    {};
   const checkInits: FinalizedResolution["checkInits"] = {};
   const tickMinutes = context.tick.durationMinutes;
 
@@ -1053,7 +1130,12 @@ export function finalizeResolution(
     const known = lookup.actionById.get(entry.actionId);
     if (!known) continue; // unreachable post-validation; keeps types honest
     if (entry.movement?.route?.length) {
-      movementInits[entry.actionId] = { route: [...entry.movement.route] };
+      movementInits[entry.actionId] = {
+        route: [...entry.movement.route],
+        ...(entry.movement.vehicleId !== undefined
+          ? { vehicleId: entry.movement.vehicleId }
+          : {}),
+      };
     }
     if (entry.check) {
       checkInits[entry.actionId] = {

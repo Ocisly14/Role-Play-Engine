@@ -23,8 +23,33 @@ import type { EngineAction } from "./types.js";
 
 const SOURCE = "movementRuntime";
 
+/** Driving moves the vehicle; walking moves the walker. */
+function positionChange(
+  actorId: string,
+  state: MovementRuntimeState,
+  position: CharacterPosition
+): StateChange {
+  if (state.vehicleId !== undefined) {
+    return {
+      kind: "vehicle.position",
+      vehicleId: state.vehicleId,
+      position,
+      sourceSubsystem: SOURCE,
+    };
+  }
+  return {
+    kind: "character.position",
+    characterId: actorId,
+    position,
+    sourceSubsystem: SOURCE,
+  };
+}
+
 /** JSON-safe route state persisted at `action.runtime.movement`. */
 export interface MovementRuntimeState {
+  /** Driving: the vehicle this movement advances. The actor sits in its
+   *  interior scene and never changes position; only the vehicle moves. */
+  vehicleId?: string;
   /** The actor's stated waypoints (place ids, adjacent hops); the last one
    *  is the destination. Legs are planned lazily on arrival at each
    *  waypoint, so a mid-route block interrupts exactly where it stands. */
@@ -85,14 +110,111 @@ function placesAdjacent(
  *  action with a movement annotation. Adjacency of the whole stated route is
  *  checked up front so a bad route fails loudly at the start, with a reason
  *  the actor reads as feedback, not silently three legs in. */
+/** Rescale a planned leg for driving: along-road steps ride the road's
+ *  driveTimeMinutes; a road with none takes no vehicles and fails the leg. */
+function toDrivenSteps(
+  dgsm: DynamicGameStateManager,
+  steps: MovementStep[]
+): { ok: true; steps: MovementStep[] } | { ok: false; reason: string } {
+  const topology = dgsm.getTopology();
+  const out: MovementStep[] = [];
+  for (const step of steps) {
+    if (step.kind !== "along_road" || !step.roadId) {
+      out.push(step);
+      continue;
+    }
+    const road = topology.roads.get(step.roadId);
+    if (!road) return { ok: false, reason: `unknown road ${step.roadId}` };
+    if (road.driveTimeMinutes === undefined) {
+      return {
+        ok: false,
+        reason: `${road.name ?? step.roadId} takes no vehicles`,
+      };
+    }
+    out.push({
+      ...step,
+      durationMinutes: Math.max(
+        1,
+        Math.round(
+          step.durationMinutes *
+            (road.driveTimeMinutes / road.travelTimeMinutes)
+        )
+      ),
+    });
+  }
+  return { ok: true, steps: out };
+}
+
+/** Plan one leg, from the moving subject's position (the vehicle's when
+ *  driving), rescaled for driving when a vehicle is involved. */
+function planLeg(
+  dgsm: DynamicGameStateManager,
+  actorId: string,
+  waypoint: string,
+  vehicleId: string | undefined
+): ReturnType<typeof planMovementRoute> {
+  const vehicle = vehicleId ? dgsm.getVehicle(vehicleId) : null;
+  const planned = planMovementRoute(
+    dgsm,
+    actorId,
+    waypoint,
+    vehicle ? vehicle.position : undefined
+  );
+  if (!planned.ok || !vehicle) return planned;
+  const driven = toDrivenSteps(dgsm, planned.steps);
+  if (!driven.ok) return { ok: false, reason: driven.reason };
+  return { ...planned, steps: driven.steps };
+}
+
 export function initMovementRuntime(
   dgsm: DynamicGameStateManager,
   actorId: string,
-  route: string[]
+  routeInput: string[],
+  vehicleId?: string
 ): MovementInitResult {
+  let route = routeInput;
   if (route.length === 0) {
     return { ok: false, reason: "movement init failed: empty route" };
   }
+  // A route often starts with the place the subject already stands in
+  // ("from the gate, up the lane…") — that is prose, not a leg. Drop it,
+  // unless it is the whole route.
+  const subject = vehicleId !== undefined ? dgsm.getVehicle(vehicleId) : null;
+  const startPos =
+    subject?.position ?? dgsm.getCharacterPosition(actorId) ?? undefined;
+  const startId =
+    startPos === undefined
+      ? undefined
+      : startPos.type === "scene"
+        ? startPos.sceneId
+        : startPos.roadId;
+  if (route.length > 1 && startId !== undefined && route[0] === startId) {
+    route = route.slice(1);
+  }
+  // The FIRST leg obeys the same grain as every other: one stated stretch
+  // from where the subject stands. Without this, a bare far destination
+  // would fall through to unconstrained pathfinding — the omniscient router
+  // the stated-route model exists to retire. (Same-place "routes" and
+  // unknown starts fall through to the planner, which answers for them.)
+  if (
+    startId !== undefined &&
+    route[0] !== startId &&
+    !placesAdjacent(dgsm, startId, route[0])
+  ) {
+    return {
+      ok: false,
+      reason: `movement init failed: route hop "${startId}" → "${route[0]}" is not a single stretch — the way between them was never stated`,
+    };
+  }
+  if (vehicleId !== undefined && dgsm.getVehicle(vehicleId) === null) {
+    return {
+      ok: false,
+      reason: `movement init failed: no vehicle "${vehicleId}"`,
+    };
+  }
+  // NOTE: whether the driver is sitting inside is checked at each advance,
+  // not here — init runs before this tick's deltas flush, so a same-tick
+  // "board and drive" resolution has not put them in the cab yet.
   for (let i = 0; i + 1 < route.length; i += 1) {
     if (!placesAdjacent(dgsm, route[i], route[i + 1])) {
       return {
@@ -101,20 +223,23 @@ export function initMovementRuntime(
       };
     }
   }
-  const planned = planMovementRoute(dgsm, actorId, route[0]);
+  const planned = planLeg(dgsm, actorId, route[0], vehicleId);
   if (!planned.ok) {
     return { ok: false, reason: `movement init failed: ${planned.reason}` };
   }
   // ETA is the first leg's plan plus the stated hops beyond it; adjacent
   // hops ride single roads, so their travel times sum directly.
-  let estimate = planned.totalMinutes;
+  let estimate = planned.steps.reduce((sum, s) => sum + s.durationMinutes, 0);
   const topology = dgsm.getTopology();
   for (let i = 0; i + 1 < route.length; i += 1) {
     const viaRoad = (topology.sceneToRoads.get(route[i]) ?? []).find(
       (r) => r.endpointA === route[i + 1] || r.endpointB === route[i + 1]
     );
     if (viaRoad) {
-      estimate += viaRoad.travelTimeMinutes;
+      estimate +=
+        vehicleId !== undefined && viaRoad.driveTimeMinutes !== undefined
+          ? viaRoad.driveTimeMinutes
+          : viaRoad.travelTimeMinutes;
     } else if (
       topology.roads.has(route[i]) ||
       topology.roads.has(route[i + 1])
@@ -129,6 +254,7 @@ export function initMovementRuntime(
   return {
     ok: true,
     state: {
+      ...(vehicleId !== undefined ? { vehicleId } : {}),
       route: [...route],
       currentLegIndex: 0,
       destinationId: route[route.length - 1],
@@ -165,7 +291,7 @@ function rolloverLeg(
     if (state.currentLegIndex + 1 >= state.route.length) return "arrived";
     state.currentLegIndex += 1;
     const nextWaypoint = state.route[state.currentLegIndex];
-    const planned = planMovementRoute(dgsm, actorId, nextWaypoint);
+    const planned = planLeg(dgsm, actorId, nextWaypoint, state.vehicleId);
     if (!planned.ok) {
       return `blocked: no way onward to ${nextWaypoint} (${planned.reason})`;
     }
@@ -183,6 +309,27 @@ export function advanceMovement(
   state: MovementRuntimeState
 ): MovementAdvanceResult {
   const stateChanges: StateChange[] = [];
+
+  // Driving is stateless binding: the wheel is held by being in the cab,
+  // this minute. Checked every advance — a driver yanked out mid-route
+  // stops the vehicle where it stands.
+  if (state.vehicleId !== undefined) {
+    const vehicle = dgsm.getVehicle(state.vehicleId);
+    const actorPos = dgsm.getCharacterPosition(actorId);
+    if (
+      !vehicle ||
+      actorPos?.type !== "scene" ||
+      actorPos.sceneId !== vehicle.interiorSceneId
+    ) {
+      return {
+        stateChanges,
+        status: "blocked",
+        blockedReason: `blocked: the driver is not inside ${
+          vehicle?.name ?? state.vehicleId
+        }`,
+      };
+    }
+  }
 
   let blocked = drainImmediate(dgsm, actorId, state, stateChanges);
   if (blocked)
@@ -218,12 +365,7 @@ export function advanceMovement(
     stepEntry.to,
     progress
   );
-  stateChanges.push({
-    kind: "character.position",
-    characterId: actorId,
-    position: nextPosition,
-    sourceSubsystem: SOURCE,
-  });
+  stateChanges.push(positionChange(actorId, state, nextPosition));
 
   if (progress >= 1) {
     state.currentStepIndex += 1;
@@ -262,12 +404,7 @@ function drainImmediate(
       if (reason) return `blocked: ${reason}`;
     }
 
-    stateChanges.push({
-      kind: "character.position",
-      characterId: actorId,
-      position: entry.to,
-      sourceSubsystem: SOURCE,
-    });
+    stateChanges.push(positionChange(actorId, state, entry.to));
     state.currentStepIndex += 1;
     state.minutesIntoStep = 0;
   }

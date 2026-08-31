@@ -28,6 +28,7 @@ import type {
   CharacterPosition,
   RoadNode,
   TownTopology,
+  VehicleState,
 } from "./topologyTypes.js";
 import { buildTopology } from "./topologyTypes.js";
 import {
@@ -101,6 +102,8 @@ export interface DynamicGameState {
     Record<string, { score: number; note: string; knownAs?: string }>
   >;
   blockedConnections: Map<string, string>; // "scene:id::road:id" typed canonical edge key -> reason
+  /** Vehicles: movable perception boundaries (see VehicleState). */
+  vehicles: VehicleState[];
   npcResidences: Record<string, string>; // npcId -> macroLocationId
   transportEdges: TransportEdge[];
 
@@ -148,6 +151,7 @@ export const initialDynamicGameState = (params: {
   npcInventories: {},
   npcRelationshipGraph: {},
   blockedConnections: new Map(),
+  vehicles: [],
   npcResidences: {},
   transportEdges: [],
   topology: null as unknown as TownTopology,
@@ -326,6 +330,7 @@ export class DynamicGameStateManager {
       characterSpots: this.state.characterSpots,
       hiddenCharacterIds: Array.from(this.hiddenCharacterIds),
       npcResidences: this.state.npcResidences,
+      vehicles: this.state.vehicles,
       transportEdges: this.state.transportEdges,
       environmentReadings: this.state.environmentReadings,
       loadedAt: this.state.loadedAt.toISOString(),
@@ -419,6 +424,7 @@ export class DynamicGameStateManager {
       npcInventories: data.npcInventories ?? {},
       npcRelationshipGraph: data.npcRelationshipGraph ?? {},
       npcResidences: data.npcResidences ?? {},
+      vehicles: data.vehicles ?? [],
       transportEdges: data.transportEdges ?? [],
       npcInjectionPolicy: data.npcInjectionPolicy ?? null,
       topology: topology!,
@@ -869,6 +875,23 @@ export class DynamicGameStateManager {
       // Module JSON may omit the field on places that start with none.
       if (!place.items) place.items = [];
       return place.items;
+    }
+    // Everything past here is character territory. Two misspellings used to
+    // fall through and silently mint a PHANTOM inventory (items vanish into
+    // a container nothing ever reads): a bare place id ("SCN_x" — meant
+    // "scene:SCN_x"), and a wrong prefix ("npc:x" — characters are bare).
+    // Refuse both loudly instead.
+    if (location.includes(":")) {
+      console.warn(
+        `[DGSM] holder "${location}": unknown prefix — places are "scene:<placeId>", characters are bare ids`
+      );
+      return undefined;
+    }
+    if (this.state.scenes.has(location) || this.state.roads.has(location)) {
+      console.warn(
+        `[DGSM] holder "${location}" names a place — did you mean "scene:${location}"?`
+      );
+      return undefined;
     }
     const inventory = this.state.npcInventories[location];
     if (inventory) return inventory;
@@ -1474,6 +1497,30 @@ export class DynamicGameStateManager {
 
   getTopology(): TownTopology {
     return this.state.topology;
+  }
+
+  // ── Vehicles ──────────────────────────────────────────────────
+
+  getVehicles(): VehicleState[] {
+    return this.state.vehicles;
+  }
+
+  getVehicle(vehicleId: string): VehicleState | null {
+    return this.state.vehicles.find((v) => v.id === vehicleId) ?? null;
+  }
+
+  /** The vehicle whose interior scene this is, if any. */
+  getVehicleByInterior(sceneId: string): VehicleState | null {
+    return (
+      this.state.vehicles.find((v) => v.interiorSceneId === sceneId) ?? null
+    );
+  }
+
+  setVehiclePosition(vehicleId: string, position: CharacterPosition): void {
+    const vehicle = this.getVehicle(vehicleId);
+    if (!vehicle) return;
+    vehicle.position = position;
+    this.state.lastUpdated = new Date();
   }
 
   setTopology(topology: TownTopology): void {

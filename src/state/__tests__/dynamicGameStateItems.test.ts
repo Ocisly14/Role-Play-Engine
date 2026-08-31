@@ -301,3 +301,23 @@ describe("setConnectionHiddenById", () => {
     expect(dgsm.resolveConnectionEdgeById("exit.nowhere.door")).toBeNull();
   });
 });
+
+describe("holder grammar hardening — no phantom inventories", () => {
+  it("refuses a bare place id as a move destination", () => {
+    const { dgsm } = makeFixture();
+    const ok = dgsm.moveItem("item_chair", "scene:S_HOME", "J_A");
+    expect(ok).toBe(false);
+    // The item stayed where it was; no inventory keyed "J_A" was minted.
+    expect(
+      dgsm.getScene("S_HOME")?.items?.some((i) => i.id === "item_chair")
+    ).toBe(true);
+    expect(dgsm.getState().npcInventories.J_A).toBeUndefined();
+  });
+
+  it("refuses an unknown prefix like npc:<id>", () => {
+    const { dgsm } = makeFixture();
+    const ok = dgsm.moveItem("item_chair", "scene:S_HOME", "npc:npc_someone");
+    expect(ok).toBe(false);
+    expect(dgsm.getState().npcInventories["npc:npc_someone"]).toBeUndefined();
+  });
+});

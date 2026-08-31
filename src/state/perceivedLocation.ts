@@ -63,13 +63,28 @@ export function resolvePerceivedLocation(
   if (position.type === "scene") {
     const scene = dgsm.getScene(position.sceneId);
     if (!scene) return null;
+    // A vehicle standing here is perceivable (and citable) like an item;
+    // from inside a vehicle's cab, the place the vehicle stands at is one
+    // hop away — the view out the window.
+    const vehiclesHere = (dgsm.getVehicles?.() ?? []).filter(
+      (v) =>
+        v.position.type === "scene" && v.position.sceneId === position.sceneId
+    );
+    const cabOf = dgsm.getVehicleByInterior?.(position.sceneId) ?? null;
     return {
       id: scene.id,
       kind: "scene",
       name: scene.name,
       description: scene.description ?? "",
       conditions: dgsm.getSceneConditions(scene.id),
-      items: visibleItems(scene.items),
+      items: [
+        ...visibleItems(scene.items),
+        ...vehiclesHere.map((v) => ({
+          id: v.id,
+          name: v.name,
+          description: v.description,
+        })),
+      ],
       // `getScene` answers null, not undefined, for an id it does not know —
       // so the old `!== undefined` test kept everything it meant to drop.
       // Hidden connections stay out until revealed: an unfound door must not
@@ -81,6 +96,16 @@ export function resolvePerceivedLocation(
           .map((c) => c.targetId)
           .filter((id) => dgsm.getScene(id) != null),
         ...(topology.sceneToRoads.get(scene.id) ?? []).map((r) => r.id),
+        // Interior of a vehicle: adjacent to wherever the vehicle stands.
+        ...(cabOf
+          ? [
+              cabOf.position.type === "scene"
+                ? cabOf.position.sceneId
+                : cabOf.position.roadId,
+            ]
+          : []),
+        // Vehicles parked here: their interiors are one door away.
+        ...vehiclesHere.map((v) => v.interiorSceneId),
       ],
     };
   }
@@ -102,12 +127,26 @@ export function resolvePerceivedLocation(
     name: road.name,
     description: road.description ?? "",
     conditions: dgsm.getSceneConditions(road.id),
-    items: visibleItems(road.items).filter(
-      (item) =>
-        item.position === undefined ||
-        Math.abs(item.position - position.position) * road.travelTimeMinutes <=
-          ROAD_ITEM_REACH_MINUTES
-    ),
+    items: [
+      ...visibleItems(road.items).filter(
+        (item) =>
+          item.position === undefined ||
+          Math.abs(item.position - position.position) *
+            road.travelTimeMinutes <=
+            ROAD_ITEM_REACH_MINUTES
+      ),
+      // Vehicles on this stretch, within the same reach radius.
+      ...(dgsm.getVehicles?.() ?? [])
+        .filter(
+          (v) =>
+            v.position.type === "road" &&
+            v.position.roadId === position.roadId &&
+            Math.abs(v.position.position - position.position) *
+              road.travelTimeMinutes <=
+              ROAD_ITEM_REACH_MINUTES
+        )
+        .map((v) => ({ id: v.id, name: v.name, description: v.description })),
+    ],
     adjacentIds: [
       road.endpointA,
       road.endpointB,

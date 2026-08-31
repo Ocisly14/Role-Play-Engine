@@ -15,6 +15,7 @@ import type {
   AlongConnection,
   RoadConnection,
   RoadNode,
+  VehicleState,
 } from "./topologyTypes.js";
 import type {
   DynamicScene,
@@ -75,6 +76,7 @@ export interface PlaceFileV2 {
   /** Absent on a TOP-LEVEL scene — a geography node (street, crossroads,
    *  yard) that the road network runs between. */
   parentLocationId?: string;
+  driveTimeMinutes?: number;
   indoor?: boolean;
   /** Required for ROAD_* files (enforced by buildRoadV2). */
   travelTimeMinutes?: number;
@@ -407,6 +409,12 @@ export function parsePlaceFileV2(entryId: string, data: unknown): PlaceFileV2 {
     entryId,
     problems
   );
+  const driveTimeMinutes = checkOptionalNumber(
+    data,
+    "driveTimeMinutes",
+    entryId,
+    problems
+  );
 
   let items: Item[] = [];
   let connections: PlaceFileV2Connection[] = [];
@@ -458,6 +466,9 @@ export function parsePlaceFileV2(entryId: string, data: unknown): PlaceFileV2 {
   if (indoor !== undefined) parsed.indoor = indoor;
   if (travelTimeMinutes !== undefined) {
     parsed.travelTimeMinutes = travelTimeMinutes;
+  }
+  if (driveTimeMinutes !== undefined) {
+    parsed.driveTimeMinutes = driveTimeMinutes;
   }
   return parsed;
 }
@@ -574,6 +585,13 @@ export function buildRoadV2(file: PlaceFileV2): RoadNode {
       );
     }
   }
+  if (file.driveTimeMinutes !== undefined && !(file.driveTimeMinutes > 0)) {
+    problems.push(
+      `driveTimeMinutes: must be a positive number, got ${JSON.stringify(
+        file.driveTimeMinutes
+      )}`
+    );
+  }
   const travelTimeMinutes = file.travelTimeMinutes;
   if (travelTimeMinutes === undefined || !(travelTimeMinutes > 0)) {
     problems.push(
@@ -601,7 +619,87 @@ export function buildRoadV2(file: PlaceFileV2): RoadNode {
   if (file.parentLocationId !== undefined) {
     road.parentLocationId = file.parentLocationId;
   }
+  if (file.driveTimeMinutes !== undefined) {
+    road.driveTimeMinutes = file.driveTimeMinutes;
+  }
   return road;
+}
+
+// ─── Vehicles ──────────────────────────────────────────────────────
+
+/**
+ * Parse + validate one `VEH_*` entry: a movable perception boundary.
+ * Requires id/name/description, an `interiorSceneId` naming a loaded
+ * NON-top-level scene (the cab — its "parent" is the vehicle, so it never
+ * enters the static topology), and an `initialLocation` naming a loaded
+ * place the vehicle starts at.
+ */
+export function parseVehicleFileV2(
+  entryId: string,
+  data: unknown,
+  module: { scenes: Map<string, DynamicScene>; placeIds: Set<string> }
+): VehicleState {
+  const problems: string[] = [];
+  if (!isRecord(data)) {
+    throw new ModuleSchemaError(entryId, [
+      "entry data: expected a JSON object",
+    ]);
+  }
+  const id = checkRequiredString(data, "id", entryId, problems);
+  const name = checkRequiredString(data, "name", entryId, problems);
+  const description = checkRequiredString(
+    data,
+    "description",
+    entryId,
+    problems
+  );
+  const interiorSceneId = checkRequiredString(
+    data,
+    "interiorSceneId",
+    entryId,
+    problems
+  );
+  const initialLocation = checkRequiredString(
+    data,
+    "initialLocation",
+    entryId,
+    problems
+  );
+  if (id !== undefined && id !== entryId) {
+    problems.push(`id "${id}" must match the entry id "${entryId}"`);
+  }
+  if (interiorSceneId !== undefined) {
+    const interior = module.scenes.get(interiorSceneId);
+    if (!interior) {
+      problems.push(
+        `interiorSceneId "${interiorSceneId}" is not a loaded scene`
+      );
+    } else if (!interior.parentLocationId) {
+      problems.push(
+        `interiorSceneId "${interiorSceneId}" must not be a top-level scene (give it parentLocationId = the vehicle id)`
+      );
+    }
+  }
+  if (initialLocation !== undefined && !module.placeIds.has(initialLocation)) {
+    problems.push(`initialLocation "${initialLocation}" is not a loaded place`);
+  }
+  if (
+    problems.length > 0 ||
+    id === undefined ||
+    name === undefined ||
+    description === undefined ||
+    interiorSceneId === undefined ||
+    initialLocation === undefined
+  ) {
+    throw new ModuleSchemaError(entryId, problems);
+  }
+  return {
+    id,
+    name,
+    description,
+    interiorSceneId,
+    position: { type: "scene", sceneId: initialLocation },
+  };
 }
 
 // ─── Module-wide reference validation ──────────────────────────────

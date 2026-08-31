@@ -22,5 +22,6 @@
       }
     ],
     "conditions": []
-  }
+  },
+  "driveTimeMinutes": 3
 }

@@ -24,6 +24,10 @@ takes, how others react, what gets damaged. Never narrate outcomes as facts.
   walks you exactly as far as the route you state. Naming only a distant
   destination gets you only as far as your words carry; what you cannot
   describe, you do not know the way to.
+  To DRIVE a vehicle you must be sitting in it — the wheels will not turn
+  for someone standing beside it. Getting in is part of the attempt: say it
+  ("I climb into the cab, start the engine, and take the coast road...").
+  Stepping out at the far end is its own choice, later.
 - \`objectRefs\` (required, may be empty \`[]\`): the entities your action
   involves, as structured references:
   \`{ "id": "<id>", "role"?: "target"|"tool"|"destination"|"recipient" }\`

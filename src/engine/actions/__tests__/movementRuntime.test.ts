@@ -28,6 +28,14 @@ const scenes = new Map<string, DynamicScene>([
       connections: [{ id: "exit.home.ja", targetId: "J_A" }],
     } as unknown as DynamicScene,
   ],
+  [
+    "S_CAB",
+    {
+      id: "S_CAB",
+      parentLocationId: "VEH_TRUCK",
+      connections: [],
+    } as unknown as DynamicScene,
+  ],
 ]);
 const roads = new Map<string, RoadNode>([
   [
@@ -37,6 +45,7 @@ const roads = new Map<string, RoadNode>([
       endpointA: "J_A",
       endpointB: "J_B",
       travelTimeMinutes: 4,
+      driveTimeMinutes: 2,
       alongConnections: [],
       connections: [],
     } as unknown as RoadNode,
@@ -60,7 +69,18 @@ function makeDgsm() {
     ["npc_1", { type: "scene", sceneId: "J_A" }],
   ]);
   const blocked = new Map<string, string>();
+  const truck = {
+    id: "VEH_TRUCK",
+    name: "truck",
+    description: "a flatbed truck",
+    interiorSceneId: "S_CAB",
+    position: { type: "scene", sceneId: "J_A" } as unknown,
+  };
   return {
+    getVehicles: () => [truck],
+    getVehicle: (id: string) => (id === "VEH_TRUCK" ? truck : null),
+    getVehicleByInterior: (id: string) => (id === "S_CAB" ? truck : null),
+    __truck: truck,
     getState: () => ({ scenes }),
     getScene: (id: string) => scenes.get(id) ?? null,
     getTopology: () => topology,
@@ -75,6 +95,7 @@ function makeDgsm() {
   } as unknown as DynamicGameStateManager & {
     __positions: Map<string, unknown>;
     __blocked: Map<string, string>;
+    __truck: { position: unknown };
   };
 }
 
@@ -85,6 +106,61 @@ describe("route-of-waypoints movement", () => {
     expect(result.ok).toBe(false);
     if (result.ok) return;
     expect(result.reason).toContain("not a single stretch");
+  });
+
+  it("driving moves the vehicle at road drive speed and leaves the driver put", () => {
+    const dgsm = makeDgsm();
+    // Driver sits in the cab; the truck stands at J_A.
+    dgsm.__positions.set("npc_1", { type: "scene", sceneId: "S_CAB" });
+    const result = initMovementRuntime(dgsm, "npc_1", ["J_B"], "VEH_TRUCK");
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    // 4′ walk becomes 2′ drive.
+    expect(result.totalMinutes).toBe(2);
+
+    let status = "moving";
+    let guard = 0;
+    while (status === "moving" && guard < 10) {
+      const advanced = advanceMovement(dgsm, "npc_1", result.state);
+      status = advanced.status;
+      for (const change of advanced.stateChanges) {
+        expect(change.kind).toBe("vehicle.position");
+        if (change.kind === "vehicle.position") {
+          dgsm.__truck.position = change.position;
+        }
+      }
+      guard += 1;
+    }
+    expect(status).toBe("arrived");
+    expect(dgsm.__truck.position).toEqual({ type: "scene", sceneId: "J_B" });
+    // The driver never moved: the cab is their position.
+    expect(dgsm.__positions.get("npc_1")).toEqual({
+      type: "scene",
+      sceneId: "S_CAB",
+    });
+  });
+
+  it("refuses to drive a road with no drive time", () => {
+    const dgsm = makeDgsm();
+    dgsm.__positions.set("npc_1", { type: "scene", sceneId: "S_CAB" });
+    dgsm.__truck.position = { type: "scene", sceneId: "J_B" };
+    const result = initMovementRuntime(dgsm, "npc_1", ["J_C"], "VEH_TRUCK");
+    expect(result.ok).toBe(false);
+    if (result.ok) return;
+    expect(result.reason).toContain("takes no vehicles");
+  });
+
+  it("refuses the wheel at first advance when the driver is not inside", () => {
+    const dgsm = makeDgsm();
+    // Init succeeds — the same-tick board-and-drive resolution has not
+    // flushed yet, so the runtime cannot demand the driver be seated here.
+    const result = initMovementRuntime(dgsm, "npc_1", ["J_B"], "VEH_TRUCK");
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    // But the wheels refuse to turn while npc_1 stands at J_A.
+    const advanced = advanceMovement(dgsm, "npc_1", result.state);
+    expect(advanced.status).toBe("blocked");
+    expect(advanced.blockedReason).toContain("not inside");
   });
 
   it("walks stated adjacent hops leg by leg to the destination", () => {

@@ -331,6 +331,12 @@ export function buildEngineResolutionContext(
       itemHolders,
       placeKinds,
       connectionIds,
+      vehicles: (dgsm.getVehicles?.() ?? []).map((v) => ({
+        id: v.id,
+        name: v.name,
+        interiorSceneId: v.interiorSceneId,
+        position: v.position,
+      })),
       characters,
     },
     actions: {

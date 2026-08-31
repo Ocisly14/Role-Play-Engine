@@ -1,0 +1,7 @@
+{
+  "id": "VEH_frank_truck",
+  "name": "Frank 的货车",
+  "description": "一辆上了年纪的雪佛兰平板货车,车斗围板刷过太多遍绿漆,车门上没有任何公司标识。轮胎的花纹是山路磨出来的,挡泥板上永远沾着车行道的碎石灰。全镇人都认得它——每天清早上山、晌午下山,准得像邮件车。",
+  "interiorSceneId": "SCN_truck_cab",
+  "initialLocation": "SCN_holt_gate"
+}

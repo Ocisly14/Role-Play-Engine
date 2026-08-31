@@ -46,10 +46,27 @@ export interface RoadNode {
   endpointB: string;
   /** Minutes to walk the full length */
   travelTimeMinutes: number;
+  /** Minutes to DRIVE the full length. Present = the road takes vehicles;
+   *  absent = it does not (trails, alleys, cliff paths). */
+  driveTimeMinutes?: number;
   /** Buildings accessible along this road (derived from `access` connections) */
   alongConnections: AlongConnection[];
   items: Item[];
   conditions: SceneCondition[];
+}
+
+/**
+ * A vehicle: a movable perception boundary. Outside it is an item-like
+ * presence at `position`; inside it is `interiorSceneId`, a normal scene
+ * whose occupants ride along for free — moving the vehicle moves nobody's
+ * position, because "in the cab" IS their position.
+ */
+export interface VehicleState {
+  id: string;
+  name: string;
+  description: string;
+  interiorSceneId: string;
+  position: CharacterPosition;
 }
 
 /**

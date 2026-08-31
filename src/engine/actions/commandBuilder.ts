@@ -136,7 +136,8 @@ export function buildActionCommand(
  *  someone's hands. Not "here" — that is the Engine's question, and it can
  *  answer it as something the actor finds out. */
 function itemExists(itemId: string, dgsm: DynamicGameStateManager): boolean {
-  return dgsm.hasItem(itemId);
+  // A vehicle's exterior is item-like: pointable wherever it stands.
+  return dgsm.hasItem(itemId) || dgsm.getVehicle?.(itemId) != null;
 }
 
 /** A handle back to a real character: their own id if the actor knows them,

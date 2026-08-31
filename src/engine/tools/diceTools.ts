@@ -102,7 +102,8 @@ export type DamageRollOutput =
     }
   | { ok: false; reason: "invalid_formula" };
 
-const FORMULA_RE = /^\s*(?:(\d+)[dD](\d+)\s*(?:([+-])\s*(\d+))?|([+-]?\d+))\s*$/;
+const FORMULA_RE =
+  /^\s*(?:(\d+)[dD](\d+)\s*(?:([+-])\s*(\d+))?|([+-]?\d+))\s*$/;
 const BONUS_RE = /^([+-]?)(?:(\d+)[dD](\d+)|(\d+))$/;
 
 export const damageRollTool: EngineCodeTool<DamageRollInput, DamageRollOutput> =

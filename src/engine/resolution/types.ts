@@ -209,6 +209,13 @@ export interface EngineResolutionContext {
     /** FULL-world place-id → kind map. Validation reads this (never the
      *  skeleton graph, which carries no interior scenes). Not rendered. */
     placeKinds: Record<string, PlaceKind>;
+    /** Vehicles: id, name, interior scene and current stand. */
+    vehicles?: Array<{
+      id: string;
+      name: string;
+      interiorSceneId: string;
+      position: unknown;
+    }>;
     /** Every authored connection id in the world. Validation lookup for
      *  connectionBlock/connectionHidden targets. Not rendered. */
     connectionIds: string[];
@@ -280,7 +287,7 @@ export type WorldActionEngineResult =
       ok: true;
       resolution: TickResolution;
       /** Movement-leg runtime annotations per actionId. */
-      movementInits: Record<string, { route: string[] }>;
+      movementInits: Record<string, { route: string[]; vehicleId?: string }>;
       /** The bar the Engine set for an action as it starts, per actionId. */
       checkInits: Record<
         string,

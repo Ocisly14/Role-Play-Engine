@@ -225,6 +225,14 @@ export type StateChange =
       sourceSubsystem: string;
     }
   | {
+      /** Move a VEHICLE. Occupants ride along for free — their position is
+       *  the vehicle's interior scene and never changes while riding. */
+      kind: "vehicle.position";
+      vehicleId: string;
+      position: CharacterPosition;
+      sourceSubsystem: string;
+    }
+  | {
       /**
        * Where a character now is WITHIN their location, as prose. Narrative
        * only — nothing reads it but prompts. Empty string clears it, and

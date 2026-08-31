@@ -195,7 +195,9 @@ export type Effect =
   | {
       kind: "item.move";
       itemId: string;
-      /** Holder strings, e.g. "scene:SCN_x" or "npc:<id>". */
+      /** Holder strings — "scene:<placeId>" for a place, a BARE character
+       *  id for a person (no "npc:" prefix; that would silently create a
+       *  phantom inventory). */
       from: string;
       to: string;
     }

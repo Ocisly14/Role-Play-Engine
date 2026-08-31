@@ -31,7 +31,7 @@ export type PathfindingOutput =
     }
   | {
       reachable: false;
-      reason: "missing_destination" | "no_current_position" | "no_path";
+      reason: string;
     };
 
 export const pathfindingTool: EngineCodeTool<

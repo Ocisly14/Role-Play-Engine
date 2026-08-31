@@ -132,7 +132,10 @@ describe("inventoryValidationTool", () => {
   });
 
   it("flags duplicate ownership as a violation", async () => {
-    const out = await inventoryValidationTool.execute({ itemId: "dup" }, ctx(dgsm));
+    const out = await inventoryValidationTool.execute(
+      { itemId: "dup" },
+      ctx(dgsm)
+    );
     expect(out.exists).toBe(true);
     expect(out.uniqueOwnership).toBe(false);
     expect(out.locations).toHaveLength(2);

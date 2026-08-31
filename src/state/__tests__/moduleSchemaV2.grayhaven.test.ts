@@ -1,12 +1,16 @@
 import fs from "node:fs";
 import path from "node:path";
 import {
+  loadScriptedEvents,
+  validateScriptedEventReferences,
+} from "@/engine/scriptedEvents/loader.js";
+import {
   buildRoadV2,
   buildSceneV2,
   parsePlaceFileV2,
   validateModuleReferences,
 } from "@/state/moduleSchemaV2.js";
-import { loadScriptedEvents } from "@/engine/scriptedEvents/loader.js";
+import { parseVehicleFileV2 } from "@/state/moduleSchemaV2.js";
 import { buildTopology } from "@/state/topologyTypes.js";
 import type { RoadNode } from "@/state/topologyTypes.js";
 import type { DynamicScene } from "@/state/types.js";
@@ -20,19 +24,31 @@ const SCENARIOS_DIR = path.join(MODULE_DIR, "Grayhaven_Scenarios");
 function loadModuleFromDisk() {
   const scenes = new Map<string, DynamicScene>();
   const roads = new Map<string, RoadNode>();
+  const rawVehicles: Array<{ entryId: string; data: unknown }> = [];
   for (const file of fs.readdirSync(SCENARIOS_DIR).sort()) {
     if (!file.endsWith(".json")) continue;
     const data = JSON.parse(
       fs.readFileSync(path.join(SCENARIOS_DIR, file), "utf8")
     );
-    const parsed = parsePlaceFileV2(path.basename(file, ".json"), data);
+    const entryId = path.basename(file, ".json");
+    if (entryId.startsWith("VEH_")) {
+      rawVehicles.push({ entryId, data });
+      continue;
+    }
+    const parsed = parsePlaceFileV2(entryId, data);
     if (parsed.id.startsWith("ROAD_")) {
       roads.set(parsed.id, buildRoadV2(parsed));
     } else {
       scenes.set(parsed.id, buildSceneV2(parsed));
     }
   }
-  return { scenes, roads };
+  const vehicles = rawVehicles.map(({ entryId, data }) =>
+    parseVehicleFileV2(entryId, data, {
+      scenes,
+      placeIds: new Set([...scenes.keys(), ...roads.keys()]),
+    })
+  );
+  return { scenes, roads, vehicles };
 }
 
 describe("grayhaven module data", () => {
@@ -40,9 +56,9 @@ describe("grayhaven module data", () => {
   const topology = buildTopology(module.scenes, module.roads);
 
   it("has the designed place counts", () => {
-    // 34 interior scenes (incl. the three closed truth-space rooms behind
-    // the station's inner door) + 16 top-level node scenes.
-    expect(module.scenes.size).toBe(50);
+    // 35 interior scenes (incl. the three closed truth-space rooms and the
+    // truck cab, whose "parent" is the vehicle) + 16 top-level node scenes.
+    expect(module.scenes.size).toBe(51);
     expect(topology.nodeSceneIds.size).toBe(16);
     expect(module.roads.size).toBe(19);
   });
@@ -115,27 +131,56 @@ describe("grayhaven module data", () => {
       }));
     const events = loadScriptedEvents(files);
     expect(events.length).toBeGreaterThanOrEqual(3);
-    // Every place a restock writes into, and every witness-guard scene,
-    // must exist in the module.
-    for (const event of events) {
-      for (const effect of event.onComplete) {
-        if (effect.kind === "item.create") {
-          expect(module.scenes.has(effect.location)).toBe(true);
-        }
-      }
-      const stack = [event.fireWhen, ...(event.failWhen ? [event.failWhen] : [])];
-      while (stack.length > 0) {
-        const pred = stack.pop();
-        if (!pred) continue;
-        if (pred.op === "sceneOccupied") {
-          expect(module.scenes.has(pred.sceneId)).toBe(true);
-        } else if (pred.op === "and" || pred.op === "or") {
-          stack.push(...pred.children);
-        } else if (pred.op === "not") {
-          stack.push(pred.child);
-        }
-      }
-    }
+    // The production cross-check: every place, connection and holder an
+    // event references must exist — a typo fails the load, not the flood.
+    const npcIds = new Set(
+      fs
+        .readdirSync(path.join(MODULE_DIR, "grayhaven_npc"))
+        .filter((f) => f.endsWith(".json"))
+        .map(
+          (f) =>
+            (
+              JSON.parse(
+                fs.readFileSync(
+                  path.join(MODULE_DIR, "grayhaven_npc", f),
+                  "utf8"
+                )
+              ) as { id: string }
+            ).id
+        )
+    );
+    expect(() =>
+      validateScriptedEventReferences(events, {
+        placeIds: new Set([...module.scenes.keys(), ...module.roads.keys()]),
+        npcIds,
+        connectionIds: new Set([
+          ...[...module.scenes.values()].flatMap((s) =>
+            (s.connections ?? []).map((c) => c.id)
+          ),
+          ...[...module.roads.values()].flatMap((r) =>
+            (r.connections ?? []).map((c) => c.id)
+          ),
+        ]),
+      })
+    ).not.toThrow();
+  });
+
+  it("Frank's truck parses: cab off-topology, parked at the Holt gate", () => {
+    expect(module.vehicles).toHaveLength(1);
+    const truck = module.vehicles[0];
+    expect(truck.id).toBe("VEH_frank_truck");
+    expect(truck.interiorSceneId).toBe("SCN_truck_cab");
+    expect(truck.position).toEqual({ type: "scene", sceneId: "SCN_holt_gate" });
+    // The cab is interior (parent = the vehicle) and NOT statically attached:
+    // its place in the world is wherever the truck stands.
+    const cab = module.scenes.get("SCN_truck_cab");
+    expect(cab?.parentLocationId).toBe("VEH_frank_truck");
+    expect(topology.sceneToParent.has("SCN_truck_cab")).toBe(false);
+    // Drivable roads carry drive times; trails do not.
+    expect(module.roads.get("ROAD_station_drive")?.driveTimeMinutes).toBe(30);
+    expect(
+      module.roads.get("ROAD_trail_creek")?.driveTimeMinutes
+    ).toBeUndefined();
   });
 
   it("the truth space exists but stays sealed behind a hidden connection", () => {
@@ -147,7 +192,11 @@ describe("grayhaven module data", () => {
     // The door is a VISIBLE item (Frank can point at it); the passage is
     // hidden — filtered from perception, uncitable, unciteable in prose.
     expect(inner?.hidden).toBe(true);
-    expect(dock?.items.some((i) => i.id === "item.station_dock.inner_door" && !i.hidden)).toBe(true);
+    expect(
+      dock?.items.some(
+        (i) => i.id === "item.station_dock.inner_door" && !i.hidden
+      )
+    ).toBe(true);
     // The three base rooms are real scenes, closed at start.
     for (const id of [
       "SCN_station_hall",
@@ -157,5 +206,4 @@ describe("grayhaven module data", () => {
       expect(module.scenes.get(id)).toBeTruthy();
     }
   });
-
 });

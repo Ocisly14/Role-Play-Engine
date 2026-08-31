@@ -99,9 +99,12 @@ ${RULES_DOC}
 ## Session protocol
 
 - You may call the deterministic tools (pathfinding, movementCost,
-  inventoryValidation, damageRoll) to ground your resolution. Movement
-  feasibility/duration MUST come from pathfinding/movementCost, not
-  estimation. You never roll a skill check yourself — you name the bar and
+  inventoryValidation, damageRoll) to ground your resolution. For travel you
+  decide only WHERE and HOW — \`movement.route\` (and \`vehicleId\` when
+  driving); code derives how long it takes from the route and sets the
+  action's clock itself, overriding any duration you write. Do not burn
+  turns computing travel time; the tools are advisory (reachability), and an
+  impossible route fails back to you with the reason. You never roll a skill check yourself — you name the bar and
   the opposition when the action starts, and code rolls both sides when its
   time is spent.
 - Finish with exactly one \`submit_resolution\` call containing the complete
@@ -270,6 +273,10 @@ export function renderContextSegments(context: EngineResolutionContext): {
     section(
       "Detailed Places (the places involved this tick; hidden items/exits are invisible to characters until revealed)",
       context.state.places
+    ),
+    section(
+      "Vehicles (movable interiors: boarding = a `position` change into interiorSceneId; driving = movement.vehicleId with the route; the vehicle stands at `position` until driven)",
+      context.state.vehicles ?? []
     ),
     section(
       "Items (at the involved places and in the actors' hands)",

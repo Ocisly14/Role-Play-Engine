@@ -298,9 +298,11 @@ async function buildBaseWorld(): Promise<BaseWorld> {
     homeScene,
     sceneName,
     sceneParent,
-    outlines: (state.scenarioOutlines ?? [])
-      .filter((o) => o.entrySceneId)
-      .map((o) => ({ id: o.id, name: o.name })),
+    // Macro-location outlines are gone; {{dest*}} substitution now draws
+    // from the top-level geography nodes (streets, yards, crossroads).
+    outlines: [...state.scenes.values()]
+      .filter((s) => !s.parentLocationId)
+      .map((s) => ({ id: s.id, name: s.name ?? s.id })),
     presentNpcs,
   };
 }

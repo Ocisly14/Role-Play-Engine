@@ -1146,3 +1146,204 @@ export type {
   ScriptedEventStatus,
   Tracker,
 };
+
+// ─── Reference integrity (cross-checked against the loaded world) ──────────
+
+export interface ScriptedEventWorldRefs {
+  /** Scene AND road ids. */
+  placeIds: ReadonlySet<string>;
+  npcIds: ReadonlySet<string>;
+  /** Authored connection ids (scenes and roads alike). */
+  connectionIds: ReadonlySet<string>;
+}
+
+/**
+ * Cross-check every world reference in the loaded events. Scene data gets
+ * this treatment at load (`validateModuleReferences`); without the same for
+ * events, a typo'd scene id passed structural validation and then failed
+ * SILENTLY at runtime — a flood that never closes the ford, a restock that
+ * never lands, visible only in server logs. Throws the same aggregated
+ * ScriptedEventLoadError the structural pass uses.
+ */
+export function validateScriptedEventReferences(
+  events: ScriptedEvent[],
+  world: ScriptedEventWorldRefs
+): void {
+  const errors: LoaderError[] = [];
+  const err = (eventId: string, path: string, message: string): void => {
+    errors.push({ file: `event:${eventId}`, path, message });
+  };
+  const place = (eventId: string, path: string, id: string): void => {
+    if (!world.placeIds.has(id)) {
+      err(eventId, path, `"${id}" is not a loaded scene/road`);
+    }
+  };
+  const npc = (eventId: string, path: string, id: string): void => {
+    if (!world.npcIds.has(id)) {
+      err(eventId, path, `"${id}" is not an authored NPC`);
+    }
+  };
+  const connection = (eventId: string, path: string, id: string): void => {
+    if (!world.connectionIds.has(id)) {
+      err(eventId, path, `"${id}" is not an authored connection id`);
+    }
+  };
+  const holder = (eventId: string, path: string, value: string): void => {
+    if (value.startsWith("scene:")) {
+      place(eventId, path, value.slice("scene:".length));
+    } else if (value.includes(":")) {
+      err(
+        eventId,
+        path,
+        `"${value}": unknown holder prefix — places are "scene:<placeId>", characters are bare ids`
+      );
+    } else if (world.placeIds.has(value)) {
+      err(
+        eventId,
+        path,
+        `"${value}" names a place — did you mean "scene:${value}"?`
+      );
+    } else {
+      npc(eventId, path, value);
+    }
+  };
+
+  const walkPredicate = (
+    eventId: string,
+    path: string,
+    pred: Predicate
+  ): void => {
+    switch (pred.op) {
+      case "characterAt":
+        npc(eventId, `${path}.characterId`, pred.characterId);
+        place(eventId, `${path}.sceneId`, pred.sceneId);
+        return;
+      case "characterAlive":
+      case "characterHasItem":
+        npc(eventId, `${path}.characterId`, pred.characterId);
+        return;
+      case "sceneHasConditionFromFeature":
+      case "sceneOccupied":
+        place(eventId, `${path}.sceneId`, pred.sceneId);
+        return;
+      case "and":
+      case "or":
+        pred.children.forEach((child, i) =>
+          walkPredicate(eventId, `${path}.children[${i}]`, child)
+        );
+        return;
+      case "not":
+        walkPredicate(eventId, `${path}.child`, pred.child);
+        return;
+      default:
+        return;
+    }
+  };
+
+  const walkCharacterPredicate = (
+    eventId: string,
+    path: string,
+    pred: CharacterPredicate
+  ): void => {
+    switch (pred.op) {
+      case "atScene":
+        place(eventId, `${path}.sceneId`, pred.sceneId);
+        return;
+      case "is":
+        npc(eventId, `${path}.characterId`, pred.characterId);
+        return;
+      case "and":
+      case "or":
+        pred.children.forEach((child, i) =>
+          walkCharacterPredicate(eventId, `${path}.children[${i}]`, child)
+        );
+        return;
+      case "not":
+        walkCharacterPredicate(eventId, `${path}.child`, pred.child);
+        return;
+      default:
+        return;
+    }
+  };
+
+  const walkScenePredicate = (
+    eventId: string,
+    path: string,
+    pred: ScenePredicate
+  ): void => {
+    switch (pred.op) {
+      case "is":
+        place(eventId, `${path}.sceneId`, pred.sceneId);
+        return;
+      case "and":
+      case "or":
+        pred.children.forEach((child, i) =>
+          walkScenePredicate(eventId, `${path}.children[${i}]`, child)
+        );
+        return;
+      case "not":
+        walkScenePredicate(eventId, `${path}.child`, pred.child);
+        return;
+      default:
+        return;
+    }
+  };
+
+  const walkEffect = (eventId: string, path: string, effect: Effect): void => {
+    switch (effect.kind) {
+      case "character.san":
+      case "character.hp":
+      case "character.fatigue":
+      case "character.addCondition":
+      case "character.removeCondition":
+        walkCharacterPredicate(
+          eventId,
+          `${path}.targetFilter`,
+          effect.targetFilter
+        );
+        return;
+      case "scene.addCondition":
+      case "scene.removeCondition":
+        walkScenePredicate(eventId, `${path}.sceneFilter`, effect.sceneFilter);
+        return;
+      case "connection.setBlock":
+      case "connection.setHidden":
+        connection(eventId, `${path}.connectionId`, effect.connectionId);
+        return;
+      case "item.create":
+        place(eventId, `${path}.location`, effect.location);
+        return;
+      case "item.move":
+        // Item ids are NOT checked — a restock's item may not exist yet.
+        holder(eventId, `${path}.from`, effect.from);
+        holder(eventId, `${path}.to`, effect.to);
+        return;
+      default:
+        return;
+    }
+  };
+
+  for (const event of events) {
+    for (const tracker of event.trackers ?? []) {
+      const match = tracker.match;
+      if (match.byNpcId !== undefined) {
+        npc(event.id, `trackers.${tracker.id}.byNpcId`, match.byNpcId);
+      }
+      if (match.atSceneId !== undefined) {
+        place(event.id, `trackers.${tracker.id}.atSceneId`, match.atSceneId);
+      }
+    }
+    walkPredicate(event.id, "fireWhen", event.fireWhen);
+    if (event.failWhen) walkPredicate(event.id, "failWhen", event.failWhen);
+    event.onComplete.forEach((effect, i) =>
+      walkEffect(event.id, `onComplete[${i}]`, effect)
+    );
+    (event.onFail ?? []).forEach((effect, i) =>
+      walkEffect(event.id, `onFail[${i}]`, effect)
+    );
+  }
+
+  if (errors.length > 0) {
+    throw new ScriptedEventLoadError(errors);
+  }
+}

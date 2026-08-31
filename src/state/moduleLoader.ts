@@ -9,6 +9,7 @@ import type { PrismaClient } from "@prisma/client";
 import {
   type ScriptedEventFile,
   loadScriptedEvents,
+  validateScriptedEventReferences,
 } from "../engine/scriptedEvents/loader.js";
 import type { ScriptedEvent } from "../engine/scriptedEvents/types.js";
 import { NpcMemoryManager } from "../memory/NpcMemoryManager.js";
@@ -22,6 +23,7 @@ import {
   buildRoadV2,
   buildSceneV2,
   parsePlaceFileV2,
+  parseVehicleFileV2,
   validateModuleReferences,
   validateTransportEdges,
 } from "./moduleSchemaV2.js";
@@ -30,6 +32,7 @@ import type {
   CharacterPosition,
   RoadNode,
   TownTopology,
+  VehicleState,
 } from "./topologyTypes.js";
 import type {
   CharacterStatus,
@@ -62,6 +65,7 @@ export interface ModuleData {
   npcs: DynamicNPCProfile[];
   scenes: Map<string, DynamicScene>;
   roads: Map<string, RoadNode>;
+  vehicles: VehicleState[];
   transportEdges: TransportEdge[];
   npcInjectionPolicy: NpcInjectionPolicy | null;
   /** Loaded+validated scripted events (may be empty if module has no scripted-events/ dir). */
@@ -102,6 +106,7 @@ export async function loadModule(
   const scenes = new Map<string, DynamicScene>();
   const roads = new Map<string, RoadNode>();
   let rawTransportEdges: unknown;
+  const rawVehicles: Array<{ entryId: string; data: unknown }> = [];
   let npcInjectionPolicy: NpcInjectionPolicy | null = null;
 
   for (const row of sceneRows) {
@@ -116,6 +121,8 @@ export async function loadModule(
       npcInjectionPolicy = data as NpcInjectionPolicy;
     } else if (row.entryId.startsWith("ROAD_")) {
       roads.set(row.entryId, buildRoadV2(parsePlaceFileV2(row.entryId, data)));
+    } else if (row.entryId.startsWith("VEH_")) {
+      rawVehicles.push({ entryId: row.entryId, data });
     } else {
       scenes.set(
         row.entryId,
@@ -129,6 +136,9 @@ export async function loadModule(
   validateModuleReferences({ scenes, roads });
 
   const placeIds = new Set<string>([...scenes.keys(), ...roads.keys()]);
+  const vehicles = rawVehicles.map(({ entryId, data }) =>
+    parseVehicleFileV2(entryId, data, { scenes, placeIds })
+  );
   const transportEdges: TransportEdge[] =
     rawTransportEdges === undefined
       ? []
@@ -147,6 +157,20 @@ export async function loadModule(
   // Missing directory → empty array (module is valid with no scripted events).
   // Files are sorted alphabetically for deterministic merge order across runs.
   const scriptedEvents = loadScriptedEventsFromDisk(modsDir, mod.moduleName);
+  // Same treatment scene data gets: a typo'd id in an event fails the LOAD,
+  // loudly, instead of failing the flood silently at runtime.
+  validateScriptedEventReferences(scriptedEvents, {
+    placeIds,
+    npcIds: new Set(npcs.map((n) => n.id)),
+    connectionIds: new Set([
+      ...[...scenes.values()].flatMap((s) =>
+        (s.connections ?? []).map((c) => c.id)
+      ),
+      ...[...roads.values()].flatMap((r) =>
+        (r.connections ?? []).map((c) => c.id)
+      ),
+    ]),
+  });
 
   return {
     moduleId: mod.moduleId,
@@ -155,6 +179,7 @@ export async function loadModule(
     npcs,
     scenes,
     roads,
+    vehicles,
     transportEdges,
     npcInjectionPolicy,
     scriptedEvents,
@@ -511,6 +536,7 @@ export function initRuntime(params: {
     sessionId,
     scenes: moduleData.scenes,
     roads: moduleData.roads,
+    vehicles: moduleData.vehicles ?? [],
     gameDateTime,
     npcCharacters: simulatedNpcs,
     moduleName: moduleData.moduleName,
