@@ -14,11 +14,22 @@
 //   gh-drive-truck    载具日常：上车（position→驾驶室）→ 说出路线 → Engine 标注
 //                     movement.vehicleId → 车按 driveTimeMinutes 走、人不动
 //
+// 技能层（grayhavenSkill*.ts，每域一景三人设：老手/无训练硬上/情境召唤）：
+//   荒野 Survival & Navigation / Watercraft Operation / Occult
+//   专业 Medicine & Psychology / Knowledge & Craft / Science & Nature
+//   暗面 Stealth & Security / Languages / Ranged Combat
+// 刻意缺席（cassandra 同款原则——没有舞台就不造舞台）：
+//   Melee Combat（日常小镇无自然打斗）、Swimming（冷雾海无正当下水理由）、
+//   Aircraft Operation（无飞行器）。凑数造景正是这张表要抓的 bug。
+//
 // Same rules as the casssandra table: NO GRADING — each run yields an
 // objective record for a human to read. Goals become `long_term_intent`
 // memories, the production path.
 
 import type { SimScenario } from "./types.js";
+import { GRAYHAVEN_SKILL_PRO } from "./grayhavenSkillPro.js";
+import { GRAYHAVEN_SKILL_SHADOW } from "./grayhavenSkillShadow.js";
+import { GRAYHAVEN_SKILL_WILD } from "./grayhavenSkillWild.js";
 
 /** The 14 Grayhaven residents, for --list and --full generation. */
 export const GRAYHAVEN_ROSTER: Array<{ id: string; note: string }> = [
@@ -42,21 +53,21 @@ export const GRAYHAVEN_SCENARIOS: SimScenario[] = [
   {
     id: "gh-street-node",
     group: "multi",
-    title: "街面节点：两个孩子在主街北段相遇后去街机厅",
+    title: "街面节点：两个孩子在主街北口相遇后去街机厅",
     targetDefs: ["Athletics"],
     cases: [
       {
         label: "Tommy+Denny｜顶层场景可站立/感知/结伴移动",
         ticks: 6,
-        scene: "主街北段",
+        scene: "主街北口",
         actors: [
           {
             npc: "npc_tommy_reyes",
-            goal: "妈妈准了你半小时假。你和 Denny 约好在主街北段碰头，一起去街机厅打《星港》里那台新街机。",
+            goal: "妈妈准了你半小时假。你和 Denny 约好在主街北口碰头，一起去街机厅打《星港》里那台新街机。",
           },
           {
             npc: "npc_denny_holt",
-            goal: "你兜里揣着攒了两周的二十五美分硬币，和 Tommy 约在主街北段碰头，一起去街机厅。",
+            goal: "你兜里揣着攒了两周的二十五美分硬币，和 Tommy 约在主街北口碰头，一起去街机厅。",
           },
         ],
       },
@@ -196,4 +207,7 @@ export const GRAYHAVEN_SCENARIOS: SimScenario[] = [
       },
     ],
   },
+  ...GRAYHAVEN_SKILL_WILD,
+  ...GRAYHAVEN_SKILL_PRO,
+  ...GRAYHAVEN_SKILL_SHADOW,
 ];

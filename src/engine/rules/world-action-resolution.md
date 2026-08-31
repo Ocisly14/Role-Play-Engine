@@ -239,9 +239,14 @@ is what happened — not a longer estimate.
   yours makes a place's description untrue, rewrite it in the same resolution
   with the scene `setDescription` operation — it REPLACES the whole prose, so
   keep every still-true `[reference-id]` citation and drop citations to
-  things no longer visibly there. This is judgement, not a machine rule:
-  small, momentary changes can stay in occurrences; rewrite when the
-  description would keep misleading everyone who enters.
+  things no longer visibly there. For plain prose this is judgement: small,
+  momentary changes can stay in occurrences; rewrite when the description
+  would keep misleading everyone who enters. **For CITED things it is a
+  machine rule**: moving or destroying an item whose `[id]` the holder
+  place's prose cites REQUIRES the rewrite in the same submission — a stale
+  citation is not merely misleading, it breaks every later render of that
+  place, and the validator will hold your submission until the prose and
+  the world agree.
 - Occurrence facts use world-true references (real ids, real names); no
   character-perspective phrasing, no invented entities.
 - Subjective perception and memory are never Engine output.

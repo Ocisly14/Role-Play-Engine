@@ -232,9 +232,13 @@ export const ITEM_OPS: OperationSpec[] = [
   {
     kinds: ["move"],
     fields:
-      'from:<current holder, exactly as the Items section shows it>, to:<"scene:<placeId>" for a place — a vehicle interior scene included — or a bare characterId> (one holder grammar, same as create.location)',
+      'from:<current holder, exactly as the Items section shows it>, to:<"scene:<placeId>" for a place — a vehicle interior scene included — or a bare characterId> (one holder grammar, same as create.location). If the FROM place\'s prose cites this item, the same submission must rewrite that description (scene setDescription) — the prose must not keep pointing at what left',
   },
-  { kinds: ["destroy"], fields: "" },
+  {
+    kinds: ["destroy"],
+    fields:
+      "(no fields). If the holder place's prose cites this item, the same submission must rewrite that description (scene setDescription)",
+  },
   {
     kinds: ["set"],
     fields:

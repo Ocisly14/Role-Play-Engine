@@ -75,6 +75,8 @@ interface Lookup {
   vehicleIds: Set<string>;
   vehicleInteriors: Map<string, string>;
   characterSceneIds: Map<string, string | undefined>;
+  /** Involved (Tier 2) places' prose — for the stale-citation check. */
+  placeDescriptions: Map<string, string>;
   /** FULL-world item→holder map (context.state.itemHolders). */
   itemHolders: Map<string, string>;
   /** All actions addressable this resolution (queued from commands + active).
@@ -184,6 +186,9 @@ export function buildLookup(context: EngineResolutionContext): Lookup {
       return [c.id, position?.sceneId];
     })
   );
+  const placeDescriptions = new Map(
+    context.state.places.map((p) => [p.id, p.description ?? ""])
+  );
   const locationIds = new Set<string>(placeIds);
   for (const c of context.state.characters) {
     if (c.locationId) locationIds.add(c.locationId);
@@ -227,6 +232,7 @@ export function buildLookup(context: EngineResolutionContext): Lookup {
     vehicleIds,
     vehicleInteriors,
     characterSceneIds,
+    placeDescriptions,
     itemHolders,
     actionById,
     requiredActionIds: new Set([...worklist.starting, ...worklist.ending]),
@@ -906,6 +912,34 @@ export function validateRawResolution(
       { kind: "itemChange", index: i },
       validateItemChange(i, d, lookup, movedItemIds, createdItemIds)
     );
+  });
+  // Prose-coherence: an item CITED by its holder place's description cannot
+  // leave (move/destroy) without the same submission rewriting that prose —
+  // a stale citation breaks every later render of the place. Mechanical:
+  // string containment vs the Tier-2 snapshot; places outside the involved
+  // set are skipped (their prose is not at hand to check).
+  (raw.itemChanges ?? []).forEach((d, i) => {
+    if (d === null) return;
+    const op = d.operation as { kind?: string; from?: string };
+    if (op?.kind !== "move" && op?.kind !== "destroy") return;
+    if (!d.itemId) return;
+    const holder =
+      op.kind === "move" ? op.from : lookup.itemHolders.get(d.itemId);
+    if (typeof holder !== "string" || !holder.startsWith("scene:")) return;
+    const placeId = holder.slice("scene:".length);
+    const prose = lookup.placeDescriptions.get(placeId);
+    if (prose === undefined || !prose.includes(`[${d.itemId}]`)) return;
+    const rewritten = (raw.sceneChanges ?? []).some(
+      (sc) =>
+        sc !== null &&
+        (sc as { sceneId?: string }).sceneId === placeId &&
+        (sc.operation as { kind?: string })?.kind === "setDescription"
+    );
+    if (!rewritten) {
+      at({ kind: "itemChange", index: i }, [
+        `"${d.itemId}" is cited in the description of "${placeId}" — ${op.kind === "move" ? "moving" : "destroying"} it leaves that prose pointing at nothing and breaks every later render there. Add a sceneChanges setDescription for "${placeId}" in this submission (keep still-true citations, drop this one).`,
+      ]);
+    }
   });
   (raw.occurrences ?? []).forEach((o, i) => {
     if (o === null) return;

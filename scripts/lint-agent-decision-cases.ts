@@ -164,6 +164,9 @@ const dir = SCENARIO_DIR;
 const names: string[] = [];
 for (const f of readdirSync(dir)) {
   if (!f.endsWith(".json")) continue;
+  // Mirror the harness: its sceneName map is built from state.scenes, so
+  // road and vehicle names never take part in hint matching.
+  if (f.startsWith("ROAD_") || f.startsWith("VEH_")) continue;
   try {
     const j = JSON.parse(readFileSync(`${dir}/${f}`, "utf8"));
     if (j.name) names.push(String(j.name));

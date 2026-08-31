@@ -697,6 +697,70 @@ describe("applyRepair — one shape for every field", () => {
   });
 });
 
+describe("prose coherence — a cited item cannot leave silently", () => {
+  const proseContext = () => {
+    const ctx = makeContext({});
+    // The study's prose cites the lock: moving it out must rewrite the prose.
+    ctx.state.places[0].description =
+      "A study. A cabinet lock gleams on the desk [lock_1].";
+    return ctx;
+  };
+  const moveOut = {
+    sourceActionId: ACTION_ID,
+    causalBasis: "pocketed the lock",
+    itemId: "lock_1",
+    operation: { kind: "move", from: "scene:SCN_1", to: "npc_1" },
+  };
+
+  it("rejects moving a cited item without rewriting the place's prose", () => {
+    const errors = text(
+      validateRawResolution(
+        { starting: [start()], itemChanges: [moveOut] },
+        proseContext(),
+        []
+      )
+    );
+    expect(errors).toContain('cited in the description of "SCN_1"');
+    expect(errors).toContain("setDescription");
+  });
+
+  it("accepts the same move when the submission rewrites the prose", () => {
+    const errors = text(
+      validateRawResolution(
+        {
+          starting: [start()],
+          itemChanges: [moveOut],
+          sceneChanges: [
+            {
+              sourceActionId: ACTION_ID,
+              causalBasis: "the lock left the desk",
+              sceneId: "SCN_1",
+              operation: {
+                kind: "setDescription",
+                description: "A study. The desk is bare.",
+              },
+            },
+          ],
+        },
+        proseContext(),
+        []
+      )
+    );
+    expect(errors).not.toContain("cited in the description");
+  });
+
+  it("does not fire for an uncited item", () => {
+    const errors = text(
+      validateRawResolution(
+        { starting: [start()], itemChanges: [moveOut] },
+        makeContext({}),
+        []
+      )
+    );
+    expect(errors).not.toContain("cited in the description");
+  });
+});
+
 describe("operations are checked against the fields they advertise", () => {
   // Each of these passed validation before and reached the applier, where a
   // bad value either did nothing or wrote nonsense into the world. A delta
