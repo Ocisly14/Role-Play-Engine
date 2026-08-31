@@ -9,21 +9,11 @@ export function isRoadId(locationId: string, topology: TownTopology): boolean {
 }
 
 /**
- * Returns true if the given location ID is a junction in the topology.
- */
-export function isJunctionId(
-  locationId: string,
-  topology: TownTopology
-): boolean {
-  return topology.junctions.has(locationId);
-}
-
-/**
  * Returns adjacent location IDs for a given location in the topology.
  *
- * - Scene → parent road or junction (via sceneToParent)
- * - Road → endpoint junctions + along-road scenes
- * - Junction → connected roads + connected scenes
+ * - Attached scene → parent node scene or road (via sceneToParent)
+ * - Road → endpoint node scenes + along-road scenes
+ * - Node scene → incident roads + attached scenes
  *
  * Returns an empty array if the locationId is not found in the topology.
  */
@@ -31,11 +21,11 @@ export function getTopologyNeighbors(
   locationId: string,
   topology: TownTopology
 ): string[] {
-  // Check if it's a scene (in sceneToParent)
+  // Check if it's an attached scene (in sceneToParent)
   const parentInfo = topology.sceneToParent.get(locationId);
   if (parentInfo) {
-    if (parentInfo.type === "junction") {
-      return [parentInfo.junctionId];
+    if (parentInfo.type === "scene") {
+      return [parentInfo.sceneId];
     }
     // type === "road"
     return [parentInfo.roadId];
@@ -51,18 +41,18 @@ export function getTopologyNeighbors(
     return neighbors;
   }
 
-  // Check if it's a junction
-  const junction = topology.junctions.get(locationId);
-  if (junction) {
+  // Check if it's a node scene
+  if (topology.nodeSceneIds.has(locationId)) {
     const neighbors: string[] = [];
-    // Connected roads
-    const roads = topology.junctionToRoads.get(locationId) ?? [];
-    for (const r of roads) {
+    // Incident roads
+    for (const r of topology.sceneToRoads.get(locationId) ?? []) {
       neighbors.push(r.id);
     }
-    // Connected scenes
-    for (const sceneId of junction.connectedSceneIds) {
-      neighbors.push(sceneId);
+    // Attached scenes
+    for (const [sceneId, parent] of topology.sceneToParent) {
+      if (parent.type === "scene" && parent.sceneId === locationId) {
+        neighbors.push(sceneId);
+      }
     }
     return neighbors;
   }

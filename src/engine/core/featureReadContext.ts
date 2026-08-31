@@ -26,11 +26,6 @@ export interface FeatureReadContext {
    * that contribute to every outdoor location regardless of region.
    */
   getRoadIds(): string[];
-  /**
-   * Enumerate all junction IDs from the topology. Mirrors getRoadIds —
-   * used by features that contribute to every outdoor location.
-   */
-  getJunctionIds(): string[];
   getCharacter(characterId: string): DynamicNPCProfile | undefined;
   getCharactersInScene(sceneId: string): DynamicNPCProfile[];
   /**
@@ -40,7 +35,7 @@ export interface FeatureReadContext {
    */
   getAllAliveCharacterIds(): string[];
   /**
-   * Resolve a character's current location ID (scene / road / junction),
+   * Resolve a character's current location ID (scene / road),
    * routing through the same `resolveCharacterLocationId` helper used by
    * pre-Phase-D feature code. Returns `undefined` when no position is set.
    */
@@ -78,17 +73,17 @@ export interface FeatureReadContext {
   getFeatureInitConfig<T>(featureId: string): T | undefined;
 
   /**
-   * Enumerate outdoor location IDs (scenes with !indoor, plus junctions and
-   * roads) belonging to the given region. Used by the weather feature's init
+   * Enumerate outdoor location IDs (scenes with !indoor, plus roads)
+   * belonging to the given region. Used by the weather feature's init
    * hook to compute affectedSceneIds; kept as a bundled helper so features
    * don't need to peek at raw DGSM collections.
    */
   getOutdoorLocationIdsInRegion(regionId: string): string[];
 
   /**
-   * Read the precomputed topology index (junctions/roads/sceneToParent maps).
+   * Read the precomputed topology index (node scenes/roads/sceneToParent).
    * Used by features whose propagation rules depend on outdoor topology, e.g.
-   * fire spreading scene → road/junction → adjacent scenes. Returns undefined
+   * fire spreading scene → road → adjacent scenes. Returns undefined
    * when no topology has been loaded (legacy modules / pure-scene worlds).
    */
   getTopology(): TownTopology | undefined;
@@ -116,7 +111,6 @@ export function makeDGSMFeatureReadContext(
     getSceneIds: () => dgsm.getAllSceneIds(),
     getScene: (id) => dgsm.getScene(id) ?? undefined,
     getRoadIds: () => Array.from(dgsm.getState().roads.keys()),
-    getJunctionIds: () => Array.from(dgsm.getState().junctions.keys()),
     getCharacter: (id) => dgsm.getNpcProfile(id),
     getCharactersInScene: (sceneId) =>
       dgsm
@@ -177,16 +171,18 @@ export function makeDGSMFeatureReadContext(
     getOutdoorLocationIdsInRegion(regionId: string): string[] {
       const state = dgsm.getState();
       const out: string[] = [];
+      // A place with no parent (top-level node scene, road) counts as the
+      // implicit "OUTDOOR" region — the convention junction data used.
       state.scenes.forEach((scene, id) => {
-        if (scene.parentLocationId === regionId && !scene.indoor) {
+        if (
+          (scene.parentLocationId ?? "OUTDOOR") === regionId &&
+          !scene.indoor
+        ) {
           out.push(id);
         }
       });
-      for (const [id, junc] of state.junctions) {
-        if (junc.parentLocationId === regionId) out.push(id);
-      }
       for (const [id, road] of state.roads) {
-        if (road.parentLocationId === regionId) out.push(id);
+        if ((road.parentLocationId ?? "OUTDOOR") === regionId) out.push(id);
       }
       return out;
     },

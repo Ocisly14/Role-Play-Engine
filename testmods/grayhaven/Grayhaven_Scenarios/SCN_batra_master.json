@@ -1,0 +1,36 @@
+{
+  "schemaVersion": 2,
+  "id": "SCN_batra_master",
+  "name": "Batra 家·主卧",
+  "description": "主卧不大,收拾得一丝不苟:床单绷得平整,Dev 的金丝眼镜盒和三支笔在床头柜上排成一线[item.batra_master.bedside_items],窗帘挡着主街的灯。床脚一只樟木箱[item.batra_master.sari_trunk],叠放着 Anita 只在节日才穿的纱丽,掀开箱盖,樟脑混着一丝小豆蔻的气味。五斗柜角上摆着一座小神龛[item.batra_master.puja_shelf],铜迦内什像前一盏陶灯,灯芯早已烧尽,只剩一点香灰的余味。窗外雾天里能听见海的方向传来隐约的浪声。房门通回起居厨房[SCN_batra_living]。",
+  "parentLocationId": "LOC_batra_shop",
+  "indoor": true,
+  "references": {
+    "items": [
+      {
+        "id": "item.batra_master.sari_trunk",
+        "name": "樟木箱",
+        "description": "床脚的樟木箱,叠放着节日才穿的纱丽,颜色在这座灰雾小镇里亮得近乎奢侈。箱底压着从孟买带来的旧信。"
+      },
+      {
+        "id": "item.batra_master.bedside_items",
+        "name": "眼镜盒与钢笔",
+        "description": "床头柜上,Dev 的金丝眼镜盒和三支不同颜色的钢笔排成一线——跟他店里工作台上的秩序一模一样。"
+      },
+      {
+        "id": "item.batra_master.puja_shelf",
+        "name": "小神龛",
+        "description": "五斗柜角上一座小小的神龛,铜制迦内什像前摆着一盏陶灯,灯芯早已烧尽,只留一点香灰的余味,是从孟买带来的少数几样东西之一。"
+      }
+    ],
+    "connections": [
+      {
+        "id": "exit.batra_master.living_door",
+        "targetId": "SCN_batra_living",
+        "name": "主卧门",
+        "description": "通回起居厨房的房门。"
+      }
+    ],
+    "conditions": []
+  }
+}

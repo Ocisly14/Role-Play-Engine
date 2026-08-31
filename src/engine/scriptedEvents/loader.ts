@@ -152,6 +152,9 @@ const PREDICATE_OPS = [
   "characterHasItem",
   "sceneHasConditionFromFeature",
   "gameDate",
+  "timeOfDay",
+  "sceneOccupied",
+  "regionWeather",
   "eventStatus",
   "and",
   "or",
@@ -183,6 +186,9 @@ const EFFECT_KINDS = [
   "scene.addCondition",
   "scene.removeCondition",
   "connection.setBlock",
+  "connection.setHidden",
+  "item.create",
+  "item.move",
   "event.emit",
   "event.transition",
 ];
@@ -229,6 +235,17 @@ export function validateScriptedEvent(
   // Optional: durationTicks
   if (item.durationTicks !== undefined && !isNumber(item.durationTicks)) {
     pushErr(errors, file, `${path}.durationTicks`, "must be a number");
+  }
+  // Optional: recurring
+  if (item.recurring !== undefined && !isBoolean(item.recurring)) {
+    pushErr(errors, file, `${path}.recurring`, "must be a boolean");
+  }
+  // Optional: recurringCooldownTicks
+  if (
+    item.recurringCooldownTicks !== undefined &&
+    !isNumber(item.recurringCooldownTicks)
+  ) {
+    pushErr(errors, file, `${path}.recurringCooldownTicks`, "must be a number");
   }
 
   // Optional: trackers
@@ -436,6 +453,47 @@ function validatePredicate(
       }
       if (!isString(item.value)) {
         pushErr(errors, file, `${path}.value`, "required ISO date string");
+      }
+      return;
+    }
+    case "timeOfDay": {
+      if (!isString(item.cmp) || !VALID_CMP.has(item.cmp)) {
+        pushErr(
+          errors,
+          file,
+          `${path}.cmp`,
+          `must be one of: ${[...VALID_CMP].join(", ")}`
+        );
+      }
+      if (!isString(item.value) || !/^\d{2}:\d{2}$/.test(item.value)) {
+        pushErr(errors, file, `${path}.value`, 'required "HH:MM" string');
+      }
+      return;
+    }
+    case "sceneOccupied": {
+      if (!isString(item.sceneId)) {
+        pushErr(errors, file, `${path}.sceneId`, "required string");
+      }
+      return;
+    }
+    case "regionWeather": {
+      if (!isString(item.regionId)) {
+        pushErr(errors, file, `${path}.regionId`, "required string");
+      }
+      if (
+        !isArray(item.types) ||
+        item.types.length === 0 ||
+        !item.types.every((t) => isString(t))
+      ) {
+        pushErr(
+          errors,
+          file,
+          `${path}.types`,
+          "required non-empty string array"
+        );
+      }
+      if (item.minIntensity !== undefined && !isNumber(item.minIntensity)) {
+        pushErr(errors, file, `${path}.minIntensity`, "must be a number");
       }
       return;
     }
@@ -762,6 +820,56 @@ function validateEffect(
       if (!isString(item.reason)) {
         pushErr(errors, file, `${path}.reason`, "required string");
       }
+      if (item.featureId !== undefined && !isString(item.featureId)) {
+        pushErr(errors, file, `${path}.featureId`, "must be a string");
+      }
+      return;
+    }
+    case "connection.setHidden": {
+      if (!isString(item.connectionId)) {
+        pushErr(errors, file, `${path}.connectionId`, "required string");
+      }
+      if (!isBoolean(item.hidden)) {
+        pushErr(errors, file, `${path}.hidden`, "required boolean");
+      }
+      return;
+    }
+    case "item.create": {
+      if (!isString(item.location)) {
+        pushErr(errors, file, `${path}.location`, "required string (place id)");
+      }
+      if (!isString(item.name)) {
+        pushErr(errors, file, `${path}.name`, "required string");
+      }
+      if (item.description !== undefined && !isString(item.description)) {
+        pushErr(errors, file, `${path}.description`, "must be a string");
+      }
+      if (item.id !== undefined && !isString(item.id)) {
+        pushErr(errors, file, `${path}.id`, "must be a string");
+      }
+      if (item.skipIfExists !== undefined && !isBoolean(item.skipIfExists)) {
+        pushErr(errors, file, `${path}.skipIfExists`, "must be a boolean");
+      }
+      if (item.skipIfExists === true && !isString(item.id)) {
+        pushErr(
+          errors,
+          file,
+          `${path}.id`,
+          "required when skipIfExists is set (the guard matches by id)"
+        );
+      }
+      return;
+    }
+    case "item.move": {
+      if (!isString(item.itemId)) {
+        pushErr(errors, file, `${path}.itemId`, "required string");
+      }
+      if (!isString(item.from)) {
+        pushErr(errors, file, `${path}.from`, "required holder string");
+      }
+      if (!isString(item.to)) {
+        pushErr(errors, file, `${path}.to`, "required holder string");
+      }
       return;
     }
     case "event.emit": {
@@ -1038,3 +1146,204 @@ export type {
   ScriptedEventStatus,
   Tracker,
 };
+
+// ─── Reference integrity (cross-checked against the loaded world) ──────────
+
+export interface ScriptedEventWorldRefs {
+  /** Scene AND road ids. */
+  placeIds: ReadonlySet<string>;
+  npcIds: ReadonlySet<string>;
+  /** Authored connection ids (scenes and roads alike). */
+  connectionIds: ReadonlySet<string>;
+}
+
+/**
+ * Cross-check every world reference in the loaded events. Scene data gets
+ * this treatment at load (`validateModuleReferences`); without the same for
+ * events, a typo'd scene id passed structural validation and then failed
+ * SILENTLY at runtime — a flood that never closes the ford, a restock that
+ * never lands, visible only in server logs. Throws the same aggregated
+ * ScriptedEventLoadError the structural pass uses.
+ */
+export function validateScriptedEventReferences(
+  events: ScriptedEvent[],
+  world: ScriptedEventWorldRefs
+): void {
+  const errors: LoaderError[] = [];
+  const err = (eventId: string, path: string, message: string): void => {
+    errors.push({ file: `event:${eventId}`, path, message });
+  };
+  const place = (eventId: string, path: string, id: string): void => {
+    if (!world.placeIds.has(id)) {
+      err(eventId, path, `"${id}" is not a loaded scene/road`);
+    }
+  };
+  const npc = (eventId: string, path: string, id: string): void => {
+    if (!world.npcIds.has(id)) {
+      err(eventId, path, `"${id}" is not an authored NPC`);
+    }
+  };
+  const connection = (eventId: string, path: string, id: string): void => {
+    if (!world.connectionIds.has(id)) {
+      err(eventId, path, `"${id}" is not an authored connection id`);
+    }
+  };
+  const holder = (eventId: string, path: string, value: string): void => {
+    if (value.startsWith("scene:")) {
+      place(eventId, path, value.slice("scene:".length));
+    } else if (value.includes(":")) {
+      err(
+        eventId,
+        path,
+        `"${value}": unknown holder prefix — places are "scene:<placeId>", characters are bare ids`
+      );
+    } else if (world.placeIds.has(value)) {
+      err(
+        eventId,
+        path,
+        `"${value}" names a place — did you mean "scene:${value}"?`
+      );
+    } else {
+      npc(eventId, path, value);
+    }
+  };
+
+  const walkPredicate = (
+    eventId: string,
+    path: string,
+    pred: Predicate
+  ): void => {
+    switch (pred.op) {
+      case "characterAt":
+        npc(eventId, `${path}.characterId`, pred.characterId);
+        place(eventId, `${path}.sceneId`, pred.sceneId);
+        return;
+      case "characterAlive":
+      case "characterHasItem":
+        npc(eventId, `${path}.characterId`, pred.characterId);
+        return;
+      case "sceneHasConditionFromFeature":
+      case "sceneOccupied":
+        place(eventId, `${path}.sceneId`, pred.sceneId);
+        return;
+      case "and":
+      case "or":
+        pred.children.forEach((child, i) =>
+          walkPredicate(eventId, `${path}.children[${i}]`, child)
+        );
+        return;
+      case "not":
+        walkPredicate(eventId, `${path}.child`, pred.child);
+        return;
+      default:
+        return;
+    }
+  };
+
+  const walkCharacterPredicate = (
+    eventId: string,
+    path: string,
+    pred: CharacterPredicate
+  ): void => {
+    switch (pred.op) {
+      case "atScene":
+        place(eventId, `${path}.sceneId`, pred.sceneId);
+        return;
+      case "is":
+        npc(eventId, `${path}.characterId`, pred.characterId);
+        return;
+      case "and":
+      case "or":
+        pred.children.forEach((child, i) =>
+          walkCharacterPredicate(eventId, `${path}.children[${i}]`, child)
+        );
+        return;
+      case "not":
+        walkCharacterPredicate(eventId, `${path}.child`, pred.child);
+        return;
+      default:
+        return;
+    }
+  };
+
+  const walkScenePredicate = (
+    eventId: string,
+    path: string,
+    pred: ScenePredicate
+  ): void => {
+    switch (pred.op) {
+      case "is":
+        place(eventId, `${path}.sceneId`, pred.sceneId);
+        return;
+      case "and":
+      case "or":
+        pred.children.forEach((child, i) =>
+          walkScenePredicate(eventId, `${path}.children[${i}]`, child)
+        );
+        return;
+      case "not":
+        walkScenePredicate(eventId, `${path}.child`, pred.child);
+        return;
+      default:
+        return;
+    }
+  };
+
+  const walkEffect = (eventId: string, path: string, effect: Effect): void => {
+    switch (effect.kind) {
+      case "character.san":
+      case "character.hp":
+      case "character.fatigue":
+      case "character.addCondition":
+      case "character.removeCondition":
+        walkCharacterPredicate(
+          eventId,
+          `${path}.targetFilter`,
+          effect.targetFilter
+        );
+        return;
+      case "scene.addCondition":
+      case "scene.removeCondition":
+        walkScenePredicate(eventId, `${path}.sceneFilter`, effect.sceneFilter);
+        return;
+      case "connection.setBlock":
+      case "connection.setHidden":
+        connection(eventId, `${path}.connectionId`, effect.connectionId);
+        return;
+      case "item.create":
+        place(eventId, `${path}.location`, effect.location);
+        return;
+      case "item.move":
+        // Item ids are NOT checked — a restock's item may not exist yet.
+        holder(eventId, `${path}.from`, effect.from);
+        holder(eventId, `${path}.to`, effect.to);
+        return;
+      default:
+        return;
+    }
+  };
+
+  for (const event of events) {
+    for (const tracker of event.trackers ?? []) {
+      const match = tracker.match;
+      if (match.byNpcId !== undefined) {
+        npc(event.id, `trackers.${tracker.id}.byNpcId`, match.byNpcId);
+      }
+      if (match.atSceneId !== undefined) {
+        place(event.id, `trackers.${tracker.id}.atSceneId`, match.atSceneId);
+      }
+    }
+    walkPredicate(event.id, "fireWhen", event.fireWhen);
+    if (event.failWhen) walkPredicate(event.id, "failWhen", event.failWhen);
+    event.onComplete.forEach((effect, i) =>
+      walkEffect(event.id, `onComplete[${i}]`, effect)
+    );
+    (event.onFail ?? []).forEach((effect, i) =>
+      walkEffect(event.id, `onFail[${i}]`, effect)
+    );
+  }
+
+  if (errors.length > 0) {
+    throw new ScriptedEventLoadError(errors);
+  }
+}

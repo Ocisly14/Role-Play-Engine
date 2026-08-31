@@ -48,18 +48,27 @@ export interface InventoryItem {
   properties?: Record<string, any>;
 }
 
+/**
+ * Memory categories a module may author for an NPC at session start.
+ *
+ * Geographic knowledge is authored here as `map` memories like everything
+ * else — nothing is generated at bootstrap. Relationships and long-term
+ * intentions have dedicated profile fields, but remain accepted here for an
+ * explicitly authored memory.
+ */
+export type NpcProfileMemoryType =
+  | "general"
+  | "plan"
+  | "secret"
+  | "relationship"
+  | "map"
+  | "long_term_intent";
+
 /** Memory entry defined in NPC profile JSON, bootstrapped into NpcMemory at session init. */
 export interface NpcProfileMemoryEntry {
-  type: "information" | "secret" | "event" | "belief";
+  type: NpcProfileMemoryType;
   content: string;
   metadata?: Record<string, any>;
-}
-
-export interface KnownMapSeed {
-  sceneIds?: string[];
-  junctionIds?: string[];
-  roadIds?: string[];
-  scenarioOutlineIds?: string[];
 }
 
 /** The stances a module may author. One list, so the compile-time union and
@@ -247,7 +256,6 @@ export interface DynamicNPCProfile {
   longTermIntent: string;
   relationships: NPCRelationship[];
   memory?: NpcProfileMemoryEntry[];
-  knownMapSeed?: KnownMapSeed;
 
   isPlayerInjected?: boolean;
 }
@@ -255,7 +263,10 @@ export interface DynamicNPCProfile {
 // ─── Scene types ───────────────────────────────────────────────────
 
 export interface SceneConnection {
+  /** Stable module-unique connection id (authoring convention: `exit.<place>.<slug>`). */
+  id: string;
   targetId: string;
+  name?: string;
   description?: string;
   /** When true, this connection is not visible to NPCs until revealed */
   hidden?: boolean;
@@ -265,7 +276,9 @@ export interface DynamicScene {
   id: string;
   name: string;
   description: string;
-  parentLocationId: string;
+  /** The containing macro location (outline id) or node scene. Absent on a
+   *  TOP-LEVEL scene — a geography node: street stretch, crossroads, yard. */
+  parentLocationId?: string;
   items: Item[];
   conditions: SceneCondition[];
   connections: SceneConnection[];
@@ -300,9 +313,17 @@ export interface Item {
   id: string;
   name: string;
   description?: string;
+  /** When true, this item is not visible to NPCs until revealed. */
+  hidden?: boolean;
   /** Contributes to scene illumination — read by subsystem/sun.ts. */
   isLightSource?: boolean;
   lightLevel?: number;
+  /** ROAD items only: where along the road's length the item sits
+   *  (0.0 = endpointA side, 1.0 = endpointB side). Perception applies
+   *  ROAD_ITEM_REACH_MINUTES around the walker; a positionless road item
+   *  is ambient — visible anywhere along the length. Invalid on scenes:
+   *  a scene has no interior distance. */
+  position?: number;
 }
 
 export interface SceneImage {
@@ -312,20 +333,6 @@ export interface SceneImage {
 }
 
 // ─── World structure types ─────────────────────────────────────────
-
-/**
- * Scenario Outline - Macro location container for sub-scenes
- */
-export interface ScenarioOutline {
-  id: string;
-  name: string;
-  description: string;
-  sourcePlaceId?: string;
-  sourcePlaceName?: string;
-  residents?: string[];
-  subSceneCount: number;
-  entrySceneId?: string;
-}
 
 /**
  * Transport Edge - Connects two macro locations via a street/outdoor scene

@@ -1,0 +1,36 @@
+{
+  "schemaVersion": 2,
+  "id": "SCN_holt_denny",
+  "name": "Denny 的房间",
+  "description": "小房间被书占领了:床头、窗台、椅子上全是卷了角的科幻平装书 [item.holt_denny.scifi_paperbacks],书脊按他自己的一套体系排序——入侵类、地底类、政府隐瞒类各归各摞。墙上用图钉别着他手画的星图和一张从杂志剪下的雷达站照片。书桌上一盏歪脖子台灯 [item.holt_denny.desk_lamp] 亮着,灯罩上贴着几张卡通贴纸;抽屉半开着,里面放着一支备用的哮喘吸入器 [item.holt_denny.spare_inhaler],压在一叠写满小字的活页纸上。哥哥 Glen 的旧夹克没在——他穿着呢。房门 [SCN_holt_common] 通向起居的大开间,门缝底下塞了条毛巾,挡光,也挡听。",
+  "parentLocationId": "LOC_holt_house",
+  "indoor": true,
+  "references": {
+    "items": [
+      {
+        "id": "item.holt_denny.scifi_paperbacks",
+        "name": "科幻平装书堆",
+        "description": "几十本卷角的科幻平装书,按『入侵』『地底』『政府隐瞒』分摞,页边写满批注。"
+      },
+      {
+        "id": "item.holt_denny.spare_inhaler",
+        "name": "备用哮喘吸入器",
+        "description": "备用的哮喘吸入器,压在一叠写满小字的活页纸上。"
+      },
+      {
+        "id": "item.holt_denny.desk_lamp",
+        "name": "台灯",
+        "description": "书桌上一盏歪脖子台灯,灯罩上贴着几张卡通贴纸,常常亮到很晚——他看书习惯不开顶灯。"
+      }
+    ],
+    "connections": [
+      {
+        "id": "exit.holt_denny.door",
+        "targetId": "SCN_holt_common",
+        "name": "房门",
+        "description": "通向起居大开间的门,门缝底下塞着一条毛巾。"
+      }
+    ],
+    "conditions": []
+  }
+}

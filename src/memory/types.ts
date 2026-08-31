@@ -2,23 +2,20 @@ import type {
   NpcMemoryType,
   NpcMemory as PrismaNpcMemory,
 } from "@prisma/client";
-import type { KnownMapSeed } from "../state/types.js";
 
 // Re-export Prisma types
 export type { NpcMemoryType } from "@prisma/client";
 export type NpcMemory = PrismaNpcMemory;
 
 /**
- * Module data is authored in the PRE-consolidation memory vocabulary
- * (`NpcProfileMemoryEntry` in state/types.ts: information | secret | event |
- * belief). The runtime enum no longer has three of those, and a raw
- * passthrough reaches `getHandler` as `undefined` and dies on `.prepare` —
- * which is exactly what happened to every session created from an existing
- * module. Map at the ingestion boundary, the way skills go through
- * `LEGACY_SKILL_TO_CANONICAL`, and leave the authoring vocabulary alone.
+ * NPC profile JSON now uses the canonical runtime vocabulary. Keep this map
+ * at the ingestion boundary solely for already-published modules that still
+ * carry the old information/event/belief vocabulary; raw passthrough would
+ * reach `getHandler` as `undefined` and fail on `.prepare`.
  */
 const LEGACY_MEMORY_TYPE_TO_CANONICAL: Readonly<Record<string, NpcMemoryType>> =
   {
+    context: "map",
     information: "general",
     event: "general",
     // A belief is about someone often enough that `relationship` is tempting,
@@ -36,7 +33,6 @@ const CANONICAL_MEMORY_TYPES: ReadonlySet<string> = new Set<NpcMemoryType>([
   "relationship",
   "map",
   "long_term_intent",
-  "context",
 ]);
 
 /** Fold an authored memory type onto the runtime enum. Anything unrecognized
@@ -68,35 +64,13 @@ export interface RelationshipMetadata {
   newScore?: number;
 }
 
-
-export interface KnownMapIds {
-  sceneIds: string[];
-  junctionIds: string[];
-  roadIds: string[];
-  scenarioOutlineIds: string[];
-}
-
-/** `context` memories are the character's standing knowledge of a place —
- *  which one, and at what altitude. See contextMemory.ts. */
-export interface ContextMetadata {
-  scope: "macro" | "interior" | "topology";
-  /** Outline id for `macro`, scene id for `interior`, absent for `topology`. */
+/** A map memory's standing knowledge of a place. */
+export interface MapMetadata {
+  /** Scene/road id the knowledge is about, when it is about one place. */
   locationId?: string;
 }
 
-export type MemoryMetadata = RelationshipMetadata | ContextMetadata;
-
-export interface EnsureContextMemoriesParams {
-  npcId: string;
-  sessionId: string;
-  moduleId: string;
-  gameDateTime: string;
-  dgsm: import("../state/DynamicGameState.js").DynamicGameStateManager;
-  /** Absent means the character knows the whole map. */
-  seed?: KnownMapSeed;
-  /** Module language ("en" | "zh") — drives the glue between descriptions. */
-  language?: string;
-}
+export type MemoryMetadata = RelationshipMetadata | MapMetadata;
 
 // ===== Query & Retrieval Types =====
 
@@ -159,14 +133,7 @@ export interface ContextProfile {
 
 export const CONTEXT_PROFILES: Record<ContextPurpose, ContextProfile> = {
   scheduling: {
-    defaultTypes: [
-      "general",
-      "plan",
-      "secret",
-      "relationship",
-      "map",
-      "context",
-    ],
+    defaultTypes: ["general", "plan", "secret", "relationship", "map"],
     defaultLimit: 20,
     typeLimits: { general: 0, plan: 0, relationship: 0 },
   },
@@ -176,7 +143,7 @@ export const CONTEXT_PROFILES: Record<ContextPurpose, ContextProfile> = {
     typeLimits: { general: 0 },
   },
   detailing: {
-    defaultTypes: ["general", "plan", "secret", "relationship", "map", "context"],
+    defaultTypes: ["general", "plan", "secret", "relationship", "map"],
     defaultLimit: 5,
     typeLimits: { general: 0 },
   },

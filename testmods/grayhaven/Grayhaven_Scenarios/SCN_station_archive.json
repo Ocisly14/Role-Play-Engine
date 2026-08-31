@@ -1,0 +1,36 @@
+{
+  "schemaVersion": 2,
+  "id": "SCN_station_archive",
+  "name": "雷德利站·档案室",
+  "description": "一间狭长的房间,两侧是低声运转的存储阵列 [item.station_archive.storage_array],整齐的插槽从地面排到天花板,每一格上亮着一个名字——灰港每一个人的名字,按字母排,没有遗漏。其中一格与众不同:外壳比别的旧了不止一轮,格沿环着一圈红色的标记 [item.station_archive.earl_slot]。房间中央悬着一方平置的玻璃台面 [item.station_archive.reading_surface],走近时它会自己亮起来。只有一扇门,回到控制大厅 [SCN_station_hall]。",
+  "parentLocationId": "LOC_station",
+  "indoor": true,
+  "references": {
+    "items": [
+      {
+        "id": "item.station_archive.storage_array",
+        "name": "镇民存储阵列",
+        "description": "从地面排到天花板的插槽阵列,每一格的边缘亮着一个名字:Reyes、Holt、Batra、Medeiros、Pruitt……十四个姓氏,几十个格子,还有更多空格在暗着。格子里的东西看不见,只听得见极轻的、类似翻页的声响,从不停歇——像有什么在里面被一遍遍地读。"
+      },
+      {
+        "id": "item.station_archive.earl_slot",
+        "name": "带红环的旧插槽",
+        "description": "阵列里唯一与众不同的一格:外壳的样式比左右的都旧,像换代时被刻意留下来的老件,格沿环着一圈红色标记,边上蚀刻着一行小字——「PRUITT, E. / RETAINED / RUN 1–」,后面的数字被磨得看不清了。"
+      },
+      {
+        "id": "item.station_archive.reading_surface",
+        "name": "检索台面",
+        "description": "悬在房间中央的一方平置玻璃,没有支脚,没有开关。有人走近,它便自己亮起:一张正面照浮上来,然后是一列参数、一栏栏日期,以及大段大段流动的文字——像一个人记得的一生,被从头到尾摊开。它显示谁的,取决于站在它面前的是谁。"
+      }
+    ],
+    "connections": [
+      {
+        "id": "exit.station_archive.hall_door",
+        "targetId": "SCN_station_hall",
+        "name": "档案室门",
+        "description": "回到控制大厅的门。"
+      }
+    ],
+    "conditions": []
+  }
+}

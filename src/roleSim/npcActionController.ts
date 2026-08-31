@@ -509,7 +509,6 @@ export class NpcActionController {
       npcId,
       this.sessionId,
       [
-        "context",
         "general",
         "plan",
         "secret",

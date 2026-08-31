@@ -2,7 +2,7 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-The package is **`role-play-engine`** ("LLM World Engine"); the checkout directory is still `CoC-AI-agent` for historical reasons. Call of Cthulhu IP references were scrubbed — don't reintroduce named-setting terminology. A few `coc*` identifiers survive as leftovers (`src/planning/cocSkillList.ts`, `DEBUG=coc:*`); treat them as vestigial, not as a naming convention.
+The package is **`role-play-engine`** ("LLM World Engine"); the checkout directory is still `CoC-AI-agent` for historical reasons. Call of Cthulhu IP references were scrubbed — don't reintroduce named-setting terminology. A few `coc*` identifiers survive as leftovers (`DEBUG=coc:*`); treat them as vestigial, not as a naming convention.
 
 ## Commands
 
@@ -66,13 +66,13 @@ There is **no central scheduler** and **no planning agent**. The pipeline is `pe
 
 Agent output is **untrusted**. `engine/actions/commandValidator.ts` checks shape, enums, duration bounds, and that every `objectRef` names something real; `commandBuilder.ts` then wraps the result into a trusted `ActionCommand`. Rejections carry a structured reason the agent reads as feedback next decision. No semantic judgement happens at the boundary — feasibility, skill fit, and resistance are the Engine's job in full context.
 
-`state/perceivableDirectory.ts` defines what an actor may point at. Unknown characters are addressed by a **per-tick alias** (`stranger_a`); the boundary swaps in the real id before the Engine sees the command, so canonical names never enter the actor's context. Known people, items, and scenes keep their real ids.
+`state/perceivableDirectory.ts` defines what an actor may point at. Unknown characters are addressed by a **per-tick alias** (`stranger_a`); the boundary swaps in the real id before the Engine sees the command, so canonical names never enter the actor's context. Known people, items, and scenes keep their real ids. Connections are **never citable**: a passage is topology bookkeeping — the v2 prose cites the PLACE a passage leads to (`[SCN_*]`), and a door that matters as an object (lockable, breakable) is authored as an item. A road item may carry a `position` (0-1 along the length); perception applies a 5-minute reach radius (`ROAD_ITEM_REACH_MINUTES`) around the walker, and boundary + renderer read the same resolver so the citable set and the rendered set never diverge.
 
 The alias is derived from (viewer, target), so it is stable: the same stranger wears the same tag for the same actor for as long as they stay unknown. Every id space is therefore stable, and the boundary asks only one thing of a citation — **does it name something real**. Whether the thing is still within reach is the Engine's question, and it can answer it as something the actor perceives ("the display where the daisies were is empty") instead of a rejection the actor never sees.
 
 ### Perception / render layer
 
-`roleSim/renderer/` turns a `PerceivedBundle` (scene, own conditions, own action posture, the tick's occurrences this character perceives) into **one first-person paragraph** via a MEDIUM-model call. Entities carry bracketed citation tags — `[stranger_a]`, `[ITEM_7]` — and citing a tag is the only way a character can point at anything. A paragraph carrying a tag the actor could not cite is sent back once, quoting the exact string it invented; `stripUncitableTags` then drops whatever is still uncitable before the paragraph reaches the actor. On renderer failure the wrapper returns null; there is deliberately **no god-eye fallback**.
+`roleSim/renderer/` turns a `PerceivedBundle` (scene, own conditions, own action posture, the tick's occurrences this character perceives) into **one first-person paragraph** via a MEDIUM-model call. Entities carry bracketed citation tags — `[stranger_a]`, `[ITEM_7]`, `[SCN_LIBRARY]` — and citing a tag is the only way a character can point at anything. A paragraph carrying a tag the actor could not cite is sent back once, quoting the exact string it invented; `stripUncitableTags` then drops whatever is still uncitable before the paragraph reaches the actor. On renderer failure the wrapper returns null; there is deliberately **no god-eye fallback**.
 
 ### Skills
 
@@ -84,10 +84,10 @@ The 57 CoC skills were consolidated into **17 broad ability domains** (`engine/r
 - `roleSim/` — LLM persona layer: `llmAgent`, `agent` (contracts), `npcActionController`, `renderer/`, `systemPrompt`, `userPromptBuilder`, `profileFormatter`, `memoryFormatter`, `sanityGuidance`, `seedIntents`, `toolDispatcher`, `tools/` (`act`, `continue`, `writeMemory`, `schemas`).
 - `simulation/` — `SimulationRunner`, `PlaybackScheduler`, `SimulationEventEmitter`, `runtimePersistence`, `characterInjection`. The driver layer between API and engine.
 - `state/` — `DynamicGameState` + `DynamicGameStateLoader`, `moduleLoader`/`moduleImporter`, `gameClock`, `perceivableDirectory`, `perceivedLocation`, `topologyTypes`, `blockedConnections`. Module loading is YAML-driven.
-- `memory/` — `MemoryStore`, `MemoryRetriever`, `NpcMemoryManager`, `DecayEngine`, `contextMemory`, `knownLocations`, plus per-type `handlers/`. Embeddings via FastEmbed (`rag/localEmbeddingManager`).
+- `memory/` — `MemoryStore`, `MemoryRetriever`, `NpcMemoryManager`, `DecayEngine`, plus per-type `handlers/`. Embeddings via FastEmbed (`rag/localEmbeddingManager`). Nothing geographic is generated at bootstrap — the old `contextMemory`/`knownLocations`/`knownMapSeed` layer is gone.
 - `models/` — in-house LLM layer. `providers/` holds one thin adapter per vendor (`anthropic`, `openai`, `google`); policy (retries, model-class fallback, usage accounting) lives in `generator.ts`, and `tokenUsage.ts` tracks spend. Supports native tool calls and provider prompt-cache breakpoints (`SystemBlock.cacheControl`). **LangChain has been removed — don't reintroduce it.**
 - `shared/agents/memory/database/` — Prisma client, module scoping, seed data.
-- `planning/` — nearly gutted; only `cocSkillList.ts` (base values), `sceneMapFormatter.ts`, and a few types remain, still imported by the engine and server. Its README is stale. The module is on its way out — don't add to it.
+- `planning/` — nearly gutted; only `sceneMapFormatter.ts` and a few types remain, still imported by the engine and server. Its README is stale. The module is on its way out — don't add to it.
 - `rag/` — `localEmbeddingManager` (used by memory) and a Discovery-RAG service under `session/` that is currently unwired.
 - `i18n/` — en/zh.
 
@@ -95,13 +95,13 @@ The 57 CoC skills were consolidated into **17 broad ability domains** (`engine/r
 
 ### Memory
 
-Seven memory types (`NpcMemoryType` in `prisma/schema.prisma`). Six are **character-authored** via `writeMemory` — `general`, `plan`, `secret`, `relationship`, `map`, `long_term_intent`. One is **system-authored**: `context` (the world as the character already knows it at session start: one per macro location, one per interior scene, one for topology). Nothing else is recorded on the character's behalf — there is no end-of-day diary, so what remains of a day is only what the character chose to write.
+Six memory types (`NpcMemoryType` in `prisma/schema.prisma`), all **character-authored** — `general`, `plan`, `secret`, `relationship`, `map`, `long_term_intent`. A module seeds them through each NPC profile's `memory` array (geographic knowledge included, as `map` memories in the character's own voice); in play `writeMemory` writes the same types. **Nothing is generated on the character's behalf** — no bootstrap gazetteer (the `context` type and `knownMapSeed` are gone), no end-of-day diary. What a character knows about the map is exactly what their profile says plus what they wrote down; a place absent from both does not exist for them, which is the whole loss-in-the-woods mechanic. Macro-location containers (`ScenarioOutline`/`LOC_*`, `scenarios_outline.json`) are likewise gone: `parentLocationId` survives only as the interior-scene marker (any non-empty value) and a viewer-side grouping label, placement uses scene ids directly (`currentLocation`/`residence` on the profile), and the topology attaches deep interiors transitively by itself.
 
 There is **no recall tool**: memories are injected whole into the user prompt, so a memory absent from the prompt does not exist for that character. Decay lives in `DecayEngine`.
 
 A character's view of another is a `relationship` memory they write themselves, and writing one is also what updates `npcRelationshipGraph` — one author, two indexes. Knowing WHO someone is is a separate fact: the graph node's `knownAs` (what this viewer calls them), set by the character when a name is said in their hearing, and the only thing `isKnownTo` reads. Having an opinion about a face is not an introduction — conflating the two used to hand every character the canonical name of anyone they had merely noticed. The Engine has **no** relationship operation: it reports what happened, and what anyone makes of it is theirs to record. (It had one; told to note that a shopkeeper had grown wary of a customer, the applier wrote the same score and the same note onto the customer's row too, inventing his opinion of her out of hers of him.)
 
-`writeMemory` carries an `op` — `add` (default), `replace`, `delete`. `replace`/`delete` address a memory by the tag `memoryFormatter.ts` renders at the head of each line (`M3f9a2c`, derived from the row id so it never repoints). The tag resolves only against the memories that were in THAT decision's prompt, and the store call scopes on `(id, sessionId, npcId)` — the same "you may only point at what you were shown" rule the `act` boundary applies to objectRefs. System-authored types stay unwritable through all three ops. The character's own long-term goal is a `long_term_intent` memory in the same block, not a prompt section of its own.
+`writeMemory` carries an `op` — `add` (default), `replace`, `delete`. `replace`/`delete` address a memory by the tag `memoryFormatter.ts` renders at the head of each line (`M3f9a2c`, derived from the row id so it never repoints). The tag resolves only against the memories that were in THAT decision's prompt, and the store call scopes on `(id, sessionId, npcId)` — the same "you may only point at what you were shown" rule the `act` boundary applies to objectRefs. The character's own long-term goal is a `long_term_intent` memory in the same block, not a prompt section of its own.
 
 ### Time
 

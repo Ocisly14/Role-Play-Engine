@@ -1,0 +1,102 @@
+{
+  "schemaVersion": 2,
+  "id": "ROAD_main_street",
+  "name": "主街",
+  "description": "贯穿灰港的主街,从北口走到南口要一刻钟。街两侧是繁荣年代留下的假立面商铺楼,一半橱窗钉着木板,电线在雾里下垂。北端是几条路交汇的主街北口 [SCN_main_north],口上那盏最老的铸铁路灯 [item.main_street.street_lamp] 入夜自己亮起来——最近它亮得不太稳。街的北半热闹些:蓝鸟餐馆的玻璃门里飘出咖啡和烤面包的气味 [SCN_bluebird_dining],门口那条被几代人磨亮的木长椅是镇上看街的老位置 [item.main_street.diner_bench];隔壁杂货店兼邮局的纱门后传出收音机声 [SCN_grocery_store],门口立着掉漆的蓝色邮筒,筒身钉着邮件车时刻表 [item.main_street.mailbox];街对面警长办公室的大门上嵌着擦得发亮的铜星 [SCN_sheriff_front],门旁的镇公告栏钉满层层叠叠的纸 [item.main_street.notice_board]。过了中段,人行道的裂缝里长出草,南半冷清下来:街机厅「星港」的霓虹白天也亮着 [SCN_arcade],巴特拉电视维修铺的橱窗里摞着待修的电视机 [SCN_batra_shop],再往南是诊所的磨砂玻璃门 [SCN_clinic_waiting]。南端止于主街南口 [SCN_main_south],风里已经闻得到海。",
+  "parentLocationId": "OUTDOOR",
+  "travelTimeMinutes": 15,
+  "references": {
+    "items": [
+      {
+        "id": "item.main_street.street_lamp",
+        "name": "街角路灯",
+        "description": "北口街角那盏铸铁路灯,灯柱上还留着繁荣年代的铸花,是主街上最老的一盏。天黑自己亮,天亮自己灭,三十年没人管过。去年冬天起,它入夜后会毫无规律地闪上几下,又自己恢复正常。",
+        "position": 0.05,
+        "isLightSource": true,
+        "lightLevel": 2
+      },
+      {
+        "id": "item.main_street.diner_bench",
+        "name": "餐馆门口的木长椅",
+        "description": "蓝鸟餐馆门口的一条木长椅,漆早掉光了,座面被几代人磨出两块浅坑。天气好的时候老人坐在这儿看街——看谁进了谁的门,看车从哪个方向来。",
+        "position": 0.1
+      },
+      {
+        "id": "item.main_street.mailbox",
+        "name": "邮筒",
+        "description": "杂货店门口那只掉漆的蓝色邮筒,投信口的铰链一推就吱呀作响。筒身上钉着一块搪瓷牌,写着邮件车的到站时刻:每周二上午。牌子挂了多少年没人记得,车也从没误过点。",
+        "position": 0.18
+      },
+      {
+        "id": "item.main_street.notice_board",
+        "name": "镇公告栏",
+        "description": "警长办公室门旁的木框公告栏,玻璃碎了一角一直没换。里面钉着层层叠叠的纸:九月渔汛节的游行路线、州立公园的林火警示、招人手的手写条、丢猫的启事——最上面一层压着最下面一层,谁也没清理过。",
+        "position": 0.25
+      }
+    ],
+    "connections": [
+      {
+        "id": "exit.main_street.north_end",
+        "targetId": "SCN_main_north",
+        "name": "主街北口",
+        "role": "endpointA"
+      },
+      {
+        "id": "exit.main_street.south_end",
+        "targetId": "SCN_main_south",
+        "name": "主街南口",
+        "role": "endpointB"
+      },
+      {
+        "id": "exit.main_street.bluebird_door",
+        "targetId": "SCN_bluebird_dining",
+        "name": "蓝鸟餐馆正门",
+        "description": "挂着营业木牌的玻璃门,推开时门铃会响。",
+        "role": "access",
+        "position": 0.1
+      },
+      {
+        "id": "exit.main_street.grocery_door",
+        "targetId": "SCN_grocery_store",
+        "name": "杂货店兼邮局的纱门",
+        "description": "弹簧纱门,里面是店堂和邮政柜台。",
+        "role": "access",
+        "position": 0.18
+      },
+      {
+        "id": "exit.main_street.sheriff_door",
+        "targetId": "SCN_sheriff_front",
+        "name": "警长办公室大门",
+        "description": "嵌着铜星的木门,通向前厅。",
+        "role": "access",
+        "position": 0.25
+      },
+      {
+        "id": "exit.main_street.arcade_door",
+        "targetId": "SCN_arcade",
+        "name": "街机厅「星港」大门",
+        "description": "贴满海报的玻璃门,门里是整厅的电子音。",
+        "role": "access",
+        "position": 0.62
+      },
+      {
+        "id": "exit.main_street.batra_door",
+        "targetId": "SCN_batra_shop",
+        "name": "巴特拉电视维修铺店门",
+        "description": "挂着手写营业时间牌的店门,通向一楼工作台。",
+        "role": "access",
+        "position": 0.72
+      },
+      {
+        "id": "exit.main_street.clinic_door",
+        "targetId": "SCN_clinic_waiting",
+        "name": "诊所大门",
+        "description": "磨砂玻璃门,通向候诊室。",
+        "role": "access",
+        "position": 0.82
+      }
+    ],
+    "conditions": []
+  },
+  "driveTimeMinutes": 2
+}

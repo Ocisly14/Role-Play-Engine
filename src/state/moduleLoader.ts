@@ -9,6 +9,7 @@ import type { PrismaClient } from "@prisma/client";
 import {
   type ScriptedEventFile,
   loadScriptedEvents,
+  validateScriptedEventReferences,
 } from "../engine/scriptedEvents/loader.js";
 import type { ScriptedEvent } from "../engine/scriptedEvents/types.js";
 import { NpcMemoryManager } from "../memory/NpcMemoryManager.js";
@@ -19,21 +20,25 @@ import type { DynamicGameState } from "./DynamicGameState.js";
 import { normalizeSpot } from "./characterSpot.js";
 import { ISO_DATE_RE, makeDateTime } from "./gameClock.js";
 import {
-  buildTopology,
-  enrichTopologyWithInteriorScenes,
-} from "./topologyTypes.js";
+  buildRoadV2,
+  buildSceneV2,
+  parsePlaceFileV2,
+  parseVehicleFileV2,
+  validateModuleReferences,
+  validateTransportEdges,
+} from "./moduleSchemaV2.js";
+import { buildTopology } from "./topologyTypes.js";
 import type {
   CharacterPosition,
-  JunctionNode,
   RoadNode,
   TownTopology,
+  VehicleState,
 } from "./topologyTypes.js";
 import type {
   CharacterStatus,
   DynamicNPCProfile,
   DynamicScene,
   ModuleSetup,
-  ScenarioOutline,
   TransportEdge,
 } from "./types.js";
 
@@ -59,9 +64,8 @@ export interface ModuleData {
   setup: ModuleSetup | null;
   npcs: DynamicNPCProfile[];
   scenes: Map<string, DynamicScene>;
-  junctions: Map<string, JunctionNode>;
   roads: Map<string, RoadNode>;
-  scenarioOutlines: ScenarioOutline[];
+  vehicles: VehicleState[];
   transportEdges: TransportEdge[];
   npcInjectionPolicy: NpcInjectionPolicy | null;
   /** Loaded+validated scripted events (may be empty if module has no scripted-events/ dir). */
@@ -75,27 +79,6 @@ export interface ModuleData {
  * directory exists) and attaches the validated event list. Disk access here is
  * intentional: scripted-events are not (yet) persisted to the DB.
  */
-/**
- * Module JSON writes a scene's connections either way — `["SCN_2"]` in one
- * module, `[{ "targetId": "SCN_2", "description": ... }]` in the next — and
- * the row was cast straight to `DynamicScene`, so the string form sailed
- * past the type system and every reader that reaches for `c.targetId` got
- * `undefined`. Silently: the World Action Engine's world snapshot listed a
- * scene's exits as `[{}, {}, {}]`, `perceivedLocation` produced no adjacent
- * places at all — so an actor could cite no place but the room it stood in —
- * and fire and weather propagated to nowhere. Normalize once, here, and every
- * consumer downstream sees one shape.
- */
-function normalizeScene(scene: DynamicScene): DynamicScene {
-  if (!Array.isArray(scene.connections)) return scene;
-  return {
-    ...scene,
-    connections: scene.connections.map((c) =>
-      typeof c === "string" ? { targetId: c } : c
-    ),
-  };
-}
-
 export async function loadModule(
   prisma: PrismaClient,
   moduleId: string,
@@ -121,34 +104,48 @@ export async function loadModule(
   });
 
   const scenes = new Map<string, DynamicScene>();
-  const junctions = new Map<string, JunctionNode>();
   const roads = new Map<string, RoadNode>();
-  let scenarioOutlines: ScenarioOutline[] = [];
-  let transportEdges: TransportEdge[] = [];
+  let rawTransportEdges: unknown;
+  const rawVehicles: Array<{ entryId: string; data: unknown }> = [];
   let npcInjectionPolicy: NpcInjectionPolicy | null = null;
 
   for (const row of sceneRows) {
-    const data = row.data as any;
+    const data: unknown = row.data;
     if (row.entryId === "__scenarios_outline__") {
-      scenarioOutlines = Array.isArray(data)
-        ? data
-        : Array.isArray(data?.scenarios)
-          ? data.scenarios
-          : [];
+      // Retired: scenario outlines are no longer part of the runtime — NPC
+      // geographic knowledge is authored per-profile, placement uses scene
+      // ids. Rows from older imports are ignored.
     } else if (row.entryId === "__transport_edges__") {
-      transportEdges = Array.isArray(data)
-        ? data
-        : (data?.transportEdges ?? []);
+      rawTransportEdges = data;
     } else if (row.entryId === "__npc_injection_policy__") {
       npcInjectionPolicy = data as NpcInjectionPolicy;
-    } else if (row.entryId.startsWith("JUNC_")) {
-      junctions.set(row.entryId, data as JunctionNode);
     } else if (row.entryId.startsWith("ROAD_")) {
-      roads.set(row.entryId, data as RoadNode);
+      roads.set(row.entryId, buildRoadV2(parsePlaceFileV2(row.entryId, data)));
+    } else if (row.entryId.startsWith("VEH_")) {
+      rawVehicles.push({ entryId: row.entryId, data });
     } else {
-      scenes.set(row.entryId, normalizeScene(data as DynamicScene));
+      scenes.set(
+        row.entryId,
+        buildSceneV2(parsePlaceFileV2(row.entryId, data))
+      );
     }
   }
+
+  // Cross-file checks over the fully parsed module: one id namespace, citation
+  // completeness, connection targets. Throws ModuleSchemaError on violation.
+  validateModuleReferences({ scenes, roads });
+
+  const placeIds = new Set<string>([...scenes.keys(), ...roads.keys()]);
+  const vehicles = rawVehicles.map(({ entryId, data }) =>
+    parseVehicleFileV2(entryId, data, { scenes, placeIds })
+  );
+  const transportEdges: TransportEdge[] =
+    rawTransportEdges === undefined
+      ? []
+      : validateTransportEdges("__transport_edges__", rawTransportEdges, {
+          outlineIds: new Set<string>(),
+          placeIds,
+        });
 
   // Load NPCs
   const npcRows = await prisma.moduleNpc.findMany({
@@ -160,6 +157,20 @@ export async function loadModule(
   // Missing directory → empty array (module is valid with no scripted events).
   // Files are sorted alphabetically for deterministic merge order across runs.
   const scriptedEvents = loadScriptedEventsFromDisk(modsDir, mod.moduleName);
+  // Same treatment scene data gets: a typo'd id in an event fails the LOAD,
+  // loudly, instead of failing the flood silently at runtime.
+  validateScriptedEventReferences(scriptedEvents, {
+    placeIds,
+    npcIds: new Set(npcs.map((n) => n.id)),
+    connectionIds: new Set([
+      ...[...scenes.values()].flatMap((s) =>
+        (s.connections ?? []).map((c) => c.id)
+      ),
+      ...[...roads.values()].flatMap((r) =>
+        (r.connections ?? []).map((c) => c.id)
+      ),
+    ]),
+  });
 
   return {
     moduleId: mod.moduleId,
@@ -167,9 +178,8 @@ export async function loadModule(
     setup,
     npcs,
     scenes,
-    junctions,
     roads,
-    scenarioOutlines,
+    vehicles,
     transportEdges,
     npcInjectionPolicy,
     scriptedEvents,
@@ -359,8 +369,8 @@ export function initRuntime(params: {
 
   // Build topology
   const topology: TownTopology | null =
-    moduleData.junctions.size > 0 || moduleData.roads.size > 0
-      ? buildTopology(moduleData.junctions, moduleData.roads)
+    moduleData.scenes.size > 0 || moduleData.roads.size > 0
+      ? buildTopology(moduleData.scenes, moduleData.roads)
       : null;
 
   if (!topology) {
@@ -369,21 +379,8 @@ export function initRuntime(params: {
     );
   }
 
-  // Enrich topology with interior sub-scenes
-  if (moduleData.scenes.size > 0 || moduleData.scenarioOutlines?.length) {
-    enrichTopologyWithInteriorScenes(
-      topology,
-      moduleData.scenes,
-      moduleData.scenarioOutlines ?? []
-    );
-  }
-
   // Determine default starting scene
-  const defaultSceneId =
-    moduleData.scenarioOutlines?.[0]?.entrySceneId ??
-    moduleData.scenarioOutlines?.[0]?.id ??
-    moduleData.scenes.keys().next().value ??
-    "unknown";
+  const defaultSceneId = moduleData.scenes.keys().next().value ?? "unknown";
 
   // Initialize runtime NPC state
   const npcStats: Record<string, { hp: number; san: number }> = {};
@@ -396,61 +393,24 @@ export function initRuntime(params: {
   const characterPositions: Record<string, CharacterPosition> = {};
   const characterSpots: Record<string, string> = {};
 
-  // Build residence lookup from scenarioOutlines
-  const residentToLocation: Record<string, string> = {};
-  for (const outline of moduleData.scenarioOutlines) {
-    if (outline.residents) {
-      for (const residentId of outline.residents as string[]) {
-        residentToLocation[residentId] = outline.id;
-      }
-    }
-  }
-
-  // Build macro location → entry scene lookup
-  const macroToEntry: Record<string, string> = {};
-  for (const outline of moduleData.scenarioOutlines) {
-    if (outline.entrySceneId) {
-      macroToEntry[outline.id] = outline.entrySceneId;
-    }
-  }
-
   for (const npc of simulatedNpcs) {
-    // Location: prefer explicit currentLocation from NPC profile
-    const residence = npc.residence ?? residentToLocation[npc.id];
+    // Placement is scene-id addressed: `currentLocation` (where they stand at
+    // session start), falling back to `residence` (where they live). Both
+    // name a scene or road directly — there is no macro-location indirection.
+    const isPlace = (id: string | undefined): id is string =>
+      !!id && (moduleData.scenes.has(id) || moduleData.roads.has(id));
     let resolvedLocation: string;
-    if (
-      npc.currentLocation &&
-      (moduleData.scenes.has(npc.currentLocation) ||
-        moduleData.junctions.has(npc.currentLocation) ||
-        moduleData.roads.has(npc.currentLocation))
-    ) {
-      // NPC profile specifies a valid scene, junction, or road directly
+    if (isPlace(npc.currentLocation)) {
       resolvedLocation = npc.currentLocation;
-    } else if (residence) {
-      resolvedLocation = macroToEntry[residence] ?? residence;
+    } else if (isPlace(npc.residence)) {
+      resolvedLocation = npc.residence;
     } else {
+      console.warn(
+        `[moduleLoader] NPC ${npc.id} has no valid currentLocation/residence, using default ${defaultSceneId}`
+      );
       resolvedLocation = defaultSceneId;
     }
-    // Validate: if resolvedLocation is a macro ID (not in scenes/junctions/roads), map to entry scene
-    if (
-      !moduleData.scenes.has(resolvedLocation) &&
-      !moduleData.junctions.has(resolvedLocation) &&
-      !moduleData.roads.has(resolvedLocation)
-    ) {
-      const fallback = macroToEntry[resolvedLocation];
-      if (fallback) {
-        console.warn(
-          `[moduleLoader] NPC ${npc.id} resolved to macro location ${resolvedLocation}, mapping to entry scene ${fallback}`
-        );
-        resolvedLocation = fallback;
-      } else {
-        console.warn(
-          `[moduleLoader] NPC ${npc.id} resolved to unknown location ${resolvedLocation}, using default ${defaultSceneId}`
-        );
-        resolvedLocation = defaultSceneId;
-      }
-    }
-    if (residence) npcResidences[npc.id] = residence;
+    if (npc.residence) npcResidences[npc.id] = npc.residence;
 
     // A sheet that says nothing about languages means "speaks what everyone
     // here speaks" — not "has no tongue at all". Without this every character
@@ -528,11 +488,6 @@ export function initRuntime(params: {
         type: "scene",
         sceneId: resolvedLocation,
       };
-    } else if (moduleData.junctions.has(resolvedLocation)) {
-      characterPositions[npc.id] = {
-        type: "junction",
-        junctionId: resolvedLocation,
-      };
     } else if (moduleData.roads.has(resolvedLocation)) {
       characterPositions[npc.id] = {
         type: "road",
@@ -580,13 +535,12 @@ export function initRuntime(params: {
   return {
     sessionId,
     scenes: moduleData.scenes,
-    junctions: moduleData.junctions,
     roads: moduleData.roads,
+    vehicles: moduleData.vehicles ?? [],
     gameDateTime,
     npcCharacters: simulatedNpcs,
     moduleName: moduleData.moduleName,
     moduleSetup: moduleSetupWithInit,
-    scenarioOutlines: moduleData.scenarioOutlines,
     scopedFeatureStates: { scene: {}, region: {}, character: {}, global: {} },
     scriptedEventStates: {},
     environmentReadings: {},

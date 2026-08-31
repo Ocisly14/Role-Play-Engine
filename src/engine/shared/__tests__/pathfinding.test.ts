@@ -1,10 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { DynamicGameStateManager } from "../../../state/DynamicGameState.js";
-import {
-  type JunctionNode,
-  type RoadNode,
-  buildTopology,
-} from "../../../state/topologyTypes.js";
+import { type RoadNode, buildTopology } from "../../../state/topologyTypes.js";
+import type { DynamicScene } from "../../../state/types.js";
 import { nearestRoadPosition, resolveTargetPosition } from "../pathfinding.js";
 
 // Minimal town: S_HOME ── J_A ══ R_MAIN (10 min) ══ J_B
@@ -12,9 +9,24 @@ import { nearestRoadPosition, resolveTargetPosition } from "../pathfinding.js";
 // resolve to null and loop the mover on "couldn't work out a way"), and
 // B_SHOP whose entry is a scene (the previously-working case).
 
-const junctions = new Map<string, JunctionNode>([
-  ["J_A", { id: "J_A", connectedSceneIds: ["S_HOME"] } as JunctionNode],
-  ["J_B", { id: "J_B", connectedSceneIds: [] } as unknown as JunctionNode],
+// J_A/J_B are top-level scenes (no parentLocationId): geography nodes.
+const scenes = new Map<string, DynamicScene>([
+  [
+    "J_A",
+    {
+      id: "J_A",
+      connections: [{ id: "exit.ja.home", targetId: "S_HOME" }],
+    } as unknown as DynamicScene,
+  ],
+  ["J_B", { id: "J_B", connections: [] } as unknown as DynamicScene],
+  [
+    "S_HOME",
+    {
+      id: "S_HOME",
+      parentLocationId: "B_SHOP",
+      connections: [],
+    } as unknown as DynamicScene,
+  ],
 ]);
 const roads = new Map<string, RoadNode>([
   [
@@ -28,7 +40,7 @@ const roads = new Map<string, RoadNode>([
     } as unknown as RoadNode,
   ],
 ]);
-const topology = buildTopology(junctions, roads);
+const topology = buildTopology(scenes, roads);
 
 const dgsm = {
   getState: () => ({
@@ -37,28 +49,16 @@ const dgsm = {
       { id: "B_SHOP", name: "商铺", entrySceneId: "S_HOME" },
       { id: "LOOP", name: "自指", entrySceneId: "LOOP" },
     ],
-    scenes: new Map(),
+    scenes,
   }),
 } as unknown as DynamicGameStateManager;
 
-describe("resolveTargetPosition — outline entry recursion", () => {
-  it("resolves an outline whose entry is a road", () => {
-    expect(resolveTargetPosition("OUTDOOR", topology, dgsm)).toEqual({
-      type: "road",
-      roadId: "R_MAIN",
-      position: 0.5,
-    });
-  });
-
-  it("still resolves an outline whose entry is a scene", () => {
-    expect(resolveTargetPosition("B_SHOP", topology, dgsm)).toEqual({
-      type: "scene",
-      sceneId: "S_HOME",
-    });
-  });
-
-  it("does not recurse into a self-referencing outline", () => {
-    expect(resolveTargetPosition("LOOP", topology, dgsm)).toBeNull();
+describe("resolveTargetPosition — retired macro-location ids", () => {
+  it("answers null for an id that names no scene or road", () => {
+    // Outline indirection is gone: a movement target must name a place in
+    // the topology directly.
+    expect(resolveTargetPosition("OUTDOOR", topology, dgsm)).toBeNull();
+    expect(resolveTargetPosition("B_SHOP", topology, dgsm)).toBeNull();
   });
 });
 

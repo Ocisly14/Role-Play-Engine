@@ -1,0 +1,4768 @@
+{
+  "generatedAt": "2026-08-29T02:10:55.802Z",
+  "source": "coc_analysis_data.sql",
+  "privacy": "Password hashes, tokens, and IP addresses are intentionally excluded.",
+  "metricDefinitions": {
+    "sessionElapsedSeconds": "Sum of max(0, last_activity_at - started_at) across sessions.",
+    "activeTurnSeconds": "Sum of max(0, completed_at - started_at) across completed turns."
+  },
+  "totals": {
+    "accounts": 127,
+    "modulesCreated": 140,
+    "sessions": 243,
+    "sessionElapsedSeconds": 5494,
+    "activeTurnSeconds": 92201,
+    "turns": 2317
+  },
+  "accounts": [
+    {
+      "account": {
+        "id": "4f207dca-c690-476a-bfc0-6eaef5ff769e",
+        "email": "1006529762@qq.com",
+        "username": "dubai712",
+        "role": "USER",
+        "emailVerified": true,
+        "active": true,
+        "createdAt": "2026-02-13 03:57:44.789",
+        "lastLoginAt": "2026-02-13 03:58:24.905"
+      },
+      "modulesCreated": {
+        "count": 0,
+        "modules": []
+      },
+      "playActivity": {
+        "sessionCount": 0,
+        "sessionElapsedSeconds": 0,
+        "sessionElapsedHours": 0,
+        "activeTurnSeconds": 0,
+        "activeTurnHours": 0,
+        "turnCount": 0,
+        "completedTurnCount": 0,
+        "modulesPlayedCount": 0,
+        "firstSessionAt": null,
+        "lastSessionActivityAt": null
+      }
+    },
+    {
+      "account": {
+        "id": "4e9b9496-630a-41ca-a062-4638140774b1",
+        "email": "1044591285@qq.com",
+        "username": "luxleader",
+        "role": "USER",
+        "emailVerified": true,
+        "active": true,
+        "createdAt": "2026-02-13 04:13:28.004",
+        "lastLoginAt": "2026-02-16 18:24:08.021"
+      },
+      "modulesCreated": {
+        "count": 4,
+        "modules": [
+          {
+            "moduleId": "e9e3d5f7-ae17-466a-bf38-9074b98323b2",
+            "name": "渊下之盟：黑礁镇的挽歌 (Covenant of the Abyss: Elegy of Black Reef)",
+            "createdAt": "2026-02-13 05:45:59.968",
+            "updatedAt": "2026-02-16 01:16:31.491",
+            "status": "active",
+            "isShared": false
+          },
+          {
+            "moduleId": "10f92cd8-3f9c-45a2-b515-9fe86fb61f26",
+            "name": "The Ash King's Requiem",
+            "createdAt": "2026-02-14 17:50:49.231",
+            "updatedAt": "2026-02-16 18:28:36.758",
+            "status": "active",
+            "isShared": false
+          },
+          {
+            "moduleId": "2520351c-b720-4408-92cb-fd1448343e61",
+            "name": "The Ash King's Vigil",
+            "createdAt": "2026-02-14 17:52:08.408",
+            "updatedAt": "2026-02-16 01:16:31.491",
+            "status": "active",
+            "isShared": false
+          },
+          {
+            "moduleId": "ba76cc7c-5003-446c-8997-7ab0a515a705",
+            "name": "The Pale Breath of Hokkaido: The Yukinohana Incident",
+            "createdAt": "2026-02-16 18:26:18.065",
+            "updatedAt": "2026-02-16 18:28:34.443",
+            "status": "active",
+            "isShared": false
+          }
+        ]
+      },
+      "playActivity": {
+        "sessionCount": 26,
+        "sessionElapsedSeconds": 0,
+        "sessionElapsedHours": 0,
+        "activeTurnSeconds": 18281,
+        "activeTurnHours": 5.08,
+        "turnCount": 553,
+        "completedTurnCount": 544,
+        "modulesPlayedCount": 4,
+        "firstSessionAt": "2026-02-13 04:18:48.38",
+        "lastSessionActivityAt": "2026-02-16 18:28:41.992"
+      }
+    },
+    {
+      "account": {
+        "id": "e06b0050-33d1-4956-811b-b8bb8250a797",
+        "email": "1149397707@qq.com",
+        "username": "lechess",
+        "role": "USER",
+        "emailVerified": true,
+        "active": true,
+        "createdAt": "2026-03-26 10:05:22.801",
+        "lastLoginAt": "2026-03-26 18:12:44.685"
+      },
+      "modulesCreated": {
+        "count": 0,
+        "modules": []
+      },
+      "playActivity": {
+        "sessionCount": 0,
+        "sessionElapsedSeconds": 0,
+        "sessionElapsedHours": 0,
+        "activeTurnSeconds": 0,
+        "activeTurnHours": 0,
+        "turnCount": 0,
+        "completedTurnCount": 0,
+        "modulesPlayedCount": 0,
+        "firstSessionAt": null,
+        "lastSessionActivityAt": null
+      }
+    },
+    {
+      "account": {
+        "id": "eaf292b8-91fc-4dfc-8962-8dcee8a6d1ff",
+        "email": "1152565876@qq.com",
+        "username": null,
+        "role": "USER",
+        "emailVerified": true,
+        "active": true,
+        "createdAt": "2026-03-08 14:04:06.568",
+        "lastLoginAt": "2026-03-11 08:55:58.626"
+      },
+      "modulesCreated": {
+        "count": 4,
+        "modules": [
+          {
+            "moduleId": "51552f92-836f-4df2-891b-01515fc691f8",
+            "name": "沉睡潮：阿卡姆的长夜",
+            "createdAt": "2026-03-10 21:50:14.066",
+            "updatedAt": "2026-03-10 23:20:33.37",
+            "status": "active",
+            "isShared": false
+          },
+          {
+            "moduleId": "4461b9bd-f7a2-48a6-ba96-752a20d2ed51",
+            "name": "The Pale Breath of Hokkaido: The Yukinohana Incident",
+            "createdAt": "2026-03-10 22:59:26.311",
+            "updatedAt": "2026-03-10 23:20:24.181",
+            "status": "active",
+            "isShared": false
+          },
+          {
+            "moduleId": "2984291c-5f8b-4a83-ab3c-462f1a33d6ce",
+            "name": "五月的圣河：被选之岸",
+            "createdAt": "2026-03-10 22:59:38.864",
+            "updatedAt": "2026-03-10 23:20:24.191",
+            "status": "active",
+            "isShared": false
+          },
+          {
+            "moduleId": "8d42a8a0-3094-4789-8241-97182f162fdd",
+            "name": "海洋之心的晚宴",
+            "createdAt": "2026-03-10 23:00:30.799",
+            "updatedAt": "2026-03-10 23:20:24.198",
+            "status": "active",
+            "isShared": false
+          }
+        ]
+      },
+      "playActivity": {
+        "sessionCount": 9,
+        "sessionElapsedSeconds": 0,
+        "sessionElapsedHours": 0,
+        "activeTurnSeconds": 3794,
+        "activeTurnHours": 1.05,
+        "turnCount": 69,
+        "completedTurnCount": 67,
+        "modulesPlayedCount": 1,
+        "firstSessionAt": "2026-03-10 21:51:41.683",
+        "lastSessionActivityAt": "2026-03-10 23:20:12.187"
+      }
+    },
+    {
+      "account": {
+        "id": "902a8fdd-240f-45ff-af23-9fef0495bdf8",
+        "email": "1210647856@qq.com",
+        "username": "123",
+        "role": "USER",
+        "emailVerified": true,
+        "active": true,
+        "createdAt": "2026-03-08 07:22:58.103",
+        "lastLoginAt": "2026-03-08 07:24:14.174"
+      },
+      "modulesCreated": {
+        "count": 0,
+        "modules": []
+      },
+      "playActivity": {
+        "sessionCount": 0,
+        "sessionElapsedSeconds": 0,
+        "sessionElapsedHours": 0,
+        "activeTurnSeconds": 0,
+        "activeTurnHours": 0,
+        "turnCount": 0,
+        "completedTurnCount": 0,
+        "modulesPlayedCount": 0,
+        "firstSessionAt": null,
+        "lastSessionActivityAt": null
+      }
+    },
+    {
+      "account": {
+        "id": "bfbae6a6-4969-43a8-bfeb-45f48a003671",
+        "email": "123456789@163.com",
+        "username": "小1酱",
+        "role": "USER",
+        "emailVerified": false,
+        "active": true,
+        "createdAt": "2026-05-04 10:21:15.735",
+        "lastLoginAt": null
+      },
+      "modulesCreated": {
+        "count": 0,
+        "modules": []
+      },
+      "playActivity": {
+        "sessionCount": 0,
+        "sessionElapsedSeconds": 0,
+        "sessionElapsedHours": 0,
+        "activeTurnSeconds": 0,
+        "activeTurnHours": 0,
+        "turnCount": 0,
+        "completedTurnCount": 0,
+        "modulesPlayedCount": 0,
+        "firstSessionAt": null,
+        "lastSessionActivityAt": null
+      }
+    },
+    {
+      "account": {
+        "id": "abff1e78-9041-4545-906f-6e206cad11fb",
+        "email": "1277424106@qq.com",
+        "username": null,
+        "role": "USER",
+        "emailVerified": true,
+        "active": true,
+        "createdAt": "2026-04-02 15:50:19.25",
+        "lastLoginAt": "2026-04-04 05:22:56.986"
+      },
+      "modulesCreated": {
+        "count": 1,
+        "modules": [
+          {
+            "moduleId": "55c2f7f1-b56f-4429-8c1d-a79e174322bc",
+            "name": "海洋之心的晚宴",
+            "createdAt": "2026-04-02 16:23:33.588",
+            "updatedAt": "2026-04-02 16:24:52.245",
+            "status": "active",
+            "isShared": false
+          }
+        ]
+      },
+      "playActivity": {
+        "sessionCount": 6,
+        "sessionElapsedSeconds": 0,
+        "sessionElapsedHours": 0,
+        "activeTurnSeconds": 3624,
+        "activeTurnHours": 1.01,
+        "turnCount": 102,
+        "completedTurnCount": 92,
+        "modulesPlayedCount": 1,
+        "firstSessionAt": "2026-04-02 16:24:59.797",
+        "lastSessionActivityAt": "2026-04-04 05:23:12.312"
+      }
+    },
+    {
+      "account": {
+        "id": "f40a742a-823e-418d-b4f9-3212cb35e10e",
+        "email": "1339408343@qq.com",
+        "username": "Raven",
+        "role": "USER",
+        "emailVerified": true,
+        "active": true,
+        "createdAt": "2026-03-16 06:24:06.221",
+        "lastLoginAt": "2026-03-16 08:03:15.853"
+      },
+      "modulesCreated": {
+        "count": 0,
+        "modules": []
+      },
+      "playActivity": {
+        "sessionCount": 0,
+        "sessionElapsedSeconds": 0,
+        "sessionElapsedHours": 0,
+        "activeTurnSeconds": 0,
+        "activeTurnHours": 0,
+        "turnCount": 0,
+        "completedTurnCount": 0,
+        "modulesPlayedCount": 0,
+        "firstSessionAt": null,
+        "lastSessionActivityAt": null
+      }
+    },
+    {
+      "account": {
+        "id": "0894b0b6-4655-47e3-b466-aee1b231a150",
+        "email": "1435079539@qq.com",
+        "username": "ryuuseihanabi",
+        "role": "USER",
+        "emailVerified": true,
+        "active": true,
+        "createdAt": "2026-02-13 06:40:49.054",
+        "lastLoginAt": "2026-02-13 06:47:19.577"
+      },
+      "modulesCreated": {
+        "count": 0,
+        "modules": []
+      },
+      "playActivity": {
+        "sessionCount": 0,
+        "sessionElapsedSeconds": 0,
+        "sessionElapsedHours": 0,
+        "activeTurnSeconds": 0,
+        "activeTurnHours": 0,
+        "turnCount": 0,
+        "completedTurnCount": 0,
+        "modulesPlayedCount": 0,
+        "firstSessionAt": null,
+        "lastSessionActivityAt": null
+      }
+    },
+    {
+      "account": {
+        "id": "cfccc7af-0d8e-4c64-8867-2712cc8e95c0",
+        "email": "1448388582@qq.com",
+        "username": "我的小猫酱",
+        "role": "USER",
+        "emailVerified": true,
+        "active": true,
+        "createdAt": "2026-02-14 01:40:22.443",
+        "lastLoginAt": "2026-02-14 10:33:17.119"
+      },
+      "modulesCreated": {
+        "count": 1,
+        "modules": [
+          {
+            "moduleId": "5fef42c3-710c-40db-829d-679525bc6c82",
+            "name": "绝命迫降：黑礁岛之谜 (Crash on Black Reef)",
+            "createdAt": "2026-02-14 10:49:42.384",
+            "updatedAt": "2026-02-16 01:16:31.491",
+            "status": "active",
+            "isShared": false
+          }
+        ]
+      },
+      "playActivity": {
+        "sessionCount": 1,
+        "sessionElapsedSeconds": 0,
+        "sessionElapsedHours": 0,
+        "activeTurnSeconds": 86,
+        "activeTurnHours": 0.02,
+        "turnCount": 3,
+        "completedTurnCount": 3,
+        "modulesPlayedCount": 1,
+        "firstSessionAt": "2026-02-14 10:50:56.781",
+        "lastSessionActivityAt": "2026-02-14 10:50:56.781"
+      }
+    },
+    {
+      "account": {
+        "id": "52005201-5b73-4985-9985-f3c08745c309",
+        "email": "15000224351@139.com",
+        "username": "mukoyo",
+        "role": "USER",
+        "emailVerified": true,
+        "active": true,
+        "createdAt": "2026-03-20 03:04:25.79",
+        "lastLoginAt": "2026-03-20 05:29:36.699"
+      },
+      "modulesCreated": {
+        "count": 1,
+        "modules": [
+          {
+            "moduleId": "866cb2fb-7ee4-4fa5-9069-57d96ccfe2db",
+            "name": "灰林的兽语契约",
+            "createdAt": "2026-03-20 03:51:08.8",
+            "updatedAt": "2026-03-20 05:29:41.675",
+            "status": "active",
+            "isShared": false
+          }
+        ]
+      },
+      "playActivity": {
+        "sessionCount": 1,
+        "sessionElapsedSeconds": 0,
+        "sessionElapsedHours": 0,
+        "activeTurnSeconds": 52,
+        "activeTurnHours": 0.01,
+        "turnCount": 3,
+        "completedTurnCount": 2,
+        "modulesPlayedCount": 1,
+        "firstSessionAt": "2026-03-20 06:01:36.085",
+        "lastSessionActivityAt": "2026-03-20 06:01:36.085"
+      }
+    },
+    {
+      "account": {
+        "id": "8885704e-084f-4a4f-81d6-4ee48b3accb2",
+        "email": "1504308018@qq.com",
+        "username": null,
+        "role": "USER",
+        "emailVerified": true,
+        "active": true,
+        "createdAt": "2026-02-13 10:24:15.7",
+        "lastLoginAt": "2026-02-13 10:25:34.153"
+      },
+      "modulesCreated": {
+        "count": 1,
+        "modules": [
+          {
+            "moduleId": "1e33d15f-24e5-4429-a9d6-08920d050635",
+            "name": "Feast of Flesh and Neon",
+            "createdAt": "2026-02-13 10:36:52.692",
+            "updatedAt": "2026-02-16 01:16:31.491",
+            "status": "active",
+            "isShared": false
+          }
+        ]
+      },
+      "playActivity": {
+        "sessionCount": 1,
+        "sessionElapsedSeconds": 0,
+        "sessionElapsedHours": 0,
+        "activeTurnSeconds": 54,
+        "activeTurnHours": 0.01,
+        "turnCount": 2,
+        "completedTurnCount": 2,
+        "modulesPlayedCount": 1,
+        "firstSessionAt": "2026-02-13 10:57:21.32",
+        "lastSessionActivityAt": "2026-02-13 10:57:21.32"
+      }
+    },
+    {
+      "account": {
+        "id": "c757aa35-53f2-4f95-a86f-473dac757594",
+        "email": "1532476830@qq.com",
+        "username": "qihao",
+        "role": "USER",
+        "emailVerified": true,
+        "active": true,
+        "createdAt": "2026-02-25 05:43:11.266",
+        "lastLoginAt": "2026-03-12 08:50:05.642"
+      },
+      "modulesCreated": {
+        "count": 1,
+        "modules": [
+          {
+            "moduleId": "fec254ce-d632-4efa-b48a-56987bbdcad7",
+            "name": "海洋之心的晚宴",
+            "createdAt": "2026-02-25 07:15:48.16",
+            "updatedAt": "2026-03-04 16:14:46.366",
+            "status": "active",
+            "isShared": true
+          }
+        ]
+      },
+      "playActivity": {
+        "sessionCount": 2,
+        "sessionElapsedSeconds": 0,
+        "sessionElapsedHours": 0,
+        "activeTurnSeconds": 2275,
+        "activeTurnHours": 0.63,
+        "turnCount": 43,
+        "completedTurnCount": 35,
+        "modulesPlayedCount": 1,
+        "firstSessionAt": "2026-03-04 15:02:43.505",
+        "lastSessionActivityAt": "2026-03-12 08:52:24.26"
+      }
+    },
+    {
+      "account": {
+        "id": "15caa513-80ef-4bb6-9512-3e158defa061",
+        "email": "1543600872@qq.com",
+        "username": "Favole",
+        "role": "USER",
+        "emailVerified": true,
+        "active": true,
+        "createdAt": "2026-03-02 02:17:13.745",
+        "lastLoginAt": "2026-03-02 02:17:49.458"
+      },
+      "modulesCreated": {
+        "count": 0,
+        "modules": []
+      },
+      "playActivity": {
+        "sessionCount": 0,
+        "sessionElapsedSeconds": 0,
+        "sessionElapsedHours": 0,
+        "activeTurnSeconds": 0,
+        "activeTurnHours": 0,
+        "turnCount": 0,
+        "completedTurnCount": 0,
+        "modulesPlayedCount": 0,
+        "firstSessionAt": null,
+        "lastSessionActivityAt": null
+      }
+    },
+    {
+      "account": {
+        "id": "29980c68-a02b-44d3-82cc-cf01eff5ad5f",
+        "email": "15552490@qq.com",
+        "username": "kane",
+        "role": "USER",
+        "emailVerified": true,
+        "active": true,
+        "createdAt": "2026-02-25 17:02:42.103",
+        "lastLoginAt": "2026-02-25 17:03:21.399"
+      },
+      "modulesCreated": {
+        "count": 1,
+        "modules": [
+          {
+            "moduleId": "e91a07d2-9b24-414b-aa38-8956014459c2",
+            "name": "雾岭的噬人魔鬼",
+            "createdAt": "2026-02-25 17:16:11.745",
+            "updatedAt": "2026-02-25 17:16:12.127",
+            "status": "active",
+            "isShared": false
+          }
+        ]
+      },
+      "playActivity": {
+        "sessionCount": 0,
+        "sessionElapsedSeconds": 0,
+        "sessionElapsedHours": 0,
+        "activeTurnSeconds": 0,
+        "activeTurnHours": 0,
+        "turnCount": 0,
+        "completedTurnCount": 0,
+        "modulesPlayedCount": 0,
+        "firstSessionAt": null,
+        "lastSessionActivityAt": null
+      }
+    },
+    {
+      "account": {
+        "id": "351d498e-6608-4b62-a1f1-6769df94fcd9",
+        "email": "1559236628@qq.com",
+        "username": "star",
+        "role": "USER",
+        "emailVerified": true,
+        "active": true,
+        "createdAt": "2026-02-24 08:13:54.903",
+        "lastLoginAt": "2026-04-30 11:19:47.195"
+      },
+      "modulesCreated": {
+        "count": 1,
+        "modules": [
+          {
+            "moduleId": "6af58d51-859a-4693-9fa5-c084086b82a2",
+            "name": "五月的圣河：被选之岸",
+            "createdAt": "2026-02-24 08:30:51.195",
+            "updatedAt": "2026-03-02 09:37:35.709",
+            "status": "active",
+            "isShared": true
+          }
+        ]
+      },
+      "playActivity": {
+        "sessionCount": 0,
+        "sessionElapsedSeconds": 0,
+        "sessionElapsedHours": 0,
+        "activeTurnSeconds": 0,
+        "activeTurnHours": 0,
+        "turnCount": 0,
+        "completedTurnCount": 0,
+        "modulesPlayedCount": 0,
+        "firstSessionAt": null,
+        "lastSessionActivityAt": null
+      }
+    },
+    {
+      "account": {
+        "id": "6b34e049-371f-40dc-b6fa-a1de1a3c0740",
+        "email": "1595493997@qq.com",
+        "username": "罗初，",
+        "role": "USER",
+        "emailVerified": true,
+        "active": true,
+        "createdAt": "2026-02-13 20:39:47.095",
+        "lastLoginAt": "2026-02-14 06:46:46.226"
+      },
+      "modulesCreated": {
+        "count": 0,
+        "modules": []
+      },
+      "playActivity": {
+        "sessionCount": 0,
+        "sessionElapsedSeconds": 0,
+        "sessionElapsedHours": 0,
+        "activeTurnSeconds": 0,
+        "activeTurnHours": 0,
+        "turnCount": 0,
+        "completedTurnCount": 0,
+        "modulesPlayedCount": 0,
+        "firstSessionAt": null,
+        "lastSessionActivityAt": null
+      }
+    },
+    {
+      "account": {
+        "id": "3af5d5fe-6320-4cce-a179-31ce7849297b",
+        "email": "15988908997@163.com",
+        "username": "Voco",
+        "role": "USER",
+        "emailVerified": true,
+        "active": true,
+        "createdAt": "2026-02-24 08:27:10.545",
+        "lastLoginAt": "2026-02-24 08:28:08.133"
+      },
+      "modulesCreated": {
+        "count": 0,
+        "modules": []
+      },
+      "playActivity": {
+        "sessionCount": 0,
+        "sessionElapsedSeconds": 0,
+        "sessionElapsedHours": 0,
+        "activeTurnSeconds": 0,
+        "activeTurnHours": 0,
+        "turnCount": 0,
+        "completedTurnCount": 0,
+        "modulesPlayedCount": 0,
+        "firstSessionAt": null,
+        "lastSessionActivityAt": null
+      }
+    },
+    {
+      "account": {
+        "id": "236a08f6-fe3b-425d-924d-83c5723548e2",
+        "email": "1662146068@qq.com",
+        "username": "Lin",
+        "role": "USER",
+        "emailVerified": true,
+        "active": true,
+        "createdAt": "2026-02-14 15:38:24.222",
+        "lastLoginAt": "2026-02-14 15:45:09.028"
+      },
+      "modulesCreated": {
+        "count": 0,
+        "modules": []
+      },
+      "playActivity": {
+        "sessionCount": 0,
+        "sessionElapsedSeconds": 0,
+        "sessionElapsedHours": 0,
+        "activeTurnSeconds": 0,
+        "activeTurnHours": 0,
+        "turnCount": 0,
+        "completedTurnCount": 0,
+        "modulesPlayedCount": 0,
+        "firstSessionAt": null,
+        "lastSessionActivityAt": null
+      }
+    },
+    {
+      "account": {
+        "id": "157a603e-1fe9-4348-b0fe-b33ca27e433a",
+        "email": "1668610167@qq.com",
+        "username": null,
+        "role": "USER",
+        "emailVerified": true,
+        "active": true,
+        "createdAt": "2026-03-25 04:52:47.369",
+        "lastLoginAt": "2026-03-25 04:53:44.923"
+      },
+      "modulesCreated": {
+        "count": 1,
+        "modules": [
+          {
+            "moduleId": "ff59fbef-2654-40ad-b467-ca475bf47bd1",
+            "name": "血色长夜：吸血鬼的黑暗世界",
+            "createdAt": "2026-03-25 05:04:41.014",
+            "updatedAt": "2026-03-25 05:04:41.621",
+            "status": "active",
+            "isShared": false
+          }
+        ]
+      },
+      "playActivity": {
+        "sessionCount": 0,
+        "sessionElapsedSeconds": 0,
+        "sessionElapsedHours": 0,
+        "activeTurnSeconds": 0,
+        "activeTurnHours": 0,
+        "turnCount": 0,
+        "completedTurnCount": 0,
+        "modulesPlayedCount": 0,
+        "firstSessionAt": null,
+        "lastSessionActivityAt": null
+      }
+    },
+    {
+      "account": {
+        "id": "93d9524c-5257-4cde-9c5f-18fa15a28621",
+        "email": "1791127081@qq.com",
+        "username": null,
+        "role": "USER",
+        "emailVerified": true,
+        "active": true,
+        "createdAt": "2026-02-13 12:22:02.807",
+        "lastLoginAt": "2026-02-13 12:22:40.987"
+      },
+      "modulesCreated": {
+        "count": 0,
+        "modules": []
+      },
+      "playActivity": {
+        "sessionCount": 0,
+        "sessionElapsedSeconds": 0,
+        "sessionElapsedHours": 0,
+        "activeTurnSeconds": 0,
+        "activeTurnHours": 0,
+        "turnCount": 0,
+        "completedTurnCount": 0,
+        "modulesPlayedCount": 0,
+        "firstSessionAt": null,
+        "lastSessionActivityAt": null
+      }
+    },
+    {
+      "account": {
+        "id": "36d02487-61be-4d86-8f9f-0dbd2d632e93",
+        "email": "18217519220@163.com",
+        "username": "陶青蠋",
+        "role": "USER",
+        "emailVerified": true,
+        "active": true,
+        "createdAt": "2026-03-06 06:51:54.931",
+        "lastLoginAt": "2026-03-06 06:52:43.289"
+      },
+      "modulesCreated": {
+        "count": 0,
+        "modules": []
+      },
+      "playActivity": {
+        "sessionCount": 0,
+        "sessionElapsedSeconds": 0,
+        "sessionElapsedHours": 0,
+        "activeTurnSeconds": 0,
+        "activeTurnHours": 0,
+        "turnCount": 0,
+        "completedTurnCount": 0,
+        "modulesPlayedCount": 0,
+        "firstSessionAt": null,
+        "lastSessionActivityAt": null
+      }
+    },
+    {
+      "account": {
+        "id": "2c5e0f29-e03a-4e5e-885c-dcbd3c65cbd2",
+        "email": "1842232440@qq.com",
+        "username": "墨夜琉璃",
+        "role": "USER",
+        "emailVerified": true,
+        "active": true,
+        "createdAt": "2026-02-24 17:37:45.31",
+        "lastLoginAt": "2026-03-11 16:38:38.103"
+      },
+      "modulesCreated": {
+        "count": 0,
+        "modules": []
+      },
+      "playActivity": {
+        "sessionCount": 0,
+        "sessionElapsedSeconds": 0,
+        "sessionElapsedHours": 0,
+        "activeTurnSeconds": 0,
+        "activeTurnHours": 0,
+        "turnCount": 0,
+        "completedTurnCount": 0,
+        "modulesPlayedCount": 0,
+        "firstSessionAt": null,
+        "lastSessionActivityAt": null
+      }
+    },
+    {
+      "account": {
+        "id": "15038448-77d4-408f-8d2f-7da904dbf717",
+        "email": "1968874992@qq.com",
+        "username": "yulok",
+        "role": "USER",
+        "emailVerified": true,
+        "active": true,
+        "createdAt": "2026-02-13 15:27:11.167",
+        "lastLoginAt": "2026-02-14 12:27:13.167"
+      },
+      "modulesCreated": {
+        "count": 1,
+        "modules": [
+          {
+            "moduleId": "c8c592cf-b97e-460e-8065-8eb76c67778b",
+            "name": "Invitation from the Grey Boundary",
+            "createdAt": "2026-02-14 12:35:01.974",
+            "updatedAt": "2026-02-16 01:16:31.491",
+            "status": "active",
+            "isShared": false
+          }
+        ]
+      },
+      "playActivity": {
+        "sessionCount": 0,
+        "sessionElapsedSeconds": 0,
+        "sessionElapsedHours": 0,
+        "activeTurnSeconds": 0,
+        "activeTurnHours": 0,
+        "turnCount": 0,
+        "completedTurnCount": 0,
+        "modulesPlayedCount": 0,
+        "firstSessionAt": null,
+        "lastSessionActivityAt": null
+      }
+    },
+    {
+      "account": {
+        "id": "df94781c-b964-4cd8-a7e6-fb3e429da634",
+        "email": "1970201456@qq.com",
+        "username": "h123",
+        "role": "USER",
+        "emailVerified": true,
+        "active": true,
+        "createdAt": "2026-03-13 11:56:32.272",
+        "lastLoginAt": "2026-04-27 07:11:21.042"
+      },
+      "modulesCreated": {
+        "count": 2,
+        "modules": [
+          {
+            "moduleId": "955578dd-71a1-407c-bc17-b8bfe4f27bf6",
+            "name": "海洋之心的晚宴",
+            "createdAt": "2026-03-13 12:01:12.704",
+            "updatedAt": "2026-04-27 07:21:44.15",
+            "status": "active",
+            "isShared": false
+          },
+          {
+            "moduleId": "92939fb9-97a6-4c5d-94ba-63d084c9ecd5",
+            "name": "经验的残响：裂隙之下的魔王域",
+            "createdAt": "2026-04-27 07:21:56.756",
+            "updatedAt": "2026-04-27 07:21:56.786",
+            "status": "active",
+            "isShared": false
+          }
+        ]
+      },
+      "playActivity": {
+        "sessionCount": 3,
+        "sessionElapsedSeconds": 0,
+        "sessionElapsedHours": 0,
+        "activeTurnSeconds": 331,
+        "activeTurnHours": 0.09,
+        "turnCount": 11,
+        "completedTurnCount": 10,
+        "modulesPlayedCount": 2,
+        "firstSessionAt": "2026-03-13 12:03:35.006",
+        "lastSessionActivityAt": "2026-04-27 07:27:11.934"
+      }
+    },
+    {
+      "account": {
+        "id": "21a22cbc-656e-4832-82ac-b96eeb703680",
+        "email": "2018200568@qq.com",
+        "username": "幽灵君",
+        "role": "USER",
+        "emailVerified": true,
+        "active": true,
+        "createdAt": "2026-03-02 11:49:18.444",
+        "lastLoginAt": "2026-03-02 11:50:51.64"
+      },
+      "modulesCreated": {
+        "count": 0,
+        "modules": []
+      },
+      "playActivity": {
+        "sessionCount": 0,
+        "sessionElapsedSeconds": 0,
+        "sessionElapsedHours": 0,
+        "activeTurnSeconds": 0,
+        "activeTurnHours": 0,
+        "turnCount": 0,
+        "completedTurnCount": 0,
+        "modulesPlayedCount": 0,
+        "firstSessionAt": null,
+        "lastSessionActivityAt": null
+      }
+    },
+    {
+      "account": {
+        "id": "f2951d77-c50c-4f77-9ea5-a32ef2590577",
+        "email": "2036408737@qq.com",
+        "username": "bxc",
+        "role": "USER",
+        "emailVerified": true,
+        "active": true,
+        "createdAt": "2026-02-13 10:01:48.371",
+        "lastLoginAt": "2026-02-13 10:02:19.073"
+      },
+      "modulesCreated": {
+        "count": 1,
+        "modules": [
+          {
+            "moduleId": "4d4b1062-207d-4e7c-926a-fff97ba6eda6",
+            "name": "The Final Offer",
+            "createdAt": "2026-02-13 10:13:36.458",
+            "updatedAt": "2026-02-16 01:16:31.491",
+            "status": "active",
+            "isShared": false
+          }
+        ]
+      },
+      "playActivity": {
+        "sessionCount": 0,
+        "sessionElapsedSeconds": 0,
+        "sessionElapsedHours": 0,
+        "activeTurnSeconds": 0,
+        "activeTurnHours": 0,
+        "turnCount": 0,
+        "completedTurnCount": 0,
+        "modulesPlayedCount": 0,
+        "firstSessionAt": null,
+        "lastSessionActivityAt": null
+      }
+    },
+    {
+      "account": {
+        "id": "dd2de946-2e0d-4296-85df-53c2dc09bc32",
+        "email": "2101676495@qq.com",
+        "username": "德利特",
+        "role": "USER",
+        "emailVerified": true,
+        "active": true,
+        "createdAt": "2026-02-26 08:35:35.659",
+        "lastLoginAt": "2026-02-26 08:37:43.618"
+      },
+      "modulesCreated": {
+        "count": 0,
+        "modules": []
+      },
+      "playActivity": {
+        "sessionCount": 0,
+        "sessionElapsedSeconds": 0,
+        "sessionElapsedHours": 0,
+        "activeTurnSeconds": 0,
+        "activeTurnHours": 0,
+        "turnCount": 0,
+        "completedTurnCount": 0,
+        "modulesPlayedCount": 0,
+        "firstSessionAt": null,
+        "lastSessionActivityAt": null
+      }
+    },
+    {
+      "account": {
+        "id": "81dea17e-bad5-4f28-b94d-a3413a28daf5",
+        "email": "2119766089@qq.com",
+        "username": "SaltyPepperfish",
+        "role": "USER",
+        "emailVerified": true,
+        "active": true,
+        "createdAt": "2026-02-25 04:44:37.569",
+        "lastLoginAt": "2026-03-07 11:06:48.732"
+      },
+      "modulesCreated": {
+        "count": 1,
+        "modules": [
+          {
+            "moduleId": "93029221-6c49-44c1-ba36-0d1e1451cb63",
+            "name": "暗影之友：孵化者的契约",
+            "createdAt": "2026-02-25 05:26:31.089",
+            "updatedAt": "2026-03-07 11:10:23.416",
+            "status": "active",
+            "isShared": false
+          }
+        ]
+      },
+      "playActivity": {
+        "sessionCount": 0,
+        "sessionElapsedSeconds": 0,
+        "sessionElapsedHours": 0,
+        "activeTurnSeconds": 0,
+        "activeTurnHours": 0,
+        "turnCount": 0,
+        "completedTurnCount": 0,
+        "modulesPlayedCount": 0,
+        "firstSessionAt": null,
+        "lastSessionActivityAt": null
+      }
+    },
+    {
+      "account": {
+        "id": "145810b9-8d56-4d4d-8e35-5a91f45a426a",
+        "email": "2206695637@qq.com",
+        "username": "Wursula",
+        "role": "USER",
+        "emailVerified": true,
+        "active": true,
+        "createdAt": "2026-03-11 01:34:09.137",
+        "lastLoginAt": "2026-03-11 01:34:46.577"
+      },
+      "modulesCreated": {
+        "count": 0,
+        "modules": []
+      },
+      "playActivity": {
+        "sessionCount": 0,
+        "sessionElapsedSeconds": 0,
+        "sessionElapsedHours": 0,
+        "activeTurnSeconds": 0,
+        "activeTurnHours": 0,
+        "turnCount": 0,
+        "completedTurnCount": 0,
+        "modulesPlayedCount": 0,
+        "firstSessionAt": null,
+        "lastSessionActivityAt": null
+      }
+    },
+    {
+      "account": {
+        "id": "1bd2cc85-cc29-4c4f-9426-300b3672e3bc",
+        "email": "2230807783@qq.com",
+        "username": "豆小芽",
+        "role": "USER",
+        "emailVerified": true,
+        "active": true,
+        "createdAt": "2026-02-13 03:57:40.688",
+        "lastLoginAt": "2026-02-13 03:58:16.909"
+      },
+      "modulesCreated": {
+        "count": 0,
+        "modules": []
+      },
+      "playActivity": {
+        "sessionCount": 0,
+        "sessionElapsedSeconds": 0,
+        "sessionElapsedHours": 0,
+        "activeTurnSeconds": 0,
+        "activeTurnHours": 0,
+        "turnCount": 0,
+        "completedTurnCount": 0,
+        "modulesPlayedCount": 0,
+        "firstSessionAt": null,
+        "lastSessionActivityAt": null
+      }
+    },
+    {
+      "account": {
+        "id": "56dd1ec6-5bed-4deb-9f60-c81e6b1bada8",
+        "email": "2249944271@qq.com",
+        "username": null,
+        "role": "USER",
+        "emailVerified": true,
+        "active": true,
+        "createdAt": "2026-03-07 20:40:08.437",
+        "lastLoginAt": "2026-03-07 20:43:37.19"
+      },
+      "modulesCreated": {
+        "count": 3,
+        "modules": [
+          {
+            "moduleId": "86454cc1-1b17-470c-aca7-e2453bd18c7a",
+            "name": "The Pale Breath of Hokkaido: The Yukinohana Incident",
+            "createdAt": "2026-03-07 20:54:07.567",
+            "updatedAt": "2026-03-07 21:07:50.869",
+            "status": "active",
+            "isShared": false
+          },
+          {
+            "moduleId": "7ce8c8fd-aae4-4f47-9e3d-16bad3b20187",
+            "name": "海洋之心的晚宴",
+            "createdAt": "2026-03-07 21:07:07.363",
+            "updatedAt": "2026-03-07 21:07:56.949",
+            "status": "active",
+            "isShared": false
+          },
+          {
+            "moduleId": "08598508-8627-4aa3-abd4-c4ec9797d48c",
+            "name": "五月的圣河：被选之岸",
+            "createdAt": "2026-03-07 21:07:40.857",
+            "updatedAt": "2026-03-07 21:07:50.861",
+            "status": "active",
+            "isShared": false
+          }
+        ]
+      },
+      "playActivity": {
+        "sessionCount": 3,
+        "sessionElapsedSeconds": 0,
+        "sessionElapsedHours": 0,
+        "activeTurnSeconds": 144,
+        "activeTurnHours": 0.04,
+        "turnCount": 6,
+        "completedTurnCount": 6,
+        "modulesPlayedCount": 2,
+        "firstSessionAt": "2026-03-07 21:06:03.077",
+        "lastSessionActivityAt": "2026-03-07 21:10:54.777"
+      }
+    },
+    {
+      "account": {
+        "id": "134ab37f-6e1d-4fbd-a1a7-b34e41005f4e",
+        "email": "2304286742@qq.com",
+        "username": "shark",
+        "role": "USER",
+        "emailVerified": true,
+        "active": true,
+        "createdAt": "2026-02-24 09:51:29.522",
+        "lastLoginAt": "2026-02-24 09:52:05.357"
+      },
+      "modulesCreated": {
+        "count": 3,
+        "modules": [
+          {
+            "moduleId": "dd1d77d5-98c4-495d-b691-d2df4eade469",
+            "name": "五月的圣河：被选之岸",
+            "createdAt": "2026-02-24 10:03:43.521",
+            "updatedAt": "2026-02-24 10:57:08.097",
+            "status": "active",
+            "isShared": false
+          },
+          {
+            "moduleId": "583e3d16-5666-4aee-ba3b-470158ecd536",
+            "name": "The Pale Breath of Hokkaido: The Yukinohana Incident",
+            "createdAt": "2026-02-24 10:04:18.203",
+            "updatedAt": "2026-02-24 10:57:08.087",
+            "status": "active",
+            "isShared": false
+          },
+          {
+            "moduleId": "46751f57-dccf-43ca-85e4-41583f64cb0b",
+            "name": "妻之邀：灰城的祭礼",
+            "createdAt": "2026-02-24 10:25:07.686",
+            "updatedAt": "2026-02-24 10:57:12.766",
+            "status": "active",
+            "isShared": false
+          }
+        ]
+      },
+      "playActivity": {
+        "sessionCount": 2,
+        "sessionElapsedSeconds": 0,
+        "sessionElapsedHours": 0,
+        "activeTurnSeconds": 107,
+        "activeTurnHours": 0.03,
+        "turnCount": 5,
+        "completedTurnCount": 4,
+        "modulesPlayedCount": 2,
+        "firstSessionAt": "2026-02-24 10:04:38.068",
+        "lastSessionActivityAt": "2026-02-24 10:58:07.847"
+      }
+    },
+    {
+      "account": {
+        "id": "153210ea-27b9-4f35-8437-c8c5a61ad357",
+        "email": "2390850512@qq.com",
+        "username": "提亚斯",
+        "role": "USER",
+        "emailVerified": true,
+        "active": true,
+        "createdAt": "2026-03-11 08:48:05.305",
+        "lastLoginAt": "2026-03-11 08:49:49.119"
+      },
+      "modulesCreated": {
+        "count": 5,
+        "modules": [
+          {
+            "moduleId": "7b24e27a-dbd1-484e-9bb7-3390711c971f",
+            "name": "沉睡潮：阿卡姆的长夜",
+            "createdAt": "2026-03-11 09:14:59.744",
+            "updatedAt": "2026-03-11 09:19:56.202",
+            "status": "active",
+            "isShared": false
+          },
+          {
+            "moduleId": "accb59bb-cda5-49e2-8f15-407034e79779",
+            "name": "布鲁克林的私酿与低语",
+            "createdAt": "2026-03-11 09:15:11.557",
+            "updatedAt": "2026-03-11 09:19:56.224",
+            "status": "active",
+            "isShared": false
+          },
+          {
+            "moduleId": "00707895-81af-4f80-ba28-8d6ddda64587",
+            "name": "The Pale Breath of Hokkaido: The Yukinohana Incident",
+            "createdAt": "2026-03-11 09:15:15.569",
+            "updatedAt": "2026-03-11 09:19:56.209",
+            "status": "active",
+            "isShared": false
+          },
+          {
+            "moduleId": "5fd9ea29-6f74-48b5-9fec-30dc2392dac0",
+            "name": "海洋之心的晚宴",
+            "createdAt": "2026-03-11 09:15:20.32",
+            "updatedAt": "2026-03-11 09:19:56.216",
+            "status": "active",
+            "isShared": false
+          },
+          {
+            "moduleId": "85ab7c6b-1c64-41d8-aa4c-54d7cd313c8d",
+            "name": "经验的残响：裂隙之下的魔王域",
+            "createdAt": "2026-03-11 09:18:47.698",
+            "updatedAt": "2026-03-11 09:20:39.694",
+            "status": "active",
+            "isShared": false
+          }
+        ]
+      },
+      "playActivity": {
+        "sessionCount": 3,
+        "sessionElapsedSeconds": 0,
+        "sessionElapsedHours": 0,
+        "activeTurnSeconds": 132,
+        "activeTurnHours": 0.04,
+        "turnCount": 5,
+        "completedTurnCount": 5,
+        "modulesPlayedCount": 3,
+        "firstSessionAt": "2026-03-11 09:15:59.143",
+        "lastSessionActivityAt": "2026-03-11 09:21:04.911"
+      }
+    },
+    {
+      "account": {
+        "id": "2a146ac0-6fb9-4937-8127-5df1f2f09991",
+        "email": "2511897889@qq.com",
+        "username": null,
+        "role": "USER",
+        "emailVerified": true,
+        "active": true,
+        "createdAt": "2026-02-24 07:23:09.102",
+        "lastLoginAt": "2026-02-24 07:24:16.1"
+      },
+      "modulesCreated": {
+        "count": 2,
+        "modules": [
+          {
+            "moduleId": "c27b4f84-b529-4793-9fb3-17dcc425bfe3",
+            "name": "第三个星期一的腕纹",
+            "createdAt": "2026-02-24 07:44:05.503",
+            "updatedAt": "2026-02-24 08:11:41.397",
+            "status": "active",
+            "isShared": false
+          },
+          {
+            "moduleId": "3c14265b-2cfe-41e3-b639-39d93962a55f",
+            "name": "The Pale Breath of Hokkaido: The Yukinohana Incident",
+            "createdAt": "2026-02-24 08:11:47.111",
+            "updatedAt": "2026-02-24 08:11:47.133",
+            "status": "active",
+            "isShared": false
+          }
+        ]
+      },
+      "playActivity": {
+        "sessionCount": 3,
+        "sessionElapsedSeconds": 0,
+        "sessionElapsedHours": 0,
+        "activeTurnSeconds": 278,
+        "activeTurnHours": 0.08,
+        "turnCount": 7,
+        "completedTurnCount": 7,
+        "modulesPlayedCount": 2,
+        "firstSessionAt": "2026-02-24 08:00:26.414",
+        "lastSessionActivityAt": "2026-02-24 08:12:09.009"
+      }
+    },
+    {
+      "account": {
+        "id": "77261286-6132-47d5-93b4-4883144db587",
+        "email": "2559749429@qq.com",
+        "username": "dddjjw",
+        "role": "USER",
+        "emailVerified": true,
+        "active": true,
+        "createdAt": "2026-02-24 08:27:39.533",
+        "lastLoginAt": "2026-02-24 14:22:12.935"
+      },
+      "modulesCreated": {
+        "count": 2,
+        "modules": [
+          {
+            "moduleId": "6168211a-11f3-4af7-b247-3fa421ade754",
+            "name": "高潮的代价：天衡市的收割",
+            "createdAt": "2026-02-24 09:35:03.239",
+            "updatedAt": "2026-02-24 14:23:22.168",
+            "status": "active",
+            "isShared": false
+          },
+          {
+            "moduleId": "555a464f-0cd1-4090-80c8-ed141f2f1966",
+            "name": "高潮机器：铁网区的低语",
+            "createdAt": "2026-02-24 10:04:59.202",
+            "updatedAt": "2026-02-24 14:23:22.176",
+            "status": "active",
+            "isShared": false
+          }
+        ]
+      },
+      "playActivity": {
+        "sessionCount": 4,
+        "sessionElapsedSeconds": 0,
+        "sessionElapsedHours": 0,
+        "activeTurnSeconds": 664,
+        "activeTurnHours": 0.18,
+        "turnCount": 15,
+        "completedTurnCount": 12,
+        "modulesPlayedCount": 2,
+        "firstSessionAt": "2026-02-24 09:35:42.883",
+        "lastSessionActivityAt": "2026-02-24 10:29:46.311"
+      }
+    },
+    {
+      "account": {
+        "id": "a0b4afb7-076a-469e-8e11-c5b7bf6797ee",
+        "email": "2593647953@qq.com",
+        "username": "2593647953",
+        "role": "USER",
+        "emailVerified": true,
+        "active": true,
+        "createdAt": "2026-03-24 07:20:03.789",
+        "lastLoginAt": "2026-03-24 07:20:53.233"
+      },
+      "modulesCreated": {
+        "count": 2,
+        "modules": [
+          {
+            "moduleId": "2e2c8aa3-98da-42dc-8dba-0a9524c50c4a",
+            "name": "布鲁克林的私酿与低语",
+            "createdAt": "2026-03-24 07:21:42.255",
+            "updatedAt": "2026-03-24 07:22:02.164",
+            "status": "active",
+            "isShared": false
+          },
+          {
+            "moduleId": "e1cd9ab5-022a-4b7f-97cf-b7788f24fb5d",
+            "name": "海洋之心的晚宴",
+            "createdAt": "2026-03-24 07:21:46.257",
+            "updatedAt": "2026-03-24 07:22:02.186",
+            "status": "active",
+            "isShared": false
+          }
+        ]
+      },
+      "playActivity": {
+        "sessionCount": 0,
+        "sessionElapsedSeconds": 0,
+        "sessionElapsedHours": 0,
+        "activeTurnSeconds": 0,
+        "activeTurnHours": 0,
+        "turnCount": 0,
+        "completedTurnCount": 0,
+        "modulesPlayedCount": 0,
+        "firstSessionAt": null,
+        "lastSessionActivityAt": null
+      }
+    },
+    {
+      "account": {
+        "id": "fb894bb5-bb51-4988-9e37-d44607d0bc53",
+        "email": "2689708744@qq.com",
+        "username": "mllm",
+        "role": "USER",
+        "emailVerified": true,
+        "active": true,
+        "createdAt": "2026-02-13 20:17:48.311",
+        "lastLoginAt": "2026-02-13 20:18:15.872"
+      },
+      "modulesCreated": {
+        "count": 0,
+        "modules": []
+      },
+      "playActivity": {
+        "sessionCount": 0,
+        "sessionElapsedSeconds": 0,
+        "sessionElapsedHours": 0,
+        "activeTurnSeconds": 0,
+        "activeTurnHours": 0,
+        "turnCount": 0,
+        "completedTurnCount": 0,
+        "modulesPlayedCount": 0,
+        "firstSessionAt": null,
+        "lastSessionActivityAt": null
+      }
+    },
+    {
+      "account": {
+        "id": "7a06616b-c6ea-4705-96fb-43077cd8845d",
+        "email": "2691151144@qq.com",
+        "username": "Pattie",
+        "role": "USER",
+        "emailVerified": true,
+        "active": true,
+        "createdAt": "2026-03-09 09:38:06.823",
+        "lastLoginAt": "2026-03-09 12:17:58.393"
+      },
+      "modulesCreated": {
+        "count": 0,
+        "modules": []
+      },
+      "playActivity": {
+        "sessionCount": 0,
+        "sessionElapsedSeconds": 0,
+        "sessionElapsedHours": 0,
+        "activeTurnSeconds": 0,
+        "activeTurnHours": 0,
+        "turnCount": 0,
+        "completedTurnCount": 0,
+        "modulesPlayedCount": 0,
+        "firstSessionAt": null,
+        "lastSessionActivityAt": null
+      }
+    },
+    {
+      "account": {
+        "id": "acbc7805-9227-4ed5-9146-ba7c7508044f",
+        "email": "2696407757@qq.com",
+        "username": "felous",
+        "role": "USER",
+        "emailVerified": true,
+        "active": true,
+        "createdAt": "2026-05-13 16:17:08.013",
+        "lastLoginAt": "2026-05-14 09:18:20.655"
+      },
+      "modulesCreated": {
+        "count": 2,
+        "modules": [
+          {
+            "moduleId": "bcd794a1-9a11-4307-a0b2-b347e4be3cc5",
+            "name": "这座城市在笑",
+            "createdAt": "2026-05-13 17:01:17.648",
+            "updatedAt": "2026-05-14 09:19:03.372",
+            "status": "active",
+            "isShared": false
+          },
+          {
+            "moduleId": "8573cfd1-3bca-4a01-98a2-aa3ce5f7dd1c",
+            "name": "布鲁克林的私酿与低语",
+            "createdAt": "2026-05-14 09:18:49.52",
+            "updatedAt": "2026-05-14 09:19:07.83",
+            "status": "active",
+            "isShared": false
+          }
+        ]
+      },
+      "playActivity": {
+        "sessionCount": 2,
+        "sessionElapsedSeconds": 0,
+        "sessionElapsedHours": 0,
+        "activeTurnSeconds": 515,
+        "activeTurnHours": 0.14,
+        "turnCount": 12,
+        "completedTurnCount": 10,
+        "modulesPlayedCount": 2,
+        "firstSessionAt": "2026-05-13 17:01:34.038",
+        "lastSessionActivityAt": "2026-05-14 09:19:42.448"
+      }
+    },
+    {
+      "account": {
+        "id": "c308a8cb-ef41-401a-82b0-1b459bb7c0bf",
+        "email": "2704362776ywl@gmail.com",
+        "username": "yriaf",
+        "role": "USER",
+        "emailVerified": true,
+        "active": true,
+        "createdAt": "2026-05-13 16:35:26.202",
+        "lastLoginAt": "2026-05-13 16:36:51.521"
+      },
+      "modulesCreated": {
+        "count": 1,
+        "modules": [
+          {
+            "moduleId": "f1294b3e-ff8e-4642-b523-5d1b020c734e",
+            "name": "这座城市在笑",
+            "createdAt": "2026-05-13 16:53:54.942",
+            "updatedAt": "2026-05-13 16:53:54.968",
+            "status": "active",
+            "isShared": false
+          }
+        ]
+      },
+      "playActivity": {
+        "sessionCount": 1,
+        "sessionElapsedSeconds": 0,
+        "sessionElapsedHours": 0,
+        "activeTurnSeconds": 769,
+        "activeTurnHours": 0.21,
+        "turnCount": 12,
+        "completedTurnCount": 11,
+        "modulesPlayedCount": 1,
+        "firstSessionAt": "2026-05-13 16:54:21.733",
+        "lastSessionActivityAt": "2026-05-13 16:54:21.733"
+      }
+    },
+    {
+      "account": {
+        "id": "77f81b9a-642e-4925-8c85-5f65c5da4ff5",
+        "email": "2724377372@qq.com",
+        "username": "ztgj1014",
+        "role": "USER",
+        "emailVerified": false,
+        "active": true,
+        "createdAt": "2026-03-04 02:12:43.544",
+        "lastLoginAt": null
+      },
+      "modulesCreated": {
+        "count": 0,
+        "modules": []
+      },
+      "playActivity": {
+        "sessionCount": 0,
+        "sessionElapsedSeconds": 0,
+        "sessionElapsedHours": 0,
+        "activeTurnSeconds": 0,
+        "activeTurnHours": 0,
+        "turnCount": 0,
+        "completedTurnCount": 0,
+        "modulesPlayedCount": 0,
+        "firstSessionAt": null,
+        "lastSessionActivityAt": null
+      }
+    },
+    {
+      "account": {
+        "id": "736b9cb0-3e77-48e7-8a79-551e9ab4d348",
+        "email": "2807038329@qq.com",
+        "username": "dlmsr",
+        "role": "USER",
+        "emailVerified": true,
+        "active": true,
+        "createdAt": "2026-02-13 07:15:48.395",
+        "lastLoginAt": "2026-02-13 07:18:52.318"
+      },
+      "modulesCreated": {
+        "count": 1,
+        "modules": [
+          {
+            "moduleId": "a485a087-cad1-4b4a-8f42-ec97697315d4",
+            "name": "伪神的盛宴 (The Feast of the False God)",
+            "createdAt": "2026-02-13 10:27:09.457",
+            "updatedAt": "2026-02-16 01:16:31.491",
+            "status": "active",
+            "isShared": false
+          }
+        ]
+      },
+      "playActivity": {
+        "sessionCount": 1,
+        "sessionElapsedSeconds": 0,
+        "sessionElapsedHours": 0,
+        "activeTurnSeconds": 33,
+        "activeTurnHours": 0.01,
+        "turnCount": 2,
+        "completedTurnCount": 2,
+        "modulesPlayedCount": 1,
+        "firstSessionAt": "2026-02-13 10:42:41.24",
+        "lastSessionActivityAt": "2026-02-13 10:42:41.24"
+      }
+    },
+    {
+      "account": {
+        "id": "c682dbeb-cf5e-414a-ad26-37581373e0d7",
+        "email": "2808652096@qq.com",
+        "username": "tsuru",
+        "role": "USER",
+        "emailVerified": true,
+        "active": true,
+        "createdAt": "2026-03-21 12:38:41.741",
+        "lastLoginAt": "2026-03-21 12:40:24.052"
+      },
+      "modulesCreated": {
+        "count": 2,
+        "modules": [
+          {
+            "moduleId": "fc4620e7-d574-4ec0-808b-d3ee71ae9481",
+            "name": "The Quiet Mark of n。",
+            "createdAt": "2026-03-21 13:09:58.002",
+            "updatedAt": "2026-03-21 13:18:35.856",
+            "status": "active",
+            "isShared": false
+          },
+          {
+            "moduleId": "1cca7a84-06be-4e55-b3d4-cc9b7afb9355",
+            "name": "迷雾中的低语：黑木镇的纪事",
+            "createdAt": "2026-03-21 13:18:22.365",
+            "updatedAt": "2026-03-21 13:18:40.251",
+            "status": "active",
+            "isShared": false
+          }
+        ]
+      },
+      "playActivity": {
+        "sessionCount": 0,
+        "sessionElapsedSeconds": 0,
+        "sessionElapsedHours": 0,
+        "activeTurnSeconds": 0,
+        "activeTurnHours": 0,
+        "turnCount": 0,
+        "completedTurnCount": 0,
+        "modulesPlayedCount": 0,
+        "firstSessionAt": null,
+        "lastSessionActivityAt": null
+      }
+    },
+    {
+      "account": {
+        "id": "b3aac6b0-21fe-40b5-982e-58b77688b662",
+        "email": "2814604576@qq.com",
+        "username": "四叶露露",
+        "role": "USER",
+        "emailVerified": true,
+        "active": true,
+        "createdAt": "2026-02-25 07:17:07.823",
+        "lastLoginAt": "2026-02-25 07:18:02.96"
+      },
+      "modulesCreated": {
+        "count": 1,
+        "modules": [
+          {
+            "moduleId": "f1deaab0-5aa8-46c7-b2c4-46fa737bd49d",
+            "name": "五月的圣河：被选之岸",
+            "createdAt": "2026-02-25 07:20:42.141",
+            "updatedAt": "2026-02-25 07:20:44.043",
+            "status": "active",
+            "isShared": false
+          }
+        ]
+      },
+      "playActivity": {
+        "sessionCount": 1,
+        "sessionElapsedSeconds": 0,
+        "sessionElapsedHours": 0,
+        "activeTurnSeconds": 289,
+        "activeTurnHours": 0.08,
+        "turnCount": 6,
+        "completedTurnCount": 5,
+        "modulesPlayedCount": 1,
+        "firstSessionAt": "2026-02-25 07:29:23.922",
+        "lastSessionActivityAt": "2026-02-25 07:29:23.922"
+      }
+    },
+    {
+      "account": {
+        "id": "0d1738be-6edc-4cae-b841-b41c9992dc86",
+        "email": "2826413692@qq.com",
+        "username": null,
+        "role": "USER",
+        "emailVerified": false,
+        "active": true,
+        "createdAt": "2026-02-14 03:16:03.215",
+        "lastLoginAt": null
+      },
+      "modulesCreated": {
+        "count": 0,
+        "modules": []
+      },
+      "playActivity": {
+        "sessionCount": 0,
+        "sessionElapsedSeconds": 0,
+        "sessionElapsedHours": 0,
+        "activeTurnSeconds": 0,
+        "activeTurnHours": 0,
+        "turnCount": 0,
+        "completedTurnCount": 0,
+        "modulesPlayedCount": 0,
+        "firstSessionAt": null,
+        "lastSessionActivityAt": null
+      }
+    },
+    {
+      "account": {
+        "id": "4f94ec51-0bc7-4456-b97f-9f860f659265",
+        "email": "2833924511@qq.com",
+        "username": "r0bot",
+        "role": "USER",
+        "emailVerified": true,
+        "active": true,
+        "createdAt": "2026-03-04 14:39:17.418",
+        "lastLoginAt": "2026-03-05 06:36:54.865"
+      },
+      "modulesCreated": {
+        "count": 5,
+        "modules": [
+          {
+            "moduleId": "88bbbb9b-78c6-48a9-bfb4-6a73784ab241",
+            "name": "五月的圣河：被选之岸",
+            "createdAt": "2026-03-04 15:14:46.74",
+            "updatedAt": "2026-03-05 06:37:16.835",
+            "status": "active",
+            "isShared": false
+          },
+          {
+            "moduleId": "5e011669-d7fc-49cd-9a06-d1dbd0a90994",
+            "name": "经验的残响：裂隙之下的魔王域",
+            "createdAt": "2026-03-04 15:15:15.295",
+            "updatedAt": "2026-03-05 06:37:20.026",
+            "status": "active",
+            "isShared": false
+          },
+          {
+            "moduleId": "c09dd61b-add9-4d33-952b-ea3a14d87fe3",
+            "name": "布鲁克林的私酿与低语",
+            "createdAt": "2026-03-04 15:16:11.427",
+            "updatedAt": "2026-03-05 06:37:16.845",
+            "status": "active",
+            "isShared": false
+          },
+          {
+            "moduleId": "26bcf982-7232-4ee9-a8f6-272e86264341",
+            "name": "海洋之心的晚宴",
+            "createdAt": "2026-03-04 15:16:19.611",
+            "updatedAt": "2026-03-05 06:37:16.853",
+            "status": "active",
+            "isShared": false
+          },
+          {
+            "moduleId": "e012f837-3adc-404c-b0ba-0d8c0faeccea",
+            "name": "The Pale Breath of Hokkaido: The Yukinohana Incident",
+            "createdAt": "2026-03-04 16:20:23.601",
+            "updatedAt": "2026-03-05 06:37:16.861",
+            "status": "active",
+            "isShared": false
+          }
+        ]
+      },
+      "playActivity": {
+        "sessionCount": 0,
+        "sessionElapsedSeconds": 0,
+        "sessionElapsedHours": 0,
+        "activeTurnSeconds": 0,
+        "activeTurnHours": 0,
+        "turnCount": 0,
+        "completedTurnCount": 0,
+        "modulesPlayedCount": 0,
+        "firstSessionAt": null,
+        "lastSessionActivityAt": null
+      }
+    },
+    {
+      "account": {
+        "id": "77ba1686-d35c-408c-bd75-4c54d799c3df",
+        "email": "285054165@qq.com",
+        "username": "atom",
+        "role": "USER",
+        "emailVerified": true,
+        "active": true,
+        "createdAt": "2026-02-14 14:08:48.815",
+        "lastLoginAt": "2026-02-14 14:09:27.461"
+      },
+      "modulesCreated": {
+        "count": 3,
+        "modules": [
+          {
+            "moduleId": "ef5733d8-0dc2-47f5-8ec6-533399ce7afc",
+            "name": "The Neural Jianghu: Caravan of the Damned",
+            "createdAt": "2026-02-14 14:20:10.988",
+            "updatedAt": "2026-02-16 01:16:31.491",
+            "status": "active",
+            "isShared": false
+          },
+          {
+            "moduleId": "33598317-508b-48a3-b837-9f005f1fca2c",
+            "name": "The Phantom Code of the Dragon-Spine",
+            "createdAt": "2026-02-14 14:21:08.316",
+            "updatedAt": "2026-02-16 01:16:31.491",
+            "status": "active",
+            "isShared": false
+          },
+          {
+            "moduleId": "4697a2d9-da2b-4409-b954-581822ecd9ac",
+            "name": "The Phantom of the Meridian",
+            "createdAt": "2026-02-14 14:23:26.238",
+            "updatedAt": "2026-02-16 01:16:31.491",
+            "status": "active",
+            "isShared": false
+          }
+        ]
+      },
+      "playActivity": {
+        "sessionCount": 0,
+        "sessionElapsedSeconds": 0,
+        "sessionElapsedHours": 0,
+        "activeTurnSeconds": 0,
+        "activeTurnHours": 0,
+        "turnCount": 0,
+        "completedTurnCount": 0,
+        "modulesPlayedCount": 0,
+        "firstSessionAt": null,
+        "lastSessionActivityAt": null
+      }
+    },
+    {
+      "account": {
+        "id": "0cf6c289-3299-4714-9729-fa139add4c3b",
+        "email": "2862965476@qq.com",
+        "username": "蘑菇成精",
+        "role": "USER",
+        "emailVerified": true,
+        "active": true,
+        "createdAt": "2026-02-14 10:46:11.12",
+        "lastLoginAt": "2026-02-14 10:46:56.452"
+      },
+      "modulesCreated": {
+        "count": 0,
+        "modules": []
+      },
+      "playActivity": {
+        "sessionCount": 0,
+        "sessionElapsedSeconds": 0,
+        "sessionElapsedHours": 0,
+        "activeTurnSeconds": 0,
+        "activeTurnHours": 0,
+        "turnCount": 0,
+        "completedTurnCount": 0,
+        "modulesPlayedCount": 0,
+        "firstSessionAt": null,
+        "lastSessionActivityAt": null
+      }
+    },
+    {
+      "account": {
+        "id": "df05c598-35ab-4626-802e-d5c2eb01cca4",
+        "email": "2932941842@qq.cm",
+        "username": "木头人",
+        "role": "USER",
+        "emailVerified": false,
+        "active": true,
+        "createdAt": "2026-05-04 11:32:00.7",
+        "lastLoginAt": null
+      },
+      "modulesCreated": {
+        "count": 0,
+        "modules": []
+      },
+      "playActivity": {
+        "sessionCount": 0,
+        "sessionElapsedSeconds": 0,
+        "sessionElapsedHours": 0,
+        "activeTurnSeconds": 0,
+        "activeTurnHours": 0,
+        "turnCount": 0,
+        "completedTurnCount": 0,
+        "modulesPlayedCount": 0,
+        "firstSessionAt": null,
+        "lastSessionActivityAt": null
+      }
+    },
+    {
+      "account": {
+        "id": "c4f87a1d-1062-4509-84a3-aab677c499c8",
+        "email": "302625155@qq.com",
+        "username": "gig12345asd",
+        "role": "USER",
+        "emailVerified": true,
+        "active": true,
+        "createdAt": "2026-02-24 07:28:37.819",
+        "lastLoginAt": "2026-03-07 09:59:04.409"
+      },
+      "modulesCreated": {
+        "count": 0,
+        "modules": []
+      },
+      "playActivity": {
+        "sessionCount": 0,
+        "sessionElapsedSeconds": 0,
+        "sessionElapsedHours": 0,
+        "activeTurnSeconds": 0,
+        "activeTurnHours": 0,
+        "turnCount": 0,
+        "completedTurnCount": 0,
+        "modulesPlayedCount": 0,
+        "firstSessionAt": null,
+        "lastSessionActivityAt": null
+      }
+    },
+    {
+      "account": {
+        "id": "7efeaa23-1192-4e0e-bacc-c67ca76d3208",
+        "email": "3097374045@qq.com",
+        "username": "流浮休",
+        "role": "USER",
+        "emailVerified": true,
+        "active": true,
+        "createdAt": "2026-03-29 17:08:13.548",
+        "lastLoginAt": "2026-03-29 17:35:08.599"
+      },
+      "modulesCreated": {
+        "count": 3,
+        "modules": [
+          {
+            "moduleId": "3e32296c-2a23-4be1-b209-106120aa53b1",
+            "name": "这座城市在笑",
+            "createdAt": "2026-03-29 17:36:33.583",
+            "updatedAt": "2026-03-29 18:56:59.846",
+            "status": "active",
+            "isShared": false
+          },
+          {
+            "moduleId": "7ddba5a1-c5a5-4a63-bb08-bfbde2fd8a90",
+            "name": "五月的圣河：被选之岸",
+            "createdAt": "2026-03-29 17:36:57.663",
+            "updatedAt": "2026-03-29 18:56:59.827",
+            "status": "active",
+            "isShared": false
+          },
+          {
+            "moduleId": "097725b7-efe4-422e-9a09-0e9cd33e405f",
+            "name": "布鲁克林的私酿与低语",
+            "createdAt": "2026-03-29 17:37:02.011",
+            "updatedAt": "2026-03-29 18:56:59.838",
+            "status": "active",
+            "isShared": false
+          }
+        ]
+      },
+      "playActivity": {
+        "sessionCount": 9,
+        "sessionElapsedSeconds": 0,
+        "sessionElapsedHours": 0,
+        "activeTurnSeconds": 823,
+        "activeTurnHours": 0.23,
+        "turnCount": 25,
+        "completedTurnCount": 24,
+        "modulesPlayedCount": 1,
+        "firstSessionAt": "2026-03-29 17:37:36.199",
+        "lastSessionActivityAt": "2026-03-29 17:56:31.798"
+      }
+    },
+    {
+      "account": {
+        "id": "a71515bb-7c3e-43a0-b252-721104fdd426",
+        "email": "3102934370@qq.com",
+        "username": null,
+        "role": "USER",
+        "emailVerified": true,
+        "active": true,
+        "createdAt": "2026-03-06 17:11:04.532",
+        "lastLoginAt": "2026-03-06 17:23:51.727"
+      },
+      "modulesCreated": {
+        "count": 3,
+        "modules": [
+          {
+            "moduleId": "93515b72-30c8-428e-af0e-c49694c98551",
+            "name": "经验的残响：裂隙之下的魔王域",
+            "createdAt": "2026-03-06 17:52:20.942",
+            "updatedAt": "2026-03-06 18:02:56.468",
+            "status": "active",
+            "isShared": false
+          },
+          {
+            "moduleId": "d63cb31b-e039-4ee3-aebe-0dc3151f9206",
+            "name": "海洋之心的晚宴",
+            "createdAt": "2026-03-06 17:53:05.257",
+            "updatedAt": "2026-03-06 18:02:56.477",
+            "status": "active",
+            "isShared": false
+          },
+          {
+            "moduleId": "d111e5e1-89ba-41cc-a9f7-7f177be2feb9",
+            "name": "五月的圣河：被选之岸",
+            "createdAt": "2026-03-06 17:53:27.243",
+            "updatedAt": "2026-03-06 18:03:01.436",
+            "status": "active",
+            "isShared": false
+          }
+        ]
+      },
+      "playActivity": {
+        "sessionCount": 2,
+        "sessionElapsedSeconds": 0,
+        "sessionElapsedHours": 0,
+        "activeTurnSeconds": 538,
+        "activeTurnHours": 0.15,
+        "turnCount": 10,
+        "completedTurnCount": 10,
+        "modulesPlayedCount": 1,
+        "firstSessionAt": "2026-03-06 18:03:17.473",
+        "lastSessionActivityAt": "2026-03-06 18:04:31.214"
+      }
+    },
+    {
+      "account": {
+        "id": "93b1eb23-aad1-4de7-94eb-5b4db45a288c",
+        "email": "3113169324@qq.com",
+        "username": "justice",
+        "role": "USER",
+        "emailVerified": true,
+        "active": true,
+        "createdAt": "2026-02-13 10:17:39.353",
+        "lastLoginAt": "2026-02-13 10:20:33.036"
+      },
+      "modulesCreated": {
+        "count": 1,
+        "modules": [
+          {
+            "moduleId": "060696c5-1a9d-4159-8921-7d8d9cf36460",
+            "name": "The Pulse Beneath the Neon (霓虹之下的脉动)",
+            "createdAt": "2026-02-13 10:29:15.854",
+            "updatedAt": "2026-02-16 01:16:31.491",
+            "status": "active",
+            "isShared": false
+          }
+        ]
+      },
+      "playActivity": {
+        "sessionCount": 1,
+        "sessionElapsedSeconds": 0,
+        "sessionElapsedHours": 0,
+        "activeTurnSeconds": 0,
+        "activeTurnHours": 0,
+        "turnCount": 1,
+        "completedTurnCount": 1,
+        "modulesPlayedCount": 1,
+        "firstSessionAt": "2026-02-13 10:32:21.874",
+        "lastSessionActivityAt": "2026-02-13 10:32:21.874"
+      }
+    },
+    {
+      "account": {
+        "id": "55a9688f-cf23-4516-a3d2-aed27af9e847",
+        "email": "3188931267@qq.com",
+        "username": "Alice",
+        "role": "USER",
+        "emailVerified": true,
+        "active": true,
+        "createdAt": "2026-03-15 18:03:59.579",
+        "lastLoginAt": "2026-04-04 15:37:05.882"
+      },
+      "modulesCreated": {
+        "count": 1,
+        "modules": [
+          {
+            "moduleId": "f6524421-4cb8-4aa3-8aa7-eb24ccd511e2",
+            "name": "这座城市在笑",
+            "createdAt": "2026-03-16 03:31:24.27",
+            "updatedAt": "2026-03-16 03:36:23.156",
+            "status": "active",
+            "isShared": true
+          }
+        ]
+      },
+      "playActivity": {
+        "sessionCount": 3,
+        "sessionElapsedSeconds": 0,
+        "sessionElapsedHours": 0,
+        "activeTurnSeconds": 509,
+        "activeTurnHours": 0.14,
+        "turnCount": 13,
+        "completedTurnCount": 13,
+        "modulesPlayedCount": 1,
+        "firstSessionAt": "2026-03-16 03:32:09.291",
+        "lastSessionActivityAt": "2026-03-16 05:03:55.09"
+      }
+    },
+    {
+      "account": {
+        "id": "8c56d9f2-8654-45e3-9c9f-1fa02e63f81c",
+        "email": "3198614787@qq.com",
+        "username": "sans",
+        "role": "USER",
+        "emailVerified": true,
+        "active": true,
+        "createdAt": "2026-02-24 09:20:54.24",
+        "lastLoginAt": "2026-02-24 09:21:27.793"
+      },
+      "modulesCreated": {
+        "count": 2,
+        "modules": [
+          {
+            "moduleId": "e16a0574-abdf-4ded-9e0f-334fb6454e64",
+            "name": "The Pale Breath of Hokkaido: The Yukinohana Incident",
+            "createdAt": "2026-02-24 09:22:04.384",
+            "updatedAt": "2026-02-24 10:59:13.214",
+            "status": "active",
+            "isShared": false
+          },
+          {
+            "moduleId": "4a7ee707-ec90-4c95-a96a-c106922084c7",
+            "name": "沉睡潮：阿卡姆的长夜",
+            "createdAt": "2026-02-24 09:55:44.13",
+            "updatedAt": "2026-02-24 10:59:16.135",
+            "status": "active",
+            "isShared": true
+          }
+        ]
+      },
+      "playActivity": {
+        "sessionCount": 1,
+        "sessionElapsedSeconds": 0,
+        "sessionElapsedHours": 0,
+        "activeTurnSeconds": 73,
+        "activeTurnHours": 0.02,
+        "turnCount": 2,
+        "completedTurnCount": 2,
+        "modulesPlayedCount": 1,
+        "firstSessionAt": "2026-02-24 11:14:05.322",
+        "lastSessionActivityAt": "2026-02-24 11:14:05.322"
+      }
+    },
+    {
+      "account": {
+        "id": "9d65e265-d7b6-4fa9-8467-26a512e3e5fc",
+        "email": "3468217479@qq.com",
+        "username": "wdtt",
+        "role": "USER",
+        "emailVerified": true,
+        "active": true,
+        "createdAt": "2026-02-13 15:43:34.154",
+        "lastLoginAt": "2026-02-13 15:44:33.22"
+      },
+      "modulesCreated": {
+        "count": 0,
+        "modules": []
+      },
+      "playActivity": {
+        "sessionCount": 1,
+        "sessionElapsedSeconds": 0,
+        "sessionElapsedHours": 0,
+        "activeTurnSeconds": 31,
+        "activeTurnHours": 0.01,
+        "turnCount": 2,
+        "completedTurnCount": 2,
+        "modulesPlayedCount": 0,
+        "firstSessionAt": "2026-02-13 15:49:01.216",
+        "lastSessionActivityAt": "2026-02-13 15:49:01.216"
+      }
+    },
+    {
+      "account": {
+        "id": "aef7a109-1c47-405f-be84-77b293a57b7f",
+        "email": "3483537065@qq.com",
+        "username": "八分二十秒",
+        "role": "USER",
+        "emailVerified": true,
+        "active": true,
+        "createdAt": "2026-02-13 05:58:32.067",
+        "lastLoginAt": "2026-02-13 05:59:17.281"
+      },
+      "modulesCreated": {
+        "count": 3,
+        "modules": [
+          {
+            "moduleId": "1ee11e56-85b3-461f-8f39-9fb80e1f44bc",
+            "name": "The Hundred-Year Shadow Play",
+            "createdAt": "2026-02-13 06:20:05.939",
+            "updatedAt": "2026-02-16 01:16:31.491",
+            "status": "active",
+            "isShared": false
+          },
+          {
+            "moduleId": "5a235493-3b44-4db3-875e-bcddb554ed78",
+            "name": "Strings of the Ashen Pantomime",
+            "createdAt": "2026-02-13 06:24:11.99",
+            "updatedAt": "2026-02-16 01:16:31.491",
+            "status": "active",
+            "isShared": false
+          },
+          {
+            "moduleId": "4320fad7-6fe6-4b0b-9420-9e08d11cf60d",
+            "name": "The Centenary Shadow Play",
+            "createdAt": "2026-02-13 06:26:39.877",
+            "updatedAt": "2026-02-16 01:16:31.491",
+            "status": "active",
+            "isShared": false
+          }
+        ]
+      },
+      "playActivity": {
+        "sessionCount": 1,
+        "sessionElapsedSeconds": 0,
+        "sessionElapsedHours": 0,
+        "activeTurnSeconds": 0,
+        "activeTurnHours": 0,
+        "turnCount": 1,
+        "completedTurnCount": 1,
+        "modulesPlayedCount": 1,
+        "firstSessionAt": "2026-02-13 06:59:04.211",
+        "lastSessionActivityAt": "2026-02-13 06:59:04.211"
+      }
+    },
+    {
+      "account": {
+        "id": "957bdfed-e595-4ba8-a982-5c90f5e3f3b3",
+        "email": "3536364911@qq.com",
+        "username": "殊余月",
+        "role": "USER",
+        "emailVerified": true,
+        "active": true,
+        "createdAt": "2026-02-25 04:20:57.458",
+        "lastLoginAt": "2026-02-25 04:22:11.463"
+      },
+      "modulesCreated": {
+        "count": 1,
+        "modules": [
+          {
+            "moduleId": "34c52c17-c04e-4220-8cfe-c9d92e991039",
+            "name": "圣巡与暗潮：萨尔图的沉默",
+            "createdAt": "2026-02-25 04:43:16.666",
+            "updatedAt": "2026-02-25 04:43:17.238",
+            "status": "active",
+            "isShared": false
+          }
+        ]
+      },
+      "playActivity": {
+        "sessionCount": 0,
+        "sessionElapsedSeconds": 0,
+        "sessionElapsedHours": 0,
+        "activeTurnSeconds": 0,
+        "activeTurnHours": 0,
+        "turnCount": 0,
+        "completedTurnCount": 0,
+        "modulesPlayedCount": 0,
+        "firstSessionAt": null,
+        "lastSessionActivityAt": null
+      }
+    },
+    {
+      "account": {
+        "id": "b0b1e84b-f384-4f42-a688-4237032b5909",
+        "email": "3584526705@qq.com",
+        "username": "Utopian",
+        "role": "USER",
+        "emailVerified": true,
+        "active": true,
+        "createdAt": "2026-03-06 14:07:36.512",
+        "lastLoginAt": "2026-03-06 14:10:37.167"
+      },
+      "modulesCreated": {
+        "count": 1,
+        "modules": [
+          {
+            "moduleId": "5b50f559-dc40-437b-a981-57dc926fa53f",
+            "name": "The Pale Breath of Hokkaido: The Yukinohana Incident",
+            "createdAt": "2026-03-06 14:22:16.331",
+            "updatedAt": "2026-03-06 15:34:51.893",
+            "status": "active",
+            "isShared": false
+          }
+        ]
+      },
+      "playActivity": {
+        "sessionCount": 7,
+        "sessionElapsedSeconds": 0,
+        "sessionElapsedHours": 0,
+        "activeTurnSeconds": 539,
+        "activeTurnHours": 0.15,
+        "turnCount": 16,
+        "completedTurnCount": 16,
+        "modulesPlayedCount": 1,
+        "firstSessionAt": "2026-03-06 14:51:56.326",
+        "lastSessionActivityAt": "2026-03-06 15:10:42.339"
+      }
+    },
+    {
+      "account": {
+        "id": "43b4b3f4-8383-4ca1-8554-68eb4d3d8000",
+        "email": "3808983058@qq.com",
+        "username": "teriri天下第一",
+        "role": "USER",
+        "emailVerified": true,
+        "active": true,
+        "createdAt": "2026-05-04 11:38:09.885",
+        "lastLoginAt": "2026-05-04 14:45:21.077"
+      },
+      "modulesCreated": {
+        "count": 1,
+        "modules": [
+          {
+            "moduleId": "8071e098-604f-4127-8c94-c7a522ace6ac",
+            "name": "沉睡潮：阿卡姆的长夜",
+            "createdAt": "2026-05-04 11:49:38.034",
+            "updatedAt": "2026-05-04 11:52:50.627",
+            "status": "active",
+            "isShared": false
+          }
+        ]
+      },
+      "playActivity": {
+        "sessionCount": 1,
+        "sessionElapsedSeconds": 0,
+        "sessionElapsedHours": 0,
+        "activeTurnSeconds": 122,
+        "activeTurnHours": 0.03,
+        "turnCount": 3,
+        "completedTurnCount": 3,
+        "modulesPlayedCount": 1,
+        "firstSessionAt": "2026-05-04 14:47:23.512",
+        "lastSessionActivityAt": "2026-05-04 14:47:23.512"
+      }
+    },
+    {
+      "account": {
+        "id": "bd2ae0d8-4491-4552-a4c7-16d4dc98a106",
+        "email": "380983058@qq.com",
+        "username": "特丽丽天下第一",
+        "role": "USER",
+        "emailVerified": false,
+        "active": true,
+        "createdAt": "2026-05-04 11:34:15.091",
+        "lastLoginAt": null
+      },
+      "modulesCreated": {
+        "count": 0,
+        "modules": []
+      },
+      "playActivity": {
+        "sessionCount": 0,
+        "sessionElapsedSeconds": 0,
+        "sessionElapsedHours": 0,
+        "activeTurnSeconds": 0,
+        "activeTurnHours": 0,
+        "turnCount": 0,
+        "completedTurnCount": 0,
+        "modulesPlayedCount": 0,
+        "firstSessionAt": null,
+        "lastSessionActivityAt": null
+      }
+    },
+    {
+      "account": {
+        "id": "0caba823-3db1-4d07-a707-d9a38573743a",
+        "email": "413812871@qq.com",
+        "username": "zero one",
+        "role": "USER",
+        "emailVerified": true,
+        "active": true,
+        "createdAt": "2026-02-24 08:16:24.377",
+        "lastLoginAt": "2026-02-24 08:16:51.578"
+      },
+      "modulesCreated": {
+        "count": 0,
+        "modules": []
+      },
+      "playActivity": {
+        "sessionCount": 0,
+        "sessionElapsedSeconds": 0,
+        "sessionElapsedHours": 0,
+        "activeTurnSeconds": 0,
+        "activeTurnHours": 0,
+        "turnCount": 0,
+        "completedTurnCount": 0,
+        "modulesPlayedCount": 0,
+        "firstSessionAt": null,
+        "lastSessionActivityAt": null
+      }
+    },
+    {
+      "account": {
+        "id": "8c5d1d29-e331-457b-9b34-eb3ff08a097d",
+        "email": "446045200@qq.com",
+        "username": "结月缘",
+        "role": "USER",
+        "emailVerified": true,
+        "active": true,
+        "createdAt": "2026-02-24 10:59:03.454",
+        "lastLoginAt": "2026-02-24 11:00:17.706"
+      },
+      "modulesCreated": {
+        "count": 0,
+        "modules": []
+      },
+      "playActivity": {
+        "sessionCount": 0,
+        "sessionElapsedSeconds": 0,
+        "sessionElapsedHours": 0,
+        "activeTurnSeconds": 0,
+        "activeTurnHours": 0,
+        "turnCount": 0,
+        "completedTurnCount": 0,
+        "modulesPlayedCount": 0,
+        "firstSessionAt": null,
+        "lastSessionActivityAt": null
+      }
+    },
+    {
+      "account": {
+        "id": "c86137f9-f9c5-492d-ab53-e667287b63da",
+        "email": "522592777@qq.com",
+        "username": null,
+        "role": "USER",
+        "emailVerified": true,
+        "active": true,
+        "createdAt": "2026-02-27 19:33:36.807",
+        "lastLoginAt": "2026-02-27 19:34:45.469"
+      },
+      "modulesCreated": {
+        "count": 0,
+        "modules": []
+      },
+      "playActivity": {
+        "sessionCount": 0,
+        "sessionElapsedSeconds": 0,
+        "sessionElapsedHours": 0,
+        "activeTurnSeconds": 0,
+        "activeTurnHours": 0,
+        "turnCount": 0,
+        "completedTurnCount": 0,
+        "modulesPlayedCount": 0,
+        "firstSessionAt": null,
+        "lastSessionActivityAt": null
+      }
+    },
+    {
+      "account": {
+        "id": "ae5bf31e-84ad-42bd-921d-83a9ff7fcec8",
+        "email": "572561858@qq.com",
+        "username": null,
+        "role": "USER",
+        "emailVerified": true,
+        "active": true,
+        "createdAt": "2026-02-12 08:17:45",
+        "lastLoginAt": "2026-02-12 08:18:34"
+      },
+      "modulesCreated": {
+        "count": 0,
+        "modules": []
+      },
+      "playActivity": {
+        "sessionCount": 0,
+        "sessionElapsedSeconds": 0,
+        "sessionElapsedHours": 0,
+        "activeTurnSeconds": 0,
+        "activeTurnHours": 0,
+        "turnCount": 0,
+        "completedTurnCount": 0,
+        "modulesPlayedCount": 0,
+        "firstSessionAt": null,
+        "lastSessionActivityAt": null
+      }
+    },
+    {
+      "account": {
+        "id": "b16603f4-aca7-41f9-93aa-c1c42ea07a7c",
+        "email": "619312661@qq.com",
+        "username": null,
+        "role": "USER",
+        "emailVerified": true,
+        "active": true,
+        "createdAt": "2026-02-14 10:51:54.03",
+        "lastLoginAt": "2026-02-14 10:58:11.967"
+      },
+      "modulesCreated": {
+        "count": 1,
+        "modules": [
+          {
+            "moduleId": "7c57239c-745d-4696-b1fe-23e1e1be8868",
+            "name": "墙垣后的呓语 (Babble Behind the Walls)",
+            "createdAt": "2026-02-14 11:05:51.537",
+            "updatedAt": "2026-02-16 01:16:31.491",
+            "status": "active",
+            "isShared": false
+          }
+        ]
+      },
+      "playActivity": {
+        "sessionCount": 0,
+        "sessionElapsedSeconds": 0,
+        "sessionElapsedHours": 0,
+        "activeTurnSeconds": 0,
+        "activeTurnHours": 0,
+        "turnCount": 0,
+        "completedTurnCount": 0,
+        "modulesPlayedCount": 0,
+        "firstSessionAt": null,
+        "lastSessionActivityAt": null
+      }
+    },
+    {
+      "account": {
+        "id": "4e5f86a1-3d79-442f-bbe1-835944fce629",
+        "email": "632254253@qq.com",
+        "username": "YanagiS",
+        "role": "USER",
+        "emailVerified": true,
+        "active": true,
+        "createdAt": "2026-02-26 14:53:07.121",
+        "lastLoginAt": "2026-02-26 14:55:09.487"
+      },
+      "modulesCreated": {
+        "count": 0,
+        "modules": []
+      },
+      "playActivity": {
+        "sessionCount": 0,
+        "sessionElapsedSeconds": 0,
+        "sessionElapsedHours": 0,
+        "activeTurnSeconds": 0,
+        "activeTurnHours": 0,
+        "turnCount": 0,
+        "completedTurnCount": 0,
+        "modulesPlayedCount": 0,
+        "firstSessionAt": null,
+        "lastSessionActivityAt": null
+      }
+    },
+    {
+      "account": {
+        "id": "c432e157-1143-4129-a43d-e8a06a4c7971",
+        "email": "790071659@qq.com",
+        "username": null,
+        "role": "USER",
+        "emailVerified": true,
+        "active": true,
+        "createdAt": "2026-02-13 10:05:35.324",
+        "lastLoginAt": "2026-02-13 10:33:51.015"
+      },
+      "modulesCreated": {
+        "count": 0,
+        "modules": []
+      },
+      "playActivity": {
+        "sessionCount": 0,
+        "sessionElapsedSeconds": 0,
+        "sessionElapsedHours": 0,
+        "activeTurnSeconds": 0,
+        "activeTurnHours": 0,
+        "turnCount": 0,
+        "completedTurnCount": 0,
+        "modulesPlayedCount": 0,
+        "firstSessionAt": null,
+        "lastSessionActivityAt": null
+      }
+    },
+    {
+      "account": {
+        "id": "d79d3444-8bdd-4cfc-8f64-d4d8df78130a",
+        "email": "851387526@qq.com",
+        "username": "Alxysl",
+        "role": "USER",
+        "emailVerified": true,
+        "active": true,
+        "createdAt": "2026-02-25 01:57:54.45",
+        "lastLoginAt": "2026-02-25 09:07:05.206"
+      },
+      "modulesCreated": {
+        "count": 1,
+        "modules": [
+          {
+            "moduleId": "72db59c7-f0b5-4b10-b8f6-8bfbb3b91e7b",
+            "name": "星网修研：玄极之渊",
+            "createdAt": "2026-02-25 02:12:59.6",
+            "updatedAt": "2026-02-25 02:13:00.534",
+            "status": "active",
+            "isShared": false
+          }
+        ]
+      },
+      "playActivity": {
+        "sessionCount": 0,
+        "sessionElapsedSeconds": 0,
+        "sessionElapsedHours": 0,
+        "activeTurnSeconds": 0,
+        "activeTurnHours": 0,
+        "turnCount": 0,
+        "completedTurnCount": 0,
+        "modulesPlayedCount": 0,
+        "firstSessionAt": null,
+        "lastSessionActivityAt": null
+      }
+    },
+    {
+      "account": {
+        "id": "3acd59c9-3e41-4333-bb28-f61816a178ab",
+        "email": "892629646@qq.com",
+        "username": "Tsorf",
+        "role": "USER",
+        "emailVerified": true,
+        "active": true,
+        "createdAt": "2026-02-24 08:20:11.001",
+        "lastLoginAt": "2026-02-24 08:22:37.801"
+      },
+      "modulesCreated": {
+        "count": 0,
+        "modules": []
+      },
+      "playActivity": {
+        "sessionCount": 0,
+        "sessionElapsedSeconds": 0,
+        "sessionElapsedHours": 0,
+        "activeTurnSeconds": 0,
+        "activeTurnHours": 0,
+        "turnCount": 0,
+        "completedTurnCount": 0,
+        "modulesPlayedCount": 0,
+        "firstSessionAt": null,
+        "lastSessionActivityAt": null
+      }
+    },
+    {
+      "account": {
+        "id": "2bdfef39-9556-4501-af71-cf51a7e0fde0",
+        "email": "930784368@qq.com",
+        "username": "HN233",
+        "role": "USER",
+        "emailVerified": true,
+        "active": true,
+        "createdAt": "2026-02-13 07:31:51.85",
+        "lastLoginAt": "2026-02-13 07:32:38.327"
+      },
+      "modulesCreated": {
+        "count": 1,
+        "modules": [
+          {
+            "moduleId": "a0d6d62f-4137-43c8-bc5f-5e39354ad1b8",
+            "name": "Fetters of the Pale Rose",
+            "createdAt": "2026-02-13 07:43:19.794",
+            "updatedAt": "2026-02-16 01:16:31.491",
+            "status": "active",
+            "isShared": false
+          }
+        ]
+      },
+      "playActivity": {
+        "sessionCount": 0,
+        "sessionElapsedSeconds": 0,
+        "sessionElapsedHours": 0,
+        "activeTurnSeconds": 0,
+        "activeTurnHours": 0,
+        "turnCount": 0,
+        "completedTurnCount": 0,
+        "modulesPlayedCount": 0,
+        "firstSessionAt": null,
+        "lastSessionActivityAt": null
+      }
+    },
+    {
+      "account": {
+        "id": "ccc1d4ea-279e-44ef-bc97-95205eab22c5",
+        "email": "951864420@qq.com",
+        "username": "零响希",
+        "role": "USER",
+        "emailVerified": true,
+        "active": true,
+        "createdAt": "2026-02-25 17:52:17.047",
+        "lastLoginAt": "2026-02-25 17:52:49.178"
+      },
+      "modulesCreated": {
+        "count": 0,
+        "modules": []
+      },
+      "playActivity": {
+        "sessionCount": 0,
+        "sessionElapsedSeconds": 0,
+        "sessionElapsedHours": 0,
+        "activeTurnSeconds": 0,
+        "activeTurnHours": 0,
+        "turnCount": 0,
+        "completedTurnCount": 0,
+        "modulesPlayedCount": 0,
+        "firstSessionAt": null,
+        "lastSessionActivityAt": null
+      }
+    },
+    {
+      "account": {
+        "id": "33225ffa-be2e-4d15-9638-beacf3cb914a",
+        "email": "958898226@qq.com",
+        "username": "Zachary",
+        "role": "USER",
+        "emailVerified": true,
+        "active": true,
+        "createdAt": "2026-02-13 07:23:16.898",
+        "lastLoginAt": "2026-02-13 07:24:54.59"
+      },
+      "modulesCreated": {
+        "count": 0,
+        "modules": []
+      },
+      "playActivity": {
+        "sessionCount": 0,
+        "sessionElapsedSeconds": 0,
+        "sessionElapsedHours": 0,
+        "activeTurnSeconds": 0,
+        "activeTurnHours": 0,
+        "turnCount": 0,
+        "completedTurnCount": 0,
+        "modulesPlayedCount": 0,
+        "firstSessionAt": null,
+        "lastSessionActivityAt": null
+      }
+    },
+    {
+      "account": {
+        "id": "04f3a6b0-4e8f-4832-b4f2-020db3ea804e",
+        "email": "987935409@qq.com",
+        "username": "Youfei",
+        "role": "USER",
+        "emailVerified": true,
+        "active": true,
+        "createdAt": "2026-02-24 08:29:30.138",
+        "lastLoginAt": "2026-02-24 08:30:02.739"
+      },
+      "modulesCreated": {
+        "count": 0,
+        "modules": []
+      },
+      "playActivity": {
+        "sessionCount": 0,
+        "sessionElapsedSeconds": 0,
+        "sessionElapsedHours": 0,
+        "activeTurnSeconds": 0,
+        "activeTurnHours": 0,
+        "turnCount": 0,
+        "completedTurnCount": 0,
+        "modulesPlayedCount": 0,
+        "firstSessionAt": null,
+        "lastSessionActivityAt": null
+      }
+    },
+    {
+      "account": {
+        "id": "f899b96d-4416-4e9b-8503-0bff14f4d209",
+        "email": "bc51231@um.edu.mo",
+        "username": "phantom24601",
+        "role": "USER",
+        "emailVerified": true,
+        "active": true,
+        "createdAt": "2026-03-24 06:02:58.418",
+        "lastLoginAt": "2026-04-27 15:05:24.71"
+      },
+      "modulesCreated": {
+        "count": 1,
+        "modules": [
+          {
+            "moduleId": "4124c785-34bc-4c34-88f9-d89d1ff60c8f",
+            "name": "这座城市在笑",
+            "createdAt": "2026-03-24 09:11:33.322",
+            "updatedAt": "2026-04-27 15:06:04.303",
+            "status": "active",
+            "isShared": false
+          }
+        ]
+      },
+      "playActivity": {
+        "sessionCount": 2,
+        "sessionElapsedSeconds": 0,
+        "sessionElapsedHours": 0,
+        "activeTurnSeconds": 102,
+        "activeTurnHours": 0.03,
+        "turnCount": 7,
+        "completedTurnCount": 5,
+        "modulesPlayedCount": 1,
+        "firstSessionAt": "2026-03-24 09:14:44.179",
+        "lastSessionActivityAt": "2026-03-24 09:16:03.886"
+      }
+    },
+    {
+      "account": {
+        "id": "ec4486a1-aa21-48ab-8413-7cfde1df165d",
+        "email": "che_gt@163.com",
+        "username": "elen",
+        "role": "USER",
+        "emailVerified": true,
+        "active": true,
+        "createdAt": "2026-02-26 01:01:28.52",
+        "lastLoginAt": "2026-02-26 11:45:51.574"
+      },
+      "modulesCreated": {
+        "count": 2,
+        "modules": [
+          {
+            "moduleId": "c144d3b8-89c0-46aa-aa14-91cce97cd1a4",
+            "name": "沉睡潮：阿卡姆的长夜",
+            "createdAt": "2026-02-26 01:03:23.042",
+            "updatedAt": "2026-02-26 12:27:27.323",
+            "status": "active",
+            "isShared": false
+          },
+          {
+            "moduleId": "35c7567d-cc73-4039-a14e-2c5a85ada7d7",
+            "name": "橄榄林下的无名神祠",
+            "createdAt": "2026-02-26 12:21:55.961",
+            "updatedAt": "2026-02-26 12:27:27.335",
+            "status": "active",
+            "isShared": false
+          }
+        ]
+      },
+      "playActivity": {
+        "sessionCount": 12,
+        "sessionElapsedSeconds": 0,
+        "sessionElapsedHours": 0,
+        "activeTurnSeconds": 9702,
+        "activeTurnHours": 2.69,
+        "turnCount": 155,
+        "completedTurnCount": 153,
+        "modulesPlayedCount": 1,
+        "firstSessionAt": "2026-02-26 01:36:28.908",
+        "lastSessionActivityAt": "2026-02-26 12:05:13.568"
+      }
+    },
+    {
+      "account": {
+        "id": "f68c92bf-04b0-41c7-9295-294c80b5f7cf",
+        "email": "chenmoxilin@163.com",
+        "username": "沉默西林",
+        "role": "USER",
+        "emailVerified": true,
+        "active": true,
+        "createdAt": "2026-02-13 07:04:23.759",
+        "lastLoginAt": "2026-02-13 07:05:32.485"
+      },
+      "modulesCreated": {
+        "count": 0,
+        "modules": []
+      },
+      "playActivity": {
+        "sessionCount": 0,
+        "sessionElapsedSeconds": 0,
+        "sessionElapsedHours": 0,
+        "activeTurnSeconds": 0,
+        "activeTurnHours": 0,
+        "turnCount": 0,
+        "completedTurnCount": 0,
+        "modulesPlayedCount": 0,
+        "firstSessionAt": null,
+        "lastSessionActivityAt": null
+      }
+    },
+    {
+      "account": {
+        "id": "2f560aa1-a47b-472a-bbf3-2ed972a58472",
+        "email": "copioustwists@gmail.com",
+        "username": null,
+        "role": "USER",
+        "emailVerified": true,
+        "active": true,
+        "createdAt": "2026-02-14 07:51:10.417",
+        "lastLoginAt": "2026-02-14 07:52:04.998"
+      },
+      "modulesCreated": {
+        "count": 0,
+        "modules": []
+      },
+      "playActivity": {
+        "sessionCount": 0,
+        "sessionElapsedSeconds": 0,
+        "sessionElapsedHours": 0,
+        "activeTurnSeconds": 0,
+        "activeTurnHours": 0,
+        "turnCount": 0,
+        "completedTurnCount": 0,
+        "modulesPlayedCount": 0,
+        "firstSessionAt": null,
+        "lastSessionActivityAt": null
+      }
+    },
+    {
+      "account": {
+        "id": "71163789-24a2-4707-8a65-6f0e905c8e05",
+        "email": "cxnchn0527@163.com",
+        "username": "村头一霸王二狗",
+        "role": "USER",
+        "emailVerified": true,
+        "active": true,
+        "createdAt": "2026-03-02 08:57:10.767",
+        "lastLoginAt": "2026-03-02 08:58:10.199"
+      },
+      "modulesCreated": {
+        "count": 0,
+        "modules": []
+      },
+      "playActivity": {
+        "sessionCount": 0,
+        "sessionElapsedSeconds": 0,
+        "sessionElapsedHours": 0,
+        "activeTurnSeconds": 0,
+        "activeTurnHours": 0,
+        "turnCount": 0,
+        "completedTurnCount": 0,
+        "modulesPlayedCount": 0,
+        "firstSessionAt": null,
+        "lastSessionActivityAt": null
+      }
+    },
+    {
+      "account": {
+        "id": "1831331f-9e26-4a7f-895c-b1bd939428c2",
+        "email": "demon7swordofficial@gmail.com",
+        "username": "demon7sword",
+        "role": "USER",
+        "emailVerified": true,
+        "active": true,
+        "createdAt": "2026-02-13 11:50:56.058",
+        "lastLoginAt": "2026-03-01 02:31:27.925"
+      },
+      "modulesCreated": {
+        "count": 1,
+        "modules": [
+          {
+            "moduleId": "82c90687-66cb-428b-9f64-1d7c0ea218aa",
+            "name": "The Gala of the Faceless",
+            "createdAt": "2026-02-13 12:02:06.74",
+            "updatedAt": "2026-03-01 02:31:56.867",
+            "status": "active",
+            "isShared": false
+          }
+        ]
+      },
+      "playActivity": {
+        "sessionCount": 1,
+        "sessionElapsedSeconds": 0,
+        "sessionElapsedHours": 0,
+        "activeTurnSeconds": 0,
+        "activeTurnHours": 0,
+        "turnCount": 1,
+        "completedTurnCount": 1,
+        "modulesPlayedCount": 1,
+        "firstSessionAt": "2026-02-14 07:24:45.727",
+        "lastSessionActivityAt": "2026-02-14 07:24:45.727"
+      }
+    },
+    {
+      "account": {
+        "id": "d8e1c45c-4974-4de1-99bc-d4ce5c8ec9a6",
+        "email": "dongziwuyu@163.com",
+        "username": "dongzhiwuyu",
+        "role": "USER",
+        "emailVerified": true,
+        "active": true,
+        "createdAt": "2026-02-12 03:05:24",
+        "lastLoginAt": "2026-02-13 02:53:07.646"
+      },
+      "modulesCreated": {
+        "count": 5,
+        "modules": [
+          {
+            "moduleId": "392bd99a-fb83-4ad0-bb3e-477c04fff806",
+            "name": "深渊之剑与魔影之塔 (The Sword of the Abyss and the Tower of Shadow)",
+            "createdAt": "2026-02-13 02:53:13.066",
+            "updatedAt": "2026-02-16 01:16:31.491",
+            "status": "active",
+            "isShared": false
+          },
+          {
+            "moduleId": "935f43bc-178d-433f-b581-b9d7f431fd46",
+            "name": "Ascension of the Iron Soul",
+            "createdAt": "2026-02-13 02:53:13.078",
+            "updatedAt": "2026-02-16 01:16:31.491",
+            "status": "active",
+            "isShared": false
+          },
+          {
+            "moduleId": "ce58cd4a-b6ab-4a62-b626-8181aecbe330",
+            "name": "Echoes of the Abyssal Spire (深渊尖塔的回响)",
+            "createdAt": "2026-02-13 02:53:13.085",
+            "updatedAt": "2026-02-16 01:16:31.491",
+            "status": "active",
+            "isShared": false
+          },
+          {
+            "moduleId": "7da9442b-f3f3-44c7-b33d-3dc38fcbcdff",
+            "name": "蚀星魔堡的挽歌",
+            "createdAt": "2026-02-13 02:53:13.093",
+            "updatedAt": "2026-02-16 01:16:31.491",
+            "status": "active",
+            "isShared": false
+          },
+          {
+            "moduleId": "141a97b2-33e2-4b30-8e96-3f07bee4e2ce",
+            "name": "深渊登阶 (The Abyssal Ascent)",
+            "createdAt": "2026-02-13 02:59:50.875",
+            "updatedAt": "2026-02-16 01:16:31.491",
+            "status": "active",
+            "isShared": false
+          }
+        ]
+      },
+      "playActivity": {
+        "sessionCount": 1,
+        "sessionElapsedSeconds": 0,
+        "sessionElapsedHours": 0,
+        "activeTurnSeconds": 380,
+        "activeTurnHours": 0.11,
+        "turnCount": 12,
+        "completedTurnCount": 12,
+        "modulesPlayedCount": 1,
+        "firstSessionAt": "2026-02-13 03:07:23.518",
+        "lastSessionActivityAt": "2026-02-13 03:07:23.518"
+      }
+    },
+    {
+      "account": {
+        "id": "b0b7c9f1-7548-4f80-a153-0509cdac0065",
+        "email": "ecarlos_wiio@outlook.com",
+        "username": "ECARLOS",
+        "role": "USER",
+        "emailVerified": true,
+        "active": true,
+        "createdAt": "2026-02-13 10:07:44.192",
+        "lastLoginAt": "2026-03-19 13:50:10.785"
+      },
+      "modulesCreated": {
+        "count": 1,
+        "modules": [
+          {
+            "moduleId": "e4be5492-b4b2-414b-9c81-cc6589cf755e",
+            "name": "The Pale Breath of Hokkaido: The Yukinohana Incident",
+            "createdAt": "2026-03-17 10:10:28.702",
+            "updatedAt": "2026-03-19 13:50:37.461",
+            "status": "active",
+            "isShared": false
+          }
+        ]
+      },
+      "playActivity": {
+        "sessionCount": 5,
+        "sessionElapsedSeconds": 0,
+        "sessionElapsedHours": 0,
+        "activeTurnSeconds": 678,
+        "activeTurnHours": 0.19,
+        "turnCount": 17,
+        "completedTurnCount": 17,
+        "modulesPlayedCount": 1,
+        "firstSessionAt": "2026-03-17 16:07:22.175",
+        "lastSessionActivityAt": "2026-03-18 16:09:04.258"
+      }
+    },
+    {
+      "account": {
+        "id": "e46147a1-897a-4749-93ff-7281772981d4",
+        "email": "fallensnow9769@163.com",
+        "username": "结城优纪",
+        "role": "USER",
+        "emailVerified": false,
+        "active": true,
+        "createdAt": "2026-02-24 07:28:29.022",
+        "lastLoginAt": null
+      },
+      "modulesCreated": {
+        "count": 0,
+        "modules": []
+      },
+      "playActivity": {
+        "sessionCount": 0,
+        "sessionElapsedSeconds": 0,
+        "sessionElapsedHours": 0,
+        "activeTurnSeconds": 0,
+        "activeTurnHours": 0,
+        "turnCount": 0,
+        "completedTurnCount": 0,
+        "modulesPlayedCount": 0,
+        "firstSessionAt": null,
+        "lastSessionActivityAt": null
+      }
+    },
+    {
+      "account": {
+        "id": "94d7aa6d-4225-4252-85a9-b9a618957ed8",
+        "email": "fl20061119@qq.com",
+        "username": "风铃cc",
+        "role": "USER",
+        "emailVerified": true,
+        "active": true,
+        "createdAt": "2026-03-04 07:59:46.654",
+        "lastLoginAt": "2026-03-04 08:01:42.921"
+      },
+      "modulesCreated": {
+        "count": 3,
+        "modules": [
+          {
+            "moduleId": "6f743013-ebeb-4c63-9829-96a231732350",
+            "name": "A Pulse Behind Silk Curtains",
+            "createdAt": "2026-03-04 08:49:00.189",
+            "updatedAt": "2026-03-04 08:56:36.943",
+            "status": "active",
+            "isShared": false
+          },
+          {
+            "moduleId": "9181f3f4-8ae2-4a88-9349-acec18f6853c",
+            "name": "沉睡潮：阿卡姆的长夜",
+            "createdAt": "2026-03-04 08:49:54.477",
+            "updatedAt": "2026-03-04 08:56:36.934",
+            "status": "active",
+            "isShared": false
+          },
+          {
+            "moduleId": "949d3646-cdea-45bd-8e6a-eeeb397fddf3",
+            "name": "The Hollow's Quiet Accord",
+            "createdAt": "2026-03-04 08:56:03.474",
+            "updatedAt": "2026-03-04 08:56:36.951",
+            "status": "active",
+            "isShared": false
+          }
+        ]
+      },
+      "playActivity": {
+        "sessionCount": 3,
+        "sessionElapsedSeconds": 0,
+        "sessionElapsedHours": 0,
+        "activeTurnSeconds": 69,
+        "activeTurnHours": 0.02,
+        "turnCount": 9,
+        "completedTurnCount": 8,
+        "modulesPlayedCount": 1,
+        "firstSessionAt": "2026-03-04 08:50:20.331",
+        "lastSessionActivityAt": "2026-03-04 08:54:41.258"
+      }
+    },
+    {
+      "account": {
+        "id": "7aa3dc3b-e2d5-4729-9f5b-85ba76f89646",
+        "email": "goodbyetoefl2022@163.com",
+        "username": null,
+        "role": "USER",
+        "emailVerified": true,
+        "active": true,
+        "createdAt": "2026-02-24 07:35:11.968",
+        "lastLoginAt": "2026-02-26 11:33:45.584"
+      },
+      "modulesCreated": {
+        "count": 0,
+        "modules": []
+      },
+      "playActivity": {
+        "sessionCount": 0,
+        "sessionElapsedSeconds": 0,
+        "sessionElapsedHours": 0,
+        "activeTurnSeconds": 0,
+        "activeTurnHours": 0,
+        "turnCount": 0,
+        "completedTurnCount": 0,
+        "modulesPlayedCount": 0,
+        "firstSessionAt": null,
+        "lastSessionActivityAt": null
+      }
+    },
+    {
+      "account": {
+        "id": "974ec996-f638-4f87-8bc2-13a4424d4c3e",
+        "email": "hakubasang@gmail.com",
+        "username": "Morgan",
+        "role": "USER",
+        "emailVerified": true,
+        "active": true,
+        "createdAt": "2026-03-06 05:07:22.431",
+        "lastLoginAt": "2026-03-06 05:08:59.537"
+      },
+      "modulesCreated": {
+        "count": 2,
+        "modules": [
+          {
+            "moduleId": "6e5eb4ac-f1aa-4562-87c1-c01a96e11a7c",
+            "name": "潮影档案：深水城的暗潮",
+            "createdAt": "2026-03-06 05:21:34.247",
+            "updatedAt": "2026-03-06 06:03:41.26",
+            "status": "active",
+            "isShared": false
+          },
+          {
+            "moduleId": "1bb7e1e6-b2f8-442f-aeff-e616369a2af5",
+            "name": "潮影之门：沉默的潮汐",
+            "createdAt": "2026-03-06 06:17:17.887",
+            "updatedAt": "2026-03-06 06:17:18.386",
+            "status": "active",
+            "isShared": false
+          }
+        ]
+      },
+      "playActivity": {
+        "sessionCount": 0,
+        "sessionElapsedSeconds": 0,
+        "sessionElapsedHours": 0,
+        "activeTurnSeconds": 0,
+        "activeTurnHours": 0,
+        "turnCount": 0,
+        "completedTurnCount": 0,
+        "modulesPlayedCount": 0,
+        "firstSessionAt": null,
+        "lastSessionActivityAt": null
+      }
+    },
+    {
+      "account": {
+        "id": "f4908d3c-c316-4219-8397-bf8f28ca00e7",
+        "email": "hanabel724@gmail.com",
+        "username": "Voice",
+        "role": "USER",
+        "emailVerified": true,
+        "active": true,
+        "createdAt": "2026-03-09 03:46:22.429",
+        "lastLoginAt": "2026-03-09 03:47:08.735"
+      },
+      "modulesCreated": {
+        "count": 0,
+        "modules": []
+      },
+      "playActivity": {
+        "sessionCount": 0,
+        "sessionElapsedSeconds": 0,
+        "sessionElapsedHours": 0,
+        "activeTurnSeconds": 0,
+        "activeTurnHours": 0,
+        "turnCount": 0,
+        "completedTurnCount": 0,
+        "modulesPlayedCount": 0,
+        "firstSessionAt": null,
+        "lastSessionActivityAt": null
+      }
+    },
+    {
+      "account": {
+        "id": "633bcffe-103e-47fb-99cd-a1e0483d50c4",
+        "email": "hzb571211@gmail.com",
+        "username": "300亿影帝",
+        "role": "USER",
+        "emailVerified": true,
+        "active": true,
+        "createdAt": "2026-02-25 03:27:00.688",
+        "lastLoginAt": "2026-02-25 03:27:28.43"
+      },
+      "modulesCreated": {
+        "count": 0,
+        "modules": []
+      },
+      "playActivity": {
+        "sessionCount": 0,
+        "sessionElapsedSeconds": 0,
+        "sessionElapsedHours": 0,
+        "activeTurnSeconds": 0,
+        "activeTurnHours": 0,
+        "turnCount": 0,
+        "completedTurnCount": 0,
+        "modulesPlayedCount": 0,
+        "firstSessionAt": null,
+        "lastSessionActivityAt": null
+      }
+    },
+    {
+      "account": {
+        "id": "bfcf4b77-6a25-4ee6-ad11-1aa18a258589",
+        "email": "jiujiuztgj163@qq.com",
+        "username": "zaiweiwei",
+        "role": "USER",
+        "emailVerified": false,
+        "active": true,
+        "createdAt": "2026-03-04 02:18:30.119",
+        "lastLoginAt": null
+      },
+      "modulesCreated": {
+        "count": 0,
+        "modules": []
+      },
+      "playActivity": {
+        "sessionCount": 0,
+        "sessionElapsedSeconds": 0,
+        "sessionElapsedHours": 0,
+        "activeTurnSeconds": 0,
+        "activeTurnHours": 0,
+        "turnCount": 0,
+        "completedTurnCount": 0,
+        "modulesPlayedCount": 0,
+        "firstSessionAt": null,
+        "lastSessionActivityAt": null
+      }
+    },
+    {
+      "account": {
+        "id": "6db919b3-56d1-41cb-9b24-7519ec61a4be",
+        "email": "josiecen@163.com",
+        "username": "Josie",
+        "role": "USER",
+        "emailVerified": true,
+        "active": true,
+        "createdAt": "2026-02-24 18:10:17.146",
+        "lastLoginAt": "2026-02-25 07:33:17.888"
+      },
+      "modulesCreated": {
+        "count": 1,
+        "modules": [
+          {
+            "moduleId": "5f1cddef-fb30-4f38-b8ca-1033b95cc54d",
+            "name": "债已到期：霍洛溪的空壳与契约",
+            "createdAt": "2026-02-24 18:30:16.938",
+            "updatedAt": "2026-02-25 07:33:35.812",
+            "status": "active",
+            "isShared": false
+          }
+        ]
+      },
+      "playActivity": {
+        "sessionCount": 2,
+        "sessionElapsedSeconds": 0,
+        "sessionElapsedHours": 0,
+        "activeTurnSeconds": 1057,
+        "activeTurnHours": 0.29,
+        "turnCount": 28,
+        "completedTurnCount": 17,
+        "modulesPlayedCount": 1,
+        "firstSessionAt": "2026-02-25 07:36:51.448",
+        "lastSessionActivityAt": "2026-02-25 07:38:57.597"
+      }
+    },
+    {
+      "account": {
+        "id": "03765bce-cb29-4811-b9b1-d636ebdd43f8",
+        "email": "k910547818@outlook.com",
+        "username": "Zoe",
+        "role": "USER",
+        "emailVerified": true,
+        "active": true,
+        "createdAt": "2026-03-08 09:42:20.574",
+        "lastLoginAt": "2026-03-08 09:44:18.584"
+      },
+      "modulesCreated": {
+        "count": 1,
+        "modules": [
+          {
+            "moduleId": "f6a803f5-8f14-421a-8ccc-ed084d60aa67",
+            "name": "沉睡潮：阿卡姆的长夜",
+            "createdAt": "2026-03-08 10:24:35.278",
+            "updatedAt": "2026-03-08 10:43:46.177",
+            "status": "active",
+            "isShared": false
+          }
+        ]
+      },
+      "playActivity": {
+        "sessionCount": 4,
+        "sessionElapsedSeconds": 0,
+        "sessionElapsedHours": 0,
+        "activeTurnSeconds": 1399,
+        "activeTurnHours": 0.39,
+        "turnCount": 44,
+        "completedTurnCount": 39,
+        "modulesPlayedCount": 1,
+        "firstSessionAt": "2026-03-08 10:42:22.245",
+        "lastSessionActivityAt": "2026-03-08 11:11:48.148"
+      }
+    },
+    {
+      "account": {
+        "id": "20eebf1f-c7ff-4813-97d3-515664d794c1",
+        "email": "lkx201x@163.com",
+        "username": "siro",
+        "role": "USER",
+        "emailVerified": true,
+        "active": true,
+        "createdAt": "2026-02-24 11:35:14.508",
+        "lastLoginAt": "2026-03-03 15:05:54.32"
+      },
+      "modulesCreated": {
+        "count": 3,
+        "modules": [
+          {
+            "moduleId": "f7533d17-06bb-4612-bb92-adfcc276eefe",
+            "name": "经验的残响：裂隙之下的魔王域",
+            "createdAt": "2026-02-24 12:15:40.08",
+            "updatedAt": "2026-03-03 16:17:16.034",
+            "status": "active",
+            "isShared": true
+          },
+          {
+            "moduleId": "ae0731fd-2363-4962-be79-f83095c1f744",
+            "name": "滞留雾木镇：塌路与沉默",
+            "createdAt": "2026-02-24 12:22:28.106",
+            "updatedAt": "2026-03-03 16:17:16.027",
+            "status": "active",
+            "isShared": false
+          },
+          {
+            "moduleId": "039cf195-44cb-41c6-b2e2-cd8dac9ca019",
+            "name": "长夜传说：夜流市之刃",
+            "createdAt": "2026-03-03 15:27:30.335",
+            "updatedAt": "2026-03-03 16:17:16.02",
+            "status": "active",
+            "isShared": false
+          }
+        ]
+      },
+      "playActivity": {
+        "sessionCount": 14,
+        "sessionElapsedSeconds": 0,
+        "sessionElapsedHours": 0,
+        "activeTurnSeconds": 10715,
+        "activeTurnHours": 2.98,
+        "turnCount": 193,
+        "completedTurnCount": 181,
+        "modulesPlayedCount": 3,
+        "firstSessionAt": "2026-02-24 12:28:52.635",
+        "lastSessionActivityAt": "2026-03-03 15:54:00.663"
+      }
+    },
+    {
+      "account": {
+        "id": "b55cb78e-3d49-4109-a7a4-219d0561553b",
+        "email": "luderud@gmail.com",
+        "username": "LuDeRu",
+        "role": "USER",
+        "emailVerified": true,
+        "active": true,
+        "createdAt": "2026-02-12 00:55:30",
+        "lastLoginAt": "2026-02-12 00:55:51"
+      },
+      "modulesCreated": {
+        "count": 0,
+        "modules": []
+      },
+      "playActivity": {
+        "sessionCount": 0,
+        "sessionElapsedSeconds": 0,
+        "sessionElapsedHours": 0,
+        "activeTurnSeconds": 0,
+        "activeTurnHours": 0,
+        "turnCount": 0,
+        "completedTurnCount": 0,
+        "modulesPlayedCount": 0,
+        "firstSessionAt": null,
+        "lastSessionActivityAt": null
+      }
+    },
+    {
+      "account": {
+        "id": "2605133e-7e62-45f8-8ac6-fae018ecb223",
+        "email": "meathill@gmail.com",
+        "username": "meathill",
+        "role": "USER",
+        "emailVerified": true,
+        "active": true,
+        "createdAt": "2026-02-14 01:19:02.689",
+        "lastLoginAt": "2026-02-14 01:19:24.882"
+      },
+      "modulesCreated": {
+        "count": 0,
+        "modules": []
+      },
+      "playActivity": {
+        "sessionCount": 0,
+        "sessionElapsedSeconds": 0,
+        "sessionElapsedHours": 0,
+        "activeTurnSeconds": 0,
+        "activeTurnHours": 0,
+        "turnCount": 0,
+        "completedTurnCount": 0,
+        "modulesPlayedCount": 0,
+        "firstSessionAt": null,
+        "lastSessionActivityAt": null
+      }
+    },
+    {
+      "account": {
+        "id": "a4e71544-596d-41ee-9d76-d4600edac2a4",
+        "email": "moths404@gmail.com",
+        "username": "Moss",
+        "role": "USER",
+        "emailVerified": true,
+        "active": true,
+        "createdAt": "2026-02-13 07:03:22.636",
+        "lastLoginAt": "2026-03-12 03:37:41.303"
+      },
+      "modulesCreated": {
+        "count": 1,
+        "modules": [
+          {
+            "moduleId": "807683fd-856f-4872-a6dc-92ba32053193",
+            "name": "The Tally of the Drowned (沉溺者的计数)",
+            "createdAt": "2026-02-13 07:42:13.475",
+            "updatedAt": "2026-03-12 03:38:29.46",
+            "status": "active",
+            "isShared": false
+          }
+        ]
+      },
+      "playActivity": {
+        "sessionCount": 1,
+        "sessionElapsedSeconds": 0,
+        "sessionElapsedHours": 0,
+        "activeTurnSeconds": 0,
+        "activeTurnHours": 0,
+        "turnCount": 1,
+        "completedTurnCount": 1,
+        "modulesPlayedCount": 1,
+        "firstSessionAt": "2026-02-13 07:52:04.196",
+        "lastSessionActivityAt": "2026-02-13 07:52:04.196"
+      }
+    },
+    {
+      "account": {
+        "id": "b4ff5289-77fb-435c-918d-1cc6d3565c0f",
+        "email": "nx1211mo@gmail.com",
+        "username": "xin",
+        "role": "USER",
+        "emailVerified": true,
+        "active": true,
+        "createdAt": "2026-03-10 06:39:08.999",
+        "lastLoginAt": "2026-03-10 06:46:49.966"
+      },
+      "modulesCreated": {
+        "count": 1,
+        "modules": [
+          {
+            "moduleId": "f4343bae-ddde-42fe-9bb8-5bccd5cbe4d5",
+            "name": "海洋之心的晚宴",
+            "createdAt": "2026-03-10 06:58:12.606",
+            "updatedAt": "2026-03-10 06:58:12.626",
+            "status": "active",
+            "isShared": false
+          }
+        ]
+      },
+      "playActivity": {
+        "sessionCount": 2,
+        "sessionElapsedSeconds": 0,
+        "sessionElapsedHours": 0,
+        "activeTurnSeconds": 589,
+        "activeTurnHours": 0.16,
+        "turnCount": 15,
+        "completedTurnCount": 11,
+        "modulesPlayedCount": 1,
+        "firstSessionAt": "2026-03-10 06:58:42.403",
+        "lastSessionActivityAt": "2026-03-10 07:04:53.566"
+      }
+    },
+    {
+      "account": {
+        "id": "6b94beab-2af6-48bd-a810-a514e71931d6",
+        "email": "ruoyuchen0202@gmail.com",
+        "username": "roll",
+        "role": "USER",
+        "emailVerified": true,
+        "active": true,
+        "createdAt": "2026-02-13 06:25:29.61",
+        "lastLoginAt": "2026-02-13 07:55:53.443"
+      },
+      "modulesCreated": {
+        "count": 1,
+        "modules": [
+          {
+            "moduleId": "b117423c-92f7-4fda-a0c8-3f094396b3a8",
+            "name": "The Stalled Flight",
+            "createdAt": "2026-02-13 08:58:56.143",
+            "updatedAt": "2026-02-16 01:16:31.491",
+            "status": "active",
+            "isShared": false
+          }
+        ]
+      },
+      "playActivity": {
+        "sessionCount": 2,
+        "sessionElapsedSeconds": 0,
+        "sessionElapsedHours": 0,
+        "activeTurnSeconds": 95,
+        "activeTurnHours": 0.03,
+        "turnCount": 5,
+        "completedTurnCount": 5,
+        "modulesPlayedCount": 1,
+        "firstSessionAt": "2026-02-13 09:07:14.152",
+        "lastSessionActivityAt": "2026-02-13 09:10:21.359"
+      }
+    },
+    {
+      "account": {
+        "id": "404d851d-f7eb-4639-b042-3161a71b7ed6",
+        "email": "s.yining@wustl.com",
+        "username": null,
+        "role": "USER",
+        "emailVerified": false,
+        "active": true,
+        "createdAt": "2026-02-14 03:13:30.735",
+        "lastLoginAt": null
+      },
+      "modulesCreated": {
+        "count": 0,
+        "modules": []
+      },
+      "playActivity": {
+        "sessionCount": 0,
+        "sessionElapsedSeconds": 0,
+        "sessionElapsedHours": 0,
+        "activeTurnSeconds": 0,
+        "activeTurnHours": 0,
+        "turnCount": 0,
+        "completedTurnCount": 0,
+        "modulesPlayedCount": 0,
+        "firstSessionAt": null,
+        "lastSessionActivityAt": null
+      }
+    },
+    {
+      "account": {
+        "id": "c662352e-cdd4-48a4-8f98-6cad3f84dd8f",
+        "email": "s.yining@wustl.edu",
+        "username": null,
+        "role": "USER",
+        "emailVerified": true,
+        "active": true,
+        "createdAt": "2026-02-24 08:45:16.33",
+        "lastLoginAt": "2026-02-24 17:15:28.655"
+      },
+      "modulesCreated": {
+        "count": 1,
+        "modules": [
+          {
+            "moduleId": "bb10a5a7-5b97-45f7-9136-b4afd413fe79",
+            "name": "The Obsidian Holiday",
+            "createdAt": "2026-02-16 01:16:31.491",
+            "updatedAt": "2026-02-24 08:30:21.299",
+            "status": "active",
+            "isShared": false
+          }
+        ]
+      },
+      "playActivity": {
+        "sessionCount": 0,
+        "sessionElapsedSeconds": 0,
+        "sessionElapsedHours": 0,
+        "activeTurnSeconds": 0,
+        "activeTurnHours": 0,
+        "turnCount": 0,
+        "completedTurnCount": 0,
+        "modulesPlayedCount": 0,
+        "firstSessionAt": null,
+        "lastSessionActivityAt": null
+      }
+    },
+    {
+      "account": {
+        "id": "891a0bc2-59bc-44d4-90b5-3a8483431bdb",
+        "email": "s20101138@icloud.com",
+        "username": "咕咕咕",
+        "role": "USER",
+        "emailVerified": true,
+        "active": true,
+        "createdAt": "2026-02-25 06:09:16.565",
+        "lastLoginAt": "2026-02-25 06:12:05.295"
+      },
+      "modulesCreated": {
+        "count": 1,
+        "modules": [
+          {
+            "moduleId": "34bb67e2-0f0c-41bb-bdd7-fd99fe991be0",
+            "name": "布鲁克林的私酿与低语",
+            "createdAt": "2026-02-25 07:28:36.686",
+            "updatedAt": "2026-02-25 07:49:41.485",
+            "status": "active",
+            "isShared": true
+          }
+        ]
+      },
+      "playActivity": {
+        "sessionCount": 1,
+        "sessionElapsedSeconds": 0,
+        "sessionElapsedHours": 0,
+        "activeTurnSeconds": 328,
+        "activeTurnHours": 0.09,
+        "turnCount": 8,
+        "completedTurnCount": 6,
+        "modulesPlayedCount": 1,
+        "firstSessionAt": "2026-02-25 07:50:03.881",
+        "lastSessionActivityAt": "2026-02-25 07:50:03.881"
+      }
+    },
+    {
+      "account": {
+        "id": "0a5f394d-f0a9-48cc-9ff3-e9a729e6bb4c",
+        "email": "sarilang0720@gmail.com",
+        "username": "waliwaliwaa",
+        "role": "USER",
+        "emailVerified": true,
+        "active": true,
+        "createdAt": "2026-02-24 07:48:08.728",
+        "lastLoginAt": "2026-02-24 07:48:45.965"
+      },
+      "modulesCreated": {
+        "count": 0,
+        "modules": []
+      },
+      "playActivity": {
+        "sessionCount": 0,
+        "sessionElapsedSeconds": 0,
+        "sessionElapsedHours": 0,
+        "activeTurnSeconds": 0,
+        "activeTurnHours": 0,
+        "turnCount": 0,
+        "completedTurnCount": 0,
+        "modulesPlayedCount": 0,
+        "firstSessionAt": null,
+        "lastSessionActivityAt": null
+      }
+    },
+    {
+      "account": {
+        "id": "b89fab71-1c57-404e-90cb-b43c21a0f0b8",
+        "email": "sin093@qq.com",
+        "username": "sin093",
+        "role": "USER",
+        "emailVerified": true,
+        "active": true,
+        "createdAt": "2026-02-14 18:28:40.623",
+        "lastLoginAt": "2026-02-14 18:30:48.96"
+      },
+      "modulesCreated": {
+        "count": 3,
+        "modules": [
+          {
+            "moduleId": "f25e5008-12a1-494d-8e6a-c027a45e79ea",
+            "name": "黑港的污秽潮汐 (The Filthy Tides of Blackport)",
+            "createdAt": "2026-02-14 19:35:01.745",
+            "updatedAt": "2026-02-16 01:16:31.491",
+            "status": "active",
+            "isShared": false
+          },
+          {
+            "moduleId": "15064551-17a7-4dfc-ad8b-4e2ccc7cb822",
+            "name": "The Black Harbor Dirge",
+            "createdAt": "2026-02-14 19:43:59.425",
+            "updatedAt": "2026-02-16 01:16:31.491",
+            "status": "active",
+            "isShared": false
+          },
+          {
+            "moduleId": "232b0392-61a5-47eb-8a8b-32993ca63c30",
+            "name": "The Grey Hunger of Fog Reef",
+            "createdAt": "2026-02-14 22:15:25.888",
+            "updatedAt": "2026-02-16 01:16:31.491",
+            "status": "active",
+            "isShared": false
+          }
+        ]
+      },
+      "playActivity": {
+        "sessionCount": 2,
+        "sessionElapsedSeconds": 0,
+        "sessionElapsedHours": 0,
+        "activeTurnSeconds": 1712,
+        "activeTurnHours": 0.48,
+        "turnCount": 39,
+        "completedTurnCount": 33,
+        "modulesPlayedCount": 2,
+        "firstSessionAt": "2026-02-14 19:19:49.449",
+        "lastSessionActivityAt": "2026-02-14 19:48:15.35"
+      }
+    },
+    {
+      "account": {
+        "id": "2a5871a1-afa9-4e99-879a-4bc75bfc6151",
+        "email": "sinyi0096@outlook.com",
+        "username": "sinyi",
+        "role": "USER",
+        "emailVerified": true,
+        "active": true,
+        "createdAt": "2026-02-26 08:03:06.978",
+        "lastLoginAt": "2026-02-26 08:08:59.181"
+      },
+      "modulesCreated": {
+        "count": 1,
+        "modules": [
+          {
+            "moduleId": "ffa95ac4-4999-440d-833d-963d8e405638",
+            "name": "经验的残响：裂隙之下的魔王域",
+            "createdAt": "2026-02-26 08:11:10.93",
+            "updatedAt": "2026-02-26 08:12:18.315",
+            "status": "active",
+            "isShared": false
+          }
+        ]
+      },
+      "playActivity": {
+        "sessionCount": 0,
+        "sessionElapsedSeconds": 0,
+        "sessionElapsedHours": 0,
+        "activeTurnSeconds": 0,
+        "activeTurnHours": 0,
+        "turnCount": 0,
+        "completedTurnCount": 0,
+        "modulesPlayedCount": 0,
+        "firstSessionAt": null,
+        "lastSessionActivityAt": null
+      }
+    },
+    {
+      "account": {
+        "id": "725512d3-d389-4d00-88fe-31202bd3f5e6",
+        "email": "sissievans07@gmail.com",
+        "username": "Pensieve",
+        "role": "USER",
+        "emailVerified": true,
+        "active": true,
+        "createdAt": "2026-02-24 13:52:05.305",
+        "lastLoginAt": "2026-02-24 17:00:52.578"
+      },
+      "modulesCreated": {
+        "count": 1,
+        "modules": [
+          {
+            "moduleId": "717fa254-7881-45d7-86e3-6605a8335cf6",
+            "name": "无觉之城：精神污染的悄然蔓延",
+            "createdAt": "2026-02-24 14:30:49.321",
+            "updatedAt": "2026-02-24 17:20:45.276",
+            "status": "active",
+            "isShared": false
+          }
+        ]
+      },
+      "playActivity": {
+        "sessionCount": 0,
+        "sessionElapsedSeconds": 0,
+        "sessionElapsedHours": 0,
+        "activeTurnSeconds": 0,
+        "activeTurnHours": 0,
+        "turnCount": 0,
+        "completedTurnCount": 0,
+        "modulesPlayedCount": 0,
+        "firstSessionAt": null,
+        "lastSessionActivityAt": null
+      }
+    },
+    {
+      "account": {
+        "id": "71363a34-c5c6-41c2-8afe-afd832cc5427",
+        "email": "sqybndkih04@outlook.com",
+        "username": "Rexy",
+        "role": "USER",
+        "emailVerified": true,
+        "active": true,
+        "createdAt": "2026-02-13 07:47:19.113",
+        "lastLoginAt": "2026-02-18 04:52:30.503"
+      },
+      "modulesCreated": {
+        "count": 4,
+        "modules": [
+          {
+            "moduleId": "80f87aca-9aab-4430-b91e-63393314fd96",
+            "name": "The Saffron Syllabus",
+            "createdAt": "2026-02-13 07:57:45.232",
+            "updatedAt": "2026-02-16 01:16:31.491",
+            "status": "active",
+            "isShared": false
+          },
+          {
+            "moduleId": "664def62-70a8-433c-b501-8c2aec6fca8e",
+            "name": "卡尔克萨的深黄学期 (The Saffron Semester of Carcosa)",
+            "createdAt": "2026-02-13 08:05:00.68",
+            "updatedAt": "2026-02-16 01:16:31.491",
+            "status": "active",
+            "isShared": false
+          },
+          {
+            "moduleId": "0dd11cf2-40d8-4c51-98c4-689b823ff2a2",
+            "name": "The Pallid Curriculum",
+            "createdAt": "2026-02-13 08:07:34.488",
+            "updatedAt": "2026-02-16 01:16:31.491",
+            "status": "active",
+            "isShared": false
+          },
+          {
+            "moduleId": "a742d19c-8e04-4fb8-8534-651a0c2ed6a6",
+            "name": "The King in the Ivory Tower",
+            "createdAt": "2026-02-13 11:47:59.68",
+            "updatedAt": "2026-02-16 01:16:31.491",
+            "status": "active",
+            "isShared": false
+          }
+        ]
+      },
+      "playActivity": {
+        "sessionCount": 24,
+        "sessionElapsedSeconds": 0,
+        "sessionElapsedHours": 0,
+        "activeTurnSeconds": 12936,
+        "activeTurnHours": 3.59,
+        "turnCount": 343,
+        "completedTurnCount": 331,
+        "modulesPlayedCount": 2,
+        "firstSessionAt": "2026-02-13 08:49:35.036",
+        "lastSessionActivityAt": "2026-02-18 05:03:27.46"
+      }
+    },
+    {
+      "account": {
+        "id": "b2475067-d8df-4d04-8c5a-28c5681ae69d",
+        "email": "stqy0801@163.com",
+        "username": "ClearCloud",
+        "role": "USER",
+        "emailVerified": true,
+        "active": true,
+        "createdAt": "2026-02-14 09:18:21.156",
+        "lastLoginAt": null
+      },
+      "modulesCreated": {
+        "count": 0,
+        "modules": []
+      },
+      "playActivity": {
+        "sessionCount": 0,
+        "sessionElapsedSeconds": 0,
+        "sessionElapsedHours": 0,
+        "activeTurnSeconds": 0,
+        "activeTurnHours": 0,
+        "turnCount": 0,
+        "completedTurnCount": 0,
+        "modulesPlayedCount": 0,
+        "firstSessionAt": null,
+        "lastSessionActivityAt": null
+      }
+    },
+    {
+      "account": {
+        "id": "784e0cbe-7963-4757-b146-a7dff183be10",
+        "email": "test@test.com",
+        "username": "admin",
+        "role": "ADMIN",
+        "emailVerified": true,
+        "active": true,
+        "createdAt": "2026-02-04 19:20:33",
+        "lastLoginAt": null
+      },
+      "modulesCreated": {
+        "count": 0,
+        "modules": []
+      },
+      "playActivity": {
+        "sessionCount": 0,
+        "sessionElapsedSeconds": 0,
+        "sessionElapsedHours": 0,
+        "activeTurnSeconds": 0,
+        "activeTurnHours": 0,
+        "turnCount": 0,
+        "completedTurnCount": 0,
+        "modulesPlayedCount": 0,
+        "firstSessionAt": null,
+        "lastSessionActivityAt": null
+      }
+    },
+    {
+      "account": {
+        "id": "105ffea8-7f11-4c9e-919a-adad48be4880",
+        "email": "thecattywitch@gmail.com",
+        "username": "sophiethewitch",
+        "role": "USER",
+        "emailVerified": true,
+        "active": true,
+        "createdAt": "2026-02-26 05:34:00.557",
+        "lastLoginAt": "2026-02-26 05:34:39.79"
+      },
+      "modulesCreated": {
+        "count": 2,
+        "modules": [
+          {
+            "moduleId": "42506943-74f2-47a6-b363-5328f4e4928a",
+            "name": "The Pale Breath of Hokkaido: The Yukinohana Incident",
+            "createdAt": "2026-02-26 05:49:31.974",
+            "updatedAt": "2026-02-26 05:52:49.445",
+            "status": "active",
+            "isShared": false
+          },
+          {
+            "moduleId": "d7445878-a1e4-42b5-a1c9-2df59cdceb76",
+            "name": "布鲁克林的私酿与低语",
+            "createdAt": "2026-02-26 05:52:12.842",
+            "updatedAt": "2026-02-26 05:52:49.453",
+            "status": "active",
+            "isShared": false
+          }
+        ]
+      },
+      "playActivity": {
+        "sessionCount": 0,
+        "sessionElapsedSeconds": 0,
+        "sessionElapsedHours": 0,
+        "activeTurnSeconds": 0,
+        "activeTurnHours": 0,
+        "turnCount": 0,
+        "completedTurnCount": 0,
+        "modulesPlayedCount": 0,
+        "firstSessionAt": null,
+        "lastSessionActivityAt": null
+      }
+    },
+    {
+      "account": {
+        "id": "459a663d-eecb-432d-a6a5-406c96374599",
+        "email": "ump13534533417@163.com",
+        "username": "lokuy",
+        "role": "USER",
+        "emailVerified": true,
+        "active": true,
+        "createdAt": "2026-02-14 18:21:47.46",
+        "lastLoginAt": "2026-02-14 18:22:22.726"
+      },
+      "modulesCreated": {
+        "count": 0,
+        "modules": []
+      },
+      "playActivity": {
+        "sessionCount": 0,
+        "sessionElapsedSeconds": 0,
+        "sessionElapsedHours": 0,
+        "activeTurnSeconds": 0,
+        "activeTurnHours": 0,
+        "turnCount": 0,
+        "completedTurnCount": 0,
+        "modulesPlayedCount": 0,
+        "firstSessionAt": null,
+        "lastSessionActivityAt": null
+      }
+    },
+    {
+      "account": {
+        "id": "71944988-dcce-486d-a0f8-4d843453f9bd",
+        "email": "victor530914@163.com",
+        "username": null,
+        "role": "USER",
+        "emailVerified": false,
+        "active": true,
+        "createdAt": "2026-02-24 07:20:12.193",
+        "lastLoginAt": null
+      },
+      "modulesCreated": {
+        "count": 0,
+        "modules": []
+      },
+      "playActivity": {
+        "sessionCount": 0,
+        "sessionElapsedSeconds": 0,
+        "sessionElapsedHours": 0,
+        "activeTurnSeconds": 0,
+        "activeTurnHours": 0,
+        "turnCount": 0,
+        "completedTurnCount": 0,
+        "modulesPlayedCount": 0,
+        "firstSessionAt": null,
+        "lastSessionActivityAt": null
+      }
+    },
+    {
+      "account": {
+        "id": "8932b5d1-48af-4799-ae15-cdf830699cd2",
+        "email": "victor530914@gmail.com",
+        "username": null,
+        "role": "ADMIN",
+        "emailVerified": true,
+        "active": true,
+        "createdAt": "2026-02-04 19:21:31",
+        "lastLoginAt": "2026-05-10 05:36:32.811"
+      },
+      "modulesCreated": {
+        "count": 3,
+        "modules": [
+          {
+            "moduleId": "1a02bb4c-5334-4642-83ad-421403ed84b8",
+            "name": "The Obsidian Holiday",
+            "createdAt": "2026-02-12 23:22:30.46",
+            "updatedAt": "2026-02-27 20:19:43.24",
+            "status": "active",
+            "isShared": false
+          },
+          {
+            "moduleId": "a470a60d-539b-4bbe-8870-026c605752b2",
+            "name": "The Pale Breath of Hokkaido: The Yukinohana Incident",
+            "createdAt": "2026-02-16 05:26:42.319",
+            "updatedAt": "2026-02-27 20:19:43.25",
+            "status": "active",
+            "isShared": true
+          },
+          {
+            "moduleId": "83ca42df-9155-468b-8e7a-bfedc31ca111",
+            "name": "Digital Tides: Echoes Beneath borabora岛上",
+            "createdAt": "2026-02-20 06:29:58.033",
+            "updatedAt": "2026-02-27 20:19:43.26",
+            "status": "active",
+            "isShared": false
+          }
+        ]
+      },
+      "playActivity": {
+        "sessionCount": 52,
+        "sessionElapsedSeconds": 5494,
+        "sessionElapsedHours": 1.53,
+        "activeTurnSeconds": 16301,
+        "activeTurnHours": 4.53,
+        "turnCount": 459,
+        "completedTurnCount": 435,
+        "modulesPlayedCount": 3,
+        "firstSessionAt": "2026-02-04 19:39:12",
+        "lastSessionActivityAt": "2026-05-10 05:36:38.037"
+      }
+    },
+    {
+      "account": {
+        "id": "a34f8dc2-595b-4699-bb70-335481074182",
+        "email": "villanella@yeah.net",
+        "username": "Vill",
+        "role": "USER",
+        "emailVerified": true,
+        "active": true,
+        "createdAt": "2026-03-11 17:43:27.161",
+        "lastLoginAt": "2026-03-11 17:44:29.919"
+      },
+      "modulesCreated": {
+        "count": 6,
+        "modules": [
+          {
+            "moduleId": "3736b300-e277-4c5f-840c-7763c787177e",
+            "name": "布鲁克林的私酿与低语",
+            "createdAt": "2026-03-11 17:50:52.806",
+            "updatedAt": "2026-03-11 18:02:36.81",
+            "status": "active",
+            "isShared": false
+          },
+          {
+            "moduleId": "7d0ae33e-503b-4922-ae35-99f8c93fbff4",
+            "name": "The Hollow's Quiet Accord",
+            "createdAt": "2026-03-11 17:51:11.132",
+            "updatedAt": "2026-03-11 18:02:20.32",
+            "status": "active",
+            "isShared": false
+          },
+          {
+            "moduleId": "3ee2342e-a408-429a-a168-93ba94cbc55e",
+            "name": "沉睡潮：阿卡姆的长夜",
+            "createdAt": "2026-03-11 17:51:14.699",
+            "updatedAt": "2026-03-11 18:02:20.327",
+            "status": "active",
+            "isShared": false
+          },
+          {
+            "moduleId": "5eb26bb6-7263-4a4b-9081-6444d2634a8f",
+            "name": "海洋之心的晚宴",
+            "createdAt": "2026-03-11 17:51:26.708",
+            "updatedAt": "2026-03-11 18:02:20.334",
+            "status": "active",
+            "isShared": false
+          },
+          {
+            "moduleId": "fd3e478d-a85e-4d2d-90a3-8558980ffbd8",
+            "name": "经验的残响：裂隙之下的魔王域",
+            "createdAt": "2026-03-11 17:51:33.84",
+            "updatedAt": "2026-03-11 18:02:20.304",
+            "status": "active",
+            "isShared": false
+          },
+          {
+            "moduleId": "03158b6f-45d4-496f-868b-ef2e4ed542ad",
+            "name": "五月的圣河：被选之岸",
+            "createdAt": "2026-03-11 17:53:50.371",
+            "updatedAt": "2026-03-11 18:02:20.341",
+            "status": "active",
+            "isShared": false
+          }
+        ]
+      },
+      "playActivity": {
+        "sessionCount": 1,
+        "sessionElapsedSeconds": 0,
+        "sessionElapsedHours": 0,
+        "activeTurnSeconds": 69,
+        "activeTurnHours": 0.02,
+        "turnCount": 3,
+        "completedTurnCount": 2,
+        "modulesPlayedCount": 1,
+        "firstSessionAt": "2026-03-11 18:07:42.051",
+        "lastSessionActivityAt": "2026-03-11 18:07:42.051"
+      }
+    },
+    {
+      "account": {
+        "id": "946213a2-d0dd-4b56-80ba-2e6efd8b0c4b",
+        "email": "weimengqian7@gmail.com",
+        "username": "what",
+        "role": "USER",
+        "emailVerified": true,
+        "active": true,
+        "createdAt": "2026-02-13 08:04:22.671",
+        "lastLoginAt": "2026-02-13 08:17:50.691"
+      },
+      "modulesCreated": {
+        "count": 2,
+        "modules": [
+          {
+            "moduleId": "4ad74cd6-d201-4e06-820b-e29a9a1a3ef8",
+            "name": "The Infinite Scale",
+            "createdAt": "2026-02-13 08:13:48.853",
+            "updatedAt": "2026-02-16 01:16:31.491",
+            "status": "active",
+            "isShared": false
+          },
+          {
+            "moduleId": "118aae2c-4754-48cd-888d-4179b5ffd53e",
+            "name": "The Town That Hates",
+            "createdAt": "2026-02-13 08:27:49.539",
+            "updatedAt": "2026-02-16 01:16:31.491",
+            "status": "active",
+            "isShared": false
+          }
+        ]
+      },
+      "playActivity": {
+        "sessionCount": 1,
+        "sessionElapsedSeconds": 0,
+        "sessionElapsedHours": 0,
+        "activeTurnSeconds": 0,
+        "activeTurnHours": 0,
+        "turnCount": 1,
+        "completedTurnCount": 1,
+        "modulesPlayedCount": 1,
+        "firstSessionAt": "2026-02-13 09:21:08.52",
+        "lastSessionActivityAt": "2026-02-13 09:21:08.52"
+      }
+    },
+    {
+      "account": {
+        "id": "05d73365-b979-48d7-ba5d-8621dcd92499",
+        "email": "wfq1727@163.com",
+        "username": "齐翎12",
+        "role": "USER",
+        "emailVerified": true,
+        "active": true,
+        "createdAt": "2026-02-28 15:45:25.799",
+        "lastLoginAt": "2026-04-20 16:40:03.833"
+      },
+      "modulesCreated": {
+        "count": 4,
+        "modules": [
+          {
+            "moduleId": "b20275c1-90ea-4211-bfb6-9dd79f0e6c91",
+            "name": "经验的残响：裂隙之下的魔王域",
+            "createdAt": "2026-04-20 16:43:48.882",
+            "updatedAt": "2026-04-20 16:59:16.011",
+            "status": "active",
+            "isShared": false
+          },
+          {
+            "moduleId": "055555dc-cfc4-4fea-9937-218cc44b6ed9",
+            "name": "海洋之心的晚宴",
+            "createdAt": "2026-04-20 16:50:38.726",
+            "updatedAt": "2026-04-20 16:59:16.019",
+            "status": "active",
+            "isShared": false
+          },
+          {
+            "moduleId": "43680318-32b4-4692-81ea-a4cb76b9f825",
+            "name": "布鲁克林的私酿与低语",
+            "createdAt": "2026-04-20 16:50:55.275",
+            "updatedAt": "2026-04-20 16:59:16.025",
+            "status": "active",
+            "isShared": false
+          },
+          {
+            "moduleId": "6e51e03a-7bea-4635-b8a6-18fbebce8bc5",
+            "name": "The Hollow's Quiet Accord",
+            "createdAt": "2026-04-20 16:59:27.864",
+            "updatedAt": "2026-04-20 16:59:27.864",
+            "status": "active",
+            "isShared": false
+          }
+        ]
+      },
+      "playActivity": {
+        "sessionCount": 0,
+        "sessionElapsedSeconds": 0,
+        "sessionElapsedHours": 0,
+        "activeTurnSeconds": 0,
+        "activeTurnHours": 0,
+        "turnCount": 0,
+        "completedTurnCount": 0,
+        "modulesPlayedCount": 0,
+        "firstSessionAt": null,
+        "lastSessionActivityAt": null
+      }
+    },
+    {
+      "account": {
+        "id": "1353eb28-a051-4b1b-9657-89db3e80a39b",
+        "email": "wuyixin3715@126.com",
+        "username": "TaxlossLover",
+        "role": "USER",
+        "emailVerified": true,
+        "active": true,
+        "createdAt": "2026-02-24 10:01:41.281",
+        "lastLoginAt": "2026-02-24 12:49:32.015"
+      },
+      "modulesCreated": {
+        "count": 3,
+        "modules": [
+          {
+            "moduleId": "121d1287-450a-44ea-b2df-8775120f36bd",
+            "name": "沉睡潮：阿卡姆的长夜",
+            "createdAt": "2026-02-24 12:52:27.138",
+            "updatedAt": "2026-02-24 14:07:56.221",
+            "status": "active",
+            "isShared": false
+          },
+          {
+            "moduleId": "b3509732-9584-4bd8-b9b6-ff2e57f4000f",
+            "name": "The Pale Breath of Hokkaido: The Yukinohana Incident",
+            "createdAt": "2026-02-24 12:53:53.604",
+            "updatedAt": "2026-02-24 14:07:56.211",
+            "status": "active",
+            "isShared": false
+          },
+          {
+            "moduleId": "61d35769-c1cf-4afb-8bf5-7b44ea34e4ab",
+            "name": "五月的圣河：被选之岸",
+            "createdAt": "2026-02-24 12:54:06.145",
+            "updatedAt": "2026-02-24 14:07:59.865",
+            "status": "active",
+            "isShared": false
+          }
+        ]
+      },
+      "playActivity": {
+        "sessionCount": 4,
+        "sessionElapsedSeconds": 0,
+        "sessionElapsedHours": 0,
+        "activeTurnSeconds": 830,
+        "activeTurnHours": 0.23,
+        "turnCount": 8,
+        "completedTurnCount": 8,
+        "modulesPlayedCount": 1,
+        "firstSessionAt": "2026-02-24 14:02:33.747",
+        "lastSessionActivityAt": "2026-02-24 14:18:24.672"
+      }
+    },
+    {
+      "account": {
+        "id": "595d8a98-c3f7-4510-bac9-416c47f359ee",
+        "email": "xranranchen@163.com",
+        "username": "chromium",
+        "role": "USER",
+        "emailVerified": true,
+        "active": true,
+        "createdAt": "2026-04-03 03:11:13.659",
+        "lastLoginAt": "2026-04-03 03:14:51.865"
+      },
+      "modulesCreated": {
+        "count": 2,
+        "modules": [
+          {
+            "moduleId": "363f45ac-5893-4431-9e0f-37e87aef0bc8",
+            "name": "这座城市在笑",
+            "createdAt": "2026-04-03 03:21:07.168",
+            "updatedAt": "2026-04-03 03:25:39.834",
+            "status": "active",
+            "isShared": false
+          },
+          {
+            "moduleId": "fd862ca2-7387-4e3e-a20a-6cc0bce7193a",
+            "name": "海洋之心的晚宴",
+            "createdAt": "2026-04-03 03:25:45.223",
+            "updatedAt": "2026-04-03 03:25:45.249",
+            "status": "active",
+            "isShared": false
+          }
+        ]
+      },
+      "playActivity": {
+        "sessionCount": 1,
+        "sessionElapsedSeconds": 0,
+        "sessionElapsedHours": 0,
+        "activeTurnSeconds": 68,
+        "activeTurnHours": 0.02,
+        "turnCount": 2,
+        "completedTurnCount": 2,
+        "modulesPlayedCount": 1,
+        "firstSessionAt": "2026-04-03 04:01:22.55",
+        "lastSessionActivityAt": "2026-04-03 04:01:22.55"
+      }
+    },
+    {
+      "account": {
+        "id": "3353f65c-7ca1-4579-9980-9b6e035cdb0a",
+        "email": "xycorh@163.com",
+        "username": "rinneee",
+        "role": "USER",
+        "emailVerified": true,
+        "active": true,
+        "createdAt": "2026-03-20 05:04:15.991",
+        "lastLoginAt": "2026-03-20 05:04:55.166"
+      },
+      "modulesCreated": {
+        "count": 0,
+        "modules": []
+      },
+      "playActivity": {
+        "sessionCount": 0,
+        "sessionElapsedSeconds": 0,
+        "sessionElapsedHours": 0,
+        "activeTurnSeconds": 0,
+        "activeTurnHours": 0,
+        "turnCount": 0,
+        "completedTurnCount": 0,
+        "modulesPlayedCount": 0,
+        "firstSessionAt": null,
+        "lastSessionActivityAt": null
+      }
+    },
+    {
+      "account": {
+        "id": "19e12c41-2552-4fcd-baaf-620eece27972",
+        "email": "yueque8783572@163.com",
+        "username": "yan",
+        "role": "USER",
+        "emailVerified": true,
+        "active": true,
+        "createdAt": "2026-02-16 06:43:49.926",
+        "lastLoginAt": "2026-02-24 15:45:05.067"
+      },
+      "modulesCreated": {
+        "count": 5,
+        "modules": [
+          {
+            "moduleId": "6ced3a18-e3c0-4f36-9341-91d54165894d",
+            "name": "The Pale Reflection of Oakhaven",
+            "createdAt": "2026-02-16 09:29:17.723",
+            "updatedAt": "2026-02-24 16:02:28.122",
+            "status": "active",
+            "isShared": false
+          },
+          {
+            "moduleId": "30e4b26a-b6cf-4f55-8a19-5108581920b7",
+            "name": "The Azure Veil of Somerset",
+            "createdAt": "2026-02-16 11:05:35.542",
+            "updatedAt": "2026-02-24 16:02:28.13",
+            "status": "active",
+            "isShared": false
+          },
+          {
+            "moduleId": "4dd99947-cefd-4b76-b39f-925b5911db94",
+            "name": "安提花的蔚蓝回响 (The Azure Echo of Anthy)",
+            "createdAt": "2026-02-16 11:17:10.547",
+            "updatedAt": "2026-02-24 16:02:28.113",
+            "status": "active",
+            "isShared": false
+          },
+          {
+            "moduleId": "123fbe79-b402-407a-82bb-01d3fe356a3a",
+            "name": "The Pale Breath of Hokkaido: The Yukinohana Incident",
+            "createdAt": "2026-02-16 11:19:17.268",
+            "updatedAt": "2026-02-24 16:02:28.102",
+            "status": "active",
+            "isShared": false
+          },
+          {
+            "moduleId": "04fe1482-0e83-45e3-b732-68db11b7a51b",
+            "name": "蔚蓝雾中的回响 (Echoes in the Azure Mist)",
+            "createdAt": "2026-02-17 20:28:28.675",
+            "updatedAt": "2026-02-24 16:02:28.137",
+            "status": "active",
+            "isShared": false
+          }
+        ]
+      },
+      "playActivity": {
+        "sessionCount": 4,
+        "sessionElapsedSeconds": 0,
+        "sessionElapsedHours": 0,
+        "activeTurnSeconds": 119,
+        "activeTurnHours": 0.03,
+        "turnCount": 6,
+        "completedTurnCount": 6,
+        "modulesPlayedCount": 3,
+        "firstSessionAt": "2026-02-16 09:33:04.759",
+        "lastSessionActivityAt": "2026-02-17 20:32:44.307"
+      }
+    },
+    {
+      "account": {
+        "id": "daf6edf4-8d60-4407-920c-c995dfd974d9",
+        "email": "yueteng5234@gmail.com",
+        "username": "homeless",
+        "role": "USER",
+        "emailVerified": true,
+        "active": true,
+        "createdAt": "2026-03-01 16:23:52.784",
+        "lastLoginAt": "2026-03-02 05:19:00.008"
+      },
+      "modulesCreated": {
+        "count": 1,
+        "modules": [
+          {
+            "moduleId": "43710787-e9e0-42e0-ab16-f0ea32bd02e8",
+            "name": "The Hollow's Quiet Accord",
+            "createdAt": "2026-03-01 16:40:28.036",
+            "updatedAt": "2026-03-02 05:19:08.99",
+            "status": "active",
+            "isShared": true
+          }
+        ]
+      },
+      "playActivity": {
+        "sessionCount": 0,
+        "sessionElapsedSeconds": 0,
+        "sessionElapsedHours": 0,
+        "activeTurnSeconds": 0,
+        "activeTurnHours": 0,
+        "turnCount": 0,
+        "completedTurnCount": 0,
+        "modulesPlayedCount": 0,
+        "firstSessionAt": null,
+        "lastSessionActivityAt": null
+      }
+    },
+    {
+      "account": {
+        "id": "e2a5a4ee-97b8-4647-98b7-de6df883939c",
+        "email": "yuuki12345@qq.com",
+        "username": "yuuki",
+        "role": "USER",
+        "emailVerified": true,
+        "active": true,
+        "createdAt": "2026-03-10 03:21:12.338",
+        "lastLoginAt": "2026-03-10 03:22:04.733"
+      },
+      "modulesCreated": {
+        "count": 0,
+        "modules": []
+      },
+      "playActivity": {
+        "sessionCount": 0,
+        "sessionElapsedSeconds": 0,
+        "sessionElapsedHours": 0,
+        "activeTurnSeconds": 0,
+        "activeTurnHours": 0,
+        "turnCount": 0,
+        "completedTurnCount": 0,
+        "modulesPlayedCount": 0,
+        "firstSessionAt": null,
+        "lastSessionActivityAt": null
+      }
+    },
+    {
+      "account": {
+        "id": "23c696e3-0640-4628-bdca-fd8724bdec2c",
+        "email": "z2685754737@gmail.com",
+        "username": "bleach165",
+        "role": "USER",
+        "emailVerified": true,
+        "active": true,
+        "createdAt": "2026-03-17 17:07:45.706",
+        "lastLoginAt": "2026-03-17 17:22:36.472"
+      },
+      "modulesCreated": {
+        "count": 1,
+        "modules": [
+          {
+            "moduleId": "bd3908e0-fcdd-442e-b06c-12c5228e7f3b",
+            "name": "林缘的兽怒",
+            "createdAt": "2026-03-17 17:43:02.722",
+            "updatedAt": "2026-03-17 18:05:44.629",
+            "status": "active",
+            "isShared": false
+          }
+        ]
+      },
+      "playActivity": {
+        "sessionCount": 6,
+        "sessionElapsedSeconds": 0,
+        "sessionElapsedHours": 0,
+        "activeTurnSeconds": 989,
+        "activeTurnHours": 0.27,
+        "turnCount": 29,
+        "completedTurnCount": 27,
+        "modulesPlayedCount": 1,
+        "firstSessionAt": "2026-03-17 17:49:11.174",
+        "lastSessionActivityAt": "2026-03-17 18:15:45.211"
+      }
+    },
+    {
+      "account": {
+        "id": "c3880b00-9f78-4e1b-8fcc-11d8560e6b44",
+        "email": "zelsta@163.com",
+        "username": null,
+        "role": "USER",
+        "emailVerified": true,
+        "active": true,
+        "createdAt": "2026-02-24 07:55:08.715",
+        "lastLoginAt": "2026-02-24 07:55:42.145"
+      },
+      "modulesCreated": {
+        "count": 1,
+        "modules": [
+          {
+            "moduleId": "a715df50-0ee4-4f97-be5e-b6b928a47527",
+            "name": "流沙回归：翻不尽的卷帙",
+            "createdAt": "2026-02-24 08:22:11.512",
+            "updatedAt": "2026-02-24 10:46:53.183",
+            "status": "active",
+            "isShared": false
+          }
+        ]
+      },
+      "playActivity": {
+        "sessionCount": 1,
+        "sessionElapsedSeconds": 0,
+        "sessionElapsedHours": 0,
+        "activeTurnSeconds": 0,
+        "activeTurnHours": 0,
+        "turnCount": 1,
+        "completedTurnCount": 1,
+        "modulesPlayedCount": 1,
+        "firstSessionAt": "2026-02-24 10:48:03.767",
+        "lastSessionActivityAt": "2026-02-24 10:48:03.767"
+      }
+    },
+    {
+      "account": {
+        "id": "8aad0b74-cd81-41de-9f07-4cd8ae654d17",
+        "email": "zengyiyang10@gmail.com",
+        "username": "Elheru",
+        "role": "USER",
+        "emailVerified": true,
+        "active": true,
+        "createdAt": "2026-02-16 01:40:48.215",
+        "lastLoginAt": "2026-02-16 04:24:42.578"
+      },
+      "modulesCreated": {
+        "count": 1,
+        "modules": [
+          {
+            "moduleId": "f0226739-ad38-4968-8e98-861cddd13213",
+            "name": "The Whispering Mist of Springs",
+            "createdAt": "2026-02-16 04:34:16.847",
+            "updatedAt": "2026-02-16 05:39:28.294",
+            "status": "active",
+            "isShared": false
+          }
+        ]
+      },
+      "playActivity": {
+        "sessionCount": 1,
+        "sessionElapsedSeconds": 0,
+        "sessionElapsedHours": 0,
+        "activeTurnSeconds": 0,
+        "activeTurnHours": 0,
+        "turnCount": 1,
+        "completedTurnCount": 1,
+        "modulesPlayedCount": 1,
+        "firstSessionAt": "2026-02-16 05:39:47.424",
+        "lastSessionActivityAt": "2026-02-16 05:39:47.424"
+      }
+    },
+    {
+      "account": {
+        "id": "1e9222fb-2e41-4f26-8d4e-2adc0010b7f8",
+        "email": "zhangtaihong58@gmail.com",
+        "username": "huadan",
+        "role": "USER",
+        "emailVerified": true,
+        "active": true,
+        "createdAt": "2026-02-13 08:23:30.533",
+        "lastLoginAt": "2026-02-13 08:24:45.795"
+      },
+      "modulesCreated": {
+        "count": 1,
+        "modules": [
+          {
+            "moduleId": "c4d841ee-b00c-400f-8998-dd380fc3d88e",
+            "name": "The Sallow Menu",
+            "createdAt": "2026-02-13 08:33:27.676",
+            "updatedAt": "2026-02-16 01:16:31.491",
+            "status": "active",
+            "isShared": false
+          }
+        ]
+      },
+      "playActivity": {
+        "sessionCount": 0,
+        "sessionElapsedSeconds": 0,
+        "sessionElapsedHours": 0,
+        "activeTurnSeconds": 0,
+        "activeTurnHours": 0,
+        "turnCount": 0,
+        "completedTurnCount": 0,
+        "modulesPlayedCount": 0,
+        "firstSessionAt": null,
+        "lastSessionActivityAt": null
+      }
+    },
+    {
+      "account": {
+        "id": "ac88398e-a27a-4f04-a096-f00aeabb6302",
+        "email": "zhiouzhang98@gmail.com",
+        "username": "Ene",
+        "role": "USER",
+        "emailVerified": true,
+        "active": true,
+        "createdAt": "2026-02-13 05:56:47.033",
+        "lastLoginAt": "2026-02-13 05:57:31.481"
+      },
+      "modulesCreated": {
+        "count": 1,
+        "modules": [
+          {
+            "moduleId": "7afaf486-5827-4d28-a6f7-9c05d699128e",
+            "name": "The Wounds of Silent Creek",
+            "createdAt": "2026-02-13 06:17:22.659",
+            "updatedAt": "2026-02-16 01:16:31.491",
+            "status": "active",
+            "isShared": false
+          }
+        ]
+      },
+      "playActivity": {
+        "sessionCount": 1,
+        "sessionElapsedSeconds": 0,
+        "sessionElapsedHours": 0,
+        "activeTurnSeconds": 0,
+        "activeTurnHours": 0,
+        "turnCount": 1,
+        "completedTurnCount": 1,
+        "modulesPlayedCount": 1,
+        "firstSessionAt": "2026-02-13 06:19:12.898",
+        "lastSessionActivityAt": "2026-02-13 06:19:12.898"
+      }
+    },
+    {
+      "account": {
+        "id": "dd5d1244-72ac-43da-a6ff-4a12944b30a7",
+        "email": "zhuohaoik@gmail.com",
+        "username": null,
+        "role": "USER",
+        "emailVerified": true,
+        "active": true,
+        "createdAt": "2026-02-25 01:15:15.327",
+        "lastLoginAt": "2026-02-25 01:16:04.542"
+      },
+      "modulesCreated": {
+        "count": 1,
+        "modules": [
+          {
+            "moduleId": "cc85a941-bbf7-486e-be6e-b40bd39e8ec4",
+            "name": "The Slow Bloom of Marrowfen",
+            "createdAt": "2026-02-25 01:31:28.604",
+            "updatedAt": "2026-02-25 01:31:29.061",
+            "status": "active",
+            "isShared": false
+          }
+        ]
+      },
+      "playActivity": {
+        "sessionCount": 0,
+        "sessionElapsedSeconds": 0,
+        "sessionElapsedHours": 0,
+        "activeTurnSeconds": 0,
+        "activeTurnHours": 0,
+        "turnCount": 0,
+        "completedTurnCount": 0,
+        "modulesPlayedCount": 0,
+        "firstSessionAt": null,
+        "lastSessionActivityAt": null
+      }
+    }
+  ]
+}

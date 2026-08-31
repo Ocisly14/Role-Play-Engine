@@ -113,7 +113,7 @@ describe("buildUserPromptSegments", () => {
     expect(decide).toContain("Write content in English.");
   });
 
-  it("breakpoints only the part that does not move", () => {
+  it("keeps map memories outside the cached block", () => {
     // A breakpoint at the end of an append-only block still MOVES every tick,
     // and the provider charges a cache write for the whole new prefix, not the
     // increment. Measured: 343k read against 655k written — worse than not
@@ -125,7 +125,7 @@ describe("buildUserPromptSegments", () => {
           {
             id: "aaaaaaaa-1111-1111-1111-111111111111",
             handle: "Maaaaaaaa",
-            type: "context",
+            type: "map",
             content: "The bakery is on Mill Street.",
             gameDateTime: "1923-04-01T00:00:00",
           },
@@ -144,6 +144,7 @@ describe("buildUserPromptSegments", () => {
     expect(segments.filter((s) => s.cache)).toHaveLength(1);
     expect(segments[0].cache).toBe(true);
     expect(segments[segments.length - 1].cache).toBe(false);
+    expect(segments[0].text).not.toContain("The bakery is on Mill Street");
   });
 
   it("keeps written memory and perception OUT of the cached block", () => {
@@ -155,7 +156,7 @@ describe("buildUserPromptSegments", () => {
           {
             id: "aaaaaaaa-1111-1111-1111-111111111111",
             handle: "Maaaaaaaa",
-            type: "context",
+            type: "map",
             content: "The bakery is on Mill Street.",
             gameDateTime: "1923-04-01T00:00:00",
           },
@@ -183,7 +184,7 @@ describe("buildUserPromptSegments", () => {
       .join("");
 
     expect(cached).toContain("## Who you are");
-    expect(cached).toContain("The bakery is on Mill Street");
+    expect(cached).not.toContain("The bakery is on Mill Street");
     expect(cached).not.toContain("Hollins lied");
     expect(cached).not.toContain("A door closes");
   });
@@ -361,18 +362,14 @@ describe("a character knows their own hands", () => {
   });
 });
 
-describe("splitting the memory block cannot disturb the handles", () => {
-  // The block is rendered in two pieces so the frozen half can sit behind the
-  // cache breakpoint. When handles were derived at render time this quietly
-  // broke them — each half was tagged against itself, so a collision spanning
-  // the halves printed one handle on two memories and the resolver, which saw
-  // the whole set, recognised neither. Stored handles make the split a
-  // non-event.
+describe("memory handles stay stable", () => {
+  // Map and general memories share one block. Stored handles make a collision
+  // harmless because the formatter never derives them from the rendered set.
   const colliding = [
     {
       id: "aaaaaaaa-0000-0000-0000-000000000001",
       handle: "Maaaaaaaa",
-      type: "context",
+      type: "map",
       content: "The bakery is on Mill Street.",
       gameDateTime: "1923-04-01T00:00:00",
     },
@@ -385,22 +382,21 @@ describe("splitting the memory block cannot disturb the handles", () => {
     },
   ];
 
-  it("prints each half's stored handle, distinct across the split", () => {
+  it("prints each stored handle distinctly", () => {
     const text = buildUserPrompt(makeCtx({ memories: colliding }), opts);
     const handles = [...text.matchAll(/^- #(M[0-9a-f]+)/gm)].map(
       (m) => m[1]
     );
 
     expect(handles).toEqual(["Maaaaaaaa", "Maaaaaaaa00"]);
-    // And each sits in the half it belongs to.
-    const frozen = buildUserPromptSegments(
+    const cached = buildUserPromptSegments(
       makeCtx({ memories: colliding }),
       opts
     )
       .filter((s) => s.cache)
       .map((s) => s.text)
       .join("");
-    expect(frozen).toContain("#Maaaaaaaa ");
-    expect(frozen).not.toContain("Maaaaaaaa00");
+    expect(cached).not.toContain("#Maaaaaaaa ");
+    expect(cached).not.toContain("Maaaaaaaa00");
   });
 });

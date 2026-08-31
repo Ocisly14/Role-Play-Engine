@@ -1,0 +1,23 @@
+{
+  "moduleId": "grayhaven",
+  "moduleStartDate": "1985-07-08",
+  "description": "Recommended NPC injection policy for simulation startup. All fourteen Grayhaven residents are ordinary townsfolk and run under daily_sim: regular town life, work routines, and social behavior.",
+  "tiers": {
+    "daily_sim": [
+      "npc_tommy_reyes",
+      "npc_denny_holt",
+      "npc_priya_batra",
+      "npc_marisol_reyes",
+      "npc_frank_holt",
+      "npc_susan_holt",
+      "npc_ray_holt",
+      "npc_dev_batra",
+      "npc_anita_batra",
+      "npc_dolores_medeiros",
+      "npc_doc_weaver",
+      "npc_earl_pruitt",
+      "npc_cole_baxter",
+      "npc_vance"
+    ]
+  }
+}

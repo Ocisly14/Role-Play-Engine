@@ -30,10 +30,13 @@ export interface RawActionStart {
   /** Active resistance: who defends and with which skill. Code rolls both
    *  sides and compares levels. */
   opposedBy?: Array<{ characterId: string; skillId: string }>;
-  /** Engine-owned runtime annotation: set when this action has a movement leg
-   *  the deterministic movement executor should advance tick by tick. The
-   *  destination must have been checked with the pathfinding tool. */
-  movement?: { destinationId: string };
+  /** Engine-owned runtime annotation: set when this action has a movement
+   *  leg. `route` is the path THE ACTOR STATED, grounded to place ids —
+   *  ordered waypoints, each topologically adjacent to the previous, the
+   *  last being the destination. The Engine never invents an unstated leg:
+   *  a character who did not say how to get somewhere has not chosen a way,
+   *  and their walk ends where their words end. */
+  movement?: { route: string[]; vehicleId?: string };
 }
 
 export interface RawCheck {
@@ -94,7 +97,10 @@ export interface RawOccurrence {
   facts: Array<{
     type: string;
     content: string;
-    entityRefs?: Array<{ kind: "character" | "item" | "scene"; id: string }>;
+    entityRefs?: Array<{
+      kind: "character" | "item" | "scene" | "connection";
+      id: string;
+    }>;
   }>;
   participants: Array<{
     characterId: string;
@@ -149,8 +155,7 @@ export const CHARACTER_OPS: OperationSpec[] = [
   { kinds: ["hp", "san", "fatigue"], fields: "delta:number, reason:string" },
   {
     kinds: ["position"],
-    fields:
-      'position:{type:"scene"|"junction"|"road", sceneId|junctionId|roadId}',
+    fields: 'position:{type:"scene"|"road", sceneId|roadId}',
   },
   {
     kinds: ["spot"],
@@ -176,10 +181,24 @@ export const SCENE_OPS: OperationSpec[] = [
     fields:
       "condition:{description:string, featureId?:string, mechanicalEffect?:object}",
   },
-  { kinds: ["removeCondition"], fields: "predicate:{featureId:string}" },
+  {
+    kinds: ["removeCondition"],
+    fields:
+      "predicate:{id?:string, featureId?:string} — at least one; id removes that one condition, featureId removes every condition that feature owns",
+  },
+  {
+    kinds: ["setDescription"],
+    fields:
+      "description:string — REPLACES the place's whole prose; keep every still-true [reference-id] citation, drop citations to things no longer visibly here",
+  },
   {
     kinds: ["connectionBlock"],
     fields: "connectionId:string, blocked:boolean, reason:string",
+  },
+  {
+    kinds: ["connectionHidden"],
+    fields:
+      "connectionId:string, hidden:boolean — false reveals a concealed exit, true conceals one",
   },
   {
     kinds: ["environmentContribute"],
@@ -208,17 +227,22 @@ export const ITEM_OPS: OperationSpec[] = [
   {
     kinds: ["create"],
     fields:
-      "name:string, location:<sceneId or characterId>, description?:string",
+      'name:string, location:<"scene:<placeId>" or characterId>, description?:string, id?:string — stable id; must be unused; omit to auto-generate; ALWAYS pass one for non-Latin names',
   },
   {
     kinds: ["move"],
-    fields: "from:<current holder>, to:<sceneId or characterId>",
+    fields:
+      'from:<current holder, exactly as the Items section shows it>, to:<"scene:<placeId>" for a place — a vehicle interior scene included — or a bare characterId> (one holder grammar, same as create.location). If the FROM place\'s prose cites this item, the same submission must rewrite that description (scene setDescription) — the prose must not keep pointing at what left',
   },
-  { kinds: ["destroy"], fields: "" },
+  {
+    kinds: ["destroy"],
+    fields:
+      "(no fields). If the holder place's prose cites this item, the same submission must rewrite that description (scene setDescription)",
+  },
   {
     kinds: ["set"],
     fields:
-      "any of — description:string (REPLACES the whole description; write everything still true of the thing) · appendDescription:string (adds one sentence to what is there; how damage is recorded — say who or what did it, and do not repeat what the description already says) · isLightSource:boolean (false when it no longer lights the room, e.g. smashed) · lightLevel:number",
+      "any of — description:string (REPLACES the whole description; write everything still true of the thing) · appendDescription:string (adds one sentence to what is there; how damage is recorded — say who or what did it, and do not repeat what the description already says) · hidden:boolean (false REVEALS a concealed item to characters, true conceals it) · isLightSource:boolean (false when it no longer lights the room, e.g. smashed) · lightLevel:number",
   },
 ];
 
@@ -242,7 +266,10 @@ export function opKinds(ops: OperationSpec[]): ReadonlySet<string> {
 const ENTITY_REF = {
   type: "object",
   properties: {
-    kind: { type: "string", enum: ["character", "item", "scene"] },
+    kind: {
+      type: "string",
+      enum: ["character", "item", "scene", "connection"],
+    },
     id: { type: "string" },
   },
   required: ["kind", "id"],
@@ -349,7 +376,7 @@ export const submitResolutionTool: ToolSpec = {
       starting: {
         type: "array",
         description:
-          "Actions that BEGIN this tick — the ids the trigger section lists under `starting`. How long each should take and how hard it is. Never an outcome: its time has not been spent yet.",
+          "Actions that BEGIN this tick — the ids the trigger section lists under `starting`. For a non-travel action: how long it should take and how hard it is. For travel: only the route (and vehicle) — the clock is derived from it. Never an outcome: its time has not been spent yet.",
         items: {
           type: "object",
           properties: {
@@ -358,7 +385,7 @@ export const submitResolutionTool: ToolSpec = {
               type: "integer",
               minimum: 1,
               description:
-                "How long the action SHOULD take. You never state elapsed time — code advances progress from the clock.",
+                "How long the action SHOULD take. REQUIRED for a non-travel action; OMIT when `movement` is set — travel time is derived from the route and anything you write here is overridden. You never state elapsed time — code advances progress from the clock.",
             },
             timingReason: {
               type: "string",
@@ -399,13 +426,24 @@ export const submitResolutionTool: ToolSpec = {
             movement: {
               type: "object",
               description:
-                "Set when the action has a movement leg: the deterministic movement executor will walk the character there tick by tick. Verify the destination with the pathfinding tool first.",
-              properties: { destinationId: { type: "string" } },
-              required: ["destinationId"],
+                "REQUIRED whenever the action crosses a scene boundary — a 40-minute haul or one step into the next room alike; a single adjacent waypoint is a complete route. A duration alone moves nobody, and facts must not put hands on what the position cannot reach. `route` = the path the ACTOR STATED, grounded to place ids: ordered waypoints, each adjacent to the previous, last = destination. Ground only what their words carry (stepping out of the current room onto its street is an implied first hop). NEVER invent an unstated leg — a character who did not say how to get somewhere walks only as far as their words go, and re-decides there. Code derives the travel time from the route (walk or drive) and sets the clock itself: omit resolvedDurationTicks for pure travel.",
+              properties: {
+                route: {
+                  type: "array",
+                  items: { type: "string" },
+                  minItems: 1,
+                },
+                vehicleId: {
+                  type: "string",
+                  description:
+                    "Set when the actor DRIVES: the vehicle moves along the route (drivable roads only) and everyone in its interior scene rides along. The driver must be inside the vehicle; whether they may drive it is yours to judge.",
+                },
+              },
+              required: ["route"],
               additionalProperties: false,
             },
           },
-          required: ["actionId", "resolvedDurationTicks", "timingReason"],
+          required: ["actionId"],
           additionalProperties: false,
         },
       },
@@ -601,7 +639,7 @@ export const CODE_TOOL_SPECS: ToolSpec[] = [
   {
     name: "pathfinding",
     description:
-      "Plan the route from a character's current position to a destination id (scene/junction/road). Returns reachability, leg summary and total minutes.",
+      "Plan the route from a character's current position to a destination id (scene/road). Returns reachability, leg summary and total WALKING minutes. Advisory only — a movement action's clock is derived by code from its route (drive speeds included); you never need this number for a duration.",
     inputSchema: {
       type: "object",
       properties: {
@@ -615,7 +653,7 @@ export const CODE_TOOL_SPECS: ToolSpec[] = [
   {
     name: "movementCost",
     description:
-      "Estimate travel time (minutes/ticks) from a character's current position to a destination id.",
+      "Estimate WALKING time (minutes/ticks) from a character's current position to a destination id. Advisory only — never needed for a movement action's duration, which code derives from the route (drive speeds included).",
     inputSchema: {
       type: "object",
       properties: {

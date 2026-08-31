@@ -1,0 +1,26 @@
+{
+  "schemaVersion": 2,
+  "id": "ROAD_trail_creek",
+  "name": "灰溪林径",
+  "description": "林道口进山后偏西的一条林径,顺着地势缓缓下行,单程一小时十分钟。起点在林道口 [SCN_trailhead],尽头是灰溪的渡口 [SCN_creek_ford]。蕨丛没过小腿,相似的树干一根接一根向后退,走到一半就很难说清自己究竟走了多远。",
+  "parentLocationId": "OUTDOOR",
+  "travelTimeMinutes": 70,
+  "references": {
+    "items": [],
+    "connections": [
+      {
+        "id": "exit.trail_creek.trailhead_end",
+        "targetId": "SCN_trailhead",
+        "name": "林径起点(林道口)",
+        "role": "endpointA"
+      },
+      {
+        "id": "exit.trail_creek.creek_end",
+        "targetId": "SCN_creek_ford",
+        "name": "林径尽头(渡口)",
+        "role": "endpointB"
+      }
+    ],
+    "conditions": []
+  }
+}

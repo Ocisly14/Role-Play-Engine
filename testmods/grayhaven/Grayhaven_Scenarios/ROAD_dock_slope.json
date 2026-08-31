@@ -1,0 +1,26 @@
+{
+  "schemaVersion": 2,
+  "id": "ROAD_dock_slope",
+  "name": "下坡道",
+  "description": "从主街南端下到海边的坡道,路面被盐雾蚀得发白,一刻钟的下坡。上坡的一头接着主街南口 [SCN_main_south],下坡的尽头是码头和海滩 [SCN_dock]。走下去的时候,咸腥味一步比一步重,雾大的日子走到一半就听得见浪。",
+  "parentLocationId": "OUTDOOR",
+  "travelTimeMinutes": 15,
+  "references": {
+    "items": [],
+    "connections": [
+      {
+        "id": "exit.dock_slope.street_end",
+        "targetId": "SCN_main_south",
+        "name": "坡道上端",
+        "role": "endpointA"
+      },
+      {
+        "id": "exit.dock_slope.dock_end",
+        "targetId": "SCN_dock",
+        "name": "坡道下端",
+        "role": "endpointB"
+      }
+    ],
+    "conditions": []
+  }
+}

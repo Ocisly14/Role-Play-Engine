@@ -24,7 +24,7 @@ export type PlannedRoute =
       totalMinutes: number;
       targetPosition: CharacterPosition;
     }
-  | { ok: false; reason: "missing_destination" | "no_current_position" | "no_path" };
+  | { ok: false; reason: string };
 
 /**
  * Resolve a destination id and plan the movement route from `currentPosition`,
@@ -35,11 +35,13 @@ export type PlannedRoute =
 export function planMovementRoute(
   dgsm: DynamicGameStateManager,
   characterId: string,
-  destination: string | undefined
+  destination: string | undefined,
+  fromPosition?: CharacterPosition
 ): PlannedRoute {
   if (!destination) return { ok: false, reason: "missing_destination" };
 
-  const currentPosition = dgsm.getCharacterPosition(characterId);
+  const currentPosition =
+    fromPosition ?? dgsm.getCharacterPosition(characterId);
   if (!currentPosition) return { ok: false, reason: "no_current_position" };
 
   // Same-building shortcut: scene → scene within the same parent location.
@@ -48,10 +50,9 @@ export function planMovementRoute(
     const currentScene = state.scenes.get(currentPosition.sceneId);
     const targetScene = state.scenes.get(destination);
     if (
-      currentScene &&
+      currentScene?.parentLocationId &&
       targetScene &&
       currentScene.parentLocationId === targetScene.parentLocationId &&
-      currentScene.parentLocationId !== "OUTDOOR" &&
       currentPosition.sceneId !== destination
     ) {
       const targetPos: CharacterPosition = {

@@ -1,7 +1,9 @@
-// D7 full-context guarantee: every scene, item, character, new command and
-// active action appears in the context — nothing is filtered for perceived
-// relevance — and every snapshot is read from the one tick-start state.
+// Two-tier context: Tier 1 is the macro skeleton (interior edges within one
+// location vanish from it); Tier 2 carries full snapshots of only the
+// involved places; the full-world lookup surfaces (itemHolders, placeKinds,
+// connectionIds) are never trimmed; characters stay complete.
 
+import { buildTopology } from "@/state/topologyTypes.js";
 import { describe, expect, it } from "vitest";
 import type { DynamicGameStateManager } from "../../../state/DynamicGameState.js";
 import type { ActionCommand, EngineAction } from "../../actions/types.js";
@@ -19,7 +21,15 @@ function makeDgsm(): DynamicGameStateManager {
         items: id === "SCN_1" ? [{ id: "lamp", name: "lamp" }] : [],
         conditions: [],
         connections:
-          id === "SCN_1" ? [{ targetId: "SCN_2", description: "a door" }] : [],
+          id === "SCN_1"
+            ? [
+                {
+                  id: "exit.scn1.door",
+                  targetId: "SCN_2",
+                  description: "a door",
+                },
+              ]
+            : [],
       },
     ])
   );
@@ -42,6 +52,7 @@ function makeDgsm(): DynamicGameStateManager {
       airborneHazards: [],
     }),
     getSceneConditions: () => [],
+    getTopology: () => buildTopology(scenes, new Map()),
     getConnectionBlockReason: (from: string, to: string) =>
       from === "SCN_1" && to === "SCN_2" ? "rubble" : undefined,
     getCharactersInScene: (sceneId: string) =>
@@ -64,7 +75,7 @@ function makeNpc(id: string, scene: string) {
     name: id,
     __scene: scene,
     attributes: { STR: 50 },
-    skills: { Locksmith: 60 },
+    skills: { "Stealth & Security": 60 },
     status: {
       hp: 10,
       maxHp: 12,
@@ -109,19 +120,37 @@ describe("buildEngineResolutionContext", () => {
     activeActions: [active],
   });
 
-  it("includes EVERY scene, item and character — no relevance trimming", () => {
-    expect(context.state.scenes.map((s) => s.id).sort()).toEqual([
-      "SCN_1",
-      "SCN_2",
-      "SCN_FAR",
-    ]);
+  it("keeps interior scenes out of the skeleton but in the full-world lookups", () => {
+    // No junctions or roads here, so the skeleton lists no geography nodes —
+    // the interior scenes live under placeKinds, not in the graph.
+    expect(context.state.graph.places).toEqual([]);
+    expect(context.state.placeKinds).toEqual({
+      SCN_1: "scene",
+      SCN_2: "scene",
+      SCN_FAR: "scene",
+    });
+    expect(context.state.connectionIds).toEqual(["exit.scn1.door"]);
     // The far-away idle character is present too.
     expect(context.state.characters.map((c) => c.id).sort()).toEqual([
       "npc_1",
       "npc_2",
       "npc_far",
     ]);
-    // Items from scenes AND inventories, with holders.
+    // The full-world holder map is never trimmed.
+    expect(context.state.itemHolders).toEqual({
+      lamp: "scene:SCN_1",
+      pick: "npc_1",
+    });
+  });
+
+  it("snapshots only the involved places in Tier 2", () => {
+    // npc_1 (new command) stands in SCN_1; npc_2 (active action) in SCN_2.
+    // SCN_FAR involves no action and gets no detailed snapshot.
+    expect(context.state.places.map((p) => p.id).sort()).toEqual([
+      "SCN_1",
+      "SCN_2",
+    ]);
+    // Items: the involved places' floors plus the involved actors' pockets.
     expect(
       context.state.items.map((i) => `${i.id}@${i.holder}`).sort()
     ).toEqual(["lamp@scene:SCN_1", "pick@npc_1"]);
@@ -129,14 +158,28 @@ describe("buildEngineResolutionContext", () => {
 
   it("carries real skill values, positions and blocked connections", () => {
     const npc1 = context.state.characters.find((c) => c.id === "npc_1");
-    expect(npc1?.skills.Locksmith).toBe(60);
+    expect(npc1?.skills["Stealth & Security"]).toBe(60);
     expect(npc1?.locationId).toBe("SCN_1");
-    const scn1 = context.state.scenes.find((s) => s.id === "SCN_1");
+    const scn1 = context.state.places.find((s) => s.id === "SCN_1");
+    expect(scn1?.kind).toBe("scene");
     expect(scn1?.connections[0]).toMatchObject({
+      connectionId: "exit.scn1.door",
       targetId: "SCN_2",
       blockedReason: "rubble",
     });
     expect(scn1?.presentCharacterIds).toEqual(["npc_1"]);
+    // The interior SCN_1→SCN_2 edge (both in L1) is dropped from the
+    // skeleton; its blocked state still surfaces in the volatile list,
+    // addressed by the authored endpoints.
+    expect(context.state.graph.edges).toEqual([]);
+    expect(context.state.blockedEdges).toEqual([
+      {
+        connectionId: "exit.scn1.door",
+        from: "SCN_1",
+        to: "SCN_2",
+        reason: "rubble",
+      },
+    ]);
   });
 
   it("unions trigger action ids and stamps the tick frame", () => {

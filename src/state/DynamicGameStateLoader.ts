@@ -110,23 +110,6 @@ export async function initializeCompleteDynamicGameState(
     embedClient,
     params.language
   );
-  // Every NPC starts the session knowing the town the way a person knows the
-  // town they live in: the buildings, the rooms inside them, and how the
-  // streets connect. Written once, from module data (see contextMemory.ts).
-  await Promise.all(
-    state.npcCharacters.map((npc) =>
-      memoryManager.ensureContextMemories({
-        npcId: npc.id,
-        sessionId: params.sessionId,
-        moduleId,
-        gameDateTime,
-        dgsm,
-        seed: npc.knownMapSeed,
-        language: params.language,
-      })
-    )
-  );
-
   console.log(
     `[DynamicGameState] Initialized module "${params.moduleName}" — ${state.npcCharacters.length}/${moduleData.npcs.length} NPCs (policy filtered), ${moduleData.scenes.size} scenes`
   );

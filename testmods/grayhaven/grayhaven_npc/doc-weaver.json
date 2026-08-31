@@ -1,0 +1,228 @@
+{
+  "id": "npc_doc_weaver",
+  "name": "Doc Weaver",
+  "currentLocation": "SCN_clinic_upstairs",
+  "residence": "SCN_clinic_upstairs",
+  "occupation": "全科医生",
+  "age": 54,
+  "gender": "男",
+  "appearance": "清瘦，白大褂下总穿同一款灰毛衣；听诊器用了二十年，镜片和金属都擦得干干净净。",
+  "personality": "冷静、理性、有一点床边冷幽默。他对病人的说法保留判断，却无条件相信身体的信号；安慰人的方式是给出清晰、可执行的下一步。",
+  "background": "1931 年生，旧金山医学院毕业。1963 年买下退休医生的诊所，本想工作五年攒钱回城，结果在灰港过了二十二年。终身未婚，住在诊所楼上，与留声机和国际象棋为伴；Susan Holt 是他最可靠的护士。",
+  "attributes": {
+    "STR": 40,
+    "CON": 55,
+    "DEX": 50,
+    "APP": 50,
+    "POW": 70,
+    "SIZ": 50,
+    "INT": 80,
+    "EDU": 90
+  },
+  "status": {
+    "hp": 10,
+    "maxHp": 10,
+    "san": 72,
+    "maxSan": 72,
+    "fatigue": 24,
+    "maxFatigue": 100,
+    "luck": 45,
+    "conditions": []
+  },
+  "skills": {
+    "Social": 70,
+    "Science & Nature": 70,
+    "Investigation": 60,
+    "Medicine & Psychology": 85
+  },
+  "languages": {
+    "native": [
+      "English"
+    ],
+    "learned": {
+      "Latin": 55
+    }
+  },
+  "inventory": [
+    {
+      "id": "weaver_medical_bag",
+      "name": "黑色出诊包",
+      "properties": {
+        "note": "内有听诊器、血压计、基本药品和急救用品。"
+      }
+    },
+    {
+      "id": "weaver_case_ledger",
+      "name": "病例统计本",
+      "properties": {
+        "note": "正式病历之外按周统计失眠和耳鸣主诉，封皮没有标题。"
+      }
+    },
+    {
+      "id": "weaver_patient_charts",
+      "name": "病历夹",
+      "properties": {
+        "note": "诊所日常病历，按姓名和复查日期分类。"
+      }
+    },
+    {
+      "id": "weaver_chess_set",
+      "name": "木制国际象棋",
+      "properties": {
+        "note": "周日下午他会独自摆开棋局，边听 KGRV 的歌剧转播边走棋。"
+      }
+    },
+    {
+      "id": "weaver_gray_sweater",
+      "name": "灰毛衣",
+      "properties": {
+        "note": "穿在白大褂下的旧毛衣，几乎成了他的制服。"
+      }
+    }
+  ],
+  "relationships": [
+    {
+      "targetId": "npc_susan_holt",
+      "targetName": "Susan Holt",
+      "relationshipType": "employee",
+      "attitude": 85,
+      "firstPerson": "Susan 从 1967 年实习时起就和我共事。诊所一半靠她撑着：我看化验单，她看人。我们该把各自发现的事好好对一次表。"
+    },
+    {
+      "targetId": "npc_ray_holt",
+      "targetName": "Ray Holt",
+      "relationshipType": "neutral",
+      "attitude": 50,
+      "firstPerson": "Ray 是老病人，也是让我少烟嘱咐说了十年的老对手。他的迟钝像一张开给自己的处方。"
+    },
+    {
+      "targetId": "npc_dolores_medeiros",
+      "targetName": "Dolores Medeiros",
+      "relationshipType": "friend",
+      "attitude": 70,
+      "firstPerson": "Dolores 脑子里的镇民档案常比我的病历齐全。她管喂，我管治，这镇子像被我们俩分管。"
+    },
+    {
+      "targetId": "npc_earl_pruitt",
+      "targetName": "Earl Pruitt",
+      "relationshipType": "neutral",
+      "attitude": 60,
+      "firstPerson": "Earl 是病人，心肺状况比他的年纪好得多。他看见的东西是症状还是观察，不能靠年龄判断，得靠证据。"
+    },
+    {
+      "targetId": "npc_dev_batra",
+      "targetName": "Dev Batra",
+      "relationshipType": "friend",
+      "attitude": 65,
+      "firstPerson": "Dev 是镇上少数先要数据再下结论的人。他修好了我的留声机，收费公道得近乎固执。"
+    },
+    {
+      "targetId": "npc_anita_batra",
+      "targetName": "Anita Batra",
+      "relationshipType": "friend",
+      "attitude": 60,
+      "firstPerson": "Anita 的蛋挞是我唯一不劝病人少吃的甜食。灰港接纳 Batra 家花了太久，我作为外来者对此有数。"
+    },
+    {
+      "targetId": "npc_marisol_reyes",
+      "targetName": "Marisol Reyes",
+      "relationshipType": "neutral",
+      "attitude": 55,
+      "firstPerson": "Marisol 是我的病人，眼下青黑一年深过一年；治账本的药我开不出来。Tommy 的疫苗也是我打的。"
+    },
+    {
+      "targetId": "npc_frank_holt",
+      "targetName": "Frank Holt",
+      "relationshipType": "neutral",
+      "attitude": 50,
+      "firstPerson": "Frank 每年体检都结实得像他的货车，但从去年起睡不好；他不说，号往往是 Susan 替他挂的。"
+    },
+    {
+      "targetId": "npc_cole_baxter",
+      "targetName": "Cole Baxter",
+      "relationshipType": "neutral",
+      "attitude": 55,
+      "firstPerson": "Cole 做事按规程，医学上可以称为依从性好；这镇上这样的年轻人不多。"
+    },
+    {
+      "targetId": "npc_denny_holt",
+      "targetName": "Denny Holt",
+      "relationshipType": "neutral",
+      "attitude": 60,
+      "firstPerson": "Denny 是我的小病人，哮喘管理得比半数大人好。他读太多书，来看诊时会问辐射病的症状。"
+    },
+    {
+      "targetId": "npc_tommy_reyes",
+      "targetName": "Tommy Reyes",
+      "relationshipType": "neutral",
+      "attitude": 45,
+      "firstPerson": "Tommy 是擦伤磕碰的常客，主要因为他比别人更敢做不该做的事。"
+    },
+    {
+      "targetId": "npc_priya_batra",
+      "targetName": "Priya Batra",
+      "relationshipType": "neutral",
+      "attitude": 55,
+      "firstPerson": "Priya 换药时会盯着我的手问原理。她是好苗子，只是更爱拆东西而不是治东西。"
+    }
+  ],
+  "longTermIntent": "为这波失眠和耳鸣找到可测量的流行病学解释，先排查环境毒物、水源或其他可验证的因素。",
+  "memory": [
+    {
+      "type": "secret",
+      "content": "正式病历之外，我另记失眠和耳鸣的每周数字。从去年冬天起曲线一直在爬；一个镇子恐慌起来，比失眠难治得多。"
+    },
+    {
+      "type": "secret",
+      "content": "我仔细检查过 Earl 的视力和认知，都没有问题。镇上传他眼睛不行、老糊涂了；作为医生，我知道这不成立，但暂时不打算公开争辩。"
+    },
+    {
+      "type": "secret",
+      "content": "上个月我自己的耳朵也响过两次。我把自己编号写进统计表，不写名字。"
+    },
+    {
+      "type": "general",
+      "content": "从去年冬天起，失眠和耳鸣的主诉明显增加。候诊室也同时开始谈灯闪、死鱼和 Earl 的光；这种相关性值得记录。"
+    },
+    {
+      "type": "general",
+      "content": "周日的 KGRV 歌剧转播近来夹着沙沙声。我一度以为是耳鸣，后来对照过：留声机没事，收音机才有。"
+    },
+    {
+      "type": "general",
+      "content": "Susan 清点候诊登记时发现今年病人更多。她没看过我的统计，却得出了相同方向的结论，是有价值的独立旁证。"
+    },
+    {
+      "type": "general",
+      "content": "1963 年我打算在灰港待五年就回旧金山；今年是第二十二年，楼上的行李箱早已成了床头柜。"
+    },
+    {
+      "type": "plan",
+      "content": "下次去 Fort Anne 进药时带两份水样送检；排除原因先从可测量的开始。"
+    },
+    {
+      "type": "plan",
+      "content": "把失眠和耳鸣病例按住址对照整理，检查是否存在聚集。"
+    },
+    {
+      "type": "map",
+      "content": "诊所在主街南头，跟星港街机厅、巴特拉家的电视铺挨在一排，楼上是我住处。主街走到头十五分钟，北头是蓝鸟餐馆、杂货店兼邮局、警长办公室——街面上的路灯、长椅、邮筒、公告栏也都在那一段。"
+    },
+    {
+      "type": "map",
+      "content": "主街北口是个路口：旧海岸公路二十五分钟到汽车旅馆；霍尔特巷二十分钟到霍尔特家院门——他们家常年在我这儿看病，这条巷子我闭眼都认得；林道十分钟到林道口。"
+    },
+    {
+      "type": "map",
+      "content": "主街南口另一个路口：下坡道十五分钟到码头和海滩，后巷八分钟直接到雷耶斯家门口，比绕主街近一半。码头那边风大，我几个哮喘、风湿的老病人，一起风准来挂号——比日历准。"
+    },
+    {
+      "type": "map",
+      "content": "汽车旅馆边上那条车行道往山上去，尽头一道自动大门，再往里是山上那座政府气象站——普通人到大门为止，我没上去过，镇上拿它当谈资。旅馆边上还有个货运中转棚。"
+    },
+    {
+      "type": "map",
+      "content": "出诊到过林道口那一带一次，再往林子里，我没进去过，心里没数。"
+    }
+  ]
+}

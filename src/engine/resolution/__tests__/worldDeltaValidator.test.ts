@@ -82,9 +82,14 @@ function makeContext(opts: {
       worldInvariants: [],
     },
     state: {
-      scenes: [
+      graph: { places: [], edges: [] },
+      blockedEdges: [],
+      placeKinds: { SCN_1: "scene" },
+      connectionIds: [],
+      places: [
         {
           id: "SCN_1",
+          kind: "scene",
           name: "Study",
           description: "",
           parentLocationId: "L1",
@@ -105,13 +110,14 @@ function makeContext(opts: {
         { id: "lock_1", name: "cabinet lock", holder: "scene:SCN_1" },
         { id: "pick_1", name: "lockpicks", holder: "npc_1" },
       ],
+      itemHolders: { lock_1: "scene:SCN_1", pick_1: "npc_1" },
       characters: [
         {
           id: "npc_1",
           name: "Marsh",
           alive: true,
           attributes: {},
-          skills: { Locksmith: 60 },
+          skills: { "Stealth & Security": 60 },
           hp: 10,
           maxHp: 12,
           san: 40,
@@ -309,7 +315,7 @@ describe("validateRawResolution — the three moments", () => {
 });
 
 describe("validateRawResolution — outcome and the bar", () => {
-  const skillCommand = command({ declaredSkillId: "Locksmith" });
+  const skillCommand = command({ declaredSkillId: "Stealth & Security" });
   const runningContext = (overrides: Partial<EngineAction> = {}) =>
     makeContext({
       newCommands: [],
@@ -334,7 +340,11 @@ describe("validateRawResolution — outcome and the bar", () => {
     const errors = validateRawResolution(
       { ending: [end({ outcome: "success" })] },
       runningContext({
-        check: { skillId: "Locksmith", requiredLevel: "regular", basis: "…" },
+        check: {
+          skillId: "Stealth & Security",
+          requiredLevel: "regular",
+          basis: "…",
+        },
       }),
       []
     );
@@ -345,7 +355,11 @@ describe("validateRawResolution — outcome and the bar", () => {
     const errors = validateRawResolution(
       { ending: [end({ outcome: undefined })] },
       runningContext({
-        check: { skillId: "Locksmith", requiredLevel: "regular", basis: "…" },
+        check: {
+          skillId: "Stealth & Security",
+          requiredLevel: "regular",
+          basis: "…",
+        },
       }),
       []
     );
@@ -495,7 +509,7 @@ describe("finalizeResolution", () => {
         start({
           resolvedDurationTicks: 5,
           timingReason: "five minutes at the keyway",
-          movement: { destinationId: "SCN_1" },
+          movement: { route: ["SCN_1"] },
         }),
       ],
       occurrences: [
@@ -523,7 +537,7 @@ describe("finalizeResolution", () => {
     expect(t.nextWakeAt).toBe("1923-04-02T09:20:00");
     expect(t.progressDeltaMinutes).toBe(0);
     expect(finalized.movementInits[ACTION_ID]).toEqual({
-      destinationId: "SCN_1",
+      route: ["SCN_1"],
     });
 
     const occ = finalized.resolution.occurrences[0];
@@ -683,6 +697,70 @@ describe("applyRepair — one shape for every field", () => {
   });
 });
 
+describe("prose coherence — a cited item cannot leave silently", () => {
+  const proseContext = () => {
+    const ctx = makeContext({});
+    // The study's prose cites the lock: moving it out must rewrite the prose.
+    ctx.state.places[0].description =
+      "A study. A cabinet lock gleams on the desk [lock_1].";
+    return ctx;
+  };
+  const moveOut = {
+    sourceActionId: ACTION_ID,
+    causalBasis: "pocketed the lock",
+    itemId: "lock_1",
+    operation: { kind: "move", from: "scene:SCN_1", to: "npc_1" },
+  };
+
+  it("rejects moving a cited item without rewriting the place's prose", () => {
+    const errors = text(
+      validateRawResolution(
+        { starting: [start()], itemChanges: [moveOut] },
+        proseContext(),
+        []
+      )
+    );
+    expect(errors).toContain('cited in the description of "SCN_1"');
+    expect(errors).toContain("setDescription");
+  });
+
+  it("accepts the same move when the submission rewrites the prose", () => {
+    const errors = text(
+      validateRawResolution(
+        {
+          starting: [start()],
+          itemChanges: [moveOut],
+          sceneChanges: [
+            {
+              sourceActionId: ACTION_ID,
+              causalBasis: "the lock left the desk",
+              sceneId: "SCN_1",
+              operation: {
+                kind: "setDescription",
+                description: "A study. The desk is bare.",
+              },
+            },
+          ],
+        },
+        proseContext(),
+        []
+      )
+    );
+    expect(errors).not.toContain("cited in the description");
+  });
+
+  it("does not fire for an uncited item", () => {
+    const errors = text(
+      validateRawResolution(
+        { starting: [start()], itemChanges: [moveOut] },
+        makeContext({}),
+        []
+      )
+    );
+    expect(errors).not.toContain("cited in the description");
+  });
+});
+
 describe("operations are checked against the fields they advertise", () => {
   // Each of these passed validation before and reached the applier, where a
   // bad value either did nothing or wrote nonsense into the world. A delta
@@ -703,25 +781,29 @@ describe("operations are checked against the fields they advertise", () => {
       )
     );
 
-  it("rejects a position type outside the three real kinds", () => {
+  it("rejects a position type outside the two real kinds", () => {
     expect(
       errorsFor({ kind: "position", position: { type: "teleport" } })
-    ).toContain('position.type must be "scene", "junction" or "road"');
+    ).toContain('position.type must be "scene" or "road"');
+    // The junction kind is gone: geography nodes are scenes now.
+    expect(
+      errorsFor({ kind: "position", position: { type: "junction" } })
+    ).toContain('position.type must be "scene" or "road"');
   });
 
   it("rejects a position whose id field is missing for its type", () => {
     expect(
-      errorsFor({ kind: "position", position: { type: "junction" } })
-    ).toContain("requires junctionId");
+      errorsFor({ kind: "position", position: { type: "road" } })
+    ).toContain("requires roadId");
   });
 
-  it("rejects a junction or road nobody was shown", () => {
-    // Only scenes used to be checked, so any junction id at all was accepted
+  it("rejects a road nobody was shown", () => {
+    // Only scenes used to be checked, so any road id at all was accepted
     // and the character was stood somewhere that does not exist.
     expect(
       errorsFor({
         kind: "position",
-        position: { type: "junction", junctionId: "JUNC_NOWHERE" },
+        position: { type: "road", roadId: "ROAD_NOWHERE" },
       })
     ).toContain("is not a place you were shown");
   });
@@ -777,14 +859,14 @@ describe("operations are checked against the fields they advertise", () => {
     expect(errors).toContain('environmentHazard needs "add" or "remove"');
   });
 
-  it("rejects a movement destination nobody was shown", () => {
+  it("rejects a movement waypoint nobody was shown", () => {
     const errors = text(
       validateRawResolution(
-        { starting: [start({ movement: { destinationId: "SCN_ATLANTIS" } })] },
+        { starting: [start({ movement: { route: ["SCN_ATLANTIS"] } })] },
         makeContext({}),
         []
       )
     );
-    expect(errors).toContain("is not a place you were shown");
+    expect(errors).toContain("is not a place in this world");
   });
 });

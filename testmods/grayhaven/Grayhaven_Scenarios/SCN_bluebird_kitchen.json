@@ -1,0 +1,47 @@
+{
+  "schemaVersion": 2,
+  "id": "SCN_bluebird_kitchen",
+  "name": "蓝鸟餐馆·后厨",
+  "description": "后厨窄而热,钢面操作台擦得能照出人影,炖鱼汤在灶上小火咕嘟,油和糖的香气分踞两端。墙上香料架的正中是一只小豆蔻铁罐[item.bluebird_kitchen.spice_tin]——Anita 的领地就从那只罐子向外延伸。那台漆皮剥落的老烤箱[item.bluebird_kitchen.old_oven]边,架子上晾着成排的蛋挞烤模[item.bluebird_kitchen.tart_tray],锡皮被几千炉蛋挞烤出了暗金色。弹簧门通回堂座[SCN_bluebird_dining],门上的小圆窗正好望见柜台;角落一段陡楼梯通向楼上 Dolores 的住处[SCN_bluebird_upstairs],楼梯口挂着她换下的围裙[item.bluebird_kitchen.dolores_apron]。",
+  "parentLocationId": "LOC_bluebird_diner",
+  "indoor": true,
+  "references": {
+    "items": [
+      {
+        "id": "item.bluebird_kitchen.spice_tin",
+        "name": "小豆蔻铁罐",
+        "description": "香料架正中的小豆蔻铁罐,盖子内侧用古吉拉特文写着一行小字。Anita 的曲奇和蛋挞都从这罐子里开始。"
+      },
+      {
+        "id": "item.bluebird_kitchen.tart_tray",
+        "name": "蛋挞烤模",
+        "description": "成排的锡皮蛋挞烤模,用了不知多少年,烤出一层暗金色的旧光。"
+      },
+      {
+        "id": "item.bluebird_kitchen.old_oven",
+        "name": "老烤箱",
+        "description": "占了半面墙的老式烤箱,搪瓷漆皮边角剥落,炉门把手被握得发亮,一开炉门就涌出一股焦糖香。"
+      },
+      {
+        "id": "item.bluebird_kitchen.dolores_apron",
+        "name": "Dolores 的围裙",
+        "description": "楼梯口钉子上挂着的一条浆过的围裙,前襟沾着洗不掉的油渍和粉迹,是 Dolores 下工后随手换下的那件。"
+      }
+    ],
+    "connections": [
+      {
+        "id": "exit.bluebird_kitchen.dining_door",
+        "targetId": "SCN_bluebird_dining",
+        "name": "弹簧门",
+        "description": "带小圆窗的弹簧双开门,通回堂座。"
+      },
+      {
+        "id": "exit.bluebird_kitchen.stairs_up",
+        "targetId": "SCN_bluebird_upstairs",
+        "name": "后楼梯",
+        "description": "角落的陡楼梯,通向楼上 Dolores 的住处。"
+      }
+    ],
+    "conditions": []
+  }
+}

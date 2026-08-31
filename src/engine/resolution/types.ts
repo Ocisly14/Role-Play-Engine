@@ -1,10 +1,13 @@
 // src/engine/resolution/types.ts
 //
 // Contracts of the unified World Action Engine resolution phase (plan D7 /
-// Phase 7). The Engine receives one verifiable, replayable
-// EngineResolutionContext per triggered tick — always the FULL world
-// authoritative snapshot, never a pre-trimmed "relevant" subset — plus all
-// new commands and all active actions, and returns one TickResolution.
+// Phase 7, two-tier context since M3). The Engine receives one verifiable,
+// replayable EngineResolutionContext per triggered tick: Tier 1 is the whole
+// world as a graph (every place and every connection, no prose), Tier 2 is
+// the full snapshot of only the places this tick's actions touch. Characters
+// stay complete, and the validation lookup (`state.itemHolders` plus the
+// graph) is built from the FULL state, so what the prompt trims never
+// narrows what the validator accepts.
 
 import type { CharacterPosition } from "../../state/topologyTypes.js";
 import type {
@@ -26,21 +29,74 @@ export interface ItemSnapshot {
   name: string;
   description?: string;
   type?: string;
-  /** "scene:<sceneId>" or a character id — same grammar as DGSM item moves. */
+  /** "scene:<placeId>" or a character id — same grammar as DGSM item moves. */
   holder: string;
+  /** The Engine is all-knowing: hidden items appear here (that is what makes
+   *  revealing them possible), flagged so it knows characters cannot see them. */
+  hidden?: boolean;
   damaged?: boolean;
   properties?: Record<string, unknown>;
 }
 
-export interface SceneSnapshot {
+export type PlaceKind = "scene" | "road";
+
+/** Tier 1: the world SKELETON — macro locations plus geography (top-level
+ *  node scenes and roads), no interior scenes. An edge whose authored
+ *  endpoint is an interior scene is lifted to that scene's parent (the
+ *  connectionId stays the authored one), and edges between two scenes of the
+ *  same parent are omitted. Static by construction: blocked state travels
+ *  separately (volatile), so this section stays byte-identical across ticks
+ *  for prompt caching. */
+export interface WorldGraph {
+  /** Geography nodes only: top-level scenes (kind "scene") and roads.
+   *  `description` is the authored v2 prose — it cites local items,
+   *  conditions and the places its passages lead to, so the skeleton
+   *  renders in the same description-plus-references shape as every
+   *  place file. */
+  places: Array<{
+    id: string;
+    kind: PlaceKind;
+    name: string;
+    description?: string;
+    parentLocationId?: string;
+  }>;
+  edges: Array<{
+    /** The authored connection id (`exit.*`) — the handle connectionBlock /
+     *  connectionHidden operations take. */
+    connectionId: string;
+    /** Skeleton node: the declaring place, lifted to its macro location when
+     *  the declaring place is an interior scene. */
+    from: string;
+    to: string;
+    /** Full-length walk time; set on road endpoint edges. */
+    travelTimeMinutes?: number;
+    hidden?: boolean;
+  }>;
+}
+
+/** A currently impassable edge, addressed by the authored ids (volatile —
+ *  rendered outside the cached graph so blocking a road does not invalidate
+ *  the stable prompt half). */
+export interface BlockedEdge {
+  connectionId: string;
+  from: string;
+  to: string;
+  reason: string;
+}
+
+/** Tier 2: the full snapshot of one INVOLVED place — a scene or road an
+ *  action touches this tick. */
+export interface PlaceSnapshot {
   id: string;
+  kind: PlaceKind;
   name: string;
   description: string;
-  parentLocationId: string;
+  parentLocationId?: string;
   indoor?: boolean;
   conditions: SceneCondition[];
   itemIds: string[];
   connections: Array<{
+    connectionId: string;
     targetId: string;
     description?: string;
     hidden?: boolean;
@@ -138,8 +194,32 @@ export interface EngineResolutionContext {
   };
 
   state: {
-    scenes: SceneSnapshot[];
+    /** Tier 1 — the world skeleton: macro locations + geography. Static. */
+    graph: WorldGraph;
+    /** Currently blocked edges, world-wide. Volatile companion to `graph`. */
+    blockedEdges: BlockedEdge[];
+    /** Tier 2 — full snapshots of the involved places only. */
+    places: PlaceSnapshot[];
+    /** Items at the involved places plus the involved actors' inventories. */
     items: ItemSnapshot[];
+    /** FULL-world item-id → holder map. Validation reads this (never the
+     *  trimmed `items` list), so an item at an uninvolved place is still a
+     *  real reference. Not rendered into the prompt. */
+    itemHolders: Record<string, string>;
+    /** FULL-world place-id → kind map. Validation reads this (never the
+     *  skeleton graph, which carries no interior scenes). Not rendered. */
+    placeKinds: Record<string, PlaceKind>;
+    /** Vehicles: id, name, interior scene and current stand. */
+    vehicles?: Array<{
+      id: string;
+      name: string;
+      interiorSceneId: string;
+      position: unknown;
+    }>;
+    /** Every authored connection id in the world. Validation lookup for
+     *  connectionBlock/connectionHidden targets. Not rendered. */
+    connectionIds: string[];
+    /** ALL characters, untrimmed. */
     characters: CharacterSnapshot[];
   };
 
@@ -207,7 +287,7 @@ export type WorldActionEngineResult =
       ok: true;
       resolution: TickResolution;
       /** Movement-leg runtime annotations per actionId. */
-      movementInits: Record<string, { destinationId: string }>;
+      movementInits: Record<string, { route: string[]; vehicleId?: string }>;
       /** The bar the Engine set for an action as it starts, per actionId. */
       checkInits: Record<
         string,

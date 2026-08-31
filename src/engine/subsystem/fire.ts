@@ -174,24 +174,20 @@ function getBlockableNeighbors(
   ctx: FeatureReadContext
 ): string[] {
   const neighbors: string[] = [];
+  const topology = ctx.getTopology();
   const scene = ctx.getScene(locationId);
   if (scene) {
     for (const conn of scene.connections ?? []) {
       neighbors.push(conn.targetId);
     }
+    // A node scene also touches its incident roads.
+    for (const road of topology?.sceneToRoads.get(locationId) ?? []) {
+      neighbors.push(road.id);
+    }
     return neighbors;
   }
 
-  const topology = ctx.getTopology();
   if (!topology) return neighbors;
-
-  const junction = topology.junctions.get(locationId);
-  if (junction) {
-    const roads = topology.junctionToRoads.get(locationId) ?? [];
-    for (const road of roads) neighbors.push(road.id);
-    for (const sceneId of junction.connectedSceneIds) neighbors.push(sceneId);
-    return neighbors;
-  }
 
   const road = topology.roads.get(locationId);
   if (road) {
@@ -243,7 +239,7 @@ function emitFireExtinguish(
 }
 
 /**
- * Enumerate adjacent scene/road/junction IDs to attempt ignition spread,
+ * Enumerate adjacent scene/road IDs to attempt ignition spread,
  * mirroring the old onPropagate logic (scene-connections fallback + topology).
  */
 function getAdjacentIgnitionTargets(
@@ -258,10 +254,9 @@ function getAdjacentIgnitionTargets(
   const topology = ctx.getTopology();
   if (topology) {
     const road = topology.roads.get(locationId);
-    const junction = topology.junctions.get(locationId);
 
     if (road) {
-      // Road fire → spread to endpoint junctions when burnRange reaches end.
+      // Road fire → spread to endpoint node scenes when burnRange reaches end.
       // (For scene fires on a road, fall through to generic road-fire handling.)
       const state = ctx.getFeatureState<FireSceneState>(locationId);
       if (state && isFireRoadState(state)) {
@@ -281,8 +276,8 @@ function getAdjacentIgnitionTargets(
       }
     }
 
-    if (junction) {
-      const connectedRoads = topology.junctionToRoads.get(locationId) ?? [];
+    if (topology.nodeSceneIds.has(locationId)) {
+      const connectedRoads = topology.sceneToRoads.get(locationId) ?? [];
       for (const r of connectedRoads) {
         const startPos = r.endpointA === locationId ? 0.0 : 1.0;
         targets.push({
@@ -290,8 +285,9 @@ function getAdjacentIgnitionTargets(
           newState: createRoadFireState(1, startPos),
         });
       }
-      for (const sceneId of junction.connectedSceneIds) {
-        targets.push({ targetId: sceneId, newState: createFireState(1) });
+      const nodeScene = ctx.getScene(locationId);
+      for (const conn of nodeScene?.connections ?? []) {
+        targets.push({ targetId: conn.targetId, newState: createFireState(1) });
       }
       return targets;
     }
@@ -305,7 +301,7 @@ function getAdjacentIgnitionTargets(
         });
       } else {
         targets.push({
-          targetId: parent.junctionId,
+          targetId: parent.sceneId,
           newState: createFireState(1),
         });
       }
@@ -466,7 +462,7 @@ export const fireSubsystem: AnchorSubsystem = {
       next.propagationCountdown <= 0 &&
       next.intensity >= next.spreadThreshold
     ) {
-      // Attempt to spread to adjacent scenes/roads/junctions.
+      // Attempt to spread to adjacent scenes/roads.
       const adjacentTargets = getAdjacentIgnitionTargets(sceneId, ctx);
       for (const { targetId, newState } of adjacentTargets) {
         // Don't overwrite an already-burning location.

@@ -2,7 +2,7 @@
 //
 // 人际常识 — the people a character already knows, before the first tick.
 //
-// The sibling of `contextMemory`: that one turns module geography into
+// The module-data seeder for relationships: like authored map memories turn geography into
 // memories of the town, this one turns module relationships into memories of
 // people. Same rules — assembled from module data with no LLM, so the
 // bootstrap stays free, deterministic and replayable.
@@ -48,10 +48,7 @@ function warmth(attitude: number | undefined, language: string): string | null {
  *  `relationship_stance_partner` into six characters' heads. Warmth still
  *  carries the attitude, so dropping the clause degrades; printing the key
  *  does not. */
-function stance(
-  relationshipType: string,
-  language: string
-): string | null {
+function stance(relationshipType: string, language: string): string | null {
   const key = `relationship_stance_${relationshipType}`;
   const phrase = t(key, language);
   if (phrase !== key) return phrase;

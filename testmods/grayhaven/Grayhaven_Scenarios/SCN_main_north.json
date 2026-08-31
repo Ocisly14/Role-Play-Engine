@@ -1,0 +1,27 @@
+{
+  "schemaVersion": 2,
+  "id": "SCN_main_north",
+  "name": "主街北口",
+  "description": "主街北端的路口,灰港的几条路在这里碰头:主街向南延伸进镇子,旧海岸公路向北出镇通向汽车旅馆,一条安静的小巷拐向霍尔特家,进山的林道口也从这里起步。路口立着一块木头里程标志牌 [item.main_north.mile_marker],钉着到附近几个镇子的英里数。繁荣年代的假立面商铺楼到路口为止,再往北就只有雾、一根钉满旧传单的电线杆 [item.main_north.utility_pole] 和草——路肩的草地上还碾着两道深辙 [item.main_north.turnaround_ruts],是半夜来兜风调头的车留下的。傍晚雾漫进来的时候,总是先从这个口上漫起。",
+  "references": {
+    "items": [
+      {
+        "id": "item.main_north.mile_marker",
+        "name": "里程标志牌",
+        "description": "路口一根木柱上钉着几块指向不同方向的木牌,漆面剥落,写着到周边城镇的英里数。最远的那块朝北,字迹被常年的雾气泡得发涨,几乎认不出。"
+      },
+      {
+        "id": "item.main_north.utility_pole",
+        "name": "钉满传单的电线杆",
+        "description": "镇子这头最后一根电线杆,杆身钉满一层又一层褪色的传单——渔汛节的、招工的、丢猫的,新的盖旧的,谁也没撕过。电线从杆顶往北方的雾里去。"
+      },
+      {
+        "id": "item.main_north.turnaround_ruts",
+        "name": "路肩上的车辙",
+        "description": "路口北侧草地上碾出的两道深辙,常年不长草。是镇上年轻人开车到镇界兜一圈、在这儿调头留下的——雾天照样有人来。"
+      }
+    ],
+    "connections": [],
+    "conditions": []
+  }
+}

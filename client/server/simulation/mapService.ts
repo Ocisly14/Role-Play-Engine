@@ -34,12 +34,18 @@ export async function getTopology(
   const topology = dgsm.getTopology();
   if (!topology) return null;
 
-  const junctions = Array.from(topology.junctions.values()).map((j) => ({
-    id: j.id,
-    name: j.name,
-    parentLocationId: j.parentLocationId,
-    connectedSceneIds: j.connectedSceneIds,
-  }));
+  const stateForNodes = dgsm.getState();
+  // Wire compat: the viewer still calls the geography nodes "junctions".
+  // They are top-level scenes now; synthesize the same shape.
+  const junctions = Array.from(topology.nodeSceneIds)
+    .map((id) => stateForNodes.scenes.get(id))
+    .filter((s): s is NonNullable<typeof s> => s !== undefined)
+    .map((s) => ({
+      id: s.id,
+      name: s.name,
+      parentLocationId: s.parentLocationId ?? "OUTDOOR",
+      connectedSceneIds: (s.connections ?? []).map((c) => c.targetId),
+    }));
   const roads = Array.from(topology.roads.values()).map((r) => ({
     id: r.id,
     name: r.name,
@@ -63,16 +69,27 @@ export async function getTopology(
       })),
     };
   });
-  const scenarioOutlines = (state.scenarioOutlines ?? [])
-    .filter((o) => o.id !== "OUTDOOR")
-    .map((o) => ({
-      id: o.id,
-      name: o.name,
-      description: o.description,
-      entrySceneId: o.entrySceneId,
-      residents: o.residents,
-      subSceneCount: o.subSceneCount,
-    }));
+  // Viewer-only building groups, derived from the parentLocationId labels
+  // scenes still carry. Scenario outlines are gone as a runtime concept; the
+  // town map just needs "which rooms are one building" and a display name.
+  const groups = new Map<string, { names: string[]; count: number }>();
+  for (const s of state.scenes.values()) {
+    const label = s.parentLocationId;
+    if (!label || label === "OUTDOOR") continue;
+    const g = groups.get(label) ?? { names: [], count: 0 };
+    g.names.push(s.name);
+    g.count += 1;
+    groups.set(label, g);
+  }
+  const scenarioOutlines = [...groups.entries()].map(([id, g]) => {
+    const prefixes = new Set(g.names.map((n) => n.split("·")[0]));
+    return {
+      id,
+      name: prefixes.size === 1 ? [...prefixes][0] : id,
+      description: "",
+      subSceneCount: g.count,
+    };
+  });
   const transportEdges = (state.transportEdges ?? []).map((e) => ({
     fromLocationId: e.fromLocationId,
     toLocationId: e.toLocationId,
@@ -162,14 +179,11 @@ function resolveResidenceName(
 ): string | undefined {
   if (!residenceId) return undefined;
   const state = dgsm.getState();
-  // Check scenarioOutlines first (macro locations like buildings)
-  const outline = (state.scenarioOutlines ?? []).find(
-    (o) => o.id === residenceId
-  );
-  if (outline) return outline.name;
-  // Check scenes
+  // Residence names a scene or road directly.
   const scene = state.scenes.get(residenceId);
   if (scene) return scene.name;
+  const road = state.roads?.get?.(residenceId);
+  if (road) return road.name;
   return residenceId;
 }
 

@@ -9,7 +9,7 @@ import type { AddMemoryParams } from "./types.js";
  * Row order for every candidate query: chronological, with `id` breaking ties.
  *
  * It used to be `{ importance: "desc" }`, a single NON-UNIQUE key — and
- * `importance` defaults to 1.0 with nothing overriding it for `context`
+ * `importance` defaults to 1.0 with nothing overriding it for generated map
  * memories, so a character's entire geography (76 rows for one NPC) sorted as
  * one flat tie. Postgres is free to return a tie in any order it likes, and
  * that order reaches the prompt verbatim through `formatMemories`, whose sort

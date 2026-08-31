@@ -343,7 +343,7 @@ export class SimulationRunner {
       : null;
     if (!entrySceneId) {
       throw new Error(
-        `Cannot resolve entry scene for residence "${profile.residence}". Check scenarioOutlines.`
+        `Cannot resolve entry scene for residence "${profile.residence}" — it must name a scene or road in this module.`
       );
     }
 
@@ -698,7 +698,7 @@ export class SimulationRunner {
         }
       }
 
-      // (2) Write death event memory (Decision 26). Use scene/junction/road
+      // (2) Write death event memory (Decision 26). Use scene/road
       // *name* in the memory text so it reads naturally to the agent.
       const position = gameState.characterPositions[npc.id];
       const locationId = position

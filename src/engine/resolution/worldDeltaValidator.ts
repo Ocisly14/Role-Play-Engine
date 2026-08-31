@@ -60,13 +60,24 @@ export interface KnownAction {
 interface Lookup {
   characterIds: Set<string>;
   aliveCharacterIds: Set<string>;
+  /** Every scene (interior and top-level node scenes alike). */
   sceneIds: Set<string>;
-  /** Every place the Engine could legitimately name: scenes, the junctions and
-   *  roads characters stand on, and everything the scenes' own connections
-   *  point at. The context carries no junction/road tables, so this is built
-   *  from what the Engine was actually SHOWN — the same rule the `act`
-   *  boundary applies to a character: you may only point at what you saw. */
+  /** EVERY place in the world — scene or road — from
+   *  `state.placeKinds`, the full-world lookup. Never the skeleton graph
+   *  (which drops interior scenes) and never the trimmed Tier-2 snapshots:
+   *  prompt layering must not narrow what counts as a real reference. */
+  placeIds: Set<string>;
+  /** placeIds plus wherever a character actually stands (defensive: a
+   *  position outside the graph is still a real location). */
   locationIds: Set<string>;
+  /** Every authored connection id (`exit.*`), from `state.connectionIds`. */
+  connectionIds: Set<string>;
+  vehicleIds: Set<string>;
+  vehicleInteriors: Map<string, string>;
+  characterSceneIds: Map<string, string | undefined>;
+  /** Involved (Tier 2) places' prose — for the stale-citation check. */
+  placeDescriptions: Map<string, string>;
+  /** FULL-world item→holder map (context.state.itemHolders). */
   itemHolders: Map<string, string>;
   /** All actions addressable this resolution (queued from commands + active).
    *  Active entries carry progress, duration and the bar set at start — all
@@ -159,28 +170,38 @@ export function buildLookup(context: EngineResolutionContext): Lookup {
   const aliveCharacterIds = new Set(
     context.state.characters.filter((c) => c.alive).map((c) => c.id)
   );
-  const sceneIds = new Set(context.state.scenes.map((s) => s.id));
-  const locationIds = new Set<string>(sceneIds);
+  const placeKinds = Object.entries(context.state.placeKinds);
+  const sceneIds = new Set(
+    placeKinds.filter(([, kind]) => kind === "scene").map(([id]) => id)
+  );
+  const placeIds = new Set(placeKinds.map(([id]) => id));
+  const connectionIds = new Set(context.state.connectionIds);
+  const vehicleIds = new Set((context.state.vehicles ?? []).map((v) => v.id));
+  const vehicleInteriors = new Map(
+    (context.state.vehicles ?? []).map((v) => [v.id, v.interiorSceneId])
+  );
+  const characterSceneIds = new Map(
+    context.state.characters.map((c) => {
+      const position = c.position as { sceneId?: string } | null;
+      return [c.id, position?.sceneId];
+    })
+  );
+  const placeDescriptions = new Map(
+    context.state.places.map((p) => [p.id, p.description ?? ""])
+  );
+  const locationIds = new Set<string>(placeIds);
   for (const c of context.state.characters) {
     if (c.locationId) locationIds.add(c.locationId);
     const position = c.position as
-      | { sceneId?: string; junctionId?: string; roadId?: string }
+      | { sceneId?: string; roadId?: string }
       | undefined;
-    for (const id of [
-      position?.sceneId,
-      position?.junctionId,
-      position?.roadId,
-    ]) {
+    for (const id of [position?.sceneId, position?.roadId]) {
       if (id) locationIds.add(id);
     }
   }
-  for (const scene of context.state.scenes) {
-    for (const connection of scene.connections ?? []) {
-      if (connection.targetId) locationIds.add(connection.targetId);
-    }
-  }
-  const itemHolders = new Map<string, string>();
-  for (const item of context.state.items) itemHolders.set(item.id, item.holder);
+  const itemHolders = new Map<string, string>(
+    Object.entries(context.state.itemHolders)
+  );
 
   const actionById = new Map<string, KnownAction>();
   for (const action of context.actions.activeActions) {
@@ -205,7 +226,13 @@ export function buildLookup(context: EngineResolutionContext): Lookup {
     characterIds,
     aliveCharacterIds,
     sceneIds,
+    placeIds,
     locationIds,
+    connectionIds,
+    vehicleIds,
+    vehicleInteriors,
+    characterSceneIds,
+    placeDescriptions,
     itemHolders,
     actionById,
     requiredActionIds: new Set([...worklist.starting, ...worklist.ending]),
@@ -283,17 +310,46 @@ function validateStart(entry: RawActionStart, lookup: Lookup): string[] {
       `opposedBy needs a check — name the bar the opposition is against`
     );
   }
-  // The destination goes straight to the movement runtime, which walks the
-  // character there tick by tick. An id nobody was shown sends them nowhere,
-  // silently, for as long as the action lasts.
+  // The route goes straight to the movement runtime, which walks the
+  // character leg by leg. Every waypoint must name a real place; adjacency
+  // between consecutive waypoints is enforced at movement init, which fails
+  // the action with a route-shaped reason the actor can learn from.
   if (entry.movement !== undefined) {
-    const destination = entry.movement.destinationId;
-    if (typeof destination !== "string" || !destination.trim()) {
-      errs.push(`movement requires a destinationId`);
-    } else if (!lookup.locationIds.has(destination)) {
+    const route = entry.movement.route;
+    if (!Array.isArray(route) || route.length === 0) {
       errs.push(
-        `movement.destinationId "${destination}" is not a place you were shown — check it with the pathfinding tool first`
+        `movement requires a non-empty route array (the waypoints the actor stated, grounded to place ids)`
       );
+    } else {
+      for (const waypoint of route) {
+        if (typeof waypoint !== "string" || !waypoint.trim()) {
+          errs.push("movement.route entries must be place id strings");
+        } else if (!lookup.locationIds.has(waypoint)) {
+          errs.push(
+            `movement.route waypoint "${waypoint}" is not a place in this world`
+          );
+        }
+      }
+    }
+    if (
+      entry.movement.vehicleId !== undefined &&
+      !lookup.vehicleIds.has(entry.movement.vehicleId)
+    ) {
+      errs.push(
+        `movement.vehicleId "${entry.movement.vehicleId}" is not a vehicle in this world`
+      );
+    }
+  }
+  // Duration is conditionally required: a non-travel action must say how
+  // long it takes (and why); a travel action must NOT be clocked by hand —
+  // code derives its time from the route.
+  if (entry.movement === undefined) {
+    if (entry.resolvedDurationTicks === undefined) {
+      errs.push(
+        `a non-travel action needs resolvedDurationTicks (with a timingReason); only movement actions derive their clock from the route`
+      );
+    } else if (!entry.timingReason?.trim()) {
+      errs.push(`resolvedDurationTicks requires a timingReason`);
     }
   }
   return errs;
@@ -358,7 +414,8 @@ function validateCommonDelta(delta: RawSourcedDelta, lookup: Lookup): string[] {
 
 function validHolder(holder: string, lookup: Lookup): boolean {
   if (holder.startsWith("scene:")) {
-    return lookup.sceneIds.has(holder.slice("scene:".length));
+    // All three place kinds hold items — a glove on a road is a real holder.
+    return lookup.placeIds.has(holder.slice("scene:".length));
   }
   return lookup.characterIds.has(holder);
 }
@@ -392,27 +449,25 @@ export function validateCharacterChange(
       break;
     }
     case "position": {
-      // Only `type: "scene"` used to be checked, so a junction or road id was
-      // accepted unseen and reached the applier, which would happily stand the
+      // Only `type: "scene"` used to be checked, so a road id was accepted
+      // unseen and reached the applier, which would happily stand the
       // character on a place that does not exist.
       const p = op.position as
         | {
             type?: string;
             sceneId?: string;
-            junctionId?: string;
             roadId?: string;
           }
         | undefined;
       const idField = {
         scene: "sceneId",
-        junction: "junctionId",
         road: "roadId",
       } as const;
       if (!p || typeof p !== "object") {
         errs.push(`position.position must be an object {type, <id>}`);
       } else if (!p.type || !(p.type in idField)) {
         errs.push(
-          `position.type must be "scene", "junction" or "road" — got ${JSON.stringify(p.type)}`
+          `position.type must be "scene" or "road" — got ${JSON.stringify(p.type)}`
         );
       } else {
         const field = idField[p.type as keyof typeof idField];
@@ -474,7 +529,9 @@ export function validateSceneChange(
   lookup: Lookup
 ): string[] {
   const errs = validateCommonDelta(delta, lookup);
-  if (!delta.sceneId || !lookup.sceneIds.has(delta.sceneId)) {
+  // Scene operations apply to every place kind — roads carry
+  // conditions, descriptions and connections exactly like interior scenes.
+  if (!delta.sceneId || !lookup.placeIds.has(delta.sceneId)) {
     errs.push(`sceneId "${delta.sceneId}" does not exist`);
     return errs;
   }
@@ -483,6 +540,15 @@ export function validateSceneChange(
     errs.push(`unknown scene operation kind "${op?.kind}"`);
     return errs;
   }
+  const checkConnectionId = (kind: string): void => {
+    if (typeof op.connectionId !== "string" || !op.connectionId) {
+      errs.push(`${kind} requires connectionId`);
+    } else if (!lookup.connectionIds.has(op.connectionId)) {
+      errs.push(
+        `${kind}.connectionId "${op.connectionId}" names nothing real — cite an exit id (\`exit.*\`) from the graph edges or a place snapshot's connections`
+      );
+    }
+  };
   switch (op.kind) {
     case "addCondition": {
       const c = op.condition as { description?: string } | undefined;
@@ -492,21 +558,35 @@ export function validateSceneChange(
       break;
     }
     case "removeCondition": {
-      const p = op.predicate as { featureId?: string } | undefined;
-      if (!p?.featureId) {
-        errs.push(`removeCondition requires predicate.featureId`);
+      const p = op.predicate as { id?: string; featureId?: string } | undefined;
+      const hasId = typeof p?.id === "string" && p.id.length > 0;
+      const hasFeatureId =
+        typeof p?.featureId === "string" && p.featureId.length > 0;
+      if (!hasId && !hasFeatureId) {
+        errs.push(
+          "removeCondition requires predicate.id and/or predicate.featureId"
+        );
       }
       break;
     }
-    case "connectionBlock":
-      if (typeof op.connectionId !== "string" || !op.connectionId) {
-        errs.push(`connectionBlock requires connectionId`);
+    case "setDescription":
+      if (typeof op.description !== "string" || !op.description.trim()) {
+        errs.push("setDescription requires a non-empty description");
       }
+      break;
+    case "connectionBlock":
+      checkConnectionId("connectionBlock");
       if (typeof op.blocked !== "boolean") {
         errs.push(`connectionBlock requires blocked boolean`);
       }
       if (typeof op.reason !== "string" || !op.reason.trim()) {
         errs.push(`connectionBlock requires a reason`);
+      }
+      break;
+    case "connectionHidden":
+      checkConnectionId("connectionHidden");
+      if (typeof op.hidden !== "boolean") {
+        errs.push("connectionHidden requires hidden boolean");
       }
       break;
     case "environmentContribute":
@@ -552,7 +632,8 @@ export function validateItemChange(
   index: number,
   delta: RawSourcedDelta & { itemId?: string },
   lookup: Lookup,
-  movedItemIds: Set<string>
+  movedItemIds: Set<string>,
+  createdItemIds: Set<string> = new Set()
 ): string[] {
   const errs = validateCommonDelta(delta, lookup);
   const op = delta.operation;
@@ -566,8 +647,26 @@ export function validateItemChange(
     }
     if (typeof op.location !== "string" || !validHolder(op.location, lookup)) {
       errs.push(
-        `create.location "${op.location}" must be "scene:<realSceneId>" or a real character id`
+        `create.location "${op.location}" must be "scene:<realPlaceId>" or a real character id`
       );
+    }
+    if (op.id !== undefined) {
+      const id = op.id;
+      if (typeof id !== "string" || !id) {
+        errs.push("create.id must be a non-empty string when present");
+      } else if (id.length > 64) {
+        errs.push(`create.id must be at most 64 characters — got ${id.length}`);
+      } else if (/[[\]\s]/.test(id)) {
+        errs.push("create.id must not contain brackets or whitespace");
+      } else if (lookup.itemHolders.has(id)) {
+        errs.push(
+          `create.id "${id}" is already taken by an existing item — pick an unused id or omit it`
+        );
+      } else if (createdItemIds.has(id)) {
+        errs.push(`create.id "${id}" is created more than once this tick`);
+      } else {
+        createdItemIds.add(id);
+      }
     }
     return errs;
   }
@@ -584,7 +683,9 @@ export function validateItemChange(
         );
       }
       if (typeof op.to !== "string" || !validHolder(op.to, lookup)) {
-        errs.push(`move.to "${op.to}" is not a valid holder`);
+        errs.push(
+          `move.to "${op.to}" is not a valid holder — write "scene:<placeId>" for a place (a vehicle interior scene included) or a bare characterId for a person`
+        );
       }
       if (movedItemIds.has(delta.itemId)) {
         errs.push(
@@ -608,12 +709,13 @@ export function validateItemChange(
       const hasAppend =
         typeof op.appendDescription === "string" &&
         op.appendDescription.trim().length > 0;
+      const hasHidden = typeof op.hidden === "boolean";
       const hasLight =
         typeof op.isLightSource === "boolean" ||
         typeof op.lightLevel === "number";
-      if (!hasDescription && !hasAppend && !hasLight) {
+      if (!hasDescription && !hasAppend && !hasHidden && !hasLight) {
         errs.push(
-          `set needs at least one of description, appendDescription, isLightSource, lightLevel`
+          `set needs at least one of description, appendDescription, hidden, isLightSource, lightLevel`
         );
       }
       // Replacing and appending in the same breath does not say which text
@@ -638,7 +740,10 @@ const PERSPECTIVE_PATTERNS = [
 export function validateOccurrence(
   index: number,
   occ: RawOccurrence,
-  lookup: Lookup
+  lookup: Lookup,
+  /** Item ids minted by this submission's own `create` operations: an
+   *  occurrence may cite the thing the same tick brings into being. */
+  createdItemIds: Set<string> = new Set()
 ): string[] {
   const errs: string[] = [];
   for (const id of occ.sourceActionIds ?? []) {
@@ -661,16 +766,18 @@ export function validateOccurrence(
       );
     }
     for (const ref of fact.entityRefs ?? []) {
-      const pool =
-        ref.kind === "character"
-          ? lookup.characterIds
-          : ref.kind === "scene"
-            ? lookup.locationIds
-            : lookup.itemHolders;
       const exists =
         ref.kind === "item"
-          ? (pool as Map<string, string>).has(ref.id)
-          : (pool as Set<string>).has(ref.id);
+          ? lookup.itemHolders.has(ref.id) ||
+            createdItemIds.has(ref.id) ||
+            // A vehicle's exterior is item-like: an occurrence may point at
+            // the truck itself.
+            lookup.vehicleIds.has(ref.id)
+          : ref.kind === "character"
+            ? lookup.characterIds.has(ref.id)
+            : ref.kind === "connection"
+              ? lookup.connectionIds.has(ref.id)
+              : lookup.locationIds.has(ref.id);
       if (!exists) {
         errs.push(
           `facts[${fi}]: entityRef ${ref.kind} "${ref.id}" does not exist`
@@ -741,6 +848,40 @@ export function validateRawResolution(
       seen.add(entry.actionId);
       at(target, validate(entry as never, lookup));
     }
+    if (moment === "starting") {
+      // The wheels will not turn for someone standing beside the vehicle:
+      // a drive is only settled when the driver is IN the interior scene —
+      // already, or moved there by a position change in this same
+      // submission. Mechanical (position vs scene id), so it can live here
+      // rather than in the rules prose alone.
+      for (const entry of entries as RawActionStart[]) {
+        const vehicleId = entry.movement?.vehicleId;
+        if (vehicleId === undefined) continue;
+        const interior = lookup.vehicleInteriors.get(vehicleId);
+        if (interior === undefined) continue; // unknown vehicle already reported
+        const actorId = lookup.actionById.get(entry.actionId)?.command.actorId;
+        if (actorId === undefined) continue;
+        const alreadyInside =
+          lookup.characterSceneIds.get(actorId) === interior;
+        const boardedThisSubmission = (raw.characterChanges ?? []).some(
+          (change) =>
+            change.characterId === actorId &&
+            (
+              change.operation as {
+                kind?: string;
+                position?: { sceneId?: string };
+              }
+            )?.kind === "position" &&
+            (change.operation as { position?: { sceneId?: string } }).position
+              ?.sceneId === interior
+        );
+        if (!alreadyInside && !boardedThisSubmission) {
+          at({ kind: "action", actionId: entry.actionId }, [
+            `movement.vehicleId "${vehicleId}": the driver ${actorId} is not in its interior scene "${interior}" — add a characterChange position into "${interior}" in this submission (boarding), or drop the vehicle and walk`,
+          ]);
+        }
+      }
+    }
   }
   for (const required of lookup.requiredActionIds) {
     if (!seen.has(required)) {
@@ -751,6 +892,9 @@ export function validateRawResolution(
   }
 
   const movedItemIds = new Set<string>();
+  // Ids minted by this submission's `create` operations: occurrences may cite
+  // them, so item changes are validated (and the set filled) first.
+  const createdItemIds = new Set<string>();
   (raw.characterChanges ?? []).forEach((d, i) => {
     if (d === null) return;
     at(
@@ -766,12 +910,43 @@ export function validateRawResolution(
     if (d === null) return;
     at(
       { kind: "itemChange", index: i },
-      validateItemChange(i, d, lookup, movedItemIds)
+      validateItemChange(i, d, lookup, movedItemIds, createdItemIds)
     );
+  });
+  // Prose-coherence: an item CITED by its holder place's description cannot
+  // leave (move/destroy) without the same submission rewriting that prose —
+  // a stale citation breaks every later render of the place. Mechanical:
+  // string containment vs the Tier-2 snapshot; places outside the involved
+  // set are skipped (their prose is not at hand to check).
+  (raw.itemChanges ?? []).forEach((d, i) => {
+    if (d === null) return;
+    const op = d.operation as { kind?: string; from?: string };
+    if (op?.kind !== "move" && op?.kind !== "destroy") return;
+    if (!d.itemId) return;
+    const holder =
+      op.kind === "move" ? op.from : lookup.itemHolders.get(d.itemId);
+    if (typeof holder !== "string" || !holder.startsWith("scene:")) return;
+    const placeId = holder.slice("scene:".length);
+    const prose = lookup.placeDescriptions.get(placeId);
+    if (prose === undefined || !prose.includes(`[${d.itemId}]`)) return;
+    const rewritten = (raw.sceneChanges ?? []).some(
+      (sc) =>
+        sc !== null &&
+        (sc as { sceneId?: string }).sceneId === placeId &&
+        (sc.operation as { kind?: string })?.kind === "setDescription"
+    );
+    if (!rewritten) {
+      at({ kind: "itemChange", index: i }, [
+        `"${d.itemId}" is cited in the description of "${placeId}" — ${op.kind === "move" ? "moving" : "destroying"} it leaves that prose pointing at nothing and breaks every later render there. Add a sceneChanges setDescription for "${placeId}" in this submission (keep still-true citations, drop this one).`,
+      ]);
+    }
   });
   (raw.occurrences ?? []).forEach((o, i) => {
     if (o === null) return;
-    at({ kind: "occurrence", index: i }, validateOccurrence(i, o, lookup));
+    at(
+      { kind: "occurrence", index: i },
+      validateOccurrence(i, o, lookup, createdItemIds)
+    );
   });
   // An ending's own occurrence gets the same checks, addressed at the action
   // it belongs to. "Every ending leaves a trace" needs no rule any more: the
@@ -783,7 +958,8 @@ export function validateRawResolution(
       validateOccurrence(
         0,
         { ...entry.occurrence, sourceActionIds: [entry.actionId] },
-        lookup
+        lookup,
+        createdItemIds
       )
     );
   }
@@ -945,7 +1121,7 @@ export function applyRepair(
 export interface FinalizedResolution {
   resolution: TickResolution;
   /** Movement-leg annotations per action (Engine-owned runtime init). */
-  movementInits: Record<string, { destinationId: string }>;
+  movementInits: Record<string, { route: string[]; vehicleId?: string }>;
   /** The bar set for an action as it starts, per actionId. Written onto the
    *  action once and never revised — code rolls against it later. */
   checkInits: Record<
@@ -975,7 +1151,8 @@ export function finalizeResolution(
 ): FinalizedResolution {
   const lookup = buildLookup(context);
   const transitions: ActionTransition[] = [];
-  const movementInits: Record<string, { destinationId: string }> = {};
+  const movementInits: Record<string, { route: string[]; vehicleId?: string }> =
+    {};
   const checkInits: FinalizedResolution["checkInits"] = {};
   const tickMinutes = context.tick.durationMinutes;
 
@@ -986,9 +1163,12 @@ export function finalizeResolution(
   for (const entry of raw.starting ?? []) {
     const known = lookup.actionById.get(entry.actionId);
     if (!known) continue; // unreachable post-validation; keeps types honest
-    if (entry.movement?.destinationId) {
+    if (entry.movement?.route?.length) {
       movementInits[entry.actionId] = {
-        destinationId: entry.movement.destinationId,
+        route: [...entry.movement.route],
+        ...(entry.movement.vehicleId !== undefined
+          ? { vehicleId: entry.movement.vehicleId }
+          : {}),
       };
     }
     if (entry.check) {

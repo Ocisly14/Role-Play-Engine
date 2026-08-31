@@ -10,6 +10,7 @@ import type { CharacterPosition } from "../../state/topologyTypes.js";
 import type {
   CharacterCondition,
   ConditionPredicate,
+  EntityKind,
   GameTime,
   SceneCondition,
 } from "../core/types.js";
@@ -261,10 +262,23 @@ export type SceneStateOperation =
   | { kind: "addCondition"; condition: SceneCondition }
   | { kind: "removeCondition"; predicate: ConditionPredicate }
   | {
+      /** Rewrite the place's whole prose. Descriptions and references are
+       *  deliberately decoupled: rewriting the prose neither adds nor removes
+       *  any entity — it changes what a visitor is told about the place. */
+      kind: "setDescription";
+      description: string;
+    }
+  | {
       kind: "connectionBlock";
       connectionId: string;
       blocked: boolean;
       reason: string;
+    }
+  | {
+      /** Reveal (`hidden: false`) or conceal a connection by its authored id. */
+      kind: "connectionHidden";
+      connectionId: string;
+      hidden: boolean;
     }
   | {
       kind: "environmentContribute";
@@ -286,6 +300,9 @@ export type ItemStateOperation =
       name: string;
       location: string;
       description?: string;
+      /** Stable id, used verbatim when unused. Non-Latin names collapse to
+       *  nothing under the generated-id slug, so those must pass one. */
+      id?: string;
     }
   | { kind: "move"; from: string; to: string }
   | { kind: "destroy" }
@@ -295,6 +312,8 @@ export type ItemStateOperation =
       description?: string;
       /** Adds one sentence to the description instead of replacing it. */
       appendDescription?: string;
+      /** Conceal from / reveal to characters. `false` is the reveal. */
+      hidden?: boolean;
       isLightSource?: boolean;
       lightLevel?: number;
     };
@@ -349,7 +368,10 @@ export interface Occurrence {
     id: string;
     type: string;
     content: string;
-    entityRefs: ActionEntityRef[];
+    /** Engine vocabulary, not the actor citation grammar: an occurrence may
+     *  reference a connection edge ("the pass is blocked") even though actors
+     *  cannot cite one — such a ref renders untagged. */
+    entityRefs: Array<{ kind: EntityKind; id: string }>;
   }>;
   participants: Array<{
     characterId: string;

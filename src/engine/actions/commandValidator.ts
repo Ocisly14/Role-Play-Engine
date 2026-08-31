@@ -7,7 +7,6 @@
 // feasible, whether the skill fits, whether the target resists — all of that
 // is the Engine's job in full context.
 
-import type { PerceivableDirectory } from "../../state/perceivableDirectory.js";
 import {
   ACTION_ENTITY_KINDS,
   type ActToolArgs,
@@ -35,8 +34,10 @@ export interface WorldRefs {
    *  alias space is stable, so this needs no notion of "this tick". */
   resolveCharacter(handle: string): string | undefined;
   hasItem(id: string): boolean;
-  /** Scene, junction or road — the citation grammar has one `scene` kind for
-   *  "a place". */
+  /** Scene or road — the citation grammar has one `scene` kind for
+   *  "a place". Connections are NOT a citable id space: a passage is
+   *  topology bookkeeping, the prose points at the place it leads to, and
+   *  a door that matters as an object is an item. */
   hasPlace(id: string): boolean;
 }
 
@@ -59,7 +60,6 @@ const ROLE_SET = new Set<string>(OBJECT_REF_ROLES);
  */
 export function validateActArgs(
   raw: unknown,
-  directory: PerceivableDirectory,
   world: WorldRefs
 ): ValidateActArgsResult {
   if (typeof raw !== "object" || raw === null) {
@@ -84,7 +84,7 @@ export function validateActArgs(
   }
   const refs: ActionObjectRef[] = [];
   for (const [i, entry] of args.objectRefs.entries()) {
-    const ref = validateRef(entry, i, directory, world);
+    const ref = validateRef(entry, i, world);
     if (!ref.ok) return ref;
     refs.push(ref.ref);
   }
@@ -158,7 +158,6 @@ type ValidateRefResult =
 function validateRef(
   entry: unknown,
   index: number,
-  directory: PerceivableDirectory,
   world: WorldRefs
 ): ValidateRefResult {
   if (typeof entry !== "object" || entry === null) {
@@ -231,8 +230,9 @@ function validateRef(
   const resolvedKind =
     matches.length === 1
       ? matches[0]
-      : matches.find((k) => k === declaredKind) ?? matches[0];
-  const resolvedId = resolvedKind === "character" ? (asCharacter as string) : id;
+      : (matches.find((k) => k === declaredKind) ?? matches[0]);
+  const resolvedId =
+    resolvedKind === "character" ? (asCharacter as string) : id;
 
   return {
     ok: true,

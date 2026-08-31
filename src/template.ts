@@ -114,8 +114,7 @@ const isDynamicGameState = (state: unknown): state is DynamicGameState => {
     state &&
       typeof state === "object" &&
       "moduleName" in state &&
-      "scenarioOutlines" in state &&
-      "macroScene" in state
+      "scenes" in state
   );
 };
 

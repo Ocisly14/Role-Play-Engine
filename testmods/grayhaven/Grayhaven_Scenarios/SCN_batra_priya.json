@@ -1,0 +1,36 @@
+{
+  "schemaVersion": 2,
+  "id": "SCN_batra_priya",
+  "name": "Batra 家·Priya 的房间",
+  "description": "房间一半是床铺,一半是工作台,分界线泾渭分明——床上乱,台上齐。台面正中是一台改装过的收音机[item.batra_priya.modified_radio],旋钮换过、外壳打了新孔,天线用晾衣铁丝接长,直伸到窗框外。旁边的焊台[item.batra_priya.soldering_station]收拾得和她父亲的一样规矩,烙铁架上还留着松香的余味。台角摊着那册「证据登记簿」[item.batra_priya.evidence_notebook],条目按 A、B、C 三级分类,字迹精确得像仪表读数。墙上钉着一张她手画的 KGRV 频段刻度表,铅笔标着几个打问号的位置。房门通向起居厨房[SCN_batra_living]。",
+  "parentLocationId": "LOC_batra_shop",
+  "indoor": true,
+  "references": {
+    "items": [
+      {
+        "id": "item.batra_priya.modified_radio",
+        "name": "改装收音机",
+        "description": "Priya 亲手改装的收音机:换过旋钮、打了新孔、接长了天线,调谐比店里卖的任何一台都细。她用它守着 KGRV 频段上那些不该出现的杂音。"
+      },
+      {
+        "id": "item.batra_priya.soldering_station",
+        "name": "焊台",
+        "description": "小号的焊台和一盒分格零件,收拾得规规矩矩——手艺和秩序都随了 Dev。"
+      },
+      {
+        "id": "item.batra_priya.evidence_notebook",
+        "name": "证据登记簿",
+        "description": "一册硬皮登记簿,怪事按可复现性分级:A 级有记录,B 级有旁证,C 级是 Tommy 说的。每条都记着日期、地点和在场的人。"
+      }
+    ],
+    "connections": [
+      {
+        "id": "exit.batra_priya.living_door",
+        "targetId": "SCN_batra_living",
+        "name": "房门",
+        "description": "贴着「闲人免进」的房门,通向起居厨房。"
+      }
+    ],
+    "conditions": []
+  }
+}

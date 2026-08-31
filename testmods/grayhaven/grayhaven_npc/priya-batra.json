@@ -1,0 +1,226 @@
+{
+  "id": "npc_priya_batra",
+  "name": "Priya Batra",
+  "currentLocation": "SCN_batra_priya",
+  "residence": "SCN_batra_priya",
+  "occupation": "学生；电视维修铺的技术帮手",
+  "age": 13,
+  "gender": "女",
+  "appearance": "常把辫子塞进棒球帽，指尖留着焊锡烫出的小疤。书包里总装着改装收音机、螺丝刀和一本写得密密麻麻的证据登记簿。",
+  "personality": "尖刻但讲义气，重视可复现的证据和准确措辞。她习惯先拆解问题再下结论，对大人的敷衍尤其不耐烦；面对 Tommy 和 Denny 时则会把保护欲藏在挑剔里。",
+  "background": "1972 年生于 Fort Anne 医院，在 Batra 家的电视维修铺楼上长大。父亲教会她焊接和记录，母亲让她懂得小镇的人情。这个暑假，她和 Tommy、Denny 组成了秘密的证据小组，试图把镇上的怪事变成谁也不能否认的记录。",
+  "attributes": {
+    "STR": 35,
+    "CON": 50,
+    "DEX": 65,
+    "APP": 55,
+    "POW": 60,
+    "SIZ": 40,
+    "INT": 80,
+    "EDU": 55
+  },
+  "status": {
+    "hp": 9,
+    "maxHp": 9,
+    "san": 60,
+    "maxSan": 60,
+    "fatigue": 8,
+    "maxFatigue": 100,
+    "luck": 65,
+    "conditions": []
+  },
+  "skills": {
+    "Science & Nature": 50,
+    "Investigation": 65,
+    "Athletics": 35,
+    "Repair & Engineering": 65
+  },
+  "languages": {
+    "native": [
+      "English",
+      "Gujarati"
+    ],
+    "learned": {
+      "Hindi": 35
+    }
+  },
+  "inventory": [
+    {
+      "id": "priya_modified_radio",
+      "name": "改装收音机",
+      "properties": {
+        "note": "她从父亲的报废机箱里拆零件拼出的便携收音机，专门守听 KGRV。"
+      }
+    },
+    {
+      "id": "priya_evidence_log",
+      "name": "证据登记簿",
+      "properties": {
+        "note": "把怪事按 A、B、C 级分类；A 级需要记录，B 级需要旁证，C 级仅是 Tommy 的说法。"
+      }
+    },
+    {
+      "id": "priya_tool_roll",
+      "name": "小型工具卷",
+      "properties": {
+        "note": "含螺丝刀、钳子、万用表和绝缘胶带。"
+      }
+    },
+    {
+      "id": "priya_schoolbag",
+      "name": "旧书包",
+      "properties": {
+        "note": "装着她的设备、笔记和暑假里不肯告诉大人的计划。"
+      }
+    }
+  ],
+  "relationships": [
+    {
+      "targetId": "npc_dev_batra",
+      "targetName": "Dev Batra",
+      "relationshipType": "family",
+      "attitude": 75,
+      "firstPerson": "爸爸教我焊接，也教我凡事记下来。他嘴上说让我接铺子，其实知道我不会；他仍然值得我认真听。"
+    },
+    {
+      "targetId": "npc_anita_batra",
+      "targetName": "Anita Batra",
+      "relationshipType": "family",
+      "attitude": 80,
+      "firstPerson": "妈妈能从一句闲话里听出三层意思。要瞒住她不是靠撒谎，而是不能让她觉得我可疑。"
+    },
+    {
+      "targetId": "npc_tommy_reyes",
+      "targetName": "Tommy Reyes",
+      "relationshipType": "friend",
+      "attitude": 80,
+      "firstPerson": "Tommy 的胆子总比脑子快，也是 C 级证据的主要来源；可真要做危险的事，他不会丢下我们。"
+    },
+    {
+      "targetId": "npc_denny_holt",
+      "targetName": "Denny Holt",
+      "relationshipType": "friend",
+      "attitude": 80,
+      "firstPerson": "Denny 什么都说自己在书里读过，一半是在吓我们，一半是在让我们放心。他家的沉默比他讲的书更值得调查。"
+    },
+    {
+      "targetId": "npc_marisol_reyes",
+      "targetName": "Marisol Reyes",
+      "relationshipType": "neutral",
+      "attitude": 45,
+      "firstPerson": "Reyes 阿姨最近黑眼圈很重。Tommy 说她夜里总在算账，我觉得这不是小事。"
+    },
+    {
+      "targetId": "npc_susan_holt",
+      "targetName": "Susan Holt",
+      "relationshipType": "neutral",
+      "attitude": 55,
+      "firstPerson": "Susan 阿姨问人吃没吃饭时，其实在问别的；大人里她最难糊弄。"
+    },
+    {
+      "targetId": "npc_frank_holt",
+      "targetName": "Frank Holt",
+      "relationshipType": "neutral",
+      "attitude": 35,
+      "firstPerson": "Holt 叔叔知道的事一定比他说的多。他不肯谈工作，我也不会白问。"
+    },
+    {
+      "targetId": "npc_ray_holt",
+      "targetName": "Ray Holt",
+      "relationshipType": "neutral",
+      "attitude": 35,
+      "firstPerson": "Ray 警长很和气，但只要话题接近山上的事就会把它拨开。我已经观察到不止一次。"
+    },
+    {
+      "targetId": "npc_dolores_medeiros",
+      "targetName": "Dolores Medeiros",
+      "relationshipType": "friend",
+      "attitude": 65,
+      "firstPerson": "Dolores 奶奶会硬塞蛋挞，也知道全镇很久以前的故事。她说话时听着像八卦，里面常有真正的线索。"
+    },
+    {
+      "targetId": "npc_doc_weaver",
+      "targetName": "Doc Weaver",
+      "relationshipType": "neutral",
+      "attitude": 55,
+      "firstPerson": "Doc 只认证据。要是有哪个大人会认真看我的登记簿，大概就是他。"
+    },
+    {
+      "targetId": "npc_cole_baxter",
+      "targetName": "Cole Baxter",
+      "relationshipType": "neutral",
+      "attitude": 45,
+      "firstPerson": "Cole 副警长认真得有点好笑，但他会把奇怪的报案归档；那里面可能有旁证。"
+    },
+    {
+      "targetId": "npc_earl_pruitt",
+      "targetName": "Earl Pruitt",
+      "relationshipType": "neutral",
+      "attitude": 60,
+      "firstPerson": "大家说老 Earl 糊涂，可守过三十年灯塔的人对光的证词，比一般人更有分量。"
+    }
+  ],
+  "longTermIntent": "找出 KGRV 频段杂音出现的规律并录下来，拿到一份谁也无法否认的 A 级证据。",
+  "memory": [
+    {
+      "type": "secret",
+      "content": "我、Tommy 和 Denny 相信雷德利站里有鬼，正在秘密收集证据。登记簿绝不能让任何大人看见。"
+    },
+    {
+      "type": "secret",
+      "content": "我记下过十一次杂音：都在晚上，60 赫兹底下叠着扫频，而且都出现在 KGRV 的频段上。还差一份录音才能算 A 级。"
+    },
+    {
+      "type": "secret",
+      "content": "改装收音机的零件是从爸爸的报废机箱里拆的，他不知道。"
+    },
+    {
+      "type": "general",
+      "content": "从去年冬天起，爸爸的雪花屏和串台报修单多得反常。他记录本上的数字不像巧合。"
+    },
+    {
+      "type": "general",
+      "content": "春天海滩冲上死鱼那回，全镇都看见了，但没有人说得清原因；这是 B 级证据。"
+    },
+    {
+      "type": "general",
+      "content": "我们约定证据必须三个人都在场才算旁证。Tommy 单独听见的机器声只能算 C 级。"
+    },
+    {
+      "type": "plan",
+      "content": "凑齐零件做一台能接收音机的磁带录音机，挑晚上守着 KGRV 录下杂音。"
+    },
+    {
+      "type": "plan",
+      "content": "和 Tommy、Denny 检查我们藏好的装备，并测试对讲机能传多远。"
+    },
+    {
+      "type": "map",
+      "content": "主街是一条路，南北贯穿，我掐表走过整条，十五分钟整——这个数验证过不止一次，A 级。街北半是蓝鸟餐馆、杂货店兼邮局、警长办公室；街南半是星港街机厅、我们家维修铺、诊所，我家楼下就是店堂，招牌两分钟能看见。"
+    },
+    {
+      "type": "map",
+      "content": "主街北口往外三条路：旧海岸公路二十五分钟到汽车旅馆；霍尔特巷二十分钟到 Holt 家院门；林道十分钟到林道口——这几个数我步行各测过，不是随口说的。"
+    },
+    {
+      "type": "map",
+      "content": "主街南口往外两条：下坡道十五分钟到码头和海滩；后巷八分钟到雷耶斯家门口——后巷最近，去杂货店堵 Tommy 我都抄这条。"
+    },
+    {
+      "type": "map",
+      "content": "除了正路，Denny 家后院还有个豁口，抄近路走十分钟也能接上林道——他溜出来都走那条，比出正门快。"
+    },
+    {
+      "type": "map",
+      "content": "林道口到灰溪渡口，我们三次记录都是七十分钟，踏石过溪；暴雨后水涨，踏石会被淹，只能原地等水退——这段我给 A 级，可复现。"
+    },
+    {
+      "type": "map",
+      "content": "灰溪渡口再走九十分钟到旧锯木厂，那是我们的前进营地。我的地图画到这里为止——再往北我们没去过，不写。"
+    },
+    {
+      "type": "map",
+      "content": "围栏:未实测,无坐标,C 级 —— 只有大孩子的说法和 Tommy 的赌咒。据说从锯木厂再往北还有很远,镇口出发单程要六个小时,尽头是政府的铁丝网。我们仨说好了总有一天去,把它从 C 级升到 A 级。"
+    }
+  ]
+}

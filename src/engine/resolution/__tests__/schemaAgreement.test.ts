@@ -193,12 +193,16 @@ describe("what the schema marks required", () => {
     expect(submit.properties.ending.items?.required).toContain("reason");
   });
 
-  it("makes a start carry its duration, so the rule needs no validator", () => {
-    expect(submit.properties.starting.items?.required).toEqual([
-      "actionId",
-      "resolvedDurationTicks",
-      "timingReason",
-    ]);
+  it("leaves duration optional in shape — travel derives its clock from the route", () => {
+    // Duration cannot be `required`: a movement action must NOT be clocked
+    // by hand (code derives its time from the route and overrides any
+    // number), while a non-travel action must be. The conditional lives in
+    // the validator (a non-travel start without a duration is rejected)
+    // plus the field description — same split as `outcome` below.
+    expect(submit.properties.starting.items?.required).toEqual(["actionId"]);
+    const duration = submit.properties.starting.items?.properties
+      .resolvedDurationTicks as { description?: string } | undefined;
+    expect(duration?.description).toContain("OMIT when `movement` is set");
   });
 
   it("leaves outcome optional in shape but says when it is required", () => {
@@ -278,7 +282,13 @@ describe("the trigger worklist answers what the Engine would otherwise infer", (
         outputSchemaVersion: 1,
         worldInvariants: [],
       },
-      state: { scenes: [], items: [], characters: [] },
+      state: {
+        graph: { places: [], edges: [] },
+        places: [],
+        items: [],
+        itemHolders: {},
+        characters: [],
+      },
       actions: {
         newCommands: [command("bare"), command("skilled", "Social")],
         activeActions: [],

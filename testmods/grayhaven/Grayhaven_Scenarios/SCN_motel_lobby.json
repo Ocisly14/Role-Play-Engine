@@ -1,0 +1,42 @@
+{
+  "schemaVersion": 2,
+  "id": "SCN_motel_lobby",
+  "name": "汽车旅馆前台",
+  "description": "1959 年的乐观主义在这间前台里慢慢褪色:霓虹字样的『VACANCY』常年亮着,柜台的福米卡贴面磨出了白边,墙上的加州公路地图还印着改线前的旧路。墙边一个旋转明信片架 [item.motel_lobby.postcard_rack] 上插着改线前的旧海岸公路风景照,边角卷了毛,少说二十年没人抽走过一张。柜台上摊着一本住客登记簿 [item.motel_lobby.guest_register],一页能翻过一个月;柜台后的钉板 [item.motel_lobby.key_board] 上挂着一排黄铜房门钥匙,只有 4 号的挂钩是空的。临街的玻璃门 [SCN_motel] 出去是旧海岸公路旁的旅馆路口,门上的铃铛很久才响一次;侧面的木门 [SCN_motel_porch] 通向连着客房的外廊。",
+  "parentLocationId": "LOC_motel",
+  "indoor": true,
+  "references": {
+    "items": [
+      {
+        "id": "item.motel_lobby.postcard_rack",
+        "name": "明信片架",
+        "description": "柜台墙边的旋转明信片架,插着改线前的旧海岸公路风景照,边角卷了毛,少说二十年没人抽走过一张。"
+      },
+      {
+        "id": "item.motel_lobby.guest_register",
+        "name": "住客登记簿",
+        "description": "硬皮登记簿,一页能翻过一个月。最近的一行写着:W. Vance,弗雷斯诺,4 号房,钓鱼。"
+      },
+      {
+        "id": "item.motel_lobby.key_board",
+        "name": "钥匙钉板",
+        "description": "柜台后的钉板,挂着一排黄铜房门钥匙,只有 4 号的挂钩空着。"
+      }
+    ],
+    "connections": [
+      {
+        "id": "exit.motel_lobby.front_door",
+        "targetId": "SCN_motel",
+        "name": "临街玻璃门",
+        "description": "装着铃铛的玻璃门,出去是旧海岸公路旁的旅馆路口。"
+      },
+      {
+        "id": "exit.motel_lobby.porch_door",
+        "targetId": "SCN_motel_porch",
+        "name": "外廊门",
+        "description": "侧面的木门,通向连着客房的外廊。"
+      }
+    ],
+    "conditions": []
+  }
+}

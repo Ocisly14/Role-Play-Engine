@@ -1,0 +1,27 @@
+{
+  "schemaVersion": 2,
+  "id": "SCN_railbed",
+  "name": "旧铁路路基",
+  "description": "伐木铁路拆走铁轨后留下的路基,笔直地切过林子,枕木的印子还嵌在道砟里。几根朽得发黑的枕木残段横在路基边缘,踩上去一脚就能陷进去,散出一股腐木的潮气 [item.railbed.rotted_tie]。这是林区里唯一不会让人迷路的地形——只要沿着它走,总能走到头。路基两侧的排水沟里积着黑色的落叶水,道砟缝里偶尔能踢到一枚锈成一团的道钉,捡起来揣进兜里也不嫌沉 [item.railbed.rusted_spike]。道砟本身棱角还没磨圆,一脚踩上去硌得人龇牙 [item.railbed.sharp_ballast]。",
+  "references": {
+    "items": [
+      {
+        "id": "item.railbed.rotted_tie",
+        "name": "朽烂的枕木残段",
+        "description": "横在路基边缘的枕木残段,朽得发黑,长了苔藓,踩上去一脚就能陷进去。"
+      },
+      {
+        "id": "item.railbed.rusted_spike",
+        "name": "锈道钉",
+        "description": "道砟缝里踢出来的一枚道钉,锈成了一团,分量还挺压手。"
+      },
+      {
+        "id": "item.railbed.sharp_ballast",
+        "name": "棱角道砟",
+        "description": "铺在路基上的碎石道砟,棱角还没被磨圆,踩上去硌脚。"
+      }
+    ],
+    "connections": [],
+    "conditions": []
+  }
+}

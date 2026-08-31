@@ -1,0 +1,48 @@
+{
+  "schemaVersion": 2,
+  "id": "SCN_grocery_store",
+  "name": "杂货店兼邮局·店堂",
+  "description": "店堂是全镇最老的字号,从 Reis 时代传到今天:木地板被一个世纪的脚步磨出浅沟,货架排得整整齐齐,罐头标签一律朝外,收银台矮凳边那排糖果货架[item.grocery_store.candy_shelf]的玻璃罐盖被摸得发亮。靠里一角是邮政柜台,铜栅栏后挂着邮资表和分信格,柜台正中那台邮政秤[item.grocery_store.postal_scale]的秤盘边缘也磨得发亮——邮件车每周二来,这里就是灰港与外界的全部往来。收银台上那台黄铜收银机也是老铺传下的物件,按键的脆响半条街都认得。收银机旁摊着 Marisol 的账本[item.grocery_store.account_ledger],铅笔字一路算到小数点后两位。临街的门上挂着铃铛,出去便是主街[ROAD_main_street];柜台后一扇门通向后仓[SCN_grocery_backroom],门框上钉着历年身高刻痕,最高的一道写着 Tommy。",
+  "parentLocationId": "LOC_grocery_store",
+  "indoor": true,
+  "references": {
+    "items": [
+      {
+        "id": "item.grocery_store.account_ledger",
+        "name": "店铺账本",
+        "description": "Marisol 的记账本,铅笔字迹利落,每一栏都算到小数点后两位。最近几页有反复擦改重算的痕迹。"
+      },
+      {
+        "id": "item.grocery_store.candy_shelf",
+        "name": "糖果货架",
+        "description": "收银台旁一排矮货架,摆着散装薄荷糖和太妃糖的玻璃罐,盖子被无数只小手摸得发亮,是店里最低矮也最常被翻动的一角。"
+      },
+      {
+        "id": "item.grocery_store.postal_scale",
+        "name": "邮政秤",
+        "description": "柜台正中一台黄铜邮政秤,秤盘边缘被信件和包裹磨得发亮,砝码常年摆在一侧,称重前先要用手拂掉盘里的纸屑。"
+      },
+      {
+        "id": "item.grocery_store.duplicate_bills",
+        "name": "两张序列号相同的钞票",
+        "description": "两张二十美元钞票,压在收银机钱格的底层,序列号一字不差地相同。Marisol 把它们单独夹在一起,宁愿相信是自己看错了。",
+        "hidden": true
+      }
+    ],
+    "connections": [
+      {
+        "id": "exit.grocery_store.street_door",
+        "targetId": "ROAD_main_street",
+        "name": "临街门",
+        "description": "挂着铃铛的临街门,通向主街北段。"
+      },
+      {
+        "id": "exit.grocery_store.backroom_door",
+        "targetId": "SCN_grocery_backroom",
+        "name": "后仓门",
+        "description": "柜台后的门,门框上钉着历年的身高刻痕,通向后仓。"
+      }
+    ],
+    "conditions": []
+  }
+}

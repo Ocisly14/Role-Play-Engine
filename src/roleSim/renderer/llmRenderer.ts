@@ -12,13 +12,13 @@ import type { Occurrence } from "../../engine/actions/types.js";
 import { ModelClass, generateText } from "../../models/index.js";
 import type { PromptSegment } from "../../models/types.js";
 import type { DynamicGameStateManager } from "../../state/DynamicGameState.js";
+import { formatForPrompt } from "../../state/gameClock.js";
 import {
   buildPerceivableDirectory,
   descriptionIdentifier,
   isKnownTo,
   knownAs,
 } from "../../state/perceivableDirectory.js";
-import { formatForPrompt } from "../../state/gameClock.js";
 import { resolveLocationById } from "../../state/perceivedLocation.js";
 import type { DynamicNPCProfile } from "../../state/types.js";
 import type { PerceivedBundle } from "./types.js";
@@ -374,7 +374,7 @@ function buildUserPromptSegments(
   }
 
   volatileParts.push("# Current scene");
-  volatileParts.push(formatScene(bundle, dgsm, tags));
+  volatileParts.push(formatScene(bundle, tags));
 
   if (bundle.charactersInScene.length > 0) {
     volatileParts.push(
@@ -447,11 +447,7 @@ function formatSelfNow(bundle: PerceivedBundle): string {
   return lines.join("\n");
 }
 
-function formatScene(
-  bundle: PerceivedBundle,
-  dgsm: DynamicGameStateManager,
-  tags: CitationTags
-): string {
+function formatScene(bundle: PerceivedBundle, tags: CitationTags): string {
   const lines: string[] = [];
   const { scene } = bundle;
   lines.push(`Name: ${scene.name}${tag(scene.id, tags, "other")}`);
@@ -462,16 +458,22 @@ function formatScene(
       if (c.description) lines.push(`  - ${c.description}`);
     }
   }
-  if (scene.id) {
-    // By id, not getScene: the place may be a road or junction, which carry
-    // items of their own and are invisible to the scene lookup.
-    const items = resolveLocationById(scene.id, dgsm)?.items ?? [];
-    if (items.length > 0) {
-      lines.push("Items visible here:");
-      for (const item of items) {
-        const desc = item.description ? `: ${item.description}` : "";
-        lines.push(`  - ${item.name}${tag(item.id, tags, "other")}${desc}`);
-      }
+  // From the bundle, not re-resolved by id: the bundle's item set was
+  // computed from the actor's ACTUAL position (a road item beyond reach is
+  // already gone), where an id lookup could only guess mid-road.
+  if (bundle.scene.items.length > 0) {
+    lines.push(
+      "Items perceivable here (a distance in parentheses = minutes' walk away along this stretch; judge from conditions and distance whether the viewpoint notices a far one — an unnoticed thing is simply not mentioned):"
+    );
+    for (const item of bundle.scene.items) {
+      const desc = item.description ? `: ${item.description}` : "";
+      const dist =
+        item.distanceMinutes !== undefined && item.distanceMinutes > 0
+          ? ` (~${item.distanceMinutes} min away)`
+          : "";
+      lines.push(
+        `  - ${item.name}${tag(item.id, tags, "other")}${dist}${desc}`
+      );
     }
   }
   return lines.join("\n");

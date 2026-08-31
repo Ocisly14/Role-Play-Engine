@@ -1,0 +1,34 @@
+{
+  "schemaVersion": 2,
+  "id": "SCN_trailhead",
+  "name": "林道口",
+  "description": "主街北口尽头的步道口,全镇人人知道的进山入口。一块褪色的州立公园木牌 [item.trailhead.park_sign] 歪在草里,玻璃框里的地图早被撕走,只剩几个晒白的图钉印;林道从这里扎进红杉的阴影,气温立刻低了几度。牌子脚下一截老树桩上倒钉着一只马蹄铁 [item.trailhead.boot_scraper],进山出山的人习惯在这儿蹭掉靴底的泥。霍尔特家后院的树篱上有一道豁口,正好在林道起点旁汇入 [SCN_holt_backyard]。再往里,林径分向灰溪和旧铁路路基两个方向,岔口没有任何路标,只有路边一只掉漆的木头登记箱 [item.trailhead.log_box],箱里拴着一支啃出牙印的铅笔和一叠被雨水泡皱的登记表,多半没人认真填。",
+  "references": {
+    "items": [
+      {
+        "id": "item.trailhead.park_sign",
+        "name": "州立公园木牌",
+        "description": "步道口那块州立公园的木牌,油漆剥落得只剩底色。牌面正中原本嵌着一张玻璃框裱的步道地图,不知哪年被人撬开撕走,如今只剩四个晒得发白的图钉印,钉着一小片被风吹得卷边的空白。"
+      },
+      {
+        "id": "item.trailhead.boot_scraper",
+        "name": "钉在树桩上的马蹄铁",
+        "description": "木牌脚下一截齐膝高的老树桩,倒钉着一只锈迹斑斑的马蹄铁,铁刃冲上。进山出山的人图省事,总爱在这儿蹭掉靴底沾的泥,树桩边沿被磨得发白。"
+      },
+      {
+        "id": "item.trailhead.log_box",
+        "name": "步道登记箱",
+        "description": "钉在岔路口树干上的木头登记箱,盖子掉漆卷边。箱里拴着一支啃出牙印的铅笔和一叠被雨水泡皱又晒干的登记表,大多数人路过看一眼,懒得填。"
+      }
+    ],
+    "connections": [
+      {
+        "id": "exit.trailhead.holt_backyard_gap",
+        "targetId": "SCN_holt_backyard",
+        "name": "霍尔特家后院豁口",
+        "description": "树篱上的一道豁口,钻过去就是霍尔特家的后院。"
+      }
+    ],
+    "conditions": []
+  }
+}

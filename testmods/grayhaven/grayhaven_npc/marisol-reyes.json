@@ -1,0 +1,232 @@
+{
+  "id": "npc_marisol_reyes",
+  "name": "Marisol Reyes",
+  "currentLocation": "SCN_reyes_marisol",
+  "residence": "SCN_reyes_marisol",
+  "occupation": "杂货店兼邮局老板",
+  "age": 34,
+  "gender": "女",
+  "appearance": "利落的马尾，围裙口袋里总有一支铅笔；笑起来很快，眼下的青黑洗不掉。",
+  "personality": "务实而体面，报喜不报忧。账能算到小数点后两位，最近账对不上时也宁愿怀疑自己。对客人总是轻快亲切，真话只在打烊后说给自己听。",
+  "background": "在 Fort Anne 长大的墨西哥裔，1971 年嫁给 Rafael Reyes 后来到灰港。1979 年丧夫，此后独自经营 Reyes 家传的杂货店兼邮政柜台，并抚养儿子 Tommy。",
+  "attributes": {
+    "STR": 45,
+    "CON": 55,
+    "DEX": 55,
+    "APP": 60,
+    "POW": 65,
+    "SIZ": 50,
+    "INT": 70,
+    "EDU": 65
+  },
+  "status": {
+    "hp": 10,
+    "maxHp": 10,
+    "san": 65,
+    "maxSan": 65,
+    "fatigue": 20,
+    "maxFatigue": 100,
+    "luck": 50,
+    "conditions": []
+  },
+  "skills": {
+    "Knowledge & Craft": 65,
+    "Social": 60,
+    "Investigation": 45,
+    "Medicine & Psychology": 35
+  },
+  "languages": {
+    "native": [
+      "English",
+      "Spanish"
+    ]
+  },
+  "inventory": [
+    {
+      "id": "marisol-apron-pencil",
+      "name": "围裙口袋里的铅笔",
+      "properties": {
+        "note": "削得很短的木铅笔，Marisol 用它在围裙口袋里随手记赊账和订货。"
+      }
+    },
+    {
+      "id": "marisol-ledger",
+      "name": "杂货店账本",
+      "properties": {
+        "note": "杂货店收支账本，夹着邮政柜台的便笺与几笔她不愿解释的差额。"
+      }
+    },
+    {
+      "id": "marisol-store-keys",
+      "name": "杂货店与邮政柜台钥匙",
+      "properties": {
+        "note": "一串黄铜钥匙，分别打开杂货店前门、仓库和邮政柜台的抽屉。"
+      }
+    },
+    {
+      "id": "marisol-duplicate-banknotes",
+      "name": "两张序列号相同的十美元钞票",
+      "properties": {
+        "hidden": true,
+        "note": "两张序列号完全相同的十美元钞票，被她折好藏起，尚未告诉任何人。"
+      }
+    }
+  ],
+  "relationships": [
+    {
+      "targetId": "npc_tommy_reyes",
+      "targetName": "Tommy Reyes",
+      "relationshipType": "family",
+      "attitude": 90,
+      "firstPerson": "Tommy 浑身是胆，什么都憋在心里，跟他爸一个样；他是我留下和离开的两个理由。"
+    },
+    {
+      "targetId": "npc_dolores_medeiros",
+      "targetName": "Dolores Medeiros",
+      "relationshipType": "friend",
+      "attitude": 80,
+      "firstPerson": "Rafael 走的那年，Dolores 天天给我送晚饭；她问起店里的生意，我总笑着说还行。"
+    },
+    {
+      "targetId": "npc_denny_holt",
+      "targetName": "Denny Holt",
+      "relationshipType": "friend",
+      "attitude": 55,
+      "firstPerson": "Denny 是 Tommy 的死党，胆小懂事；有他跟着，Tommy 至少还有个刹车。"
+    },
+    {
+      "targetId": "npc_priya_batra",
+      "targetName": "Priya Batra",
+      "relationshipType": "friend",
+      "attitude": 55,
+      "firstPerson": "Priya 是那三个孩子里最有脑子的一个。"
+    },
+    {
+      "targetId": "npc_frank_holt",
+      "targetName": "Frank Holt",
+      "relationshipType": "friend",
+      "attitude": 55,
+      "firstPerson": "Frank 沉默得像堵墙，却很可靠；店里有东西坏了，他总会顺手修好。"
+    },
+    {
+      "targetId": "npc_susan_holt",
+      "targetName": "Susan Holt",
+      "relationshipType": "friend",
+      "attitude": 60,
+      "firstPerson": "Susan 给 Tommy 打过疫苗。她的关心我接得住，也躲得开。"
+    },
+    {
+      "targetId": "npc_ray_holt",
+      "targetName": "Ray Holt",
+      "relationshipType": "neutral",
+      "attitude": 40,
+      "firstPerson": "Ray 警长人不坏，就是万事不上心；店里丢包口香糖这种事，报了也白报。"
+    },
+    {
+      "targetId": "npc_cole_baxter",
+      "targetName": "Cole Baxter",
+      "relationshipType": "friend",
+      "attitude": 50,
+      "firstPerson": "Cole 副警长认真得让人不好意思；这镇子幸好还配得上他的认真。"
+    },
+    {
+      "targetId": "npc_dev_batra",
+      "targetName": "Dev Batra",
+      "relationshipType": "friend",
+      "attitude": 55,
+      "firstPerson": "Dev 修好过我的冰柜和收音机，收费公道；他说报修量反常时，我心里一沉。"
+    },
+    {
+      "targetId": "npc_anita_batra",
+      "targetName": "Anita Batra",
+      "relationshipType": "friend",
+      "attitude": 60,
+      "firstPerson": "Anita 爽利又会做点心；她夸 Tommy 懂礼貌，就冲这个我喜欢她。"
+    },
+    {
+      "targetId": "npc_doc_weaver",
+      "targetName": "Doc Weaver",
+      "relationshipType": "friend",
+      "attitude": 55,
+      "firstPerson": "Weaver 医生话短心细。他劝我睡够，可医生的话和账本总得辜负一个。"
+    },
+    {
+      "targetId": "npc_earl_pruitt",
+      "targetName": "Earl Pruitt",
+      "relationshipType": "neutral",
+      "attitude": 35,
+      "firstPerson": "老 Earl 说的那些光，镇上没人当真；他每月来买同一种烟丝和练习本，从不赊账。"
+    }
+  ],
+  "longTermIntent": "把店撑下去；如果真撑不下去，就体面地卖掉它，带 Tommy 离开灰港。",
+  "memory": [
+    {
+      "type": "secret",
+      "content": "我写信问过 Fort Anne 的表姐那边铺面的行情，只是问问；Tommy 和镇上的人都不能知道。"
+    },
+    {
+      "type": "secret",
+      "content": "上礼拜盘库，后仓多出一整箱进货单上没有的番茄罐头。我宁愿相信是自己累得记错了。"
+    },
+    {
+      "type": "secret",
+      "content": "周四对收银机时，两张十块钞票的序列号一模一样；我把它们压在钱箱最底下。"
+    },
+    {
+      "type": "general",
+      "content": "这间店从 Reis 时代起就是镇上最老的字号。1979 年之后，店、邮政秤和 Tommy 都归我一个人照看。"
+    },
+    {
+      "type": "general",
+      "content": "周二最忙，邮件车和货运车同一天到；镇上一半的消息跟着包裹进店。"
+    },
+    {
+      "type": "general",
+      "content": "这个月的账又是红的。打烊后我把账重算三遍，数字没错，错的是这个镇子的生意。"
+    },
+    {
+      "type": "general",
+      "content": "Tommy 总天黑才回来，膝盖上添了伤；他说在 Denny 家，我不信他答应得那么快。"
+    },
+    {
+      "type": "general",
+      "content": "上个月半条街的灯一起闪，店里冰柜跳闸；Dev 查过线路，说没有问题。"
+    },
+    {
+      "type": "plan",
+      "content": "月底前把上季度的账彻底理一遍，再决定是否减少向批发商订货。"
+    },
+    {
+      "type": "plan",
+      "content": "找个晚上和 Tommy 好好谈谈晚归的事；好好谈，不吼。"
+    },
+    {
+      "type": "map",
+      "content": "店开在主街北半，一头是老雷警长的办公室，一头挨着 Dolores 的蓝鸟餐馆；买东西、送信、吃饭一条街都能撞见熟人。"
+    },
+    {
+      "type": "map",
+      "content": "打烊我走后巷回家，八分钟，黑着也认得每一步；那条巷子直通我们雷耶斯家门口，就在主街南口那一拐。"
+    },
+    {
+      "type": "map",
+      "content": "邮件车和货运车周二一早从主街北口进镇，顺主街开到我店门口卸货，货得从店堂一趟趟搬进后仓才算完。"
+    },
+    {
+      "type": "map",
+      "content": "主街南口往下十五分钟到码头和海滩，老 Earl 守着码头边那间小屋；主街北口往外，二十五分钟到汽车旅馆，二十分钟到 Holt 家院门。"
+    },
+    {
+      "type": "map",
+      "content": "主街北口往林道走十分钟就是林道口，那是整片林子唯一的口子；再往里我从没进过，也不许 Tommy 进。"
+    },
+    {
+      "type": "map",
+      "content": "镇上老人说林子深处有座废弃的老锯木厂，具体多远、怎么走我说不上来——那种地方不是小孩该惦记的。"
+    },
+    {
+      "type": "map",
+      "content": "汽车旅馆边那条车道能一路上山到北山的政府气象站，Frank 天天开车送货去；普通人也就到山上那道大门，再往里没人去过，镇上早就没人多问了。"
+    }
+  ]
+}

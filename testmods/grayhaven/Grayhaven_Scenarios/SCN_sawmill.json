@@ -1,0 +1,27 @@
+{
+  "schemaVersion": 2,
+  "id": "SCN_sawmill",
+  "name": "旧锯木厂",
+  "description": "1974 年关闭的锯木厂废墟。塌了半边的主棚下,一副锈死的带锯架还立在原地 [item.sawmill.rusted_saw_frame],锯台上的苔藓厚得能按出指印,空地边缘的锯末堆早已腐成黑土。锯台后头有个角落用几块木板搭起矮座,旁边一张油布叠好压着几块石头防风——附近的孩子偷偷把这儿叫「前进营地」,聚在这儿的痕迹还没散尽 [item.sawmill.forward_camp]。空地边缘钻出一丛野黑莓,八月正是熟透的时候,枝条上坠满发亮的黑浆果,顺手一捋就是一把,指尖也染得发紫 [item.sawmill.blackberry_bramble]。林径在废墟前分岔,分别通向溪谷、旧路基、雾谷和更北面的红杉环——站在空地中央,每个方向看起来都像来时的路。",
+  "references": {
+    "items": [
+      {
+        "id": "item.sawmill.rusted_saw_frame",
+        "name": "锈死的带锯架",
+        "description": "锯木厂主棚下的大型带锯架,整体锈死,锯台上覆着厚苔。"
+      },
+      {
+        "id": "item.sawmill.forward_camp",
+        "name": "前进营地角落",
+        "description": "锯台后头的一个角落,几块木板搭成矮座,旁边一张油布叠好压着几块石头防风,是附近孩子私下聚会的地方。"
+      },
+      {
+        "id": "item.sawmill.blackberry_bramble",
+        "name": "野黑莓丛",
+        "description": "空地边缘长出的一丛野黑莓,八月正熟,枝条上坠满发亮的黑浆果。"
+      }
+    ],
+    "connections": [],
+    "conditions": []
+  }
+}

@@ -1,0 +1,34 @@
+{
+  "schemaVersion": 2,
+  "id": "SCN_lighthouse_cliff",
+  "name": "灯塔崖",
+  "description": "镇南海崖的顶端,俯瞰全镇与海面的制高点,风从不停歇——崖边一张风蚀长椅 [item.lighthouse_cliff.weathered_bench] 常年被吹得发凉,漆早磨光,木纹翘起。老灯塔立在崖缘,白漆剥落成斑;塔基旁竖着一截锈蚀的旧旗杆座 [item.lighthouse_cliff.flagpole_base],旗子不知哪年就没了,螺栓仍死死锚在岩石里。1982 年自动化之后,塔身那扇铁门 [item.lighthouse_cliff.iron_door] 就一直锁着,锁是那年新换的。门后是守了三十年灯的塔内 [SCN_lighthouse_interior]。灯还亮,只是不再需要人。唯一的下山路是通回码头的崖间小径。",
+  "references": {
+    "items": [
+      {
+        "id": "item.lighthouse_cliff.iron_door",
+        "name": "灯塔铁门",
+        "description": "灯塔底座的铁门,漆皮锈成深褐色,唯独锁眼锃亮——1982 年自动化时海岸警卫队换的新锁。门上没有告示,只有锁本身在说:这里不再欢迎任何人。"
+      },
+      {
+        "id": "item.lighthouse_cliff.weathered_bench",
+        "name": "风蚀长椅",
+        "description": "崖边一张木长椅,漆早被风沙磨光,木纹翘起发灰,坐上去能感到常年被吹得发凉的木头。"
+      },
+      {
+        "id": "item.lighthouse_cliff.flagpole_base",
+        "name": "旧旗杆座",
+        "description": "崖顶一截空的旗杆座,锈迹斑斑,旗子不知哪年就没了,底座的螺栓仍死死锚在岩石里。"
+      }
+    ],
+    "connections": [
+      {
+        "id": "exit.lighthouse_cliff.lighthouse_door",
+        "targetId": "SCN_lighthouse_interior",
+        "name": "灯塔铁门",
+        "description": "1982 年换过锁的铁门,通向灯塔内部的螺旋梯。"
+      }
+    ],
+    "conditions": []
+  }
+}

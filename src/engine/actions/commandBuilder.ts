@@ -9,10 +9,7 @@
 
 import { randomUUID } from "node:crypto";
 import type { DynamicGameStateManager } from "../../state/DynamicGameState.js";
-import {
-  aliasFor,
-  buildPerceivableDirectory,
-} from "../../state/perceivableDirectory.js";
+import { aliasFor } from "../../state/perceivableDirectory.js";
 import type { CommandRejectionCode } from "./commandValidator.js";
 import { validateActArgs } from "./commandValidator.js";
 import { canonicalDisplayName, resolveSkillValue } from "./skillRollService.js";
@@ -36,14 +33,10 @@ export function buildActionCommand(
 ): BuildCommandResult {
   const { dgsm } = deps;
 
-  const directory = buildPerceivableDirectory(actorId, dgsm);
-  const validated = validateActArgs(rawArgs, directory, {
+  const validated = validateActArgs(rawArgs, {
     resolveCharacter: (handle) => resolveCharacterHandle(handle, actorId, dgsm),
     hasItem: (id) => itemExists(id, dgsm),
-    hasPlace: (id) =>
-      dgsm.getScene(id) !== null ||
-      dgsm.getJunction(id) !== null ||
-      dgsm.getRoad(id) !== null,
+    hasPlace: (id) => dgsm.getScene(id) !== null || dgsm.getRoad(id) !== null,
   });
   if (!validated.ok) return validated;
   const args = validated.args;
@@ -139,18 +132,12 @@ export function buildActionCommand(
   return { ok: true, command };
 }
 
-/** Anywhere in the world: on the floor of some scene, or in someone's hands.
- *  Not "here" — that is the Engine's question, and it can answer it as
- *  something the actor finds out. */
+/** Anywhere in the world: on the ground of any scene, junction or road, or in
+ *  someone's hands. Not "here" — that is the Engine's question, and it can
+ *  answer it as something the actor finds out. */
 function itemExists(itemId: string, dgsm: DynamicGameStateManager): boolean {
-  const state = dgsm.getState();
-  for (const scene of state.scenes.values()) {
-    if ((scene.items ?? []).some((item) => item.id === itemId)) return true;
-  }
-  for (const inventory of Object.values(state.npcInventories ?? {})) {
-    if ((inventory ?? []).some((item) => item.id === itemId)) return true;
-  }
-  return false;
+  // A vehicle's exterior is item-like: pointable wherever it stands.
+  return dgsm.hasItem(itemId) || dgsm.getVehicle?.(itemId) != null;
 }
 
 /** A handle back to a real character: their own id if the actor knows them,

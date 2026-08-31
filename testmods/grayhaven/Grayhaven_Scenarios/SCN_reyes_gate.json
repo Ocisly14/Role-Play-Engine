@@ -1,0 +1,34 @@
+{
+  "schemaVersion": 2,
+  "id": "SCN_reyes_gate",
+  "name": "雷耶斯家门口",
+  "description": "后巷尽头的一小片门前空地。木门漆成早已褪色的蓝,门边一小畦香草 [item.reyes_gate.herb_bed] 长得倒精神,一辆 BMX 单车 [item.reyes_gate.bmx] 斜靠在墙根,车把上缠着褪色的红胶带。墙角一根钉子上挂着一只旧蟹笼 [item.reyes_gate.crab_trap],藤条早就发脆,多年没再下过水。小门后就是母子俩的客厅兼厨房 [SCN_reyes_living]。巷子里安静,主街的声音传到这里只剩个底子。",
+  "references": {
+    "items": [
+      {
+        "id": "item.reyes_gate.herb_bed",
+        "name": "香草畦",
+        "description": "门边一小畦薄荷和牛至,长得挤挤挨挨,叶片上还挂着早上浇的水珠。"
+      },
+      {
+        "id": "item.reyes_gate.bmx",
+        "name": "BMX 单车",
+        "description": "Tommy 的车,车把上缠着褪色的红胶带,车架磕出好几道漆痕,后轮沾着林道的红土没擦干净。"
+      },
+      {
+        "id": "item.reyes_gate.crab_trap",
+        "name": "旧蟹笼",
+        "description": "藤条编的蟹笼,挂在墙钉上晒了不知多少个夏天,藤条早已发脆掉渣——Rafael 出海前常用的家什,如今再没人碰过。"
+      }
+    ],
+    "connections": [
+      {
+        "id": "exit.reyes_gate.front_door",
+        "targetId": "SCN_reyes_living",
+        "name": "雷耶斯家小门",
+        "description": "褪色的蓝漆木门,通向客厅兼厨房。"
+      }
+    ],
+    "conditions": []
+  }
+}

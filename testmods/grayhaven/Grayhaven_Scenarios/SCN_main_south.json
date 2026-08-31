@@ -1,0 +1,27 @@
+{
+  "schemaVersion": 2,
+  "id": "SCN_main_south",
+  "name": "主街南口",
+  "description": "主街南端的路口。铺装到这里戛然而止,剩下的是几年前铺路工程没了下文、堆在路边长了草的一堆碎石 [item.main_south.gravel_pile];下坡道折向码头,咸腥味和柴油味顺着坡爬上来,坡口那根电线杆终年落满海鸥,杆身被鸟粪染成灰白色 [item.main_south.gull_pole]。一条窄窄的后巷从两栋房子之间拐进去,墙脚还嵌着一只锈死的拴狗铁环 [item.main_south.tether_ring],通向雷耶斯家。站在口上能听见海——雾天听得更清楚,像整个镇子都被推到了水边。",
+  "references": {
+    "items": [
+      {
+        "id": "item.main_south.gravel_pile",
+        "name": "路边的碎石堆",
+        "description": "铺装到南口就断了,路边堆着一小堆碎石,是几年前镇政府说要往南接着铺、材料运到了却没了下文留下的。碎石堆边缘早就长了草,没人再提起这回事。"
+      },
+      {
+        "id": "item.main_south.gull_pole",
+        "name": "落满海鸥的电线杆",
+        "description": "坡口那根电线杆终年落着一群海鸥,杆身被鸟粪染得灰白,叫声比过路的车还多。风大的时候,整根杆子看着都在轻轻晃。"
+      },
+      {
+        "id": "item.main_south.tether_ring",
+        "name": "墙脚的拴狗铁环",
+        "description": "后巷口一块石头里嵌着一只锈死的铁环,是运货马车年代拴牲口留下的。铁环早锈得转不动,倒偶尔还有谁把狗绳顺手往上一挂。"
+      }
+    ],
+    "connections": [],
+    "conditions": []
+  }
+}

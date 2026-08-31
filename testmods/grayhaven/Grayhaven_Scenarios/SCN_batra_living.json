@@ -1,0 +1,53 @@
+{
+  "schemaVersion": 2,
+  "id": "SCN_batra_living",
+  "name": "Batra 家·起居厨房",
+  "description": "楼上的起居室与厨房合为一间,是这栋楼里最暖的地方:炉上常年温着一壶茶[item.batra_living.chai_kettle],小豆蔻和烤黄油的香气盖过了楼下飘上来的松香味。灶边一排香料架[item.batra_living.spice_shelf]按 Anita 的次序排列,谁动过她一闻就知道。墙上一排相框[item.batra_living.family_photos]:孟买的婚礼、弗里蒙特装配线前的合影、Priya 在 Fort Anne 医院的满月照——一家人十三年的西迁史挂成一行。墙角一台老式缝纫机[item.batra_living.sewing_machine],踏板边搭着待滚边的纱丽,是 Anita 改衣裳的角落。楼梯下到店堂[SCN_batra_shop];走廊尽头两扇门,一扇通主卧[SCN_batra_master],另一扇贴着手写的「闲人免进」,是 Priya 的房间[SCN_batra_priya]。",
+  "parentLocationId": "LOC_batra_shop",
+  "indoor": true,
+  "references": {
+    "items": [
+      {
+        "id": "item.batra_living.spice_shelf",
+        "name": "香料架",
+        "description": "灶边的香料架,铁罐与玻璃瓶按 Anita 自己的次序排列,标签一半英文一半古吉拉特文。"
+      },
+      {
+        "id": "item.batra_living.family_photos",
+        "name": "全家相框",
+        "description": "墙上一排相框:孟买的婚礼、装配线前的合影、Priya 的满月照。从孟买到灰港的十三年挂成一行。"
+      },
+      {
+        "id": "item.batra_living.chai_kettle",
+        "name": "茶壶",
+        "description": "灶上常年温着的一把铝壶,壶身被炉火熏得发黑,壶嘴积着经年的茶垢——Batra 家一天从这壶茶开始,也从这壶茶结束。"
+      },
+      {
+        "id": "item.batra_living.sewing_machine",
+        "name": "缝纫机",
+        "description": "墙角一台脚踏式老式缝纫机,漆面磨得发亮,针脚仍利落——Anita 改裤脚、滚纱丽边都在这儿。"
+      }
+    ],
+    "connections": [
+      {
+        "id": "exit.batra_living.stairs_down",
+        "targetId": "SCN_batra_shop",
+        "name": "室内楼梯",
+        "description": "下到店堂工作台的室内楼梯。"
+      },
+      {
+        "id": "exit.batra_living.master_door",
+        "targetId": "SCN_batra_master",
+        "name": "主卧门",
+        "description": "走廊尽头的主卧房门。"
+      },
+      {
+        "id": "exit.batra_living.priya_door",
+        "targetId": "SCN_batra_priya",
+        "name": "Priya 的房门",
+        "description": "贴着手写「闲人免进」纸条的房门。"
+      }
+    ],
+    "conditions": []
+  }
+}

@@ -1,0 +1,36 @@
+{
+  "schemaVersion": 2,
+  "id": "SCN_clinic_upstairs",
+  "name": "诊所·楼上住处",
+  "description": "楼上是 Weaver 的住处,一目了然的单身汉整洁:一把扶手椅、一架读了半辈子的书、灰毛衣搭在椅背上,和白大褂下那件是同一款。窗台上搁着一支从没点燃过的烟斗[item.clinic_upstairs.pipe],烟丝原封未拆——他跟病人说「少烟」时,自己先领受了这句话。窗边小桌上摆着一副国际象棋[item.clinic_upstairs.chess_set],棋局下到一半——执黑执白都是他自己,周日下午的老习惯。角落的留声机[item.clinic_upstairs.gramophone]旁码着歌剧唱片,它和 KGRV 的歌剧转播轮着占据这间屋子的安静。窗外是主街南口的屋顶和更远处灰白的海。楼梯下去是候诊室[SCN_clinic_waiting],楼板薄,楼下门铃一响他就听得见。",
+  "parentLocationId": "LOC_clinic",
+  "indoor": true,
+  "references": {
+    "items": [
+      {
+        "id": "item.clinic_upstairs.chess_set",
+        "name": "国际象棋",
+        "description": "窗边小桌上的国际象棋,棋局永远下到一半。对面那把椅子二十二年来大多数时候是空的。"
+      },
+      {
+        "id": "item.clinic_upstairs.gramophone",
+        "name": "留声机",
+        "description": "一台保养极好的老留声机,旁边的歌剧唱片按作曲家排列。唱针是 Dev 帮他配的。"
+      },
+      {
+        "id": "item.clinic_upstairs.pipe",
+        "name": "烟斗",
+        "description": "窗台上一支从没被点着过的烟斗,烟丝原封未拆。买它纯粹是手指偶尔想有个东西可拿——他劝病人少烟,自己先戒了这一口。"
+      }
+    ],
+    "connections": [
+      {
+        "id": "exit.clinic_upstairs.stairs_down",
+        "targetId": "SCN_clinic_waiting",
+        "name": "楼梯",
+        "description": "挂着「私人」木牌的楼梯,下去是候诊室。"
+      }
+    ],
+    "conditions": []
+  }
+}

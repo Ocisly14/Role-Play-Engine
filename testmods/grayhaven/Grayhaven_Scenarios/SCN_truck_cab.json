@@ -1,0 +1,29 @@
+{
+  "schemaVersion": 2,
+  "id": "SCN_truck_cab",
+  "name": "货车驾驶室",
+  "description": "Frank 那辆雪佛兰平板货车的驾驶室:座椅的弹簧从八年前就开始抱怨,仪表盘擦得和他的账一样干净。方向盘上缠着一段磨旧的皮条 [item.truck_cab.wheel_wrap],挡位杆头被一只手掌磨得发亮。遮阳板背后夹着一沓复写纸 [item.truck_cab.carbon_copies],边角整整齐齐。座椅之间立着一只军绿色保温杯 [item.truck_cab.thermos],杯身的漆磕掉了一圈。收音机坏了三年,没修——开车的时候他哼歌,总是同一首走调的《Blue Bayou》。",
+  "parentLocationId": "VEH_frank_truck",
+  "indoor": true,
+  "references": {
+    "items": [
+      {
+        "id": "item.truck_cab.wheel_wrap",
+        "name": "方向盘皮条",
+        "description": "缠在方向盘上的一段旧皮条,被同一双手在同一段山路上磨了八年,光滑得像用旧的工具柄。"
+      },
+      {
+        "id": "item.truck_cab.carbon_copies",
+        "name": "签收单复写纸",
+        "description": "遮阳板背后夹着的一沓复写纸,每张的抬头都一样,存根按日期码得整整齐齐——八年的送货,一张不少,一张没人看过。"
+      },
+      {
+        "id": "item.truck_cab.thermos",
+        "name": "军绿色保温杯",
+        "description": "座椅之间立着的军绿色保温杯,漆磕掉了一圈,是 Susan 每天清早灌满咖啡塞给他的那只。杯底的咖啡渍比杯子的年纪还老。"
+      }
+    ],
+    "connections": [],
+    "conditions": []
+  }
+}

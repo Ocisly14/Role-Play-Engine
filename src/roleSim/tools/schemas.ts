@@ -45,9 +45,10 @@ export const actTool: ToolSpec = {
           type: "object",
           properties: {
             // No `kind`: the id says whether it names a person, a thing or a
-            // place, so asking for it as well only offered a way to be wrong
-            // about a real id — and a mislabelled real id used to be rejected
-            // as if it named nothing. The boundary derives the kind.
+            // place, so asking for it as well only
+            // offered a way to be wrong about a real id — and a mislabelled
+            // real id used to be rejected as if it named nothing. The
+            // boundary derives the kind.
             id: { type: "string" },
             role: {
               type: "string",

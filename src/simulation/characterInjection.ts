@@ -178,15 +178,14 @@ export async function removeCharacterFromState(
 }
 
 /**
- * Given a macro location ID (ScenarioOutline.id), return the entrySceneId
- * of that outline, or null if not found or not set.
+ * Validate a placement target: a scene or road id. Macro-location
+ * indirection is gone — residence and injection sites name places directly.
  */
 export function resolveEntryScene(
   dgsm: DynamicGameStateManager,
-  macroLocationId: string
+  placeId: string
 ): string | null {
   const state = dgsm.getState();
-  const outline = state.scenarioOutlines.find((o) => o.id === macroLocationId);
-  if (!outline) return null;
-  return outline.entrySceneId ?? null;
+  if (state.scenes.has(placeId) || state.roads.has(placeId)) return placeId;
+  return null;
 }

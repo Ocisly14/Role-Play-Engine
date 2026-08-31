@@ -17,9 +17,8 @@ vi.mock("../../../models/index.js", async () => {
   return { ...actual, generateToolCalls };
 });
 
-const { renderContext, renderContextSegments, resolveTick } = await import(
-  "../worldActionEngine.js"
-);
+const { renderContext, renderContextSegments, renderWorldGraph, resolveTick } =
+  await import("../worldActionEngine.js");
 
 const cmd: ActionCommand = {
   commandId: "c1",
@@ -48,17 +47,32 @@ function makeContext(): EngineResolutionContext {
       worldInvariants: [],
     },
     state: {
-      // The scene the actor stands in, and the one it connects to. The
-      // movement destination has to be somewhere the Engine was shown.
-      scenes: [
+      // The skeleton carries only the macro location; the scenes the actor
+      // stands in / moves to are real via placeKinds (the validator's
+      // full-world lookup), and the involved one is snapshotted below.
+      graph: {
+        places: [{ id: "J_A", kind: "scene" as const, name: "Crossing" }],
+        edges: [],
+      },
+      blockedEdges: [],
+      placeKinds: { SCN_1: "scene", SCN_FAR: "scene" },
+      connectionIds: ["exit.scn1.far"],
+      places: [
         {
           id: "SCN_1",
+          kind: "scene",
           name: "Reading room",
           description: "Shelves and a long table.",
           parentLocationId: "OUTDOOR",
           conditions: [],
           itemIds: [],
-          connections: [{ targetId: "SCN_FAR", description: "a far door" }],
+          connections: [
+            {
+              connectionId: "exit.scn1.far",
+              targetId: "SCN_FAR",
+              description: "a far door",
+            },
+          ],
           environment: {
             temperature: 18,
             illumination: 60,
@@ -70,6 +84,7 @@ function makeContext(): EngineResolutionContext {
         },
       ],
       items: [],
+      itemHolders: {},
       characters: [
         {
           id: "npc_1",
@@ -109,7 +124,7 @@ const validSubmission = {
       actionId: "action_c1",
       resolvedDurationTicks: 5,
       timingReason: "route takes five minutes",
-      movement: { destinationId: "SCN_FAR" },
+      movement: { route: ["SCN_FAR"] },
     },
   ],
 };
@@ -161,7 +176,7 @@ describe("resolveTick session loop", () => {
       }),
     ]);
     expect(result.movementInits.action_c1).toEqual({
-      destinationId: "SCN_FAR",
+      route: ["SCN_FAR"],
     });
     expect(result.codeToolInvocations).toHaveLength(1);
     expect(result.codeToolInvocations[0]).toMatchObject({
@@ -360,13 +375,21 @@ describe("renderContextSegments caching layout", () => {
   it("keeps the world in the stable half and the minute in the volatile half", () => {
     const { stable, volatile } = renderContextSegments(makeContext());
 
-    expect(stable).toContain("## Scenes");
-    expect(stable).toContain("## Items");
+    expect(stable).toContain("## World Graph");
     expect(stable).toContain("## World Invariants");
+    // The skeleton renders as a compact adjacency list, not JSON.
+    expect(stable).toContain("- J_A (Crossing)");
+    expect(stable).not.toContain('"places"');
 
+    // Detailed places, items and blocked state depend on this tick, so they
+    // live in the volatile half — blocking an edge must not invalidate the
+    // cached stable prefix.
     for (const section of [
       "## Tick",
       "## Trigger",
+      "## Blocked Connections",
+      "## Detailed Places",
+      "## Items",
       "## Characters",
       "## New Commands",
       "## Active Actions",
@@ -381,5 +404,49 @@ describe("renderContextSegments caching layout", () => {
     const { stable, volatile } = renderContextSegments(context);
     expect(stable + volatile).toBe(renderContext(context));
     expect(stable + volatile).not.toContain("\n\n\n");
+  });
+});
+
+describe("renderWorldGraph", () => {
+  it("renders each node as description + connection references", () => {
+    const text = renderWorldGraph({
+      places: [
+        {
+          id: "J_A",
+          kind: "scene",
+          name: "Crossing",
+          description: "A windswept\ncrossing.",
+        },
+        {
+          id: "R_MAIN",
+          kind: "road",
+          name: "Star Avenue",
+        },
+      ],
+      edges: [
+        {
+          connectionId: "exit.home.secret",
+          from: "J_A",
+          to: "R_MAIN",
+          hidden: true,
+        },
+        {
+          connectionId: "exit.road.a",
+          from: "R_MAIN",
+          to: "J_A",
+          travelTimeMinutes: 15,
+        },
+      ],
+    });
+    expect(text.split("\n")).toEqual([
+      "Outdoor node scenes:",
+      // Authored prose rides along, newlines flattened.
+      "- J_A (Crossing): A windswept crossing.",
+      "  connections: [exit.home.secret] -> R_MAIN (hidden)",
+      "Roads:",
+      // No description and no prose — the node line stands alone.
+      "- R_MAIN (Star Avenue)",
+      "  connections: [exit.road.a] -> J_A 15min",
+    ]);
   });
 });

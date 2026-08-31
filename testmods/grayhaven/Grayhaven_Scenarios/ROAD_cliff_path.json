@@ -1,0 +1,34 @@
+{
+  "schemaVersion": 2,
+  "id": "ROAD_cliff_path",
+  "name": "崖间小径",
+  "description": "沿海崖蜿蜒的小径,是码头与灯塔崖之间唯一的通路,单程半个钟头。北端起于码头 [SCN_dock];走出没几分钟,一条岔路拐向海边那间独居的小屋,烟囱里常有若有若无的烟 [SCN_earl_cabin];此后小径贴着崖缘一路爬升,南端止于灯塔崖顶 [SCN_lighthouse_cliff]。一侧始终是崖下的浪声,雾天走这条路,得用脚记住每一个弯。",
+  "parentLocationId": "OUTDOOR",
+  "travelTimeMinutes": 30,
+  "references": {
+    "items": [],
+    "connections": [
+      {
+        "id": "exit.cliff_path.dock_end",
+        "targetId": "SCN_dock",
+        "name": "小径北端(码头)",
+        "role": "endpointA"
+      },
+      {
+        "id": "exit.cliff_path.cliff_end",
+        "targetId": "SCN_lighthouse_cliff",
+        "name": "小径南端(灯塔崖)",
+        "role": "endpointB"
+      },
+      {
+        "id": "exit.cliff_path.cabin_turnoff",
+        "targetId": "SCN_earl_cabin",
+        "name": "通往小屋的岔路",
+        "description": "拐向码头边独居小屋的岔路。",
+        "role": "access",
+        "position": 0.15
+      }
+    ],
+    "conditions": []
+  }
+}

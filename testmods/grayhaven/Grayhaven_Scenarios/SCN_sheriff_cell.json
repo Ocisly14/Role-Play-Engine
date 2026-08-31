@@ -1,0 +1,41 @@
+{
+  "schemaVersion": 2,
+  "id": "SCN_sheriff_cell",
+  "name": "警长办公室·拘留室",
+  "description": "拘留室里一张铁架铺位[item.sheriff_cell.bunk]、一只水槽[item.sheriff_cell.sink],铁栅栏的漆有些年头了。这间屋子闲置已久[cond.sheriff_cell.disused]——灰港上一回真正关过人,还是多年前一个醉酒闹事的外地渔工。铺位上卷着的旧毯子落了灰,墙角堆着几只纸箱[item.sheriff_cell.storage_boxes],装着圣诞游行的彩灯和用不上的路障牌:牢房成了镇公所的储藏间。铁框门通回前厅走廊[SCN_sheriff_front],钥匙挂在前厅,从来没人惦记。",
+  "parentLocationId": "LOC_sheriff_office",
+  "indoor": true,
+  "references": {
+    "items": [
+      {
+        "id": "item.sheriff_cell.bunk",
+        "name": "铁架铺位",
+        "description": "焊死在墙上的铁架床,网格床板的漆早剥落见锈;铺位上卷着的旧毯子常年没人碰过,折角都硬成了死褶。"
+      },
+      {
+        "id": "item.sheriff_cell.sink",
+        "name": "水槽",
+        "description": "墙角一只搪瓷水槽,龙头拧不紧,滴水声是这屋子唯一没停过的动静;瓷面裂了几道锈黄的纹。"
+      },
+      {
+        "id": "item.sheriff_cell.storage_boxes",
+        "name": "杂物纸箱",
+        "description": "几只纸箱:圣诞游行的彩灯、备用路障牌、一箱过期的交通传单。小镇治安的全部富余都堆在这儿。"
+      }
+    ],
+    "connections": [
+      {
+        "id": "exit.sheriff_cell.front_door",
+        "targetId": "SCN_sheriff_front",
+        "name": "铁框门",
+        "description": "通回前厅走廊的铁框门,从不上锁。"
+      }
+    ],
+    "conditions": [
+      {
+        "id": "cond.sheriff_cell.disused",
+        "description": "拘留室闲置多年,积灰的铺位和堆放的杂物让它更像储藏间而非牢房。"
+      }
+    ]
+  }
+}

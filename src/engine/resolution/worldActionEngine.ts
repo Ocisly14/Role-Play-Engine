@@ -27,6 +27,7 @@ import {
   type EngineResolutionContext,
   type ResolutionError,
   type WorldActionEngineResult,
+  type WorldGraph,
   formatErrorTarget,
 } from "./types.js";
 import {
@@ -63,12 +64,14 @@ const FORCE_SUBMIT_AFTER = 4;
 const MAX_REPAIR_ROUNDS = 3;
 const CODE_TOOL_NAMES = new Set(CODE_TOOL_SPECS.map((t) => t.name));
 
-// ── Rules document: loaded once. The build ships TS only, so fall back to
-//    the repo-relative path when the URL-relative read misses. ──
-function loadRulesDoc(): string {
+// ── Rule documents: loaded once. Instructional prose lives in
+//    src/engine/rules/*.md — editable without touching code. The build
+//    ships TS only, so fall back to the repo-relative path when the
+//    URL-relative read misses. ──
+function loadRuleFile(name: string, fallback: string): string {
   const candidates = [
-    new URL("../rules/world-action-resolution.md", import.meta.url),
-    `${process.cwd()}/src/engine/rules/world-action-resolution.md`,
+    new URL(`../rules/${name}`, import.meta.url),
+    `${process.cwd()}/src/engine/rules/${name}`,
   ];
   for (const candidate of candidates) {
     try {
@@ -77,13 +80,18 @@ function loadRulesDoc(): string {
       // try next
     }
   }
-  console.warn(
-    "[WorldActionEngine] world-action-resolution.md not found; using embedded summary"
-  );
-  return "Resolve all actions under strict causality, state constraints, locality, engine-owned timing, conservation, roll-first assessment, concurrency consistency, minimal change, and fact/perception separation.";
+  console.warn(`[WorldActionEngine] ${name} not found; using embedded summary`);
+  return fallback;
 }
 
-const RULES_DOC = loadRulesDoc();
+const RULES_DOC = loadRuleFile(
+  "world-action-resolution.md",
+  "Resolve all actions under strict causality, state constraints, locality, engine-owned timing, conservation, roll-first assessment, concurrency consistency, minimal change, and fact/perception separation."
+);
+const SESSION_PROTOCOL = loadRuleFile(
+  "session-protocol.md",
+  "Ground the resolution with the deterministic tools where needed; finish with exactly one submit_resolution answering every worklist id."
+);
 
 const SYSTEM_PROMPT = `You are the World Action Engine of a tick-based Call of Cthulhu world
 simulation. You are the sole authority on what actually happens: characters
@@ -95,28 +103,7 @@ code owns the clock and the dice, and hands you their results.
 
 ${RULES_DOC}
 
-## Session protocol
-
-- You may call the deterministic tools (pathfinding, movementCost,
-  inventoryValidation, damageRoll) to ground your resolution. Movement
-  feasibility/duration MUST come from pathfinding/movementCost, not
-  estimation. You never roll a skill check yourself — you name the bar and
-  the opposition when the action starts, and code rolls both sides when its
-  time is spent.
-- Finish with exactly one \`submit_resolution\` call containing the complete
-  resolution. Do not mix it with other tool calls in the same turn.
-- Answer every id the trigger's \`resolve\` worklist puts under
-  \`starting\` and \`ending\`, in that list. The list an action goes in IS the
-  decision about what happens to it, and each list carries only the fields
-  that moment allows. Ids under \`stillRunning\` need nothing from you.
-- \`repair_resolution\` is listed for the whole session but is only valid
-  AFTER a submission comes back rejected. Never open with it.
-- Facts and reasons are objective and third-person. Perceiver lists follow
-  physical/sensory reach (same location; adjacent for loud signals).
-- The actor's proposedDurationTicks is advisory. You output
-  resolvedDurationTicks + timingReason when the action starts, and again only
-  if you revise the estimate. There is no status field and no progress field:
-  saying nothing about an in-flight action leaves it running.
+${SESSION_PROTOCOL}
 
 ## Skill catalog
 
@@ -159,13 +146,64 @@ function commandForPrompt(command: ActionCommand): Record<string, unknown> {
  * 114 characters changed. Measured cross-tick common prefix: 0.3%.
  *
  * So the world description goes FIRST and everything about this particular
- * minute goes LAST. Characters are volatile too — the stamina subsystem moves
- * fatigue on most ticks — and at ~1.8k characters they are cheap to re-send,
- * so they lead the volatile half rather than poisoning the stable one.
+ * minute goes LAST. Since the two-tier context (M3) the stable half is the
+ * world SKELETON — macro locations + geography as a compact adjacency list,
+ * no prose — which only changes when an edge is revealed or authored anew;
+ * blocked state was moved OUT of it into the volatile Blocked Connections
+ * section precisely so a felled tree does not invalidate the cached prefix.
+ * The detailed place snapshots and the item list depend on which places this
+ * tick's actions involve, so they live in the volatile half with the
+ * characters (whom the stamina subsystem moves on most ticks anyway).
  *
  * The model reads titled JSON sections, so nothing about the resolution
  * depends on this order.
  */
+/**
+ * The skeleton graph in the module's own authoring shape: each node is its
+ * prose description plus a `connections:` reference line — the same
+ * description-and-references format as the v2 place files and the Tier-2
+ * snapshots, so the Engine reads one format everywhere. Junction/road prose
+ * is the authored text and already cites its `[exit.*]` ids; the reference
+ * line resolves each id to its (lifted) target and travel time.
+ */
+export function renderWorldGraph(graph: WorldGraph): string {
+  const edgesByFrom = new Map<string, WorldGraph["edges"]>();
+  for (const edge of graph.edges) {
+    const list = edgesByFrom.get(edge.from);
+    if (list) list.push(edge);
+    else edgesByFrom.set(edge.from, [edge]);
+  }
+  const renderEdge = (edge: WorldGraph["edges"][number]): string =>
+    [
+      `[${edge.connectionId}] -> ${edge.to}`,
+      ...(edge.travelTimeMinutes !== undefined
+        ? [`${edge.travelTimeMinutes}min`]
+        : []),
+      ...(edge.hidden ? ["(hidden)"] : []),
+    ].join(" ");
+  const nodeLines = (
+    id: string,
+    name: string,
+    description: string | undefined
+  ): string[] => {
+    const prose = description?.replace(/\s*\n\s*/g, " ").trim();
+    const head = `- ${id} (${name})${prose ? `: ${prose}` : ""}`;
+    const edges = edgesByFrom.get(id);
+    if (!edges) return [head];
+    return [head, `  connections: ${edges.map(renderEdge).join("; ")}`];
+  };
+  const lines: string[] = [];
+  for (const kind of ["scene", "road"] as const) {
+    const nodes = graph.places.filter((p) => p.kind === kind);
+    if (nodes.length === 0) continue;
+    lines.push(kind === "scene" ? "Outdoor node scenes:" : "Roads:");
+    for (const node of nodes) {
+      lines.push(...nodeLines(node.id, node.name, node.description));
+    }
+  }
+  return lines.join("\n");
+}
+
 export function renderContextSegments(context: EngineResolutionContext): {
   stable: string;
   volatile: string;
@@ -207,11 +245,26 @@ export function renderContextSegments(context: EngineResolutionContext): {
   const stable = [
     "# Tick Resolution Request",
     section("World Invariants", context.rules.worldInvariants),
-    section("Scenes", context.state.scenes),
-    section("Items", context.state.items),
+    `## World Graph (skeleton: macro locations + geography, each as description + connection references; interior scenes appear only under Detailed Places; the [connectionId] references are what connectionBlock/connectionHidden take)\n${renderWorldGraph(context.state.graph)}`,
   ].join("\n\n");
 
   const volatile = [
+    section(
+      "Blocked Connections (currently impassable edges, world-wide; empty means everything is passable)",
+      context.state.blockedEdges
+    ),
+    section(
+      "Detailed Places (the places involved this tick; hidden items/exits are invisible to characters until revealed)",
+      context.state.places
+    ),
+    section(
+      "Vehicles (movable interiors: boarding = a `position` change into interiorSceneId; driving = movement.vehicleId with the route; the vehicle stands at `position` until driven)",
+      context.state.vehicles ?? []
+    ),
+    section(
+      "Items (at the involved places and in the actors' hands)",
+      context.state.items
+    ),
     section("Characters", context.state.characters),
     section("Trigger", {
       ...context.trigger,

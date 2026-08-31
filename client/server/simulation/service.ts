@@ -75,17 +75,10 @@ function resolveTopLevelLocationId(
 ): string | null {
   const scene = dgsm.getState().scenes.get(locationId);
   if (scene?.parentLocationId) return scene.parentLocationId;
-
-  const junction = topology?.junctions.get(locationId);
-  if (junction?.parentLocationId) return junction.parentLocationId;
+  if (scene) return "OUTDOOR";
 
   const road = topology?.roads.get(locationId);
   if (road?.parentLocationId) return road.parentLocationId;
-
-  const outline = dgsm
-    .getState()
-    .scenarioOutlines.find((candidate) => candidate.id === locationId);
-  if (outline?.id) return outline.id;
 
   if (locationId === "OUTDOOR") return locationId;
   return null;
@@ -249,14 +242,11 @@ function getOutdoorWeatherRegionIds(dgsm: DynamicGameStateManager): string[] {
 
   state.scenes.forEach((scene) => {
     if (!scene.indoor) {
-      regionIds.add(scene.parentLocationId);
+      regionIds.add(scene.parentLocationId ?? "OUTDOOR");
     }
   });
-  for (const [, junction] of state.junctions) {
-    regionIds.add(junction.parentLocationId);
-  }
   for (const [, road] of state.roads) {
-    regionIds.add(road.parentLocationId);
+    regionIds.add(road.parentLocationId ?? "OUTDOOR");
   }
 
   return Array.from(regionIds);
@@ -270,17 +260,12 @@ function getOutdoorLocationIdsForRegion(
   const locationIds: string[] = [];
 
   state.scenes.forEach((scene, sceneId) => {
-    if (scene.parentLocationId === regionId && !scene.indoor) {
+    if ((scene.parentLocationId ?? "OUTDOOR") === regionId && !scene.indoor) {
       locationIds.push(sceneId);
     }
   });
-  for (const [junctionId, junction] of state.junctions) {
-    if (junction.parentLocationId === regionId) {
-      locationIds.push(junctionId);
-    }
-  }
   for (const [roadId, road] of state.roads) {
-    if (road.parentLocationId === regionId) {
+    if ((road.parentLocationId ?? "OUTDOOR") === regionId) {
       locationIds.push(roadId);
     }
   }

@@ -1,0 +1,88 @@
+{
+  "id": "npc_denny_holt",
+  "name": "Denny Holt",
+  "occupation": "学生",
+  "age": 12,
+  "gender": "男",
+  "currentLocation": "SCN_holt_denny",
+  "residence": "SCN_holt_denny",
+  "appearance": "瘦小，总穿大一号的哥哥旧夹克；口袋里有哮喘吸入器和一本卷角的平装科幻小说。",
+  "personality": "谨慎胆小，却读过太多东西。总想给怪事找小说里的先例，是孩子团的理论担当；说话常从“我在书里读到过”开始，紧张时越说越快。",
+  "background": "Holt 家第三代，Ray 的孙子、Frank 与 Susan 的儿子。哥哥 Glen 1984 年参军，现驻圣迭戈；暑假里他与 Tommy、Priya 一起私下调查雷德利站。",
+  "attributes": { "STR": 35, "CON": 40, "DEX": 50, "APP": 50, "POW": 60, "SIZ": 40, "INT": 75, "EDU": 45 },
+  "status": { "hp": 8, "maxHp": 8, "san": 60, "maxSan": 60, "fatigue": 10, "maxFatigue": 100, "luck": 55, "conditions": [] },
+  "skills": { "Knowledge & Craft": 70, "Investigation": 55, "Occult": 40, "Athletics": 25, "Science & Nature": 45 },
+  "languages": { "native": ["English"] },
+  "inventory": [
+    {
+      "id": "denny-glen-jacket",
+      "name": "Glen 的旧夹克",
+      "properties": {
+        "note": "哥哥 Glen 留下的宽大旧夹克，袖口磨损，仍有淡淡的机油味。"
+      }
+    },
+    {
+      "id": "denny-inhaler",
+      "name": "哮喘吸入器",
+      "properties": {
+        "note": "随身携带的蓝色哮喘吸入器，紧张或跑动后必须使用。"
+      }
+    },
+    {
+      "id": "denny-paperback",
+      "name": "卷角的科幻平装书",
+      "properties": {
+        "note": "一本被反复翻阅的科幻小说，书页卷角，夹着他对怪事的猜想。"
+      }
+    },
+    {
+      "id": "denny-observation-notebook",
+      "name": "观察小本子",
+      "properties": {
+        "hidden": true,
+        "note": "藏在夹克内袋的小本子，按日期记录大人谈到雷德利站时的反应。"
+      }
+    },
+    {
+      "id": "denny-walkie-talkie",
+      "name": "对讲机",
+      "properties": {
+        "note": "孩子们调查时联络用的对讲机，电池盖用胶带固定。"
+      }
+    }
+  ],
+ "relationships": [
+    { "targetId": "npc_ray_holt", "targetName": "Ray Holt", "relationshipType": "family", "attitude": 80, "firstPerson": "爷爷对我有求必应，可一提山上就拿钓鱼把话岔开；他年轻时肯定知道什么。" },
+    { "targetId": "npc_frank_holt", "targetName": "Frank Holt", "relationshipType": "family", "attitude": 70, "firstPerson": "爸每天开货车上山送货；他紧张时会哼歌，我听得出来。" },
+    { "targetId": "npc_susan_holt", "targetName": "Susan Holt", "relationshipType": "family", "attitude": 85, "firstPerson": "妈妈什么都看得出来，瞒她比瞒爸难十倍。" },
+    { "targetId": "npc_tommy_reyes", "targetName": "Tommy Reyes", "relationshipType": "friend", "attitude": 90, "firstPerson": "Tommy 是死党，敢打赌也敢带路，就是老漏细节；还好有 Priya。" },
+    { "targetId": "npc_priya_batra", "targetName": "Priya Batra", "relationshipType": "friend", "attitude": 85, "firstPerson": "Priya 的证据分级最讲道理。她说我的理论至少算 B 级思路。" },
+    { "targetId": "npc_marisol_reyes", "targetName": "Marisol Reyes", "relationshipType": "friend", "attitude": 55, "firstPerson": "Reyes 阿姨总多给我们一把糖；她最近看起来很累。" },
+    { "targetId": "npc_dolores_medeiros", "targetName": "Dolores Medeiros", "relationshipType": "friend", "attitude": 60, "firstPerson": "Dolores 奶奶什么都知道，进她的门先会被按着吃东西。" },
+    { "targetId": "npc_dev_batra", "targetName": "Dev Batra", "relationshipType": "friend", "attitude": 45, "firstPerson": "Dev 叔叔什么坏的都能修好。" },
+    { "targetId": "npc_anita_batra", "targetName": "Anita Batra", "relationshipType": "friend", "attitude": 55, "firstPerson": "Anita 阿姨的小豆蔻曲奇天下第一。" },
+    { "targetId": "npc_doc_weaver", "targetName": "Doc Weaver", "relationshipType": "friend", "attitude": 50, "firstPerson": "Weaver 医生给我看哮喘，说话像开处方，但从不吓唬人。" },
+    { "targetId": "npc_earl_pruitt", "targetName": "Earl Pruitt", "relationshipType": "friend", "attitude": 50, "firstPerson": "大家说 Earl 爷爷糊涂，可最先说真话的人总是没人信。" },
+    { "targetId": "npc_cole_baxter", "targetName": "Cole Baxter", "relationshipType": "friend", "attitude": 45, "firstPerson": "Cole 副警长真的记下了我们报的锯木厂怪声。" }
+  ],
+  "longTermIntent": "搞清楚爷爷和爸爸到底在瞒什么；我确信他们守着同一个方向的秘密，而那个方向就是山上的雷德利站。",
+  "memory": [
+    { "type": "secret", "content": "我和 Tommy、Priya 约好收集雷德利站有鬼的证据。登记簿在 Priya 那儿，不能让任何大人知道，尤其是家里人。" },
+    { "type": "secret", "content": "我夜里从后院栅栏的豁口溜出去过，没人发现。" },
+    { "type": "secret", "content": "我在小本子上记着：爸爸被问到山上会哼走调的歌，爷爷听到“山上”就岔开话题；每一次我都记了日期。" },
+    { "type": "general", "content": "哥哥 Glen 1984 年参军，1985 年六月的信说军舰比整个灰港还大；他的旧夹克现在归我。" },
+    { "type": "general", "content": "家里的老玩笑是“已经给海军交过一个儿子了，山上那站该放过我们了吧”；每次听见，爸爸都不笑。" },
+    { "type": "general", "content": "从 1984 年冬天起，镇上的灯会闪，收音机会串进怪杂音；书里说这种事从来不是孤立发生的。" },
+    { "type": "general", "content": "1985 年七月，我们在旧锯木厂废墟立了前进营地：Priya 管登记，Tommy 探路，我负责理论。" },
+    { "type": "plan", "content": "八月底前再去一次锯木厂，把 Priya 新记下的杂音规律和证据簿对一遍。" },
+    { "type": "plan", "content": "晚饭时留心：爷爷和爸爸只要同桌，总有一个先把话题从山上引开；我要记下是谁。" },
+    { "type": "map", "content": "主街是镇上唯一一条正经街，走一头到另一头要一刻钟，骑车能省一半——北边挨着蓝鸟餐馆、杂货店兼邮局、警长办公室，南边是星港街机厅、Batra家的电视维修铺（Priya家住楼上）和诊所。" },
+    { "type": "map", "content": "从我家顺霍尔特巷走去主街北口要二十分钟，那儿也是旧海岸公路和林道的交叉口；旧海岸公路再往北是汽车旅馆，旅馆边上那个货运棚是爸爸他们的货车上山送雷德利站的地方——车能一直开到自动大门，我们小孩连门都到不了。" },
+    { "type": "map", "content": "主街南口往下坡道走一刻钟到码头和海滩，后巷抄近路八分钟就到Tommy家门口；码头往南沿崖边小路走半小时是灯塔，唯一的岔路通向Earl爷爷的小屋——灯塔从1982年起就锁着，没人能进去。" },
+    { "type": "map", "content": "从我家后院栅栏的豁口钻出去，顺坡走几分钟就接上林道，再往回走一点就是林道口——比从主街北口绕过去快一半还多，这是我的私门，夜里溜出去不用经过起居室。" },
+    { "type": "map", "content": "去旧锯木厂我们走灰溪渡口这条线：林道口到渡口一个多钟头，踏石过溪，再走一个半钟头到锯木厂，单程小半天，当天必须往返。" },
+    { "type": "map", "content": "下大雨后灰溪会涨水，踏石一淹就过不去——1985年6月那场雨后我们就被堵在半路回来过一次；书里写涨水趟不过去就该原路退，我们那次就是这么办的。" },
+    { "type": "map", "content": "Priya的地图上还画了另一条到锯木厂的路——旧铁路路基，笔直好认不会迷路，但绕远，得走三个钟头，是灰溪涨水时的备用路。" },
+    { "type": "map", "content": "锯木厂再往北我们没去过，只听说最深处是政府的铁丝网围栏，单程要走上六个钟头——没探明的路线书里教训我不能贸然闯，我们说好总有一天要去。" }
+  ]
+}

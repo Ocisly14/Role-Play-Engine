@@ -1,0 +1,36 @@
+{
+  "schemaVersion": 2,
+  "id": "SCN_holt_ray",
+  "name": "Ray 的房间",
+  "description": "老警长的房间有一种懒得体面、又懒得不体面的气味:烟斗丝、旧皮革、晒过的报纸。窗边一把陷出人形的扶手椅,椅子扶手上摊着一摞填了一半的填字游戏册 [item.holt_ray.crossword_stack],铅笔头就卡在页缝里。衣柜顶上横着一副落了灰的钓具箱 [item.holt_ray.tackle_box]——他嘴上总说退休了就天天去钓鱼,箱子却好几年没开过。制服外套 [item.holt_ray.uniform_jacket] 挂在门后,警徽擦得很亮,和屋里其余的一切格格不入。房门 [SCN_holt_common] 通向起居的大开间。",
+  "parentLocationId": "LOC_holt_house",
+  "indoor": true,
+  "references": {
+    "items": [
+      {
+        "id": "item.holt_ray.crossword_stack",
+        "name": "填字游戏册",
+        "description": "一摞填了一半的填字游戏册,铅笔头卡在页缝里,有几格被涂改过很多次。"
+      },
+      {
+        "id": "item.holt_ray.tackle_box",
+        "name": "钓具箱",
+        "description": "落了灰的旧钓具箱,搭扣锈住了,好几年没被打开过。"
+      },
+      {
+        "id": "item.holt_ray.uniform_jacket",
+        "name": "警长制服外套",
+        "description": "挂在门后的深蓝色制服外套,肩章洗得有点发白,只有别在胸前的警徽擦得锃亮。"
+      }
+    ],
+    "connections": [
+      {
+        "id": "exit.holt_ray.door",
+        "targetId": "SCN_holt_common",
+        "name": "房门",
+        "description": "通向起居大开间的房门。"
+      }
+    ],
+    "conditions": []
+  }
+}

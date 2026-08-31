@@ -1,0 +1,48 @@
+{
+  "schemaVersion": 2,
+  "id": "SCN_clinic_waiting",
+  "name": "诊所·候诊室",
+  "description": "候诊室不大,却是主街南口又一个闲聊的去处:靠墙两条长椅,坐垫凹陷的位置说明常客都有各自的座,长椅一端摆着个旧木箱[item.clinic_waiting.toy_box],装着掉漆的玩具车和缺角的积木,是留给候诊孩子的老古董。Susan 的护士台正对着门,台面一尘不染,台上摊着预约簿[item.clinic_waiting.appointment_book],她的圆体字排得像药品标签一样清楚。茶几上一摞旧杂志[item.clinic_waiting.magazine_stack],最新的一本也是去年的。墙上的体检宣传画从六十年代挂到今天。临街门通向主街[ROAD_main_street];诊室的门[SCN_clinic_exam]关着时,候诊的人自觉压低声音;楼梯口挂着「私人」的小木牌,通向楼上 Weaver 医生的住处[SCN_clinic_upstairs]。",
+  "parentLocationId": "LOC_clinic",
+  "indoor": true,
+  "references": {
+    "items": [
+      {
+        "id": "item.clinic_waiting.appointment_book",
+        "name": "预约簿",
+        "description": "护士台上的预约簿,Susan 的圆体字工整清楚。最近几周,「睡不好」和「耳朵嗡嗡响」出现的频率高得她自己都皱眉。"
+      },
+      {
+        "id": "item.clinic_waiting.magazine_stack",
+        "name": "旧杂志",
+        "description": "茶几上的一摞杂志:钓鱼月刊、读者文摘、一本缺了封面的电视指南。最新的一本也是去年的。"
+      },
+      {
+        "id": "item.clinic_waiting.toy_box",
+        "name": "玩具箱",
+        "description": "长椅角落的一只旧木箱,装着掉漆的玩具车和缺了角的积木——常客小孩候诊时的固定去处,边角都被摸得发亮。"
+      }
+    ],
+    "connections": [
+      {
+        "id": "exit.clinic_waiting.street_door",
+        "targetId": "ROAD_main_street",
+        "name": "临街门",
+        "description": "装着门铃的临街门,通向主街南段。"
+      },
+      {
+        "id": "exit.clinic_waiting.exam_door",
+        "targetId": "SCN_clinic_exam",
+        "name": "诊室门",
+        "description": "磨砂玻璃门,门后是 Weaver 医生的诊室。"
+      },
+      {
+        "id": "exit.clinic_waiting.stairs_up",
+        "targetId": "SCN_clinic_upstairs",
+        "name": "私人楼梯",
+        "description": "挂着「私人」木牌的楼梯,通向楼上 Weaver 医生的住处。"
+      }
+    ],
+    "conditions": []
+  }
+}

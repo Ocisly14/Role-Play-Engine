@@ -1,0 +1,26 @@
+{
+  "schemaVersion": 2,
+  "id": "ROAD_trail_access",
+  "name": "林道",
+  "description": "从主街北口走到林道口的十分钟土路,穿过镇边最后几户人家的后栅栏。镇子的一头接在主街北口 [SCN_main_north],另一头是林道口那块歪掉的木牌 [SCN_trailhead]。路的后半段,红杉的影子已经盖过来了,镇上的声音一步步退到身后。",
+  "parentLocationId": "OUTDOOR",
+  "travelTimeMinutes": 10,
+  "references": {
+    "items": [],
+    "connections": [
+      {
+        "id": "exit.trail_access.street_end",
+        "targetId": "SCN_main_north",
+        "name": "林道镇端",
+        "role": "endpointA"
+      },
+      {
+        "id": "exit.trail_access.trailhead_end",
+        "targetId": "SCN_trailhead",
+        "name": "林道口端",
+        "role": "endpointB"
+      }
+    ],
+    "conditions": []
+  }
+}

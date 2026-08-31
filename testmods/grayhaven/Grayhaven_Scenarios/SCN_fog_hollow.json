@@ -1,0 +1,37 @@
+{
+  "schemaVersion": 2,
+  "id": "SCN_fog_hollow",
+  "name": "雾谷",
+  "description": "一片低洼的谷地,四条林径在此交汇。海雾顺着地势灌进来就再也出不去,常年淤在谷底,十步之外只剩下树影的轮廓 [cond.fog_hollow.pooled_fog]。谷底中央积着一汪水,常年不干,雾气压得水面看不出一点波纹,黑得照不出人影 [item.fog_hollow.black_pool]。潭边散落着几块石头,长满湿滑的青苔,是谷里唯一算得上落脚点的东西 [item.fog_hollow.mossy_stones]。一截枯枝半沉在水里,泡得发黑发软,一碰就是一手黏腻的水汽 [item.fog_hollow.sunken_branch]。谷里没有任何标志物,四个出口在雾里看起来一模一样——在灰港的林子里,没有比这里更容易转向的地方。",
+  "references": {
+    "items": [
+      {
+        "id": "item.fog_hollow.black_pool",
+        "name": "谷底黑水潭",
+        "description": "谷底中央一汪常年不干的水潭,雾气压得水面看不出波纹,黑得照不出人影。"
+      },
+      {
+        "id": "item.fog_hollow.mossy_stones",
+        "name": "潭边石头",
+        "description": "散落在水潭边的几块石头,长满湿滑的青苔。"
+      },
+      {
+        "id": "item.fog_hollow.sunken_branch",
+        "name": "沉在水里的枯枝",
+        "description": "半沉在水潭里的一截枯枝,泡得发黑发软。"
+      }
+    ],
+    "connections": [],
+    "conditions": [
+      {
+        "id": "cond.fog_hollow.pooled_fog",
+        "description": "淤积在谷底的浓雾,视野不足十步,极易在四个岔口间转向迷路。",
+        "mechanicalEffect": {
+          "skillPenalty": {
+            "Investigation": -10
+          }
+        }
+      }
+    ]
+  }
+}

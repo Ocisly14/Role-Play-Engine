@@ -16,6 +16,7 @@ import {
 import type {
   OwnActionState,
   PerceivedBundle,
+  PerceivedSceneItem,
   ScenePresentCharacter,
 } from "./types.js";
 
@@ -82,7 +83,7 @@ function resolveScene(
   npcId: string,
   dgsm: DynamicGameStateManager
 ): PerceivedBundle["scene"] {
-  // Roads and junctions are places too — a traveller mid-route perceives the
+  // Roads are places too — a traveller mid-route perceives the
   // street they are on, not "an indistinct place".
   const location = resolvePerceivedLocation(
     dgsm.getCharacterPosition(npcId),
@@ -94,6 +95,27 @@ function resolveScene(
       name: location.name,
       description: location.description,
       activeConditions: location.conditions,
+      // The same items the trust boundary lets this actor cite — resolved
+      // from the ACTUAL position, so a road item beyond reach is neither
+      // rendered nor citable. Distance rides along for the renderer to
+      // judge salience (fog, night, attention) in prose.
+      items: location.items.map((item): PerceivedSceneItem => {
+        const entry: PerceivedSceneItem = { id: item.id, name: item.name };
+        if (item.description !== undefined) {
+          entry.description = item.description;
+        }
+        if (
+          item.position !== undefined &&
+          location.selfPosition !== undefined &&
+          location.travelTimeMinutes !== undefined
+        ) {
+          entry.distanceMinutes = Math.round(
+            Math.abs(item.position - location.selfPosition) *
+              location.travelTimeMinutes
+          );
+        }
+        return entry;
+      }),
     };
   }
 
@@ -102,6 +124,7 @@ function resolveScene(
     name: "an indistinct place",
     description: "",
     activeConditions: [],
+    items: [],
   };
 }
 

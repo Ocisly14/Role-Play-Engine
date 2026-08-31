@@ -1,9 +1,5 @@
 import type { DynamicGameStateManager } from "../../state/DynamicGameState.js";
-import type {
-  CharacterPosition,
-  JunctionNode,
-  RoadNode,
-} from "../../state/topologyTypes.js";
+import type { CharacterPosition, RoadNode } from "../../state/topologyTypes.js";
 
 export const ROAD_COPRESENCE_THRESHOLD_MINUTES = 2;
 
@@ -19,14 +15,8 @@ function getRoad(
   return dgsm.getState().roads?.get(position.roadId) ?? null;
 }
 
-function getJunctionName(
-  junctionId: string,
-  dgsm: DynamicGameStateManager
-): string {
-  const junction = dgsm.getState().junctions.get(junctionId) as
-    | JunctionNode
-    | undefined;
-  return junction?.name ?? junctionId;
+function getSceneName(sceneId: string, dgsm: DynamicGameStateManager): string {
+  return dgsm.getScene(sceneId)?.name ?? sceneId;
 }
 
 export function isCharacterAtLocation(
@@ -38,8 +28,6 @@ export function isCharacterAtLocation(
   switch (position.type) {
     case "scene":
       return position.sceneId === locationId;
-    case "junction":
-      return position.junctionId === locationId;
     case "road":
       return position.roadId === locationId;
   }
@@ -71,10 +59,6 @@ export function arePositionsCoLocated(
     return a.sceneId === b.sceneId;
   }
 
-  if (a.type === "junction" && b.type === "junction") {
-    return a.junctionId === b.junctionId;
-  }
-
   if (a.type === "road" && b.type === "road" && a.roadId === b.roadId) {
     const distanceMinutes = getRoadDistanceMinutesBetweenPositions(a, b, dgsm);
     return distanceMinutes !== null && distanceMinutes <= roadThresholdMinutes;
@@ -94,8 +78,6 @@ export function describePrecisePosition(
       const scene = dgsm.getScene(position.sceneId);
       return `Inside ${scene?.name ?? position.sceneId}.`;
     }
-    case "junction":
-      return `At ${getJunctionName(position.junctionId, dgsm)}.`;
     case "road": {
       const road = getRoad(position, dgsm);
       if (!road) return `On ${position.roadId}.`;
@@ -107,10 +89,10 @@ export function describePrecisePosition(
         (1 - position.position) * road.travelTimeMinutes
       );
 
-      return `On ${road.name}, about ${minutesFromA} minute(s) from ${getJunctionName(
+      return `On ${road.name}, about ${minutesFromA} minute(s) from ${getSceneName(
         road.endpointA,
         dgsm
-      )} and ${minutesFromB} minute(s) from ${getJunctionName(
+      )} and ${minutesFromB} minute(s) from ${getSceneName(
         road.endpointB,
         dgsm
       )}.`;

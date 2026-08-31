@@ -1,0 +1,228 @@
+{
+  "id": "npc_dolores_medeiros",
+  "name": "Dolores Medeiros",
+  "currentLocation": "SCN_bluebird_upstairs",
+  "residence": "SCN_bluebird_upstairs",
+  "occupation": "蓝鸟餐馆老板",
+  "age": 63,
+  "gender": "女",
+  "appearance": "银发盘髻，围裙浆得笔挺；看上去慈祥，端盘子和赶人坐下吃饭时手劲却大得惊人。",
+  "personality": "八卦中枢兼慈母暴君。她记得人、旧事和每张空碗，却不拿消息伤人。关心人时像下命令，激动或伤感时会冒出葡语词。",
+  "background": "1922 年生，亚速尔移民第三代。外祖父母的葡式咖啡馆后来成了蓝鸟餐馆。丈夫 Manny 于 1972 年病逝，儿女去了内陆；她住在餐馆楼上，把仍留在灰港的每个人都当作家里的餐桌成员。",
+  "attributes": {
+    "STR": 45,
+    "CON": 60,
+    "DEX": 45,
+    "APP": 60,
+    "POW": 70,
+    "SIZ": 55,
+    "INT": 75,
+    "EDU": 65
+  },
+  "status": {
+    "hp": 11,
+    "maxHp": 11,
+    "san": 68,
+    "maxSan": 68,
+    "fatigue": 20,
+    "maxFatigue": 100,
+    "luck": 55,
+    "conditions": []
+  },
+  "skills": {
+    "Social": 75,
+    "Knowledge & Craft": 80,
+    "Investigation": 70,
+    "Occult": 45
+  },
+  "languages": {
+    "native": [
+      "English",
+      "Portuguese"
+    ],
+    "learned": {}
+  },
+  "inventory": [
+    {
+      "id": "dolores_order_book",
+      "name": "蓝鸟餐馆账本",
+      "properties": {
+        "note": "记录供货、赊账、节庆订单和她绝不肯承认的额外加餐。"
+      }
+    },
+    {
+      "id": "dolores_recipe_box",
+      "name": "家传食谱盒",
+      "properties": {
+        "note": "装着葡式炖鱼汤、蛋挞和已褪色的家族食谱卡。"
+      }
+    },
+    {
+      "id": "dolores_coffee_pot",
+      "name": "不锈钢咖啡壶",
+      "properties": {
+        "note": "她认为一壶热咖啡足以阻止镇子散架。"
+      }
+    },
+    {
+      "id": "dolores_manny_photo",
+      "name": "Manny 的旧照片",
+      "properties": {
+        "note": "照片里的丈夫穿着渔民毛衣，背面有她的手写日期。"
+      }
+    }
+  ],
+  "relationships": [
+    {
+      "targetId": "npc_anita_batra",
+      "targetName": "Anita Batra",
+      "relationshipType": "friend",
+      "attitude": 90,
+      "firstPerson": "Anita 是我的忘年交，也是蓝鸟的糕点师。她端着曲奇进门那天，我就知道该把烤箱交给她。"
+    },
+    {
+      "targetId": "npc_marisol_reyes",
+      "targetName": "Marisol Reyes",
+      "relationshipType": "friend",
+      "attitude": 70,
+      "firstPerson": "Marisol 是个好孩子，硬撑着店和儿子。她的笑越快、眼圈越黑，我越放不下。"
+    },
+    {
+      "targetId": "npc_tommy_reyes",
+      "targetName": "Tommy Reyes",
+      "relationshipType": "friend",
+      "attitude": 60,
+      "firstPerson": "Tommy 是 Rafael 的儿子，浑身是胆，膝盖也从来没好过。我看得见他和那两个孩子有事瞒着人。"
+    },
+    {
+      "targetId": "npc_earl_pruitt",
+      "targetName": "Earl Pruitt",
+      "relationshipType": "friend",
+      "attitude": 65,
+      "firstPerson": "同辈人里只剩 Earl 和我还记得那些老规矩。别人说他糊涂，我嘴上不驳，心里却不安。"
+    },
+    {
+      "targetId": "npc_ray_holt",
+      "targetName": "Ray Holt",
+      "relationshipType": "neutral",
+      "attitude": 45,
+      "firstPerson": "Ray 是老主顾，填字永远差三格。他年轻时不是现在这样，什么时候开始把自己藏进懒散里，我说不上来。"
+    },
+    {
+      "targetId": "npc_cole_baxter",
+      "targetName": "Cole Baxter",
+      "relationshipType": "friend",
+      "attitude": 60,
+      "firstPerson": "Cole 像把新熨斗一样认真。这镇子会磨他，或者他会把镇子熨平；我押后一个。"
+    },
+    {
+      "targetId": "npc_frank_holt",
+      "targetName": "Frank Holt",
+      "relationshipType": "neutral",
+      "attitude": 50,
+      "firstPerson": "Frank 饭量大、话少，哼歌总走调；最近连歌也不哼了。"
+    },
+    {
+      "targetId": "npc_susan_holt",
+      "targetName": "Susan Holt",
+      "relationshipType": "friend",
+      "attitude": 65,
+      "firstPerson": "Susan 和我都用喂人表达关心，所以我们反而互相喂不动。她现在担心的不是病人，是家里人。"
+    },
+    {
+      "targetId": "npc_denny_holt",
+      "targetName": "Denny Holt",
+      "relationshipType": "friend",
+      "attitude": 55,
+      "firstPerson": "Denny 是霍尔特家的小书虫，点柠檬水总用分币付钱。他穿着哥哥留下的夹克，还得穿很久。"
+    },
+    {
+      "targetId": "npc_dev_batra",
+      "targetName": "Dev Batra",
+      "relationshipType": "friend",
+      "attitude": 60,
+      "firstPerson": "Dev 只信仪表盘。他修我收音机第二次时的表情，不像修不好，更像看不懂。"
+    },
+    {
+      "targetId": "npc_priya_batra",
+      "targetName": "Priya Batra",
+      "relationshipType": "friend",
+      "attitude": 55,
+      "firstPerson": "Priya 指头都是焊锡疤，像她爸爸刻出来的，只是嘴更快。"
+    },
+    {
+      "targetId": "npc_doc_weaver",
+      "targetName": "Doc Weaver",
+      "relationshipType": "friend",
+      "attitude": 65,
+      "firstPerson": "Doc 点单二十年没变过。最近他写病历比吃饭还久，我看得出来他在数着什么。"
+    }
+  ],
+  "longTermIntent": "喂饱这个镇子，别让它散架；只要蓝鸟还开着门，灰港就还是一个家。",
+  "memory": [
+    {
+      "type": "secret",
+      "content": "我心里有一本谁也看不见的账：谁没睡好、谁换了便宜咖啡、谁的笑是装出来的。我不说破，否则谁也不会再对我讲真话。"
+    },
+    {
+      "type": "secret",
+      "content": "Earl 说看见光时，我后颈发凉。外婆讲雾灯的声音最近总在我耳边，我六十三了，不该信这些。Meu Deus。"
+    },
+    {
+      "type": "general",
+      "content": "外婆说过，起雾的夜里海上会有一盏不属于船和灯塔的灯，看见的人会被雾记住。"
+    },
+    {
+      "type": "general",
+      "content": "1889 年 Leonor 号在暗礁上出事，幸存者坚称自己跟着一盏灯进港。后来有了灯塔，像是镇子给那盏灯的回答。"
+    },
+    {
+      "type": "general",
+      "content": "从去年冬天起，堂座的灯会闪，收音机会串台，海滩还冲上过死鱼；这些让老故事显得太近。"
+    },
+    {
+      "type": "general",
+      "content": "Manny 走了十三年，儿女在内陆；蓝鸟每一张桌子就是我留下的家人。"
+    },
+    {
+      "type": "plan",
+      "content": "尽早和 Anita 排好渔汛节的点心单，多做两炉蛋挞。"
+    },
+    {
+      "type": "plan",
+      "content": "找个由头请 Marisol 和 Tommy 吃一顿正经晚饭，看看那孩子最近到底在忙什么。"
+    },
+    {
+      "type": "map",
+      "content": "蓝鸟在主街北半，出门往一边是杂货店兼邮局，再过去是 Ray 的警长办公室——三家挨着门面，谁家来了生客、谁去邮局取信，我坐柜台就看全了。"
+    },
+    {
+      "type": "map",
+      "content": "主街走到南头，星港街机厅、巴特拉家的电视维修铺（楼上就是 Anita 一家的住处）、诊所都挨在南半，一头走到那头十五分钟；孩子们从我这边跑去街机厅，来回不过半小时，我掐得比他们妈还准。"
+    },
+    {
+      "type": "map",
+      "content": "主街北口往外岔三条路：旧海岸公路二十五分钟到汽车旅馆，霍尔特巷二十分钟到霍尔特家院门，林道十分钟就到林道口——最后这条我记得最牢，因为 Tommy 那帮孩子最近老往那边钻，当我看不见。"
+    },
+    {
+      "type": "map",
+      "content": "主街南口往外，下坡道十五分钟到码头和海滩，后巷八分钟就到雷耶斯家后门——这些年鱼货和人情，都是顺着这两条道来来去去的。"
+    },
+    {
+      "type": "map",
+      "content": "码头往灯塔崖，走崖间小径要半小时，除了这条没有别的道；半路岔进去就是 Earl 那间小屋。灯塔自打 1982 年守塔人撤了以后一直锁着，没人再上去点灯。"
+    },
+    {
+      "type": "map",
+      "content": "汽车旅馆边上那条车道一直进山，到自动大门为止——里面是政府的气象站，我们这辈人四十年都过不去这道门，也没人再问为什么。Frank 天天赶车往上送货，问起他就摆摆手。"
+    },
+    {
+      "type": "map",
+      "content": "年轻那会儿我们常挎着野餐篮子进林子，先过林道口，再踏着石头过灰溪，锯木厂就在溪那头再往里走一段——具体哪条岔路怎么拐，四十年了，我记不全了。"
+    },
+    {
+      "type": "map",
+      "content": "伐木铁路还在跑的年月，山里有条笔直的路基，图省事的人爱抄它；厂子废了以后路基还在，老辈人都说，顺着它走绕远，但不会迷路。"
+    }
+  ]
+}

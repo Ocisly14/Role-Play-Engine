@@ -1,0 +1,26 @@
+{
+  "schemaVersion": 2,
+  "id": "ROAD_creek_sawmill",
+  "name": "渡口北径",
+  "description": "过了灰溪之后继续向北深入的林径,一个半小时的路。一头起于渡口对岸 [SCN_creek_ford],另一头钻出林子,正对旧锯木厂的废墟 [SCN_sawmill]。途中要翻两道长满倒木的浅沟;雾大的时候,沟这边和沟那边看起来像同一个地方。",
+  "parentLocationId": "OUTDOOR",
+  "travelTimeMinutes": 90,
+  "references": {
+    "items": [],
+    "connections": [
+      {
+        "id": "exit.creek_sawmill.creek_end",
+        "targetId": "SCN_creek_ford",
+        "name": "南端(渡口)",
+        "role": "endpointA"
+      },
+      {
+        "id": "exit.creek_sawmill.sawmill_end",
+        "targetId": "SCN_sawmill",
+        "name": "北端(锯木厂)",
+        "role": "endpointB"
+      }
+    ],
+    "conditions": []
+  }
+}
