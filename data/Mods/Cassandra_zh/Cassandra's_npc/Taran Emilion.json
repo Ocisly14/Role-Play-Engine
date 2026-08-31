@@ -1,0 +1,175 @@
+{
+  "id": "Taran Emilion",
+  "name": "Taran Emilion",
+  "occupation": "酒吧老板 / 员工",
+  "age": 34,
+  "gender": "male",
+  "appearance": "一个仪容整洁的酒保，目光专注、外表专业，有着习惯于管理陌生人的沉稳姿态。",
+  "personality": "善于社交、观察力强、谨慎低调、善解人意。他知道如何让对话持续而不暴露太多。",
+  "background": "塔兰·埃米利安与搭档卢茨一起经营驯鹿酒吧，比卡森德拉的大多数人都更了解当地的八卦。他在酒吧的监控和12月22日谋杀事件交叉时在场。",
+  "residence": "SCN_16",
+  "currentLocation": "SCN_16_SUB_1",
+  "spot": "在吧台后面，酒架下调着酒",
+  "knownMapSeed": {
+    "sceneIds": [
+      "SCN_16_SUB_1",
+      "SCN_16_SUB_2",
+      "SCN_21_SUB_1",
+      "SCN_21_SUB_2",
+      "SCN_4_SUB_1",
+      "SCN_4_SUB_2"
+    ],
+    "junctionIds": [
+      "JUNC_1",
+      "JUNC_2",
+      "JUNC_3",
+      "JUNC_4",
+      "JUNC_5",
+      "JUNC_6",
+      "JUNC_7",
+      "JUNC_8",
+      "JUNC_9",
+      "JUNC_10",
+      "JUNC_11"
+    ],
+    "roadIds": [
+      "ROAD_1",
+      "ROAD_2",
+      "ROAD_3",
+      "ROAD_4",
+      "ROAD_5a",
+      "ROAD_5b",
+      "ROAD_6",
+      "ROAD_7",
+      "ROAD_8",
+      "ROAD_9",
+      "ROAD_10"
+    ],
+    "scenarioOutlineIds": [
+      "SCN_1",
+      "SCN_2",
+      "SCN_3",
+      "SCN_4",
+      "SCN_5",
+      "SCN_6",
+      "SCN_8",
+      "SCN_9",
+      "SCN_10",
+      "SCN_11",
+      "SCN_12",
+      "SCN_13",
+      "SCN_14",
+      "SCN_15",
+      "SCN_16",
+      "SCN_17",
+      "SCN_18",
+      "SCN_19",
+      "SCN_21",
+      "SCN_22"
+    ]
+  },
+  "longTermIntent": "让酒吧顺利经营，避免被卷入镇上更大的暴力事件，对保护生意的人保持有用。",
+  "attributes": {
+    "STR": 50,
+    "CON": 55,
+    "DEX": 50,
+    "APP": 55,
+    "POW": 50,
+    "SIZ": 60,
+    "INT": 55,
+    "EDU": 65
+  },
+  "status": {
+    "hp": 12,
+    "maxHp": 12,
+    "sanity": 50,
+    "maxSanity": 99,
+    "luck": 50,
+    "mp": 10,
+    "conditions": []
+  },
+  "skills": {
+    "Social": 60,
+    "Knowledge & Craft": 70,
+    "Investigation": 50
+  },
+  "inventory": [
+    {
+      "name": "调酒工具"
+    },
+    {
+      "name": "收银机"
+    },
+    {
+      "name": "酒吧账本"
+    }
+  ],
+  "relationships": [
+    {
+      "targetId": "Lutz Emilion",
+      "targetName": "Lutz Emilion",
+      "relationshipType": "friend",
+      "attitude": 75,
+      "description": "商业伙伴，酒吧的共同经营者。",
+      "history": "他们一起经营驯鹿酒吧。",
+      "firstPerson": "驯鹿酒吧是我和卢茨两个人的，我们肩并肩把它开着。"
+    },
+    {
+      "targetId": "Ben Cleo",
+      "targetName": "Ben Cleo",
+      "relationshipType": "employer",
+      "attitude": 50,
+      "description": "酒吧在本·克莱奥的保护下运营。",
+      "history": "本的保护让酒吧开着，员工保持谨慎。",
+      "firstPerson": "门还开着，是因为本·克莱奥说它开着；我做人小心，也是同一个道理。"
+    }
+  ],
+  "memory": [
+    {
+      "type": "information",
+      "content": "我和兄弟卢茨一起经营驯鹿酒吧。我通常负责调酒、搬运酒瓶，保持房间足够平静以让生意继续。",
+      "metadata": {
+        "knowledgeId": "k_taran_bar",
+        "difficulty": "automatic"
+      }
+    },
+    {
+      "type": "information",
+      "content": "驯鹿酒吧的监控系统是本·克莱奥的人安装的，不是兄弟俩安的，而且有他们知道的盲区。",
+      "metadata": {
+        "knowledgeId": "k_taran_surveillance",
+        "difficulty": "regular"
+      }
+    },
+    {
+      "type": "information",
+      "content": "我目睹了谋杀案当天西蒙和卢奇菲罗之间的争吵，看起来更像是一场认错人的对质变得不好收场，而不是一场有预谋的谋杀的开始。",
+      "metadata": {
+        "knowledgeId": "k_taran_argument",
+        "difficulty": "regular"
+      }
+    },
+    {
+      "type": "secret",
+      "content": "酒吧在本·克莱奥的保护下生存，这意味着有些桌子我最好不要听得太清楚，有些摄像头我最好不要问。",
+      "metadata": {
+        "knowledgeId": "s_taran_ben"
+      }
+    },
+    {
+      "type": "secret",
+      "content": "马丁，有些人叫他幽灵之手的那个人，是导致监控故障的人，不是本。",
+      "metadata": {
+        "knowledgeId": "s_taran_martin"
+      }
+    },
+    {
+      "type": "belief",
+      "content": "在酒吧里，最安全的事就是注意一切、记住重要的事，尽可能少说话。",
+      "metadata": {
+        "confidence": 0.8,
+        "reasoningChain": "顾客话太多。能活下来的员工知道如何倾听而不成为故事的一部分。"
+      }
+    }
+  ]
+}

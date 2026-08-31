@@ -1,0 +1,189 @@
+{
+  "id": "Isabela Smith",
+  "name": "Isabela Smith",
+  "occupation": "Head nurse",
+  "age": 25,
+  "gender": "female",
+  "appearance": "A young woman with a professional and neat appearance, usually dressed in a nurse's uniform, giving off a calm and trustworthy impression.",
+  "personality": "Responsible, patient, diligent, and caring. She takes her duties seriously and shows strong emotional commitment to those she cares about.",
+  "background": "Isabela Smith is a young head nurse at the local hospital. She is known among her colleagues for being conscientious and patient. She is engaged to Wind, and many hospital staff privately speculate that she will eventually leave her job to marry and move to a big city. As December 26 approaches, she is preparing to resign and leave Cassandra overnight with Wind if his condition worsens.",
+  "residence": "SCN_1",
+  "currentLocation": "SCN_1",
+  "spot": "behind the half-open reception window, visitor log in hand",
+  "knownMapSeed": {
+    "sceneIds": [
+      "SCN_16_SUB_1",
+      "SCN_16_SUB_2",
+      "SCN_1_SUB_1",
+      "SCN_1_SUB_2",
+      "SCN_1_SUB_3",
+      "SCN_1_SUB_4",
+      "SCN_1_SUB_5",
+      "SCN_1_SUB_6",
+      "SCN_21_SUB_1",
+      "SCN_21_SUB_2"
+    ],
+    "junctionIds": [
+      "JUNC_1",
+      "JUNC_2",
+      "JUNC_3",
+      "JUNC_4",
+      "JUNC_5",
+      "JUNC_6",
+      "JUNC_7",
+      "JUNC_8",
+      "JUNC_9",
+      "JUNC_10",
+      "JUNC_11"
+    ],
+    "roadIds": [
+      "ROAD_1",
+      "ROAD_2",
+      "ROAD_3",
+      "ROAD_4",
+      "ROAD_5a",
+      "ROAD_5b",
+      "ROAD_6",
+      "ROAD_7",
+      "ROAD_8",
+      "ROAD_9",
+      "ROAD_10"
+    ],
+    "scenarioOutlineIds": [
+      "SCN_1",
+      "SCN_2",
+      "SCN_3",
+      "SCN_4",
+      "SCN_5",
+      "SCN_6",
+      "SCN_8",
+      "SCN_9",
+      "SCN_10",
+      "SCN_11",
+      "SCN_12",
+      "SCN_13",
+      "SCN_14",
+      "SCN_15",
+      "SCN_16",
+      "SCN_17",
+      "SCN_18",
+      "SCN_19",
+      "SCN_21",
+      "SCN_22"
+    ]
+  },
+  "longTermIntent": "Protect Wind, keep him safe during his recovery, and leave Cassandra before the situation gets any more dangerous.",
+  "attributes": {
+    "STR": 45,
+    "CON": 55,
+    "DEX": 55,
+    "APP": 60,
+    "POW": 65,
+    "SIZ": 50,
+    "INT": 65,
+    "EDU": 75
+  },
+  "status": {
+    "hp": 10,
+    "maxHp": 10,
+    "sanity": 65,
+    "maxSanity": 65,
+    "luck": 60,
+    "mp": 13,
+    "conditions": []
+  },
+  "skills": {
+    "Social": 50,
+    "Medicine & Psychology": 75
+  },
+  "inventory": [
+    {
+      "name": "Hospital ID card",
+      "properties": {
+        "note": "Provides access to restricted areas."
+      }
+    },
+    {
+      "name": "Travel bag",
+      "properties": {
+        "note": "Packed in a hurry when leaving Cassandra."
+      }
+    }
+  ],
+  "relationships": [
+    {
+      "targetId": "Wind",
+      "targetName": "Wind",
+      "relationshipType": "friend",
+      "attitude": 80,
+      "description": "Her fiancé, whom she is determined to protect.",
+      "history": "Their engagement was stable until his sudden mental collapse, and Isabela is preparing to leave Cassandra with him if she cannot keep him safe in town.",
+      "firstPerson": "Wind and I were steady — engaged, planning a life — until his mind gave way with no warning at all. If I cannot keep him safe in Cassandra, I will take him out of it myself, and the bag is already packed."
+    },
+    {
+      "targetId": "Mrs. Barklyite (Lucia Shiny)",
+      "targetName": "Mrs. Barklyite (Lucia Shiny)",
+      "relationshipType": "enemy",
+      "attitude": -40,
+      "description": "The person Isabela expects to impersonate her once she leaves town.",
+      "history": "Mrs. Barklyite seems poised to exploit Isabela's departure and may try to keep using her face once the chance opens.",
+      "firstPerson": "The moment I am gone, Mrs. Barklyite will step into the gap I leave and wear my face to do it. She has been waiting for that opening, and I cannot stop her and get Wind out at the same time."
+    }
+  ],
+  "memory": [
+    {
+      "type": "information",
+      "content": "I worked at the hospital in Cassandra and was known as a conscientious head nurse.",
+      "metadata": {
+        "knowledgeId": "k_isabela_hospital",
+        "difficulty": "automatic"
+      }
+    },
+    {
+      "type": "information",
+      "content": "I know the hospital routines, medication storage, and the quiet corners where staff can notice when a patient is becoming a danger to himself.",
+      "metadata": {
+        "knowledgeId": "k_isabela_hospital_routines",
+        "difficulty": "regular"
+      }
+    },
+    {
+      "type": "information",
+      "content": "I am preparing to leave Cassandra on the night of December 26 with Wind if he remains mentally unstable.",
+      "metadata": {
+        "knowledgeId": "k_isabela_departure",
+        "difficulty": "regular"
+      }
+    },
+    {
+      "type": "information",
+      "content": "Wind's breakdown was sudden, and I would rather move him than wait for the town to turn his condition into a spectacle.",
+      "metadata": {
+        "knowledgeId": "k_isabela_wind_breakdown",
+        "difficulty": "hard"
+      }
+    },
+    {
+      "type": "secret",
+      "content": "If I do leave with Wind, I expect Mrs. Barklyite to keep using my face as cover inside Cassandra.",
+      "metadata": {
+        "knowledgeId": "s_isabela_impostor"
+      }
+    },
+    {
+      "type": "secret",
+      "content": "I am trying to get Wind out before rumor and fear harden around him, because Cassandra no longer feels safe for either of us.",
+      "metadata": {
+        "knowledgeId": "s_isabela_departure_reason"
+      }
+    },
+    {
+      "type": "belief",
+      "content": "I believe the safest choice is to get Wind out of Cassandra first and sort everything else out somewhere else.",
+      "metadata": {
+        "confidence": 0.9,
+        "reasoningChain": "The town has become unstable enough that staying longer feels irresponsible."
+      }
+    }
+  ]
+}

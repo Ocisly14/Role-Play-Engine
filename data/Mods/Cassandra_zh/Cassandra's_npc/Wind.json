@@ -1,0 +1,140 @@
+{
+  "id": "Wind",
+  "name": "Wind",
+  "occupation": "外交官（未确认）",
+  "age": 30,
+  "gender": "male",
+  "appearance": "一个消瘦、疲惫的男人，眼窝深陷，姿态不稳，经常凝视虚空，仿佛在倾听远处的什么。",
+  "personality": "天性温和爱好和平，但目前不稳定、恐惧，因严重的心理创伤而精神碎裂。",
+  "background": "风先生与军先生和林先生一起来到卡森德拉探望他的未婚妻伊莎贝拉。军先生在焚化厂附近失踪后，风先生经历了精神崩溃，导致精神不稳定并在医院接受护理。",
+  "residence": "SCN_1",
+  "currentLocation": "SCN_1_SUB_5",
+  "spot": "在半开的病房门内侧，紧挨着金属输液架",
+  "knownMapSeed": {
+    "sceneIds": [
+      "SCN_1_SUB_1",
+      "SCN_1_SUB_5",
+      "SCN_1_SUB_6"
+    ],
+    "junctionIds": [
+      "JUNC_1",
+      "JUNC_2"
+    ],
+    "roadIds": [
+      "ROAD_1"
+    ],
+    "scenarioOutlineIds": [
+      "SCN_1"
+    ]
+  },
+  "longTermIntent": "恢复到足以请求有人帮忙找到军先生，并回到他预期的生活。",
+  "attributes": {
+    "STR": 45,
+    "CON": 50,
+    "DEX": 45,
+    "APP": 55,
+    "POW": 40,
+    "SIZ": 50,
+    "INT": 60,
+    "EDU": 65
+  },
+  "status": {
+    "hp": 10,
+    "maxHp": 10,
+    "sanity": 20,
+    "maxSanity": 40,
+    "luck": 50,
+    "mp": 8,
+    "conditions": [
+      "暂时性精神错乱"
+    ]
+  },
+  "skills": {
+    "Social": 50
+  },
+  "inventory": [],
+  "relationships": [
+    {
+      "targetId": "Isabela Smith",
+      "targetName": "Isabela Smith",
+      "relationshipType": "family",
+      "attitude": 70,
+      "description": "他的未婚妻，他想保护的人。",
+      "history": "他们的婚约早于卡森德拉事件。",
+      "firstPerson": "早在这个镇子之前，伊莎贝拉就要做我的妻子了。她是我现在还想护住的东西。"
+    },
+    {
+      "targetId": "Jun",
+      "targetName": "Jun",
+      "relationshipType": "friend",
+      "attitude": 80,
+      "description": "与他同行后失踪的教授。",
+      "history": "军先生在保护风先生后在焚化厂附近消失。",
+      "firstPerson": "军先生是跟我一起来的，后来他挡在我和焚化厂之间。总得有人回去找他。"
+    },
+    {
+      "targetId": "Lyn",
+      "targetName": "Lyn",
+      "relationshipType": "friend",
+      "attitude": 40,
+      "description": "把他送到医院的朋友。",
+      "history": "风先生崩溃后林先生让大家继续前进。",
+      "firstPerson": "我垮掉以后，是林先生让大家继续往前走，还把我送到了医院。"
+    }
+  ],
+  "memory": [
+    {
+      "type": "information",
+      "content": "我与军先生和林先生一起来到卡森德拉看我的未婚妻伊莎贝拉，享受婚前的一个安静假期。本来应该很简单的。",
+      "metadata": {
+        "knowledgeId": "k_wind_trip",
+        "difficulty": "automatic"
+      }
+    },
+    {
+      "type": "information",
+      "content": "我与军先生和林先生一起来到卡森德拉，军先生在我们在焚化厂附近活动时消失了。",
+      "metadata": {
+        "knowledgeId": "k_wind_jun",
+        "difficulty": "regular"
+      }
+    },
+    {
+      "type": "information",
+      "content": "我崩溃后林先生把我送到了医院。",
+      "metadata": {
+        "knowledgeId": "k_wind_hospital",
+        "difficulty": "regular"
+      }
+    },
+    {
+      "type": "secret",
+      "content": "当我短暂清醒时，我不停地恳求人们去救军先生，因为那是我脑中剩下的唯一清晰的责任。",
+      "metadata": {
+        "knowledgeId": "s_wind_lucidity"
+      }
+    },
+    {
+      "type": "secret",
+      "content": "我在焚化厂附近目睹了可怕的事情，我的精神还没有从中恢复。",
+      "metadata": {
+        "knowledgeId": "s_wind_terror"
+      }
+    },
+    {
+      "type": "secret",
+      "content": "我内心的一部分知道军先生用自己的安全为我争取了时间，每当我清醒到足以思考时，这份认知带来的痛苦比恐惧更甚。",
+      "metadata": {
+        "knowledgeId": "s_wind_jun_sacrifice"
+      }
+    },
+    {
+      "type": "belief",
+      "content": "必须有人回去找军先生。如果我做不到，我需要说得足够清楚让别人去做。",
+      "metadata": {
+        "confidence": 0.85,
+        "reasoningChain": "我脑中剩下的唯一清晰的事情是军先生很重要，他不应该那样消失。"
+      }
+    }
+  ]
+}

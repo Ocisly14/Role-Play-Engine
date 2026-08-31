@@ -1,0 +1,182 @@
+{
+  "id": "Solomon",
+  "name": "Solomon",
+  "occupation": "Occult book collector / fortune teller",
+  "age": 50,
+  "gender": "male",
+  "appearance": "A quiet, carefully composed man who keeps his face calm even when his attention is elsewhere. He looks like someone who has spent years around symbols, books, and private rituals.",
+  "personality": "Reflective, reserved, curious, and selective about who gets access to his interests. Solomon is not reckless with the things he knows, and he does not like being pushed.",
+  "background": "Solomon has long been drawn to mysticism and rare books, and for a time he even seemed to have a little genuine prophetic ability before age and experience shut that door. He now keeps an occult shop beside the flower store and protects his collection as if it were a private archive of dangerous possibilities. He bought The King in Yellow before coming to Cassandra, and the book remains one of the few things he will not casually hand over to anyone else.",
+  "residence": "SCN_11",
+  "currentLocation": "SCN_11_SUB_1",
+  "spot": "in the lounge chair by the door, close to the small brazier",
+  "knownMapSeed": {
+    "sceneIds": [
+      "SCN_16_SUB_1",
+      "SCN_16_SUB_2",
+      "SCN_21_SUB_1",
+      "SCN_21_SUB_2"
+    ],
+    "junctionIds": [
+      "JUNC_1",
+      "JUNC_2",
+      "JUNC_3",
+      "JUNC_4",
+      "JUNC_5",
+      "JUNC_6",
+      "JUNC_7",
+      "JUNC_8",
+      "JUNC_9",
+      "JUNC_10",
+      "JUNC_11"
+    ],
+    "roadIds": [
+      "ROAD_1",
+      "ROAD_2",
+      "ROAD_3",
+      "ROAD_4",
+      "ROAD_5a",
+      "ROAD_5b",
+      "ROAD_6",
+      "ROAD_7",
+      "ROAD_8",
+      "ROAD_9",
+      "ROAD_10"
+    ],
+    "scenarioOutlineIds": [
+      "SCN_1",
+      "SCN_2",
+      "SCN_3",
+      "SCN_4",
+      "SCN_5",
+      "SCN_6",
+      "SCN_8",
+      "SCN_9",
+      "SCN_10",
+      "SCN_11",
+      "SCN_12",
+      "SCN_13",
+      "SCN_14",
+      "SCN_15",
+      "SCN_16",
+      "SCN_17",
+      "SCN_18",
+      "SCN_19",
+      "SCN_20",
+      "SCN_21",
+      "SCN_22"
+    ]
+  },
+  "longTermIntent": "Keep his books and shop private, avoid unnecessary attention, and preserve the small circle of people he trusts.",
+  "attributes": {
+    "STR": 35,
+    "CON": 45,
+    "DEX": 45,
+    "APP": 50,
+    "POW": 65,
+    "SIZ": 45,
+    "INT": 75,
+    "EDU": 70
+  },
+  "status": {
+    "hp": 9,
+    "maxHp": 9,
+    "sanity": 65,
+    "maxSanity": 65,
+    "luck": 50,
+    "mp": 13,
+    "conditions": []
+  },
+  "skills": {
+    "Social": 55,
+    "Investigation": 70,
+    "Occult": 75
+  },
+  "inventory": [
+    {
+      "name": "Occult Books",
+      "properties": {
+        "note": "A small but carefully chosen collection of rare books and notes."
+      }
+    },
+    {
+      "name": "Tarot Deck",
+      "properties": {
+        "note": "A worn deck used for readings and as a social shield when needed."
+      }
+    },
+    {
+      "name": "The King in Yellow",
+      "properties": {
+        "note": "A book he refuses to let most people read."
+      }
+    }
+  ],
+  "relationships": [
+    {
+      "targetId": "Robin",
+      "targetName": "Robin",
+      "relationshipType": "friend",
+      "attitude": 75,
+      "description": "A trusted friend who came to visit and help when needed.",
+      "history": "Robin is one of the few people Solomon lets close without feeling exposed.",
+      "firstPerson": "Robin came when I needed someone and asked nothing for it — one of the very few I can sit with without feeling exposed."
+    },
+    {
+      "targetId": "Bo He",
+      "targetName": "Bo He",
+      "relationshipType": "friend",
+      "attitude": 55,
+      "description": "A friend whose mental health has been fragile.",
+      "history": "Solomon cares about Bo He and accepted Robin's help when Bo He needed support.",
+      "firstPerson": "Bo He's mind has never been steady, and when it gave way I let Robin help carry him. He matters to me more than I show."
+    }
+  ],
+  "memory": [
+    {
+      "type": "information",
+      "content": "I run the occult shop beside the flower store, and I keep my books where I can watch them myself.",
+      "metadata": {
+        "knowledgeId": "k_solomon_shop",
+        "difficulty": "automatic"
+      }
+    },
+    {
+      "type": "information",
+      "content": "I bought The King in Yellow before coming to Cassandra, and I know enough about it to know why I will not let strangers handle it casually.",
+      "metadata": {
+        "knowledgeId": "k_solomon_yellow_book",
+        "difficulty": "regular"
+      }
+    },
+    {
+      "type": "secret",
+      "content": "I once had a stronger prophetic sense than I do now, and I do not like admitting how much of it has faded.",
+      "metadata": {
+        "knowledgeId": "s_solomon_prophecy"
+      }
+    },
+    {
+      "type": "secret",
+      "content": "The previous owner of The King in Yellow left me more than a dangerous book. I also learned a version of Hastur's song that still works under the wrong sky, though the cost is ugly.",
+      "metadata": {
+        "knowledgeId": "s_solomon_hastur_song"
+      }
+    },
+    {
+      "type": "secret",
+      "content": "I do not know Ben personally, and I dislike him on principle. After my friend Bo He started digging into matters tied to Ben, he lost his mind and had to be taken somewhere safe.",
+      "metadata": {
+        "knowledgeId": "s_solomon_bohe"
+      }
+    },
+    {
+      "type": "belief",
+      "content": "Some knowledge is better handled as a private burden than as a public fact.",
+      "metadata": {
+        "confidence": 0.87,
+        "reasoningChain": "If the wrong person gets the right book, they can make a disaster out of curiosity. Keeping dangerous texts controlled is safer than pretending they are harmless."
+      }
+    }
+  ]
+}

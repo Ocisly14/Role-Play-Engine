@@ -1,5 +1,6 @@
 // Type import - not used in this file
 // import type { CoCDatabase } from "../../../src/shared/agents/memory/database/index.js";
+import { canonicalSkillName } from "../../../src/engine/rules/skillCatalog.js";
 
 /**
  * Prepare character data for database insertion
@@ -61,10 +62,12 @@ export function prepareCharacterForDB(characterData: any): any {
     skills: JSON.stringify(
       Object.entries(characterData.skills || {}).reduce(
         (acc: any, [name, data]: [string, any]) => {
+          const canonicalName = canonicalSkillName(name);
+          let normalizedData: any;
           // Support both old format (data.value) and new format (data.total with breakdown)
           if (typeof data === "object" && data.total !== undefined) {
             // New format: store complete skill data with breakdown
-            acc[name] = {
+            normalizedData = {
               value: data.total,
               base: data.base || 0,
               occupationalPoints: data.occupationalPoints || 0,
@@ -72,8 +75,19 @@ export function prepareCharacterForDB(characterData: any): any {
             };
           } else {
             // Old format or simple value: store as is
-            acc[name] = typeof data === "object" ? data.value || 0 : data;
+            normalizedData = typeof data === "object" ? data.value || 0 : data;
           }
+          const previous = acc[canonicalName];
+          const previousValue =
+            Number(typeof previous === "object" ? previous.value : previous) ||
+            0;
+          const nextValue =
+            Number(
+              typeof normalizedData === "object"
+                ? normalizedData.value
+                : normalizedData
+            ) || 0;
+          if (nextValue >= previousValue) acc[canonicalName] = normalizedData;
           return acc;
         },
         {}
@@ -162,7 +176,11 @@ export function parseCharacterFromDB(character: any): any {
           ? explicitTotal
           : computedTotal;
 
-        processedSkills[skillName] = total;
+        const canonicalName = canonicalSkillName(skillName);
+        processedSkills[canonicalName] = Math.max(
+          Number(processedSkills[canonicalName]) || 0,
+          total
+        );
         processedSkillDetails[skillName] = {
           base: Number.isFinite(base) ? base : 0,
           occupationalPoints: Number.isFinite(occupationalPoints)
@@ -172,7 +190,11 @@ export function parseCharacterFromDB(character: any): any {
           total,
         };
       } else {
-        processedSkills[skillName] = skillData;
+        const canonicalName = canonicalSkillName(skillName);
+        processedSkills[canonicalName] = Math.max(
+          Number(processedSkills[canonicalName]) || 0,
+          Number(skillData) || 0
+        );
       }
     });
   }

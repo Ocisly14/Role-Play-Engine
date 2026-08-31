@@ -1,5 +1,4 @@
 import { describe, expect, it } from "vitest";
-import { INTERPRET_ACTION_TOOL } from "../../../engine/interpreter/gameInterpreter.js";
 import { TOOL_CAPS, VALID_TOOLS } from "../../../roleSim/toolDispatcher.js";
 import { AGENT_TOOLS } from "../../../roleSim/tools/schemas.js";
 import type { ToolSpec } from "../types.js";
@@ -51,46 +50,43 @@ describe("agent tool schemas", () => {
       "act",
       "continue",
       "writeMemory",
-      "recallMemory",
-      "getMapSnapshot",
     ]);
   });
 
-  it("requires actionText on act", () => {
+  it("requires exactly the intent fields on act — never authoritative ones", () => {
     const act = AGENT_TOOLS.find((t) => t.name === "act");
-    const schema = act?.inputSchema as { required?: string[] };
-    expect(schema.required).toEqual(["actionText"]);
-  });
-});
-
-describe("interpreter tool schema", () => {
-  it("requires steps, each with a definitionId and impact", () => {
-    const schema = INTERPRET_ACTION_TOOL.inputSchema as {
+    const schema = act?.inputSchema as {
       required?: string[];
-      properties?: { steps?: { items?: { required?: string[] } } };
+      properties?: Record<string, unknown>;
     };
-    expect(schema.required).toEqual(["steps"]);
-    expect(schema.properties?.steps?.items?.required).toEqual([
-      "definitionId",
-      "impact",
+    expect(schema.required).toEqual([
+      "description",
+      "objectRefs",
+      "proposedDurationTicks",
     ]);
-  });
-
-  it("is not strict — destination applies to movement steps only", () => {
-    expect(INTERPRET_ACTION_TOOL.strict).toBeFalsy();
-    assertStrictIsExpressible(INTERPRET_ACTION_TOOL);
-  });
-
-  it("bounds impact to the 0-5 perceptibility scale", () => {
-    const schema = INTERPRET_ACTION_TOOL.inputSchema as {
-      properties?: {
-        steps?: {
-          items?: { properties?: { impact?: Record<string, number> } };
-        };
-      };
-    };
-    const impact = schema.properties?.steps?.items?.properties?.impact;
-    expect(impact?.minimum).toBe(0);
-    expect(impact?.maximum).toBe(5);
+    const props = Object.keys(schema.properties ?? {});
+    expect(props.sort()).toEqual(
+      [
+        "description",
+        "objectRefs",
+        "proposedDurationTicks",
+        "skillId",
+        // Which tongue, for the one domain that has no single value.
+        "language",
+        "utterance",
+      ].sort()
+    );
+    // No authoritative fields: skill values, difficulty, rolls, outcomes,
+    // resolved durations.
+    for (const forbidden of [
+      "skillValue",
+      "difficulty",
+      "checkType",
+      "roll",
+      "success",
+      "resolvedDurationTicks",
+    ]) {
+      expect(props).not.toContain(forbidden);
+    }
   });
 });

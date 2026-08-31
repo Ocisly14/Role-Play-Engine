@@ -1,3 +1,4 @@
+import { randomUUID } from "node:crypto";
 import * as path from "node:path";
 import type { PrismaClient } from "@prisma/client";
 import {
@@ -5,23 +6,12 @@ import {
   createTickEngine,
 } from "../engine/core/tickEngine.js";
 import type {
-  ActionStep,
   CharacterAction as EngineCharacterAction,
   FeatureEvent,
-  PlannedOutcome,
   TickReport,
 } from "../engine/core/types.js";
-import type { ActionDefinitionRegistry } from "../engine/definitions/registry.js";
-import { interpretAction } from "../engine/interpreter/gameInterpreter.js";
-import {
-  createDefaultDefinitions,
-  createDefaultSubsystemRegistry,
-} from "../engine/registerDefaults.js";
-import { buildCancelResolverAction } from "../engine/resolver/cancelPrompt.js";
-import { buildStateContext } from "../engine/resolver/stateContextBuilder.js";
-import { resolveState } from "../engine/resolver/stateResolver.js";
+import { createDefaultSubsystemRegistry } from "../engine/registerDefaults.js";
 import type { NpcMemoryManager } from "../memory/NpcMemoryManager.js";
-import { summarizeAllNpcDayMemory } from "../roleSim/dailySummarization.js";
 import { LLMRoleSimAgent } from "../roleSim/llmAgent.js";
 import { NpcActionController } from "../roleSim/npcActionController.js";
 import type { DynamicGameStateManager } from "../state/DynamicGameState.js";
@@ -40,6 +30,7 @@ import {
   resolveEntryScene,
 } from "./characterInjection.js";
 import {
+  loadPerceptionHistory,
   persistSimulationEvents,
   persistSimulationRuntime,
 } from "./runtimePersistence.js";
@@ -84,7 +75,6 @@ export class SimulationRunner {
   private readonly sessionId: string;
   private readonly config: SimulationConfig;
   private readonly dgsm: DynamicGameStateManager;
-  private definitions: ActionDefinitionRegistry;
   private readonly language: string;
   private readonly memoryManager?: NpcMemoryManager;
   private readonly prisma: PrismaClient;
@@ -116,7 +106,6 @@ export class SimulationRunner {
   constructor(params: {
     config: SimulationConfig;
     dgsm: DynamicGameStateManager;
-    definitions: ActionDefinitionRegistry;
     language: string;
     memoryManager?: NpcMemoryManager;
     prisma: PrismaClient;
@@ -124,7 +113,6 @@ export class SimulationRunner {
     this.config = params.config;
     this.sessionId = params.config.sessionId;
     this.dgsm = params.dgsm;
-    this.definitions = params.definitions;
     this.language = params.language;
     this.memoryManager = params.memoryManager;
     this.prisma = params.prisma;
@@ -174,9 +162,10 @@ export class SimulationRunner {
         result[npc.id] = null;
         continue;
       }
-      const queue = this.tickEngine?.getActorQueue(npc.id) ?? [];
-      const active = queue.find((s) => s.status === "active");
-      result[npc.id] = active?.actionText ?? null;
+      const active = (this.tickEngine?.getActorActions(npc.id) ?? []).find(
+        (a) => a.status === "active"
+      );
+      result[npc.id] = active?.command.description ?? null;
     }
     return result;
   }
@@ -506,77 +495,16 @@ export class SimulationRunner {
       return { engine: this.tickEngine, controller: this.npcController };
     }
 
-    if (this.definitions.getAll().length === 0) {
-      this.definitions = createDefaultDefinitions();
-    }
-
     const subsystemRegistry = createDefaultSubsystemRegistry();
     const scriptedEvents = this.moduleName
       ? loadScriptedEventsForModule(this.moduleName)
       : [];
 
-    const definitionList = this.definitions.getAll();
-
     const engine = createTickEngine({
       dgsm: this.dgsm,
       subsystemRegistry,
       scriptedEvents,
-      interpretAction: async (input, directory) => {
-        const result = await interpretAction(
-          input.actionText,
-          definitionList,
-          this.language,
-          directory
-        );
-        return { steps: result.steps };
-      },
-      resolve: async (
-        step: ActionStep,
-        ctx: unknown,
-        cancel
-      ): Promise<{ outcome: PlannedOutcome; plannedDuration: number }> => {
-        const definition = this.definitions.get(step.definitionId);
-        if (!definition) {
-          return {
-            outcome: { stateChanges: [], elapsedMinutes: 0 },
-            plannedDuration: 0,
-          };
-        }
-        const stateContext = buildStateContext(
-          definition,
-          {
-            characterId: step.characterId,
-            referencedEntities: step.referencedEntities,
-          },
-          this.dgsm,
-          step.executionSceneId
-        );
-        // On cancel, wrap actionText with prompt directive so the resolver LLM
-        // produces a partial-progress outcome.
-        const actionForResolver = cancel
-          ? buildCancelResolverAction(step.actionText, cancel)
-          : step.actionText;
-
-        const resolved = await resolveState({
-          action: actionForResolver,
-          definition,
-          outcomeSection: definition.content,
-          stateContext,
-          language: this.language,
-        });
-        void ctx;
-        // Engine is source of truth for elapsed time on cancel.
-        const elapsedMinutes = cancel
-          ? cancel.elapsedMinutes
-          : resolved.elapsedMinutes;
-        return {
-          outcome: { stateChanges: resolved.stateChanges, elapsedMinutes },
-          plannedDuration: elapsedMinutes,
-        };
-      },
-      getActorDex: (id) => this.dgsm.getNpcProfile(id)?.attributes?.DEX ?? 50,
       tickDurationMinutes: 1,
-      lang: this.language,
       persistedState: this.pendingTickEngineState ?? undefined,
     });
 
@@ -597,12 +525,19 @@ export class SimulationRunner {
       sessionId: this.sessionId,
       moduleId: this.config.moduleId,
       language: this.language,
+      // Buffered here and flushed once per tick: one row per character per
+      // tick, written in a single createMany rather than a query per paragraph.
+      onPerception: (entry) => this.pendingPerceptions.push(entry),
     });
 
     this.wireEngineEvents(engine);
 
     this.tickEngine = engine;
     this.npcController = controller;
+    // Before the first decide(): a character resumed with an empty stream
+    // reintroduces the room as if they had just walked in, and their own
+    // prompt loses the day they lived.
+    await this.restorePerceptions(controller);
     return { engine, controller };
   }
 
@@ -674,21 +609,9 @@ export class SimulationRunner {
             newDate: datePart(stateAfter.gameDateTime),
           }
         );
-
-        // Daily summarization (Decision 25) — system writes [date]-prefixed
-        // summary memories for every alive NPC. Schedule generation (the
-        // legacy second half of onNewDay) is deleted with the planner.
-        if (this.memoryManager) {
-          await summarizeAllNpcDayMemory({
-            dgsm: this.dgsm,
-            memoryManager: this.memoryManager,
-            sessionId: this.sessionId,
-            moduleId: this.config.moduleId,
-            // summarize the date that JUST ended.
-            gameDate: dateBefore,
-            language: this.language,
-          });
-        }
+        // Nothing else happens on a day boundary. The end-of-day diary is
+        // gone: it was the last thing written on a character's behalf, and
+        // what they keep of a day is now only what they chose to write.
       }
 
       await this.checkDerivedEvents();
@@ -719,6 +642,10 @@ export class SimulationRunner {
       }
 
       await this.persistAndBroadcastEvents(emittedEvents);
+      // Separate from the broadcast path on purpose: these are per-character
+      // paragraphs, and pushing every one of them to every client would swamp
+      // the socket for a view that is not per-character anyway.
+      await this.persistPerceptions();
       await this.saveRuntime();
     } catch (error) {
       console.error(
@@ -760,13 +687,15 @@ export class SimulationRunner {
 
       this.deadNpcIds.add(npc.id);
 
-      // (1) Cancel any in-flight engine action(s) for this NPC.
+      // (1) Interrupt any in-flight engine action(s) for this NPC — the
+      // Engine resolves the interruption next tick (proper transition, no
+      // silent drop).
       if (this.tickEngine) {
-        const queue = this.tickEngine.getActorQueue(npc.id);
-        const live = queue.find(
-          (s) => s.status === "active" || s.status === "queued"
-        );
-        if (live) this.tickEngine.cancelAction(live.handle);
+        for (const action of this.tickEngine.getActorActions(npc.id)) {
+          if (action.status === "active" || action.status === "queued") {
+            this.tickEngine.requestInterruption(action.id, "actor died");
+          }
+        }
       }
 
       // (2) Write death event memory (Decision 26). Use scene/junction/road
@@ -784,7 +713,8 @@ export class SimulationRunner {
           npcId: npc.id,
           sessionId: this.sessionId,
           moduleId: this.config.moduleId,
-          type: "event",
+          // System-authored: the character cannot record their own death.
+          type: "general",
           content: `[${datePart(gameState.gameDateTime)}] Died at ${timePart(gameState.gameDateTime)} in ${locationName}`,
           gameDateTime: gameState.gameDateTime,
         });
@@ -871,6 +801,60 @@ export class SimulationRunner {
     this.stopReason = reason;
     this.state = reason === "manual" ? "stopped" : "completed";
     return this.emitStateChange();
+  }
+
+  /** Paragraphs rendered since the last flush. Persisted, never broadcast. */
+  private pendingPerceptions: Array<{
+    npcId: string;
+    gameDateTime: string;
+    location: string;
+    narrative: string;
+  }> = [];
+
+  /** Hand a freshly built controller the paragraphs this session already
+   *  produced. Failure is non-fatal: the run continues with characters who
+   *  simply do not remember having looked around, which is worse narration but
+   *  not a broken tick. */
+  private async restorePerceptions(
+    controller: NpcActionController
+  ): Promise<void> {
+    try {
+      const prior = await loadPerceptionHistory(this.prisma, this.sessionId);
+      if (prior.length > 0) {
+        controller.restorePerceptionHistory(prior);
+        console.log(
+          `[SimulationRunner] restored ${prior.length} rendered paragraphs for ${this.sessionId}`
+        );
+      }
+    } catch (err) {
+      console.warn(
+        `[SimulationRunner] could not restore perception history: ${String(err)}`
+      );
+    }
+  }
+
+  /** Write the tick's rendered paragraphs as `npc_perceived` rows. They ride
+   *  the SimulationEvent table rather than a table of their own: it is already
+   *  the per-session, per-tick, append-only stream, indexed on
+   *  (sessionId, gameDateTime) and cascade-deleted with the session. */
+  private async persistPerceptions(): Promise<void> {
+    const pending = this.pendingPerceptions;
+    if (pending.length === 0) return;
+    this.pendingPerceptions = [];
+    await persistSimulationEvents(
+      this.prisma,
+      pending.map((p) => ({
+        id: randomUUID(),
+        sessionId: this.sessionId,
+        tick: this.ticksExecuted,
+        gameDateTime: p.gameDateTime,
+        type: "npc_perceived" as const,
+        actorNpcId: p.npcId,
+        location: p.location,
+        data: { narrative: p.narrative },
+        timestamp: new Date(),
+      }))
+    );
   }
 
   private async persistEvents(events: SimulationEvent[]): Promise<void> {

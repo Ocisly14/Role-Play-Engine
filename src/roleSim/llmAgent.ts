@@ -1,12 +1,12 @@
 // src/roleSim/llmAgent.ts
 //
-// Phase F LLM-driven RoleSimAgent. One decide() opens a fresh agent loop:
-// each iteration sends the full ctx + transcript-so-far as one user prompt,
-// the LLM emits a single JSON tool call, instant tools loop back, terminal
-// tools (act/continue) end the loop and return the decision to the
-// controller. No native Anthropic tool_use API — same generateText +
-// parseJsonResponse path as the rest of the project.
+// LLM-driven RoleSimAgent. One decide() opens a fresh agent loop: the opening
+// user turn carries the whole situation, the model answers with native tool
+// calls, and a terminal call (act/continue) ends the loop and returns the
+// decision to the controller. `writeMemory` is the only non-terminal tool and
+// it rides along in the terminal turn, so the common case is a single request.
 
+import type { ActionObjectRef } from "../engine/actions/types.js";
 import type { NpcMemoryManager } from "../memory/NpcMemoryManager.js";
 import { ModelClass, generateToolCalls } from "../models/index.js";
 import type {
@@ -64,13 +64,14 @@ export class LLMRoleSimAgent implements RoleSimAgent {
     const caps = { ...TOOL_CAPS };
     const dispatcherDeps = this.buildDispatcherDeps(ctx);
 
-    // The opening user turn holds the whole situation. Instant-tool rounds
-    // append an assistant turn plus its tool result, so the prefix only ever
-    // grows — every earlier turn stays byte-identical and stays cacheable.
+    // The opening user turn holds the whole situation. A turn that failed to
+    // terminate appends an assistant turn plus its tool results, so the
+    // prefix only ever grows — every earlier turn stays byte-identical and
+    // stays cacheable.
     const messages: ModelMessage[] = [
       {
         role: "user",
-        content: buildUserPromptSegments(ctx, [], {
+        content: buildUserPromptSegments(ctx, {
           language: this.deps.language,
           dgsm: this.deps.dgsm,
         }).map((segment) => ({
@@ -113,30 +114,43 @@ export class LLMRoleSimAgent implements RoleSimAgent {
       const terminal = toolCalls.filter((c) => TERMINAL_TOOLS.has(c.name));
       const instant = toolCalls.filter((c) => !TERMINAL_TOOLS.has(c.name));
 
-      // A clean terminal turn ends the decision. Nothing further is sent, so
-      // the tool call needs no result.
-      if (terminal.length > 0 && instant.length === 0) {
+      // A terminal turn ends the decision. Every non-terminal tool returns
+      // nothing the agent must read before deciding, so any that rode along
+      // are executed first — the memory lands before the tick advances — and
+      // nothing further is sent, so those calls need no results.
+      if (terminal.length > 0) {
+        for (const call of instant) {
+          if (!VALID_TOOLS.has(call.name)) {
+            console.warn(
+              `[LLMRoleSimAgent] ${ctx.npcId} called unknown tool "${call.name}" on the terminal turn`
+            );
+            continue;
+          }
+          const dispatched = await dispatchInstantTool(
+            call.name,
+            call.args,
+            caps,
+            dispatcherDeps
+          );
+          if (dispatched.result.startsWith("Error:")) {
+            console.warn(
+              `[LLMRoleSimAgent] ${ctx.npcId} ${call.name} rejected on the terminal turn: ${dispatched.result}`
+            );
+          }
+        }
         return this.buildTerminalDecision({
           tool: terminal[0].name,
           ...terminal[0].args,
         });
       }
 
-      // Otherwise every call must be answered — including a terminal one the
-      // model mixed in, which is reported as not executed rather than being
-      // silently dropped, so it can correct itself on the next turn.
+      // No terminal call this turn: answer every call the model made and loop
+      // back so it can commit. Anthropic rejects the next request unless each
+      // tool_use is answered.
       messages.push(assistantMessage);
       const results: ToolResultRecord[] = [];
 
-      for (const call of toolCalls) {
-        if (TERMINAL_TOOLS.has(call.name)) {
-          results.push({
-            toolCallId: call.id,
-            content: `Error: "${call.name}" was NOT executed. A turn may contain either informational tools or one terminal tool (act/continue), never both. Finish your lookups, then commit in a turn of its own.`,
-          });
-          continue;
-        }
-
+      for (const call of instant) {
         if (!VALID_TOOLS.has(call.name)) {
           results.push({
             toolCallId: call.id,
@@ -168,8 +182,25 @@ export class LLMRoleSimAgent implements RoleSimAgent {
     [k: string]: unknown;
   }): RoleSimDecision {
     if (parsed.tool === "act") {
-      const actionText = String(parsed.actionText ?? "");
-      return { tool: "act", actionText };
+      // Pass the raw args through with only light shape coercion. Real
+      // validation (ref scope, duration bounds, skill existence) is the
+      // trust boundary's job in commandBuilder/commandValidator — errors
+      // there come back to the agent as rejection feedback.
+      const refs = Array.isArray(parsed.objectRefs) ? parsed.objectRefs : [];
+      return {
+        tool: "act",
+        description: String(parsed.description ?? ""),
+        objectRefs: refs as ActionObjectRef[],
+        proposedDurationTicks: Number(parsed.proposedDurationTicks),
+        skillId:
+          typeof parsed.skillId === "string" && parsed.skillId.trim() !== ""
+            ? parsed.skillId
+            : undefined,
+        utterance:
+          typeof parsed.utterance === "string" && parsed.utterance !== ""
+            ? parsed.utterance
+            : undefined,
+      };
     }
     return {
       tool: "continue",
@@ -177,27 +208,18 @@ export class LLMRoleSimAgent implements RoleSimAgent {
     };
   }
 
-  private formatToolCall(parsed: {
-    tool: string;
-    [k: string]: unknown;
-  }): string {
-    return `→ Called: ${JSON.stringify(parsed)}`;
-  }
-  private formatToolResult(result: string): string {
-    return `← Result: ${result}`;
-  }
-  private formatToolError(toolName: unknown, msg: string): string {
-    return `← Error for "${String(toolName)}": ${msg}`;
-  }
-
   private buildDispatcherDeps(ctx: RoleSimContext): DispatcherDeps {
     return {
       memory: this.deps.memory,
       dgsm: this.deps.dgsm,
       npcId: ctx.npcId,
+      // `ref` resolves against exactly what the prompt showed, so the
+      // dispatcher gets the same list the formatter tagged.
+      memories: ctx.memories,
       sessionId: this.deps.sessionId,
       moduleId: this.deps.moduleId,
       gameDateTime: ctx.currentTime,
+      ...(ctx.currentScene ? { location: ctx.currentScene } : {}),
     };
   }
 }

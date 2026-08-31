@@ -1,0 +1,903 @@
+{
+  "npcId": "Vito",
+  "memories": [
+    {
+      "type": "information",
+      "content": "去年圣诞节前，我遇见了那个后来成为2002年帕拉迪尔酒店谋杀案受害者的不知名黑人女孩。",
+      "gameDay": 1,
+      "gameTime": "00:00",
+      "location": null,
+      "metadata": {
+        "difficulty": "regular",
+        "knowledgeId": "k_vito_victim"
+      }
+    },
+    {
+      "type": "secret",
+      "content": "我说我不知道有便宜的出租房，第二天我跟她说话的那个女孩就被谋杀了。",
+      "gameDay": 1,
+      "gameTime": "00:00",
+      "location": null,
+      "metadata": {
+        "knowledgeId": "s_vito_rooms"
+      }
+    },
+    {
+      "type": "secret",
+      "content": "我去珊德拉那里不止一次，因为布鲁诺在那里待过，而我解释不清楚的方式在我们最终弄清楚之前和海伦之间造成了麻烦。",
+      "gameDay": 1,
+      "gameTime": "00:00",
+      "location": null,
+      "metadata": {
+        "knowledgeId": "s_vito_shandra"
+      }
+    },
+    {
+      "type": "plan",
+      "content": "Today's plan: 1. 在档案室彻底检查档案柜，清点并记录被动过的卷宗和缺失案卷。 at 档案室; 2. 把检查结果写成简短通报并将关键卷宗临时封存并上锁。 at 警察局; 3. 找勒克斯当面询问那本记录名单的笔记本下落并要求他交出或说明保存地点。 at 警察局; 4. 去看望海伦，确认她一切安好并告诉她我会留意她的安全。 at 海伦的餐桌; 5. 去珊德拉家确认她是否安全，并温和询问她与布鲁诺最近的来往情况。 at 珊德拉的小屋; 6. 在驯鹿酒吧外守候，观察布鲁诺或其他可疑人物的出现并尽量以自然方式与他搭话试探情况。 at 驯鹿酒吧; 7. 顺路去帕拉迪尔大酒店打探是否有与旧案相关的访客或可疑活动。 at 帕拉迪尔大酒店; 8. 到星辰医院询问监控录像是否能调取并查看昨晚相关时间段的影像。 at 星辰医院; 9. 回到警察局整理当天的笔录和发现，写成正式报告交上级备案。 at 警察局; 10. 去海伦的餐桌吃晚饭并再次确认她的安全措施和应急联络方式。 at 海伦的餐桌; 11. 回到警察局检查封存档案是否安全，交接夜班值勤安排后在局里休息睡觉。 at 警察局",
+      "gameDay": 2,
+      "gameTime": "00:00",
+      "location": null,
+      "metadata": {
+        "planType": "daily"
+      }
+    },
+    {
+      "type": "information",
+      "content": "海伦是菲利普在驯鹿酒吧试图调情的女人。",
+      "gameDay": 1,
+      "gameTime": "00:00",
+      "location": null,
+      "metadata": {
+        "difficulty": "regular",
+        "knowledgeId": "k_vito_helen"
+      }
+    },
+    {
+      "type": "information",
+      "content": "我是一名当地辅助警察，但我在小事务、修理和帮助普通人方面比在读懂政治或隐藏动机方面更在行。",
+      "gameDay": 1,
+      "gameTime": "00:00",
+      "location": null,
+      "metadata": {
+        "difficulty": "automatic",
+        "knowledgeId": "k_vito_local"
+      }
+    },
+    {
+      "type": "belief",
+      "content": "做正确的事应该是简单明了的，即使我不是总能看到每个角度。",
+      "gameDay": 1,
+      "gameTime": "00:00",
+      "location": null,
+      "metadata": {
+        "confidence": 0.6,
+        "reasoningChain": "今天看到有人被指示篡改档案并承认受贿，我意识到“做正确的事应该是简单明了的”不再总是成立；官僚和腐败会使做好事变得复杂，需要更多谨慎和程序来确保正义。"
+      }
+    },
+    {
+      "type": "secret",
+      "content": "我本想向警方提起那个女孩，但案子被搁置得太快，我说服自己我的记忆帮不上忙。然后我忘了这件事，这至今让我不安。",
+      "gameDay": 1,
+      "gameTime": "00:00",
+      "location": null,
+      "metadata": {
+        "knowledgeId": "s_vito_shelved_case"
+      }
+    },
+    {
+      "type": "plan",
+      "content": "维持镇上的和平，诚实地完成工作，确保海伦的安全。",
+      "gameDay": 1,
+      "gameTime": "00:00",
+      "location": null,
+      "metadata": {
+        "planType": "long_term"
+      }
+    },
+    {
+      "type": "witness",
+      "content": "[相遇] 布鲁诺在档案室直接质问我，命令我立刻别动或移走任何卷宗，并问我是否受人指使。在他的压力下我承认知道Lux说帕特里齐奥曾要求有人把一些文件“消失”，并提到标为“珍妮·弗洛伦斯”和“马丁·金释放”的卷宗确实不见了；我随后停止动作，态度顺从但明显不安。Lux也在场。我现在很紧张和警惕，担心档案被篡改或有人掩盖证据，决定优先封存盘点并设法让Lux交出那本记录名单的笔记本，必要时请求支援。",
+      "gameDay": 2,
+      "gameTime": "00:05",
+      "location": "SCN_3_SUB_3",
+      "metadata": {
+        "impact": 2,
+        "perspective": "co_presence",
+        "sourceAction": "Lux Lynch 在 档案室",
+        "sourceCharacterId": "__encounter__"
+      }
+    },
+    {
+      "type": "event",
+      "content": "检查索引卡抽屉，查找并记录“珍妮·弗洛伦斯”和“马丁·金释放”案卷所在的档案号 [在 SCN_3_SUB_3 因重新规划而中断] 已中断",
+      "gameDay": 2,
+      "gameTime": "00:05",
+      "location": "SCN_3_SUB_3",
+      "metadata": {
+        "outcome": "检查索引卡抽屉，查找并记录“珍妮·弗洛伦斯”和“马丁·金释放”案卷所在的档案号 [在 SCN_3_SUB_3 因重新规划而中断] 已中断",
+        "interruptionReason": "revise_replan"
+      }
+    },
+    {
+      "type": "event",
+      "content": "布鲁诺在档案室质问我，命令我别动卷宗并问我是否受人指使。我说Lux曾告诉我帕特里齐奥要求有人把一些文件“消失”，Lux保留有一本记录这些人的笔记本，并且标为“珍妮·弗洛伦斯”和“马丁·金释放”的卷宗不见了。听到布鲁诺的命令后我停手并照做了。",
+      "gameDay": 2,
+      "gameTime": "00:05",
+      "location": "SCN_3_SUB_3",
+      "metadata": {
+        "outcome": "质问维托为什么在档案室，命令他立即停止触碰或移走任何卷宗，并要求他说明是否受人指使"
+      }
+    },
+    {
+      "type": "witness",
+      "content": "[目击] 我注意到布鲁诺说他当场将卢克斯拘留，命令卢克斯不得触碰或移走任何卷宗并原地等候支援，他还有卢克斯的供述在案。听到这话我感到紧张又警惕——一方面这能防止证物被立刻搬动，另一方面布鲁诺自己行为可疑，可能在控制局面或掩盖什么。我决定立刻介入：当面确认卢克斯被控制的情况，要求出示或交出那本记录名单的笔记本，紧盯布鲁诺不让他离开并开始封存盘点抽屉，必要时马上呼叫支援。",
+      "gameDay": 2,
+      "gameTime": "00:10",
+      "location": "SCN_3_SUB_3",
+      "metadata": {
+        "impact": 2,
+        "perspective": "witness",
+        "sourceAction": "我当场将卢克斯拘留，命令他不得触碰或移走任何卷宗并原地等待支援。我已有他的供述记录在案，不能允许他接触证物或试图销毁任何可能暴露其牵连的材料。",
+        "sourceCharacterId": "Bruno Galilei"
+      }
+    },
+    {
+      "type": "event",
+      "content": "检查索引卡抽屉，查找并记录“珍妮·弗洛伦斯”和“马丁·金释放”案卷的档案号 [在 SCN_3_SUB_3 因重新规划而中断] 已中断",
+      "gameDay": 2,
+      "gameTime": "00:10",
+      "location": "SCN_3_SUB_3",
+      "metadata": {
+        "outcome": "检查索引卡抽屉，查找并记录“珍妮·弗洛伦斯”和“马丁·金释放”案卷的档案号 [在 SCN_3_SUB_3 因重新规划而中断] 已中断",
+        "interruptionReason": "revise_replan"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我到了档案室找Lux和Bruno，没能找到他们，但还是当场要求交出记载被指示人员的笔记本或说明保存地点，并警告Bruno不得离开或接触档案。两人的抵抗/缺席导致我的说服尝试失败。",
+      "gameDay": 2,
+      "gameTime": "00:14",
+      "location": "SCN_3_SUB_3",
+      "metadata": {
+        "outcome": "当面对Lux确认他已被控制不得触碰证物，并当场要求他交出记载被指示人员的笔记本或说明保存地点，同时警告Bruno不得离开或接触档案 [Persuade 35, rolled 65 (fail) — all targets resisted] failed"
+      }
+    },
+    {
+      "type": "event",
+      "content": "检查索引卡抽屉，查找并记录“珍妮·弗洛伦斯”和“马丁·金释放”案卷的档案号 [在 SCN_3_SUB_3 因重新规划而中断] 已中断",
+      "gameDay": 2,
+      "gameTime": "00:16",
+      "location": "SCN_3_SUB_3",
+      "metadata": {
+        "outcome": "检查索引卡抽屉，查找并记录“珍妮·弗洛伦斯”和“马丁·金释放”案卷的档案号 [在 SCN_3_SUB_3 因重新规划而中断] 已中断",
+        "interruptionReason": "revise_replan"
+      }
+    },
+    {
+      "type": "witness",
+      "content": "[目击] 我看到布鲁诺用法医室的钥匙把放有帕拉迪尔大酒店和驯鹿酒吧案卷的档案柜上锁，合上所有抽屉，并在折叠案件笔记上记录了锁定时间和他当时在档案室的位置，同时明确让卢克斯不得接触任何文件。我感到警惕和怀疑——这既可能是在保护证物，也可能是在控制或掩盖证据。我现在要立刻当面核实这把锁和钥匙的来历，争取把钥匙或其保管权掌在可追溯的人手里，立刻要求卢克斯交出那本记录名单的笔记本或说明保存地点，必要时马上呼叫支援并封存并盘点抽屉。",
+      "gameDay": 2,
+      "gameTime": "00:16",
+      "location": "SCN_3_SUB_3",
+      "metadata": {
+        "impact": 2,
+        "perspective": "witness",
+        "sourceAction": "我用档案柜与法医室钥匙把放有帕拉迪尔大酒店和驯鹿酒吧案卷的卷宗档案柜上锁，并把所有抽屉合上，确保卢克斯无法接触任何文件；我在折叠案件笔记上记录了锁定时间和我当时所在的档案室位置。",
+        "sourceCharacterId": "Bruno Galilei"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我接到勒克斯的无线电，听出是既定暗号。他问我是否已到拦截点并让我去档案室入口制造一个小干扰来分散注意力；我答应会马上前去，但心里有些不安。",
+      "gameDay": 2,
+      "gameTime": "00:18",
+      "location": "SCN_3_SUB_3",
+      "metadata": {
+        "outcome": "通过无线电向维托发出既定暗号，短促确认他是否已前往拦截点并请求立即在档案室入口制造分散注意力的小干扰"
+      }
+    },
+    {
+      "type": "witness",
+      "content": "[目击] 我看到勒克斯迅速从索引卡抽屉里抽出几张可能与布鲁诺笔录相关的纸卡，悄悄塞进口袋藏好。抽屉里剩下的卡片有被匆忙翻找的痕迹，但没有引起旁人注意。我感到震惊、愤怒又警惕——这几乎就是在篡改证物，证实勒克斯确有隐瞒或销毁记录的行为。我决定立刻拦住他，取回那些卡片并要求他交出或说明那本记录名单的笔记本位置，必要时呼叫支援并当场封存并记录证据。",
+      "gameDay": 2,
+      "gameTime": "00:21",
+      "location": "SCN_3_SUB_3",
+      "metadata": {
+        "impact": 2,
+        "perspective": "witness",
+        "sourceAction": "我迅速从索引卡抽屉里抽出几张可能与布鲁诺笔录相关的纸卡，塞进口袋里藏好。抽屉里剩下的索引卡有被匆忙翻找过的痕迹，但动作没有引起注意。",
+        "sourceCharacterId": "Lux Lynch"
+      }
+    },
+    {
+      "type": "event",
+      "content": "检查卷宗档案柜上的封条，确认锁的类型与封条是否完好并记录相关状况 [在 SCN_3_SUB_3 因重新规划而中断] 已中断",
+      "gameDay": 2,
+      "gameTime": "00:21",
+      "location": "SCN_3_SUB_3",
+      "metadata": {
+        "outcome": "检查卷宗档案柜上的封条，确认锁的类型与封条是否完好并记录相关状况 [在 SCN_3_SUB_3 因重新规划而中断] 已中断",
+        "interruptionReason": "revise_replan"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我在档案室拦住了Lux，并从他身上取回了一张被藏的索引卡；我当场清点并在笔记本里将该卡记录为证物，注意到索引卡抽屉确实少了几张卡片并写下了备注。 [rel:Lux Lynch -10 → -4]",
+      "gameDay": 2,
+      "gameTime": "00:25",
+      "location": "SCN_3_SUB_3",
+      "metadata": {
+        "outcome": "拦住Lux并从他身上取回被藏的索引卡，现场盘点并记录为证物"
+      }
+    },
+    {
+      "type": "witness",
+      "content": "[目击] 我看到布鲁诺把索引卡抽屉内现存纸卡的序号与缺失情况清点并记入折叠案件笔记，还在抽屉边缘用铅笔做了标记以保留翻动痕迹。我对他既警觉又不信任——这动作可能是在保护证物，也可能是在控制或掩盖证据。我打算立即当面核对他的记录，取走或复印笔记并封存抽屉，确保证据链可追溯，同时继续拦截勒克斯取回被藏的索引卡，必要时呼叫支援。",
+      "gameDay": 2,
+      "gameTime": "00:51",
+      "location": "SCN_3_SUB_3",
+      "metadata": {
+        "impact": 2,
+        "perspective": "witness",
+        "sourceAction": "我清点并记录了索引卡抽屉内现存纸卡的序号与缺失情况，内容记入折叠案件笔记里，并在抽屉边缘用铅笔做了标记以保留翻动痕迹。",
+        "sourceCharacterId": "Bruno Galilei"
+      }
+    },
+    {
+      "type": "event",
+      "content": "当场盘问勒克斯，要求他交出所有被藏的索引卡并说明那本记录名单的笔记本放在哪里；警告若不配合就呼叫增援并当场搜身 [在 SCN_3_SUB_3 因重新规划而中断] 已中断",
+      "gameDay": 2,
+      "gameTime": "00:51",
+      "location": "SCN_3_SUB_3",
+      "metadata": {
+        "outcome": "当场盘问勒克斯，要求他交出所有被藏的索引卡并说明那本记录名单的笔记本放在哪里；警告若不配合就呼叫增援并当场搜身 [在 SCN_3_SUB_3 因重新规划而中断] 已中断",
+        "interruptionReason": "revise_replan"
+      }
+    },
+    {
+      "type": "plan",
+      "content": "Today's plan: 1. 在局里吃点晚饭并查看今晚的值班报告和无线电通话记录，安排巡逻路线。 at 警察局大厅; 2. 到警局前检查巡逻车和装备，确认路况并出发巡逻以应对暴雪下的突发情况。 at 新月街A南西端·警察局前; 3. 到驯鹿酒吧巡视并与酒吧工作人员和常客交谈，确认现场没有冲突并提醒保持秩序。 at 驯鹿酒吧; 4. 去海伦的餐桌亲自找海伦核实她今晚的安全状况，并提出必要的护送或保护建议。 at 海伦的餐桌; 5. 顺路拜访珊德拉的小屋，礼貌询问布鲁诺的下落并记录任何可能有用的目击或线索。 at 珊德拉的小屋; 6. 到星辰医院问询是否有与今晚事件或街头冲突相关的入院记录并核对病历信息。 at 星辰医院; 7. 回到局里整理今晚收集到的口供和证据，完成夜班笔录并向值班长汇报情况。 at 警察局大厅; 8. 与接班同事交接后在办公区简单休息，准备好明早继续维护小镇安全。 at 警察局大厅",
+      "gameDay": 1,
+      "gameTime": "19:00",
+      "location": null,
+      "metadata": {
+        "planType": "daily"
+      }
+    },
+    {
+      "type": "witness",
+      "content": "[目击] 我在办公桌上吃了简单的晚饭，一边逐项翻阅帕特里齐奥今晚交代的任务和未处理的通报。没发现需要立刻上报的异常证据；我把几项要明早处理的事项圈出并把文件按原样放回桌面，喝空的纸杯放在一旁。心里稍微松了口气，但对海伦和珊德拉有关的事仍保持警觉，按原计划继续安排巡逻和查访。",
+      "gameDay": 1,
+      "gameTime": "19:15",
+      "location": "SCN_3_SUB_1",
+      "metadata": {
+        "impact": 2,
+        "perspective": "witness",
+        "sourceAction": "我在办公桌上吃了简单的晚饭，同时把帕特里齐奥今晚交代的任务和未处理的通报逐一翻阅。没有发现需要立刻上报的意外证据；我圈出几项要明早处理的事项，并把文件按原样放回桌面，喝空的纸杯放在一旁。",
+        "sourceCharacterId": "Lux Lynch"
+      }
+    },
+    {
+      "type": "event",
+      "content": "在大厅的办公桌旁坐下，吃点晚饭并从办公桌里取出今晚的值班报告和无线电通话记录，逐页查看记录并在辖区地图上标注并安排今晚的巡逻路线 [在 SCN_3_SUB_1 因重新规划而中断] 已中断",
+      "gameDay": 1,
+      "gameTime": "19:23",
+      "location": "SCN_3_SUB_1",
+      "metadata": {
+        "outcome": "在大厅的办公桌旁坐下，吃点晚饭并从办公桌里取出今晚的值班报告和无线电通话记录，逐页查看记录并在辖区地图上标注并安排今晚的巡逻路线 [在 SCN_3_SUB_1 因重新规划而中断] 已中断",
+        "interruptionReason": "revise_replan"
+      }
+    },
+    {
+      "type": "witness",
+      "content": "[相遇] 19:23 我在局大厅正要坐下，突然与Lux Lynch和Bruno Galilei面对面相遇。布鲁诺看起来有些紧张，Lux神情冷静但警觉。我心里一紧——布鲁诺与珊德拉有关联，这让我担心这次相遇可能带来线索或麻烦。感觉必须马上上前问清来意，保护海伦并收集信息。",
+      "gameDay": 1,
+      "gameTime": "19:23",
+      "location": "SCN_3_SUB_1",
+      "metadata": {
+        "impact": 2,
+        "perspective": "co_presence",
+        "sourceAction": "Lux Lynch, Bruno Galilei 在 警察局大厅",
+        "sourceCharacterId": "__encounter__"
+      }
+    },
+    {
+      "type": "event",
+      "content": "Lux低声问我今晚为什么来，我回答我是辅助警察，今晚值班来处理小事务、修理和帮忙看着局里的日常事宜。",
+      "gameDay": 1,
+      "gameTime": "19:26",
+      "location": "SCN_3_SUB_1",
+      "metadata": {
+        "outcome": "低声询问Vito和布鲁诺他们今晚来此的目的"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我来到警察局当面询问Lux Lynch和Bruno Galilei他们来此的原因，并试图核实布鲁诺与珊德拉的关系，但两人均不在场。因为找不到当事人，我也无法评估是否需要立即对海伦或珊德拉采取保护或调查措施。我要把这次未果的询问记录下来，等待通过其他渠道联系他们或得到进一步线索。",
+      "gameDay": 1,
+      "gameTime": "19:29",
+      "location": "SCN_3_SUB_1",
+      "metadata": {
+        "outcome": "当面询问Lux Lynch和Bruno Galilei他们来到警局的原因，核实布鲁诺与珊德拉的关系，并评估是否需要立即对海伦或珊德拉采取保护或调查措施"
+      }
+    },
+    {
+      "type": "event",
+      "content": "鲁克斯和我闲聊了一会儿，主要说外面的暴雪和值班轮班，语气很谨慎。最后他借故出去，我没从他那里听到有关案件或可疑事情的内容。",
+      "gameDay": 1,
+      "gameTime": "19:30",
+      "location": "SCN_3_SUB_1",
+      "metadata": {
+        "outcome": "以轻声闲聊掩饰真实意图，向Vito和布鲁诺谈论外面的大雪和值班安排，试图把话题带到无害的方向并寻找借口离开。"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我用值班无线电联系上了Lux Lynch，他接了线。我询问他是否在附近并请他说明布鲁诺来警局的原因，通话已接通，等待对方进一步说明。",
+      "gameDay": 1,
+      "gameTime": "19:35",
+      "location": "SCN_3_SUB_1",
+      "metadata": {
+        "outcome": "用值班无线电呼叫Lux Lynch，询问他是否在附近并请他说明布鲁诺为何来警局"
+      }
+    },
+    {
+      "type": "event",
+      "content": "[直接] 19:40 —— 布鲁诺在局里直接和我对峙，问我是谁指使我来、我是从哪里知道他和珊德拉的关系。他态度回避，抵抗我的劝说，没有说出任何有用信息。我觉得不安和怀疑，布鲁诺的闪烁其词让我更担心海伦和珊德拉的安全。现在我决定把重心转向核实布鲁诺与珊德拉的关联、尽快去看望海伦并顺路到珊德拉的小屋再搜集口供或线索，同时考虑安排对布鲁诺的留意或监视。",
+      "gameDay": 1,
+      "gameTime": "19:40",
+      "location": "SCN_3_SUB_1",
+      "metadata": {
+        "impact": 1,
+        "perspective": "targeted",
+        "sourceAction": "我在警局盘问Vito，问他为何特意来警局、受谁指使以及他如何得知我与珊德拉的关系。他抵抗我的劝说，没说出有用的信息，态度回避。",
+        "sourceCharacterId": "Bruno Galilei"
+      }
+    },
+    {
+      "type": "event",
+      "content": "布鲁诺问我是谁指使我来，以及我是从哪里知道他和珊德拉的关系。我说我是一名当地辅助警察，通常处理小事务和帮助普通人，没再多说别的。",
+      "gameDay": 1,
+      "gameTime": "19:40",
+      "location": "SCN_3_SUB_1",
+      "metadata": {
+        "outcome": "讯问Vito为何特意来警局，问清他受谁指使并从何处获知我与珊德拉的关系 [Persuade 55, rolled 93 (fail) — all targets resisted] failed"
+      }
+    },
+    {
+      "type": "witness",
+      "content": "[目击] 19:42 我看到Lux用警局的内务钥匙串打开后方的金属文件柜，按名称和案卷夹迅速翻查与珍妮·弗洛伦斯案和马丁·金释放有关的卷宗。抽屉里没有这些案卷，他在笔记本上记下了需要继续追查的要点，然后把抽屉合上并复位。我感到不安和怀疑——重要案卷不见可能是疏忽也可能是有人动过手脚。这会影响我对案件记录完整性的重视，决定把查清案卷去向和人员出入记录列为优先事项，同时仍按原计划去看望海伦和珊德拉。",
+      "gameDay": 1,
+      "gameTime": "19:42",
+      "location": "SCN_3_SUB_1",
+      "metadata": {
+        "impact": 2,
+        "perspective": "witness",
+        "sourceAction": "我用警局内务钥匙串把后方的金属文件柜打开，按名称和案卷夹迅速翻找与珍妮·弗洛伦斯案和马丁·金释放相关的卷宗。抽屉里并没有这些案卷，没法抄录原件；我在笔记本上记下需要继续追查的要点，然后把抽屉合上并复位。",
+        "sourceCharacterId": "Lux Lynch"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我通过值班无线电请求鲁克斯对布鲁诺做一次巡逻检查，并在布鲁诺离开警局后对其行踪进行跟踪监视。鲁克斯口头同意，会前去执行并在外面观察他的动向。 [rel:Lux Lynch +1 → 12]",
+      "gameDay": 1,
+      "gameTime": "19:45",
+      "location": "SCN_3_SUB_1",
+      "metadata": {
+        "outcome": "通过值班无线电请求Lux对布鲁诺进行巡逻检查，并在布鲁诺离开警局后对其行踪进行跟踪监视"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我当面问了Lux为什么在档案柜里翻找“珍妮·弗洛伦斯”和“马丁·金释放”的卷宗。Lux告诉我，帕特里齐奥希望他平息投诉、让一些文件“消失”，并承认收过贿赂且有一本记录这些人的笔记本，但他没有承认释放马丁·金或栽赃折刀的事，我听后感到不安并记下了这些细节。 [rel:Lux Lynch -8 → 4]",
+      "gameDay": 1,
+      "gameTime": "19:50",
+      "location": "SCN_3_SUB_1",
+      "metadata": {
+        "outcome": "当面询问Lux为何在档案柜中查找“珍妮·弗洛伦斯”和“马丁·金释放”案的卷宗，并请他说明是谁授权以及是否发现任何异常或文件被移走"
+      }
+    },
+    {
+      "type": "witness",
+      "content": "[相遇] 19:53 我在警局大厅与Lux Lynch面对面相遇。他看起来冷静但警觉——我刚刚还看到他在档案柜里翻找与珍妮·弗洛伦斯和马丁·金释放有关的卷宗，且他曾暗示帕特里齐奥让一些文件“消失”。我感到不安和怀疑，担心档案被篡改或有人掩盖真相。现在我打算优先当面盘问Lux并尽快盘点、封存相关案卷和查阅出入记录，但仍会按计划继续看望海伦和珊德拉并留意布鲁诺的动向。",
+      "gameDay": 1,
+      "gameTime": "19:53",
+      "location": "SCN_3_SUB_1",
+      "metadata": {
+        "impact": 2,
+        "perspective": "co_presence",
+        "sourceAction": "Lux Lynch 在 警察局大厅",
+        "sourceCharacterId": "__encounter__"
+      }
+    },
+    {
+      "type": "event",
+      "content": "走到档案室 成功",
+      "gameDay": 1,
+      "gameTime": "19:55",
+      "location": "SCN_3_SUB_3",
+      "metadata": {
+        "outcome": "走到档案室 成功",
+        "blockedReason": "",
+        "failureReason": ""
+      }
+    },
+    {
+      "type": "witness",
+      "content": "[相遇] 我在档案室遇到布鲁诺·加里莱，他靠近档案柜，神情紧张且闪烁其词。我感到很不安——他与珊德拉有关联，加上之前档案缺失的事，怀疑有人可能在篡改记录或试图掩盖线索。我决定立刻阻止他接近柜子并着手封存、盘点相关卷宗，同时联系Lux请求支援，随后再继续按计划去看望海伦和珊德拉并监视布鲁诺的动向。",
+      "gameDay": 1,
+      "gameTime": "19:55",
+      "location": "SCN_3_SUB_3",
+      "metadata": {
+        "impact": 2,
+        "perspective": "co_presence",
+        "sourceAction": "Bruno Galilei 在 档案室",
+        "sourceCharacterId": "__encounter__"
+      }
+    },
+    {
+      "type": "information",
+      "content": "布鲁诺在档案室徘徊并对我闪烁其词；他与珊德拉有关系，见面时表现得非常紧张和回避。 ",
+      "gameDay": 1,
+      "gameTime": "23:59",
+      "location": null,
+      "metadata": {
+        "revealed": false,
+        "difficulty": "regular",
+        "knowledgeId": "learned_day1_3"
+      }
+    },
+    {
+      "type": "secret",
+      "content": "Lux对我说帕特里齐奥曾要求他让一些文件“消失”，并承认收过贿赂，他保留有一本记录这些人的笔记本。",
+      "gameDay": 1,
+      "gameTime": "23:59",
+      "location": null,
+      "metadata": {
+        "revealed": false,
+        "difficulty": "hard",
+        "knowledgeId": "learned_day1_2"
+      }
+    },
+    {
+      "type": "information",
+      "content": "档案柜中标注为“珍妮·弗洛伦斯”和“马丁·金释放”的卷宗不在抽屉里（有人动过或丢失）。",
+      "gameDay": 1,
+      "gameTime": "23:59",
+      "location": null,
+      "metadata": {
+        "revealed": false,
+        "difficulty": "regular",
+        "knowledgeId": "learned_day1_1"
+      }
+    }
+  ],
+  "plans": [
+    {
+      "npcName": "Vito",
+      "gameDay": 1,
+      "schedule": [
+        {
+          "activity": "在局里吃点晚饭并查看今晚的值班报告和无线电通话记录，安排巡逻路线。",
+          "location": "警察局大厅"
+        },
+        {
+          "activity": "到警局前检查巡逻车和装备，确认路况并出发巡逻以应对暴雪下的突发情况。",
+          "location": "新月街A南西端·警察局前"
+        },
+        {
+          "activity": "到驯鹿酒吧巡视并与酒吧工作人员和常客交谈，确认现场没有冲突并提醒保持秩序。",
+          "location": "驯鹿酒吧"
+        },
+        {
+          "activity": "去海伦的餐桌亲自找海伦核实她今晚的安全状况，并提出必要的护送或保护建议。",
+          "location": "海伦的餐桌"
+        },
+        {
+          "activity": "顺路拜访珊德拉的小屋，礼貌询问布鲁诺的下落并记录任何可能有用的目击或线索。",
+          "location": "珊德拉的小屋"
+        },
+        {
+          "activity": "到星辰医院问询是否有与今晚事件或街头冲突相关的入院记录并核对病历信息。",
+          "location": "星辰医院"
+        },
+        {
+          "activity": "回到局里整理今晚收集到的口供和证据，完成夜班笔录并向值班长汇报情况。",
+          "location": "警察局大厅"
+        },
+        {
+          "activity": "与接班同事交接后在办公区简单休息，准备好明早继续维护小镇安全。",
+          "location": "警察局大厅"
+        }
+      ],
+      "nodes": [
+        {
+          "type": "object_interaction",
+          "action": "在大厅的办公桌旁坐下，吃点晚饭并从办公桌里取出今晚的值班报告和无线电通话记录，逐页查看记录并在辖区地图上标注并安排今晚的巡逻路线",
+          "impact": 0,
+          "nodeId": "oi1_vito_1900",
+          "status": "interrupted",
+          "endTime": "19:25",
+          "outcome": "在大厅的办公桌旁坐下，吃点晚饭并从办公桌里取出今晚的值班报告和无线电通话记录，逐页查看记录并在辖区地图上标注并安排今晚的巡逻路线 [因重新规划而中断] 已中断",
+          "startTime": "19:00",
+          "characterId": "Vito",
+          "characterName": "Vito",
+          "executionMeta": {
+            "startedAt": "19:00",
+            "interruptedAt": "19:23",
+            "remainingMinutes": 0,
+            "interruptionReason": "revise_replan"
+          },
+          "objectInteractionPayload": {
+            "itemId": "ITEM_SCN3_1"
+          }
+        },
+        {
+          "type": "character_interaction",
+          "action": "拦住布鲁诺，阻止他接近档案柜并当面要求他不要动这些卷宗",
+          "impact": 1,
+          "nodeId": "ci_vito_001",
+          "status": "in_progress",
+          "endTime": "19:59",
+          "startTime": "19:56",
+          "characterId": "Vito",
+          "characterName": "Vito",
+          "executionMeta": {
+            "startedAt": "19:56",
+            "remainingMinutes": 3
+          },
+          "targetCharacterIds": [
+            "Bruno Galilei"
+          ]
+        },
+        {
+          "type": "scene_interaction",
+          "action": "用值班无线电呼叫Lux Lynch，询问他是否在附近并请他说明布鲁诺为何来警局",
+          "impact": 1,
+          "nodeId": "si1",
+          "status": "completed",
+          "endTime": "19:35",
+          "outcome": "我用值班无线电联系上了Lux Lynch，他接了线。我询问他是否在附近并请他说明布鲁诺来警局的原因，通话已接通，等待对方进一步说明。",
+          "startTime": "19:32",
+          "characterId": "Vito",
+          "characterName": "Vito",
+          "executionMeta": {
+            "startedAt": "19:32",
+            "completedAt": "19:35",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "character_interaction",
+          "action": "拦住布鲁诺，阻止他接近档案柜并当面要求他不要动这些卷宗",
+          "impact": 1,
+          "nodeId": "ci_vito_001",
+          "status": "in_progress",
+          "endTime": "19:59",
+          "startTime": "19:56",
+          "characterId": "Vito",
+          "characterName": "Vito",
+          "executionMeta": {
+            "startedAt": "19:56",
+            "remainingMinutes": 3
+          },
+          "targetCharacterIds": [
+            "Bruno Galilei"
+          ]
+        },
+        {
+          "type": "character_interaction",
+          "action": "当面询问Lux为何在档案柜中查找“珍妮·弗洛伦斯”和“马丁·金释放”案的卷宗，并请他说明是谁授权以及是否发现任何异常或文件被移走",
+          "impact": 1,
+          "nodeId": "ci1",
+          "status": "completed",
+          "endTime": "19:50",
+          "outcome": "我当面问了Lux为什么在档案柜里翻找“珍妮·弗洛伦斯”和“马丁·金释放”的卷宗。Lux告诉我，帕特里齐奥希望他平息投诉、让一些文件“消失”，并承认收过贿赂且有一本记录这些人的笔记本，但他没有承认释放马丁·金或栽赃折刀的事，我听后感到不安并记下了这些细节。",
+          "startTime": "19:46",
+          "characterId": "Vito",
+          "characterName": "Vito",
+          "executionMeta": {
+            "startedAt": "19:46",
+            "completedAt": "19:50",
+            "remainingMinutes": 0
+          },
+          "targetCharacterIds": [
+            "Lux Lynch"
+          ]
+        },
+        {
+          "type": "movement",
+          "action": "走到档案室",
+          "impact": 0,
+          "nodeId": "m_vito_001",
+          "status": "completed",
+          "endTime": "19:56",
+          "outcome": "走到档案室 成功",
+          "startTime": "19:51",
+          "characterId": "Vito",
+          "destination": "SCN_3_SUB_3",
+          "characterName": "Vito",
+          "executionMeta": {
+            "movement": {
+              "routeSnapshot": [
+                {
+                  "to": {
+                    "type": "scene",
+                    "sceneId": "SCN_3_SUB_3"
+                  },
+                  "from": {
+                    "type": "scene",
+                    "sceneId": "SCN_3_SUB_1"
+                  },
+                  "kind": "to_scene",
+                  "blockCheck": {
+                    "toId": "SCN_3_SUB_3",
+                    "fromId": "SCN_3_SUB_1"
+                  },
+                  "durationMinutes": 5
+                }
+              ],
+              "targetPosition": {
+                "type": "scene",
+                "sceneId": "SCN_3_SUB_3"
+              },
+              "minutesIntoStep": 0,
+              "currentStepIndex": 1,
+              "lastReachablePosition": {
+                "type": "scene",
+                "sceneId": "SCN_3_SUB_3"
+              }
+            },
+            "startedAt": "19:51",
+            "completedAt": "19:55",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "character_interaction",
+          "action": "拦住布鲁诺，阻止他接近档案柜并当面要求他不要动这些卷宗",
+          "impact": 1,
+          "nodeId": "ci_vito_001",
+          "status": "in_progress",
+          "endTime": "19:59",
+          "startTime": "19:56",
+          "characterId": "Vito",
+          "characterName": "Vito",
+          "executionMeta": {
+            "startedAt": "19:56",
+            "remainingMinutes": 3
+          },
+          "targetCharacterIds": [
+            "Bruno Galilei"
+          ]
+        }
+      ]
+    },
+    {
+      "npcName": "Vito",
+      "gameDay": 2,
+      "schedule": [
+        {
+          "activity": "在档案室彻底检查档案柜，清点并记录被动过的卷宗和缺失案卷。",
+          "location": "档案室"
+        },
+        {
+          "activity": "把检查结果写成简短通报并将关键卷宗临时封存并上锁。",
+          "location": "警察局"
+        },
+        {
+          "activity": "找勒克斯当面询问那本记录名单的笔记本下落并要求他交出或说明保存地点。",
+          "location": "警察局"
+        },
+        {
+          "activity": "去看望海伦，确认她一切安好并告诉她我会留意她的安全。",
+          "location": "海伦的餐桌"
+        },
+        {
+          "activity": "去珊德拉家确认她是否安全，并温和询问她与布鲁诺最近的来往情况。",
+          "location": "珊德拉的小屋"
+        },
+        {
+          "activity": "在驯鹿酒吧外守候，观察布鲁诺或其他可疑人物的出现并尽量以自然方式与他搭话试探情况。",
+          "location": "驯鹿酒吧"
+        },
+        {
+          "activity": "顺路去帕拉迪尔大酒店打探是否有与旧案相关的访客或可疑活动。",
+          "location": "帕拉迪尔大酒店"
+        },
+        {
+          "activity": "到星辰医院询问监控录像是否能调取并查看昨晚相关时间段的影像。",
+          "location": "星辰医院"
+        },
+        {
+          "activity": "回到警察局整理当天的笔录和发现，写成正式报告交上级备案。",
+          "location": "警察局"
+        },
+        {
+          "activity": "去海伦的餐桌吃晚饭并再次确认她的安全措施和应急联络方式。",
+          "location": "海伦的餐桌"
+        },
+        {
+          "activity": "回到警察局检查封存档案是否安全，交接夜班值勤安排后在局里休息睡觉。",
+          "location": "警察局"
+        }
+      ],
+      "nodes": [
+        {
+          "type": "scene_interaction",
+          "action": "检查索引卡抽屉，查找并记录“珍妮·弗洛伦斯”和“马丁·金释放”案卷所在的档案号",
+          "impact": 2,
+          "nodeId": "si1",
+          "status": "interrupted",
+          "endTime": "00:10",
+          "outcome": "检查索引卡抽屉，查找并记录“珍妮·弗洛伦斯”和“马丁·金释放”案卷所在的档案号 [因重新规划而中断] 已中断",
+          "startTime": "00:00",
+          "characterId": "Vito",
+          "characterName": "Vito",
+          "executionMeta": {
+            "startedAt": "00:00",
+            "interruptedAt": "00:05",
+            "remainingMinutes": 0,
+            "interruptionReason": "revise_replan"
+          },
+          "objectInteractionPayload": {
+            "itemId": "ITEM_SCN3_10"
+          }
+        },
+        {
+          "type": "object_interaction",
+          "action": "检查索引卡抽屉，查找并记录“珍妮·弗洛伦斯”和“马丁·金释放”案卷的档案号",
+          "impact": 2,
+          "nodeId": "oi1",
+          "status": "interrupted",
+          "endTime": "00:25",
+          "outcome": "检查索引卡抽屉，查找并记录“珍妮·弗洛伦斯”和“马丁·金释放”案卷的档案号 [因重新规划而中断] 已中断",
+          "startTime": "00:15",
+          "characterId": "Vito",
+          "characterName": "Vito",
+          "executionMeta": {
+            "startedAt": "00:15",
+            "interruptedAt": "00:16",
+            "remainingMinutes": 0,
+            "interruptionReason": "revise_replan"
+          },
+          "objectInteractionPayload": {
+            "itemId": "ITEM_SCN3_10"
+          }
+        },
+        {
+          "type": "character_interaction",
+          "skill": "Persuade",
+          "action": "当面对Lux确认他已被控制不得触碰证物，并当场要求他交出记载被指示人员的笔记本或说明保存地点，同时警告Bruno不得离开或接触档案",
+          "impact": 1,
+          "nodeId": "ci_vito_0002",
+          "status": "failed",
+          "endTime": "00:14",
+          "startTime": "00:11",
+          "characterId": "Vito",
+          "characterName": "Vito",
+          "executionMeta": {
+            "failedAt": "00:14",
+            "startedAt": "00:11",
+            "remainingMinutes": 3
+          },
+          "targetCharacterIds": [
+            "npc_lux_lynch",
+            "npc_bruno_galilei"
+          ]
+        },
+        {
+          "type": "object_interaction",
+          "action": "检查索引卡抽屉，查找并记录“珍妮·弗洛伦斯”和“马丁·金释放”案卷的档案号",
+          "impact": 2,
+          "nodeId": "oi1",
+          "status": "interrupted",
+          "endTime": "00:25",
+          "outcome": "检查索引卡抽屉，查找并记录“珍妮·弗洛伦斯”和“马丁·金释放”案卷的档案号 [因重新规划而中断] 已中断",
+          "startTime": "00:15",
+          "characterId": "Vito",
+          "characterName": "Vito",
+          "executionMeta": {
+            "startedAt": "00:15",
+            "interruptedAt": "00:16",
+            "remainingMinutes": 0,
+            "interruptionReason": "revise_replan"
+          },
+          "objectInteractionPayload": {
+            "itemId": "ITEM_SCN3_10"
+          }
+        },
+        {
+          "type": "object_interaction",
+          "action": "检查卷宗档案柜上的封条，确认锁的类型与封条是否完好并记录相关状况",
+          "impact": 2,
+          "nodeId": "oi_vito_1",
+          "status": "interrupted",
+          "endTime": "00:22",
+          "outcome": "检查卷宗档案柜上的封条，确认锁的类型与封条是否完好并记录相关状况 [因重新规划而中断] 已中断",
+          "startTime": "00:17",
+          "characterId": "Vito",
+          "characterName": "Vito",
+          "executionMeta": {
+            "startedAt": "00:17",
+            "interruptedAt": "00:21",
+            "remainingMinutes": 0,
+            "interruptionReason": "revise_replan"
+          },
+          "objectInteractionPayload": {
+            "itemId": "ITEM_SCN3_4"
+          }
+        },
+        {
+          "type": "character_interaction",
+          "action": "拦住Lux并从他身上取回被藏的索引卡，现场盘点并记录为证物",
+          "impact": 2,
+          "nodeId": "ci2",
+          "status": "completed",
+          "endTime": "00:25",
+          "outcome": "我在档案室拦住了Lux，并从他身上取回了一张被藏的索引卡；我当场清点并在笔记本里将该卡记录为证物，注意到索引卡抽屉确实少了几张卡片并写下了备注。",
+          "startTime": "00:22",
+          "characterId": "Vito",
+          "characterName": "Vito",
+          "executionMeta": {
+            "startedAt": "00:22",
+            "completedAt": "00:25",
+            "remainingMinutes": 0
+          },
+          "targetCharacterIds": [
+            "Lux Lynch"
+          ]
+        },
+        {
+          "type": "character_interaction",
+          "skill": "Persuade",
+          "action": "当场盘问勒克斯，要求他交出所有被藏的索引卡并说明那本记录名单的笔记本放在哪里；警告若不配合就呼叫增援并当场搜身",
+          "impact": 1,
+          "nodeId": "ci_vito_0001",
+          "status": "interrupted",
+          "endTime": "00:31",
+          "outcome": "当场盘问勒克斯，要求他交出所有被藏的索引卡并说明那本记录名单的笔记本放在哪里；警告若不配合就呼叫增援并当场搜身 [因重新规划而中断] 已中断",
+          "startTime": "00:26",
+          "characterId": "Vito",
+          "characterName": "Vito",
+          "executionMeta": {
+            "startedAt": "00:26",
+            "interruptedAt": "00:51",
+            "remainingMinutes": 0,
+            "interruptionReason": "revise_replan"
+          },
+          "targetCharacterIds": [
+            "Lux Lynch"
+          ]
+        },
+        {
+          "type": "character_interaction",
+          "skill": "Persuade",
+          "action": "当面要求布鲁诺交出他记录抽屉清点的折叠案件笔记并当场取走以便封存为证物，说明这是为确保证据链必要，必要时会呼叫增援",
+          "impact": 2,
+          "nodeId": "ci1",
+          "status": "in_progress",
+          "endTime": "00:57",
+          "startTime": "00:52",
+          "characterId": "Vito",
+          "characterName": "Vito",
+          "executionMeta": {
+            "startedAt": "00:52",
+            "remainingMinutes": 5
+          },
+          "targetCharacterIds": [
+            "Bruno Galilei"
+          ]
+        }
+      ]
+    }
+  ],
+  "intents": [
+    {
+      "intent": "马上当面核对并控制布鲁诺的清点记录——取走或复印他的笔记，封存抽屉并确保证据链，同时继续拦截勒克斯并取回被藏的索引卡，必要时呼叫支援。",
+      "updatedAt": "2026-04-02T09:02:04.788Z"
+    }
+  ],
+  "npcName": "Vito"
+}

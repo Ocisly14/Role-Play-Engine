@@ -1,0 +1,234 @@
+{
+  "id": "Anatole Laplace (Anatole)",
+  "name": "Anatole Laplace (Anatole)",
+  "occupation": "信息安全工程师 / 监控系统设计师",
+  "age": 22,
+  "gender": "male",
+  "appearance": "一个瘦削、苍白的年轻人，面部轮廓锐利，双眼疲惫，体态透露出在屏幕前耗去了太多时间。他穿着朴素，看上去更像一个不眠不休的技术员，而不是什么社交场上的人物。",
+  "personality": "冷酷理性、多疑、控制欲强、情感封闭。阿纳托尔相信安全来自信息优势，而非信任。他聪明且自律，却对软弱、感情用事和混乱毫无耐心。",
+  "background": "阿纳托尔是一名技艺高超的监控与信息安全专家。1998年，他通过暗网被一批富裕客户招募，对方想要一套强大的监控系统来保护他们的秘密行动。他设计了最初的千维系统，并故意在其中埋下后门访问路径，以确保自己永远不会被完全排除在外。当他意识到这套系统的重心就在卡森德拉时，他便把这个镇子当作一个可以用信息控制代替安全感的地方。他深深怨恨西蒙总是为了情感牵绊而放弃周密的计划，尤其是在涉及南希的时候。",
+  "residence": "SCN_9",
+  "currentLocation": "SCN_9_SUB_3",
+  "spot": "坐在三台显示器前，背对着被遮黑的窗户",
+  "knownMapSeed": {
+    "sceneIds": [
+      "SCN_15_SUB_1",
+      "SCN_15_SUB_2",
+      "SCN_16_SUB_1",
+      "SCN_16_SUB_2",
+      "SCN_21_SUB_1",
+      "SCN_21_SUB_2",
+      "SCN_4_SUB_1",
+      "SCN_4_SUB_2",
+      "SCN_9_SUB_1",
+      "SCN_9_SUB_2",
+      "SCN_9_SUB_3"
+    ],
+    "junctionIds": [
+      "JUNC_1",
+      "JUNC_2",
+      "JUNC_3",
+      "JUNC_4",
+      "JUNC_5",
+      "JUNC_6",
+      "JUNC_7",
+      "JUNC_8",
+      "JUNC_9",
+      "JUNC_10",
+      "JUNC_11"
+    ],
+    "roadIds": [
+      "ROAD_1",
+      "ROAD_2",
+      "ROAD_3",
+      "ROAD_4",
+      "ROAD_5a",
+      "ROAD_5b",
+      "ROAD_6",
+      "ROAD_7",
+      "ROAD_8",
+      "ROAD_9",
+      "ROAD_10"
+    ],
+    "scenarioOutlineIds": [
+      "SCN_1",
+      "SCN_2",
+      "SCN_3",
+      "SCN_4",
+      "SCN_5",
+      "SCN_6",
+      "SCN_8",
+      "SCN_9",
+      "SCN_10",
+      "SCN_11",
+      "SCN_12",
+      "SCN_13",
+      "SCN_14",
+      "SCN_15",
+      "SCN_16",
+      "SCN_17",
+      "SCN_18",
+      "SCN_19",
+      "SCN_21",
+      "SCN_22"
+    ]
+  },
+  "longTermIntent": "通过监控权限维持筹码，保住自己对卡森德拉关键信息渠道的隐秘控制，并阻止西蒙的情感抉择摧毁他辛苦建立起来的战略位置。",
+  "attributes": {
+    "STR": 40,
+    "CON": 55,
+    "DEX": 50,
+    "APP": 45,
+    "POW": 70,
+    "SIZ": 50,
+    "INT": 80,
+    "EDU": 85
+  },
+  "status": {
+    "hp": 10,
+    "maxHp": 10,
+    "sanity": 55,
+    "maxSanity": 70,
+    "luck": 60,
+    "mp": 14,
+    "conditions": []
+  },
+  "skills": {
+    "Knowledge & Craft": 70,
+    "Investigation": 60,
+    "Repair & Engineering": 85
+  },
+  "inventory": [
+    {
+      "name": "工作站权限",
+      "properties": {
+        "note": "以花店二楼的工作站作为他主要的技术基地。"
+      }
+    },
+    {
+      "name": "千维系统后门知识",
+      "properties": {
+        "note": "阿纳托尔设计了最初的系统，至今仍比任何人都更了解其隐藏的访问路径。"
+      }
+    },
+    {
+      "name": "门禁卡克隆设备",
+      "properties": {
+        "note": "一台紧凑的技术工具，可在获得原卡时复制门禁卡。"
+      }
+    },
+    {
+      "name": "加密文件",
+      "properties": {
+        "note": "通过监控和入侵收集的技术记录与敏感材料。"
+      }
+    }
+  ],
+  "relationships": [
+    {
+      "targetId": "Simon Laplace (Simon)",
+      "targetName": "Simon Laplace (Simon)",
+      "relationshipType": "family",
+      "attitude": -60,
+      "description": "共用这具身体的主人格，阿纳托尔认为他那些情感化的决定既鲁莽又自毁。",
+      "history": "当西蒙选择了南希和漂泊的生活，而不是安全、控制与利益之后，他们内部的冲突进一步恶化。",
+      "firstPerson": "西蒙在白天占用着这具身体，还挥霍得毫无节制——他拿安全、控制和利益去换南希和一种漂泊的日子，最后替我们收拾残局的人是我。"
+    },
+    {
+      "targetId": "Nancy Charlotte",
+      "targetName": "Nancy Charlotte",
+      "relationshipType": "enemy",
+      "attitude": -25,
+      "description": "一个动摇局面的因素，阿纳托尔认为正是她让西蒙持续非理性而脆弱。",
+      "history": "阿纳托尔把西蒙拒绝走更安全、更可控的那条路，归咎于南希始终在他身边。",
+      "firstPerson": "南希让西蒙一直软弱而不理性；只要她还站在他面前，他就永远不会选那条更稳妥的路，而他每拒绝一次，我们的处境就再垮一分。"
+    },
+    {
+      "targetId": "Adolph Carl",
+      "targetName": "Adolph Carl",
+      "relationshipType": "rival",
+      "attitude": -35,
+      "description": "一个操纵型的情报掮客，对阿纳托尔的过去知道得太多。",
+      "history": "阿道夫的威胁信迫使阿纳托尔去驯鹿酒吧应对，证明他愿意把旧秘密武器化。",
+      "firstPerson": "阿道夫对我做过的事知道得比任何活人都多，他那封提到1988年的信把我叫去驯鹿酒吧，就是要让我明白：只要对他有利，旧秘密随时可以拿出来交易。"
+    },
+    {
+      "targetId": "Lux Lynch",
+      "targetName": "Lux Lynch",
+      "relationshipType": "neutral",
+      "attitude": -15,
+      "description": "一个腐败的警察，其恐惧与妥协使他有可能派上用场。",
+      "history": "阿纳托尔相信勒克斯的腐败是可追溯的，必要时可以用来施压。",
+      "firstPerson": "勒克斯被人买通过，也一直在害怕，这让他有迹可循。哪天我需要警察把头扭到一边，他的腐败就是我伸手就能抓住的把柄。"
+    }
+  ],
+  "memory": [
+    {
+      "type": "information",
+      "content": "我主要在 SCN_9 的二楼空间工作，在那里我可以处理监控、入侵和技术活儿，不会有西蒙那些心软的本能来碍事。",
+      "metadata": {
+        "knowledgeId": "k_anatole_workspace",
+        "difficulty": "automatic"
+      }
+    },
+    {
+      "type": "information",
+      "content": "1998年我设计了最初的千维系统，从一开始就在里面留了一个隐藏后门。即使硬件不在我手上，我对它结构的理解也超过这个镇上任何活着的人。",
+      "metadata": {
+        "knowledgeId": "k_anatole_qianwei",
+        "difficulty": "regular"
+      }
+    },
+    {
+      "type": "information",
+      "content": "西蒙和我并不平等地共享记忆。我知道他的想法，也能利用他得知的东西；但除非事情触及他极为在意的部分，他只能捕捉到我所作所为的碎片。",
+      "metadata": {
+        "knowledgeId": "k_anatole_memory_gap",
+        "difficulty": "regular"
+      }
+    },
+    {
+      "type": "secret",
+      "content": "我不只是与西蒙有联系。我是同一具身体里的另一个意志，诞生于那些他渴望某种更冷、更强的东西来承受他自己承受不了之事的岁月。",
+      "metadata": {
+        "knowledgeId": "s_anatole_dual_identity"
+      }
+    },
+    {
+      "type": "secret",
+      "content": "2002年那批富裕客户消失时，清醒着的是西蒙。等我弄明白发生了什么，千维系统本身已经不见了——尽管我知道它并没有离开卡森德拉。",
+      "metadata": {
+        "knowledgeId": "s_anatole_qianwei_lost"
+      }
+    },
+    {
+      "type": "secret",
+      "content": "我收到过一封提及1988年的威胁信，于是去了驯鹿酒吧，因为无视一个掌握那种信息的人是愚蠢的。那里由我掌控，而西蒙始终没有弄清整件事的全貌。",
+      "metadata": {
+        "knowledgeId": "s_anatole_adolph_note"
+      }
+    },
+    {
+      "type": "secret",
+      "content": "我的技术工作保护过危险的客户，也保护过他们想要隐藏的仪式或交易。我接受了这一点，因为访问权限和控制对我来说比任何人的清白都更重要。",
+      "metadata": {
+        "knowledgeId": "s_anatole_complicity"
+      }
+    },
+    {
+      "type": "secret",
+      "content": "勒克斯·林奇腐败到这种程度：如果我需要镇上警方那边的配合，我很可能可以挖出或重建对他的筹码。",
+      "metadata": {
+        "knowledgeId": "s_anatole_lux_leverage"
+      }
+    },
+    {
+      "type": "belief",
+      "content": "西蒙对南希的依恋是一个结构性的弱点，但西蒙本人仍然是我要保护的。如果他继续把她的安全和他自己的良心置于控制之上，我们两个都会被那些愿意先下手的人逼到墙角。",
+      "metadata": {
+        "confidence": 0.88,
+        "reasoningChain": "每一次西蒙选择感情而非筹码，我们的处境就更糟。卡森德拉奖赏的是准备、监控和果断的行动，而不是愧疚；在我自己动手之前，我不会让外人把他击垮。"
+      }
+    }
+  ]
+}

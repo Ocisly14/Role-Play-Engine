@@ -200,6 +200,11 @@ model NpcMemory {
   content        String
   metadata       Json?
   tags           String[]
+  /// The short name the character cites to revise or retract this memory
+  /// ("M3f9a2c"). Minted once at write time against the handles that
+  /// character already holds — see src/memory/memoryHandle.ts. Stored rather
+  /// than derived so it can never change under a character who has read it.
+  handle         String
 
   gameDateTime   String        @map("game_datetime")
   location       String?
@@ -217,6 +222,7 @@ model NpcMemory {
   session Session @relation(fields: [sessionId], references: [sessionId], onDelete: Cascade)
   module  Module  @relation(fields: [moduleId], references: [moduleId], onDelete: Cascade)
 
+  @@unique([sessionId, npcId, handle])
   @@index([sessionId, npcId])
   @@index([sessionId, npcId, type])
   @@index([sessionId, npcId, gameDateTime])
@@ -225,15 +231,17 @@ model NpcMemory {
 }
 
 enum NpcMemoryType {
-  event
-  witness
-  information
-  map
-  belief
-  plan
-  secret
-  summary
-  long_term_intent
+  // Agent-authored (the character decides what is worth keeping):
+  general          // 普通记忆 — what happened, what was seen, conclusions, facts learned
+  plan             // 计划 — an intention held beyond this minute
+  secret           // 秘密 — something hidden the character realized; decays slowly
+  relationship     // 角色关系 — about a specific person (metadata.targetId)
+  map              // 地图记忆 — a place or route the character learned in play
+  long_term_intent // 长期目标 — rare, replaces the standing goal
+  // System-authored:
+  context          // 地理常识 — the world as the character already knows it at
+                   // session start: one memory per macro location, one per
+                   // scene inside it, and one for how the streets connect
 }
 
 // ─── Simulation Events ───────────────────────────────────────────

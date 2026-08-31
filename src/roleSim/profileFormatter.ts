@@ -1,16 +1,25 @@
 // src/roleSim/profileFormatter.ts
 //
-// Formats the 12-field profile block for the user prompt's "## Who you are"
-// section. Inventory and relationships come from runtime DGSM (not the
-// profile's static fields), so this helper takes both.
+// Formats the character's own description, split by how long each part stays
+// true:
+//
+//  - `formatProfile` — who they are. Module-authored, never moves for the
+//    life of the session, so it can sit inside the prompt's cached prefix.
+//  - `formatSkills` — what they are good and bad at. Also frozen: no
+//    WorldDelta operation touches skill values, so a character's training is
+//    fixed for the session.
+//  - `formatCondition` — how they are RIGHT NOW: vitals, conditions, what
+//    they carry, who they know. The stamina subsystem moves fatigue on most
+//    ticks and items change hands, so this must sit AFTER the breakpoint.
+//    Mixed in with the profile it invalidated the whole prefix every tick.
 
+import { resolveSkillValue } from "../engine/actions/skillRollService.js";
+import { SKILL_CATALOG } from "../engine/rules/skillCatalog.js";
 import type { DynamicGameStateManager } from "../state/DynamicGameState.js";
 import type { DynamicNPCProfile, InventoryItem } from "../state/types.js";
 
-export function formatProfile(
-  npc: DynamicNPCProfile,
-  dgsm: DynamicGameStateManager
-): string {
+/** Who they are. Nothing here changes while the session runs. */
+export function formatProfile(npc: DynamicNPCProfile): string {
   const lines: string[] = [];
   lines.push(`Name: ${npc.name}`);
 
@@ -26,13 +35,30 @@ export function formatProfile(
   if (npc.backstory) lines.push(`Backstory: ${npc.backstory}`);
   if (npc.residence) lines.push(`Residence: ${npc.residence}`);
 
-  lines.push(formatStatusLine(npc));
+  return lines.join("\n");
+}
+
+/** How they are this minute. Expected to differ from the previous tick. */
+export function formatCondition(
+  npc: DynamicNPCProfile,
+  dgsm: DynamicGameStateManager
+): string {
+  const lines: string[] = [formatStatusLine(npc)];
+
+  // Proprioception: you always know where you put yourself, before you know
+  // anything about the room. It sits here and not in `formatProfile` because
+  // it moves — a spot in the cached frozen block would be a place the
+  // character believes they are standing an hour after they left it.
+  const spot = dgsm.getCharacterSpot(npc.id);
+  if (spot) lines.push(`Where you are: ${spot}`);
 
   const inventoryLine = formatInventoryLine(dgsm, npc.id);
   if (inventoryLine) lines.push(inventoryLine);
 
-  const relationshipsBlock = formatRelationshipsBlock(dgsm, npc.id);
-  if (relationshipsBlock) lines.push(relationshipsBlock);
+  // No relationships block. It rendered the graph's note verbatim — and that
+  // note IS the character's own `relationship` memory, which is injected whole
+  // a few lines further down. The character was reading the same sentence
+  // twice, and paying for it twice.
 
   return lines.join("\n");
 }
@@ -63,25 +89,57 @@ function formatInventoryLine(
   const parts = items.map((item) => {
     const qty =
       item.quantity && item.quantity > 1 ? ` (x${item.quantity})` : "";
-    return `${item.name} [id: ${item.id}]${qty}`;
+    return `${item.name} [${item.id}]${qty}`;
   });
-  return `Inventory (cite items by id): ${parts.join(", ")}`;
+  return `Inventory (the bracketed tag is how you cite it): ${parts.join(", ")}`;
 }
+/**
+ * What this character is good and bad at, best first.
+ *
+ * A person knows their own hands. Withholding the numbers left the agent
+ * choosing whether to declare a skill with no idea whether it was a strength,
+ * and it declared none at all — 25 actions out of 25 in one measured run.
+ *
+ * Every value goes through `resolveSkillValue`, the same resolver the intake
+ * uses when a skill is actually declared: trained value if the sheet has one,
+ * the catalog's base value otherwise. A prompt that computed its own numbers
+ * would be telling the character something the dice then disagree with.
+ */
+export function formatSkills(npc: DynamicNPCProfile): string {
+  const rated = SKILL_CATALOG.map((skill) => ({
+    name: skill.name,
+    value: resolveSkillValue(skill.name, npc.skills ?? {})?.value ?? skill.base,
+  })).sort((a, b) => b.value - a.value || a.name.localeCompare(b.name));
 
-function formatRelationshipsBlock(
-  dgsm: DynamicGameStateManager,
-  npcId: string
-): string | null {
-  const graph = dgsm.getState().npcRelationshipGraph?.[npcId];
-  if (!graph) return null;
-  const entries = Object.entries(graph);
-  if (entries.length === 0) return null;
+  const lines = [
+    // Stated in the terms the ladder actually uses (`successLevelFor`), so the
+    // character can weigh an attempt instead of guessing what 65 means.
+    "Your training, best first. The number is your chance in 100 of a",
+    "straightforward success; half of it does notably better, a fifth of it is",
+    "your best work. Low is not nothing — it is a long shot, not a refusal.",
+    "",
+    // Languages is excluded from the rated list: it has no single value, and
+    // printing one would tell the character something the dice never use.
+    ...rated
+      .filter((s) => s.name !== "Languages")
+      .map((s) => `- ${s.name} ${s.value}`),
+  ];
 
-  const allNpcs = dgsm.getState().npcCharacters;
-  const lines = entries.map(([targetId, rel]) => {
-    const target = allNpcs.find((n) => n.id === targetId);
-    const name = target?.name ?? targetId;
-    return `  - ${name}: ${rel.note} (score: ${rel.score})`;
-  });
-  return ["Relationships:", ...lines].join("\n");
+  const native = npc.languages?.native ?? [];
+  const learned = Object.entries(npc.languages?.learned ?? {}).sort(
+    (a, b) => b[1] - a[1]
+  );
+  if (native.length > 0 || learned.length > 0) {
+    lines.push(
+      "",
+      "Languages. You never roll to use one you grew up in — you simply speak",
+      "it. Naming any other tongue is a Languages check at the fluency below.",
+      ...(native.length > 0
+        ? [`- ${native.join(", ")} (yours, no check)`]
+        : []),
+      ...learned.map(([tongue, value]) => `- ${tongue} ${value}`)
+    );
+  }
+
+  return lines.join("\n");
 }

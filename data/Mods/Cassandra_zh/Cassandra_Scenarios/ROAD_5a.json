@@ -1,0 +1,53 @@
+{
+  "id": "ROAD_5a",
+  "name": "石榴巷北段",
+  "description": "石榴巷的北段，从星辰大道南端三岔口向南延伸至日暮大道分叉处。巷道较窄，两侧建筑遮挡部分风雪。",
+  "parentLocationId": "OUTDOOR",
+  "endpointA": "JUNC_2",
+  "endpointB": "JUNC_6",
+  "travelTimeMinutes": 5,
+  "alongConnections": [],
+  "items": [
+    {
+      "id": "ITEM_ROAD5A_1",
+      "name": "墙面壁灯",
+      "description": "几盏装在巷道两侧建筑外墙上的旧壁灯，灯罩和底座在白天看去都蒙着一层薄尘。",
+      "isLightSource": true,
+      "lightLevel": 2
+    },
+    {
+      "id": "ITEM_ROAD5A_2",
+      "name": "排水沟铁盖",
+      "description": "巷边狭长的排水沟盖板被鞋底与车轮反复碾压，边角已经有些翘起。"
+    },
+    {
+      "id": "ITEM_ROAD5A_3",
+      "name": "堆叠垃圾桶",
+      "description": "几只深色垃圾桶挤在墙角，桶身被风雪和脏水刷出一道道发白的痕迹。"
+    }
+  ],
+  "conditions": [
+    {
+      "description": "露天巷道，受天气影响。巷道较窄，两侧建筑遮挡部分风雪。",
+      "mechanicalEffect": {
+        "skillPenalty": [
+          {
+            "skill": "Stealth",
+            "delta": -10
+          }
+        ]
+      }
+    },
+    {
+      "description": "巷道路灯稀疏，夜间光线昏暗。",
+      "mechanicalEffect": {
+        "skillPenalty": [
+          {
+            "skill": "Perception",
+            "delta": -20
+          }
+        ]
+      }
+    }
+  ]
+}

@@ -10,6 +10,11 @@ export type SimulationEventType =
   | "npc_death"
   | "simulation_state_changed"
   | "npc_moved"
+  /** One character's rendered paragraph for one tick. Persisted so a resumed
+   *  session can hand the renderer and the character back the day they lived;
+   *  not broadcast — it is per-character, and 28 paragraphs a tick would
+   *  swamp the socket. */
+  | "npc_perceived"
   | "npc_position_snapshot"
   | "playback_buffering"
   | "playback_resumed";

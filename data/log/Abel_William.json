@@ -1,0 +1,3179 @@
+{
+  "npcId": "Abel William",
+  "memories": [
+    {
+      "type": "information",
+      "content": "我在2002年父亲去世后接管了酒厂，现在每天大部分时间都在办公室、车间和地窖之间来回奔波，试图维持这个地方运转。",
+      "gameDay": 1,
+      "gameTime": "00:00",
+      "location": null,
+      "metadata": {
+        "difficulty": "automatic",
+        "knowledgeId": "k_abel_distillery"
+      }
+    },
+    {
+      "type": "information",
+      "content": "生意已经萎缩了一段时间。我关闭了酒厂的大部分区域，解雇了像马塞尔·格温普兰这样的工人，因为我实在付不起他们的工资了。",
+      "gameDay": 1,
+      "gameTime": "00:00",
+      "location": null,
+      "metadata": {
+        "difficulty": "regular",
+        "knowledgeId": "k_abel_layoffs"
+      }
+    },
+    {
+      "type": "plan",
+      "content": "Today's plan: 1. 在台灯下继续整理并复核昨晚抄录的剪报、注记与时间线。 at 办公室; 2. 把最关键的抄录页放入外套内侧口袋，并把需要马上核查的姓名抄到账本页边。 at 办公室; 3. 下到地下酒窖再次检视木质酒桶的安置、锁具和温度状况，确保无异常。 at 地下酒窖; 4. 在车间巡查蒸馏器、供暖和搬移后的库存，记录需要维修的项目并标注优先级。 at 酒厂; 5. 整理并准备今天的出货单和发票草稿，核对账本上的款项与欠款。 at 办公室; 6. 给怀特和海伦留便条并发语音信箱，约定明晨取回钟表零件并安排与海伦商谈上架事宜。 at 办公室; 7. 检查并加固办公室和车间的门窗、设置备用照明并准备晚间的巡查计划。 at 酒厂; 8. 早上到钟表店从Marks White那里取回替换小齿轮并确认他对机件的说明。 at 钟表店; 9. 顺路在花店买几朵花以改善品酒区氛围并与店主简单寒暄维系关系。 at 花店·卡森德拉之花; 10. 与海伦见面商谈把我们的伏特加作为餐厅鸡尾酒基酒的可能性并争取小批量上架。 at 海伦的餐桌; 11. 到五金店向哈里森采购蒸馏器维修所需的材料并询问他是否能帮忙紧急修理。 at 五金店; 12. 去珊德拉家询问她最近是否见过马塞尔并打听附近是否有异常动静。 at 珊德拉的小屋; 13. 回到酒厂监督工人对蒸馏器的修理、检验维修效果并安排货物出货优先级。 at 酒厂; 14. 在台灯下把今天得到的信息和新线索更新到剪报时间线上，列出明日优先调查对象。 at 办公室; 15. 检查地下酒窖与办公室最后一遍，锁好门窗后回到办公室休息并尽早入睡。 at 酒厂",
+      "gameDay": 2,
+      "gameTime": "00:00",
+      "location": null,
+      "metadata": {
+        "planType": "daily"
+      }
+    },
+    {
+      "type": "information",
+      "content": "酒厂虽然比以前小了，但伏特加的品质依然很好。我为此感到骄傲，我讨厌别人说得好像这个地方已经完了一样。",
+      "gameDay": 1,
+      "gameTime": "00:00",
+      "location": null,
+      "metadata": {
+        "difficulty": "regular",
+        "knowledgeId": "k_abel_pride"
+      }
+    },
+    {
+      "type": "belief",
+      "content": "如果我让这个地方衰败下去，我失去的不仅是一份生意。我失去的是父亲留给我的最后一样实在的东西，而我还没准备好把它拱手让给腐烂、债务或蜘蛛。",
+      "gameDay": 1,
+      "gameTime": "00:00",
+      "location": null,
+      "metadata": {
+        "confidence": 0.88,
+        "reasoningChain": "今天我亲自检查并把重要木桶移至安全处，又发现了剪报中的新注记和可追查的重合线索，这让我更坚定地认为不能让酒厂衰败——这里不仅是生意，更是与父亲相关的东西。"
+      }
+    },
+    {
+      "type": "information",
+      "content": "我像父亲那样在办公室里保留着剪报本。他的讣告还在里面，还有一篇1988年的暴动旧报道和一篇关于奇怪海洋活动的新报纸，不知怎么混到了同一叠里。最近我在这些剪报里发现了以前没注意到的手写注记、一个折叠的小纸片和一处粘贴的剪报片段，提示有若干目击记录与时间点（但目前还不能明确指向父亲去世）。",
+      "gameDay": 1,
+      "gameTime": "00:00",
+      "location": null,
+      "metadata": {
+        "difficulty": "regular",
+        "knowledgeId": "k_abel_office_papers",
+        "lastUpdated": "2026-04-02T08:02:57.191Z"
+      }
+    },
+    {
+      "type": "secret",
+      "content": "我对父亲2002年突然去世的方式一直感到不对劲。我无法证明什么，但我不相信它像人们希望我接受的那样普通。",
+      "gameDay": 1,
+      "gameTime": "00:00",
+      "location": null,
+      "metadata": {
+        "knowledgeId": "s_abel_father_death"
+      }
+    },
+    {
+      "type": "plan",
+      "content": "延续父亲留下的酒厂事业，将威廉家族的伏特加品牌在卡森德拉扎根并发扬光大，证明自己有能力独当一面。",
+      "gameDay": 1,
+      "gameTime": "00:00",
+      "location": null,
+      "metadata": {
+        "planType": "long_term"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我在台灯下把剪报集与昨晚抄的注记逐条核对，把出现重合的姓名与时间抄到账本页边，并用符号标出几处可疑条目以便后续核查；抄录的注记仍随身携带。",
+      "gameDay": 2,
+      "gameTime": "00:20",
+      "location": "SCN_13_SUB_2",
+      "metadata": {
+        "itemId": "ITEM_SCN13_5",
+        "outcome": "在台灯下继续复核剪报集与昨晚抄录的注记，核对时间线并标注可疑条目",
+        "itemName": "剪报集"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我把最关键的抄录注记和几页已标注的剪报页放进办公桌抽屉并合上，准备在离开酒厂前把它们带走妥善保管。",
+      "gameDay": 2,
+      "gameTime": "00:25",
+      "location": "SCN_13_SUB_2",
+      "metadata": {
+        "itemId": "ITEM_SCN13_13",
+        "outcome": "把最关键的抄录注记和几页已标注的剪报页放进办公桌抽屉里以便带出酒厂前妥善保管",
+        "itemName": "老式橡木办公桌"
+      }
+    },
+    {
+      "type": "event",
+      "content": "抽屉是解着的，我顺手把抄录的注记和几页已标注的剪报从办公桌抽屉里取出，塞进外套内侧口袋，准备随身带走。",
+      "gameDay": 2,
+      "gameTime": "00:30",
+      "location": "SCN_13_SUB_2",
+      "metadata": {
+        "itemId": "ITEM_SCN13_13",
+        "outcome": "从老式橡木办公桌的抽屉里取出最关键的抄录注记和被标注的剪报页，放入外套内侧口袋以便随身带走",
+        "itemName": "老式橡木办公桌"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我在台灯下逐条核对了经营账本，把今天的出货单与发票草拟好，并在账本页边用符号标出有欠款的客户以便随后联系；我把一份草稿夹进了桌边的发票夹备用。",
+      "gameDay": 2,
+      "gameTime": "00:47",
+      "location": "SCN_13_SUB_2",
+      "metadata": {
+        "itemId": "ITEM_SCN13_8",
+        "outcome": "在台灯下核对经营账本并草拟今天的出货单与发票，标注出有欠款的客户以便随后联系",
+        "itemName": "经营账本"
+      }
+    },
+    {
+      "type": "event",
+      "content": "前往酒厂 成功",
+      "gameDay": 2,
+      "gameTime": "00:53",
+      "location": "SCN_13_SUB_1",
+      "metadata": {
+        "outcome": "前往酒厂 成功",
+        "blockedReason": "",
+        "failureReason": ""
+      }
+    },
+    {
+      "type": "event",
+      "content": "我巡查了靠近入口的蒸馏设备与供暖系统，确认并记录了需要维修的项目与优先级。发现部分蒸馏设备停用且落满灰尘，管道阀门有滴漏，已列为高优先级；角落的木质酒桶铁箍生锈，记录为中等优先级。维修清单与优先级已记录在案。",
+      "gameDay": 2,
+      "gameTime": "01:10",
+      "location": "SCN_13_SUB_1",
+      "metadata": {
+        "outcome": "巡查车间内的蒸馏器与供暖系统，检查搬移后的库存并记录需要维修的项目与优先级"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我推开车间深处那扇微微变形的木门，走进隐蔽的办公室并检查了内部的文件与摆设；我翻看并环视一遍，未发现明显的异常或有价值的物品。",
+      "gameDay": 2,
+      "gameTime": "01:20",
+      "location": "SCN_13_SUB_1",
+      "metadata": {
+        "outcome": "推开闲置车间深处的微微变形木质门，进入隐蔽办公室检查文件与摆设"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我检查并加固了办公室与车间的门窗，并把通往隐蔽办公室和地下酒窖的通道上了锁。部署了便携应急照明，厂区暗处的可见度有所改善。已制定并记录好晚间巡查路线与时间表。",
+      "gameDay": 2,
+      "gameTime": "01:35",
+      "location": "SCN_13_SUB_1",
+      "metadata": {
+        "outcome": "检查并加固办公室和车间的门窗，设置备用照明并准备晚间的巡查计划。"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我从剪报集中把那个折叠的小纸片取了出来，在办公室的台灯下小心展开并查看。纸片上写着几处姓名和对应的时间，内容与我已抄录的注记相符。为了继续比对，我把剪报摊开在台灯下。",
+      "gameDay": 2,
+      "gameTime": "01:46",
+      "location": "SCN_13_SUB_1",
+      "metadata": {
+        "itemId": "ITEM_SCN13_5",
+        "outcome": "从剪报集中取出折叠的小纸片并在办公室台灯下展开仔细查看",
+        "itemName": "剪报集"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我在台灯下把那张已展开的小纸片与剪报集和抄录注记逐条比对，检查墨迹与笔迹，发现笔迹与我抄录的内容一致；于是就在账本相应页边做了简要标注，并用符号标出需优先核查的姓名与时间。",
+      "gameDay": 2,
+      "gameTime": "01:57",
+      "location": "SCN_13_SUB_1",
+      "metadata": {
+        "itemId": "ITEM_SCN13_5",
+        "outcome": "在台灯下把折叠的小纸片与剪报集和抄录注记逐一比对，检查墨迹与笔迹是否一致并在账本旁做简要标注",
+        "itemName": "剪报集"
+      }
+    },
+    {
+      "type": "event",
+      "content": "在台灯下把今天得到的信息和新线索更新到剪报时间线上，列出明日优先调查对象 成功",
+      "gameDay": 2,
+      "gameTime": "02:18",
+      "location": "SCN_13_SUB_1",
+      "metadata": {
+        "outcome": "在台灯下把今天得到的信息和新线索更新到剪报时间线上，列出明日优先调查对象 成功"
+      }
+    },
+    {
+      "type": "event",
+      "content": "走到办公室坐下准备休息 [受阻：block] 失败",
+      "gameDay": 2,
+      "gameTime": "02:19",
+      "location": "SCN_13_SUB_1",
+      "metadata": {
+        "outcome": "走到办公室坐下准备休息 [受阻：block] 失败",
+        "blockedReason": "block",
+        "failureReason": "location_blocked"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我再次检查了隐蔽办公室和办公区域，查看了桌面、地面与出入口，没发现任何明显会阻止我坐下的东西或危险。",
+      "gameDay": 2,
+      "gameTime": "02:25",
+      "location": "SCN_13_SUB_1",
+      "metadata": {
+        "outcome": "检查办公室，寻找刚才阻止我坐下的原因"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我在台灯下把剪报集与抄录注记逐条比对，将那张已展开的小纸片上的手写姓名与时间点一一核实，确认与我抄录的注记相符。随后又复核了账本页边的标记，圈出需要优先跟进的条目。",
+      "gameDay": 2,
+      "gameTime": "02:40",
+      "location": "SCN_13_SUB_1",
+      "metadata": {
+        "itemId": "ITEM_SCN13_5",
+        "outcome": "在台灯下再次仔细比对剪报集与抄录注记，核对小纸片上的笔迹与时间点",
+        "itemName": "剪报集"
+      }
+    },
+    {
+      "type": "event",
+      "content": "坐在办公室的椅子上闭目休息五分钟，深呼吸以平复情绪并稍事恢复体力 成功",
+      "gameDay": 2,
+      "gameTime": "02:46",
+      "location": "SCN_13_SUB_1",
+      "metadata": {
+        "outcome": "坐在办公室的椅子上闭目休息五分钟，深呼吸以平复情绪并稍事恢复体力 成功"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我检查了角落里那几只空置的木质酒桶：桶身的铁箍确实有明显锈迹，盖子在位且看起来完好，桶是解着的，内部空无一物。",
+      "gameDay": 2,
+      "gameTime": "02:52",
+      "location": "SCN_13_SUB_1",
+      "metadata": {
+        "itemId": "ITEM_SCN13_10",
+        "outcome": "检查空置木质酒桶的铁箍和盖子是否完好",
+        "itemName": "空置木质酒桶"
+      }
+    },
+    {
+      "type": "event",
+      "content": "走回办公室准备休息 [受阻：block] 失败",
+      "gameDay": 2,
+      "gameTime": "02:53",
+      "location": "SCN_13_SUB_1",
+      "metadata": {
+        "outcome": "走回办公室准备休息 [受阻：block] 失败",
+        "blockedReason": "block",
+        "failureReason": "location_blocked"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我用办公室钥匙打开了车间深处那扇微微变形的木门，门锁被解开，隐蔽办公室现在可以进入。",
+      "gameDay": 2,
+      "gameTime": "02:56",
+      "location": "SCN_13_SUB_1",
+      "metadata": {
+        "outcome": "用办公室钥匙打开办公室门"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我把隐蔽办公室的抽屉和文件逐一翻查，检查所有能及之处，但没找到任何遗漏的笔记或能指向父亲死亡原因的线索。",
+      "gameDay": 2,
+      "gameTime": "03:08",
+      "location": "SCN_13_SUB_1",
+      "metadata": {
+        "outcome": "仔细搜索隐蔽办公室的抽屉和文件，查看是否有遗漏的笔记或与父亲死亡相关的线索"
+      }
+    },
+    {
+      "type": "event",
+      "content": "在台灯下再次逐页比对剪报集与抄录注记，仔细检查父亲讣告、手写注记和那张小纸片，寻找前后矛盾或未注意到的细节 成功",
+      "gameDay": 2,
+      "gameTime": "03:29",
+      "location": "SCN_13_SUB_1",
+      "metadata": {
+        "outcome": "在台灯下再次逐页比对剪报集与抄录注记，仔细检查父亲讣告、手写注记和那张小纸片，寻找前后矛盾或未注意到的细节 成功"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我把刚刚在台灯下展开的小纸片重新折好，然后塞进外套的内侧口袋里妥善保存，免得丢失。",
+      "gameDay": 2,
+      "gameTime": "03:33",
+      "location": "SCN_13_SUB_1",
+      "metadata": {
+        "itemId": "ITEM_SCN13_5",
+        "outcome": "把那张已展开的小纸片折好并放进外套内侧口袋以妥善保存",
+        "itemName": "剪报集"
+      }
+    },
+    {
+      "type": "event",
+      "content": "坐到办公室的椅子上，在台灯下闭目休息十分钟以恢复体力并整理思绪 成功",
+      "gameDay": 2,
+      "gameTime": "03:44",
+      "location": "SCN_13_SUB_1",
+      "metadata": {
+        "outcome": "坐到办公室的椅子上，在台灯下闭目休息十分钟以恢复体力并整理思绪 成功"
+      }
+    },
+    {
+      "type": "event",
+      "content": "清理通往地下酒窖的石砌台阶上的阻碍物以打开通道 [STR 1, rolled 9 (difficulty: regular)] failed",
+      "gameDay": 2,
+      "gameTime": "03:50",
+      "location": "SCN_13_SUB_1",
+      "metadata": {
+        "outcome": "清理通往地下酒窖的石砌台阶上的阻碍物以打开通道 [STR 1, rolled 9 (difficulty: regular)] failed"
+      }
+    },
+    {
+      "type": "event",
+      "content": "用力清理通往地下酒窖的石砌台阶上的阻碍物，打开下行通道 [STR 1, rolled 69 (difficulty: regular)] failed",
+      "gameDay": 2,
+      "gameTime": "04:01",
+      "location": "SCN_13_SUB_1",
+      "metadata": {
+        "outcome": "用力清理通往地下酒窖的石砌台阶上的阻碍物，打开下行通道 [STR 1, rolled 69 (difficulty: regular)] failed"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我在车间和储物区仔细翻找，从伏特加酿造设备上拆下了一段金属管，作为临时撬棍放在车间一角，以便清理通往地下酒窖石砌台阶上的阻碍物。设备因此有了损伤，但我得到了可用的工具。",
+      "gameDay": 2,
+      "gameTime": "04:12",
+      "location": "SCN_13_SUB_1",
+      "metadata": {
+        "outcome": "在厂区车间与储物区寻找一把撬棍或铁锹，以便清理通往地下酒窖石砌台阶上的阻碍物"
+      }
+    },
+    {
+      "type": "event",
+      "content": "用从蒸馏设备上拆下的那段金属管作为撬棍，撬开并清理通往地下酒窖石砌台阶上的阻碍物，打开下行通道 [STR 1, rolled 86 (difficulty: regular)] failed",
+      "gameDay": 2,
+      "gameTime": "04:23",
+      "location": "SCN_13_SUB_1",
+      "metadata": {
+        "outcome": "用从蒸馏设备上拆下的那段金属管作为撬棍，撬开并清理通往地下酒窖石砌台阶上的阻碍物，打开下行通道 [STR 1, rolled 86 (difficulty: regular)] failed"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我仔细检查了通往地下酒窖的石砌台阶，找到了可撬动的接点，并利用车间角落那段可作撬棍的金属管清除了阻碍，现在台阶可以下行通往酒窖。",
+      "gameDay": 2,
+      "gameTime": "04:29",
+      "location": "SCN_13_SUB_1",
+      "metadata": {
+        "outcome": "仔细检查并评估通往地下酒窖石砌台阶上的阻碍物，寻找可撬动的接点或替代通道"
+      }
+    },
+    {
+      "type": "witness",
+      "content": "[相遇] 我在怀特的钟表店与Marks White当面碰面，他把为我准备的替换小齿轮交给我，并简短地说明了几个安装要点。店内灯光昏黄，怀特看起来专注而礼貌。拿到零件让我心里踏实了——这件事按计划解决，接下来我仍照原定安排回厂处理账本、检查地下酒窖和蒸馏设备。",
+      "gameDay": 2,
+      "gameTime": "05:02",
+      "location": "SCN_12_SUB_1",
+      "metadata": {
+        "impact": 2,
+        "perspective": "co_presence",
+        "sourceAction": "Marks White 在 怀特的钟表店",
+        "sourceCharacterId": "__encounter__"
+      }
+    },
+    {
+      "type": "event",
+      "content": "前往钟表店取回怀特那里订的替换小齿轮 成功",
+      "gameDay": 2,
+      "gameTime": "05:02",
+      "location": "SCN_12_SUB_1",
+      "metadata": {
+        "outcome": "前往钟表店取回怀特那里订的替换小齿轮 成功",
+        "blockedReason": "",
+        "failureReason": ""
+      }
+    },
+    {
+      "type": "witness",
+      "content": "[相遇] 我在花店·卡森德拉之花碰到了店主Nancy Charlotte和Simon Laplace。店里弥漫着湿土和鲜花的气息，Nancy热情地打招呼，帮我挑了几朵耐放的雏菊；Simon在一旁沉稳地点头寒暄，神情略显心不在焉。我们就花的摆放和最近镇上的天气聊了几句，气氛友好但简短。我听后心里感到安稳——这次顺路买花并与店主维系关系的计划按预期进行，遇见两人没有带来紧急信息，也不会改变我接下来的安排。",
+      "gameDay": 2,
+      "gameTime": "05:14",
+      "location": "SCN_9_SUB_1",
+      "metadata": {
+        "impact": 2,
+        "perspective": "co_presence",
+        "sourceAction": "Nancy Charlotte, Simon Laplace (Simon) 在 花店·卡森德拉之花",
+        "sourceCharacterId": "__encounter__"
+      }
+    },
+    {
+      "type": "event",
+      "content": "前往花店·卡森德拉之花顺路买几朵花并与店主寒暄维系关系 成功",
+      "gameDay": 2,
+      "gameTime": "05:14",
+      "location": "SCN_9_SUB_1",
+      "metadata": {
+        "outcome": "前往花店·卡森德拉之花顺路买几朵花并与店主寒暄维系关系 成功",
+        "blockedReason": "",
+        "failureReason": ""
+      }
+    },
+    {
+      "type": "witness",
+      "content": "[相遇] 我在酒厂厂区碰到了Marks White。他看起来专注而礼貌，突然在这里遇见我让我有些意外但并不惊慌。想到早上已经从他那儿拿到替换小齿轮，我对他出现在厂区感到好奇并保持警惕，但这件事不会改变我现在下到地下酒窖检查木桶、锁具和温度的计划。",
+      "gameDay": 2,
+      "gameTime": "05:18",
+      "location": "SCN_13_SUB_1",
+      "metadata": {
+        "impact": 2,
+        "perspective": "co_presence",
+        "sourceAction": "Marks White 在 酒厂厂区",
+        "sourceCharacterId": "__encounter__"
+      }
+    },
+    {
+      "type": "event",
+      "content": "前往酒厂以检查地下酒窖 成功",
+      "gameDay": 2,
+      "gameTime": "05:18",
+      "location": "SCN_13_SUB_1",
+      "metadata": {
+        "outcome": "前往酒厂以检查地下酒窖 成功",
+        "blockedReason": "",
+        "failureReason": ""
+      }
+    },
+    {
+      "type": "event",
+      "content": "怀特来酒厂当面询问替换零件的领取方式，是现在取还是由代表代为取走。我回答了他的问题，并确认他会准备好零件。交流没有冲突。",
+      "gameDay": 2,
+      "gameTime": "05:24",
+      "location": "SCN_13_SUB_1",
+      "metadata": {
+        "outcome": "当面确认亚伯来此的目的，询问他是否现在要取走为他准备的替换零件或应交由酒厂代表代收"
+      }
+    },
+    {
+      "type": "witness",
+      "content": "[相遇] 我在酒厂厂区碰到了Marks White。他看起来专注且礼貌，这让我有些意外但并不惊慌。想到早上已从他那拿到替换小齿轮，我对他在厂区出现感到好奇并保持警惕；我们简短确认了零件领取的安排，交流没有冲突。这个相遇不会改变我下到地下酒窖检查木桶、锁具和温度的计划。",
+      "gameDay": 2,
+      "gameTime": "06:05",
+      "location": "SCN_13_SUB_1",
+      "metadata": {
+        "impact": 2,
+        "perspective": "co_presence",
+        "sourceAction": "Marks White 在 酒厂厂区",
+        "sourceCharacterId": "__encounter__"
+      }
+    },
+    {
+      "type": "event",
+      "content": "怀特把替换零件交给我，我在他面前确认并记录了交接细节。对他问及马塞尔和“九天使”时，我告诉他最近没人见过马塞尔——我也已因付不起工资解雇了马塞尔——并且我没有听说过“九天使”。",
+      "gameDay": 2,
+      "gameTime": "06:12",
+      "location": "SCN_13_SUB_1",
+      "metadata": {
+        "outcome": "把为他准备的替换零件递给亚伯，确认他本人领取并当面记录交接细节，同时询问他是否听说过关于马塞尔或“九天使”的任何消息"
+      }
+    },
+    {
+      "type": "plan",
+      "content": "Today's plan: 1. 在办公室整理今天的账务和出货记录，翻看父亲留下的剪报寻找有用线索。 at 办公室; 2. 巡视酒厂车间，检查蒸馏器和储罐的运行状况并记录需要维修的项目。 at 酒厂; 3. 下到地下酒窖检查库存瓶况、温度以及是否有蛛网或其他异常，并把重要货物移到更安全的位置。 at 酒厂; 4. 去钟表店找怀特，商量订购一个替换小零件并顺便打听他最近有没有见过马塞尔的下落。 at 钟表店; 5. 若钟表店无法提供零件，就到五金店购买必需的备件并确认明早能否继续送货维修。 at 五金店; 6. 回到办公室准备明天的工作安排，给留守的员工留好说明，检查门窗锁好后在办公室里休息以恢复体力并守护酒厂。 at 办公室",
+      "gameDay": 1,
+      "gameTime": "19:00",
+      "location": null,
+      "metadata": {
+        "planType": "daily"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我把靠窗书架上的剪报集逐册翻阅，挑出几页看起来重要的剪报摊在办公桌上准备记录；目前还没有发现能明确指向父亲去世、1988年暴动或那些海洋异常的确凿证据。",
+      "gameDay": 1,
+      "gameTime": "19:20",
+      "location": "SCN_13_SUB_2",
+      "metadata": {
+        "itemId": "ITEM_SCN13_5",
+        "outcome": "翻阅剪报集，仔细查看父亲留下的剪报，寻找关于父亲去世、1988年暴动或那些奇怪海洋活动的任何可疑线索，并把重要页翻到桌面上以便记录",
+        "itemName": "剪报集"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我把今天的出货单和发票从发票夹与桌面上的资料里整理出来，逐条记入经营账本，并在相关条目旁标注了需要维修的设备与几处可疑的剪报线索；记录完把账本合上放回桌角。",
+      "gameDay": 1,
+      "gameTime": "19:35",
+      "location": "SCN_13_SUB_2",
+      "metadata": {
+        "itemId": "ITEM_SCN13_8",
+        "outcome": "把今天的出货单和发票整理并记录到经营账本里，标注需要维修的设备与发现的异常剪报线索",
+        "itemName": "经营账本"
+      }
+    },
+    {
+      "type": "event",
+      "content": "走到酒厂车间巡视蒸馏器和储罐的运行状况 成功",
+      "gameDay": 1,
+      "gameTime": "19:40",
+      "location": "SCN_13_SUB_1",
+      "metadata": {
+        "outcome": "走到酒厂车间巡视蒸馏器和储罐的运行状况 成功",
+        "blockedReason": "",
+        "failureReason": ""
+      }
+    },
+    {
+      "type": "event",
+      "content": "沿厂区角落的石砌台阶走下去，进入地下酒窖准备检查库存瓶况、温度并留意蛛网或其他异常 成功",
+      "gameDay": 1,
+      "gameTime": "19:41",
+      "location": "SCN_13_SUB_1",
+      "metadata": {
+        "outcome": "沿厂区角落的石砌台阶走下去，进入地下酒窖准备检查库存瓶况、温度并留意蛛网或其他异常 成功",
+        "blockedReason": "",
+        "failureReason": ""
+      }
+    },
+    {
+      "type": "event",
+      "content": "我下到地下酒窖，检查了库存瓶况和温度，没发现蛛网或其他异常；把重要货物，包括那些木质酒桶，搬到更安全的位置并安置好了。",
+      "gameDay": 1,
+      "gameTime": "19:57",
+      "location": "SCN_13_SUB_1",
+      "metadata": {
+        "outcome": "检查地下酒窖内的库存瓶况和温度，查看是否有蛛网或其他异常，并把重要货物（包括木质酒桶）移到更安全的位置"
+      }
+    },
+    {
+      "type": "event",
+      "content": "走到钟表店找怀特，商量订购一个替换小零件并顺便打听他最近有没有见过马塞尔的下落 成功",
+      "gameDay": 1,
+      "gameTime": "20:02",
+      "location": "SCN_12_SUB_1",
+      "metadata": {
+        "outcome": "走到钟表店找怀特，商量订购一个替换小零件并顺便打听他最近有没有见过马塞尔的下落 成功",
+        "blockedReason": "",
+        "failureReason": ""
+      }
+    },
+    {
+      "type": "witness",
+      "content": "[相遇] 我刚在怀特的钟表店与怀特和谢安德拉·赫尔南德斯面对面碰面。怀特在柜台前摆弄一个小齿轮，谢安德拉站在一旁，神情有点警觉。原本我是来订购替换小零件并顺便问问马塞尔的下落——能当面见到怀特让我松了口气，但谢安德拉的出现让我有些戒备，感觉事情可能比我预计的复杂。总体上紧张但冷静，打算照原计划把零件的事和马塞尔的线索打听清楚。",
+      "gameDay": 1,
+      "gameTime": "20:02",
+      "location": "SCN_12_SUB_1",
+      "metadata": {
+        "impact": 2,
+        "perspective": "co_presence",
+        "sourceAction": "Marks White, Shandra Hernandez 在 怀特的钟表店",
+        "sourceCharacterId": "__encounter__"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我在怀特的钟表店当面订了一个替换的小零件，并顺便当面问怀特和珊德拉最近有没有见过马塞尔。怀特接受了订货，表示会准备零件；怀特和珊德拉都告诉我最近没见过马塞尔。 [rel:Marks White +0 → 10] [rel:Shandra Hernandez +0 → 0]",
+      "gameDay": 1,
+      "gameTime": "20:10",
+      "location": "SCN_12_SUB_1",
+      "metadata": {
+        "outcome": "向怀特订购那个替换小零件，并当面问怀特与谢安德拉最近有没有见过马塞尔"
+      }
+    },
+    {
+      "type": "event",
+      "content": "回到酒厂 成功",
+      "gameDay": 1,
+      "gameTime": "20:15",
+      "location": "SCN_13_SUB_1",
+      "metadata": {
+        "outcome": "回到酒厂 成功",
+        "blockedReason": "",
+        "failureReason": ""
+      }
+    },
+    {
+      "type": "event",
+      "content": "走到办公室 成功",
+      "gameDay": 1,
+      "gameTime": "20:17",
+      "location": "SCN_13_SUB_2",
+      "metadata": {
+        "outcome": "走到办公室 成功",
+        "blockedReason": "",
+        "failureReason": ""
+      }
+    },
+    {
+      "type": "event",
+      "content": "我把台灯打开，暖黄的光把桌面照得很清楚，便继续整理账本和摊开的剪报，能清楚看清记录与纸页。",
+      "gameDay": 1,
+      "gameTime": "20:20",
+      "location": "SCN_13_SUB_2",
+      "metadata": {
+        "outcome": "把台灯打开以便查看桌面并继续整理账务和剪报"
+      }
+    },
+    {
+      "type": "event",
+      "content": "给留守的员工写下明日工作安排并留好说明 成功",
+      "gameDay": 1,
+      "gameTime": "20:35",
+      "location": "SCN_13_SUB_2",
+      "metadata": {
+        "outcome": "给留守的员工写下明日工作安排并留好说明 成功"
+      }
+    },
+    {
+      "type": "event",
+      "content": "检查并锁好办公室的门窗 成功",
+      "gameDay": 1,
+      "gameTime": "20:40",
+      "location": "SCN_13_SUB_2",
+      "metadata": {
+        "outcome": "检查并锁好办公室的门窗 成功"
+      }
+    },
+    {
+      "type": "event",
+      "content": "在办公室休息以恢复体力并守护酒厂 成功",
+      "gameDay": 1,
+      "gameTime": "21:41",
+      "location": "SCN_13_SUB_2",
+      "metadata": {
+        "outcome": "在办公室休息以恢复体力并守护酒厂 成功"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我把靠窗书架上的剪报集拿到办公桌上，摊开几页在台灯下逐页翻看并抄录可能与父亲去世有关的线索；到目前为止还未发现明确指向父亲死亡的确凿证据。",
+      "gameDay": 1,
+      "gameTime": "22:00",
+      "location": "SCN_13_SUB_2",
+      "metadata": {
+        "itemId": "ITEM_SCN13_5",
+        "outcome": "把靠窗的剪报集拿到办公桌上，继续翻看并抄录可能有关父亲去世的线索",
+        "itemName": "剪报集"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我把酿酒技术书架一排排检查，掀开书背、掏探夹层并逐页翻阅，寻找父亲可能藏匿的笔记或信件。没有发现任何信件或笔记，只有泛黄的纸页、灰尘和翻阅留下的折痕。",
+      "gameDay": 1,
+      "gameTime": "22:06",
+      "location": "SCN_13_SUB_2",
+      "metadata": {
+        "itemId": "ITEM_SCN13_4",
+        "outcome": "搜查酿酒技术书架，检查书背、夹层与书页之间是否藏有父亲留下的笔记或信件",
+        "itemName": "酿酒技术书架"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我把老式橡木办公桌的抽屉拉开检查了一遍；抽屉是解着的，而且里面空的，没有手电筒、火柴或其他可用来照明的物品。我把抽屉留着打开，准备去别处继续寻找。",
+      "gameDay": 1,
+      "gameTime": "22:12",
+      "location": "SCN_13_SUB_2",
+      "metadata": {
+        "itemId": "ITEM_SCN13_13",
+        "outcome": "打开老式橡木办公桌的抽屉，检查里面是否有手电筒、火柴或其他能照明的物品",
+        "itemName": "老式橡木办公桌"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我把相框玻璃轻轻擦去表面的灰尘，将褪色的老照片取下翻看背面和相框缝隙，仔细寻找笔迹、贴纸或藏匿物；背面只有泛黄的纸张和年代感的胶痕，没有发现任何笔记、贴片或暗格。",
+      "gameDay": 1,
+      "gameTime": "22:18",
+      "location": "SCN_13_SUB_2",
+      "metadata": {
+        "itemId": "ITEM_SCN13_11",
+        "outcome": "检查褪色老照片的背面和相框，寻找笔迹、贴纸或藏匿物",
+        "itemName": "褪色老照片"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我把老式橡木办公桌的底部和所有抽屉逐一检查、抚摸缝隙与角落，寻找暗格或刻痕。除了账本、几页摊开的剪报和办公桌本身的正常结构外，未发现任何隐藏隔层或异常。",
+      "gameDay": 1,
+      "gameTime": "22:24",
+      "location": "SCN_13_SUB_2",
+      "metadata": {
+        "outcome": "检查老式橡木办公桌底部和抽屉内部的每一个角落，寻找暗格、刻痕或隐藏物"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我把发票夹翻开，逐页检查并核对了与今日出货相符的几笔发票，但没有发现任何直接提到我父亲去世或马塞尔的交易记录。",
+      "gameDay": 1,
+      "gameTime": "22:30",
+      "location": "SCN_13_SUB_2",
+      "metadata": {
+        "itemId": "ITEM_SCN13_9",
+        "outcome": "检查并翻阅发票夹中的发票，寻找与父亲去世或马塞尔相关的交易记录",
+        "itemName": "发票夹"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我把靠窗的剪报集拿到台灯下，在关于1988年暴动与奇异海洋活动的那几页逐页仔细翻阅。发现了几处以前没注意到的手写注记、一个折叠的小纸片和一处粘贴的剪报片段，提示有目击记录和时间点，但并没有给出能明确指向父亲去世的确凿证据。我把这些页摊在桌上备用，准备抄录重要内容。",
+      "gameDay": 1,
+      "gameTime": "22:40",
+      "location": "SCN_13_SUB_2",
+      "metadata": {
+        "itemId": "ITEM_SCN13_5",
+        "outcome": "再次仔细翻阅靠窗书架上的剪报集，重点检查关于1988年暴动和奇异海洋活动的那几页，寻找被忽略的注记、折痕或粘贴物",
+        "itemName": "剪报集"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我把剪报中夹着的折叠小纸片展开，仔细读了上面的手写注记并将重要内容抄录下来；这些笔记提示了若干目击记录与时间点，但并未给出能明确指向父亲去世的确凿证据。",
+      "gameDay": 1,
+      "gameTime": "22:50",
+      "location": "SCN_13_SUB_2",
+      "metadata": {
+        "itemId": "ITEM_SCN13_5",
+        "outcome": "展开剪报中的折叠小纸片，仔细阅读并抄录上面的手写注记",
+        "itemName": "剪报集"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我把刚抄录的手写注记与靠窗的剪报集和桌上的父亲讣告逐条对照，把出现重合的时间和姓名做了标注；没有找到能直接说明父亲死因的确凿证据，但圈出几处重合的人名与时间，作为后续核查线索。",
+      "gameDay": 1,
+      "gameTime": "22:56",
+      "location": "SCN_13_SUB_2",
+      "metadata": {
+        "itemId": "ITEM_SCN13_5",
+        "outcome": "把刚抄录的手写注记与靠窗的剪报集和桌上的父亲讣告对照核对，标注出重合的时间与出现的姓名",
+        "itemName": "剪报集"
+      }
+    },
+    {
+      "type": "event",
+      "content": "打开台灯以便继续检查和抄录剪报注记 成功",
+      "gameDay": 1,
+      "gameTime": "22:58",
+      "location": "SCN_13_SUB_2",
+      "metadata": {
+        "outcome": "打开台灯以便继续检查和抄录剪报注记 成功"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我把刚抄录的手写注记与摊开的剪报逐条对照、整理成时间线，并把出现可疑重合的姓名与时间工整地记在账本页边作为后续核查的线索；随后将账本合上，放回桌角。",
+      "gameDay": 1,
+      "gameTime": "23:10",
+      "location": "SCN_13_SUB_2",
+      "metadata": {
+        "itemId": "账本",
+        "outcome": "把刚抄录的手写注记和摊开的剪报整理成时间线，并把可疑的重合姓名与时间写入账本边缘以便后续核查",
+        "itemName": "账本"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我打开台灯，灯光把桌面照亮，我在台灯下继续检查摊开的剪报和刚抄录的注记，逐条核对并在几处时间与姓名处做了标注。",
+      "gameDay": 1,
+      "gameTime": "23:12",
+      "location": "SCN_13_SUB_2",
+      "metadata": {
+        "outcome": "打开台灯，照亮桌面继续检查摊开的剪报和抄录的注记"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我把老式橡木办公桌的抽屉合上了。抽屉是解着的、里面是空的，合上时发出轻微的木声，现在抽屉已关闭放回原位。",
+      "gameDay": 1,
+      "gameTime": "23:14",
+      "location": "SCN_13_SUB_2",
+      "metadata": {
+        "itemId": "ITEM_SCN13_13",
+        "outcome": "关上老式橡木办公桌的抽屉",
+        "itemName": "老式橡木办公桌"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我把账本和台灯下摊开的剪报集（其中夹着我刚抄录的注记）收好，连同注记一并放进老式橡木办公桌的抽屉里，并把抽屉关上，确保资料与线索被妥善保存。",
+      "gameDay": 1,
+      "gameTime": "23:18",
+      "location": "SCN_13_SUB_2",
+      "metadata": {
+        "itemId": "账本",
+        "outcome": "把账本和刚抄录的注记放入老式橡木办公桌的抽屉里并关上抽屉，确保资料和线索安全保存",
+        "itemName": "账本"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我把放在老式橡木办公桌抽屉里的抄录注记取了出来，并把那些注记悄悄塞进外套的内侧口袋里带在身上；抽屉暂时没关。",
+      "gameDay": 1,
+      "gameTime": "23:22",
+      "location": "SCN_13_SUB_2",
+      "metadata": {
+        "itemId": "ITEM_SCN13_13",
+        "outcome": "把放在老式橡木办公桌抽屉里的抄录注记取出来，藏到外套内侧口袋里以便随身携带",
+        "itemName": "老式橡木办公桌"
+      }
+    },
+    {
+      "type": "event",
+      "content": "把外套内侧口袋里的抄录注记掏出来，在台灯下仔细阅读并核对我记下的时间与人名 成功",
+      "gameDay": 1,
+      "gameTime": "23:28",
+      "location": "SCN_13_SUB_2",
+      "metadata": {
+        "outcome": "把外套内侧口袋里的抄录注记掏出来，在台灯下仔细阅读并核对我记下的时间与人名 成功"
+      }
+    },
+    {
+      "type": "event",
+      "content": "把抄录注记放回外套内侧口袋 成功",
+      "gameDay": 1,
+      "gameTime": "23:31",
+      "location": "SCN_13_SUB_2",
+      "metadata": {
+        "outcome": "把抄录注记放回外套内侧口袋 成功"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我从外套内侧口袋里把那页抄录注记摸了出来，放进了老式橡木办公桌的抽屉里，然后把抽屉合上了，合上时传来轻微的木声。",
+      "gameDay": 1,
+      "gameTime": "23:35",
+      "location": "SCN_13_SUB_2",
+      "metadata": {
+        "itemId": "ITEM_SCN13_13",
+        "outcome": "把外套内侧口袋里的抄录注记取出，放回老式橡木办公桌的抽屉并把抽屉关上",
+        "itemName": "老式橡木办公桌"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我把抽屉拉开，取出了那页刚抄录的注记，确认内容后将其收进随身。抽屉仍然开着，桌上的台灯把周围照得很清楚。",
+      "gameDay": 1,
+      "gameTime": "23:38",
+      "location": "SCN_13_SUB_2",
+      "metadata": {
+        "itemId": "ITEM_SCN13_13",
+        "outcome": "打开老式橡木办公桌的抽屉并取出我刚抄录的注记",
+        "itemName": "老式橡木办公桌"
+      }
+    },
+    {
+      "type": "event",
+      "content": "把老式橡木办公桌的抽屉合上 成功",
+      "gameDay": 1,
+      "gameTime": "23:40",
+      "location": "SCN_13_SUB_2",
+      "metadata": {
+        "outcome": "把老式橡木办公桌的抽屉合上 成功"
+      }
+    },
+    {
+      "type": "event",
+      "content": "打开台灯继续核对抄录注记与摊开的剪报 成功",
+      "gameDay": 1,
+      "gameTime": "23:46",
+      "location": "SCN_13_SUB_2",
+      "metadata": {
+        "outcome": "打开台灯继续核对抄录注记与摊开的剪报 成功"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我打开了台灯，暖黄的光圈照亮了桌面工作区，使摊开的报纸与剪报清晰可见，便于继续核对记录。",
+      "gameDay": 1,
+      "gameTime": "23:48",
+      "location": "SCN_13_SUB_2",
+      "metadata": {
+        "outcome": "打开台灯"
+      }
+    },
+    {
+      "type": "information",
+      "content": "怀特和谢安德拉都告诉我他们最近没有见过马塞尔，没有人能给出他的下落线索。",
+      "gameDay": 1,
+      "gameTime": "23:59",
+      "location": null,
+      "metadata": {
+        "revealed": false,
+        "difficulty": "regular",
+        "knowledgeId": "learned_day1_2"
+      }
+    },
+    {
+      "type": "information",
+      "content": "怀特在钟表店当面接受了我的订单，会为我准备一个替换的小齿轮零件。",
+      "gameDay": 1,
+      "gameTime": "23:59",
+      "location": null,
+      "metadata": {
+        "revealed": false,
+        "difficulty": "automatic",
+        "knowledgeId": "learned_day1_1"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我把抄录注记上的重要姓名与对应时间一一抄到账本的一页空白处，字迹工整以便后续比对。抄写完毕后合上账本，随身带着备用。",
+      "gameDay": 1,
+      "gameTime": "23:59",
+      "location": "SCN_13_SUB_2",
+      "metadata": {
+        "itemId": "账本",
+        "outcome": "把抄录注记上的重要姓名与时间抄到账本的空白页上以便保存和比对",
+        "itemName": "账本"
+      }
+    },
+    {
+      "type": "secret",
+      "content": "靠窗的剪报集中有以前未注意到的手写注记、一个折叠的小纸片和一处粘贴的剪报片段，这些提示了若干目击记录与时间点，但并未直接证明父亲去世的原因。 （我已将这些内容抄录并留存）",
+      "gameDay": 1,
+      "gameTime": "23:59",
+      "location": null,
+      "metadata": {
+        "revealed": false,
+        "difficulty": "hard",
+        "knowledgeId": "learned_day1_4"
+      }
+    },
+    {
+      "type": "secret",
+      "content": "我把抄录的注记与剪报逐条对照，标注出几处姓名与时间的重合，把这些条目抄到账本页边作为后续核查线索，并随身携带了那页注记。",
+      "gameDay": 1,
+      "gameTime": "23:59",
+      "location": null,
+      "metadata": {
+        "revealed": false,
+        "difficulty": "hard",
+        "knowledgeId": "learned_day1_6"
+      }
+    },
+    {
+      "type": "information",
+      "content": "我下到地下酒窖检查时没有发现蛛网或其他异常，并把重要的木质酒桶搬到更安全的位置以防损失。",
+      "gameDay": 1,
+      "gameTime": "23:59",
+      "location": null,
+      "metadata": {
+        "revealed": false,
+        "difficulty": "regular",
+        "knowledgeId": "learned_day1_3"
+      }
+    },
+    {
+      "type": "information",
+      "content": "办公桌的抽屉当时是解着的但里面是空的，没有手电筒、火柴或其他可用来照明的物品。",
+      "gameDay": 1,
+      "gameTime": "23:59",
+      "location": null,
+      "metadata": {
+        "revealed": false,
+        "difficulty": "automatic",
+        "knowledgeId": "learned_day1_5"
+      }
+    }
+  ],
+  "plans": [
+    {
+      "npcName": "Abel William",
+      "gameDay": 1,
+      "schedule": [
+        {
+          "activity": "在办公室整理今天的账务和出货记录，翻看父亲留下的剪报寻找有用线索。",
+          "location": "办公室"
+        },
+        {
+          "activity": "巡视酒厂车间，检查蒸馏器和储罐的运行状况并记录需要维修的项目。",
+          "location": "酒厂"
+        },
+        {
+          "activity": "下到地下酒窖检查库存瓶况、温度以及是否有蛛网或其他异常，并把重要货物移到更安全的位置。",
+          "location": "酒厂"
+        },
+        {
+          "activity": "去钟表店找怀特，商量订购一个替换小零件并顺便打听他最近有没有见过马塞尔的下落。",
+          "location": "钟表店"
+        },
+        {
+          "activity": "若钟表店无法提供零件，就到五金店购买必需的备件并确认明早能否继续送货维修。",
+          "location": "五金店"
+        },
+        {
+          "activity": "回到办公室准备明天的工作安排，给留守的员工留好说明，检查门窗锁好后在办公室里休息以恢复体力并守护酒厂。",
+          "location": "办公室"
+        }
+      ],
+      "nodes": [
+        {
+          "type": "object_interaction",
+          "action": "把抄录注记上的重要姓名与时间抄到账本的空白页上以便保存和比对",
+          "impact": 0,
+          "nodeId": "oi1",
+          "status": "completed",
+          "endTime": "23:59",
+          "outcome": "我把抄录注记上的重要姓名与对应时间一一抄到账本的一页空白处，字迹工整以便后续比对。抄写完毕后合上账本，随身带着备用。",
+          "startTime": "23:49",
+          "characterId": "Abel William",
+          "characterName": "Abel William",
+          "executionMeta": {
+            "startedAt": "23:49",
+            "completedAt": "23:59",
+            "remainingMinutes": 0
+          },
+          "objectInteractionPayload": {
+            "itemId": "账本"
+          }
+        },
+        {
+          "type": "object_interaction",
+          "action": "把抄录注记上的重要姓名与时间抄到账本的空白页上以便保存和比对",
+          "impact": 0,
+          "nodeId": "oi1",
+          "status": "completed",
+          "endTime": "23:59",
+          "outcome": "我把抄录注记上的重要姓名与对应时间一一抄到账本的一页空白处，字迹工整以便后续比对。抄写完毕后合上账本，随身带着备用。",
+          "startTime": "23:49",
+          "characterId": "Abel William",
+          "characterName": "Abel William",
+          "executionMeta": {
+            "startedAt": "23:49",
+            "completedAt": "23:59",
+            "remainingMinutes": 0
+          },
+          "objectInteractionPayload": {
+            "itemId": "账本"
+          }
+        },
+        {
+          "type": "movement",
+          "action": "走到办公室",
+          "impact": 0,
+          "nodeId": "m1",
+          "status": "completed",
+          "endTime": "20:18",
+          "outcome": "走到办公室 成功",
+          "startTime": "20:16",
+          "characterId": "Abel William",
+          "destination": "SCN_13_SUB_2",
+          "characterName": "Abel William",
+          "executionMeta": {
+            "movement": {
+              "routeSnapshot": [
+                {
+                  "to": {
+                    "type": "scene",
+                    "sceneId": "SCN_13_SUB_2"
+                  },
+                  "from": {
+                    "type": "scene",
+                    "sceneId": "SCN_13_SUB_1"
+                  },
+                  "kind": "to_scene",
+                  "blockCheck": {
+                    "toId": "SCN_13_SUB_2",
+                    "fromId": "SCN_13_SUB_1"
+                  },
+                  "durationMinutes": 2
+                }
+              ],
+              "targetPosition": {
+                "type": "scene",
+                "sceneId": "SCN_13_SUB_2"
+              },
+              "minutesIntoStep": 0,
+              "currentStepIndex": 1,
+              "lastReachablePosition": {
+                "type": "scene",
+                "sceneId": "SCN_13_SUB_2"
+              }
+            },
+            "startedAt": "20:16",
+            "completedAt": "20:17",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "movement",
+          "action": "走到办公室",
+          "impact": 0,
+          "nodeId": "m1",
+          "status": "completed",
+          "endTime": "20:18",
+          "outcome": "走到办公室 成功",
+          "startTime": "20:16",
+          "characterId": "Abel William",
+          "destination": "SCN_13_SUB_2",
+          "characterName": "Abel William",
+          "executionMeta": {
+            "movement": {
+              "routeSnapshot": [
+                {
+                  "to": {
+                    "type": "scene",
+                    "sceneId": "SCN_13_SUB_2"
+                  },
+                  "from": {
+                    "type": "scene",
+                    "sceneId": "SCN_13_SUB_1"
+                  },
+                  "kind": "to_scene",
+                  "blockCheck": {
+                    "toId": "SCN_13_SUB_2",
+                    "fromId": "SCN_13_SUB_1"
+                  },
+                  "durationMinutes": 2
+                }
+              ],
+              "targetPosition": {
+                "type": "scene",
+                "sceneId": "SCN_13_SUB_2"
+              },
+              "minutesIntoStep": 0,
+              "currentStepIndex": 1,
+              "lastReachablePosition": {
+                "type": "scene",
+                "sceneId": "SCN_13_SUB_2"
+              }
+            },
+            "startedAt": "20:16",
+            "completedAt": "20:17",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "scene_interaction",
+          "action": "检查地下酒窖内的库存瓶况和温度，查看是否有蛛网或其他异常，并把重要货物（包括木质酒桶）移到更安全的位置",
+          "impact": 0,
+          "nodeId": "si_cellar_check_01",
+          "status": "completed",
+          "endTime": "19:57",
+          "outcome": "我下到地下酒窖，检查了库存瓶况和温度，没发现蛛网或其他异常；把重要货物，包括那些木质酒桶，搬到更安全的位置并安置好了。",
+          "startTime": "19:42",
+          "characterId": "Abel William",
+          "characterName": "Abel William",
+          "executionMeta": {
+            "startedAt": "19:42",
+            "completedAt": "19:57",
+            "remainingMinutes": 0
+          },
+          "objectInteractionPayload": {
+            "itemId": "ITEM_SCN13_10"
+          }
+        },
+        {
+          "type": "movement",
+          "action": "走到办公室",
+          "impact": 0,
+          "nodeId": "m1",
+          "status": "completed",
+          "endTime": "20:18",
+          "outcome": "走到办公室 成功",
+          "startTime": "20:16",
+          "characterId": "Abel William",
+          "destination": "SCN_13_SUB_2",
+          "characterName": "Abel William",
+          "executionMeta": {
+            "movement": {
+              "routeSnapshot": [
+                {
+                  "to": {
+                    "type": "scene",
+                    "sceneId": "SCN_13_SUB_2"
+                  },
+                  "from": {
+                    "type": "scene",
+                    "sceneId": "SCN_13_SUB_1"
+                  },
+                  "kind": "to_scene",
+                  "blockCheck": {
+                    "toId": "SCN_13_SUB_2",
+                    "fromId": "SCN_13_SUB_1"
+                  },
+                  "durationMinutes": 2
+                }
+              ],
+              "targetPosition": {
+                "type": "scene",
+                "sceneId": "SCN_13_SUB_2"
+              },
+              "minutesIntoStep": 0,
+              "currentStepIndex": 1,
+              "lastReachablePosition": {
+                "type": "scene",
+                "sceneId": "SCN_13_SUB_2"
+              }
+            },
+            "startedAt": "20:16",
+            "completedAt": "20:17",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "character_interaction",
+          "action": "向怀特订购那个替换小零件，并当面问怀特与谢安德拉最近有没有见过马塞尔",
+          "impact": 1,
+          "nodeId": "ci1",
+          "status": "completed",
+          "endTime": "20:10",
+          "outcome": "我在怀特的钟表店当面订了一个替换的小零件，并顺便当面问怀特和珊德拉最近有没有见过马塞尔。怀特接受了订货，表示会准备零件；怀特和珊德拉都告诉我最近没见过马塞尔。",
+          "startTime": "20:03",
+          "characterId": "Abel William",
+          "characterName": "Abel William",
+          "executionMeta": {
+            "startedAt": "20:03",
+            "completedAt": "20:10",
+            "remainingMinutes": 0
+          },
+          "targetCharacterIds": [
+            "Marks White",
+            "Shandra Hernandez"
+          ]
+        },
+        {
+          "type": "movement",
+          "action": "走到办公室",
+          "impact": 0,
+          "nodeId": "m1",
+          "status": "completed",
+          "endTime": "20:18",
+          "outcome": "走到办公室 成功",
+          "startTime": "20:16",
+          "characterId": "Abel William",
+          "destination": "SCN_13_SUB_2",
+          "characterName": "Abel William",
+          "executionMeta": {
+            "movement": {
+              "routeSnapshot": [
+                {
+                  "to": {
+                    "type": "scene",
+                    "sceneId": "SCN_13_SUB_2"
+                  },
+                  "from": {
+                    "type": "scene",
+                    "sceneId": "SCN_13_SUB_1"
+                  },
+                  "kind": "to_scene",
+                  "blockCheck": {
+                    "toId": "SCN_13_SUB_2",
+                    "fromId": "SCN_13_SUB_1"
+                  },
+                  "durationMinutes": 2
+                }
+              ],
+              "targetPosition": {
+                "type": "scene",
+                "sceneId": "SCN_13_SUB_2"
+              },
+              "minutesIntoStep": 0,
+              "currentStepIndex": 1,
+              "lastReachablePosition": {
+                "type": "scene",
+                "sceneId": "SCN_13_SUB_2"
+              }
+            },
+            "startedAt": "20:16",
+            "completedAt": "20:17",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "movement",
+          "action": "走到办公室",
+          "impact": 0,
+          "nodeId": "m1",
+          "status": "completed",
+          "endTime": "20:18",
+          "outcome": "走到办公室 成功",
+          "startTime": "20:16",
+          "characterId": "Abel William",
+          "destination": "SCN_13_SUB_2",
+          "characterName": "Abel William",
+          "executionMeta": {
+            "movement": {
+              "routeSnapshot": [
+                {
+                  "to": {
+                    "type": "scene",
+                    "sceneId": "SCN_13_SUB_2"
+                  },
+                  "from": {
+                    "type": "scene",
+                    "sceneId": "SCN_13_SUB_1"
+                  },
+                  "kind": "to_scene",
+                  "blockCheck": {
+                    "toId": "SCN_13_SUB_2",
+                    "fromId": "SCN_13_SUB_1"
+                  },
+                  "durationMinutes": 2
+                }
+              ],
+              "targetPosition": {
+                "type": "scene",
+                "sceneId": "SCN_13_SUB_2"
+              },
+              "minutesIntoStep": 0,
+              "currentStepIndex": 1,
+              "lastReachablePosition": {
+                "type": "scene",
+                "sceneId": "SCN_13_SUB_2"
+              }
+            },
+            "startedAt": "20:16",
+            "completedAt": "20:17",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "scene_interaction",
+          "action": "打开台灯",
+          "impact": 0,
+          "nodeId": "si1",
+          "status": "completed",
+          "endTime": "23:48",
+          "outcome": "我打开了台灯，暖黄的光圈照亮了桌面工作区，使摊开的报纸与剪报清晰可见，便于继续核对记录。",
+          "startTime": "23:47",
+          "characterId": "Abel William",
+          "characterName": "Abel William",
+          "executionMeta": {
+            "startedAt": "23:47",
+            "completedAt": "23:48",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "action",
+          "action": "把抄录注记放回外套内侧口袋",
+          "impact": 0,
+          "nodeId": "a1",
+          "status": "completed",
+          "endTime": "23:31",
+          "outcome": "把抄录注记放回外套内侧口袋 成功",
+          "startTime": "23:29",
+          "characterId": "Abel William",
+          "characterName": "Abel William",
+          "executionMeta": {
+            "startedAt": "23:29",
+            "completedAt": "23:31",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "action",
+          "action": "检查并锁好办公室的门窗",
+          "impact": 0,
+          "nodeId": "a_abel_2036_01",
+          "status": "completed",
+          "endTime": "20:40",
+          "outcome": "检查并锁好办公室的门窗 成功",
+          "startTime": "20:36",
+          "characterId": "Abel William",
+          "characterName": "Abel William",
+          "executionMeta": {
+            "startedAt": "20:36",
+            "completedAt": "20:40",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "action",
+          "action": "把抄录注记放回外套内侧口袋",
+          "impact": 0,
+          "nodeId": "a1",
+          "status": "completed",
+          "endTime": "23:31",
+          "outcome": "把抄录注记放回外套内侧口袋 成功",
+          "startTime": "23:29",
+          "characterId": "Abel William",
+          "characterName": "Abel William",
+          "executionMeta": {
+            "startedAt": "23:29",
+            "completedAt": "23:31",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "object_interaction",
+          "action": "把靠窗的剪报集拿到办公桌上，继续翻看并抄录可能有关父亲去世的线索",
+          "impact": 0,
+          "nodeId": "oi_day1_2142",
+          "status": "completed",
+          "endTime": "22:00",
+          "outcome": "我把靠窗书架上的剪报集拿到办公桌上，摊开几页在台灯下逐页翻看并抄录可能与父亲去世有关的线索；到目前为止还未发现明确指向父亲死亡的确凿证据。",
+          "startTime": "21:42",
+          "characterId": "Abel William",
+          "characterName": "Abel William",
+          "executionMeta": {
+            "startedAt": "21:42",
+            "completedAt": "22:00",
+            "remainingMinutes": 0
+          },
+          "objectInteractionPayload": {
+            "itemId": "ITEM_SCN13_5"
+          }
+        },
+        {
+          "type": "object_interaction",
+          "action": "把放在老式橡木办公桌抽屉里的抄录注记取出来，藏到外套内侧口袋里以便随身携带",
+          "impact": 0,
+          "nodeId": "oi_abel_001",
+          "status": "completed",
+          "endTime": "23:22",
+          "outcome": "我把放在老式橡木办公桌抽屉里的抄录注记取了出来，并把那些注记悄悄塞进外套的内侧口袋里带在身上；抽屉暂时没关。",
+          "startTime": "23:19",
+          "characterId": "Abel William",
+          "characterName": "Abel William",
+          "executionMeta": {
+            "startedAt": "23:19",
+            "completedAt": "23:22",
+            "remainingMinutes": 0
+          },
+          "objectInteractionPayload": {
+            "itemId": "ITEM_SCN13_13"
+          }
+        },
+        {
+          "type": "object_interaction",
+          "action": "打开老式橡木办公桌的抽屉，检查里面是否有手电筒、火柴或其他能照明的物品",
+          "impact": 0,
+          "nodeId": "oi_next_01",
+          "status": "completed",
+          "endTime": "22:12",
+          "outcome": "我把老式橡木办公桌的抽屉拉开检查了一遍；抽屉是解着的，而且里面空的，没有手电筒、火柴或其他可用来照明的物品。我把抽屉留着打开，准备去别处继续寻找。",
+          "startTime": "22:07",
+          "characterId": "Abel William",
+          "characterName": "Abel William",
+          "executionMeta": {
+            "startedAt": "22:07",
+            "completedAt": "22:12",
+            "remainingMinutes": 0
+          },
+          "objectInteractionPayload": {
+            "itemId": "ITEM_SCN13_13"
+          }
+        },
+        {
+          "type": "object_interaction",
+          "action": "检查褪色老照片的背面和相框，寻找笔迹、贴纸或藏匿物",
+          "impact": 0,
+          "nodeId": "oi_day1_2213",
+          "status": "completed",
+          "endTime": "22:18",
+          "outcome": "我把相框玻璃轻轻擦去表面的灰尘，将褪色的老照片取下翻看背面和相框缝隙，仔细寻找笔迹、贴纸或藏匿物；背面只有泛黄的纸张和年代感的胶痕，没有发现任何笔记、贴片或暗格。",
+          "startTime": "22:13",
+          "characterId": "Abel William",
+          "characterName": "Abel William",
+          "executionMeta": {
+            "startedAt": "22:13",
+            "completedAt": "22:18",
+            "remainingMinutes": 0
+          },
+          "objectInteractionPayload": {
+            "itemId": "ITEM_SCN13_11"
+          }
+        },
+        {
+          "type": "scene_interaction",
+          "action": "检查老式橡木办公桌底部和抽屉内部的每一个角落，寻找暗格、刻痕或隐藏物",
+          "impact": 0,
+          "nodeId": "si2",
+          "status": "completed",
+          "endTime": "22:24",
+          "outcome": "我把老式橡木办公桌的底部和所有抽屉逐一检查、抚摸缝隙与角落，寻找暗格或刻痕。除了账本、几页摊开的剪报和办公桌本身的正常结构外，未发现任何隐藏隔层或异常。",
+          "startTime": "22:19",
+          "characterId": "Abel William",
+          "characterName": "Abel William",
+          "executionMeta": {
+            "startedAt": "22:19",
+            "completedAt": "22:24",
+            "remainingMinutes": 0
+          },
+          "objectInteractionPayload": {
+            "itemId": "ITEM_SCN13_13"
+          }
+        },
+        {
+          "type": "object_interaction",
+          "action": "检查并翻阅发票夹中的发票，寻找与父亲去世或马塞尔相关的交易记录",
+          "impact": 0,
+          "nodeId": "oi_day1_2225",
+          "status": "completed",
+          "endTime": "22:30",
+          "outcome": "我把发票夹翻开，逐页检查并核对了与今日出货相符的几笔发票，但没有发现任何直接提到我父亲去世或马塞尔的交易记录。",
+          "startTime": "22:25",
+          "characterId": "Abel William",
+          "characterName": "Abel William",
+          "executionMeta": {
+            "startedAt": "22:25",
+            "completedAt": "22:30",
+            "remainingMinutes": 0
+          },
+          "objectInteractionPayload": {
+            "itemId": "ITEM_SCN13_9"
+          }
+        },
+        {
+          "type": "object_interaction",
+          "action": "再次仔细翻阅靠窗书架上的剪报集，重点检查关于1988年暴动和奇异海洋活动的那几页，寻找被忽略的注记、折痕或粘贴物",
+          "impact": 0,
+          "nodeId": "oi_abel_01",
+          "status": "completed",
+          "endTime": "22:40",
+          "outcome": "我把靠窗的剪报集拿到台灯下，在关于1988年暴动与奇异海洋活动的那几页逐页仔细翻阅。发现了几处以前没注意到的手写注记、一个折叠的小纸片和一处粘贴的剪报片段，提示有目击记录和时间点，但并没有给出能明确指向父亲去世的确凿证据。我把这些页摊在桌上备用，准备抄录重要内容。",
+          "startTime": "22:31",
+          "characterId": "Abel William",
+          "characterName": "Abel William",
+          "executionMeta": {
+            "startedAt": "22:31",
+            "completedAt": "22:40",
+            "remainingMinutes": 0
+          },
+          "objectInteractionPayload": {
+            "itemId": "ITEM_SCN13_5"
+          }
+        },
+        {
+          "type": "object_interaction",
+          "action": "展开剪报中的折叠小纸片，仔细阅读并抄录上面的手写注记",
+          "impact": 0,
+          "nodeId": "oi_day1_2241",
+          "status": "completed",
+          "endTime": "22:50",
+          "outcome": "我把剪报中夹着的折叠小纸片展开，仔细读了上面的手写注记并将重要内容抄录下来；这些笔记提示了若干目击记录与时间点，但并未给出能明确指向父亲去世的确凿证据。",
+          "startTime": "22:41",
+          "characterId": "Abel William",
+          "characterName": "Abel William",
+          "executionMeta": {
+            "startedAt": "22:41",
+            "completedAt": "22:50",
+            "remainingMinutes": 0
+          },
+          "objectInteractionPayload": {
+            "itemId": "ITEM_SCN13_5"
+          }
+        },
+        {
+          "type": "object_interaction",
+          "action": "把刚抄录的手写注记与靠窗的剪报集和桌上的父亲讣告对照核对，标注出重合的时间与出现的姓名",
+          "impact": 0,
+          "nodeId": "oi_next1",
+          "status": "completed",
+          "endTime": "22:56",
+          "outcome": "我把刚抄录的手写注记与靠窗的剪报集和桌上的父亲讣告逐条对照，把出现重合的时间和姓名做了标注；没有找到能直接说明父亲死因的确凿证据，但圈出几处重合的人名与时间，作为后续核查线索。",
+          "startTime": "22:51",
+          "characterId": "Abel William",
+          "characterName": "Abel William",
+          "executionMeta": {
+            "startedAt": "22:51",
+            "completedAt": "22:56",
+            "remainingMinutes": 0
+          },
+          "objectInteractionPayload": {
+            "itemId": "ITEM_SCN13_5"
+          }
+        },
+        {
+          "type": "action",
+          "action": "把抄录注记放回外套内侧口袋",
+          "impact": 0,
+          "nodeId": "a1",
+          "status": "completed",
+          "endTime": "23:31",
+          "outcome": "把抄录注记放回外套内侧口袋 成功",
+          "startTime": "23:29",
+          "characterId": "Abel William",
+          "characterName": "Abel William",
+          "executionMeta": {
+            "startedAt": "23:29",
+            "completedAt": "23:31",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "object_interaction",
+          "action": "把放在老式橡木办公桌抽屉里的抄录注记取出来，藏到外套内侧口袋里以便随身携带",
+          "impact": 0,
+          "nodeId": "oi_abel_001",
+          "status": "completed",
+          "endTime": "23:22",
+          "outcome": "我把放在老式橡木办公桌抽屉里的抄录注记取了出来，并把那些注记悄悄塞进外套的内侧口袋里带在身上；抽屉暂时没关。",
+          "startTime": "23:19",
+          "characterId": "Abel William",
+          "characterName": "Abel William",
+          "executionMeta": {
+            "startedAt": "23:19",
+            "completedAt": "23:22",
+            "remainingMinutes": 0
+          },
+          "objectInteractionPayload": {
+            "itemId": "ITEM_SCN13_13"
+          }
+        },
+        {
+          "type": "scene_interaction",
+          "action": "打开台灯",
+          "impact": 0,
+          "nodeId": "si1",
+          "status": "completed",
+          "endTime": "23:48",
+          "outcome": "我打开了台灯，暖黄的光圈照亮了桌面工作区，使摊开的报纸与剪报清晰可见，便于继续核对记录。",
+          "startTime": "23:47",
+          "characterId": "Abel William",
+          "characterName": "Abel William",
+          "executionMeta": {
+            "startedAt": "23:47",
+            "completedAt": "23:48",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "object_interaction",
+          "action": "关上老式橡木办公桌的抽屉",
+          "impact": 0,
+          "nodeId": "oi_day1_2313",
+          "status": "completed",
+          "endTime": "23:14",
+          "outcome": "我把老式橡木办公桌的抽屉合上了。抽屉是解着的、里面是空的，合上时发出轻微的木声，现在抽屉已关闭放回原位。",
+          "startTime": "23:13",
+          "characterId": "Abel William",
+          "characterName": "Abel William",
+          "executionMeta": {
+            "startedAt": "23:13",
+            "completedAt": "23:14",
+            "remainingMinutes": 0
+          },
+          "objectInteractionPayload": {
+            "itemId": "ITEM_SCN13_13"
+          }
+        },
+        {
+          "type": "object_interaction",
+          "action": "把账本和刚抄录的注记放入老式橡木办公桌的抽屉里并关上抽屉，确保资料和线索安全保存",
+          "impact": 0,
+          "nodeId": "oi_day1_2315",
+          "status": "completed",
+          "endTime": "23:18",
+          "outcome": "我把账本和台灯下摊开的剪报集（其中夹着我刚抄录的注记）收好，连同注记一并放进老式橡木办公桌的抽屉里，并把抽屉关上，确保资料与线索被妥善保存。",
+          "startTime": "23:15",
+          "characterId": "Abel William",
+          "characterName": "Abel William",
+          "executionMeta": {
+            "startedAt": "23:15",
+            "completedAt": "23:18",
+            "remainingMinutes": 0
+          },
+          "objectInteractionPayload": {
+            "itemId": "账本"
+          }
+        },
+        {
+          "type": "object_interaction",
+          "action": "把放在老式橡木办公桌抽屉里的抄录注记取出来，藏到外套内侧口袋里以便随身携带",
+          "impact": 0,
+          "nodeId": "oi_abel_001",
+          "status": "completed",
+          "endTime": "23:22",
+          "outcome": "我把放在老式橡木办公桌抽屉里的抄录注记取了出来，并把那些注记悄悄塞进外套的内侧口袋里带在身上；抽屉暂时没关。",
+          "startTime": "23:19",
+          "characterId": "Abel William",
+          "characterName": "Abel William",
+          "executionMeta": {
+            "startedAt": "23:19",
+            "completedAt": "23:22",
+            "remainingMinutes": 0
+          },
+          "objectInteractionPayload": {
+            "itemId": "ITEM_SCN13_13"
+          }
+        },
+        {
+          "type": "action",
+          "action": "把外套内侧口袋里的抄录注记掏出来，在台灯下仔细阅读并核对我记下的时间与人名",
+          "impact": 0,
+          "nodeId": "a1_2323",
+          "status": "completed",
+          "endTime": "23:28",
+          "outcome": "把外套内侧口袋里的抄录注记掏出来，在台灯下仔细阅读并核对我记下的时间与人名 成功",
+          "startTime": "23:23",
+          "characterId": "Abel William",
+          "characterName": "Abel William",
+          "executionMeta": {
+            "startedAt": "23:23",
+            "completedAt": "23:28",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "action",
+          "action": "把抄录注记放回外套内侧口袋",
+          "impact": 0,
+          "nodeId": "a1",
+          "status": "completed",
+          "endTime": "23:31",
+          "outcome": "把抄录注记放回外套内侧口袋 成功",
+          "startTime": "23:29",
+          "characterId": "Abel William",
+          "characterName": "Abel William",
+          "executionMeta": {
+            "startedAt": "23:29",
+            "completedAt": "23:31",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "object_interaction",
+          "action": "把外套内侧口袋里的抄录注记取出，放回老式橡木办公桌的抽屉并把抽屉关上",
+          "impact": 0,
+          "nodeId": "oi_day1_2332",
+          "status": "completed",
+          "endTime": "23:35",
+          "outcome": "我从外套内侧口袋里把那页抄录注记摸了出来，放进了老式橡木办公桌的抽屉里，然后把抽屉合上了，合上时传来轻微的木声。",
+          "startTime": "23:32",
+          "characterId": "Abel William",
+          "characterName": "Abel William",
+          "executionMeta": {
+            "startedAt": "23:32",
+            "completedAt": "23:35",
+            "remainingMinutes": 0
+          },
+          "objectInteractionPayload": {
+            "itemId": "ITEM_SCN13_13"
+          }
+        },
+        {
+          "type": "object_interaction",
+          "action": "把抄录注记上的重要姓名与时间抄到账本的空白页上以便保存和比对",
+          "impact": 0,
+          "nodeId": "oi1",
+          "status": "completed",
+          "endTime": "23:59",
+          "outcome": "我把抄录注记上的重要姓名与对应时间一一抄到账本的一页空白处，字迹工整以便后续比对。抄写完毕后合上账本，随身带着备用。",
+          "startTime": "23:49",
+          "characterId": "Abel William",
+          "characterName": "Abel William",
+          "executionMeta": {
+            "startedAt": "23:49",
+            "completedAt": "23:59",
+            "remainingMinutes": 0
+          },
+          "objectInteractionPayload": {
+            "itemId": "账本"
+          }
+        },
+        {
+          "type": "action",
+          "action": "把老式橡木办公桌的抽屉合上",
+          "impact": 0,
+          "nodeId": "a_day1_2339_01",
+          "status": "completed",
+          "endTime": "23:40",
+          "outcome": "把老式橡木办公桌的抽屉合上 成功",
+          "startTime": "23:39",
+          "characterId": "Abel William",
+          "characterName": "Abel William",
+          "executionMeta": {
+            "startedAt": "23:39",
+            "completedAt": "23:40",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "action",
+          "action": "打开台灯继续核对抄录注记与摊开的剪报",
+          "impact": 0,
+          "nodeId": "a1_2341",
+          "status": "completed",
+          "endTime": "23:46",
+          "outcome": "打开台灯继续核对抄录注记与摊开的剪报 成功",
+          "startTime": "23:41",
+          "characterId": "Abel William",
+          "characterName": "Abel William",
+          "executionMeta": {
+            "startedAt": "23:41",
+            "completedAt": "23:46",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "scene_interaction",
+          "action": "打开台灯",
+          "impact": 0,
+          "nodeId": "si1",
+          "status": "completed",
+          "endTime": "23:48",
+          "outcome": "我打开了台灯，暖黄的光圈照亮了桌面工作区，使摊开的报纸与剪报清晰可见，便于继续核对记录。",
+          "startTime": "23:47",
+          "characterId": "Abel William",
+          "characterName": "Abel William",
+          "executionMeta": {
+            "startedAt": "23:47",
+            "completedAt": "23:48",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "object_interaction",
+          "action": "把抄录注记上的重要姓名与时间抄到账本的空白页上以便保存和比对",
+          "impact": 0,
+          "nodeId": "oi1",
+          "status": "completed",
+          "endTime": "23:59",
+          "outcome": "我把抄录注记上的重要姓名与对应时间一一抄到账本的一页空白处，字迹工整以便后续比对。抄写完毕后合上账本，随身带着备用。",
+          "startTime": "23:49",
+          "characterId": "Abel William",
+          "characterName": "Abel William",
+          "executionMeta": {
+            "startedAt": "23:49",
+            "completedAt": "23:59",
+            "remainingMinutes": 0
+          },
+          "objectInteractionPayload": {
+            "itemId": "账本"
+          }
+        }
+      ]
+    },
+    {
+      "npcName": "Abel William",
+      "gameDay": 2,
+      "schedule": [
+        {
+          "activity": "在台灯下继续整理并复核昨晚抄录的剪报、注记与时间线。",
+          "location": "办公室"
+        },
+        {
+          "activity": "把最关键的抄录页放入外套内侧口袋，并把需要马上核查的姓名抄到账本页边。",
+          "location": "办公室"
+        },
+        {
+          "activity": "下到地下酒窖再次检视木质酒桶的安置、锁具和温度状况，确保无异常。",
+          "location": "地下酒窖"
+        },
+        {
+          "activity": "在车间巡查蒸馏器、供暖和搬移后的库存，记录需要维修的项目并标注优先级。",
+          "location": "酒厂"
+        },
+        {
+          "activity": "整理并准备今天的出货单和发票草稿，核对账本上的款项与欠款。",
+          "location": "办公室"
+        },
+        {
+          "activity": "给怀特和海伦留便条并发语音信箱，约定明晨取回钟表零件并安排与海伦商谈上架事宜。",
+          "location": "办公室"
+        },
+        {
+          "activity": "检查并加固办公室和车间的门窗、设置备用照明并准备晚间的巡查计划。",
+          "location": "酒厂"
+        },
+        {
+          "activity": "早上到钟表店从Marks White那里取回替换小齿轮并确认他对机件的说明。",
+          "location": "钟表店"
+        },
+        {
+          "activity": "顺路在花店买几朵花以改善品酒区氛围并与店主简单寒暄维系关系。",
+          "location": "花店·卡森德拉之花"
+        },
+        {
+          "activity": "与海伦见面商谈把我们的伏特加作为餐厅鸡尾酒基酒的可能性并争取小批量上架。",
+          "location": "海伦的餐桌"
+        },
+        {
+          "activity": "到五金店向哈里森采购蒸馏器维修所需的材料并询问他是否能帮忙紧急修理。",
+          "location": "五金店"
+        },
+        {
+          "activity": "去珊德拉家询问她最近是否见过马塞尔并打听附近是否有异常动静。",
+          "location": "珊德拉的小屋"
+        },
+        {
+          "activity": "回到酒厂监督工人对蒸馏器的修理、检验维修效果并安排货物出货优先级。",
+          "location": "酒厂"
+        },
+        {
+          "activity": "在台灯下把今天得到的信息和新线索更新到剪报时间线上，列出明日优先调查对象。",
+          "location": "办公室"
+        },
+        {
+          "activity": "检查地下酒窖与办公室最后一遍，锁好门窗后回到办公室休息并尽早入睡。",
+          "location": "酒厂"
+        }
+      ],
+      "nodes": [
+        {
+          "type": "object_interaction",
+          "action": "检查空置木质酒桶的铁箍和盖子是否完好",
+          "impact": 0,
+          "nodeId": "oi1",
+          "status": "completed",
+          "endTime": "02:52",
+          "outcome": "我检查了角落里那几只空置的木质酒桶：桶身的铁箍确实有明显锈迹，盖子在位且看起来完好，桶是解着的，内部空无一物。",
+          "startTime": "02:47",
+          "characterId": "Abel William",
+          "characterName": "Abel William",
+          "executionMeta": {
+            "startedAt": "02:47",
+            "completedAt": "02:52",
+            "remainingMinutes": 0
+          },
+          "objectInteractionPayload": {
+            "itemId": "ITEM_SCN13_10"
+          }
+        },
+        {
+          "type": "object_interaction",
+          "action": "把最关键的抄录注记和几页已标注的剪报页放进办公桌抽屉里以便带出酒厂前妥善保管",
+          "impact": 0,
+          "nodeId": "oi2",
+          "status": "completed",
+          "endTime": "00:25",
+          "outcome": "我把最关键的抄录注记和几页已标注的剪报页放进办公桌抽屉并合上，准备在离开酒厂前把它们带走妥善保管。",
+          "startTime": "00:21",
+          "characterId": "Abel William",
+          "characterName": "Abel William",
+          "executionMeta": {
+            "startedAt": "00:21",
+            "completedAt": "00:25",
+            "remainingMinutes": 0
+          },
+          "objectInteractionPayload": {
+            "itemId": "ITEM_SCN13_13"
+          }
+        },
+        {
+          "type": "object_interaction",
+          "action": "从老式橡木办公桌的抽屉里取出最关键的抄录注记和被标注的剪报页，放入外套内侧口袋以便随身带走",
+          "impact": 0,
+          "nodeId": "oi_day2_002",
+          "status": "completed",
+          "endTime": "00:30",
+          "outcome": "抽屉是解着的，我顺手把抄录的注记和几页已标注的剪报从办公桌抽屉里取出，塞进外套内侧口袋，准备随身带走。",
+          "startTime": "00:26",
+          "characterId": "Abel William",
+          "characterName": "Abel William",
+          "executionMeta": {
+            "startedAt": "00:26",
+            "completedAt": "00:30",
+            "remainingMinutes": 0
+          },
+          "objectInteractionPayload": {
+            "itemId": "ITEM_SCN13_13"
+          }
+        },
+        {
+          "type": "movement",
+          "action": "下到地下酒窖",
+          "impact": 0,
+          "nodeId": "m1",
+          "status": "failed",
+          "endTime": "05:21",
+          "outcome": "下到地下酒窖 [拓扑中无可用路径] 失败",
+          "startTime": "05:19",
+          "characterId": "Abel William",
+          "destination": "地下酒窖",
+          "characterName": "Abel William",
+          "executionMeta": {
+            "failedAt": "05:19",
+            "startedAt": "05:19",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "object_interaction",
+          "action": "检查空置木质酒桶的铁箍和盖子是否完好",
+          "impact": 0,
+          "nodeId": "oi1",
+          "status": "completed",
+          "endTime": "02:52",
+          "outcome": "我检查了角落里那几只空置的木质酒桶：桶身的铁箍确实有明显锈迹，盖子在位且看起来完好，桶是解着的，内部空无一物。",
+          "startTime": "02:47",
+          "characterId": "Abel William",
+          "characterName": "Abel William",
+          "executionMeta": {
+            "startedAt": "02:47",
+            "completedAt": "02:52",
+            "remainingMinutes": 0
+          },
+          "objectInteractionPayload": {
+            "itemId": "ITEM_SCN13_10"
+          }
+        },
+        {
+          "type": "movement",
+          "action": "下到地下酒窖",
+          "impact": 0,
+          "nodeId": "m1",
+          "status": "failed",
+          "endTime": "05:21",
+          "outcome": "下到地下酒窖 [拓扑中无可用路径] 失败",
+          "startTime": "05:19",
+          "characterId": "Abel William",
+          "destination": "地下酒窖",
+          "characterName": "Abel William",
+          "executionMeta": {
+            "failedAt": "05:19",
+            "startedAt": "05:19",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "movement",
+          "action": "下到地下酒窖",
+          "impact": 0,
+          "nodeId": "m1",
+          "status": "failed",
+          "endTime": "05:21",
+          "outcome": "下到地下酒窖 [拓扑中无可用路径] 失败",
+          "startTime": "05:19",
+          "characterId": "Abel William",
+          "destination": "地下酒窖",
+          "characterName": "Abel William",
+          "executionMeta": {
+            "failedAt": "05:19",
+            "startedAt": "05:19",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "scene_interaction",
+          "action": "巡查车间内的蒸馏器与供暖系统，检查搬移后的库存并记录需要维修的项目与优先级",
+          "impact": 2,
+          "nodeId": "si_day2_001",
+          "status": "completed",
+          "endTime": "01:10",
+          "outcome": "我巡查了靠近入口的蒸馏设备与供暖系统，确认并记录了需要维修的项目与优先级。发现部分蒸馏设备停用且落满灰尘，管道阀门有滴漏，已列为高优先级；角落的木质酒桶铁箍生锈，记录为中等优先级。维修清单与优先级已记录在案。",
+          "startTime": "00:54",
+          "characterId": "Abel William",
+          "characterName": "Abel William",
+          "executionMeta": {
+            "startedAt": "00:54",
+            "completedAt": "01:10",
+            "remainingMinutes": 0
+          },
+          "objectInteractionPayload": {
+            "itemId": "ITEM_SCN13_1"
+          }
+        },
+        {
+          "type": "scene_interaction",
+          "action": "推开闲置车间深处的微微变形木质门，进入隐蔽办公室检查文件与摆设",
+          "impact": 0,
+          "nodeId": "si2_day2_0111",
+          "status": "completed",
+          "endTime": "01:20",
+          "outcome": "我推开车间深处那扇微微变形的木门，走进隐蔽的办公室并检查了内部的文件与摆设；我翻看并环视一遍，未发现明显的异常或有价值的物品。",
+          "startTime": "01:11",
+          "characterId": "Abel William",
+          "characterName": "Abel William",
+          "executionMeta": {
+            "startedAt": "01:11",
+            "completedAt": "01:20",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "scene_interaction",
+          "action": "检查并加固办公室和车间的门窗，设置备用照明并准备晚间的巡查计划。",
+          "impact": 2,
+          "nodeId": "si_next_01",
+          "status": "completed",
+          "endTime": "01:35",
+          "outcome": "我检查并加固了办公室与车间的门窗，并把通往隐蔽办公室和地下酒窖的通道上了锁。部署了便携应急照明，厂区暗处的可见度有所改善。已制定并记录好晚间巡查路线与时间表。",
+          "startTime": "01:21",
+          "characterId": "Abel William",
+          "characterName": "Abel William",
+          "executionMeta": {
+            "startedAt": "01:21",
+            "completedAt": "01:35",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "object_interaction",
+          "action": "从剪报集中取出折叠的小纸片并在办公室台灯下展开仔细查看",
+          "impact": 0,
+          "nodeId": "oi_next_01",
+          "status": "completed",
+          "endTime": "01:46",
+          "outcome": "我从剪报集中把那个折叠的小纸片取了出来，在办公室的台灯下小心展开并查看。纸片上写着几处姓名和对应的时间，内容与我已抄录的注记相符。为了继续比对，我把剪报摊开在台灯下。",
+          "startTime": "01:36",
+          "characterId": "Abel William",
+          "characterName": "Abel William",
+          "executionMeta": {
+            "startedAt": "01:36",
+            "completedAt": "01:46",
+            "remainingMinutes": 0
+          },
+          "objectInteractionPayload": {
+            "itemId": "ITEM_SCN13_5"
+          }
+        },
+        {
+          "type": "object_interaction",
+          "action": "在台灯下把折叠的小纸片与剪报集和抄录注记逐一比对，检查墨迹与笔迹是否一致并在账本旁做简要标注",
+          "impact": 0,
+          "nodeId": "oi_day2_01_47_01",
+          "status": "completed",
+          "endTime": "01:57",
+          "outcome": "我在台灯下把那张已展开的小纸片与剪报集和抄录注记逐条比对，检查墨迹与笔迹，发现笔迹与我抄录的内容一致；于是就在账本相应页边做了简要标注，并用符号标出需优先核查的姓名与时间。",
+          "startTime": "01:47",
+          "characterId": "Abel William",
+          "characterName": "Abel William",
+          "executionMeta": {
+            "startedAt": "01:47",
+            "completedAt": "01:57",
+            "remainingMinutes": 0
+          },
+          "objectInteractionPayload": {
+            "itemId": "ITEM_SCN13_5"
+          }
+        },
+        {
+          "type": "action",
+          "action": "在台灯下把今天得到的信息和新线索更新到剪报时间线上，列出明日优先调查对象",
+          "impact": 0,
+          "nodeId": "a2",
+          "status": "completed",
+          "endTime": "02:18",
+          "outcome": "在台灯下把今天得到的信息和新线索更新到剪报时间线上，列出明日优先调查对象 成功",
+          "startTime": "01:58",
+          "characterId": "Abel William",
+          "characterName": "Abel William",
+          "executionMeta": {
+            "startedAt": "01:58",
+            "completedAt": "02:18",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "movement",
+          "action": "下到地下酒窖",
+          "impact": 0,
+          "nodeId": "m1",
+          "status": "failed",
+          "endTime": "05:21",
+          "outcome": "下到地下酒窖 [拓扑中无可用路径] 失败",
+          "startTime": "05:19",
+          "characterId": "Abel William",
+          "destination": "地下酒窖",
+          "characterName": "Abel William",
+          "executionMeta": {
+            "failedAt": "05:19",
+            "startedAt": "05:19",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "scene_interaction",
+          "action": "仔细检查并评估通往地下酒窖石砌台阶上的阻碍物，寻找可撬动的接点或替代通道",
+          "impact": 0,
+          "nodeId": "si2",
+          "status": "completed",
+          "endTime": "04:29",
+          "outcome": "我仔细检查了通往地下酒窖的石砌台阶，找到了可撬动的接点，并利用车间角落那段可作撬棍的金属管清除了阻碍，现在台阶可以下行通往酒窖。",
+          "startTime": "04:24",
+          "characterId": "Abel William",
+          "characterName": "Abel William",
+          "executionMeta": {
+            "startedAt": "04:24",
+            "completedAt": "04:29",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "object_interaction",
+          "action": "在台灯下再次仔细比对剪报集与抄录注记，核对小纸片上的笔迹与时间点",
+          "impact": 0,
+          "nodeId": "oi_day2_02_26",
+          "status": "completed",
+          "endTime": "02:40",
+          "outcome": "我在台灯下把剪报集与抄录注记逐条比对，将那张已展开的小纸片上的手写姓名与时间点一一核实，确认与我抄录的注记相符。随后又复核了账本页边的标记，圈出需要优先跟进的条目。",
+          "startTime": "02:26",
+          "characterId": "Abel William",
+          "characterName": "Abel William",
+          "executionMeta": {
+            "startedAt": "02:26",
+            "completedAt": "02:40",
+            "remainingMinutes": 0
+          },
+          "objectInteractionPayload": {
+            "itemId": "ITEM_SCN13_5"
+          }
+        },
+        {
+          "type": "action",
+          "action": "坐在办公室的椅子上闭目休息五分钟，深呼吸以平复情绪并稍事恢复体力",
+          "impact": 0,
+          "nodeId": "a_day2_0241",
+          "status": "completed",
+          "endTime": "02:46",
+          "outcome": "坐在办公室的椅子上闭目休息五分钟，深呼吸以平复情绪并稍事恢复体力 成功",
+          "startTime": "02:41",
+          "characterId": "Abel William",
+          "characterName": "Abel William",
+          "executionMeta": {
+            "startedAt": "02:41",
+            "completedAt": "02:46",
+            "remainingMinutes": 0
+          },
+          "routineSubtype": "rest"
+        },
+        {
+          "type": "object_interaction",
+          "action": "检查空置木质酒桶的铁箍和盖子是否完好",
+          "impact": 0,
+          "nodeId": "oi1",
+          "status": "completed",
+          "endTime": "02:52",
+          "outcome": "我检查了角落里那几只空置的木质酒桶：桶身的铁箍确实有明显锈迹，盖子在位且看起来完好，桶是解着的，内部空无一物。",
+          "startTime": "02:47",
+          "characterId": "Abel William",
+          "characterName": "Abel William",
+          "executionMeta": {
+            "startedAt": "02:47",
+            "completedAt": "02:52",
+            "remainingMinutes": 0
+          },
+          "objectInteractionPayload": {
+            "itemId": "ITEM_SCN13_10"
+          }
+        },
+        {
+          "type": "movement",
+          "action": "下到地下酒窖",
+          "impact": 0,
+          "nodeId": "m1",
+          "status": "failed",
+          "endTime": "05:21",
+          "outcome": "下到地下酒窖 [拓扑中无可用路径] 失败",
+          "startTime": "05:19",
+          "characterId": "Abel William",
+          "destination": "地下酒窖",
+          "characterName": "Abel William",
+          "executionMeta": {
+            "failedAt": "05:19",
+            "startedAt": "05:19",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "scene_interaction",
+          "action": "用办公室钥匙打开办公室门",
+          "impact": 0,
+          "nodeId": "si_day2_02_54_01",
+          "status": "completed",
+          "endTime": "02:56",
+          "outcome": "我用办公室钥匙打开了车间深处那扇微微变形的木门，门锁被解开，隐蔽办公室现在可以进入。",
+          "startTime": "02:54",
+          "characterId": "Abel William",
+          "characterName": "Abel William",
+          "executionMeta": {
+            "startedAt": "02:54",
+            "completedAt": "02:56",
+            "remainingMinutes": 0
+          },
+          "objectInteractionPayload": {
+            "itemId": "办公室钥匙"
+          }
+        },
+        {
+          "type": "movement",
+          "action": "走进隐蔽办公室，准备仔细检查抽屉和之前匆忙翻看的文件",
+          "impact": 0,
+          "nodeId": "m_day2_001",
+          "status": "failed",
+          "endTime": "02:59",
+          "outcome": "走进隐蔽办公室，准备仔细检查抽屉和之前匆忙翻看的文件 [拓扑中无可用路径] 失败",
+          "startTime": "02:57",
+          "characterId": "Abel William",
+          "destination": "隐蔽办公室",
+          "characterName": "Abel William",
+          "executionMeta": {
+            "failedAt": "02:57",
+            "startedAt": "02:57",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "scene_interaction",
+          "action": "仔细检查并评估通往地下酒窖石砌台阶上的阻碍物，寻找可撬动的接点或替代通道",
+          "impact": 0,
+          "nodeId": "si2",
+          "status": "completed",
+          "endTime": "04:29",
+          "outcome": "我仔细检查了通往地下酒窖的石砌台阶，找到了可撬动的接点，并利用车间角落那段可作撬棍的金属管清除了阻碍，现在台阶可以下行通往酒窖。",
+          "startTime": "04:24",
+          "characterId": "Abel William",
+          "characterName": "Abel William",
+          "executionMeta": {
+            "startedAt": "04:24",
+            "completedAt": "04:29",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "action",
+          "action": "在台灯下再次逐页比对剪报集与抄录注记，仔细检查父亲讣告、手写注记和那张小纸片，寻找前后矛盾或未注意到的细节",
+          "impact": 0,
+          "nodeId": "a1",
+          "status": "completed",
+          "endTime": "03:29",
+          "outcome": "在台灯下再次逐页比对剪报集与抄录注记，仔细检查父亲讣告、手写注记和那张小纸片，寻找前后矛盾或未注意到的细节 成功",
+          "startTime": "03:09",
+          "characterId": "Abel William",
+          "characterName": "Abel William",
+          "executionMeta": {
+            "startedAt": "03:09",
+            "completedAt": "03:29",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "object_interaction",
+          "action": "把那张已展开的小纸片折好并放进外套内侧口袋以妥善保存",
+          "impact": 0,
+          "nodeId": "oi_day2_0330_01",
+          "status": "completed",
+          "endTime": "03:33",
+          "outcome": "我把刚刚在台灯下展开的小纸片重新折好，然后塞进外套的内侧口袋里妥善保存，免得丢失。",
+          "startTime": "03:30",
+          "characterId": "Abel William",
+          "characterName": "Abel William",
+          "executionMeta": {
+            "startedAt": "03:30",
+            "completedAt": "03:33",
+            "remainingMinutes": 0
+          },
+          "objectInteractionPayload": {
+            "itemId": "ITEM_SCN13_5"
+          }
+        },
+        {
+          "type": "action",
+          "action": "坐到办公室的椅子上，在台灯下闭目休息十分钟以恢复体力并整理思绪",
+          "impact": 0,
+          "nodeId": "a14",
+          "status": "completed",
+          "endTime": "03:44",
+          "outcome": "坐到办公室的椅子上，在台灯下闭目休息十分钟以恢复体力并整理思绪 成功",
+          "startTime": "03:34",
+          "characterId": "Abel William",
+          "characterName": "Abel William",
+          "executionMeta": {
+            "startedAt": "03:34",
+            "completedAt": "03:44",
+            "remainingMinutes": 0
+          },
+          "routineSubtype": "rest"
+        },
+        {
+          "type": "scene_interaction",
+          "skill": "STR",
+          "action": "清理通往地下酒窖的石砌台阶上的阻碍物以打开通道",
+          "impact": 2,
+          "nodeId": "si1",
+          "status": "failed",
+          "endTime": "03:50",
+          "startTime": "03:45",
+          "characterId": "Abel William",
+          "characterName": "Abel William",
+          "executionMeta": {
+            "failedAt": "03:50",
+            "startedAt": "03:45",
+            "remainingMinutes": 5
+          }
+        },
+        {
+          "type": "scene_interaction",
+          "skill": "STR",
+          "action": "用力清理通往地下酒窖的石砌台阶上的阻碍物，打开下行通道",
+          "impact": 0,
+          "nodeId": "si3",
+          "status": "failed",
+          "endTime": "04:01",
+          "startTime": "03:51",
+          "characterId": "Abel William",
+          "characterName": "Abel William",
+          "executionMeta": {
+            "failedAt": "04:01",
+            "startedAt": "03:51",
+            "remainingMinutes": 10
+          }
+        },
+        {
+          "type": "scene_interaction",
+          "action": "在厂区车间与储物区寻找一把撬棍或铁锹，以便清理通往地下酒窖石砌台阶上的阻碍物",
+          "impact": 0,
+          "nodeId": "si_day2_0402_01",
+          "status": "completed",
+          "endTime": "04:12",
+          "outcome": "我在车间和储物区仔细翻找，从伏特加酿造设备上拆下了一段金属管，作为临时撬棍放在车间一角，以便清理通往地下酒窖石砌台阶上的阻碍物。设备因此有了损伤，但我得到了可用的工具。",
+          "startTime": "04:02",
+          "characterId": "Abel William",
+          "characterName": "Abel William",
+          "executionMeta": {
+            "startedAt": "04:02",
+            "completedAt": "04:12",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "scene_interaction",
+          "skill": "STR",
+          "action": "用从蒸馏设备上拆下的那段金属管作为撬棍，撬开并清理通往地下酒窖石砌台阶上的阻碍物，打开下行通道",
+          "impact": 2,
+          "nodeId": "si_13_0413",
+          "status": "failed",
+          "endTime": "04:23",
+          "startTime": "04:13",
+          "characterId": "Abel William",
+          "characterName": "Abel William",
+          "executionMeta": {
+            "failedAt": "04:23",
+            "startedAt": "04:13",
+            "remainingMinutes": 10
+          }
+        },
+        {
+          "type": "scene_interaction",
+          "action": "仔细检查并评估通往地下酒窖石砌台阶上的阻碍物，寻找可撬动的接点或替代通道",
+          "impact": 0,
+          "nodeId": "si2",
+          "status": "completed",
+          "endTime": "04:29",
+          "outcome": "我仔细检查了通往地下酒窖的石砌台阶，找到了可撬动的接点，并利用车间角落那段可作撬棍的金属管清除了阻碍，现在台阶可以下行通往酒窖。",
+          "startTime": "04:24",
+          "characterId": "Abel William",
+          "characterName": "Abel William",
+          "executionMeta": {
+            "startedAt": "04:24",
+            "completedAt": "04:29",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "movement",
+          "action": "下到地下酒窖",
+          "impact": 0,
+          "nodeId": "m1",
+          "status": "failed",
+          "endTime": "05:21",
+          "outcome": "下到地下酒窖 [拓扑中无可用路径] 失败",
+          "startTime": "05:19",
+          "characterId": "Abel William",
+          "destination": "地下酒窖",
+          "characterName": "Abel William",
+          "executionMeta": {
+            "failedAt": "05:19",
+            "startedAt": "05:19",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "movement",
+          "action": "下到地下酒窖检查木质酒桶的安置、锁具和温度状况",
+          "impact": 0,
+          "nodeId": "m_abel_0431",
+          "status": "failed",
+          "endTime": "04:34",
+          "outcome": "下到地下酒窖检查木质酒桶的安置、锁具和温度状况 [拓扑中无可用路径] 失败",
+          "startTime": "04:31",
+          "characterId": "Abel William",
+          "destination": "地下酒窖",
+          "characterName": "Abel William",
+          "executionMeta": {
+            "failedAt": "04:31",
+            "startedAt": "04:31",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "movement",
+          "action": "下到地下酒窖检查木质酒桶的安置、锁具和温度状况",
+          "impact": 0,
+          "nodeId": "m_2002_day2_0432",
+          "status": "failed",
+          "endTime": "04:35",
+          "outcome": "下到地下酒窖检查木质酒桶的安置、锁具和温度状况 [拓扑中无可用路径] 失败",
+          "startTime": "04:32",
+          "characterId": "Abel William",
+          "destination": "地下酒窖",
+          "characterName": "Abel William",
+          "executionMeta": {
+            "failedAt": "04:32",
+            "startedAt": "04:32",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "movement",
+          "action": "走下石砌台阶前往地下酒窖检查木质酒桶的安置、锁具和温度状况",
+          "impact": 0,
+          "nodeId": "m_next_to_cellar",
+          "status": "failed",
+          "endTime": "04:36",
+          "outcome": "走下石砌台阶前往地下酒窖检查木质酒桶的安置、锁具和温度状况 [拓扑中无可用路径] 失败",
+          "startTime": "04:33",
+          "characterId": "Abel William",
+          "destination": "地下酒窖",
+          "characterName": "Abel William",
+          "executionMeta": {
+            "failedAt": "04:33",
+            "startedAt": "04:33",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "movement",
+          "action": "走下石砌台阶前往地下酒窖检查木质酒桶的安置、锁具和温度状况",
+          "impact": 0,
+          "nodeId": "m2_0434",
+          "status": "failed",
+          "endTime": "04:36",
+          "outcome": "走下石砌台阶前往地下酒窖检查木质酒桶的安置、锁具和温度状况 [拓扑中无可用路径] 失败",
+          "startTime": "04:34",
+          "characterId": "Abel William",
+          "destination": "地下酒窖",
+          "characterName": "Abel William",
+          "executionMeta": {
+            "failedAt": "04:34",
+            "startedAt": "04:34",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "movement",
+          "action": "下到地下酒窖",
+          "impact": 0,
+          "nodeId": "m1",
+          "status": "failed",
+          "endTime": "05:21",
+          "outcome": "下到地下酒窖 [拓扑中无可用路径] 失败",
+          "startTime": "05:19",
+          "characterId": "Abel William",
+          "destination": "地下酒窖",
+          "characterName": "Abel William",
+          "executionMeta": {
+            "failedAt": "05:19",
+            "startedAt": "05:19",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "movement",
+          "action": "走下石砌台阶前往地下酒窖",
+          "impact": 0,
+          "nodeId": "m_abel_0001",
+          "status": "failed",
+          "endTime": "04:38",
+          "outcome": "走下石砌台阶前往地下酒窖 [拓扑中无可用路径] 失败",
+          "startTime": "04:36",
+          "characterId": "Abel William",
+          "destination": "地下酒窖",
+          "characterName": "Abel William",
+          "executionMeta": {
+            "failedAt": "04:36",
+            "startedAt": "04:36",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "movement",
+          "action": "下到地下酒窖",
+          "impact": 0,
+          "nodeId": "m1",
+          "status": "failed",
+          "endTime": "05:21",
+          "outcome": "下到地下酒窖 [拓扑中无可用路径] 失败",
+          "startTime": "05:19",
+          "characterId": "Abel William",
+          "destination": "地下酒窖",
+          "characterName": "Abel William",
+          "executionMeta": {
+            "failedAt": "05:19",
+            "startedAt": "05:19",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "movement",
+          "action": "下到地下酒窖",
+          "impact": 0,
+          "nodeId": "m_dg_001",
+          "status": "failed",
+          "endTime": "04:40",
+          "outcome": "下到地下酒窖 [拓扑中无可用路径] 失败",
+          "startTime": "04:38",
+          "characterId": "Abel William",
+          "destination": "地下酒窖",
+          "characterName": "Abel William",
+          "executionMeta": {
+            "failedAt": "04:38",
+            "startedAt": "04:38",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "movement",
+          "action": "下到地下酒窖",
+          "impact": 0,
+          "nodeId": "m1",
+          "status": "failed",
+          "endTime": "05:21",
+          "outcome": "下到地下酒窖 [拓扑中无可用路径] 失败",
+          "startTime": "05:19",
+          "characterId": "Abel William",
+          "destination": "地下酒窖",
+          "characterName": "Abel William",
+          "executionMeta": {
+            "failedAt": "05:19",
+            "startedAt": "05:19",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "movement",
+          "action": "下到地下酒窖",
+          "impact": 0,
+          "nodeId": "m2",
+          "status": "in_progress",
+          "endTime": "05:23",
+          "startTime": "05:20",
+          "characterId": "Abel William",
+          "destination": "地下酒窖",
+          "characterName": "Abel William",
+          "executionMeta": {
+            "startedAt": "05:20",
+            "remainingMinutes": 3
+          }
+        },
+        {
+          "type": "movement",
+          "action": "下到地下酒窖",
+          "impact": 0,
+          "nodeId": "m1",
+          "status": "failed",
+          "endTime": "05:21",
+          "outcome": "下到地下酒窖 [拓扑中无可用路径] 失败",
+          "startTime": "05:19",
+          "characterId": "Abel William",
+          "destination": "地下酒窖",
+          "characterName": "Abel William",
+          "executionMeta": {
+            "failedAt": "05:19",
+            "startedAt": "05:19",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "movement",
+          "action": "下到地下酒窖",
+          "impact": 0,
+          "nodeId": "m1",
+          "status": "failed",
+          "endTime": "05:21",
+          "outcome": "下到地下酒窖 [拓扑中无可用路径] 失败",
+          "startTime": "05:19",
+          "characterId": "Abel William",
+          "destination": "地下酒窖",
+          "characterName": "Abel William",
+          "executionMeta": {
+            "failedAt": "05:19",
+            "startedAt": "05:19",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "movement",
+          "action": "走下地下酒窖",
+          "impact": 0,
+          "nodeId": "m_day2_0443_01",
+          "status": "failed",
+          "endTime": "04:48",
+          "outcome": "走下地下酒窖 [拓扑中无可用路径] 失败",
+          "startTime": "04:43",
+          "characterId": "Abel William",
+          "destination": "地下酒窖",
+          "characterName": "Abel William",
+          "executionMeta": {
+            "failedAt": "04:43",
+            "startedAt": "04:43",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "movement",
+          "action": "下到地下酒窖",
+          "impact": 0,
+          "nodeId": "m1",
+          "status": "failed",
+          "endTime": "05:21",
+          "outcome": "下到地下酒窖 [拓扑中无可用路径] 失败",
+          "startTime": "05:19",
+          "characterId": "Abel William",
+          "destination": "地下酒窖",
+          "characterName": "Abel William",
+          "executionMeta": {
+            "failedAt": "05:19",
+            "startedAt": "05:19",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "movement",
+          "action": "走下石砌台阶进入地下酒窖，准备检视木质酒桶的安置、锁具与温度状况",
+          "impact": 0,
+          "nodeId": "m_abel_04_45",
+          "status": "failed",
+          "endTime": "04:50",
+          "outcome": "走下石砌台阶进入地下酒窖，准备检视木质酒桶的安置、锁具与温度状况 [拓扑中无可用路径] 失败",
+          "startTime": "04:45",
+          "characterId": "Abel William",
+          "destination": "地下酒窖",
+          "characterName": "Abel William",
+          "executionMeta": {
+            "failedAt": "04:45",
+            "startedAt": "04:45",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "movement",
+          "action": "下到地下酒窖",
+          "impact": 0,
+          "nodeId": "m1",
+          "status": "failed",
+          "endTime": "05:21",
+          "outcome": "下到地下酒窖 [拓扑中无可用路径] 失败",
+          "startTime": "05:19",
+          "characterId": "Abel William",
+          "destination": "地下酒窖",
+          "characterName": "Abel William",
+          "executionMeta": {
+            "failedAt": "05:19",
+            "startedAt": "05:19",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "movement",
+          "action": "下到地下酒窖",
+          "impact": 0,
+          "nodeId": "m1",
+          "status": "failed",
+          "endTime": "05:21",
+          "outcome": "下到地下酒窖 [拓扑中无可用路径] 失败",
+          "startTime": "05:19",
+          "characterId": "Abel William",
+          "destination": "地下酒窖",
+          "characterName": "Abel William",
+          "executionMeta": {
+            "failedAt": "05:19",
+            "startedAt": "05:19",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "movement",
+          "action": "走下石砌台阶进入地下酒窖",
+          "impact": 0,
+          "nodeId": "m_abel_04_48_01",
+          "status": "failed",
+          "endTime": "04:50",
+          "outcome": "走下石砌台阶进入地下酒窖 [拓扑中无可用路径] 失败",
+          "startTime": "04:48",
+          "characterId": "Abel William",
+          "destination": "地下酒窖",
+          "characterName": "Abel William",
+          "executionMeta": {
+            "failedAt": "04:48",
+            "startedAt": "04:48",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "movement",
+          "action": "下到地下酒窖",
+          "impact": 0,
+          "nodeId": "m1",
+          "status": "failed",
+          "endTime": "05:21",
+          "outcome": "下到地下酒窖 [拓扑中无可用路径] 失败",
+          "startTime": "05:19",
+          "characterId": "Abel William",
+          "destination": "地下酒窖",
+          "characterName": "Abel William",
+          "executionMeta": {
+            "failedAt": "05:19",
+            "startedAt": "05:19",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "movement",
+          "action": "下到地下酒窖",
+          "impact": 0,
+          "nodeId": "m2",
+          "status": "in_progress",
+          "endTime": "05:23",
+          "startTime": "05:20",
+          "characterId": "Abel William",
+          "destination": "地下酒窖",
+          "characterName": "Abel William",
+          "executionMeta": {
+            "startedAt": "05:20",
+            "remainingMinutes": 3
+          }
+        },
+        {
+          "type": "movement",
+          "action": "下到地下酒窖",
+          "impact": 0,
+          "nodeId": "m_day2_0451_01",
+          "status": "failed",
+          "endTime": "04:54",
+          "outcome": "下到地下酒窖 [拓扑中无可用路径] 失败",
+          "startTime": "04:51",
+          "characterId": "Abel William",
+          "destination": "地下酒窖",
+          "characterName": "Abel William",
+          "executionMeta": {
+            "failedAt": "04:51",
+            "startedAt": "04:51",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "movement",
+          "action": "下到地下酒窖",
+          "impact": 0,
+          "nodeId": "m1",
+          "status": "failed",
+          "endTime": "05:21",
+          "outcome": "下到地下酒窖 [拓扑中无可用路径] 失败",
+          "startTime": "05:19",
+          "characterId": "Abel William",
+          "destination": "地下酒窖",
+          "characterName": "Abel William",
+          "executionMeta": {
+            "failedAt": "05:19",
+            "startedAt": "05:19",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "movement",
+          "action": "下到地下酒窖再次检视木质酒桶的安置、锁具和温度状况",
+          "impact": 0,
+          "nodeId": "m_day2_0453",
+          "status": "failed",
+          "endTime": "04:56",
+          "outcome": "下到地下酒窖再次检视木质酒桶的安置、锁具和温度状况 [拓扑中无可用路径] 失败",
+          "startTime": "04:53",
+          "characterId": "Abel William",
+          "destination": "地下酒窖",
+          "characterName": "Abel William",
+          "executionMeta": {
+            "failedAt": "04:53",
+            "startedAt": "04:53",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "movement",
+          "action": "下到地下酒窖检视木质酒桶的安置、锁具与温度状况",
+          "impact": 0,
+          "nodeId": "m_abel_04_54_01",
+          "status": "failed",
+          "endTime": "04:58",
+          "outcome": "下到地下酒窖检视木质酒桶的安置、锁具与温度状况 [拓扑中无可用路径] 失败",
+          "startTime": "04:54",
+          "characterId": "Abel William",
+          "destination": "地下酒窖",
+          "characterName": "Abel William",
+          "executionMeta": {
+            "failedAt": "04:54",
+            "startedAt": "04:54",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "movement",
+          "action": "下到地下酒窖检查木质酒桶的安置、锁具与温度状况",
+          "impact": 0,
+          "nodeId": "m_day2_0455",
+          "status": "failed",
+          "endTime": "05:00",
+          "outcome": "下到地下酒窖检查木质酒桶的安置、锁具与温度状况 [拓扑中无可用路径] 失败",
+          "startTime": "04:55",
+          "characterId": "Abel William",
+          "destination": "地下酒窖",
+          "characterName": "Abel William",
+          "executionMeta": {
+            "failedAt": "04:55",
+            "startedAt": "04:55",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "movement",
+          "action": "下到地下酒窖",
+          "impact": 0,
+          "nodeId": "m1",
+          "status": "failed",
+          "endTime": "05:21",
+          "outcome": "下到地下酒窖 [拓扑中无可用路径] 失败",
+          "startTime": "05:19",
+          "characterId": "Abel William",
+          "destination": "地下酒窖",
+          "characterName": "Abel William",
+          "executionMeta": {
+            "failedAt": "05:19",
+            "startedAt": "05:19",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "movement",
+          "action": "下到地下酒窖检查木质酒桶的安置、锁具和温度状况",
+          "impact": 0,
+          "nodeId": "m1_0457",
+          "status": "failed",
+          "endTime": "05:02",
+          "outcome": "下到地下酒窖检查木质酒桶的安置、锁具和温度状况 [拓扑中无可用路径] 失败",
+          "startTime": "04:57",
+          "characterId": "Abel William",
+          "destination": "地下酒窖",
+          "characterName": "Abel William",
+          "executionMeta": {
+            "failedAt": "04:57",
+            "startedAt": "04:57",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "movement",
+          "action": "前往钟表店取回怀特那里订的替换小齿轮",
+          "impact": 0,
+          "nodeId": "m3",
+          "status": "completed",
+          "endTime": "05:08",
+          "outcome": "前往钟表店取回怀特那里订的替换小齿轮 成功",
+          "startTime": "04:58",
+          "characterId": "Abel William",
+          "destination": "SCN_12_SUB_1",
+          "characterName": "Abel William",
+          "executionMeta": {
+            "movement": {
+              "routeSnapshot": [
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_4",
+                    "position": 0
+                  },
+                  "from": {
+                    "type": "scene",
+                    "sceneId": "SCN_13_SUB_1"
+                  },
+                  "kind": "along_road",
+                  "roadId": "ROAD_4",
+                  "blockCheck": {
+                    "toId": "ROAD_4",
+                    "fromId": "SCN_13_SUB_1"
+                  },
+                  "durationMinutes": 1
+                },
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_4",
+                    "position": 0
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_4",
+                    "position": 0
+                  },
+                  "kind": "along_road",
+                  "roadId": "ROAD_4",
+                  "durationMinutes": 0
+                },
+                {
+                  "to": {
+                    "type": "junction",
+                    "junctionId": "JUNC_3"
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_4",
+                    "position": 0
+                  },
+                  "kind": "to_junction",
+                  "blockCheck": {
+                    "toId": "JUNC_3",
+                    "fromId": "ROAD_4"
+                  },
+                  "durationMinutes": 0
+                },
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_4",
+                    "position": 0
+                  },
+                  "from": {
+                    "type": "junction",
+                    "junctionId": "JUNC_3"
+                  },
+                  "kind": "to_junction",
+                  "blockCheck": {
+                    "toId": "ROAD_4",
+                    "fromId": "JUNC_3"
+                  },
+                  "durationMinutes": 0
+                },
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_4",
+                    "position": 0.22
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_4",
+                    "position": 0
+                  },
+                  "kind": "along_road",
+                  "roadId": "ROAD_4",
+                  "durationMinutes": 2.2
+                },
+                {
+                  "to": {
+                    "type": "scene",
+                    "sceneId": "SCN_12_SUB_1"
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_4",
+                    "position": 0.22
+                  },
+                  "kind": "to_scene",
+                  "blockCheck": {
+                    "toId": "SCN_12_SUB_1",
+                    "fromId": "ROAD_4"
+                  },
+                  "durationMinutes": 1
+                }
+              ],
+              "targetPosition": {
+                "type": "scene",
+                "sceneId": "SCN_12_SUB_1"
+              },
+              "minutesIntoStep": 0,
+              "currentStepIndex": 6,
+              "lastReachablePosition": {
+                "type": "scene",
+                "sceneId": "SCN_12_SUB_1"
+              }
+            },
+            "startedAt": "04:58",
+            "completedAt": "05:02",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "movement",
+          "action": "下到地下酒窖",
+          "impact": 0,
+          "nodeId": "m2",
+          "status": "in_progress",
+          "endTime": "05:23",
+          "startTime": "05:20",
+          "characterId": "Abel William",
+          "destination": "地下酒窖",
+          "characterName": "Abel William",
+          "executionMeta": {
+            "startedAt": "05:20",
+            "remainingMinutes": 3
+          }
+        },
+        {
+          "type": "movement",
+          "action": "下到地下酒窖",
+          "impact": 0,
+          "nodeId": "m1",
+          "status": "failed",
+          "endTime": "05:21",
+          "outcome": "下到地下酒窖 [拓扑中无可用路径] 失败",
+          "startTime": "05:19",
+          "characterId": "Abel William",
+          "destination": "地下酒窖",
+          "characterName": "Abel William",
+          "executionMeta": {
+            "failedAt": "05:19",
+            "startedAt": "05:19",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "movement",
+          "action": "下到地下酒窖",
+          "impact": 0,
+          "nodeId": "m1",
+          "status": "failed",
+          "endTime": "05:21",
+          "outcome": "下到地下酒窖 [拓扑中无可用路径] 失败",
+          "startTime": "05:19",
+          "characterId": "Abel William",
+          "destination": "地下酒窖",
+          "characterName": "Abel William",
+          "executionMeta": {
+            "failedAt": "05:19",
+            "startedAt": "05:19",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "movement",
+          "action": "下到地下酒窖",
+          "impact": 0,
+          "nodeId": "m2",
+          "status": "in_progress",
+          "endTime": "05:23",
+          "startTime": "05:20",
+          "characterId": "Abel William",
+          "destination": "地下酒窖",
+          "characterName": "Abel William",
+          "executionMeta": {
+            "startedAt": "05:20",
+            "remainingMinutes": 3
+          }
+        }
+      ]
+    }
+  ],
+  "intents": [
+    {
+      "intent": "下到地下酒窖再次检视木质酒桶的安置、锁具和温度状况，确保无异常",
+      "updatedAt": "2026-04-02T12:33:39.409Z"
+    }
+  ],
+  "npcName": "Abel William"
+}

@@ -148,3 +148,54 @@ export function runtimeToStatus(
     stopReason: runtime.stopReason,
   };
 }
+
+/** The rendered paragraphs a session has already produced.
+ *
+ *  Ordered by (actorNpcId, gameDateTime, timestamp) — character first, because
+ *  this is not one timeline but one stream per character, which is the shape
+ *  the caller buckets it back into. Rows arrive already grouped and already in
+ *  order within each group.
+ *
+ *  `timestamp` is the last tiebreaker rather than the first sort key: everyone
+ *  who perceives a given minute is written in a single `createMany`, so their
+ *  rows can share a game time and a millisecond, and a sort with ties returns
+ *  whatever order the database felt like — different between two loads of the
+ *  same data. Three keys make it total. */
+export async function loadPerceptionHistory(
+  prisma: PrismaClient,
+  sessionId: string
+): Promise<
+  Array<{
+    npcId: string;
+    gameDateTime: string;
+    location: string;
+    narrative: string;
+  }>
+> {
+  const rows = await prisma.simulationEvent.findMany({
+    where: { sessionId, type: "npc_perceived" },
+    orderBy: [
+      { actorNpcId: "asc" },
+      { gameDateTime: "asc" },
+      { timestamp: "asc" },
+    ],
+    select: {
+      actorNpcId: true,
+      gameDateTime: true,
+      location: true,
+      data: true,
+    },
+  });
+  const out = [];
+  for (const r of rows) {
+    const narrative = (r.data as { narrative?: unknown } | null)?.narrative;
+    if (typeof narrative !== "string" || narrative.length === 0) continue;
+    out.push({
+      npcId: r.actorNpcId,
+      gameDateTime: r.gameDateTime,
+      location: r.location,
+      narrative,
+    });
+  }
+  return out;
+}

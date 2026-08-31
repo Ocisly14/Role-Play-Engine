@@ -11,7 +11,6 @@ interface Skill {
 }
 
 interface SkillsSectionProps {
-  form: Record<string, string>;
   onChange: (key: string, value: string) => void;
   skillsState: Skill[];
   skillPointsUsage: {
@@ -26,7 +25,6 @@ interface SkillsSectionProps {
 }
 
 export const SkillsSection: React.FC<SkillsSectionProps> = ({
-  form,
   onChange,
   skillsState,
   skillPointsUsage,
@@ -211,12 +209,12 @@ export const SkillsSection: React.FC<SkillsSectionProps> = ({
             {
               key: "investigation",
               labelKey: "categories.investigationCriminal",
-              categories: ["Investigation", "Criminal"],
+              categories: ["Investigation"],
             },
             {
               key: "combat",
               labelKey: "categories.combat",
-              categories: ["Combat"],
+              categories: ["Combat", "Physical", "Technical", "Vehicle"],
             },
           ].map((group) => {
             const groupSkills = skillsState.filter((s) =>

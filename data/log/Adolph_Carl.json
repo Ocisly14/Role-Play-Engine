@@ -1,0 +1,2925 @@
+{
+  "npcId": "Adolph Carl",
+  "memories": [
+    {
+      "type": "information",
+      "content": "我靠买卖和存储敏感信息为生。卡森德拉到处都是有利可图的秘密，尤其是在那些坚持自己体面的人当中。",
+      "gameDay": 1,
+      "gameTime": "00:00",
+      "location": null,
+      "metadata": {
+        "difficulty": "regular",
+        "knowledgeId": "k_adolph_information_trade"
+      }
+    },
+    {
+      "type": "information",
+      "content": "2002年我从一对失踪富裕夫妇的别墅地下室获得了真正的千维系统。那台机器是我留在卡森德拉的最好理由。",
+      "gameDay": 1,
+      "gameTime": "00:00",
+      "location": null,
+      "metadata": {
+        "difficulty": "regular",
+        "knowledgeId": "k_adolph_qianwei"
+      }
+    },
+    {
+      "type": "information",
+      "content": "我知道红石夫人在星辰医院用苏珊的名字工作，我也足够了解五金店的军火交易暗号，必要时可以涉足那门生意。",
+      "gameDay": 1,
+      "gameTime": "00:00",
+      "location": null,
+      "metadata": {
+        "difficulty": "hard",
+        "knowledgeId": "k_adolph_local_channels"
+      }
+    },
+    {
+      "type": "information",
+      "content": "人们在不同的生意中用不同的名字认识我。有些人认识阿道夫·卡尔，其他人只知道岸先生或安先生，我更喜欢这样。",
+      "gameDay": 1,
+      "gameTime": "00:00",
+      "location": null,
+      "metadata": {
+        "difficulty": "regular",
+        "knowledgeId": "k_adolph_aliases"
+      }
+    },
+    {
+      "type": "plan",
+      "content": "Today's plan: 1. 在监控室继续核查并标注昨夜录制的优先档案，确认离线备份完整并记录在系统日志中。 at 阿道夫家; 2. 在主控台完善并加密“草案-礼物接收协议”，准备针对哈里森与卢奇菲罗的跟进私信并设置实时提醒。 at 阿道夫家; 3. 刻录一张带时间戳与完整校验的冗余光盘放入保密箱并更新存取日志。 at 阿道夫家; 4. 演练一次礼物接收场景以验证客厅主摄像头角度与证据链的完整性。 at 阿道夫家; 5. 小睡片刻以恢复精力，为白天外出做准备。 at 阿道夫家; 6. 以优雅顾客的身份出现在花店，暗中观察西蒙并收集可利用的社交细节。 at 花店·卡森德拉之花; 7. 在占星师小铺门口静候并试探所罗门的动向与可能的来访者。 at 占星师小铺; 8. 以探望Mrs. Barklyite为名在医院核实她与卢奇菲罗或其他关键人物的联系线索。 at 星辰医院; 9. 到五金店以顾客之名接近哈里森，留意任何礼物相关的迹象或带有暗号的对话。 at 五金店; 10. 在前往伐木场的中途停留墓地，低调观察是否有人对旧案或可疑行踪留下痕迹。 at 墓地; 11. 回到监控室合并白天收集到的情报，更新优先目标清单并微调摄像与备份参数。 at 阿道夫家; 12. 晚间在帕拉迪尔大酒店用餐以维护我的上流形象并试探与富有人士的接触机会。 at 帕拉迪尔大酒店; 13. 之后前往驯鹿酒吧投放一条小线索以测试镇上反应并观察谁会接招。 at 驯鹿酒吧; 14. 回家对当天关键片段做最终归档与多重加密备份，设定明晚19:00的会面提醒，然后休息睡觉。 at 阿道夫家",
+      "gameDay": 2,
+      "gameTime": "00:00",
+      "location": null,
+      "metadata": {
+        "planType": "daily"
+      }
+    },
+    {
+      "type": "belief",
+      "content": "如果我让其他人毫无争议地控制镇上的信息流通，我将再次变得可有可无。对秘密的掌控是我唯一稳固的保护。",
+      "gameDay": 1,
+      "gameTime": "00:00",
+      "location": null,
+      "metadata": {
+        "confidence": 0.95,
+        "reasoningChain": "今晚我通过千维系统维持并强化了对信息流的控制：发现并标注可疑人物、安排受控会面、并验证了所有备份与监控预设。成功掌控这些主动权使我更加确信掌握秘密是我最稳固的防线。"
+      }
+    },
+    {
+      "type": "information",
+      "content": "我住在SCN_15，那里有一个隐藏的监控室。从那个房间我可以监视我自己的房子、附近的动向，以及卡森德拉比大多数人会觉得舒服的多得多的地方。",
+      "gameDay": 1,
+      "gameTime": "00:00",
+      "location": null,
+      "metadata": {
+        "difficulty": "automatic",
+        "knowledgeId": "k_adolph_house_system"
+      }
+    },
+    {
+      "type": "secret",
+      "content": "卢奇菲罗是我的联系人之一。她口袋里的纸条和手机上的信息都可能追溯到我，我很庆幸大多数人仍然不知道其中一条信息来自哪里。",
+      "gameDay": 1,
+      "gameTime": "00:00",
+      "location": null,
+      "metadata": {
+        "knowledgeId": "s_adolph_lucifero"
+      }
+    },
+    {
+      "type": "secret",
+      "content": "当我的家族在法国崩溃时，我秘密目睹了西蒙杀害了南希的母亲。他从未意识到我在场，从那以后我一直把这份知识当作一项长期投资。",
+      "gameDay": 1,
+      "gameTime": "00:00",
+      "location": null,
+      "metadata": {
+        "knowledgeId": "s_adolph_1988_witness"
+      }
+    },
+    {
+      "type": "secret",
+      "content": "在卡森德拉认出西蒙之后，我开始密切监视他，最终发送了那封将他引到驯鹿酒吧的威胁信。勒克斯的出现和卢奇菲罗的谋杀在我能将那个旧秘密变现之前破坏了会面。",
+      "gameDay": 1,
+      "gameTime": "00:00",
+      "location": null,
+      "metadata": {
+        "knowledgeId": "s_adolph_bar_note"
+      }
+    },
+    {
+      "type": "plan",
+      "content": "利用千维系统和情报网络在卡森德拉保持不可触碰的地位，维持上流社会的假象，从他人的秘密中获利，最终积累足够的筹码以自己的条件重新进入精英阶层。",
+      "gameDay": 1,
+      "gameTime": "00:00",
+      "location": null,
+      "metadata": {
+        "planType": "long_term"
+      }
+    },
+    {
+      "type": "secret",
+      "content": "我精心打造的上流社会形象基本上是假的。我被那些圈子容忍，是因为我掌握着他们害怕的信息，而不是因为他们真正接受我为自己人。",
+      "gameDay": 1,
+      "gameTime": "00:00",
+      "location": null,
+      "metadata": {
+        "knowledgeId": "s_adolph_false_status"
+      }
+    },
+    {
+      "type": "event",
+      "content": "监视哈里森的实时视频画面，密切注意他的举止与任何礼物交接迹象并准备触发礼物接收协议 成功",
+      "gameDay": 2,
+      "gameTime": "00:10",
+      "location": "SCN_15_SUB_2",
+      "metadata": {
+        "outcome": "监视哈里森的实时视频画面，密切注意他的举止与任何礼物交接迹象并准备触发礼物接收协议 成功"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我在小型服务器上将“草案-礼物接收协议”完善并以强加密保存，同时为哈里森与卢奇菲罗准备了跟进私信模板，并在服务器上设定了针对他们回复的实时提醒与自动备份。所有更改和触发规则已写入服务器日志并标为优先档案。",
+      "gameDay": 2,
+      "gameTime": "00:25",
+      "location": "SCN_15_SUB_2",
+      "metadata": {
+        "itemId": "ITEM_SCN15_6",
+        "outcome": "在小型服务器上完善并加密“草案-礼物接收协议”，为哈里森与卢奇菲罗的跟进私信准备模板并设置实时提醒",
+        "itemName": "小型服务器机箱"
+      }
+    },
+    {
+      "type": "witness",
+      "content": "[相遇] 我在监控室正对着哈里森·洛克希德——他出现在我面前，出乎意料。心跳加速，有戒备和紧张感：他可能是来交付礼物，也可能是要盘问或探查设备。我立刻意识到必须掌控这次面对面接触，准备触发“礼物接收协议”、同时确保摄像与服务器证据被即时保护与备份，保持表面淡定以保全我的掩饰。",
+      "gameDay": 2,
+      "gameTime": "00:35",
+      "location": "SCN_15_SUB_2",
+      "metadata": {
+        "impact": 2,
+        "perspective": "co_presence",
+        "sourceAction": "Harrison Lockheed 在 监控室",
+        "sourceCharacterId": "__encounter__"
+      }
+    },
+    {
+      "type": "event",
+      "content": "在监控室小睡三十分钟以恢复精力 [在 SCN_15_SUB_2 因重新规划而中断] 已中断",
+      "gameDay": 2,
+      "gameTime": "00:35",
+      "location": "SCN_15_SUB_2",
+      "metadata": {
+        "outcome": "在监控室小睡三十分钟以恢复精力 [在 SCN_15_SUB_2 因重新规划而中断] 已中断",
+        "interruptionReason": "revise_replan"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我以冷静、得体的姿态来到监控室，原本想与哈里森当面交谈并暗示此刻不便接收礼物以试探来意，但他并未出现在房内，未能接触到他。房间内监控与离线备份正常运行，我确认了摄像头与已导出的关键帧记录了相关情况；目前无法触发或验证“礼物接收协议”。",
+      "gameDay": 2,
+      "gameTime": "00:41",
+      "location": "SCN_15_SUB_2",
+      "metadata": {
+        "outcome": "以冷静、得体的姿态迎上前去与哈里森交谈，礼貌问候并暗示此刻不便当面接收礼物，试探他的来意、拖延或转移话题，同时留意他的表情与措辞以评估是否需立即触发“礼物接收协议”，并在必要时保持表面上的可否认性以维护掩饰。 [Persuade 55, rolled 76 (fail) — all targets resisted] failed"
+      }
+    },
+    {
+      "type": "event",
+      "content": "监视客厅实时画面，保持录制并在哈里森出现时准备触发礼物接收协议与立即备份 成功",
+      "gameDay": 2,
+      "gameTime": "00:52",
+      "location": "SCN_15_SUB_2",
+      "metadata": {
+        "outcome": "监视客厅实时画面，保持录制并在哈里森出现时准备触发礼物接收协议与立即备份 成功"
+      }
+    },
+    {
+      "type": "event",
+      "content": "推开隔音门走出监控室，前往屋内走廊以便与哈里森当面接触并掌控交谈节奏 成功",
+      "gameDay": 2,
+      "gameTime": "00:54",
+      "location": "SCN_15_SUB_1",
+      "metadata": {
+        "outcome": "推开隔音门走出监控室，前往屋内走廊以便与哈里森当面接触并掌控交谈节奏 成功",
+        "blockedReason": "",
+        "failureReason": ""
+      }
+    },
+    {
+      "type": "event",
+      "content": "在玄关处整理衣领以呈现得体、冷静的姿态准备接待哈里森 成功",
+      "gameDay": 2,
+      "gameTime": "01:00",
+      "location": "SCN_15_SUB_1",
+      "metadata": {
+        "outcome": "在玄关处整理衣领以呈现得体、冷静的姿态准备接待哈里森 成功"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我在主控台上激活并触发了“草案-礼物接收协议”，将其设为实时执行并强制写入主控台与离线硬盘的冗余备份，所有操作已被系统日志记录。",
+      "gameDay": 2,
+      "gameTime": "01:03",
+      "location": "SCN_15_SUB_1",
+      "metadata": {
+        "itemId": "千维系统控制台权限",
+        "outcome": "在主控台上激活并触发“草案-礼物接收协议”，设为实时执行并强制写入主控台与离线硬盘的冗余备份",
+        "itemName": "千维系统控制台权限"
+      }
+    },
+    {
+      "type": "event",
+      "content": "在客厅沙发处演练一次礼物接收场景，假装接过包裹并大声念出预设的匿名核验代码以验证摄像与音频记录角度及证据链的完整性与可读性 成功",
+      "gameDay": 2,
+      "gameTime": "01:09",
+      "location": "SCN_15_SUB_1",
+      "metadata": {
+        "outcome": "在客厅沙发处演练一次礼物接收场景，假装接过包裹并大声念出预设的匿名核验代码以验证摄像与音频记录角度及证据链的完整性与可读性 成功"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我刻录了一张带有时间戳与完整校验的冗余光盘，并把实体光盘放入保密箱。随后我在系统日志中记录了刻录与存取的详情，日志与相关元数据已被写入主控台并同步到离线硬盘作为冗余备份。",
+      "gameDay": 2,
+      "gameTime": "01:20",
+      "location": "SCN_15_SUB_1",
+      "metadata": {
+        "outcome": "刻录一张带时间戳与完整校验的冗余光盘并放入保密箱，随后在系统日志中记录刻录与存取记录"
+      }
+    },
+    {
+      "type": "event",
+      "content": "小睡三十分钟以恢复精力，为白天外出做准备 成功",
+      "gameDay": 2,
+      "gameTime": "01:51",
+      "location": "SCN_15_SUB_1",
+      "metadata": {
+        "outcome": "小睡三十分钟以恢复精力，为白天外出做准备 成功"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我在主控台将哈里森的实时视频流放大，聚焦五金店及其可能前往的路径，标注了可疑动作并将当前帧写入优先备份并同步到离线硬盘。",
+      "gameDay": 2,
+      "gameTime": "01:57",
+      "location": "SCN_15_SUB_1",
+      "metadata": {
+        "outcome": "在主控台上再次查看并放大哈里森的实时视频流，重点监测五金店与他可能前往的路径，标注任何可疑动作并将当前帧写入优先备份。"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我检查了主控台的实时视频流与“礼物接收协议”的备份状态，确认系统正在将实时录制与关键帧写入主控台与离线硬盘的冗余备份（优先档案已标记）。未发现备份未即时写入的异常，因此未手动触发额外备份，已将本次核查记录写入系统日志。",
+      "gameDay": 2,
+      "gameTime": "02:03",
+      "location": "SCN_15_SUB_1",
+      "metadata": {
+        "outcome": "检查主控台的实时视频流与礼物接收协议的激活与备份状态，若发现备份未即时写入则手动触发立即备份并将当前关键帧写入离线硬盘"
+      }
+    },
+    {
+      "type": "witness",
+      "content": "[相遇] 在卡森德拉南新街与Kovind和Shandra Hernandez不期而遇。对方身份不明，我感到惊讶和警觉：表面保持礼貌与镇定，避免透露任何信息，暗自评估他们是否与我正在处理的目标或网络有关。决定回家后将此次接触记录入千维系统日志并复核监控覆盖情况。",
+      "gameDay": 2,
+      "gameTime": "02:09",
+      "location": "ROAD_3",
+      "metadata": {
+        "impact": 2,
+        "perspective": "co_presence",
+        "sourceAction": "Kovind, Shandra Hernandez 在 卡森德拉南新街",
+        "sourceCharacterId": "__encounter__"
+      }
+    },
+    {
+      "type": "witness",
+      "content": "[相遇] 我在哈里森的五金店与哈里森·洛克希德当面相遇。他的意图不明（可能来交付礼物，也可能是盘问或探查），我感到心跳加速并保持高度戒备。必须立刻触发“礼物接收协议”、在交谈中保持表面冷静以保全掩饰，同时确保摄像与服务器的即时备份与证据链不被中断。",
+      "gameDay": 2,
+      "gameTime": "02:15",
+      "location": "SCN_18_SUB_1",
+      "metadata": {
+        "impact": 2,
+        "perspective": "co_presence",
+        "sourceAction": "Harrison Lockheed 在 哈里森的五金店",
+        "sourceCharacterId": "__encounter__"
+      }
+    },
+    {
+      "type": "event",
+      "content": "前往五金店 成功",
+      "gameDay": 2,
+      "gameTime": "02:15",
+      "location": "SCN_18_SUB_1",
+      "metadata": {
+        "outcome": "前往五金店 成功",
+        "blockedReason": "",
+        "failureReason": ""
+      }
+    },
+    {
+      "type": "plan",
+      "content": "Today's plan: 1. 检查千维系统与所有摄像头的实时画面和服务器日志，确认今晚没有异常入侵并标记待核查片段。 at 监控室; 2. 在客厅换上外出服，准备晚餐并把今晚可能用到的资料、笔记本和现金放入公文包。 at 阿道夫家; 3. 以顾客身份短暂停留，观察西蒙的举动并留意花店常客的交谈以搜集可利用的信息。 at 花店·卡森德拉之花; 4. 坐下吃晚餐并与一两位常客闲聊，试探他们对镇上最近事件的看法并留意可交易的流言。 at 海伦的餐桌; 5. 在人群中低调观察并打探关于卢奇菲罗与勒克斯的最新流言，同时注意酒吧的监控死角和可疑人物。 at 驯鹿酒吧; 6. 在医院门廊附近确认红石夫人的夜班动向并通过远程手段核实她的身份信息是否有异常。 at 星辰医院; 7. 回到家把今晚收集到的录像与录音回放、剪辑并备份成可出售或用于要挟的情报包。 at 阿道夫家; 8. 通过加密通道向卢奇菲罗和哈里森发送暗示性消息，安排明日私下会面并确认交换条件。 at 监控室; 9. 在书房整理档案，草拟两封信件（一个邀约一个隐晦的威胁），核对家族旧档以寻找加重筹码的细节然后就寝。 at 阿道夫家",
+      "gameDay": 1,
+      "gameTime": "19:00",
+      "location": null,
+      "metadata": {
+        "planType": "daily"
+      }
+    },
+    {
+      "type": "event",
+      "content": "检查千维系统与所有摄像头的实时画面和服务器日志，确认今晚没有异常入侵并标记待核查片段。 成功",
+      "gameDay": 1,
+      "gameTime": "19:20",
+      "location": "SCN_15_SUB_2",
+      "metadata": {
+        "outcome": "检查千维系统与所有摄像头的实时画面和服务器日志，确认今晚没有异常入侵并标记待核查片段。 成功"
+      }
+    },
+    {
+      "type": "event",
+      "content": "走到客厅 成功",
+      "gameDay": 1,
+      "gameTime": "19:22",
+      "location": "SCN_15_SUB_1",
+      "metadata": {
+        "outcome": "走到客厅 成功",
+        "blockedReason": "",
+        "failureReason": ""
+      }
+    },
+    {
+      "type": "event",
+      "content": "我从衣柜里取出一套礼服，换上了外出服，顺手把衣柜门关好，身上还残留着柜中淡淡的香水气息。",
+      "gameDay": 1,
+      "gameTime": "19:30",
+      "location": "SCN_15_SUB_1",
+      "metadata": {
+        "itemId": "ITEM_SCN15_3",
+        "outcome": "从衣柜里取出一套礼服并换上外出服",
+        "itemName": "考究的礼服衣柜"
+      }
+    },
+    {
+      "type": "event",
+      "content": "步行前往花店·卡森德拉之花，作为顾客短暂停留以观察西蒙并倾听常客交谈 [在 ROAD_2 因重新规划而中断] 已中断",
+      "gameDay": 1,
+      "gameTime": "19:36",
+      "location": "ROAD_2",
+      "metadata": {
+        "outcome": "步行前往花店·卡森德拉之花，作为顾客短暂停留以观察西蒙并倾听常客交谈 [在 ROAD_2 因重新规划而中断] 已中断",
+        "interruptionReason": "revise_replan"
+      }
+    },
+    {
+      "type": "witness",
+      "content": "[相遇] 19:36 在卡森德拉北新街与Johnny和Solomon面对面相遇。他们向我走近并试图搭话，我立刻感到警觉并在心里快速评估他们可能带来的风险或利益。情绪上是冷静而计算的——准备用礼貌的应对掩饰真正意图，必要时立刻撤离或把此人列入今晚需重点监视的对象。",
+      "gameDay": 1,
+      "gameTime": "19:36",
+      "location": "ROAD_2",
+      "metadata": {
+        "impact": 2,
+        "perspective": "co_presence",
+        "sourceAction": "Johnny, Solomon 在 卡森德拉北新街",
+        "sourceCharacterId": "__encounter__"
+      }
+    },
+    {
+      "type": "event",
+      "content": "以礼貌而克制的口吻与Johnny和Solomon搭话，试探他们此行目的并暗中辨认衣着、口音与随行情况 [target Johnny not present] failed",
+      "gameDay": 1,
+      "gameTime": "19:42",
+      "location": "ROAD_2",
+      "metadata": {
+        "outcome": "以礼貌而克制的口吻与Johnny和Solomon搭话，试探他们此行目的并暗中辨认衣着、口音与随行情况 [target Johnny not present] failed"
+      }
+    },
+    {
+      "type": "event",
+      "content": "以礼貌而克制的口吻向Johnny和Solomon搭话，试探他们此行目的并暗中记录衣着、口音与同行人数与去向 [target Johnny not present] failed",
+      "gameDay": 1,
+      "gameTime": "19:48",
+      "location": "ROAD_2",
+      "metadata": {
+        "outcome": "以礼貌而克制的口吻向Johnny和Solomon搭话，试探他们此行目的并暗中记录衣着、口音与同行人数与去向 [target Johnny not present] failed"
+      }
+    },
+    {
+      "type": "event",
+      "content": "与Johnny和Solomon交谈以试探他们此行目的并暗中记录衣着、口音与同行人数 [target Johnny not present] failed",
+      "gameDay": 1,
+      "gameTime": "19:54",
+      "location": "ROAD_2",
+      "metadata": {
+        "outcome": "与Johnny和Solomon交谈以试探他们此行目的并暗中记录衣着、口音与同行人数 [target Johnny not present] failed"
+      }
+    },
+    {
+      "type": "witness",
+      "content": "[相遇] 19:36 在卡森德拉北新街与Solomon面对面相遇。他上前试图搭话，我瞬间警觉，情绪冷静且计算中——准备以礼貌掩饰真实意图，同时在心里迅速评估他是否带来信息、威胁或机会。感到需要立刻行动：要么当场跟进套话并记录细节，要么马上回监控室回放并标注相关画面，把他列入今晚重点监视对象。",
+      "gameDay": 1,
+      "gameTime": "19:55",
+      "location": "ROAD_2",
+      "metadata": {
+        "impact": 2,
+        "perspective": "co_presence",
+        "sourceAction": "Solomon 在 卡森德拉北新街",
+        "sourceCharacterId": "__encounter__"
+      }
+    },
+    {
+      "type": "event",
+      "content": "以礼貌而克制的口吻接近并与Johnny和Solomon搭话，试探他们此行目的并暗中记录衣着、口音与同行人数和去向 [在 ROAD_2 因重新规划而中断] 已中断",
+      "gameDay": 1,
+      "gameTime": "19:55",
+      "location": "ROAD_2",
+      "metadata": {
+        "outcome": "以礼貌而克制的口吻接近并与Johnny和Solomon搭话，试探他们此行目的并暗中记录衣着、口音与同行人数和去向 [在 ROAD_2 因重新规划而中断] 已中断",
+        "interruptionReason": "revise_replan"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我以礼貌而克制的口吻与所罗门搭话，试探他此行目的并暗中记录了他的衣着与口音、随行人数与去向。所罗门说他在来卡森德拉之前就买了《黄衣之王》，不会让陌生人随便翻阅，并且在花店旁经营一间神秘学商店；目前他没有随行人员，似乎打算回到那家店。 [rel:Solomon +0 → 0]",
+      "gameDay": 1,
+      "gameTime": "20:00",
+      "location": "ROAD_2",
+      "metadata": {
+        "outcome": "以礼貌而克制的口吻与Solomon搭话，试探他此行目的并暗中记录衣着、口音与随行人数与去向"
+      }
+    },
+    {
+      "type": "event",
+      "content": "前往占星师小铺 [在 ROAD_2 因重新规划而中断] 已中断",
+      "gameDay": 1,
+      "gameTime": "20:01",
+      "location": "ROAD_2",
+      "metadata": {
+        "outcome": "前往占星师小铺 [在 ROAD_2 因重新规划而中断] 已中断",
+        "interruptionReason": "revise_replan"
+      }
+    },
+    {
+      "type": "witness",
+      "content": "[相遇] 20:01 在卡森德拉北新街与Solomon和Angela当面相遇。他们靠近并试图搭话，我立刻警觉。情绪冷静、计算中——在心里快速评估他们可能带来的信息、威胁或交易价值。感觉需要立即行动：要么当场礼貌套话并记录细节，要么马上撤回监控室回放并标注相关画面，同时准备向合作方发出暗示性提醒。",
+      "gameDay": 1,
+      "gameTime": "20:01",
+      "location": "ROAD_2",
+      "metadata": {
+        "impact": 2,
+        "perspective": "co_presence",
+        "sourceAction": "Angela, Solomon 在 卡森德拉北新街",
+        "sourceCharacterId": "__encounter__"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我以礼貌且克制的方式接近了Solomon和Angela，暗中记录了他们的衣着、口音、随行人数与去向。所罗门穿着端庄，告诉我他在来卡森德拉之前已购得《黄衣之王》，不会随便示人，且目前无人随行，打算回到花店旁的神秘学商店；安吉拉穿着朴素，背着街头挎包，只说自己在城里到处走动。双方礼貌应对但保持防备，我记录了以上细节。 [rel:Solomon +0 → 0] [rel:Angela +0 → 0]",
+      "gameDay": 1,
+      "gameTime": "20:07",
+      "location": "ROAD_2",
+      "metadata": {
+        "outcome": "以礼貌且克制的方式接近Solomon和Angela，礼貌套话并暗中记录他们的衣着、口音、随行人数与去向"
+      }
+    },
+    {
+      "type": "event",
+      "content": "[直接] Harrison Lockheed刚才试图走近并把准备好的小礼物递给我，但因为我不在场互动未果。我既警觉又好奇——这可能是个建立关系的机会，也可能是有人在试探或暗中收集我方反应。我倾向于把Harrison列为今晚优先监控对象，回放并标注相关影像，同时通过加密渠道安排后续接触。",
+      "gameDay": 1,
+      "gameTime": "20:07",
+      "location": "ROAD_2",
+      "metadata": {
+        "impact": 1,
+        "perspective": "targeted",
+        "sourceAction": "走近阿道夫，与他和在场的Angela、Solomon寒暄，并把准备好的小礼物递给阿道夫，同时留意他们谈话中的任何可能影响我生意的消息 [target Adolph Carl not present] failed",
+        "sourceCharacterId": "Harrison Lockheed"
+      }
+    },
+    {
+      "type": "event",
+      "content": "走回监控室，回放并标注哈里森、安吉拉与所罗门的相关影像，并把哈里森列入今晚重点监控名单 [在 ROAD_2 因重新规划而中断] 已中断",
+      "gameDay": 1,
+      "gameTime": "20:11",
+      "location": "ROAD_2",
+      "metadata": {
+        "outcome": "走回监控室，回放并标注哈里森、安吉拉与所罗门的相关影像，并把哈里森列入今晚重点监控名单 [在 ROAD_2 因重新规划而中断] 已中断",
+        "interruptionReason": "revise_replan"
+      }
+    },
+    {
+      "type": "event",
+      "content": "[直接] 刚才Harrison Lockheed试图靠近并把一个小礼物递给我，但因为我当时不在场互动未果。我对这一举动既警觉又好奇——这可能是建立关系的机会，也可能是对我阵营的试探或收集反应的手段。我倾向于立即回监控室回放并标注相关画面，把Harrison列为今晚重点盯防对象，并通过加密渠道安排后续接触。",
+      "gameDay": 1,
+      "gameTime": "20:11",
+      "location": "ROAD_2",
+      "metadata": {
+        "impact": 1,
+        "perspective": "targeted",
+        "sourceAction": "向阿道夫、Angela和Solomon寒暄，并把小礼物递给阿道夫，同时留心他们谈话中的任何风声 [target Adolph Carl not present] failed",
+        "sourceCharacterId": "Harrison Lockheed"
+      }
+    },
+    {
+      "type": "event",
+      "content": "回到阿道夫家并前往监控室 成功",
+      "gameDay": 1,
+      "gameTime": "20:18",
+      "location": "SCN_15_SUB_1",
+      "metadata": {
+        "outcome": "回到阿道夫家并前往监控室 成功",
+        "blockedReason": "",
+        "failureReason": ""
+      }
+    },
+    {
+      "type": "event",
+      "content": "我用千维系统控制台权限回放并标注了今晚涉及哈里森、安吉拉和所罗门的所有监控片段，确认未见异常入侵；随后将那些已标注的片段导出并备份到离线硬盘，标记为优先档案。",
+      "gameDay": 1,
+      "gameTime": "20:29",
+      "location": "SCN_15_SUB_1",
+      "metadata": {
+        "itemId": "千维系统控制台权限",
+        "outcome": "回放并标注哈里森、安吉拉与所罗门在今晚的所有监控录像片段，然后将标注的片段备份到离线硬盘并标记为优先档案",
+        "itemName": "千维系统控制台权限"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我用千维系统的控制台权限向卢奇菲罗发出了一条加密且暗示性的私信，安排了私下会面并把话题引向哈里森，为日后留出要挟的余地；操作已完成，系统日志有记录。",
+      "gameDay": 1,
+      "gameTime": "20:35",
+      "location": "SCN_15_SUB_1",
+      "metadata": {
+        "itemId": "千维系统控制台权限",
+        "outcome": "通过千维系统控制台权限向卢奇菲罗发送加密且暗示性的私信，安排私下会面并引导其关注与哈里森有关的事宜（为后续跟进留出可要挟的余地）",
+        "itemName": "千维系统控制台权限"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我在千维系统控制台上把哈里森设为优先监控目标；系统确认并在监控界面突出显示他的实时位置，相关操作已写入系统日志。",
+      "gameDay": 1,
+      "gameTime": "20:41",
+      "location": "SCN_15_SUB_1",
+      "metadata": {
+        "outcome": "在千维系统控制台上把哈里森设为优先监控目标"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我在主控台上草拟并保存了一份礼物接收协议模板，随后将千维系统的监控优先级与录制参数上调，指定哈里森为高度优先并将摄像头重新对准他，同时启用了实时强化录制与离线冗余备份。系统确认保存与参数生效。",
+      "gameDay": 1,
+      "gameTime": "20:50",
+      "location": "SCN_15_SUB_1",
+      "metadata": {
+        "outcome": "在主控台上草拟并保存一份礼物接收协议模板，同时修改千维系统监控优先级与录制参数，将摄像头对准并强化对哈里森的实时录制与离线备份"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我通过千维系统向哈里森发送了一条加密私信，确认愿意在受控并录制的条件下接受他的礼物，并要求按照主控台保存的“草案-礼物接收协议”在我家客厅进行交接（全程录制并写入冗余备份），建议明晚19:00并附上匿名确认代码。系统已在监控日志中记录该发送并将相关记录纳入优先备份。",
+      "gameDay": 1,
+      "gameTime": "20:55",
+      "location": "SCN_15_SUB_1",
+      "metadata": {
+        "outcome": "通过千维系统的加密通道向Harrison发送一条短消息：确认我愿意在受控并录制的条件下接受他的礼物，要求按照已保存的“草案-礼物接收协议”在我家客厅进行交接（将进行全程录制并写入冗余备份），建议明晚19:00会面并附上用于核验的匿名确认代码。"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我把靠在沙发旁的沉重拐杖拿起，放进那只考究的礼服衣柜里并把门关上了。",
+      "gameDay": 1,
+      "gameTime": "20:58",
+      "location": "SCN_15_SUB_1",
+      "metadata": {
+        "itemId": "ITEM_SCN15_4",
+        "outcome": "把沉重的拐杖放入考究的礼服衣柜并关上衣柜门",
+        "itemName": "沉重的拐杖"
+      }
+    },
+    {
+      "type": "event",
+      "content": "在主控台实时监看哈里森的摄像画面，保持警觉并标注任何异常或可利用的细节 成功",
+      "gameDay": 1,
+      "gameTime": "21:10",
+      "location": "SCN_15_SUB_1",
+      "metadata": {
+        "outcome": "在主控台实时监看哈里森的摄像画面，保持警觉并标注任何异常或可利用的细节 成功"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我在千维系统控制台上为哈里森的回复设定了实时通知阈值，并把该通知设置与来信存档配置为自动写入冗余备份；系统日志记录了这些操作。",
+      "gameDay": 1,
+      "gameTime": "21:16",
+      "location": "SCN_15_SUB_1",
+      "metadata": {
+        "itemId": "千维系统控制台权限",
+        "outcome": "在千维系统控制台上为哈里森的回复设定实时通知阈值，并把该通知设置与来信存档自动写入冗余备份",
+        "itemName": "千维系统控制台权限"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我在主控台打开了加密信箱并查看了哈里森的最新回复；目前没有收到他的确认或任何疑问。我确认为哈里森设置的实时通知仍然激活，并将本次检查记录入系统日志以备后续核查。",
+      "gameDay": 1,
+      "gameTime": "21:22",
+      "location": "SCN_15_SUB_1",
+      "metadata": {
+        "outcome": "在主控台检查加密信箱并读取哈里森的最新回复，确认是否有收到他的确认或疑问"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我在主控台对摄像与音频进行了完整的同步测试，录制并回放了一段短片。回放显示音视频同步正常，录像已同时写入主控台与离线硬盘，冗余备份被确认并记录在系统日志中。",
+      "gameDay": 1,
+      "gameTime": "21:28",
+      "location": "SCN_15_SUB_1",
+      "metadata": {
+        "outcome": "在主控台对摄像与音频进行一次完整的同步测试，录制并回放一段短片以确认音视频同步与冗余备份生效"
+      }
+    },
+    {
+      "type": "event",
+      "content": "准备晚餐 成功",
+      "gameDay": 1,
+      "gameTime": "21:45",
+      "location": "SCN_15_SUB_1",
+      "metadata": {
+        "outcome": "准备晚餐 成功"
+      }
+    },
+    {
+      "type": "event",
+      "content": "坐下吃晚餐并在主控台实时监看哈里森的摄像画面，留意任何回复或异常并在系统中记录观察笔记 成功",
+      "gameDay": 1,
+      "gameTime": "22:06",
+      "location": "SCN_15_SUB_1",
+      "metadata": {
+        "outcome": "坐下吃晚餐并在主控台实时监看哈里森的摄像画面，留意任何回复或异常并在系统中记录观察笔记 成功"
+      }
+    },
+    {
+      "type": "event",
+      "content": "刷新并检查加密信箱的最新消息，回放任何新收到的音视频附件并将重要片段标注入优先档案 成功",
+      "gameDay": 1,
+      "gameTime": "22:12",
+      "location": "SCN_15_SUB_1",
+      "metadata": {
+        "outcome": "刷新并检查加密信箱的最新消息，回放任何新收到的音视频附件并将重要片段标注入优先档案 成功"
+      }
+    },
+    {
+      "type": "event",
+      "content": "走到监控室 成功",
+      "gameDay": 1,
+      "gameTime": "22:15",
+      "location": "SCN_15_SUB_2",
+      "metadata": {
+        "outcome": "走到监控室 成功",
+        "blockedReason": "",
+        "failureReason": ""
+      }
+    },
+    {
+      "type": "event",
+      "content": "我在控制面板上调整了多台摄像头，锁定哈里森的当前位置与可能的来路与退路，微调了放大倍数并将设置保存为一个实时触发的监控预设；触发时系统会自动开始记录并写入备份。",
+      "gameDay": 1,
+      "gameTime": "22:21",
+      "location": "SCN_15_SUB_2",
+      "metadata": {
+        "itemId": "ITEM_SCN15_2",
+        "outcome": "调整监控设施，把多台摄像头对准哈里森的当前位置与可能的来路与退路，微调放大倍数并保存为一个监控预设以便实时触发记录",
+        "itemName": "监控设施"
+      }
+    },
+    {
+      "type": "event",
+      "content": "检查加密信箱是否有哈里森的新回复并回放任何新收到的音视频附件，将重要片段标注入优先档案 成功",
+      "gameDay": 1,
+      "gameTime": "22:25",
+      "location": "SCN_15_SUB_2",
+      "metadata": {
+        "outcome": "检查加密信箱是否有哈里森的新回复并回放任何新收到的音视频附件，将重要片段标注入优先档案 成功"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我在控制面板上微调了客厅主摄像头的焦距，截取了当前的关键画面并将该帧导出写入角落的小型服务器作为离线备份；显示屏短暂冻结在那一帧，系统显示已完成写入。",
+      "gameDay": 1,
+      "gameTime": "22:31",
+      "location": "SCN_15_SUB_2",
+      "metadata": {
+        "itemId": "ITEM_SCN15_2",
+        "outcome": "调整客厅主摄像头的焦距并截取当前画面关键帧保存到离线硬盘",
+        "itemName": "监控设施"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我重启了墙上的显示屏组，之前冻结的关键帧消失，屏幕恢复为实时监控画面并能响应控制台的切换指令。监控墙现在运行正常。",
+      "gameDay": 1,
+      "gameTime": "22:34",
+      "location": "SCN_15_SUB_2",
+      "metadata": {
+        "itemId": "ITEM_SCN15_1",
+        "outcome": "重启显示屏使画面恢复正常",
+        "itemName": "显示屏组"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我在角落的小型服务器上载入了刚导出的关键帧并打开了离线备份，系统成功读取并播放了该帧，确认备份文件可用且已写入。",
+      "gameDay": 1,
+      "gameTime": "22:40",
+      "location": "SCN_15_SUB_2",
+      "metadata": {
+        "itemId": "ITEM_SCN15_6",
+        "outcome": "检查小型服务器上的已导出关键帧并验证备份文件能否正常读取",
+        "itemName": "小型服务器机箱"
+      }
+    },
+    {
+      "type": "event",
+      "content": "检查加密信箱是否有哈里森的新回复并回放任何新收到的音视频附件，将重要片段标注入优先档案 成功",
+      "gameDay": 1,
+      "gameTime": "22:46",
+      "location": "SCN_15_SUB_2",
+      "metadata": {
+        "outcome": "检查加密信箱是否有哈里森的新回复并回放任何新收到的音视频附件，将重要片段标注入优先档案 成功"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我在千维监控控制台逐帧回放了哈里森靠近我家的录像，逐帧标注了所有可疑动作与物品，并将带注释的片段保存到小型服务器作为离线备份。",
+      "gameDay": 1,
+      "gameTime": "23:00",
+      "location": "SCN_15_SUB_2",
+      "metadata": {
+        "itemId": "ITEM_SCN15_2",
+        "outcome": "回放并逐帧审查哈里森靠近我家的监控录像，标注所有可疑动作与物品",
+        "itemName": "监控设施"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我将已标注的回放片段刻录到一张备份光盘上，并把刻录好的光盘放回了备份光盘盒里，作为离线冗余备份保存。",
+      "gameDay": 1,
+      "gameTime": "23:10",
+      "location": "SCN_15_SUB_2",
+      "metadata": {
+        "itemId": "ITEM_SCN15_7",
+        "outcome": "把已标注的回放片段刻录到备份光盘并放入备份光盘盒",
+        "itemName": "备份光盘盒"
+      }
+    },
+    {
+      "type": "event",
+      "content": "刷新并检查加密信箱是否有哈里森的新回复，回放任何新收到的音视频并将重要片段标注为优先档案 成功",
+      "gameDay": 1,
+      "gameTime": "23:13",
+      "location": "SCN_15_SUB_2",
+      "metadata": {
+        "outcome": "刷新并检查加密信箱是否有哈里森的新回复，回放任何新收到的音视频并将重要片段标注为优先档案 成功"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我打开备份光盘盒，取出刚刻录的光盘，检查盘面后用记号笔在盘面写上刻录时间与标签，然后把光盘放回光盘盒中保存。盘面完好，已标注为优先档案。",
+      "gameDay": 1,
+      "gameTime": "23:18",
+      "location": "SCN_15_SUB_2",
+      "metadata": {
+        "itemId": "ITEM_SCN15_7",
+        "outcome": "打开备份光盘盒，取出刚刻录的光盘，检查盘面并在盘面用记号笔写上刻录时间与标签，然后将光盘放回光盘盒中保存",
+        "itemName": "备份光盘盒"
+      }
+    },
+    {
+      "type": "event",
+      "content": "再次刷新并检查加密信箱是否有哈里森的新回复，回放任何新收到的音视频附件，并将重要片段标注入优先档案 成功",
+      "gameDay": 1,
+      "gameTime": "23:24",
+      "location": "SCN_15_SUB_2",
+      "metadata": {
+        "outcome": "再次刷新并检查加密信箱是否有哈里森的新回复，回放任何新收到的音视频附件，并将重要片段标注入优先档案 成功"
+      }
+    },
+    {
+      "type": "event",
+      "content": "在监控室实时监看哈里森的摄像画面，保持警觉并在系统内记录任何异常或可利用的细节 成功",
+      "gameDay": 1,
+      "gameTime": "23:35",
+      "location": "SCN_15_SUB_2",
+      "metadata": {
+        "outcome": "在监控室实时监看哈里森的摄像画面，保持警觉并在系统内记录任何异常或可利用的细节 成功"
+      }
+    },
+    {
+      "type": "event",
+      "content": "刷新并检查加密信箱是否有哈里森的新回复，回放任何新收到的音视频附件，并将重要片段标注为优先档案 成功",
+      "gameDay": 1,
+      "gameTime": "23:40",
+      "location": "SCN_15_SUB_2",
+      "metadata": {
+        "outcome": "刷新并检查加密信箱是否有哈里森的新回复，回放任何新收到的音视频附件，并将重要片段标注为优先档案 成功"
+      }
+    },
+    {
+      "type": "event",
+      "content": "在控制台前实时监视哈里森的摄像画面，记录任何异常或可利用的细节并将观察笔记保存到优先档案；若收到哈里森回复，立即标注该回复并启动备用录制。 成功",
+      "gameDay": 1,
+      "gameTime": "23:50",
+      "location": "SCN_15_SUB_2",
+      "metadata": {
+        "outcome": "在控制台前实时监视哈里森的摄像画面，记录任何异常或可利用的细节并将观察笔记保存到优先档案；若收到哈里森回复，立即标注该回复并启动备用录制。 成功"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我在千维系统上启用了“礼物接收协议”监控预设，锁定了客厅主摄像头的角度与录制参数，并启动了一次完整的演练录制。录制已写入小型服务器并刻录到光盘，冗余备份路径已确认可用。",
+      "gameDay": 1,
+      "gameTime": "23:56",
+      "location": "SCN_15_SUB_2",
+      "metadata": {
+        "outcome": "在千维系统上应用“礼物接收协议”监控预设，锁定客厅摄像头的角度与录制参数，启动一次完整演练录制并确认冗余备份路径可用"
+      }
+    },
+    {
+      "type": "secret",
+      "content": "我已向卢奇菲罗发出加密私信，安排私下会面并暗示涉及哈里森，意在用她作为中间人或未来要挟的节点；该信息已通过千维系统发送并记录在日志中。 ",
+      "gameDay": 1,
+      "gameTime": "23:59",
+      "location": null,
+      "metadata": {
+        "revealed": false,
+        "difficulty": "hard",
+        "knowledgeId": "learned_day1_4"
+      }
+    },
+    {
+      "type": "information",
+      "content": "今晚千维系统工作稳定：实时画面、服务器日志与离线冗余备份均无异常，关键帧与刻录光盘经过验证可读。 ",
+      "gameDay": 1,
+      "gameTime": "23:59",
+      "location": null,
+      "metadata": {
+        "revealed": false,
+        "difficulty": "automatic",
+        "knowledgeId": "learned_day1_5"
+      }
+    },
+    {
+      "type": "information",
+      "content": "所罗门在来卡森德拉之前就已购得一本《黄衣之王》，并表示不会让陌生人随意翻阅；他在花店旁经营一家神秘学商店。 ",
+      "gameDay": 1,
+      "gameTime": "23:59",
+      "location": null,
+      "metadata": {
+        "revealed": false,
+        "difficulty": "regular",
+        "knowledgeId": "learned_day1_1"
+      }
+    },
+    {
+      "type": "information",
+      "content": "多次试图与Johnny接触的尝试都未能成功——他今晚没有出现或刻意避开了我的接触。 ",
+      "gameDay": 1,
+      "gameTime": "23:59",
+      "location": null,
+      "metadata": {
+        "revealed": false,
+        "difficulty": "regular",
+        "knowledgeId": "learned_day1_3"
+      }
+    },
+    {
+      "type": "secret",
+      "content": "哈里森曾在我家附近试图靠近并准备赠送小礼物，我已把他设为高度优先的监控对象并发送了受控交接的邀请，但截至今晚尚未收到确认回复。 ",
+      "gameDay": 1,
+      "gameTime": "23:59",
+      "location": null,
+      "metadata": {
+        "revealed": false,
+        "difficulty": "hard",
+        "knowledgeId": "learned_day1_2"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我打开并查看了小型服务器上的备份验证日志，确认刚刻录的光盘和机内的离线备份都能被正常读取，回放与注释均完整。验证记录已写入服务器日志。",
+      "gameDay": 1,
+      "gameTime": "23:59",
+      "location": "SCN_15_SUB_2",
+      "metadata": {
+        "itemId": "ITEM_SCN15_6",
+        "outcome": "检查小型服务器上的备份验证日志，确认刚刚刻录的光盘与离线备份完整可读",
+        "itemName": "小型服务器机箱"
+      }
+    }
+  ],
+  "plans": [
+    {
+      "npcName": "Adolph Carl",
+      "gameDay": 1,
+      "schedule": [
+        {
+          "activity": "检查千维系统与所有摄像头的实时画面和服务器日志，确认今晚没有异常入侵并标记待核查片段。",
+          "location": "监控室"
+        },
+        {
+          "activity": "在客厅换上外出服，准备晚餐并把今晚可能用到的资料、笔记本和现金放入公文包。",
+          "location": "阿道夫家"
+        },
+        {
+          "activity": "以顾客身份短暂停留，观察西蒙的举动并留意花店常客的交谈以搜集可利用的信息。",
+          "location": "花店·卡森德拉之花"
+        },
+        {
+          "activity": "坐下吃晚餐并与一两位常客闲聊，试探他们对镇上最近事件的看法并留意可交易的流言。",
+          "location": "海伦的餐桌"
+        },
+        {
+          "activity": "在人群中低调观察并打探关于卢奇菲罗与勒克斯的最新流言，同时注意酒吧的监控死角和可疑人物。",
+          "location": "驯鹿酒吧"
+        },
+        {
+          "activity": "在医院门廊附近确认红石夫人的夜班动向并通过远程手段核实她的身份信息是否有异常。",
+          "location": "星辰医院"
+        },
+        {
+          "activity": "回到家把今晚收集到的录像与录音回放、剪辑并备份成可出售或用于要挟的情报包。",
+          "location": "阿道夫家"
+        },
+        {
+          "activity": "通过加密通道向卢奇菲罗和哈里森发送暗示性消息，安排明日私下会面并确认交换条件。",
+          "location": "监控室"
+        },
+        {
+          "activity": "在书房整理档案，草拟两封信件（一个邀约一个隐晦的威胁），核对家族旧档以寻找加重筹码的细节然后就寝。",
+          "location": "阿道夫家"
+        }
+      ],
+      "nodes": [
+        {
+          "type": "action",
+          "action": "检查加密信箱是否有哈里森的新回复并回放任何新收到的音视频附件，将重要片段标注入优先档案",
+          "impact": 0,
+          "nodeId": "a1",
+          "status": "completed",
+          "endTime": "22:25",
+          "outcome": "检查加密信箱是否有哈里森的新回复并回放任何新收到的音视频附件，将重要片段标注入优先档案 成功",
+          "startTime": "22:22",
+          "characterId": "Adolph Carl",
+          "characterName": "Adolph Carl",
+          "executionMeta": {
+            "startedAt": "22:22",
+            "completedAt": "22:25",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "movement",
+          "action": "回到阿道夫家并前往监控室",
+          "impact": 0,
+          "nodeId": "m1",
+          "status": "completed",
+          "endTime": "20:17",
+          "outcome": "回到阿道夫家并前往监控室 成功",
+          "startTime": "20:12",
+          "characterId": "Adolph Carl",
+          "destination": "SCN_15_SUB_1",
+          "characterName": "Adolph Carl",
+          "executionMeta": {
+            "movement": {
+              "routeSnapshot": [
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_2",
+                    "position": 0
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_2",
+                    "position": 0.09999999999999999
+                  },
+                  "kind": "along_road",
+                  "roadId": "ROAD_2",
+                  "durationMinutes": 0.9999999999999999
+                },
+                {
+                  "to": {
+                    "type": "junction",
+                    "junctionId": "JUNC_2"
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_2",
+                    "position": 0
+                  },
+                  "kind": "to_junction",
+                  "blockCheck": {
+                    "toId": "JUNC_2",
+                    "fromId": "ROAD_2"
+                  },
+                  "durationMinutes": 0
+                },
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_5a",
+                    "position": 0
+                  },
+                  "from": {
+                    "type": "junction",
+                    "junctionId": "JUNC_2"
+                  },
+                  "kind": "to_junction",
+                  "blockCheck": {
+                    "toId": "ROAD_5a",
+                    "fromId": "JUNC_2"
+                  },
+                  "durationMinutes": 0
+                },
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_5a",
+                    "position": 1
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_5a",
+                    "position": 0
+                  },
+                  "kind": "along_road",
+                  "roadId": "ROAD_5a",
+                  "durationMinutes": 5
+                },
+                {
+                  "to": {
+                    "type": "junction",
+                    "junctionId": "JUNC_6"
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_5a",
+                    "position": 1
+                  },
+                  "kind": "to_junction",
+                  "blockCheck": {
+                    "toId": "JUNC_6",
+                    "fromId": "ROAD_5a"
+                  },
+                  "durationMinutes": 0
+                },
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_5b",
+                    "position": 0
+                  },
+                  "from": {
+                    "type": "junction",
+                    "junctionId": "JUNC_6"
+                  },
+                  "kind": "to_junction",
+                  "blockCheck": {
+                    "toId": "ROAD_5b",
+                    "fromId": "JUNC_6"
+                  },
+                  "durationMinutes": 0
+                },
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_5b",
+                    "position": 0
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_5b",
+                    "position": 0
+                  },
+                  "kind": "along_road",
+                  "roadId": "ROAD_5b",
+                  "durationMinutes": 0
+                },
+                {
+                  "to": {
+                    "type": "scene",
+                    "sceneId": "SCN_15_SUB_1"
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_5b",
+                    "position": 0
+                  },
+                  "kind": "to_scene",
+                  "blockCheck": {
+                    "toId": "SCN_15_SUB_1",
+                    "fromId": "ROAD_5b"
+                  },
+                  "durationMinutes": 1
+                }
+              ],
+              "targetPosition": {
+                "type": "scene",
+                "sceneId": "SCN_15_SUB_1"
+              },
+              "minutesIntoStep": 0,
+              "currentStepIndex": 8,
+              "lastReachablePosition": {
+                "type": "scene",
+                "sceneId": "SCN_15_SUB_1"
+              }
+            },
+            "startedAt": "20:12",
+            "completedAt": "20:18",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "object_interaction",
+          "action": "通过千维系统控制台权限向卢奇菲罗发送加密且暗示性的私信，安排私下会面并引导其关注与哈里森有关的事宜（为后续跟进留出可要挟的余地）",
+          "impact": 1,
+          "nodeId": "oi2",
+          "status": "completed",
+          "endTime": "20:35",
+          "outcome": "我用千维系统的控制台权限向卢奇菲罗发出了一条加密且暗示性的私信，安排了私下会面并把话题引向哈里森，为日后留出要挟的余地；操作已完成，系统日志有记录。",
+          "startTime": "20:30",
+          "characterId": "Adolph Carl",
+          "characterName": "Adolph Carl",
+          "executionMeta": {
+            "startedAt": "20:30",
+            "completedAt": "20:35",
+            "remainingMinutes": 0
+          },
+          "objectInteractionPayload": {
+            "itemId": "千维系统控制台权限"
+          }
+        },
+        {
+          "type": "movement",
+          "action": "回到阿道夫家并前往监控室",
+          "impact": 0,
+          "nodeId": "m1",
+          "status": "completed",
+          "endTime": "20:17",
+          "outcome": "回到阿道夫家并前往监控室 成功",
+          "startTime": "20:12",
+          "characterId": "Adolph Carl",
+          "destination": "SCN_15_SUB_1",
+          "characterName": "Adolph Carl",
+          "executionMeta": {
+            "movement": {
+              "routeSnapshot": [
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_2",
+                    "position": 0
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_2",
+                    "position": 0.09999999999999999
+                  },
+                  "kind": "along_road",
+                  "roadId": "ROAD_2",
+                  "durationMinutes": 0.9999999999999999
+                },
+                {
+                  "to": {
+                    "type": "junction",
+                    "junctionId": "JUNC_2"
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_2",
+                    "position": 0
+                  },
+                  "kind": "to_junction",
+                  "blockCheck": {
+                    "toId": "JUNC_2",
+                    "fromId": "ROAD_2"
+                  },
+                  "durationMinutes": 0
+                },
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_5a",
+                    "position": 0
+                  },
+                  "from": {
+                    "type": "junction",
+                    "junctionId": "JUNC_2"
+                  },
+                  "kind": "to_junction",
+                  "blockCheck": {
+                    "toId": "ROAD_5a",
+                    "fromId": "JUNC_2"
+                  },
+                  "durationMinutes": 0
+                },
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_5a",
+                    "position": 1
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_5a",
+                    "position": 0
+                  },
+                  "kind": "along_road",
+                  "roadId": "ROAD_5a",
+                  "durationMinutes": 5
+                },
+                {
+                  "to": {
+                    "type": "junction",
+                    "junctionId": "JUNC_6"
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_5a",
+                    "position": 1
+                  },
+                  "kind": "to_junction",
+                  "blockCheck": {
+                    "toId": "JUNC_6",
+                    "fromId": "ROAD_5a"
+                  },
+                  "durationMinutes": 0
+                },
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_5b",
+                    "position": 0
+                  },
+                  "from": {
+                    "type": "junction",
+                    "junctionId": "JUNC_6"
+                  },
+                  "kind": "to_junction",
+                  "blockCheck": {
+                    "toId": "ROAD_5b",
+                    "fromId": "JUNC_6"
+                  },
+                  "durationMinutes": 0
+                },
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_5b",
+                    "position": 0
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_5b",
+                    "position": 0
+                  },
+                  "kind": "along_road",
+                  "roadId": "ROAD_5b",
+                  "durationMinutes": 0
+                },
+                {
+                  "to": {
+                    "type": "scene",
+                    "sceneId": "SCN_15_SUB_1"
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_5b",
+                    "position": 0
+                  },
+                  "kind": "to_scene",
+                  "blockCheck": {
+                    "toId": "SCN_15_SUB_1",
+                    "fromId": "ROAD_5b"
+                  },
+                  "durationMinutes": 1
+                }
+              ],
+              "targetPosition": {
+                "type": "scene",
+                "sceneId": "SCN_15_SUB_1"
+              },
+              "minutesIntoStep": 0,
+              "currentStepIndex": 8,
+              "lastReachablePosition": {
+                "type": "scene",
+                "sceneId": "SCN_15_SUB_1"
+              }
+            },
+            "startedAt": "20:12",
+            "completedAt": "20:18",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "character_interaction",
+          "action": "以礼貌而克制的口吻与Solomon搭话，试探他此行目的并暗中记录衣着、口音与随行人数与去向",
+          "impact": 1,
+          "nodeId": "ci1",
+          "status": "completed",
+          "endTime": "20:00",
+          "outcome": "我以礼貌而克制的口吻与所罗门搭话，试探他此行目的并暗中记录了他的衣着与口音、随行人数与去向。所罗门说他在来卡森德拉之前就买了《黄衣之王》，不会让陌生人随便翻阅，并且在花店旁经营一间神秘学商店；目前他没有随行人员，似乎打算回到那家店。",
+          "startTime": "19:56",
+          "characterId": "Adolph Carl",
+          "characterName": "Adolph Carl",
+          "executionMeta": {
+            "startedAt": "19:56",
+            "completedAt": "20:00",
+            "remainingMinutes": 0
+          },
+          "targetCharacterIds": [
+            "Solomon"
+          ]
+        },
+        {
+          "type": "character_interaction",
+          "skill": "Persuade",
+          "action": "以礼貌而克制的口吻向Johnny和Solomon搭话，试探他们此行目的并暗中记录衣着、口音与同行人数与去向",
+          "impact": 1,
+          "nodeId": "ci_day1_1943",
+          "status": "failed",
+          "endTime": "19:48",
+          "startTime": "19:43",
+          "characterId": "Adolph Carl",
+          "characterName": "Adolph Carl",
+          "executionMeta": {
+            "failedAt": "19:48",
+            "startedAt": "19:43",
+            "remainingMinutes": 5
+          },
+          "targetCharacterIds": [
+            "Johnny",
+            "Solomon"
+          ]
+        },
+        {
+          "type": "character_interaction",
+          "action": "与Johnny和Solomon交谈以试探他们此行目的并暗中记录衣着、口音与同行人数",
+          "impact": 2,
+          "nodeId": "ci2",
+          "status": "failed",
+          "endTime": "19:54",
+          "startTime": "19:49",
+          "characterId": "Adolph Carl",
+          "characterName": "Adolph Carl",
+          "executionMeta": {
+            "failedAt": "19:54",
+            "startedAt": "19:49",
+            "remainingMinutes": 5
+          },
+          "targetCharacterIds": [
+            "Johnny",
+            "Solomon"
+          ]
+        },
+        {
+          "type": "character_interaction",
+          "action": "以礼貌而克制的口吻接近并与Johnny和Solomon搭话，试探他们此行目的并暗中记录衣着、口音与同行人数和去向",
+          "impact": 1,
+          "nodeId": "ci_day1_1955_01",
+          "status": "interrupted",
+          "endTime": "19:58",
+          "outcome": "以礼貌而克制的口吻接近并与Johnny和Solomon搭话，试探他们此行目的并暗中记录衣着、口音与同行人数和去向 [因重新规划而中断] 已中断",
+          "startTime": "19:55",
+          "characterId": "Adolph Carl",
+          "characterName": "Adolph Carl",
+          "executionMeta": {
+            "startedAt": "19:55",
+            "interruptedAt": "19:55",
+            "remainingMinutes": 0,
+            "interruptionReason": "revise_replan"
+          },
+          "targetCharacterIds": [
+            "Johnny",
+            "Solomon"
+          ]
+        },
+        {
+          "type": "character_interaction",
+          "action": "以礼貌而克制的口吻与Solomon搭话，试探他此行目的并暗中记录衣着、口音与随行人数与去向",
+          "impact": 1,
+          "nodeId": "ci1",
+          "status": "completed",
+          "endTime": "20:00",
+          "outcome": "我以礼貌而克制的口吻与所罗门搭话，试探他此行目的并暗中记录了他的衣着与口音、随行人数与去向。所罗门说他在来卡森德拉之前就买了《黄衣之王》，不会让陌生人随便翻阅，并且在花店旁经营一间神秘学商店；目前他没有随行人员，似乎打算回到那家店。",
+          "startTime": "19:56",
+          "characterId": "Adolph Carl",
+          "characterName": "Adolph Carl",
+          "executionMeta": {
+            "startedAt": "19:56",
+            "completedAt": "20:00",
+            "remainingMinutes": 0
+          },
+          "targetCharacterIds": [
+            "Solomon"
+          ]
+        },
+        {
+          "type": "movement",
+          "action": "回到阿道夫家并前往监控室",
+          "impact": 0,
+          "nodeId": "m1",
+          "status": "completed",
+          "endTime": "20:17",
+          "outcome": "回到阿道夫家并前往监控室 成功",
+          "startTime": "20:12",
+          "characterId": "Adolph Carl",
+          "destination": "SCN_15_SUB_1",
+          "characterName": "Adolph Carl",
+          "executionMeta": {
+            "movement": {
+              "routeSnapshot": [
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_2",
+                    "position": 0
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_2",
+                    "position": 0.09999999999999999
+                  },
+                  "kind": "along_road",
+                  "roadId": "ROAD_2",
+                  "durationMinutes": 0.9999999999999999
+                },
+                {
+                  "to": {
+                    "type": "junction",
+                    "junctionId": "JUNC_2"
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_2",
+                    "position": 0
+                  },
+                  "kind": "to_junction",
+                  "blockCheck": {
+                    "toId": "JUNC_2",
+                    "fromId": "ROAD_2"
+                  },
+                  "durationMinutes": 0
+                },
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_5a",
+                    "position": 0
+                  },
+                  "from": {
+                    "type": "junction",
+                    "junctionId": "JUNC_2"
+                  },
+                  "kind": "to_junction",
+                  "blockCheck": {
+                    "toId": "ROAD_5a",
+                    "fromId": "JUNC_2"
+                  },
+                  "durationMinutes": 0
+                },
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_5a",
+                    "position": 1
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_5a",
+                    "position": 0
+                  },
+                  "kind": "along_road",
+                  "roadId": "ROAD_5a",
+                  "durationMinutes": 5
+                },
+                {
+                  "to": {
+                    "type": "junction",
+                    "junctionId": "JUNC_6"
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_5a",
+                    "position": 1
+                  },
+                  "kind": "to_junction",
+                  "blockCheck": {
+                    "toId": "JUNC_6",
+                    "fromId": "ROAD_5a"
+                  },
+                  "durationMinutes": 0
+                },
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_5b",
+                    "position": 0
+                  },
+                  "from": {
+                    "type": "junction",
+                    "junctionId": "JUNC_6"
+                  },
+                  "kind": "to_junction",
+                  "blockCheck": {
+                    "toId": "ROAD_5b",
+                    "fromId": "JUNC_6"
+                  },
+                  "durationMinutes": 0
+                },
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_5b",
+                    "position": 0
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_5b",
+                    "position": 0
+                  },
+                  "kind": "along_road",
+                  "roadId": "ROAD_5b",
+                  "durationMinutes": 0
+                },
+                {
+                  "to": {
+                    "type": "scene",
+                    "sceneId": "SCN_15_SUB_1"
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_5b",
+                    "position": 0
+                  },
+                  "kind": "to_scene",
+                  "blockCheck": {
+                    "toId": "SCN_15_SUB_1",
+                    "fromId": "ROAD_5b"
+                  },
+                  "durationMinutes": 1
+                }
+              ],
+              "targetPosition": {
+                "type": "scene",
+                "sceneId": "SCN_15_SUB_1"
+              },
+              "minutesIntoStep": 0,
+              "currentStepIndex": 8,
+              "lastReachablePosition": {
+                "type": "scene",
+                "sceneId": "SCN_15_SUB_1"
+              }
+            },
+            "startedAt": "20:12",
+            "completedAt": "20:18",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "character_interaction",
+          "action": "以礼貌且克制的方式接近Solomon和Angela，礼貌套话并暗中记录他们的衣着、口音、随行人数与去向",
+          "impact": 1,
+          "nodeId": "ci_day1_2002",
+          "status": "completed",
+          "endTime": "20:07",
+          "outcome": "我以礼貌且克制的方式接近了Solomon和Angela，暗中记录了他们的衣着、口音、随行人数与去向。所罗门穿着端庄，告诉我他在来卡森德拉之前已购得《黄衣之王》，不会随便示人，且目前无人随行，打算回到花店旁的神秘学商店；安吉拉穿着朴素，背着街头挎包，只说自己在城里到处走动。双方礼貌应对但保持防备，我记录了以上细节。",
+          "startTime": "20:02",
+          "characterId": "Adolph Carl",
+          "characterName": "Adolph Carl",
+          "executionMeta": {
+            "startedAt": "20:02",
+            "completedAt": "20:07",
+            "remainingMinutes": 0
+          },
+          "targetCharacterIds": [
+            "Solomon",
+            "Angela"
+          ]
+        },
+        {
+          "type": "movement",
+          "action": "走回监控室，回放并标注哈里森、安吉拉与所罗门的相关影像，并把哈里森列入今晚重点监控名单",
+          "impact": 0,
+          "nodeId": "m_next_001",
+          "status": "interrupted",
+          "endTime": "20:13",
+          "outcome": "走回监控室，回放并标注哈里森、安吉拉与所罗门的相关影像，并把哈里森列入今晚重点监控名单 [因重新规划而中断] 已中断",
+          "startTime": "20:09",
+          "characterId": "Adolph Carl",
+          "destination": "SCN_15_SUB_2",
+          "characterName": "Adolph Carl",
+          "executionMeta": {
+            "startedAt": "20:09",
+            "interruptedAt": "20:11",
+            "remainingMinutes": 0,
+            "interruptionReason": "revise_replan"
+          }
+        },
+        {
+          "type": "movement",
+          "action": "回到阿道夫家并前往监控室",
+          "impact": 0,
+          "nodeId": "m1",
+          "status": "completed",
+          "endTime": "20:17",
+          "outcome": "回到阿道夫家并前往监控室 成功",
+          "startTime": "20:12",
+          "characterId": "Adolph Carl",
+          "destination": "SCN_15_SUB_1",
+          "characterName": "Adolph Carl",
+          "executionMeta": {
+            "movement": {
+              "routeSnapshot": [
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_2",
+                    "position": 0
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_2",
+                    "position": 0.09999999999999999
+                  },
+                  "kind": "along_road",
+                  "roadId": "ROAD_2",
+                  "durationMinutes": 0.9999999999999999
+                },
+                {
+                  "to": {
+                    "type": "junction",
+                    "junctionId": "JUNC_2"
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_2",
+                    "position": 0
+                  },
+                  "kind": "to_junction",
+                  "blockCheck": {
+                    "toId": "JUNC_2",
+                    "fromId": "ROAD_2"
+                  },
+                  "durationMinutes": 0
+                },
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_5a",
+                    "position": 0
+                  },
+                  "from": {
+                    "type": "junction",
+                    "junctionId": "JUNC_2"
+                  },
+                  "kind": "to_junction",
+                  "blockCheck": {
+                    "toId": "ROAD_5a",
+                    "fromId": "JUNC_2"
+                  },
+                  "durationMinutes": 0
+                },
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_5a",
+                    "position": 1
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_5a",
+                    "position": 0
+                  },
+                  "kind": "along_road",
+                  "roadId": "ROAD_5a",
+                  "durationMinutes": 5
+                },
+                {
+                  "to": {
+                    "type": "junction",
+                    "junctionId": "JUNC_6"
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_5a",
+                    "position": 1
+                  },
+                  "kind": "to_junction",
+                  "blockCheck": {
+                    "toId": "JUNC_6",
+                    "fromId": "ROAD_5a"
+                  },
+                  "durationMinutes": 0
+                },
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_5b",
+                    "position": 0
+                  },
+                  "from": {
+                    "type": "junction",
+                    "junctionId": "JUNC_6"
+                  },
+                  "kind": "to_junction",
+                  "blockCheck": {
+                    "toId": "ROAD_5b",
+                    "fromId": "JUNC_6"
+                  },
+                  "durationMinutes": 0
+                },
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_5b",
+                    "position": 0
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_5b",
+                    "position": 0
+                  },
+                  "kind": "along_road",
+                  "roadId": "ROAD_5b",
+                  "durationMinutes": 0
+                },
+                {
+                  "to": {
+                    "type": "scene",
+                    "sceneId": "SCN_15_SUB_1"
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_5b",
+                    "position": 0
+                  },
+                  "kind": "to_scene",
+                  "blockCheck": {
+                    "toId": "SCN_15_SUB_1",
+                    "fromId": "ROAD_5b"
+                  },
+                  "durationMinutes": 1
+                }
+              ],
+              "targetPosition": {
+                "type": "scene",
+                "sceneId": "SCN_15_SUB_1"
+              },
+              "minutesIntoStep": 0,
+              "currentStepIndex": 8,
+              "lastReachablePosition": {
+                "type": "scene",
+                "sceneId": "SCN_15_SUB_1"
+              }
+            },
+            "startedAt": "20:12",
+            "completedAt": "20:18",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "object_interaction",
+          "action": "回放并标注哈里森、安吉拉与所罗门在今晚的所有监控录像片段，然后将标注的片段备份到离线硬盘并标记为优先档案",
+          "impact": 0,
+          "nodeId": "oi_adolph_1",
+          "status": "completed",
+          "endTime": "20:29",
+          "outcome": "我用千维系统控制台权限回放并标注了今晚涉及哈里森、安吉拉和所罗门的所有监控片段，确认未见异常入侵；随后将那些已标注的片段导出并备份到离线硬盘，标记为优先档案。",
+          "startTime": "20:19",
+          "characterId": "Adolph Carl",
+          "characterName": "Adolph Carl",
+          "executionMeta": {
+            "startedAt": "20:19",
+            "completedAt": "20:29",
+            "remainingMinutes": 0
+          },
+          "objectInteractionPayload": {
+            "itemId": "千维系统控制台权限"
+          }
+        },
+        {
+          "type": "object_interaction",
+          "action": "通过千维系统控制台权限向卢奇菲罗发送加密且暗示性的私信，安排私下会面并引导其关注与哈里森有关的事宜（为后续跟进留出可要挟的余地）",
+          "impact": 1,
+          "nodeId": "oi2",
+          "status": "completed",
+          "endTime": "20:35",
+          "outcome": "我用千维系统的控制台权限向卢奇菲罗发出了一条加密且暗示性的私信，安排了私下会面并把话题引向哈里森，为日后留出要挟的余地；操作已完成，系统日志有记录。",
+          "startTime": "20:30",
+          "characterId": "Adolph Carl",
+          "characterName": "Adolph Carl",
+          "executionMeta": {
+            "startedAt": "20:30",
+            "completedAt": "20:35",
+            "remainingMinutes": 0
+          },
+          "objectInteractionPayload": {
+            "itemId": "千维系统控制台权限"
+          }
+        },
+        {
+          "type": "scene_interaction",
+          "action": "在主控台上草拟并保存一份礼物接收协议模板，同时修改千维系统监控优先级与录制参数，将摄像头对准并强化对哈里森的实时录制与离线备份",
+          "impact": 0,
+          "nodeId": "si1",
+          "status": "completed",
+          "endTime": "20:50",
+          "outcome": "我在主控台上草拟并保存了一份礼物接收协议模板，随后将千维系统的监控优先级与录制参数上调，指定哈里森为高度优先并将摄像头重新对准他，同时启用了实时强化录制与离线冗余备份。系统确认保存与参数生效。",
+          "startTime": "20:42",
+          "characterId": "Adolph Carl",
+          "characterName": "Adolph Carl",
+          "executionMeta": {
+            "startedAt": "20:42",
+            "completedAt": "20:50",
+            "remainingMinutes": 0
+          },
+          "objectInteractionPayload": {
+            "itemId": "ITEM_SCN15_12"
+          }
+        },
+        {
+          "type": "scene_interaction",
+          "action": "在主控台上草拟并保存一份礼物接收协议模板，同时修改千维系统监控优先级与录制参数，将摄像头对准并强化对哈里森的实时录制与离线备份",
+          "impact": 0,
+          "nodeId": "si1",
+          "status": "completed",
+          "endTime": "20:50",
+          "outcome": "我在主控台上草拟并保存了一份礼物接收协议模板，随后将千维系统的监控优先级与录制参数上调，指定哈里森为高度优先并将摄像头重新对准他，同时启用了实时强化录制与离线冗余备份。系统确认保存与参数生效。",
+          "startTime": "20:42",
+          "characterId": "Adolph Carl",
+          "characterName": "Adolph Carl",
+          "executionMeta": {
+            "startedAt": "20:42",
+            "completedAt": "20:50",
+            "remainingMinutes": 0
+          },
+          "objectInteractionPayload": {
+            "itemId": "ITEM_SCN15_12"
+          }
+        },
+        {
+          "type": "scene_interaction",
+          "action": "通过千维系统的加密通道向Harrison发送一条短消息：确认我愿意在受控并录制的条件下接受他的礼物，要求按照已保存的“草案-礼物接收协议”在我家客厅进行交接（将进行全程录制并写入冗余备份），建议明晚19:00会面并附上用于核验的匿名确认代码。",
+          "impact": 1,
+          "nodeId": "si_harrison_msg_2051",
+          "status": "completed",
+          "endTime": "20:55",
+          "outcome": "我通过千维系统向哈里森发送了一条加密私信，确认愿意在受控并录制的条件下接受他的礼物，并要求按照主控台保存的“草案-礼物接收协议”在我家客厅进行交接（全程录制并写入冗余备份），建议明晚19:00并附上匿名确认代码。系统已在监控日志中记录该发送并将相关记录纳入优先备份。",
+          "startTime": "20:51",
+          "characterId": "Adolph Carl",
+          "characterName": "Adolph Carl",
+          "executionMeta": {
+            "startedAt": "20:51",
+            "completedAt": "20:55",
+            "remainingMinutes": 0
+          },
+          "objectInteractionPayload": {
+            "itemId": "千维系统控制台权限"
+          }
+        },
+        {
+          "type": "object_interaction",
+          "action": "把沉重的拐杖放入考究的礼服衣柜并关上衣柜门",
+          "impact": 0,
+          "nodeId": "oi1_adolph_2056",
+          "status": "completed",
+          "endTime": "20:58",
+          "outcome": "我把靠在沙发旁的沉重拐杖拿起，放进那只考究的礼服衣柜里并把门关上了。",
+          "startTime": "20:56",
+          "characterId": "Adolph Carl",
+          "characterName": "Adolph Carl",
+          "executionMeta": {
+            "startedAt": "20:56",
+            "completedAt": "20:58",
+            "remainingMinutes": 0
+          },
+          "objectInteractionPayload": {
+            "itemId": "ITEM_SCN15_4"
+          }
+        },
+        {
+          "type": "action",
+          "action": "准备晚餐",
+          "impact": 0,
+          "nodeId": "a2",
+          "status": "completed",
+          "endTime": "21:45",
+          "outcome": "准备晚餐 成功",
+          "startTime": "21:29",
+          "characterId": "Adolph Carl",
+          "characterName": "Adolph Carl",
+          "executionMeta": {
+            "startedAt": "21:29",
+            "completedAt": "21:45",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "object_interaction",
+          "action": "打开备份光盘盒，取出刚刻录的光盘，检查盘面并在盘面用记号笔写上刻录时间与标签，然后将光盘放回光盘盒中保存",
+          "impact": 0,
+          "nodeId": "oi1",
+          "status": "completed",
+          "endTime": "23:18",
+          "outcome": "我打开备份光盘盒，取出刚刻录的光盘，检查盘面后用记号笔在盘面写上刻录时间与标签，然后把光盘放回光盘盒中保存。盘面完好，已标注为优先档案。",
+          "startTime": "23:14",
+          "characterId": "Adolph Carl",
+          "characterName": "Adolph Carl",
+          "executionMeta": {
+            "startedAt": "23:14",
+            "completedAt": "23:18",
+            "remainingMinutes": 0
+          },
+          "objectInteractionPayload": {
+            "itemId": "ITEM_SCN15_7"
+          }
+        },
+        {
+          "type": "scene_interaction",
+          "action": "在主控台检查加密信箱并读取哈里森的最新回复，确认是否有收到他的确认或疑问",
+          "impact": 0,
+          "nodeId": "si1_adolph_2117",
+          "status": "completed",
+          "endTime": "21:22",
+          "outcome": "我在主控台打开了加密信箱并查看了哈里森的最新回复；目前没有收到他的确认或任何疑问。我确认为哈里森设置的实时通知仍然激活，并将本次检查记录入系统日志以备后续核查。",
+          "startTime": "21:17",
+          "characterId": "Adolph Carl",
+          "characterName": "Adolph Carl",
+          "executionMeta": {
+            "startedAt": "21:17",
+            "completedAt": "21:22",
+            "remainingMinutes": 0
+          },
+          "objectInteractionPayload": {
+            "itemId": "千维系统控制台权限"
+          }
+        },
+        {
+          "type": "scene_interaction",
+          "action": "在主控台对摄像与音频进行一次完整的同步测试，录制并回放一段短片以确认音视频同步与冗余备份生效",
+          "impact": 0,
+          "nodeId": "si2",
+          "status": "completed",
+          "endTime": "21:28",
+          "outcome": "我在主控台对摄像与音频进行了完整的同步测试，录制并回放了一段短片。回放显示音视频同步正常，录像已同时写入主控台与离线硬盘，冗余备份被确认并记录在系统日志中。",
+          "startTime": "21:23",
+          "characterId": "Adolph Carl",
+          "characterName": "Adolph Carl",
+          "executionMeta": {
+            "startedAt": "21:23",
+            "completedAt": "21:28",
+            "remainingMinutes": 0
+          },
+          "objectInteractionPayload": {
+            "itemId": "千维系统控制台权限"
+          }
+        },
+        {
+          "type": "action",
+          "action": "准备晚餐",
+          "impact": 0,
+          "nodeId": "a2",
+          "status": "completed",
+          "endTime": "21:45",
+          "outcome": "准备晚餐 成功",
+          "startTime": "21:29",
+          "characterId": "Adolph Carl",
+          "characterName": "Adolph Carl",
+          "executionMeta": {
+            "startedAt": "21:29",
+            "completedAt": "21:45",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "action",
+          "action": "坐下吃晚餐并在主控台实时监看哈里森的摄像画面，留意任何回复或异常并在系统中记录观察笔记",
+          "impact": 0,
+          "nodeId": "a1_day1_2146",
+          "status": "completed",
+          "endTime": "22:06",
+          "outcome": "坐下吃晚餐并在主控台实时监看哈里森的摄像画面，留意任何回复或异常并在系统中记录观察笔记 成功",
+          "startTime": "21:46",
+          "characterId": "Adolph Carl",
+          "characterName": "Adolph Carl",
+          "executionMeta": {
+            "startedAt": "21:46",
+            "completedAt": "22:06",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "action",
+          "action": "刷新并检查加密信箱的最新消息，回放任何新收到的音视频附件并将重要片段标注入优先档案",
+          "impact": 0,
+          "nodeId": "a22_2207",
+          "status": "completed",
+          "endTime": "22:12",
+          "outcome": "刷新并检查加密信箱的最新消息，回放任何新收到的音视频附件并将重要片段标注入优先档案 成功",
+          "startTime": "22:07",
+          "characterId": "Adolph Carl",
+          "characterName": "Adolph Carl",
+          "executionMeta": {
+            "startedAt": "22:07",
+            "completedAt": "22:12",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "movement",
+          "action": "走到监控室",
+          "impact": 0,
+          "nodeId": "m_adolph_001",
+          "status": "completed",
+          "endTime": "22:16",
+          "outcome": "走到监控室 成功",
+          "startTime": "22:13",
+          "characterId": "Adolph Carl",
+          "destination": "SCN_15_SUB_2",
+          "characterName": "Adolph Carl",
+          "executionMeta": {
+            "movement": {
+              "routeSnapshot": [
+                {
+                  "to": {
+                    "type": "scene",
+                    "sceneId": "SCN_15_SUB_2"
+                  },
+                  "from": {
+                    "type": "scene",
+                    "sceneId": "SCN_15_SUB_1"
+                  },
+                  "kind": "to_scene",
+                  "blockCheck": {
+                    "toId": "SCN_15_SUB_2",
+                    "fromId": "SCN_15_SUB_1"
+                  },
+                  "durationMinutes": 3
+                }
+              ],
+              "targetPosition": {
+                "type": "scene",
+                "sceneId": "SCN_15_SUB_2"
+              },
+              "minutesIntoStep": 0,
+              "currentStepIndex": 1,
+              "lastReachablePosition": {
+                "type": "scene",
+                "sceneId": "SCN_15_SUB_2"
+              }
+            },
+            "startedAt": "22:13",
+            "completedAt": "22:15",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "object_interaction",
+          "action": "重启显示屏使画面恢复正常",
+          "impact": 0,
+          "nodeId": "oi_next_001",
+          "status": "completed",
+          "endTime": "22:34",
+          "outcome": "我重启了墙上的显示屏组，之前冻结的关键帧消失，屏幕恢复为实时监控画面并能响应控制台的切换指令。监控墙现在运行正常。",
+          "startTime": "22:32",
+          "characterId": "Adolph Carl",
+          "characterName": "Adolph Carl",
+          "executionMeta": {
+            "startedAt": "22:32",
+            "completedAt": "22:34",
+            "remainingMinutes": 0
+          },
+          "objectInteractionPayload": {
+            "itemId": "ITEM_SCN15_1"
+          }
+        },
+        {
+          "type": "action",
+          "action": "检查加密信箱是否有哈里森的新回复并回放任何新收到的音视频附件，将重要片段标注入优先档案",
+          "impact": 0,
+          "nodeId": "a1",
+          "status": "completed",
+          "endTime": "22:25",
+          "outcome": "检查加密信箱是否有哈里森的新回复并回放任何新收到的音视频附件，将重要片段标注入优先档案 成功",
+          "startTime": "22:22",
+          "characterId": "Adolph Carl",
+          "characterName": "Adolph Carl",
+          "executionMeta": {
+            "startedAt": "22:22",
+            "completedAt": "22:25",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "object_interaction",
+          "action": "调整客厅主摄像头的焦距并截取当前画面关键帧保存到离线硬盘",
+          "impact": 0,
+          "nodeId": "oi_adolph_001",
+          "status": "completed",
+          "endTime": "22:31",
+          "outcome": "我在控制面板上微调了客厅主摄像头的焦距，截取了当前的关键画面并将该帧导出写入角落的小型服务器作为离线备份；显示屏短暂冻结在那一帧，系统显示已完成写入。",
+          "startTime": "22:26",
+          "characterId": "Adolph Carl",
+          "characterName": "Adolph Carl",
+          "executionMeta": {
+            "startedAt": "22:26",
+            "completedAt": "22:31",
+            "remainingMinutes": 0
+          },
+          "objectInteractionPayload": {
+            "itemId": "ITEM_SCN15_2"
+          }
+        },
+        {
+          "type": "object_interaction",
+          "action": "重启显示屏使画面恢复正常",
+          "impact": 0,
+          "nodeId": "oi_next_001",
+          "status": "completed",
+          "endTime": "22:34",
+          "outcome": "我重启了墙上的显示屏组，之前冻结的关键帧消失，屏幕恢复为实时监控画面并能响应控制台的切换指令。监控墙现在运行正常。",
+          "startTime": "22:32",
+          "characterId": "Adolph Carl",
+          "characterName": "Adolph Carl",
+          "executionMeta": {
+            "startedAt": "22:32",
+            "completedAt": "22:34",
+            "remainingMinutes": 0
+          },
+          "objectInteractionPayload": {
+            "itemId": "ITEM_SCN15_1"
+          }
+        },
+        {
+          "type": "object_interaction",
+          "action": "检查小型服务器上的已导出关键帧并验证备份文件能否正常读取",
+          "impact": 0,
+          "nodeId": "oi_monitor_001",
+          "status": "completed",
+          "endTime": "22:40",
+          "outcome": "我在角落的小型服务器上载入了刚导出的关键帧并打开了离线备份，系统成功读取并播放了该帧，确认备份文件可用且已写入。",
+          "startTime": "22:35",
+          "characterId": "Adolph Carl",
+          "characterName": "Adolph Carl",
+          "executionMeta": {
+            "startedAt": "22:35",
+            "completedAt": "22:40",
+            "remainingMinutes": 0
+          },
+          "objectInteractionPayload": {
+            "itemId": "ITEM_SCN15_6"
+          }
+        },
+        {
+          "type": "action",
+          "action": "检查加密信箱是否有哈里森的新回复并回放任何新收到的音视频附件，将重要片段标注入优先档案",
+          "impact": 0,
+          "nodeId": "a_day1_2241",
+          "status": "completed",
+          "endTime": "22:46",
+          "outcome": "检查加密信箱是否有哈里森的新回复并回放任何新收到的音视频附件，将重要片段标注入优先档案 成功",
+          "startTime": "22:41",
+          "characterId": "Adolph Carl",
+          "characterName": "Adolph Carl",
+          "executionMeta": {
+            "startedAt": "22:41",
+            "completedAt": "22:46",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "object_interaction",
+          "action": "回放并逐帧审查哈里森靠近我家的监控录像，标注所有可疑动作与物品",
+          "impact": 0,
+          "nodeId": "oi_22_47_review_harrison",
+          "status": "completed",
+          "endTime": "23:00",
+          "outcome": "我在千维监控控制台逐帧回放了哈里森靠近我家的录像，逐帧标注了所有可疑动作与物品，并将带注释的片段保存到小型服务器作为离线备份。",
+          "startTime": "22:47",
+          "characterId": "Adolph Carl",
+          "characterName": "Adolph Carl",
+          "executionMeta": {
+            "startedAt": "22:47",
+            "completedAt": "23:00",
+            "remainingMinutes": 0
+          },
+          "objectInteractionPayload": {
+            "itemId": "ITEM_SCN15_2"
+          }
+        },
+        {
+          "type": "object_interaction",
+          "action": "把已标注的回放片段刻录到备份光盘并放入备份光盘盒",
+          "impact": 0,
+          "nodeId": "oi_day1_2301",
+          "status": "completed",
+          "endTime": "23:10",
+          "outcome": "我将已标注的回放片段刻录到一张备份光盘上，并把刻录好的光盘放回了备份光盘盒里，作为离线冗余备份保存。",
+          "startTime": "23:01",
+          "characterId": "Adolph Carl",
+          "characterName": "Adolph Carl",
+          "executionMeta": {
+            "startedAt": "23:01",
+            "completedAt": "23:10",
+            "remainingMinutes": 0
+          },
+          "objectInteractionPayload": {
+            "itemId": "ITEM_SCN15_7"
+          }
+        },
+        {
+          "type": "action",
+          "action": "刷新并检查加密信箱是否有哈里森的新回复，回放任何新收到的音视频并将重要片段标注为优先档案",
+          "impact": 0,
+          "nodeId": "a_day1_2311_01",
+          "status": "completed",
+          "endTime": "23:13",
+          "outcome": "刷新并检查加密信箱是否有哈里森的新回复，回放任何新收到的音视频并将重要片段标注为优先档案 成功",
+          "startTime": "23:11",
+          "characterId": "Adolph Carl",
+          "characterName": "Adolph Carl",
+          "executionMeta": {
+            "startedAt": "23:11",
+            "completedAt": "23:13",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "object_interaction",
+          "action": "打开备份光盘盒，取出刚刻录的光盘，检查盘面并在盘面用记号笔写上刻录时间与标签，然后将光盘放回光盘盒中保存",
+          "impact": 0,
+          "nodeId": "oi1",
+          "status": "completed",
+          "endTime": "23:18",
+          "outcome": "我打开备份光盘盒，取出刚刻录的光盘，检查盘面后用记号笔在盘面写上刻录时间与标签，然后把光盘放回光盘盒中保存。盘面完好，已标注为优先档案。",
+          "startTime": "23:14",
+          "characterId": "Adolph Carl",
+          "characterName": "Adolph Carl",
+          "executionMeta": {
+            "startedAt": "23:14",
+            "completedAt": "23:18",
+            "remainingMinutes": 0
+          },
+          "objectInteractionPayload": {
+            "itemId": "ITEM_SCN15_7"
+          }
+        },
+        {
+          "type": "action",
+          "action": "再次刷新并检查加密信箱是否有哈里森的新回复，回放任何新收到的音视频附件，并将重要片段标注入优先档案",
+          "impact": 0,
+          "nodeId": "a_2300_2319_check_inbox_01",
+          "status": "completed",
+          "endTime": "23:24",
+          "outcome": "再次刷新并检查加密信箱是否有哈里森的新回复，回放任何新收到的音视频附件，并将重要片段标注入优先档案 成功",
+          "startTime": "23:19",
+          "characterId": "Adolph Carl",
+          "characterName": "Adolph Carl",
+          "executionMeta": {
+            "startedAt": "23:19",
+            "completedAt": "23:24",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "action",
+          "action": "在监控室实时监看哈里森的摄像画面，保持警觉并在系统内记录任何异常或可利用的细节",
+          "impact": 0,
+          "nodeId": "a_day1_2325",
+          "status": "completed",
+          "endTime": "23:35",
+          "outcome": "在监控室实时监看哈里森的摄像画面，保持警觉并在系统内记录任何异常或可利用的细节 成功",
+          "startTime": "23:25",
+          "characterId": "Adolph Carl",
+          "characterName": "Adolph Carl",
+          "executionMeta": {
+            "startedAt": "23:25",
+            "completedAt": "23:35",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "action",
+          "action": "刷新并检查加密信箱是否有哈里森的新回复，回放任何新收到的音视频附件，并将重要片段标注为优先档案",
+          "impact": 0,
+          "nodeId": "a_adolph_2336_1",
+          "status": "completed",
+          "endTime": "23:40",
+          "outcome": "刷新并检查加密信箱是否有哈里森的新回复，回放任何新收到的音视频附件，并将重要片段标注为优先档案 成功",
+          "startTime": "23:36",
+          "characterId": "Adolph Carl",
+          "characterName": "Adolph Carl",
+          "executionMeta": {
+            "startedAt": "23:36",
+            "completedAt": "23:40",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "action",
+          "action": "在控制台前实时监视哈里森的摄像画面，记录任何异常或可利用的细节并将观察笔记保存到优先档案；若收到哈里森回复，立即标注该回复并启动备用录制。",
+          "impact": 0,
+          "nodeId": "a_next_01",
+          "status": "completed",
+          "endTime": "23:50",
+          "outcome": "在控制台前实时监视哈里森的摄像画面，记录任何异常或可利用的细节并将观察笔记保存到优先档案；若收到哈里森回复，立即标注该回复并启动备用录制。 成功",
+          "startTime": "23:41",
+          "characterId": "Adolph Carl",
+          "characterName": "Adolph Carl",
+          "executionMeta": {
+            "startedAt": "23:41",
+            "completedAt": "23:50",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "scene_interaction",
+          "action": "在千维系统上应用“礼物接收协议”监控预设，锁定客厅摄像头的角度与录制参数，启动一次完整演练录制并确认冗余备份路径可用",
+          "impact": 0,
+          "nodeId": "si_monitor_preset_1",
+          "status": "completed",
+          "endTime": "23:56",
+          "outcome": "我在千维系统上启用了“礼物接收协议”监控预设，锁定了客厅主摄像头的角度与录制参数，并启动了一次完整的演练录制。录制已写入小型服务器并刻录到光盘，冗余备份路径已确认可用。",
+          "startTime": "23:51",
+          "characterId": "Adolph Carl",
+          "characterName": "Adolph Carl",
+          "executionMeta": {
+            "startedAt": "23:51",
+            "completedAt": "23:56",
+            "remainingMinutes": 0
+          },
+          "objectInteractionPayload": {
+            "itemId": "ITEM_SCN15_2"
+          }
+        },
+        {
+          "type": "object_interaction",
+          "action": "检查小型服务器上的备份验证日志，确认刚刚刻录的光盘与离线备份完整可读",
+          "impact": 0,
+          "nodeId": "oi_server_check_001",
+          "status": "completed",
+          "endTime": "23:59",
+          "outcome": "我打开并查看了小型服务器上的备份验证日志，确认刚刻录的光盘和机内的离线备份都能被正常读取，回放与注释均完整。验证记录已写入服务器日志。",
+          "startTime": "23:57",
+          "characterId": "Adolph Carl",
+          "characterName": "Adolph Carl",
+          "executionMeta": {
+            "startedAt": "23:57",
+            "completedAt": "23:59",
+            "remainingMinutes": 0
+          },
+          "objectInteractionPayload": {
+            "itemId": "ITEM_SCN15_6"
+          }
+        }
+      ]
+    },
+    {
+      "npcName": "Adolph Carl",
+      "gameDay": 2,
+      "schedule": [
+        {
+          "activity": "在监控室继续核查并标注昨夜录制的优先档案，确认离线备份完整并记录在系统日志中。",
+          "location": "阿道夫家"
+        },
+        {
+          "activity": "在主控台完善并加密“草案-礼物接收协议”，准备针对哈里森与卢奇菲罗的跟进私信并设置实时提醒。",
+          "location": "阿道夫家"
+        },
+        {
+          "activity": "刻录一张带时间戳与完整校验的冗余光盘放入保密箱并更新存取日志。",
+          "location": "阿道夫家"
+        },
+        {
+          "activity": "演练一次礼物接收场景以验证客厅主摄像头角度与证据链的完整性。",
+          "location": "阿道夫家"
+        },
+        {
+          "activity": "小睡片刻以恢复精力，为白天外出做准备。",
+          "location": "阿道夫家"
+        },
+        {
+          "activity": "以优雅顾客的身份出现在花店，暗中观察西蒙并收集可利用的社交细节。",
+          "location": "花店·卡森德拉之花"
+        },
+        {
+          "activity": "在占星师小铺门口静候并试探所罗门的动向与可能的来访者。",
+          "location": "占星师小铺"
+        },
+        {
+          "activity": "以探望Mrs. Barklyite为名在医院核实她与卢奇菲罗或其他关键人物的联系线索。",
+          "location": "星辰医院"
+        },
+        {
+          "activity": "到五金店以顾客之名接近哈里森，留意任何礼物相关的迹象或带有暗号的对话。",
+          "location": "五金店"
+        },
+        {
+          "activity": "在前往伐木场的中途停留墓地，低调观察是否有人对旧案或可疑行踪留下痕迹。",
+          "location": "墓地"
+        },
+        {
+          "activity": "回到监控室合并白天收集到的情报，更新优先目标清单并微调摄像与备份参数。",
+          "location": "阿道夫家"
+        },
+        {
+          "activity": "晚间在帕拉迪尔大酒店用餐以维护我的上流形象并试探与富有人士的接触机会。",
+          "location": "帕拉迪尔大酒店"
+        },
+        {
+          "activity": "之后前往驯鹿酒吧投放一条小线索以测试镇上反应并观察谁会接招。",
+          "location": "驯鹿酒吧"
+        },
+        {
+          "activity": "回家对当天关键片段做最终归档与多重加密备份，设定明晚19:00的会面提醒，然后休息睡觉。",
+          "location": "阿道夫家"
+        }
+      ],
+      "nodes": [
+        {
+          "type": "action",
+          "action": "监视客厅实时画面，保持录制并在哈里森出现时准备触发礼物接收协议与立即备份",
+          "impact": 0,
+          "nodeId": "a1",
+          "status": "completed",
+          "endTime": "00:52",
+          "outcome": "监视客厅实时画面，保持录制并在哈里森出现时准备触发礼物接收协议与立即备份 成功",
+          "startTime": "00:42",
+          "characterId": "Adolph Carl",
+          "characterName": "Adolph Carl",
+          "executionMeta": {
+            "startedAt": "00:42",
+            "completedAt": "00:52",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "object_interaction",
+          "action": "在小型服务器上完善并加密“草案-礼物接收协议”，为哈里森与卢奇菲罗的跟进私信准备模板并设置实时提醒",
+          "impact": 0,
+          "nodeId": "oi_adolph_001",
+          "status": "completed",
+          "endTime": "00:25",
+          "outcome": "我在小型服务器上将“草案-礼物接收协议”完善并以强加密保存，同时为哈里森与卢奇菲罗准备了跟进私信模板，并在服务器上设定了针对他们回复的实时提醒与自动备份。所有更改和触发规则已写入服务器日志并标为优先档案。",
+          "startTime": "00:11",
+          "characterId": "Adolph Carl",
+          "characterName": "Adolph Carl",
+          "executionMeta": {
+            "startedAt": "00:11",
+            "completedAt": "00:25",
+            "remainingMinutes": 0
+          },
+          "objectInteractionPayload": {
+            "itemId": "ITEM_SCN15_6"
+          }
+        },
+        {
+          "type": "action",
+          "action": "小睡三十分钟以恢复精力，为白天外出做准备",
+          "impact": 0,
+          "nodeId": "a2",
+          "status": "completed",
+          "endTime": "01:51",
+          "outcome": "小睡三十分钟以恢复精力，为白天外出做准备 成功",
+          "startTime": "01:21",
+          "characterId": "Adolph Carl",
+          "characterName": "Adolph Carl",
+          "executionMeta": {
+            "startedAt": "01:21",
+            "completedAt": "01:51",
+            "remainingMinutes": 0
+          },
+          "routineSubtype": "rest"
+        },
+        {
+          "type": "character_interaction",
+          "skill": "Persuade",
+          "action": "以冷静、得体的姿态迎上前去与哈里森交谈，礼貌问候并暗示此刻不便当面接收礼物，试探他的来意、拖延或转移话题，同时留意他的表情与措辞以评估是否需立即触发“礼物接收协议”，并在必要时保持表面上的可否认性以维护掩饰。",
+          "impact": 1,
+          "nodeId": "ci1",
+          "status": "failed",
+          "endTime": "00:41",
+          "startTime": "00:36",
+          "characterId": "Adolph Carl",
+          "characterName": "Adolph Carl",
+          "executionMeta": {
+            "failedAt": "00:41",
+            "startedAt": "00:36",
+            "remainingMinutes": 5
+          },
+          "targetCharacterIds": [
+            "npc_harrison_lockheed"
+          ]
+        },
+        {
+          "type": "action",
+          "action": "监视客厅实时画面，保持录制并在哈里森出现时准备触发礼物接收协议与立即备份",
+          "impact": 0,
+          "nodeId": "a1",
+          "status": "completed",
+          "endTime": "00:52",
+          "outcome": "监视客厅实时画面，保持录制并在哈里森出现时准备触发礼物接收协议与立即备份 成功",
+          "startTime": "00:42",
+          "characterId": "Adolph Carl",
+          "characterName": "Adolph Carl",
+          "executionMeta": {
+            "startedAt": "00:42",
+            "completedAt": "00:52",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "movement",
+          "action": "推开隔音门走出监控室，前往屋内走廊以便与哈里森当面接触并掌控交谈节奏",
+          "impact": 0,
+          "nodeId": "m1",
+          "status": "completed",
+          "endTime": "00:55",
+          "outcome": "推开隔音门走出监控室，前往屋内走廊以便与哈里森当面接触并掌控交谈节奏 成功",
+          "startTime": "00:53",
+          "characterId": "Adolph Carl",
+          "destination": "SCN_15_SUB_1",
+          "characterName": "Adolph Carl",
+          "executionMeta": {
+            "movement": {
+              "routeSnapshot": [
+                {
+                  "to": {
+                    "type": "scene",
+                    "sceneId": "SCN_15_SUB_1"
+                  },
+                  "from": {
+                    "type": "scene",
+                    "sceneId": "SCN_15_SUB_2"
+                  },
+                  "kind": "to_scene",
+                  "blockCheck": {
+                    "toId": "SCN_15_SUB_1",
+                    "fromId": "SCN_15_SUB_2"
+                  },
+                  "durationMinutes": 2
+                }
+              ],
+              "targetPosition": {
+                "type": "scene",
+                "sceneId": "SCN_15_SUB_1"
+              },
+              "minutesIntoStep": 0,
+              "currentStepIndex": 1,
+              "lastReachablePosition": {
+                "type": "scene",
+                "sceneId": "SCN_15_SUB_1"
+              }
+            },
+            "startedAt": "00:53",
+            "completedAt": "00:54",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "action",
+          "action": "小睡三十分钟以恢复精力，为白天外出做准备",
+          "impact": 0,
+          "nodeId": "a2",
+          "status": "completed",
+          "endTime": "01:51",
+          "outcome": "小睡三十分钟以恢复精力，为白天外出做准备 成功",
+          "startTime": "01:21",
+          "characterId": "Adolph Carl",
+          "characterName": "Adolph Carl",
+          "executionMeta": {
+            "startedAt": "01:21",
+            "completedAt": "01:51",
+            "remainingMinutes": 0
+          },
+          "routineSubtype": "rest"
+        },
+        {
+          "type": "object_interaction",
+          "action": "在主控台上激活并触发“草案-礼物接收协议”，设为实时执行并强制写入主控台与离线硬盘的冗余备份",
+          "impact": 0,
+          "nodeId": "oi_day2_0101_1",
+          "status": "completed",
+          "endTime": "01:03",
+          "outcome": "我在主控台上激活并触发了“草案-礼物接收协议”，将其设为实时执行并强制写入主控台与离线硬盘的冗余备份，所有操作已被系统日志记录。",
+          "startTime": "01:01",
+          "characterId": "Adolph Carl",
+          "characterName": "Adolph Carl",
+          "executionMeta": {
+            "startedAt": "01:01",
+            "completedAt": "01:03",
+            "remainingMinutes": 0
+          },
+          "objectInteractionPayload": {
+            "itemId": "千维系统控制台权限"
+          }
+        },
+        {
+          "type": "action",
+          "action": "在客厅沙发处演练一次礼物接收场景，假装接过包裹并大声念出预设的匿名核验代码以验证摄像与音频记录角度及证据链的完整性与可读性",
+          "impact": 0,
+          "nodeId": "a3",
+          "status": "completed",
+          "endTime": "01:09",
+          "outcome": "在客厅沙发处演练一次礼物接收场景，假装接过包裹并大声念出预设的匿名核验代码以验证摄像与音频记录角度及证据链的完整性与可读性 成功",
+          "startTime": "01:04",
+          "characterId": "Adolph Carl",
+          "characterName": "Adolph Carl",
+          "executionMeta": {
+            "startedAt": "01:04",
+            "completedAt": "01:09",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "scene_interaction",
+          "action": "刻录一张带时间戳与完整校验的冗余光盘并放入保密箱，随后在系统日志中记录刻录与存取记录",
+          "impact": 0,
+          "nodeId": "si1_day2_0110",
+          "status": "completed",
+          "endTime": "01:20",
+          "outcome": "我刻录了一张带有时间戳与完整校验的冗余光盘，并把实体光盘放入保密箱。随后我在系统日志中记录了刻录与存取的详情，日志与相关元数据已被写入主控台并同步到离线硬盘作为冗余备份。",
+          "startTime": "01:10",
+          "characterId": "Adolph Carl",
+          "characterName": "Adolph Carl",
+          "executionMeta": {
+            "startedAt": "01:10",
+            "completedAt": "01:20",
+            "remainingMinutes": 0
+          },
+          "objectInteractionPayload": {
+            "itemId": "千维系统控制台权限"
+          }
+        },
+        {
+          "type": "action",
+          "action": "小睡三十分钟以恢复精力，为白天外出做准备",
+          "impact": 0,
+          "nodeId": "a2",
+          "status": "completed",
+          "endTime": "01:51",
+          "outcome": "小睡三十分钟以恢复精力，为白天外出做准备 成功",
+          "startTime": "01:21",
+          "characterId": "Adolph Carl",
+          "characterName": "Adolph Carl",
+          "executionMeta": {
+            "startedAt": "01:21",
+            "completedAt": "01:51",
+            "remainingMinutes": 0
+          },
+          "routineSubtype": "rest"
+        },
+        {
+          "type": "scene_interaction",
+          "action": "在主控台上再次查看并放大哈里森的实时视频流，重点监测五金店与他可能前往的路径，标注任何可疑动作并将当前帧写入优先备份。",
+          "impact": 0,
+          "nodeId": "si3",
+          "status": "completed",
+          "endTime": "01:57",
+          "outcome": "我在主控台将哈里森的实时视频流放大，聚焦五金店及其可能前往的路径，标注了可疑动作并将当前帧写入优先备份并同步到离线硬盘。",
+          "startTime": "01:52",
+          "characterId": "Adolph Carl",
+          "characterName": "Adolph Carl",
+          "executionMeta": {
+            "startedAt": "01:52",
+            "completedAt": "01:57",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "scene_interaction",
+          "action": "检查主控台的实时视频流与礼物接收协议的激活与备份状态，若发现备份未即时写入则手动触发立即备份并将当前关键帧写入离线硬盘",
+          "impact": 0,
+          "nodeId": "si_adolph_01",
+          "status": "completed",
+          "endTime": "02:03",
+          "outcome": "我检查了主控台的实时视频流与“礼物接收协议”的备份状态，确认系统正在将实时录制与关键帧写入主控台与离线硬盘的冗余备份（优先档案已标记）。未发现备份未即时写入的异常，因此未手动触发额外备份，已将本次核查记录写入系统日志。",
+          "startTime": "01:58",
+          "characterId": "Adolph Carl",
+          "characterName": "Adolph Carl",
+          "executionMeta": {
+            "startedAt": "01:58",
+            "completedAt": "02:03",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "movement",
+          "action": "前往五金店",
+          "impact": 0,
+          "nodeId": "m_day2_0204_01",
+          "status": "completed",
+          "endTime": "02:09",
+          "outcome": "前往五金店 成功",
+          "startTime": "02:04",
+          "characterId": "Adolph Carl",
+          "destination": "SCN_18_SUB_1",
+          "characterName": "Adolph Carl",
+          "executionMeta": {
+            "movement": {
+              "routeSnapshot": [
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_5b",
+                    "position": 0
+                  },
+                  "from": {
+                    "type": "scene",
+                    "sceneId": "SCN_15_SUB_1"
+                  },
+                  "kind": "along_road",
+                  "roadId": "ROAD_5b",
+                  "blockCheck": {
+                    "toId": "ROAD_5b",
+                    "fromId": "SCN_15_SUB_1"
+                  },
+                  "durationMinutes": 1
+                },
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_5b",
+                    "position": 0
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_5b",
+                    "position": 0
+                  },
+                  "kind": "along_road",
+                  "roadId": "ROAD_5b",
+                  "durationMinutes": 0
+                },
+                {
+                  "to": {
+                    "type": "junction",
+                    "junctionId": "JUNC_6"
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_5b",
+                    "position": 0
+                  },
+                  "kind": "to_junction",
+                  "blockCheck": {
+                    "toId": "JUNC_6",
+                    "fromId": "ROAD_5b"
+                  },
+                  "durationMinutes": 0
+                },
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_5b",
+                    "position": 0
+                  },
+                  "from": {
+                    "type": "junction",
+                    "junctionId": "JUNC_6"
+                  },
+                  "kind": "to_junction",
+                  "blockCheck": {
+                    "toId": "ROAD_5b",
+                    "fromId": "JUNC_6"
+                  },
+                  "durationMinutes": 0
+                },
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_5b",
+                    "position": 1
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_5b",
+                    "position": 0
+                  },
+                  "kind": "along_road",
+                  "roadId": "ROAD_5b",
+                  "durationMinutes": 5
+                },
+                {
+                  "to": {
+                    "type": "junction",
+                    "junctionId": "JUNC_4"
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_5b",
+                    "position": 1
+                  },
+                  "kind": "to_junction",
+                  "blockCheck": {
+                    "toId": "JUNC_4",
+                    "fromId": "ROAD_5b"
+                  },
+                  "durationMinutes": 0
+                },
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_3",
+                    "position": 1
+                  },
+                  "from": {
+                    "type": "junction",
+                    "junctionId": "JUNC_4"
+                  },
+                  "kind": "to_junction",
+                  "blockCheck": {
+                    "toId": "ROAD_3",
+                    "fromId": "JUNC_4"
+                  },
+                  "durationMinutes": 0
+                },
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_3",
+                    "position": 0.58
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_3",
+                    "position": 1
+                  },
+                  "kind": "along_road",
+                  "roadId": "ROAD_3",
+                  "durationMinutes": 4.2
+                },
+                {
+                  "to": {
+                    "type": "scene",
+                    "sceneId": "SCN_18_SUB_1"
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_3",
+                    "position": 0.58
+                  },
+                  "kind": "to_scene",
+                  "blockCheck": {
+                    "toId": "SCN_18_SUB_1",
+                    "fromId": "ROAD_3"
+                  },
+                  "durationMinutes": 1
+                }
+              ],
+              "targetPosition": {
+                "type": "scene",
+                "sceneId": "SCN_18_SUB_1"
+              },
+              "minutesIntoStep": 0,
+              "currentStepIndex": 9,
+              "lastReachablePosition": {
+                "type": "scene",
+                "sceneId": "SCN_18_SUB_1"
+              }
+            },
+            "startedAt": "02:04",
+            "completedAt": "02:15",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "character_interaction",
+          "action": "以优雅顾客的身份与哈里森交谈，暗示此刻可以交付礼物并引导他说明来意以评估他的意图并保持掩饰",
+          "impact": 1,
+          "nodeId": "ci2",
+          "status": "in_progress",
+          "endTime": "02:21",
+          "startTime": "02:16",
+          "characterId": "Adolph Carl",
+          "characterName": "Adolph Carl",
+          "executionMeta": {
+            "startedAt": "02:16",
+            "remainingMinutes": 5
+          },
+          "targetCharacterIds": [
+            "Harrison Lockheed"
+          ]
+        }
+      ]
+    }
+  ],
+  "intents": [
+    {
+      "intent": "Execute the gift-receive protocol now; secure and back up all evidence in real time; control the conversation to preserve my cover and assess Harrison's intentions.",
+      "updatedAt": "2026-04-02T10:33:05.372Z"
+    }
+  ],
+  "npcName": "Adolph Carl"
+}

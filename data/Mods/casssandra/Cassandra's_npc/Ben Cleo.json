@@ -1,0 +1,218 @@
+{
+  "id": "Ben Cleo",
+  "name": "Ben Cleo",
+  "occupation": "Mafia boss / underground power broker",
+  "age": 47,
+  "gender": "male",
+  "appearance": "A composed and intimidating man with a calm posture. Dresses neatly and practically, giving the impression of a businessman rather than a criminal.",
+  "personality": "Cold-headed, pragmatic, disciplined, and authoritarian. Values order, loyalty, and efficiency; rarely acts on impulse.",
+  "background": "Ben Cleo is the current head of the Cleo family, a local mafia power in Cassandra. Raised within the criminal underworld, he inherited leadership after internal family power shifts. Under his control, the Cleo family manages smuggling and underground trade through the train station, operating under the principle of conducting business without interfering in the motives behind transactions. Ben maintains strict discipline among his subordinates and avoids unnecessary cruelty, focusing instead on long-term stability and profit.",
+  "residence": "SCN_21",
+  "currentLocation": "SCN_21",
+  "spot": "at the far end of the platform by the rusted station sign",
+  "knownMapSeed": {
+    "sceneIds": [
+      "SCN_16_SUB_1",
+      "SCN_16_SUB_2",
+      "SCN_17_SUB_1",
+      "SCN_17_SUB_4",
+      "SCN_21_SUB_1",
+      "SCN_21_SUB_2",
+      "SCN_21_SUB_3",
+      "SCN_4_SUB_1",
+      "SCN_4_SUB_2",
+      "SCN_4_SUB_3",
+      "SCN_7_SUB_1",
+      "SCN_7_SUB_2"
+    ],
+    "junctionIds": [
+      "JUNC_1",
+      "JUNC_2",
+      "JUNC_3",
+      "JUNC_4",
+      "JUNC_5",
+      "JUNC_6",
+      "JUNC_7",
+      "JUNC_8",
+      "JUNC_9",
+      "JUNC_10",
+      "JUNC_11"
+    ],
+    "roadIds": [
+      "ROAD_1",
+      "ROAD_2",
+      "ROAD_3",
+      "ROAD_4",
+      "ROAD_5a",
+      "ROAD_5b",
+      "ROAD_6",
+      "ROAD_7",
+      "ROAD_8",
+      "ROAD_9",
+      "ROAD_10"
+    ],
+    "scenarioOutlineIds": [
+      "SCN_1",
+      "SCN_2",
+      "SCN_3",
+      "SCN_4",
+      "SCN_5",
+      "SCN_6",
+      "SCN_7",
+      "SCN_8",
+      "SCN_9",
+      "SCN_10",
+      "SCN_11",
+      "SCN_12",
+      "SCN_13",
+      "SCN_14",
+      "SCN_15",
+      "SCN_16",
+      "SCN_17",
+      "SCN_18",
+      "SCN_19",
+      "SCN_20",
+      "SCN_21",
+      "SCN_22"
+    ]
+  },
+  "longTermIntent": "Keep the Cleo family's train-station business stable, preserve his authority over local smuggling and protection rackets, and keep Patrizio and other outsiders from using Cassandra against him.",
+  "attributes": {
+    "STR": 65,
+    "CON": 70,
+    "DEX": 55,
+    "APP": 60,
+    "POW": 60,
+    "SIZ": 65,
+    "INT": 70,
+    "EDU": 65
+  },
+  "status": {
+    "hp": 14,
+    "maxHp": 14,
+    "sanity": 60,
+    "maxSanity": 99,
+    "luck": 70,
+    "mp": 12,
+    "conditions": []
+  },
+  "skills": {
+    "Social": 70,
+    "Investigation": 50,
+    "Melee Combat": 55,
+    "Ranged Combat": 60
+  },
+  "inventory": [
+    {
+      "name": "Beretta pistol",
+      "quantity": 1,
+      "properties": {
+        "note": "His usual carry gun."
+      }
+    },
+    {
+      "name": "Desert Eagle (1981 custom, gold-inlaid edition, .357 caliber)",
+      "quantity": 1,
+      "properties": {
+        "note": "Special custom handgun by MRI, internal members only. He loves it and carries it everywhere, but rarely uses it unless absolutely necessary."
+      }
+    },
+    {
+      "name": "Family safe key",
+      "properties": {
+        "note": "Key to the safe holding Karong's notes and occult books."
+      }
+    }
+  ],
+  "relationships": [
+    {
+      "targetId": "Haran Greenwood",
+      "targetName": "Haran Greenwood",
+      "relationshipType": "employee",
+      "attitude": 70,
+      "description": "Trusted subordinate responsible for guarding the train station entrance.",
+      "history": "Haran helped Ben secure power during earlier transitions within the Cleo family.",
+      "firstPerson": "Haran holds the station entrance for me. He stood at my shoulder while the family was deciding who would lead it, and that is why he is trusted."
+    },
+    {
+      "targetId": "Adolph Carl",
+      "targetName": "Adolph Carl",
+      "relationshipType": "neutral",
+      "attitude": 10,
+      "description": "Occasional business contact acting as a middleman.",
+      "history": "They have cooperated when interests aligned but maintain distance.",
+      "firstPerson": "Adolph brokers for me when our interests point the same way — business where it suits us, distance elsewhere."
+    },
+    {
+      "targetId": "Patrizio von Samsa",
+      "targetName": "Patrizio von Samsa",
+      "relationshipType": "enemy",
+      "attitude": -50,
+      "description": "A political operator Ben no longer trusts.",
+      "history": "Ben helped Patrizio rise, but now believes Patrizio wants too much control over Cassandra.",
+      "firstPerson": "I put Patrizio where he stands, and now he wants more of Cassandra than I agreed to hand over. What I raised, I can set down."
+    }
+  ],
+  "memory": [
+    {
+      "type": "information",
+      "content": "I run the Cleo family's operations through SCN_21 and treat the train station as the practical center of our business.",
+      "metadata": {
+        "knowledgeId": "k_ben_station_front",
+        "difficulty": "automatic"
+      }
+    },
+    {
+      "type": "information",
+      "content": "I took control of the family when I was seventeen after my father disappeared. Since then, I have kept power by rewarding discipline and crushing hesitation before it grows teeth.",
+      "metadata": {
+        "knowledgeId": "k_ben_inherited_power",
+        "difficulty": "regular"
+      }
+    },
+    {
+      "type": "information",
+      "content": "The family survives by keeping business cleanly separated from questions about clients' motives. I expect discipline, silence, and efficient work from everyone under me.",
+      "metadata": {
+        "knowledgeId": "k_ben_rule",
+        "difficulty": "regular"
+      }
+    },
+    {
+      "type": "secret",
+      "content": "My gold-inlaid Desert Eagle is a rare 1981 custom .357, and I know exactly how bad that looks. I also know I was not at the murder scene when Lucifero was shot.",
+      "metadata": {
+        "knowledgeId": "s_ben_gun_and_alibi"
+      }
+    },
+    {
+      "type": "secret",
+      "content": "I was at a secret gambling session in the church basement during the 2003 Reindeer Bar murder and have no intention of volunteering that fact.",
+      "metadata": {
+        "knowledgeId": "s_ben_gambling"
+      }
+    },
+    {
+      "type": "secret",
+      "content": "My father's notes and occult books are locked in a safe. I do not openly believe the things they describe, but I have not destroyed them because some part of me suspects they explain more than I want explained.",
+      "metadata": {
+        "knowledgeId": "s_ben_safe"
+      }
+    },
+    {
+      "type": "secret",
+      "content": "I know Patrizio has a man working for him under the name Ghost Hand, but I have never met that operative face to face and do not know who he really is.",
+      "metadata": {
+        "knowledgeId": "s_ben_ghost_hand"
+      }
+    },
+    {
+      "type": "belief",
+      "content": "Patrizio is useful only while his ambitions stay contained. If he starts putting Cassandra itself at risk, he becomes a liability, and I will not let him wreck the town I feed on.",
+      "metadata": {
+        "confidence": 0.86,
+        "reasoningChain": "I helped him climb, but he keeps making moves that suggest he wants more than a working arrangement. I am no saint, but anyone who destroys Cassandra destroys my livelihood too."
+      }
+    }
+  ]
+}

@@ -185,74 +185,25 @@ describe("Applier — no-op filtering", () => {
 });
 
 describe("Applier — character id validation", () => {
-  it("drops a relationship.change naming a character that does not exist", () => {
-    // Observed live: the resolver emitted fromId "npc_colleague" (mimicking
-    // the schema example's placeholder style), and updateRelationship
-    // auto-created a ghost node for it.
+  // The relationship operation is gone: what one character thinks of another
+  // is theirs to write via `writeMemory`, not the Engine's to assert. It used
+  // to be validated here because the resolver kept naming placeholder ids and
+  // `updateRelationship` auto-created ghost nodes for them — a problem that
+  // now cannot arise, because nothing reaches that function any more.
+  it("still refuses a condition on a character that does not exist", () => {
     const { dgsm, applied } = makeDgsm({
       knownCharacters: ["Bruno Galilei", "Lux Lynch"],
     });
 
     const result = flush(dgsm, [
       {
-        kind: "relationship.change",
-        fromId: "npc_colleague",
-        toId: "Lux Lynch",
-        delta: -10,
-        note: "n",
+        kind: "character.addCondition",
+        characterId: "npc_colleague",
+        condition: { id: "shaken", description: "rattled" },
       },
     ] as StateChange[]);
 
     expect(result.stateChanges).toHaveLength(0);
     expect(applied).toEqual([]);
-  });
-
-  it("keeps a relationship.change between existing characters", () => {
-    const { dgsm, applied } = makeDgsm({
-      knownCharacters: ["Bruno Galilei", "Lux Lynch"],
-    });
-
-    const result = flush(dgsm, [
-      {
-        kind: "relationship.change",
-        fromId: "Bruno Galilei",
-        toId: "Lux Lynch",
-        delta: -10,
-        note: "n",
-      },
-    ] as StateChange[]);
-
-    expect(result.stateChanges).toHaveLength(1);
-    expect(applied).toEqual(["rel:Bruno Galilei->Lux Lynch"]);
-  });
-
-  it("drops memory and character changes for unknown ids", () => {
-    const { dgsm } = makeDgsm({ knownCharacters: ["npc_1"] });
-
-    const result = flush(dgsm, [
-      { kind: "memory.event", characterId: "npc_ghost", content: "x" },
-      {
-        kind: "character.addCondition",
-        characterId: "npc_ghost",
-        condition: { id: "c", description: "d" },
-      },
-      { kind: "memory.event", characterId: "npc_1", content: "kept" },
-    ] as StateChange[]);
-
-    expect(result.stateChanges.map((c) => c.kind)).toEqual(["memory.event"]);
-  });
-
-  it("leaves kinds without character ids alone", () => {
-    const { dgsm } = makeDgsm({ knownCharacters: [] });
-
-    const result = flush(dgsm, [
-      {
-        kind: "scene.addCondition",
-        sceneId: "SCN_1",
-        condition: { id: "c", description: "d" },
-      },
-    ] as unknown as StateChange[]);
-
-    expect(result.stateChanges).toHaveLength(1);
   });
 });

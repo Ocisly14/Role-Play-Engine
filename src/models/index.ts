@@ -24,7 +24,10 @@ export {
   getCurrentUsageTotals,
   resetUsageStats,
   getUsageStats,
+  measureUsage,
+  usageTotals,
   formatUsageReport,
+  formatUsageLine,
   uncachedInputTokens,
   promptTokensSent,
 } from "./tokenUsage.js";

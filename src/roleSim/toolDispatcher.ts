@@ -1,34 +1,33 @@
 // src/roleSim/toolDispatcher.ts
 //
-// Phase F instant-tool dispatcher. Executes the agent's non-terminal tools
-// (writeMemory / recallMemory / getMapSnapshot) against the memory store and
-// DGSM. Terminal tools (act / continue) never flow through here — the agent
-// loop returns them to the controller, which is the single place engine
-// submission/cancellation happens.
+// Instant-tool dispatcher. Executes the agent's non-terminal tools
+// (`writeMemory` — the only one) against the memory store and DGSM. Terminal
+// tools (act / continue) never flow through here — the agent loop returns
+// them to the controller, which is the single place engine submission
+// happens.
+//
+// Nothing here returns a result the agent must read before deciding, so the
+// agent loop lets these calls ride along in the same turn as a terminal one.
 
 import type { NpcMemoryManager } from "../memory/NpcMemoryManager.js";
 import type { NpcMemoryType } from "../memory/types.js";
 import type { DynamicGameStateManager } from "../state/DynamicGameState.js";
-import { coerceIsoDate, formatForPrompt } from "../state/gameClock.js";
+import {
+  aliasFor,
+  descriptionIdentifier,
+  knownAs,
+} from "../state/perceivableDirectory.js";
 
 /** Tools that consume a tick — calling one ends the agent loop. Decision 17. */
 export const TERMINAL_TOOLS = new Set<string>(["act", "continue"]);
 
 /** Per-tool call budget within a single decide() call. Decision 19. */
 export const TOOL_CAPS: Record<string, number> = {
-  recallMemory: 10,
   writeMemory: 3,
-  getMapSnapshot: 1,
 };
 
 /** Whitelist of valid tool names — used for LLM output validation. */
-export const VALID_TOOLS = new Set<string>([
-  "act",
-  "continue",
-  "writeMemory",
-  "recallMemory",
-  "getMapSnapshot",
-]);
+export const VALID_TOOLS = new Set<string>(["act", "continue", "writeMemory"]);
 
 export interface DispatcherDeps {
   memory: NpcMemoryManager;
@@ -37,6 +36,18 @@ export interface DispatcherDeps {
   sessionId: string;
   moduleId: string;
   gameDateTime: string;
+  /** Where the character is right now — stamped onto written memories. */
+  location?: string;
+  /** Exactly the memories that were rendered into this decision's prompt.
+   *  `ref` resolves against THIS list and nothing else — the same rule the
+   *  `act` boundary applies to objectRefs: a character may only point at what
+   *  they were shown. */
+  memories: ReadonlyArray<{
+    id: string;
+    handle: string;
+    type: string;
+    content: string;
+  }>;
 }
 
 export interface DispatchResult {
@@ -45,21 +56,15 @@ export interface DispatchResult {
 }
 
 interface WriteMemoryInput {
-  type: NpcMemoryType;
+  op?: "add" | "replace" | "delete";
+  type?: NpcMemoryType;
   content?: string;
-  mapAdd?: {
-    sceneNames?: string[];
-    junctionNames?: string[];
-    roadNames?: string[];
-    revealHiddenConnection?: string;
-  };
-}
-
-interface RecallMemoryInput {
-  query?: string;
-  types?: NpcMemoryType[];
-  gameDates?: string[];
-  limit?: number;
+  /** Required for op=replace / op=delete — the tag of the memory to act on. */
+  ref?: string;
+  /** Required for type=relationship — who the memory is about. */
+  targetId?: string;
+  /** With type=relationship — what the character now calls them. */
+  knownAs?: string;
 }
 
 export async function dispatchInstantTool(
@@ -78,45 +83,94 @@ export async function dispatchInstantTool(
   switch (toolName) {
     case "writeMemory":
       return await dispatchWriteMemory(input as WriteMemoryInput, deps);
-    case "recallMemory":
-      return await dispatchRecallMemory(input as RecallMemoryInput, deps);
-    case "getMapSnapshot":
-      return await dispatchGetMapSnapshot(deps);
     default:
       return { result: `Unknown instant tool: ${toolName}` };
   }
 }
 
-const WRITE_MEMORY_DISALLOWED: ReadonlySet<string> = new Set([
-  "event",
-  "witness",
-]);
+/** The character writes its own memories. `context` — the geography they
+ *  started the session knowing — is the one thing written for them, so it is
+ *  the one thing they may not rewrite. */
+const WRITE_MEMORY_DISALLOWED: ReadonlySet<string> = new Set(["context"]);
 
 async function dispatchWriteMemory(
   input: WriteMemoryInput,
   deps: DispatcherDeps
 ): Promise<DispatchResult> {
-  if (!input || typeof input.type !== "string") {
+  if (!input) {
+    return { result: "Error: writeMemory requires arguments." };
+  }
+  const op = input.op ?? "add";
+  if (op === "replace" || op === "delete") {
+    return await dispatchReviseMemory(op, input, deps);
+  }
+  if (typeof input.type !== "string") {
     return { result: "Error: writeMemory requires a 'type' field." };
   }
   if (WRITE_MEMORY_DISALLOWED.has(input.type)) {
     return {
-      result: `Error: writeMemory cannot write type "${input.type}" — engine-only. Allowed types: plan, belief, secret, information, summary, long_term_intent, map.`,
+      result: `Error: "${input.type}" memories are not yours to write. Allowed types: general, plan, secret, relationship, map, long_term_intent.`,
     };
   }
 
-  let content = typeof input.content === "string" ? input.content : "";
-
-  if (input.type === "map" && input.mapAdd) {
-    const summary = renderMapAddSummary(input.mapAdd, deps.dgsm);
-    content = content ? `${content}\n${summary}` : summary;
-  }
+  const content = typeof input.content === "string" ? input.content : "";
 
   if (!content.trim()) {
     return {
-      result:
-        "Error: writeMemory requires non-empty 'content' (or 'mapAdd' for type=map).",
+      result: "Error: writeMemory requires non-empty 'content'.",
     };
+  }
+
+  // A relationship memory without a subject cannot be retrieved as "what do
+  // I know about X" — reject rather than silently degrade it to general.
+  let metadata: Record<string, unknown> | undefined;
+  if (input.type === "relationship") {
+    const targetId = input.targetId?.trim();
+    if (!targetId) {
+      return {
+        result:
+          "Error: type=relationship requires 'targetId' — the handle of the person the memory is about.",
+      };
+    }
+    // An alias for a stranger, or a real id for someone they know. Resolved
+    // against every character in the world, not only those in the room: a
+    // character's sharpest read on someone is usually formed just after that
+    // person walks out, and the alias means the same person either way.
+    const realId = deps.dgsm
+      .getState()
+      .npcCharacters.map((npc) => npc.id)
+      .find((id) => id === targetId || aliasFor(deps.npcId, id) === targetId);
+    const profile = realId ? deps.dgsm.getNpcProfile(realId) : undefined;
+    if (!realId || !profile) {
+      return {
+        result: `Error: targetId "${targetId}" is nobody in this world. Copy the tag shown beside them in what you perceive.`,
+      };
+    }
+    // Store the REAL id. It never reaches the character — the handler renders
+    // `targetName`, and nothing puts `targetId` in a prompt — so there is no
+    // leak, and the key stays joinable. `targetName` is how THEY refer to this person, "the tall pale
+    // man" until the day they learn better.
+    metadata = {
+      targetId: realId,
+      targetName:
+        knownAs(deps.dgsm, deps.npcId, realId) ??
+        descriptionIdentifier(profile),
+    };
+
+    // The relationship graph is the same fact as this memory, indexed for
+    // lookup — so the character writes both, and nothing writes either on
+    // their behalf. The Engine used to keep the graph, deciding for a
+    // character what they now thought of someone; that operation is gone.
+    //
+    // One direction only. That the shopkeeper has taken a view of the customer
+    // says nothing about what he makes of her.
+    deps.dgsm.updateRelationship(
+      deps.npcId,
+      realId,
+      0,
+      content.trim(),
+      input.knownAs?.trim() || undefined
+    );
   }
 
   await deps.memory.add({
@@ -126,169 +180,92 @@ async function dispatchWriteMemory(
     type: input.type,
     content,
     gameDateTime: deps.gameDateTime,
+    ...(deps.location ? { location: deps.location } : {}),
+    ...(metadata ? { metadata } : {}),
   });
 
   return {
-    result: `Wrote ${input.type} memory: "${truncate(content, 80)}"`,
+    result: `Remembered (${input.type}): "${truncate(content, 80)}"`,
   };
 }
 
-function renderMapAddSummary(
-  mapAdd: NonNullable<WriteMemoryInput["mapAdd"]>,
-  dgsm: DynamicGameStateManager
-): string {
-  const state = dgsm.getState();
-  const lines: string[] = [];
-
-  for (const name of mapAdd.sceneNames ?? []) {
-    const scene = findByName(state.scenes, name);
-    lines.push(
-      scene
-        ? `Learned scene: ${scene.name} (${scene.id})`
-        : `Noted unknown scene: ${name}`
-    );
-    if (!scene) {
-      console.warn(
-        `[toolDispatcher] writeMemory.mapAdd.sceneNames: no scene matched "${name}"`
-      );
-    }
-  }
-  for (const name of mapAdd.junctionNames ?? []) {
-    const junction = findByName(state.junctions, name);
-    lines.push(
-      junction
-        ? `Learned junction: ${junction.name} (${junction.id})`
-        : `Noted unknown junction: ${name}`
-    );
-    if (!junction) {
-      console.warn(
-        `[toolDispatcher] writeMemory.mapAdd.junctionNames: no junction matched "${name}"`
-      );
-    }
-  }
-  for (const name of mapAdd.roadNames ?? []) {
-    const road = findByName(state.roads, name);
-    lines.push(
-      road
-        ? `Learned road: ${road.name} (${road.id})`
-        : `Noted unknown road: ${name}`
-    );
-    if (!road) {
-      console.warn(
-        `[toolDispatcher] writeMemory.mapAdd.roadNames: no road matched "${name}"`
-      );
-    }
-  }
-  if (mapAdd.revealHiddenConnection) {
-    lines.push(
-      `Discovered hidden connection: ${mapAdd.revealHiddenConnection}`
-    );
-  }
-  return lines.join("\n");
-}
-
-function findByName<T extends { id: string; name: string }>(
-  map: Map<string, T>,
-  name: string
-): T | undefined {
-  const needle = name.trim().toLowerCase();
-  for (const value of map.values()) {
-    if (value.name.toLowerCase() === needle) return value;
-  }
-  return undefined;
-}
-
-async function dispatchRecallMemory(
-  input: RecallMemoryInput,
+/**
+ * Correct or retract a memory the character already holds.
+ *
+ * Two gates, in this order:
+ *  1. `ref` must name a memory that was IN THIS DECISION'S PROMPT. Resolving
+ *     against the rendered list — not against the store — is the same rule
+ *     `act` applies to objectRefs: a character can only point at what they
+ *     were shown. It also makes a truncated-tag collision resolvable, since
+ *     both sides derive tags from the same list.
+ *  2. The row must still belong to this character in this session. That is
+ *     enforced inside the query, so even a leaked id changes nothing.
+ *
+ * The geography they started with and the diary written for them are not
+ * theirs to rewrite — same list as for writing.
+ */
+async function dispatchReviseMemory(
+  op: "replace" | "delete",
+  input: WriteMemoryInput,
   deps: DispatcherDeps
 ): Promise<DispatchResult> {
-  const limit = clampLimit(input.limit, 5, 20);
-  let gameDates: string[] | undefined;
-  if (input.gameDates !== undefined) {
-    if (!Array.isArray(input.gameDates)) {
-      return {
-        result: `Error: gameDates must be an array of ISO 8601 dates (e.g. ["1923-10-15"])`,
-      };
-    }
-    const coerced: string[] = [];
-    for (const raw of input.gameDates) {
-      const c = typeof raw === "string" ? coerceIsoDate(raw) : null;
-      if (!c) {
-        return {
-          result: `Error: gameDates entries must be ISO 8601 date "YYYY-MM-DD" (got: ${JSON.stringify(raw)})`,
-        };
-      }
-      if (c !== raw.trim()) {
-        console.debug(
-          `[toolDispatcher] coerced recallMemory.gameDates entry "${raw}" -> "${c}"`
-        );
-      }
-      coerced.push(c);
-    }
-    gameDates = coerced.length > 0 ? coerced : undefined;
+  // Rendered as `#M3f9a2c`; the handle itself is the part after the '#'.
+  // Accept either, rather than spend a round trip rejecting the form the
+  // character was shown.
+  const ref = input.ref?.trim().replace(/^#/, "");
+  if (!ref) {
+    return {
+      result: `Error: op="${op}" requires 'ref' — the tag at the start of that line in what you remember, e.g. M3f9a2c.`,
+    };
   }
-  const memories = await deps.memory.query({
-    npcId: deps.npcId,
+
+  // The handle is stored on the row, so resolving is a lookup and not a
+  // recomputation — which is what used to make this disagree with the prompt.
+  const target = deps.memories.find((m) => m.handle === ref);
+  if (!target) {
+    return {
+      result: `Error: "${ref}" is not a memory of yours. Copy the tag exactly as it appears at the start of the line in what you remember.`,
+    };
+  }
+  if (WRITE_MEMORY_DISALLOWED.has(target.type)) {
+    return {
+      result: `Error: "${target.type}" memories are not yours to change — that is what you already knew coming in. Write a new memory of your own instead.`,
+    };
+  }
+
+  if (op === "delete") {
+    const done = await deps.memory.retractOwn({
+      memoryId: target.id,
+      sessionId: deps.sessionId,
+      npcId: deps.npcId,
+    });
+    return {
+      result: done
+        ? `Forgotten: "${truncate(target.content, 80)}"`
+        : `Error: "${ref}" is no longer in your memory.`,
+    };
+  }
+
+  const content = typeof input.content === "string" ? input.content : "";
+  if (!content.trim()) {
+    return {
+      result:
+        "Error: op=\"replace\" requires 'content' — the whole corrected memory, not just what changed.",
+    };
+  }
+
+  const done = await deps.memory.reviseOwn({
+    memoryId: target.id,
     sessionId: deps.sessionId,
-    query: input.query ?? "",
-    filters: {
-      types: input.types,
-      ...(gameDates !== undefined ? { gameDate: gameDates } : {}),
-    },
-    limit,
+    npcId: deps.npcId,
+    content,
+    metadata: { revisedAt: deps.gameDateTime },
   });
-
-  if (memories.length === 0) {
-    return { result: "No memories matched." };
-  }
-
-  const lines = memories.map(
-    (m) =>
-      `- [${formatForPrompt(m.gameDateTime)}] (${m.type}) ${truncate(m.content, 200)}`
-  );
   return {
-    result: `Found ${memories.length} memory(ies):\n${lines.join("\n")}`,
+    result: done
+      ? `Corrected (${target.type}): "${truncate(content, 80)}"`
+      : `Error: "${ref}" is no longer in your memory.`,
   };
-}
-
-async function dispatchGetMapSnapshot(
-  deps: DispatcherDeps
-): Promise<DispatchResult> {
-  const snapshot = await deps.memory.getMapSnapshot(deps.npcId, deps.sessionId);
-  if (!snapshot) {
-    return { result: "No map known yet." };
-  }
-
-  const sceneList = Object.values(snapshot.scenes)
-    .map(
-      (s) =>
-        `- ${s.name} (${s.id})${s.detailLevel === "name_only" ? " [name only]" : ""}`
-    )
-    .join("\n");
-  const junctionList = Object.values(snapshot.junctions)
-    .map((j) => `- ${j.name} (${j.id})`)
-    .join("\n");
-  const roadList = Object.values(snapshot.roads)
-    .map((r) => `- ${r.name} (${r.id})`)
-    .join("\n");
-
-  const sections: string[] = [];
-  if (sceneList) sections.push(`Scenes:\n${sceneList}`);
-  if (junctionList) sections.push(`Junctions:\n${junctionList}`);
-  if (roadList) sections.push(`Roads:\n${roadList}`);
-  if (snapshot.revealedHiddenConnections.length > 0) {
-    sections.push(
-      `Revealed hidden connections:\n${snapshot.revealedHiddenConnections
-        .map((c) => `- ${c}`)
-        .join("\n")}`
-    );
-  }
-  return { result: sections.join("\n\n") || "Empty map." };
-}
-
-function clampLimit(value: unknown, fallback: number, max: number): number {
-  if (typeof value !== "number" || !Number.isFinite(value)) return fallback;
-  return Math.max(1, Math.min(max, Math.round(value)));
 }
 
 function truncate(text: string, max: number): string {

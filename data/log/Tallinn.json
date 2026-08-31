@@ -1,0 +1,4874 @@
+{
+  "npcId": "Tallinn",
+  "memories": [
+    {
+      "type": "information",
+      "content": "卢奇菲罗小心地处理私人事务，虽然钱总是其中的一部分，但我信任她超过我这行的大多数人。",
+      "gameDay": 1,
+      "gameTime": "00:00",
+      "location": null,
+      "metadata": {
+        "difficulty": "regular",
+        "knowledgeId": "k_tallinn_lucifero"
+      }
+    },
+    {
+      "type": "secret",
+      "content": "我雇卢奇菲罗做一件私事，因为我以为我的爱人正向别人靠拢，我宁愿花钱找可以否认的麻烦，也不让错误的人知道我为什么愤怒。",
+      "gameDay": 1,
+      "gameTime": "00:00",
+      "location": null,
+      "metadata": {
+        "knowledgeId": "s_tallinn_personal_job"
+      }
+    },
+    {
+      "type": "plan",
+      "content": "在地下赌场的圈子里保住自己的位置和面子，守护不愿被外人知晓的私生活秘密，维持与少数信得过之人的义气。",
+      "gameDay": 1,
+      "gameTime": "00:00",
+      "location": null,
+      "metadata": {
+        "planType": "long_term"
+      }
+    },
+    {
+      "type": "plan",
+      "content": "Today's plan: 1. 在教堂巡查祭坛与暗门，确认联系簿与藏物安全并封堵寒气。 at 教堂; 2. 与科文德低声交代目前的事态与今晚的增援安排，确认谁值得信任并分配观察点。 at 教堂; 3. 去驯鹿酒吧巡逻，确认筹码、桌面布置与人员分工并留意任何提到「码头」的交谈。 at 驯鹿酒吧; 4. 在驯鹿酒吧私下找科文德再次交代安保细节并观察新面孔的来路与态度。 at 驯鹿酒吧; 5. 前往星辰医院寻找文森特，确认他是否接到请求并携带外科器械到教堂增援。 at 星辰医院; 6. 白天到五金店与哈里森碰面，检查备用小装置并约定若有变故的应急交接方式。 at 五金店; 7. 顺路到花店·卡森德拉之花用作掩护，观察是否有人打听我或卢奇菲罗的过往。 at 花店·卡森德拉之花; 8. 去海伦的餐桌吃顿正经的午餐并借机打探镇上的流言以维护我的面子与情报源。 at 海伦的餐桌; 9. 傍晚返回教堂，整理隐蔽口袋里的物品并把联系簿再次藏回古旧圣经以防被动。 at 教堂; 10. 晚上回到驯鹿酒吧值夜，维持秩序、解决纠纷并盯紧任何可疑新面孔以守住我的位置。 at 驯鹿酒吧; 11. 深夜回到教堂，点燃几支蜡烛封好通道，确认安全后在主殿小睡休息以保存体力。 at 教堂",
+      "gameDay": 2,
+      "gameTime": "00:00",
+      "location": null,
+      "metadata": {
+        "planType": "daily"
+      }
+    },
+    {
+      "type": "secret",
+      "content": "她去世前几个月，卢奇菲罗告诉我她终于击败了一个对手，从他们手中夺取了一个棘手的战利品。她看起来比我见过的任何时候都更骄傲。",
+      "gameDay": 1,
+      "gameTime": "00:00",
+      "location": null,
+      "metadata": {
+        "knowledgeId": "s_tallinn_lucifero_prize"
+      }
+    },
+    {
+      "type": "secret",
+      "content": "我不知道幽灵之手是谁，但我知道使用'码头'作为暗号的人几乎肯定与镇上的黑帮那边有关。",
+      "gameDay": 1,
+      "gameTime": "00:00",
+      "location": null,
+      "metadata": {
+        "knowledgeId": "s_tallinn_dock_code"
+      }
+    },
+    {
+      "type": "secret",
+      "content": "我把私生活对地下世界的大多数人隐藏，因为我很清楚一旦像我这样的人不再符合他们期望的形象，闲话变成筹码的速度有多快。",
+      "gameDay": 1,
+      "gameTime": "00:00",
+      "location": null,
+      "metadata": {
+        "knowledgeId": "s_tallinn_private"
+      }
+    },
+    {
+      "type": "belief",
+      "content": "在一个犯罪小镇生存的最好方式是保持有用、谨慎，而且不容易被羞辱。",
+      "gameDay": 1,
+      "gameTime": "00:00",
+      "location": null,
+      "metadata": {
+        "confidence": 0.93,
+        "reasoningChain": "今天的经历——科文德的可靠准备、康斯坦丁的试探以及我通过谨慎藏匿和观察避免泄露——都再次证明保持谨慎、可用且不轻易被羞辱是可行的生存之道，因此我的信心水平略微上升。"
+      }
+    },
+    {
+      "type": "information",
+      "content": "这边的人叫我塔林寡妇。这个绰号一半是玩笑一半是警告，我让它替我做事。",
+      "gameDay": 1,
+      "gameTime": "00:00",
+      "location": null,
+      "metadata": {
+        "difficulty": "regular",
+        "knowledgeId": "k_tallinn_nickname"
+      }
+    },
+    {
+      "type": "information",
+      "content": "我与科文德一起在镇上的赌场那边工作，钱流动得快，话说得低，问错了问题可能让人受伤。",
+      "gameDay": 1,
+      "gameTime": "00:00",
+      "location": null,
+      "metadata": {
+        "difficulty": "automatic",
+        "knowledgeId": "k_tallinn_casino"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我悄声用教堂座机联系了科文德和两名信得过的人，低声交代他们提高警惕、占位观察康斯坦丁及任何提到「码头」的可疑对话，并嘱咐一有异常立刻通知我。",
+      "gameDay": 2,
+      "gameTime": "00:05",
+      "location": "SCN_17_SUB_1",
+      "metadata": {
+        "outcome": "悄声拨打教堂座机联系科文德与两名可信任的人，低声告知他们提高警惕并占位观察康斯坦丁与任何提到「码头」的可疑交谈"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我退到主殿侧墙的阴影中，悄悄观察康斯坦丁与帕特里齐奥的举动，注意他们的姿态与互动。顺手检查了自己的隐蔽口袋，确认重要物品完好无损。",
+      "gameDay": 2,
+      "gameTime": "00:10",
+      "location": "SCN_17_SUB_1",
+      "metadata": {
+        "outcome": "退到主殿侧墙的阴影中，暗中观察康斯坦丁与帕特里齐奥的举动，并顺手检查隐蔽口袋确认重要物品完好无损"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我悄悄把祭坛上的古旧圣经拿起，翻阅并检查了书页与封面；发现我夹在其中的折叠联系簿仍在且完好无损，页面没有被翻动或明显动过的痕迹，于是把书轻放回祭坛。",
+      "gameDay": 2,
+      "gameTime": "00:13",
+      "location": "SCN_17_SUB_1",
+      "metadata": {
+        "itemId": "ITEM_SCN17_3",
+        "outcome": "悄悄拿起祭坛上的圣经，翻阅确认是否藏有联系簿或其他敏感物品，并检查书页或封面有无被动过的痕迹",
+        "itemName": "圣经"
+      }
+    },
+    {
+      "type": "event",
+      "content": "康斯坦丁以低声命令的方式交代任务：若接到信号去帕拉迪尔大酒店并在必要时制造骚动；在未接到信号前在教堂外围隐蔽观察，发现可疑或有人提到“码头”要立刻回报。我确认了内层隐蔽口袋内的重要物品完好，并将按指示守在暗处观察。",
+      "gameDay": 2,
+      "gameTime": "00:16",
+      "location": "SCN_17_SUB_1",
+      "metadata": {
+        "outcome": "低声命令Tallinn在我发出信号后立刻前往帕拉迪尔大酒店，在必要时制造骚动以分散注意力；在未收到信号前保持在教堂外围隐蔽占位并观察任何可疑人物或提到“码头”的交谈并立刻回报。"
+      }
+    },
+    {
+      "type": "event",
+      "content": "隐蔽观察康斯坦丁与帕特里齐奥及附近人员的一举一动，注意任何提到“码头”的交谈并在心中记下可疑面孔与位置 成功",
+      "gameDay": 2,
+      "gameTime": "00:24",
+      "location": "SCN_17_SUB_1",
+      "metadata": {
+        "outcome": "隐蔽观察康斯坦丁与帕特里齐奥及附近人员的一举一动，注意任何提到“码头”的交谈并在心中记下可疑面孔与位置 成功"
+      }
+    },
+    {
+      "type": "event",
+      "content": "康斯坦丁低声吩咐我立刻去帕拉迪尔大酒店，并在必要时制造骚动来掩护他在教堂的行动；我接受了指令并确认内层隐蔽口袋内的重要物件完好，但会继续保持警觉与隐蔽。",
+      "gameDay": 2,
+      "gameTime": "00:25",
+      "location": "SCN_17_SUB_1",
+      "metadata": {
+        "outcome": "低声命令Tallinn立刻前往帕拉迪尔大酒店，在必要时制造骚动以掩护我在教堂的行动"
+      }
+    },
+    {
+      "type": "event",
+      "content": "康斯坦丁在殿内对我低声下令，指示我在他发信号或他走不开时去帕拉迪尔大酒店制造骚动，掩护外面的动静并确保外科器械交接安全。我确认了内层隐蔽口袋里的重要物品完好并接受执行——这让我在职业上对他更可用，但并未实质建立起信任。",
+      "gameDay": 2,
+      "gameTime": "00:36",
+      "location": "SCN_17_SUB_1",
+      "metadata": {
+        "outcome": "低声下达备用制造骚动的命令给Tallinn，指示在我发出信号或我无法离开时立刻制造噪动以掩护教堂外的动静并保护外科器械的交接"
+      }
+    },
+    {
+      "type": "event",
+      "content": "悄悄移向主殿更深的阴影处，屏息观察康斯坦丁与暗门方向并留意任何提到“码头”的低语 成功",
+      "gameDay": 2,
+      "gameTime": "00:37",
+      "location": "SCN_17_SUB_1",
+      "metadata": {
+        "outcome": "悄悄移向主殿更深的阴影处，屏息观察康斯坦丁与暗门方向并留意任何提到“码头”的低语 成功"
+      }
+    },
+    {
+      "type": "event",
+      "content": "倾听主殿内的低语，注意任何提到“码头”的谈话并记录可疑声源位置 成功",
+      "gameDay": 2,
+      "gameTime": "00:48",
+      "location": "SCN_17_SUB_1",
+      "metadata": {
+        "outcome": "倾听主殿内的低语，注意任何提到“码头”的谈话并记录可疑声源位置 成功"
+      }
+    },
+    {
+      "type": "event",
+      "content": "在主殿侧墙更深处隐蔽观察康斯坦丁与帕特里齐奥，以及任何可能提到“码头”暗号的人，默默记录位置与动向 成功",
+      "gameDay": 2,
+      "gameTime": "01:09",
+      "location": "SCN_17_SUB_1",
+      "metadata": {
+        "outcome": "在主殿侧墙更深处隐蔽观察康斯坦丁与帕特里齐奥，以及任何可能提到“码头”暗号的人，默默记录位置与动向 成功"
+      }
+    },
+    {
+      "type": "event",
+      "content": "监听通往地底秘密赌场的通道入口的动静 成功",
+      "gameDay": 2,
+      "gameTime": "01:15",
+      "location": "SCN_17_SUB_1",
+      "metadata": {
+        "outcome": "监听通往地底秘密赌场的通道入口的动静 成功"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我在主殿低声找科文德，但他不在。于是我通过教堂座机联系了科文德和两名我信得过的人，交代了今晚的增援安排、确认了观察点，并嘱咐一旦听到“码头”暗号立即回报。",
+      "gameDay": 2,
+      "gameTime": "01:20",
+      "location": "SCN_17_SUB_1",
+      "metadata": {
+        "outcome": "低声向科文德交代当前事态与今晚增援安排，确认信得过的观察点并嘱咐发现“码头”暗号立即回报"
+      }
+    },
+    {
+      "type": "event",
+      "content": "康斯坦丁在祭坛旁低声交代：若帕特里齐奥未按计划行动或出现异常，我要在帕拉迪尔大酒店制造骚动掩护交接，并在确认外科器械交付完好后立即回报。他的话很明确，我已接受并将待命，必要时按约行动。",
+      "gameDay": 2,
+      "gameTime": "01:25",
+      "location": "SCN_17_SUB_1",
+      "metadata": {
+        "outcome": "悄声向Tallinn下达备用出动指令：若帕特里齐奥未按计划行动或出现异常，立即在帕拉迪尔大酒店制造骚动掩护交接并在确认外科器械安全交付后立刻回报我。"
+      }
+    },
+    {
+      "type": "event",
+      "content": "康斯坦丁在祭坛旁低声命令我立即前往帕拉迪尔大酒店，必要时在那儿制造骚动以掩护交接并在完成后立刻回报。他的语气严厉但明确，我职业性地接受了命令，会按指示行动并保持隐蔽与谨慎。",
+      "gameDay": 2,
+      "gameTime": "01:34",
+      "location": "SCN_17_SUB_1",
+      "metadata": {
+        "outcome": "命令Tallinn现在立刻前往帕拉迪尔大酒店，如有必要在那儿制造骚动以掩护交接并在完成后立即回报我"
+      }
+    },
+    {
+      "type": "event",
+      "content": "在主殿阴影中继续隐蔽观察康斯坦丁与任何可能使用“码头”暗号的人，悄声记录位置与可疑动向 成功",
+      "gameDay": 2,
+      "gameTime": "01:35",
+      "location": "SCN_17_SUB_1",
+      "metadata": {
+        "outcome": "在主殿阴影中继续隐蔽观察康斯坦丁与任何可能使用“码头”暗号的人，悄声记录位置与可疑动向 成功"
+      }
+    },
+    {
+      "type": "event",
+      "content": "悄悄移到主殿更深的阴影处并固定观察位置，保持隐蔽不引人注意 成功",
+      "gameDay": 2,
+      "gameTime": "01:40",
+      "location": "SCN_17_SUB_1",
+      "metadata": {
+        "outcome": "悄悄移到主殿更深的阴影处并固定观察位置，保持隐蔽不引人注意 成功"
+      }
+    },
+    {
+      "type": "event",
+      "content": "康斯坦丁命令我去帕拉迪尔大酒店制造骚动以掩护他在教堂的行动，并要求完成后立即回报。我职业性地接受了指示，准备按约行动并保持我的私域与物品不被触及。",
+      "gameDay": 2,
+      "gameTime": "01:42",
+      "location": "SCN_17_SUB_1",
+      "metadata": {
+        "outcome": "命令Tallinn现在立刻前往帕拉迪尔大酒店，在那里制造骚动以掩护我在教堂的行动，完成后立即回报我"
+      }
+    },
+    {
+      "type": "event",
+      "content": "在主殿侧墙阴影中保持隐蔽观察康斯坦丁，仔细倾听并记录任何提到“码头”的谈话或异常动静 [在 SCN_17_SUB_1 因重新规划而中断] 已中断",
+      "gameDay": 2,
+      "gameTime": "01:44",
+      "location": "SCN_17_SUB_1",
+      "metadata": {
+        "outcome": "在主殿侧墙阴影中保持隐蔽观察康斯坦丁，仔细倾听并记录任何提到“码头”的谈话或异常动静 [在 SCN_17_SUB_1 因重新规划而中断] 已中断",
+        "interruptionReason": "revise_replan"
+      }
+    },
+    {
+      "type": "witness",
+      "content": "[目击] 01:44 — 我看见康斯坦丁在祭坛暗处点燃了那支特殊的标记蜡烛，烛焰作为出动信号被触发。心里一紧，知道现在必须立刻行动：按约定前往帕拉迪尔大酒店，必要时制造骚动掩护交接，同时确保我藏在内袋的联系簿和小装置无恙，并与冷蛛协同。情绪是警觉而果决，既有一点紧张但更偏向职业性的冷静。",
+      "gameDay": 2,
+      "gameTime": "01:44",
+      "location": "SCN_17_SUB_1",
+      "metadata": {
+        "impact": 2,
+        "perspective": "witness",
+        "sourceAction": "我在祭坛暗处点燃了那支特别的标记蜡烛，烛焰作为出动信号被触发。按约定，冷蛛与Tallinn已接到信号并开始出动。",
+        "sourceCharacterId": "Constantine Frollo"
+      }
+    },
+    {
+      "type": "witness",
+      "content": "[相遇] 01:49 在卡森德拉南新街与Shandra Hernandez面对面相遇。她匆匆停下打了个招呼，目光短暂打量我，我以克制的微笑回应、没泄露任何信息。心里警觉但保持职业冷静——这次偶遇虽让人紧张，却不会阻碍我按康斯坦丁的信号前往帕拉迪尔大酒店，按原计划行动并保护我的隐蔽物品。",
+      "gameDay": 2,
+      "gameTime": "01:49",
+      "location": "ROAD_3",
+      "metadata": {
+        "impact": 2,
+        "perspective": "co_presence",
+        "sourceAction": "Shandra Hernandez 在 卡森德拉南新街",
+        "sourceCharacterId": "__encounter__"
+      }
+    },
+    {
+      "type": "event",
+      "content": "前往帕拉迪尔大酒店以在必要时制造骚动并与冷蛛会合 成功",
+      "gameDay": 2,
+      "gameTime": "01:52",
+      "location": "SCN_4_SUB_1",
+      "metadata": {
+        "outcome": "前往帕拉迪尔大酒店以在必要时制造骚动并与冷蛛会合 成功",
+        "blockedReason": "",
+        "failureReason": ""
+      }
+    },
+    {
+      "type": "event",
+      "content": "我到帕拉迪尔大酒店大堂去找冷蛛，准备低声确认掩护骚动的信号与交接细节，但他根本不在场。我查看了前台和休息区，没人出现，只能暂时作罢，待会儿换别的联络方式再尝试。",
+      "gameDay": 2,
+      "gameTime": "01:56",
+      "location": "SCN_4_SUB_1",
+      "metadata": {
+        "outcome": "低声与冷蛛确认掩护骚动的信号与交接细节"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我在前台把登记簿和留言本逐页翻看，核对了来客姓名与房号，但没有发现任何署名“冷蛛”或能指引出其房号的线索。登记簿仍然整齐地摆在台面上，服务铃静置一旁。",
+      "gameDay": 2,
+      "gameTime": "02:00",
+      "location": "SCN_4_SUB_1",
+      "metadata": {
+        "itemId": "ITEM_SCN4_1",
+        "outcome": "检查前台的登记簿和留言，寻找冷蛛的登记信息或房号",
+        "itemName": "前台接待处"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我悄悄绕到前台柜台后，检查了台面、登记簿和可能的缝隙与抽屉，特意寻找留给“冷蛛”的留言、房卡或小纸条，但没发现任何可疑的留言或留置物。前台看起来一切正常，没有留下明显被动过的痕迹。",
+      "gameDay": 2,
+      "gameTime": "02:04",
+      "location": "SCN_4_SUB_1",
+      "metadata": {
+        "itemId": "ITEM_SCN4_1",
+        "outcome": "在前台柜台后面悄悄搜索是否有留给“冷蛛”的留言、房卡或纸条",
+        "itemName": "前台接待处"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我悄悄将一张写有约定暗号和简短指示的折叠纸条夹入前台的登记簿，留给“冷蛛”以便他发现并联系我。",
+      "gameDay": 2,
+      "gameTime": "02:08",
+      "location": "SCN_4_SUB_1",
+      "metadata": {
+        "itemId": "ITEM_SCN4_1",
+        "outcome": "在前台登记簿里夹一张写有暗号与简短指示的折叠纸条，留给“冷蛛”以便他发现并联系我",
+        "itemName": "前台接待处"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我检查了前台的登记簿；我夹入的那张折叠纸条还稳稳地夹在登记簿里，折痕端正，未被翻动或取走，周围也没有发现其他异常。",
+      "gameDay": 2,
+      "gameTime": "02:11",
+      "location": "SCN_4_SUB_1",
+      "metadata": {
+        "itemId": "ITEM_SCN4_1",
+        "outcome": "检查前台登记簿，确认我夹入的折叠纸条仍在原位且没有被人翻动或取走",
+        "itemName": "前台接待处"
+      }
+    },
+    {
+      "type": "event",
+      "content": "在大堂休息区隐蔽观察进出客人，留意冷蛛出现或他留下的信号，同时保持警觉，准备在必要时制造骚动以掩护交接 成功",
+      "gameDay": 2,
+      "gameTime": "02:22",
+      "location": "SCN_4_SUB_1",
+      "metadata": {
+        "outcome": "在大堂休息区隐蔽观察进出客人，留意冷蛛出现或他留下的信号，同时保持警觉，准备在必要时制造骚动以掩护交接 成功"
+      }
+    },
+    {
+      "type": "event",
+      "content": "靠近电梯与楼梯口，悄声监听并观察上层来往人群寻找冷蛛的动静 成功",
+      "gameDay": 2,
+      "gameTime": "02:28",
+      "location": "SCN_4_SUB_1",
+      "metadata": {
+        "outcome": "靠近电梯与楼梯口，悄声监听并观察上层来往人群寻找冷蛛的动静 成功"
+      }
+    },
+    {
+      "type": "event",
+      "content": "在大堂靠近电梯与楼梯口保持隐蔽观察并静听上层动静，准备在冷蛛出现或接到信号时立即应对 成功",
+      "gameDay": 2,
+      "gameTime": "02:35",
+      "location": "SCN_4_SUB_1",
+      "metadata": {
+        "outcome": "在大堂靠近电梯与楼梯口保持隐蔽观察并静听上层动静，准备在冷蛛出现或接到信号时立即应对 成功"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我按下了电梯呼叫按钮，看到按钮灯亮起，随后侧耳倾听并透过门缝朝电梯与楼梯方向张望，暂时既没看见也没听到有人下来。",
+      "gameDay": 2,
+      "gameTime": "02:38",
+      "location": "SCN_4_SUB_1",
+      "metadata": {
+        "outcome": "按下电梯呼叫按钮，侧耳观察并透过门缝留意电梯内或楼梯上向下的人影"
+      }
+    },
+    {
+      "type": "event",
+      "content": "悄悄走上楼梯到帕拉迪尔大酒店客房走廊寻找冷蛛 成功",
+      "gameDay": 2,
+      "gameTime": "02:39",
+      "location": "SCN_4_SUB_1",
+      "metadata": {
+        "outcome": "悄悄走上楼梯到帕拉迪尔大酒店客房走廊寻找冷蛛 成功",
+        "blockedReason": "",
+        "failureReason": ""
+      }
+    },
+    {
+      "type": "event",
+      "content": "悄悄沿着楼梯上到客房走廊，继续寻找冷蛛 成功",
+      "gameDay": 2,
+      "gameTime": "02:40",
+      "location": "SCN_4_SUB_1",
+      "metadata": {
+        "outcome": "悄悄沿着楼梯上到客房走廊，继续寻找冷蛛 成功",
+        "blockedReason": "",
+        "failureReason": ""
+      }
+    },
+    {
+      "type": "event",
+      "content": "悄悄上楼到客房走廊寻找冷蛛 成功",
+      "gameDay": 2,
+      "gameTime": "02:41",
+      "location": "SCN_4_SUB_1",
+      "metadata": {
+        "outcome": "悄悄上楼到客房走廊寻找冷蛛 成功",
+        "blockedReason": "",
+        "failureReason": ""
+      }
+    },
+    {
+      "type": "event",
+      "content": "悄声沿楼梯上到客房走廊寻找冷蛛 成功",
+      "gameDay": 2,
+      "gameTime": "02:42",
+      "location": "SCN_4_SUB_1",
+      "metadata": {
+        "outcome": "悄声沿楼梯上到客房走廊寻找冷蛛 成功",
+        "blockedReason": "",
+        "failureReason": ""
+      }
+    },
+    {
+      "type": "event",
+      "content": "我在电梯口守候，盯着电梯和楼梯的动静，留意冷蛛出现或任何接应信号。暂时未见有人影或明显脚步声，电梯呼叫灯仍然点亮，周围没有其他异常。",
+      "gameDay": 2,
+      "gameTime": "02:48",
+      "location": "SCN_4_SUB_1",
+      "metadata": {
+        "outcome": "在电梯口守候并观察楼层与楼梯来往，留意冷蛛出现或任何接应信号的迹象"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我翻开前台的登记簿，找到我之前夹的那张折叠纸条。纸条仍在原位，写着给“冷蛛”的暗号与简短指示，完好无损，既没有新增留言也没有被取走。前台看起来一切如常。",
+      "gameDay": 2,
+      "gameTime": "02:52",
+      "location": "SCN_4_SUB_1",
+      "metadata": {
+        "itemId": "ITEM_SCN4_1",
+        "outcome": "检查前台登记簿里我夹着的折叠纸条是否有新留言或被取走",
+        "itemName": "前台接待处"
+      }
+    },
+    {
+      "type": "event",
+      "content": "悄悄上楼检查客房走廊寻找冷蛛 成功",
+      "gameDay": 2,
+      "gameTime": "02:53",
+      "location": "SCN_4_SUB_1",
+      "metadata": {
+        "outcome": "悄悄上楼检查客房走廊寻找冷蛛 成功",
+        "blockedReason": "",
+        "failureReason": ""
+      }
+    },
+    {
+      "type": "event",
+      "content": "在电梯口继续隐蔽守候并倾听楼上与楼下动静，寻找冷蛛或任何接应信号 成功",
+      "gameDay": 2,
+      "gameTime": "02:59",
+      "location": "SCN_4_SUB_1",
+      "metadata": {
+        "outcome": "在电梯口继续隐蔽守候并倾听楼上与楼下动静，寻找冷蛛或任何接应信号 成功"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我走到前台，低声翻看登记簿，翻开几页确认我先前夹进去的那张折叠纸条还在原位；纸条如描述般被夹着，登记簿和台面看起来并未被动过。",
+      "gameDay": 2,
+      "gameTime": "03:05",
+      "location": "SCN_4_SUB_1",
+      "metadata": {
+        "itemId": "ITEM_SCN4_1",
+        "outcome": "走到前台，低声翻看登记簿，确认我夹的折叠纸条仍在原位",
+        "itemName": "前台接待处"
+      }
+    },
+    {
+      "type": "event",
+      "content": "在电梯口隐蔽守候并观察楼上与楼梯动静，寻找并确认冷蛛的出现 成功",
+      "gameDay": 2,
+      "gameTime": "03:16",
+      "location": "SCN_4_SUB_1",
+      "metadata": {
+        "outcome": "在电梯口隐蔽守候并观察楼上与楼梯动静，寻找并确认冷蛛的出现 成功"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我悄声上楼到客房走廊，沿走廊逐一靠近房门并侧耳倾听脚步与任何异常声响；目前没有发现可见的人影或明显脚步声，暂未发现冷蛛或接应信号。",
+      "gameDay": 2,
+      "gameTime": "03:22",
+      "location": "SCN_4_SUB_1",
+      "metadata": {
+        "outcome": "悄声上楼到客房走廊，沿走廊寻找冷蛛并留意房门、脚步与任何异常声响"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我翻开前台的登记簿，发现我先前夹入的那张折叠纸条仍然放在原位，纸上写的暗号和简短指示清晰可见，登记簿看起来没有被动过。",
+      "gameDay": 2,
+      "gameTime": "03:25",
+      "location": "SCN_4_SUB_1",
+      "metadata": {
+        "itemId": "ITEM_SCN4_1",
+        "outcome": "翻开前台登记簿，检查我夹入的折叠纸条是否仍在原位",
+        "itemName": "前台接待处"
+      }
+    },
+    {
+      "type": "event",
+      "content": "在大堂电梯口旁隐蔽等待并倾听楼上楼下动静，准备在必要时制造骚动掩护交接 成功",
+      "gameDay": 2,
+      "gameTime": "03:36",
+      "location": "SCN_4_SUB_1",
+      "metadata": {
+        "outcome": "在大堂电梯口旁隐蔽等待并倾听楼上楼下动静，准备在必要时制造骚动掩护交接 成功"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我从前台登记簿里取出那张折叠纸条查看。纸条上仍是原先的暗号和简短指示，未见冷蛛留下任何回信或额外标记。",
+      "gameDay": 2,
+      "gameTime": "03:40",
+      "location": "SCN_4_SUB_1",
+      "metadata": {
+        "outcome": "检查前台登记簿中夹着的折叠纸条，确认是否有冷蛛的回应"
+      }
+    },
+    {
+      "type": "event",
+      "content": "在大堂电梯口附近的沙发上悄然坐下，注视电梯与楼梯方向寻找冷蛛的出现，并准备在必要时制造骚动以掩护交接 成功",
+      "gameDay": 2,
+      "gameTime": "03:46",
+      "location": "SCN_4_SUB_1",
+      "metadata": {
+        "outcome": "在大堂电梯口附近的沙发上悄然坐下，注视电梯与楼梯方向寻找冷蛛的出现，并准备在必要时制造骚动以掩护交接 成功"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我按下了电梯的呼叫按钮，按键有明显回弹，呼叫信号已发送并等待电梯回应。",
+      "gameDay": 2,
+      "gameTime": "03:49",
+      "location": "SCN_4_SUB_1",
+      "metadata": {
+        "outcome": "按下电梯呼叫按钮"
+      }
+    },
+    {
+      "type": "event",
+      "content": "在电梯口守候电梯到达 成功",
+      "gameDay": 2,
+      "gameTime": "03:55",
+      "location": "SCN_4_SUB_1",
+      "metadata": {
+        "outcome": "在电梯口守候电梯到达 成功"
+      }
+    },
+    {
+      "type": "event",
+      "content": "在大堂电梯口继续隐蔽守候并倾听楼上与楼梯的动静，随时准备接应冷蛛或在必要时制造骚动掩护交接 成功",
+      "gameDay": 2,
+      "gameTime": "04:06",
+      "location": "SCN_4_SUB_1",
+      "metadata": {
+        "outcome": "在大堂电梯口继续隐蔽守候并倾听楼上与楼梯的动静，随时准备接应冷蛛或在必要时制造骚动掩护交接 成功"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我把登记簿翻开，把夹着的折叠纸条抽出，仔细查看纸条与登记簿内容——没有发现所谓“冷蛛”的回信或任何新痕迹。把纸条按原样折好放回登记簿，并把台面整理整齐，前台看上去依旧没有异常。",
+      "gameDay": 2,
+      "gameTime": "04:09",
+      "location": "SCN_4_SUB_1",
+      "metadata": {
+        "itemId": "ITEM_SCN4_1",
+        "outcome": "检查前台登记簿与夹着的折叠纸条，确认是否有冷蛛的回信或任何新痕迹，然后将纸条放回原位整理好",
+        "itemName": "前台接待处"
+      }
+    },
+    {
+      "type": "event",
+      "content": "倾听电梯门缝并观察是否有人下楼 成功",
+      "gameDay": 2,
+      "gameTime": "04:12",
+      "location": "SCN_4_SUB_1",
+      "metadata": {
+        "outcome": "倾听电梯门缝并观察是否有人下楼 成功"
+      }
+    },
+    {
+      "type": "event",
+      "content": "靠近电梯门口，当电梯到达时观察并识别下楼的任何人 成功",
+      "gameDay": 2,
+      "gameTime": "04:16",
+      "location": "SCN_4_SUB_1",
+      "metadata": {
+        "outcome": "靠近电梯门口，当电梯到达时观察并识别下楼的任何人 成功"
+      }
+    },
+    {
+      "type": "event",
+      "content": "在大堂沙发上坐下，假装休息并注视电梯与楼梯方向，同时将手放在内袋保护我的联系簿与小装置 成功",
+      "gameDay": 2,
+      "gameTime": "04:27",
+      "location": "SCN_4_SUB_1",
+      "metadata": {
+        "outcome": "在大堂沙发上坐下，假装休息并注视电梯与楼梯方向，同时将手放在内袋保护我的联系簿与小装置 成功"
+      }
+    },
+    {
+      "type": "event",
+      "content": "上楼到客房走廊寻找冷蛛 成功",
+      "gameDay": 2,
+      "gameTime": "04:28",
+      "location": "SCN_4_SUB_1",
+      "metadata": {
+        "outcome": "上楼到客房走廊寻找冷蛛 成功",
+        "blockedReason": "",
+        "failureReason": ""
+      }
+    },
+    {
+      "type": "event",
+      "content": "靠近电梯门缝倾听并守候，手放在内袋保护联系簿与小装置，随时准备应对冷蛛出现或制造必要的骚动 成功",
+      "gameDay": 2,
+      "gameTime": "04:35",
+      "location": "SCN_4_SUB_1",
+      "metadata": {
+        "outcome": "靠近电梯门缝倾听并守候，手放在内袋保护联系簿与小装置，随时准备应对冷蛛出现或制造必要的骚动 成功"
+      }
+    },
+    {
+      "type": "event",
+      "content": "检查内层隐蔽口袋，确认联系簿与小装置仍在并且完好 成功",
+      "gameDay": 2,
+      "gameTime": "04:38",
+      "location": "SCN_4_SUB_1",
+      "metadata": {
+        "outcome": "检查内层隐蔽口袋，确认联系簿与小装置仍在并且完好 成功"
+      }
+    },
+    {
+      "type": "event",
+      "content": "在大堂沙发上坐下，假装休息并把手放在内层隐蔽口袋上持续守候电梯与楼梯动静，准备随时应对冷蛛出现或制造骚动 成功",
+      "gameDay": 2,
+      "gameTime": "04:49",
+      "location": "SCN_4_SUB_1",
+      "metadata": {
+        "outcome": "在大堂沙发上坐下，假装休息并把手放在内层隐蔽口袋上持续守候电梯与楼梯动静，准备随时应对冷蛛出现或制造骚动 成功"
+      }
+    },
+    {
+      "type": "event",
+      "content": "悄然走向电梯并上楼到客房走廊寻找冷蛛 成功",
+      "gameDay": 2,
+      "gameTime": "04:50",
+      "location": "SCN_4_SUB_1",
+      "metadata": {
+        "outcome": "悄然走向电梯并上楼到客房走廊寻找冷蛛 成功",
+        "blockedReason": "",
+        "failureReason": ""
+      }
+    },
+    {
+      "type": "event",
+      "content": "轻声敲开最近的客房门并侧耳倾听是否有回应 成功",
+      "gameDay": 2,
+      "gameTime": "04:53",
+      "location": "SCN_4_SUB_1",
+      "metadata": {
+        "outcome": "轻声敲开最近的客房门并侧耳倾听是否有回应 成功"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我悄声上楼，沿走廊逐一靠近房门侧耳倾听，没有听到冷蛛或任何接应信号。",
+      "gameDay": 2,
+      "gameTime": "04:59",
+      "location": "SCN_4_SUB_1",
+      "metadata": {
+        "outcome": "悄声上楼到客房走廊，沿走廊逐一靠近房门并侧耳倾听寻找“冷蛛”或任何接应信号"
+      }
+    },
+    {
+      "type": "event",
+      "content": "悄声下楼回到大堂，在前台沙发处坐下继续守候电梯与楼梯动静，手放在内层口袋保护我的隐蔽物，随时准备在必要时制造骚动掩护交接并在交接完成后向康斯坦丁回报 成功",
+      "gameDay": 2,
+      "gameTime": "05:10",
+      "location": "SCN_4_SUB_1",
+      "metadata": {
+        "outcome": "悄声下楼回到大堂，在前台沙发处坐下继续守候电梯与楼梯动静，手放在内层口袋保护我的隐蔽物，随时准备在必要时制造骚动掩护交接并在交接完成后向康斯坦丁回报 成功"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我悄悄走到前台，低声翻看登记簿，找到了夹在其中的那张折叠纸条——暗号和简短指示完好无损，未见任何新增留言或房号线索。将联系簿和小装置紧贴在花哨衣服的内层口袋并扣好，确保它们没有暴露。",
+      "gameDay": 2,
+      "gameTime": "05:14",
+      "location": "SCN_4_SUB_1",
+      "metadata": {
+        "itemId": "ITEM_SCN4_1",
+        "outcome": "走到前台低声翻看登记簿，寻找冷蛛留下的回信或任何新迹象，同时保护内层口袋里的联系簿和小装置",
+        "itemName": "前台接待处"
+      }
+    },
+    {
+      "type": "event",
+      "content": "走到电梯口盯着电梯门口观察来往人影 成功",
+      "gameDay": 2,
+      "gameTime": "05:20",
+      "location": "SCN_4_SUB_1",
+      "metadata": {
+        "outcome": "走到电梯口盯着电梯门口观察来往人影 成功"
+      }
+    },
+    {
+      "type": "event",
+      "content": "悄然上楼到客房走廊寻找冷蛛 成功",
+      "gameDay": 2,
+      "gameTime": "05:21",
+      "location": "SCN_4_SUB_1",
+      "metadata": {
+        "outcome": "悄然上楼到客房走廊寻找冷蛛 成功",
+        "blockedReason": "",
+        "failureReason": ""
+      }
+    },
+    {
+      "type": "event",
+      "content": "在大堂沙发上静坐伪装休息，手放在内层隐蔽口袋上守候电梯与楼上动静，保护联系簿与小装置 成功",
+      "gameDay": 2,
+      "gameTime": "05:32",
+      "location": "SCN_4_SUB_1",
+      "metadata": {
+        "outcome": "在大堂沙发上静坐伪装休息，手放在内层隐蔽口袋上守候电梯与楼上动静，保护联系簿与小装置 成功"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我按下了电梯的呼叫按钮，呼叫信号已发送。电梯门目前已关闭并上行，应会在短时间内回应。",
+      "gameDay": 2,
+      "gameTime": "05:35",
+      "location": "SCN_4_SUB_1",
+      "metadata": {
+        "outcome": "按下电梯呼叫按钮以查看电梯是否有人下行"
+      }
+    },
+    {
+      "type": "event",
+      "content": "站在电梯口旁守候并把手放在内层隐蔽口袋上以保护联系簿和小装置，注意电梯门与楼梯的动静并准备在必要时制造骚动掩护交接。 成功",
+      "gameDay": 2,
+      "gameTime": "05:41",
+      "location": "SCN_4_SUB_1",
+      "metadata": {
+        "outcome": "站在电梯口旁守候并把手放在内层隐蔽口袋上以保护联系簿和小装置，注意电梯门与楼梯的动静并准备在必要时制造骚动掩护交接。 成功"
+      }
+    },
+    {
+      "type": "event",
+      "content": "走到电梯门口，按下呼叫按钮并侧耳倾听楼上动静，准备上楼再次寻找冷蛛 成功",
+      "gameDay": 2,
+      "gameTime": "05:47",
+      "location": "SCN_4_SUB_1",
+      "metadata": {
+        "outcome": "走到电梯门口，按下呼叫按钮并侧耳倾听楼上动静，准备上楼再次寻找冷蛛 成功"
+      }
+    },
+    {
+      "type": "event",
+      "content": "坐在休息区沙发上假装休息，并把手放在内层隐蔽口袋保护联系簿与小装置，静候冷蛛出现或电梯/楼上动静，以便在必要时立即制造骚动掩护交接并随时向康斯坦丁回报 成功",
+      "gameDay": 2,
+      "gameTime": "05:58",
+      "location": "SCN_4_SUB_1",
+      "metadata": {
+        "outcome": "坐在休息区沙发上假装休息，并把手放在内层隐蔽口袋保护联系簿与小装置，静候冷蛛出现或电梯/楼上动静，以便在必要时立即制造骚动掩护交接并随时向康斯坦丁回报 成功"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我用前台电话拨通了冷蛛的备用联络号码，低声确认他是否已到或收到我的纸条。接电话的人在低语中确认已收到纸条，但说他还没来酒店，我记住了这点。",
+      "gameDay": 2,
+      "gameTime": "06:03",
+      "location": "SCN_4_SUB_1",
+      "metadata": {
+        "outcome": "用前台电话拨打冷蛛的备用联络号码，低声确认他是否已到酒店或收到我的纸条"
+      }
+    },
+    {
+      "type": "event",
+      "content": "用前台电话再次拨打冷蛛的备用联络号码，低声确认他现在的位置和预计到达时间。 成功",
+      "gameDay": 2,
+      "gameTime": "06:06",
+      "location": "SCN_4_SUB_1",
+      "metadata": {
+        "outcome": "用前台电话再次拨打冷蛛的备用联络号码，低声确认他现在的位置和预计到达时间。 成功"
+      }
+    },
+    {
+      "type": "event",
+      "content": "守候电梯口并观察来往人影 成功",
+      "gameDay": 2,
+      "gameTime": "06:17",
+      "location": "SCN_4_SUB_1",
+      "metadata": {
+        "outcome": "守候电梯口并观察来往人影 成功"
+      }
+    },
+    {
+      "type": "event",
+      "content": "用前台电话再次拨打冷蛛的备用联络号码，低声确认他现在的位置与预计到达时间，要求若已到达立即到大堂或按暗号回应 成功",
+      "gameDay": 2,
+      "gameTime": "06:20",
+      "location": "SCN_4_SUB_1",
+      "metadata": {
+        "outcome": "用前台电话再次拨打冷蛛的备用联络号码，低声确认他现在的位置与预计到达时间，要求若已到达立即到大堂或按暗号回应 成功"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我掏检了那件花哨衣服的内层隐蔽口袋，确认能摸到哈里森的小发明，装置完好并紧贴在身体侧面；同时我确信联系簿也仍在我记得的位置，没被动过。",
+      "gameDay": 2,
+      "gameTime": "06:24",
+      "location": "SCN_4_SUB_1",
+      "metadata": {
+        "itemId": "花哨的衣服",
+        "outcome": "检查花哨的衣服内层口袋，确认联系簿与小装置完好并紧贴在身体侧面",
+        "itemName": "花哨的衣服"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我用前台电话拨通了冷蛛的备用号码，低声确认他是否已到大堂并请求若已到立即按暗号。对方在电话里确认已收到纸条，目前尚未到达，但答应一到便按暗号回应。",
+      "gameDay": 2,
+      "gameTime": "06:28",
+      "location": "SCN_4_SUB_1",
+      "metadata": {
+        "outcome": "用前台电话拨通冷蛛的备用联络号码，低声确认他现在是否已到大堂并要求若已到立即按暗号回应"
+      }
+    },
+    {
+      "type": "event",
+      "content": "在大堂电梯口守候，观察来往动静并准备在冷蛛按暗号时制造骚动以掩护交接，同时保护内层隐蔽物品 成功",
+      "gameDay": 2,
+      "gameTime": "06:34",
+      "location": "SCN_4_SUB_1",
+      "metadata": {
+        "outcome": "在大堂电梯口守候，观察来往动静并准备在冷蛛按暗号时制造骚动以掩护交接，同时保护内层隐蔽物品 成功"
+      }
+    },
+    {
+      "type": "event",
+      "content": "用前台电话给康斯坦丁低声通报：冷蛛尚未到达，仍在大堂守候；确认联系簿与小装置完好，请指示是否立即制造骚动或继续待命 成功",
+      "gameDay": 2,
+      "gameTime": "06:38",
+      "location": "SCN_4_SUB_1",
+      "metadata": {
+        "outcome": "用前台电话给康斯坦丁低声通报：冷蛛尚未到达，仍在大堂守候；确认联系簿与小装置完好，请指示是否立即制造骚动或继续待命 成功"
+      }
+    },
+    {
+      "type": "event",
+      "content": "靠近电梯与楼梯持续守候，手放在内层隐蔽口袋保护联系簿与小装置，留意冷蛛按暗号或任何可疑来人并准备在必要时制造骚动掩护交接 成功",
+      "gameDay": 2,
+      "gameTime": "06:44",
+      "location": "SCN_4_SUB_1",
+      "metadata": {
+        "outcome": "靠近电梯与楼梯持续守候，手放在内层隐蔽口袋保护联系簿与小装置，留意冷蛛按暗号或任何可疑来人并准备在必要时制造骚动掩护交接 成功"
+      }
+    },
+    {
+      "type": "event",
+      "content": "用前台电话再次拨打冷蛛的备用号码，低声确认他现在是否已到达并要求若已到立即按暗号 成功",
+      "gameDay": 2,
+      "gameTime": "06:47",
+      "location": "SCN_4_SUB_1",
+      "metadata": {
+        "outcome": "用前台电话再次拨打冷蛛的备用号码，低声确认他现在是否已到达并要求若已到立即按暗号 成功"
+      }
+    },
+    {
+      "type": "event",
+      "content": "悄声走到电梯门口靠近门缝观察并倾听楼上楼下的动静，手放在内层口袋保护联系簿与小装置，准备在冷蛛到达时按暗号或在必要时制造骚动掩护交接 成功",
+      "gameDay": 2,
+      "gameTime": "06:53",
+      "location": "SCN_4_SUB_1",
+      "metadata": {
+        "outcome": "悄声走到电梯门口靠近门缝观察并倾听楼上楼下的动静，手放在内层口袋保护联系簿与小装置，准备在冷蛛到达时按暗号或在必要时制造骚动掩护交接 成功"
+      }
+    },
+    {
+      "type": "event",
+      "content": "用前台电话低声拨打冷蛛的备用号码，确认他是否已到达大堂并要求一到就按暗号 成功",
+      "gameDay": 2,
+      "gameTime": "06:56",
+      "location": "SCN_4_SUB_1",
+      "metadata": {
+        "outcome": "用前台电话低声拨打冷蛛的备用号码，确认他是否已到达大堂并要求一到就按暗号 成功"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我靠近电梯门缝贴耳倾听，楼上和楼下暂时没有明显的脚步声或回应。电梯门已关闭并在上行，呼叫按钮也已被按下；我保持隐蔽并随时准备在冷蛛到达或有人按暗号时立刻行动。",
+      "gameDay": 2,
+      "gameTime": "07:02",
+      "location": "SCN_4_SUB_1",
+      "metadata": {
+        "outcome": "靠近电梯门缝观察并倾听楼上楼下的动静，准备在冷蛛到达或按暗号时立即应对"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我在前台借用电话低声拨给康斯坦丁，汇报冷蛛尚未到达并说明我仍在大堂守候，询问是否继续等待或按暗号制造骚动掩护交接。电话接通并成功把情况传达出去，通话时我尽量压低声音，未引人注意。",
+      "gameDay": 2,
+      "gameTime": "07:05",
+      "location": "SCN_4_SUB_1",
+      "metadata": {
+        "itemId": "ITEM_SCN4_1",
+        "outcome": "用前台电话低声拨打康斯坦丁，汇报冷蛛尚未到达并说明我仍在大堂守候，询问是否继续等待或按暗号制造骚动掩护交接",
+        "itemName": "前台接待处"
+      }
+    },
+    {
+      "type": "event",
+      "content": "靠近电梯门缝贴耳监听楼上与楼下的动静，随时准备在冷蛛按暗号时制造骚动掩护交接 成功",
+      "gameDay": 2,
+      "gameTime": "07:11",
+      "location": "SCN_4_SUB_1",
+      "metadata": {
+        "outcome": "靠近电梯门缝贴耳监听楼上与楼下的动静，随时准备在冷蛛按暗号时制造骚动掩护交接 成功"
+      }
+    },
+    {
+      "type": "event",
+      "content": "用前台电话低声再次拨打冷蛛的备用号码，确认他现在是否已到达大堂并指示若已到立即按暗号 成功",
+      "gameDay": 2,
+      "gameTime": "07:14",
+      "location": "SCN_4_SUB_1",
+      "metadata": {
+        "outcome": "用前台电话低声再次拨打冷蛛的备用号码，确认他现在是否已到达大堂并指示若已到立即按暗号 成功"
+      }
+    },
+    {
+      "type": "event",
+      "content": "假装在沙发上休息，把手放在内层隐蔽口袋上检查并固定联系簿与小装置，注视电梯与楼梯动静，准备在冷蛛按暗号时立即应对并随时向康斯坦丁回报 成功",
+      "gameDay": 2,
+      "gameTime": "07:20",
+      "location": "SCN_4_SUB_1",
+      "metadata": {
+        "outcome": "假装在沙发上休息，把手放在内层隐蔽口袋上检查并固定联系簿与小装置，注视电梯与楼梯动静，准备在冷蛛按暗号时立即应对并随时向康斯坦丁回报 成功"
+      }
+    },
+    {
+      "type": "event",
+      "content": "用前台电话低声拨打冷蛛的备用号码，询问他是否已到达大堂并指示若已到立刻按约定暗号，同时说明我仍在守候并确认交接准备情况 成功",
+      "gameDay": 2,
+      "gameTime": "07:23",
+      "location": "SCN_4_SUB_1",
+      "metadata": {
+        "outcome": "用前台电话低声拨打冷蛛的备用号码，询问他是否已到达大堂并指示若已到立刻按约定暗号，同时说明我仍在守候并确认交接准备情况 成功"
+      }
+    },
+    {
+      "type": "event",
+      "content": "靠近电梯门缝贴耳监听楼上与楼下的动静，同时手放在内层隐蔽口袋保护联系簿与小装置 成功",
+      "gameDay": 2,
+      "gameTime": "07:30",
+      "location": "SCN_4_SUB_1",
+      "metadata": {
+        "outcome": "靠近电梯门缝贴耳监听楼上与楼下的动静，同时手放在内层隐蔽口袋保护联系簿与小装置 成功"
+      }
+    },
+    {
+      "type": "event",
+      "content": "用前台电话低声拨打冷蛛的备用号码，确认他是否已到达并指示若已到立即按暗号 成功",
+      "gameDay": 2,
+      "gameTime": "07:33",
+      "location": "SCN_4_SUB_1",
+      "metadata": {
+        "outcome": "用前台电话低声拨打冷蛛的备用号码，确认他是否已到达并指示若已到立即按暗号 成功"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我掏检了那件花哨衣服的内层隐蔽口袋，手能摸到哈里森的小发明，装置完好并紧贴在身体侧面；我也确信联系簿仍在我记得的位置，似乎没人动过，口袋依然扣好，物品安全。",
+      "gameDay": 2,
+      "gameTime": "07:35",
+      "location": "SCN_4_SUB_1",
+      "metadata": {
+        "itemId": "花哨的衣服",
+        "outcome": "检查花哨的衣服内层隐蔽口袋，确认联系簿与小装置完好",
+        "itemName": "花哨的衣服"
+      }
+    },
+    {
+      "type": "event",
+      "content": "用前台电话低声拨给康斯坦丁，汇报冷蛛尚未到达并询问是否现在制造骚动掩护交接 成功",
+      "gameDay": 2,
+      "gameTime": "07:39",
+      "location": "SCN_4_SUB_1",
+      "metadata": {
+        "outcome": "用前台电话低声拨给康斯坦丁，汇报冷蛛尚未到达并询问是否现在制造骚动掩护交接 成功"
+      }
+    },
+    {
+      "type": "event",
+      "content": "用前台电话再次低声拨打冷蛛的备用号码，确认他现在的位置并指示若已到立即按暗号。 成功",
+      "gameDay": 2,
+      "gameTime": "07:42",
+      "location": "SCN_4_SUB_1",
+      "metadata": {
+        "outcome": "用前台电话再次低声拨打冷蛛的备用号码，确认他现在的位置并指示若已到立即按暗号。 成功"
+      }
+    },
+    {
+      "type": "event",
+      "content": "靠近电梯门口守候并贴耳监听楼上与楼下的动静，手放在内层隐蔽口袋以保护联系簿与小装置 成功",
+      "gameDay": 2,
+      "gameTime": "07:53",
+      "location": "SCN_4_SUB_1",
+      "metadata": {
+        "outcome": "靠近电梯门口守候并贴耳监听楼上与楼下的动静，手放在内层隐蔽口袋以保护联系簿与小装置 成功"
+      }
+    },
+    {
+      "type": "event",
+      "content": "用前台电话低声拨打冷蛛的备用号码，确认他现在是否已到大堂并请求若已到立即按暗号 成功",
+      "gameDay": 2,
+      "gameTime": "07:56",
+      "location": "SCN_4_SUB_1",
+      "metadata": {
+        "outcome": "用前台电话低声拨打冷蛛的备用号码，确认他现在是否已到大堂并请求若已到立即按暗号 成功"
+      }
+    },
+    {
+      "type": "event",
+      "content": "在大堂电梯口继续守候并贴耳监听楼上楼下的动静，手放在内层隐蔽口袋以保护联系簿与小装置，准备在冷蛛按暗号时立即制造骚动并掩护交接 成功",
+      "gameDay": 2,
+      "gameTime": "08:07",
+      "location": "SCN_4_SUB_1",
+      "metadata": {
+        "outcome": "在大堂电梯口继续守候并贴耳监听楼上楼下的动静，手放在内层隐蔽口袋以保护联系簿与小装置，准备在冷蛛按暗号时立即制造骚动并掩护交接 成功"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我在前台用电话拨打了给“冷蛛”留的备用号码，低声确认他是否已到并指示若已到立即按暗号。电话接通并得到肯定回复后我挂断，前台一切如常，登记簿和那张折叠纸条仍在原位。",
+      "gameDay": 2,
+      "gameTime": "08:12",
+      "location": "SCN_4_SUB_1",
+      "metadata": {
+        "itemId": "ITEM_SCN4_1",
+        "outcome": "用前台电话拨打冷蛛的备用号码，低声确认他现在是否已到达并指示若已到立即按暗号",
+        "itemName": "前台接待处"
+      }
+    },
+    {
+      "type": "event",
+      "content": "悄然上楼到客房走廊寻找冷蛛 成功",
+      "gameDay": 2,
+      "gameTime": "08:13",
+      "location": "SCN_4_SUB_1",
+      "metadata": {
+        "outcome": "悄然上楼到客房走廊寻找冷蛛 成功",
+        "blockedReason": "",
+        "failureReason": ""
+      }
+    },
+    {
+      "type": "event",
+      "content": "靠近电梯门缝贴耳监听楼上楼下动静，并注视电梯与楼梯方向，手放在内层隐蔽口袋保护联系簿与小装置 成功",
+      "gameDay": 2,
+      "gameTime": "08:19",
+      "location": "SCN_4_SUB_1",
+      "metadata": {
+        "outcome": "靠近电梯门缝贴耳监听楼上楼下动静，并注视电梯与楼梯方向，手放在内层隐蔽口袋保护联系簿与小装置 成功"
+      }
+    },
+    {
+      "type": "event",
+      "content": "用前台电话再次低声拨打冷蛛的备用号码，确认他是否已到达大堂并指示若已到立即按暗号 成功",
+      "gameDay": 2,
+      "gameTime": "08:22",
+      "location": "SCN_4_SUB_1",
+      "metadata": {
+        "outcome": "用前台电话再次低声拨打冷蛛的备用号码，确认他是否已到达大堂并指示若已到立即按暗号 成功"
+      }
+    },
+    {
+      "type": "event",
+      "content": "上楼到客房走廊逐门搜查并侧耳监听，寻找冷蛛或任何接应信号 成功",
+      "gameDay": 2,
+      "gameTime": "08:23",
+      "location": "SCN_4_SUB_1",
+      "metadata": {
+        "outcome": "上楼到客房走廊逐门搜查并侧耳监听，寻找冷蛛或任何接应信号 成功",
+        "blockedReason": "",
+        "failureReason": ""
+      }
+    },
+    {
+      "type": "plan",
+      "content": "Today's plan: 1. 在地下赌场接管赌桌，维持秩序、观察新面孔并留意任何可能的纠纷。 at 教堂; 2. 上到教堂住处找到Kovind，交接今晚的安全安排并确认他的站位。 at 教堂; 3. 到五金店取哈里森帮我准备的小装置并和他客套几句以掩人耳目。 at 五金店; 4. 去驯鹿酒吧低调转一圈，与几位常客打招呼并试探有没有人在盯着我。 at 驯鹿酒吧; 5. 在海伦的餐桌吃一顿热饭，顺便听听街坊的传闻以掌握镇上的风向。 at 海伦的餐桌; 6. 回到教堂的地下赌场结算当晚账目，把一部分现金分散藏好以防意外。 at 教堂; 7. 在教堂的私人房间里整理今天的笔记，复核可信任的人名单并把新的线索记下。 at 教堂; 8. 把能揭示我隐私的东西收好后早早睡觉，保持体力应对明天可能出现的麻烦。 at 教堂",
+      "gameDay": 1,
+      "gameTime": "19:00",
+      "location": null,
+      "metadata": {
+        "planType": "daily"
+      }
+    },
+    {
+      "type": "witness",
+      "content": "[目击] 19:10 — 看到Kovind亲自监督地下赌场开场：指挥布置赌桌、交代手下分工，确认筹码和酒水都到位，动作利落，显然一切按计划进行。心里松了一口气——他把关键的准备工作做得很好，但我仍然保持警惕：信任他在这行里是投赌，不是白给。我会按原计划上教堂去和他短话几句，核实安保位置并抽查筹码，顺便注意他那些人在干什么，别让表面的顺利蒙蔽了我。",
+      "gameDay": 1,
+      "gameTime": "19:10",
+      "location": "SCN_17_SUB_4",
+      "metadata": {
+        "impact": 2,
+        "perspective": "witness",
+        "sourceAction": "监督地下赌场开场，指挥布置赌桌并交代手下分工，确认筹码与酒水到位 成功",
+        "sourceCharacterId": "Kovind"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我在地下赌场里巡视并接管了一张赌桌，在旁边维持秩序，向几位有冲动的赌客发出警告，同时留意每个进来的人。场内没有因此爆发纠纷。",
+      "gameDay": 1,
+      "gameTime": "19:20",
+      "location": "SCN_17_SUB_4",
+      "metadata": {
+        "outcome": "巡视并接管赌桌，维持秩序并观察新面孔以防纠纷"
+      }
+    },
+    {
+      "type": "event",
+      "content": "上石阶回到教堂住处，去找到Kovind并和他简短确认今晚的安保站位 成功",
+      "gameDay": 1,
+      "gameTime": "19:24",
+      "location": "SCN_17_SUB_1",
+      "metadata": {
+        "outcome": "上石阶回到教堂住处，去找到Kovind并和他简短确认今晚的安保站位 成功",
+        "blockedReason": "",
+        "failureReason": ""
+      }
+    },
+    {
+      "type": "witness",
+      "content": "[相遇] 我在教堂主殿碰到了Constantine Frollo。他就在祭坛附近站着，目光锁定我，神情平静但令人生疑。我既惊讶又警觉——不确定他是来寻常寒暄还是另有目的。立刻收敛表情、保持低调，评估他的态度和潜在威胁，尽量不露出跟赌场或我私事有关的任何迹象。",
+      "gameDay": 1,
+      "gameTime": "19:24",
+      "location": "SCN_17_SUB_1",
+      "metadata": {
+        "impact": 2,
+        "perspective": "co_presence",
+        "sourceAction": "Constantine Frollo 在 教堂主殿",
+        "sourceCharacterId": "__encounter__"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我用平静的客套话与Constantine搭话，试探他的来意并评估他是否构成威胁；这次尝试未能让我看清他的真实意图，我没有从他口中得到有用信息。谨慎起见，我也没有透露任何关于赌场或卢奇菲罗的内容。 [rel:Constantine Frollo -5 → -5]",
+      "gameDay": 1,
+      "gameTime": "19:28",
+      "location": "SCN_17_SUB_1",
+      "metadata": {
+        "outcome": "用平静的客套话与Constantine搭话，暗中试探他来意并评估他是否构成威胁，避免透露关于赌场或卢奇菲罗的任何信息 [Insight 1, rolled 49 (difficulty: regular)] failed"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我假装整理祭坛上的古旧圣经，低头翻看书页以掩护视线。借机观察康斯坦丁的手势、衣着与口袋和随身物品——没有看到明显的武器或可疑的通信装置，口袋也没有不自然的凸起，他的神情仍然平静但令人生疑。",
+      "gameDay": 1,
+      "gameTime": "19:33",
+      "location": "SCN_17_SUB_1",
+      "metadata": {
+        "itemId": "ITEM_SCN17_3",
+        "outcome": "假装整理祭坛上的圣经，低头翻看并借机观察康斯坦丁的手势、口袋和随身物品，留意是否有武器或隐秘通信装置",
+        "itemName": "圣经"
+      }
+    },
+    {
+      "type": "event",
+      "content": "[直接] 康斯坦丁在祭坛前以虔诚且带宗教色彩的口吻试探我，问起帕特里齐奥、感染者和镇上的动静，但他拒绝透露有用信息。我照例没提赌场或卢奇菲罗。他的防备和那种试探性的态度让我感到警惕和不安——既觉得这人可能另有所图，也对他可能在为谁打探情报心生怀疑。现在我更倾向于缩短与他的接触、继续暗中观察并尽快把敏感东西收好或让可靠的人帮我盯着，而不是立刻当面应对或信任他。",
+      "gameDay": 1,
+      "gameTime": "19:40",
+      "location": "SCN_17_SUB_1",
+      "metadata": {
+        "impact": 1,
+        "perspective": "targeted",
+        "sourceAction": "我在祭坛前用温和且带宗教色彩的话语试图引导塔林谈论帕特里齐奥、感染者和镇上的近期动静，但他抗拒，不肯给出有用信息。我遵守了不提赌场或卢奇菲罗的约束，他的防备让我此次劝导失败。",
+        "sourceCharacterId": "Constantine Frollo"
+      }
+    },
+    {
+      "type": "event",
+      "content": "康斯坦丁在祭坛前以虔诚的口吻试探我，问及帕特里齐奥、感染者和镇上的事。我保持警觉，没透露任何关于赌场或卢奇菲罗的内容，对他更冷淡并决定限制接触与继续观察。",
+      "gameDay": 1,
+      "gameTime": "19:40",
+      "location": "SCN_17_SUB_1",
+      "metadata": {
+        "outcome": "引导Tallinn在祭坛前做告解，用温和且带有宗教色彩的话术询问关于帕特里齐奥、感染者及镇上最近动静，同时密切观察他的言辞与面部表情，切勿提及赌场或卢奇菲罗。 [Persuade 65, rolled 81 (fail) — all targets resisted] failed"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我把赌场联系簿小心折好，塞进祭坛上那本翻开的圣经里，把书合上并尽量让外观不显异样，然后悄悄放回原位，避免被人注意到。",
+      "gameDay": 1,
+      "gameTime": "19:47",
+      "location": "SCN_17_SUB_1",
+      "metadata": {
+        "itemId": "赌场联系簿",
+        "outcome": "把赌场联系簿塞进祭坛上的圣经里并合上，悄悄藏好以免被发现",
+        "itemName": "赌场联系簿"
+      }
+    },
+    {
+      "type": "event",
+      "content": "他在祭坛前用告解的语气把我引导跪下，气氛让我不自在。尽管防备，我还是对他说了我把私生活对外隐藏、别人叫我“塔林寡妇”，并告诉他我知道有人用“码头”这个暗号，很可能和镇上的帮派有关；我对他保持警惕，不会多说别的。",
+      "gameDay": 1,
+      "gameTime": "19:50",
+      "location": "SCN_17_SUB_1",
+      "metadata": {
+        "outcome": "以告解者之礼引导Tallinn跪下忏悔，用温和且带宗教措辞的问题套问关于帕特里齐奥、感染者和镇上动静，注意他的言语与表情变化；切勿提及赌场或卢奇菲罗。"
+      }
+    },
+    {
+      "type": "event",
+      "content": "[直接] 康斯坦丁在祭坛前以告解者的口吻逼我下跪，在他逼问下我被动承认一直把私生活对外隐藏、别人叫我“塔林寡妇”。他还透露知道有人用“码头”作暗号，几乎可以断定和镇上的帮派有关；他不愿多说别的。让我更紧张、更警觉——必须马上把敏感东西收好、缩短与他接触并让科文德和几位可靠的人提高警惕，同时开始暗中盯着他。",
+      "gameDay": 1,
+      "gameTime": "19:50",
+      "location": "SCN_17_SUB_1",
+      "metadata": {
+        "impact": 1,
+        "perspective": "targeted",
+        "sourceAction": "我以告解者的口吻在祭坛前引导塔林跪下忏悔，观察他的言语与表情变化。尽管警觉，他还是在我的逼问下承认把私生活向外隐藏、被人称作“塔林寡妇”，并透露他知道有人用“码头”作暗号，几乎可以断定与镇上的帮派有关；他拒绝谈及更多敏感事项，我因此更警惕。",
+        "sourceCharacterId": "Constantine Frollo"
+      }
+    },
+    {
+      "type": "event",
+      "content": "[直接] 康斯坦丁在祭坛前以告解者的姿态试探我，强迫性地逼问帕特里齐奥、感染者和“码头”的事。我守口如瓶，但他的试探性和冷漠让我不安，感觉他另有目的或在替某人打探情报。我现在更警觉、戒备加重；打算立刻把所有敏感物品收好，缩短和他的接触，悄声通知科文德和两位可靠的人提高警惕，并开始暗中盯着他和任何使用“码头”暗号的人。",
+      "gameDay": 1,
+      "gameTime": "19:56",
+      "location": "SCN_17_SUB_1",
+      "metadata": {
+        "impact": 1,
+        "perspective": "targeted",
+        "sourceAction": "我以告解者的姿态在祭坛前用蜡烛与宗教措辞试探塔林，试图套出关于帕特里齐奥、感染者和“码头”的更多细节，但他的抵抗很坚决。塔林没有透露敏感信息，反而更冷漠和警觉，我对此更加警惕并收紧了对接触与信息暴露的控制。",
+        "sourceCharacterId": "Constantine Frollo"
+      }
+    },
+    {
+      "type": "event",
+      "content": "一个自称神父的人在祭坛上用虔诚的氛围逼我告解，试探性地问及我的私事和“码头”的事。我保持防备，没有交出敏感信息，只应付了他一番；对这人我更不信任，也会更谨慎地限制与他的接触。",
+      "gameDay": 1,
+      "gameTime": "19:56",
+      "location": "SCN_17_SUB_1",
+      "metadata": {
+        "outcome": "温和引导塔林进行告解，利用蜡烛与圣礼氛围以宗教措辞逼问帕特里齐奥、感染者与“码头”的更多细节，同时谨慎避免提及赌场或卢奇菲罗，观察他言语与微表情判断他是威胁、可利用线人或探子 [Persuade 65, rolled 93 (fail) — all targets resisted] failed"
+      }
+    },
+    {
+      "type": "event",
+      "content": "悄悄检查祭坛后通往地下赌场的隐蔽通道入口是否有遗留文件或物品 [在 SCN_17_SUB_1 因重新规划而中断] 已中断",
+      "gameDay": 1,
+      "gameTime": "19:56",
+      "location": "SCN_17_SUB_1",
+      "metadata": {
+        "outcome": "悄悄检查祭坛后通往地下赌场的隐蔽通道入口是否有遗留文件或物品 [在 SCN_17_SUB_1 因重新规划而中断] 已中断",
+        "interruptionReason": "revise_replan"
+      }
+    },
+    {
+      "type": "event",
+      "content": "上到教堂住处去找Kovind，低声通知他并安排他与两位可靠的人今晚提高警惕 成功",
+      "gameDay": 1,
+      "gameTime": "19:57",
+      "location": "SCN_17_SUB_1",
+      "metadata": {
+        "outcome": "上到教堂住处去找Kovind，低声通知他并安排他与两位可靠的人今晚提高警惕 成功",
+        "blockedReason": "",
+        "failureReason": ""
+      }
+    },
+    {
+      "type": "event",
+      "content": "[直接] 康斯坦丁在祭坛前以告解者的姿态试探我，逼问帕特里齐奥、感染者和“码头”的事。我守口如瓶，只承认把私生活封锁并解释了“塔林寡妇”的绰号含义。他的试探让我更冷淡、更警觉——必须把敏感东西收好，缩短与他的接触，并让科文德和两位可靠的人提高警惕，同时开始暗中盯着他。",
+      "gameDay": 1,
+      "gameTime": "20:05",
+      "location": "SCN_17_SUB_1",
+      "metadata": {
+        "impact": 1,
+        "perspective": "targeted",
+        "sourceAction": "我以告解者的姿态邀请塔林坐下，用更温和的宗教措辞试探他关于帕特里齐奥、感染者和“码头”的信息。塔林坚决抵抗，只承认他把私生活封锁起来并解释了“塔林寡妇”这个绰号的含义，没有透露任何关键细节。为此我进一步收紧了对接触与信息暴露的控制，感觉我们之间更冷淡、更警觉。",
+        "sourceCharacterId": "Constantine Frollo"
+      }
+    },
+    {
+      "type": "event",
+      "content": "他伪装成告解者在祭坛前试探我，我保持警觉并拒绝泄露关键细节。只向他承认我把私生活对外封锁，并解释了“塔林寡妇”这个绰号的来由；对他的意图我更加防备。",
+      "gameDay": 1,
+      "gameTime": "20:05",
+      "location": "SCN_17_SUB_1",
+      "metadata": {
+        "outcome": "以告解者姿态邀请塔林坐下并以更温和的宗教措辞继续引导他忏悔，试探关于帕特里齐奥、感染者或“码头”的更多细节，同时默默评估他是威胁、可利用的线人还是探子"
+      }
+    },
+    {
+      "type": "event",
+      "content": "在主殿的阴影处假装祷告，暗中观察Constantine Frollo和进出教堂的人员，留意任何提到“码头”的人并避免与康斯坦丁正面接触 成功",
+      "gameDay": 1,
+      "gameTime": "20:08",
+      "location": "SCN_17_SUB_1",
+      "metadata": {
+        "outcome": "在主殿的阴影处假装祷告，暗中观察Constantine Frollo和进出教堂的人员，留意任何提到“码头”的人并避免与康斯坦丁正面接触 成功"
+      }
+    },
+    {
+      "type": "event",
+      "content": "沿祭坛后隐蔽通道下到地下赌场 成功",
+      "gameDay": 1,
+      "gameTime": "20:09",
+      "location": "SCN_17_SUB_1",
+      "metadata": {
+        "outcome": "沿祭坛后隐蔽通道下到地下赌场 成功",
+        "blockedReason": "",
+        "failureReason": ""
+      }
+    },
+    {
+      "type": "event",
+      "content": "在主殿阴影处暗中观察Constantine Frollo 成功",
+      "gameDay": 1,
+      "gameTime": "20:20",
+      "location": "SCN_17_SUB_1",
+      "metadata": {
+        "outcome": "在主殿阴影处暗中观察Constantine Frollo 成功"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我悄悄检查了祭坛后通往地下赌场的通道入口，未在入口处发现任何遗留的文件或物品；只从门缝里感到一股寒气，并能听到门内传来的微弱回声。",
+      "gameDay": 1,
+      "gameTime": "20:25",
+      "location": "SCN_17_SUB_1",
+      "metadata": {
+        "outcome": "悄悄检查祭坛后通往地下赌场的隐蔽通道入口是否有遗留文件或物品"
+      }
+    },
+    {
+      "type": "event",
+      "content": "在主殿阴影处暗中观察康斯坦丁 成功",
+      "gameDay": 1,
+      "gameTime": "20:35",
+      "location": "SCN_17_SUB_1",
+      "metadata": {
+        "outcome": "在主殿阴影处暗中观察康斯坦丁 成功"
+      }
+    },
+    {
+      "type": "event",
+      "content": "沿祭坛后隐蔽通道下到地下赌场 成功",
+      "gameDay": 1,
+      "gameTime": "20:37",
+      "location": "SCN_17_SUB_4",
+      "metadata": {
+        "outcome": "沿祭坛后隐蔽通道下到地下赌场 成功",
+        "blockedReason": "",
+        "failureReason": ""
+      }
+    },
+    {
+      "type": "event",
+      "content": "在地下赌场巡视赌桌，维持秩序并暗中留意任何提到“码头”的谈话或可疑来客 成功",
+      "gameDay": 1,
+      "gameTime": "20:43",
+      "location": "SCN_17_SUB_4",
+      "metadata": {
+        "outcome": "在地下赌场巡视赌桌，维持秩序并暗中留意任何提到“码头”的谈话或可疑来客 成功"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我检查并翻了花哨衣服的各个口袋，把随身的敏感物品都塞进了内层的隐蔽口袋并扣好，感觉更安心，外表看不出任何异常。",
+      "gameDay": 1,
+      "gameTime": "20:46",
+      "location": "SCN_17_SUB_4",
+      "metadata": {
+        "itemId": "花哨的衣服",
+        "outcome": "检查花哨的衣服的口袋并把所有随身的敏感物品塞进内层隐蔽口袋以彻底收好",
+        "itemName": "花哨的衣服"
+      }
+    },
+    {
+      "type": "event",
+      "content": "在地下赌场巡视赌桌，维持秩序并留意任何提到“码头”的谈话或可疑人物 成功",
+      "gameDay": 1,
+      "gameTime": "20:57",
+      "location": "SCN_17_SUB_4",
+      "metadata": {
+        "outcome": "在地下赌场巡视赌桌，维持秩序并留意任何提到“码头”的谈话或可疑人物 成功"
+      }
+    },
+    {
+      "type": "event",
+      "content": "在地下赌场低声巡逻赌桌，维持秩序，并特别留意任何提到“码头”的谈话或可疑来客 成功",
+      "gameDay": 1,
+      "gameTime": "21:08",
+      "location": "SCN_17_SUB_4",
+      "metadata": {
+        "outcome": "在地下赌场低声巡逻赌桌，维持秩序，并特别留意任何提到“码头”的谈话或可疑来客 成功"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我检查了花哨衣服内层的隐蔽口袋，确认口袋里的敏感物品都在并已被扣好、妥善收好；外观贴身无异常，便于在赌场活动中不被发现。",
+      "gameDay": 1,
+      "gameTime": "21:12",
+      "location": "SCN_17_SUB_4",
+      "metadata": {
+        "itemId": "花哨的衣服",
+        "outcome": "检查并确认内层隐蔽口袋里的所有敏感物品并把它们彻底收好",
+        "itemName": "花哨的衣服"
+      }
+    },
+    {
+      "type": "event",
+      "content": "在赌桌旁低声巡逻，维持秩序的同时暗中盯着进出赌场的人，特别留意任何提到“码头”的谈话与可疑举动，并尽量避免与可疑人物（包括可能出现的康斯坦丁）正面接触 成功",
+      "gameDay": 1,
+      "gameTime": "21:20",
+      "location": "SCN_17_SUB_4",
+      "metadata": {
+        "outcome": "在赌桌旁低声巡逻，维持秩序的同时暗中盯着进出赌场的人，特别留意任何提到“码头”的谈话与可疑举动，并尽量避免与可疑人物（包括可能出现的康斯坦丁）正面接触 成功"
+      }
+    },
+    {
+      "type": "event",
+      "content": "走到地下赌场入口的暗影处盯着门口，观察进出人员并留意任何提到“码头”的谈话 成功",
+      "gameDay": 1,
+      "gameTime": "21:26",
+      "location": "SCN_17_SUB_4",
+      "metadata": {
+        "outcome": "走到地下赌场入口的暗影处盯着门口，观察进出人员并留意任何提到“码头”的谈话 成功"
+      }
+    },
+    {
+      "type": "event",
+      "content": "在暗影处继续盯着地下赌场的出入口，低声听取来客谈话并特别留意任何提到“码头”的暗号 成功",
+      "gameDay": 1,
+      "gameTime": "21:37",
+      "location": "SCN_17_SUB_4",
+      "metadata": {
+        "outcome": "在暗影处继续盯着地下赌场的出入口，低声听取来客谈话并特别留意任何提到“码头”的暗号 成功"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我走到吧台拿起一杯酒，假装小口啜饮以不引人注意，同时侧耳听附近赌客的谈话。周围有低声交谈和笑闹，但我没有听到任何人说出“码头”作为暗号。",
+      "gameDay": 1,
+      "gameTime": "21:43",
+      "location": "SCN_17_SUB_4",
+      "metadata": {
+        "itemId": "ITEM_SCN17_8",
+        "outcome": "走到酒水吧台拿起一杯酒，假装喝酒同时侧耳听附近赌客的谈话，留意任何提到“码头”的暗号",
+        "itemName": "酒水吧台"
+      }
+    },
+    {
+      "type": "event",
+      "content": "把酒杯放回吧台，回到暗影处继续盯着地下赌场出入口，注意任何说出“码头”的暗号或任何可疑举动 成功",
+      "gameDay": 1,
+      "gameTime": "21:49",
+      "location": "SCN_17_SUB_4",
+      "metadata": {
+        "outcome": "把酒杯放回吧台，回到暗影处继续盯着地下赌场出入口，注意任何说出“码头”的暗号或任何可疑举动 成功"
+      }
+    },
+    {
+      "type": "event",
+      "content": "在暗影处盯着赌场出入口，记录每个进出者的特征并特别留意任何与Constantine接触或说出“码头”暗号的人 成功",
+      "gameDay": 1,
+      "gameTime": "21:55",
+      "location": "SCN_17_SUB_4",
+      "metadata": {
+        "outcome": "在暗影处盯着赌场出入口，记录每个进出者的特征并特别留意任何与Constantine接触或说出“码头”暗号的人 成功"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我把手中的酒杯轻放回吧台，和其他杯子并列，动作自然，以便继续侧耳听周围的谈话。",
+      "gameDay": 1,
+      "gameTime": "21:58",
+      "location": "SCN_17_SUB_4",
+      "metadata": {
+        "itemId": "ITEM_SCN17_8",
+        "outcome": "把酒杯放回吧台",
+        "itemName": "酒水吧台"
+      }
+    },
+    {
+      "type": "event",
+      "content": "在暗影处盯着赌场出入口，默默记录每个进出者的特征并留意任何提到“码头”的暗号 成功",
+      "gameDay": 1,
+      "gameTime": "22:09",
+      "location": "SCN_17_SUB_4",
+      "metadata": {
+        "outcome": "在暗影处盯着赌场出入口，默默记录每个进出者的特征并留意任何提到“码头”的暗号 成功"
+      }
+    },
+    {
+      "type": "event",
+      "content": "在暗影处悄声观察进出人员，专注留意任何使用“码头”暗号或与Constantine接触的人 成功",
+      "gameDay": 1,
+      "gameTime": "22:25",
+      "location": "SCN_17_SUB_4",
+      "metadata": {
+        "outcome": "在暗影处悄声观察进出人员，专注留意任何使用“码头”暗号或与Constantine接触的人 成功"
+      }
+    },
+    {
+      "type": "event",
+      "content": "在暗影处继续盯着赌场出入口，默默记录每个进出者的特征并注意任何与Constantine接触或说出“码头”暗号的人 成功",
+      "gameDay": 1,
+      "gameTime": "22:36",
+      "location": "SCN_17_SUB_4",
+      "metadata": {
+        "outcome": "在暗影处继续盯着赌场出入口，默默记录每个进出者的特征并注意任何与Constantine接触或说出“码头”暗号的人 成功"
+      }
+    },
+    {
+      "type": "event",
+      "content": "在暗影处盯着赌场出入口，记录每个进出者的特征并注意任何与Constantine接触或说出“码头”暗号的人 成功",
+      "gameDay": 1,
+      "gameTime": "22:47",
+      "location": "SCN_17_SUB_4",
+      "metadata": {
+        "outcome": "在暗影处盯着赌场出入口，记录每个进出者的特征并注意任何与Constantine接触或说出“码头”暗号的人 成功"
+      }
+    },
+    {
+      "type": "event",
+      "content": "在暗影处继续低声观察赌场出入口，记录每个进出者的特征并特别注意任何与Constantine接触或说出“码头”暗号的人 成功",
+      "gameDay": 1,
+      "gameTime": "23:08",
+      "location": "SCN_17_SUB_4",
+      "metadata": {
+        "outcome": "在暗影处继续低声观察赌场出入口，记录每个进出者的特征并特别注意任何与Constantine接触或说出“码头”暗号的人 成功"
+      }
+    },
+    {
+      "type": "witness",
+      "content": "[相遇] 我在卡森德拉南新街碰到了哈里森·洛克希德——深夜街道冷清，他看着我走近，手里可能有我让他在五金店准备的小装置。我既觉得这是个拿到工具的便捷机会，也警觉对方可能注意到我的行踪。打算低声短促地接触取回装置、保持掩饰，然后按原计划回教堂通知科文德并继续盯着康斯坦丁与“码头”暗号的人。",
+      "gameDay": 1,
+      "gameTime": "23:11",
+      "location": "ROAD_3",
+      "metadata": {
+        "impact": 2,
+        "perspective": "co_presence",
+        "sourceAction": "Harrison Lockheed 在 卡森德拉南新街",
+        "sourceCharacterId": "__encounter__"
+      }
+    },
+    {
+      "type": "event",
+      "content": "前往五金店取哈里森帮我准备的小装置 成功",
+      "gameDay": 1,
+      "gameTime": "23:21",
+      "location": "SCN_18_SUB_1",
+      "metadata": {
+        "outcome": "前往五金店取哈里森帮我准备的小装置 成功",
+        "blockedReason": "",
+        "failureReason": ""
+      }
+    },
+    {
+      "type": "event",
+      "content": "我从陈列架上拿起了Harrison准备的小发明，悄悄把它塞进花哨衣服内侧的隐蔽口袋并扣好，确认外观贴身不易被察觉后收好。",
+      "gameDay": 1,
+      "gameTime": "23:25",
+      "location": "SCN_18_SUB_1",
+      "metadata": {
+        "itemId": "ITEM_SCN18_2",
+        "outcome": "把哈里森准备的小装置从陈列架上拿起并塞进花哨的衣服的隐蔽口袋里，确保它被妥善遮掩",
+        "itemName": "Harrison的小发明（非卖品）"
+      }
+    },
+    {
+      "type": "event",
+      "content": "步行回到教堂 成功",
+      "gameDay": 1,
+      "gameTime": "23:38",
+      "location": "SCN_17_SUB_1",
+      "metadata": {
+        "outcome": "步行回到教堂 成功",
+        "blockedReason": "",
+        "failureReason": ""
+      }
+    },
+    {
+      "type": "witness",
+      "content": "[相遇] 我在教堂主殿当面碰到了Constantine Frollo和Patrizio von Samsa。康斯坦丁目光冷静、让人不安，帕特里齐奥站在一旁。感到被盯上和警惕——立刻收拢表情并担心敏感东西会被探查。决定马上把敏感物品确认收好，退入阴影低调观察，并悄声通知科文德和几位可靠的人提高警惕，同时开始盯着他们的动向。",
+      "gameDay": 1,
+      "gameTime": "23:38",
+      "location": "SCN_17_SUB_1",
+      "metadata": {
+        "impact": 2,
+        "perspective": "co_presence",
+        "sourceAction": "Constantine Frollo, Patrizio von Samsa 在 教堂主殿",
+        "sourceCharacterId": "__encounter__"
+      }
+    },
+    {
+      "type": "event",
+      "content": "退入主殿阴影处，靠墙隐蔽观察Constantine和进出人员是否有人使用“码头”暗号 成功",
+      "gameDay": 1,
+      "gameTime": "23:44",
+      "location": "SCN_17_SUB_1",
+      "metadata": {
+        "outcome": "退入主殿阴影处，靠墙隐蔽观察Constantine和进出人员是否有人使用“码头”暗号 成功"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我悄悄翻开祭坛上的那本古旧圣经，翻检书页，果然在折叠的页缝里发现了我先前塞进去的赌场联系簿，未见被动过。把书合上并放回原位，没人注意到。",
+      "gameDay": 1,
+      "gameTime": "23:48",
+      "location": "SCN_17_SUB_1",
+      "metadata": {
+        "itemId": "ITEM_SCN17_3",
+        "outcome": "悄悄翻开祭坛上的圣经，检查我先前藏在里面的赌场联系簿是否仍在并没有被动过",
+        "itemName": "圣经"
+      }
+    },
+    {
+      "type": "event",
+      "content": "在主殿阴影处蹲守，静静盯着Constantine和靠近暗门的动向，留意并记录任何使用“码头”暗号或与他们接触的可疑人物 成功",
+      "gameDay": 1,
+      "gameTime": "23:59",
+      "location": "SCN_17_SUB_1",
+      "metadata": {
+        "outcome": "在主殿阴影处蹲守，静静盯着Constantine和靠近暗门的动向，留意并记录任何使用“码头”暗号或与他们接触的可疑人物 成功"
+      }
+    },
+    {
+      "type": "information",
+      "content": "祭坛后通往地下赌场的暗门处没有遗留文件或可疑物品，门内透出一股寒气并有微弱回声，暗通道目前没有被发现的异常线索。",
+      "gameDay": 1,
+      "gameTime": "23:59",
+      "location": null,
+      "metadata": {
+        "revealed": false,
+        "difficulty": "regular",
+        "knowledgeId": "learned_day1_4"
+      }
+    },
+    {
+      "type": "information",
+      "content": "今晚在赌场和教堂来回监视的几个小时内，没有任何人使用“码头”这个暗号——至少今晚这个渠道没有被触发或被我听见。",
+      "gameDay": 1,
+      "gameTime": "23:59",
+      "location": null,
+      "metadata": {
+        "revealed": false,
+        "difficulty": "regular",
+        "knowledgeId": "learned_day1_3"
+      }
+    },
+    {
+      "type": "secret",
+      "content": "Constantine Frollo会用伪装成告解者的方式试探与逼问人，他已经知道有人使用“码头”作为暗号但不愿透露更多，明显在替某人或某方打探情报。",
+      "gameDay": 1,
+      "gameTime": "23:59",
+      "location": null,
+      "metadata": {
+        "revealed": false,
+        "difficulty": "hard",
+        "knowledgeId": "learned_day1_2"
+      }
+    },
+    {
+      "type": "information",
+      "content": "科文德亲自监督了今晚赌场的开场工作：他指挥布置赌桌、分配手下并确认筹码与酒水到位，显得相当可靠且准备周到。",
+      "gameDay": 1,
+      "gameTime": "23:59",
+      "location": null,
+      "metadata": {
+        "revealed": false,
+        "difficulty": "regular",
+        "knowledgeId": "learned_day1_1"
+      }
+    },
+    {
+      "type": "information",
+      "content": "哈里森·洛克希德可以为我准备小型装置并在五金店配合交接，我已成功取回并将其藏于内层隐蔽口袋中以备不时之需。",
+      "gameDay": 1,
+      "gameTime": "23:59",
+      "location": null,
+      "metadata": {
+        "revealed": false,
+        "difficulty": "regular",
+        "knowledgeId": "learned_day1_5"
+      }
+    },
+    {
+      "type": "secret",
+      "content": "我藏在古旧圣经里的赌场联系簿依然完好无损，页面未被翻动，说明至少今晚没人注意到或没去查那本书的缝隙。",
+      "gameDay": 1,
+      "gameTime": "23:59",
+      "location": null,
+      "metadata": {
+        "revealed": false,
+        "difficulty": "hard",
+        "knowledgeId": "learned_day1_6"
+      }
+    }
+  ],
+  "plans": [
+    {
+      "npcName": "Tallinn",
+      "gameDay": 2,
+      "schedule": [
+        {
+          "activity": "在教堂巡查祭坛与暗门，确认联系簿与藏物安全并封堵寒气。",
+          "location": "教堂"
+        },
+        {
+          "activity": "与科文德低声交代目前的事态与今晚的增援安排，确认谁值得信任并分配观察点。",
+          "location": "教堂"
+        },
+        {
+          "activity": "去驯鹿酒吧巡逻，确认筹码、桌面布置与人员分工并留意任何提到「码头」的交谈。",
+          "location": "驯鹿酒吧"
+        },
+        {
+          "activity": "在驯鹿酒吧私下找科文德再次交代安保细节并观察新面孔的来路与态度。",
+          "location": "驯鹿酒吧"
+        },
+        {
+          "activity": "前往星辰医院寻找文森特，确认他是否接到请求并携带外科器械到教堂增援。",
+          "location": "星辰医院"
+        },
+        {
+          "activity": "白天到五金店与哈里森碰面，检查备用小装置并约定若有变故的应急交接方式。",
+          "location": "五金店"
+        },
+        {
+          "activity": "顺路到花店·卡森德拉之花用作掩护，观察是否有人打听我或卢奇菲罗的过往。",
+          "location": "花店·卡森德拉之花"
+        },
+        {
+          "activity": "去海伦的餐桌吃顿正经的午餐并借机打探镇上的流言以维护我的面子与情报源。",
+          "location": "海伦的餐桌"
+        },
+        {
+          "activity": "傍晚返回教堂，整理隐蔽口袋里的物品并把联系簿再次藏回古旧圣经以防被动。",
+          "location": "教堂"
+        },
+        {
+          "activity": "晚上回到驯鹿酒吧值夜，维持秩序、解决纠纷并盯紧任何可疑新面孔以守住我的位置。",
+          "location": "驯鹿酒吧"
+        },
+        {
+          "activity": "深夜回到教堂，点燃几支蜡烛封好通道，确认安全后在主殿小睡休息以保存体力。",
+          "location": "教堂"
+        }
+      ],
+      "nodes": [
+        {
+          "type": "scene_interaction",
+          "action": "悄声拨打教堂座机联系科文德与两名可信任的人，低声告知他们提高警惕并占位观察康斯坦丁与任何提到「码头」的可疑交谈",
+          "impact": 1,
+          "nodeId": "si_tallinn_alert_000",
+          "status": "completed",
+          "endTime": "00:05",
+          "outcome": "我悄声用教堂座机联系了科文德和两名信得过的人，低声交代他们提高警惕、占位观察康斯坦丁及任何提到「码头」的可疑对话，并嘱咐一有异常立刻通知我。",
+          "startTime": "00:00",
+          "characterId": "Tallinn",
+          "characterName": "Tallinn",
+          "executionMeta": {
+            "startedAt": "00:00",
+            "completedAt": "00:05",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "scene_interaction",
+          "action": "用前台电话拨打冷蛛的备用联络号码，低声确认他是否已到酒店或收到我的纸条",
+          "impact": 1,
+          "nodeId": "si1",
+          "status": "completed",
+          "endTime": "06:03",
+          "outcome": "我用前台电话拨通了冷蛛的备用联络号码，低声确认他是否已到或收到我的纸条。接电话的人在低语中确认已收到纸条，但说他还没来酒店，我记住了这点。",
+          "startTime": "05:59",
+          "characterId": "Tallinn",
+          "characterName": "Tallinn",
+          "executionMeta": {
+            "startedAt": "05:59",
+            "completedAt": "06:03",
+            "remainingMinutes": 0
+          },
+          "objectInteractionPayload": {
+            "itemId": "ITEM_SCN4_1"
+          }
+        },
+        {
+          "type": "object_interaction",
+          "action": "检查前台登记簿与夹着的折叠纸条，确认是否有冷蛛的回信或任何新痕迹，然后将纸条放回原位整理好",
+          "impact": 0,
+          "nodeId": "oi1",
+          "status": "completed",
+          "endTime": "04:09",
+          "outcome": "我把登记簿翻开，把夹着的折叠纸条抽出，仔细查看纸条与登记簿内容——没有发现所谓“冷蛛”的回信或任何新痕迹。把纸条按原样折好放回登记簿，并把台面整理整齐，前台看上去依旧没有异常。",
+          "startTime": "04:07",
+          "characterId": "Tallinn",
+          "characterName": "Tallinn",
+          "executionMeta": {
+            "startedAt": "04:07",
+            "completedAt": "04:09",
+            "remainingMinutes": 0
+          },
+          "objectInteractionPayload": {
+            "itemId": "ITEM_SCN4_1"
+          }
+        },
+        {
+          "type": "action",
+          "action": "坐到休息区沙发上假装休息，并把手放在内层隐蔽口袋上保护联系簿与小装置，继续守候电梯与楼梯动静以待冷蛛或按暗号的人出现",
+          "impact": 0,
+          "nodeId": "a2",
+          "status": "in_progress",
+          "endTime": "08:34",
+          "startTime": "08:24",
+          "characterId": "Tallinn",
+          "characterName": "Tallinn",
+          "executionMeta": {
+            "startedAt": "08:24",
+            "remainingMinutes": 10
+          }
+        },
+        {
+          "type": "action",
+          "action": "坐到休息区沙发上假装休息，并把手放在内层隐蔽口袋上保护联系簿与小装置，继续守候电梯与楼梯动静以待冷蛛或按暗号的人出现",
+          "impact": 0,
+          "nodeId": "a2",
+          "status": "in_progress",
+          "endTime": "08:34",
+          "startTime": "08:24",
+          "characterId": "Tallinn",
+          "characterName": "Tallinn",
+          "executionMeta": {
+            "startedAt": "08:24",
+            "remainingMinutes": 10
+          }
+        },
+        {
+          "type": "action",
+          "action": "坐到休息区沙发上假装休息，并把手放在内层隐蔽口袋上保护联系簿与小装置，继续守候电梯与楼梯动静以待冷蛛或按暗号的人出现",
+          "impact": 0,
+          "nodeId": "a2",
+          "status": "in_progress",
+          "endTime": "08:34",
+          "startTime": "08:24",
+          "characterId": "Tallinn",
+          "characterName": "Tallinn",
+          "executionMeta": {
+            "startedAt": "08:24",
+            "remainingMinutes": 10
+          }
+        },
+        {
+          "type": "action",
+          "action": "坐到休息区沙发上假装休息，并把手放在内层隐蔽口袋上保护联系簿与小装置，继续守候电梯与楼梯动静以待冷蛛或按暗号的人出现",
+          "impact": 0,
+          "nodeId": "a2",
+          "status": "in_progress",
+          "endTime": "08:34",
+          "startTime": "08:24",
+          "characterId": "Tallinn",
+          "characterName": "Tallinn",
+          "executionMeta": {
+            "startedAt": "08:24",
+            "remainingMinutes": 10
+          }
+        },
+        {
+          "type": "action",
+          "action": "监听通往地底秘密赌场的通道入口的动静",
+          "impact": 0,
+          "nodeId": "a_next_01",
+          "status": "completed",
+          "endTime": "01:15",
+          "outcome": "监听通往地底秘密赌场的通道入口的动静 成功",
+          "startTime": "01:10",
+          "characterId": "Tallinn",
+          "characterName": "Tallinn",
+          "executionMeta": {
+            "startedAt": "01:10",
+            "completedAt": "01:15",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "character_interaction",
+          "action": "低声与冷蛛确认掩护骚动的信号与交接细节",
+          "impact": 1,
+          "nodeId": "ci_tallinn_01",
+          "status": "completed",
+          "endTime": "01:56",
+          "outcome": "我到帕拉迪尔大酒店大堂去找冷蛛，准备低声确认掩护骚动的信号与交接细节，但他根本不在场。我查看了前台和休息区，没人出现，只能暂时作罢，待会儿换别的联络方式再尝试。",
+          "startTime": "01:53",
+          "characterId": "Tallinn",
+          "characterName": "Tallinn",
+          "executionMeta": {
+            "startedAt": "01:53",
+            "completedAt": "01:56",
+            "remainingMinutes": 0
+          },
+          "targetCharacterIds": [
+            "npc_cold_spider"
+          ]
+        },
+        {
+          "type": "action",
+          "action": "在主殿阴影中继续隐蔽观察康斯坦丁与任何可能使用“码头”暗号的人，悄声记录位置与可疑动向",
+          "impact": 0,
+          "nodeId": "a_day2_0121_obs",
+          "status": "completed",
+          "endTime": "01:35",
+          "outcome": "在主殿阴影中继续隐蔽观察康斯坦丁与任何可能使用“码头”暗号的人，悄声记录位置与可疑动向 成功",
+          "startTime": "01:21",
+          "characterId": "Tallinn",
+          "characterName": "Tallinn",
+          "executionMeta": {
+            "startedAt": "01:21",
+            "completedAt": "01:35",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "action",
+          "action": "悄悄移到主殿更深的阴影处并固定观察位置，保持隐蔽不引人注意",
+          "impact": 0,
+          "nodeId": "a_day2_0136",
+          "status": "completed",
+          "endTime": "01:40",
+          "outcome": "悄悄移到主殿更深的阴影处并固定观察位置，保持隐蔽不引人注意 成功",
+          "startTime": "01:36",
+          "characterId": "Tallinn",
+          "characterName": "Tallinn",
+          "executionMeta": {
+            "startedAt": "01:36",
+            "completedAt": "01:40",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "action",
+          "action": "在主殿侧墙阴影中保持隐蔽观察康斯坦丁，仔细倾听并记录任何提到“码头”的谈话或异常动静",
+          "impact": 0,
+          "nodeId": "a_day2_0141",
+          "status": "interrupted",
+          "endTime": "01:50",
+          "outcome": "在主殿侧墙阴影中保持隐蔽观察康斯坦丁，仔细倾听并记录任何提到“码头”的谈话或异常动静 [因重新规划而中断] 已中断",
+          "startTime": "01:41",
+          "characterId": "Tallinn",
+          "characterName": "Tallinn",
+          "executionMeta": {
+            "startedAt": "01:41",
+            "interruptedAt": "01:44",
+            "remainingMinutes": 0,
+            "interruptionReason": "revise_replan"
+          }
+        },
+        {
+          "type": "movement",
+          "action": "悄然上楼到客房走廊寻找冷蛛",
+          "impact": 0,
+          "nodeId": "m1",
+          "status": "completed",
+          "endTime": "08:18",
+          "outcome": "悄然上楼到客房走廊寻找冷蛛 成功",
+          "startTime": "08:13",
+          "characterId": "Tallinn",
+          "destination": "SCN_4_SUB_1",
+          "characterName": "Tallinn",
+          "executionMeta": {
+            "movement": {
+              "routeSnapshot": [],
+              "targetPosition": {
+                "type": "scene",
+                "sceneId": "SCN_4_SUB_1"
+              },
+              "minutesIntoStep": 0,
+              "currentStepIndex": 0,
+              "lastReachablePosition": {
+                "type": "scene",
+                "sceneId": "SCN_4_SUB_1"
+              }
+            },
+            "startedAt": "08:13",
+            "completedAt": "08:13",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "character_interaction",
+          "action": "低声与冷蛛确认掩护骚动的信号与交接细节",
+          "impact": 1,
+          "nodeId": "ci_tallinn_01",
+          "status": "completed",
+          "endTime": "01:56",
+          "outcome": "我到帕拉迪尔大酒店大堂去找冷蛛，准备低声确认掩护骚动的信号与交接细节，但他根本不在场。我查看了前台和休息区，没人出现，只能暂时作罢，待会儿换别的联络方式再尝试。",
+          "startTime": "01:53",
+          "characterId": "Tallinn",
+          "characterName": "Tallinn",
+          "executionMeta": {
+            "startedAt": "01:53",
+            "completedAt": "01:56",
+            "remainingMinutes": 0
+          },
+          "targetCharacterIds": [
+            "npc_cold_spider"
+          ]
+        },
+        {
+          "type": "object_interaction",
+          "action": "检查前台登记簿与夹着的折叠纸条，确认是否有冷蛛的回信或任何新痕迹，然后将纸条放回原位整理好",
+          "impact": 0,
+          "nodeId": "oi1",
+          "status": "completed",
+          "endTime": "04:09",
+          "outcome": "我把登记簿翻开，把夹着的折叠纸条抽出，仔细查看纸条与登记簿内容——没有发现所谓“冷蛛”的回信或任何新痕迹。把纸条按原样折好放回登记簿，并把台面整理整齐，前台看上去依旧没有异常。",
+          "startTime": "04:07",
+          "characterId": "Tallinn",
+          "characterName": "Tallinn",
+          "executionMeta": {
+            "startedAt": "04:07",
+            "completedAt": "04:09",
+            "remainingMinutes": 0
+          },
+          "objectInteractionPayload": {
+            "itemId": "ITEM_SCN4_1"
+          }
+        },
+        {
+          "type": "object_interaction",
+          "action": "在前台柜台后面悄悄搜索是否有留给“冷蛛”的留言、房卡或纸条",
+          "impact": 0,
+          "nodeId": "oi_t2_0201",
+          "status": "completed",
+          "endTime": "02:04",
+          "outcome": "我悄悄绕到前台柜台后，检查了台面、登记簿和可能的缝隙与抽屉，特意寻找留给“冷蛛”的留言、房卡或小纸条，但没发现任何可疑的留言或留置物。前台看起来一切正常，没有留下明显被动过的痕迹。",
+          "startTime": "02:01",
+          "characterId": "Tallinn",
+          "characterName": "Tallinn",
+          "executionMeta": {
+            "startedAt": "02:01",
+            "completedAt": "02:04",
+            "remainingMinutes": 0
+          },
+          "objectInteractionPayload": {
+            "itemId": "ITEM_SCN4_1"
+          }
+        },
+        {
+          "type": "object_interaction",
+          "action": "在前台登记簿里夹一张写有暗号与简短指示的折叠纸条，留给“冷蛛”以便他发现并联系我",
+          "impact": 1,
+          "nodeId": "oi_tallinn_02_05",
+          "status": "completed",
+          "endTime": "02:08",
+          "outcome": "我悄悄将一张写有约定暗号和简短指示的折叠纸条夹入前台的登记簿，留给“冷蛛”以便他发现并联系我。",
+          "startTime": "02:05",
+          "characterId": "Tallinn",
+          "characterName": "Tallinn",
+          "executionMeta": {
+            "startedAt": "02:05",
+            "completedAt": "02:08",
+            "remainingMinutes": 0
+          },
+          "objectInteractionPayload": {
+            "itemId": "ITEM_SCN4_1"
+          }
+        },
+        {
+          "type": "object_interaction",
+          "action": "检查前台登记簿，确认我夹入的折叠纸条仍在原位且没有被人翻动或取走",
+          "impact": 0,
+          "nodeId": "oi_tallinn_0209",
+          "status": "completed",
+          "endTime": "02:11",
+          "outcome": "我检查了前台的登记簿；我夹入的那张折叠纸条还稳稳地夹在登记簿里，折痕端正，未被翻动或取走，周围也没有发现其他异常。",
+          "startTime": "02:09",
+          "characterId": "Tallinn",
+          "characterName": "Tallinn",
+          "executionMeta": {
+            "startedAt": "02:09",
+            "completedAt": "02:11",
+            "remainingMinutes": 0
+          },
+          "objectInteractionPayload": {
+            "itemId": "ITEM_SCN4_1"
+          }
+        },
+        {
+          "type": "action",
+          "action": "在大堂休息区隐蔽观察进出客人，留意冷蛛出现或他留下的信号，同时保持警觉，准备在必要时制造骚动以掩护交接",
+          "impact": 0,
+          "nodeId": "a2_0212",
+          "status": "completed",
+          "endTime": "02:22",
+          "outcome": "在大堂休息区隐蔽观察进出客人，留意冷蛛出现或他留下的信号，同时保持警觉，准备在必要时制造骚动以掩护交接 成功",
+          "startTime": "02:12",
+          "characterId": "Tallinn",
+          "characterName": "Tallinn",
+          "executionMeta": {
+            "startedAt": "02:12",
+            "completedAt": "02:22",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "action",
+          "action": "坐到休息区沙发上假装休息，并把手放在内层隐蔽口袋上保护联系簿与小装置，继续守候电梯与楼梯动静以待冷蛛或按暗号的人出现",
+          "impact": 0,
+          "nodeId": "a2",
+          "status": "in_progress",
+          "endTime": "08:34",
+          "startTime": "08:24",
+          "characterId": "Tallinn",
+          "characterName": "Tallinn",
+          "executionMeta": {
+            "startedAt": "08:24",
+            "remainingMinutes": 10
+          }
+        },
+        {
+          "type": "action",
+          "action": "在大堂靠近电梯与楼梯口保持隐蔽观察并静听上层动静，准备在冷蛛出现或接到信号时立即应对",
+          "impact": 0,
+          "nodeId": "a_tallinn_0229_01",
+          "status": "completed",
+          "endTime": "02:35",
+          "outcome": "在大堂靠近电梯与楼梯口保持隐蔽观察并静听上层动静，准备在冷蛛出现或接到信号时立即应对 成功",
+          "startTime": "02:29",
+          "characterId": "Tallinn",
+          "characterName": "Tallinn",
+          "executionMeta": {
+            "startedAt": "02:29",
+            "completedAt": "02:35",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "scene_interaction",
+          "action": "按下电梯呼叫按钮，侧耳观察并透过门缝留意电梯内或楼梯上向下的人影",
+          "impact": 0,
+          "nodeId": "si_tallinn_02",
+          "status": "completed",
+          "endTime": "02:38",
+          "outcome": "我按下了电梯呼叫按钮，看到按钮灯亮起，随后侧耳倾听并透过门缝朝电梯与楼梯方向张望，暂时既没看见也没听到有人下来。",
+          "startTime": "02:36",
+          "characterId": "Tallinn",
+          "characterName": "Tallinn",
+          "executionMeta": {
+            "startedAt": "02:36",
+            "completedAt": "02:38",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "movement",
+          "action": "悄悄走上楼梯到帕拉迪尔大酒店客房走廊寻找冷蛛",
+          "impact": 0,
+          "nodeId": "m_tallinn_0239",
+          "status": "completed",
+          "endTime": "02:44",
+          "outcome": "悄悄走上楼梯到帕拉迪尔大酒店客房走廊寻找冷蛛 成功",
+          "startTime": "02:39",
+          "characterId": "Tallinn",
+          "destination": "SCN_4_SUB_1",
+          "characterName": "Tallinn",
+          "executionMeta": {
+            "movement": {
+              "routeSnapshot": [],
+              "targetPosition": {
+                "type": "scene",
+                "sceneId": "SCN_4_SUB_1"
+              },
+              "minutesIntoStep": 0,
+              "currentStepIndex": 0,
+              "lastReachablePosition": {
+                "type": "scene",
+                "sceneId": "SCN_4_SUB_1"
+              }
+            },
+            "startedAt": "02:39",
+            "completedAt": "02:39",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "movement",
+          "action": "悄然上楼到客房走廊寻找冷蛛",
+          "impact": 0,
+          "nodeId": "m1",
+          "status": "completed",
+          "endTime": "08:18",
+          "outcome": "悄然上楼到客房走廊寻找冷蛛 成功",
+          "startTime": "08:13",
+          "characterId": "Tallinn",
+          "destination": "SCN_4_SUB_1",
+          "characterName": "Tallinn",
+          "executionMeta": {
+            "movement": {
+              "routeSnapshot": [],
+              "targetPosition": {
+                "type": "scene",
+                "sceneId": "SCN_4_SUB_1"
+              },
+              "minutesIntoStep": 0,
+              "currentStepIndex": 0,
+              "lastReachablePosition": {
+                "type": "scene",
+                "sceneId": "SCN_4_SUB_1"
+              }
+            },
+            "startedAt": "08:13",
+            "completedAt": "08:13",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "movement",
+          "action": "悄然上楼到客房走廊寻找冷蛛",
+          "impact": 0,
+          "nodeId": "m1",
+          "status": "completed",
+          "endTime": "08:18",
+          "outcome": "悄然上楼到客房走廊寻找冷蛛 成功",
+          "startTime": "08:13",
+          "characterId": "Tallinn",
+          "destination": "SCN_4_SUB_1",
+          "characterName": "Tallinn",
+          "executionMeta": {
+            "movement": {
+              "routeSnapshot": [],
+              "targetPosition": {
+                "type": "scene",
+                "sceneId": "SCN_4_SUB_1"
+              },
+              "minutesIntoStep": 0,
+              "currentStepIndex": 0,
+              "lastReachablePosition": {
+                "type": "scene",
+                "sceneId": "SCN_4_SUB_1"
+              }
+            },
+            "startedAt": "08:13",
+            "completedAt": "08:13",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "movement",
+          "action": "悄声沿楼梯上到客房走廊寻找冷蛛",
+          "impact": 0,
+          "nodeId": "m3",
+          "status": "completed",
+          "endTime": "02:45",
+          "outcome": "悄声沿楼梯上到客房走廊寻找冷蛛 成功",
+          "startTime": "02:42",
+          "characterId": "Tallinn",
+          "destination": "SCN_4_SUB_1",
+          "characterName": "Tallinn",
+          "executionMeta": {
+            "movement": {
+              "routeSnapshot": [],
+              "targetPosition": {
+                "type": "scene",
+                "sceneId": "SCN_4_SUB_1"
+              },
+              "minutesIntoStep": 0,
+              "currentStepIndex": 0,
+              "lastReachablePosition": {
+                "type": "scene",
+                "sceneId": "SCN_4_SUB_1"
+              }
+            },
+            "startedAt": "02:42",
+            "completedAt": "02:42",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "scene_interaction",
+          "action": "在电梯口守候并观察楼层与楼梯来往，留意冷蛛出现或任何接应信号的迹象",
+          "impact": 0,
+          "nodeId": "si_tallinn_wait_elevator_0243",
+          "status": "completed",
+          "endTime": "02:48",
+          "outcome": "我在电梯口守候，盯着电梯和楼梯的动静，留意冷蛛出现或任何接应信号。暂时未见有人影或明显脚步声，电梯呼叫灯仍然点亮，周围没有其他异常。",
+          "startTime": "02:43",
+          "characterId": "Tallinn",
+          "characterName": "Tallinn",
+          "executionMeta": {
+            "startedAt": "02:43",
+            "completedAt": "02:48",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "object_interaction",
+          "action": "检查前台登记簿里我夹着的折叠纸条是否有新留言或被取走",
+          "impact": 0,
+          "nodeId": "oi_tallinn_check_note_0249",
+          "status": "completed",
+          "endTime": "02:52",
+          "outcome": "我翻开前台的登记簿，找到我之前夹的那张折叠纸条。纸条仍在原位，写着给“冷蛛”的暗号与简短指示，完好无损，既没有新增留言也没有被取走。前台看起来一切如常。",
+          "startTime": "02:49",
+          "characterId": "Tallinn",
+          "characterName": "Tallinn",
+          "executionMeta": {
+            "startedAt": "02:49",
+            "completedAt": "02:52",
+            "remainingMinutes": 0
+          },
+          "objectInteractionPayload": {
+            "itemId": "ITEM_SCN4_1"
+          }
+        },
+        {
+          "type": "movement",
+          "action": "悄悄上楼检查客房走廊寻找冷蛛",
+          "impact": 0,
+          "nodeId": "m2",
+          "status": "completed",
+          "endTime": "02:58",
+          "outcome": "悄悄上楼检查客房走廊寻找冷蛛 成功",
+          "startTime": "02:53",
+          "characterId": "Tallinn",
+          "destination": "SCN_4_SUB_1",
+          "characterName": "Tallinn",
+          "executionMeta": {
+            "movement": {
+              "routeSnapshot": [],
+              "targetPosition": {
+                "type": "scene",
+                "sceneId": "SCN_4_SUB_1"
+              },
+              "minutesIntoStep": 0,
+              "currentStepIndex": 0,
+              "lastReachablePosition": {
+                "type": "scene",
+                "sceneId": "SCN_4_SUB_1"
+              }
+            },
+            "startedAt": "02:53",
+            "completedAt": "02:53",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "action",
+          "action": "在电梯口继续隐蔽守候并倾听楼上与楼下动静，寻找冷蛛或任何接应信号",
+          "impact": 0,
+          "nodeId": "a_tallinn_0254_01",
+          "status": "completed",
+          "endTime": "02:59",
+          "outcome": "在电梯口继续隐蔽守候并倾听楼上与楼下动静，寻找冷蛛或任何接应信号 成功",
+          "startTime": "02:54",
+          "characterId": "Tallinn",
+          "characterName": "Tallinn",
+          "executionMeta": {
+            "startedAt": "02:54",
+            "completedAt": "02:59",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "object_interaction",
+          "action": "走到前台，低声翻看登记簿，确认我夹的折叠纸条仍在原位",
+          "impact": 0,
+          "nodeId": "oi_tallinn_check_book_0300",
+          "status": "completed",
+          "endTime": "03:05",
+          "outcome": "我走到前台，低声翻看登记簿，翻开几页确认我先前夹进去的那张折叠纸条还在原位；纸条如描述般被夹着，登记簿和台面看起来并未被动过。",
+          "startTime": "03:00",
+          "characterId": "Tallinn",
+          "characterName": "Tallinn",
+          "executionMeta": {
+            "startedAt": "03:00",
+            "completedAt": "03:05",
+            "remainingMinutes": 0
+          },
+          "objectInteractionPayload": {
+            "itemId": "ITEM_SCN4_1"
+          }
+        },
+        {
+          "type": "action",
+          "action": "在电梯口隐蔽守候并观察楼上与楼梯动静，寻找并确认冷蛛的出现",
+          "impact": 0,
+          "nodeId": "a_tallinn_wait_0306",
+          "status": "completed",
+          "endTime": "03:16",
+          "outcome": "在电梯口隐蔽守候并观察楼上与楼梯动静，寻找并确认冷蛛的出现 成功",
+          "startTime": "03:06",
+          "characterId": "Tallinn",
+          "characterName": "Tallinn",
+          "executionMeta": {
+            "startedAt": "03:06",
+            "completedAt": "03:16",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "scene_interaction",
+          "action": "悄声上楼到客房走廊，沿走廊寻找冷蛛并留意房门、脚步与任何异常声响",
+          "impact": 0,
+          "nodeId": "si1_0317",
+          "status": "completed",
+          "endTime": "03:22",
+          "outcome": "我悄声上楼到客房走廊，沿走廊逐一靠近房门并侧耳倾听脚步与任何异常声响；目前没有发现可见的人影或明显脚步声，暂未发现冷蛛或接应信号。",
+          "startTime": "03:17",
+          "characterId": "Tallinn",
+          "characterName": "Tallinn",
+          "executionMeta": {
+            "startedAt": "03:17",
+            "completedAt": "03:22",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "object_interaction",
+          "action": "翻开前台登记簿，检查我夹入的折叠纸条是否仍在原位",
+          "impact": 0,
+          "nodeId": "oi_tallinn_03_23_01",
+          "status": "completed",
+          "endTime": "03:25",
+          "outcome": "我翻开前台的登记簿，发现我先前夹入的那张折叠纸条仍然放在原位，纸上写的暗号和简短指示清晰可见，登记簿看起来没有被动过。",
+          "startTime": "03:23",
+          "characterId": "Tallinn",
+          "characterName": "Tallinn",
+          "executionMeta": {
+            "startedAt": "03:23",
+            "completedAt": "03:25",
+            "remainingMinutes": 0
+          },
+          "objectInteractionPayload": {
+            "itemId": "ITEM_SCN4_1"
+          }
+        },
+        {
+          "type": "action",
+          "action": "坐到休息区沙发上假装休息，并把手放在内层隐蔽口袋上保护联系簿与小装置，继续守候电梯与楼梯动静以待冷蛛或按暗号的人出现",
+          "impact": 0,
+          "nodeId": "a2",
+          "status": "in_progress",
+          "endTime": "08:34",
+          "startTime": "08:24",
+          "characterId": "Tallinn",
+          "characterName": "Tallinn",
+          "executionMeta": {
+            "startedAt": "08:24",
+            "remainingMinutes": 10
+          }
+        },
+        {
+          "type": "scene_interaction",
+          "action": "用前台电话拨打冷蛛的备用联络号码，低声确认他是否已到酒店或收到我的纸条",
+          "impact": 1,
+          "nodeId": "si1",
+          "status": "completed",
+          "endTime": "06:03",
+          "outcome": "我用前台电话拨通了冷蛛的备用联络号码，低声确认他是否已到或收到我的纸条。接电话的人在低语中确认已收到纸条，但说他还没来酒店，我记住了这点。",
+          "startTime": "05:59",
+          "characterId": "Tallinn",
+          "characterName": "Tallinn",
+          "executionMeta": {
+            "startedAt": "05:59",
+            "completedAt": "06:03",
+            "remainingMinutes": 0
+          },
+          "objectInteractionPayload": {
+            "itemId": "ITEM_SCN4_1"
+          }
+        },
+        {
+          "type": "action",
+          "action": "在大堂电梯口附近的沙发上悄然坐下，注视电梯与楼梯方向寻找冷蛛的出现，并准备在必要时制造骚动以掩护交接",
+          "impact": 0,
+          "nodeId": "a_node_0341",
+          "status": "completed",
+          "endTime": "03:46",
+          "outcome": "在大堂电梯口附近的沙发上悄然坐下，注视电梯与楼梯方向寻找冷蛛的出现，并准备在必要时制造骚动以掩护交接 成功",
+          "startTime": "03:41",
+          "characterId": "Tallinn",
+          "characterName": "Tallinn",
+          "executionMeta": {
+            "startedAt": "03:41",
+            "completedAt": "03:46",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "scene_interaction",
+          "action": "用前台电话拨打冷蛛的备用联络号码，低声确认他是否已到酒店或收到我的纸条",
+          "impact": 1,
+          "nodeId": "si1",
+          "status": "completed",
+          "endTime": "06:03",
+          "outcome": "我用前台电话拨通了冷蛛的备用联络号码，低声确认他是否已到或收到我的纸条。接电话的人在低语中确认已收到纸条，但说他还没来酒店，我记住了这点。",
+          "startTime": "05:59",
+          "characterId": "Tallinn",
+          "characterName": "Tallinn",
+          "executionMeta": {
+            "startedAt": "05:59",
+            "completedAt": "06:03",
+            "remainingMinutes": 0
+          },
+          "objectInteractionPayload": {
+            "itemId": "ITEM_SCN4_1"
+          }
+        },
+        {
+          "type": "action",
+          "action": "在大堂电梯口继续守候并贴耳监听楼上楼下的动静，手放在内层隐蔽口袋以保护联系簿与小装置，准备在冷蛛按暗号时立即制造骚动并掩护交接",
+          "impact": 0,
+          "nodeId": "a1",
+          "status": "completed",
+          "endTime": "08:07",
+          "outcome": "在大堂电梯口继续守候并贴耳监听楼上楼下的动静，手放在内层隐蔽口袋以保护联系簿与小装置，准备在冷蛛按暗号时立即制造骚动并掩护交接 成功",
+          "startTime": "07:57",
+          "characterId": "Tallinn",
+          "characterName": "Tallinn",
+          "executionMeta": {
+            "startedAt": "07:57",
+            "completedAt": "08:07",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "action",
+          "action": "轻声敲开最近的客房门并侧耳倾听是否有回应",
+          "impact": 1,
+          "nodeId": "a3",
+          "status": "completed",
+          "endTime": "04:53",
+          "outcome": "轻声敲开最近的客房门并侧耳倾听是否有回应 成功",
+          "startTime": "04:51",
+          "characterId": "Tallinn",
+          "characterName": "Tallinn",
+          "executionMeta": {
+            "startedAt": "04:51",
+            "completedAt": "04:53",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "object_interaction",
+          "action": "检查前台登记簿与夹着的折叠纸条，确认是否有冷蛛的回信或任何新痕迹，然后将纸条放回原位整理好",
+          "impact": 0,
+          "nodeId": "oi1",
+          "status": "completed",
+          "endTime": "04:09",
+          "outcome": "我把登记簿翻开，把夹着的折叠纸条抽出，仔细查看纸条与登记簿内容——没有发现所谓“冷蛛”的回信或任何新痕迹。把纸条按原样折好放回登记簿，并把台面整理整齐，前台看上去依旧没有异常。",
+          "startTime": "04:07",
+          "characterId": "Tallinn",
+          "characterName": "Tallinn",
+          "executionMeta": {
+            "startedAt": "04:07",
+            "completedAt": "04:09",
+            "remainingMinutes": 0
+          },
+          "objectInteractionPayload": {
+            "itemId": "ITEM_SCN4_1"
+          }
+        },
+        {
+          "type": "action",
+          "action": "在大堂电梯口继续守候并贴耳监听楼上楼下的动静，手放在内层隐蔽口袋以保护联系簿与小装置，准备在冷蛛按暗号时立即制造骚动并掩护交接",
+          "impact": 0,
+          "nodeId": "a1",
+          "status": "completed",
+          "endTime": "08:07",
+          "outcome": "在大堂电梯口继续守候并贴耳监听楼上楼下的动静，手放在内层隐蔽口袋以保护联系簿与小装置，准备在冷蛛按暗号时立即制造骚动并掩护交接 成功",
+          "startTime": "07:57",
+          "characterId": "Tallinn",
+          "characterName": "Tallinn",
+          "executionMeta": {
+            "startedAt": "07:57",
+            "completedAt": "08:07",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "action",
+          "action": "靠近电梯门口，当电梯到达时观察并识别下楼的任何人",
+          "impact": 0,
+          "nodeId": "a_tallinn_0413_1",
+          "status": "completed",
+          "endTime": "04:16",
+          "outcome": "靠近电梯门口，当电梯到达时观察并识别下楼的任何人 成功",
+          "startTime": "04:13",
+          "characterId": "Tallinn",
+          "characterName": "Tallinn",
+          "executionMeta": {
+            "startedAt": "04:13",
+            "completedAt": "04:16",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "action",
+          "action": "在大堂沙发上坐下，假装休息并注视电梯与楼梯方向，同时将手放在内袋保护我的联系簿与小装置",
+          "impact": 0,
+          "nodeId": "a_next_0417",
+          "status": "completed",
+          "endTime": "04:27",
+          "outcome": "在大堂沙发上坐下，假装休息并注视电梯与楼梯方向，同时将手放在内袋保护我的联系簿与小装置 成功",
+          "startTime": "04:17",
+          "characterId": "Tallinn",
+          "characterName": "Tallinn",
+          "executionMeta": {
+            "startedAt": "04:17",
+            "completedAt": "04:27",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "movement",
+          "action": "悄然上楼到客房走廊寻找冷蛛",
+          "impact": 0,
+          "nodeId": "m1",
+          "status": "completed",
+          "endTime": "08:18",
+          "outcome": "悄然上楼到客房走廊寻找冷蛛 成功",
+          "startTime": "08:13",
+          "characterId": "Tallinn",
+          "destination": "SCN_4_SUB_1",
+          "characterName": "Tallinn",
+          "executionMeta": {
+            "movement": {
+              "routeSnapshot": [],
+              "targetPosition": {
+                "type": "scene",
+                "sceneId": "SCN_4_SUB_1"
+              },
+              "minutesIntoStep": 0,
+              "currentStepIndex": 0,
+              "lastReachablePosition": {
+                "type": "scene",
+                "sceneId": "SCN_4_SUB_1"
+              }
+            },
+            "startedAt": "08:13",
+            "completedAt": "08:13",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "action",
+          "action": "在大堂电梯口继续守候并贴耳监听楼上楼下的动静，手放在内层隐蔽口袋以保护联系簿与小装置，准备在冷蛛按暗号时立即制造骚动并掩护交接",
+          "impact": 0,
+          "nodeId": "a1",
+          "status": "completed",
+          "endTime": "08:07",
+          "outcome": "在大堂电梯口继续守候并贴耳监听楼上楼下的动静，手放在内层隐蔽口袋以保护联系簿与小装置，准备在冷蛛按暗号时立即制造骚动并掩护交接 成功",
+          "startTime": "07:57",
+          "characterId": "Tallinn",
+          "characterName": "Tallinn",
+          "executionMeta": {
+            "startedAt": "07:57",
+            "completedAt": "08:07",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "action",
+          "action": "检查内层隐蔽口袋，确认联系簿与小装置仍在并且完好",
+          "impact": 0,
+          "nodeId": "a_day2_0436_1",
+          "status": "completed",
+          "endTime": "04:38",
+          "outcome": "检查内层隐蔽口袋，确认联系簿与小装置仍在并且完好 成功",
+          "startTime": "04:36",
+          "characterId": "Tallinn",
+          "characterName": "Tallinn",
+          "executionMeta": {
+            "startedAt": "04:36",
+            "completedAt": "04:38",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "action",
+          "action": "在大堂沙发上坐下，假装休息并把手放在内层隐蔽口袋上持续守候电梯与楼梯动静，准备随时应对冷蛛出现或制造骚动",
+          "impact": 0,
+          "nodeId": "a_day2_0439_1",
+          "status": "completed",
+          "endTime": "04:49",
+          "outcome": "在大堂沙发上坐下，假装休息并把手放在内层隐蔽口袋上持续守候电梯与楼梯动静，准备随时应对冷蛛出现或制造骚动 成功",
+          "startTime": "04:39",
+          "characterId": "Tallinn",
+          "characterName": "Tallinn",
+          "executionMeta": {
+            "startedAt": "04:39",
+            "completedAt": "04:49",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "movement",
+          "action": "悄然上楼到客房走廊寻找冷蛛",
+          "impact": 0,
+          "nodeId": "m1",
+          "status": "completed",
+          "endTime": "08:18",
+          "outcome": "悄然上楼到客房走廊寻找冷蛛 成功",
+          "startTime": "08:13",
+          "characterId": "Tallinn",
+          "destination": "SCN_4_SUB_1",
+          "characterName": "Tallinn",
+          "executionMeta": {
+            "movement": {
+              "routeSnapshot": [],
+              "targetPosition": {
+                "type": "scene",
+                "sceneId": "SCN_4_SUB_1"
+              },
+              "minutesIntoStep": 0,
+              "currentStepIndex": 0,
+              "lastReachablePosition": {
+                "type": "scene",
+                "sceneId": "SCN_4_SUB_1"
+              }
+            },
+            "startedAt": "08:13",
+            "completedAt": "08:13",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "action",
+          "action": "轻声敲开最近的客房门并侧耳倾听是否有回应",
+          "impact": 1,
+          "nodeId": "a3",
+          "status": "completed",
+          "endTime": "04:53",
+          "outcome": "轻声敲开最近的客房门并侧耳倾听是否有回应 成功",
+          "startTime": "04:51",
+          "characterId": "Tallinn",
+          "characterName": "Tallinn",
+          "executionMeta": {
+            "startedAt": "04:51",
+            "completedAt": "04:53",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "scene_interaction",
+          "action": "悄声上楼到客房走廊，沿走廊逐一靠近房门并侧耳倾听寻找“冷蛛”或任何接应信号",
+          "impact": 0,
+          "nodeId": "si2",
+          "status": "completed",
+          "endTime": "04:59",
+          "outcome": "我悄声上楼，沿走廊逐一靠近房门侧耳倾听，没有听到冷蛛或任何接应信号。",
+          "startTime": "04:54",
+          "characterId": "Tallinn",
+          "characterName": "Tallinn",
+          "executionMeta": {
+            "startedAt": "04:54",
+            "completedAt": "04:59",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "action",
+          "action": "悄声下楼回到大堂，在前台沙发处坐下继续守候电梯与楼梯动静，手放在内层口袋保护我的隐蔽物，随时准备在必要时制造骚动掩护交接并在交接完成后向康斯坦丁回报",
+          "impact": 2,
+          "nodeId": "a_tallinn_0500",
+          "status": "completed",
+          "endTime": "05:10",
+          "outcome": "悄声下楼回到大堂，在前台沙发处坐下继续守候电梯与楼梯动静，手放在内层口袋保护我的隐蔽物，随时准备在必要时制造骚动掩护交接并在交接完成后向康斯坦丁回报 成功",
+          "startTime": "05:00",
+          "characterId": "Tallinn",
+          "characterName": "Tallinn",
+          "executionMeta": {
+            "startedAt": "05:00",
+            "completedAt": "05:10",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "object_interaction",
+          "action": "走到前台低声翻看登记簿，寻找冷蛛留下的回信或任何新迹象，同时保护内层口袋里的联系簿和小装置",
+          "impact": 0,
+          "nodeId": "oi_tallinn_check_register_0511",
+          "status": "completed",
+          "endTime": "05:14",
+          "outcome": "我悄悄走到前台，低声翻看登记簿，找到了夹在其中的那张折叠纸条——暗号和简短指示完好无损，未见任何新增留言或房号线索。将联系簿和小装置紧贴在花哨衣服的内层口袋并扣好，确保它们没有暴露。",
+          "startTime": "05:11",
+          "characterId": "Tallinn",
+          "characterName": "Tallinn",
+          "executionMeta": {
+            "startedAt": "05:11",
+            "completedAt": "05:14",
+            "remainingMinutes": 0
+          },
+          "objectInteractionPayload": {
+            "itemId": "ITEM_SCN4_1"
+          }
+        },
+        {
+          "type": "action",
+          "action": "走到电梯口盯着电梯门口观察来往人影",
+          "impact": 2,
+          "nodeId": "a_tallinn_0515_01",
+          "status": "completed",
+          "endTime": "05:20",
+          "outcome": "走到电梯口盯着电梯门口观察来往人影 成功",
+          "startTime": "05:15",
+          "characterId": "Tallinn",
+          "characterName": "Tallinn",
+          "executionMeta": {
+            "startedAt": "05:15",
+            "completedAt": "05:20",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "movement",
+          "action": "上楼到客房走廊逐门搜查并侧耳监听，寻找冷蛛或任何接应信号",
+          "impact": 2,
+          "nodeId": "m_tallinn_01",
+          "status": "completed",
+          "endTime": "08:28",
+          "outcome": "上楼到客房走廊逐门搜查并侧耳监听，寻找冷蛛或任何接应信号 成功",
+          "startTime": "08:23",
+          "characterId": "Tallinn",
+          "destination": "SCN_4_SUB_1",
+          "characterName": "Tallinn",
+          "executionMeta": {
+            "movement": {
+              "routeSnapshot": [],
+              "targetPosition": {
+                "type": "scene",
+                "sceneId": "SCN_4_SUB_1"
+              },
+              "minutesIntoStep": 0,
+              "currentStepIndex": 0,
+              "lastReachablePosition": {
+                "type": "scene",
+                "sceneId": "SCN_4_SUB_1"
+              }
+            },
+            "startedAt": "08:23",
+            "completedAt": "08:23",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "action",
+          "action": "在大堂电梯口继续守候并贴耳监听楼上楼下的动静，手放在内层隐蔽口袋以保护联系簿与小装置，准备在冷蛛按暗号时立即制造骚动并掩护交接",
+          "impact": 0,
+          "nodeId": "a1",
+          "status": "completed",
+          "endTime": "08:07",
+          "outcome": "在大堂电梯口继续守候并贴耳监听楼上楼下的动静，手放在内层隐蔽口袋以保护联系簿与小装置，准备在冷蛛按暗号时立即制造骚动并掩护交接 成功",
+          "startTime": "07:57",
+          "characterId": "Tallinn",
+          "characterName": "Tallinn",
+          "executionMeta": {
+            "startedAt": "07:57",
+            "completedAt": "08:07",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "scene_interaction",
+          "action": "用前台电话拨打冷蛛的备用联络号码，低声确认他是否已到酒店或收到我的纸条",
+          "impact": 1,
+          "nodeId": "si1",
+          "status": "completed",
+          "endTime": "06:03",
+          "outcome": "我用前台电话拨通了冷蛛的备用联络号码，低声确认他是否已到或收到我的纸条。接电话的人在低语中确认已收到纸条，但说他还没来酒店，我记住了这点。",
+          "startTime": "05:59",
+          "characterId": "Tallinn",
+          "characterName": "Tallinn",
+          "executionMeta": {
+            "startedAt": "05:59",
+            "completedAt": "06:03",
+            "remainingMinutes": 0
+          },
+          "objectInteractionPayload": {
+            "itemId": "ITEM_SCN4_1"
+          }
+        },
+        {
+          "type": "action",
+          "action": "站在电梯口旁守候并把手放在内层隐蔽口袋上以保护联系簿和小装置，注意电梯门与楼梯的动静并准备在必要时制造骚动掩护交接。",
+          "impact": 0,
+          "nodeId": "a_tallinn_0536",
+          "status": "completed",
+          "endTime": "05:41",
+          "outcome": "站在电梯口旁守候并把手放在内层隐蔽口袋上以保护联系簿和小装置，注意电梯门与楼梯的动静并准备在必要时制造骚动掩护交接。 成功",
+          "startTime": "05:36",
+          "characterId": "Tallinn",
+          "characterName": "Tallinn",
+          "executionMeta": {
+            "startedAt": "05:36",
+            "completedAt": "05:41",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "action",
+          "action": "走到电梯门口，按下呼叫按钮并侧耳倾听楼上动静，准备上楼再次寻找冷蛛",
+          "impact": 0,
+          "nodeId": "a_tallinn_05_42",
+          "status": "completed",
+          "endTime": "05:47",
+          "outcome": "走到电梯门口，按下呼叫按钮并侧耳倾听楼上动静，准备上楼再次寻找冷蛛 成功",
+          "startTime": "05:42",
+          "characterId": "Tallinn",
+          "characterName": "Tallinn",
+          "executionMeta": {
+            "startedAt": "05:42",
+            "completedAt": "05:47",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "action",
+          "action": "坐到休息区沙发上假装休息，并把手放在内层隐蔽口袋上保护联系簿与小装置，继续守候电梯与楼梯动静以待冷蛛或按暗号的人出现",
+          "impact": 0,
+          "nodeId": "a2",
+          "status": "in_progress",
+          "endTime": "08:34",
+          "startTime": "08:24",
+          "characterId": "Tallinn",
+          "characterName": "Tallinn",
+          "executionMeta": {
+            "startedAt": "08:24",
+            "remainingMinutes": 10
+          }
+        },
+        {
+          "type": "scene_interaction",
+          "action": "用前台电话拨打冷蛛的备用联络号码，低声确认他是否已到酒店或收到我的纸条",
+          "impact": 1,
+          "nodeId": "si1",
+          "status": "completed",
+          "endTime": "06:03",
+          "outcome": "我用前台电话拨通了冷蛛的备用联络号码，低声确认他是否已到或收到我的纸条。接电话的人在低语中确认已收到纸条，但说他还没来酒店，我记住了这点。",
+          "startTime": "05:59",
+          "characterId": "Tallinn",
+          "characterName": "Tallinn",
+          "executionMeta": {
+            "startedAt": "05:59",
+            "completedAt": "06:03",
+            "remainingMinutes": 0
+          },
+          "objectInteractionPayload": {
+            "itemId": "ITEM_SCN4_1"
+          }
+        },
+        {
+          "type": "action",
+          "action": "坐到休息区沙发上假装休息，并把手放在内层隐蔽口袋上保护联系簿与小装置，继续守候电梯与楼梯动静以待冷蛛或按暗号的人出现",
+          "impact": 0,
+          "nodeId": "a2",
+          "status": "in_progress",
+          "endTime": "08:34",
+          "startTime": "08:24",
+          "characterId": "Tallinn",
+          "characterName": "Tallinn",
+          "executionMeta": {
+            "startedAt": "08:24",
+            "remainingMinutes": 10
+          }
+        },
+        {
+          "type": "action",
+          "action": "守候电梯口并观察来往人影",
+          "impact": 0,
+          "nodeId": "a26",
+          "status": "completed",
+          "endTime": "06:17",
+          "outcome": "守候电梯口并观察来往人影 成功",
+          "startTime": "06:07",
+          "characterId": "Tallinn",
+          "characterName": "Tallinn",
+          "executionMeta": {
+            "startedAt": "06:07",
+            "completedAt": "06:17",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "action",
+          "action": "坐到休息区沙发上假装休息，并把手放在内层隐蔽口袋上保护联系簿与小装置，继续守候电梯与楼梯动静以待冷蛛或按暗号的人出现",
+          "impact": 0,
+          "nodeId": "a2",
+          "status": "in_progress",
+          "endTime": "08:34",
+          "startTime": "08:24",
+          "characterId": "Tallinn",
+          "characterName": "Tallinn",
+          "executionMeta": {
+            "startedAt": "08:24",
+            "remainingMinutes": 10
+          }
+        },
+        {
+          "type": "object_interaction",
+          "action": "检查花哨的衣服内层口袋，确认联系簿与小装置完好并紧贴在身体侧面",
+          "impact": 0,
+          "nodeId": "oi_tallinn_0621",
+          "status": "completed",
+          "endTime": "06:24",
+          "outcome": "我掏检了那件花哨衣服的内层隐蔽口袋，确认能摸到哈里森的小发明，装置完好并紧贴在身体侧面；同时我确信联系簿也仍在我记得的位置，没被动过。",
+          "startTime": "06:21",
+          "characterId": "Tallinn",
+          "characterName": "Tallinn",
+          "executionMeta": {
+            "startedAt": "06:21",
+            "completedAt": "06:24",
+            "remainingMinutes": 0
+          },
+          "objectInteractionPayload": {
+            "itemId": "花哨的衣服"
+          }
+        },
+        {
+          "type": "scene_interaction",
+          "action": "用前台电话拨通冷蛛的备用联络号码，低声确认他现在是否已到大堂并要求若已到立即按暗号回应",
+          "impact": 1,
+          "nodeId": "si3",
+          "status": "completed",
+          "endTime": "06:28",
+          "outcome": "我用前台电话拨通了冷蛛的备用号码，低声确认他是否已到大堂并请求若已到立即按暗号。对方在电话里确认已收到纸条，目前尚未到达，但答应一到便按暗号回应。",
+          "startTime": "06:25",
+          "characterId": "Tallinn",
+          "characterName": "Tallinn",
+          "executionMeta": {
+            "startedAt": "06:25",
+            "completedAt": "06:28",
+            "remainingMinutes": 0
+          },
+          "objectInteractionPayload": {
+            "itemId": "ITEM_SCN4_1"
+          }
+        },
+        {
+          "type": "action",
+          "action": "在大堂电梯口守候，观察来往动静并准备在冷蛛按暗号时制造骚动以掩护交接，同时保护内层隐蔽物品",
+          "impact": 0,
+          "nodeId": "a_day2_0629_1",
+          "status": "completed",
+          "endTime": "06:34",
+          "outcome": "在大堂电梯口守候，观察来往动静并准备在冷蛛按暗号时制造骚动以掩护交接，同时保护内层隐蔽物品 成功",
+          "startTime": "06:29",
+          "characterId": "Tallinn",
+          "characterName": "Tallinn",
+          "executionMeta": {
+            "startedAt": "06:29",
+            "completedAt": "06:34",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "action",
+          "action": "用前台电话给康斯坦丁低声通报：冷蛛尚未到达，仍在大堂守候；确认联系簿与小装置完好，请指示是否立即制造骚动或继续待命",
+          "impact": 1,
+          "nodeId": "a_day2_0635",
+          "status": "completed",
+          "endTime": "06:38",
+          "outcome": "用前台电话给康斯坦丁低声通报：冷蛛尚未到达，仍在大堂守候；确认联系簿与小装置完好，请指示是否立即制造骚动或继续待命 成功",
+          "startTime": "06:35",
+          "characterId": "Tallinn",
+          "characterName": "Tallinn",
+          "executionMeta": {
+            "startedAt": "06:35",
+            "completedAt": "06:38",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "action",
+          "action": "在大堂电梯口继续守候并贴耳监听楼上楼下的动静，手放在内层隐蔽口袋以保护联系簿与小装置，准备在冷蛛按暗号时立即制造骚动并掩护交接",
+          "impact": 0,
+          "nodeId": "a1",
+          "status": "completed",
+          "endTime": "08:07",
+          "outcome": "在大堂电梯口继续守候并贴耳监听楼上楼下的动静，手放在内层隐蔽口袋以保护联系簿与小装置，准备在冷蛛按暗号时立即制造骚动并掩护交接 成功",
+          "startTime": "07:57",
+          "characterId": "Tallinn",
+          "characterName": "Tallinn",
+          "executionMeta": {
+            "startedAt": "07:57",
+            "completedAt": "08:07",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "action",
+          "action": "用前台电话再次拨打冷蛛的备用号码，低声确认他现在是否已到达并要求若已到立即按暗号",
+          "impact": 0,
+          "nodeId": "a25",
+          "status": "completed",
+          "endTime": "06:47",
+          "outcome": "用前台电话再次拨打冷蛛的备用号码，低声确认他现在是否已到达并要求若已到立即按暗号 成功",
+          "startTime": "06:45",
+          "characterId": "Tallinn",
+          "characterName": "Tallinn",
+          "executionMeta": {
+            "startedAt": "06:45",
+            "completedAt": "06:47",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "action",
+          "action": "悄声走到电梯门口靠近门缝观察并倾听楼上楼下的动静，手放在内层口袋保护联系簿与小装置，准备在冷蛛到达时按暗号或在必要时制造骚动掩护交接",
+          "impact": 0,
+          "nodeId": "a24",
+          "status": "completed",
+          "endTime": "06:53",
+          "outcome": "悄声走到电梯门口靠近门缝观察并倾听楼上楼下的动静，手放在内层口袋保护联系簿与小装置，准备在冷蛛到达时按暗号或在必要时制造骚动掩护交接 成功",
+          "startTime": "06:48",
+          "characterId": "Tallinn",
+          "characterName": "Tallinn",
+          "executionMeta": {
+            "startedAt": "06:48",
+            "completedAt": "06:53",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "action",
+          "action": "用前台电话低声拨打冷蛛的备用号码，确认他是否已到达大堂并要求一到就按暗号",
+          "impact": 1,
+          "nodeId": "a_day2_0654",
+          "status": "completed",
+          "endTime": "06:56",
+          "outcome": "用前台电话低声拨打冷蛛的备用号码，确认他是否已到达大堂并要求一到就按暗号 成功",
+          "startTime": "06:54",
+          "characterId": "Tallinn",
+          "characterName": "Tallinn",
+          "executionMeta": {
+            "startedAt": "06:54",
+            "completedAt": "06:56",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "scene_interaction",
+          "action": "靠近电梯门缝观察并倾听楼上楼下的动静，准备在冷蛛到达或按暗号时立即应对",
+          "impact": 0,
+          "nodeId": "si_tallinn_01",
+          "status": "completed",
+          "endTime": "07:02",
+          "outcome": "我靠近电梯门缝贴耳倾听，楼上和楼下暂时没有明显的脚步声或回应。电梯门已关闭并在上行，呼叫按钮也已被按下；我保持隐蔽并随时准备在冷蛛到达或有人按暗号时立刻行动。",
+          "startTime": "06:57",
+          "characterId": "Tallinn",
+          "characterName": "Tallinn",
+          "executionMeta": {
+            "startedAt": "06:57",
+            "completedAt": "07:02",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "object_interaction",
+          "action": "用前台电话低声拨打康斯坦丁，汇报冷蛛尚未到达并说明我仍在大堂守候，询问是否继续等待或按暗号制造骚动掩护交接",
+          "impact": 1,
+          "nodeId": "oi_tallinn_call_constantine_0703",
+          "status": "completed",
+          "endTime": "07:05",
+          "outcome": "我在前台借用电话低声拨给康斯坦丁，汇报冷蛛尚未到达并说明我仍在大堂守候，询问是否继续等待或按暗号制造骚动掩护交接。电话接通并成功把情况传达出去，通话时我尽量压低声音，未引人注意。",
+          "startTime": "07:03",
+          "characterId": "Tallinn",
+          "characterName": "Tallinn",
+          "executionMeta": {
+            "startedAt": "07:03",
+            "completedAt": "07:05",
+            "remainingMinutes": 0
+          },
+          "objectInteractionPayload": {
+            "itemId": "ITEM_SCN4_1"
+          }
+        },
+        {
+          "type": "action",
+          "action": "坐到休息区沙发上假装休息，并把手放在内层隐蔽口袋上保护联系簿与小装置，继续守候电梯与楼梯动静以待冷蛛或按暗号的人出现",
+          "impact": 0,
+          "nodeId": "a2",
+          "status": "in_progress",
+          "endTime": "08:34",
+          "startTime": "08:24",
+          "characterId": "Tallinn",
+          "characterName": "Tallinn",
+          "executionMeta": {
+            "startedAt": "08:24",
+            "remainingMinutes": 10
+          }
+        },
+        {
+          "type": "action",
+          "action": "用前台电话低声再次拨打冷蛛的备用号码，确认他现在是否已到达大堂并指示若已到立即按暗号",
+          "impact": 1,
+          "nodeId": "a_t1",
+          "status": "completed",
+          "endTime": "07:14",
+          "outcome": "用前台电话低声再次拨打冷蛛的备用号码，确认他现在是否已到达大堂并指示若已到立即按暗号 成功",
+          "startTime": "07:12",
+          "characterId": "Tallinn",
+          "characterName": "Tallinn",
+          "executionMeta": {
+            "startedAt": "07:12",
+            "completedAt": "07:14",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "action",
+          "action": "假装在沙发上休息，把手放在内层隐蔽口袋上检查并固定联系簿与小装置，注视电梯与楼梯动静，准备在冷蛛按暗号时立即应对并随时向康斯坦丁回报",
+          "impact": 0,
+          "nodeId": "a_tallinn_07_15_01",
+          "status": "completed",
+          "endTime": "07:20",
+          "outcome": "假装在沙发上休息，把手放在内层隐蔽口袋上检查并固定联系簿与小装置，注视电梯与楼梯动静，准备在冷蛛按暗号时立即应对并随时向康斯坦丁回报 成功",
+          "startTime": "07:15",
+          "characterId": "Tallinn",
+          "characterName": "Tallinn",
+          "executionMeta": {
+            "startedAt": "07:15",
+            "completedAt": "07:20",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "action",
+          "action": "坐到休息区沙发上假装休息，并把手放在内层隐蔽口袋上保护联系簿与小装置，继续守候电梯与楼梯动静以待冷蛛或按暗号的人出现",
+          "impact": 0,
+          "nodeId": "a2",
+          "status": "in_progress",
+          "endTime": "08:34",
+          "startTime": "08:24",
+          "characterId": "Tallinn",
+          "characterName": "Tallinn",
+          "executionMeta": {
+            "startedAt": "08:24",
+            "remainingMinutes": 10
+          }
+        },
+        {
+          "type": "action",
+          "action": "在大堂电梯口继续守候并贴耳监听楼上楼下的动静，手放在内层隐蔽口袋以保护联系簿与小装置，准备在冷蛛按暗号时立即制造骚动并掩护交接",
+          "impact": 0,
+          "nodeId": "a1",
+          "status": "completed",
+          "endTime": "08:07",
+          "outcome": "在大堂电梯口继续守候并贴耳监听楼上楼下的动静，手放在内层隐蔽口袋以保护联系簿与小装置，准备在冷蛛按暗号时立即制造骚动并掩护交接 成功",
+          "startTime": "07:57",
+          "characterId": "Tallinn",
+          "characterName": "Tallinn",
+          "executionMeta": {
+            "startedAt": "07:57",
+            "completedAt": "08:07",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "action",
+          "action": "用前台电话低声拨打冷蛛的备用号码，确认他是否已到达并指示若已到立即按暗号",
+          "impact": 0,
+          "nodeId": "a_tallinn_0731",
+          "status": "completed",
+          "endTime": "07:33",
+          "outcome": "用前台电话低声拨打冷蛛的备用号码，确认他是否已到达并指示若已到立即按暗号 成功",
+          "startTime": "07:31",
+          "characterId": "Tallinn",
+          "characterName": "Tallinn",
+          "executionMeta": {
+            "startedAt": "07:31",
+            "completedAt": "07:33",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "object_interaction",
+          "action": "检查花哨的衣服内层隐蔽口袋，确认联系簿与小装置完好",
+          "impact": 0,
+          "nodeId": "oi_tallinn_checkpocket_0734",
+          "status": "completed",
+          "endTime": "07:35",
+          "outcome": "我掏检了那件花哨衣服的内层隐蔽口袋，手能摸到哈里森的小发明，装置完好并紧贴在身体侧面；我也确信联系簿仍在我记得的位置，似乎没人动过，口袋依然扣好，物品安全。",
+          "startTime": "07:34",
+          "characterId": "Tallinn",
+          "characterName": "Tallinn",
+          "executionMeta": {
+            "startedAt": "07:34",
+            "completedAt": "07:35",
+            "remainingMinutes": 0
+          },
+          "objectInteractionPayload": {
+            "itemId": "花哨的衣服"
+          }
+        },
+        {
+          "type": "action",
+          "action": "用前台电话低声拨给康斯坦丁，汇报冷蛛尚未到达并询问是否现在制造骚动掩护交接",
+          "impact": 1,
+          "nodeId": "a_tallinn_0001",
+          "status": "completed",
+          "endTime": "07:39",
+          "outcome": "用前台电话低声拨给康斯坦丁，汇报冷蛛尚未到达并询问是否现在制造骚动掩护交接 成功",
+          "startTime": "07:36",
+          "characterId": "Tallinn",
+          "characterName": "Tallinn",
+          "executionMeta": {
+            "startedAt": "07:36",
+            "completedAt": "07:39",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "action",
+          "action": "在大堂电梯口继续守候并贴耳监听楼上楼下的动静，手放在内层隐蔽口袋以保护联系簿与小装置，准备在冷蛛按暗号时立即制造骚动并掩护交接",
+          "impact": 0,
+          "nodeId": "a1",
+          "status": "completed",
+          "endTime": "08:07",
+          "outcome": "在大堂电梯口继续守候并贴耳监听楼上楼下的动静，手放在内层隐蔽口袋以保护联系簿与小装置，准备在冷蛛按暗号时立即制造骚动并掩护交接 成功",
+          "startTime": "07:57",
+          "characterId": "Tallinn",
+          "characterName": "Tallinn",
+          "executionMeta": {
+            "startedAt": "07:57",
+            "completedAt": "08:07",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "action",
+          "action": "靠近电梯门口守候并贴耳监听楼上与楼下的动静，手放在内层隐蔽口袋以保护联系簿与小装置",
+          "impact": 0,
+          "nodeId": "a_tallinn_wait_0743",
+          "status": "completed",
+          "endTime": "07:53",
+          "outcome": "靠近电梯门口守候并贴耳监听楼上与楼下的动静，手放在内层隐蔽口袋以保护联系簿与小装置 成功",
+          "startTime": "07:43",
+          "characterId": "Tallinn",
+          "characterName": "Tallinn",
+          "executionMeta": {
+            "startedAt": "07:43",
+            "completedAt": "07:53",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "action",
+          "action": "用前台电话低声拨打冷蛛的备用号码，确认他现在是否已到大堂并请求若已到立即按暗号",
+          "impact": 1,
+          "nodeId": "a_t2_0754",
+          "status": "completed",
+          "endTime": "07:56",
+          "outcome": "用前台电话低声拨打冷蛛的备用号码，确认他现在是否已到大堂并请求若已到立即按暗号 成功",
+          "startTime": "07:54",
+          "characterId": "Tallinn",
+          "characterName": "Tallinn",
+          "executionMeta": {
+            "startedAt": "07:54",
+            "completedAt": "07:56",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "action",
+          "action": "在大堂电梯口继续守候并贴耳监听楼上楼下的动静，手放在内层隐蔽口袋以保护联系簿与小装置，准备在冷蛛按暗号时立即制造骚动并掩护交接",
+          "impact": 0,
+          "nodeId": "a1",
+          "status": "completed",
+          "endTime": "08:07",
+          "outcome": "在大堂电梯口继续守候并贴耳监听楼上楼下的动静，手放在内层隐蔽口袋以保护联系簿与小装置，准备在冷蛛按暗号时立即制造骚动并掩护交接 成功",
+          "startTime": "07:57",
+          "characterId": "Tallinn",
+          "characterName": "Tallinn",
+          "executionMeta": {
+            "startedAt": "07:57",
+            "completedAt": "08:07",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "object_interaction",
+          "action": "用前台电话拨打冷蛛的备用号码，低声确认他现在是否已到达并指示若已到立即按暗号",
+          "impact": 1,
+          "nodeId": "oi_tallinn_call1",
+          "status": "completed",
+          "endTime": "08:12",
+          "outcome": "我在前台用电话拨打了给“冷蛛”留的备用号码，低声确认他是否已到并指示若已到立即按暗号。电话接通并得到肯定回复后我挂断，前台一切如常，登记簿和那张折叠纸条仍在原位。",
+          "startTime": "08:08",
+          "characterId": "Tallinn",
+          "characterName": "Tallinn",
+          "executionMeta": {
+            "startedAt": "08:08",
+            "completedAt": "08:12",
+            "remainingMinutes": 0
+          },
+          "objectInteractionPayload": {
+            "itemId": "ITEM_SCN4_1"
+          }
+        },
+        {
+          "type": "movement",
+          "action": "悄然上楼到客房走廊寻找冷蛛",
+          "impact": 0,
+          "nodeId": "m1",
+          "status": "completed",
+          "endTime": "08:18",
+          "outcome": "悄然上楼到客房走廊寻找冷蛛 成功",
+          "startTime": "08:13",
+          "characterId": "Tallinn",
+          "destination": "SCN_4_SUB_1",
+          "characterName": "Tallinn",
+          "executionMeta": {
+            "movement": {
+              "routeSnapshot": [],
+              "targetPosition": {
+                "type": "scene",
+                "sceneId": "SCN_4_SUB_1"
+              },
+              "minutesIntoStep": 0,
+              "currentStepIndex": 0,
+              "lastReachablePosition": {
+                "type": "scene",
+                "sceneId": "SCN_4_SUB_1"
+              }
+            },
+            "startedAt": "08:13",
+            "completedAt": "08:13",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "action",
+          "action": "靠近电梯门缝贴耳监听楼上楼下动静，并注视电梯与楼梯方向，手放在内层隐蔽口袋保护联系簿与小装置",
+          "impact": 0,
+          "nodeId": "a_next_0814",
+          "status": "completed",
+          "endTime": "08:19",
+          "outcome": "靠近电梯门缝贴耳监听楼上楼下动静，并注视电梯与楼梯方向，手放在内层隐蔽口袋保护联系簿与小装置 成功",
+          "startTime": "08:14",
+          "characterId": "Tallinn",
+          "characterName": "Tallinn",
+          "executionMeta": {
+            "startedAt": "08:14",
+            "completedAt": "08:19",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "action",
+          "action": "用前台电话再次低声拨打冷蛛的备用号码，确认他是否已到达大堂并指示若已到立即按暗号",
+          "impact": 0,
+          "nodeId": "a2_0820",
+          "status": "completed",
+          "endTime": "08:22",
+          "outcome": "用前台电话再次低声拨打冷蛛的备用号码，确认他是否已到达大堂并指示若已到立即按暗号 成功",
+          "startTime": "08:20",
+          "characterId": "Tallinn",
+          "characterName": "Tallinn",
+          "executionMeta": {
+            "startedAt": "08:20",
+            "completedAt": "08:22",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "movement",
+          "action": "上楼到客房走廊逐门搜查并侧耳监听，寻找冷蛛或任何接应信号",
+          "impact": 2,
+          "nodeId": "m_tallinn_01",
+          "status": "completed",
+          "endTime": "08:28",
+          "outcome": "上楼到客房走廊逐门搜查并侧耳监听，寻找冷蛛或任何接应信号 成功",
+          "startTime": "08:23",
+          "characterId": "Tallinn",
+          "destination": "SCN_4_SUB_1",
+          "characterName": "Tallinn",
+          "executionMeta": {
+            "movement": {
+              "routeSnapshot": [],
+              "targetPosition": {
+                "type": "scene",
+                "sceneId": "SCN_4_SUB_1"
+              },
+              "minutesIntoStep": 0,
+              "currentStepIndex": 0,
+              "lastReachablePosition": {
+                "type": "scene",
+                "sceneId": "SCN_4_SUB_1"
+              }
+            },
+            "startedAt": "08:23",
+            "completedAt": "08:23",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "action",
+          "action": "坐到休息区沙发上假装休息，并把手放在内层隐蔽口袋上保护联系簿与小装置，继续守候电梯与楼梯动静以待冷蛛或按暗号的人出现",
+          "impact": 0,
+          "nodeId": "a2",
+          "status": "in_progress",
+          "endTime": "08:34",
+          "startTime": "08:24",
+          "characterId": "Tallinn",
+          "characterName": "Tallinn",
+          "executionMeta": {
+            "startedAt": "08:24",
+            "remainingMinutes": 10
+          }
+        }
+      ]
+    },
+    {
+      "npcName": "Tallinn",
+      "gameDay": 1,
+      "schedule": [
+        {
+          "activity": "在地下赌场接管赌桌，维持秩序、观察新面孔并留意任何可能的纠纷。",
+          "location": "教堂"
+        },
+        {
+          "activity": "上到教堂住处找到Kovind，交接今晚的安全安排并确认他的站位。",
+          "location": "教堂"
+        },
+        {
+          "activity": "到五金店取哈里森帮我准备的小装置并和他客套几句以掩人耳目。",
+          "location": "五金店"
+        },
+        {
+          "activity": "去驯鹿酒吧低调转一圈，与几位常客打招呼并试探有没有人在盯着我。",
+          "location": "驯鹿酒吧"
+        },
+        {
+          "activity": "在海伦的餐桌吃一顿热饭，顺便听听街坊的传闻以掌握镇上的风向。",
+          "location": "海伦的餐桌"
+        },
+        {
+          "activity": "回到教堂的地下赌场结算当晚账目，把一部分现金分散藏好以防意外。",
+          "location": "教堂"
+        },
+        {
+          "activity": "在教堂的私人房间里整理今天的笔记，复核可信任的人名单并把新的线索记下。",
+          "location": "教堂"
+        },
+        {
+          "activity": "把能揭示我隐私的东西收好后早早睡觉，保持体力应对明天可能出现的麻烦。",
+          "location": "教堂"
+        }
+      ],
+      "nodes": [
+        {
+          "type": "scene_interaction",
+          "action": "巡视并接管赌桌，维持秩序并观察新面孔以防纠纷",
+          "impact": 2,
+          "nodeId": "si1",
+          "status": "completed",
+          "endTime": "19:20",
+          "outcome": "我在地下赌场里巡视并接管了一张赌桌，在旁边维持秩序，向几位有冲动的赌客发出警告，同时留意每个进来的人。场内没有因此爆发纠纷。",
+          "startTime": "19:00",
+          "characterId": "Tallinn",
+          "characterName": "Tallinn",
+          "executionMeta": {
+            "startedAt": "19:00",
+            "completedAt": "19:20",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "movement",
+          "action": "上石阶回到教堂住处，去找到Kovind并和他简短确认今晚的安保站位",
+          "impact": 0,
+          "nodeId": "m_tallinn_1",
+          "status": "completed",
+          "endTime": "19:25",
+          "outcome": "上石阶回到教堂住处，去找到Kovind并和他简短确认今晚的安保站位 成功",
+          "startTime": "19:21",
+          "characterId": "Tallinn",
+          "destination": "SCN_17_SUB_1",
+          "characterName": "Tallinn",
+          "executionMeta": {
+            "movement": {
+              "routeSnapshot": [
+                {
+                  "to": {
+                    "type": "scene",
+                    "sceneId": "SCN_17_SUB_1"
+                  },
+                  "from": {
+                    "type": "scene",
+                    "sceneId": "SCN_17_SUB_4"
+                  },
+                  "kind": "to_scene",
+                  "blockCheck": {
+                    "toId": "SCN_17_SUB_1",
+                    "fromId": "SCN_17_SUB_4"
+                  },
+                  "durationMinutes": 4
+                }
+              ],
+              "targetPosition": {
+                "type": "scene",
+                "sceneId": "SCN_17_SUB_1"
+              },
+              "minutesIntoStep": 0,
+              "currentStepIndex": 1,
+              "lastReachablePosition": {
+                "type": "scene",
+                "sceneId": "SCN_17_SUB_1"
+              }
+            },
+            "startedAt": "19:21",
+            "completedAt": "19:24",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "character_interaction",
+          "skill": "Insight",
+          "action": "用平静的客套话与Constantine搭话，暗中试探他来意并评估他是否构成威胁，避免透露关于赌场或卢奇菲罗的任何信息",
+          "impact": 1,
+          "nodeId": "ci1",
+          "status": "failed",
+          "endTime": "19:28",
+          "startTime": "19:25",
+          "characterId": "Tallinn",
+          "characterName": "Tallinn",
+          "executionMeta": {
+            "failedAt": "19:28",
+            "startedAt": "19:25",
+            "remainingMinutes": 3
+          },
+          "targetCharacterIds": [
+            "Constantine Frollo"
+          ]
+        },
+        {
+          "type": "object_interaction",
+          "action": "把酒杯放回吧台",
+          "impact": 2,
+          "nodeId": "oi1",
+          "status": "completed",
+          "endTime": "21:58",
+          "outcome": "我把手中的酒杯轻放回吧台，和其他杯子并列，动作自然，以便继续侧耳听周围的谈话。",
+          "startTime": "21:56",
+          "characterId": "Tallinn",
+          "characterName": "Tallinn",
+          "executionMeta": {
+            "startedAt": "21:56",
+            "completedAt": "21:58",
+            "remainingMinutes": 0
+          },
+          "objectInteractionPayload": {
+            "itemId": "ITEM_SCN17_8"
+          }
+        },
+        {
+          "type": "object_interaction",
+          "action": "把酒杯放回吧台",
+          "impact": 2,
+          "nodeId": "oi1",
+          "status": "completed",
+          "endTime": "21:58",
+          "outcome": "我把手中的酒杯轻放回吧台，和其他杯子并列，动作自然，以便继续侧耳听周围的谈话。",
+          "startTime": "21:56",
+          "characterId": "Tallinn",
+          "characterName": "Tallinn",
+          "executionMeta": {
+            "startedAt": "21:56",
+            "completedAt": "21:58",
+            "remainingMinutes": 0
+          },
+          "objectInteractionPayload": {
+            "itemId": "ITEM_SCN17_8"
+          }
+        },
+        {
+          "type": "scene_interaction",
+          "action": "悄悄检查祭坛后通往地下赌场的隐蔽通道入口是否有遗留文件或物品",
+          "impact": 0,
+          "nodeId": "si_tallinn_001",
+          "status": "interrupted",
+          "endTime": "19:57",
+          "outcome": "悄悄检查祭坛后通往地下赌场的隐蔽通道入口是否有遗留文件或物品 [因重新规划而中断] 已中断",
+          "startTime": "19:52",
+          "characterId": "Tallinn",
+          "characterName": "Tallinn",
+          "executionMeta": {
+            "startedAt": "19:52",
+            "interruptedAt": "19:56",
+            "remainingMinutes": 0,
+            "interruptionReason": "revise_replan"
+          }
+        },
+        {
+          "type": "movement",
+          "action": "步行回到教堂",
+          "impact": 0,
+          "nodeId": "m1",
+          "status": "completed",
+          "endTime": "23:29",
+          "outcome": "步行回到教堂 成功",
+          "startTime": "23:26",
+          "characterId": "Tallinn",
+          "destination": "SCN_17_SUB_1",
+          "characterName": "Tallinn",
+          "executionMeta": {
+            "movement": {
+              "routeSnapshot": [
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_3",
+                    "position": 0.58
+                  },
+                  "from": {
+                    "type": "scene",
+                    "sceneId": "SCN_18_SUB_1"
+                  },
+                  "kind": "along_road",
+                  "roadId": "ROAD_3",
+                  "blockCheck": {
+                    "toId": "ROAD_3",
+                    "fromId": "SCN_18_SUB_1"
+                  },
+                  "durationMinutes": 1
+                },
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_3",
+                    "position": 1
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_3",
+                    "position": 0.58
+                  },
+                  "kind": "along_road",
+                  "roadId": "ROAD_3",
+                  "durationMinutes": 4.2
+                },
+                {
+                  "to": {
+                    "type": "junction",
+                    "junctionId": "JUNC_4"
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_3",
+                    "position": 1
+                  },
+                  "kind": "to_junction",
+                  "blockCheck": {
+                    "toId": "JUNC_4",
+                    "fromId": "ROAD_3"
+                  },
+                  "durationMinutes": 0
+                },
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_3",
+                    "position": 1
+                  },
+                  "from": {
+                    "type": "junction",
+                    "junctionId": "JUNC_4"
+                  },
+                  "kind": "to_junction",
+                  "blockCheck": {
+                    "toId": "ROAD_3",
+                    "fromId": "JUNC_4"
+                  },
+                  "durationMinutes": 0
+                },
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_3",
+                    "position": 0.49
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_3",
+                    "position": 1
+                  },
+                  "kind": "along_road",
+                  "roadId": "ROAD_3",
+                  "durationMinutes": 5.1
+                },
+                {
+                  "to": {
+                    "type": "scene",
+                    "sceneId": "SCN_17_SUB_1"
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_3",
+                    "position": 0.49
+                  },
+                  "kind": "to_scene",
+                  "blockCheck": {
+                    "toId": "SCN_17_SUB_1",
+                    "fromId": "ROAD_3"
+                  },
+                  "durationMinutes": 1
+                }
+              ],
+              "targetPosition": {
+                "type": "scene",
+                "sceneId": "SCN_17_SUB_1"
+              },
+              "minutesIntoStep": 0,
+              "currentStepIndex": 6,
+              "lastReachablePosition": {
+                "type": "scene",
+                "sceneId": "SCN_17_SUB_1"
+              }
+            },
+            "startedAt": "23:26",
+            "completedAt": "23:38",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "action",
+          "action": "在暗影处继续低声观察赌场出入口，记录每个进出者的特征并特别注意任何与Constantine接触或说出“码头”暗号的人",
+          "impact": 0,
+          "nodeId": "a1",
+          "status": "completed",
+          "endTime": "23:08",
+          "outcome": "在暗影处继续低声观察赌场出入口，记录每个进出者的特征并特别注意任何与Constantine接触或说出“码头”暗号的人 成功",
+          "startTime": "22:48",
+          "characterId": "Tallinn",
+          "characterName": "Tallinn",
+          "executionMeta": {
+            "startedAt": "22:48",
+            "completedAt": "23:08",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "movement",
+          "action": "步行回到教堂",
+          "impact": 0,
+          "nodeId": "m1",
+          "status": "completed",
+          "endTime": "23:29",
+          "outcome": "步行回到教堂 成功",
+          "startTime": "23:26",
+          "characterId": "Tallinn",
+          "destination": "SCN_17_SUB_1",
+          "characterName": "Tallinn",
+          "executionMeta": {
+            "movement": {
+              "routeSnapshot": [
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_3",
+                    "position": 0.58
+                  },
+                  "from": {
+                    "type": "scene",
+                    "sceneId": "SCN_18_SUB_1"
+                  },
+                  "kind": "along_road",
+                  "roadId": "ROAD_3",
+                  "blockCheck": {
+                    "toId": "ROAD_3",
+                    "fromId": "SCN_18_SUB_1"
+                  },
+                  "durationMinutes": 1
+                },
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_3",
+                    "position": 1
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_3",
+                    "position": 0.58
+                  },
+                  "kind": "along_road",
+                  "roadId": "ROAD_3",
+                  "durationMinutes": 4.2
+                },
+                {
+                  "to": {
+                    "type": "junction",
+                    "junctionId": "JUNC_4"
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_3",
+                    "position": 1
+                  },
+                  "kind": "to_junction",
+                  "blockCheck": {
+                    "toId": "JUNC_4",
+                    "fromId": "ROAD_3"
+                  },
+                  "durationMinutes": 0
+                },
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_3",
+                    "position": 1
+                  },
+                  "from": {
+                    "type": "junction",
+                    "junctionId": "JUNC_4"
+                  },
+                  "kind": "to_junction",
+                  "blockCheck": {
+                    "toId": "ROAD_3",
+                    "fromId": "JUNC_4"
+                  },
+                  "durationMinutes": 0
+                },
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_3",
+                    "position": 0.49
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_3",
+                    "position": 1
+                  },
+                  "kind": "along_road",
+                  "roadId": "ROAD_3",
+                  "durationMinutes": 5.1
+                },
+                {
+                  "to": {
+                    "type": "scene",
+                    "sceneId": "SCN_17_SUB_1"
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_3",
+                    "position": 0.49
+                  },
+                  "kind": "to_scene",
+                  "blockCheck": {
+                    "toId": "SCN_17_SUB_1",
+                    "fromId": "ROAD_3"
+                  },
+                  "durationMinutes": 1
+                }
+              ],
+              "targetPosition": {
+                "type": "scene",
+                "sceneId": "SCN_17_SUB_1"
+              },
+              "minutesIntoStep": 0,
+              "currentStepIndex": 6,
+              "lastReachablePosition": {
+                "type": "scene",
+                "sceneId": "SCN_17_SUB_1"
+              }
+            },
+            "startedAt": "23:26",
+            "completedAt": "23:38",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "action",
+          "action": "在主殿阴影处暗中观察Constantine Frollo",
+          "impact": 0,
+          "nodeId": "a2",
+          "status": "completed",
+          "endTime": "20:20",
+          "outcome": "在主殿阴影处暗中观察Constantine Frollo 成功",
+          "startTime": "20:10",
+          "characterId": "Tallinn",
+          "characterName": "Tallinn",
+          "executionMeta": {
+            "startedAt": "20:10",
+            "completedAt": "20:20",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "scene_interaction",
+          "action": "悄悄检查祭坛后通往地下赌场的隐蔽通道入口是否有遗留文件或物品",
+          "impact": 0,
+          "nodeId": "si2",
+          "status": "completed",
+          "endTime": "20:25",
+          "outcome": "我悄悄检查了祭坛后通往地下赌场的通道入口，未在入口处发现任何遗留的文件或物品；只从门缝里感到一股寒气，并能听到门内传来的微弱回声。",
+          "startTime": "20:21",
+          "characterId": "Tallinn",
+          "characterName": "Tallinn",
+          "executionMeta": {
+            "startedAt": "20:21",
+            "completedAt": "20:25",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "action",
+          "action": "在暗影处继续低声观察赌场出入口，记录每个进出者的特征并特别注意任何与Constantine接触或说出“码头”暗号的人",
+          "impact": 0,
+          "nodeId": "a1",
+          "status": "completed",
+          "endTime": "23:08",
+          "outcome": "在暗影处继续低声观察赌场出入口，记录每个进出者的特征并特别注意任何与Constantine接触或说出“码头”暗号的人 成功",
+          "startTime": "22:48",
+          "characterId": "Tallinn",
+          "characterName": "Tallinn",
+          "executionMeta": {
+            "startedAt": "22:48",
+            "completedAt": "23:08",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "movement",
+          "action": "步行回到教堂",
+          "impact": 0,
+          "nodeId": "m1",
+          "status": "completed",
+          "endTime": "23:29",
+          "outcome": "步行回到教堂 成功",
+          "startTime": "23:26",
+          "characterId": "Tallinn",
+          "destination": "SCN_17_SUB_1",
+          "characterName": "Tallinn",
+          "executionMeta": {
+            "movement": {
+              "routeSnapshot": [
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_3",
+                    "position": 0.58
+                  },
+                  "from": {
+                    "type": "scene",
+                    "sceneId": "SCN_18_SUB_1"
+                  },
+                  "kind": "along_road",
+                  "roadId": "ROAD_3",
+                  "blockCheck": {
+                    "toId": "ROAD_3",
+                    "fromId": "SCN_18_SUB_1"
+                  },
+                  "durationMinutes": 1
+                },
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_3",
+                    "position": 1
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_3",
+                    "position": 0.58
+                  },
+                  "kind": "along_road",
+                  "roadId": "ROAD_3",
+                  "durationMinutes": 4.2
+                },
+                {
+                  "to": {
+                    "type": "junction",
+                    "junctionId": "JUNC_4"
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_3",
+                    "position": 1
+                  },
+                  "kind": "to_junction",
+                  "blockCheck": {
+                    "toId": "JUNC_4",
+                    "fromId": "ROAD_3"
+                  },
+                  "durationMinutes": 0
+                },
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_3",
+                    "position": 1
+                  },
+                  "from": {
+                    "type": "junction",
+                    "junctionId": "JUNC_4"
+                  },
+                  "kind": "to_junction",
+                  "blockCheck": {
+                    "toId": "ROAD_3",
+                    "fromId": "JUNC_4"
+                  },
+                  "durationMinutes": 0
+                },
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_3",
+                    "position": 0.49
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_3",
+                    "position": 1
+                  },
+                  "kind": "along_road",
+                  "roadId": "ROAD_3",
+                  "durationMinutes": 5.1
+                },
+                {
+                  "to": {
+                    "type": "scene",
+                    "sceneId": "SCN_17_SUB_1"
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_3",
+                    "position": 0.49
+                  },
+                  "kind": "to_scene",
+                  "blockCheck": {
+                    "toId": "SCN_17_SUB_1",
+                    "fromId": "ROAD_3"
+                  },
+                  "durationMinutes": 1
+                }
+              ],
+              "targetPosition": {
+                "type": "scene",
+                "sceneId": "SCN_17_SUB_1"
+              },
+              "minutesIntoStep": 0,
+              "currentStepIndex": 6,
+              "lastReachablePosition": {
+                "type": "scene",
+                "sceneId": "SCN_17_SUB_1"
+              }
+            },
+            "startedAt": "23:26",
+            "completedAt": "23:38",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "action",
+          "action": "在地下赌场巡视赌桌，维持秩序并暗中留意任何提到“码头”的谈话或可疑来客",
+          "impact": 2,
+          "nodeId": "a1_tallinn_2038",
+          "status": "completed",
+          "endTime": "20:43",
+          "outcome": "在地下赌场巡视赌桌，维持秩序并暗中留意任何提到“码头”的谈话或可疑来客 成功",
+          "startTime": "20:38",
+          "characterId": "Tallinn",
+          "characterName": "Tallinn",
+          "executionMeta": {
+            "startedAt": "20:38",
+            "completedAt": "20:43",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "object_interaction",
+          "action": "把酒杯放回吧台",
+          "impact": 2,
+          "nodeId": "oi1",
+          "status": "completed",
+          "endTime": "21:58",
+          "outcome": "我把手中的酒杯轻放回吧台，和其他杯子并列，动作自然，以便继续侧耳听周围的谈话。",
+          "startTime": "21:56",
+          "characterId": "Tallinn",
+          "characterName": "Tallinn",
+          "executionMeta": {
+            "startedAt": "21:56",
+            "completedAt": "21:58",
+            "remainingMinutes": 0
+          },
+          "objectInteractionPayload": {
+            "itemId": "ITEM_SCN17_8"
+          }
+        },
+        {
+          "type": "action",
+          "action": "在赌桌旁低声巡逻，维持秩序的同时暗中盯着进出赌场的人，特别留意任何提到“码头”的谈话与可疑举动，并尽量避免与可疑人物（包括可能出现的康斯坦丁）正面接触",
+          "impact": 0,
+          "nodeId": "a_tallinn_01",
+          "status": "completed",
+          "endTime": "21:20",
+          "outcome": "在赌桌旁低声巡逻，维持秩序的同时暗中盯着进出赌场的人，特别留意任何提到“码头”的谈话与可疑举动，并尽量避免与可疑人物（包括可能出现的康斯坦丁）正面接触 成功",
+          "startTime": "21:13",
+          "characterId": "Tallinn",
+          "characterName": "Tallinn",
+          "executionMeta": {
+            "startedAt": "21:13",
+            "completedAt": "21:20",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "action",
+          "action": "在地下赌场低声巡逻赌桌，维持秩序，并特别留意任何提到“码头”的谈话或可疑来客",
+          "impact": 2,
+          "nodeId": "a25",
+          "status": "completed",
+          "endTime": "21:08",
+          "outcome": "在地下赌场低声巡逻赌桌，维持秩序，并特别留意任何提到“码头”的谈话或可疑来客 成功",
+          "startTime": "20:58",
+          "characterId": "Tallinn",
+          "characterName": "Tallinn",
+          "executionMeta": {
+            "startedAt": "20:58",
+            "completedAt": "21:08",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "object_interaction",
+          "action": "检查并确认内层隐蔽口袋里的所有敏感物品并把它们彻底收好",
+          "impact": 0,
+          "nodeId": "oi_t1",
+          "status": "completed",
+          "endTime": "21:12",
+          "outcome": "我检查了花哨衣服内层的隐蔽口袋，确认口袋里的敏感物品都在并已被扣好、妥善收好；外观贴身无异常，便于在赌场活动中不被发现。",
+          "startTime": "21:09",
+          "characterId": "Tallinn",
+          "characterName": "Tallinn",
+          "executionMeta": {
+            "startedAt": "21:09",
+            "completedAt": "21:12",
+            "remainingMinutes": 0
+          },
+          "objectInteractionPayload": {
+            "itemId": "花哨的衣服"
+          }
+        },
+        {
+          "type": "action",
+          "action": "在赌桌旁低声巡逻，维持秩序的同时暗中盯着进出赌场的人，特别留意任何提到“码头”的谈话与可疑举动，并尽量避免与可疑人物（包括可能出现的康斯坦丁）正面接触",
+          "impact": 0,
+          "nodeId": "a_tallinn_01",
+          "status": "completed",
+          "endTime": "21:20",
+          "outcome": "在赌桌旁低声巡逻，维持秩序的同时暗中盯着进出赌场的人，特别留意任何提到“码头”的谈话与可疑举动，并尽量避免与可疑人物（包括可能出现的康斯坦丁）正面接触 成功",
+          "startTime": "21:13",
+          "characterId": "Tallinn",
+          "characterName": "Tallinn",
+          "executionMeta": {
+            "startedAt": "21:13",
+            "completedAt": "21:20",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "action",
+          "action": "走到地下赌场入口的暗影处盯着门口，观察进出人员并留意任何提到“码头”的谈话",
+          "impact": 0,
+          "nodeId": "a_tallinn_021",
+          "status": "completed",
+          "endTime": "21:26",
+          "outcome": "走到地下赌场入口的暗影处盯着门口，观察进出人员并留意任何提到“码头”的谈话 成功",
+          "startTime": "21:21",
+          "characterId": "Tallinn",
+          "characterName": "Tallinn",
+          "executionMeta": {
+            "startedAt": "21:21",
+            "completedAt": "21:26",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "action",
+          "action": "在暗影处继续盯着赌场出入口，默默记录每个进出者的特征并注意任何与Constantine接触或说出“码头”暗号的人",
+          "impact": 0,
+          "nodeId": "a_tallinn_001",
+          "status": "completed",
+          "endTime": "22:36",
+          "outcome": "在暗影处继续盯着赌场出入口，默默记录每个进出者的特征并注意任何与Constantine接触或说出“码头”暗号的人 成功",
+          "startTime": "22:26",
+          "characterId": "Tallinn",
+          "characterName": "Tallinn",
+          "executionMeta": {
+            "startedAt": "22:26",
+            "completedAt": "22:36",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "object_interaction",
+          "action": "把哈里森准备的小装置从陈列架上拿起并塞进花哨的衣服的隐蔽口袋里，确保它被妥善遮掩",
+          "impact": 0,
+          "nodeId": "oi_tallinn_01",
+          "status": "completed",
+          "endTime": "23:25",
+          "outcome": "我从陈列架上拿起了Harrison准备的小发明，悄悄把它塞进花哨衣服内侧的隐蔽口袋并扣好，确认外观贴身不易被察觉后收好。",
+          "startTime": "23:22",
+          "characterId": "Tallinn",
+          "characterName": "Tallinn",
+          "executionMeta": {
+            "startedAt": "23:22",
+            "completedAt": "23:25",
+            "remainingMinutes": 0
+          },
+          "objectInteractionPayload": {
+            "itemId": "ITEM_SCN18_2"
+          }
+        },
+        {
+          "type": "action",
+          "action": "在暗影处继续盯着赌场出入口，默默记录每个进出者的特征并注意任何与Constantine接触或说出“码头”暗号的人",
+          "impact": 0,
+          "nodeId": "a_tallinn_001",
+          "status": "completed",
+          "endTime": "22:36",
+          "outcome": "在暗影处继续盯着赌场出入口，默默记录每个进出者的特征并注意任何与Constantine接触或说出“码头”暗号的人 成功",
+          "startTime": "22:26",
+          "characterId": "Tallinn",
+          "characterName": "Tallinn",
+          "executionMeta": {
+            "startedAt": "22:26",
+            "completedAt": "22:36",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "action",
+          "action": "在暗影处盯着赌场出入口，记录每个进出者的特征并特别留意任何与Constantine接触或说出“码头”暗号的人",
+          "impact": 0,
+          "nodeId": "a_day1_2150_01",
+          "status": "completed",
+          "endTime": "21:55",
+          "outcome": "在暗影处盯着赌场出入口，记录每个进出者的特征并特别留意任何与Constantine接触或说出“码头”暗号的人 成功",
+          "startTime": "21:50",
+          "characterId": "Tallinn",
+          "characterName": "Tallinn",
+          "executionMeta": {
+            "startedAt": "21:50",
+            "completedAt": "21:55",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "object_interaction",
+          "action": "把酒杯放回吧台",
+          "impact": 2,
+          "nodeId": "oi1",
+          "status": "completed",
+          "endTime": "21:58",
+          "outcome": "我把手中的酒杯轻放回吧台，和其他杯子并列，动作自然，以便继续侧耳听周围的谈话。",
+          "startTime": "21:56",
+          "characterId": "Tallinn",
+          "characterName": "Tallinn",
+          "executionMeta": {
+            "startedAt": "21:56",
+            "completedAt": "21:58",
+            "remainingMinutes": 0
+          },
+          "objectInteractionPayload": {
+            "itemId": "ITEM_SCN17_8"
+          }
+        },
+        {
+          "type": "action",
+          "action": "在暗影处盯着赌场出入口，默默记录每个进出者的特征并留意任何提到“码头”的暗号",
+          "impact": 0,
+          "nodeId": "a23",
+          "status": "completed",
+          "endTime": "22:09",
+          "outcome": "在暗影处盯着赌场出入口，默默记录每个进出者的特征并留意任何提到“码头”的暗号 成功",
+          "startTime": "21:59",
+          "characterId": "Tallinn",
+          "characterName": "Tallinn",
+          "executionMeta": {
+            "startedAt": "21:59",
+            "completedAt": "22:09",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "action",
+          "action": "在暗影处悄声观察进出人员，专注留意任何使用“码头”暗号或与Constantine接触的人",
+          "impact": 0,
+          "nodeId": "a_next_001",
+          "status": "completed",
+          "endTime": "22:25",
+          "outcome": "在暗影处悄声观察进出人员，专注留意任何使用“码头”暗号或与Constantine接触的人 成功",
+          "startTime": "22:10",
+          "characterId": "Tallinn",
+          "characterName": "Tallinn",
+          "executionMeta": {
+            "startedAt": "22:10",
+            "completedAt": "22:25",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "action",
+          "action": "在暗影处继续盯着赌场出入口，默默记录每个进出者的特征并注意任何与Constantine接触或说出“码头”暗号的人",
+          "impact": 0,
+          "nodeId": "a_tallinn_001",
+          "status": "completed",
+          "endTime": "22:36",
+          "outcome": "在暗影处继续盯着赌场出入口，默默记录每个进出者的特征并注意任何与Constantine接触或说出“码头”暗号的人 成功",
+          "startTime": "22:26",
+          "characterId": "Tallinn",
+          "characterName": "Tallinn",
+          "executionMeta": {
+            "startedAt": "22:26",
+            "completedAt": "22:36",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "action",
+          "action": "在暗影处盯着赌场出入口，记录每个进出者的特征并注意任何与Constantine接触或说出“码头”暗号的人",
+          "impact": 0,
+          "nodeId": "a_day1_2237",
+          "status": "completed",
+          "endTime": "22:47",
+          "outcome": "在暗影处盯着赌场出入口，记录每个进出者的特征并注意任何与Constantine接触或说出“码头”暗号的人 成功",
+          "startTime": "22:37",
+          "characterId": "Tallinn",
+          "characterName": "Tallinn",
+          "executionMeta": {
+            "startedAt": "22:37",
+            "completedAt": "22:47",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "action",
+          "action": "在暗影处继续低声观察赌场出入口，记录每个进出者的特征并特别注意任何与Constantine接触或说出“码头”暗号的人",
+          "impact": 0,
+          "nodeId": "a1",
+          "status": "completed",
+          "endTime": "23:08",
+          "outcome": "在暗影处继续低声观察赌场出入口，记录每个进出者的特征并特别注意任何与Constantine接触或说出“码头”暗号的人 成功",
+          "startTime": "22:48",
+          "characterId": "Tallinn",
+          "characterName": "Tallinn",
+          "executionMeta": {
+            "startedAt": "22:48",
+            "completedAt": "23:08",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "movement",
+          "action": "步行回到教堂",
+          "impact": 0,
+          "nodeId": "m1",
+          "status": "completed",
+          "endTime": "23:29",
+          "outcome": "步行回到教堂 成功",
+          "startTime": "23:26",
+          "characterId": "Tallinn",
+          "destination": "SCN_17_SUB_1",
+          "characterName": "Tallinn",
+          "executionMeta": {
+            "movement": {
+              "routeSnapshot": [
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_3",
+                    "position": 0.58
+                  },
+                  "from": {
+                    "type": "scene",
+                    "sceneId": "SCN_18_SUB_1"
+                  },
+                  "kind": "along_road",
+                  "roadId": "ROAD_3",
+                  "blockCheck": {
+                    "toId": "ROAD_3",
+                    "fromId": "SCN_18_SUB_1"
+                  },
+                  "durationMinutes": 1
+                },
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_3",
+                    "position": 1
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_3",
+                    "position": 0.58
+                  },
+                  "kind": "along_road",
+                  "roadId": "ROAD_3",
+                  "durationMinutes": 4.2
+                },
+                {
+                  "to": {
+                    "type": "junction",
+                    "junctionId": "JUNC_4"
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_3",
+                    "position": 1
+                  },
+                  "kind": "to_junction",
+                  "blockCheck": {
+                    "toId": "JUNC_4",
+                    "fromId": "ROAD_3"
+                  },
+                  "durationMinutes": 0
+                },
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_3",
+                    "position": 1
+                  },
+                  "from": {
+                    "type": "junction",
+                    "junctionId": "JUNC_4"
+                  },
+                  "kind": "to_junction",
+                  "blockCheck": {
+                    "toId": "ROAD_3",
+                    "fromId": "JUNC_4"
+                  },
+                  "durationMinutes": 0
+                },
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_3",
+                    "position": 0.49
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_3",
+                    "position": 1
+                  },
+                  "kind": "along_road",
+                  "roadId": "ROAD_3",
+                  "durationMinutes": 5.1
+                },
+                {
+                  "to": {
+                    "type": "scene",
+                    "sceneId": "SCN_17_SUB_1"
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_3",
+                    "position": 0.49
+                  },
+                  "kind": "to_scene",
+                  "blockCheck": {
+                    "toId": "SCN_17_SUB_1",
+                    "fromId": "ROAD_3"
+                  },
+                  "durationMinutes": 1
+                }
+              ],
+              "targetPosition": {
+                "type": "scene",
+                "sceneId": "SCN_17_SUB_1"
+              },
+              "minutesIntoStep": 0,
+              "currentStepIndex": 6,
+              "lastReachablePosition": {
+                "type": "scene",
+                "sceneId": "SCN_17_SUB_1"
+              }
+            },
+            "startedAt": "23:26",
+            "completedAt": "23:38",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "object_interaction",
+          "action": "把哈里森准备的小装置从陈列架上拿起并塞进花哨的衣服的隐蔽口袋里，确保它被妥善遮掩",
+          "impact": 0,
+          "nodeId": "oi_tallinn_01",
+          "status": "completed",
+          "endTime": "23:25",
+          "outcome": "我从陈列架上拿起了Harrison准备的小发明，悄悄把它塞进花哨衣服内侧的隐蔽口袋并扣好，确认外观贴身不易被察觉后收好。",
+          "startTime": "23:22",
+          "characterId": "Tallinn",
+          "characterName": "Tallinn",
+          "executionMeta": {
+            "startedAt": "23:22",
+            "completedAt": "23:25",
+            "remainingMinutes": 0
+          },
+          "objectInteractionPayload": {
+            "itemId": "ITEM_SCN18_2"
+          }
+        },
+        {
+          "type": "movement",
+          "action": "步行回到教堂",
+          "impact": 0,
+          "nodeId": "m1",
+          "status": "completed",
+          "endTime": "23:29",
+          "outcome": "步行回到教堂 成功",
+          "startTime": "23:26",
+          "characterId": "Tallinn",
+          "destination": "SCN_17_SUB_1",
+          "characterName": "Tallinn",
+          "executionMeta": {
+            "movement": {
+              "routeSnapshot": [
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_3",
+                    "position": 0.58
+                  },
+                  "from": {
+                    "type": "scene",
+                    "sceneId": "SCN_18_SUB_1"
+                  },
+                  "kind": "along_road",
+                  "roadId": "ROAD_3",
+                  "blockCheck": {
+                    "toId": "ROAD_3",
+                    "fromId": "SCN_18_SUB_1"
+                  },
+                  "durationMinutes": 1
+                },
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_3",
+                    "position": 1
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_3",
+                    "position": 0.58
+                  },
+                  "kind": "along_road",
+                  "roadId": "ROAD_3",
+                  "durationMinutes": 4.2
+                },
+                {
+                  "to": {
+                    "type": "junction",
+                    "junctionId": "JUNC_4"
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_3",
+                    "position": 1
+                  },
+                  "kind": "to_junction",
+                  "blockCheck": {
+                    "toId": "JUNC_4",
+                    "fromId": "ROAD_3"
+                  },
+                  "durationMinutes": 0
+                },
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_3",
+                    "position": 1
+                  },
+                  "from": {
+                    "type": "junction",
+                    "junctionId": "JUNC_4"
+                  },
+                  "kind": "to_junction",
+                  "blockCheck": {
+                    "toId": "ROAD_3",
+                    "fromId": "JUNC_4"
+                  },
+                  "durationMinutes": 0
+                },
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_3",
+                    "position": 0.49
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_3",
+                    "position": 1
+                  },
+                  "kind": "along_road",
+                  "roadId": "ROAD_3",
+                  "durationMinutes": 5.1
+                },
+                {
+                  "to": {
+                    "type": "scene",
+                    "sceneId": "SCN_17_SUB_1"
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_3",
+                    "position": 0.49
+                  },
+                  "kind": "to_scene",
+                  "blockCheck": {
+                    "toId": "SCN_17_SUB_1",
+                    "fromId": "ROAD_3"
+                  },
+                  "durationMinutes": 1
+                }
+              ],
+              "targetPosition": {
+                "type": "scene",
+                "sceneId": "SCN_17_SUB_1"
+              },
+              "minutesIntoStep": 0,
+              "currentStepIndex": 6,
+              "lastReachablePosition": {
+                "type": "scene",
+                "sceneId": "SCN_17_SUB_1"
+              }
+            },
+            "startedAt": "23:26",
+            "completedAt": "23:38",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "action",
+          "action": "退入主殿阴影处，靠墙隐蔽观察Constantine和进出人员是否有人使用“码头”暗号",
+          "impact": 0,
+          "nodeId": "a_day1_2339_tallinn_observe",
+          "status": "completed",
+          "endTime": "23:44",
+          "outcome": "退入主殿阴影处，靠墙隐蔽观察Constantine和进出人员是否有人使用“码头”暗号 成功",
+          "startTime": "23:39",
+          "characterId": "Tallinn",
+          "characterName": "Tallinn",
+          "executionMeta": {
+            "startedAt": "23:39",
+            "completedAt": "23:44",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "object_interaction",
+          "action": "悄悄翻开祭坛上的圣经，检查我先前藏在里面的赌场联系簿是否仍在并没有被动过",
+          "impact": 0,
+          "nodeId": "oi_tallinn_001",
+          "status": "completed",
+          "endTime": "23:48",
+          "outcome": "我悄悄翻开祭坛上的那本古旧圣经，翻检书页，果然在折叠的页缝里发现了我先前塞进去的赌场联系簿，未见被动过。把书合上并放回原位，没人注意到。",
+          "startTime": "23:45",
+          "characterId": "Tallinn",
+          "characterName": "Tallinn",
+          "executionMeta": {
+            "startedAt": "23:45",
+            "completedAt": "23:48",
+            "remainingMinutes": 0
+          },
+          "objectInteractionPayload": {
+            "itemId": "ITEM_SCN17_3"
+          }
+        },
+        {
+          "type": "action",
+          "action": "在主殿阴影处蹲守，静静盯着Constantine和靠近暗门的动向，留意并记录任何使用“码头”暗号或与他们接触的可疑人物",
+          "impact": 0,
+          "nodeId": "a_tallinn_observe_01",
+          "status": "completed",
+          "endTime": "23:59",
+          "outcome": "在主殿阴影处蹲守，静静盯着Constantine和靠近暗门的动向，留意并记录任何使用“码头”暗号或与他们接触的可疑人物 成功",
+          "startTime": "23:49",
+          "characterId": "Tallinn",
+          "characterName": "Tallinn",
+          "executionMeta": {
+            "startedAt": "23:49",
+            "completedAt": "23:59",
+            "remainingMinutes": 0
+          }
+        }
+      ]
+    }
+  ],
+  "intents": [
+    {
+      "intent": "Immediately move to the Paladriel Hotel to create a disturbance if necessary to cover Constantine's operation; coordinate with Cold Spider, protect my hidden items (contact book, small device), and report back to Constantine when the handoff is secure.",
+      "updatedAt": "2026-04-02T09:59:40.839Z"
+    }
+  ],
+  "npcName": "Tallinn"
+}

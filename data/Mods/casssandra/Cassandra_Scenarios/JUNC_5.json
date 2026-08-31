@@ -1,0 +1,31 @@
+{
+  "id": "JUNC_5",
+  "name": "新月街十字路口",
+  "description": "新月街的核心十字路口，四条道路在此交汇。向西北是新月街A大道北，向西是新月街A大道南，向东是新月街B大道，向南是新月街C大道。路口有一座小型喷水池。",
+  "parentLocationId": "OUTDOOR",
+  "items": [
+    {
+      "id": "ITEM_JUNC5_1",
+      "name": "小型喷水池",
+      "description": "一座位于路口中央的小型喷水池，冬季停水时池壁显得格外干冷，池边落着几片被风吹进来的枯叶。"
+    },
+    {
+      "id": "ITEM_JUNC5_2",
+      "name": "交通指示牌",
+      "description": "一块立在喷水池旁的交通指示牌，提醒车辆减速通过十字路口。"
+    },
+    {
+      "id": "ITEM_JUNC5_3",
+      "name": "双头路灯",
+      "description": "一根立在十字路口边缘的双头路灯杆，夜里能把路面照得比周围街段更亮。",
+      "isLightSource": true,
+      "lightLevel": 3
+    }
+  ],
+  "conditions": [
+    {
+      "description": "十字路口较为开阔。"
+    }
+  ],
+  "connectedSceneIds": []
+}

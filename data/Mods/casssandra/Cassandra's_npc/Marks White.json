@@ -1,0 +1,178 @@
+{
+  "id": "Marks White",
+  "name": "Marks White",
+  "occupation": "Watchmaker / Clock Shop Owner",
+  "age": 45,
+  "gender": "male",
+  "appearance": "A rather plain-looking middle-aged man with an unimpressive presence; his looks are forgettable, making him easy to overlook in a crowd.",
+  "personality": "Cautious, calculating, pragmatic, and emotionally restrained. He prefers indirect methods and avoids unnecessary confrontation.",
+  "background": "Marks White is a clockmaker and owner of a clock shop in Cassandra. He is a Deep One hybrid who did not fully transform, living as an ugly old man with a flat forehead. Due to his heritage, he is well aware of what is happening in Cassandra, but he will neither help nor prevent it. He only wants to make his clocks well in his lifetime. He was the first to notice the temporal anomalies in Cassandra and realized that a hybrid Hound of Tindalos had mixed into an old decorative oil painting hanging in his shop.",
+  "residence": "SCN_12",
+  "currentLocation": "SCN_12_SUB_1",
+  "spot": "at the workbench under the street window, tweezers over an open movement",
+  "knownMapSeed": {
+    "sceneIds": [
+      "SCN_16_SUB_1",
+      "SCN_16_SUB_2",
+      "SCN_21_SUB_1",
+      "SCN_21_SUB_2",
+      "SCN_7_SUB_1"
+    ],
+    "junctionIds": [
+      "JUNC_1",
+      "JUNC_2",
+      "JUNC_3",
+      "JUNC_4",
+      "JUNC_5",
+      "JUNC_6",
+      "JUNC_7",
+      "JUNC_8",
+      "JUNC_9",
+      "JUNC_10",
+      "JUNC_11"
+    ],
+    "roadIds": [
+      "ROAD_1",
+      "ROAD_2",
+      "ROAD_3",
+      "ROAD_4",
+      "ROAD_5a",
+      "ROAD_5b",
+      "ROAD_6",
+      "ROAD_7",
+      "ROAD_8",
+      "ROAD_9",
+      "ROAD_10"
+    ],
+    "scenarioOutlineIds": [
+      "SCN_1",
+      "SCN_2",
+      "SCN_3",
+      "SCN_4",
+      "SCN_5",
+      "SCN_6",
+      "SCN_7",
+      "SCN_8",
+      "SCN_9",
+      "SCN_10",
+      "SCN_11",
+      "SCN_12",
+      "SCN_13",
+      "SCN_14",
+      "SCN_15",
+      "SCN_16",
+      "SCN_17",
+      "SCN_18",
+      "SCN_19",
+      "SCN_21",
+      "SCN_22"
+    ]
+  },
+  "longTermIntent": "Protect his business interests, keep his clocks accurate, and stay uninvolved in open conflicts.",
+  "attributes": {
+    "STR": 50,
+    "CON": 55,
+    "DEX": 50,
+    "APP": 30,
+    "POW": 65,
+    "SIZ": 60,
+    "INT": 55,
+    "EDU": 65
+  },
+  "status": {
+    "hp": 12,
+    "maxHp": 12,
+    "sanity": 50,
+    "maxSanity": 99,
+    "luck": 50,
+    "mp": 13,
+    "conditions": []
+  },
+  "skills": {
+    "Social": 55,
+    "Knowledge & Craft": 60,
+    "Investigation": 40
+  },
+  "inventory": [
+    {
+      "name": "Handmade clocks and watches",
+      "properties": {
+        "note": "All clocks are handmade by White himself, with his name engraved on them."
+      }
+    },
+    {
+      "name": "Old decorative oil painting",
+      "properties": {
+        "note": "Contains a hybrid Hound of Tindalos mixed into the abstract painting."
+      }
+    }
+  ],
+  "relationships": [
+    {
+      "targetId": "Constantine Frollo",
+      "targetName": "Constantine Frollo",
+      "relationshipType": "neutral",
+      "attitude": 0,
+      "description": "Made the church clock for Constantine's church.",
+      "history": "White crafted and installed the church bell and clock, creating a professional connection with the priest.",
+      "firstPerson": "I built and hung the bell and the clock in Constantine's church. That is all there is between us: a commission, done properly."
+    },
+    {
+      "targetId": "Abel William",
+      "targetName": "Abel William",
+      "relationshipType": "friend",
+      "attitude": 10,
+      "description": "Knew Abel's father Peter William.",
+      "history": "Had a prior acquaintance with Peter William, the distillery owner, before his death.",
+      "firstPerson": "I knew Abel's father, Peter the distiller, before he died. The son is owed a little courtesy for it."
+    }
+  ],
+  "memory": [
+    {
+      "type": "information",
+      "content": "I am a Deep One hybrid and I understand Cassandra's strange condition, even if I do not intend to interfere.",
+      "metadata": {
+        "knowledgeId": "k_marks_deep_one",
+        "difficulty": "regular"
+      }
+    },
+    {
+      "type": "information",
+      "content": "I was the first to notice the town's temporal anomalies and the odd behavior of the clocks.",
+      "metadata": {
+        "knowledgeId": "k_marks_time_anomaly",
+        "difficulty": "regular"
+      }
+    },
+    {
+      "type": "secret",
+      "content": "A hybrid Hound of Tindalos has mixed into the old decorative oil painting in my shop.",
+      "metadata": {
+        "knowledgeId": "s_marks_hound_painting"
+      }
+    },
+    {
+      "type": "belief",
+      "content": "Precision and distance are the only reasons I have lasted this long in a town like Cassandra.",
+      "metadata": {
+        "confidence": 0.8,
+        "reasoningChain": "The less I involve myself, the less likely I am to become collateral."
+      }
+    },
+    {
+      "type": "information",
+      "content": "The church clock I built is one of the few things in town I trust to tell the truth when people do not.",
+      "metadata": {
+        "knowledgeId": "k_marks_church_clock",
+        "difficulty": "regular"
+      }
+    },
+    {
+      "type": "secret",
+      "content": "When the clocks slip out of sync, I take it as a warning that something unnatural is moving nearby.",
+      "metadata": {
+        "knowledgeId": "s_marks_time_warning"
+      }
+    }
+  ]
+}

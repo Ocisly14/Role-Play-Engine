@@ -1,0 +1,29 @@
+{
+  "id": "SCN_4_SUB_1",
+  "name": "Lisa's Living Room",
+  "description": "A small, tidy living room with a comfortable couch, a bookshelf filled with novels and art books, and a desk with a laptop. Plants line the windowsill. A kitchen nook is tucked in the corner with a coffee maker and neatly arranged mugs.",
+  "parentLocationId": "SCN_4",
+  "items": [
+    {
+      "id": "ITEM_S4_1",
+      "name": "Laptop",
+      "description": "Lisa's personal laptop on the desk, currently showing an email inbox."
+    },
+    {
+      "id": "ITEM_S4_2",
+      "name": "Art Books",
+      "description": "A collection of art and photography books on the shelf. Some have bookmarks."
+    },
+    {
+      "id": "ITEM_S4_3",
+      "name": "Coffee Maker",
+      "description": "A French press coffee maker with a bag of premium coffee beans beside it."
+    }
+  ],
+  "conditions": [
+    {
+      "description": "A warm, well-kept apartment with natural light from the window. Smells faintly of coffee and lavender."
+    }
+  ],
+  "connections": ["SCN_4_SUB_2", "JUNC_4"]
+}

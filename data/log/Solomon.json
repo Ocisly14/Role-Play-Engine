@@ -1,0 +1,5201 @@
+{
+  "npcId": "Solomon",
+  "memories": [
+    {
+      "type": "belief",
+      "content": "有些知识作为私人负担比作为公开事实处理得更好。",
+      "gameDay": 1,
+      "gameTime": "00:00",
+      "location": null,
+      "metadata": {
+        "confidence": 0.95,
+        "reasoningChain": "今晚多次有人在街上和店外试探并有人进入店内打量藏书，证明将某些知识保持私有能减少直接危险与被窥探的风险，因此我对“有些知识作为私人负担比公开更好”的信念更为坚定。"
+      }
+    },
+    {
+      "type": "plan",
+      "content": "穷尽一生探索神秘学的真谛，收集和守护那些常人不应触碰的禁忌知识。他相信这个世界远比表面所见更加深邃和危险，而理解这些隐秘的真相是他存在的意义。",
+      "gameDay": 1,
+      "gameTime": "00:00",
+      "location": null,
+      "metadata": {
+        "planType": "long_term"
+      }
+    },
+    {
+      "type": "plan",
+      "content": "Today's plan: 1. 再次检查《黄衣之王》的暗红封蜡、帘幕后折缝的封印与圆桌周围的护阵，确认一切完好无损。 at 占卜馆; 2. 把昨夜的观察记录写入日志并冥想十分钟以平复心绪与直觉。 at 占卜馆; 3. 简单用餐并小憩两小时以保存精力以备整日巡查。 at 占卜馆; 4. 找Simon简短交谈，试探昨夜在北新街出现的几名访客与他们的动机。 at 花店·卡森德拉之花; 5. 在街口附近隐蔽站位观察人来人往，注意Harrison、Adolph或其他可疑人物的行踪。 at 北新街端点三岔口; 6. 以邻里寒暄为由向Harrison打听镇上最近的传闻并观察他的反应。 at 五金店; 7. 在不引人注目的距离观察阿道夫家的出入与监控布置，确认是否有人监视我或占卜馆。 at 阿道夫家; 8. 坐在驯鹿酒吧听取常客与酒保关于镇上流言的谈论，并留意与我相关的线索。 at 驯鹿酒吧; 9. 到墓地巡视寻找任何异常痕迹或与伐木场、仪式有关的线索。 at 墓地; 10. 在医院外观察来往并向值班人员低声打听是否有人近期因精神崩溃或不寻常事件入院。 at 星辰医院; 11. 在海伦的餐桌吃晚饭并留心与我藏书相关的话题是否被人提及。 at 海伦的餐桌; 12. 回到占卜馆重新加固门锁与护阵，将白天发现入档并把暗红封蜡复检一次。 at 占卜馆; 13. 在深紫色帘幕后静坐冥想并小心地测试自己对那首曲调的掌控以评估危险性。 at 占卜馆; 14. 在灯烛熄灭前把日记上锁、熄灭外围蜡烛并尽量早些休息以恢复精力。 at 占卜馆",
+      "gameDay": 2,
+      "gameTime": "00:00",
+      "location": null,
+      "metadata": {
+        "planType": "daily"
+      }
+    },
+    {
+      "type": "secret",
+      "content": "我曾经有比现在更强的预言感知，我不喜欢承认那有多少已经消退了。",
+      "gameDay": 1,
+      "gameTime": "00:00",
+      "location": null,
+      "metadata": {
+        "knowledgeId": "s_solomon_prophecy"
+      }
+    },
+    {
+      "type": "secret",
+      "content": "《黄衣之王》的前任主人不仅留给我一本危险的书。我还学到了一个在错误天空下仍然有效的哈斯塔之歌的版本，尽管代价是丑陋的。",
+      "gameDay": 1,
+      "gameTime": "00:00",
+      "location": null,
+      "metadata": {
+        "knowledgeId": "s_solomon_hastur_song"
+      }
+    },
+    {
+      "type": "information",
+      "content": "我在来卡森德拉之前买了《黄衣之王》，我对它了解得足够多，知道为什么不会让陌生人随便翻阅它。",
+      "gameDay": 1,
+      "gameTime": "00:00",
+      "location": null,
+      "metadata": {
+        "difficulty": "regular",
+        "knowledgeId": "k_solomon_yellow_book"
+      }
+    },
+    {
+      "type": "secret",
+      "content": "我不认识本，凭原则不喜欢他。我曾有一位叫薄荷的朋友，他开始调查与本有关的事情后精神崩溃，不得不被送走。另一位帮忙照顾薄荷的朋友罗宾随后也离开了卡森德拉。自那以后，我变得更加孤僻，不再主动与人建立深层联系。",
+      "gameDay": 1,
+      "gameTime": "00:00",
+      "location": null,
+      "metadata": {
+        "knowledgeId": "s_solomon_bohe"
+      }
+    },
+    {
+      "type": "information",
+      "content": "我在花店旁经营神秘学商店，把我的书放在我可以亲自看管的地方。",
+      "gameDay": 1,
+      "gameTime": "00:00",
+      "location": null,
+      "metadata": {
+        "difficulty": "automatic",
+        "knowledgeId": "k_solomon_shop"
+      }
+    },
+    {
+      "type": "witness",
+      "content": "[相遇] 00:07——我在占卜馆与Harrison Lockheed面对面相遇。他站在店内，目光在藏书与出入口间游移，神情平静却带有审视的探查意味。我感到警觉与不安——他的出现强化了他与Adolph之间可能的联动与对我藏书的兴趣。我决定立刻行动：悄悄避于暗处，第一时间检查《黄衣之王》的暗红封蜡与帘幕后折缝的封印是否完好（我注意到此前这些封印均未被扰动），同时避免与Harrison交谈并开始在心中记录此刻细节。",
+      "gameDay": 2,
+      "gameTime": "00:07",
+      "location": "SCN_11_SUB_1",
+      "metadata": {
+        "impact": 2,
+        "perspective": "co_presence",
+        "sourceAction": "Harrison Lockheed 在 占卜馆",
+        "sourceCharacterId": "__encounter__"
+      }
+    },
+    {
+      "type": "event",
+      "content": "把昨夜的观察记录写入日志 [在 SCN_11_SUB_1 因重新规划而中断] 已中断",
+      "gameDay": 2,
+      "gameTime": "00:07",
+      "location": "SCN_11_SUB_1",
+      "metadata": {
+        "outcome": "把昨夜的观察记录写入日志 [在 SCN_11_SUB_1 因重新规划而中断] 已中断",
+        "interruptionReason": "revise_replan"
+      }
+    },
+    {
+      "type": "event",
+      "content": "哈里森低声来问我，塞给我一个小礼物并要我把信息悄悄转给阿道夫，还想知道阿道夫最近是否来过镇上。我接受了礼物并同意代为转交，但拒绝透露关于阿道夫或镇上传闻的更多细节，保持谨慎。",
+      "gameDay": 2,
+      "gameTime": "00:12",
+      "location": "SCN_11_SUB_1",
+      "metadata": {
+        "outcome": "低声向所罗门确认他会用隐秘方式将我的信息转交给阿道夫，并试探性询问阿道夫最近是否出现在镇上，观察他的反应以评估可靠性。 [Persuade 40, rolled 44 (fail) — all targets resisted] failed"
+      }
+    },
+    {
+      "type": "event",
+      "content": "检查圆桌周围的护阵是否有异常 [在 SCN_11_SUB_1 因重新规划而中断] 已中断",
+      "gameDay": 2,
+      "gameTime": "00:12",
+      "location": "SCN_11_SUB_1",
+      "metadata": {
+        "outcome": "检查圆桌周围的护阵是否有异常 [在 SCN_11_SUB_1 因重新规划而中断] 已中断",
+        "interruptionReason": "revise_replan"
+      }
+    },
+    {
+      "type": "event",
+      "content": "[直接] Harrison Lockheed 在占卜馆低声与我接触，塞给我一个小礼物并低语请我悄悄把信息转交给Adolph，还试探性询问阿道夫最近是否来过镇上。我接受了礼物但保持警惕，拒绝透露任何有关阿道夫或镇上传闻的细节。感到戒备与不安，决定立刻悄然检查《黄衣之王》的暗红封蜡与帘幕后折缝的封印并秘密观察Harrison的动向。",
+      "gameDay": 2,
+      "gameTime": "00:12",
+      "location": "SCN_11_SUB_1",
+      "metadata": {
+        "impact": 1,
+        "perspective": "targeted",
+        "sourceAction": "我低声问所罗门能否以隐秘方式把我的信息转交给阿道夫，并试探性询问阿道夫最近是否出现在镇上；我的劝说没有奏效，所罗门保持警惕并未透露阿道夫的下落。所罗门口头接受了我递上的小礼物并表示会代为转交，但我没能从他那里得到有用的确认。",
+        "sourceCharacterId": "Harrison Lockheed"
+      }
+    },
+    {
+      "type": "event",
+      "content": "检查圆桌周围的护阵是否有异常 [在 SCN_11_SUB_1 因重新规划而中断] 已中断",
+      "gameDay": 2,
+      "gameTime": "00:18",
+      "location": "SCN_11_SUB_1",
+      "metadata": {
+        "outcome": "检查圆桌周围的护阵是否有异常 [在 SCN_11_SUB_1 因重新规划而中断] 已中断",
+        "interruptionReason": "revise_replan"
+      }
+    },
+    {
+      "type": "event",
+      "content": "[直接] 00:18——哈里森·洛克希德与我低声确认了暗号，接受我递上的小礼物并口头同意以隐蔽方式代为转交，但没有透露阿道夫的下落，态度谨慎。我感到更为戒备和不安：他的介入证实了对我藏书的兴趣与潜在威胁。决定立刻行动：悄然复查《黄衣之王》暗红封蜡与帘幕后折缝封印，检查圆桌护阵是否异常，秘密记录此次接触细节，并推迟今日对外的会面与外出计划，隐蔽观察哈里森的动向。",
+      "gameDay": 2,
+      "gameTime": "00:18",
+      "location": "SCN_11_SUB_1",
+      "metadata": {
+        "impact": 1,
+        "perspective": "targeted",
+        "sourceAction": "我和所罗门低声确认了用于转交信息的暗号，并约定了具体的递送与留信方式。他接受了我递上的小礼物，口头同意会以隐秘方式代为转交，但没有透露阿道夫的下落，态度依旧谨慎。",
+        "sourceCharacterId": "Harrison Lockheed"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我接受了Harrison递上的小礼物，听他低声确认暗号并约定了递送与留信方式，口头同意会以隐秘方式代为转交但保持警惕。我向他说明了那本书上暗红封蜡完好无损，书本未被翻动。",
+      "gameDay": 2,
+      "gameTime": "00:18",
+      "location": "SCN_11_SUB_1",
+      "metadata": {
+        "outcome": "低声与Solomon确认用于转交信息的暗号并约定具体的递送与留信方式"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我悄悄检查了圆桌周围的护阵，没发现异常；附近的蜡烛和圆桌布上的蜡滴都在原位，护阵保持完整。",
+      "gameDay": 2,
+      "gameTime": "00:23",
+      "location": "SCN_11_SUB_1",
+      "metadata": {
+        "outcome": "悄悄检查圆桌周围的护阵是否有异常"
+      }
+    },
+    {
+      "type": "event",
+      "content": "把刚才与Harrison接触的经过和所见细节详尽地记录到日志中 成功",
+      "gameDay": 2,
+      "gameTime": "00:34",
+      "location": "SCN_11_SUB_1",
+      "metadata": {
+        "outcome": "把刚才与Harrison接触的经过和所见细节详尽地记录到日志中 成功"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我从帘幕后靠窗的暗处盯着北新街端点的三岔口，留意Harrison的动向，并悄悄把所见记在随身笔记中。观察顺利，位置隐蔽，帘幕和暗红色封蜡未被扰动。",
+      "gameDay": 2,
+      "gameTime": "00:50",
+      "location": "SCN_11_SUB_1",
+      "metadata": {
+        "outcome": "从帘幕后靠窗的暗处观察北新街端点三岔口，留心Harrison的动向并悄悄记录所见"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我在圆桌周围对护阵进行了加固，确认巩固后夜间防护已增强。检查时未发现异常，护阵保持完好。",
+      "gameDay": 2,
+      "gameTime": "00:58",
+      "location": "SCN_11_SUB_1",
+      "metadata": {
+        "outcome": "加固圆桌周围的护阵以增强夜间防护"
+      }
+    },
+    {
+      "type": "event",
+      "content": "在深紫色帘幕后静坐冥想十分钟，平复心绪并小心地以极低声调试探自己对那首哈斯塔之歌的微弱掌控，注意任何异常反应 成功",
+      "gameDay": 2,
+      "gameTime": "01:09",
+      "location": "SCN_11_SUB_1",
+      "metadata": {
+        "outcome": "在深紫色帘幕后静坐冥想十分钟，平复心绪并小心地以极低声调试探自己对那首哈斯塔之歌的微弱掌控，注意任何异常反应 成功"
+      }
+    },
+    {
+      "type": "witness",
+      "content": "[相遇] 我在花店“卡森德拉之花”与Simon Laplace和Nancy Charlotte意外面对面相遇。Simon表情沉稳但眼神审视，Nancy在一旁显得警觉且留意周围。他们的举止让我怀疑正在摸索有关我或我藏书的信息。我感到突如其来的戒备与不安——原本的静坐冥想与暗中观察计划被打断。我立刻收敛言行，压低声线避免暴露，暗中评估是否应撤回占卜馆或留下密封便条，并在确保安全的前提下继续观察他们的动向。",
+      "gameDay": 2,
+      "gameTime": "01:22",
+      "location": "SCN_9_SUB_1",
+      "metadata": {
+        "impact": 2,
+        "perspective": "co_presence",
+        "sourceAction": "Nancy Charlotte, Simon Laplace (Simon) 在 花店·卡森德拉之花",
+        "sourceCharacterId": "__encounter__"
+      }
+    },
+    {
+      "type": "event",
+      "content": "悄悄走到花店·卡森德拉之花 成功",
+      "gameDay": 2,
+      "gameTime": "01:22",
+      "location": "SCN_9_SUB_1",
+      "metadata": {
+        "outcome": "悄悄走到花店·卡森德拉之花 成功",
+        "blockedReason": "",
+        "failureReason": ""
+      }
+    },
+    {
+      "type": "event",
+      "content": "用包装台上的牛皮纸折成并密封一封便条，放在花店后门处并简要交代当前局势与提醒注意安全 [在 SCN_9_SUB_1 因重新规划而中断] 已中断",
+      "gameDay": 2,
+      "gameTime": "01:26",
+      "location": "SCN_9_SUB_1",
+      "metadata": {
+        "outcome": "用包装台上的牛皮纸折成并密封一封便条，放在花店后门处并简要交代当前局势与提醒注意安全 [在 SCN_9_SUB_1 因重新规划而中断] 已中断",
+        "interruptionReason": "revise_replan"
+      }
+    },
+    {
+      "type": "witness",
+      "content": "[目击] 我注意到Simon走到收银台旁，站在南希身边，目光在我身上转移并盯着店内所有出口——他的审视让我感到警觉与不安，怀疑他们在刻意监视我的出入。立即想要收敛言行、退回隐蔽处并尽快加固封蜡与护阵，或在后门留密封便条告知盟友，今晚绝不冒然外出。",
+      "gameDay": 2,
+      "gameTime": "01:26",
+      "location": "SCN_9_SUB_1",
+      "metadata": {
+        "impact": 2,
+        "perspective": "witness",
+        "sourceAction": "走到收银台旁站在南希身边，观察Solomon的举动并盯着店内所有出口 成功",
+        "sourceCharacterId": "Simon Laplace (Simon)"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我把一张密封的便条放在收银柜台旁那道半掩的木门处，便条已放置完毕并留在原位。",
+      "gameDay": 2,
+      "gameTime": "01:29",
+      "location": "SCN_9_SUB_1",
+      "metadata": {
+        "outcome": "把密封便条放在花店后门处"
+      }
+    },
+    {
+      "type": "event",
+      "content": "有个年轻人（西蒙）低声问我是谁、来意为何，我如实回答：我在花店旁经营神秘学商店，来卡森德拉前买了《黄衣之王》，不会让陌生人随意翻阅。我还告诉他我注意到Angela与Adolph和Harrison有协同行为，Adolph约在19:42与我搭话，Harrison曾在21:59进店并请我代为转交礼物。",
+      "gameDay": 2,
+      "gameTime": "01:33",
+      "location": "SCN_9_SUB_1",
+      "metadata": {
+        "outcome": "低声询问Solomon他的身份和来意"
+      }
+    },
+    {
+      "type": "event",
+      "content": "退到收银柜台旁半掩的木门后躲藏 成功",
+      "gameDay": 2,
+      "gameTime": "01:35",
+      "location": "SCN_9_SUB_1",
+      "metadata": {
+        "outcome": "退到收银柜台旁半掩的木门后躲藏 成功"
+      }
+    },
+    {
+      "type": "event",
+      "content": "在半掩木门后隐蔽观察店内所有出口与窗外街道，悄悄记录任何可疑人物或动静 成功",
+      "gameDay": 2,
+      "gameTime": "01:46",
+      "location": "SCN_9_SUB_1",
+      "metadata": {
+        "outcome": "在半掩木门后隐蔽观察店内所有出口与窗外街道，悄悄记录任何可疑人物或动静 成功"
+      }
+    },
+    {
+      "type": "witness",
+      "content": "[相遇] 在北新街与Johnny面对面相遇。他神情平静但让我警觉，目光模糊难辨是敌是友。我感到戒备与不安，立刻收敛言行、避免搭话，准备绕行或退回店内隐蔽处，心里盘算把他当作可能的监视者并在安全处加紧核查《黄衣之王》的暗红封蜡与护阵。",
+      "gameDay": 2,
+      "gameTime": "01:54",
+      "location": "ROAD_2",
+      "metadata": {
+        "impact": 2,
+        "perspective": "co_presence",
+        "sourceAction": "Johnny 在 卡森德拉北新街",
+        "sourceCharacterId": "__encounter__"
+      }
+    },
+    {
+      "type": "event",
+      "content": "悄悄离开半掩的木门，静悄悄回到占星师小铺以重新检查《黄衣之王》的暗红封蜡与圆桌护阵并加固门锁 [在 ROAD_2 因重新规划而中断] 已中断",
+      "gameDay": 2,
+      "gameTime": "01:54",
+      "location": "ROAD_2",
+      "metadata": {
+        "outcome": "悄悄离开半掩的木门，静悄悄回到占星师小铺以重新检查《黄衣之王》的暗红封蜡与圆桌护阵并加固门锁 [在 ROAD_2 因重新规划而中断] 已中断",
+        "interruptionReason": "revise_replan"
+      }
+    },
+    {
+      "type": "event",
+      "content": "[直接] 刚收到信息：Simon Laplace在店内低声要求出示身份证明并说明来意，但因我当时不在场而未能得逞。此举证实他在主动探查我的身份与动机，让我更加警觉与不安，但并不改变我原先的优先顺序──仍会避开接触、尽快退回隐蔽处（优先经侧道回花店或占卜馆）、并按计划重新检查并加固暗红封蜡与护阵，同时在后门留密封便条，今晚不外出并隐蔽观察可疑人员动向。",
+      "gameDay": 2,
+      "gameTime": "01:56",
+      "location": "ROAD_2",
+      "metadata": {
+        "impact": 1,
+        "perspective": "targeted",
+        "sourceAction": "低声要求Solomon出示身份证明并说明他此刻在店内的具体来意 [target Solomon not present] failed",
+        "sourceCharacterId": "Simon Laplace (Simon)"
+      }
+    },
+    {
+      "type": "witness",
+      "content": "[相遇] 我在卡森德拉北新街与Angela面对面相遇。她神色警觉，举止让我怀疑她正在与Adolph和Harrison协同行动。立刻感到更强的被监视与危险感——不应接触或解释，马上绕行或退回附近隐蔽处（优先花店或占卜馆），在安全处再重新检查《黄衣之王》的暗红封蜡与护阵、加固门锁，并考虑留密封便条通知盟友，今晚尽量不外出。",
+      "gameDay": 2,
+      "gameTime": "02:09",
+      "location": "ROAD_2",
+      "metadata": {
+        "impact": 2,
+        "perspective": "co_presence",
+        "sourceAction": "Angela 在 卡森德拉北新街",
+        "sourceCharacterId": "__encounter__"
+      }
+    },
+    {
+      "type": "event",
+      "content": "悄然退回占星师小铺，避开Johnny并寻找暗处藏身 [在 ROAD_2 因重新规划而中断] 已中断",
+      "gameDay": 2,
+      "gameTime": "02:09",
+      "location": "ROAD_2",
+      "metadata": {
+        "outcome": "悄然退回占星师小铺，避开Johnny并寻找暗处藏身 [在 ROAD_2 因重新规划而中断] 已中断",
+        "interruptionReason": "revise_replan"
+      }
+    },
+    {
+      "type": "witness",
+      "content": "[相遇] 刚在花店“卡森德拉之花”与Nancy Charlotte和Simon Laplace正面相遇。Simon神情沉稳但眼神审视，Nancy显得警觉。他们的举止让我怀疑正在探查我的身份或藏书（Simon之前曾低声要求出示身份证明并探询来意），我感到突如其来的戒备与不安。立即收敛言行、压低声线，决定马上撤回到隐蔽处（优先经侧门或后门回占卜馆或花店暗处），在安全处重新检查并加固《黄衣之王》的暗红封蜡与圆桌护阵、锁好门，并在后门留密封便条通知盟友；今晚不外出，暗中继续观察他们的动向。",
+      "gameDay": 2,
+      "gameTime": "02:20",
+      "location": "SCN_9_SUB_1",
+      "metadata": {
+        "impact": 2,
+        "perspective": "co_presence",
+        "sourceAction": "Nancy Charlotte, Simon Laplace (Simon) 在 花店·卡森德拉之花",
+        "sourceCharacterId": "__encounter__"
+      }
+    },
+    {
+      "type": "event",
+      "content": "悄然退入花店·卡森德拉之花的后门以避开Angela并且不发生交谈 成功",
+      "gameDay": 2,
+      "gameTime": "02:20",
+      "location": "SCN_9_SUB_1",
+      "metadata": {
+        "outcome": "悄然退入花店·卡森德拉之花的后门以避开Angela并且不发生交谈 成功",
+        "blockedReason": "",
+        "failureReason": ""
+      }
+    },
+    {
+      "type": "event",
+      "content": "我向西蒙出示了身份证明并简要说明我此刻在店内的来意：我在花店旁经营一间神秘学商店，书籍由我亲自看管，且我在来卡森德拉前就买了《黄衣之王》，因此不会让陌生人翻阅。我还告诉他，Angela频繁与Adolph和Harrison同行，Adolph约在19:42与我搭话，Harrison在21:59曾进店并留下一个小礼物并打听过Adolph。",
+      "gameDay": 2,
+      "gameTime": "02:24",
+      "location": "SCN_9_SUB_1",
+      "metadata": {
+        "outcome": "低声要求所罗门出示身份证明并简要说明他此刻在店内的具体来意"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我躲在半掩的木门后暗处，悄悄观察店外街道并记录下我所见。未见到Angela或任何可疑人物，街道安静无异常，我把记录收好以备后续核对。",
+      "gameDay": 2,
+      "gameTime": "02:26",
+      "location": "SCN_9_SUB_1",
+      "metadata": {
+        "outcome": "在半掩木门后暗处观察店外街道以留意Angela或其他可疑人物的动向并悄悄记录"
+      }
+    },
+    {
+      "type": "event",
+      "content": "悄悄经侧门回到占星师小铺 成功",
+      "gameDay": 2,
+      "gameTime": "02:39",
+      "location": "SCN_11_SUB_1",
+      "metadata": {
+        "outcome": "悄悄经侧门回到占星师小铺 成功",
+        "blockedReason": "",
+        "failureReason": ""
+      }
+    },
+    {
+      "type": "event",
+      "content": "我检查了《黄衣之王》的暗红封蜡，确认没有裂缝，在必要处补上了新蜡并压上了我的记号，然后把书放回躺椅下的藏处，封印与护守恢复如初。",
+      "gameDay": 2,
+      "gameTime": "02:45",
+      "location": "SCN_11_SUB_1",
+      "metadata": {
+        "itemId": "《黄衣之王》",
+        "outcome": "检查并加固《黄衣之王》的暗红封蜡，确认无裂缝并在必要处补蜡密封",
+        "itemName": "《黄衣之王》"
+      }
+    },
+    {
+      "type": "event",
+      "content": "回到深紫色帘幕后靠窗的暗处，隐蔽观察北新街端点三岔口并把所见记录在随身笔记中 成功",
+      "gameDay": 2,
+      "gameTime": "02:56",
+      "location": "SCN_11_SUB_1",
+      "metadata": {
+        "outcome": "回到深紫色帘幕后靠窗的暗处，隐蔽观察北新街端点三岔口并把所见记录在随身笔记中 成功"
+      }
+    },
+    {
+      "type": "event",
+      "content": "在深紫色帘幕后继续隐蔽观察北新街端点三岔口十分钟以确认是否出现Angela、Harrison或Adolph，并将所见记入随身笔记 成功",
+      "gameDay": 2,
+      "gameTime": "03:07",
+      "location": "SCN_11_SUB_1",
+      "metadata": {
+        "outcome": "在深紫色帘幕后继续隐蔽观察北新街端点三岔口十分钟以确认是否出现Angela、Harrison或Adolph，并将所见记入随身笔记 成功"
+      }
+    },
+    {
+      "type": "event",
+      "content": "把刚才在窗前观察到的情况写入随身笔记 成功",
+      "gameDay": 2,
+      "gameTime": "03:18",
+      "location": "SCN_11_SUB_1",
+      "metadata": {
+        "outcome": "把刚才在窗前观察到的情况写入随身笔记 成功"
+      }
+    },
+    {
+      "type": "event",
+      "content": "在深紫色帘幕后继续隐蔽观察北新街端点三岔口，留意Angela、Harrison或Adolph的出现与互动并悄悄记录所见 [在 SCN_11_SUB_1 因重新规划而中断] 已中断",
+      "gameDay": 2,
+      "gameTime": "03:31",
+      "location": "SCN_11_SUB_1",
+      "metadata": {
+        "outcome": "在深紫色帘幕后继续隐蔽观察北新街端点三岔口，留意Angela、Harrison或Adolph的出现与互动并悄悄记录所见 [在 SCN_11_SUB_1 因重新规划而中断] 已中断",
+        "interruptionReason": "revise_replan"
+      }
+    },
+    {
+      "type": "event",
+      "content": "[直接] 刚得知Simon在店内低声命令要我站到灯光下举手并把随身物品放到收银台上、说明来意，但因我当时不在场而未能得逞。此举证明他在主动探查我的身份与动机，令我警觉与不安。我感到被针对：立刻要收拢行动、退回隐蔽处并马上加固《黄衣之王》的暗红封蜡与圆桌护阵、锁好门窗；在确保安全的前提下考虑在花店后门留密封便条通知盟友，今晚不外出并暗中观察Simon及其同伙的动向。",
+      "gameDay": 2,
+      "gameTime": "03:31",
+      "location": "SCN_11_SUB_1",
+      "metadata": {
+        "impact": 1,
+        "perspective": "targeted",
+        "sourceAction": "低声命令所罗门站到灯光下把手举起并将随身物品放到收银台上，说明此刻留在店内的具体来意 [target Solomon not present] failed",
+        "sourceCharacterId": "Simon Laplace (Simon)"
+      }
+    },
+    {
+      "type": "event",
+      "content": "把门边的躺椅推到前门前以堵住门 [在 SCN_11_SUB_1 因重新规划而中断] 已中断",
+      "gameDay": 2,
+      "gameTime": "03:35",
+      "location": "SCN_11_SUB_1",
+      "metadata": {
+        "outcome": "把门边的躺椅推到前门前以堵住门 [在 SCN_11_SUB_1 因重新规划而中断] 已中断",
+        "interruptionReason": "revise_replan"
+      }
+    },
+    {
+      "type": "event",
+      "content": "[直接] 我刚得知Simon在店内低声命令要我站到灯光下并把随身物品放到收银台上以便确认身份与来意，但因我当时不在场未能得逞。我感到被针对，警觉与不安立刻上升。会立即收拢行动：退回隐蔽处，重新检查并加固《黄衣之王》的暗红封蜡与圆桌护阵，锁好门窗；若能不暴露则在花店后门留密封便条通知盟友；今晚不外出并暗中观察Simon及其同伙的动向。",
+      "gameDay": 2,
+      "gameTime": "03:35",
+      "location": "SCN_11_SUB_1",
+      "metadata": {
+        "impact": 1,
+        "perspective": "targeted",
+        "sourceAction": "低声命令所罗门站到灯光下，把随身物品放到收银台上以便确认身份和来意 [target Solomon not present] failed",
+        "sourceCharacterId": "Simon Laplace (Simon)"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我把门边的躺椅推到前门前以堵住门口；躺椅下藏着的那本神秘书籍随躺椅一起到了门前，仍被深紫色帘幕掩护，帘幕上的暗红封蜡并未被扰动。",
+      "gameDay": 2,
+      "gameTime": "03:38",
+      "location": "SCN_11_SUB_1",
+      "metadata": {
+        "itemId": "ITEM_SCN11_2",
+        "outcome": "把门边的躺椅推到前门前以堵住门",
+        "itemName": "门边的躺椅"
+      }
+    },
+    {
+      "type": "event",
+      "content": "从深紫色帘幕后靠窗的暗处隐蔽观察北新街端点三岔口，密切留意Simon及其同伙的动向并把所见记录在随身笔记中 成功",
+      "gameDay": 2,
+      "gameTime": "03:49",
+      "location": "SCN_11_SUB_1",
+      "metadata": {
+        "outcome": "从深紫色帘幕后靠窗的暗处隐蔽观察北新街端点三岔口，密切留意Simon及其同伙的动向并把所见记录在随身笔记中 成功"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我悄悄吹熄了圆桌周围的外围蜡烛，室内光线进一步减弱，暗处更易隐蔽。吹灭过程没有扰动到护阵或封蜡，其他摆设保持原状。",
+      "gameDay": 2,
+      "gameTime": "03:53",
+      "location": "SCN_11_SUB_1",
+      "metadata": {
+        "outcome": "悄悄吹熄圆桌周围的外围蜡烛以减少室内可见光，保持暗处隐蔽"
+      }
+    },
+    {
+      "type": "event",
+      "content": "在深紫色帘幕后继续隐蔽观察北新街端点三岔口并把所见记入随身笔记 成功",
+      "gameDay": 2,
+      "gameTime": "04:14",
+      "location": "SCN_11_SUB_1",
+      "metadata": {
+        "outcome": "在深紫色帘幕后继续隐蔽观察北新街端点三岔口并把所见记入随身笔记 成功"
+      }
+    },
+    {
+      "type": "event",
+      "content": "继续在深紫色帘幕后隐蔽观察北新街端点三岔口并记录所有可疑动向 成功",
+      "gameDay": 2,
+      "gameTime": "04:30",
+      "location": "SCN_11_SUB_1",
+      "metadata": {
+        "outcome": "继续在深紫色帘幕后隐蔽观察北新街端点三岔口并记录所有可疑动向 成功"
+      }
+    },
+    {
+      "type": "event",
+      "content": "继续在深紫色帘幕后隐蔽观察北新街端点三岔口并把所见记入随身笔记 成功",
+      "gameDay": 2,
+      "gameTime": "04:45",
+      "location": "SCN_11_SUB_1",
+      "metadata": {
+        "outcome": "继续在深紫色帘幕后隐蔽观察北新街端点三岔口并把所见记入随身笔记 成功"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我把门边的旧躺椅用力推到前门处，牢牢抵住门扇，堵塞比先前更稳。躺椅下的神秘书籍仍在帘幕后，未被暴露。",
+      "gameDay": 2,
+      "gameTime": "04:48",
+      "location": "SCN_11_SUB_1",
+      "metadata": {
+        "outcome": "把门边的躺椅牢牢推到前门边以加固门的阻挡"
+      }
+    },
+    {
+      "type": "event",
+      "content": "继续在深紫色帘幕后隐蔽观察北新街端点三岔口，密切监视Simon及其同伙的动向并悄悄记录所见 成功",
+      "gameDay": 2,
+      "gameTime": "05:10",
+      "location": "SCN_11_SUB_1",
+      "metadata": {
+        "outcome": "继续在深紫色帘幕后隐蔽观察北新街端点三岔口，密切监视Simon及其同伙的动向并悄悄记录所见 成功"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我悄悄吹熄了天花板上的铜质油灯，屋内变得更暗些，便于我在帘幕后继续隐蔽观察北新街三岔口与Harrison的动向。",
+      "gameDay": 2,
+      "gameTime": "05:13",
+      "location": "SCN_11_SUB_1",
+      "metadata": {
+        "outcome": "悄悄吹熄铜质油灯以进一步降低室内光线，维持隐蔽观察状态"
+      }
+    },
+    {
+      "type": "event",
+      "content": "在深紫色帘幕后继续隐蔽观察北新街端点三岔口并把所见详尽记录在随身笔记中 成功",
+      "gameDay": 2,
+      "gameTime": "05:24",
+      "location": "SCN_11_SUB_1",
+      "metadata": {
+        "outcome": "在深紫色帘幕后继续隐蔽观察北新街端点三岔口并把所见详尽记录在随身笔记中 成功"
+      }
+    },
+    {
+      "type": "event",
+      "content": "简单用餐并小憩两小时以保存精力 成功",
+      "gameDay": 2,
+      "gameTime": "07:25",
+      "location": "SCN_11_SUB_1",
+      "metadata": {
+        "outcome": "简单用餐并小憩两小时以保存精力 成功"
+      }
+    },
+    {
+      "type": "event",
+      "content": "从深紫色帘幕后靠窗继续隐蔽观察北新街端点三岔口，并把所见详尽记录在随身笔记中 成功",
+      "gameDay": 2,
+      "gameTime": "07:46",
+      "location": "SCN_11_SUB_1",
+      "metadata": {
+        "outcome": "从深紫色帘幕后靠窗继续隐蔽观察北新街端点三岔口，并把所见详尽记录在随身笔记中 成功"
+      }
+    },
+    {
+      "type": "event",
+      "content": "把今天对《黄衣之王》暗红封蜡、帘幕后折缝封印与圆桌护阵的检查与加固情况详尽记录到日记中并将日记上锁 成功",
+      "gameDay": 2,
+      "gameTime": "07:55",
+      "location": "SCN_11_SUB_1",
+      "metadata": {
+        "outcome": "把今天对《黄衣之王》暗红封蜡、帘幕后折缝封印与圆桌护阵的检查与加固情况详尽记录到日记中并将日记上锁 成功"
+      }
+    },
+    {
+      "type": "event",
+      "content": "在深紫色帘幕后继续隐蔽观察北新街端点三岔口并把所见详尽记录在随身笔记中 成功",
+      "gameDay": 2,
+      "gameTime": "08:16",
+      "location": "SCN_11_SUB_1",
+      "metadata": {
+        "outcome": "在深紫色帘幕后继续隐蔽观察北新街端点三岔口并把所见详尽记录在随身笔记中 成功"
+      }
+    },
+    {
+      "type": "plan",
+      "content": "Today's plan: 1. 为今晚可能的来访者整理占卜用具与预约记录 at 占星师小铺; 2. 审阅并加强对《黄衣之王》封存的保护措施，确保不会被随意翻阅 at 占星师小铺; 3. 敲门与Simon和Nancy短谈并借用几块麻布和一小瓶红酒作为临时保存材料 at 花店·卡森德拉之花; 4. 用借来的材料对几本脆弱的卷册做临时修护并在修复日志中记录细节 at 占星师小铺; 5. 煮一杯热茶并简单用餐，同时翻阅一段无害的经文作笔记 at 占星师小铺; 6. 将新近入藏的书目要点录入我的私有藏书目录并标注警示标签 at 占星师小铺; 7. 点上几根额外的蜡烛并布置简单护阵以维持夜间的安全防护 at 占星师小铺; 8. 写下今日观察与偶得的梦境片段，尝试捕捉任何残留的预感 at 占星师小铺; 9. 查看门外的雪况并根据天气制定明日起身外出的计划 at 占星师小铺; 10. 在睡前做短暂的冥想以封存今日接触到的思想，然后就寝 at 占星师小铺",
+      "gameDay": 1,
+      "gameTime": "19:00",
+      "location": null,
+      "metadata": {
+        "planType": "daily"
+      }
+    },
+    {
+      "type": "event",
+      "content": "整理占卜用具并核对今晚的预约记录 成功",
+      "gameDay": 1,
+      "gameTime": "19:15",
+      "location": "SCN_11_SUB_1",
+      "metadata": {
+        "outcome": "整理占卜用具并核对今晚的预约记录 成功"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我在圆桌上为《黄衣之王》重新封蜡，加强了封存，并在蜡印上按下了我的记号。动作顺利，书现在被牢固封存，桌面留下几处蜡迹。",
+      "gameDay": 1,
+      "gameTime": "19:30",
+      "location": "SCN_11_SUB_1",
+      "metadata": {
+        "itemId": "《黄衣之王》",
+        "outcome": "为《黄衣之王》重新封蜡以加强封存",
+        "itemName": "《黄衣之王》"
+      }
+    },
+    {
+      "type": "witness",
+      "content": "[相遇] 我在卡森德拉北新街与Johnny面对面相遇。他看上去像是随意路过，表情冷静但眼里带着一丝局促。我心里微微警觉——对他并不熟悉，也不愿在街上与人多作停留。于是我只是礼貌地点了点头，保持距离，准备继续回占星师小铺按原计划处理今日未完的事宜。",
+      "gameDay": 1,
+      "gameTime": "19:36",
+      "location": "ROAD_2",
+      "metadata": {
+        "impact": 2,
+        "perspective": "co_presence",
+        "sourceAction": "Johnny 在 卡森德拉北新街",
+        "sourceCharacterId": "__encounter__"
+      }
+    },
+    {
+      "type": "event",
+      "content": "步行前往花店·卡森德拉之花 [在 ROAD_2 因重新规划而中断] 已中断",
+      "gameDay": 1,
+      "gameTime": "19:42",
+      "location": "ROAD_2",
+      "metadata": {
+        "outcome": "步行前往花店·卡森德拉之花 [在 ROAD_2 因重新规划而中断] 已中断",
+        "interruptionReason": "revise_replan"
+      }
+    },
+    {
+      "type": "event",
+      "content": "[直接] Adolph Carl以礼貌而克制的口吻向我和Johnny搭话，探试我们此行目的并暗中辨认衣着、口音与随行情况——他针对Johnny的试探因Johnny不在而失败。我感到警觉与不安，觉得有人在留意我与我的藏书。决定立刻回到占星师小铺检查并加强《黄衣之王》的封存，同时保持低调观察Adolph的动向。",
+      "gameDay": 1,
+      "gameTime": "19:42",
+      "location": "ROAD_2",
+      "metadata": {
+        "impact": 1,
+        "perspective": "targeted",
+        "sourceAction": "以礼貌而克制的口吻与Johnny和Solomon搭话，试探他们此行目的并暗中辨认衣着、口音与随行情况 [target Johnny not present] failed",
+        "sourceCharacterId": "Adolph Carl"
+      }
+    },
+    {
+      "type": "event",
+      "content": "步行返回占星师小铺 [在 ROAD_2 因重新规划而中断] 已中断",
+      "gameDay": 1,
+      "gameTime": "19:48",
+      "location": "ROAD_2",
+      "metadata": {
+        "outcome": "步行返回占星师小铺 [在 ROAD_2 因重新规划而中断] 已中断",
+        "interruptionReason": "revise_replan"
+      }
+    },
+    {
+      "type": "event",
+      "content": "[直接] 19:42 我注意到Adolph Carl以礼貌而克制的口吻向我和Johnny搭话，试探我们的此行目的，并暗中记录衣着、口音与随行人数与去向（针对Johnny的试探因Johnny不在而未果）。这一举动让我感到被盯上，心中警觉与不安。我决定立刻回店检查并加强《黄衣之王》的封存，同时低调观察Adolph的动向，避免在街上与人多作停留。",
+      "gameDay": 1,
+      "gameTime": "19:48",
+      "location": "ROAD_2",
+      "metadata": {
+        "impact": 1,
+        "perspective": "targeted",
+        "sourceAction": "以礼貌而克制的口吻向Johnny和Solomon搭话，试探他们此行目的并暗中记录衣着、口音与同行人数与去向 [target Johnny not present] failed",
+        "sourceCharacterId": "Adolph Carl"
+      }
+    },
+    {
+      "type": "event",
+      "content": "[直接] 刚才Adolph Carl以礼貌而克制的口吻向我搭话，试探我们此行目的，并暗中记录了我的衣着、口音与随行人数（他对Johnny的试探因Johnny不在而失败）。我感到被盯上了，心里警觉又不安。决定按原计划立即回占星师小铺，检查并加固《黄衣之王》的封存，同时低调观察Adolph的动向，避免在街上与人多作停留。",
+      "gameDay": 1,
+      "gameTime": "19:54",
+      "location": "ROAD_2",
+      "metadata": {
+        "impact": 1,
+        "perspective": "targeted",
+        "sourceAction": "与Johnny和Solomon交谈以试探他们此行目的并暗中记录衣着、口音与同行人数 [target Johnny not present] failed",
+        "sourceCharacterId": "Adolph Carl"
+      }
+    },
+    {
+      "type": "witness",
+      "content": "[相遇] 我在卡森德拉北新街与Adolph Carl面对面相遇。他以礼貌而克制的口吻试探我们的目的，似乎在暗中记录我的衣着、口音和随行情况。被盯上的感觉让我警觉且不安。我决定立即停止在街上逗留，立刻返回占星师小铺，检查并加固《黄衣之王》的封存，并在安全处低调观察Adolph的动向，避免与其交谈。",
+      "gameDay": 1,
+      "gameTime": "19:55",
+      "location": "ROAD_2",
+      "metadata": {
+        "impact": 2,
+        "perspective": "co_presence",
+        "sourceAction": "Adolph Carl 在 卡森德拉北新街",
+        "sourceCharacterId": "__encounter__"
+      }
+    },
+    {
+      "type": "event",
+      "content": "步行回到占星师小铺，低调进入准备检查《黄衣之王》的封存 [在 ROAD_2 因重新规划而中断] 已中断",
+      "gameDay": 1,
+      "gameTime": "19:55",
+      "location": "ROAD_2",
+      "metadata": {
+        "outcome": "步行回到占星师小铺，低调进入准备检查《黄衣之王》的封存 [在 ROAD_2 因重新规划而中断] 已中断",
+        "interruptionReason": "revise_replan"
+      }
+    },
+    {
+      "type": "event",
+      "content": "有个衣着讲究的男人礼貌地问我的来意，我简短回答说我在来卡森德拉前买了《黄衣之王》，知道为何不能让陌生人翻阅，也告诉他我在花店旁经营神秘学商店。我感觉被试探，因此只说了这些，没有让他接触我的书。",
+      "gameDay": 1,
+      "gameTime": "20:00",
+      "location": "ROAD_2",
+      "metadata": {
+        "outcome": "以礼貌而克制的口吻与Solomon搭话，试探他此行目的并暗中记录衣着、口音与随行人数与去向"
+      }
+    },
+    {
+      "type": "witness",
+      "content": "[相遇] 我在卡森德拉北新街与Adolph Carl和一名叫Angela的女子面对面相遇。Adolph依旧以礼貌而克制的口吻试探性地搭话，并在观察我的衣着与随行状况，Angela在旁警觉地注视着我。被他们同时出现和盯视让我更加不安与警觉。我决定立刻停止在街上的逗留，马上返回占星师小铺，检查并加固《黄衣之王》的封存，同时从安全处低调观察他们的动向。",
+      "gameDay": 1,
+      "gameTime": "20:01",
+      "location": "ROAD_2",
+      "metadata": {
+        "impact": 2,
+        "perspective": "co_presence",
+        "sourceAction": "Adolph Carl, Angela 在 卡森德拉北新街",
+        "sourceCharacterId": "__encounter__"
+      }
+    },
+    {
+      "type": "event",
+      "content": "步行回到占星师小铺 [在 ROAD_2 因重新规划而中断] 已中断",
+      "gameDay": 1,
+      "gameTime": "20:01",
+      "location": "ROAD_2",
+      "metadata": {
+        "outcome": "步行回到占星师小铺 [在 ROAD_2 因重新规划而中断] 已中断",
+        "interruptionReason": "revise_replan"
+      }
+    },
+    {
+      "type": "event",
+      "content": "[直接] 我刚看到Harrison Lockheed走近Adolph和Angela，和他们寒暄并把一个小礼物递给了Adolph，同时留意他们的谈话，似乎在打探或交换可能影响我生意的信息。我感到更为警觉和不安——有人比我想象的更留意这片区域和可能的藏书线索。现在我更急切要回店加固封存，并从安全处盯着他们，避免正面接触。",
+      "gameDay": 1,
+      "gameTime": "20:07",
+      "location": "ROAD_2",
+      "metadata": {
+        "impact": 1,
+        "perspective": "targeted",
+        "sourceAction": "走近阿道夫，与他和在场的Angela、Solomon寒暄，并把准备好的小礼物递给阿道夫，同时留意他们谈话中的任何可能影响我生意的消息 [target Adolph Carl not present] failed",
+        "sourceCharacterId": "Harrison Lockheed"
+      }
+    },
+    {
+      "type": "event",
+      "content": "有个自称Adolph的绅士礼貌地套话，询问我的衣着、口音与去向。我告诉他我在来卡森德拉前就买了《黄衣之王》，不会让陌生人翻看，目前无人随行，打算回到花店旁的神秘学商店。我对他保持防备，未对他开放信任。",
+      "gameDay": 1,
+      "gameTime": "20:07",
+      "location": "ROAD_2",
+      "metadata": {
+        "outcome": "以礼貌且克制的方式接近Solomon和Angela，礼貌套话并暗中记录他们的衣着、口音、随行人数与去向"
+      }
+    },
+    {
+      "type": "event",
+      "content": "步行回占星师小铺以检查并加固《黄衣之王》的封存，低调观察阿道夫的动向 [在 ROAD_2 因重新规划而中断] 已中断",
+      "gameDay": 1,
+      "gameTime": "20:11",
+      "location": "ROAD_2",
+      "metadata": {
+        "outcome": "步行回占星师小铺以检查并加固《黄衣之王》的封存，低调观察阿道夫的动向 [在 ROAD_2 因重新规划而中断] 已中断",
+        "interruptionReason": "revise_replan"
+      }
+    },
+    {
+      "type": "event",
+      "content": "[直接] 我看到Harrison Lockheed走近Adolph和Angela，与他们寒暄并把一个小礼物递给Adolph，似乎在打听或交换对我可能不利的信息。此事让我更为警觉和不安——有人比我先前估计的更密切地注意这一区域和可能的藏书线索。我决定立刻回占星师小铺，加固《黄衣之王》的封存，并从隐蔽处低调监视他们，绝不正面接触。",
+      "gameDay": 1,
+      "gameTime": "20:11",
+      "location": "ROAD_2",
+      "metadata": {
+        "impact": 1,
+        "perspective": "targeted",
+        "sourceAction": "向阿道夫、Angela和Solomon寒暄，并把小礼物递给阿道夫，同时留心他们谈话中的任何风声 [target Adolph Carl not present] failed",
+        "sourceCharacterId": "Harrison Lockheed"
+      }
+    },
+    {
+      "type": "witness",
+      "content": "[相遇] 我在卡森德拉北新街与Angela面对面相遇。她神色警觉，像是与Adolph等人有关联。这让我更不安与警惕，但并未改变我原本要立刻回占星师小铺加固《黄衣之王》封存并低调监视他们的计划；我会尽量避开交谈，低调离开。",
+      "gameDay": 1,
+      "gameTime": "20:12",
+      "location": "ROAD_2",
+      "metadata": {
+        "impact": 2,
+        "perspective": "co_presence",
+        "sourceAction": "Angela 在 卡森德拉北新街",
+        "sourceCharacterId": "__encounter__"
+      }
+    },
+    {
+      "type": "event",
+      "content": "步行回占星师小铺，低调保持隐蔽并避免与Adolph、Harrison和Angela接触 成功",
+      "gameDay": 1,
+      "gameTime": "20:17",
+      "location": "SCN_11_SUB_1",
+      "metadata": {
+        "outcome": "步行回占星师小铺，低调保持隐蔽并避免与Adolph、Harrison和Angela接触 成功",
+        "blockedReason": "",
+        "failureReason": ""
+      }
+    },
+    {
+      "type": "event",
+      "content": "我掀开书的封面边缘，检查了《黄衣之王》上那枚暗红色的封蜡：封印完好无损，压着我的记号，周围的几处新蜡滴也未被扰动。我将书放回原位，保持警觉，继续在店内低调观察外面的动向。",
+      "gameDay": 1,
+      "gameTime": "20:23",
+      "location": "SCN_11_SUB_1",
+      "metadata": {
+        "itemId": "《黄衣之王》",
+        "outcome": "检查《黄衣之王》的封蜡，确认封存是否完好",
+        "itemName": "《黄衣之王》"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我在圆桌周围点了几根额外的蜡烛，并按计划布置了一道简单的护阵以维持夜间的安全。圆桌附近的光线比刚才好些，护阵看起来稳当。",
+      "gameDay": 1,
+      "gameTime": "20:34",
+      "location": "SCN_11_SUB_1",
+      "metadata": {
+        "outcome": "点上几根额外的蜡烛并在圆桌周围布置一道简单护阵以维持夜间的安全防护"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我从深紫色帘幕的一角悄悄探视街道，留意Harrison、Adolph与Angela是否靠近或交谈。确认在我能看见的范围内没有他们接近或互相交谈。",
+      "gameDay": 1,
+      "gameTime": "20:40",
+      "location": "SCN_11_SUB_1",
+      "metadata": {
+        "outcome": "从深紫色帘幕的一角悄悄观察街道上的动向，留意Harrison、Adolph与Angela是否靠近或交谈"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我检查了占卜馆的门锁与门栓，确认没有松动后把它们加固并试了试，门现在更牢固，短时间内不易被外部强行打开。",
+      "gameDay": 1,
+      "gameTime": "20:44",
+      "location": "SCN_11_SUB_1",
+      "metadata": {
+        "outcome": "检查并加固占卜馆大门的锁与门栓"
+      }
+    },
+    {
+      "type": "witness",
+      "content": "[相遇] 我在卡森德拉北新街与Harrison Lockheed面对面相遇。他刚与Adolph和Angela接触并递了个小礼物，神情中带着探询意味。这让我更警觉和不安——有人比我估计的更靠近注意这片区域与我的藏书线索。我不会与他交谈，决定立即离开街道，回占星师小铺加固《黄衣之王》的封存，并从隐蔽处低调监视他们。",
+      "gameDay": 1,
+      "gameTime": "20:49",
+      "location": "ROAD_2",
+      "metadata": {
+        "impact": 2,
+        "perspective": "co_presence",
+        "sourceAction": "Harrison Lockheed 在 卡森德拉北新街",
+        "sourceCharacterId": "__encounter__"
+      }
+    },
+    {
+      "type": "event",
+      "content": "前往花店并敲门向Simon和Nancy借几块麻布和一小瓶红酒 [在 ROAD_2 因重新规划而中断] 已中断",
+      "gameDay": 1,
+      "gameTime": "20:49",
+      "location": "ROAD_2",
+      "metadata": {
+        "outcome": "前往花店并敲门向Simon和Nancy借几块麻布和一小瓶红酒 [在 ROAD_2 因重新规划而中断] 已中断",
+        "interruptionReason": "revise_replan"
+      }
+    },
+    {
+      "type": "event",
+      "content": "哈里森低声向我打招呼，请我替他把礼物转交给阿道夫并打听阿道夫的近况。我礼貌地同意会留意并帮忙转交，但当时并未透露或确认有关阿道夫是否在家的任何信息。",
+      "gameDay": 1,
+      "gameTime": "20:53",
+      "location": "ROAD_2",
+      "metadata": {
+        "outcome": "低声向Solomon问候，恳请他替我把准备好的小礼物转交给阿道夫，并顺便探听阿道夫最近是否在家以及镇上的新风声；同时仔细观察他的表情和随行人员有无异常。"
+      }
+    },
+    {
+      "type": "witness",
+      "content": "[相遇] 我在卡森德拉北新街再次与Harrison Lockheed面对面相遇。他刚与Adolph和Angela接触并递了个小礼物，神情带着探询意味。此事让我更警觉和不安——有人比我预想的更关注这片区域与我的藏书线索。我不会与他交谈，马上离开街道，立刻回占星师小铺加固《黄衣之王》的封存，并从隐蔽处低调监视他们。",
+      "gameDay": 1,
+      "gameTime": "20:57",
+      "location": "ROAD_2",
+      "metadata": {
+        "impact": 2,
+        "perspective": "co_presence",
+        "sourceAction": "Harrison Lockheed 在 卡森德拉北新街",
+        "sourceCharacterId": "__encounter__"
+      }
+    },
+    {
+      "type": "event",
+      "content": "快步返回占星师小铺，保持低调并避免与Harrison接触 [在 ROAD_2 因重新规划而中断] 已中断",
+      "gameDay": 1,
+      "gameTime": "20:57",
+      "location": "ROAD_2",
+      "metadata": {
+        "outcome": "快步返回占星师小铺，保持低调并避免与Harrison接触 [在 ROAD_2 因重新规划而中断] 已中断",
+        "interruptionReason": "revise_replan"
+      }
+    },
+    {
+      "type": "event",
+      "content": "快步返回占星师小铺，避免与Harrison接触并从隐蔽处低调观察门外动向 [在 ROAD_2 因重新规划而中断] 已中断",
+      "gameDay": 1,
+      "gameTime": "21:04",
+      "location": "ROAD_2",
+      "metadata": {
+        "outcome": "快步返回占星师小铺，避免与Harrison接触并从隐蔽处低调观察门外动向 [在 ROAD_2 因重新规划而中断] 已中断",
+        "interruptionReason": "revise_replan"
+      }
+    },
+    {
+      "type": "witness",
+      "content": "[相遇] 我在卡森德拉北新街与Harrison Lockheed面对面相遇。他刚刚和Adolph、Angela接触并递了个小礼物，脸上带着探询的神色。我感到更为警惕和不安，不愿与他或那几人有任何交谈或拖延。决定立刻离开街道，返回占星师小铺，马上检查并加固《黄衣之王》的封存，并从隐蔽处低调监视他们。",
+      "gameDay": 1,
+      "gameTime": "21:04",
+      "location": "ROAD_2",
+      "metadata": {
+        "impact": 2,
+        "perspective": "co_presence",
+        "sourceAction": "Harrison Lockheed 在 卡森德拉北新街",
+        "sourceCharacterId": "__encounter__"
+      }
+    },
+    {
+      "type": "witness",
+      "content": "[相遇] 我在卡森德拉北新街与Harrison Lockheed面对面相遇。他刚与Adolph和Angela接触并递了个小礼物，神色中带着探询意味。我更觉警惕和不安，不愿与他们交谈。决定立刻离开街道，返回占星师小铺加固《黄衣之王》的封存，并从隐蔽处低调监视他们。",
+      "gameDay": 1,
+      "gameTime": "21:08",
+      "location": "ROAD_2",
+      "metadata": {
+        "impact": 2,
+        "perspective": "co_presence",
+        "sourceAction": "Harrison Lockheed 在 卡森德拉北新街",
+        "sourceCharacterId": "__encounter__"
+      }
+    },
+    {
+      "type": "event",
+      "content": "快步返回占星师小铺，避免与Harrison接触并从隐蔽处低调观察门外动向 [在 ROAD_2 因重新规划而中断] 已中断",
+      "gameDay": 1,
+      "gameTime": "21:08",
+      "location": "ROAD_2",
+      "metadata": {
+        "outcome": "快步返回占星师小铺，避免与Harrison接触并从隐蔽处低调观察门外动向 [在 ROAD_2 因重新规划而中断] 已中断",
+        "interruptionReason": "revise_replan"
+      }
+    },
+    {
+      "type": "event",
+      "content": "快步返回占星师小铺以确认并加固《黄衣之王》的封存 [在 ROAD_2 因重新规划而中断] 已中断",
+      "gameDay": 1,
+      "gameTime": "21:11",
+      "location": "ROAD_2",
+      "metadata": {
+        "outcome": "快步返回占星师小铺以确认并加固《黄衣之王》的封存 [在 ROAD_2 因重新规划而中断] 已中断",
+        "interruptionReason": "revise_replan"
+      }
+    },
+    {
+      "type": "witness",
+      "content": "[相遇] 我在卡森德拉北新街与Simon Laplace和Harrison Lockheed面对面相遇。Harrison神情带着探询意味，似乎刚与Adolph和Angela接触过，Simon也在场。我感到更加警觉和不安，不愿与他们交谈或在街上逗留。决定立刻离开街道，快速返回占星师小铺，立即检查并加固《黄衣之王》的封存，并从隐蔽处低调监视他们；原本去花店借麻布和红酒的事暂缓，不在此时与人交涉。",
+      "gameDay": 1,
+      "gameTime": "21:11",
+      "location": "ROAD_2",
+      "metadata": {
+        "impact": 2,
+        "perspective": "co_presence",
+        "sourceAction": "Simon Laplace (Simon), Harrison Lockheed 在 卡森德拉北新街",
+        "sourceCharacterId": "__encounter__"
+      }
+    },
+    {
+      "type": "event",
+      "content": "哈里森把一个小礼物交给我，请我转交给阿道夫。我礼貌地同意代为转交，但没有告诉他阿道夫是否最近露面；我保持了平静，周围也无人异常。",
+      "gameDay": 1,
+      "gameTime": "21:12",
+      "location": "ROAD_2",
+      "metadata": {
+        "outcome": "上前与Solomon低声寒暄，把准备好的小礼物递给他请他代为转交给阿道夫，并小声问阿道夫最近有没有露面，同时注意他的表情和随行者是否有异常"
+      }
+    },
+    {
+      "type": "event",
+      "content": "快步回到占星师小铺，保持低调并准备从隐蔽处观察门外动向 [在 ROAD_2 因重新规划而中断] 已中断",
+      "gameDay": 1,
+      "gameTime": "21:15",
+      "location": "ROAD_2",
+      "metadata": {
+        "outcome": "快步回到占星师小铺，保持低调并准备从隐蔽处观察门外动向 [在 ROAD_2 因重新规划而中断] 已中断",
+        "interruptionReason": "revise_replan"
+      }
+    },
+    {
+      "type": "witness",
+      "content": "[相遇] 我刚在卡森德拉北新街与Angela和Simon面对面相遇。Angela的神色仍然警觉，Simon在场让我更不安——他们可能与刚才那些在附近打探的人有关。我不打算与他们交谈，也不会去花店借东西以免暴露行踪。感到紧张但保持冷静，决定立即离开街道，快速返回占星师小铺，马上检查并加固《黄衣之王》的封存，并从隐蔽处低调观察他们的动向。",
+      "gameDay": 1,
+      "gameTime": "21:15",
+      "location": "ROAD_2",
+      "metadata": {
+        "impact": 2,
+        "perspective": "co_presence",
+        "sourceAction": "Angela, Simon Laplace (Simon) 在 卡森德拉北新街",
+        "sourceCharacterId": "__encounter__"
+      }
+    },
+    {
+      "type": "witness",
+      "content": "[相遇] 我在卡森德拉北新街与Harrison Lockheed面对面相遇。他刚和Adolph、Angela接触并递了个小礼物，神情带着探询意味。我感到更为警觉和不安，不愿与他们有任何交谈或拖延——我要立刻离开街道，回占星师小铺加固《黄衣之王》的封存，并从隐蔽处低调监视他们。",
+      "gameDay": 1,
+      "gameTime": "21:17",
+      "location": "ROAD_2",
+      "metadata": {
+        "impact": 2,
+        "perspective": "co_presence",
+        "sourceAction": "Harrison Lockheed 在 卡森德拉北新街",
+        "sourceCharacterId": "__encounter__"
+      }
+    },
+    {
+      "type": "event",
+      "content": "快步返回占星师小铺 [在 ROAD_2 因重新规划而中断] 已中断",
+      "gameDay": 1,
+      "gameTime": "21:17",
+      "location": "ROAD_2",
+      "metadata": {
+        "outcome": "快步返回占星师小铺 [在 ROAD_2 因重新规划而中断] 已中断",
+        "interruptionReason": "revise_replan"
+      }
+    },
+    {
+      "type": "witness",
+      "content": "[相遇] 我在卡森德拉北新街与Angela和Harrison面对面相遇。Harrison神情带探询意味，想到他刚与Adolph等人接触并递过礼物，我更觉警惕与不安。我不会与他们交谈，决定立即离开街道，迅速返回占星师小铺，马上检查并加固《黄衣之王》的封存，并从隐蔽处低调监视他们。",
+      "gameDay": 1,
+      "gameTime": "21:20",
+      "location": "ROAD_2",
+      "metadata": {
+        "impact": 2,
+        "perspective": "co_presence",
+        "sourceAction": "Angela, Harrison Lockheed 在 卡森德拉北新街",
+        "sourceCharacterId": "__encounter__"
+      }
+    },
+    {
+      "type": "event",
+      "content": "快步返回占星师小铺 [在 ROAD_2 因重新规划而中断] 已中断",
+      "gameDay": 1,
+      "gameTime": "21:20",
+      "location": "ROAD_2",
+      "metadata": {
+        "outcome": "快步返回占星师小铺 [在 ROAD_2 因重新规划而中断] 已中断",
+        "interruptionReason": "revise_replan"
+      }
+    },
+    {
+      "type": "witness",
+      "content": "[相遇] 我在卡森德拉北新街与Angela和Harrison Lockheed面对面相遇。Harrison神色带着探询意味，看来刚与Adolph接触并递过小礼物。被他们近距离遇见让我更为警觉和不安。我不会与他们交谈，立即离开街道，快步返回占星师小铺，确认并加固《黄衣之王》的封存，并从隐蔽处低调监视他们。",
+      "gameDay": 1,
+      "gameTime": "21:21",
+      "location": "ROAD_2",
+      "metadata": {
+        "impact": 2,
+        "perspective": "co_presence",
+        "sourceAction": "Angela, Harrison Lockheed 在 卡森德拉北新街",
+        "sourceCharacterId": "__encounter__"
+      }
+    },
+    {
+      "type": "event",
+      "content": "快步回到占星师小铺以确认并加固《黄衣之王》的封存，同时从窗帘后低调观察门外动向 [在 ROAD_2 因重新规划而中断] 已中断",
+      "gameDay": 1,
+      "gameTime": "21:21",
+      "location": "ROAD_2",
+      "metadata": {
+        "outcome": "快步回到占星师小铺以确认并加固《黄衣之王》的封存，同时从窗帘后低调观察门外动向 [在 ROAD_2 因重新规划而中断] 已中断",
+        "interruptionReason": "revise_replan"
+      }
+    },
+    {
+      "type": "witness",
+      "content": "[相遇] 我在卡森德拉北新街与Harrison Lockheed面对面相遇。他刚与Adolph和Angela接触并递了个小礼物，神情带着探询意味。我感到更为警觉和不安，不愿与他们有任何交谈或拖延——决定立刻离开街道，快步回占星师小铺，马上检查并加固《黄衣之王》的封存，并从隐蔽处低调监视他们。",
+      "gameDay": 1,
+      "gameTime": "21:23",
+      "location": "ROAD_2",
+      "metadata": {
+        "impact": 2,
+        "perspective": "co_presence",
+        "sourceAction": "Harrison Lockheed 在 卡森德拉北新街",
+        "sourceCharacterId": "__encounter__"
+      }
+    },
+    {
+      "type": "event",
+      "content": "快步回占星师小铺，保持低调并准备从窗帘后继续观察门外动向 [在 ROAD_2 因重新规划而中断] 已中断",
+      "gameDay": 1,
+      "gameTime": "21:23",
+      "location": "ROAD_2",
+      "metadata": {
+        "outcome": "快步回占星师小铺，保持低调并准备从窗帘后继续观察门外动向 [在 ROAD_2 因重新规划而中断] 已中断",
+        "interruptionReason": "revise_replan"
+      }
+    },
+    {
+      "type": "event",
+      "content": "步行回占星师小铺 [在 ROAD_2 因重新规划而中断] 已中断",
+      "gameDay": 1,
+      "gameTime": "21:25",
+      "location": "ROAD_2",
+      "metadata": {
+        "outcome": "步行回占星师小铺 [在 ROAD_2 因重新规划而中断] 已中断",
+        "interruptionReason": "revise_replan"
+      }
+    },
+    {
+      "type": "witness",
+      "content": "[相遇] 我在卡森德拉北新街与Harrison Lockheed面对面相遇。他刚与Adolph和Angela接触并递了个小礼物，神色带着探询意味。我感到更为警觉和不安，不愿与他们交谈或逗留街上——决定立刻离开，快步返回占星师小铺，马上确认并加固《黄衣之王》的封存，并从隐蔽处低调监视他们。",
+      "gameDay": 1,
+      "gameTime": "21:25",
+      "location": "ROAD_2",
+      "metadata": {
+        "impact": 2,
+        "perspective": "co_presence",
+        "sourceAction": "Harrison Lockheed 在 卡森德拉北新街",
+        "sourceCharacterId": "__encounter__"
+      }
+    },
+    {
+      "type": "event",
+      "content": "哈里森走近把一个小礼物交给我，说是给阿道夫的，并悄声询问阿道夫最近是否出现以及是否有对他店不利的流言。我礼貌地接下并同意代为转交，但没有透露阿道夫是否在家或具体传闻；我注意到他在观察我的表情并留心是否有人随行。",
+      "gameDay": 1,
+      "gameTime": "21:27",
+      "location": "ROAD_2",
+      "metadata": {
+        "outcome": "靠近所罗门，压低声音把为阿道夫准备的小礼物交给他，并悄声问他阿道夫最近是否有露面以及镇上有没有对我店不利的风声，同时注意观察他的表情和是否有可疑随行（尤其留意Simon）；若他回避或显露危险迹象则立即收手。"
+      }
+    },
+    {
+      "type": "event",
+      "content": "快步返回占星师小铺以确认并加固《黄衣之王》的封存，同时从隐蔽处低调观察门外动向 [在 ROAD_2 因重新规划而中断] 已中断",
+      "gameDay": 1,
+      "gameTime": "21:29",
+      "location": "ROAD_2",
+      "metadata": {
+        "outcome": "快步返回占星师小铺以确认并加固《黄衣之王》的封存，同时从隐蔽处低调观察门外动向 [在 ROAD_2 因重新规划而中断] 已中断",
+        "interruptionReason": "revise_replan"
+      }
+    },
+    {
+      "type": "witness",
+      "content": "[相遇] 我在卡森德拉北新街与Harrison Lockheed面对面相遇。他刚和Adolph、Angela接触并递过一个小礼物，神色带着探询意味。我感到更为警觉和不安，决定不与他交谈，立刻离开街道，快步返回占星师小铺，确认并加固《黄衣之王》的封存，并从隐蔽处低调监视他们。",
+      "gameDay": 1,
+      "gameTime": "21:29",
+      "location": "ROAD_2",
+      "metadata": {
+        "impact": 2,
+        "perspective": "co_presence",
+        "sourceAction": "Harrison Lockheed 在 卡森德拉北新街",
+        "sourceCharacterId": "__encounter__"
+      }
+    },
+    {
+      "type": "event",
+      "content": "快步返回占星师小铺以确认并加固《黄衣之王》的封存，同时从隐蔽处低调观察门外动向 成功",
+      "gameDay": 1,
+      "gameTime": "21:33",
+      "location": "SCN_11_SUB_1",
+      "metadata": {
+        "outcome": "快步返回占星师小铺以确认并加固《黄衣之王》的封存，同时从隐蔽处低调观察门外动向 成功",
+        "blockedReason": "",
+        "failureReason": ""
+      }
+    },
+    {
+      "type": "event",
+      "content": "煮一杯热茶并简单用餐，同时翻阅一段无害的经文并在心中记下要点以稳定情绪 成功",
+      "gameDay": 1,
+      "gameTime": "21:54",
+      "location": "SCN_11_SUB_1",
+      "metadata": {
+        "outcome": "煮一杯热茶并简单用餐，同时翻阅一段无害的经文并在心中记下要点以稳定情绪 成功"
+      }
+    },
+    {
+      "type": "event",
+      "content": "把新近入藏的书目要点录入我的私有藏书目录，并为《黄衣之王》贴上显眼的警示标签 [在 SCN_11_SUB_1 因重新规划而中断] 已中断",
+      "gameDay": 1,
+      "gameTime": "21:59",
+      "location": "SCN_11_SUB_1",
+      "metadata": {
+        "outcome": "把新近入藏的书目要点录入我的私有藏书目录，并为《黄衣之王》贴上显眼的警示标签 [在 SCN_11_SUB_1 因重新规划而中断] 已中断",
+        "interruptionReason": "revise_replan"
+      }
+    },
+    {
+      "type": "witness",
+      "content": "[相遇] 我在占卜馆里与Harrison Lockheed面对面相遇。他带着那份带有探询意味的小礼物进了屋，目光在店内停留了太久，像是在打量藏书与出入路线。我立刻感到一阵冰冷的警觉与愤懑——他已跨入我的私人领域，可能威胁到《黄衣之王》的安全。我不愿正面交谈，必须马上停下手边的一切：加固封存、把危险书目移到更隐蔽处并从暗处低调观察他的行动，暂缓原本的记录与外出计划。",
+      "gameDay": 1,
+      "gameTime": "21:59",
+      "location": "SCN_11_SUB_1",
+      "metadata": {
+        "impact": 2,
+        "perspective": "co_presence",
+        "sourceAction": "Harrison Lockheed 在 占卜馆",
+        "sourceCharacterId": "__encounter__"
+      }
+    },
+    {
+      "type": "event",
+      "content": "哈里森低声来问我阿道夫是否露面，并让我替他转交一份小礼物、留意有人靠近。面对他的劝说我保持保留，没透露有关阿道夫的任何信息，但口头上接受了代为转交的请求。占卜馆里依旧安静，我会保持谨慎，不让他催促或逼迫我说更多。",
+      "gameDay": 1,
+      "gameTime": "22:04",
+      "location": "SCN_11_SUB_1",
+      "metadata": {
+        "outcome": "低声向Solomon再探问：阿道夫最近有露面吗？并请他代为转交小礼物，同时密切观察他的表情与周围是否有人靠近；若他回避或显得可疑则立刻收手离开。 [Persuade 40, rolled 57 (fail) — all targets resisted] failed"
+      }
+    },
+    {
+      "type": "event",
+      "content": "[直接] 哈里森又在占卜馆低声问我阿道夫最近是否露面，并把那份小礼物交给我，嘱我留意表情与周围是否有人靠近。我保持克制，没透露阿道夫的下落，口头上答应代为转交。心里更警觉和不悦，但这并未改变我的首要任务：继续加固《黄衣之王》的封存并从隐蔽处观察他的动向，不再在当下追问。",
+      "gameDay": 1,
+      "gameTime": "22:04",
+      "location": "SCN_11_SUB_1",
+      "metadata": {
+        "impact": 1,
+        "perspective": "targeted",
+        "sourceAction": "我在占卜馆低声问所罗门阿道夫最近有没有露面，并请他代为转交一份小礼物，同时嘱咐他留意表情与附近是否有人靠近。劝说失败：所罗门保持克制，没有透露阿道夫的下落。既然得不到更多信息，我决定不再强求，收手离开。",
+        "sourceCharacterId": "Harrison Lockheed"
+      }
+    },
+    {
+      "type": "event",
+      "content": "退到深紫色帘幕后，藏身并从隐蔽处观察Harrison的一举一动，避免与他正面接触 成功",
+      "gameDay": 1,
+      "gameTime": "22:05",
+      "location": "SCN_11_SUB_1",
+      "metadata": {
+        "outcome": "退到深紫色帘幕后，藏身并从隐蔽处观察Harrison的一举一动，避免与他正面接触 成功"
+      }
+    },
+    {
+      "type": "event",
+      "content": "从深紫色帘幕后静静观察门外，记录Harrison Lockheed以及任何同伴的动向并留意是否有人靠近 成功",
+      "gameDay": 1,
+      "gameTime": "22:16",
+      "location": "SCN_11_SUB_1",
+      "metadata": {
+        "outcome": "从深紫色帘幕后静静观察门外，记录Harrison Lockheed以及任何同伴的动向并留意是否有人靠近 成功"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我把《黄衣之王》悄悄收好，塞进门口那厚重的深紫色帘幕后的一处隐蔽折叠里，确保书不显眼且便于我从暗处守护。",
+      "gameDay": 1,
+      "gameTime": "22:20",
+      "location": "SCN_11_SUB_1",
+      "metadata": {
+        "itemId": "《黄衣之王》",
+        "outcome": "将《黄衣之王》悄悄收起并放到深紫色帘幕后的一处隐蔽位置，确保书本不显眼且便于我从暗处守护",
+        "itemName": "《黄衣之王》"
+      }
+    },
+    {
+      "type": "event",
+      "content": "从深紫色帘幕后悄悄观察门外，盯着Harrison Lockheed及任何靠近者的动向并默默记下异常 成功",
+      "gameDay": 1,
+      "gameTime": "22:31",
+      "location": "SCN_11_SUB_1",
+      "metadata": {
+        "outcome": "从深紫色帘幕后悄悄观察门外，盯着Harrison Lockheed及任何靠近者的动向并默默记下异常 成功"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我掀开并检查了那道厚重的深紫色帘幕后藏匿的书籍。封蜡完好无损，藏匿位置没有被动过，帘幕依然能很好地掩蔽书本；我将它复位，继续从暗处观察可疑之人。",
+      "gameDay": 1,
+      "gameTime": "22:35",
+      "location": "SCN_11_SUB_1",
+      "metadata": {
+        "itemId": "《黄衣之王》",
+        "outcome": "检查深紫色帘幕后隐藏处的《黄衣之王》，确认封蜡与藏匿位置完好",
+        "itemName": "《黄衣之王》"
+      }
+    },
+    {
+      "type": "event",
+      "content": "从深紫色帘幕后悄悄观察门外，注视Harrison Lockheed及其同伴的动向并默默记录细节 成功",
+      "gameDay": 1,
+      "gameTime": "22:46",
+      "location": "SCN_11_SUB_1",
+      "metadata": {
+        "outcome": "从深紫色帘幕后悄悄观察门外，注视Harrison Lockheed及其同伴的动向并默默记录细节 成功"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我在深紫色帘幕的内侧折缝处滴了一道薄薄的暗红色封蜡，这样若有人掀帘或触碰折缝就会留下痕迹。封蜡已干，看起来不显眼，能够让我从暗处察觉帘幕是否被动过。",
+      "gameDay": 1,
+      "gameTime": "22:50",
+      "location": "SCN_11_SUB_1",
+      "metadata": {
+        "itemId": "ITEM_SCN11_6",
+        "outcome": "在深紫色帘幕的折缝处滴上一道薄薄的封蜡，以便若帘幕被动过能立即察觉",
+        "itemName": "深紫色帘幕"
+      }
+    },
+    {
+      "type": "event",
+      "content": "躲在深紫色帘幕后继续静静观察门外，记录Harrison Lockheed及任何同伴的接近或异常举动 成功",
+      "gameDay": 1,
+      "gameTime": "23:01",
+      "location": "SCN_11_SUB_1",
+      "metadata": {
+        "outcome": "躲在深紫色帘幕后继续静静观察门外，记录Harrison Lockheed及任何同伴的接近或异常举动 成功"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我检查了深紫色帘幕内侧折缝上那道暗红色封蜡，封蜡已干且完好，没有被扰动的痕迹；我把帘幕复位，继续在暗处观察街道。",
+      "gameDay": 1,
+      "gameTime": "23:07",
+      "location": "SCN_11_SUB_1",
+      "metadata": {
+        "itemId": "ITEM_SCN11_6",
+        "outcome": "检查深紫色帘幕折缝处的暗红色封蜡是否完好且未被扰动",
+        "itemName": "深紫色帘幕"
+      }
+    },
+    {
+      "type": "event",
+      "content": "从深紫色帘幕后静静观察门外，记录Harrison Lockheed及其同伴的动向并留意任何接近占卜馆的可疑人物 成功",
+      "gameDay": 1,
+      "gameTime": "23:18",
+      "location": "SCN_11_SUB_1",
+      "metadata": {
+        "outcome": "从深紫色帘幕后静静观察门外，记录Harrison Lockheed及其同伴的动向并留意任何接近占卜馆的可疑人物 成功"
+      }
+    },
+    {
+      "type": "event",
+      "content": "在日志中记录今晚关于Harrison、Adolph和Angela的观察细节，标注《黄衣之王》的警戒优先级并写下应对要点 成功",
+      "gameDay": 1,
+      "gameTime": "23:24",
+      "location": "SCN_11_SUB_1",
+      "metadata": {
+        "outcome": "在日志中记录今晚关于Harrison、Adolph和Angela的观察细节，标注《黄衣之王》的警戒优先级并写下应对要点 成功"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我掀开厚重的深紫色帘幕后，摸到并取出塞在内侧折叠处的那本《黄衣之王》。封蜡完好，暗红色的封印上还有我的记号和几处新鲜蜡滴，书明显未被翻动。确认无恙后我将书放回原处，并把帘子放回原位。",
+      "gameDay": 1,
+      "gameTime": "23:30",
+      "location": "SCN_11_SUB_1",
+      "metadata": {
+        "itemId": "《黄衣之王》",
+        "outcome": "检查深紫色帘幕后藏匿的《黄衣之王》，确认封蜡完好",
+        "itemName": "《黄衣之王》"
+      }
+    },
+    {
+      "type": "event",
+      "content": "闭目冥想十分钟，静默封存今日接触到的念头与印象，然后就寝以恢复精力 成功",
+      "gameDay": 1,
+      "gameTime": "23:36",
+      "location": "SCN_11_SUB_1",
+      "metadata": {
+        "outcome": "闭目冥想十分钟，静默封存今日接触到的念头与印象，然后就寝以恢复精力 成功"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我检查了深紫色帘幕后折缝处的暗红色封蜡，确认封蜡完好，未被扰动。",
+      "gameDay": 1,
+      "gameTime": "23:40",
+      "location": "SCN_11_SUB_1",
+      "metadata": {
+        "outcome": "检查深紫色帘幕后折缝处的暗红色封蜡，确认封蜡未被扰动"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我把《黄衣之王》从帘幕后取出，放到门边的躺椅下面的角落，然后把深紫色帘幕理顺垂下以掩护。",
+      "gameDay": 1,
+      "gameTime": "23:44",
+      "location": "SCN_11_SUB_1",
+      "metadata": {
+        "itemId": "《黄衣之王》",
+        "outcome": "把《黄衣之王》从帘幕后取出，放到门边的躺椅下面并整理帘幕以掩护",
+        "itemName": "《黄衣之王》"
+      }
+    },
+    {
+      "type": "event",
+      "content": "从深紫色帘幕后悄悄观察门外，监视Harrison Lockheed及其任何同伴的动向 成功",
+      "gameDay": 1,
+      "gameTime": "23:55",
+      "location": "SCN_11_SUB_1",
+      "metadata": {
+        "outcome": "从深紫色帘幕后悄悄观察门外，监视Harrison Lockheed及其任何同伴的动向 成功"
+      }
+    },
+    {
+      "type": "secret",
+      "content": "我在深紫色帘幕后折缝处滴下了暗红色封蜡作为窃动痕迹检测，这道封蜡目前完好无损；这是我刻意隐瞒的防护手段，不会向他人透露。",
+      "gameDay": 1,
+      "gameTime": "23:59",
+      "location": null,
+      "metadata": {
+        "revealed": false,
+        "difficulty": "extreme",
+        "knowledgeId": "learned_day1_4"
+      }
+    },
+    {
+      "type": "event",
+      "content": "在深紫色帘幕后继续静静观察门外，监视Harrison Lockheed及其可能的同伴的动向 成功",
+      "gameDay": 1,
+      "gameTime": "23:59",
+      "location": "SCN_11_SUB_1",
+      "metadata": {
+        "outcome": "在深紫色帘幕后继续静静观察门外，监视Harrison Lockheed及其可能的同伴的动向 成功"
+      }
+    },
+    {
+      "type": "information",
+      "content": "我为《黄衣之王》按下的暗红封蜡和记号在今晚的多次检查中均保持完好，书本未被翻动或扰动。",
+      "gameDay": 1,
+      "gameTime": "23:59",
+      "location": null,
+      "metadata": {
+        "revealed": false,
+        "difficulty": "hard",
+        "knowledgeId": "learned_day1_5"
+      }
+    },
+    {
+      "type": "information",
+      "content": "Adolph Carl在19:42左右直接对我搭话，试探我的目的并记录我的衣着、口音与随行状况，表明他在主动收集关于我的信息。",
+      "gameDay": 1,
+      "gameTime": "23:59",
+      "location": null,
+      "metadata": {
+        "revealed": false,
+        "difficulty": "regular",
+        "knowledgeId": "learned_day1_1"
+      }
+    },
+    {
+      "type": "information",
+      "content": "Harrison Lockheed多次出现在北新街并曾将一个小礼物交给Adolph；他还在21:59进入我的店内，目光在藏书与出入口上停留过久，随后低声请我代为转交礼物并打听阿道夫的近况。",
+      "gameDay": 1,
+      "gameTime": "23:59",
+      "location": null,
+      "metadata": {
+        "revealed": false,
+        "difficulty": "regular",
+        "knowledgeId": "learned_day1_2"
+      }
+    },
+    {
+      "type": "information",
+      "content": "Angela频繁与Adolph和Harrison一同行动，神色警觉，显示他们之间存在明显的协同行为，可能正在共同打探与我或我的藏书有关的情报。",
+      "gameDay": 1,
+      "gameTime": "23:59",
+      "location": null,
+      "metadata": {
+        "revealed": false,
+        "difficulty": "regular",
+        "knowledgeId": "learned_day1_3"
+      }
+    }
+  ],
+  "plans": [
+    {
+      "npcName": "Solomon",
+      "gameDay": 2,
+      "schedule": [
+        {
+          "activity": "再次检查《黄衣之王》的暗红封蜡、帘幕后折缝的封印与圆桌周围的护阵，确认一切完好无损。",
+          "location": "占卜馆"
+        },
+        {
+          "activity": "把昨夜的观察记录写入日志并冥想十分钟以平复心绪与直觉。",
+          "location": "占卜馆"
+        },
+        {
+          "activity": "简单用餐并小憩两小时以保存精力以备整日巡查。",
+          "location": "占卜馆"
+        },
+        {
+          "activity": "暂缓与Simon见面，今晚不外出；在花店后门留一封密封便条，简要交代局势并请他注意安全。",
+          "location": "花店·卡森德拉之花"
+        },
+        {
+          "activity": "从占卜馆窗户与暗处隐蔽观察北新街端点三岔口，注意Harrison、Adolph或其他可疑人员的动向并记录。",
+          "location": "占卜馆"
+        },
+        {
+          "activity": "放弃以寒暄探听哈里森，今晚不亲自前往；改为观察五金店外出入并等待他按暗号留下的联系或留言。",
+          "location": "五金店"
+        },
+        {
+          "activity": "今晚避免近距靠近阿道夫家；从屋内或安全暗处观察其外部光线与出入情况，白天再做更近距离检查。",
+          "location": "阿道夫家"
+        },
+        {
+          "activity": "推迟进入驯鹿酒吧听取传闻，今晚避免外出搜集流言，改为通过暗中打探或等白天观察。",
+          "location": "驯鹿酒吧"
+        },
+        {
+          "activity": "推迟到白天再去墓地巡视；今晚不外出前往。",
+          "location": "墓地"
+        },
+        {
+          "activity": "推迟在医院外打听，今晚不外出；白天视情况向值班人员低声询问。",
+          "location": "星辰医院"
+        },
+        {
+          "activity": "推迟在海伦的餐桌用晚餐并搜集信息，改为白天前往或等待更安全时机。",
+          "location": "海伦的餐桌"
+        },
+        {
+          "activity": "在占卜馆重新加固门锁与护阵，记录当天检查结果，并再次确认暗红封蜡无异常。",
+          "location": "占卜馆"
+        },
+        {
+          "activity": "在深紫色帘幕后静坐冥想并小心地测试自己对那首曲调的掌控以评估危险性。",
+          "location": "占卜馆"
+        },
+        {
+          "activity": "在灯烛熄灭前把日记上锁、熄灭外围蜡烛并尽量早些休息以恢复精力。",
+          "location": "占卜馆"
+        }
+      ],
+      "nodes": [
+        {
+          "type": "object_interaction",
+          "action": "把昨夜的观察记录写入日志",
+          "impact": 0,
+          "nodeId": "oi_solomon_001",
+          "status": "interrupted",
+          "endTime": "00:15",
+          "outcome": "把昨夜的观察记录写入日志 [因重新规划而中断] 已中断",
+          "startTime": "00:00",
+          "characterId": "Solomon",
+          "characterName": "Solomon",
+          "executionMeta": {
+            "startedAt": "00:00",
+            "interruptedAt": "00:07",
+            "remainingMinutes": 0,
+            "interruptionReason": "revise_replan"
+          },
+          "objectInteractionPayload": {
+            "itemId": "神秘学书籍"
+          }
+        },
+        {
+          "type": "scene_interaction",
+          "action": "检查圆桌周围的护阵是否有异常",
+          "impact": 0,
+          "nodeId": "si1",
+          "status": "interrupted",
+          "endTime": "00:18",
+          "outcome": "检查圆桌周围的护阵是否有异常 [因重新规划而中断] 已中断",
+          "startTime": "00:13",
+          "characterId": "Solomon",
+          "characterName": "Solomon",
+          "executionMeta": {
+            "startedAt": "00:13",
+            "interruptedAt": "00:18",
+            "remainingMinutes": 0,
+            "interruptionReason": "revise_replan"
+          },
+          "objectInteractionPayload": {
+            "itemId": "ITEM_SCN11_4"
+          }
+        },
+        {
+          "type": "scene_interaction",
+          "action": "检查圆桌周围的护阵是否有异常",
+          "impact": 0,
+          "nodeId": "si1",
+          "status": "interrupted",
+          "endTime": "00:18",
+          "outcome": "检查圆桌周围的护阵是否有异常 [因重新规划而中断] 已中断",
+          "startTime": "00:13",
+          "characterId": "Solomon",
+          "characterName": "Solomon",
+          "executionMeta": {
+            "startedAt": "00:13",
+            "interruptedAt": "00:18",
+            "remainingMinutes": 0,
+            "interruptionReason": "revise_replan"
+          },
+          "objectInteractionPayload": {
+            "itemId": "ITEM_SCN11_4"
+          }
+        },
+        {
+          "type": "scene_interaction",
+          "action": "悄悄检查圆桌周围的护阵是否有异常",
+          "impact": 0,
+          "nodeId": "si_check_array_001",
+          "status": "completed",
+          "endTime": "00:23",
+          "outcome": "我悄悄检查了圆桌周围的护阵，没发现异常；附近的蜡烛和圆桌布上的蜡滴都在原位，护阵保持完整。",
+          "startTime": "00:19",
+          "characterId": "Solomon",
+          "characterName": "Solomon",
+          "executionMeta": {
+            "startedAt": "00:19",
+            "completedAt": "00:23",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "action",
+          "action": "把刚才与Harrison接触的经过和所见细节详尽地记录到日志中",
+          "impact": 0,
+          "nodeId": "a_solomon_001",
+          "status": "completed",
+          "endTime": "00:34",
+          "outcome": "把刚才与Harrison接触的经过和所见细节详尽地记录到日志中 成功",
+          "startTime": "00:24",
+          "characterId": "Solomon",
+          "characterName": "Solomon",
+          "executionMeta": {
+            "startedAt": "00:24",
+            "completedAt": "00:34",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "scene_interaction",
+          "action": "悄悄吹熄圆桌周围的外围蜡烛以减少室内可见光，保持暗处隐蔽",
+          "impact": 0,
+          "nodeId": "si2",
+          "status": "completed",
+          "endTime": "03:53",
+          "outcome": "我悄悄吹熄了圆桌周围的外围蜡烛，室内光线进一步减弱，暗处更易隐蔽。吹灭过程没有扰动到护阵或封蜡，其他摆设保持原状。",
+          "startTime": "03:50",
+          "characterId": "Solomon",
+          "characterName": "Solomon",
+          "executionMeta": {
+            "startedAt": "03:50",
+            "completedAt": "03:53",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "scene_interaction",
+          "action": "悄悄吹熄圆桌周围的外围蜡烛以减少室内可见光，保持暗处隐蔽",
+          "impact": 0,
+          "nodeId": "si2",
+          "status": "completed",
+          "endTime": "03:53",
+          "outcome": "我悄悄吹熄了圆桌周围的外围蜡烛，室内光线进一步减弱，暗处更易隐蔽。吹灭过程没有扰动到护阵或封蜡，其他摆设保持原状。",
+          "startTime": "03:50",
+          "characterId": "Solomon",
+          "characterName": "Solomon",
+          "executionMeta": {
+            "startedAt": "03:50",
+            "completedAt": "03:53",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "action",
+          "action": "在深紫色帘幕后继续隐蔽观察北新街端点三岔口并把所见详尽记录在随身笔记中",
+          "impact": 0,
+          "nodeId": "a2",
+          "status": "completed",
+          "endTime": "05:24",
+          "outcome": "在深紫色帘幕后继续隐蔽观察北新街端点三岔口并把所见详尽记录在随身笔记中 成功",
+          "startTime": "05:14",
+          "characterId": "Solomon",
+          "characterName": "Solomon",
+          "executionMeta": {
+            "startedAt": "05:14",
+            "completedAt": "05:24",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "movement",
+          "action": "悄悄经侧门回到占星师小铺",
+          "impact": 0,
+          "nodeId": "m1",
+          "status": "completed",
+          "endTime": "02:30",
+          "outcome": "悄悄经侧门回到占星师小铺 成功",
+          "startTime": "02:27",
+          "characterId": "Solomon",
+          "destination": "SCN_11_SUB_1",
+          "characterName": "Solomon",
+          "executionMeta": {
+            "movement": {
+              "routeSnapshot": [
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_2",
+                    "position": 0.83
+                  },
+                  "from": {
+                    "type": "scene",
+                    "sceneId": "SCN_9_SUB_1"
+                  },
+                  "kind": "along_road",
+                  "roadId": "ROAD_2",
+                  "blockCheck": {
+                    "toId": "ROAD_2",
+                    "fromId": "SCN_9_SUB_1"
+                  },
+                  "durationMinutes": 1
+                },
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_2",
+                    "position": 0
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_2",
+                    "position": 0.83
+                  },
+                  "kind": "along_road",
+                  "roadId": "ROAD_2",
+                  "durationMinutes": 8.299999999999999
+                },
+                {
+                  "to": {
+                    "type": "junction",
+                    "junctionId": "JUNC_2"
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_2",
+                    "position": 0
+                  },
+                  "kind": "to_junction",
+                  "blockCheck": {
+                    "toId": "JUNC_2",
+                    "fromId": "ROAD_2"
+                  },
+                  "durationMinutes": 0
+                },
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_2",
+                    "position": 0
+                  },
+                  "from": {
+                    "type": "junction",
+                    "junctionId": "JUNC_2"
+                  },
+                  "kind": "to_junction",
+                  "blockCheck": {
+                    "toId": "ROAD_2",
+                    "fromId": "JUNC_2"
+                  },
+                  "durationMinutes": 0
+                },
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_2",
+                    "position": 0.14
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_2",
+                    "position": 0
+                  },
+                  "kind": "along_road",
+                  "roadId": "ROAD_2",
+                  "durationMinutes": 1.4
+                },
+                {
+                  "to": {
+                    "type": "scene",
+                    "sceneId": "SCN_11_SUB_1"
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_2",
+                    "position": 0.14
+                  },
+                  "kind": "to_scene",
+                  "blockCheck": {
+                    "toId": "SCN_11_SUB_1",
+                    "fromId": "ROAD_2"
+                  },
+                  "durationMinutes": 1
+                }
+              ],
+              "targetPosition": {
+                "type": "scene",
+                "sceneId": "SCN_11_SUB_1"
+              },
+              "minutesIntoStep": 0,
+              "currentStepIndex": 6,
+              "lastReachablePosition": {
+                "type": "scene",
+                "sceneId": "SCN_11_SUB_1"
+              }
+            },
+            "startedAt": "02:27",
+            "completedAt": "02:39",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "object_interaction",
+          "action": "用包装台上的牛皮纸折成并密封一封便条，放在花店后门处并简要交代当前局势与提醒注意安全",
+          "impact": 1,
+          "nodeId": "oi1",
+          "status": "interrupted",
+          "endTime": "01:30",
+          "outcome": "用包装台上的牛皮纸折成并密封一封便条，放在花店后门处并简要交代当前局势与提醒注意安全 [因重新规划而中断] 已中断",
+          "startTime": "01:23",
+          "characterId": "Solomon",
+          "characterName": "Solomon",
+          "executionMeta": {
+            "startedAt": "01:23",
+            "interruptedAt": "01:26",
+            "remainingMinutes": 0,
+            "interruptionReason": "revise_replan"
+          },
+          "objectInteractionPayload": {
+            "itemId": "ITEM_SCN9_6"
+          }
+        },
+        {
+          "type": "scene_interaction",
+          "action": "把密封便条放在花店后门处",
+          "impact": 0,
+          "nodeId": "si_place_note_0127",
+          "status": "completed",
+          "endTime": "01:29",
+          "outcome": "我把一张密封的便条放在收银柜台旁那道半掩的木门处，便条已放置完毕并留在原位。",
+          "startTime": "01:27",
+          "characterId": "Solomon",
+          "characterName": "Solomon",
+          "executionMeta": {
+            "startedAt": "01:27",
+            "completedAt": "01:29",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "action",
+          "action": "退到收银柜台旁半掩的木门后躲藏",
+          "impact": 0,
+          "nodeId": "a_solomon_0130_hide_1",
+          "status": "completed",
+          "endTime": "01:35",
+          "outcome": "退到收银柜台旁半掩的木门后躲藏 成功",
+          "startTime": "01:30",
+          "characterId": "Solomon",
+          "characterName": "Solomon",
+          "executionMeta": {
+            "startedAt": "01:30",
+            "completedAt": "01:35",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "action",
+          "action": "在半掩木门后隐蔽观察店内所有出口与窗外街道，悄悄记录任何可疑人物或动静",
+          "impact": 0,
+          "nodeId": "a_solomon_0136",
+          "status": "completed",
+          "endTime": "01:46",
+          "outcome": "在半掩木门后隐蔽观察店内所有出口与窗外街道，悄悄记录任何可疑人物或动静 成功",
+          "startTime": "01:36",
+          "characterId": "Solomon",
+          "characterName": "Solomon",
+          "executionMeta": {
+            "startedAt": "01:36",
+            "completedAt": "01:46",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "movement",
+          "action": "悄悄离开半掩的木门，静悄悄回到占星师小铺以重新检查《黄衣之王》的暗红封蜡与圆桌护阵并加固门锁",
+          "impact": 0,
+          "nodeId": "m2",
+          "status": "interrupted",
+          "endTime": "01:50",
+          "outcome": "悄悄离开半掩的木门，静悄悄回到占星师小铺以重新检查《黄衣之王》的暗红封蜡与圆桌护阵并加固门锁 [因重新规划而中断] 已中断",
+          "startTime": "01:47",
+          "characterId": "Solomon",
+          "destination": "SCN_11_SUB_1",
+          "characterName": "Solomon",
+          "executionMeta": {
+            "movement": {
+              "routeSnapshot": [
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_2",
+                    "position": 0.83
+                  },
+                  "from": {
+                    "type": "scene",
+                    "sceneId": "SCN_9_SUB_1"
+                  },
+                  "kind": "along_road",
+                  "roadId": "ROAD_2",
+                  "blockCheck": {
+                    "toId": "ROAD_2",
+                    "fromId": "SCN_9_SUB_1"
+                  },
+                  "durationMinutes": 1
+                },
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_2",
+                    "position": 0
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_2",
+                    "position": 0.83
+                  },
+                  "kind": "along_road",
+                  "roadId": "ROAD_2",
+                  "durationMinutes": 8.299999999999999
+                },
+                {
+                  "to": {
+                    "type": "junction",
+                    "junctionId": "JUNC_2"
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_2",
+                    "position": 0
+                  },
+                  "kind": "to_junction",
+                  "blockCheck": {
+                    "toId": "JUNC_2",
+                    "fromId": "ROAD_2"
+                  },
+                  "durationMinutes": 0
+                },
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_2",
+                    "position": 0
+                  },
+                  "from": {
+                    "type": "junction",
+                    "junctionId": "JUNC_2"
+                  },
+                  "kind": "to_junction",
+                  "blockCheck": {
+                    "toId": "ROAD_2",
+                    "fromId": "JUNC_2"
+                  },
+                  "durationMinutes": 0
+                },
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_2",
+                    "position": 0.14
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_2",
+                    "position": 0
+                  },
+                  "kind": "along_road",
+                  "roadId": "ROAD_2",
+                  "durationMinutes": 1.4
+                },
+                {
+                  "to": {
+                    "type": "scene",
+                    "sceneId": "SCN_11_SUB_1"
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_2",
+                    "position": 0.14
+                  },
+                  "kind": "to_scene",
+                  "blockCheck": {
+                    "toId": "SCN_11_SUB_1",
+                    "fromId": "ROAD_2"
+                  },
+                  "durationMinutes": 1
+                }
+              ],
+              "targetPosition": {
+                "type": "scene",
+                "sceneId": "SCN_11_SUB_1"
+              },
+              "minutesIntoStep": 6,
+              "currentStepIndex": 1,
+              "lastReachablePosition": {
+                "type": "road",
+                "roadId": "ROAD_2",
+                "position": 0.2299999999999999
+              }
+            },
+            "startedAt": "01:47",
+            "interruptedAt": "01:54",
+            "remainingMinutes": 0,
+            "interruptionReason": "revise_replan"
+          }
+        },
+        {
+          "type": "movement",
+          "action": "悄悄经侧门回到占星师小铺",
+          "impact": 0,
+          "nodeId": "m1",
+          "status": "completed",
+          "endTime": "02:30",
+          "outcome": "悄悄经侧门回到占星师小铺 成功",
+          "startTime": "02:27",
+          "characterId": "Solomon",
+          "destination": "SCN_11_SUB_1",
+          "characterName": "Solomon",
+          "executionMeta": {
+            "movement": {
+              "routeSnapshot": [
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_2",
+                    "position": 0.83
+                  },
+                  "from": {
+                    "type": "scene",
+                    "sceneId": "SCN_9_SUB_1"
+                  },
+                  "kind": "along_road",
+                  "roadId": "ROAD_2",
+                  "blockCheck": {
+                    "toId": "ROAD_2",
+                    "fromId": "SCN_9_SUB_1"
+                  },
+                  "durationMinutes": 1
+                },
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_2",
+                    "position": 0
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_2",
+                    "position": 0.83
+                  },
+                  "kind": "along_road",
+                  "roadId": "ROAD_2",
+                  "durationMinutes": 8.299999999999999
+                },
+                {
+                  "to": {
+                    "type": "junction",
+                    "junctionId": "JUNC_2"
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_2",
+                    "position": 0
+                  },
+                  "kind": "to_junction",
+                  "blockCheck": {
+                    "toId": "JUNC_2",
+                    "fromId": "ROAD_2"
+                  },
+                  "durationMinutes": 0
+                },
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_2",
+                    "position": 0
+                  },
+                  "from": {
+                    "type": "junction",
+                    "junctionId": "JUNC_2"
+                  },
+                  "kind": "to_junction",
+                  "blockCheck": {
+                    "toId": "ROAD_2",
+                    "fromId": "JUNC_2"
+                  },
+                  "durationMinutes": 0
+                },
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_2",
+                    "position": 0.14
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_2",
+                    "position": 0
+                  },
+                  "kind": "along_road",
+                  "roadId": "ROAD_2",
+                  "durationMinutes": 1.4
+                },
+                {
+                  "to": {
+                    "type": "scene",
+                    "sceneId": "SCN_11_SUB_1"
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_2",
+                    "position": 0.14
+                  },
+                  "kind": "to_scene",
+                  "blockCheck": {
+                    "toId": "SCN_11_SUB_1",
+                    "fromId": "ROAD_2"
+                  },
+                  "durationMinutes": 1
+                }
+              ],
+              "targetPosition": {
+                "type": "scene",
+                "sceneId": "SCN_11_SUB_1"
+              },
+              "minutesIntoStep": 0,
+              "currentStepIndex": 6,
+              "lastReachablePosition": {
+                "type": "scene",
+                "sceneId": "SCN_11_SUB_1"
+              }
+            },
+            "startedAt": "02:27",
+            "completedAt": "02:39",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "movement",
+          "action": "悄然退入花店·卡森德拉之花的后门以避开Angela并且不发生交谈",
+          "impact": 0,
+          "nodeId": "m_solomon_0210_01",
+          "status": "completed",
+          "endTime": "02:12",
+          "outcome": "悄然退入花店·卡森德拉之花的后门以避开Angela并且不发生交谈 成功",
+          "startTime": "02:10",
+          "characterId": "Solomon",
+          "destination": "SCN_9_SUB_1",
+          "characterName": "Solomon",
+          "executionMeta": {
+            "movement": {
+              "routeSnapshot": [
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_2",
+                    "position": 1
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_2",
+                    "position": 0.2299999999999999
+                  },
+                  "kind": "along_road",
+                  "roadId": "ROAD_2",
+                  "durationMinutes": 7.700000000000001
+                },
+                {
+                  "to": {
+                    "type": "junction",
+                    "junctionId": "JUNC_3"
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_2",
+                    "position": 1
+                  },
+                  "kind": "to_junction",
+                  "blockCheck": {
+                    "toId": "JUNC_3",
+                    "fromId": "ROAD_2"
+                  },
+                  "durationMinutes": 0
+                },
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_2",
+                    "position": 1
+                  },
+                  "from": {
+                    "type": "junction",
+                    "junctionId": "JUNC_3"
+                  },
+                  "kind": "to_junction",
+                  "blockCheck": {
+                    "toId": "ROAD_2",
+                    "fromId": "JUNC_3"
+                  },
+                  "durationMinutes": 0
+                },
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_2",
+                    "position": 0.83
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_2",
+                    "position": 1
+                  },
+                  "kind": "along_road",
+                  "roadId": "ROAD_2",
+                  "durationMinutes": 1.7
+                },
+                {
+                  "to": {
+                    "type": "scene",
+                    "sceneId": "SCN_9_SUB_1"
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_2",
+                    "position": 0.83
+                  },
+                  "kind": "to_scene",
+                  "blockCheck": {
+                    "toId": "SCN_9_SUB_1",
+                    "fromId": "ROAD_2"
+                  },
+                  "durationMinutes": 1
+                }
+              ],
+              "targetPosition": {
+                "type": "scene",
+                "sceneId": "SCN_9_SUB_1"
+              },
+              "minutesIntoStep": 0,
+              "currentStepIndex": 5,
+              "lastReachablePosition": {
+                "type": "scene",
+                "sceneId": "SCN_9_SUB_1"
+              }
+            },
+            "startedAt": "02:10",
+            "completedAt": "02:20",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "scene_interaction",
+          "action": "在半掩木门后暗处观察店外街道以留意Angela或其他可疑人物的动向并悄悄记录",
+          "impact": 0,
+          "nodeId": "si_next_02_21",
+          "status": "completed",
+          "endTime": "02:26",
+          "outcome": "我躲在半掩的木门后暗处，悄悄观察店外街道并记录下我所见。未见到Angela或任何可疑人物，街道安静无异常，我把记录收好以备后续核对。",
+          "startTime": "02:21",
+          "characterId": "Solomon",
+          "characterName": "Solomon",
+          "executionMeta": {
+            "startedAt": "02:21",
+            "completedAt": "02:26",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "movement",
+          "action": "悄悄经侧门回到占星师小铺",
+          "impact": 0,
+          "nodeId": "m1",
+          "status": "completed",
+          "endTime": "02:30",
+          "outcome": "悄悄经侧门回到占星师小铺 成功",
+          "startTime": "02:27",
+          "characterId": "Solomon",
+          "destination": "SCN_11_SUB_1",
+          "characterName": "Solomon",
+          "executionMeta": {
+            "movement": {
+              "routeSnapshot": [
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_2",
+                    "position": 0.83
+                  },
+                  "from": {
+                    "type": "scene",
+                    "sceneId": "SCN_9_SUB_1"
+                  },
+                  "kind": "along_road",
+                  "roadId": "ROAD_2",
+                  "blockCheck": {
+                    "toId": "ROAD_2",
+                    "fromId": "SCN_9_SUB_1"
+                  },
+                  "durationMinutes": 1
+                },
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_2",
+                    "position": 0
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_2",
+                    "position": 0.83
+                  },
+                  "kind": "along_road",
+                  "roadId": "ROAD_2",
+                  "durationMinutes": 8.299999999999999
+                },
+                {
+                  "to": {
+                    "type": "junction",
+                    "junctionId": "JUNC_2"
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_2",
+                    "position": 0
+                  },
+                  "kind": "to_junction",
+                  "blockCheck": {
+                    "toId": "JUNC_2",
+                    "fromId": "ROAD_2"
+                  },
+                  "durationMinutes": 0
+                },
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_2",
+                    "position": 0
+                  },
+                  "from": {
+                    "type": "junction",
+                    "junctionId": "JUNC_2"
+                  },
+                  "kind": "to_junction",
+                  "blockCheck": {
+                    "toId": "ROAD_2",
+                    "fromId": "JUNC_2"
+                  },
+                  "durationMinutes": 0
+                },
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_2",
+                    "position": 0.14
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_2",
+                    "position": 0
+                  },
+                  "kind": "along_road",
+                  "roadId": "ROAD_2",
+                  "durationMinutes": 1.4
+                },
+                {
+                  "to": {
+                    "type": "scene",
+                    "sceneId": "SCN_11_SUB_1"
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_2",
+                    "position": 0.14
+                  },
+                  "kind": "to_scene",
+                  "blockCheck": {
+                    "toId": "SCN_11_SUB_1",
+                    "fromId": "ROAD_2"
+                  },
+                  "durationMinutes": 1
+                }
+              ],
+              "targetPosition": {
+                "type": "scene",
+                "sceneId": "SCN_11_SUB_1"
+              },
+              "minutesIntoStep": 0,
+              "currentStepIndex": 6,
+              "lastReachablePosition": {
+                "type": "scene",
+                "sceneId": "SCN_11_SUB_1"
+              }
+            },
+            "startedAt": "02:27",
+            "completedAt": "02:39",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "object_interaction",
+          "action": "检查并加固《黄衣之王》的暗红封蜡，确认无裂缝并在必要处补蜡密封",
+          "impact": 0,
+          "nodeId": "oi_solomon_check_wax_0001",
+          "status": "completed",
+          "endTime": "02:45",
+          "outcome": "我检查了《黄衣之王》的暗红封蜡，确认没有裂缝，在必要处补上了新蜡并压上了我的记号，然后把书放回躺椅下的藏处，封印与护守恢复如初。",
+          "startTime": "02:40",
+          "characterId": "Solomon",
+          "characterName": "Solomon",
+          "executionMeta": {
+            "startedAt": "02:40",
+            "completedAt": "02:45",
+            "remainingMinutes": 0
+          },
+          "objectInteractionPayload": {
+            "itemId": "《黄衣之王》"
+          }
+        },
+        {
+          "type": "action",
+          "action": "回到深紫色帘幕后靠窗的暗处，隐蔽观察北新街端点三岔口并把所见记录在随身笔记中",
+          "impact": 0,
+          "nodeId": "a_solomon_0246_01",
+          "status": "completed",
+          "endTime": "02:56",
+          "outcome": "回到深紫色帘幕后靠窗的暗处，隐蔽观察北新街端点三岔口并把所见记录在随身笔记中 成功",
+          "startTime": "02:46",
+          "characterId": "Solomon",
+          "characterName": "Solomon",
+          "executionMeta": {
+            "startedAt": "02:46",
+            "completedAt": "02:56",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "action",
+          "action": "在深紫色帘幕后继续隐蔽观察北新街端点三岔口十分钟以确认是否出现Angela、Harrison或Adolph，并将所见记入随身笔记",
+          "impact": 0,
+          "nodeId": "a_solomon_02",
+          "status": "completed",
+          "endTime": "03:07",
+          "outcome": "在深紫色帘幕后继续隐蔽观察北新街端点三岔口十分钟以确认是否出现Angela、Harrison或Adolph，并将所见记入随身笔记 成功",
+          "startTime": "02:57",
+          "characterId": "Solomon",
+          "characterName": "Solomon",
+          "executionMeta": {
+            "startedAt": "02:57",
+            "completedAt": "03:07",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "action",
+          "action": "把刚才在窗前观察到的情况写入随身笔记",
+          "impact": 0,
+          "nodeId": "a1",
+          "status": "completed",
+          "endTime": "03:18",
+          "outcome": "把刚才在窗前观察到的情况写入随身笔记 成功",
+          "startTime": "03:08",
+          "characterId": "Solomon",
+          "characterName": "Solomon",
+          "executionMeta": {
+            "startedAt": "03:08",
+            "completedAt": "03:18",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "action",
+          "action": "在深紫色帘幕后继续隐蔽观察北新街端点三岔口并把所见详尽记录在随身笔记中",
+          "impact": 0,
+          "nodeId": "a2",
+          "status": "completed",
+          "endTime": "05:24",
+          "outcome": "在深紫色帘幕后继续隐蔽观察北新街端点三岔口并把所见详尽记录在随身笔记中 成功",
+          "startTime": "05:14",
+          "characterId": "Solomon",
+          "characterName": "Solomon",
+          "executionMeta": {
+            "startedAt": "05:14",
+            "completedAt": "05:24",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "object_interaction",
+          "action": "把门边的躺椅推到前门前以堵住门",
+          "impact": 0,
+          "nodeId": "oi_day2_0332_1",
+          "status": "interrupted",
+          "endTime": "03:34",
+          "outcome": "把门边的躺椅推到前门前以堵住门 [因重新规划而中断] 已中断",
+          "startTime": "03:32",
+          "characterId": "Solomon",
+          "characterName": "Solomon",
+          "executionMeta": {
+            "startedAt": "03:32",
+            "interruptedAt": "03:35",
+            "remainingMinutes": 0,
+            "interruptionReason": "revise_replan"
+          },
+          "objectInteractionPayload": {
+            "itemId": "ITEM_SCN11_2"
+          }
+        },
+        {
+          "type": "object_interaction",
+          "action": "把门边的躺椅推到前门前以堵住门",
+          "impact": 0,
+          "nodeId": "oi_push_chair_0336",
+          "status": "completed",
+          "endTime": "03:38",
+          "outcome": "我把门边的躺椅推到前门前以堵住门口；躺椅下藏着的那本神秘书籍随躺椅一起到了门前，仍被深紫色帘幕掩护，帘幕上的暗红封蜡并未被扰动。",
+          "startTime": "03:36",
+          "characterId": "Solomon",
+          "characterName": "Solomon",
+          "executionMeta": {
+            "startedAt": "03:36",
+            "completedAt": "03:38",
+            "remainingMinutes": 0
+          },
+          "objectInteractionPayload": {
+            "itemId": "ITEM_SCN11_2"
+          }
+        },
+        {
+          "type": "action",
+          "action": "从深紫色帘幕后靠窗的暗处隐蔽观察北新街端点三岔口，密切留意Simon及其同伙的动向并把所见记录在随身笔记中",
+          "impact": 0,
+          "nodeId": "a_solomon_0339",
+          "status": "completed",
+          "endTime": "03:49",
+          "outcome": "从深紫色帘幕后靠窗的暗处隐蔽观察北新街端点三岔口，密切留意Simon及其同伙的动向并把所见记录在随身笔记中 成功",
+          "startTime": "03:39",
+          "characterId": "Solomon",
+          "characterName": "Solomon",
+          "executionMeta": {
+            "startedAt": "03:39",
+            "completedAt": "03:49",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "scene_interaction",
+          "action": "悄悄吹熄圆桌周围的外围蜡烛以减少室内可见光，保持暗处隐蔽",
+          "impact": 0,
+          "nodeId": "si2",
+          "status": "completed",
+          "endTime": "03:53",
+          "outcome": "我悄悄吹熄了圆桌周围的外围蜡烛，室内光线进一步减弱，暗处更易隐蔽。吹灭过程没有扰动到护阵或封蜡，其他摆设保持原状。",
+          "startTime": "03:50",
+          "characterId": "Solomon",
+          "characterName": "Solomon",
+          "executionMeta": {
+            "startedAt": "03:50",
+            "completedAt": "03:53",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "action",
+          "action": "在深紫色帘幕后继续隐蔽观察北新街端点三岔口并把所见记入随身笔记",
+          "impact": 0,
+          "nodeId": "a_solomon_0354_1",
+          "status": "completed",
+          "endTime": "04:14",
+          "outcome": "在深紫色帘幕后继续隐蔽观察北新街端点三岔口并把所见记入随身笔记 成功",
+          "startTime": "03:54",
+          "characterId": "Solomon",
+          "characterName": "Solomon",
+          "executionMeta": {
+            "startedAt": "03:54",
+            "completedAt": "04:14",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "action",
+          "action": "继续在深紫色帘幕后隐蔽观察北新街端点三岔口并记录所有可疑动向",
+          "impact": 0,
+          "nodeId": "a_next_0415",
+          "status": "completed",
+          "endTime": "04:30",
+          "outcome": "继续在深紫色帘幕后隐蔽观察北新街端点三岔口并记录所有可疑动向 成功",
+          "startTime": "04:15",
+          "characterId": "Solomon",
+          "characterName": "Solomon",
+          "executionMeta": {
+            "startedAt": "04:15",
+            "completedAt": "04:30",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "action",
+          "action": "继续在深紫色帘幕后隐蔽观察北新街端点三岔口并把所见记入随身笔记",
+          "impact": 0,
+          "nodeId": "a_next_001",
+          "status": "completed",
+          "endTime": "04:45",
+          "outcome": "继续在深紫色帘幕后隐蔽观察北新街端点三岔口并把所见记入随身笔记 成功",
+          "startTime": "04:31",
+          "characterId": "Solomon",
+          "characterName": "Solomon",
+          "executionMeta": {
+            "startedAt": "04:31",
+            "completedAt": "04:45",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "scene_interaction",
+          "action": "把门边的躺椅牢牢推到前门边以加固门的阻挡",
+          "impact": 0,
+          "nodeId": "si_next1",
+          "status": "completed",
+          "endTime": "04:48",
+          "outcome": "我把门边的旧躺椅用力推到前门处，牢牢抵住门扇，堵塞比先前更稳。躺椅下的神秘书籍仍在帘幕后，未被暴露。",
+          "startTime": "04:46",
+          "characterId": "Solomon",
+          "characterName": "Solomon",
+          "executionMeta": {
+            "startedAt": "04:46",
+            "completedAt": "04:48",
+            "remainingMinutes": 0
+          },
+          "objectInteractionPayload": {
+            "itemId": "ITEM_SCN11_2"
+          }
+        },
+        {
+          "type": "action",
+          "action": "继续在深紫色帘幕后隐蔽观察北新街端点三岔口，密切监视Simon及其同伙的动向并悄悄记录所见",
+          "impact": 0,
+          "nodeId": "a3_day2_0449",
+          "status": "completed",
+          "endTime": "05:10",
+          "outcome": "继续在深紫色帘幕后隐蔽观察北新街端点三岔口，密切监视Simon及其同伙的动向并悄悄记录所见 成功",
+          "startTime": "04:49",
+          "characterId": "Solomon",
+          "characterName": "Solomon",
+          "executionMeta": {
+            "startedAt": "04:49",
+            "completedAt": "05:10",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "scene_interaction",
+          "action": "悄悄吹熄铜质油灯以进一步降低室内光线，维持隐蔽观察状态",
+          "impact": 0,
+          "nodeId": "si_solomon_extinguish_lamp_0511",
+          "status": "completed",
+          "endTime": "05:13",
+          "outcome": "我悄悄吹熄了天花板上的铜质油灯，屋内变得更暗些，便于我在帘幕后继续隐蔽观察北新街三岔口与Harrison的动向。",
+          "startTime": "05:11",
+          "characterId": "Solomon",
+          "characterName": "Solomon",
+          "executionMeta": {
+            "startedAt": "05:11",
+            "completedAt": "05:13",
+            "remainingMinutes": 0
+          },
+          "objectInteractionPayload": {
+            "itemId": "ITEM_SCN11_5"
+          }
+        },
+        {
+          "type": "action",
+          "action": "在深紫色帘幕后继续隐蔽观察北新街端点三岔口并把所见详尽记录在随身笔记中",
+          "impact": 0,
+          "nodeId": "a2",
+          "status": "completed",
+          "endTime": "05:24",
+          "outcome": "在深紫色帘幕后继续隐蔽观察北新街端点三岔口并把所见详尽记录在随身笔记中 成功",
+          "startTime": "05:14",
+          "characterId": "Solomon",
+          "characterName": "Solomon",
+          "executionMeta": {
+            "startedAt": "05:14",
+            "completedAt": "05:24",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "action",
+          "action": "简单用餐并小憩两小时以保存精力",
+          "impact": 0,
+          "nodeId": "a_solomon_rest_0525",
+          "status": "completed",
+          "endTime": "07:25",
+          "outcome": "简单用餐并小憩两小时以保存精力 成功",
+          "startTime": "05:25",
+          "characterId": "Solomon",
+          "characterName": "Solomon",
+          "executionMeta": {
+            "startedAt": "05:25",
+            "completedAt": "07:25",
+            "remainingMinutes": 0
+          },
+          "routineSubtype": "rest"
+        },
+        {
+          "type": "action",
+          "action": "从深紫色帘幕后靠窗继续隐蔽观察北新街端点三岔口，并把所见详尽记录在随身笔记中",
+          "impact": 0,
+          "nodeId": "a_solomon_0726",
+          "status": "completed",
+          "endTime": "07:46",
+          "outcome": "从深紫色帘幕后靠窗继续隐蔽观察北新街端点三岔口，并把所见详尽记录在随身笔记中 成功",
+          "startTime": "07:26",
+          "characterId": "Solomon",
+          "characterName": "Solomon",
+          "executionMeta": {
+            "startedAt": "07:26",
+            "completedAt": "07:46",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "action",
+          "action": "把今天对《黄衣之王》暗红封蜡、帘幕后折缝封印与圆桌护阵的检查与加固情况详尽记录到日记中并将日记上锁",
+          "impact": 0,
+          "nodeId": "a_solomon_0747_1",
+          "status": "completed",
+          "endTime": "07:55",
+          "outcome": "把今天对《黄衣之王》暗红封蜡、帘幕后折缝封印与圆桌护阵的检查与加固情况详尽记录到日记中并将日记上锁 成功",
+          "startTime": "07:47",
+          "characterId": "Solomon",
+          "characterName": "Solomon",
+          "executionMeta": {
+            "startedAt": "07:47",
+            "completedAt": "07:55",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "action",
+          "action": "在深紫色帘幕后继续隐蔽观察北新街端点三岔口并把所见详尽记录在随身笔记中",
+          "impact": 0,
+          "nodeId": "a_next_0756",
+          "status": "completed",
+          "endTime": "08:16",
+          "outcome": "在深紫色帘幕后继续隐蔽观察北新街端点三岔口并把所见详尽记录在随身笔记中 成功",
+          "startTime": "07:56",
+          "characterId": "Solomon",
+          "characterName": "Solomon",
+          "executionMeta": {
+            "startedAt": "07:56",
+            "completedAt": "08:16",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "action",
+          "action": "继续在深紫色帘幕后靠窗隐蔽观察北新街端点三岔口，并把所见详尽记录在随身笔记中",
+          "impact": 0,
+          "nodeId": "a_next_0817",
+          "status": "in_progress",
+          "endTime": "08:27",
+          "startTime": "08:17",
+          "characterId": "Solomon",
+          "characterName": "Solomon",
+          "executionMeta": {
+            "startedAt": "08:17",
+            "remainingMinutes": 10
+          }
+        }
+      ]
+    },
+    {
+      "npcName": "Solomon",
+      "gameDay": 1,
+      "schedule": [
+        {
+          "activity": "为今晚可能的来访者整理占卜用具与预约记录",
+          "location": "占星师小铺"
+        },
+        {
+          "activity": "审阅并加强对《黄衣之王》封存的保护措施，确保不会被随意翻阅",
+          "location": "占星师小铺"
+        },
+        {
+          "activity": "敲门与Simon和Nancy短谈并借用几块麻布和一小瓶红酒作为临时保存材料",
+          "location": "花店·卡森德拉之花"
+        },
+        {
+          "activity": "用借来的材料对几本脆弱的卷册做临时修护并在修复日志中记录细节",
+          "location": "占星师小铺"
+        },
+        {
+          "activity": "煮一杯热茶并简单用餐，同时翻阅一段无害的经文作笔记",
+          "location": "占星师小铺"
+        },
+        {
+          "activity": "将新近入藏的书目要点录入我的私有藏书目录并标注警示标签",
+          "location": "占星师小铺"
+        },
+        {
+          "activity": "点上几根额外的蜡烛并布置简单护阵以维持夜间的安全防护",
+          "location": "占星师小铺"
+        },
+        {
+          "activity": "写下今日观察与偶得的梦境片段，尝试捕捉任何残留的预感",
+          "location": "占星师小铺"
+        },
+        {
+          "activity": "查看门外的雪况并根据天气制定明日起身外出的计划",
+          "location": "占星师小铺"
+        },
+        {
+          "activity": "在睡前做短暂的冥想以封存今日接触到的思想，然后就寝",
+          "location": "占星师小铺"
+        }
+      ],
+      "nodes": [
+        {
+          "type": "action",
+          "action": "在日志中记录今晚关于Harrison、Adolph和Angela的观察细节，标注《黄衣之王》的警戒优先级并写下应对要点",
+          "impact": 0,
+          "nodeId": "a_solomon_001",
+          "status": "completed",
+          "endTime": "23:24",
+          "outcome": "在日志中记录今晚关于Harrison、Adolph和Angela的观察细节，标注《黄衣之王》的警戒优先级并写下应对要点 成功",
+          "startTime": "23:19",
+          "characterId": "Solomon",
+          "characterName": "Solomon",
+          "executionMeta": {
+            "startedAt": "23:19",
+            "completedAt": "23:24",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "object_interaction",
+          "action": "检查深紫色帘幕后隐藏处的《黄衣之王》，确认封蜡与藏匿位置完好",
+          "impact": 0,
+          "nodeId": "oi1",
+          "status": "completed",
+          "endTime": "22:35",
+          "outcome": "我掀开并检查了那道厚重的深紫色帘幕后藏匿的书籍。封蜡完好无损，藏匿位置没有被动过，帘幕依然能很好地掩蔽书本；我将它复位，继续从暗处观察可疑之人。",
+          "startTime": "22:32",
+          "characterId": "Solomon",
+          "characterName": "Solomon",
+          "executionMeta": {
+            "startedAt": "22:32",
+            "completedAt": "22:35",
+            "remainingMinutes": 0
+          },
+          "objectInteractionPayload": {
+            "itemId": "《黄衣之王》"
+          }
+        },
+        {
+          "type": "movement",
+          "action": "快步回到占星师小铺，保持低调并准备从隐蔽处观察门外动向",
+          "impact": 0,
+          "nodeId": "m_solomon_001",
+          "status": "interrupted",
+          "endTime": "21:15",
+          "outcome": "快步回到占星师小铺，保持低调并准备从隐蔽处观察门外动向 [因重新规划而中断] 已中断",
+          "startTime": "21:12",
+          "characterId": "Solomon",
+          "destination": "SCN_11_SUB_1",
+          "characterName": "Solomon",
+          "executionMeta": {
+            "startedAt": "21:12",
+            "interruptedAt": "21:15",
+            "remainingMinutes": 0,
+            "interruptionReason": "revise_replan"
+          }
+        },
+        {
+          "type": "movement",
+          "action": "步行回占星师小铺",
+          "impact": 0,
+          "nodeId": "m1",
+          "status": "interrupted",
+          "endTime": "21:26",
+          "outcome": "步行回占星师小铺 [因重新规划而中断] 已中断",
+          "startTime": "21:24",
+          "characterId": "Solomon",
+          "destination": "SCN_11_SUB_1",
+          "characterName": "Solomon",
+          "executionMeta": {
+            "movement": {
+              "routeSnapshot": [
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_2",
+                    "position": 0
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_2",
+                    "position": 0.1
+                  },
+                  "kind": "along_road",
+                  "roadId": "ROAD_2",
+                  "durationMinutes": 1
+                },
+                {
+                  "to": {
+                    "type": "junction",
+                    "junctionId": "JUNC_2"
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_2",
+                    "position": 0
+                  },
+                  "kind": "to_junction",
+                  "blockCheck": {
+                    "toId": "JUNC_2",
+                    "fromId": "ROAD_2"
+                  },
+                  "durationMinutes": 0
+                },
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_2",
+                    "position": 0
+                  },
+                  "from": {
+                    "type": "junction",
+                    "junctionId": "JUNC_2"
+                  },
+                  "kind": "to_junction",
+                  "blockCheck": {
+                    "toId": "ROAD_2",
+                    "fromId": "JUNC_2"
+                  },
+                  "durationMinutes": 0
+                },
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_2",
+                    "position": 0.14
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_2",
+                    "position": 0
+                  },
+                  "kind": "along_road",
+                  "roadId": "ROAD_2",
+                  "durationMinutes": 1.4
+                },
+                {
+                  "to": {
+                    "type": "scene",
+                    "sceneId": "SCN_11_SUB_1"
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_2",
+                    "position": 0.14
+                  },
+                  "kind": "to_scene",
+                  "blockCheck": {
+                    "toId": "SCN_11_SUB_1",
+                    "fromId": "ROAD_2"
+                  },
+                  "durationMinutes": 1
+                }
+              ],
+              "targetPosition": {
+                "type": "scene",
+                "sceneId": "SCN_11_SUB_1"
+              },
+              "minutesIntoStep": 1,
+              "currentStepIndex": 3,
+              "lastReachablePosition": {
+                "type": "road",
+                "roadId": "ROAD_2",
+                "position": 0.1
+              }
+            },
+            "startedAt": "21:24",
+            "interruptedAt": "21:25",
+            "remainingMinutes": 0,
+            "interruptionReason": "revise_replan"
+          }
+        },
+        {
+          "type": "movement",
+          "action": "步行回占星师小铺",
+          "impact": 0,
+          "nodeId": "m1",
+          "status": "interrupted",
+          "endTime": "21:26",
+          "outcome": "步行回占星师小铺 [因重新规划而中断] 已中断",
+          "startTime": "21:24",
+          "characterId": "Solomon",
+          "destination": "SCN_11_SUB_1",
+          "characterName": "Solomon",
+          "executionMeta": {
+            "movement": {
+              "routeSnapshot": [
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_2",
+                    "position": 0
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_2",
+                    "position": 0.1
+                  },
+                  "kind": "along_road",
+                  "roadId": "ROAD_2",
+                  "durationMinutes": 1
+                },
+                {
+                  "to": {
+                    "type": "junction",
+                    "junctionId": "JUNC_2"
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_2",
+                    "position": 0
+                  },
+                  "kind": "to_junction",
+                  "blockCheck": {
+                    "toId": "JUNC_2",
+                    "fromId": "ROAD_2"
+                  },
+                  "durationMinutes": 0
+                },
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_2",
+                    "position": 0
+                  },
+                  "from": {
+                    "type": "junction",
+                    "junctionId": "JUNC_2"
+                  },
+                  "kind": "to_junction",
+                  "blockCheck": {
+                    "toId": "ROAD_2",
+                    "fromId": "JUNC_2"
+                  },
+                  "durationMinutes": 0
+                },
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_2",
+                    "position": 0.14
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_2",
+                    "position": 0
+                  },
+                  "kind": "along_road",
+                  "roadId": "ROAD_2",
+                  "durationMinutes": 1.4
+                },
+                {
+                  "to": {
+                    "type": "scene",
+                    "sceneId": "SCN_11_SUB_1"
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_2",
+                    "position": 0.14
+                  },
+                  "kind": "to_scene",
+                  "blockCheck": {
+                    "toId": "SCN_11_SUB_1",
+                    "fromId": "ROAD_2"
+                  },
+                  "durationMinutes": 1
+                }
+              ],
+              "targetPosition": {
+                "type": "scene",
+                "sceneId": "SCN_11_SUB_1"
+              },
+              "minutesIntoStep": 1,
+              "currentStepIndex": 3,
+              "lastReachablePosition": {
+                "type": "road",
+                "roadId": "ROAD_2",
+                "position": 0.1
+              }
+            },
+            "startedAt": "21:24",
+            "interruptedAt": "21:25",
+            "remainingMinutes": 0,
+            "interruptionReason": "revise_replan"
+          }
+        },
+        {
+          "type": "movement",
+          "action": "步行回占星师小铺",
+          "impact": 0,
+          "nodeId": "m1",
+          "status": "interrupted",
+          "endTime": "21:26",
+          "outcome": "步行回占星师小铺 [因重新规划而中断] 已中断",
+          "startTime": "21:24",
+          "characterId": "Solomon",
+          "destination": "SCN_11_SUB_1",
+          "characterName": "Solomon",
+          "executionMeta": {
+            "movement": {
+              "routeSnapshot": [
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_2",
+                    "position": 0
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_2",
+                    "position": 0.1
+                  },
+                  "kind": "along_road",
+                  "roadId": "ROAD_2",
+                  "durationMinutes": 1
+                },
+                {
+                  "to": {
+                    "type": "junction",
+                    "junctionId": "JUNC_2"
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_2",
+                    "position": 0
+                  },
+                  "kind": "to_junction",
+                  "blockCheck": {
+                    "toId": "JUNC_2",
+                    "fromId": "ROAD_2"
+                  },
+                  "durationMinutes": 0
+                },
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_2",
+                    "position": 0
+                  },
+                  "from": {
+                    "type": "junction",
+                    "junctionId": "JUNC_2"
+                  },
+                  "kind": "to_junction",
+                  "blockCheck": {
+                    "toId": "ROAD_2",
+                    "fromId": "JUNC_2"
+                  },
+                  "durationMinutes": 0
+                },
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_2",
+                    "position": 0.14
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_2",
+                    "position": 0
+                  },
+                  "kind": "along_road",
+                  "roadId": "ROAD_2",
+                  "durationMinutes": 1.4
+                },
+                {
+                  "to": {
+                    "type": "scene",
+                    "sceneId": "SCN_11_SUB_1"
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_2",
+                    "position": 0.14
+                  },
+                  "kind": "to_scene",
+                  "blockCheck": {
+                    "toId": "SCN_11_SUB_1",
+                    "fromId": "ROAD_2"
+                  },
+                  "durationMinutes": 1
+                }
+              ],
+              "targetPosition": {
+                "type": "scene",
+                "sceneId": "SCN_11_SUB_1"
+              },
+              "minutesIntoStep": 1,
+              "currentStepIndex": 3,
+              "lastReachablePosition": {
+                "type": "road",
+                "roadId": "ROAD_2",
+                "position": 0.1
+              }
+            },
+            "startedAt": "21:24",
+            "interruptedAt": "21:25",
+            "remainingMinutes": 0,
+            "interruptionReason": "revise_replan"
+          }
+        },
+        {
+          "type": "movement",
+          "action": "步行回占星师小铺",
+          "impact": 0,
+          "nodeId": "m1",
+          "status": "interrupted",
+          "endTime": "21:26",
+          "outcome": "步行回占星师小铺 [因重新规划而中断] 已中断",
+          "startTime": "21:24",
+          "characterId": "Solomon",
+          "destination": "SCN_11_SUB_1",
+          "characterName": "Solomon",
+          "executionMeta": {
+            "movement": {
+              "routeSnapshot": [
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_2",
+                    "position": 0
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_2",
+                    "position": 0.1
+                  },
+                  "kind": "along_road",
+                  "roadId": "ROAD_2",
+                  "durationMinutes": 1
+                },
+                {
+                  "to": {
+                    "type": "junction",
+                    "junctionId": "JUNC_2"
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_2",
+                    "position": 0
+                  },
+                  "kind": "to_junction",
+                  "blockCheck": {
+                    "toId": "JUNC_2",
+                    "fromId": "ROAD_2"
+                  },
+                  "durationMinutes": 0
+                },
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_2",
+                    "position": 0
+                  },
+                  "from": {
+                    "type": "junction",
+                    "junctionId": "JUNC_2"
+                  },
+                  "kind": "to_junction",
+                  "blockCheck": {
+                    "toId": "ROAD_2",
+                    "fromId": "JUNC_2"
+                  },
+                  "durationMinutes": 0
+                },
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_2",
+                    "position": 0.14
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_2",
+                    "position": 0
+                  },
+                  "kind": "along_road",
+                  "roadId": "ROAD_2",
+                  "durationMinutes": 1.4
+                },
+                {
+                  "to": {
+                    "type": "scene",
+                    "sceneId": "SCN_11_SUB_1"
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_2",
+                    "position": 0.14
+                  },
+                  "kind": "to_scene",
+                  "blockCheck": {
+                    "toId": "SCN_11_SUB_1",
+                    "fromId": "ROAD_2"
+                  },
+                  "durationMinutes": 1
+                }
+              ],
+              "targetPosition": {
+                "type": "scene",
+                "sceneId": "SCN_11_SUB_1"
+              },
+              "minutesIntoStep": 1,
+              "currentStepIndex": 3,
+              "lastReachablePosition": {
+                "type": "road",
+                "roadId": "ROAD_2",
+                "position": 0.1
+              }
+            },
+            "startedAt": "21:24",
+            "interruptedAt": "21:25",
+            "remainingMinutes": 0,
+            "interruptionReason": "revise_replan"
+          }
+        },
+        {
+          "type": "movement",
+          "action": "步行回占星师小铺",
+          "impact": 0,
+          "nodeId": "m1",
+          "status": "interrupted",
+          "endTime": "21:26",
+          "outcome": "步行回占星师小铺 [因重新规划而中断] 已中断",
+          "startTime": "21:24",
+          "characterId": "Solomon",
+          "destination": "SCN_11_SUB_1",
+          "characterName": "Solomon",
+          "executionMeta": {
+            "movement": {
+              "routeSnapshot": [
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_2",
+                    "position": 0
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_2",
+                    "position": 0.1
+                  },
+                  "kind": "along_road",
+                  "roadId": "ROAD_2",
+                  "durationMinutes": 1
+                },
+                {
+                  "to": {
+                    "type": "junction",
+                    "junctionId": "JUNC_2"
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_2",
+                    "position": 0
+                  },
+                  "kind": "to_junction",
+                  "blockCheck": {
+                    "toId": "JUNC_2",
+                    "fromId": "ROAD_2"
+                  },
+                  "durationMinutes": 0
+                },
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_2",
+                    "position": 0
+                  },
+                  "from": {
+                    "type": "junction",
+                    "junctionId": "JUNC_2"
+                  },
+                  "kind": "to_junction",
+                  "blockCheck": {
+                    "toId": "ROAD_2",
+                    "fromId": "JUNC_2"
+                  },
+                  "durationMinutes": 0
+                },
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_2",
+                    "position": 0.14
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_2",
+                    "position": 0
+                  },
+                  "kind": "along_road",
+                  "roadId": "ROAD_2",
+                  "durationMinutes": 1.4
+                },
+                {
+                  "to": {
+                    "type": "scene",
+                    "sceneId": "SCN_11_SUB_1"
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_2",
+                    "position": 0.14
+                  },
+                  "kind": "to_scene",
+                  "blockCheck": {
+                    "toId": "SCN_11_SUB_1",
+                    "fromId": "ROAD_2"
+                  },
+                  "durationMinutes": 1
+                }
+              ],
+              "targetPosition": {
+                "type": "scene",
+                "sceneId": "SCN_11_SUB_1"
+              },
+              "minutesIntoStep": 1,
+              "currentStepIndex": 3,
+              "lastReachablePosition": {
+                "type": "road",
+                "roadId": "ROAD_2",
+                "position": 0.1
+              }
+            },
+            "startedAt": "21:24",
+            "interruptedAt": "21:25",
+            "remainingMinutes": 0,
+            "interruptionReason": "revise_replan"
+          }
+        },
+        {
+          "type": "object_interaction",
+          "action": "检查《黄衣之王》的封蜡，确认封存是否完好",
+          "impact": 0,
+          "nodeId": "oi_solomon_check_seal_001",
+          "status": "completed",
+          "endTime": "20:23",
+          "outcome": "我掀开书的封面边缘，检查了《黄衣之王》上那枚暗红色的封蜡：封印完好无损，压着我的记号，周围的几处新蜡滴也未被扰动。我将书放回原位，保持警觉，继续在店内低调观察外面的动向。",
+          "startTime": "20:18",
+          "characterId": "Solomon",
+          "characterName": "Solomon",
+          "executionMeta": {
+            "startedAt": "20:18",
+            "completedAt": "20:23",
+            "remainingMinutes": 0
+          },
+          "objectInteractionPayload": {
+            "itemId": "《黄衣之王》"
+          }
+        },
+        {
+          "type": "scene_interaction",
+          "action": "点上几根额外的蜡烛并在圆桌周围布置一道简单护阵以维持夜间的安全防护",
+          "impact": 0,
+          "nodeId": "si_solomon_01",
+          "status": "completed",
+          "endTime": "20:34",
+          "outcome": "我在圆桌周围点了几根额外的蜡烛，并按计划布置了一道简单的护阵以维持夜间的安全。圆桌附近的光线比刚才好些，护阵看起来稳当。",
+          "startTime": "20:24",
+          "characterId": "Solomon",
+          "characterName": "Solomon",
+          "executionMeta": {
+            "startedAt": "20:24",
+            "completedAt": "20:34",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "scene_interaction",
+          "action": "从深紫色帘幕的一角悄悄观察街道上的动向，留意Harrison、Adolph与Angela是否靠近或交谈",
+          "impact": 0,
+          "nodeId": "si_solomon_2035_1",
+          "status": "completed",
+          "endTime": "20:40",
+          "outcome": "我从深紫色帘幕的一角悄悄探视街道，留意Harrison、Adolph与Angela是否靠近或交谈。确认在我能看见的范围内没有他们接近或互相交谈。",
+          "startTime": "20:35",
+          "characterId": "Solomon",
+          "characterName": "Solomon",
+          "executionMeta": {
+            "startedAt": "20:35",
+            "completedAt": "20:40",
+            "remainingMinutes": 0
+          },
+          "objectInteractionPayload": {
+            "itemId": "ITEM_SCN11_6"
+          }
+        },
+        {
+          "type": "scene_interaction",
+          "action": "检查并加固占卜馆大门的锁与门栓",
+          "impact": 0,
+          "nodeId": "si1_solomon_001",
+          "status": "completed",
+          "endTime": "20:44",
+          "outcome": "我检查了占卜馆的门锁与门栓，确认没有松动后把它们加固并试了试，门现在更牢固，短时间内不易被外部强行打开。",
+          "startTime": "20:41",
+          "characterId": "Solomon",
+          "characterName": "Solomon",
+          "executionMeta": {
+            "startedAt": "20:41",
+            "completedAt": "20:44",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "movement",
+          "action": "步行回占星师小铺",
+          "impact": 0,
+          "nodeId": "m1",
+          "status": "interrupted",
+          "endTime": "21:26",
+          "outcome": "步行回占星师小铺 [因重新规划而中断] 已中断",
+          "startTime": "21:24",
+          "characterId": "Solomon",
+          "destination": "SCN_11_SUB_1",
+          "characterName": "Solomon",
+          "executionMeta": {
+            "movement": {
+              "routeSnapshot": [
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_2",
+                    "position": 0
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_2",
+                    "position": 0.1
+                  },
+                  "kind": "along_road",
+                  "roadId": "ROAD_2",
+                  "durationMinutes": 1
+                },
+                {
+                  "to": {
+                    "type": "junction",
+                    "junctionId": "JUNC_2"
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_2",
+                    "position": 0
+                  },
+                  "kind": "to_junction",
+                  "blockCheck": {
+                    "toId": "JUNC_2",
+                    "fromId": "ROAD_2"
+                  },
+                  "durationMinutes": 0
+                },
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_2",
+                    "position": 0
+                  },
+                  "from": {
+                    "type": "junction",
+                    "junctionId": "JUNC_2"
+                  },
+                  "kind": "to_junction",
+                  "blockCheck": {
+                    "toId": "ROAD_2",
+                    "fromId": "JUNC_2"
+                  },
+                  "durationMinutes": 0
+                },
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_2",
+                    "position": 0.14
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_2",
+                    "position": 0
+                  },
+                  "kind": "along_road",
+                  "roadId": "ROAD_2",
+                  "durationMinutes": 1.4
+                },
+                {
+                  "to": {
+                    "type": "scene",
+                    "sceneId": "SCN_11_SUB_1"
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_2",
+                    "position": 0.14
+                  },
+                  "kind": "to_scene",
+                  "blockCheck": {
+                    "toId": "SCN_11_SUB_1",
+                    "fromId": "ROAD_2"
+                  },
+                  "durationMinutes": 1
+                }
+              ],
+              "targetPosition": {
+                "type": "scene",
+                "sceneId": "SCN_11_SUB_1"
+              },
+              "minutesIntoStep": 1,
+              "currentStepIndex": 3,
+              "lastReachablePosition": {
+                "type": "road",
+                "roadId": "ROAD_2",
+                "position": 0.1
+              }
+            },
+            "startedAt": "21:24",
+            "interruptedAt": "21:25",
+            "remainingMinutes": 0,
+            "interruptionReason": "revise_replan"
+          }
+        },
+        {
+          "type": "movement",
+          "action": "快步返回占星师小铺，保持低调并避免与Harrison接触",
+          "impact": 0,
+          "nodeId": "m_next_2050",
+          "status": "interrupted",
+          "endTime": "20:52",
+          "outcome": "快步返回占星师小铺，保持低调并避免与Harrison接触 [因重新规划而中断] 已中断",
+          "startTime": "20:50",
+          "characterId": "Solomon",
+          "destination": "SCN_11_SUB_1",
+          "characterName": "Solomon",
+          "executionMeta": {
+            "movement": {
+              "routeSnapshot": [
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_2",
+                    "position": 0
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_2",
+                    "position": 0.2
+                  },
+                  "kind": "along_road",
+                  "roadId": "ROAD_2",
+                  "durationMinutes": 2
+                },
+                {
+                  "to": {
+                    "type": "junction",
+                    "junctionId": "JUNC_2"
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_2",
+                    "position": 0
+                  },
+                  "kind": "to_junction",
+                  "blockCheck": {
+                    "toId": "JUNC_2",
+                    "fromId": "ROAD_2"
+                  },
+                  "durationMinutes": 0
+                },
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_2",
+                    "position": 0
+                  },
+                  "from": {
+                    "type": "junction",
+                    "junctionId": "JUNC_2"
+                  },
+                  "kind": "to_junction",
+                  "blockCheck": {
+                    "toId": "ROAD_2",
+                    "fromId": "JUNC_2"
+                  },
+                  "durationMinutes": 0
+                },
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_2",
+                    "position": 0.14
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_2",
+                    "position": 0
+                  },
+                  "kind": "along_road",
+                  "roadId": "ROAD_2",
+                  "durationMinutes": 1.4
+                },
+                {
+                  "to": {
+                    "type": "scene",
+                    "sceneId": "SCN_11_SUB_1"
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_2",
+                    "position": 0.14
+                  },
+                  "kind": "to_scene",
+                  "blockCheck": {
+                    "toId": "SCN_11_SUB_1",
+                    "fromId": "ROAD_2"
+                  },
+                  "durationMinutes": 1
+                }
+              ],
+              "targetPosition": {
+                "type": "scene",
+                "sceneId": "SCN_11_SUB_1"
+              },
+              "minutesIntoStep": 1,
+              "currentStepIndex": 3,
+              "lastReachablePosition": {
+                "type": "road",
+                "roadId": "ROAD_2",
+                "position": 0.1
+              }
+            },
+            "startedAt": "20:50",
+            "interruptedAt": "20:57",
+            "remainingMinutes": 0,
+            "interruptionReason": "revise_replan"
+          }
+        },
+        {
+          "type": "movement",
+          "action": "快步返回占星师小铺，避免与Harrison接触并从隐蔽处低调观察门外动向",
+          "impact": 0,
+          "nodeId": "m_return_to_shop_2058",
+          "status": "interrupted",
+          "endTime": "20:59",
+          "outcome": "快步返回占星师小铺，避免与Harrison接触并从隐蔽处低调观察门外动向 [因重新规划而中断] 已中断",
+          "startTime": "20:58",
+          "characterId": "Solomon",
+          "destination": "SCN_11_SUB_1",
+          "characterName": "Solomon",
+          "executionMeta": {
+            "movement": {
+              "routeSnapshot": [
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_2",
+                    "position": 0
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_2",
+                    "position": 0.1
+                  },
+                  "kind": "along_road",
+                  "roadId": "ROAD_2",
+                  "durationMinutes": 1
+                },
+                {
+                  "to": {
+                    "type": "junction",
+                    "junctionId": "JUNC_2"
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_2",
+                    "position": 0
+                  },
+                  "kind": "to_junction",
+                  "blockCheck": {
+                    "toId": "JUNC_2",
+                    "fromId": "ROAD_2"
+                  },
+                  "durationMinutes": 0
+                },
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_2",
+                    "position": 0
+                  },
+                  "from": {
+                    "type": "junction",
+                    "junctionId": "JUNC_2"
+                  },
+                  "kind": "to_junction",
+                  "blockCheck": {
+                    "toId": "ROAD_2",
+                    "fromId": "JUNC_2"
+                  },
+                  "durationMinutes": 0
+                },
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_2",
+                    "position": 0.14
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_2",
+                    "position": 0
+                  },
+                  "kind": "along_road",
+                  "roadId": "ROAD_2",
+                  "durationMinutes": 1.4
+                },
+                {
+                  "to": {
+                    "type": "scene",
+                    "sceneId": "SCN_11_SUB_1"
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_2",
+                    "position": 0.14
+                  },
+                  "kind": "to_scene",
+                  "blockCheck": {
+                    "toId": "SCN_11_SUB_1",
+                    "fromId": "ROAD_2"
+                  },
+                  "durationMinutes": 1
+                }
+              ],
+              "targetPosition": {
+                "type": "scene",
+                "sceneId": "SCN_11_SUB_1"
+              },
+              "minutesIntoStep": 1,
+              "currentStepIndex": 3,
+              "lastReachablePosition": {
+                "type": "road",
+                "roadId": "ROAD_2",
+                "position": 0.1
+              }
+            },
+            "startedAt": "20:58",
+            "interruptedAt": "21:04",
+            "remainingMinutes": 0,
+            "interruptionReason": "revise_replan"
+          }
+        },
+        {
+          "type": "movement",
+          "action": "快步返回占星师小铺，避免与Harrison接触并从隐蔽处低调观察门外动向",
+          "impact": 1,
+          "nodeId": "m_solomon_2105_1",
+          "status": "interrupted",
+          "endTime": "21:07",
+          "outcome": "快步返回占星师小铺，避免与Harrison接触并从隐蔽处低调观察门外动向 [因重新规划而中断] 已中断",
+          "startTime": "21:05",
+          "characterId": "Solomon",
+          "destination": "SCN_11_SUB_1",
+          "characterName": "Solomon",
+          "executionMeta": {
+            "movement": {
+              "routeSnapshot": [
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_2",
+                    "position": 0
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_2",
+                    "position": 0.1
+                  },
+                  "kind": "along_road",
+                  "roadId": "ROAD_2",
+                  "durationMinutes": 1
+                },
+                {
+                  "to": {
+                    "type": "junction",
+                    "junctionId": "JUNC_2"
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_2",
+                    "position": 0
+                  },
+                  "kind": "to_junction",
+                  "blockCheck": {
+                    "toId": "JUNC_2",
+                    "fromId": "ROAD_2"
+                  },
+                  "durationMinutes": 0
+                },
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_2",
+                    "position": 0
+                  },
+                  "from": {
+                    "type": "junction",
+                    "junctionId": "JUNC_2"
+                  },
+                  "kind": "to_junction",
+                  "blockCheck": {
+                    "toId": "ROAD_2",
+                    "fromId": "JUNC_2"
+                  },
+                  "durationMinutes": 0
+                },
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_2",
+                    "position": 0.14
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_2",
+                    "position": 0
+                  },
+                  "kind": "along_road",
+                  "roadId": "ROAD_2",
+                  "durationMinutes": 1.4
+                },
+                {
+                  "to": {
+                    "type": "scene",
+                    "sceneId": "SCN_11_SUB_1"
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_2",
+                    "position": 0.14
+                  },
+                  "kind": "to_scene",
+                  "blockCheck": {
+                    "toId": "SCN_11_SUB_1",
+                    "fromId": "ROAD_2"
+                  },
+                  "durationMinutes": 1
+                }
+              ],
+              "targetPosition": {
+                "type": "scene",
+                "sceneId": "SCN_11_SUB_1"
+              },
+              "minutesIntoStep": 1,
+              "currentStepIndex": 3,
+              "lastReachablePosition": {
+                "type": "road",
+                "roadId": "ROAD_2",
+                "position": 0.1
+              }
+            },
+            "startedAt": "21:05",
+            "interruptedAt": "21:08",
+            "remainingMinutes": 0,
+            "interruptionReason": "revise_replan"
+          }
+        },
+        {
+          "type": "movement",
+          "action": "快步回到占星师小铺，保持低调并准备从隐蔽处观察门外动向",
+          "impact": 0,
+          "nodeId": "m_solomon_001",
+          "status": "interrupted",
+          "endTime": "21:15",
+          "outcome": "快步回到占星师小铺，保持低调并准备从隐蔽处观察门外动向 [因重新规划而中断] 已中断",
+          "startTime": "21:12",
+          "characterId": "Solomon",
+          "destination": "SCN_11_SUB_1",
+          "characterName": "Solomon",
+          "executionMeta": {
+            "startedAt": "21:12",
+            "interruptedAt": "21:15",
+            "remainingMinutes": 0,
+            "interruptionReason": "revise_replan"
+          }
+        },
+        {
+          "type": "movement",
+          "action": "快步回到占星师小铺，保持低调并准备从隐蔽处观察门外动向",
+          "impact": 0,
+          "nodeId": "m_solomon_001",
+          "status": "interrupted",
+          "endTime": "21:15",
+          "outcome": "快步回到占星师小铺，保持低调并准备从隐蔽处观察门外动向 [因重新规划而中断] 已中断",
+          "startTime": "21:12",
+          "characterId": "Solomon",
+          "destination": "SCN_11_SUB_1",
+          "characterName": "Solomon",
+          "executionMeta": {
+            "startedAt": "21:12",
+            "interruptedAt": "21:15",
+            "remainingMinutes": 0,
+            "interruptionReason": "revise_replan"
+          }
+        },
+        {
+          "type": "movement",
+          "action": "快步返回占星师小铺",
+          "impact": 0,
+          "nodeId": "m_solomon_01",
+          "status": "interrupted",
+          "endTime": "21:18",
+          "outcome": "快步返回占星师小铺 [因重新规划而中断] 已中断",
+          "startTime": "21:16",
+          "characterId": "Solomon",
+          "destination": "SCN_11_SUB_1",
+          "characterName": "Solomon",
+          "executionMeta": {
+            "movement": {
+              "routeSnapshot": [
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_2",
+                    "position": 0
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_2",
+                    "position": 0.1
+                  },
+                  "kind": "along_road",
+                  "roadId": "ROAD_2",
+                  "durationMinutes": 1
+                },
+                {
+                  "to": {
+                    "type": "junction",
+                    "junctionId": "JUNC_2"
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_2",
+                    "position": 0
+                  },
+                  "kind": "to_junction",
+                  "blockCheck": {
+                    "toId": "JUNC_2",
+                    "fromId": "ROAD_2"
+                  },
+                  "durationMinutes": 0
+                },
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_2",
+                    "position": 0
+                  },
+                  "from": {
+                    "type": "junction",
+                    "junctionId": "JUNC_2"
+                  },
+                  "kind": "to_junction",
+                  "blockCheck": {
+                    "toId": "ROAD_2",
+                    "fromId": "JUNC_2"
+                  },
+                  "durationMinutes": 0
+                },
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_2",
+                    "position": 0.14
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_2",
+                    "position": 0
+                  },
+                  "kind": "along_road",
+                  "roadId": "ROAD_2",
+                  "durationMinutes": 1.4
+                },
+                {
+                  "to": {
+                    "type": "scene",
+                    "sceneId": "SCN_11_SUB_1"
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_2",
+                    "position": 0.14
+                  },
+                  "kind": "to_scene",
+                  "blockCheck": {
+                    "toId": "SCN_11_SUB_1",
+                    "fromId": "ROAD_2"
+                  },
+                  "durationMinutes": 1
+                }
+              ],
+              "targetPosition": {
+                "type": "scene",
+                "sceneId": "SCN_11_SUB_1"
+              },
+              "minutesIntoStep": 1,
+              "currentStepIndex": 3,
+              "lastReachablePosition": {
+                "type": "road",
+                "roadId": "ROAD_2",
+                "position": 0.1
+              }
+            },
+            "startedAt": "21:16",
+            "interruptedAt": "21:17",
+            "remainingMinutes": 0,
+            "interruptionReason": "revise_replan"
+          }
+        },
+        {
+          "type": "movement",
+          "action": "快步返回占星师小铺",
+          "impact": 0,
+          "nodeId": "m_solomon_2118_return_shop",
+          "status": "interrupted",
+          "endTime": "21:20",
+          "outcome": "快步返回占星师小铺 [因重新规划而中断] 已中断",
+          "startTime": "21:18",
+          "characterId": "Solomon",
+          "destination": "SCN_11_SUB_1",
+          "characterName": "Solomon",
+          "executionMeta": {
+            "movement": {
+              "routeSnapshot": [
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_2",
+                    "position": 0
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_2",
+                    "position": 0.1
+                  },
+                  "kind": "along_road",
+                  "roadId": "ROAD_2",
+                  "durationMinutes": 1
+                },
+                {
+                  "to": {
+                    "type": "junction",
+                    "junctionId": "JUNC_2"
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_2",
+                    "position": 0
+                  },
+                  "kind": "to_junction",
+                  "blockCheck": {
+                    "toId": "JUNC_2",
+                    "fromId": "ROAD_2"
+                  },
+                  "durationMinutes": 0
+                },
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_2",
+                    "position": 0
+                  },
+                  "from": {
+                    "type": "junction",
+                    "junctionId": "JUNC_2"
+                  },
+                  "kind": "to_junction",
+                  "blockCheck": {
+                    "toId": "ROAD_2",
+                    "fromId": "JUNC_2"
+                  },
+                  "durationMinutes": 0
+                },
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_2",
+                    "position": 0.14
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_2",
+                    "position": 0
+                  },
+                  "kind": "along_road",
+                  "roadId": "ROAD_2",
+                  "durationMinutes": 1.4
+                },
+                {
+                  "to": {
+                    "type": "scene",
+                    "sceneId": "SCN_11_SUB_1"
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_2",
+                    "position": 0.14
+                  },
+                  "kind": "to_scene",
+                  "blockCheck": {
+                    "toId": "SCN_11_SUB_1",
+                    "fromId": "ROAD_2"
+                  },
+                  "durationMinutes": 1
+                }
+              ],
+              "targetPosition": {
+                "type": "scene",
+                "sceneId": "SCN_11_SUB_1"
+              },
+              "minutesIntoStep": 0,
+              "currentStepIndex": 3,
+              "lastReachablePosition": {
+                "type": "road",
+                "roadId": "ROAD_2",
+                "position": 0
+              }
+            },
+            "startedAt": "21:18",
+            "interruptedAt": "21:20",
+            "remainingMinutes": 0,
+            "interruptionReason": "revise_replan"
+          }
+        },
+        {
+          "type": "movement",
+          "action": "快步回到占星师小铺以确认并加固《黄衣之王》的封存，同时从窗帘后低调观察门外动向",
+          "impact": 0,
+          "nodeId": "m_solomon_return_shop_2121",
+          "status": "interrupted",
+          "endTime": "21:24",
+          "outcome": "快步回到占星师小铺以确认并加固《黄衣之王》的封存，同时从窗帘后低调观察门外动向 [因重新规划而中断] 已中断",
+          "startTime": "21:21",
+          "characterId": "Solomon",
+          "destination": "SCN_11_SUB_1",
+          "characterName": "Solomon",
+          "executionMeta": {
+            "movement": {
+              "routeSnapshot": [
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_2",
+                    "position": 0
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_2",
+                    "position": 0
+                  },
+                  "kind": "along_road",
+                  "roadId": "ROAD_2",
+                  "durationMinutes": 0
+                },
+                {
+                  "to": {
+                    "type": "junction",
+                    "junctionId": "JUNC_2"
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_2",
+                    "position": 0
+                  },
+                  "kind": "to_junction",
+                  "blockCheck": {
+                    "toId": "JUNC_2",
+                    "fromId": "ROAD_2"
+                  },
+                  "durationMinutes": 0
+                },
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_2",
+                    "position": 0
+                  },
+                  "from": {
+                    "type": "junction",
+                    "junctionId": "JUNC_2"
+                  },
+                  "kind": "to_junction",
+                  "blockCheck": {
+                    "toId": "ROAD_2",
+                    "fromId": "JUNC_2"
+                  },
+                  "durationMinutes": 0
+                },
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_2",
+                    "position": 0.14
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_2",
+                    "position": 0
+                  },
+                  "kind": "along_road",
+                  "roadId": "ROAD_2",
+                  "durationMinutes": 1.4
+                },
+                {
+                  "to": {
+                    "type": "scene",
+                    "sceneId": "SCN_11_SUB_1"
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_2",
+                    "position": 0.14
+                  },
+                  "kind": "to_scene",
+                  "blockCheck": {
+                    "toId": "SCN_11_SUB_1",
+                    "fromId": "ROAD_2"
+                  },
+                  "durationMinutes": 1
+                }
+              ],
+              "targetPosition": {
+                "type": "scene",
+                "sceneId": "SCN_11_SUB_1"
+              },
+              "minutesIntoStep": 1,
+              "currentStepIndex": 3,
+              "lastReachablePosition": {
+                "type": "road",
+                "roadId": "ROAD_2",
+                "position": 0.09999999999999999
+              }
+            },
+            "startedAt": "21:21",
+            "interruptedAt": "21:21",
+            "remainingMinutes": 0,
+            "interruptionReason": "revise_replan"
+          }
+        },
+        {
+          "type": "movement",
+          "action": "步行回占星师小铺",
+          "impact": 0,
+          "nodeId": "m1",
+          "status": "interrupted",
+          "endTime": "21:26",
+          "outcome": "步行回占星师小铺 [因重新规划而中断] 已中断",
+          "startTime": "21:24",
+          "characterId": "Solomon",
+          "destination": "SCN_11_SUB_1",
+          "characterName": "Solomon",
+          "executionMeta": {
+            "movement": {
+              "routeSnapshot": [
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_2",
+                    "position": 0
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_2",
+                    "position": 0.1
+                  },
+                  "kind": "along_road",
+                  "roadId": "ROAD_2",
+                  "durationMinutes": 1
+                },
+                {
+                  "to": {
+                    "type": "junction",
+                    "junctionId": "JUNC_2"
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_2",
+                    "position": 0
+                  },
+                  "kind": "to_junction",
+                  "blockCheck": {
+                    "toId": "JUNC_2",
+                    "fromId": "ROAD_2"
+                  },
+                  "durationMinutes": 0
+                },
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_2",
+                    "position": 0
+                  },
+                  "from": {
+                    "type": "junction",
+                    "junctionId": "JUNC_2"
+                  },
+                  "kind": "to_junction",
+                  "blockCheck": {
+                    "toId": "ROAD_2",
+                    "fromId": "JUNC_2"
+                  },
+                  "durationMinutes": 0
+                },
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_2",
+                    "position": 0.14
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_2",
+                    "position": 0
+                  },
+                  "kind": "along_road",
+                  "roadId": "ROAD_2",
+                  "durationMinutes": 1.4
+                },
+                {
+                  "to": {
+                    "type": "scene",
+                    "sceneId": "SCN_11_SUB_1"
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_2",
+                    "position": 0.14
+                  },
+                  "kind": "to_scene",
+                  "blockCheck": {
+                    "toId": "SCN_11_SUB_1",
+                    "fromId": "ROAD_2"
+                  },
+                  "durationMinutes": 1
+                }
+              ],
+              "targetPosition": {
+                "type": "scene",
+                "sceneId": "SCN_11_SUB_1"
+              },
+              "minutesIntoStep": 1,
+              "currentStepIndex": 3,
+              "lastReachablePosition": {
+                "type": "road",
+                "roadId": "ROAD_2",
+                "position": 0.1
+              }
+            },
+            "startedAt": "21:24",
+            "interruptedAt": "21:25",
+            "remainingMinutes": 0,
+            "interruptionReason": "revise_replan"
+          }
+        },
+        {
+          "type": "movement",
+          "action": "步行回占星师小铺",
+          "impact": 0,
+          "nodeId": "m1",
+          "status": "interrupted",
+          "endTime": "21:26",
+          "outcome": "步行回占星师小铺 [因重新规划而中断] 已中断",
+          "startTime": "21:24",
+          "characterId": "Solomon",
+          "destination": "SCN_11_SUB_1",
+          "characterName": "Solomon",
+          "executionMeta": {
+            "movement": {
+              "routeSnapshot": [
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_2",
+                    "position": 0
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_2",
+                    "position": 0.1
+                  },
+                  "kind": "along_road",
+                  "roadId": "ROAD_2",
+                  "durationMinutes": 1
+                },
+                {
+                  "to": {
+                    "type": "junction",
+                    "junctionId": "JUNC_2"
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_2",
+                    "position": 0
+                  },
+                  "kind": "to_junction",
+                  "blockCheck": {
+                    "toId": "JUNC_2",
+                    "fromId": "ROAD_2"
+                  },
+                  "durationMinutes": 0
+                },
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_2",
+                    "position": 0
+                  },
+                  "from": {
+                    "type": "junction",
+                    "junctionId": "JUNC_2"
+                  },
+                  "kind": "to_junction",
+                  "blockCheck": {
+                    "toId": "ROAD_2",
+                    "fromId": "JUNC_2"
+                  },
+                  "durationMinutes": 0
+                },
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_2",
+                    "position": 0.14
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_2",
+                    "position": 0
+                  },
+                  "kind": "along_road",
+                  "roadId": "ROAD_2",
+                  "durationMinutes": 1.4
+                },
+                {
+                  "to": {
+                    "type": "scene",
+                    "sceneId": "SCN_11_SUB_1"
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_2",
+                    "position": 0.14
+                  },
+                  "kind": "to_scene",
+                  "blockCheck": {
+                    "toId": "SCN_11_SUB_1",
+                    "fromId": "ROAD_2"
+                  },
+                  "durationMinutes": 1
+                }
+              ],
+              "targetPosition": {
+                "type": "scene",
+                "sceneId": "SCN_11_SUB_1"
+              },
+              "minutesIntoStep": 1,
+              "currentStepIndex": 3,
+              "lastReachablePosition": {
+                "type": "road",
+                "roadId": "ROAD_2",
+                "position": 0.1
+              }
+            },
+            "startedAt": "21:24",
+            "interruptedAt": "21:25",
+            "remainingMinutes": 0,
+            "interruptionReason": "revise_replan"
+          }
+        },
+        {
+          "type": "movement",
+          "action": "快步返回占星师小铺以确认并加固《黄衣之王》的封存，同时从隐蔽处低调观察门外动向",
+          "impact": 2,
+          "nodeId": "m1_solomon_2126",
+          "status": "interrupted",
+          "endTime": "21:29",
+          "outcome": "快步返回占星师小铺以确认并加固《黄衣之王》的封存，同时从隐蔽处低调观察门外动向 [因重新规划而中断] 已中断",
+          "startTime": "21:26",
+          "characterId": "Solomon",
+          "destination": "SCN_11_SUB_1",
+          "characterName": "Solomon",
+          "executionMeta": {
+            "startedAt": "21:26",
+            "interruptedAt": "21:29",
+            "remainingMinutes": 0,
+            "interruptionReason": "revise_replan"
+          }
+        },
+        {
+          "type": "movement",
+          "action": "快步返回占星师小铺以确认并加固《黄衣之王》的封存，同时从隐蔽处低调观察门外动向",
+          "impact": 0,
+          "nodeId": "m_solomon_return_shop_2130",
+          "status": "completed",
+          "endTime": "21:33",
+          "outcome": "快步返回占星师小铺以确认并加固《黄衣之王》的封存，同时从隐蔽处低调观察门外动向 成功",
+          "startTime": "21:30",
+          "characterId": "Solomon",
+          "destination": "SCN_11_SUB_1",
+          "characterName": "Solomon",
+          "executionMeta": {
+            "movement": {
+              "routeSnapshot": [
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_2",
+                    "position": 0
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_2",
+                    "position": 0.1
+                  },
+                  "kind": "along_road",
+                  "roadId": "ROAD_2",
+                  "durationMinutes": 1
+                },
+                {
+                  "to": {
+                    "type": "junction",
+                    "junctionId": "JUNC_2"
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_2",
+                    "position": 0
+                  },
+                  "kind": "to_junction",
+                  "blockCheck": {
+                    "toId": "JUNC_2",
+                    "fromId": "ROAD_2"
+                  },
+                  "durationMinutes": 0
+                },
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_2",
+                    "position": 0
+                  },
+                  "from": {
+                    "type": "junction",
+                    "junctionId": "JUNC_2"
+                  },
+                  "kind": "to_junction",
+                  "blockCheck": {
+                    "toId": "ROAD_2",
+                    "fromId": "JUNC_2"
+                  },
+                  "durationMinutes": 0
+                },
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_2",
+                    "position": 0.14
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_2",
+                    "position": 0
+                  },
+                  "kind": "along_road",
+                  "roadId": "ROAD_2",
+                  "durationMinutes": 1.4
+                },
+                {
+                  "to": {
+                    "type": "scene",
+                    "sceneId": "SCN_11_SUB_1"
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_2",
+                    "position": 0.14
+                  },
+                  "kind": "to_scene",
+                  "blockCheck": {
+                    "toId": "SCN_11_SUB_1",
+                    "fromId": "ROAD_2"
+                  },
+                  "durationMinutes": 1
+                }
+              ],
+              "targetPosition": {
+                "type": "scene",
+                "sceneId": "SCN_11_SUB_1"
+              },
+              "minutesIntoStep": 0,
+              "currentStepIndex": 5,
+              "lastReachablePosition": {
+                "type": "scene",
+                "sceneId": "SCN_11_SUB_1"
+              }
+            },
+            "startedAt": "21:30",
+            "completedAt": "21:33",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "action",
+          "action": "在深紫色帘幕后继续静静观察门外，监视Harrison Lockheed及其可能的同伴的动向",
+          "impact": 0,
+          "nodeId": "a1",
+          "status": "completed",
+          "endTime": "23:59",
+          "outcome": "在深紫色帘幕后继续静静观察门外，监视Harrison Lockheed及其可能的同伴的动向 成功",
+          "startTime": "23:56",
+          "characterId": "Solomon",
+          "characterName": "Solomon",
+          "executionMeta": {
+            "startedAt": "23:56",
+            "completedAt": "23:59",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "action",
+          "action": "把新近入藏的书目要点录入我的私有藏书目录，并为《黄衣之王》贴上显眼的警示标签",
+          "impact": 0,
+          "nodeId": "a_solomon_2155_01",
+          "status": "interrupted",
+          "endTime": "22:05",
+          "outcome": "把新近入藏的书目要点录入我的私有藏书目录，并为《黄衣之王》贴上显眼的警示标签 [因重新规划而中断] 已中断",
+          "startTime": "21:55",
+          "characterId": "Solomon",
+          "characterName": "Solomon",
+          "executionMeta": {
+            "startedAt": "21:55",
+            "interruptedAt": "21:59",
+            "remainingMinutes": 0,
+            "interruptionReason": "revise_replan"
+          }
+        },
+        {
+          "type": "action",
+          "action": "退到深紫色帘幕后，藏身并从隐蔽处观察Harrison的一举一动，避免与他正面接触",
+          "impact": 0,
+          "nodeId": "a_next_2200",
+          "status": "completed",
+          "endTime": "22:05",
+          "outcome": "退到深紫色帘幕后，藏身并从隐蔽处观察Harrison的一举一动，避免与他正面接触 成功",
+          "startTime": "22:00",
+          "characterId": "Solomon",
+          "characterName": "Solomon",
+          "executionMeta": {
+            "startedAt": "22:00",
+            "completedAt": "22:05",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "action",
+          "action": "从深紫色帘幕后静静观察门外，记录Harrison Lockheed以及任何同伴的动向并留意是否有人靠近",
+          "impact": 0,
+          "nodeId": "a_solomon_2206",
+          "status": "completed",
+          "endTime": "22:16",
+          "outcome": "从深紫色帘幕后静静观察门外，记录Harrison Lockheed以及任何同伴的动向并留意是否有人靠近 成功",
+          "startTime": "22:06",
+          "characterId": "Solomon",
+          "characterName": "Solomon",
+          "executionMeta": {
+            "startedAt": "22:06",
+            "completedAt": "22:16",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "object_interaction",
+          "action": "将《黄衣之王》悄悄收起并放到深紫色帘幕后的一处隐蔽位置，确保书本不显眼且便于我从暗处守护",
+          "impact": 0,
+          "nodeId": "oi_solomon_store_yellow_01",
+          "status": "completed",
+          "endTime": "22:20",
+          "outcome": "我把《黄衣之王》悄悄收好，塞进门口那厚重的深紫色帘幕后的一处隐蔽折叠里，确保书不显眼且便于我从暗处守护。",
+          "startTime": "22:17",
+          "characterId": "Solomon",
+          "characterName": "Solomon",
+          "executionMeta": {
+            "startedAt": "22:17",
+            "completedAt": "22:20",
+            "remainingMinutes": 0
+          },
+          "objectInteractionPayload": {
+            "itemId": "《黄衣之王》"
+          }
+        },
+        {
+          "type": "action",
+          "action": "在日志中记录今晚关于Harrison、Adolph和Angela的观察细节，标注《黄衣之王》的警戒优先级并写下应对要点",
+          "impact": 0,
+          "nodeId": "a_solomon_001",
+          "status": "completed",
+          "endTime": "23:24",
+          "outcome": "在日志中记录今晚关于Harrison、Adolph和Angela的观察细节，标注《黄衣之王》的警戒优先级并写下应对要点 成功",
+          "startTime": "23:19",
+          "characterId": "Solomon",
+          "characterName": "Solomon",
+          "executionMeta": {
+            "startedAt": "23:19",
+            "completedAt": "23:24",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "object_interaction",
+          "action": "检查深紫色帘幕后隐藏处的《黄衣之王》，确认封蜡与藏匿位置完好",
+          "impact": 0,
+          "nodeId": "oi1",
+          "status": "completed",
+          "endTime": "22:35",
+          "outcome": "我掀开并检查了那道厚重的深紫色帘幕后藏匿的书籍。封蜡完好无损，藏匿位置没有被动过，帘幕依然能很好地掩蔽书本；我将它复位，继续从暗处观察可疑之人。",
+          "startTime": "22:32",
+          "characterId": "Solomon",
+          "characterName": "Solomon",
+          "executionMeta": {
+            "startedAt": "22:32",
+            "completedAt": "22:35",
+            "remainingMinutes": 0
+          },
+          "objectInteractionPayload": {
+            "itemId": "《黄衣之王》"
+          }
+        },
+        {
+          "type": "action",
+          "action": "在日志中记录今晚关于Harrison、Adolph和Angela的观察细节，标注《黄衣之王》的警戒优先级并写下应对要点",
+          "impact": 0,
+          "nodeId": "a_solomon_001",
+          "status": "completed",
+          "endTime": "23:24",
+          "outcome": "在日志中记录今晚关于Harrison、Adolph和Angela的观察细节，标注《黄衣之王》的警戒优先级并写下应对要点 成功",
+          "startTime": "23:19",
+          "characterId": "Solomon",
+          "characterName": "Solomon",
+          "executionMeta": {
+            "startedAt": "23:19",
+            "completedAt": "23:24",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "object_interaction",
+          "action": "把《黄衣之王》从帘幕后取出，放到门边的躺椅下面并整理帘幕以掩护",
+          "impact": 0,
+          "nodeId": "oi_solomon_001",
+          "status": "completed",
+          "endTime": "23:44",
+          "outcome": "我把《黄衣之王》从帘幕后取出，放到门边的躺椅下面的角落，然后把深紫色帘幕理顺垂下以掩护。",
+          "startTime": "23:41",
+          "characterId": "Solomon",
+          "characterName": "Solomon",
+          "executionMeta": {
+            "startedAt": "23:41",
+            "completedAt": "23:44",
+            "remainingMinutes": 0
+          },
+          "objectInteractionPayload": {
+            "itemId": "《黄衣之王》"
+          }
+        },
+        {
+          "type": "action",
+          "action": "躲在深紫色帘幕后继续静静观察门外，记录Harrison Lockheed及任何同伴的接近或异常举动",
+          "impact": 0,
+          "nodeId": "a_solomon_observe_001",
+          "status": "completed",
+          "endTime": "23:01",
+          "outcome": "躲在深紫色帘幕后继续静静观察门外，记录Harrison Lockheed及任何同伴的接近或异常举动 成功",
+          "startTime": "22:51",
+          "characterId": "Solomon",
+          "characterName": "Solomon",
+          "executionMeta": {
+            "startedAt": "22:51",
+            "completedAt": "23:01",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "object_interaction",
+          "action": "检查深紫色帘幕折缝处的暗红色封蜡是否完好且未被扰动",
+          "impact": 0,
+          "nodeId": "oi_solomon_01",
+          "status": "completed",
+          "endTime": "23:07",
+          "outcome": "我检查了深紫色帘幕内侧折缝上那道暗红色封蜡，封蜡已干且完好，没有被扰动的痕迹；我把帘幕复位，继续在暗处观察街道。",
+          "startTime": "23:02",
+          "characterId": "Solomon",
+          "characterName": "Solomon",
+          "executionMeta": {
+            "startedAt": "23:02",
+            "completedAt": "23:07",
+            "remainingMinutes": 0
+          },
+          "objectInteractionPayload": {
+            "itemId": "ITEM_SCN11_6"
+          }
+        },
+        {
+          "type": "action",
+          "action": "在日志中记录今晚关于Harrison、Adolph和Angela的观察细节，标注《黄衣之王》的警戒优先级并写下应对要点",
+          "impact": 0,
+          "nodeId": "a_solomon_001",
+          "status": "completed",
+          "endTime": "23:24",
+          "outcome": "在日志中记录今晚关于Harrison、Adolph和Angela的观察细节，标注《黄衣之王》的警戒优先级并写下应对要点 成功",
+          "startTime": "23:19",
+          "characterId": "Solomon",
+          "characterName": "Solomon",
+          "executionMeta": {
+            "startedAt": "23:19",
+            "completedAt": "23:24",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "action",
+          "action": "在日志中记录今晚关于Harrison、Adolph和Angela的观察细节，标注《黄衣之王》的警戒优先级并写下应对要点",
+          "impact": 0,
+          "nodeId": "a_solomon_001",
+          "status": "completed",
+          "endTime": "23:24",
+          "outcome": "在日志中记录今晚关于Harrison、Adolph和Angela的观察细节，标注《黄衣之王》的警戒优先级并写下应对要点 成功",
+          "startTime": "23:19",
+          "characterId": "Solomon",
+          "characterName": "Solomon",
+          "executionMeta": {
+            "startedAt": "23:19",
+            "completedAt": "23:24",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "object_interaction",
+          "action": "检查深紫色帘幕后藏匿的《黄衣之王》，确认封蜡完好",
+          "impact": 0,
+          "nodeId": "oi_solomon_2325",
+          "status": "completed",
+          "endTime": "23:30",
+          "outcome": "我掀开厚重的深紫色帘幕后，摸到并取出塞在内侧折叠处的那本《黄衣之王》。封蜡完好，暗红色的封印上还有我的记号和几处新鲜蜡滴，书明显未被翻动。确认无恙后我将书放回原处，并把帘子放回原位。",
+          "startTime": "23:25",
+          "characterId": "Solomon",
+          "characterName": "Solomon",
+          "executionMeta": {
+            "startedAt": "23:25",
+            "completedAt": "23:30",
+            "remainingMinutes": 0
+          },
+          "objectInteractionPayload": {
+            "itemId": "《黄衣之王》"
+          }
+        },
+        {
+          "type": "action",
+          "action": "闭目冥想十分钟，静默封存今日接触到的念头与印象，然后就寝以恢复精力",
+          "impact": 0,
+          "nodeId": "a_solomon_2331",
+          "status": "completed",
+          "endTime": "23:36",
+          "outcome": "闭目冥想十分钟，静默封存今日接触到的念头与印象，然后就寝以恢复精力 成功",
+          "startTime": "23:31",
+          "characterId": "Solomon",
+          "characterName": "Solomon",
+          "executionMeta": {
+            "startedAt": "23:31",
+            "completedAt": "23:36",
+            "remainingMinutes": 0
+          },
+          "routineSubtype": "rest"
+        },
+        {
+          "type": "scene_interaction",
+          "action": "检查深紫色帘幕后折缝处的暗红色封蜡，确认封蜡未被扰动",
+          "impact": 0,
+          "nodeId": "si1_day1_2337",
+          "status": "completed",
+          "endTime": "23:40",
+          "outcome": "我检查了深紫色帘幕后折缝处的暗红色封蜡，确认封蜡完好，未被扰动。",
+          "startTime": "23:37",
+          "characterId": "Solomon",
+          "characterName": "Solomon",
+          "executionMeta": {
+            "startedAt": "23:37",
+            "completedAt": "23:40",
+            "remainingMinutes": 0
+          },
+          "objectInteractionPayload": {
+            "itemId": "ITEM_SCN11_6"
+          }
+        },
+        {
+          "type": "object_interaction",
+          "action": "把《黄衣之王》从帘幕后取出，放到门边的躺椅下面并整理帘幕以掩护",
+          "impact": 0,
+          "nodeId": "oi_solomon_001",
+          "status": "completed",
+          "endTime": "23:44",
+          "outcome": "我把《黄衣之王》从帘幕后取出，放到门边的躺椅下面的角落，然后把深紫色帘幕理顺垂下以掩护。",
+          "startTime": "23:41",
+          "characterId": "Solomon",
+          "characterName": "Solomon",
+          "executionMeta": {
+            "startedAt": "23:41",
+            "completedAt": "23:44",
+            "remainingMinutes": 0
+          },
+          "objectInteractionPayload": {
+            "itemId": "《黄衣之王》"
+          }
+        },
+        {
+          "type": "action",
+          "action": "从深紫色帘幕后悄悄观察门外，监视Harrison Lockheed及其任何同伴的动向",
+          "impact": 0,
+          "nodeId": "a_solomon_2345",
+          "status": "completed",
+          "endTime": "23:55",
+          "outcome": "从深紫色帘幕后悄悄观察门外，监视Harrison Lockheed及其任何同伴的动向 成功",
+          "startTime": "23:45",
+          "characterId": "Solomon",
+          "characterName": "Solomon",
+          "executionMeta": {
+            "startedAt": "23:45",
+            "completedAt": "23:55",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "action",
+          "action": "在深紫色帘幕后继续静静观察门外，监视Harrison Lockheed及其可能的同伴的动向",
+          "impact": 0,
+          "nodeId": "a1",
+          "status": "completed",
+          "endTime": "23:59",
+          "outcome": "在深紫色帘幕后继续静静观察门外，监视Harrison Lockheed及其可能的同伴的动向 成功",
+          "startTime": "23:56",
+          "characterId": "Solomon",
+          "characterName": "Solomon",
+          "executionMeta": {
+            "startedAt": "23:56",
+            "completedAt": "23:59",
+            "remainingMinutes": 0
+          }
+        }
+      ]
+    }
+  ],
+  "intents": [
+    {
+      "intent": "Prioritize immediate concealment and defensive measures: avoid any contact with Simon, do not meet him tonight, return at once to a concealed safe spot in the占卜馆 via a side/back route, immediately recheck and reinforce the dark-red wax seal on The King in Yellow and the wards around the round table, lock and barricade doors, if it can be done without exposure leave a sealed note at the flower shop back door warning allies, and remain hidden to observe Simon and his associates' movements; suspend all outside movements for tonight.",
+      "updatedAt": "2026-04-02T11:37:45.643Z"
+    }
+  ],
+  "npcName": "Solomon"
+}

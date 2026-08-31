@@ -1,0 +1,17 @@
+{
+  "npcId": "npc_kovind",
+  "memories": [
+    {
+      "type": "event",
+      "content": "Tallinn通过教堂座机联系我，告诉我要提高警惕，在教堂附近与两名可信的人占位观察，并在听到任何提到“码头”的可疑交谈时立即回报。",
+      "gameDay": 2,
+      "gameTime": "01:20",
+      "location": "SCN_17_SUB_1",
+      "metadata": {
+        "outcome": "低声向科文德交代当前事态与今晚增援安排，确认信得过的观察点并嘱咐发现“码头”暗号立即回报"
+      }
+    }
+  ],
+  "plans": [],
+  "intents": []
+}

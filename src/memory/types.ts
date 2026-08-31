@@ -2,63 +2,72 @@ import type {
   NpcMemoryType,
   NpcMemory as PrismaNpcMemory,
 } from "@prisma/client";
-import type { JunctionNode, RoadNode } from "../state/topologyTypes.js";
-import type {
-  DynamicScene,
-  KnownMapSeed,
-  ScenarioOutline,
-  TransportEdge,
-} from "../state/types.js";
+import type { KnownMapSeed } from "../state/types.js";
 
 // Re-export Prisma types
 export type { NpcMemoryType } from "@prisma/client";
 export type NpcMemory = PrismaNpcMemory;
 
+/**
+ * Module data is authored in the PRE-consolidation memory vocabulary
+ * (`NpcProfileMemoryEntry` in state/types.ts: information | secret | event |
+ * belief). The runtime enum no longer has three of those, and a raw
+ * passthrough reaches `getHandler` as `undefined` and dies on `.prepare` —
+ * which is exactly what happened to every session created from an existing
+ * module. Map at the ingestion boundary, the way skills go through
+ * `LEGACY_SKILL_TO_CANONICAL`, and leave the authoring vocabulary alone.
+ */
+const LEGACY_MEMORY_TYPE_TO_CANONICAL: Readonly<Record<string, NpcMemoryType>> =
+  {
+    information: "general",
+    event: "general",
+    // A belief is about someone often enough that `relationship` is tempting,
+    // but module entries carry no target id, so that conversion would invent
+    // a subject. `general` keeps the content and loses nothing real.
+    belief: "general",
+    knowledge: "general",
+    witness: "general",
+  };
+
+const CANONICAL_MEMORY_TYPES: ReadonlySet<string> = new Set<NpcMemoryType>([
+  "general",
+  "plan",
+  "secret",
+  "relationship",
+  "map",
+  "long_term_intent",
+  "context",
+]);
+
+/** Fold an authored memory type onto the runtime enum. Anything unrecognized
+ *  keeps its content as `general` and says so — dropping module-authored
+ *  material silently is worse than filing it under the default. */
+export function canonicalMemoryType(
+  raw: string,
+  context?: string
+): NpcMemoryType {
+  const trimmed = raw?.trim() ?? "";
+  if (CANONICAL_MEMORY_TYPES.has(trimmed)) return trimmed as NpcMemoryType;
+  const mapped = LEGACY_MEMORY_TYPE_TO_CANONICAL[trimmed.toLowerCase()];
+  if (mapped) return mapped;
+  console.warn(
+    `[memory] unknown memory type "${raw}"${context ? ` (${context})` : ""} — stored as "general"`
+  );
+  return "general";
+}
+
 // ===== Metadata Types (per memory type) =====
 
-export interface EventMetadata {
-  outcome?: string;
-  itemId?: string;
-  itemName?: string;
-  targetItemId?: string;
-  targetItemName?: string;
-}
-
-export interface WitnessMetadata {
-  sourceCharacterId: string;
-  sourceAction: string;
-  impact: number;
-}
-
-export interface KnowledgeMetadata {
-  knowledgeId: string;
-  difficulty?: string;
-  revealed?: boolean;
-}
-
-export interface BeliefMetadata {
-  confidence: number;
-  reasoningChain: string;
-}
-
-export interface EmotionMetadata {
-  emotionType: string;
-  intensity: number;
-  trigger?: string;
-  decayRate?: number;
-}
-
+/** `relationship` memories scope to one person so retrieval can answer
+ *  "what do I remember about X". Written by the character, so the score
+ *  fields are optional — a memory may be purely qualitative. */
 export interface RelationshipMetadata {
   targetId: string;
-  targetName: string;
-  scoreDelta: number;
-  newScore: number;
+  targetName?: string;
+  scoreDelta?: number;
+  newScore?: number;
 }
 
-export interface PlanMetadata {
-  planType: "long_term" | "daily" | "immediate";
-  priority?: number;
-}
 
 export interface KnownMapIds {
   sceneIds: string[];
@@ -67,58 +76,26 @@ export interface KnownMapIds {
   scenarioOutlineIds: string[];
 }
 
-export interface KnownMapScene extends DynamicScene {
-  detailLevel?: "full" | "name_only";
+/** `context` memories are the character's standing knowledge of a place —
+ *  which one, and at what altitude. See contextMemory.ts. */
+export interface ContextMetadata {
+  scope: "macro" | "interior" | "topology";
+  /** Outline id for `macro`, scene id for `interior`, absent for `topology`. */
+  locationId?: string;
 }
 
-export interface KnownMapSnapshot {
-  schemaVersion: number;
-  updatedAt: string;
-  knownIds: KnownMapIds;
-  revealedHiddenConnections: string[];
-  scenes: Record<string, KnownMapScene>;
-  junctions: Record<string, JunctionNode>;
-  roads: Record<string, RoadNode>;
-  scenarioOutlines: ScenarioOutline[];
-  transportEdges: TransportEdge[];
-  blockedConnections: Record<string, string>;
-}
+export type MemoryMetadata = RelationshipMetadata | ContextMetadata;
 
-export interface MapMetadata {
-  snapshot: KnownMapSnapshot;
-}
-
-export type MemoryMetadata =
-  | EventMetadata
-  | WitnessMetadata
-  | KnowledgeMetadata
-  | BeliefMetadata
-  | EmotionMetadata
-  | RelationshipMetadata
-  | PlanMetadata
-  | MapMetadata;
-
-export interface EnsureMapSnapshotParams {
+export interface EnsureContextMemoriesParams {
   npcId: string;
   sessionId: string;
   moduleId: string;
   gameDateTime: string;
-  location?: string;
   dgsm: import("../state/DynamicGameState.js").DynamicGameStateManager;
+  /** Absent means the character knows the whole map. */
   seed?: KnownMapSeed;
-}
-
-export interface RefreshMapSnapshotParams {
-  npcId: string;
-  sessionId: string;
-  moduleId: string;
-  gameDateTime: string;
-  location?: string;
-  dgsm: import("../state/DynamicGameState.js").DynamicGameStateManager;
-}
-
-export interface RevealMapLocationsParams extends RefreshMapSnapshotParams {
-  locationIds: string[];
+  /** Module language ("en" | "zh") — drives the glue between descriptions. */
+  language?: string;
 }
 
 // ===== Query & Retrieval Types =====
@@ -129,13 +106,6 @@ export interface ScoredMemory extends PrismaNpcMemory {
 }
 
 export type ContextPurpose = "scheduling" | "reaction" | "detailing";
-
-export type ReasoningTrigger =
-  | "day_transition"
-  | "high_impact"
-  | "player_question"
-  | "information_discovered"
-  | "witness_major";
 
 // ===== Manager API Parameter Types =====
 
@@ -160,7 +130,7 @@ export interface QueryMemoryParams {
     types?: NpcMemoryType[];
     /** Single ISO date "YYYY-MM-DD" matches that day; array matches any of the listed days (OR-set). */
     gameDate?: string | string[];
-    /** When set, ephemeral types (event/witness/plan) are restricted to this day only. */
+    /** When set, ephemeral types are restricted to this day only. */
     currentGameDate?: string;
     location?: string;
     tags?: string[];
@@ -174,36 +144,8 @@ export interface GetContextParams {
   sessionId: string;
   purpose: ContextPurpose;
   query?: string;
-  /** Current game date — ephemeral memories (event/witness/plan) are restricted to this date. */
+  /** Current game date — ephemeral memories are restricted to this date. */
   currentGameDate?: string;
-}
-
-export interface TriggerReasoningParams {
-  npcId: string;
-  sessionId: string;
-  moduleId: string;
-  trigger: ReasoningTrigger;
-  context?: string;
-  gameDateTime: string;
-}
-
-// ===== Belief Reasoning Output =====
-
-export interface BeliefOutput {
-  belief: string;
-  confidence: number;
-  reasoningChain: string;
-}
-
-export interface BeliefUpdateOutput {
-  originalBelief: string;
-  newConfidence: number;
-  reason: string;
-}
-
-export interface ReasoningResult {
-  newBeliefs: BeliefOutput[];
-  updatedBeliefs: BeliefUpdateOutput[];
 }
 
 // ===== Context Profiles =====
@@ -218,32 +160,25 @@ export interface ContextProfile {
 export const CONTEXT_PROFILES: Record<ContextPurpose, ContextProfile> = {
   scheduling: {
     defaultTypes: [
-      "event",
-      "witness",
-      "information",
-      "belief",
+      "general",
+      "plan",
       "secret",
-      "summary",
+      "relationship",
+      "map",
+      "context",
     ],
     defaultLimit: 20,
-    typeLimits: {
-      event: 0,
-      witness: 0,
-      summary: 10,
-      information: 0,
-      belief: 0,
-      secret: 10,
-    },
+    typeLimits: { general: 0, plan: 0, relationship: 0 },
   },
   reaction: {
-    defaultTypes: ["event", "witness", "belief", "secret", "information"],
+    defaultTypes: ["general", "plan", "secret", "relationship"],
     defaultLimit: 5,
-    typeLimits: { event: 0, witness: 0 },
+    typeLimits: { general: 0 },
   },
   detailing: {
-    defaultTypes: ["event", "witness", "belief", "secret", "information"],
+    defaultTypes: ["general", "plan", "secret", "relationship", "map", "context"],
     defaultLimit: 5,
-    typeLimits: { event: 0, witness: 0 },
+    typeLimits: { general: 0 },
   },
 };
 

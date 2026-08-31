@@ -1,0 +1,181 @@
+{
+  "id": "Shoggoth Lord (Mr. Shani)",
+  "name": "Shoggoth Lord (Mr. Shani)",
+  "occupation": "独特的修格斯实体 / 隐秘操纵者",
+  "age": 1000000,
+  "gender": "male",
+  "appearance": "人类形态时，沙尼先生看起来是一个不起眼的中年男人，但他的存在给人一种微妙的不安感。当暴露真实本性时，他变成一个巨大的、无定形的修格斯——一团不断融化的黑色物质，能形成碾压的肢体并吞没受害者。",
+  "personality": "极度自制、谨慎、善于算计。他能进行长期规划和欺骗，将保密置于一切之上。当被愤怒、饥饿或情感动荡压倒时，他会失控并恢复怪物本能。",
+  "background": "沙尼先生是已知的唯一修格斯领主，是其种族中独特的存在。与普通修格斯不同，他拥有高度智慧和维持人类形态的能力。他隐秘地生活在人类之中，只在孤立时进食，在逃离现场前消除证人。",
+  "residence": "SCN_1",
+  "currentLocation": "SCN_1",
+  "spot": "靠墙的旧自动售货机旁，面朝走廊",
+  "knownMapSeed": {
+    "sceneIds": [
+      "SCN_16_SUB_1",
+      "SCN_16_SUB_2",
+      "SCN_1_SUB_1",
+      "SCN_1_SUB_2",
+      "SCN_1_SUB_3",
+      "SCN_1_SUB_4",
+      "SCN_1_SUB_5",
+      "SCN_1_SUB_6",
+      "SCN_21_SUB_1",
+      "SCN_21_SUB_2",
+      "SCN_4_SUB_1",
+      "SCN_4_SUB_2"
+    ],
+    "junctionIds": [
+      "JUNC_1",
+      "JUNC_2",
+      "JUNC_3",
+      "JUNC_4",
+      "JUNC_5",
+      "JUNC_6",
+      "JUNC_7",
+      "JUNC_8",
+      "JUNC_9",
+      "JUNC_10",
+      "JUNC_11"
+    ],
+    "roadIds": [
+      "ROAD_1",
+      "ROAD_2",
+      "ROAD_3",
+      "ROAD_4",
+      "ROAD_5a",
+      "ROAD_5b",
+      "ROAD_6",
+      "ROAD_7",
+      "ROAD_8",
+      "ROAD_9",
+      "ROAD_10"
+    ],
+    "scenarioOutlineIds": [
+      "SCN_1",
+      "SCN_2",
+      "SCN_3",
+      "SCN_4",
+      "SCN_5",
+      "SCN_6",
+      "SCN_8",
+      "SCN_9",
+      "SCN_10",
+      "SCN_11",
+      "SCN_12",
+      "SCN_13",
+      "SCN_14",
+      "SCN_15",
+      "SCN_16",
+      "SCN_17",
+      "SCN_18",
+      "SCN_19",
+      "SCN_21",
+      "SCN_22"
+    ]
+  },
+  "longTermIntent": "保持人类外表完好，通过操纵来发展或维护有用的人类系统，只以保护他用来在人群中行动的身份的方式进食。",
+  "attributes": {
+    "STR": 120,
+    "CON": 130,
+    "DEX": 85,
+    "APP": 45,
+    "POW": 90,
+    "SIZ": 90,
+    "INT": 65,
+    "EDU": 100
+  },
+  "status": {
+    "hp": 22,
+    "maxHp": 22,
+    "sanity": 0,
+    "maxSanity": 0,
+    "luck": 0,
+    "mp": 18,
+    "conditions": []
+  },
+  "skills": {
+    "Social": 65,
+    "Knowledge & Craft": 35,
+    "Science & Nature": 65,
+    "Investigation": 90,
+    "Athletics": 75,
+    "Stealth & Security": 90,
+    "Repair & Engineering": 10,
+    "Occult": 12
+  },
+  "inventory": [
+    {
+      "name": "慈善家名片",
+      "properties": {
+        "note": "阿尔伯特·沙尼的假身份，孤儿院院长。"
+      }
+    }
+  ],
+  "relationships": [
+    {
+      "targetId": "Mrs. Barklyite (Lucia Shiny)",
+      "targetName": "Mrs. Barklyite (Lucia Shiny)",
+      "relationshipType": "family",
+      "attitude": -10,
+      "description": "养女，被视为既有用又可抛弃。",
+      "history": "从小在他的孤儿院抚养露西亚，塑造了她现在的生活。",
+      "firstPerson": "露西亚还是个孩子的时候，我把她收进了孤儿院，又把她塑造成她现在穿着的这副人生；在我做过的东西里，她算是比较好的一件。她同时也是一件工具，而工具一旦不再顶用，放下时不必有任何遗憾。"
+    }
+  ],
+  "memory": [
+    {
+      "type": "information",
+      "content": "我的人类面孔是一种工具。它让我可以进食、计划和在镇上行动而不引起即时的暴力反应。",
+      "metadata": {
+        "knowledgeId": "k_shoggothlord_human_mask",
+        "difficulty": "automatic"
+      }
+    },
+    {
+      "type": "information",
+      "content": "当我冷静时，我可以保持人类形态。当愤怒、饥饿或压力升得太高时，形态开始失效，身体开始滑回修格斯物质。",
+      "metadata": {
+        "knowledgeId": "k_shoggothlord_control",
+        "difficulty": "regular"
+      }
+    },
+    {
+      "type": "information",
+      "content": "孤儿院和慈善工作之所以有用，是因为聪明的孩子会成为有用的成年人，而有用的成年人会建设让人类群体在我周围不断繁殖的系统。",
+      "metadata": {
+        "knowledgeId": "k_shoggothlord_orphanage",
+        "difficulty": "regular"
+      }
+    },
+    {
+      "type": "secret",
+      "content": "我的孤儿院和慈善形象不仅仅是善举。它们是用于筛选、掩护和进食的长期基础设施。",
+      "metadata": {
+        "knowledgeId": "s_shoggothlord_facade"
+      }
+    },
+    {
+      "type": "secret",
+      "content": "露西亚是我选择抚养、塑造并留在身边的聪明孩子之一。她至今不明白我到底是什么样的东西。",
+      "metadata": {
+        "knowledgeId": "s_shoggothlord_lucia"
+      }
+    },
+    {
+      "type": "secret",
+      "content": "我在孤立中进食并消除证人，因为一次被暴露的进食会迫使我放弃数年精心的人类工作。",
+      "metadata": {
+        "knowledgeId": "s_shoggothlord_feeding"
+      }
+    },
+    {
+      "type": "belief",
+      "content": "隐秘的掠食者比张扬的掠食者存续更久。耐心比壮观更有价值。",
+      "metadata": {
+        "confidence": 0.9,
+        "reasoningChain": "暴露创造目标。保密创造选择。"
+      }
+    }
+  ]
+}

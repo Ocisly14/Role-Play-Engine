@@ -1,0 +1,27 @@
+{
+  "npcId": "npc_simon",
+  "memories": [
+    {
+      "type": "event",
+      "content": "我当时不在卡森德拉北新街，因此没有见到海伦，也没有接收到她关于监控录像与时间戳的要求。",
+      "gameDay": 2,
+      "gameTime": "08:10",
+      "location": "ROAD_2",
+      "metadata": {
+        "outcome": "告诉西蒙在有人在场时当面出示星辰医院的监控录像与时间戳，我现在拒绝与他单独核实"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我当时不在花店，未听到南希的询问，也没有收到她的消息。",
+      "gameDay": 1,
+      "gameTime": "21:25",
+      "location": "SCN_9_SUB_1",
+      "metadata": {
+        "outcome": "轻声问西蒙是否需要休息或我能帮忙什么"
+      }
+    }
+  ],
+  "plans": [],
+  "intents": []
+}

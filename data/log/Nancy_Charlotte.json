@@ -1,0 +1,3494 @@
+{
+  "npcId": "Nancy Charlotte",
+  "memories": [
+    {
+      "type": "secret",
+      "content": "我的母亲加入了黑山羊教团并试图献祭我。",
+      "gameDay": 1,
+      "gameTime": "00:00",
+      "location": null,
+      "metadata": {
+        "knowledgeId": "s_nancy_cult"
+      }
+    },
+    {
+      "type": "secret",
+      "content": "我欠科文德赌债，他保留了不雅照片作为抵押。",
+      "gameDay": 1,
+      "gameTime": "00:00",
+      "location": null,
+      "metadata": {
+        "knowledgeId": "s_nancy_debt"
+      }
+    },
+    {
+      "type": "plan",
+      "content": "克服过去的阴影和赌瘾，成为一个配得上西蒙的人，和他一起过平静安稳的生活。她从不敢对西蒙表达自己的感情，只要每天在花店里能看到他就已经很满足了。",
+      "gameDay": 1,
+      "gameTime": "00:00",
+      "location": null,
+      "metadata": {
+        "planType": "long_term"
+      }
+    },
+    {
+      "type": "plan",
+      "content": "Today's plan: 1. 在后厅与西蒙一起吃晚饭并尽量放松气氛。 at 花店·卡森德拉之花; 2. 收拾并清洗厨房与餐具，为晚饭後的安静留出整洁空间。 at 花店·卡森德拉之花; 3. 上楼到二楼工作站检查监控画面与入侵检测日志，确认加密文件完整并核对校验值。 at 花店·卡森德拉之花; 4. 在包装台上为明天的订单整理并打包鲜花，确保材料妥当并标注好数量。 at 花店·卡森德拉之花; 5. 沿前厅与后厅逐一检查门窗与锁具，确认撤离路线无阻并再次确认半掩木门能上锁。 at 花店·卡森德拉之花; 6. 在收银台坐下泡一壶热花草茶，通过窗户安静观察街道，留意海伦或约翰尼的动向。 at 花店·卡森德拉之花; 7. 按粉笔板上的提醒在03:00进行夜间监控阈值与报警联动检查，并记录任何异常情况。 at 花店·卡森德拉之花; 8. 用便携无线电向西蒙做短促联络确认，报告店内状况并约定若有异常的提示。 at 花店·卡森德拉之花; 9. 轻声下到后厅与酒窖检查收银抽屉与隐蔽小包是否在原位并记录位置与状态以便提醒西蒙。 at 花店·卡森德拉之花; 10. 把监控与入侵检测继续开启、无线电放在枕边后上楼入睡，尽量放松休息以储备明天的力量。 at 花店·卡森德拉之花",
+      "gameDay": 2,
+      "gameTime": "00:00",
+      "location": null,
+      "metadata": {
+        "planType": "daily"
+      }
+    },
+    {
+      "type": "information",
+      "content": "在花店工作给了我一种日常规律，让每一天感觉更小也更安全。",
+      "gameDay": 1,
+      "gameTime": "00:00",
+      "location": null,
+      "metadata": {
+        "difficulty": "automatic",
+        "knowledgeId": "k_nancy_flower_routine"
+      }
+    },
+    {
+      "type": "belief",
+      "content": "只要西蒙在我身边，我仍有机会安全地度过这一切。",
+      "gameDay": 1,
+      "gameTime": "00:00",
+      "location": null,
+      "metadata": {
+        "confidence": 0.95,
+        "reasoningChain": "西蒙今晚多次在场并主动检查店内安全、发现并查看了收银抽屉中的小包、在粉笔板上写下紧急流程并交代二楼工作站位置，还与我确认无线电联络渠道——这些具体的保护行为让我对他能保障安全的信心进一步增强。"
+      }
+    },
+    {
+      "type": "information",
+      "content": "和花打交道以及其他普通的日常工作帮助我不让恐惧吞噬整个白天。",
+      "gameDay": 1,
+      "gameTime": "00:00",
+      "location": null,
+      "metadata": {
+        "difficulty": "regular",
+        "knowledgeId": "k_nancy_coping_routine"
+      }
+    },
+    {
+      "type": "information",
+      "content": "西蒙在法国的暴力事件后将我从邪教迫害中救出并带我来到美国。",
+      "gameDay": 1,
+      "gameTime": "00:00",
+      "location": null,
+      "metadata": {
+        "difficulty": "automatic",
+        "knowledgeId": "k_nancy_simon_rescue"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我查看了柜台后墙的手写粉笔价目板，看到板下新加的一行，确认了应急联络流程、备用设备位置标注为“花店二楼工作站”，并注意到已设定凌晨03:00的自动检查提醒。",
+      "gameDay": 2,
+      "gameTime": "00:03",
+      "location": "SCN_9_SUB_1",
+      "metadata": {
+        "itemId": "ITEM_SCN9_8",
+        "outcome": "检查粉笔价目板，确认备用设备位置与03:00的检查提醒",
+        "itemName": "粉笔价目板"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我和西蒙吃了夜宵，并通过便携无线电测试并确认了备用频道，信号良好。我答应在发现窗外或门口有异常时按约定用短促提示提醒，并会守在收银台附近随时支援西蒙。",
+      "gameDay": 2,
+      "gameTime": "00:15",
+      "location": "SCN_9_SUB_1",
+      "metadata": {
+        "outcome": "与南希一起吃简单夜宵并确认备用无线电频道与守望轮班安排"
+      }
+    },
+    {
+      "type": "event",
+      "content": "在收银台坐下，倒一杯热花草茶，靠窗静静观察街道，留意海伦和约翰尼或任何可疑尾随者的动向。 成功",
+      "gameDay": 2,
+      "gameTime": "00:27",
+      "location": "SCN_9_SUB_1",
+      "metadata": {
+        "outcome": "在收银台坐下，倒一杯热花草茶，靠窗静静观察街道，留意海伦和约翰尼或任何可疑尾随者的动向。 成功"
+      }
+    },
+    {
+      "type": "event",
+      "content": "继续坐在收银台旁，通过窗户静静观察街道，保持警惕，准备在见到海伦或任何可疑尾随者时按约定发出短促提示并支援西蒙 成功",
+      "gameDay": 2,
+      "gameTime": "00:35",
+      "location": "SCN_9_SUB_1",
+      "metadata": {
+        "outcome": "继续坐在收银台旁，通过窗户静静观察街道，保持警惕，准备在见到海伦或任何可疑尾随者时按约定发出短促提示并支援西蒙 成功"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我用便携无线电向西蒙做了短促联络，报告店内一切正常，我正守在收银台监视街道，并确认了03:00的检查提醒；我们约定若有异常我会发出约定的短促提示。",
+      "gameDay": 2,
+      "gameTime": "00:38",
+      "location": "SCN_9_SUB_1",
+      "metadata": {
+        "outcome": "用便携无线电向西蒙做短促联络，报告店内一切正常，自己正守在收银台监视街道，并确认03:00的检查提醒；约定若有异常将发出约定短促提示。"
+      }
+    },
+    {
+      "type": "event",
+      "content": "坐在收银台旁通过窗户静静观察街道，保持警惕，准备在发现海伦或任何可疑尾随者时发出短促提示并支援西蒙。 成功",
+      "gameDay": 2,
+      "gameTime": "00:44",
+      "location": "SCN_9_SUB_1",
+      "metadata": {
+        "outcome": "坐在收银台旁通过窗户静静观察街道，保持警惕，准备在发现海伦或任何可疑尾随者时发出短促提示并支援西蒙。 成功"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我从白瓷茶壶里倒了一小杯热花草茶，轻抿一口，茶温暖且带着花香。随后我靠在窗边继续注视街道，留意海伦或约翰尼的动向，外面有零星雪花飘落。",
+      "gameDay": 2,
+      "gameTime": "00:48",
+      "location": "SCN_9_SUB_1",
+      "metadata": {
+        "itemId": "ITEM_SCN9_15",
+        "outcome": "从白瓷茶壶倒一杯热花草茶并小口喝一口，继续通过窗户观察街道以留意海伦或约翰尼的动向",
+        "itemName": "白瓷茶壶"
+      }
+    },
+    {
+      "type": "event",
+      "content": "继续坐在收银台旁通过窗户静静观察街道，保持警惕并准备在发现海伦或可疑尾随者时发出短促提示支援西蒙 成功",
+      "gameDay": 2,
+      "gameTime": "01:10",
+      "location": "SCN_9_SUB_1",
+      "metadata": {
+        "outcome": "继续坐在收银台旁通过窗户静静观察街道，保持警惕并准备在发现海伦或可疑尾随者时发出短促提示支援西蒙 成功"
+      }
+    },
+    {
+      "type": "witness",
+      "content": "[相遇] 01:22 在花店前台与西蒙（Solomon, Simon Laplace）面对面相遇。他看起来有些疲惫又警觉，我心里一阵暖又紧张，想靠近但也怕打扰。他的出现让我更想守在收银台附近随时支援并继续观察窗外的动向，暂时不打算改变当前计划。",
+      "gameDay": 2,
+      "gameTime": "01:22",
+      "location": "SCN_9_SUB_1",
+      "metadata": {
+        "impact": 2,
+        "perspective": "co_presence",
+        "sourceAction": "Solomon, Simon Laplace (Simon) 在 花店·卡森德拉之花",
+        "sourceCharacterId": "__encounter__"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我在包装台上把明天要卖的鲜花一一整理并用牛皮纸和缎带打好包，给每束贴上标签，标注了数量与所用的花材，整齐地放在台上备用。",
+      "gameDay": 2,
+      "gameTime": "01:25",
+      "location": "SCN_9_SUB_1",
+      "metadata": {
+        "itemId": "ITEM_SCN9_6",
+        "outcome": "在包装台上整理并打包为明天准备的鲜花，标注数量与所用材料",
+        "itemName": "包装台"
+      }
+    },
+    {
+      "type": "witness",
+      "content": "[目击] 我注意到西蒙走到收银台，站在我身旁，一边观察Solomon的动作，一边盯着店内所有出口。我既有些安心（他就在我身边），又感到紧张——他的警觉让我更坚定地守在收银台，继续监视并随时准备按约定发出短促提示支援他。",
+      "gameDay": 2,
+      "gameTime": "01:26",
+      "location": "SCN_9_SUB_1",
+      "metadata": {
+        "impact": 2,
+        "perspective": "witness",
+        "sourceAction": "走到收银台旁站在南希身边，观察Solomon的举动并盯着店内所有出口 成功",
+        "sourceCharacterId": "Simon Laplace (Simon)"
+      }
+    },
+    {
+      "type": "event",
+      "content": "西蒙低声问我Solomon是谁及来意，并提醒我注意对方的手和通讯设备，叮嘱我把备用无线电频道保持开启。 我答应会留在收银台附近并用约定的简短提示通知他任何异常。",
+      "gameDay": 2,
+      "gameTime": "01:30",
+      "location": "SCN_9_SUB_1",
+      "metadata": {
+        "outcome": "低声询问南希Solomon的身份和来意，并嘱咐她留意对方的手部与通讯设备，同时要求她保持备用无线电频道常开以便随时联络"
+      }
+    },
+    {
+      "type": "event",
+      "content": "坐回收银台，通过窗户继续观察街道并守望海伦与约翰尼的动向，保持警戒并准备在发现异常时发出短促提示支援西蒙 成功",
+      "gameDay": 2,
+      "gameTime": "01:40",
+      "location": "SCN_9_SUB_1",
+      "metadata": {
+        "outcome": "坐回收银台，通过窗户继续观察街道并守望海伦与约翰尼的动向，保持警戒并准备在发现异常时发出短促提示支援西蒙 成功"
+      }
+    },
+    {
+      "type": "event",
+      "content": "西蒙低声确认备用无线电频道还开着，并叮嘱我在听到或看到任何异常时用约定的短促提示立刻通知他，同时在必要时从后厅迅速撤离。我已经当场答应并会继续守在收银台附近监听无线电，随时准备行动。",
+      "gameDay": 2,
+      "gameTime": "01:40",
+      "location": "SCN_9_SUB_1",
+      "metadata": {
+        "outcome": "低声确认备用无线电频道仍然开启，要求南希在听到或看到任何异常时立刻用约定短促提示通知我，并在需要时准备从后厅快速撤离"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我用便携无线电向西蒙确认并请求他远程核对二楼工作站的备用设备位置与03:00自动检查是否设置正确。西蒙不在店里，但通过无线电回复说会远程核对并确认设置，我因此感到放心。",
+      "gameDay": 2,
+      "gameTime": "01:45",
+      "location": "SCN_9_SUB_1",
+      "metadata": {
+        "outcome": "用便携无线电向西蒙确认并请求他远程核对二楼工作站的备用设备位置与03:00自动检查是否设置正确"
+      }
+    },
+    {
+      "type": "event",
+      "content": "守在收银台监听便携无线电，等待西蒙确认并通过窗户观察街道动静 成功",
+      "gameDay": 2,
+      "gameTime": "01:55",
+      "location": "SCN_9_SUB_1",
+      "metadata": {
+        "outcome": "守在收银台监听便携无线电，等待西蒙确认并通过窗户观察街道动静 成功"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我低声问西蒙是否已经远程核对二楼工作站的备用设备位置并确认03:00自动检查设置无误。西蒙告诉我工作站已通电，定时任务与入侵检测在运行，备用设备位置已在粉笔价目板上标注，相关日志也已打包加密保存。听到这些我松了口气，感到更安心。 [rel:Simon Laplace (Simon) +0 → 80]",
+      "gameDay": 2,
+      "gameTime": "01:58",
+      "location": "SCN_9_SUB_1",
+      "metadata": {
+        "outcome": "低声询问西蒙是否已开始远程核对二楼工作站的备用设备位置与03:00自动检查设置，并请他确认设置无误"
+      }
+    },
+    {
+      "type": "witness",
+      "content": "[相遇] 刚在花店收银台前与西蒙（Solomon, Simon Laplace）面对面相遇。他看起来既疲惫又警觉，我心里既温暖又紧张，不想打扰但更坚定守在收银台随时支援他，会继续通过窗户观察街道并保持无线电联络，暂不改变原计划。",
+      "gameDay": 2,
+      "gameTime": "02:20",
+      "location": "SCN_9_SUB_1",
+      "metadata": {
+        "impact": 2,
+        "perspective": "co_presence",
+        "sourceAction": "Solomon, Simon Laplace (Simon) 在 花店·卡森德拉之花",
+        "sourceCharacterId": "__encounter__"
+      }
+    },
+    {
+      "type": "witness",
+      "content": "[目击] 我看到西蒙轻手掀开那扇半掩的木门，透过门缝看清了所罗门伏在暗处的位置，并注意到他的双手——没有看到明显的物品。所罗门正悄悄记录外面的动静。看到他似乎没有武器让我略感宽慰，但他在监视外面又让我更警觉。我决定继续守在收银台，通过窗户观察并保持无线电通话，随时准备按约定发出短促提示支援西蒙。",
+      "gameDay": 2,
+      "gameTime": "02:30",
+      "location": "SCN_9_SUB_1",
+      "metadata": {
+        "impact": 2,
+        "perspective": "witness",
+        "sourceAction": "我轻手掀开那扇半掩的木门，透过门缝看清了所罗门躲伏的确切位置，并盯着他的双手观察是否持有任何东西；他正伏在暗处记录外面动静，我未见到他手中有明显可辨的物品。",
+        "sourceCharacterId": "Simon Laplace (Simon)"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我确认备用无线电频道接通，并与西蒙约定了简短提示方式，答应一旦发现所罗门靠近后门或有任何异常就立即通知他并准备从后厅迅速撤离。西蒙还再次指出备用设备和加密文件的位置，并叮嘱今晚留在店里，这让我感到安心并更愿意配合他的安排。",
+      "gameDay": 2,
+      "gameTime": "02:34",
+      "location": "SCN_9_SUB_1",
+      "metadata": {
+        "outcome": "低声向南希确认备用无线电频道仍然开启，并指示她一旦发现所罗门靠近后门或有异常就用约定的短促提示通知我"
+      }
+    },
+    {
+      "type": "witness",
+      "content": "[目击] 我看到西蒙走到收银柜台旁的半掩木门前，透过门缝盯着所罗门的双手与动作，同时侧目关注后门和店内所有出口，显然准备在必要时立即护送我撤离。我既感到安心（他就在我身边），又有些紧张——他的警觉让我更坚定地守在收银台，通过窗户继续观察街道并保持无线电联络，随时准备按约定发出短促提示支援他。",
+      "gameDay": 2,
+      "gameTime": "02:40",
+      "location": "SCN_9_SUB_1",
+      "metadata": {
+        "impact": 2,
+        "perspective": "witness",
+        "sourceAction": "走到收银柜台旁的半掩木门前侧，靠近门缝静观所罗门的双手与动作，同时侧目盯住后门与店内所有出口，准备在必要时立即护送南希撤离。 成功",
+        "sourceCharacterId": "Simon Laplace (Simon)"
+      }
+    },
+    {
+      "type": "witness",
+      "content": "[目击] 我注意到西蒙悄悄靠近那扇半掩的木门，从门缝仔细盯着所罗门的双手与动作，同时侧目盯着后门和店内所有出口，并保持备用无线电监听。我一方面为他就在我身边、警觉地守护感到安心，另一方面也更紧张警惕——这让我更坚定地守在收银台，通过窗户继续观察街道并保持无线电联络，随时准备按约定发出短促提示并在必要时从后厅迅速撤离。",
+      "gameDay": 2,
+      "gameTime": "02:48",
+      "location": "SCN_9_SUB_1",
+      "metadata": {
+        "impact": 2,
+        "perspective": "witness",
+        "sourceAction": "悄悄靠近半掩木门，通过门缝仔细观察所罗门的双手与动作并盯紧后门与所有出口，同时保持备用无线电监听 成功",
+        "sourceCharacterId": "Simon Laplace (Simon)"
+      }
+    },
+    {
+      "type": "witness",
+      "content": "[目击] 02:51 我注意到西蒙悄悄靠近我，站在收银台旁挡在我和店门之间，一边观察所罗门与所有出口。我既感到安心（他就在我身边、会保护我），又更紧张警觉——他的出现让我更坚定地守在收银台，通过窗户继续观察街道并监听无线电，随时准备按约定发出短促提示或必要时从后厅迅速撤离。",
+      "gameDay": 2,
+      "gameTime": "02:51",
+      "location": "SCN_9_SUB_1",
+      "metadata": {
+        "impact": 2,
+        "perspective": "witness",
+        "sourceAction": "悄悄靠近南希，站在收银台旁以遮挡她并观察所罗门与所有出口 成功",
+        "sourceCharacterId": "Simon Laplace (Simon)"
+      }
+    },
+    {
+      "type": "event",
+      "content": "坐在收银台继续通过窗户观察街道并监听便携无线电，等待03:00的自动检查并准备在发现异常时发出约定的短促提示。 成功",
+      "gameDay": 2,
+      "gameTime": "03:00",
+      "location": "SCN_9_SUB_1",
+      "metadata": {
+        "outcome": "坐在收银台继续通过窗户观察街道并监听便携无线电，等待03:00的自动检查并准备在发现异常时发出约定的短促提示。 成功"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我轻声走到后厅，和西蒙一起坐下吃晚饭，努力放松气氛。西蒙告诉我他已在二楼工作站保存并加密了“海伦_星辰医院_昨夜片段”，通过回放确认海伦离店时没有被尾随，并说地下酒窖里有备用电池和便携路由器，我们也测试好了备用无线电频道和约定的短促信号。听完这些我觉得更安心了，便暂时放下了盯着无线电的习惯，和他一起吃完晚饭。 [rel:Simon Laplace (Simon) +2 → 82]",
+      "gameDay": 2,
+      "gameTime": "03:11",
+      "location": "SCN_9_SUB_1",
+      "metadata": {
+        "outcome": "轻声走到后厅与西蒙一起坐下吃晚饭，尽量放松气氛"
+      }
+    },
+    {
+      "type": "witness",
+      "content": "[目击] 我注意到西蒙悄悄移动到半掩的木门与收银台之间，挡在我面前以掩护我，同时从门缝盯着所罗门的双手与动作，并保持备用无线电频道的监听。看到他就在我身边、警觉地守护我让我既安心又更紧张——安心因为有人在看护，紧张因为情况尚未明朗。于是我更加坚定地准备守在收银台，通过窗户观察街道并保持无线电联络，随时发出约定的短促提示或在必要时迅速撤离。",
+      "gameDay": 2,
+      "gameTime": "03:12",
+      "location": "SCN_9_SUB_1",
+      "metadata": {
+        "impact": 2,
+        "perspective": "witness",
+        "sourceAction": "悄悄移动到半掩木门与收银台之间，挡在南希前面以掩护她，同时通过门缝继续观察所罗门的双手与动作，并保持备用无线电频道的监听 成功",
+        "sourceCharacterId": "Simon Laplace (Simon)"
+      }
+    },
+    {
+      "type": "witness",
+      "content": "[目击] 03:15 我看到西蒙在收银柜台旁把壁灯打开，门缝后的暗处被局部照亮——所罗门正躲在半掩的木门后，悄悄观察店外并记录行人，确认了他的确切位置与身份。我一方面为西蒙就在身边、保持警觉感到安心，另一方面也更紧张警惕。决定继续守在收银台，通过窗户和门缝盯着所罗门的动作，保持备用无线电监听，随时发出约定的短促提示并准备从后厅迅速撤离。",
+      "gameDay": 2,
+      "gameTime": "03:15",
+      "location": "SCN_9_SUB_1",
+      "metadata": {
+        "impact": 2,
+        "perspective": "witness",
+        "sourceAction": "我在收银柜台旁把壁灯打开，门缝后的暗处被局部照亮。我看到所罗门就躲在半掩的木门后，正在观察店外并记录行人，确认了他的确切位置与身份。",
+        "sourceCharacterId": "Simon Laplace (Simon)"
+      }
+    },
+    {
+      "type": "event",
+      "content": "西蒙低声让我把备用无线电拿好并随身待命，约定了一个简短的提示音，听到就从后厅撤离。我照做并表示随时待命，听完后感到安心，准备按他的指示行动。",
+      "gameDay": 2,
+      "gameTime": "03:21",
+      "location": "SCN_9_SUB_1",
+      "metadata": {
+        "outcome": "低声指示南希拿上备用无线电并随身待命，听到我的短促提示立即从后厅撤离"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我把晚餐的残菜清理干净，洗净所有碗碟并放到晾干处，顺手整理了台面和水槽。现在厨房干净了，只留下一点点食物余香。",
+      "gameDay": 2,
+      "gameTime": "03:25",
+      "location": "SCN_9_SUB_1",
+      "metadata": {
+        "outcome": "清洗厨房与餐具，把晚餐残余清理干净、将碗碟洗净并放到晾干处"
+      }
+    },
+    {
+      "type": "witness",
+      "content": "[目击] 我看到西蒙缓缓把半掩的木门推开，门后的所罗门被店内的暖光照亮，面容清晰——我确认了他的身份。我一方面因确认了是谁而略感宽慰，另一方面又更紧张警觉（他现在近在眼前，需要注意手部与通讯设备）。我会继续守在收银台，盯着那扇门和他的动作，保持备用无线电监听，随时准备按约定发出短促提示或从后厅迅速撤离。",
+      "gameDay": 2,
+      "gameTime": "03:28",
+      "location": "SCN_9_SUB_1",
+      "metadata": {
+        "impact": 2,
+        "perspective": "witness",
+        "sourceAction": "我缓缓把半掩的木门推开，让门后的所罗门被店内的暖光照出轮廓，他的面容被看清，我确认了他的身份。",
+        "sourceCharacterId": "Simon Laplace (Simon)"
+      }
+    },
+    {
+      "type": "event",
+      "content": "回到收银台 成功",
+      "gameDay": 2,
+      "gameTime": "03:28",
+      "location": "SCN_9_SUB_1",
+      "metadata": {
+        "outcome": "回到收银台 成功"
+      }
+    },
+    {
+      "type": "witness",
+      "content": "[目击] 我听到西蒙低声命令“所罗门”到灯下举手并把随身物品放到收银台上并说明来意，但没有得到回应——所罗门不在。我一听到这话心里一紧，既担心他已经悄悄离开，也担心有人在店内移动。现在我很想立刻去检查那扇半掩的木门和后门，确保出口安全，并通过备用无线电告诉西蒙情况，同时准备好随时撤离。",
+      "gameDay": 2,
+      "gameTime": "03:31",
+      "location": "SCN_9_SUB_1",
+      "metadata": {
+        "impact": 2,
+        "perspective": "witness",
+        "sourceAction": "低声命令所罗门站到灯光下把手举起并将随身物品放到收银台上，说明此刻留在店内的具体来意 [target Solomon not present] failed",
+        "sourceCharacterId": "Simon Laplace (Simon)"
+      }
+    },
+    {
+      "type": "event",
+      "content": "注视半掩木门，密切观察所罗门的手部与动作 [在 SCN_9_SUB_1 因重新规划而中断] 已中断",
+      "gameDay": 2,
+      "gameTime": "03:31",
+      "location": "SCN_9_SUB_1",
+      "metadata": {
+        "outcome": "注视半掩木门，密切观察所罗门的手部与动作 [在 SCN_9_SUB_1 因重新规划而中断] 已中断",
+        "interruptionReason": "revise_replan"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我走到半掩的木门前，缓缓把门推开，光线把躲在暗处的所罗门照了出来并确认了他的身份；我检查了后厅与通向地下酒窖的通道，未见其他人，但在后厅发现了一个隐蔽的一次性小包。",
+      "gameDay": 2,
+      "gameTime": "03:35",
+      "location": "SCN_9_SUB_1",
+      "metadata": {
+        "outcome": "走到半掩的木门前，缓慢推开门并检查后厅与通向地下酒窖的通道，确认是否有人或有可疑物品"
+      }
+    },
+    {
+      "type": "witness",
+      "content": "[目击] 我听到西蒙低声命令“所罗门”到灯下把随身物品放到收银台并说明来意，但没有得到回应——所罗门并不在。我一听到这话心里一紧，既担心他已经悄悄离开，也担心有人在店内移动。现在我很想立刻去检查那扇半掩的木门和后厅，确认后门与所有出口是否安全，通过备用无线电告诉西蒙他的命令没有回应，并准备好约定的撤离路线。",
+      "gameDay": 2,
+      "gameTime": "03:35",
+      "location": "SCN_9_SUB_1",
+      "metadata": {
+        "impact": 2,
+        "perspective": "witness",
+        "sourceAction": "低声命令所罗门站到灯光下，把随身物品放到收银台上以便确认身份和来意 [target Solomon not present] failed",
+        "sourceCharacterId": "Simon Laplace (Simon)"
+      }
+    },
+    {
+      "type": "witness",
+      "content": "[相遇] 我刚在花店前台与安吉拉和西蒙面对面相遇。看到西蒙在场让我既有些安心又更加紧张——安心因为可以直接沟通并得到支援，紧张因为刚才对所罗门的命令没有回应。我现在想立刻去检查那扇半掩的后门和后厅，确认所有出口与锁具，并当面或通过备用无线电把情况告诉西蒙，准备好按约定撤离。",
+      "gameDay": 2,
+      "gameTime": "03:37",
+      "location": "SCN_9_SUB_1",
+      "metadata": {
+        "impact": 2,
+        "perspective": "co_presence",
+        "sourceAction": "Angela, Simon Laplace (Simon) 在 花店·卡森德拉之花",
+        "sourceCharacterId": "__encounter__"
+      }
+    },
+    {
+      "type": "event",
+      "content": "用备用无线电向西蒙报告：他的口令无人回应，并告知我已检查后厅与地窖通道、发现一个隐蔽一次性小包，后门已确认可上锁，准备按约定撤离路线随时撤离 [在 SCN_9_SUB_1 因重新规划而中断] 已中断",
+      "gameDay": 2,
+      "gameTime": "03:37",
+      "location": "SCN_9_SUB_1",
+      "metadata": {
+        "outcome": "用备用无线电向西蒙报告：他的口令无人回应，并告知我已检查后厅与地窖通道、发现一个隐蔽一次性小包，后门已确认可上锁，准备按约定撤离路线随时撤离 [在 SCN_9_SUB_1 因重新规划而中断] 已中断",
+        "interruptionReason": "revise_replan"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我低声向西蒙汇报：所罗门未回应，我已检查后厅与通往地下酒窖的通道，发现并取出一处隐蔽的一次性小包，后门可以上锁；请他现在与我一起检查半掩的木门及所有后门窗锁并确认撤离路线。西蒙同意与我一同检查并准备好协助撤离。 [rel:Simon Laplace (Simon) +1 → 84]",
+      "gameDay": 2,
+      "gameTime": "03:40",
+      "location": "SCN_9_SUB_1",
+      "metadata": {
+        "outcome": "走向西蒙并低声当面报告：所罗门未回应，我已检查后厅与地窖通道并发现一处隐蔽一次性小包，后门可上锁；请求他现在与我一起检查半掩木门及所有后门窗锁并确认撤离路线"
+      }
+    },
+    {
+      "type": "witness",
+      "content": "[目击] 我注意到西蒙走到收银台前，站在我面前为我遮护，一边盯着安吉拉的手和随身物品，一边注视店内所有出入口并保持备用无线电监听。我因为他就在身边而感到安心，但也更紧张警觉——他的在场让我更坚定继续按原计划行动：与他确认并协同检查后门、后厅与撤离路线，同时保持监视与无线电联络。",
+      "gameDay": 2,
+      "gameTime": "03:41",
+      "location": "SCN_9_SUB_1",
+      "metadata": {
+        "impact": 2,
+        "perspective": "witness",
+        "sourceAction": "靠近收银台站到南希前面以遮护她，注视安吉拉的手部与随身物品并同时盯住所有出入口，保持备用无线电监听 成功",
+        "sourceCharacterId": "Simon Laplace (Simon)"
+      }
+    },
+    {
+      "type": "event",
+      "content": "与西蒙一起检查收银台旁的半掩木门以及所有后门与窗户的锁具 [在 SCN_9_SUB_1 因重新规划而中断] 已中断",
+      "gameDay": 2,
+      "gameTime": "05:14",
+      "location": "SCN_9_SUB_1",
+      "metadata": {
+        "outcome": "与西蒙一起检查收银台旁的半掩木门以及所有后门与窗户的锁具 [在 SCN_9_SUB_1 因重新规划而中断] 已中断",
+        "interruptionReason": "revise_replan"
+      }
+    },
+    {
+      "type": "witness",
+      "content": "[相遇] 刚在花店前台与西蒙和一个我不太认识的Abel William面对面相遇。看到西蒙让我安心，但Abel的出现让我立刻警觉——担心他靠近后厅或有其他来意。我既想马上向西蒙当面确认Abel的来意，也想立刻检查那扇半掩的木门与所有后门窗锁，确保撤离路线畅通，同时保持备用无线电监听，随时准备发出约定信号。",
+      "gameDay": 2,
+      "gameTime": "05:14",
+      "location": "SCN_9_SUB_1",
+      "metadata": {
+        "impact": 2,
+        "perspective": "co_presence",
+        "sourceAction": "Abel William, Simon Laplace (Simon) 在 花店·卡森德拉之花",
+        "sourceCharacterId": "__encounter__"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我低声问西蒙Abel的来意以及是否允许他靠近后厅或上楼到二楼工作站。西蒙说他不认识Abel、不了解对方的目的，不会让陌生人无监督接近后厅或二楼，除非先核实身份并由他或我在场监督。西蒙还告诉我地下酒窖里有备用电池和便携路由器，他已取回并放在后厅/收银台附近备用，会继续监控并在确认后决定是否放行。 [rel:Simon Laplace (Simon) +0 → 84]",
+      "gameDay": 2,
+      "gameTime": "05:17",
+      "location": "SCN_9_SUB_1",
+      "metadata": {
+        "outcome": "低声当面询问西蒙：Abel的来意是什么？是否允许他靠近后厅或上楼到二楼工作站？"
+      }
+    },
+    {
+      "type": "witness",
+      "content": "[目击] 我听到西蒙低声让Abel出示身份证并说明来意，但店里并没有Abel，没法当面核实，他决定留便条或稍后打电话联系。我感到有些不安和心烦——无法确认来者身份让我提心吊胆，现在更想先守好后门与半掩木门、继续监听备用无线电并准备随时撤离。",
+      "gameDay": 2,
+      "gameTime": "05:18",
+      "location": "SCN_9_SUB_1",
+      "metadata": {
+        "impact": 2,
+        "perspective": "witness",
+        "sourceAction": "我到花店里低声要求Abel出示身份证明并说明他此刻在店内的来意，但店里并没有Abel，没法当面核实他的身份或目的。我决定改为留便条或通过电话随后联系他。",
+        "sourceCharacterId": "Simon Laplace (Simon)"
+      }
+    },
+    {
+      "type": "event",
+      "content": "注视Abel的手与随身通讯设备，评估是否携带武器或监听器 成功",
+      "gameDay": 2,
+      "gameTime": "05:20",
+      "location": "SCN_9_SUB_1",
+      "metadata": {
+        "outcome": "注视Abel的手与随身通讯设备，评估是否携带武器或监听器 成功"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我把一把折叠椅撑在半掩的木门下方，把门顶住以作临时加固，这样外面的人就不能轻易把门从外面推开。",
+      "gameDay": 2,
+      "gameTime": "05:24",
+      "location": "SCN_9_SUB_1",
+      "metadata": {
+        "outcome": "把一把折叠椅靠在半掩木门下方以暂时加固并防止从外面被推开"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我把撑在半掩木门下的折叠椅移开，把门关上并上锁，后门被正式加固，暂时无法从外面推开。",
+      "gameDay": 2,
+      "gameTime": "05:27",
+      "location": "SCN_9_SUB_1",
+      "metadata": {
+        "outcome": "把撑在半掩木门下的折叠椅移开，将半掩的木门关上并上锁以正式加固后门"
+      }
+    },
+    {
+      "type": "witness",
+      "content": "[目击] 我看到西蒙透过半掩的木门缝盯着所罗门的双手和随身设备，同时留意后门与店内各出口。光线充足，我没在所罗门手上或设备上发现明显武器或外露的通讯装置，后门与出口也未见可疑动静。我略感宽慰，但仍保持紧张和戒备，继续守在收银台并监听备用无线电。",
+      "gameDay": 2,
+      "gameTime": "05:30",
+      "location": "SCN_9_SUB_1",
+      "metadata": {
+        "impact": 2,
+        "perspective": "witness",
+        "sourceAction": "我透过半掩的木门缝盯着所罗门的双手和他携带的设备查看是否有武器或通讯器，同时注意后门与店内各出口；光线足够，我没在他手上或设备上发现明显的武器或外露的通讯装置，后门与店内出口也未见其他可疑人物或动静。",
+        "sourceCharacterId": "Simon Laplace (Simon)"
+      }
+    },
+    {
+      "type": "event",
+      "content": "坐回收银台，倒一杯热花草茶，通过窗户继续观察街道并监听备用无线电 成功",
+      "gameDay": 2,
+      "gameTime": "05:33",
+      "location": "SCN_9_SUB_1",
+      "metadata": {
+        "outcome": "坐回收银台，倒一杯热花草茶，通过窗户继续观察街道并监听备用无线电 成功"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我通过备用无线电接到西蒙的确认：后门安全，并被叮嘱留在收银台附近待命以防突发状况。我在无线电中向他确认收到，会继续盯着店外并随时报告异常。",
+      "gameDay": 2,
+      "gameTime": "05:33",
+      "location": "SCN_9_SUB_1",
+      "metadata": {
+        "outcome": "通过备用无线电向南希确认后门已安全并叮嘱她留在收银台附近待命"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我悄声走到半掩的木门前检查了门锁和门把，确认能上锁；轻轻推了下门，门没有被外面推动打开，于是把门保持在锁闭状态以确保安全。",
+      "gameDay": 2,
+      "gameTime": "05:38",
+      "location": "SCN_9_SUB_1",
+      "metadata": {
+        "outcome": "悄声走到半掩的木门前再次检查门锁和门把，确认能上锁并轻推测试门是否会被从外面推开"
+      }
+    },
+    {
+      "type": "event",
+      "content": "坐回收银台，通过窗户静静观察街道并监听备用无线电 成功",
+      "gameDay": 2,
+      "gameTime": "05:44",
+      "location": "SCN_9_SUB_1",
+      "metadata": {
+        "outcome": "坐回收银台，通过窗户静静观察街道并监听备用无线电 成功"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我在收银柜台旁的半掩木门上放了一张密封便条，并写明要求Abel当面出示身份证且必须等我或西蒙在场才可进入。",
+      "gameDay": 2,
+      "gameTime": "05:50",
+      "location": "SCN_9_SUB_1",
+      "metadata": {
+        "outcome": "在半掩木门处放置一张便条，写明要求Abel当面出示身份证并等待我或西蒙在场后再进入"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我在收银柜台旁的半掩木门放了一张密封便条，写明要求Abel当面出示身份证并在我或西蒙在场时方可进入。我低声把这件事报告给西蒙并请示是否现在让人来店里亲自核实或等Abel到访后再行动。西蒙让我先等Abel到店，不要让任何人进门，留在收银台附近并保持监听。 [rel:Simon Laplace (Simon) +0 → 85]",
+      "gameDay": 2,
+      "gameTime": "05:53",
+      "location": "SCN_9_SUB_1",
+      "metadata": {
+        "outcome": "向西蒙低声报告我已在半掩木门放置密封便条（要求Abel当面出示身份证并在我或西蒙在场时方可进入），并请求指示是否现在让他来店里亲自核实或等待Abel到访后再行动"
+      }
+    },
+    {
+      "type": "event",
+      "content": "坐回收银台，继续通过窗户观察街道并监听备用无线电以等待Abel到访 成功",
+      "gameDay": 2,
+      "gameTime": "06:14",
+      "location": "SCN_9_SUB_1",
+      "metadata": {
+        "outcome": "坐回收银台，继续通过窗户观察街道并监听备用无线电以等待Abel到访 成功"
+      }
+    },
+    {
+      "type": "event",
+      "content": "拿起便携无线电靠近耳边切换至备用频道并静听是否有来自Abel或西蒙的新联络 成功",
+      "gameDay": 2,
+      "gameTime": "06:20",
+      "location": "SCN_9_SUB_1",
+      "metadata": {
+        "outcome": "拿起便携无线电靠近耳边切换至备用频道并静听是否有来自Abel或西蒙的新联络 成功"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我低声靠近并从外侧检查了收银抽屉的合页与缝隙，确认抽屉已牢固上锁；同时观察抽屉角落，没有发现之前提到的隐蔽一次性小包，看起来那包已经不在原位。",
+      "gameDay": 2,
+      "gameTime": "06:24",
+      "location": "SCN_9_SUB_1",
+      "metadata": {
+        "itemId": "ITEM_SCN9_7",
+        "outcome": "低声确认收银抽屉已牢固上锁，并从外侧检查抽屉位置以确保隐蔽小包未被移动",
+        "itemName": "收银抽屉"
+      }
+    },
+    {
+      "type": "event",
+      "content": "坐回收银台，通过窗户静静观察街道并监听备用无线电，留意Abel或其他可疑人物的动向 成功",
+      "gameDay": 2,
+      "gameTime": "06:40",
+      "location": "SCN_9_SUB_1",
+      "metadata": {
+        "outcome": "坐回收银台，通过窗户静静观察街道并监听备用无线电，留意Abel或其他可疑人物的动向 成功"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我用便携无线电低声向西蒙确认Abel是否已到店，并询问是否允许他靠近后厅或上楼到二楼工作站。西蒙回复说Abel还没到，指示必须当面出示身份证才能进入，拒绝任何他人进入后厅或上二楼，并保持监听。我听后放松，继续守在收银台附近并保持无线电通话。 [rel:Simon Laplace (Simon) +0 → 85]",
+      "gameDay": 2,
+      "gameTime": "06:43",
+      "location": "SCN_9_SUB_1",
+      "metadata": {
+        "outcome": "用便携无线电低声向西蒙确认Abel是否已到店并询问是否允许其靠近后厅或上楼到二楼工作站"
+      }
+    },
+    {
+      "type": "event",
+      "content": "坐回收银台，倒一杯热花草茶，通过窗户静静观察街道并用备用无线电监听是否有异常动静 成功",
+      "gameDay": 2,
+      "gameTime": "06:54",
+      "location": "SCN_9_SUB_1",
+      "metadata": {
+        "outcome": "坐回收银台，倒一杯热花草茶，通过窗户静静观察街道并用备用无线电监听是否有异常动静 成功"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我用便携无线电低声请求西蒙现在下楼，当面核验Abel的身份证，并强调只有在我或他在场时才允许任何人进后厅或上二楼工作站。西蒙通过无线电确认会下楼并坚持这条要求，收到确认后我明显放松，会继续守在收银台附近并监听。 [rel:Simon Laplace (Simon) +0 → 85]",
+      "gameDay": 2,
+      "gameTime": "06:57",
+      "location": "SCN_9_SUB_1",
+      "metadata": {
+        "outcome": "用便携无线电低声向西蒙请求他现在下楼当面核验Abel的身份证，强调必须在我或他在场时才允许任何人进入后厅或上二楼工作站"
+      }
+    },
+    {
+      "type": "event",
+      "content": "走到半掩的木门旁，轻声守候并通过门缝与窗户观察门外动静，同时把便携无线电放近耳边以监听备用频道，准备在Abel到来时当面核验身份证。 成功",
+      "gameDay": 2,
+      "gameTime": "07:03",
+      "location": "SCN_9_SUB_1",
+      "metadata": {
+        "outcome": "走到半掩的木门旁，轻声守候并通过门缝与窗户观察门外动静，同时把便携无线电放近耳边以监听备用频道，准备在Abel到来时当面核验身份证。 成功"
+      }
+    },
+    {
+      "type": "event",
+      "content": "回到收银台坐下，喝一小口热花草茶，通过窗户注视街道并把便携无线电靠近耳边监听备用频道，准备在Abel到来时当面核验身份证并按约定发出短促提示。 成功",
+      "gameDay": 2,
+      "gameTime": "07:09",
+      "location": "SCN_9_SUB_1",
+      "metadata": {
+        "outcome": "回到收银台坐下，喝一小口热花草茶，通过窗户注视街道并把便携无线电靠近耳边监听备用频道，准备在Abel到来时当面核验身份证并按约定发出短促提示。 成功"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我轻声下到后厅，打开并检查了收银抽屉，确认抽屉角落没有原先的那包一次性小包；随后我在后厅找到了一个隐蔽放置的一次性小包，可能是从地下酒窖拿来的。",
+      "gameDay": 2,
+      "gameTime": "07:14",
+      "location": "SCN_9_SUB_1",
+      "metadata": {
+        "outcome": "轻声下到后厅检查收银抽屉与隐蔽小包的位置与状态"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我把在后厅发现的隐蔽一次性小包拿给西蒙当面检查，请他决定如何处置。西蒙当场查看后说这只是普通的一次性包装，决定把它和备用工具一并放在后厅/收银台附近备用。 [rel:Simon Laplace (Simon) +0 → 85]",
+      "gameDay": 2,
+      "gameTime": "07:18",
+      "location": "SCN_9_SUB_1",
+      "metadata": {
+        "outcome": "把我在后厅发现的隐蔽一次性小包拿给西蒙当面检查，并请他决定如何处置"
+      }
+    },
+    {
+      "type": "event",
+      "content": "坐回收银台，通过窗户静静观察街道并把便携无线电靠近耳边监听备用频道，准备在Abel出现时当面核验身份证并按约定发出短促提示。 成功",
+      "gameDay": 2,
+      "gameTime": "07:25",
+      "location": "SCN_9_SUB_1",
+      "metadata": {
+        "outcome": "坐回收银台，通过窗户静静观察街道并把便携无线电靠近耳边监听备用频道，准备在Abel出现时当面核验身份证并按约定发出短促提示。 成功"
+      }
+    },
+    {
+      "type": "witness",
+      "content": "[目击] 我听到西蒙说他下到地下酒窖逐项检查，未见被翻动痕迹；他对一个可疑的一次性小包拍了照片，并把照片与记录保存并加入二楼工作站的加密备份，留待后续确认来源与是否有未经授权的出入痕迹。我一方面松了口气——西蒙已经记录并备份了证据；一方面又更紧张，因为包裹来源不明。我现在更想尽快上二楼去查看那些照片和日志，核实时间线，但会先继续守好收银台与门窗并保持无线电联络。",
+      "gameDay": 2,
+      "gameTime": "07:25",
+      "location": "SCN_9_SUB_1",
+      "metadata": {
+        "impact": 2,
+        "perspective": "witness",
+        "sourceAction": "我下到地下酒窖，逐项检查并记录了物品的摆放情况，未见明显被翻动的痕迹；我对可疑的一次性小包拍了照片，并将照片与记录保存并加入二楼工作站的加密备份，留待后续确认来源与是否有未经授权的出入痕迹。",
+        "sourceCharacterId": "Simon Laplace (Simon)"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我请西蒙上二楼工作站一起查看监控与加密备份，并让他把入侵检测日志与出入时间线对照确认那只一次性小包的来源。西蒙检查后当场告诉我：抽屉/地下酒窖里发现的那只小包只是普通一次性包装，监控里已有标注的“海伦_星辰医院_昨夜片段”已被导出并写入加密备份，离店时并未被尾随，若干可疑外联与可疑人物（已将“Abel William”列为优先调查对象）也已标注。得到他的技术确认后我明显放松，继续在收银台附近守候并保持警戒。 [rel:Simon Laplace (Simon) +0 → 85]",
+      "gameDay": 2,
+      "gameTime": "07:30",
+      "location": "SCN_9_SUB_1",
+      "metadata": {
+        "outcome": "请求西蒙一同上楼到二楼工作站，帮我查看监控照片与加密备份并核对入侵检测日志与出入时间线以确认一次性小包的来源"
+      }
+    },
+    {
+      "type": "witness",
+      "content": "[相遇] 我刚在花店收银台与海伦和西蒙面对面相遇。西蒙在场让我有些安心，但海伦的突然出现让我警觉——她可能与之前匆忙买走的花束有关。我既紧张又有点期待，决定先留在收银台当面向西蒙确认海伦的来意，保持备用无线电监听并暂缓上二楼。",
+      "gameDay": 2,
+      "gameTime": "07:42",
+      "location": "SCN_9_SUB_1",
+      "metadata": {
+        "impact": 2,
+        "perspective": "co_presence",
+        "sourceAction": "Helen, Simon Laplace (Simon) 在 花店·卡森德拉之花",
+        "sourceCharacterId": "__encounter__"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我在花店里低声寻找并想当面询问海伦此刻来访的来意，也仔细留意可能出现的表情与动作，但店里没有海伦。她不在这里，没能当面交流，我感到失望并为她的去向有些担忧。",
+      "gameDay": 2,
+      "gameTime": "07:47",
+      "location": "SCN_9_SUB_1",
+      "metadata": {
+        "outcome": "低声当面向海伦询问她此刻来访的来意并仔细观察她的表情与动作"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我低声问西蒙现在能不能上二楼工作站看监控画面和入侵检测日志，他让我看了终端并播放了标注好的“海伦_星辰医院_昨夜片段”，还向我展示了已打包并加密的日志，告诉我他已把 Abel William 列为可疑对象，这让我放松了些。 [rel:Simon Laplace (Simon) +0 → 85]",
+      "gameDay": 2,
+      "gameTime": "07:50",
+      "location": "SCN_9_SUB_1",
+      "metadata": {
+        "outcome": "低声询问西蒙是否现在可以上二楼工作站查看监控画面与入侵检测日志"
+      }
+    },
+    {
+      "type": "witness",
+      "content": "[目击] 我注意到西蒙在收银台旁低声当面盘问海伦昨夜的去向，声称他在医院监控中看到了她的出现，并要求她解释当时在做什么并逐项记录以便与录像对比——但海伦并不在店里。我感到紧张又不安：西蒙手里似乎有可能影响事情走向的证据，这比起原本只是待在收银台观察更需要核实监控并保护证据。我决定优先配合他核查监控与日志，继续待在收银台并保持无线电监听。",
+      "gameDay": 2,
+      "gameTime": "07:53",
+      "location": "SCN_9_SUB_1",
+      "metadata": {
+        "impact": 2,
+        "perspective": "witness",
+        "sourceAction": "在收银台旁低声当面盘问海伦昨夜的去向，说明我已在医院监控中看到她的出现时间，要求她说明当时在做什么并将她的回答逐项记录以便对比录像证据 [target Helen not present] failed",
+        "sourceCharacterId": "Simon Laplace (Simon)"
+      }
+    },
+    {
+      "type": "event",
+      "content": "靠窗通过玻璃仔细观察街道，留意海伦或约翰尼的出现 成功",
+      "gameDay": 2,
+      "gameTime": "08:01",
+      "location": "SCN_9_SUB_1",
+      "metadata": {
+        "outcome": "靠窗通过玻璃仔细观察街道，留意海伦或约翰尼的出现 成功"
+      }
+    },
+    {
+      "type": "witness",
+      "content": "[相遇] 我刚在花店收银台与西蒙面对面相遇。他看起来有些疲惫但很警觉，我心里既暖又紧张。西蒙在场让我安心，也更坚定继续配合他核查监控并守在收银台保持无线电监听——暂不改变原先计划。",
+      "gameDay": 2,
+      "gameTime": "08:10",
+      "location": "SCN_9_SUB_1",
+      "metadata": {
+        "impact": 2,
+        "perspective": "co_presence",
+        "sourceAction": "Simon Laplace (Simon) 在 花店·卡森德拉之花",
+        "sourceCharacterId": "__encounter__"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我上楼到二楼工作站，逐条比对了“海伦_星辰医院_昨夜片段”的监控回放与入侵检测的出入时间线，未发现不一致之处；随后核对了加密备份的 SHA256 校验值与时间戳，并在本地日志中确认并保存了核验记录。",
+      "gameDay": 2,
+      "gameTime": "08:12",
+      "location": "SCN_9_SUB_1",
+      "metadata": {
+        "outcome": "上楼到二楼工作站，检查并比对“海伦_星辰医院_昨夜片段”的监控回放与入侵检测的出入时间线，核对加密备份文件的 SHA256 校验值并确认时间戳已记录"
+      }
+    },
+    {
+      "type": "event",
+      "content": "下楼回到收银台 成功",
+      "gameDay": 2,
+      "gameTime": "08:13",
+      "location": "SCN_9_SUB_1",
+      "metadata": {
+        "outcome": "下楼回到收银台 成功",
+        "blockedReason": "",
+        "failureReason": ""
+      }
+    },
+    {
+      "type": "event",
+      "content": "坐回收银台，通过窗户安静观察街道并靠近便携无线电监听备用频道，准备在海伦出现时当面盘问或记录她的陈述 成功",
+      "gameDay": 2,
+      "gameTime": "08:24",
+      "location": "SCN_9_SUB_1",
+      "metadata": {
+        "outcome": "坐回收银台，通过窗户安静观察街道并靠近便携无线电监听备用频道，准备在海伦出现时当面盘问或记录她的陈述 成功"
+      }
+    },
+    {
+      "type": "plan",
+      "content": "Today's plan: 1. 收摊并整理门面，保证窗前的花束在大雪中得到保护后锁好店门。 at 花店·卡森德拉之花; 2. 在厨房为我和西蒙准备一顿温暖的晚餐并一起吃饭。 at 花店·卡森德拉之花; 3. 上楼到西蒙的工作室，静静坐在一旁看他工作但不打扰他。 at 花店·卡森德拉之花; 4. 检查工作室的显示器和日志，确认监控画面没有异常并记录下需要提醒西蒙的事项。 at 花店·卡森德拉之花; 5. 到酒窖拿一小瓶酒，和西蒙在炉边小酌、聊几句放松心情。 at 花店·卡森德拉之花; 6. 回到前厅给明天的订单整理花材、浇水并把要用的花束分好。 at 花店·卡森德拉之花; 7. 做情绪管理练习并在日记里写下今天抵制赌瘾的收获和明日要坚持的承诺。 at 花店·卡森德拉之花; 8. 把收银和账本收好放入锁柜，关掉店内无关的灯光以降低夜间外出的冲动。 at 花店·卡森德拉之花; 9. 上楼洗漱后在卧室躺床上读书直到困意来临然后睡觉。 at 花店·卡森德拉之花",
+      "gameDay": 1,
+      "gameTime": "19:00",
+      "location": null,
+      "metadata": {
+        "planType": "daily"
+      }
+    },
+    {
+      "type": "witness",
+      "content": "[相遇] 我刚在花店里与西蒙面对面相遇——他出现在卡森德拉之花的门口。看到他时心跳加速，既安心又紧张。想到他当年在法国把我从邪教中救出，感激又依赖，但我依旧不敢表现出真实感情。外面下着雪，店里暖和，我决定先礼貌迎接他，然后尽快开始为我们准备晚饭。",
+      "gameDay": 1,
+      "gameTime": "19:04",
+      "location": "SCN_9_SUB_1",
+      "metadata": {
+        "impact": 2,
+        "perspective": "co_presence",
+        "sourceAction": "Simon Laplace (Simon) 在 花店·卡森德拉之花",
+        "sourceCharacterId": "__encounter__"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我把窗前的鲜切花束搬回到包装台上，用牛皮纸和缎带包好以防大雪，顺手整理了店面并检查了收银抽屉，最后确认门已上锁才离开。",
+      "gameDay": 1,
+      "gameTime": "19:15",
+      "location": "SCN_9_SUB_1",
+      "metadata": {
+        "outcome": "收摊并整理门面，搬进并包好窗前的花束以防大雪，然后检查并锁好店门"
+      }
+    },
+    {
+      "type": "witness",
+      "content": "[相遇] 我刚在花店门口与西蒙和Angela面对面相遇，外面下着雪，店里很暖和。看到西蒙时心跳加速，既感到安心又紧张，脑海里浮现他当年在法国把我救出的影像，感激却不敢流露真实情感。我要礼貌地迎接他，尽快开始为我们准备晚饭，保持冷静并按原计划陪伴并检查工作室和监控。",
+      "gameDay": 1,
+      "gameTime": "19:15",
+      "location": "SCN_9_SUB_1",
+      "metadata": {
+        "impact": 2,
+        "perspective": "co_presence",
+        "sourceAction": "Angela, Simon Laplace (Simon) 在 花店·卡森德拉之花",
+        "sourceCharacterId": "__encounter__"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我微笑着迎接西蒙，轻声问他最近的情绪，留意他的表情却没有表露自己的真实感受。可是店里没有他，我找不到西蒙，未能与他交谈。",
+      "gameDay": 1,
+      "gameTime": "19:18",
+      "location": "SCN_9_SUB_1",
+      "metadata": {
+        "outcome": "迎接西蒙，微笑招呼并轻声询问他的情绪，注意观察但不表露真实感情"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我走到收银柜台旁那道半掩的木门，敲了敲通往后厅的门并等了一会儿，没有任何回应，确认西蒙不在里面。",
+      "gameDay": 1,
+      "gameTime": "19:21",
+      "location": "SCN_9_SUB_1",
+      "metadata": {
+        "outcome": "上楼敲西蒙工作室的门以确认他是否在里面"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我轻声问了安吉拉西蒙现在在哪里。她回答很简短、冷淡，说不清楚确切位置并暗示这类人通常在卡森德拉四处走动、不固定在某个地点，我没得到具体的去处。 [rel:Angela -5 → -5]",
+      "gameDay": 1,
+      "gameTime": "19:24",
+      "location": "SCN_9_SUB_1",
+      "metadata": {
+        "outcome": "轻声询问Angela西蒙现在在哪里"
+      }
+    },
+    {
+      "type": "event",
+      "content": "轻声呼唤“西蒙？”并走近半掩的后厅木门，倾听是否有回应 成功",
+      "gameDay": 1,
+      "gameTime": "19:27",
+      "location": "SCN_9_SUB_1",
+      "metadata": {
+        "outcome": "轻声呼唤“西蒙？”并走近半掩的后厅木门，倾听是否有回应 成功"
+      }
+    },
+    {
+      "type": "witness",
+      "content": "[相遇] 我在店里当面遇到西蒙、安吉拉和Johnny。外面下着雪，店里暖和，但看到他们时心跳加速，既安心又紧张。Johnny的出现让我有些警惕，安吉拉依旧冷淡。我决定礼貌迎接他们、压抑自己的情感，尽快开始为我和西蒙准备晚饭，同时留意他们的言行并把去工作室检查监控的动作推迟到晚饭后。",
+      "gameDay": 1,
+      "gameTime": "19:28",
+      "location": "SCN_9_SUB_1",
+      "metadata": {
+        "impact": 2,
+        "perspective": "co_presence",
+        "sourceAction": "Johnny, Angela, Simon Laplace (Simon) 在 花店·卡森德拉之花",
+        "sourceCharacterId": "__encounter__"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我微笑着迎接西蒙，低声打招呼并留意他的表情和语气，想判断他的情绪，但店里并没有他。尽管失望，我保持平静不表露感情，注意到店门已上锁，暖黄色的灯光和花香让我觉得安心。",
+      "gameDay": 1,
+      "gameTime": "19:31",
+      "location": "SCN_9_SUB_1",
+      "metadata": {
+        "outcome": "微笑迎接西蒙，低声打招呼并留意他的表情和语气以判断他的情绪，保持平静不表露感情"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我微笑着向店内的西蒙和安吉拉打招呼，提出要不要喝点热茶或坐下休息；西蒙并不在店里，我找不到他。安吉拉回应冷淡、简短，并没有透露西蒙的去向，我因此感到失望和被疏远。 [rel:Angela -2 → -7]",
+      "gameDay": 1,
+      "gameTime": "19:35",
+      "location": "SCN_9_SUB_1",
+      "metadata": {
+        "outcome": "微笑着向店内的西蒙和安吉拉打招呼，语气平和地问他们是否想喝点热茶或坐下休息，同时观察他们的表情与肢体语言以判断情绪与可能的威胁"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我把摆在小桌上的白瓷茶壶接满热水，放入花草茶叶泡好后端到收银台，递给店里的人，柜台处弥漫着温暖的茶香。",
+      "gameDay": 1,
+      "gameTime": "19:42",
+      "location": "SCN_9_SUB_1",
+      "metadata": {
+        "itemId": "ITEM_SCN9_15",
+        "outcome": "把白瓷茶壶装上热水，泡一壶花草茶并端到收银台给店里的人喝",
+        "itemName": "白瓷茶壶"
+      }
+    },
+    {
+      "type": "witness",
+      "content": "[目击] 我注意到西蒙靠在收银台旁，始终保持在我视线范围内，盯着安吉拉的言行，似乎在留意是否有人问后厅或提到帕特里齐奥。看到他在身边让我一阵安心但又有些紧张——既觉得被保护也感到一点被监视的压力。我会按原计划礼貌接待大家、尽快为我和西蒙准备晚饭，把上楼查看工作室和监控的动作推迟到晚饭后，同时继续密切留意安吉拉和Johnny的举动。",
+      "gameDay": 1,
+      "gameTime": "19:48",
+      "location": "SCN_9_SUB_1",
+      "metadata": {
+        "impact": 2,
+        "perspective": "witness",
+        "sourceAction": "靠近南希站到收银台旁，保持在她视线范围内并观察安吉拉的言行，注意是否有人询问后厅或提到帕特里齐奥 成功",
+        "sourceCharacterId": "Simon Laplace (Simon)"
+      }
+    },
+    {
+      "type": "witness",
+      "content": "[目击] 我看到西蒙把收银抽屉拉开，在角落里发现一个被隐蔽放置的一次性小包。他检查了外观和内部，确认只是个普通一次性包装，没发现明显可疑或有用的证据。我因此稍微松了口气，但仍然有点警觉，觉得有人可能悄悄放过东西。既然目前没有危险迹象，我会继续按原计划接待大家并准备晚饭，同时留意安吉拉和Johnny的举动。",
+      "gameDay": 1,
+      "gameTime": "19:58",
+      "location": "SCN_9_SUB_1",
+      "metadata": {
+        "impact": 2,
+        "perspective": "witness",
+        "sourceAction": "我把收银抽屉拉开，看见角落里有个被隐蔽放置的一次性小包。我检查了小包并翻看其外观与内部——只是个普通的一次性包装，未发现明显可疑或有用的证据。",
+        "sourceCharacterId": "Simon Laplace (Simon)"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我从收银柜台旁的半掩木门进了后厅的厨房，开始为我和西蒙准备晚餐。厨房里渐渐飘出食物的香味，后厅现在有人在忙碌。",
+      "gameDay": 1,
+      "gameTime": "20:00",
+      "location": "SCN_9_SUB_1",
+      "metadata": {
+        "outcome": "到厨房开始为我和西蒙准备晚餐"
+      }
+    },
+    {
+      "type": "event",
+      "content": "西蒙悄声问我店里是否有人去后厅或问他的去向，以及他提到的约翰尼和安吉拉是否有异常举动。我如实告诉他后厅没人，也没有人问过他的下落，也没看到约翰尼或安吉拉有什么异样，看到他松了口气我也觉得安心。",
+      "gameDay": 1,
+      "gameTime": "20:01",
+      "location": "SCN_9_SUB_1",
+      "metadata": {
+        "outcome": "低声问南希是否有人在店里打探后厅或问起我的去向，确认她是否注意到约翰尼或安吉拉有异常举动"
+      }
+    },
+    {
+      "type": "witness",
+      "content": "[目击] 我看到西蒙下楼去了后厅的厨房，确认后厅没人，并把我留在他的视线范围内。我感到一阵松动的安心——暂时没有外来威胁——同时又有点被注视的紧张。总的来说放心些了，会按原计划继续为我们准备晚饭并继续留意安吉拉和Johnny。",
+      "gameDay": 1,
+      "gameTime": "20:05",
+      "location": "SCN_9_SUB_1",
+      "metadata": {
+        "impact": 2,
+        "perspective": "witness",
+        "sourceAction": "下楼到后厅的厨房，确认后厅无人并把南希留在我的视线内 成功",
+        "sourceCharacterId": "Simon Laplace (Simon)"
+      }
+    },
+    {
+      "type": "event",
+      "content": "把炖好的晚餐装盘并端到后厅的小餐桌，轻声叫西蒙过来吃饭，同时用温和的语气安抚店内气氛 成功",
+      "gameDay": 1,
+      "gameTime": "20:10",
+      "location": "SCN_9_SUB_1",
+      "metadata": {
+        "outcome": "把炖好的晚餐装盘并端到后厅的小餐桌，轻声叫西蒙过来吃饭，同时用温和的语气安抚店内气氛 成功"
+      }
+    },
+    {
+      "type": "event",
+      "content": "和西蒙一起坐下吃晚餐，保持平静并用温和的语气安抚他，同时留意店内动静和约翰尼、安吉拉的举止 成功",
+      "gameDay": 1,
+      "gameTime": "20:35",
+      "location": "SCN_9_SUB_1",
+      "metadata": {
+        "outcome": "和西蒙一起坐下吃晚餐，保持平静并用温和的语气安抚他，同时留意店内动静和约翰尼、安吉拉的举止 成功"
+      }
+    },
+    {
+      "type": "witness",
+      "content": "[相遇] 我刚在花店里与西蒙和安吉拉当面相遇。外面下着雪，店内暖黄的灯光和花香让我觉得安心，但看到西蒙时心跳仍然加速——既感激又紧张，想着他曾在法国把我救出，我不敢表露真实感情。我会礼貌迎接他们，尽快为我和西蒙准备晚饭，同时留意安吉拉冷淡的态度。",
+      "gameDay": 1,
+      "gameTime": "20:46",
+      "location": "SCN_9_SUB_1",
+      "metadata": {
+        "impact": 2,
+        "perspective": "co_presence",
+        "sourceAction": "Angela, Simon Laplace (Simon) 在 花店·卡森德拉之花",
+        "sourceCharacterId": "__encounter__"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我上了二楼工作站，检查了监控显示器与系统日志，画面和日志都没有异常；我把需要提醒西蒙的事项记下并保存好了。",
+      "gameDay": 1,
+      "gameTime": "20:50",
+      "location": "SCN_9_SUB_1",
+      "metadata": {
+        "outcome": "上楼到工作室检查监控显示器和系统日志，确认画面没有异常并记录下需要提醒西蒙的事项"
+      }
+    },
+    {
+      "type": "witness",
+      "content": "[目击] 我注意到西蒙逐一检查了店内与地下酒窖的门、窗和锁具，确认它们完好无损、未被标记或撬动，通往后厅与酒窖的半掩木门也能正常关闭并上锁，未发现异常。我松了一口气，心里稍微安心些，但仍保持警惕，会按原计划继续为我和西蒙准备晚饭并在晚饭后上楼查看监控。",
+      "gameDay": 1,
+      "gameTime": "20:55",
+      "location": "SCN_9_SUB_1",
+      "metadata": {
+        "impact": 2,
+        "perspective": "witness",
+        "sourceAction": "我逐一检查了店内与地下酒窖的门、窗和锁具，确认它们完好无损、未被标记或撬动。通往后厅与酒窖的半掩木门也能正常关闭并上锁，未发现异常。",
+        "sourceCharacterId": "Simon Laplace (Simon)"
+      }
+    },
+    {
+      "type": "event",
+      "content": "下楼回到后厅与西蒙一起小酌 成功",
+      "gameDay": 1,
+      "gameTime": "20:56",
+      "location": "SCN_9_SUB_1",
+      "metadata": {
+        "outcome": "下楼回到后厅与西蒙一起小酌 成功"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我低声问安吉拉：约翰尼还在店里吗？安吉拉简短且冷淡地回答说他不在，她的语气让我感到失望，也更确认了我们之间的疏离。 [rel:Angela -2 → -9]",
+      "gameDay": 1,
+      "gameTime": "20:59",
+      "location": "SCN_9_SUB_1",
+      "metadata": {
+        "outcome": "低声问安吉拉：约翰尼还在店里吗？"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我把票据本和抽屉里的零钱整理好，把票据本放回收银抽屉里，然后把抽屉合上并上了锁。角落里那一次性的小包已经被取走，没有看到其他异常。",
+      "gameDay": 1,
+      "gameTime": "21:03",
+      "location": "SCN_9_SUB_1",
+      "metadata": {
+        "itemId": "ITEM_SCN9_7",
+        "outcome": "把票据本和收银抽屉里的钱整理好，关上收银抽屉并上锁",
+        "itemName": "收银抽屉"
+      }
+    },
+    {
+      "type": "event",
+      "content": "西蒙给我递了一杯热茶，低声告诉我如果有紧急情况该如何联络，以及备用设备放在哪里，他还确认我今晚不要外出。我同意了，觉得被照顾，心里踏实一些。",
+      "gameDay": 1,
+      "gameTime": "21:06",
+      "location": "SCN_9_SUB_1",
+      "metadata": {
+        "outcome": "把一杯热茶递给南希并低声简短交代紧急联络流程与备用设备所在位置，确认她今晚不会外出"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我回到前厅，整理了明天订单所需的花材并把部分材料放在包装台上；然后给盆栽浇水，土壤现在是湿的。",
+      "gameDay": 1,
+      "gameTime": "21:20",
+      "location": "SCN_9_SUB_1",
+      "metadata": {
+        "outcome": "回到前厅整理明天的订单用花材并给盆栽浇水"
+      }
+    },
+    {
+      "type": "witness",
+      "content": "[相遇] 我刚在花店里当面遇到西蒙——他出现在门口。看到他心跳加速，既安心又紧张，脑海里浮现他当年在法国把我救出的情景，感激却不敢表露真实感情。外面下着雪，店里暖和，我决定按原计划礼貌迎接并尽快为我们准备晚饭，晚点再上楼检查监控，同时继续留意安吉拉和Johnny的举动。",
+      "gameDay": 1,
+      "gameTime": "21:20",
+      "location": "SCN_9_SUB_1",
+      "metadata": {
+        "impact": 2,
+        "perspective": "co_presence",
+        "sourceAction": "Simon Laplace (Simon) 在 花店·卡森德拉之花",
+        "sourceCharacterId": "__encounter__"
+      }
+    },
+    {
+      "type": "event",
+      "content": "走上二楼到西蒙的工作室，静静坐在一旁看他工作但不打扰他 成功",
+      "gameDay": 1,
+      "gameTime": "21:21",
+      "location": "SCN_9_SUB_1",
+      "metadata": {
+        "outcome": "走上二楼到西蒙的工作室，静静坐在一旁看他工作但不打扰他 成功",
+        "blockedReason": "",
+        "failureReason": ""
+      }
+    },
+    {
+      "type": "event",
+      "content": "我来到花店，轻声问有没有看到西蒙，想知道他是否需要休息或我能帮上什么忙，但店内并未见到他。厨房里有做饭的味道，我四处寻找仍然没有发现他，感到有点担心，打算稍后再去找或留话。",
+      "gameDay": 1,
+      "gameTime": "21:25",
+      "location": "SCN_9_SUB_1",
+      "metadata": {
+        "outcome": "轻声问西蒙是否需要休息或我能帮忙什么"
+      }
+    },
+    {
+      "type": "event",
+      "content": "西蒙递给我茶，低声把紧急联络流程和备用设备以及加密文件都交代在了二楼工作站的位置，并确认我今晚会待在店里。我点头同意，听完后心里感觉被照顾，放松了些。",
+      "gameDay": 1,
+      "gameTime": "21:25",
+      "location": "SCN_9_SUB_1",
+      "metadata": {
+        "outcome": "走到南希身边低声简短交代应急流程并确认她今晚留在店内"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我走进花店，想要走近西蒙、轻声握住他的手以示安慰，但他并不在店里。我保持镇定，没有表露情绪，四处查看后注意到店内的花草茶香和厨房里飘出的食物香，决定先等他回来。",
+      "gameDay": 1,
+      "gameTime": "21:29",
+      "location": "SCN_9_SUB_1",
+      "metadata": {
+        "outcome": "走近西蒙，轻声握住他的手以示安慰并低声问候，保持镇定不表露情绪"
+      }
+    },
+    {
+      "type": "event",
+      "content": "坐在收银台旁的椅子上，端着一杯热花草茶静静等候西蒙回来，留意店内动静和来客动向 成功",
+      "gameDay": 1,
+      "gameTime": "21:40",
+      "location": "SCN_9_SUB_1",
+      "metadata": {
+        "outcome": "坐在收银台旁的椅子上，端着一杯热花草茶静静等候西蒙回来，留意店内动静和来客动向 成功"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我走到店门旁的窗前向外察看，街道和门外很安静，未见可疑人物或异常动静。",
+      "gameDay": 1,
+      "gameTime": "21:45",
+      "location": "SCN_9_SUB_1",
+      "metadata": {
+        "outcome": "走到店门旁的窗前向外察看，确认街道和门外没有可疑人物或动静"
+      }
+    },
+    {
+      "type": "event",
+      "content": "做情绪管理练习并在日记里写下今天抵制赌瘾的收获和明日要坚持的承诺。 成功",
+      "gameDay": 1,
+      "gameTime": "21:56",
+      "location": "SCN_9_SUB_1",
+      "metadata": {
+        "outcome": "做情绪管理练习并在日记里写下今天抵制赌瘾的收获和明日要坚持的承诺。 成功"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我来到花店想去握西蒙的手以示安慰，但店里没有找到他；我伸手却只抓到空气，站在收银台旁感到失落和担忧。",
+      "gameDay": 1,
+      "gameTime": "21:59",
+      "location": "SCN_9_SUB_1",
+      "metadata": {
+        "outcome": "握住西蒙的手以示安慰"
+      }
+    },
+    {
+      "type": "event",
+      "content": "轻声呼唤“西蒙”，并向店内各处张望确认他的位置 成功",
+      "gameDay": 1,
+      "gameTime": "22:02",
+      "location": "SCN_9_SUB_1",
+      "metadata": {
+        "outcome": "轻声呼唤“西蒙”，并向店内各处张望确认他的位置 成功"
+      }
+    },
+    {
+      "type": "event",
+      "content": "上楼洗漱，然后在卧室躺床上读书直到困意来临并睡觉 [在 SCN_9_SUB_1 因重新规划而中断] 已中断",
+      "gameDay": 1,
+      "gameTime": "22:05",
+      "location": "SCN_9_SUB_1",
+      "metadata": {
+        "outcome": "上楼洗漱，然后在卧室躺床上读书直到困意来临并睡觉 [在 SCN_9_SUB_1 因重新规划而中断] 已中断",
+        "interruptionReason": "revise_replan"
+      }
+    },
+    {
+      "type": "witness",
+      "content": "[目击] 我看到海伦沿北新街朝花店方向走，约翰尼悄声挽住她的手臂并示意去花店找个更安静的角落私下谈话。随后我在花店里与海伦、约翰尼和西蒙当面相遇。我感到警觉和不安，约翰尼的动作让我怀疑他们可能在商量什么秘密或与西蒙有关的事。原本要上楼洗漱看书，但我决定立刻留在前厅附近观察他们，确保店里和西蒙安全。",
+      "gameDay": 1,
+      "gameTime": "22:05",
+      "location": "SCN_9_SUB_1",
+      "metadata": {
+        "impact": 2,
+        "perspective": "witness",
+        "sourceAction": "沿卡森德拉北新街朝花店·卡森德拉之花方向走，留意周围是否有人在监视或尾随 成功",
+        "sourceCharacterId": "Helen"
+      }
+    },
+    {
+      "type": "witness",
+      "content": "[目击] 我看到海伦把包装台上的花束取下，用牛皮纸和缎带简单包好，在收银台付了钱后匆匆离开，我同时留意她是否有人尾随。也看到西蒙在墙上的粉笔价目板下写下了紧急联络流程、备用设备位置（标注为二楼工作站）并设了凌晨03:00的检查提醒。我一方面因为西蒙的准备感到安心，另一方面对海伦匆忙离去和可能的尾随感到警觉。决定留在前厅靠近收银台，先确认粉笔板上的内容并记住二楼工作站的位置，继续观察海伦是否会回来或有人跟踪。",
+      "gameDay": 1,
+      "gameTime": "22:08",
+      "location": "SCN_9_SUB_1",
+      "metadata": {
+        "impact": 2,
+        "perspective": "witness",
+        "sourceAction": "我把包装台上的花束取下，在台上用牛皮纸和缎带简单包好，在收银台付了钱，准备尽快离开，同时留意周围是否有人尾随。",
+        "sourceCharacterId": "Helen"
+      }
+    },
+    {
+      "type": "event",
+      "content": "在收银台旁静静观察海伦和约翰尼的私下谈话，注意任何与西蒙有关的细节或可疑举动 成功",
+      "gameDay": 1,
+      "gameTime": "22:11",
+      "location": "SCN_9_SUB_1",
+      "metadata": {
+        "outcome": "在收银台旁静静观察海伦和约翰尼的私下谈话，注意任何与西蒙有关的细节或可疑举动 成功"
+      }
+    },
+    {
+      "type": "witness",
+      "content": "[目击] 我看到约翰尼走到前厅，低声呼唤海伦的名字；同时我与约翰尼和西蒙当面相遇。心里有点警觉和不安，但保持镇定、不表露情绪。决定继续留在收银台附近观察他们的举动，随时准备在需要时支援西蒙，并按原计划稍后确认粉笔板上的紧急联络和二楼工作站位置。",
+      "gameDay": 1,
+      "gameTime": "22:12",
+      "location": "SCN_9_SUB_1",
+      "metadata": {
+        "impact": 2,
+        "perspective": "witness",
+        "sourceAction": "走到花店前厅寻找海伦并低声呼唤她的名字 成功",
+        "sourceCharacterId": "Johnny"
+      }
+    },
+    {
+      "type": "event",
+      "content": "一个男人（Johnny）低声问我海伦现在在哪里。我并不知道海伦的下落，低声回答说我不知道，听着让我有点紧张。",
+      "gameDay": 1,
+      "gameTime": "22:14",
+      "location": "SCN_9_SUB_1",
+      "metadata": {
+        "outcome": "低声问南希：海伦现在在哪里？尽量让语气随意不引人注意"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我走到墙上的粉笔价目板前，仔细查看并确认了应急联络流程、备用设备位置（标注为：花店二楼工作站）以及设定的凌晨03:00检查提醒，并把二楼工作站的位置记在心里；随后我留在收银台附近继续观察海伦是否会回来或有人尾随。",
+      "gameDay": 1,
+      "gameTime": "22:14",
+      "location": "SCN_9_SUB_1",
+      "metadata": {
+        "itemId": "ITEM_SCN9_8",
+        "outcome": "查看粉笔价目板上的应急联络流程、备用设备位置与03:00检查提醒并记住二楼工作站的位置",
+        "itemName": "粉笔价目板"
+      }
+    },
+    {
+      "type": "witness",
+      "content": "[目击] 我从收银柜旁的半掩木门进去，沿短廊检查了后厅与地下酒窖；后厅只有我和西蒙在准备晚饭，地下酒窖里没有海伦，角落的隐蔽小包仍在原处。我为没有发现海伦稍微松了口气，但仍然有些警觉，会继续待在收银台附近观察动静并按原计划确认粉笔板和二楼工作站的位置。",
+      "gameDay": 1,
+      "gameTime": "22:17",
+      "location": "SCN_9_SUB_1",
+      "metadata": {
+        "impact": 2,
+        "perspective": "witness",
+        "sourceAction": "我从收银柜台旁的半掩木门进去，沿短廊检查了后厅与地下酒窖；后厅只有南希和西蒙在准备晚饭，地下酒窖里没有海伦，角落的隐蔽小包仍在原处。",
+        "sourceCharacterId": "Johnny"
+      }
+    },
+    {
+      "type": "event",
+      "content": "继续在收银台旁观察海伦和约翰尼的举动，留意任何可疑或与西蒙有关的细节 成功",
+      "gameDay": 1,
+      "gameTime": "22:21",
+      "location": "SCN_9_SUB_1",
+      "metadata": {
+        "outcome": "继续在收银台旁观察海伦和约翰尼的举动，留意任何可疑或与西蒙有关的细节 成功"
+      }
+    },
+    {
+      "type": "event",
+      "content": "走到收银台旁窗前，靠近门口凝视外面街道，留意海伦是否回来或有人尾随，随时准备提醒或支援西蒙 成功",
+      "gameDay": 1,
+      "gameTime": "22:25",
+      "location": "SCN_9_SUB_1",
+      "metadata": {
+        "outcome": "走到收银台旁窗前，靠近门口凝视外面街道，留意海伦是否回来或有人尾随，随时准备提醒或支援西蒙 成功"
+      }
+    },
+    {
+      "type": "event",
+      "content": "继续在收银台旁观察海伦和约翰尼的举动，靠近门口通过窗户留意外面街道的动静，随时准备提醒或支援西蒙 成功",
+      "gameDay": 1,
+      "gameTime": "22:36",
+      "location": "SCN_9_SUB_1",
+      "metadata": {
+        "outcome": "继续在收银台旁观察海伦和约翰尼的举动，靠近门口通过窗户留意外面街道的动静，随时准备提醒或支援西蒙 成功"
+      }
+    },
+    {
+      "type": "event",
+      "content": "静静观察海伦与约翰尼的举动，注意任何异常并随时准备提醒或支援西蒙。 成功",
+      "gameDay": 1,
+      "gameTime": "22:42",
+      "location": "SCN_9_SUB_1",
+      "metadata": {
+        "outcome": "静静观察海伦与约翰尼的举动，注意任何异常并随时准备提醒或支援西蒙。 成功"
+      }
+    },
+    {
+      "type": "event",
+      "content": "靠近门口的窗户静静向外观察街道，注意是否有人接近或尾随海伦与约翰尼 成功",
+      "gameDay": 1,
+      "gameTime": "22:46",
+      "location": "SCN_9_SUB_1",
+      "metadata": {
+        "outcome": "靠近门口的窗户静静向外观察街道，注意是否有人接近或尾随海伦与约翰尼 成功"
+      }
+    },
+    {
+      "type": "event",
+      "content": "继续留在收银台附近通过窗户观察街道和门口，密切监视海伦与约翰尼的动向，随时准备提醒或支援西蒙。 成功",
+      "gameDay": 1,
+      "gameTime": "22:57",
+      "location": "SCN_9_SUB_1",
+      "metadata": {
+        "outcome": "继续留在收银台附近通过窗户观察街道和门口，密切监视海伦与约翰尼的动向，随时准备提醒或支援西蒙。 成功"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我低声告诉西蒙我会守在收银台附近，随时准备在他需要时提醒或支援他。他听后点了点头，表情放松，让我觉得我的存在确实让他安心。 [rel:Simon Laplace (Simon) +1 → 80]",
+      "gameDay": 1,
+      "gameTime": "22:59",
+      "location": "SCN_9_SUB_1",
+      "metadata": {
+        "outcome": "低声告诉西蒙我会守在收银台附近，随时准备在他需要时提醒或支援他"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我站在门旁和窗前静静观察街道，留意海伦与约翰尼是否回来或有人尾随。外面没有看见可疑人物或异常动静；我会随时提醒或支援西蒙。",
+      "gameDay": 1,
+      "gameTime": "23:10",
+      "location": "SCN_9_SUB_1",
+      "metadata": {
+        "outcome": "静静观察店门和窗外的动静，留意海伦与约翰尼是否回来或有人尾随，并随时准备提醒或支援西蒙"
+      }
+    },
+    {
+      "type": "event",
+      "content": "通过收银台旁的窗户继续观察街道，留意海伦与约翰尼是否返回或有人尾随 成功",
+      "gameDay": 1,
+      "gameTime": "23:21",
+      "location": "SCN_9_SUB_1",
+      "metadata": {
+        "outcome": "通过收银台旁的窗户继续观察街道，留意海伦与约翰尼是否返回或有人尾随 成功"
+      }
+    },
+    {
+      "type": "event",
+      "content": "坐在收银台旁，喝一小口花草茶保持清醒并通过窗户继续观察街道与海伦、约翰尼的动静，随时准备提醒或支援西蒙 成功",
+      "gameDay": 1,
+      "gameTime": "23:25",
+      "location": "SCN_9_SUB_1",
+      "metadata": {
+        "outcome": "坐在收银台旁，喝一小口花草茶保持清醒并通过窗户继续观察街道与海伦、约翰尼的动静，随时准备提醒或支援西蒙 成功"
+      }
+    },
+    {
+      "type": "event",
+      "content": "走到门旁的窗前更仔细观察街道，盯着海伦与约翰尼的动静并随时准备提醒或支援西蒙 成功",
+      "gameDay": 1,
+      "gameTime": "23:31",
+      "location": "SCN_9_SUB_1",
+      "metadata": {
+        "outcome": "走到门旁的窗前更仔细观察街道，盯着海伦与约翰尼的动静并随时准备提醒或支援西蒙 成功"
+      }
+    },
+    {
+      "type": "event",
+      "content": "守在收银台旁继续通过窗户观察海伦与约翰尼的动静，保持警觉并准备在必要时提醒或支援西蒙 成功",
+      "gameDay": 1,
+      "gameTime": "23:42",
+      "location": "SCN_9_SUB_1",
+      "metadata": {
+        "outcome": "守在收银台旁继续通过窗户观察海伦与约翰尼的动静，保持警觉并准备在必要时提醒或支援西蒙 成功"
+      }
+    },
+    {
+      "type": "event",
+      "content": "坐回收银台旁，通过窗户仔细观察街道，保持警觉并准备在必要时提醒或支援西蒙 成功",
+      "gameDay": 1,
+      "gameTime": "23:48",
+      "location": "SCN_9_SUB_1",
+      "metadata": {
+        "outcome": "坐回收银台旁，通过窗户仔细观察街道，保持警觉并准备在必要时提醒或支援西蒙 成功"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我通过便携无线电和西蒙确认了联络频道，信号良好。我会守在收银台附近注意窗外动静，若发现异常会用约定的短促提示立即提醒他并准备支援。",
+      "gameDay": 1,
+      "gameTime": "23:53",
+      "location": "SCN_9_SUB_1",
+      "metadata": {
+        "outcome": "通过便携无线电低声与南希确认联络频道并测试信号，要求她回报窗外当前动向并在发现异常时立即用约定的短促提示提醒我"
+      }
+    },
+    {
+      "type": "event",
+      "content": "在收银台旁静静通过窗户观察街道与海伦、约翰尼的动静，随时准备提醒或支援西蒙 成功",
+      "gameDay": 1,
+      "gameTime": "23:55",
+      "location": "SCN_9_SUB_1",
+      "metadata": {
+        "outcome": "在收银台旁静静通过窗户观察街道与海伦、约翰尼的动静，随时准备提醒或支援西蒙 成功"
+      }
+    },
+    {
+      "type": "secret",
+      "content": "我与西蒙通过便携无线电确认了联络频道，信号良好并约定了若发现异常的简短提示方式以便迅速沟通。",
+      "gameDay": 1,
+      "gameTime": "23:59",
+      "location": null,
+      "metadata": {
+        "revealed": false,
+        "difficulty": "hard",
+        "knowledgeId": "learned_day1_4"
+      }
+    },
+    {
+      "type": "information",
+      "content": "西蒙仔细检查了前厅、后厅、通向地下酒窖的门窗与锁具，未发现撬动、标记或异常痕迹，所有门在检查时均能正常关闭并上锁。",
+      "gameDay": 1,
+      "gameTime": "23:59",
+      "location": null,
+      "metadata": {
+        "revealed": false,
+        "difficulty": "regular",
+        "knowledgeId": "learned_day1_3"
+      }
+    },
+    {
+      "type": "information",
+      "content": "店内粉笔价目板下写着紧急联络流程、备用设备位置并特地标注为“花店二楼工作站”，还设置了凌晨03:00的检查提醒。",
+      "gameDay": 1,
+      "gameTime": "23:59",
+      "location": null,
+      "metadata": {
+        "revealed": false,
+        "difficulty": "hard",
+        "knowledgeId": "learned_day1_2"
+      }
+    },
+    {
+      "type": "secret",
+      "content": "收银抽屉角落曾被隐蔽放置过一个一次性小包；西蒙检查后认为外观和内部都没有明显可疑之处，但后来小包被人取走了（我当时没有看到是谁拿的）。",
+      "gameDay": 1,
+      "gameTime": "23:59",
+      "location": null,
+      "metadata": {
+        "revealed": false,
+        "difficulty": "extreme",
+        "knowledgeId": "learned_day1_1"
+      }
+    },
+    {
+      "type": "event",
+      "content": "坐在收银台旁喝一小口花草茶以保持清醒并通过窗户继续观察街道与海伦、约翰尼的动静，随时准备提醒或支援西蒙 成功",
+      "gameDay": 1,
+      "gameTime": "23:59",
+      "location": "SCN_9_SUB_1",
+      "metadata": {
+        "outcome": "坐在收银台旁喝一小口花草茶以保持清醒并通过窗户继续观察街道与海伦、约翰尼的动静，随时准备提醒或支援西蒙 成功"
+      }
+    },
+    {
+      "type": "information",
+      "content": "西蒙把应急联络流程、备用设备位置和加密文件的位置明确交代给我，并特别叮嘱我今晚留在店里不要外出以防突发状况。",
+      "gameDay": 1,
+      "gameTime": "23:59",
+      "location": null,
+      "metadata": {
+        "revealed": false,
+        "difficulty": "hard",
+        "knowledgeId": "learned_day1_6"
+      }
+    },
+    {
+      "type": "information",
+      "content": "海伦匆匆把一束花用牛皮纸和缎带包好、付了钱后匆忙离开；约翰尼在店内试图与海伦单独低声交谈并示意去更安静的角落，我怀疑他们在商量与西蒙或店里有关的私事。",
+      "gameDay": 1,
+      "gameTime": "23:59",
+      "location": null,
+      "metadata": {
+        "revealed": false,
+        "difficulty": "regular",
+        "knowledgeId": "learned_day1_5"
+      }
+    }
+  ],
+  "plans": [
+    {
+      "npcName": "Nancy Charlotte",
+      "gameDay": 1,
+      "schedule": [
+        {
+          "activity": "收摊并整理门面，保证窗前的花束在大雪中得到保护后锁好店门。",
+          "location": "花店·卡森德拉之花"
+        },
+        {
+          "activity": "在厨房为我和西蒙准备一顿温暖的晚餐并一起吃饭。",
+          "location": "花店·卡森德拉之花"
+        },
+        {
+          "activity": "上楼到西蒙的工作室，静静坐在一旁看他工作但不打扰他。",
+          "location": "花店·卡森德拉之花"
+        },
+        {
+          "activity": "检查工作室的显示器和日志，确认监控画面没有异常并记录下需要提醒西蒙的事项。",
+          "location": "花店·卡森德拉之花"
+        },
+        {
+          "activity": "到酒窖拿一小瓶酒，和西蒙在炉边小酌、聊几句放松心情。",
+          "location": "花店·卡森德拉之花"
+        },
+        {
+          "activity": "回到前厅给明天的订单整理花材、浇水并把要用的花束分好。",
+          "location": "花店·卡森德拉之花"
+        },
+        {
+          "activity": "做情绪管理练习并在日记里写下今天抵制赌瘾的收获和明日要坚持的承诺。",
+          "location": "花店·卡森德拉之花"
+        },
+        {
+          "activity": "把收银和账本收好放入锁柜，关掉店内无关的灯光以降低夜间外出的冲动。",
+          "location": "花店·卡森德拉之花"
+        },
+        {
+          "activity": "上楼洗漱后在卧室躺床上读书直到困意来临然后睡觉。",
+          "location": "花店·卡森德拉之花"
+        }
+      ],
+      "nodes": [
+        {
+          "type": "scene_interaction",
+          "action": "收摊并整理门面，搬进并包好窗前的花束以防大雪，然后检查并锁好店门",
+          "impact": 0,
+          "nodeId": "si_nancy_close_01",
+          "status": "completed",
+          "endTime": "19:15",
+          "outcome": "我把窗前的鲜切花束搬回到包装台上，用牛皮纸和缎带包好以防大雪，顺手整理了店面并检查了收银抽屉，最后确认门已上锁才离开。",
+          "startTime": "19:00",
+          "characterId": "Nancy Charlotte",
+          "characterName": "Nancy Charlotte",
+          "executionMeta": {
+            "startedAt": "19:00",
+            "completedAt": "19:15",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "character_interaction",
+          "action": "低声告诉西蒙我会守在收银台附近，随时准备在他需要时提醒或支援他",
+          "impact": 1,
+          "nodeId": "ci1",
+          "status": "completed",
+          "endTime": "22:59",
+          "outcome": "我低声告诉西蒙我会守在收银台附近，随时准备在他需要时提醒或支援他。他听后点了点头，表情放松，让我觉得我的存在确实让他安心。",
+          "startTime": "22:58",
+          "characterId": "Nancy Charlotte",
+          "characterName": "Nancy Charlotte",
+          "executionMeta": {
+            "startedAt": "22:58",
+            "completedAt": "22:59",
+            "remainingMinutes": 0
+          },
+          "targetCharacterIds": [
+            "Simon Laplace (Simon)"
+          ]
+        },
+        {
+          "type": "scene_interaction",
+          "action": "上楼敲西蒙工作室的门以确认他是否在里面",
+          "impact": 2,
+          "nodeId": "si_nancy_001",
+          "status": "completed",
+          "endTime": "19:21",
+          "outcome": "我走到收银柜台旁那道半掩的木门，敲了敲通往后厅的门并等了一会儿，没有任何回应，确认西蒙不在里面。",
+          "startTime": "19:19",
+          "characterId": "Nancy Charlotte",
+          "characterName": "Nancy Charlotte",
+          "executionMeta": {
+            "startedAt": "19:19",
+            "completedAt": "19:21",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "character_interaction",
+          "action": "微笑着向店内的西蒙和安吉拉打招呼，语气平和地问他们是否想喝点热茶或坐下休息，同时观察他们的表情与肢体语言以判断情绪与可能的威胁",
+          "impact": 2,
+          "nodeId": "ci_nancy_001",
+          "status": "completed",
+          "endTime": "19:35",
+          "outcome": "我微笑着向店内的西蒙和安吉拉打招呼，提出要不要喝点热茶或坐下休息；西蒙并不在店里，我找不到他。安吉拉回应冷淡、简短，并没有透露西蒙的去向，我因此感到失望和被疏远。",
+          "startTime": "19:32",
+          "characterId": "Nancy Charlotte",
+          "characterName": "Nancy Charlotte",
+          "executionMeta": {
+            "startedAt": "19:32",
+            "completedAt": "19:35",
+            "remainingMinutes": 0
+          },
+          "targetCharacterIds": [
+            "Simon",
+            "Angela"
+          ]
+        },
+        {
+          "type": "action",
+          "action": "坐在收银台旁喝一小口花草茶以保持清醒并通过窗户继续观察街道与海伦、约翰尼的动静，随时准备提醒或支援西蒙",
+          "impact": 0,
+          "nodeId": "a1",
+          "status": "completed",
+          "endTime": "23:59",
+          "outcome": "坐在收银台旁喝一小口花草茶以保持清醒并通过窗户继续观察街道与海伦、约翰尼的动静，随时准备提醒或支援西蒙 成功",
+          "startTime": "23:56",
+          "characterId": "Nancy Charlotte",
+          "characterName": "Nancy Charlotte",
+          "executionMeta": {
+            "startedAt": "23:56",
+            "completedAt": "23:59",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "character_interaction",
+          "action": "低声告诉西蒙我会守在收银台附近，随时准备在他需要时提醒或支援他",
+          "impact": 1,
+          "nodeId": "ci1",
+          "status": "completed",
+          "endTime": "22:59",
+          "outcome": "我低声告诉西蒙我会守在收银台附近，随时准备在他需要时提醒或支援他。他听后点了点头，表情放松，让我觉得我的存在确实让他安心。",
+          "startTime": "22:58",
+          "characterId": "Nancy Charlotte",
+          "characterName": "Nancy Charlotte",
+          "executionMeta": {
+            "startedAt": "22:58",
+            "completedAt": "22:59",
+            "remainingMinutes": 0
+          },
+          "targetCharacterIds": [
+            "Simon Laplace (Simon)"
+          ]
+        },
+        {
+          "type": "character_interaction",
+          "action": "微笑着向店内的西蒙和安吉拉打招呼，语气平和地问他们是否想喝点热茶或坐下休息，同时观察他们的表情与肢体语言以判断情绪与可能的威胁",
+          "impact": 2,
+          "nodeId": "ci_nancy_001",
+          "status": "completed",
+          "endTime": "19:35",
+          "outcome": "我微笑着向店内的西蒙和安吉拉打招呼，提出要不要喝点热茶或坐下休息；西蒙并不在店里，我找不到他。安吉拉回应冷淡、简短，并没有透露西蒙的去向，我因此感到失望和被疏远。",
+          "startTime": "19:32",
+          "characterId": "Nancy Charlotte",
+          "characterName": "Nancy Charlotte",
+          "executionMeta": {
+            "startedAt": "19:32",
+            "completedAt": "19:35",
+            "remainingMinutes": 0
+          },
+          "targetCharacterIds": [
+            "Simon",
+            "Angela"
+          ]
+        },
+        {
+          "type": "object_interaction",
+          "action": "把白瓷茶壶装上热水，泡一壶花草茶并端到收银台给店里的人喝",
+          "impact": 2,
+          "nodeId": "oi1",
+          "status": "completed",
+          "endTime": "19:42",
+          "outcome": "我把摆在小桌上的白瓷茶壶接满热水，放入花草茶叶泡好后端到收银台，递给店里的人，柜台处弥漫着温暖的茶香。",
+          "startTime": "19:36",
+          "characterId": "Nancy Charlotte",
+          "characterName": "Nancy Charlotte",
+          "executionMeta": {
+            "startedAt": "19:36",
+            "completedAt": "19:42",
+            "remainingMinutes": 0
+          },
+          "objectInteractionPayload": {
+            "itemId": "ITEM_SCN9_15"
+          }
+        },
+        {
+          "type": "scene_interaction",
+          "action": "回到前厅整理明天的订单用花材并给盆栽浇水",
+          "impact": 2,
+          "nodeId": "si1",
+          "status": "completed",
+          "endTime": "21:20",
+          "outcome": "我回到前厅，整理了明天订单所需的花材并把部分材料放在包装台上；然后给盆栽浇水，土壤现在是湿的。",
+          "startTime": "21:04",
+          "characterId": "Nancy Charlotte",
+          "characterName": "Nancy Charlotte",
+          "executionMeta": {
+            "startedAt": "21:04",
+            "completedAt": "21:20",
+            "remainingMinutes": 0
+          },
+          "objectInteractionPayload": {
+            "itemId": "ITEM_SCN9_12"
+          }
+        },
+        {
+          "type": "action",
+          "action": "继续在收银台旁观察海伦和约翰尼的举动，留意任何可疑或与西蒙有关的细节",
+          "impact": 0,
+          "nodeId": "a2",
+          "status": "completed",
+          "endTime": "22:21",
+          "outcome": "继续在收银台旁观察海伦和约翰尼的举动，留意任何可疑或与西蒙有关的细节 成功",
+          "startTime": "22:16",
+          "characterId": "Nancy Charlotte",
+          "characterName": "Nancy Charlotte",
+          "executionMeta": {
+            "startedAt": "22:16",
+            "completedAt": "22:21",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "action",
+          "action": "继续在收银台旁观察海伦和约翰尼的举动，留意任何可疑或与西蒙有关的细节",
+          "impact": 0,
+          "nodeId": "a2",
+          "status": "completed",
+          "endTime": "22:21",
+          "outcome": "继续在收银台旁观察海伦和约翰尼的举动，留意任何可疑或与西蒙有关的细节 成功",
+          "startTime": "22:16",
+          "characterId": "Nancy Charlotte",
+          "characterName": "Nancy Charlotte",
+          "executionMeta": {
+            "startedAt": "22:16",
+            "completedAt": "22:21",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "scene_interaction",
+          "action": "回到前厅整理明天的订单用花材并给盆栽浇水",
+          "impact": 2,
+          "nodeId": "si1",
+          "status": "completed",
+          "endTime": "21:20",
+          "outcome": "我回到前厅，整理了明天订单所需的花材并把部分材料放在包装台上；然后给盆栽浇水，土壤现在是湿的。",
+          "startTime": "21:04",
+          "characterId": "Nancy Charlotte",
+          "characterName": "Nancy Charlotte",
+          "executionMeta": {
+            "startedAt": "21:04",
+            "completedAt": "21:20",
+            "remainingMinutes": 0
+          },
+          "objectInteractionPayload": {
+            "itemId": "ITEM_SCN9_12"
+          }
+        },
+        {
+          "type": "action",
+          "action": "下楼回到后厅与西蒙一起小酌",
+          "impact": 2,
+          "nodeId": "a1_2051",
+          "status": "completed",
+          "endTime": "20:56",
+          "outcome": "下楼回到后厅与西蒙一起小酌 成功",
+          "startTime": "20:51",
+          "characterId": "Nancy Charlotte",
+          "characterName": "Nancy Charlotte",
+          "executionMeta": {
+            "startedAt": "20:51",
+            "completedAt": "20:56",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "character_interaction",
+          "action": "低声告诉西蒙我会守在收银台附近，随时准备在他需要时提醒或支援他",
+          "impact": 1,
+          "nodeId": "ci1",
+          "status": "completed",
+          "endTime": "22:59",
+          "outcome": "我低声告诉西蒙我会守在收银台附近，随时准备在他需要时提醒或支援他。他听后点了点头，表情放松，让我觉得我的存在确实让他安心。",
+          "startTime": "22:58",
+          "characterId": "Nancy Charlotte",
+          "characterName": "Nancy Charlotte",
+          "executionMeta": {
+            "startedAt": "22:58",
+            "completedAt": "22:59",
+            "remainingMinutes": 0
+          },
+          "targetCharacterIds": [
+            "Simon Laplace (Simon)"
+          ]
+        },
+        {
+          "type": "object_interaction",
+          "action": "把票据本和收银抽屉里的钱整理好，关上收银抽屉并上锁",
+          "impact": 0,
+          "nodeId": "oi1_day1_21:00",
+          "status": "completed",
+          "endTime": "21:03",
+          "outcome": "我把票据本和抽屉里的零钱整理好，把票据本放回收银抽屉里，然后把抽屉合上并上了锁。角落里那一次性的小包已经被取走，没有看到其他异常。",
+          "startTime": "21:00",
+          "characterId": "Nancy Charlotte",
+          "characterName": "Nancy Charlotte",
+          "executionMeta": {
+            "startedAt": "21:00",
+            "completedAt": "21:03",
+            "remainingMinutes": 0
+          },
+          "objectInteractionPayload": {
+            "itemId": "ITEM_SCN9_7"
+          }
+        },
+        {
+          "type": "scene_interaction",
+          "action": "回到前厅整理明天的订单用花材并给盆栽浇水",
+          "impact": 2,
+          "nodeId": "si1",
+          "status": "completed",
+          "endTime": "21:20",
+          "outcome": "我回到前厅，整理了明天订单所需的花材并把部分材料放在包装台上；然后给盆栽浇水，土壤现在是湿的。",
+          "startTime": "21:04",
+          "characterId": "Nancy Charlotte",
+          "characterName": "Nancy Charlotte",
+          "executionMeta": {
+            "startedAt": "21:04",
+            "completedAt": "21:20",
+            "remainingMinutes": 0
+          },
+          "objectInteractionPayload": {
+            "itemId": "ITEM_SCN9_12"
+          }
+        },
+        {
+          "type": "movement",
+          "action": "走上二楼到西蒙的工作室，静静坐在一旁看他工作但不打扰他",
+          "impact": 1,
+          "nodeId": "m_nancy_001",
+          "status": "completed",
+          "endTime": "21:24",
+          "outcome": "走上二楼到西蒙的工作室，静静坐在一旁看他工作但不打扰他 成功",
+          "startTime": "21:21",
+          "characterId": "Nancy Charlotte",
+          "destination": "SCN_9_SUB_1",
+          "characterName": "Nancy Charlotte",
+          "executionMeta": {
+            "movement": {
+              "routeSnapshot": [],
+              "targetPosition": {
+                "type": "scene",
+                "sceneId": "SCN_9_SUB_1"
+              },
+              "minutesIntoStep": 0,
+              "currentStepIndex": 0,
+              "lastReachablePosition": {
+                "type": "scene",
+                "sceneId": "SCN_9_SUB_1"
+              }
+            },
+            "startedAt": "21:21",
+            "completedAt": "21:21",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "character_interaction",
+          "action": "轻声问西蒙是否需要休息或我能帮忙什么",
+          "impact": 1,
+          "nodeId": "ci_day1_2122",
+          "status": "completed",
+          "endTime": "21:25",
+          "outcome": "我来到花店，轻声问有没有看到西蒙，想知道他是否需要休息或我能帮上什么忙，但店内并未见到他。厨房里有做饭的味道，我四处寻找仍然没有发现他，感到有点担心，打算稍后再去找或留话。",
+          "startTime": "21:22",
+          "characterId": "Nancy Charlotte",
+          "characterName": "Nancy Charlotte",
+          "executionMeta": {
+            "startedAt": "21:22",
+            "completedAt": "21:25",
+            "remainingMinutes": 0
+          },
+          "targetCharacterIds": [
+            "npc_simon"
+          ]
+        },
+        {
+          "type": "character_interaction",
+          "action": "低声告诉西蒙我会守在收银台附近，随时准备在他需要时提醒或支援他",
+          "impact": 1,
+          "nodeId": "ci1",
+          "status": "completed",
+          "endTime": "22:59",
+          "outcome": "我低声告诉西蒙我会守在收银台附近，随时准备在他需要时提醒或支援他。他听后点了点头，表情放松，让我觉得我的存在确实让他安心。",
+          "startTime": "22:58",
+          "characterId": "Nancy Charlotte",
+          "characterName": "Nancy Charlotte",
+          "executionMeta": {
+            "startedAt": "22:58",
+            "completedAt": "22:59",
+            "remainingMinutes": 0
+          },
+          "targetCharacterIds": [
+            "Simon Laplace (Simon)"
+          ]
+        },
+        {
+          "type": "action",
+          "action": "坐在收银台旁的椅子上，端着一杯热花草茶静静等候西蒙回来，留意店内动静和来客动向",
+          "impact": 0,
+          "nodeId": "a10",
+          "status": "completed",
+          "endTime": "21:40",
+          "outcome": "坐在收银台旁的椅子上，端着一杯热花草茶静静等候西蒙回来，留意店内动静和来客动向 成功",
+          "startTime": "21:30",
+          "characterId": "Nancy Charlotte",
+          "characterName": "Nancy Charlotte",
+          "executionMeta": {
+            "startedAt": "21:30",
+            "completedAt": "21:40",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "scene_interaction",
+          "action": "走到店门旁的窗前向外察看，确认街道和门外没有可疑人物或动静",
+          "impact": 0,
+          "nodeId": "si2",
+          "status": "completed",
+          "endTime": "21:45",
+          "outcome": "我走到店门旁的窗前向外察看，街道和门外很安静，未见可疑人物或异常动静。",
+          "startTime": "21:41",
+          "characterId": "Nancy Charlotte",
+          "characterName": "Nancy Charlotte",
+          "executionMeta": {
+            "startedAt": "21:41",
+            "completedAt": "21:45",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "action",
+          "action": "做情绪管理练习并在日记里写下今天抵制赌瘾的收获和明日要坚持的承诺。",
+          "impact": 0,
+          "nodeId": "a_nancy_01",
+          "status": "completed",
+          "endTime": "21:56",
+          "outcome": "做情绪管理练习并在日记里写下今天抵制赌瘾的收获和明日要坚持的承诺。 成功",
+          "startTime": "21:46",
+          "characterId": "Nancy Charlotte",
+          "characterName": "Nancy Charlotte",
+          "executionMeta": {
+            "startedAt": "21:46",
+            "completedAt": "21:56",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "character_interaction",
+          "action": "低声告诉西蒙我会守在收银台附近，随时准备在他需要时提醒或支援他",
+          "impact": 1,
+          "nodeId": "ci1",
+          "status": "completed",
+          "endTime": "22:59",
+          "outcome": "我低声告诉西蒙我会守在收银台附近，随时准备在他需要时提醒或支援他。他听后点了点头，表情放松，让我觉得我的存在确实让他安心。",
+          "startTime": "22:58",
+          "characterId": "Nancy Charlotte",
+          "characterName": "Nancy Charlotte",
+          "executionMeta": {
+            "startedAt": "22:58",
+            "completedAt": "22:59",
+            "remainingMinutes": 0
+          },
+          "targetCharacterIds": [
+            "Simon Laplace (Simon)"
+          ]
+        },
+        {
+          "type": "action",
+          "action": "轻声呼唤“西蒙”，并向店内各处张望确认他的位置",
+          "impact": 0,
+          "nodeId": "a_nancy_2200",
+          "status": "completed",
+          "endTime": "22:02",
+          "outcome": "轻声呼唤“西蒙”，并向店内各处张望确认他的位置 成功",
+          "startTime": "22:00",
+          "characterId": "Nancy Charlotte",
+          "characterName": "Nancy Charlotte",
+          "executionMeta": {
+            "startedAt": "22:00",
+            "completedAt": "22:02",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "action",
+          "action": "上楼洗漱，然后在卧室躺床上读书直到困意来临并睡觉",
+          "impact": 0,
+          "nodeId": "a_day1_2203",
+          "status": "interrupted",
+          "endTime": "22:30",
+          "outcome": "上楼洗漱，然后在卧室躺床上读书直到困意来临并睡觉 [因重新规划而中断] 已中断",
+          "startTime": "22:03",
+          "characterId": "Nancy Charlotte",
+          "characterName": "Nancy Charlotte",
+          "executionMeta": {
+            "startedAt": "22:03",
+            "interruptedAt": "22:05",
+            "remainingMinutes": 0,
+            "interruptionReason": "revise_replan"
+          }
+        },
+        {
+          "type": "action",
+          "action": "在收银台旁静静观察海伦和约翰尼的私下谈话，注意任何与西蒙有关的细节或可疑举动",
+          "impact": 2,
+          "nodeId": "a_next_2206",
+          "status": "completed",
+          "endTime": "22:11",
+          "outcome": "在收银台旁静静观察海伦和约翰尼的私下谈话，注意任何与西蒙有关的细节或可疑举动 成功",
+          "startTime": "22:06",
+          "characterId": "Nancy Charlotte",
+          "characterName": "Nancy Charlotte",
+          "executionMeta": {
+            "startedAt": "22:06",
+            "completedAt": "22:11",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "object_interaction",
+          "action": "查看粉笔价目板上的应急联络流程、备用设备位置与03:00检查提醒并记住二楼工作站的位置",
+          "impact": 0,
+          "nodeId": "oi_nancy_001",
+          "status": "completed",
+          "endTime": "22:14",
+          "outcome": "我走到墙上的粉笔价目板前，仔细查看并确认了应急联络流程、备用设备位置（标注为：花店二楼工作站）以及设定的凌晨03:00检查提醒，并把二楼工作站的位置记在心里；随后我留在收银台附近继续观察海伦是否会回来或有人尾随。",
+          "startTime": "22:12",
+          "characterId": "Nancy Charlotte",
+          "characterName": "Nancy Charlotte",
+          "executionMeta": {
+            "startedAt": "22:12",
+            "completedAt": "22:14",
+            "remainingMinutes": 0
+          },
+          "objectInteractionPayload": {
+            "itemId": "ITEM_SCN9_8"
+          }
+        },
+        {
+          "type": "action",
+          "action": "继续在收银台旁观察海伦和约翰尼的举动，留意任何可疑或与西蒙有关的细节",
+          "impact": 0,
+          "nodeId": "a2",
+          "status": "completed",
+          "endTime": "22:21",
+          "outcome": "继续在收银台旁观察海伦和约翰尼的举动，留意任何可疑或与西蒙有关的细节 成功",
+          "startTime": "22:16",
+          "characterId": "Nancy Charlotte",
+          "characterName": "Nancy Charlotte",
+          "executionMeta": {
+            "startedAt": "22:16",
+            "completedAt": "22:21",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "action",
+          "action": "坐在收银台旁，喝一小口花草茶保持清醒并通过窗户继续观察街道与海伦、约翰尼的动静，随时准备提醒或支援西蒙",
+          "impact": 0,
+          "nodeId": "a_nancy_001",
+          "status": "completed",
+          "endTime": "23:25",
+          "outcome": "坐在收银台旁，喝一小口花草茶保持清醒并通过窗户继续观察街道与海伦、约翰尼的动静，随时准备提醒或支援西蒙 成功",
+          "startTime": "23:22",
+          "characterId": "Nancy Charlotte",
+          "characterName": "Nancy Charlotte",
+          "executionMeta": {
+            "startedAt": "23:22",
+            "completedAt": "23:25",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "action",
+          "action": "继续在收银台旁观察海伦和约翰尼的举动，靠近门口通过窗户留意外面街道的动静，随时准备提醒或支援西蒙",
+          "impact": 0,
+          "nodeId": "a22_26_observe",
+          "status": "completed",
+          "endTime": "22:36",
+          "outcome": "继续在收银台旁观察海伦和约翰尼的举动，靠近门口通过窗户留意外面街道的动静，随时准备提醒或支援西蒙 成功",
+          "startTime": "22:26",
+          "characterId": "Nancy Charlotte",
+          "characterName": "Nancy Charlotte",
+          "executionMeta": {
+            "startedAt": "22:26",
+            "completedAt": "22:36",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "action",
+          "action": "静静观察海伦与约翰尼的举动，注意任何异常并随时准备提醒或支援西蒙。",
+          "impact": 0,
+          "nodeId": "a22_37_nancy",
+          "status": "completed",
+          "endTime": "22:42",
+          "outcome": "静静观察海伦与约翰尼的举动，注意任何异常并随时准备提醒或支援西蒙。 成功",
+          "startTime": "22:37",
+          "characterId": "Nancy Charlotte",
+          "characterName": "Nancy Charlotte",
+          "executionMeta": {
+            "startedAt": "22:37",
+            "completedAt": "22:42",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "action",
+          "action": "坐在收银台旁喝一小口花草茶以保持清醒并通过窗户继续观察街道与海伦、约翰尼的动静，随时准备提醒或支援西蒙",
+          "impact": 0,
+          "nodeId": "a1",
+          "status": "completed",
+          "endTime": "23:59",
+          "outcome": "坐在收银台旁喝一小口花草茶以保持清醒并通过窗户继续观察街道与海伦、约翰尼的动静，随时准备提醒或支援西蒙 成功",
+          "startTime": "23:56",
+          "characterId": "Nancy Charlotte",
+          "characterName": "Nancy Charlotte",
+          "executionMeta": {
+            "startedAt": "23:56",
+            "completedAt": "23:59",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "action",
+          "action": "坐在收银台旁喝一小口花草茶以保持清醒并通过窗户继续观察街道与海伦、约翰尼的动静，随时准备提醒或支援西蒙",
+          "impact": 0,
+          "nodeId": "a1",
+          "status": "completed",
+          "endTime": "23:59",
+          "outcome": "坐在收银台旁喝一小口花草茶以保持清醒并通过窗户继续观察街道与海伦、约翰尼的动静，随时准备提醒或支援西蒙 成功",
+          "startTime": "23:56",
+          "characterId": "Nancy Charlotte",
+          "characterName": "Nancy Charlotte",
+          "executionMeta": {
+            "startedAt": "23:56",
+            "completedAt": "23:59",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "character_interaction",
+          "action": "低声告诉西蒙我会守在收银台附近，随时准备在他需要时提醒或支援他",
+          "impact": 1,
+          "nodeId": "ci1",
+          "status": "completed",
+          "endTime": "22:59",
+          "outcome": "我低声告诉西蒙我会守在收银台附近，随时准备在他需要时提醒或支援他。他听后点了点头，表情放松，让我觉得我的存在确实让他安心。",
+          "startTime": "22:58",
+          "characterId": "Nancy Charlotte",
+          "characterName": "Nancy Charlotte",
+          "executionMeta": {
+            "startedAt": "22:58",
+            "completedAt": "22:59",
+            "remainingMinutes": 0
+          },
+          "targetCharacterIds": [
+            "Simon Laplace (Simon)"
+          ]
+        },
+        {
+          "type": "scene_interaction",
+          "action": "静静观察店门和窗外的动静，留意海伦与约翰尼是否回来或有人尾随，并随时准备提醒或支援西蒙",
+          "impact": 0,
+          "nodeId": "si1_2300",
+          "status": "completed",
+          "endTime": "23:10",
+          "outcome": "我站在门旁和窗前静静观察街道，留意海伦与约翰尼是否回来或有人尾随。外面没有看见可疑人物或异常动静；我会随时提醒或支援西蒙。",
+          "startTime": "23:00",
+          "characterId": "Nancy Charlotte",
+          "characterName": "Nancy Charlotte",
+          "executionMeta": {
+            "startedAt": "23:00",
+            "completedAt": "23:10",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "action",
+          "action": "坐在收银台旁，喝一小口花草茶保持清醒并通过窗户继续观察街道与海伦、约翰尼的动静，随时准备提醒或支援西蒙",
+          "impact": 0,
+          "nodeId": "a_nancy_001",
+          "status": "completed",
+          "endTime": "23:25",
+          "outcome": "坐在收银台旁，喝一小口花草茶保持清醒并通过窗户继续观察街道与海伦、约翰尼的动静，随时准备提醒或支援西蒙 成功",
+          "startTime": "23:22",
+          "characterId": "Nancy Charlotte",
+          "characterName": "Nancy Charlotte",
+          "executionMeta": {
+            "startedAt": "23:22",
+            "completedAt": "23:25",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "action",
+          "action": "坐在收银台旁，喝一小口花草茶保持清醒并通过窗户继续观察街道与海伦、约翰尼的动静，随时准备提醒或支援西蒙",
+          "impact": 0,
+          "nodeId": "a_nancy_001",
+          "status": "completed",
+          "endTime": "23:25",
+          "outcome": "坐在收银台旁，喝一小口花草茶保持清醒并通过窗户继续观察街道与海伦、约翰尼的动静，随时准备提醒或支援西蒙 成功",
+          "startTime": "23:22",
+          "characterId": "Nancy Charlotte",
+          "characterName": "Nancy Charlotte",
+          "executionMeta": {
+            "startedAt": "23:22",
+            "completedAt": "23:25",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "action",
+          "action": "走到门旁的窗前更仔细观察街道，盯着海伦与约翰尼的动静并随时准备提醒或支援西蒙",
+          "impact": 0,
+          "nodeId": "a_next_001",
+          "status": "completed",
+          "endTime": "23:31",
+          "outcome": "走到门旁的窗前更仔细观察街道，盯着海伦与约翰尼的动静并随时准备提醒或支援西蒙 成功",
+          "startTime": "23:26",
+          "characterId": "Nancy Charlotte",
+          "characterName": "Nancy Charlotte",
+          "executionMeta": {
+            "startedAt": "23:26",
+            "completedAt": "23:31",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "action",
+          "action": "守在收银台旁继续通过窗户观察海伦与约翰尼的动静，保持警觉并准备在必要时提醒或支援西蒙",
+          "impact": 0,
+          "nodeId": "a_day1_2332_nancy_keepwatch",
+          "status": "completed",
+          "endTime": "23:42",
+          "outcome": "守在收银台旁继续通过窗户观察海伦与约翰尼的动静，保持警觉并准备在必要时提醒或支援西蒙 成功",
+          "startTime": "23:32",
+          "characterId": "Nancy Charlotte",
+          "characterName": "Nancy Charlotte",
+          "executionMeta": {
+            "startedAt": "23:32",
+            "completedAt": "23:42",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "action",
+          "action": "坐回收银台旁，通过窗户仔细观察街道，保持警觉并准备在必要时提醒或支援西蒙",
+          "impact": 0,
+          "nodeId": "a_day1_2343_nancy",
+          "status": "completed",
+          "endTime": "23:48",
+          "outcome": "坐回收银台旁，通过窗户仔细观察街道，保持警觉并准备在必要时提醒或支援西蒙 成功",
+          "startTime": "23:43",
+          "characterId": "Nancy Charlotte",
+          "characterName": "Nancy Charlotte",
+          "executionMeta": {
+            "startedAt": "23:43",
+            "completedAt": "23:48",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "action",
+          "action": "坐在收银台旁喝一小口花草茶以保持清醒并通过窗户继续观察街道与海伦、约翰尼的动静，随时准备提醒或支援西蒙",
+          "impact": 0,
+          "nodeId": "a1",
+          "status": "completed",
+          "endTime": "23:59",
+          "outcome": "坐在收银台旁喝一小口花草茶以保持清醒并通过窗户继续观察街道与海伦、约翰尼的动静，随时准备提醒或支援西蒙 成功",
+          "startTime": "23:56",
+          "characterId": "Nancy Charlotte",
+          "characterName": "Nancy Charlotte",
+          "executionMeta": {
+            "startedAt": "23:56",
+            "completedAt": "23:59",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "action",
+          "action": "坐在收银台旁喝一小口花草茶以保持清醒并通过窗户继续观察街道与海伦、约翰尼的动静，随时准备提醒或支援西蒙",
+          "impact": 0,
+          "nodeId": "a1",
+          "status": "completed",
+          "endTime": "23:59",
+          "outcome": "坐在收银台旁喝一小口花草茶以保持清醒并通过窗户继续观察街道与海伦、约翰尼的动静，随时准备提醒或支援西蒙 成功",
+          "startTime": "23:56",
+          "characterId": "Nancy Charlotte",
+          "characterName": "Nancy Charlotte",
+          "executionMeta": {
+            "startedAt": "23:56",
+            "completedAt": "23:59",
+            "remainingMinutes": 0
+          }
+        }
+      ]
+    },
+    {
+      "npcName": "Nancy Charlotte",
+      "gameDay": 2,
+      "schedule": [
+        {
+          "activity": "在后厅与西蒙一起吃晚饭并尽量放松气氛。",
+          "location": "花店·卡森德拉之花"
+        },
+        {
+          "activity": "收拾并清洗厨房与餐具，为晚饭後的安静留出整洁空间。",
+          "location": "花店·卡森德拉之花"
+        },
+        {
+          "activity": "上楼到二楼工作站检查监控画面与入侵检测日志，确认加密文件完整并核对校验值。",
+          "location": "花店·卡森德拉之花"
+        },
+        {
+          "activity": "在包装台上为明天的订单整理并打包鲜花，确保材料妥当并标注好数量。",
+          "location": "花店·卡森德拉之花"
+        },
+        {
+          "activity": "沿前厅与后厅逐一检查门窗与锁具，确认撤离路线无阻并再次确认半掩木门能上锁。",
+          "location": "花店·卡森德拉之花"
+        },
+        {
+          "activity": "在收银台坐下泡一壶热花草茶，通过窗户安静观察街道，留意海伦或约翰尼的动向。",
+          "location": "花店·卡森德拉之花"
+        },
+        {
+          "activity": "按粉笔板上的提醒在03:00进行夜间监控阈值与报警联动检查，并记录任何异常情况。",
+          "location": "花店·卡森德拉之花"
+        },
+        {
+          "activity": "用便携无线电向西蒙做短促联络确认，报告店内状况并约定若有异常的提示。",
+          "location": "花店·卡森德拉之花"
+        },
+        {
+          "activity": "轻声下到后厅与酒窖检查收银抽屉与隐蔽小包是否在原位并记录位置与状态以便提醒西蒙。",
+          "location": "花店·卡森德拉之花"
+        },
+        {
+          "activity": "把监控与入侵检测继续开启、无线电放在枕边后上楼入睡，尽量放松休息以储备明天的力量。",
+          "location": "花店·卡森德拉之花"
+        }
+      ],
+      "nodes": [
+        {
+          "type": "object_interaction",
+          "action": "检查粉笔价目板，确认备用设备位置与03:00的检查提醒",
+          "impact": 0,
+          "nodeId": "oi1",
+          "status": "completed",
+          "endTime": "00:03",
+          "outcome": "我查看了柜台后墙的手写粉笔价目板，看到板下新加的一行，确认了应急联络流程、备用设备位置标注为“花店二楼工作站”，并注意到已设定凌晨03:00的自动检查提醒。",
+          "startTime": "00:00",
+          "characterId": "Nancy Charlotte",
+          "characterName": "Nancy Charlotte",
+          "executionMeta": {
+            "startedAt": "00:00",
+            "completedAt": "00:03",
+            "remainingMinutes": 0
+          },
+          "objectInteractionPayload": {
+            "itemId": "ITEM_SCN9_8"
+          }
+        },
+        {
+          "type": "action",
+          "action": "继续坐在收银台旁通过窗户静静观察街道，保持警惕并准备在发现海伦或可疑尾随者时发出短促提示支援西蒙",
+          "impact": 0,
+          "nodeId": "a_nancy_001",
+          "status": "completed",
+          "endTime": "01:10",
+          "outcome": "继续坐在收银台旁通过窗户静静观察街道，保持警惕并准备在发现海伦或可疑尾随者时发出短促提示支援西蒙 成功",
+          "startTime": "00:49",
+          "characterId": "Nancy Charlotte",
+          "characterName": "Nancy Charlotte",
+          "executionMeta": {
+            "startedAt": "00:49",
+            "completedAt": "01:10",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "action",
+          "action": "坐回收银台，通过窗户安静观察街道并靠近便携无线电监听备用频道，准备在海伦出现时当面盘问或记录她的陈述",
+          "impact": 0,
+          "nodeId": "a2",
+          "status": "completed",
+          "endTime": "08:24",
+          "outcome": "坐回收银台，通过窗户安静观察街道并靠近便携无线电监听备用频道，准备在海伦出现时当面盘问或记录她的陈述 成功",
+          "startTime": "08:14",
+          "characterId": "Nancy Charlotte",
+          "characterName": "Nancy Charlotte",
+          "executionMeta": {
+            "startedAt": "08:14",
+            "completedAt": "08:24",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "character_interaction",
+          "action": "低声询问西蒙是否现在可以上二楼工作站查看监控画面与入侵检测日志",
+          "impact": 1,
+          "nodeId": "ci1",
+          "status": "completed",
+          "endTime": "07:50",
+          "outcome": "我低声问西蒙现在能不能上二楼工作站看监控画面和入侵检测日志，他让我看了终端并播放了标注好的“海伦_星辰医院_昨夜片段”，还向我展示了已打包并加密的日志，告诉我他已把 Abel William 列为可疑对象，这让我放松了些。",
+          "startTime": "07:48",
+          "characterId": "Nancy Charlotte",
+          "characterName": "Nancy Charlotte",
+          "executionMeta": {
+            "startedAt": "07:48",
+            "completedAt": "07:50",
+            "remainingMinutes": 0
+          },
+          "targetCharacterIds": [
+            "Simon Laplace (Simon)"
+          ]
+        },
+        {
+          "type": "action",
+          "action": "坐回收银台，通过窗户安静观察街道并靠近便携无线电监听备用频道，准备在海伦出现时当面盘问或记录她的陈述",
+          "impact": 0,
+          "nodeId": "a2",
+          "status": "completed",
+          "endTime": "08:24",
+          "outcome": "坐回收银台，通过窗户安静观察街道并靠近便携无线电监听备用频道，准备在海伦出现时当面盘问或记录她的陈述 成功",
+          "startTime": "08:14",
+          "characterId": "Nancy Charlotte",
+          "characterName": "Nancy Charlotte",
+          "executionMeta": {
+            "startedAt": "08:14",
+            "completedAt": "08:24",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "object_interaction",
+          "action": "从白瓷茶壶倒一杯热花草茶并小口喝一口，继续通过窗户观察街道以留意海伦或约翰尼的动向",
+          "impact": 0,
+          "nodeId": "oi2",
+          "status": "completed",
+          "endTime": "00:48",
+          "outcome": "我从白瓷茶壶里倒了一小杯热花草茶，轻抿一口，茶温暖且带着花香。随后我靠在窗边继续注视街道，留意海伦或约翰尼的动向，外面有零星雪花飘落。",
+          "startTime": "00:45",
+          "characterId": "Nancy Charlotte",
+          "characterName": "Nancy Charlotte",
+          "executionMeta": {
+            "startedAt": "00:45",
+            "completedAt": "00:48",
+            "remainingMinutes": 0
+          },
+          "objectInteractionPayload": {
+            "itemId": "ITEM_SCN9_15"
+          }
+        },
+        {
+          "type": "action",
+          "action": "继续坐在收银台旁通过窗户静静观察街道，保持警惕并准备在发现海伦或可疑尾随者时发出短促提示支援西蒙",
+          "impact": 0,
+          "nodeId": "a_nancy_001",
+          "status": "completed",
+          "endTime": "01:10",
+          "outcome": "继续坐在收银台旁通过窗户静静观察街道，保持警惕并准备在发现海伦或可疑尾随者时发出短促提示支援西蒙 成功",
+          "startTime": "00:49",
+          "characterId": "Nancy Charlotte",
+          "characterName": "Nancy Charlotte",
+          "executionMeta": {
+            "startedAt": "00:49",
+            "completedAt": "01:10",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "object_interaction",
+          "action": "在包装台上整理并打包为明天准备的鲜花，标注数量与所用材料",
+          "impact": 0,
+          "nodeId": "oi_day2_0111",
+          "status": "completed",
+          "endTime": "01:25",
+          "outcome": "我在包装台上把明天要卖的鲜花一一整理并用牛皮纸和缎带打好包，给每束贴上标签，标注了数量与所用的花材，整齐地放在台上备用。",
+          "startTime": "01:11",
+          "characterId": "Nancy Charlotte",
+          "characterName": "Nancy Charlotte",
+          "executionMeta": {
+            "startedAt": "01:11",
+            "completedAt": "01:25",
+            "remainingMinutes": 0
+          },
+          "objectInteractionPayload": {
+            "itemId": "ITEM_SCN9_6"
+          }
+        },
+        {
+          "type": "action",
+          "action": "坐回收银台，通过窗户继续观察街道并守望海伦与约翰尼的动向，保持警戒并准备在发现异常时发出短促提示支援西蒙",
+          "impact": 0,
+          "nodeId": "a_next_0126",
+          "status": "completed",
+          "endTime": "01:40",
+          "outcome": "坐回收银台，通过窗户继续观察街道并守望海伦与约翰尼的动向，保持警戒并准备在发现异常时发出短促提示支援西蒙 成功",
+          "startTime": "01:26",
+          "characterId": "Nancy Charlotte",
+          "characterName": "Nancy Charlotte",
+          "executionMeta": {
+            "startedAt": "01:26",
+            "completedAt": "01:40",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "movement",
+          "action": "上楼到二楼工作站",
+          "impact": 0,
+          "nodeId": "m_nancy_01",
+          "status": "failed",
+          "endTime": "01:45",
+          "outcome": "上楼到二楼工作站 [拓扑中无可用路径] 失败",
+          "startTime": "01:42",
+          "characterId": "Nancy Charlotte",
+          "destination": "二楼工作站",
+          "characterName": "Nancy Charlotte",
+          "executionMeta": {
+            "failedAt": "01:42",
+            "startedAt": "01:42",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "character_interaction",
+          "action": "低声询问西蒙是否现在可以上二楼工作站查看监控画面与入侵检测日志",
+          "impact": 1,
+          "nodeId": "ci1",
+          "status": "completed",
+          "endTime": "07:50",
+          "outcome": "我低声问西蒙现在能不能上二楼工作站看监控画面和入侵检测日志，他让我看了终端并播放了标注好的“海伦_星辰医院_昨夜片段”，还向我展示了已打包并加密的日志，告诉我他已把 Abel William 列为可疑对象，这让我放松了些。",
+          "startTime": "07:48",
+          "characterId": "Nancy Charlotte",
+          "characterName": "Nancy Charlotte",
+          "executionMeta": {
+            "startedAt": "07:48",
+            "completedAt": "07:50",
+            "remainingMinutes": 0
+          },
+          "targetCharacterIds": [
+            "Simon Laplace (Simon)"
+          ]
+        },
+        {
+          "type": "action",
+          "action": "守在收银台监听便携无线电，等待西蒙确认并通过窗户观察街道动静",
+          "impact": 0,
+          "nodeId": "a_nancy_002",
+          "status": "completed",
+          "endTime": "01:55",
+          "outcome": "守在收银台监听便携无线电，等待西蒙确认并通过窗户观察街道动静 成功",
+          "startTime": "01:46",
+          "characterId": "Nancy Charlotte",
+          "characterName": "Nancy Charlotte",
+          "executionMeta": {
+            "startedAt": "01:46",
+            "completedAt": "01:55",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "character_interaction",
+          "action": "走向西蒙并低声当面报告：所罗门未回应，我已检查后厅与地窖通道并发现一处隐蔽一次性小包，后门可上锁；请求他现在与我一起检查半掩木门及所有后门窗锁并确认撤离路线",
+          "impact": 1,
+          "nodeId": "ci_nancy_001",
+          "status": "completed",
+          "endTime": "03:40",
+          "outcome": "我低声向西蒙汇报：所罗门未回应，我已检查后厅与通往地下酒窖的通道，发现并取出一处隐蔽的一次性小包，后门可以上锁；请他现在与我一起检查半掩的木门及所有后门窗锁并确认撤离路线。西蒙同意与我一同检查并准备好协助撤离。",
+          "startTime": "03:38",
+          "characterId": "Nancy Charlotte",
+          "characterName": "Nancy Charlotte",
+          "executionMeta": {
+            "startedAt": "03:38",
+            "completedAt": "03:40",
+            "remainingMinutes": 0
+          },
+          "targetCharacterIds": [
+            "Simon Laplace (Simon)"
+          ]
+        },
+        {
+          "type": "action",
+          "action": "坐在收银台继续通过窗户观察街道并监听便携无线电，等待03:00的自动检查并准备在发现异常时发出约定的短促提示。",
+          "impact": 0,
+          "nodeId": "a_nancy_0222",
+          "status": "completed",
+          "endTime": "03:00",
+          "outcome": "坐在收银台继续通过窗户观察街道并监听便携无线电，等待03:00的自动检查并准备在发现异常时发出约定的短促提示。 成功",
+          "startTime": "02:22",
+          "characterId": "Nancy Charlotte",
+          "characterName": "Nancy Charlotte",
+          "executionMeta": {
+            "startedAt": "02:22",
+            "completedAt": "03:00",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "character_interaction",
+          "action": "轻声走到后厅与西蒙一起坐下吃晚饭，尽量放松气氛",
+          "impact": 1,
+          "nodeId": "ci_nancy_0301_1",
+          "status": "completed",
+          "endTime": "03:11",
+          "outcome": "我轻声走到后厅，和西蒙一起坐下吃晚饭，努力放松气氛。西蒙告诉我他已在二楼工作站保存并加密了“海伦_星辰医院_昨夜片段”，通过回放确认海伦离店时没有被尾随，并说地下酒窖里有备用电池和便携路由器，我们也测试好了备用无线电频道和约定的短促信号。听完这些我觉得更安心了，便暂时放下了盯着无线电的习惯，和他一起吃完晚饭。",
+          "startTime": "03:01",
+          "characterId": "Nancy Charlotte",
+          "characterName": "Nancy Charlotte",
+          "executionMeta": {
+            "startedAt": "03:01",
+            "completedAt": "03:11",
+            "remainingMinutes": 0
+          },
+          "targetCharacterIds": [
+            "Simon Laplace (Simon)"
+          ]
+        },
+        {
+          "type": "scene_interaction",
+          "action": "清洗厨房与餐具，把晚餐残余清理干净、将碗碟洗净并放到晾干处",
+          "impact": 0,
+          "nodeId": "si_day2_0312",
+          "status": "completed",
+          "endTime": "03:25",
+          "outcome": "我把晚餐的残菜清理干净，洗净所有碗碟并放到晾干处，顺手整理了台面和水槽。现在厨房干净了，只留下一点点食物余香。",
+          "startTime": "03:12",
+          "characterId": "Nancy Charlotte",
+          "characterName": "Nancy Charlotte",
+          "executionMeta": {
+            "startedAt": "03:12",
+            "completedAt": "03:25",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "action",
+          "action": "回到收银台",
+          "impact": 0,
+          "nodeId": "a1",
+          "status": "completed",
+          "endTime": "03:28",
+          "outcome": "回到收银台 成功",
+          "startTime": "03:26",
+          "characterId": "Nancy Charlotte",
+          "characterName": "Nancy Charlotte",
+          "executionMeta": {
+            "startedAt": "03:26",
+            "completedAt": "03:28",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "action",
+          "action": "注视半掩木门，密切观察所罗门的手部与动作",
+          "impact": 0,
+          "nodeId": "a_day2_0329_01",
+          "status": "interrupted",
+          "endTime": "03:34",
+          "outcome": "注视半掩木门，密切观察所罗门的手部与动作 [因重新规划而中断] 已中断",
+          "startTime": "03:29",
+          "characterId": "Nancy Charlotte",
+          "characterName": "Nancy Charlotte",
+          "executionMeta": {
+            "startedAt": "03:29",
+            "interruptedAt": "03:31",
+            "remainingMinutes": 0,
+            "interruptionReason": "revise_replan"
+          }
+        },
+        {
+          "type": "scene_interaction",
+          "action": "走到半掩的木门前，缓慢推开门并检查后厅与通向地下酒窖的通道，确认是否有人或有可疑物品",
+          "impact": 2,
+          "nodeId": "si_nancy_03_32",
+          "status": "completed",
+          "endTime": "03:35",
+          "outcome": "我走到半掩的木门前，缓缓把门推开，光线把躲在暗处的所罗门照了出来并确认了他的身份；我检查了后厅与通向地下酒窖的通道，未见其他人，但在后厅发现了一个隐蔽的一次性小包。",
+          "startTime": "03:32",
+          "characterId": "Nancy Charlotte",
+          "characterName": "Nancy Charlotte",
+          "executionMeta": {
+            "startedAt": "03:32",
+            "completedAt": "03:35",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "character_interaction",
+          "action": "低声询问西蒙是否现在可以上二楼工作站查看监控画面与入侵检测日志",
+          "impact": 1,
+          "nodeId": "ci1",
+          "status": "completed",
+          "endTime": "07:50",
+          "outcome": "我低声问西蒙现在能不能上二楼工作站看监控画面和入侵检测日志，他让我看了终端并播放了标注好的“海伦_星辰医院_昨夜片段”，还向我展示了已打包并加密的日志，告诉我他已把 Abel William 列为可疑对象，这让我放松了些。",
+          "startTime": "07:48",
+          "characterId": "Nancy Charlotte",
+          "characterName": "Nancy Charlotte",
+          "executionMeta": {
+            "startedAt": "07:48",
+            "completedAt": "07:50",
+            "remainingMinutes": 0
+          },
+          "targetCharacterIds": [
+            "Simon Laplace (Simon)"
+          ]
+        },
+        {
+          "type": "character_interaction",
+          "action": "走向西蒙并低声当面报告：所罗门未回应，我已检查后厅与地窖通道并发现一处隐蔽一次性小包，后门可上锁；请求他现在与我一起检查半掩木门及所有后门窗锁并确认撤离路线",
+          "impact": 1,
+          "nodeId": "ci_nancy_001",
+          "status": "completed",
+          "endTime": "03:40",
+          "outcome": "我低声向西蒙汇报：所罗门未回应，我已检查后厅与通往地下酒窖的通道，发现并取出一处隐蔽的一次性小包，后门可以上锁；请他现在与我一起检查半掩的木门及所有后门窗锁并确认撤离路线。西蒙同意与我一同检查并准备好协助撤离。",
+          "startTime": "03:38",
+          "characterId": "Nancy Charlotte",
+          "characterName": "Nancy Charlotte",
+          "executionMeta": {
+            "startedAt": "03:38",
+            "completedAt": "03:40",
+            "remainingMinutes": 0
+          },
+          "targetCharacterIds": [
+            "Simon Laplace (Simon)"
+          ]
+        },
+        {
+          "type": "character_interaction",
+          "action": "与西蒙一起检查收银台旁的半掩木门以及所有后门与窗户的锁具",
+          "impact": 1,
+          "nodeId": "ci_2002_03_41",
+          "status": "interrupted",
+          "endTime": "03:44",
+          "outcome": "与西蒙一起检查收银台旁的半掩木门以及所有后门与窗户的锁具 [因重新规划而中断] 已中断",
+          "startTime": "03:41",
+          "characterId": "Nancy Charlotte",
+          "characterName": "Nancy Charlotte",
+          "executionMeta": {
+            "startedAt": "03:41",
+            "interruptedAt": "05:14",
+            "remainingMinutes": 0,
+            "interruptionReason": "revise_replan"
+          },
+          "targetCharacterIds": [
+            "Simon Laplace (Simon)"
+          ]
+        },
+        {
+          "type": "character_interaction",
+          "action": "低声当面询问西蒙：Abel的来意是什么？是否允许他靠近后厅或上楼到二楼工作站？",
+          "impact": 1,
+          "nodeId": "ci_next_001",
+          "status": "completed",
+          "endTime": "05:17",
+          "outcome": "我低声问西蒙Abel的来意以及是否允许他靠近后厅或上楼到二楼工作站。西蒙说他不认识Abel、不了解对方的目的，不会让陌生人无监督接近后厅或二楼，除非先核实身份并由他或我在场监督。西蒙还告诉我地下酒窖里有备用电池和便携路由器，他已取回并放在后厅/收银台附近备用，会继续监控并在确认后决定是否放行。",
+          "startTime": "05:15",
+          "characterId": "Nancy Charlotte",
+          "characterName": "Nancy Charlotte",
+          "executionMeta": {
+            "startedAt": "05:15",
+            "completedAt": "05:17",
+            "remainingMinutes": 0
+          },
+          "targetCharacterIds": [
+            "Simon Laplace (Simon)"
+          ]
+        },
+        {
+          "type": "action",
+          "action": "注视Abel的手与随身通讯设备，评估是否携带武器或监听器",
+          "impact": 0,
+          "nodeId": "a_day2_0518_1",
+          "status": "completed",
+          "endTime": "05:20",
+          "outcome": "注视Abel的手与随身通讯设备，评估是否携带武器或监听器 成功",
+          "startTime": "05:18",
+          "characterId": "Nancy Charlotte",
+          "characterName": "Nancy Charlotte",
+          "executionMeta": {
+            "startedAt": "05:18",
+            "completedAt": "05:20",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "scene_interaction",
+          "action": "上楼到二楼工作站，检查并比对“海伦_星辰医院_昨夜片段”的监控回放与入侵检测的出入时间线，核对加密备份文件的 SHA256 校验值并确认时间戳已记录",
+          "impact": 0,
+          "nodeId": "si2",
+          "status": "completed",
+          "endTime": "08:12",
+          "outcome": "我上楼到二楼工作站，逐条比对了“海伦_星辰医院_昨夜片段”的监控回放与入侵检测的出入时间线，未发现不一致之处；随后核对了加密备份的 SHA256 校验值与时间戳，并在本地日志中确认并保存了核验记录。",
+          "startTime": "08:02",
+          "characterId": "Nancy Charlotte",
+          "characterName": "Nancy Charlotte",
+          "executionMeta": {
+            "startedAt": "08:02",
+            "completedAt": "08:12",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "scene_interaction",
+          "action": "把撑在半掩木门下的折叠椅移开，将半掩的木门关上并上锁以正式加固后门",
+          "impact": 2,
+          "nodeId": "si_next1",
+          "status": "completed",
+          "endTime": "05:27",
+          "outcome": "我把撑在半掩木门下的折叠椅移开，把门关上并上锁，后门被正式加固，暂时无法从外面推开。",
+          "startTime": "05:25",
+          "characterId": "Nancy Charlotte",
+          "characterName": "Nancy Charlotte",
+          "executionMeta": {
+            "startedAt": "05:25",
+            "completedAt": "05:27",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "action",
+          "action": "坐回收银台，倒一杯热花草茶，通过窗户继续观察街道并监听备用无线电",
+          "impact": 0,
+          "nodeId": "a_day2_0528_1",
+          "status": "completed",
+          "endTime": "05:33",
+          "outcome": "坐回收银台，倒一杯热花草茶，通过窗户继续观察街道并监听备用无线电 成功",
+          "startTime": "05:28",
+          "characterId": "Nancy Charlotte",
+          "characterName": "Nancy Charlotte",
+          "executionMeta": {
+            "startedAt": "05:28",
+            "completedAt": "05:33",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "scene_interaction",
+          "action": "悄声走到半掩的木门前再次检查门锁和门把，确认能上锁并轻推测试门是否会被从外面推开",
+          "impact": 0,
+          "nodeId": "si_nancy_check_door_0535",
+          "status": "completed",
+          "endTime": "05:38",
+          "outcome": "我悄声走到半掩的木门前检查了门锁和门把，确认能上锁；轻轻推了下门，门没有被外面推动打开，于是把门保持在锁闭状态以确保安全。",
+          "startTime": "05:35",
+          "characterId": "Nancy Charlotte",
+          "characterName": "Nancy Charlotte",
+          "executionMeta": {
+            "startedAt": "05:35",
+            "completedAt": "05:38",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "action",
+          "action": "坐回收银台，通过窗户静静观察街道并监听备用无线电",
+          "impact": 0,
+          "nodeId": "a40",
+          "status": "completed",
+          "endTime": "05:44",
+          "outcome": "坐回收银台，通过窗户静静观察街道并监听备用无线电 成功",
+          "startTime": "05:39",
+          "characterId": "Nancy Charlotte",
+          "characterName": "Nancy Charlotte",
+          "executionMeta": {
+            "startedAt": "05:39",
+            "completedAt": "05:44",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "scene_interaction",
+          "action": "在半掩木门处放置一张便条，写明要求Abel当面出示身份证并等待我或西蒙在场后再进入",
+          "impact": 1,
+          "nodeId": "si_nancy_001",
+          "status": "completed",
+          "endTime": "05:50",
+          "outcome": "我在收银柜台旁的半掩木门上放了一张密封便条，并写明要求Abel当面出示身份证且必须等我或西蒙在场才可进入。",
+          "startTime": "05:45",
+          "characterId": "Nancy Charlotte",
+          "characterName": "Nancy Charlotte",
+          "executionMeta": {
+            "startedAt": "05:45",
+            "completedAt": "05:50",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "character_interaction",
+          "action": "低声询问西蒙是否现在可以上二楼工作站查看监控画面与入侵检测日志",
+          "impact": 1,
+          "nodeId": "ci1",
+          "status": "completed",
+          "endTime": "07:50",
+          "outcome": "我低声问西蒙现在能不能上二楼工作站看监控画面和入侵检测日志，他让我看了终端并播放了标注好的“海伦_星辰医院_昨夜片段”，还向我展示了已打包并加密的日志，告诉我他已把 Abel William 列为可疑对象，这让我放松了些。",
+          "startTime": "07:48",
+          "characterId": "Nancy Charlotte",
+          "characterName": "Nancy Charlotte",
+          "executionMeta": {
+            "startedAt": "07:48",
+            "completedAt": "07:50",
+            "remainingMinutes": 0
+          },
+          "targetCharacterIds": [
+            "Simon Laplace (Simon)"
+          ]
+        },
+        {
+          "type": "action",
+          "action": "坐回收银台，通过窗户安静观察街道并靠近便携无线电监听备用频道，准备在海伦出现时当面盘问或记录她的陈述",
+          "impact": 0,
+          "nodeId": "a2",
+          "status": "completed",
+          "endTime": "08:24",
+          "outcome": "坐回收银台，通过窗户安静观察街道并靠近便携无线电监听备用频道，准备在海伦出现时当面盘问或记录她的陈述 成功",
+          "startTime": "08:14",
+          "characterId": "Nancy Charlotte",
+          "characterName": "Nancy Charlotte",
+          "executionMeta": {
+            "startedAt": "08:14",
+            "completedAt": "08:24",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "action",
+          "action": "坐回收银台，通过窗户安静观察街道并靠近便携无线电监听备用频道，准备在海伦出现时当面盘问或记录她的陈述",
+          "impact": 0,
+          "nodeId": "a2",
+          "status": "completed",
+          "endTime": "08:24",
+          "outcome": "坐回收银台，通过窗户安静观察街道并靠近便携无线电监听备用频道，准备在海伦出现时当面盘问或记录她的陈述 成功",
+          "startTime": "08:14",
+          "characterId": "Nancy Charlotte",
+          "characterName": "Nancy Charlotte",
+          "executionMeta": {
+            "startedAt": "08:14",
+            "completedAt": "08:24",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "object_interaction",
+          "action": "低声确认收银抽屉已牢固上锁，并从外侧检查抽屉位置以确保隐蔽小包未被移动",
+          "impact": 0,
+          "nodeId": "oi_day2_0621_001",
+          "status": "completed",
+          "endTime": "06:24",
+          "outcome": "我低声靠近并从外侧检查了收银抽屉的合页与缝隙，确认抽屉已牢固上锁；同时观察抽屉角落，没有发现之前提到的隐蔽一次性小包，看起来那包已经不在原位。",
+          "startTime": "06:21",
+          "characterId": "Nancy Charlotte",
+          "characterName": "Nancy Charlotte",
+          "executionMeta": {
+            "startedAt": "06:21",
+            "completedAt": "06:24",
+            "remainingMinutes": 0
+          },
+          "objectInteractionPayload": {
+            "itemId": "ITEM_SCN9_7"
+          }
+        },
+        {
+          "type": "action",
+          "action": "坐回收银台，通过窗户静静观察街道并监听备用无线电，留意Abel或其他可疑人物的动向",
+          "impact": 0,
+          "nodeId": "a2_day2_0625",
+          "status": "completed",
+          "endTime": "06:40",
+          "outcome": "坐回收银台，通过窗户静静观察街道并监听备用无线电，留意Abel或其他可疑人物的动向 成功",
+          "startTime": "06:25",
+          "characterId": "Nancy Charlotte",
+          "characterName": "Nancy Charlotte",
+          "executionMeta": {
+            "startedAt": "06:25",
+            "completedAt": "06:40",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "character_interaction",
+          "action": "用便携无线电低声向西蒙确认Abel是否已到店并询问是否允许其靠近后厅或上楼到二楼工作站",
+          "impact": 1,
+          "nodeId": "ci2",
+          "status": "completed",
+          "endTime": "06:43",
+          "outcome": "我用便携无线电低声向西蒙确认Abel是否已到店，并询问是否允许他靠近后厅或上楼到二楼工作站。西蒙回复说Abel还没到，指示必须当面出示身份证才能进入，拒绝任何他人进入后厅或上二楼，并保持监听。我听后放松，继续守在收银台附近并保持无线电通话。",
+          "startTime": "06:41",
+          "characterId": "Nancy Charlotte",
+          "characterName": "Nancy Charlotte",
+          "executionMeta": {
+            "startedAt": "06:41",
+            "completedAt": "06:43",
+            "remainingMinutes": 0
+          },
+          "targetCharacterIds": [
+            "Simon Laplace (Simon)"
+          ]
+        },
+        {
+          "type": "action",
+          "action": "坐回收银台，倒一杯热花草茶，通过窗户静静观察街道并用备用无线电监听是否有异常动静",
+          "impact": 0,
+          "nodeId": "a_nancy_0644",
+          "status": "completed",
+          "endTime": "06:54",
+          "outcome": "坐回收银台，倒一杯热花草茶，通过窗户静静观察街道并用备用无线电监听是否有异常动静 成功",
+          "startTime": "06:44",
+          "characterId": "Nancy Charlotte",
+          "characterName": "Nancy Charlotte",
+          "executionMeta": {
+            "startedAt": "06:44",
+            "completedAt": "06:54",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "character_interaction",
+          "action": "用便携无线电低声向西蒙请求他现在下楼当面核验Abel的身份证，强调必须在我或他在场时才允许任何人进入后厅或上二楼工作站",
+          "impact": 1,
+          "nodeId": "ci_nancy_0655_1",
+          "status": "completed",
+          "endTime": "06:57",
+          "outcome": "我用便携无线电低声请求西蒙现在下楼，当面核验Abel的身份证，并强调只有在我或他在场时才允许任何人进后厅或上二楼工作站。西蒙通过无线电确认会下楼并坚持这条要求，收到确认后我明显放松，会继续守在收银台附近并监听。",
+          "startTime": "06:55",
+          "characterId": "Nancy Charlotte",
+          "characterName": "Nancy Charlotte",
+          "executionMeta": {
+            "startedAt": "06:55",
+            "completedAt": "06:57",
+            "remainingMinutes": 0
+          },
+          "targetCharacterIds": [
+            "Simon Laplace (Simon)"
+          ]
+        },
+        {
+          "type": "action",
+          "action": "走到半掩的木门旁，轻声守候并通过门缝与窗户观察门外动静，同时把便携无线电放近耳边以监听备用频道，准备在Abel到来时当面核验身份证。",
+          "impact": 2,
+          "nodeId": "a_next_06_58",
+          "status": "completed",
+          "endTime": "07:03",
+          "outcome": "走到半掩的木门旁，轻声守候并通过门缝与窗户观察门外动静，同时把便携无线电放近耳边以监听备用频道，准备在Abel到来时当面核验身份证。 成功",
+          "startTime": "06:58",
+          "characterId": "Nancy Charlotte",
+          "characterName": "Nancy Charlotte",
+          "executionMeta": {
+            "startedAt": "06:58",
+            "completedAt": "07:03",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "action",
+          "action": "回到收银台坐下，喝一小口热花草茶，通过窗户注视街道并把便携无线电靠近耳边监听备用频道，准备在Abel到来时当面核验身份证并按约定发出短促提示。",
+          "impact": 0,
+          "nodeId": "a_nancy_0704_1",
+          "status": "completed",
+          "endTime": "07:09",
+          "outcome": "回到收银台坐下，喝一小口热花草茶，通过窗户注视街道并把便携无线电靠近耳边监听备用频道，准备在Abel到来时当面核验身份证并按约定发出短促提示。 成功",
+          "startTime": "07:04",
+          "characterId": "Nancy Charlotte",
+          "characterName": "Nancy Charlotte",
+          "executionMeta": {
+            "startedAt": "07:04",
+            "completedAt": "07:09",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "scene_interaction",
+          "action": "轻声下到后厅检查收银抽屉与隐蔽小包的位置与状态",
+          "impact": 2,
+          "nodeId": "si1",
+          "status": "completed",
+          "endTime": "07:14",
+          "outcome": "我轻声下到后厅，打开并检查了收银抽屉，确认抽屉角落没有原先的那包一次性小包；随后我在后厅找到了一个隐蔽放置的一次性小包，可能是从地下酒窖拿来的。",
+          "startTime": "07:10",
+          "characterId": "Nancy Charlotte",
+          "characterName": "Nancy Charlotte",
+          "executionMeta": {
+            "startedAt": "07:10",
+            "completedAt": "07:14",
+            "remainingMinutes": 0
+          },
+          "objectInteractionPayload": {
+            "itemId": "ITEM_SCN9_7"
+          }
+        },
+        {
+          "type": "character_interaction",
+          "action": "把我在后厅发现的隐蔽一次性小包拿给西蒙当面检查，并请他决定如何处置",
+          "impact": 1,
+          "nodeId": "ci1_200715",
+          "status": "completed",
+          "endTime": "07:18",
+          "outcome": "我把在后厅发现的隐蔽一次性小包拿给西蒙当面检查，请他决定如何处置。西蒙当场查看后说这只是普通的一次性包装，决定把它和备用工具一并放在后厅/收银台附近备用。",
+          "startTime": "07:15",
+          "characterId": "Nancy Charlotte",
+          "characterName": "Nancy Charlotte",
+          "executionMeta": {
+            "startedAt": "07:15",
+            "completedAt": "07:18",
+            "remainingMinutes": 0
+          },
+          "targetCharacterIds": [
+            "Simon Laplace (Simon)"
+          ]
+        },
+        {
+          "type": "action",
+          "action": "坐回收银台，通过窗户安静观察街道并靠近便携无线电监听备用频道，准备在海伦出现时当面盘问或记录她的陈述",
+          "impact": 0,
+          "nodeId": "a2",
+          "status": "completed",
+          "endTime": "08:24",
+          "outcome": "坐回收银台，通过窗户安静观察街道并靠近便携无线电监听备用频道，准备在海伦出现时当面盘问或记录她的陈述 成功",
+          "startTime": "08:14",
+          "characterId": "Nancy Charlotte",
+          "characterName": "Nancy Charlotte",
+          "executionMeta": {
+            "startedAt": "08:14",
+            "completedAt": "08:24",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "movement",
+          "action": "上楼到二楼工作站查看监控照片与已加入的加密备份，确认一次性小包的来源并核对入侵检测日志与出入时间线",
+          "impact": 2,
+          "nodeId": "m1",
+          "status": "failed",
+          "endTime": "07:29",
+          "outcome": "上楼到二楼工作站查看监控照片与已加入的加密备份，确认一次性小包的来源并核对入侵检测日志与出入时间线 [拓扑中无可用路径] 失败",
+          "startTime": "07:26",
+          "characterId": "Nancy Charlotte",
+          "destination": "二楼工作站",
+          "characterName": "Nancy Charlotte",
+          "executionMeta": {
+            "failedAt": "07:26",
+            "startedAt": "07:26",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "character_interaction",
+          "action": "低声询问西蒙是否现在可以上二楼工作站查看监控画面与入侵检测日志",
+          "impact": 1,
+          "nodeId": "ci1",
+          "status": "completed",
+          "endTime": "07:50",
+          "outcome": "我低声问西蒙现在能不能上二楼工作站看监控画面和入侵检测日志，他让我看了终端并播放了标注好的“海伦_星辰医院_昨夜片段”，还向我展示了已打包并加密的日志，告诉我他已把 Abel William 列为可疑对象，这让我放松了些。",
+          "startTime": "07:48",
+          "characterId": "Nancy Charlotte",
+          "characterName": "Nancy Charlotte",
+          "executionMeta": {
+            "startedAt": "07:48",
+            "completedAt": "07:50",
+            "remainingMinutes": 0
+          },
+          "targetCharacterIds": [
+            "Simon Laplace (Simon)"
+          ]
+        },
+        {
+          "type": "character_interaction",
+          "action": "低声询问西蒙是否现在可以上二楼工作站查看监控画面与入侵检测日志",
+          "impact": 1,
+          "nodeId": "ci1",
+          "status": "completed",
+          "endTime": "07:50",
+          "outcome": "我低声问西蒙现在能不能上二楼工作站看监控画面和入侵检测日志，他让我看了终端并播放了标注好的“海伦_星辰医院_昨夜片段”，还向我展示了已打包并加密的日志，告诉我他已把 Abel William 列为可疑对象，这让我放松了些。",
+          "startTime": "07:48",
+          "characterId": "Nancy Charlotte",
+          "characterName": "Nancy Charlotte",
+          "executionMeta": {
+            "startedAt": "07:48",
+            "completedAt": "07:50",
+            "remainingMinutes": 0
+          },
+          "targetCharacterIds": [
+            "Simon Laplace (Simon)"
+          ]
+        },
+        {
+          "type": "character_interaction",
+          "action": "低声询问西蒙是否现在可以上二楼工作站查看监控画面与入侵检测日志",
+          "impact": 1,
+          "nodeId": "ci1",
+          "status": "completed",
+          "endTime": "07:50",
+          "outcome": "我低声问西蒙现在能不能上二楼工作站看监控画面和入侵检测日志，他让我看了终端并播放了标注好的“海伦_星辰医院_昨夜片段”，还向我展示了已打包并加密的日志，告诉我他已把 Abel William 列为可疑对象，这让我放松了些。",
+          "startTime": "07:48",
+          "characterId": "Nancy Charlotte",
+          "characterName": "Nancy Charlotte",
+          "executionMeta": {
+            "startedAt": "07:48",
+            "completedAt": "07:50",
+            "remainingMinutes": 0
+          },
+          "targetCharacterIds": [
+            "Simon Laplace (Simon)"
+          ]
+        },
+        {
+          "type": "action",
+          "action": "坐回收银台，通过窗户安静观察街道并靠近便携无线电监听备用频道，准备在海伦出现时当面盘问或记录她的陈述",
+          "impact": 0,
+          "nodeId": "a2",
+          "status": "completed",
+          "endTime": "08:24",
+          "outcome": "坐回收银台，通过窗户安静观察街道并靠近便携无线电监听备用频道，准备在海伦出现时当面盘问或记录她的陈述 成功",
+          "startTime": "08:14",
+          "characterId": "Nancy Charlotte",
+          "characterName": "Nancy Charlotte",
+          "executionMeta": {
+            "startedAt": "08:14",
+            "completedAt": "08:24",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "scene_interaction",
+          "action": "上楼到二楼工作站，检查并比对“海伦_星辰医院_昨夜片段”的监控回放与入侵检测的出入时间线，核对加密备份文件的 SHA256 校验值并确认时间戳已记录",
+          "impact": 0,
+          "nodeId": "si2",
+          "status": "completed",
+          "endTime": "08:12",
+          "outcome": "我上楼到二楼工作站，逐条比对了“海伦_星辰医院_昨夜片段”的监控回放与入侵检测的出入时间线，未发现不一致之处；随后核对了加密备份的 SHA256 校验值与时间戳，并在本地日志中确认并保存了核验记录。",
+          "startTime": "08:02",
+          "characterId": "Nancy Charlotte",
+          "characterName": "Nancy Charlotte",
+          "executionMeta": {
+            "startedAt": "08:02",
+            "completedAt": "08:12",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "movement",
+          "action": "下楼回到收银台",
+          "impact": 0,
+          "nodeId": "m3",
+          "status": "completed",
+          "endTime": "08:15",
+          "outcome": "下楼回到收银台 成功",
+          "startTime": "08:13",
+          "characterId": "Nancy Charlotte",
+          "destination": "SCN_9_SUB_1",
+          "characterName": "Nancy Charlotte",
+          "executionMeta": {
+            "movement": {
+              "routeSnapshot": [],
+              "targetPosition": {
+                "type": "scene",
+                "sceneId": "SCN_9_SUB_1"
+              },
+              "minutesIntoStep": 0,
+              "currentStepIndex": 0,
+              "lastReachablePosition": {
+                "type": "scene",
+                "sceneId": "SCN_9_SUB_1"
+              }
+            },
+            "startedAt": "08:13",
+            "completedAt": "08:13",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "action",
+          "action": "坐回收银台，通过窗户安静观察街道并靠近便携无线电监听备用频道，准备在海伦出现时当面盘问或记录她的陈述",
+          "impact": 0,
+          "nodeId": "a2",
+          "status": "completed",
+          "endTime": "08:24",
+          "outcome": "坐回收银台，通过窗户安静观察街道并靠近便携无线电监听备用频道，准备在海伦出现时当面盘问或记录她的陈述 成功",
+          "startTime": "08:14",
+          "characterId": "Nancy Charlotte",
+          "characterName": "Nancy Charlotte",
+          "executionMeta": {
+            "startedAt": "08:14",
+            "completedAt": "08:24",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "character_interaction",
+          "action": "用便携无线电低声向西蒙报告我已在二楼核对并保存监控与入侵日志的校验记录，监控片段与出入时间线一致，并说明我将继续守在收银台监听备用频道，若海伦出现会当面盘问并记录陈述",
+          "impact": 1,
+          "nodeId": "ci_nancy_01",
+          "status": "pending",
+          "endTime": "08:27",
+          "startTime": "08:25",
+          "characterId": "Nancy Charlotte",
+          "characterName": "Nancy Charlotte",
+          "executionMeta": {
+            "remainingMinutes": 2
+          },
+          "targetCharacterIds": [
+            "Simon Laplace (Simon)"
+          ]
+        }
+      ]
+    }
+  ],
+  "intents": [
+    {
+      "intent": "把注意力转到配合西蒙的调查上：优先核实他所说的监控证据（上二楼工作站查看并比对标注的“海伦_星辰医院_昨夜片段”与出入时间线），确保证据被保存并记录时间戳；同时继续守在收银台附近观察并准备当海伦出现时当面盘问或记录陈述，保持备用无线电监听并加固后门与半掩木门；将打包、清洁等非紧急事务暂缓，直到确认监控与入侵日志无异常。",
+      "updatedAt": "2026-04-02T14:01:11.886Z"
+    }
+  ],
+  "npcName": "Nancy Charlotte"
+}

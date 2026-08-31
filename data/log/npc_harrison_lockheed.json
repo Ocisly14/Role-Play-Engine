@@ -1,0 +1,17 @@
+{
+  "npcId": "npc_harrison_lockheed",
+  "memories": [
+    {
+      "type": "event",
+      "content": "我当时并不在监控室。有人（阿道夫）来找过我但未能找到我，所以我没有与他交谈或披露任何信息。",
+      "gameDay": 2,
+      "gameTime": "00:41",
+      "location": "SCN_15_SUB_2",
+      "metadata": {
+        "outcome": "以冷静、得体的姿态迎上前去与哈里森交谈，礼貌问候并暗示此刻不便当面接收礼物，试探他的来意、拖延或转移话题，同时留意他的表情与措辞以评估是否需立即触发“礼物接收协议”，并在必要时保持表面上的可否认性以维护掩饰。 [Persuade 55, rolled 76 (fail) — all targets resisted] failed"
+      }
+    }
+  ],
+  "plans": [],
+  "intents": []
+}

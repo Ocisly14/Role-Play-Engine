@@ -1,41 +1,44 @@
 import type { NpcMemoryType } from "@prisma/client";
 import type { MemoryHandler } from "../types.js";
-import { BeliefHandler } from "./BeliefHandler.js";
-import { EventHandler } from "./EventHandler.js";
-import { InformationHandler } from "./InformationHandler.js";
+import { ContextHandler } from "./ContextHandler.js";
+import { GeneralHandler } from "./GeneralHandler.js";
 import { LongTermIntentHandler } from "./LongTermIntentHandler.js";
 import { MapHandler } from "./MapHandler.js";
 import { PlanHandler } from "./PlanHandler.js";
+import { RelationshipHandler } from "./RelationshipHandler.js";
 import { SecretHandler } from "./SecretHandler.js";
-import { SummaryHandler } from "./SummaryHandler.js";
-import { WitnessHandler } from "./WitnessHandler.js";
 
 export {
-  EventHandler,
-  WitnessHandler,
-  InformationHandler,
+  ContextHandler,
+  GeneralHandler,
   LongTermIntentHandler,
   MapHandler,
-  BeliefHandler,
   PlanHandler,
+  RelationshipHandler,
   SecretHandler,
-  SummaryHandler,
 };
 
 const HANDLERS: Record<NpcMemoryType, MemoryHandler> = {
-  event: new EventHandler(),
-  witness: new WitnessHandler(),
-  information: new InformationHandler(),
-  map: new MapHandler(),
-  belief: new BeliefHandler(),
+  general: new GeneralHandler(),
   plan: new PlanHandler(),
   secret: new SecretHandler(),
-  summary: new SummaryHandler(),
+  relationship: new RelationshipHandler(),
+  map: new MapHandler(),
   long_term_intent: new LongTermIntentHandler(),
+  context: new ContextHandler(),
 };
 
 export function getHandler(type: NpcMemoryType): MemoryHandler {
-  return HANDLERS[type];
+  const handler = HANDLERS[type];
+  if (!handler) {
+    // Without this the caller dies on `undefined.prepare`, which names
+    // nothing. Every type that reaches the store must already have been
+    // folded onto the enum by `canonicalMemoryType`.
+    throw new Error(
+      `[memory] no handler for memory type "${type}" — fold it onto the runtime enum with canonicalMemoryType() before storing`
+    );
+  }
+  return handler;
 }
 
 export function getAllHandlers(): Record<NpcMemoryType, MemoryHandler> {

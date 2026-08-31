@@ -1,5 +1,6 @@
 import type { DynamicGameStateManager } from "../../state/DynamicGameState.js";
 import type { CharacterCondition } from "../core/types.js";
+import { canonicalSkillName } from "../rules/skillCatalog.js";
 
 /**
  * Aggregate skill penalties from a character's active conditions.
@@ -32,7 +33,10 @@ export function getCharacterConditionPenalties(
     }
     if (mech.skillPenalty) {
       for (const [skill, delta] of Object.entries(mech.skillPenalty)) {
-        penalties.set(skill, (penalties.get(skill) ?? 0) + delta);
+        // Conditions are authored with pre-consolidation skill names; map them
+        // onto the broad domains the roll actually uses.
+        const key = skill === "*" ? "*" : canonicalSkillName(skill);
+        penalties.set(key, (penalties.get(key) ?? 0) + delta);
       }
     }
   }

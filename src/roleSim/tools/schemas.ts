@@ -11,45 +11,92 @@
 // Every schema sets `additionalProperties: false` and lists `required`, which
 // is what `strict: true` demands on both providers.
 
+import { SKILL_CATALOG } from "../../engine/rules/skillCatalog.js";
 import type { ToolSpec } from "../../models/providers/types.js";
 
-const MEMORY_TYPES = [
-  "event",
-  "witness",
-  "information",
-  "map",
-  "belief",
+/** Types the character may write. `summary` is system-authored (end-of-day
+ *  diary) and deliberately absent. */
+const WRITABLE_MEMORY_TYPES = [
+  "general",
   "plan",
   "secret",
-  "summary",
+  "relationship",
+  "map",
   "long_term_intent",
 ] as const;
 
 export const actTool: ToolSpec = {
   name: "act",
   description:
-    "Take one minute-scale beat in the world. Terminates this decision and consumes a tick. See the act section of the system prompt for granularity rules and the actionText format.",
+    "Declare the ONE thing you now set out to do in the world (intent only — the engine decides outcomes and real duration). Terminates this decision and consumes a tick. See the act section of the system prompt for granularity rules.",
   inputSchema: {
     type: "object",
     properties: {
-      actionText: {
+      description: {
         type: "string",
         description:
-          "Two labeled sections in one string: a [narrative] block (one short in-character sentence with [N] citation markers) followed by an optional [references] block mapping each [N] to `id: <entity-id>; kind: <character|item|scene>`.",
+          "One or two in-character sentences describing what you attempt and how — never its outcome.",
+      },
+      objectRefs: {
+        type: "array",
+        description:
+          "Entities the action involves. Each id MUST be a bracketed tag from what you perceive this tick, copied exactly and without its brackets (a stranger appears as an alias like `stranger_a`). Use [] when no entity is involved.",
+        items: {
+          type: "object",
+          properties: {
+            // No `kind`: the id says whether it names a person, a thing or a
+            // place, so asking for it as well only offered a way to be wrong
+            // about a real id — and a mislabelled real id used to be rejected
+            // as if it named nothing. The boundary derives the kind.
+            id: { type: "string" },
+            role: {
+              type: "string",
+              enum: ["target", "tool", "destination", "recipient"],
+              description:
+                "How you use this entity: acted upon (target), used to act (tool), moved toward (destination), given/told something (recipient).",
+            },
+          },
+          required: ["id"],
+          additionalProperties: false,
+        },
+      },
+      proposedDurationTicks: {
+        type: "integer",
+        minimum: 1,
+        description:
+          "How many ticks (1 tick = 1 in-world minute) you expect or are willing to invest. Your estimate only — the engine sets the authoritative duration.",
+      },
+      skillId: {
+        // Enumerated rather than free text, for two reasons found in one run
+        // where 25 of 25 actions declared nothing at all: the only example the
+        // model was shown ("Locksmith") is a pre-consolidation name that no
+        // character sheet carries any more, and the list of real skills lived
+        // only in the system prompt, far from the moment of choosing.
+        type: "string",
+        enum: SKILL_CATALOG.map((skill) => skill.name),
+        description:
+          "The skill you consciously bring to bear. Declare it whenever your training is what you are relying on — talking someone round, moving unseen, forcing a lock, reading a document, landing a blow — and declare it even when you are poor at it: missing a check costs the minutes and that approach, nothing more. Omitting it is a real choice and not a default: an action with no declared skill is settled on its own merits and your training counts for nothing. Never values, difficulties or rolls — only which skill.",
+      },
+      language: {
+        type: "string",
+        description:
+          'Required with skillId "Languages", and meaningless without it: name the tongue you are reading or speaking, exactly as it appears under "What you can do". A language you grew up with needs no skillId at all — you simply speak it.',
+      },
+      utterance: {
+        type: "string",
+        description:
+          "Optional: the exact words you speak, verbatim. Omit when silent.",
       },
     },
-    required: ["actionText"],
+    required: ["description", "objectRefs", "proposedDurationTicks"],
     additionalProperties: false,
   },
-  // Every property is required here, so strict validation is expressible on
-  // both providers.
-  strict: true,
 };
 
 export const continueTool: ToolSpec = {
   name: "continue",
   description:
-    "Keep doing what you are already doing. Terminates this decision and consumes a tick.",
+    "Keep your IN-FLIGHT action running (see 'Currently doing'). If you have no in-flight action, this does NOTHING — no event, no memory, others see you standing idle; declare routines with `act` instead. Terminates this decision and consumes a tick.",
   inputSchema: {
     type: "object",
     properties: {
@@ -66,62 +113,42 @@ export const continueTool: ToolSpec = {
 export const writeMemoryTool: ToolSpec = {
   name: "writeMemory",
   description:
-    "Record a genuinely new thought, plan, belief or secret. Reflection, not narration — the engine logs events automatically.",
+    "Keep, correct or retract a long-term memory — nothing is recorded for you. Free: may be called in the same turn as act/continue.",
   inputSchema: {
     type: "object",
     properties: {
-      type: { type: "string", enum: [...MEMORY_TYPES] },
-      content: { type: "string" },
-      mapAdd: {
-        type: "object",
-        properties: {
-          sceneNames: { type: "array", items: { type: "string" } },
-          junctionNames: { type: "array", items: { type: "string" } },
-          roadNames: { type: "array", items: { type: "string" } },
-          revealHiddenConnection: { type: "string" },
-        },
-        required: [],
-        additionalProperties: false,
+      op: {
+        type: "string",
+        enum: ["add", "replace", "delete"],
+        description:
+          "add (default) keeps something new. replace corrects a memory you already hold. delete retracts one. replace and delete need `ref`.",
+      },
+      type: {
+        type: "string",
+        enum: [...WRITABLE_MEMORY_TYPES],
+        description: "Required for op=add. Ignored for replace and delete.",
+      },
+      content: {
+        type: "string",
+        description:
+          "Required for op=add and op=replace. For replace this is the whole corrected memory, not a diff.",
+      },
+      ref: {
+        type: "string",
+        description:
+          "Required for op=replace and op=delete: the tag shown at the start of that line in what you remember, e.g. M3f9a2c.",
+      },
+      targetId: {
+        type: "string",
+        description:
+          "Required for type=relationship: the person this memory is about, by the tag beside them in what you perceive.",
+      },
+      knownAs: {
+        type: "string",
+        description:
+          "With type=relationship: what you now CALL this person, once you have actually been told — a name you heard them give, or that someone used in front of you. Until you set it they stay a description to you, however strong your opinion. Never guess it, and never put down a name nobody said.",
       },
     },
-    required: ["type"],
-    additionalProperties: false,
-  },
-};
-
-export const recallMemoryTool: ToolSpec = {
-  name: "recallMemory",
-  description:
-    "Search your own memory. Does not consume a tick; you must still finish with act or continue.",
-  inputSchema: {
-    type: "object",
-    properties: {
-      query: { type: "string" },
-      types: {
-        type: "array",
-        items: { type: "string", enum: [...MEMORY_TYPES] },
-      },
-      gameDates: {
-        type: "array",
-        items: {
-          type: "string",
-          description: 'ISO 8601 date, "YYYY-MM-DD".',
-        },
-      },
-      limit: { type: "integer" },
-    },
-    required: [],
-    additionalProperties: false,
-  },
-};
-
-export const getMapSnapshotTool: ToolSpec = {
-  name: "getMapSnapshot",
-  description:
-    "Read your current map knowledge. Does not consume a tick; you must still finish with act or continue.",
-  inputSchema: {
-    type: "object",
-    properties: {},
     required: [],
     additionalProperties: false,
   },
@@ -129,10 +156,4 @@ export const getMapSnapshotTool: ToolSpec = {
 
 /** Order is stable: tool definitions render ahead of the system prompt, so a
  *  reordering would invalidate the cached prefix on every call. */
-export const AGENT_TOOLS: ToolSpec[] = [
-  actTool,
-  continueTool,
-  writeMemoryTool,
-  recallMemoryTool,
-  getMapSnapshotTool,
-];
+export const AGENT_TOOLS: ToolSpec[] = [actTool, continueTool, writeMemoryTool];

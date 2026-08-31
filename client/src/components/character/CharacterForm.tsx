@@ -128,7 +128,6 @@ export const CharacterForm: React.FC<CharacterFormProps> = ({
 
         {/* Skills Section */}
         <SkillsSection
-          form={form}
           onChange={onChange}
           skillsState={skillsState}
           skillPointsUsage={skillPointsUsage}

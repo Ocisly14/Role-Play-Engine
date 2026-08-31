@@ -1,4 +1,6 @@
 import type { DynamicGameStateManager } from "../../state/DynamicGameState.js";
+import { normalizeSpot } from "../../state/characterSpot.js";
+import type { SourcedWorldDelta, WorldDelta } from "../actions/types.js";
 import type {
   DamageReport,
   EnvironmentReading,
@@ -86,7 +88,7 @@ export class Applier {
    * record and in `lastUpdated` churn while meaning nothing.
    *
    * Only kinds whose no-op condition is unambiguous are covered. Records that
-   * downstream consumers read (memory.*, relationship.change) and additive
+   * downstream consumers read (memory.*) and additive
    * kinds are never filtered, and neither are the delta kinds, which are
    * aggregated into DamageReports before being applied.
    */
@@ -102,6 +104,17 @@ export class Applier {
           this.dgsm.getNpcProfile(c.characterId)?.status?.conditions ?? [];
         return !conditions.some((cond) => cond.id === c.conditionId);
       }
+
+      case "character.spot":
+        // Only the empty clear, and only when there is nothing to clear. A
+        // repeat of the same phrase is NOT a no-op: this is evaluated against
+        // the PRE-flush state, and a position change later in the same flush
+        // can clear the spot in between — dropping the repeat here would
+        // leave the character with nothing.
+        return (
+          normalizeSpot(c.spot) === "" &&
+          this.dgsm.getCharacterSpot(c.characterId) === null
+        );
 
       case "feature.setState": {
         const scope = this.featureScopes.get(c.featureId) ?? "scene";
@@ -122,12 +135,10 @@ export class Applier {
    * For kinds that reference characters by id, verify the id actually names
    * a character. Returns the offending id, or null when the change is sound.
    *
-   * The resolver's ids come from an LLM, and its schema examples used to
-   * show invented placeholder ids — observed live as a `relationship.change`
-   * from "npc_colleague", a character that does not exist, silently creating
-   * a ghost node in the relationship graph (updateRelationship auto-creates
-   * nodes for any string). The agent path validates its citations through
-   * parseActionText; this is the same guard for the resolver/subsystem path.
+   * Engine deltas are validated upstream (worldDeltaValidator), but
+   * subsystem-emitted StateChanges have no earlier gate — observed live as a
+   * a change naming a character that does not exist, which downstream setters
+   * would happily auto-create as a ghost node. This is the last-line guard.
    */
   private invalidCharacterRef(c: StateChange): string | null {
     const known = (id: string) =>
@@ -139,29 +150,200 @@ export class Applier {
       case "character.addCondition":
       case "character.removeCondition":
       case "character.position":
+      case "character.spot":
       case "memory.event":
       case "memory.witness":
         return known(c.characterId);
-      case "relationship.change":
-        return known(c.fromId) ?? known(c.toId);
       default:
         return null;
     }
   }
 
+  /**
+   * Native intake for the World Action Engine's sourced deltas (plan Phase 8;
+   * decision 2026-08-26: the Applier consumes WorldDelta directly — no
+   * external adapter layer). Each delta is folded into the same two-pass
+   * pipeline as StateChanges, so hp/san/fatigue keep their aggregation and
+   * DamageReport semantics; the source actionId rides in the
+   * sourceFeatureId/sourceSubsystem slot as "action:<id>" for traceability.
+   */
+  private deltaToChanges(sourced: SourcedWorldDelta): StateChange[] {
+    const source =
+      sourced.source.kind === "action"
+        ? `action:${sourced.source.actionId}`
+        : sourced.source.kind === "subsystem"
+          ? `subsystem:${sourced.source.subsystemId}`
+          : `scriptedEvent:${sourced.source.eventId}`;
+    const delta = sourced.delta as WorldDelta;
+
+    if (delta.domain === "character") {
+      const { characterId, operation: op } = delta;
+      switch (op.kind) {
+        case "hp":
+        case "san":
+        case "fatigue":
+          return [
+            {
+              kind: `character.${op.kind}` as "character.hp",
+              characterId,
+              delta: op.delta,
+              sourceFeatureId: source,
+              reason: `${sourced.causalBasis} — ${op.reason}`,
+            },
+          ];
+        case "position":
+          return [
+            {
+              kind: "character.position",
+              characterId,
+              position: op.position,
+              sourceSubsystem: source,
+            },
+          ];
+        case "spot":
+          return [
+            {
+              kind: "character.spot",
+              characterId,
+              spot: op.spot,
+            },
+          ];
+        case "addCondition":
+          return [
+            {
+              kind: "character.addCondition",
+              characterId,
+              condition: op.condition,
+            },
+          ];
+        case "removeCondition":
+          return [
+            {
+              kind: "character.removeCondition",
+              characterId,
+              conditionId: op.conditionId,
+            },
+          ];
+      }
+    }
+
+    if (delta.domain === "scene") {
+      const { sceneId, operation: op } = delta;
+      switch (op.kind) {
+        case "addCondition":
+          return [
+            { kind: "scene.addCondition", sceneId, condition: op.condition },
+          ];
+        case "removeCondition":
+          return [
+            { kind: "scene.removeCondition", sceneId, predicate: op.predicate },
+          ];
+        case "connectionBlock":
+          return [
+            {
+              kind: "connection.setBlock",
+              connectionId: op.connectionId,
+              blocked: op.blocked,
+              sourceFeatureId: source,
+              reason: op.reason,
+            },
+          ];
+        case "environmentContribute":
+          return [
+            {
+              kind: "environment.contribute",
+              locationId: sceneId,
+              quantity: op.quantity,
+              value: op.value,
+              sourceFeatureId: source,
+            },
+          ];
+        case "environmentHazard":
+          return [
+            {
+              kind: "environment.hazard",
+              locationId: sceneId,
+              ...(op.add !== undefined ? { add: op.add } : {}),
+              ...(op.remove !== undefined ? { remove: op.remove } : {}),
+              sourceFeatureId: source,
+            },
+          ];
+      }
+    }
+
+    // Item domain
+    const { itemId, operation: op } = delta;
+    switch (op.kind) {
+      case "create":
+        return [
+          {
+            kind: "item.create",
+            name: op.name,
+            location: op.location,
+            ...(typeof op.description === "string"
+              ? { description: op.description }
+              : {}),
+          },
+        ];
+      case "move":
+        return itemId
+          ? [{ kind: "item.move", itemId, from: op.from, to: op.to }]
+          : [];
+      case "set":
+        return itemId
+          ? [
+              {
+                kind: "item.set",
+                itemId,
+                ...(typeof op.description === "string"
+                  ? { description: op.description }
+                  : {}),
+                ...(typeof op.appendDescription === "string"
+                  ? { appendDescription: op.appendDescription }
+                  : {}),
+                ...(typeof op.isLightSource === "boolean"
+                  ? { isLightSource: op.isLightSource }
+                  : {}),
+                ...(typeof op.lightLevel === "number"
+                  ? { lightLevel: op.lightLevel }
+                  : {}),
+              },
+            ]
+          : [];
+      case "destroy":
+        return itemId ? [{ kind: "item.destroy", itemId }] : [];
+    }
+    return [];
+  }
+
+  private findItemSceneId(itemId: string): string | undefined {
+    for (const scene of this.dgsm.getState().scenes.values()) {
+      if ((scene.items ?? []).some((i) => i.id === itemId)) return scene.id;
+    }
+    return undefined;
+  }
+
   flush(
     inputChanges: readonly StateChange[],
-    _gameDateTime: GameTime
+    _gameDateTime: GameTime,
+    sourcedDeltas: readonly SourcedWorldDelta[] = []
   ): {
     damageReports: DamageReport[];
     featureEvents: FeatureEvent[];
     stateChanges: StateChange[];
   } {
+    // Engine deltas apply ahead of subsystem/scripted changes: semantic
+    // outcomes land first, ambient effects follow (same relative order the
+    // orchestrator's buffer had for action outcomes historically).
+    const combined = [
+      ...sourcedDeltas.flatMap((d) => this.deltaToChanges(d)),
+      ...inputChanges,
+    ];
     // Filtered up front so no-ops are neither applied nor reported. Evaluated
     // against the pre-flush state, which is correct because a change that is
     // a no-op now can only be made non-no-op by another change in this same
     // batch — and the kinds covered here are not emitted twice per tick.
-    const changes = inputChanges.filter((c) => {
+    const changes = combined.filter((c) => {
       const badId = this.invalidCharacterRef(c);
       if (badId !== null) {
         console.warn(
@@ -192,6 +374,8 @@ export class Applier {
       reason: string;
     }> = [];
     const featureEmissions: FeatureEvent[] = [];
+    // Last write wins: a spot is one slot, not an accumulation.
+    const spotWrites = new Map<string, string>();
     const envBuckets = new Map<string, EnvBucket>();
     const ensureEnvBucket = (locationId: string): EnvBucket => {
       let b = envBuckets.get(locationId);
@@ -220,6 +404,9 @@ export class Applier {
             featureId: c.sourceFeatureId,
             reason: c.reason,
           });
+          break;
+        case "character.spot":
+          spotWrites.set(c.characterId, c.spot);
           break;
         case "event.emit":
           featureEmissions.push(c.event);
@@ -333,21 +520,28 @@ export class Applier {
           this.dgsm.removeScopedFeatureState(c.featureId, scope, c.key);
           break;
         }
-        case "scene.damageItem": {
-          this.dgsm.markItemDamaged(c.sceneId, c.itemId, c.damagedBy, c.reason);
-          break;
-        }
         case "character.position": {
           this.dgsm.setCharacterPosition(c.characterId, c.position);
           break;
         }
         // ── Resolver-emitted item ops ──
-        case "item.modify": {
-          this.dgsm.modifyItem(c.itemId, { description: c.description });
+        case "item.set": {
+          this.dgsm.setItem(c.itemId, {
+            ...(c.description !== undefined
+              ? { description: c.description }
+              : {}),
+            ...(c.appendDescription !== undefined
+              ? { appendDescription: c.appendDescription }
+              : {}),
+            ...(c.isLightSource !== undefined
+              ? { isLightSource: c.isLightSource }
+              : {}),
+            ...(c.lightLevel !== undefined ? { lightLevel: c.lightLevel } : {}),
+          });
           break;
         }
         case "item.create": {
-          this.dgsm.createItem(c.name, c.location, c.properties);
+          this.dgsm.createItem(c.name, c.location, c.description);
           break;
         }
         case "item.move": {
@@ -358,16 +552,6 @@ export class Applier {
           this.dgsm.destroyItem(c.itemId);
           break;
         }
-        // ── Resolver-emitted relationship op ──
-        case "relationship.change": {
-          this.dgsm.updateRelationship(
-            c.fromId,
-            c.toId,
-            typeof c.delta === "number" ? c.delta : 0,
-            typeof c.note === "string" ? c.note : ""
-          );
-          break;
-        }
         // ── Memory entries: applier no-op; consumed by
         //    NpcActionController.routeResolverMemories after applier.flush. ──
         case "memory.event":
@@ -376,6 +560,17 @@ export class Applier {
         default:
           break;
       }
+    }
+
+    // AFTER the replay loop, deliberately. Engine deltas apply ahead of the
+    // buffered StateChanges (see the `combined` array above), and the movement
+    // runtime's final `character.position` of a walk sits in that buffer — so
+    // a spot applied in delta order would be set, then wiped by
+    // `setCharacterPosition` clearing on the very arrival it was describing.
+    // Position first, always; the spot is what is true once everyone has
+    // finished moving.
+    for (const [characterId, spot] of spotWrites) {
+      this.dgsm.setCharacterSpot(characterId, spot);
     }
 
     const synthesizedDeaths: FeatureEvent[] = damageReports

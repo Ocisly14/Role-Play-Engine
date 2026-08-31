@@ -1,9 +1,8 @@
 // src/engine/subsystem/registry.ts
 //
-// Map-backed Subsystem collection. Mirrors the pattern of
-// ActionDefinitionRegistry and the pre-Phase-I CodeEngineRegistry.
+// Map-backed Subsystem collection.
 
-import type { ActionSubsystem, AnchorSubsystem, Subsystem } from "./types.js";
+import type { AnchorSubsystem, Subsystem } from "./types.js";
 
 export class SubsystemRegistry {
   private subsystems = new Map<string, Subsystem>();
@@ -32,14 +31,4 @@ export class SubsystemRegistry {
       .sort((a, b) => (a.priority ?? 999) - (b.priority ?? 999));
   }
 
-  /**
-   * Lookup an ActionSubsystem by id. Caller (TickOrchestrator Phase 3) maps
-   * `ActionStep.codeSubsystem` → subsystem id. Returns undefined if no match
-   * or the registered subsystem is an AnchorSubsystem (caller treats as
-   * configuration error).
-   */
-  getActionSubsystem(id: string): ActionSubsystem | undefined {
-    const s = this.subsystems.get(id);
-    return s?.kind === "action" ? s : undefined;
-  }
 }

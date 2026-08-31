@@ -1,0 +1,17 @@
+{
+  "npcId": "Marks_White",
+  "memories": [
+    {
+      "type": "event",
+      "content": "我今天不在店里，所以没有见到珊德拉，也没有被问到关于邻里聚会或异常情况的事。",
+      "gameDay": 1,
+      "gameTime": "19:57",
+      "location": "SCN_12_SUB_1",
+      "metadata": {
+        "outcome": "向怀特借一把小型螺丝刀并询问最近街坊是否有人提到奇怪的聚会或异常情况"
+      }
+    }
+  ],
+  "plans": [],
+  "intents": []
+}

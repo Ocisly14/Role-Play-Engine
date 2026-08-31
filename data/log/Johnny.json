@@ -1,0 +1,4835 @@
+{
+  "npcId": "Johnny",
+  "memories": [
+    {
+      "type": "secret",
+      "content": "如果我再次感到被羞辱，我的嫉妒和暴脾气可能会把我推向鲁莽或暴力的行为。",
+      "gameDay": 1,
+      "gameTime": "00:00",
+      "location": null,
+      "metadata": {
+        "knowledgeId": "s_johnny_jealousy"
+      }
+    },
+    {
+      "type": "plan",
+      "content": "赢得海伦的芳心，在卡森德拉过上令人艳羡的狩猎生活，证明自己在各方面都比维托更出色、更值得被爱。",
+      "gameDay": 1,
+      "gameTime": "00:00",
+      "location": null,
+      "metadata": {
+        "planType": "long_term"
+      }
+    },
+    {
+      "type": "secret",
+      "content": "我对维托的关注超出了应有的程度，因为我无法忍受在海伦生命中排第二的想法。",
+      "gameDay": 1,
+      "gameTime": "00:00",
+      "location": null,
+      "metadata": {
+        "knowledgeId": "s_johnny_vito_watch"
+      }
+    },
+    {
+      "type": "plan",
+      "content": "Today's plan: 1. 在一层大厅检查并记录监控设备和吧台上手枪的位置变化以确定那晚发生的细节。 at 驯鹿酒吧; 2. 找卢茨当面问清楚菲利普到底去了哪里并警告他不要乱说我和海伦的事。 at 驯鹿酒吧; 3. 清晨把早已准备好的花留给海伦，并向南希打听海伦最近是否安全与心情如何。 at 花店·卡森德拉之花; 4. 当面向海伦真诚道歉并邀请她接受我带回来的猎物作为今晚餐桌的食材以表心意。 at 海伦的餐桌; 5. 到林地里狩猎一阵以证明我的能力并准备一份值得海伦骄傲的猎物作为礼物。 at 日暮大道东端·森林入口; 6. 去五金店买些维修监控或加固猎具需要的材料，以便修好驯鹿酒吧的监控或准备狩猎用具。 at 五金店; 7. 傍晚把猎物交给海伦，尽力表现尊重与诚意，争取和她单独谈一次。 at 海伦的餐桌; 8. 夜里回到林边的露宿处休息，回想今天的努力并为明天继续争取海伦做准备。 at 日暮大道东端·森林入口",
+      "gameDay": 2,
+      "gameTime": "00:00",
+      "location": null,
+      "metadata": {
+        "planType": "daily"
+      }
+    },
+    {
+      "type": "information",
+      "content": "2003年12月22日我去驯鹿酒吧见海伦，想终于说出我的感受。",
+      "gameDay": 1,
+      "gameTime": "00:00",
+      "location": null,
+      "metadata": {
+        "difficulty": "automatic",
+        "knowledgeId": "k_johnny_bar_date"
+      }
+    },
+    {
+      "type": "information",
+      "content": "我对卡森德拉周围的林地了如指掌，可以在那里打猎，我讨厌被困在镇上而不能自由地待在外面。",
+      "gameDay": 1,
+      "gameTime": "00:00",
+      "location": null,
+      "metadata": {
+        "difficulty": "regular",
+        "knowledgeId": "k_johnny_hunter"
+      }
+    },
+    {
+      "type": "information",
+      "content": "菲利普·斯卡莱塔那天晚上骚扰了海伦，我在一场激烈的争吵后把他赶走了。",
+      "gameDay": 1,
+      "gameTime": "00:00",
+      "location": null,
+      "metadata": {
+        "difficulty": "regular",
+        "knowledgeId": "k_johnny_philip_fight"
+      }
+    },
+    {
+      "type": "belief",
+      "content": "如果我表现得足够自信，海伦会看到我是认真的，而不只是另一个大嗓门的蠢货。",
+      "gameDay": 1,
+      "gameTime": "00:00",
+      "location": null,
+      "metadata": {
+        "confidence": 0.6,
+        "reasoningChain": "我尽力表现得自信並直接道歉，但海倫對我的反應時好時壞，且周圍人的存在和監視讓自信不足以保證她一定會接受我；因此這個信念被削弱了一點。"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我把猎枪放在吧台台面上，双手摊开示意放下以表无威胁。酒吧里的人可以看见枪不在我手上，气氛稍微缓和了一些。",
+      "gameDay": 2,
+      "gameTime": "00:02",
+      "location": "SCN_16_SUB_1",
+      "metadata": {
+        "itemId": "猎枪",
+        "outcome": "把猎枪放在吧台上以示无威胁",
+        "itemName": "猎枪"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我打开并检查了已损坏的监控设备，确认内部线路裸露且有多个摄像头存在盲区，并对外露线路和破损外壳进行了拍照记录以作取证。",
+      "gameDay": 2,
+      "gameTime": "00:08",
+      "location": "SCN_16_SUB_1",
+      "metadata": {
+        "itemId": "ITEM_SCN16_4",
+        "outcome": "检查并记录已损坏的监控设备外壳和暴露线路的状况以取证",
+        "itemName": "已损坏的监控设备"
+      }
+    },
+    {
+      "type": "event",
+      "content": "柯文德按住我的胳膊威胁我要照片，我慌乱中把我知道的说了：驯鹿酒吧的监控设备坏了，那晚菲利普骚扰了海伦，我把他赶走了。我不愿意交代但在威胁下妥协，还提到柯文德在23:13曾拿起手枪示威。",
+      "gameDay": 2,
+      "gameTime": "00:11",
+      "location": "SCN_16_SUB_1",
+      "metadata": {
+        "outcome": "抢夺Johnny的相机和存储卡，按住他胳膊威胁他交出所有照片"
+      }
+    },
+    {
+      "type": "event",
+      "content": "后退两步离开吧台并举起双手示意我没有武器以缓和柯文德的紧张情绪 [在 SCN_16_SUB_1 因重新规划而中断] 已中断",
+      "gameDay": 2,
+      "gameTime": "00:11",
+      "location": "SCN_16_SUB_1",
+      "metadata": {
+        "outcome": "后退两步离开吧台并举起双手示意我没有武器以缓和柯文德的紧张情绪 [在 SCN_16_SUB_1 因重新规划而中断] 已中断",
+        "interruptionReason": "revise_replan"
+      }
+    },
+    {
+      "type": "event",
+      "content": "[直接] 柯文德按住我的胳膊，威胁我要我交出照片和存储卡。我在压力下退缩，勉强说出酒吧监控故障、那晚菲利普骚扰了海伦并被我赶走，还说了柯文德在23:13拿起过手枪示威。我感到害怕和羞愧，被胁迫说出这些，担心证据会被夺走，也担心海伦和我自己的安全。",
+      "gameDay": 2,
+      "gameTime": "00:11",
+      "location": "SCN_16_SUB_1",
+      "metadata": {
+        "impact": 2,
+        "perspective": "targeted",
+        "sourceAction": "我按住约翰尼的胳膊，威胁他交出照片和存储卡。约翰尼在压力下退缩并说酒吧的监控设备损坏，那晚菲利普骚扰了海伦并被他赶走了，他还提到我在23:13拿起过一把手枪并朝我们示威。约翰尼虽然不情愿，但被迫说出了这些事实。",
+        "sourceCharacterId": "Kovind"
+      }
+    },
+    {
+      "type": "event",
+      "content": "柯文德试图搜查我并夺走他所说的相机和存储卡，我抵抗并阻止了他的动作，没有任何物品被夺走。被人搜身让我更加害怕和警惕。",
+      "gameDay": 2,
+      "gameTime": "00:15",
+      "location": "SCN_16_SUB_1",
+      "metadata": {
+        "outcome": "搜查约翰尼的随身物品并夺取相机和存储卡 [Intimidate 60, rolled 16 (hard) — all targets resisted] failed"
+      }
+    },
+    {
+      "type": "event",
+      "content": "悄声叫卢茨到我身旁，低声把监控照片和存储卡递给他，请他替我保管并别让柯文德看到 [在 SCN_16_SUB_1 因重新规划而中断] 已中断",
+      "gameDay": 2,
+      "gameTime": "00:15",
+      "location": "SCN_16_SUB_1",
+      "metadata": {
+        "outcome": "悄声叫卢茨到我身旁，低声把监控照片和存储卡递给他，请他替我保管并别让柯文德看到 [在 SCN_16_SUB_1 因重新规划而中断] 已中断",
+        "interruptionReason": "revise_replan"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我把拍的照片和存储卡交给了卢茨，他说会替我保管并冷静查看，把存储卡放进收银机抽屉并锁上，还叫我坐下别去碰监控设备。我照他说的做了，神情稍微平静了一些。",
+      "gameDay": 2,
+      "gameTime": "00:15",
+      "location": "SCN_16_SUB_1",
+      "metadata": {
+        "outcome": "低声而平静地从Johnny手中索要并接过他拍的照片与存储卡，向他保证我会替他保管以便冷静查看；把存储卡放进收银机抽屉并锁好，提醒他坐下不要再碰监控设备。"
+      }
+    },
+    {
+      "type": "event",
+      "content": "[直接] 刚才柯文德在一层大厅试图搜查我并夺走相机和存储卡，我在压力下拒绝配合并成功抵抗。他没拿到任何东西但局势因此更紧张。我感到害怕并保持高度戒备，打算立刻把相机和存储卡藏好、撤到更安全的地方，尽快找到卢茨或其他帮手，避免再被柯文德单独逼问，并尽量确认监控情况和提醒海伦。",
+      "gameDay": 2,
+      "gameTime": "00:15",
+      "location": "SCN_16_SUB_1",
+      "metadata": {
+        "impact": 1,
+        "perspective": "targeted",
+        "sourceAction": "我在一层大厅试图搜查约翰尼，想夺走他身上的相机和存储卡，但他在压力下拒绝配合并成功抵抗。我没拿到任何东西，局势因此更紧张，我继续保持戒备。",
+        "sourceCharacterId": "Kovind"
+      }
+    },
+    {
+      "type": "event",
+      "content": "[直接] 00:16 我把照片和存储卡交给了卢茨，他把存储卡放进收银机抽屉并锁好，低声叫我坐下别去碰监控设备。我照做了，情绪平复了一些，既松了口气又有点戒备——现在得靠卢茨暂时保管证物，避免再跟柯文德正面冲突，稍后要私下跟卢茨确认并尽快警告海伦。",
+      "gameDay": 2,
+      "gameTime": "00:16",
+      "location": "SCN_16_SUB_1",
+      "metadata": {
+        "impact": 1,
+        "perspective": "targeted",
+        "sourceAction": "我低声而平静地从约翰尼手里接过照片与存储卡，向他保证会替他保管以便冷静查看；把存储卡放进收银机抽屉并锁好，同时提醒他坐下不要再碰监控设备。约翰尼配合交出了物品，情绪在我的安抚下有所缓和。",
+        "sourceCharacterId": "Lutz Emilion"
+      }
+    },
+    {
+      "type": "event",
+      "content": "塔兰悄声让我把相机存储卡和照片交给他，并在他的录音里按日期复述昨夜情况，尤其是23:13谁持枪。我拒绝了，既没交出东西也没按他录音说话。",
+      "gameDay": 2,
+      "gameTime": "00:17",
+      "location": "SCN_16_SUB_1",
+      "metadata": {
+        "outcome": "低声让约翰尼把相机存储卡和照片交给我，并当着我的录音并注明日期口述他昨夜看到的情况（尤其说明大约23:13时谁持枪）以便保存证据链 [Persuade 10, rolled 60 (fail) — all targets resisted] failed"
+      }
+    },
+    {
+      "type": "event",
+      "content": "低声把相机和存储卡交给卢茨，嘱咐他立刻藏好并别让柯文德看到 [在 SCN_16_SUB_1 因重新规划而中断] 已中断",
+      "gameDay": 2,
+      "gameTime": "00:17",
+      "location": "SCN_16_SUB_1",
+      "metadata": {
+        "outcome": "低声把相机和存储卡交给卢茨，嘱咐他立刻藏好并别让柯文德看到 [在 SCN_16_SUB_1 因重新规划而中断] 已中断",
+        "interruptionReason": "revise_replan"
+      }
+    },
+    {
+      "type": "event",
+      "content": "[直接] 塔兰·埃米利昂刚悄声来向我索要相机存储卡和照片，并让我在他的录音里按日期口述昨夜约23:13谁持枪以保留证据链。我拒绝交出物证也没按他录口供。他对我有抵触且没有配合，这让我感到被逼迫、紧张和戒备，担心证据会被夺走或被人利用。现在必须立刻确认卢茨是否仍在安全保管存储卡并私下提醒他别交出，同时尽快寻找其他证据或证人并考虑通知海伦。",
+      "gameDay": 2,
+      "gameTime": "00:17",
+      "location": "SCN_16_SUB_1",
+      "metadata": {
+        "impact": 1,
+        "perspective": "targeted",
+        "sourceAction": "我低声要求约翰尼把相机存储卡和照片交给我，并在我的录音里按日期口述昨夜约23:13谁持枪以保留证据链，但他抵抗并拒绝交出或录口供。我记下了他的抵触态度和未配合，后续需要寻找其他证据或证人。",
+        "sourceCharacterId": "Taran Emilion"
+      }
+    },
+    {
+      "type": "event",
+      "content": "科文德试图强行搜查我并夺走我的相机和存储卡，我抵抗住并保住了随身物品。此事让我愤怒，局势更紧张，我把他当成更直接的隐患。",
+      "gameDay": 2,
+      "gameTime": "00:18",
+      "location": "SCN_16_SUB_1",
+      "metadata": {
+        "outcome": "强行搜查并从约翰尼身上夺取相机和存储卡 [Intimidate 60, rolled 57 (regular) — all targets resisted] failed"
+      }
+    },
+    {
+      "type": "event",
+      "content": "[直接] 刚才柯文德在一层大厅试图强行搜身并夺走我的相机和存储卡，我抵抗住了，他没拿到任何东西。现场气氛因此更加紧张，他明显对我更敌对。我感到害怕又愤怒，保持高度戒备。接下来我要尽快确认卢茨是否仍在安全保管存储卡并私下嘱咐他别交给任何人，同时尽量避免与柯文德正面冲突并考虑尽快提醒海伦。",
+      "gameDay": 2,
+      "gameTime": "00:18",
+      "location": "SCN_16_SUB_1",
+      "metadata": {
+        "impact": 2,
+        "perspective": "targeted",
+        "sourceAction": "我在一层对约翰尼进行了强行搜查，试图夺走他的相机和存储卡，但约翰尼抵抗成功，我未能拿到任何东西。现场气氛因此更紧张，他明显更敌对。",
+        "sourceCharacterId": "Kovind"
+      }
+    },
+    {
+      "type": "event",
+      "content": "低声靠近卢茨，悄声确认他还把存储卡和照片藏在收银机抽屉里，并嘱咐他不要把这些东西交给任何人，除非得到我的允许 [在 SCN_16_SUB_1 因重新规划而中断] 已中断",
+      "gameDay": 2,
+      "gameTime": "00:22",
+      "location": "SCN_16_SUB_1",
+      "metadata": {
+        "outcome": "低声靠近卢茨，悄声确认他还把存储卡和照片藏在收银机抽屉里，并嘱咐他不要把这些东西交给任何人，除非得到我的允许 [在 SCN_16_SUB_1 因重新规划而中断] 已中断",
+        "interruptionReason": "revise_replan"
+      }
+    },
+    {
+      "type": "event",
+      "content": "柯文德突然扑上来强行搜我，想抢我的相机和存储卡，我抵抗并保住了物品。被人当众动手让我很生气也更警觉，他和我的敌意明显加深。",
+      "gameDay": 2,
+      "gameTime": "00:22",
+      "location": "SCN_16_SUB_1",
+      "metadata": {
+        "outcome": "扑向约翰尼，强行搜身并夺走他的相机和存储卡 [Brawl 65, rolled 68 (difficulty: regular)] failed"
+      }
+    },
+    {
+      "type": "event",
+      "content": "[直接] 柯文德刚才扑上来要强行搜我、抢走我的相机和存储卡，我抵抗住了，没丢东西。被当众动手让我又害怕又愤怒，觉得他现在更危险、更值得警惕。我要立刻确认卢茨确实把存储卡藏好并私下叮嘱他别交给任何人，再把相机和卡藏得更隐蔽，尽量避开柯文德并尽快通知海伦。",
+      "gameDay": 2,
+      "gameTime": "00:22",
+      "location": "SCN_16_SUB_1",
+      "metadata": {
+        "impact": 2,
+        "perspective": "targeted",
+        "sourceAction": "我扑向约翰尼，试图强行搜身并夺走他的相机和存储卡，但动作失败，没能拿走任何东西。约翰尼反抗成功，现场气氛立刻变得更紧张，我会把他视为更大的隐患并考虑更强硬的后续手段。",
+        "sourceCharacterId": "Kovind"
+      }
+    },
+    {
+      "type": "witness",
+      "content": "[相遇] 我在一层大厅与Shandra、Kovind、Lutz Emilion和Taran Emilion面对面相遇。看到柯文德和塔兰都在，我立刻感到紧张和戒备——他们之前试图夺走我的相机和存储卡。卢茨也在，这是当面确认他是否仍保管证物并悄声交代不要交人的最好机会，但必须非常小心避开柯文德和塔兰以免升级冲突。我现在既害怕又急切。",
+      "gameDay": 2,
+      "gameTime": "00:27",
+      "location": "SCN_16_SUB_1",
+      "metadata": {
+        "impact": 2,
+        "perspective": "co_presence",
+        "sourceAction": "Shandra Hernandez, Kovind, Lutz Emilion, Taran Emilion 在 一层大厅",
+        "sourceCharacterId": "__encounter__"
+      }
+    },
+    {
+      "type": "event",
+      "content": "低声靠近卢茨，悄声确认他仍把存储卡和照片锁在收银机抽屉里，并嘱咐他不要把这些东西交给任何人，除非得到我的允许 [在 SCN_16_SUB_1 因重新规划而中断] 已中断",
+      "gameDay": 2,
+      "gameTime": "00:27",
+      "location": "SCN_16_SUB_1",
+      "metadata": {
+        "outcome": "低声靠近卢茨，悄声确认他仍把存储卡和照片锁在收银机抽屉里，并嘱咐他不要把这些东西交给任何人，除非得到我的允许 [在 SCN_16_SUB_1 因重新规划而中断] 已中断",
+        "interruptionReason": "revise_replan"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我低声在卢茨耳边确认他已把存储卡和照片锁在收银机抽屉里，并再三嘱咐他不要把这些东西交给任何人，除非得到我的允许。卢茨镇定地接过并保证会锁好，同时安抚了我的情绪，让我稍微放心。 [rel:Lutz Emilion +3 → 13]",
+      "gameDay": 2,
+      "gameTime": "00:30",
+      "location": "SCN_16_SUB_1",
+      "metadata": {
+        "outcome": "低声在卢茨耳边确认他仍把存储卡和照片锁在收银机抽屉里，并再三嘱咐他不要把这些东西交给任何人，除非得到我的允许"
+      }
+    },
+    {
+      "type": "event",
+      "content": "悄悄站在吧台附近，保持低调注视柯文德和塔兰的动向，同时不离开卢茨身边以便随时确认存储卡安全吗 成功",
+      "gameDay": 2,
+      "gameTime": "00:36",
+      "location": "SCN_16_SUB_1",
+      "metadata": {
+        "outcome": "悄悄站在吧台附近，保持低调注视柯文德和塔兰的动向，同时不离开卢茨身边以便随时确认存储卡安全吗 成功"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我低声走到卢茨身边，确认收银机抽屉里的存储卡和照片还在，并严肃嘱咐他不要把这些东西交给任何人，遇到有人来问先通知我。卢茨答应会把它们锁好，这让我情绪稍微平稳了一些。 [rel:Lutz Emilion +2 → 15]",
+      "gameDay": 2,
+      "gameTime": "00:40",
+      "location": "SCN_16_SUB_1",
+      "metadata": {
+        "outcome": "低声走到卢茨身边，悄声确认收银机抽屉里存的存储卡和照片还在，严肃嘱咐他不要把这些东西交给任何人，遇到有人来问先通知我"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我低声向卢茨要收银机抽屉的钥匙，想把存储卡转移到更安全的地方，但他没有把钥匙交给我。被拒绝让我觉得恼火和受阻，暂时拿不到存储卡。 [rel:Lutz Emilion -4 → 11]",
+      "gameDay": 2,
+      "gameTime": "00:44",
+      "location": "SCN_16_SUB_1",
+      "metadata": {
+        "outcome": "低声向卢茨要求把收银机抽屉的钥匙交给我，以便我能把存储卡转移到更安全的地方 [Persuade 10, rolled 89 (fail) — all targets resisted] failed"
+      }
+    },
+    {
+      "type": "witness",
+      "content": "[目击] 我看到Patrizio von Samsa走进驯鹿酒吧，坐在吧台一角装作随意地观察，像是在等珊德拉出现。随后我在一层大厅与Patrizio、柯文德、卢茨、珊德拉和塔兰面对面相遇。看到柯文德和塔兰在场让我很紧张——他们之前试图夺走我的相机和存储卡。我感到既害怕又急切，必须立刻悄声确认卢茨仍把存储卡和照片保管好并嘱咐他不要交给任何人，同时尽量避免与柯文德或塔兰正面冲突。",
+      "gameDay": 2,
+      "gameTime": "00:47",
+      "location": "SCN_16_SUB_1",
+      "metadata": {
+        "impact": 2,
+        "perspective": "witness",
+        "sourceAction": "走进驯鹿酒吧并坐在吧台一角，装作随意地观察周围并留意珊德拉的出现 成功",
+        "sourceCharacterId": "Patrizio von Samsa"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我低声恳求卢茨把收银机抽屉的钥匙交给我，或把存储卡交到我能立刻藏好的安全地方，但他拒绝了。被拒绝让我很恼火，也暂时拿不到存储卡。 [rel:Lutz Emilion -4 → 7]",
+      "gameDay": 2,
+      "gameTime": "00:47",
+      "location": "SCN_16_SUB_1",
+      "metadata": {
+        "outcome": "低声恳求卢茨把收银机抽屉的钥匙交给我，或者把存储卡交到我能马上藏好的安全地方 [Persuade 10, rolled 80 (fail) — all targets resisted] failed"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我低声靠近卢茨，悄声确认他仍保管着存储卡和照片，并严肃嘱咐他不要把这些东西交给任何人，遇到有人来问先通知我。卢茨口头答应了但神情谨慎，我暂时放心但信任并未恢复。 [rel:Lutz Emilion -2 → 5]",
+      "gameDay": 2,
+      "gameTime": "00:50",
+      "location": "SCN_16_SUB_1",
+      "metadata": {
+        "outcome": "低声靠近卢茨，悄声确认他仍保管着存储卡和照片，并严肃嘱咐他不要把这些东西交给任何人，遇到有人来问先通知我"
+      }
+    },
+    {
+      "type": "event",
+      "content": "悄声盯着帕特里齐奥、柯文德和塔兰，低调监视他们在大厅的动向，注意是否有人试图靠近收银机或接近卢茨 [在 SCN_16_SUB_1 因重新规划而中断] 已中断",
+      "gameDay": 2,
+      "gameTime": "00:57",
+      "location": "SCN_16_SUB_1",
+      "metadata": {
+        "outcome": "悄声盯着帕特里齐奥、柯文德和塔兰，低调监视他们在大厅的动向，注意是否有人试图靠近收银机或接近卢茨 [在 SCN_16_SUB_1 因重新规划而中断] 已中断",
+        "interruptionReason": "revise_replan"
+      }
+    },
+    {
+      "type": "event",
+      "content": "[直接] 柯文德当众逼我交出相机与存储卡，并用吧台上的手枪威胁要我让卢茨和塔兰当场销毁存储卡，但他们都拒绝配合，搜身和没收未果。现场气氛因此更加紧张，我既害怕又愤怒，觉得柯文德更危险了。必须立刻悄声确认卢茨确实把存储卡和照片藏好，严令他不要交给任何人，考虑把证物转移到更安全的地方，避开柯文德并尽快私下通知海伦。",
+      "gameDay": 2,
+      "gameTime": "00:57",
+      "location": "SCN_16_SUB_1",
+      "metadata": {
+        "impact": 2,
+        "perspective": "targeted",
+        "sourceAction": "我当众逼迫约翰尼交出相机与存储卡，并命令卢茨和塔兰在我面前当场销毁存储卡，以我放在吧台上的手枪威胁他们。但他们都拒绝服从，搜身和没收未能奏效，现场气氛因此更紧张，我必须对他们的抵抗保持警惕并考虑下一步更强硬的手段。",
+        "sourceCharacterId": "Kovind"
+      }
+    },
+    {
+      "type": "event",
+      "content": "科温德当着众人的面逼我交出相机和存储卡，并命令卢茨和塔兰当场销毁存储卡，他还用吧台上的手枪示威。我拒绝交出，保住了自己的东西，心里对他更警惕也更愤怒。",
+      "gameDay": 2,
+      "gameTime": "00:57",
+      "location": "SCN_16_SUB_1",
+      "metadata": {
+        "outcome": "当众逼迫约翰尼交出相机与存储卡，并命令卢茨和塔兰在我面前当场销毁存储卡；若有人反抗立即用手枪示威性开火 [Intimidate 60, rolled 88 (fail) — all targets resisted] failed"
+      }
+    },
+    {
+      "type": "witness",
+      "content": "[目击] 刚才我看到柯文德从吧台后面的储物柜里把那把猎枪取了出来，柜门敞开，枪现在在他手里并被举起来示威。我的心猛地一沉，又怕又怒——他拿枪的动作把局势直接推向危险。我感到必须马上行动：悄声确认卢茨保管好存储卡并警告海伦，同时尽量避免与柯文德正面冲突并寻找安全撤离或求助的途径。",
+      "gameDay": 2,
+      "gameTime": "00:59",
+      "location": "SCN_16_SUB_1",
+      "metadata": {
+        "impact": 2,
+        "perspective": "witness",
+        "sourceAction": "我从吧台后方的储物柜里把那把猎枪取了出来，举起以示威吓阻；储物柜门敞开，猎枪现在在我手里。",
+        "sourceCharacterId": "Kovind"
+      }
+    },
+    {
+      "type": "event",
+      "content": "低声恳求卢茨把收银机抽屉的钥匙交给我，以便我把存储卡和照片立刻转移到更安全的藏匿处 [在 SCN_16_SUB_1 因重新规划而中断] 已中断",
+      "gameDay": 2,
+      "gameTime": "00:59",
+      "location": "SCN_16_SUB_1",
+      "metadata": {
+        "outcome": "低声恳求卢茨把收银机抽屉的钥匙交给我，以便我把存储卡和照片立刻转移到更安全的藏匿处 [在 SCN_16_SUB_1 因重新规划而中断] 已中断",
+        "interruptionReason": "revise_replan"
+      }
+    },
+    {
+      "type": "event",
+      "content": "悄悄离开一层大厅去海伦的餐桌，私下提醒海伦尽快离开酒吧并寻找安全藏身处 [在 ROAD_3 因重新规划而中断] 已中断",
+      "gameDay": 2,
+      "gameTime": "01:03",
+      "location": "ROAD_3",
+      "metadata": {
+        "outcome": "悄悄离开一层大厅去海伦的餐桌，私下提醒海伦尽快离开酒吧并寻找安全藏身处 [在 ROAD_3 因重新规划而中断] 已中断",
+        "interruptionReason": "revise_replan"
+      }
+    },
+    {
+      "type": "event",
+      "content": "[直接] 刚才卢茨走到我和柯文德之间把我们分开，低声但坚定地命令柯文德把猎枪放下并坐下，同时示意塔兰立刻封锁所有出入口、把收银机抽屉钥匙随身保管并加派人手重点巡查监控盲区。看到他这么做我既感激又紧张——柯文德手里有枪，局势明显危险。我现在急切且戒备，必须马上确认存储卡是否安全、私下叮嘱卢茨不要交人，并尽快提醒海伦撤到安全处。",
+      "gameDay": 2,
+      "gameTime": "01:03",
+      "location": "ROAD_3",
+      "metadata": {
+        "impact": 1,
+        "perspective": "targeted",
+        "sourceAction": "走到科文德和约翰尼中间把两人分开，低声但坚定地命令科文德把猎枪放下并坐到一边，同时示意塔兰立刻封锁所有出入口、把收银机抽屉钥匙随身保管并加派人手重点巡查监控盲区，遇到任何人试图接近监控或抽屉立即阻止并向我报告 [target Johnny not present] failed",
+        "sourceCharacterId": "Lutz Emilion"
+      }
+    },
+    {
+      "type": "event",
+      "content": "走回驯鹿酒吧，悄悄靠近吧台 成功",
+      "gameDay": 2,
+      "gameTime": "01:10",
+      "location": "SCN_16_SUB_1",
+      "metadata": {
+        "outcome": "走回驯鹿酒吧，悄悄靠近吧台 成功",
+        "blockedReason": "",
+        "failureReason": ""
+      }
+    },
+    {
+      "type": "witness",
+      "content": "[相遇] 我在一层大厅与柯文德、卢茨、帕特里齐奥和塔兰面对面相遇。看到柯文德和塔兰让我立刻紧张——他们之前试图抢我的相机和存储卡，柯文德也曾拿过枪。卢茨在场是确认存储卡是否安全并私下叮嘱他的唯一机会，但我必须小心避免与柯文德正面冲突。我感到害怕、愤怒和急切，准备立刻悄声接近卢茨确认证物并设法提醒海伦撤离。",
+      "gameDay": 2,
+      "gameTime": "01:10",
+      "location": "SCN_16_SUB_1",
+      "metadata": {
+        "impact": 2,
+        "perspective": "co_presence",
+        "sourceAction": "Kovind, Lutz Emilion, Patrizio von Samsa, Taran Emilion 在 一层大厅",
+        "sourceCharacterId": "__encounter__"
+      }
+    },
+    {
+      "type": "event",
+      "content": "柯文德突然向我猛扑，想抢我的相机和存储卡，我抵抗并守住了这些物品。被他当众挑衅让我更警觉和愤怒，酒吧里的紧张氛围明显加剧。",
+      "gameDay": 2,
+      "gameTime": "01:13",
+      "location": "SCN_16_SUB_1",
+      "metadata": {
+        "outcome": "猛扑向约翰尼，强行夺取他的相机与存储卡 [STR 1, rolled 51 (difficulty: regular)] failed"
+      }
+    },
+    {
+      "type": "event",
+      "content": "低声确认卢茨仍把存储卡和照片锁在收银机抽屉里，并严肃嘱咐他别把这些东西交给任何人，遇到别人来问要先通知我。 [在 SCN_16_SUB_1 因重新规划而中断] 已中断",
+      "gameDay": 2,
+      "gameTime": "01:13",
+      "location": "SCN_16_SUB_1",
+      "metadata": {
+        "outcome": "低声确认卢茨仍把存储卡和照片锁在收银机抽屉里，并严肃嘱咐他别把这些东西交给任何人，遇到别人来问要先通知我。 [在 SCN_16_SUB_1 因重新规划而中断] 已中断",
+        "interruptionReason": "revise_replan"
+      }
+    },
+    {
+      "type": "event",
+      "content": "[直接] 柯文德突然猛扑过来想抢我的相机和存储卡，但我抵抗住并保住了物品。酒吧气氛因此更加紧张，监控仍然损坏，吧台上的武器很明显。我又害怕又愤怒，必须立刻悄声确认卢茨确实把存储卡藏好并私下提醒海伦尽快撤离，同时尽量避开柯文德。",
+      "gameDay": 2,
+      "gameTime": "01:13",
+      "location": "SCN_16_SUB_1",
+      "metadata": {
+        "impact": 2,
+        "perspective": "targeted",
+        "sourceAction": "我猛扑向约翰尼，试图强行夺走他的相机与存储卡，但动作失败；约翰尼当场反抗并保住了物件。酒吧气氛因此更紧张，监控损坏和吧台上的武器仍然显眼。",
+        "sourceCharacterId": "Kovind"
+      }
+    },
+    {
+      "type": "witness",
+      "content": "[目击] 我看到帕特里齐奥以镇长那种果断的语气和姿态迅速上前，把科温德制服并当场搜身，抢回了他手中的相机与存储卡，还解除并收缴了他的猎枪，酒吧局势被他稳住。我的第一反应是松了一口气——枪不在科温德手里了——但马上又紧张和愤怒：证物现在被帕特里齐奥拿走了，我必须立刻查清他把相机和存储卡放到哪儿、能不能拿回，马上确认卢茨是否还有备份并悄悄提醒海伦离开酒吧。",
+      "gameDay": 2,
+      "gameTime": "01:16",
+      "location": "SCN_16_SUB_1",
+      "metadata": {
+        "impact": 2,
+        "perspective": "witness",
+        "sourceAction": "我以镇长特有的语气与姿态迅速上前，将科温德制服并当场搜身，夺回他手中的相机与存储卡，并解除并收缴了他的猎枪以防其使用。整个过程稳健而果断，酒吧内的局势被我控制住。",
+        "sourceCharacterId": "Patrizio von Samsa"
+      }
+    },
+    {
+      "type": "event",
+      "content": "悄声靠近卢茨，确认他仍把存储卡和照片锁在收银机抽屉里，并严肃嘱咐他不要把这些东西交给任何人，若有人来问先通知我 [在 SCN_16_SUB_1 因重新规划而中断] 已中断",
+      "gameDay": 2,
+      "gameTime": "01:16",
+      "location": "SCN_16_SUB_1",
+      "metadata": {
+        "outcome": "悄声靠近卢茨，确认他仍把存储卡和照片锁在收银机抽屉里，并严肃嘱咐他不要把这些东西交给任何人，若有人来问先通知我 [在 SCN_16_SUB_1 因重新规划而中断] 已中断",
+        "interruptionReason": "revise_replan"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我上前用强硬语气逼问帕特里齐奥把相机和存储卡交出来或当场出示物证。帕特里齐奥冷静抵抗，没有交出任何东西，拒绝配合，酒吧内气氛变得更紧张。 [rel:Patrizio von Samsa -15 → -15]",
+      "gameDay": 2,
+      "gameTime": "01:19",
+      "location": "SCN_16_SUB_1",
+      "metadata": {
+        "outcome": "上前逼问Patrizio把相机和存储卡放到哪儿，强硬要求他当场交还或出示物证 [Intimidate 50, rolled 31 (regular) — all targets resisted] failed"
+      }
+    },
+    {
+      "type": "event",
+      "content": "悄声靠近卢茨，低声确认他是否还有照片或存储卡的备份，并严令他不要把任何东西交给别人，遇到有人来问要立刻通知我 [在 SCN_16_SUB_1 因重新规划而中断] 已中断",
+      "gameDay": 2,
+      "gameTime": "01:22",
+      "location": "SCN_16_SUB_1",
+      "metadata": {
+        "outcome": "悄声靠近卢茨，低声确认他是否还有照片或存储卡的备份，并严令他不要把任何东西交给别人，遇到有人来问要立刻通知我 [在 SCN_16_SUB_1 因重新规划而中断] 已中断",
+        "interruptionReason": "revise_replan"
+      }
+    },
+    {
+      "type": "witness",
+      "content": "[目击] 刚才看到柯文德当众下令让卢茨和塔兰封锁所有出入口、没收手机并把我和帕特里齐奥围住，甚至宣布违命开枪处理——命令被执行起来，现场暂时被他控制。我的心一下子紧到喉咙，既愤怒又害怕：一方面这更危险了（有人手里有枪、出入口被封），另一方面证物更可能被人掌握或销毁（帕特里齐奥刚把相机和存储卡抢走）。我现在很急切、高度戒备，必须立刻行动：悄声确认卢茨是否还有备份并暗示他绝对别交出任何东西；找机会查清帕特里齐奥把相机/存储卡放在哪儿并尽力取回；尽快私下提醒海伦撤离到安全地点；同时尽量避免与持枪或执令者正面冲突，选择隐蔽与谈判为先。今天其余计划（送花、出门狩猎、五金店修理）全部推后，直到证物和海伦安全为止。",
+      "gameDay": 2,
+      "gameTime": "01:22",
+      "location": "SCN_16_SUB_1",
+      "metadata": {
+        "impact": 2,
+        "perspective": "witness",
+        "sourceAction": "我当众命令卢茨与塔兰立刻封锁所有出入口、没收所有手机并把帕特里齐奥和约翰尼围住，禁止任何人接近或带走相机与存储卡，并声明违命开枪处理。命令被执行起来，尽管他们明显不情愿，但我暂时恢复了对现场的控制。",
+        "sourceCharacterId": "Kovind"
+      }
+    },
+    {
+      "type": "event",
+      "content": "悄声靠近帕特里齐奥，低声质问他把相机和存储卡放到哪里，逼他立刻指明存放处或交出来 [在 SCN_16_SUB_1 因重新规划而中断] 已中断",
+      "gameDay": 2,
+      "gameTime": "01:25",
+      "location": "SCN_16_SUB_1",
+      "metadata": {
+        "outcome": "悄声靠近帕特里齐奥，低声质问他把相机和存储卡放到哪里，逼他立刻指明存放处或交出来 [在 SCN_16_SUB_1 因重新规划而中断] 已中断",
+        "interruptionReason": "revise_replan"
+      }
+    },
+    {
+      "type": "witness",
+      "content": "[目击] 我看到柯文德当众威胁卢茨和塔兰，命令立刻搜身帕特里齐奥和我并夺回相机与存储卡，违令就开枪。塔兰不情愿开始搜查，卢茨拒绝配合，现场暂时被柯文德控制但敌意更深。我既害怕又愤怒，心跳加速——必须立刻确认证物是否还能保住、悄声指示卢茨不要交出任何东西，并尽快私下提醒海伦撤离到安全处。",
+      "gameDay": 2,
+      "gameTime": "01:25",
+      "location": "SCN_16_SUB_1",
+      "metadata": {
+        "impact": 2,
+        "perspective": "witness",
+        "sourceAction": "我当众威胁卢茨和塔兰：立刻搜身帕特里齐奥和约翰尼，把相机与存储卡夺回来，违命就开枪。塔兰不情愿地开始搜查，卢茨拒绝配合，场面因此暂时由我恢复控制，但敌意更深了。",
+        "sourceCharacterId": "Kovind"
+      }
+    },
+    {
+      "type": "witness",
+      "content": "[目击] 我看到柯文德把手枪指向卢茨，逼他立刻交出收银机抽屉钥匙和所有手机；卢茨当场拒绝，表面服从但明显在抵抗。我感到又害怕又愤怒、非常紧张：局势已明显升级，卢茨和存储卡的安全受到直接威胁，必须马上采取行动——设法阻止或拖延柯文德、悄声确认并夺回证物，同时暗中提醒海伦撤离。",
+      "gameDay": 2,
+      "gameTime": "01:28",
+      "location": "SCN_16_SUB_1",
+      "metadata": {
+        "impact": 2,
+        "perspective": "witness",
+        "sourceAction": "我把手枪指向卢茨，逼他立刻交出收银机抽屉钥匙和所有手机，否则就开枪。但卢茨当场拒绝，没有交出钥匙，表面服从但明显在抵抗，我的威吓没有达到预期效果。",
+        "sourceCharacterId": "Kovind"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我低声询问卢茨有没有相机或存储卡的任何备份，并严令他绝对不要把照片或存储卡交给任何人；若有人来问必须立刻通知我。他口头答应了但神情谨慎，我暂时放下警惕，但信任并未恢复。 [rel:Lutz Emilion -3 → 2]",
+      "gameDay": 2,
+      "gameTime": "01:28",
+      "location": "SCN_16_SUB_1",
+      "metadata": {
+        "outcome": "低声询问卢茨有没有相机或存储卡的任何备份，并严令他绝对不要把照片或存储卡交给任何人；若有人来问必须立刻通知我"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我悄声靠近帕特里齐奥，低声问他相机和存储卡现在放在哪儿，要求他私下交出来或告诉我藏处。但他冷静拒绝并抵抗了我的逼问，我没有得到任何信息，感到被挫败与羞辱，酒吧里的气氛更紧张。 [rel:Patrizio von Samsa -10 → -25]",
+      "gameDay": 2,
+      "gameTime": "01:31",
+      "location": "SCN_16_SUB_1",
+      "metadata": {
+        "outcome": "低声靠近帕特里齐奥，悄声询问相机和存储卡现在放在哪里，要求他私下交出来或告诉我存放处（不在柯文德或塔兰面前大声说） [Persuade 10, rolled 45 (fail) — all targets resisted] failed"
+      }
+    },
+    {
+      "type": "witness",
+      "content": "[目击] 我看到柯文德当众试图逼迫卢茨和塔兰交出相机与存储卡并封锁出口，但他的恐吓并未完全奏效；在和卢茨对峙时我自己不慎擦伤，未能取得决定性控制。塔兰拒绝屈服，场面仍然很紧张。我又害怕又愤怒，必须立刻悄声确认卢茨是否还保管着存储卡并严令他别交出，同时悄悄提醒海伦撤离，设法让帕特里齐奥或其他人取回相机或趁乱把存储卡转移到更安全的藏处，尽量避免与持枪者正面冲突。",
+      "gameDay": 2,
+      "gameTime": "01:31",
+      "location": "SCN_16_SUB_1",
+      "metadata": {
+        "impact": 2,
+        "perspective": "witness",
+        "sourceAction": "我试图逼迫卢茨和塔兰交出相机与存储卡并封锁出口，但我的恐吓未能整体奏效；在对卢茨的对峙中我失手自伤（意外擦伤），没有因此取得决定性控制。塔兰拒绝屈服，场面仍然紧张。",
+        "sourceCharacterId": "Kovind"
+      }
+    },
+    {
+      "type": "witness",
+      "content": "[相遇] 我在卡森德拉南新街碰到了Shandra Hernandez。见到她让我有点惊讶但并不慌——她可能是个能提供信息或作为传话人的人，但眼下我的首要任务仍是确认卢茨手里是否还有存储卡并悄悄提醒海伦撤离。我暂时不会改变计划或立刻行动，只会留意她的态度并在必要时利用她的帮助。",
+      "gameDay": 2,
+      "gameTime": "01:32",
+      "location": "ROAD_3",
+      "metadata": {
+        "impact": 2,
+        "perspective": "co_presence",
+        "sourceAction": "Shandra Hernandez 在 卡森德拉南新街",
+        "sourceCharacterId": "__encounter__"
+      }
+    },
+    {
+      "type": "event",
+      "content": "悄悄走到海伦的餐桌，私下提醒海伦尽快离开酒吧并躲到安全处 成功",
+      "gameDay": 2,
+      "gameTime": "01:49",
+      "location": "SCN_10_SUB_1",
+      "metadata": {
+        "outcome": "悄悄走到海伦的餐桌，私下提醒海伦尽快离开酒吧并躲到安全处 成功",
+        "blockedReason": "",
+        "failureReason": ""
+      }
+    },
+    {
+      "type": "witness",
+      "content": "[相遇] 我在小餐厅当面碰到了海伦，悄声提醒她尽快离开酒吧并躲到安全处。看到她时我既松了口气又很紧张——她看起来害怕但没受伤。我现在急切想立即护送她离开并同时确认卢茨那边的存储卡是否安全，心情是保护性强烈并带着焦虑。",
+      "gameDay": 2,
+      "gameTime": "01:49",
+      "location": "SCN_10_SUB_1",
+      "metadata": {
+        "impact": 2,
+        "perspective": "co_presence",
+        "sourceAction": "Helen 在 小餐厅",
+        "sourceCharacterId": "__encounter__"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我低声说服海伦现在就跟我离开餐厅，去日暮大道东端的森林入口躲避；她当场口头确认不会回酒吧并跟我一起离开。她虽显警惕但没有拒绝，我控制住情绪，带她离开。 [rel:Helen +5 → 85]",
+      "gameDay": 2,
+      "gameTime": "01:53",
+      "location": "SCN_10_SUB_1",
+      "metadata": {
+        "outcome": "低声说服海伦跟我离开餐厅，立刻随我去日暮大道东端的森林入口躲避，并确认她不会回酒吧"
+      }
+    },
+    {
+      "type": "witness",
+      "content": "[相遇] 我在卡森德拉北新街意外与Solomon面对面相遇。他的出现让我有点吃惊并保持戒备，但并未立刻改变我当前的优先级——我仍以确认海伦安全和确保存储卡为第一要务。短时间内我会保持低调、观察他的态度并避免与陌生人纠缠，只有在他表现出威胁或能提供关键帮助时才会调整行动。",
+      "gameDay": 2,
+      "gameTime": "01:54",
+      "location": "ROAD_2",
+      "metadata": {
+        "impact": 2,
+        "perspective": "co_presence",
+        "sourceAction": "Solomon 在 卡森德拉北新街",
+        "sourceCharacterId": "__encounter__"
+      }
+    },
+    {
+      "type": "witness",
+      "content": "[相遇] 我在日暮大道遇到了Angela。她跟我打了个招呼，态度平静也没有表现出威胁。我有点惊讶，但保持警惕；这只是一个短暂遭遇，不会改变我当前优先确保海伦与存储卡安全的计划。",
+      "gameDay": 2,
+      "gameTime": "02:02",
+      "location": "ROAD_10",
+      "metadata": {
+        "impact": 2,
+        "perspective": "co_presence",
+        "sourceAction": "Angela 在 日暮大道",
+        "sourceCharacterId": "__encounter__"
+      }
+    },
+    {
+      "type": "event",
+      "content": "带海伦离开餐厅，悄悄前往日暮大道东端·森林入口躲避 成功",
+      "gameDay": 2,
+      "gameTime": "02:17",
+      "location": "JUNC_11",
+      "metadata": {
+        "outcome": "带海伦离开餐厅，悄悄前往日暮大道东端·森林入口躲避 成功",
+        "blockedReason": "",
+        "failureReason": ""
+      }
+    },
+    {
+      "type": "event",
+      "content": "低声再次确认海伦不会回酒吧，嘱咐她留在森林入口并保持隐蔽，等我通知再离开 成功",
+      "gameDay": 2,
+      "gameTime": "02:23",
+      "location": "JUNC_11",
+      "metadata": {
+        "outcome": "低声再次确认海伦不会回酒吧，嘱咐她留在森林入口并保持隐蔽，等我通知再离开 成功"
+      }
+    },
+    {
+      "type": "event",
+      "content": "悄声确认海伦仍在林地入口的藏匿处并再三嘱咐她保持隐蔽、不要回酒吧，遇到可疑声音不要回应，等我通知再离开 成功",
+      "gameDay": 2,
+      "gameTime": "02:29",
+      "location": "JUNC_11",
+      "metadata": {
+        "outcome": "悄声确认海伦仍在林地入口的藏匿处并再三嘱咐她保持隐蔽、不要回酒吧，遇到可疑声音不要回应，等我通知再离开 成功"
+      }
+    },
+    {
+      "type": "witness",
+      "content": "[相遇] 刚在日暮大道遇到Angela，她向我打招呼，态度平静没有表现出威胁。我有点惊讶但保持警惕；这是短暂相遇，不会改变我当前以确保海伦与存储卡安全为优先的计划。",
+      "gameDay": 2,
+      "gameTime": "02:38",
+      "location": "ROAD_10",
+      "metadata": {
+        "impact": 2,
+        "perspective": "co_presence",
+        "sourceAction": "Angela 在 日暮大道",
+        "sourceCharacterId": "__encounter__"
+      }
+    },
+    {
+      "type": "event",
+      "content": "悄悄返回驯鹿酒吧，准备私下靠近卢茨确认他是否仍保管存储卡并设法取得收银机抽屉钥匙 成功",
+      "gameDay": 2,
+      "gameTime": "02:53",
+      "location": "SCN_16_SUB_1",
+      "metadata": {
+        "outcome": "悄悄返回驯鹿酒吧，准备私下靠近卢茨确认他是否仍保管存储卡并设法取得收银机抽屉钥匙 成功",
+        "blockedReason": "",
+        "failureReason": ""
+      }
+    },
+    {
+      "type": "witness",
+      "content": "[相遇] 我刚在一层大厅与卢茨、帕特里齐奥和塔兰当面相遇。看到帕特里齐奥在场我立刻紧张——他之前有可能掌握我的相机和存储卡。我既害怕又愤怒，感到局势更紧急：必须悄声确认帕特里齐奥是否真的拿着证物并询问藏匿地点，或设法在不激怒柯文德/塔兰的情况下把东西取回；同时低调确认卢茨是否还有备份并严令他别交人，并尽快保证海伦的安全和撤离。",
+      "gameDay": 2,
+      "gameTime": "02:53",
+      "location": "SCN_16_SUB_1",
+      "metadata": {
+        "impact": 2,
+        "perspective": "co_presence",
+        "sourceAction": "Lutz Emilion, Patrizio von Samsa, Taran Emilion 在 一层大厅",
+        "sourceCharacterId": "__encounter__"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我低声向卢茨索要收银机抽屉钥匙，并严令他绝对不要把存储卡或照片交给任何人，遇到有人来问要先悄声通知我。但我的恐吓没有奏效——卢茨抵抗并未交出钥匙，我没得到任何承诺，局面依旧僵硬。 [rel:Lutz Emilion -3 → -1]",
+      "gameDay": 2,
+      "gameTime": "02:56",
+      "location": "SCN_16_SUB_1",
+      "metadata": {
+        "outcome": "低声向卢茨索要收银机抽屉钥匙，并严令他绝对不要把存储卡或照片交给任何人，遇到有人来问要先悄声通知我 [Intimidate 50, rolled 54 (fail) — all targets resisted] failed"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我在驯鹿酒吧的昏暗角落靠近帕特里齐奥，低声威胁他要他交出相机和存储卡或说出藏匿地点，想用压迫逼他就范。但他冷静地抵抗，没有交出任何东西，威胁没有奏效，我感到更受挫与羞辱。我的愤怒上升，事态可能会升级。 [rel:Patrizio von Samsa -10 → -35]",
+      "gameDay": 2,
+      "gameTime": "03:02",
+      "location": "SCN_16_SUB_1",
+      "metadata": {
+        "outcome": "悄声威胁帕特里齐奥，逼他交出相机和存储卡或说出藏匿地点 [Intimidate 40, rolled 84 (fail) — all targets resisted] failed"
+      }
+    },
+    {
+      "type": "witness",
+      "content": "[目击] 我刚看到塔兰检查了吧台后面的储物柜，锁仍然上着、没有明显破损，但储物柜的钥匙现在由帕特里齐奥持有，暂时无法打开。我又气又紧张——这可能意味着帕特里齐奥掌握了证物或能接触到柜内的东西。我必须立刻行动：悄声确认帕特里齐奥手里到底有没有相机或存储卡，设法拿到钥匙或找出藏匿处，同时继续确保海伦安全，尽量避免与持枪或执令者正面冲突。",
+      "gameDay": 2,
+      "gameTime": "03:03",
+      "location": "SCN_16_SUB_1",
+      "metadata": {
+        "impact": 2,
+        "perspective": "witness",
+        "sourceAction": "我检查了吧台后方储物柜的锁，确认柜门仍然上着锁，锁体无明显破损；储物柜的钥匙现在由Patrizio持有，暂时无法打开。",
+        "sourceCharacterId": "Taran Emilion"
+      }
+    },
+    {
+      "type": "event",
+      "content": "低声威胁卢茨，逼他把收银机抽屉钥匙交给我，或当场把存储卡转移到我指定的安全藏处，否则我会采取行动 [在 SCN_16_SUB_1 因重新规划而中断] 已中断",
+      "gameDay": 2,
+      "gameTime": "03:03",
+      "location": "SCN_16_SUB_1",
+      "metadata": {
+        "outcome": "低声威胁卢茨，逼他把收银机抽屉钥匙交给我，或当场把存储卡转移到我指定的安全藏处，否则我会采取行动 [在 SCN_16_SUB_1 因重新规划而中断] 已中断",
+        "interruptionReason": "revise_replan"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我低声问卢茨相机或存储卡是否有任何备份，并严令他绝对不要把这些东西交给任何人，遇到有人询问要先悄声通知我。卢茨低声回我说存储卡已经被销毁，并口头表示如果有人来问会先通知我，但语气谨慎。 [rel:Lutz Emilion -3 → -4]",
+      "gameDay": 2,
+      "gameTime": "03:06",
+      "location": "SCN_16_SUB_1",
+      "metadata": {
+        "outcome": "低声确认卢茨是否有相机或存储卡的任何备份，并严令他绝对不要把这些东西交给任何人，遇到有人询问要先悄声通知我"
+      }
+    },
+    {
+      "type": "event",
+      "content": "悄悄观察帕特里齐奥的动作，密切注意他是否携带储物柜钥匙、触摸或靠近吧台后方储物柜及他可能藏匿相机或存储卡的行为 成功",
+      "gameDay": 2,
+      "gameTime": "03:12",
+      "location": "SCN_16_SUB_1",
+      "metadata": {
+        "outcome": "悄悄观察帕特里齐奥的动作，密切注意他是否携带储物柜钥匙、触摸或靠近吧台后方储物柜及他可能藏匿相机或存储卡的行为 成功"
+      }
+    },
+    {
+      "type": "event",
+      "content": "悄声观察帕特里齐奥随身物品，确认他是否携带储物柜钥匙或相机/存储卡的迹象 成功",
+      "gameDay": 2,
+      "gameTime": "03:15",
+      "location": "SCN_16_SUB_1",
+      "metadata": {
+        "outcome": "悄声观察帕特里齐奥随身物品，确认他是否携带储物柜钥匙或相机/存储卡的迹象 成功"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我压低声音问帕特里齐奥吧台后储物柜的钥匙或有没有相机/存储卡，让他私下交出或指明藏匿处。他悄悄把储物柜钥匙递给我，并低声说嵌墙保险箱里只剩下加塔诺托亚的诅咒画像和梦王会的仪式手稿，里面没有今晚监控录像的拷贝。 [rel:Patrizio von Samsa -5 → -40]",
+      "gameDay": 2,
+      "gameTime": "03:18",
+      "location": "SCN_16_SUB_1",
+      "metadata": {
+        "outcome": "低声询问帕特里齐奥是否携带吧台后储物柜的钥匙或有相机/存储卡，要求他私下交出或指明藏匿处，压低语气以免惊动柯文德或塔兰"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我用帕特里齐奥给的钥匙打开了吧台后方的储物柜，迅速检查了里面，没发现相机或存储卡。钥匙现在在我手上，储物柜门敞开。",
+      "gameDay": 2,
+      "gameTime": "03:21",
+      "location": "SCN_16_SUB_1",
+      "metadata": {
+        "outcome": "用帕特里齐奥给的钥匙打开吧台后方储物柜并快速检查内部是否有相机或存储卡"
+      }
+    },
+    {
+      "type": "event",
+      "content": "有人悄悄碰了我的手，但我当时没太在意；之后发现储物柜的钥匙不见了，我感到被愚弄和羞辱，怀疑是帕特里齐奥所为。",
+      "gameDay": 2,
+      "gameTime": "03:23",
+      "location": "SCN_16_SUB_1",
+      "metadata": {
+        "outcome": "悄声从约翰尼手中夺回吧台后方储物柜的钥匙"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我悄声靠近卢茨，低声告诉他储物柜里没有相机或存储卡，并严厉命令他当场确认是否还有任何备份、在安全时把存储卡转移到我指定的隐蔽处，绝对不要把任何东西交给任何人，若有人来询问必须先悄声通知我。卢茨低声回称存储卡已被销毁并口头表示会先通知我，但语气谨慎且未提供可验证的证据，我感到他的承诺不足以满足我的需求，信任没有修复。 [rel:Lutz Emilion -3 → -7]",
+      "gameDay": 2,
+      "gameTime": "03:25",
+      "location": "SCN_16_SUB_1",
+      "metadata": {
+        "outcome": "悄声靠近卢茨，把储物柜里空无相机或存储卡的情况低声告诉他，严厉要求他当场确认是否还有任何备份并在安全时把存储卡转移到我指定的隐蔽处，命令他现在绝对不要把任何东西交给任何人，若有人来询问必须先悄声通知我"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我没有注意到有人从我手里拿走了储物柜的钥匙；到现在为止我仍以为钥匙还在我这里。",
+      "gameDay": 2,
+      "gameTime": "03:29",
+      "location": "SCN_16_SUB_1",
+      "metadata": {
+        "outcome": "悄无声息地从约翰尼手中夺回吧台后方储物柜的钥匙并将其藏好"
+      }
+    },
+    {
+      "type": "event",
+      "content": "悄声留在一层大厅靠近帕特里齐奥的侧后方，暗中盯着他的一举一动，注意他是否掏出或藏入任何小型物品（钥匙、相机、存储卡），并在发现可疑动作时记住位置以便后续取回 成功",
+      "gameDay": 2,
+      "gameTime": "03:29",
+      "location": "SCN_16_SUB_1",
+      "metadata": {
+        "outcome": "悄声留在一层大厅靠近帕特里齐奥的侧后方，暗中盯着他的一举一动，注意他是否掏出或藏入任何小型物品（钥匙、相机、存储卡），并在发现可疑动作时记住位置以便后续取回 成功"
+      }
+    },
+    {
+      "type": "witness",
+      "content": "[目击] 我看到塔兰彻底搜查了吧台后方的储物柜和周边隐蔽处，却什么也没找到——既没有我的相机也没有存储卡，也没发现篡改痕迹。我感到又愤怒又紧张：这说明证物不在柜里，很可能被人带走或藏到别处（帕特里齐奥最可疑）。现在必须立刻行动：悄悄确认帕特里齐奥手里到底有没有钥匙或证物，尽快从卢茨核实有没有备份，并私下把海伦转移到安全处，避免当众激怒持枪者。",
+      "gameDay": 2,
+      "gameTime": "03:30",
+      "location": "SCN_16_SUB_1",
+      "metadata": {
+        "impact": 2,
+        "perspective": "witness",
+        "sourceAction": "我彻底搜查了吧台后方的储物柜和周边隐蔽处，但没找到约翰尼的相机或存储卡，也没有发现任何被篡改的痕迹。",
+        "sourceCharacterId": "Taran Emilion"
+      }
+    },
+    {
+      "type": "plan",
+      "content": "Today's plan: 1. 在一层大厅冷静下来，喝一杯酒平复情绪并回想今晚的争执。 at 驯鹿酒吧; 2. 询问酒保和常客海伦离开的方向，确认她去了哪里并打听菲利普是否还在镇上。 at 驯鹿酒吧; 3. 买一束花作为补偿礼物，准备向海伦真诚道歉。 at 花店·卡森德拉之花; 4. 亲自找到海伦，当面道歉并尝试重新安排一次不被打扰的约会。 at 海伦的餐桌; 5. 若海伦不在餐厅，沿北新街走到三岔口继续寻找她或追踪她离开的路线。 at 北新街端点三岔口; 6. 如有需要，向哈里森打听菲利普的下落并顺便买些简单的过夜装备以备不时之需。 at 五金店; 7. 若仍未能见到海伦，回到酒吧在角落里等到闭店后再决定去哪里过夜休息。 at 驯鹿酒吧",
+      "gameDay": 1,
+      "gameTime": "19:00",
+      "location": null,
+      "metadata": {
+        "planType": "daily"
+      }
+    },
+    {
+      "type": "event",
+      "content": "坐到吧台边要一杯波本并慢慢喝下去以冷静下来，回想刚才与菲利普争吵的经过 成功",
+      "gameDay": 1,
+      "gameTime": "19:10",
+      "location": "SCN_16_SUB_1",
+      "metadata": {
+        "outcome": "坐到吧台边要一杯波本并慢慢喝下去以冷静下来，回想刚才与菲利普争吵的经过 成功"
+      }
+    },
+    {
+      "type": "witness",
+      "content": "[目击] 我看到塔兰在一层大厅迎接进门的顾客，维持酒吧的气氛；卢茨巡视了整层大厅，把灯光调回可用的昏黄亮度、调低了背景音乐并把吧台整理整齐，但那套监控设备依然损坏，未被修好。我心里仍然紧张——监控坏了让我有点不安，但这并不改变我现在先冷静下来、按原计划去找海伦的打算。",
+      "gameDay": 1,
+      "gameTime": "19:10",
+      "location": "SCN_16_SUB_1",
+      "metadata": {
+        "impact": 2,
+        "perspective": "witness",
+        "sourceAction": "在一层大厅迎接进门的顾客并维持酒吧的气氛 成功",
+        "sourceCharacterId": "Taran Emilion"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我在一层大厅靠低声问卢茨和塔兰：海伦刚才往哪个方向离开？菲利普还在镇上吗？但两人都不在这里，我找遍了大厅也没遇到他们，所以没有得到任何信息。",
+      "gameDay": 1,
+      "gameTime": "19:16",
+      "location": "SCN_16_SUB_1",
+      "metadata": {
+        "outcome": "低声问卢茨和塔兰：海伦刚才往哪个方向离开？菲利普还在镇上吗？"
+      }
+    },
+    {
+      "type": "event",
+      "content": "走出一层大厅，前往花店买一束花作为补偿礼物 成功",
+      "gameDay": 1,
+      "gameTime": "19:28",
+      "location": "SCN_9_SUB_1",
+      "metadata": {
+        "outcome": "走出一层大厅，前往花店买一束花作为补偿礼物 成功",
+        "blockedReason": "",
+        "failureReason": ""
+      }
+    },
+    {
+      "type": "witness",
+      "content": "[相遇] 我在花店“卡森德拉之花”碰到了Angela、Nancy Charlotte和Simon Laplace。他们正在店里交谈，气氛平静。我有点紧张，担心别人看到我买花或被问到海伦的去向，但这不会改变我要买花并去找海伦的计划。",
+      "gameDay": 1,
+      "gameTime": "19:28",
+      "location": "SCN_9_SUB_1",
+      "metadata": {
+        "impact": 2,
+        "perspective": "co_presence",
+        "sourceAction": "Angela, Nancy Charlotte, Simon Laplace (Simon) 在 花店·卡森德拉之花",
+        "sourceCharacterId": "__encounter__"
+      }
+    },
+    {
+      "type": "witness",
+      "content": "[相遇] 我在北新街碰到了Solomon，和他面对面相遇。他看起来没有敌意，只是点了点头。我有点惊讶和紧张，担心他会问起海伦或昨晚的争执，但这只是短暂的分心，并不会改变我先去驯鹿酒吧冷静一下、买花然后去找海伦的计划。",
+      "gameDay": 1,
+      "gameTime": "19:36",
+      "location": "ROAD_2",
+      "metadata": {
+        "impact": 2,
+        "perspective": "co_presence",
+        "sourceAction": "Solomon 在 卡森德拉北新街",
+        "sourceCharacterId": "__encounter__"
+      }
+    },
+    {
+      "type": "event",
+      "content": "[直接] 我看到阿道夫·卡尔试图以礼貌而克制的口吻和我与索罗门搭话，试探我们的此行目的并暗中辨认衣着、口音与随行情况，但他没找到我（target Johnny not present 失败）。这让我感到不安和被监视，心里紧张但不会立刻放弃去找海伦的打算，只是决定更谨慎些。",
+      "gameDay": 1,
+      "gameTime": "19:42",
+      "location": "ROAD_2",
+      "metadata": {
+        "impact": 1,
+        "perspective": "targeted",
+        "sourceAction": "以礼貌而克制的口吻与Johnny和Solomon搭话，试探他们此行目的并暗中辨认衣着、口音与随行情况 [target Johnny not present] failed",
+        "sourceCharacterId": "Adolph Carl"
+      }
+    },
+    {
+      "type": "event",
+      "content": "[直接] 我感到阿道夫·卡尔试图以礼貌而克制的口吻和我与索罗门搭话，探听我们此行目的并暗中记录衣着、口音与随行人数与去向，但他没找到我（target Johnny not present）。这让我有些不安和被监视，心里紧张，但我不会立刻放弃去找海伦的打算，只是决定提高警惕，暂不主动对质，先向索罗门打听情况再决定下一步。",
+      "gameDay": 1,
+      "gameTime": "19:48",
+      "location": "ROAD_2",
+      "metadata": {
+        "impact": 1,
+        "perspective": "targeted",
+        "sourceAction": "以礼貌而克制的口吻向Johnny和Solomon搭话，试探他们此行目的并暗中记录衣着、口音与同行人数与去向 [target Johnny not present] failed",
+        "sourceCharacterId": "Adolph Carl"
+      }
+    },
+    {
+      "type": "event",
+      "content": "[直接] 在北新街（ROAD_2），我注意到阿道夫·卡尔试图以礼貌而克制的口吻与我与索罗门搭话，探听我们此行目的并暗中记录衣着、口音与随行人数，但他没找到我（未能直接接触到我）。我感到被盯着、有些不安和紧张，但不会放弃今晚去找海伦的计划；我决定提高警惕、避免招摇，暂不正面对质，先向索罗门打听情况再决定下一步。",
+      "gameDay": 1,
+      "gameTime": "19:54",
+      "location": "ROAD_2",
+      "metadata": {
+        "impact": 1,
+        "perspective": "targeted",
+        "sourceAction": "与Johnny和Solomon交谈以试探他们此行目的并暗中记录衣着、口音与同行人数 [target Johnny not present] failed",
+        "sourceCharacterId": "Adolph Carl"
+      }
+    },
+    {
+      "type": "witness",
+      "content": "[相遇] 我在小餐厅当面碰到了海伦。看到她时心跳加速，既紧张又急切——这是当面道歉并争取她的机会，但我也担心有人在暗中注视（比如阿道夫），所以想既主动又谨慎地应对。",
+      "gameDay": 1,
+      "gameTime": "19:55",
+      "location": "SCN_10_SUB_1",
+      "metadata": {
+        "impact": 2,
+        "perspective": "co_presence",
+        "sourceAction": "Helen 在 小餐厅",
+        "sourceCharacterId": "__encounter__"
+      }
+    },
+    {
+      "type": "event",
+      "content": "步行前往海伦的餐桌以当面道歉并尝试重新安排一次不被打扰的约会 成功",
+      "gameDay": 1,
+      "gameTime": "19:55",
+      "location": "SCN_10_SUB_1",
+      "metadata": {
+        "outcome": "步行前往海伦的餐桌以当面道歉并尝试重新安排一次不被打扰的约会 成功",
+        "blockedReason": "",
+        "failureReason": ""
+      }
+    },
+    {
+      "type": "event",
+      "content": "我低声向海伦真诚道歉，并请她能否私下交谈或出去短暂散步以避开旁人；她没有当场拒绝，答应私下说话或出去片刻。她跟我说她记得我在驯鹿酒吧那晚是和菲利普打起来的，不希望那件事被进一步夸大，并同意我们留意周围是否有人在监视。 [rel:Helen +3 → 83]",
+      "gameDay": 1,
+      "gameTime": "19:59",
+      "location": "SCN_10_SUB_1",
+      "metadata": {
+        "outcome": "低声向海伦真诚道歉，并悄声请求能否私下交谈或出去短暂散步以避开旁人，留意周围是否有人在监视"
+      }
+    },
+    {
+      "type": "witness",
+      "content": "[相遇] 我在小餐厅与海伦和哈里森面对面相遇。看到海伦时心跳加速，既紧张又急切——这是当面道歉并争取私下谈话的机会。哈里森在场让我有些警觉，担心他会影响交谈或评价我；我也留意是否有人（比如阿道夫）在暗中注视。所以我打算既主动又谨慎地接近海伦，尝试把对话转为私下。",
+      "gameDay": 1,
+      "gameTime": "21:34",
+      "location": "SCN_10_SUB_1",
+      "metadata": {
+        "impact": 2,
+        "perspective": "co_presence",
+        "sourceAction": "Harrison Lockheed, Helen 在 小餐厅",
+        "sourceCharacterId": "__encounter__"
+      }
+    },
+    {
+      "type": "witness",
+      "content": "[目击] 我看到哈里森向海伦低声寒暄并点菜，趁机悄声打听镇上风声和阿道夫是否露面，同时密切盯着我的表情。我感到被盯上了，既紧张又恼火——这会妨碍我和海伦单独交谈。我打算更谨慎，尽快把海伦带到没人注意的地方，避免与哈里森正面冲突，同时留意阿道夫的动向。",
+      "gameDay": 1,
+      "gameTime": "21:40",
+      "location": "SCN_10_SUB_1",
+      "metadata": {
+        "impact": 2,
+        "perspective": "witness",
+        "sourceAction": "向海伦低声寒暄并点一份招牌菜，借机悄声打听镇上最近的风声以及阿道夫是否有露面，同时密切观察约翰尼的表情与反应 成功",
+        "sourceCharacterId": "Harrison Lockheed"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我低声拉住海伦的手，示意去后门外短暂散步以避开哈里森。她同意了，并表示会配合留意周围是否有人在监视；她还提到记得驯鹿酒吧那晚我与菲利普的冲突，不希望那件事被进一步夸大。 [rel:Helen +0 → 83]",
+      "gameDay": 1,
+      "gameTime": "21:44",
+      "location": "SCN_10_SUB_1",
+      "metadata": {
+        "outcome": "低声拉住海伦的手，示意她跟我到外面后门处短暂散步以避开哈里森"
+      }
+    },
+    {
+      "type": "witness",
+      "content": "[相遇] 我在北新街当面遇到海伦和哈里森。看到海伦时心跳加速，既紧张又急切；哈里森在场让我警觉，担心他会妨碍我与海伦单独交谈。我打算立刻接近海伦，低声道歉并设法把她带到没人注意的地方，同时留意是否有人（比如阿道夫）在暗中监视。",
+      "gameDay": 1,
+      "gameTime": "21:45",
+      "location": "ROAD_2",
+      "metadata": {
+        "impact": 2,
+        "perspective": "co_presence",
+        "sourceAction": "Harrison Lockheed, Helen 在 卡森德拉北新街",
+        "sourceCharacterId": "__encounter__"
+      }
+    },
+    {
+      "type": "event",
+      "content": "牵着海伦走出后门到外面短暂散步，避开哈里森并环顾周围寻找可疑人物 [在 ROAD_2 因重新规划而中断] 已中断",
+      "gameDay": 1,
+      "gameTime": "21:45",
+      "location": "ROAD_2",
+      "metadata": {
+        "outcome": "牵着海伦走出后门到外面短暂散步，避开哈里森并环顾周围寻找可疑人物 [在 ROAD_2 因重新规划而中断] 已中断",
+        "interruptionReason": "revise_replan"
+      }
+    },
+    {
+      "type": "event",
+      "content": "牵着海伦的手朝北新街端点三岔口走，低声说服她去一个更安静的地方私下谈话 [在 ROAD_2 因重新规划而中断] 已中断",
+      "gameDay": 1,
+      "gameTime": "21:47",
+      "location": "ROAD_2",
+      "metadata": {
+        "outcome": "牵着海伦的手朝北新街端点三岔口走，低声说服她去一个更安静的地方私下谈话 [在 ROAD_2 因重新规划而中断] 已中断",
+        "interruptionReason": "revise_replan"
+      }
+    },
+    {
+      "type": "witness",
+      "content": "[相遇] 我在北新街当面遇到海伦、哈里森和安吉拉。看到海伦时心跳加速，既紧张又急切——这是当面道歉并争取私下谈话的机会。但哈里森在旁让我警觉，担心他会打断或影响对话；我也留意有没有阿道夫在暗中监视。决定立刻上前，低声道歉并设法把海伦带到没人注意的地方，同时避免与哈里森正面冲突。",
+      "gameDay": 1,
+      "gameTime": "21:47",
+      "location": "ROAD_2",
+      "metadata": {
+        "impact": 2,
+        "perspective": "co_presence",
+        "sourceAction": "Angela, Harrison Lockheed, Helen 在 卡森德拉北新街",
+        "sourceCharacterId": "__encounter__"
+      }
+    },
+    {
+      "type": "witness",
+      "content": "[相遇] 我在北新街与海伦、哈里森和安吉拉当面相遇。看到海伦时心跳加速，既紧张又急切；哈里森在旁让我警觉，担心他会妨碍我与海伦单独交谈。我决定立即上前低声道歉并设法把她带到没人注意的地方，同时保持警惕，留意有没有阿道夫或其他人在暗中监视。",
+      "gameDay": 1,
+      "gameTime": "21:53",
+      "location": "ROAD_2",
+      "metadata": {
+        "impact": 2,
+        "perspective": "co_presence",
+        "sourceAction": "Angela, Helen, Harrison Lockheed 在 卡森德拉北新街",
+        "sourceCharacterId": "__encounter__"
+      }
+    },
+    {
+      "type": "event",
+      "content": "低声继续劝说海伦跟我去一个更安静的地方私下说话 [在 ROAD_2 因重新规划而中断] 已中断",
+      "gameDay": 1,
+      "gameTime": "21:53",
+      "location": "ROAD_2",
+      "metadata": {
+        "outcome": "低声继续劝说海伦跟我去一个更安静的地方私下说话 [在 ROAD_2 因重新规划而中断] 已中断",
+        "interruptionReason": "revise_replan"
+      }
+    },
+    {
+      "type": "witness",
+      "content": "[相遇] 我在北新街当面碰到了安吉拉。她看起来在附近徘徊或注意着周围，这让我有点紧张——多了一个可能的旁观者或传话人。但这不会改变我现在要做的事：继续设法接近海伦、低声道歉并争取把她带到没人注意的地方，同时警惕哈里森和阿道夫。",
+      "gameDay": 1,
+      "gameTime": "21:54",
+      "location": "ROAD_2",
+      "metadata": {
+        "impact": 2,
+        "perspective": "co_presence",
+        "sourceAction": "Angela 在 卡森德拉北新街",
+        "sourceCharacterId": "__encounter__"
+      }
+    },
+    {
+      "type": "event",
+      "content": "海伦用低声谈论镇上日常，刻意没提驯鹿酒吧或过去的争执，她用眼神和手势示意周围有人注意并能在需要时结束对话。我感到安心并愿意配合保持低调，随时准备按她的暗号行动。",
+      "gameDay": 1,
+      "gameTime": "21:54",
+      "location": "ROAD_2",
+      "metadata": {
+        "outcome": "低声与约翰尼交谈，把话题维持在镇上琐事和日常上，避免提及驯鹿酒吧或任何暴力往事，同时用眼神和短促手势扫视周围以示警并准备在必要时示意员工靠近或结束对话。"
+      }
+    },
+    {
+      "type": "event",
+      "content": "向海伦低声道歉并示意她跟我去一个更安静的地方私下说话 [在 ROAD_2 因重新规划而中断] 已中断",
+      "gameDay": 1,
+      "gameTime": "21:55",
+      "location": "ROAD_2",
+      "metadata": {
+        "outcome": "向海伦低声道歉并示意她跟我去一个更安静的地方私下说话 [在 ROAD_2 因重新规划而中断] 已中断",
+        "interruptionReason": "revise_replan"
+      }
+    },
+    {
+      "type": "witness",
+      "content": "[相遇] 我在北新街当面遇到海伦、哈里森和安吉拉。看到海伦时心跳加速，既紧张又急切——这是当面道歉并争取私下谈话的机会。我很警觉哈里森可能会干扰，也留意有没有阿道夫在暗中监视，打算立刻上前低声道歉并尝试把海伦带到一个更安静、没人注意的地方，同时尽量避免与哈里森正面冲突。",
+      "gameDay": 1,
+      "gameTime": "21:55",
+      "location": "ROAD_2",
+      "metadata": {
+        "impact": 2,
+        "perspective": "co_presence",
+        "sourceAction": "Angela, Harrison Lockheed, Helen 在 卡森德拉北新街",
+        "sourceCharacterId": "__encounter__"
+      }
+    },
+    {
+      "type": "witness",
+      "content": "[相遇] 我在北新街当面遇到海伦、哈里森和安吉拉。看到海伦时心跳加速，既紧张又迫切——这是当面道歉并争取把她单独带走的机会。我决定立刻上前低声道歉并设法把她带到没人注意的地方，同时避免与哈里森正面冲突并留意阿道夫或其他可疑人物在旁监视。情绪警觉且有些焦虑，但下定决心马上行动。",
+      "gameDay": 1,
+      "gameTime": "21:56",
+      "location": "ROAD_2",
+      "metadata": {
+        "impact": 2,
+        "perspective": "co_presence",
+        "sourceAction": "Angela, Harrison Lockheed, Helen 在 卡森德拉北新街",
+        "sourceCharacterId": "__encounter__"
+      }
+    },
+    {
+      "type": "event",
+      "content": "再次低声向海伦道歉并轻拉她的手示意去一个更安静的角落私下说话 [在 ROAD_2 因重新规划而中断] 已中断",
+      "gameDay": 1,
+      "gameTime": "21:56",
+      "location": "ROAD_2",
+      "metadata": {
+        "outcome": "再次低声向海伦道歉并轻拉她的手示意去一个更安静的角落私下说话 [在 ROAD_2 因重新规划而中断] 已中断",
+        "interruptionReason": "revise_replan"
+      }
+    },
+    {
+      "type": "witness",
+      "content": "[目击] 我在花店“卡森德拉之花”当面遇到海伦、Nancy Charlotte 和 Simon Laplace。看到海伦时心跳加速，既紧张又迫切——这是当面道歉并争取私下谈话的机会。有人在场让我警觉，我会保持低调、留意是否有人在监视（尤其是阿道夫或哈里森），尽快尝试把海伦带到更安静的地方；若被阻止就退回驯鹿酒吧冷静。",
+      "gameDay": 1,
+      "gameTime": "22:05",
+      "location": "SCN_9_SUB_1",
+      "metadata": {
+        "impact": 2,
+        "perspective": "witness",
+        "sourceAction": "沿卡森德拉北新街朝花店·卡森德拉之花方向走，留意周围是否有人在监视或尾随 成功",
+        "sourceCharacterId": "Helen"
+      }
+    },
+    {
+      "type": "event",
+      "content": "悄声挽住海伦的手臂，低声示意朝花店·卡森德拉之花方向走，去找一个更安静的角落私下谈话 成功",
+      "gameDay": 1,
+      "gameTime": "22:05",
+      "location": "SCN_9_SUB_1",
+      "metadata": {
+        "outcome": "悄声挽住海伦的手臂，低声示意朝花店·卡森德拉之花方向走，去找一个更安静的角落私下谈话 成功",
+        "blockedReason": "",
+        "failureReason": ""
+      }
+    },
+    {
+      "type": "event",
+      "content": "低声拉海伦穿过收银柜台旁的半掩木门，带她到后厅与酒窖的短廊里私下说话 成功",
+      "gameDay": 1,
+      "gameTime": "22:07",
+      "location": "SCN_9_SUB_2",
+      "metadata": {
+        "outcome": "低声拉海伦穿过收银柜台旁的半掩木门，带她到后厅与酒窖的短廊里私下说话 成功",
+        "blockedReason": "",
+        "failureReason": ""
+      }
+    },
+    {
+      "type": "event",
+      "content": "我去了后厅，想低声向海伦道歉并恳请她给我一个单独机会，邀请她出去短暂散步继续谈话，但她根本不在这里。我在房间里找了遍也没找到她，这次尝试失败了。",
+      "gameDay": 1,
+      "gameTime": "22:10",
+      "location": "SCN_9_SUB_2",
+      "metadata": {
+        "outcome": "低声向海伦道歉，表明想弥补那晚的冲突并恳请她给我一个单独机会，邀请她和我出去短暂散步继续谈话 [Persuade 10, rolled 83 (fail) — all targets resisted] failed"
+      }
+    },
+    {
+      "type": "event",
+      "content": "走到花店前厅寻找海伦并低声呼唤她的名字 成功",
+      "gameDay": 1,
+      "gameTime": "22:12",
+      "location": "SCN_9_SUB_1",
+      "metadata": {
+        "outcome": "走到花店前厅寻找海伦并低声呼唤她的名字 成功",
+        "blockedReason": "",
+        "failureReason": ""
+      }
+    },
+    {
+      "type": "witness",
+      "content": "[相遇] 我在花店“卡森德拉之花”当面遇到Nancy Charlotte和Simon Laplace，他们正在店里交谈。看到他们让我更警觉，担心买花或接近海伦会被围观或被盘问，但这不会改变我的打算——我会尽量低调接近海伦，简短道歉并争取把她带到安静处私下说话；同时留意是否有人监视（尤其是阿道夫），并避免与哈里森正面冲突。情绪紧张但坚定。",
+      "gameDay": 1,
+      "gameTime": "22:12",
+      "location": "SCN_9_SUB_1",
+      "metadata": {
+        "impact": 2,
+        "perspective": "co_presence",
+        "sourceAction": "Nancy Charlotte, Simon Laplace (Simon) 在 花店·卡森德拉之花",
+        "sourceCharacterId": "__encounter__"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我悄声问了南希：“海伦现在在哪里？”尽量让语气随意不引人注意。她说她不知道，语气温柔但有些紧张。 [rel:Nancy Charlotte -5 → -5]",
+      "gameDay": 1,
+      "gameTime": "22:14",
+      "location": "SCN_9_SUB_1",
+      "metadata": {
+        "outcome": "低声问南希：海伦现在在哪里？尽量让语气随意不引人注意"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我从收银柜台旁的半掩木门进去，沿短廊检查了后厅与地下酒窖；后厅只有南希和西蒙在准备晚饭，地下酒窖里没有海伦，角落的隐蔽小包仍在原处。",
+      "gameDay": 1,
+      "gameTime": "22:17",
+      "location": "SCN_9_SUB_1",
+      "metadata": {
+        "outcome": "检查后厅与地下酒窖以寻找海伦"
+      }
+    },
+    {
+      "type": "witness",
+      "content": "[相遇] 我在北新街当面遇到海伦和Vincent Galenus。看到海伦时心跳加速，既紧张又急切——这是当面道歉并争取私下谈话的机会。Vincent的在场让我警觉，担心他或其他人在旁观或会阻碍我。我决定马上行动，上前低声道歉并尽量把海伦带到没人注意的安静处，同时保持警惕，留意哈里森或阿道夫的动向。",
+      "gameDay": 1,
+      "gameTime": "22:19",
+      "location": "ROAD_2",
+      "metadata": {
+        "impact": 2,
+        "perspective": "co_presence",
+        "sourceAction": "Vincent Galenus, Helen 在 卡森德拉北新街",
+        "sourceCharacterId": "__encounter__"
+      }
+    },
+    {
+      "type": "event",
+      "content": "离开花店并前往驯鹿酒吧冷静一下 [在 ROAD_2 因重新规划而中断] 已中断",
+      "gameDay": 1,
+      "gameTime": "22:19",
+      "location": "ROAD_2",
+      "metadata": {
+        "outcome": "离开花店并前往驯鹿酒吧冷静一下 [在 ROAD_2 因重新规划而中断] 已中断",
+        "interruptionReason": "revise_replan"
+      }
+    },
+    {
+      "type": "event",
+      "content": "低声向海伦道歉并示意她跟我去一个更安静的角落私下谈话 [target Helen not present] failed",
+      "gameDay": 1,
+      "gameTime": "22:22",
+      "location": "ROAD_2",
+      "metadata": {
+        "outcome": "低声向海伦道歉并示意她跟我去一个更安静的角落私下谈话 [target Helen not present] failed"
+      }
+    },
+    {
+      "type": "event",
+      "content": "走向海伦的餐桌 成功",
+      "gameDay": 1,
+      "gameTime": "22:32",
+      "location": "SCN_10_SUB_1",
+      "metadata": {
+        "outcome": "走向海伦的餐桌 成功",
+        "blockedReason": "",
+        "failureReason": ""
+      }
+    },
+    {
+      "type": "witness",
+      "content": "[相遇] 22:32 我在小餐厅看到海伦和Vincent Galenus面对面坐着。看到海伦心跳加速，又紧张又急切——这是当面道歉并争取私下谈话的机会。但Vincent的在场让我更警觉，担心他或其他人在旁边干预或当众评判我。我决定立即行动：低声接近海伦，真诚道歉并尽量把对话转到没人注意的安静处，同时保持低调、避免正面冲突并留意周围可疑人物。",
+      "gameDay": 1,
+      "gameTime": "22:32",
+      "location": "SCN_10_SUB_1",
+      "metadata": {
+        "impact": 2,
+        "perspective": "co_presence",
+        "sourceAction": "Vincent Galenus, Helen 在 小餐厅",
+        "sourceCharacterId": "__encounter__"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我低声向海伦道歉，轻拉她的手，示意到门外短暂散步。她没有拒绝，握住我的手并点头，我感觉局势被缓和。 [rel:Helen +2 → 85]",
+      "gameDay": 1,
+      "gameTime": "22:35",
+      "location": "SCN_10_SUB_1",
+      "metadata": {
+        "outcome": "低声向海伦道歉并轻拉她的手示意到门外短暂散步"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我告诉了文森特：菲利普那晚骚扰了海伦，我把他赶走了；我确实在2003年12月22日去了驯鹿酒吧，想对海伦表白。文森特小声地问话并注意我的表情，我也看到他刻意没有提到医院、药物或他的妻子的事。",
+      "gameDay": 1,
+      "gameTime": "22:36",
+      "location": "SCN_10_SUB_1",
+      "metadata": {
+        "outcome": "与约翰尼寒暄，低声询问他最近在镇上的见闻和那晚在驯鹿酒吧的事，同时注意观察他的语气、表情与肢体语言，避免提及医院、药物或我妻子的事。"
+      }
+    },
+    {
+      "type": "witness",
+      "content": "[相遇] 我在小餐厅看到海伦坐着，旁边还有Vincent Galenus和Harrison Lockheed。心跳加速，又紧张又急切——这是向海伦当面道歉的机会，但两人同席让我更警觉。感觉被盯着，有点不安，但仍想尽办法把对话转到没人注意的地方，决定更低调、更谨慎地接近并留意周围可疑人物。",
+      "gameDay": 1,
+      "gameTime": "22:37",
+      "location": "SCN_10_SUB_1",
+      "metadata": {
+        "impact": 2,
+        "perspective": "co_presence",
+        "sourceAction": "Harrison Lockheed, Vincent Galenus 在 小餐厅",
+        "sourceCharacterId": "__encounter__"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我低声向海伦道歉并试图拉她到后门外短暂散步以便私下说话，但她没有被说服，保持距离并拒绝了我的邀请。我有些失落，但没有当场争执。 [rel:Helen -3 → 82]",
+      "gameDay": 1,
+      "gameTime": "22:40",
+      "location": "SCN_10_SUB_1",
+      "metadata": {
+        "outcome": "低声说服海伦跟我到后门外短暂散步以便私下说话 [Persuade 10, rolled 27 (fail) — all targets resisted] failed"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我跟文森特低声聊了几句，他没问到海伦或药物的事。我告诉他我对卡森德拉周围的林地很熟悉，并确认2003年12月22日我去过驯鹿酒吧——那晚菲利普骚扰了海伦，我把他赶走了。",
+      "gameDay": 1,
+      "gameTime": "22:42",
+      "location": "SCN_10_SUB_1",
+      "metadata": {
+        "outcome": "低声与约翰尼继续寒暄并随意询问他对小镇近况和常去场所的看法，避免提及医院、药物或我妻子的事"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我低声告诉海伦我会尊重她的决定，等她觉得安全时再找个安静的地方私下谈。我试图拉她到后门外短暂散步，但她拒绝了，保持距离。我虽然有些失落，但没有当场争执。 [rel:Helen -2 → 80]",
+      "gameDay": 1,
+      "gameTime": "22:46",
+      "location": "SCN_10_SUB_1",
+      "metadata": {
+        "outcome": "低声对海伦说我会尊重她的决定，等她觉得安全时再找个安静的地方私下谈"
+      }
+    },
+    {
+      "type": "witness",
+      "content": "[相遇] 现在23:04，我在一层大厅与Kovind、卢茨·艾米利翁和塔兰·艾米利翁面对面相遇。他们看起来平静，卢茨像往常一样巡视灯光、塔兰在维持秩序。见到他们让我有点紧张和警觉，担心被注意到，但这并不改变我回驯鹿酒吧冷静喝一杯并按原计划行事的打算——我会保持低调，礼貌点头通过。",
+      "gameDay": 1,
+      "gameTime": "23:04",
+      "location": "SCN_16_SUB_1",
+      "metadata": {
+        "impact": 2,
+        "perspective": "co_presence",
+        "sourceAction": "Kovind, Lutz Emilion, Taran Emilion 在 一层大厅",
+        "sourceCharacterId": "__encounter__"
+      }
+    },
+    {
+      "type": "event",
+      "content": "走出餐厅前往驯鹿酒吧冷静一下 成功",
+      "gameDay": 1,
+      "gameTime": "23:04",
+      "location": "SCN_16_SUB_1",
+      "metadata": {
+        "outcome": "走出餐厅前往驯鹿酒吧冷静一下 成功",
+        "blockedReason": "",
+        "failureReason": ""
+      }
+    },
+    {
+      "type": "event",
+      "content": "[直接] 23:10 时柯文德上前用威胁口吻盘问我、卢茨和塔兰，强硬想查我们今晚的来意和相互关系，但我们都抵抗了他的逼问，他没有得到实质情报。我对他的挑衅很生气，也更警觉——觉得有人在盯着我，担心他会干扰我接近海伦或在酒吧制造事端。",
+      "gameDay": 1,
+      "gameTime": "23:10",
+      "location": "SCN_16_SUB_1",
+      "metadata": {
+        "impact": 2,
+        "perspective": "targeted",
+        "sourceAction": "我上前以威慑口吻盘问Johnny、Lutz和Taran，强硬追问他们今晚的来意与相互关系，想查清是否会妨碍今晚的收款。但他们都抵抗了我的逼问，我没得到任何有用情报。对他们的抵抗我更生不满，也提高了警觉。",
+        "sourceCharacterId": "Kovind"
+      }
+    },
+    {
+      "type": "event",
+      "content": "柯文德上前用威胁的口气盘问我和他们今晚来酒吧的目的，想知道我们是否会妨碍他的事。我没有配合，也没说出实质内容，顶了回去，觉得这是挑衅。",
+      "gameDay": 1,
+      "gameTime": "23:10",
+      "location": "SCN_16_SUB_1",
+      "metadata": {
+        "outcome": "上前盘问Johnny、Lutz和Taran，强硬追问他们今晚的来意与相互关系，探查是否会妨碍今晚的收款并以威慑口吻试探他们的反应 [Intimidate 60, rolled 86 (fail) — all targets resisted] failed"
+      }
+    },
+    {
+      "type": "event",
+      "content": "酒保低声问我来意并留意我有没有武器，我告诉他我在2003年12月22日去见海伦，想说出我的感受，也说那晚菲利普骚扰了海伦，我把他赶走了。Lutz看到了我带着猎枪并注意到我很紧张，但没有挑衅。",
+      "gameDay": 1,
+      "gameTime": "23:13",
+      "location": "SCN_16_SUB_1",
+      "metadata": {
+        "outcome": "低声询问Johnny来意并观察他是否携带武器或表现出敌意"
+      }
+    },
+    {
+      "type": "event",
+      "content": "坐到角落的皮质卡座，点一杯波本并慢慢喝下以冷静情绪，等到闭店后再决定去哪里过夜 [在 SCN_16_SUB_1 因重新规划而中断] 已中断",
+      "gameDay": 1,
+      "gameTime": "23:13",
+      "location": "SCN_16_SUB_1",
+      "metadata": {
+        "outcome": "坐到角落的皮质卡座，点一杯波本并慢慢喝下以冷静情绪，等到闭店后再决定去哪里过夜 [在 SCN_16_SUB_1 因重新规划而中断] 已中断",
+        "interruptionReason": "revise_replan"
+      }
+    },
+    {
+      "type": "witness",
+      "content": "[目击] 23:13 我看到柯文德从吧台上拿起一把手枪，举向我、卢茨和塔兰示威，盯着我们等待反应，随时准备先发制人。我既愤怒又紧张，震惊中意识到必须立刻想办法压制局势或迅速撤离以保全自己和同伴，暂时放下去找海伦的念头，先以安全为先。",
+      "gameDay": 1,
+      "gameTime": "23:13",
+      "location": "SCN_16_SUB_1",
+      "metadata": {
+        "impact": 2,
+        "perspective": "witness",
+        "sourceAction": "我从吧台上拿起那把手枪，举向Johnny、卢茨和塔兰示威，盯着他们以震慑。保持着姿态等待他们的反应，准备在必要时先发制人。",
+        "sourceCharacterId": "Kovind"
+      }
+    },
+    {
+      "type": "information",
+      "content": "驯鹿酒吧一层的监控设备损坏，今晚并未被修好。",
+      "gameDay": 1,
+      "gameTime": "23:59",
+      "location": null,
+      "metadata": {
+        "revealed": false,
+        "difficulty": "automatic",
+        "knowledgeId": "learned_day1_1"
+      }
+    },
+    {
+      "type": "information",
+      "content": "海伦对我的回应是摇摆的：有时接受我的道歉并允许短暂接触，有时又保持距离并拒绝单独出去，说明她仍然犹豫不决。",
+      "gameDay": 1,
+      "gameTime": "23:59",
+      "location": null,
+      "metadata": {
+        "revealed": false,
+        "difficulty": "regular",
+        "knowledgeId": "learned_day1_4"
+      }
+    },
+    {
+      "type": "information",
+      "content": "文森特在听我提到那晚的争执时留意我的表情，但没有提及他妻子或医院的事，显得有选择性地关注我的话题。",
+      "gameDay": 1,
+      "gameTime": "23:59",
+      "location": null,
+      "metadata": {
+        "revealed": false,
+        "difficulty": "regular",
+        "knowledgeId": "learned_day1_8"
+      }
+    },
+    {
+      "type": "information",
+      "content": "柯文德在晚上23:13从吧台拿起一把手枪并朝我、卢茨和塔兰示威，气氛一度紧张到可能发生暴力。",
+      "gameDay": 1,
+      "gameTime": "23:59",
+      "location": null,
+      "metadata": {
+        "revealed": false,
+        "difficulty": "regular",
+        "knowledgeId": "learned_day1_5"
+      }
+    },
+    {
+      "type": "information",
+      "content": "南希在被我问及海伦下落时显得紧张和不确定，我和她的关系因此微微恶化。",
+      "gameDay": 1,
+      "gameTime": "23:59",
+      "location": null,
+      "metadata": {
+        "revealed": false,
+        "difficulty": "regular",
+        "knowledgeId": "learned_day1_9"
+      }
+    },
+    {
+      "type": "information",
+      "content": "卢茨注意到我带着猎枪并留意我当时的神情，酒保也低声询问我来意和是否带有武器。",
+      "gameDay": 1,
+      "gameTime": "23:59",
+      "location": null,
+      "metadata": {
+        "revealed": false,
+        "difficulty": "regular",
+        "knowledgeId": "learned_day1_7"
+      }
+    },
+    {
+      "type": "information",
+      "content": "海伦记得我在驯鹿酒吧那晚与菲利普的冲突，并明确表示不希望那件事被进一步夸大或传播。",
+      "gameDay": 1,
+      "gameTime": "23:59",
+      "location": null,
+      "metadata": {
+        "revealed": false,
+        "difficulty": "automatic",
+        "knowledgeId": "learned_day1_3"
+      }
+    },
+    {
+      "type": "information",
+      "content": "阿道夫·卡尔在镇上试图以礼貌的方式探听我们的行踪和目的，并在多处出现试图辨认和记录衣着与随行情况。",
+      "gameDay": 1,
+      "gameTime": "23:59",
+      "location": null,
+      "metadata": {
+        "revealed": false,
+        "difficulty": "regular",
+        "knowledgeId": "learned_day1_2"
+      }
+    },
+    {
+      "type": "secret",
+      "content": "花店后厅和地下酒窖曾被我搜索过，地下酒窖里没有海伦，但角落里一个隐蔽的小包仍然在原处，没有被动过。",
+      "gameDay": 1,
+      "gameTime": "23:59",
+      "location": null,
+      "metadata": {
+        "revealed": false,
+        "difficulty": "hard",
+        "knowledgeId": "learned_day1_6"
+      }
+    }
+  ],
+  "plans": [
+    {
+      "npcName": "Johnny",
+      "gameDay": 2,
+      "schedule": [
+        {
+          "activity": "立刻悄声确认帕特里齐奥是否真的掌握相机和存储卡，切勿当众质问或激怒柯文德；观察柯文德、塔兰与卢茨的位置与动向，记录监控与武器摆放，找到帕特里齐奥可能藏匿物证的线索。",
+          "location": "驯鹿酒吧"
+        },
+        {
+          "activity": "在不引人注意的情况下靠近卢茨，低声严令他不要把任何东西交给别人，要求他把收银机抽屉钥匙交给我或在安全时把存储卡转移到我指定的隐蔽处；若他不能交钥匙，吩咐他在有人来盘问时先通知我并拖延时间。",
+          "location": "驯鹿酒吧"
+        },
+        {
+          "activity": "不要亲自马上去找海伦以免暴露或引发冲突，通过卢茨或可信的人悄悄通知海伦立刻撤离酒吧并躲到安全处（不要回酒吧）；优先保证她人身安全。",
+          "location": "海伦的餐桌"
+        },
+        {
+          "activity": "准备撤离与转移方案：评估能否在混乱或分散注意力时把存储卡带出酒吧，若可行立即转移到我熟悉的林边隐蔽点；绝不与持枪者正面冲突，必要时优先保全人身与证物。",
+          "location": "驯鹿酒吧"
+        },
+        {
+          "activity": "作为备用藏匿点：若能安全把存储卡带出酒吧，先撤到林边隐蔽处保管并暂不回镇上过夜，等待局势平息再处理证物。",
+          "location": "日暮大道东端·森林入口"
+        },
+        {
+          "activity": "如能不露痕迹，通过南希或其他可信人确认海伦下落并在安全时由她代为转交花或信息；若无法安全传达，则推迟送花。",
+          "location": "花店·卡森德拉之花"
+        },
+        {
+          "activity": "推迟去买修监控或加固猎具的材料；先把监控损坏与吧台武器状况拍照记录作为取证，等证物与海伦安全后再去五金店处理维修事宜。",
+          "location": "五金店"
+        },
+        {
+          "activity": "仅在确认安全且海伦愿意时再当面表达心意或争取单独谈话，当前不主动寻求单独对话以免激化局势。",
+          "location": "海伦的餐桌"
+        },
+        {
+          "activity": "暂不离开镇上过夜，如需离开夜间则留在靠近林边能迅速撤离的地点；夜间优先守护证物并保证自身安全，待局势稳定再返回或出门狩猎。",
+          "location": "日暮大道东端·森林入口"
+        }
+      ],
+      "nodes": [
+        {
+          "type": "object_interaction",
+          "action": "把猎枪放在吧台上以示无威胁",
+          "impact": 2,
+          "nodeId": "oi1",
+          "status": "completed",
+          "endTime": "00:02",
+          "outcome": "我把猎枪放在吧台台面上，双手摊开示意放下以表无威胁。酒吧里的人可以看见枪不在我手上，气氛稍微缓和了一些。",
+          "startTime": "00:00",
+          "characterId": "Johnny",
+          "characterName": "Johnny",
+          "executionMeta": {
+            "startedAt": "00:00",
+            "completedAt": "00:02",
+            "remainingMinutes": 0
+          },
+          "objectInteractionPayload": {
+            "itemId": "猎枪"
+          }
+        },
+        {
+          "type": "object_interaction",
+          "action": "检查并记录已损坏的监控设备外壳和暴露线路的状况以取证",
+          "impact": 2,
+          "nodeId": "oi_sc16_1",
+          "status": "completed",
+          "endTime": "00:08",
+          "outcome": "我打开并检查了已损坏的监控设备，确认内部线路裸露且有多个摄像头存在盲区，并对外露线路和破损外壳进行了拍照记录以作取证。",
+          "startTime": "00:03",
+          "characterId": "Johnny",
+          "characterName": "Johnny",
+          "executionMeta": {
+            "startedAt": "00:03",
+            "completedAt": "00:08",
+            "remainingMinutes": 0
+          },
+          "objectInteractionPayload": {
+            "itemId": "ITEM_SCN16_4"
+          }
+        },
+        {
+          "type": "action",
+          "action": "后退两步离开吧台并举起双手示意我没有武器以缓和柯文德的紧张情绪",
+          "impact": 2,
+          "nodeId": "a_johnny_001",
+          "status": "interrupted",
+          "endTime": "00:11",
+          "outcome": "后退两步离开吧台并举起双手示意我没有武器以缓和柯文德的紧张情绪 [因重新规划而中断] 已中断",
+          "startTime": "00:09",
+          "characterId": "Johnny",
+          "characterName": "Johnny",
+          "executionMeta": {
+            "startedAt": "00:09",
+            "interruptedAt": "00:11",
+            "remainingMinutes": 0,
+            "interruptionReason": "revise_replan"
+          }
+        },
+        {
+          "type": "character_interaction",
+          "action": "悄声叫卢茨到我身旁，低声把监控照片和存储卡递给他，请他替我保管并别让柯文德看到",
+          "impact": 1,
+          "nodeId": "ci_johnny_00_12",
+          "status": "interrupted",
+          "endTime": "00:15",
+          "outcome": "悄声叫卢茨到我身旁，低声把监控照片和存储卡递给他，请他替我保管并别让柯文德看到 [因重新规划而中断] 已中断",
+          "startTime": "00:12",
+          "characterId": "Johnny",
+          "characterName": "Johnny",
+          "executionMeta": {
+            "startedAt": "00:12",
+            "interruptedAt": "00:15",
+            "remainingMinutes": 0,
+            "interruptionReason": "revise_replan"
+          },
+          "targetCharacterIds": [
+            "Lutz Emilion"
+          ]
+        },
+        {
+          "type": "character_interaction",
+          "action": "低声在卢茨耳边确认他仍把存储卡和照片锁在收银机抽屉里，并再三嘱咐他不要把这些东西交给任何人，除非得到我的允许",
+          "impact": 1,
+          "nodeId": "ci_johnny_001",
+          "status": "completed",
+          "endTime": "00:30",
+          "outcome": "我低声在卢茨耳边确认他已把存储卡和照片锁在收银机抽屉里，并再三嘱咐他不要把这些东西交给任何人，除非得到我的允许。卢茨镇定地接过并保证会锁好，同时安抚了我的情绪，让我稍微放心。",
+          "startTime": "00:28",
+          "characterId": "Johnny",
+          "characterName": "Johnny",
+          "executionMeta": {
+            "startedAt": "00:28",
+            "completedAt": "00:30",
+            "remainingMinutes": 0
+          },
+          "targetCharacterIds": [
+            "Lutz Emilion"
+          ]
+        },
+        {
+          "type": "character_interaction",
+          "action": "低声靠近卢茨，悄声确认他还把存储卡和照片藏在收银机抽屉里，并嘱咐他不要把这些东西交给任何人，除非得到我的允许",
+          "impact": 1,
+          "nodeId": "ci1_johnny_lutz",
+          "status": "interrupted",
+          "endTime": "00:21",
+          "outcome": "低声靠近卢茨，悄声确认他还把存储卡和照片藏在收银机抽屉里，并嘱咐他不要把这些东西交给任何人，除非得到我的允许 [因重新规划而中断] 已中断",
+          "startTime": "00:18",
+          "characterId": "Johnny",
+          "characterName": "Johnny",
+          "executionMeta": {
+            "startedAt": "00:18",
+            "interruptedAt": "00:22",
+            "remainingMinutes": 0,
+            "interruptionReason": "revise_replan"
+          },
+          "targetCharacterIds": [
+            "Lutz Emilion"
+          ]
+        },
+        {
+          "type": "character_interaction",
+          "action": "低声在卢茨耳边确认他仍把存储卡和照片锁在收银机抽屉里，并再三嘱咐他不要把这些东西交给任何人，除非得到我的允许",
+          "impact": 1,
+          "nodeId": "ci_johnny_001",
+          "status": "completed",
+          "endTime": "00:30",
+          "outcome": "我低声在卢茨耳边确认他已把存储卡和照片锁在收银机抽屉里，并再三嘱咐他不要把这些东西交给任何人，除非得到我的允许。卢茨镇定地接过并保证会锁好，同时安抚了我的情绪，让我稍微放心。",
+          "startTime": "00:28",
+          "characterId": "Johnny",
+          "characterName": "Johnny",
+          "executionMeta": {
+            "startedAt": "00:28",
+            "completedAt": "00:30",
+            "remainingMinutes": 0
+          },
+          "targetCharacterIds": [
+            "Lutz Emilion"
+          ]
+        },
+        {
+          "type": "character_interaction",
+          "action": "低声在卢茨耳边确认他仍把存储卡和照片锁在收银机抽屉里，并再三嘱咐他不要把这些东西交给任何人，除非得到我的允许",
+          "impact": 1,
+          "nodeId": "ci_johnny_001",
+          "status": "completed",
+          "endTime": "00:30",
+          "outcome": "我低声在卢茨耳边确认他已把存储卡和照片锁在收银机抽屉里，并再三嘱咐他不要把这些东西交给任何人，除非得到我的允许。卢茨镇定地接过并保证会锁好，同时安抚了我的情绪，让我稍微放心。",
+          "startTime": "00:28",
+          "characterId": "Johnny",
+          "characterName": "Johnny",
+          "executionMeta": {
+            "startedAt": "00:28",
+            "completedAt": "00:30",
+            "remainingMinutes": 0
+          },
+          "targetCharacterIds": [
+            "Lutz Emilion"
+          ]
+        },
+        {
+          "type": "action",
+          "action": "悄声盯着帕特里齐奥、柯文德和塔兰，低调监视他们在大厅的动向，注意是否有人试图靠近收银机或接近卢茨",
+          "impact": 0,
+          "nodeId": "a2",
+          "status": "interrupted",
+          "endTime": "00:56",
+          "outcome": "悄声盯着帕特里齐奥、柯文德和塔兰，低调监视他们在大厅的动向，注意是否有人试图靠近收银机或接近卢茨 [因重新规划而中断] 已中断",
+          "startTime": "00:51",
+          "characterId": "Johnny",
+          "characterName": "Johnny",
+          "executionMeta": {
+            "startedAt": "00:51",
+            "interruptedAt": "00:57",
+            "remainingMinutes": 0,
+            "interruptionReason": "revise_replan"
+          }
+        },
+        {
+          "type": "character_interaction",
+          "skill": "Sleight of Hand",
+          "action": "悄悄从帕特里齐奥身上不动声色地偷回储物柜钥匙",
+          "impact": 1,
+          "nodeId": "ci2",
+          "status": "in_progress",
+          "endTime": "03:33",
+          "startTime": "03:31",
+          "characterId": "Johnny",
+          "characterName": "Johnny",
+          "executionMeta": {
+            "startedAt": "03:31",
+            "remainingMinutes": 2
+          },
+          "targetCharacterIds": [
+            "Patrizio von Samsa"
+          ]
+        },
+        {
+          "type": "character_interaction",
+          "skill": "Persuade",
+          "action": "低声向卢茨要求把收银机抽屉的钥匙交给我，以便我能把存储卡转移到更安全的地方",
+          "impact": 1,
+          "nodeId": "ci1_johnny_0001",
+          "status": "failed",
+          "endTime": "00:44",
+          "startTime": "00:41",
+          "characterId": "Johnny",
+          "characterName": "Johnny",
+          "executionMeta": {
+            "failedAt": "00:44",
+            "startedAt": "00:41",
+            "remainingMinutes": 3
+          },
+          "targetCharacterIds": [
+            "Lutz Emilion"
+          ]
+        },
+        {
+          "type": "character_interaction",
+          "skill": "Intimidate",
+          "action": "悄声威胁帕特里齐奥，逼他交出相机和存储卡或说出藏匿地点",
+          "impact": 1,
+          "nodeId": "ci1",
+          "status": "failed",
+          "endTime": "03:02",
+          "startTime": "02:57",
+          "characterId": "Johnny",
+          "characterName": "Johnny",
+          "executionMeta": {
+            "failedAt": "03:02",
+            "startedAt": "02:57",
+            "remainingMinutes": 5
+          },
+          "targetCharacterIds": [
+            "Patrizio von Samsa"
+          ]
+        },
+        {
+          "type": "character_interaction",
+          "action": "低声靠近卢茨，悄声确认他仍保管着存储卡和照片，并严肃嘱咐他不要把这些东西交给任何人，遇到有人来问先通知我",
+          "impact": 1,
+          "nodeId": "ci_johnny_confirm_lutz_00_48",
+          "status": "completed",
+          "endTime": "00:50",
+          "outcome": "我低声靠近卢茨，悄声确认他仍保管着存储卡和照片，并严肃嘱咐他不要把这些东西交给任何人，遇到有人来问先通知我。卢茨口头答应了但神情谨慎，我暂时放心但信任并未恢复。",
+          "startTime": "00:48",
+          "characterId": "Johnny",
+          "characterName": "Johnny",
+          "executionMeta": {
+            "startedAt": "00:48",
+            "completedAt": "00:50",
+            "remainingMinutes": 0
+          },
+          "targetCharacterIds": [
+            "Lutz Emilion"
+          ]
+        },
+        {
+          "type": "action",
+          "action": "悄声盯着帕特里齐奥、柯文德和塔兰，低调监视他们在大厅的动向，注意是否有人试图靠近收银机或接近卢茨",
+          "impact": 0,
+          "nodeId": "a2",
+          "status": "interrupted",
+          "endTime": "00:56",
+          "outcome": "悄声盯着帕特里齐奥、柯文德和塔兰，低调监视他们在大厅的动向，注意是否有人试图靠近收银机或接近卢茨 [因重新规划而中断] 已中断",
+          "startTime": "00:51",
+          "characterId": "Johnny",
+          "characterName": "Johnny",
+          "executionMeta": {
+            "startedAt": "00:51",
+            "interruptedAt": "00:57",
+            "remainingMinutes": 0,
+            "interruptionReason": "revise_replan"
+          }
+        },
+        {
+          "type": "character_interaction",
+          "skill": "Persuade",
+          "action": "低声恳求卢茨把收银机抽屉的钥匙交给我，以便我把存储卡和照片立刻转移到更安全的藏匿处",
+          "impact": 1,
+          "nodeId": "ci_day2_005",
+          "status": "interrupted",
+          "endTime": "01:03",
+          "outcome": "低声恳求卢茨把收银机抽屉的钥匙交给我，以便我把存储卡和照片立刻转移到更安全的藏匿处 [因重新规划而中断] 已中断",
+          "startTime": "00:58",
+          "characterId": "Johnny",
+          "characterName": "Johnny",
+          "executionMeta": {
+            "startedAt": "00:58",
+            "interruptedAt": "00:59",
+            "remainingMinutes": 0,
+            "interruptionReason": "revise_replan"
+          },
+          "targetCharacterIds": [
+            "Lutz Emilion"
+          ]
+        },
+        {
+          "type": "movement",
+          "action": "悄悄离开一层大厅去海伦的餐桌，私下提醒海伦尽快离开酒吧并寻找安全藏身处",
+          "impact": 0,
+          "nodeId": "m_johnny_to_helen_01",
+          "status": "interrupted",
+          "endTime": "01:10",
+          "outcome": "悄悄离开一层大厅去海伦的餐桌，私下提醒海伦尽快离开酒吧并寻找安全藏身处 [因重新规划而中断] 已中断",
+          "startTime": "01:00",
+          "characterId": "Johnny",
+          "destination": "SCN_10_SUB_1",
+          "characterName": "Johnny",
+          "executionMeta": {
+            "movement": {
+              "routeSnapshot": [
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_3",
+                    "position": 0.76
+                  },
+                  "from": {
+                    "type": "scene",
+                    "sceneId": "SCN_16_SUB_1"
+                  },
+                  "kind": "along_road",
+                  "roadId": "ROAD_3",
+                  "blockCheck": {
+                    "toId": "ROAD_3",
+                    "fromId": "SCN_16_SUB_1"
+                  },
+                  "durationMinutes": 1
+                },
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_3",
+                    "position": 0
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_3",
+                    "position": 0.76
+                  },
+                  "kind": "along_road",
+                  "roadId": "ROAD_3",
+                  "durationMinutes": 7.6
+                },
+                {
+                  "to": {
+                    "type": "junction",
+                    "junctionId": "JUNC_3"
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_3",
+                    "position": 0
+                  },
+                  "kind": "to_junction",
+                  "blockCheck": {
+                    "toId": "JUNC_3",
+                    "fromId": "ROAD_3"
+                  },
+                  "durationMinutes": 0
+                },
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_2",
+                    "position": 1
+                  },
+                  "from": {
+                    "type": "junction",
+                    "junctionId": "JUNC_3"
+                  },
+                  "kind": "to_junction",
+                  "blockCheck": {
+                    "toId": "ROAD_2",
+                    "fromId": "JUNC_3"
+                  },
+                  "durationMinutes": 0
+                },
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_2",
+                    "position": 0.28
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_2",
+                    "position": 1
+                  },
+                  "kind": "along_road",
+                  "roadId": "ROAD_2",
+                  "durationMinutes": 7.199999999999999
+                },
+                {
+                  "to": {
+                    "type": "scene",
+                    "sceneId": "SCN_10_SUB_1"
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_2",
+                    "position": 0.28
+                  },
+                  "kind": "to_scene",
+                  "blockCheck": {
+                    "toId": "SCN_10_SUB_1",
+                    "fromId": "ROAD_2"
+                  },
+                  "durationMinutes": 1
+                }
+              ],
+              "targetPosition": {
+                "type": "scene",
+                "sceneId": "SCN_10_SUB_1"
+              },
+              "minutesIntoStep": 0,
+              "currentStepIndex": 1,
+              "lastReachablePosition": {
+                "type": "road",
+                "roadId": "ROAD_3",
+                "position": 0.76
+              }
+            },
+            "startedAt": "01:00",
+            "interruptedAt": "01:03",
+            "remainingMinutes": 0,
+            "interruptionReason": "revise_replan"
+          }
+        },
+        {
+          "type": "movement",
+          "action": "走回驯鹿酒吧，悄悄靠近吧台",
+          "impact": 0,
+          "nodeId": "m_johnny_0104",
+          "status": "completed",
+          "endTime": "01:07",
+          "outcome": "走回驯鹿酒吧，悄悄靠近吧台 成功",
+          "startTime": "01:04",
+          "characterId": "Johnny",
+          "destination": "SCN_16_SUB_1",
+          "characterName": "Johnny",
+          "executionMeta": {
+            "movement": {
+              "routeSnapshot": [
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_3",
+                    "position": 1
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_3",
+                    "position": 0.76
+                  },
+                  "kind": "along_road",
+                  "roadId": "ROAD_3",
+                  "durationMinutes": 2.4
+                },
+                {
+                  "to": {
+                    "type": "junction",
+                    "junctionId": "JUNC_4"
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_3",
+                    "position": 1
+                  },
+                  "kind": "to_junction",
+                  "blockCheck": {
+                    "toId": "JUNC_4",
+                    "fromId": "ROAD_3"
+                  },
+                  "durationMinutes": 0
+                },
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_3",
+                    "position": 1
+                  },
+                  "from": {
+                    "type": "junction",
+                    "junctionId": "JUNC_4"
+                  },
+                  "kind": "to_junction",
+                  "blockCheck": {
+                    "toId": "ROAD_3",
+                    "fromId": "JUNC_4"
+                  },
+                  "durationMinutes": 0
+                },
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_3",
+                    "position": 0.76
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_3",
+                    "position": 1
+                  },
+                  "kind": "along_road",
+                  "roadId": "ROAD_3",
+                  "durationMinutes": 2.4
+                },
+                {
+                  "to": {
+                    "type": "scene",
+                    "sceneId": "SCN_16_SUB_1"
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_3",
+                    "position": 0.76
+                  },
+                  "kind": "to_scene",
+                  "blockCheck": {
+                    "toId": "SCN_16_SUB_1",
+                    "fromId": "ROAD_3"
+                  },
+                  "durationMinutes": 1
+                }
+              ],
+              "targetPosition": {
+                "type": "scene",
+                "sceneId": "SCN_16_SUB_1"
+              },
+              "minutesIntoStep": 0,
+              "currentStepIndex": 5,
+              "lastReachablePosition": {
+                "type": "scene",
+                "sceneId": "SCN_16_SUB_1"
+              }
+            },
+            "startedAt": "01:04",
+            "completedAt": "01:10",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "character_interaction",
+          "action": "低声确认卢茨仍把存储卡和照片锁在收银机抽屉里，并严肃嘱咐他别把这些东西交给任何人，遇到别人来问要先通知我。",
+          "impact": 1,
+          "nodeId": "ci_day2_0111_lutz",
+          "status": "interrupted",
+          "endTime": "01:13",
+          "outcome": "低声确认卢茨仍把存储卡和照片锁在收银机抽屉里，并严肃嘱咐他别把这些东西交给任何人，遇到别人来问要先通知我。 [因重新规划而中断] 已中断",
+          "startTime": "01:11",
+          "characterId": "Johnny",
+          "characterName": "Johnny",
+          "executionMeta": {
+            "startedAt": "01:11",
+            "interruptedAt": "01:13",
+            "remainingMinutes": 0,
+            "interruptionReason": "revise_replan"
+          },
+          "targetCharacterIds": [
+            "Lutz Emilion"
+          ]
+        },
+        {
+          "type": "character_interaction",
+          "skill": "Intimidate",
+          "action": "悄声靠近卢茨，把储物柜里空无相机或存储卡的情况低声告诉他，严厉要求他当场确认是否还有任何备份并在安全时把存储卡转移到我指定的隐蔽处，命令他现在绝对不要把任何东西交给任何人，若有人来询问必须先悄声通知我",
+          "impact": 1,
+          "nodeId": "ci_johnny_01",
+          "status": "completed",
+          "endTime": "03:25",
+          "outcome": "我悄声靠近卢茨，低声告诉他储物柜里没有相机或存储卡，并严厉命令他当场确认是否还有任何备份、在安全时把存储卡转移到我指定的隐蔽处，绝对不要把任何东西交给任何人，若有人来询问必须先悄声通知我。卢茨低声回称存储卡已被销毁并口头表示会先通知我，但语气谨慎且未提供可验证的证据，我感到他的承诺不足以满足我的需求，信任没有修复。",
+          "startTime": "03:22",
+          "characterId": "Johnny",
+          "characterName": "Johnny",
+          "executionMeta": {
+            "startedAt": "03:22",
+            "completedAt": "03:25",
+            "remainingMinutes": 0
+          },
+          "targetCharacterIds": [
+            "Lutz Emilion"
+          ]
+        },
+        {
+          "type": "character_interaction",
+          "skill": "Intimidate",
+          "action": "悄声靠近卢茨，把储物柜里空无相机或存储卡的情况低声告诉他，严厉要求他当场确认是否还有任何备份并在安全时把存储卡转移到我指定的隐蔽处，命令他现在绝对不要把任何东西交给任何人，若有人来询问必须先悄声通知我",
+          "impact": 1,
+          "nodeId": "ci_johnny_01",
+          "status": "completed",
+          "endTime": "03:25",
+          "outcome": "我悄声靠近卢茨，低声告诉他储物柜里没有相机或存储卡，并严厉命令他当场确认是否还有任何备份、在安全时把存储卡转移到我指定的隐蔽处，绝对不要把任何东西交给任何人，若有人来询问必须先悄声通知我。卢茨低声回称存储卡已被销毁并口头表示会先通知我，但语气谨慎且未提供可验证的证据，我感到他的承诺不足以满足我的需求，信任没有修复。",
+          "startTime": "03:22",
+          "characterId": "Johnny",
+          "characterName": "Johnny",
+          "executionMeta": {
+            "startedAt": "03:22",
+            "completedAt": "03:25",
+            "remainingMinutes": 0
+          },
+          "targetCharacterIds": [
+            "Lutz Emilion"
+          ]
+        },
+        {
+          "type": "character_interaction",
+          "skill": "Intimidate",
+          "action": "悄声威胁帕特里齐奥，逼他交出相机和存储卡或说出藏匿地点",
+          "impact": 1,
+          "nodeId": "ci1",
+          "status": "failed",
+          "endTime": "03:02",
+          "startTime": "02:57",
+          "characterId": "Johnny",
+          "characterName": "Johnny",
+          "executionMeta": {
+            "failedAt": "03:02",
+            "startedAt": "02:57",
+            "remainingMinutes": 5
+          },
+          "targetCharacterIds": [
+            "Patrizio von Samsa"
+          ]
+        },
+        {
+          "type": "character_interaction",
+          "skill": "Intimidate",
+          "action": "悄声威胁帕特里齐奥，逼他交出相机和存储卡或说出藏匿地点",
+          "impact": 1,
+          "nodeId": "ci1",
+          "status": "failed",
+          "endTime": "03:02",
+          "startTime": "02:57",
+          "characterId": "Johnny",
+          "characterName": "Johnny",
+          "executionMeta": {
+            "failedAt": "03:02",
+            "startedAt": "02:57",
+            "remainingMinutes": 5
+          },
+          "targetCharacterIds": [
+            "Patrizio von Samsa"
+          ]
+        },
+        {
+          "type": "character_interaction",
+          "skill": "Intimidate",
+          "action": "悄声靠近卢茨，把储物柜里空无相机或存储卡的情况低声告诉他，严厉要求他当场确认是否还有任何备份并在安全时把存储卡转移到我指定的隐蔽处，命令他现在绝对不要把任何东西交给任何人，若有人来询问必须先悄声通知我",
+          "impact": 1,
+          "nodeId": "ci_johnny_01",
+          "status": "completed",
+          "endTime": "03:25",
+          "outcome": "我悄声靠近卢茨，低声告诉他储物柜里没有相机或存储卡，并严厉命令他当场确认是否还有任何备份、在安全时把存储卡转移到我指定的隐蔽处，绝对不要把任何东西交给任何人，若有人来询问必须先悄声通知我。卢茨低声回称存储卡已被销毁并口头表示会先通知我，但语气谨慎且未提供可验证的证据，我感到他的承诺不足以满足我的需求，信任没有修复。",
+          "startTime": "03:22",
+          "characterId": "Johnny",
+          "characterName": "Johnny",
+          "executionMeta": {
+            "startedAt": "03:22",
+            "completedAt": "03:25",
+            "remainingMinutes": 0
+          },
+          "targetCharacterIds": [
+            "Lutz Emilion"
+          ]
+        },
+        {
+          "type": "character_interaction",
+          "skill": "Intimidate",
+          "action": "悄声靠近卢茨，把储物柜里空无相机或存储卡的情况低声告诉他，严厉要求他当场确认是否还有任何备份并在安全时把存储卡转移到我指定的隐蔽处，命令他现在绝对不要把任何东西交给任何人，若有人来询问必须先悄声通知我",
+          "impact": 1,
+          "nodeId": "ci_johnny_01",
+          "status": "completed",
+          "endTime": "03:25",
+          "outcome": "我悄声靠近卢茨，低声告诉他储物柜里没有相机或存储卡，并严厉命令他当场确认是否还有任何备份、在安全时把存储卡转移到我指定的隐蔽处，绝对不要把任何东西交给任何人，若有人来询问必须先悄声通知我。卢茨低声回称存储卡已被销毁并口头表示会先通知我，但语气谨慎且未提供可验证的证据，我感到他的承诺不足以满足我的需求，信任没有修复。",
+          "startTime": "03:22",
+          "characterId": "Johnny",
+          "characterName": "Johnny",
+          "executionMeta": {
+            "startedAt": "03:22",
+            "completedAt": "03:25",
+            "remainingMinutes": 0
+          },
+          "targetCharacterIds": [
+            "Lutz Emilion"
+          ]
+        },
+        {
+          "type": "movement",
+          "action": "悄悄走到海伦的餐桌，私下提醒海伦尽快离开酒吧并躲到安全处",
+          "impact": 0,
+          "nodeId": "m1",
+          "status": "completed",
+          "endTime": "01:34",
+          "outcome": "悄悄走到海伦的餐桌，私下提醒海伦尽快离开酒吧并躲到安全处 成功",
+          "startTime": "01:32",
+          "characterId": "Johnny",
+          "destination": "SCN_10_SUB_1",
+          "characterName": "Johnny",
+          "executionMeta": {
+            "movement": {
+              "routeSnapshot": [
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_3",
+                    "position": 0.76
+                  },
+                  "from": {
+                    "type": "scene",
+                    "sceneId": "SCN_16_SUB_1"
+                  },
+                  "kind": "along_road",
+                  "roadId": "ROAD_3",
+                  "blockCheck": {
+                    "toId": "ROAD_3",
+                    "fromId": "SCN_16_SUB_1"
+                  },
+                  "durationMinutes": 1
+                },
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_3",
+                    "position": 0
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_3",
+                    "position": 0.76
+                  },
+                  "kind": "along_road",
+                  "roadId": "ROAD_3",
+                  "durationMinutes": 7.6
+                },
+                {
+                  "to": {
+                    "type": "junction",
+                    "junctionId": "JUNC_3"
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_3",
+                    "position": 0
+                  },
+                  "kind": "to_junction",
+                  "blockCheck": {
+                    "toId": "JUNC_3",
+                    "fromId": "ROAD_3"
+                  },
+                  "durationMinutes": 0
+                },
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_2",
+                    "position": 1
+                  },
+                  "from": {
+                    "type": "junction",
+                    "junctionId": "JUNC_3"
+                  },
+                  "kind": "to_junction",
+                  "blockCheck": {
+                    "toId": "ROAD_2",
+                    "fromId": "JUNC_3"
+                  },
+                  "durationMinutes": 0
+                },
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_2",
+                    "position": 0.28
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_2",
+                    "position": 1
+                  },
+                  "kind": "along_road",
+                  "roadId": "ROAD_2",
+                  "durationMinutes": 7.199999999999999
+                },
+                {
+                  "to": {
+                    "type": "scene",
+                    "sceneId": "SCN_10_SUB_1"
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_2",
+                    "position": 0.28
+                  },
+                  "kind": "to_scene",
+                  "blockCheck": {
+                    "toId": "SCN_10_SUB_1",
+                    "fromId": "ROAD_2"
+                  },
+                  "durationMinutes": 1
+                }
+              ],
+              "targetPosition": {
+                "type": "scene",
+                "sceneId": "SCN_10_SUB_1"
+              },
+              "minutesIntoStep": 0,
+              "currentStepIndex": 6,
+              "lastReachablePosition": {
+                "type": "scene",
+                "sceneId": "SCN_10_SUB_1"
+              }
+            },
+            "startedAt": "01:32",
+            "completedAt": "01:49",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "character_interaction",
+          "skill": "Intimidate",
+          "action": "悄声靠近卢茨，把储物柜里空无相机或存储卡的情况低声告诉他，严厉要求他当场确认是否还有任何备份并在安全时把存储卡转移到我指定的隐蔽处，命令他现在绝对不要把任何东西交给任何人，若有人来询问必须先悄声通知我",
+          "impact": 1,
+          "nodeId": "ci_johnny_01",
+          "status": "completed",
+          "endTime": "03:25",
+          "outcome": "我悄声靠近卢茨，低声告诉他储物柜里没有相机或存储卡，并严厉命令他当场确认是否还有任何备份、在安全时把存储卡转移到我指定的隐蔽处，绝对不要把任何东西交给任何人，若有人来询问必须先悄声通知我。卢茨低声回称存储卡已被销毁并口头表示会先通知我，但语气谨慎且未提供可验证的证据，我感到他的承诺不足以满足我的需求，信任没有修复。",
+          "startTime": "03:22",
+          "characterId": "Johnny",
+          "characterName": "Johnny",
+          "executionMeta": {
+            "startedAt": "03:22",
+            "completedAt": "03:25",
+            "remainingMinutes": 0
+          },
+          "targetCharacterIds": [
+            "Lutz Emilion"
+          ]
+        },
+        {
+          "type": "movement",
+          "action": "带海伦离开餐厅，悄悄前往日暮大道东端·森林入口躲避",
+          "impact": 1,
+          "nodeId": "m_johnny_forest_01",
+          "status": "completed",
+          "endTime": "02:24",
+          "outcome": "带海伦离开餐厅，悄悄前往日暮大道东端·森林入口躲避 成功",
+          "startTime": "01:54",
+          "characterId": "Johnny",
+          "destination": "JUNC_11",
+          "characterName": "Johnny",
+          "executionMeta": {
+            "movement": {
+              "routeSnapshot": [
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_2",
+                    "position": 0.28
+                  },
+                  "from": {
+                    "type": "scene",
+                    "sceneId": "SCN_10_SUB_1"
+                  },
+                  "kind": "along_road",
+                  "roadId": "ROAD_2",
+                  "blockCheck": {
+                    "toId": "ROAD_2",
+                    "fromId": "SCN_10_SUB_1"
+                  },
+                  "durationMinutes": 1
+                },
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_2",
+                    "position": 0
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_2",
+                    "position": 0.28
+                  },
+                  "kind": "along_road",
+                  "roadId": "ROAD_2",
+                  "durationMinutes": 2.8
+                },
+                {
+                  "to": {
+                    "type": "junction",
+                    "junctionId": "JUNC_2"
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_2",
+                    "position": 0
+                  },
+                  "kind": "to_junction",
+                  "blockCheck": {
+                    "toId": "JUNC_2",
+                    "fromId": "ROAD_2"
+                  },
+                  "durationMinutes": 0
+                },
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_5a",
+                    "position": 0
+                  },
+                  "from": {
+                    "type": "junction",
+                    "junctionId": "JUNC_2"
+                  },
+                  "kind": "to_junction",
+                  "blockCheck": {
+                    "toId": "ROAD_5a",
+                    "fromId": "JUNC_2"
+                  },
+                  "durationMinutes": 0
+                },
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_5a",
+                    "position": 1
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_5a",
+                    "position": 0
+                  },
+                  "kind": "along_road",
+                  "roadId": "ROAD_5a",
+                  "durationMinutes": 5
+                },
+                {
+                  "to": {
+                    "type": "junction",
+                    "junctionId": "JUNC_6"
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_5a",
+                    "position": 1
+                  },
+                  "kind": "to_junction",
+                  "blockCheck": {
+                    "toId": "JUNC_6",
+                    "fromId": "ROAD_5a"
+                  },
+                  "durationMinutes": 0
+                },
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_10",
+                    "position": 0
+                  },
+                  "from": {
+                    "type": "junction",
+                    "junctionId": "JUNC_6"
+                  },
+                  "kind": "to_junction",
+                  "blockCheck": {
+                    "toId": "ROAD_10",
+                    "fromId": "JUNC_6"
+                  },
+                  "durationMinutes": 0
+                },
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_10",
+                    "position": 1
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_10",
+                    "position": 0
+                  },
+                  "kind": "along_road",
+                  "roadId": "ROAD_10",
+                  "durationMinutes": 15
+                },
+                {
+                  "to": {
+                    "type": "junction",
+                    "junctionId": "JUNC_11"
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_10",
+                    "position": 1
+                  },
+                  "kind": "to_junction",
+                  "blockCheck": {
+                    "toId": "JUNC_11",
+                    "fromId": "ROAD_10"
+                  },
+                  "durationMinutes": 0
+                }
+              ],
+              "targetPosition": {
+                "type": "junction",
+                "junctionId": "JUNC_11"
+              },
+              "minutesIntoStep": 0,
+              "currentStepIndex": 9,
+              "lastReachablePosition": {
+                "type": "junction",
+                "junctionId": "JUNC_11"
+              }
+            },
+            "startedAt": "01:54",
+            "completedAt": "02:17",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "action",
+          "action": "低声再次确认海伦不会回酒吧，嘱咐她留在森林入口并保持隐蔽，等我通知再离开",
+          "impact": 0,
+          "nodeId": "a1",
+          "status": "completed",
+          "endTime": "02:23",
+          "outcome": "低声再次确认海伦不会回酒吧，嘱咐她留在森林入口并保持隐蔽，等我通知再离开 成功",
+          "startTime": "02:18",
+          "characterId": "Johnny",
+          "characterName": "Johnny",
+          "executionMeta": {
+            "startedAt": "02:18",
+            "completedAt": "02:23",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "action",
+          "action": "悄声确认海伦仍在林地入口的藏匿处并再三嘱咐她保持隐蔽、不要回酒吧，遇到可疑声音不要回应，等我通知再离开",
+          "impact": 0,
+          "nodeId": "a_next_0224",
+          "status": "completed",
+          "endTime": "02:29",
+          "outcome": "悄声确认海伦仍在林地入口的藏匿处并再三嘱咐她保持隐蔽、不要回酒吧，遇到可疑声音不要回应，等我通知再离开 成功",
+          "startTime": "02:24",
+          "characterId": "Johnny",
+          "characterName": "Johnny",
+          "executionMeta": {
+            "startedAt": "02:24",
+            "completedAt": "02:29",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "movement",
+          "action": "悄悄返回驯鹿酒吧，准备私下靠近卢茨确认他是否仍保管存储卡并设法取得收银机抽屉钥匙",
+          "impact": 0,
+          "nodeId": "m_johnny_01",
+          "status": "completed",
+          "endTime": "02:45",
+          "outcome": "悄悄返回驯鹿酒吧，准备私下靠近卢茨确认他是否仍保管存储卡并设法取得收银机抽屉钥匙 成功",
+          "startTime": "02:30",
+          "characterId": "Johnny",
+          "destination": "SCN_16_SUB_1",
+          "characterName": "Johnny",
+          "executionMeta": {
+            "movement": {
+              "routeSnapshot": [
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_10",
+                    "position": 1
+                  },
+                  "from": {
+                    "type": "junction",
+                    "junctionId": "JUNC_11"
+                  },
+                  "kind": "to_junction",
+                  "blockCheck": {
+                    "toId": "ROAD_10",
+                    "fromId": "JUNC_11"
+                  },
+                  "durationMinutes": 0
+                },
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_10",
+                    "position": 0
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_10",
+                    "position": 1
+                  },
+                  "kind": "along_road",
+                  "roadId": "ROAD_10",
+                  "durationMinutes": 15
+                },
+                {
+                  "to": {
+                    "type": "junction",
+                    "junctionId": "JUNC_6"
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_10",
+                    "position": 0
+                  },
+                  "kind": "to_junction",
+                  "blockCheck": {
+                    "toId": "JUNC_6",
+                    "fromId": "ROAD_10"
+                  },
+                  "durationMinutes": 0
+                },
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_5b",
+                    "position": 0
+                  },
+                  "from": {
+                    "type": "junction",
+                    "junctionId": "JUNC_6"
+                  },
+                  "kind": "to_junction",
+                  "blockCheck": {
+                    "toId": "ROAD_5b",
+                    "fromId": "JUNC_6"
+                  },
+                  "durationMinutes": 0
+                },
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_5b",
+                    "position": 1
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_5b",
+                    "position": 0
+                  },
+                  "kind": "along_road",
+                  "roadId": "ROAD_5b",
+                  "durationMinutes": 5
+                },
+                {
+                  "to": {
+                    "type": "junction",
+                    "junctionId": "JUNC_4"
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_5b",
+                    "position": 1
+                  },
+                  "kind": "to_junction",
+                  "blockCheck": {
+                    "toId": "JUNC_4",
+                    "fromId": "ROAD_5b"
+                  },
+                  "durationMinutes": 0
+                },
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_3",
+                    "position": 1
+                  },
+                  "from": {
+                    "type": "junction",
+                    "junctionId": "JUNC_4"
+                  },
+                  "kind": "to_junction",
+                  "blockCheck": {
+                    "toId": "ROAD_3",
+                    "fromId": "JUNC_4"
+                  },
+                  "durationMinutes": 0
+                },
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_3",
+                    "position": 0.76
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_3",
+                    "position": 1
+                  },
+                  "kind": "along_road",
+                  "roadId": "ROAD_3",
+                  "durationMinutes": 2.4
+                },
+                {
+                  "to": {
+                    "type": "scene",
+                    "sceneId": "SCN_16_SUB_1"
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_3",
+                    "position": 0.76
+                  },
+                  "kind": "to_scene",
+                  "blockCheck": {
+                    "toId": "SCN_16_SUB_1",
+                    "fromId": "ROAD_3"
+                  },
+                  "durationMinutes": 1
+                }
+              ],
+              "targetPosition": {
+                "type": "scene",
+                "sceneId": "SCN_16_SUB_1"
+              },
+              "minutesIntoStep": 0,
+              "currentStepIndex": 9,
+              "lastReachablePosition": {
+                "type": "scene",
+                "sceneId": "SCN_16_SUB_1"
+              }
+            },
+            "startedAt": "02:30",
+            "completedAt": "02:53",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "character_interaction",
+          "skill": "Intimidate",
+          "action": "低声向卢茨索要收银机抽屉钥匙，并严令他绝对不要把存储卡或照片交给任何人，遇到有人来问要先悄声通知我",
+          "impact": 1,
+          "nodeId": "ci3",
+          "status": "failed",
+          "endTime": "02:56",
+          "startTime": "02:54",
+          "characterId": "Johnny",
+          "characterName": "Johnny",
+          "executionMeta": {
+            "failedAt": "02:56",
+            "startedAt": "02:54",
+            "remainingMinutes": 2
+          },
+          "targetCharacterIds": [
+            "Lutz Emilion"
+          ]
+        },
+        {
+          "type": "character_interaction",
+          "skill": "Intimidate",
+          "action": "悄声威胁帕特里齐奥，逼他交出相机和存储卡或说出藏匿地点",
+          "impact": 1,
+          "nodeId": "ci1",
+          "status": "failed",
+          "endTime": "03:02",
+          "startTime": "02:57",
+          "characterId": "Johnny",
+          "characterName": "Johnny",
+          "executionMeta": {
+            "failedAt": "03:02",
+            "startedAt": "02:57",
+            "remainingMinutes": 5
+          },
+          "targetCharacterIds": [
+            "Patrizio von Samsa"
+          ]
+        },
+        {
+          "type": "character_interaction",
+          "skill": "Intimidate",
+          "action": "低声威胁卢茨，逼他把收银机抽屉钥匙交给我，或当场把存储卡转移到我指定的安全藏处，否则我会采取行动",
+          "impact": 1,
+          "nodeId": "ci_johnny_0303_1",
+          "status": "interrupted",
+          "endTime": "03:05",
+          "outcome": "低声威胁卢茨，逼他把收银机抽屉钥匙交给我，或当场把存储卡转移到我指定的安全藏处，否则我会采取行动 [因重新规划而中断] 已中断",
+          "startTime": "03:03",
+          "characterId": "Johnny",
+          "characterName": "Johnny",
+          "executionMeta": {
+            "startedAt": "03:03",
+            "interruptedAt": "03:03",
+            "remainingMinutes": 0,
+            "interruptionReason": "revise_replan"
+          },
+          "targetCharacterIds": [
+            "Lutz Emilion"
+          ]
+        },
+        {
+          "type": "character_interaction",
+          "skill": "Sleight of Hand",
+          "action": "悄悄从帕特里齐奥身上不动声色地偷回储物柜钥匙",
+          "impact": 1,
+          "nodeId": "ci2",
+          "status": "in_progress",
+          "endTime": "03:33",
+          "startTime": "03:31",
+          "characterId": "Johnny",
+          "characterName": "Johnny",
+          "executionMeta": {
+            "startedAt": "03:31",
+            "remainingMinutes": 2
+          },
+          "targetCharacterIds": [
+            "Patrizio von Samsa"
+          ]
+        },
+        {
+          "type": "action",
+          "action": "悄悄观察帕特里齐奥的动作，密切注意他是否携带储物柜钥匙、触摸或靠近吧台后方储物柜及他可能藏匿相机或存储卡的行为",
+          "impact": 0,
+          "nodeId": "a_next_0307",
+          "status": "completed",
+          "endTime": "03:12",
+          "outcome": "悄悄观察帕特里齐奥的动作，密切注意他是否携带储物柜钥匙、触摸或靠近吧台后方储物柜及他可能藏匿相机或存储卡的行为 成功",
+          "startTime": "03:07",
+          "characterId": "Johnny",
+          "characterName": "Johnny",
+          "executionMeta": {
+            "startedAt": "03:07",
+            "completedAt": "03:12",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "action",
+          "action": "悄声观察帕特里齐奥随身物品，确认他是否携带储物柜钥匙或相机/存储卡的迹象",
+          "impact": 0,
+          "nodeId": "a_johnny_03_13_01",
+          "status": "completed",
+          "endTime": "03:15",
+          "outcome": "悄声观察帕特里齐奥随身物品，确认他是否携带储物柜钥匙或相机/存储卡的迹象 成功",
+          "startTime": "03:13",
+          "characterId": "Johnny",
+          "characterName": "Johnny",
+          "executionMeta": {
+            "startedAt": "03:13",
+            "completedAt": "03:15",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "character_interaction",
+          "skill": "Sleight of Hand",
+          "action": "悄悄从帕特里齐奥身上不动声色地偷回储物柜钥匙",
+          "impact": 1,
+          "nodeId": "ci2",
+          "status": "in_progress",
+          "endTime": "03:33",
+          "startTime": "03:31",
+          "characterId": "Johnny",
+          "characterName": "Johnny",
+          "executionMeta": {
+            "startedAt": "03:31",
+            "remainingMinutes": 2
+          },
+          "targetCharacterIds": [
+            "Patrizio von Samsa"
+          ]
+        },
+        {
+          "type": "scene_interaction",
+          "action": "用帕特里齐奥给的钥匙打开吧台后方储物柜并快速检查内部是否有相机或存储卡",
+          "impact": 2,
+          "nodeId": "si_johnny_check_locker_0319",
+          "status": "completed",
+          "endTime": "03:21",
+          "outcome": "我用帕特里齐奥给的钥匙打开了吧台后方的储物柜，迅速检查了里面，没发现相机或存储卡。钥匙现在在我手上，储物柜门敞开。",
+          "startTime": "03:19",
+          "characterId": "Johnny",
+          "characterName": "Johnny",
+          "executionMeta": {
+            "startedAt": "03:19",
+            "completedAt": "03:21",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "character_interaction",
+          "skill": "Intimidate",
+          "action": "悄声靠近卢茨，把储物柜里空无相机或存储卡的情况低声告诉他，严厉要求他当场确认是否还有任何备份并在安全时把存储卡转移到我指定的隐蔽处，命令他现在绝对不要把任何东西交给任何人，若有人来询问必须先悄声通知我",
+          "impact": 1,
+          "nodeId": "ci_johnny_01",
+          "status": "completed",
+          "endTime": "03:25",
+          "outcome": "我悄声靠近卢茨，低声告诉他储物柜里没有相机或存储卡，并严厉命令他当场确认是否还有任何备份、在安全时把存储卡转移到我指定的隐蔽处，绝对不要把任何东西交给任何人，若有人来询问必须先悄声通知我。卢茨低声回称存储卡已被销毁并口头表示会先通知我，但语气谨慎且未提供可验证的证据，我感到他的承诺不足以满足我的需求，信任没有修复。",
+          "startTime": "03:22",
+          "characterId": "Johnny",
+          "characterName": "Johnny",
+          "executionMeta": {
+            "startedAt": "03:22",
+            "completedAt": "03:25",
+            "remainingMinutes": 0
+          },
+          "targetCharacterIds": [
+            "Lutz Emilion"
+          ]
+        },
+        {
+          "type": "action",
+          "action": "悄声留在一层大厅靠近帕特里齐奥的侧后方，暗中盯着他的一举一动，注意他是否掏出或藏入任何小型物品（钥匙、相机、存储卡），并在发现可疑动作时记住位置以便后续取回",
+          "impact": 0,
+          "nodeId": "a_next1",
+          "status": "completed",
+          "endTime": "03:29",
+          "outcome": "悄声留在一层大厅靠近帕特里齐奥的侧后方，暗中盯着他的一举一动，注意他是否掏出或藏入任何小型物品（钥匙、相机、存储卡），并在发现可疑动作时记住位置以便后续取回 成功",
+          "startTime": "03:26",
+          "characterId": "Johnny",
+          "characterName": "Johnny",
+          "executionMeta": {
+            "startedAt": "03:26",
+            "completedAt": "03:29",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "character_interaction",
+          "skill": "Sleight of Hand",
+          "action": "悄悄从帕特里齐奥身上不动声色地偷回储物柜钥匙",
+          "impact": 1,
+          "nodeId": "ci2",
+          "status": "in_progress",
+          "endTime": "03:33",
+          "startTime": "03:31",
+          "characterId": "Johnny",
+          "characterName": "Johnny",
+          "executionMeta": {
+            "startedAt": "03:31",
+            "remainingMinutes": 2
+          },
+          "targetCharacterIds": [
+            "Patrizio von Samsa"
+          ]
+        }
+      ]
+    },
+    {
+      "npcName": "Johnny",
+      "gameDay": 1,
+      "schedule": [
+        {
+          "activity": "当面向海伦真诚道歉，争取重新安排一次不被打扰的约会。",
+          "location": "海伦的餐桌"
+        },
+        {
+          "activity": "如果可能，要求私下谈话或邀请她出去短暂散步以避开旁人和监视，观察她的反应并决定下一步。",
+          "location": "海伦的餐桌"
+        },
+        {
+          "activity": "如有需要，向哈里森打听菲利普的下落并顺便买些简单的过夜装备以备不时之需。",
+          "location": "五金店"
+        },
+        {
+          "activity": "若海伦拒绝或交谈不顺利，回到驯鹿酒吧在角落冷静，喝一杯酒平复情绪并等到闭店后再决定去哪里过夜休息。",
+          "location": "驯鹿酒吧"
+        }
+      ],
+      "nodes": [
+        {
+          "type": "action",
+          "action": "坐到吧台边要一杯波本并慢慢喝下去以冷静下来，回想刚才与菲利普争吵的经过",
+          "impact": 0,
+          "nodeId": "a_johnny_001",
+          "status": "completed",
+          "endTime": "19:10",
+          "outcome": "坐到吧台边要一杯波本并慢慢喝下去以冷静下来，回想刚才与菲利普争吵的经过 成功",
+          "startTime": "19:00",
+          "characterId": "Johnny",
+          "characterName": "Johnny",
+          "executionMeta": {
+            "startedAt": "19:00",
+            "completedAt": "19:10",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "character_interaction",
+          "skill": "Persuade",
+          "action": "用低沉而平静的语气对柯文德说话，尽力安抚他并劝他把枪放下，表明我们没有敌意并愿意离开以避免冲突",
+          "impact": 2,
+          "nodeId": "ci1",
+          "status": "in_progress",
+          "endTime": "23:17",
+          "startTime": "23:14",
+          "characterId": "Johnny",
+          "characterName": "Johnny",
+          "executionMeta": {
+            "startedAt": "23:14",
+            "remainingMinutes": 3
+          },
+          "targetCharacterIds": [
+            "Kovind"
+          ]
+        },
+        {
+          "type": "movement",
+          "action": "走出餐厅前往驯鹿酒吧冷静一下",
+          "impact": 0,
+          "nodeId": "m_johnny_001",
+          "status": "completed",
+          "endTime": "22:52",
+          "outcome": "走出餐厅前往驯鹿酒吧冷静一下 成功",
+          "startTime": "22:47",
+          "characterId": "Johnny",
+          "destination": "SCN_16_SUB_1",
+          "characterName": "Johnny",
+          "executionMeta": {
+            "movement": {
+              "routeSnapshot": [
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_2",
+                    "position": 0.28
+                  },
+                  "from": {
+                    "type": "scene",
+                    "sceneId": "SCN_10_SUB_1"
+                  },
+                  "kind": "along_road",
+                  "roadId": "ROAD_2",
+                  "blockCheck": {
+                    "toId": "ROAD_2",
+                    "fromId": "SCN_10_SUB_1"
+                  },
+                  "durationMinutes": 1
+                },
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_2",
+                    "position": 1
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_2",
+                    "position": 0.28
+                  },
+                  "kind": "along_road",
+                  "roadId": "ROAD_2",
+                  "durationMinutes": 7.199999999999999
+                },
+                {
+                  "to": {
+                    "type": "junction",
+                    "junctionId": "JUNC_3"
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_2",
+                    "position": 1
+                  },
+                  "kind": "to_junction",
+                  "blockCheck": {
+                    "toId": "JUNC_3",
+                    "fromId": "ROAD_2"
+                  },
+                  "durationMinutes": 0
+                },
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_3",
+                    "position": 0
+                  },
+                  "from": {
+                    "type": "junction",
+                    "junctionId": "JUNC_3"
+                  },
+                  "kind": "to_junction",
+                  "blockCheck": {
+                    "toId": "ROAD_3",
+                    "fromId": "JUNC_3"
+                  },
+                  "durationMinutes": 0
+                },
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_3",
+                    "position": 0.76
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_3",
+                    "position": 0
+                  },
+                  "kind": "along_road",
+                  "roadId": "ROAD_3",
+                  "durationMinutes": 7.6
+                },
+                {
+                  "to": {
+                    "type": "scene",
+                    "sceneId": "SCN_16_SUB_1"
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_3",
+                    "position": 0.76
+                  },
+                  "kind": "to_scene",
+                  "blockCheck": {
+                    "toId": "SCN_16_SUB_1",
+                    "fromId": "ROAD_3"
+                  },
+                  "durationMinutes": 1
+                }
+              ],
+              "targetPosition": {
+                "type": "scene",
+                "sceneId": "SCN_16_SUB_1"
+              },
+              "minutesIntoStep": 0,
+              "currentStepIndex": 6,
+              "lastReachablePosition": {
+                "type": "scene",
+                "sceneId": "SCN_16_SUB_1"
+              }
+            },
+            "startedAt": "22:47",
+            "completedAt": "23:04",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "movement",
+          "action": "步行前往海伦的餐桌以当面道歉并尝试重新安排一次不被打扰的约会",
+          "impact": 0,
+          "nodeId": "m_johnny_to_helen_restaurant_1",
+          "status": "completed",
+          "endTime": "19:34",
+          "outcome": "步行前往海伦的餐桌以当面道歉并尝试重新安排一次不被打扰的约会 成功",
+          "startTime": "19:29",
+          "characterId": "Johnny",
+          "destination": "SCN_10_SUB_1",
+          "characterName": "Johnny",
+          "executionMeta": {
+            "movement": {
+              "routeSnapshot": [
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_2",
+                    "position": 0.83
+                  },
+                  "from": {
+                    "type": "scene",
+                    "sceneId": "SCN_9_SUB_1"
+                  },
+                  "kind": "along_road",
+                  "roadId": "ROAD_2",
+                  "blockCheck": {
+                    "toId": "ROAD_2",
+                    "fromId": "SCN_9_SUB_1"
+                  },
+                  "durationMinutes": 1
+                },
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_2",
+                    "position": 1
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_2",
+                    "position": 0.83
+                  },
+                  "kind": "along_road",
+                  "roadId": "ROAD_2",
+                  "durationMinutes": 1.7
+                },
+                {
+                  "to": {
+                    "type": "junction",
+                    "junctionId": "JUNC_3"
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_2",
+                    "position": 1
+                  },
+                  "kind": "to_junction",
+                  "blockCheck": {
+                    "toId": "JUNC_3",
+                    "fromId": "ROAD_2"
+                  },
+                  "durationMinutes": 0
+                },
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_2",
+                    "position": 1
+                  },
+                  "from": {
+                    "type": "junction",
+                    "junctionId": "JUNC_3"
+                  },
+                  "kind": "to_junction",
+                  "blockCheck": {
+                    "toId": "ROAD_2",
+                    "fromId": "JUNC_3"
+                  },
+                  "durationMinutes": 0
+                },
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_2",
+                    "position": 0.28
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_2",
+                    "position": 1
+                  },
+                  "kind": "along_road",
+                  "roadId": "ROAD_2",
+                  "durationMinutes": 7.199999999999999
+                },
+                {
+                  "to": {
+                    "type": "scene",
+                    "sceneId": "SCN_10_SUB_1"
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_2",
+                    "position": 0.28
+                  },
+                  "kind": "to_scene",
+                  "blockCheck": {
+                    "toId": "SCN_10_SUB_1",
+                    "fromId": "ROAD_2"
+                  },
+                  "durationMinutes": 1
+                }
+              ],
+              "targetPosition": {
+                "type": "scene",
+                "sceneId": "SCN_10_SUB_1"
+              },
+              "minutesIntoStep": 0,
+              "currentStepIndex": 6,
+              "lastReachablePosition": {
+                "type": "scene",
+                "sceneId": "SCN_10_SUB_1"
+              }
+            },
+            "startedAt": "19:29",
+            "completedAt": "19:55",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "character_interaction",
+          "action": "低声向海伦真诚道歉，并悄声请求能否私下交谈或出去短暂散步以避开旁人，留意周围是否有人在监视",
+          "impact": 1,
+          "nodeId": "ci_johnny_apologize_1",
+          "status": "completed",
+          "endTime": "19:59",
+          "outcome": "我低声向海伦真诚道歉，并请她能否私下交谈或出去短暂散步以避开旁人；她没有当场拒绝，答应私下说话或出去片刻。她跟我说她记得我在驯鹿酒吧那晚是和菲利普打起来的，不希望那件事被进一步夸大，并同意我们留意周围是否有人在监视。",
+          "startTime": "19:56",
+          "characterId": "Johnny",
+          "characterName": "Johnny",
+          "executionMeta": {
+            "startedAt": "19:56",
+            "completedAt": "19:59",
+            "remainingMinutes": 0
+          },
+          "targetCharacterIds": [
+            "Helen"
+          ]
+        },
+        {
+          "type": "character_interaction",
+          "skill": "Persuade",
+          "action": "用低沉而平静的语气对柯文德说话，尽力安抚他并劝他把枪放下，表明我们没有敌意并愿意离开以避免冲突",
+          "impact": 2,
+          "nodeId": "ci1",
+          "status": "in_progress",
+          "endTime": "23:17",
+          "startTime": "23:14",
+          "characterId": "Johnny",
+          "characterName": "Johnny",
+          "executionMeta": {
+            "startedAt": "23:14",
+            "remainingMinutes": 3
+          },
+          "targetCharacterIds": [
+            "Kovind"
+          ]
+        },
+        {
+          "type": "movement",
+          "action": "离开花店并前往驯鹿酒吧冷静一下",
+          "impact": 0,
+          "nodeId": "m1",
+          "status": "interrupted",
+          "endTime": "22:28",
+          "outcome": "离开花店并前往驯鹿酒吧冷静一下 [因重新规划而中断] 已中断",
+          "startTime": "22:18",
+          "characterId": "Johnny",
+          "destination": "SCN_16_SUB_1",
+          "characterName": "Johnny",
+          "executionMeta": {
+            "movement": {
+              "routeSnapshot": [
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_2",
+                    "position": 0.83
+                  },
+                  "from": {
+                    "type": "scene",
+                    "sceneId": "SCN_9_SUB_1"
+                  },
+                  "kind": "along_road",
+                  "roadId": "ROAD_2",
+                  "blockCheck": {
+                    "toId": "ROAD_2",
+                    "fromId": "SCN_9_SUB_1"
+                  },
+                  "durationMinutes": 1
+                },
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_2",
+                    "position": 1
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_2",
+                    "position": 0.83
+                  },
+                  "kind": "along_road",
+                  "roadId": "ROAD_2",
+                  "durationMinutes": 1.7
+                },
+                {
+                  "to": {
+                    "type": "junction",
+                    "junctionId": "JUNC_3"
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_2",
+                    "position": 1
+                  },
+                  "kind": "to_junction",
+                  "blockCheck": {
+                    "toId": "JUNC_3",
+                    "fromId": "ROAD_2"
+                  },
+                  "durationMinutes": 0
+                },
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_3",
+                    "position": 0
+                  },
+                  "from": {
+                    "type": "junction",
+                    "junctionId": "JUNC_3"
+                  },
+                  "kind": "to_junction",
+                  "blockCheck": {
+                    "toId": "ROAD_3",
+                    "fromId": "JUNC_3"
+                  },
+                  "durationMinutes": 0
+                },
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_3",
+                    "position": 0.76
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_3",
+                    "position": 0
+                  },
+                  "kind": "along_road",
+                  "roadId": "ROAD_3",
+                  "durationMinutes": 7.6
+                },
+                {
+                  "to": {
+                    "type": "scene",
+                    "sceneId": "SCN_16_SUB_1"
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_3",
+                    "position": 0.76
+                  },
+                  "kind": "to_scene",
+                  "blockCheck": {
+                    "toId": "SCN_16_SUB_1",
+                    "fromId": "ROAD_3"
+                  },
+                  "durationMinutes": 1
+                }
+              ],
+              "targetPosition": {
+                "type": "scene",
+                "sceneId": "SCN_16_SUB_1"
+              },
+              "minutesIntoStep": 1,
+              "currentStepIndex": 1,
+              "lastReachablePosition": {
+                "type": "road",
+                "roadId": "ROAD_2",
+                "position": 0.9299999999999999
+              }
+            },
+            "startedAt": "22:18",
+            "interruptedAt": "22:19",
+            "remainingMinutes": 0,
+            "interruptionReason": "revise_replan"
+          }
+        },
+        {
+          "type": "movement",
+          "action": "离开花店并前往驯鹿酒吧冷静一下",
+          "impact": 0,
+          "nodeId": "m1",
+          "status": "interrupted",
+          "endTime": "22:28",
+          "outcome": "离开花店并前往驯鹿酒吧冷静一下 [因重新规划而中断] 已中断",
+          "startTime": "22:18",
+          "characterId": "Johnny",
+          "destination": "SCN_16_SUB_1",
+          "characterName": "Johnny",
+          "executionMeta": {
+            "movement": {
+              "routeSnapshot": [
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_2",
+                    "position": 0.83
+                  },
+                  "from": {
+                    "type": "scene",
+                    "sceneId": "SCN_9_SUB_1"
+                  },
+                  "kind": "along_road",
+                  "roadId": "ROAD_2",
+                  "blockCheck": {
+                    "toId": "ROAD_2",
+                    "fromId": "SCN_9_SUB_1"
+                  },
+                  "durationMinutes": 1
+                },
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_2",
+                    "position": 1
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_2",
+                    "position": 0.83
+                  },
+                  "kind": "along_road",
+                  "roadId": "ROAD_2",
+                  "durationMinutes": 1.7
+                },
+                {
+                  "to": {
+                    "type": "junction",
+                    "junctionId": "JUNC_3"
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_2",
+                    "position": 1
+                  },
+                  "kind": "to_junction",
+                  "blockCheck": {
+                    "toId": "JUNC_3",
+                    "fromId": "ROAD_2"
+                  },
+                  "durationMinutes": 0
+                },
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_3",
+                    "position": 0
+                  },
+                  "from": {
+                    "type": "junction",
+                    "junctionId": "JUNC_3"
+                  },
+                  "kind": "to_junction",
+                  "blockCheck": {
+                    "toId": "ROAD_3",
+                    "fromId": "JUNC_3"
+                  },
+                  "durationMinutes": 0
+                },
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_3",
+                    "position": 0.76
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_3",
+                    "position": 0
+                  },
+                  "kind": "along_road",
+                  "roadId": "ROAD_3",
+                  "durationMinutes": 7.6
+                },
+                {
+                  "to": {
+                    "type": "scene",
+                    "sceneId": "SCN_16_SUB_1"
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_3",
+                    "position": 0.76
+                  },
+                  "kind": "to_scene",
+                  "blockCheck": {
+                    "toId": "SCN_16_SUB_1",
+                    "fromId": "ROAD_3"
+                  },
+                  "durationMinutes": 1
+                }
+              ],
+              "targetPosition": {
+                "type": "scene",
+                "sceneId": "SCN_16_SUB_1"
+              },
+              "minutesIntoStep": 1,
+              "currentStepIndex": 1,
+              "lastReachablePosition": {
+                "type": "road",
+                "roadId": "ROAD_2",
+                "position": 0.9299999999999999
+              }
+            },
+            "startedAt": "22:18",
+            "interruptedAt": "22:19",
+            "remainingMinutes": 0,
+            "interruptionReason": "revise_replan"
+          }
+        },
+        {
+          "type": "character_interaction",
+          "skill": "Persuade",
+          "action": "低声继续劝说海伦跟我去一个更安静的地方私下说话",
+          "impact": 1,
+          "nodeId": "ci_next_001",
+          "status": "interrupted",
+          "endTime": "21:50",
+          "outcome": "低声继续劝说海伦跟我去一个更安静的地方私下说话 [因重新规划而中断] 已中断",
+          "startTime": "21:48",
+          "characterId": "Johnny",
+          "characterName": "Johnny",
+          "executionMeta": {
+            "startedAt": "21:48",
+            "interruptedAt": "21:53",
+            "remainingMinutes": 0,
+            "interruptionReason": "revise_replan"
+          },
+          "targetCharacterIds": [
+            "Helen"
+          ]
+        },
+        {
+          "type": "action",
+          "action": "向海伦低声道歉并示意她跟我去一个更安静的地方私下说话",
+          "impact": 1,
+          "nodeId": "a12",
+          "status": "interrupted",
+          "endTime": "21:56",
+          "outcome": "向海伦低声道歉并示意她跟我去一个更安静的地方私下说话 [因重新规划而中断] 已中断",
+          "startTime": "21:54",
+          "characterId": "Johnny",
+          "characterName": "Johnny",
+          "executionMeta": {
+            "startedAt": "21:54",
+            "interruptedAt": "21:55",
+            "remainingMinutes": 0,
+            "interruptionReason": "revise_replan"
+          }
+        },
+        {
+          "type": "character_interaction",
+          "skill": "Persuade",
+          "action": "用低沉而平静的语气对柯文德说话，尽力安抚他并劝他把枪放下，表明我们没有敌意并愿意离开以避免冲突",
+          "impact": 2,
+          "nodeId": "ci1",
+          "status": "in_progress",
+          "endTime": "23:17",
+          "startTime": "23:14",
+          "characterId": "Johnny",
+          "characterName": "Johnny",
+          "executionMeta": {
+            "startedAt": "23:14",
+            "remainingMinutes": 3
+          },
+          "targetCharacterIds": [
+            "Kovind"
+          ]
+        },
+        {
+          "type": "movement",
+          "action": "离开花店并前往驯鹿酒吧冷静一下",
+          "impact": 0,
+          "nodeId": "m1",
+          "status": "interrupted",
+          "endTime": "22:28",
+          "outcome": "离开花店并前往驯鹿酒吧冷静一下 [因重新规划而中断] 已中断",
+          "startTime": "22:18",
+          "characterId": "Johnny",
+          "destination": "SCN_16_SUB_1",
+          "characterName": "Johnny",
+          "executionMeta": {
+            "movement": {
+              "routeSnapshot": [
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_2",
+                    "position": 0.83
+                  },
+                  "from": {
+                    "type": "scene",
+                    "sceneId": "SCN_9_SUB_1"
+                  },
+                  "kind": "along_road",
+                  "roadId": "ROAD_2",
+                  "blockCheck": {
+                    "toId": "ROAD_2",
+                    "fromId": "SCN_9_SUB_1"
+                  },
+                  "durationMinutes": 1
+                },
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_2",
+                    "position": 1
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_2",
+                    "position": 0.83
+                  },
+                  "kind": "along_road",
+                  "roadId": "ROAD_2",
+                  "durationMinutes": 1.7
+                },
+                {
+                  "to": {
+                    "type": "junction",
+                    "junctionId": "JUNC_3"
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_2",
+                    "position": 1
+                  },
+                  "kind": "to_junction",
+                  "blockCheck": {
+                    "toId": "JUNC_3",
+                    "fromId": "ROAD_2"
+                  },
+                  "durationMinutes": 0
+                },
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_3",
+                    "position": 0
+                  },
+                  "from": {
+                    "type": "junction",
+                    "junctionId": "JUNC_3"
+                  },
+                  "kind": "to_junction",
+                  "blockCheck": {
+                    "toId": "ROAD_3",
+                    "fromId": "JUNC_3"
+                  },
+                  "durationMinutes": 0
+                },
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_3",
+                    "position": 0.76
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_3",
+                    "position": 0
+                  },
+                  "kind": "along_road",
+                  "roadId": "ROAD_3",
+                  "durationMinutes": 7.6
+                },
+                {
+                  "to": {
+                    "type": "scene",
+                    "sceneId": "SCN_16_SUB_1"
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_3",
+                    "position": 0.76
+                  },
+                  "kind": "to_scene",
+                  "blockCheck": {
+                    "toId": "SCN_16_SUB_1",
+                    "fromId": "ROAD_3"
+                  },
+                  "durationMinutes": 1
+                }
+              ],
+              "targetPosition": {
+                "type": "scene",
+                "sceneId": "SCN_16_SUB_1"
+              },
+              "minutesIntoStep": 1,
+              "currentStepIndex": 1,
+              "lastReachablePosition": {
+                "type": "road",
+                "roadId": "ROAD_2",
+                "position": 0.9299999999999999
+              }
+            },
+            "startedAt": "22:18",
+            "interruptedAt": "22:19",
+            "remainingMinutes": 0,
+            "interruptionReason": "revise_replan"
+          }
+        },
+        {
+          "type": "movement",
+          "action": "离开花店并前往驯鹿酒吧冷静一下",
+          "impact": 0,
+          "nodeId": "m1",
+          "status": "interrupted",
+          "endTime": "22:28",
+          "outcome": "离开花店并前往驯鹿酒吧冷静一下 [因重新规划而中断] 已中断",
+          "startTime": "22:18",
+          "characterId": "Johnny",
+          "destination": "SCN_16_SUB_1",
+          "characterName": "Johnny",
+          "executionMeta": {
+            "movement": {
+              "routeSnapshot": [
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_2",
+                    "position": 0.83
+                  },
+                  "from": {
+                    "type": "scene",
+                    "sceneId": "SCN_9_SUB_1"
+                  },
+                  "kind": "along_road",
+                  "roadId": "ROAD_2",
+                  "blockCheck": {
+                    "toId": "ROAD_2",
+                    "fromId": "SCN_9_SUB_1"
+                  },
+                  "durationMinutes": 1
+                },
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_2",
+                    "position": 1
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_2",
+                    "position": 0.83
+                  },
+                  "kind": "along_road",
+                  "roadId": "ROAD_2",
+                  "durationMinutes": 1.7
+                },
+                {
+                  "to": {
+                    "type": "junction",
+                    "junctionId": "JUNC_3"
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_2",
+                    "position": 1
+                  },
+                  "kind": "to_junction",
+                  "blockCheck": {
+                    "toId": "JUNC_3",
+                    "fromId": "ROAD_2"
+                  },
+                  "durationMinutes": 0
+                },
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_3",
+                    "position": 0
+                  },
+                  "from": {
+                    "type": "junction",
+                    "junctionId": "JUNC_3"
+                  },
+                  "kind": "to_junction",
+                  "blockCheck": {
+                    "toId": "ROAD_3",
+                    "fromId": "JUNC_3"
+                  },
+                  "durationMinutes": 0
+                },
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_3",
+                    "position": 0.76
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_3",
+                    "position": 0
+                  },
+                  "kind": "along_road",
+                  "roadId": "ROAD_3",
+                  "durationMinutes": 7.6
+                },
+                {
+                  "to": {
+                    "type": "scene",
+                    "sceneId": "SCN_16_SUB_1"
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_3",
+                    "position": 0.76
+                  },
+                  "kind": "to_scene",
+                  "blockCheck": {
+                    "toId": "SCN_16_SUB_1",
+                    "fromId": "ROAD_3"
+                  },
+                  "durationMinutes": 1
+                }
+              ],
+              "targetPosition": {
+                "type": "scene",
+                "sceneId": "SCN_16_SUB_1"
+              },
+              "minutesIntoStep": 1,
+              "currentStepIndex": 1,
+              "lastReachablePosition": {
+                "type": "road",
+                "roadId": "ROAD_2",
+                "position": 0.9299999999999999
+              }
+            },
+            "startedAt": "22:18",
+            "interruptedAt": "22:19",
+            "remainingMinutes": 0,
+            "interruptionReason": "revise_replan"
+          }
+        },
+        {
+          "type": "character_interaction",
+          "skill": "Persuade",
+          "action": "用低沉而平静的语气对柯文德说话，尽力安抚他并劝他把枪放下，表明我们没有敌意并愿意离开以避免冲突",
+          "impact": 2,
+          "nodeId": "ci1",
+          "status": "in_progress",
+          "endTime": "23:17",
+          "startTime": "23:14",
+          "characterId": "Johnny",
+          "characterName": "Johnny",
+          "executionMeta": {
+            "startedAt": "23:14",
+            "remainingMinutes": 3
+          },
+          "targetCharacterIds": [
+            "Kovind"
+          ]
+        },
+        {
+          "type": "movement",
+          "action": "离开花店并前往驯鹿酒吧冷静一下",
+          "impact": 0,
+          "nodeId": "m1",
+          "status": "interrupted",
+          "endTime": "22:28",
+          "outcome": "离开花店并前往驯鹿酒吧冷静一下 [因重新规划而中断] 已中断",
+          "startTime": "22:18",
+          "characterId": "Johnny",
+          "destination": "SCN_16_SUB_1",
+          "characterName": "Johnny",
+          "executionMeta": {
+            "movement": {
+              "routeSnapshot": [
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_2",
+                    "position": 0.83
+                  },
+                  "from": {
+                    "type": "scene",
+                    "sceneId": "SCN_9_SUB_1"
+                  },
+                  "kind": "along_road",
+                  "roadId": "ROAD_2",
+                  "blockCheck": {
+                    "toId": "ROAD_2",
+                    "fromId": "SCN_9_SUB_1"
+                  },
+                  "durationMinutes": 1
+                },
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_2",
+                    "position": 1
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_2",
+                    "position": 0.83
+                  },
+                  "kind": "along_road",
+                  "roadId": "ROAD_2",
+                  "durationMinutes": 1.7
+                },
+                {
+                  "to": {
+                    "type": "junction",
+                    "junctionId": "JUNC_3"
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_2",
+                    "position": 1
+                  },
+                  "kind": "to_junction",
+                  "blockCheck": {
+                    "toId": "JUNC_3",
+                    "fromId": "ROAD_2"
+                  },
+                  "durationMinutes": 0
+                },
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_3",
+                    "position": 0
+                  },
+                  "from": {
+                    "type": "junction",
+                    "junctionId": "JUNC_3"
+                  },
+                  "kind": "to_junction",
+                  "blockCheck": {
+                    "toId": "ROAD_3",
+                    "fromId": "JUNC_3"
+                  },
+                  "durationMinutes": 0
+                },
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_3",
+                    "position": 0.76
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_3",
+                    "position": 0
+                  },
+                  "kind": "along_road",
+                  "roadId": "ROAD_3",
+                  "durationMinutes": 7.6
+                },
+                {
+                  "to": {
+                    "type": "scene",
+                    "sceneId": "SCN_16_SUB_1"
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_3",
+                    "position": 0.76
+                  },
+                  "kind": "to_scene",
+                  "blockCheck": {
+                    "toId": "SCN_16_SUB_1",
+                    "fromId": "ROAD_3"
+                  },
+                  "durationMinutes": 1
+                }
+              ],
+              "targetPosition": {
+                "type": "scene",
+                "sceneId": "SCN_16_SUB_1"
+              },
+              "minutesIntoStep": 1,
+              "currentStepIndex": 1,
+              "lastReachablePosition": {
+                "type": "road",
+                "roadId": "ROAD_2",
+                "position": 0.9299999999999999
+              }
+            },
+            "startedAt": "22:18",
+            "interruptedAt": "22:19",
+            "remainingMinutes": 0,
+            "interruptionReason": "revise_replan"
+          }
+        },
+        {
+          "type": "character_interaction",
+          "action": "低声问南希：海伦现在在哪里？尽量让语气随意不引人注意",
+          "impact": 1,
+          "nodeId": "ci_day1_2213_1",
+          "status": "completed",
+          "endTime": "22:14",
+          "outcome": "我悄声问了南希：“海伦现在在哪里？”尽量让语气随意不引人注意。她说她不知道，语气温柔但有些紧张。",
+          "startTime": "22:13",
+          "characterId": "Johnny",
+          "characterName": "Johnny",
+          "executionMeta": {
+            "startedAt": "22:13",
+            "completedAt": "22:14",
+            "remainingMinutes": 0
+          },
+          "targetCharacterIds": [
+            "Nancy Charlotte"
+          ]
+        },
+        {
+          "type": "scene_interaction",
+          "action": "检查后厅与地下酒窖以寻找海伦",
+          "impact": 2,
+          "nodeId": "si_johnny_01",
+          "status": "completed",
+          "endTime": "22:17",
+          "outcome": "我从收银柜台旁的半掩木门进去，沿短廊检查了后厅与地下酒窖；后厅只有南希和西蒙在准备晚饭，地下酒窖里没有海伦，角落的隐蔽小包仍在原处。",
+          "startTime": "22:15",
+          "characterId": "Johnny",
+          "characterName": "Johnny",
+          "executionMeta": {
+            "startedAt": "22:15",
+            "completedAt": "22:17",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "movement",
+          "action": "离开花店并前往驯鹿酒吧冷静一下",
+          "impact": 0,
+          "nodeId": "m1",
+          "status": "interrupted",
+          "endTime": "22:28",
+          "outcome": "离开花店并前往驯鹿酒吧冷静一下 [因重新规划而中断] 已中断",
+          "startTime": "22:18",
+          "characterId": "Johnny",
+          "destination": "SCN_16_SUB_1",
+          "characterName": "Johnny",
+          "executionMeta": {
+            "movement": {
+              "routeSnapshot": [
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_2",
+                    "position": 0.83
+                  },
+                  "from": {
+                    "type": "scene",
+                    "sceneId": "SCN_9_SUB_1"
+                  },
+                  "kind": "along_road",
+                  "roadId": "ROAD_2",
+                  "blockCheck": {
+                    "toId": "ROAD_2",
+                    "fromId": "SCN_9_SUB_1"
+                  },
+                  "durationMinutes": 1
+                },
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_2",
+                    "position": 1
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_2",
+                    "position": 0.83
+                  },
+                  "kind": "along_road",
+                  "roadId": "ROAD_2",
+                  "durationMinutes": 1.7
+                },
+                {
+                  "to": {
+                    "type": "junction",
+                    "junctionId": "JUNC_3"
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_2",
+                    "position": 1
+                  },
+                  "kind": "to_junction",
+                  "blockCheck": {
+                    "toId": "JUNC_3",
+                    "fromId": "ROAD_2"
+                  },
+                  "durationMinutes": 0
+                },
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_3",
+                    "position": 0
+                  },
+                  "from": {
+                    "type": "junction",
+                    "junctionId": "JUNC_3"
+                  },
+                  "kind": "to_junction",
+                  "blockCheck": {
+                    "toId": "ROAD_3",
+                    "fromId": "JUNC_3"
+                  },
+                  "durationMinutes": 0
+                },
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_3",
+                    "position": 0.76
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_3",
+                    "position": 0
+                  },
+                  "kind": "along_road",
+                  "roadId": "ROAD_3",
+                  "durationMinutes": 7.6
+                },
+                {
+                  "to": {
+                    "type": "scene",
+                    "sceneId": "SCN_16_SUB_1"
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_3",
+                    "position": 0.76
+                  },
+                  "kind": "to_scene",
+                  "blockCheck": {
+                    "toId": "SCN_16_SUB_1",
+                    "fromId": "ROAD_3"
+                  },
+                  "durationMinutes": 1
+                }
+              ],
+              "targetPosition": {
+                "type": "scene",
+                "sceneId": "SCN_16_SUB_1"
+              },
+              "minutesIntoStep": 1,
+              "currentStepIndex": 1,
+              "lastReachablePosition": {
+                "type": "road",
+                "roadId": "ROAD_2",
+                "position": 0.9299999999999999
+              }
+            },
+            "startedAt": "22:18",
+            "interruptedAt": "22:19",
+            "remainingMinutes": 0,
+            "interruptionReason": "revise_replan"
+          }
+        },
+        {
+          "type": "character_interaction",
+          "skill": "Persuade",
+          "action": "用低沉而平静的语气对柯文德说话，尽力安抚他并劝他把枪放下，表明我们没有敌意并愿意离开以避免冲突",
+          "impact": 2,
+          "nodeId": "ci1",
+          "status": "in_progress",
+          "endTime": "23:17",
+          "startTime": "23:14",
+          "characterId": "Johnny",
+          "characterName": "Johnny",
+          "executionMeta": {
+            "startedAt": "23:14",
+            "remainingMinutes": 3
+          },
+          "targetCharacterIds": [
+            "Kovind"
+          ]
+        },
+        {
+          "type": "movement",
+          "action": "走出餐厅前往驯鹿酒吧冷静一下",
+          "impact": 0,
+          "nodeId": "m_johnny_001",
+          "status": "completed",
+          "endTime": "22:52",
+          "outcome": "走出餐厅前往驯鹿酒吧冷静一下 成功",
+          "startTime": "22:47",
+          "characterId": "Johnny",
+          "destination": "SCN_16_SUB_1",
+          "characterName": "Johnny",
+          "executionMeta": {
+            "movement": {
+              "routeSnapshot": [
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_2",
+                    "position": 0.28
+                  },
+                  "from": {
+                    "type": "scene",
+                    "sceneId": "SCN_10_SUB_1"
+                  },
+                  "kind": "along_road",
+                  "roadId": "ROAD_2",
+                  "blockCheck": {
+                    "toId": "ROAD_2",
+                    "fromId": "SCN_10_SUB_1"
+                  },
+                  "durationMinutes": 1
+                },
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_2",
+                    "position": 1
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_2",
+                    "position": 0.28
+                  },
+                  "kind": "along_road",
+                  "roadId": "ROAD_2",
+                  "durationMinutes": 7.199999999999999
+                },
+                {
+                  "to": {
+                    "type": "junction",
+                    "junctionId": "JUNC_3"
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_2",
+                    "position": 1
+                  },
+                  "kind": "to_junction",
+                  "blockCheck": {
+                    "toId": "JUNC_3",
+                    "fromId": "ROAD_2"
+                  },
+                  "durationMinutes": 0
+                },
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_3",
+                    "position": 0
+                  },
+                  "from": {
+                    "type": "junction",
+                    "junctionId": "JUNC_3"
+                  },
+                  "kind": "to_junction",
+                  "blockCheck": {
+                    "toId": "ROAD_3",
+                    "fromId": "JUNC_3"
+                  },
+                  "durationMinutes": 0
+                },
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_3",
+                    "position": 0.76
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_3",
+                    "position": 0
+                  },
+                  "kind": "along_road",
+                  "roadId": "ROAD_3",
+                  "durationMinutes": 7.6
+                },
+                {
+                  "to": {
+                    "type": "scene",
+                    "sceneId": "SCN_16_SUB_1"
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_3",
+                    "position": 0.76
+                  },
+                  "kind": "to_scene",
+                  "blockCheck": {
+                    "toId": "SCN_16_SUB_1",
+                    "fromId": "ROAD_3"
+                  },
+                  "durationMinutes": 1
+                }
+              ],
+              "targetPosition": {
+                "type": "scene",
+                "sceneId": "SCN_16_SUB_1"
+              },
+              "minutesIntoStep": 0,
+              "currentStepIndex": 6,
+              "lastReachablePosition": {
+                "type": "scene",
+                "sceneId": "SCN_16_SUB_1"
+              }
+            },
+            "startedAt": "22:47",
+            "completedAt": "23:04",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "character_interaction",
+          "action": "低声向海伦道歉并轻拉她的手示意到门外短暂散步",
+          "impact": 1,
+          "nodeId": "ci_johnny_apologize_2233",
+          "status": "completed",
+          "endTime": "22:35",
+          "outcome": "我低声向海伦道歉，轻拉她的手，示意到门外短暂散步。她没有拒绝，握住我的手并点头，我感觉局势被缓和。",
+          "startTime": "22:33",
+          "characterId": "Johnny",
+          "characterName": "Johnny",
+          "executionMeta": {
+            "startedAt": "22:33",
+            "completedAt": "22:35",
+            "remainingMinutes": 0
+          },
+          "targetCharacterIds": [
+            "Helen"
+          ]
+        },
+        {
+          "type": "character_interaction",
+          "skill": "Persuade",
+          "action": "低声说服海伦跟我到后门外短暂散步以便私下说话",
+          "impact": 1,
+          "nodeId": "ci_johnny_01",
+          "status": "failed",
+          "endTime": "22:40",
+          "startTime": "22:38",
+          "characterId": "Johnny",
+          "characterName": "Johnny",
+          "executionMeta": {
+            "failedAt": "22:40",
+            "startedAt": "22:38",
+            "remainingMinutes": 2
+          },
+          "targetCharacterIds": [
+            "Helen"
+          ]
+        },
+        {
+          "type": "character_interaction",
+          "skill": "Persuade",
+          "action": "用低沉而平静的语气对柯文德说话，尽力安抚他并劝他把枪放下，表明我们没有敌意并愿意离开以避免冲突",
+          "impact": 2,
+          "nodeId": "ci1",
+          "status": "in_progress",
+          "endTime": "23:17",
+          "startTime": "23:14",
+          "characterId": "Johnny",
+          "characterName": "Johnny",
+          "executionMeta": {
+            "startedAt": "23:14",
+            "remainingMinutes": 3
+          },
+          "targetCharacterIds": [
+            "Kovind"
+          ]
+        },
+        {
+          "type": "movement",
+          "action": "走出餐厅前往驯鹿酒吧冷静一下",
+          "impact": 0,
+          "nodeId": "m_johnny_001",
+          "status": "completed",
+          "endTime": "22:52",
+          "outcome": "走出餐厅前往驯鹿酒吧冷静一下 成功",
+          "startTime": "22:47",
+          "characterId": "Johnny",
+          "destination": "SCN_16_SUB_1",
+          "characterName": "Johnny",
+          "executionMeta": {
+            "movement": {
+              "routeSnapshot": [
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_2",
+                    "position": 0.28
+                  },
+                  "from": {
+                    "type": "scene",
+                    "sceneId": "SCN_10_SUB_1"
+                  },
+                  "kind": "along_road",
+                  "roadId": "ROAD_2",
+                  "blockCheck": {
+                    "toId": "ROAD_2",
+                    "fromId": "SCN_10_SUB_1"
+                  },
+                  "durationMinutes": 1
+                },
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_2",
+                    "position": 1
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_2",
+                    "position": 0.28
+                  },
+                  "kind": "along_road",
+                  "roadId": "ROAD_2",
+                  "durationMinutes": 7.199999999999999
+                },
+                {
+                  "to": {
+                    "type": "junction",
+                    "junctionId": "JUNC_3"
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_2",
+                    "position": 1
+                  },
+                  "kind": "to_junction",
+                  "blockCheck": {
+                    "toId": "JUNC_3",
+                    "fromId": "ROAD_2"
+                  },
+                  "durationMinutes": 0
+                },
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_3",
+                    "position": 0
+                  },
+                  "from": {
+                    "type": "junction",
+                    "junctionId": "JUNC_3"
+                  },
+                  "kind": "to_junction",
+                  "blockCheck": {
+                    "toId": "ROAD_3",
+                    "fromId": "JUNC_3"
+                  },
+                  "durationMinutes": 0
+                },
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_3",
+                    "position": 0.76
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_3",
+                    "position": 0
+                  },
+                  "kind": "along_road",
+                  "roadId": "ROAD_3",
+                  "durationMinutes": 7.6
+                },
+                {
+                  "to": {
+                    "type": "scene",
+                    "sceneId": "SCN_16_SUB_1"
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_3",
+                    "position": 0.76
+                  },
+                  "kind": "to_scene",
+                  "blockCheck": {
+                    "toId": "SCN_16_SUB_1",
+                    "fromId": "ROAD_3"
+                  },
+                  "durationMinutes": 1
+                }
+              ],
+              "targetPosition": {
+                "type": "scene",
+                "sceneId": "SCN_16_SUB_1"
+              },
+              "minutesIntoStep": 0,
+              "currentStepIndex": 6,
+              "lastReachablePosition": {
+                "type": "scene",
+                "sceneId": "SCN_16_SUB_1"
+              }
+            },
+            "startedAt": "22:47",
+            "completedAt": "23:04",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "action",
+          "action": "坐到角落的皮质卡座，点一杯波本并慢慢喝下以冷静情绪，等到闭店后再决定去哪里过夜",
+          "impact": 2,
+          "nodeId": "a_johnny_2305",
+          "status": "interrupted",
+          "endTime": "23:25",
+          "outcome": "坐到角落的皮质卡座，点一杯波本并慢慢喝下以冷静情绪，等到闭店后再决定去哪里过夜 [因重新规划而中断] 已中断",
+          "startTime": "23:05",
+          "characterId": "Johnny",
+          "characterName": "Johnny",
+          "executionMeta": {
+            "startedAt": "23:05",
+            "interruptedAt": "23:13",
+            "remainingMinutes": 0,
+            "interruptionReason": "revise_replan"
+          }
+        },
+        {
+          "type": "character_interaction",
+          "skill": "Persuade",
+          "action": "用低沉而平静的语气对柯文德说话，尽力安抚他并劝他把枪放下，表明我们没有敌意并愿意离开以避免冲突",
+          "impact": 2,
+          "nodeId": "ci1",
+          "status": "in_progress",
+          "endTime": "23:17",
+          "startTime": "23:14",
+          "characterId": "Johnny",
+          "characterName": "Johnny",
+          "executionMeta": {
+            "startedAt": "23:14",
+            "remainingMinutes": 3
+          },
+          "targetCharacterIds": [
+            "Kovind"
+          ]
+        }
+      ]
+    }
+  ],
+  "intents": [
+    {
+      "intent": "The storage cabinet behind the bar has been searched and contains no camera or memory card; shift focus to confirming Patrizio's possession of the key/evidence and retrieving the items (or locating any alternate hiding place). Covertly confront Patrizio to get the key or the evidence, re-verify with Lutz whether any backups exist or were destroyed, and privately ensure Helen is moved to a safe hiding spot. Avoid open confrontation with Kovind/Taran while acting.",
+      "updatedAt": "2026-04-02T11:36:21.327Z"
+    }
+  ],
+  "npcName": "Johnny"
+}

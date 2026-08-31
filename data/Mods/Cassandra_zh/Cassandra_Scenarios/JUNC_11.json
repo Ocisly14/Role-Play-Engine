@@ -1,0 +1,54 @@
+{
+  "id": "JUNC_11",
+  "name": "日暮大道东端·森林入口",
+  "description": "日暮大道的东端尽头，前方是茂密的森林。大道在此处变成泥泞的小路，消失在树木之间。空气中弥漫着松木和腐叶的气息。",
+  "parentLocationId": "OUTDOOR",
+  "items": [
+    {
+      "id": "ITEM_JUNC11_1",
+      "name": "森林警示牌",
+      "description": "一块钉在木桩上的警示牌提醒来人不要在夜间独自进入森林深处。"
+    },
+    {
+      "id": "ITEM_JUNC11_2",
+      "name": "步道标记桩",
+      "description": "几根矮木质步道标记桩，立在泥泞小路的起点处，勉强标出原有步道边界。"
+    },
+    {
+      "id": "ITEM_JUNC11_3",
+      "name": "坏掉的路灯",
+      "description": "森林入口旁的路灯灯罩裂了一角，夜里几乎起不到照明作用。",
+      "isLightSource": false,
+      "lightLevel": 3
+    }
+  ],
+  "conditions": [
+    {
+      "description": "露天路口，受天气影响。森林边缘，光线昏暗，空气潮湿。",
+      "mechanicalEffect": {
+        "skillPenalty": [
+          {
+            "skill": "Perception",
+            "delta": -20
+          },
+          {
+            "skill": "Listen",
+            "delta": -10
+          }
+        ]
+      }
+    },
+    {
+      "description": "森林入口处几乎没有路灯，夜间极为黑暗。",
+      "mechanicalEffect": {
+        "skillPenalty": [
+          {
+            "skill": "Perception",
+            "delta": -40
+          }
+        ]
+      }
+    }
+  ],
+  "connectedSceneIds": []
+}

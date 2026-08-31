@@ -1,6 +1,11 @@
 import type { NpcMemory as PrismaNpcMemory } from "@prisma/client";
 import type { MemoryHandler } from "../types.js";
 
+/**
+ * 地图记忆 — a place or route the character learned in play, in their own
+ * words. What they knew before the session opened is `context` instead
+ * (see contextMemory.ts); this type is only ever character-authored.
+ */
 export class MapHandler implements MemoryHandler {
   type = "map" as const;
 

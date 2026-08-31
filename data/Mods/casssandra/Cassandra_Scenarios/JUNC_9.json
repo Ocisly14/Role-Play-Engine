@@ -1,0 +1,43 @@
+{
+  "id": "JUNC_9",
+  "name": "新月街B东端",
+  "description": "新月街B大道的东端尽头，旁边是一栋二层木屋。街道在此终止，周围是住宅区。",
+  "parentLocationId": "OUTDOOR",
+  "items": [
+    {
+      "id": "ITEM_JUNC9_1",
+      "name": "尽头路牌",
+      "description": "一块红边白底的尽头路牌立在街道终点，提醒车辆前方无路可通。"
+    },
+    {
+      "id": "ITEM_JUNC9_2",
+      "name": "住宅邮箱组",
+      "description": "两三只金属邮箱集中固定在木桩上，箱门边缘都带着些锈迹。"
+    },
+    {
+      "id": "ITEM_JUNC9_3",
+      "name": "雨水井盖",
+      "description": "路边一块铸铁雨水井盖半嵌在地里，四周积着尘土与碎叶。"
+    }
+  ],
+  "conditions": [
+    {
+      "description": "露天路口，受天气影响。街道尽头，较为安静。",
+      "mechanicalEffect": {
+        "skillPenalty": [
+          {
+            "skill": "Perception",
+            "delta": -10
+          },
+          {
+            "skill": "Listen",
+            "delta": 10
+          }
+        ]
+      }
+    }
+  ],
+  "connectedSceneIds": [
+    "SCN_6_SUB_1"
+  ]
+}

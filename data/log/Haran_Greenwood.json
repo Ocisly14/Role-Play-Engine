@@ -1,0 +1,663 @@
+{
+  "npcId": "Haran Greenwood",
+  "memories": [
+    {
+      "type": "plan",
+      "content": "守护克莱奥家族的利益和安全，忠心耿耿地为本打理火车站的一切事务，用余生报答卡绒的救命之恩。",
+      "gameDay": 1,
+      "gameTime": "00:00",
+      "location": null,
+      "metadata": {
+        "planType": "long_term"
+      }
+    },
+    {
+      "type": "belief",
+      "content": "对我来说，平安度过余生最安全的方式就是保持有用、保持安静，不问与车站无关的问题。",
+      "gameDay": 1,
+      "gameTime": "00:00",
+      "location": null,
+      "metadata": {
+        "confidence": 0.92,
+        "reasoningChain": "本今晚的亲自核查与对我加固措施的认可证明：保持有用并安静地履行职责确实能换来信任与安全感，因此我更倾向于依赖这种策略。"
+      }
+    },
+    {
+      "type": "information",
+      "content": "我的工作记录通过车站的货物流动，我知道哪些货物比其他的更敏感。",
+      "gameDay": 1,
+      "gameTime": "00:00",
+      "location": null,
+      "metadata": {
+        "difficulty": "regular",
+        "knowledgeId": "k_haran_cargo"
+      }
+    },
+    {
+      "type": "secret",
+      "content": "我知道工棚连接着黑帮总部的入口，需要时我在那里充当警卫。",
+      "gameDay": 1,
+      "gameTime": "00:00",
+      "location": null,
+      "metadata": {
+        "knowledgeId": "s_haran_shack"
+      }
+    },
+    {
+      "type": "plan",
+      "content": "Today's plan: 1. 在月台上逐一巡查站内器材与灯光，确认备用链条、门栓和监控死角无异常。 at 月台; 2. 在值班小屋核对今晚的货运单据与货物清单，确保与记录完全一致。 at 月台; 3. 通过无线电与巡逻人员和本保持联络并确认守夜排班与巡逻路线没有空档。 at 月台; 4. 静候铁轨动静并在站台边缘监听可能经过的列车或可疑脚步声。 at 月台; 5. 快速外出检查旧街西端的外门和雪地踏印，确认通往工棚的隐蔽入口未被撬动。 at 旧街西端·火车站前; 6. 回到值班小屋整理工具、补充备品并把记录簿锁好以备查验。 at 月台; 7. 煮一杯热咖啡暖身并在小屋内小憩，设置定时起床继续巡逻。 at 月台; 8. 在天亮前再次全面巡查月台和货物区，重新核对所有箱单以备日间交接。 at 月台; 9. 早晨去海伦的餐桌吃简单早餐并顺便和店里的人打听小镇早间情况。 at 海伦的餐桌; 10. 回到月台向本或其代表口头汇报夜间情况后在值班小屋休息入睡，确保无线电开着以便随时应召。 at 月台",
+      "gameDay": 2,
+      "gameTime": "00:00",
+      "location": null,
+      "metadata": {
+        "planType": "daily"
+      }
+    },
+    {
+      "type": "information",
+      "content": "本·克莱奥信任我，因为我让车站安静了几十年，从没要求过比工资更多的东西。",
+      "gameDay": 1,
+      "gameTime": "00:00",
+      "location": null,
+      "metadata": {
+        "difficulty": "regular",
+        "knowledgeId": "k_haran_ben_trust"
+      }
+    },
+    {
+      "type": "information",
+      "content": "我在卡森德拉火车站工作了四十多年，了解它最初的地下历史。",
+      "gameDay": 1,
+      "gameTime": "00:00",
+      "location": null,
+      "metadata": {
+        "difficulty": "automatic",
+        "knowledgeId": "k_haran_history"
+      }
+    },
+    {
+      "type": "secret",
+      "content": "我能分辨哪些货物是普通货运，哪些货物不应该被记录得太清楚。",
+      "gameDay": 1,
+      "gameTime": "00:00",
+      "location": null,
+      "metadata": {
+        "knowledgeId": "s_haran_sensitive_cargo"
+      }
+    },
+    {
+      "type": "plan",
+      "content": "Today's plan: 1. 对今晚进出的货物做例行清点并留意任何未登记或可疑的箱子。 at 月台; 2. 检查火车站前的临时储存区和连接工棚的暗道是否完好并确认没有人动过。 at 旧街西端·火车站前; 3. 到驯鹿酒吧与本·克莱奥短会，口头汇报货运情况并听取今晚的指示。 at 驯鹿酒吧; 4. 在海伦的餐桌吃一顿简单的晚餐并借机观察镇上的动静。 at 海伦的餐桌; 5. 到五金店向哈里森取回或确认需要的维修工具以加固月台设施。 at 五金店; 6. 回到旧街西端的储藏室整理敏感货物并调整存放位置以便记录混淆。 at 旧街西端·火车站前; 7. 在月台值夜班，间断巡查铁轨、货物和秘密通道的安全情况。 at 月台; 8. 睡前进行最后一轮巡查后在月台内简单休息，为明天早班列车做准备。 at 月台",
+      "gameDay": 1,
+      "gameTime": "19:00",
+      "location": null,
+      "metadata": {
+        "planType": "daily"
+      }
+    },
+    {
+      "type": "witness",
+      "content": "[目击] 我听到本·克莱奥在值班小屋与月台周边逐一核对守夜排班和巡逻路线，查看了可供观察的点位，确认监视与逃生路线暂时没有明显破绽，也未发现被动过或破坏的痕迹。我对他的判断感到安心——这加强了我继续按既定计划巡视和清点货物的信心，没有必要立刻改变当前行动或当天安排。",
+      "gameDay": 1,
+      "gameTime": "19:15",
+      "location": "SCN_21_SUB_1",
+      "metadata": {
+        "impact": 2,
+        "perspective": "witness",
+        "sourceAction": "我在值班小屋和月台周边逐一核对了守夜排班与巡逻路线，查看了可供观察的点位，确认监视与逃生路线暂时没有明显破绽，也未发现被动过或破坏的痕迹。",
+        "sourceCharacterId": "Ben Cleo"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我在月台逐箱对照了今晚进出货物与我的货物交易记录，检查了可见的箱子和单据；未发现未登记或明显可疑的箱子，监视与巡逻记录也没有异常。",
+      "gameDay": 1,
+      "gameTime": "19:20",
+      "location": "SCN_21_SUB_1",
+      "metadata": {
+        "outcome": "检查月台上的今晚进出货物，与我的货物交易记录核对，查找任何未登记或可疑的箱子。"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我检查了火车站大门并试着打开，门能被打开，通往旧街西端的出入口没有被堵住或上锁，暂时可以通行。",
+      "gameDay": 1,
+      "gameTime": "19:27",
+      "location": "SCN_21_SUB_1",
+      "metadata": {
+        "outcome": "检查火车站大门并尝试打开以确认通往旧街西端的出入口是否被堵塞或上锁"
+      }
+    },
+    {
+      "type": "event",
+      "content": "本被本·克莱奥指示今夜整晚守卫并加固通往旧街西端的站门，若有任何异常需立刻报告。我已接受命令，马上按要求加强哨位和加固入口。",
+      "gameDay": 1,
+      "gameTime": "19:31",
+      "location": "SCN_21_SUB_1",
+      "metadata": {
+        "outcome": "指示 Haran 盯守并加固通往旧街西端的站门，负责整晚哨位并在发现任何异常时立刻向我报告"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我走进值班小屋，检查了侧面可能的隐蔽入口处的门锁与我能看到的通道部分，门锁看上去完好无损，周围没有明显被撬动或损坏的痕迹；未发现任何可见的通路或异常。",
+      "gameDay": 1,
+      "gameTime": "19:34",
+      "location": "SCN_21_SUB_1",
+      "metadata": {
+        "outcome": "进入值班小屋并检查侧面隐蔽入口的门锁与通道是否完好"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我走到大门前试着把门推开/拉开，门能顺利开启，通向旧街西端的出入口没有被阻隔或封闭。我没有发现其他异常。",
+      "gameDay": 1,
+      "gameTime": "19:41",
+      "location": "SCN_21_SUB_1",
+      "metadata": {
+        "outcome": "试开火车站大门以确认通往旧街西端的出入口未被阻隔"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我把通往旧街西端的大门在门栓处套上备用链条并加固，逐一检查了所有锁点，确认都牢固。现在这扇门已被我暂时封锁，短期内无法通行。",
+      "gameDay": 1,
+      "gameTime": "19:50",
+      "location": "SCN_21_SUB_1",
+      "metadata": {
+        "outcome": "加固通向旧街西端的站门，给门栓套上备用链条并检查所有锁点是否牢固"
+      }
+    },
+    {
+      "type": "event",
+      "content": "本来月台来查岗，我如实回报今晚巡逻与核对情况：货物与记录逐项对应，没有未登记或可疑的箱子，值班小屋和观察点没有异常，通往旧街西端的出入口畅通。我要继续守好岗位，随时向本报告任何变故。",
+      "gameDay": 1,
+      "gameTime": "19:50",
+      "location": "SCN_21_SUB_1",
+      "metadata": {
+        "outcome": "在月台与Haran低声交谈，询问他从酒吧和街区听到的最新情报，并确认守门期间是否发现可疑人物或异常活动"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我向本说明了我加固旧街西端站门的原因：为保护今晚几批较为敏感的货物并防止擅自出入，我已逐项核对单据并用备用链条与门栓封锁出口，未见可疑人员。本听后放心。",
+      "gameDay": 1,
+      "gameTime": "19:55",
+      "location": "SCN_21_SUB_1",
+      "metadata": {
+        "outcome": "询问哈兰加固旧街西端大门的原因"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我进了值班小屋，逐项整理并检查了备用链条、工具、手电筒和无线电，东西都在且没有被动过或损坏的痕迹；把工具挂回墙钩、搁板整理好，确认并锁上了门。",
+      "gameDay": 1,
+      "gameTime": "19:57",
+      "location": "SCN_21_SUB_1",
+      "metadata": {
+        "itemId": "ITEM_SCN21_3",
+        "outcome": "整理并检查值班小屋内的备用链条、工具、手电筒和无线电，确认锁好门",
+        "itemName": "Haran的工作小屋"
+      }
+    },
+    {
+      "type": "witness",
+      "content": "[目击] 我看到本·克莱奥亲自检查我在大门上加的备用链条与门栓，确认它们相当牢固，短时间内外侧无法强行打开。听到这个我一方面松了口气——出入口被封有助于保护今晚的敏感货物；另一方面也有些担忧，必须据此立刻调整巡逻点位和备用撤离路线，并确认工棚暗道与其他出口是否仍然可用。",
+      "gameDay": 1,
+      "gameTime": "19:59",
+      "location": "SCN_21_SUB_1",
+      "metadata": {
+        "impact": 2,
+        "perspective": "witness",
+        "sourceAction": "我检查并试探了哈兰在大门上加的备用链条与门栓，确认它们相当牢固，短时间内难以从外侧强行打开。我判断这会封锁通往旧街西端（JUNC_7）的出路，需要据此调整巡逻部署和撤离路线。",
+        "sourceCharacterId": "Ben Cleo"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我沿着月台仔细巡视了雪地踏印、货物放置痕迹和值班小屋侧面的隐蔽入口。雪与风吹拂下未发现新鲜脚印或被移动的货物，隐蔽入口也没有近期被使用的迹象。",
+      "gameDay": 1,
+      "gameTime": "20:05",
+      "location": "SCN_21_SUB_1",
+      "metadata": {
+        "outcome": "沿着月台巡视铁轨与站台边缘，检查雪地踏印、货物放置痕迹以及隐蔽通道入口是否有被动过的迹象"
+      }
+    },
+    {
+      "type": "event",
+      "content": "克莱奥让我到值班小屋当面说明我加固大门的原因并展示备用链条、门栓与备用钥匙或工具。我在墙钩与搁板上取出并演示了这些物品，向他证明门已锁牢且短时间内无法从外侧打开。Ben表示接受并当场核查，随后我继续守岗。",
+      "gameDay": 1,
+      "gameTime": "20:06",
+      "location": "SCN_21_SUB_1",
+      "metadata": {
+        "outcome": "叫哈兰到值班小屋来当面说明他加固旧街西端大门的具体原因，并让他当面展示备用链条、门栓的位置与备用钥匙或工具"
+      }
+    },
+    {
+      "type": "information",
+      "content": "今晚进出的货物与车站记录逐项核对后没有发现任何未登记或可疑的箱子，货物流动在我可见范围内没有异常。",
+      "gameDay": 1,
+      "gameTime": "23:59",
+      "location": null,
+      "metadata": {
+        "revealed": false,
+        "difficulty": "regular",
+        "knowledgeId": "learned_day1_3"
+      }
+    },
+    {
+      "type": "secret",
+      "content": "工棚通往黑帮总部的隐蔽入口今晚没有被使用或撬动的迹象：雪地没有新鲜脚印，门锁与通道部分无异常，这条暗道暂时安全。",
+      "gameDay": 1,
+      "gameTime": "23:59",
+      "location": null,
+      "metadata": {
+        "revealed": false,
+        "difficulty": "hard",
+        "knowledgeId": "learned_day1_4"
+      }
+    },
+    {
+      "type": "information",
+      "content": "本·克莱奥今晚亲自检查并认可我加固的大门与备用链条，表明他对今晚站内防护非常重视并愿意亲自核查防务细节。",
+      "gameDay": 1,
+      "gameTime": "23:59",
+      "location": null,
+      "metadata": {
+        "revealed": false,
+        "difficulty": "regular",
+        "knowledgeId": "learned_day1_1"
+      }
+    },
+    {
+      "type": "information",
+      "content": "值班小屋内备用链条、工具、手电筒和无线电完好无损，位置在墙钩和搁板上都未被动过，说明至少在我离开视线前这些物品无人接触。",
+      "gameDay": 1,
+      "gameTime": "23:59",
+      "location": null,
+      "metadata": {
+        "revealed": false,
+        "difficulty": "regular",
+        "knowledgeId": "learned_day1_5"
+      }
+    },
+    {
+      "type": "information",
+      "content": "旧街西端的出入口在我最初检查时是可通行的，但我随后在门栓处套上备用链条并加固，使其在短期内无法通行。",
+      "gameDay": 1,
+      "gameTime": "23:59",
+      "location": null,
+      "metadata": {
+        "revealed": false,
+        "difficulty": "regular",
+        "knowledgeId": "learned_day1_2"
+      }
+    }
+  ],
+  "plans": [
+    {
+      "npcName": "Haran Greenwood",
+      "gameDay": 2,
+      "schedule": [
+        {
+          "activity": "在月台上逐一巡查站内器材与灯光，确认备用链条、门栓和监控死角无异常。",
+          "location": "月台"
+        },
+        {
+          "activity": "在值班小屋核对今晚的货运单据与货物清单，确保与记录完全一致。",
+          "location": "月台"
+        },
+        {
+          "activity": "通过无线电与巡逻人员和本保持联络并确认守夜排班与巡逻路线没有空档。",
+          "location": "月台"
+        },
+        {
+          "activity": "静候铁轨动静并在站台边缘监听可能经过的列车或可疑脚步声。",
+          "location": "月台"
+        },
+        {
+          "activity": "快速外出检查旧街西端的外门和雪地踏印，确认通往工棚的隐蔽入口未被撬动。",
+          "location": "旧街西端·火车站前"
+        },
+        {
+          "activity": "回到值班小屋整理工具、补充备品并把记录簿锁好以备查验。",
+          "location": "月台"
+        },
+        {
+          "activity": "煮一杯热咖啡暖身并在小屋内小憩，设置定时起床继续巡逻。",
+          "location": "月台"
+        },
+        {
+          "activity": "在天亮前再次全面巡查月台和货物区，重新核对所有箱单以备日间交接。",
+          "location": "月台"
+        },
+        {
+          "activity": "早晨去海伦的餐桌吃简单早餐并顺便和店里的人打听小镇早间情况。",
+          "location": "海伦的餐桌"
+        },
+        {
+          "activity": "回到月台向本或其代表口头汇报夜间情况后在值班小屋休息入睡，确保无线电开着以便随时应召。",
+          "location": "月台"
+        }
+      ],
+      "nodes": [
+        {
+          "type": "movement",
+          "action": "快速外出前往旧街西端·火车站前检查外门和雪地踏印",
+          "impact": 0,
+          "nodeId": "m1",
+          "status": "failed",
+          "endTime": "00:05",
+          "outcome": "快速外出前往旧街西端·火车站前检查外门和雪地踏印 [拓扑中无可用路径] 失败",
+          "startTime": "00:00",
+          "characterId": "Haran Greenwood",
+          "destination": "JUNC_7",
+          "characterName": "Haran Greenwood",
+          "executionMeta": {
+            "failedAt": "00:00",
+            "startedAt": "00:00",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "character_interaction",
+          "action": "向本·克莱奥口头确认今晚的守夜排班与巡逻路线",
+          "impact": 1,
+          "nodeId": "ci_haran_001",
+          "status": "in_progress",
+          "endTime": "00:06",
+          "startTime": "00:01",
+          "characterId": "Haran Greenwood",
+          "characterName": "Haran Greenwood",
+          "executionMeta": {
+            "startedAt": "00:01",
+            "remainingMinutes": 5
+          },
+          "targetCharacterIds": [
+            "Ben Cleo"
+          ]
+        }
+      ]
+    },
+    {
+      "npcName": "Haran Greenwood",
+      "gameDay": 1,
+      "schedule": [
+        {
+          "activity": "对今晚进出的货物做例行清点并留意任何未登记或可疑的箱子。",
+          "location": "月台"
+        },
+        {
+          "activity": "检查火车站前的临时储存区和连接工棚的暗道是否完好并确认没有人动过。",
+          "location": "旧街西端·火车站前"
+        },
+        {
+          "activity": "到驯鹿酒吧与本·克莱奥短会，口头汇报货运情况并听取今晚的指示。",
+          "location": "驯鹿酒吧"
+        },
+        {
+          "activity": "在海伦的餐桌吃一顿简单的晚餐并借机观察镇上的动静。",
+          "location": "海伦的餐桌"
+        },
+        {
+          "activity": "到五金店向哈里森取回或确认需要的维修工具以加固月台设施。",
+          "location": "五金店"
+        },
+        {
+          "activity": "回到旧街西端的储藏室整理敏感货物并调整存放位置以便记录混淆。",
+          "location": "旧街西端·火车站前"
+        },
+        {
+          "activity": "在月台值夜班，间断巡查铁轨、货物和秘密通道的安全情况。",
+          "location": "月台"
+        },
+        {
+          "activity": "睡前进行最后一轮巡查后在月台内简单休息，为明天早班列车做准备。",
+          "location": "月台"
+        }
+      ],
+      "nodes": [
+        {
+          "type": "scene_interaction",
+          "action": "沿着月台巡视铁轨与站台边缘，检查雪地踏印、货物放置痕迹以及隐蔽通道入口是否有被动过的迹象",
+          "impact": 2,
+          "nodeId": "si1",
+          "status": "completed",
+          "endTime": "20:05",
+          "outcome": "我沿着月台仔细巡视了雪地踏印、货物放置痕迹和值班小屋侧面的隐蔽入口。雪与风吹拂下未发现新鲜脚印或被移动的货物，隐蔽入口也没有近期被使用的迹象。",
+          "startTime": "19:58",
+          "characterId": "Haran Greenwood",
+          "characterName": "Haran Greenwood",
+          "executionMeta": {
+            "startedAt": "19:58",
+            "completedAt": "20:05",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "movement",
+          "action": "走到旧街西端·火车站前，检查临时储存区并确认与工棚连接的暗道没有被动过或受损",
+          "impact": 2,
+          "nodeId": "m1",
+          "status": "failed",
+          "endTime": "19:46",
+          "outcome": "走到旧街西端·火车站前，检查临时储存区并确认与工棚连接的暗道没有被动过或受损 [拓扑中无可用路径] 失败",
+          "startTime": "19:42",
+          "characterId": "Haran Greenwood",
+          "destination": "JUNC_7",
+          "characterName": "Haran Greenwood",
+          "executionMeta": {
+            "failedAt": "19:42",
+            "startedAt": "19:42",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "scene_interaction",
+          "action": "检查火车站大门并尝试打开以确认通往旧街西端的出入口是否被堵塞或上锁",
+          "impact": 2,
+          "nodeId": "si_day1_1922_01",
+          "status": "completed",
+          "endTime": "19:27",
+          "outcome": "我检查了火车站大门并试着打开，门能被打开，通往旧街西端的出入口没有被堵住或上锁，暂时可以通行。",
+          "startTime": "19:22",
+          "characterId": "Haran Greenwood",
+          "characterName": "Haran Greenwood",
+          "executionMeta": {
+            "startedAt": "19:22",
+            "completedAt": "19:27",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "movement",
+          "action": "走到旧街西端·火车站前，检查临时储存区并确认与工棚连接的暗道没有被动过或受损",
+          "impact": 2,
+          "nodeId": "m1",
+          "status": "failed",
+          "endTime": "19:46",
+          "outcome": "走到旧街西端·火车站前，检查临时储存区并确认与工棚连接的暗道没有被动过或受损 [拓扑中无可用路径] 失败",
+          "startTime": "19:42",
+          "characterId": "Haran Greenwood",
+          "destination": "JUNC_7",
+          "characterName": "Haran Greenwood",
+          "executionMeta": {
+            "failedAt": "19:42",
+            "startedAt": "19:42",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "scene_interaction",
+          "action": "进入值班小屋并检查侧面隐蔽入口的门锁与通道是否完好",
+          "impact": 0,
+          "nodeId": "si_haran_001",
+          "status": "completed",
+          "endTime": "19:34",
+          "outcome": "我走进值班小屋，检查了侧面可能的隐蔽入口处的门锁与我能看到的通道部分，门锁看上去完好无损，周围没有明显被撬动或损坏的痕迹；未发现任何可见的通路或异常。",
+          "startTime": "19:29",
+          "characterId": "Haran Greenwood",
+          "characterName": "Haran Greenwood",
+          "executionMeta": {
+            "startedAt": "19:29",
+            "completedAt": "19:34",
+            "remainingMinutes": 0
+          },
+          "objectInteractionPayload": {
+            "itemId": "ITEM_SCN21_3"
+          }
+        },
+        {
+          "type": "movement",
+          "action": "走到旧街西端·火车站前，检查临时储存区并确认与工棚连接的暗道没有被动过或受损",
+          "impact": 2,
+          "nodeId": "m1",
+          "status": "failed",
+          "endTime": "19:46",
+          "outcome": "走到旧街西端·火车站前，检查临时储存区并确认与工棚连接的暗道没有被动过或受损 [拓扑中无可用路径] 失败",
+          "startTime": "19:42",
+          "characterId": "Haran Greenwood",
+          "destination": "JUNC_7",
+          "characterName": "Haran Greenwood",
+          "executionMeta": {
+            "failedAt": "19:42",
+            "startedAt": "19:42",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "scene_interaction",
+          "action": "试开火车站大门以确认通往旧街西端的出入口未被阻隔",
+          "impact": 2,
+          "nodeId": "si1_haran_1936",
+          "status": "completed",
+          "endTime": "19:41",
+          "outcome": "我走到大门前试着把门推开/拉开，门能顺利开启，通向旧街西端的出入口没有被阻隔或封闭。我没有发现其他异常。",
+          "startTime": "19:36",
+          "characterId": "Haran Greenwood",
+          "characterName": "Haran Greenwood",
+          "executionMeta": {
+            "startedAt": "19:36",
+            "completedAt": "19:41",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "movement",
+          "action": "走到旧街西端·火车站前，检查临时储存区并确认与工棚连接的暗道没有被动过或受损",
+          "impact": 2,
+          "nodeId": "m1",
+          "status": "failed",
+          "endTime": "19:46",
+          "outcome": "走到旧街西端·火车站前，检查临时储存区并确认与工棚连接的暗道没有被动过或受损 [拓扑中无可用路径] 失败",
+          "startTime": "19:42",
+          "characterId": "Haran Greenwood",
+          "destination": "JUNC_7",
+          "characterName": "Haran Greenwood",
+          "executionMeta": {
+            "failedAt": "19:42",
+            "startedAt": "19:42",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "movement",
+          "action": "步行前往旧街西端·火车站前以检查临时储存区和工棚暗道",
+          "impact": 0,
+          "nodeId": "m2",
+          "status": "failed",
+          "endTime": "19:48",
+          "outcome": "步行前往旧街西端·火车站前以检查临时储存区和工棚暗道 [拓扑中无可用路径] 失败",
+          "startTime": "19:43",
+          "characterId": "Haran Greenwood",
+          "destination": "JUNC_7",
+          "characterName": "Haran Greenwood",
+          "executionMeta": {
+            "failedAt": "19:43",
+            "startedAt": "19:43",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "scene_interaction",
+          "action": "加固通向旧街西端的站门，给门栓套上备用链条并检查所有锁点是否牢固",
+          "impact": 2,
+          "nodeId": "si_haran_01",
+          "status": "completed",
+          "endTime": "19:50",
+          "outcome": "我把通往旧街西端的大门在门栓处套上备用链条并加固，逐一检查了所有锁点，确认都牢固。现在这扇门已被我暂时封锁，短期内无法通行。",
+          "startTime": "19:44",
+          "characterId": "Haran Greenwood",
+          "characterName": "Haran Greenwood",
+          "executionMeta": {
+            "startedAt": "19:44",
+            "completedAt": "19:50",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "object_interaction",
+          "action": "整理并检查值班小屋内的备用链条、工具、手电筒和无线电，确认锁好门",
+          "impact": 0,
+          "nodeId": "oi1",
+          "status": "completed",
+          "endTime": "19:57",
+          "outcome": "我进了值班小屋，逐项整理并检查了备用链条、工具、手电筒和无线电，东西都在且没有被动过或损坏的痕迹；把工具挂回墙钩、搁板整理好，确认并锁上了门。",
+          "startTime": "19:52",
+          "characterId": "Haran Greenwood",
+          "characterName": "Haran Greenwood",
+          "executionMeta": {
+            "startedAt": "19:52",
+            "completedAt": "19:57",
+            "remainingMinutes": 0
+          },
+          "objectInteractionPayload": {
+            "itemId": "ITEM_SCN21_3"
+          }
+        },
+        {
+          "type": "scene_interaction",
+          "action": "沿着月台巡视铁轨与站台边缘，检查雪地踏印、货物放置痕迹以及隐蔽通道入口是否有被动过的迹象",
+          "impact": 2,
+          "nodeId": "si1",
+          "status": "completed",
+          "endTime": "20:05",
+          "outcome": "我沿着月台仔细巡视了雪地踏印、货物放置痕迹和值班小屋侧面的隐蔽入口。雪与风吹拂下未发现新鲜脚印或被移动的货物，隐蔽入口也没有近期被使用的迹象。",
+          "startTime": "19:58",
+          "characterId": "Haran Greenwood",
+          "characterName": "Haran Greenwood",
+          "executionMeta": {
+            "startedAt": "19:58",
+            "completedAt": "20:05",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "character_interaction",
+          "action": "向本·克莱奥口头汇报并示意调整后的守夜点位与撤离通道，交代守夜队需执行的具体位置与轮换时段，确认他理解并请他下令传达给守夜队",
+          "impact": 1,
+          "nodeId": "ci1",
+          "status": "in_progress",
+          "endTime": "20:13",
+          "startTime": "20:08",
+          "characterId": "Haran Greenwood",
+          "characterName": "Haran Greenwood",
+          "executionMeta": {
+            "startedAt": "20:08",
+            "remainingMinutes": 5
+          },
+          "targetCharacterIds": [
+            "Ben Cleo"
+          ]
+        }
+      ]
+    }
+  ],
+  "intents": [
+    {
+      "intent": "检查工棚暗道与其他备用出口可用性，并监督守夜点位调整的执行情况",
+      "updatedAt": "2026-04-02T04:59:08.175Z"
+    }
+  ],
+  "npcName": "Haran Greenwood"
+}

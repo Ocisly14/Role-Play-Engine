@@ -1,0 +1,47 @@
+{
+  "npcId": "npc_bruno_galilei",
+  "memories": [
+    {
+      "type": "event",
+      "content": "我不在档案室，没和Vito当面交涉；后来听说他来过并警告我不要离开或接触档案，要求交出或说明笔记本存放处，我拒绝了这种要求（抵抗）。",
+      "gameDay": 2,
+      "gameTime": "00:14",
+      "location": "SCN_3_SUB_3",
+      "metadata": {
+        "outcome": "当面对Lux确认他已被控制不得触碰证物，并当场要求他交出记载被指示人员的笔记本或说明保存地点，同时警告Bruno不得离开或接触档案 [Persuade 35, rolled 65 (fail) — all targets resisted] failed"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我今天没有出现在警察局；有人来找我但没遇到我。",
+      "gameDay": 1,
+      "gameTime": "19:29",
+      "location": "SCN_3_SUB_1",
+      "metadata": {
+        "outcome": "当面询问Lux Lynch和Bruno Galilei他们来到警局的原因，核实布鲁诺与珊德拉的关系，并评估是否需要立即对海伦或珊德拉采取保护或调查措施"
+      }
+    },
+    {
+      "type": "event",
+      "content": "有人（Lux Lynch）到警局并通过值班无线电尝试联系我，假装例行询问并邀请我到大厅；我当时不在局里，未能与对方当面接触。",
+      "gameDay": 1,
+      "gameTime": "21:02",
+      "location": "SCN_3_SUB_1",
+      "metadata": {
+        "outcome": "用值班无线电联系布鲁诺，假装例行询问确认他是否仍在局里并邀请他到大厅来谈话"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我不在警察局大厅，未参与也未见到卢克斯的任何接触或会面邀请。",
+      "gameDay": 1,
+      "gameTime": "21:07",
+      "location": "SCN_3_SUB_1",
+      "metadata": {
+        "outcome": "通过值班无线电低声呼叫布鲁诺，假装例行询问并邀请他到大厅来单独谈话"
+      }
+    }
+  ],
+  "plans": [],
+  "intents": []
+}

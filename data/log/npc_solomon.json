@@ -1,0 +1,17 @@
+{
+  "npcId": "npc_solomon",
+  "memories": [
+    {
+      "type": "event",
+      "content": "我当时不在花店，因此没人见到我或与我对话。",
+      "gameDay": 2,
+      "gameTime": "03:25",
+      "location": "SCN_9_SUB_1",
+      "metadata": {
+        "outcome": "低声但坚定地要求所罗门从半掩木门走出到门外，并在店内照明下出示身份证明，说明此刻留守的来意 [Persuade 10, rolled 40 (fail) — all targets resisted] failed"
+      }
+    }
+  ],
+  "plans": [],
+  "intents": []
+}

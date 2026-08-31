@@ -1,0 +1,42 @@
+{
+  "id": "SCN_3_SUB_1",
+  "name": "Victor's Office (1F)",
+  "description": "The first floor of Victor's company building, serving as the main office area. Tom and Lisa each have a desk with a computer. A filing cabinet and water cooler sit against the wall. A staircase at the back leads to the second floor. Victor's private office is partitioned off in the corner with a glass door and half-closed blinds.",
+  "parentLocationId": "SCN_3",
+  "items": [
+    {
+      "id": "ITEM_S3_1",
+      "name": "Office Computer",
+      "description": "A desktop computer on Tom's work desk, currently showing a spreadsheet."
+    },
+    {
+      "id": "ITEM_S3_2",
+      "name": "Filing Cabinet",
+      "description": "A metal filing cabinet containing company documents and invoices. The bottom drawer has a separate lock."
+    },
+    {
+      "id": "ITEM_S3_3",
+      "name": "Water Cooler",
+      "description": "A water cooler in the corner, the social gathering spot during breaks."
+    },
+    {
+      "id": "ITEM_S3_6",
+      "name": "Petty Cash Box",
+      "description": "A small metal cash box in Victor's desk drawer. It should contain the company's petty cash fund."
+    },
+    {
+      "id": "ITEM_S3_7",
+      "name": "Overtime Request Form",
+      "description": "A stack of blank overtime request forms on Victor's desk. Several recent ones are marked 'DENIED' in red ink."
+    }
+  ],
+  "conditions": [
+    {
+      "description": "A standard office environment with fluorescent lighting and the hum of computers. Victor's private office corner has blinds that he often keeps half-closed."
+    }
+  ],
+  "connections": [
+    "SCN_3_SUB_2",
+    "JUNC_3"
+  ]
+}

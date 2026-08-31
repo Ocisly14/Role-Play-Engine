@@ -1,0 +1,2786 @@
+{
+  "npcId": "Shandra Hernandez",
+  "memories": [
+    {
+      "type": "plan",
+      "content": "作为九天使的代理人守护世界免受不可名状之物的侵害，在不暴露组织身份的前提下阻止卡森德拉即将发生的灾难，保护那些值得被保护的人。",
+      "gameDay": 1,
+      "gameTime": "00:00",
+      "location": null,
+      "metadata": {
+        "planType": "long_term"
+      }
+    },
+    {
+      "type": "information",
+      "content": "我经营着一家旧街区的小店，保持着私家侦探的面孔，这种日常的普通让人们放松到足以告诉我他们永远不会带去警察局的事情。",
+      "gameDay": 1,
+      "gameTime": "00:00",
+      "location": null,
+      "metadata": {
+        "difficulty": "automatic",
+        "knowledgeId": "k_shandra_cover"
+      }
+    },
+    {
+      "type": "plan",
+      "content": "Today's plan: 1. 确认并加密后屋正在写入的监控录像备份，然后把备份介质带走以便安全存放。 at 怀特的钟表店; 2. 前往驯鹿酒吧，在不起眼的位置低调观察酒保与常客的行为并记录重要细节。 at 驯鹿酒吧; 3. 前往星辰医院拜访 Vincent Galenus，探听他最近是否注意到异常或可疑人物。 at 星辰医院; 4. 路过酒厂对外部环境进行快速侦查，留意是否有 Abel William 或其他可疑活动痕迹。 at 酒厂; 5. 回到珊德拉的小屋审阅并整理今天采集到的录像与笔记，整合线索并写下下一步行动计划。 at 珊德拉的小屋; 6. 把重要证物和备份隐藏并设置应急联络与警戒措施，然后休息入睡。 at 珊德拉的小屋",
+      "gameDay": 2,
+      "gameTime": "00:00",
+      "location": null,
+      "metadata": {
+        "planType": "daily"
+      }
+    },
+    {
+      "type": "information",
+      "content": "我曾是一名普通的调查员，直到一项特别委托将我带入了九天使的轨道。在那个案件之后，我理解了为什么有些真相必须被管理而非宣布。",
+      "gameDay": 1,
+      "gameTime": "00:00",
+      "location": null,
+      "metadata": {
+        "difficulty": "regular",
+        "knowledgeId": "k_shandra_nine_angels"
+      }
+    },
+    {
+      "type": "information",
+      "content": "布鲁诺最近透露他收到了一条匿名警告：不要信任他的上级，尤其是帕特里齐奥，也不要向康斯坦丁忏悔任何事。他让我保密。",
+      "gameDay": 1,
+      "gameTime": "00:00",
+      "location": null,
+      "metadata": {
+        "difficulty": "hard",
+        "knowledgeId": "k_shandra_bruno_warning"
+      }
+    },
+    {
+      "type": "secret",
+      "content": "我看过九天使关于1988年法国黑山羊教团活动的记录。我记得足够多的内容，能把菲利普的父亲和两个受保护的孩子与那场旧麻烦联系起来，即使我不记得每个名字。",
+      "gameDay": 1,
+      "gameTime": "00:00",
+      "location": null,
+      "metadata": {
+        "knowledgeId": "s_shandra_1988_records"
+      }
+    },
+    {
+      "type": "belief",
+      "content": "对抗隐藏灾难的最安全方式是控制人们了解它的内容和时机。",
+      "gameDay": 1,
+      "gameTime": "00:00",
+      "location": null,
+      "metadata": {
+        "confidence": 0.92,
+        "reasoningChain": "今日在街坊和怀特那里遇到的谨慎与隐匿行为，以及Abel看似不自然的出现，强化了我对信息控制作为防止恐慌与阻止敌对势力利用真相的信念。"
+      }
+    },
+    {
+      "type": "secret",
+      "content": "如果我目前的掩护被烧掉，我已经盯上了一个名叫苏珊的安静前医院护士的身份，作为在医院内的可能后备面孔。",
+      "gameDay": 1,
+      "gameTime": "00:00",
+      "location": null,
+      "metadata": {
+        "knowledgeId": "s_shandra_susan_identity"
+      }
+    },
+    {
+      "type": "secret",
+      "content": "布鲁诺对我的重要性超过了一个中立联系人应有的程度，我无法停止回放他信任我的那些内容。",
+      "gameDay": 1,
+      "gameTime": "00:00",
+      "location": null,
+      "metadata": {
+        "knowledgeId": "s_shandra_bruno"
+      }
+    },
+    {
+      "type": "secret",
+      "content": "我对神话事件了解得足够多，能够识别一个小镇何时正滑向灾难性的事态，但我不随意透露这些知识，因为恐慌和暴露只会帮助敌人。",
+      "gameDay": 1,
+      "gameTime": "00:00",
+      "location": null,
+      "metadata": {
+        "knowledgeId": "s_shandra_secrecy"
+      }
+    },
+    {
+      "type": "information",
+      "content": "我来到卡森德拉是因为一个旧超自然案件的幸存者警告说这里的邪教活动正在朝灾难发展，九天使认为这个警告足够可信，值得行动。",
+      "gameDay": 1,
+      "gameTime": "00:00",
+      "location": null,
+      "metadata": {
+        "difficulty": "regular",
+        "knowledgeId": "k_shandra_mission"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我进了后屋，找到了并取走了监控录像的备份介质。取走时小心翼翼，未在店内留下明显痕迹。",
+      "gameDay": 2,
+      "gameTime": "00:05",
+      "location": "SCN_12_SUB_1",
+      "metadata": {
+        "outcome": "取走后屋的监控录像备份介质"
+      }
+    },
+    {
+      "type": "witness",
+      "content": "[相遇] 刚在卡森德拉南新街与一名叫 Patrizio von Samsa 的人正面相遇。他在路边停下与我对视了几秒，表情平静但目光审视，给人一种评估我的感觉。我瞬间警觉，心里有点紧张，担心他可能与怀特店里或 Abel 的异常活动有关，或是在打探行踪。现在我的首要反应是保持低调观察，不暴露身份，评估他是否构成威胁或线索。",
+      "gameDay": 2,
+      "gameTime": "00:09",
+      "location": "ROAD_3",
+      "metadata": {
+        "impact": 2,
+        "perspective": "co_presence",
+        "sourceAction": "Patrizio von Samsa 在 卡森德拉南新街",
+        "sourceCharacterId": "__encounter__"
+      }
+    },
+    {
+      "type": "event",
+      "content": "[直接] 刚在南新街与 Patrizio von Samsa 正面交谈，他试探我今晚的安排，我礼貌回避没有透露行程。他似乎察觉到我的警觉并收敛。我有点紧张但保持冷静，怀疑他在打探怀特店或 Abel 的情况。现在我要优先确保钟表店的备份介质安全，并从远处低调观察他。",
+      "gameDay": 2,
+      "gameTime": "00:14",
+      "location": "ROAD_3",
+      "metadata": {
+        "impact": 1,
+        "perspective": "targeted",
+        "sourceAction": "我向珊德拉寒暄并礼貌询问她今晚是否有安排，试探她是否在注意或跟随我的行程，但她抵住了我的试探，没有透露任何行程细节。我没有得到有用信息，意识到她保持警觉并刻意回避。",
+        "sourceCharacterId": "Patrizio von Samsa"
+      }
+    },
+    {
+      "type": "event",
+      "content": "帕特里齐奥向我寒暄并问我今晚的安排，显然在试探我是否在跟踪或关注他。我礼貌地回避了问题，保持掩护，没有告诉他我的下一步计划。",
+      "gameDay": 2,
+      "gameTime": "00:14",
+      "location": "ROAD_3",
+      "metadata": {
+        "outcome": "向Shandra寒暄并礼貌询问她今晚是否有安排以探查她是否在跟随或注意我的行程 [Persuade 75, rolled 94 (fail) — all targets resisted] failed"
+      }
+    },
+    {
+      "type": "event",
+      "content": "一个自称镇长的人跟我套近乎，低声问我的行程并试图探我是否常来这带。我有意回避行程问题，保持冷淡防备，没有把任何情报告诉他。",
+      "gameDay": 2,
+      "gameTime": "00:20",
+      "location": "ROAD_3",
+      "metadata": {
+        "outcome": "以镇长口吻与珊德拉寒暄，低声询问她今晚是否有安排并假装随意地问她是否常来这一带，以观察她的反应和是否会跟随我"
+      }
+    },
+    {
+      "type": "event",
+      "content": "步行前往驯鹿酒吧 成功",
+      "gameDay": 2,
+      "gameTime": "00:27",
+      "location": "SCN_16_SUB_1",
+      "metadata": {
+        "outcome": "步行前往驯鹿酒吧 成功",
+        "blockedReason": "",
+        "failureReason": ""
+      }
+    },
+    {
+      "type": "witness",
+      "content": "[相遇] 我在一层大厅意外与 Johnny、Kovind、Lutz Emilion、Taran Emilion 正面相遇。四人聚在一起的气氛让我立刻警觉，心里有些紧张但努力压住情绪。我决定不与他们接触，低调退到一旁观察并记录他们的动向，同时考虑是否需要先优先保障怀特钟表店的监控备份。",
+      "gameDay": 2,
+      "gameTime": "00:27",
+      "location": "SCN_16_SUB_1",
+      "metadata": {
+        "impact": 2,
+        "perspective": "co_presence",
+        "sourceAction": "Johnny, Kovind, Lutz Emilion, Taran Emilion 在 一层大厅",
+        "sourceCharacterId": "__encounter__"
+      }
+    },
+    {
+      "type": "event",
+      "content": "[直接] 00:30 — Patrizio von Samsa 又试图直接和我搭话，故意表现得彬彬有礼、很无害，像是在探听我是否在盯着他（他的试探没有成功）。我瞬间警觉，有些紧张——这说明有人在主动打探，可能会威胁到我正在备份的监控资料。现在我的感受是提高戒备、尽量不与他接触，并优先确保怀特钟表店的备份介质安全，然后从远处低调观察他与那四人的动向，记录一切可疑细节。",
+      "gameDay": 2,
+      "gameTime": "00:30",
+      "location": "SCN_16_SUB_1",
+      "metadata": {
+        "impact": 1,
+        "perspective": "targeted",
+        "sourceAction": "礼貌地与珊德拉搭话，聊些镇上的无害琐事以评估她是否关注我并让自己看起来无害 [target Shandra Hernandez not present] failed",
+        "sourceCharacterId": "Patrizio von Samsa"
+      }
+    },
+    {
+      "type": "event",
+      "content": "在大厅角落保持低调，观察Johnny、Kovind、Lutz Emilion和Taran Emilion的互动、出入方向与可疑举动，并在调查员笔记中记录下关键细节 成功",
+      "gameDay": 2,
+      "gameTime": "00:33",
+      "location": "SCN_16_SUB_1",
+      "metadata": {
+        "outcome": "在大厅角落保持低调，观察Johnny、Kovind、Lutz Emilion和Taran Emilion的互动、出入方向与可疑举动，并在调查员笔记中记录下关键细节 成功"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我在角落里低声记下了刚才观察到的帕特里齐奥和那四人的行动路线、对话要点与时间点，笔记里把这些信息按顺序列清楚，便于后续核对和作为证据使用。",
+      "gameDay": 2,
+      "gameTime": "00:45",
+      "location": "SCN_16_SUB_1",
+      "metadata": {
+        "itemId": "调查员笔记",
+        "outcome": "在角落静静地把刚才观察到的帕特里齐奥和四人的行动路线、对话要点和时间点详细记入调查员笔记",
+        "itemName": "调查员笔记"
+      }
+    },
+    {
+      "type": "event",
+      "content": "从普通手提包中取出怀特钟表店的监控录像备份，检查外观与文件完整性，然后将备份包好放回手提包内的隐蔽处以便安全携带 [在 SCN_16_SUB_1 因重新规划而中断] 已中断",
+      "gameDay": 2,
+      "gameTime": "00:47",
+      "location": "SCN_16_SUB_1",
+      "metadata": {
+        "outcome": "从普通手提包中取出怀特钟表店的监控录像备份，检查外观与文件完整性，然后将备份包好放回手提包内的隐蔽处以便安全携带 [在 SCN_16_SUB_1 因重新规划而中断] 已中断",
+        "interruptionReason": "revise_replan"
+      }
+    },
+    {
+      "type": "witness",
+      "content": "[目击] 我注意到 Patrizio von Samsa 走进驯鹿酒吧，坐在吧台一角装作随意地打量周围并留意我的出现；我又在一层大厅与他以及 Johnny、Kovind、Lutz Emilion、Taran Emilion 正面相遇。我的警觉明显上升，感到有被人盯上的危险，紧张但冷静。现在我的首要反应是立刻保障怀特钟表店正在写入的监控备份安全，避免与他们接触，然后从远处继续监视并记录一切可疑动向。",
+      "gameDay": 2,
+      "gameTime": "00:47",
+      "location": "SCN_16_SUB_1",
+      "metadata": {
+        "impact": 2,
+        "perspective": "witness",
+        "sourceAction": "走进驯鹿酒吧并坐在吧台一角，装作随意地观察周围并留意珊德拉的出现 成功",
+        "sourceCharacterId": "Patrizio von Samsa"
+      }
+    },
+    {
+      "type": "event",
+      "content": "[直接] 刚在路上又被 Patrizio von Samsa 用镇长式的温和语气低声寒暄并观察我的表情，明显在试探我是否在跟踪或监视他，但他的试探并未得逞。我感到警觉和紧张，确认他在打探信息的可能性更大。我的反应是保持距离、不与他接触，优先确保怀特钟表店正在写入的监控备份安全（加密并带走），然后从远处低调继续监视他和那四人的动向，记录一切可疑细节。",
+      "gameDay": 2,
+      "gameTime": "00:53",
+      "location": "ROAD_3",
+      "metadata": {
+        "impact": 1,
+        "perspective": "targeted",
+        "sourceAction": "以镇长的温和语气向Shandra低声寒暄，谈论镇上无害的琐事并观察她的表情与言辞以判断她是否在跟随或监视我，同时巧妙转移话题避免提及今晚行程或五金店 [target Shandra Hernandez not present] failed",
+        "sourceCharacterId": "Patrizio von Samsa"
+      }
+    },
+    {
+      "type": "event",
+      "content": "前往珊德拉的小屋 成功",
+      "gameDay": 2,
+      "gameTime": "01:03",
+      "location": "SCN_14_SUB_1",
+      "metadata": {
+        "outcome": "前往珊德拉的小屋 成功",
+        "blockedReason": "",
+        "failureReason": ""
+      }
+    },
+    {
+      "type": "event",
+      "content": "我从柜台后方取出手提包，快速检查了包内的备份状态，确认正在写入的备份完好无损；然后把手提包放回柜台后方的隐蔽处，并用店主的围裙遮盖掩饰，尽量不引人注意。",
+      "gameDay": 2,
+      "gameTime": "01:09",
+      "location": "SCN_14_SUB_1",
+      "metadata": {
+        "itemId": "普通手提包",
+        "outcome": "从柜台后方取出普通手提包，快速检查包内备份是否完好无损，然后把手提包放到柜台后方的隐蔽处并用店主围裙覆盖掩饰",
+        "itemName": "普通手提包"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我掀开柜台后方的围裙，从隐蔽处取出那只普通手提包，并随身携带，确保监控备份与相关介质的安全。",
+      "gameDay": 2,
+      "gameTime": "01:15",
+      "location": "SCN_14_SUB_1",
+      "metadata": {
+        "itemId": "普通手提包",
+        "outcome": "从柜台后方取出普通手提包并随身携带以确保监控备份安全",
+        "itemName": "普通手提包"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我在手提包里的备份介质上对正在写入的监控录像进行了加密，设置了访问密码并确认现在无法被未授权人员读取；备份仍留在手提包中，我把包收好了以防外泄。",
+      "gameDay": 2,
+      "gameTime": "01:24",
+      "location": "SCN_14_SUB_1",
+      "metadata": {
+        "itemId": "普通手提包",
+        "outcome": "对手提包内的监控备份进行加密",
+        "itemName": "普通手提包"
+      }
+    },
+    {
+      "type": "witness",
+      "content": "[相遇] 刚在南新街与 Johnny 正面相遇。他与那四人聚在一起的气场让我立刻警觉，感觉像是在被盯梢或试探行踪。我有点紧张但努力保持冷静。决定不与他们接触，优先确保存放在手提包里的怀特钟表店监控备份安全（确认加密并带离），然后在远处低调观察并记录 Johnny 及其同伴的动向，必要时改变路线或躲藏。",
+      "gameDay": 2,
+      "gameTime": "01:32",
+      "location": "ROAD_3",
+      "metadata": {
+        "impact": 2,
+        "perspective": "co_presence",
+        "sourceAction": "Johnny 在 卡森德拉南新街",
+        "sourceCharacterId": "__encounter__"
+      }
+    },
+    {
+      "type": "event",
+      "content": "步行前往驯鹿酒吧 成功",
+      "gameDay": 2,
+      "gameTime": "01:35",
+      "location": "SCN_16_SUB_1",
+      "metadata": {
+        "outcome": "步行前往驯鹿酒吧 成功",
+        "blockedReason": "",
+        "failureReason": ""
+      }
+    },
+    {
+      "type": "witness",
+      "content": "[相遇] 我在一层大厅与 Johnny 的同伴——Kovind、Lutz Emilion、Taran Emilion 以及 Patrizio von Samsa 正面相遇。他们聚在一起的气场让我立刻提高警觉，心里紧张但努力保持冷静。我决定不与他们接触，低调退到一旁从远处观察并记录他们的动向，优先确保存放在手提包里的怀特钟表店监控备份已加密并安全带走，然后按原计划前往驯鹿酒吧继续低调监视。",
+      "gameDay": 2,
+      "gameTime": "01:35",
+      "location": "SCN_16_SUB_1",
+      "metadata": {
+        "impact": 2,
+        "perspective": "co_presence",
+        "sourceAction": "Kovind, Lutz Emilion, Patrizio von Samsa, Taran Emilion 在 一层大厅",
+        "sourceCharacterId": "__encounter__"
+      }
+    },
+    {
+      "type": "event",
+      "content": "悄悄上楼到二层环廊的隐蔽处，找一个不显眼的位置开始低调观察大厅内的Johnny及其同伴 成功",
+      "gameDay": 2,
+      "gameTime": "01:36",
+      "location": "SCN_16_SUB_1",
+      "metadata": {
+        "outcome": "悄悄上楼到二层环廊的隐蔽处，找一个不显眼的位置开始低调观察大厅内的Johnny及其同伴 成功",
+        "blockedReason": "",
+        "failureReason": ""
+      }
+    },
+    {
+      "type": "witness",
+      "content": "[目击] 我看到 Lutz Emilion 检查了吧台后方的储物柜，确认柜内有一把猎枪；他随后把柜门关上并上锁，钥匙揣在身上。我感到很不安——这群人中有人掌握武器，危险性显著上升。我现在更警觉，决定避免与他们接触、不进入驯鹿酒吧，找更安全的远处观察点，并尽快把怀特钟表店的监控备份转移到更安全的藏匿处。",
+      "gameDay": 2,
+      "gameTime": "01:38",
+      "location": "SCN_16_SUB_1",
+      "metadata": {
+        "impact": 2,
+        "perspective": "witness",
+        "sourceAction": "我检查了吧台后方的储物柜，确认柜内有一把猎枪；随后将柜门关上并上锁，把钥匙揣在身上。",
+        "sourceCharacterId": "Lutz Emilion"
+      }
+    },
+    {
+      "type": "witness",
+      "content": "[目击] 我看到 Kovind 从卢茨手里抢过吧台后方储物柜的钥匙，确保卢茨现在无法取出储物柜里的那把猎枪。卢茨表面服从但显得愤怒且戒备。我感到稍微松了口气——直接的枪械威胁暂时受限——但也更警觉，因为他们内部紧张可能会导致局势升级。我决定利用这个短暂窗口加快备份的安全转移或换到更安全的观察点，同时保持隐蔽并准备随时撤离。",
+      "gameDay": 2,
+      "gameTime": "01:40",
+      "location": "SCN_16_SUB_1",
+      "metadata": {
+        "impact": 2,
+        "perspective": "witness",
+        "sourceAction": "我从卢茨手中抢走了吧台后方储物柜的钥匙，确保他现在无法取出储物柜里的猎枪。卢茨表面服从但愤怒且戒备。",
+        "sourceCharacterId": "Kovind"
+      }
+    },
+    {
+      "type": "witness",
+      "content": "[目击] 我看到 Kovind 用储物柜钥匙打开吧台后方的储物柜，从里面把猎枪取出来并握在手中。我感到震惊与紧张——直接的武装威胁瞬间升级。我立刻提高警戒，决定不要靠近酒吧，马上找就近隐蔽处并调整备份转移路线，准备随时撤离。",
+      "gameDay": 2,
+      "gameTime": "01:44",
+      "location": "SCN_16_SUB_1",
+      "metadata": {
+        "impact": 2,
+        "perspective": "witness",
+        "sourceAction": "我用手中的储物柜钥匙打开了吧台后方的储物柜，从里面把猎枪取出来并握在手中，控制住了武器。",
+        "sourceCharacterId": "Kovind"
+      }
+    },
+    {
+      "type": "event",
+      "content": "在二层环廊用调查员笔记记录Johnny及其同伴的当前位置、相互互动、对话要点与进出方向，保持低调不引人注意 [在 SCN_16_SUB_1 因重新规划而中断] 已中断",
+      "gameDay": 2,
+      "gameTime": "01:44",
+      "location": "SCN_16_SUB_1",
+      "metadata": {
+        "outcome": "在二层环廊用调查员笔记记录Johnny及其同伴的当前位置、相互互动、对话要点与进出方向，保持低调不引人注意 [在 SCN_16_SUB_1 因重新规划而中断] 已中断",
+        "interruptionReason": "revise_replan"
+      }
+    },
+    {
+      "type": "witness",
+      "content": "[相遇] 我在卡森德拉南新街与一个叫 Tallinn 的人正面相遇。他的出现令我警觉——今晚有人不断试探我的行程，任何陌生人都可能是威胁或线索。我感到紧张但努力保持冷静，立刻避免与他接触，悄悄退到阴影处从远处观察，同时用余光确认手提包里已加密的备份完好，准备随时把备份转移到更安全的藏匿点并撤离。",
+      "gameDay": 2,
+      "gameTime": "01:49",
+      "location": "ROAD_3",
+      "metadata": {
+        "impact": 2,
+        "perspective": "co_presence",
+        "sourceAction": "Tallinn 在 卡森德拉南新街",
+        "sourceCharacterId": "__encounter__"
+      }
+    },
+    {
+      "type": "event",
+      "content": "走到教堂 [在 ROAD_3 因重新规划而中断] 已中断",
+      "gameDay": 2,
+      "gameTime": "01:49",
+      "location": "ROAD_3",
+      "metadata": {
+        "outcome": "走到教堂 [在 ROAD_3 因重新规划而中断] 已中断",
+        "interruptionReason": "revise_replan"
+      }
+    },
+    {
+      "type": "event",
+      "content": "在阴影处远距离观察Tallinn，注意他的外貌、举止与动向，并在调查员笔记中记录关键信息 成功",
+      "gameDay": 2,
+      "gameTime": "01:55",
+      "location": "ROAD_3",
+      "metadata": {
+        "outcome": "在阴影处远距离观察Tallinn，注意他的外貌、举止与动向，并在调查员笔记中记录关键信息 成功"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我检查了手提包里的监控备份，确认录像已完整写入并且经过加密，密码保护有效。检查后我把手提包放回柜台后方的隐蔽处并用围裙遮盖，尽量不引人注意。",
+      "gameDay": 2,
+      "gameTime": "01:59",
+      "location": "ROAD_3",
+      "metadata": {
+        "itemId": "普通手提包",
+        "outcome": "检查普通手提包内加密的怀特钟表店监控备份完整性，确认密码保护有效",
+        "itemName": "普通手提包"
+      }
+    },
+    {
+      "type": "event",
+      "content": "在阴影处远距离观察 Tallinn，记录他的外貌、举止和行动方向，留意他是否接触或示意给酒吧内的那几人，同时用余光确认手提包里已加密的备份仍安全无异动 [在 ROAD_3 因重新规划而中断] 已中断",
+      "gameDay": 2,
+      "gameTime": "02:05",
+      "location": "ROAD_3",
+      "metadata": {
+        "outcome": "在阴影处远距离观察 Tallinn，记录他的外貌、举止和行动方向，留意他是否接触或示意给酒吧内的那几人，同时用余光确认手提包里已加密的备份仍安全无异动 [在 ROAD_3 因重新规划而中断] 已中断",
+        "interruptionReason": "revise_replan"
+      }
+    },
+    {
+      "type": "witness",
+      "content": "[相遇] 刚在南新街与Kovind正面相遇。他的出现让我高度警觉——我记得他之前曾从储物柜取出猎枪，属于有直接武装威胁的成员。我感到紧张且必须立即行动：马上核查手提包里怀特钟表店的备份是否已加密完好，若有异常立刻把备份转移到珊德拉的小屋或近期的安全藏匿点；同时避免靠近驯鹿酒吧和与他们接触，远处低调监视他们的动向并确认撤离路线，准备随时撤离。",
+      "gameDay": 2,
+      "gameTime": "02:05",
+      "location": "ROAD_3",
+      "metadata": {
+        "impact": 2,
+        "perspective": "co_presence",
+        "sourceAction": "Kovind 在 卡森德拉南新街",
+        "sourceCharacterId": "__encounter__"
+      }
+    },
+    {
+      "type": "witness",
+      "content": "[相遇] 我在南新街正面遇到 Adolph Carl 和 Kovind。看到Kovind让我高度警觉——他之前曾取出过猎枪，是直接的武装威胁。我感到紧张但尽量保持冷静，立刻要核查手提包里已加密的怀特钟表店备份，若有异常或被盯上就马上转移备份到珊德拉的小屋或最近安全点；同时避开驯鹿酒吧，找近处隐蔽点低调观察并准备随时撤离。",
+      "gameDay": 2,
+      "gameTime": "02:09",
+      "location": "ROAD_3",
+      "metadata": {
+        "impact": 2,
+        "perspective": "co_presence",
+        "sourceAction": "Adolph Carl, Kovind 在 卡森德拉南新街",
+        "sourceCharacterId": "__encounter__"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我检查了手提包内的便携存储备份，确认备份已完成且被密码加密，文件完整无损；随后将手提包放回柜台后方并用店主的围裙遮盖，尽量不引人注意。",
+      "gameDay": 2,
+      "gameTime": "02:09",
+      "location": "ROAD_3",
+      "metadata": {
+        "itemId": "普通手提包",
+        "outcome": "检查手提包中怀特钟表店监控备份的加密状态并确认文件完整性",
+        "itemName": "普通手提包"
+      }
+    },
+    {
+      "type": "event",
+      "content": "步行前往珊德拉的小屋 成功",
+      "gameDay": 2,
+      "gameTime": "02:20",
+      "location": "SCN_14_SUB_1",
+      "metadata": {
+        "outcome": "步行前往珊德拉的小屋 成功",
+        "blockedReason": "",
+        "failureReason": ""
+      }
+    },
+    {
+      "type": "event",
+      "content": "我把柜台后方的普通手提包取出，带到后屋的隐蔽处放好并用店主的围裙掩盖。确认包内的监控录像备份完整且受密码保护。",
+      "gameDay": 2,
+      "gameTime": "02:25",
+      "location": "SCN_14_SUB_1",
+      "metadata": {
+        "outcome": "把普通手提包从柜台后方取出并带到后屋的隐蔽处放好"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我从柜台后方取出那只被围裙掩着的手提包，取出其中的备份介质并在便携硬盘上制作了第二份备份；我对新备份进行了独立加密并设置了访问密码，然后将手提包收好，确保一切看起来无异。",
+      "gameDay": 2,
+      "gameTime": "02:40",
+      "location": "SCN_14_SUB_1",
+      "metadata": {
+        "itemId": "普通手提包",
+        "outcome": "从普通手提包里取出已加密的监控录像备份，制作第二份备份到我的便携硬盘并对新备份进行独立加密和设密码保护",
+        "itemName": "普通手提包"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我在柜台后从内侧把通往后屋的半掩木门反锁，并确认门已锁好，外面无法直接打开。",
+      "gameDay": 2,
+      "gameTime": "02:43",
+      "location": "SCN_14_SUB_1",
+      "metadata": {
+        "outcome": "把后屋半掩的木门从内侧反锁并确认门已锁好"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我把已加密的备份、我的调查员笔记和重要的店铺账本一起装进手提包，确认拉链封好，然后把包放回柜台后方的隐蔽处并用围裙遮盖，尽量不引人注意。",
+      "gameDay": 2,
+      "gameTime": "02:49",
+      "location": "SCN_14_SUB_1",
+      "metadata": {
+        "itemId": "普通手提包",
+        "outcome": "把普通手提包整理成撤离包，把已加密的备份、调查员笔记和重要证物放入，确认拉链封好并把包放回后屋的隐蔽处",
+        "itemName": "普通手提包"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我在柜台用店里的有线电话拨通了布鲁诺，简短确认了他作为应急联络人的可用性，并当场约定好了撤离暗号。通话顺利结束后我把听筒放回，心里稍微安心了一些。",
+      "gameDay": 2,
+      "gameTime": "02:55",
+      "location": "SCN_14_SUB_1",
+      "metadata": {
+        "itemId": "ITEM_SCN14_3",
+        "outcome": "用柜台上的电话拨打布鲁诺的号码，简短确认他作为应急联络的可用性并约定撤离暗号",
+        "itemName": "电话"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我掀起柜台后方的围裙，取出那只普通手提包，确认拉链封好，然后把包背在肩上，随时准备撤离。",
+      "gameDay": 2,
+      "gameTime": "02:59",
+      "location": "SCN_14_SUB_1",
+      "metadata": {
+        "itemId": "普通手提包",
+        "outcome": "从柜台后方取出被围裙掩着的普通手提包，检查拉链并背在肩上以便随时撤离",
+        "itemName": "普通手提包"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我把手提包放进胡桃木玻璃罩的雪茄展柜里，并把店主的围裙搭在上面掩护，尽量不引人注意。包内的便携存储备份仍然封好并被加密。",
+      "gameDay": 2,
+      "gameTime": "03:05",
+      "location": "SCN_14_SUB_1",
+      "metadata": {
+        "itemId": "普通手提包",
+        "outcome": "把手提包放进胡桃木玻璃罩雪茄展柜并用店主围裙搭在上面掩护，作为隐蔽藏匿地点",
+        "itemName": "普通手提包"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我把被围裙遮掩的手提包从胡桃木玻璃罩里取了出来，并把包放进了我的随身物品里；围裙还搭在展柜上，展柜里留下了一个空位。",
+      "gameDay": 2,
+      "gameTime": "03:08",
+      "location": "SCN_14_SUB_1",
+      "metadata": {
+        "itemId": "ITEM_SCN14_1",
+        "outcome": "从胡桃木玻璃罩雪茄展柜中取出被围裙遮盖的手提包",
+        "itemName": "胡桃木玻璃罩雪茄展柜"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我把店铺正门上了锁，转动钥匙直到听到咔嗒声后又拉了拉门把手确认门已牢固。外面的人暂时无法从外面直接进入。",
+      "gameDay": 2,
+      "gameTime": "03:11",
+      "location": "SCN_14_SUB_1",
+      "metadata": {
+        "outcome": "锁上店铺正门"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我检查并整理了随身手提包，确认便携备份、调查员笔记和店铺账本都放好并把拉链封紧；备份介质仍为加密状态（最近来访影像已写入），撤离包已就绪。",
+      "gameDay": 2,
+      "gameTime": "03:20",
+      "location": "SCN_14_SUB_1",
+      "metadata": {
+        "itemId": "普通手提包",
+        "outcome": "检查并整理随身手提包，将已加密的备份、调查员笔记、重要账本和手机等装入并确认拉链封好，整理成撤离包状态",
+        "itemName": "普通手提包"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我把已经整理好的手提包塞进了卷烟货架里的一个隐蔽隔层，并用周围的烟盒和锡罐把它掩盖住；拉链保持封好，备份介质仍在包内。",
+      "gameDay": 2,
+      "gameTime": "03:25",
+      "location": "SCN_14_SUB_1",
+      "metadata": {
+        "itemId": "ITEM_SCN14_8",
+        "outcome": "把手提包放进卷烟货架的隐蔽隔层并用周边商品掩饰",
+        "itemName": "卷烟货架"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我轻推并测试了柜台后方那扇半掩木门，门能顺利开合。确认它可以作为备用撤离出口。",
+      "gameDay": 2,
+      "gameTime": "03:31",
+      "location": "SCN_14_SUB_1",
+      "metadata": {
+        "outcome": "检查后屋的半掩木门，确认它能作为备用撤离出口（轻推并测试开合）"
+      }
+    },
+    {
+      "type": "event",
+      "content": "步行前往教堂 成功",
+      "gameDay": 2,
+      "gameTime": "03:39",
+      "location": "SCN_17_SUB_1",
+      "metadata": {
+        "outcome": "步行前往教堂 成功",
+        "blockedReason": "",
+        "failureReason": ""
+      }
+    },
+    {
+      "type": "witness",
+      "content": "[相遇] 我在教堂主殿与Constantine Frollo和Kovind正面相遇。看到Kovind出现在近旁让我瞬间提高警觉（他之前曾取出猎枪），我感到紧张且不安。必须立刻确认手提包里已加密的备份在我身上无损，迅速退到隐蔽处避免接触，然后从安全点重新评估是否继续监视或撤离。",
+      "gameDay": 2,
+      "gameTime": "03:39",
+      "location": "SCN_17_SUB_1",
+      "metadata": {
+        "impact": 2,
+        "perspective": "co_presence",
+        "sourceAction": "Constantine Frollo, Kovind 在 教堂主殿",
+        "sourceCharacterId": "__encounter__"
+      }
+    },
+    {
+      "type": "event",
+      "content": "检查随身口袋和衣物，确认便携备份是否在我身上且已加密完整 [在 SCN_17_SUB_1 因重新规划而中断] 已中断",
+      "gameDay": 2,
+      "gameTime": "07:06",
+      "location": "SCN_17_SUB_1",
+      "metadata": {
+        "outcome": "检查随身口袋和衣物，确认便携备份是否在我身上且已加密完整 [在 SCN_17_SUB_1 因重新规划而中断] 已中断",
+        "interruptionReason": "revise_replan"
+      }
+    },
+    {
+      "type": "witness",
+      "content": "[相遇] 我在教堂主殿与 Constantine Frollo 和 Kovind 正面相遇。看到 Kovind 出现在近旁让我瞬间高度警觉（他之前曾取出过猎枪），我感到紧张且不安。必须立刻确认随身手提包里已加密的监控备份完好无损，迅速退到主殿外侧的隐蔽处以避免接触，然后从安全点重新评估是继续低调监视还是撤回珊德拉小屋并再次加密/备份资料。",
+      "gameDay": 2,
+      "gameTime": "07:06",
+      "location": "SCN_17_SUB_1",
+      "metadata": {
+        "impact": 2,
+        "perspective": "co_presence",
+        "sourceAction": "Marks White, Constantine Frollo, Kovind 在 教堂主殿",
+        "sourceCharacterId": "__encounter__"
+      }
+    },
+    {
+      "type": "plan",
+      "content": "Today's plan: 1. 关店并整理收摊准备出门。 at 珊德拉的小屋·店面; 2. 在后屋再次审阅案件笔记和布鲁诺的匿名警告，列出今晚要核对的三项人物与地点。 at 珊德拉的小屋·店面; 3. 检查并备份店内监控录像，截取任何可疑来访者镜头。 at 珊德拉的小屋·店面; 4. 去钟表店向怀特借一把小工具并顺便打听最近街坊间的异常情况。 at 钟表店; 5. 到海伦的餐桌吃一份热饭并留意同桌与附近顾客的谈话。 at 海伦的餐桌; 6. 在驯鹿酒吧低调观察，试图从酒保或常客处套出有关邪教聚会或异常仪式的线索。 at 驯鹿酒吧; 7. 前往星辰医院探望Vincent Galenus并询问他最近是否注意到任何不寻常的病人或事件。 at 星辰医院; 8. 到五金店与哈里森短聊，借一件便携工具并问问他是否见过有人采购奇怪材料。 at 五金店; 9. 绕到镇长私宅外侧做一次外围侦察，记录外部监控与可疑出入的时间点。 at 镇长私宅; 10. 回到珊德拉的小屋·店面整理并归档今晚获得的线索，制定明日行动计划然后休息。 at 珊德拉的小屋·店面",
+      "gameDay": 1,
+      "gameTime": "19:00",
+      "location": null,
+      "metadata": {
+        "planType": "daily"
+      }
+    },
+    {
+      "type": "event",
+      "content": "关店并整理收摊：清点并收好收银机内零钱，锁好收银机，盖好胡桃木玻璃罩，整理货架并把店主围裙挂回原位，检查门窗后准备出门 成功",
+      "gameDay": 1,
+      "gameTime": "19:15",
+      "location": "SCN_14_SUB_1",
+      "metadata": {
+        "outcome": "关店并整理收摊：清点并收好收银机内零钱，锁好收银机，盖好胡桃木玻璃罩，整理货架并把店主围裙挂回原位，检查门窗后准备出门 成功"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我把店内的壁灯打开，柜台后方那扇半掩的木门和通向后屋的走廊被暖色灯光照亮，我现在能看清后屋的入口。",
+      "gameDay": 1,
+      "gameTime": "19:18",
+      "location": "SCN_14_SUB_1",
+      "metadata": {
+        "outcome": "打开店内的壁灯以便照亮后屋"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我走进后屋，拿出并审阅了调查员笔记和布鲁诺的匿名警告。列出今晚要核对的三项：去钟表店找怀特并借小工具并打听街坊情况、在驯鹿酒吧低调观察酒保与常客、到星辰医院探望并询问Vincent Galenus。",
+      "gameDay": 1,
+      "gameTime": "19:29",
+      "location": "SCN_14_SUB_1",
+      "metadata": {
+        "itemId": "调查员笔记",
+        "outcome": "走进后屋，审阅调查员笔记和布鲁诺的匿名警告，列出今晚要核对的三项人物与地点",
+        "itemName": "调查员笔记"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我在后屋检查了监控录像存储，找到了近来的来访录像并开始备份以截取可疑来访者画面。备份已启动，录像正在被写入备份介质。",
+      "gameDay": 1,
+      "gameTime": "19:45",
+      "location": "SCN_14_SUB_1",
+      "metadata": {
+        "outcome": "检查后屋的监控录像存储并开始备份录像以截取可疑来访者画面"
+      }
+    },
+    {
+      "type": "event",
+      "content": "走到钟表店去向怀特借一把小工具并顺便打听街坊间的异常情况 成功",
+      "gameDay": 1,
+      "gameTime": "19:51",
+      "location": "SCN_12_SUB_1",
+      "metadata": {
+        "outcome": "走到钟表店去向怀特借一把小工具并顺便打听街坊间的异常情况 成功",
+        "blockedReason": "",
+        "failureReason": ""
+      }
+    },
+    {
+      "type": "witness",
+      "content": "[相遇] 在怀特的钟表店与店主 Marks White 当面相遇。他神色平静但略显警觉。我按原计划来借一把小工具并顺便打听附近街坊的异常情况，心情谨慎且保持掩饰，准备开始交谈并在对话中观察他的反应与店内细节。",
+      "gameDay": 1,
+      "gameTime": "19:51",
+      "location": "SCN_12_SUB_1",
+      "metadata": {
+        "impact": 2,
+        "perspective": "co_presence",
+        "sourceAction": "Marks White 在 怀特的钟表店",
+        "sourceCharacterId": "__encounter__"
+      }
+    },
+    {
+      "type": "event",
+      "content": "店主礼貌地问候并询问我的来意，他一直盯着我的手动作。我按掩护说我因一名旧超自然案件的幸存者的警告来到这里，称这是值得注意的调查，并没有触碰店内的怀表或油画。店主警惕但并未当场驱逐我。",
+      "gameDay": 1,
+      "gameTime": "19:57",
+      "location": "SCN_12_SUB_1",
+      "metadata": {
+        "outcome": "礼貌地向珊德拉问候并询问她来意，同时盯着她的手和动作，注意她是否试图接触钟表或那幅油画"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我去了怀特的钟表店，打算向怀特借一把小型螺丝刀并问问最近街坊是否有人提到奇怪的聚会或异常情况，但怀特并不在店里。工作台上有一套“钟表维修微型工具与零件”，能看到微型螺丝刀，但我没能借到任何东西，也没从怀特处得到关于聚会的任何信息。",
+      "gameDay": 1,
+      "gameTime": "19:57",
+      "location": "SCN_12_SUB_1",
+      "metadata": {
+        "outcome": "向怀特借一把小型螺丝刀并询问最近街坊是否有人提到奇怪的聚会或异常情况"
+      }
+    },
+    {
+      "type": "witness",
+      "content": "[相遇] 我在怀特的钟表店与店主Marks White以及一名叫Abel William的人当面相遇。怀特神色平静但警觉，一直盯着我的手，我没能借到那把小螺丝刀。见到Abel让我感到不安——他的出现可能并非巧合。我谨慎且警惕，决定把注意力转向查证Abel是否相关，并先确保店内监控备份完整再考虑跟踪或转向五金店借工具。",
+      "gameDay": 1,
+      "gameTime": "20:02",
+      "location": "SCN_12_SUB_1",
+      "metadata": {
+        "impact": 2,
+        "perspective": "co_presence",
+        "sourceAction": "Abel William, Marks White 在 怀特的钟表店",
+        "sourceCharacterId": "__encounter__"
+      }
+    },
+    {
+      "type": "event",
+      "content": "亚伯在店里订了一个零件并问我是否最近见过马塞尔。我告诉他没有，并注意到他看起来很疲惫、神情紧张。",
+      "gameDay": 1,
+      "gameTime": "20:10",
+      "location": "SCN_12_SUB_1",
+      "metadata": {
+        "outcome": "向怀特订购那个替换小零件，并当面问怀特与谢安德拉最近有没有见过马塞尔"
+      }
+    },
+    {
+      "type": "secret",
+      "content": "我在店内后屋找到了监控录像并已开始备份，最近的来访影像正在被写入备份介质（备份进行中）。",
+      "gameDay": 1,
+      "gameTime": "23:59",
+      "location": null,
+      "metadata": {
+        "revealed": false,
+        "difficulty": "hard",
+        "knowledgeId": "learned_day1_5"
+      }
+    },
+    {
+      "type": "information",
+      "content": "店里出现了一名叫 Abel William 的人，他订了零件，向我询问是否最近见过‘马塞尔’；他看起来疲惫且紧张，可能与这里的异常有关联。",
+      "gameDay": 1,
+      "gameTime": "23:59",
+      "location": null,
+      "metadata": {
+        "revealed": false,
+        "difficulty": "regular",
+        "knowledgeId": "learned_day1_2"
+      }
+    },
+    {
+      "type": "information",
+      "content": "怀特的钟表店店主名叫 Marks White，见面时表情平静却警觉，他频繁盯着我的手看。",
+      "gameDay": 1,
+      "gameTime": "23:59",
+      "location": null,
+      "metadata": {
+        "revealed": false,
+        "difficulty": "regular",
+        "knowledgeId": "learned_day1_1"
+      }
+    },
+    {
+      "type": "information",
+      "content": "怀特工作台上有一套钟表维修用的微型工具和螺丝刀，但我未能从怀特那里借到任何工具。",
+      "gameDay": 1,
+      "gameTime": "23:59",
+      "location": null,
+      "metadata": {
+        "revealed": false,
+        "difficulty": "regular",
+        "knowledgeId": "learned_day1_3"
+      }
+    },
+    {
+      "type": "information",
+      "content": "怀特没有向我提供关于街坊聚会或异常活动的情报，但也没有当场把我驱逐出门，态度礼貌而警惕。",
+      "gameDay": 1,
+      "gameTime": "23:59",
+      "location": null,
+      "metadata": {
+        "revealed": false,
+        "difficulty": "regular",
+        "knowledgeId": "learned_day1_4"
+      }
+    },
+    {
+      "type": "secret",
+      "content": "今晚我的下一步计划是：在驯鹿酒吧低调观察酒保与常客，并前往星辰医院探望并询问 Vincent Galenus。",
+      "gameDay": 1,
+      "gameTime": "23:59",
+      "location": null,
+      "metadata": {
+        "revealed": false,
+        "difficulty": "hard",
+        "knowledgeId": "learned_day1_6"
+      }
+    }
+  ],
+  "plans": [
+    {
+      "npcName": "Shandra Hernandez",
+      "gameDay": 2,
+      "schedule": [
+        {
+          "activity": "立刻确认并取走后屋正在写入的监控录像备份，检查加密状态，如有必要重新加密并带走备份。",
+          "location": "钟表店"
+        },
+        {
+          "activity": "将备份安全藏匿并做二次备份/多重加密，设置应急联络与基础警戒（锁门、备用出口与撤离包）。",
+          "location": "珊德拉的小屋"
+        },
+        {
+          "activity": "在教堂外或靠近入口的安全处从远处低调观察卡森德拉南新街方向，监视Kovind及其同伴的动向，绝不靠近驯鹿酒吧，记录关键细节。",
+          "location": "教堂"
+        },
+        {
+          "activity": "在确认周边安全后前往拜访 Vincent Galenus，低调询问他最近是否注意到异常或可疑人物，避免透露敏感信息。",
+          "location": "星辰医院"
+        },
+        {
+          "activity": "路过酒厂对外部进行快速侦查，注意是否有 Abel William 或其他可疑活动痕迹，勿贸然接近或进入。",
+          "location": "酒厂"
+        },
+        {
+          "activity": "回到小屋审阅并整理今天的录像与笔记，整合线索并写下下一步行动计划，把重要证物和备份最后隐藏妥当，然后休息。",
+          "location": "珊德拉的小屋"
+        }
+      ],
+      "nodes": [
+        {
+          "type": "scene_interaction",
+          "action": "取走后屋的监控录像备份介质",
+          "impact": 1,
+          "nodeId": "si_take_backup_001",
+          "status": "completed",
+          "endTime": "00:05",
+          "outcome": "我进了后屋，找到了并取走了监控录像的备份介质。取走时小心翼翼，未在店内留下明显痕迹。",
+          "startTime": "00:00",
+          "characterId": "Shandra Hernandez",
+          "characterName": "Shandra Hernandez",
+          "executionMeta": {
+            "startedAt": "00:00",
+            "completedAt": "00:05",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "movement",
+          "action": "步行前往教堂",
+          "impact": 0,
+          "nodeId": "m1",
+          "status": "completed",
+          "endTime": "03:42",
+          "outcome": "步行前往教堂 成功",
+          "startTime": "03:32",
+          "characterId": "Shandra Hernandez",
+          "destination": "SCN_17_SUB_1",
+          "characterName": "Shandra Hernandez",
+          "executionMeta": {
+            "movement": {
+              "routeSnapshot": [
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_4",
+                    "position": 0.1
+                  },
+                  "from": {
+                    "type": "scene",
+                    "sceneId": "SCN_14_SUB_1"
+                  },
+                  "kind": "along_road",
+                  "roadId": "ROAD_4",
+                  "blockCheck": {
+                    "toId": "ROAD_4",
+                    "fromId": "SCN_14_SUB_1"
+                  },
+                  "durationMinutes": 1
+                },
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_4",
+                    "position": 0
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_4",
+                    "position": 0.1
+                  },
+                  "kind": "along_road",
+                  "roadId": "ROAD_4",
+                  "durationMinutes": 1
+                },
+                {
+                  "to": {
+                    "type": "junction",
+                    "junctionId": "JUNC_3"
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_4",
+                    "position": 0
+                  },
+                  "kind": "to_junction",
+                  "blockCheck": {
+                    "toId": "JUNC_3",
+                    "fromId": "ROAD_4"
+                  },
+                  "durationMinutes": 0
+                },
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_3",
+                    "position": 0
+                  },
+                  "from": {
+                    "type": "junction",
+                    "junctionId": "JUNC_3"
+                  },
+                  "kind": "to_junction",
+                  "blockCheck": {
+                    "toId": "ROAD_3",
+                    "fromId": "JUNC_3"
+                  },
+                  "durationMinutes": 0
+                },
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_3",
+                    "position": 0.49
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_3",
+                    "position": 0
+                  },
+                  "kind": "along_road",
+                  "roadId": "ROAD_3",
+                  "durationMinutes": 4.9
+                },
+                {
+                  "to": {
+                    "type": "scene",
+                    "sceneId": "SCN_17_SUB_1"
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_3",
+                    "position": 0.49
+                  },
+                  "kind": "to_scene",
+                  "blockCheck": {
+                    "toId": "SCN_17_SUB_1",
+                    "fromId": "ROAD_3"
+                  },
+                  "durationMinutes": 1
+                }
+              ],
+              "targetPosition": {
+                "type": "scene",
+                "sceneId": "SCN_17_SUB_1"
+              },
+              "minutesIntoStep": 0,
+              "currentStepIndex": 6,
+              "lastReachablePosition": {
+                "type": "scene",
+                "sceneId": "SCN_17_SUB_1"
+              }
+            },
+            "startedAt": "03:32",
+            "completedAt": "03:39",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "action",
+          "action": "在阴影处远距离观察 Tallinn，记录他的外貌、举止和行动方向，留意他是否接触或示意给酒吧内的那几人，同时用余光确认手提包里已加密的备份仍安全无异动",
+          "impact": 0,
+          "nodeId": "a2",
+          "status": "interrupted",
+          "endTime": "02:10",
+          "outcome": "在阴影处远距离观察 Tallinn，记录他的外貌、举止和行动方向，留意他是否接触或示意给酒吧内的那几人，同时用余光确认手提包里已加密的备份仍安全无异动 [因重新规划而中断] 已中断",
+          "startTime": "02:00",
+          "characterId": "Shandra Hernandez",
+          "characterName": "Shandra Hernandez",
+          "executionMeta": {
+            "startedAt": "02:00",
+            "interruptedAt": "02:05",
+            "remainingMinutes": 0,
+            "interruptionReason": "revise_replan"
+          }
+        },
+        {
+          "type": "movement",
+          "action": "步行前往教堂",
+          "impact": 0,
+          "nodeId": "m1",
+          "status": "completed",
+          "endTime": "03:42",
+          "outcome": "步行前往教堂 成功",
+          "startTime": "03:32",
+          "characterId": "Shandra Hernandez",
+          "destination": "SCN_17_SUB_1",
+          "characterName": "Shandra Hernandez",
+          "executionMeta": {
+            "movement": {
+              "routeSnapshot": [
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_4",
+                    "position": 0.1
+                  },
+                  "from": {
+                    "type": "scene",
+                    "sceneId": "SCN_14_SUB_1"
+                  },
+                  "kind": "along_road",
+                  "roadId": "ROAD_4",
+                  "blockCheck": {
+                    "toId": "ROAD_4",
+                    "fromId": "SCN_14_SUB_1"
+                  },
+                  "durationMinutes": 1
+                },
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_4",
+                    "position": 0
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_4",
+                    "position": 0.1
+                  },
+                  "kind": "along_road",
+                  "roadId": "ROAD_4",
+                  "durationMinutes": 1
+                },
+                {
+                  "to": {
+                    "type": "junction",
+                    "junctionId": "JUNC_3"
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_4",
+                    "position": 0
+                  },
+                  "kind": "to_junction",
+                  "blockCheck": {
+                    "toId": "JUNC_3",
+                    "fromId": "ROAD_4"
+                  },
+                  "durationMinutes": 0
+                },
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_3",
+                    "position": 0
+                  },
+                  "from": {
+                    "type": "junction",
+                    "junctionId": "JUNC_3"
+                  },
+                  "kind": "to_junction",
+                  "blockCheck": {
+                    "toId": "ROAD_3",
+                    "fromId": "JUNC_3"
+                  },
+                  "durationMinutes": 0
+                },
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_3",
+                    "position": 0.49
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_3",
+                    "position": 0
+                  },
+                  "kind": "along_road",
+                  "roadId": "ROAD_3",
+                  "durationMinutes": 4.9
+                },
+                {
+                  "to": {
+                    "type": "scene",
+                    "sceneId": "SCN_17_SUB_1"
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_3",
+                    "position": 0.49
+                  },
+                  "kind": "to_scene",
+                  "blockCheck": {
+                    "toId": "SCN_17_SUB_1",
+                    "fromId": "ROAD_3"
+                  },
+                  "durationMinutes": 1
+                }
+              ],
+              "targetPosition": {
+                "type": "scene",
+                "sceneId": "SCN_17_SUB_1"
+              },
+              "minutesIntoStep": 0,
+              "currentStepIndex": 6,
+              "lastReachablePosition": {
+                "type": "scene",
+                "sceneId": "SCN_17_SUB_1"
+              }
+            },
+            "startedAt": "03:32",
+            "completedAt": "03:39",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "object_interaction",
+          "action": "检查并整理随身手提包，将已加密的备份、调查员笔记、重要账本和手机等装入并确认拉链封好，整理成撤离包状态",
+          "impact": 0,
+          "nodeId": "oi1",
+          "status": "completed",
+          "endTime": "03:20",
+          "outcome": "我检查并整理了随身手提包，确认便携备份、调查员笔记和店铺账本都放好并把拉链封紧；备份介质仍为加密状态（最近来访影像已写入），撤离包已就绪。",
+          "startTime": "03:12",
+          "characterId": "Shandra Hernandez",
+          "characterName": "Shandra Hernandez",
+          "executionMeta": {
+            "startedAt": "03:12",
+            "completedAt": "03:20",
+            "remainingMinutes": 0
+          },
+          "objectInteractionPayload": {
+            "itemId": "普通手提包"
+          }
+        },
+        {
+          "type": "object_interaction",
+          "action": "从普通手提包中取出怀特钟表店的监控录像备份，检查外观与文件完整性，然后将备份包好放回手提包内的隐蔽处以便安全携带",
+          "impact": 0,
+          "nodeId": "oi_shandra_secure_backup_0001",
+          "status": "interrupted",
+          "endTime": "00:51",
+          "outcome": "从普通手提包中取出怀特钟表店的监控录像备份，检查外观与文件完整性，然后将备份包好放回手提包内的隐蔽处以便安全携带 [因重新规划而中断] 已中断",
+          "startTime": "00:46",
+          "characterId": "Shandra Hernandez",
+          "characterName": "Shandra Hernandez",
+          "executionMeta": {
+            "startedAt": "00:46",
+            "interruptedAt": "00:47",
+            "remainingMinutes": 0,
+            "interruptionReason": "revise_replan"
+          },
+          "objectInteractionPayload": {
+            "itemId": "普通手提包"
+          }
+        },
+        {
+          "type": "movement",
+          "action": "前往珊德拉的小屋",
+          "impact": 0,
+          "nodeId": "m_shandra_001",
+          "status": "completed",
+          "endTime": "00:58",
+          "outcome": "前往珊德拉的小屋 成功",
+          "startTime": "00:48",
+          "characterId": "Shandra Hernandez",
+          "destination": "SCN_14_SUB_1",
+          "characterName": "Shandra Hernandez",
+          "executionMeta": {
+            "movement": {
+              "routeSnapshot": [
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_3",
+                    "position": 0.76
+                  },
+                  "from": {
+                    "type": "scene",
+                    "sceneId": "SCN_16_SUB_1"
+                  },
+                  "kind": "along_road",
+                  "roadId": "ROAD_3",
+                  "blockCheck": {
+                    "toId": "ROAD_3",
+                    "fromId": "SCN_16_SUB_1"
+                  },
+                  "durationMinutes": 1
+                },
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_3",
+                    "position": 0
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_3",
+                    "position": 0.76
+                  },
+                  "kind": "along_road",
+                  "roadId": "ROAD_3",
+                  "durationMinutes": 7.6
+                },
+                {
+                  "to": {
+                    "type": "junction",
+                    "junctionId": "JUNC_3"
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_3",
+                    "position": 0
+                  },
+                  "kind": "to_junction",
+                  "blockCheck": {
+                    "toId": "JUNC_3",
+                    "fromId": "ROAD_3"
+                  },
+                  "durationMinutes": 0
+                },
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_4",
+                    "position": 0
+                  },
+                  "from": {
+                    "type": "junction",
+                    "junctionId": "JUNC_3"
+                  },
+                  "kind": "to_junction",
+                  "blockCheck": {
+                    "toId": "ROAD_4",
+                    "fromId": "JUNC_3"
+                  },
+                  "durationMinutes": 0
+                },
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_4",
+                    "position": 0.1
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_4",
+                    "position": 0
+                  },
+                  "kind": "along_road",
+                  "roadId": "ROAD_4",
+                  "durationMinutes": 1
+                },
+                {
+                  "to": {
+                    "type": "scene",
+                    "sceneId": "SCN_14_SUB_1"
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_4",
+                    "position": 0.1
+                  },
+                  "kind": "to_scene",
+                  "blockCheck": {
+                    "toId": "SCN_14_SUB_1",
+                    "fromId": "ROAD_4"
+                  },
+                  "durationMinutes": 1
+                }
+              ],
+              "targetPosition": {
+                "type": "scene",
+                "sceneId": "SCN_14_SUB_1"
+              },
+              "minutesIntoStep": 0,
+              "currentStepIndex": 6,
+              "lastReachablePosition": {
+                "type": "scene",
+                "sceneId": "SCN_14_SUB_1"
+              }
+            },
+            "startedAt": "00:48",
+            "completedAt": "01:03",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "object_interaction",
+          "action": "在二层环廊用调查员笔记记录Johnny及其同伴的当前位置、相互互动、对话要点与进出方向，保持低调不引人注意",
+          "impact": 0,
+          "nodeId": "oi_shandra_01",
+          "status": "interrupted",
+          "endTime": "01:45",
+          "outcome": "在二层环廊用调查员笔记记录Johnny及其同伴的当前位置、相互互动、对话要点与进出方向，保持低调不引人注意 [因重新规划而中断] 已中断",
+          "startTime": "01:37",
+          "characterId": "Shandra Hernandez",
+          "characterName": "Shandra Hernandez",
+          "executionMeta": {
+            "startedAt": "01:37",
+            "interruptedAt": "01:44",
+            "remainingMinutes": 0,
+            "interruptionReason": "revise_replan"
+          },
+          "objectInteractionPayload": {
+            "itemId": "调查员笔记"
+          }
+        },
+        {
+          "type": "object_interaction",
+          "action": "在二层环廊用调查员笔记记录Johnny及其同伴的当前位置、相互互动、对话要点与进出方向，保持低调不引人注意",
+          "impact": 0,
+          "nodeId": "oi_shandra_01",
+          "status": "interrupted",
+          "endTime": "01:45",
+          "outcome": "在二层环廊用调查员笔记记录Johnny及其同伴的当前位置、相互互动、对话要点与进出方向，保持低调不引人注意 [因重新规划而中断] 已中断",
+          "startTime": "01:37",
+          "characterId": "Shandra Hernandez",
+          "characterName": "Shandra Hernandez",
+          "executionMeta": {
+            "startedAt": "01:37",
+            "interruptedAt": "01:44",
+            "remainingMinutes": 0,
+            "interruptionReason": "revise_replan"
+          },
+          "objectInteractionPayload": {
+            "itemId": "调查员笔记"
+          }
+        },
+        {
+          "type": "object_interaction",
+          "action": "对手提包内的监控备份进行加密",
+          "impact": 0,
+          "nodeId": "oi_shandra_encrypt_01",
+          "status": "completed",
+          "endTime": "01:24",
+          "outcome": "我在手提包里的备份介质上对正在写入的监控录像进行了加密，设置了访问密码并确认现在无法被未授权人员读取；备份仍留在手提包中，我把包收好了以防外泄。",
+          "startTime": "01:16",
+          "characterId": "Shandra Hernandez",
+          "characterName": "Shandra Hernandez",
+          "executionMeta": {
+            "startedAt": "01:16",
+            "completedAt": "01:24",
+            "remainingMinutes": 0
+          },
+          "objectInteractionPayload": {
+            "itemId": "普通手提包"
+          }
+        },
+        {
+          "type": "movement",
+          "action": "走到教堂",
+          "impact": 0,
+          "nodeId": "m_shandra_01",
+          "status": "interrupted",
+          "endTime": "01:50",
+          "outcome": "走到教堂 [因重新规划而中断] 已中断",
+          "startTime": "01:45",
+          "characterId": "Shandra Hernandez",
+          "destination": "SCN_17_SUB_1",
+          "characterName": "Shandra Hernandez",
+          "executionMeta": {
+            "movement": {
+              "routeSnapshot": [
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_3",
+                    "position": 0.76
+                  },
+                  "from": {
+                    "type": "scene",
+                    "sceneId": "SCN_16_SUB_1"
+                  },
+                  "kind": "along_road",
+                  "roadId": "ROAD_3",
+                  "blockCheck": {
+                    "toId": "ROAD_3",
+                    "fromId": "SCN_16_SUB_1"
+                  },
+                  "durationMinutes": 1
+                },
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_3",
+                    "position": 1
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_3",
+                    "position": 0.76
+                  },
+                  "kind": "along_road",
+                  "roadId": "ROAD_3",
+                  "durationMinutes": 2.4
+                },
+                {
+                  "to": {
+                    "type": "junction",
+                    "junctionId": "JUNC_4"
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_3",
+                    "position": 1
+                  },
+                  "kind": "to_junction",
+                  "blockCheck": {
+                    "toId": "JUNC_4",
+                    "fromId": "ROAD_3"
+                  },
+                  "durationMinutes": 0
+                },
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_3",
+                    "position": 1
+                  },
+                  "from": {
+                    "type": "junction",
+                    "junctionId": "JUNC_4"
+                  },
+                  "kind": "to_junction",
+                  "blockCheck": {
+                    "toId": "ROAD_3",
+                    "fromId": "JUNC_4"
+                  },
+                  "durationMinutes": 0
+                },
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_3",
+                    "position": 0.49
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_3",
+                    "position": 1
+                  },
+                  "kind": "along_road",
+                  "roadId": "ROAD_3",
+                  "durationMinutes": 5.1
+                },
+                {
+                  "to": {
+                    "type": "scene",
+                    "sceneId": "SCN_17_SUB_1"
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_3",
+                    "position": 0.49
+                  },
+                  "kind": "to_scene",
+                  "blockCheck": {
+                    "toId": "SCN_17_SUB_1",
+                    "fromId": "ROAD_3"
+                  },
+                  "durationMinutes": 1
+                }
+              ],
+              "targetPosition": {
+                "type": "scene",
+                "sceneId": "SCN_17_SUB_1"
+              },
+              "minutesIntoStep": 1,
+              "currentStepIndex": 4,
+              "lastReachablePosition": {
+                "type": "road",
+                "roadId": "ROAD_3",
+                "position": 0.9
+              }
+            },
+            "startedAt": "01:45",
+            "interruptedAt": "01:49",
+            "remainingMinutes": 0,
+            "interruptionReason": "revise_replan"
+          }
+        },
+        {
+          "type": "movement",
+          "action": "走到教堂",
+          "impact": 0,
+          "nodeId": "m_shandra_01",
+          "status": "interrupted",
+          "endTime": "01:50",
+          "outcome": "走到教堂 [因重新规划而中断] 已中断",
+          "startTime": "01:45",
+          "characterId": "Shandra Hernandez",
+          "destination": "SCN_17_SUB_1",
+          "characterName": "Shandra Hernandez",
+          "executionMeta": {
+            "movement": {
+              "routeSnapshot": [
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_3",
+                    "position": 0.76
+                  },
+                  "from": {
+                    "type": "scene",
+                    "sceneId": "SCN_16_SUB_1"
+                  },
+                  "kind": "along_road",
+                  "roadId": "ROAD_3",
+                  "blockCheck": {
+                    "toId": "ROAD_3",
+                    "fromId": "SCN_16_SUB_1"
+                  },
+                  "durationMinutes": 1
+                },
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_3",
+                    "position": 1
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_3",
+                    "position": 0.76
+                  },
+                  "kind": "along_road",
+                  "roadId": "ROAD_3",
+                  "durationMinutes": 2.4
+                },
+                {
+                  "to": {
+                    "type": "junction",
+                    "junctionId": "JUNC_4"
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_3",
+                    "position": 1
+                  },
+                  "kind": "to_junction",
+                  "blockCheck": {
+                    "toId": "JUNC_4",
+                    "fromId": "ROAD_3"
+                  },
+                  "durationMinutes": 0
+                },
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_3",
+                    "position": 1
+                  },
+                  "from": {
+                    "type": "junction",
+                    "junctionId": "JUNC_4"
+                  },
+                  "kind": "to_junction",
+                  "blockCheck": {
+                    "toId": "ROAD_3",
+                    "fromId": "JUNC_4"
+                  },
+                  "durationMinutes": 0
+                },
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_3",
+                    "position": 0.49
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_3",
+                    "position": 1
+                  },
+                  "kind": "along_road",
+                  "roadId": "ROAD_3",
+                  "durationMinutes": 5.1
+                },
+                {
+                  "to": {
+                    "type": "scene",
+                    "sceneId": "SCN_17_SUB_1"
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_3",
+                    "position": 0.49
+                  },
+                  "kind": "to_scene",
+                  "blockCheck": {
+                    "toId": "SCN_17_SUB_1",
+                    "fromId": "ROAD_3"
+                  },
+                  "durationMinutes": 1
+                }
+              ],
+              "targetPosition": {
+                "type": "scene",
+                "sceneId": "SCN_17_SUB_1"
+              },
+              "minutesIntoStep": 1,
+              "currentStepIndex": 4,
+              "lastReachablePosition": {
+                "type": "road",
+                "roadId": "ROAD_3",
+                "position": 0.9
+              }
+            },
+            "startedAt": "01:45",
+            "interruptedAt": "01:49",
+            "remainingMinutes": 0,
+            "interruptionReason": "revise_replan"
+          }
+        },
+        {
+          "type": "object_interaction",
+          "action": "在二层环廊用调查员笔记记录Johnny及其同伴的当前位置、相互互动、对话要点与进出方向，保持低调不引人注意",
+          "impact": 0,
+          "nodeId": "oi_shandra_01",
+          "status": "interrupted",
+          "endTime": "01:45",
+          "outcome": "在二层环廊用调查员笔记记录Johnny及其同伴的当前位置、相互互动、对话要点与进出方向，保持低调不引人注意 [因重新规划而中断] 已中断",
+          "startTime": "01:37",
+          "characterId": "Shandra Hernandez",
+          "characterName": "Shandra Hernandez",
+          "executionMeta": {
+            "startedAt": "01:37",
+            "interruptedAt": "01:44",
+            "remainingMinutes": 0,
+            "interruptionReason": "revise_replan"
+          },
+          "objectInteractionPayload": {
+            "itemId": "调查员笔记"
+          }
+        },
+        {
+          "type": "movement",
+          "action": "走到教堂",
+          "impact": 0,
+          "nodeId": "m_shandra_01",
+          "status": "interrupted",
+          "endTime": "01:50",
+          "outcome": "走到教堂 [因重新规划而中断] 已中断",
+          "startTime": "01:45",
+          "characterId": "Shandra Hernandez",
+          "destination": "SCN_17_SUB_1",
+          "characterName": "Shandra Hernandez",
+          "executionMeta": {
+            "movement": {
+              "routeSnapshot": [
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_3",
+                    "position": 0.76
+                  },
+                  "from": {
+                    "type": "scene",
+                    "sceneId": "SCN_16_SUB_1"
+                  },
+                  "kind": "along_road",
+                  "roadId": "ROAD_3",
+                  "blockCheck": {
+                    "toId": "ROAD_3",
+                    "fromId": "SCN_16_SUB_1"
+                  },
+                  "durationMinutes": 1
+                },
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_3",
+                    "position": 1
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_3",
+                    "position": 0.76
+                  },
+                  "kind": "along_road",
+                  "roadId": "ROAD_3",
+                  "durationMinutes": 2.4
+                },
+                {
+                  "to": {
+                    "type": "junction",
+                    "junctionId": "JUNC_4"
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_3",
+                    "position": 1
+                  },
+                  "kind": "to_junction",
+                  "blockCheck": {
+                    "toId": "JUNC_4",
+                    "fromId": "ROAD_3"
+                  },
+                  "durationMinutes": 0
+                },
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_3",
+                    "position": 1
+                  },
+                  "from": {
+                    "type": "junction",
+                    "junctionId": "JUNC_4"
+                  },
+                  "kind": "to_junction",
+                  "blockCheck": {
+                    "toId": "ROAD_3",
+                    "fromId": "JUNC_4"
+                  },
+                  "durationMinutes": 0
+                },
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_3",
+                    "position": 0.49
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_3",
+                    "position": 1
+                  },
+                  "kind": "along_road",
+                  "roadId": "ROAD_3",
+                  "durationMinutes": 5.1
+                },
+                {
+                  "to": {
+                    "type": "scene",
+                    "sceneId": "SCN_17_SUB_1"
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_3",
+                    "position": 0.49
+                  },
+                  "kind": "to_scene",
+                  "blockCheck": {
+                    "toId": "SCN_17_SUB_1",
+                    "fromId": "ROAD_3"
+                  },
+                  "durationMinutes": 1
+                }
+              ],
+              "targetPosition": {
+                "type": "scene",
+                "sceneId": "SCN_17_SUB_1"
+              },
+              "minutesIntoStep": 1,
+              "currentStepIndex": 4,
+              "lastReachablePosition": {
+                "type": "road",
+                "roadId": "ROAD_3",
+                "position": 0.9
+              }
+            },
+            "startedAt": "01:45",
+            "interruptedAt": "01:49",
+            "remainingMinutes": 0,
+            "interruptionReason": "revise_replan"
+          }
+        },
+        {
+          "type": "action",
+          "action": "在阴影处远距离观察Tallinn，注意他的外貌、举止与动向，并在调查员笔记中记录关键信息",
+          "impact": 0,
+          "nodeId": "a_shandra_021",
+          "status": "completed",
+          "endTime": "01:55",
+          "outcome": "在阴影处远距离观察Tallinn，注意他的外貌、举止与动向，并在调查员笔记中记录关键信息 成功",
+          "startTime": "01:50",
+          "characterId": "Shandra Hernandez",
+          "characterName": "Shandra Hernandez",
+          "executionMeta": {
+            "startedAt": "01:50",
+            "completedAt": "01:55",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "object_interaction",
+          "action": "检查普通手提包内加密的怀特钟表店监控备份完整性，确认密码保护有效",
+          "impact": 0,
+          "nodeId": "oi_check_backup_0156",
+          "status": "completed",
+          "endTime": "01:59",
+          "outcome": "我检查了手提包里的监控备份，确认录像已完整写入并且经过加密，密码保护有效。检查后我把手提包放回柜台后方的隐蔽处并用围裙遮盖，尽量不引人注意。",
+          "startTime": "01:56",
+          "characterId": "Shandra Hernandez",
+          "characterName": "Shandra Hernandez",
+          "executionMeta": {
+            "startedAt": "01:56",
+            "completedAt": "01:59",
+            "remainingMinutes": 0
+          },
+          "objectInteractionPayload": {
+            "itemId": "普通手提包"
+          }
+        },
+        {
+          "type": "action",
+          "action": "在阴影处远距离观察 Tallinn，记录他的外貌、举止和行动方向，留意他是否接触或示意给酒吧内的那几人，同时用余光确认手提包里已加密的备份仍安全无异动",
+          "impact": 0,
+          "nodeId": "a2",
+          "status": "interrupted",
+          "endTime": "02:10",
+          "outcome": "在阴影处远距离观察 Tallinn，记录他的外貌、举止和行动方向，留意他是否接触或示意给酒吧内的那几人，同时用余光确认手提包里已加密的备份仍安全无异动 [因重新规划而中断] 已中断",
+          "startTime": "02:00",
+          "characterId": "Shandra Hernandez",
+          "characterName": "Shandra Hernandez",
+          "executionMeta": {
+            "startedAt": "02:00",
+            "interruptedAt": "02:05",
+            "remainingMinutes": 0,
+            "interruptionReason": "revise_replan"
+          }
+        },
+        {
+          "type": "object_interaction",
+          "action": "检查并整理随身手提包，将已加密的备份、调查员笔记、重要账本和手机等装入并确认拉链封好，整理成撤离包状态",
+          "impact": 0,
+          "nodeId": "oi1",
+          "status": "completed",
+          "endTime": "03:20",
+          "outcome": "我检查并整理了随身手提包，确认便携备份、调查员笔记和店铺账本都放好并把拉链封紧；备份介质仍为加密状态（最近来访影像已写入），撤离包已就绪。",
+          "startTime": "03:12",
+          "characterId": "Shandra Hernandez",
+          "characterName": "Shandra Hernandez",
+          "executionMeta": {
+            "startedAt": "03:12",
+            "completedAt": "03:20",
+            "remainingMinutes": 0
+          },
+          "objectInteractionPayload": {
+            "itemId": "普通手提包"
+          }
+        },
+        {
+          "type": "movement",
+          "action": "步行前往教堂",
+          "impact": 0,
+          "nodeId": "m1",
+          "status": "completed",
+          "endTime": "03:42",
+          "outcome": "步行前往教堂 成功",
+          "startTime": "03:32",
+          "characterId": "Shandra Hernandez",
+          "destination": "SCN_17_SUB_1",
+          "characterName": "Shandra Hernandez",
+          "executionMeta": {
+            "movement": {
+              "routeSnapshot": [
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_4",
+                    "position": 0.1
+                  },
+                  "from": {
+                    "type": "scene",
+                    "sceneId": "SCN_14_SUB_1"
+                  },
+                  "kind": "along_road",
+                  "roadId": "ROAD_4",
+                  "blockCheck": {
+                    "toId": "ROAD_4",
+                    "fromId": "SCN_14_SUB_1"
+                  },
+                  "durationMinutes": 1
+                },
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_4",
+                    "position": 0
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_4",
+                    "position": 0.1
+                  },
+                  "kind": "along_road",
+                  "roadId": "ROAD_4",
+                  "durationMinutes": 1
+                },
+                {
+                  "to": {
+                    "type": "junction",
+                    "junctionId": "JUNC_3"
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_4",
+                    "position": 0
+                  },
+                  "kind": "to_junction",
+                  "blockCheck": {
+                    "toId": "JUNC_3",
+                    "fromId": "ROAD_4"
+                  },
+                  "durationMinutes": 0
+                },
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_3",
+                    "position": 0
+                  },
+                  "from": {
+                    "type": "junction",
+                    "junctionId": "JUNC_3"
+                  },
+                  "kind": "to_junction",
+                  "blockCheck": {
+                    "toId": "ROAD_3",
+                    "fromId": "JUNC_3"
+                  },
+                  "durationMinutes": 0
+                },
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_3",
+                    "position": 0.49
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_3",
+                    "position": 0
+                  },
+                  "kind": "along_road",
+                  "roadId": "ROAD_3",
+                  "durationMinutes": 4.9
+                },
+                {
+                  "to": {
+                    "type": "scene",
+                    "sceneId": "SCN_17_SUB_1"
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_3",
+                    "position": 0.49
+                  },
+                  "kind": "to_scene",
+                  "blockCheck": {
+                    "toId": "SCN_17_SUB_1",
+                    "fromId": "ROAD_3"
+                  },
+                  "durationMinutes": 1
+                }
+              ],
+              "targetPosition": {
+                "type": "scene",
+                "sceneId": "SCN_17_SUB_1"
+              },
+              "minutesIntoStep": 0,
+              "currentStepIndex": 6,
+              "lastReachablePosition": {
+                "type": "scene",
+                "sceneId": "SCN_17_SUB_1"
+              }
+            },
+            "startedAt": "03:32",
+            "completedAt": "03:39",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "scene_interaction",
+          "action": "把普通手提包从柜台后方取出并带到后屋的隐蔽处放好",
+          "impact": 0,
+          "nodeId": "si_shandra_01",
+          "status": "completed",
+          "endTime": "02:25",
+          "outcome": "我把柜台后方的普通手提包取出，带到后屋的隐蔽处放好并用店主的围裙掩盖。确认包内的监控录像备份完整且受密码保护。",
+          "startTime": "02:21",
+          "characterId": "Shandra Hernandez",
+          "characterName": "Shandra Hernandez",
+          "executionMeta": {
+            "startedAt": "02:21",
+            "completedAt": "02:25",
+            "remainingMinutes": 0
+          },
+          "objectInteractionPayload": {
+            "itemId": "普通手提包"
+          }
+        },
+        {
+          "type": "object_interaction",
+          "action": "把手提包放进卷烟货架的隐蔽隔层并用周边商品掩饰",
+          "impact": 0,
+          "nodeId": "oi2",
+          "status": "completed",
+          "endTime": "03:25",
+          "outcome": "我把已经整理好的手提包塞进了卷烟货架里的一个隐蔽隔层，并用周围的烟盒和锡罐把它掩盖住；拉链保持封好，备份介质仍在包内。",
+          "startTime": "03:21",
+          "characterId": "Shandra Hernandez",
+          "characterName": "Shandra Hernandez",
+          "executionMeta": {
+            "startedAt": "03:21",
+            "completedAt": "03:25",
+            "remainingMinutes": 0
+          },
+          "objectInteractionPayload": {
+            "itemId": "ITEM_SCN14_8"
+          }
+        },
+        {
+          "type": "scene_interaction",
+          "action": "把后屋半掩的木门从内侧反锁并确认门已锁好",
+          "impact": 0,
+          "nodeId": "si_day2_0241_1",
+          "status": "completed",
+          "endTime": "02:43",
+          "outcome": "我在柜台后从内侧把通往后屋的半掩木门反锁，并确认门已锁好，外面无法直接打开。",
+          "startTime": "02:41",
+          "characterId": "Shandra Hernandez",
+          "characterName": "Shandra Hernandez",
+          "executionMeta": {
+            "startedAt": "02:41",
+            "completedAt": "02:43",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "object_interaction",
+          "action": "把普通手提包整理成撤离包，把已加密的备份、调查员笔记和重要证物放入，确认拉链封好并把包放回后屋的隐蔽处",
+          "impact": 0,
+          "nodeId": "oi_shandra_pack_1",
+          "status": "completed",
+          "endTime": "02:49",
+          "outcome": "我把已加密的备份、我的调查员笔记和重要的店铺账本一起装进手提包，确认拉链封好，然后把包放回柜台后方的隐蔽处并用围裙遮盖，尽量不引人注意。",
+          "startTime": "02:44",
+          "characterId": "Shandra Hernandez",
+          "characterName": "Shandra Hernandez",
+          "executionMeta": {
+            "startedAt": "02:44",
+            "completedAt": "02:49",
+            "remainingMinutes": 0
+          },
+          "objectInteractionPayload": {
+            "itemId": "普通手提包"
+          }
+        },
+        {
+          "type": "object_interaction",
+          "action": "用柜台上的电话拨打布鲁诺的号码，简短确认他作为应急联络的可用性并约定撤离暗号",
+          "impact": 1,
+          "nodeId": "oi_shandra_call_1",
+          "status": "completed",
+          "endTime": "02:55",
+          "outcome": "我在柜台用店里的有线电话拨通了布鲁诺，简短确认了他作为应急联络人的可用性，并当场约定好了撤离暗号。通话顺利结束后我把听筒放回，心里稍微安心了一些。",
+          "startTime": "02:50",
+          "characterId": "Shandra Hernandez",
+          "characterName": "Shandra Hernandez",
+          "executionMeta": {
+            "startedAt": "02:50",
+            "completedAt": "02:55",
+            "remainingMinutes": 0
+          },
+          "objectInteractionPayload": {
+            "itemId": "ITEM_SCN14_3"
+          }
+        },
+        {
+          "type": "object_interaction",
+          "action": "从柜台后方取出被围裙掩着的普通手提包，检查拉链并背在肩上以便随时撤离",
+          "impact": 0,
+          "nodeId": "oi_take_bag_02",
+          "status": "completed",
+          "endTime": "02:59",
+          "outcome": "我掀起柜台后方的围裙，取出那只普通手提包，确认拉链封好，然后把包背在肩上，随时准备撤离。",
+          "startTime": "02:56",
+          "characterId": "Shandra Hernandez",
+          "characterName": "Shandra Hernandez",
+          "executionMeta": {
+            "startedAt": "02:56",
+            "completedAt": "02:59",
+            "remainingMinutes": 0
+          },
+          "objectInteractionPayload": {
+            "itemId": "普通手提包"
+          }
+        },
+        {
+          "type": "object_interaction",
+          "action": "把手提包放进卷烟货架的隐蔽隔层并用周边商品掩饰",
+          "impact": 0,
+          "nodeId": "oi2",
+          "status": "completed",
+          "endTime": "03:25",
+          "outcome": "我把已经整理好的手提包塞进了卷烟货架里的一个隐蔽隔层，并用周围的烟盒和锡罐把它掩盖住；拉链保持封好，备份介质仍在包内。",
+          "startTime": "03:21",
+          "characterId": "Shandra Hernandez",
+          "characterName": "Shandra Hernandez",
+          "executionMeta": {
+            "startedAt": "03:21",
+            "completedAt": "03:25",
+            "remainingMinutes": 0
+          },
+          "objectInteractionPayload": {
+            "itemId": "ITEM_SCN14_8"
+          }
+        },
+        {
+          "type": "object_interaction",
+          "action": "从胡桃木玻璃罩雪茄展柜中取出被围裙遮盖的手提包",
+          "impact": 0,
+          "nodeId": "oi_day2_0306_1",
+          "status": "completed",
+          "endTime": "03:08",
+          "outcome": "我把被围裙遮掩的手提包从胡桃木玻璃罩里取了出来，并把包放进了我的随身物品里；围裙还搭在展柜上，展柜里留下了一个空位。",
+          "startTime": "03:06",
+          "characterId": "Shandra Hernandez",
+          "characterName": "Shandra Hernandez",
+          "executionMeta": {
+            "startedAt": "03:06",
+            "completedAt": "03:08",
+            "remainingMinutes": 0
+          },
+          "objectInteractionPayload": {
+            "itemId": "ITEM_SCN14_1"
+          }
+        },
+        {
+          "type": "scene_interaction",
+          "action": "锁上店铺正门",
+          "impact": 0,
+          "nodeId": "si1",
+          "status": "completed",
+          "endTime": "03:11",
+          "outcome": "我把店铺正门上了锁，转动钥匙直到听到咔嗒声后又拉了拉门把手确认门已牢固。外面的人暂时无法从外面直接进入。",
+          "startTime": "03:09",
+          "characterId": "Shandra Hernandez",
+          "characterName": "Shandra Hernandez",
+          "executionMeta": {
+            "startedAt": "03:09",
+            "completedAt": "03:11",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "object_interaction",
+          "action": "检查并整理随身手提包，将已加密的备份、调查员笔记、重要账本和手机等装入并确认拉链封好，整理成撤离包状态",
+          "impact": 0,
+          "nodeId": "oi1",
+          "status": "completed",
+          "endTime": "03:20",
+          "outcome": "我检查并整理了随身手提包，确认便携备份、调查员笔记和店铺账本都放好并把拉链封紧；备份介质仍为加密状态（最近来访影像已写入），撤离包已就绪。",
+          "startTime": "03:12",
+          "characterId": "Shandra Hernandez",
+          "characterName": "Shandra Hernandez",
+          "executionMeta": {
+            "startedAt": "03:12",
+            "completedAt": "03:20",
+            "remainingMinutes": 0
+          },
+          "objectInteractionPayload": {
+            "itemId": "普通手提包"
+          }
+        },
+        {
+          "type": "object_interaction",
+          "action": "把手提包放进卷烟货架的隐蔽隔层并用周边商品掩饰",
+          "impact": 0,
+          "nodeId": "oi2",
+          "status": "completed",
+          "endTime": "03:25",
+          "outcome": "我把已经整理好的手提包塞进了卷烟货架里的一个隐蔽隔层，并用周围的烟盒和锡罐把它掩盖住；拉链保持封好，备份介质仍在包内。",
+          "startTime": "03:21",
+          "characterId": "Shandra Hernandez",
+          "characterName": "Shandra Hernandez",
+          "executionMeta": {
+            "startedAt": "03:21",
+            "completedAt": "03:25",
+            "remainingMinutes": 0
+          },
+          "objectInteractionPayload": {
+            "itemId": "ITEM_SCN14_8"
+          }
+        },
+        {
+          "type": "scene_interaction",
+          "action": "检查后屋的半掩木门，确认它能作为备用撤离出口（轻推并测试开合）",
+          "impact": 0,
+          "nodeId": "si_next_003",
+          "status": "completed",
+          "endTime": "03:31",
+          "outcome": "我轻推并测试了柜台后方那扇半掩木门，门能顺利开合。确认它可以作为备用撤离出口。",
+          "startTime": "03:26",
+          "characterId": "Shandra Hernandez",
+          "characterName": "Shandra Hernandez",
+          "executionMeta": {
+            "startedAt": "03:26",
+            "completedAt": "03:31",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "movement",
+          "action": "步行前往教堂",
+          "impact": 0,
+          "nodeId": "m1",
+          "status": "completed",
+          "endTime": "03:42",
+          "outcome": "步行前往教堂 成功",
+          "startTime": "03:32",
+          "characterId": "Shandra Hernandez",
+          "destination": "SCN_17_SUB_1",
+          "characterName": "Shandra Hernandez",
+          "executionMeta": {
+            "movement": {
+              "routeSnapshot": [
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_4",
+                    "position": 0.1
+                  },
+                  "from": {
+                    "type": "scene",
+                    "sceneId": "SCN_14_SUB_1"
+                  },
+                  "kind": "along_road",
+                  "roadId": "ROAD_4",
+                  "blockCheck": {
+                    "toId": "ROAD_4",
+                    "fromId": "SCN_14_SUB_1"
+                  },
+                  "durationMinutes": 1
+                },
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_4",
+                    "position": 0
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_4",
+                    "position": 0.1
+                  },
+                  "kind": "along_road",
+                  "roadId": "ROAD_4",
+                  "durationMinutes": 1
+                },
+                {
+                  "to": {
+                    "type": "junction",
+                    "junctionId": "JUNC_3"
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_4",
+                    "position": 0
+                  },
+                  "kind": "to_junction",
+                  "blockCheck": {
+                    "toId": "JUNC_3",
+                    "fromId": "ROAD_4"
+                  },
+                  "durationMinutes": 0
+                },
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_3",
+                    "position": 0
+                  },
+                  "from": {
+                    "type": "junction",
+                    "junctionId": "JUNC_3"
+                  },
+                  "kind": "to_junction",
+                  "blockCheck": {
+                    "toId": "ROAD_3",
+                    "fromId": "JUNC_3"
+                  },
+                  "durationMinutes": 0
+                },
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_3",
+                    "position": 0.49
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_3",
+                    "position": 0
+                  },
+                  "kind": "along_road",
+                  "roadId": "ROAD_3",
+                  "durationMinutes": 4.9
+                },
+                {
+                  "to": {
+                    "type": "scene",
+                    "sceneId": "SCN_17_SUB_1"
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_3",
+                    "position": 0.49
+                  },
+                  "kind": "to_scene",
+                  "blockCheck": {
+                    "toId": "SCN_17_SUB_1",
+                    "fromId": "ROAD_3"
+                  },
+                  "durationMinutes": 1
+                }
+              ],
+              "targetPosition": {
+                "type": "scene",
+                "sceneId": "SCN_17_SUB_1"
+              },
+              "minutesIntoStep": 0,
+              "currentStepIndex": 6,
+              "lastReachablePosition": {
+                "type": "scene",
+                "sceneId": "SCN_17_SUB_1"
+              }
+            },
+            "startedAt": "03:32",
+            "completedAt": "03:39",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "action",
+          "action": "检查随身口袋和衣物，确认便携备份是否在我身上且已加密完整",
+          "impact": 0,
+          "nodeId": "a_shandra_01",
+          "status": "interrupted",
+          "endTime": "03:42",
+          "outcome": "检查随身口袋和衣物，确认便携备份是否在我身上且已加密完整 [因重新规划而中断] 已中断",
+          "startTime": "03:40",
+          "characterId": "Shandra Hernandez",
+          "characterName": "Shandra Hernandez",
+          "executionMeta": {
+            "startedAt": "03:40",
+            "interruptedAt": "07:06",
+            "remainingMinutes": 0,
+            "interruptionReason": "revise_replan"
+          }
+        },
+        {
+          "type": "action",
+          "action": "检查衣物口袋与随身隐藏处，确认便携备份是否在我身上且已加密完整",
+          "impact": 0,
+          "nodeId": "a_shandra_check_backup_0707",
+          "status": "in_progress",
+          "endTime": "07:09",
+          "startTime": "07:07",
+          "characterId": "Shandra Hernandez",
+          "characterName": "Shandra Hernandez",
+          "executionMeta": {
+            "startedAt": "07:07",
+            "remainingMinutes": 2
+          }
+        }
+      ]
+    },
+    {
+      "npcName": "Shandra Hernandez",
+      "gameDay": 1,
+      "schedule": [
+        {
+          "activity": "关店并整理收摊准备出门。",
+          "location": "珊德拉的小屋·店面"
+        },
+        {
+          "activity": "在后屋再次审阅案件笔记和布鲁诺的匿名警告，列出今晚要核对的三项人物与地点。",
+          "location": "珊德拉的小屋·店面"
+        },
+        {
+          "activity": "检查并备份店内监控录像，截取任何可疑来访者镜头。",
+          "location": "珊德拉的小屋·店面"
+        },
+        {
+          "activity": "去钟表店向怀特借一把小工具并顺便打听最近街坊间的异常情况。",
+          "location": "钟表店"
+        },
+        {
+          "activity": "到海伦的餐桌吃一份热饭并留意同桌与附近顾客的谈话。",
+          "location": "海伦的餐桌"
+        },
+        {
+          "activity": "在驯鹿酒吧低调观察，试图从酒保或常客处套出有关邪教聚会或异常仪式的线索。",
+          "location": "驯鹿酒吧"
+        },
+        {
+          "activity": "前往星辰医院探望Vincent Galenus并询问他最近是否注意到任何不寻常的病人或事件。",
+          "location": "星辰医院"
+        },
+        {
+          "activity": "到五金店与哈里森短聊，借一件便携工具并问问他是否见过有人采购奇怪材料。",
+          "location": "五金店"
+        },
+        {
+          "activity": "绕到镇长私宅外侧做一次外围侦察，记录外部监控与可疑出入的时间点。",
+          "location": "镇长私宅"
+        },
+        {
+          "activity": "回到珊德拉的小屋·店面整理并归档今晚获得的线索，制定明日行动计划然后休息。",
+          "location": "珊德拉的小屋·店面"
+        }
+      ],
+      "nodes": [
+        {
+          "type": "action",
+          "action": "关店并整理收摊：清点并收好收银机内零钱，锁好收银机，盖好胡桃木玻璃罩，整理货架并把店主围裙挂回原位，检查门窗后准备出门",
+          "impact": 0,
+          "nodeId": "a1",
+          "status": "completed",
+          "endTime": "19:15",
+          "outcome": "关店并整理收摊：清点并收好收银机内零钱，锁好收银机，盖好胡桃木玻璃罩，整理货架并把店主围裙挂回原位，检查门窗后准备出门 成功",
+          "startTime": "19:00",
+          "characterId": "Shandra Hernandez",
+          "characterName": "Shandra Hernandez",
+          "executionMeta": {
+            "startedAt": "19:00",
+            "completedAt": "19:15",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "scene_interaction",
+          "action": "打开店内的壁灯以便照亮后屋",
+          "impact": 0,
+          "nodeId": "si_shandra_001",
+          "status": "completed",
+          "endTime": "19:18",
+          "outcome": "我把店内的壁灯打开，柜台后方那扇半掩的木门和通向后屋的走廊被暖色灯光照亮，我现在能看清后屋的入口。",
+          "startTime": "19:16",
+          "characterId": "Shandra Hernandez",
+          "characterName": "Shandra Hernandez",
+          "executionMeta": {
+            "startedAt": "19:16",
+            "completedAt": "19:18",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "object_interaction",
+          "action": "走进后屋，审阅调查员笔记和布鲁诺的匿名警告，列出今晚要核对的三项人物与地点",
+          "impact": 0,
+          "nodeId": "oi_shandra_001",
+          "status": "completed",
+          "endTime": "19:29",
+          "outcome": "我走进后屋，拿出并审阅了调查员笔记和布鲁诺的匿名警告。列出今晚要核对的三项：去钟表店找怀特并借小工具并打听街坊情况、在驯鹿酒吧低调观察酒保与常客、到星辰医院探望并询问Vincent Galenus。",
+          "startTime": "19:19",
+          "characterId": "Shandra Hernandez",
+          "characterName": "Shandra Hernandez",
+          "executionMeta": {
+            "startedAt": "19:19",
+            "completedAt": "19:29",
+            "remainingMinutes": 0
+          },
+          "objectInteractionPayload": {
+            "itemId": "调查员笔记"
+          }
+        },
+        {
+          "type": "scene_interaction",
+          "action": "检查后屋的监控录像存储并开始备份录像以截取可疑来访者画面",
+          "impact": 0,
+          "nodeId": "si1",
+          "status": "completed",
+          "endTime": "19:45",
+          "outcome": "我在后屋检查了监控录像存储，找到了近来的来访录像并开始备份以截取可疑来访者画面。备份已启动，录像正在被写入备份介质。",
+          "startTime": "19:30",
+          "characterId": "Shandra Hernandez",
+          "characterName": "Shandra Hernandez",
+          "executionMeta": {
+            "startedAt": "19:30",
+            "completedAt": "19:45",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "movement",
+          "action": "走到钟表店去向怀特借一把小工具并顺便打听街坊间的异常情况",
+          "impact": 0,
+          "nodeId": "m1",
+          "status": "completed",
+          "endTime": "19:56",
+          "outcome": "走到钟表店去向怀特借一把小工具并顺便打听街坊间的异常情况 成功",
+          "startTime": "19:46",
+          "characterId": "Shandra Hernandez",
+          "destination": "SCN_12_SUB_1",
+          "characterName": "Shandra Hernandez",
+          "executionMeta": {
+            "movement": {
+              "routeSnapshot": [
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_4",
+                    "position": 0.1
+                  },
+                  "from": {
+                    "type": "scene",
+                    "sceneId": "SCN_14_SUB_1"
+                  },
+                  "kind": "along_road",
+                  "roadId": "ROAD_4",
+                  "blockCheck": {
+                    "toId": "ROAD_4",
+                    "fromId": "SCN_14_SUB_1"
+                  },
+                  "durationMinutes": 1
+                },
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_4",
+                    "position": 0
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_4",
+                    "position": 0.1
+                  },
+                  "kind": "along_road",
+                  "roadId": "ROAD_4",
+                  "durationMinutes": 1
+                },
+                {
+                  "to": {
+                    "type": "junction",
+                    "junctionId": "JUNC_3"
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_4",
+                    "position": 0
+                  },
+                  "kind": "to_junction",
+                  "blockCheck": {
+                    "toId": "JUNC_3",
+                    "fromId": "ROAD_4"
+                  },
+                  "durationMinutes": 0
+                },
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_4",
+                    "position": 0
+                  },
+                  "from": {
+                    "type": "junction",
+                    "junctionId": "JUNC_3"
+                  },
+                  "kind": "to_junction",
+                  "blockCheck": {
+                    "toId": "ROAD_4",
+                    "fromId": "JUNC_3"
+                  },
+                  "durationMinutes": 0
+                },
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_4",
+                    "position": 0.22
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_4",
+                    "position": 0
+                  },
+                  "kind": "along_road",
+                  "roadId": "ROAD_4",
+                  "durationMinutes": 2.2
+                },
+                {
+                  "to": {
+                    "type": "scene",
+                    "sceneId": "SCN_12_SUB_1"
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_4",
+                    "position": 0.22
+                  },
+                  "kind": "to_scene",
+                  "blockCheck": {
+                    "toId": "SCN_12_SUB_1",
+                    "fromId": "ROAD_4"
+                  },
+                  "durationMinutes": 1
+                }
+              ],
+              "targetPosition": {
+                "type": "scene",
+                "sceneId": "SCN_12_SUB_1"
+              },
+              "minutesIntoStep": 0,
+              "currentStepIndex": 6,
+              "lastReachablePosition": {
+                "type": "scene",
+                "sceneId": "SCN_12_SUB_1"
+              }
+            },
+            "startedAt": "19:46",
+            "completedAt": "19:51",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "character_interaction",
+          "action": "向怀特借一把小型螺丝刀并询问最近街坊是否有人提到奇怪的聚会或异常情况",
+          "impact": 1,
+          "nodeId": "ci_markswhite_1952",
+          "status": "completed",
+          "endTime": "19:57",
+          "outcome": "我去了怀特的钟表店，打算向怀特借一把小型螺丝刀并问问最近街坊是否有人提到奇怪的聚会或异常情况，但怀特并不在店里。工作台上有一套“钟表维修微型工具与零件”，能看到微型螺丝刀，但我没能借到任何东西，也没从怀特处得到关于聚会的任何信息。",
+          "startTime": "19:52",
+          "characterId": "Shandra Hernandez",
+          "characterName": "Shandra Hernandez",
+          "executionMeta": {
+            "startedAt": "19:52",
+            "completedAt": "19:57",
+            "remainingMinutes": 0
+          },
+          "targetCharacterIds": [
+            "Marks_White"
+          ]
+        },
+        {
+          "type": "character_interaction",
+          "action": "向怀特借用钟表维修微型工具中的一把微型螺丝刀，并顺便询问他最近是否听说街坊间有人提到奇怪的聚会或异常情况",
+          "impact": 1,
+          "nodeId": "ci2",
+          "status": "in_progress",
+          "endTime": "20:04",
+          "startTime": "19:59",
+          "characterId": "Shandra Hernandez",
+          "characterName": "Shandra Hernandez",
+          "executionMeta": {
+            "startedAt": "19:59",
+            "remainingMinutes": 5
+          },
+          "targetCharacterIds": [
+            "Marks White"
+          ]
+        }
+      ]
+    }
+  ],
+  "intents": [
+    {
+      "intent": "Immediately verify the encrypted backup is on my person and intact; move to a nearby concealment just outside the nave to avoid engagement; avoid interaction with Constantine Frollo and Kovind; from that safer vantage decide whether to continue discreet surveillance or exfiltrate to Sandra's cabin and re-secure backups.",
+      "updatedAt": "2026-04-02T11:43:35.225Z"
+    }
+  ],
+  "npcName": "Shandra Hernandez"
+}

@@ -1,0 +1,3587 @@
+{
+  "npcId": "Helen",
+  "memories": [
+    {
+      "type": "information",
+      "content": "我在镇上经营一家餐厅，我知道如何在社交场合中穿行而不引起太多关注。",
+      "gameDay": 1,
+      "gameTime": "00:00",
+      "location": null,
+      "metadata": {
+        "difficulty": "automatic",
+        "knowledgeId": "k_helen_restaurant"
+      }
+    },
+    {
+      "type": "belief",
+      "content": "对我来说，最安全的生活是保持有用、保持冷静，让危险的人低估我。",
+      "gameDay": 1,
+      "gameTime": "00:00",
+      "location": null,
+      "metadata": {
+        "confidence": 0.9,
+        "reasoningChain": "今晚的多次试探与尾随（约翰尼的私下邀约、哈里森与文森特的探问、以及发现店内标注的应急部署）再次证明保持低调、冷静并让危险的人低估自己，是保护平静生活的有效方式。"
+      }
+    },
+    {
+      "type": "information",
+      "content": "维托曾担心我为了布鲁诺去珊德拉的小屋，但那只是一场误会，仅此而已。",
+      "gameDay": 1,
+      "gameTime": "00:00",
+      "location": null,
+      "metadata": {
+        "difficulty": "regular",
+        "knowledgeId": "k_helen_vito_misunderstanding"
+      }
+    },
+    {
+      "type": "information",
+      "content": "我记得约翰尼在驯鹿酒吧那晚以与菲利普的打斗收场，而不是以我的承诺收场，我不希望那个故事被进一步夸大。",
+      "gameDay": 1,
+      "gameTime": "00:00",
+      "location": null,
+      "metadata": {
+        "difficulty": "regular",
+        "knowledgeId": "k_helen_reindeer_bar"
+      }
+    },
+    {
+      "type": "plan",
+      "content": "Today's plan: 1. 上二楼休息并小睡，继续保持警觉并再次确认前后门窗的锁闭。 at 海伦的餐桌; 2. 在凌晨三点前往二楼走廊外检查Simon设的二楼工作站门口但不进入，确认没有被动过的迹象。 at 海伦的餐桌; 3. 清晨起床整理当天菜单并根据记好的清单准备食材与备餐计划。 at 海伦的餐桌; 4. 购买当天需要的鲜花并和店里打个招呼以维持日常社交关系。 at 花店·卡森德拉之花; 5. 开店，准备早餐时段，检视餐厅摆设并保证招牌菜的稳定供应。 at 海伦的餐桌; 6. 午间照常招待顾客，同时注意周围常客与陌生人的举止以防异常。 at 海伦的餐桌; 7. 短暂停留购买一把备用门锁并尽量避免在店内谈论餐厅安全细节。 at 五金店; 8. 顺路探望珊德拉，礼貌问候并确认她一切安好以维持邻里联系。 at 珊德拉的小屋; 9. 下午整理库存，核对明日所需食材并安排晚餐的准备工作。 at 海伦的餐桌; 10. 与维托共进晚餐，享受安静时光并尽量不谈及不必要的敏感话题。 at 海伦的餐桌; 11. 打烊前再次检查收银机与保险箱，关好后门并拉上窗帘，确保一切安全。 at 海伦的餐桌; 12. 回二楼休息区睡觉，为明天的开店恢复精力并保持必要的警觉。 at 海伦的餐桌",
+      "gameDay": 2,
+      "gameTime": "00:00",
+      "location": null,
+      "metadata": {
+        "planType": "daily"
+      }
+    },
+    {
+      "type": "plan",
+      "content": "在卡森德拉享受退休后的平静生活，与维托安稳度日，绝不让过去作为杀手的身份暴露，守护来之不易的普通人的日常。",
+      "gameDay": 1,
+      "gameTime": "00:00",
+      "location": null,
+      "metadata": {
+        "planType": "long_term"
+      }
+    },
+    {
+      "type": "event",
+      "content": "卢奇菲罗——我经常一起逛街的朋友——在驯鹿酒吧被杀了。我本打算约她出去喝酒时才发现她已经死了。我们互不知道对方的真实身份，现在永远也不会知道了。这让我意识到卡森德拉比表面看起来更危险。",
+      "gameDay": 1,
+      "gameTime": "00:00",
+      "location": null,
+      "metadata": {
+        "knowledgeId": "k_helen_lucifero_death"
+      }
+    },
+    {
+      "type": "secret",
+      "content": "我是一名退休的职业杀手，那段过去不是我希望镇上的人挖出来的东西。",
+      "gameDay": 1,
+      "gameTime": "00:00",
+      "location": null,
+      "metadata": {
+        "knowledgeId": "s_helen_assassin"
+      }
+    },
+    {
+      "type": "secret",
+      "content": "我把过去捂得严严实实，因为一旦人们开始挖掘旧日的暴力，他们就看不到我为自己建立的生活了。",
+      "gameDay": 1,
+      "gameTime": "00:00",
+      "location": null,
+      "metadata": {
+        "knowledgeId": "s_helen_past_control"
+      }
+    },
+    {
+      "type": "secret",
+      "content": "我的背景与意大利黑手党有间接联系，这也是我独立判断、从不单纯依赖表象的部分原因。",
+      "gameDay": 1,
+      "gameTime": "00:00",
+      "location": null,
+      "metadata": {
+        "knowledgeId": "s_helen_mafia"
+      }
+    },
+    {
+      "type": "event",
+      "content": "在二楼休息区小睡以恢复精力同时保持警觉 成功",
+      "gameDay": 2,
+      "gameTime": "00:30",
+      "location": "SCN_10_SUB_1",
+      "metadata": {
+        "outcome": "在二楼休息区小睡以恢复精力同时保持警觉 成功"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我轻声翻看柜台旁的预约本，末页上确实写着我刚列好的明日所需食材清单；逐项核对后确认没有遗漏，然后把本子放回了原位。",
+      "gameDay": 2,
+      "gameTime": "00:36",
+      "location": "SCN_10_SUB_1",
+      "metadata": {
+        "itemId": "ITEM_SCN10_2",
+        "outcome": "轻声翻看预约本，确认明日所需食材清单",
+        "itemName": "预约本"
+      }
+    },
+    {
+      "type": "witness",
+      "content": "[相遇] 刚在餐厅里与约翰尼面对面相遇；他看上去依旧愧疚且紧张，在店内徘徊或试探性靠近。我感到不安和警觉，不信任他的动机，决定先放弃马上小睡，先确认门窗与二楼入口的安全并暗中盯着他，避免与他交谈。",
+      "gameDay": 2,
+      "gameTime": "01:49",
+      "location": "SCN_10_SUB_1",
+      "metadata": {
+        "impact": 2,
+        "perspective": "co_presence",
+        "sourceAction": "Johnny 在 小餐厅",
+        "sourceCharacterId": "__encounter__"
+      }
+    },
+    {
+      "type": "event",
+      "content": "在二楼休息区小睡，保持警觉并留意任何异常声响 [在 SCN_10_SUB_1 因重新规划而中断] 已中断",
+      "gameDay": 2,
+      "gameTime": "01:49",
+      "location": "SCN_10_SUB_1",
+      "metadata": {
+        "outcome": "在二楼休息区小睡，保持警觉并留意任何异常声响 [在 SCN_10_SUB_1 因重新规划而中断] 已中断",
+        "interruptionReason": "revise_replan"
+      }
+    },
+    {
+      "type": "event",
+      "content": "约翰尼低声要求我立刻离开餐厅，去日暮大道东端的森林入口躲避，并确认我不会回酒吧。尽管我保持警惕，但我同意随他离开去躲起来。",
+      "gameDay": 2,
+      "gameTime": "01:53",
+      "location": "SCN_10_SUB_1",
+      "metadata": {
+        "outcome": "低声说服海伦跟我离开餐厅，立刻随我去日暮大道东端的森林入口躲避，并确认她不会回酒吧"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我悄悄走到二楼走廊外，从远处察看西蒙二楼工作站的门口。尽管二楼很暗，但我没有发现门口有被动过或其他明显异常的迹象。",
+      "gameDay": 2,
+      "gameTime": "01:55",
+      "location": "SCN_10_SUB_1",
+      "metadata": {
+        "outcome": "悄悄走到二楼走廊外，远距离观察并检查西蒙二楼工作站门口是否有被动过或异常的迹象，但不进入房间"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我悄悄靠近二楼的楼梯口，从上面往下偷看餐厅前门和外面。看到前门已上锁并拉上门闩，窗外也没有人或可疑车辆。",
+      "gameDay": 2,
+      "gameTime": "01:59",
+      "location": "SCN_10_SUB_1",
+      "metadata": {
+        "outcome": "悄悄靠近楼梯口，从二楼向下偷看餐厅门口及外面是否有人"
+      }
+    },
+    {
+      "type": "event",
+      "content": "蹲在二楼楼梯口侧耳倾听并向下观察约翰尼的动向，确认他是否还在餐厅或有异常举动 成功",
+      "gameDay": 2,
+      "gameTime": "02:10",
+      "location": "SCN_10_SUB_1",
+      "metadata": {
+        "outcome": "蹲在二楼楼梯口侧耳倾听并向下观察约翰尼的动向，确认他是否还在餐厅或有异常举动 成功"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我把那把格斗刀紧紧握在手里，然后顺手把它塞进衣内的隐蔽位置，留得能迅速拔出以备不时之需。",
+      "gameDay": 2,
+      "gameTime": "02:13",
+      "location": "SCN_10_SUB_1",
+      "metadata": {
+        "itemId": "隐藏的格斗刀",
+        "outcome": "紧握隐藏的格斗刀并把它藏在衣内便于快速拔出",
+        "itemName": "隐藏的格斗刀"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我在二楼走廊外靠近西蒙的工作站门口外侧检查了一遍，没看到撬痕、损坏或其他明显异常。",
+      "gameDay": 2,
+      "gameTime": "02:18",
+      "location": "SCN_10_SUB_1",
+      "metadata": {
+        "outcome": "检查西蒙二楼工作站门口外侧"
+      }
+    },
+    {
+      "type": "event",
+      "content": "蹲在二楼楼梯口继续静观约翰尼的动向，留意他的脚步声与任何异常举动 成功",
+      "gameDay": 2,
+      "gameTime": "02:25",
+      "location": "SCN_10_SUB_1",
+      "metadata": {
+        "outcome": "蹲在二楼楼梯口继续静观约翰尼的动向，留意他的脚步声与任何异常举动 成功"
+      }
+    },
+    {
+      "type": "event",
+      "content": "上二楼休息并小睡，继续保持警觉并再次确认前后门窗的锁闭。 成功",
+      "gameDay": 2,
+      "gameTime": "02:50",
+      "location": "SCN_10_SUB_1",
+      "metadata": {
+        "outcome": "上二楼休息并小睡，继续保持警觉并再次确认前后门窗的锁闭。 成功"
+      }
+    },
+    {
+      "type": "event",
+      "content": "蹲在二楼楼梯口继续观察约翰尼的动向，倾听脚步声并再次确认西蒙工作站门口没有异常 成功",
+      "gameDay": 2,
+      "gameTime": "02:56",
+      "location": "SCN_10_SUB_1",
+      "metadata": {
+        "outcome": "蹲在二楼楼梯口继续观察约翰尼的动向，倾听脚步声并再次确认西蒙工作站门口没有异常 成功"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我轻触了西蒙二楼工作站的门把手和门框，仔细检查后没有发现撬痕、松动或其他新近的异常痕迹。",
+      "gameDay": 2,
+      "gameTime": "02:59",
+      "location": "SCN_10_SUB_1",
+      "metadata": {
+        "outcome": "轻触西蒙二楼工作站的门把手与门框，仔细检查是否有撬痕、松动或新近留下的异常痕迹"
+      }
+    },
+    {
+      "type": "event",
+      "content": "退回楼梯口的阴影处，背靠墙隐蔽观察并倾听约翰尼的动向 成功",
+      "gameDay": 2,
+      "gameTime": "03:05",
+      "location": "SCN_10_SUB_1",
+      "metadata": {
+        "outcome": "退回楼梯口的阴影处，背靠墙隐蔽观察并倾听约翰尼的动向 成功"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我在二楼走廊外侧耳倾听约翰尼的脚步声，并悄悄保持隐蔽观察；没有听到脚步或其他异常动静，楼下看起来仍然平静。",
+      "gameDay": 2,
+      "gameTime": "03:11",
+      "location": "SCN_10_SUB_1",
+      "metadata": {
+        "outcome": "侧耳倾听约翰尼的脚步声并保持隐蔽观察"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我把一把木椅拖到通往西蒙二楼工作站的门前，斜靠在门把上楔住门，作为临时防护。门现在被椅子顶住了，我感觉安心了一些。",
+      "gameDay": 2,
+      "gameTime": "03:15",
+      "location": "SCN_10_SUB_1",
+      "metadata": {
+        "itemId": "ITEM_SCN10_5",
+        "outcome": "把一把木椅拖到西蒙二楼工作站门前，斜靠门把以楔住门作为临时防护",
+        "itemName": "木椅"
+      }
+    },
+    {
+      "type": "event",
+      "content": "靠在墙上的阴影处屏息观察并静听楼下与外面的动静，持续监视约翰尼的动向并确认西蒙工作站门口没有被动过。 成功",
+      "gameDay": 2,
+      "gameTime": "03:26",
+      "location": "SCN_10_SUB_1",
+      "metadata": {
+        "outcome": "靠在墙上的阴影处屏息观察并静听楼下与外面的动静，持续监视约翰尼的动向并确认西蒙工作站门口没有被动过。 成功"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我把那把木椅又往里推了几下，把它更紧地楔在通往西蒙二楼工作站的门把上，门被顶住了，我感觉安心了一些。",
+      "gameDay": 2,
+      "gameTime": "03:29",
+      "location": "SCN_10_SUB_1",
+      "metadata": {
+        "itemId": "ITEM_SCN10_5",
+        "outcome": "把木椅推得更紧，牢牢楔在西蒙二楼工作站的门把上以加强临时防护",
+        "itemName": "木椅"
+      }
+    },
+    {
+      "type": "event",
+      "content": "靠在阴影处静观并仔细倾听楼下与外面的动静，继续监视约翰尼并确认二楼工作站门口未被动过 成功",
+      "gameDay": 2,
+      "gameTime": "03:45",
+      "location": "SCN_10_SUB_1",
+      "metadata": {
+        "outcome": "靠在阴影处静观并仔细倾听楼下与外面的动静，继续监视约翰尼并确认二楼工作站门口未被动过 成功"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我检查了塞在衣内的格斗刀，摸了摸并微调了位置，让刀身更贴身更稳固，方便在需要时迅速拔出。这样我对自己的防护更有把握。",
+      "gameDay": 2,
+      "gameTime": "03:48",
+      "location": "SCN_10_SUB_1",
+      "metadata": {
+        "itemId": "隐藏的格斗刀",
+        "outcome": "检查并调整藏于衣内的格斗刀位置以便迅速拔出",
+        "itemName": "隐藏的格斗刀"
+      }
+    },
+    {
+      "type": "event",
+      "content": "检查楔在西蒙二楼工作站门上的木椅是否仍然稳固 成功",
+      "gameDay": 2,
+      "gameTime": "03:52",
+      "location": "SCN_10_SUB_1",
+      "metadata": {
+        "outcome": "检查楔在西蒙二楼工作站门上的木椅是否仍然稳固 成功"
+      }
+    },
+    {
+      "type": "event",
+      "content": "继续靠在二楼楼梯口阴影处屏息观察并倾听楼下与外面的动静，监视约翰尼并再次确认西蒙二楼工作站门口没有被动过 成功",
+      "gameDay": 2,
+      "gameTime": "04:03",
+      "location": "SCN_10_SUB_1",
+      "metadata": {
+        "outcome": "继续靠在二楼楼梯口阴影处屏息观察并倾听楼下与外面的动静，监视约翰尼并再次确认西蒙二楼工作站门口没有被动过 成功"
+      }
+    },
+    {
+      "type": "event",
+      "content": "继续靠在二楼楼梯口的阴影处屏息观察并倾听楼下与外面的动静，监视约翰尼并再次确认西蒙二楼工作站门口没有被动过 成功",
+      "gameDay": 2,
+      "gameTime": "04:09",
+      "location": "SCN_10_SUB_1",
+      "metadata": {
+        "outcome": "继续靠在二楼楼梯口的阴影处屏息观察并倾听楼下与外面的动静，监视约翰尼并再次确认西蒙二楼工作站门口没有被动过 成功"
+      }
+    },
+    {
+      "type": "event",
+      "content": "在二楼休息区小睡以恢复精力，同时保持警觉以便随时应对约翰尼的动向 成功",
+      "gameDay": 2,
+      "gameTime": "04:25",
+      "location": "SCN_10_SUB_1",
+      "metadata": {
+        "outcome": "在二楼休息区小睡以恢复精力，同时保持警觉以便随时应对约翰尼的动向 成功"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我悄悄走到西蒙二楼工作站的门前，把木椅推得更紧，确认门楔牢固并检查了门缝与门锁，没发现任何新异样。",
+      "gameDay": 2,
+      "gameTime": "04:30",
+      "location": "SCN_10_SUB_1",
+      "metadata": {
+        "itemId": "ITEM_SCN10_5",
+        "outcome": "悄悄走到西蒙二楼工作站的门前，把木椅推得更紧，确认门楔牢固并检查门缝与门锁是否有新异样",
+        "itemName": "木椅"
+      }
+    },
+    {
+      "type": "event",
+      "content": "靠在二楼楼梯口的阴影处继续观察约翰尼的动向并屏息倾听楼下与外面的动静 成功",
+      "gameDay": 2,
+      "gameTime": "04:40",
+      "location": "SCN_10_SUB_1",
+      "metadata": {
+        "outcome": "靠在二楼楼梯口的阴影处继续观察约翰尼的动向并屏息倾听楼下与外面的动静 成功"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我又把那把木椅推得更紧，楔在通往西蒙二楼工作站的门把上，仔细检查了门缝与门锁，没发现任何异常，门楔稳固让我放心了些。",
+      "gameDay": 2,
+      "gameTime": "04:44",
+      "location": "SCN_10_SUB_1",
+      "metadata": {
+        "itemId": "ITEM_SCN10_5",
+        "outcome": "把木椅再推紧在西蒙二楼工作站的门把上，确认门楔稳固",
+        "itemName": "木椅"
+      }
+    },
+    {
+      "type": "event",
+      "content": "回到二楼楼梯口的阴影处靠墙静观并屏息倾听楼下与外面的动静，继续监视约翰尼并确认西蒙工作站门口未被动过 成功",
+      "gameDay": 2,
+      "gameTime": "05:00",
+      "location": "SCN_10_SUB_1",
+      "metadata": {
+        "outcome": "回到二楼楼梯口的阴影处靠墙静观并屏息倾听楼下与外面的动静，继续监视约翰尼并确认西蒙工作站门口未被动过 成功"
+      }
+    },
+    {
+      "type": "event",
+      "content": "在二楼休息区小睡半小时以恢复精力并保持警觉 成功",
+      "gameDay": 2,
+      "gameTime": "05:31",
+      "location": "SCN_10_SUB_1",
+      "metadata": {
+        "outcome": "在二楼休息区小睡半小时以恢复精力并保持警觉 成功"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我拿起柜台旁的预约本，翻到末页逐项核对了我写好的明日食材清单，确认没有遗漏；整理并确认了当天的点菜单与备餐计划后，把预约本放回了原位。",
+      "gameDay": 2,
+      "gameTime": "05:42",
+      "location": "SCN_10_SUB_1",
+      "metadata": {
+        "itemId": "ITEM_SCN10_2",
+        "outcome": "拿起预约本核对并整理当天的菜单与备餐计划",
+        "itemName": "预约本"
+      }
+    },
+    {
+      "type": "witness",
+      "content": "[相遇] 刚在餐厅与Marks White面对面相遇，出乎意料但没有立即威胁性。我感到有些警觉和不安，决定不与他多交谈，继续按原计划暗中盯着约翰尼并确认二楼工作站门口与出入口的安全。",
+      "gameDay": 2,
+      "gameTime": "05:46",
+      "location": "SCN_10_SUB_1",
+      "metadata": {
+        "impact": 2,
+        "perspective": "co_presence",
+        "sourceAction": "Marks White 在 小餐厅",
+        "sourceCharacterId": "__encounter__"
+      }
+    },
+    {
+      "type": "event",
+      "content": "退回楼梯口的阴影处靠墙隐蔽观察并屏息倾听约翰尼的动向 成功",
+      "gameDay": 2,
+      "gameTime": "05:50",
+      "location": "SCN_10_SUB_1",
+      "metadata": {
+        "outcome": "退回楼梯口的阴影处靠墙隐蔽观察并屏息倾听约翰尼的动向 成功"
+      }
+    },
+    {
+      "type": "event",
+      "content": "马克斯来和我打招呼并静静听我说话，我感到他在试探是否能从我这里听到关于马塞尔或“九天使”的事。出于谨慎，我没有透露任何敏感或过去的秘密，只说了些普通的镇上琐事。",
+      "gameDay": 2,
+      "gameTime": "05:55",
+      "location": "SCN_10_SUB_1",
+      "metadata": {
+        "outcome": "向海伦打招呼并静听她谈论镇上小道消息，留心任何关于马塞尔或“九天使”的信息"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我把那把木椅又推得更紧，牢牢楔在通往西蒙二楼工作站的门把上，检查了门缝与门锁，没发现任何异常，感觉临时防护可靠。",
+      "gameDay": 2,
+      "gameTime": "06:00",
+      "location": "SCN_10_SUB_1",
+      "metadata": {
+        "itemId": "ITEM_SCN10_5",
+        "outcome": "将木椅推得更紧，检查并确认它仍然牢牢楔在西蒙二楼工作站的门把上",
+        "itemName": "木椅"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我轻声翻阅柜台旁的预约本，逐项核对了末页我写好的明日食材清单，并整理确认了今天的点菜单与备餐计划，确认无遗漏后将预约本放回原处。",
+      "gameDay": 2,
+      "gameTime": "06:15",
+      "location": "SCN_10_SUB_1",
+      "metadata": {
+        "itemId": "ITEM_SCN10_2",
+        "outcome": "翻阅预约本，核对并整理今日菜单与食材准备清单，按清单计划当天备餐",
+        "itemName": "预约本"
+      }
+    },
+    {
+      "type": "event",
+      "content": "在二楼楼梯口的阴影处屏息观察楼下与西蒙工作站门口的动静，继续监视约翰尼并留意任何异常。 成功",
+      "gameDay": 2,
+      "gameTime": "06:26",
+      "location": "SCN_10_SUB_1",
+      "metadata": {
+        "outcome": "在二楼楼梯口的阴影处屏息观察楼下与西蒙工作站门口的动静，继续监视约翰尼并留意任何异常。 成功"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我把鲜切花放回收银台后方原本放花的位置，靠近预约本，并顺手把花束整理好，包纸和缎带也摆得整齐。",
+      "gameDay": 2,
+      "gameTime": "06:30",
+      "location": "SCN_10_SUB_1",
+      "metadata": {
+        "itemId": "ITEM_SCN9_1",
+        "outcome": "把鲜切花放回收银台后方原本放花的位置并整理花束",
+        "itemName": "鲜切花束"
+      }
+    },
+    {
+      "type": "event",
+      "content": "走下楼到一楼餐厅准备开启并检查后厨主电源 成功",
+      "gameDay": 2,
+      "gameTime": "06:31",
+      "location": "SCN_10_SUB_1",
+      "metadata": {
+        "outcome": "走下楼到一楼餐厅准备开启并检查后厨主电源 成功",
+        "blockedReason": "",
+        "failureReason": ""
+      }
+    },
+    {
+      "type": "event",
+      "content": "我走进后厨，打开了主电源并把厨房照明打开。后厨灯光亮起，主要电器通上电，准备开始备餐。",
+      "gameDay": 2,
+      "gameTime": "06:36",
+      "location": "SCN_10_SUB_1",
+      "metadata": {
+        "outcome": "打开后厨主电源并开启厨房照明以便开始备餐"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我翻看预约本上的明日食材清单，随后在厨房开始准备今日的早餐食材。厨房里有了备料的动作，空气中食物和咖啡的香气比刚才更浓了。",
+      "gameDay": 2,
+      "gameTime": "06:47",
+      "location": "SCN_10_SUB_1",
+      "metadata": {
+        "outcome": "开始准备今日早餐的食材"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我继续按预约单准备早餐材料，把切好的食材整齐摆在备餐台上；然后用手摇咖啡磨研磨咖啡豆，厨房里弥漫起更浓的现磨咖啡苦香。",
+      "gameDay": 2,
+      "gameTime": "07:15",
+      "location": "SCN_10_SUB_1",
+      "metadata": {
+        "outcome": "继续准备早餐所需食材，切配并把备好的食材摆放在备餐台上，同时用手摇咖啡磨研磨新鲜咖啡豆。"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我用手摇咖啡磨把刚研好的咖啡粉倒进滤杯，放好并开始滴滤。厨房里立刻充满了更浓郁的现磨苦香，第一批咖啡正在冲煮，我在吧台附近留意着。",
+      "gameDay": 2,
+      "gameTime": "07:20",
+      "location": "SCN_10_SUB_1",
+      "metadata": {
+        "itemId": "ITEM_SCN10_8",
+        "outcome": "用手摇咖啡磨把研好的咖啡粉倒进滤杯并开始冲煮第一批咖啡",
+        "itemName": "手摇咖啡磨"
+      }
+    },
+    {
+      "type": "event",
+      "content": "把刚滴好的咖啡倒入杯中并尝一口确认口感与温度 成功",
+      "gameDay": 2,
+      "gameTime": "07:24",
+      "location": "SCN_10_SUB_1",
+      "metadata": {
+        "outcome": "把刚滴好的咖啡倒入杯中并尝一口确认口感与温度 成功"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我把第一张木桌的餐具整理好，并把点菜单摆到桌中央、靠近陶瓶，确认一切整洁，准备迎接早餐的客人。",
+      "gameDay": 2,
+      "gameTime": "07:30",
+      "location": "SCN_10_SUB_1",
+      "metadata": {
+        "itemId": "ITEM_SCN10_1",
+        "outcome": "整理并摆放第一张桌子的餐具与点菜单，准备迎接早餐顾客",
+        "itemName": "木质餐桌"
+      }
+    },
+    {
+      "type": "event",
+      "content": "走到花店·卡森德拉之花去买当天需要的鲜花并顺便和店主打个招呼 成功",
+      "gameDay": 2,
+      "gameTime": "07:42",
+      "location": "SCN_9_SUB_1",
+      "metadata": {
+        "outcome": "走到花店·卡森德拉之花去买当天需要的鲜花并顺便和店主打个招呼 成功",
+        "blockedReason": "",
+        "failureReason": ""
+      }
+    },
+    {
+      "type": "witness",
+      "content": "[相遇] 在花店·卡森德拉之花碰到了 Nancy Charlotte 和 Simon Laplace。两人看起来友好，我保持礼貌寒暄并迅速挑好当天要用的鲜花。对西蒙心存戒备（记得他曾在价目板下写过应急联络和二楼工作站的位置），所以尽量不谈敏感话题，也不多停留。感到警觉且克制，接下来仍按原计划继续监视约翰尼并确认二楼工作站门口的安全。",
+      "gameDay": 2,
+      "gameTime": "07:42",
+      "location": "SCN_9_SUB_1",
+      "metadata": {
+        "impact": 2,
+        "perspective": "co_presence",
+        "sourceAction": "Nancy Charlotte, Simon Laplace (Simon) 在 花店·卡森德拉之花",
+        "sourceCharacterId": "__encounter__"
+      }
+    },
+    {
+      "type": "event",
+      "content": "[直接] 西蒙在收银台旁低声盘问我昨晚的去向，说他在星辰医院的监控里看到了我，要求我逐项说明以便对照录像。我感到被盯上了，紧张且警觉——担心他真的能把我和医院联系起来，害怕过去曝光，但不能慌张或露出破绽。",
+      "gameDay": 2,
+      "gameTime": "07:53",
+      "location": "ROAD_2",
+      "metadata": {
+        "impact": 1,
+        "perspective": "targeted",
+        "sourceAction": "在收银台旁低声当面盘问海伦昨夜的去向，说明我已在医院监控中看到她的出现时间，要求她说明当时在做什么并将她的回答逐项记录以便对比录像证据 [target Helen not present] failed",
+        "sourceCharacterId": "Simon Laplace (Simon)"
+      }
+    },
+    {
+      "type": "event",
+      "content": "走回海伦的餐桌 [在 ROAD_2 因重新规划而中断] 已中断",
+      "gameDay": 2,
+      "gameTime": "07:54",
+      "location": "ROAD_2",
+      "metadata": {
+        "outcome": "走回海伦的餐桌 [在 ROAD_2 因重新规划而中断] 已中断",
+        "interruptionReason": "revise_replan"
+      }
+    },
+    {
+      "type": "witness",
+      "content": "[相遇] 刚在北新街与西蒙·拉普拉斯面对面相遇。记得他早些时候在收银台低声盘问我，提到在星辰医院的监控里见到我。此刻我感到被盯上了，紧张且警觉，担心他能把我和医院联系起来并暴露我的过去。决定不要与他单独交谈，保持礼貌回避或把谈话引到公开场合，同时尽快确认他是否真的有录像及录像时间，准备好一个可验证的掩饰说辞。",
+      "gameDay": 2,
+      "gameTime": "07:54",
+      "location": "ROAD_2",
+      "metadata": {
+        "impact": 2,
+        "perspective": "co_presence",
+        "sourceAction": "Simon Laplace (Simon) 在 卡森德拉北新街",
+        "sourceCharacterId": "__encounter__"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我到了卡森德拉北新街的餐厅等候，但西蒙并不在场。我当着空位用坚定但礼貌的语气要求他在餐厅有人在场时当面出示他说的星辰医院监控录像和具体时间戳，说明若不能当面展示就改约在有第三方在场时再核对，并暗示会记录他所说的细节以备查证。",
+      "gameDay": 2,
+      "gameTime": "07:58",
+      "location": "ROAD_2",
+      "metadata": {
+        "outcome": "当着西蒙的面要求他在餐厅有人在场时出示他说的星辰医院监控录像和具体时间戳，语气坚定但礼貌，说明若无法当面展示就改约在有第三方在场的地方再核对；同时暗示我会记录他所说的细节以备查证。"
+      }
+    },
+    {
+      "type": "event",
+      "content": "[直接] 西蒙在收银台低声逐项盘问我昨夜的去向，并把我的口头陈述一条条记下来，说要回去对照星辰医院的监控时间戳。我感到被盯上了，紧张又警觉，害怕过去被暴露。决定不要与他单独谈话，尽快核实他是否真有录像与时间，并准备一个可验证的掩饰说辞，同时在今后把对话引到有第三人在场的公开场合。",
+      "gameDay": 2,
+      "gameTime": "08:05",
+      "location": "ROAD_2",
+      "metadata": {
+        "impact": 1,
+        "perspective": "targeted",
+        "sourceAction": "我询问海伦昨夜的去向并逐项记录她的回答以便与医院监控时间戳比对；她回答了我的问题，我把她的口头陈述逐项记下，准备回去对照监控录像核验。",
+        "sourceCharacterId": "Simon Laplace (Simon)"
+      }
+    },
+    {
+      "type": "event",
+      "content": "西蒙问我昨夜的行踪，我回答了他的提问并注意到他在逐项记录我的话，觉得被审视所以保持谨慎。",
+      "gameDay": 2,
+      "gameTime": "08:05",
+      "location": "ROAD_2",
+      "metadata": {
+        "outcome": "询问海伦昨夜的去向并逐项记录她的回答以便比对医院监控时间戳"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我去了卡森德拉北新街找西蒙，但他不在。 我对他留下明确要求：若要核实，就必须在有人在场时当面出示星辰医院的监控录像并附时间戳，我现在拒绝与他单独核实。",
+      "gameDay": 2,
+      "gameTime": "08:10",
+      "location": "ROAD_2",
+      "metadata": {
+        "outcome": "告诉西蒙在有人在场时当面出示星辰医院的监控录像与时间戳，我现在拒绝与他单独核实"
+      }
+    },
+    {
+      "type": "event",
+      "content": "回海伦的餐桌准备开店并整理预约本以核对昨晚行踪佐证 成功",
+      "gameDay": 2,
+      "gameTime": "08:20",
+      "location": "SCN_10_SUB_1",
+      "metadata": {
+        "outcome": "回海伦的餐桌准备开店并整理预约本以核对昨晚行踪佐证 成功",
+        "blockedReason": "",
+        "failureReason": ""
+      }
+    },
+    {
+      "type": "plan",
+      "content": "Today's plan: 1. 接待晚餐客人，确认今晚的菜品和服务都顺利进行。 at 海伦的餐桌; 2. 在厨房亲自做最后一道招牌菜并观察员工的操作。 at 海伦的餐桌; 3. 结束营业，清点现金，做好账目并将款项放入保险箱。 at 海伦的餐桌; 4. 检查后厨与门锁，整理剩余食材并把不需要的东西收好。 at 海伦的餐桌; 5. 买一束简单的鲜花带回给维托，顺便和店主寒暄几句以维持邻里关系。 at 花店·卡森德拉之花; 6. 向哈里森咨询并订购一个更坚固、不显眼的门锁或小型监控设备以增强店铺安全。 at 五金店; 7. 在教堂门廊静坐片刻，整理思绪并默默纪念卢奇菲罗。 at 教堂; 8. 回到二楼休息区给自己泡杯咖啡，同时给维托打个电话报平安。 at 海伦的餐桌; 9. 翻阅明日的预订表和食材清单，规划明天的菜单与采购清单。 at 海伦的餐桌; 10. 锁好门窗，关掉厨房电源，早些上床睡觉以保持精力充沛。 at 海伦的餐桌",
+      "gameDay": 1,
+      "gameTime": "19:00",
+      "location": null,
+      "metadata": {
+        "planType": "daily"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我把柜台边的预约本翻到今晚的页码，核对了各个预订的姓名、人数和用餐时间，并确认了客人注明的特殊要求与座位偏好以便安排服务。",
+      "gameDay": 1,
+      "gameTime": "19:05",
+      "location": "SCN_10_SUB_1",
+      "metadata": {
+        "itemId": "ITEM_SCN10_2",
+        "outcome": "查看预约本，确认今晚的座位安排和客人特殊要求",
+        "itemName": "预约本"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我把餐厅的电灯打开了，原本的漆黑消失，室内恢复为温暖的黄光，能看清周围的桌椅和摆设。",
+      "gameDay": 1,
+      "gameTime": "19:08",
+      "location": "SCN_10_SUB_1",
+      "metadata": {
+        "outcome": "打开餐厅的电灯"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我把柜台角落的点菜单一张张拿出来，分别摆到每张桌子上，然后在特菜那一栏用笔圈出并写明“今晚招牌”，方便服务员和客人注意。",
+      "gameDay": 1,
+      "gameTime": "19:14",
+      "location": "SCN_10_SUB_1",
+      "metadata": {
+        "itemId": "ITEM_SCN10_7",
+        "outcome": "把点菜单摆到每张桌子上，并在特菜位置用笔标注今晚的招牌菜",
+        "itemName": "点菜单"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我亲自到后厨，用香料架上的孜然和辣椒粉为今晚的最后一道招牌菜调味，边做边旁观并检查员工的操作，确认了调味与火候，菜已准备好出餐。",
+      "gameDay": 1,
+      "gameTime": "19:35",
+      "location": "SCN_10_SUB_1",
+      "metadata": {
+        "outcome": "在后厨亲自烹饪今晚的最后一道招牌菜，同时旁观并检查员工的操作"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我把最后一道招牌菜从后厨端到客人指定的桌上，仔细摆好摆盘并确认温度适中，菜仍保持着热度。",
+      "gameDay": 1,
+      "gameTime": "19:40",
+      "location": "SCN_10_SUB_1",
+      "metadata": {
+        "outcome": "把最后一道招牌菜从后厨端到餐厅并摆到指定的客人桌上，确认摆盘与温度"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我检查了通往后厨的门锁，留意锁体和周边，没有发现被撬或受损的迹象，门锁看起来正常；后厨仍传来平常的锅碗碰撞声。",
+      "gameDay": 1,
+      "gameTime": "19:44",
+      "location": "SCN_10_SUB_1",
+      "metadata": {
+        "outcome": "检查后厨门锁"
+      }
+    },
+    {
+      "type": "witness",
+      "content": "[相遇] 19:55，我在小餐馆里与约翰尼面对面相遇。他就站在餐厅里，神情有点紧张，眼神在扫视周围。我立刻感到警觉——卢奇菲罗在驯鹿酒吧被杀的事、以及约翰尼那晚与菲利普的打斗让我担心他会把事情讲开或带来麻烦。我觉得必须保持冷静、低调，不谈过去，控制谈话方向，暗中评估他是否构成威胁，并准备在必要时悄悄请员工帮忙或结束对话。",
+      "gameDay": 1,
+      "gameTime": "19:55",
+      "location": "SCN_10_SUB_1",
+      "metadata": {
+        "impact": 2,
+        "perspective": "co_presence",
+        "sourceAction": "Johnny 在 小餐厅",
+        "sourceCharacterId": "__encounter__"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我清点了收银机里的现金，把当天的营业款装进了保险箱并锁好。收银机抽屉已清空，保险箱确认上锁。",
+      "gameDay": 1,
+      "gameTime": "19:55",
+      "location": "SCN_10_SUB_1",
+      "metadata": {
+        "outcome": "清点收银机里的现金并将当天营业款项装入保险箱"
+      }
+    },
+    {
+      "type": "event",
+      "content": "约翰尼低声向我道歉并请求私下交谈或出去散步躲开旁人；我同意了并表示会留意周围是否有人在监视。 我也告诉他我记得那晚他在驯鹿酒吧与菲利普打起来，不希望那件事被夸大。",
+      "gameDay": 1,
+      "gameTime": "19:59",
+      "location": "SCN_10_SUB_1",
+      "metadata": {
+        "outcome": "低声向海伦真诚道歉，并悄声请求能否私下交谈或出去短暂散步以避开旁人，留意周围是否有人在监视"
+      }
+    },
+    {
+      "type": "witness",
+      "content": "[相遇] 我在小餐馆与哈里森·洛克希德和约翰尼当面相遇。约翰尼显得有些紧张，眼神在四处扫视；哈里森在场让我更警觉。听到卢奇菲罗被杀的事和约翰尼那晚与菲利普的打斗让我担心他们会把过去挑明或带来麻烦。我感到必须保持冷静、低调，不谈旧事，暗中评估他们是否构成威胁，并准备在必要时让员工靠近或找借口结束交谈。",
+      "gameDay": 1,
+      "gameTime": "21:34",
+      "location": "SCN_10_SUB_1",
+      "metadata": {
+        "impact": 2,
+        "perspective": "co_presence",
+        "sourceAction": "Harrison Lockheed, Johnny 在 小餐厅",
+        "sourceCharacterId": "__encounter__"
+      }
+    },
+    {
+      "type": "witness",
+      "content": "[目击] 我注意到哈里森向我低声寒暄并点了一份招牌菜，借机悄声打听镇上的风声以及阿道夫是否露面，同时不断打量约翰尼的表情——他探询得手了。我感到警觉和不安，但保持冷静，决定立刻用招牌菜和镇上琐事来掩饰与转移话题，密切盯着约翰尼，并准备在必要时让员工靠近或找借口结束对话，正式谈门锁的事要等更安全的时机。",
+      "gameDay": 1,
+      "gameTime": "21:40",
+      "location": "SCN_10_SUB_1",
+      "metadata": {
+        "impact": 2,
+        "perspective": "witness",
+        "sourceAction": "向海伦低声寒暄并点一份招牌菜，借机悄声打听镇上最近的风声以及阿道夫是否有露面，同时密切观察约翰尼的表情与反应 成功",
+        "sourceCharacterId": "Harrison Lockheed"
+      }
+    },
+    {
+      "type": "event",
+      "content": "以平静友好的口吻与约翰尼寒暄，递上一杯咖啡并观察他的表情与话语，试探性地评估他是否构成威胁或八卦风险，必要时准备示意员工介入 [在 SCN_10_SUB_1 因重新规划而中断] 已中断",
+      "gameDay": 1,
+      "gameTime": "21:40",
+      "location": "SCN_10_SUB_1",
+      "metadata": {
+        "outcome": "以平静友好的口吻与约翰尼寒暄，递上一杯咖啡并观察他的表情与话语，试探性地评估他是否构成威胁或八卦风险，必要时准备示意员工介入 [在 SCN_10_SUB_1 因重新规划而中断] 已中断",
+        "interruptionReason": "revise_replan"
+      }
+    },
+    {
+      "type": "event",
+      "content": "约翰尼轻轻拉住我的手，示意去后门外走走以避开哈里森。我同意了，并告诉他我记得驯鹿酒吧那晚他的打斗，不想让那件事被渲染；我们约定短暂外出并留意是否有人在监视。",
+      "gameDay": 1,
+      "gameTime": "21:44",
+      "location": "SCN_10_SUB_1",
+      "metadata": {
+        "outcome": "低声拉住海伦的手，示意她跟我到外面后门处短暂散步以避开哈里森"
+      }
+    },
+    {
+      "type": "event",
+      "content": "把招牌菜端到哈里森面前并用平静语气介绍配料，顺带把话题引到镇上的日常琐事上 [在 SCN_10_SUB_1 因重新规划而中断] 已中断",
+      "gameDay": 1,
+      "gameTime": "21:44",
+      "location": "SCN_10_SUB_1",
+      "metadata": {
+        "outcome": "把招牌菜端到哈里森面前并用平静语气介绍配料，顺带把话题引到镇上的日常琐事上 [在 SCN_10_SUB_1 因重新规划而中断] 已中断",
+        "interruptionReason": "revise_replan"
+      }
+    },
+    {
+      "type": "event",
+      "content": "哈里森低声问我阿道夫最近有没有露面，我如实告诉他我记得约翰尼在驯鹿酒吧那晚以与菲利普的打斗收场，不希望那件事被进一步夸大。我注意到他在看约翰尼的表情，似乎在评估是否还安全接触。",
+      "gameDay": 1,
+      "gameTime": "21:44",
+      "location": "SCN_10_SUB_1",
+      "metadata": {
+        "outcome": "向海伦低声再问阿道夫最近是否有露面，并在交谈时注意约翰尼的表情与反应以判断是否安全继续接触"
+      }
+    },
+    {
+      "type": "event",
+      "content": "[直接] 约翰尼低声拉住我的手，示意从后门出去短暂散步以避开哈里森。我同意了，心里警觉但保持冷静，答应和他一起出去并留意周围是否有人在监视；我又重申记得驯鹿酒吧那晚他与菲利普的打斗，不希望那件事被渲染。准备把谈话保持在无害话题，并在必要时悄悄示意员工靠近或结束交谈。",
+      "gameDay": 1,
+      "gameTime": "21:44",
+      "location": "SCN_10_SUB_1",
+      "metadata": {
+        "impact": 2,
+        "perspective": "targeted",
+        "sourceAction": "我低声拉住海伦的手，示意去后门外短暂散步以避开哈里森。她同意了，并表示会配合留意周围是否有人在监视；她还提到记得驯鹿酒吧那晚我与菲利普的冲突，不希望那件事被进一步夸大。",
+        "sourceCharacterId": "Johnny"
+      }
+    },
+    {
+      "type": "witness",
+      "content": "[相遇] 我在卡森德拉北新街与哈里森·洛克希德和约翰尼当面相遇。约翰尼显得紧张并拉着我的手示意从后门短暂出去以避开哈里森。我感到警觉但保持冷静，决定现在通过后门出去，注意周围是否有人在监视，避免谈及驯鹿酒吧或过去的暴力，必要时悄悄示意员工靠近或结束交谈。",
+      "gameDay": 1,
+      "gameTime": "21:45",
+      "location": "ROAD_2",
+      "metadata": {
+        "impact": 2,
+        "perspective": "co_presence",
+        "sourceAction": "Harrison Lockheed, Johnny 在 卡森德拉北新街",
+        "sourceCharacterId": "__encounter__"
+      }
+    },
+    {
+      "type": "event",
+      "content": "从后门带约翰尼出去，沿卡森德拉北新街朝北新街端点三岔口方向走并注意是否有人在监视或尾随 [在 ROAD_2 因重新规划而中断] 已中断",
+      "gameDay": 1,
+      "gameTime": "21:45",
+      "location": "ROAD_2",
+      "metadata": {
+        "outcome": "从后门带约翰尼出去，沿卡森德拉北新街朝北新街端点三岔口方向走并注意是否有人在监视或尾随 [在 ROAD_2 因重新规划而中断] 已中断",
+        "interruptionReason": "revise_replan"
+      }
+    },
+    {
+      "type": "witness",
+      "content": "[相遇] 我在卡森德拉北新街与约翰尼和哈里森当面相遇。约翰尼紧张地拉着我的手，示意从后门短暂出去避开哈里森；我感到警觉但保持冷静。继续按原计划外出并扫视周围是否有人监视，避免提及驯鹿酒吧或过去的暴力，必要时悄悄示意员工靠近或找借口结束交谈以保护我在镇上的平静生活。",
+      "gameDay": 1,
+      "gameTime": "21:47",
+      "location": "ROAD_2",
+      "metadata": {
+        "impact": 2,
+        "perspective": "co_presence",
+        "sourceAction": "Angela, Johnny, Harrison Lockheed 在 卡森德拉北新街",
+        "sourceCharacterId": "__encounter__"
+      }
+    },
+    {
+      "type": "event",
+      "content": "环顾四周，留意是否有人在监视或尾随 成功",
+      "gameDay": 1,
+      "gameTime": "21:48",
+      "location": "ROAD_2",
+      "metadata": {
+        "outcome": "环顾四周，留意是否有人在监视或尾随 成功"
+      }
+    },
+    {
+      "type": "witness",
+      "content": "[相遇] 我在卡森德拉北新街当面遇到Angela、约翰尼和哈里森·洛克希德。约翰尼显得紧张，拉着我的手示意从后门短暂出去以避开哈里森。我感到警觉但保持冷静；决定按原计划出去并扫视周围是否有人在监视，避免提及驯鹿酒吧或过去的暴力，必要时悄悄示意员工靠近或找借口结束对话以保护我在镇上的平静生活。",
+      "gameDay": 1,
+      "gameTime": "21:53",
+      "location": "ROAD_2",
+      "metadata": {
+        "impact": 2,
+        "perspective": "co_presence",
+        "sourceAction": "Angela, Johnny, Harrison Lockheed 在 卡森德拉北新街",
+        "sourceCharacterId": "__encounter__"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我低声与约翰尼聊了镇上的琐事，刻意避开了驯鹿酒吧和任何暴力往事，并用眼神和短促手势扫视四周以示警，准备在必要时示意员工靠近或结束对话。我感觉这次低调的交流巩固了我们之间的默契，但仍需继续谨慎行事。 [rel:Johnny +0 → 83]",
+      "gameDay": 1,
+      "gameTime": "21:54",
+      "location": "ROAD_2",
+      "metadata": {
+        "outcome": "低声与约翰尼交谈，把话题维持在镇上琐事和日常上，避免提及驯鹿酒吧或任何暴力往事，同时用眼神和短促手势扫视周围以示警并准备在必要时示意员工靠近或结束对话。"
+      }
+    },
+    {
+      "type": "witness",
+      "content": "[相遇] 我在卡森德拉北新街遇到Angela、约翰尼和哈里森。约翰尼紧张地拉着我的手，示意从后门短暂出去以避开哈里森；Angela的出现让我更留意四周，但我保持冷静，决定按原计划出去并扫视是否有人在监视，避免提及驯鹿酒吧或过去的暴力，准备在必要时悄悄示意员工靠近或找借口结束对话以保护我的平静生活。",
+      "gameDay": 1,
+      "gameTime": "21:54",
+      "location": "ROAD_2",
+      "metadata": {
+        "impact": 2,
+        "perspective": "co_presence",
+        "sourceAction": "Angela 在 卡森德拉北新街",
+        "sourceCharacterId": "__encounter__"
+      }
+    },
+    {
+      "type": "witness",
+      "content": "[相遇] 我在卡森德拉北新街当面遇到Angela、约翰尼和哈里森。约翰尼显得紧张，拉着我的手示意从后门短暂出去以避开哈里森；Angela的出现让我更留意四周。我感到警觉但保持冷静，决定按原计划出去并扫视周围是否有人在监视，避免提及驯鹿酒吧或过去的暴力，必要时悄悄示意员工靠近或找借口结束对话以保护我这份来之不易的平静生活。",
+      "gameDay": 1,
+      "gameTime": "21:55",
+      "location": "ROAD_2",
+      "metadata": {
+        "impact": 2,
+        "perspective": "co_presence",
+        "sourceAction": "Angela, Harrison Lockheed, Johnny 在 卡森德拉北新街",
+        "sourceCharacterId": "__encounter__"
+      }
+    },
+    {
+      "type": "witness",
+      "content": "[相遇] 我在卡森德拉北新街与Angela、哈里森·洛克希德和约翰尼当面相遇。约翰尼显得紧张，拉着我的手示意从后门短暂出去以避开哈里森；Angela的出现让我更留意四周。我感到警觉但保持冷静，决定按原计划短暂外出并扫视周围是否有人监视，避免提及驯鹿酒吧或过去的暴力，必要时悄悄示意员工靠近或找借口结束交谈以保护我来之不易的平静生活。",
+      "gameDay": 1,
+      "gameTime": "21:56",
+      "location": "ROAD_2",
+      "metadata": {
+        "impact": 2,
+        "perspective": "co_presence",
+        "sourceAction": "Angela, Harrison Lockheed, Johnny 在 卡森德拉北新街",
+        "sourceCharacterId": "__encounter__"
+      }
+    },
+    {
+      "type": "event",
+      "content": "沿卡森德拉北新街朝花店·卡森德拉之花方向走，留意周围是否有人在监视或尾随 成功",
+      "gameDay": 1,
+      "gameTime": "22:05",
+      "location": "SCN_9_SUB_1",
+      "metadata": {
+        "outcome": "沿卡森德拉北新街朝花店·卡森德拉之花方向走，留意周围是否有人在监视或尾随 成功",
+        "blockedReason": "",
+        "failureReason": ""
+      }
+    },
+    {
+      "type": "witness",
+      "content": "[目击] 约翰尼悄声挽住我的手臂，示意朝花店·卡森德拉之花走去，并在花店遇见了Nancy Charlotte和Simon Laplace。我感到警觉但努力保持冷静——本想买束花给维托，现在更倾向快买快走，避免私下长谈，时刻留意是否有人在监视或可能听到我们的谈话。",
+      "gameDay": 1,
+      "gameTime": "22:05",
+      "location": "SCN_9_SUB_1",
+      "metadata": {
+        "impact": 2,
+        "perspective": "witness",
+        "sourceAction": "悄声挽住海伦的手臂，低声示意朝花店·卡森德拉之花方向走，去找一个更安静的角落私下谈话 成功",
+        "sourceCharacterId": "Johnny"
+      }
+    },
+    {
+      "type": "witness",
+      "content": "[目击] 我看到Simon在墙上粉笔价目板下方用粉笔写下了应急联络流程、备用设备位置（标注为二楼工作站）以及已设定的凌晨03:00检查提醒。我感觉有些警觉和不安——这暗示店里可能有备用设备或监控，或有人在做应急部署。为保护自己的低调生活，我打算尽快买好花，避免上二楼或靠近标注的工作站，留意可疑人员与监控设备，尽快离开并避免与约翰尼长时间交谈。",
+      "gameDay": 1,
+      "gameTime": "22:08",
+      "location": "SCN_9_SUB_1",
+      "metadata": {
+        "impact": 2,
+        "perspective": "witness",
+        "sourceAction": "我在墙上的粉笔价目板下方用粉笔写下了应急联络流程、备用设备位置（标注为二楼工作站）以及已设定的凌晨03:00检查提醒，确保任何在店的人都能一眼看到并知晓这些要点。",
+        "sourceCharacterId": "Simon Laplace (Simon)"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我把包装台上的花束取下，在台上用牛皮纸和缎带简单包好，在收银台付了钱，准备尽快离开，同时留意周围是否有人尾随。",
+      "gameDay": 1,
+      "gameTime": "22:08",
+      "location": "SCN_9_SUB_1",
+      "metadata": {
+        "itemId": "ITEM_SCN9_1",
+        "outcome": "取下包装台上的鲜切花束并在收银台付款，准备尽快离开",
+        "itemName": "鲜切花束"
+      }
+    },
+    {
+      "type": "witness",
+      "content": "[相遇] 在卡森德拉北新街当面遇到哈里森·洛克希德。见到他让我警觉——担心他会探听关于阿道夫或挖掘过去的事。我感到不安但努力保持冷静；决定坚持原先要快买花的计划，但绝不与哈里森交谈，今晚取消去五金店找他的打算，避免上二楼或与任何可疑设备靠近，随时注意是否有人在监视并尽快离开。",
+      "gameDay": 1,
+      "gameTime": "22:12",
+      "location": "ROAD_2",
+      "metadata": {
+        "impact": 2,
+        "perspective": "co_presence",
+        "sourceAction": "Harrison Lockheed 在 卡森德拉北新街",
+        "sourceCharacterId": "__encounter__"
+      }
+    },
+    {
+      "type": "witness",
+      "content": "[相遇] 我在卡森德拉北新街当面遇到Vincent Galenus。我对他不熟悉，但本能提高了警觉；这并不会改变我的打算——尽快买好花、避免上二楼或与哈里森接触、留意可疑人员或监视者，买完立刻离开并尽快回餐馆或回家向维托报平安。",
+      "gameDay": 1,
+      "gameTime": "22:19",
+      "location": "ROAD_2",
+      "metadata": {
+        "impact": 2,
+        "perspective": "co_presence",
+        "sourceAction": "Vincent Galenus 在 卡森德拉北新街",
+        "sourceCharacterId": "__encounter__"
+      }
+    },
+    {
+      "type": "event",
+      "content": "走出花店，直接朝海伦的餐桌回去，低调离开并保持警觉以防有人尾随或监控 成功",
+      "gameDay": 1,
+      "gameTime": "22:20",
+      "location": "SCN_10_SUB_1",
+      "metadata": {
+        "outcome": "走出花店，直接朝海伦的餐桌回去，低调离开并保持警觉以防有人尾随或监控 成功",
+        "blockedReason": "",
+        "failureReason": ""
+      }
+    },
+    {
+      "type": "witness",
+      "content": "[相遇] 我在小餐馆里见到了一个不太熟悉的人——Vincent Galenus。他的出现让我本能地提高了警觉，但他看起来并未构成直接威胁。我感到有些不安但保持冷静，决定按原计划尽快买花、避免上二楼或与哈里森接触、留意可疑人员或监视者，并尽快回餐馆或回家向维托报平安。",
+      "gameDay": 1,
+      "gameTime": "22:22",
+      "location": "SCN_10_SUB_1",
+      "metadata": {
+        "impact": 2,
+        "perspective": "co_presence",
+        "sourceAction": "Vincent Galenus 在 小餐厅",
+        "sourceCharacterId": "__encounter__"
+      }
+    },
+    {
+      "type": "event",
+      "content": "给维托打电话报平安 成功",
+      "gameDay": 1,
+      "gameTime": "22:24",
+      "location": "SCN_10_SUB_1",
+      "metadata": {
+        "outcome": "给维托打电话报平安 成功"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我把热饭递给那位看起来疲惫又愧疚的院长，他客气地谢谢并小心地问起镇上的事和医院今晚的值班，刻意避开了实验和他妻子的事。于是我告诉他我在镇上经营餐厅，并说出我记得约翰尼在驯鹿酒吧与菲利普打起来的事——我不想让那件事被夸大。",
+      "gameDay": 1,
+      "gameTime": "22:28",
+      "location": "SCN_10_SUB_1",
+      "metadata": {
+        "outcome": "接受海伦递来的热饭并小声与海伦交谈，感谢她的好意并试探性询问镇上与医院的近况及今晚的值班安排，同时避免提及医院实验或我妻子的任何细节"
+      }
+    },
+    {
+      "type": "witness",
+      "content": "[相遇] 文森特在小餐馆里低声向我打听今晚星辰医院的值班安排和监控死角情况，我礼貌且简短地回避了他的探询。他的试探让我感到孤立和不安，警觉性上升——我不愿透露任何细节，决定更谨慎地行动，尽快买花回家并留意可能的监视者。",
+      "gameDay": 1,
+      "gameTime": "22:32",
+      "location": "SCN_10_SUB_1",
+      "metadata": {
+        "impact": 2,
+        "perspective": "co_presence",
+        "sourceAction": "Johnny, Vincent Galenus 在 小餐厅",
+        "sourceCharacterId": "__encounter__"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我把包好的鲜切花放到收银台后面，整理好牛皮纸和缎带并确认放稳，准备尽快离开，同时留意是否有人尾随。",
+      "gameDay": 1,
+      "gameTime": "22:32",
+      "location": "SCN_10_SUB_1",
+      "metadata": {
+        "itemId": "ITEM_SCN9_1",
+        "outcome": "把鲜切花束放到收银台后面并整理好以便离开",
+        "itemName": "鲜切花束"
+      }
+    },
+    {
+      "type": "event",
+      "content": "文森特低声向我打听星辰医院的值班和监控死角情况，我没有透露任何关于值班或监控异常的细节，只以礼貌且简短的方式回避了他的探询。",
+      "gameDay": 1,
+      "gameTime": "22:32",
+      "location": "SCN_10_SUB_1",
+      "metadata": {
+        "outcome": "低声向海伦询问今晚星辰医院的值班安排和是否有人提到监控死角或异常动静 [Persuade 10, rolled 62 (fail) — all targets resisted] failed"
+      }
+    },
+    {
+      "type": "event",
+      "content": "约翰尼低声向我道歉并轻拉我的手，示意到门外短暂散步。我觉得他的冲动被控制住，短暂离开餐厅有助于冷静，于是我同意跟他出去。",
+      "gameDay": 1,
+      "gameTime": "22:35",
+      "location": "SCN_10_SUB_1",
+      "metadata": {
+        "outcome": "低声向海伦道歉并轻拉她的手示意到门外短暂散步"
+      }
+    },
+    {
+      "type": "event",
+      "content": "从收银台后方把鲜切花拿起来 [在 SCN_10_SUB_1 因重新规划而中断] 已中断",
+      "gameDay": 1,
+      "gameTime": "22:37",
+      "location": "SCN_10_SUB_1",
+      "metadata": {
+        "outcome": "从收银台后方把鲜切花拿起来 [在 SCN_10_SUB_1 因重新规划而中断] 已中断",
+        "interruptionReason": "revise_replan"
+      }
+    },
+    {
+      "type": "witness",
+      "content": "[相遇] 我刚在小餐馆与哈里森·洛克希德和文森特·加莱纳斯面对面相遇。他们两人在场让我立刻提高警觉。哈里森常会试探性打听风声，文森特曾探问医院值班和监控死角——我担心他们会挖掘过去或挑明约翰尼的事。我感到不安但保持冷静，决定马上收紧话题、绝不给出任何有关值班或监控的细节，暗中评估他们是否构成威胁，并准备在必要时示意员工介入或找借口结束对话，随后按原计划尽快去买花回家向维托报平安。",
+      "gameDay": 1,
+      "gameTime": "22:37",
+      "location": "SCN_10_SUB_1",
+      "metadata": {
+        "impact": 2,
+        "perspective": "co_presence",
+        "sourceAction": "Harrison Lockheed, Vincent Galenus 在 小餐厅",
+        "sourceCharacterId": "__encounter__"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我从收银台后方把那束鲜切花拿起来，整理了一下牛皮纸和缎带，然后把花放进我的手提包，动作干脆利落，没有引起注意。",
+      "gameDay": 1,
+      "gameTime": "22:39",
+      "location": "SCN_10_SUB_1",
+      "metadata": {
+        "itemId": "ITEM_SCN9_1",
+        "outcome": "把鲜切花拿起来并放进我的手提包",
+        "itemName": "鲜切花束"
+      }
+    },
+    {
+      "type": "event",
+      "content": "约翰尼低声道歉并轻拉了我的手，邀请我到后门外短暂散步私下说话。我没有同意，拒绝了他的邀请并留在餐厅，未向他透露任何私事。",
+      "gameDay": 1,
+      "gameTime": "22:40",
+      "location": "SCN_10_SUB_1",
+      "metadata": {
+        "outcome": "低声说服海伦跟我到后门外短暂散步以便私下说话 [Persuade 10, rolled 27 (fail) — all targets resisted] failed"
+      }
+    },
+    {
+      "type": "event",
+      "content": "[直接] 约翰尼低声向我道歉并试图把我拉到后门外短暂散步私下说话；我没被说服，保持距离并拒绝了邀请。我有点失落但也松了口气，警觉性更高——决定按原计划低调尽快离开餐厅，避免与哈里森和文森特多谈，留意是否有人在监视。",
+      "gameDay": 1,
+      "gameTime": "22:43",
+      "location": "SCN_10_SUB_1",
+      "metadata": {
+        "impact": 1,
+        "perspective": "targeted",
+        "sourceAction": "我低声向海伦道歉并试图拉她到后门外短暂散步以便私下说话，但她没有被说服，保持距离并拒绝了我的邀请。我有些失落，但没有当场争执。",
+        "sourceCharacterId": "Johnny"
+      }
+    },
+    {
+      "type": "event",
+      "content": "约翰尼低声向我保证会尊重我的决定，会等我觉得安全再私下谈。他试图让我出去散步私下说话，我拒绝了并保持距离。我感到他的失落，但我的警惕没有降低，信任没有因此增强。",
+      "gameDay": 1,
+      "gameTime": "22:46",
+      "location": "SCN_10_SUB_1",
+      "metadata": {
+        "outcome": "低声对海伦说我会尊重她的决定，等她觉得安全时再找个安静的地方私下谈"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我用手摇咖啡磨把豆子磨好，给自己泡了一杯现磨咖啡，闻着苦香后上了二楼的休息区静坐，尽量不跟客人多说话。",
+      "gameDay": 1,
+      "gameTime": "22:50",
+      "location": "SCN_10_SUB_1",
+      "metadata": {
+        "itemId": "ITEM_SCN10_8",
+        "outcome": "用手摇咖啡磨磨豆并给自己泡一杯咖啡，上二楼休息区静坐以避免与客人多谈",
+        "itemName": "手摇咖啡磨"
+      }
+    },
+    {
+      "type": "event",
+      "content": "悄悄从后门走到北新街端点三岔口 成功",
+      "gameDay": 1,
+      "gameTime": "22:59",
+      "location": "JUNC_3",
+      "metadata": {
+        "outcome": "悄悄从后门走到北新街端点三岔口 成功",
+        "blockedReason": "",
+        "failureReason": ""
+      }
+    },
+    {
+      "type": "event",
+      "content": "走回海伦的餐桌以尽快离开街道并回家 成功",
+      "gameDay": 1,
+      "gameTime": "23:08",
+      "location": "SCN_10_SUB_1",
+      "metadata": {
+        "outcome": "走回海伦的餐桌以尽快离开街道并回家 成功",
+        "blockedReason": "",
+        "failureReason": ""
+      }
+    },
+    {
+      "type": "event",
+      "content": "悄悄从后门离开餐厅，沿卡森德拉北新街朝北新街端点三岔口方向走以尽快回家并避免与哈里森和文森特接触 成功",
+      "gameDay": 1,
+      "gameTime": "23:17",
+      "location": "JUNC_3",
+      "metadata": {
+        "outcome": "悄悄从后门离开餐厅，沿卡森德拉北新街朝北新街端点三岔口方向走以尽快回家并避免与哈里森和文森特接触 成功",
+        "blockedReason": "",
+        "failureReason": ""
+      }
+    },
+    {
+      "type": "witness",
+      "content": "[相遇] 我在卡森德拉北新街又遇见了哈里森·洛克希德。他的出现让我提高了警觉，但我保持冷静——不打算与他多说，继续按原计划尽快买花回家，并在路上扫视周围留意是否有人在监视。我感到不安但能控制情绪。",
+      "gameDay": 1,
+      "gameTime": "23:18",
+      "location": "ROAD_2",
+      "metadata": {
+        "impact": 2,
+        "perspective": "co_presence",
+        "sourceAction": "Harrison Lockheed 在 卡森德拉北新街",
+        "sourceCharacterId": "__encounter__"
+      }
+    },
+    {
+      "type": "event",
+      "content": "步行回海伦的餐桌 成功",
+      "gameDay": 1,
+      "gameTime": "23:26",
+      "location": "SCN_10_SUB_1",
+      "metadata": {
+        "outcome": "步行回海伦的餐桌 成功",
+        "blockedReason": "",
+        "failureReason": ""
+      }
+    },
+    {
+      "type": "event",
+      "content": "我把餐厅前门锁好并拉上了门闩，确认门把和门闩都已牢牢卡住。门现在关得很紧。",
+      "gameDay": 1,
+      "gameTime": "23:29",
+      "location": "SCN_10_SUB_1",
+      "metadata": {
+        "outcome": "锁好餐厅前门并拉上门闩"
+      }
+    },
+    {
+      "type": "event",
+      "content": "走上二楼休息区 成功",
+      "gameDay": 1,
+      "gameTime": "23:33",
+      "location": "SCN_10_SUB_1",
+      "metadata": {
+        "outcome": "走上二楼休息区 成功"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我在二楼把窗帘拉开，透过窗户观察街道，试图判断哈里森与文森特是否构成威胁，但并未能确认任何明确的可疑人影或可疑车辆。",
+      "gameDay": 1,
+      "gameTime": "23:36",
+      "location": "SCN_10_SUB_1",
+      "metadata": {
+        "outcome": "拉开二楼窗帘并透过窗户向外查看，注意街道上是否有人影或可疑车辆以评估哈里森与文森特是否构成威胁"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我下楼检查了后门的门闩，试拉并观察后发现没有松动，门闩牢固，可以正常锁闭。",
+      "gameDay": 1,
+      "gameTime": "23:40",
+      "location": "SCN_10_SUB_1",
+      "metadata": {
+        "outcome": "下楼检查后门的门闩是否牢固"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我检查了二楼休息区的窗锁，确认窗户能牢固关闭，没有发现松动或异常。",
+      "gameDay": 1,
+      "gameTime": "23:44",
+      "location": "SCN_10_SUB_1",
+      "metadata": {
+        "outcome": "检查二楼休息区窗户的窗锁并确认窗户能牢固关闭"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我下楼到后厨，找到并关闭了厨房的电源总开关，检查后确认炉灶、烤箱和咖啡机等非必要电器均已断电。",
+      "gameDay": 1,
+      "gameTime": "23:50",
+      "location": "SCN_10_SUB_1",
+      "metadata": {
+        "outcome": "下楼到后厨检查并关闭厨房电源总开关，确认炉灶、烤箱和咖啡机等非必要电器已断电"
+      }
+    },
+    {
+      "type": "event",
+      "content": "走上二楼休息区 成功",
+      "gameDay": 1,
+      "gameTime": "23:51",
+      "location": "SCN_10_SUB_1",
+      "metadata": {
+        "outcome": "走上二楼休息区 成功",
+        "blockedReason": "",
+        "failureReason": ""
+      }
+    },
+    {
+      "type": "event",
+      "content": "我透过二楼的窗户仔细观察了外面的街道，没看到哈里森、文森特，或任何可疑的车辆或人物。",
+      "gameDay": 1,
+      "gameTime": "23:56",
+      "location": "SCN_10_SUB_1",
+      "metadata": {
+        "outcome": "透过二楼窗户仔细观察外部街道，辨认是否有哈里森、文森特或任何可疑车辆或人物的迹象"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我走到二楼休息区，把窗帘拉上，遮住了窗外的视线，让餐厅看起来更低调。窗帘已确认拉好，没有发现异常。",
+      "gameDay": 1,
+      "gameTime": "23:58",
+      "location": "SCN_10_SUB_1",
+      "metadata": {
+        "outcome": "把二楼休息区的窗帘拉上以遮挡外部视线并保持低调"
+      }
+    },
+    {
+      "type": "information",
+      "content": "哈里森多次在店内与街上出现，并试探性询问阿道夫是否露面，同时观察约翰尼的反应，说明他在监视或试图挖掘镇上的动向。",
+      "gameDay": 1,
+      "gameTime": "23:59",
+      "location": null,
+      "metadata": {
+        "revealed": false,
+        "difficulty": "regular",
+        "knowledgeId": "learned_day1_3"
+      }
+    },
+    {
+      "type": "secret",
+      "content": "Simon在店里用粉笔在价目板下方写了应急联络流程、备用设备的位置（标注为“二楼工作站”），并设了凌晨03:00的检查提醒，暗示店里有备用设备或某种应急布置。",
+      "gameDay": 1,
+      "gameTime": "23:59",
+      "location": null,
+      "metadata": {
+        "revealed": false,
+        "difficulty": "hard",
+        "knowledgeId": "learned_day1_1"
+      }
+    },
+    {
+      "type": "information",
+      "content": "文森特低声向我打听星辰医院的值班安排和监控死角，明显有人在探听医院监控或寻找监控盲点。",
+      "gameDay": 1,
+      "gameTime": "23:59",
+      "location": null,
+      "metadata": {
+        "revealed": false,
+        "difficulty": "hard",
+        "knowledgeId": "learned_day1_2"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我把柜台边的预约本翻到明日的页码，核对了各个预订的姓名、人数和特殊要求，然后在本子的末页用笔列出了明日所需的食材清单，并把本子放回柜台备用。",
+      "gameDay": 1,
+      "gameTime": "23:59",
+      "location": "SCN_10_SUB_1",
+      "metadata": {
+        "itemId": "ITEM_SCN10_2",
+        "outcome": "翻阅预约本，核对明日预订并列出所需食材清单",
+        "itemName": "预约本"
+      }
+    },
+    {
+      "type": "information",
+      "content": "约翰尼今晚表现出愧疚和紧张，数次道歉并表示会等我觉得安全再私下谈话，但我对他的承诺保持怀疑并没有因此放松警惕。",
+      "gameDay": 1,
+      "gameTime": "23:59",
+      "location": null,
+      "metadata": {
+        "revealed": false,
+        "difficulty": "regular",
+        "knowledgeId": "learned_day1_4"
+      }
+    }
+  ],
+  "plans": [
+    {
+      "npcName": "Helen",
+      "gameDay": 2,
+      "schedule": [
+        {
+          "activity": "上二楼休息并小睡，继续保持警觉并再次确认前后门窗的锁闭。",
+          "location": "海伦的餐桌"
+        },
+        {
+          "activity": "在凌晨三点前往二楼走廊外检查Simon设的二楼工作站门口但不进入，确认没有被动过的迹象。",
+          "location": "海伦的餐桌"
+        },
+        {
+          "activity": "清晨起床整理当天菜单并根据记好的清单准备食材与备餐计划。",
+          "location": "海伦的餐桌"
+        },
+        {
+          "activity": "购买当天需要的鲜花并和店里打个招呼以维持日常社交关系。",
+          "location": "花店·卡森德拉之花"
+        },
+        {
+          "activity": "开店，准备早餐时段，检视餐厅摆设并保证招牌菜的稳定供应。",
+          "location": "海伦的餐桌"
+        },
+        {
+          "activity": "午间照常招待顾客，同时注意周围常客与陌生人的举止以防异常。",
+          "location": "海伦的餐桌"
+        },
+        {
+          "activity": "短暂停留购买一把备用门锁并尽量避免在店内谈论餐厅安全细节。",
+          "location": "五金店"
+        },
+        {
+          "activity": "顺路探望珊德拉，礼貌问候并确认她一切安好以维持邻里联系。",
+          "location": "珊德拉的小屋"
+        },
+        {
+          "activity": "下午整理库存，核对明日所需食材并安排晚餐的准备工作。",
+          "location": "海伦的餐桌"
+        },
+        {
+          "activity": "与维托共进晚餐，享受安静时光并尽量不谈及不必要的敏感话题。",
+          "location": "海伦的餐桌"
+        },
+        {
+          "activity": "打烊前再次检查收银机与保险箱，关好后门并拉上窗帘，确保一切安全。",
+          "location": "海伦的餐桌"
+        },
+        {
+          "activity": "回二楼休息区睡觉，为明天的开店恢复精力并保持必要的警觉。",
+          "location": "海伦的餐桌"
+        }
+      ],
+      "nodes": [
+        {
+          "type": "action",
+          "action": "蹲在二楼楼梯口继续静观约翰尼的动向，留意他的脚步声与任何异常举动",
+          "impact": 0,
+          "nodeId": "a1",
+          "status": "completed",
+          "endTime": "02:25",
+          "outcome": "蹲在二楼楼梯口继续静观约翰尼的动向，留意他的脚步声与任何异常举动 成功",
+          "startTime": "02:19",
+          "characterId": "Helen",
+          "characterName": "Helen",
+          "executionMeta": {
+            "startedAt": "02:19",
+            "completedAt": "02:25",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "object_interaction",
+          "action": "翻开预约本逐页检查有无昨夜或凌晨时段可作证的预约或备注并记下可能的证人名字与时间",
+          "impact": 0,
+          "nodeId": "oi_helen_001",
+          "status": "in_progress",
+          "endTime": "08:25",
+          "startTime": "08:21",
+          "characterId": "Helen",
+          "characterName": "Helen",
+          "executionMeta": {
+            "startedAt": "08:21",
+            "remainingMinutes": 4
+          },
+          "objectInteractionPayload": {
+            "itemId": "ITEM_SCN10_2"
+          }
+        },
+        {
+          "type": "action",
+          "action": "回到二楼楼梯口的阴影处靠墙静观并屏息倾听楼下与外面的动静，继续监视约翰尼并确认西蒙工作站门口未被动过",
+          "impact": 0,
+          "nodeId": "a2",
+          "status": "completed",
+          "endTime": "05:00",
+          "outcome": "回到二楼楼梯口的阴影处靠墙静观并屏息倾听楼下与外面的动静，继续监视约翰尼并确认西蒙工作站门口未被动过 成功",
+          "startTime": "04:45",
+          "characterId": "Helen",
+          "characterName": "Helen",
+          "executionMeta": {
+            "startedAt": "04:45",
+            "completedAt": "05:00",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "scene_interaction",
+          "action": "悄悄走到二楼走廊外，远距离观察并检查西蒙二楼工作站门口是否有被动过或异常的迹象，但不进入房间",
+          "impact": 2,
+          "nodeId": "si3",
+          "status": "completed",
+          "endTime": "01:55",
+          "outcome": "我悄悄走到二楼走廊外，从远处察看西蒙二楼工作站的门口。尽管二楼很暗，但我没有发现门口有被动过或其他明显异常的迹象。",
+          "startTime": "01:50",
+          "characterId": "Helen",
+          "characterName": "Helen",
+          "executionMeta": {
+            "startedAt": "01:50",
+            "completedAt": "01:55",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "scene_interaction",
+          "action": "侧耳倾听约翰尼的脚步声并保持隐蔽观察",
+          "impact": 0,
+          "nodeId": "si2",
+          "status": "completed",
+          "endTime": "03:11",
+          "outcome": "我在二楼走廊外侧耳倾听约翰尼的脚步声，并悄悄保持隐蔽观察；没有听到脚步或其他异常动静，楼下看起来仍然平静。",
+          "startTime": "03:06",
+          "characterId": "Helen",
+          "characterName": "Helen",
+          "executionMeta": {
+            "startedAt": "03:06",
+            "completedAt": "03:11",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "action",
+          "action": "回到二楼楼梯口的阴影处靠墙静观并屏息倾听楼下与外面的动静，继续监视约翰尼并确认西蒙工作站门口未被动过",
+          "impact": 0,
+          "nodeId": "a2",
+          "status": "completed",
+          "endTime": "05:00",
+          "outcome": "回到二楼楼梯口的阴影处靠墙静观并屏息倾听楼下与外面的动静，继续监视约翰尼并确认西蒙工作站门口未被动过 成功",
+          "startTime": "04:45",
+          "characterId": "Helen",
+          "characterName": "Helen",
+          "executionMeta": {
+            "startedAt": "04:45",
+            "completedAt": "05:00",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "object_interaction",
+          "action": "紧握隐藏的格斗刀并把它藏在衣内便于快速拔出",
+          "impact": 0,
+          "nodeId": "oi_day2_0211_01",
+          "status": "completed",
+          "endTime": "02:13",
+          "outcome": "我把那把格斗刀紧紧握在手里，然后顺手把它塞进衣内的隐蔽位置，留得能迅速拔出以备不时之需。",
+          "startTime": "02:11",
+          "characterId": "Helen",
+          "characterName": "Helen",
+          "executionMeta": {
+            "startedAt": "02:11",
+            "completedAt": "02:13",
+            "remainingMinutes": 0
+          },
+          "objectInteractionPayload": {
+            "itemId": "隐藏的格斗刀"
+          }
+        },
+        {
+          "type": "scene_interaction",
+          "action": "侧耳倾听约翰尼的脚步声并保持隐蔽观察",
+          "impact": 0,
+          "nodeId": "si2",
+          "status": "completed",
+          "endTime": "03:11",
+          "outcome": "我在二楼走廊外侧耳倾听约翰尼的脚步声，并悄悄保持隐蔽观察；没有听到脚步或其他异常动静，楼下看起来仍然平静。",
+          "startTime": "03:06",
+          "characterId": "Helen",
+          "characterName": "Helen",
+          "executionMeta": {
+            "startedAt": "03:06",
+            "completedAt": "03:11",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "action",
+          "action": "蹲在二楼楼梯口继续静观约翰尼的动向，留意他的脚步声与任何异常举动",
+          "impact": 0,
+          "nodeId": "a1",
+          "status": "completed",
+          "endTime": "02:25",
+          "outcome": "蹲在二楼楼梯口继续静观约翰尼的动向，留意他的脚步声与任何异常举动 成功",
+          "startTime": "02:19",
+          "characterId": "Helen",
+          "characterName": "Helen",
+          "executionMeta": {
+            "startedAt": "02:19",
+            "completedAt": "02:25",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "action",
+          "action": "上二楼休息并小睡，继续保持警觉并再次确认前后门窗的锁闭。",
+          "impact": 0,
+          "nodeId": "a3",
+          "status": "completed",
+          "endTime": "02:50",
+          "outcome": "上二楼休息并小睡，继续保持警觉并再次确认前后门窗的锁闭。 成功",
+          "startTime": "02:26",
+          "characterId": "Helen",
+          "characterName": "Helen",
+          "executionMeta": {
+            "startedAt": "02:26",
+            "completedAt": "02:50",
+            "remainingMinutes": 0
+          },
+          "routineSubtype": "rest"
+        },
+        {
+          "type": "action",
+          "action": "蹲在二楼楼梯口继续观察约翰尼的动向，倾听脚步声并再次确认西蒙工作站门口没有异常",
+          "impact": 0,
+          "nodeId": "a_day2_0251",
+          "status": "completed",
+          "endTime": "02:56",
+          "outcome": "蹲在二楼楼梯口继续观察约翰尼的动向，倾听脚步声并再次确认西蒙工作站门口没有异常 成功",
+          "startTime": "02:51",
+          "characterId": "Helen",
+          "characterName": "Helen",
+          "executionMeta": {
+            "startedAt": "02:51",
+            "completedAt": "02:56",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "scene_interaction",
+          "action": "侧耳倾听约翰尼的脚步声并保持隐蔽观察",
+          "impact": 0,
+          "nodeId": "si2",
+          "status": "completed",
+          "endTime": "03:11",
+          "outcome": "我在二楼走廊外侧耳倾听约翰尼的脚步声，并悄悄保持隐蔽观察；没有听到脚步或其他异常动静，楼下看起来仍然平静。",
+          "startTime": "03:06",
+          "characterId": "Helen",
+          "characterName": "Helen",
+          "executionMeta": {
+            "startedAt": "03:06",
+            "completedAt": "03:11",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "action",
+          "action": "退回楼梯口的阴影处，背靠墙隐蔽观察并倾听约翰尼的动向",
+          "impact": 0,
+          "nodeId": "a_helen_0300_1",
+          "status": "completed",
+          "endTime": "03:05",
+          "outcome": "退回楼梯口的阴影处，背靠墙隐蔽观察并倾听约翰尼的动向 成功",
+          "startTime": "03:00",
+          "characterId": "Helen",
+          "characterName": "Helen",
+          "executionMeta": {
+            "startedAt": "03:00",
+            "completedAt": "03:05",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "scene_interaction",
+          "action": "侧耳倾听约翰尼的脚步声并保持隐蔽观察",
+          "impact": 0,
+          "nodeId": "si2",
+          "status": "completed",
+          "endTime": "03:11",
+          "outcome": "我在二楼走廊外侧耳倾听约翰尼的脚步声，并悄悄保持隐蔽观察；没有听到脚步或其他异常动静，楼下看起来仍然平静。",
+          "startTime": "03:06",
+          "characterId": "Helen",
+          "characterName": "Helen",
+          "executionMeta": {
+            "startedAt": "03:06",
+            "completedAt": "03:11",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "object_interaction",
+          "action": "翻开预约本逐页检查有无昨夜或凌晨时段可作证的预约或备注并记下可能的证人名字与时间",
+          "impact": 0,
+          "nodeId": "oi_helen_001",
+          "status": "in_progress",
+          "endTime": "08:25",
+          "startTime": "08:21",
+          "characterId": "Helen",
+          "characterName": "Helen",
+          "executionMeta": {
+            "startedAt": "08:21",
+            "remainingMinutes": 4
+          },
+          "objectInteractionPayload": {
+            "itemId": "ITEM_SCN10_2"
+          }
+        },
+        {
+          "type": "action",
+          "action": "回到二楼楼梯口的阴影处靠墙静观并屏息倾听楼下与外面的动静，继续监视约翰尼并确认西蒙工作站门口未被动过",
+          "impact": 0,
+          "nodeId": "a2",
+          "status": "completed",
+          "endTime": "05:00",
+          "outcome": "回到二楼楼梯口的阴影处靠墙静观并屏息倾听楼下与外面的动静，继续监视约翰尼并确认西蒙工作站门口未被动过 成功",
+          "startTime": "04:45",
+          "characterId": "Helen",
+          "characterName": "Helen",
+          "executionMeta": {
+            "startedAt": "04:45",
+            "completedAt": "05:00",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "object_interaction",
+          "action": "悄悄走到西蒙二楼工作站的门前，把木椅推得更紧，确认门楔牢固并检查门缝与门锁是否有新异样",
+          "impact": 0,
+          "nodeId": "oi1",
+          "status": "completed",
+          "endTime": "04:30",
+          "outcome": "我悄悄走到西蒙二楼工作站的门前，把木椅推得更紧，确认门楔牢固并检查了门缝与门锁，没发现任何新异样。",
+          "startTime": "04:26",
+          "characterId": "Helen",
+          "characterName": "Helen",
+          "executionMeta": {
+            "startedAt": "04:26",
+            "completedAt": "04:30",
+            "remainingMinutes": 0
+          },
+          "objectInteractionPayload": {
+            "itemId": "ITEM_SCN10_5"
+          }
+        },
+        {
+          "type": "action",
+          "action": "靠在阴影处静观并仔细倾听楼下与外面的动静，继续监视约翰尼并确认二楼工作站门口未被动过",
+          "impact": 0,
+          "nodeId": "a_day2_0330_h1",
+          "status": "completed",
+          "endTime": "03:45",
+          "outcome": "靠在阴影处静观并仔细倾听楼下与外面的动静，继续监视约翰尼并确认二楼工作站门口未被动过 成功",
+          "startTime": "03:30",
+          "characterId": "Helen",
+          "characterName": "Helen",
+          "executionMeta": {
+            "startedAt": "03:30",
+            "completedAt": "03:45",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "object_interaction",
+          "action": "检查并调整藏于衣内的格斗刀位置以便迅速拔出",
+          "impact": 0,
+          "nodeId": "oi1_check_knife_0346",
+          "status": "completed",
+          "endTime": "03:48",
+          "outcome": "我检查了塞在衣内的格斗刀，摸了摸并微调了位置，让刀身更贴身更稳固，方便在需要时迅速拔出。这样我对自己的防护更有把握。",
+          "startTime": "03:46",
+          "characterId": "Helen",
+          "characterName": "Helen",
+          "executionMeta": {
+            "startedAt": "03:46",
+            "completedAt": "03:48",
+            "remainingMinutes": 0
+          },
+          "objectInteractionPayload": {
+            "itemId": "隐藏的格斗刀"
+          }
+        },
+        {
+          "type": "action",
+          "action": "检查楔在西蒙二楼工作站门上的木椅是否仍然稳固",
+          "impact": 0,
+          "nodeId": "a_day2_0349",
+          "status": "completed",
+          "endTime": "03:52",
+          "outcome": "检查楔在西蒙二楼工作站门上的木椅是否仍然稳固 成功",
+          "startTime": "03:49",
+          "characterId": "Helen",
+          "characterName": "Helen",
+          "executionMeta": {
+            "startedAt": "03:49",
+            "completedAt": "03:52",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "action",
+          "action": "继续靠在二楼楼梯口阴影处屏息观察并倾听楼下与外面的动静，监视约翰尼并再次确认西蒙二楼工作站门口没有被动过",
+          "impact": 0,
+          "nodeId": "a_next_0353",
+          "status": "completed",
+          "endTime": "04:03",
+          "outcome": "继续靠在二楼楼梯口阴影处屏息观察并倾听楼下与外面的动静，监视约翰尼并再次确认西蒙二楼工作站门口没有被动过 成功",
+          "startTime": "03:53",
+          "characterId": "Helen",
+          "characterName": "Helen",
+          "executionMeta": {
+            "startedAt": "03:53",
+            "completedAt": "04:03",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "action",
+          "action": "靠在二楼楼梯口的阴影处继续观察约翰尼的动向并屏息倾听楼下与外面的动静",
+          "impact": 0,
+          "nodeId": "a12",
+          "status": "completed",
+          "endTime": "04:40",
+          "outcome": "靠在二楼楼梯口的阴影处继续观察约翰尼的动向并屏息倾听楼下与外面的动静 成功",
+          "startTime": "04:31",
+          "characterId": "Helen",
+          "characterName": "Helen",
+          "executionMeta": {
+            "startedAt": "04:31",
+            "completedAt": "04:40",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "action",
+          "action": "在二楼休息区小睡以恢复精力，同时保持警觉以便随时应对约翰尼的动向",
+          "impact": 0,
+          "nodeId": "a_helen_rest_0410",
+          "status": "completed",
+          "endTime": "04:25",
+          "outcome": "在二楼休息区小睡以恢复精力，同时保持警觉以便随时应对约翰尼的动向 成功",
+          "startTime": "04:10",
+          "characterId": "Helen",
+          "characterName": "Helen",
+          "executionMeta": {
+            "startedAt": "04:10",
+            "completedAt": "04:25",
+            "remainingMinutes": 0
+          },
+          "routineSubtype": "rest"
+        },
+        {
+          "type": "object_interaction",
+          "action": "悄悄走到西蒙二楼工作站的门前，把木椅推得更紧，确认门楔牢固并检查门缝与门锁是否有新异样",
+          "impact": 0,
+          "nodeId": "oi1",
+          "status": "completed",
+          "endTime": "04:30",
+          "outcome": "我悄悄走到西蒙二楼工作站的门前，把木椅推得更紧，确认门楔牢固并检查了门缝与门锁，没发现任何新异样。",
+          "startTime": "04:26",
+          "characterId": "Helen",
+          "characterName": "Helen",
+          "executionMeta": {
+            "startedAt": "04:26",
+            "completedAt": "04:30",
+            "remainingMinutes": 0
+          },
+          "objectInteractionPayload": {
+            "itemId": "ITEM_SCN10_5"
+          }
+        },
+        {
+          "type": "action",
+          "action": "靠在二楼楼梯口的阴影处继续观察约翰尼的动向并屏息倾听楼下与外面的动静",
+          "impact": 0,
+          "nodeId": "a12",
+          "status": "completed",
+          "endTime": "04:40",
+          "outcome": "靠在二楼楼梯口的阴影处继续观察约翰尼的动向并屏息倾听楼下与外面的动静 成功",
+          "startTime": "04:31",
+          "characterId": "Helen",
+          "characterName": "Helen",
+          "executionMeta": {
+            "startedAt": "04:31",
+            "completedAt": "04:40",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "object_interaction",
+          "action": "翻开预约本逐页检查有无昨夜或凌晨时段可作证的预约或备注并记下可能的证人名字与时间",
+          "impact": 0,
+          "nodeId": "oi_helen_001",
+          "status": "in_progress",
+          "endTime": "08:25",
+          "startTime": "08:21",
+          "characterId": "Helen",
+          "characterName": "Helen",
+          "executionMeta": {
+            "startedAt": "08:21",
+            "remainingMinutes": 4
+          },
+          "objectInteractionPayload": {
+            "itemId": "ITEM_SCN10_2"
+          }
+        },
+        {
+          "type": "action",
+          "action": "回到二楼楼梯口的阴影处靠墙静观并屏息倾听楼下与外面的动静，继续监视约翰尼并确认西蒙工作站门口未被动过",
+          "impact": 0,
+          "nodeId": "a2",
+          "status": "completed",
+          "endTime": "05:00",
+          "outcome": "回到二楼楼梯口的阴影处靠墙静观并屏息倾听楼下与外面的动静，继续监视约翰尼并确认西蒙工作站门口未被动过 成功",
+          "startTime": "04:45",
+          "characterId": "Helen",
+          "characterName": "Helen",
+          "executionMeta": {
+            "startedAt": "04:45",
+            "completedAt": "05:00",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "action",
+          "action": "在二楼休息区小睡半小时以恢复精力并保持警觉",
+          "impact": 0,
+          "nodeId": "a2_day2_0501",
+          "status": "completed",
+          "endTime": "05:31",
+          "outcome": "在二楼休息区小睡半小时以恢复精力并保持警觉 成功",
+          "startTime": "05:01",
+          "characterId": "Helen",
+          "characterName": "Helen",
+          "executionMeta": {
+            "startedAt": "05:01",
+            "completedAt": "05:31",
+            "remainingMinutes": 0
+          },
+          "routineSubtype": "rest"
+        },
+        {
+          "type": "object_interaction",
+          "action": "拿起预约本核对并整理当天的菜单与备餐计划",
+          "impact": 0,
+          "nodeId": "oi_day2_0532",
+          "status": "completed",
+          "endTime": "05:42",
+          "outcome": "我拿起柜台旁的预约本，翻到末页逐项核对了我写好的明日食材清单，确认没有遗漏；整理并确认了当天的点菜单与备餐计划后，把预约本放回了原位。",
+          "startTime": "05:32",
+          "characterId": "Helen",
+          "characterName": "Helen",
+          "executionMeta": {
+            "startedAt": "05:32",
+            "completedAt": "05:42",
+            "remainingMinutes": 0
+          },
+          "objectInteractionPayload": {
+            "itemId": "ITEM_SCN10_2"
+          }
+        },
+        {
+          "type": "action",
+          "action": "退回楼梯口的阴影处靠墙隐蔽观察并屏息倾听约翰尼的动向",
+          "impact": 0,
+          "nodeId": "a23",
+          "status": "completed",
+          "endTime": "05:50",
+          "outcome": "退回楼梯口的阴影处靠墙隐蔽观察并屏息倾听约翰尼的动向 成功",
+          "startTime": "05:43",
+          "characterId": "Helen",
+          "characterName": "Helen",
+          "executionMeta": {
+            "startedAt": "05:43",
+            "completedAt": "05:50",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "object_interaction",
+          "action": "将木椅推得更紧，检查并确认它仍然牢牢楔在西蒙二楼工作站的门把上",
+          "impact": 0,
+          "nodeId": "oi_helen_check_chair_0557",
+          "status": "completed",
+          "endTime": "06:00",
+          "outcome": "我把那把木椅又推得更紧，牢牢楔在通往西蒙二楼工作站的门把上，检查了门缝与门锁，没发现任何异常，感觉临时防护可靠。",
+          "startTime": "05:57",
+          "characterId": "Helen",
+          "characterName": "Helen",
+          "executionMeta": {
+            "startedAt": "05:57",
+            "completedAt": "06:00",
+            "remainingMinutes": 0
+          },
+          "objectInteractionPayload": {
+            "itemId": "ITEM_SCN10_5"
+          }
+        },
+        {
+          "type": "object_interaction",
+          "action": "翻阅预约本，核对并整理今日菜单与食材准备清单，按清单计划当天备餐",
+          "impact": 0,
+          "nodeId": "oi_helen_0601",
+          "status": "completed",
+          "endTime": "06:15",
+          "outcome": "我轻声翻阅柜台旁的预约本，逐项核对了末页我写好的明日食材清单，并整理确认了今天的点菜单与备餐计划，确认无遗漏后将预约本放回原处。",
+          "startTime": "06:01",
+          "characterId": "Helen",
+          "characterName": "Helen",
+          "executionMeta": {
+            "startedAt": "06:01",
+            "completedAt": "06:15",
+            "remainingMinutes": 0
+          },
+          "objectInteractionPayload": {
+            "itemId": "ITEM_SCN10_2"
+          }
+        },
+        {
+          "type": "action",
+          "action": "在二楼楼梯口的阴影处屏息观察楼下与西蒙工作站门口的动静，继续监视约翰尼并留意任何异常。",
+          "impact": 0,
+          "nodeId": "a_day2_0616_01",
+          "status": "completed",
+          "endTime": "06:26",
+          "outcome": "在二楼楼梯口的阴影处屏息观察楼下与西蒙工作站门口的动静，继续监视约翰尼并留意任何异常。 成功",
+          "startTime": "06:16",
+          "characterId": "Helen",
+          "characterName": "Helen",
+          "executionMeta": {
+            "startedAt": "06:16",
+            "completedAt": "06:26",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "object_interaction",
+          "action": "把鲜切花放回收银台后方原本放花的位置并整理花束",
+          "impact": 0,
+          "nodeId": "oi_day2_0627_1",
+          "status": "completed",
+          "endTime": "06:30",
+          "outcome": "我把鲜切花放回收银台后方原本放花的位置，靠近预约本，并顺手把花束整理好，包纸和缎带也摆得整齐。",
+          "startTime": "06:27",
+          "characterId": "Helen",
+          "characterName": "Helen",
+          "executionMeta": {
+            "startedAt": "06:27",
+            "completedAt": "06:30",
+            "remainingMinutes": 0
+          },
+          "objectInteractionPayload": {
+            "itemId": "ITEM_SCN9_1"
+          }
+        },
+        {
+          "type": "movement",
+          "action": "走下楼到一楼餐厅准备开启并检查后厨主电源",
+          "impact": 0,
+          "nodeId": "m_helen_0631",
+          "status": "completed",
+          "endTime": "06:35",
+          "outcome": "走下楼到一楼餐厅准备开启并检查后厨主电源 成功",
+          "startTime": "06:31",
+          "characterId": "Helen",
+          "destination": "SCN_10_SUB_1",
+          "characterName": "Helen",
+          "executionMeta": {
+            "movement": {
+              "routeSnapshot": [],
+              "targetPosition": {
+                "type": "scene",
+                "sceneId": "SCN_10_SUB_1"
+              },
+              "minutesIntoStep": 0,
+              "currentStepIndex": 0,
+              "lastReachablePosition": {
+                "type": "scene",
+                "sceneId": "SCN_10_SUB_1"
+              }
+            },
+            "startedAt": "06:31",
+            "completedAt": "06:31",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "scene_interaction",
+          "action": "打开后厨主电源并开启厨房照明以便开始备餐",
+          "impact": 0,
+          "nodeId": "action_06_32_01",
+          "status": "completed",
+          "endTime": "06:36",
+          "outcome": "我走进后厨，打开了主电源并把厨房照明打开。后厨灯光亮起，主要电器通上电，准备开始备餐。",
+          "startTime": "06:32",
+          "characterId": "Helen",
+          "characterName": "Helen",
+          "executionMeta": {
+            "startedAt": "06:32",
+            "completedAt": "06:36",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "scene_interaction",
+          "action": "开始准备今日早餐的食材",
+          "impact": 0,
+          "nodeId": "si_day2_0637_1",
+          "status": "completed",
+          "endTime": "06:47",
+          "outcome": "我翻看预约本上的明日食材清单，随后在厨房开始准备今日的早餐食材。厨房里有了备料的动作，空气中食物和咖啡的香气比刚才更浓了。",
+          "startTime": "06:37",
+          "characterId": "Helen",
+          "characterName": "Helen",
+          "executionMeta": {
+            "startedAt": "06:37",
+            "completedAt": "06:47",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "scene_interaction",
+          "action": "继续准备早餐所需食材，切配并把备好的食材摆放在备餐台上，同时用手摇咖啡磨研磨新鲜咖啡豆。",
+          "impact": 0,
+          "nodeId": "si_day2_0648",
+          "status": "completed",
+          "endTime": "07:15",
+          "outcome": "我继续按预约单准备早餐材料，把切好的食材整齐摆在备餐台上；然后用手摇咖啡磨研磨咖啡豆，厨房里弥漫起更浓的现磨咖啡苦香。",
+          "startTime": "06:48",
+          "characterId": "Helen",
+          "characterName": "Helen",
+          "executionMeta": {
+            "startedAt": "06:48",
+            "completedAt": "07:15",
+            "remainingMinutes": 0
+          },
+          "objectInteractionPayload": {
+            "itemId": "ITEM_SCN10_8"
+          }
+        },
+        {
+          "type": "object_interaction",
+          "action": "用手摇咖啡磨把研好的咖啡粉倒进滤杯并开始冲煮第一批咖啡",
+          "impact": 0,
+          "nodeId": "oi_07_16_day2",
+          "status": "completed",
+          "endTime": "07:20",
+          "outcome": "我用手摇咖啡磨把刚研好的咖啡粉倒进滤杯，放好并开始滴滤。厨房里立刻充满了更浓郁的现磨苦香，第一批咖啡正在冲煮，我在吧台附近留意着。",
+          "startTime": "07:16",
+          "characterId": "Helen",
+          "characterName": "Helen",
+          "executionMeta": {
+            "startedAt": "07:16",
+            "completedAt": "07:20",
+            "remainingMinutes": 0
+          },
+          "objectInteractionPayload": {
+            "itemId": "ITEM_SCN10_8"
+          }
+        },
+        {
+          "type": "action",
+          "action": "把刚滴好的咖啡倒入杯中并尝一口确认口感与温度",
+          "impact": 0,
+          "nodeId": "a_h_0721",
+          "status": "completed",
+          "endTime": "07:24",
+          "outcome": "把刚滴好的咖啡倒入杯中并尝一口确认口感与温度 成功",
+          "startTime": "07:21",
+          "characterId": "Helen",
+          "characterName": "Helen",
+          "executionMeta": {
+            "startedAt": "07:21",
+            "completedAt": "07:24",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "object_interaction",
+          "action": "整理并摆放第一张桌子的餐具与点菜单，准备迎接早餐顾客",
+          "impact": 2,
+          "nodeId": "oi2",
+          "status": "completed",
+          "endTime": "07:30",
+          "outcome": "我把第一张木桌的餐具整理好，并把点菜单摆到桌中央、靠近陶瓶，确认一切整洁，准备迎接早餐的客人。",
+          "startTime": "07:25",
+          "characterId": "Helen",
+          "characterName": "Helen",
+          "executionMeta": {
+            "startedAt": "07:25",
+            "completedAt": "07:30",
+            "remainingMinutes": 0
+          },
+          "objectInteractionPayload": {
+            "itemId": "ITEM_SCN10_1"
+          }
+        },
+        {
+          "type": "movement",
+          "action": "走到花店·卡森德拉之花去买当天需要的鲜花并顺便和店主打个招呼",
+          "impact": 0,
+          "nodeId": "m1",
+          "status": "completed",
+          "endTime": "07:36",
+          "outcome": "走到花店·卡森德拉之花去买当天需要的鲜花并顺便和店主打个招呼 成功",
+          "startTime": "07:31",
+          "characterId": "Helen",
+          "destination": "SCN_9_SUB_1",
+          "characterName": "Helen",
+          "executionMeta": {
+            "movement": {
+              "routeSnapshot": [
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_2",
+                    "position": 0.28
+                  },
+                  "from": {
+                    "type": "scene",
+                    "sceneId": "SCN_10_SUB_1"
+                  },
+                  "kind": "along_road",
+                  "roadId": "ROAD_2",
+                  "blockCheck": {
+                    "toId": "ROAD_2",
+                    "fromId": "SCN_10_SUB_1"
+                  },
+                  "durationMinutes": 1
+                },
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_2",
+                    "position": 1
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_2",
+                    "position": 0.28
+                  },
+                  "kind": "along_road",
+                  "roadId": "ROAD_2",
+                  "durationMinutes": 7.199999999999999
+                },
+                {
+                  "to": {
+                    "type": "junction",
+                    "junctionId": "JUNC_3"
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_2",
+                    "position": 1
+                  },
+                  "kind": "to_junction",
+                  "blockCheck": {
+                    "toId": "JUNC_3",
+                    "fromId": "ROAD_2"
+                  },
+                  "durationMinutes": 0
+                },
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_2",
+                    "position": 1
+                  },
+                  "from": {
+                    "type": "junction",
+                    "junctionId": "JUNC_3"
+                  },
+                  "kind": "to_junction",
+                  "blockCheck": {
+                    "toId": "ROAD_2",
+                    "fromId": "JUNC_3"
+                  },
+                  "durationMinutes": 0
+                },
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_2",
+                    "position": 0.83
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_2",
+                    "position": 1
+                  },
+                  "kind": "along_road",
+                  "roadId": "ROAD_2",
+                  "durationMinutes": 1.7
+                },
+                {
+                  "to": {
+                    "type": "scene",
+                    "sceneId": "SCN_9_SUB_1"
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_2",
+                    "position": 0.83
+                  },
+                  "kind": "to_scene",
+                  "blockCheck": {
+                    "toId": "SCN_9_SUB_1",
+                    "fromId": "ROAD_2"
+                  },
+                  "durationMinutes": 1
+                }
+              ],
+              "targetPosition": {
+                "type": "scene",
+                "sceneId": "SCN_9_SUB_1"
+              },
+              "minutesIntoStep": 0,
+              "currentStepIndex": 6,
+              "lastReachablePosition": {
+                "type": "scene",
+                "sceneId": "SCN_9_SUB_1"
+              }
+            },
+            "startedAt": "07:31",
+            "completedAt": "07:42",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "movement",
+          "action": "走回海伦的餐桌",
+          "impact": 0,
+          "nodeId": "m_helen_return_0743",
+          "status": "interrupted",
+          "endTime": "07:48",
+          "outcome": "走回海伦的餐桌 [因重新规划而中断] 已中断",
+          "startTime": "07:43",
+          "characterId": "Helen",
+          "destination": "SCN_10_SUB_1",
+          "characterName": "Helen",
+          "executionMeta": {
+            "movement": {
+              "routeSnapshot": [
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_2",
+                    "position": 0.83
+                  },
+                  "from": {
+                    "type": "scene",
+                    "sceneId": "SCN_9_SUB_1"
+                  },
+                  "kind": "along_road",
+                  "roadId": "ROAD_2",
+                  "blockCheck": {
+                    "toId": "ROAD_2",
+                    "fromId": "SCN_9_SUB_1"
+                  },
+                  "durationMinutes": 1
+                },
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_2",
+                    "position": 1
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_2",
+                    "position": 0.83
+                  },
+                  "kind": "along_road",
+                  "roadId": "ROAD_2",
+                  "durationMinutes": 1.7
+                },
+                {
+                  "to": {
+                    "type": "junction",
+                    "junctionId": "JUNC_3"
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_2",
+                    "position": 1
+                  },
+                  "kind": "to_junction",
+                  "blockCheck": {
+                    "toId": "JUNC_3",
+                    "fromId": "ROAD_2"
+                  },
+                  "durationMinutes": 0
+                },
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_2",
+                    "position": 1
+                  },
+                  "from": {
+                    "type": "junction",
+                    "junctionId": "JUNC_3"
+                  },
+                  "kind": "to_junction",
+                  "blockCheck": {
+                    "toId": "ROAD_2",
+                    "fromId": "JUNC_3"
+                  },
+                  "durationMinutes": 0
+                },
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_2",
+                    "position": 0.28
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_2",
+                    "position": 1
+                  },
+                  "kind": "along_road",
+                  "roadId": "ROAD_2",
+                  "durationMinutes": 7.199999999999999
+                },
+                {
+                  "to": {
+                    "type": "scene",
+                    "sceneId": "SCN_10_SUB_1"
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_2",
+                    "position": 0.28
+                  },
+                  "kind": "to_scene",
+                  "blockCheck": {
+                    "toId": "SCN_10_SUB_1",
+                    "fromId": "ROAD_2"
+                  },
+                  "durationMinutes": 1
+                }
+              ],
+              "targetPosition": {
+                "type": "scene",
+                "sceneId": "SCN_10_SUB_1"
+              },
+              "minutesIntoStep": 1,
+              "currentStepIndex": 1,
+              "lastReachablePosition": {
+                "type": "road",
+                "roadId": "ROAD_2",
+                "position": 0.9299999999999999
+              }
+            },
+            "startedAt": "07:43",
+            "interruptedAt": "07:54",
+            "remainingMinutes": 0,
+            "interruptionReason": "revise_replan"
+          }
+        },
+        {
+          "type": "character_interaction",
+          "action": "当着西蒙的面要求他在餐厅有人在场时出示他说的星辰医院监控录像和具体时间戳，语气坚定但礼貌，说明若无法当面展示就改约在有第三方在场的地方再核对；同时暗示我会记录他所说的细节以备查证。",
+          "impact": 1,
+          "nodeId": "ci1",
+          "status": "completed",
+          "endTime": "07:58",
+          "outcome": "我到了卡森德拉北新街的餐厅等候，但西蒙并不在场。我当着空位用坚定但礼貌的语气要求他在餐厅有人在场时当面出示他说的星辰医院监控录像和具体时间戳，说明若不能当面展示就改约在有第三方在场时再核对，并暗示会记录他所说的细节以备查证。",
+          "startTime": "07:55",
+          "characterId": "Helen",
+          "characterName": "Helen",
+          "executionMeta": {
+            "startedAt": "07:55",
+            "completedAt": "07:58",
+            "remainingMinutes": 0
+          },
+          "targetCharacterIds": [
+            "Simon"
+          ]
+        },
+        {
+          "type": "character_interaction",
+          "action": "告诉西蒙在有人在场时当面出示星辰医院的监控录像与时间戳，我现在拒绝与他单独核实",
+          "impact": 1,
+          "nodeId": "ci_helen_0807",
+          "status": "completed",
+          "endTime": "08:10",
+          "outcome": "我去了卡森德拉北新街找西蒙，但他不在。 我对他留下明确要求：若要核实，就必须在有人在场时当面出示星辰医院的监控录像并附时间戳，我现在拒绝与他单独核实。",
+          "startTime": "08:07",
+          "characterId": "Helen",
+          "characterName": "Helen",
+          "executionMeta": {
+            "startedAt": "08:07",
+            "completedAt": "08:10",
+            "remainingMinutes": 0
+          },
+          "targetCharacterIds": [
+            "npc_simon"
+          ]
+        },
+        {
+          "type": "movement",
+          "action": "回海伦的餐桌准备开店并整理预约本以核对昨晚行踪佐证",
+          "impact": 0,
+          "nodeId": "m_helen_return_restaurant_0811",
+          "status": "completed",
+          "endTime": "08:16",
+          "outcome": "回海伦的餐桌准备开店并整理预约本以核对昨晚行踪佐证 成功",
+          "startTime": "08:11",
+          "characterId": "Helen",
+          "destination": "SCN_10_SUB_1",
+          "characterName": "Helen",
+          "executionMeta": {
+            "movement": {
+              "routeSnapshot": [
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_2",
+                    "position": 1
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_2",
+                    "position": 0.9299999999999999
+                  },
+                  "kind": "along_road",
+                  "roadId": "ROAD_2",
+                  "durationMinutes": 0.7000000000000006
+                },
+                {
+                  "to": {
+                    "type": "junction",
+                    "junctionId": "JUNC_3"
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_2",
+                    "position": 1
+                  },
+                  "kind": "to_junction",
+                  "blockCheck": {
+                    "toId": "JUNC_3",
+                    "fromId": "ROAD_2"
+                  },
+                  "durationMinutes": 0
+                },
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_2",
+                    "position": 1
+                  },
+                  "from": {
+                    "type": "junction",
+                    "junctionId": "JUNC_3"
+                  },
+                  "kind": "to_junction",
+                  "blockCheck": {
+                    "toId": "ROAD_2",
+                    "fromId": "JUNC_3"
+                  },
+                  "durationMinutes": 0
+                },
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_2",
+                    "position": 0.28
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_2",
+                    "position": 1
+                  },
+                  "kind": "along_road",
+                  "roadId": "ROAD_2",
+                  "durationMinutes": 7.199999999999999
+                },
+                {
+                  "to": {
+                    "type": "scene",
+                    "sceneId": "SCN_10_SUB_1"
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_2",
+                    "position": 0.28
+                  },
+                  "kind": "to_scene",
+                  "blockCheck": {
+                    "toId": "SCN_10_SUB_1",
+                    "fromId": "ROAD_2"
+                  },
+                  "durationMinutes": 1
+                }
+              ],
+              "targetPosition": {
+                "type": "scene",
+                "sceneId": "SCN_10_SUB_1"
+              },
+              "minutesIntoStep": 0,
+              "currentStepIndex": 5,
+              "lastReachablePosition": {
+                "type": "scene",
+                "sceneId": "SCN_10_SUB_1"
+              }
+            },
+            "startedAt": "08:11",
+            "completedAt": "08:20",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "object_interaction",
+          "action": "翻开预约本逐页检查有无昨夜或凌晨时段可作证的预约或备注并记下可能的证人名字与时间",
+          "impact": 0,
+          "nodeId": "oi_helen_001",
+          "status": "in_progress",
+          "endTime": "08:25",
+          "startTime": "08:21",
+          "characterId": "Helen",
+          "characterName": "Helen",
+          "executionMeta": {
+            "startedAt": "08:21",
+            "remainingMinutes": 4
+          },
+          "objectInteractionPayload": {
+            "itemId": "ITEM_SCN10_2"
+          }
+        }
+      ]
+    },
+    {
+      "npcName": "Helen",
+      "gameDay": 1,
+      "schedule": [
+        {
+          "activity": "接待晚餐客人，确认今晚的菜品和服务都顺利进行。",
+          "location": "海伦的餐桌"
+        },
+        {
+          "activity": "在厨房亲自做最后一道招牌菜并观察员工的操作。",
+          "location": "海伦的餐桌"
+        },
+        {
+          "activity": "结束营业，清点现金，做好账目并将款项放入保险箱。",
+          "location": "海伦的餐桌"
+        },
+        {
+          "activity": "检查后厨与门锁，整理剩余食材并把不需要的东西收好。",
+          "location": "海伦的餐桌"
+        },
+        {
+          "activity": "买一束简单的鲜花带回给维托，顺便和店主寒暄几句以维持邻里关系。",
+          "location": "花店·卡森德拉之花"
+        },
+        {
+          "activity": "向哈里森咨询并订购一个更坚固、不显眼的门锁或小型监控设备以增强店铺安全。",
+          "location": "五金店"
+        },
+        {
+          "activity": "在教堂门廊静坐片刻，整理思绪并默默纪念卢奇菲罗。",
+          "location": "教堂"
+        },
+        {
+          "activity": "回到二楼休息区给自己泡杯咖啡，同时给维托打个电话报平安。",
+          "location": "海伦的餐桌"
+        },
+        {
+          "activity": "翻阅明日的预订表和食材清单，规划明天的菜单与采购清单。",
+          "location": "海伦的餐桌"
+        },
+        {
+          "activity": "锁好门窗，关掉厨房电源，早些上床睡觉以保持精力充沛。",
+          "location": "海伦的餐桌"
+        }
+      ],
+      "nodes": [
+        {
+          "type": "object_interaction",
+          "action": "把鲜切花拿起来并放进我的手提包",
+          "impact": 0,
+          "nodeId": "oi1",
+          "status": "completed",
+          "endTime": "22:39",
+          "outcome": "我从收银台后方把那束鲜切花拿起来，整理了一下牛皮纸和缎带，然后把花放进我的手提包，动作干脆利落，没有引起注意。",
+          "startTime": "22:38",
+          "characterId": "Helen",
+          "characterName": "Helen",
+          "executionMeta": {
+            "startedAt": "22:38",
+            "completedAt": "22:39",
+            "remainingMinutes": 0
+          },
+          "objectInteractionPayload": {
+            "itemId": "ITEM_SCN9_1"
+          }
+        },
+        {
+          "type": "scene_interaction",
+          "action": "打开餐厅的电灯",
+          "impact": 2,
+          "nodeId": "si_hel_turn_on_lights_1906",
+          "status": "completed",
+          "endTime": "19:08",
+          "outcome": "我把餐厅的电灯打开了，原本的漆黑消失，室内恢复为温暖的黄光，能看清周围的桌椅和摆设。",
+          "startTime": "19:06",
+          "characterId": "Helen",
+          "characterName": "Helen",
+          "executionMeta": {
+            "startedAt": "19:06",
+            "completedAt": "19:08",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "object_interaction",
+          "action": "把点菜单摆到每张桌子上，并在特菜位置用笔标注今晚的招牌菜",
+          "impact": 2,
+          "nodeId": "oi_scn10_001",
+          "status": "completed",
+          "endTime": "19:14",
+          "outcome": "我把柜台角落的点菜单一张张拿出来，分别摆到每张桌子上，然后在特菜那一栏用笔圈出并写明“今晚招牌”，方便服务员和客人注意。",
+          "startTime": "19:09",
+          "characterId": "Helen",
+          "characterName": "Helen",
+          "executionMeta": {
+            "startedAt": "19:09",
+            "completedAt": "19:14",
+            "remainingMinutes": 0
+          },
+          "objectInteractionPayload": {
+            "itemId": "ITEM_SCN10_7"
+          }
+        },
+        {
+          "type": "scene_interaction",
+          "action": "检查后厨门锁",
+          "impact": 0,
+          "nodeId": "si_helen_001",
+          "status": "completed",
+          "endTime": "19:44",
+          "outcome": "我检查了通往后厨的门锁，留意锁体和周边，没有发现被撬或受损的迹象，门锁看起来正常；后厨仍传来平常的锅碗碰撞声。",
+          "startTime": "19:41",
+          "characterId": "Helen",
+          "characterName": "Helen",
+          "executionMeta": {
+            "startedAt": "19:41",
+            "completedAt": "19:44",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "scene_interaction",
+          "action": "透过二楼窗户仔细观察外部街道，辨认是否有哈里森、文森特或任何可疑车辆或人物的迹象",
+          "impact": 0,
+          "nodeId": "si1",
+          "status": "completed",
+          "endTime": "23:56",
+          "outcome": "我透过二楼的窗户仔细观察了外面的街道，没看到哈里森、文森特，或任何可疑的车辆或人物。",
+          "startTime": "23:52",
+          "characterId": "Helen",
+          "characterName": "Helen",
+          "executionMeta": {
+            "startedAt": "23:52",
+            "completedAt": "23:56",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "scene_interaction",
+          "action": "检查后厨门锁",
+          "impact": 0,
+          "nodeId": "si_helen_001",
+          "status": "completed",
+          "endTime": "19:44",
+          "outcome": "我检查了通往后厨的门锁，留意锁体和周边，没有发现被撬或受损的迹象，门锁看起来正常；后厨仍传来平常的锅碗碰撞声。",
+          "startTime": "19:41",
+          "characterId": "Helen",
+          "characterName": "Helen",
+          "executionMeta": {
+            "startedAt": "19:41",
+            "completedAt": "19:44",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "scene_interaction",
+          "action": "检查二楼休息区窗户的窗锁并确认窗户能牢固关闭",
+          "impact": 0,
+          "nodeId": "si2",
+          "status": "completed",
+          "endTime": "23:44",
+          "outcome": "我检查了二楼休息区的窗锁，确认窗户能牢固关闭，没有发现松动或异常。",
+          "startTime": "23:41",
+          "characterId": "Helen",
+          "characterName": "Helen",
+          "executionMeta": {
+            "startedAt": "23:41",
+            "completedAt": "23:44",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "character_interaction",
+          "action": "低声与约翰尼交谈，把话题维持在镇上琐事和日常上，避免提及驯鹿酒吧或任何暴力往事，同时用眼神和短促手势扫视周围以示警并准备在必要时示意员工靠近或结束对话。",
+          "impact": 1,
+          "nodeId": "ci_helen_001",
+          "status": "completed",
+          "endTime": "21:54",
+          "outcome": "我低声与约翰尼聊了镇上的琐事，刻意避开了驯鹿酒吧和任何暴力往事，并用眼神和短促手势扫视四周以示警，准备在必要时示意员工靠近或结束对话。我感觉这次低调的交流巩固了我们之间的默契，但仍需继续谨慎行事。",
+          "startTime": "21:49",
+          "characterId": "Helen",
+          "characterName": "Helen",
+          "executionMeta": {
+            "startedAt": "21:49",
+            "completedAt": "21:54",
+            "remainingMinutes": 0
+          },
+          "targetCharacterIds": [
+            "Johnny"
+          ]
+        },
+        {
+          "type": "action",
+          "action": "把招牌菜端到哈里森面前并用平静语气介绍配料，顺带把话题引到镇上的日常琐事上",
+          "impact": 2,
+          "nodeId": "a2",
+          "status": "interrupted",
+          "endTime": "21:43",
+          "outcome": "把招牌菜端到哈里森面前并用平静语气介绍配料，顺带把话题引到镇上的日常琐事上 [因重新规划而中断] 已中断",
+          "startTime": "21:41",
+          "characterId": "Helen",
+          "characterName": "Helen",
+          "executionMeta": {
+            "startedAt": "21:41",
+            "interruptedAt": "21:44",
+            "remainingMinutes": 0,
+            "interruptionReason": "revise_replan"
+          }
+        },
+        {
+          "type": "movement",
+          "action": "走上二楼休息区",
+          "impact": 0,
+          "nodeId": "m1",
+          "status": "completed",
+          "endTime": "23:54",
+          "outcome": "走上二楼休息区 成功",
+          "startTime": "23:51",
+          "characterId": "Helen",
+          "destination": "SCN_10_SUB_1",
+          "characterName": "Helen",
+          "executionMeta": {
+            "movement": {
+              "routeSnapshot": [],
+              "targetPosition": {
+                "type": "scene",
+                "sceneId": "SCN_10_SUB_1"
+              },
+              "minutesIntoStep": 0,
+              "currentStepIndex": 0,
+              "lastReachablePosition": {
+                "type": "scene",
+                "sceneId": "SCN_10_SUB_1"
+              }
+            },
+            "startedAt": "23:51",
+            "completedAt": "23:51",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "action",
+          "action": "环顾四周，留意是否有人在监视或尾随",
+          "impact": 0,
+          "nodeId": "a_helen_scan_2146",
+          "status": "completed",
+          "endTime": "21:48",
+          "outcome": "环顾四周，留意是否有人在监视或尾随 成功",
+          "startTime": "21:46",
+          "characterId": "Helen",
+          "characterName": "Helen",
+          "executionMeta": {
+            "startedAt": "21:46",
+            "completedAt": "21:48",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "character_interaction",
+          "action": "低声与约翰尼交谈，把话题维持在镇上琐事和日常上，避免提及驯鹿酒吧或任何暴力往事，同时用眼神和短促手势扫视周围以示警并准备在必要时示意员工靠近或结束对话。",
+          "impact": 1,
+          "nodeId": "ci_helen_001",
+          "status": "completed",
+          "endTime": "21:54",
+          "outcome": "我低声与约翰尼聊了镇上的琐事，刻意避开了驯鹿酒吧和任何暴力往事，并用眼神和短促手势扫视四周以示警，准备在必要时示意员工靠近或结束对话。我感觉这次低调的交流巩固了我们之间的默契，但仍需继续谨慎行事。",
+          "startTime": "21:49",
+          "characterId": "Helen",
+          "characterName": "Helen",
+          "executionMeta": {
+            "startedAt": "21:49",
+            "completedAt": "21:54",
+            "remainingMinutes": 0
+          },
+          "targetCharacterIds": [
+            "Johnny"
+          ]
+        },
+        {
+          "type": "movement",
+          "action": "走上二楼休息区",
+          "impact": 0,
+          "nodeId": "m1",
+          "status": "completed",
+          "endTime": "23:54",
+          "outcome": "走上二楼休息区 成功",
+          "startTime": "23:51",
+          "characterId": "Helen",
+          "destination": "SCN_10_SUB_1",
+          "characterName": "Helen",
+          "executionMeta": {
+            "movement": {
+              "routeSnapshot": [],
+              "targetPosition": {
+                "type": "scene",
+                "sceneId": "SCN_10_SUB_1"
+              },
+              "minutesIntoStep": 0,
+              "currentStepIndex": 0,
+              "lastReachablePosition": {
+                "type": "scene",
+                "sceneId": "SCN_10_SUB_1"
+              }
+            },
+            "startedAt": "23:51",
+            "completedAt": "23:51",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "object_interaction",
+          "action": "取下包装台上的鲜切花束并在收银台付款，准备尽快离开",
+          "impact": 2,
+          "nodeId": "oi_helen_buyflowers_1",
+          "status": "completed",
+          "endTime": "22:08",
+          "outcome": "我把包装台上的花束取下，在台上用牛皮纸和缎带简单包好，在收银台付了钱，准备尽快离开，同时留意周围是否有人尾随。",
+          "startTime": "22:06",
+          "characterId": "Helen",
+          "characterName": "Helen",
+          "executionMeta": {
+            "startedAt": "22:06",
+            "completedAt": "22:08",
+            "remainingMinutes": 0
+          },
+          "objectInteractionPayload": {
+            "itemId": "ITEM_SCN9_1"
+          }
+        },
+        {
+          "type": "movement",
+          "action": "走上二楼休息区",
+          "impact": 0,
+          "nodeId": "m1",
+          "status": "completed",
+          "endTime": "23:54",
+          "outcome": "走上二楼休息区 成功",
+          "startTime": "23:51",
+          "characterId": "Helen",
+          "destination": "SCN_10_SUB_1",
+          "characterName": "Helen",
+          "executionMeta": {
+            "movement": {
+              "routeSnapshot": [],
+              "targetPosition": {
+                "type": "scene",
+                "sceneId": "SCN_10_SUB_1"
+              },
+              "minutesIntoStep": 0,
+              "currentStepIndex": 0,
+              "lastReachablePosition": {
+                "type": "scene",
+                "sceneId": "SCN_10_SUB_1"
+              }
+            },
+            "startedAt": "23:51",
+            "completedAt": "23:51",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "action",
+          "action": "给维托打电话报平安",
+          "impact": 0,
+          "nodeId": "a_helen_call_vito_001",
+          "status": "completed",
+          "endTime": "22:24",
+          "outcome": "给维托打电话报平安 成功",
+          "startTime": "22:21",
+          "characterId": "Helen",
+          "characterName": "Helen",
+          "executionMeta": {
+            "startedAt": "22:21",
+            "completedAt": "22:24",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "object_interaction",
+          "action": "把鲜切花拿起来并放进我的手提包",
+          "impact": 0,
+          "nodeId": "oi1",
+          "status": "completed",
+          "endTime": "22:39",
+          "outcome": "我从收银台后方把那束鲜切花拿起来，整理了一下牛皮纸和缎带，然后把花放进我的手提包，动作干脆利落，没有引起注意。",
+          "startTime": "22:38",
+          "characterId": "Helen",
+          "characterName": "Helen",
+          "executionMeta": {
+            "startedAt": "22:38",
+            "completedAt": "22:39",
+            "remainingMinutes": 0
+          },
+          "objectInteractionPayload": {
+            "itemId": "ITEM_SCN9_1"
+          }
+        },
+        {
+          "type": "object_interaction",
+          "action": "把鲜切花拿起来并放进我的手提包",
+          "impact": 0,
+          "nodeId": "oi1",
+          "status": "completed",
+          "endTime": "22:39",
+          "outcome": "我从收银台后方把那束鲜切花拿起来，整理了一下牛皮纸和缎带，然后把花放进我的手提包，动作干脆利落，没有引起注意。",
+          "startTime": "22:38",
+          "characterId": "Helen",
+          "characterName": "Helen",
+          "executionMeta": {
+            "startedAt": "22:38",
+            "completedAt": "22:39",
+            "remainingMinutes": 0
+          },
+          "objectInteractionPayload": {
+            "itemId": "ITEM_SCN9_1"
+          }
+        },
+        {
+          "type": "object_interaction",
+          "action": "把鲜切花拿起来并放进我的手提包",
+          "impact": 0,
+          "nodeId": "oi1",
+          "status": "completed",
+          "endTime": "22:39",
+          "outcome": "我从收银台后方把那束鲜切花拿起来，整理了一下牛皮纸和缎带，然后把花放进我的手提包，动作干脆利落，没有引起注意。",
+          "startTime": "22:38",
+          "characterId": "Helen",
+          "characterName": "Helen",
+          "executionMeta": {
+            "startedAt": "22:38",
+            "completedAt": "22:39",
+            "remainingMinutes": 0
+          },
+          "objectInteractionPayload": {
+            "itemId": "ITEM_SCN9_1"
+          }
+        },
+        {
+          "type": "object_interaction",
+          "action": "用手摇咖啡磨磨豆并给自己泡一杯咖啡，上二楼休息区静坐以避免与客人多谈",
+          "impact": 0,
+          "nodeId": "oi1_helen_2245",
+          "status": "completed",
+          "endTime": "22:50",
+          "outcome": "我用手摇咖啡磨把豆子磨好，给自己泡了一杯现磨咖啡，闻着苦香后上了二楼的休息区静坐，尽量不跟客人多说话。",
+          "startTime": "22:45",
+          "characterId": "Helen",
+          "characterName": "Helen",
+          "executionMeta": {
+            "startedAt": "22:45",
+            "completedAt": "22:50",
+            "remainingMinutes": 0
+          },
+          "objectInteractionPayload": {
+            "itemId": "ITEM_SCN10_8"
+          }
+        },
+        {
+          "type": "movement",
+          "action": "走上二楼休息区",
+          "impact": 0,
+          "nodeId": "m1",
+          "status": "completed",
+          "endTime": "23:54",
+          "outcome": "走上二楼休息区 成功",
+          "startTime": "23:51",
+          "characterId": "Helen",
+          "destination": "SCN_10_SUB_1",
+          "characterName": "Helen",
+          "executionMeta": {
+            "movement": {
+              "routeSnapshot": [],
+              "targetPosition": {
+                "type": "scene",
+                "sceneId": "SCN_10_SUB_1"
+              },
+              "minutesIntoStep": 0,
+              "currentStepIndex": 0,
+              "lastReachablePosition": {
+                "type": "scene",
+                "sceneId": "SCN_10_SUB_1"
+              }
+            },
+            "startedAt": "23:51",
+            "completedAt": "23:51",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "movement",
+          "action": "走上二楼休息区",
+          "impact": 0,
+          "nodeId": "m1",
+          "status": "completed",
+          "endTime": "23:54",
+          "outcome": "走上二楼休息区 成功",
+          "startTime": "23:51",
+          "characterId": "Helen",
+          "destination": "SCN_10_SUB_1",
+          "characterName": "Helen",
+          "executionMeta": {
+            "movement": {
+              "routeSnapshot": [],
+              "targetPosition": {
+                "type": "scene",
+                "sceneId": "SCN_10_SUB_1"
+              },
+              "minutesIntoStep": 0,
+              "currentStepIndex": 0,
+              "lastReachablePosition": {
+                "type": "scene",
+                "sceneId": "SCN_10_SUB_1"
+              }
+            },
+            "startedAt": "23:51",
+            "completedAt": "23:51",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "movement",
+          "action": "悄悄从后门离开餐厅，沿卡森德拉北新街朝北新街端点三岔口方向走以尽快回家并避免与哈里森和文森特接触",
+          "impact": 0,
+          "nodeId": "m_helen_001",
+          "status": "completed",
+          "endTime": "23:14",
+          "outcome": "悄悄从后门离开餐厅，沿卡森德拉北新街朝北新街端点三岔口方向走以尽快回家并避免与哈里森和文森特接触 成功",
+          "startTime": "23:09",
+          "characterId": "Helen",
+          "destination": "JUNC_3",
+          "characterName": "Helen",
+          "executionMeta": {
+            "movement": {
+              "routeSnapshot": [
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_2",
+                    "position": 0.28
+                  },
+                  "from": {
+                    "type": "scene",
+                    "sceneId": "SCN_10_SUB_1"
+                  },
+                  "kind": "along_road",
+                  "roadId": "ROAD_2",
+                  "blockCheck": {
+                    "toId": "ROAD_2",
+                    "fromId": "SCN_10_SUB_1"
+                  },
+                  "durationMinutes": 1
+                },
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_2",
+                    "position": 1
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_2",
+                    "position": 0.28
+                  },
+                  "kind": "along_road",
+                  "roadId": "ROAD_2",
+                  "durationMinutes": 7.199999999999999
+                },
+                {
+                  "to": {
+                    "type": "junction",
+                    "junctionId": "JUNC_3"
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_2",
+                    "position": 1
+                  },
+                  "kind": "to_junction",
+                  "blockCheck": {
+                    "toId": "JUNC_3",
+                    "fromId": "ROAD_2"
+                  },
+                  "durationMinutes": 0
+                }
+              ],
+              "targetPosition": {
+                "type": "junction",
+                "junctionId": "JUNC_3"
+              },
+              "minutesIntoStep": 0,
+              "currentStepIndex": 3,
+              "lastReachablePosition": {
+                "type": "junction",
+                "junctionId": "JUNC_3"
+              }
+            },
+            "startedAt": "23:09",
+            "completedAt": "23:17",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "movement",
+          "action": "步行回海伦的餐桌",
+          "impact": 0,
+          "nodeId": "m_node_001",
+          "status": "completed",
+          "endTime": "23:28",
+          "outcome": "步行回海伦的餐桌 成功",
+          "startTime": "23:18",
+          "characterId": "Helen",
+          "destination": "SCN_10_SUB_1",
+          "characterName": "Helen",
+          "executionMeta": {
+            "movement": {
+              "routeSnapshot": [
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_2",
+                    "position": 1
+                  },
+                  "from": {
+                    "type": "junction",
+                    "junctionId": "JUNC_3"
+                  },
+                  "kind": "to_junction",
+                  "blockCheck": {
+                    "toId": "ROAD_2",
+                    "fromId": "JUNC_3"
+                  },
+                  "durationMinutes": 0
+                },
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_2",
+                    "position": 0.28
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_2",
+                    "position": 1
+                  },
+                  "kind": "along_road",
+                  "roadId": "ROAD_2",
+                  "durationMinutes": 7.199999999999999
+                },
+                {
+                  "to": {
+                    "type": "scene",
+                    "sceneId": "SCN_10_SUB_1"
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_2",
+                    "position": 0.28
+                  },
+                  "kind": "to_scene",
+                  "blockCheck": {
+                    "toId": "SCN_10_SUB_1",
+                    "fromId": "ROAD_2"
+                  },
+                  "durationMinutes": 1
+                }
+              ],
+              "targetPosition": {
+                "type": "scene",
+                "sceneId": "SCN_10_SUB_1"
+              },
+              "minutesIntoStep": 0,
+              "currentStepIndex": 3,
+              "lastReachablePosition": {
+                "type": "scene",
+                "sceneId": "SCN_10_SUB_1"
+              }
+            },
+            "startedAt": "23:18",
+            "completedAt": "23:26",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "scene_interaction",
+          "action": "透过二楼窗户仔细观察外部街道，辨认是否有哈里森、文森特或任何可疑车辆或人物的迹象",
+          "impact": 0,
+          "nodeId": "si1",
+          "status": "completed",
+          "endTime": "23:56",
+          "outcome": "我透过二楼的窗户仔细观察了外面的街道，没看到哈里森、文森特，或任何可疑的车辆或人物。",
+          "startTime": "23:52",
+          "characterId": "Helen",
+          "characterName": "Helen",
+          "executionMeta": {
+            "startedAt": "23:52",
+            "completedAt": "23:56",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "action",
+          "action": "走上二楼休息区",
+          "impact": 0,
+          "nodeId": "a1",
+          "status": "completed",
+          "endTime": "23:33",
+          "outcome": "走上二楼休息区 成功",
+          "startTime": "23:30",
+          "characterId": "Helen",
+          "characterName": "Helen",
+          "executionMeta": {
+            "startedAt": "23:30",
+            "completedAt": "23:33",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "scene_interaction",
+          "action": "透过二楼窗户仔细观察外部街道，辨认是否有哈里森、文森特或任何可疑车辆或人物的迹象",
+          "impact": 0,
+          "nodeId": "si1",
+          "status": "completed",
+          "endTime": "23:56",
+          "outcome": "我透过二楼的窗户仔细观察了外面的街道，没看到哈里森、文森特，或任何可疑的车辆或人物。",
+          "startTime": "23:52",
+          "characterId": "Helen",
+          "characterName": "Helen",
+          "executionMeta": {
+            "startedAt": "23:52",
+            "completedAt": "23:56",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "scene_interaction",
+          "action": "透过二楼窗户仔细观察外部街道，辨认是否有哈里森、文森特或任何可疑车辆或人物的迹象",
+          "impact": 0,
+          "nodeId": "si1",
+          "status": "completed",
+          "endTime": "23:56",
+          "outcome": "我透过二楼的窗户仔细观察了外面的街道，没看到哈里森、文森特，或任何可疑的车辆或人物。",
+          "startTime": "23:52",
+          "characterId": "Helen",
+          "characterName": "Helen",
+          "executionMeta": {
+            "startedAt": "23:52",
+            "completedAt": "23:56",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "scene_interaction",
+          "action": "检查二楼休息区窗户的窗锁并确认窗户能牢固关闭",
+          "impact": 0,
+          "nodeId": "si2",
+          "status": "completed",
+          "endTime": "23:44",
+          "outcome": "我检查了二楼休息区的窗锁，确认窗户能牢固关闭，没有发现松动或异常。",
+          "startTime": "23:41",
+          "characterId": "Helen",
+          "characterName": "Helen",
+          "executionMeta": {
+            "startedAt": "23:41",
+            "completedAt": "23:44",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "scene_interaction",
+          "action": "透过二楼窗户仔细观察外部街道，辨认是否有哈里森、文森特或任何可疑车辆或人物的迹象",
+          "impact": 0,
+          "nodeId": "si1",
+          "status": "completed",
+          "endTime": "23:56",
+          "outcome": "我透过二楼的窗户仔细观察了外面的街道，没看到哈里森、文森特，或任何可疑的车辆或人物。",
+          "startTime": "23:52",
+          "characterId": "Helen",
+          "characterName": "Helen",
+          "executionMeta": {
+            "startedAt": "23:52",
+            "completedAt": "23:56",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "movement",
+          "action": "走上二楼休息区",
+          "impact": 0,
+          "nodeId": "m1",
+          "status": "completed",
+          "endTime": "23:54",
+          "outcome": "走上二楼休息区 成功",
+          "startTime": "23:51",
+          "characterId": "Helen",
+          "destination": "SCN_10_SUB_1",
+          "characterName": "Helen",
+          "executionMeta": {
+            "movement": {
+              "routeSnapshot": [],
+              "targetPosition": {
+                "type": "scene",
+                "sceneId": "SCN_10_SUB_1"
+              },
+              "minutesIntoStep": 0,
+              "currentStepIndex": 0,
+              "lastReachablePosition": {
+                "type": "scene",
+                "sceneId": "SCN_10_SUB_1"
+              }
+            },
+            "startedAt": "23:51",
+            "completedAt": "23:51",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "scene_interaction",
+          "action": "透过二楼窗户仔细观察外部街道，辨认是否有哈里森、文森特或任何可疑车辆或人物的迹象",
+          "impact": 0,
+          "nodeId": "si1",
+          "status": "completed",
+          "endTime": "23:56",
+          "outcome": "我透过二楼的窗户仔细观察了外面的街道，没看到哈里森、文森特，或任何可疑的车辆或人物。",
+          "startTime": "23:52",
+          "characterId": "Helen",
+          "characterName": "Helen",
+          "executionMeta": {
+            "startedAt": "23:52",
+            "completedAt": "23:56",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "scene_interaction",
+          "action": "把二楼休息区的窗帘拉上以遮挡外部视线并保持低调",
+          "impact": 0,
+          "nodeId": "si_day1_2357",
+          "status": "completed",
+          "endTime": "23:58",
+          "outcome": "我走到二楼休息区，把窗帘拉上，遮住了窗外的视线，让餐厅看起来更低调。窗帘已确认拉好，没有发现异常。",
+          "startTime": "23:57",
+          "characterId": "Helen",
+          "characterName": "Helen",
+          "executionMeta": {
+            "startedAt": "23:57",
+            "completedAt": "23:58",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "object_interaction",
+          "action": "翻阅预约本，核对明日预订并列出所需食材清单",
+          "impact": 0,
+          "nodeId": "oi_helen_1",
+          "status": "completed",
+          "endTime": "23:59",
+          "outcome": "我把柜台边的预约本翻到明日的页码，核对了各个预订的姓名、人数和特殊要求，然后在本子的末页用笔列出了明日所需的食材清单，并把本子放回柜台备用。",
+          "startTime": "23:59",
+          "characterId": "Helen",
+          "characterName": "Helen",
+          "executionMeta": {
+            "completedAt": "23:59",
+            "remainingMinutes": 0
+          },
+          "objectInteractionPayload": {
+            "itemId": "ITEM_SCN10_2"
+          }
+        }
+      ]
+    }
+  ],
+  "intents": [
+    {
+      "intent": "确认西蒙是否真的掌握星辰医院的监控录像及其时间戳；避免与西蒙单独单独对话，把所有交流引到有他人在场或公开场合；准备并核实一个可验证的掩饰说辞（寻找能证明我当晚行踪的佐证或目击者、预约本记录等）；继续保持对餐厅安全的警觉，谨慎应对西蒙可能的核验行为。",
+      "updatedAt": "2026-04-02T14:08:16.680Z"
+    }
+  ],
+  "npcName": "Helen"
+}

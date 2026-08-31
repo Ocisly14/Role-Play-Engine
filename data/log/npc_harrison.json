@@ -1,0 +1,17 @@
+{
+  "npcId": "npc_harrison",
+  "memories": [
+    {
+      "type": "event",
+      "content": "我今天没有出现在海伦的餐桌，没遇到文森特·G，也没收到任何关于五金店或医院设备的询问。",
+      "gameDay": 1,
+      "gameTime": "22:52",
+      "location": "SCN_10_SUB_1",
+      "metadata": {
+        "outcome": "向哈里森·洛克希德搭话，问他在镇上做什么并顺便提及五金店最近有没有人买过特殊工具或设备，注意他对医院或医疗设备相关话题的反应"
+      }
+    }
+  ],
+  "plans": [],
+  "intents": []
+}

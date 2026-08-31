@@ -1,0 +1,27 @@
+{
+  "npcId": "npc_patrizio_von_samsa",
+  "memories": [
+    {
+      "type": "event",
+      "content": "我不在教堂主殿，未曾见到康斯坦丁，也没有收到他关于留在长椅或远离祭坛和暗门的任何交代。",
+      "gameDay": 1,
+      "gameTime": "23:49",
+      "location": "SCN_17_SUB_1",
+      "metadata": {
+        "outcome": "低声对帕特里齐奥说我会召文森特前来支援，命令他留在长椅上不要靠近祭坛或暗门"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我当时不在教堂主殿，未曾听到或收到Constantine对我的任何低声告诫。",
+      "gameDay": 1,
+      "gameTime": "23:53",
+      "location": "SCN_17_SUB_1",
+      "metadata": {
+        "outcome": "低声告诫帕特里齐奥不要靠近祭坛并保持坐姿，借祷词掩护视线"
+      }
+    }
+  ],
+  "plans": [],
+  "intents": []
+}

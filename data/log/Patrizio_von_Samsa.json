@@ -1,0 +1,3304 @@
+{
+  "npcId": "Patrizio von Samsa",
+  "memories": [
+    {
+      "type": "secret",
+      "content": "我的仪式将在新年钟声敲响之际完成。仪式的目的是令群星位于正确之时，唤醒沉睡的旧日支配者。我相信这是人类唯一的救赎之路——成为克苏鲁的眷族，在拉莱耶的庇护中免于被奴役的命运。梦王会为我提供了古老的仪式手稿和必要的知识。",
+      "gameDay": 1,
+      "gameTime": "00:00",
+      "location": null,
+      "metadata": {
+        "knowledgeId": "s_patrizio_ritual_purpose"
+      }
+    },
+    {
+      "type": "information",
+      "content": "我更喜欢让权力以碎片和中间人的形式出现，而不是强迫镇上的每一份恐惧都直指我自己的脸。",
+      "gameDay": 1,
+      "gameTime": "00:00",
+      "location": null,
+      "metadata": {
+        "difficulty": "regular",
+        "knowledgeId": "k_patrizio_fragmented_power"
+      }
+    },
+    {
+      "type": "secret",
+      "content": "仪式的最后关头，修格斯可能会因为格赫罗斯降临前的'毁灭之音'共振而被唤醒，冲出焚化厂地下。到那时一切都不重要了——门已经打开，无法关闭。",
+      "gameDay": 1,
+      "gameTime": "00:00",
+      "location": null,
+      "metadata": {
+        "knowledgeId": "s_patrizio_shoggoth_risk"
+      }
+    },
+    {
+      "type": "belief",
+      "content": "现代文明终将毁灭，人类将被某些远超常规的存在奴役。唯有成为克苏鲁的眷族，在拉莱耶的广厦庇护中，才能避免精神被永恒奴役的命运。我所做的一切都是为了这个救赎。",
+      "gameDay": 1,
+      "gameTime": "00:00",
+      "location": null,
+      "metadata": {
+        "confidence": 0.95,
+        "reasoningChain": "在阿卡姆我亲眼见证了宇宙的真相。人类的文明不过是旧日支配者沉睡间隙的短暂幻觉。唯一的出路是主动拥抱转变。"
+      }
+    },
+    {
+      "type": "information",
+      "content": "我选择石榴巷的私宅，因为它靠近镇中心却不像办公室，这让来访更容易控制。",
+      "gameDay": 1,
+      "gameTime": "00:00",
+      "location": null,
+      "metadata": {
+        "difficulty": "regular",
+        "knowledgeId": "k_patrizio_house_stone_alley"
+      }
+    },
+    {
+      "type": "secret",
+      "content": "我的政治权威与我一直在其下建设的仪式和神秘学工作密不可分。如果人们理解那有多深，我的权力就会崩溃。",
+      "gameDay": 1,
+      "gameTime": "00:00",
+      "location": null,
+      "metadata": {
+        "knowledgeId": "s_patrizio_ritual"
+      }
+    },
+    {
+      "type": "belief",
+      "content": "当人们被孤立、负债并确信他们能做的最糟糕的事就是挑战权威时，一个小镇最容易治理。",
+      "gameDay": 1,
+      "gameTime": "00:00",
+      "location": null,
+      "metadata": {
+        "confidence": 0.9,
+        "reasoningChain": "秩序来自依赖。如果每个人都需要一点许可、一点人情或一点恐惧，他们就不再想象自己可以反抗。"
+      }
+    },
+    {
+      "type": "plan",
+      "content": "Today's plan: 1. 在教堂与康斯坦丁短会，重申我们的默契并安排他今晚在外制造分散注意的行动以掩护我的行程。 at 教堂; 2. 前往酒厂地下确认并维护古老仪式场的符文，重新点燃黑蜡烛并尽可能补充海盐，记录任何缺失物资以便后续补救。 at 酒厂; 3. 回到镇长私宅检查地下储藏室与那两只上锁木箱的状态，尝试用新工具安全开启或记录需要外界取得的替代物资清单。 at 镇长私宅; 4. 去五金店找哈里森借或购买精密撬具和其他必要工具，并打听是否能私下取得海盐或可替代物品。 at 五金店; 5. 拜访钟表店的怀特，暗中指示他调整镇上主要钟表的走时与新年钟声的触发，确保仪式时刻与钟声同步。 at 钟表店; 6. 前往星辰医院与文森特会面，确认他为第二阶段准备的转化药剂配方与时间表并吩咐他严格保密并按计划执行。 at 星辰医院; 7. 到驯鹿酒吧观察并与关键人物接触，安抚或重申对马塞尔等人的控制以降低他们成为变数的风险。 at 驯鹿酒吧; 8. 探访阿道夫家确认千维系统的监控状态，必要时协调他在关键时段对部分录像进行'技术性丢失'处理。 at 阿道夫家; 9. 回到镇长私宅整理今日收获与未竟事项，调整仪式物资获取时间表，然后休息以保存体力迎接接下来的关键几日。 at 镇长私宅",
+      "gameDay": 2,
+      "gameTime": "00:00",
+      "location": null,
+      "metadata": {
+        "planType": "daily"
+      }
+    },
+    {
+      "type": "secret",
+      "content": "仪式分为三个阶段，从圣诞节到新年逐步推进。第一阶段'净化祭坛'：用特制的黑蜡烛和深潜者遗留的海盐在祭坛上重新描画昆扬符文的关键节点，以焚香和低声吟诵的古老咒文激活石壁上的符文共振。这个阶段已在圣诞节前基本完成，但每晚仍需前往地下维持符文的活性，重新点燃黑蜡烛、补充消耗的海盐。",
+      "gameDay": 1,
+      "gameTime": "00:00",
+      "location": null,
+      "metadata": {
+        "knowledgeId": "s_patrizio_ritual_phase1"
+      }
+    },
+    {
+      "type": "secret",
+      "content": "第二阶段'献祭与锚定'：需要至少三名经过波拉切洛处理的活人作为'锚点'，将他们带到祭坛旁，以文森特配制的转化药剂注入体内，使他们的身体开始向克苏鲁眷族转化。转化过程中的痛苦与精神崩裂会在维度壁垒上撕开裂痕。该阶段计划在12月28日至30日之间完成。注意：目前我在私人书房与地下储藏处未能找到黑蜡烛与海盐，且两只上锁木箱短期内不可用，必须尽快调整物资获取计划并确保在12月28日前补齐所需物品与锚点。",
+      "gameDay": 1,
+      "gameTime": "00:00",
+      "location": null,
+      "metadata": {
+        "knowledgeId": "s_patrizio_ritual_phase2",
+        "lastUpdated": "2026-04-02T08:03:06.547Z"
+      }
+    },
+    {
+      "type": "secret",
+      "content": "布鲁诺是个麻烦。他不肯放下那桩黑人女孩的案子，一年来四处奔波，甚至向上级申请特查。他的调查再继续下去，迟早会牵出我和马丁的关系。我已经决定除掉他。",
+      "gameDay": 1,
+      "gameTime": "00:00",
+      "location": null,
+      "metadata": {
+        "knowledgeId": "s_patrizio_bruno_threat"
+      }
+    },
+    {
+      "type": "information",
+      "content": "我是那个让卡森德拉的公共机器运转而隐秘机器保持隐藏的人。",
+      "gameDay": 1,
+      "gameTime": "00:00",
+      "location": null,
+      "metadata": {
+        "difficulty": "automatic",
+        "knowledgeId": "k_patrizio_power"
+      }
+    },
+    {
+      "type": "secret",
+      "content": "我的日常节奏受仪式进度驱动。白天我留在石榴巷私宅（SCN_22_SUB_2），通过卢克斯和马丁遥控镇上事务、监视潜在威胁、确保没有人干扰仪式准备。傍晚后我秘密前往焚化厂（SCN_2），经过上层时必须保持安静以免惊动修格斯，进入地下仪式场维护祭坛状态、推进当前阶段的工作。深夜返回私宅。任何威胁到仪式进程的人——无论是布鲁诺、西蒙还是其他任何人——都必须在仪式完成前被清除。",
+      "gameDay": 1,
+      "gameTime": "00:00",
+      "location": null,
+      "metadata": {
+        "knowledgeId": "s_patrizio_daily_routine"
+      }
+    },
+    {
+      "type": "secret",
+      "content": "第三阶段'开门'：12月31日午夜，当新年钟声敲响，我将在祭坛上展开加塔诺托亚的诅咒画像。画像是仪式的核心焦点——格赫罗斯的形象本身就是一把钥匙，能在维度裂痕已经存在的情况下将其撕裂为通道。我会在画像前诵念梦王会手稿中的终极咒文，以自身的精神力量和锚点们的痛苦共振为驱动，打开通往旧日支配者沉睡之地的门。我以为门后是克苏鲁的救赎，但实际上穿门而来的将是格赫罗斯——审判之星、毁灭的先驱。",
+      "gameDay": 1,
+      "gameTime": "00:00",
+      "location": null,
+      "metadata": {
+        "knowledgeId": "s_patrizio_ritual_phase3"
+      }
+    },
+    {
+      "type": "information",
+      "content": "我的关系网延伸到警察、医院和镇上更黑暗的生意中，因为当每个部分看起来是独立的时候更容易控制。",
+      "gameDay": 1,
+      "gameTime": "00:00",
+      "location": null,
+      "metadata": {
+        "difficulty": "regular",
+        "knowledgeId": "k_patrizio_network"
+      }
+    },
+    {
+      "type": "secret",
+      "content": "仪式的地点在焚化厂地下的古老仪式场（SCN_2_SUB_3）。这个地下空间远比卡森德拉本身古老，墙壁上的符文出自昆扬人之手，石质祭坛经过深潜者和后来者的反复改造。这里本身就是一个天然的'门槛'——维度壁垒在此处最为薄弱。深潜者曾在此祭祀，修格斯被遗弃在焚化厂上层，算是这处遗迹不自觉的守卫。",
+      "gameDay": 1,
+      "gameTime": "00:00",
+      "location": null,
+      "metadata": {
+        "knowledgeId": "s_patrizio_ritual_site"
+      }
+    },
+    {
+      "type": "plan",
+      "content": "通过古老的仪式令群星归位，唤醒沉睡中的克苏鲁和其他旧日支配者，使人类得以转化为祂们的眷属，在拉莱耶的庇护下逃脱被另一维度存在永恒奴役的命运。他坚信这是人类唯一的救赎之路。",
+      "gameDay": 1,
+      "gameTime": "00:00",
+      "location": null,
+      "metadata": {
+        "planType": "long_term"
+      }
+    },
+    {
+      "type": "secret",
+      "content": "马丁和文森特之所以有用，是因为他们每个人都能做我不让自己的名字沾上的事。",
+      "gameDay": 1,
+      "gameTime": "00:00",
+      "location": null,
+      "metadata": {
+        "knowledgeId": "s_patrizio_proxies"
+      }
+    },
+    {
+      "type": "secret",
+      "content": "我与康斯坦丁有一个默契：当我对布鲁诺动手时，康斯坦丁会在教堂及周边制造混乱作为掩护，确保没有人能干预。经今晚会面，他态度沉稳并明确表示会在必要时随我前往焚化厂并在外制造分散注意的动静以掩护我加强看守；作为交换，我维持他教堂事务的相对不受干涉。该协议已得到口头确认，但仍需以我方筹码维系他的配合。",
+      "gameDay": 1,
+      "gameTime": "00:00",
+      "location": null,
+      "metadata": {
+        "knowledgeId": "s_patrizio_constantine_deal",
+        "lastUpdated": "2026-04-02T08:03:06.549Z"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我与康斯坦丁在主殿低声交谈，重申了我们的默契并请求他今晚在外制造分散以掩护我的行程，但他抵抗了我的说服并未承诺行动。对话简短且克制，我未能取得他对今晚分散行动的同意。 [rel:Constantine Frollo -1 → 65]",
+      "gameDay": 2,
+      "gameTime": "00:05",
+      "location": "SCN_17_SUB_1",
+      "metadata": {
+        "outcome": "与康斯坦丁低声交谈，重申我们的默契并安排他今晚在外制造分散注意的行动以掩护我的行程 [Persuade 75, rolled 52 (regular) — all targets resisted] failed"
+      }
+    },
+    {
+      "type": "witness",
+      "content": "[相遇] 我在卡森德拉南新街与Shandra Hernandez面对面相遇。她似乎注意到了我，短暂对视让我心里一紧。虽然她没有当场表现出敌意，但我担心她可能认出我或成为未来的变数。我现在感到警觉，准备保持自然姿态、探查她是否会跟随或打听，必要时用借口离开或引导她远离我的线路，以保护今晚的行动隐秘性。",
+      "gameDay": 2,
+      "gameTime": "00:09",
+      "location": "ROAD_3",
+      "metadata": {
+        "impact": 2,
+        "perspective": "co_presence",
+        "sourceAction": "Shandra Hernandez 在 卡森德拉南新街",
+        "sourceCharacterId": "__encounter__"
+      }
+    },
+    {
+      "type": "event",
+      "content": "前往酒厂 [在 ROAD_3 因重新规划而中断] 已中断",
+      "gameDay": 2,
+      "gameTime": "00:09",
+      "location": "ROAD_3",
+      "metadata": {
+        "outcome": "前往酒厂 [在 ROAD_3 因重新规划而中断] 已中断",
+        "interruptionReason": "revise_replan"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我向珊德拉寒暄并礼貌询问她今晚是否有安排，试探她是否在注意或跟随我的行程，但她抵住了我的试探，没有透露任何行程细节。我没有得到有用信息，意识到她保持警觉并刻意回避。 [rel:Shandra Hernandez -10 → -10]",
+      "gameDay": 2,
+      "gameTime": "00:14",
+      "location": "ROAD_3",
+      "metadata": {
+        "outcome": "向Shandra寒暄并礼貌询问她今晚是否有安排以探查她是否在跟随或注意我的行程 [Persuade 75, rolled 94 (fail) — all targets resisted] failed"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我以镇长的语气与珊德拉寒暄，低声询问她今晚是否有安排，并假装随意问她是否常来这一带以观察反应。她在行程问题上刻意回避、态度冷淡，我未能获得任何情报；我会改用更隐蔽和耐心的策略。 [rel:Shandra Hernandez +0 → -10]",
+      "gameDay": 2,
+      "gameTime": "00:20",
+      "location": "ROAD_3",
+      "metadata": {
+        "outcome": "以镇长口吻与珊德拉寒暄，低声询问她今晚是否有安排并假装随意地问她是否常来这一带，以观察她的反应和是否会跟随我"
+      }
+    },
+    {
+      "type": "event",
+      "content": "街道昏暗且气氛紧张，我环顾四周，未见珊德拉或任何明显的尾随迹象。",
+      "gameDay": 2,
+      "gameTime": "00:26",
+      "location": "ROAD_3",
+      "metadata": {
+        "outcome": "观察珊德拉是否跟踪我"
+      }
+    },
+    {
+      "type": "event",
+      "content": "礼貌地与珊德拉搭话，聊些镇上的无害琐事以评估她是否关注我并让自己看起来无害 [target Shandra Hernandez not present] failed",
+      "gameDay": 2,
+      "gameTime": "00:30",
+      "location": "ROAD_3",
+      "metadata": {
+        "outcome": "礼貌地与珊德拉搭话，聊些镇上的无害琐事以评估她是否关注我并让自己看起来无害 [target Shandra Hernandez not present] failed"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我不动声色地沿卡森德拉南新街环顾四周，街上并未立刻看到珊德拉或明显的尾随者。路旁的酒吧、教堂告示栏、部分熄灭的霓虹牌和五金店外堆放的木箱都可能作为观察或藏身的掩护点；街道是露天且偏暗，伴着零星飘雪和寒意，这既降低了远处被发现的可能，也增加了近距离遭伏击的风险。总体上，通往酒厂的路线并不完全安全，需要在接近时更谨慎、利用遮蔽物掩护行进。",
+      "gameDay": 2,
+      "gameTime": "00:36",
+      "location": "ROAD_3",
+      "metadata": {
+        "outcome": "不动声色地环顾卡森德拉南新街，悄悄搜寻珊德拉或任何可疑尾随者的踪迹，并评估前往酒厂的路线是否存在容易被观察或拦截的暴露点"
+      }
+    },
+    {
+      "type": "witness",
+      "content": "[相遇] 我在卡森德拉南新街与哈里森·洛克希德面对面相遇。他是五金店的那个人，这一刻让我既警觉又有些急切——这是个提前拿到精密撬具或打听海盐替代物的机会，但也可能增加被注意的风险，尤其如果珊德拉在附近。我打算保持自然、以镇长般的寒暄掩护，试探他是否能现在或今晚帮我弄到所需工具，同时留心周围可疑人物。",
+      "gameDay": 2,
+      "gameTime": "00:44",
+      "location": "ROAD_3",
+      "metadata": {
+        "impact": 2,
+        "perspective": "co_presence",
+        "sourceAction": "Harrison Lockheed 在 卡森德拉南新街",
+        "sourceCharacterId": "__encounter__"
+      }
+    },
+    {
+      "type": "witness",
+      "content": "[相遇] 00:47 — 我在一层大厅与 Johnny、Kovind、Lutz Emilion、Shandra Hernandez、Taran Emilion 面对面相遇。珊德拉的在场让我瞬间提高警觉，她以前对我保持警惕。其他人在场增加了被注意或被询问的风险。我感到紧张但必须镇定，会以镇长般自然的姿态寒暄掩饰，留心他们的反应并寻找脱身与转移话题的机会。暂时不会直奔五金店，会先评估有没有跟随或能利用的人选，必要时悄然离开或改约私下取货。",
+      "gameDay": 2,
+      "gameTime": "00:47",
+      "location": "SCN_16_SUB_1",
+      "metadata": {
+        "impact": 2,
+        "perspective": "co_presence",
+        "sourceAction": "Johnny, Kovind, Lutz Emilion, Shandra Hernandez, Taran Emilion 在 一层大厅",
+        "sourceCharacterId": "__encounter__"
+      }
+    },
+    {
+      "type": "event",
+      "content": "走进驯鹿酒吧并坐在吧台一角，装作随意地观察周围并留意珊德拉的出现 成功",
+      "gameDay": 2,
+      "gameTime": "00:47",
+      "location": "SCN_16_SUB_1",
+      "metadata": {
+        "outcome": "走进驯鹿酒吧并坐在吧台一角，装作随意地观察周围并留意珊德拉的出现 成功",
+        "blockedReason": "",
+        "failureReason": ""
+      }
+    },
+    {
+      "type": "event",
+      "content": "以镇长的温和语气向Shandra低声寒暄，谈论镇上无害的琐事并观察她的表情与言辞以判断她是否在跟随或监视我，同时巧妙转移话题避免提及今晚行程或五金店 [target Shandra Hernandez not present] failed",
+      "gameDay": 2,
+      "gameTime": "00:53",
+      "location": "SCN_16_SUB_1",
+      "metadata": {
+        "outcome": "以镇长的温和语气向Shandra低声寒暄，谈论镇上无害的琐事并观察她的表情与言辞以判断她是否在跟随或监视我，同时巧妙转移话题避免提及今晚行程或五金店 [target Shandra Hernandez not present] failed"
+      }
+    },
+    {
+      "type": "witness",
+      "content": "[目击] 我刚在吧台当众逼迫约翰尼交出相机与存储卡，并命令卢茨和塔兰当场销毁存储卡，以放在吧台上的手枪威胁他们。但他们都拒绝配合，搜身和没收未能奏效，现场气氛因此更紧张。我感到警觉与被挑衅——必须立刻提高警惕，考虑更强硬但要隐蔽的手段，防止证据外泄或有人将我识破。",
+      "gameDay": 2,
+      "gameTime": "00:57",
+      "location": "SCN_16_SUB_1",
+      "metadata": {
+        "impact": 2,
+        "perspective": "witness",
+        "sourceAction": "我当众逼迫约翰尼交出相机与存储卡，并命令卢茨和塔兰在我面前当场销毁存储卡，以我放在吧台上的手枪威胁他们。但他们都拒绝服从，搜身和没收未能奏效，现场气氛因此更紧张，我必须对他们的抵抗保持警惕并考虑下一步更强硬的手段。",
+        "sourceCharacterId": "Kovind"
+      }
+    },
+    {
+      "type": "event",
+      "content": "低声与Lutz寒暄，假装无害地聊些镇上琐事，同时试探他是否注意到有人在打听或跟踪我的行程（尤其提到Shandra或哈里森），并暗示他若有可疑来客请悄悄提醒我 [在 SCN_16_SUB_1 因重新规划而中断] 已中断",
+      "gameDay": 2,
+      "gameTime": "00:57",
+      "location": "SCN_16_SUB_1",
+      "metadata": {
+        "outcome": "低声与Lutz寒暄，假装无害地聊些镇上琐事，同时试探他是否注意到有人在打听或跟踪我的行程（尤其提到Shandra或哈里森），并暗示他若有可疑来客请悄悄提醒我 [在 SCN_16_SUB_1 因重新规划而中断] 已中断",
+        "interruptionReason": "revise_replan"
+      }
+    },
+    {
+      "type": "event",
+      "content": "低声示意卢茨到吧台一角私下交谈 [在 SCN_16_SUB_1 因重新规划而中断] 已中断",
+      "gameDay": 2,
+      "gameTime": "00:59",
+      "location": "SCN_16_SUB_1",
+      "metadata": {
+        "outcome": "低声示意卢茨到吧台一角私下交谈 [在 SCN_16_SUB_1 因重新规划而中断] 已中断",
+        "interruptionReason": "revise_replan"
+      }
+    },
+    {
+      "type": "witness",
+      "content": "[目击] 我注意到Kovind从吧台后方的储物柜里把那把猎枪取了出来，柜门敞开，猎枪现在在他手里。他的动作是明目张胆的威吓——我感到被挑衅且高度警觉。必须立刻阻止他使用或带出武器，隐秘控制局面并防止任何证据或拍摄材料离开，同时保持镇长伪装，避免在酒吧制造公开恐慌。",
+      "gameDay": 2,
+      "gameTime": "00:59",
+      "location": "SCN_16_SUB_1",
+      "metadata": {
+        "impact": 2,
+        "perspective": "witness",
+        "sourceAction": "我从吧台后方的储物柜里把那把猎枪取了出来，举起以示威吓阻；储物柜门敞开，猎枪现在在我手里。",
+        "sourceCharacterId": "Kovind"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我低声命令卢茨和塔兰把科温德的猎枪取走并暂时放回吧台后方的储物柜以封存武器并保持低调；他们照办了，我看到他们把猎枪放入储物柜并关上门。 [rel:Lutz Emilion +10 → 10] [rel:Taran Emilion +10 → 10]",
+      "gameDay": 2,
+      "gameTime": "01:02",
+      "location": "SCN_16_SUB_1",
+      "metadata": {
+        "outcome": "低声命令卢茨和塔兰把科温德的猎枪取走并暂时放回吧台后方储物柜内以封存武器并保持低调"
+      }
+    },
+    {
+      "type": "witness",
+      "content": "[目击] 我看到卢茨走到科温德和约翰尼中间，把两人分开，低声但坚定地命令科温德把猎枪放下并坐到一边，同时示意塔兰立刻封锁所有出入口、把收银机抽屉钥匙随身保管并加派人手重点巡查监控盲区，遇到任何人试图接近监控或抽屉立即阻止并向我报告。我对卢茨的迅速干预感到一丝宽慰——局面有被控制的迹象，但我仍然高度警觉，准备在必要时隐秘出手并确保任何证据不会外泄，同时保持镇长的伪装，避免在酒吧制造公开恐慌。",
+      "gameDay": 2,
+      "gameTime": "01:03",
+      "location": "SCN_16_SUB_1",
+      "metadata": {
+        "impact": 2,
+        "perspective": "witness",
+        "sourceAction": "走到科文德和约翰尼中间把两人分开，低声但坚定地命令科文德把猎枪放下并坐到一边，同时示意塔兰立刻封锁所有出入口、把收银机抽屉钥匙随身保管并加派人手重点巡查监控盲区，遇到任何人试图接近监控或抽屉立即阻止并向我报告 [target Johnny not present] failed",
+        "sourceCharacterId": "Lutz Emilion"
+      }
+    },
+    {
+      "type": "witness",
+      "content": "[目击] 我看到科温德用那把猎枪直指卢茨和塔兰，命令他们把收银机抽屉钥匙和所有手机交出来；两人都断然拒绝，现场瞬间更紧张。我感到被明目张胆地挑衅与威胁——这直接威胁到我必须封存的证据与今晚行程的隐秘性。必须立刻介入、隐蔽而坚定地控制局面：优先解除武装并封锁出口，确保任何拍摄材料不离开酒吧，同时保持镇长伪装以免引起公众恐慌。",
+      "gameDay": 2,
+      "gameTime": "01:06",
+      "location": "SCN_16_SUB_1",
+      "metadata": {
+        "impact": 2,
+        "perspective": "witness",
+        "sourceAction": "我用猎枪指着卢茨和塔兰，命令他们把收银机抽屉钥匙和所有手机交出来并封锁所有出入口；他们都拒绝了，现场没有交出任何物品，气氛更紧张。",
+        "sourceCharacterId": "Kovind"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我低声命令卢茨和塔兰把吧台后方的储物柜上锁，并把钥匙交给我；他们迅速照办，并承诺立刻阻止任何人接触或带走那把猎枪。 [rel:Lutz Emilion +3 → 13] [rel:Taran Emilion +5 → 15]",
+      "gameDay": 2,
+      "gameTime": "01:06",
+      "location": "SCN_16_SUB_1",
+      "metadata": {
+        "outcome": "低声命令卢茨和塔兰把吧台后方的储物柜上锁，并把钥匙递给我，立刻阻止任何人接触或带走那把猎枪"
+      }
+    },
+    {
+      "type": "witness",
+      "content": "[目击] 我看到科温德走上通往二层的楼梯，进入夹层俯视大厅，盯着卢茨、塔兰和我。心里一紧——他占据了制高点，且很可能还拿着那把猎枪，随时能威胁局面或冲向出口。现在必须立刻行动：命令卢茨和塔兰封堵楼梯与所有出入口，尽快将武器收回并锁好储物柜、把钥匙掌握在我手里，同时继续保持镇长的伪装以避免引发恐慌。",
+      "gameDay": 2,
+      "gameTime": "01:07",
+      "location": "SCN_16_SUB_1",
+      "metadata": {
+        "impact": 2,
+        "perspective": "witness",
+        "sourceAction": "走上通往二层的楼梯，进入二层隔层俯视大厅观察卢茨、塔兰与帕特里齐奥的动向 成功",
+        "sourceCharacterId": "Kovind"
+      }
+    },
+    {
+      "type": "event",
+      "content": "低声命令卢茨和塔兰立即封锁所有出入口，控制科温德并没收任何摄影设备与存储卡交由我保管，阻止任何人接近监控设备或储物柜 [在 SCN_16_SUB_1 因重新规划而中断] 已中断",
+      "gameDay": 2,
+      "gameTime": "01:07",
+      "location": "SCN_16_SUB_1",
+      "metadata": {
+        "outcome": "低声命令卢茨和塔兰立即封锁所有出入口，控制科温德并没收任何摄影设备与存储卡交由我保管，阻止任何人接近监控设备或储物柜 [在 SCN_16_SUB_1 因重新规划而中断] 已中断",
+        "interruptionReason": "revise_replan"
+      }
+    },
+    {
+      "type": "witness",
+      "content": "[目击] 我看到科温德走到一层大厅靠近约翰尼，当众夺走了他的相机和存储卡并成功拿走。我感到震惊与愤怒，意识到证据已经直接落入他手中，必须马上采取隐蔽而果断的行动：取回存储卡、解除其武装并控制出入口，同时保留镇长伪装以免引发公众恐慌。",
+      "gameDay": 2,
+      "gameTime": "01:08",
+      "location": "SCN_16_SUB_1",
+      "metadata": {
+        "impact": 2,
+        "perspective": "witness",
+        "sourceAction": "下到一层大厅靠近约翰尼并试图当众夺取他的相机和存储卡 成功",
+        "sourceCharacterId": "Kovind"
+      }
+    },
+    {
+      "type": "event",
+      "content": "把吧台后方储物柜用随手拿到的钥匙上锁并将钥匙收进口袋以确保存放的猎枪无法被他人取出 [在 SCN_16_SUB_1 因重新规划而中断] 已中断",
+      "gameDay": 2,
+      "gameTime": "01:08",
+      "location": "SCN_16_SUB_1",
+      "metadata": {
+        "outcome": "把吧台后方储物柜用随手拿到的钥匙上锁并将钥匙收进口袋以确保存放的猎枪无法被他人取出 [在 SCN_16_SUB_1 因重新规划而中断] 已中断",
+        "interruptionReason": "revise_replan"
+      }
+    },
+    {
+      "type": "event",
+      "content": "低声命令卢茨和塔兰立刻去制服并搜身科温德，取回相机与存储卡，封锁所有出入口并控制任何接近监控设备或尝试离开的人员，将取回的存储媒介和钥匙交给我保管 [在 SCN_16_SUB_1 因重新规划而中断] 已中断",
+      "gameDay": 2,
+      "gameTime": "01:10",
+      "location": "SCN_16_SUB_1",
+      "metadata": {
+        "outcome": "低声命令卢茨和塔兰立刻去制服并搜身科温德，取回相机与存储卡，封锁所有出入口并控制任何接近监控设备或尝试离开的人员，将取回的存储媒介和钥匙交给我保管 [在 SCN_16_SUB_1 因重新规划而中断] 已中断",
+        "interruptionReason": "revise_replan"
+      }
+    },
+    {
+      "type": "witness",
+      "content": "[相遇] 我刚在一层大厅与约翰尼、科温德、卢茨和塔兰面对面相遇。科温德刚夺走约翰尼的相机与存储卡，且可能持有猎枪；局势紧张，证据与武器有被带走或被公开的风险，直接威胁到我的行动。我感到愤怒且高度警觉。必须立即介入——在维持镇长掩饰的同时，秘中取回存储卡、解除科温德武装、命令卢茨与塔兰封锁所有出入口并把猎枪锁入储物柜且把钥匙交到我手中。",
+      "gameDay": 2,
+      "gameTime": "01:10",
+      "location": "SCN_16_SUB_1",
+      "metadata": {
+        "impact": 2,
+        "perspective": "co_presence",
+        "sourceAction": "Johnny, Kovind, Lutz Emilion, Taran Emilion 在 一层大厅",
+        "sourceCharacterId": "__encounter__"
+      }
+    },
+    {
+      "type": "witness",
+      "content": "[目击] 我看到科温德从吧台后方的储物柜里取出那把猎枪，随即当众夺走了约翰尼的相机与存储卡；我此前试图强行夺回但失败。酒吧氛围骤然紧张，武器仍在他手中，监控也被威胁。我的心里既愤怒又高度警觉——必须立刻隐蔽而果断地介入，收回存储卡、解除科温德武装、指示卢茨与塔兰封堵出入口并把枪锁回储物柜且把钥匙交到我手中，同时保持镇长的伪装以免引发公众恐慌。",
+      "gameDay": 2,
+      "gameTime": "01:13",
+      "location": "SCN_16_SUB_1",
+      "metadata": {
+        "impact": 2,
+        "perspective": "witness",
+        "sourceAction": "我猛扑向约翰尼，试图强行夺走他的相机与存储卡，但动作失败；约翰尼当场反抗并保住了物件。酒吧气氛因此更紧张，监控损坏和吧台上的武器仍然显眼。",
+        "sourceCharacterId": "Kovind"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我低声命令卢茨和塔兰现在立刻去制服并搜身科温德，取回他的相机与存储卡，解除并收回猎枪并锁回吧台后方储物柜，把钥匙交给我，封锁所有出入口并控制监控设备，务必保持低调以维护镇长身份——但两人并不在一层大厅，无法当场执行，我需要稍后找到他们并安排落实。",
+      "gameDay": 2,
+      "gameTime": "01:13",
+      "location": "SCN_16_SUB_1",
+      "metadata": {
+        "outcome": "低声命令卢茨和塔兰现在立刻制服并搜身科温德，取回他的相机与存储卡，解除并收回猎枪并锁回吧台后方储物柜，把钥匙交给我，封锁所有出入口并控制监控设备周围的人员，务必保持低调以维护镇长身份。"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我以镇长特有的语气与姿态迅速上前，将科温德制服并当场搜身，夺回他手中的相机与存储卡，并解除并收缴了他的猎枪以防其使用。整个过程稳健而果断，酒吧内的局势被我控制住。 [rel:Kovind -30 → -30]",
+      "gameDay": 2,
+      "gameTime": "01:16",
+      "location": "SCN_16_SUB_1",
+      "metadata": {
+        "outcome": "以镇长的语气与姿态迅速上前制服并搜身科温德，夺回其手中的相机与存储卡，解除并控制其武装以防其使用猎枪"
+      }
+    },
+    {
+      "type": "event",
+      "content": "约翰尼走到我面前，用威胁性的口吻要求我交出相机和存储卡或当场出示物证。我保持克制和礼貌的态度，拒绝交出任何东西，并抵抗了他的逼问，现场因此紧张起来。",
+      "gameDay": 2,
+      "gameTime": "01:19",
+      "location": "SCN_16_SUB_1",
+      "metadata": {
+        "outcome": "上前逼问Patrizio把相机和存储卡放到哪儿，强硬要求他当场交还或出示物证 [Intimidate 50, rolled 31 (regular) — all targets resisted] failed"
+      }
+    },
+    {
+      "type": "event",
+      "content": "[直接] 约翰尼上前用强硬语气逼问我要交出相机和存储卡或当场出示物证。我冷静拒绝，未交出任何东西，酒吧内气氛因此变得更紧张。我感到被挑衅和高度警觉——必须马上隐蔽而坚定地行动：优先取回存储卡、解除科温德武装、立刻指示卢茨与塔兰封锁所有出入口并控制监控，把猎枪锁回储物柜并把钥匙收在我手中，同时保持镇长伪装，必要时采取更强硬的措施以防证据外泄。",
+      "gameDay": 2,
+      "gameTime": "01:19",
+      "location": "SCN_16_SUB_1",
+      "metadata": {
+        "impact": 2,
+        "perspective": "targeted",
+        "sourceAction": "我上前用强硬语气逼问帕特里齐奥把相机和存储卡交出来或当场出示物证。帕特里齐奥冷静抵抗，没有交出任何东西，拒绝配合，酒吧内气氛变得更紧张。",
+        "sourceCharacterId": "Johnny"
+      }
+    },
+    {
+      "type": "event",
+      "content": "低声命令卢茨与塔兰：立即封锁所有出入口，控制并押送科温德到吧台后室，所有摄影器材与存储卡交由我保管并禁止任何人接触监控设备，保持低调以维护镇长形象 [在 SCN_16_SUB_1 因重新规划而中断] 已中断",
+      "gameDay": 2,
+      "gameTime": "01:19",
+      "location": "SCN_16_SUB_1",
+      "metadata": {
+        "outcome": "低声命令卢茨与塔兰：立即封锁所有出入口，控制并押送科温德到吧台后室，所有摄影器材与存储卡交由我保管并禁止任何人接触监控设备，保持低调以维护镇长形象 [在 SCN_16_SUB_1 因重新规划而中断] 已中断",
+        "interruptionReason": "revise_replan"
+      }
+    },
+    {
+      "type": "event",
+      "content": "低声命令卢茨与塔兰立即封锁所有出入口，押送科温德到吧台后室，并禁止任何人接触或移走任何摄影器材或监控设备；同时悄然将猎枪锁回吧台后方储物柜，并把钥匙交到我手中（保持镇长身份以避免引起公众恐慌） [在 SCN_16_SUB_1 因重新规划而中断] 已中断",
+      "gameDay": 2,
+      "gameTime": "01:22",
+      "location": "SCN_16_SUB_1",
+      "metadata": {
+        "outcome": "低声命令卢茨与塔兰立即封锁所有出入口，押送科温德到吧台后室，并禁止任何人接触或移走任何摄影器材或监控设备；同时悄然将猎枪锁回吧台后方储物柜，并把钥匙交到我手中（保持镇长身份以避免引起公众恐慌） [在 SCN_16_SUB_1 因重新规划而中断] 已中断",
+        "interruptionReason": "revise_replan"
+      }
+    },
+    {
+      "type": "witness",
+      "content": "[目击] 我刚注意到科温德当众命令卢茨与塔兰立刻封锁所有出入口、没收所有手机并把我和约翰尼围住，禁止任何人接近或带走相机与存储卡，还声明违命开枪处理。命令虽显不情愿，但被执行起来，科温德短暂恢复了对现场的控制。我感到被挑衅、愤怒且高度警觉——必须立刻采取隐蔽而果断的行动，先保全证据与人身安全，再设法夺回对局面的掌控，同时维持镇长的伪装以免引发公开恐慌。",
+      "gameDay": 2,
+      "gameTime": "01:22",
+      "location": "SCN_16_SUB_1",
+      "metadata": {
+        "impact": 2,
+        "perspective": "witness",
+        "sourceAction": "我当众命令卢茨与塔兰立刻封锁所有出入口、没收所有手机并把帕特里齐奥和约翰尼围住，禁止任何人接近或带走相机与存储卡，并声明违命开枪处理。命令被执行起来，尽管他们明显不情愿，但我暂时恢复了对现场的控制。",
+        "sourceCharacterId": "Kovind"
+      }
+    },
+    {
+      "type": "event",
+      "content": "低声命令卢茨与塔兰现在立刻封锁所有出入口、将科温德押送到吧台后室、把相机与存储卡交给我并把吧台后方储物柜的钥匙交到我手中；同时禁止任何人接触监控设备并保持低调以维持镇长身份。 [在 SCN_16_SUB_1 因重新规划而中断] 已中断",
+      "gameDay": 2,
+      "gameTime": "01:25",
+      "location": "SCN_16_SUB_1",
+      "metadata": {
+        "outcome": "低声命令卢茨与塔兰现在立刻封锁所有出入口、将科温德押送到吧台后室、把相机与存储卡交给我并把吧台后方储物柜的钥匙交到我手中；同时禁止任何人接触监控设备并保持低调以维持镇长身份。 [在 SCN_16_SUB_1 因重新规划而中断] 已中断",
+        "interruptionReason": "revise_replan"
+      }
+    },
+    {
+      "type": "witness",
+      "content": "[目击] 我看到科温德在众目睽睽下威胁卢茨与塔兰：立刻搜身我与约翰尼并把相机与存储卡交出，违命就开枪。塔兰不情愿地开始搜查，卢茨断然拒绝配合，场面因此短暂由我压住但敌意更深了。我感到被公开挑衅与直接威胁，警觉且愤怒——必须立刻采取隐蔽而果断的行动，阻止搜身并收回证据、解除科温德武装，同时重新掌控卢茨与塔兰以封锁出入口并保护监控设备，保持镇长伪装以免引发公众恐慌。",
+      "gameDay": 2,
+      "gameTime": "01:25",
+      "location": "SCN_16_SUB_1",
+      "metadata": {
+        "impact": 2,
+        "perspective": "witness",
+        "sourceAction": "我当众威胁卢茨和塔兰：立刻搜身帕特里齐奥和约翰尼，把相机与存储卡夺回来，违命就开枪。塔兰不情愿地开始搜查，卢茨拒绝配合，场面因此暂时由我恢复控制，但敌意更深了。",
+        "sourceCharacterId": "Kovind"
+      }
+    },
+    {
+      "type": "event",
+      "content": "低声命令卢茨与塔兰立即封锁所有出入口、控制监控盲区并押送科温德到吧台后室，将任何剩余的摄影设备与存储媒介交由我保管，并在我需要时把储物柜钥匙递给我；保持低调，不要在大厅引起骚动。 [在 SCN_16_SUB_1 因重新规划而中断] 已中断",
+      "gameDay": 2,
+      "gameTime": "01:28",
+      "location": "SCN_16_SUB_1",
+      "metadata": {
+        "outcome": "低声命令卢茨与塔兰立即封锁所有出入口、控制监控盲区并押送科温德到吧台后室，将任何剩余的摄影设备与存储媒介交由我保管，并在我需要时把储物柜钥匙递给我；保持低调，不要在大厅引起骚动。 [在 SCN_16_SUB_1 因重新规划而中断] 已中断",
+        "interruptionReason": "revise_replan"
+      }
+    },
+    {
+      "type": "witness",
+      "content": "[目击] 我看到科温德把手枪指向卢茨，逼他立刻交出收银机抽屉钥匙和所有手机，但卢茨断然拒绝。现场瞬间更紧张。我感到被当众挑衅、愤怒且高度警觉——必须立即隐蔽而果断地介入，先保全证据与人身安全，再夺回对局面的掌控，同时维持镇长伪装以免引发公众恐慌。",
+      "gameDay": 2,
+      "gameTime": "01:28",
+      "location": "SCN_16_SUB_1",
+      "metadata": {
+        "impact": 2,
+        "perspective": "witness",
+        "sourceAction": "我把手枪指向卢茨，逼他立刻交出收银机抽屉钥匙和所有手机，否则就开枪。但卢茨当场拒绝，没有交出钥匙，表面服从但明显在抵抗，我的威吓没有达到预期效果。",
+        "sourceCharacterId": "Kovind"
+      }
+    },
+    {
+      "type": "event",
+      "content": "低声命令卢茨与塔兰立即封锁所有出入口、控制监控盲区并押送科温德到吧台后室，同时将相机与存储卡交由我保管 [在 SCN_16_SUB_1 因重新规划而中断] 已中断",
+      "gameDay": 2,
+      "gameTime": "01:31",
+      "location": "SCN_16_SUB_1",
+      "metadata": {
+        "outcome": "低声命令卢茨与塔兰立即封锁所有出入口、控制监控盲区并押送科温德到吧台后室，同时将相机与存储卡交由我保管 [在 SCN_16_SUB_1 因重新规划而中断] 已中断",
+        "interruptionReason": "revise_replan"
+      }
+    },
+    {
+      "type": "event",
+      "content": "约翰尼在吧里低声靠近，要求我把相机和存储卡私下交出或说出藏处；我保持克制并拒绝回答。他显得激动且受挫，我注意到他的敌意并继续以冷静姿态应对。",
+      "gameDay": 2,
+      "gameTime": "01:31",
+      "location": "SCN_16_SUB_1",
+      "metadata": {
+        "outcome": "低声靠近帕特里齐奥，悄声询问相机和存储卡现在放在哪里，要求他私下交出来或告诉我存放处（不在柯文德或塔兰面前大声说） [Persuade 10, rolled 45 (fail) — all targets resisted] failed"
+      }
+    },
+    {
+      "type": "witness",
+      "content": "[目击] 约翰尼悄声靠近逼问我要相机和存储卡或说出藏处，我冷静拒绝但感到被挑衅与羞辱；同时科温德态度激烈并可能还持有猎枪，我在逼迫卢茨与塔兰时未能完全控制局面，塔兰拒绝合作，我在对峙中意外擦伤自己。酒吧气氛更紧张，必须马上隐蔽而坚定地介入以防证据外泄。",
+      "gameDay": 2,
+      "gameTime": "01:31",
+      "location": "SCN_16_SUB_1",
+      "metadata": {
+        "impact": 2,
+        "perspective": "witness",
+        "sourceAction": "我试图逼迫卢茨和塔兰交出相机与存储卡并封锁出口，但我的恐吓未能整体奏效；在对卢茨的对峙中我失手自伤（意外擦伤），没有因此取得决定性控制。塔兰拒绝屈服，场面仍然紧张。",
+        "sourceCharacterId": "Kovind"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我低声命令卢茨与塔兰立刻封锁所有出入口、控制监控盲区、把科温德押到吧台后室，并将相机与存储卡交由我保管，同时把吧台后方储物柜钥匙递给我。他们迅速照办：钥匙与存储介质交到我手上，科温德被带到后室，盲区与出口也已安排重点巡查。 [rel:Lutz Emilion +3 → 16] [rel:Taran Emilion +3 → 18]",
+      "gameDay": 2,
+      "gameTime": "01:34",
+      "location": "SCN_16_SUB_1",
+      "metadata": {
+        "outcome": "低声命令卢茨与塔兰立即封锁所有出入口、控制监控盲区，并押送科温德到吧台后室，把相机与存储卡交由我保管，同时把吧台后方储物柜钥匙递给我。"
+      }
+    },
+    {
+      "type": "witness",
+      "content": "[目击] 我看到卢茨不情愿地把吧台账本交给我，账本里记载了监控盲区与夜间巡逻安排；塔兰在压力下配合，科温德的相机与存储卡被夺回、所有手机被查扣并封锁了监控盲区。行动虽已达成，但现场更紧张。我既为拿到账本与证据感到宽慰，又对卢茨与塔兰将来的暗中反抗感到警惕——必须马上盘点并保全物证、把武器钥匙掌握在手中、控制盲区并在保持镇长伪装的同时隐蔽应对。",
+      "gameDay": 2,
+      "gameTime": "01:34",
+      "location": "SCN_16_SUB_1",
+      "metadata": {
+        "impact": 2,
+        "perspective": "witness",
+        "sourceAction": "我命令卢茨和塔兰立刻搜身帕特里齐奥与约翰尼，夺回相机与存储卡，查扣所有手机并封锁监控盲区。卢茨不情愿地把酒吧账本交给了我，账本里有盲区和夜间巡逻的具体安排，塔兰在压力下配合。行动达成，但现场更紧张，我要警惕他们日后的暗中反抗。",
+        "sourceCharacterId": "Kovind"
+      }
+    },
+    {
+      "type": "witness",
+      "content": "[相遇] 我在一层大厅与Shandra Hernandez、Kovind、Lutz Emilion和Taran Emilion面对面相遇。珊德拉在场让我警觉，科温德之前已夺走相机和存储卡且可能持枪，局势紧张且有被揭露或证据外泄的重大风险。我感到愤怒与高度戒备——我的关注点未变（立刻保全并盘点证物、把武器锁好并掌握钥匙、指示卢茨与塔兰封锁出口并监视他们、保持镇长伪装），但必须现在立刻介入并执行这些措施以控制局面。",
+      "gameDay": 2,
+      "gameTime": "01:35",
+      "location": "SCN_16_SUB_1",
+      "metadata": {
+        "impact": 2,
+        "perspective": "co_presence",
+        "sourceAction": "Shandra Hernandez, Kovind, Lutz Emilion, Taran Emilion 在 一层大厅",
+        "sourceCharacterId": "__encounter__"
+      }
+    },
+    {
+      "type": "event",
+      "content": "盘点并登记已收缴的相机、存储卡、手机与吧台储物柜钥匙；将存储卡与手机集中放入随身保管处并把嵌墙保险箱钥匙收进口袋以确保证据受控 [在 SCN_16_SUB_1 因重新规划而中断] 已中断",
+      "gameDay": 2,
+      "gameTime": "01:35",
+      "location": "SCN_16_SUB_1",
+      "metadata": {
+        "outcome": "盘点并登记已收缴的相机、存储卡、手机与吧台储物柜钥匙；将存储卡与手机集中放入随身保管处并把嵌墙保险箱钥匙收进口袋以确保证据受控 [在 SCN_16_SUB_1 因重新规划而中断] 已中断",
+        "interruptionReason": "revise_replan"
+      }
+    },
+    {
+      "type": "event",
+      "content": "盘点并登记已收缴的相机、存储卡、手机与吧台储物柜钥匙 [在 SCN_16_SUB_1 因重新规划而中断] 已中断",
+      "gameDay": 2,
+      "gameTime": "01:38",
+      "location": "SCN_16_SUB_1",
+      "metadata": {
+        "outcome": "盘点并登记已收缴的相机、存储卡、手机与吧台储物柜钥匙 [在 SCN_16_SUB_1 因重新规划而中断] 已中断",
+        "interruptionReason": "revise_replan"
+      }
+    },
+    {
+      "type": "witness",
+      "content": "[目击] 我看到卢茨检查吧台后方储物柜，确认里面有一把猎枪，随后把柜门关上并上了锁，把钥匙揣进了自己口袋。我感到震惊与愤怒——钥匙不在我手里直接威胁到我对武器与证据的控制。必须立刻以镇长身份低调取回钥匙或命令卢茨交出钥匙，同时继续盘点并封存已收缴的物证并确保出入口与监控受控。",
+      "gameDay": 2,
+      "gameTime": "01:38",
+      "location": "SCN_16_SUB_1",
+      "metadata": {
+        "impact": 2,
+        "perspective": "witness",
+        "sourceAction": "我检查了吧台后方的储物柜，确认柜内有一把猎枪；随后将柜门关上并上锁，把钥匙揣在身上。",
+        "sourceCharacterId": "Lutz Emilion"
+      }
+    },
+    {
+      "type": "witness",
+      "content": "[目击] 我看到科温德从卢茨手中抢走了吧台后方储物柜的钥匙，确保他现在可以阻止卢茨把猎枪收回或被我掌控。卢茨表面服从但明显愤怒且戒备。我感到一阵紧迫与愤怒——必须立刻隐蔽但果断地把钥匙和武器收回，防止证据与武器落入不受控之手，同时保持镇长伪装以免引发恐慌。",
+      "gameDay": 2,
+      "gameTime": "01:40",
+      "location": "SCN_16_SUB_1",
+      "metadata": {
+        "impact": 2,
+        "perspective": "witness",
+        "sourceAction": "我从卢茨手中抢走了吧台后方储物柜的钥匙，确保他现在无法取出储物柜里的猎枪。卢茨表面服从但愤怒且戒备。",
+        "sourceCharacterId": "Kovind"
+      }
+    },
+    {
+      "type": "event",
+      "content": "向卢茨低声索要吧台后方储物柜的钥匙并接过 [在 SCN_16_SUB_1 因重新规划而中断] 已中断",
+      "gameDay": 2,
+      "gameTime": "01:40",
+      "location": "SCN_16_SUB_1",
+      "metadata": {
+        "outcome": "向卢茨低声索要吧台后方储物柜的钥匙并接过 [在 SCN_16_SUB_1 因重新规划而中断] 已中断",
+        "interruptionReason": "revise_replan"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我悄声靠近，从科温德手中夺回了吧台后方储物柜的钥匙并迅速将其收入衣袋，确保钥匙落到我手里。行动安静且成功，没有引起进一步冲突。 [rel:Kovind -10 → -40]",
+      "gameDay": 2,
+      "gameTime": "01:43",
+      "location": "SCN_16_SUB_1",
+      "metadata": {
+        "outcome": "悄声上前，从科温德手中夺回吧台后方储物柜的钥匙并迅速将其收进口袋以确保我掌握钥匙"
+      }
+    },
+    {
+      "type": "event",
+      "content": "把猎枪放回吧台后方储物柜并用随身钥匙上锁，保持镇长伪装以免引起恐慌 [在 SCN_16_SUB_1 因重新规划而中断] 已中断",
+      "gameDay": 2,
+      "gameTime": "01:44",
+      "location": "SCN_16_SUB_1",
+      "metadata": {
+        "outcome": "把猎枪放回吧台后方储物柜并用随身钥匙上锁，保持镇长伪装以免引起恐慌 [在 SCN_16_SUB_1 因重新规划而中断] 已中断",
+        "interruptionReason": "revise_replan"
+      }
+    },
+    {
+      "type": "witness",
+      "content": "[目击] 我看到科温德用储物柜钥匙打开吧台后方的储物柜，把猎枪取出并握在手中。他的动作明目张胆且具威胁性，我感到被挑衅与高度警觉。必须立刻隐蔽介入：解除并收回武器、夺回或锁回猎枪并把钥匙掌握在我手里，同时低声指示卢茨与塔兰封锁所有出入口并控制监控盲区，并保持镇长伪装以免引发公众恐慌。",
+      "gameDay": 2,
+      "gameTime": "01:44",
+      "location": "SCN_16_SUB_1",
+      "metadata": {
+        "impact": 2,
+        "perspective": "witness",
+        "sourceAction": "我用手中的储物柜钥匙打开了吧台后方的储物柜，从里面把猎枪取出来并握在手中，控制住了武器。",
+        "sourceCharacterId": "Kovind"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我把那把猎枪放回吧台后方的储物柜，关上柜门并用随身钥匙上了锁。枪支再次被锁在柜内，短时间内无法被他人取出。",
+      "gameDay": 2,
+      "gameTime": "01:47",
+      "location": "SCN_16_SUB_1",
+      "metadata": {
+        "itemId": "猎枪",
+        "outcome": "把猎枪放回吧台后方储物柜并用随身钥匙上锁",
+        "itemName": "猎枪"
+      }
+    },
+    {
+      "type": "witness",
+      "content": "[目击] 我看到科温德举起猎枪指向卢茨，厉声命令他把吧台后方储物柜的钥匙和所有手机交出来，但卢茨断然拒绝，现场瞬间更加紧张。我既愤怒又警觉，感到必须马上介入——隐蔽而果断地解除科温德武装、夺回钥匙并指示卢茨与塔兰封锁所有出入口并控制监控，同时保持镇长伪装以免引发公众恐慌。",
+      "gameDay": 2,
+      "gameTime": "01:47",
+      "location": "SCN_16_SUB_1",
+      "metadata": {
+        "impact": 2,
+        "perspective": "witness",
+        "sourceAction": "我举起猎枪指着卢茨，命令他把储物柜钥匙和所有手机交出来，但我的威吓未能奏效；卢茨抵抗并拒绝配合。我仍然握着猎枪并持有储物柜钥匙，现场气氛因此更加紧张。",
+        "sourceCharacterId": "Kovind"
+      }
+    },
+    {
+      "type": "event",
+      "content": "[直接] 科温德刚当众试图搜我，强行夺取我的钥匙和通讯器；他在动作中重大失误，自伤了两下却一无所获。我保持冷静并成功抵抗，随身物品完好无损。我对他的公然挑衅既愤怒又高度警觉——这次侮辱我会记在心里，也更确认我必须立刻行动：低声指示卢茨与塔兰封锁所有出入口并控制监控，尽快将猎枪收回并上锁把钥匙掌握在我手里，同时保持镇长的伪装以免引发恐慌。",
+      "gameDay": 2,
+      "gameTime": "01:50",
+      "location": "SCN_16_SUB_1",
+      "metadata": {
+        "impact": 2,
+        "perspective": "targeted",
+        "sourceAction": "我试图上前搜查帕特里齐奥，强行夺取他的钥匙和通讯装置，但我在行动中发生了重大失误（fumble），动作弄糟了还自伤受了两下，没能拿到任何东西。帕特里齐奥冷静地抵抗住了，我感到既羞辱又恼怒。",
+        "sourceCharacterId": "Kovind"
+      }
+    },
+    {
+      "type": "event",
+      "content": "低声命令卢茨和塔兰把科温德押送到吧台后室并把门锁上，确保他短时间内无法回到大厅 [在 SCN_16_SUB_1 因重新规划而中断] 已中断",
+      "gameDay": 2,
+      "gameTime": "01:50",
+      "location": "SCN_16_SUB_1",
+      "metadata": {
+        "outcome": "低声命令卢茨和塔兰把科温德押送到吧台后室并把门锁上，确保他短时间内无法回到大厅 [在 SCN_16_SUB_1 因重新规划而中断] 已中断",
+        "interruptionReason": "revise_replan"
+      }
+    },
+    {
+      "type": "event",
+      "content": "科温德粗鲁地试图搜查我并夺走我的钥匙与通讯设备，但我保持冷静并成功抵抗了他的企图；他自己似乎因失误受了点伤。我的钥匙和随身物品保持完好，这件事我会记在心里。",
+      "gameDay": 2,
+      "gameTime": "01:50",
+      "location": "SCN_16_SUB_1",
+      "metadata": {
+        "outcome": "上前搜查帕特里齐奥，强行夺取他身上的钥匙和任何通讯设备 [Intimidate 60, rolled 98 (fumble) — all targets resisted] failed"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我悄声靠近科温德，迅速将他制服并从他手中夺下那把猎枪，解除他的武装。我把枪收好，确保他暂时无法反击。 [rel:Kovind -6 → -51]",
+      "gameDay": 2,
+      "gameTime": "01:53",
+      "location": "SCN_16_SUB_1",
+      "metadata": {
+        "outcome": "悄声上前将科温德制服并夺下他手中的猎枪以解除武装"
+      }
+    },
+    {
+      "type": "witness",
+      "content": "[目击] 我被科温德当众命令卢茨和塔兰立刻把我制伏并搜身，两人照办并把任何通讯设备与可疑物品递交给了科温德；我被控制住，现场秩序暂时维持但气氛更紧张。好在猎枪与吧台后储物柜的钥匙依然在我掌握之中。我感到被背叛、愤怒且高度警觉——必须立刻设法脱身并重新掌控局面，夺回对出入口与监控的控制，保护证据，同时保持镇长的伪装以免惊动众人。",
+      "gameDay": 2,
+      "gameTime": "01:56",
+      "location": "SCN_16_SUB_1",
+      "metadata": {
+        "impact": 2,
+        "perspective": "witness",
+        "sourceAction": "我命令卢茨和塔兰立刻把帕特里齐奥制伏并搜身，他们照办并把任何通讯设备和可疑物品移交给我；帕特里齐奥被控制住，猎枪与储物柜钥匙继续由我掌握。现场秩序暂被维持，但气氛更紧张。",
+        "sourceCharacterId": "Kovind"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我把猎枪放回吧台后方的储物柜里，并用随身的钥匙把柜门上了锁。现在猎枪在柜内，钥匙在我手里，柜门已关且上锁。",
+      "gameDay": 2,
+      "gameTime": "01:56",
+      "location": "SCN_16_SUB_1",
+      "metadata": {
+        "outcome": "把猎枪放回吧台后方储物柜并用随身钥匙上锁"
+      }
+    },
+    {
+      "type": "witness",
+      "content": "[目击] 我刚注意到科温德命令卢茨与塔兰立刻封锁所有出入口、查扣并集中保管所有通讯设备，严密盯控并限制我不得离开，并派人巡查监控盲区与后门；他们在胁迫下照办，现场气氛更加紧张。我感到愤怒与被背叛——我暂时失去对局势的控制，必须立刻隐秘而果断地行动：先脱身并夺回对出入口、监控与证据的掌控，且继续保持镇长的伪装以避免引发恐慌。",
+      "gameDay": 2,
+      "gameTime": "01:59",
+      "location": "SCN_16_SUB_1",
+      "metadata": {
+        "impact": 2,
+        "perspective": "witness",
+        "sourceAction": "我命令卢茨和塔兰立刻封锁所有出入口、查扣并集中保管所有通讯设备，紧盯并控制帕特里齐奥不得离开，并派人巡查监控盲区与后门。他们在胁迫下照办，现场气氛依旧紧张，我暂时收回了对局势的控制，但仍警惕他们的态度。",
+        "sourceCharacterId": "Kovind"
+      }
+    },
+    {
+      "type": "event",
+      "content": "低声命令卢茨与塔兰立刻封锁所有出入口、继续控制并覆盖监控盲区、将科温德押入后室并持续看管，所有摄影器材与存储卡不得离开，任何人靠近监控或试图取走物品立即向我报告 [在 SCN_16_SUB_1 因重新规划而中断] 已中断",
+      "gameDay": 2,
+      "gameTime": "01:59",
+      "location": "SCN_16_SUB_1",
+      "metadata": {
+        "outcome": "低声命令卢茨与塔兰立刻封锁所有出入口、继续控制并覆盖监控盲区、将科温德押入后室并持续看管，所有摄影器材与存储卡不得离开，任何人靠近监控或试图取走物品立即向我报告 [在 SCN_16_SUB_1 因重新规划而中断] 已中断",
+        "interruptionReason": "revise_replan"
+      }
+    },
+    {
+      "type": "event",
+      "content": "科文德用威吓让我交出储物柜的钥匙，我出于自保把钥匙交给了他，并承认猎枪确实已被我放回柜内并锁上。交出钥匙令我羞辱，但我当时只能顺从。",
+      "gameDay": 2,
+      "gameTime": "02:02",
+      "location": "SCN_16_SUB_1",
+      "metadata": {
+        "outcome": "从帕特里齐奥身上强行夺回吧台储物柜的钥匙"
+      }
+    },
+    {
+      "type": "event",
+      "content": "塔兰要求我将吧台后方储物柜的钥匙交给他并在场为交接作证、记录时间与目击者，我当场照办并作为在场证明记录了交接。",
+      "gameDay": 2,
+      "gameTime": "02:02",
+      "location": "SCN_16_SUB_1",
+      "metadata": {
+        "outcome": "低声命令卢茨立刻带两人控制科温德并封锁所有出口，同时让帕特里齐奥当场把吧台后方储物柜钥匙与约翰尼的相机交给我并为交接作证、记录交接时间与在场目击者；若科温德抵抗或试图离开立刻报警并联系哈里森求援。"
+      }
+    },
+    {
+      "type": "event",
+      "content": "[直接] 科温德当众用威胁逼我交出吧台后方储物柜的钥匙。在压力下我顺从地把钥匙递给了他，并告诉他我已经把猎枪放回柜内并上了锁。他拿到钥匙后明显感觉更有掌控力。我感到被羞辱、愤怒且高度警觉——必须马上采取行动，尽快夺回钥匙与对现场的控制，防止任何证据或武器被带走，同时保持镇长的伪装以免引发骚动。",
+      "gameDay": 2,
+      "gameTime": "02:02",
+      "location": "SCN_16_SUB_1",
+      "metadata": {
+        "impact": 2,
+        "perspective": "targeted",
+        "sourceAction": "我用强硬的威胁从帕特里齐奥手里夺回了吧台储物柜的钥匙；他在压力下顺从地交出钥匙并告诉我他已把猎枪放回储物柜并上了锁。拿到钥匙后我感觉局势更掌控了。",
+        "sourceCharacterId": "Kovind"
+      }
+    },
+    {
+      "type": "event",
+      "content": "低声命令卢茨与塔兰：立即并持续封锁所有出入口与楼梯，重点看守监控盲区、将任何相机、存储卡和通讯器交给我并锁入嵌墙保险箱，严禁透露今晚任何细节并保持对外的镇长伪装；如有人反抗，按我指示以最小必要武力压制并先报告我 [在 SCN_16_SUB_1 因重新规划而中断] 已中断",
+      "gameDay": 2,
+      "gameTime": "02:02",
+      "location": "SCN_16_SUB_1",
+      "metadata": {
+        "outcome": "低声命令卢茨与塔兰：立即并持续封锁所有出入口与楼梯，重点看守监控盲区、将任何相机、存储卡和通讯器交给我并锁入嵌墙保险箱，严禁透露今晚任何细节并保持对外的镇长伪装；如有人反抗，按我指示以最小必要武力压制并先报告我 [在 SCN_16_SUB_1 因重新规划而中断] 已中断",
+        "interruptionReason": "revise_replan"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我低声命令卢茨和塔兰把科温德押到吧台后室并把门上锁以限制其行动。二人迅速照办并将储物柜钥匙与监控存储介质交到我手中，局势被我在可控范围内收拢。 [rel:Lutz Emilion +3 → 19] [rel:Taran Emilion +3 → 24]",
+      "gameDay": 2,
+      "gameTime": "02:04",
+      "location": "SCN_16_SUB_1",
+      "metadata": {
+        "outcome": "低声命令卢茨与塔兰把科温德押送到吧台后室并把门上锁以限制其行动"
+      }
+    },
+    {
+      "type": "witness",
+      "content": "[目击] 我看到科温德用随身的钥匙把吧台后方的储物柜打开，取出那把猎枪并握在手里以示威吓阻。我感到当众被挑衅、愤怒且高度戒备——这直接威胁到证据与我对局势的控制。必须立刻介入，迅速解除并收回武器、夺回钥匙、命令卢茨与塔兰封锁出入口并控制监控，同时保持镇长伪装以避免引发恐慌。",
+      "gameDay": 2,
+      "gameTime": "02:04",
+      "location": "SCN_16_SUB_1",
+      "metadata": {
+        "impact": 2,
+        "perspective": "witness",
+        "sourceAction": "我用随身的钥匙打开了吧台后方被锁住的储物柜，把里面的猎枪取了出来，现在握在手里以示威吓阻。",
+        "sourceCharacterId": "Kovind"
+      }
+    },
+    {
+      "type": "event",
+      "content": "低声命令卢茨与塔兰持续封锁所有出入口并重点看守监控盲区，立即将所有相机、存储卡和通讯器交给我并由我保管，务必保持低调维护镇长身份；遇到反抗先用最小必要武力控制并随即向我汇报。 [在 SCN_16_SUB_1 因重新规划而中断] 已中断",
+      "gameDay": 2,
+      "gameTime": "02:14",
+      "location": "SCN_16_SUB_1",
+      "metadata": {
+        "outcome": "低声命令卢茨与塔兰持续封锁所有出入口并重点看守监控盲区，立即将所有相机、存储卡和通讯器交给我并由我保管，务必保持低调维护镇长身份；遇到反抗先用最小必要武力控制并随即向我汇报。 [在 SCN_16_SUB_1 因重新规划而中断] 已中断",
+        "interruptionReason": "revise_replan"
+      }
+    },
+    {
+      "type": "witness",
+      "content": "[相遇] 我刚在一层大厅与科温德、卢茨·艾米利恩和塔兰·艾米利恩面对面相遇。科温德可能仍然持有武器或已掌握吧台储物柜的钥匙，局势紧张且证据有被带走或曝光的危险。我感到愤怒、被挑衅且高度警觉——必须立即介入：低声命令卢茨与塔兰封锁所有出入口并控制监控盲区，设法夺回或取回储物柜钥匙与猎枪，收缴并封存任何相机与存储卡，同时保持镇长伪装以免惊动众人。",
+      "gameDay": 2,
+      "gameTime": "02:14",
+      "location": "SCN_16_SUB_1",
+      "metadata": {
+        "impact": 2,
+        "perspective": "co_presence",
+        "sourceAction": "Kovind, Lutz Emilion, Taran Emilion 在 一层大厅",
+        "sourceCharacterId": "__encounter__"
+      }
+    },
+    {
+      "type": "event",
+      "content": "科文德在众人面前彻底搜查了我，翻了我的口袋和文件夹，没找到相机或通讯设备；我被当众羞辱，但表面上保持克制，内心更加警觉并记下他的威胁。",
+      "gameDay": 2,
+      "gameTime": "02:17",
+      "location": "SCN_16_SUB_1",
+      "metadata": {
+        "outcome": "当众搜身帕特里齐奥，彻底检查并夺走任何相机、存储卡和通讯设备"
+      }
+    },
+    {
+      "type": "event",
+      "content": "[直接] 科温德当众搜了我一遍，没找到相机、存储卡或通讯器——但当众被搜的羞辱感很强，他的威慑因此被进一步巩固。我既愤怒又警觉，觉得局势更紧迫。必须立刻以镇长伪装隐蔽反应：设法夺回吧台储物柜的钥匙、解除并收回猎枪、命令卢茨与塔兰封锁所有出入口并控制监控盲区，迅速收缴并封存任何拍摄设备与存储介质，防止证据外泄。",
+      "gameDay": 2,
+      "gameTime": "02:17",
+      "location": "SCN_16_SUB_1",
+      "metadata": {
+        "impact": 2,
+        "perspective": "targeted",
+        "sourceAction": "我当众搜身帕特里齐奥，彻底检查了他的衣物和随身夹层，没搜到相机、存储卡或任何通讯设备；在众人面前这样做既令他窘迫，也再次巩固了我的威慑。",
+        "sourceCharacterId": "Kovind"
+      }
+    },
+    {
+      "type": "event",
+      "content": "低声命令卢茨与塔兰：马上再次封锁所有出入口、把科温德押回吧台后室并把门上锁、将所有相机、存储卡与通讯器交给我并把吧台后方储物柜的钥匙递给我，保持低调以维护镇长身份并在我需要时立刻报告任何反常情况 [在 SCN_16_SUB_1 因重新规划而中断] 已中断",
+      "gameDay": 2,
+      "gameTime": "02:17",
+      "location": "SCN_16_SUB_1",
+      "metadata": {
+        "outcome": "低声命令卢茨与塔兰：马上再次封锁所有出入口、把科温德押回吧台后室并把门上锁、将所有相机、存储卡与通讯器交给我并把吧台后方储物柜的钥匙递给我，保持低调以维护镇长身份并在我需要时立刻报告任何反常情况 [在 SCN_16_SUB_1 因重新规划而中断] 已中断",
+        "interruptionReason": "revise_replan"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我在塔兰面前将吧台后方储物柜的钥匙交给卢茨，并在他摆放的酒吧账本上记录了交接时间与在场目击者，以维持秩序与体面。整个过程我保持克制、配合且不露破绽。",
+      "gameDay": 2,
+      "gameTime": "02:20",
+      "location": "SCN_16_SUB_1",
+      "metadata": {
+        "outcome": "要求帕特里齐奥把吧台后方储物柜的钥匙交给卢茨，并当场在账本上记录交接时间与在场目击者"
+      }
+    },
+    {
+      "type": "event",
+      "content": "低声命令卢茨和塔兰继续封锁所有出入口、重点看守监控盲区并把任何相机、存储卡与通讯器立即交给我保管；若有人反抗以最小必要武力控制并立刻向我汇报，保持低调以维护镇长身份。 [在 SCN_16_SUB_1 因重新规划而中断] 已中断",
+      "gameDay": 2,
+      "gameTime": "02:53",
+      "location": "SCN_16_SUB_1",
+      "metadata": {
+        "outcome": "低声命令卢茨和塔兰继续封锁所有出入口、重点看守监控盲区并把任何相机、存储卡与通讯器立即交给我保管；若有人反抗以最小必要武力控制并立刻向我汇报，保持低调以维护镇长身份。 [在 SCN_16_SUB_1 因重新规划而中断] 已中断",
+        "interruptionReason": "revise_replan"
+      }
+    },
+    {
+      "type": "witness",
+      "content": "[相遇] 我刚在一层大厅与 Johnny、Lutz Emilion 和 Taran Emilion 面对面相遇。有人在场加剧了局势的危险性——科温德可能仍掌握武器或钥匙，证据有被带走或曝光的风险。我感到愤怒、被挑衅且高度警觉；必须马上以镇长伪装隐蔽介入，设法夺回储物柜钥匙或指示卢茨、塔兰把猎枪锁回并把钥匙交到我手中，封锁所有出入口并控制监控与存储介质，保护证据。",
+      "gameDay": 2,
+      "gameTime": "02:53",
+      "location": "SCN_16_SUB_1",
+      "metadata": {
+        "impact": 2,
+        "perspective": "co_presence",
+        "sourceAction": "Johnny, Lutz Emilion, Taran Emilion 在 一层大厅",
+        "sourceCharacterId": "__encounter__"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我低声命令卢茨与塔兰立刻把所有相机、存储卡与通讯器交给我，立即将猎枪锁回吧台后方储物柜并把钥匙交到我手中，持续封锁所有出入口并控制监控盲区以维持掩护与镇长伪装。他们迅速且利落地服从，现场由他们继续维持封锁与盲区巡查，储物柜钥匙现在在我手中。 [rel:Lutz Emilion +3 → 22] [rel:Taran Emilion +2 → 27]",
+      "gameDay": 2,
+      "gameTime": "02:56",
+      "location": "SCN_16_SUB_1",
+      "metadata": {
+        "outcome": "低声命令卢茨与塔兰把所有相机、存储卡与通讯器立刻交给我，立即将猎枪锁回吧台后方储物柜并把钥匙交到我手中，持续封锁所有出入口并控制监控盲区以维持掩护和镇长伪装"
+      }
+    },
+    {
+      "type": "event",
+      "content": "低声命令卢茨与塔兰把所有相机、存储卡与通讯器交给我并将这些物证立即放入嵌墙保险箱，锁上并把钥匙交给我保管；继续封锁所有出入口并重点巡查监控盲区，保持低调以维护镇长形象。 [在 SCN_16_SUB_1 因重新规划而中断] 已中断",
+      "gameDay": 2,
+      "gameTime": "03:02",
+      "location": "SCN_16_SUB_1",
+      "metadata": {
+        "outcome": "低声命令卢茨与塔兰把所有相机、存储卡与通讯器交给我并将这些物证立即放入嵌墙保险箱，锁上并把钥匙交给我保管；继续封锁所有出入口并重点巡查监控盲区，保持低调以维护镇长形象。 [在 SCN_16_SUB_1 因重新规划而中断] 已中断",
+        "interruptionReason": "revise_replan"
+      }
+    },
+    {
+      "type": "event",
+      "content": "[直接] 约翰尼在驯鹿酒吧的昏暗角落靠近我，低声威胁要我交出相机和存储卡或说出藏匿地点。我冷静抵抗并拒绝交出任何东西，但感到被羞辱与挫败，愤怒上升，事态可能会升级。必须立刻介入：夺回钥匙并收回猎枪，指示卢茨与塔兰封锁所有出入口并控制监控盲区，阻止任何相机、存储卡或通讯器被带走，同时保持镇长伪装以免引发公众骚动。",
+      "gameDay": 2,
+      "gameTime": "03:02",
+      "location": "SCN_16_SUB_1",
+      "metadata": {
+        "impact": 1,
+        "perspective": "targeted",
+        "sourceAction": "我在驯鹿酒吧的昏暗角落靠近帕特里齐奥，低声威胁他要他交出相机和存储卡或说出藏匿地点，想用压迫逼他就范。但他冷静地抵抗，没有交出任何东西，威胁没有奏效，我感到更受挫与羞辱。我的愤怒上升，事态可能会升级。",
+        "sourceCharacterId": "Johnny"
+      }
+    },
+    {
+      "type": "event",
+      "content": "约翰尼在酒吧里对我低声威胁，要求交出相机、存储卡或说出藏匿地点；我保持镇定并拒绝没有让步。对方看起来受挫且愤怒，我注意到他的情绪变化并会因此更加谨慎。",
+      "gameDay": 2,
+      "gameTime": "03:02",
+      "location": "SCN_16_SUB_1",
+      "metadata": {
+        "outcome": "悄声威胁帕特里齐奥，逼他交出相机和存储卡或说出藏匿地点 [Intimidate 40, rolled 84 (fail) — all targets resisted] failed"
+      }
+    },
+    {
+      "type": "witness",
+      "content": "[目击] 我注意到塔兰检查了吧台后方储物柜的锁，确认柜门仍然上着锁且锁体无明显破损；储物柜的钥匙现在由我（Patrizio）持有，暂时无法打开。我一方面松了口气，另一方面仍然高度警觉——必须马上核实柜内物品并继续控制出入口与监控，确保武器与证据不会被他人带走。",
+      "gameDay": 2,
+      "gameTime": "03:03",
+      "location": "SCN_16_SUB_1",
+      "metadata": {
+        "impact": 2,
+        "perspective": "witness",
+        "sourceAction": "我检查了吧台后方储物柜的锁，确认柜门仍然上着锁，锁体无明显破损；储物柜的钥匙现在由Patrizio持有，暂时无法打开。",
+        "sourceCharacterId": "Taran Emilion"
+      }
+    },
+    {
+      "type": "event",
+      "content": "约翰尼在酒吧角落低声问我要储物柜钥匙或相机/存储卡，为了不当众对峙，我私下把吧台后储物柜的钥匙交给了他，并告诉他嵌墙保险箱里只剩下加塔诺托亚的诅咒画像與梦王会的仪式手稿，确实没有今晚监控录像的拷贝。为了维护形象与局面，我选择低声应对并保持表面平静。",
+      "gameDay": 2,
+      "gameTime": "03:18",
+      "location": "SCN_16_SUB_1",
+      "metadata": {
+        "outcome": "低声询问帕特里齐奥是否携带吧台后储物柜的钥匙或有相机/存储卡，要求他私下交出或指明藏匿处，压低语气以免惊动柯文德或塔兰"
+      }
+    },
+    {
+      "type": "witness",
+      "content": "[目击] 我看到约翰尼用我给的钥匙打开了吧台后方的储物柜，迅速检查后并未发现相机或存储卡。钥匙此刻在他手里，柜门敞开。我感到愤怒与被背叛——这直接威胁到我对武器与证物的控制，必须立刻夺回钥匙并封存柜内物品以防证据外泄。",
+      "gameDay": 2,
+      "gameTime": "03:21",
+      "location": "SCN_16_SUB_1",
+      "metadata": {
+        "impact": 2,
+        "perspective": "witness",
+        "sourceAction": "我用帕特里齐奥给的钥匙打开了吧台后方的储物柜，迅速检查了里面，没发现相机或存储卡。钥匙现在在我手上，储物柜门敞开。",
+        "sourceCharacterId": "Johnny"
+      }
+    },
+    {
+      "type": "event",
+      "content": "低声命令卢茨与塔兰继续封锁所有出入口、看守监控盲区，并把所有相机、存储卡和通讯器交入嵌墙保险箱且不得让任何人接触钥匙或监控设备 [在 SCN_16_SUB_1 因重新规划而中断] 已中断",
+      "gameDay": 2,
+      "gameTime": "03:21",
+      "location": "SCN_16_SUB_1",
+      "metadata": {
+        "outcome": "低声命令卢茨与塔兰继续封锁所有出入口、看守监控盲区，并把所有相机、存储卡和通讯器交入嵌墙保险箱且不得让任何人接触钥匙或监控设备 [在 SCN_16_SUB_1 因重新规划而中断] 已中断",
+        "interruptionReason": "revise_replan"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我悄无声息地从约翰尼手中夺回了吧台后方储物柜的钥匙；他没有察觉，我把钥匙藏好，继续维持冷静与主动权。 [rel:Johnny -3 → -43]",
+      "gameDay": 2,
+      "gameTime": "03:23",
+      "location": "SCN_16_SUB_1",
+      "metadata": {
+        "outcome": "悄声从约翰尼手中夺回吧台后方储物柜的钥匙"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我检查了吧台后方敞开的储物柜，逐项核对了柜内物品并确认清单。未发现相机或存储卡，储物柜内物品情况已记录。",
+      "gameDay": 2,
+      "gameTime": "03:26",
+      "location": "SCN_16_SUB_1",
+      "metadata": {
+        "outcome": "检查吧台后方储物柜内物品以确认清单"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我悄无声息地从约翰尼手中夺回了吧台后方储物柜的钥匙并将其藏好。约翰尼并未察觉，我继续在幕后掌控局面，确保那把钥匙和储物柜内容不会暴露。 [rel:Johnny -4 → -47]",
+      "gameDay": 2,
+      "gameTime": "03:29",
+      "location": "SCN_16_SUB_1",
+      "metadata": {
+        "outcome": "悄无声息地从约翰尼手中夺回吧台后方储物柜的钥匙并将其藏好"
+      }
+    },
+    {
+      "type": "witness",
+      "content": "[目击] 塔兰告诉我：他彻底搜查了吧台后方的储物柜和周边隐蔽处，但没找到约翰尼的相机或存储卡，也未见被篡改的痕迹。我感到愤怒与不安——这意味着证据不在预期位置，可能已被带走或藏到别处。我必须立刻扩大搜查范围并严密控制出入口与人员，迅速查明相机与存储卡的下落，防止证据外泄。",
+      "gameDay": 2,
+      "gameTime": "03:30",
+      "location": "SCN_16_SUB_1",
+      "metadata": {
+        "impact": 2,
+        "perspective": "witness",
+        "sourceAction": "我彻底搜查了吧台后方的储物柜和周边隐蔽处，但没找到约翰尼的相机或存储卡，也没有发现任何被篡改的痕迹。",
+        "sourceCharacterId": "Taran Emilion"
+      }
+    },
+    {
+      "type": "event",
+      "content": "把吧台后方储物柜关上并上锁，把钥匙收入衣袋并确认钥匙安全保管 [在 SCN_16_SUB_1 因重新规划而中断] 已中断",
+      "gameDay": 2,
+      "gameTime": "03:30",
+      "location": "SCN_16_SUB_1",
+      "metadata": {
+        "outcome": "把吧台后方储物柜关上并上锁，把钥匙收入衣袋并确认钥匙安全保管 [在 SCN_16_SUB_1 因重新规划而中断] 已中断",
+        "interruptionReason": "revise_replan"
+      }
+    },
+    {
+      "type": "plan",
+      "content": "Today's plan: 1. 在私人书房复核仪式手稿与今晚的监控录像，并把要带走的黑蜡烛和海盐打包好 at 镇长私宅; 2. 在会客室吃一份简单的晚餐并换上便于行动的外衣，确保出门不惊动任何人 at 镇长私宅; 3. 与康斯坦丁短会，确认他会在我需要的时候制造足够的混乱以掩护处理布鲁诺的问题 at 教堂; 4. 悄无声息地在上层巡查修格斯的关押处，确认没有异常并再次加固看守方式以免惊动它 at 焚化厂; 5. 下到地下仪式场重新点燃黑蜡烛、补充海盐并在祭坛上描画并校正昆扬符文以维持共振 at 焚化厂; 6. 记录仪式场的能量读数并微调低声咒语与祭品摆放，确保第二阶段的准备稳步推进 at 焚化厂; 7. 回到私宅后把现场日志与监测记录锁入密柜，并与卢克斯和马丁简短通话确认镇上今夜无异常后就寝 at 镇长私宅",
+      "gameDay": 1,
+      "gameTime": "19:00",
+      "location": null,
+      "metadata": {
+        "planType": "daily"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我用嵌墙保险箱钥匙打开了那只嵌墙保险箱，从里面取出并将梦王会仪式手稿放入随身；保险箱里只剩下加塔诺托亚的诅咒画像。保险箱内并没有我想要的黑蜡烛或海盐，也没有今晚监控录像的拷贝——我快速检查了保险箱内并未发现录像拷贝。",
+      "gameDay": 1,
+      "gameTime": "19:10",
+      "location": "SCN_22_SUB_2",
+      "metadata": {
+        "itemId": "ITEM_SCN22_10",
+        "outcome": "用嵌墙保险箱钥匙打开嵌墙保险箱，从里取出黑蜡烛、海盐与仪式手稿，并快速检查保险箱中保存的今晚监控录像拷贝是否完整",
+        "itemName": "嵌墙保险箱"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我仔细翻检了写字台、带锁抽屉周边和书架，并在炉灰里查看残余。抽屉缝里取出几页折叠便笺，并把桌上的未封来信收进身上；炉膛只有烧焦的纸片，没找到抽屉钥匙、黑蜡烛、海盐或任何录像拷贝。",
+      "gameDay": 1,
+      "gameTime": "19:16",
+      "location": "SCN_22_SUB_2",
+      "metadata": {
+        "outcome": "在书房里仔细检查并翻找带锁抽屉及其周边、书架与桌面，寻找抽屉钥匙、黑蜡烛、海盐或任何监控录像拷贝"
+      }
+    },
+    {
+      "type": "event",
+      "content": "走到书架后暗门并悄悄下楼前往地下储藏室 成功",
+      "gameDay": 1,
+      "gameTime": "19:17",
+      "location": "SCN_22_SUB_3",
+      "metadata": {
+        "outcome": "走到书架后暗门并悄悄下楼前往地下储藏室 成功",
+        "blockedReason": "",
+        "failureReason": ""
+      }
+    },
+    {
+      "type": "event",
+      "content": "我把金属护罩灯打开了，地下储藏室从漆黑变得明亮，架上的文件盒、煤油和上锁木箱现在都看得清楚。",
+      "gameDay": 1,
+      "gameTime": "19:20",
+      "location": "SCN_22_SUB_3",
+      "metadata": {
+        "outcome": "打开金属护罩灯以照亮地下储藏室"
+      }
+    },
+    {
+      "type": "event",
+      "content": "用铁铲撬开上锁木箱，寻找黑蜡烛与海盐 [STR 1, rolled 76 (difficulty: regular)] failed (item: ITEM_SCN22_8) [item: 上锁木箱 (id:ITEM_SCN22_8)]",
+      "gameDay": 1,
+      "gameTime": "19:26",
+      "location": "SCN_22_SUB_3",
+      "metadata": {
+        "itemId": "ITEM_SCN22_8",
+        "outcome": "用铁铲撬开上锁木箱，寻找黑蜡烛与海盐 [STR 1, rolled 76 (difficulty: regular)] failed (item: ITEM_SCN22_8)",
+        "itemName": "上锁木箱"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我检查了那两只上锁木箱的挂锁与铰链。挂锁是黄铜制，表面有磨损但没有明显被撬开的痕迹；铰链和螺丝虽有老化与轻微锈斑，但仍然紧固，短时间内靠徒手或简陋工具难以拆开，看来需要合适的工具或钥匙才能打开。",
+      "gameDay": 1,
+      "gameTime": "19:30",
+      "location": "SCN_22_SUB_3",
+      "metadata": {
+        "itemId": "ITEM_SCN22_8",
+        "outcome": "检查上锁木箱的锁与铰链，寻找可利用的弱点或备用钥匙痕迹",
+        "itemName": "上锁木箱"
+      }
+    },
+    {
+      "type": "event",
+      "content": "走上狭窄台阶回到私人书房 成功",
+      "gameDay": 1,
+      "gameTime": "19:33",
+      "location": "SCN_22_SUB_1",
+      "metadata": {
+        "outcome": "走上狭窄台阶回到私人书房 成功",
+        "blockedReason": "",
+        "failureReason": ""
+      }
+    },
+    {
+      "type": "event",
+      "content": "前往私人书房 成功",
+      "gameDay": 1,
+      "gameTime": "19:34",
+      "location": "SCN_22_SUB_1",
+      "metadata": {
+        "outcome": "前往私人书房 成功",
+        "blockedReason": "",
+        "failureReason": ""
+      }
+    },
+    {
+      "type": "event",
+      "content": "我把壁炉台上的黄铜座钟短暂移开，检查了钟的背面和底座缝隙——钟面玻璃几乎无尘、走时精准，但背后并没有藏着备用钥匙。",
+      "gameDay": 1,
+      "gameTime": "19:38",
+      "location": "SCN_22_SUB_1",
+      "metadata": {
+        "itemId": "ITEM_SCN22_1",
+        "outcome": "检查壁炉上的黄铜座钟背后是否藏有备用钥匙",
+        "itemName": "黄铜座钟"
+      }
+    },
+    {
+      "type": "event",
+      "content": "前往私人书房 成功",
+      "gameDay": 1,
+      "gameTime": "19:39",
+      "location": "SCN_22_SUB_1",
+      "metadata": {
+        "outcome": "前往私人书房 成功",
+        "blockedReason": "",
+        "failureReason": ""
+      }
+    },
+    {
+      "type": "event",
+      "content": "我把墙上的无署名相框取下，翻看了背面和边缝寻找藏匿的小物或钥匙，但没有发现任何可用的物件或线索，于是将相框放回原位。",
+      "gameDay": 1,
+      "gameTime": "19:42",
+      "location": "SCN_22_SUB_1",
+      "metadata": {
+        "itemId": "ITEM_SCN22_2",
+        "outcome": "检查并翻看无署名相框背后寻找藏匿的小物或钥匙",
+        "itemName": "无署名相框"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我把壁炉台上的待客茶盘逐一掀开和翻看，检查茶具背面和托盘缝隙，但没有找到钥匙或任何隐藏物品；茶具已被我整理回原位，只有托盘显出被翻动的痕迹。",
+      "gameDay": 1,
+      "gameTime": "19:46",
+      "location": "SCN_22_SUB_1",
+      "metadata": {
+        "itemId": "ITEM_SCN22_3",
+        "outcome": "检查并翻看待客茶盘寻找钥匙或隐藏物品",
+        "itemName": "待客茶盘"
+      }
+    },
+    {
+      "type": "event",
+      "content": "前往私人书房 成功",
+      "gameDay": 1,
+      "gameTime": "19:47",
+      "location": "SCN_22_SUB_1",
+      "metadata": {
+        "outcome": "前往私人书房 成功",
+        "blockedReason": "",
+        "failureReason": ""
+      }
+    },
+    {
+      "type": "event",
+      "content": "在会客室吃一份简单的晚餐，尽量保持安静不惊动任何人 成功",
+      "gameDay": 1,
+      "gameTime": "20:08",
+      "location": "SCN_22_SUB_1",
+      "metadata": {
+        "outcome": "在会客室吃一份简单的晚餐，尽量保持安静不惊动任何人 成功"
+      }
+    },
+    {
+      "type": "event",
+      "content": "前往私人书房 成功",
+      "gameDay": 1,
+      "gameTime": "20:10",
+      "location": "SCN_22_SUB_2",
+      "metadata": {
+        "outcome": "前往私人书房 成功",
+        "blockedReason": "",
+        "failureReason": ""
+      }
+    },
+    {
+      "type": "event",
+      "content": "尝试用开锁工具撬开带锁抽屉以寻找黑蜡烛和海盐 [Locksmith 1, rolled 53 (difficulty: regular)] failed (item: ITEM_SCN22_5) [item: 带锁抽屉 (id:ITEM_SCN22_5)]",
+      "gameDay": 1,
+      "gameTime": "20:16",
+      "location": "SCN_22_SUB_2",
+      "metadata": {
+        "itemId": "ITEM_SCN22_5",
+        "outcome": "尝试用开锁工具撬开带锁抽屉以寻找黑蜡烛和海盐 [Locksmith 1, rolled 53 (difficulty: regular)] failed (item: ITEM_SCN22_5)",
+        "itemName": "带锁抽屉"
+      }
+    },
+    {
+      "type": "event",
+      "content": "复核梦王会仪式手稿，逐段核对咒语、祭品与今晚所需物品并在手稿上做标记 成功",
+      "gameDay": 1,
+      "gameTime": "20:30",
+      "location": "SCN_22_SUB_2",
+      "metadata": {
+        "outcome": "复核梦王会仪式手稿，逐段核对咒语、祭品与今晚所需物品并在手稿上做标记 成功"
+      }
+    },
+    {
+      "type": "event",
+      "content": "前往教堂与康斯坦丁短会，确认他会在我需要时制造混乱掩护我处理布鲁诺 [在 ROAD_3 因重新规划而中断] 已中断",
+      "gameDay": 1,
+      "gameTime": "20:34",
+      "location": "ROAD_3",
+      "metadata": {
+        "outcome": "前往教堂与康斯坦丁短会，确认他会在我需要时制造混乱掩护我处理布鲁诺 [在 ROAD_3 因重新规划而中断] 已中断",
+        "interruptionReason": "revise_replan"
+      }
+    },
+    {
+      "type": "witness",
+      "content": "[相遇] 在卡森德拉南新街于20:34与Marcel Gwynplaine面对面相遇。这是意外的遭遇，我感到警觉与不悦——任何多余的交谈都可能暴露今晚的安排或牵出布鲁诺的事。短时间内我会试探他的来意，尽量隐瞒身份与目的，准备迅速转移话题或脱离现场，随后在确定他无威胁后继续前往与康斯坦丁的会面。",
+      "gameDay": 1,
+      "gameTime": "20:34",
+      "location": "ROAD_3",
+      "metadata": {
+        "impact": 2,
+        "perspective": "co_presence",
+        "sourceAction": "Marcel Gwynplaine 在 卡森德拉南新街",
+        "sourceCharacterId": "__encounter__"
+      }
+    },
+    {
+      "type": "event",
+      "content": "与Marcel搭话，询问他今晚为什么在南新街，观察他的反应以判断他是否构成威胁；不透露关于我或今晚安排的任何信息，必要时以匆忙前往教堂为由结束谈话 [target Marcel Gwynplaine not present] failed",
+      "gameDay": 1,
+      "gameTime": "20:40",
+      "location": "ROAD_3",
+      "metadata": {
+        "outcome": "与Marcel搭话，询问他今晚为什么在南新街，观察他的反应以判断他是否构成威胁；不透露关于我或今晚安排的任何信息，必要时以匆忙前往教堂为由结束谈话 [target Marcel Gwynplaine not present] failed"
+      }
+    },
+    {
+      "type": "witness",
+      "content": "[相遇] 在新月街A大道北与Marcel Gwynplaine面对面相遇。他的出现让我警觉且不悦——任何多余的交谈都可能暴露今晚的安排或牵扯出布鲁诺。我准备短暂试探他的来意，隐瞒身份与目的，必要时以匆忙前往教堂为由迅速结束对话并脱离现场；若确认无威胁则继续前往与康斯坦丁的会面。",
+      "gameDay": 1,
+      "gameTime": "20:41",
+      "location": "ROAD_6",
+      "metadata": {
+        "impact": 2,
+        "perspective": "co_presence",
+        "sourceAction": "Marcel Gwynplaine 在 新月街A大道北",
+        "sourceCharacterId": "__encounter__"
+      }
+    },
+    {
+      "type": "event",
+      "content": "前往马塞尔家以短暂接触并评估马塞尔·格温普兰的意图 [在 ROAD_6 因重新规划而中断] 已中断",
+      "gameDay": 1,
+      "gameTime": "20:41",
+      "location": "ROAD_6",
+      "metadata": {
+        "outcome": "前往马塞尔家以短暂接触并评估马塞尔·格温普兰的意图 [在 ROAD_6 因重新规划而中断] 已中断",
+        "interruptionReason": "revise_replan"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我以匆忙去教堂为由与马塞尔搭话，试探他今晚为何出现在新月街并警告他不要跟随或就敏感话题联系我。经过施压后，他承认在12月22日于驯鹿酒吧见过异常，并说曾在新月街B大道的下水道口看到一名脸上有明显疤痕或胎记的男人；他也承认曾是第一个在洗手间发现卢奇菲罗尸体但因害怕试图溜走。他明确同意不会跟随我或就敏感话题联系我。 [rel:Marcel Gwynplaine +10 → 10]",
+      "gameDay": 1,
+      "gameTime": "20:46",
+      "location": "ROAD_6",
+      "metadata": {
+        "outcome": "以匆忙前往教堂参加短会为由与马塞尔搭话，试探他今晚为何出现在新月街；在不透露今晚安排或布鲁诺事宜的情况下警告他不要跟随或就敏感话题联系我，若他表现出可疑或执着立刻礼貌收场离开。"
+      }
+    },
+    {
+      "type": "witness",
+      "content": "[相遇] 在教堂主殿与康斯坦丁面对面相遇。他态度沉稳，默许会在我需要时制造混乱以掩护我处理布鲁诺。听到他的保证让我松了口气但依旧警觉——不能在此多停留或暴露今晚其他安排，必须尽快去焚化厂继续仪式前的最后准备。",
+      "gameDay": 1,
+      "gameTime": "20:54",
+      "location": "SCN_17_SUB_1",
+      "metadata": {
+        "impact": 2,
+        "perspective": "co_presence",
+        "sourceAction": "Constantine Frollo 在 教堂主殿",
+        "sourceCharacterId": "__encounter__"
+      }
+    },
+    {
+      "type": "event",
+      "content": "步行前往教堂与康斯坦丁短会，确认他会在我需要时制造混乱以掩护处理布鲁诺 成功",
+      "gameDay": 1,
+      "gameTime": "20:54",
+      "location": "SCN_17_SUB_1",
+      "metadata": {
+        "outcome": "步行前往教堂与康斯坦丁短会，确认他会在我需要时制造混乱以掩护处理布鲁诺 成功",
+        "blockedReason": "",
+        "failureReason": ""
+      }
+    },
+    {
+      "type": "event",
+      "content": "我低声请求康斯坦丁随我前往焚化厂，并在我靠近上层关押处时在外制造分散注意的动静以掩护我加强看守。康斯坦丁表示会配合，虽带保留但答应制造掩护并同行；我们默契地以他教堂事务不受干涉作为交换。 [rel:Constantine Frollo +7 → 62]",
+      "gameDay": 1,
+      "gameTime": "20:59",
+      "location": "SCN_17_SUB_1",
+      "metadata": {
+        "outcome": "低声请求康斯坦丁随我前往焚化厂，并在我靠近上层关押处时准备在外制造分散注意的动静以掩护我加强看守"
+      }
+    },
+    {
+      "type": "witness",
+      "content": "[相遇] 我在教堂主殿与康斯坦丁·弗罗洛面对面。他态度沉稳，默许会在我需要时制造混乱以掩护我处理布鲁诺。听到他的保证让我松了口气但依旧警觉——不能在此多停留或暴露今晚其他安排，必须尽快去焚化厂继续为第二阶段仪式做最后准备。",
+      "gameDay": 1,
+      "gameTime": "23:38",
+      "location": "SCN_17_SUB_1",
+      "metadata": {
+        "impact": 2,
+        "perspective": "co_presence",
+        "sourceAction": "Tallinn, Constantine Frollo 在 教堂主殿",
+        "sourceCharacterId": "__encounter__"
+      }
+    },
+    {
+      "type": "event",
+      "content": "康斯坦丁把我引到长椅上让我坐下，低声祈祷掩饰他的动作，使我没有去靠近祭坛或暗门。我感到被牵制和安抚，因此坐着观察他的举动并暂时配合。",
+      "gameDay": 1,
+      "gameTime": "23:42",
+      "location": "SCN_17_SUB_1",
+      "metadata": {
+        "outcome": "低声引导帕特里齐奥坐下并为他做一段简短祈祷以分散他的注意，不让他靠近祭坛或暗门"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我听从示意，坐在长椅上低声祈祷，注意到康斯坦丁的目光盯着祭坛和暗门。我按约配合，觉得这是他掌控局势的一部分，因此没有反抗。",
+      "gameDay": 1,
+      "gameTime": "23:46",
+      "location": "SCN_17_SUB_1",
+      "metadata": {
+        "outcome": "低声示意帕特里齐奥留在长椅上并继续祈祷，以祷词掩护我的视线与注意力，盯着祭坛与暗门方向观察他的反应"
+      }
+    },
+    {
+      "type": "information",
+      "content": "地下储藏室的两只上锁木箱使用黄铜挂锁，表面有磨损但没有被撬开的痕迹，铰链与螺丝虽老化但仍然紧固；短时间内徒手或简陋工具难以打开，需要合适的工具或钥匙才能进入。",
+      "gameDay": 1,
+      "gameTime": "23:59",
+      "location": null,
+      "metadata": {
+        "revealed": false,
+        "difficulty": "regular",
+        "knowledgeId": "learned_day1_3"
+      }
+    },
+    {
+      "type": "secret",
+      "content": "马塞尔承认他在12月22日于驯鹿酒吧见过异常，并说曾在新月街B大道下水道口看到一名脸上有明显疤痕或胎记的男人；他也承认曾是第一个在洗手间发现卢奇菲罗尸体但因害怕试图离开。他当场口头同意不会跟随我或就敏感话题联系我。",
+      "gameDay": 1,
+      "gameTime": "23:59",
+      "location": null,
+      "metadata": {
+        "revealed": false,
+        "difficulty": "hard",
+        "knowledgeId": "learned_day1_1"
+      }
+    },
+    {
+      "type": "information",
+      "content": "嵌墙保险箱里只剩下加塔诺托亚的诅咒画像與梦王会的仪式手稿；并没有黑蜡烛、海盐或任何今晚监控录像的拷贝，说明仪式所需的若干实物并不在我私宅可直接取得的位置。",
+      "gameDay": 1,
+      "gameTime": "23:59",
+      "location": null,
+      "metadata": {
+        "revealed": false,
+        "difficulty": "regular",
+        "knowledgeId": "learned_day1_2"
+      }
+    }
+  ],
+  "plans": [
+    {
+      "npcName": "Patrizio von Samsa",
+      "gameDay": 1,
+      "schedule": [
+        {
+          "activity": "在私人书房复核仪式手稿与今晚的监控录像，并把要带走的黑蜡烛和海盐打包好",
+          "location": "镇长私宅"
+        },
+        {
+          "activity": "在会客室吃一份简单的晚餐并换上便于行动的外衣，确保出门不惊动任何人",
+          "location": "镇长私宅"
+        },
+        {
+          "activity": "与康斯坦丁短会，确认他会在我需要的时候制造足够的混乱以掩护处理布鲁诺的问题",
+          "location": "教堂"
+        },
+        {
+          "activity": "悄无声息地在上层巡查修格斯的关押处，确认没有异常并再次加固看守方式以免惊动它",
+          "location": "焚化厂"
+        },
+        {
+          "activity": "下到地下仪式场重新点燃黑蜡烛、补充海盐并在祭坛上描画并校正昆扬符文以维持共振",
+          "location": "焚化厂"
+        },
+        {
+          "activity": "记录仪式场的能量读数并微调低声咒语与祭品摆放，确保第二阶段的准备稳步推进",
+          "location": "焚化厂"
+        },
+        {
+          "activity": "回到私宅后把现场日志与监测记录锁入密柜，并与卢克斯和马丁简短通话确认镇上今夜无异常后就寝",
+          "location": "镇长私宅"
+        }
+      ],
+      "nodes": [
+        {
+          "type": "object_interaction",
+          "action": "检查并翻看无署名相框背后寻找藏匿的小物或钥匙",
+          "impact": 0,
+          "nodeId": "oi1",
+          "status": "completed",
+          "endTime": "19:42",
+          "outcome": "我把墙上的无署名相框取下，翻看了背面和边缝寻找藏匿的小物或钥匙，但没有发现任何可用的物件或线索，于是将相框放回原位。",
+          "startTime": "19:40",
+          "characterId": "Patrizio von Samsa",
+          "characterName": "Patrizio von Samsa",
+          "executionMeta": {
+            "startedAt": "19:40",
+            "completedAt": "19:42",
+            "remainingMinutes": 0
+          },
+          "objectInteractionPayload": {
+            "itemId": "ITEM_SCN22_2"
+          }
+        },
+        {
+          "type": "scene_interaction",
+          "action": "在书房里仔细检查并翻找带锁抽屉及其周边、书架与桌面，寻找抽屉钥匙、黑蜡烛、海盐或任何监控录像拷贝",
+          "impact": 0,
+          "nodeId": "si_day1_1911_1",
+          "status": "completed",
+          "endTime": "19:16",
+          "outcome": "我仔细翻检了写字台、带锁抽屉周边和书架，并在炉灰里查看残余。抽屉缝里取出几页折叠便笺，并把桌上的未封来信收进身上；炉膛只有烧焦的纸片，没找到抽屉钥匙、黑蜡烛、海盐或任何录像拷贝。",
+          "startTime": "19:11",
+          "characterId": "Patrizio von Samsa",
+          "characterName": "Patrizio von Samsa",
+          "executionMeta": {
+            "startedAt": "19:11",
+            "completedAt": "19:16",
+            "remainingMinutes": 0
+          },
+          "objectInteractionPayload": {
+            "itemId": "ITEM_SCN22_5"
+          }
+        },
+        {
+          "type": "movement",
+          "action": "前往焚化厂",
+          "impact": 0,
+          "nodeId": "m1",
+          "status": "in_progress",
+          "endTime": "23:50",
+          "startTime": "23:40",
+          "characterId": "Patrizio von Samsa",
+          "destination": "SCN_2_SUB_1",
+          "characterName": "Patrizio von Samsa",
+          "executionMeta": {
+            "startedAt": "23:40",
+            "remainingMinutes": 10
+          }
+        },
+        {
+          "type": "scene_interaction",
+          "action": "打开金属护罩灯以照亮地下储藏室",
+          "impact": 0,
+          "nodeId": "si1",
+          "status": "completed",
+          "endTime": "19:20",
+          "outcome": "我把金属护罩灯打开了，地下储藏室从漆黑变得明亮，架上的文件盒、煤油和上锁木箱现在都看得清楚。",
+          "startTime": "19:18",
+          "characterId": "Patrizio von Samsa",
+          "characterName": "Patrizio von Samsa",
+          "executionMeta": {
+            "startedAt": "19:18",
+            "completedAt": "19:20",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "object_interaction",
+          "skill": "Locksmith",
+          "action": "尝试用开锁工具撬开带锁抽屉以寻找黑蜡烛和海盐",
+          "impact": 0,
+          "nodeId": "oi2",
+          "status": "failed",
+          "endTime": "20:16",
+          "startTime": "20:11",
+          "characterId": "Patrizio von Samsa",
+          "characterName": "Patrizio von Samsa",
+          "executionMeta": {
+            "failedAt": "20:16",
+            "startedAt": "20:11",
+            "remainingMinutes": 5
+          },
+          "objectInteractionPayload": {
+            "itemId": "ITEM_SCN22_5"
+          }
+        },
+        {
+          "type": "object_interaction",
+          "action": "检查上锁木箱的锁与铰链，寻找可利用的弱点或备用钥匙痕迹",
+          "impact": 0,
+          "nodeId": "oi_patrizio_01",
+          "status": "completed",
+          "endTime": "19:30",
+          "outcome": "我检查了那两只上锁木箱的挂锁与铰链。挂锁是黄铜制，表面有磨损但没有明显被撬开的痕迹；铰链和螺丝虽有老化与轻微锈斑，但仍然紧固，短时间内靠徒手或简陋工具难以拆开，看来需要合适的工具或钥匙才能打开。",
+          "startTime": "19:27",
+          "characterId": "Patrizio von Samsa",
+          "characterName": "Patrizio von Samsa",
+          "executionMeta": {
+            "startedAt": "19:27",
+            "completedAt": "19:30",
+            "remainingMinutes": 0
+          },
+          "objectInteractionPayload": {
+            "itemId": "ITEM_SCN22_8"
+          }
+        },
+        {
+          "type": "movement",
+          "action": "前往焚化厂",
+          "impact": 0,
+          "nodeId": "m1",
+          "status": "in_progress",
+          "endTime": "23:50",
+          "startTime": "23:40",
+          "characterId": "Patrizio von Samsa",
+          "destination": "SCN_2_SUB_1",
+          "characterName": "Patrizio von Samsa",
+          "executionMeta": {
+            "startedAt": "23:40",
+            "remainingMinutes": 10
+          }
+        },
+        {
+          "type": "movement",
+          "action": "前往焚化厂",
+          "impact": 0,
+          "nodeId": "m1",
+          "status": "in_progress",
+          "endTime": "23:50",
+          "startTime": "23:40",
+          "characterId": "Patrizio von Samsa",
+          "destination": "SCN_2_SUB_1",
+          "characterName": "Patrizio von Samsa",
+          "executionMeta": {
+            "startedAt": "23:40",
+            "remainingMinutes": 10
+          }
+        },
+        {
+          "type": "object_interaction",
+          "action": "检查壁炉上的黄铜座钟背后是否藏有备用钥匙",
+          "impact": 0,
+          "nodeId": "oi_pv_001",
+          "status": "completed",
+          "endTime": "19:38",
+          "outcome": "我把壁炉台上的黄铜座钟短暂移开，检查了钟的背面和底座缝隙——钟面玻璃几乎无尘、走时精准，但背后并没有藏着备用钥匙。",
+          "startTime": "19:35",
+          "characterId": "Patrizio von Samsa",
+          "characterName": "Patrizio von Samsa",
+          "executionMeta": {
+            "startedAt": "19:35",
+            "completedAt": "19:38",
+            "remainingMinutes": 0
+          },
+          "objectInteractionPayload": {
+            "itemId": "ITEM_SCN22_1"
+          }
+        },
+        {
+          "type": "movement",
+          "action": "前往私人书房",
+          "impact": 0,
+          "nodeId": "m_patrizio_001",
+          "status": "completed",
+          "endTime": "19:41",
+          "outcome": "前往私人书房 成功",
+          "startTime": "19:39",
+          "characterId": "Patrizio von Samsa",
+          "destination": "SCN_22_SUB_1",
+          "characterName": "Patrizio von Samsa",
+          "executionMeta": {
+            "movement": {
+              "routeSnapshot": [],
+              "targetPosition": {
+                "type": "scene",
+                "sceneId": "SCN_22_SUB_1"
+              },
+              "minutesIntoStep": 0,
+              "currentStepIndex": 0,
+              "lastReachablePosition": {
+                "type": "scene",
+                "sceneId": "SCN_22_SUB_1"
+              }
+            },
+            "startedAt": "19:39",
+            "completedAt": "19:39",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "object_interaction",
+          "action": "检查并翻看无署名相框背后寻找藏匿的小物或钥匙",
+          "impact": 0,
+          "nodeId": "oi1",
+          "status": "completed",
+          "endTime": "19:42",
+          "outcome": "我把墙上的无署名相框取下，翻看了背面和边缝寻找藏匿的小物或钥匙，但没有发现任何可用的物件或线索，于是将相框放回原位。",
+          "startTime": "19:40",
+          "characterId": "Patrizio von Samsa",
+          "characterName": "Patrizio von Samsa",
+          "executionMeta": {
+            "startedAt": "19:40",
+            "completedAt": "19:42",
+            "remainingMinutes": 0
+          },
+          "objectInteractionPayload": {
+            "itemId": "ITEM_SCN22_2"
+          }
+        },
+        {
+          "type": "object_interaction",
+          "action": "检查并翻看待客茶盘寻找钥匙或隐藏物品",
+          "impact": 0,
+          "nodeId": "oi_scn22_01",
+          "status": "completed",
+          "endTime": "19:46",
+          "outcome": "我把壁炉台上的待客茶盘逐一掀开和翻看，检查茶具背面和托盘缝隙，但没有找到钥匙或任何隐藏物品；茶具已被我整理回原位，只有托盘显出被翻动的痕迹。",
+          "startTime": "19:43",
+          "characterId": "Patrizio von Samsa",
+          "characterName": "Patrizio von Samsa",
+          "executionMeta": {
+            "startedAt": "19:43",
+            "completedAt": "19:46",
+            "remainingMinutes": 0
+          },
+          "objectInteractionPayload": {
+            "itemId": "ITEM_SCN22_3"
+          }
+        },
+        {
+          "type": "movement",
+          "action": "前往焚化厂",
+          "impact": 0,
+          "nodeId": "m1",
+          "status": "in_progress",
+          "endTime": "23:50",
+          "startTime": "23:40",
+          "characterId": "Patrizio von Samsa",
+          "destination": "SCN_2_SUB_1",
+          "characterName": "Patrizio von Samsa",
+          "executionMeta": {
+            "startedAt": "23:40",
+            "remainingMinutes": 10
+          }
+        },
+        {
+          "type": "action",
+          "action": "在会客室吃一份简单的晚餐，尽量保持安静不惊动任何人",
+          "impact": 0,
+          "nodeId": "a2",
+          "status": "completed",
+          "endTime": "20:08",
+          "outcome": "在会客室吃一份简单的晚餐，尽量保持安静不惊动任何人 成功",
+          "startTime": "19:48",
+          "characterId": "Patrizio von Samsa",
+          "characterName": "Patrizio von Samsa",
+          "executionMeta": {
+            "startedAt": "19:48",
+            "completedAt": "20:08",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "movement",
+          "action": "前往焚化厂",
+          "impact": 0,
+          "nodeId": "m1",
+          "status": "in_progress",
+          "endTime": "23:50",
+          "startTime": "23:40",
+          "characterId": "Patrizio von Samsa",
+          "destination": "SCN_2_SUB_1",
+          "characterName": "Patrizio von Samsa",
+          "executionMeta": {
+            "startedAt": "23:40",
+            "remainingMinutes": 10
+          }
+        },
+        {
+          "type": "object_interaction",
+          "skill": "Locksmith",
+          "action": "尝试用开锁工具撬开带锁抽屉以寻找黑蜡烛和海盐",
+          "impact": 0,
+          "nodeId": "oi2",
+          "status": "failed",
+          "endTime": "20:16",
+          "startTime": "20:11",
+          "characterId": "Patrizio von Samsa",
+          "characterName": "Patrizio von Samsa",
+          "executionMeta": {
+            "failedAt": "20:16",
+            "startedAt": "20:11",
+            "remainingMinutes": 5
+          },
+          "objectInteractionPayload": {
+            "itemId": "ITEM_SCN22_5"
+          }
+        },
+        {
+          "type": "action",
+          "action": "复核梦王会仪式手稿，逐段核对咒语、祭品与今晚所需物品并在手稿上做标记",
+          "impact": 0,
+          "nodeId": "a_next_001",
+          "status": "completed",
+          "endTime": "20:30",
+          "outcome": "复核梦王会仪式手稿，逐段核对咒语、祭品与今晚所需物品并在手稿上做标记 成功",
+          "startTime": "20:17",
+          "characterId": "Patrizio von Samsa",
+          "characterName": "Patrizio von Samsa",
+          "executionMeta": {
+            "startedAt": "20:17",
+            "completedAt": "20:30",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "movement",
+          "action": "前往焚化厂",
+          "impact": 0,
+          "nodeId": "m1",
+          "status": "in_progress",
+          "endTime": "23:50",
+          "startTime": "23:40",
+          "characterId": "Patrizio von Samsa",
+          "destination": "SCN_2_SUB_1",
+          "characterName": "Patrizio von Samsa",
+          "executionMeta": {
+            "startedAt": "23:40",
+            "remainingMinutes": 10
+          }
+        },
+        {
+          "type": "character_interaction",
+          "skill": "Persuade",
+          "action": "与Marcel搭话，询问他今晚为什么在南新街，观察他的反应以判断他是否构成威胁；不透露关于我或今晚安排的任何信息，必要时以匆忙前往教堂为由结束谈话",
+          "impact": 1,
+          "nodeId": "ci_marcel_2035",
+          "status": "failed",
+          "endTime": "20:40",
+          "startTime": "20:35",
+          "characterId": "Patrizio von Samsa",
+          "characterName": "Patrizio von Samsa",
+          "executionMeta": {
+            "failedAt": "20:40",
+            "startedAt": "20:35",
+            "remainingMinutes": 5
+          },
+          "targetCharacterIds": [
+            "Marcel Gwynplaine"
+          ]
+        },
+        {
+          "type": "movement",
+          "action": "前往焚化厂",
+          "impact": 0,
+          "nodeId": "m1",
+          "status": "in_progress",
+          "endTime": "23:50",
+          "startTime": "23:40",
+          "characterId": "Patrizio von Samsa",
+          "destination": "SCN_2_SUB_1",
+          "characterName": "Patrizio von Samsa",
+          "executionMeta": {
+            "startedAt": "23:40",
+            "remainingMinutes": 10
+          }
+        },
+        {
+          "type": "character_interaction",
+          "skill": "Persuade",
+          "action": "以匆忙前往教堂参加短会为由与马塞尔搭话，试探他今晚为何出现在新月街；在不透露今晚安排或布鲁诺事宜的情况下警告他不要跟随或就敏感话题联系我，若他表现出可疑或执着立刻礼貌收场离开。",
+          "impact": 1,
+          "nodeId": "ci2",
+          "status": "completed",
+          "endTime": "20:46",
+          "outcome": "我以匆忙去教堂为由与马塞尔搭话，试探他今晚为何出现在新月街并警告他不要跟随或就敏感话题联系我。经过施压后，他承认在12月22日于驯鹿酒吧见过异常，并说曾在新月街B大道的下水道口看到一名脸上有明显疤痕或胎记的男人；他也承认曾是第一个在洗手间发现卢奇菲罗尸体但因害怕试图溜走。他明确同意不会跟随我或就敏感话题联系我。",
+          "startTime": "20:42",
+          "characterId": "Patrizio von Samsa",
+          "characterName": "Patrizio von Samsa",
+          "executionMeta": {
+            "startedAt": "20:42",
+            "completedAt": "20:46",
+            "remainingMinutes": 0
+          },
+          "targetCharacterIds": [
+            "Marcel Gwynplaine"
+          ]
+        },
+        {
+          "type": "movement",
+          "action": "前往焚化厂",
+          "impact": 0,
+          "nodeId": "m1",
+          "status": "in_progress",
+          "endTime": "23:50",
+          "startTime": "23:40",
+          "characterId": "Patrizio von Samsa",
+          "destination": "SCN_2_SUB_1",
+          "characterName": "Patrizio von Samsa",
+          "executionMeta": {
+            "startedAt": "23:40",
+            "remainingMinutes": 10
+          }
+        },
+        {
+          "type": "movement",
+          "action": "前往焚化厂",
+          "impact": 0,
+          "nodeId": "m1",
+          "status": "in_progress",
+          "endTime": "23:50",
+          "startTime": "23:40",
+          "characterId": "Patrizio von Samsa",
+          "destination": "SCN_2_SUB_1",
+          "characterName": "Patrizio von Samsa",
+          "executionMeta": {
+            "startedAt": "23:40",
+            "remainingMinutes": 10
+          }
+        },
+        {
+          "type": "character_interaction",
+          "action": "低声请求康斯坦丁随我前往焚化厂，并在我靠近上层关押处时准备在外制造分散注意的动静以掩护我加强看守",
+          "impact": 1,
+          "nodeId": "ci_pat_001",
+          "status": "completed",
+          "endTime": "20:59",
+          "outcome": "我低声请求康斯坦丁随我前往焚化厂，并在我靠近上层关押处时在外制造分散注意的动静以掩护我加强看守。康斯坦丁表示会配合，虽带保留但答应制造掩护并同行；我们默契地以他教堂事务不受干涉作为交换。",
+          "startTime": "20:56",
+          "characterId": "Patrizio von Samsa",
+          "characterName": "Patrizio von Samsa",
+          "executionMeta": {
+            "startedAt": "20:56",
+            "completedAt": "20:59",
+            "remainingMinutes": 0
+          },
+          "targetCharacterIds": [
+            "Constantine Frollo"
+          ]
+        },
+        {
+          "type": "movement",
+          "action": "前往焚化厂",
+          "impact": 0,
+          "nodeId": "m1",
+          "status": "in_progress",
+          "endTime": "23:50",
+          "startTime": "23:40",
+          "characterId": "Patrizio von Samsa",
+          "destination": "SCN_2_SUB_1",
+          "characterName": "Patrizio von Samsa",
+          "executionMeta": {
+            "startedAt": "23:40",
+            "remainingMinutes": 10
+          }
+        }
+      ]
+    },
+    {
+      "npcName": "Patrizio von Samsa",
+      "gameDay": 2,
+      "schedule": [
+        {
+          "activity": "立刻隐秘介入并控制局面：指示卢茨与塔兰封锁所有出入口、将科温德的猎枪与任何武器安全收回并锁入吧台后储物柜、收缴并封存任何拍摄设备与存储卡（亲自保管钥匙），封锁监控盲区并拍照留证，同时保持镇长伪装以避免引发公众恐慌。",
+          "location": "驯鹿酒吧"
+        },
+        {
+          "activity": "立即与康斯坦丁短会，要求他现在就对酒吧外和焚化厂周边制造分散（以掩护我在酒吧的隐蔽行动或随后前往酒厂），并重申替我在必要时制造混乱以便掩护关键物品调动的承诺。",
+          "location": "教堂"
+        },
+        {
+          "activity": "在确保驯鹿酒吧局势已完全受控且不会暴露证据的前提下前往酒厂地下确认并维护古老仪式场的符文，重新点燃黑蜡烛并尽可能补充海盐，记录任何缺失物资以便后续补救。",
+          "location": "酒厂"
+        },
+        {
+          "activity": "回到镇长私宅检查地下储藏室与那两只上锁木箱的状态，尝试用随身携带或从五金店取得的精密撬具安全开启或记录需要外界取得的替代物资清单。",
+          "location": "镇长私宅"
+        },
+        {
+          "activity": "去五金店找哈里森借或购买精密撬具和其他必要工具，并打听是否能私下取得海盐或可替代物品；鉴于当前局势优先请求夜间协助。",
+          "location": "五金店"
+        },
+        {
+          "activity": "拜访钟表店的怀特，暗中指示他调整镇上主要钟表的走时与新年钟声的触发，确保仪式时刻与钟声同步。",
+          "location": "钟表店"
+        },
+        {
+          "activity": "前往星辰医院与文森特会面，确认他为第二阶段准备的转化药剂配方与时间表并吩咐他严格保密并按计划执行。",
+          "location": "星辰医院"
+        },
+        {
+          "activity": "探访阿道夫家确认千维系统的监控状态，必要时协调他在关键时段对部分录像进行“技术性丢失”处理以保护我方行动。",
+          "location": "阿道夫家"
+        },
+        {
+          "activity": "回到镇长私宅整理今日收获与未竟事项，更新仪式物资获取时间表，然后休息以保存体力迎接接下来的关键几日。",
+          "location": "镇长私宅"
+        }
+      ],
+      "nodes": [
+        {
+          "type": "character_interaction",
+          "action": "命令卢茨与塔兰立即对酒吧进行全面搜查：逐个检查所有在场人员与隐蔽处、翻检吧台后方与酒架及角落、封锁并持续监控所有出入口与监控盲区；凡发现任何摄影设备或存储媒介立即交给我并放入嵌墙保险箱（钥匙由我保管），如有人抵抗以最小必要武力控制并先向我汇报；同时追查并报告约翰尼与科温德的行踪与位置。",
+          "impact": 1,
+          "nodeId": "ci1",
+          "status": "in_progress",
+          "endTime": "03:35",
+          "startTime": "03:31",
+          "characterId": "Patrizio von Samsa",
+          "characterName": "Patrizio von Samsa",
+          "executionMeta": {
+            "startedAt": "03:31",
+            "remainingMinutes": 4
+          },
+          "targetCharacterIds": [
+            "Lutz Emilion",
+            "Taran Emilion"
+          ]
+        },
+        {
+          "type": "movement",
+          "action": "前往酒厂",
+          "impact": 2,
+          "nodeId": "m1",
+          "status": "interrupted",
+          "endTime": "00:16",
+          "outcome": "前往酒厂 [因重新规划而中断] 已中断",
+          "startTime": "00:06",
+          "characterId": "Patrizio von Samsa",
+          "destination": "SCN_13_SUB_1",
+          "characterName": "Patrizio von Samsa",
+          "executionMeta": {
+            "movement": {
+              "routeSnapshot": [
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_3",
+                    "position": 0.49
+                  },
+                  "from": {
+                    "type": "scene",
+                    "sceneId": "SCN_17_SUB_1"
+                  },
+                  "kind": "along_road",
+                  "roadId": "ROAD_3",
+                  "blockCheck": {
+                    "toId": "ROAD_3",
+                    "fromId": "SCN_17_SUB_1"
+                  },
+                  "durationMinutes": 1
+                },
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_3",
+                    "position": 0
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_3",
+                    "position": 0.49
+                  },
+                  "kind": "along_road",
+                  "roadId": "ROAD_3",
+                  "durationMinutes": 4.9
+                },
+                {
+                  "to": {
+                    "type": "junction",
+                    "junctionId": "JUNC_3"
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_3",
+                    "position": 0
+                  },
+                  "kind": "to_junction",
+                  "blockCheck": {
+                    "toId": "JUNC_3",
+                    "fromId": "ROAD_3"
+                  },
+                  "durationMinutes": 0
+                },
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_4",
+                    "position": 0
+                  },
+                  "from": {
+                    "type": "junction",
+                    "junctionId": "JUNC_3"
+                  },
+                  "kind": "to_junction",
+                  "blockCheck": {
+                    "toId": "ROAD_4",
+                    "fromId": "JUNC_3"
+                  },
+                  "durationMinutes": 0
+                },
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_4",
+                    "position": 0
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_4",
+                    "position": 0
+                  },
+                  "kind": "along_road",
+                  "roadId": "ROAD_4",
+                  "durationMinutes": 0
+                },
+                {
+                  "to": {
+                    "type": "scene",
+                    "sceneId": "SCN_13_SUB_1"
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_4",
+                    "position": 0
+                  },
+                  "kind": "to_scene",
+                  "blockCheck": {
+                    "toId": "SCN_13_SUB_1",
+                    "fromId": "ROAD_4"
+                  },
+                  "durationMinutes": 1
+                }
+              ],
+              "targetPosition": {
+                "type": "scene",
+                "sceneId": "SCN_13_SUB_1"
+              },
+              "minutesIntoStep": 3,
+              "currentStepIndex": 1,
+              "lastReachablePosition": {
+                "type": "road",
+                "roadId": "ROAD_3",
+                "position": 0.1900000000000001
+              }
+            },
+            "startedAt": "00:06",
+            "interruptedAt": "00:09",
+            "remainingMinutes": 0,
+            "interruptionReason": "revise_replan"
+          }
+        },
+        {
+          "type": "character_interaction",
+          "skill": "Persuade",
+          "action": "向Shandra寒暄并礼貌询问她今晚是否有安排以探查她是否在跟随或注意我的行程",
+          "impact": 1,
+          "nodeId": "ci_day2_001",
+          "status": "failed",
+          "endTime": "00:14",
+          "startTime": "00:10",
+          "characterId": "Patrizio von Samsa",
+          "characterName": "Patrizio von Samsa",
+          "executionMeta": {
+            "failedAt": "00:14",
+            "startedAt": "00:10",
+            "remainingMinutes": 4
+          },
+          "targetCharacterIds": [
+            "Shandra Hernandez"
+          ]
+        },
+        {
+          "type": "character_interaction",
+          "action": "命令卢茨与塔兰立即对酒吧进行全面搜查：逐个检查所有在场人员与隐蔽处、翻检吧台后方与酒架及角落、封锁并持续监控所有出入口与监控盲区；凡发现任何摄影设备或存储媒介立即交给我并放入嵌墙保险箱（钥匙由我保管），如有人抵抗以最小必要武力控制并先向我汇报；同时追查并报告约翰尼与科温德的行踪与位置。",
+          "impact": 1,
+          "nodeId": "ci1",
+          "status": "in_progress",
+          "endTime": "03:35",
+          "startTime": "03:31",
+          "characterId": "Patrizio von Samsa",
+          "characterName": "Patrizio von Samsa",
+          "executionMeta": {
+            "startedAt": "03:31",
+            "remainingMinutes": 4
+          },
+          "targetCharacterIds": [
+            "Lutz Emilion",
+            "Taran Emilion"
+          ]
+        },
+        {
+          "type": "scene_interaction",
+          "action": "把吧台后方储物柜用随手拿到的钥匙上锁并将钥匙收进口袋以确保存放的猎枪无法被他人取出",
+          "impact": 2,
+          "nodeId": "si2",
+          "status": "interrupted",
+          "endTime": "01:10",
+          "outcome": "把吧台后方储物柜用随手拿到的钥匙上锁并将钥匙收进口袋以确保存放的猎枪无法被他人取出 [因重新规划而中断] 已中断",
+          "startTime": "01:08",
+          "characterId": "Patrizio von Samsa",
+          "characterName": "Patrizio von Samsa",
+          "executionMeta": {
+            "startedAt": "01:08",
+            "interruptedAt": "01:08",
+            "remainingMinutes": 0,
+            "interruptionReason": "revise_replan"
+          }
+        },
+        {
+          "type": "character_interaction",
+          "action": "低声命令卢茨与塔兰立刻封锁所有出入口、继续控制并覆盖监控盲区、将科温德押入后室并持续看管，所有摄影器材与存储卡不得离开，任何人靠近监控或试图取走物品立即向我报告",
+          "impact": 1,
+          "nodeId": "ci2",
+          "status": "interrupted",
+          "endTime": "02:00",
+          "outcome": "低声命令卢茨与塔兰立刻封锁所有出入口、继续控制并覆盖监控盲区、将科温德押入后室并持续看管，所有摄影器材与存储卡不得离开，任何人靠近监控或试图取走物品立即向我报告 [因重新规划而中断] 已中断",
+          "startTime": "01:57",
+          "characterId": "Patrizio von Samsa",
+          "characterName": "Patrizio von Samsa",
+          "executionMeta": {
+            "startedAt": "01:57",
+            "interruptedAt": "01:59",
+            "remainingMinutes": 0,
+            "interruptionReason": "revise_replan"
+          },
+          "targetCharacterIds": [
+            "Lutz Emilion",
+            "Taran Emilion"
+          ]
+        },
+        {
+          "type": "scene_interaction",
+          "action": "把吧台后方储物柜关上并上锁，把钥匙收入衣袋并确认钥匙安全保管",
+          "impact": 0,
+          "nodeId": "si1",
+          "status": "interrupted",
+          "endTime": "03:33",
+          "outcome": "把吧台后方储物柜关上并上锁，把钥匙收入衣袋并确认钥匙安全保管 [因重新规划而中断] 已中断",
+          "startTime": "03:30",
+          "characterId": "Patrizio von Samsa",
+          "characterName": "Patrizio von Samsa",
+          "executionMeta": {
+            "startedAt": "03:30",
+            "interruptedAt": "03:30",
+            "remainingMinutes": 0,
+            "interruptionReason": "revise_replan"
+          }
+        },
+        {
+          "type": "movement",
+          "action": "走进驯鹿酒吧并坐在吧台一角，装作随意地观察周围并留意珊德拉的出现",
+          "impact": 2,
+          "nodeId": "m2",
+          "status": "completed",
+          "endTime": "00:40",
+          "outcome": "走进驯鹿酒吧并坐在吧台一角，装作随意地观察周围并留意珊德拉的出现 成功",
+          "startTime": "00:37",
+          "characterId": "Patrizio von Samsa",
+          "destination": "SCN_16_SUB_1",
+          "characterName": "Patrizio von Samsa",
+          "executionMeta": {
+            "movement": {
+              "routeSnapshot": [
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_3",
+                    "position": 0
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_3",
+                    "position": 0.1900000000000001
+                  },
+                  "kind": "along_road",
+                  "roadId": "ROAD_3",
+                  "durationMinutes": 1.900000000000001
+                },
+                {
+                  "to": {
+                    "type": "junction",
+                    "junctionId": "JUNC_3"
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_3",
+                    "position": 0
+                  },
+                  "kind": "to_junction",
+                  "blockCheck": {
+                    "toId": "JUNC_3",
+                    "fromId": "ROAD_3"
+                  },
+                  "durationMinutes": 0
+                },
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_3",
+                    "position": 0
+                  },
+                  "from": {
+                    "type": "junction",
+                    "junctionId": "JUNC_3"
+                  },
+                  "kind": "to_junction",
+                  "blockCheck": {
+                    "toId": "ROAD_3",
+                    "fromId": "JUNC_3"
+                  },
+                  "durationMinutes": 0
+                },
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_3",
+                    "position": 0.76
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_3",
+                    "position": 0
+                  },
+                  "kind": "along_road",
+                  "roadId": "ROAD_3",
+                  "durationMinutes": 7.6
+                },
+                {
+                  "to": {
+                    "type": "scene",
+                    "sceneId": "SCN_16_SUB_1"
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_3",
+                    "position": 0.76
+                  },
+                  "kind": "to_scene",
+                  "blockCheck": {
+                    "toId": "SCN_16_SUB_1",
+                    "fromId": "ROAD_3"
+                  },
+                  "durationMinutes": 1
+                }
+              ],
+              "targetPosition": {
+                "type": "scene",
+                "sceneId": "SCN_16_SUB_1"
+              },
+              "minutesIntoStep": 0,
+              "currentStepIndex": 5,
+              "lastReachablePosition": {
+                "type": "scene",
+                "sceneId": "SCN_16_SUB_1"
+              }
+            },
+            "startedAt": "00:37",
+            "completedAt": "00:47",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "character_interaction",
+          "action": "低声命令卢茨与塔兰立刻封锁所有出入口、继续控制并覆盖监控盲区、将科温德押入后室并持续看管，所有摄影器材与存储卡不得离开，任何人靠近监控或试图取走物品立即向我报告",
+          "impact": 1,
+          "nodeId": "ci2",
+          "status": "interrupted",
+          "endTime": "02:00",
+          "outcome": "低声命令卢茨与塔兰立刻封锁所有出入口、继续控制并覆盖监控盲区、将科温德押入后室并持续看管，所有摄影器材与存储卡不得离开，任何人靠近监控或试图取走物品立即向我报告 [因重新规划而中断] 已中断",
+          "startTime": "01:57",
+          "characterId": "Patrizio von Samsa",
+          "characterName": "Patrizio von Samsa",
+          "executionMeta": {
+            "startedAt": "01:57",
+            "interruptedAt": "01:59",
+            "remainingMinutes": 0,
+            "interruptionReason": "revise_replan"
+          },
+          "targetCharacterIds": [
+            "Lutz Emilion",
+            "Taran Emilion"
+          ]
+        },
+        {
+          "type": "character_interaction",
+          "action": "命令卢茨与塔兰立即对酒吧进行全面搜查：逐个检查所有在场人员与隐蔽处、翻检吧台后方与酒架及角落、封锁并持续监控所有出入口与监控盲区；凡发现任何摄影设备或存储媒介立即交给我并放入嵌墙保险箱（钥匙由我保管），如有人抵抗以最小必要武力控制并先向我汇报；同时追查并报告约翰尼与科温德的行踪与位置。",
+          "impact": 1,
+          "nodeId": "ci1",
+          "status": "in_progress",
+          "endTime": "03:35",
+          "startTime": "03:31",
+          "characterId": "Patrizio von Samsa",
+          "characterName": "Patrizio von Samsa",
+          "executionMeta": {
+            "startedAt": "03:31",
+            "remainingMinutes": 4
+          },
+          "targetCharacterIds": [
+            "Lutz Emilion",
+            "Taran Emilion"
+          ]
+        },
+        {
+          "type": "character_interaction",
+          "action": "低声命令卢茨与塔兰：马上再次封锁所有出入口、把科温德押回吧台后室并把门上锁、将所有相机、存储卡与通讯器交给我并把吧台后方储物柜的钥匙递给我，保持低调以维护镇长身份并在我需要时立刻报告任何反常情况",
+          "impact": 2,
+          "nodeId": "ci_pat_001",
+          "status": "interrupted",
+          "endTime": "02:17",
+          "outcome": "低声命令卢茨与塔兰：马上再次封锁所有出入口、把科温德押回吧台后室并把门上锁、将所有相机、存储卡与通讯器交给我并把吧台后方储物柜的钥匙递给我，保持低调以维护镇长身份并在我需要时立刻报告任何反常情况 [因重新规划而中断] 已中断",
+          "startTime": "02:15",
+          "characterId": "Patrizio von Samsa",
+          "characterName": "Patrizio von Samsa",
+          "executionMeta": {
+            "startedAt": "02:15",
+            "interruptedAt": "02:17",
+            "remainingMinutes": 0,
+            "interruptionReason": "revise_replan"
+          },
+          "targetCharacterIds": [
+            "Lutz Emilion",
+            "Taran Emilion"
+          ]
+        },
+        {
+          "type": "character_interaction",
+          "action": "命令卢茨与塔兰立即对酒吧进行全面搜查：逐个检查所有在场人员与隐蔽处、翻检吧台后方与酒架及角落、封锁并持续监控所有出入口与监控盲区；凡发现任何摄影设备或存储媒介立即交给我并放入嵌墙保险箱（钥匙由我保管），如有人抵抗以最小必要武力控制并先向我汇报；同时追查并报告约翰尼与科温德的行踪与位置。",
+          "impact": 1,
+          "nodeId": "ci1",
+          "status": "in_progress",
+          "endTime": "03:35",
+          "startTime": "03:31",
+          "characterId": "Patrizio von Samsa",
+          "characterName": "Patrizio von Samsa",
+          "executionMeta": {
+            "startedAt": "03:31",
+            "remainingMinutes": 4
+          },
+          "targetCharacterIds": [
+            "Lutz Emilion",
+            "Taran Emilion"
+          ]
+        },
+        {
+          "type": "character_interaction",
+          "action": "低声命令卢茨和塔兰把吧台后方的储物柜上锁，并把钥匙递给我，立刻阻止任何人接触或带走那把猎枪",
+          "impact": 1,
+          "nodeId": "ci1_day2_0103",
+          "status": "completed",
+          "endTime": "01:06",
+          "outcome": "我低声命令卢茨和塔兰把吧台后方的储物柜上锁，并把钥匙交给我；他们迅速照办，并承诺立刻阻止任何人接触或带走那把猎枪。",
+          "startTime": "01:03",
+          "characterId": "Patrizio von Samsa",
+          "characterName": "Patrizio von Samsa",
+          "executionMeta": {
+            "startedAt": "01:03",
+            "completedAt": "01:06",
+            "remainingMinutes": 0
+          },
+          "targetCharacterIds": [
+            "Lutz Emilion",
+            "Taran Emilion"
+          ]
+        },
+        {
+          "type": "character_interaction",
+          "action": "命令卢茨与塔兰立即对酒吧进行全面搜查：逐个检查所有在场人员与隐蔽处、翻检吧台后方与酒架及角落、封锁并持续监控所有出入口与监控盲区；凡发现任何摄影设备或存储媒介立即交给我并放入嵌墙保险箱（钥匙由我保管），如有人抵抗以最小必要武力控制并先向我汇报；同时追查并报告约翰尼与科温德的行踪与位置。",
+          "impact": 1,
+          "nodeId": "ci1",
+          "status": "in_progress",
+          "endTime": "03:35",
+          "startTime": "03:31",
+          "characterId": "Patrizio von Samsa",
+          "characterName": "Patrizio von Samsa",
+          "executionMeta": {
+            "startedAt": "03:31",
+            "remainingMinutes": 4
+          },
+          "targetCharacterIds": [
+            "Lutz Emilion",
+            "Taran Emilion"
+          ]
+        },
+        {
+          "type": "scene_interaction",
+          "action": "把吧台后方储物柜用随手拿到的钥匙上锁并将钥匙收进口袋以确保存放的猎枪无法被他人取出",
+          "impact": 2,
+          "nodeId": "si2",
+          "status": "interrupted",
+          "endTime": "01:10",
+          "outcome": "把吧台后方储物柜用随手拿到的钥匙上锁并将钥匙收进口袋以确保存放的猎枪无法被他人取出 [因重新规划而中断] 已中断",
+          "startTime": "01:08",
+          "characterId": "Patrizio von Samsa",
+          "characterName": "Patrizio von Samsa",
+          "executionMeta": {
+            "startedAt": "01:08",
+            "interruptedAt": "01:08",
+            "remainingMinutes": 0,
+            "interruptionReason": "revise_replan"
+          }
+        },
+        {
+          "type": "character_interaction",
+          "action": "低声命令卢茨和塔兰立刻去制服并搜身科温德，取回相机与存储卡，封锁所有出入口并控制任何接近监控设备或尝试离开的人员，将取回的存储媒介和钥匙交给我保管",
+          "impact": 1,
+          "nodeId": "ci1_0109",
+          "status": "interrupted",
+          "endTime": "01:11",
+          "outcome": "低声命令卢茨和塔兰立刻去制服并搜身科温德，取回相机与存储卡，封锁所有出入口并控制任何接近监控设备或尝试离开的人员，将取回的存储媒介和钥匙交给我保管 [因重新规划而中断] 已中断",
+          "startTime": "01:09",
+          "characterId": "Patrizio von Samsa",
+          "characterName": "Patrizio von Samsa",
+          "executionMeta": {
+            "startedAt": "01:09",
+            "interruptedAt": "01:10",
+            "remainingMinutes": 0,
+            "interruptionReason": "revise_replan"
+          },
+          "targetCharacterIds": [
+            "Lutz Emilion",
+            "Taran Emilion"
+          ]
+        },
+        {
+          "type": "character_interaction",
+          "action": "低声命令卢茨和塔兰现在立刻制服并搜身科温德，取回他的相机与存储卡，解除并收回猎枪并锁回吧台后方储物柜，把钥匙交给我，封锁所有出入口并控制监控设备周围的人员，务必保持低调以维护镇长身份。",
+          "impact": 1,
+          "nodeId": "ci1_0111",
+          "status": "completed",
+          "endTime": "01:13",
+          "outcome": "我低声命令卢茨和塔兰现在立刻去制服并搜身科温德，取回他的相机与存储卡，解除并收回猎枪并锁回吧台后方储物柜，把钥匙交给我，封锁所有出入口并控制监控设备，务必保持低调以维护镇长身份——但两人并不在一层大厅，无法当场执行，我需要稍后找到他们并安排落实。",
+          "startTime": "01:11",
+          "characterId": "Patrizio von Samsa",
+          "characterName": "Patrizio von Samsa",
+          "executionMeta": {
+            "startedAt": "01:11",
+            "completedAt": "01:13",
+            "remainingMinutes": 0
+          },
+          "targetCharacterIds": [
+            "npc_lutz_emilion",
+            "npc_taran_emilion"
+          ]
+        },
+        {
+          "type": "character_interaction",
+          "action": "低声命令卢茨与塔兰：马上再次封锁所有出入口、把科温德押回吧台后室并把门上锁、将所有相机、存储卡与通讯器交给我并把吧台后方储物柜的钥匙递给我，保持低调以维护镇长身份并在我需要时立刻报告任何反常情况",
+          "impact": 2,
+          "nodeId": "ci_pat_001",
+          "status": "interrupted",
+          "endTime": "02:17",
+          "outcome": "低声命令卢茨与塔兰：马上再次封锁所有出入口、把科温德押回吧台后室并把门上锁、将所有相机、存储卡与通讯器交给我并把吧台后方储物柜的钥匙递给我，保持低调以维护镇长身份并在我需要时立刻报告任何反常情况 [因重新规划而中断] 已中断",
+          "startTime": "02:15",
+          "characterId": "Patrizio von Samsa",
+          "characterName": "Patrizio von Samsa",
+          "executionMeta": {
+            "startedAt": "02:15",
+            "interruptedAt": "02:17",
+            "remainingMinutes": 0,
+            "interruptionReason": "revise_replan"
+          },
+          "targetCharacterIds": [
+            "Lutz Emilion",
+            "Taran Emilion"
+          ]
+        },
+        {
+          "type": "character_interaction",
+          "action": "命令卢茨与塔兰立即对酒吧进行全面搜查：逐个检查所有在场人员与隐蔽处、翻检吧台后方与酒架及角落、封锁并持续监控所有出入口与监控盲区；凡发现任何摄影设备或存储媒介立即交给我并放入嵌墙保险箱（钥匙由我保管），如有人抵抗以最小必要武力控制并先向我汇报；同时追查并报告约翰尼与科温德的行踪与位置。",
+          "impact": 1,
+          "nodeId": "ci1",
+          "status": "in_progress",
+          "endTime": "03:35",
+          "startTime": "03:31",
+          "characterId": "Patrizio von Samsa",
+          "characterName": "Patrizio von Samsa",
+          "executionMeta": {
+            "startedAt": "03:31",
+            "remainingMinutes": 4
+          },
+          "targetCharacterIds": [
+            "Lutz Emilion",
+            "Taran Emilion"
+          ]
+        },
+        {
+          "type": "character_interaction",
+          "action": "低声命令卢茨与塔兰立即封锁所有出入口，押送科温德到吧台后室，并禁止任何人接触或移走任何摄影器材或监控设备；同时悄然将猎枪锁回吧台后方储物柜，并把钥匙交到我手中（保持镇长身份以避免引起公众恐慌）",
+          "impact": 1,
+          "nodeId": "ci_patrizio_0120",
+          "status": "interrupted",
+          "endTime": "01:24",
+          "outcome": "低声命令卢茨与塔兰立即封锁所有出入口，押送科温德到吧台后室，并禁止任何人接触或移走任何摄影器材或监控设备；同时悄然将猎枪锁回吧台后方储物柜，并把钥匙交到我手中（保持镇长身份以避免引起公众恐慌） [因重新规划而中断] 已中断",
+          "startTime": "01:20",
+          "characterId": "Patrizio von Samsa",
+          "characterName": "Patrizio von Samsa",
+          "executionMeta": {
+            "startedAt": "01:20",
+            "interruptedAt": "01:22",
+            "remainingMinutes": 0,
+            "interruptionReason": "revise_replan"
+          },
+          "targetCharacterIds": [
+            "Lutz Emilion",
+            "Taran Emilion"
+          ]
+        },
+        {
+          "type": "character_interaction",
+          "action": "命令卢茨与塔兰立即对酒吧进行全面搜查：逐个检查所有在场人员与隐蔽处、翻检吧台后方与酒架及角落、封锁并持续监控所有出入口与监控盲区；凡发现任何摄影设备或存储媒介立即交给我并放入嵌墙保险箱（钥匙由我保管），如有人抵抗以最小必要武力控制并先向我汇报；同时追查并报告约翰尼与科温德的行踪与位置。",
+          "impact": 1,
+          "nodeId": "ci1",
+          "status": "in_progress",
+          "endTime": "03:35",
+          "startTime": "03:31",
+          "characterId": "Patrizio von Samsa",
+          "characterName": "Patrizio von Samsa",
+          "executionMeta": {
+            "startedAt": "03:31",
+            "remainingMinutes": 4
+          },
+          "targetCharacterIds": [
+            "Lutz Emilion",
+            "Taran Emilion"
+          ]
+        },
+        {
+          "type": "character_interaction",
+          "skill": "Persuade",
+          "action": "低声命令卢茨与塔兰立即封锁所有出入口、控制监控盲区并押送科温德到吧台后室，将任何剩余的摄影设备与存储媒介交由我保管，并在我需要时把储物柜钥匙递给我；保持低调，不要在大厅引起骚动。",
+          "impact": 1,
+          "nodeId": "ci_day2_0126",
+          "status": "interrupted",
+          "endTime": "01:29",
+          "outcome": "低声命令卢茨与塔兰立即封锁所有出入口、控制监控盲区并押送科温德到吧台后室，将任何剩余的摄影设备与存储媒介交由我保管，并在我需要时把储物柜钥匙递给我；保持低调，不要在大厅引起骚动。 [因重新规划而中断] 已中断",
+          "startTime": "01:26",
+          "characterId": "Patrizio von Samsa",
+          "characterName": "Patrizio von Samsa",
+          "executionMeta": {
+            "startedAt": "01:26",
+            "interruptedAt": "01:28",
+            "remainingMinutes": 0,
+            "interruptionReason": "revise_replan"
+          },
+          "targetCharacterIds": [
+            "Lutz Emilion",
+            "Taran Emilion"
+          ]
+        },
+        {
+          "type": "character_interaction",
+          "action": "低声命令卢茨与塔兰立即封锁所有出入口、控制监控盲区并押送科温德到吧台后室，同时将相机与存储卡交由我保管",
+          "impact": 1,
+          "nodeId": "ci_next_0129",
+          "status": "interrupted",
+          "endTime": "01:31",
+          "outcome": "低声命令卢茨与塔兰立即封锁所有出入口、控制监控盲区并押送科温德到吧台后室，同时将相机与存储卡交由我保管 [因重新规划而中断] 已中断",
+          "startTime": "01:29",
+          "characterId": "Patrizio von Samsa",
+          "characterName": "Patrizio von Samsa",
+          "executionMeta": {
+            "startedAt": "01:29",
+            "interruptedAt": "01:31",
+            "remainingMinutes": 0,
+            "interruptionReason": "revise_replan"
+          },
+          "targetCharacterIds": [
+            "Lutz Emilion",
+            "Taran Emilion"
+          ]
+        },
+        {
+          "type": "character_interaction",
+          "action": "低声命令卢茨与塔兰立即封锁所有出入口、控制监控盲区，并押送科温德到吧台后室，把相机与存储卡交由我保管，同时把吧台后方储物柜钥匙递给我。",
+          "impact": 1,
+          "nodeId": "ci1_pat_0132",
+          "status": "completed",
+          "endTime": "01:34",
+          "outcome": "我低声命令卢茨与塔兰立刻封锁所有出入口、控制监控盲区、把科温德押到吧台后室，并将相机与存储卡交由我保管，同时把吧台后方储物柜钥匙递给我。他们迅速照办：钥匙与存储介质交到我手上，科温德被带到后室，盲区与出口也已安排重点巡查。",
+          "startTime": "01:32",
+          "characterId": "Patrizio von Samsa",
+          "characterName": "Patrizio von Samsa",
+          "executionMeta": {
+            "startedAt": "01:32",
+            "completedAt": "01:34",
+            "remainingMinutes": 0
+          },
+          "targetCharacterIds": [
+            "Lutz Emilion",
+            "Taran Emilion"
+          ]
+        },
+        {
+          "type": "scene_interaction",
+          "action": "把吧台后方储物柜关上并上锁，把钥匙收入衣袋并确认钥匙安全保管",
+          "impact": 0,
+          "nodeId": "si1",
+          "status": "interrupted",
+          "endTime": "03:33",
+          "outcome": "把吧台后方储物柜关上并上锁，把钥匙收入衣袋并确认钥匙安全保管 [因重新规划而中断] 已中断",
+          "startTime": "03:30",
+          "characterId": "Patrizio von Samsa",
+          "characterName": "Patrizio von Samsa",
+          "executionMeta": {
+            "startedAt": "03:30",
+            "interruptedAt": "03:30",
+            "remainingMinutes": 0,
+            "interruptionReason": "revise_replan"
+          }
+        },
+        {
+          "type": "action",
+          "action": "盘点并登记已收缴的相机、存储卡、手机与吧台储物柜钥匙",
+          "impact": 0,
+          "nodeId": "a2",
+          "status": "interrupted",
+          "endTime": "01:40",
+          "outcome": "盘点并登记已收缴的相机、存储卡、手机与吧台储物柜钥匙 [因重新规划而中断] 已中断",
+          "startTime": "01:36",
+          "characterId": "Patrizio von Samsa",
+          "characterName": "Patrizio von Samsa",
+          "executionMeta": {
+            "startedAt": "01:36",
+            "interruptedAt": "01:38",
+            "remainingMinutes": 0,
+            "interruptionReason": "revise_replan"
+          }
+        },
+        {
+          "type": "character_interaction",
+          "action": "命令卢茨与塔兰立即对酒吧进行全面搜查：逐个检查所有在场人员与隐蔽处、翻检吧台后方与酒架及角落、封锁并持续监控所有出入口与监控盲区；凡发现任何摄影设备或存储媒介立即交给我并放入嵌墙保险箱（钥匙由我保管），如有人抵抗以最小必要武力控制并先向我汇报；同时追查并报告约翰尼与科温德的行踪与位置。",
+          "impact": 1,
+          "nodeId": "ci1",
+          "status": "in_progress",
+          "endTime": "03:35",
+          "startTime": "03:31",
+          "characterId": "Patrizio von Samsa",
+          "characterName": "Patrizio von Samsa",
+          "executionMeta": {
+            "startedAt": "03:31",
+            "remainingMinutes": 4
+          },
+          "targetCharacterIds": [
+            "Lutz Emilion",
+            "Taran Emilion"
+          ]
+        },
+        {
+          "type": "character_interaction",
+          "action": "悄声上前，从科温德手中夺回吧台后方储物柜的钥匙并迅速将其收进口袋以确保我掌握钥匙",
+          "impact": 1,
+          "nodeId": "ci_day2_0141_01",
+          "status": "completed",
+          "endTime": "01:43",
+          "outcome": "我悄声靠近，从科温德手中夺回了吧台后方储物柜的钥匙并迅速将其收入衣袋，确保钥匙落到我手里。行动安静且成功，没有引起进一步冲突。",
+          "startTime": "01:41",
+          "characterId": "Patrizio von Samsa",
+          "characterName": "Patrizio von Samsa",
+          "executionMeta": {
+            "startedAt": "01:41",
+            "completedAt": "01:43",
+            "remainingMinutes": 0
+          },
+          "targetCharacterIds": [
+            "Kovind"
+          ]
+        },
+        {
+          "type": "object_interaction",
+          "action": "把猎枪放回吧台后方储物柜并用随身钥匙上锁，保持镇长伪装以免引起恐慌",
+          "impact": 0,
+          "nodeId": "oi1",
+          "status": "interrupted",
+          "endTime": "01:46",
+          "outcome": "把猎枪放回吧台后方储物柜并用随身钥匙上锁，保持镇长伪装以免引起恐慌 [因重新规划而中断] 已中断",
+          "startTime": "01:44",
+          "characterId": "Patrizio von Samsa",
+          "characterName": "Patrizio von Samsa",
+          "executionMeta": {
+            "startedAt": "01:44",
+            "interruptedAt": "01:44",
+            "remainingMinutes": 0,
+            "interruptionReason": "revise_replan"
+          },
+          "objectInteractionPayload": {
+            "itemId": "猎枪"
+          }
+        },
+        {
+          "type": "object_interaction",
+          "action": "把猎枪放回吧台后方储物柜并用随身钥匙上锁",
+          "impact": 2,
+          "nodeId": "oi_pat_01",
+          "status": "completed",
+          "endTime": "01:47",
+          "outcome": "我把那把猎枪放回吧台后方的储物柜，关上柜门并用随身钥匙上了锁。枪支再次被锁在柜内，短时间内无法被他人取出。",
+          "startTime": "01:45",
+          "characterId": "Patrizio von Samsa",
+          "characterName": "Patrizio von Samsa",
+          "executionMeta": {
+            "startedAt": "01:45",
+            "completedAt": "01:47",
+            "remainingMinutes": 0
+          },
+          "objectInteractionPayload": {
+            "itemId": "猎枪"
+          }
+        },
+        {
+          "type": "character_interaction",
+          "action": "命令卢茨与塔兰立即对酒吧进行全面搜查：逐个检查所有在场人员与隐蔽处、翻检吧台后方与酒架及角落、封锁并持续监控所有出入口与监控盲区；凡发现任何摄影设备或存储媒介立即交给我并放入嵌墙保险箱（钥匙由我保管），如有人抵抗以最小必要武力控制并先向我汇报；同时追查并报告约翰尼与科温德的行踪与位置。",
+          "impact": 1,
+          "nodeId": "ci1",
+          "status": "in_progress",
+          "endTime": "03:35",
+          "startTime": "03:31",
+          "characterId": "Patrizio von Samsa",
+          "characterName": "Patrizio von Samsa",
+          "executionMeta": {
+            "startedAt": "03:31",
+            "remainingMinutes": 4
+          },
+          "targetCharacterIds": [
+            "Lutz Emilion",
+            "Taran Emilion"
+          ]
+        },
+        {
+          "type": "character_interaction",
+          "action": "命令卢茨与塔兰立即对酒吧进行全面搜查：逐个检查所有在场人员与隐蔽处、翻检吧台后方与酒架及角落、封锁并持续监控所有出入口与监控盲区；凡发现任何摄影设备或存储媒介立即交给我并放入嵌墙保险箱（钥匙由我保管），如有人抵抗以最小必要武力控制并先向我汇报；同时追查并报告约翰尼与科温德的行踪与位置。",
+          "impact": 1,
+          "nodeId": "ci1",
+          "status": "in_progress",
+          "endTime": "03:35",
+          "startTime": "03:31",
+          "characterId": "Patrizio von Samsa",
+          "characterName": "Patrizio von Samsa",
+          "executionMeta": {
+            "startedAt": "03:31",
+            "remainingMinutes": 4
+          },
+          "targetCharacterIds": [
+            "Lutz Emilion",
+            "Taran Emilion"
+          ]
+        },
+        {
+          "type": "scene_interaction",
+          "action": "把吧台后方储物柜关上并上锁，把钥匙收入衣袋并确认钥匙安全保管",
+          "impact": 0,
+          "nodeId": "si1",
+          "status": "interrupted",
+          "endTime": "03:33",
+          "outcome": "把吧台后方储物柜关上并上锁，把钥匙收入衣袋并确认钥匙安全保管 [因重新规划而中断] 已中断",
+          "startTime": "03:30",
+          "characterId": "Patrizio von Samsa",
+          "characterName": "Patrizio von Samsa",
+          "executionMeta": {
+            "startedAt": "03:30",
+            "interruptedAt": "03:30",
+            "remainingMinutes": 0,
+            "interruptionReason": "revise_replan"
+          }
+        },
+        {
+          "type": "character_interaction",
+          "action": "低声命令卢茨与塔兰立刻封锁所有出入口、继续控制并覆盖监控盲区、将科温德押入后室并持续看管，所有摄影器材与存储卡不得离开，任何人靠近监控或试图取走物品立即向我报告",
+          "impact": 1,
+          "nodeId": "ci2",
+          "status": "interrupted",
+          "endTime": "02:00",
+          "outcome": "低声命令卢茨与塔兰立刻封锁所有出入口、继续控制并覆盖监控盲区、将科温德押入后室并持续看管，所有摄影器材与存储卡不得离开，任何人靠近监控或试图取走物品立即向我报告 [因重新规划而中断] 已中断",
+          "startTime": "01:57",
+          "characterId": "Patrizio von Samsa",
+          "characterName": "Patrizio von Samsa",
+          "executionMeta": {
+            "startedAt": "01:57",
+            "interruptedAt": "01:59",
+            "remainingMinutes": 0,
+            "interruptionReason": "revise_replan"
+          },
+          "targetCharacterIds": [
+            "Lutz Emilion",
+            "Taran Emilion"
+          ]
+        },
+        {
+          "type": "character_interaction",
+          "action": "低声命令卢茨与塔兰：立即并持续封锁所有出入口与楼梯，重点看守监控盲区、将任何相机、存储卡和通讯器交给我并锁入嵌墙保险箱，严禁透露今晚任何细节并保持对外的镇长伪装；如有人反抗，按我指示以最小必要武力压制并先报告我",
+          "impact": 1,
+          "nodeId": "ci_day2_02_00_01",
+          "status": "interrupted",
+          "endTime": "02:04",
+          "outcome": "低声命令卢茨与塔兰：立即并持续封锁所有出入口与楼梯，重点看守监控盲区、将任何相机、存储卡和通讯器交给我并锁入嵌墙保险箱，严禁透露今晚任何细节并保持对外的镇长伪装；如有人反抗，按我指示以最小必要武力压制并先报告我 [因重新规划而中断] 已中断",
+          "startTime": "02:00",
+          "characterId": "Patrizio von Samsa",
+          "characterName": "Patrizio von Samsa",
+          "executionMeta": {
+            "startedAt": "02:00",
+            "interruptedAt": "02:02",
+            "remainingMinutes": 0,
+            "interruptionReason": "revise_replan"
+          },
+          "targetCharacterIds": [
+            "Lutz Emilion",
+            "Taran Emilion"
+          ]
+        },
+        {
+          "type": "character_interaction",
+          "action": "低声命令卢茨与塔兰把科温德押送到吧台后室并把门上锁以限制其行动",
+          "impact": 1,
+          "nodeId": "ci1_0203",
+          "status": "completed",
+          "endTime": "02:04",
+          "outcome": "我低声命令卢茨和塔兰把科温德押到吧台后室并把门上锁以限制其行动。二人迅速照办并将储物柜钥匙与监控存储介质交到我手中，局势被我在可控范围内收拢。",
+          "startTime": "02:03",
+          "characterId": "Patrizio von Samsa",
+          "characterName": "Patrizio von Samsa",
+          "executionMeta": {
+            "startedAt": "02:03",
+            "completedAt": "02:04",
+            "remainingMinutes": 0
+          },
+          "targetCharacterIds": [
+            "Lutz Emilion",
+            "Taran Emilion"
+          ]
+        },
+        {
+          "type": "character_interaction",
+          "action": "低声命令卢茨与塔兰持续封锁所有出入口并重点看守监控盲区，立即将所有相机、存储卡和通讯器交给我并由我保管，务必保持低调维护镇长身份；遇到反抗先用最小必要武力控制并随即向我汇报。",
+          "impact": 1,
+          "nodeId": "ci_next_02_05",
+          "status": "interrupted",
+          "endTime": "02:08",
+          "outcome": "低声命令卢茨与塔兰持续封锁所有出入口并重点看守监控盲区，立即将所有相机、存储卡和通讯器交给我并由我保管，务必保持低调维护镇长身份；遇到反抗先用最小必要武力控制并随即向我汇报。 [因重新规划而中断] 已中断",
+          "startTime": "02:05",
+          "characterId": "Patrizio von Samsa",
+          "characterName": "Patrizio von Samsa",
+          "executionMeta": {
+            "startedAt": "02:05",
+            "interruptedAt": "02:14",
+            "remainingMinutes": 0,
+            "interruptionReason": "revise_replan"
+          },
+          "targetCharacterIds": [
+            "Lutz Emilion",
+            "Taran Emilion"
+          ]
+        },
+        {
+          "type": "character_interaction",
+          "action": "低声命令卢茨与塔兰：马上再次封锁所有出入口、把科温德押回吧台后室并把门上锁、将所有相机、存储卡与通讯器交给我并把吧台后方储物柜的钥匙递给我，保持低调以维护镇长身份并在我需要时立刻报告任何反常情况",
+          "impact": 2,
+          "nodeId": "ci_pat_001",
+          "status": "interrupted",
+          "endTime": "02:17",
+          "outcome": "低声命令卢茨与塔兰：马上再次封锁所有出入口、把科温德押回吧台后室并把门上锁、将所有相机、存储卡与通讯器交给我并把吧台后方储物柜的钥匙递给我，保持低调以维护镇长身份并在我需要时立刻报告任何反常情况 [因重新规划而中断] 已中断",
+          "startTime": "02:15",
+          "characterId": "Patrizio von Samsa",
+          "characterName": "Patrizio von Samsa",
+          "executionMeta": {
+            "startedAt": "02:15",
+            "interruptedAt": "02:17",
+            "remainingMinutes": 0,
+            "interruptionReason": "revise_replan"
+          },
+          "targetCharacterIds": [
+            "Lutz Emilion",
+            "Taran Emilion"
+          ]
+        },
+        {
+          "type": "character_interaction",
+          "action": "低声命令卢茨和塔兰继续封锁所有出入口、重点看守监控盲区并把任何相机、存储卡与通讯器立即交给我保管；若有人反抗以最小必要武力控制并立刻向我汇报，保持低调以维护镇长身份。",
+          "impact": 1,
+          "nodeId": "ci_day2_0218_1",
+          "status": "interrupted",
+          "endTime": "02:20",
+          "outcome": "低声命令卢茨和塔兰继续封锁所有出入口、重点看守监控盲区并把任何相机、存储卡与通讯器立即交给我保管；若有人反抗以最小必要武力控制并立刻向我汇报，保持低调以维护镇长身份。 [因重新规划而中断] 已中断",
+          "startTime": "02:18",
+          "characterId": "Patrizio von Samsa",
+          "characterName": "Patrizio von Samsa",
+          "executionMeta": {
+            "startedAt": "02:18",
+            "interruptedAt": "02:53",
+            "remainingMinutes": 0,
+            "interruptionReason": "revise_replan"
+          },
+          "targetCharacterIds": [
+            "Lutz Emilion",
+            "Taran Emilion"
+          ]
+        },
+        {
+          "type": "character_interaction",
+          "action": "低声命令卢茨与塔兰把所有相机、存储卡与通讯器立刻交给我，立即将猎枪锁回吧台后方储物柜并把钥匙交到我手中，持续封锁所有出入口并控制监控盲区以维持掩护和镇长伪装",
+          "impact": 1,
+          "nodeId": "ci_day2_0254_001",
+          "status": "completed",
+          "endTime": "02:56",
+          "outcome": "我低声命令卢茨与塔兰立刻把所有相机、存储卡与通讯器交给我，立即将猎枪锁回吧台后方储物柜并把钥匙交到我手中，持续封锁所有出入口并控制监控盲区以维持掩护与镇长伪装。他们迅速且利落地服从，现场由他们继续维持封锁与盲区巡查，储物柜钥匙现在在我手中。",
+          "startTime": "02:54",
+          "characterId": "Patrizio von Samsa",
+          "characterName": "Patrizio von Samsa",
+          "executionMeta": {
+            "startedAt": "02:54",
+            "completedAt": "02:56",
+            "remainingMinutes": 0
+          },
+          "targetCharacterIds": [
+            "Lutz Emilion",
+            "Taran Emilion"
+          ]
+        },
+        {
+          "type": "character_interaction",
+          "action": "命令卢茨与塔兰立即对酒吧进行全面搜查：逐个检查所有在场人员与隐蔽处、翻检吧台后方与酒架及角落、封锁并持续监控所有出入口与监控盲区；凡发现任何摄影设备或存储媒介立即交给我并放入嵌墙保险箱（钥匙由我保管），如有人抵抗以最小必要武力控制并先向我汇报；同时追查并报告约翰尼与科温德的行踪与位置。",
+          "impact": 1,
+          "nodeId": "ci1",
+          "status": "in_progress",
+          "endTime": "03:35",
+          "startTime": "03:31",
+          "characterId": "Patrizio von Samsa",
+          "characterName": "Patrizio von Samsa",
+          "executionMeta": {
+            "startedAt": "03:31",
+            "remainingMinutes": 4
+          },
+          "targetCharacterIds": [
+            "Lutz Emilion",
+            "Taran Emilion"
+          ]
+        },
+        {
+          "type": "character_interaction",
+          "action": "低声命令卢茨与塔兰继续封锁所有出入口、看守监控盲区，并把所有相机、存储卡和通讯器交入嵌墙保险箱且不得让任何人接触钥匙或监控设备",
+          "impact": 1,
+          "nodeId": "ci_day2_0303_01",
+          "status": "interrupted",
+          "endTime": "03:06",
+          "outcome": "低声命令卢茨与塔兰继续封锁所有出入口、看守监控盲区，并把所有相机、存储卡和通讯器交入嵌墙保险箱且不得让任何人接触钥匙或监控设备 [因重新规划而中断] 已中断",
+          "startTime": "03:03",
+          "characterId": "Patrizio von Samsa",
+          "characterName": "Patrizio von Samsa",
+          "executionMeta": {
+            "startedAt": "03:03",
+            "interruptedAt": "03:21",
+            "remainingMinutes": 0,
+            "interruptionReason": "revise_replan"
+          },
+          "targetCharacterIds": [
+            "Lutz Emilion",
+            "Taran Emilion"
+          ]
+        },
+        {
+          "type": "character_interaction",
+          "action": "命令卢茨与塔兰立即对酒吧进行全面搜查：逐个检查所有在场人员与隐蔽处、翻检吧台后方与酒架及角落、封锁并持续监控所有出入口与监控盲区；凡发现任何摄影设备或存储媒介立即交给我并放入嵌墙保险箱（钥匙由我保管），如有人抵抗以最小必要武力控制并先向我汇报；同时追查并报告约翰尼与科温德的行踪与位置。",
+          "impact": 1,
+          "nodeId": "ci1",
+          "status": "in_progress",
+          "endTime": "03:35",
+          "startTime": "03:31",
+          "characterId": "Patrizio von Samsa",
+          "characterName": "Patrizio von Samsa",
+          "executionMeta": {
+            "startedAt": "03:31",
+            "remainingMinutes": 4
+          },
+          "targetCharacterIds": [
+            "Lutz Emilion",
+            "Taran Emilion"
+          ]
+        },
+        {
+          "type": "scene_interaction",
+          "action": "检查吧台后方储物柜内物品以确认清单",
+          "impact": 0,
+          "nodeId": "si_next_001",
+          "status": "completed",
+          "endTime": "03:26",
+          "outcome": "我检查了吧台后方敞开的储物柜，逐项核对了柜内物品并确认清单。未发现相机或存储卡，储物柜内物品情况已记录。",
+          "startTime": "03:24",
+          "characterId": "Patrizio von Samsa",
+          "characterName": "Patrizio von Samsa",
+          "executionMeta": {
+            "startedAt": "03:24",
+            "completedAt": "03:26",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "character_interaction",
+          "action": "悄无声息地从约翰尼手中夺回吧台后方储物柜的钥匙并将其藏好",
+          "impact": 1,
+          "nodeId": "ci_node_0327_01",
+          "status": "completed",
+          "endTime": "03:29",
+          "outcome": "我悄无声息地从约翰尼手中夺回了吧台后方储物柜的钥匙并将其藏好。约翰尼并未察觉，我继续在幕后掌控局面，确保那把钥匙和储物柜内容不会暴露。",
+          "startTime": "03:27",
+          "characterId": "Patrizio von Samsa",
+          "characterName": "Patrizio von Samsa",
+          "executionMeta": {
+            "startedAt": "03:27",
+            "completedAt": "03:29",
+            "remainingMinutes": 0
+          },
+          "targetCharacterIds": [
+            "Johnny"
+          ]
+        },
+        {
+          "type": "scene_interaction",
+          "action": "把吧台后方储物柜关上并上锁，把钥匙收入衣袋并确认钥匙安全保管",
+          "impact": 0,
+          "nodeId": "si1",
+          "status": "interrupted",
+          "endTime": "03:33",
+          "outcome": "把吧台后方储物柜关上并上锁，把钥匙收入衣袋并确认钥匙安全保管 [因重新规划而中断] 已中断",
+          "startTime": "03:30",
+          "characterId": "Patrizio von Samsa",
+          "characterName": "Patrizio von Samsa",
+          "executionMeta": {
+            "startedAt": "03:30",
+            "interruptedAt": "03:30",
+            "remainingMinutes": 0,
+            "interruptionReason": "revise_replan"
+          }
+        },
+        {
+          "type": "character_interaction",
+          "action": "命令卢茨与塔兰立即对酒吧进行全面搜查：逐个检查所有在场人员与隐蔽处、翻检吧台后方与酒架及角落、封锁并持续监控所有出入口与监控盲区；凡发现任何摄影设备或存储媒介立即交给我并放入嵌墙保险箱（钥匙由我保管），如有人抵抗以最小必要武力控制并先向我汇报；同时追查并报告约翰尼与科温德的行踪与位置。",
+          "impact": 1,
+          "nodeId": "ci1",
+          "status": "in_progress",
+          "endTime": "03:35",
+          "startTime": "03:31",
+          "characterId": "Patrizio von Samsa",
+          "characterName": "Patrizio von Samsa",
+          "executionMeta": {
+            "startedAt": "03:31",
+            "remainingMinutes": 4
+          },
+          "targetCharacterIds": [
+            "Lutz Emilion",
+            "Taran Emilion"
+          ]
+        }
+      ]
+    }
+  ],
+  "intents": [
+    {
+      "intent": "立即扩大搜查与控制：指示卢茨与塔兰全面搜查酒吧与所有在场人员与隐蔽处，封锁并监控所有出入口与监控盲区，追查约翰尼与科温德的行踪；把任何摄影设备或存储媒介立即交给我并交入嵌墙保险箱，必要时以最小必要武力控制疑似携带者以保全证据。",
+      "updatedAt": "2026-04-02T11:36:21.190Z"
+    }
+  ],
+  "npcName": "Patrizio von Samsa"
+}

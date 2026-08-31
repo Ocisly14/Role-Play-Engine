@@ -3,7 +3,6 @@ import fs from "node:fs";
 import path from "node:path";
 import type { PrismaClient } from "@prisma/client";
 import { WebSocket } from "ws";
-import { createDefaultDefinitions } from "../../../src/engine/index.js";
 import {
   type WeatherType,
   computeSkillPenalties,
@@ -128,7 +127,6 @@ function buildSimulationBundle(params: {
 } {
   const db = DatabaseManager.getInstance().getDatabase();
   const dgsm = new DynamicGameStateManager(params.gameState, db);
-  const definitions = createDefaultDefinitions();
   const provider =
     (process.env.MODEL_PROVIDER as ModelProviderName) ??
     ModelProviderName.OPENAI;
@@ -142,7 +140,6 @@ function buildSimulationBundle(params: {
   const runner = new SimulationRunner({
     config: params.config,
     dgsm,
-    definitions,
     language: params.language,
     memoryManager,
     prisma: params.prisma,
@@ -295,13 +292,12 @@ function clearWeatherConditions(
   dgsm: DynamicGameStateManager,
   locationId: string
 ): void {
-  const state = dgsm.getState();
-  const conditions = state.scenarioConditions[locationId];
-  if (!conditions) return;
+  const conditions = dgsm.getSceneConditions(locationId);
+  if (conditions.length === 0) return;
   dgsm.replaceSceneConditions(
     locationId,
     conditions.filter(
-      (condition: any) => !condition.description.startsWith("[Weather]")
+      (condition) => !condition.description.startsWith("[Weather]")
     )
   );
 }
@@ -409,6 +405,7 @@ export async function createSimulation(
     sessionId,
     moduleName,
     emailId,
+    language,
   });
   if (!gameState) {
     throw new Error(

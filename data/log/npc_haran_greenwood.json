@@ -1,0 +1,17 @@
+{
+  "npcId": "npc_haran_greenwood",
+  "memories": [
+    {
+      "type": "event",
+      "content": "我今晚不在月台值班小屋，所以没有接到Ben的邀请或关于街区与酒吧情报的询问。对此我没有任何记忆或回应。",
+      "gameDay": 1,
+      "gameTime": "19:27",
+      "location": "SCN_21_SUB_1",
+      "metadata": {
+        "outcome": "在值班小屋请Haran共进晚餐并询问街区与酒吧的最新情报"
+      }
+    }
+  ],
+  "plans": [],
+  "intents": []
+}

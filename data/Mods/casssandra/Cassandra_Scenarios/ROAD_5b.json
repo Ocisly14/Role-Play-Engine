@@ -1,0 +1,65 @@
+{
+  "id": "ROAD_5b",
+  "name": "石榴巷南段",
+  "description": "石榴巷的南段，从日暮大道分叉处向南延伸至南新街东端三岔口。沿途有阿道夫的屋子和一栋镇长的私宅。",
+  "parentLocationId": "OUTDOOR",
+  "endpointA": "JUNC_6",
+  "endpointB": "JUNC_4",
+  "travelTimeMinutes": 5,
+  "alongConnections": [
+    {
+      "sceneId": "SCN_15_SUB_1",
+      "position": 0
+    },
+    {
+      "sceneId": "SCN_22_SUB_1",
+      "position": 0.53
+    }
+  ],
+  "items": [
+    {
+      "id": "ITEM_ROAD5B_1",
+      "name": "电线杆",
+      "description": "一根老旧的木质电线杆立在巷口一侧，表面被风雨侵蚀得发灰，杆身上还钉着几枚生锈的旧钉。"
+    },
+    {
+      "id": "ITEM_ROAD5B_4",
+      "name": "卷边杂贴广告",
+      "description": "电线杆上层层覆盖着杂贴广告和电话号码条，纸面受潮卷边，风一吹就哗啦作响，边角一扯就会碎裂。"
+    },
+    {
+      "id": "ITEM_ROAD5B_2",
+      "name": "住户邮箱",
+      "description": "巷道一侧的住户邮箱颜色斑驳，投递口边缘留下了反复拉扯的磨痕。"
+    },
+    {
+      "id": "ITEM_ROAD5B_3",
+      "name": "路边排水栅",
+      "description": "一块长条形排水栅嵌在路面最低处，积着泥水和碎叶。"
+    }
+  ],
+  "conditions": [
+    {
+      "description": "露天巷道，受天气影响。巷道较窄，两侧建筑遮挡部分风雪。",
+      "mechanicalEffect": {
+        "skillPenalty": [
+          {
+            "skill": "Stealth",
+            "delta": -10
+          }
+        ]
+      }
+    },
+    {
+      "description": "巷道路灯稀疏，夜间光线昏暗。",
+      "mechanicalEffect": {
+        "skillPenalty": [
+          {
+            "skill": "Perception",
+            "delta": -20
+          }
+        ]
+      }
+    }
+  ]
+}

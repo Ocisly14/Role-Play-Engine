@@ -17,6 +17,7 @@ import {
   type ToolCallOptions,
   type ToolCallResult,
 } from "./types.js";
+import { traceModelCall } from "./trace.js";
 
 /**
  * Model class usage guidelines:
@@ -402,6 +403,16 @@ export async function generateText(
     }
 
     record(ctx, options, response.usage);
+    traceModelCall({
+      operation: options.operation,
+      provider: ctx.provider,
+      modelClass: ctx.modelClass,
+      modelName: ctx.settings.name,
+      system,
+      request: content,
+      response: response.text,
+      usage: response.usage,
+    });
     console.log(
       `✅ Generated text successfully (${response.text.length} characters, input tokens: ${response.usage?.input_tokens ?? "?"})`
     );
@@ -455,6 +466,17 @@ export async function generateToolCalls(
       ? response.toolCalls
       : response.toolCalls.slice(0, 1);
 
+    traceModelCall({
+      operation: options.operation,
+      provider: ctx.provider,
+      modelClass: ctx.modelClass,
+      modelName: ctx.settings.name,
+      system,
+      request: options.messages,
+      response: { text: response.text, toolCalls },
+      usage: response.usage,
+      tools: options.tools,
+    });
     console.log(
       `✅ Tool call ${toolCalls.map((c) => c.name).join(", ")} (input tokens: ${response.usage?.input_tokens ?? "?"})`
     );

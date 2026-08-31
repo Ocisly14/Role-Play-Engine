@@ -1,0 +1,17 @@
+{
+  "npcId": "simon_laplace",
+  "memories": [
+    {
+      "type": "event",
+      "content": "我不在花店，因此没有经历南希走近或试图握我的手，她来过我却不在场。",
+      "gameDay": 1,
+      "gameTime": "21:29",
+      "location": "SCN_9_SUB_1",
+      "metadata": {
+        "outcome": "走近西蒙，轻声握住他的手以示安慰并低声问候，保持镇定不表露情绪"
+      }
+    }
+  ],
+  "plans": [],
+  "intents": []
+}

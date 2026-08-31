@@ -1,0 +1,27 @@
+{
+  "npcId": "npc_helen",
+  "memories": [
+    {
+      "type": "event",
+      "content": "我此刻不在花店，未在现场也未被南希当面询问。若有人来找我，他们不会在店里找到我。",
+      "gameDay": 2,
+      "gameTime": "07:47",
+      "location": "SCN_9_SUB_1",
+      "metadata": {
+        "outcome": "低声当面向海伦询问她此刻来访的来意并仔细观察她的表情与动作"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我当时不在后厅，没遇到约翰，也没有听到他的道歉或邀请。",
+      "gameDay": 1,
+      "gameTime": "22:10",
+      "location": "SCN_9_SUB_2",
+      "metadata": {
+        "outcome": "低声向海伦道歉，表明想弥补那晚的冲突并恳请她给我一个单独机会，邀请她和我出去短暂散步继续谈话 [Persuade 10, rolled 83 (fail) — all targets resisted] failed"
+      }
+    }
+  ],
+  "plans": [],
+  "intents": []
+}

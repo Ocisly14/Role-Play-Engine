@@ -49,8 +49,8 @@ describe("generateToolCalls", () => {
     // the history must stay valid even if a provider ignores that.
     chatWithTools.mockResolvedValue({
       toolCalls: [
-        { id: "t1", name: "recallMemory", args: {} },
-        { id: "t2", name: "getMapSnapshot", args: {} },
+        { id: "t1", name: "writeMemory", args: {} },
+        { id: "t2", name: "writeMemory", args: {} },
       ],
       text: "",
       usage: null,
@@ -64,7 +64,7 @@ describe("generateToolCalls", () => {
     });
 
     expect(result.toolCalls).toHaveLength(1);
-    expect(result.toolCalls[0].name).toBe("recallMemory");
+    expect(result.toolCalls[0].name).toBe("writeMemory");
     const assistant = result.assistantMessage;
     if (assistant.role !== "assistant") throw new Error("expected assistant");
     expect(assistant.toolCalls).toHaveLength(1);
@@ -93,8 +93,8 @@ describe("generateToolCalls", () => {
     // The caller opted in, so it is on the hook for answering all of them.
     chatWithTools.mockResolvedValue({
       toolCalls: [
-        { id: "t1", name: "recallMemory", args: { query: "a" } },
-        { id: "t2", name: "recallMemory", args: { query: "b" } },
+        { id: "t1", name: "writeMemory", args: { query: "a" } },
+        { id: "t2", name: "writeMemory", args: { query: "b" } },
       ],
       text: "",
       usage: null,

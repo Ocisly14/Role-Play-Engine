@@ -1,0 +1,238 @@
+{
+  "id": "Adolph Carl",
+  "name": "Adolph Carl",
+  "occupation": "Information broker / upper-class intermediary",
+  "age": 36,
+  "gender": "male",
+  "appearance": "A tall, slender man with a pale complexion and an unhealthy yet dangerous air. He is meticulous about his grooming, dresses in elegant formal wear, and keeps his home scented with expensive incense and carefully chosen perfume.",
+  "personality": "Calm, elegant, vain, and calculating. Adolph hides insecurity behind polished manners and controlled expressions. He enjoys leverage, hates losing the initiative, and values appearances almost as much as survival.",
+  "background": "Adolph was born into a once-comfortable family descended from minor nobility. He studied economics and electronics, expecting to inherit a respectable future, but his family was ruined by a predatory Egyptian businessman and the network behind him. Sent to America before his studies were finished, Adolph lost both parents to suicide soon after. He rebuilt himself through information: first through computer systems, then through secrets, blackmail, and carefully managed social access. In 2002, he came to Cassandra chasing leads and acquired the Qianwei System from the basement of a missing rich couple's villa. Since then, he has remained in town, using surveillance and information trade to make himself indispensable while plotting a return to true influence.",
+  "residence": "SCN_15",
+  "currentLocation": "SCN_15_SUB_2",
+  "spot": "in the high-backed chair at the console, screens still on standby",
+  "knownMapSeed": {
+    "sceneIds": [
+      "SCN_15_SUB_1",
+      "SCN_15_SUB_2",
+      "SCN_16_SUB_1",
+      "SCN_16_SUB_2",
+      "SCN_21_SUB_1",
+      "SCN_21_SUB_2",
+      "SCN_4_SUB_1",
+      "SCN_4_SUB_2",
+      "SCN_4_SUB_3"
+    ],
+    "junctionIds": [
+      "JUNC_1",
+      "JUNC_2",
+      "JUNC_3",
+      "JUNC_4",
+      "JUNC_5",
+      "JUNC_6",
+      "JUNC_7",
+      "JUNC_8",
+      "JUNC_9",
+      "JUNC_10",
+      "JUNC_11"
+    ],
+    "roadIds": [
+      "ROAD_1",
+      "ROAD_2",
+      "ROAD_3",
+      "ROAD_4",
+      "ROAD_5a",
+      "ROAD_5b",
+      "ROAD_6",
+      "ROAD_7",
+      "ROAD_8",
+      "ROAD_9",
+      "ROAD_10"
+    ],
+    "scenarioOutlineIds": [
+      "SCN_1",
+      "SCN_2",
+      "SCN_3",
+      "SCN_4",
+      "SCN_5",
+      "SCN_6",
+      "SCN_8",
+      "SCN_9",
+      "SCN_10",
+      "SCN_11",
+      "SCN_12",
+      "SCN_13",
+      "SCN_14",
+      "SCN_15",
+      "SCN_16",
+      "SCN_17",
+      "SCN_18",
+      "SCN_19",
+      "SCN_21",
+      "SCN_22"
+    ]
+  },
+  "longTermIntent": "Use the Qianwei System and his information network to stay untouchable in Cassandra, preserve his upper-class facade, profit from other people's secrets, and eventually regain enough leverage to re-enter elite society on his own terms.",
+  "attributes": {
+    "STR": 45,
+    "CON": 50,
+    "DEX": 55,
+    "APP": 70,
+    "POW": 65,
+    "SIZ": 55,
+    "INT": 80,
+    "EDU": 75
+  },
+  "status": {
+    "hp": 10,
+    "maxHp": 10,
+    "sanity": 65,
+    "maxSanity": 99,
+    "luck": 60,
+    "mp": 13,
+    "conditions": []
+  },
+  "skills": {
+    "Social": 70,
+    "Investigation": 50,
+    "Repair & Engineering": 60
+  },
+  "inventory": [
+    {
+      "name": "Formal Wardrobe",
+      "properties": {
+        "note": "Several well-kept tailored suits and dress clothes."
+      }
+    },
+    {
+      "name": "Expensive Incense and Perfume",
+      "properties": {
+        "note": "Adolph uses scent as part of the image he presents to visitors."
+      }
+    },
+    {
+      "name": "Heavy Walking Cane",
+      "properties": {
+        "note": "A stylish but sturdy cane that can double as a weapon."
+      }
+    },
+    {
+      "name": "Polished Old Coin",
+      "properties": {
+        "note": "A coin he habitually rolls across his knuckles when annoyed or thinking."
+      }
+    },
+    {
+      "name": "Qianwei System Console Access",
+      "properties": {
+        "note": "Adolph controls a powerful surveillance setup from the hidden monitor room in his house."
+      }
+    }
+  ],
+  "relationships": [
+    {
+      "targetId": "Anatole Laplace (Anatole)",
+      "targetName": "Anatole Laplace (Anatole)",
+      "relationshipType": "rival",
+      "attitude": -25,
+      "description": "A dangerous man from Adolph's past whose secrets are valuable and whose presence in Cassandra unsettles him.",
+      "history": "Adolph secretly witnessed Anatole kill Nancy's mother in France in 1988. He never forgot it and now watches him closely in Cassandra.",
+      "firstPerson": "I watched Anatole kill Nancy's mother in France in 1988, and he has never once known I was there. Now he walks about Cassandra, worth a fortune in secrets and worth losing sleep over, so I keep him in view."
+    },
+    {
+      "targetId": "Lux Lynch",
+      "targetName": "Lux Lynch",
+      "relationshipType": "neutral",
+      "attitude": -10,
+      "description": "A compromised policeman Adolph sees as both a possible asset and a liability.",
+      "history": "Adolph recognized Lux at the Reindeer Bar and immediately suspected his presence was tied to hidden police corruption or something worse.",
+      "firstPerson": "I recognised Lux the moment he turned up at the Reindeer Bar, and a policeman that far out of place is either rotten or carrying something worse. An asset one day, perhaps; a liability today."
+    },
+    {
+      "targetId": "Mrs. Barklyite (Lucia Shiny)",
+      "targetName": "Mrs. Barklyite (Lucia Shiny)",
+      "relationshipType": "neutral",
+      "attitude": 15,
+      "description": "A covert business contact connected to sensitive hospital matters.",
+      "history": "Adolph knows her as the Red Stone Lady and has acted as an intermediary in her dealings with Lucifero.",
+      "firstPerson": "The Red Stone Lady and I understand one another — I carried her words to Lucifero and took my cut. Her hospital business is delicate, which is why it pays."
+    }
+  ],
+  "memory": [
+    {
+      "type": "information",
+      "content": "I live at SCN_15 and keep a hidden monitor room there. From that room I watch my own house, nearby movements, and far more of Cassandra than most people would find comfortable.",
+      "metadata": {
+        "knowledgeId": "k_adolph_house_system",
+        "difficulty": "automatic"
+      }
+    },
+    {
+      "type": "information",
+      "content": "People know me by different names for different kinds of business. Some know Adolph Carl, others only know Shore Master or Mr. An, and I prefer it that way.",
+      "metadata": {
+        "knowledgeId": "k_adolph_aliases",
+        "difficulty": "regular"
+      }
+    },
+    {
+      "type": "information",
+      "content": "I live by buying, storing, and selling sensitive information. Cassandra is full of profitable secrets, especially among the people who insist they are respectable.",
+      "metadata": {
+        "knowledgeId": "k_adolph_information_trade",
+        "difficulty": "regular"
+      }
+    },
+    {
+      "type": "information",
+      "content": "In 2002 I acquired the real Qianwei System from the basement of a missing wealthy couple's villa. That machine is the best reason I have to remain in Cassandra at all.",
+      "metadata": {
+        "knowledgeId": "k_adolph_qianwei",
+        "difficulty": "regular"
+      }
+    },
+    {
+      "type": "information",
+      "content": "I know the Red Stone Lady works under the name Susan at Star Hospital, and I know the hardware store's gun-running code well enough to navigate that trade when necessary.",
+      "metadata": {
+        "knowledgeId": "k_adolph_local_channels",
+        "difficulty": "hard"
+      }
+    },
+    {
+      "type": "secret",
+      "content": "My polished upper-class image is mostly a fraud. I am tolerated in those circles because I hold information they fear, not because they would ever truly accept me as one of them.",
+      "metadata": {
+        "knowledgeId": "s_adolph_false_status"
+      }
+    },
+    {
+      "type": "secret",
+      "content": "When my family collapsed in France, I secretly witnessed Anatole kill Nancy's mother. He never realized I was there, and I have treated that knowledge as a long-term investment ever since.",
+      "metadata": {
+        "knowledgeId": "s_adolph_1988_witness"
+      }
+    },
+    {
+      "type": "secret",
+      "content": "After recognizing Anatole or Simon in Cassandra, I began watching him closely and eventually sent the threatening note that drew him to the Reindeer Bar. Lux's appearance and Lucifero's murder ruined the meeting before I could turn the old secret into profit.",
+      "metadata": {
+        "knowledgeId": "s_adolph_bar_note"
+      }
+    },
+    {
+      "type": "secret",
+      "content": "Lucifero was one of my contacts. The note in her pocket and the message on her phone could both have pointed back to me, and I am very relieved that most people still do not know where one of those messages came from.",
+      "metadata": {
+        "knowledgeId": "s_adolph_lucifero"
+      }
+    },
+    {
+      "type": "belief",
+      "content": "If I let anyone else gain uncontested control over the town's information flows, I will become disposable again. Control of secrets is the only stable protection I have.",
+      "metadata": {
+        "confidence": 0.9,
+        "reasoningChain": "My family's fall proved status is meaningless without leverage. The Qianwei System and what I know about others are the only reasons I can still act like a man of importance."
+      }
+    }
+  ]
+}

@@ -1,0 +1,1830 @@
+{
+  "npcId": "Philip Scaletta",
+  "memories": [
+    {
+      "type": "secret",
+      "content": "我从不该拿的地方拿了不属于我的东西，我宁愿人们把注意力集中在别人身上，尤其是马塞尔，而不是仔细盯着我看。",
+      "gameDay": 1,
+      "gameTime": "00:00",
+      "location": null,
+      "metadata": {
+        "knowledgeId": "s_philip_stolen_goods"
+      }
+    },
+    {
+      "type": "plan",
+      "content": "在社会底层靠偷盗和骗术求生，赚够钱保住自己的命和自由。他把父亲传授的魔术技艺用在了见不得人的勾当上，嘴上玩世不恭，心底深处却埋葬着一个关于美满家庭和世界顶尖魔术师的破碎梦想。",
+      "gameDay": 1,
+      "gameTime": "00:00",
+      "location": null,
+      "metadata": {
+        "planType": "long_term"
+      }
+    },
+    {
+      "type": "information",
+      "content": "我学会了如果人们记得我是个蠢货，他们通常就不再找那只真正拿了东西的手了。",
+      "gameDay": 1,
+      "gameTime": "00:00",
+      "location": null,
+      "metadata": {
+        "difficulty": "regular",
+        "knowledgeId": "k_philip_playing_fool"
+      }
+    },
+    {
+      "type": "information",
+      "content": "驯鹿酒吧事件教会我，一个顺错了的口袋如果我在房间里待太久就能变成永久的问题。",
+      "gameDay": 1,
+      "gameTime": "00:00",
+      "location": null,
+      "metadata": {
+        "difficulty": "regular",
+        "knowledgeId": "k_philip_bar_problem"
+      }
+    },
+    {
+      "type": "plan",
+      "content": "Today's plan: 1. 吃掉那碗方便面并把昨晚挑选出来准备典当和藏匿的赃物再确认一遍 at 菲利普的住宅; 2. 检查改造夹克的隐蔽暗袋，确认典当票据、开锁工具和那张全家福都在合适位置 at 菲利普的住宅; 3. 默背并微调我的不在场证明稿，练习几段可能会用到的说辞以便有人问话时口齿清楚 at 菲利普的住宅; 4. 用父亲教我的把戏和洗牌手法练手以保持灵活的手感并让自己冷静下来 at 菲利普的住宅; 5. 把屋里翻动过的痕迹整理好，盖好杯垫、收回露出的物品，制造一个看起来像正常居住的假象 at 菲利普的住宅; 6. 小睡几个小时，等天亮和街上动静更明朗再决定是否出门 at 菲利普的住宅; 7. 从远处观察驯鹿酒吧和周边的动静，听听路人或店铺有没有新的传言以判断风险 at 北新街端点三岔口; 8. 试探性地找怀特询问几块老表的价值并探听他是否愿意做一次私人交易 at 钟表店; 9. 去五金店找哈里森买一两件小工具并顺便套套近乎打听当天镇上的状况 at 五金店; 10. 在门口装作买花的样子观察海伦的餐桌方向和街上来往的人以确认谁在出没 at 花店·卡森德拉之花; 11. 把白天收集到的信息整理进心里的时间线，必要时调整不在场证明并把最值钱的东西再转移到更隐蔽的地方 at 菲利普的住宅; 12. 晚饭随便吃点东西后再次检查暗袋和藏匿处，练一遍把戏然后早点睡以保存体力和警觉性 at 菲利普的住宅",
+      "gameDay": 2,
+      "gameTime": "00:00",
+      "location": null,
+      "metadata": {
+        "planType": "daily"
+      }
+    },
+    {
+      "type": "belief",
+      "content": "如果我把故事说得小小的、把嘴巴闭紧，卡森德拉会在吃掉我之前先吃掉别人。",
+      "gameDay": 1,
+      "gameTime": "00:00",
+      "location": null,
+      "metadata": {
+        "confidence": 0.82,
+        "reasoningChain": "我今天选择把嘴闭紧、把证据藏好并准备好不在场证明，同时外面大雪压制了外界干扰——没有开口、没有走动让我避免了更多暴露的风险，这强化了“先让别人吃掉麻烦”的想法。"
+      }
+    },
+    {
+      "type": "information",
+      "content": "我靠小偷小摸、快手和假装自己看到的比实际少来生活。",
+      "gameDay": 1,
+      "gameTime": "00:00",
+      "location": null,
+      "metadata": {
+        "difficulty": "automatic",
+        "knowledgeId": "k_philip_hustle"
+      }
+    },
+    {
+      "type": "information",
+      "content": "驯鹿酒吧事件不管我喜不喜欢都与我有关，因为我在场而且我知道足以让人起疑的事。",
+      "gameDay": 1,
+      "gameTime": "00:00",
+      "location": null,
+      "metadata": {
+        "difficulty": "regular",
+        "knowledgeId": "k_philip_bar_incident"
+      }
+    },
+    {
+      "type": "event",
+      "content": "吃掉正在煮的方便面 成功",
+      "gameDay": 2,
+      "gameTime": "00:20",
+      "location": "SCN_8_SUB_1",
+      "metadata": {
+        "outcome": "吃掉正在煮的方便面 成功"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我检查了改造夹克内侧的隐蔽暗袋，确认典当票据、开锁工具和那张全家福都整齐地放在原位，心里松了口气。",
+      "gameDay": 2,
+      "gameTime": "00:28",
+      "location": "SCN_8_SUB_1",
+      "metadata": {
+        "itemId": "改装夹克",
+        "outcome": "检查改造夹克的隐蔽暗袋，确认典当票据、开锁工具和那张全家福都在合适位置",
+        "itemName": "改装夹克"
+      }
+    },
+    {
+      "type": "event",
+      "content": "默背并微调我的不在场证明稿，练习几段可能会用到的说辞以便有人问话时口齿清楚 成功",
+      "gameDay": 2,
+      "gameTime": "00:44",
+      "location": "SCN_8_SUB_1",
+      "metadata": {
+        "outcome": "默背并微调我的不在场证明稿，练习几段可能会用到的说辞以便有人问话时口齿清楚 成功"
+      }
+    },
+    {
+      "type": "event",
+      "content": "用父亲教我的把戏和洗牌手法练手，以保持灵活的手感并让自己冷静下来 成功",
+      "gameDay": 2,
+      "gameTime": "01:00",
+      "location": "SCN_8_SUB_1",
+      "metadata": {
+        "outcome": "用父亲教我的把戏和洗牌手法练手，以保持灵活的手感并让自己冷静下来 成功"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我把屋里被翻动的痕迹收拾干净，盖回杯垫，并把露出的手表和首饰塞进改造夹克的暗袋。现在屋子看起来不像刚才被翻过，赃物已不再外露。",
+      "gameDay": 2,
+      "gameTime": "01:10",
+      "location": "SCN_8_SUB_1",
+      "metadata": {
+        "outcome": "整理屋里被翻动过的痕迹，盖好杯垫并把露出的赃物收进改造夹克的暗袋"
+      }
+    },
+    {
+      "type": "event",
+      "content": "小睡两个小时以等雪小点 成功",
+      "gameDay": 2,
+      "gameTime": "03:11",
+      "location": "SCN_8_SUB_1",
+      "metadata": {
+        "outcome": "小睡两个小时以等雪小点 成功"
+      }
+    },
+    {
+      "type": "event",
+      "content": "小睡三个小时以等待雪停和天亮再决定是否出门 成功",
+      "gameDay": 2,
+      "gameTime": "06:12",
+      "location": "SCN_8_SUB_1",
+      "metadata": {
+        "outcome": "小睡三个小时以等待雪停和天亮再决定是否出门 成功"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我把灶台的火关了，锅里的水不再翻滚，热气和方便面的味道开始减弱。我确认锅不会干掉。",
+      "gameDay": 2,
+      "gameTime": "06:15",
+      "location": "SCN_8_SUB_1",
+      "metadata": {
+        "outcome": "关掉灶台上的火以免锅干掉"
+      }
+    },
+    {
+      "type": "event",
+      "content": "坐在旧沙发上默背并复习我写的不在场证明稿，微调几句备用说辞以便有人问话时口齿清楚 成功",
+      "gameDay": 2,
+      "gameTime": "06:25",
+      "location": "SCN_8_SUB_1",
+      "metadata": {
+        "outcome": "坐在旧沙发上默背并复习我写的不在场证明稿，微调几句备用说辞以便有人问话时口齿清楚 成功"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我把屋内的灯打开，房间光线恢复正常，能更清楚地查看和复习我的不在场证明稿。",
+      "gameDay": 2,
+      "gameTime": "06:28",
+      "location": "SCN_8_SUB_1",
+      "metadata": {
+        "outcome": "打开房间的灯以便更清楚地复习不在场证明稿"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我把小冰箱门拉开，把里头翻了个底儿朝天，但里面空空的，没什么能当晚饭。记得我之前只是把几件手表短暂停在后格，后来又移走了，所以冰箱里并没有留下食物。",
+      "gameDay": 2,
+      "gameTime": "06:34",
+      "location": "SCN_8_SUB_1",
+      "metadata": {
+        "itemId": "ITEM_SCN8_9",
+        "outcome": "打开小冰箱查看有什么吃的并拿出能当晚饭的东西",
+        "itemName": "小冰箱"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我检查了改造夹克内侧的隐蔽暗袋；典当票据、改装的开锁工具和那张全家福都整齐地放在原位，确认无误，心里松了口气。",
+      "gameDay": 2,
+      "gameTime": "06:40",
+      "location": "SCN_8_SUB_1",
+      "metadata": {
+        "itemId": "ITEM_SCN8_1",
+        "outcome": "检查改造夹克的隐蔽暗袋，确认典当票据、开锁工具和那张全家福都在合适位置",
+        "itemName": "Philip的改造夹克"
+      }
+    },
+    {
+      "type": "event",
+      "content": "坐回旧沙发上再次默背并复习我写的不在场证明稿 成功",
+      "gameDay": 2,
+      "gameTime": "06:50",
+      "location": "SCN_8_SUB_1",
+      "metadata": {
+        "outcome": "坐回旧沙发上再次默背并复习我写的不在场证明稿 成功"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我从纱门的缝隙向外窥视，新月街被厚厚的积雪覆盖，能见度与行走均受影响；暂未见到行人或警车，因此我判断现在不适合去海伦的餐桌。",
+      "gameDay": 2,
+      "gameTime": "06:53",
+      "location": "SCN_8_SUB_1",
+      "metadata": {
+        "outcome": "从纱门的缝隙向外窥视新月街，确认雪势与来往行人的情况"
+      }
+    },
+    {
+      "type": "event",
+      "content": "在旧沙发上小睡半小时，等雪小点再考虑出门去海伦的餐桌 成功",
+      "gameDay": 2,
+      "gameTime": "07:24",
+      "location": "SCN_8_SUB_1",
+      "metadata": {
+        "outcome": "在旧沙发上小睡半小时，等雪小点再考虑出门去海伦的餐桌 成功"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我从纱门缝里向外窥视，发现新月街仍被厚厚的积雪覆盖，雪势并未明显减弱，能见度与行走都受影响；暂时没有看到行人或警车，所以我判断现在不适合去海伦的餐桌。",
+      "gameDay": 2,
+      "gameTime": "07:27",
+      "location": "SCN_8_SUB_1",
+      "metadata": {
+        "outcome": "从纱门缝隙向外窥视新月街，检查雪势是否减弱以及街上是否有人或警车经过"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我把客厅的显像管电视打开，调到本地新闻频道，看了天气预报和关于驯鹿酒吧事件的最新报道。屏幕发出微弱的光，画面是常规的新闻直播。",
+      "gameDay": 2,
+      "gameTime": "07:33",
+      "location": "SCN_8_SUB_1",
+      "metadata": {
+        "itemId": "ITEM_SCN8_5",
+        "outcome": "打开显像管电视并调到本地新闻频道查看天气预报和关于驯鹿酒吧事件的最新报道",
+        "itemName": "显像管电视机"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我从纱门的缝隙向外看：新月街被厚厚的积雪覆盖，雪势并未明显减弱，能见度与行走均受影响；暂时没有看到行人或警车，我判断现在不适合去海伦的餐桌。",
+      "gameDay": 2,
+      "gameTime": "07:36",
+      "location": "SCN_8_SUB_1",
+      "metadata": {
+        "outcome": "从纱门缝向外查看雪势和街上是否有人或警车"
+      }
+    },
+    {
+      "type": "plan",
+      "content": "Today's plan: 1. 整理并清点手头的赃物，决定哪些必须藏起来或尽快变现 at 菲利普的住宅; 2. 吃一顿便宜的晚饭并装作随意地打听镇上关于驯鹿酒吧事件的传闻 at 海伦的餐桌; 3. 在门口和吧台附近悄悄观察当晚气氛，确认有没有警察或认识的人在盯着我 at 驯鹿酒吧; 4. 把最容易被怀疑的物品换地方藏好，并把可能用到的不在场证明写成草稿备查 at 菲利普的住宅; 5. 练习几段父亲教的手法和骗术以保持手快头脑清醒，然后收拾睡觉 at 菲利普的住宅",
+      "gameDay": 1,
+      "gameTime": "19:00",
+      "location": null,
+      "metadata": {
+        "planType": "daily"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我把散落的手表、钱夹和首饰清点整理了一遍，把最值钱的几件塞进那件改造夹克的隐蔽暗袋里，另外挑出几样准备尽快去典当变现；全家福我没有动，仍然藏在原处。",
+      "gameDay": 1,
+      "gameTime": "19:20",
+      "location": "SCN_8_SUB_1",
+      "metadata": {
+        "outcome": "整理并清点手头的赃物，决定哪些必须藏起来或尽快变现"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我把屋里的灯打开，房间从漆黑变成了普通照明，能看清每样东西。我清点了赃物：几件已塞进我改造夹克的暗袋，另有几件摆好准备去当铺。",
+      "gameDay": 1,
+      "gameTime": "19:23",
+      "location": "SCN_8_SUB_1",
+      "metadata": {
+        "outcome": "打开屋内的灯以便清点赃物"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我把准备去典当的几件手表和首饰收好，塞进厨房角落那台小冰箱的后格里，关上门藏好了。",
+      "gameDay": 1,
+      "gameTime": "19:29",
+      "location": "SCN_8_SUB_1",
+      "metadata": {
+        "itemId": "ITEM_SCN8_9",
+        "outcome": "把准备去典当的手表和首饰放进小冰箱后格藏好",
+        "itemName": "小冰箱"
+      }
+    },
+    {
+      "type": "event",
+      "content": "穿上改装夹克准备出门去海伦的餐桌 成功",
+      "gameDay": 1,
+      "gameTime": "19:34",
+      "location": "SCN_8_SUB_1",
+      "metadata": {
+        "outcome": "穿上改装夹克准备出门去海伦的餐桌 成功"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我把纱门推开向外看：通往新月街的短小径和街道被厚厚的积雪覆盖，雪还在下，走过去去海伦的餐桌现在看起来不太可行。",
+      "gameDay": 1,
+      "gameTime": "19:39",
+      "location": "SCN_8_SUB_1",
+      "metadata": {
+        "outcome": "打开纱门并向外查看街道和积雪情况，确认是否能出门去海伦的餐桌"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我把小冰箱后格里准备去当铺的几只手表和首饰全都掏了出来，然后把它们塞进旧沙发下面的破洞里藏好，沙发底看起来很自然，没有引人注意的痕迹。",
+      "gameDay": 1,
+      "gameTime": "19:45",
+      "location": "SCN_8_SUB_1",
+      "metadata": {
+        "itemId": "ITEM_SCN8_9",
+        "outcome": "把小冰箱后格里准备去典当的手表和首饰取出来，塞进旧沙发下面的破洞里藏好",
+        "itemName": "小冰箱"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我把桌面杯垫下面的典当票据抽了出来，顺手塞进改造夹克内侧的隐蔽暗袋，掂了掂确认票据放得稳妥。",
+      "gameDay": 1,
+      "gameTime": "19:50",
+      "location": "SCN_8_SUB_1",
+      "metadata": {
+        "itemId": "ITEM_SCN8_6",
+        "outcome": "把典当票据塞进改造夹克的暗袋里藏好",
+        "itemName": "典当票据"
+      }
+    },
+    {
+      "type": "event",
+      "content": "拿出纸笔并把可能用到的不在场证明写成草稿，列出当晚时间线、我在哪儿、可能的证人和能作证的物证（参考全家福照片） 成功",
+      "gameDay": 1,
+      "gameTime": "20:05",
+      "location": "SCN_8_SUB_1",
+      "metadata": {
+        "outcome": "拿出纸笔并把可能用到的不在场证明写成草稿，列出当晚时间线、我在哪儿、可能的证人和能作证的物证（参考全家福照片） 成功"
+      }
+    },
+    {
+      "type": "event",
+      "content": "在屋里练习父亲教的几段手法和骗术，检视并整理要用的工具（纸牌、细钢丝、开锁工具） 成功",
+      "gameDay": 1,
+      "gameTime": "20:26",
+      "location": "SCN_8_SUB_1",
+      "metadata": {
+        "outcome": "在屋里练习父亲教的几段手法和骗术，检视并整理要用的工具（纸牌、细钢丝、开锁工具） 成功"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我把那几支改造过的开锁工具塞进改造夹克内侧的隐蔽暗袋里，暗袋合上后很平整，工具藏得很妥当。",
+      "gameDay": 1,
+      "gameTime": "20:30",
+      "location": "SCN_8_SUB_1",
+      "metadata": {
+        "itemId": "ITEM_SCN8_4",
+        "outcome": "把开锁工具塞进改造夹克内侧的隐蔽暗袋里",
+        "itemName": "开锁工具"
+      }
+    },
+    {
+      "type": "event",
+      "content": "练习父亲教的手法和骗术以保持手快 成功",
+      "gameDay": 1,
+      "gameTime": "20:45",
+      "location": "SCN_8_SUB_1",
+      "metadata": {
+        "outcome": "练习父亲教的手法和骗术以保持手快 成功"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我推开纱门向外张望。外面新月街被厚雪覆盖，能见度低，暂时没看到行人或警车。",
+      "gameDay": 1,
+      "gameTime": "20:48",
+      "location": "SCN_8_SUB_1",
+      "metadata": {
+        "outcome": "推开纱门向外查看新月街路况和有没有行人或警察"
+      }
+    },
+    {
+      "type": "event",
+      "content": "练习父亲教的手法和骗术以保持手快 成功",
+      "gameDay": 1,
+      "gameTime": "21:09",
+      "location": "SCN_8_SUB_1",
+      "metadata": {
+        "outcome": "练习父亲教的手法和骗术以保持手快 成功"
+      }
+    },
+    {
+      "type": "event",
+      "content": "检查改造夹克内侧的隐蔽暗袋，确认典当票据和开锁工具是否仍放得稳妥 [改造夹克 not found] failed (item: 改造夹克) [item: 改造夹克]",
+      "gameDay": 1,
+      "gameTime": "21:15",
+      "location": "SCN_8_SUB_1",
+      "metadata": {
+        "itemId": "改造夹克",
+        "outcome": "检查改造夹克内侧的隐蔽暗袋，确认典当票据和开锁工具是否仍放得稳妥 [改造夹克 not found] failed (item: 改造夹克)"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我掏开改造夹克内侧的隐蔽暗袋检查了一遍：典当票据和那套开锁工具都还在，摆放平整没有移位。我把暗袋合好，确保它们继续保持隐藏。",
+      "gameDay": 1,
+      "gameTime": "21:20",
+      "location": "SCN_8_SUB_1",
+      "metadata": {
+        "itemId": "ITEM_SCN8_1",
+        "outcome": "检查并打开改造夹克内侧的隐蔽暗袋，确认典当票据和开锁工具仍在并保持隐藏",
+        "itemName": "Philip的改造夹克"
+      }
+    },
+    {
+      "type": "event",
+      "content": "练习父亲教的把戏与手法，专注练习洗牌与指法十分钟 成功",
+      "gameDay": 1,
+      "gameTime": "21:31",
+      "location": "SCN_8_SUB_1",
+      "metadata": {
+        "outcome": "练习父亲教的把戏与手法，专注练习洗牌与指法十分钟 成功"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我在厨房把水烧开，用灶台煮了一碗方便面，锅里冒着热气，屋里充满了方便面的气味。",
+      "gameDay": 1,
+      "gameTime": "21:43",
+      "location": "SCN_8_SUB_1",
+      "metadata": {
+        "outcome": "在厨房用灶台煮一碗方便面作为晚饭"
+      }
+    },
+    {
+      "type": "event",
+      "content": "吃掉炉上的一碗方便面 成功",
+      "gameDay": 1,
+      "gameTime": "21:55",
+      "location": "SCN_8_SUB_1",
+      "metadata": {
+        "outcome": "吃掉炉上的一碗方便面 成功"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我从纱门向外张望，发现新月街仍被厚厚的积雪覆盖，能见度很差，雪势并未好转；暂时没有看到行人或警察。",
+      "gameDay": 1,
+      "gameTime": "21:58",
+      "location": "SCN_8_SUB_1",
+      "metadata": {
+        "outcome": "从纱门向外张望，确认雪势和街上能见度是否有好转"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我把那张全家福老照片拿起来，边对照照片里的人物与位置，边核对并调整不在场证明草稿里的时间线与证人细节，确认照片所示能为我的说辞提供支撑。调整完毕后我把照片收进身上，方便随时出示。",
+      "gameDay": 1,
+      "gameTime": "22:09",
+      "location": "SCN_8_SUB_1",
+      "metadata": {
+        "itemId": "ITEM_SCN8_3",
+        "outcome": "拿起全家福老照片，边对照照片边复核并调整不在场证明草稿里的时间线和证人细节",
+        "itemName": "全家福老照片"
+      }
+    },
+    {
+      "type": "event",
+      "content": "坐回桌边再次复习并默读不在场证明草稿，记住关键时间线与证人细节 成功",
+      "gameDay": 1,
+      "gameTime": "22:20",
+      "location": "SCN_8_SUB_1",
+      "metadata": {
+        "outcome": "坐回桌边再次复习并默读不在场证明草稿，记住关键时间线与证人细节 成功"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我从推开的纱门向外望去，街道被厚厚的积雪覆盖，能见度低且行走受影响，暂时也没看到任何行人或警察。基于眼前的雪势，我判断现在不适合出门去海伦的餐桌。",
+      "gameDay": 1,
+      "gameTime": "22:24",
+      "location": "SCN_8_SUB_1",
+      "metadata": {
+        "outcome": "从纱门向外观察雪势，判断是否适合现在前往海伦的餐桌"
+      }
+    },
+    {
+      "type": "event",
+      "content": "坐回桌边再次复习并默读不在场证明草稿十分钟 成功",
+      "gameDay": 1,
+      "gameTime": "22:35",
+      "location": "SCN_8_SUB_1",
+      "metadata": {
+        "outcome": "坐回桌边再次复习并默读不在场证明草稿十分钟 成功"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我从纱门向外张望，看到新月街被厚厚的积雪覆盖，能见度很差，暂时没有行人或警察出现。我判断现在不适合出门去海伦的餐桌。",
+      "gameDay": 1,
+      "gameTime": "22:38",
+      "location": "SCN_8_SUB_1",
+      "metadata": {
+        "outcome": "从纱门向外张望，检查雪势与街道能见度，确认是否适合现在出门去海伦的餐桌"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我把纱门关上并顺手把门闩扣好，尽量阻挡外面的风雪。门关好了，屋里不再有冷风灌进来。",
+      "gameDay": 1,
+      "gameTime": "22:40",
+      "location": "SCN_8_SUB_1",
+      "metadata": {
+        "outcome": "把纱门关上并顺手扣好门闩，防止风雪吹进屋里"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我把纱门微微推开，从门缝向外看去：街道被厚雪覆盖，能见度不佳，暂时没看到行人或警车。我判断现在不适合去海伦的餐桌。",
+      "gameDay": 1,
+      "gameTime": "22:44",
+      "location": "SCN_8_SUB_1",
+      "metadata": {
+        "outcome": "微微推开纱门缝隙，从门缝向外查看雪势和街道上是否有行人或警车"
+      }
+    },
+    {
+      "type": "event",
+      "content": "坐回桌边继续复习并默读不在场证明草稿十分钟 成功",
+      "gameDay": 1,
+      "gameTime": "22:55",
+      "location": "SCN_8_SUB_1",
+      "metadata": {
+        "outcome": "坐回桌边继续复习并默读不在场证明草稿十分钟 成功"
+      }
+    },
+    {
+      "type": "event",
+      "content": "继续复习并默读不在场证明草稿十分钟 成功",
+      "gameDay": 1,
+      "gameTime": "23:06",
+      "location": "SCN_8_SUB_1",
+      "metadata": {
+        "outcome": "继续复习并默读不在场证明草稿十分钟 成功"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我从纱门缝向外仔细看了新月街：街道被厚厚的积雪覆盖，能见度很低，暂时没看到行人或警车。根据眼见的雪势和能见度，我判断现在不适合出门去海伦的餐桌。",
+      "gameDay": 1,
+      "gameTime": "23:10",
+      "location": "SCN_8_SUB_1",
+      "metadata": {
+        "outcome": "从纱门缝向外仔细观察新月街的雪势和能见度，确认是否适合出门"
+      }
+    },
+    {
+      "type": "event",
+      "content": "继续默读并复习不在场证明草稿十分钟 成功",
+      "gameDay": 1,
+      "gameTime": "23:21",
+      "location": "SCN_8_SUB_1",
+      "metadata": {
+        "outcome": "继续默读并复习不在场证明草稿十分钟 成功"
+      }
+    },
+    {
+      "type": "event",
+      "content": "坐到窗边观察外面雪势十分钟，顺便默读并复习不在场证明草稿 成功",
+      "gameDay": 1,
+      "gameTime": "23:32",
+      "location": "SCN_8_SUB_1",
+      "metadata": {
+        "outcome": "坐到窗边观察外面雪势十分钟，顺便默读并复习不在场证明草稿 成功"
+      }
+    },
+    {
+      "type": "event",
+      "content": "继续坐在窗边观察外面雪势并默读复习不在场证明草稿十分钟 成功",
+      "gameDay": 1,
+      "gameTime": "23:43",
+      "location": "SCN_8_SUB_1",
+      "metadata": {
+        "outcome": "继续坐在窗边观察外面雪势并默读复习不在场证明草稿十分钟 成功"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我把那张全家福老照片塞进改造夹克内侧的隐蔽暗袋里并扣好，放在身上随时备用。",
+      "gameDay": 1,
+      "gameTime": "23:46",
+      "location": "SCN_8_SUB_1",
+      "metadata": {
+        "itemId": "ITEM_SCN8_3",
+        "outcome": "把全家福老照片塞回改装夹克内侧的隐蔽暗袋并扣好，随时备用",
+        "itemName": "全家福老照片"
+      }
+    },
+    {
+      "type": "event",
+      "content": "坐到窗边观察外面雪势并默读不在场证明草稿十分钟 成功",
+      "gameDay": 1,
+      "gameTime": "23:57",
+      "location": "SCN_8_SUB_1",
+      "metadata": {
+        "outcome": "坐到窗边观察外面雪势并默读不在场证明草稿十分钟 成功"
+      }
+    },
+    {
+      "type": "secret",
+      "content": "我已把典当票据、那套改造的开锁工具和那张全家福放在改造夹克内侧的隐蔽暗袋里，部分手表和首饰藏在旧沙发下的破洞中（小冰箱后格曾作短暂停放）。",
+      "gameDay": 1,
+      "gameTime": "23:59",
+      "location": null,
+      "metadata": {
+        "revealed": false,
+        "difficulty": "extreme",
+        "knowledgeId": "learned_day1_2"
+      }
+    },
+    {
+      "type": "secret",
+      "content": "我把不在场证明的时间线、可能的证人和能佐证的物证（全家福）写成草稿并记在心里，准备随时出示或背诵以保全自己。",
+      "gameDay": 1,
+      "gameTime": "23:59",
+      "location": null,
+      "metadata": {
+        "revealed": false,
+        "difficulty": "hard",
+        "knowledgeId": "learned_day1_3"
+      }
+    },
+    {
+      "type": "event",
+      "content": "检查改造夹克内侧的隐蔽暗袋，确认典当票据、开锁工具和全家福照片仍在 [改造夹克 not found] failed (item: 改造夹克) [item: 改造夹克]",
+      "gameDay": 1,
+      "gameTime": "23:59",
+      "location": "SCN_8_SUB_1",
+      "metadata": {
+        "itemId": "改造夹克",
+        "outcome": "检查改造夹克内侧的隐蔽暗袋，确认典当票据、开锁工具和全家福照片仍在 [改造夹克 not found] failed (item: 改造夹克)"
+      }
+    },
+    {
+      "type": "information",
+      "content": "新月街此刻被厚厚积雪覆盖，能见度很差，雪势未见好转，路上暂时没有行人或警车，外出去海伦的餐桌目前不安全可行。",
+      "gameDay": 1,
+      "gameTime": "23:59",
+      "location": null,
+      "metadata": {
+        "revealed": false,
+        "difficulty": "regular",
+        "knowledgeId": "learned_day1_1"
+      }
+    }
+  ],
+  "plans": [
+    {
+      "npcName": "Philip Scaletta",
+      "gameDay": 2,
+      "schedule": [
+        {
+          "activity": "吃掉那碗方便面并把昨晚挑选出来准备典当和藏匿的赃物再确认一遍",
+          "location": "菲利普的住宅"
+        },
+        {
+          "activity": "检查改造夹克的隐蔽暗袋，确认典当票据、开锁工具和那张全家福都在合适位置",
+          "location": "菲利普的住宅"
+        },
+        {
+          "activity": "默背并微调我的不在场证明稿，练习几段可能会用到的说辞以便有人问话时口齿清楚",
+          "location": "菲利普的住宅"
+        },
+        {
+          "activity": "用父亲教我的把戏和洗牌手法练手以保持灵活的手感并让自己冷静下来",
+          "location": "菲利普的住宅"
+        },
+        {
+          "activity": "把屋里翻动过的痕迹整理好，盖好杯垫、收回露出的物品，制造一个看起来像正常居住的假象",
+          "location": "菲利普的住宅"
+        },
+        {
+          "activity": "小睡几个小时，等天亮和街上动静更明朗再决定是否出门",
+          "location": "菲利普的住宅"
+        },
+        {
+          "activity": "从远处观察驯鹿酒吧和周边的动静，听听路人或店铺有没有新的传言以判断风险",
+          "location": "北新街端点三岔口"
+        },
+        {
+          "activity": "试探性地找怀特询问几块老表的价值并探听他是否愿意做一次私人交易",
+          "location": "钟表店"
+        },
+        {
+          "activity": "去五金店找哈里森买一两件小工具并顺便套套近乎打听当天镇上的状况",
+          "location": "五金店"
+        },
+        {
+          "activity": "在门口装作买花的样子观察海伦的餐桌方向和街上来往的人以确认谁在出没",
+          "location": "花店·卡森德拉之花"
+        },
+        {
+          "activity": "把白天收集到的信息整理进心里的时间线，必要时调整不在场证明并把最值钱的东西再转移到更隐蔽的地方",
+          "location": "菲利普的住宅"
+        },
+        {
+          "activity": "晚饭随便吃点东西后再次检查暗袋和藏匿处，练一遍把戏然后早点睡以保存体力和警觉性",
+          "location": "菲利普的住宅"
+        }
+      ],
+      "nodes": [
+        {
+          "type": "action",
+          "action": "小睡一会儿，等雪小点再决定是否出门",
+          "impact": 0,
+          "nodeId": "a1",
+          "status": "in_progress",
+          "endTime": "08:37",
+          "startTime": "07:37",
+          "characterId": "Philip Scaletta",
+          "characterName": "Philip Scaletta",
+          "executionMeta": {
+            "startedAt": "07:37",
+            "remainingMinutes": 60
+          },
+          "routineSubtype": "rest"
+        },
+        {
+          "type": "object_interaction",
+          "action": "打开显像管电视并调到本地新闻频道查看天气预报和关于驯鹿酒吧事件的最新报道",
+          "impact": 0,
+          "nodeId": "oi1",
+          "status": "completed",
+          "endTime": "07:33",
+          "outcome": "我把客厅的显像管电视打开，调到本地新闻频道，看了天气预报和关于驯鹿酒吧事件的最新报道。屏幕发出微弱的光，画面是常规的新闻直播。",
+          "startTime": "07:28",
+          "characterId": "Philip Scaletta",
+          "characterName": "Philip Scaletta",
+          "executionMeta": {
+            "startedAt": "07:28",
+            "completedAt": "07:33",
+            "remainingMinutes": 0
+          },
+          "objectInteractionPayload": {
+            "itemId": "ITEM_SCN8_5"
+          }
+        },
+        {
+          "type": "action",
+          "action": "小睡两个小时以等雪小点",
+          "impact": 0,
+          "nodeId": "a2",
+          "status": "completed",
+          "endTime": "03:11",
+          "outcome": "小睡两个小时以等雪小点 成功",
+          "startTime": "01:11",
+          "characterId": "Philip Scaletta",
+          "characterName": "Philip Scaletta",
+          "executionMeta": {
+            "startedAt": "01:11",
+            "completedAt": "03:11",
+            "remainingMinutes": 0
+          },
+          "routineSubtype": "rest"
+        },
+        {
+          "type": "action",
+          "action": "小睡两个小时以等雪小点",
+          "impact": 0,
+          "nodeId": "a2",
+          "status": "completed",
+          "endTime": "03:11",
+          "outcome": "小睡两个小时以等雪小点 成功",
+          "startTime": "01:11",
+          "characterId": "Philip Scaletta",
+          "characterName": "Philip Scaletta",
+          "executionMeta": {
+            "startedAt": "01:11",
+            "completedAt": "03:11",
+            "remainingMinutes": 0
+          },
+          "routineSubtype": "rest"
+        },
+        {
+          "type": "scene_interaction",
+          "action": "整理屋里被翻动过的痕迹，盖好杯垫并把露出的赃物收进改造夹克的暗袋",
+          "impact": 0,
+          "nodeId": "si2",
+          "status": "completed",
+          "endTime": "01:10",
+          "outcome": "我把屋里被翻动的痕迹收拾干净，盖回杯垫，并把露出的手表和首饰塞进改造夹克的暗袋。现在屋子看起来不像刚才被翻过，赃物已不再外露。",
+          "startTime": "01:01",
+          "characterId": "Philip Scaletta",
+          "characterName": "Philip Scaletta",
+          "executionMeta": {
+            "startedAt": "01:01",
+            "completedAt": "01:10",
+            "remainingMinutes": 0
+          },
+          "objectInteractionPayload": {
+            "itemId": "ITEM_SCN8_1"
+          }
+        },
+        {
+          "type": "action",
+          "action": "小睡两个小时以等雪小点",
+          "impact": 0,
+          "nodeId": "a2",
+          "status": "completed",
+          "endTime": "03:11",
+          "outcome": "小睡两个小时以等雪小点 成功",
+          "startTime": "01:11",
+          "characterId": "Philip Scaletta",
+          "characterName": "Philip Scaletta",
+          "executionMeta": {
+            "startedAt": "01:11",
+            "completedAt": "03:11",
+            "remainingMinutes": 0
+          },
+          "routineSubtype": "rest"
+        },
+        {
+          "type": "action",
+          "action": "小睡三个小时以等待雪停和天亮再决定是否出门",
+          "impact": 0,
+          "nodeId": "a3",
+          "status": "completed",
+          "endTime": "06:12",
+          "outcome": "小睡三个小时以等待雪停和天亮再决定是否出门 成功",
+          "startTime": "03:12",
+          "characterId": "Philip Scaletta",
+          "characterName": "Philip Scaletta",
+          "executionMeta": {
+            "startedAt": "03:12",
+            "completedAt": "06:12",
+            "remainingMinutes": 0
+          },
+          "routineSubtype": "rest"
+        },
+        {
+          "type": "scene_interaction",
+          "action": "关掉灶台上的火以免锅干掉",
+          "impact": 0,
+          "nodeId": "si_day2_0613",
+          "status": "completed",
+          "endTime": "06:15",
+          "outcome": "我把灶台的火关了，锅里的水不再翻滚，热气和方便面的味道开始减弱。我确认锅不会干掉。",
+          "startTime": "06:13",
+          "characterId": "Philip Scaletta",
+          "characterName": "Philip Scaletta",
+          "executionMeta": {
+            "startedAt": "06:13",
+            "completedAt": "06:15",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "action",
+          "action": "坐在旧沙发上默背并复习我写的不在场证明稿，微调几句备用说辞以便有人问话时口齿清楚",
+          "impact": 0,
+          "nodeId": "a_day2_0616_philip_01",
+          "status": "completed",
+          "endTime": "06:25",
+          "outcome": "坐在旧沙发上默背并复习我写的不在场证明稿，微调几句备用说辞以便有人问话时口齿清楚 成功",
+          "startTime": "06:16",
+          "characterId": "Philip Scaletta",
+          "characterName": "Philip Scaletta",
+          "executionMeta": {
+            "startedAt": "06:16",
+            "completedAt": "06:25",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "scene_interaction",
+          "action": "打开房间的灯以便更清楚地复习不在场证明稿",
+          "impact": 0,
+          "nodeId": "si_day2_0626_1",
+          "status": "completed",
+          "endTime": "06:28",
+          "outcome": "我把屋内的灯打开，房间光线恢复正常，能更清楚地查看和复习我的不在场证明稿。",
+          "startTime": "06:26",
+          "characterId": "Philip Scaletta",
+          "characterName": "Philip Scaletta",
+          "executionMeta": {
+            "startedAt": "06:26",
+            "completedAt": "06:28",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "object_interaction",
+          "action": "打开小冰箱查看有什么吃的并拿出能当晚饭的东西",
+          "impact": 0,
+          "nodeId": "oi_philip_0629_01",
+          "status": "completed",
+          "endTime": "06:34",
+          "outcome": "我把小冰箱门拉开，把里头翻了个底儿朝天，但里面空空的，没什么能当晚饭。记得我之前只是把几件手表短暂停在后格，后来又移走了，所以冰箱里并没有留下食物。",
+          "startTime": "06:29",
+          "characterId": "Philip Scaletta",
+          "characterName": "Philip Scaletta",
+          "executionMeta": {
+            "startedAt": "06:29",
+            "completedAt": "06:34",
+            "remainingMinutes": 0
+          },
+          "objectInteractionPayload": {
+            "itemId": "ITEM_SCN8_9"
+          }
+        },
+        {
+          "type": "object_interaction",
+          "action": "检查改造夹克的隐蔽暗袋，确认典当票据、开锁工具和那张全家福都在合适位置",
+          "impact": 0,
+          "nodeId": "oi2",
+          "status": "completed",
+          "endTime": "06:40",
+          "outcome": "我检查了改造夹克内侧的隐蔽暗袋；典当票据、改装的开锁工具和那张全家福都整齐地放在原位，确认无误，心里松了口气。",
+          "startTime": "06:35",
+          "characterId": "Philip Scaletta",
+          "characterName": "Philip Scaletta",
+          "executionMeta": {
+            "startedAt": "06:35",
+            "completedAt": "06:40",
+            "remainingMinutes": 0
+          },
+          "objectInteractionPayload": {
+            "itemId": "ITEM_SCN8_1"
+          }
+        },
+        {
+          "type": "action",
+          "action": "坐回旧沙发上再次默背并复习我写的不在场证明稿",
+          "impact": 0,
+          "nodeId": "a_next1",
+          "status": "completed",
+          "endTime": "06:50",
+          "outcome": "坐回旧沙发上再次默背并复习我写的不在场证明稿 成功",
+          "startTime": "06:41",
+          "characterId": "Philip Scaletta",
+          "characterName": "Philip Scaletta",
+          "executionMeta": {
+            "startedAt": "06:41",
+            "completedAt": "06:50",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "scene_interaction",
+          "action": "从纱门缝隙向外窥视新月街，检查雪势是否减弱以及街上是否有人或警车经过",
+          "impact": 0,
+          "nodeId": "si1",
+          "status": "completed",
+          "endTime": "07:27",
+          "outcome": "我从纱门缝里向外窥视，发现新月街仍被厚厚的积雪覆盖，雪势并未明显减弱，能见度与行走都受影响；暂时没有看到行人或警车，所以我判断现在不适合去海伦的餐桌。",
+          "startTime": "07:25",
+          "characterId": "Philip Scaletta",
+          "characterName": "Philip Scaletta",
+          "executionMeta": {
+            "startedAt": "07:25",
+            "completedAt": "07:27",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "action",
+          "action": "在旧沙发上小睡半小时，等雪小点再考虑出门去海伦的餐桌",
+          "impact": 0,
+          "nodeId": "a10",
+          "status": "completed",
+          "endTime": "07:24",
+          "outcome": "在旧沙发上小睡半小时，等雪小点再考虑出门去海伦的餐桌 成功",
+          "startTime": "06:54",
+          "characterId": "Philip Scaletta",
+          "characterName": "Philip Scaletta",
+          "executionMeta": {
+            "startedAt": "06:54",
+            "completedAt": "07:24",
+            "remainingMinutes": 0
+          },
+          "routineSubtype": "rest"
+        },
+        {
+          "type": "scene_interaction",
+          "action": "从纱门缝隙向外窥视新月街，检查雪势是否减弱以及街上是否有人或警车经过",
+          "impact": 0,
+          "nodeId": "si1",
+          "status": "completed",
+          "endTime": "07:27",
+          "outcome": "我从纱门缝里向外窥视，发现新月街仍被厚厚的积雪覆盖，雪势并未明显减弱，能见度与行走都受影响；暂时没有看到行人或警车，所以我判断现在不适合去海伦的餐桌。",
+          "startTime": "07:25",
+          "characterId": "Philip Scaletta",
+          "characterName": "Philip Scaletta",
+          "executionMeta": {
+            "startedAt": "07:25",
+            "completedAt": "07:27",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "object_interaction",
+          "action": "打开显像管电视并调到本地新闻频道查看天气预报和关于驯鹿酒吧事件的最新报道",
+          "impact": 0,
+          "nodeId": "oi1",
+          "status": "completed",
+          "endTime": "07:33",
+          "outcome": "我把客厅的显像管电视打开，调到本地新闻频道，看了天气预报和关于驯鹿酒吧事件的最新报道。屏幕发出微弱的光，画面是常规的新闻直播。",
+          "startTime": "07:28",
+          "characterId": "Philip Scaletta",
+          "characterName": "Philip Scaletta",
+          "executionMeta": {
+            "startedAt": "07:28",
+            "completedAt": "07:33",
+            "remainingMinutes": 0
+          },
+          "objectInteractionPayload": {
+            "itemId": "ITEM_SCN8_5"
+          }
+        },
+        {
+          "type": "scene_interaction",
+          "action": "从纱门缝向外查看雪势和街上是否有人或警车",
+          "impact": 0,
+          "nodeId": "si1_0734",
+          "status": "completed",
+          "endTime": "07:36",
+          "outcome": "我从纱门的缝隙向外看：新月街被厚厚的积雪覆盖，雪势并未明显减弱，能见度与行走均受影响；暂时没有看到行人或警车，我判断现在不适合去海伦的餐桌。",
+          "startTime": "07:34",
+          "characterId": "Philip Scaletta",
+          "characterName": "Philip Scaletta",
+          "executionMeta": {
+            "startedAt": "07:34",
+            "completedAt": "07:36",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "action",
+          "action": "小睡一会儿，等雪小点再决定是否出门",
+          "impact": 0,
+          "nodeId": "a1",
+          "status": "in_progress",
+          "endTime": "08:37",
+          "startTime": "07:37",
+          "characterId": "Philip Scaletta",
+          "characterName": "Philip Scaletta",
+          "executionMeta": {
+            "startedAt": "07:37",
+            "remainingMinutes": 60
+          },
+          "routineSubtype": "rest"
+        }
+      ]
+    },
+    {
+      "npcName": "Philip Scaletta",
+      "gameDay": 1,
+      "schedule": [
+        {
+          "activity": "整理并清点手头的赃物，决定哪些必须藏起来或尽快变现",
+          "location": "菲利普的住宅"
+        },
+        {
+          "activity": "吃一顿便宜的晚饭并装作随意地打听镇上关于驯鹿酒吧事件的传闻",
+          "location": "海伦的餐桌"
+        },
+        {
+          "activity": "在门口和吧台附近悄悄观察当晚气氛，确认有没有警察或认识的人在盯着我",
+          "location": "驯鹿酒吧"
+        },
+        {
+          "activity": "把最容易被怀疑的物品换地方藏好，并把可能用到的不在场证明写成草稿备查",
+          "location": "菲利普的住宅"
+        },
+        {
+          "activity": "练习几段父亲教的手法和骗术以保持手快头脑清醒，然后收拾睡觉",
+          "location": "菲利普的住宅"
+        }
+      ],
+      "nodes": [
+        {
+          "type": "scene_interaction",
+          "action": "从纱门向外观察雪势，判断是否适合现在前往海伦的餐桌",
+          "impact": 0,
+          "nodeId": "si1",
+          "status": "completed",
+          "endTime": "22:24",
+          "outcome": "我从推开的纱门向外望去，街道被厚厚的积雪覆盖，能见度低且行走受影响，暂时也没看到任何行人或警察。基于眼前的雪势，我判断现在不适合出门去海伦的餐桌。",
+          "startTime": "22:21",
+          "characterId": "Philip Scaletta",
+          "characterName": "Philip Scaletta",
+          "executionMeta": {
+            "startedAt": "22:21",
+            "completedAt": "22:24",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "scene_interaction",
+          "action": "从纱门向外观察雪势，判断是否适合现在前往海伦的餐桌",
+          "impact": 0,
+          "nodeId": "si1",
+          "status": "completed",
+          "endTime": "22:24",
+          "outcome": "我从推开的纱门向外望去，街道被厚厚的积雪覆盖，能见度低且行走受影响，暂时也没看到任何行人或警察。基于眼前的雪势，我判断现在不适合出门去海伦的餐桌。",
+          "startTime": "22:21",
+          "characterId": "Philip Scaletta",
+          "characterName": "Philip Scaletta",
+          "executionMeta": {
+            "startedAt": "22:21",
+            "completedAt": "22:24",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "object_interaction",
+          "action": "检查改造夹克内侧的隐蔽暗袋，确认典当票据、开锁工具和全家福照片仍在",
+          "impact": 0,
+          "nodeId": "oi1",
+          "status": "failed",
+          "endTime": "23:59",
+          "startTime": "23:58",
+          "characterId": "Philip Scaletta",
+          "characterName": "Philip Scaletta",
+          "executionMeta": {
+            "failedAt": "23:59",
+            "startedAt": "23:58",
+            "remainingMinutes": 10
+          },
+          "objectInteractionPayload": {
+            "itemId": "改造夹克"
+          }
+        },
+        {
+          "type": "movement",
+          "action": "步行前往海伦的餐桌吃晚饭并打听驯鹿酒吧的传闻",
+          "impact": 0,
+          "nodeId": "m_phil_001",
+          "status": "failed",
+          "endTime": "19:45",
+          "outcome": "步行前往海伦的餐桌吃晚饭并打听驯鹿酒吧的传闻 [拓扑中无可用路径] 失败",
+          "startTime": "19:30",
+          "characterId": "Philip Scaletta",
+          "destination": "SCN_10_SUB_1",
+          "characterName": "Philip Scaletta",
+          "executionMeta": {
+            "failedAt": "19:30",
+            "startedAt": "19:30",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "action",
+          "action": "坐回桌边继续复习并默读不在场证明草稿十分钟",
+          "impact": 0,
+          "nodeId": "a1",
+          "status": "completed",
+          "endTime": "22:55",
+          "outcome": "坐回桌边继续复习并默读不在场证明草稿十分钟 成功",
+          "startTime": "22:45",
+          "characterId": "Philip Scaletta",
+          "characterName": "Philip Scaletta",
+          "executionMeta": {
+            "startedAt": "22:45",
+            "completedAt": "22:55",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "movement",
+          "action": "前往海伦的餐桌，吃晚饭并装作随意地打听驯鹿酒吧的传闻",
+          "impact": 0,
+          "nodeId": "m_philip_to_helen_1",
+          "status": "failed",
+          "endTime": "19:45",
+          "outcome": "前往海伦的餐桌，吃晚饭并装作随意地打听驯鹿酒吧的传闻 [拓扑中无可用路径] 失败",
+          "startTime": "19:35",
+          "characterId": "Philip Scaletta",
+          "destination": "SCN_10_SUB_1",
+          "characterName": "Philip Scaletta",
+          "executionMeta": {
+            "failedAt": "19:35",
+            "startedAt": "19:35",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "movement",
+          "action": "前往海伦的餐桌",
+          "impact": 0,
+          "nodeId": "m2",
+          "status": "failed",
+          "endTime": "19:46",
+          "outcome": "前往海伦的餐桌 [拓扑中无可用路径] 失败",
+          "startTime": "19:36",
+          "characterId": "Philip Scaletta",
+          "destination": "SCN_10_SUB_1",
+          "characterName": "Philip Scaletta",
+          "executionMeta": {
+            "failedAt": "19:36",
+            "startedAt": "19:36",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "scene_interaction",
+          "action": "从纱门向外观察雪势，判断是否适合现在前往海伦的餐桌",
+          "impact": 0,
+          "nodeId": "si1",
+          "status": "completed",
+          "endTime": "22:24",
+          "outcome": "我从推开的纱门向外望去，街道被厚厚的积雪覆盖，能见度低且行走受影响，暂时也没看到任何行人或警察。基于眼前的雪势，我判断现在不适合出门去海伦的餐桌。",
+          "startTime": "22:21",
+          "characterId": "Philip Scaletta",
+          "characterName": "Philip Scaletta",
+          "executionMeta": {
+            "startedAt": "22:21",
+            "completedAt": "22:24",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "object_interaction",
+          "action": "检查改造夹克内侧的隐蔽暗袋，确认典当票据、开锁工具和全家福照片仍在",
+          "impact": 0,
+          "nodeId": "oi1",
+          "status": "failed",
+          "endTime": "23:59",
+          "startTime": "23:58",
+          "characterId": "Philip Scaletta",
+          "characterName": "Philip Scaletta",
+          "executionMeta": {
+            "failedAt": "23:59",
+            "startedAt": "23:58",
+            "remainingMinutes": 10
+          },
+          "objectInteractionPayload": {
+            "itemId": "改造夹克"
+          }
+        },
+        {
+          "type": "object_interaction",
+          "action": "拿起全家福老照片，边对照照片边复核并调整不在场证明草稿里的时间线和证人细节",
+          "impact": 0,
+          "nodeId": "oi2",
+          "status": "completed",
+          "endTime": "22:09",
+          "outcome": "我把那张全家福老照片拿起来，边对照照片里的人物与位置，边核对并调整不在场证明草稿里的时间线与证人细节，确认照片所示能为我的说辞提供支撑。调整完毕后我把照片收进身上，方便随时出示。",
+          "startTime": "21:59",
+          "characterId": "Philip Scaletta",
+          "characterName": "Philip Scaletta",
+          "executionMeta": {
+            "startedAt": "21:59",
+            "completedAt": "22:09",
+            "remainingMinutes": 0
+          },
+          "objectInteractionPayload": {
+            "itemId": "ITEM_SCN8_3"
+          }
+        },
+        {
+          "type": "action",
+          "action": "拿出纸笔并把可能用到的不在场证明写成草稿，列出当晚时间线、我在哪儿、可能的证人和能作证的物证（参考全家福照片）",
+          "impact": 0,
+          "nodeId": "a_day1_1951_1",
+          "status": "completed",
+          "endTime": "20:05",
+          "outcome": "拿出纸笔并把可能用到的不在场证明写成草稿，列出当晚时间线、我在哪儿、可能的证人和能作证的物证（参考全家福照片） 成功",
+          "startTime": "19:51",
+          "characterId": "Philip Scaletta",
+          "characterName": "Philip Scaletta",
+          "executionMeta": {
+            "startedAt": "19:51",
+            "completedAt": "20:05",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "action",
+          "action": "继续坐在窗边观察外面雪势并默读复习不在场证明草稿十分钟",
+          "impact": 0,
+          "nodeId": "a2",
+          "status": "completed",
+          "endTime": "23:43",
+          "outcome": "继续坐在窗边观察外面雪势并默读复习不在场证明草稿十分钟 成功",
+          "startTime": "23:33",
+          "characterId": "Philip Scaletta",
+          "characterName": "Philip Scaletta",
+          "executionMeta": {
+            "startedAt": "23:33",
+            "completedAt": "23:43",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "object_interaction",
+          "action": "检查改造夹克内侧的隐蔽暗袋，确认典当票据、开锁工具和全家福照片仍在",
+          "impact": 0,
+          "nodeId": "oi1",
+          "status": "failed",
+          "endTime": "23:59",
+          "startTime": "23:58",
+          "characterId": "Philip Scaletta",
+          "characterName": "Philip Scaletta",
+          "executionMeta": {
+            "failedAt": "23:59",
+            "startedAt": "23:58",
+            "remainingMinutes": 10
+          },
+          "objectInteractionPayload": {
+            "itemId": "改造夹克"
+          }
+        },
+        {
+          "type": "action",
+          "action": "练习父亲教的手法和骗术以保持手快",
+          "impact": 0,
+          "nodeId": "a1_phil_practice",
+          "status": "completed",
+          "endTime": "20:45",
+          "outcome": "练习父亲教的手法和骗术以保持手快 成功",
+          "startTime": "20:31",
+          "characterId": "Philip Scaletta",
+          "characterName": "Philip Scaletta",
+          "executionMeta": {
+            "startedAt": "20:31",
+            "completedAt": "20:45",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "scene_interaction",
+          "action": "从纱门向外观察雪势，判断是否适合现在前往海伦的餐桌",
+          "impact": 0,
+          "nodeId": "si1",
+          "status": "completed",
+          "endTime": "22:24",
+          "outcome": "我从推开的纱门向外望去，街道被厚厚的积雪覆盖，能见度低且行走受影响，暂时也没看到任何行人或警察。基于眼前的雪势，我判断现在不适合出门去海伦的餐桌。",
+          "startTime": "22:21",
+          "characterId": "Philip Scaletta",
+          "characterName": "Philip Scaletta",
+          "executionMeta": {
+            "startedAt": "22:21",
+            "completedAt": "22:24",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "action",
+          "action": "坐回桌边继续复习并默读不在场证明草稿十分钟",
+          "impact": 0,
+          "nodeId": "a1",
+          "status": "completed",
+          "endTime": "22:55",
+          "outcome": "坐回桌边继续复习并默读不在场证明草稿十分钟 成功",
+          "startTime": "22:45",
+          "characterId": "Philip Scaletta",
+          "characterName": "Philip Scaletta",
+          "executionMeta": {
+            "startedAt": "22:45",
+            "completedAt": "22:55",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "object_interaction",
+          "action": "检查改造夹克内侧的隐蔽暗袋，确认典当票据和开锁工具是否仍放得稳妥",
+          "impact": 0,
+          "nodeId": "a_next_001",
+          "status": "failed",
+          "endTime": "21:15",
+          "startTime": "21:10",
+          "characterId": "Philip Scaletta",
+          "characterName": "Philip Scaletta",
+          "executionMeta": {
+            "failedAt": "21:15",
+            "startedAt": "21:10",
+            "remainingMinutes": 5
+          },
+          "objectInteractionPayload": {
+            "itemId": "改造夹克"
+          }
+        },
+        {
+          "type": "object_interaction",
+          "action": "检查改造夹克内侧的隐蔽暗袋，确认典当票据、开锁工具和全家福照片仍在",
+          "impact": 0,
+          "nodeId": "oi1",
+          "status": "failed",
+          "endTime": "23:59",
+          "startTime": "23:58",
+          "characterId": "Philip Scaletta",
+          "characterName": "Philip Scaletta",
+          "executionMeta": {
+            "failedAt": "23:59",
+            "startedAt": "23:58",
+            "remainingMinutes": 10
+          },
+          "objectInteractionPayload": {
+            "itemId": "改造夹克"
+          }
+        },
+        {
+          "type": "action",
+          "action": "继续复习并默读不在场证明草稿十分钟",
+          "impact": 0,
+          "nodeId": "a_philip_001",
+          "status": "completed",
+          "endTime": "23:06",
+          "outcome": "继续复习并默读不在场证明草稿十分钟 成功",
+          "startTime": "22:56",
+          "characterId": "Philip Scaletta",
+          "characterName": "Philip Scaletta",
+          "executionMeta": {
+            "startedAt": "22:56",
+            "completedAt": "23:06",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "movement",
+          "action": "前往海伦的餐桌",
+          "impact": 0,
+          "nodeId": "m1",
+          "status": "failed",
+          "endTime": "22:00",
+          "outcome": "前往海伦的餐桌 [拓扑中无可用路径] 失败",
+          "startTime": "21:44",
+          "characterId": "Philip Scaletta",
+          "destination": "SCN_10_SUB_1",
+          "characterName": "Philip Scaletta",
+          "executionMeta": {
+            "failedAt": "21:44",
+            "startedAt": "21:44",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "scene_interaction",
+          "action": "从纱门向外观察雪势，判断是否适合现在前往海伦的餐桌",
+          "impact": 0,
+          "nodeId": "si1",
+          "status": "completed",
+          "endTime": "22:24",
+          "outcome": "我从推开的纱门向外望去，街道被厚厚的积雪覆盖，能见度低且行走受影响，暂时也没看到任何行人或警察。基于眼前的雪势，我判断现在不适合出门去海伦的餐桌。",
+          "startTime": "22:21",
+          "characterId": "Philip Scaletta",
+          "characterName": "Philip Scaletta",
+          "executionMeta": {
+            "startedAt": "22:21",
+            "completedAt": "22:24",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "movement",
+          "action": "前往海伦的餐桌",
+          "impact": 0,
+          "nodeId": "m1",
+          "status": "failed",
+          "endTime": "22:00",
+          "outcome": "前往海伦的餐桌 [拓扑中无可用路径] 失败",
+          "startTime": "21:44",
+          "characterId": "Philip Scaletta",
+          "destination": "SCN_10_SUB_1",
+          "characterName": "Philip Scaletta",
+          "executionMeta": {
+            "failedAt": "21:44",
+            "startedAt": "21:44",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "action",
+          "action": "吃掉炉上的一碗方便面",
+          "impact": 0,
+          "nodeId": "a_philip_eat_01",
+          "status": "completed",
+          "endTime": "21:55",
+          "outcome": "吃掉炉上的一碗方便面 成功",
+          "startTime": "21:45",
+          "characterId": "Philip Scaletta",
+          "characterName": "Philip Scaletta",
+          "executionMeta": {
+            "startedAt": "21:45",
+            "completedAt": "21:55",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "scene_interaction",
+          "action": "从纱门向外张望，确认雪势和街上能见度是否有好转",
+          "impact": 0,
+          "nodeId": "si_philip_peek_01",
+          "status": "completed",
+          "endTime": "21:58",
+          "outcome": "我从纱门向外张望，发现新月街仍被厚厚的积雪覆盖，能见度很差，雪势并未好转；暂时没有看到行人或警察。",
+          "startTime": "21:56",
+          "characterId": "Philip Scaletta",
+          "characterName": "Philip Scaletta",
+          "executionMeta": {
+            "startedAt": "21:56",
+            "completedAt": "21:58",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "object_interaction",
+          "action": "拿起全家福老照片，边对照照片边复核并调整不在场证明草稿里的时间线和证人细节",
+          "impact": 0,
+          "nodeId": "oi2",
+          "status": "completed",
+          "endTime": "22:09",
+          "outcome": "我把那张全家福老照片拿起来，边对照照片里的人物与位置，边核对并调整不在场证明草稿里的时间线与证人细节，确认照片所示能为我的说辞提供支撑。调整完毕后我把照片收进身上，方便随时出示。",
+          "startTime": "21:59",
+          "characterId": "Philip Scaletta",
+          "characterName": "Philip Scaletta",
+          "executionMeta": {
+            "startedAt": "21:59",
+            "completedAt": "22:09",
+            "remainingMinutes": 0
+          },
+          "objectInteractionPayload": {
+            "itemId": "ITEM_SCN8_3"
+          }
+        },
+        {
+          "type": "action",
+          "action": "继续坐在窗边观察外面雪势并默读复习不在场证明草稿十分钟",
+          "impact": 0,
+          "nodeId": "a2",
+          "status": "completed",
+          "endTime": "23:43",
+          "outcome": "继续坐在窗边观察外面雪势并默读复习不在场证明草稿十分钟 成功",
+          "startTime": "23:33",
+          "characterId": "Philip Scaletta",
+          "characterName": "Philip Scaletta",
+          "executionMeta": {
+            "startedAt": "23:33",
+            "completedAt": "23:43",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "scene_interaction",
+          "action": "从纱门向外观察雪势，判断是否适合现在前往海伦的餐桌",
+          "impact": 0,
+          "nodeId": "si1",
+          "status": "completed",
+          "endTime": "22:24",
+          "outcome": "我从推开的纱门向外望去，街道被厚厚的积雪覆盖，能见度低且行走受影响，暂时也没看到任何行人或警察。基于眼前的雪势，我判断现在不适合出门去海伦的餐桌。",
+          "startTime": "22:21",
+          "characterId": "Philip Scaletta",
+          "characterName": "Philip Scaletta",
+          "executionMeta": {
+            "startedAt": "22:21",
+            "completedAt": "22:24",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "action",
+          "action": "坐回桌边继续复习并默读不在场证明草稿十分钟",
+          "impact": 0,
+          "nodeId": "a1",
+          "status": "completed",
+          "endTime": "22:55",
+          "outcome": "坐回桌边继续复习并默读不在场证明草稿十分钟 成功",
+          "startTime": "22:45",
+          "characterId": "Philip Scaletta",
+          "characterName": "Philip Scaletta",
+          "executionMeta": {
+            "startedAt": "22:45",
+            "completedAt": "22:55",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "scene_interaction",
+          "action": "从纱门向外张望，检查雪势与街道能见度，确认是否适合现在出门去海伦的餐桌",
+          "impact": 0,
+          "nodeId": "si_day1_2236",
+          "status": "completed",
+          "endTime": "22:38",
+          "outcome": "我从纱门向外张望，看到新月街被厚厚的积雪覆盖，能见度很差，暂时没有行人或警察出现。我判断现在不适合出门去海伦的餐桌。",
+          "startTime": "22:36",
+          "characterId": "Philip Scaletta",
+          "characterName": "Philip Scaletta",
+          "executionMeta": {
+            "startedAt": "22:36",
+            "completedAt": "22:38",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "scene_interaction",
+          "action": "把纱门关上并顺手扣好门闩，防止风雪吹进屋里",
+          "impact": 0,
+          "nodeId": "si_ph_001",
+          "status": "completed",
+          "endTime": "22:40",
+          "outcome": "我把纱门关上并顺手把门闩扣好，尽量阻挡外面的风雪。门关好了，屋里不再有冷风灌进来。",
+          "startTime": "22:39",
+          "characterId": "Philip Scaletta",
+          "characterName": "Philip Scaletta",
+          "executionMeta": {
+            "startedAt": "22:39",
+            "completedAt": "22:40",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "scene_interaction",
+          "action": "微微推开纱门缝隙，从门缝向外查看雪势和街道上是否有行人或警车",
+          "impact": 0,
+          "nodeId": "si_philip_001",
+          "status": "completed",
+          "endTime": "22:44",
+          "outcome": "我把纱门微微推开，从门缝向外看去：街道被厚雪覆盖，能见度不佳，暂时没看到行人或警车。我判断现在不适合去海伦的餐桌。",
+          "startTime": "22:41",
+          "characterId": "Philip Scaletta",
+          "characterName": "Philip Scaletta",
+          "executionMeta": {
+            "startedAt": "22:41",
+            "completedAt": "22:44",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "action",
+          "action": "坐回桌边继续复习并默读不在场证明草稿十分钟",
+          "impact": 0,
+          "nodeId": "a1",
+          "status": "completed",
+          "endTime": "22:55",
+          "outcome": "坐回桌边继续复习并默读不在场证明草稿十分钟 成功",
+          "startTime": "22:45",
+          "characterId": "Philip Scaletta",
+          "characterName": "Philip Scaletta",
+          "executionMeta": {
+            "startedAt": "22:45",
+            "completedAt": "22:55",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "action",
+          "action": "继续复习并默读不在场证明草稿十分钟",
+          "impact": 0,
+          "nodeId": "a_philip_001",
+          "status": "completed",
+          "endTime": "23:06",
+          "outcome": "继续复习并默读不在场证明草稿十分钟 成功",
+          "startTime": "22:56",
+          "characterId": "Philip Scaletta",
+          "characterName": "Philip Scaletta",
+          "executionMeta": {
+            "startedAt": "22:56",
+            "completedAt": "23:06",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "scene_interaction",
+          "action": "从纱门缝向外仔细观察新月街的雪势和能见度，确认是否适合出门",
+          "impact": 0,
+          "nodeId": "si_philip_peek_snow_2307",
+          "status": "completed",
+          "endTime": "23:10",
+          "outcome": "我从纱门缝向外仔细看了新月街：街道被厚厚的积雪覆盖，能见度很低，暂时没看到行人或警车。根据眼见的雪势和能见度，我判断现在不适合出门去海伦的餐桌。",
+          "startTime": "23:07",
+          "characterId": "Philip Scaletta",
+          "characterName": "Philip Scaletta",
+          "executionMeta": {
+            "startedAt": "23:07",
+            "completedAt": "23:10",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "action",
+          "action": "继续默读并复习不在场证明草稿十分钟",
+          "impact": 0,
+          "nodeId": "a_philip_01",
+          "status": "completed",
+          "endTime": "23:21",
+          "outcome": "继续默读并复习不在场证明草稿十分钟 成功",
+          "startTime": "23:11",
+          "characterId": "Philip Scaletta",
+          "characterName": "Philip Scaletta",
+          "executionMeta": {
+            "startedAt": "23:11",
+            "completedAt": "23:21",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "action",
+          "action": "坐到窗边观察外面雪势十分钟，顺便默读并复习不在场证明草稿",
+          "impact": 0,
+          "nodeId": "a_next_2322",
+          "status": "completed",
+          "endTime": "23:32",
+          "outcome": "坐到窗边观察外面雪势十分钟，顺便默读并复习不在场证明草稿 成功",
+          "startTime": "23:22",
+          "characterId": "Philip Scaletta",
+          "characterName": "Philip Scaletta",
+          "executionMeta": {
+            "startedAt": "23:22",
+            "completedAt": "23:32",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "action",
+          "action": "继续坐在窗边观察外面雪势并默读复习不在场证明草稿十分钟",
+          "impact": 0,
+          "nodeId": "a2",
+          "status": "completed",
+          "endTime": "23:43",
+          "outcome": "继续坐在窗边观察外面雪势并默读复习不在场证明草稿十分钟 成功",
+          "startTime": "23:33",
+          "characterId": "Philip Scaletta",
+          "characterName": "Philip Scaletta",
+          "executionMeta": {
+            "startedAt": "23:33",
+            "completedAt": "23:43",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "object_interaction",
+          "action": "把全家福老照片塞回改装夹克内侧的隐蔽暗袋并扣好，随时备用",
+          "impact": 0,
+          "nodeId": "oi_day1_2344_1",
+          "status": "completed",
+          "endTime": "23:46",
+          "outcome": "我把那张全家福老照片塞进改造夹克内侧的隐蔽暗袋里并扣好，放在身上随时备用。",
+          "startTime": "23:44",
+          "characterId": "Philip Scaletta",
+          "characterName": "Philip Scaletta",
+          "executionMeta": {
+            "startedAt": "23:44",
+            "completedAt": "23:46",
+            "remainingMinutes": 0
+          },
+          "objectInteractionPayload": {
+            "itemId": "ITEM_SCN8_3"
+          }
+        },
+        {
+          "type": "action",
+          "action": "坐到窗边观察外面雪势并默读不在场证明草稿十分钟",
+          "impact": 0,
+          "nodeId": "a_philip_watch_2347",
+          "status": "completed",
+          "endTime": "23:57",
+          "outcome": "坐到窗边观察外面雪势并默读不在场证明草稿十分钟 成功",
+          "startTime": "23:47",
+          "characterId": "Philip Scaletta",
+          "characterName": "Philip Scaletta",
+          "executionMeta": {
+            "startedAt": "23:47",
+            "completedAt": "23:57",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "object_interaction",
+          "action": "检查改造夹克内侧的隐蔽暗袋，确认典当票据、开锁工具和全家福照片仍在",
+          "impact": 0,
+          "nodeId": "oi1",
+          "status": "failed",
+          "endTime": "23:59",
+          "startTime": "23:58",
+          "characterId": "Philip Scaletta",
+          "characterName": "Philip Scaletta",
+          "executionMeta": {
+            "failedAt": "23:59",
+            "startedAt": "23:58",
+            "remainingMinutes": 10
+          },
+          "objectInteractionPayload": {
+            "itemId": "改造夹克"
+          }
+        }
+      ]
+    }
+  ],
+  "intents": [
+    {
+      "intent": "吃晚饭并顺便复习我写的不在场证明草稿，等雪小点再试图去海伦的餐桌装作随意打听驯鹿酒吧的传闻",
+      "updatedAt": "2026-04-02T07:52:38.494Z"
+    }
+  ],
+  "npcName": "Philip Scaletta"
+}

@@ -1,0 +1,228 @@
+{
+  "id": "Patrizio von Samsa",
+  "name": "Patrizio von Samsa",
+  "occupation": "Mayor / Former Psychiatrist",
+  "age": 50,
+  "gender": "male",
+  "appearance": "A pale, slender man who dresses with careful elegance and carries himself as if every room already belongs to him. His expression is polite by default, but his eyes rarely stop calculating.",
+  "personality": "Controlled, manipulative, patient, and deeply committed to maintaining authority. Patrizio prefers pressure, access, and quiet leverage over open confrontation, and he values image almost as much as power.",
+  "background": "Born into a German immigrant family that still clung to old status and old fantasies, Patrizio studied psychiatry and later spent time in Arkham, where an encounter with things he could not explain changed the direction of his life. He left medicine, entered local politics, and eventually turned Cassandra into a place he could govern through fear, favors, and carefully managed secrets. As town leader he prefers to stay out of sight and govern through proxies, while his network reaches into the police, the hospital, and the town's hidden rituals.",
+  "residence": "SCN_22",
+  "currentLocation": "SCN_22_SUB_2",
+  "spot": "at the writing desk by the window, unsealed letters at his elbow",
+  "knownMapSeed": {
+    "sceneIds": [
+      "SCN_2_SUB_1",
+      "SCN_2_SUB_2",
+      "SCN_2_SUB_3",
+      "SCN_16_SUB_1",
+      "SCN_16_SUB_2",
+      "SCN_17_SUB_1",
+      "SCN_17_SUB_4",
+      "SCN_1_SUB_1",
+      "SCN_1_SUB_4",
+      "SCN_1_SUB_5",
+      "SCN_21_SUB_1",
+      "SCN_21_SUB_2",
+      "SCN_21_SUB_3",
+      "SCN_22_SUB_1",
+      "SCN_22_SUB_2",
+      "SCN_22_SUB_3",
+      "SCN_3_SUB_1",
+      "SCN_3_SUB_2",
+      "SCN_3_SUB_3",
+      "SCN_4_SUB_1",
+      "SCN_4_SUB_2",
+      "SCN_4_SUB_3"
+    ],
+    "junctionIds": [
+      "JUNC_1",
+      "JUNC_2",
+      "JUNC_3",
+      "JUNC_4",
+      "JUNC_5",
+      "JUNC_6",
+      "JUNC_7",
+      "JUNC_8",
+      "JUNC_9",
+      "JUNC_10",
+      "JUNC_11"
+    ],
+    "roadIds": [
+      "ROAD_1",
+      "ROAD_2",
+      "ROAD_3",
+      "ROAD_4",
+      "ROAD_5a",
+      "ROAD_5b",
+      "ROAD_6",
+      "ROAD_7",
+      "ROAD_8",
+      "ROAD_9",
+      "ROAD_10"
+    ],
+    "scenarioOutlineIds": [
+      "SCN_1",
+      "SCN_2",
+      "SCN_3",
+      "SCN_4",
+      "SCN_5",
+      "SCN_6",
+      "SCN_7",
+      "SCN_8",
+      "SCN_9",
+      "SCN_10",
+      "SCN_11",
+      "SCN_12",
+      "SCN_13",
+      "SCN_14",
+      "SCN_15",
+      "SCN_16",
+      "SCN_17",
+      "SCN_18",
+      "SCN_19",
+      "SCN_20",
+      "SCN_21",
+      "SCN_22"
+    ]
+  },
+  "longTermIntent": "Keep Cassandra under his control, protect the people and systems that keep his influence intact, and complete his hidden ritual plans without exposing how much of the town answers to him.",
+  "attributes": {
+    "STR": 40,
+    "CON": 55,
+    "DEX": 45,
+    "APP": 75,
+    "POW": 80,
+    "SIZ": 55,
+    "INT": 80,
+    "EDU": 85
+  },
+  "status": {
+    "hp": 10,
+    "maxHp": 10,
+    "sanity": 75,
+    "maxSanity": 99,
+    "luck": 60,
+    "mp": 16,
+    "conditions": []
+  },
+  "skills": {
+    "Social": 80,
+    "Investigation": 55,
+    "Medicine & Psychology": 60
+  },
+  "inventory": [
+    {
+      "name": "Tailored Suit",
+      "properties": {
+        "note": "Several carefully maintained suits that reinforce his public image."
+      }
+    },
+    {
+      "name": "Mayor's Documents",
+      "properties": {
+        "note": "Official papers, notes, and contacts that help him manage the town."
+      }
+    },
+    {
+      "name": "Private Appointment Book",
+      "properties": {
+        "note": "A slim notebook of meetings, favors, and reminders that never appears in public."
+      }
+    }
+  ],
+  "relationships": [
+    {
+      "targetId": "Martin Gin (Cleo)",
+      "targetName": "Martin Gin (Cleo)",
+      "relationshipType": "ally",
+      "attitude": 60,
+      "description": "A useful operative who handles discreet work and technical support.",
+      "history": "Patrizio brought Martin into Cassandra because Martin could do the jobs Patrizio did not want his own hands tied to.",
+      "firstPerson": "I brought Martin here for the jobs I cannot let be tied to my own hands: discreet work, technical problems. He does them quietly, which is exactly why I keep him."
+    },
+    {
+      "targetId": "Vincent Galenus",
+      "targetName": "Vincent Galenus",
+      "relationshipType": "ally",
+      "attitude": 35,
+      "description": "The doctor whose hospital work supports Patrizio's private projects.",
+      "history": "Patrizio uses Vincent's guilt, money problems, and access to keep the hospital aligned with his plans.",
+      "firstPerson": "Vincent keeps the hospital aligned with my work because I hold his guilt and his money troubles in one hand. His access is worth more to me than his conscience is to him."
+    },
+    {
+      "targetId": "Lux Lynch",
+      "targetName": "Lux Lynch",
+      "relationshipType": "ally",
+      "attitude": 20,
+      "description": "A compromised policeman whose loyalty is mostly fear and habit.",
+      "history": "Patrizio keeps Lux useful by letting him feel protected while making sure he never forgets who has leverage.",
+      "firstPerson": "Lux obeys out of fear and habit rather than loyalty. I let him feel protected, and I make certain he never forgets who holds the leverage."
+    },
+    {
+      "targetId": "Simon Laplace (Simon)",
+      "targetName": "Simon Laplace (Simon)",
+      "relationshipType": "rival",
+      "attitude": -30,
+      "description": "A hacker whose curiosity threatens the secrets Patrizio has buried.",
+      "history": "Simon has seen too much of Patrizio's hidden structure and has become a problem that cannot be ignored forever.",
+      "firstPerson": "Simon has seen more of my hidden structure than a curious young man should survive seeing. Curiosity like his does not stop on its own, and I cannot ignore him forever."
+    }
+  ],
+  "memory": [
+    {
+      "type": "information",
+      "content": "I am the man who keeps Cassandra's public machinery running while the private machinery stays hidden.",
+      "metadata": {
+        "knowledgeId": "k_patrizio_power",
+        "difficulty": "automatic"
+      }
+    },
+    {
+      "type": "information",
+      "content": "My network reaches into the police, the hospital, and the town's darker business because each piece is easier to control when it looks separate.",
+      "metadata": {
+        "knowledgeId": "k_patrizio_network",
+        "difficulty": "regular"
+      }
+    },
+    {
+      "type": "secret",
+      "content": "My political authority is inseparable from the ritual and occult work I have been building underneath it. If people understood how deep that runs, my power would collapse.",
+      "metadata": {
+        "knowledgeId": "s_patrizio_ritual"
+      }
+    },
+    {
+      "type": "secret",
+      "content": "Martin and Vincent are useful because each of them can do what I cannot let be tied to my name.",
+      "metadata": {
+        "knowledgeId": "s_patrizio_proxies"
+      }
+    },
+    {
+      "type": "belief",
+      "content": "A town is easiest to govern when people are isolated, indebted, and convinced that the worst thing they can do is challenge authority.",
+      "metadata": {
+        "confidence": 0.9,
+        "reasoningChain": "Order comes from dependency. If everyone needs a little permission, a little favor, or a little fear, they stop imagining they can resist."
+      }
+    },
+    {
+      "type": "information",
+      "content": "I chose my private house on Stone Alley because it sits close to the center of town without feeling like an office, which makes visits easier to control.",
+      "metadata": {
+        "knowledgeId": "k_patrizio_house_stone_alley",
+        "difficulty": "regular"
+      }
+    },
+    {
+      "type": "information",
+      "content": "I prefer power to appear in fragments and intermediaries instead of forcing every fear in town to point back at my own face.",
+      "metadata": {
+        "knowledgeId": "k_patrizio_fragmented_power",
+        "difficulty": "regular"
+      }
+    }
+  ]
+}

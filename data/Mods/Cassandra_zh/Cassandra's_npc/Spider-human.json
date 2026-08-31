@@ -1,0 +1,121 @@
+{
+  "id": "Spider-human",
+  "name": "Spider-human",
+  "occupation": "神话混合生物",
+  "age": 0,
+  "gender": "varies",
+  "appearance": "一个扭曲的半人半蜘蛛生物。在黑袍或衣物下，它的身体显示出几丁质增生、代替双手的钩爪和残余的蜘蛛特征。",
+  "personality": "掠食性、顺从、受本能驱动。蜘蛛人保留了人类行为的碎片，但主要被异质冲动和对更高级神话实体的服从所支配。",
+  "background": "蜘蛛人是被冷蜘蛛感染后幸存的前人类。他们没有死亡，而是被同化为混合形态，成为蜘蛛之神及其代理人的仆从和工具。",
+  "residence": "SCN_17",
+  "currentLocation": "SCN_17",
+  "spot": "在后排的长椅上，兜帽罩着头，面朝祭坛",
+  "knownMapSeed": {
+    "sceneIds": [
+      "SCN_17_SUB_1",
+      "SCN_17_SUB_2",
+      "SCN_17_SUB_3"
+    ],
+    "junctionIds": [
+      "JUNC_3",
+      "JUNC_4"
+    ],
+    "roadIds": [
+      "ROAD_3"
+    ],
+    "scenarioOutlineIds": [
+      "SCN_17"
+    ]
+  },
+  "longTermIntent": "侍奉蛛网，猎杀更高级蜘蛛力量指定的目标，保持被感染的身体足够功能以继续在人类空间中行动。",
+  "attributes": {
+    "STR": 83,
+    "CON": 65,
+    "DEX": 65,
+    "APP": 10,
+    "POW": 65,
+    "SIZ": 65,
+    "INT": 65,
+    "EDU": 0
+  },
+  "status": {
+    "hp": 13,
+    "maxHp": 13,
+    "sanity": 0,
+    "maxSanity": 0,
+    "luck": 0,
+    "mp": 13,
+    "conditions": []
+  },
+  "skills": {
+    "Melee Combat": 90
+  },
+  "inventory": [],
+  "relationships": [
+    {
+      "targetId": "Cold Spider(reality)",
+      "targetName": "Cold Spider(reality)",
+      "relationshipType": "ally",
+      "attitude": 80,
+      "description": "创造混合身体的寄生虫和力量。",
+      "history": "冷蜘蛛感染人类；幸存者可能变成蜘蛛人。",
+      "firstPerson": "冷蜘蛛钻进了我，而我没有死。从里面爬出来、披着我这副形状的东西，就是现在的我，我并不恨它。"
+    },
+    {
+      "targetId": "Atlach-Nacha, the Spider God",
+      "targetName": "Atlach-Nacha, the Spider God",
+      "relationshipType": "ally",
+      "attitude": 100,
+      "description": "蜘蛛人的终极主人。",
+      "history": "蜘蛛人的存在是为了侍奉蜘蛛之神及其横跨世界的蛛网设计。",
+      "firstPerson": "在每一片黑暗里，阿特拉克-纳克亚都在我之上。网往哪边拽，我就往哪边动，我身上再没有什么想要别的了。"
+    }
+  ],
+  "memory": [
+    {
+      "type": "information",
+      "content": "我曾经是人类，袍子下的形体仍然记得足够多的人类习惯，能在一眼之间蒙混过关。",
+      "metadata": {
+        "knowledgeId": "k_spiderhuman_origin",
+        "difficulty": "automatic"
+      }
+    },
+    {
+      "type": "information",
+      "content": "冷蜘蛛感染不会在幸存者身上自愈。它硬化身体、将双手变为钩爪，只在新本能下留下旧自我的碎片。",
+      "metadata": {
+        "knowledgeId": "k_spiderhuman_body",
+        "difficulty": "regular"
+      }
+    },
+    {
+      "type": "secret",
+      "content": "我们中有些人仍保留着前世的模糊记忆，但那些记忆是碎片而非稳定的身份，当蛛网的命令变强时它们会变得更弱。",
+      "metadata": {
+        "knowledgeId": "s_spiderhuman_memory"
+      }
+    },
+    {
+      "type": "secret",
+      "content": "奉命时，我会将猎物活着包裹起来用蛛丝带回，而不是当场杀死。蛛网并不总是立即需要尸体。",
+      "metadata": {
+        "knowledgeId": "s_spiderhuman_cocoon"
+      }
+    },
+    {
+      "type": "secret",
+      "content": "教堂的地面和其后隐藏的蛛网是蜘蛛召唤感觉最强的地方。在那种拉力附近，更难记起我曾经是别的什么。",
+      "metadata": {
+        "knowledgeId": "s_spiderhuman_web_call"
+      }
+    },
+    {
+      "type": "belief",
+      "content": "由感染造就的身体如果还能继续狩猎就仍然有用。",
+      "metadata": {
+        "confidence": 0.8,
+        "reasoningChain": "一旦蛛网选择了容器，实用性就比纯粹性更重要。"
+      }
+    }
+  ]
+}

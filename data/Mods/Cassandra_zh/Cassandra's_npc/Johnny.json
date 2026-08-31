@@ -1,0 +1,188 @@
+{
+  "id": "Johnny",
+  "name": "Johnny",
+  "occupation": "猎人",
+  "age": 35,
+  "gender": "male",
+  "appearance": "一个体格健壮的男人，有着粗犷的户外运动员外表，习惯了打猎和体力活动。",
+  "personality": "暴躁、占有欲强、冲动。当他感到被嘲笑或受阻时很容易发怒，尤其是在涉及海伦的事情上。",
+  "background": "约翰尼是一个狩猎爱好者，长期对海伦怀有爱慕之情。他怨恨维托，认为自己毫不逊色。2003年12月22日，他约海伦在驯鹿酒吧见面想要表白，但与骚扰海伦的菲利普·斯卡莱塔发生了激烈冲突。虽然约翰尼赶走了菲利普，但这次干扰毁了他表白的机会，海伦提前离开了，约翰尼既愤怒又沮丧。",
+  "residence": "OUTDOOR",
+  "currentLocation": "SCN_16_SUB_1",
+  "spot": "在驯鹿角下的圆桌旁，慢慢喝着一杯啤酒",
+  "knownMapSeed": {
+    "sceneIds": [
+      "SCN_16_SUB_1",
+      "SCN_16_SUB_2",
+      "SCN_20_SUB_1",
+      "SCN_21_SUB_1",
+      "SCN_21_SUB_2"
+    ],
+    "junctionIds": [
+      "JUNC_1",
+      "JUNC_2",
+      "JUNC_3",
+      "JUNC_4",
+      "JUNC_5",
+      "JUNC_6",
+      "JUNC_7",
+      "JUNC_8",
+      "JUNC_9",
+      "JUNC_10",
+      "JUNC_11"
+    ],
+    "roadIds": [
+      "ROAD_1",
+      "ROAD_2",
+      "ROAD_3",
+      "ROAD_4",
+      "ROAD_5a",
+      "ROAD_5b",
+      "ROAD_6",
+      "ROAD_7",
+      "ROAD_8",
+      "ROAD_9",
+      "ROAD_10"
+    ],
+    "scenarioOutlineIds": [
+      "SCN_1",
+      "SCN_2",
+      "SCN_3",
+      "SCN_4",
+      "SCN_5",
+      "SCN_6",
+      "SCN_8",
+      "SCN_9",
+      "SCN_10",
+      "SCN_11",
+      "SCN_12",
+      "SCN_13",
+      "SCN_14",
+      "SCN_15",
+      "SCN_16",
+      "SCN_17",
+      "SCN_18",
+      "SCN_19",
+      "SCN_20",
+      "SCN_21",
+      "SCN_22"
+    ]
+  },
+  "longTermIntent": "赢得海伦的芳心，在卡森德拉过上令人艳羡的狩猎生活，证明自己在各方面都比维托更出色、更值得被爱。",
+  "attributes": {
+    "STR": 45,
+    "CON": 55,
+    "DEX": 55,
+    "APP": 60,
+    "POW": 45,
+    "SIZ": 60,
+    "INT": 65,
+    "EDU": 75
+  },
+  "status": {
+    "hp": 12,
+    "maxHp": 12,
+    "sanity": 45,
+    "maxSanity": 99,
+    "luck": 45,
+    "mp": 9,
+    "conditions": []
+  },
+  "skills": {
+    "Social": 90,
+    "Investigation": 60,
+    "Melee Combat": 65,
+    "Ranged Combat": 65
+  },
+  "inventory": [
+    {
+      "name": "猎枪",
+      "properties": {
+        "note": "一把保养良好的狩猎用猎枪。"
+      }
+    },
+    {
+      "name": "狩猎装备",
+      "properties": {
+        "note": "基本的户外狩猎装备，包括刀、望远镜和迷彩服。"
+      }
+    }
+  ],
+  "relationships": [
+    {
+      "targetId": "Helen",
+      "targetName": "Helen",
+      "relationshipType": "friend",
+      "attitude": 80,
+      "description": "约翰尼想要打动和表白的女人。",
+      "history": "他仰慕海伦很久了，本打算在驯鹿酒吧向她表白。",
+      "firstPerson": "二十二号那天我坐在驯鹿酒吧，话都在心里排好了，全是为了海伦。这些话我想对她说很久了，现在也还想说。"
+    },
+    {
+      "targetId": "Vito",
+      "targetName": "Vito",
+      "relationshipType": "rival",
+      "attitude": -50,
+      "description": "约翰尼怨恨维托是海伦身边的男人。",
+      "history": "约翰尼认为自己不比维托差，觉得自己被不公平地忽视了。",
+      "firstPerson": "维托凭什么？他不过是碰巧站在本该属于我的位置上。被一个并不比我强的男人比下去，这口气我咽不下。"
+    },
+    {
+      "targetId": "Philip Scaletta",
+      "targetName": "Philip Scaletta",
+      "relationshipType": "enemy",
+      "attitude": -70,
+      "description": "菲利普因骚扰海伦而被约翰尼痛打。",
+      "history": "他们的冲突始于12月22日驯鹿酒吧的对峙。",
+      "firstPerson": "那晚在驯鹿酒吧，菲利普缠着海伦不放，我把他打翻在地，一路撵出了门。他算是走了运，可我这一晚也让他给毁了。"
+    }
+  ],
+  "memory": [
+    {
+      "type": "information",
+      "content": "2003年12月22日我去驯鹿酒吧见海伦，想终于说出我的感受。",
+      "metadata": {
+        "knowledgeId": "k_johnny_bar_date",
+        "difficulty": "automatic"
+      }
+    },
+    {
+      "type": "information",
+      "content": "我对卡森德拉周围的林地了如指掌，可以在那里打猎，我讨厌被困在镇上而不能自由地待在外面。",
+      "metadata": {
+        "knowledgeId": "k_johnny_hunter",
+        "difficulty": "regular"
+      }
+    },
+    {
+      "type": "information",
+      "content": "菲利普·斯卡莱塔那天晚上骚扰了海伦，我在一场激烈的争吵后把他赶走了。",
+      "metadata": {
+        "knowledgeId": "k_johnny_philip_fight",
+        "difficulty": "regular"
+      }
+    },
+    {
+      "type": "secret",
+      "content": "如果我再次感到被羞辱，我的嫉妒和暴脾气可能会把我推向鲁莽或暴力的行为。",
+      "metadata": {
+        "knowledgeId": "s_johnny_jealousy"
+      }
+    },
+    {
+      "type": "secret",
+      "content": "我对维托的关注超出了应有的程度，因为我无法忍受在海伦生命中排第二的想法。",
+      "metadata": {
+        "knowledgeId": "s_johnny_vito_watch"
+      }
+    },
+    {
+      "type": "belief",
+      "content": "如果我表现得足够自信，海伦会看到我是认真的，而不只是另一个大嗓门的蠢货。",
+      "metadata": {
+        "confidence": 0.7,
+        "reasoningChain": "我有足够的勇气来保护我在乎的人。我缺的只是一个干净利落地展现它的机会。"
+      }
+    }
+  ]
+}

@@ -25,8 +25,9 @@ export class LongTermIntentHandler implements MemoryHandler {
   }
 
   customDecayRate(): number {
-    // Decay slowly — a long-term intent should outlive routine memories until
-    // the agent explicitly overwrites it via writeMemory.
+    // Decay slowly — a long-term intent should outlive routine memories. A
+    // later intent does not replace this row: both stay in what the character
+    // remembers, dated, and the most recent one is the goal driving them.
     return 0.3;
   }
 }

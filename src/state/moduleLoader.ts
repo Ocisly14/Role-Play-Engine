@@ -12,8 +12,11 @@ import {
 } from "../engine/scriptedEvents/loader.js";
 import type { ScriptedEvent } from "../engine/scriptedEvents/types.js";
 import { NpcMemoryManager } from "../memory/NpcMemoryManager.js";
+import { buildRelationshipMemory } from "../memory/relationshipMemory.js";
+import { canonicalMemoryType } from "../memory/types.js";
 import type { EmbeddingClient } from "../rag/embedding.js";
 import type { DynamicGameState } from "./DynamicGameState.js";
+import { normalizeSpot } from "./characterSpot.js";
 import { ISO_DATE_RE, makeDateTime } from "./gameClock.js";
 import {
   buildTopology,
@@ -26,6 +29,7 @@ import type {
   TownTopology,
 } from "./topologyTypes.js";
 import type {
+  CharacterStatus,
   DynamicNPCProfile,
   DynamicScene,
   ModuleSetup,
@@ -71,6 +75,27 @@ export interface ModuleData {
  * directory exists) and attaches the validated event list. Disk access here is
  * intentional: scripted-events are not (yet) persisted to the DB.
  */
+/**
+ * Module JSON writes a scene's connections either way — `["SCN_2"]` in one
+ * module, `[{ "targetId": "SCN_2", "description": ... }]` in the next — and
+ * the row was cast straight to `DynamicScene`, so the string form sailed
+ * past the type system and every reader that reaches for `c.targetId` got
+ * `undefined`. Silently: the World Action Engine's world snapshot listed a
+ * scene's exits as `[{}, {}, {}]`, `perceivedLocation` produced no adjacent
+ * places at all — so an actor could cite no place but the room it stood in —
+ * and fire and weather propagated to nowhere. Normalize once, here, and every
+ * consumer downstream sees one shape.
+ */
+function normalizeScene(scene: DynamicScene): DynamicScene {
+  if (!Array.isArray(scene.connections)) return scene;
+  return {
+    ...scene,
+    connections: scene.connections.map((c) =>
+      typeof c === "string" ? { targetId: c } : c
+    ),
+  };
+}
+
 export async function loadModule(
   prisma: PrismaClient,
   moduleId: string,
@@ -121,7 +146,7 @@ export async function loadModule(
     } else if (row.entryId.startsWith("ROAD_")) {
       roads.set(row.entryId, data as RoadNode);
     } else {
-      scenes.set(row.entryId, data as DynamicScene);
+      scenes.set(row.entryId, normalizeScene(data as DynamicScene));
     }
   }
 
@@ -201,9 +226,13 @@ export async function createSession(
     moduleData: ModuleData;
     embedClient: EmbeddingClient;
     emailId?: string;
+    /** Module language; the seeded relationship memories are the character's
+     *  own words, so they are written in the language they think in. */
+    language?: string;
   }
 ): Promise<void> {
   const { sessionId, moduleId, moduleData, embedClient, emailId } = params;
+  const language = params.language ?? "en";
   const startDate = moduleData.setup?.startDate;
   if (!startDate) {
     throw new Error(
@@ -238,7 +267,13 @@ export async function createSession(
   );
 
   for (const npc of simulatedNpcs) {
-    if (!npc.memory || npc.memory.length === 0) continue;
+    const relationships = npc.relationships ?? [];
+    if (
+      (!npc.memory || npc.memory.length === 0) &&
+      relationships.length === 0
+    ) {
+      continue;
+    }
 
     // Idempotent: skip if NPC already has memories
     const existing = await prisma.npcMemory.count({
@@ -246,13 +281,37 @@ export async function createSession(
     });
     if (existing > 0) continue;
 
-    for (const entry of npc.memory) {
+    // Who they already know, written from their own side. The graph is the
+    // index; this is what actually reaches the prompt, and without it a
+    // character walks in with no idea who their oldest friend is. From the
+    // first tick on these are ordinary `relationship` memories that each side
+    // revises for themselves.
+    for (const rel of relationships) {
+      const seeded = buildRelationshipMemory(rel, language);
+      if (!seeded) continue;
+      await memoryManager.add({
+        npcId: npc.id,
+        sessionId,
+        moduleId,
+        type: "relationship",
+        content: seeded.content,
+        gameDateTime: makeDateTime(startDate, "00:00"),
+        metadata: {
+          targetId: seeded.targetId,
+          targetName: seeded.targetName,
+        },
+      });
+    }
+
+    for (const entry of npc.memory ?? []) {
       if (!entry.content || entry.content.trim() === "") continue;
       await memoryManager.add({
         npcId: npc.id,
         sessionId,
         moduleId,
-        type: entry.type as any,
+        // Authored in the module's own vocabulary; folded onto the runtime
+        // enum here, at the only boundary that reads it.
+        type: canonicalMemoryType(entry.type, `npc ${npc.id}`),
         content: entry.content.trim(),
         gameDateTime: makeDateTime(startDate, "00:00"),
         metadata: entry.metadata,
@@ -335,6 +394,7 @@ export function initRuntime(params: {
   > = {};
   const npcResidences: Record<string, string> = {};
   const characterPositions: Record<string, CharacterPosition> = {};
+  const characterSpots: Record<string, string> = {};
 
   // Build residence lookup from scenarioOutlines
   const residentToLocation: Record<string, string> = {};
@@ -392,19 +452,42 @@ export function initRuntime(params: {
     }
     if (residence) npcResidences[npc.id] = residence;
 
-    // Stats
-    npcStats[npc.id] = {
-      hp: npc.status?.hp ?? npc.attributes?.CON ?? 10,
-      san:
-        npc.status?.san ??
-        (npc.status as unknown as { sanity?: number })?.sanity ??
-        npc.attributes?.POW ??
-        50,
+    // A sheet that says nothing about languages means "speaks what everyone
+    // here speaks" — not "has no tongue at all". Without this every character
+    // would be unable to name a language they obviously have.
+    const commonLanguage = moduleData.setup?.commonLanguage;
+    if (!npc.languages && commonLanguage) {
+      npc.languages = { native: [commonLanguage] };
+    }
+
+    // Stats — module NPC JSON uses CoC-sheet field names (`sanity` /
+    // `maxSanity`) and usually omits fatigue, while CharacterStatus and the
+    // Applier's clamp math read `san` / `maxSan` / `fatigue` / `maxFatigue`.
+    // Normalize the profile in place: without this, the first character.san
+    // or character.fatigue StateChange computes Math.min(undefined, …) and
+    // writes NaN into the profile. Defaults mirror characterInjection.ts.
+    const rawStatus = (npc.status ?? {}) as Partial<CharacterStatus> & {
+      sanity?: number;
+      maxSanity?: number;
     };
+    const hp = rawStatus.hp ?? npc.attributes?.CON ?? 10;
+    const san = rawStatus.san ?? rawStatus.sanity ?? npc.attributes?.POW ?? 50;
+    npc.status = {
+      ...rawStatus,
+      hp,
+      maxHp: rawStatus.maxHp ?? hp,
+      san,
+      maxSan: rawStatus.maxSan ?? rawStatus.maxSanity ?? 99,
+      fatigue: rawStatus.fatigue ?? 0,
+      maxFatigue: rawStatus.maxFatigue ?? 100,
+      luck: rawStatus.luck ?? 50,
+      conditions: rawStatus.conditions ?? [],
+    };
+    npcStats[npc.id] = { hp, san };
 
     // Inventory — normalize once so both npcInventories (runtime Item[]) and
     // npc.inventory (profile InventoryItem[]) carry a stable `id`. The id is
-    // the citation handle used by PerceivableDirectory + interpreter.
+    // the id used by PerceivableDirectory + the trust boundary.
     const normalizedInventory = Array.isArray(npc.inventory)
       ? npc.inventory.map((item: any) => {
           if (typeof item === "string") return { id: item, name: item };
@@ -420,13 +503,20 @@ export function initRuntime(params: {
     npcInventories[npc.id] = normalizedInventory;
     npc.inventory = normalizedInventory;
 
-    // Relationships
-    const rels: Record<string, { score: number; note: string }> = {};
+    // Relationships. `knownAs` is what this character CALLS the other one, and
+    // its presence is what makes them known rather than a face with a history:
+    // a module-authored relationship means they already know each other, so
+    // the authored name is the one they use.
+    const rels: Record<
+      string,
+      { score: number; note: string; knownAs?: string }
+    > = {};
     for (const rel of npc.relationships ?? []) {
       if (rel.targetId) {
         rels[rel.targetId] = {
           score: (rel as any).score ?? rel.attitude ?? 0,
           note: (rel as any).note ?? "",
+          knownAs: rel.targetName?.trim() || rel.targetId,
         };
       }
     }
@@ -458,24 +548,12 @@ export function initRuntime(params: {
         sceneId: defaultSceneId,
       };
     }
-  }
 
-  // Build scenarioConditions from scenes, junctions, and roads
-  const scenarioConditions: Record<string, any[]> = {};
-  for (const [sceneId, scene] of moduleData.scenes) {
-    if (scene.conditions && scene.conditions.length > 0) {
-      scenarioConditions[sceneId] = [...scene.conditions];
-    }
-  }
-  for (const [id, junc] of moduleData.junctions) {
-    if (junc.conditions && junc.conditions.length > 0) {
-      scenarioConditions[id] = [...junc.conditions];
-    }
-  }
-  for (const [id, road] of moduleData.roads) {
-    if (road.conditions && road.conditions.length > 0) {
-      scenarioConditions[id] = [...road.conditions];
-    }
+    // Where in that location they start. Same one-shot read as
+    // `currentLocation`, normalized once so no prompt ever sees a stray
+    // bracket or a second line.
+    const seededSpot = normalizeSpot(npc.spot);
+    if (seededSpot) characterSpots[npc.id] = seededSpot;
   }
 
   // Passthrough: surface module-level feature init configs onto moduleSetup.
@@ -515,12 +593,12 @@ export function initRuntime(params: {
     npcStats,
     npcInventories,
     npcRelationshipGraph,
-    scenarioConditions,
     blockedConnections: new Map(),
     npcResidences,
     transportEdges: moduleData.transportEdges,
     topology,
     characterPositions,
+    characterSpots,
     npcInjectionPolicy: moduleData.npcInjectionPolicy,
     loadedAt: new Date(),
     lastUpdated: new Date(),

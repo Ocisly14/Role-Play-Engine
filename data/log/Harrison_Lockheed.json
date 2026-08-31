@@ -1,0 +1,4870 @@
+{
+  "npcId": "Harrison Lockheed",
+  "memories": [
+    {
+      "type": "secret",
+      "content": "我出售的枪支不符合加利福尼亚法规，所以所有正经交易都必须保密。",
+      "gameDay": 1,
+      "gameTime": "00:00",
+      "location": null,
+      "metadata": {
+        "knowledgeId": "s_harrison_illegal_sales"
+      }
+    },
+    {
+      "type": "plan",
+      "content": "维持五金店作为谨慎的掩护生意，继续在不引起法律注意的情况下出售枪支，并与保护他生意的人保持良好关系。",
+      "gameDay": 1,
+      "gameTime": "00:00",
+      "location": null,
+      "metadata": {
+        "planType": "long_term"
+      }
+    },
+    {
+      "type": "secret",
+      "content": "本·克莱奥和阿道夫·卡尔都知道我的军火生意，本的保护是我能继续经营的原因之一。",
+      "gameDay": 1,
+      "gameTime": "00:00",
+      "location": null,
+      "metadata": {
+        "knowledgeId": "s_harrison_protection"
+      }
+    },
+    {
+      "type": "information",
+      "content": "当有人想从我这里买枪时，我让他们用暗号'锤子砸到钉子上会怎么样？'来问，只有安静的人才会被认真对待。",
+      "gameDay": 1,
+      "gameTime": "00:00",
+      "location": null,
+      "metadata": {
+        "difficulty": "regular",
+        "knowledgeId": "k_harrison_code"
+      }
+    },
+    {
+      "type": "information",
+      "content": "我通常能看出一个顾客把五金当借口来打听枪支，而且我知道如何引导谈话。",
+      "gameDay": 1,
+      "gameTime": "00:00",
+      "location": null,
+      "metadata": {
+        "difficulty": "regular",
+        "knowledgeId": "k_harrison_customer_read"
+      }
+    },
+    {
+      "type": "secret",
+      "content": "我最好的一些改装品被留给那些能付得起钱又能闭嘴的人。",
+      "gameDay": 1,
+      "gameTime": "00:00",
+      "location": null,
+      "metadata": {
+        "knowledgeId": "s_harrison_special_mods"
+      }
+    },
+    {
+      "type": "plan",
+      "content": "Today's plan: 1. 检查后门警报和门窗传感器，并回放昨夜监控录像以查明陈列架上标注为“非卖品”的小发明确实何时被拿走。 at 五金店; 2. 在后室对那把史密斯625做最后确认并把它妥善藏匿，更新内账编号以便日后查对。 at 五金店; 3. 整理库存并对可疑缺货项做详细盘点，记录任何异常以备日间核查。 at 五金店; 4. 在店里吃早饭并整理当天要用的工具与包裹，准备开门营业并装作一如既往的店主。 at 五金店; 5. 开门营业时对进店顾客保持健谈，留心把五金当幌子来打听枪支的人并用暗号“锤子砸到钉子上会怎么样？”试探对方意图。 at 五金店; 6. 见所罗门并私下交付小礼物，确认他愿意代为留意并在需要时转交信息给阿道夫或我指定的人。 at 占星师小铺; 7. 在不触动他监控的情况下把一份象征性的礼物留在门外，以示感谢并稳固与阿道夫的保护关系。 at 阿道夫家; 8. 给海伦留下一束花作为示好并顺便打听镇里最新的风声以维护公开社交面具。 at 花店·卡森德拉之花; 9. 找怀特帮忙修一件小工具，借此拉近关系并试探有没有人昨夜在我店附近出现过。 at 钟表店; 10. 傍晚去和本·克莱奥碰面，喝一杯并通过健谈确认他对我生意的态度与近期保护安排。 at 驯鹿酒吧; 11. 关店前再检查监控与警报系统，整理当天账本并把可疑交易记录密封收藏以备需要时翻查。 at 五金店; 12. 在店内睡前回顾一天发生的事并列出需要优先跟进的三件事，为明天的行动做准备。 at 五金店",
+      "gameDay": 2,
+      "gameTime": "00:00",
+      "location": null,
+      "metadata": {
+        "planType": "daily"
+      }
+    },
+    {
+      "type": "information",
+      "content": "我在SCN_18经营五金店，但店铺也掩盖着让我维持生计的真正枪支交易。",
+      "gameDay": 1,
+      "gameTime": "00:00",
+      "location": null,
+      "metadata": {
+        "difficulty": "automatic",
+        "knowledgeId": "k_harrison_store"
+      }
+    },
+    {
+      "type": "belief",
+      "content": "如果我保持有用、健谈和小心，我就能让店开着，把问题大多留在账本之外。",
+      "gameDay": 1,
+      "gameTime": "00:00",
+      "location": null,
+      "metadata": {
+        "confidence": 0.85,
+        "reasoningChain": "今天我通过谨慎和健谈成功从安吉拉与所罗门那儿取得转交与情报，同时按程序完成了店内安保与监控检查，这强化了我依靠谨慎与交际维持生意的信念；不过海伦的明确回避与公众场合的限制也提醒我这方法并非万无一失。"
+      }
+    },
+    {
+      "type": "event",
+      "content": "步行前往占星师小铺 成功",
+      "gameDay": 2,
+      "gameTime": "00:07",
+      "location": "SCN_11_SUB_1",
+      "metadata": {
+        "outcome": "步行前往占星师小铺 成功",
+        "blockedReason": "",
+        "failureReason": ""
+      }
+    },
+    {
+      "type": "witness",
+      "content": "[相遇] 我在占卜馆当面遇到所罗门。他显得镇定但有戒备，眼里有些疲惫。见到他我有点松口气——正打算立刻把小礼物交给他，低声探问阿道夫的下落，并确认他是否愿意继续为我传话，同时谨慎观察他是否可靠。",
+      "gameDay": 2,
+      "gameTime": "00:07",
+      "location": "SCN_11_SUB_1",
+      "metadata": {
+        "impact": 2,
+        "perspective": "co_presence",
+        "sourceAction": "Solomon 在 占卜馆",
+        "sourceCharacterId": "__encounter__"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我低声问所罗门能否以隐秘方式把我的信息转交给阿道夫，并试探性询问阿道夫最近是否出现在镇上；我的劝说没有奏效，所罗门保持警惕并未透露阿道夫的下落。所罗门口头接受了我递上的小礼物并表示会代为转交，但我没能从他那里得到有用的确认。 [rel:Solomon +1 → 12]",
+      "gameDay": 2,
+      "gameTime": "00:12",
+      "location": "SCN_11_SUB_1",
+      "metadata": {
+        "outcome": "低声向所罗门确认他会用隐秘方式将我的信息转交给阿道夫，并试探性询问阿道夫最近是否出现在镇上，观察他的反应以评估可靠性。 [Persuade 40, rolled 44 (fail) — all targets resisted] failed"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我和所罗门低声确认了用于转交信息的暗号，并约定了具体的递送与留信方式。他接受了我递上的小礼物，口头同意会以隐秘方式代为转交，但没有透露阿道夫的下落，态度依旧谨慎。 [rel:Solomon +1 → 13]",
+      "gameDay": 2,
+      "gameTime": "00:18",
+      "location": "SCN_11_SUB_1",
+      "metadata": {
+        "outcome": "低声与Solomon确认用于转交信息的暗号并约定具体的递送与留信方式"
+      }
+    },
+    {
+      "type": "event",
+      "content": "前往阿道夫家 成功",
+      "gameDay": 2,
+      "gameTime": "00:27",
+      "location": "SCN_15_SUB_1",
+      "metadata": {
+        "outcome": "前往阿道夫家 成功",
+        "blockedReason": "",
+        "failureReason": ""
+      }
+    },
+    {
+      "type": "event",
+      "content": "我检查了天花板和边缘处的半球形摄像头，确认它们朝向客厅开口与沙发区，红色指示灯正在对准并记录活动；没有发现明显的监控盲点。",
+      "gameDay": 2,
+      "gameTime": "00:31",
+      "location": "SCN_15_SUB_1",
+      "metadata": {
+        "outcome": "观察并确认客厅天花板边缘摄像头的朝向，寻找可能的监控盲点"
+      }
+    },
+    {
+      "type": "witness",
+      "content": "[相遇] 我在监控室当面遇到阿道夫·卡尔。原本打算短暂干扰或循环摄像以便稍后把礼物放在他门外，但看到他在监控室让我既惊讶又警觉——感觉自己的计划立刻暴露风险。手心有点发汗，意识到必须立刻停止任何对摄像头的调整，避免引起怀疑或直接对峙。现在优先是维持店面的掩护安全，避免与他正面接触，改用所罗门或等待更安全的时机递送礼物，并留意他是否查看录像或对我有进一步动作。",
+      "gameDay": 2,
+      "gameTime": "00:35",
+      "location": "SCN_15_SUB_2",
+      "metadata": {
+        "impact": 2,
+        "perspective": "co_presence",
+        "sourceAction": "Adolph Carl 在 监控室",
+        "sourceCharacterId": "__encounter__"
+      }
+    },
+    {
+      "type": "event",
+      "content": "前往监控室 成功",
+      "gameDay": 2,
+      "gameTime": "00:35",
+      "location": "SCN_15_SUB_2",
+      "metadata": {
+        "outcome": "前往监控室 成功",
+        "blockedReason": "",
+        "failureReason": ""
+      }
+    },
+    {
+      "type": "witness",
+      "content": "[相遇] 00:44 在卡森德拉南新街与一名自称Patrizio von Samsa的人面对面相遇。他穿着整洁，神情镇定但目光在打量周围，给我一种小心的压迫感。遇见他让我警觉但未感到立刻的危险——我既好奇又防备，决定保持掩护身份、礼貌应对并暗中评估他的意图，暂不透露关于阿道夫或所罗门的任何信息。",
+      "gameDay": 2,
+      "gameTime": "00:44",
+      "location": "ROAD_3",
+      "metadata": {
+        "impact": 2,
+        "perspective": "co_presence",
+        "sourceAction": "Patrizio von Samsa 在 卡森德拉南新街",
+        "sourceCharacterId": "__encounter__"
+      }
+    },
+    {
+      "type": "event",
+      "content": "离开监控室并前往五金店 成功",
+      "gameDay": 2,
+      "gameTime": "00:47",
+      "location": "SCN_18_SUB_1",
+      "metadata": {
+        "outcome": "离开监控室并前往五金店 成功",
+        "blockedReason": "",
+        "failureReason": ""
+      }
+    },
+    {
+      "type": "event",
+      "content": "我查看并回放了店内监控录像，找到了将陈列架上“非卖品”移走的关键时间段并做了标注以便后续处理；画面中未见陈列架有明显被撬动的痕迹。",
+      "gameDay": 2,
+      "gameTime": "00:55",
+      "location": "SCN_18_SUB_1",
+      "metadata": {
+        "outcome": "检查监控录像回放以确定陈列架上“非卖品”何时被移走"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我把后室工作台上完成调试的史密斯625收起来，放入后室的隐蔽藏匿处，并在内账中做了记录以便日后查对。",
+      "gameDay": 2,
+      "gameTime": "01:06",
+      "location": "SCN_18_SUB_1",
+      "metadata": {
+        "itemId": "ITEM_SCN18_5",
+        "outcome": "把史密斯625从后室工作台收起来并放入隐蔽藏匿处，更新内账编号以便日后查对",
+        "itemName": "史密斯625转轮手枪"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我把监控切到外部门口和南新街路段，定位到00:44并逐帧回放，截取了关键帧并保存了时间戳，已存档备用。",
+      "gameDay": 2,
+      "gameTime": "01:12",
+      "location": "SCN_18_SUB_1",
+      "metadata": {
+        "outcome": "切换并回放外部门口及南新街路段的监控录像，定位00:44时是否出现Patrizio von Samsa并保存关键截图与时间戳以备后续核对"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我将00:44的关键截图放大并逐帧增强，生成并保存了一份更清晰的高分辨率证据图像。面容与衣着细节较原图有所清晰，但不足以百分之百确认Patrizio的身份。",
+      "gameDay": 2,
+      "gameTime": "01:18",
+      "location": "SCN_18_SUB_1",
+      "metadata": {
+        "outcome": "放大并逐帧增强00:44的关键截图，尝试辨认Patrizio的面容、衣着和任何可识别标志并保存放大图像作为证据"
+      }
+    },
+    {
+      "type": "event",
+      "content": "检查增强后的00:44关键截图，细看面容和衣着特征并标注任何可疑线索 成功",
+      "gameDay": 2,
+      "gameTime": "01:25",
+      "location": "SCN_18_SUB_1",
+      "metadata": {
+        "outcome": "检查增强后的00:44关键截图，细看面容和衣着特征并标注任何可疑线索 成功"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我在后室找出顾客账本与保修记录，把00:44的关键截图逐项放大比对，逐一核对面容与名字，并把匹配与不匹配的结果记录并存入监控系统备案。",
+      "gameDay": 2,
+      "gameTime": "01:36",
+      "location": "SCN_18_SUB_1",
+      "metadata": {
+        "outcome": "在后室翻出并比对顾客账本与保修记录，将00:44关键截图与账本中的面容和名字逐项核对"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我逐格盘点了店内货架与后室库存，确认陈列架最上层的“非卖品”确实不在架上，后室工作台原放置的史密斯625也已空缺；其余待售五金、铁丝与麻绳与账本记录相符。异常项和证据已记录并归档备用。",
+      "gameDay": 2,
+      "gameTime": "01:47",
+      "location": "SCN_18_SUB_1",
+      "metadata": {
+        "outcome": "对店内库存进行详细盘点，重点核查可疑缺货项并记录任何异常"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我把外门和南新街路段的摄像切成持续录影并开启了移动检测，设置为优先监视与00:44关键截图相符的体貌特征。系统会实时标注并保存任何触发片段，已开始归档以备取证。",
+      "gameDay": 2,
+      "gameTime": "02:00",
+      "location": "SCN_18_SUB_1",
+      "metadata": {
+        "outcome": "切换外门与南新街路段的监控为持续录影并启用移动检测，重点监视是否有人符合00:44关键截图的体貌特征"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我把最近的监控录像、00:44关键截图和相关日志完整地复制到外置硬盘。备份完成后，我把硬盘放回并藏在后室的隐蔽处，确认放置稳妥。",
+      "gameDay": 2,
+      "gameTime": "02:11",
+      "location": "SCN_18_SUB_1",
+      "metadata": {
+        "outcome": "将最近的监控录像、00:44关键截图与相关日志备份到外置硬盘，并把备份硬盘放回后室隐蔽处存放"
+      }
+    },
+    {
+      "type": "event",
+      "content": "在店内吃早饭并整理当天要用的工具与包裹，准备开门营业并维持掩护身份 [在 SCN_18_SUB_1 因重新规划而中断] 已中断",
+      "gameDay": 2,
+      "gameTime": "02:15",
+      "location": "SCN_18_SUB_1",
+      "metadata": {
+        "outcome": "在店内吃早饭并整理当天要用的工具与包裹，准备开门营业并维持掩护身份 [在 SCN_18_SUB_1 因重新规划而中断] 已中断",
+        "interruptionReason": "revise_replan"
+      }
+    },
+    {
+      "type": "witness",
+      "content": "[相遇] 我在五金店里当面遇到阿道夫·卡尔，感到既惊讶又警觉，手心发汗。见到他让我立刻收起任何可能暴露我的举动：不再调整摄像头，尽快把那把史密斯625和可疑物品藏好，装作平常的店主与他寒暄以免引起怀疑。我打算细看他的反应并在他离开后把这次遭遇和相关监控录像备份记录。",
+      "gameDay": 2,
+      "gameTime": "02:15",
+      "location": "SCN_18_SUB_1",
+      "metadata": {
+        "impact": 2,
+        "perspective": "co_presence",
+        "sourceAction": "Adolph Carl 在 哈里森的五金店",
+        "sourceCharacterId": "__encounter__"
+      }
+    },
+    {
+      "type": "plan",
+      "content": "Today's plan: 1. 把前台关好并检查灯光、门锁和货架，准备晚间安保程序 at 五金店; 2. 去后室检查并整理隐藏库存，确认今晚需要处理的改装零件是否齐全 at 五金店; 3. 对一把委托改装的手枪做最后调试并用暗号记录客户信息 at 五金店; 4. 吃一顿简单的晚餐并顺便聊聊镇上最近的动静以打听消息 at 海伦的餐桌; 5. 找本·克莱奥碰面喝一杯，确认他对我生意的保护和近况 at 驯鹿酒吧; 6. 去阿道夫家做一次简短拜访并留下一点小心意以维护关系 at 阿道夫家; 7. 回店把账本和样品藏好并检查监控录影及后门警报 at 五金店; 8. 在后室写下明日的补货与客户名单，整理计划后上床休息 at 五金店",
+      "gameDay": 1,
+      "gameTime": "19:00",
+      "location": null,
+      "metadata": {
+        "planType": "daily"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我把前台关好并上锁，检查了店内的灯光、门锁和货架，确认灯光正常、门锁已上、货架摆放无误。随后启动了晚间安保程序，准备关店。",
+      "gameDay": 1,
+      "gameTime": "19:10",
+      "location": "SCN_18_SUB_1",
+      "metadata": {
+        "outcome": "把前台关好并检查灯光、门锁和货架，准备晚间安保程序"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我走进后室，检查并整理了隐藏库存，确认今晚需要的改装零件齐全。",
+      "gameDay": 1,
+      "gameTime": "19:25",
+      "location": "SCN_18_SUB_1",
+      "metadata": {
+        "outcome": "走进后室，检查并整理隐藏库存，确认今晚需要的改装零件是否齐全"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我在后室的工作台上对那把史密斯625做了最后调试，空击并检查了击发机构与瞄准器，回火在可接受范围内，一切运转顺畅。",
+      "gameDay": 1,
+      "gameTime": "19:46",
+      "location": "SCN_18_SUB_1",
+      "metadata": {
+        "itemId": "ITEM_SCN18_5",
+        "outcome": "对史密斯625转轮手枪做最后调试，检验击发机构、瞄准器和回火情况",
+        "itemName": "史密斯625转轮手枪"
+      }
+    },
+    {
+      "type": "event",
+      "content": "在后室默用暗号将委托人的姓名、交付时间和改装要求编码记牢并分配内部编号备用 成功",
+      "gameDay": 1,
+      "gameTime": "19:52",
+      "location": "SCN_18_SUB_1",
+      "metadata": {
+        "outcome": "在后室默用暗号将委托人的姓名、交付时间和改装要求编码记牢并分配内部编号备用 成功"
+      }
+    },
+    {
+      "type": "witness",
+      "content": "[相遇] 我在卡森德拉北新街碰见了阿道夫·卡尔，他身边还有Angela和Solomon。见到阿道夫让我心里松了口，但他与另外两人在一起让我有些警觉——我本来计划晚点去他家拜访并留下小心意，现在有机会当面打招呼并试探他们手里有没有镇上的新消息（尤其是关于我店或最近动静的传言）。我会靠近寒暄并留心他们的言行。",
+      "gameDay": 1,
+      "gameTime": "20:01",
+      "location": "ROAD_2",
+      "metadata": {
+        "impact": 2,
+        "perspective": "co_presence",
+        "sourceAction": "Adolph Carl, Angela, Solomon 在 卡森德拉北新街",
+        "sourceCharacterId": "__encounter__"
+      }
+    },
+    {
+      "type": "event",
+      "content": "前往海伦的餐桌 [在 ROAD_2 因重新规划而中断] 已中断",
+      "gameDay": 1,
+      "gameTime": "20:01",
+      "location": "ROAD_2",
+      "metadata": {
+        "outcome": "前往海伦的餐桌 [在 ROAD_2 因重新规划而中断] 已中断",
+        "interruptionReason": "revise_replan"
+      }
+    },
+    {
+      "type": "event",
+      "content": "走近阿道夫，与他和在场的Angela、Solomon寒暄，并把准备好的小礼物递给阿道夫，同时留意他们谈话中的任何可能影响我生意的消息 [target Adolph Carl not present] failed",
+      "gameDay": 1,
+      "gameTime": "20:07",
+      "location": "ROAD_2",
+      "metadata": {
+        "outcome": "走近阿道夫，与他和在场的Angela、Solomon寒暄，并把准备好的小礼物递给阿道夫，同时留意他们谈话中的任何可能影响我生意的消息 [target Adolph Carl not present] failed"
+      }
+    },
+    {
+      "type": "event",
+      "content": "向阿道夫、Angela和Solomon寒暄，并把小礼物递给阿道夫，同时留心他们谈话中的任何风声 [target Adolph Carl not present] failed",
+      "gameDay": 1,
+      "gameTime": "20:11",
+      "location": "ROAD_2",
+      "metadata": {
+        "outcome": "向阿道夫、Angela和Solomon寒暄，并把小礼物递给阿道夫，同时留心他们谈话中的任何风声 [target Adolph Carl not present] failed"
+      }
+    },
+    {
+      "type": "event",
+      "content": "向阿道夫及随行的Angela、Solomon上前寒暄，把准备好的小礼物递给阿道夫，并仔细听他们的谈话以捕捉任何可能影响我店生意的风声 [在 ROAD_2 因重新规划而中断] 已中断",
+      "gameDay": 1,
+      "gameTime": "20:12",
+      "location": "ROAD_2",
+      "metadata": {
+        "outcome": "向阿道夫及随行的Angela、Solomon上前寒暄，把准备好的小礼物递给阿道夫，并仔细听他们的谈话以捕捉任何可能影响我店生意的风声 [在 ROAD_2 因重新规划而中断] 已中断",
+        "interruptionReason": "revise_replan"
+      }
+    },
+    {
+      "type": "witness",
+      "content": "[相遇] 我在卡森德拉北新街当面碰到Angela和Solomon，阿道夫也在场。见到阿道夫我心里松了口，但他身边有人让我提高警觉——这是我把小礼物亲手递上并当面探听镇上风声的好机会。我感到既有些放松又很警惕，准备立刻上前寒暄、低调递礼并注意他们的言行与肢体语言，留意是否有对我店或生意不利的消息或可用的机会。",
+      "gameDay": 1,
+      "gameTime": "20:12",
+      "location": "ROAD_2",
+      "metadata": {
+        "impact": 2,
+        "perspective": "co_presence",
+        "sourceAction": "Angela, Solomon 在 卡森德拉北新街",
+        "sourceCharacterId": "__encounter__"
+      }
+    },
+    {
+      "type": "event",
+      "content": "向Angela和Solomon寒暄，把准备好的小礼物托付给他们请代为转交给阿道夫，并在交谈中低声打听最近镇上的风声，留意任何可能影响我店生意的信息 [target Angela not present] failed",
+      "gameDay": 1,
+      "gameTime": "20:16",
+      "location": "ROAD_2",
+      "metadata": {
+        "outcome": "向Angela和Solomon寒暄，把准备好的小礼物托付给他们请代为转交给阿道夫，并在交谈中低声打听最近镇上的风声，留意任何可能影响我店生意的信息 [target Angela not present] failed"
+      }
+    },
+    {
+      "type": "event",
+      "content": "向Angela和Solomon寒暄，把准备好的小礼物递给他们请代为转交给阿道夫，并在交谈中低声打听最近镇上的风声，留意任何可能影响我店生意的信息 [target Angela not present] failed",
+      "gameDay": 1,
+      "gameTime": "20:22",
+      "location": "ROAD_2",
+      "metadata": {
+        "outcome": "向Angela和Solomon寒暄，把准备好的小礼物递给他们请代为转交给阿道夫，并在交谈中低声打听最近镇上的风声，留意任何可能影响我店生意的信息 [target Angela not present] failed"
+      }
+    },
+    {
+      "type": "event",
+      "content": "把准备好的小礼物递给Angela，请她代为转交给阿道夫，并低声问她最近镇上的风声是否有对我店不利的消息 [target Angela not present] failed",
+      "gameDay": 1,
+      "gameTime": "20:26",
+      "location": "ROAD_2",
+      "metadata": {
+        "outcome": "把准备好的小礼物递给Angela，请她代为转交给阿道夫，并低声问她最近镇上的风声是否有对我店不利的消息 [target Angela not present] failed"
+      }
+    },
+    {
+      "type": "event",
+      "content": "向Angela问候并低声询问阿道夫现在在不在，顺便请她代为转交小礼物 [target Angela not present] failed",
+      "gameDay": 1,
+      "gameTime": "20:30",
+      "location": "ROAD_2",
+      "metadata": {
+        "outcome": "向Angela问候并低声询问阿道夫现在在不在，顺便请她代为转交小礼物 [target Angela not present] failed"
+      }
+    },
+    {
+      "type": "event",
+      "content": "向Angela低声寒暄，委托她将小礼物交给阿道夫并顺便打听阿道夫现在是否在家以及最近镇上的风声 [target Angela not present] failed",
+      "gameDay": 1,
+      "gameTime": "20:35",
+      "location": "ROAD_2",
+      "metadata": {
+        "outcome": "向Angela低声寒暄，委托她将小礼物交给阿道夫并顺便打听阿道夫现在是否在家以及最近镇上的风声 [target Angela not present] failed"
+      }
+    },
+    {
+      "type": "witness",
+      "content": "[相遇] 我刚在卡森德拉北新街当面遇到Angela。见到她让我既松了口气又提高了警觉——这是把准备好的小礼物交给阿道夫或当面打听他是否在家的好机会。我现在想马上上前，低声把礼物托付给她并顺便打听镇上最近的风声，同时留意她的表情与周围有没有可疑人物。如果阿道夫不在，我会改往海伦的餐桌吃晚饭并继续打听消息。",
+      "gameDay": 1,
+      "gameTime": "20:36",
+      "location": "ROAD_2",
+      "metadata": {
+        "impact": 2,
+        "perspective": "co_presence",
+        "sourceAction": "Angela 在 卡森德拉北新街",
+        "sourceCharacterId": "__encounter__"
+      }
+    },
+    {
+      "type": "event",
+      "content": "把准备好的小礼物递给Angela，请她代为转交给阿道夫，并低声问她阿道夫现在是否在家，同时顺带打听最近镇上的风声是否有对我店不利的消息 [在 ROAD_2 因重新规划而中断] 已中断",
+      "gameDay": 1,
+      "gameTime": "20:36",
+      "location": "ROAD_2",
+      "metadata": {
+        "outcome": "把准备好的小礼物递给Angela，请她代为转交给阿道夫，并低声问她阿道夫现在是否在家，同时顺带打听最近镇上的风声是否有对我店不利的消息 [在 ROAD_2 因重新规划而中断] 已中断",
+        "interruptionReason": "revise_replan"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我走近安吉拉，低声把准备好的小礼物递给她并问阿道夫现在是否在家。她被说服后没有给出阿道夫的下落，但告诉我她在卡森德拉四处走动、不在固定地点，并且通常不追问买家的动机；我注意到她表情平静，周围谈话也很少。 [rel:Angela +5 → 5]",
+      "gameDay": 1,
+      "gameTime": "20:40",
+      "location": "ROAD_2",
+      "metadata": {
+        "outcome": "走近Angela，低声把准备好的小礼物交给她并悄声询问阿道夫现在是否在家，同时留意她的表情与周围谈话以捕捉关于镇上对我店可能不利的风声"
+      }
+    },
+    {
+      "type": "event",
+      "content": "前往海伦的餐桌吃晚饭并顺便打听镇上最近的动静 [在 ROAD_2 因重新规划而中断] 已中断",
+      "gameDay": 1,
+      "gameTime": "20:49",
+      "location": "ROAD_2",
+      "metadata": {
+        "outcome": "前往海伦的餐桌吃晚饭并顺便打听镇上最近的动静 [在 ROAD_2 因重新规划而中断] 已中断",
+        "interruptionReason": "revise_replan"
+      }
+    },
+    {
+      "type": "witness",
+      "content": "[相遇] 我刚在卡森德拉北新街当面碰到Solomon。看到他让我有点松口气，因为他常和阿道夫、Angela来往，但我也很警觉——这是当面打听阿道夫下落或镇上风声的好机会。我想马上上前寒暄，低声探问阿道夫是否在家并尽可能把准备好的小礼物托付或交代转交，同时留意Solomon的表情和是否有可疑同伴，判断是否安全继续跟进。",
+      "gameDay": 1,
+      "gameTime": "20:49",
+      "location": "ROAD_2",
+      "metadata": {
+        "impact": 2,
+        "perspective": "co_presence",
+        "sourceAction": "Solomon 在 卡森德拉北新街",
+        "sourceCharacterId": "__encounter__"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我低声向所罗门问候，请他把我准备的小礼物转交给阿道夫，并探听阿道夫最近是否在家以及镇上的新风声；同时我留意他的表情和随行人员。所罗门面色平静，周围无人异常，他口头上同意帮忙转交，但并未给出关于阿道夫是否在家的具体信息。 [rel:Solomon +5 → 5]",
+      "gameDay": 1,
+      "gameTime": "20:53",
+      "location": "ROAD_2",
+      "metadata": {
+        "outcome": "低声向Solomon问候，恳请他替我把准备好的小礼物转交给阿道夫，并顺便探听阿道夫最近是否在家以及镇上的新风声；同时仔细观察他的表情和随行人员有无异常。"
+      }
+    },
+    {
+      "type": "event",
+      "content": "低声继续与所罗门搭话，轻描淡写地问他最近镇上有没有什么新风声，顺便再确认阿道夫最近有没有露面或回家 [target Solomon not present] failed",
+      "gameDay": 1,
+      "gameTime": "20:56",
+      "location": "ROAD_2",
+      "metadata": {
+        "outcome": "低声继续与所罗门搭话，轻描淡写地问他最近镇上有没有什么新风声，顺便再确认阿道夫最近有没有露面或回家 [target Solomon not present] failed"
+      }
+    },
+    {
+      "type": "witness",
+      "content": "[相遇] 我在卡森德拉北新街当面碰到所罗门。看到他让我有点松口气，但我同时很警觉——这是个立刻上前的机会。我打算低声寒暄，探听阿道夫最近是否有露面，并把为阿道夫准备的小礼物托付给所罗门或请他代为转交；同时密切观察他的表情和随行者有没有异常。如果他回避或显得有危险迹象，我会当场收手，改往海伦的餐桌继续打听镇上风声。",
+      "gameDay": 1,
+      "gameTime": "20:57",
+      "location": "ROAD_2",
+      "metadata": {
+        "impact": 2,
+        "perspective": "co_presence",
+        "sourceAction": "Solomon 在 卡森德拉北新街",
+        "sourceCharacterId": "__encounter__"
+      }
+    },
+    {
+      "type": "event",
+      "content": "低声询问所罗门阿道夫最近是否有露面并打听镇上的新风声，同时留意他的表情与随行是否有异常 [在 ROAD_2 因重新规划而中断] 已中断",
+      "gameDay": 1,
+      "gameTime": "20:57",
+      "location": "ROAD_2",
+      "metadata": {
+        "outcome": "低声询问所罗门阿道夫最近是否有露面并打听镇上的新风声，同时留意他的表情与随行是否有异常 [在 ROAD_2 因重新规划而中断] 已中断",
+        "interruptionReason": "revise_replan"
+      }
+    },
+    {
+      "type": "event",
+      "content": "低声向所罗门寒暄，把准备好的小礼物托付或请他代为转交给阿道夫，并悄声询问阿道夫最近有没有露面以及镇上有什么新风声，同时注意他表情和是否有可疑同伴 [target Solomon not present] failed",
+      "gameDay": 1,
+      "gameTime": "21:03",
+      "location": "ROAD_2",
+      "metadata": {
+        "outcome": "低声向所罗门寒暄，把准备好的小礼物托付或请他代为转交给阿道夫，并悄声询问阿道夫最近有没有露面以及镇上有什么新风声，同时注意他表情和是否有可疑同伴 [target Solomon not present] failed"
+      }
+    },
+    {
+      "type": "witness",
+      "content": "[相遇] 我在卡森德拉北新街当面碰到了所罗门。见到他让我松了口气，但也很警觉——这是把为阿道夫准备的小礼物托付出去并当面打听阿道夫下落与镇上新风声的好机会。我打算立刻上前低声寒暄，把礼物交给他或请他代转，并注意他的表情与随行是否有异常；若他回避或显得有危险迹象，我会当场收手，改往海伦的餐桌继续打听。",
+      "gameDay": 1,
+      "gameTime": "21:04",
+      "location": "ROAD_2",
+      "metadata": {
+        "impact": 2,
+        "perspective": "co_presence",
+        "sourceAction": "Solomon 在 卡森德拉北新街",
+        "sourceCharacterId": "__encounter__"
+      }
+    },
+    {
+      "type": "event",
+      "content": "向所罗门低声寒暄，请他把为阿道夫准备的小礼物代为转交，并顺便问他阿道夫最近是否有回家或露面；注意他的表情与随行是否有异常 [在 ROAD_2 因重新规划而中断] 已中断",
+      "gameDay": 1,
+      "gameTime": "21:04",
+      "location": "ROAD_2",
+      "metadata": {
+        "outcome": "向所罗门低声寒暄，请他把为阿道夫准备的小礼物代为转交，并顺便问他阿道夫最近是否有回家或露面；注意他的表情与随行是否有异常 [在 ROAD_2 因重新规划而中断] 已中断",
+        "interruptionReason": "revise_replan"
+      }
+    },
+    {
+      "type": "event",
+      "content": "低声询问所罗门：阿道夫最近有露面吗？并请他把我准备的小礼物代为转交给阿道夫，同时观察他的表情与随行是否异常 [target Solomon not present] failed",
+      "gameDay": 1,
+      "gameTime": "21:07",
+      "location": "ROAD_2",
+      "metadata": {
+        "outcome": "低声询问所罗门：阿道夫最近有露面吗？并请他把我准备的小礼物代为转交给阿道夫，同时观察他的表情与随行是否异常 [target Solomon not present] failed"
+      }
+    },
+    {
+      "type": "witness",
+      "content": "[相遇] 现在是21:08，我在卡森德拉北新街当面碰到了所罗门。见到他让我略感宽心，但仍然高度警觉——这是把为阿道夫准备的小礼物托付给他或请他代为转交并当面低声探听阿道夫下落与镇上新风声的好机会。我感到紧张且谨慎，打算靠近低声寒暄，注意观察他表情与随行者的反应；如果他回避或有危险迹象，我会立刻收手，改往海伦的餐桌继续打听消息。",
+      "gameDay": 1,
+      "gameTime": "21:08",
+      "location": "ROAD_2",
+      "metadata": {
+        "impact": 2,
+        "perspective": "co_presence",
+        "sourceAction": "Solomon 在 卡森德拉北新街",
+        "sourceCharacterId": "__encounter__"
+      }
+    },
+    {
+      "type": "witness",
+      "content": "[相遇] 我在卡森德拉北新街当面碰到Simon Laplace。他独自一人，穿着深色外套，神情平静但目光警觉，像是在留意四周。见到他让我微微紧张，但并未立即改变我的计划——我仍打算接近所罗门，把小礼物托付并暗中探听阿道夫的下落，同时在接触时留意Simon有无行动或靠近。",
+      "gameDay": 1,
+      "gameTime": "21:11",
+      "location": "ROAD_2",
+      "metadata": {
+        "impact": 2,
+        "perspective": "co_presence",
+        "sourceAction": "Simon Laplace (Simon) 在 卡森德拉北新街",
+        "sourceCharacterId": "__encounter__"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我上前与所罗门低声寒暄，把准备好的小礼物递给他，请他代为转交给阿道夫，并悄声问阿道夫最近有没有露面。我注意到他面色平静、周围无人异常；他口头上同意代为转交，但并未透露阿道夫是否在家。 [rel:Solomon +2 → 7]",
+      "gameDay": 1,
+      "gameTime": "21:12",
+      "location": "ROAD_2",
+      "metadata": {
+        "outcome": "上前与Solomon低声寒暄，把准备好的小礼物递给他请他代为转交给阿道夫，并小声问阿道夫最近有没有露面，同时注意他的表情和随行者是否有异常"
+      }
+    },
+    {
+      "type": "event",
+      "content": "观察所罗门的表情与随行者的举动，注意西蒙是否有任何可疑靠近或异常动作 成功",
+      "gameDay": 1,
+      "gameTime": "21:15",
+      "location": "ROAD_2",
+      "metadata": {
+        "outcome": "观察所罗门的表情与随行者的举动，注意西蒙是否有任何可疑靠近或异常动作 成功"
+      }
+    },
+    {
+      "type": "witness",
+      "content": "[相遇] 我在卡森德拉北新街当面碰到了Angela和Simon Laplace。看到他们让我既有点松口又紧张——这是把为阿道夫准备的小礼物交给Angela并当面打听阿道夫下落的机会，但Simon在场让我警觉。我现在想立刻靠近，低声寒暄，把礼物托付给Angela并顺便问她阿道夫最近有无露面，同时紧盯Simon的表情与动作；若他们回避或显露危险迹象，我会当场收手，改往海伦的餐桌继续打听镇上风声。",
+      "gameDay": 1,
+      "gameTime": "21:15",
+      "location": "ROAD_2",
+      "metadata": {
+        "impact": 2,
+        "perspective": "co_presence",
+        "sourceAction": "Angela, Simon Laplace (Simon) 在 卡森德拉北新街",
+        "sourceCharacterId": "__encounter__"
+      }
+    },
+    {
+      "type": "event",
+      "content": "向安吉拉低声递交准备好的小礼物并请她代为转交给阿道夫或告知阿道夫现在是否在家，同时压低声音避免提及任何非法事务，并在交谈中密切观察西蒙的表情与肢体语言有无威胁或偷听迹象；若安吉拉不配合或西蒙表现可疑则中止接触。 [在 ROAD_2 因重新规划而中断] 已中断",
+      "gameDay": 1,
+      "gameTime": "21:17",
+      "location": "ROAD_2",
+      "metadata": {
+        "outcome": "向安吉拉低声递交准备好的小礼物并请她代为转交给阿道夫或告知阿道夫现在是否在家，同时压低声音避免提及任何非法事务，并在交谈中密切观察西蒙的表情与肢体语言有无威胁或偷听迹象；若安吉拉不配合或西蒙表现可疑则中止接触。 [在 ROAD_2 因重新规划而中断] 已中断",
+        "interruptionReason": "revise_replan"
+      }
+    },
+    {
+      "type": "witness",
+      "content": "[相遇] 我在卡森德拉北新街当面碰到所罗门，见到他让我稍感宽心但很警觉——这是当面把为阿道夫准备的小礼物托付出去并试探阿道夫下落与镇上风声的好机会。我现在想马上上前低声寒暄，把礼物交给他并留意他的神情与是否有同伴；如果他表现回避或有危险迹象，我会立刻收手并改往海伦的餐桌继续打听。",
+      "gameDay": 1,
+      "gameTime": "21:17",
+      "location": "ROAD_2",
+      "metadata": {
+        "impact": 2,
+        "perspective": "co_presence",
+        "sourceAction": "Solomon 在 卡森德拉北新街",
+        "sourceCharacterId": "__encounter__"
+      }
+    },
+    {
+      "type": "event",
+      "content": "将为阿道夫准备的小礼物递给所罗门并低声询问他阿道夫最近是否有露面，同时留意他的表情与是否有可疑随行 [在 ROAD_2 因重新规划而中断] 已中断",
+      "gameDay": 1,
+      "gameTime": "21:20",
+      "location": "ROAD_2",
+      "metadata": {
+        "outcome": "将为阿道夫准备的小礼物递给所罗门并低声询问他阿道夫最近是否有露面，同时留意他的表情与是否有可疑随行 [在 ROAD_2 因重新规划而中断] 已中断",
+        "interruptionReason": "revise_replan"
+      }
+    },
+    {
+      "type": "witness",
+      "content": "[相遇] 我刚在卡森德拉北新街当面碰到Angela。见到她让我既松了口又警觉——这是把为阿道夫准备的小礼物交给她并低声探问阿道夫是否在家以及打听镇上有没有对我店不利的风声的好机会。我现在觉得应该立刻上前，压低声音把礼物托付给她并密切注意她的表情与周围是否有可疑人物；如果她不配合或表现出危险迹象，我会当场收手，改往所罗门或海伦的餐桌继续打听。",
+      "gameDay": 1,
+      "gameTime": "21:20",
+      "location": "ROAD_2",
+      "metadata": {
+        "impact": 2,
+        "perspective": "co_presence",
+        "sourceAction": "Angela 在 卡森德拉北新街",
+        "sourceCharacterId": "__encounter__"
+      }
+    },
+    {
+      "type": "witness",
+      "content": "[相遇] 我在卡森德拉北新街当面遇到Angela和Solomon（现在21:21）。见到他们让我既有些松口又很警觉——这是把为阿道夫准备的小礼物当面托付并探听镇上风声的好机会。我打算按原计划立刻靠近安静寒暄，低声把礼物交给Angela并问她阿道夫是否在家，同时留意Angela的表情和Simon（或随行者）是否有可疑举动；如果她不配合或场面显得有风险，我会当场收手，改去接触Solomon或转往海伦的餐桌继续打听消息。",
+      "gameDay": 1,
+      "gameTime": "21:21",
+      "location": "ROAD_2",
+      "metadata": {
+        "impact": 2,
+        "perspective": "co_presence",
+        "sourceAction": "Angela, Solomon 在 卡森德拉北新街",
+        "sourceCharacterId": "__encounter__"
+      }
+    },
+    {
+      "type": "witness",
+      "content": "[相遇] 我在卡森德拉北新街当面遇到所罗门。见到他让我略感宽心，但也立刻提高警觉——他常和阿道夫、Angela交往，这给了我当面托付小礼物并打听阿道夫下落的机会。我现在想靠近低声寒暄，把礼物交给他并探听镇上风声，同时留意他神情与是否有可疑同伴；如果场面不安全就马上收手，改去海伦的餐桌继续打听。",
+      "gameDay": 1,
+      "gameTime": "21:23",
+      "location": "ROAD_2",
+      "metadata": {
+        "impact": 2,
+        "perspective": "co_presence",
+        "sourceAction": "Solomon 在 卡森德拉北新街",
+        "sourceCharacterId": "__encounter__"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我靠近安吉拉，低声把准备好的小礼物递给她并问阿道夫现在是否在家；她接过礼物，平静又简短地表示阿道夫四处走动、没有固定地点，但拒绝透露确切行踪。我留意了她的表情和周围，没看到西蒙或明显可疑的人，场面没有升级，随后收手准备去找所罗门或海伦继续打听。 [rel:Angela +2 → 7]",
+      "gameDay": 1,
+      "gameTime": "21:24",
+      "location": "ROAD_2",
+      "metadata": {
+        "outcome": "靠近安吉拉，低声把准备好的小礼物递给她并问阿道夫现在是否在家，同时留意她的表情与周围是否有可疑人物（尤其西蒙）；如她拒绝或场面显得危险则立即收手，改往所罗门或海伦处继续打听。 [Persuade 40, rolled 76 (fail) — all targets resisted] failed"
+      }
+    },
+    {
+      "type": "witness",
+      "content": "[相遇] 我在卡森德拉北新街当面碰到所罗门。见到他让我微微松口，但仍然高度警觉——这是把为阿道夫准备的小礼物托付并低声探听阿道夫行踪与镇上风声的好机会。我感到紧张且谨慎，打算立刻靠近寒暄，压低声音交付礼物并密切观察他的表情与是否有可疑随行（尤其是Simon）；若他回避或场面显得不安全，我会当场收手，改往海伦的餐桌继续打听。",
+      "gameDay": 1,
+      "gameTime": "21:25",
+      "location": "ROAD_2",
+      "metadata": {
+        "impact": 2,
+        "perspective": "co_presence",
+        "sourceAction": "Solomon 在 卡森德拉北新街",
+        "sourceCharacterId": "__encounter__"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我靠近所罗门，把为阿道夫准备的小礼物悄声交给他，并低声问阿道夫最近是否露面以及镇上有没有对我店不利的风声。他面色平静、周围无人异常，口头上接受并同意代为转交，但对阿道夫是否在家和具体传闻保持保留，我于是收手不再追问。 [rel:Solomon +2 → 9]",
+      "gameDay": 1,
+      "gameTime": "21:27",
+      "location": "ROAD_2",
+      "metadata": {
+        "outcome": "靠近所罗门，压低声音把为阿道夫准备的小礼物交给他，并悄声问他阿道夫最近是否有露面以及镇上有没有对我店不利的风声，同时注意观察他的表情和是否有可疑随行（尤其留意Simon）；若他回避或显露危险迹象则立即收手。"
+      }
+    },
+    {
+      "type": "witness",
+      "content": "[相遇] 我在卡森德拉北新街当面遇到所罗门。看到他让我有些宽心但也很警觉——这是把为阿道夫准备的小礼物托付并当面探听阿道夫下落与镇上风声的好机会。我感到紧张且谨慎，打算靠近低声寒暄，同时留意他神情与随行有无异常；若场面不安全就收手改去海伦的餐桌。",
+      "gameDay": 1,
+      "gameTime": "21:29",
+      "location": "ROAD_2",
+      "metadata": {
+        "impact": 2,
+        "perspective": "co_presence",
+        "sourceAction": "Solomon 在 卡森德拉北新街",
+        "sourceCharacterId": "__encounter__"
+      }
+    },
+    {
+      "type": "witness",
+      "content": "[相遇] 我在小餐厅的海伦餐桌碰到了海伦和约翰尼。海伦看起来像平常那样友好，约翰尼在旁边神情平静但带着审视的目光。我觉得比在街上碰到可疑人时放松些——这正是我原先计划去海伦那儿吃顿简单晚饭并顺便打听镇上风声的机会。我打算按计划低声寒暄，利用用餐时机探听有没有对我店不利的传言，同时留心约翰尼的态度与周围是否有异常。",
+      "gameDay": 1,
+      "gameTime": "21:34",
+      "location": "SCN_10_SUB_1",
+      "metadata": {
+        "impact": 2,
+        "perspective": "co_presence",
+        "sourceAction": "Helen, Johnny 在 小餐厅",
+        "sourceCharacterId": "__encounter__"
+      }
+    },
+    {
+      "type": "event",
+      "content": "前往海伦的餐桌吃晚饭并顺便打听镇上最近的动静 成功",
+      "gameDay": 1,
+      "gameTime": "21:34",
+      "location": "SCN_10_SUB_1",
+      "metadata": {
+        "outcome": "前往海伦的餐桌吃晚饭并顺便打听镇上最近的动静 成功",
+        "blockedReason": "",
+        "failureReason": ""
+      }
+    },
+    {
+      "type": "event",
+      "content": "向海伦低声寒暄并点一份招牌菜，借机悄声打听镇上最近的风声以及阿道夫是否有露面，同时密切观察约翰尼的表情与反应 成功",
+      "gameDay": 1,
+      "gameTime": "21:40",
+      "location": "SCN_10_SUB_1",
+      "metadata": {
+        "outcome": "向海伦低声寒暄并点一份招牌菜，借机悄声打听镇上最近的风声以及阿道夫是否有露面，同时密切观察约翰尼的表情与反应 成功"
+      }
+    },
+    {
+      "type": "witness",
+      "content": "[目击] 我看到约翰尼低声拉住海伦的手，示意去后门外短暂散步以避开我。海伦同意了，还说会注意周围是否有人在监视，并提到记得我在驯鹿酒吧与菲利普的冲突，不希望那事被夸大。我感到一阵警觉和被排斥——这可能会切断我从海伦处获取情报的机会，也说明别人对我有所顾忌。我需要立即决定是否低声挽留或放手转向其他线索，同时保持低调以免引起麻烦。",
+      "gameDay": 1,
+      "gameTime": "21:44",
+      "location": "SCN_10_SUB_1",
+      "metadata": {
+        "impact": 2,
+        "perspective": "witness",
+        "sourceAction": "我低声拉住海伦的手，示意去后门外短暂散步以避开哈里森。她同意了，并表示会配合留意周围是否有人在监视；她还提到记得驯鹿酒吧那晚我与菲利普的冲突，不希望那件事被进一步夸大。",
+        "sourceCharacterId": "Johnny"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我向海伦低声再问阿道夫最近是否有露面，并在交谈时留意约翰尼的表情以判断是否安全继续接触。海伦告诉我她记得约翰尼在驯鹿酒吧那晚以与菲利普的打斗收场，而不是以她的承诺收场，并表示不希望那个故事被进一步夸大。 [rel:Helen +5 → 5]",
+      "gameDay": 1,
+      "gameTime": "21:44",
+      "location": "SCN_10_SUB_1",
+      "metadata": {
+        "outcome": "向海伦低声再问阿道夫最近是否有露面，并在交谈时注意约翰尼的表情与反应以判断是否安全继续接触"
+      }
+    },
+    {
+      "type": "witness",
+      "content": "[相遇] 我在卡森德拉北新街当面碰到海伦和约翰尼。海伦拉着约翰尼低声示意绕开我，提到不想把驯鹿酒吧那事再扩大，我感到被回避和一阵警觉——她显然不愿多谈。我不会在这里纠缠，保持低调，继续通过所罗门或安吉拉低声探听镇上风声以保护店铺。",
+      "gameDay": 1,
+      "gameTime": "21:45",
+      "location": "ROAD_2",
+      "metadata": {
+        "impact": 2,
+        "perspective": "co_presence",
+        "sourceAction": "Helen, Johnny 在 卡森德拉北新街",
+        "sourceCharacterId": "__encounter__"
+      }
+    },
+    {
+      "type": "witness",
+      "content": "[相遇] 我在卡森德拉北新街当面碰到了Angela、Johnny和Helen。见到他们我既有些松口气又很警觉——Helen之前明显想回避我，Johnny在旁让我更谨慎。我打算立刻压低声音靠近把为阿道夫准备的小礼物悄悄交给Angela，顺便低声探听阿道夫是否有露面，同时密切盯着Johnny和Helen的表情以防场面恶化，避免在公众场合引起注意。",
+      "gameDay": 1,
+      "gameTime": "21:47",
+      "location": "ROAD_2",
+      "metadata": {
+        "impact": 2,
+        "perspective": "co_presence",
+        "sourceAction": "Angela, Johnny, Helen 在 卡森德拉北新街",
+        "sourceCharacterId": "__encounter__"
+      }
+    },
+    {
+      "type": "event",
+      "content": "不去挽留海伦，起身离开餐厅，前往占星师小铺找所罗门打听风声 [在 ROAD_2 因重新规划而中断] 已中断",
+      "gameDay": 1,
+      "gameTime": "21:47",
+      "location": "ROAD_2",
+      "metadata": {
+        "outcome": "不去挽留海伦，起身离开餐厅，前往占星师小铺找所罗门打听风声 [在 ROAD_2 因重新规划而中断] 已中断",
+        "interruptionReason": "revise_replan"
+      }
+    },
+    {
+      "type": "event",
+      "content": "压低声音向安吉拉询问最近镇上的风声，试探阿道夫是否有露面，并留意她的表情与周围是否有人偷听 [target Angela not present] failed",
+      "gameDay": 1,
+      "gameTime": "21:51",
+      "location": "ROAD_2",
+      "metadata": {
+        "outcome": "压低声音向安吉拉询问最近镇上的风声，试探阿道夫是否有露面，并留意她的表情与周围是否有人偷听 [target Angela not present] failed"
+      }
+    },
+    {
+      "type": "witness",
+      "content": "[相遇] 我在卡森德拉北新街碰到安吉拉、海伦和约翰尼同时在场（现在21:53）。见到海伦和约翰尼让我警觉——海伦之前明显想避开我，约翰尼在旁又让我更谨慎。我感到不安并决定不要在这里当众交付小礼物或纠缠海伦；情势太有风险了。我会立即离开人群，去找更安全的接触对象（所罗门）或直接回店里继续晚间安保与整理后室，保持低调以保护店铺与生意。",
+      "gameDay": 1,
+      "gameTime": "21:53",
+      "location": "ROAD_2",
+      "metadata": {
+        "impact": 2,
+        "perspective": "co_presence",
+        "sourceAction": "Angela, Helen, Johnny 在 卡森德拉北新街",
+        "sourceCharacterId": "__encounter__"
+      }
+    },
+    {
+      "type": "event",
+      "content": "前往占星师小铺找所罗门低调打听镇上风声 [在 ROAD_2 因重新规划而中断] 已中断",
+      "gameDay": 1,
+      "gameTime": "21:53",
+      "location": "ROAD_2",
+      "metadata": {
+        "outcome": "前往占星师小铺找所罗门低调打听镇上风声 [在 ROAD_2 因重新规划而中断] 已中断",
+        "interruptionReason": "revise_replan"
+      }
+    },
+    {
+      "type": "event",
+      "content": "悄悄离开人群，前往占星师小铺找所罗门低调打听镇上风声 [在 ROAD_2 因重新规划而中断] 已中断",
+      "gameDay": 1,
+      "gameTime": "21:54",
+      "location": "ROAD_2",
+      "metadata": {
+        "outcome": "悄悄离开人群，前往占星师小铺找所罗门低调打听镇上风声 [在 ROAD_2 因重新规划而中断] 已中断",
+        "interruptionReason": "revise_replan"
+      }
+    },
+    {
+      "type": "witness",
+      "content": "[相遇] 我在卡森德拉北新街当面碰到安吉拉和海伦（21:54）。见到她们让我紧张——海伦可能会回避我，安吉拉当众接触有风险。我不打算上前交礼或纠缠，心里一紧后决定立刻离开人群，去找单独的所罗门或直接回店把晚间安保和后室库存检查完，再通过更谨慎的方式打听消息。",
+      "gameDay": 1,
+      "gameTime": "21:54",
+      "location": "ROAD_2",
+      "metadata": {
+        "impact": 2,
+        "perspective": "co_presence",
+        "sourceAction": "Angela, Helen 在 卡森德拉北新街",
+        "sourceCharacterId": "__encounter__"
+      }
+    },
+    {
+      "type": "event",
+      "content": "前往占星师小铺寻找所罗门以低调打听镇上风声 [在 ROAD_2 因重新规划而中断] 已中断",
+      "gameDay": 1,
+      "gameTime": "21:55",
+      "location": "ROAD_2",
+      "metadata": {
+        "outcome": "前往占星师小铺寻找所罗门以低调打听镇上风声 [在 ROAD_2 因重新规划而中断] 已中断",
+        "interruptionReason": "revise_replan"
+      }
+    },
+    {
+      "type": "witness",
+      "content": "[相遇] 现在21:55，我在卡森德拉北新街当面碰到了Angela、Helen和Johnny。看到海伦拉着约翰尼在场让我很不安——海伦之前就想避开我，约翰尼在旁更让我警觉。我感到必须避免当众交付小礼物或与海伦纠缠，决定立刻离开人群，去找单独的所罗门或直接回店完成晚间安保与后室检查，保持低调继续通过更谨慎的方式打听阿道夫下落。",
+      "gameDay": 1,
+      "gameTime": "21:55",
+      "location": "ROAD_2",
+      "metadata": {
+        "impact": 2,
+        "perspective": "co_presence",
+        "sourceAction": "Angela, Helen, Johnny 在 卡森德拉北新街",
+        "sourceCharacterId": "__encounter__"
+      }
+    },
+    {
+      "type": "witness",
+      "content": "[相遇] 现在21:56，我在卡森德拉北新街当面碰到Angela、Helen和Johnny一起。海伦明显想回避我，约翰尼在旁让我警觉——当众交付小礼物或纠缠海伦风险太大。我感到不安并决定不要停留，立刻离开人群，改去找单独的所罗门或直接回店完成晚间安保，并通过更谨慎的方式继续打听镇上风声。",
+      "gameDay": 1,
+      "gameTime": "21:56",
+      "location": "ROAD_2",
+      "metadata": {
+        "impact": 2,
+        "perspective": "co_presence",
+        "sourceAction": "Angela, Helen, Johnny 在 卡森德拉北新街",
+        "sourceCharacterId": "__encounter__"
+      }
+    },
+    {
+      "type": "event",
+      "content": "悄悄离开人群，前往占星师小铺寻找所罗门以低调打听镇上风声 [在 ROAD_2 因重新规划而中断] 已中断",
+      "gameDay": 1,
+      "gameTime": "21:56",
+      "location": "ROAD_2",
+      "metadata": {
+        "outcome": "悄悄离开人群，前往占星师小铺寻找所罗门以低调打听镇上风声 [在 ROAD_2 因重新规划而中断] 已中断",
+        "interruptionReason": "revise_replan"
+      }
+    },
+    {
+      "type": "witness",
+      "content": "[相遇] 我在占卜馆当面碰到所罗门（现在21:59）。见到他让我有些宽心也保持警觉——这是当面把为阿道夫准备的小礼物托付并低声探问阿道夫最近有没有露面的好机会。我感到紧张但决定马上靠近压低声音交付礼物并试探风声，同时密切观察他的面色与周围是否有人可疑；若场面显得不安全就立刻收手，回店完成晚间安保并在更安全的场合继续打听。",
+      "gameDay": 1,
+      "gameTime": "21:59",
+      "location": "SCN_11_SUB_1",
+      "metadata": {
+        "impact": 2,
+        "perspective": "co_presence",
+        "sourceAction": "Solomon 在 占卜馆",
+        "sourceCharacterId": "__encounter__"
+      }
+    },
+    {
+      "type": "event",
+      "content": "悄悄离开人群前往占星师小铺寻找所罗门 成功",
+      "gameDay": 1,
+      "gameTime": "21:59",
+      "location": "SCN_11_SUB_1",
+      "metadata": {
+        "outcome": "悄悄离开人群前往占星师小铺寻找所罗门 成功",
+        "blockedReason": "",
+        "failureReason": ""
+      }
+    },
+    {
+      "type": "event",
+      "content": "我在占卜馆低声问所罗门阿道夫最近有没有露面，并请他代为转交一份小礼物，同时嘱咐他留意表情与附近是否有人靠近。劝说失败：所罗门保持克制，没有透露阿道夫的下落。既然得不到更多信息，我决定不再强求，收手离开。 [rel:Solomon +2 → 11]",
+      "gameDay": 1,
+      "gameTime": "22:04",
+      "location": "SCN_11_SUB_1",
+      "metadata": {
+        "outcome": "低声向Solomon再探问：阿道夫最近有露面吗？并请他代为转交小礼物，同时密切观察他的表情与周围是否有人靠近；若他回避或显得可疑则立刻收手离开。 [Persuade 40, rolled 57 (fail) — all targets resisted] failed"
+      }
+    },
+    {
+      "type": "witness",
+      "content": "[相遇] 我刚在卡森德拉北新街当面碰到海伦。看到她一时有点意外但也有希望——这是个能当面打听阿道夫下落和镇上风声的机会。不过我记得她之前有回避我的倾向，心里既紧张又谨慎。计划是靠近低声寒暄试探，若她回避或有危险迹象就收手回店完成晚间安保。",
+      "gameDay": 1,
+      "gameTime": "22:12",
+      "location": "ROAD_2",
+      "metadata": {
+        "impact": 2,
+        "perspective": "co_presence",
+        "sourceAction": "Helen 在 卡森德拉北新街",
+        "sourceCharacterId": "__encounter__"
+      }
+    },
+    {
+      "type": "event",
+      "content": "回到五金店 成功",
+      "gameDay": 1,
+      "gameTime": "22:21",
+      "location": "SCN_18_SUB_1",
+      "metadata": {
+        "outcome": "回到五金店 成功",
+        "blockedReason": "",
+        "failureReason": ""
+      }
+    },
+    {
+      "type": "witness",
+      "content": "[相遇] 我在小餐厅看到海伦、约翰尼和一个新面孔——Vincent Galenus同桌而坐。Vincent的出现让我立刻警觉，场面比预想的更有风险；海伦之前有回避我的倾向，约翰尼又在旁留意。感觉现在不宜上前寒暄或当众交付小礼物，心里不安且谨慎。我决定立刻放弃靠近海伦，离开餐厅回店完成晚间安保与后室检查，之后再找所罗门或安吉拉在更安全的情况下低调打听消息。",
+      "gameDay": 1,
+      "gameTime": "22:37",
+      "location": "SCN_10_SUB_1",
+      "metadata": {
+        "impact": 2,
+        "perspective": "co_presence",
+        "sourceAction": "Vincent Galenus, Helen, Johnny 在 小餐厅",
+        "sourceCharacterId": "__encounter__"
+      }
+    },
+    {
+      "type": "event",
+      "content": "前往海伦的餐桌，准备靠近海伦压低声音寒暄并试探阿道夫最近有没有露面与镇上是否有对店不利的风声，同时留意约翰尼或周围是否有人介入 成功",
+      "gameDay": 1,
+      "gameTime": "22:37",
+      "location": "SCN_10_SUB_1",
+      "metadata": {
+        "outcome": "前往海伦的餐桌，准备靠近海伦压低声音寒暄并试探阿道夫最近有没有露面与镇上是否有对店不利的风声，同时留意约翰尼或周围是否有人介入 成功",
+        "blockedReason": "",
+        "failureReason": ""
+      }
+    },
+    {
+      "type": "event",
+      "content": "离开海伦的餐桌并回到五金店 成功",
+      "gameDay": 1,
+      "gameTime": "22:53",
+      "location": "SCN_18_SUB_1",
+      "metadata": {
+        "outcome": "离开海伦的餐桌并回到五金店 成功",
+        "blockedReason": "",
+        "failureReason": ""
+      }
+    },
+    {
+      "type": "event",
+      "content": "我在柜台播放并查看了店内的监控录像回放。画面正常，录像可用。确认录像记录了店内的影像。",
+      "gameDay": 1,
+      "gameTime": "22:59",
+      "location": "SCN_18_SUB_1",
+      "metadata": {
+        "outcome": "检查店内监控录像回放"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我把账本和样品收好并藏到后室库存里，避免放在显眼处。随后逐一检查了后门警报和门窗传感器，所有设备都在线且运行正常。",
+      "gameDay": 1,
+      "gameTime": "23:10",
+      "location": "SCN_18_SUB_1",
+      "metadata": {
+        "outcome": "把账本和样品藏好，并检查后门警报与门窗传感器是否正常工作"
+      }
+    },
+    {
+      "type": "witness",
+      "content": "[相遇] 我在卡森德拉南新街当面碰到了一个叫Tallinn的人（现在23:11）。突然遇到不熟悉的面孔让我警觉又有些不安——这既可能是意外的情报来源，也可能带来麻烦。我放慢脚步、保持低调，准备先暗中观察他的言行以判断身份与意图；若对方无害我会在安全距离内尝试套近乎或收集有用信息，若有任何可疑或威胁迹象我会立刻离开并返回五金店完成晚间安保。这个相遇把我当前的注意力临时转向识别Tallinn，但并不需要立刻停止手头的例行工作或彻底改变今日行程。",
+      "gameDay": 1,
+      "gameTime": "23:11",
+      "location": "ROAD_3",
+      "metadata": {
+        "impact": 2,
+        "perspective": "co_presence",
+        "sourceAction": "Tallinn 在 卡森德拉南新街",
+        "sourceCharacterId": "__encounter__"
+      }
+    },
+    {
+      "type": "witness",
+      "content": "[相遇] 我在卡森德拉北新街当面碰到海伦。看到她我一时惊讶又警觉——她过去常对我回避，身边若有约翰尼或别人会增加风险。我不想在众人面前被纠缠或暴露，所以感到不安并倾向立刻离开，回店完成晚间安保，改为找更安全的对象继续打听消息。",
+      "gameDay": 1,
+      "gameTime": "23:18",
+      "location": "ROAD_2",
+      "metadata": {
+        "impact": 2,
+        "perspective": "co_presence",
+        "sourceAction": "Helen 在 卡森德拉北新街",
+        "sourceCharacterId": "__encounter__"
+      }
+    },
+    {
+      "type": "event",
+      "content": "悄悄离开店内，步行前往占星师小铺，在更安全的场合低调联系所罗门 [在 ROAD_2 因重新规划而中断] 已中断",
+      "gameDay": 1,
+      "gameTime": "23:18",
+      "location": "ROAD_2",
+      "metadata": {
+        "outcome": "悄悄离开店内，步行前往占星师小铺，在更安全的场合低调联系所罗门 [在 ROAD_2 因重新规划而中断] 已中断",
+        "interruptionReason": "revise_replan"
+      }
+    },
+    {
+      "type": "event",
+      "content": "步行回五金店继续完成晚间安保与后室检查 成功",
+      "gameDay": 1,
+      "gameTime": "23:26",
+      "location": "SCN_18_SUB_1",
+      "metadata": {
+        "outcome": "步行回五金店继续完成晚间安保与后室检查 成功",
+        "blockedReason": "",
+        "failureReason": ""
+      }
+    },
+    {
+      "type": "event",
+      "content": "在后室的写字台上写下明日的补货清单和客户名单 成功",
+      "gameDay": 1,
+      "gameTime": "23:37",
+      "location": "SCN_18_SUB_1",
+      "metadata": {
+        "outcome": "在后室的写字台上写下明日的补货清单和客户名单 成功"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我检查并开启了店内的照明，确认照明系统与电源运转正常。店内恢复明亮，适合继续检查或接待顾客。",
+      "gameDay": 1,
+      "gameTime": "23:41",
+      "location": "SCN_18_SUB_1",
+      "metadata": {
+        "outcome": "检查并打开店内照明，确认照明系统与电源无异常"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我检查了陈列架最上层的空位，确认标注为“非卖品”的小发明确实被拿走；我在周围仔细查看，未发现明显被撬动或移动的痕迹。",
+      "gameDay": 1,
+      "gameTime": "23:47",
+      "location": "SCN_18_SUB_1",
+      "metadata": {
+        "outcome": "检查陈列架最上层的空位，确认标注为“非卖品”的小发明是否被拿走并寻找任何被撬动或移动的痕迹"
+      }
+    },
+    {
+      "type": "secret",
+      "content": "陈列架上标注为“非卖品”的小发明灯确实不见了，周围没有明显被撬动的痕迹——可能有人趁机拿走。",
+      "gameDay": 1,
+      "gameTime": "23:59",
+      "location": null,
+      "metadata": {
+        "revealed": false,
+        "difficulty": "hard",
+        "knowledgeId": "learned_day1_8"
+      }
+    },
+    {
+      "type": "information",
+      "content": "我对后室那把史密斯625做了最后调试并确认击发机构与瞄准器运转顺畅，回火在可接受范围。",
+      "gameDay": 1,
+      "gameTime": "23:59",
+      "location": null,
+      "metadata": {
+        "revealed": false,
+        "difficulty": "automatic",
+        "knowledgeId": "learned_day1_9"
+      }
+    },
+    {
+      "type": "information",
+      "content": "后门警报和门窗传感器都在线且运行正常，晚间安保系统工作良好。",
+      "gameDay": 1,
+      "gameTime": "23:59",
+      "location": null,
+      "metadata": {
+        "revealed": false,
+        "difficulty": "automatic",
+        "knowledgeId": "learned_day1_10"
+      }
+    },
+    {
+      "type": "information",
+      "content": "店内监控录像正常且今晚的录像可用，回放记录了店内影像。",
+      "gameDay": 1,
+      "gameTime": "23:59",
+      "location": null,
+      "metadata": {
+        "revealed": false,
+        "difficulty": "automatic",
+        "knowledgeId": "learned_day1_7"
+      }
+    },
+    {
+      "type": "information",
+      "content": "我在卡森德拉南新街遇到一个自称Tallinn的陌生人，目前身份和目的不明，值得留意。",
+      "gameDay": 1,
+      "gameTime": "23:59",
+      "location": null,
+      "metadata": {
+        "revealed": false,
+        "difficulty": "regular",
+        "knowledgeId": "learned_day1_6"
+      }
+    },
+    {
+      "type": "information",
+      "content": "Vincent Galenus今晚出现在海伦和约翰尼的餐桌，这个新面孔让我对该桌的安全与动机生疑。",
+      "gameDay": 1,
+      "gameTime": "23:59",
+      "location": null,
+      "metadata": {
+        "revealed": false,
+        "difficulty": "regular",
+        "knowledgeId": "learned_day1_5"
+      }
+    },
+    {
+      "type": "information",
+      "content": "约翰尼在海伦身边显得很警觉，曾低声拉住海伦示意避开我，他在公共场合会干预海伦的接触对象。",
+      "gameDay": 1,
+      "gameTime": "23:59",
+      "location": null,
+      "metadata": {
+        "revealed": false,
+        "difficulty": "regular",
+        "knowledgeId": "learned_day1_4"
+      }
+    },
+    {
+      "type": "information",
+      "content": "海伦记得驯鹿酒吧那晚与菲利普的冲突，并明确表示不希望那件事被扩大，这也是她回避我的原因之一。",
+      "gameDay": 1,
+      "gameTime": "23:59",
+      "location": null,
+      "metadata": {
+        "revealed": false,
+        "difficulty": "regular",
+        "knowledgeId": "learned_day1_3"
+      }
+    },
+    {
+      "type": "information",
+      "content": "所罗门愿意代为转交我交付的小礼物，面对我的试探时表现得克制且可靠，短期内是个可用的情报与联络点。",
+      "gameDay": 1,
+      "gameTime": "23:59",
+      "location": null,
+      "metadata": {
+        "revealed": false,
+        "difficulty": "regular",
+        "knowledgeId": "learned_day1_2"
+      }
+    },
+    {
+      "type": "information",
+      "content": "安吉拉在镇上走动、没有固定据点，她说通常不追问买家的动机并且在交接时很淡定。",
+      "gameDay": 1,
+      "gameTime": "23:59",
+      "location": null,
+      "metadata": {
+        "revealed": false,
+        "difficulty": "regular",
+        "knowledgeId": "learned_day1_1"
+      }
+    }
+  ],
+  "plans": [
+    {
+      "npcName": "Harrison Lockheed",
+      "gameDay": 2,
+      "schedule": [
+        {
+          "activity": "立即停止对摄像头的任何调整或干扰，避免与阿道夫正面接触或引起他注意，尽快从监控室撤离并返回五金店；在撤离前尽量不留下任何痕迹，并在安全回到店里后记录本次遭遇细节。",
+          "location": "阿道夫家"
+        },
+        {
+          "activity": "检查后门警报和门窗传感器，并回放昨夜监控录像以查明陈列架上标注为“非卖品”的小发明确实何时被拿走。",
+          "location": "五金店"
+        },
+        {
+          "activity": "在后室对那把史密斯625做最后确认并把它妥善藏匿，更新内账编号以便日后查对。",
+          "location": "五金店"
+        },
+        {
+          "activity": "整理库存并对可疑缺货项做详细盘点，记录任何异常以备日间核查。",
+          "location": "五金店"
+        },
+        {
+          "activity": "在店里吃早饭并整理当天要用的工具与包裹，准备开门营业并装作一如既往的店主。",
+          "location": "五金店"
+        },
+        {
+          "activity": "开门营业时对进店顾客保持健谈，留心把五金当幌子来打听枪支的人并用暗号“锤子砸到钉子上会怎么样？”试探对方意图。",
+          "location": "五金店"
+        },
+        {
+          "activity": "尽快联系并见所罗门，将小礼物交由他保管并委托代为转交给阿道夫，要求他在安全且不暴露我的情况下再进行递交并向我确认时间与方式。",
+          "location": "占星师小铺"
+        },
+        {
+          "activity": "取消直接在阿道夫家放礼物的计划；在不触碰或调整任何监控设备的前提下，监视是否有来自阿道夫的主动动作（查看录像、发送私信等），记录任何异常并在返回五金店后备份相关录像与日志。",
+          "location": "阿道夫家"
+        },
+        {
+          "activity": "给海伦留下一束花作为示好并顺便打听镇里最新的风声以维护公开社交面具。",
+          "location": "花店·卡森德拉之花"
+        },
+        {
+          "activity": "找怀特帮忙修一件小工具，借此拉近关系并试探有没有人昨夜在我店附近出现过。",
+          "location": "钟表店"
+        },
+        {
+          "activity": "傍晚去和本·克莱奥碰面，喝一杯并通过健谈确认他对我生意的态度与近期保护安排。",
+          "location": "驯鹿酒吧"
+        },
+        {
+          "activity": "关店前再检查监控与警报系统，整理当天账本并把可疑交易记录密封收藏以备需要时翻查。",
+          "location": "五金店"
+        },
+        {
+          "activity": "在店内睡前回顾一天发生的事并列出需要优先跟进的三件事，为明天的行动做准备。",
+          "location": "五金店"
+        }
+      ],
+      "nodes": [
+        {
+          "type": "movement",
+          "action": "离开监控室并前往五金店",
+          "impact": 2,
+          "nodeId": "m1",
+          "status": "completed",
+          "endTime": "00:46",
+          "outcome": "离开监控室并前往五金店 成功",
+          "startTime": "00:36",
+          "characterId": "Harrison Lockheed",
+          "destination": "SCN_18_SUB_1",
+          "characterName": "Harrison Lockheed",
+          "executionMeta": {
+            "movement": {
+              "routeSnapshot": [
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_5b",
+                    "position": 0
+                  },
+                  "from": {
+                    "type": "scene",
+                    "sceneId": "SCN_15_SUB_1"
+                  },
+                  "kind": "along_road",
+                  "roadId": "ROAD_5b",
+                  "blockCheck": {
+                    "toId": "ROAD_5b",
+                    "fromId": "SCN_15_SUB_1"
+                  },
+                  "durationMinutes": 1
+                },
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_5b",
+                    "position": 0
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_5b",
+                    "position": 0
+                  },
+                  "kind": "along_road",
+                  "roadId": "ROAD_5b",
+                  "durationMinutes": 0
+                },
+                {
+                  "to": {
+                    "type": "junction",
+                    "junctionId": "JUNC_6"
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_5b",
+                    "position": 0
+                  },
+                  "kind": "to_junction",
+                  "blockCheck": {
+                    "toId": "JUNC_6",
+                    "fromId": "ROAD_5b"
+                  },
+                  "durationMinutes": 0
+                },
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_5b",
+                    "position": 0
+                  },
+                  "from": {
+                    "type": "junction",
+                    "junctionId": "JUNC_6"
+                  },
+                  "kind": "to_junction",
+                  "blockCheck": {
+                    "toId": "ROAD_5b",
+                    "fromId": "JUNC_6"
+                  },
+                  "durationMinutes": 0
+                },
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_5b",
+                    "position": 1
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_5b",
+                    "position": 0
+                  },
+                  "kind": "along_road",
+                  "roadId": "ROAD_5b",
+                  "durationMinutes": 5
+                },
+                {
+                  "to": {
+                    "type": "junction",
+                    "junctionId": "JUNC_4"
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_5b",
+                    "position": 1
+                  },
+                  "kind": "to_junction",
+                  "blockCheck": {
+                    "toId": "JUNC_4",
+                    "fromId": "ROAD_5b"
+                  },
+                  "durationMinutes": 0
+                },
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_3",
+                    "position": 1
+                  },
+                  "from": {
+                    "type": "junction",
+                    "junctionId": "JUNC_4"
+                  },
+                  "kind": "to_junction",
+                  "blockCheck": {
+                    "toId": "ROAD_3",
+                    "fromId": "JUNC_4"
+                  },
+                  "durationMinutes": 0
+                },
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_3",
+                    "position": 0.58
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_3",
+                    "position": 1
+                  },
+                  "kind": "along_road",
+                  "roadId": "ROAD_3",
+                  "durationMinutes": 4.2
+                },
+                {
+                  "to": {
+                    "type": "scene",
+                    "sceneId": "SCN_18_SUB_1"
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_3",
+                    "position": 0.58
+                  },
+                  "kind": "to_scene",
+                  "blockCheck": {
+                    "toId": "SCN_18_SUB_1",
+                    "fromId": "ROAD_3"
+                  },
+                  "durationMinutes": 1
+                }
+              ],
+              "targetPosition": {
+                "type": "scene",
+                "sceneId": "SCN_18_SUB_1"
+              },
+              "minutesIntoStep": 0,
+              "currentStepIndex": 9,
+              "lastReachablePosition": {
+                "type": "scene",
+                "sceneId": "SCN_18_SUB_1"
+              }
+            },
+            "startedAt": "00:36",
+            "completedAt": "00:47",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "character_interaction",
+          "skill": "Persuade",
+          "action": "低声向所罗门确认他会用隐秘方式将我的信息转交给阿道夫，并试探性询问阿道夫最近是否出现在镇上，观察他的反应以评估可靠性。",
+          "impact": 1,
+          "nodeId": "ci2",
+          "status": "failed",
+          "endTime": "00:12",
+          "startTime": "00:08",
+          "characterId": "Harrison Lockheed",
+          "characterName": "Harrison Lockheed",
+          "executionMeta": {
+            "failedAt": "00:12",
+            "startedAt": "00:08",
+            "remainingMinutes": 4
+          },
+          "targetCharacterIds": [
+            "Solomon"
+          ]
+        },
+        {
+          "type": "character_interaction",
+          "skill": "Persuade",
+          "action": "低声与Solomon确认用于转交信息的暗号并约定具体的递送与留信方式",
+          "impact": 1,
+          "nodeId": "ci1",
+          "status": "completed",
+          "endTime": "00:18",
+          "outcome": "我和所罗门低声确认了用于转交信息的暗号，并约定了具体的递送与留信方式。他接受了我递上的小礼物，口头同意会以隐秘方式代为转交，但没有透露阿道夫的下落，态度依旧谨慎。",
+          "startTime": "00:13",
+          "characterId": "Harrison Lockheed",
+          "characterName": "Harrison Lockheed",
+          "executionMeta": {
+            "startedAt": "00:13",
+            "completedAt": "00:18",
+            "remainingMinutes": 0
+          },
+          "targetCharacterIds": [
+            "Solomon"
+          ]
+        },
+        {
+          "type": "movement",
+          "action": "离开监控室并前往五金店",
+          "impact": 2,
+          "nodeId": "m1",
+          "status": "completed",
+          "endTime": "00:46",
+          "outcome": "离开监控室并前往五金店 成功",
+          "startTime": "00:36",
+          "characterId": "Harrison Lockheed",
+          "destination": "SCN_18_SUB_1",
+          "characterName": "Harrison Lockheed",
+          "executionMeta": {
+            "movement": {
+              "routeSnapshot": [
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_5b",
+                    "position": 0
+                  },
+                  "from": {
+                    "type": "scene",
+                    "sceneId": "SCN_15_SUB_1"
+                  },
+                  "kind": "along_road",
+                  "roadId": "ROAD_5b",
+                  "blockCheck": {
+                    "toId": "ROAD_5b",
+                    "fromId": "SCN_15_SUB_1"
+                  },
+                  "durationMinutes": 1
+                },
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_5b",
+                    "position": 0
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_5b",
+                    "position": 0
+                  },
+                  "kind": "along_road",
+                  "roadId": "ROAD_5b",
+                  "durationMinutes": 0
+                },
+                {
+                  "to": {
+                    "type": "junction",
+                    "junctionId": "JUNC_6"
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_5b",
+                    "position": 0
+                  },
+                  "kind": "to_junction",
+                  "blockCheck": {
+                    "toId": "JUNC_6",
+                    "fromId": "ROAD_5b"
+                  },
+                  "durationMinutes": 0
+                },
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_5b",
+                    "position": 0
+                  },
+                  "from": {
+                    "type": "junction",
+                    "junctionId": "JUNC_6"
+                  },
+                  "kind": "to_junction",
+                  "blockCheck": {
+                    "toId": "ROAD_5b",
+                    "fromId": "JUNC_6"
+                  },
+                  "durationMinutes": 0
+                },
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_5b",
+                    "position": 1
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_5b",
+                    "position": 0
+                  },
+                  "kind": "along_road",
+                  "roadId": "ROAD_5b",
+                  "durationMinutes": 5
+                },
+                {
+                  "to": {
+                    "type": "junction",
+                    "junctionId": "JUNC_4"
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_5b",
+                    "position": 1
+                  },
+                  "kind": "to_junction",
+                  "blockCheck": {
+                    "toId": "JUNC_4",
+                    "fromId": "ROAD_5b"
+                  },
+                  "durationMinutes": 0
+                },
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_3",
+                    "position": 1
+                  },
+                  "from": {
+                    "type": "junction",
+                    "junctionId": "JUNC_4"
+                  },
+                  "kind": "to_junction",
+                  "blockCheck": {
+                    "toId": "ROAD_3",
+                    "fromId": "JUNC_4"
+                  },
+                  "durationMinutes": 0
+                },
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_3",
+                    "position": 0.58
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_3",
+                    "position": 1
+                  },
+                  "kind": "along_road",
+                  "roadId": "ROAD_3",
+                  "durationMinutes": 4.2
+                },
+                {
+                  "to": {
+                    "type": "scene",
+                    "sceneId": "SCN_18_SUB_1"
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_3",
+                    "position": 0.58
+                  },
+                  "kind": "to_scene",
+                  "blockCheck": {
+                    "toId": "SCN_18_SUB_1",
+                    "fromId": "ROAD_3"
+                  },
+                  "durationMinutes": 1
+                }
+              ],
+              "targetPosition": {
+                "type": "scene",
+                "sceneId": "SCN_18_SUB_1"
+              },
+              "minutesIntoStep": 0,
+              "currentStepIndex": 9,
+              "lastReachablePosition": {
+                "type": "scene",
+                "sceneId": "SCN_18_SUB_1"
+              }
+            },
+            "startedAt": "00:36",
+            "completedAt": "00:47",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "scene_interaction",
+          "action": "观察并确认客厅天花板边缘摄像头的朝向，寻找可能的监控盲点",
+          "impact": 2,
+          "nodeId": "si_adolph_check_cams_002",
+          "status": "completed",
+          "endTime": "00:31",
+          "outcome": "我检查了天花板和边缘处的半球形摄像头，确认它们朝向客厅开口与沙发区，红色指示灯正在对准并记录活动；没有发现明显的监控盲点。",
+          "startTime": "00:28",
+          "characterId": "Harrison Lockheed",
+          "characterName": "Harrison Lockheed",
+          "executionMeta": {
+            "startedAt": "00:28",
+            "completedAt": "00:31",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "movement",
+          "action": "前往监控室",
+          "impact": 0,
+          "nodeId": "m_sc15_01",
+          "status": "completed",
+          "endTime": "00:36",
+          "outcome": "前往监控室 成功",
+          "startTime": "00:32",
+          "characterId": "Harrison Lockheed",
+          "destination": "SCN_15_SUB_2",
+          "characterName": "Harrison Lockheed",
+          "executionMeta": {
+            "movement": {
+              "routeSnapshot": [
+                {
+                  "to": {
+                    "type": "scene",
+                    "sceneId": "SCN_15_SUB_2"
+                  },
+                  "from": {
+                    "type": "scene",
+                    "sceneId": "SCN_15_SUB_1"
+                  },
+                  "kind": "to_scene",
+                  "blockCheck": {
+                    "toId": "SCN_15_SUB_2",
+                    "fromId": "SCN_15_SUB_1"
+                  },
+                  "durationMinutes": 4
+                }
+              ],
+              "targetPosition": {
+                "type": "scene",
+                "sceneId": "SCN_15_SUB_2"
+              },
+              "minutesIntoStep": 0,
+              "currentStepIndex": 1,
+              "lastReachablePosition": {
+                "type": "scene",
+                "sceneId": "SCN_15_SUB_2"
+              }
+            },
+            "startedAt": "00:32",
+            "completedAt": "00:35",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "movement",
+          "action": "离开监控室并前往五金店",
+          "impact": 2,
+          "nodeId": "m1",
+          "status": "completed",
+          "endTime": "00:46",
+          "outcome": "离开监控室并前往五金店 成功",
+          "startTime": "00:36",
+          "characterId": "Harrison Lockheed",
+          "destination": "SCN_18_SUB_1",
+          "characterName": "Harrison Lockheed",
+          "executionMeta": {
+            "movement": {
+              "routeSnapshot": [
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_5b",
+                    "position": 0
+                  },
+                  "from": {
+                    "type": "scene",
+                    "sceneId": "SCN_15_SUB_1"
+                  },
+                  "kind": "along_road",
+                  "roadId": "ROAD_5b",
+                  "blockCheck": {
+                    "toId": "ROAD_5b",
+                    "fromId": "SCN_15_SUB_1"
+                  },
+                  "durationMinutes": 1
+                },
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_5b",
+                    "position": 0
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_5b",
+                    "position": 0
+                  },
+                  "kind": "along_road",
+                  "roadId": "ROAD_5b",
+                  "durationMinutes": 0
+                },
+                {
+                  "to": {
+                    "type": "junction",
+                    "junctionId": "JUNC_6"
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_5b",
+                    "position": 0
+                  },
+                  "kind": "to_junction",
+                  "blockCheck": {
+                    "toId": "JUNC_6",
+                    "fromId": "ROAD_5b"
+                  },
+                  "durationMinutes": 0
+                },
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_5b",
+                    "position": 0
+                  },
+                  "from": {
+                    "type": "junction",
+                    "junctionId": "JUNC_6"
+                  },
+                  "kind": "to_junction",
+                  "blockCheck": {
+                    "toId": "ROAD_5b",
+                    "fromId": "JUNC_6"
+                  },
+                  "durationMinutes": 0
+                },
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_5b",
+                    "position": 1
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_5b",
+                    "position": 0
+                  },
+                  "kind": "along_road",
+                  "roadId": "ROAD_5b",
+                  "durationMinutes": 5
+                },
+                {
+                  "to": {
+                    "type": "junction",
+                    "junctionId": "JUNC_4"
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_5b",
+                    "position": 1
+                  },
+                  "kind": "to_junction",
+                  "blockCheck": {
+                    "toId": "JUNC_4",
+                    "fromId": "ROAD_5b"
+                  },
+                  "durationMinutes": 0
+                },
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_3",
+                    "position": 1
+                  },
+                  "from": {
+                    "type": "junction",
+                    "junctionId": "JUNC_4"
+                  },
+                  "kind": "to_junction",
+                  "blockCheck": {
+                    "toId": "ROAD_3",
+                    "fromId": "JUNC_4"
+                  },
+                  "durationMinutes": 0
+                },
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_3",
+                    "position": 0.58
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_3",
+                    "position": 1
+                  },
+                  "kind": "along_road",
+                  "roadId": "ROAD_3",
+                  "durationMinutes": 4.2
+                },
+                {
+                  "to": {
+                    "type": "scene",
+                    "sceneId": "SCN_18_SUB_1"
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_3",
+                    "position": 0.58
+                  },
+                  "kind": "to_scene",
+                  "blockCheck": {
+                    "toId": "SCN_18_SUB_1",
+                    "fromId": "ROAD_3"
+                  },
+                  "durationMinutes": 1
+                }
+              ],
+              "targetPosition": {
+                "type": "scene",
+                "sceneId": "SCN_18_SUB_1"
+              },
+              "minutesIntoStep": 0,
+              "currentStepIndex": 9,
+              "lastReachablePosition": {
+                "type": "scene",
+                "sceneId": "SCN_18_SUB_1"
+              }
+            },
+            "startedAt": "00:36",
+            "completedAt": "00:47",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "scene_interaction",
+          "action": "检查监控录像回放以确定陈列架上“非卖品”何时被移走",
+          "impact": 0,
+          "nodeId": "si1",
+          "status": "completed",
+          "endTime": "00:55",
+          "outcome": "我查看并回放了店内监控录像，找到了将陈列架上“非卖品”移走的关键时间段并做了标注以便后续处理；画面中未见陈列架有明显被撬动的痕迹。",
+          "startTime": "00:48",
+          "characterId": "Harrison Lockheed",
+          "characterName": "Harrison Lockheed",
+          "executionMeta": {
+            "startedAt": "00:48",
+            "completedAt": "00:55",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "object_interaction",
+          "action": "把史密斯625从后室工作台收起来并放入隐蔽藏匿处，更新内账编号以便日后查对",
+          "impact": 0,
+          "nodeId": "oi_harrison_001",
+          "status": "completed",
+          "endTime": "01:06",
+          "outcome": "我把后室工作台上完成调试的史密斯625收起来，放入后室的隐蔽藏匿处，并在内账中做了记录以便日后查对。",
+          "startTime": "00:56",
+          "characterId": "Harrison Lockheed",
+          "characterName": "Harrison Lockheed",
+          "executionMeta": {
+            "startedAt": "00:56",
+            "completedAt": "01:06",
+            "remainingMinutes": 0
+          },
+          "objectInteractionPayload": {
+            "itemId": "ITEM_SCN18_5"
+          }
+        },
+        {
+          "type": "scene_interaction",
+          "action": "切换并回放外部门口及南新街路段的监控录像，定位00:44时是否出现Patrizio von Samsa并保存关键截图与时间戳以备后续核对",
+          "impact": 0,
+          "nodeId": "si_harrison_01",
+          "status": "completed",
+          "endTime": "01:12",
+          "outcome": "我把监控切到外部门口和南新街路段，定位到00:44并逐帧回放，截取了关键帧并保存了时间戳，已存档备用。",
+          "startTime": "01:07",
+          "characterId": "Harrison Lockheed",
+          "characterName": "Harrison Lockheed",
+          "executionMeta": {
+            "startedAt": "01:07",
+            "completedAt": "01:12",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "scene_interaction",
+          "action": "切换外门与南新街路段的监控为持续录影并启用移动检测，重点监视是否有人符合00:44关键截图的体貌特征",
+          "impact": 0,
+          "nodeId": "si2",
+          "status": "completed",
+          "endTime": "02:00",
+          "outcome": "我把外门和南新街路段的摄像切成持续录影并开启了移动检测，设置为优先监视与00:44关键截图相符的体貌特征。系统会实时标注并保存任何触发片段，已开始归档以备取证。",
+          "startTime": "01:48",
+          "characterId": "Harrison Lockheed",
+          "characterName": "Harrison Lockheed",
+          "executionMeta": {
+            "startedAt": "01:48",
+            "completedAt": "02:00",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "action",
+          "action": "检查增强后的00:44关键截图，细看面容和衣着特征并标注任何可疑线索",
+          "impact": 0,
+          "nodeId": "a2",
+          "status": "completed",
+          "endTime": "01:25",
+          "outcome": "检查增强后的00:44关键截图，细看面容和衣着特征并标注任何可疑线索 成功",
+          "startTime": "01:19",
+          "characterId": "Harrison Lockheed",
+          "characterName": "Harrison Lockheed",
+          "executionMeta": {
+            "startedAt": "01:19",
+            "completedAt": "01:25",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "scene_interaction",
+          "action": "在后室翻出并比对顾客账本与保修记录，将00:44关键截图与账本中的面容和名字逐项核对",
+          "impact": 0,
+          "nodeId": "si_day2_01",
+          "status": "completed",
+          "endTime": "01:36",
+          "outcome": "我在后室找出顾客账本与保修记录，把00:44的关键截图逐项放大比对，逐一核对面容与名字，并把匹配与不匹配的结果记录并存入监控系统备案。",
+          "startTime": "01:26",
+          "characterId": "Harrison Lockheed",
+          "characterName": "Harrison Lockheed",
+          "executionMeta": {
+            "startedAt": "01:26",
+            "completedAt": "01:36",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "scene_interaction",
+          "action": "对店内库存进行详细盘点，重点核查可疑缺货项并记录任何异常",
+          "impact": 0,
+          "nodeId": "si_day2_0137_01",
+          "status": "completed",
+          "endTime": "01:47",
+          "outcome": "我逐格盘点了店内货架与后室库存，确认陈列架最上层的“非卖品”确实不在架上，后室工作台原放置的史密斯625也已空缺；其余待售五金、铁丝与麻绳与账本记录相符。异常项和证据已记录并归档备用。",
+          "startTime": "01:37",
+          "characterId": "Harrison Lockheed",
+          "characterName": "Harrison Lockheed",
+          "executionMeta": {
+            "startedAt": "01:37",
+            "completedAt": "01:47",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "scene_interaction",
+          "action": "切换外门与南新街路段的监控为持续录影并启用移动检测，重点监视是否有人符合00:44关键截图的体貌特征",
+          "impact": 0,
+          "nodeId": "si2",
+          "status": "completed",
+          "endTime": "02:00",
+          "outcome": "我把外门和南新街路段的摄像切成持续录影并开启了移动检测，设置为优先监视与00:44关键截图相符的体貌特征。系统会实时标注并保存任何触发片段，已开始归档以备取证。",
+          "startTime": "01:48",
+          "characterId": "Harrison Lockheed",
+          "characterName": "Harrison Lockheed",
+          "executionMeta": {
+            "startedAt": "01:48",
+            "completedAt": "02:00",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "scene_interaction",
+          "action": "将最近的监控录像、00:44关键截图与相关日志备份到外置硬盘，并把备份硬盘放回后室隐蔽处存放",
+          "impact": 0,
+          "nodeId": "si_backup_0201",
+          "status": "completed",
+          "endTime": "02:11",
+          "outcome": "我把最近的监控录像、00:44关键截图和相关日志完整地复制到外置硬盘。备份完成后，我把硬盘放回并藏在后室的隐蔽处，确认放置稳妥。",
+          "startTime": "02:01",
+          "characterId": "Harrison Lockheed",
+          "characterName": "Harrison Lockheed",
+          "executionMeta": {
+            "startedAt": "02:01",
+            "completedAt": "02:11",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "action",
+          "action": "在店内吃早饭并整理当天要用的工具与包裹，准备开门营业并维持掩护身份",
+          "impact": 0,
+          "nodeId": "a_day2_0212",
+          "status": "interrupted",
+          "endTime": "02:30",
+          "outcome": "在店内吃早饭并整理当天要用的工具与包裹，准备开门营业并维持掩护身份 [因重新规划而中断] 已中断",
+          "startTime": "02:12",
+          "characterId": "Harrison Lockheed",
+          "characterName": "Harrison Lockheed",
+          "executionMeta": {
+            "startedAt": "02:12",
+            "interruptedAt": "02:15",
+            "remainingMinutes": 0,
+            "interruptionReason": "revise_replan"
+          }
+        },
+        {
+          "type": "character_interaction",
+          "action": "装作平常的店主向阿道夫寒暄，保持语气中立并仔细观察他的反应",
+          "impact": 1,
+          "nodeId": "ci_harrison_0216_01",
+          "status": "in_progress",
+          "endTime": "02:20",
+          "startTime": "02:16",
+          "characterId": "Harrison Lockheed",
+          "characterName": "Harrison Lockheed",
+          "executionMeta": {
+            "startedAt": "02:16",
+            "remainingMinutes": 4
+          },
+          "targetCharacterIds": [
+            "Adolph Carl"
+          ]
+        }
+      ]
+    },
+    {
+      "npcName": "Harrison Lockheed",
+      "gameDay": 1,
+      "schedule": [
+        {
+          "activity": "把前台关好并检查灯光、门锁和货架，准备晚间安保程序",
+          "location": "五金店"
+        },
+        {
+          "activity": "去后室检查并整理隐藏库存，确认今晚需要处理的改装零件是否齐全",
+          "location": "五金店"
+        },
+        {
+          "activity": "对一把委托改装的手枪做最后调试并用暗号记录客户信息",
+          "location": "五金店"
+        },
+        {
+          "activity": "吃一顿简单的晚餐并顺便聊聊镇上最近的动静以打听消息",
+          "location": "海伦的餐桌"
+        },
+        {
+          "activity": "找本·克莱奥碰面喝一杯，确认他对我生意的保护和近况",
+          "location": "驯鹿酒吧"
+        },
+        {
+          "activity": "去阿道夫家做一次简短拜访并留下一点小心意以维护关系",
+          "location": "阿道夫家"
+        },
+        {
+          "activity": "回店把账本和样品藏好并检查监控录影及后门警报",
+          "location": "五金店"
+        },
+        {
+          "activity": "在后室写下明日的补货与客户名单，整理计划后上床休息",
+          "location": "五金店"
+        }
+      ],
+      "nodes": [
+        {
+          "type": "scene_interaction",
+          "action": "把账本和样品藏好，并检查后门警报与门窗传感器是否正常工作",
+          "impact": 0,
+          "nodeId": "si1",
+          "status": "completed",
+          "endTime": "23:10",
+          "outcome": "我把账本和样品收好并藏到后室库存里，避免放在显眼处。随后逐一检查了后门警报和门窗传感器，所有设备都在线且运行正常。",
+          "startTime": "23:00",
+          "characterId": "Harrison Lockheed",
+          "characterName": "Harrison Lockheed",
+          "executionMeta": {
+            "startedAt": "23:00",
+            "completedAt": "23:10",
+            "remainingMinutes": 0
+          },
+          "objectInteractionPayload": {
+            "itemId": "非法枪支库存"
+          }
+        },
+        {
+          "type": "scene_interaction",
+          "action": "把账本和样品藏好，并检查后门警报与门窗传感器是否正常工作",
+          "impact": 0,
+          "nodeId": "si1",
+          "status": "completed",
+          "endTime": "23:10",
+          "outcome": "我把账本和样品收好并藏到后室库存里，避免放在显眼处。随后逐一检查了后门警报和门窗传感器，所有设备都在线且运行正常。",
+          "startTime": "23:00",
+          "characterId": "Harrison Lockheed",
+          "characterName": "Harrison Lockheed",
+          "executionMeta": {
+            "startedAt": "23:00",
+            "completedAt": "23:10",
+            "remainingMinutes": 0
+          },
+          "objectInteractionPayload": {
+            "itemId": "非法枪支库存"
+          }
+        },
+        {
+          "type": "object_interaction",
+          "action": "对史密斯625转轮手枪做最后调试，检验击发机构、瞄准器和回火情况",
+          "impact": 0,
+          "nodeId": "oi1",
+          "status": "completed",
+          "endTime": "19:46",
+          "outcome": "我在后室的工作台上对那把史密斯625做了最后调试，空击并检查了击发机构与瞄准器，回火在可接受范围内，一切运转顺畅。",
+          "startTime": "19:26",
+          "characterId": "Harrison Lockheed",
+          "characterName": "Harrison Lockheed",
+          "executionMeta": {
+            "startedAt": "19:26",
+            "completedAt": "19:46",
+            "remainingMinutes": 0
+          },
+          "objectInteractionPayload": {
+            "itemId": "ITEM_SCN18_5"
+          }
+        },
+        {
+          "type": "action",
+          "action": "在后室默用暗号将委托人的姓名、交付时间和改装要求编码记牢并分配内部编号备用",
+          "impact": 0,
+          "nodeId": "a2",
+          "status": "completed",
+          "endTime": "19:52",
+          "outcome": "在后室默用暗号将委托人的姓名、交付时间和改装要求编码记牢并分配内部编号备用 成功",
+          "startTime": "19:47",
+          "characterId": "Harrison Lockheed",
+          "characterName": "Harrison Lockheed",
+          "executionMeta": {
+            "startedAt": "19:47",
+            "completedAt": "19:52",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "movement",
+          "action": "前往海伦的餐桌",
+          "impact": 0,
+          "nodeId": "m_harrison_to_helen_01",
+          "status": "interrupted",
+          "endTime": "20:03",
+          "outcome": "前往海伦的餐桌 [因重新规划而中断] 已中断",
+          "startTime": "19:53",
+          "characterId": "Harrison Lockheed",
+          "destination": "SCN_10_SUB_1",
+          "characterName": "Harrison Lockheed",
+          "executionMeta": {
+            "movement": {
+              "routeSnapshot": [
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_3",
+                    "position": 0.58
+                  },
+                  "from": {
+                    "type": "scene",
+                    "sceneId": "SCN_18_SUB_1"
+                  },
+                  "kind": "along_road",
+                  "roadId": "ROAD_3",
+                  "blockCheck": {
+                    "toId": "ROAD_3",
+                    "fromId": "SCN_18_SUB_1"
+                  },
+                  "durationMinutes": 1
+                },
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_3",
+                    "position": 0
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_3",
+                    "position": 0.58
+                  },
+                  "kind": "along_road",
+                  "roadId": "ROAD_3",
+                  "durationMinutes": 5.8
+                },
+                {
+                  "to": {
+                    "type": "junction",
+                    "junctionId": "JUNC_3"
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_3",
+                    "position": 0
+                  },
+                  "kind": "to_junction",
+                  "blockCheck": {
+                    "toId": "JUNC_3",
+                    "fromId": "ROAD_3"
+                  },
+                  "durationMinutes": 0
+                },
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_2",
+                    "position": 1
+                  },
+                  "from": {
+                    "type": "junction",
+                    "junctionId": "JUNC_3"
+                  },
+                  "kind": "to_junction",
+                  "blockCheck": {
+                    "toId": "ROAD_2",
+                    "fromId": "JUNC_3"
+                  },
+                  "durationMinutes": 0
+                },
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_2",
+                    "position": 0.28
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_2",
+                    "position": 1
+                  },
+                  "kind": "along_road",
+                  "roadId": "ROAD_2",
+                  "durationMinutes": 7.199999999999999
+                },
+                {
+                  "to": {
+                    "type": "scene",
+                    "sceneId": "SCN_10_SUB_1"
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_2",
+                    "position": 0.28
+                  },
+                  "kind": "to_scene",
+                  "blockCheck": {
+                    "toId": "SCN_10_SUB_1",
+                    "fromId": "ROAD_2"
+                  },
+                  "durationMinutes": 1
+                }
+              ],
+              "targetPosition": {
+                "type": "scene",
+                "sceneId": "SCN_10_SUB_1"
+              },
+              "minutesIntoStep": 2,
+              "currentStepIndex": 4,
+              "lastReachablePosition": {
+                "type": "road",
+                "roadId": "ROAD_2",
+                "position": 0.8
+              }
+            },
+            "startedAt": "19:53",
+            "interruptedAt": "20:01",
+            "remainingMinutes": 0,
+            "interruptionReason": "revise_replan"
+          }
+        },
+        {
+          "type": "character_interaction",
+          "action": "压低声音向安吉拉询问最近镇上的风声，试探阿道夫是否有露面，并留意她的表情与周围是否有人偷听",
+          "impact": 1,
+          "nodeId": "ci1",
+          "status": "failed",
+          "endTime": "21:51",
+          "startTime": "21:48",
+          "characterId": "Harrison Lockheed",
+          "characterName": "Harrison Lockheed",
+          "executionMeta": {
+            "failedAt": "21:51",
+            "startedAt": "21:48",
+            "remainingMinutes": 3
+          },
+          "targetCharacterIds": [
+            "Angela"
+          ]
+        },
+        {
+          "type": "character_interaction",
+          "action": "向阿道夫、Angela和Solomon寒暄，并把小礼物递给阿道夫，同时留心他们谈话中的任何风声",
+          "impact": 2,
+          "nodeId": "ci_adolph_2008",
+          "status": "failed",
+          "endTime": "20:11",
+          "startTime": "20:08",
+          "characterId": "Harrison Lockheed",
+          "characterName": "Harrison Lockheed",
+          "executionMeta": {
+            "failedAt": "20:11",
+            "startedAt": "20:08",
+            "remainingMinutes": 3
+          },
+          "targetCharacterIds": [
+            "Adolph Carl",
+            "Angela",
+            "Solomon"
+          ]
+        },
+        {
+          "type": "character_interaction",
+          "action": "压低声音向安吉拉询问最近镇上的风声，试探阿道夫是否有露面，并留意她的表情与周围是否有人偷听",
+          "impact": 1,
+          "nodeId": "ci1",
+          "status": "failed",
+          "endTime": "21:51",
+          "startTime": "21:48",
+          "characterId": "Harrison Lockheed",
+          "characterName": "Harrison Lockheed",
+          "executionMeta": {
+            "failedAt": "21:51",
+            "startedAt": "21:48",
+            "remainingMinutes": 3
+          },
+          "targetCharacterIds": [
+            "Angela"
+          ]
+        },
+        {
+          "type": "character_interaction",
+          "action": "压低声音向安吉拉询问最近镇上的风声，试探阿道夫是否有露面，并留意她的表情与周围是否有人偷听",
+          "impact": 1,
+          "nodeId": "ci1",
+          "status": "failed",
+          "endTime": "21:51",
+          "startTime": "21:48",
+          "characterId": "Harrison Lockheed",
+          "characterName": "Harrison Lockheed",
+          "executionMeta": {
+            "failedAt": "21:51",
+            "startedAt": "21:48",
+            "remainingMinutes": 3
+          },
+          "targetCharacterIds": [
+            "Angela"
+          ]
+        },
+        {
+          "type": "character_interaction",
+          "action": "压低声音向安吉拉询问最近镇上的风声，试探阿道夫是否有露面，并留意她的表情与周围是否有人偷听",
+          "impact": 1,
+          "nodeId": "ci1",
+          "status": "failed",
+          "endTime": "21:51",
+          "startTime": "21:48",
+          "characterId": "Harrison Lockheed",
+          "characterName": "Harrison Lockheed",
+          "executionMeta": {
+            "failedAt": "21:51",
+            "startedAt": "21:48",
+            "remainingMinutes": 3
+          },
+          "targetCharacterIds": [
+            "Angela"
+          ]
+        },
+        {
+          "type": "character_interaction",
+          "action": "把准备好的小礼物递给Angela，请她代为转交给阿道夫，并低声问她最近镇上的风声是否有对我店不利的消息",
+          "impact": 1,
+          "nodeId": "ci_harrison_gift_angela_01",
+          "status": "failed",
+          "endTime": "20:26",
+          "startTime": "20:23",
+          "characterId": "Harrison Lockheed",
+          "characterName": "Harrison Lockheed",
+          "executionMeta": {
+            "failedAt": "20:26",
+            "startedAt": "20:23",
+            "remainingMinutes": 3
+          },
+          "targetCharacterIds": [
+            "Angela"
+          ]
+        },
+        {
+          "type": "character_interaction",
+          "action": "向Angela问候并低声询问阿道夫现在在不在，顺便请她代为转交小礼物",
+          "impact": 1,
+          "nodeId": "ci_next_001",
+          "status": "failed",
+          "endTime": "20:30",
+          "startTime": "20:27",
+          "characterId": "Harrison Lockheed",
+          "characterName": "Harrison Lockheed",
+          "executionMeta": {
+            "failedAt": "20:30",
+            "startedAt": "20:27",
+            "remainingMinutes": 3
+          },
+          "targetCharacterIds": [
+            "Angela"
+          ]
+        },
+        {
+          "type": "character_interaction",
+          "skill": "Persuade",
+          "action": "低声向Solomon再探问：阿道夫最近有露面吗？并请他代为转交小礼物，同时密切观察他的表情与周围是否有人靠近；若他回避或显得可疑则立刻收手离开。",
+          "impact": 1,
+          "nodeId": "ci_harrison_001",
+          "status": "failed",
+          "endTime": "22:04",
+          "startTime": "22:00",
+          "characterId": "Harrison Lockheed",
+          "characterName": "Harrison Lockheed",
+          "executionMeta": {
+            "failedAt": "22:04",
+            "startedAt": "22:00",
+            "remainingMinutes": 4
+          },
+          "targetCharacterIds": [
+            "Solomon"
+          ]
+        },
+        {
+          "type": "character_interaction",
+          "action": "把准备好的小礼物递给Angela，请她代为转交给阿道夫，并低声问她阿道夫现在是否在家，同时顺带打听最近镇上的风声是否有对我店不利的消息",
+          "impact": 1,
+          "nodeId": "ci_harrison_01",
+          "status": "interrupted",
+          "endTime": "20:39",
+          "outcome": "把准备好的小礼物递给Angela，请她代为转交给阿道夫，并低声问她阿道夫现在是否在家，同时顺带打听最近镇上的风声是否有对我店不利的消息 [因重新规划而中断] 已中断",
+          "startTime": "20:36",
+          "characterId": "Harrison Lockheed",
+          "characterName": "Harrison Lockheed",
+          "executionMeta": {
+            "startedAt": "20:36",
+            "interruptedAt": "20:36",
+            "remainingMinutes": 0,
+            "interruptionReason": "revise_replan"
+          },
+          "targetCharacterIds": [
+            "Angela"
+          ]
+        },
+        {
+          "type": "character_interaction",
+          "skill": "Persuade",
+          "action": "走近Angela，低声把准备好的小礼物交给她并悄声询问阿道夫现在是否在家，同时留意她的表情与周围谈话以捕捉关于镇上对我店可能不利的风声",
+          "impact": 1,
+          "nodeId": "ci_harrison_angela_2037",
+          "status": "completed",
+          "endTime": "20:40",
+          "outcome": "我走近安吉拉，低声把准备好的小礼物递给她并问阿道夫现在是否在家。她被说服后没有给出阿道夫的下落，但告诉我她在卡森德拉四处走动、不在固定地点，并且通常不追问买家的动机；我注意到她表情平静，周围谈话也很少。",
+          "startTime": "20:37",
+          "characterId": "Harrison Lockheed",
+          "characterName": "Harrison Lockheed",
+          "executionMeta": {
+            "startedAt": "20:37",
+            "completedAt": "20:40",
+            "remainingMinutes": 0
+          },
+          "targetCharacterIds": [
+            "Angela"
+          ]
+        },
+        {
+          "type": "movement",
+          "action": "步行前往占星师小铺低调联系所罗门，打听阿道夫最近是否有露面",
+          "impact": 0,
+          "nodeId": "m1",
+          "status": "in_progress",
+          "endTime": "23:53",
+          "startTime": "23:48",
+          "characterId": "Harrison Lockheed",
+          "destination": "SCN_11_SUB_1",
+          "characterName": "Harrison Lockheed",
+          "executionMeta": {
+            "movement": {
+              "routeSnapshot": [
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_3",
+                    "position": 0.58
+                  },
+                  "from": {
+                    "type": "scene",
+                    "sceneId": "SCN_18_SUB_1"
+                  },
+                  "kind": "along_road",
+                  "roadId": "ROAD_3",
+                  "blockCheck": {
+                    "toId": "ROAD_3",
+                    "fromId": "SCN_18_SUB_1"
+                  },
+                  "durationMinutes": 1
+                },
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_3",
+                    "position": 0
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_3",
+                    "position": 0.58
+                  },
+                  "kind": "along_road",
+                  "roadId": "ROAD_3",
+                  "durationMinutes": 5.8
+                },
+                {
+                  "to": {
+                    "type": "junction",
+                    "junctionId": "JUNC_3"
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_3",
+                    "position": 0
+                  },
+                  "kind": "to_junction",
+                  "blockCheck": {
+                    "toId": "JUNC_3",
+                    "fromId": "ROAD_3"
+                  },
+                  "durationMinutes": 0
+                },
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_2",
+                    "position": 1
+                  },
+                  "from": {
+                    "type": "junction",
+                    "junctionId": "JUNC_3"
+                  },
+                  "kind": "to_junction",
+                  "blockCheck": {
+                    "toId": "ROAD_2",
+                    "fromId": "JUNC_3"
+                  },
+                  "durationMinutes": 0
+                },
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_2",
+                    "position": 0.14
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_2",
+                    "position": 1
+                  },
+                  "kind": "along_road",
+                  "roadId": "ROAD_2",
+                  "durationMinutes": 8.6
+                },
+                {
+                  "to": {
+                    "type": "scene",
+                    "sceneId": "SCN_11_SUB_1"
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_2",
+                    "position": 0.14
+                  },
+                  "kind": "to_scene",
+                  "blockCheck": {
+                    "toId": "SCN_11_SUB_1",
+                    "fromId": "ROAD_2"
+                  },
+                  "durationMinutes": 1
+                }
+              ],
+              "targetPosition": {
+                "type": "scene",
+                "sceneId": "SCN_11_SUB_1"
+              },
+              "minutesIntoStep": 5,
+              "currentStepIndex": 4,
+              "lastReachablePosition": {
+                "type": "road",
+                "roadId": "ROAD_2",
+                "position": 0.5
+              }
+            },
+            "startedAt": "23:48",
+            "remainingMinutes": 5
+          }
+        },
+        {
+          "type": "character_interaction",
+          "action": "压低声音向安吉拉询问最近镇上的风声，试探阿道夫是否有露面，并留意她的表情与周围是否有人偷听",
+          "impact": 1,
+          "nodeId": "ci1",
+          "status": "failed",
+          "endTime": "21:51",
+          "startTime": "21:48",
+          "characterId": "Harrison Lockheed",
+          "characterName": "Harrison Lockheed",
+          "executionMeta": {
+            "failedAt": "21:51",
+            "startedAt": "21:48",
+            "remainingMinutes": 3
+          },
+          "targetCharacterIds": [
+            "Angela"
+          ]
+        },
+        {
+          "type": "character_interaction",
+          "action": "将为阿道夫准备的小礼物递给所罗门并低声询问他阿道夫最近是否有露面，同时留意他的表情与是否有可疑随行",
+          "impact": 1,
+          "nodeId": "ci2",
+          "status": "interrupted",
+          "endTime": "21:21",
+          "outcome": "将为阿道夫准备的小礼物递给所罗门并低声询问他阿道夫最近是否有露面，同时留意他的表情与是否有可疑随行 [因重新规划而中断] 已中断",
+          "startTime": "21:18",
+          "characterId": "Harrison Lockheed",
+          "characterName": "Harrison Lockheed",
+          "executionMeta": {
+            "startedAt": "21:18",
+            "interruptedAt": "21:20",
+            "remainingMinutes": 0,
+            "interruptionReason": "revise_replan"
+          },
+          "targetCharacterIds": [
+            "Solomon"
+          ]
+        },
+        {
+          "type": "character_interaction",
+          "action": "压低声音向安吉拉询问最近镇上的风声，试探阿道夫是否有露面，并留意她的表情与周围是否有人偷听",
+          "impact": 1,
+          "nodeId": "ci1",
+          "status": "failed",
+          "endTime": "21:51",
+          "startTime": "21:48",
+          "characterId": "Harrison Lockheed",
+          "characterName": "Harrison Lockheed",
+          "executionMeta": {
+            "failedAt": "21:51",
+            "startedAt": "21:48",
+            "remainingMinutes": 3
+          },
+          "targetCharacterIds": [
+            "Angela"
+          ]
+        },
+        {
+          "type": "character_interaction",
+          "action": "低声向所罗门寒暄，把准备好的小礼物托付或请他代为转交给阿道夫，并悄声询问阿道夫最近有没有露面以及镇上有什么新风声，同时注意他表情和是否有可疑同伴",
+          "impact": 1,
+          "nodeId": "ci3",
+          "status": "failed",
+          "endTime": "21:03",
+          "startTime": "20:58",
+          "characterId": "Harrison Lockheed",
+          "characterName": "Harrison Lockheed",
+          "executionMeta": {
+            "failedAt": "21:03",
+            "startedAt": "20:58",
+            "remainingMinutes": 5
+          },
+          "targetCharacterIds": [
+            "Solomon"
+          ]
+        },
+        {
+          "type": "character_interaction",
+          "action": "向所罗门低声寒暄，请他把为阿道夫准备的小礼物代为转交，并顺便问他阿道夫最近是否有回家或露面；注意他的表情与随行是否有异常",
+          "impact": 1,
+          "nodeId": "ci_harrison_2104_1",
+          "status": "interrupted",
+          "endTime": "21:06",
+          "outcome": "向所罗门低声寒暄，请他把为阿道夫准备的小礼物代为转交，并顺便问他阿道夫最近是否有回家或露面；注意他的表情与随行是否有异常 [因重新规划而中断] 已中断",
+          "startTime": "21:04",
+          "characterId": "Harrison Lockheed",
+          "characterName": "Harrison Lockheed",
+          "executionMeta": {
+            "startedAt": "21:04",
+            "interruptedAt": "21:04",
+            "remainingMinutes": 0,
+            "interruptionReason": "revise_replan"
+          },
+          "targetCharacterIds": [
+            "Solomon"
+          ]
+        },
+        {
+          "type": "character_interaction",
+          "action": "低声询问所罗门：阿道夫最近有露面吗？并请他把我准备的小礼物代为转交给阿道夫，同时观察他的表情与随行是否异常",
+          "impact": 1,
+          "nodeId": "ci2_2105",
+          "status": "failed",
+          "endTime": "21:07",
+          "startTime": "21:05",
+          "characterId": "Harrison Lockheed",
+          "characterName": "Harrison Lockheed",
+          "executionMeta": {
+            "failedAt": "21:07",
+            "startedAt": "21:05",
+            "remainingMinutes": 2
+          },
+          "targetCharacterIds": [
+            "Solomon"
+          ]
+        },
+        {
+          "type": "character_interaction",
+          "action": "压低声音向安吉拉询问最近镇上的风声，试探阿道夫是否有露面，并留意她的表情与周围是否有人偷听",
+          "impact": 1,
+          "nodeId": "ci1",
+          "status": "failed",
+          "endTime": "21:51",
+          "startTime": "21:48",
+          "characterId": "Harrison Lockheed",
+          "characterName": "Harrison Lockheed",
+          "executionMeta": {
+            "failedAt": "21:51",
+            "startedAt": "21:48",
+            "remainingMinutes": 3
+          },
+          "targetCharacterIds": [
+            "Angela"
+          ]
+        },
+        {
+          "type": "action",
+          "action": "观察所罗门的表情与随行者的举动，注意西蒙是否有任何可疑靠近或异常动作",
+          "impact": 0,
+          "nodeId": "a1_2113",
+          "status": "completed",
+          "endTime": "21:15",
+          "outcome": "观察所罗门的表情与随行者的举动，注意西蒙是否有任何可疑靠近或异常动作 成功",
+          "startTime": "21:13",
+          "characterId": "Harrison Lockheed",
+          "characterName": "Harrison Lockheed",
+          "executionMeta": {
+            "startedAt": "21:13",
+            "completedAt": "21:15",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "character_interaction",
+          "action": "向安吉拉低声递交准备好的小礼物并请她代为转交给阿道夫或告知阿道夫现在是否在家，同时压低声音避免提及任何非法事务，并在交谈中密切观察西蒙的表情与肢体语言有无威胁或偷听迹象；若安吉拉不配合或西蒙表现可疑则中止接触。",
+          "impact": 1,
+          "nodeId": "ci_harrison_2116",
+          "status": "interrupted",
+          "endTime": "21:18",
+          "outcome": "向安吉拉低声递交准备好的小礼物并请她代为转交给阿道夫或告知阿道夫现在是否在家，同时压低声音避免提及任何非法事务，并在交谈中密切观察西蒙的表情与肢体语言有无威胁或偷听迹象；若安吉拉不配合或西蒙表现可疑则中止接触。 [因重新规划而中断] 已中断",
+          "startTime": "21:16",
+          "characterId": "Harrison Lockheed",
+          "characterName": "Harrison Lockheed",
+          "executionMeta": {
+            "startedAt": "21:16",
+            "interruptedAt": "21:17",
+            "remainingMinutes": 0,
+            "interruptionReason": "revise_replan"
+          },
+          "targetCharacterIds": [
+            "Angela",
+            "Simon Laplace"
+          ]
+        },
+        {
+          "type": "character_interaction",
+          "action": "将为阿道夫准备的小礼物递给所罗门并低声询问他阿道夫最近是否有露面，同时留意他的表情与是否有可疑随行",
+          "impact": 1,
+          "nodeId": "ci2",
+          "status": "interrupted",
+          "endTime": "21:21",
+          "outcome": "将为阿道夫准备的小礼物递给所罗门并低声询问他阿道夫最近是否有露面，同时留意他的表情与是否有可疑随行 [因重新规划而中断] 已中断",
+          "startTime": "21:18",
+          "characterId": "Harrison Lockheed",
+          "characterName": "Harrison Lockheed",
+          "executionMeta": {
+            "startedAt": "21:18",
+            "interruptedAt": "21:20",
+            "remainingMinutes": 0,
+            "interruptionReason": "revise_replan"
+          },
+          "targetCharacterIds": [
+            "Solomon"
+          ]
+        },
+        {
+          "type": "character_interaction",
+          "skill": "Persuade",
+          "action": "靠近安吉拉，低声把准备好的小礼物递给她并问阿道夫现在是否在家，同时留意她的表情与周围是否有可疑人物（尤其西蒙）；如她拒绝或场面显得危险则立即收手，改往所罗门或海伦处继续打听。",
+          "impact": 1,
+          "nodeId": "ci_harrison_1",
+          "status": "failed",
+          "endTime": "21:24",
+          "startTime": "21:21",
+          "characterId": "Harrison Lockheed",
+          "characterName": "Harrison Lockheed",
+          "executionMeta": {
+            "failedAt": "21:24",
+            "startedAt": "21:21",
+            "remainingMinutes": 3
+          },
+          "targetCharacterIds": [
+            "Angela"
+          ]
+        },
+        {
+          "type": "character_interaction",
+          "action": "压低声音向安吉拉询问最近镇上的风声，试探阿道夫是否有露面，并留意她的表情与周围是否有人偷听",
+          "impact": 1,
+          "nodeId": "ci1",
+          "status": "failed",
+          "endTime": "21:51",
+          "startTime": "21:48",
+          "characterId": "Harrison Lockheed",
+          "characterName": "Harrison Lockheed",
+          "executionMeta": {
+            "failedAt": "21:51",
+            "startedAt": "21:48",
+            "remainingMinutes": 3
+          },
+          "targetCharacterIds": [
+            "Angela"
+          ]
+        },
+        {
+          "type": "movement",
+          "action": "前往海伦的餐桌吃晚饭并顺便打听镇上最近的动静",
+          "impact": 0,
+          "nodeId": "m2_2128",
+          "status": "completed",
+          "endTime": "21:33",
+          "outcome": "前往海伦的餐桌吃晚饭并顺便打听镇上最近的动静 成功",
+          "startTime": "21:28",
+          "characterId": "Harrison Lockheed",
+          "destination": "SCN_10_SUB_1",
+          "characterName": "Harrison Lockheed",
+          "executionMeta": {
+            "movement": {
+              "routeSnapshot": [
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_2",
+                    "position": 0
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_2",
+                    "position": 0.2999999999999999
+                  },
+                  "kind": "along_road",
+                  "roadId": "ROAD_2",
+                  "durationMinutes": 2.999999999999999
+                },
+                {
+                  "to": {
+                    "type": "junction",
+                    "junctionId": "JUNC_2"
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_2",
+                    "position": 0
+                  },
+                  "kind": "to_junction",
+                  "blockCheck": {
+                    "toId": "JUNC_2",
+                    "fromId": "ROAD_2"
+                  },
+                  "durationMinutes": 0
+                },
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_2",
+                    "position": 0
+                  },
+                  "from": {
+                    "type": "junction",
+                    "junctionId": "JUNC_2"
+                  },
+                  "kind": "to_junction",
+                  "blockCheck": {
+                    "toId": "ROAD_2",
+                    "fromId": "JUNC_2"
+                  },
+                  "durationMinutes": 0
+                },
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_2",
+                    "position": 0.28
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_2",
+                    "position": 0
+                  },
+                  "kind": "along_road",
+                  "roadId": "ROAD_2",
+                  "durationMinutes": 2.8
+                },
+                {
+                  "to": {
+                    "type": "scene",
+                    "sceneId": "SCN_10_SUB_1"
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_2",
+                    "position": 0.28
+                  },
+                  "kind": "to_scene",
+                  "blockCheck": {
+                    "toId": "SCN_10_SUB_1",
+                    "fromId": "ROAD_2"
+                  },
+                  "durationMinutes": 1
+                }
+              ],
+              "targetPosition": {
+                "type": "scene",
+                "sceneId": "SCN_10_SUB_1"
+              },
+              "minutesIntoStep": 0,
+              "currentStepIndex": 5,
+              "lastReachablePosition": {
+                "type": "scene",
+                "sceneId": "SCN_10_SUB_1"
+              }
+            },
+            "startedAt": "21:28",
+            "completedAt": "21:34",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "action",
+          "action": "向海伦低声寒暄并点一份招牌菜，借机悄声打听镇上最近的风声以及阿道夫是否有露面，同时密切观察约翰尼的表情与反应",
+          "impact": 2,
+          "nodeId": "a_harrison_001",
+          "status": "completed",
+          "endTime": "21:40",
+          "outcome": "向海伦低声寒暄并点一份招牌菜，借机悄声打听镇上最近的风声以及阿道夫是否有露面，同时密切观察约翰尼的表情与反应 成功",
+          "startTime": "21:35",
+          "characterId": "Harrison Lockheed",
+          "characterName": "Harrison Lockheed",
+          "executionMeta": {
+            "startedAt": "21:35",
+            "completedAt": "21:40",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "character_interaction",
+          "skill": "Persuade",
+          "action": "低声向Solomon再探问：阿道夫最近有露面吗？并请他代为转交小礼物，同时密切观察他的表情与周围是否有人靠近；若他回避或显得可疑则立刻收手离开。",
+          "impact": 1,
+          "nodeId": "ci_harrison_001",
+          "status": "failed",
+          "endTime": "22:04",
+          "startTime": "22:00",
+          "characterId": "Harrison Lockheed",
+          "characterName": "Harrison Lockheed",
+          "executionMeta": {
+            "failedAt": "22:04",
+            "startedAt": "22:00",
+            "remainingMinutes": 4
+          },
+          "targetCharacterIds": [
+            "Solomon"
+          ]
+        },
+        {
+          "type": "movement",
+          "action": "步行前往占星师小铺低调联系所罗门，打听阿道夫最近是否有露面",
+          "impact": 0,
+          "nodeId": "m1",
+          "status": "in_progress",
+          "endTime": "23:53",
+          "startTime": "23:48",
+          "characterId": "Harrison Lockheed",
+          "destination": "SCN_11_SUB_1",
+          "characterName": "Harrison Lockheed",
+          "executionMeta": {
+            "movement": {
+              "routeSnapshot": [
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_3",
+                    "position": 0.58
+                  },
+                  "from": {
+                    "type": "scene",
+                    "sceneId": "SCN_18_SUB_1"
+                  },
+                  "kind": "along_road",
+                  "roadId": "ROAD_3",
+                  "blockCheck": {
+                    "toId": "ROAD_3",
+                    "fromId": "SCN_18_SUB_1"
+                  },
+                  "durationMinutes": 1
+                },
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_3",
+                    "position": 0
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_3",
+                    "position": 0.58
+                  },
+                  "kind": "along_road",
+                  "roadId": "ROAD_3",
+                  "durationMinutes": 5.8
+                },
+                {
+                  "to": {
+                    "type": "junction",
+                    "junctionId": "JUNC_3"
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_3",
+                    "position": 0
+                  },
+                  "kind": "to_junction",
+                  "blockCheck": {
+                    "toId": "JUNC_3",
+                    "fromId": "ROAD_3"
+                  },
+                  "durationMinutes": 0
+                },
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_2",
+                    "position": 1
+                  },
+                  "from": {
+                    "type": "junction",
+                    "junctionId": "JUNC_3"
+                  },
+                  "kind": "to_junction",
+                  "blockCheck": {
+                    "toId": "ROAD_2",
+                    "fromId": "JUNC_3"
+                  },
+                  "durationMinutes": 0
+                },
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_2",
+                    "position": 0.14
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_2",
+                    "position": 1
+                  },
+                  "kind": "along_road",
+                  "roadId": "ROAD_2",
+                  "durationMinutes": 8.6
+                },
+                {
+                  "to": {
+                    "type": "scene",
+                    "sceneId": "SCN_11_SUB_1"
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_2",
+                    "position": 0.14
+                  },
+                  "kind": "to_scene",
+                  "blockCheck": {
+                    "toId": "SCN_11_SUB_1",
+                    "fromId": "ROAD_2"
+                  },
+                  "durationMinutes": 1
+                }
+              ],
+              "targetPosition": {
+                "type": "scene",
+                "sceneId": "SCN_11_SUB_1"
+              },
+              "minutesIntoStep": 5,
+              "currentStepIndex": 4,
+              "lastReachablePosition": {
+                "type": "road",
+                "roadId": "ROAD_2",
+                "position": 0.5
+              }
+            },
+            "startedAt": "23:48",
+            "remainingMinutes": 5
+          }
+        },
+        {
+          "type": "character_interaction",
+          "action": "压低声音向安吉拉询问最近镇上的风声，试探阿道夫是否有露面，并留意她的表情与周围是否有人偷听",
+          "impact": 1,
+          "nodeId": "ci1",
+          "status": "failed",
+          "endTime": "21:51",
+          "startTime": "21:48",
+          "characterId": "Harrison Lockheed",
+          "characterName": "Harrison Lockheed",
+          "executionMeta": {
+            "failedAt": "21:51",
+            "startedAt": "21:48",
+            "remainingMinutes": 3
+          },
+          "targetCharacterIds": [
+            "Angela"
+          ]
+        },
+        {
+          "type": "movement",
+          "action": "步行前往占星师小铺低调联系所罗门，打听阿道夫最近是否有露面",
+          "impact": 0,
+          "nodeId": "m1",
+          "status": "in_progress",
+          "endTime": "23:53",
+          "startTime": "23:48",
+          "characterId": "Harrison Lockheed",
+          "destination": "SCN_11_SUB_1",
+          "characterName": "Harrison Lockheed",
+          "executionMeta": {
+            "movement": {
+              "routeSnapshot": [
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_3",
+                    "position": 0.58
+                  },
+                  "from": {
+                    "type": "scene",
+                    "sceneId": "SCN_18_SUB_1"
+                  },
+                  "kind": "along_road",
+                  "roadId": "ROAD_3",
+                  "blockCheck": {
+                    "toId": "ROAD_3",
+                    "fromId": "SCN_18_SUB_1"
+                  },
+                  "durationMinutes": 1
+                },
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_3",
+                    "position": 0
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_3",
+                    "position": 0.58
+                  },
+                  "kind": "along_road",
+                  "roadId": "ROAD_3",
+                  "durationMinutes": 5.8
+                },
+                {
+                  "to": {
+                    "type": "junction",
+                    "junctionId": "JUNC_3"
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_3",
+                    "position": 0
+                  },
+                  "kind": "to_junction",
+                  "blockCheck": {
+                    "toId": "JUNC_3",
+                    "fromId": "ROAD_3"
+                  },
+                  "durationMinutes": 0
+                },
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_2",
+                    "position": 1
+                  },
+                  "from": {
+                    "type": "junction",
+                    "junctionId": "JUNC_3"
+                  },
+                  "kind": "to_junction",
+                  "blockCheck": {
+                    "toId": "ROAD_2",
+                    "fromId": "JUNC_3"
+                  },
+                  "durationMinutes": 0
+                },
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_2",
+                    "position": 0.14
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_2",
+                    "position": 1
+                  },
+                  "kind": "along_road",
+                  "roadId": "ROAD_2",
+                  "durationMinutes": 8.6
+                },
+                {
+                  "to": {
+                    "type": "scene",
+                    "sceneId": "SCN_11_SUB_1"
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_2",
+                    "position": 0.14
+                  },
+                  "kind": "to_scene",
+                  "blockCheck": {
+                    "toId": "SCN_11_SUB_1",
+                    "fromId": "ROAD_2"
+                  },
+                  "durationMinutes": 1
+                }
+              ],
+              "targetPosition": {
+                "type": "scene",
+                "sceneId": "SCN_11_SUB_1"
+              },
+              "minutesIntoStep": 5,
+              "currentStepIndex": 4,
+              "lastReachablePosition": {
+                "type": "road",
+                "roadId": "ROAD_2",
+                "position": 0.5
+              }
+            },
+            "startedAt": "23:48",
+            "remainingMinutes": 5
+          }
+        },
+        {
+          "type": "movement",
+          "action": "步行前往占星师小铺低调联系所罗门，打听阿道夫最近是否有露面",
+          "impact": 0,
+          "nodeId": "m1",
+          "status": "in_progress",
+          "endTime": "23:53",
+          "startTime": "23:48",
+          "characterId": "Harrison Lockheed",
+          "destination": "SCN_11_SUB_1",
+          "characterName": "Harrison Lockheed",
+          "executionMeta": {
+            "movement": {
+              "routeSnapshot": [
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_3",
+                    "position": 0.58
+                  },
+                  "from": {
+                    "type": "scene",
+                    "sceneId": "SCN_18_SUB_1"
+                  },
+                  "kind": "along_road",
+                  "roadId": "ROAD_3",
+                  "blockCheck": {
+                    "toId": "ROAD_3",
+                    "fromId": "SCN_18_SUB_1"
+                  },
+                  "durationMinutes": 1
+                },
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_3",
+                    "position": 0
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_3",
+                    "position": 0.58
+                  },
+                  "kind": "along_road",
+                  "roadId": "ROAD_3",
+                  "durationMinutes": 5.8
+                },
+                {
+                  "to": {
+                    "type": "junction",
+                    "junctionId": "JUNC_3"
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_3",
+                    "position": 0
+                  },
+                  "kind": "to_junction",
+                  "blockCheck": {
+                    "toId": "JUNC_3",
+                    "fromId": "ROAD_3"
+                  },
+                  "durationMinutes": 0
+                },
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_2",
+                    "position": 1
+                  },
+                  "from": {
+                    "type": "junction",
+                    "junctionId": "JUNC_3"
+                  },
+                  "kind": "to_junction",
+                  "blockCheck": {
+                    "toId": "ROAD_2",
+                    "fromId": "JUNC_3"
+                  },
+                  "durationMinutes": 0
+                },
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_2",
+                    "position": 0.14
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_2",
+                    "position": 1
+                  },
+                  "kind": "along_road",
+                  "roadId": "ROAD_2",
+                  "durationMinutes": 8.6
+                },
+                {
+                  "to": {
+                    "type": "scene",
+                    "sceneId": "SCN_11_SUB_1"
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_2",
+                    "position": 0.14
+                  },
+                  "kind": "to_scene",
+                  "blockCheck": {
+                    "toId": "SCN_11_SUB_1",
+                    "fromId": "ROAD_2"
+                  },
+                  "durationMinutes": 1
+                }
+              ],
+              "targetPosition": {
+                "type": "scene",
+                "sceneId": "SCN_11_SUB_1"
+              },
+              "minutesIntoStep": 5,
+              "currentStepIndex": 4,
+              "lastReachablePosition": {
+                "type": "road",
+                "roadId": "ROAD_2",
+                "position": 0.5
+              }
+            },
+            "startedAt": "23:48",
+            "remainingMinutes": 5
+          }
+        },
+        {
+          "type": "movement",
+          "action": "前往占星师小铺寻找所罗门以低调打听镇上风声",
+          "impact": 0,
+          "nodeId": "m_harrison_01",
+          "status": "interrupted",
+          "endTime": "21:58",
+          "outcome": "前往占星师小铺寻找所罗门以低调打听镇上风声 [因重新规划而中断] 已中断",
+          "startTime": "21:55",
+          "characterId": "Harrison Lockheed",
+          "destination": "SCN_11_SUB_1",
+          "characterName": "Harrison Lockheed",
+          "executionMeta": {
+            "movement": {
+              "routeSnapshot": [
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_2",
+                    "position": 0
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_2",
+                    "position": 0
+                  },
+                  "kind": "along_road",
+                  "roadId": "ROAD_2",
+                  "durationMinutes": 0
+                },
+                {
+                  "to": {
+                    "type": "junction",
+                    "junctionId": "JUNC_2"
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_2",
+                    "position": 0
+                  },
+                  "kind": "to_junction",
+                  "blockCheck": {
+                    "toId": "JUNC_2",
+                    "fromId": "ROAD_2"
+                  },
+                  "durationMinutes": 0
+                },
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_2",
+                    "position": 0
+                  },
+                  "from": {
+                    "type": "junction",
+                    "junctionId": "JUNC_2"
+                  },
+                  "kind": "to_junction",
+                  "blockCheck": {
+                    "toId": "ROAD_2",
+                    "fromId": "JUNC_2"
+                  },
+                  "durationMinutes": 0
+                },
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_2",
+                    "position": 0.14
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_2",
+                    "position": 0
+                  },
+                  "kind": "along_road",
+                  "roadId": "ROAD_2",
+                  "durationMinutes": 1.4
+                },
+                {
+                  "to": {
+                    "type": "scene",
+                    "sceneId": "SCN_11_SUB_1"
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_2",
+                    "position": 0.14
+                  },
+                  "kind": "to_scene",
+                  "blockCheck": {
+                    "toId": "SCN_11_SUB_1",
+                    "fromId": "ROAD_2"
+                  },
+                  "durationMinutes": 1
+                }
+              ],
+              "targetPosition": {
+                "type": "scene",
+                "sceneId": "SCN_11_SUB_1"
+              },
+              "minutesIntoStep": 1,
+              "currentStepIndex": 3,
+              "lastReachablePosition": {
+                "type": "road",
+                "roadId": "ROAD_2",
+                "position": 0.09999999999999999
+              }
+            },
+            "startedAt": "21:55",
+            "interruptedAt": "21:55",
+            "remainingMinutes": 0,
+            "interruptionReason": "revise_replan"
+          }
+        },
+        {
+          "type": "movement",
+          "action": "步行前往占星师小铺低调联系所罗门，打听阿道夫最近是否有露面",
+          "impact": 0,
+          "nodeId": "m1",
+          "status": "in_progress",
+          "endTime": "23:53",
+          "startTime": "23:48",
+          "characterId": "Harrison Lockheed",
+          "destination": "SCN_11_SUB_1",
+          "characterName": "Harrison Lockheed",
+          "executionMeta": {
+            "movement": {
+              "routeSnapshot": [
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_3",
+                    "position": 0.58
+                  },
+                  "from": {
+                    "type": "scene",
+                    "sceneId": "SCN_18_SUB_1"
+                  },
+                  "kind": "along_road",
+                  "roadId": "ROAD_3",
+                  "blockCheck": {
+                    "toId": "ROAD_3",
+                    "fromId": "SCN_18_SUB_1"
+                  },
+                  "durationMinutes": 1
+                },
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_3",
+                    "position": 0
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_3",
+                    "position": 0.58
+                  },
+                  "kind": "along_road",
+                  "roadId": "ROAD_3",
+                  "durationMinutes": 5.8
+                },
+                {
+                  "to": {
+                    "type": "junction",
+                    "junctionId": "JUNC_3"
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_3",
+                    "position": 0
+                  },
+                  "kind": "to_junction",
+                  "blockCheck": {
+                    "toId": "JUNC_3",
+                    "fromId": "ROAD_3"
+                  },
+                  "durationMinutes": 0
+                },
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_2",
+                    "position": 1
+                  },
+                  "from": {
+                    "type": "junction",
+                    "junctionId": "JUNC_3"
+                  },
+                  "kind": "to_junction",
+                  "blockCheck": {
+                    "toId": "ROAD_2",
+                    "fromId": "JUNC_3"
+                  },
+                  "durationMinutes": 0
+                },
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_2",
+                    "position": 0.14
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_2",
+                    "position": 1
+                  },
+                  "kind": "along_road",
+                  "roadId": "ROAD_2",
+                  "durationMinutes": 8.6
+                },
+                {
+                  "to": {
+                    "type": "scene",
+                    "sceneId": "SCN_11_SUB_1"
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_2",
+                    "position": 0.14
+                  },
+                  "kind": "to_scene",
+                  "blockCheck": {
+                    "toId": "SCN_11_SUB_1",
+                    "fromId": "ROAD_2"
+                  },
+                  "durationMinutes": 1
+                }
+              ],
+              "targetPosition": {
+                "type": "scene",
+                "sceneId": "SCN_11_SUB_1"
+              },
+              "minutesIntoStep": 5,
+              "currentStepIndex": 4,
+              "lastReachablePosition": {
+                "type": "road",
+                "roadId": "ROAD_2",
+                "position": 0.5
+              }
+            },
+            "startedAt": "23:48",
+            "remainingMinutes": 5
+          }
+        },
+        {
+          "type": "movement",
+          "action": "悄悄离开人群前往占星师小铺寻找所罗门",
+          "impact": 0,
+          "nodeId": "m_harrison_001",
+          "status": "completed",
+          "endTime": "22:02",
+          "outcome": "悄悄离开人群前往占星师小铺寻找所罗门 成功",
+          "startTime": "21:57",
+          "characterId": "Harrison Lockheed",
+          "destination": "SCN_11_SUB_1",
+          "characterName": "Harrison Lockheed",
+          "executionMeta": {
+            "movement": {
+              "routeSnapshot": [
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_2",
+                    "position": 0
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_2",
+                    "position": 0
+                  },
+                  "kind": "along_road",
+                  "roadId": "ROAD_2",
+                  "durationMinutes": 0
+                },
+                {
+                  "to": {
+                    "type": "junction",
+                    "junctionId": "JUNC_2"
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_2",
+                    "position": 0
+                  },
+                  "kind": "to_junction",
+                  "blockCheck": {
+                    "toId": "JUNC_2",
+                    "fromId": "ROAD_2"
+                  },
+                  "durationMinutes": 0
+                },
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_2",
+                    "position": 0
+                  },
+                  "from": {
+                    "type": "junction",
+                    "junctionId": "JUNC_2"
+                  },
+                  "kind": "to_junction",
+                  "blockCheck": {
+                    "toId": "ROAD_2",
+                    "fromId": "JUNC_2"
+                  },
+                  "durationMinutes": 0
+                },
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_2",
+                    "position": 0.14
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_2",
+                    "position": 0
+                  },
+                  "kind": "along_road",
+                  "roadId": "ROAD_2",
+                  "durationMinutes": 1.4
+                },
+                {
+                  "to": {
+                    "type": "scene",
+                    "sceneId": "SCN_11_SUB_1"
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_2",
+                    "position": 0.14
+                  },
+                  "kind": "to_scene",
+                  "blockCheck": {
+                    "toId": "SCN_11_SUB_1",
+                    "fromId": "ROAD_2"
+                  },
+                  "durationMinutes": 1
+                }
+              ],
+              "targetPosition": {
+                "type": "scene",
+                "sceneId": "SCN_11_SUB_1"
+              },
+              "minutesIntoStep": 0,
+              "currentStepIndex": 5,
+              "lastReachablePosition": {
+                "type": "scene",
+                "sceneId": "SCN_11_SUB_1"
+              }
+            },
+            "startedAt": "21:57",
+            "completedAt": "21:59",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "character_interaction",
+          "skill": "Persuade",
+          "action": "低声向Solomon再探问：阿道夫最近有露面吗？并请他代为转交小礼物，同时密切观察他的表情与周围是否有人靠近；若他回避或显得可疑则立刻收手离开。",
+          "impact": 1,
+          "nodeId": "ci_harrison_001",
+          "status": "failed",
+          "endTime": "22:04",
+          "startTime": "22:00",
+          "characterId": "Harrison Lockheed",
+          "characterName": "Harrison Lockheed",
+          "executionMeta": {
+            "failedAt": "22:04",
+            "startedAt": "22:00",
+            "remainingMinutes": 4
+          },
+          "targetCharacterIds": [
+            "Solomon"
+          ]
+        },
+        {
+          "type": "movement",
+          "action": "步行前往占星师小铺低调联系所罗门，打听阿道夫最近是否有露面",
+          "impact": 0,
+          "nodeId": "m1",
+          "status": "in_progress",
+          "endTime": "23:53",
+          "startTime": "23:48",
+          "characterId": "Harrison Lockheed",
+          "destination": "SCN_11_SUB_1",
+          "characterName": "Harrison Lockheed",
+          "executionMeta": {
+            "movement": {
+              "routeSnapshot": [
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_3",
+                    "position": 0.58
+                  },
+                  "from": {
+                    "type": "scene",
+                    "sceneId": "SCN_18_SUB_1"
+                  },
+                  "kind": "along_road",
+                  "roadId": "ROAD_3",
+                  "blockCheck": {
+                    "toId": "ROAD_3",
+                    "fromId": "SCN_18_SUB_1"
+                  },
+                  "durationMinutes": 1
+                },
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_3",
+                    "position": 0
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_3",
+                    "position": 0.58
+                  },
+                  "kind": "along_road",
+                  "roadId": "ROAD_3",
+                  "durationMinutes": 5.8
+                },
+                {
+                  "to": {
+                    "type": "junction",
+                    "junctionId": "JUNC_3"
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_3",
+                    "position": 0
+                  },
+                  "kind": "to_junction",
+                  "blockCheck": {
+                    "toId": "JUNC_3",
+                    "fromId": "ROAD_3"
+                  },
+                  "durationMinutes": 0
+                },
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_2",
+                    "position": 1
+                  },
+                  "from": {
+                    "type": "junction",
+                    "junctionId": "JUNC_3"
+                  },
+                  "kind": "to_junction",
+                  "blockCheck": {
+                    "toId": "ROAD_2",
+                    "fromId": "JUNC_3"
+                  },
+                  "durationMinutes": 0
+                },
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_2",
+                    "position": 0.14
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_2",
+                    "position": 1
+                  },
+                  "kind": "along_road",
+                  "roadId": "ROAD_2",
+                  "durationMinutes": 8.6
+                },
+                {
+                  "to": {
+                    "type": "scene",
+                    "sceneId": "SCN_11_SUB_1"
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_2",
+                    "position": 0.14
+                  },
+                  "kind": "to_scene",
+                  "blockCheck": {
+                    "toId": "SCN_11_SUB_1",
+                    "fromId": "ROAD_2"
+                  },
+                  "durationMinutes": 1
+                }
+              ],
+              "targetPosition": {
+                "type": "scene",
+                "sceneId": "SCN_11_SUB_1"
+              },
+              "minutesIntoStep": 5,
+              "currentStepIndex": 4,
+              "lastReachablePosition": {
+                "type": "road",
+                "roadId": "ROAD_2",
+                "position": 0.5
+              }
+            },
+            "startedAt": "23:48",
+            "remainingMinutes": 5
+          }
+        },
+        {
+          "type": "movement",
+          "action": "步行前往占星师小铺低调联系所罗门，打听阿道夫最近是否有露面",
+          "impact": 0,
+          "nodeId": "m1",
+          "status": "in_progress",
+          "endTime": "23:53",
+          "startTime": "23:48",
+          "characterId": "Harrison Lockheed",
+          "destination": "SCN_11_SUB_1",
+          "characterName": "Harrison Lockheed",
+          "executionMeta": {
+            "movement": {
+              "routeSnapshot": [
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_3",
+                    "position": 0.58
+                  },
+                  "from": {
+                    "type": "scene",
+                    "sceneId": "SCN_18_SUB_1"
+                  },
+                  "kind": "along_road",
+                  "roadId": "ROAD_3",
+                  "blockCheck": {
+                    "toId": "ROAD_3",
+                    "fromId": "SCN_18_SUB_1"
+                  },
+                  "durationMinutes": 1
+                },
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_3",
+                    "position": 0
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_3",
+                    "position": 0.58
+                  },
+                  "kind": "along_road",
+                  "roadId": "ROAD_3",
+                  "durationMinutes": 5.8
+                },
+                {
+                  "to": {
+                    "type": "junction",
+                    "junctionId": "JUNC_3"
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_3",
+                    "position": 0
+                  },
+                  "kind": "to_junction",
+                  "blockCheck": {
+                    "toId": "JUNC_3",
+                    "fromId": "ROAD_3"
+                  },
+                  "durationMinutes": 0
+                },
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_2",
+                    "position": 1
+                  },
+                  "from": {
+                    "type": "junction",
+                    "junctionId": "JUNC_3"
+                  },
+                  "kind": "to_junction",
+                  "blockCheck": {
+                    "toId": "ROAD_2",
+                    "fromId": "JUNC_3"
+                  },
+                  "durationMinutes": 0
+                },
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_2",
+                    "position": 0.14
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_2",
+                    "position": 1
+                  },
+                  "kind": "along_road",
+                  "roadId": "ROAD_2",
+                  "durationMinutes": 8.6
+                },
+                {
+                  "to": {
+                    "type": "scene",
+                    "sceneId": "SCN_11_SUB_1"
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_2",
+                    "position": 0.14
+                  },
+                  "kind": "to_scene",
+                  "blockCheck": {
+                    "toId": "SCN_11_SUB_1",
+                    "fromId": "ROAD_2"
+                  },
+                  "durationMinutes": 1
+                }
+              ],
+              "targetPosition": {
+                "type": "scene",
+                "sceneId": "SCN_11_SUB_1"
+              },
+              "minutesIntoStep": 5,
+              "currentStepIndex": 4,
+              "lastReachablePosition": {
+                "type": "road",
+                "roadId": "ROAD_2",
+                "position": 0.5
+              }
+            },
+            "startedAt": "23:48",
+            "remainingMinutes": 5
+          }
+        },
+        {
+          "type": "movement",
+          "action": "离开海伦的餐桌并回到五金店",
+          "impact": 0,
+          "nodeId": "m_return_hardware_01",
+          "status": "completed",
+          "endTime": "22:48",
+          "outcome": "离开海伦的餐桌并回到五金店 成功",
+          "startTime": "22:38",
+          "characterId": "Harrison Lockheed",
+          "destination": "SCN_18_SUB_1",
+          "characterName": "Harrison Lockheed",
+          "executionMeta": {
+            "movement": {
+              "routeSnapshot": [
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_2",
+                    "position": 0.28
+                  },
+                  "from": {
+                    "type": "scene",
+                    "sceneId": "SCN_10_SUB_1"
+                  },
+                  "kind": "along_road",
+                  "roadId": "ROAD_2",
+                  "blockCheck": {
+                    "toId": "ROAD_2",
+                    "fromId": "SCN_10_SUB_1"
+                  },
+                  "durationMinutes": 1
+                },
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_2",
+                    "position": 1
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_2",
+                    "position": 0.28
+                  },
+                  "kind": "along_road",
+                  "roadId": "ROAD_2",
+                  "durationMinutes": 7.199999999999999
+                },
+                {
+                  "to": {
+                    "type": "junction",
+                    "junctionId": "JUNC_3"
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_2",
+                    "position": 1
+                  },
+                  "kind": "to_junction",
+                  "blockCheck": {
+                    "toId": "JUNC_3",
+                    "fromId": "ROAD_2"
+                  },
+                  "durationMinutes": 0
+                },
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_3",
+                    "position": 0
+                  },
+                  "from": {
+                    "type": "junction",
+                    "junctionId": "JUNC_3"
+                  },
+                  "kind": "to_junction",
+                  "blockCheck": {
+                    "toId": "ROAD_3",
+                    "fromId": "JUNC_3"
+                  },
+                  "durationMinutes": 0
+                },
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_3",
+                    "position": 0.58
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_3",
+                    "position": 0
+                  },
+                  "kind": "along_road",
+                  "roadId": "ROAD_3",
+                  "durationMinutes": 5.8
+                },
+                {
+                  "to": {
+                    "type": "scene",
+                    "sceneId": "SCN_18_SUB_1"
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_3",
+                    "position": 0.58
+                  },
+                  "kind": "to_scene",
+                  "blockCheck": {
+                    "toId": "SCN_18_SUB_1",
+                    "fromId": "ROAD_3"
+                  },
+                  "durationMinutes": 1
+                }
+              ],
+              "targetPosition": {
+                "type": "scene",
+                "sceneId": "SCN_18_SUB_1"
+              },
+              "minutesIntoStep": 0,
+              "currentStepIndex": 6,
+              "lastReachablePosition": {
+                "type": "scene",
+                "sceneId": "SCN_18_SUB_1"
+              }
+            },
+            "startedAt": "22:38",
+            "completedAt": "22:53",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "scene_interaction",
+          "action": "检查并打开店内照明，确认照明系统与电源无异常",
+          "impact": 0,
+          "nodeId": "si_harrison_001",
+          "status": "completed",
+          "endTime": "23:41",
+          "outcome": "我检查并开启了店内的照明，确认照明系统与电源运转正常。店内恢复明亮，适合继续检查或接待顾客。",
+          "startTime": "23:38",
+          "characterId": "Harrison Lockheed",
+          "characterName": "Harrison Lockheed",
+          "executionMeta": {
+            "startedAt": "23:38",
+            "completedAt": "23:41",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "scene_interaction",
+          "action": "把账本和样品藏好，并检查后门警报与门窗传感器是否正常工作",
+          "impact": 0,
+          "nodeId": "si1",
+          "status": "completed",
+          "endTime": "23:10",
+          "outcome": "我把账本和样品收好并藏到后室库存里，避免放在显眼处。随后逐一检查了后门警报和门窗传感器，所有设备都在线且运行正常。",
+          "startTime": "23:00",
+          "characterId": "Harrison Lockheed",
+          "characterName": "Harrison Lockheed",
+          "executionMeta": {
+            "startedAt": "23:00",
+            "completedAt": "23:10",
+            "remainingMinutes": 0
+          },
+          "objectInteractionPayload": {
+            "itemId": "非法枪支库存"
+          }
+        },
+        {
+          "type": "movement",
+          "action": "步行前往占星师小铺低调联系所罗门，打听阿道夫最近是否有露面",
+          "impact": 0,
+          "nodeId": "m1",
+          "status": "in_progress",
+          "endTime": "23:53",
+          "startTime": "23:48",
+          "characterId": "Harrison Lockheed",
+          "destination": "SCN_11_SUB_1",
+          "characterName": "Harrison Lockheed",
+          "executionMeta": {
+            "movement": {
+              "routeSnapshot": [
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_3",
+                    "position": 0.58
+                  },
+                  "from": {
+                    "type": "scene",
+                    "sceneId": "SCN_18_SUB_1"
+                  },
+                  "kind": "along_road",
+                  "roadId": "ROAD_3",
+                  "blockCheck": {
+                    "toId": "ROAD_3",
+                    "fromId": "SCN_18_SUB_1"
+                  },
+                  "durationMinutes": 1
+                },
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_3",
+                    "position": 0
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_3",
+                    "position": 0.58
+                  },
+                  "kind": "along_road",
+                  "roadId": "ROAD_3",
+                  "durationMinutes": 5.8
+                },
+                {
+                  "to": {
+                    "type": "junction",
+                    "junctionId": "JUNC_3"
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_3",
+                    "position": 0
+                  },
+                  "kind": "to_junction",
+                  "blockCheck": {
+                    "toId": "JUNC_3",
+                    "fromId": "ROAD_3"
+                  },
+                  "durationMinutes": 0
+                },
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_2",
+                    "position": 1
+                  },
+                  "from": {
+                    "type": "junction",
+                    "junctionId": "JUNC_3"
+                  },
+                  "kind": "to_junction",
+                  "blockCheck": {
+                    "toId": "ROAD_2",
+                    "fromId": "JUNC_3"
+                  },
+                  "durationMinutes": 0
+                },
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_2",
+                    "position": 0.14
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_2",
+                    "position": 1
+                  },
+                  "kind": "along_road",
+                  "roadId": "ROAD_2",
+                  "durationMinutes": 8.6
+                },
+                {
+                  "to": {
+                    "type": "scene",
+                    "sceneId": "SCN_11_SUB_1"
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_2",
+                    "position": 0.14
+                  },
+                  "kind": "to_scene",
+                  "blockCheck": {
+                    "toId": "SCN_11_SUB_1",
+                    "fromId": "ROAD_2"
+                  },
+                  "durationMinutes": 1
+                }
+              ],
+              "targetPosition": {
+                "type": "scene",
+                "sceneId": "SCN_11_SUB_1"
+              },
+              "minutesIntoStep": 5,
+              "currentStepIndex": 4,
+              "lastReachablePosition": {
+                "type": "road",
+                "roadId": "ROAD_2",
+                "position": 0.5
+              }
+            },
+            "startedAt": "23:48",
+            "remainingMinutes": 5
+          }
+        },
+        {
+          "type": "movement",
+          "action": "步行前往占星师小铺低调联系所罗门，打听阿道夫最近是否有露面",
+          "impact": 0,
+          "nodeId": "m1",
+          "status": "in_progress",
+          "endTime": "23:53",
+          "startTime": "23:48",
+          "characterId": "Harrison Lockheed",
+          "destination": "SCN_11_SUB_1",
+          "characterName": "Harrison Lockheed",
+          "executionMeta": {
+            "movement": {
+              "routeSnapshot": [
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_3",
+                    "position": 0.58
+                  },
+                  "from": {
+                    "type": "scene",
+                    "sceneId": "SCN_18_SUB_1"
+                  },
+                  "kind": "along_road",
+                  "roadId": "ROAD_3",
+                  "blockCheck": {
+                    "toId": "ROAD_3",
+                    "fromId": "SCN_18_SUB_1"
+                  },
+                  "durationMinutes": 1
+                },
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_3",
+                    "position": 0
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_3",
+                    "position": 0.58
+                  },
+                  "kind": "along_road",
+                  "roadId": "ROAD_3",
+                  "durationMinutes": 5.8
+                },
+                {
+                  "to": {
+                    "type": "junction",
+                    "junctionId": "JUNC_3"
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_3",
+                    "position": 0
+                  },
+                  "kind": "to_junction",
+                  "blockCheck": {
+                    "toId": "JUNC_3",
+                    "fromId": "ROAD_3"
+                  },
+                  "durationMinutes": 0
+                },
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_2",
+                    "position": 1
+                  },
+                  "from": {
+                    "type": "junction",
+                    "junctionId": "JUNC_3"
+                  },
+                  "kind": "to_junction",
+                  "blockCheck": {
+                    "toId": "ROAD_2",
+                    "fromId": "JUNC_3"
+                  },
+                  "durationMinutes": 0
+                },
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_2",
+                    "position": 0.14
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_2",
+                    "position": 1
+                  },
+                  "kind": "along_road",
+                  "roadId": "ROAD_2",
+                  "durationMinutes": 8.6
+                },
+                {
+                  "to": {
+                    "type": "scene",
+                    "sceneId": "SCN_11_SUB_1"
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_2",
+                    "position": 0.14
+                  },
+                  "kind": "to_scene",
+                  "blockCheck": {
+                    "toId": "SCN_11_SUB_1",
+                    "fromId": "ROAD_2"
+                  },
+                  "durationMinutes": 1
+                }
+              ],
+              "targetPosition": {
+                "type": "scene",
+                "sceneId": "SCN_11_SUB_1"
+              },
+              "minutesIntoStep": 5,
+              "currentStepIndex": 4,
+              "lastReachablePosition": {
+                "type": "road",
+                "roadId": "ROAD_2",
+                "position": 0.5
+              }
+            },
+            "startedAt": "23:48",
+            "remainingMinutes": 5
+          }
+        },
+        {
+          "type": "action",
+          "action": "在后室的写字台上写下明日的补货清单和客户名单",
+          "impact": 0,
+          "nodeId": "a1_harrison_2327",
+          "status": "completed",
+          "endTime": "23:37",
+          "outcome": "在后室的写字台上写下明日的补货清单和客户名单 成功",
+          "startTime": "23:27",
+          "characterId": "Harrison Lockheed",
+          "characterName": "Harrison Lockheed",
+          "executionMeta": {
+            "startedAt": "23:27",
+            "completedAt": "23:37",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "scene_interaction",
+          "action": "检查并打开店内照明，确认照明系统与电源无异常",
+          "impact": 0,
+          "nodeId": "si_harrison_001",
+          "status": "completed",
+          "endTime": "23:41",
+          "outcome": "我检查并开启了店内的照明，确认照明系统与电源运转正常。店内恢复明亮，适合继续检查或接待顾客。",
+          "startTime": "23:38",
+          "characterId": "Harrison Lockheed",
+          "characterName": "Harrison Lockheed",
+          "executionMeta": {
+            "startedAt": "23:38",
+            "completedAt": "23:41",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "scene_interaction",
+          "action": "检查陈列架最上层的空位，确认标注为“非卖品”的小发明是否被拿走并寻找任何被撬动或移动的痕迹",
+          "impact": 0,
+          "nodeId": "si_day1_2342",
+          "status": "completed",
+          "endTime": "23:47",
+          "outcome": "我检查了陈列架最上层的空位，确认标注为“非卖品”的小发明确实被拿走；我在周围仔细查看，未发现明显被撬动或移动的痕迹。",
+          "startTime": "23:42",
+          "characterId": "Harrison Lockheed",
+          "characterName": "Harrison Lockheed",
+          "executionMeta": {
+            "startedAt": "23:42",
+            "completedAt": "23:47",
+            "remainingMinutes": 0
+          }
+        },
+        {
+          "type": "movement",
+          "action": "步行前往占星师小铺低调联系所罗门，打听阿道夫最近是否有露面",
+          "impact": 0,
+          "nodeId": "m1",
+          "status": "in_progress",
+          "endTime": "23:53",
+          "startTime": "23:48",
+          "characterId": "Harrison Lockheed",
+          "destination": "SCN_11_SUB_1",
+          "characterName": "Harrison Lockheed",
+          "executionMeta": {
+            "movement": {
+              "routeSnapshot": [
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_3",
+                    "position": 0.58
+                  },
+                  "from": {
+                    "type": "scene",
+                    "sceneId": "SCN_18_SUB_1"
+                  },
+                  "kind": "along_road",
+                  "roadId": "ROAD_3",
+                  "blockCheck": {
+                    "toId": "ROAD_3",
+                    "fromId": "SCN_18_SUB_1"
+                  },
+                  "durationMinutes": 1
+                },
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_3",
+                    "position": 0
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_3",
+                    "position": 0.58
+                  },
+                  "kind": "along_road",
+                  "roadId": "ROAD_3",
+                  "durationMinutes": 5.8
+                },
+                {
+                  "to": {
+                    "type": "junction",
+                    "junctionId": "JUNC_3"
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_3",
+                    "position": 0
+                  },
+                  "kind": "to_junction",
+                  "blockCheck": {
+                    "toId": "JUNC_3",
+                    "fromId": "ROAD_3"
+                  },
+                  "durationMinutes": 0
+                },
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_2",
+                    "position": 1
+                  },
+                  "from": {
+                    "type": "junction",
+                    "junctionId": "JUNC_3"
+                  },
+                  "kind": "to_junction",
+                  "blockCheck": {
+                    "toId": "ROAD_2",
+                    "fromId": "JUNC_3"
+                  },
+                  "durationMinutes": 0
+                },
+                {
+                  "to": {
+                    "type": "road",
+                    "roadId": "ROAD_2",
+                    "position": 0.14
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_2",
+                    "position": 1
+                  },
+                  "kind": "along_road",
+                  "roadId": "ROAD_2",
+                  "durationMinutes": 8.6
+                },
+                {
+                  "to": {
+                    "type": "scene",
+                    "sceneId": "SCN_11_SUB_1"
+                  },
+                  "from": {
+                    "type": "road",
+                    "roadId": "ROAD_2",
+                    "position": 0.14
+                  },
+                  "kind": "to_scene",
+                  "blockCheck": {
+                    "toId": "SCN_11_SUB_1",
+                    "fromId": "ROAD_2"
+                  },
+                  "durationMinutes": 1
+                }
+              ],
+              "targetPosition": {
+                "type": "scene",
+                "sceneId": "SCN_11_SUB_1"
+              },
+              "minutesIntoStep": 5,
+              "currentStepIndex": 4,
+              "lastReachablePosition": {
+                "type": "road",
+                "roadId": "ROAD_2",
+                "position": 0.5
+              }
+            },
+            "startedAt": "23:48",
+            "remainingMinutes": 5
+          }
+        }
+      ]
+    }
+  ],
+  "intents": [
+    {
+      "intent": "Immediate priority shifts to avoiding detection by Adolph Carl in my shop: stop any tampering with cameras, secure and hide the Smith 625 and any contraband, present as a normal shopkeeper and keep conversation neutral, watch Adolph closely for signs he’s investigating, and postpone active surveillance of Patrizio until Adolph has left.",
+      "updatedAt": "2026-04-02T10:33:05.703Z"
+    }
+  ],
+  "npcName": "Harrison Lockheed"
+}

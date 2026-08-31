@@ -62,22 +62,40 @@ export interface KnownMapSeed {
   scenarioOutlineIds?: string[];
 }
 
+/** The stances a module may author. One list, so the compile-time union and
+ *  every runtime check are the same thing: this used to be a bare union with
+ *  no runtime counterpart, and module JSON carrying `partner`, `acquaintance`
+ *  and `colleague` sailed past a cast into the prompt — `relationship_stance_
+ *  partner` has no translation, so the i18n key itself was rendered into
+ *  characters' memories as if it were prose. */
+export const RELATIONSHIP_TYPES = [
+  "ally",
+  "enemy",
+  "neutral",
+  "family",
+  "friend",
+  "rival",
+  "employer",
+  "employee",
+  "stranger",
+] as const;
+
+export type RelationshipType = (typeof RELATIONSHIP_TYPES)[number];
+
 export interface NPCRelationship {
   targetId: string;
   targetName: string;
-  relationshipType:
-    | "ally"
-    | "enemy"
-    | "neutral"
-    | "family"
-    | "friend"
-    | "rival"
-    | "employer"
-    | "employee"
-    | "stranger";
+  relationshipType: RelationshipType;
   attitude: number;
   description?: string;
   history?: string;
+  /** The same relationship in the holder's own voice. `description` and
+   *  `history` are authored as a dossier — third person, ABOUT the character
+   *  rather than by them — which reads as somebody else's notes once it sits
+   *  in a memory block among sentences the character wrote themselves. When
+   *  this is present it is what they remember; the other two stay as the
+   *  author's reference. */
+  firstPerson?: string;
 }
 
 // ─── Inventory utilities ───────────────────────────────────────────
@@ -183,6 +201,17 @@ export class InventoryUtils {
  * DynamicWorld NPC Profile — flat character type for the simulation engine.
  * Location is tracked via characterPositions, not on the profile.
  */
+export interface CharacterLanguages {
+  /** Grew up in it. Never checked: a person does not roll to speak their own
+   *  language, and treating it as a skill makes every ordinary sentence a
+   *  gamble. */
+  native: string[];
+  /** Everything else, by fluency 1-99. A tongue absent from both lists is one
+   *  the character simply does not have — a rejection at the boundary, not a
+   *  harder check. */
+  learned?: Record<string, number>;
+}
+
 export interface DynamicNPCProfile {
   id: string;
   name: string;
@@ -190,6 +219,11 @@ export interface DynamicNPCProfile {
   status: CharacterStatus;
   inventory: InventoryItem[];
   skills: Record<string, number>;
+  /** Which tongues, not how good at "languages" in general. A single
+   *  fluency number cannot say that a character reads Latin haltingly and
+   *  speaks their own language perfectly, and the difference is the whole
+   *  of what this domain adjudicates. */
+  languages?: CharacterLanguages;
 
   // Character descriptors (used in LLM planning prompts)
   occupation?: string;
@@ -201,6 +235,13 @@ export interface DynamicNPCProfile {
   backstory?: string;
   residence?: string;
   currentLocation?: string;
+  /**
+   * Seed only, read once at load exactly like `currentLocation`: where in that
+   * location they start — "在工作台旁，背对着门". The live value lives in
+   * `characterSpots` on the state and is never written back here, so DO NOT
+   * render this field in any prompt: it goes stale the first time they move.
+   */
+  spot?: string;
 
   // Simulation data
   longTermIntent: string;
@@ -226,7 +267,6 @@ export interface DynamicScene {
   description: string;
   parentLocationId: string;
   items: Item[];
-  itemContexts?: Record<string, string>;
   conditions: SceneCondition[];
   connections: SceneConnection[];
   sceneImage?: SceneImage;
@@ -243,48 +283,26 @@ export interface WeaponStats {
   era?: string;
 }
 
-export interface ConsumableStats {
-  uses?: number;
-  effect?: string;
-  duration?: number;
-}
-
-export interface ContainerStats {
-  capacity?: number;
-  locked?: boolean;
-  lockDifficulty?: "easy" | "regular" | "hard" | "extreme";
-  contents?: string[];
-  storedItems?: Item[];
-}
-
+/**
+ * An object in the world. A name and a paragraph — nothing else, because
+ * nothing else was ever read: `type`, `category`, `reveals`, `discoveryMethod`,
+ * `era`, `weaponStats`, `consumableStats` and `containerStats` had no consumer
+ * anywhere in src/ or client/, and `damaged` was a second way of saying what
+ * every damaged item's description already said in words ("残破", "部分灯管已经
+ * 不亮", "被砸毁"). The Engine reads the description and judges; a field that
+ * repeats the prose is a field that can disagree with it.
+ *
+ * `isLightSource`/`lightLevel` stay because they are NOT judged by a model:
+ * `subsystem/sun.ts` sums them in code to compute a scene's illumination. A
+ * lamp that stops working stops being a light source — one flag, not two.
+ */
 export interface Item {
   id: string;
   name: string;
   description?: string;
-  type?:
-    | "weapon"
-    | "consumable"
-    | "tool"
-    | "lighting"
-    | "container"
-    | "key"
-    | "document"
-    | "other";
-  category?: "evidence" | "mundane";
-  reveals?: string[];
-  discoveryMethod?: string;
-  era?: string;
-  damaged?: boolean;
-  damageDetails?: {
-    damagedBy: string;
-    damagedAt: string;
-    reason: string;
-  };
+  /** Contributes to scene illumination — read by subsystem/sun.ts. */
   isLightSource?: boolean;
   lightLevel?: number;
-  weaponStats?: WeaponStats;
-  consumableStats?: ConsumableStats;
-  containerStats?: ContainerStats;
 }
 
 export interface SceneImage {
@@ -326,6 +344,11 @@ export interface ModuleSetup {
   introduction?: string;
   /** In-world calendar start date in ISO 8601 (YYYY-MM-DD). */
   startDate: string;
+  /** The tongue everyone in this setting grew up speaking, unless their own
+   *  profile says otherwise. Without it a character has no native language at
+   *  all and every ordinary sentence would want a check — so the loader gives
+   *  it to any NPC whose sheet is silent. */
+  commonLanguage?: string;
   initialGameTime?: string;
   tags?: string[];
   weatherPresets?: Array<{

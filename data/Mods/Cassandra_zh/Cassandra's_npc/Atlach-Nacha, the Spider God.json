@@ -1,0 +1,110 @@
+{
+  "id": "Atlach-Nacha, the Spider God",
+  "name": "Atlach-Nacha, the Spider God",
+  "occupation": "旧日支配者 / 外神",
+  "age": 999999999,
+  "gender": "N/A",
+  "appearance": "一个巨大的、超凡脱俗的蜘蛛实体，拥有无数长腿和一个巨大的腹部，不断编织着横跨世界之间的巨型宇宙之网。",
+  "personality": "一种古老的、异质的智慧，专注于完成连接幻梦境和清醒世界的宇宙之网。",
+  "background": "阿特拉克-纳克亚是一位栖息在幻梦境中的古老蜘蛛之神，无休止地编织着一张旨在连接其领域与清醒世界的巨型之网。通过教团、蜘蛛生物和隐秘的庇护所，它的影响力渗透到人类现实中。",
+  "residence": "SCN_17",
+  "currentLocation": "SCN_17",
+  "spot": "填满耶稣受难雕像后方的钟楼入口，长腿撑在石壁上",
+  "knownMapSeed": {
+    "sceneIds": [
+      "SCN_17_SUB_1",
+      "SCN_17_SUB_2",
+      "SCN_17_SUB_3",
+      "SCN_17_SUB_4"
+    ],
+    "junctionIds": [],
+    "roadIds": [],
+    "scenarioOutlineIds": [
+      "SCN_17"
+    ]
+  },
+  "longTermIntent": "完成连接幻梦境和清醒世界的巨网，然后通过信徒、蜘蛛生物和被腐化的人类扩大其影响力，使两个世界更容易穿越。",
+  "attributes": {
+    "STR": 150,
+    "CON": 375,
+    "DEX": 125,
+    "APP": 0,
+    "POW": 150,
+    "SIZ": 125,
+    "INT": 75,
+    "EDU": 0
+  },
+  "status": {
+    "hp": 50,
+    "maxHp": 50,
+    "sanity": 0,
+    "maxSanity": 0,
+    "luck": 0,
+    "mp": 30,
+    "conditions": []
+  },
+  "skills": {
+    "Melee Combat": 60,
+    "Ranged Combat": 80
+  },
+  "inventory": [],
+  "relationships": [
+    {
+      "targetId": "Constantine Frollo",
+      "targetName": "Constantine Frollo",
+      "relationshipType": "ally",
+      "attitude": 0,
+      "description": "一位充当其人间代理人的人类神父。",
+      "history": "阿特拉克-纳克亚赐予康斯坦丁力量，换取他的虔诚以及帮助维护教堂侧的蛛网。",
+      "firstPerson": "康斯坦丁看守着他教堂底下的那处通路，收容从那边过来的东西；为此我给了他力量。虔诚不过是一根丝；能承重的丝，我便留着。"
+    }
+  ],
+  "memory": [
+    {
+      "type": "information",
+      "content": "教堂内部和下方隐藏着一张连接幻梦境与卡森德拉的蛛网。那张网是我的影响力到达清醒世界的活桥梁。",
+      "metadata": {
+        "knowledgeId": "k_atlach_web",
+        "difficulty": "automatic"
+      }
+    },
+    {
+      "type": "information",
+      "content": "卡森德拉的冷蜘蛛和蜘蛛人是同一设计的延伸。它们不是偶然，而是两个世界被拉得太近的有用后果。",
+      "metadata": {
+        "knowledgeId": "k_atlach_servants",
+        "difficulty": "regular"
+      }
+    },
+    {
+      "type": "information",
+      "content": "康斯坦丁通过照管教堂侧的通道和庇护从中爬过来的东西来让自己有用。这份服务是我容忍在此处理人间事务的原因。",
+      "metadata": {
+        "knowledgeId": "k_atlach_constantine",
+        "difficulty": "regular"
+      }
+    },
+    {
+      "type": "secret",
+      "content": "如果教堂侧的蛛网被破坏，幻梦境与清醒世界之间的通道将变得不稳定。我的仆从知道这一点，并致力于保护这个通道。",
+      "metadata": {
+        "knowledgeId": "s_atlach_bridge"
+      }
+    },
+    {
+      "type": "secret",
+      "content": "像酒厂那个男人这样的人类宿主是可以接受的损耗。感染是否削弱他们、改变他们或最终杀死他们，都不如繁殖、穿越和蛛网的扩展重要。",
+      "metadata": {
+        "knowledgeId": "s_atlach_human_cost"
+      }
+    },
+    {
+      "type": "belief",
+      "content": "人类的城市是暂时的。唯有蛛网长存，每一个有用的仆从不过是帮助将其收紧。",
+      "metadata": {
+        "confidence": 0.95,
+        "reasoningChain": "蛛网之所以存续，是因为它横跨世界，而人类会消逝、衰老，终成猎物。"
+      }
+    }
+  ]
+}

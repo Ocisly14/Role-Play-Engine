@@ -1,5 +1,4 @@
 import type { CharacterPosition } from "../../state/topologyTypes.js";
-import type { ToolResult } from "../types.js";
 
 export type FeatureStateScope = "scene" | "region" | "character" | "global";
 
@@ -26,13 +25,12 @@ export type GameTime = GameDateTime;
 
 export type Unsubscribe = () => void;
 
-/** Kind of entity referenced via [Name] citation in actionText.
- *  Drives downstream routing: stateContextBuilder, scriptedEventRunner.matchTarget,
- *  impactPropagation level-1 propagation all filter by kind === "character". */
+/** Kind of entity referenced by an action. Downstream routing
+ *  (scriptedEventRunner.matchTarget, impactPropagation level-1) filters by
+ *  kind === "character". */
 export type EntityKind = "character" | "item" | "scene";
 
-/** A resolved citation from `actionText`: directory lookup result.
- *  Produced by GameInterpreter; carried on InterpretedStep / ActionStep / CharacterAction. */
+/** A typed entity reference (id + kind) carried on CharacterAction. */
 export interface ReferencedEntity {
   id: string;
   kind: EntityKind;
@@ -54,90 +52,6 @@ export interface CharacterCondition {
     attackPenalty?: number;
   };
   expiresAt?: GameTime; // optional auto-expiry (not enforced by Applier — features check)
-}
-
-export interface ActionInput {
-  characterId: string;
-  actionText: string;
-  sceneId: string;
-  overlayFields?: Record<string, unknown>;
-  // targetCharacterIds removed — agent no longer emits this; interpreter derives referencedEntities
-}
-
-export interface ActionHandle {
-  readonly id: string;
-  readonly characterId: string;
-  readonly submittedAt: GameTime;
-}
-
-export type ActionStatus =
-  | "queued"
-  | "active"
-  | "completed"
-  | "interrupted"
-  | "cancelled";
-
-export interface ActionStep {
-  id: string;
-  handle: ActionHandle;
-  stepGroupId: string;
-  stepIndex: number;
-
-  characterId: string;
-  /** Citations from actionText resolved by interpreter — typed (id + kind).
-   *  Replaces legacy `targetCharacterIds: string[]` (Phase H). */
-  referencedEntities: ReferencedEntity[];
-  actionText: string;
-  definitionId: string;
-  executionSceneId: string;
-  overlayFields?: Record<string, unknown>;
-
-  /**
-   * Dispatch discriminator copied from the matched `ActionDefinition.engine`
-   * during interpretation. `"code"` steps are dispatched to a
-   * `CodeEngineSubsystem`; `"llm"` steps run through the resolver path.
-   * Optional for back-compat with steps constructed before the dual-engine
-   * cutover (e.g. via tests); the orchestrator treats `undefined` as `"llm"`.
-   */
-  engine?: "code" | "llm";
-  /**
-   * Identifies which `CodeEngineSubsystem` handles this step when
-   * `engine === "code"`. Copied from `ActionDefinition.codeSubsystem`.
-   */
-  codeSubsystem?: string;
-
-  /**
-   * Per-step perceptibility level produced by GameInterpreter. Drives
-   * impactPropagation.findAffectedCharacters at commit time so co-located /
-   * neighbor / global NPCs get woken into decide() this tick.
-   *   0 private · 1 targeted · 2 same scene · 3 macro location ·
-   *   4 neighborhood · 5 global
-   */
-  impact: 0 | 1 | 2 | 3 | 4 | 5;
-
-  submittedAt: GameTime;
-
-  activatedAt?: GameTime;
-  plannedDuration?: number;
-  plannedOutcome?: PlannedOutcome;
-  completionTime?: GameTime;
-
-  /**
-   * Skill-check verdict produced at activation time (Phase 3) by
-   * `runSkillCheck(step)`. Set once when the LLM-engine step activates and
-   * carried for the rest of the step's lifetime so the cancel-time re-resolve
-   * can see the same roll outcome. `undefined` means no skill check ran (no
-   * `skillCheck:` in the ActionDefinition, or runSkillCheck not registered)
-   * — resolver falls back to "auto success" exactly as before.
-   */
-  skillCheckResult?: ToolResult;
-
-  status: ActionStatus;
-}
-
-export interface CancelResult {
-  applied: boolean;
-  remainingChainCancelled: number;
 }
 
 export interface SceneCondition {
@@ -197,9 +111,9 @@ export const DEFAULT_ENVIRONMENT_READING: EnvironmentReading = Object.freeze({
 }) as EnvironmentReading;
 
 /**
- * Output of the resolver pipeline for a single action step. Consumed by
- * Phase 4 commit (applier processes stateChanges) and by EventBus emission
- * (narrative surfaces). Moved here from worldFeature.ts in Phase I.
+ * Legacy outcome shape kept for the derived CharacterAction migration view
+ * (TickReport.commits). Dies when downstream consumers finish moving to
+ * transitions + occurrences.
  */
 export interface PlannedOutcome {
   stateChanges: StateChange[];
@@ -281,14 +195,6 @@ export type StateChange =
       sourceFeatureId: string;
     }
   | {
-      kind: "scene.damageItem";
-      sceneId: string;
-      itemId: string;
-      damagedBy: string; // "fire" | "moisture" | "weapon" | ...
-      reason: string;
-      sourceFeatureId: string;
-    }
-  | {
       /**
        * Move a character to a new topology position. Emitted by the CodeEngine
        * movement subsystem each tick as it interpolates along a route.
@@ -299,17 +205,37 @@ export type StateChange =
       position: CharacterPosition;
       sourceSubsystem: string;
     }
+  | {
+      /**
+       * Where a character now is WITHIN their location, as prose. Narrative
+       * only — nothing reads it but prompts. Empty string clears it, and
+       * `setCharacterPosition` clears it on its own whenever the location id
+       * actually changes.
+       */
+      kind: "character.spot";
+      characterId: string;
+      spot: string;
+    }
   // ── Resolver-emitted variants (flattened from resolver schemaTypes) ──
   | {
-      kind: "item.modify";
+      /** Everything about an item that can change while it exists. Its
+       *  description is its state; the two lighting fields are the only part
+       *  a deterministic subsystem reads rather than a model (sun.ts). */
+      kind: "item.set";
       itemId: string;
-      description: string;
+      description?: string;
+      /** Appended as one sentence instead of replacing. How damage lands. */
+      appendDescription?: string;
+      isLightSource?: boolean;
+      lightLevel?: number;
+      /** Set when a subsystem emitted this rather than the resolver. */
+      sourceFeatureId?: string;
     }
   | {
       kind: "item.create";
       name: string;
       location: string;
-      properties?: Record<string, unknown>;
+      description?: string;
     }
   | {
       kind: "item.move";
@@ -322,25 +248,18 @@ export type StateChange =
       itemId: string;
     }
   | {
-      /** Resolver-emitted event memory. Applier no-op; consumed by
-       *  NpcActionController.routeResolverMemories. */
+      /** Subsystem-emitted event memory. Applier no-op; consumed by
+       *  NpcActionController.routeStateChangeMemories. */
       kind: "memory.event";
       characterId: string;
       content: string;
     }
   | {
-      /** Resolver-emitted witness memory. Applier no-op; consumed by
-       *  NpcActionController.routeResolverMemories. */
+      /** Subsystem-emitted witness memory. Applier no-op; consumed by
+       *  NpcActionController.routeStateChangeMemories. */
       kind: "memory.witness";
       characterId: string;
       content: string;
-    }
-  | {
-      kind: "relationship.change";
-      fromId: string;
-      toId: string;
-      delta?: number;
-      note?: string;
     };
 
 export interface CharacterAction {
@@ -376,11 +295,16 @@ export interface DamageReport {
 
 export interface TickReport {
   gameDateTime: GameDateTime;
-  /** Steps that became `active` this tick (queued → active). Surfaced so the
-   *  controller can write "begin" event memory at activatedAt, paired with
-   *  the existing "result" memory from `commits` at completedAt. */
-  activations: ActionStep[];
+  /** Action lifecycle changes this tick (plan Phase 8). The authoritative
+   *  record; `commits`/`cancellations` below are derived views kept for the
+   *  migration window (event emitter, renderer) until Phase 9 consumers
+   *  switch to transitions + occurrences. */
+  transitions: import("../actions/types.js").ActionTransition[];
+  /** Objective occurrences with perceiver character ids (plan D6). */
+  occurrences: import("../actions/types.js").Occurrence[];
+  /** Derived from transitions with to="completed". */
   commits: CharacterAction[];
+  /** Derived from transitions with to="interrupted"/"cancelled"/"failed". */
   cancellations: CharacterAction[];
   featureEvents: FeatureEvent[];
   stateChanges: StateChange[];

@@ -1,0 +1,41 @@
+{
+  "town": {
+    "background": "town_bg.jpg"
+  },
+  "scenarios": {
+    "SCN_1": { "x": 150, "y": 200, "thumbnail": "SCN_1_SUB_1_bg.jpg" },
+    "SCN_2": { "x": 400, "y": 300, "thumbnail": "SCN_2_SUB_1_bg.jpg" },
+    "SCN_3": { "x": 650, "y": 200, "thumbnail": "SCN_3_SUB_1_bg.jpg" },
+    "SCN_4": { "x": 400, "y": 500, "thumbnail": "SCN_4_SUB_1_bg.jpg" }
+  },
+  "scenes": {
+    "SCN_1_SUB_1": {
+      "background": "SCN_1_SUB_1_bg.jpg",
+      "npcAreas": [{ "x": 50, "y": 80, "width": 200, "height": 120 }]
+    },
+    "SCN_1_SUB_2": {
+      "background": "SCN_1_SUB_2_bg.jpg",
+      "npcAreas": [{ "x": 60, "y": 60, "width": 180, "height": 100 }]
+    },
+    "SCN_2_SUB_1": {
+      "background": "SCN_2_SUB_1_bg.jpg",
+      "npcAreas": [{ "x": 40, "y": 40, "width": 300, "height": 200 }]
+    },
+    "SCN_3_SUB_1": {
+      "background": "SCN_3_SUB_1_bg.jpg",
+      "npcAreas": [{ "x": 50, "y": 50, "width": 250, "height": 150 }]
+    },
+    "SCN_3_SUB_2": {
+      "background": "SCN_3_SUB_2_bg.jpg",
+      "npcAreas": [{ "x": 40, "y": 60, "width": 200, "height": 130 }]
+    },
+    "SCN_4_SUB_1": {
+      "background": "SCN_4_SUB_1_bg.jpg",
+      "npcAreas": [{ "x": 50, "y": 70, "width": 190, "height": 110 }]
+    },
+    "SCN_4_SUB_2": {
+      "background": "SCN_4_SUB_2_bg.jpg",
+      "npcAreas": [{ "x": 40, "y": 50, "width": 170, "height": 100 }]
+    }
+  }
+}

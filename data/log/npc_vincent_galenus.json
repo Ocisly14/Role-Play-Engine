@@ -1,0 +1,37 @@
+{
+  "npcId": "npc_vincent_galenus",
+  "memories": [
+    {
+      "type": "event",
+      "content": "我接到康斯坦丁的电话，请我带外科器械立即前往教堂并在那儿留守；他还提示有人可能接近祭坛并叮嘱不要透露暗门位置。我已同意前往并准备按要求待命。",
+      "gameDay": 2,
+      "gameTime": "01:09",
+      "location": "SCN_17_SUB_1",
+      "metadata": {
+        "outcome": "用教堂座机再次拨打星辰医院，确认文森特会立即带外科器械到教堂并留守"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我当时不在医院大厅，未与任何自称“苏珊”的人接触或披露关于实验室与药品的任何信息。",
+      "gameDay": 1,
+      "gameTime": "21:05",
+      "location": "SCN_1_SUB_1",
+      "metadata": {
+        "outcome": "以“苏珊”的身份轻声向Vincent询问他刚才提到的实验室和药品储存的具体位置与涉事人员，装作关心并观察他的言行反应以评估可信度"
+      }
+    },
+    {
+      "type": "event",
+      "content": "我不在大厅，未被自称“苏珊”的人接近或询问。",
+      "gameDay": 1,
+      "gameTime": "22:52",
+      "location": "SCN_1_SUB_1",
+      "metadata": {
+        "outcome": "以“苏珊”身份走向文森特并礼貌寒暄，询问他目前是否需要帮助及他刚才提到的“奇迹药”来源，保持专业与谨慎以不暴露掩护。"
+      }
+    }
+  ],
+  "plans": [],
+  "intents": []
+}

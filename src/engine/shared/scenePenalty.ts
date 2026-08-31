@@ -1,5 +1,6 @@
 import type { DynamicGameStateManager } from "../../state/DynamicGameState.js";
 import type { SceneCondition } from "../core/types.js";
+import { canonicalSkillName } from "../rules/skillCatalog.js";
 
 export function getScenePenalties(
   location: string,
@@ -11,7 +12,10 @@ export function getScenePenalties(
     const sp = cond.mechanicalEffect?.skillPenalty;
     if (!sp) continue;
     for (const [skill, delta] of Object.entries(sp)) {
-      penalties.set(skill, (penalties.get(skill) ?? 0) + delta);
+      // Conditions are authored with pre-consolidation skill names; map them
+      // onto the broad domains the roll actually uses.
+      const key = skill === "*" ? "*" : canonicalSkillName(skill);
+      penalties.set(key, (penalties.get(key) ?? 0) + delta);
     }
   }
   return penalties;

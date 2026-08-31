@@ -40,38 +40,24 @@ interface LightPenaltyEntry {
 
 const LIGHT_LEVEL_PENALTIES: Record<number, LightPenaltyEntry[]> = {
   1: [
-    { skill: "Perception", delta: -40 },
-    { skill: "Navigate", delta: -30 },
-    { skill: "Track", delta: -40 },
-    { skill: "Pistol", delta: -40 },
-    { skill: "Rifle", delta: -40 },
-    { skill: "Submachine Gun", delta: -40 },
-    { skill: "Bow", delta: -40 },
-    { skill: "Climb", delta: -20 },
-    { skill: "Drive Auto", delta: -30 },
-    { skill: "Research", delta: -50 },
+    { skill: "Investigation", delta: -40 },
+    { skill: "Survival & Navigation", delta: -30 },
+    { skill: "Ranged Combat", delta: -40 },
+    { skill: "Athletics", delta: -20 },
+    { skill: "Land Vehicle Operation", delta: -30 },
   ],
   2: [
-    { skill: "Perception", delta: -20 },
-    { skill: "Navigate", delta: -15 },
-    { skill: "Track", delta: -20 },
-    { skill: "Pistol", delta: -20 },
-    { skill: "Rifle", delta: -20 },
-    { skill: "Submachine Gun", delta: -20 },
-    { skill: "Bow", delta: -20 },
-    { skill: "Climb", delta: -10 },
-    { skill: "Drive Auto", delta: -15 },
-    { skill: "Research", delta: -20 },
+    { skill: "Investigation", delta: -20 },
+    { skill: "Survival & Navigation", delta: -15 },
+    { skill: "Ranged Combat", delta: -20 },
+    { skill: "Athletics", delta: -10 },
+    { skill: "Land Vehicle Operation", delta: -15 },
   ],
   3: [],
   4: [],
   5: [
-    { skill: "Perception", delta: -15 },
-    { skill: "Track", delta: -10 },
-    { skill: "Pistol", delta: -15 },
-    { skill: "Rifle", delta: -15 },
-    { skill: "Submachine Gun", delta: -15 },
-    { skill: "Bow", delta: -15 },
+    { skill: "Investigation", delta: -15 },
+    { skill: "Ranged Combat", delta: -15 },
   ],
 };
 
@@ -191,7 +177,9 @@ Dark environments impose skill penalties; blinding light also impairs vision.`,
       const scene = ctx.getScene(sceneId);
       if (!scene?.items) continue;
       for (const item of scene.items) {
-        if (!item.isLightSource || item.damaged) continue;
+        // A lamp that stops working stops being a light source: there is no
+        // separate damaged flag any more, so breaking one clears this.
+        if (!item.isLightSource) continue;
         const level = item.lightLevel ?? DEFAULT_ITEM_LIGHT_LEVEL;
         out.push(contributeIllumination(sceneId, level));
       }

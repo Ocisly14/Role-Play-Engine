@@ -1,0 +1,101 @@
+{
+  "id": "Deep One",
+  "name": "Deep One",
+  "occupation": "Mythos Aquatic Humanoid",
+  "age": 0,
+  "gender": "N/A",
+  "appearance": "A tall, powerfully built amphibious humanoid with slick, rubbery skin mottled by scales. Bulging, unblinking eyes, gill-slits along the neck, wide mouths filled with sharp teeth, and webbed hands and feet mark them as profoundly inhuman.",
+  "personality": "Cold, predatory, and communal. Deep Ones are patient and calculating, guided by ancient traditions and absolute loyalty to their kind and aquatic gods.",
+  "background": "Deep Ones are an ancient aquatic race dwelling in the ocean depths. They can live both underwater and on land and often interact with humans through cults, interbreeding, or coastal settlements, most infamously tied to the Innsmouth legacy.",
+  "residence": "SCN_7",
+  "currentLocation": "SCN_7",
+  "spot": "waist-deep in the rushing channel, close against the brick wall",
+  "knownMapSeed": {
+    "junctionIds": [],
+    "roadIds": [],
+    "scenarioOutlineIds": [
+      "SCN_7"
+    ],
+    "sceneIds": [
+      "SCN_7_SUB_1",
+      "SCN_7_SUB_2"
+    ]
+  },
+  "longTermIntent": "Defend Deep One territory, keep the hidden ways between water and land open, and preserve the bloodline and alliances that keep humans from claiming too much of the coast.",
+  "attributes": {
+    "STR": 65,
+    "CON": 70,
+    "DEX": 55,
+    "APP": 10,
+    "POW": 55,
+    "SIZ": 65,
+    "INT": 60,
+    "EDU": 40
+  },
+  "status": {
+    "hp": 14,
+    "maxHp": 14,
+    "sanity": 0,
+    "maxSanity": 0,
+    "luck": 0,
+    "mp": 11,
+    "conditions": []
+  },
+  "skills": {
+    "Athletics": 25,
+    "Melee Combat": 45
+  },
+  "inventory": [],
+  "relationships": [
+    {
+      "targetId": "Deep One Hybrid (Bearer of the Innsmouth Taint)",
+      "targetName": "Deep One Hybrid (Bearer of the Innsmouth Taint)",
+      "relationshipType": "family",
+      "attitude": 40,
+      "description": "A bloodline descendant carrying the mixed human heritage Deep Ones rely on to spread.",
+      "history": "The hybrid is part of the same long bloodline that Deep Ones use to expand among humans.",
+      "firstPerson": "The hybrid carries our blood thinned through human flesh, one link in the long line by which we take the shore. Kin, and the work; the water finishes what the bloodline starts."
+    }
+  ],
+  "memory": [
+    {
+      "type": "information",
+      "content": "I can breathe both underwater and on land without assistance, which makes it hard for humans to drive me away once I claim an area.",
+      "metadata": {
+        "knowledgeId": "k_deepone_breathing",
+        "difficulty": "regular"
+      }
+    },
+    {
+      "type": "information",
+      "content": "I trust spears and tridents more than human-made weapons, though I can use either when necessary.",
+      "metadata": {
+        "knowledgeId": "k_deepone_weapons",
+        "difficulty": "regular"
+      }
+    },
+    {
+      "type": "information",
+      "content": "I know how to move through tides, drains, and submerged routes, and I remember places human maps forget.",
+      "metadata": {
+        "knowledgeId": "k_deepone_routes",
+        "difficulty": "regular"
+      }
+    },
+    {
+      "type": "secret",
+      "content": "My kind uses interbreeding as a deliberate long game, and I treat hybrids as part of the work of spreading our blood.",
+      "metadata": {
+        "knowledgeId": "s_deepone_hybrid_line"
+      }
+    },
+    {
+      "type": "belief",
+      "content": "To me, human settlements are temporary borders. Water always remembers where it was first.",
+      "metadata": {
+        "confidence": 0.9,
+        "reasoningChain": "The deep places last longer than the cities built over them."
+      }
+    }
+  ]
+}

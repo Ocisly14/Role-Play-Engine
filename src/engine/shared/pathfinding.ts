@@ -38,11 +38,14 @@ export function resolveTargetPosition(
     const outline = (state.scenarioOutlines ?? []).find(
       (o) => o.id === locationId
     );
-    if (
-      outline?.entrySceneId &&
-      topology.sceneToParent.has(outline.entrySceneId)
-    ) {
-      return { type: "scene", sceneId: outline.entrySceneId };
+    // The entry may itself be a scene, junction, or road (the OUTDOOR
+    // region's entry is ROAD_1) — resolve it through the same rules instead
+    // of demanding a scene, which stranded every road-entry outline as
+    // "no path" (observed live: interpreter legally picked the listed
+    // OUTDOOR id and the mover looped on "couldn't work out a way").
+    if (outline?.entrySceneId && outline.entrySceneId !== locationId) {
+      const entry = resolveTargetPosition(outline.entrySceneId, topology, dgsm);
+      if (entry) return entry;
     }
     const scene = state.scenes.get(locationId);
     if (scene) {
@@ -207,6 +210,34 @@ export function findTopologyPath(
   }
 
   return null;
+}
+
+/**
+ * For a road destination with no explicit position ("去那条街"), arriving
+ * means stepping ONTO the road — not walking to its midpoint. Pick the road
+ * end that is cheapest to reach from `from`; if the mover is already on the
+ * road, they are already there. Falls back to 0.5 when neither end routes.
+ */
+export function nearestRoadPosition(
+  from: CharacterPosition,
+  roadId: string,
+  topology: TownTopology,
+  dgsm?: DynamicGameStateManager
+): number {
+  if (from.type === "road" && from.roadId === roadId) return from.position;
+  const costTo = (position: number): number => {
+    const route = buildMovementRouteIgnoringBlocks(
+      from,
+      { type: "road", roadId, position },
+      topology,
+      dgsm
+    );
+    return route ? route.totalMinutes : Number.POSITIVE_INFINITY;
+  };
+  const a = costTo(0);
+  const b = costTo(1);
+  if (!Number.isFinite(a) && !Number.isFinite(b)) return 0.5;
+  return a <= b ? 0 : 1;
 }
 
 export function buildMovementRouteIgnoringBlocks(
