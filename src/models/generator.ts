@@ -7,6 +7,7 @@ import { getEndpoint, models } from "./configuration.js";
 import { getAdapter } from "./providers/index.js";
 import type { ContentPart, SystemBlock } from "./providers/types.js";
 import { type TokenUsageTotals, recordTokenUsage } from "./tokenUsage.js";
+import { traceModelCall } from "./trace.js";
 import {
   type GenerationOptions,
   type ImageInput,
@@ -17,7 +18,6 @@ import {
   type ToolCallOptions,
   type ToolCallResult,
 } from "./types.js";
-import { traceModelCall } from "./trace.js";
 
 /**
  * Model class usage guidelines:
@@ -345,6 +345,7 @@ export async function generateText(
     temperature,
     contextSegments,
     cacheSystemPrompt,
+    maxOutputTokens,
   } = options;
 
   // Adapters that lack explicit breakpoints ignore `cacheControl`, so this is
@@ -389,7 +390,7 @@ export async function generateText(
       modelName: ctx.settings.name,
       system,
       content,
-      maxOutputTokens: ctx.settings.maxOutputTokens,
+      maxOutputTokens: maxOutputTokens ?? ctx.settings.maxOutputTokens,
       temperature,
       // Streaming exists only to feed onToken, and only Google wired it up.
       onToken:

@@ -30,6 +30,7 @@ import {
   resolveEntryScene,
 } from "./characterInjection.js";
 import {
+  PERCEPTION_COMPACTED_EVENT,
   loadPerceptionHistory,
   persistSimulationEvents,
   persistSimulationRuntime,
@@ -528,6 +529,8 @@ export class SimulationRunner {
       // Buffered here and flushed once per tick: one row per character per
       // tick, written in a single createMany rather than a query per paragraph.
       onPerception: (entry) => this.pendingPerceptions.push(entry),
+      onPerceptionCompacted: (entry) =>
+        this.pendingPerceptionSummaries.push(entry),
     });
 
     this.wireEngineEvents(engine);
@@ -811,6 +814,15 @@ export class SimulationRunner {
     narrative: string;
   }> = [];
 
+  /** Condensed accounts written since the last flush. Same treatment. */
+  private pendingPerceptionSummaries: Array<{
+    npcId: string;
+    gameDateTime: string;
+    location: string;
+    narrative: string;
+    coversThroughGameDateTime: string;
+  }> = [];
+
   /** Hand a freshly built controller the paragraphs this session already
    *  produced. Failure is non-fatal: the run continues with characters who
    *  simply do not remember having looked around, which is worse narration but
@@ -839,19 +851,44 @@ export class SimulationRunner {
    *  (sessionId, gameDateTime) and cascade-deleted with the session. */
   private async persistPerceptions(): Promise<void> {
     const pending = this.pendingPerceptions;
-    if (pending.length === 0) return;
     this.pendingPerceptions = [];
+    if (pending.length > 0) {
+      await persistSimulationEvents(
+        this.prisma,
+        pending.map((p) => ({
+          id: randomUUID(),
+          sessionId: this.sessionId,
+          tick: this.ticksExecuted,
+          gameDateTime: p.gameDateTime,
+          type: "npc_perceived" as const,
+          actorNpcId: p.npcId,
+          location: p.location,
+          data: { narrative: p.narrative },
+          timestamp: new Date(),
+        }))
+      );
+    }
+
+    const summaries = this.pendingPerceptionSummaries;
+    if (summaries.length === 0) return;
+    this.pendingPerceptionSummaries = [];
+    // Written alongside the paragraphs, never instead of them: the log keeps
+    // every minute the character lived, and the summary is an additional row
+    // saying "from here back, this is what they would still tell you".
     await persistSimulationEvents(
       this.prisma,
-      pending.map((p) => ({
+      summaries.map((s) => ({
         id: randomUUID(),
         sessionId: this.sessionId,
         tick: this.ticksExecuted,
-        gameDateTime: p.gameDateTime,
-        type: "npc_perceived" as const,
-        actorNpcId: p.npcId,
-        location: p.location,
-        data: { narrative: p.narrative },
+        gameDateTime: s.gameDateTime,
+        type: PERCEPTION_COMPACTED_EVENT,
+        actorNpcId: s.npcId,
+        location: s.location,
+        data: {
+          narrative: s.narrative,
+          coversThrough: s.coversThroughGameDateTime,
+        },
         timestamp: new Date(),
       }))
     );

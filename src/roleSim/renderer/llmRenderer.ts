@@ -25,6 +25,13 @@ import type { PerceivedBundle } from "./types.js";
 
 const RENDERER_OPERATION = "phase-g-perception-render";
 
+/** How many of the character's own prior paragraphs the renderer is shown.
+ *  A fixed window, not the whole stream: this block exists so the renderer
+ *  knows the room's standing furniture has already been described, and that
+ *  is a fact about the last few minutes. The stream itself stays whole in
+ *  NpcActionController — the character's own prompt still reads all of it. */
+const RENDER_HISTORY_WINDOW = 5;
+
 const SYSTEM_PROMPT = `You are the perception renderer for a tick-based simulation.
 
 Your only job: turn the events of one game tick into a first-person, sensory
@@ -313,17 +320,27 @@ export async function renderViaLLM(
   return stripUncitableTags(narrative, tags.allowed, params.npcId);
 }
 
-/** Three tiers, ordered so the cacheable prefix grows and never rewrites:
+/** Three tiers, cut by whether they MOVE — which is not the same as whether
+ *  their prefix is stable:
  *
  *   frozen   identity — byte-identical every tick this character renders
- *   growing  everything they have already been told they perceived, APPENDED
+ *   growing  the recent perception window
  *   volatile this minute
  *
- * The history is deliberately append-only rather than a sliding window. A
- * window of the last N moves its own first byte every tick, which invalidates
- * itself AND everything after it; an append-only list keeps the prefix of
- * length N byte-identical to what it was last tick, so the breakpoint at its
- * end is read rather than rewritten.
+ * The one breakpoint sits on `frozen`, and only there. An append-only block
+ * looks like the ideal place for one — the prefix is intact, so surely the
+ * cache reads it? It does, and then writes the now-longer prefix as a new
+ * entry, and the provider charges a cache WRITE for the whole thing rather
+ * than for the increment. Measured on the character's own prompt over 37
+ * calls with the breakpoint at the end of its growing block: 343k tokens read
+ * against 655k written, an effective 1.35x on content that costs 1.0x
+ * uncached (see userPromptBuilder.ts). This file kept that arrangement long
+ * after the other one dropped it, on top of a history that never stopped
+ * growing.
+ *
+ * So the history is a fixed window now (RENDER_HISTORY_WINDOW), and the
+ * segment holding it carries no breakpoint: bounded content at 1.0x beats
+ * unbounded content at 1.35x after about four ticks, and the gap only widens.
  */
 /** `--- 12-01 19:05 · 教堂主殿 ---`, the same stamp the character's own prompt
  *  uses, so a paragraph reads the same in both places. */
@@ -356,8 +373,14 @@ function buildUserPromptSegments(
   // What this character has already been told they perceived. Without it the
   // renderer reintroduces the room from scratch every minute — the oak doors,
   // the candle smoke, the ticking — because it cannot know it said all that
-  // two ticks ago.
-  const history = params.recentPerceptions ?? [];
+  // two ticks ago. The window is what that job needs and no more: a place's
+  // standing furniture was said within the last few minutes or it is stale
+  // anyway. Moving between places needs no special case — the new place's
+  // paragraphs push the old ones out on their own, and the mixed window in
+  // between is exactly the continuity a character carries through a door.
+  const history = (params.recentPerceptions ?? []).slice(
+    -RENDER_HISTORY_WINDOW
+  );
   if (history.length > 0) {
     const block = history
       .map((p) => `${stamp(p.gameDateTime, p.location, dgsm)}\n${p.narrative}`)
@@ -406,13 +429,15 @@ function buildUserPromptSegments(
   }
 
   const segments: PromptSegment[] = [];
-  // No breakpoint on `frozen` alone: identity is ~2 lines, far under any
-  // provider's minimum cacheable prefix, and the system prompt already carries
-  // one. The breakpoint goes at the end of the history, where the prefix is
-  // both stable and worth caching.
-  segments.push({ text: frozen.join("\n\n"), cache: growing.length === 0 });
+  // The breakpoint goes here and nowhere else. Identity is ~2 lines on its
+  // own, but a cached prefix runs from the first byte of the request, so what
+  // this breakpoint actually holds is the system prompt plus those lines —
+  // and it holds them without moving. Everything after it moves every tick,
+  // and a breakpoint on moving content is charged as a write of the whole
+  // prefix, which is worse than not caching it at all.
+  segments.push({ text: frozen.join("\n\n"), cache: true });
   if (growing.length > 0) {
-    segments.push({ text: growing.join("\n\n"), cache: true });
+    segments.push({ text: growing.join("\n\n"), cache: false });
   }
   segments.push({ text: volatileParts.join("\n\n"), cache: false });
   return segments;

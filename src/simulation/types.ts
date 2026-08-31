@@ -15,6 +15,12 @@ export type SimulationEventType =
    *  not broadcast — it is per-character, and 28 paragraphs a tick would
    *  swamp the socket. */
   | "npc_perceived"
+  /** One character's own condensed account of their earlier paragraphs,
+   *  written when their stream passed the prompt budget. `data.coversThrough`
+   *  is the `gameDateTime` of the last paragraph it speaks for. Additive: the
+   *  paragraphs it covers stay in the log, and only the view handed to the
+   *  prompts is shortened. Not broadcast, for the same reason. */
+  | "npc_perception_compacted"
   | "npc_position_snapshot"
   | "playback_buffering"
   | "playback_resumed";

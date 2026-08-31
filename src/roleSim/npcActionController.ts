@@ -20,6 +20,7 @@ import { findAffectedCharacters } from "../engine/shared/impactPropagation.js";
 import type { NpcMemoryManager } from "../memory/NpcMemoryManager.js";
 import type { DynamicGameStateManager } from "../state/DynamicGameState.js";
 import type { RoleSimAgent, RoleSimContext } from "./agent.js";
+import { compactPerceptions, needsCompaction } from "./perceptionCompactor.js";
 import { buildPerceivedBundle, render } from "./renderer/index.js";
 
 export interface NpcActionControllerDeps {
@@ -41,6 +42,18 @@ export interface NpcActionControllerDeps {
     gameDateTime: string;
     location: string;
     narrative: string;
+  }) => void;
+  /** Called when a character has condensed their own stream. The summary
+   *  speaks for every paragraph up to and including
+   *  `coversThroughGameDateTime`, so a subscriber that stores it can serve the
+   *  short stream back on reload without deleting the long one — the event log
+   *  keeps every paragraph; only the prompt gets the shorter view. */
+  onPerceptionCompacted?: (entry: {
+    npcId: string;
+    gameDateTime: string;
+    location: string;
+    narrative: string;
+    coversThroughGameDateTime: string;
   }) => void;
 }
 
@@ -122,6 +135,7 @@ export class NpcActionController {
     PerceptionHistoryEntry[]
   >();
   private readonly onPerception?: NpcActionControllerDeps["onPerception"];
+  private readonly onPerceptionCompacted?: NpcActionControllerDeps["onPerceptionCompacted"];
 
   constructor(deps: NpcActionControllerDeps) {
     this.engine = deps.engine;
@@ -130,6 +144,7 @@ export class NpcActionController {
     this.dgsm = deps.dgsm;
     this.sessionId = deps.sessionId;
     this.onPerception = deps.onPerception;
+    this.onPerceptionCompacted = deps.onPerceptionCompacted;
     this.moduleId = deps.moduleId;
     this.language = deps.language ?? "en";
 
@@ -315,6 +330,9 @@ export class NpcActionController {
           ...(decision.skillId !== undefined
             ? { skillId: decision.skillId }
             : {}),
+          ...(decision.language !== undefined
+            ? { language: decision.language }
+            : {}),
           ...(decision.utterance !== undefined
             ? { utterance: decision.utterance }
             : {}),
@@ -442,15 +460,7 @@ export class NpcActionController {
 
     // Snapshot every prior perception (excludes current tick); push current
     // after.
-    const recentPerceptions = priorPerceptions;
-    this.recordPerception(
-      npcId,
-      gameDateTime,
-      currentScene,
-      rendered.narrative
-    );
-
-    return {
+    const baseCtx: RoleSimContext = {
       npcId,
       currentTime: gameDateTime,
       npcProfile: profile,
@@ -458,8 +468,61 @@ export class NpcActionController {
       memories,
       currentAction,
       perception: { narrative: rendered.narrative, location: currentScene },
-      recentPerceptions,
+      recentPerceptions: priorPerceptions,
     };
+
+    // Over the ceiling, the character condenses their own stream before they
+    // decide under it — with this same context, so what they keep is judged
+    // from where they are standing. Ordered before `recordPerception` so the
+    // paragraph they have not yet been told about does not land inside the
+    // part they are summarizing.
+    const recentPerceptions = await this.compactIfOverBudget(
+      npcId,
+      baseCtx,
+      priorPerceptions
+    );
+
+    this.recordPerception(
+      npcId,
+      gameDateTime,
+      currentScene,
+      rendered.narrative
+    );
+
+    return { ...baseCtx, recentPerceptions };
+  }
+
+  /** Returns the stream the decision should read: the compacted one when the
+   *  ceiling was passed and the call produced something, the original
+   *  otherwise. A failed compaction is not a failed tick — the long stream is
+   *  still correct, and the attempt simply repeats next decision. */
+  private async compactIfOverBudget(
+    npcId: string,
+    ctx: RoleSimContext,
+    priorPerceptions: PerceptionHistoryEntry[]
+  ): Promise<PerceptionHistoryEntry[]> {
+    if (!needsCompaction(priorPerceptions)) return priorPerceptions;
+
+    const compacted = await compactPerceptions({
+      ctx,
+      dgsm: this.dgsm,
+      language: this.language,
+    });
+    if (!compacted) return priorPerceptions;
+
+    this.perceptionHistory.set(npcId, [...compacted.entries]);
+    const summaryEntry = compacted.entries[0];
+    this.onPerceptionCompacted?.({
+      npcId,
+      gameDateTime: summaryEntry.gameDateTime,
+      location: summaryEntry.location,
+      narrative: summaryEntry.narrative,
+      coversThroughGameDateTime: compacted.coversThroughGameDateTime,
+    });
+    console.log(
+      `[NpcActionController] ${npcId}: condensed ${priorPerceptions.length} paragraphs into a summary + ${compacted.entries.length - 1}`
+    );
+    return compacted.entries;
   }
 
   private recordPerception(

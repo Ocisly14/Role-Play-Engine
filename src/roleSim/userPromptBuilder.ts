@@ -20,6 +20,19 @@ import {
 export interface BuildUserPromptOptions {
   language: string;
   dgsm: DynamicGameStateManager;
+  /**
+   * What the prompt asks for at the end. Everything above it is identical
+   * either way, which is the point: the character who compacts their own
+   * stream is the same character, reading the same profile, memories and
+   * present minute they read when they act. Only the closing instruction
+   * differs, so the two cannot drift apart.
+   *
+   * `compact` also needs the cutoff — the stamp of the last paragraph that
+   * gets folded into the summary. Everything after it stays verbatim.
+   */
+  closing?:
+    | { kind: "decide" }
+    | { kind: "compact"; coversThrough: string; targetTokens: number };
 }
 
 /**
@@ -134,11 +147,49 @@ a positive tick count, a real skill name) or choose a different action.`
   }
 
   const langName = opts.language?.startsWith("zh") ? "Chinese" : "English";
-  // `act` output is structured fields — prose goes in `description`, ids in
-  // `objectRefs`. The envelope itself is enforced by the API (a tool call is
-  // required), so this doesn't have to describe JSON.
-  volatile.push(
-    `## Decide
+  const closing = opts.closing ?? { kind: "decide" };
+
+  if (closing.kind === "compact") {
+    // No tools on this call: the answer is the paragraph itself. What the
+    // character keeps is their judgement, made from their own standpoint —
+    // the same standpoint every other line of this prompt establishes.
+    volatile.push(
+      `## Condense what you have lived through
+Your own record of the day has grown too long to carry whole. Rewrite the
+early part of it, in your own voice, as the account you would still be able
+to give of it.
+
+Everything in **What you have lived through so far** up to and including
+\`${closing.coversThrough}\` is what you are condensing. The entries after
+that stamp stay exactly as they are — do not summarize, repeat or mention
+them.
+
+Keep what you would still know: who you dealt with and how it stands
+between you, what you learned, what you promised or were promised, what you
+carried, what changed and what it cost. Drop the minute-by-minute — the
+walking, the waiting, the weather that mattered to nobody. Where a thing
+matters because of when or where it happened, keep the when and the where.
+
+Anything in square brackets — \`[ITEM_7]\`, \`[stranger_a]\`,
+\`[SCN_LIBRARY]\` — is a handle, not a word. Carry every one you keep
+through into your account EXACTLY as it appears, brackets included, attached
+to the same thing it was attached to above. A handle is how you reach for a
+thing later: drop a thing and its handle goes with it, but keep the thing
+and lose the handle and you will remember the brass key with no way left to
+reach for it. Never write a bracket you did not read above, and never put
+one on something that had none.
+
+Write it as one continuous first-person account, past tense, in
+${langName}. No headings, no bullet list, no commentary about the act of
+summarizing. Aim for about ${closing.targetTokens} tokens; shorter is fine
+if your day was thin. Write the account now — nothing else.`
+    );
+  } else {
+    // `act` output is structured fields — prose goes in `description`, ids in
+    // `objectRefs`. The envelope itself is enforced by the API (a tool call is
+    // required), so this doesn't have to describe JSON.
+    volatile.push(
+      `## Decide
 Everything above is INPUT you have read — the world describing itself TO
 you. The bracketed tags in what you perceive — \`[stranger_a]\`,
 \`[ITEM_7]\`, \`[SCN_LIBRARY]\` — are the ONLY ids you may put in
@@ -149,7 +200,8 @@ in \`utterance\`) — never the tags.
 
 Call one tool now — \`act\` or \`continue\`, plus any \`writeMemory\`
 worth keeping from what you just perceived. Write content in ${langName}.`
-  );
+    );
+  }
 
   // Drop empty groups before joining so the separator layout matches a plain
   // `sections.join("\n\n")` over the same non-empty sections. The trailing
@@ -172,8 +224,12 @@ worth keeping from what you just perceived. Write content in ${langName}.`
 
 /** `--- 1923-04-02 09:15 · Miskatonic Library ---`: when and where this
  *  reached the character. The scene id is shown only if the module has no
- *  name for it — this line is read as prose, not cited as an id. */
-function stamp(
+ *  name for it — this line is read as prose, not cited as an id.
+ *
+ *  Exported because compaction names its cutoff with one: the instruction
+ *  points at a line the character can actually find in the block above it,
+ *  rather than asking them to count entries from the end. */
+export function stamp(
   gameDateTime: string,
   sceneId: string | undefined,
   dgsm: DynamicGameStateManager

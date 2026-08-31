@@ -196,6 +196,10 @@ export class LLMRoleSimAgent implements RoleSimAgent {
           typeof parsed.skillId === "string" && parsed.skillId.trim() !== ""
             ? parsed.skillId
             : undefined,
+        language:
+          typeof parsed.language === "string" && parsed.language.trim() !== ""
+            ? parsed.language
+            : undefined,
         utterance:
           typeof parsed.utterance === "string" && parsed.utterance !== ""
             ? parsed.utterance
