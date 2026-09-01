@@ -2,7 +2,9 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-The package is **`role-play-engine`** ("LLM World Engine"); the checkout directory is still `CoC-AI-agent` for historical reasons. Call of Cthulhu IP references were scrubbed — don't reintroduce named-setting terminology. A few `coc*` identifiers survive as leftovers (`DEBUG=coc:*`); treat them as vestigial, not as a naming convention.
+The package is **`role-play-engine`** ("LLM World Engine"); the checkout directory is still `CoC-AI-agent` for historical reasons. Call of Cthulhu IP references were scrubbed — don't reintroduce named-setting terminology. A few `CoC` mentions survive as leftovers (file-header comments in `src/models/*`, the `allowedHosts` entry in `vitest.config.ts`); treat them as vestigial, not as a naming convention.
+
+**The root `README.md` is stale.** It still describes the pre-refactor design (`ActionStep` with `engine: "llm" | "code"` routing, per-skill schemas, a "task processor"). None of that exists any more — see *The two LLM seams* below for what actually runs. `src/planning/README.md` is stale for the same reason.
 
 ## Commands
 
@@ -21,11 +23,27 @@ pnpm test -- path/to/file.test.ts             # run a single test file
 pnpm test -- -t "name"                        # run by test name pattern
 ```
 
-`pnpm chat` is the app. The simulation harness is `scripts/test-agent-decisions.ts` (`pnpm test:agent-decisions`): each case stages a scene inside its **own real session** and runs the production pipeline for a few in-world minutes — no stubs. `pnpm lint:agent-cases` structurally checks the case table for free. Scripts that referenced the pre-refactor tree (`run-simulation.ts`, `probe-npc-decide.ts`, `test-role-agent.ts`, …) were deleted; don't resurrect them. Set `LLM_TRACE_DIR` (or pass `--dump-prompts`) to dump every model call, prompt and answer, to disk.
+`pnpm chat` is the app. Every other script below spends real money on model calls — none of them stub the LLM.
+
+```bash
+pnpm test:agent-decisions   # scripts/test-agent-decisions.ts — the simulation harness
+pnpm lint:agent-cases       # structural check of the case table; free, run it first
+pnpm sim:full               # scripts/full-injection-run.ts — whole town, one session, resumable
+pnpm smoke:module           # module loads clean, no model calls
+pnpm prompt:budget          # per-block token accounting for the character prompt
+```
+
+`test-agent-decisions.ts` stages each case inside its **own real session** and runs the production pipeline for a few in-world minutes — no stubs, no grading, just an objective per-actor record. Useful flags: `--list`, `--only <case>`, `--module grayhaven` (compact table, loads from `testmods/` instead of `data/Mods/`), `--drop-sessions`, `--dump-prompts`. Cost scales with actor *slots*, not actor·ticks. `full-injection-run.ts` is the other half: every character present, measuring prompt blocks at full roster size; it resumes from the last completed tick and stops itself when the same error signature repeats.
+
+Scripts that referenced the pre-refactor tree (`run-simulation.ts`, `probe-npc-decide.ts`, `test-role-agent.ts`, …) were deleted; don't resurrect them. Set `LLM_TRACE_DIR` (or pass `--dump-prompts`) to dump every model call, prompt and answer, to disk.
 
 Prisma: **use `prisma db push`** rather than `migrate dev` — the `reminder_embeddings` schema has drift that makes `migrate dev` unsafe. Scenario rows have a compound unique key `(moduleId, scenarioId)`; query with `findFirst`, not `findUnique`.
 
 Path alias `@/*` -> `src/*` is configured for vitest; respect that when adding tests.
+
+### Environment
+
+`.env.example` is the reference. `MODEL_PROVIDER` picks the vendor; each class is overridable per vendor — `{SMALL,MEDIUM,LARGE}_{ANTHROPIC,OPENAI,GOOGLE}_MODEL` plus `EMBEDDING_*` / `IMAGE_*`. Other knobs that matter when running the sim: `LLM_TRACE_DIR` (dump every prompt), `NPC_DECIDE_CONCURRENCY` (parallel NPC decisions per tick), `SKIP_EMBEDDING_WARMUP`, `PRISMA_LOG_QUERIES`, `PORT` / `API_URL`.
 
 ## Architecture
 
@@ -58,7 +76,9 @@ There is **no central scheduler** and **no planning agent**. The pipeline is `pe
 
 ### The two LLM seams
 
-**World Action Engine** (`engine/resolution/worldActionEngine.ts`) — one agentic session per triggered tick, over the full world context. It may consult the deterministic code tools (`engine/tools/`: pathfinding, movement cost, inventory validation, dice) and must finish with a terminal `submit_resolution` call. Output is validated in code (`worldDeltaValidator.ts`), gets up to `MAX_REPAIR_ROUNDS` corrective rounds, and anything still invalid is dropped with its action failed. There are **no action types and no per-action prompts** — one rule document (`engine/rules/world-action-resolution.md`) governs everything.
+**World Action Engine** (`engine/resolution/worldActionEngine.ts`) — one agentic session per triggered tick, over the full world context. Output is validated in code (`worldDeltaValidator.ts`), gets up to `MAX_REPAIR_ROUNDS` (3) corrective rounds via `repair_resolution`, and anything still invalid is dropped with its action failed. There are **no action types and no per-action prompts** — one rule document (`engine/rules/world-action-resolution.md`) governs everything, with `engine/rules/session-protocol.md` as the session contract.
+
+The session's economics are part of its design: every turn re-sends the whole request, so **a turn costs about what the resolution costs**. Hence exactly **one** code tool — `damageRoll` (`engine/tools/diceTools.ts`, registered flat by name in `registerDefaults.ts`) — because a roll must never be the model's. Pathfinding, movement cost and inventory lookups were deliberately removed: the request already carries the graph, the places and the items, so the model reads rather than queries. The turn budget is a code constant *and* a prompt sentence (`FORCE_SUBMIT_AFTER` / `MAX_ITERATIONS` templated into the protocol); after the force point the tools are withdrawn and a submission is demanded. Every session must end with exactly one `submit_resolution` call, alone in its turn.
 
 **RoleSimAgent** (`roleSim/llmAgent.ts`) — per-NPC persona loop. Tools: `act` and `continue` are terminal (consume the tick, return to the controller); `writeMemory` is an instant tool dispatched by `toolDispatcher.ts` and rides along in the same turn. There is no recall tool — see Memory below.
 
@@ -70,32 +90,52 @@ Agent output is **untrusted**. `engine/actions/commandValidator.ts` checks shape
 
 The alias is derived from (viewer, target), so it is stable: the same stranger wears the same tag for the same actor for as long as they stay unknown. Every id space is therefore stable, and the boundary asks only one thing of a citation — **does it name something real**. Whether the thing is still within reach is the Engine's question, and it can answer it as something the actor perceives ("the display where the daisies were is empty") instead of a rejection the actor never sees.
 
+Travel is stated, not computed by the model: the actor names `movement.route` (and `vehicleId` when driving), code derives the duration and overrides whatever the Engine wrote. A hop that doesn't exist fails back to the actor naming both places, which is how they learn to correct it.
+
 ### Perception / render layer
 
 `roleSim/renderer/` turns a `PerceivedBundle` (scene, own conditions, own action posture, the tick's occurrences this character perceives) into **one first-person paragraph** via a MEDIUM-model call. Entities carry bracketed citation tags — `[stranger_a]`, `[ITEM_7]`, `[SCN_LIBRARY]` — and citing a tag is the only way a character can point at anything. A paragraph carrying a tag the actor could not cite is sent back once, quoting the exact string it invented; `stripUncitableTags` then drops whatever is still uncitable before the paragraph reaches the actor. On renderer failure the wrapper returns null; there is deliberately **no god-eye fallback**.
 
+The perception stream is append-only and injected whole, so it has a ceiling: `roleSim/perceptionCompactor.ts` hands the character their own prompt back and asks *them* to condense the early part into the account they could still give, keeping the most recent paragraphs verbatim. The judgement belongs to the person whose day it was — same principle as `writeMemory` having no curator. `roleSim/promptBudget.ts` measures per-block spend (counting CJK and Latin separately, since this world runs in Chinese); it is measurement only and evicts nothing.
+
 ### Skills
 
-The 57 CoC skills were consolidated into **17 broad ability domains** (`engine/rules/skillCatalog.ts`, one `.md` per domain in `engine/rules/skills/`). Specific approaches, tools, and weapon types are judged from the action description by the Engine, not tracked as separate stats. `engine/rules/skillReference.ts` renders the catalog into *both* prompts (roleSim system prompt and the Engine session). When deleting routing machinery, keep the skill knowledge — it lives in those files.
+The 57 CoC skills were consolidated into **17 broad ability domains** (`engine/rules/skillCatalog.ts`, one `.md` per domain in `engine/rules/skills/`, with YAML frontmatter). Specific approaches, tools, and weapon types are judged from the action description by the Engine, not tracked as separate stats. `engine/rules/skillReference.ts` renders the catalog into *both* prompts (roleSim system prompt and the Engine session). When deleting routing machinery, keep the skill knowledge — it lives in those files.
 
 ### Source layout (`src/`)
 
-- `engine/` — tick runtime. `core/` (tickEngine/tickOrchestrator/applier/eventBus/scriptedEventRunner), `actions/` (ActionCommand intake, command validator/builder, EngineAction store, skill adjudication, movement runtime), `resolution/` (World Action Engine + context builder + WorldDelta schema/validator), `tools/` (deterministic code tools), `subsystem/` (fire, weather, sun, stamina, movement, item damage, condition expiry), `scriptedEvents/`, `rules/`, `shared/` (dice, pathfinding, impact propagation, topology helpers, JSON parsing). Owns all world-state transitions. No interpreter, no per-action definitions.
-- `roleSim/` — LLM persona layer: `llmAgent`, `agent` (contracts), `npcActionController`, `renderer/`, `systemPrompt`, `userPromptBuilder`, `profileFormatter`, `memoryFormatter`, `sanityGuidance`, `seedIntents`, `toolDispatcher`, `tools/` (`act`, `continue`, `writeMemory`, `schemas`).
-- `simulation/` — `SimulationRunner`, `PlaybackScheduler`, `SimulationEventEmitter`, `runtimePersistence`, `characterInjection`. The driver layer between API and engine.
-- `state/` — `DynamicGameState` + `DynamicGameStateLoader`, `moduleLoader`/`moduleImporter`, `gameClock`, `perceivableDirectory`, `perceivedLocation`, `topologyTypes`, `blockedConnections`. Module loading is YAML-driven.
+- `engine/` — tick runtime. `core/` (tickEngine/tickOrchestrator/applier/eventBus/scriptedEventRunner), `actions/` (ActionCommand intake, command validator/builder, EngineAction store, skill adjudication, movement runtime), `resolution/` (World Action Engine + context builder + WorldDelta schema/validator), `tools/` (the code-tool registry and `damageRoll`), `subsystem/` (fire, weather, sun, stamina, item damage, condition expiry), `scriptedEvents/`, `rules/`, `shared/` (dice, pathfinding, impact propagation, topology helpers, JSON parsing). Owns all world-state transitions. No interpreter, no per-action definitions.
+- `roleSim/` — LLM persona layer: `llmAgent`, `agent` (contracts), `npcActionController`, `renderer/`, `systemPrompt`, `userPromptBuilder`, `profileFormatter`, `memoryFormatter`, `perceptionCompactor`, `promptBudget`, `seedIntents`, `toolDispatcher`, `tools/` (`act`, `continue`, `writeMemory`, `schemas`).
+- `simulation/` — `SimulationRunner`, `SimulationEventEmitter`, `runtimePersistence`, `characterInjection`. The driver layer between API and engine.
+- `state/` — `DynamicGameState` + `DynamicGameStateLoader`, `moduleLoader`/`moduleImporter`/`moduleSchemaV2`, `gameClock`, `perceivableDirectory`, `perceivedLocation`, `connectionRegistry`, `blockedConnections`, `characterSpot`, `topologyTypes`.
 - `memory/` — `MemoryStore`, `MemoryRetriever`, `NpcMemoryManager`, `DecayEngine`, plus per-type `handlers/`. Embeddings via FastEmbed (`rag/localEmbeddingManager`). Nothing geographic is generated at bootstrap — the old `contextMemory`/`knownLocations`/`knownMapSeed` layer is gone.
-- `models/` — in-house LLM layer. `providers/` holds one thin adapter per vendor (`anthropic`, `openai`, `google`); policy (retries, model-class fallback, usage accounting) lives in `generator.ts`, and `tokenUsage.ts` tracks spend. Supports native tool calls and provider prompt-cache breakpoints (`SystemBlock.cacheControl`). **LangChain has been removed — don't reintroduce it.**
+- `models/` — in-house LLM layer. `providers/` holds one adapter per vendor (`anthropic`, `openai`, `google`, `deepseek` — the first three over vendor SDKs, DeepSeek over `fetch` since it ships none); policy (retries, model-class fallback, usage accounting) lives in `generator.ts`, `tokenUsage.ts` tracks spend, `trace.ts` implements `LLM_TRACE_DIR`. Supports native tool calls and provider prompt-cache breakpoints (`SystemBlock.cacheControl`). **LangChain has been removed — don't reintroduce it.**
 - `shared/agents/memory/database/` — Prisma client, module scoping, seed data.
-- `planning/` — nearly gutted; only `sceneMapFormatter.ts` and a few types remain, still imported by the engine and server. Its README is stale. The module is on its way out — don't add to it.
+- `planning/` — nearly gutted; only `sceneMapFormatter.ts` and a few types remain, still imported by the engine and server. The module is on its way out — don't add to it.
 - `rag/` — `localEmbeddingManager` (used by memory) and a Discovery-RAG service under `session/` that is currently unwired.
 - `i18n/` — en/zh.
 
 `godot-client/` (top level) is a separate GDScript client that consumes the WebSocket event stream.
 
+### Modules (world data)
+
+Modules are **JSON**, not YAML, and load through `state/moduleLoader.ts` + `state/moduleSchemaV2.ts`. The authoring contract is `testmods/DYNAMIC_WORLD_SCENE_SCHEMA.md` — everything in it is enforced at LOAD time, and a violation throws a single aggregated `ModuleSchemaError` rather than failing silently later.
+
+```
+<module>/
+  module_setup.json            optional: startDate + introduction + weather presets
+  npc_injection_policy.json    optional: which NPCs simulate, by tier
+  <scenes-dir>/                SCN_*.json (scenes), ROAD_*.json, VEH_*.json (vehicles)
+  scripted-events/*.json       optional: event definitions (arrays)
+```
+
+Schema **v2 is prose-first**: `description` is the complete scene text a character perceives, every visible object / passage / condition is cited inline as `[reference-id]`, and the matching machine-readable rows live in the same file under `references`. v1 files (no `schemaVersion: 2`) are rejected outright. Retired and rejected by the loader: `scenarios_outline.json` and the `LOC_*` macro-location layer, `JUNC_*` files (a crossroads is a top-level scene), `truth_timeline.json`, `knowledge_matrix.json`, `macro_scene.json`, `module_digest.json`.
+
+`testmods/grayhaven/` is the live reference module (71 place files, ~10 NPCs — `grayhaven_npc/*.json` profiles alongside `characters/*.md` prose). Runtime modules live in `data/Mods/`.
+
 ### Memory
 
-Six memory types (`NpcMemoryType` in `prisma/schema.prisma`), all **character-authored** — `general`, `plan`, `secret`, `relationship`, `map`, `long_term_intent`. A module seeds them through each NPC profile's `memory` array (geographic knowledge included, as `map` memories in the character's own voice); in play `writeMemory` writes the same types. **Nothing is generated on the character's behalf** — no bootstrap gazetteer (the `context` type and `knownMapSeed` are gone), no end-of-day diary. What a character knows about the map is exactly what their profile says plus what they wrote down; a place absent from both does not exist for them, which is the whole loss-in-the-woods mechanic. Macro-location containers (`ScenarioOutline`/`LOC_*`, `scenarios_outline.json`) are likewise gone: `parentLocationId` survives only as the interior-scene marker (any non-empty value) and a viewer-side grouping label, placement uses scene ids directly (`currentLocation`/`residence` on the profile), and the topology attaches deep interiors transitively by itself.
+Six memory types (`NpcMemoryType` in `prisma/schema.prisma`), all **character-authored** — `general`, `plan`, `secret`, `relationship`, `map`, `long_term_intent`. A module seeds them through each NPC profile's `memory` array (geographic knowledge included, as `map` memories in the character's own voice); in play `writeMemory` writes the same types. **Nothing is generated on the character's behalf** — no bootstrap gazetteer (the `context` type and `knownMapSeed` are gone), no end-of-day diary. What a character knows about the map is exactly what their profile says plus what they wrote down; a place absent from both does not exist for them, which is the whole loss-in-the-woods mechanic. Macro-location containers are likewise gone: `parentLocationId` survives only as the interior-scene marker (any non-empty value) and a viewer-side grouping label, placement uses scene ids directly (`currentLocation`/`residence` on the profile), and the topology attaches deep interiors transitively by itself.
 
 There is **no recall tool**: memories are injected whole into the user prompt, so a memory absent from the prompt does not exist for that character. Decay lives in `DecayEngine`.
 
@@ -109,15 +149,15 @@ The codebase uses **ISO 8601 `gameDateTime` strings** as the single time field (
 
 ### Server (`client/server.ts` + `client/server/`)
 
-Express + WebSocket. Route modules are mounted from `client/server/{auth,character,data,maps,mod,simulation,skills,analytics}/routes.ts`. `WebSocketManager` handles live simulation events. `DatabaseManager` wraps the Prisma client. Daily analytics scheduler is started/stopped from the entrypoint.
+Express + WebSocket. Mounted route modules are `maps`, `auth`, `simulation/mapRoutes` (public viewer reads), `analytics`, `data`, `simulation` — **in that order**; the public/unauthenticated routers must stay ahead of the authenticated ones, and the SPA fallback after all of them. The `character/`, `mod/` and `skills/` directories are now empty leftovers — character creation, the mod manager and skill lookup were deleted from both server and frontend; don't wire them back. `WebSocketManager` handles live simulation events, `DatabaseManager` wraps the Prisma client, and the daily analytics scheduler is started/stopped from the entrypoint.
 
 ### Frontend (`client/src/`)
 
-React + Vite + Tailwind. Used to manage and inspect simulations; no in-browser turn-based chat surface.
+React + Vite + Tailwind. Used to manage and inspect simulations; no in-browser turn-based chat surface, no character sheet, no mod editor.
 
 ## Testing conventions
 
-- Unit tests live in `__tests__/` directories beside source (`src/engine/**/__tests__`, `src/state/__tests__`, `src/memory/__tests__`, `src/models/__tests__`, `src/roleSim/__tests__`, `src/roleSim/renderer/__tests__`). Engine integration helpers are in `src/engine/__tests__/integration/`. The top-level `__tests__/simulation/` directory is currently empty.
+- Unit tests live in `__tests__/` directories beside source (`src/engine/**/__tests__`, `src/state/__tests__`, `src/memory/__tests__`, `src/models/__tests__`, `src/roleSim/__tests__`, `src/roleSim/renderer/__tests__`, `src/simulation/__tests__`). Engine integration helpers are in `src/engine/__tests__/integration/makeIntegrationEngine.ts`. There is no top-level `__tests__/` directory.
 - Skip TDD for trivial code (pure types, thin delegation). Keep tests for algorithmic logic.
 - Prefer batching verification at the end of a multi-step plan rather than per-step smoke tests.
 

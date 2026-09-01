@@ -109,10 +109,14 @@ function harness(opts: { liveActions?: EngineAction[] } = {}) {
     dgsm: dgsm as never,
     sessionId: "s1",
     language: "en",
+    decideConcurrency: 3,
   });
-  void controller;
   return {
-    fire: (r: TickReport) => tickHandler!(r),
+    fire: (r: TickReport) => {
+      if (!tickHandler) throw new Error("tickCompleted handler not registered");
+      return tickHandler(r);
+    },
+    controller,
     decisions,
     memoryAdds,
     agent,
@@ -156,6 +160,44 @@ describe("occurrence routing", () => {
     for (const call of bundleCalls) {
       expect(call.occurrencesForNpc).toHaveLength(1);
     }
+  });
+
+  it("runs co-located NPC pipelines concurrently from the same tick", async () => {
+    const h = harness();
+    const started: string[] = [];
+    let release!: () => void;
+    const gate = new Promise<void>((resolve) => {
+      release = resolve;
+    });
+    render.mockImplementation(async ({ npcId }: { npcId: string }) => {
+      started.push(npcId);
+      await gate;
+      return { narrative: "Something happens." };
+    });
+
+    const pending = h.fire(makeReport());
+    await vi.waitFor(() => expect(started).toHaveLength(3));
+    release();
+    await pending;
+  });
+
+  it("runs the initial bootstrap with the same bounded concurrency", async () => {
+    const h = harness();
+    const started: string[] = [];
+    let release!: () => void;
+    const gate = new Promise<void>((resolve) => {
+      release = resolve;
+    });
+    render.mockImplementation(async ({ npcId }: { npcId: string }) => {
+      started.push(npcId);
+      await gate;
+      return { narrative: "The room around me." };
+    });
+
+    const pending = h.controller.bootstrap();
+    await vi.waitFor(() => expect(started).toHaveLength(3));
+    release();
+    await pending;
   });
 
   it("a busy NPC listed as perceiver IS woken (chance to replace its action)", async () => {

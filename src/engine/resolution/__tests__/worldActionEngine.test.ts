@@ -131,7 +131,7 @@ const validSubmission = {
 
 function makeDeps() {
   const codeTools = new CodeToolRegistry();
-  // The session offers one tool now; `damageRoll` is it. (pathfinding,
+  // The session offers only dice tools. (pathfinding,
   // movementCost and inventoryValidation were removed — a tool call costs a
   // full-context round trip, and those three answered from data the request
   // already carries.)
@@ -139,6 +139,11 @@ function makeDeps() {
     name: "damageRoll",
     description: "stub",
     execute: () => ({ ok: true, total: 5, dice: [4, 1] }),
+  });
+  codeTools.register({
+    name: "sanityCheck",
+    description: "stub",
+    execute: () => ({ ok: true, passed: false, loss: 4 }),
   });
   return { dgsm: {} as DynamicGameStateManager, codeTools };
 }
@@ -194,6 +199,40 @@ describe("resolveTick session loop", () => {
       (m: { role: string }) => m.role === "tool"
     );
     expect(toolMsg.results[0].content).toContain("total");
+  });
+
+  it("attributes sanity-check invocations to their causing action", async () => {
+    generateToolCalls
+      .mockResolvedValueOnce(
+        turn([
+          {
+            id: "san",
+            name: "sanityCheck",
+            args: {
+              actionId: "action_c1",
+              characterId: "npc_1",
+              successLoss: "0",
+              failureLoss: "1d4",
+            },
+          },
+        ])
+      )
+      .mockResolvedValueOnce(
+        turn([
+          { id: "submit", name: "submit_resolution", args: validSubmission },
+        ])
+      );
+
+    const result = await resolveTick(makeContext(), makeDeps());
+
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.codeToolInvocations).toContainEqual(
+      expect.objectContaining({
+        toolName: "sanityCheck",
+        actionId: "action_c1",
+      })
+    );
   });
 
   it("rejects a mixed submit+tool turn without losing the session", async () => {
@@ -461,32 +500,62 @@ describe("the turn budget", () => {
   });
 
   it("stops offering parallel calls once one tool is demanded", async () => {
-    // Four turns of lookups, then the guard withdraws the tools. On that turn
-    // `toolChoice` names the only acceptable call, so a parallel turn can add
-    // nothing but a second copy of it — and the intake takes a submission
-    // ONLY when it arrives alone. Measured live: both copies refused, another
-    // full-world round trip spent sending the same thing again by itself.
-    for (let i = 0; i < 4; i += 1) {
-      generateToolCalls.mockResolvedValueOnce(
-        turn([{ id: `t${i}`, name: "damageRoll", args: { formula: "1d6" } }])
+    // Repair is the one moment `toolChoice` still names a single tool. On that
+    // turn a parallel call can add nothing but a second copy of it — and the
+    // intake takes a patch ONLY when it arrives alone. Measured live: both
+    // copies refused, another full-world round trip spent sending the same
+    // thing again by itself.
+    generateToolCalls
+      .mockResolvedValueOnce(
+        turn([{ id: "t0", name: "damageRoll", args: { formula: "1d6" } }])
+      )
+      .mockResolvedValueOnce(
+        // Ending an action that is still queued — rejected, so repair opens.
+        turn([
+          {
+            id: "t1",
+            name: "submit_resolution",
+            args: {
+              ending: [
+                {
+                  actionId: "action_c1",
+                  outcome: "success",
+                  reason: "done already",
+                  occurrence: {
+                    facts: [
+                      { type: "action_result", content: "the door opens" },
+                    ],
+                    participants: [{ characterId: "npc_1", role: "actor" }],
+                    perceiverCharacterIds: ["npc_1"],
+                  },
+                },
+              ],
+            },
+          },
+        ])
+      )
+      .mockResolvedValueOnce(
+        turn([
+          {
+            id: "t2",
+            name: "repair_resolution",
+            args: { starting: validSubmission.starting },
+          },
+        ])
       );
-    }
-    generateToolCalls.mockResolvedValueOnce(
-      turn([{ id: "sub", name: "submit_resolution", args: validSubmission }])
-    );
 
     const result = await resolveTick(makeContext(), makeDeps());
     expect(result.ok).toBe(true);
 
     const calls = generateToolCalls.mock.calls.map((c) => c[0]);
     // While it still had a choice of tool, batching stayed available.
-    for (const call of calls.slice(0, 4)) {
+    for (const call of calls.slice(0, 2)) {
       expect(call.toolChoice).toBe("any");
       expect(call.allowParallelCalls).toBe(true);
     }
-    // On the demanded submission it does not.
-    expect(calls[4].toolChoice).toEqual({ name: "submit_resolution" });
-    expect(calls[4].allowParallelCalls).toBe(false);
+    // On the demanded patch it does not.
+    expect(calls[2].toolChoice).toEqual({ name: "repair_resolution" });
+    expect(calls[2].allowParallelCalls).toBe(false);
   });
 
   it("tells the model the budget it is spending, with the real numbers", async () => {
@@ -500,10 +569,11 @@ describe("the turn budget", () => {
     // The budget is a code constant and a prompt sentence at once; the
     // document names it with a placeholder so the two cannot drift.
     expect(prompt).not.toContain("{{");
-    expect(prompt).toMatch(/\b4 turns with the tools\b/);
-    expect(prompt).toMatch(/\b8 turns in all\b/);
+    expect(prompt).toMatch(/\b3 turns in all\b/);
     // And why there is nothing to spend those turns on but the resolution.
     expect(prompt).toContain("there is nothing to look up");
     expect(prompt).toContain("A turn is expensive");
+    expect(prompt).toContain("# Sanity Check Guidance");
+    expect(prompt).toContain("sanityCheck");
   });
 });

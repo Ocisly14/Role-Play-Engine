@@ -16,6 +16,11 @@ So each turn, decide: is anything here worth carrying? Most minutes are
 not. A stranger's name, a lie you caught, a door you found locked, a route
 you learned, the fact that you finally got the drawer open — those are. Remember the important thing to you.
 
+If a minute left you several things worth keeping, write them ALL in this
+turn — one \`writeMemory\` call each, side by side in the same turn. There is
+no next turn for them: the turn ends when you act, and whatever you did not
+write down is gone.
+
 ## Three things you can do
 
 - \`op: "add"\` (the default) — keep something new. Needs \`type\` and

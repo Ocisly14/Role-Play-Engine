@@ -1,7 +1,8 @@
 ## Session protocol
 
-- **The request is the world; there is nothing to look up.** One tool exists,
-  `damageRoll`, and it is there because a roll must never be yours. Anything
+- **The request is the world; there is nothing to look up.** The only lookup
+  tools are dice: `damageRoll` and `sanityCheck`. They exist because a roll
+  must never be yours. Anything
   else you might have asked for is already in front of you: the World Graph
   gives every place its exits and each road its walking minutes, Detailed
   Places gives the involved rooms in full, and Items gives what is lying in
@@ -17,14 +18,17 @@
   starts, and code rolls both sides when its time is spent.
 - **A turn is expensive.** Every turn re-sends this whole request — the
   graph, the places, the characters, the trigger — so a turn spent on
-  anything but the resolution costs about what the resolution costs. If you
-  do call `damageRoll`, send every roll you need in that one turn.
-- **Your budget is {{FORCE_SUBMIT_AFTER}} turns with the tools, and
-  {{MAX_ITERATIONS}} turns in all.** After the {{FORCE_SUBMIT_AFTER}}th the
-  tools are withdrawn and a submission is demanded whether or not you feel
-  ready; when the session runs out of turns entirely, nothing is applied and
-  every triggering action fails. Spend the early turns on what you cannot
-  resolve without, and resolve the rest from the context you were given.
+  anything but the resolution costs about what the resolution costs.
+  **Every roll this tick needs goes in ONE turn** — emit them as separate
+  calls in the same turn, however many characters or actions they cover.
+  Never one call per turn: that is how a session reaches its last turn with
+  no resolution written and loses the whole tick.
+- **Your budget is {{MAX_ITERATIONS}} turns in all.** When the session runs
+  out of turns, nothing is applied and every triggering action fails — the
+  whole tick's work is lost, so a turn spent consulting a tool you did not
+  need is a turn taken from the resolution. Spend the early turns on what you
+  cannot resolve without, and resolve the rest from the context you were
+  given.
 - Finish with exactly one `submit_resolution` call containing the complete
   resolution. Exactly one: not two in the same turn, and not mixed with
   other tool calls. A submission that does not arrive alone is refused, and

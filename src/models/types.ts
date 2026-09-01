@@ -21,6 +21,7 @@ export enum ModelProviderName {
   OPENAI = "openai",
   ANTHROPIC = "anthropic",
   GOOGLE = "google",
+  DEEPSEEK = "deepseek",
 }
 
 /**

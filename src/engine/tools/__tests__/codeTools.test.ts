@@ -1,6 +1,6 @@
-// Code-tool tests: registry invocation recording and damage-formula parsing.
+// Code-tool tests: registry invocation recording and trusted dice.
 //
-// The session offers ONE tool now. `pathfinding`, `movementCost` and
+// The session offers only dice tools now. `pathfinding`, `movementCost` and
 // `inventoryValidation` were removed — the first two answered from the World
 // Graph the request already carries, and the third was replaced by putting
 // the named person's pockets into the request itself. Their tests went with
@@ -9,7 +9,7 @@
 import { describe, expect, it } from "vitest";
 import type { CodeToolContext, EngineCodeTool } from "../codeTool.js";
 import { CodeToolRegistry } from "../codeTool.js";
-import { clampValue, damageRollTool } from "../diceTools.js";
+import { clampValue, damageRollTool, sanityCheckTool } from "../diceTools.js";
 
 function makeDgsm(overrides: Record<string, unknown> = {}) {
   return {
@@ -140,6 +140,107 @@ describe("damageRollTool", () => {
       });
     }
   );
+});
+
+describe("sanityCheckTool", () => {
+  const saneCharacter = makeDgsm({
+    getNpcProfile: (id: string) =>
+      id === "npc_1"
+        ? { status: { san: 60, maxSan: 80 }, skills: {} }
+        : undefined,
+  });
+
+  it("uses the success formula when d100 is at or below current SAN", () => {
+    expect(
+      sanityCheckTool.execute(
+        {
+          actionId: "action_1",
+          characterId: "npc_1",
+          successLoss: "0",
+          failureLoss: "1d6",
+          fixedRoll: 60,
+        },
+        ctx(saneCharacter, "action_1")
+      )
+    ).toEqual({
+      ok: true,
+      actionId: "action_1",
+      characterId: "npc_1",
+      currentSan: 60,
+      roll: 60,
+      passed: true,
+      lossFormula: "0",
+      lossRolls: [],
+      loss: 0,
+    });
+  });
+
+  it("rolls the failure loss without letting the model choose the result", () => {
+    expect(
+      sanityCheckTool.execute(
+        {
+          actionId: "action_2",
+          characterId: "npc_1",
+          successLoss: "1",
+          failureLoss: "1d6",
+          fixedRoll: 61,
+          fixedLossRolls: [4],
+        },
+        ctx(saneCharacter, "action_2")
+      )
+    ).toMatchObject({
+      ok: true,
+      passed: false,
+      lossFormula: "1d6",
+      lossRolls: [4],
+      loss: 4,
+    });
+  });
+
+  it("rejects unknown or non-sanity-bearing characters and bad formulas", () => {
+    expect(
+      sanityCheckTool.execute(
+        {
+          actionId: "action_1",
+          characterId: "missing",
+          successLoss: "0",
+          failureLoss: "1",
+        },
+        ctx(saneCharacter)
+      )
+    ).toEqual({ ok: false, reason: "unknown_character" });
+
+    expect(
+      sanityCheckTool.execute(
+        {
+          actionId: "action_1",
+          characterId: "entity",
+          successLoss: "0",
+          failureLoss: "1",
+        },
+        ctx(
+          makeDgsm({
+            getNpcProfile: () => ({
+              status: { san: 0, maxSan: 0 },
+              skills: {},
+            }),
+          })
+        )
+      )
+    ).toEqual({ ok: false, reason: "sanity_not_applicable" });
+
+    expect(
+      sanityCheckTool.execute(
+        {
+          actionId: "action_1",
+          characterId: "npc_1",
+          successLoss: "-1",
+          failureLoss: "terror",
+        },
+        ctx(saneCharacter)
+      )
+    ).toEqual({ ok: false, reason: "invalid_loss_formula" });
+  });
 });
 
 describe("clampValue", () => {

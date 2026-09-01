@@ -31,6 +31,9 @@ export interface NpcActionControllerDeps {
   sessionId: string;
   /** Module language ("en" | "zh"). Drives renderer output language. */
   language?: string;
+  /** Maximum per-character render/decide pipelines in flight. Defaults to
+   *  NPC_DECIDE_CONCURRENCY (8 when unset); injectable for deterministic tests. */
+  decideConcurrency?: number;
   /** Called for every paragraph rendered, in order. The controller keeps the
    *  stream in memory because both prompts need all of it; whoever owns
    *  durability subscribes here rather than reaching into the buffer. Left
@@ -62,32 +65,11 @@ interface DecideOpts {
   occurrencesForNpc?: Occurrence[];
 }
 
-/** Max location groups deciding concurrently. Overridable for tuning. */
-const DECIDE_GROUP_CONCURRENCY = (() => {
+/** Max NPC pipelines deciding concurrently. Overridable for tuning. */
+const DEFAULT_DECIDE_CONCURRENCY = (() => {
   const raw = Number(process.env.NPC_DECIDE_CONCURRENCY);
   return Number.isInteger(raw) && raw > 0 ? raw : 8;
 })();
-
-/**
- * Group ids by resolved location. Ids resolving to the same non-empty
- * location share a group (order preserved); ids with no resolvable location
- * each get their own group. Ids resolving to `null` are dropped (dead NPCs).
- */
-export function groupByLocation(
-  ids: string[],
-  resolve: (id: string) => string | null
-): string[][] {
-  const byLocation = new Map<string, string[]>();
-  for (const id of ids) {
-    const location = resolve(id);
-    if (location === null) continue;
-    const key = location === "" ? `__solo:${id}` : location;
-    const group = byLocation.get(key);
-    if (group) group.push(id);
-    else byLocation.set(key, [id]);
-  }
-  return [...byLocation.values()];
-}
 
 /** Run `worker` over `items` with at most `limit` in flight. Rejections
  *  propagate after all in-flight workers settle. */
@@ -106,7 +88,11 @@ export async function runWithConcurrency<T>(
       }
     }
   );
-  await Promise.all(lanes);
+  const settled = await Promise.allSettled(lanes);
+  const failed = settled.find(
+    (result): result is PromiseRejectedResult => result.status === "rejected"
+  );
+  if (failed) throw failed.reason;
 }
 
 interface PerceptionHistoryEntry {
@@ -123,6 +109,7 @@ export class NpcActionController {
   private readonly dgsm: DynamicGameStateManager;
   private readonly sessionId: string;
   private readonly language: string;
+  private readonly decideConcurrency: number;
   /** Per-NPC log of every renderer narrative this session, oldest first —
    *  injected whole, so nothing the character perceived scrolls out of reach.
    *  Only successful renders enter; failed renders leave the log untouched.
@@ -143,6 +130,12 @@ export class NpcActionController {
     this.onPerception = deps.onPerception;
     this.onPerceptionCompacted = deps.onPerceptionCompacted;
     this.language = deps.language ?? "en";
+    this.decideConcurrency =
+      deps.decideConcurrency !== undefined &&
+      Number.isInteger(deps.decideConcurrency) &&
+      deps.decideConcurrency > 0
+        ? deps.decideConcurrency
+        : DEFAULT_DECIDE_CONCURRENCY;
 
     this.engine.on("tickCompleted", (report: TickReport) =>
       this.processTickReport(report)
@@ -155,9 +148,9 @@ export class NpcActionController {
     const alive = this.dgsm
       .getState()
       .npcCharacters.filter((n) => this.dgsm.isNpcAlive(n.id));
-    for (const npc of alive) {
-      await this.decide(npc.id);
-    }
+    await runWithConcurrency(alive, this.decideConcurrency, (npc) =>
+      this.decide(npc.id)
+    );
   }
 
   private async processTickReport(report: TickReport): Promise<void> {
@@ -229,29 +222,24 @@ export class NpcActionController {
       ...idleAlive,
     ]);
 
-    // 5. Location-grouped decide(). NPCs at the same location decide
-    //    sequentially so later deciders see earlier deciders' submissions;
-    //    groups at different locations run concurrently (capped).
-    const groups = groupByLocation([...allTargets], (npcId) =>
-      this.dgsm.isNpcAlive(npcId) ? this.resolveCurrentSceneId(npcId) : null
+    // 5. Every target decides independently from the same completed-tick
+    //    snapshot. A submitted command is intent, not an observable event, so
+    //    even co-located characters must not learn it through process order.
+    //    The next Engine tick resolves every submitted command together.
+    const targets = [...allTargets].filter((npcId) =>
+      this.dgsm.isNpcAlive(npcId)
     );
-    await runWithConcurrency(
-      groups,
-      DECIDE_GROUP_CONCURRENCY,
-      async (npcIds) => {
-        for (const npcId of npcIds) {
-          if (!this.dgsm.isNpcAlive(npcId)) continue;
-          const occurrencesForNpc = occByNpc.get(npcId);
-          await this.decide(npcId, {
-            report,
-            occurrencesForNpc:
-              occurrencesForNpc && occurrencesForNpc.length > 0
-                ? occurrencesForNpc
-                : undefined,
-          });
-        }
-      }
-    );
+    await runWithConcurrency(targets, this.decideConcurrency, async (npcId) => {
+      if (!this.dgsm.isNpcAlive(npcId)) return;
+      const occurrencesForNpc = occByNpc.get(npcId);
+      await this.decide(npcId, {
+        report,
+        occurrencesForNpc:
+          occurrencesForNpc && occurrencesForNpc.length > 0
+            ? occurrencesForNpc
+            : undefined,
+      });
+    });
   }
 
   /** Adapt one legacy FeatureEvent into occurrence form (migration shim). */
@@ -386,11 +374,6 @@ export class NpcActionController {
 
   private npcHasActiveStep(npcId: string): boolean {
     return this.liveActionFor(npcId) !== undefined;
-  }
-
-  private resolveCurrentSceneId(npcId: string): string {
-    const position = this.dgsm.getCharacterPosition(npcId);
-    return position ? this.dgsm.resolveLocationId(position) : "";
   }
 
   private async buildContext(

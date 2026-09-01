@@ -319,7 +319,18 @@ export class TickOrchestrator {
           );
           transition.timingReason =
             transition.timingReason ?? "movement time derived from the route";
-          transition.nextWakeAt = addMinutes(nextTickTime, minutes);
+          // Wake at the duration we just RESOLVED, not at the raw estimate.
+          // A leg that begins or ends partway along a road costs a fractional
+          // number of minutes (|0 - 0.1| * 15 = 1.5), which the movement
+          // runtime handles by advancing a minute per tick and clamping — so
+          // the leg really does take `resolvedDurationTicks`. Deriving the
+          // wake time from the same number keeps the two from describing the
+          // same action differently, and keeps a fraction off the clock,
+          // which rejects one outright.
+          transition.nextWakeAt = addMinutes(
+            nextTickTime,
+            transition.resolvedDurationTicks * this.deps.tickDurationMinutes
+          );
         }
       }
     }

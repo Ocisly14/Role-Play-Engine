@@ -642,7 +642,7 @@ export const repairResolutionTool: ToolSpec = {
  * LLM-facing declarations of the deterministic code tools. Execution runs
  * through the CodeToolRegistry; results are trusted and recorded.
  *
- * One tool, because a turn is not cheap. Every tool call spends a round trip
+ * Only dice tools, because a turn is not cheap. Every tool call spends a round trip
  * of the whole world context — measured at ~60k tokens on a full town — so a
  * tool only earns its place by answering something the request cannot say.
  * Three did not, and were removed:
@@ -673,6 +673,31 @@ export const CODE_TOOL_SPECS: ToolSpec[] = [
         damageBonus: { type: "string" },
       },
       required: ["formula"],
+      additionalProperties: false,
+    },
+  },
+  {
+    name: "sanityCheck",
+    description:
+      "Roll an involuntary sanity check against a character's current SAN, then roll the authored success/failure loss formula. Use only for a character who perceived the horror.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        actionId: {
+          type: "string",
+          description: "The action whose consequence caused this exposure.",
+        },
+        characterId: { type: "string" },
+        successLoss: {
+          type: "string",
+          description: 'SAN loss formula on success, such as "0" or "1".',
+        },
+        failureLoss: {
+          type: "string",
+          description: 'SAN loss formula on failure, such as "1d4" or "1d10".',
+        },
+      },
+      required: ["actionId", "characterId", "successLoss", "failureLoss"],
       additionalProperties: false,
     },
   },

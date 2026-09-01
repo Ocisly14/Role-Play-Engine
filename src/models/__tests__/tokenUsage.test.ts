@@ -61,6 +61,17 @@ describe("normalizeUsageMetadata — prompt cache counters", () => {
         prompt_tokens_details: { cached_tokens: 1024 },
       })
     ).toMatchObject({ input_tokens: 2000, cache_read_tokens: 1024 });
+
+    // DeepSeek names the hit itself rather than nesting it under a details
+    // object. Unread, every DeepSeek run would report a 0% cache hit rate.
+    expect(
+      normalizeUsageMetadata({
+        prompt_tokens: 2000,
+        completion_tokens: 30,
+        prompt_cache_hit_tokens: 1216,
+        prompt_cache_miss_tokens: 784,
+      })
+    ).toMatchObject({ input_tokens: 2000, cache_read_tokens: 1216 });
   });
 
   it("defaults cache counters to 0 when the provider reports none", () => {
@@ -92,6 +103,10 @@ describe("uncachedInputTokens — provider-dependent input_tokens semantics", ()
     expect(uncachedInputTokens(totals, ModelProviderName.ANTHROPIC)).toBe(1500);
   });
 
+  it("subtracts for DeepSeek too (hit + miss = prompt_tokens)", () => {
+    expect(uncachedInputTokens(totals, ModelProviderName.DEEPSEEK)).toBe(476);
+  });
+
   it("never goes negative on inconsistent provider data", () => {
     expect(
       uncachedInputTokens(
@@ -117,6 +132,8 @@ describe("uncachedInputTokens — provider-dependent input_tokens semantics", ()
 
     expect(promptTokensSent(openai, ModelProviderName.OPENAI)).toBe(1500);
     expect(promptTokensSent(anthropic, ModelProviderName.ANTHROPIC)).toBe(1500);
+    // DeepSeek reports it the OpenAI way.
+    expect(promptTokensSent(openai, ModelProviderName.DEEPSEEK)).toBe(1500);
   });
 });
 

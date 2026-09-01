@@ -5,6 +5,9 @@
 
 import { describe, expect, it, vi } from "vitest";
 import type { DynamicGameStateManager } from "../../../state/DynamicGameState.js";
+import { buildTopology } from "../../../state/topologyTypes.js";
+import type { RoadNode } from "../../../state/topologyTypes.js";
+import type { DynamicScene } from "../../../state/types.js";
 import type { ActionCommand } from "../../actions/types.js";
 import type { EngineResolutionContext } from "../../resolution/types.js";
 import type { RawTickResolution } from "../../resolution/worldDeltaSchema.js";
@@ -518,5 +521,113 @@ describe("a route that does not join up", () => {
     const narrative = reports[0].cancellations[0].outcome?.narrative;
     expect(narrative).toContain("not a single stretch");
     expect(narrative).toContain("林道口 (SCN_TRAILHEAD)");
+  });
+});
+
+describe("a walk that starts partway along a road", () => {
+  // Observed live (grayhaven gh-cross-town, DeepSeek run 2026-09-01):
+  // "addMinutes expects an integer minute delta, got 2.5."
+  //
+  // Road positions are fractions of the road's length, so a leg that begins
+  // or ends between the endpoints costs a FRACTIONAL number of minutes:
+  // |0 - 0.1| * 15 = 1.5. The movement runtime handles that correctly — it
+  // advances one minute per tick and clamps progress at 1, so the leg simply
+  // takes 2 ticks. `resolvedDurationTicks` agreed (ceil(1.5) = 2). Only
+  // `nextWakeAt` disagreed, being handed the raw 1.5, and the clock refused
+  // it. The two numbers describe the same thing and must not diverge.
+  function makeRoadDgsm() {
+    const base = makeDgsm();
+    const scenes = new Map([
+      ["J_A", { id: "J_A", name: "主街北口", connections: [] }],
+      ["J_B", { id: "J_B", name: "主街南口", connections: [] }],
+    ]);
+    const roads = new Map([
+      [
+        "R_MAIN",
+        {
+          id: "R_MAIN",
+          name: "主街",
+          endpointA: "J_A",
+          endpointB: "J_B",
+          travelTimeMinutes: 15,
+          alongConnections: [],
+          connections: [],
+        },
+      ],
+    ]);
+    return {
+      ...base,
+      getState: () => ({
+        ...base.getState(),
+        scenes,
+      }),
+      getScene: (id: string) => scenes.get(id) ?? null,
+      getTopology: () =>
+        buildTopology(
+          scenes as unknown as Map<string, DynamicScene>,
+          roads as unknown as Map<string, RoadNode>
+        ),
+      // Standing one tenth of the way down the road, walking back to J_A.
+      getCharacterPosition: () => ({
+        type: "road",
+        roadId: "R_MAIN",
+        position: 0.1,
+      }),
+      getBlockedConnections: () => new Map<string, string>(),
+      getConnectionBlockReason: () => undefined,
+    } as unknown as DynamicGameStateManager;
+  }
+
+  function stubResolveWithWalk() {
+    const fn = vi.fn(async (context: EngineResolutionContext) => {
+      const raw: RawTickResolution = { starting: [], ending: [] };
+      for (const t of context.trigger.triggers) {
+        for (const actionId of t.actionIds) {
+          if (t.reason === "new_action") {
+            raw.starting?.push({
+              actionId,
+              resolvedDurationTicks: 4,
+              timingReason: "stub: she walks back up the street",
+              movement: { route: ["J_A"] },
+            });
+          }
+        }
+      }
+      const finalized = finalizeResolution(raw, context);
+      return {
+        ok: true as const,
+        resolution: finalized.resolution,
+        movementInits: finalized.movementInits,
+        checkInits: finalized.checkInits,
+        codeToolInvocations: [],
+      };
+    });
+    return { fn, calls: [] as EngineResolutionContext[] };
+  }
+
+  it("does not hand the clock a fractional minute", async () => {
+    const { engine } = makeEngine(makeRoadDgsm(), stubResolveWithWalk());
+    await engine.submitCommand(
+      command({ description: "我沿主街往回走到北口。" })
+    );
+    // Before the fix this threw: addMinutes got 1.5.
+    await expect(engine.tick()).resolves.toBeUndefined();
+  });
+
+  it("wakes at exactly the duration it resolved, not the raw estimate", async () => {
+    const { engine } = makeEngine(makeRoadDgsm(), stubResolveWithWalk());
+    await engine.submitCommand(
+      command({ description: "我沿主街往回走到北口。" })
+    );
+    const reports: import("../types.js").TickReport[] = [];
+    engine.on("tickCompleted", (r) => {
+      reports.push(r);
+    });
+    await engine.tick();
+
+    const started = reports[0].transitions.find((t) => t.to === "active");
+    expect(started?.resolvedDurationTicks).toBe(2); // ceil(1.5 / 1)
+    // The clock is at 09:01 when the action starts, plus its own 2 ticks.
+    expect(started?.nextWakeAt).toBe("1923-04-02T09:03:00");
   });
 });

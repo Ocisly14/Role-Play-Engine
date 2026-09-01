@@ -2,6 +2,7 @@
 
 import { ModelProviderName } from "../types.js";
 import { AnthropicAdapter } from "./anthropic.js";
+import { DeepSeekAdapter } from "./deepseek.js";
 import { GoogleAdapter } from "./google.js";
 import { OpenAIAdapter } from "./openai.js";
 import type { ProviderAdapter } from "./types.js";
@@ -10,6 +11,7 @@ const adapters: Record<ModelProviderName, ProviderAdapter> = {
   [ModelProviderName.OPENAI]: new OpenAIAdapter(),
   [ModelProviderName.ANTHROPIC]: new AnthropicAdapter(),
   [ModelProviderName.GOOGLE]: new GoogleAdapter(),
+  [ModelProviderName.DEEPSEEK]: new DeepSeekAdapter(),
 };
 
 export function getAdapter(provider: ModelProviderName): ProviderAdapter {

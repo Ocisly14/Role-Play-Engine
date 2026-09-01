@@ -2,8 +2,8 @@
 //
 // The unified World Action Engine session (plan Phase 7). Called once per
 // triggered tick with the full EngineResolutionContext. Runs an agentic loop:
-// the model may consult the one deterministic code tool it has left (damage
-// dice — a roll must never be the model's) and must finish with
+// the model may consult deterministic dice tools (damage and sanity checks —
+// a roll must never be the model's) and must finish with
 // one terminal `submit_resolution` call. Output is validated in code; one
 // corrective retry, then whatever is still invalid is dropped and the
 // affected actions are failed. No action types, no per-definition prompts —
@@ -45,15 +45,22 @@ import {
   validateRawResolution,
 } from "./worldDeltaValidator.js";
 
-const MAX_ITERATIONS = 8;
 /**
- * After this many turns the session stops offering the code tools and demands
- * the terminal submission. Without it a model that keeps consulting tools —
- * or keeps re-submitting alongside them — burns every iteration and every
- * triggering action fails, at full-world context cost per turn. Observed
- * live before this guard existed.
+ * Hard ceiling on turns in one session — repair rounds included, since they
+ * run in the same loop.
+ *
+ * 5, down from 8. Measured over two 30-tick full-town runs: at 8 the failing
+ * sessions spent every turn fanning out optional tool calls and applied
+ * nothing, at ~65k of full-world context per wasted turn — four such ticks
+ * were half of that run's entire token spend. Cutting to 3 removed that waste
+ * but starved two ticks that needed a fourth turn, so the failure count did
+ * not move: 5 either way, for opposite reasons.
+ *
+ * 5 is the worst honest path — one turn of tools, one submission, three
+ * repairs — and costs nothing on the common path, where the median session
+ * still finishes in under two turns.
  */
-const FORCE_SUBMIT_AFTER = 4;
+const MAX_ITERATIONS = 5;
 /**
  * How many repair rounds a submission gets before the session gives up.
  *
@@ -88,6 +95,10 @@ const RULES_DOC = loadRuleFile(
   "world-action-resolution.md",
   "Resolve all actions under strict causality, state constraints, locality, engine-owned timing, conservation, roll-first assessment, concurrency consistency, minimal change, and fact/perception separation."
 );
+const SANITY_RULES_DOC = loadRuleFile(
+  "sanity-check.md",
+  "Sanity checks are involuntary, apply only to characters who perceived a concrete horror, and must use the sanityCheck tool. Apply exactly the loss code returns as a negative character.san delta."
+);
 /** The turn budget is a code constant and a prompt sentence at once. The
  *  document names it with a placeholder so the two cannot drift: a model told
  *  it has four turns when the guard fires at three would spend the difference
@@ -95,9 +106,7 @@ const RULES_DOC = loadRuleFile(
 const SESSION_PROTOCOL = loadRuleFile(
   "session-protocol.md",
   "Ground the resolution with the deterministic tools where needed; finish with exactly one submit_resolution answering every worklist id."
-)
-  .replaceAll("{{FORCE_SUBMIT_AFTER}}", String(FORCE_SUBMIT_AFTER))
-  .replaceAll("{{MAX_ITERATIONS}}", String(MAX_ITERATIONS));
+).replaceAll("{{MAX_ITERATIONS}}", String(MAX_ITERATIONS));
 
 const SYSTEM_PROMPT = `You are the World Action Engine of a tick-based Call of Cthulhu world
 simulation. You are the sole authority on what actually happens: characters
@@ -108,6 +117,8 @@ time passed, whether an action is finished, or whether a check was passed:
 code owns the clock and the dice, and hands you their results.
 
 ${RULES_DOC}
+
+${SANITY_RULES_DOC}
 
 ${SESSION_PROTOCOL}
 
@@ -368,24 +379,13 @@ export async function resolveTick(
     let toolCalls: Awaited<ReturnType<typeof generateToolCalls>>["toolCalls"];
     let assistantMessage: ModelMessage;
     try {
-      // Once a submission exists, the only move left is to patch it.
-      const mustSubmit = !repairing && i >= FORCE_SUBMIT_AFTER;
-      if (mustSubmit && i === FORCE_SUBMIT_AFTER) {
-        console.warn(
-          `[WorldActionEngine] ${context.tick.tickId}: ${i} turns without a ` +
-            "submission — withdrawing the code tools and demanding one now"
-        );
-      }
       const res = await generateToolCalls({
         customSystemPrompt: SYSTEM_PROMPT,
         cacheSystemPrompt: true,
         messages,
         tools,
-        toolChoice: repairing
-          ? { name: "repair_resolution" }
-          : mustSubmit
-            ? { name: "submit_resolution" }
-            : "any",
+        // Once a submission exists, the only move left is to patch it.
+        toolChoice: repairing ? { name: "repair_resolution" } : "any",
         // Parallel calls only while the model still has a choice of tool.
         // Once `toolChoice` names one, a second copy of it is the only other
         // thing a parallel turn can produce — and the intake below takes a
@@ -394,7 +394,7 @@ export async function resolveTick(
         // demanded submission came back twice, both refused, and the tick
         // paid another full-world round trip (~65k tokens) to send the same
         // thing again by itself.
-        allowParallelCalls: !repairing && !mustSubmit,
+        allowParallelCalls: !repairing,
         modelClass: ModelClass.MEDIUM,
         operation: "world-action-engine",
       });
@@ -517,8 +517,13 @@ export async function resolveTick(
         continue;
       }
       try {
+        const actionId =
+          typeof call.args.actionId === "string"
+            ? call.args.actionId
+            : undefined;
         const output = await deps.codeTools.run(call.name, call.args, {
           dgsm: deps.dgsm,
+          ...(actionId !== undefined ? { actionId } : {}),
         });
         results.push({ toolCallId: call.id, content: JSON.stringify(output) });
       } catch (err) {
