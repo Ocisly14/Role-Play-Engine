@@ -31,13 +31,13 @@
     ],
     "connections": [
       {
-        "id": "exit.grocery_store.street_door",
+        "id": "connection.grocery_store.street_door",
         "targetId": "ROAD_main_street",
         "name": "临街门",
         "description": "挂着铃铛的临街门,通向主街北段。"
       },
       {
-        "id": "exit.grocery_store.backroom_door",
+        "id": "connection.grocery_store.backroom_door",
         "targetId": "SCN_grocery_backroom",
         "name": "后仓门",
         "description": "柜台后的门,门框上钉着历年的身高刻痕,通向后仓。"

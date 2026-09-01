@@ -9,19 +9,19 @@
     "items": [],
     "connections": [
       {
-        "id": "exit.cliff_path.dock_end",
+        "id": "connection.cliff_path.dock_end",
         "targetId": "SCN_dock",
         "name": "小径北端(码头)",
         "role": "endpointA"
       },
       {
-        "id": "exit.cliff_path.cliff_end",
+        "id": "connection.cliff_path.cliff_end",
         "targetId": "SCN_lighthouse_cliff",
         "name": "小径南端(灯塔崖)",
         "role": "endpointB"
       },
       {
-        "id": "exit.cliff_path.cabin_turnoff",
+        "id": "connection.cliff_path.cabin_turnoff",
         "targetId": "SCN_earl_cabin",
         "name": "通往小屋的岔路",
         "description": "拐向码头边独居小屋的岔路。",

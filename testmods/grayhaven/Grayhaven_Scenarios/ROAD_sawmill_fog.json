@@ -9,13 +9,13 @@
     "items": [],
     "connections": [
       {
-        "id": "exit.sawmill_fog.sawmill_end",
+        "id": "connection.sawmill_fog.sawmill_end",
         "targetId": "SCN_sawmill",
         "name": "东端(锯木厂)",
         "role": "endpointA"
       },
       {
-        "id": "exit.sawmill_fog.hollow_end",
+        "id": "connection.sawmill_fog.hollow_end",
         "targetId": "SCN_fog_hollow",
         "name": "西端(雾谷)",
         "role": "endpointB"

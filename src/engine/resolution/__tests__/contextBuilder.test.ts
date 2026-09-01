@@ -24,7 +24,7 @@ function makeDgsm(): DynamicGameStateManager {
           id === "SCN_1"
             ? [
                 {
-                  id: "exit.scn1.door",
+                  id: "connection.scn1.door",
                   targetId: "SCN_2",
                   description: "a door",
                 },
@@ -136,7 +136,7 @@ describe("buildEngineResolutionContext", () => {
       SCN_2: "scene",
       SCN_FAR: "scene",
     });
-    expect(context.state.connectionIds).toEqual(["exit.scn1.door"]);
+    expect(context.state.connectionIds).toEqual(["connection.scn1.door"]);
     // The far-away idle character is present too.
     expect(context.state.characters.map((c) => c.id).sort()).toEqual([
       "npc_1",
@@ -172,7 +172,7 @@ describe("buildEngineResolutionContext", () => {
     const scn1 = context.state.places.find((s) => s.id === "SCN_1");
     expect(scn1?.kind).toBe("scene");
     expect(scn1?.connections[0]).toMatchObject({
-      connectionId: "exit.scn1.door",
+      connectionId: "connection.scn1.door",
       targetId: "SCN_2",
       blockedReason: "rubble",
     });
@@ -183,7 +183,7 @@ describe("buildEngineResolutionContext", () => {
     expect(context.state.graph.edges).toEqual([]);
     expect(context.state.blockedEdges).toEqual([
       {
-        connectionId: "exit.scn1.door",
+        connectionId: "connection.scn1.door",
         from: "SCN_1",
         to: "SCN_2",
         reason: "rubble",

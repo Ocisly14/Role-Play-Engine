@@ -18,6 +18,7 @@ import type {
 import {
   applyRepair,
   finalizeResolution,
+  normalizeRawResolution,
   validateRawResolution,
 } from "../worldDeltaValidator.js";
 
@@ -868,5 +869,55 @@ describe("operations are checked against the fields they advertise", () => {
       )
     );
     expect(errors).toContain("is not a place in this world");
+  });
+});
+
+// `input_schema` is a description the provider does not enforce — `strict` is
+// off everywhere and cannot be turned on for `submit_resolution` (every
+// top-level field is optional and `operation` is deliberately open). So the
+// contents can arrive in shapes the schema does not describe, and dropping a
+// whole list takes a resolution with it: observed once as `starting` arriving
+// as an array and `ending`, in the same call, as its own JSON text.
+describe("normalizeRawResolution reads what the schema did not guarantee", () => {
+  const entry = {
+    actionId: "action_c1",
+    reason: "the lock gives",
+    occurrence: {
+      facts: [{ type: "action_result", content: "it opened" }],
+      participants: [{ characterId: "npc_1", role: "actor" }],
+      perceiverCharacterIds: ["npc_1"],
+    },
+  };
+
+  /** The shapes below are exactly what the schema does NOT describe, so they
+   *  are cast in: the parameter is typed as if the provider had honoured it. */
+  const asRaw = (v: unknown) =>
+    v as Parameters<typeof normalizeRawResolution>[0];
+
+  it("parses a list that arrived as its own JSON text", () => {
+    const raw = normalizeRawResolution(
+      asRaw({ starting: [], ending: JSON.stringify([entry]) })
+    );
+    expect(raw.ending).toHaveLength(1);
+    expect(raw.ending?.[0]).toMatchObject({ actionId: "action_c1" });
+  });
+
+  it("still reads the index-keyed object form", () => {
+    const raw = normalizeRawResolution(asRaw({ ending: { 0: entry } }));
+    expect(raw.ending).toHaveLength(1);
+  });
+
+  it("drops a string that is not a list, rather than guessing", () => {
+    const raw = normalizeRawResolution(
+      asRaw({ ending: "nothing ended this tick" })
+    );
+    expect(raw.ending).toEqual([]);
+  });
+
+  it("drops a JSON string that parses to something other than a list", () => {
+    const raw = normalizeRawResolution(
+      asRaw({ ending: JSON.stringify(entry) })
+    );
+    expect(raw.ending).toEqual([]);
   });
 });

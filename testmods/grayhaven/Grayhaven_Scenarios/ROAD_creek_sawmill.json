@@ -9,13 +9,13 @@
     "items": [],
     "connections": [
       {
-        "id": "exit.creek_sawmill.creek_end",
+        "id": "connection.creek_sawmill.creek_end",
         "targetId": "SCN_creek_ford",
         "name": "南端(渡口)",
         "role": "endpointA"
       },
       {
-        "id": "exit.creek_sawmill.sawmill_end",
+        "id": "connection.creek_sawmill.sawmill_end",
         "targetId": "SCN_sawmill",
         "name": "北端(锯木厂)",
         "role": "endpointB"

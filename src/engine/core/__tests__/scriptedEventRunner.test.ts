@@ -201,7 +201,7 @@ describe("recurring scripted events", () => {
       onComplete: [
         {
           kind: "connection.setBlock",
-          connectionId: "exit.creek_sawmill.creek_end",
+          connectionId: "connection.creek_sawmill.creek_end",
           blocked: true,
           reason: "洪水没过踏石",
           featureId: "creek_flood",
@@ -235,7 +235,7 @@ describe("recurring scripted events", () => {
       onComplete: [
         {
           kind: "connection.setBlock",
-          connectionId: "exit.creek_sawmill.creek_end",
+          connectionId: "connection.creek_sawmill.creek_end",
           blocked: false,
           reason: "洪水没过踏石",
           featureId: "creek_flood",
@@ -267,7 +267,7 @@ describe("recurring scripted events", () => {
     expect(changes).toEqual([
       {
         kind: "connection.setBlock",
-        connectionId: "exit.creek_sawmill.creek_end",
+        connectionId: "connection.creek_sawmill.creek_end",
         blocked: true,
         sourceFeatureId: "creek_flood",
         reason: "洪水没过踏石",
@@ -287,7 +287,7 @@ describe("recurring scripted events", () => {
     expect(lift).toEqual([
       {
         kind: "connection.setBlock",
-        connectionId: "exit.creek_sawmill.creek_end",
+        connectionId: "connection.creek_sawmill.creek_end",
         blocked: false,
         sourceFeatureId: "creek_flood",
         reason: "洪水没过踏石",
@@ -304,7 +304,7 @@ describe("recurring scripted events", () => {
       onComplete: [
         {
           kind: "connection.setHidden",
-          connectionId: "exit.station_dock.inner_door",
+          connectionId: "connection.station_dock.inner_door",
           hidden: false,
         },
       ],
@@ -314,7 +314,7 @@ describe("recurring scripted events", () => {
     expect(changes).toEqual([
       {
         kind: "connection.setHidden",
-        connectionId: "exit.station_dock.inner_door",
+        connectionId: "connection.station_dock.inner_door",
         hidden: false,
       },
     ]);

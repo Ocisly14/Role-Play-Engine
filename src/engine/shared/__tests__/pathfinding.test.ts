@@ -15,7 +15,7 @@ const scenes = new Map<string, DynamicScene>([
     "J_A",
     {
       id: "J_A",
-      connections: [{ id: "exit.ja.home", targetId: "S_HOME" }],
+      connections: [{ id: "connection.ja.home", targetId: "S_HOME" }],
     } as unknown as DynamicScene,
   ],
   ["J_B", { id: "J_B", connections: [] } as unknown as DynamicScene],

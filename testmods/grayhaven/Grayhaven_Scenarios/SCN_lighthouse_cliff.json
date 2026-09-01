@@ -23,7 +23,7 @@
     ],
     "connections": [
       {
-        "id": "exit.lighthouse_cliff.lighthouse_door",
+        "id": "connection.lighthouse_cliff.lighthouse_door",
         "targetId": "SCN_lighthouse_interior",
         "name": "灯塔铁门",
         "description": "1982 年换过锁的铁门,通向灯塔内部的螺旋梯。"

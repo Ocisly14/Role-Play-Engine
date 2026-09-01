@@ -25,7 +25,7 @@
     ],
     "connections": [
       {
-        "id": "exit.station_maintenance.hall_door",
+        "id": "connection.station_maintenance.hall_door",
         "targetId": "SCN_station_hall",
         "name": "维护间门",
         "description": "通回控制大厅的窄门。"

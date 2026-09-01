@@ -25,7 +25,7 @@
     ],
     "connections": [
       {
-        "id": "exit.batra_priya.living_door",
+        "id": "connection.batra_priya.living_door",
         "targetId": "SCN_batra_living",
         "name": "房门",
         "description": "贴着「闲人免进」的房门,通向起居厨房。"

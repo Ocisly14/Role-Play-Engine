@@ -9,13 +9,13 @@
     "items": [],
     "connections": [
       {
-        "id": "exit.holt_lane.street_end",
+        "id": "connection.holt_lane.street_end",
         "targetId": "SCN_main_north",
         "name": "巷口(主街)",
         "role": "endpointA"
       },
       {
-        "id": "exit.holt_lane.holt_end",
+        "id": "connection.holt_lane.holt_end",
         "targetId": "SCN_holt_gate",
         "name": "巷尾(霍尔特家院门)",
         "role": "endpointB"

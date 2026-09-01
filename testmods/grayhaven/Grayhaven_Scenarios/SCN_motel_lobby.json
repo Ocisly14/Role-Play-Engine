@@ -25,13 +25,13 @@
     ],
     "connections": [
       {
-        "id": "exit.motel_lobby.front_door",
+        "id": "connection.motel_lobby.front_door",
         "targetId": "SCN_motel",
         "name": "临街玻璃门",
         "description": "装着铃铛的玻璃门,出去是旧海岸公路旁的旅馆路口。"
       },
       {
-        "id": "exit.motel_lobby.porch_door",
+        "id": "connection.motel_lobby.porch_door",
         "targetId": "SCN_motel_porch",
         "name": "外廊门",
         "description": "侧面的木门,通向连着客房的外廊。"

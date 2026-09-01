@@ -18,7 +18,7 @@ import type { DynamicScene } from "./types.js";
 export type ConnectionOwnerKind = "scene" | "road";
 
 export interface ConnectionRegistryEntry {
-  /** The connection's own id (`exit.<place>.<slug>`). */
+  /** The connection's own id (`connection.<place>.<slug>`). */
   id: string;
   /** The place whose file declares this connection. */
   ownerId: string;

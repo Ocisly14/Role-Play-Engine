@@ -23,13 +23,13 @@
     ],
     "connections": [
       {
-        "id": "exit.motel.lobby_door",
+        "id": "connection.motel.lobby_door",
         "targetId": "SCN_motel_lobby",
         "name": "旅馆前台的门",
         "description": "挂着「有空房」牌子的玻璃门,通向前台。"
       },
       {
-        "id": "exit.motel.shed_door",
+        "id": "connection.motel.shed_door",
         "targetId": "SCN_freight_shed",
         "name": "货运中转棚卷帘门",
         "description": "铁皮棚的卷帘门,开在公路岔路口旁。"

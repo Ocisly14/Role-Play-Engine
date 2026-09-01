@@ -5,7 +5,7 @@ const allowed = new Set([
   "stranger_a",
   "ITEM_7",
   "SCN_LIBRARY",
-  "exit.library.stacks",
+  "connection.library.stacks",
 ]);
 
 describe("stripUncitableTags", () => {
@@ -33,7 +33,7 @@ describe("stripUncitableTags", () => {
 
   it("keeps an exit tag — doors are citable as themselves", () => {
     const text =
-      "A stairway rises behind the desk [exit.library.stacks], its rail worn smooth.";
+      "A stairway rises behind the desk [connection.library.stacks], its rail worn smooth.";
     expect(stripUncitableTags(text, allowed, "npc_1")).toBe(text);
   });
 

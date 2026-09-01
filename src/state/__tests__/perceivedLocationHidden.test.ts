@@ -41,8 +41,8 @@ function makeWorld(): World {
     ],
     conditions: [],
     connections: [
-      { id: "exit.parlor.shop", targetId: "S_SHOP" },
-      { id: "exit.parlor.cellar", targetId: "S_CELLAR", hidden: true },
+      { id: "connection.parlor.shop", targetId: "S_SHOP" },
+      { id: "connection.parlor.cellar", targetId: "S_CELLAR", hidden: true },
     ],
   };
   const otherScenes: DynamicScene[] = ["S_SHOP", "S_CELLAR", "S_HUT"].map(
@@ -68,8 +68,8 @@ function makeWorld(): World {
     ],
     conditions: [],
     connections: [
-      { id: "exit.junc_x.shop", targetId: "S_SHOP" },
-      { id: "exit.junc_x.cellar", targetId: "S_CELLAR", hidden: true },
+      { id: "connection.junc_x.shop", targetId: "S_SHOP" },
+      { id: "connection.junc_x.cellar", targetId: "S_CELLAR", hidden: true },
     ],
   };
 
@@ -78,16 +78,16 @@ function makeWorld(): World {
     name: "Star Avenue",
     description: "A long avenue.",
     connections: [
-      { id: "exit.r_main.a", targetId: "J_X", role: "endpointA" },
-      { id: "exit.r_main.b", targetId: "J_Y", role: "endpointB" },
+      { id: "connection.r_main.a", targetId: "J_X", role: "endpointA" },
+      { id: "connection.r_main.b", targetId: "J_Y", role: "endpointB" },
       {
-        id: "exit.r_main.shop",
+        id: "connection.r_main.shop",
         targetId: "S_SHOP",
         role: "access",
         position: 0.3,
       },
       {
-        id: "exit.r_main.hut",
+        id: "connection.r_main.hut",
         targetId: "S_HUT",
         role: "access",
         position: 0.7,
@@ -272,14 +272,14 @@ describe("revealing (flipping the hidden flag) restores visibility", () => {
     const { dgsm, scene, junction, road, setActorPosition } = makeWorld();
 
     const cellarExit = scene.connections.find(
-      (c) => c.id === "exit.parlor.cellar"
+      (c) => c.id === "connection.parlor.cellar"
     );
     if (cellarExit) cellarExit.hidden = false;
     const junctionCellar = junction.connections.find(
-      (c) => c.id === "exit.junc_x.cellar"
+      (c) => c.id === "connection.junc_x.cellar"
     );
     if (junctionCellar) junctionCellar.hidden = false;
-    const hutAccess = road.connections.find((c) => c.id === "exit.r_main.hut");
+    const hutAccess = road.connections.find((c) => c.id === "connection.r_main.hut");
     if (hutAccess) hutAccess.hidden = false;
 
     expect(

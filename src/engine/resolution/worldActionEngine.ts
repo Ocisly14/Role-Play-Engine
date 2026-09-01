@@ -169,7 +169,7 @@ function commandForPrompt(command: ActionCommand): Record<string, unknown> {
  * prose description plus a `connections:` reference line — the same
  * description-and-references format as the v2 place files and the Tier-2
  * snapshots, so the Engine reads one format everywhere. Junction/road prose
- * is the authored text and already cites its `[exit.*]` ids; the reference
+ * is the authored text and already cites its `[connection.*]` ids; the reference
  * line resolves each id to its (lifted) target and travel time.
  */
 export function renderWorldGraph(graph: WorldGraph): string {

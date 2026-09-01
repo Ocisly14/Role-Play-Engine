@@ -34,6 +34,14 @@ export type OwnActionState =
     }
   | { kind: "idle" };
 
+/** A way out of the current place, as the viewpoint can see it. */
+export interface PerceivedAdjacentPlace {
+  /** The PLACE the passage leads to — connections are never citable, so this
+   *  is the target's id, which is what the actor may point at. */
+  id: string;
+  name: string;
+}
+
 export interface PerceivedSceneItem {
   id: string;
   name: string;
@@ -55,6 +63,15 @@ export interface PerceivedBundle {
      *  the trust boundary lets the actor cite. `distanceMinutes` is set for
      *  a road item with a position: minutes' walk from the viewpoint. */
     items: PerceivedSceneItem[];
+    /** Where this place leads. Hidden passages are already gone: the
+     *  perception resolver drops them until they are revealed, so an exit the
+     *  character has not found simply is not here. A character standing in a
+     *  room learns the way out from this and nothing else — their memories are
+     *  about the town, not about which door of their own house opens where.
+     *  Observed: a sheriff spent three ticks failing to leave his bedroom
+     *  because every paragraph rendered the armchair and the light and never
+     *  once said the door led to the living room. */
+    adjacentPlaces: PerceivedAdjacentPlace[];
   };
   /** Where the viewpoint has put themselves inside that place, as prose —
    *  "at the workbench, back to the door". Proprioceptive: you always know

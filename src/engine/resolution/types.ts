@@ -61,7 +61,7 @@ export interface WorldGraph {
     parentLocationId?: string;
   }>;
   edges: Array<{
-    /** The authored connection id (`exit.*`) — the handle connectionBlock /
+    /** The authored connection id (`connection.*`) — the handle connectionBlock /
      *  connectionHidden operations take. */
     connectionId: string;
     /** Skeleton node: the declaring place, lifted to its macro location when

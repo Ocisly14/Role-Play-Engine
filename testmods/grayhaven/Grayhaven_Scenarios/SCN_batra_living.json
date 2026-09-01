@@ -30,19 +30,19 @@
     ],
     "connections": [
       {
-        "id": "exit.batra_living.stairs_down",
+        "id": "connection.batra_living.stairs_down",
         "targetId": "SCN_batra_shop",
         "name": "室内楼梯",
         "description": "下到店堂工作台的室内楼梯。"
       },
       {
-        "id": "exit.batra_living.master_door",
+        "id": "connection.batra_living.master_door",
         "targetId": "SCN_batra_master",
         "name": "主卧门",
         "description": "走廊尽头的主卧房门。"
       },
       {
-        "id": "exit.batra_living.priya_door",
+        "id": "connection.batra_living.priya_door",
         "targetId": "SCN_batra_priya",
         "name": "Priya 的房门",
         "description": "贴着手写「闲人免进」纸条的房门。"

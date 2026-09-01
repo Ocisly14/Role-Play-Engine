@@ -30,13 +30,13 @@
     ],
     "connections": [
       {
-        "id": "exit.bluebird_dining.street_door",
+        "id": "connection.bluebird_dining.street_door",
         "targetId": "ROAD_main_street",
         "name": "临街玻璃门",
         "description": "挂着手写营业木牌的玻璃门,通向主街北段。"
       },
       {
-        "id": "exit.bluebird_dining.kitchen_door",
+        "id": "connection.bluebird_dining.kitchen_door",
         "targetId": "SCN_bluebird_kitchen",
         "name": "后厨弹簧门",
         "description": "柜台后的弹簧双开门,通向后厨。"

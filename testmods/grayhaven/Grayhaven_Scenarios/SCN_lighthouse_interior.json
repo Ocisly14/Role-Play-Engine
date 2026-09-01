@@ -25,7 +25,7 @@
     ],
     "connections": [
       {
-        "id": "exit.lighthouse_interior.tower_door",
+        "id": "connection.lighthouse_interior.tower_door",
         "targetId": "SCN_lighthouse_cliff",
         "name": "塔底铁门",
         "description": "通向崖顶平台的铁门,外侧挂着海岸警卫队的官方挂锁。"

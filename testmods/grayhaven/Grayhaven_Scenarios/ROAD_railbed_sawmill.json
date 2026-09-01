@@ -9,13 +9,13 @@
     "items": [],
     "connections": [
       {
-        "id": "exit.railbed_sawmill.railbed_end",
+        "id": "connection.railbed_sawmill.railbed_end",
         "targetId": "SCN_railbed",
         "name": "南端(旧路基)",
         "role": "endpointA"
       },
       {
-        "id": "exit.railbed_sawmill.sawmill_end",
+        "id": "connection.railbed_sawmill.sawmill_end",
         "targetId": "SCN_sawmill",
         "name": "北端(锯木厂)",
         "role": "endpointB"

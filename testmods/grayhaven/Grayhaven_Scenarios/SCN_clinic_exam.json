@@ -25,7 +25,7 @@
     ],
     "connections": [
       {
-        "id": "exit.clinic_exam.waiting_door",
+        "id": "connection.clinic_exam.waiting_door",
         "targetId": "SCN_clinic_waiting",
         "name": "诊室门",
         "description": "磨砂玻璃门,通回候诊室。"

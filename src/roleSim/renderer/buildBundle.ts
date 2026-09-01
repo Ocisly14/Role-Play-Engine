@@ -95,6 +95,12 @@ function resolveScene(
       name: location.name,
       description: location.description,
       activeConditions: location.conditions,
+      // Already free of hidden passages: `adjacentIds` is built with
+      // `.filter((c) => !c.hidden)`, so an unfound door never reaches here.
+      adjacentPlaces: location.adjacentIds.map((id) => ({
+        id,
+        name: placeName(id, dgsm),
+      })),
       // The same items the trust boundary lets this actor cite — resolved
       // from the ACTUAL position, so a road item beyond reach is neither
       // rendered nor citable. Distance rides along for the renderer to
@@ -125,7 +131,15 @@ function resolveScene(
     description: "",
     activeConditions: [],
     items: [],
+    adjacentPlaces: [],
   };
+}
+
+/** A neighbouring place by the name a person standing here would use. */
+function placeName(id: string, dgsm: DynamicGameStateManager): string {
+  return (
+    dgsm.getScene(id)?.name ?? dgsm.getTopology?.()?.roads.get(id)?.name ?? id
+  );
 }
 
 const ENDED_STATUSES = new Set([

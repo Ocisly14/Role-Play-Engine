@@ -9,13 +9,13 @@
     "items": [],
     "connections": [
       {
-        "id": "exit.backstreet.street_end",
+        "id": "connection.backstreet.street_end",
         "targetId": "SCN_main_south",
         "name": "巷口(主街南口)",
         "role": "endpointA"
       },
       {
-        "id": "exit.backstreet.reyes_end",
+        "id": "connection.backstreet.reyes_end",
         "targetId": "SCN_reyes_gate",
         "name": "巷尾(雷耶斯家门口)",
         "role": "endpointB"

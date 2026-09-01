@@ -25,7 +25,7 @@
     ],
     "connections": [
       {
-        "id": "exit.sheriff_cell.front_door",
+        "id": "connection.sheriff_cell.front_door",
         "targetId": "SCN_sheriff_front",
         "name": "铁框门",
         "description": "通回前厅走廊的铁框门,从不上锁。"

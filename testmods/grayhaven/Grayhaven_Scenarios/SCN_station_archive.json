@@ -25,7 +25,7 @@
     ],
     "connections": [
       {
-        "id": "exit.station_archive.hall_door",
+        "id": "connection.station_archive.hall_door",
         "targetId": "SCN_station_hall",
         "name": "档案室门",
         "description": "回到控制大厅的门。"

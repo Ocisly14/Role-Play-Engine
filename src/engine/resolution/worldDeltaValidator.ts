@@ -30,6 +30,7 @@ import type {
   TickResolution,
   WorldDelta,
 } from "../actions/types.js";
+import { parseJsonResponse } from "../shared/jsonParse.js";
 import type { CodeToolInvocation } from "../tools/codeTool.js";
 import type { EngineResolutionContext, ResolutionError } from "./types.js";
 import {
@@ -70,7 +71,7 @@ interface Lookup {
   /** placeIds plus wherever a character actually stands (defensive: a
    *  position outside the graph is still a real location). */
   locationIds: Set<string>;
-  /** Every authored connection id (`exit.*`), from `state.connectionIds`. */
+  /** Every authored connection id (`connection.*`), from `state.connectionIds`. */
   connectionIds: Set<string>;
   vehicleIds: Set<string>;
   vehicleInteriors: Map<string, string>;
@@ -545,7 +546,7 @@ export function validateSceneChange(
       errs.push(`${kind} requires connectionId`);
     } else if (!lookup.connectionIds.has(op.connectionId)) {
       errs.push(
-        `${kind}.connectionId "${op.connectionId}" names nothing real — cite an exit id (\`exit.*\`) from the graph edges or a place snapshot's connections`
+        `${kind}.connectionId "${op.connectionId}" names nothing real — cite an exit id (\`connection.*\`) from the graph edges or a place snapshot's connections`
       );
     }
   };
@@ -998,8 +999,36 @@ export function normalizeList<T>(value: unknown, field = "field"): T[] {
       .sort(([a], [b]) => Number(a) - Number(b))
       .map(([, item]) => item);
   }
+  if (typeof value === "string") {
+    // The whole list, serialized. `input_schema` is a description the model
+    // usually honours, not a contract the provider enforces: `strict` is off
+    // everywhere here and cannot be turned on for this tool (every top-level
+    // field is genuinely optional, and `operation` is deliberately open so
+    // one schema can carry eighteen kinds). The envelope is guaranteed by
+    // `toolChoice`; the contents are not.
+    //
+    // Observed once in a measured run: `starting` came back a proper array
+    // and `ending` came back as its own JSON text, in the same call. Dropping
+    // it took a whole resolution with it — the transition, the reason, and an
+    // occurrence two characters were meant to perceive — and left one line of
+    // warning behind. Nothing else caught it: the action had ended early
+    // rather than on its duration, so it was not on the worklist and no
+    // "unanswered" check applied, and with no transition there was nothing
+    // for the fallback occurrence to attach to.
+    try {
+      const parsed = parseJsonResponse<unknown>(value);
+      if (Array.isArray(parsed)) {
+        console.warn(
+          `[WorldActionEngine] ${field} arrived as a JSON string — parsed back into an array of ${parsed.length}`
+        );
+        return parsed as T[];
+      }
+    } catch {
+      // Falls through to the drop below, which says so.
+    }
+  }
   console.warn(
-    `[WorldActionEngine] ${field} arrived as ${typeof value} — ignored`
+    `[WorldActionEngine] ${field} arrived as ${typeof value} and could not be read — ignored`
   );
   return [];
 }

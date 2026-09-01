@@ -234,3 +234,82 @@ describe("buildPerceivedBundle", () => {
     expect(bundle.ownSpot).toBeUndefined();
   });
 });
+
+// A sheriff spent three ticks failing to leave his own bedroom: every
+// paragraph rendered the armchair and the light, and none of them said the
+// door led to the living room. His memories are about the town — the lane,
+// the main street, the docks — and hold nothing about which door of his own
+// house opens where. Perception was his only source, and it did not say.
+describe("the ways out", () => {
+  /** A study whose door leads to the hall, optionally unfound. */
+  function studyWithDoor(hidden: boolean): DynamicGameStateManager {
+    const study = {
+      id: "SCN_1",
+      name: "Study",
+      description: "a dim study",
+      conditions: [],
+      items: [],
+      connections: [
+        {
+          id: "connection.study.door",
+          targetId: "SCN_HALL",
+          ...(hidden ? { hidden: true } : {}),
+        },
+      ],
+    };
+    const hall = {
+      id: "SCN_HALL",
+      name: "The Hall",
+      description: "a hall",
+      conditions: [],
+      items: [],
+      connections: [],
+    };
+    const scenes = new Map([
+      ["SCN_1", study],
+      ["SCN_HALL", hall],
+    ]);
+    return {
+      ...(dgsm as unknown as Record<string, unknown>),
+      getState: () => ({
+        scenes,
+        npcCharacters: [],
+        characterPositions: {},
+        roads: new Map(),
+      }),
+      getScene: (id: string) => scenes.get(id) ?? null,
+      getTopology: () => ({
+        nodeSceneIds: new Set(),
+        roads: new Map(),
+        sceneToRoads: new Map(),
+        sceneToParent: new Map([["SCN_1", "L1"]]),
+      }),
+    } as unknown as DynamicGameStateManager;
+  }
+
+  it("carries the place this one leads to, by name", () => {
+    const bundle = buildPerceivedBundle({
+      npcId: "npc_1",
+      dgsm: studyWithDoor(false),
+      engine: makeEngine([]),
+    });
+    expect(bundle.scene.adjacentPlaces).toContainEqual({
+      id: "SCN_HALL",
+      name: "The Hall",
+    });
+  });
+
+  it("leaves out a passage the character has not found", () => {
+    // `adjacentIds` filters `!c.hidden` upstream, so an unrevealed door never
+    // reaches the bundle — a renderer told to write the ways out cannot hand
+    // the character one they have not discovered.
+    const bundle = buildPerceivedBundle({
+      npcId: "npc_1",
+      dgsm: studyWithDoor(true),
+      engine: makeEngine([]),
+    });
+    expect(bundle.scene.adjacentPlaces.map((e) => e.id)).not.toContain(
+      "SCN_HALL"
+    );
+  });
+});

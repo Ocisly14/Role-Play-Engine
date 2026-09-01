@@ -23,7 +23,7 @@
     ],
     "connections": [
       {
-        "id": "exit.reyes_gate.front_door",
+        "id": "connection.reyes_gate.front_door",
         "targetId": "SCN_reyes_living",
         "name": "雷耶斯家小门",
         "description": "褪色的蓝漆木门,通向客厅兼厨房。"

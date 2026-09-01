@@ -30,13 +30,13 @@
     ],
     "connections": [
       {
-        "id": "exit.bluebird_kitchen.dining_door",
+        "id": "connection.bluebird_kitchen.dining_door",
         "targetId": "SCN_bluebird_dining",
         "name": "弹簧门",
         "description": "带小圆窗的弹簧双开门,通回堂座。"
       },
       {
-        "id": "exit.bluebird_kitchen.stairs_up",
+        "id": "connection.bluebird_kitchen.stairs_up",
         "targetId": "SCN_bluebird_upstairs",
         "name": "后楼梯",
         "description": "角落的陡楼梯,通向楼上 Dolores 的住处。"

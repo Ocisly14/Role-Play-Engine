@@ -25,19 +25,19 @@
     ],
     "connections": [
       {
-        "id": "exit.station_hall.inner_door",
+        "id": "connection.station_hall.inner_door",
         "targetId": "SCN_station_dock",
         "name": "内门(装卸区侧)",
         "description": "回到装卸区的灰色钢门。这一侧同样没有把手。"
       },
       {
-        "id": "exit.station_hall.archive_door",
+        "id": "connection.station_hall.archive_door",
         "targetId": "SCN_station_archive",
         "name": "档案室门",
         "description": "标着「ARCHIVE」的门。"
       },
       {
-        "id": "exit.station_hall.maintenance_door",
+        "id": "connection.station_hall.maintenance_door",
         "targetId": "SCN_station_maintenance",
         "name": "无标识窄门",
         "description": "一扇没有任何标识的窄门。"

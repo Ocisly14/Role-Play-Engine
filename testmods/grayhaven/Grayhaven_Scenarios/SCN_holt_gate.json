@@ -23,7 +23,7 @@
     ],
     "connections": [
       {
-        "id": "exit.holt_gate.front_door",
+        "id": "connection.holt_gate.front_door",
         "targetId": "SCN_holt_common",
         "name": "霍尔特家纱门",
         "description": "门廊尽头的纱门,通向起居餐厨。"

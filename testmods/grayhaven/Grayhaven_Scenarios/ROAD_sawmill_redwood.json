@@ -9,13 +9,13 @@
     "items": [],
     "connections": [
       {
-        "id": "exit.sawmill_redwood.sawmill_end",
+        "id": "connection.sawmill_redwood.sawmill_end",
         "targetId": "SCN_sawmill",
         "name": "南端(锯木厂)",
         "role": "endpointA"
       },
       {
-        "id": "exit.sawmill_redwood.redwood_end",
+        "id": "connection.sawmill_redwood.redwood_end",
         "targetId": "SCN_redwood_ring",
         "name": "北端(红杉环)",
         "role": "endpointB"

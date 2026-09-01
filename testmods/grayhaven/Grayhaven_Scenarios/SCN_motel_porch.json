@@ -24,13 +24,13 @@
     ],
     "connections": [
       {
-        "id": "exit.motel_porch.lobby_door",
+        "id": "connection.motel_porch.lobby_door",
         "targetId": "SCN_motel_lobby",
         "name": "前台门",
         "description": "外廊一头的木门,通回前台。"
       },
       {
-        "id": "exit.motel_porch.room4_door",
+        "id": "connection.motel_porch.room4_door",
         "targetId": "SCN_motel_room4",
         "name": "4 号房房门",
         "description": "外廊中段的 4 号房门,门牌的铜字擦得很亮。"

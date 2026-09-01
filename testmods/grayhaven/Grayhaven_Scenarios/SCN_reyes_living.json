@@ -25,19 +25,19 @@
     ],
     "connections": [
       {
-        "id": "exit.reyes_living.marisol_door",
+        "id": "connection.reyes_living.marisol_door",
         "targetId": "SCN_reyes_marisol",
         "name": "Marisol 的卧室门",
         "description": "一扇虚掩的木门,门后是 Marisol 的卧室。"
       },
       {
-        "id": "exit.reyes_living.tommy_door",
+        "id": "connection.reyes_living.tommy_door",
         "targetId": "SCN_reyes_tommy",
         "name": "Tommy 的房间门",
         "description": "贴着 BMX 车辙贴纸的门,通向 Tommy 的房间。"
       },
       {
-        "id": "exit.reyes_living.lane_door",
+        "id": "connection.reyes_living.lane_door",
         "targetId": "SCN_reyes_gate",
         "name": "后街小门",
         "description": "临后巷的小门,出去是自家门口的空地。"

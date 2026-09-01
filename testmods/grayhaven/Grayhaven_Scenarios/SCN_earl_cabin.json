@@ -25,7 +25,7 @@
     ],
     "connections": [
       {
-        "id": "exit.earl_cabin.door",
+        "id": "connection.earl_cabin.door",
         "targetId": "ROAD_cliff_path",
         "name": "小屋门",
         "description": "开向崖径的木门,门后挂着油布雨衣。"

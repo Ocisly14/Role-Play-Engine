@@ -36,19 +36,19 @@
     ],
     "connections": [
       {
-        "id": "exit.main_street.north_end",
+        "id": "connection.main_street.north_end",
         "targetId": "SCN_main_north",
         "name": "主街北口",
         "role": "endpointA"
       },
       {
-        "id": "exit.main_street.south_end",
+        "id": "connection.main_street.south_end",
         "targetId": "SCN_main_south",
         "name": "主街南口",
         "role": "endpointB"
       },
       {
-        "id": "exit.main_street.bluebird_door",
+        "id": "connection.main_street.bluebird_door",
         "targetId": "SCN_bluebird_dining",
         "name": "蓝鸟餐馆正门",
         "description": "挂着营业木牌的玻璃门,推开时门铃会响。",
@@ -56,7 +56,7 @@
         "position": 0.1
       },
       {
-        "id": "exit.main_street.grocery_door",
+        "id": "connection.main_street.grocery_door",
         "targetId": "SCN_grocery_store",
         "name": "杂货店兼邮局的纱门",
         "description": "弹簧纱门,里面是店堂和邮政柜台。",
@@ -64,7 +64,7 @@
         "position": 0.18
       },
       {
-        "id": "exit.main_street.sheriff_door",
+        "id": "connection.main_street.sheriff_door",
         "targetId": "SCN_sheriff_front",
         "name": "警长办公室大门",
         "description": "嵌着铜星的木门,通向前厅。",
@@ -72,7 +72,7 @@
         "position": 0.25
       },
       {
-        "id": "exit.main_street.arcade_door",
+        "id": "connection.main_street.arcade_door",
         "targetId": "SCN_arcade",
         "name": "街机厅「星港」大门",
         "description": "贴满海报的玻璃门,门里是整厅的电子音。",
@@ -80,7 +80,7 @@
         "position": 0.62
       },
       {
-        "id": "exit.main_street.batra_door",
+        "id": "connection.main_street.batra_door",
         "targetId": "SCN_batra_shop",
         "name": "巴特拉电视维修铺店门",
         "description": "挂着手写营业时间牌的店门,通向一楼工作台。",
@@ -88,7 +88,7 @@
         "position": 0.72
       },
       {
-        "id": "exit.main_street.clinic_door",
+        "id": "connection.main_street.clinic_door",
         "targetId": "SCN_clinic_waiting",
         "name": "诊所大门",
         "description": "磨砂玻璃门,通向候诊室。",

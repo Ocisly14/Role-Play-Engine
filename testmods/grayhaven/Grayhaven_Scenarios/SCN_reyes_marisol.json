@@ -25,7 +25,7 @@
     ],
     "connections": [
       {
-        "id": "exit.reyes_marisol.door",
+        "id": "connection.reyes_marisol.door",
         "targetId": "SCN_reyes_living",
         "name": "卧室门",
         "description": "通回客厅的木门,门轴上过油,没有声音。"

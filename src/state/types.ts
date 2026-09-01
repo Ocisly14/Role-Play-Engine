@@ -263,7 +263,7 @@ export interface DynamicNPCProfile {
 // ─── Scene types ───────────────────────────────────────────────────
 
 export interface SceneConnection {
-  /** Stable module-unique connection id (authoring convention: `exit.<place>.<slug>`). */
+  /** Stable module-unique connection id (authoring convention: `connection.<place>.<slug>`). */
   id: string;
   targetId: string;
   name?: string;

@@ -25,13 +25,13 @@
     ],
     "connections": [
       {
-        "id": "exit.batra_shop.street_door",
+        "id": "connection.batra_shop.street_door",
         "targetId": "ROAD_main_street",
         "name": "临街门",
         "description": "老五金行传下的临街门,通向主街南段。"
       },
       {
-        "id": "exit.batra_shop.stairs_up",
+        "id": "connection.batra_shop.stairs_up",
         "targetId": "SCN_batra_living",
         "name": "室内楼梯",
         "description": "店堂后侧的室内楼梯,通向楼上的起居厨房。"

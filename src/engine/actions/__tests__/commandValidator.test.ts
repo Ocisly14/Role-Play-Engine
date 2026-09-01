@@ -128,9 +128,9 @@ describe("validateActArgs", () => {
   it("rejects an exit id — connections are not a citable space", () => {
     // A passage is topology bookkeeping: the prose points at the place a
     // door leads to, and a door that matters as an object is an item. An
-    // `exit.*` id therefore names nothing an actor may cite.
+    // `connection.*` id therefore names nothing an actor may cite.
     const result = validateActArgs(
-      args({ objectRefs: [{ id: "exit.scn1.door", role: "destination" }] }),
+      args({ objectRefs: [{ id: "connection.scn1.door", role: "destination" }] }),
       world
     );
     expect(result).toMatchObject({ ok: false, code: "unknown_ref" });

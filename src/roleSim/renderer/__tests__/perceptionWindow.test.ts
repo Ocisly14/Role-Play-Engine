@@ -46,6 +46,7 @@ const bundle = {
     description: "A platform.",
     activeConditions: [],
     items: [],
+    adjacentPlaces: [],
   },
   ownConditions: [],
   ownAction: { kind: "idle" },
@@ -124,5 +125,21 @@ describe("cache breakpoints", () => {
     );
     expect(historySegment).toBeDefined();
     expect(historySegment?.cache).toBe(false);
+  });
+});
+
+describe("what the history block is for", () => {
+  it("says the old paragraphs are continuity only, and this minute is the world", async () => {
+    const { context } = await render(9);
+
+    // The paragraphs carry the tags they carried then. A character who has
+    // moved is reading handles that were legal in a room they have left —
+    // observed once as a tackle box reached back into from the front gate,
+    // copied exactly, as the copy-the-tag rule instructs.
+    expect(context).toContain("for CONTINUITY");
+    expect(context).toContain("not evidence about now");
+    expect(context).toContain("Tag only what appears in THIS");
+    // And the original job of the block survives.
+    expect(context).toContain("do not\nre-introduce what is unchanged");
   });
 });

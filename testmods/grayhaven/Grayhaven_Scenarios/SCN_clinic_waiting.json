@@ -25,19 +25,19 @@
     ],
     "connections": [
       {
-        "id": "exit.clinic_waiting.street_door",
+        "id": "connection.clinic_waiting.street_door",
         "targetId": "ROAD_main_street",
         "name": "临街门",
         "description": "装着门铃的临街门,通向主街南段。"
       },
       {
-        "id": "exit.clinic_waiting.exam_door",
+        "id": "connection.clinic_waiting.exam_door",
         "targetId": "SCN_clinic_exam",
         "name": "诊室门",
         "description": "磨砂玻璃门,门后是 Weaver 医生的诊室。"
       },
       {
-        "id": "exit.clinic_waiting.stairs_up",
+        "id": "connection.clinic_waiting.stairs_up",
         "targetId": "SCN_clinic_upstairs",
         "name": "私人楼梯",
         "description": "挂着「私人」木牌的楼梯,通向楼上 Weaver 医生的住处。"

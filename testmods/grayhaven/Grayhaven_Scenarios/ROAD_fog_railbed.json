@@ -9,13 +9,13 @@
     "items": [],
     "connections": [
       {
-        "id": "exit.fog_railbed.hollow_end",
+        "id": "connection.fog_railbed.hollow_end",
         "targetId": "SCN_fog_hollow",
         "name": "西端(雾谷)",
         "role": "endpointA"
       },
       {
-        "id": "exit.fog_railbed.railbed_end",
+        "id": "connection.fog_railbed.railbed_end",
         "targetId": "SCN_railbed",
         "name": "东端(旧路基)",
         "role": "endpointB"

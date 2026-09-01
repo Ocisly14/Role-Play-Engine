@@ -23,7 +23,7 @@
     ],
     "connections": [
       {
-        "id": "exit.trailhead.holt_backyard_gap",
+        "id": "connection.trailhead.holt_backyard_gap",
         "targetId": "SCN_holt_backyard",
         "name": "霍尔特家后院豁口",
         "description": "树篱上的一道豁口,钻过去就是霍尔特家的后院。"

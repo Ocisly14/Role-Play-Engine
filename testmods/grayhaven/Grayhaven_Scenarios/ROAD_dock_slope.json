@@ -9,13 +9,13 @@
     "items": [],
     "connections": [
       {
-        "id": "exit.dock_slope.street_end",
+        "id": "connection.dock_slope.street_end",
         "targetId": "SCN_main_south",
         "name": "坡道上端",
         "role": "endpointA"
       },
       {
-        "id": "exit.dock_slope.dock_end",
+        "id": "connection.dock_slope.dock_end",
         "targetId": "SCN_dock",
         "name": "坡道下端",
         "role": "endpointB"

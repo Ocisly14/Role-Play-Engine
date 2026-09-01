@@ -9,13 +9,13 @@
     "items": [],
     "connections": [
       {
-        "id": "exit.station_approach.gate_end",
+        "id": "connection.station_approach.gate_end",
         "targetId": "SCN_gate",
         "name": "引道下端(大门)",
         "role": "endpointA"
       },
       {
-        "id": "exit.station_approach.yard_end",
+        "id": "connection.station_approach.yard_end",
         "targetId": "SCN_station_yard",
         "name": "引道上端(站区场院)",
         "role": "endpointB"

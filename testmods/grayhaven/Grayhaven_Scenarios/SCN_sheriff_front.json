@@ -25,19 +25,19 @@
     ],
     "connections": [
       {
-        "id": "exit.sheriff_front.street_door",
+        "id": "connection.sheriff_front.street_door",
         "targetId": "ROAD_main_street",
         "name": "临街门",
         "description": "磨砂玻璃上漆着「警长办公室」的临街门,通向主街北段。"
       },
       {
-        "id": "exit.sheriff_front.office_door",
+        "id": "connection.sheriff_front.office_door",
         "targetId": "SCN_sheriff_office",
         "name": "里间门",
         "description": "通向警长里间办公室的门,常年半掩。"
       },
       {
-        "id": "exit.sheriff_front.cell_door",
+        "id": "connection.sheriff_front.cell_door",
         "targetId": "SCN_sheriff_cell",
         "name": "拘留室通道",
         "description": "走廊尽头通向拘留室的铁框门。"

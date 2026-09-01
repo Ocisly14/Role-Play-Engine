@@ -9,13 +9,13 @@
     "items": [],
     "connections": [
       {
-        "id": "exit.trail_creek.trailhead_end",
+        "id": "connection.trail_creek.trailhead_end",
         "targetId": "SCN_trailhead",
         "name": "林径起点(林道口)",
         "role": "endpointA"
       },
       {
-        "id": "exit.trail_creek.creek_end",
+        "id": "connection.trail_creek.creek_end",
         "targetId": "SCN_creek_ford",
         "name": "林径尽头(渡口)",
         "role": "endpointB"

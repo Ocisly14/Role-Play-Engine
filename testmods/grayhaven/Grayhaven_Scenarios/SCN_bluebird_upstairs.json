@@ -30,7 +30,7 @@
     ],
     "connections": [
       {
-        "id": "exit.bluebird_upstairs.stairs_down",
+        "id": "connection.bluebird_upstairs.stairs_down",
         "targetId": "SCN_bluebird_kitchen",
         "name": "楼梯",
         "description": "陡楼梯,下去是后厨。"

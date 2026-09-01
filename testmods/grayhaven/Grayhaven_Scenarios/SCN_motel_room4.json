@@ -31,7 +31,7 @@
     ],
     "connections": [
       {
-        "id": "exit.motel_room4.door",
+        "id": "connection.motel_room4.door",
         "targetId": "SCN_motel_porch",
         "name": "房门",
         "description": "开向外廊的房门,合页不响。"

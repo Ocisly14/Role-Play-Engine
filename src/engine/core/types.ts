@@ -27,7 +27,7 @@ export type Unsubscribe = () => void;
 
 /** Kind of entity referenced by an action. Downstream routing
  *  (scriptedEventRunner.matchTarget, impactPropagation level-1) filters by
- *  kind === "character". `connection` names an authored exit (`exit.*`). */
+ *  kind === "character". `connection` names an authored exit (`connection.*`). */
 export type EntityKind = "character" | "item" | "scene" | "connection";
 
 /** A typed entity reference (id + kind) carried on CharacterAction. */
@@ -175,7 +175,7 @@ export type StateChange =
       reason: string;
     }
   | {
-      /** Reveal/hide a connection by its authored id (`exit.*`). Routed to
+      /** Reveal/hide a connection by its authored id (`connection.*`). Routed to
        *  DGSM.setConnectionHiddenById, which mutates the owning place's
        *  SceneConnection in place. */
       kind: "connection.setHidden";

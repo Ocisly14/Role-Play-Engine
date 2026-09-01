@@ -25,31 +25,31 @@
     ],
     "connections": [
       {
-        "id": "exit.holt_common.ray_door",
+        "id": "connection.holt_common.ray_door",
         "targetId": "SCN_holt_ray",
         "name": "Ray 的房间门",
         "description": "走廊尽头的门,门后是老警长的房间。"
       },
       {
-        "id": "exit.holt_common.master_door",
+        "id": "connection.holt_common.master_door",
         "targetId": "SCN_holt_master",
         "name": "主卧门",
         "description": "Frank 和 Susan 的主卧房门。"
       },
       {
-        "id": "exit.holt_common.denny_door",
+        "id": "connection.holt_common.denny_door",
         "targetId": "SCN_holt_denny",
         "name": "Denny 的房间门",
         "description": "贴着火箭贴纸的小房间门。"
       },
       {
-        "id": "exit.holt_common.backyard_door",
+        "id": "connection.holt_common.backyard_door",
         "targetId": "SCN_holt_backyard",
         "name": "后院纱门",
         "description": "厨房一侧的纱门,弹簧一松就砰的一声,通向后院。"
       },
       {
-        "id": "exit.holt_common.front_door",
+        "id": "connection.holt_common.front_door",
         "targetId": "SCN_holt_gate",
         "name": "前门",
         "description": "正对院门的前门,出去穿过前院就是 Holt 家的院门。"

@@ -25,7 +25,7 @@
     ],
     "connections": [
       {
-        "id": "exit.reyes_tommy.door",
+        "id": "connection.reyes_tommy.door",
         "targetId": "SCN_reyes_living",
         "name": "房间门",
         "description": "通向客厅的门,内侧贴着手画的『禁止入内』告示。"

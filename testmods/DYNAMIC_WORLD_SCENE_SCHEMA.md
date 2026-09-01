@@ -64,7 +64,7 @@ inline with a stable `[reference-id]`.
     ],
     "connections": [
       {
-        "id": "exit.library.stacks",
+        "id": "connection.library.stacks",
         "targetId": "SCN_library_stacks",
         "name": "Stairway to stacks",
         "description": "A narrow stairway behind the circulation desk."
@@ -89,7 +89,7 @@ inline with a stable `[reference-id]`.
   (the prose would reveal them).
 - Conditions are always cited exactly once.
 - **Connections are cited by the place they lead to** (`[SCN_library_stacks]`,
-  `[ROAD_main_street]`) — never by their own `exit.*` id. A passage is
+  `[ROAD_main_street]`) — never by their own `connection.*` id. A passage is
   topology bookkeeping, not a pointable thing. Every non-hidden connection's
   target must be cited exactly once; a hidden connection's target must NOT be
   cited. **A door that matters as an object** (lockable, breakable, notable)

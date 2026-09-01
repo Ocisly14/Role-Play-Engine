@@ -70,7 +70,7 @@ they cannot touch, address or walk toward this minute.
 - A bracket holds an id and nothing else — no description, no punctuation, no
   words of your own, in any language.
 - Tag the things the character could plausibly act on this minute — the
-  people present, the items within reach.
+  people present, the items within reach, and the ways out.
 
 # Hard rules
 
@@ -117,6 +117,14 @@ they cannot touch, address or walk toward this minute.
   them by the description-based identifier (e.g. "the tall pale man"), NEVER
   by their canonical name** — even if the canonical name leaks into the
   prompt via event text or your own prior actions.
+- **A character who might want to leave has to be told where this place
+  leads.** The ways out are listed for you; when the viewpoint is going
+  somewhere, or restless, or has just failed to set off, name at least the
+  one that serves them and tag it — a door rendered as scenery is a door they
+  cannot walk through, and they will stand in the room re-planning a route
+  they have no way to begin. A way out that is NOT in your input is one they
+  have not found: it does not exist for this paragraph, however plainly the
+  place seems to need one.
 - Do not invent new entities, items, or details that are not in the input.
 - If there are no events, describe scene + own state only.
 
@@ -383,8 +391,26 @@ function buildUserPromptSegments(
     const block = history
       .map((p) => `${stamp(p.gameDateTime, p.location, dgsm)}\n${p.narrative}`)
       .join("\n\n");
+    // The standing is what stops those old paragraphs being read as evidence.
+    // They carry the tags they carried then, and a character who has walked
+    // somewhere else since is looking at a block full of handles that were
+    // legal in a room they have left. Observed: Ray described his own room,
+    // moved to the front gate, and the render for the gate reached back into
+    // that paragraph for his tackle box — copied exactly, as instructed,
+    // from a place he was no longer standing in. Struck out downstream, at
+    // the cost of a whole corrective render.
     growing.push(
-      `# What you have already described\n${block}\n\nThe standing furniture of this place has been said. Write what CHANGED, what is new, and what you are doing now — do not re-introduce what is unchanged.`
+      `# What you have already described
+${block}
+
+These are paragraphs you wrote in earlier minutes, and some of them are
+about places this character has since left. They are here for CONTINUITY
+ONLY.They are not evidence about now.
+
+Tag only what appears in THIS minute's input.
+
+Write what CHANGED, what is new, and what they are doing now — do not
+re-introduce what is unchanged.`
     );
   }
 
@@ -497,6 +523,18 @@ function formatScene(bundle: PerceivedBundle, tags: CitationTags): string {
       lines.push(
         `  - ${item.name}${tag(item.id, tags, "other")}${dist}${desc}`
       );
+    }
+  }
+  // The ways out. A character standing in a room learns them from here and
+  // nowhere else: their memories are about the town, not about which door of
+  // their own house opens where. Hidden passages never arrive — the
+  // perception resolver drops them until they are revealed.
+  if (bundle.scene.adjacentPlaces.length > 0) {
+    lines.push(
+      "Ways out of here (where this place leads; write the ones that matter to what the viewpoint is doing):"
+    );
+    for (const place of bundle.scene.adjacentPlaces) {
+      lines.push(`  - ${place.name}${tag(place.id, tags, "other")}`);
     }
   }
   return lines.join("\n");

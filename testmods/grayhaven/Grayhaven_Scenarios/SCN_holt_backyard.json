@@ -24,13 +24,13 @@
     ],
     "connections": [
       {
-        "id": "exit.holt_backyard.house_door",
+        "id": "connection.holt_backyard.house_door",
         "targetId": "SCN_holt_common",
         "name": "后院纱门",
         "description": "通回起居餐厨的纱门。"
       },
       {
-        "id": "exit.holt_backyard.fence_gap",
+        "id": "connection.holt_backyard.fence_gap",
         "targetId": "SCN_trailhead",
         "name": "院墙豁口",
         "description": "栅栏缺了两块板的豁口,草被踩出一条浅道,汇入通往林道口的小径。"

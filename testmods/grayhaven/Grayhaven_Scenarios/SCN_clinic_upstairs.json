@@ -25,7 +25,7 @@
     ],
     "connections": [
       {
-        "id": "exit.clinic_upstairs.stairs_down",
+        "id": "connection.clinic_upstairs.stairs_down",
         "targetId": "SCN_clinic_waiting",
         "name": "楼梯",
         "description": "挂着「私人」木牌的楼梯,下去是候诊室。"

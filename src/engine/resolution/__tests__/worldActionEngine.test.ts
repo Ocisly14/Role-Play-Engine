@@ -56,7 +56,7 @@ function makeContext(): EngineResolutionContext {
       },
       blockedEdges: [],
       placeKinds: { SCN_1: "scene", SCN_FAR: "scene" },
-      connectionIds: ["exit.scn1.far"],
+      connectionIds: ["connection.scn1.far"],
       places: [
         {
           id: "SCN_1",
@@ -68,7 +68,7 @@ function makeContext(): EngineResolutionContext {
           itemIds: [],
           connections: [
             {
-              connectionId: "exit.scn1.far",
+              connectionId: "connection.scn1.far",
               targetId: "SCN_FAR",
               description: "a far door",
             },
@@ -429,13 +429,13 @@ describe("renderWorldGraph", () => {
       ],
       edges: [
         {
-          connectionId: "exit.home.secret",
+          connectionId: "connection.home.secret",
           from: "J_A",
           to: "R_MAIN",
           hidden: true,
         },
         {
-          connectionId: "exit.road.a",
+          connectionId: "connection.road.a",
           from: "R_MAIN",
           to: "J_A",
           travelTimeMinutes: 15,
@@ -446,11 +446,11 @@ describe("renderWorldGraph", () => {
       "Outdoor node scenes:",
       // Authored prose rides along, newlines flattened.
       "- J_A (Crossing): A windswept crossing.",
-      "  connections: [exit.home.secret] -> R_MAIN (hidden)",
+      "  connections: [connection.home.secret] -> R_MAIN (hidden)",
       "Roads:",
       // No description and no prose — the node line stands alone.
       "- R_MAIN (Star Avenue)",
-      "  connections: [exit.road.a] -> J_A 15min",
+      "  connections: [connection.road.a] -> J_A 15min",
     ]);
   });
 });

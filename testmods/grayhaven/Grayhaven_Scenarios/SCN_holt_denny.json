@@ -25,7 +25,7 @@
     ],
     "connections": [
       {
-        "id": "exit.holt_denny.door",
+        "id": "connection.holt_denny.door",
         "targetId": "SCN_holt_common",
         "name": "房门",
         "description": "通向起居大开间的门,门缝底下塞着一条毛巾。"

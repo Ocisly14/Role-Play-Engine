@@ -16,7 +16,7 @@ const scenes = new Map<string, DynamicScene>([
     {
       id: "J_A",
       name: "北口",
-      connections: [{ id: "exit.ja.home", targetId: "S_HOME" }],
+      connections: [{ id: "connection.ja.home", targetId: "S_HOME" }],
     } as unknown as DynamicScene,
   ],
   ["J_B", { id: "J_B", connections: [] } as unknown as DynamicScene],
@@ -29,7 +29,7 @@ const scenes = new Map<string, DynamicScene>([
     {
       id: "S_HOME",
       parentLocationId: "B_HOME",
-      connections: [{ id: "exit.home.ja", targetId: "J_A" }],
+      connections: [{ id: "connection.home.ja", targetId: "J_A" }],
     } as unknown as DynamicScene,
   ],
   [

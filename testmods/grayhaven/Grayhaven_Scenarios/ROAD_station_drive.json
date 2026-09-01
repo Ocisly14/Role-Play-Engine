@@ -9,13 +9,13 @@
     "items": [],
     "connections": [
       {
-        "id": "exit.station_drive.motel_end",
+        "id": "connection.station_drive.motel_end",
         "targetId": "SCN_motel",
         "name": "车行道下端(公路岔口)",
         "role": "endpointA"
       },
       {
-        "id": "exit.station_drive.gate_end",
+        "id": "connection.station_drive.gate_end",
         "targetId": "SCN_gate",
         "name": "车行道上端(自动大门)",
         "role": "endpointB"

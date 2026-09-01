@@ -25,7 +25,7 @@
     ],
     "connections": [
       {
-        "id": "exit.holt_ray.door",
+        "id": "connection.holt_ray.door",
         "targetId": "SCN_holt_common",
         "name": "房门",
         "description": "通向起居大开间的房门。"

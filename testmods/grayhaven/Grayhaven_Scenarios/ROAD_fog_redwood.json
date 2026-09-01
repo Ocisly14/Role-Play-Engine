@@ -9,13 +9,13 @@
     "items": [],
     "connections": [
       {
-        "id": "exit.fog_redwood.hollow_end",
+        "id": "connection.fog_redwood.hollow_end",
         "targetId": "SCN_fog_hollow",
         "name": "南端(雾谷)",
         "role": "endpointA"
       },
       {
-        "id": "exit.fog_redwood.redwood_end",
+        "id": "connection.fog_redwood.redwood_end",
         "targetId": "SCN_redwood_ring",
         "name": "北端(红杉环)",
         "role": "endpointB"

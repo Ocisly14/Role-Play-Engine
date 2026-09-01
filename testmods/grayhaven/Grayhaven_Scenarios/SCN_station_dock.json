@@ -30,13 +30,13 @@
     ],
     "connections": [
       {
-        "id": "exit.station_dock.rollup_door",
+        "id": "connection.station_dock.rollup_door",
         "targetId": "SCN_station_yard",
         "name": "卷帘门",
         "description": "装卸区的卷帘门,感应到货车会自行升起,通向站前场地。"
       },
       {
-        "id": "exit.station_dock.inner_door",
+        "id": "connection.station_dock.inner_door",
         "targetId": "SCN_station_hall",
         "name": "内门",
         "description": "装卸区尽头的灰色内门,从没开过。",

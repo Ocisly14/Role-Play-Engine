@@ -34,10 +34,10 @@ function makeDgsm(): DynamicGameStateManager {
     ],
     conditions: [{ id: "cond.home.dust", description: "dust everywhere" }],
     connections: [
-      { id: "exit.home.junc", targetId: "J_A" },
-      { id: "exit.home.secret", targetId: "R_MAIN", hidden: true },
+      { id: "connection.home.junc", targetId: "J_A" },
+      { id: "connection.home.secret", targetId: "R_MAIN", hidden: true },
       // Interior edge within LOC_TOWN — must vanish from the skeleton.
-      { id: "exit.home.far", targetId: "S_FAR" },
+      { id: "connection.home.far", targetId: "S_FAR" },
     ],
     indoor: true,
   };
@@ -49,7 +49,7 @@ function makeDgsm(): DynamicGameStateManager {
     parentLocationId: "LOC_TOWN",
     items: [{ id: "item_vase", name: "a vase" }],
     conditions: [],
-    connections: [{ id: "exit.far.junc", targetId: "J_A" }],
+    connections: [{ id: "connection.far.junc", targetId: "J_A" }],
   };
 
   // Top-level scenes (no parentLocationId): geography nodes.
@@ -60,8 +60,8 @@ function makeDgsm(): DynamicGameStateManager {
     items: [{ id: "item_lamppost", name: "a lamppost" }],
     conditions: [],
     connections: [
-      { id: "exit.junc.home", targetId: "S_HOME" },
-      { id: "exit.junc.road", targetId: "R_MAIN" },
+      { id: "connection.junc.home", targetId: "S_HOME" },
+      { id: "connection.junc.road", targetId: "R_MAIN" },
     ],
   };
 
@@ -79,8 +79,8 @@ function makeDgsm(): DynamicGameStateManager {
     name: "Star Avenue",
     description: "A long avenue.",
     connections: [
-      { id: "exit.road.a", targetId: "J_A", role: "endpointA" },
-      { id: "exit.road.b", targetId: "J_B", role: "endpointB" },
+      { id: "connection.road.a", targetId: "J_A", role: "endpointA" },
+      { id: "connection.road.b", targetId: "J_B", role: "endpointB" },
     ],
     endpointA: "J_A",
     endpointB: "J_B",
@@ -207,28 +207,28 @@ describe("Tier 1 — the skeleton: macro locations + geography", () => {
     const byId = new Map(graph.edges.map((e) => [e.connectionId, e]));
     // Edges that collapse into a building's own street (self-edges after
     // lifting) and interior-to-interior edges are Tier 2 detail, not
-    // skeleton: exit.home.junc / exit.junc.home / exit.far.junc /
-    // exit.home.far all vanish.
+    // skeleton: connection.home.junc / connection.junc.home / connection.far.junc /
+    // connection.home.far all vanish.
     expect([...byId.keys()].sort()).toEqual([
-      "exit.home.secret",
-      "exit.junc.road",
-      "exit.road.a",
-      "exit.road.b",
+      "connection.home.secret",
+      "connection.junc.road",
+      "connection.road.a",
+      "connection.road.b",
     ]);
     // An interior scene's edge to a DIFFERENT skeleton node survives, lifted
     // to the scene's attachment and keeping the authored id.
-    expect(byId.get("exit.home.secret")).toMatchObject({
+    expect(byId.get("connection.home.secret")).toMatchObject({
       from: "J_A",
       to: "R_MAIN",
     });
     // Road endpoint edges carry the full walk time.
-    expect(byId.get("exit.road.a")).toMatchObject({
+    expect(byId.get("connection.road.a")).toMatchObject({
       from: "R_MAIN",
       to: "J_A",
       travelTimeMinutes: 15,
     });
     // Hidden connections stay in the graph, flagged: the Engine is all-knowing.
-    expect(byId.get("exit.home.secret")?.hidden).toBe(true);
+    expect(byId.get("connection.home.secret")?.hidden).toBe(true);
     // Blocked state never rides on the (cached) skeleton.
     for (const edge of graph.edges) {
       expect(edge).not.toHaveProperty("blockedReason");
@@ -238,7 +238,7 @@ describe("Tier 1 — the skeleton: macro locations + geography", () => {
   it("reports blocked edges in the volatile list, one entry per symmetric edge", () => {
     expect(state.blockedEdges).toEqual([
       {
-        connectionId: "exit.junc.road",
+        connectionId: "connection.junc.road",
         from: "J_A",
         to: "R_MAIN",
         reason: "a felled tree",
@@ -255,7 +255,7 @@ describe("Tier 1 — the skeleton: macro locations + geography", () => {
       R_MAIN: "road",
     });
     // The dropped interior edge is still a real connection to the validator.
-    expect(state.connectionIds).toContain("exit.home.far");
+    expect(state.connectionIds).toContain("connection.home.far");
     expect([...state.connectionIds].sort()).toHaveLength(8);
   });
 });
@@ -281,8 +281,8 @@ describe("Tier 2 — full snapshots of the involved places only", () => {
     const junction = state.places.find((p) => p.id === "J_A");
     expect(junction?.kind).toBe("scene");
     expect(junction?.connections.map((c) => c.connectionId).sort()).toEqual([
-      "exit.junc.home",
-      "exit.junc.road",
+      "connection.junc.home",
+      "connection.junc.road",
     ]);
   });
 
@@ -292,7 +292,7 @@ describe("Tier 2 — full snapshots of the involved places only", () => {
       { id: "cond.home.dust", description: "dust everywhere" },
     ]);
     const secret = home?.connections.find(
-      (c) => c.connectionId === "exit.home.secret"
+      (c) => c.connectionId === "connection.home.secret"
     );
     expect(secret?.hidden).toBe(true);
 

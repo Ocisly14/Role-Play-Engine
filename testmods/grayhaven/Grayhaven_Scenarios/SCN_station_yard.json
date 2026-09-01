@@ -23,7 +23,7 @@
     ],
     "connections": [
       {
-        "id": "exit.station_yard.dock_rollup",
+        "id": "connection.station_yard.dock_rollup",
         "targetId": "SCN_station_dock",
         "name": "装卸区卷帘门",
         "description": "主楼一侧的卷帘门,通向装卸区。"

@@ -25,7 +25,7 @@
     ],
     "connections": [
       {
-        "id": "exit.batra_master.living_door",
+        "id": "connection.batra_master.living_door",
         "targetId": "SCN_batra_living",
         "name": "主卧门",
         "description": "通回起居厨房的房门。"

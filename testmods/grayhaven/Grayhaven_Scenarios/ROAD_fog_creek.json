@@ -9,13 +9,13 @@
     "items": [],
     "connections": [
       {
-        "id": "exit.fog_creek.hollow_end",
+        "id": "connection.fog_creek.hollow_end",
         "targetId": "SCN_fog_hollow",
         "name": "东端(雾谷)",
         "role": "endpointA"
       },
       {
-        "id": "exit.fog_creek.creek_end",
+        "id": "connection.fog_creek.creek_end",
         "targetId": "SCN_creek_ford",
         "name": "西端(渡口)",
         "role": "endpointB"
