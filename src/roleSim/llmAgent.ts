@@ -39,10 +39,6 @@ export interface AgentIterationEvent {
   responseText: string;
   /** The tool call the model made. Always set on the native tool path. */
   parsed?: { tool: string; [k: string]: unknown };
-  /** Set if parseJsonResponse threw. The agent will return `continue`. */
-  /** Legacy text-JSON path only; never set now that the provider enforces
-   *  the tool envelope. Kept so existing run records still typecheck. */
-  parseError?: string;
 }
 
 export interface LLMRoleSimAgentDeps {

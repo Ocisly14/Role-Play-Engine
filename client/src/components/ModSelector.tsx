@@ -11,14 +11,12 @@ export interface ModSelectorProps {
   apiBaseUrl?: string;
   onSelectMod: (modName: string) => void;
   onCancel: () => void;
-  onCreateStory?: () => void;
 }
 
 export function ModSelector({
   apiBaseUrl = "/api",
   onSelectMod,
   onCancel,
-  onCreateStory,
 }: ModSelectorProps) {
   const { t } = useTranslation("module");
   const [mods, setMods] = useState<Mod[]>([]);
@@ -227,24 +225,6 @@ export function ModSelector({
           </div>
           <div className="modal-content">
             <div className="mod-grid">
-              {/* Create Your Own Story Card */}
-              {onCreateStory && (
-                <div
-                  className="mod-card create-story-card"
-                  onClick={onCreateStory}
-                >
-                  <div className="mod-card-inner">
-                    <div className="mod-card-icon">✨</div>
-                    <div className="mod-card-content">
-                      <h3 className="mod-card-title">{t("createStory")}</h3>
-                      <p className="mod-card-subtitle">
-                        {t("createStoryDesc")}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              )}
-
               {/* Existing Mods */}
               {mods.map((mod) => (
                 <div

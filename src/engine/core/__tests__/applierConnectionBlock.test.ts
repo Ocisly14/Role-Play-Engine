@@ -138,7 +138,7 @@ describe("connectionBlock lands in state.blockedConnections", () => {
     expect(dgsm.getConnectionBlockReason("J_A", "R_MAIN")).toBe(
       "a felled tree"
     );
-    expect(dgsm.isConnectionBlocked("R_MAIN", "J_A")).toBe(true);
+    expect(dgsm.getConnectionBlockReason("R_MAIN", "J_A")).toBeDefined();
   });
 
   it("drops (warn, no throw) a vote whose connection id resolves to no edge", () => {
@@ -160,31 +160,19 @@ describe("pathfinding refuses the blocked edge and detours", () => {
   const to = { type: "scene", sceneId: "J_B" } as const;
 
   it("takes the direct road while it is open", () => {
-    const { topology, state, dgsm } = fixture;
-    const path = findTopologyPath(
-      from,
-      to,
-      topology,
-      state.blockedConnections,
-      dgsm
-    );
+    const { topology, state } = fixture;
+    const path = findTopologyPath(from, to, topology, state.blockedConnections);
     expect(path?.steps.map((s) => s.id)).toEqual(["R_MAIN"]);
     expect(path?.totalMinutes).toBe(10);
   });
 
   it("detours once the Engine blocks the direct road", () => {
-    const { applier, topology, state, dgsm } = fixture;
+    const { applier, topology, state } = fixture;
     applier.flush([], T, [
       blockDelta("a1", "connection.ja.rmain", true, "a felled tree"),
     ]);
 
-    const path = findTopologyPath(
-      from,
-      to,
-      topology,
-      state.blockedConnections,
-      dgsm
-    );
+    const path = findTopologyPath(from, to, topology, state.blockedConnections);
     expect(path).not.toBeNull();
     expect(path?.steps.map((s) => s.id)).toEqual(["R_A_C", "R_C_B"]);
     expect(path?.totalMinutes).toBe(14);
@@ -212,7 +200,7 @@ describe("refcounted votes from several sources", () => {
     applier.flush([], T, [
       blockDelta("a2", "connection.ja.rmain", false, "a mudslide"),
     ]);
-    expect(dgsm.isConnectionBlocked("J_A", "R_MAIN")).toBe(false);
+    expect(dgsm.getConnectionBlockReason("J_A", "R_MAIN")).toBeUndefined();
   });
 
   it("collapses the two directions' exit ids onto one edge", () => {
@@ -221,14 +209,14 @@ describe("refcounted votes from several sources", () => {
     applier.flush([], T, [
       blockDelta("a1", "connection.home.junc", true, "door jammed"),
     ]);
-    expect(dgsm.isConnectionBlocked("S_HOME", "J_A")).toBe(true);
+    expect(dgsm.getConnectionBlockReason("S_HOME", "J_A")).toBeDefined();
 
     // ...and lift it through the junction's opposite-direction exit id: same
     // edge, same vote table entry.
     applier.flush([], T, [
       blockDelta("a1", "connection.junc.home", false, "door jammed"),
     ]);
-    expect(dgsm.isConnectionBlocked("S_HOME", "J_A")).toBe(false);
+    expect(dgsm.getConnectionBlockReason("S_HOME", "J_A")).toBeUndefined();
   });
 });
 
@@ -254,7 +242,7 @@ describe("vote table serialization", () => {
     revived.flush([], T, [
       blockDelta("a2", "connection.ja.rmain", false, "a mudslide"),
     ]);
-    expect(dgsm.isConnectionBlocked("J_A", "R_MAIN")).toBe(false);
+    expect(dgsm.getConnectionBlockReason("J_A", "R_MAIN")).toBeUndefined();
   });
 });
 
@@ -294,21 +282,23 @@ describe("connectionDiscovered", () => {
   }
 
   it("records everyone named, on the connection itself", () => {
-    const { applier, dgsm } = withCast();
+    const { applier, state } = withCast();
     applier.flush([], T, [discovery(["npc_1", "npc_2"])]);
 
-    expect(dgsm.hasDiscoveredConnection("npc_1", CONN)).toBe(true);
-    expect(dgsm.hasDiscoveredConnection("npc_2", CONN)).toBe(true);
+    const discoveredBy = state.scenes
+      .get("S_HOME")
+      ?.connections?.find((c) => c.id === CONN)?.discoveredBy;
+    expect(discoveredBy).toContain("npc_1");
+    expect(discoveredBy).toContain("npc_2");
     // The one who was not in the room learns nothing.
-    expect(dgsm.hasDiscoveredConnection("npc_3", CONN)).toBe(false);
+    expect(discoveredBy).not.toContain("npc_3");
   });
 
   it("is idempotent — finding the same door twice is one discovery", () => {
-    const { applier, dgsm, state } = withCast();
+    const { applier, state } = withCast();
     applier.flush([], T, [discovery(["npc_1"])]);
     applier.flush([], T, [discovery(["npc_1"])]);
 
-    expect(dgsm.hasDiscoveredConnection("npc_1", CONN)).toBe(true);
     const connection = state.scenes
       .get("S_HOME")
       ?.connections?.find((c) => c.id === CONN);

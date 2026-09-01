@@ -359,8 +359,6 @@ export async function resolveTick(
     submitResolutionTool,
     repairResolutionTool,
   ];
-  const correctiveRetryUsed = false;
-
   // The submission under repair, and how many repair rounds it has had.
   let pending: RawTickResolution | undefined;
   let repairRounds = 0;
@@ -429,7 +427,7 @@ export async function resolveTick(
         repairCall.args as unknown as RawResolutionRepair
       );
       const invocationsSoFar = deps.codeTools.drainInvocations();
-      const errors = validateRawResolution(pending, context, invocationsSoFar);
+      const errors = validateRawResolution(pending, context);
       requeueInvocations(deps.codeTools, invocationsSoFar);
       if (errors.length === 0) {
         const finalized = finalizeResolution(pending, context);
@@ -466,7 +464,7 @@ export async function resolveTick(
         submits[0].args as unknown as RawTickResolution
       );
       const invocationsSoFar = deps.codeTools.drainInvocations();
-      const errors = validateRawResolution(raw, context, invocationsSoFar);
+      const errors = validateRawResolution(raw, context);
       requeueInvocations(deps.codeTools, invocationsSoFar);
       if (errors.length === 0) {
         const finalized = finalizeResolution(raw, context);

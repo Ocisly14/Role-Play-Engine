@@ -185,17 +185,11 @@ function end(overrides: Partial<RawActionEnd> = {}): RawActionEnd {
   };
 }
 
-/** A standalone occurrence, for the cases that are about the array itself. */
-function trace(actionId: string = ACTION_ID): RawTickResolution["occurrences"] {
-  return [{ ...occurrence(), sourceActionIds: [actionId] }];
-}
-
 describe("validateRawResolution — the three moments", () => {
   it("accepts a well-formed start", () => {
     const errors = validateRawResolution(
       { starting: [start()] },
-      makeContext({}),
-      []
+      makeContext({})
     );
     expect(errors).toEqual([]);
   });
@@ -203,8 +197,7 @@ describe("validateRawResolution — the three moments", () => {
   it("rejects an unknown actionId and reports the unanswered trigger", () => {
     const errors = validateRawResolution(
       { starting: [start({ actionId: "action_ghost" })] },
-      makeContext({}),
-      []
+      makeContext({})
     );
     expect(text(errors)).toContain("unknown actionId");
     expect(text(errors)).toContain("was not answered");
@@ -218,8 +211,7 @@ describe("validateRawResolution — the three moments", () => {
         starting: [start()],
         ending: [end({ actionId: ACTION_ID })],
       },
-      makeContext({}),
-      []
+      makeContext({})
     );
     expect(text(errors)).toContain("appears more than once");
   });
@@ -230,8 +222,7 @@ describe("validateRawResolution — the three moments", () => {
     // list, and the error says which list it belongs in.
     const errors = validateRawResolution(
       { ending: [end({ actionId: ACTION_ID })] },
-      makeContext({}),
-      []
+      makeContext({})
     );
     expect(text(errors)).toContain("has not started yet");
     expect(text(errors)).toContain('"starting"');
@@ -244,8 +235,7 @@ describe("validateRawResolution — the three moments", () => {
         newCommands: [],
         activeActions: [activeAction()],
         triggerActionIds: ["action_live"],
-      }),
-      []
+      })
     );
     expect(text(errors)).toContain("already running");
   });
@@ -257,8 +247,7 @@ describe("validateRawResolution — the three moments", () => {
         newCommands: [],
         activeActions: [{ ...activeAction(), status: "completed" as const }],
         triggerActionIds: ["action_live"],
-      }),
-      []
+      })
     );
     expect(text(errors)).toContain("cannot be resolved again");
   });
@@ -273,7 +262,7 @@ describe("validateRawResolution — the three moments", () => {
       activeActions: [activeAction()],
       triggerActionIds: ["action_live"],
     });
-    expect(validateRawResolution({}, stillRunning, [])).toEqual([]);
+    expect(validateRawResolution({}, stillRunning)).toEqual([]);
   });
 
   it("still demands an answer for an action whose time is spent", () => {
@@ -282,12 +271,10 @@ describe("validateRawResolution — the three moments", () => {
       activeActions: [activeAction({ progressMinutes: 10 })],
       triggerActionIds: ["action_live"],
     });
-    expect(text(validateRawResolution({}, due, []))).toContain(
-      "was not answered"
-    );
+    expect(text(validateRawResolution({}, due))).toContain("was not answered");
     // The duration was set once, when it began. There is no list to move it
     // to and no way to ask for more time: the only answer is what happened.
-    expect(validateRawResolution({ ending: [end()] }, due, [])).toEqual([]);
+    expect(validateRawResolution({ ending: [end()] }, due)).toEqual([]);
   });
 
   it("checks the occurrence carried by an ending", () => {
@@ -308,8 +295,7 @@ describe("validateRawResolution — the three moments", () => {
         newCommands: [],
         activeActions: [activeAction()],
         triggerActionIds: ["action_live"],
-      }),
-      []
+      })
     );
     expect(text(errors)).toContain("action:action_live");
   });
@@ -330,8 +316,7 @@ describe("validateRawResolution — outcome and the bar", () => {
     // field was optional while the validator required it.
     const errors = validateRawResolution(
       { ending: [end({ outcome: undefined })] },
-      runningContext(),
-      []
+      runningContext()
     );
     expect(text(errors)).toContain("carried no check");
     expect(text(errors)).toContain("endingNeedsOutcome");
@@ -346,8 +331,7 @@ describe("validateRawResolution — outcome and the bar", () => {
           requiredLevel: "regular",
           basis: "…",
         },
-      }),
-      []
+      })
     );
     expect(text(errors)).toContain("code decides success from the roll");
   });
@@ -361,8 +345,7 @@ describe("validateRawResolution — outcome and the bar", () => {
           requiredLevel: "regular",
           basis: "…",
         },
-      }),
-      []
+      })
     );
     expect(errors).toEqual([]);
   });
@@ -379,8 +362,7 @@ describe("validateRawResolution — outcome and the bar", () => {
           }),
         ],
       },
-      makeContext({ newCommands: [skillCommand] }),
-      []
+      makeContext({ newCommands: [skillCommand] })
     );
     expect(errors).toEqual([]);
   });
@@ -392,8 +374,7 @@ describe("validateRawResolution — outcome and the bar", () => {
           start({ check: { requiredLevel: "hard", basis: "invented" } }),
         ],
       },
-      makeContext({}),
-      []
+      makeContext({})
     );
     expect(text(errors)).toContain("nothing to check");
   });
@@ -408,8 +389,7 @@ describe("validateRawResolution — outcome and the bar", () => {
           }),
         ],
       },
-      makeContext({ newCommands: [skillCommand] }),
-      []
+      makeContext({ newCommands: [skillCommand] })
     );
     expect(text(unknown)).toContain("does not exist");
 
@@ -419,8 +399,7 @@ describe("validateRawResolution — outcome and the bar", () => {
           start({ opposedBy: [{ characterId: "npc_2", skillId: "Social" }] }),
         ],
       },
-      makeContext({ newCommands: [skillCommand] }),
-      []
+      makeContext({ newCommands: [skillCommand] })
     );
     expect(text(noBar)).toContain("needs a check");
   });
@@ -440,8 +419,7 @@ describe("validateRawResolution — deltas and occurrences", () => {
           },
         ],
       },
-      makeContext({}),
-      []
+      makeContext({})
     );
     const joined = text(errors);
     expect(joined).toContain('sourceActionId "action_ghost" is unknown');
@@ -458,8 +436,7 @@ describe("validateRawResolution — deltas and occurrences", () => {
     });
     const wrongFrom = validateRawResolution(
       { starting: [start()], itemChanges: [move("npc_2")] },
-      makeContext({}),
-      []
+      makeContext({})
     );
     expect(text(wrongFrom)).toContain(
       "does not match the item's actual holder"
@@ -470,8 +447,7 @@ describe("validateRawResolution — deltas and occurrences", () => {
         starting: [start()],
         itemChanges: [move("scene:SCN_1"), move("scene:SCN_1")],
       },
-      makeContext({}),
-      []
+      makeContext({})
     );
     expect(text(doubleMove)).toContain("unique-ownership conflict");
   });
@@ -490,8 +466,7 @@ describe("validateRawResolution — deltas and occurrences", () => {
           },
         ],
       },
-      makeContext({}),
-      []
+      makeContext({})
     );
     const joined = text(errors);
     expect(joined).toContain("character-perspective wording");
@@ -717,8 +692,7 @@ describe("prose coherence — a cited item cannot leave silently", () => {
     const errors = text(
       validateRawResolution(
         { starting: [start()], itemChanges: [moveOut] },
-        proseContext(),
-        []
+        proseContext()
       )
     );
     expect(errors).toContain('cited in the description of "SCN_1"');
@@ -743,8 +717,7 @@ describe("prose coherence — a cited item cannot leave silently", () => {
             },
           ],
         },
-        proseContext(),
-        []
+        proseContext()
       )
     );
     expect(errors).not.toContain("cited in the description");
@@ -754,8 +727,7 @@ describe("prose coherence — a cited item cannot leave silently", () => {
     const errors = text(
       validateRawResolution(
         { starting: [start()], itemChanges: [moveOut] },
-        makeContext({}),
-        []
+        makeContext({})
       )
     );
     expect(errors).not.toContain("cited in the description");
@@ -777,8 +749,7 @@ describe("operations are checked against the fields they advertise", () => {
     text(
       validateRawResolution(
         { starting: [start()], characterChanges: [delta(operation)] },
-        makeContext({}),
-        []
+        makeContext({})
       )
     );
 
@@ -853,8 +824,7 @@ describe("operations are checked against the fields they advertise", () => {
             },
           ],
         },
-        makeContext({}),
-        []
+        makeContext({})
       )
     );
     expect(errors).toContain('environmentHazard needs "add" or "remove"');
@@ -864,8 +834,7 @@ describe("operations are checked against the fields they advertise", () => {
     const errors = text(
       validateRawResolution(
         { starting: [start({ movement: { route: ["SCN_ATLANTIS"] } })] },
-        makeContext({}),
-        []
+        makeContext({})
       )
     );
     expect(errors).toContain("is not a place in this world");

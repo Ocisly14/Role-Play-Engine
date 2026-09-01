@@ -121,7 +121,7 @@ const text = (errors: ResolutionError[]): string =>
 
 function validate(partial: Partial<RawTickResolution>): string {
   return text(
-    validateRawResolution({ starting: [start], ...partial }, makeContext(), [])
+    validateRawResolution({ starting: [start], ...partial }, makeContext())
   );
 }
 

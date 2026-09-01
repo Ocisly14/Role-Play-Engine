@@ -74,7 +74,6 @@ export interface OrchestratorDeps {
   /** Injectable for tests; defaults to the real World Action Engine. */
   resolveTickFn?: ResolveTickFn;
   tickDurationMinutes: number;
-  hasInitialized: boolean;
 }
 
 interface PendingInterruption {
@@ -83,15 +82,12 @@ interface PendingInterruption {
 }
 
 export class TickOrchestrator {
-  private hasInitialized: boolean;
   private pendingInterruptions: PendingInterruption[] = [];
   private tickCounter = 0;
   private activeAnchorInstances = new Set<string>();
   private anchorInstancesRehydrated = false;
 
-  constructor(private deps: OrchestratorDeps) {
-    this.hasInitialized = deps.hasInitialized;
-  }
+  constructor(private deps: OrchestratorDeps) {}
 
   /** External interruption signal (e.g. actor died mid-action). The action
    *  is resolved — not silently dropped — on the next tick. */
@@ -423,7 +419,7 @@ export class TickOrchestrator {
     for (const t of transitions) {
       const action = this.deps.actionStore.get(t.actionId);
       if (!action) continue;
-      this.applyTransition(action, t, nextTickTime, engineResult);
+      this.applyTransition(action, t, nextTickTime);
       const planned = movementStates.get(t.actionId);
       if (planned?.ok && action.status === "active") {
         action.runtime = { ...(action.runtime ?? {}), movement: planned.state };
@@ -489,8 +485,7 @@ export class TickOrchestrator {
   private applyTransition(
     action: EngineAction,
     t: ActionTransition,
-    now: GameTime,
-    engineResult: (WorldActionEngineResult & { ok: true }) | undefined
+    now: GameTime
   ): void {
     if (action.status === "queued" && t.to !== "queued") {
       action.startedAt = now;

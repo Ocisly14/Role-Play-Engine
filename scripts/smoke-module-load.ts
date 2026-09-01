@@ -270,8 +270,7 @@ async function main(): Promise<void> {
           from as CharacterPosition,
           to as CharacterPosition,
           topology,
-          state.blockedConnections,
-          dgsm
+          state.blockedConnections
         );
         if (!path) {
           unreachable++;

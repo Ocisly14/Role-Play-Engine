@@ -128,7 +128,6 @@ interface SidePanelProps {
   eventLog: SimulationEvent[];
   onSelectNpc: (npcId: string | null) => void;
   onZoomToNpc: (npcId: string) => void;
-  isMobile: boolean;
   isOpen: boolean;
   onClose: () => void;
 }
@@ -145,7 +144,6 @@ export function SidePanel({
   eventLog,
   onSelectNpc,
   onZoomToNpc,
-  isMobile,
   isOpen,
   onClose,
 }: SidePanelProps) {

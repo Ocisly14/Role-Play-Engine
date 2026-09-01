@@ -29,8 +29,6 @@ export interface NpcActionControllerDeps {
   memory: NpcMemoryManager;
   dgsm: DynamicGameStateManager;
   sessionId: string;
-  /** Module id required by NpcMemoryManager.add when writing memories. */
-  moduleId: string;
   /** Module language ("en" | "zh"). Drives renderer output language. */
   language?: string;
   /** Called for every paragraph rendered, in order. The controller keeps the
@@ -124,7 +122,6 @@ export class NpcActionController {
   private readonly memory: NpcMemoryManager;
   private readonly dgsm: DynamicGameStateManager;
   private readonly sessionId: string;
-  private readonly moduleId: string;
   private readonly language: string;
   /** Per-NPC log of every renderer narrative this session, oldest first —
    *  injected whole, so nothing the character perceived scrolls out of reach.
@@ -145,7 +142,6 @@ export class NpcActionController {
     this.sessionId = deps.sessionId;
     this.onPerception = deps.onPerception;
     this.onPerceptionCompacted = deps.onPerceptionCompacted;
-    this.moduleId = deps.moduleId;
     this.language = deps.language ?? "en";
 
     this.engine.on("tickCompleted", (report: TickReport) =>

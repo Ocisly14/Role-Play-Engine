@@ -1,4 +1,7 @@
-import { DynamicGameStateManager } from "../../../state/DynamicGameState.js";
+import {
+  DynamicGameStateManager,
+  initialDynamicGameState,
+} from "../../../state/DynamicGameState.js";
 import type { ModuleSetup } from "../../../state/types.js";
 import { type TickEngine, createTickEngine } from "../../core/tickEngine.js";
 import { createDefaultSubsystemRegistry } from "../../registerDefaults.js";
@@ -36,10 +39,9 @@ export interface IntegrationEngineOptions {
 export function makeIntegrationEngine(
   opts: IntegrationEngineOptions = {}
 ): IntegrationEngineSetup {
-  const dgsm = new DynamicGameStateManager();
-  if (opts.moduleSetup) {
-    dgsm.loadWorldData({ moduleSetup: opts.moduleSetup });
-  }
+  const state = initialDynamicGameState();
+  if (opts.moduleSetup) state.moduleSetup = opts.moduleSetup;
+  const dgsm = new DynamicGameStateManager(state);
   const initial = opts.initialTime ?? "1923-10-17T08:00:00";
   dgsm.setGameDateTime(initial);
 
@@ -86,7 +88,7 @@ export function seedNpc(
   id: string,
   sceneId: string
 ): void {
-  dgsm.registerNpcProfile({
+  dgsm.getState().npcCharacters.push({
     id,
     name: id,
     attributes: {
@@ -131,7 +133,7 @@ export function seedScene(
     items?: Array<{ id: string; name: string }>;
   } = {}
 ): void {
-  dgsm.updateScene(sceneId, {
+  dgsm.getState().scenes.set(sceneId, {
     id: sceneId,
     name: sceneId,
     description: "",

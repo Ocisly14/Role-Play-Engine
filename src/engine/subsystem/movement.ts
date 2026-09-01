@@ -80,7 +80,7 @@ export function planMovementRoute(
   }
 
   const topology = dgsm.getTopology();
-  let targetPosition = resolveTargetPosition(destination, topology, dgsm);
+  let targetPosition = resolveTargetPosition(destination, topology);
   if (!targetPosition) return { ok: false, reason: "no_path" };
   // A road destination with no explicit "@position" ("去那条街" / an outline
   // whose entry is a road) means "get onto that road" — snap to the end
@@ -91,8 +91,7 @@ export function planMovementRoute(
       position: nearestRoadPosition(
         currentPosition,
         targetPosition.roadId,
-        topology,
-        dgsm
+        topology
       ),
     };
   }
@@ -100,8 +99,7 @@ export function planMovementRoute(
   const route = buildMovementRouteIgnoringBlocks(
     currentPosition,
     targetPosition,
-    topology,
-    dgsm
+    topology
   );
   if (!route) return { ok: false, reason: "no_path" };
 

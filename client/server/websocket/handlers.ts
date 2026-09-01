@@ -4,12 +4,10 @@ import type { WSClient } from "./WebSocketManager.js";
  * Handle incoming WebSocket messages from clients
  * @param data - Raw message data from client
  * @param client - Client connection info
- * @param clients - Map of all connected clients
  */
 export async function handleClientMessage(
   data: Buffer,
-  client: WSClient,
-  clients: Map<string, WSClient>
+  client: WSClient
 ): Promise<void> {
   try {
     const message = JSON.parse(data.toString());

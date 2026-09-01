@@ -1,4 +1,3 @@
-import type { DynamicGameStateManager } from "../../state/DynamicGameState.js";
 import { hasBlockedConnection } from "../../state/blockedConnections.js";
 import type {
   CharacterPosition,
@@ -8,13 +7,12 @@ import type {
 import type { MovementStep } from "../core/types.js";
 
 /**
- * Convert a location ID string to a CharacterPosition using topology and dgsm state.
- * Checks: node scenes → sceneToParent → roads → outline fallback → interior sub-scene fallback.
+ * Convert a location ID string to a CharacterPosition using topology.
+ * Checks node scenes, attached scenes, and roads.
  */
 export function resolveTargetPosition(
   locationId: string,
-  topology: TownTopology,
-  dgsm?: DynamicGameStateManager
+  topology: TownTopology
 ): CharacterPosition | null {
   if (
     topology.nodeSceneIds.has(locationId) ||
@@ -95,16 +93,15 @@ export function findTopologyPath(
   from: CharacterPosition,
   to: CharacterPosition,
   topology: TownTopology,
-  blockedConnections: Map<string, string>,
-  dgsm?: DynamicGameStateManager
+  blockedConnections: Map<string, string>
 ): TopologyPath | null {
   // Same location check
   if (positionsEqual(from, to)) {
     return { steps: [], totalMinutes: 0 };
   }
 
-  const startInfo = resolveToNodes(from, topology, blockedConnections, dgsm);
-  const endInfo = resolveToNodes(to, topology, blockedConnections, dgsm);
+  const startInfo = resolveToNodes(from, topology, blockedConnections);
+  const endInfo = resolveToNodes(to, topology, blockedConnections);
 
   if (!startInfo || !endInfo) return null;
 
@@ -185,16 +182,14 @@ export function findTopologyPath(
 export function nearestRoadPosition(
   from: CharacterPosition,
   roadId: string,
-  topology: TownTopology,
-  dgsm?: DynamicGameStateManager
+  topology: TownTopology
 ): number {
   if (from.type === "road" && from.roadId === roadId) return from.position;
   const costTo = (position: number): number => {
     const route = buildMovementRouteIgnoringBlocks(
       from,
       { type: "road", roadId, position },
-      topology,
-      dgsm
+      topology
     );
     return route ? route.totalMinutes : Number.POSITIVE_INFINITY;
   };
@@ -207,14 +202,13 @@ export function nearestRoadPosition(
 export function buildMovementRouteIgnoringBlocks(
   from: CharacterPosition,
   to: CharacterPosition,
-  topology: TownTopology,
-  dgsm?: DynamicGameStateManager
+  topology: TownTopology
 ): { steps: MovementStep[]; totalMinutes: number } | null {
   if (positionsEqual(from, to)) {
     return { steps: [], totalMinutes: 0 };
   }
 
-  const startEntries = resolveToRouteNodes(from, topology, dgsm);
+  const startEntries = resolveToRouteNodes(from, topology);
   const endEntries = resolveToRouteNodesFromTarget(to, topology);
   if (!startEntries || !endEntries) return null;
 
@@ -274,8 +268,7 @@ export function buildMovementRouteIgnoringBlocks(
 function resolveToNodes(
   pos: CharacterPosition,
   topology: TownTopology,
-  blockedConnections: Map<string, string>,
-  dgsm?: DynamicGameStateManager
+  blockedConnections: Map<string, string>
 ): NodeEntry[] | null {
   switch (pos.type) {
     case "road": {
@@ -459,8 +452,7 @@ function positionsEqual(a: CharacterPosition, b: CharacterPosition): boolean {
 
 function resolveToRouteNodes(
   pos: CharacterPosition,
-  topology: TownTopology,
-  dgsm?: DynamicGameStateManager
+  topology: TownTopology
 ): RouteNodeEntry[] | null {
   switch (pos.type) {
     case "road": {

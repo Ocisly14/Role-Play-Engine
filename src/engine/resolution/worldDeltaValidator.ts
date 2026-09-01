@@ -31,7 +31,6 @@ import type {
   WorldDelta,
 } from "../actions/types.js";
 import { parseJsonResponse } from "../shared/jsonParse.js";
-import type { CodeToolInvocation } from "../tools/codeTool.js";
 import type { EngineResolutionContext, ResolutionError } from "./types.js";
 import {
   CHARACTER_OPS,
@@ -422,7 +421,6 @@ function validHolder(holder: string, lookup: Lookup): boolean {
 }
 
 export function validateCharacterChange(
-  index: number,
   delta: RawSourcedDelta & { characterId?: string },
   lookup: Lookup
 ): string[] {
@@ -525,7 +523,6 @@ export function validateCharacterChange(
 }
 
 export function validateSceneChange(
-  index: number,
   delta: RawSourcedDelta & { sceneId?: string },
   lookup: Lookup
 ): string[] {
@@ -648,7 +645,6 @@ export function validateSceneChange(
 }
 
 export function validateItemChange(
-  index: number,
   delta: RawSourcedDelta & { itemId?: string },
   lookup: Lookup,
   movedItemIds: Set<string>,
@@ -757,7 +753,6 @@ const PERSPECTIVE_PATTERNS = [
 ];
 
 export function validateOccurrence(
-  index: number,
   occ: RawOccurrence,
   lookup: Lookup,
   /** Item ids minted by this submission's own `create` operations: an
@@ -828,8 +823,7 @@ export function validateOccurrence(
 
 export function validateRawResolution(
   raw: RawTickResolution,
-  context: EngineResolutionContext,
-  invocations: CodeToolInvocation[]
+  context: EngineResolutionContext
 ): ResolutionError[] {
   const lookup = buildLookup(context);
   const errors: ResolutionError[] = [];
@@ -918,18 +912,18 @@ export function validateRawResolution(
     if (d === null) return;
     at(
       { kind: "characterChange", index: i },
-      validateCharacterChange(i, d, lookup)
+      validateCharacterChange(d, lookup)
     );
   });
   (raw.sceneChanges ?? []).forEach((d, i) => {
     if (d === null) return;
-    at({ kind: "sceneChange", index: i }, validateSceneChange(i, d, lookup));
+    at({ kind: "sceneChange", index: i }, validateSceneChange(d, lookup));
   });
   (raw.itemChanges ?? []).forEach((d, i) => {
     if (d === null) return;
     at(
       { kind: "itemChange", index: i },
-      validateItemChange(i, d, lookup, movedItemIds, createdItemIds)
+      validateItemChange(d, lookup, movedItemIds, createdItemIds)
     );
   });
   // Prose-coherence: an item CITED by its holder place's description cannot
@@ -964,7 +958,7 @@ export function validateRawResolution(
     if (o === null) return;
     at(
       { kind: "occurrence", index: i },
-      validateOccurrence(i, o, lookup, createdItemIds)
+      validateOccurrence(o, lookup, createdItemIds)
     );
   });
   // An ending's own occurrence gets the same checks, addressed at the action
@@ -975,7 +969,6 @@ export function validateRawResolution(
     at(
       { kind: "action", actionId: entry.actionId },
       validateOccurrence(
-        0,
         { ...entry.occurrence, sourceActionIds: [entry.actionId] },
         lookup,
         createdItemIds

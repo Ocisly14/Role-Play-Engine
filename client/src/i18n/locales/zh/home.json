@@ -1,37 +1,7 @@
 {
   "menu": {
-    "manageModules": "管理模组",
-    "createCharacter": "创建角色",
-    "viewCharacters": "查看角色",
     "newSimulation": "新模拟",
     "continueSimulation": "继续模拟"
-  },
-  "characters": {
-    "title": "您的角色",
-    "count": "{{count}}个调查员",
-    "count_plural": "{{count}}个调查员",
-    "ready": "就绪",
-    "loading": "加载角色中...",
-    "empty": "还没有创建角色",
-    "emptyDescription": "创建您的第一个调查员，开始您的调查之旅",
-    "viewSheet": "查看角色卡",
-    "unknownOccupation": "未知职业"
-  },
-  "selector": {
-    "title": "选择调查员",
-    "processing": "处理中...",
-    "importWait": "请稍候,这可能需要几秒钟...",
-    "retry": "重试",
-    "createFirst": "创建第一个调查员",
-    "age": "年龄:",
-    "createNew": "创建新角色",
-    "done": "完成",
-    "importing": "导入数据中...",
-    "startGame": "使用此角色开始游戏",
-    "loadError": "加载角色失败",
-    "networkError": "网络错误: 无法连接到服务器",
-    "moduleLoading": "模组加载中...",
-    "importFailed": "数据导入失败"
   },
   "analytics": {
     "title": "数据看板",

@@ -178,25 +178,6 @@ export class DynamicGameStateManager {
     );
   }
 
-  /**
-   * Insert or replace a scene in the scenes map
-   */
-  updateScene(sceneId: string, scene: DynamicScene): void {
-    this.state.scenes.set(sceneId, scene);
-  }
-
-  /**
-   * Load world data into state.
-   * Only loads fields that the simulation engine uses.
-   */
-  loadWorldData(data: {
-    moduleSetup?: ModuleSetup;
-  }): void {
-    if (data.moduleSetup) {
-      this.state.moduleSetup = data.moduleSetup;
-    }
-  }
-
   // === Serialization ===
 
   /**
@@ -857,20 +838,6 @@ export class DynamicGameStateManager {
   }
 
   /**
-   * Insert/upsert an NPC profile. Used by Applier tests + bootstrap paths.
-   */
-  registerNpcProfile(profile: DynamicNPCProfile): void {
-    const existingIndex = this.state.npcCharacters.findIndex(
-      (n) => n.id === profile.id
-    );
-    if (existingIndex >= 0) {
-      this.state.npcCharacters[existingIndex] = profile;
-    } else {
-      this.state.npcCharacters.push(profile);
-    }
-  }
-
-  /**
    * Directly write a character status field to an absolute value.
    * Thin wrapper used by the Applier after summing deltas + clamping.
    */
@@ -977,14 +944,6 @@ export class DynamicGameStateManager {
     return true;
   }
 
-  hasDiscoveredConnection(characterId: string, connectionId: string): boolean {
-    return (
-      this.findConnectionById(connectionId)?.discoveredBy?.includes(
-        characterId
-      ) ?? false
-    );
-  }
-
   private findConnectionById(
     connectionId: string
   ): SceneConnection | undefined {
@@ -1016,10 +975,6 @@ export class DynamicGameStateManager {
   }
 
   // === Blocked Connections ===
-
-  isConnectionBlocked(fromId: string, toId: string): boolean {
-    return this.getConnectionBlockReason(fromId, toId) !== undefined;
-  }
 
   getConnectionBlockReason(fromId: string, toId: string): string | undefined {
     const fromRef = resolveBlockedConnectionNodeRef(fromId, this.state);
@@ -1085,10 +1040,6 @@ export class DynamicGameStateManager {
     const vehicle = this.getVehicle(vehicleId);
     if (!vehicle) return;
     vehicle.position = position;
-  }
-
-  setTopology(topology: TownTopology): void {
-    this.state.topology = topology;
   }
 
   // === Character Position ===

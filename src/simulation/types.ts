@@ -53,12 +53,6 @@ export interface SimulationConfig {
   tickIntervalMs?: number;
   maxDays?: number;
   stopEvents?: string[];
-  /** Deprecated: old playback release interval. Retained for runtime compatibility only. */
-  displayIntervalMs?: number;
-  /** Deprecated: old playback buffer size. Retained for runtime compatibility only. */
-  minBufferTicks?: number;
-  /** Deprecated: old fast-sim loop delay. Retained for runtime compatibility only. */
-  simulationDelayMs?: number;
   /** Sync game time to real wall-clock time */
   syncRealTime?: boolean;
   /** Buffer minutes ahead of real time (default 0). */

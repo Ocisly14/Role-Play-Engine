@@ -94,8 +94,8 @@ function makeDgsm(): DynamicGameStateManager {
   state.roads.set(road.id, road);
   state.npcInventories = { npc_home: [{ id: "item_coin", name: "a coin" }] };
 
+  state.topology = buildTopology(state.scenes, state.roads);
   const dgsm = new DynamicGameStateManager(state);
-  dgsm.setTopology(buildTopology(state.scenes, state.roads));
   for (const [id, sceneId] of [
     ["npc_home", "S_HOME"],
     ["npc_far", "S_FAR"],
@@ -115,7 +115,7 @@ function makeDgsm(): DynamicGameStateManager {
 }
 
 function seedNpc(dgsm: DynamicGameStateManager, id: string): void {
-  dgsm.registerNpcProfile({
+  dgsm.getState().npcCharacters.push({
     id,
     name: id,
     attributes: {
