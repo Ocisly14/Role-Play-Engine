@@ -45,35 +45,28 @@
   },
   "inventory": [
     {
-      "id": "weaver_medical_bag",
+      "id": "item.weaver.medical_bag",
       "name": "黑色出诊包",
       "properties": {
         "note": "内有听诊器、血压计、基本药品和急救用品。"
       }
     },
     {
-      "id": "weaver_case_ledger",
+      "id": "item.weaver.case_ledger",
       "name": "病例统计本",
       "properties": {
         "note": "正式病历之外按周统计失眠和耳鸣主诉，封皮没有标题。"
       }
     },
     {
-      "id": "weaver_patient_charts",
+      "id": "item.weaver.patient_charts",
       "name": "病历夹",
       "properties": {
         "note": "诊所日常病历，按姓名和复查日期分类。"
       }
     },
     {
-      "id": "weaver_chess_set",
-      "name": "木制国际象棋",
-      "properties": {
-        "note": "周日下午他会独自摆开棋局，边听 KGRV 的歌剧转播边走棋。"
-      }
-    },
-    {
-      "id": "weaver_gray_sweater",
+      "id": "item.weaver.gray_sweater",
       "name": "灰毛衣",
       "properties": {
         "note": "穿在白大褂下的旧毛衣，几乎成了他的制服。"

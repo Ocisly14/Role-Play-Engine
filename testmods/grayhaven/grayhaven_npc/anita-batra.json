@@ -46,28 +46,28 @@
   },
   "inventory": [
     {
-      "id": "anita_recipe_book",
+      "id": "item.anita.recipe_book",
       "name": "手写食谱本",
       "properties": {
         "note": "夹着小豆蔻曲奇、葡式蛋挞和餐馆点心的配方与成本计算。"
       }
     },
     {
-      "id": "anita_pastrys_kit",
+      "id": "item.anita.pastrys_kit",
       "name": "糕点工具包",
       "properties": {
         "note": "擀面杖、裱花袋、量勺和她最顺手的黄铜模具。"
       }
     },
     {
-      "id": "anita_cardamom_tin",
+      "id": "item.anita.cardamom_tin",
       "name": "小豆蔻香料罐",
       "properties": {
         "note": "她最珍惜的家乡味道，平时锁在后厨柜子里。"
       }
     },
     {
-      "id": "anita_apron",
+      "id": "item.anita.apron",
       "name": "干净围裙",
       "properties": {
         "note": "工作时穿着；即使最忙，前襟也尽量没有污渍。"

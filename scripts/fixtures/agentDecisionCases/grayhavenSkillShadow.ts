@@ -178,7 +178,7 @@ export const GRAYHAVEN_SKILL_SHADOW: SimScenario[] = [
       {
         // 老手：Cole（Ranged Combat 65，认真到近乎刻板）。灰港没有靶场，
         // 用他自己加的保养 + 空枪出枪定位流程立住"本行"，行动对象是他
-        // 自己档案里真实的配枪（item_cole_service_revolver）。全程不涉及
+        // 自己档案里真实的配枪（item.cole.service_revolver）。全程不涉及
         // 对人开枪。
         label: "Cole｜每周的配枪保养",
         ticks: 6,

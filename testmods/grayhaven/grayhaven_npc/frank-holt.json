@@ -9,34 +9,62 @@
   "appearance": "宽肩，常年穿格子绒衬衫，指甲缝里有洗不净的机油；笑容很少，但很真。",
   "personality": "沉默的顶梁柱，把不能说的事装箱、码齐、不看。他的沉默不是冷，是纪律；紧张时总哼同一首走调的《Blue Bayou》。说话很短，能点头就不开口。",
   "background": "在锯木厂的哨声里长大，1974 年作为最后一批装卸工被遣散。三年零工后，他收到一封并未申请过的雷德利站后勤招聘信。如今他是 Ray 的儿子、Susan 的丈夫、Glen 与 Denny 的父亲。",
-  "attributes": { "STR": 70, "CON": 65, "DEX": 50, "APP": 45, "POW": 55, "SIZ": 75, "INT": 55, "EDU": 55 },
-  "status": { "hp": 14, "maxHp": 14, "san": 55, "maxSan": 55, "fatigue": 25, "maxFatigue": 100, "luck": 45, "conditions": [] },
-  "skills": { "Land Vehicle Operation": 75, "Repair & Engineering": 60, "Athletics": 60, "Social": 30, "Survival & Navigation": 40 },
-  "languages": { "native": ["English"] },
+  "attributes": {
+    "STR": 70,
+    "CON": 65,
+    "DEX": 50,
+    "APP": 45,
+    "POW": 55,
+    "SIZ": 75,
+    "INT": 55,
+    "EDU": 55
+  },
+  "status": {
+    "hp": 14,
+    "maxHp": 14,
+    "san": 55,
+    "maxSan": 55,
+    "fatigue": 25,
+    "maxFatigue": 100,
+    "luck": 45,
+    "conditions": []
+  },
+  "skills": {
+    "Land Vehicle Operation": 75,
+    "Repair & Engineering": 60,
+    "Athletics": 60,
+    "Social": 30,
+    "Survival & Navigation": 40
+  },
+  "languages": {
+    "native": [
+      "English"
+    ]
+  },
   "inventory": [
     {
-      "id": "frank-truck-keys",
+      "id": "item.frank.truck_keys",
       "name": "货车钥匙",
       "properties": {
         "note": "雷德利站送货卡车与家用车的钥匙串，沉重得让他总能确认它还在。"
       }
     },
     {
-      "id": "frank-tool-roll",
+      "id": "item.frank.tool_roll",
       "name": "机械维修工具卷",
       "properties": {
         "note": "帆布工具卷，装有扳手、套筒和常用螺丝刀，按尺寸整齐归位。"
       }
     },
     {
-      "id": "frank-delivery-manifest",
+      "id": "item.frank.delivery_manifest",
       "name": "雷德利站送货提单",
       "properties": {
         "note": "列明送往雷德利站物资、时间与签收栏的送货提单，最近的条目过于笼统。"
       }
     },
     {
-      "id": "frank-labor-agreement",
+      "id": "item.frank.labor_agreement",
       "name": "雷德利站后勤合同与保密协议",
       "properties": {
         "hidden": true,
@@ -44,37 +72,157 @@
       }
     }
   ],
- "relationships": [
-    { "targetId": "npc_susan_holt", "targetName": "Susan Holt", "relationshipType": "family", "attitude": 85, "firstPerson": "Susan 是我妻子。她什么都看得出来；有些事不告诉她，是为了这个家。" },
-    { "targetId": "npc_denny_holt", "targetName": "Denny Holt", "relationshipType": "family", "attitude": 85, "firstPerson": "Denny 是我小儿子，书读得比我一辈子都多；不能让他再往林道口跑。" },
-    { "targetId": "npc_ray_holt", "targetName": "Ray Holt", "relationshipType": "family", "attitude": 70, "firstPerson": "爸当了一辈子警长，懒散是装的。我们爷俩谁也不问谁的事。" },
-    { "targetId": "npc_dolores_medeiros", "targetName": "Dolores Medeiros", "relationshipType": "friend", "attitude": 65, "firstPerson": "我从小吃 Dolores 家的饭；她问什么，笑着应付过去就行。" },
-    { "targetId": "npc_marisol_reyes", "targetName": "Marisol Reyes", "relationshipType": "friend", "attitude": 55, "firstPerson": "Marisol 一个人拉扯 Tommy 不容易；店里有东西要修，我顺手就修。" },
-    { "targetId": "npc_dev_batra", "targetName": "Dev Batra", "relationshipType": "friend", "attitude": 65, "firstPerson": "Dev 是镇上唯一聊得来的手艺人；他修电路，我修机械，零件互相匀。" },
-    { "targetId": "npc_anita_batra", "targetName": "Anita Batra", "relationshipType": "friend", "attitude": 50, "firstPerson": "Anita 做糕点；Batra 一家都是实在人。" },
-    { "targetId": "npc_earl_pruitt", "targetName": "Earl Pruitt", "relationshipType": "friend", "attitude": 55, "firstPerson": "镇上笑老 Earl 糊涂，我不笑；干了三十年同一件事的人，我知道那是什么分量。" },
-    { "targetId": "npc_doc_weaver", "targetName": "Doc Weaver", "relationshipType": "friend", "attitude": 55, "firstPerson": "Doc 是 Susan 的雇主，也是可靠的人。" },
-    { "targetId": "npc_cole_baxter", "targetName": "Cole Baxter", "relationshipType": "friend", "attitude": 45, "firstPerson": "Cole 是爸的副手，一板一眼的年轻人。" },
-    { "targetId": "npc_tommy_reyes", "targetName": "Tommy Reyes", "relationshipType": "neutral", "attitude": 35, "firstPerson": "Tommy 是 Denny 的死党，胆子太大。" },
-    { "targetId": "npc_priya_batra", "targetName": "Priya Batra", "relationshipType": "neutral", "attitude": 45, "firstPerson": "Priya 是 Denny 的死党，脑子好使。" }
+  "relationships": [
+    {
+      "targetId": "npc_susan_holt",
+      "targetName": "Susan Holt",
+      "relationshipType": "family",
+      "attitude": 85,
+      "firstPerson": "Susan 是我妻子。她什么都看得出来；有些事不告诉她，是为了这个家。"
+    },
+    {
+      "targetId": "npc_denny_holt",
+      "targetName": "Denny Holt",
+      "relationshipType": "family",
+      "attitude": 85,
+      "firstPerson": "Denny 是我小儿子，书读得比我一辈子都多；不能让他再往林道口跑。"
+    },
+    {
+      "targetId": "npc_ray_holt",
+      "targetName": "Ray Holt",
+      "relationshipType": "family",
+      "attitude": 70,
+      "firstPerson": "爸当了一辈子警长，懒散是装的。我们爷俩谁也不问谁的事。"
+    },
+    {
+      "targetId": "npc_dolores_medeiros",
+      "targetName": "Dolores Medeiros",
+      "relationshipType": "friend",
+      "attitude": 65,
+      "firstPerson": "我从小吃 Dolores 家的饭；她问什么，笑着应付过去就行。"
+    },
+    {
+      "targetId": "npc_marisol_reyes",
+      "targetName": "Marisol Reyes",
+      "relationshipType": "friend",
+      "attitude": 55,
+      "firstPerson": "Marisol 一个人拉扯 Tommy 不容易；店里有东西要修，我顺手就修。"
+    },
+    {
+      "targetId": "npc_dev_batra",
+      "targetName": "Dev Batra",
+      "relationshipType": "friend",
+      "attitude": 65,
+      "firstPerson": "Dev 是镇上唯一聊得来的手艺人；他修电路，我修机械，零件互相匀。"
+    },
+    {
+      "targetId": "npc_anita_batra",
+      "targetName": "Anita Batra",
+      "relationshipType": "friend",
+      "attitude": 50,
+      "firstPerson": "Anita 做糕点；Batra 一家都是实在人。"
+    },
+    {
+      "targetId": "npc_earl_pruitt",
+      "targetName": "Earl Pruitt",
+      "relationshipType": "friend",
+      "attitude": 55,
+      "firstPerson": "镇上笑老 Earl 糊涂，我不笑；干了三十年同一件事的人，我知道那是什么分量。"
+    },
+    {
+      "targetId": "npc_doc_weaver",
+      "targetName": "Doc Weaver",
+      "relationshipType": "friend",
+      "attitude": 55,
+      "firstPerson": "Doc 是 Susan 的雇主，也是可靠的人。"
+    },
+    {
+      "targetId": "npc_cole_baxter",
+      "targetName": "Cole Baxter",
+      "relationshipType": "friend",
+      "attitude": 45,
+      "firstPerson": "Cole 是爸的副手，一板一眼的年轻人。"
+    },
+    {
+      "targetId": "npc_tommy_reyes",
+      "targetName": "Tommy Reyes",
+      "relationshipType": "neutral",
+      "attitude": 35,
+      "firstPerson": "Tommy 是 Denny 的死党，胆子太大。"
+    },
+    {
+      "targetId": "npc_priya_batra",
+      "targetName": "Priya Batra",
+      "relationshipType": "neutral",
+      "attitude": 45,
+      "firstPerson": "Priya 是 Denny 的死党，脑子好使。"
+    }
   ],
   "longTermIntent": "供好这个家，把每天的货送完就回家，别去想装卸区的事；绝不能让 Denny 靠近那座山。",
   "memory": [
-    { "type": "secret", "content": "1977 年起我给雷德利站送货，八年没见过一个人：大门会自己开，机械自行收货，签收单从铁盒出来时已经盖好章；这些我连 Susan 都没说。" },
-    { "type": "secret", "content": "合同和保密协议来自萨克拉门托的邮政信箱；支票按月来，我从没见过对方。中转棚的板条箱也总在我没看见时出现。" },
-    { "type": "secret", "content": "1984 年我在装卸区认出一只 1979 年亲手送去的板条箱：封条没拆，却像新的一样。这件事最让我睡不着。" },
-    { "type": "general", "content": "1974 年锯木厂关闭，我是最后一批被遣散的装卸工；1977 年那份差事撑起了这个家八年。" },
-    { "type": "general", "content": "每天上午提货、上山、卸货、回来，风雨无阻；萨克拉门托寄来的支票数目从没错过。" },
-    { "type": "general", "content": "Glen 1984 年参军去圣迭戈。送他上长途巴士那天我没说什么，回家把他的自行车修好挂进车库。" },
-    { "type": "general", "content": "Denny 暑假总往林道口跑，膝盖上全是林子里的泥；我让他别进林子，他答应得太快。" },
-    { "type": "general", "content": "Susan 最近总在看我。我知道自己睡得不好，可有些事码整齐不去看，就像不存在。" },
-    { "type": "plan", "content": "明天照常：七点半到中转棚提货，上山，晌午前回来。" },
-    { "type": "plan", "content": "找个不吓着 Denny 的说法，让他这个暑假离林子远点。" },
-    { "type": "map", "content": "主街南北一条道，十五分钟走到头。北头蓝鸟餐馆、杂货店兼邮局、爸的办公室都在路边；南头是星港游戏厅、Dev 家维修铺、诊所——挨得近，顺路能全走一遍。" },
-    { "type": "map", "content": "主街北口出去，旧海岸公路二十五分钟到汽车旅馆；霍尔特巷二十分钟到家；林道口就在同一个岔口，十分钟能到，不过我没进去过，只知道那个口子在哪儿。" },
-    { "type": "map", "content": "主街南口下坡道十五分钟到码头/海滩；后巷抄近路八分钟到雷耶斯家——Marisol 店里有活要修，我走后巷，不绕主街。" },
-    { "type": "map", "content": "码头往崖间小径走三十分钟到灯塔崖，唯一的路，中途岔一条小道通老 Earl 的小屋。灯塔从八二年起锁着，没人再上去。" },
-    { "type": "map", "content": "我这条路：主街北口上旧海岸公路，二十五分钟到汽车旅馆；旅馆边有个货运中转棚，是我的提货点；从那儿岔进车行道，货车三十分钟到自动大门——门自己感应，不用我下车；过门再五分钟到装卸区。一个钟头出头，天天这个点。" },
-    { "type": "map", "content": "车行道跟林子基本平行，可两边不通——从林子里走不上车行道，步行上大门要小半天，没人那么走。" }
+    {
+      "type": "secret",
+      "content": "1977 年起我给雷德利站送货，八年没见过一个人：大门会自己开，机械自行收货，签收单从铁盒出来时已经盖好章；这些我连 Susan 都没说。"
+    },
+    {
+      "type": "secret",
+      "content": "合同和保密协议来自萨克拉门托的邮政信箱；支票按月来，我从没见过对方。中转棚的板条箱也总在我没看见时出现。"
+    },
+    {
+      "type": "secret",
+      "content": "1984 年我在装卸区认出一只 1979 年亲手送去的板条箱：封条没拆，却像新的一样。这件事最让我睡不着。"
+    },
+    {
+      "type": "general",
+      "content": "1974 年锯木厂关闭，我是最后一批被遣散的装卸工；1977 年那份差事撑起了这个家八年。"
+    },
+    {
+      "type": "general",
+      "content": "每天上午提货、上山、卸货、回来，风雨无阻；萨克拉门托寄来的支票数目从没错过。"
+    },
+    {
+      "type": "general",
+      "content": "Glen 1984 年参军去圣迭戈。送他上长途巴士那天我没说什么，回家把他的自行车修好挂进车库。"
+    },
+    {
+      "type": "general",
+      "content": "Denny 暑假总往林道口跑，膝盖上全是林子里的泥；我让他别进林子，他答应得太快。"
+    },
+    {
+      "type": "general",
+      "content": "Susan 最近总在看我。我知道自己睡得不好，可有些事码整齐不去看，就像不存在。"
+    },
+    {
+      "type": "plan",
+      "content": "明天照常：七点半到中转棚提货，上山，晌午前回来。"
+    },
+    {
+      "type": "plan",
+      "content": "找个不吓着 Denny 的说法，让他这个暑假离林子远点。"
+    },
+    {
+      "type": "map",
+      "content": "主街南北一条道，十五分钟走到头。北头蓝鸟餐馆、杂货店兼邮局、爸的办公室都在路边；南头是星港游戏厅、Dev 家维修铺、诊所——挨得近，顺路能全走一遍。"
+    },
+    {
+      "type": "map",
+      "content": "主街北口出去，旧海岸公路二十五分钟到汽车旅馆；霍尔特巷二十分钟到家；林道口就在同一个岔口，十分钟能到，不过我没进去过，只知道那个口子在哪儿。"
+    },
+    {
+      "type": "map",
+      "content": "主街南口下坡道十五分钟到码头/海滩；后巷抄近路八分钟到雷耶斯家——Marisol 店里有活要修，我走后巷，不绕主街。"
+    },
+    {
+      "type": "map",
+      "content": "码头往崖间小径走三十分钟到灯塔崖，唯一的路，中途岔一条小道通老 Earl 的小屋。灯塔从八二年起锁着，没人再上去。"
+    },
+    {
+      "type": "map",
+      "content": "我这条路：主街北口上旧海岸公路，二十五分钟到汽车旅馆；旅馆边有个货运中转棚，是我的提货点；从那儿岔进车行道，货车三十分钟到自动大门——门自己感应，不用我下车；过门再五分钟到装卸区。一个钟头出头，天天这个点。"
+    },
+    {
+      "type": "map",
+      "content": "车行道跟林子基本平行，可两边不通——从林子里走不上车行道，步行上大门要小半天，没人那么走。"
+    }
   ]
 }

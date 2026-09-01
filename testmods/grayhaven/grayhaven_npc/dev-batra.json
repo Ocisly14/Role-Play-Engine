@@ -46,35 +46,28 @@
   },
   "inventory": [
     {
-      "id": "dev_service_ledger",
-      "name": "维修记录本",
-      "properties": {
-        "note": "逐单记录日期、机型、症状和根因；近来的根因栏空得越来越多。"
-      }
-    },
-    {
-      "id": "dev_portable_oscilloscope",
+      "id": "item.dev.portable_oscilloscope",
       "name": "便携示波器",
       "properties": {
         "note": "用来追查异常干扰的精密仪器。"
       }
     },
     {
-      "id": "dev_signal_generator",
+      "id": "item.dev.signal_generator",
       "name": "信号发生器",
       "properties": {
         "note": "维修铺工作台上的校准设备。"
       }
     },
     {
-      "id": "dev_repair_toolcase",
+      "id": "item.dev.repair_toolcase",
       "name": "维修工具箱",
       "properties": {
         "note": "分类极严，连备用螺丝都按尺寸收纳。"
       }
     },
     {
-      "id": "dev_colored_pens",
+      "id": "item.dev.colored_pens",
       "name": "三支彩色笔",
       "properties": {
         "note": "用于区分报修症状、已排除原因和待复查项目。"

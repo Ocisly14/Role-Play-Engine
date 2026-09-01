@@ -233,3 +233,24 @@ placement now that macro locations are gone:
   is written per profile in the character's own voice. Nothing geographic is
   generated at bootstrap; a place absent from a character's memories does not
   exist for them (this IS the lost-in-the-woods mechanic).
+- `inventory[]`: what the character carries. Ids follow the same grammar as
+  a place file's items, with the owner where the place would be:
+
+  ```
+  item.<owner>.<thing>     item.tommy.walkie_talkie, item.ray.sheriff_badge
+  ```
+
+  **An object exists in exactly one place, and the id is what says so.** A
+  thing the character carries belongs here and nowhere else; a thing that
+  lives in a room belongs in that room's `references.items` and the
+  character picks it up. Writing it in both makes two objects that nothing
+  can tell apart afterwards: they hold different ids, so `itemHolders` gives
+  each its own holder, the owner perceives their own thing twice, and a
+  delta that moves, damages or destroys one leaves its twin untouched. Ten
+  such pairs were authored into Grayhaven before this rule was written down
+  — a bicycle both in Tommy's hands and leaning at his gate, and he cited
+  each of them in different minutes of the same errand.
+
+  Two objects that merely resemble each other are fine and stay separate:
+  Denny carries an inhaler and keeps a spare in his room; the stethoscope on
+  the clinic's rack is Weaver's, not the one in Susan's bag.
