@@ -35,7 +35,6 @@ import { initializeCompleteDynamicGameState } from "../../../src/state/DynamicGa
 import { datePart, makeDateTime } from "../../../src/state/gameClock.js";
 import { importModule } from "../../../src/state/moduleImporter.js";
 import type { TownTopology } from "../../../src/state/topologyTypes.js";
-import { DatabaseManager } from "../core/DatabaseManager.js";
 import { WebSocketManager } from "../websocket/WebSocketManager.js";
 
 const runners = new Map<string, SimulationRunner>();
@@ -118,8 +117,7 @@ function buildSimulationBundle(params: {
   dgsm: DynamicGameStateManager;
   memoryManager: NpcMemoryManager;
 } {
-  const db = DatabaseManager.getInstance().getDatabase();
-  const dgsm = new DynamicGameStateManager(params.gameState, db);
+  const dgsm = new DynamicGameStateManager(params.gameState);
   const provider =
     (process.env.MODEL_PROVIDER as ModelProviderName) ??
     ModelProviderName.OPENAI;
@@ -340,7 +338,7 @@ export function applyGlobalWeather(
   for (const regionId of regionIds) {
     const locationIds = getOutdoorLocationIdsForRegion(dgsm, regionId);
 
-    dgsm.setFeatureSceneState(WEATHER_FEATURE_ID, regionId, {
+    dgsm.setScopedFeatureState(WEATHER_FEATURE_ID, "region", regionId, {
       weatherType: weather,
       intensity,
       minutesInState: 0,
@@ -354,11 +352,14 @@ export function applyGlobalWeather(
     if (weather !== "clear" && intensity > 0) {
       const label = getWeatherLabel(weather, intensity);
       const penalties = computeSkillPenalties(weather, intensity);
+      const skillPenalty: Record<string, number> = {};
+      for (const { skill, delta } of penalties) {
+        skillPenalty[skill] = (skillPenalty[skill] ?? 0) + delta;
+      }
       for (const locationId of locationIds) {
         dgsm.appendSceneCondition(locationId, {
           description: `[Weather] ${label}`,
-          mechanicalEffect:
-            penalties.length > 0 ? { skillPenalty: penalties } : undefined,
+          mechanicalEffect: penalties.length > 0 ? { skillPenalty } : undefined,
         });
       }
     }
@@ -375,7 +376,6 @@ export async function createSimulation(
   config?: Partial<SimulationConfig> & { weather?: WeatherType }
 ): Promise<{ sessionId: string; status: SimulationStatus }> {
   const sessionId = randomUUID();
-  const db = DatabaseManager.getInstance().getDatabase();
   const emailId = resolveEmailId();
   const moduleId = await ensureModuleIdForSimulation(
     prisma,
@@ -386,7 +386,7 @@ export async function createSimulation(
     throw new Error(`Module "${moduleName}" not found`);
   }
 
-  const gameState = await initializeCompleteDynamicGameState(db, {
+  const gameState = await initializeCompleteDynamicGameState({
     sessionId,
     moduleName,
     emailId,

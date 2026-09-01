@@ -19,10 +19,7 @@ import { Applier } from "../applier.js";
 // Topology: J_A —R_MAIN(10')— J_B, with a two-road detour J_A —R_A_C(5')—
 // J_C —R_C_B(9')— J_B. S_HOME hangs off J_A with a two-way pair of exit ids.
 function makeFixture() {
-  const state = initialDynamicGameState({
-    sessionId: "test-session",
-    moduleName: "test-module",
-  });
+  const state = initialDynamicGameState();
 
   const scene: DynamicScene = {
     id: "S_HOME",

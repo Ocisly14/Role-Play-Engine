@@ -731,7 +731,7 @@ export class SimulationRunner {
         gameState.gameDateTime,
         {
           npcName: npc.name,
-          hp: gameState.npcStats[npc.id]?.hp ?? npc.status.hp ?? 0,
+          hp: npc.status.hp ?? 0,
         }
       );
     }

@@ -119,8 +119,8 @@ export function seedNpc(
 
 /**
  * Insert a scene with the given fields. Mirrors the shape produced by
- * dgsm.ensureScene() but lets callers populate items / parentLocationId /
- * indoor without round-tripping through later setters.
+ * the runtime scene shape while letting callers populate items /
+ * parentLocationId / indoor in one write.
  */
 export function seedScene(
   dgsm: DynamicGameStateManager,

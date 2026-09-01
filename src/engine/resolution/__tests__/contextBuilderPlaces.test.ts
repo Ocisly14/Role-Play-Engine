@@ -18,10 +18,7 @@ import type { ActionCommand, EngineAction } from "../../actions/types.js";
 import { buildEngineResolutionContext } from "../contextBuilder.js";
 
 function makeDgsm(): DynamicGameStateManager {
-  const state = initialDynamicGameState({
-    sessionId: "test-session",
-    moduleName: "test-module",
-  });
+  const state = initialDynamicGameState();
 
   const home: DynamicScene = {
     id: "S_HOME",

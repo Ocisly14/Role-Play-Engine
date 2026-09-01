@@ -23,7 +23,7 @@ import {
   buildConnectionRegistry,
   resolveConnectionEdge,
 } from "./connectionRegistry.js";
-import { addMinutes, datePart, isSameDay, makeDateTime } from "./gameClock.js";
+import { makeDateTime } from "./gameClock.js";
 import type {
   CharacterPosition,
   RoadNode,
@@ -31,13 +31,7 @@ import type {
   VehicleState,
 } from "./topologyTypes.js";
 import { buildTopology } from "./topologyTypes.js";
-import {
-  InventoryUtils,
-  type ModuleSetup,
-  type NPCRelationship,
-  RELATIONSHIP_TYPES,
-  type RelationshipType,
-} from "./types.js";
+import type { ModuleSetup } from "./types.js";
 import type {
   DynamicNPCProfile,
   DynamicScene,
@@ -51,9 +45,6 @@ import type {
  * All fields here are actively read/written by tick processor, handlers, or features.
  */
 export interface DynamicGameState {
-  // === Session ===
-  sessionId: string;
-
   // === Scenes & Topology Nodes ===
   // Top-level scenes (no parentLocationId) are the geography nodes the road
   // network runs between; there is no separate junction type.
@@ -66,8 +57,7 @@ export interface DynamicGameState {
   // === Characters ===
   npcCharacters: DynamicNPCProfile[];
 
-  // === Module Metadata ===
-  moduleName: string;
+  // === Module Configuration ===
   moduleSetup: ModuleSetup | null;
 
   // === World Feature Runtime State ===
@@ -92,8 +82,7 @@ export interface DynamicGameState {
   // environment.* StateChanges; read by features via FeatureReadContext.
   environmentReadings: Record<string /* locationId */, EnvironmentReading>;
 
-  // === NPC Planning System Runtime State ===
-  npcStats: Record<string, { hp: number; san: number }>;
+  // === World Runtime State ===
   npcInventories: Record<string, Item[]>; // npcId -> items
   /** What each character holds about another. `knownAs` is what they CALL
    *  them — present only once they have actually learned it, which is what
@@ -105,7 +94,6 @@ export interface DynamicGameState {
   blockedConnections: Map<string, string>; // "scene:id::road:id" typed canonical edge key -> reason
   /** Vehicles: movable perception boundaries (see VehicleState). */
   vehicles: VehicleState[];
-  npcResidences: Record<string, string>; // npcId -> macroLocationId
   transportEdges: TransportEdge[];
 
   // === Road Topology (required) ===
@@ -119,62 +107,39 @@ export interface DynamicGameState {
    * is computed from it and nobody is stopped by it.
    */
   characterSpots: Record<string, string>;
-  hiddenCharacterIds?: string[];
-
-  // === NPC Injection Policy ===
-  npcInjectionPolicy: import("./moduleLoader.js").NpcInjectionPolicy | null;
-
-  // === Metadata ===
-  loadedAt: Date;
-  lastUpdated: Date;
 }
 
 /**
  * Create initial DynamicGameState with provided runtime data.
  * Character and gameDateTime should be loaded from DB or module setup.
  */
-export const initialDynamicGameState = (params: {
-  sessionId: string;
-  moduleName: string;
-  gameDateTime?: string;
-}): DynamicGameState => ({
-  sessionId: params.sessionId,
+export const initialDynamicGameState = (
+  gameDateTime = "1900-01-01T08:00:00"
+): DynamicGameState => ({
   scenes: new Map(),
   roads: new Map(),
-  gameDateTime: params.gameDateTime ?? "1900-01-01T08:00:00",
+  gameDateTime,
   npcCharacters: [],
-  moduleName: params.moduleName,
   moduleSetup: null,
   scopedFeatureStates: { scene: {}, region: {}, character: {}, global: {} },
   scriptedEventStates: {},
   environmentReadings: {},
-  npcStats: {},
   npcInventories: {},
   npcRelationshipGraph: {},
   blockedConnections: new Map(),
   vehicles: [],
-  npcResidences: {},
   transportEdges: [],
   topology: null as unknown as TownTopology,
   characterPositions: {},
   characterSpots: {},
-  hiddenCharacterIds: [],
-  npcInjectionPolicy: null,
-  loadedAt: new Date(),
-  lastUpdated: new Date(),
 });
 
 /**
  * Dynamic Game State Manager
  * Provides methods to manage DynamicWorld-specific state
  */
-/** Membership test for the authored stances — see RELATIONSHIP_TYPES. */
-const RELATIONSHIP_TYPE_SET: ReadonlySet<string> = new Set(RELATIONSHIP_TYPES);
-
 export class DynamicGameStateManager {
   private state: DynamicGameState;
-  private db: any;
-  private hiddenCharacterIds = new Set<string>();
 
   /**
    * Lazily built id-addressed index over every authored connection.
@@ -184,36 +149,8 @@ export class DynamicGameStateManager {
    */
   private connectionRegistry: ConnectionRegistry | null = null;
 
-  constructor(state?: DynamicGameState, db?: any) {
-    this.state =
-      state ?? initialDynamicGameState({ sessionId: "", moduleName: "" });
-    this.db = db || null;
-    this.hiddenCharacterIds = new Set(this.state.hiddenCharacterIds ?? []);
-    this.syncHiddenCharacterIds();
-  }
-
-  setCharacterHidden(characterId: string, hidden: boolean): void {
-    if (hidden) {
-      this.hiddenCharacterIds.add(characterId);
-    } else {
-      this.hiddenCharacterIds.delete(characterId);
-    }
-    this.syncHiddenCharacterIds();
-  }
-
-  isCharacterHidden(characterId: string): boolean {
-    return this.hiddenCharacterIds.has(characterId);
-  }
-
-  private syncHiddenCharacterIds(): void {
-    this.state.hiddenCharacterIds = Array.from(this.hiddenCharacterIds);
-  }
-
-  /**
-   * Set database instance for scene management
-   */
-  setDb(db: any): void {
-    this.db = db;
+  constructor(state?: DynamicGameState) {
+    this.state = state ?? initialDynamicGameState();
   }
 
   /**
@@ -223,42 +160,7 @@ export class DynamicGameStateManager {
     return this.state;
   }
 
-  // === NPC Injection Policy Helpers ===
-
-  /**
-   * Get the set of NPC IDs that should be actively simulated
-   * (daily_sim + investigator_sim tiers). If no policy, all NPCs are simulated.
-   */
-  getSimulatedNpcIds(): Set<string> {
-    const policy = this.state.npcInjectionPolicy;
-    if (!policy) {
-      return new Set(
-        this.state.npcCharacters
-          .map((n) => n.id)
-          .filter((id) => this.isNpcAlive(id))
-      );
-    }
-    const ids = new Set<string>();
-    for (const name of policy.tiers.daily_sim ?? []) {
-      if (this.isNpcAlive(name)) ids.add(name);
-    }
-    for (const name of policy.tiers.investigator_sim ?? []) {
-      if (this.isNpcAlive(name)) ids.add(name);
-    }
-    return ids;
-  }
-
-  /**
-   * Get NPC profiles that should be actively simulated.
-   */
-  getSimulatedNpcs(): DynamicNPCProfile[] {
-    const simIds = this.getSimulatedNpcIds();
-    return this.state.npcCharacters.filter((n) => simIds.has(n.id));
-  }
-
   isNpcAlive(npcId: string): boolean {
-    const stats = this.state.npcStats[npcId];
-    if (stats) return stats.hp > 0;
     const npc = this.state.npcCharacters.find((n) => n.id === npcId);
     return (npc?.status.hp ?? 0) > 0;
   }
@@ -281,7 +183,6 @@ export class DynamicGameStateManager {
    */
   updateScene(sceneId: string, scene: DynamicScene): void {
     this.state.scenes.set(sceneId, scene);
-    this.state.lastUpdated = new Date();
   }
 
   /**
@@ -294,8 +195,6 @@ export class DynamicGameStateManager {
     if (data.moduleSetup) {
       this.state.moduleSetup = data.moduleSetup;
     }
-
-    this.state.lastUpdated = new Date();
   }
 
   // === Serialization ===
@@ -327,15 +226,6 @@ export class DynamicGameStateManager {
       blockedConnections: blockedConnsObj,
       // Topology is fully derivable from scenes + roads; rebuilt on load.
       topology: null,
-      characterPositions: this.state.characterPositions,
-      characterSpots: this.state.characterSpots,
-      hiddenCharacterIds: Array.from(this.hiddenCharacterIds),
-      npcResidences: this.state.npcResidences,
-      vehicles: this.state.vehicles,
-      transportEdges: this.state.transportEdges,
-      environmentReadings: this.state.environmentReadings,
-      loadedAt: this.state.loadedAt.toISOString(),
-      lastUpdated: this.state.lastUpdated.toISOString(),
     };
   }
 
@@ -390,14 +280,31 @@ export class DynamicGameStateManager {
     }
 
     return {
-      sessionId: data.sessionId ?? "",
-      moduleName: data.moduleName ?? "",
       moduleSetup: data.moduleSetup ?? null,
       gameDateTime:
         typeof data.gameDateTime === "string"
           ? data.gameDateTime
           : makeDateTime(data.moduleSetup?.startDate ?? "1900-01-01", "08:00"),
-      npcCharacters: data.npcCharacters ?? [],
+      npcCharacters: (data.npcCharacters ?? []).map(
+        (npc: DynamicNPCProfile): DynamicNPCProfile => {
+          // One-way migration for persisted rows written while hp/san lived in
+          // the now-retired npcStats mirror. Runtime state keeps only status.
+          const legacyStats = data.npcStats?.[npc.id];
+          if (!legacyStats || typeof legacyStats !== "object") return npc;
+          return {
+            ...npc,
+            status: {
+              ...npc.status,
+              ...(Number.isFinite(legacyStats.hp)
+                ? { hp: legacyStats.hp }
+                : {}),
+              ...(Number.isFinite(legacyStats.san)
+                ? { san: legacyStats.san }
+                : {}),
+            },
+          };
+        }
+      ),
       scenes,
       roads,
       blockedConnections,
@@ -421,13 +328,10 @@ export class DynamicGameStateManager {
         data.environmentReadings && typeof data.environmentReadings === "object"
           ? (data.environmentReadings as Record<string, EnvironmentReading>)
           : {},
-      npcStats: data.npcStats ?? {},
       npcInventories: data.npcInventories ?? {},
       npcRelationshipGraph: data.npcRelationshipGraph ?? {},
-      npcResidences: data.npcResidences ?? {},
       vehicles: data.vehicles ?? [],
       transportEdges: data.transportEdges ?? [],
-      npcInjectionPolicy: data.npcInjectionPolicy ?? null,
       topology: topology!,
       characterPositions: (() => {
         if (
@@ -453,35 +357,6 @@ export class DynamicGameStateManager {
         data.characterSpots && typeof data.characterSpots === "object"
           ? (data.characterSpots as Record<string, string>)
           : {},
-      hiddenCharacterIds: Array.isArray(data.hiddenCharacterIds)
-        ? data.hiddenCharacterIds.filter(
-            (characterId: unknown): characterId is string =>
-              typeof characterId === "string"
-          )
-        : [],
-      loadedAt: data.loadedAt
-        ? typeof data.loadedAt === "string"
-          ? new Date(data.loadedAt)
-          : data.loadedAt
-        : new Date(),
-      lastUpdated: data.lastUpdated
-        ? typeof data.lastUpdated === "string"
-          ? new Date(data.lastUpdated)
-          : data.lastUpdated
-        : new Date(),
-    };
-  }
-
-  /**
-   * Create a copy of the state
-   */
-  clone(): DynamicGameState {
-    return {
-      ...this.state,
-      scenes: new Map(this.state.scenes),
-      roads: new Map(this.state.roads),
-      blockedConnections: new Map(this.state.blockedConnections),
-      hiddenCharacterIds: [...(this.state.hiddenCharacterIds ?? [])],
     };
   }
 
@@ -506,256 +381,6 @@ export class DynamicGameStateManager {
         this.state.npcCharacters.push(newNpc);
       }
     }
-    this.state.lastUpdated = new Date();
-  }
-
-  /**
-   * Apply state updates from action agent results
-   */
-  applyActionUpdate(stateUpdate: any): void {
-    if (!stateUpdate) return;
-
-    // Update NPC characters
-    if (stateUpdate.npcCharacters && Array.isArray(stateUpdate.npcCharacters)) {
-      for (const npcUpdate of stateUpdate.npcCharacters) {
-        const existingNpc = this.state.npcCharacters.find(
-          (npc) => npc.id === npcUpdate.id
-        );
-        if (existingNpc) {
-          this.updateCharacter(existingNpc, npcUpdate);
-        }
-      }
-    }
-    this.state.lastUpdated = new Date();
-  }
-
-  /**
-   * Update individual character data
-   */
-  private updateCharacter(character: any, updates: any): void {
-    // Update character name if provided
-    if (updates.name) {
-      character.name = updates.name;
-    }
-
-    // Update status values (hp, san, mp, etc.)
-    if (updates.status) {
-      for (const [key, value] of Object.entries(updates.status)) {
-        if (key === "conditions" && Array.isArray(value)) {
-          const seen = new Set<string>();
-          const normalizedConditions: import(
-            "../engine/core/types.js"
-          ).CharacterCondition[] = [];
-          for (const item of value) {
-            if (typeof item === "string") {
-              const trimmed = item.trim();
-              if (trimmed.length === 0 || seen.has(trimmed)) continue;
-              seen.add(trimmed);
-              normalizedConditions.push({
-                id: (globalThis.crypto?.randomUUID?.() ??
-                  `${Date.now()}-${Math.random()}`) as string,
-                description: trimmed,
-              });
-            } else if (
-              item &&
-              typeof item === "object" &&
-              typeof (item as { description?: unknown }).description ===
-                "string"
-            ) {
-              const cond = item as import(
-                "../engine/core/types.js"
-              ).CharacterCondition;
-              const desc = cond.description.trim();
-              if (desc.length === 0 || seen.has(desc)) continue;
-              seen.add(desc);
-              normalizedConditions.push({
-                ...cond,
-                id:
-                  cond.id ??
-                  ((globalThis.crypto?.randomUUID?.() ??
-                    `${Date.now()}-${Math.random()}`) as string),
-                description: desc,
-              });
-            }
-          }
-          character.status.conditions = normalizedConditions;
-          continue;
-        }
-
-        if (typeof value === "number" && key in character.status) {
-          // Apply differential update (e.g., hp: -2 means subtract 2)
-          character.status[key] += value;
-
-          // Ensure values don't go below 0
-          if (character.status[key] < 0) {
-            character.status[key] = 0;
-          }
-        }
-      }
-    }
-
-    // Update attributes if provided
-    if (updates.attributes) {
-      for (const [key, value] of Object.entries(updates.attributes)) {
-        if (typeof value === "number" && key in character.attributes) {
-          character.attributes[key] += value;
-        }
-      }
-    }
-
-    // Update skills if provided
-    if (updates.skills) {
-      for (const [skillName, value] of Object.entries(updates.skills)) {
-        if (typeof value === "number") {
-          if (skillName in character.skills) {
-            character.skills[skillName] += value;
-          } else {
-            character.skills[skillName] = value;
-          }
-        }
-      }
-    }
-
-    // Update inventory if provided
-    if (updates.inventory !== undefined) {
-      // Normalize existing inventory to InventoryItem[]
-      character.inventory = InventoryUtils.normalizeInventory(
-        character.inventory
-      );
-
-      if (Array.isArray(updates.inventory)) {
-        // Replace entire inventory with InventoryItem[]
-        character.inventory = InventoryUtils.normalizeInventory(
-          updates.inventory
-        );
-      } else if (
-        typeof updates.inventory === "object" &&
-        !Array.isArray(updates.inventory)
-      ) {
-        // Support operations like { add: [...], remove: [...] }
-        if (updates.inventory.add) {
-          const itemsToAdd = Array.isArray(updates.inventory.add)
-            ? updates.inventory.add
-            : [updates.inventory.add];
-          character.inventory = InventoryUtils.addItems(
-            character.inventory,
-            InventoryUtils.normalizeInventory(itemsToAdd)
-          );
-        }
-
-        if (updates.inventory.remove) {
-          const itemsToRemove = Array.isArray(updates.inventory.remove)
-            ? updates.inventory.remove
-            : [updates.inventory.remove];
-          character.inventory = InventoryUtils.removeItems(
-            character.inventory,
-            InventoryUtils.normalizeInventory(itemsToRemove)
-          );
-        }
-      }
-    }
-
-    // Update appearance if provided
-    if (typeof updates.appearance === "string") {
-      const nextAppearance = updates.appearance.trim();
-      if (nextAppearance.length > 0) {
-        character.appearance = nextAppearance;
-      }
-    }
-
-    // Update relationships for NPCs if provided
-    if (
-      Array.isArray(updates.relationships) &&
-      Array.isArray(character.relationships)
-    ) {
-      const sanitizedRelationships: NPCRelationship[] = [];
-      for (const rel of updates.relationships) {
-        if (!rel || typeof rel !== "object") continue;
-        const targetId = (rel as any).targetId;
-        const targetName = (rel as any).targetName;
-        const relationshipType = (rel as any).relationshipType;
-        const attitude = (rel as any).attitude;
-        if (
-          typeof targetId !== "string" ||
-          typeof targetName !== "string" ||
-          typeof relationshipType !== "string" ||
-          typeof attitude !== "number"
-        ) {
-          continue;
-        }
-        // A stance outside the authored set used to be cast straight through
-        // and only surfaced at the far end, as an untranslated i18n key sitting
-        // in a character's memory. Name it here, where it can still be traced
-        // to whoever sent it, and fall back rather than drop the relationship.
-        if (!RELATIONSHIP_TYPE_SET.has(relationshipType)) {
-          console.warn(
-            `[DynamicGameState] ${character?.id ?? "?"} → ${targetId}: unknown relationshipType "${relationshipType}" — recorded as "neutral" (valid: ${RELATIONSHIP_TYPES.join(", ")})`
-          );
-        }
-
-        const clampedAttitude = Math.max(
-          -100,
-          Math.min(100, Math.round(attitude))
-        );
-        sanitizedRelationships.push({
-          targetId,
-          targetName,
-          relationshipType: RELATIONSHIP_TYPE_SET.has(relationshipType)
-            ? (relationshipType as RelationshipType)
-            : "neutral",
-          attitude: clampedAttitude,
-          ...(typeof (rel as any).description === "string"
-            ? { description: (rel as any).description }
-            : {}),
-          ...(typeof (rel as any).history === "string"
-            ? { history: (rel as any).history }
-            : {}),
-        });
-      }
-
-      const merged = [...character.relationships];
-      for (const newRel of sanitizedRelationships) {
-        const existingIndex = merged.findIndex(
-          (existingRel) => existingRel.targetId === newRel.targetId
-        );
-        if (existingIndex >= 0) {
-          merged[existingIndex] = newRel;
-        } else {
-          merged.push(newRel);
-        }
-      }
-      character.relationships = merged;
-    }
-  }
-
-  // === Time Management ===
-
-  /**
-   * Update game time based on elapsed time in minutes
-   */
-  updateGameTime(elapsedMinutes: number): {
-    dayChanged: boolean;
-    previousDateTime: string;
-  } {
-    if (!elapsedMinutes || elapsedMinutes <= 0)
-      return {
-        dayChanged: false,
-        previousDateTime: this.state.gameDateTime,
-      };
-
-    const previousDateTime = this.state.gameDateTime;
-    this.state.gameDateTime = addMinutes(previousDateTime, elapsedMinutes);
-    if (!isSameDay(previousDateTime, this.state.gameDateTime)) {
-      console.log(
-        `A new day has dawned! It is now ${datePart(this.state.gameDateTime)}`
-      );
-    }
-    this.state.lastUpdated = new Date();
-
-    return {
-      dayChanged: !isSameDay(this.state.gameDateTime, previousDateTime),
-      previousDateTime,
-    };
   }
 
   /**
@@ -764,56 +389,10 @@ export class DynamicGameStateManager {
    */
   setGameClock(params: { gameDateTime: string }): void {
     this.state.gameDateTime = params.gameDateTime;
-    this.state.lastUpdated = new Date();
-  }
-
-  // === NPC Planning System Helpers ===
-
-  getNpcStats(npcId: string): { hp: number; san: number } | undefined {
-    return this.state.npcStats[npcId];
-  }
-
-  updateNpcHp(npcId: string, delta: number): void {
-    if (!this.state.npcStats[npcId]) return;
-    this.state.npcStats[npcId].hp = Math.max(
-      0,
-      this.state.npcStats[npcId].hp + delta
-    );
-    this.syncNpcStatusFromStats(npcId);
-    this.state.lastUpdated = new Date();
-  }
-
-  updateNpcSan(npcId: string, delta: number): void {
-    if (!this.state.npcStats[npcId]) return;
-    this.state.npcStats[npcId].san = Math.max(
-      0,
-      this.state.npcStats[npcId].san + delta
-    );
-    this.syncNpcStatusFromStats(npcId);
-    this.state.lastUpdated = new Date();
   }
 
   getNpcInventory(npcId: string): Item[] {
     return this.state.npcInventories[npcId] ?? [];
-  }
-
-  findNpcItem(npcId: string, itemId: string): Item | undefined {
-    return this.state.npcInventories[npcId]?.find((i) => i.id === itemId);
-  }
-
-  addItemToNpc(npcId: string, item: Item): void {
-    if (!this.state.npcInventories[npcId])
-      this.state.npcInventories[npcId] = [];
-    this.state.npcInventories[npcId].push(item);
-  }
-
-  removeItemFromNpc(npcId: string, itemId: string): Item | undefined {
-    if (!this.state.npcInventories[npcId]) return undefined;
-    const idx = this.state.npcInventories[npcId].findIndex(
-      (i) => i.id === itemId
-    );
-    if (idx === -1) return undefined;
-    return this.state.npcInventories[npcId].splice(idx, 1)[0];
   }
 
   /** Update an item's description in place. Searches all scenes then all NPC
@@ -855,7 +434,6 @@ export class DynamicGameStateManager {
       target.isLightSource = patch.isLightSource;
     }
     if (patch.lightLevel !== undefined) target.lightLevel = patch.lightLevel;
-    this.state.lastUpdated = new Date();
     return true;
   }
 
@@ -945,7 +523,6 @@ export class DynamicGameStateManager {
     const item: Item = { id: itemId, name };
     if (description?.trim()) item.description = description;
     container.push(item);
-    this.state.lastUpdated = new Date();
     return item;
   }
 
@@ -966,7 +543,6 @@ export class DynamicGameStateManager {
       return false;
     }
     destination.push(removed);
-    this.state.lastUpdated = new Date();
     return true;
   }
 
@@ -977,7 +553,6 @@ export class DynamicGameStateManager {
       const idx = items.findIndex((i) => i.id === itemId);
       if (idx !== -1) {
         items.splice(idx, 1);
-        this.state.lastUpdated = new Date();
         return true;
       }
     }
@@ -1128,7 +703,6 @@ export class DynamicGameStateManager {
       return;
     }
     place.conditions.push(toAppend);
-    this.state.lastUpdated = new Date();
   }
 
   /**
@@ -1140,7 +714,6 @@ export class DynamicGameStateManager {
     const idx = place.conditions.findIndex((c) => c.id === conditionId);
     if (idx === -1) return false;
     place.conditions.splice(idx, 1);
-    this.state.lastUpdated = new Date();
     return true;
   }
 
@@ -1158,7 +731,6 @@ export class DynamicGameStateManager {
     place.conditions = place.conditions.filter(
       (c) => c.featureId !== featureId
     );
-    this.state.lastUpdated = new Date();
   }
 
   /**
@@ -1175,7 +747,6 @@ export class DynamicGameStateManager {
       return false;
     }
     place.description = description;
-    this.state.lastUpdated = new Date();
     return true;
   }
 
@@ -1191,7 +762,6 @@ export class DynamicGameStateManager {
       return;
     }
     place.conditions = conditions;
-    this.state.lastUpdated = new Date();
   }
 
   // === Scoped Feature State ===
@@ -1206,7 +776,6 @@ export class DynamicGameStateManager {
     const bucket = this.state.scopedFeatureStates[scope];
     if (!bucket[featureId]) bucket[featureId] = {};
     bucket[featureId][key] = data;
-    this.state.lastUpdated = new Date();
   }
 
   /** Get feature state at a specific scope+key. */
@@ -1241,7 +810,6 @@ export class DynamicGameStateManager {
     const bucket = this.state.scopedFeatureStates[scope][featureId];
     if (!bucket) return;
     delete bucket[key];
-    this.state.lastUpdated = new Date();
   }
 
   // === Scripted Event State (Phase C) ===
@@ -1252,16 +820,6 @@ export class DynamicGameStateManager {
 
   setScriptedEventState(eventId: string, state: ScriptedEventState): void {
     this.state.scriptedEventStates[eventId] = state;
-    this.state.lastUpdated = new Date();
-  }
-
-  getAllScriptedEventStates(): Record<string, ScriptedEventState> {
-    return this.state.scriptedEventStates;
-  }
-
-  removeScriptedEventState(eventId: string): void {
-    delete this.state.scriptedEventStates[eventId];
-    this.state.lastUpdated = new Date();
   }
 
   // === Environment Readings (Phase D) ===
@@ -1274,7 +832,6 @@ export class DynamicGameStateManager {
 
   setEnvironmentReading(locationId: string, reading: EnvironmentReading): void {
     this.state.environmentReadings[locationId] = reading;
-    this.state.lastUpdated = new Date();
   }
 
   // === Narrow helpers ===
@@ -1293,7 +850,6 @@ export class DynamicGameStateManager {
 
   setGameDateTime(value: string): void {
     this.state.gameDateTime = value;
-    this.state.lastUpdated = new Date();
   }
 
   getNpcProfile(characterId: string): DynamicNPCProfile | undefined {
@@ -1312,7 +868,6 @@ export class DynamicGameStateManager {
     } else {
       this.state.npcCharacters.push(profile);
     }
-    this.state.lastUpdated = new Date();
   }
 
   /**
@@ -1327,15 +882,6 @@ export class DynamicGameStateManager {
     const profile = this.state.npcCharacters.find((n) => n.id === characterId);
     if (!profile) return;
     profile.status[field] = value;
-    // Keep legacy npcStats mirror in sync for hp/san so planning helpers
-    // that read `npcStats` continue to see fresh values.
-    if (field === "hp" || field === "san") {
-      const stats = this.state.npcStats[characterId];
-      if (stats) {
-        stats[field] = value;
-      }
-    }
-    this.state.lastUpdated = new Date();
   }
 
   /**
@@ -1354,7 +900,6 @@ export class DynamicGameStateManager {
         `${Date.now()}-${Math.random()}`) as string,
       description: "dead",
     });
-    this.state.lastUpdated = new Date();
   }
 
   /**
@@ -1367,7 +912,6 @@ export class DynamicGameStateManager {
     const profile = this.state.npcCharacters.find((n) => n.id === characterId);
     if (!profile) return;
     profile.status.conditions.push(condition);
-    this.state.lastUpdated = new Date();
   }
 
   /**
@@ -1379,26 +923,6 @@ export class DynamicGameStateManager {
     profile.status.conditions = profile.status.conditions.filter(
       (c) => c.id !== conditionId
     );
-    this.state.lastUpdated = new Date();
-  }
-
-  /**
-   * Ensure a scene exists in state.scenes. Creates a minimal DynamicScene
-   * with empty items/conditions/connections if not already present.
-   * Used by the Applier + tests to seed scene state.
-   */
-  ensureScene(sceneId: string): void {
-    if (this.state.scenes.has(sceneId)) return;
-    this.state.scenes.set(sceneId, {
-      id: sceneId,
-      name: sceneId,
-      description: "",
-      parentLocationId: "",
-      items: [],
-      conditions: [],
-      connections: [],
-    });
-    this.state.lastUpdated = new Date();
   }
 
   // === Connection Registry ===
@@ -1408,7 +932,7 @@ export class DynamicGameStateManager {
    * roads). Built once on first use — runtime never adds or removes
    * connections, it only flips flags on them.
    */
-  getConnectionRegistry(): ConnectionRegistry {
+  private getConnectionRegistry(): ConnectionRegistry {
     if (!this.connectionRegistry) {
       this.connectionRegistry = buildConnectionRegistry({
         scenes: this.state.scenes,
@@ -1449,7 +973,6 @@ export class DynamicGameStateManager {
     const found = connection.discoveredBy ?? [];
     if (!found.includes(characterId)) {
       connection.discoveredBy = [...found, characterId];
-      this.state.lastUpdated = new Date();
     }
     return true;
   }
@@ -1489,7 +1012,6 @@ export class DynamicGameStateManager {
       return false;
     }
     connection.hidden = hidden;
-    this.state.lastUpdated = new Date();
     return true;
   }
 
@@ -1530,7 +1052,6 @@ export class DynamicGameStateManager {
     } else {
       this.state.blockedConnections.delete(key);
     }
-    this.state.lastUpdated = new Date();
   }
 
   // === Topology ===
@@ -1564,12 +1085,10 @@ export class DynamicGameStateManager {
     const vehicle = this.getVehicle(vehicleId);
     if (!vehicle) return;
     vehicle.position = position;
-    this.state.lastUpdated = new Date();
   }
 
   setTopology(topology: TownTopology): void {
     this.state.topology = topology;
-    this.state.lastUpdated = new Date();
   }
 
   // === Character Position ===
@@ -1598,7 +1117,6 @@ export class DynamicGameStateManager {
       delete this.state.characterSpots[characterId];
     }
     this.state.characterPositions[characterId] = position;
-    this.state.lastUpdated = new Date();
   }
 
   // === Character Spot (where inside the location) ===
@@ -1623,7 +1141,6 @@ export class DynamicGameStateManager {
     } else {
       delete this.state.characterSpots[characterId];
     }
-    this.state.lastUpdated = new Date();
   }
 
   getCharactersOnRoad(
@@ -1655,15 +1172,5 @@ export class DynamicGameStateManager {
       case "scene":
         return position.sceneId;
     }
-  }
-
-  private syncNpcStatusFromStats(npcId: string): void {
-    const npc = this.state.npcCharacters.find(
-      (candidate) => candidate.id === npcId
-    );
-    const stats = this.state.npcStats[npcId];
-    if (!npc || !stats) return;
-    npc.status.hp = stats.hp;
-    npc.status.san = stats.san;
   }
 }

@@ -13,10 +13,7 @@ import type { DynamicScene } from "../types.js";
 // id-space of holders.
 
 function makeFixture() {
-  const state = initialDynamicGameState({
-    sessionId: "test-session",
-    moduleName: "test-module",
-  });
+  const state = initialDynamicGameState();
 
   const scene: DynamicScene = {
     id: "S_HOME",

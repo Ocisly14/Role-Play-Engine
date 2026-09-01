@@ -5,14 +5,12 @@
 
 import fs from "fs";
 import path from "path";
-import { NpcMemoryManager } from "../memory/index.js";
 import { ModelProviderName } from "../models/types.js";
 import { EmbeddingClient } from "../rag/embedding.js";
 import { resolveModuleIdByName } from "../shared/agents/memory/database/moduleScope.js";
 import { getPrismaClient } from "../shared/agents/memory/database/prismaClient.js";
 import { resolveEmailId } from "../shared/agents/memory/database/userContext.js";
 import type { DynamicGameState } from "./DynamicGameState.js";
-import { DynamicGameStateManager } from "./DynamicGameState.js";
 import { makeDateTime } from "./gameClock.js";
 import { importModule } from "./moduleImporter.js";
 import { createSession, initRuntime, loadModule } from "./moduleLoader.js";
@@ -21,16 +19,13 @@ import { createSession, initRuntime, loadModule } from "./moduleLoader.js";
  * Initialize complete DynamicGameState with runtime data.
  * Wraps the three-step moduleLoader API for backward compatibility.
  */
-export async function initializeCompleteDynamicGameState(
-  _db: unknown,
-  params: {
-    sessionId: string;
-    moduleName: string;
-    emailId?: string;
-    /** Module language ("en" | "zh") — drives bootstrap memory wording. */
-    language?: string;
-  }
-): Promise<DynamicGameState | null> {
+export async function initializeCompleteDynamicGameState(params: {
+  sessionId: string;
+  moduleName: string;
+  emailId?: string;
+  /** Module language ("en" | "zh") — drives bootstrap memory wording. */
+  language?: string;
+}): Promise<DynamicGameState | null> {
   const prisma = getPrismaClient();
   const resolvedEmailId = params.emailId
     ? resolveEmailId(params.emailId)
@@ -99,17 +94,10 @@ export async function initializeCompleteDynamicGameState(
 
   // Step 3: Build runtime state
   const state = initRuntime({
-    sessionId: params.sessionId,
     moduleData,
     gameDateTime,
   });
 
-  const dgsm = new DynamicGameStateManager(state);
-  const memoryManager = new NpcMemoryManager(
-    prisma,
-    embedClient,
-    params.language
-  );
   console.log(
     `[DynamicGameState] Initialized module "${params.moduleName}" — ${state.npcCharacters.length}/${moduleData.npcs.length} NPCs (policy filtered), ${moduleData.scenes.size} scenes`
   );

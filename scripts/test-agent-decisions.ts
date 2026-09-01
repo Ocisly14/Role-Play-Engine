@@ -264,7 +264,6 @@ async function buildBaseWorld(): Promise<BaseWorld> {
     throw new Error(`Module ${MODULE_NAME} not loadable or missing startDate`);
   }
   const state = initRuntime({
-    sessionId: SESSION_ID,
     moduleData,
     gameDateTime: makeDateTime(moduleData.setup.startDate, "19:00"),
   });
@@ -273,7 +272,9 @@ async function buildBaseWorld(): Promise<BaseWorld> {
   const homeScene = new Map<string, string>();
   const presentNpcs = new Set<string>();
   const firstScene = [...state.scenes.keys()][0];
-  for (const npc of dgsm.getSimulatedNpcs()) {
+  for (const npc of state.npcCharacters.filter((npc) =>
+    dgsm.isNpcAlive(npc.id)
+  )) {
     presentNpcs.add(npc.id);
     const pos = dgsm.getCharacterPosition(npc.id);
     homeScene.set(

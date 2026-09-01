@@ -88,7 +88,6 @@ async function main(): Promise<void> {
 
   // ---- initRuntime -----------------------------------------------------
   const state = initRuntime({
-    sessionId: "smoke_module_load",
     moduleData,
     gameDateTime: makeDateTime(startDate, TIME),
   });
@@ -106,11 +105,10 @@ async function main(): Promise<void> {
     `  场景       ${state.scenes.size}（顶层节点 ${nodeScenes.length} · 内部 ${interiorScenes.length}）`
   );
   console.log(`  道路       ${state.roads.size}`);
-  console.log(`  大场景纲要 ${moduleData.scenarioOutlines.length}`);
   console.log(`  transport_edges ${moduleData.transportEdges.length}`);
   console.log(`  脚本事件   ${moduleData.scriptedEvents.length}`);
   console.log(
-    `  NPC        模组 ${moduleData.npcs.length} → 参与模拟 ${dgsm.getSimulatedNpcs().length}`
+    `  NPC        模组 ${moduleData.npcs.length} → 参与模拟 ${state.npcCharacters.length}`
   );
 
   // ---- referential integrity ------------------------------------------
@@ -121,18 +119,6 @@ async function main(): Promise<void> {
       if (!known(c.targetId))
         problem(`场景 ${sceneId} 的出口 ${c.id} 指向不存在的 ${c.targetId}`);
     }
-    // parentLocationId points at a macro outline id or a node scene; a name
-    // that is neither leaves the scene dangling off the topology.
-    const parent = scene.parentLocationId;
-    if (
-      parent &&
-      parent !== "OUTDOOR" &&
-      !state.scenes.has(parent) &&
-      !moduleData.scenarioOutlines.some((o) => o.id === parent)
-    )
-      problem(
-        `场景 ${sceneId} 的 parentLocationId ${parent} 既不是大场景也不是场景`
-      );
     if (
       !topology.nodeSceneIds.has(sceneId) &&
       !topology.sceneToParent.has(sceneId)
@@ -158,16 +144,6 @@ async function main(): Promise<void> {
       );
   }
 
-  const npcIds = new Set(moduleData.npcs.map((n) => n.id));
-  for (const o of moduleData.scenarioOutlines) {
-    if (!o.entrySceneId) hint(`大场景 ${o.id} 没有 entrySceneId`);
-    else if (!state.scenes.has(o.entrySceneId))
-      problem(`大场景 ${o.id} 的 entrySceneId ${o.entrySceneId} 不存在`);
-    for (const r of (o.residents ?? []) as string[])
-      if (!npcIds.has(r))
-        problem(`大场景 ${o.id} 的 resident ${r} 不是模组里的 NPC`);
-  }
-
   // Duplicate item ids resolve to the wrong copy on every id-keyed path.
   const itemHome = new Map<string, string>();
   const noteItem = (id: string, where: string) => {
@@ -184,10 +160,7 @@ async function main(): Promise<void> {
 
   // ---- NPC placement ---------------------------------------------------
   head("NPC 落位");
-  const simulated = dgsm.getSimulatedNpcs();
-  const residentOf = new Map<string, string>();
-  for (const o of moduleData.scenarioOutlines)
-    for (const r of (o.residents ?? []) as string[]) residentOf.set(r, o.id);
+  const simulated = state.npcCharacters;
 
   const perScene = new Map<string, string[]>();
   for (const npc of simulated) {
@@ -208,12 +181,12 @@ async function main(): Promise<void> {
     const via =
       npc.currentLocation && known(npc.currentLocation)
         ? "currentLocation"
-        : residentOf.has(npc.id)
-          ? `residents/${residentOf.get(npc.id)}`
+        : npc.residence && known(npc.residence)
+          ? "residence"
           : "默认回退";
     if (via === "默认回退")
       problem(
-        `NPC ${npc.id} 既无 currentLocation 也不在任何 residents 里，落到了默认场景 ${at}`
+        `NPC ${npc.id} 既无有效 currentLocation 也无有效 residence，落到了默认场景 ${at}`
       );
     perScene.set(at, [...(perScene.get(at) ?? []), npc.id]);
     console.log(

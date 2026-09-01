@@ -1,4 +1,9 @@
-import type { DynamicGameState } from "../../../src/state/index.js";
+interface ServerGameState {
+  sessionId?: string;
+  playerCharacter?: {
+    skills?: Record<string, unknown>;
+  };
+}
 
 /**
  * Singleton class to manage global server state
@@ -6,10 +11,10 @@ import type { DynamicGameState } from "../../../src/state/index.js";
  */
 export class ServerState {
   private static instance: ServerState | null = null;
-  private dynamicGameStatesByUser = new Map<string, DynamicGameState | null>();
+  private dynamicGameStatesByUser = new Map<string, ServerGameState | null>();
   private dynamicGameStatesBySession = new Map<
     string,
-    DynamicGameState | null
+    ServerGameState | null
   >();
 
   private constructor() {}
@@ -29,7 +34,7 @@ export class ServerState {
    */
   public setGameState(
     userId: string,
-    dynamicGameState: DynamicGameState | null
+    dynamicGameState: ServerGameState | null
   ): void {
     this.dynamicGameStatesByUser.set(userId, dynamicGameState);
     if (dynamicGameState?.sessionId) {
@@ -45,7 +50,7 @@ export class ServerState {
    */
   public setGameStateBySession(
     sessionId: string,
-    dynamicGameState: DynamicGameState | null
+    dynamicGameState: ServerGameState | null
   ): void {
     this.dynamicGameStatesBySession.set(sessionId, dynamicGameState);
     const userId = this.findUserIdBySession(sessionId);
@@ -57,7 +62,7 @@ export class ServerState {
   /**
    * Get DynamicGameState for a user
    */
-  public getDynamicGameState(userId: string): DynamicGameState | null {
+  public getDynamicGameState(userId: string): ServerGameState | null {
     return this.dynamicGameStatesByUser.get(userId) ?? null;
   }
 
@@ -66,7 +71,7 @@ export class ServerState {
    */
   public getDynamicGameStateBySession(
     sessionId: string
-  ): DynamicGameState | null {
+  ): ServerGameState | null {
     return this.dynamicGameStatesBySession.get(sessionId) ?? null;
   }
 

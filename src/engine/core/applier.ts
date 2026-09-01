@@ -85,7 +85,7 @@ export class Applier {
    * `scene.removeCondition` on every tick "in case a stale [Lighting]
    * condition lingers" without checking whether one does, and stamina
    * re-writes an unchanged feature state every tick. Those land in the tick
-   * record and in `lastUpdated` churn while meaning nothing.
+   * record while meaning nothing.
    *
    * Only kinds whose no-op condition is unambiguous are covered. Records that
    * downstream consumers read (memory.*) and additive

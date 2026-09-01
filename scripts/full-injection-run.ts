@@ -268,7 +268,6 @@ async function prepare(): Promise<Prepared> {
     throw new Error(`Module ${MODULE_NAME} not loadable or missing startDate`);
   }
   const state = initRuntime({
-    sessionId: SESSION_ID,
     moduleData,
     gameDateTime: makeDateTime(moduleData.setup.startDate, START_TIME),
   });

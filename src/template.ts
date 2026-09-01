@@ -113,8 +113,9 @@ const isDynamicGameState = (state: unknown): state is DynamicGameState => {
   return Boolean(
     state &&
       typeof state === "object" &&
-      "moduleName" in state &&
-      "scenes" in state
+      "scenes" in state &&
+      "roads" in state &&
+      "gameDateTime" in state
   );
 };
 
