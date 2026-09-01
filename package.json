@@ -28,6 +28,7 @@
     "smoke:module": "tsx scripts/smoke-module-load.ts",
     "lint:agent-cases": "tsx scripts/lint-agent-decision-cases.ts",
     "prompt:budget": "tsx scripts/analyze-prompt-budget.ts",
+    "sim:full": "tsx scripts/full-injection-run.ts",
     "verify:module-migration": "node --import tsx scripts/verify-module-migration.ts"
   },
   "keywords": [
