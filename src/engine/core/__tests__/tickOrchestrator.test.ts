@@ -415,3 +415,108 @@ describe("persistence", () => {
     expect(engine.getActorActions("npc_1")).toHaveLength(1);
   });
 });
+
+describe("a route that does not join up", () => {
+  // Observed live: Tommy's remembered way merged two real lanes into one
+  // ("north gate, then Holt Lane, then ten minutes to the trailhead" — Holt
+  // Lane goes to the Holt gate). The Engine refused to invent the missing
+  // stretch, which is correct; but all the actor was told is that his action
+  // "did not go on", so he read it as a dizzy spell and re-stated the SAME
+  // wrong route twice more. Three ticks on a mistake one sentence could fix.
+  function makeMapDgsm() {
+    const base = makeDgsm();
+    const named = new Map([
+      ["SCN_1", { id: "SCN_1", name: "家门口", connections: [] }],
+      [
+        "SCN_TRAILHEAD",
+        { id: "SCN_TRAILHEAD", name: "林道口", connections: [] },
+      ],
+    ]);
+    return {
+      ...base,
+      getScene: (id: string) => named.get(id) ?? null,
+      getTopology: () => ({
+        roads: new Map(),
+        nodeSceneIds: new Set(["SCN_1", "SCN_TRAILHEAD"]),
+        sceneToParent: new Map(),
+        sceneToRoads: new Map(),
+      }),
+    } as unknown as DynamicGameStateManager;
+  }
+
+  /** Starts the action with a movement leg whose single hop is not a stretch. */
+  function stubResolveWithBadRoute() {
+    const fn = vi.fn(async (context: EngineResolutionContext) => {
+      const raw: RawTickResolution = { starting: [], ending: [] };
+      for (const t of context.trigger.triggers) {
+        for (const actionId of t.actionIds) {
+          if (t.reason === "new_action") {
+            raw.starting?.push({
+              actionId,
+              resolvedDurationTicks: 10,
+              timingReason: "stub: a ride across town",
+              movement: { route: ["SCN_TRAILHEAD"] },
+            });
+          }
+        }
+      }
+      const finalized = finalizeResolution(raw, context);
+      return {
+        ok: true as const,
+        resolution: finalized.resolution,
+        movementInits: finalized.movementInits,
+        checkInits: finalized.checkInits,
+        codeToolInvocations: [],
+      };
+    });
+    return { fn, calls: [] as EngineResolutionContext[] };
+  }
+
+  it("tells the actor which two places their way ran between, in words about the world", async () => {
+    const { engine } = makeEngine(makeMapDgsm(), stubResolveWithBadRoute());
+    await engine.submitCommand(
+      command({ description: "我骑车往北去林道口找他们。" })
+    );
+
+    const reports: import("../types.js").TickReport[] = [];
+    engine.on("tickCompleted", (r) => {
+      reports.push(r);
+    });
+    await engine.tick();
+
+    const transition = reports[0].transitions[0];
+    expect(transition.to).toBe("failed");
+    expect(transition.unstatedHop).toEqual({
+      fromId: "SCN_1",
+      toId: "SCN_TRAILHEAD",
+    });
+
+    const fact = reports[0].occurrences[0].facts[0].content;
+    // Both places by name — this is the whole point: he can correct the route.
+    expect(fact).toContain("家门口");
+    expect(fact).toContain("林道口");
+    expect(fact).toContain("没有出发");
+    // And NOT the engine's own diagnostic, which has no experience in it and
+    // got rendered as a dizzy spell.
+    expect(fact).not.toContain("not a single stretch");
+    expect(fact).not.toContain("movement init failed");
+  });
+
+  it("carries the reason into the persisted outcome instead of an empty string", async () => {
+    const { engine } = makeEngine(makeMapDgsm(), stubResolveWithBadRoute());
+    await engine.submitCommand(command());
+
+    const reports: import("../types.js").TickReport[] = [];
+    engine.on("tickCompleted", (r) => {
+      reports.push(r);
+    });
+    await engine.tick();
+
+    // SimulationEventEmitter reads `outcome.narrative` into the event row.
+    // Nothing wrote it before, so every failed row in the log said only that
+    // something had ended.
+    const narrative = reports[0].cancellations[0].outcome?.narrative;
+    expect(narrative).toContain("not a single stretch");
+    expect(narrative).toContain("林道口 (SCN_TRAILHEAD)");
+  });
+});

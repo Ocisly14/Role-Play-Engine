@@ -15,11 +15,15 @@ const scenes = new Map<string, DynamicScene>([
     "J_A",
     {
       id: "J_A",
+      name: "北口",
       connections: [{ id: "exit.ja.home", targetId: "S_HOME" }],
     } as unknown as DynamicScene,
   ],
   ["J_B", { id: "J_B", connections: [] } as unknown as DynamicScene],
-  ["J_C", { id: "J_C", connections: [] } as unknown as DynamicScene],
+  [
+    "J_C",
+    { id: "J_C", name: "林道口", connections: [] } as unknown as DynamicScene,
+  ],
   [
     "S_HOME",
     {
@@ -106,6 +110,12 @@ describe("route-of-waypoints movement", () => {
     expect(result.ok).toBe(false);
     if (result.ok) return;
     expect(result.reason).toContain("not a single stretch");
+    // Names, not bare ids: this string is read by a person in the log, and the
+    // pair rides along so the actor can be told which two places their
+    // remembered way ran between.
+    expect(result.reason).toContain("北口 (J_A)");
+    expect(result.reason).toContain("林道口 (J_C)");
+    expect(result.unstatedHop).toEqual({ fromId: "J_A", toId: "J_C" });
   });
 
   it("driving moves the vehicle at road drive speed and leaves the driver put", () => {

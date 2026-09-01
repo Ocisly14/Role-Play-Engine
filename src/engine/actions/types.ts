@@ -241,6 +241,11 @@ export interface ActionTransition {
   timingReason?: string;
   nextWakeAt?: GameTime;
   reason?: string;
+  /** Set when this transition is a movement that never started because the
+   *  stated route did not join up. `reason` says it in the engine's words for
+   *  the log; these two ids let the actor be told which pair of places their
+   *  remembered way ran between, in theirs. */
+  unstatedHop?: { fromId: string; toId: string };
 }
 
 // ==================== World deltas ====================

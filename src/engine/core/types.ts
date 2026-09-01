@@ -122,6 +122,11 @@ export const DEFAULT_ENVIRONMENT_READING: EnvironmentReading = Object.freeze({
 export interface PlannedOutcome {
   stateChanges: StateChange[];
   elapsedMinutes: number;
+  /** Why the action ended the way it did, in the engine's words. Read by
+   *  SimulationEventEmitter into the persisted event's `outcome` field, which
+   *  was `""` on every row until this was carried: a run could be replayed
+   *  from the log and still not say why anything failed. */
+  narrative?: string;
 }
 
 export type StateChange =

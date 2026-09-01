@@ -304,6 +304,9 @@ export class TickOrchestrator {
         if (!planned.ok && transition.to === "active") {
           transition.to = "failed";
           transition.reason = planned.reason;
+          if (planned.unstatedHop) {
+            transition.unstatedHop = planned.unstatedHop;
+          }
           transition.nextWakeAt = undefined;
           continue;
         }
@@ -356,9 +359,7 @@ export class TickOrchestrator {
           {
             id: `${occurrenceId}#f0`,
             type: "action_result",
-            content: `${t.actorId} 的行动「${action.command.description}」${
-              t.to === "completed" ? "结束了" : `没有进行下去（${t.to}）`
-            }${t.reason ? `：${t.reason}` : "，没有留下可见的变化"}`,
+            content: this.fallbackFact(t, action),
             entityRefs: [{ kind: "character", id: t.actorId }],
           },
         ],
@@ -506,6 +507,45 @@ export class TickOrchestrator {
     }
   }
 
+  /** A place as the person standing in it would name it. */
+  private placeName(id: string): string {
+    const { dgsm } = this.deps;
+    return (
+      dgsm.getScene(id)?.name ?? dgsm.getTopology?.()?.roads.get(id)?.name ?? id
+    );
+  }
+
+  /**
+   * What the actor is told when an action ended without the Engine narrating
+   * it. This is the only account they will get, so it has to be an account —
+   * something that happened to them, in words about the world.
+   *
+   * The route case earns its own sentence. Handed the engine's own diagnostic
+   * ("route hop … is not a single stretch"), the renderer had nothing
+   * experiential to work with and rendered a dizzy spell; the character read
+   * that as his own confusion and re-stated the SAME wrong route twice more.
+   * The truth is narrower and far more useful to him: the way he had in mind
+   * runs between two places that are not joined, and he never set off.
+   */
+  private fallbackFact(t: ActionTransition, action: EngineAction): string {
+    const what = `「${action.command.description}」`;
+    if (t.unstatedHop) {
+      const from = this.placeName(t.unstatedHop.fromId);
+      const to = this.placeName(t.unstatedHop.toId);
+      // Not "you misremembered": in both observed cases every memory the
+      // actor held was correct and they had joined two of them. Saying the
+      // memory was wrong sends them to doubt their own head — which is
+      // exactly what both of them then did.
+      return `${t.actorId} 没有出发。他心里那条路要从「${from}」接到「${to}」，可这两处之间并没有一条路——不是他记错了什么，是这两段本来就接不上。他还在原地，${what} 一步也没有开始，时间也没有花掉；要去别处，得走一条他确实知道通向那里的路。`;
+    }
+    if (t.to === "completed") {
+      return `${t.actorId} 的行动${what}结束了${t.reason ? `：${t.reason}` : "，没有留下可见的变化"}`;
+    }
+    return `${t.actorId} 的行动${what}没有进行下去（${t.to}）${
+      t.reason ? `：${t.reason}` : "，没有留下可见的变化"
+    }`;
+  }
+
   private toCharacterAction(
     action: EngineAction,
     t: ActionTransition,
@@ -530,6 +570,11 @@ export class TickOrchestrator {
       outcome: {
         stateChanges: [],
         elapsedMinutes: action.progressMinutes,
+        // The emitter has always read `narrative` into the persisted event's
+        // `outcome`; nothing ever wrote it, so every failed row in the log
+        // said only that something ended. The reason is the whole value of
+        // the row.
+        ...(t.reason ? { narrative: t.reason } : {}),
       },
     };
   }
