@@ -85,7 +85,11 @@ function harness(opts: { liveActions?: EngineAction[] } = {}) {
       npcCharacters: npcs.map((id) => ({ id, name: id })),
     }),
     isNpcAlive: () => true,
-    getNpcProfile: (id: string) => ({ id, name: id, status: { conditions: [] } }),
+    getNpcProfile: (id: string) => ({
+      id,
+      name: id,
+      status: { conditions: [] },
+    }),
     getGameDateTime: () => "1923-04-02T09:05:00",
     getCharacterPosition: () => ({ type: "scene", sceneId: "SCN_1" }),
     resolveLocationId: () => "SCN_1",

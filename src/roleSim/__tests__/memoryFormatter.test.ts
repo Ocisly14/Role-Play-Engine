@@ -80,5 +80,4 @@ describe("handles", () => {
     const alone = formatMemories([rows[3]]);
     expect(alone.startsWith("- #M44444444")).toBe(true);
   });
-
 });

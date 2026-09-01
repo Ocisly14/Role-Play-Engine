@@ -51,7 +51,9 @@ void _covers;
 
 describe("the act tool schema and RoleSimDecision describe the same thing", () => {
   it("every schema property has a slot in the decision — nothing to drop", () => {
-    const schema = actTool.inputSchema as { properties: Record<string, unknown> };
+    const schema = actTool.inputSchema as {
+      properties: Record<string, unknown>;
+    };
     const wireFields = ACT.filter((k) => k !== "tool").sort();
     expect(Object.keys(schema.properties).sort()).toEqual(wireFields);
   });

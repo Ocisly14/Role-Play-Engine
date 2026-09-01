@@ -1,8 +1,5 @@
 import { describe, expect, it } from "vitest";
-import {
-  groupByLocation,
-  runWithConcurrency,
-} from "../npcActionController.js";
+import { groupByLocation, runWithConcurrency } from "../npcActionController.js";
 
 describe("groupByLocation", () => {
   it("groups ids sharing a location, preserving order", () => {
@@ -12,12 +9,12 @@ describe("groupByLocation", () => {
       c: "SCN_1",
       d: "SCN_2",
     };
-    expect(groupByLocation(["a", "b", "c", "d"], (id) => locations[id])).toEqual(
-      [
-        ["a", "c"],
-        ["b", "d"],
-      ]
-    );
+    expect(
+      groupByLocation(["a", "b", "c", "d"], (id) => locations[id])
+    ).toEqual([
+      ["a", "c"],
+      ["b", "d"],
+    ]);
   });
 
   it("gives unresolvable (empty) locations solo groups and drops null ids", () => {
