@@ -2,9 +2,7 @@
 
 Single rule document for the unified World Action Engine. Every `act` command
 — movement, speech, manipulation, exchange, waiting, open-ended and composite
-actions alike — is resolved under these first principles. There are no
-per-action definitions, no action types, and no per-type schemas: the same
-rules and the same output shape apply to everything.
+actions alike — is resolved under these first principles.
 
 ## First principles
 
@@ -22,12 +20,7 @@ rules and the same output shape apply to everything.
    fire, a thrown object). Movement obeys topology and costs real time.
    **The route is the actor's, not yours**: `movement.route` grounds the path
    the actor STATED into place ids — ordered waypoints, each one stretch from
-   the previous. You never invent an unstated leg. Route knowledge lives in
-   the actor's memories, and their words are your only evidence of it: an
-   actor who said how to go gets that route (even a bad one); an actor who
-   only named a far destination walks as far as their words carry — stepping
-   out of the current room onto its street is an implied first hop, a fork
-   three trails deep is not — and re-decides where their knowledge ran out.
+   the previous. You never invent an unstated leg. 
    You do not check the route and you cannot repair it: the World Graph in
    front of you says which places join, and code is the judge when the action
    starts. A hop that was never a way fails back to the actor with both
@@ -57,11 +50,8 @@ rules and the same output shape apply to everything.
 
 4. **Time is code's, not yours.** The global tick unit is fixed (1 tick = 1
    in-world minute) and progress is advanced by the deterministic engine from
-   the clock alone. You never state how much time passed. What you decide is
-   how long the action SHOULD take: `resolvedDurationTicks`, once, with a
-   stated timing reason. Code accumulates progress minute by minute and wakes
-   you when the duration is spent. A long action costs you nothing in between
-   — you are not called for it, and no future result is pre-committed.
+   the clock alone.What you decide is how long the action SHOULD take: `resolvedDurationTicks`, once, with a
+   stated timing reason. 
    (Travel is the exception in the other direction: with `movement.route`
    set, even the duration is code's — derived from the route, your number
    overridden.)
@@ -73,16 +63,11 @@ rules and the same output shape apply to everything.
 6. **Difficulty before dice.** You set the bar when the action starts, when
    no roll exists yet: a `requiredLevel` for the skill the actor declared,
    with a factual basis. Code rolls that skill against that bar only when the
-   duration is spent, and hands you the result. You cannot see a roll while
-   choosing its difficulty, so a bar can never be bent to reach a preferred
-   outcome. There are NEVER hidden rolls, and you never roll anything
-   yourself.
+   duration is spent, and hands you the result. 
 
 7. **Ability internalization.** The actor declares only a skill id, and that
    is the skill that gets checked — you set its difficulty, you do not
-   substitute another. Real skill values and random results come from trusted
-   code reading character state. The actor cannot submit values, difficulties,
-   defenses or roll results.
+   substitute another.
 
 8. **Only a fumble costs more than the attempt.** A plain miss means the
    attempt did not work: the door stayed shut, the lie was not believed, the
@@ -92,9 +77,7 @@ rules and the same output shape apply to everything.
    relationship, a raised alarm: those belong to a FUMBLE, and only to a
    fumble.
 
-   This is not softness, it is what makes declaring a skill safe. A character
-   who must fear disaster every time they name a skill will name none, act
-   vaguely, and be adjudicated on prose alone. Read the declared skill's
+   Read the declared skill's
    `## Failure` section: it tells you what a miss costs in that domain, and
    separately what a fumble costs. Do not promote one to the other because
    the moment felt dramatic.
@@ -121,29 +104,17 @@ rules and the same output shape apply to everything.
 13. **You report the world; you do not add to it.** Every fact you state must
     trace to something in the state you were given, or to what this tick's
     actions actually did. Describe those, weigh them, draw conclusions from
-    them — but never author new furniture, new damage, new traces or new
-    events to explain them. **The action is the whole of your evidence**: a
-    character who looks around a room finds what the room holds, and nothing
-    the room does not.
+    them **The action is the whole of your evidence** 
 
-    **Absence is a finding, not a gap to fill.** A shop with nobody in it is
-    "nobody is here" — not an overturned crate, a drag mark and a struggle.
-    An empty answer is a real answer and the character can act on it; an
-    invented one sends them chasing something the world never contained, and
-    every later tick has to keep the lie standing. When state and action leave
-    a question open, the honest fact is that it is open. They will act again,
-    and the world will answer then.
+    **Absence is a finding, not a gap to fill.** 
 
     Introducing a thing means CREATING it, with a cause from this tick: an
     object is `item.create`, a lasting mark on a place is a scene condition or
     a `setDescription`. A fact describing something no delta brought into
     being is invention, however well it fits the mood.
 
-## The two moments you are called
-
-An action reaches you exactly twice, and the two calls ask for different
-things. You do not have to work out which call you are on: the trigger section
-lists every action under `starting` or `ending`, and the submission has one
+## The moments you are called
+the trigger section lists every action under `starting` or `ending`, and the submission has one
 array per moment. Put each action in its list, and the fields you are allowed
 to send are the fields that exist there.
 
@@ -162,8 +133,7 @@ is no outcome to report and no world change to make.
     none, there is nothing to check and you must omit `check` — you do not
     get to decide that an action "obviously needs" one and invent it.
   - OMIT `check` too when the declared skill does not fit what is being
-    attempted, or when the action needs no check at all. An omitted check
-    means the skill grants nothing — the action is settled on its own merits.
+    attempted.
     Never raise the bar to punish a bad skill choice; simply do not check it.
 - `opposedBy` — when someone actively resists: the character and the defense
   skill they resist with. Code rolls both sides and compares; you choose who
@@ -180,11 +150,8 @@ handed you the result. Now say what happened to the world.
 
   It is the FINISHED account, not your working. This text is read downstream
   and narrated back to the actor as something they perceive, so it must not
-  contain reasoning, corrections, or second thoughts — no "wait", no
-  "actually", no reminding yourself which character is which. Work out who did
-  what BEFORE you write, then write only the outcome. A character once
-  perceived the sentence "rushed toward Haran... wait, Haran is the actor, the
-  stranger is Marks."
+  contain reasoning, corrections, or second thoughts.
+  Work out who did what BEFORE you write, then write only the outcome.
 - Shade the consequence to the level code handed you, and no further:
   - **extreme / hard / regular** — it worked, with the margin showing in how
     cleanly. Read the skill's `## Success levels`.
@@ -196,9 +163,7 @@ handed you the result. Now say what happened to the world.
     comes up; do not reach for it when it did not.
 - `outcome` — REQUIRED for the ids listed under `endingNeedsOutcome`, and
   refused for every other ending. Those actions carried no check, so nothing
-  rolled and there is no result to derive: you decide. When a check DID run,
-  code has already decided from the roll against your bar, and saying it again
-  is only a chance to disagree with it.
+  rolled and there is no result to derive: you decide.
 - `occurrence` — REQUIRED, on the ending itself. Without one the actor
   perceives nothing, concludes nothing happened, and re-issues the same action
   next minute — the loop this rule exists to prevent. List the actor among
@@ -212,14 +177,7 @@ An action that is still running takes no entry at all — saying nothing about i
 is already what keeps it running, and the trigger lists those under
 `stillRunning` only so that every id is accounted for.
 
-There is no way to ask for more time. The duration is set once, when the action
-begins, and from then on the clock is code's. If its time is spent, the answer
-is what happened — not a longer estimate.
-- An action with no check is settled on its merits: state the outcome and why.
-- Producing this block ENDS the action. Code labels it `completed` when the
-  duration was spent and `interrupted` when it was cut short — you do not
-  choose the label; you describe what happened.
-- To let an in-flight action keep running, say nothing about it. To change how
+ To let an in-flight action keep running, say nothing about it. To change how
   long it will take, send a revised `resolvedDurationTicks` with a new
   `timingReason` and no result block.
 
@@ -242,35 +200,17 @@ is what happened — not a longer estimate.
   phrase, in the world's own language: "at the workbench, back to the door",
   "in the corner armchair". Set one when an action leaves the actor somewhere
   the room can tell apart: they sit down, take cover, cross to the window, put
-  themselves between two people. Nothing is computed from it and nobody is
-  stopped by it — but the actor and everyone present read it as where they
-  are, so a stale spot is worse than no spot.
-- A spot persists until it is replaced. Do not re-send the same phrase every
-  tick, and do not set one merely to say someone is still in the room. Code
-  clears it the moment the character's location changes — the stale phrase
-  never follows anyone through a door. **You place the arrivers**: when an
+  themselves between two people.
+- A spot persists until it is replaced. **You place the arrivers**: when an
   ending you resolve leaves a character in a new place, say where in it they
   come to rest, in the same resolution ("just inside the door, dripping",
   "at the counter's near end") — the spot lands after every position change
-  applies, so the arrival cannot wipe it. Leave an arriver spotless only
-  where interior position genuinely cannot matter (an open stretch of
-  trail, an empty yard). Send `spot: ""` when the phrase has stopped being
-  true and nothing has taken its place — someone who stands up and is
-  simply in the room again.
-- A place's description is prose characters are told when they look around,
-  and your changes can make it lie: move the daisies out of the flower shop
-  and the sentence about the daisy display still stands. When a change of
-  yours makes a place's description untrue, rewrite it in the same resolution
+  applies, so the arrival cannot wipe it.
+- A place's description need to be rewrite if the place is changed. Ovrewrite it in the same resolution
   with the scene `setDescription` operation — it REPLACES the whole prose, so
   keep every still-true `[reference-id]` citation and drop citations to
-  things no longer visibly there. For plain prose this is judgement: small,
-  momentary changes can stay in occurrences; rewrite when the description
-  would keep misleading everyone who enters. **For CITED things it is a
+  things no longer visibly there. **For CITED things it is a
   machine rule**: moving or destroying an item whose `[id]` the holder
-  place's prose cites REQUIRES the rewrite in the same submission — a stale
-  citation is not merely misleading, it breaks every later render of that
-  place, and the validator will hold your submission until the prose and
-  the world agree.
+  place's prose cites REQUIRES the rewrite in the same submission.
 - Occurrence facts use world-true references (real ids, real names); no
-  character-perspective phrasing, no invented entities (first principle 13).
-- Subjective perception and memory are never Engine output.
+  character-perspective phrasing, no invented entities.

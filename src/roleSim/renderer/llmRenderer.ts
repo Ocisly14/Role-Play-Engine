@@ -51,12 +51,8 @@ tag into the narrative, right after the words that name the thing:
   The tall pale man [stranger_a] winds the gramophone
   [item.clinic_upstairs.gramophone] in the corner.
 
-A tag is a machine handle, not a word: **copy it character by character from
-your input.** Most of them read like \`item.<place>.<thing>\` — three parts,
-and the middle part is a place name you have probably also seen spelled out
-in the prose. That middle part is where a tag gets mistyped, and a mistyped
-tag is not a small error: it names nothing, so it is struck out and the
-character loses the ability to reach for a thing they can see.
+A tag is a machine handle: **copy it character by character from
+your input.** 
 
 This is the ONLY way the character can point at anything: they act by citing
 a tag they read in your paragraph. An entity you leave untagged is an entity
@@ -69,8 +65,10 @@ they cannot touch, address or walk toward this minute.
   the room, so it never wears the room's tag. Nor does a lamp wear the tag of
   the street it stands on, or a wheel the tag of the cart.
 - An entity with no tag in your input is written with no tag.
-- A tag is not a name and never replaces the prose: write
-  "the tall pale man [stranger_a]", never "stranger_a walks in".
+- A tag follows the prose, it does not replace it: the words name the thing,
+  the bracket comes after them.
+- A bracket holds an id and nothing else — no description, no punctuation, no
+  words of your own, in any language.
 - Tag the things the character could plausibly act on this minute — the
   people present, the items within reach.
 
@@ -127,34 +125,21 @@ they cannot touch, address or walk toward this minute.
 Input gives you:
   Person (UNKNOWN): the tall pale man  [stranger_a]
     Appearance: Tall, pale, with a long black overcoat and an ivory-handled cane.
+    Where they are in this place: by the door, hat still on
+  Items perceivable here:
+    - 留声机  [item.clinic_upstairs.gramophone]: 角落里的留声机，旁边码着歌剧唱片。
+    - 烟斗  [item.clinic_upstairs.pipe]: 窗台上一支从没点燃过的烟斗。
 
-Correct output:
-  The tall pale man [stranger_a] steps into the room and inclines his head,
-  the ivory head of his cane catching the lamplight.
+Write:
+  The tall pale man [stranger_a] is still by the door with his hat on, and I
+  cannot place him. The gramophone [item.clinic_upstairs.gramophone] in the
+  corner has run to the end of its side; the pipe on the sill
+  [item.clinic_upstairs.pipe] has not been touched since I set it there.
 
-WRONG (leaks the canonical name of someone the viewpoint has never met):
-  Professor Hollins steps into the room...
-
-WRONG (leaks a machine id that is not the given tag):
-  The tall pale man (Hollins) steps into the room...
-
-WRONG (tag swallowed the prose):
-  stranger_a steps into the room...
-
-WRONG (prose swallowed by the tag — the bracket holds an id and NOTHING else,
-no description, no punctuation, no words of your own, in any language):
-  我猛拽那位老工人[item.clinic_upstairs.pipe 旁的同伴]的手臂...
-  The old man [stranger_a, the one by the door] catches my arm...
-
-WRONG (the room's own tag hung on a fixture inside the room — the door is not
-the room, and the actor who copies this points at the wrong thing):
-  探头凑近那道被钉死的暗门 [SCN_clinic_upstairs]...
-  I lean toward the boarded-up door [SCN_clinic_upstairs]...
-
-WRONG (the middle part of the tag rewritten from memory — every character of
-a tag is copied, and this one now names nothing at all):
-  角落的留声机 [item.clinic_upstersic.gramophone] 还在转...
-  The gramophone [item.clinic_upstersic.gramophone] is still turning...
+Every bracket in that paragraph was copied from the input character for
+character, sits directly after the words that name its thing, and holds
+nothing but the id. The man is "the tall pale man" because that is what the
+input calls him — a name would be one the viewpoint has not been told.
 
 Right: name the thing in your prose, then the bare id in a bracket after it.
 Nothing to cite? Then write it with no bracket — an entity the actor can see

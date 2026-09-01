@@ -10,12 +10,11 @@ description: Keep something in long-term memory. Free — may be called alongsid
 **Nothing is remembered for you.** What you perceive is what reached your
 senses in the moment — it is not memory. Memory is what YOU decided was
 worth keeping: it comes back to you as your own words, and it is what
-remains of the day. The world no longer keeps a diary on your behalf.
+remains of your life.
 
 So each turn, decide: is anything here worth carrying? Most minutes are
 not. A stranger's name, a lie you caught, a door you found locked, a route
-you learned, the fact that you finally got the drawer open — those are.
-The colour of the wallpaper is not.
+you learned, the fact that you finally got the drawer open — those are. Remember the important thing to you.
 
 ## Three things you can do
 
@@ -31,8 +30,7 @@ The colour of the wallpaper is not.
     - #M3f9a2c [12-01 09:20] (general) Hollins said he was at the harbour all evening.
 
 Copy \`M3f9a2c\` exactly, without the \`#\`. Only your own memories carry a tag
-you can use — what you already knew before this morning, and the account of
-your day, are not yours to rewrite.
+you can use — what you already knew.
 
 ### Correct, do not pile up
 
@@ -50,37 +48,34 @@ still something that happened to you**, and you keep it.
 
 ## Cost
 
-Free. It does NOT consume a tick, and it may be called **in the same turn
+It may be called **in the same turn
 as \`act\` or \`continue\`** — decide your action and record your memory
 together.
 
 ## Types
 
-- \`general\` — 普通记忆. The default. What you did and how it turned
+- \`general\` — The default. What you did and how it turned
   out, what you saw someone else do, a conclusion you reached, a fact you
   learned. One memory = one thing worth recalling later; do not dump a
   whole minute of scenery into it.
-- \`plan\` — 计划. An intention you mean to hold beyond this minute:
+- \`plan\` — An intention you mean to hold beyond this minute:
   "tomorrow morning, get to the harbour before anyone notices". Not your
   next action — that is \`act\`.
-- \`secret\` — 秘密. Something hidden you worked out and would not say
+- \`secret\` —  Something hidden you worked out and would not say
   aloud. These fade slowly; you will still be carrying them days later.
-- \`relationship\` — 角色关系. What you now think of a specific person.
+- \`relationship\` — What you now think of a specific person.
   Requires \`targetId\` — the tag beside that person in what you perceive,
   exactly as you would write it in \`objectRefs\`. Use it when your read on
   someone changes: they lied, they helped, they frightened you, you decided
-  to trust them. This is the ONLY way anyone comes to hold a view of anyone —
-  nothing and nobody records one for you, and the world will not decide on
-  your behalf that you have warmed to someone.
+  to trust them.
   Set \`knownAs\` the first time you learn what to CALL them: a name they
   gave, or that someone used in front of you. Until you do, they stay a
   description to you — "the thin young man" — however sure you are of what
   they are. That is not a formality: **you do not know a name nobody has said
   in your hearing**, and writing one down would be inventing it.
-- \`map\` — 地图记忆. A place or route you learned *today* — a door you
-  had never noticed, a shortcut, where someone actually lives. The town you
-  already knew before this morning is not this; only what today taught you.
-- \`long_term_intent\` — 长期目标. ONLY when the goal driving your whole
+- \`map\` —  A place or route you learned — a door you
+  had never noticed, a shortcut, where someone actually lives or a new house you've never saw before or has changed.
+- \`long_term_intent\` — ONLY when the goal driving your whole
   life here genuinely changes. Rare — an ordinary intention is a \`plan\`.
   Add rather than replace: both stay in what you remember, dated, and the most
   recent is the one driving you now — so the earlier goal reads as what you
@@ -96,8 +91,6 @@ together.
   without the surrounding scene.
 - One fact per call. Two unrelated things = two calls (max 3 per decision).
 - Write what it MEANS to you, not a transcript of what was said.
-- Do not record what you are about to do — that is your action, not a
-  memory. Use \`plan\` only for an intention that outlives this minute.
 
 ## Cap
 
@@ -105,12 +98,6 @@ Max 3 \`writeMemory\` calls per decision — adds, replaces and deletes all
 count against the same 3.
 
 ## Examples
-
-You formed an intention for later:
-writeMemory({ "type": "plan", "content": "Tomorrow morning, reach the harbour before the constable's rounds." })
-
-You worked something out you would not say aloud:
-writeMemory({ "type": "secret", "content": "The handwriting in the ledger is the professor's own. He forged the entries himself." })
 
 You just caught an inconsistency:
 writeMemory({ "type": "general", "content": "The professor said the ledger never left his office, but I saw it in the parlour an hour earlier." })
@@ -120,9 +107,6 @@ writeMemory({ "type": "relationship", "targetId": "stranger_a", "content": "He w
 
 You caught their name:
 writeMemory({ "type": "relationship", "targetId": "stranger_a", "knownAs": "Hollins", "content": "He gave his name as Hollins, and offered it a little too quickly." })
-
-Your own action finally paid off:
-writeMemory({ "type": "general", "content": "The cabinet lock gave way after a few minutes of work. Inside: a bundle of letters tied with string." })
 
 You learned where something is:
 writeMemory({ "type": "map", "content": "There is a back stairwell behind the kitchen at the boarding house — it comes out on the alley, not the street." })
@@ -135,6 +119,4 @@ writeMemory({ "op": "replace", "ref": "M3f9a2c", "content": "The ledger entries 
 
 Something you wrote down proved baseless:
 writeMemory({ "op": "delete", "ref": "Mb71e04" })
-
-A quiet minute with nothing to keep — write nothing at all.
 `;
