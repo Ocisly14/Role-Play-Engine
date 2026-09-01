@@ -584,6 +584,24 @@ export function validateSceneChange(
         errs.push(`connectionBlock requires a reason`);
       }
       break;
+    case "connectionDiscovered": {
+      checkConnectionId("connectionDiscovered");
+      const ids = op.characterIds;
+      if (!Array.isArray(ids) || ids.length === 0) {
+        errs.push(
+          "connectionDiscovered requires characterIds — everyone who could see it happen, and at least one of them"
+        );
+        break;
+      }
+      for (const id of ids) {
+        if (typeof id !== "string" || !lookup.characterIds.has(id)) {
+          errs.push(
+            `connectionDiscovered.characterIds contains "${String(id)}", which names no character`
+          );
+        }
+      }
+      break;
+    }
     case "connectionHidden":
       checkConnectionId("connectionHidden");
       if (typeof op.hidden !== "boolean") {

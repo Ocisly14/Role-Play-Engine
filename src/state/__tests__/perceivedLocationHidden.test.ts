@@ -279,7 +279,9 @@ describe("revealing (flipping the hidden flag) restores visibility", () => {
       (c) => c.id === "connection.junc_x.cellar"
     );
     if (junctionCellar) junctionCellar.hidden = false;
-    const hutAccess = road.connections.find((c) => c.id === "connection.r_main.hut");
+    const hutAccess = road.connections.find(
+      (c) => c.id === "connection.r_main.hut"
+    );
     if (hutAccess) hutAccess.hidden = false;
 
     expect(
@@ -303,5 +305,73 @@ describe("revealing (flipping the hidden flag) restores visibility", () => {
     expect(buildPerceivableDirectory("actor", dgsm).scenes).toEqual(
       new Set(["S_PARLOR", "S_SHOP", "S_CELLAR"])
     );
+  });
+});
+
+// `hidden` is the world's answer to "can anyone see this"; `discoveredBy` is
+// this viewer's answer to "have I found it". One passage, both facts on it —
+// so nothing has to be kept in step with anything else.
+describe("a passage one character has found", () => {
+  function world() {
+    const scenes = new Map<string, DynamicScene>([
+      [
+        "SCN_A",
+        {
+          id: "SCN_A",
+          name: "Dock",
+          description: "d",
+          conditions: [],
+          items: [],
+          connections: [
+            {
+              id: "connection.a.inner",
+              targetId: "SCN_B",
+              hidden: true,
+              discoveredBy: ["npc_finder"],
+            },
+          ],
+        } as unknown as DynamicScene,
+      ],
+      [
+        "SCN_B",
+        {
+          id: "SCN_B",
+          name: "Hall",
+          description: "d",
+          conditions: [],
+          items: [],
+          connections: [],
+        } as unknown as DynamicScene,
+      ],
+    ]);
+    return {
+      getScene: (id: string) => scenes.get(id) ?? null,
+      getState: () => ({ scenes, roads: new Map(), characterPositions: {} }),
+      getSceneConditions: () => [],
+      getTopology: () => ({
+        nodeSceneIds: new Set(),
+        roads: new Map(),
+        sceneToRoads: new Map(),
+        sceneToParent: new Map(),
+      }),
+      getVehicleByInterior: () => null,
+      getVehicles: () => [],
+    } as unknown as DynamicGameStateManager;
+  }
+  const at = { type: "scene" as const, sceneId: "SCN_A" };
+
+  it("is in the finder's perception", () => {
+    const loc = resolvePerceivedLocation(at, world(), "npc_finder");
+    expect(loc?.adjacentIds).toContain("SCN_B");
+  });
+
+  it("is not in anyone else's", () => {
+    const loc = resolvePerceivedLocation(at, world(), "npc_other");
+    expect(loc?.adjacentIds).not.toContain("SCN_B");
+  });
+
+  it("is not there for a viewerless read — naming a place is not looking", () => {
+    const loc = resolvePerceivedLocation(at, world());
+    expect(loc?.adjacentIds).not.toContain("SCN_B");
   });
 });

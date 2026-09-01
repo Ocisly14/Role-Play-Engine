@@ -260,3 +260,61 @@ describe("vote table serialization", () => {
     expect(dgsm.isConnectionBlocked("J_A", "R_MAIN")).toBe(false);
   });
 });
+
+// `hidden` is the world's answer to "can anyone see this"; `discoveredBy` is
+// each viewer's answer to "have I found it". Both live on the passage, so
+// nothing has to be kept in step with anything else — and finding is not
+// private, so the operation carries a list.
+describe("connectionDiscovered", () => {
+  const CONN = "connection.home.junc";
+
+  function discovery(characterIds: string[]): SourcedWorldDelta {
+    return {
+      source: { kind: "action", actionId: "a1" },
+      causalBasis: "he prised the panel away and they all saw it",
+      delta: {
+        domain: "scene",
+        sceneId: "S_HOME",
+        operation: {
+          kind: "connectionDiscovered",
+          connectionId: CONN,
+          characterIds,
+        },
+      },
+    };
+  }
+
+  /** The character-ref guard drops a change naming nobody, so the fixture has
+   *  to contain the people who are supposed to find the door. */
+  function withCast() {
+    const f = makeFixture();
+    f.state.npcCharacters.push(
+      ...["npc_1", "npc_2", "npc_3"].map(
+        (id) => ({ id, name: id, status: { conditions: [] } }) as never
+      )
+    );
+    return f;
+  }
+
+  it("records everyone named, on the connection itself", () => {
+    const { applier, dgsm } = withCast();
+    applier.flush([], T, [discovery(["npc_1", "npc_2"])]);
+
+    expect(dgsm.hasDiscoveredConnection("npc_1", CONN)).toBe(true);
+    expect(dgsm.hasDiscoveredConnection("npc_2", CONN)).toBe(true);
+    // The one who was not in the room learns nothing.
+    expect(dgsm.hasDiscoveredConnection("npc_3", CONN)).toBe(false);
+  });
+
+  it("is idempotent — finding the same door twice is one discovery", () => {
+    const { applier, dgsm, state } = withCast();
+    applier.flush([], T, [discovery(["npc_1"])]);
+    applier.flush([], T, [discovery(["npc_1"])]);
+
+    expect(dgsm.hasDiscoveredConnection("npc_1", CONN)).toBe(true);
+    const connection = state.scenes
+      .get("S_HOME")
+      ?.connections?.find((c) => c.id === CONN);
+    expect(connection?.discoveredBy).toEqual(["npc_1"]);
+  });
+});

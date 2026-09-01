@@ -85,9 +85,13 @@ function resolveScene(
 ): PerceivedBundle["scene"] {
   // Roads are places too — a traveller mid-route perceives the
   // street they are on, not "an indistinct place".
+  // Same resolver AND same viewer as the trust boundary reads: a passage this
+  // character has found is rendered for them and citable by them, and one they
+  // have not is neither.
   const location = resolvePerceivedLocation(
     dgsm.getCharacterPosition(npcId),
-    dgsm
+    dgsm,
+    npcId
   );
   if (location) {
     return {

@@ -145,7 +145,9 @@ function builtModule(
         name: "Stacks",
         description: "Rows of shelves, and the stairway down [SCN_library].",
         references: {
-          connections: [{ id: "connection.stacks.down", targetId: "SCN_library" }],
+          connections: [
+            { id: "connection.stacks.down", targetId: "SCN_library" },
+          ],
         },
       })
     )
@@ -535,7 +537,9 @@ describe("validateModuleReferences", () => {
     const module = builtModule((m) => {
       const cellar = m.scenes.get("SCN_cellar");
       if (!cellar) throw new Error("fixture broke");
-      cellar.connections = [{ id: "connection.cellar.up", targetId: "SCN_library" }];
+      cellar.connections = [
+        { id: "connection.cellar.up", targetId: "SCN_library" },
+      ];
     });
     const error = expectSchemaError(() => validateModuleReferences(module));
     expect(error.problems.join("\n")).toContain(
@@ -552,7 +556,9 @@ describe("validateModuleReferences", () => {
     });
     const error = expectSchemaError(() => validateModuleReferences(module));
     const text = error.problems.join("\n");
-    expect(text).toContain("cites [connection.stacks.down], which is not declared");
+    expect(text).toContain(
+      "cites [connection.stacks.down], which is not declared"
+    );
     expect(text).toContain('connection target "SCN_library" is never cited');
   });
 
@@ -661,7 +667,11 @@ describe("validateModuleReferences", () => {
         description:
           "North to the corner [connection.ms.n], south into the library [connection.ms.s].",
         connections: [
-          { id: "connection.ms.n", targetId: "SCN_main_north", role: "endpointA" },
+          {
+            id: "connection.ms.n",
+            targetId: "SCN_main_north",
+            role: "endpointA",
+          },
           { id: "connection.ms.s", targetId: "SCN_library", role: "endpointB" },
         ],
         endpointA: "SCN_main_north",

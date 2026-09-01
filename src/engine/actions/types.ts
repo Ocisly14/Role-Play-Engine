@@ -280,6 +280,16 @@ export type SceneStateOperation =
       reason: string;
     }
   | {
+      /** These characters have found a concealed passage. Addressed at the
+       *  connection because that is where the fact lives — `discoveredBy`
+       *  sits beside `hidden` on the passage itself — and it takes a list
+       *  because finding is not private: everyone who watched the bookcase
+       *  swing out learned the same thing at the same moment. */
+      kind: "connectionDiscovered";
+      connectionId: string;
+      characterIds: string[];
+    }
+  | {
       /** Reveal (`hidden: false`) or conceal a connection by its authored id. */
       kind: "connectionHidden";
       connectionId: string;

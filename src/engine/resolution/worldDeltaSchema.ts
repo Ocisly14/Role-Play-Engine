@@ -196,6 +196,11 @@ export const SCENE_OPS: OperationSpec[] = [
     fields: "connectionId:string, blocked:boolean, reason:string",
   },
   {
+    kinds: ["connectionDiscovered"],
+    fields:
+      "connectionId:string, characterIds:string[] — these characters have FOUND a concealed passage. List EVERYONE who could see it happen, not just whoever acted: from now each of them perceives it and may use it, and it stays shut for everyone else. Only for a connection that is hidden. To open it for the whole world instead (a door forced, a wall broken) use connectionHidden with hidden:false",
+  },
+  {
     kinds: ["connectionHidden"],
     fields:
       "connectionId:string, hidden:boolean — false reveals a concealed exit, true conceals one",

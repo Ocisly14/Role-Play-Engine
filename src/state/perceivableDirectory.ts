@@ -141,7 +141,8 @@ export function buildPerceivableDirectory(
   // ── Items: items at the current location ∪ actor inventory ──────
   const location = resolvePerceivedLocation(
     dgsm.getCharacterPosition(actorId),
-    dgsm
+    dgsm,
+    actorId
   );
   for (const item of location?.items ?? []) items.add(item.id);
   // Read inventory from runtime npcInventories (mutated by item.move /

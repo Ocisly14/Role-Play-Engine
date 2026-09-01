@@ -214,3 +214,19 @@ is already what keeps it running, and the trigger lists those under
   place's prose cites REQUIRES the rewrite in the same submission.
 - Occurrence facts use world-true references (real ids, real names); no
   character-perspective phrasing, no invented entities.
+
+## Concealed passages
+
+A connection marked `hidden` is not in anyone's perception.
+You decide if one can find out based on the actions and situations.
+
+- `scene.connectionDiscovered { connectionId, characterIds }` — these
+  characters now know the passage is there. Emit it when the action actually
+  uncovered the passage.
+- `scene.connectionHidden { connectionId, hidden: false }` — it is open to
+  the world now. The boards are off, the bookcase is swung wide, the wall is
+  down. Everyone who comes here sees it.
+
+**Finding is not private.** `characterIds` is a LIST, and the actor is only
+its first entry: put in everyone who could find out — those at the spot, and
+those told by someone who was.

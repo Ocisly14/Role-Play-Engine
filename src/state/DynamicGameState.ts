@@ -42,6 +42,7 @@ import type {
   DynamicNPCProfile,
   DynamicScene,
   Item,
+  SceneConnection,
   TransportEdge,
 } from "./types.js";
 
@@ -1430,6 +1431,49 @@ export class DynamicGameStateManager {
    * SceneConnection in place (serializes with state). False + warn when the
    * id resolves to nothing.
    */
+  /** Record that this character has found a concealed connection. Kept on the
+   *  connection itself, beside `hidden`, so a passage carries its own answer
+   *  to "who knows about me" and nothing has to be kept in step with it.
+   *  Idempotent — finding the same door twice is one discovery. */
+  recordConnectionDiscovery(
+    characterId: string,
+    connectionId: string
+  ): boolean {
+    const connection = this.findConnectionById(connectionId);
+    if (!connection) {
+      console.warn(
+        `[DynamicGameState] recordConnectionDiscovery: unknown connection id "${connectionId}"`
+      );
+      return false;
+    }
+    const found = connection.discoveredBy ?? [];
+    if (!found.includes(characterId)) {
+      connection.discoveredBy = [...found, characterId];
+      this.state.lastUpdated = new Date();
+    }
+    return true;
+  }
+
+  hasDiscoveredConnection(characterId: string, connectionId: string): boolean {
+    return (
+      this.findConnectionById(connectionId)?.discoveredBy?.includes(
+        characterId
+      ) ?? false
+    );
+  }
+
+  private findConnectionById(
+    connectionId: string
+  ): SceneConnection | undefined {
+    const entry = this.getConnectionRegistry().get(connectionId);
+    if (!entry) return undefined;
+    const owner =
+      entry.ownerKind === "scene"
+        ? this.state.scenes.get(entry.ownerId)
+        : this.state.roads.get(entry.ownerId);
+    return owner?.connections?.find((c) => c.id === connectionId);
+  }
+
   setConnectionHiddenById(connectionId: string, hidden: boolean): boolean {
     const entry = this.getConnectionRegistry().get(connectionId);
     const owner = entry

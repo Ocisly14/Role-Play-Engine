@@ -72,7 +72,11 @@ function makeContext(): EngineResolutionContext {
       },
       blockedEdges: [],
       placeKinds: { SCN_1: "scene", J_A: "scene", R_MAIN: "road" },
-      connectionIds: ["connection.home.junc", "connection.junc.home", "connection.rmain.a"],
+      connectionIds: [
+        "connection.home.junc",
+        "connection.junc.home",
+        "connection.rmain.a",
+      ],
       places: [],
       items: [],
       itemHolders: {

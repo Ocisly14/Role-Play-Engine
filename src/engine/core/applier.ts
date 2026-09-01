@@ -162,6 +162,9 @@ export class Applier {
       case "memory.event":
       case "memory.witness":
         return known(c.characterId);
+      case "connection.discovered":
+        // A list, not one id: the first stranger in it is the offender.
+        return c.characterIds.map(known).find((id) => id !== null) ?? null;
       default:
         return null;
     }
@@ -262,6 +265,14 @@ export class Applier {
               blocked: op.blocked,
               sourceFeatureId: source,
               reason: op.reason,
+            },
+          ];
+        case "connectionDiscovered":
+          return [
+            {
+              kind: "connection.discovered",
+              connectionId: op.connectionId,
+              characterIds: op.characterIds,
             },
           ];
         case "connectionHidden":
@@ -537,6 +548,14 @@ export class Applier {
           break;
         case "connection.setHidden":
           this.dgsm.setConnectionHiddenById(c.connectionId, c.hidden);
+          break;
+        case "connection.discovered":
+          // Written straight onto the passage. Idempotent per character, and
+          // a warn (not a throw) for an id that names nothing — a bad
+          // discovery must not take the tick down with it.
+          for (const characterId of c.characterIds) {
+            this.dgsm.recordConnectionDiscovery(characterId, c.connectionId);
+          }
           break;
         case "character.addCondition":
           this.dgsm.addCharacterCondition(c.characterId, c.condition);

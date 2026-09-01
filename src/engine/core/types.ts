@@ -175,6 +175,16 @@ export type StateChange =
       reason: string;
     }
   | {
+      /** These characters have found a concealed connection: each of them
+       *  perceives it from now on, and nobody else does. Recorded on the
+       *  passage itself (`SceneConnection.discoveredBy`), beside `hidden`.
+       *  `connection.setHidden` is the other half — that one opens it for the
+       *  whole world at once. */
+      kind: "connection.discovered";
+      connectionId: string;
+      characterIds: string[];
+    }
+  | {
       /** Reveal/hide a connection by its authored id (`connection.*`). Routed to
        *  DGSM.setConnectionHiddenById, which mutates the owning place's
        *  SceneConnection in place. */

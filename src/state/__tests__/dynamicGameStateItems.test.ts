@@ -269,14 +269,22 @@ describe("scene condition ids", () => {
 
 describe("setConnectionHiddenById", () => {
   it("reveals a hidden scene connection in place", () => {
-    expect(dgsm.setConnectionHiddenById("connection.home.secret", false)).toBe(true);
-    const conn = scene.connections.find((c) => c.id === "connection.home.secret");
+    expect(dgsm.setConnectionHiddenById("connection.home.secret", false)).toBe(
+      true
+    );
+    const conn = scene.connections.find(
+      (c) => c.id === "connection.home.secret"
+    );
     expect(conn?.hidden).toBe(false);
   });
 
   it("hides a node-scene connection", () => {
-    expect(dgsm.setConnectionHiddenById("connection.junc.road", true)).toBe(true);
-    const conn = junction.connections.find((c) => c.id === "connection.junc.road");
+    expect(dgsm.setConnectionHiddenById("connection.junc.road", true)).toBe(
+      true
+    );
+    const conn = junction.connections.find(
+      (c) => c.id === "connection.junc.road"
+    );
     expect(conn?.hidden).toBe(true);
   });
 
@@ -287,7 +295,9 @@ describe("setConnectionHiddenById", () => {
   });
 
   it("returns false and warns for an unknown connection id", () => {
-    expect(dgsm.setConnectionHiddenById("connection.nowhere.door", true)).toBe(false);
+    expect(dgsm.setConnectionHiddenById("connection.nowhere.door", true)).toBe(
+      false
+    );
     expect(warnSpy).toHaveBeenCalledWith(
       expect.stringContaining('unknown connection id "connection.nowhere.door"')
     );
@@ -298,7 +308,9 @@ describe("setConnectionHiddenById", () => {
     const back = dgsm.resolveConnectionEdgeById("connection.junc.home");
     expect(there?.key).toBeDefined();
     expect(there?.key).toBe(back?.key);
-    expect(dgsm.resolveConnectionEdgeById("connection.nowhere.door")).toBeNull();
+    expect(
+      dgsm.resolveConnectionEdgeById("connection.nowhere.door")
+    ).toBeNull();
   });
 });
 
