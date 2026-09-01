@@ -6,80 +6,15 @@
 // (rolled at intake) and must not be re-rolled. Both tools accept explicit
 // roll values so a replay can pin recorded outcomes.
 
-import {
-  resolveSkillValue,
-  rollSkill,
-  successLevelFor,
-} from "../actions/skillRollService.js";
-import type { SkillRollRecord } from "../actions/types.js";
-import {
-  applyPenalties,
-  getCharacterConditionPenalties,
-  getScenePenalties,
-  rollD100,
-} from "../shared/index.js";
-import type { CodeToolContext, EngineCodeTool } from "./codeTool.js";
+import { successLevelFor } from "../actions/skillRollService.js";
+import { rollD100 } from "../shared/index.js";
+import type { EngineCodeTool } from "./codeTool.js";
 
 /** Clamp helper shared by numeric aggregation paths. Exported as a plain
  *  function — clamping is arithmetic, not a tool invocation. */
 export function clampValue(value: number, min: number, max: number): number {
   return Math.max(min, Math.min(max, value));
 }
-
-// ==================== Opposed / defender roll ====================
-
-export interface OpposedRollInput {
-  characterId: string;
-  /** Defense skill the ENGINE chose for this defender (the Engine judges
-   *  which defense applies; this tool only executes the roll). */
-  skillId: string;
-  /** Replay only: pin the d100 result instead of rolling. */
-  fixedRoll?: number;
-}
-
-export type OpposedRollOutput =
-  | { ok: true; record: SkillRollRecord }
-  | { ok: false; reason: "unknown_skill" };
-
-export const opposedRollTool: EngineCodeTool<
-  OpposedRollInput,
-  OpposedRollOutput
-> = {
-  name: "opposedRoll",
-  description:
-    "Roll a defender's skill (real value from character state, scene/condition penalties applied) for an opposed check. Never re-rolls the actor.",
-  execute(input: OpposedRollInput, ctx: CodeToolContext): OpposedRollOutput {
-    const profileSkills =
-      ctx.dgsm.getNpcProfile(input.characterId)?.skills ?? {};
-    const resolved = resolveSkillValue(input.skillId, profileSkills);
-    if (!resolved) return { ok: false, reason: "unknown_skill" };
-
-    // Same penalty stack the legacy skill-check path applied: scene
-    // conditions at the defender's location plus their own conditions.
-    const position = ctx.dgsm.getCharacterPosition(input.characterId);
-    const locationId = position ? ctx.dgsm.resolveLocationId(position) : "";
-    const scenePenalties = locationId
-      ? getScenePenalties(locationId, ctx.dgsm)
-      : new Map<string, number>();
-    const charPenalties = getCharacterConditionPenalties(
-      input.characterId,
-      ctx.dgsm
-    );
-    const adjusted = applyPenalties(
-      applyPenalties(
-        { [resolved.canonicalSkillId]: resolved.value },
-        scenePenalties
-      ),
-      charPenalties
-    );
-    const value = adjusted[resolved.canonicalSkillId] ?? resolved.value;
-
-    return {
-      ok: true,
-      record: rollSkill(resolved.canonicalSkillId, value, input.fixedRoll),
-    };
-  },
-};
 
 // ==================== Damage dice ====================
 

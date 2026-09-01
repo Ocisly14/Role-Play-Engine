@@ -131,10 +131,14 @@ const validSubmission = {
 
 function makeDeps() {
   const codeTools = new CodeToolRegistry();
+  // The session offers one tool now; `damageRoll` is it. (pathfinding,
+  // movementCost and inventoryValidation were removed — a tool call costs a
+  // full-context round trip, and those three answered from data the request
+  // already carries.)
   codeTools.register({
-    name: "movementCost",
+    name: "damageRoll",
     description: "stub",
-    execute: () => ({ reachable: true, totalMinutes: 5, totalTicks: 5 }),
+    execute: () => ({ ok: true, total: 5, dice: [4, 1] }),
   });
   return { dgsm: {} as DynamicGameStateManager, codeTools };
 }
@@ -154,8 +158,8 @@ describe("resolveTick session loop", () => {
         turn([
           {
             id: "t1",
-            name: "movementCost",
-            args: { characterId: "npc_1", destinationId: "SCN_FAR" },
+            name: "damageRoll",
+            args: { formula: "1d6+1" },
           },
         ])
       )
@@ -180,8 +184,8 @@ describe("resolveTick session loop", () => {
     });
     expect(result.codeToolInvocations).toHaveLength(1);
     expect(result.codeToolInvocations[0]).toMatchObject({
-      toolName: "movementCost",
-      output: { reachable: true, totalMinutes: 5, totalTicks: 5 },
+      toolName: "damageRoll",
+      output: { ok: true, total: 5 },
     });
 
     // The second request carried the tool result back to the model.
@@ -189,14 +193,14 @@ describe("resolveTick session loop", () => {
     const toolMsg = secondCall.messages.find(
       (m: { role: string }) => m.role === "tool"
     );
-    expect(toolMsg.results[0].content).toContain("reachable");
+    expect(toolMsg.results[0].content).toContain("total");
   });
 
   it("rejects a mixed submit+tool turn without losing the session", async () => {
     generateToolCalls
       .mockResolvedValueOnce(
         turn([
-          { id: "t1", name: "movementCost", args: {} },
+          { id: "t1", name: "damageRoll", args: { formula: "1d6" } },
           { id: "t2", name: "submit_resolution", args: validSubmission },
         ])
       )
@@ -448,5 +452,58 @@ describe("renderWorldGraph", () => {
       "- R_MAIN (Star Avenue)",
       "  connections: [exit.road.a] -> J_A 15min",
     ]);
+  });
+});
+
+describe("the turn budget", () => {
+  beforeEach(() => {
+    generateToolCalls.mockReset();
+  });
+
+  it("stops offering parallel calls once one tool is demanded", async () => {
+    // Four turns of lookups, then the guard withdraws the tools. On that turn
+    // `toolChoice` names the only acceptable call, so a parallel turn can add
+    // nothing but a second copy of it — and the intake takes a submission
+    // ONLY when it arrives alone. Measured live: both copies refused, another
+    // full-world round trip spent sending the same thing again by itself.
+    for (let i = 0; i < 4; i += 1) {
+      generateToolCalls.mockResolvedValueOnce(
+        turn([{ id: `t${i}`, name: "damageRoll", args: { formula: "1d6" } }])
+      );
+    }
+    generateToolCalls.mockResolvedValueOnce(
+      turn([{ id: "sub", name: "submit_resolution", args: validSubmission }])
+    );
+
+    const result = await resolveTick(makeContext(), makeDeps());
+    expect(result.ok).toBe(true);
+
+    const calls = generateToolCalls.mock.calls.map((c) => c[0]);
+    // While it still had a choice of tool, batching stayed available.
+    for (const call of calls.slice(0, 4)) {
+      expect(call.toolChoice).toBe("any");
+      expect(call.allowParallelCalls).toBe(true);
+    }
+    // On the demanded submission it does not.
+    expect(calls[4].toolChoice).toEqual({ name: "submit_resolution" });
+    expect(calls[4].allowParallelCalls).toBe(false);
+  });
+
+  it("tells the model the budget it is spending, with the real numbers", async () => {
+    generateToolCalls.mockResolvedValueOnce(
+      turn([{ id: "sub", name: "submit_resolution", args: validSubmission }])
+    );
+    await resolveTick(makeContext(), makeDeps());
+
+    const prompt = generateToolCalls.mock.calls[0][0]
+      .customSystemPrompt as string;
+    // The budget is a code constant and a prompt sentence at once; the
+    // document names it with a placeholder so the two cannot drift.
+    expect(prompt).not.toContain("{{");
+    expect(prompt).toMatch(/\b4 turns with the tools\b/);
+    expect(prompt).toMatch(/\b8 turns in all\b/);
+    // And why there is nothing to spend those turns on but the resolution.
+    expect(prompt).toContain("there is nothing to look up");
+    expect(prompt).toContain("A turn is expensive");
   });
 });

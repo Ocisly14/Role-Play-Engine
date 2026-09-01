@@ -2,8 +2,8 @@
 //
 // The unified World Action Engine session (plan Phase 7). Called once per
 // triggered tick with the full EngineResolutionContext. Runs an agentic loop:
-// the model may consult the deterministic code tools (pathfinding, movement
-// cost, inventory validation, opposed roll, damage dice) and must finish with
+// the model may consult the one deterministic code tool it has left (damage
+// dice — a roll must never be the model's) and must finish with
 // one terminal `submit_resolution` call. Output is validated in code; one
 // corrective retry, then whatever is still invalid is dropped and the
 // affected actions are failed. No action types, no per-definition prompts —
@@ -88,10 +88,16 @@ const RULES_DOC = loadRuleFile(
   "world-action-resolution.md",
   "Resolve all actions under strict causality, state constraints, locality, engine-owned timing, conservation, roll-first assessment, concurrency consistency, minimal change, and fact/perception separation."
 );
+/** The turn budget is a code constant and a prompt sentence at once. The
+ *  document names it with a placeholder so the two cannot drift: a model told
+ *  it has four turns when the guard fires at three would spend the difference
+ *  every tick, and nobody would see it in either place alone. */
 const SESSION_PROTOCOL = loadRuleFile(
   "session-protocol.md",
   "Ground the resolution with the deterministic tools where needed; finish with exactly one submit_resolution answering every worklist id."
-);
+)
+  .replaceAll("{{FORCE_SUBMIT_AFTER}}", String(FORCE_SUBMIT_AFTER))
+  .replaceAll("{{MAX_ITERATIONS}}", String(MAX_ITERATIONS));
 
 const SYSTEM_PROMPT = `You are the World Action Engine of a tick-based Call of Cthulhu world
 simulation. You are the sole authority on what actually happens: characters
@@ -382,7 +388,15 @@ export async function resolveTick(
           : mustSubmit
             ? { name: "submit_resolution" }
             : "any",
-        allowParallelCalls: !repairing,
+        // Parallel calls only while the model still has a choice of tool.
+        // Once `toolChoice` names one, a second copy of it is the only other
+        // thing a parallel turn can produce — and the intake below takes a
+        // submission ONLY when it arrives alone, so both copies were
+        // rejected and the turn was spent for nothing. Measured live: the
+        // demanded submission came back twice, both refused, and the tick
+        // paid another full-world round trip (~65k tokens) to send the same
+        // thing again by itself.
+        allowParallelCalls: !repairing && !mustSubmit,
         modelClass: ModelClass.MEDIUM,
         operation: "world-action-engine",
       });

@@ -633,51 +633,30 @@ export const repairResolutionTool: ToolSpec = {
 
 // ==================== Code-tool schemas for the session ====================
 
-/** LLM-facing declarations of the deterministic code tools. Execution runs
- *  through the CodeToolRegistry; results are trusted and recorded. */
+/**
+ * LLM-facing declarations of the deterministic code tools. Execution runs
+ * through the CodeToolRegistry; results are trusted and recorded.
+ *
+ * One tool, because a turn is not cheap. Every tool call spends a round trip
+ * of the whole world context — measured at ~60k tokens on a full town — so a
+ * tool only earns its place by answering something the request cannot say.
+ * Three did not, and were removed:
+ *
+ *   `pathfinding` / `movementCost` — the World Graph section already renders
+ *     every top-level place with its exits and each road's walking minutes,
+ *     so both answered from data the model was holding. Worse, neither could
+ *     change an outcome: the actor's stated route is the only route, and code
+ *     (`placesAdjacent`) is the authority on whether a stated hop exists. In
+ *     one measured ten-tick run they took 11 of 14 tool calls and about a
+ *     third of the run's entire prompt budget, checking a route hop by hop, a
+ *     turn at a time.
+ *   `inventoryValidation` — replaced by putting the answer in the request:
+ *     a command that names a person, or an item a person holds, now pulls
+ *     that person's pockets into the Items section (contextBuilder).
+ *
+ * Dice stay. A roll is the one thing the model must never do itself.
+ */
 export const CODE_TOOL_SPECS: ToolSpec[] = [
-  {
-    name: "pathfinding",
-    description:
-      "Plan the route from a character's current position to a destination id (scene/road). Returns reachability, leg summary and total WALKING minutes. Advisory only — a movement action's clock is derived by code from its route (drive speeds included); you never need this number for a duration.",
-    inputSchema: {
-      type: "object",
-      properties: {
-        characterId: { type: "string" },
-        destinationId: { type: "string" },
-      },
-      required: ["characterId", "destinationId"],
-      additionalProperties: false,
-    },
-  },
-  {
-    name: "movementCost",
-    description:
-      "Estimate WALKING time (minutes/ticks) from a character's current position to a destination id. Advisory only — never needed for a movement action's duration, which code derives from the route (drive speeds included).",
-    inputSchema: {
-      type: "object",
-      properties: {
-        characterId: { type: "string" },
-        destinationId: { type: "string" },
-      },
-      required: ["characterId", "destinationId"],
-      additionalProperties: false,
-    },
-  },
-  {
-    name: "inventoryValidation",
-    description:
-      "Locate an item (scene or inventory), check unique ownership, and optionally whether an actor holds/can reach it.",
-    inputSchema: {
-      type: "object",
-      properties: {
-        itemId: { type: "string" },
-        actorId: { type: "string" },
-      },
-      required: ["itemId"],
-      additionalProperties: false,
-    },
-  },
   {
     name: "damageRoll",
     description:

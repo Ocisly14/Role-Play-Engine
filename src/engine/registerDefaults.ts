@@ -10,9 +10,6 @@ import { sunSubsystem } from "./subsystem/sun.js";
 import { weatherSubsystem } from "./subsystem/weather.js";
 import { CodeToolRegistry } from "./tools/codeTool.js";
 import { damageRollTool } from "./tools/diceTools.js";
-import { inventoryValidationTool } from "./tools/inventoryValidationTool.js";
-import { movementCostTool } from "./tools/movementCostTool.js";
-import { pathfindingTool } from "./tools/pathfindingTool.js";
 
 export function createDefaultSubsystemRegistry(): SubsystemRegistry {
   const reg = new SubsystemRegistry();
@@ -26,13 +23,12 @@ export function createDefaultSubsystemRegistry(): SubsystemRegistry {
   return reg;
 }
 
-/** Deterministic capabilities exposed to the unified World Action Engine
- *  (plan Phase 5). Registered flat by name — never routed by action kind. */
+/** Deterministic capabilities exposed to the unified World Action Engine.
+ *  Registered flat by name — never routed by action kind. One tool: a call
+ *  costs a full-context round trip, so anything the request can simply say is
+ *  said there instead. See CODE_TOOL_SPECS for what went and why. */
 export function createDefaultCodeToolRegistry(): CodeToolRegistry {
   const reg = new CodeToolRegistry();
-  reg.register(pathfindingTool);
-  reg.register(movementCostTool);
-  reg.register(inventoryValidationTool);
   reg.register(damageRollTool);
   return reg;
 }

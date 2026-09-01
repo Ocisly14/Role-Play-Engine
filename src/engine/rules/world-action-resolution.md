@@ -28,8 +28,11 @@ rules and the same output shape apply to everything.
    only named a far destination walks as far as their words carry — stepping
    out of the current room onto its street is an implied first hop, a fork
    three trails deep is not — and re-decides where their knowledge ran out.
-   The pathfinding tool is advisory: use it to check a stated hop, never to
-   substitute your route for theirs. **Any resolution that has a character
+   You do not check the route and you cannot repair it: the World Graph in
+   front of you says which places join, and code is the judge when the action
+   starts. A hop that was never a way fails back to the actor with both
+   places named — that is how they find out their remembered way was wrong,
+   and it is theirs to correct, not yours to substitute. **Any resolution that has a character
    cross a scene boundary MUST carry `movement.route`** — a long haul or one
    step through the next door, no exception: a single adjacent waypoint
    (`route: ["SCN_x"]`) is a complete route. A duration alone moves nobody:

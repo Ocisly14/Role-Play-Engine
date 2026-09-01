@@ -61,16 +61,17 @@ engine 处理的「操作」分四层，彼此不共享枚举：**演员发出�
 
 ## 3. Engine 会话内可用的工具
 
-**确定性代码工具**（`registerDefaults.ts:createDefaultCodeToolRegistry`，按名字平铺注册，永不按动作类型路由）：
+**确定性代码工具只剩一个**（`registerDefaults.ts:createDefaultCodeToolRegistry`）：
 
-| 工具 | 文件 |
-|---|---|
-| `pathfinding` | `engine/tools/pathfindingTool.ts` |
-| `movementCost` | `engine/tools/movementCostTool.ts` |
-| `inventoryValidation` | `engine/tools/inventoryValidationTool.ts` |
-| `damageRoll` | `engine/tools/diceTools.ts` |
+| 工具 | 文件 | 为什么留 |
+|---|---|---|
+| `damageRoll` | `engine/tools/diceTools.ts` | 掷骰绝不能归模型 |
 
-> `opposedRoll` 在 `diceTools.ts` 里定义但**未注册**给模型——对抗掷骰由代码在 `skillRollService` 里做，Engine 只声明 `opposedBy`。
+原先还有三个，已删除——**一次工具调用要花掉一整轮、即一次约 60k 上下文的往返**，所以工具只有在回答「请求里说不出来的东西」时才值这个价：
+
+- `pathfinding` / `movementCost`：World Graph 段本来就渲染了每个顶层地点的出边和每条路的步行分钟，两者都是在替模型搜索它已经拿着的数据；而且都改变不了结果——演员陈述的路线是唯一路线，某一跳存不存在由代码（`placesAdjacent`）裁决。实测一次 10-tick 跑里它们占了 14 次工具调用中的 11 次、约全程 prompt 预算的三分之一，只为逐跳核对一条路线。
+- `inventoryValidation`：改成把答案直接放进请求——命令点名了谁、或点名了谁手里的东西，`contextBuilder` 就把那个人的口袋一并注入 Items 段。几百 token，而且在问题被提出之前就答完了。
+- `opposedRoll`：定义了但从未注册，也没有任何代码调用。对抗掷骰的真实路径是 Engine 在 `starting` 里声明 `opposedBy`，`skillRollService` 到期时掷两边。已连同上面三个一起删除。
 
 **终止工具**：`submit_resolution`。输出经 `worldDeltaValidator` 校验，最多 `MAX_REPAIR_ROUNDS = 3` 轮定向修补；仍不合法的条目被丢弃，对应动作判 failed。
 
@@ -174,7 +175,7 @@ engine 处理的「操作」分四层，彼此不共享枚举：**演员发出�
 
 `weather` · `sun` · `stamina` · `itemDamage` · `fire` · `characterConditionExpiry` · `sceneConditionExpiry`
 
-> `subsystem/movement.ts` **不是**注册的子系统，它是纯路线库（`planMovementRoute` / `interpolateMovementPosition`），被 `pathfinding`/`movementCost` 工具和 `actions/movementRuntime.ts` 调用。
+> `subsystem/movement.ts` **不是**注册的子系统，它是纯路线库（`planMovementRoute` / `interpolateMovementPosition`），被 `actions/movementRuntime.ts` 调用。
 
 **其余确定性逻辑**：
 

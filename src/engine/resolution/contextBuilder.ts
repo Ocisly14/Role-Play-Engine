@@ -231,7 +231,15 @@ export function buildEngineResolutionContext(
   };
 
   // ── The involved set: the triggering actors' places, the places their
-  //    objectRefs point at, and the holder places of referenced items. ──
+  //    objectRefs point at, the holder places of referenced items — and the
+  //    people a command names, so what they are carrying is IN the request.
+  //
+  //    That last one replaced a tool. `inventoryValidation` existed to answer
+  //    "who holds this, and can the actor reach it" for something the prompt
+  //    did not show, and every answer cost a turn: the model paid a full
+  //    round trip of the whole world context to be told one holder. Putting
+  //    the named person's pockets in the request costs a few hundred tokens
+  //    and answers it before it is asked. ──
   const commands: ActionCommand[] = [
     ...params.newCommands,
     ...params.activeActions.map((action) => action.command),
@@ -245,10 +253,22 @@ export function buildEngineResolutionContext(
     for (const ref of command.objectRefs ?? []) {
       if (ref.kind === "scene") {
         involvedPlaceIds.add(ref.id);
+      } else if (ref.kind === "character") {
+        // Named in a command, so their pockets are part of what this tick is
+        // about — whether they are the target of a theft, the recipient of a
+        // gift, or simply the person being asked for the key.
+        involvedActorIds.add(ref.id);
       } else if (ref.kind === "item") {
         const holder = itemHolders[ref.id];
-        if (holder?.startsWith("scene:")) {
+        if (holder === undefined) continue;
+        if (holder.startsWith("scene:")) {
           involvedPlaceIds.add(holder.slice("scene:".length));
+        } else {
+          // Held by a person. Their inventory is the only place this item can
+          // be shown from, and until now nothing pulled them in: the item was
+          // real enough to pass the citation boundary and absent from every
+          // rendered section of the request.
+          involvedActorIds.add(holder);
         }
       }
     }
