@@ -23,9 +23,10 @@
 // but it must still mean tomorrow what it meant today.
 //
 // People the viewpoint DOES know, and all items and places, keep their real
-// ids. `SCN_LIBRARY` tells the actor it is a library, which they can see;
-// `ITEM_SCN2_7` tells them nothing. There is no identity to protect, so there
-// is no indirection to pay for.
+// ids. `SCN_clinic_waiting` tells the actor it is a waiting room, which they
+// can see anyway; `item.clinic_upstairs.gramophone` tells them there is a
+// gramophone upstairs, which they are looking at. There is no identity to
+// protect, so there is no indirection to pay for.
 
 import { createHash } from "node:crypto";
 import type { DynamicGameStateManager } from "./DynamicGameState.js";

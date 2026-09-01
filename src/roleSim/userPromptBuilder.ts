@@ -81,8 +81,32 @@ export function buildUserPromptSegments(
   frozen.push(`## Who you are\n${formatProfile(ctx.npcProfile)}`);
   frozen.push(`## What you can do\n${formatSkills(ctx.npcProfile)}`);
 
+  // The standing over memory, said once where the memories are.
+  //
+  // The second sentence is the one that was paid for. Two characters in two
+  // runs walked into the same wall: each held several memories that were all
+  // CORRECT, and joined two of them into a way that does not exist — the lane
+  // to Denny's house continued as the path to the trailhead; the gap in the
+  // back fence became a shortcut to the far end of Main Street. Told only
+  // that their action "did not go on", both read it as their own head going
+  // vague and re-stated the same impossible route, more carefully. Telling
+  // them their memory might be wrong would be a lie in both cases and would
+  // point them at the wrong doubt: the memories were right, the joining was
+  // invented.
   if (ctx.memories.length > 0) {
-    growing.push(`## What you remember\n${formatMemories(ctx.memories)}`);
+    growing.push(
+      `## What you remember
+This is your own record, in your own words — not the world's. It can be out
+of date, and it is about places you are not standing in; where it disagrees
+with what you perceive right now, what you perceive is what is true.
+
+And two things you remember separately do not join into one way just because
+you remember both. You know that one place leads to another only if you
+remember it leading there, or you can see that it does. A way you assembled
+out of two true memories is not a way you know.
+
+${formatMemories(ctx.memories)}`
+    );
   }
 
   // The character's day as they lived it, not a sensor log: this is the whole
@@ -170,8 +194,8 @@ carried, what changed and what it cost. Drop the minute-by-minute — the
 walking, the waiting, the weather that mattered to nobody. Where a thing
 matters because of when or where it happened, keep the when and the where.
 
-Anything in square brackets — \`[ITEM_7]\`, \`[stranger_a]\`,
-\`[SCN_LIBRARY]\` — is a handle, not a word. Carry every one you keep
+Anything in square brackets — \`[item.clinic_upstairs.gramophone]\`,
+\`[stranger_a]\`, \`[SCN_clinic_waiting]\` — is a handle, not a word. Carry every one you keep
 through into your account EXACTLY as it appears, brackets included, attached
 to the same thing it was attached to above. A handle is how you reach for a
 thing later: drop a thing and its handle goes with it, but keep the thing
@@ -192,7 +216,8 @@ if your day was thin. Write the account now — nothing else.`
       `## Decide
 Everything above is INPUT you have read — the world describing itself TO
 you. The bracketed tags in what you perceive — \`[stranger_a]\`,
-\`[ITEM_7]\`, \`[SCN_LIBRARY]\` — are the ONLY ids you may put in
+\`[item.clinic_upstairs.gramophone]\`, \`[SCN_clinic_waiting]\` — are the
+ONLY ids you may put in
 \`objectRefs\`; copy one exactly, without its brackets. Something you
 perceive with no tag is something you cannot act on this minute. Your
 in-character prose goes in \`description\` (and the exact words you speak

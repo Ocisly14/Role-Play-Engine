@@ -45,10 +45,18 @@ commentary before or after it.
 # Citation tags
 
 Entities in your input carry a tag in square brackets — \`[stranger_a]\`,
-\`[ITEM_7]\`, \`[SCN_LIBRARY]\`. Write the tag into the narrative, right
-after the words that name the thing:
+\`[item.clinic_upstairs.gramophone]\`, \`[SCN_clinic_waiting]\`. Write the
+tag into the narrative, right after the words that name the thing:
 
-  The tall pale man [stranger_a] sets a brass key [ITEM_7] on the counter.
+  The tall pale man [stranger_a] winds the gramophone
+  [item.clinic_upstairs.gramophone] in the corner.
+
+A tag is a machine handle, not a word: **copy it character by character from
+your input.** Most of them read like \`item.<place>.<thing>\` — three parts,
+and the middle part is a place name you have probably also seen spelled out
+in the prose. That middle part is where a tag gets mistyped, and a mistyped
+tag is not a small error: it names nothing, so it is struck out and the
+character loses the ability to reach for a thing they can see.
 
 This is the ONLY way the character can point at anything: they act by citing
 a tag they read in your paragraph. An entity you leave untagged is an entity
@@ -135,13 +143,18 @@ WRONG (tag swallowed the prose):
 
 WRONG (prose swallowed by the tag — the bracket holds an id and NOTHING else,
 no description, no punctuation, no words of your own, in any language):
-  我猛拽那位老工人[ITEM_SCN21_3旁的同伴]的手臂...
+  我猛拽那位老工人[item.clinic_upstairs.pipe 旁的同伴]的手臂...
   The old man [stranger_a, the one by the door] catches my arm...
 
 WRONG (the room's own tag hung on a fixture inside the room — the door is not
-the nave, and the actor who copies this points at the wrong thing):
-  探头凑近那道被钉死的暗门 [SCN_17_SUB_1]...
-  I lean toward the boarded-up door [SCN_17_SUB_1]...
+the room, and the actor who copies this points at the wrong thing):
+  探头凑近那道被钉死的暗门 [SCN_clinic_upstairs]...
+  I lean toward the boarded-up door [SCN_clinic_upstairs]...
+
+WRONG (the middle part of the tag rewritten from memory — every character of
+a tag is copied, and this one now names nothing at all):
+  角落的留声机 [item.clinic_upstersic.gramophone] 还在转...
+  The gramophone [item.clinic_upstersic.gramophone] is still turning...
 
 Right: name the thing in your prose, then the bare id in a bracket after it.
 Nothing to cite? Then write it with no bracket — an entity the actor can see

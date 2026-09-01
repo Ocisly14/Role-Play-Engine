@@ -384,9 +384,7 @@ describe("memory handles stay stable", () => {
 
   it("prints each stored handle distinctly", () => {
     const text = buildUserPrompt(makeCtx({ memories: colliding }), opts);
-    const handles = [...text.matchAll(/^- #(M[0-9a-f]+)/gm)].map(
-      (m) => m[1]
-    );
+    const handles = [...text.matchAll(/^- #(M[0-9a-f]+)/gm)].map((m) => m[1]);
 
     expect(handles).toEqual(["Maaaaaaaa", "Maaaaaaaa00"]);
     const cached = buildUserPromptSegments(
@@ -398,5 +396,46 @@ describe("memory handles stay stable", () => {
       .join("");
     expect(cached).not.toContain("#Maaaaaaaa ");
     expect(cached).not.toContain("Maaaaaaaa00");
+  });
+});
+
+describe("the standing over memory", () => {
+  // Two characters in two runs held only CORRECT memories and joined two of
+  // them into a way that does not exist. Both then doubted their own heads.
+  // The block has to say the memories may be stale AND that joining two of
+  // them invents nothing.
+  it("qualifies the memory block against live perception and against joining", () => {
+    const text = buildUserPrompt(
+      makeCtx({
+        memories: [
+          {
+            id: "m1",
+            handle: "M1",
+            type: "map",
+            content:
+              "the lane from my gate reaches Main Street in twenty minutes",
+            gameDateTime: "1923-04-01T09:00:00",
+          },
+        ],
+      }),
+      { language: "en", dgsm }
+    );
+
+    expect(text).toContain("## What you remember");
+    expect(text).toContain("what you perceive is what is true");
+    expect(text).toContain(
+      "two things you remember separately do not join into one way"
+    );
+    // The memories themselves still follow the heading.
+    expect(text).toContain("reaches Main Street in twenty minutes");
+  });
+
+  it("says nothing about memory when the character holds none", () => {
+    const text = buildUserPrompt(makeCtx({ memories: [] }), {
+      language: "en",
+      dgsm,
+    });
+    expect(text).not.toContain("## What you remember");
+    expect(text).not.toContain("do not join into one way");
   });
 });

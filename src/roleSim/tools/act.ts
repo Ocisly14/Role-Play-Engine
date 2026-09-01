@@ -98,8 +98,8 @@ Try a lock with a skill and a tool:
 act({
   "description": "I kneel at the cabinet and work the lock with my picks, listening for the tumblers.",
   "objectRefs": [
-    { "id": "cabinet_lock", "role": "target" },
-    { "id": "ITEM_SCN2_7", "role": "tool" }
+    { "id": "item.clinic_exam.cabinet", "role": "target" },
+    { "id": "item.susan.nurse_bag", "role": "tool" }
   ],
   "proposedDurationTicks": 3,
   "skillId": "Stealth & Security"
@@ -115,8 +115,8 @@ act({
 
 Head somewhere:
 act({
-  "description": "I set off through the drizzle toward the library, keeping to the lit side of the street.",
-  "objectRefs": [ { "id": "SCN_LIBRARY", "role": "destination" } ],
+  "description": "I set off through the drizzle toward the clinic, keeping to the lit side of the street.",
+  "objectRefs": [ { "id": "SCN_clinic_waiting", "role": "destination" } ],
   "proposedDurationTicks": 12
 })
 `;
