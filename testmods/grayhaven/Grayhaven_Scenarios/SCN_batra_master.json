@@ -2,8 +2,8 @@
   "schemaVersion": 2,
   "id": "SCN_batra_master",
   "name": "Batra 家·主卧",
-  "description": "主卧不大,收拾得一丝不苟:床单绷得平整,Dev 的金丝眼镜盒和三支笔在床头柜上排成一线[item.batra_master.bedside_items],窗帘挡着主街的灯。床脚一只樟木箱[item.batra_master.sari_trunk],叠放着 Anita 只在节日才穿的纱丽,掀开箱盖,樟脑混着一丝小豆蔻的气味。五斗柜角上摆着一座小神龛[item.batra_master.puja_shelf],铜迦内什像前一盏陶灯,灯芯早已烧尽,只剩一点香灰的余味。窗外雾天里能听见海的方向传来隐约的浪声。房门通回起居厨房[SCN_batra_living]。",
-  "parentLocationId": "LOC_batra_shop",
+  "description": "主卧不大,收拾得一丝不苟:一张双人床[item.batra_master.bed]占了大半间屋,床单绷得平整,枕头拍得一样高。床头柜上,眼镜盒、上链手表和一只闹钟排成一线[item.batra_master.bedside_items];一盏罩着旧灯罩的床头灯[item.batra_master.bedside_lamp]是这间屋夜里唯一的光,Dev 睡前要就着它把当天的活在心里过一遍。窗上厚窗帘[item.batra_master.window_curtain]拉严了挡住主街的灯,雾天里能听见海的方向传来隐约的浪声。床脚一只樟木箱[item.batra_master.sari_trunk],叠放着 Anita 只在节日才穿的纱丽,掀开箱盖,樟脑混着一丝小豆蔻的气味。靠墙一只带穿衣镜的旧衣柜[item.batra_master.wardrobe],门轴响,Anita 用一小块折起的纸片垫住了。五斗柜[item.batra_master.dresser]的抽屉里是叠好的衬衫与账本纸,柜角上摆着一座小神龛[item.batra_master.puja_shelf],铜迦内什像前一盏陶灯,灯芯早已烧尽,只剩一点香灰的余味。房门通回起居厨房[SCN_batra_living]。",
+  "parentLocationId": "batra_shop",
   "indoor": true,
   "references": {
     "items": [
@@ -14,18 +14,45 @@
       },
       {
         "id": "item.batra_master.bedside_items",
-        "name": "眼镜盒与钢笔",
-        "description": "床头柜上,Dev 的金丝眼镜盒和三支不同颜色的钢笔排成一线——跟他店里工作台上的秩序一模一样。"
+        "name": "眼镜盒与上链手表",
+        "description": "床头柜上一线排开的东西:Dev 的金丝眼镜盒、一块每晚上一次弦的手表,还有一只发条闹钟,铃总设在开店前一小时。摆法跟他店里工作台上的秩序一模一样。"
       },
       {
         "id": "item.batra_master.puja_shelf",
         "name": "小神龛",
         "description": "五斗柜角上一座小小的神龛,铜制迦内什像前摆着一盏陶灯,灯芯早已烧尽,只留一点香灰的余味,是从孟买带来的少数几样东西之一。"
+      },
+      {
+        "id": "item.batra_master.bed",
+        "name": "双人床",
+        "description": "一张老式木床架的双人床,床单每天绷平,床垫靠窗那一侧睡塌了一道浅沟——Dev 二十年没换过边。床底下是两只落灰的空箱子。"
+      },
+      {
+        "id": "item.batra_master.bedside_lamp",
+        "name": "床头灯",
+        "description": "床头柜上一盏罩着旧布灯罩的台灯,开关拧起来卡一下。灯泡是 Dev 从店里拿的,亮度刚够看清一页字。",
+        "isLightSource": true,
+        "lightLevel": 2
+      },
+      {
+        "id": "item.batra_master.wardrobe",
+        "name": "旧衣柜",
+        "description": "带穿衣镜的旧木衣柜,门轴一响就吵醒人,Anita 折了张纸片垫在合页里。里头一半是熨好的衬衫,一半是纱丽的防尘布袋。"
+      },
+      {
+        "id": "item.batra_master.dresser",
+        "name": "五斗柜",
+        "description": "靠墙一只五斗柜,抽屉里是叠好的衬衫、袜子和一叠账本用的空白纸。最上一层抽屉锁着,钥匙就搁在柜顶的小碟里——这家人对锁的态度一向如此。"
+      },
+      {
+        "id": "item.batra_master.window_curtain",
+        "name": "窗帘",
+        "description": "临主街那扇窗上的厚布窗帘,拉严了能挡住街角路灯。拉开一条缝,从这里能看见半条主街和自家店门口的那块牌子。"
       }
     ],
     "connections": [
       {
-        "id": "exit.batra_master.living_door",
+        "id": "connection.batra_master.living_door",
         "targetId": "SCN_batra_living",
         "name": "主卧门",
         "description": "通回起居厨房的房门。"

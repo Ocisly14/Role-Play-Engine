@@ -9,27 +9,55 @@
   "appearance": "发福，警徽擦得很亮；办公椅向后仰出了固定的弧度，桌上总摊着一份没做完的填字游戏。",
   "personality": "懒散是表演，迟钝是选择。对镇民真心温和，对孙子有求必应；听到山上的话题就会用钓鱼打比方慢悠悠地拨开。",
   "background": "伐木工的儿子，1949 年退伍回灰港当警员，1971 年起任警长，临近退休。Frank 的父亲、Denny 的祖父；三十六年治安史一半在脑子里，一半在不肯翻的档案柜里。",
-  "attributes": { "STR": 50, "CON": 55, "DEX": 35, "APP": 45, "POW": 65, "SIZ": 70, "INT": 65, "EDU": 65 },
-  "status": { "hp": 12, "maxHp": 12, "san": 60, "maxSan": 60, "fatigue": 15, "maxFatigue": 100, "luck": 50, "conditions": [] },
-  "skills": { "Social": 65, "Investigation": 50, "Ranged Combat": 45, "Athletics": 25, "Knowledge & Craft": 45 },
-  "languages": { "native": ["English"] },
+  "attributes": {
+    "STR": 50,
+    "CON": 55,
+    "DEX": 35,
+    "APP": 45,
+    "POW": 65,
+    "SIZ": 70,
+    "INT": 65,
+    "EDU": 65
+  },
+  "status": {
+    "hp": 12,
+    "maxHp": 12,
+    "san": 60,
+    "maxSan": 60,
+    "fatigue": 15,
+    "maxFatigue": 100,
+    "luck": 50,
+    "conditions": []
+  },
+  "skills": {
+    "Social": 65,
+    "Investigation": 50,
+    "Ranged Combat": 45,
+    "Athletics": 25,
+    "Knowledge & Craft": 45
+  },
+  "languages": {
+    "native": [
+      "English"
+    ]
+  },
   "inventory": [
     {
-      "id": "ray-sheriff-badge",
+      "id": "item.ray.sheriff_badge",
       "name": "擦得很亮的警徽",
       "properties": {
         "note": "Ray 多年来每天擦拭的警长徽章，边缘已经没有新徽章的锐利。"
       }
     },
     {
-      "id": "ray-service-revolver",
+      "id": "item.ray.service_revolver",
       "name": "配枪左轮手枪",
       "properties": {
         "note": "警署配枪的左轮手枪，保养得很好，但 Ray 很少愿意把它从枪套里拿出来。"
       }
     },
     {
-      "id": "ray-service-revolver-ammo",
+      "id": "item.ray.service_revolver_ammo",
       "name": "左轮手枪备用子弹",
       "quantity": 12,
       "properties": {
@@ -37,14 +65,7 @@
       }
     },
     {
-      "id": "ray-crossword",
-      "name": "填了一半的填字游戏",
-      "properties": {
-        "note": "报纸上的填字游戏，已经填了一半，空格旁有 Ray 反复擦改的铅笔痕。"
-      }
-    },
-    {
-      "id": "ray-1958-case-notes",
+      "id": "item.ray.case_notes_1958",
       "name": "1958 年旧案笔录",
       "properties": {
         "hidden": true,
@@ -52,40 +73,169 @@
       }
     }
   ],
- "relationships": [
-    { "targetId": "npc_frank_holt", "targetName": "Frank Holt", "relationshipType": "family", "attitude": 75, "firstPerson": "Frank 是我儿子；1977 年那份差事把家从谷底捞上来，我们谁也不问对方山上什么样。" },
-    { "targetId": "npc_susan_holt", "targetName": "Susan Holt", "relationshipType": "family", "attitude": 75, "firstPerson": "Susan 是这个家真正的黏合剂；她的眼睛什么都看得见。" },
-    { "targetId": "npc_denny_holt", "targetName": "Denny Holt", "relationshipType": "family", "attitude": 85, "firstPerson": "Denny 是我孙子，有求必应；可他最近看我的眼神像在钓鱼，等我开口。" },
-    { "targetId": "npc_cole_baxter", "targetName": "Cole Baxter", "relationshipType": "employee", "attitude": 60, "firstPerson": "Cole 是副手，认真过头，咖啡放三块糖；好孩子，就怕把认真用错方向。" },
-    { "targetId": "npc_earl_pruitt", "targetName": "Earl Pruitt", "relationshipType": "friend", "attitude": 65, "firstPerson": "Earl 是老相识；他在雾里看见光，我不想知道他究竟看见了什么。" },
-    { "targetId": "npc_dolores_medeiros", "targetName": "Dolores Medeiros", "relationshipType": "friend", "attitude": 70, "firstPerson": "Dolores 是同辈老街坊和镇上的活地图；我知道的她一半都知道。" },
-    { "targetId": "npc_doc_weaver", "targetName": "Doc Weaver", "relationshipType": "friend", "attitude": 60, "firstPerson": "Doc 靠得住；医生记得勤，跟警察一样，都是睡得不安。" },
-    { "targetId": "npc_marisol_reyes", "targetName": "Marisol Reyes", "relationshipType": "friend", "attitude": 55, "firstPerson": "Marisol 在 Rafael 走后撑起了店；我的烟只在她那儿买。" },
-    { "targetId": "npc_dev_batra", "targetName": "Dev Batra", "relationshipType": "friend", "attitude": 50, "firstPerson": "Dev 话不多但实在；他抱怨报修单反常时，我把话岔开了。" },
-    { "targetId": "npc_anita_batra", "targetName": "Anita Batra", "relationshipType": "friend", "attitude": 55, "firstPerson": "这镇子一半的和气是 Anita 烤出来的。" },
-    { "targetId": "npc_tommy_reyes", "targetName": "Tommy Reyes", "relationshipType": "neutral", "attitude": 40, "firstPerson": "Tommy 胆子大、车骑得野，和 Denny、Priya 天天嘀嘀咕咕。" },
-    { "targetId": "npc_priya_batra", "targetName": "Priya Batra", "relationshipType": "neutral", "attitude": 45, "firstPerson": "Priya 的眼睛尖得像探照灯；孩子一安静，大人就该操心。" }
+  "relationships": [
+    {
+      "targetId": "npc_frank_holt",
+      "targetName": "Frank Holt",
+      "relationshipType": "family",
+      "attitude": 75,
+      "firstPerson": "Frank 是我儿子；1977 年那份差事把家从谷底捞上来，我们谁也不问对方山上什么样。"
+    },
+    {
+      "targetId": "npc_susan_holt",
+      "targetName": "Susan Holt",
+      "relationshipType": "family",
+      "attitude": 75,
+      "firstPerson": "Susan 是这个家真正的黏合剂；她的眼睛什么都看得见。"
+    },
+    {
+      "targetId": "npc_denny_holt",
+      "targetName": "Denny Holt",
+      "relationshipType": "family",
+      "attitude": 85,
+      "firstPerson": "Denny 是我孙子，有求必应；可他最近看我的眼神像在钓鱼，等我开口。"
+    },
+    {
+      "targetId": "npc_cole_baxter",
+      "targetName": "Cole Baxter",
+      "relationshipType": "employee",
+      "attitude": 60,
+      "firstPerson": "Cole 是副手，认真过头，咖啡放三块糖；好孩子，就怕把认真用错方向。"
+    },
+    {
+      "targetId": "npc_earl_pruitt",
+      "targetName": "Earl Pruitt",
+      "relationshipType": "friend",
+      "attitude": 65,
+      "firstPerson": "Earl 是老相识；他在雾里看见光，我不想知道他究竟看见了什么。"
+    },
+    {
+      "targetId": "npc_dolores_medeiros",
+      "targetName": "Dolores Medeiros",
+      "relationshipType": "friend",
+      "attitude": 70,
+      "firstPerson": "Dolores 是同辈老街坊和镇上的活地图；我知道的她一半都知道。"
+    },
+    {
+      "targetId": "npc_doc_weaver",
+      "targetName": "Doc Weaver",
+      "relationshipType": "friend",
+      "attitude": 60,
+      "firstPerson": "Doc 靠得住；医生记得勤，跟警察一样，都是睡得不安。"
+    },
+    {
+      "targetId": "npc_marisol_reyes",
+      "targetName": "Marisol Reyes",
+      "relationshipType": "friend",
+      "attitude": 55,
+      "firstPerson": "Marisol 在 Rafael 走后撑起了店；我的烟只在她那儿买。"
+    },
+    {
+      "targetId": "npc_dev_batra",
+      "targetName": "Dev Batra",
+      "relationshipType": "friend",
+      "attitude": 50,
+      "firstPerson": "Dev 话不多但实在；他抱怨报修单反常时，我把话岔开了。"
+    },
+    {
+      "targetId": "npc_anita_batra",
+      "targetName": "Anita Batra",
+      "relationshipType": "friend",
+      "attitude": 55,
+      "firstPerson": "这镇子一半的和气是 Anita 烤出来的。"
+    },
+    {
+      "targetId": "npc_tommy_reyes",
+      "targetName": "Tommy Reyes",
+      "relationshipType": "neutral",
+      "attitude": 40,
+      "firstPerson": "Tommy 胆子大、车骑得野，和 Denny、Priya 天天嘀嘀咕咕。"
+    },
+    {
+      "targetId": "npc_priya_batra",
+      "targetName": "Priya Batra",
+      "relationshipType": "neutral",
+      "attitude": 45,
+      "firstPerson": "Priya 的眼睛尖得像探照灯；孩子一安静，大人就该操心。"
+    }
   ],
   "longTermIntent": "平平安安干到退休，别让旧事在这之前翻出来；可 Cole 的档案柜和 Denny 的眼神都提醒我，有笔账迟早要还。",
   "memory": [
-    { "type": "secret", "content": "1958 年我还是年轻警员时，一个渔民报案说在雷德利站方向的雾里看见怪东西；我做了笔录，准备上报。" },
-    { "type": "secret", "content": "随后两个穿西装的人上门，知道我的名字和笔录每个字，客气地提醒此案到此为止；我把案卷压了下来。" },
-    { "type": "secret", "content": "从那以后，我把每一件沾着山上的报案都轻轻滑走。Cole 的档案柜就在前厅，一门之隔，我一次没翻过。" },
-    { "type": "general", "content": "1949 年我退伍回灰港，1971 年接任警长；这份差事干了三十六年，快到头了。" },
-    { "type": "general", "content": "Cole 把每一起怪事报案都规规矩矩归档，档案柜就在前厅；他不明白我为何从不看。" },
-    { "type": "general", "content": "从 1984 年冬天起，报灯闪和收音机串台的人多起来；我说线路老、天气潮，说得熟练到让自己心惊。" },
-    { "type": "general", "content": "Denny 暑假总往林道口跑，吃饭时看我的眼神像等我说漏什么；他年轻时跟我一样，眼睛太尖。" },
-    { "type": "general", "content": "潮水好的傍晚我会去码头钓鱼；Earl 偶尔在旁边，我们能一声不吭坐一个钟头。" },
-    { "type": "plan", "content": "找机会让 Frank 看紧 Denny，别让孩子往林子深处跑；理由我来编。" },
-    { "type": "plan", "content": "这周把积着的巡逻记录补签，Cole 又把它们码在我桌角了。" },
-    { "type": "map", "content": "主街从北口到南口十五分钟，警长办公室就在靠北那一段，边上挨着杂货店和蓝鸟餐馆——出门溜达一圈，这三家的门脸我抬眼都能看到。" },
-    { "type": "map", "content": "再往南是街机厅「星港」、Batra家的维修铺（他们一家住楼上）、诊所；南口出去后巷八分钟到雷耶斯家门口，下坡道十五分钟到码头，这条巡逻线我三十六年没怎么走岔过。" },
-    { "type": "map", "content": "北口出去，霍尔特巷二十分钟到我家院门，旧海岸公路二十五分钟到汽车旅馆，林道十分钟到林道口——这几条路我闭着眼都能走。" },
-    { "type": "map", "content": "码头往南崖间小径三十分钟到灯塔崖，半道上岔一条路到Earl的小屋，这是上灯塔唯一的道；旅馆边上车行道能通到山上的自动大门，货车三十分钟、步行四个半钟头，普通人到大门就是头，再往上是政府气象站的地界。" },
-    { "type": "map", "content": "林道口进山两条主线：一条奔灰溪渡口，一个来钟头，踏石过溪——暴雨后涨水，踏石一淹就断了道；另一条一个钟头到旧铁路路基，路基是当年伐木铁路留下的，笔直好认，绕远但不迷路。" },
-    { "type": "map", "content": "灰溪渡口再往里一个半钟头到旧锯木厂，走路基的话从路基到厂子要两个钟头。厂子1974年关的，如今就是一片废墟，差不多在进山的半道上。" },
-    { "type": "map", "content": "锯木厂往深处走，一个钟头到雾谷，一个来钟头到红杉环。雾谷是块低洼谷地，雾常年淤在那儿，四条林径都在谷里交汇——通灰溪、路基、锯木厂、红杉环，全林子最容易转向的地方，雾天别指望在那儿认准方向。" },
-    { "type": "map", "content": "雾谷到红杉环不到一个钟头；雾谷绕沼泽到灰溪将近两个钟头，穿灌木到路基也要两个钟头。要是在林子里走了半天又绕回原地，多半是在雾谷和红杉环之间打转了。" },
-    { "type": "map", "content": "红杉环再往北爬两个多钟头，就是山上那道铁丝网围栏，普通人走到那儿就没路了。不管走锯木厂线还是雾谷线，镇上到围栏都得六个来钟头，谁也说不清哪条更快。" }
+    {
+      "type": "secret",
+      "content": "1958 年我还是年轻警员时，一个渔民报案说在雷德利站方向的雾里看见怪东西；我做了笔录，准备上报。"
+    },
+    {
+      "type": "secret",
+      "content": "随后两个穿西装的人上门，知道我的名字和笔录每个字，客气地提醒此案到此为止；我把案卷压了下来。"
+    },
+    {
+      "type": "secret",
+      "content": "从那以后，我把每一件沾着山上的报案都轻轻滑走。Cole 的档案柜就在前厅，一门之隔，我一次没翻过。"
+    },
+    {
+      "type": "general",
+      "content": "1949 年我退伍回灰港，1971 年接任警长；这份差事干了三十六年，快到头了。"
+    },
+    {
+      "type": "general",
+      "content": "Cole 把每一起怪事报案都规规矩矩归档，档案柜就在前厅；他不明白我为何从不看。"
+    },
+    {
+      "type": "general",
+      "content": "从 1984 年冬天起，报灯闪和收音机串台的人多起来；我说线路老、天气潮，说得熟练到让自己心惊。"
+    },
+    {
+      "type": "general",
+      "content": "Denny 暑假总往林道口跑，吃饭时看我的眼神像等我说漏什么；他年轻时跟我一样，眼睛太尖。"
+    },
+    {
+      "type": "general",
+      "content": "潮水好的傍晚我会去码头钓鱼；Earl 偶尔在旁边，我们能一声不吭坐一个钟头。"
+    },
+    {
+      "type": "plan",
+      "content": "找机会让 Frank 看紧 Denny，别让孩子往林子深处跑；理由我来编。"
+    },
+    {
+      "type": "plan",
+      "content": "这周把积着的巡逻记录补签，Cole 又把它们码在我桌角了。"
+    },
+    {
+      "type": "map",
+      "content": "主街从北口到南口十五分钟，警长办公室就在靠北那一段，边上挨着杂货店和蓝鸟餐馆——出门溜达一圈，这三家的门脸我抬眼都能看到。"
+    },
+    {
+      "type": "map",
+      "content": "再往南是街机厅「星港」、Batra家的维修铺（他们一家住楼上）、诊所；南口出去后巷八分钟到雷耶斯家门口，下坡道十五分钟到码头，这条巡逻线我三十六年没怎么走岔过。"
+    },
+    {
+      "type": "map",
+      "content": "北口出去，霍尔特巷二十分钟到我家院门，旧海岸公路二十五分钟到汽车旅馆，林道十分钟到林道口——这几条路我闭着眼都能走。"
+    },
+    {
+      "type": "map",
+      "content": "码头往南崖间小径三十分钟到灯塔崖，半道上岔一条路到Earl的小屋，这是上灯塔唯一的道；旅馆边上车行道能通到山上的自动大门，货车三十分钟、步行四个半钟头，普通人到大门就是头，再往上是政府气象站的地界。"
+    },
+    {
+      "type": "map",
+      "content": "林道口进山两条主线：一条奔灰溪渡口，一个来钟头，踏石过溪——暴雨后涨水，踏石一淹就断了道；另一条一个钟头到旧铁路路基，路基是当年伐木铁路留下的，笔直好认，绕远但不迷路。"
+    },
+    {
+      "type": "map",
+      "content": "灰溪渡口再往里一个半钟头到旧锯木厂，走路基的话从路基到厂子要两个钟头。厂子1974年关的，如今就是一片废墟，差不多在进山的半道上。"
+    },
+    {
+      "type": "map",
+      "content": "锯木厂往深处走，一个钟头到雾谷，一个来钟头到红杉环。雾谷是块低洼谷地，雾常年淤在那儿，四条林径都在谷里交汇——通灰溪、路基、锯木厂、红杉环，全林子最容易转向的地方，雾天别指望在那儿认准方向。"
+    },
+    {
+      "type": "map",
+      "content": "雾谷到红杉环不到一个钟头；雾谷绕沼泽到灰溪将近两个钟头，穿灌木到路基也要两个钟头。要是在林子里走了半天又绕回原地，多半是在雾谷和红杉环之间打转了。"
+    },
+    {
+      "type": "map",
+      "content": "红杉环再往北爬两个多钟头，就是山上那道铁丝网围栏，普通人走到那儿就没路了。不管走锯木厂线还是雾谷线，镇上到围栏都得六个来钟头，谁也说不清哪条更快。"
+    }
   ]
 }

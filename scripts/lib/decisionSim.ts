@@ -46,7 +46,6 @@ import type { RoleSimAgent, RoleSimDecision } from "../../src/roleSim/agent.js";
 import { LLMRoleSimAgent } from "../../src/roleSim/llmAgent.js";
 import { NpcActionController } from "../../src/roleSim/npcActionController.js";
 import { DynamicGameStateManager } from "../../src/state/DynamicGameState.js";
-import { datePart } from "../../src/state/gameClock.js";
 import type { Item } from "../../src/state/types.js";
 
 import type { NpcMemoryType } from "@prisma/client";
@@ -439,14 +438,17 @@ export async function runStagedCase(
   // Every write — the staged seeds, the geography bootstrap, and whatever the
   // character decides to keep — goes through the production store. The
   // wrapper only mirrors them into the observation record.
-  const memory = observeMemoryWrites(input.memory, (npcId, type, content, op) => {
-    observation.memoryWrites.push({
-      npcId,
-      type,
-      content,
-      ...(op ? { op } : {}),
-    });
-  });
+  const memory = observeMemoryWrites(
+    input.memory,
+    (npcId, type, content, op) => {
+      observation.memoryWrites.push({
+        npcId,
+        type,
+        content,
+        ...(op ? { op } : {}),
+      });
+    }
+  );
 
   // ---- stage the scene -------------------------------------------------
   for (const desc of stage.sceneConditions ?? []) {
@@ -474,12 +476,10 @@ export async function runStagedCase(
     });
 
     if (typeof actor.hp === "number") {
-      const cur = dgsm.getNpcStats(actor.npcId)?.hp ?? profile.status.hp;
-      dgsm.updateNpcHp(actor.npcId, actor.hp - cur);
+      dgsm.setCharacterField(actor.npcId, "hp", actor.hp);
     }
     if (typeof actor.san === "number") {
-      const cur = dgsm.getNpcStats(actor.npcId)?.san ?? profile.status.san;
-      dgsm.updateNpcSan(actor.npcId, actor.san - cur);
+      dgsm.setCharacterField(actor.npcId, "san", actor.san);
     }
     (actor.conditions ?? []).forEach((description, i) => {
       const condition: CharacterCondition = {
@@ -490,7 +490,7 @@ export async function runStagedCase(
       dgsm.addCharacterCondition(actor.npcId, condition);
     });
     for (const item of actor.items ?? []) {
-      dgsm.addItemToNpc(actor.npcId, { ...item } as Item);
+      dgsm.createItem(item.name, actor.npcId, item.description, item.id);
     }
 
     // Goal → long_term_intent, which reaches the prompt as one more line in
@@ -531,10 +531,9 @@ export async function runStagedCase(
       from: locationOf(dgsm, actor.npcId),
       to: "",
     };
-    const stats = dgsm.getNpcStats(actor.npcId);
     observation.vitals[actor.npcId] = {
-      hp: [stats?.hp ?? 0, 0],
-      san: [stats?.san ?? 0, 0],
+      hp: [profile.status.hp ?? 0, 0],
+      san: [profile.status.san ?? 0, 0],
     };
   }
 
@@ -1012,11 +1011,11 @@ export async function runStagedCase(
   // ---- final readings ---------------------------------------------------
   for (const actor of stage.actors) {
     observation.positions[actor.npcId].to = locationOf(dgsm, actor.npcId);
-    const stats = dgsm.getNpcStats(actor.npcId);
-    observation.vitals[actor.npcId].hp[1] = stats?.hp ?? 0;
-    observation.vitals[actor.npcId].san[1] = stats?.san ?? 0;
+    const profile = dgsm.getNpcProfile(actor.npcId);
+    observation.vitals[actor.npcId].hp[1] = profile?.status.hp ?? 0;
+    observation.vitals[actor.npcId].san[1] = profile?.status.san ?? 0;
     observation.conditionsAtEnd[actor.npcId] = (
-      dgsm.getNpcProfile(actor.npcId)?.status.conditions ?? []
+      profile?.status.conditions ?? []
     ).map((c) => (typeof c === "string" ? c : c.description));
   }
   for (const id of stagedItemIds) {

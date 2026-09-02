@@ -2,8 +2,8 @@
   "schemaVersion": 2,
   "id": "SCN_reyes_tommy",
   "name": "Tommy 的房间",
-  "description": "十三岁男孩的房间该有的乱这里都有:床没铺,地板上散着运动鞋和一副缠了红胶带的备用车把握把 [item.reyes_tommy.spare_grips],墙上钉着从杂志撕下来的 BMX 特技页。窗台内侧藏着一只旧果酱罐 [item.reyes_tommy.savings_jar],里面的硬币和皱钞票码得意外整齐——罐子上用胶布写着一个只有他自己懂的数字。床底下拖出半箱翻烂的漫画 [item.reyes_tommy.comic_stack],封面卷了角,页边有铅笔画的雷德利站铁丝网。房门 [SCN_reyes_living] 通向客厅,门内侧贴着一张手画的『禁止入内』告示,妈妈从来不理它。",
-  "parentLocationId": "LOC_reyes_house",
+  "description": "十三岁男孩的房间该有的乱这里都有:床 [item.reyes_tommy.bed] 没铺,被子堆成一团;地板上散着一双沾着红土的球鞋 [item.reyes_tommy.sneakers] 和一副缠了红胶带的备用车把握把 [item.reyes_tommy.spare_grips]。墙上钉着从杂志撕下来的 BMX 特技页 [item.reyes_tommy.bmx_pinups],旁边压着一张铅笔画的林子路线图 [item.reyes_tommy.trail_map]:林道口、灰溪、锯木厂,再往北全是问号。靠墙一张掉漆的旧课桌 [item.reyes_tommy.school_desk],抽屉里塞着橡皮筋、电池和一只手电筒 [item.reyes_tommy.flashlight];床头夹着一盏台灯 [item.reyes_tommy.clip_lamp],夜里看漫画用,听见走廊的脚步一把就能摁灭。床底下拖出半箱翻烂的漫画 [item.reyes_tommy.comic_stack],封面卷了角,页边有铅笔画的雷德利站铁丝网;箱子边上还压着一把生了锈的渔用折刀 [item.reyes_tommy.fathers_knife],刀柄上刻的名字缩写不是他的,他也从不提起它。朝后巷的那扇窗 [item.reyes_tommy.window] 插销早松了,推的时候得托住上框才不响,窗外墙根就摞着那几只木条箱。房门 [SCN_reyes_living] 通向客厅,门内侧贴着一张手画的『禁止入内』告示,妈妈从来不理它。",
+  "parentLocationId": "reyes_house",
   "indoor": true,
   "references": {
     "items": [
@@ -13,19 +13,63 @@
         "description": "一副缠着褪色红胶带的旧车把套,是摔坏那副的替换件,一直没装上,团在鞋堆里落灰。"
       },
       {
-        "id": "item.reyes_tommy.savings_jar",
-        "name": "攒钱罐",
-        "description": "旧果酱罐,硬币和皱钞票码得很整齐,胶布上写着一个目标数字。"
-      },
-      {
         "id": "item.reyes_tommy.comic_stack",
         "name": "漫画堆",
         "description": "半箱翻烂的漫画书,页边空白处有铅笔画的铁丝网和探险路线。"
+      },
+      {
+        "id": "item.reyes_tommy.bed",
+        "name": "床",
+        "description": "一张靠墙的单人床,床单皱成一团,被子从来只是往上一掀。床垫和墙之间的缝里塞着糖纸、断掉的鞋带和几张对折的纸条。"
+      },
+      {
+        "id": "item.reyes_tommy.sneakers",
+        "name": "球鞋",
+        "description": "一双帆布球鞋,鞋侧糊着一层林道的红土,鞋带打了个死结——他从来是整只脚硬蹬进去。鞋跟踩塌了,后帮上有一道被链条蹭出的黑印。"
+      },
+      {
+        "id": "item.reyes_tommy.bmx_pinups",
+        "name": "BMX 特技剪页",
+        "description": "从杂志上撕下来钉在墙上的几页彩图:腾空的车手、土坡赛道、一整版车把和牙盘的广告。有一页上用圆珠笔画了个圈,旁边写着一个价钱和一个感叹号。"
+      },
+      {
+        "id": "item.reyes_tommy.trail_map",
+        "name": "手画的林子路线图",
+        "description": "作业本纸上用铅笔画的地图,反复描粗过:林道口、灰溪的踏石、旧锯木厂,时间标在每一段旁边。锯木厂再往北是一片问号和一行写得很重的字——『总有一天』。"
+      },
+      {
+        "id": "item.reyes_tommy.school_desk",
+        "name": "旧课桌",
+        "description": "学校淘汰下来的掉漆木课桌,桌面刻着两代人的名字缩写。抽屉里是橡皮筋、几节还有电的电池、拆开的鞋盒和一卷电工胶带——修车和修对讲机的家当都在这儿。"
+      },
+      {
+        "id": "item.reyes_tommy.flashlight",
+        "name": "手电筒",
+        "description": "红色塑料壳的手电筒,尾盖用胶带缠着才不掉。光柱昏黄,电池省着用——夜里出门和在锯木厂里照黑角落全靠它。",
+        "isLightSource": true,
+        "lightLevel": 1
+      },
+      {
+        "id": "item.reyes_tommy.clip_lamp",
+        "name": "夹式台灯",
+        "description": "夹在床头栏杆上的一盏小台灯,灯罩被烤得发黄,开关就在手边——听见客厅那头的脚步声,一按就黑。",
+        "isLightSource": true,
+        "lightLevel": 1
+      },
+      {
+        "id": "item.reyes_tommy.fathers_knife",
+        "name": "渔用折刀",
+        "description": "一把刀身生了红锈的老折刀,开合已经很涩,木柄上刻着 R.R. 两个字母。是从父亲的东西里留下来的,压在漫画箱边上,他既不用它,也不肯拿走。"
+      },
+      {
+        "id": "item.reyes_tommy.window",
+        "name": "朝后巷的窗",
+        "description": "一扇朝后巷开的上下推拉窗,插销松了很久没修,推的时候托住上框就不会响。窗台外沿有几道鞋底蹭出的黑痕,底下墙根就是那摞木条箱——落下去只有半人高。"
       }
     ],
     "connections": [
       {
-        "id": "exit.reyes_tommy.door",
+        "id": "connection.reyes_tommy.door",
         "targetId": "SCN_reyes_living",
         "name": "房间门",
         "description": "通向客厅的门,内侧贴着手画的『禁止入内』告示。"

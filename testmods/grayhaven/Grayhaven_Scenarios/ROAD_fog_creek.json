@@ -2,20 +2,56 @@
   "schemaVersion": 2,
   "id": "ROAD_fog_creek",
   "name": "沼泽绕径",
-  "description": "雾谷与灰溪渡口之间的林径,要绕开一大片黑水沼泽,单程近两小时。谷侧的入口没在雾里 [SCN_fog_hollow],溪侧的出口开在渡口下游的柳丛后 [SCN_creek_ford]。绕行段横着倒木,泥浆能吞掉半只靴子,是整片林区最招人咒骂的一段路。",
+  "description": "雾谷与灰溪渡口之间的林径,要绕开一大片黑水沼泽,单程近两小时。谷侧的入口没在雾里 [SCN_fog_hollow],溪侧的出口开在渡口下游的柳丛后 [SCN_creek_ford]。整段路都贴着那片沼泽走,黑水面上浮着一层铁锈色的膜,看着结实,底下没有底 [item.fog_creek.black_bog]。出谷不远有一道冲沟,一根倒木横在上面当桥用,树皮早被踩秃了 [item.fog_creek.deadfall_bridge]。绕行段最烂的一截当年铺过圆木栈道,如今大半沉进泥里,只剩几根还露着背,踩得准才不会陷 [item.fog_creek.sunken_corduroy];栈道尽头的烂泥里立着一只旧胶靴,靴口朝天,谁也没能把它拔回去 [item.fog_creek.mired_boot]。再往前,一根界桩从中间折断,倒在蕨类里,漆掉得一点不剩 [item.fog_creek.snapped_post]。快到溪边时柳丛密得看不见人,得侧着身子挤过去,出来就是渡口下游的浅滩 [item.fog_creek.willow_thicket]。泥浆能吞掉半只靴子,这是整片林区最招人咒骂的一段路。",
   "parentLocationId": "OUTDOOR",
   "travelTimeMinutes": 110,
   "references": {
-    "items": [],
+    "items": [
+      {
+        "id": "item.fog_creek.black_bog",
+        "name": "黑水沼泽",
+        "description": "路一路贴着走的那片沼泽,水面浮着一层铁锈色的膜,芦苇和枯树桩从水里立出来;看着能落脚,踩下去没有底。"
+      },
+      {
+        "id": "item.fog_creek.deadfall_bridge",
+        "name": "当桥用的倒木",
+        "description": "架在一道冲沟上的一根倒木,树皮被踩得精光,中段有点弹性,过的时候会晃。",
+        "position": 0.2
+      },
+      {
+        "id": "item.fog_creek.sunken_corduroy",
+        "name": "沉进泥里的圆木栈道",
+        "description": "伐木年代在烂泥段铺的圆木栈道,横铺的圆木大半沉了,只剩几根露着脊背,湿的时候滑得站不住。",
+        "position": 0.4
+      },
+      {
+        "id": "item.fog_creek.mired_boot",
+        "name": "陷在泥里的旧胶靴",
+        "description": "一只齐膝的旧橡胶靴,靴口朝天陷在烂泥里,只露出半截筒身,拔了几次都没拔动,泥把它咬死了。",
+        "position": 0.45
+      },
+      {
+        "id": "item.fog_creek.snapped_post",
+        "name": "折断的界桩",
+        "description": "从中间折断、倒在蕨类里的一根木质界桩,漆和字都没了,只看得出是人立的东西。",
+        "position": 0.7
+      },
+      {
+        "id": "item.fog_creek.willow_thicket",
+        "name": "溪边的柳丛",
+        "description": "渡口下游一片密得看不见人的柳丛,枝条低垂,得侧着身子挤过去,出来就是浅滩。",
+        "position": 0.95
+      }
+    ],
     "connections": [
       {
-        "id": "exit.fog_creek.hollow_end",
+        "id": "connection.fog_creek.hollow_end",
         "targetId": "SCN_fog_hollow",
         "name": "东端(雾谷)",
         "role": "endpointA"
       },
       {
-        "id": "exit.fog_creek.creek_end",
+        "id": "connection.fog_creek.creek_end",
         "targetId": "SCN_creek_ford",
         "name": "西端(渡口)",
         "role": "endpointB"

@@ -1,0 +1,25 @@
+{
+  "schemaVersion": 2,
+  "id": "SCN_jackson_town",
+  "name": "杰克逊小镇",
+  "description": "木墙和瞭望塔围住了山谷里的杰克逊镇,大门内亮着成排的电灯,烟从覆雪的屋顶升起来。守门人认得巡逻队的马和装备,已经有人从门楼下来接应 [item.jackson_town.gate]。跨过这里就回到了有人值守的安全范围。回头沿县道向西南走,会回到风雪中的拐弯处 [SCN_county_road]。",
+  "parentLocationId": "OUTDOOR",
+  "references": {
+    "items": [
+      {
+        "id": "item.jackson_town.gate",
+        "name": "杰克逊镇大门",
+        "description": "厚木与钢梁加固的大门嵌在围墙之间,门楼上有人持枪值守。巡逻队靠近时,门内会有人核对暗号并牵马接应。"
+      }
+    ],
+    "connections": [
+      {
+        "id": "connection.jackson_town.county_road",
+        "targetId": "SCN_county_road",
+        "name": "返回县道",
+        "description": "从镇门沿县道向西南折返,回到山谷外的县道拐弯处。"
+      }
+    ],
+    "conditions": []
+  }
+}

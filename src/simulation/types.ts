@@ -15,6 +15,12 @@ export type SimulationEventType =
    *  not broadcast — it is per-character, and 28 paragraphs a tick would
    *  swamp the socket. */
   | "npc_perceived"
+  /** One character's own condensed account of their earlier paragraphs,
+   *  written when their stream passed the prompt budget. `data.coversThrough`
+   *  is the `gameDateTime` of the last paragraph it speaks for. Additive: the
+   *  paragraphs it covers stay in the log, and only the view handed to the
+   *  prompts is shortened. Not broadcast, for the same reason. */
+  | "npc_perception_compacted"
   | "npc_position_snapshot"
   | "playback_buffering"
   | "playback_resumed";
@@ -47,12 +53,6 @@ export interface SimulationConfig {
   tickIntervalMs?: number;
   maxDays?: number;
   stopEvents?: string[];
-  /** Deprecated: old playback release interval. Retained for runtime compatibility only. */
-  displayIntervalMs?: number;
-  /** Deprecated: old playback buffer size. Retained for runtime compatibility only. */
-  minBufferTicks?: number;
-  /** Deprecated: old fast-sim loop delay. Retained for runtime compatibility only. */
-  simulationDelayMs?: number;
   /** Sync game time to real wall-clock time */
   syncRealTime?: boolean;
   /** Buffer minutes ahead of real time (default 0). */

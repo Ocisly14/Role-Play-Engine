@@ -2,20 +2,50 @@
   "schemaVersion": 2,
   "id": "ROAD_fog_railbed",
   "name": "灌木穿径",
-  "description": "雾谷通往旧路基的两小时,几乎全程在齐肩的灌木里钻。谷侧的入口 [SCN_fog_hollow] 与路基侧的出口 [SCN_railbed] 之间没有一段舒展的路:树枝抽脸,方向感在灌木里被磨得一点不剩——直到那条笔直的路基突然出现在脚下。",
+  "description": "雾谷通往旧路基的两小时,几乎全程在齐肩的灌木里钻。谷侧的入口 [SCN_fog_hollow] 与路基侧的出口 [SCN_railbed] 之间没有一段舒展的路:树枝抽脸,方向感在灌木里被磨得一点不剩。头顶偶尔能瞥见一根锈成褐色的旧电话线,从一棵树牵到另一棵树,当年是伐木队接到路基上去的,中间断了好几处,可只要还找得着它,就还知道自己朝着哪边 [item.fog_railbed.phone_wire]。三分之一处横着一棵连根拔起的树,根盘立起来比人高,底下的坑积着水 [item.fog_railbed.deadfall]。再往前,一片荆棘上挂着一小块褪色的布,边缘是被硬扯下来的 [item.fog_railbed.snagged_cloth]。灌木里有一处稍微开阔的岔口,地上垒的石头已经被踢散了一半 [item.fog_railbed.fork_cairn]。最后一段脚下开始硌人,土里翻出一截锈成一块的废钢轨头 [item.fog_railbed.rail_offcut]——再往前,那条笔直的路基就突然出现在脚下了。",
   "parentLocationId": "OUTDOOR",
   "travelTimeMinutes": 120,
   "references": {
-    "items": [],
+    "items": [
+      {
+        "id": "item.fog_railbed.phone_wire",
+        "name": "旧伐木电话线",
+        "description": "从一棵树牵到另一棵树的一根旧单股电话线,锈成褐色,当年伐木队用来接通路基上的调度点。断了好几处,但顺着它走就不会走偏。"
+      },
+      {
+        "id": "item.fog_railbed.deadfall",
+        "name": "连根拔起的倒树",
+        "description": "横在路上的一棵连根倒下的树,根盘竖起来比人还高,根坑里积着一汪浑水。",
+        "position": 0.3
+      },
+      {
+        "id": "item.fog_railbed.snagged_cloth",
+        "name": "挂在荆棘上的布片",
+        "description": "一小块褪色的棉布,挂在齐肩高的荆棘上,边缘是硬扯断的毛边,已经被雨水洗得辨不出原色。",
+        "position": 0.45
+      },
+      {
+        "id": "item.fog_railbed.fork_cairn",
+        "name": "被踢散的石堆",
+        "description": "灌木里一处稍开阔的岔口边,原本垒起的石头散了一半,剩下的几块还叠着,看得出是人码的。",
+        "position": 0.6
+      },
+      {
+        "id": "item.fog_railbed.rail_offcut",
+        "name": "半埋的废钢轨头",
+        "description": "土里翻出来的一截钢轨断头,锈成一整块,是当年从路基上截下来随手扔的,踩上去硌脚。",
+        "position": 0.85
+      }
+    ],
     "connections": [
       {
-        "id": "exit.fog_railbed.hollow_end",
+        "id": "connection.fog_railbed.hollow_end",
         "targetId": "SCN_fog_hollow",
         "name": "西端(雾谷)",
         "role": "endpointA"
       },
       {
-        "id": "exit.fog_railbed.railbed_end",
+        "id": "connection.fog_railbed.railbed_end",
         "targetId": "SCN_railbed",
         "name": "东端(旧路基)",
         "role": "endpointB"

@@ -1,9 +1,8 @@
-import type http from "http";
+import type http from "node:http";
 import { randomUUID } from "node:crypto";
 import { WebSocket, WebSocketServer } from "ws";
 import { getPrismaClient } from "../../../src/shared/agents/memory/database/prismaClient.js";
 import { verifyToken } from "../auth/jwt.js";
-import { ServerState } from "../core/ServerState.js";
 import { handleClientMessage } from "./handlers.js";
 
 export interface WSClient {
@@ -73,10 +72,9 @@ export class WebSocketManager {
       }
 
       const creds = token ? this.verifyTokenCreds(token) : null;
-      const userId = creds?.userId ?? null;
       const email = creds?.email ?? null;
 
-      if (!userId || !email) {
+      if (!email) {
         ws.close();
         return;
       }
@@ -86,7 +84,7 @@ export class WebSocketManager {
         return;
       }
 
-      const owned = await this.isSessionOwnedByUser(sessionId, userId, email);
+      const owned = await this.isSessionOwnedByUser(sessionId, email);
       if (!owned) {
         ws.close();
         return;
@@ -132,9 +130,7 @@ export class WebSocketManager {
     );
 
     // Setup event handlers
-    ws.on("message", (data: Buffer) =>
-      handleClientMessage(data, client, this.clients)
-    );
+    ws.on("message", (data: Buffer) => handleClientMessage(data, client));
     ws.on("close", () => this.handleDisconnection(sessionId, ws));
     ws.on("error", (error) =>
       console.error(`[WebSocket] Error for client ${sessionId}:`, error)
@@ -162,42 +158,33 @@ export class WebSocketManager {
    * @param req - HTTP upgrade request
    * @returns Session ID or null if not found
    */
-  private extractSessionId(req: any): string | null {
+  private extractSessionId(req: http.IncomingMessage): string | null {
     return req.url?.split("sessionId=")[1]?.split("&")[0] || null;
   }
 
-  private extractToken(req: any): string | null {
+  private extractToken(req: http.IncomingMessage): string | null {
     return req.url?.split("token=")[1]?.split("&")[0] || null;
   }
 
-  private extractParam(req: any, name: string): string | null {
+  private extractParam(req: http.IncomingMessage, name: string): string | null {
     const regex = new RegExp(`${name}=([^&]*)`);
     const match = req.url?.match(regex);
     return match ? decodeURIComponent(match[1]) : null;
   }
 
-  private verifyTokenCreds(
-    token: string
-  ): { userId: string; email: string } | null {
+  private verifyTokenCreds(token: string): { email: string } | null {
     try {
       const payload = verifyToken(decodeURIComponent(token));
-      return { userId: payload.userId, email: payload.email };
-    } catch (error) {
+      return { email: payload.email };
+    } catch {
       return null;
     }
   }
 
   private async isSessionOwnedByUser(
     sessionId: string,
-    userId: string,
     email: string
   ): Promise<boolean> {
-    const serverState = ServerState.getInstance();
-    const activeState = serverState.getDynamicGameState(userId);
-    if (activeState?.sessionId === sessionId) {
-      return true;
-    }
-
     const prisma = getPrismaClient();
     const ownedSession = await prisma.session.findFirst({
       where: { sessionId, emailId: email },
@@ -248,10 +235,10 @@ export class WebSocketManager {
     clientId: string,
     client: WSClient
   ): void {
-    if (!this.simulationClients.has(sessionId)) {
-      this.simulationClients.set(sessionId, new Map());
-    }
-    this.simulationClients.get(sessionId)!.set(clientId, client);
+    const clients =
+      this.simulationClients.get(sessionId) ?? new Map<string, WSClient>();
+    clients.set(clientId, client);
+    this.simulationClients.set(sessionId, clients);
   }
 
   /**
@@ -284,7 +271,7 @@ export class WebSocketManager {
    */
   public close(): void {
     // Close all client connections
-    for (const [sessionId, client] of this.clients.entries()) {
+    for (const client of this.clients.values()) {
       if (client.ws.readyState === WebSocket.OPEN) {
         client.ws.close();
       }

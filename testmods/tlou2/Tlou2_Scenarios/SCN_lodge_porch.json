@@ -1,0 +1,48 @@
+{
+  "schemaVersion": 2,
+  "id": "SCN_lodge_porch",
+  "name": "旅馆门廊",
+  "description": "一条木头门廊沿着旅馆正面铺开,顶棚挡住了大半的雪,墙把风折了一道——这是外面唯一还站得住人的地方 [cond.lodge_porch.wind_break]。靠墙码着一垛劈好的柴,最上面一层是干的,说明有人今天才添过 [item.lodge_porch.firewood]。柴垛旁倒扣着一只铁皮桶,桶沿的雪被人蹭掉了一圈,像是常有人坐在上面 [item.lodge_porch.tin_bucket]。一盏马灯挂在门框边的钉子上,玻璃罩熏得发黄,火苗还在里面晃 [item.lodge_porch.lantern]。台阶下去就是车道 [SCN_lodge_drive];推开身后那扇厚木门,是旅馆的大厅 [SCN_lodge_greatroom]。",
+  "parentLocationId": "OUTDOOR",
+  "references": {
+    "items": [
+      {
+        "id": "item.lodge_porch.firewood",
+        "name": "码好的柴垛",
+        "description": "靠墙码到齐胸高的一垛劈柴。底下几层结了霜,最上面一层是干的,断口新鲜——有人在今天之内添过柴,而且是从屋里搬出来的顺序。"
+      },
+      {
+        "id": "item.lodge_porch.tin_bucket",
+        "name": "倒扣的铁皮桶",
+        "description": "柴垛旁一只倒扣的镀锌铁皮桶,桶底被坐得发亮,桶沿一圈的雪被蹭掉了。有人习惯坐在这儿,面朝车道。"
+      },
+      {
+        "id": "item.lodge_porch.lantern",
+        "name": "挂着的马灯",
+        "description": "一盏旧式煤油马灯挂在门框边的铁钉上,玻璃罩熏得发黄。灯还亮着,油还有半壶——挂在这儿是为了让外面的人找得到门。",
+        "isLightSource": true,
+        "lightLevel": 2
+      }
+    ],
+    "connections": [
+      {
+        "id": "connection.lodge_porch.drive",
+        "targetId": "SCN_lodge_drive",
+        "name": "门廊台阶",
+        "description": "三级木台阶,下去就是环形车道。"
+      },
+      {
+        "id": "connection.lodge_porch.greatroom",
+        "targetId": "SCN_lodge_greatroom",
+        "name": "旅馆正门",
+        "description": "一扇厚重的木门,门缝里透出火光和热气。"
+      }
+    ],
+    "conditions": [
+      {
+        "id": "cond.lodge_porch.wind_break",
+        "description": "背风处:顶棚和墙挡掉了大部分风雪,是外面唯一能站住人、听得清说话的地方。"
+      }
+    ]
+  }
+}

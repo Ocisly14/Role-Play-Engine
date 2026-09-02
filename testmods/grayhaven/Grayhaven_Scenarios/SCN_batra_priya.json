@@ -2,8 +2,8 @@
   "schemaVersion": 2,
   "id": "SCN_batra_priya",
   "name": "Batra 家·Priya 的房间",
-  "description": "房间一半是床铺,一半是工作台,分界线泾渭分明——床上乱,台上齐。台面正中是一台改装过的收音机[item.batra_priya.modified_radio],旋钮换过、外壳打了新孔,天线用晾衣铁丝接长,直伸到窗框外。旁边的焊台[item.batra_priya.soldering_station]收拾得和她父亲的一样规矩,烙铁架上还留着松香的余味。台角摊着那册「证据登记簿」[item.batra_priya.evidence_notebook],条目按 A、B、C 三级分类,字迹精确得像仪表读数。墙上钉着一张她手画的 KGRV 频段刻度表,铅笔标着几个打问号的位置。房门通向起居厨房[SCN_batra_living]。",
-  "parentLocationId": "LOC_batra_shop",
+  "description": "房间一半是床铺,一半是工作台,分界线泾渭分明——床上乱,台上齐:窄床[item.batra_priya.bed]的被子团在墙角,床沿搭着昨天的袜子;靠窗那张旧书桌[item.batra_priya.desk]却收拾得连一根线头都没有,桌角贴着一张用胶带补过的镇子简图。台面正中是一台改装过的收音机[item.batra_priya.modified_radio],旋钮换过、外壳打了新孔,天线用晾衣铁丝接长,直伸到窗框外。旁边的焊台[item.batra_priya.soldering_station]收拾得和她父亲的一样规矩,烙铁架上还留着松香的余味;焊台边摊着一台拆开的磁带录音机[item.batra_priya.recorder_project],机芯用零件盒垫着,还差一只压带轮就能接到收音机上去。台角摊着那册「证据登记簿」[item.batra_priya.evidence_notebook],条目按 A、B、C 三级分类,字迹精确得像仪表读数。一盏夹在桌沿的台灯[item.batra_priya.desk_lamp]压得很低,夜里守频段时只开这一盏,门缝里透出去的光不多。墙上钉着一张她手画的 KGRV 频段刻度表[item.batra_priya.band_chart],铅笔标着几个打问号的位置;底下的木箱上摞着一叠电子手册与旧杂志[item.batra_priya.tech_manuals],书脊都翻软了。房门通向起居厨房[SCN_batra_living]。",
+  "parentLocationId": "batra_shop",
   "indoor": true,
   "references": {
     "items": [
@@ -15,17 +15,49 @@
       {
         "id": "item.batra_priya.soldering_station",
         "name": "焊台",
-        "description": "小号的焊台和一盒分格零件,收拾得规规矩矩——手艺和秩序都随了 Dev。"
+        "description": "小号的焊台和一盒分格零件,收拾得规规矩矩——手艺和秩序都随了 Dev。零件多半是从楼下报废机箱上拆来的,这件事她没打算说。"
       },
       {
         "id": "item.batra_priya.evidence_notebook",
         "name": "证据登记簿",
-        "description": "一册硬皮登记簿,怪事按可复现性分级:A 级有记录,B 级有旁证,C 级是 Tommy 说的。每条都记着日期、地点和在场的人。"
+        "description": "一册硬皮登记簿,怪事按可复现性分级:A 级有记录,B 级有旁证,C 级是 Tommy 说的。每条都记着日期、地点和在场的人。出门时它在书包里,在家时摊在台角。"
+      },
+      {
+        "id": "item.batra_priya.bed",
+        "name": "窄床",
+        "description": "靠墙的一张窄床,被子团在墙角,枕头下压着一本图书馆的书。床底塞着一双沾着林子里泥的球鞋,鞋帮上的灰是昨天的。"
+      },
+      {
+        "id": "item.batra_priya.desk",
+        "name": "旧书桌",
+        "description": "靠窗的旧书桌,是楼下店堂淘汰下来的柜台改的,桌面钉了一层白铁皮不怕烫。桌角贴着一张用胶带补过的镇子简图,几个地名是后来才添上去的。"
+      },
+      {
+        "id": "item.batra_priya.desk_lamp",
+        "name": "夹式台灯",
+        "description": "夹在桌沿的一盏铁皮台灯,罩子压得很低,只照亮台面那一小圈。她夜里守频段时就开这一盏——门缝底下透出去的光不容易被大人注意到。",
+        "isLightSource": true,
+        "lightLevel": 2
+      },
+      {
+        "id": "item.batra_priya.recorder_project",
+        "name": "拆开的磁带录音机",
+        "description": "一台拆得只剩机芯的磁带录音机,外壳搁在一边,导线已经预留好接收音机的长度。差一只压带轮和一根皮带——凑齐了,她就能把那段杂音真正录下来。"
+      },
+      {
+        "id": "item.batra_priya.band_chart",
+        "name": "手画频段刻度表",
+        "description": "钉在墙上的一张手画刻度表,横轴是 KGRV 那一段频率,铅笔在几个位置上打了问号,旁边小字记着日期和时刻——全是晚上。"
+      },
+      {
+        "id": "item.batra_priya.tech_manuals",
+        "name": "电子手册与旧杂志",
+        "description": "木箱上摞着的一叠东西:一本翻软了的电路手册、几年份的《大众电子学》、一册收音机检修图集。空白处密密麻麻是她自己的批注。"
       }
     ],
     "connections": [
       {
-        "id": "exit.batra_priya.living_door",
+        "id": "connection.batra_priya.living_door",
         "targetId": "SCN_batra_living",
         "name": "房门",
         "description": "贴着「闲人免进」的房门,通向起居厨房。"

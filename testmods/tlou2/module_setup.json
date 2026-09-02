@@ -1,0 +1,14 @@
+{
+  "startDate": "2038-12-06",
+  "initialGameTime": "14:20",
+  "title": "Jackson, Wyoming — 没有名字的那一天",
+  "commonLanguage": "English",
+  "introduction": "2038 年 12 月,怀俄明的第一场大雪已经下了两天。杰克逊镇外的山脊上,风把能见度压到十步以内。一个从西边来的女人被感染者追散了队伍,退到坡顶时刀已经脱手;两个骑马巡逻的男人从林子里出来,枪响了三次,事情就结束了。三个人站在还冒着热气的尸体之间,谁也不认识谁。风还在刮,天要黑了,山下的路正在被雪填平。接下来的每一句话都是他们自己决定要不要说的。",
+  "weatherPresets": [
+    {
+      "regionId": "OUTDOOR",
+      "weatherType": "snow",
+      "intensity": 4
+    }
+  ]
+}

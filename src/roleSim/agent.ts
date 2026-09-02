@@ -21,6 +21,7 @@ export type RoleSimDecision =
       objectRefs: ActionObjectRef[];
       proposedDurationTicks: number;
       skillId?: string;
+      language?: string;
       utterance?: string;
     }
   | { tool: "continue"; reason?: string }

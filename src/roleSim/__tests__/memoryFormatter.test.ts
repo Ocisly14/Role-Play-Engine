@@ -64,7 +64,7 @@ describe("formatMemories", () => {
 
   it("keeps the location suffix out of the way of the ordering", () => {
     const withPlace = formatMemories([{ ...rows[0], location: "Mill Street" }]);
-    expect(withPlace).toContain("(map) at Mill Street The bakery");
+    expect(withPlace).toContain("(map, at Mill Street) The bakery");
   });
 });
 
@@ -80,5 +80,4 @@ describe("handles", () => {
     const alone = formatMemories([rows[3]]);
     expect(alone.startsWith("- #M44444444")).toBe(true);
   });
-
 });

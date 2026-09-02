@@ -25,6 +25,13 @@ import type { PerceivedBundle } from "./types.js";
 
 const RENDERER_OPERATION = "phase-g-perception-render";
 
+/** How many of the character's own prior paragraphs the renderer is shown.
+ *  A fixed window, not the whole stream: this block exists so the renderer
+ *  knows the room's standing furniture has already been described, and that
+ *  is a fact about the last few minutes. The stream itself stays whole in
+ *  NpcActionController — the character's own prompt still reads all of it. */
+const RENDER_HISTORY_WINDOW = 5;
+
 const SYSTEM_PROMPT = `You are the perception renderer for a tick-based simulation.
 
 Your only job: turn the events of one game tick into a first-person, sensory
@@ -38,10 +45,14 @@ commentary before or after it.
 # Citation tags
 
 Entities in your input carry a tag in square brackets — \`[stranger_a]\`,
-\`[ITEM_7]\`, \`[SCN_LIBRARY]\`. Write the tag into the narrative, right
-after the words that name the thing:
+\`[item.clinic_upstairs.gramophone]\`, \`[SCN_clinic_waiting]\`. Write the
+tag into the narrative, right after the words that name the thing:
 
-  The tall pale man [stranger_a] sets a brass key [ITEM_7] on the counter.
+  The tall pale man [stranger_a] winds the gramophone
+  [item.clinic_upstairs.gramophone] in the corner.
+
+A tag is a machine handle: **copy it character by character from
+your input.** 
 
 This is the ONLY way the character can point at anything: they act by citing
 a tag they read in your paragraph. An entity you leave untagged is an entity
@@ -54,10 +65,30 @@ they cannot touch, address or walk toward this minute.
   the room, so it never wears the room's tag. Nor does a lamp wear the tag of
   the street it stands on, or a wheel the tag of the cart.
 - An entity with no tag in your input is written with no tag.
-- A tag is not a name and never replaces the prose: write
-  "the tall pale man [stranger_a]", never "stranger_a walks in".
+- A tag follows the prose, it does not replace it: the words name the thing,
+  the bracket comes after them.
+- A bracket holds an id and nothing else — no description, no punctuation, no
+  words of your own, in any language.
 - Tag the things the character could plausibly act on this minute — the
-  people present, the items within reach.
+  people present, the items within reach, and the ways out.
+- Tagging is not inventory. An item the character could act on is citable
+  whether or not this paragraph names it; you do not owe every item a
+  mention every minute. Name a thing when it is NEW to the character, when
+  it CHANGED, or when they act on or look at it now — and then tag it. A
+  thing already described in an earlier paragraph and unchanged since is
+  left out, and the character can still cite it from before.
+
+# IDENTITY FIREWALL — STRANGER MEANS NAME UNKNOWN
+
+A tag beginning with \`stranger_\` is a hard information boundary. The
+viewpoint does NOT know that person's canonical name.
+
+- NEVER attach a canonical name to a \`stranger_*\` tag.
+- Refer to the person only by the description printed on their \`Person
+  (UNKNOWN)\` line: for example, \`the lean, taller man [stranger_abc123]\`.
+- If a name is audibly spoken, you may render the spoken word as dialogue,
+  but it still does not become the stranger's label unless the input marks
+  that person KNOWN.
 
 # Hard rules
 
@@ -74,6 +105,9 @@ they cannot touch, address or walk toward this minute.
 - Render only what the viewpoint can perceive RIGHT NOW: external sights, sounds,
   smells, touches, plus your own body/mind state. Do NOT mention memory,
   relationships, prior knowledge, or future plans.
+- The viewpoint's OWN conditions are always felt. Let them colour the whole
+  paragraph — what draws the eye, how the hands behave, what the body will not
+  do — never state them as a label, a diagnosis or a status line.
 - **When "Own action this tick" is present, the narrative MUST render it.**
   It is the one thing the viewpoint cannot fail to notice — their own hands.
   \`Ongoing:\` renders as what they are doing at this moment of it ("my knife
@@ -97,6 +131,18 @@ they cannot touch, address or walk toward this minute.
   the corner armchair", "he is still bent over the workbench"), never as a
   restated label, and never contradict it — do not put someone at the window
   who is at the workbench. It carries no bracket and never gets one.
+- **Where a person is decides how they can be rendered.** "People present in
+  your scene" are in the room with the viewpoint. Anyone listed under "Other
+  entities involved in events" is NOT — their \`Where they are\` line says
+  where, and the place's description below it says what lies between. A
+  person in the next place along reaches the viewpoint only as what crosses
+  the way between them: a voice through a door, a shape in a doorway, a
+  light under it. Never put them at the viewpoint's side, never let hands
+  cross — an object "handed over" between two places is passed at the
+  threshold, and a blanket in the next room is not tucked from this one. An
+  occurrence marked "NOT here" happened over there: render what of it
+  carries, not the scene itself. Get this wrong and the character will act
+  on a room they are not in.
 - For non-self entities, only render conditions that have an external sensory
   manifestation. Do not leak plot secrets, hidden allegiances, or any condition
   the viewpoint cannot perceive.
@@ -104,6 +150,14 @@ they cannot touch, address or walk toward this minute.
   them by the description-based identifier (e.g. "the tall pale man"), NEVER
   by their canonical name** — even if the canonical name leaks into the
   prompt via event text or your own prior actions.
+- **A character who might want to leave has to be told where this place
+  leads.** The ways out are listed for you; when the viewpoint is going
+  somewhere, or restless, or has just failed to set off, name at least the
+  one that serves them and tag it — a door rendered as scenery is a door they
+  cannot walk through, and they will stand in the room re-planning a route
+  they have no way to begin. A way out that is NOT in your input is one they
+  have not found: it does not exist for this paragraph, however plainly the
+  place seems to need one.
 - Do not invent new entities, items, or details that are not in the input.
 - If there are no events, describe scene + own state only.
 
@@ -112,29 +166,21 @@ they cannot touch, address or walk toward this minute.
 Input gives you:
   Person (UNKNOWN): the tall pale man  [stranger_a]
     Appearance: Tall, pale, with a long black overcoat and an ivory-handled cane.
+    Where they are in this place: by the door, hat still on
+  Items perceivable here:
+    - 留声机  [item.clinic_upstairs.gramophone]: 角落里的留声机，旁边码着歌剧唱片。
+    - 烟斗  [item.clinic_upstairs.pipe]: 窗台上一支从没点燃过的烟斗。
 
-Correct output:
-  The tall pale man [stranger_a] steps into the room and inclines his head,
-  the ivory head of his cane catching the lamplight.
+Write:
+  The tall pale man [stranger_a] is still by the door with his hat on, and I
+  cannot place him. The gramophone [item.clinic_upstairs.gramophone] in the
+  corner has run to the end of its side; the pipe on the sill
+  [item.clinic_upstairs.pipe] has not been touched since I set it there.
 
-WRONG (leaks the canonical name of someone the viewpoint has never met):
-  Professor Hollins steps into the room...
-
-WRONG (leaks a machine id that is not the given tag):
-  The tall pale man (Hollins) steps into the room...
-
-WRONG (tag swallowed the prose):
-  stranger_a steps into the room...
-
-WRONG (prose swallowed by the tag — the bracket holds an id and NOTHING else,
-no description, no punctuation, no words of your own, in any language):
-  我猛拽那位老工人[ITEM_SCN21_3旁的同伴]的手臂...
-  The old man [stranger_a, the one by the door] catches my arm...
-
-WRONG (the room's own tag hung on a fixture inside the room — the door is not
-the nave, and the actor who copies this points at the wrong thing):
-  探头凑近那道被钉死的暗门 [SCN_17_SUB_1]...
-  I lean toward the boarded-up door [SCN_17_SUB_1]...
+Every bracket in that paragraph was copied from the input character for
+character, sits directly after the words that name its thing, and holds
+nothing but the id. The man is "the tall pale man" because that is what the
+input calls him — a name would be one the viewpoint has not been told.
 
 Right: name the thing in your prose, then the bare id in a bracket after it.
 Nothing to cite? Then write it with no bracket — an entity the actor can see
@@ -154,6 +200,78 @@ interface CitationTags {
   items: Set<string>;
   /** Every tag the narrative may legally carry. */
   allowed: Set<string>;
+}
+
+export interface StrangerIdentity {
+  alias: string;
+  canonicalName: string;
+  description: string;
+}
+
+function canonicalNameVariants(name: string): string[] {
+  const whole = name.trim();
+  if (!whole) return [];
+  return [
+    ...new Set([
+      whole,
+      ...whole.split(/[\s\u00b7\u30fb]+/u).filter((part) => part.length > 1),
+    ]),
+  ].sort((a, b) => b.length - a.length);
+}
+
+function escapeRegExp(value: string): string {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+/**
+ * Canonical names used as the label for a stranger, e.g.
+ * `Tommy [stranger_a1b2c3]`. A spoken name elsewhere in the sentence is not
+ * a binding and remains audible; the forbidden part is asserting that the
+ * unknown face carrying this alias IS that named person.
+ */
+export function strangerCanonicalLabelViolations(
+  narrative: string,
+  identities: ReadonlyArray<StrangerIdentity>
+): string[] {
+  const violations: string[] = [];
+  for (const identity of identities) {
+    const alias = escapeRegExp(identity.alias);
+    for (const name of canonicalNameVariants(identity.canonicalName)) {
+      const pattern = new RegExp(
+        `(^|[^\\p{L}\\p{N}_])${escapeRegExp(name)}(?=\\s*\\[${alias}\\])`,
+        "gu"
+      );
+      if (pattern.test(narrative)) {
+        violations.push(`${name} [${identity.alias}]`);
+      }
+    }
+  }
+  return [...new Set(violations)];
+}
+
+/** Deterministic last line of defence when a renderer ignores the identity
+ * firewall even after corrective feedback. It changes only a canonical name
+ * directly bound to that stranger's alias; dialogue mentioning the same name
+ * elsewhere is preserved. */
+export function scrubStrangerCanonicalLabels(
+  narrative: string,
+  identities: ReadonlyArray<StrangerIdentity>
+): string {
+  let scrubbed = narrative;
+  for (const identity of identities) {
+    const alias = escapeRegExp(identity.alias);
+    for (const name of canonicalNameVariants(identity.canonicalName)) {
+      const pattern = new RegExp(
+        `(^|[^\\p{L}\\p{N}_])${escapeRegExp(name)}(?=\\s*\\[${alias}\\])`,
+        "gu"
+      );
+      scrubbed = scrubbed.replace(
+        pattern,
+        (_match, prefix: string) => `${prefix}${identity.description}`
+      );
+    }
+  }
+  return scrubbed;
 }
 
 function buildCitationTags(
@@ -177,6 +295,24 @@ function buildCitationTags(
   };
 }
 
+function buildStrangerIdentities(
+  dgsm: DynamicGameStateManager,
+  tags: CitationTags
+): StrangerIdentity[] {
+  const identities: StrangerIdentity[] = [];
+  for (const [realId, handle] of tags.characters) {
+    if (!handle.startsWith("stranger_")) continue;
+    const profile = dgsm.getNpcProfile(realId);
+    if (!profile?.name) continue;
+    identities.push({
+      alias: handle,
+      canonicalName: profile.name,
+      description: descriptionIdentifier(profile),
+    });
+  }
+  return identities;
+}
+
 /** `  [tag]` when the entity is citable, nothing when it is not — an
  *  untagged entity is one the actor can perceive but not act on. */
 function tag(id: string, tags: CitationTags, kind: "character" | "other") {
@@ -190,6 +326,106 @@ function tag(id: string, tags: CitationTags, kind: "character" | "other") {
 }
 
 const TAG_PATTERN = /\s*\[([^\]\n]{1,64})\]/g;
+
+/** Full-width brackets around something that reads as an id. Measured live in
+ *  a Chinese paragraph: `妈妈【npc_susan_holt】`. The renderer had copied the id
+ *  perfectly and only reached for the bracket its input method offered. */
+const WIDE_TAG_PATTERN = /[【［]([^】］\]\n]{1,64})[】］]/g;
+
+/** Fold `【id】` / `［id］` into `[id]`, so a tag written with a full-width
+ *  bracket is a tag and not prose. Runs before any tag is inspected: an
+ *  uninspected wide bracket sails past the strip and lands in the perception
+ *  stream as a tag the actor can read but never cite. The id inside is left
+ *  as written — whether it is real is the next stage's question. */
+export function normalizeTagBrackets(narrative: string): string {
+  return narrative.replace(WIDE_TAG_PATTERN, (_m, raw: string) => `[${raw}]`);
+}
+
+/** Levenshtein distance, iterative two-row. Tag ids are short (< 64 chars),
+ *  so the quadratic cost is nothing. */
+function editDistance(a: string, b: string): number {
+  if (a === b) return 0;
+  let prev = Array.from({ length: b.length + 1 }, (_, i) => i);
+  for (let i = 1; i <= a.length; i++) {
+    const row = [i];
+    for (let j = 1; j <= b.length; j++) {
+      row[j] = Math.min(
+        prev[j] + 1,
+        row[j - 1] + 1,
+        prev[j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1)
+      );
+    }
+    prev = row;
+  }
+  return prev[b.length];
+}
+
+/** How close a near miss must be before we treat it as the same id. */
+const NEAR_MISS_SIMILARITY = 0.9;
+/** ...and how much better than the runner-up, so an ambiguous pair is left
+ *  alone rather than resolved by a coin flip. */
+const NEAR_MISS_MARGIN = 0.05;
+
+/**
+ * Resolve a mistyped tag onto the id the renderer meant, or null.
+ *
+ * The renderer copies ids by hand and slips: `SCM_motel_porch` for
+ * `SCN_motel_porch` is one key away, and costs a whole corrective round trip
+ * to fix by asking. Matching it back is free.
+ *
+ * What this must NOT do is repair a tag into a DIFFERENT thing. Measured
+ * live: the renderer wrote `item.reyes_tommy_radio` for what the module calls
+ * `item.reyes_living.radio` — the living-room set, not Tommy's. That pair
+ * scores ~0.74 and is correctly refused; the one-key slip scores ~0.93 and is
+ * accepted. The margin check refuses anything with two plausible answers, so
+ * a near-tie is dropped the old way instead of guessed.
+ *
+ * Only ids the actor may actually cite are candidates, so this can never
+ * invent reach the boundary would not have granted.
+ */
+export function resolveNearMissTag(
+  candidate: string,
+  allowed: ReadonlySet<string>
+): string | null {
+  let best: { id: string; score: number } | null = null;
+  let runnerUp = 0;
+
+  for (const id of allowed) {
+    const longer = Math.max(candidate.length, id.length);
+    if (longer === 0) continue;
+    const score = 1 - editDistance(candidate, id) / longer;
+    if (!best || score > best.score) {
+      if (best) runnerUp = best.score;
+      best = { id, score };
+    } else if (score > runnerUp) {
+      runnerUp = score;
+    }
+  }
+
+  if (!best || best.score < NEAR_MISS_SIMILARITY) return null;
+  if (best.score - runnerUp < NEAR_MISS_MARGIN) return null;
+  return best.id;
+}
+
+/** Rewrite tags that are one slip away from a real id, before anyone counts
+ *  them as uncitable. Saves the corrective round trip the mistake would
+ *  otherwise cost, and leaves genuinely wrong tags untouched for it. */
+export function repairNearMissTags(
+  narrative: string,
+  allowed: ReadonlySet<string>,
+  npcId: string
+): string {
+  return narrative.replace(TAG_PATTERN, (match, raw: string) => {
+    const candidate = raw.trim();
+    if (allowed.has(candidate)) return match;
+    const resolved = resolveNearMissTag(candidate, allowed);
+    if (!resolved) return match;
+    console.warn(
+      `[renderer] ${npcId}: repaired near-miss tag "${candidate}" -> "${resolved}"`
+    );
+    return ` [${resolved}]`;
+  });
+}
 
 /** Drop any bracketed tag the actor could not legally cite. The renderer is a
  *  SMALL model copying ids by hand: an invented or mistyped tag would sail
@@ -247,6 +483,7 @@ export async function renderViaLLM(
   params: RenderViaLLMParams
 ): Promise<string> {
   const tags = buildCitationTags(params.npcId, params.dgsm);
+  const strangerIdentities = buildStrangerIdentities(params.dgsm, tags);
   const segments = buildUserPromptSegments(params, tags);
   const langName = params.language?.startsWith("zh") ? "Chinese" : "English";
 
@@ -279,8 +516,16 @@ export async function renderViaLLM(
       maxRetries: 2,
     });
 
-  let narrative = (await ask()).trim();
+  let narrative = repairNearMissTags(
+    normalizeTagBrackets((await ask()).trim()),
+    tags.allowed,
+    params.npcId
+  );
   const bad = uncitableTags(narrative, tags.allowed);
+  const identityViolations = strangerCanonicalLabelViolations(
+    narrative,
+    strangerIdentities
+  );
 
   // One corrective pass before falling back to stripping. A stripped tag is
   // not a broken tick — the prose survives — but it silently costs the
@@ -289,41 +534,78 @@ export async function renderViaLLM(
   // it invented. Observed: `[ITEM_SCN21_3旁的同伴]`, an id with a phrase of
   // narrative welded onto it, which no amount of re-reading the rules would
   // have caught but naming it plainly does.
-  if (bad.length > 0) {
+  if (bad.length > 0 || identityViolations.length > 0) {
     console.warn(
-      `[renderer] ${params.npcId}: uncitable ${bad.map((t) => `"${t}"`).join(", ")} — asking again`
+      `[renderer] ${params.npcId}: rejected output${
+        bad.length > 0
+          ? `; uncitable ${bad.map((t) => `"${t}"`).join(", ")}`
+          : ""
+      }${
+        identityViolations.length > 0
+          ? `; stranger-name binding ${identityViolations.map((v) => `"${v}"`).join(", ")}`
+          : ""
+      } — asking again`
     );
-    narrative = (
+    narrative = repairNearMissTags(
       await ask(
         [
           "\n\n# Your last attempt was rejected",
-          "You wrote " +
-            bad.map((t) => `[${t}]`).join(", ") +
-            " — not a citable id. A bracket holds an id and NOTHING else: no",
-          "description, no punctuation, no words of your own, in any language.",
-          "Name the thing in your prose and put the bare id in the bracket after",
-          "it, copied exactly from the address book above — or, if none of them",
-          "is the thing you mean, write it with no bracket at all.",
+          ...(bad.length > 0
+            ? [
+                `You wrote ${bad.map((t) => `[${t}]`).join(", ")} — not a citable id. A bracket holds an id and NOTHING else: no`,
+                "description, no punctuation, no words of your own, in any language.",
+                "Name the thing in your prose and put the bare id in the bracket after",
+                "it, copied exactly from the address book above — or, if none of them",
+                "is the thing you mean, write it with no bracket at all.",
+              ]
+            : []),
+          ...(identityViolations.length > 0
+            ? [
+                `You attached a canonical name to a stranger alias: ${identityViolations.join(", ")}. This crosses the IDENTITY FIREWALL.`,
+                "A stranger_* tag means the viewpoint does not know that person's name.",
+                "Replace the name with the description on the Person (UNKNOWN) line.",
+                "Do not infer identity from event text, action text, or prior paragraphs.",
+              ]
+            : []),
           "Rewrite the whole paragraph.",
         ].join("\n")
-      )
-    ).trim();
+      ).then((t) => normalizeTagBrackets(t.trim())),
+      tags.allowed,
+      params.npcId
+    );
   }
 
-  return stripUncitableTags(narrative, tags.allowed, params.npcId);
+  const citable = stripUncitableTags(narrative, tags.allowed, params.npcId);
+  const scrubbed = scrubStrangerCanonicalLabels(citable, strangerIdentities);
+  if (scrubbed !== citable) {
+    console.warn(
+      `[renderer] ${params.npcId}: scrubbed canonical name bound to stranger alias`
+    );
+  }
+  return scrubbed;
 }
 
-/** Three tiers, ordered so the cacheable prefix grows and never rewrites:
+/** Three tiers, cut by whether they MOVE — which is not the same as whether
+ *  their prefix is stable:
  *
  *   frozen   identity — byte-identical every tick this character renders
- *   growing  everything they have already been told they perceived, APPENDED
+ *   growing  the recent perception window
  *   volatile this minute
  *
- * The history is deliberately append-only rather than a sliding window. A
- * window of the last N moves its own first byte every tick, which invalidates
- * itself AND everything after it; an append-only list keeps the prefix of
- * length N byte-identical to what it was last tick, so the breakpoint at its
- * end is read rather than rewritten.
+ * The one breakpoint sits on `frozen`, and only there. An append-only block
+ * looks like the ideal place for one — the prefix is intact, so surely the
+ * cache reads it? It does, and then writes the now-longer prefix as a new
+ * entry, and the provider charges a cache WRITE for the whole thing rather
+ * than for the increment. Measured on the character's own prompt over 37
+ * calls with the breakpoint at the end of its growing block: 343k tokens read
+ * against 655k written, an effective 1.35x on content that costs 1.0x
+ * uncached (see userPromptBuilder.ts). This file kept that arrangement long
+ * after the other one dropped it, on top of a history that never stopped
+ * growing.
+ *
+ * So the history is a fixed window now (RENDER_HISTORY_WINDOW), and the
+ * segment holding it carries no breakpoint: bounded content at 1.0x beats
+ * unbounded content at 1.35x after about four ticks, and the gap only widens.
  */
 /** `--- 12-01 19:05 · 教堂主殿 ---`, the same stamp the character's own prompt
  *  uses, so a paragraph reads the same in both places. */
@@ -356,14 +638,40 @@ function buildUserPromptSegments(
   // What this character has already been told they perceived. Without it the
   // renderer reintroduces the room from scratch every minute — the oak doors,
   // the candle smoke, the ticking — because it cannot know it said all that
-  // two ticks ago.
-  const history = params.recentPerceptions ?? [];
+  // two ticks ago. The window is what that job needs and no more: a place's
+  // standing furniture was said within the last few minutes or it is stale
+  // anyway. Moving between places needs no special case — the new place's
+  // paragraphs push the old ones out on their own, and the mixed window in
+  // between is exactly the continuity a character carries through a door.
+  const history = (params.recentPerceptions ?? []).slice(
+    -RENDER_HISTORY_WINDOW
+  );
   if (history.length > 0) {
     const block = history
       .map((p) => `${stamp(p.gameDateTime, p.location, dgsm)}\n${p.narrative}`)
       .join("\n\n");
+    // The standing is what stops those old paragraphs being read as evidence.
+    // They carry the tags they carried then, and a character who has walked
+    // somewhere else since is looking at a block full of handles that were
+    // legal in a room they have left. Observed: Ray described his own room,
+    // moved to the front gate, and the render for the gate reached back into
+    // that paragraph for his tackle box — copied exactly, as instructed,
+    // from a place he was no longer standing in. Struck out downstream, at
+    // the cost of a whole corrective render.
     growing.push(
-      `# What you have already described\n${block}\n\nThe standing furniture of this place has been said. Write what CHANGED, what is new, and what you are doing now — do not re-introduce what is unchanged.`
+      `# What you have already described
+${block}
+
+These are paragraphs you wrote in earlier minutes, and some of them are
+about places this character has since left. They are here for CONTINUITY
+ONLY.They are not evidence about now.
+
+Tag only what appears in THIS minute's input.
+
+Write what CHANGED, what is new, and what they are doing now. An item these
+paragraphs already name stays off the page this minute unless it changed,
+moved, or the viewpoint's hands or eyes are on it now. A paragraph that
+re-lists the furniture is a paragraph that says nothing happened.`
     );
   }
 
@@ -406,13 +714,15 @@ function buildUserPromptSegments(
   }
 
   const segments: PromptSegment[] = [];
-  // No breakpoint on `frozen` alone: identity is ~2 lines, far under any
-  // provider's minimum cacheable prefix, and the system prompt already carries
-  // one. The breakpoint goes at the end of the history, where the prefix is
-  // both stable and worth caching.
-  segments.push({ text: frozen.join("\n\n"), cache: growing.length === 0 });
+  // The breakpoint goes here and nowhere else. Identity is ~2 lines on its
+  // own, but a cached prefix runs from the first byte of the request, so what
+  // this breakpoint actually holds is the system prompt plus those lines —
+  // and it holds them without moving. Everything after it moves every tick,
+  // and a breakpoint on moving content is charged as a write of the whole
+  // prefix, which is worse than not caching it at all.
+  segments.push({ text: frozen.join("\n\n"), cache: true });
   if (growing.length > 0) {
-    segments.push({ text: growing.join("\n\n"), cache: true });
+    segments.push({ text: growing.join("\n\n"), cache: false });
   }
   segments.push({ text: volatileParts.join("\n\n"), cache: false });
   return segments;
@@ -476,6 +786,18 @@ function formatScene(bundle: PerceivedBundle, tags: CitationTags): string {
       );
     }
   }
+  // The ways out. A character standing in a room learns them from here and
+  // nowhere else: their memories are about the town, not about which door of
+  // their own house opens where. Hidden passages never arrive — the
+  // perception resolver drops them until they are revealed.
+  if (bundle.scene.adjacentPlaces.length > 0) {
+    lines.push(
+      "Ways out of here (where this place leads; write the ones that matter to what the viewpoint is doing):"
+    );
+    for (const place of bundle.scene.adjacentPlaces) {
+      lines.push(`  - ${place.name}${tag(place.id, tags, "other")}`);
+    }
+  }
   return lines.join("\n");
 }
 
@@ -532,6 +854,17 @@ function collectOtherEntities(
       `Person (${knownTag}): ${identifier}${tag(charId, tags, "character")}`
     );
     if (profile.appearance) lines.push(`  Appearance: ${profile.appearance}`);
+    // They are in this section and not the one above BECAUSE they are not
+    // here. Say where, and how that place stands to this one, or the
+    // renderer reads a placeless participant as "in the room": measured as a
+    // mother kneeling at a bedside two rooms from where she stood.
+    const placeId = characterPlaceId(dgsm, charId);
+    if (placeId) {
+      lines.push(`  ${whereRelativeToHere(placeId, bundle, dgsm, tags)}`);
+      sceneIds.add(placeId);
+    } else {
+      lines.push("  Where they are: NOT here — somewhere you cannot see.");
+    }
     const conds = profile.status?.conditions ?? [];
     if (conds.length > 0) {
       lines.push("  Active conditions (render only externally perceivable):");
@@ -544,7 +877,13 @@ function collectOtherEntities(
   for (const sceneId of sceneIds) {
     const scene = dgsm.getScene(sceneId);
     if (!scene) continue;
-    lines.push(`Adjacent scene: ${scene.name}${tag(scene.id, tags, "other")}`);
+    const adjacent = bundle.scene.adjacentPlaces.some((p) => p.id === sceneId);
+    lines.push(
+      `${adjacent ? "Neighbouring place" : "Distant place"} (NOT where you are): ${scene.name}${tag(scene.id, tags, "other")}`
+    );
+    // The description is what lets the renderer reason about the geometry —
+    // a door with a towel under it, a porch open to the road — and so about
+    // what carries through and what does not.
     if (scene.description) lines.push(`  Description: ${scene.description}`);
   }
 
@@ -588,6 +927,39 @@ function formatOccurrences(
     .join("\n");
 }
 
+/** The place a character stands in: a scene id, or the road they walk. */
+function characterPlaceId(
+  dgsm: DynamicGameStateManager,
+  characterId: string
+): string | undefined {
+  const position = dgsm.getCharacterPosition(characterId) as
+    | { type: "scene"; sceneId: string }
+    | { type: "road"; roadId: string }
+    | null;
+  if (!position) return undefined;
+  return position.type === "scene" ? position.sceneId : position.roadId;
+}
+
+/** One line placing another place against the viewpoint's: the same place,
+ *  the next one along (with the way that joins them), or out of reach. */
+function whereRelativeToHere(
+  placeId: string,
+  bundle: PerceivedBundle,
+  dgsm: DynamicGameStateManager,
+  tags: CitationTags
+): string {
+  const name =
+    dgsm.getScene(placeId)?.name ??
+    dgsm.getTopology?.()?.roads.get(placeId)?.name ??
+    placeId;
+  if (placeId === bundle.scene.id) return "Where they are: here, with you.";
+  const adjacent = bundle.scene.adjacentPlaces.some((p) => p.id === placeId);
+  if (adjacent) {
+    return `Where they are: NOT here — in ${name}${tag(placeId, tags, "other")}, the next place along; only what carries through the way between (a voice, a light under the door, a figure in the doorway) reaches you, and nobody's hands cross it.`;
+  }
+  return `Where they are: NOT here — in ${name}${tag(placeId, tags, "other")}, out of sight and beyond earshot unless a signal below says otherwise.`;
+}
+
 function formatOccurrence(
   occ: Occurrence,
   bundle: PerceivedBundle,
@@ -599,7 +971,11 @@ function formatOccurrence(
     occ.locationId === bundle.scene.id
       ? "here"
       : occ.locationId
-        ? `at ${occ.locationId} (not your location)`
+        ? `NOT here — ${
+            bundle.scene.adjacentPlaces.some((p) => p.id === occ.locationId)
+              ? "in the next place along"
+              : "somewhere else"
+          } (${occ.locationId})`
         : "location unspecified";
   // By tag, never by real id: a participant the viewpoint does not know must
   // reach the narrative as `stranger_a`, not as the name behind it.

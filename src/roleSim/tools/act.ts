@@ -24,8 +24,7 @@ takes, how others react, what gets damaged. Never narrate outcomes as facts.
   walks you exactly as far as the route you state. Naming only a distant
   destination gets you only as far as your words carry; what you cannot
   describe, you do not know the way to.
-  To DRIVE a vehicle you must be sitting in it — the wheels will not turn
-  for someone standing beside it. Getting in is part of the attempt: say it
+  To DRIVE a vehicle you must be sitting in it. Getting in is part of the attempt: say it
   ("I climb into the cab, start the engine, and take the coast road...").
   Stepping out at the far end is its own choice, later.
 - \`objectRefs\` (required, may be empty \`[]\`): the entities your action
@@ -33,8 +32,7 @@ takes, how others react, what gets damaged. Never narrate outcomes as facts.
   \`{ "id": "<id>", "role"?: "target"|"tool"|"destination"|"recipient" }\`
   - \`id\` MUST be a bracketed tag from what you perceive this tick, copied
     exactly and without its brackets. Something you perceive with no tag is
-    something you cannot act on this minute; inventing an id gets the action
-    rejected.
+    something you cannot act on this minute. **Never invent an id**
   - \`role\` says how YOU use the entity: \`target\` (acted upon),
     \`tool\` (used to act), \`destination\` (moved toward),
     \`recipient\` (given/told something).
@@ -42,24 +40,21 @@ takes, how others react, what gets damaged. Never narrate outcomes as facts.
   minute) you expect or are willing to invest. This is YOUR estimate only —
   the engine sets the real duration and may shorten or extend it.
 - \`skillId\` (optional): the skill you consciously bring to bear, chosen
-  from the list the tool offers — the same 17 in the Skill catalog section.
+  from the list the tool offers.
   Declare it whenever your training is what you are relying on: talking
   someone round, moving unseen, forcing a lock, reading a document, landing
   a blow. **Omitting it is a choice with a cost.** An action with no
-  declared skill is settled on its own merits — your training counts for
-  nothing on it, and cannot be brought to bear afterwards.
-  Declare it even when you are poor at it. Missing a check costs you the
-  minutes and that particular angle, nothing more; only a genuine fumble
+  declared skill is settled on its own merits.
+  You can still declare it even when you are poor at it. Only a genuine fumble
   takes something lasting away. What you must not do is reach for an
-  unrelated skill you happen to be good at: the engine judges whether the
+  unrelated skill: the engine judges whether the
   skill fits what you actually described, and one that does not fit grants
-  nothing. You never supply values, difficulties or rolls.
+  nothing.
 - \`language\` (only with \`skillId: "Languages"\`): which tongue you are
   reading or speaking. "Languages" is a domain, not one number — name the
   language exactly as it is listed under **What you can do**. The tongues you
   grew up in are not a skill: to use one, declare no \`skillId\` at all and
-  simply speak. A tongue on neither list is one you do not have, and trying is
-  not a harder attempt — it is one you cannot make.
+  simply speak.
 - \`utterance\` (optional): the EXACT words you speak, verbatim, in your
   character's voice. Omit when you say nothing. Paraphrase goes in
   \`description\`; the literal line goes here.
@@ -75,11 +70,16 @@ you when it ends or when something interrupts.
 A pure body-language twitch (clearing your throat, shifting weight) is not
 an act — fold it into your next real action's description, or \`continue\`.
 
+One undertaking is what you are doing NOW — not a plan with a branch in it.
+"I wait a few more minutes, and if nothing comes I go back to my room" is
+two acts: the waiting, then a decision you have not made yet. The world runs
+the waiting and shows you what came of it; the going back is next minute's
+\`act\`, once you know. A "then" or an "if" in your description is a sign
+you are declaring two things — declare the first.
+
 ## In-flight actions
 
-Calling \`act\` while an action is in flight REPLACES it: the engine
-resolves the interruption of the old action (keeping partial progress) and
-the start of the new one together. You never need to cancel first.
+Calling \`act\` while an action is in flight will interrupt and REPLACES it: (keeping partial progress) and start a new one.
 
 ## Names vs ids
 
@@ -87,8 +87,7 @@ the start of the new one together. You never need to cancel first.
   you actually know in-game. If perception calls a stranger "the tall pale
   man", call them that.
 - \`objectRefs.id\` is the system handle for the same thing: the tag you
-  read in the narrative. Someone you know is tagged by their own id; a
-  stranger is tagged \`stranger_a\`, an alias that means nothing on its own
+  read in the narrative. Someone you know is tagged by their own id; an alias that means nothing on its own
   — the words it sits beside are what tell you which person it is. Either way
   it belongs in \`objectRefs\` and never in your prose.
 
@@ -98,8 +97,8 @@ Try a lock with a skill and a tool:
 act({
   "description": "I kneel at the cabinet and work the lock with my picks, listening for the tumblers.",
   "objectRefs": [
-    { "id": "cabinet_lock", "role": "target" },
-    { "id": "ITEM_SCN2_7", "role": "tool" }
+    { "id": "item.clinic_exam.cabinet", "role": "target" },
+    { "id": "item.susan.nurse_bag", "role": "tool" }
   ],
   "proposedDurationTicks": 3,
   "skillId": "Stealth & Security"
@@ -107,7 +106,7 @@ act({
 
 Speak to someone present:
 act({
-  "description": "I lean toward the tall pale man and press him quietly about tonight's discovery.",
+  "description": "I lean toward the tall pale man and press him quietly about what was found at the harbour.",
   "objectRefs": [ { "id": "stranger_a", "role": "target" } ],
   "proposedDurationTicks": 1,
   "utterance": "今晚到底发现了什么？地点和通报人？"
@@ -115,8 +114,8 @@ act({
 
 Head somewhere:
 act({
-  "description": "I set off through the drizzle toward the library, keeping to the lit side of the street.",
-  "objectRefs": [ { "id": "SCN_LIBRARY", "role": "destination" } ],
+  "description": "I set off through the drizzle toward the clinic, keeping to the lit side of the street.",
+  "objectRefs": [ { "id": "SCN_clinic_waiting", "role": "destination" } ],
   "proposedDurationTicks": 12
 })
 `;

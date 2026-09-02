@@ -2,20 +2,51 @@
   "schemaVersion": 2,
   "id": "ROAD_redwood_fence",
   "name": "围栏爬径",
-  "description": "从红杉环向北的最后一段爬升,两小时十分钟。起点在红杉环的北缘 [SCN_redwood_ring],尽头撞上一道链网围栏 [SCN_fence]。越靠北,林子越静;鸟叫在某个说不清的位置停下之后,就再没有响起过。",
+  "description": "从红杉环向北的最后一段爬升,两小时十分钟。起点在红杉环的北缘 [SCN_redwood_ring],尽头撞上一道链网围栏 [SCN_fence]。开头一段路边埋着一块铁地锚,一段钢缆从锚眼里伸出来,朝北拉进林子,走出十几步就再也找不着它 [item.redwood_fence.cable_anchor]。坡陡起来之后,一棵倒木斜横在路上,树干上被踩出一道发亮的凹槽,踩着过去比绕过去快 [item.redwood_fence.deadfall]。半途一块石头底下渗出一汪泉,水凉得手发麻,再往北就没有水了 [item.redwood_fence.last_spring]。过了泉不久是一个老岔口,石堆还在,另一条岔路早被灌木封死,拨开也看不出通向哪儿 [item.redwood_fence.blocked_fork]。最后一段的路牌掉在草里,字朝下,桩子空着立在原处 [item.redwood_fence.fallen_sign]。越靠北,林子越静;鸟叫在某个说不清的位置停下之后,就再没有响起过。",
   "parentLocationId": "OUTDOOR",
   "travelTimeMinutes": 130,
   "references": {
-    "items": [],
+    "items": [
+      {
+        "id": "item.redwood_fence.cable_anchor",
+        "name": "索道地锚",
+        "description": "埋在路边土里的一块铁质地锚,一段钢缆从锚眼里伸出来朝北拉进林子,走出十几步就被腐叶和灌木吃掉,再也找不着。",
+        "position": 0.2
+      },
+      {
+        "id": "item.redwood_fence.deadfall",
+        "name": "陡坡上的倒木",
+        "description": "斜横在陡坡路面上的一棵倒木,树干上被过路的脚踩出一道发亮的凹槽;踩着过去比绕开快,湿了就滑。",
+        "position": 0.35
+      },
+      {
+        "id": "item.redwood_fence.last_spring",
+        "name": "石下的泉眼",
+        "description": "一块大石头底下渗出的一汪泉,水凉得手发麻,浅但清。这是这条路上最后一处水源,再往北一路干到围栏。",
+        "position": 0.5
+      },
+      {
+        "id": "item.redwood_fence.blocked_fork",
+        "name": "封死的老岔口",
+        "description": "一处早年的岔口,路边的石堆还在,分出去的那条路已经被灌木和倒枝封死,拨开也看不出通向哪儿。",
+        "position": 0.65
+      },
+      {
+        "id": "item.redwood_fence.fallen_sign",
+        "name": "掉在草里的路牌",
+        "description": "一块从桩子上掉下来、字面朝下扣在草里的木牌,桩子还空着立在原处;翻过来能看清上面写了什么。",
+        "position": 0.8
+      }
+    ],
     "connections": [
       {
-        "id": "exit.redwood_fence.redwood_end",
+        "id": "connection.redwood_fence.redwood_end",
         "targetId": "SCN_redwood_ring",
         "name": "南端(红杉环)",
         "role": "endpointA"
       },
       {
-        "id": "exit.redwood_fence.fence_end",
+        "id": "connection.redwood_fence.fence_end",
         "targetId": "SCN_fence",
         "name": "北端(围栏)",
         "role": "endpointB"

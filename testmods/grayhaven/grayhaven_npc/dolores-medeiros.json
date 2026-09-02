@@ -44,28 +44,28 @@
   },
   "inventory": [
     {
-      "id": "dolores_order_book",
+      "id": "item.dolores.order_book",
       "name": "蓝鸟餐馆账本",
       "properties": {
         "note": "记录供货、赊账、节庆订单和她绝不肯承认的额外加餐。"
       }
     },
     {
-      "id": "dolores_recipe_box",
+      "id": "item.dolores.recipe_box",
       "name": "家传食谱盒",
       "properties": {
         "note": "装着葡式炖鱼汤、蛋挞和已褪色的家族食谱卡。"
       }
     },
     {
-      "id": "dolores_coffee_pot",
+      "id": "item.dolores.coffee_pot",
       "name": "不锈钢咖啡壶",
       "properties": {
         "note": "她认为一壶热咖啡足以阻止镇子散架。"
       }
     },
     {
-      "id": "dolores_manny_photo",
+      "id": "item.dolores.manny_photo",
       "name": "Manny 的旧照片",
       "properties": {
         "note": "照片里的丈夫穿着渔民毛衣，背面有她的手写日期。"

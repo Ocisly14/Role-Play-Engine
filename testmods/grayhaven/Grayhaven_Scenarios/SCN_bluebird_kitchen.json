@@ -2,41 +2,91 @@
   "schemaVersion": 2,
   "id": "SCN_bluebird_kitchen",
   "name": "蓝鸟餐馆·后厨",
-  "description": "后厨窄而热,钢面操作台擦得能照出人影,炖鱼汤在灶上小火咕嘟,油和糖的香气分踞两端。墙上香料架的正中是一只小豆蔻铁罐[item.bluebird_kitchen.spice_tin]——Anita 的领地就从那只罐子向外延伸。那台漆皮剥落的老烤箱[item.bluebird_kitchen.old_oven]边,架子上晾着成排的蛋挞烤模[item.bluebird_kitchen.tart_tray],锡皮被几千炉蛋挞烤出了暗金色。弹簧门通回堂座[SCN_bluebird_dining],门上的小圆窗正好望见柜台;角落一段陡楼梯通向楼上 Dolores 的住处[SCN_bluebird_upstairs],楼梯口挂着她换下的围裙[item.bluebird_kitchen.dolores_apron]。",
-  "parentLocationId": "LOC_bluebird_diner",
+  "description": "后厨窄而热,一条钢面备菜台从门口一直伸到墙角,擦得能照出人影[item.bluebird_kitchen.prep_table],台角的木刀座里插着一排木柄厨刀[item.bluebird_kitchen.knife_block],刃口天天上油。靠墙的六头煤气灶火苗压得很低[item.bluebird_kitchen.range],最大的那口铸铁汤锅里,炖鱼汤咕嘟了整个上午[item.bluebird_kitchen.stew_pot],油和糖的香气分踞后厨两端。灶边那台漆皮剥落的老烤箱[item.bluebird_kitchen.old_oven]是 Anita 的领地,架子上晾着成排的蛋挞烤模[item.bluebird_kitchen.tart_tray],锡皮被几千炉蛋挞烤出了暗金色;烤箱上方的香料架上,大小铁罐按她自己的次序码得一格不乱[item.bluebird_kitchen.spice_rack]。对面一台立式冷柜嗡嗡作响[item.bluebird_kitchen.cooler],门封条老了,得用胯顶一下才关得严;旁边的干货架上堆着砂糖、罐头、米袋和一麻袋咖啡豆[item.bluebird_kitchen.pantry_shelf]。三格水槽泡碗的那一格常年不见底[item.bluebird_kitchen.dish_sink],上方墙上钉着一具红漆掉角的灭火器[item.bluebird_kitchen.extinguisher],压力表指针还在绿区。传菜窗口上方悬着挂单转盘[item.bluebird_kitchen.order_wheel],堂座的单子夹上去转半圈就到了灶前;窗台上一台小收音机整天开着 KGRV[item.bluebird_kitchen.kitchen_radio],近来老串进一阵沙沙声,拍两下就好,过一会儿又来。弹簧门通回堂座[SCN_bluebird_dining],门上的小圆窗正好望见柜台;角落一段陡楼梯通向楼上 Dolores 的住处[SCN_bluebird_upstairs],楼梯口挂着她换下的围裙[item.bluebird_kitchen.dolores_apron]。",
+  "parentLocationId": "bluebird_diner",
   "indoor": true,
   "references": {
     "items": [
       {
-        "id": "item.bluebird_kitchen.spice_tin",
-        "name": "小豆蔻铁罐",
-        "description": "香料架正中的小豆蔻铁罐,盖子内侧用古吉拉特文写着一行小字。Anita 的曲奇和蛋挞都从这罐子里开始。"
-      },
-      {
         "id": "item.bluebird_kitchen.tart_tray",
         "name": "蛋挞烤模",
-        "description": "成排的锡皮蛋挞烤模,用了不知多少年,烤出一层暗金色的旧光。"
+        "description": "成排的锡皮蛋挞烤模,是餐馆的家什,用了不知多少年,烤出一层暗金色的旧光。"
       },
       {
         "id": "item.bluebird_kitchen.old_oven",
         "name": "老烤箱",
-        "description": "占了半面墙的老式烤箱,搪瓷漆皮边角剥落,炉门把手被握得发亮,一开炉门就涌出一股焦糖香。"
+        "description": "占了半面墙的老式烤箱,搪瓷漆皮边角剥落,炉门把手被握得发亮,一开炉门就涌出一股焦糖香。温控旋钮早就不准,Anita 靠手背试火。"
       },
       {
         "id": "item.bluebird_kitchen.dolores_apron",
         "name": "Dolores 的围裙",
         "description": "楼梯口钉子上挂着的一条浆过的围裙,前襟沾着洗不掉的油渍和粉迹,是 Dolores 下工后随手换下的那件。"
+      },
+      {
+        "id": "item.bluebird_kitchen.prep_table",
+        "name": "钢面备菜台",
+        "description": "一条不锈钢面的长备菜台,台面被刀口划得密密麻麻却擦得反光,底下一层敞架码着搪瓷盆、砧板和摞起来的白瓷盘。切配、揉面、装盘都在这儿完成。"
+      },
+      {
+        "id": "item.bluebird_kitchen.knife_block",
+        "name": "厨刀与刀座",
+        "description": "台角一只木刀座,插着片刀、剔骨刀和一把磨得只剩半宽的老鱼刀——那把是从外祖父母的咖啡馆传下来的,只有 Dolores 用它剖鱼。"
+      },
+      {
+        "id": "item.bluebird_kitchen.range",
+        "name": "六头煤气灶",
+        "description": "靠墙的铸铁六头煤气灶,一头的点火器坏了得划火柴,灶面油渍擦得发白。上方是一具吸满油的抽油烟罩,风机一开整个后厨说话都得喊。"
+      },
+      {
+        "id": "item.bluebird_kitchen.stew_pot",
+        "name": "铸铁汤锅",
+        "description": "灶上最大的一口铸铁锅,炖鱼汤从早上文火煨到打烊,锅沿结着一圈陈年的琥珀色汤垢。锅里的方子是手抄食谱上那一页,Dolores 闭着眼也能配。"
+      },
+      {
+        "id": "item.bluebird_kitchen.spice_rack",
+        "name": "香料架",
+        "description": "烤箱上方一整排木格香料架,大小铁罐和玻璃瓶按 Anita 自己的次序码得一格不乱——葡式的月桂、红椒粉挨着她从家里带来的那一路香料。谁动乱了她一眼就看得出来。"
+      },
+      {
+        "id": "item.bluebird_kitchen.cooler",
+        "name": "立式冷柜",
+        "description": "对着灶台的一台白漆立式冷柜,压缩机嗡嗡作响,门封条老化了得用胯顶一下才关严。里头是黄油、鸡蛋、当天没卖完的鱼和一盘留给 Anita 的蛋挞。"
+      },
+      {
+        "id": "item.bluebird_kitchen.pantry_shelf",
+        "name": "干货架",
+        "description": "墙角一组敞口木架,砂糖、罐头、米袋、一麻袋咖啡豆和成摞的纸巾按用量排开。最下一层压着账期的送货单,穿在一根铁钉上。"
+      },
+      {
+        "id": "item.bluebird_kitchen.dish_sink",
+        "name": "三格水槽",
+        "description": "洗、涮、消毒各一格的老式三格水槽,龙头漏水滴了多年,底下的水泥地磨出一片浅坑。泡碗的那一格常年不见底。"
+      },
+      {
+        "id": "item.bluebird_kitchen.extinguisher",
+        "name": "灭火器",
+        "description": "水槽上方墙上钉着的一具干粉灭火器,红漆掉了角,标签上的年检日期糊了,压力表指针还在绿区。装它那年后厨着过一次小火,从此谁都知道它在哪儿。"
+      },
+      {
+        "id": "item.bluebird_kitchen.order_wheel",
+        "name": "挂单转盘",
+        "description": "传菜窗口上方一只铝制转盘,堂座的点单纸条夹上去转半圈就到了灶前。忙起来纸条挂满一圈,Dolores 从窗口喊一嗓子比转盘还快。"
+      },
+      {
+        "id": "item.bluebird_kitchen.kitchen_radio",
+        "name": "后厨收音机",
+        "description": "窗台上一台掉了旋钮的小台式收音机,整天开着 KGRV,音量压过抽油烟机一点点。近来老串进一阵沙沙声,拍两下机壳就好,过一会儿又来。"
       }
     ],
     "connections": [
       {
-        "id": "exit.bluebird_kitchen.dining_door",
+        "id": "connection.bluebird_kitchen.dining_door",
         "targetId": "SCN_bluebird_dining",
         "name": "弹簧门",
         "description": "带小圆窗的弹簧双开门,通回堂座。"
       },
       {
-        "id": "exit.bluebird_kitchen.stairs_up",
+        "id": "connection.bluebird_kitchen.stairs_up",
         "targetId": "SCN_bluebird_upstairs",
         "name": "后楼梯",
         "description": "角落的陡楼梯,通向楼上 Dolores 的住处。"

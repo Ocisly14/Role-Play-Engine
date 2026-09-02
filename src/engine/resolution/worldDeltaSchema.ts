@@ -91,6 +91,23 @@ export interface RawItemChange extends RawSourcedDelta {
   itemId?: string;
 }
 
+/** One declared sanity check, riding on the occurrence whose perception
+ *  caused it. The model declares; code rolls. A PASSED check costs nothing at
+ *  all, so there is only a failure loss — no success/failure pair. */
+export interface RawSanityCheck {
+  characterId: string;
+  /** Dice formula for the loss on a FAILED check, e.g. "1", "1d4", "1d10". */
+  failureLoss: string;
+  /** Candidate severe impairment if the failed roll actually loses at least
+   *  5 SAN. Lesser losses change SAN but do not create a condition. */
+  consequence?: {
+    /** Objective signs and the major impairment they cause. */
+    description: string;
+    /** Whole in-world minutes; becomes the condition's `expiresAt`. */
+    durationMinutes: number;
+  };
+}
+
 export interface RawOccurrence {
   sourceActionIds: string[];
   locationId?: string;
@@ -114,6 +131,7 @@ export interface RawOccurrence {
     originLocationId?: string;
     intensity?: number;
   }>;
+  sanityChecks?: RawSanityCheck[];
 }
 
 export interface RawTickResolution {
@@ -149,24 +167,77 @@ export interface OperationSpec {
   kinds: string[];
   /** Field list exactly as the model should write it, `kind` excluded. */
   fields: string;
+  /** The same fields as a strict-compatible JSON Schema fragment, `kind`
+   *  excluded. `opSchema` turns each row into one `anyOf` branch, so the
+   *  prose the model reads and the grammar the provider enforces come from
+   *  one table and cannot disagree. Every nested object must close with
+   *  `additionalProperties: false`; no `minimum`/`maximum`/`pattern`. */
+  schema: {
+    properties: Record<string, unknown>;
+    required?: string[];
+  };
 }
 
+const STR = { type: "string" } as const;
+const BOOL = { type: "boolean" } as const;
+const STR_LIST = { type: "array", items: STR } as const;
+
 export const CHARACTER_OPS: OperationSpec[] = [
-  { kinds: ["hp", "san", "fatigue"], fields: "delta:number, reason:string" },
   {
+    kinds: ["hp", "san", "fatigue"],
+    fields: "delta:number, reason:string",
+    schema: {
+      properties: { delta: { type: "integer" }, reason: STR },
+      required: ["delta", "reason"],
+    },
+  },
+  {
+    // Scene only. A road position carries a fraction along the road that only
+    // the movement runtime knows how to set; a `position` op that stood a
+    // character on a road left the fraction out, and the next route planned
+    // from there was NaN and took the whole tick down with it.
     kinds: ["position"],
-    fields: 'position:{type:"scene"|"road", sceneId|roadId}',
+    fields:
+      'position:{type:"scene", sceneId:string} — a displacement that is NOT a walk: boarding or leaving a vehicle (its interior scene), or the consequence of an act that moves a body without a route — out through a window, carried off, dragged, thrown, fallen through. NEVER for going somewhere: a character who walks, runs, sneaks, rides or crawls to another place gets `movement.route` on the action, and this op is refused in your head before it is written. A road is walked, never assigned',
+    schema: {
+      properties: {
+        position: {
+          type: "object",
+          properties: { type: { const: "scene" }, sceneId: STR },
+          required: ["type", "sceneId"],
+          additionalProperties: false,
+        },
+      },
+      required: ["position"],
+    },
   },
   {
     kinds: ["spot"],
     fields:
       'spot:string — where in the place they now are, one short phrase; "" clears it',
+    schema: { properties: { spot: STR }, required: ["spot"] },
   },
   {
     kinds: ["addCondition"],
-    fields: "condition:{id:string, description:string}",
+    fields:
+      "condition:{id:string, description:string} — description must state an objective, persistent, independently observable/verifiable state and the important mental or physical function it makes impossible or severely impairs; never a thought, feeling, mood, attitude, opinion, suspicion, relationship stance, or recognition",
+    schema: {
+      properties: {
+        condition: {
+          type: "object",
+          properties: { id: STR, description: STR },
+          required: ["id", "description"],
+          additionalProperties: false,
+        },
+      },
+      required: ["condition"],
+    },
   },
-  { kinds: ["removeCondition"], fields: "conditionId:string" },
+  {
+    kinds: ["removeCondition"],
+    fields: "conditionId:string",
+    schema: { properties: { conditionId: STR }, required: ["conditionId"] },
+  },
   // No `relationship`. What one character thinks of another is theirs to
   // write, through `writeMemory`, and nothing is recorded on their behalf.
   // The Engine had an operation for it, and it did exactly the damage that
@@ -177,37 +248,89 @@ export const CHARACTER_OPS: OperationSpec[] = [
 
 export const SCENE_OPS: OperationSpec[] = [
   {
+    // `mechanicalEffect` is not offered: it is a skill-penalty MAP, which a
+    // strict schema cannot express, the validator never read it, and only
+    // subsystems (fire, sun, stamina) set one — in code.
     kinds: ["addCondition"],
-    fields:
-      "condition:{description:string, featureId?:string, mechanicalEffect?:object}",
+    fields: "condition:{description:string, featureId?:string}",
+    schema: {
+      properties: {
+        condition: {
+          type: "object",
+          properties: { description: STR, featureId: STR },
+          required: ["description"],
+          additionalProperties: false,
+        },
+      },
+      required: ["condition"],
+    },
   },
   {
     kinds: ["removeCondition"],
     fields:
       "predicate:{id?:string, featureId?:string} — at least one; id removes that one condition, featureId removes every condition that feature owns",
+    schema: {
+      properties: {
+        predicate: {
+          type: "object",
+          properties: { id: STR, featureId: STR },
+          additionalProperties: false,
+        },
+      },
+      required: ["predicate"],
+    },
   },
   {
     kinds: ["setDescription"],
     fields:
       "description:string — REPLACES the place's whole prose; keep every still-true [reference-id] citation, drop citations to things no longer visibly here",
+    schema: { properties: { description: STR }, required: ["description"] },
   },
   {
     kinds: ["connectionBlock"],
     fields: "connectionId:string, blocked:boolean, reason:string",
+    schema: {
+      properties: { connectionId: STR, blocked: BOOL, reason: STR },
+      required: ["connectionId", "blocked", "reason"],
+    },
+  },
+  {
+    kinds: ["connectionDiscovered"],
+    fields:
+      "connectionId:string, characterIds:string[] — these characters have FOUND a concealed passage. List EVERYONE who could see it happen, not just whoever acted: from now each of them perceives it and may use it, and it stays shut for everyone else. Only for a connection that is hidden. To open it for the whole world instead (a door forced, a wall broken) use connectionHidden with hidden:false",
+    schema: {
+      properties: { connectionId: STR, characterIds: STR_LIST },
+      required: ["connectionId", "characterIds"],
+    },
   },
   {
     kinds: ["connectionHidden"],
     fields:
       "connectionId:string, hidden:boolean — false reveals a concealed exit, true conceals one",
+    schema: {
+      properties: { connectionId: STR, hidden: BOOL },
+      required: ["connectionId", "hidden"],
+    },
   },
   {
     kinds: ["environmentContribute"],
     fields:
       'quantity:"temperature"|"illumination"|"oxygen"|"noise", value:number',
+    schema: {
+      properties: {
+        quantity: {
+          type: "string",
+          enum: ["temperature", "illumination", "oxygen", "noise"],
+        },
+        value: { type: "number" },
+      },
+      required: ["quantity", "value"],
+    },
   },
   {
     kinds: ["environmentHazard"],
     fields: "add?:string[], remove?:string[]",
+    schema: { properties: { add: STR_LIST, remove: STR_LIST } },
   },
 ];
 
@@ -228,21 +351,36 @@ export const ITEM_OPS: OperationSpec[] = [
     kinds: ["create"],
     fields:
       'name:string, location:<"scene:<placeId>" or characterId>, description?:string, id?:string — stable id; must be unused; omit to auto-generate; ALWAYS pass one for non-Latin names',
+    schema: {
+      properties: { name: STR, location: STR, description: STR, id: STR },
+      required: ["name", "location"],
+    },
   },
   {
     kinds: ["move"],
     fields:
       'from:<current holder, exactly as the Items section shows it>, to:<"scene:<placeId>" for a place — a vehicle interior scene included — or a bare characterId> (one holder grammar, same as create.location). If the FROM place\'s prose cites this item, the same submission must rewrite that description (scene setDescription) — the prose must not keep pointing at what left',
+    schema: { properties: { from: STR, to: STR }, required: ["from", "to"] },
   },
   {
     kinds: ["destroy"],
     fields:
       "(no fields). If the holder place's prose cites this item, the same submission must rewrite that description (scene setDescription)",
+    schema: { properties: {} },
   },
   {
     kinds: ["set"],
     fields:
       "any of — description:string (REPLACES the whole description; write everything still true of the thing) · appendDescription:string (adds one sentence to what is there; how damage is recorded — say who or what did it, and do not repeat what the description already says) · hidden:boolean (false REVEALS a concealed item to characters, true conceals it) · isLightSource:boolean (false when it no longer lights the room, e.g. smashed) · lightLevel:number",
+    schema: {
+      properties: {
+        description: STR,
+        appendDescription: STR,
+        hidden: BOOL,
+        isLightSource: BOOL,
+        lightLevel: { type: "number" },
+      },
+    },
   },
 ];
 
@@ -263,6 +401,23 @@ export function opKinds(ops: OperationSpec[]): ReadonlySet<string> {
   return new Set(ops.flatMap((op) => op.kinds));
 }
 
+/** The grammar the provider enforces: one closed object per kind, chosen by
+ *  `kind`'s constant. Replaces the open `additionalProperties: true` object
+ *  that strict mode refuses — and that let a misspelt field through to the
+ *  validator, a repair round later. */
+export function opSchema(ops: OperationSpec[]): { anyOf: unknown[] } {
+  return {
+    anyOf: ops.flatMap((op) =>
+      op.kinds.map((kind) => ({
+        type: "object",
+        properties: { kind: { const: kind }, ...op.schema.properties },
+        required: ["kind", ...(op.schema.required ?? [])],
+        additionalProperties: false,
+      }))
+    ),
+  };
+}
+
 const ENTITY_REF = {
   type: "object",
   properties: {
@@ -276,7 +431,11 @@ const ENTITY_REF = {
   additionalProperties: false,
 } as const;
 
-const sourcedDelta = (idField: string, idRequired: boolean) => ({
+const sourcedDelta = (
+  idField: string,
+  idRequired: boolean,
+  ops: OperationSpec[]
+) => ({
   type: "object",
   properties: {
     sourceActionId: { type: "string" },
@@ -285,14 +444,10 @@ const sourcedDelta = (idField: string, idRequired: boolean) => ({
       description: "Short factual statement of why this change follows.",
     },
     [idField]: { type: "string" },
-    operation: {
-      type: "object",
-      description:
-        "Shape depends on `kind` — see the exact field list on the array this delta belongs to. Field names are literal: a wrong one is a rejection, not a synonym.",
-      properties: { kind: { type: "string" } },
-      required: ["kind"],
-      additionalProperties: true,
-    },
+    // No `description` beside the `anyOf`: the array's description already
+    // spells out every kind's fields, and a sibling keyword on a union is
+    // the kind of thing a strict grammar compiler may refuse.
+    operation: opSchema(ops),
   },
   required: [
     "sourceActionId",
@@ -362,12 +517,72 @@ const OCCURRENCE_BODY = {
       additionalProperties: false,
     },
   },
+  // Declared here, rolled by code. The count and minute bounds live in the
+  // validator and in these descriptions, not as schema keywords: strict mode
+  // supports neither `maxItems` nor `minimum`/`maximum`.
+  sanityChecks: {
+    type: "array",
+    description:
+      "Involuntary sanity checks caused by perceiving THIS occurrence — at most 8. Rare — see the sanity guidance for the closed list of things that warrant one. Code reads the character's SAN, rolls d100 and settles it; a passed check costs nothing at all. Do not also write a character `san` change for the same exposure.",
+    items: {
+      type: "object",
+      properties: {
+        characterId: {
+          type: "string",
+          description:
+            "Must be one of this occurrence's perceiverCharacterIds — exposure is perception.",
+        },
+        failureLoss: {
+          type: "string",
+          description:
+            'SAN lost when the check FAILS: "1", "1d4", "1d6" or "1d10". There is no success loss — passing is free. A flat zero is refused.',
+        },
+        consequence: {
+          type: "object",
+          description:
+            "Optional candidate condition for a severe failed reaction. Code applies it only when actual SAN loss is at least 5. Omit it for a reaction that would only be fear, distress, unease, or another inner feeling.",
+          properties: {
+            description: {
+              type: "string",
+              description:
+                "One objective present-tense description combining signs another observer could see or independently verify with the important mental or physical function now impossible or severely impaired. Never first-person inner narration, thoughts, feelings, mood, attitude, or opinion. If no major impairment exists, omit the whole consequence.",
+            },
+            durationMinutes: {
+              type: "integer",
+              description:
+                "Whole in-world minutes it lasts, from 5 to 1440. Nothing but the clock can revoke it.",
+            },
+          },
+          required: ["description", "durationMinutes"],
+          additionalProperties: false,
+        },
+      },
+      required: ["characterId", "failureLoss"],
+      additionalProperties: false,
+    },
+  },
 } as const;
 
 const OCCURRENCE_REQUIRED = ["facts", "participants", "perceiverCharacterIds"];
 
 export const submitResolutionTool: ToolSpec = {
   name: "submit_resolution",
+  // NOT strict, and not for want of trying. Without a grammar the model has
+  // handed back `starting` as a JSON string, a whole submission as one
+  // string, and once a submission shattered into seven parallel calls — each
+  // a repair round, a full re-send of the world. The schema was brought
+  // inside Anthropic's strict subset for exactly that (closed objects, an
+  // `anyOf` per operation kind, no numeric keywords — kept, because the
+  // model reads it either way), and the API refused it on a limit the docs
+  // do not mention: at most 24 OPTIONAL parameters across every strict tool
+  // in the request, counted through every nesting level. This tool alone has
+  // 44 — six top-level lists, a dozen genuinely optional fields on starts
+  // and endings, the occurrence body twice — and repair has 67. Squeezing
+  // under 24 means "required but nullable" on most of them, which is a
+  // dozen `null`s per entry. The lint in schemaAgreement.test.ts keeps the
+  // subset and counts the optionals, so the day the limit moves this is one
+  // flag flip. Until then `normalizeList` reads the string shapes back.
+  strict: false,
   description:
     "Terminal: submit the complete resolution of this tick — one entry per triggering action (its duration and difficulty when it starts, its result when it resolves), sourced world deltas grouped by domain, and objective occurrences with perceiver character ids.",
   inputSchema: {
@@ -383,13 +598,13 @@ export const submitResolutionTool: ToolSpec = {
             actionId: { type: "string" },
             resolvedDurationTicks: {
               type: "integer",
-              minimum: 1,
               description:
-                "How long the action SHOULD take. REQUIRED for a non-travel action; OMIT when `movement` is set — travel time is derived from the route and anything you write here is overridden. You never state elapsed time — code advances progress from the clock.",
+                "How long the action SHOULD take, a whole number of minutes, at least 1. REQUIRED for a non-travel action; OMIT when `movement` is set — travel time is derived from the route and anything you write here is overridden. You never state elapsed time — code advances progress from the clock.",
             },
             timingReason: {
               type: "string",
-              description: "Objective reason for the chosen duration.",
+              description:
+                "Optional: the objective reason for the chosen duration, for the log.",
             },
             check: {
               type: "object",
@@ -476,11 +691,13 @@ export const submitResolutionTool: ToolSpec = {
             },
             resolvedDurationTicks: {
               type: "integer",
-              minimum: 1,
               description:
-                "Only to revise the estimate — say so in timingReason.",
+                "Only to revise the estimate — a whole number of minutes, at least 1.",
             },
-            timingReason: { type: "string" },
+            timingReason: {
+              type: "string",
+              description: "Optional: why the estimate changed, for the log.",
+            },
           },
           required: ["actionId", "reason", "occurrence"],
           additionalProperties: false,
@@ -489,17 +706,17 @@ export const submitResolutionTool: ToolSpec = {
       characterChanges: {
         type: "array",
         description: `Persistent character-state changes only; descriptive results belong in occurrences. \`operation\` is one of, with exactly these fields: ${renderOps(CHARACTER_OPS)}.`,
-        items: sourcedDelta("characterId", true),
+        items: sourcedDelta("characterId", true, CHARACTER_OPS),
       },
       sceneChanges: {
         type: "array",
         description: `Scene-state changes. \`operation\` is one of, with exactly these fields: ${renderOps(SCENE_OPS)}.`,
-        items: sourcedDelta("sceneId", true),
+        items: sourcedDelta("sceneId", true, SCENE_OPS),
       },
       itemChanges: {
         type: "array",
         description: `Item changes; itemId is required except for create. \`operation\` is one of, with exactly these fields: ${renderOps(ITEM_OPS)}.`,
-        items: sourcedDelta("itemId", false),
+        items: sourcedDelta("itemId", false, ITEM_OPS),
       },
       occurrences: {
         type: "array",
@@ -576,8 +793,8 @@ const repairable = (itemSchema: unknown, what: string) => {
         ...item.properties,
         index: {
           type: "integer",
-          minimum: 0,
-          description: "The index quoted in the error. Omit to append.",
+          description:
+            "The index quoted in the error (0 or more). Omit to append.",
         },
         remove: {
           type: "boolean",
@@ -592,6 +809,8 @@ const repairable = (itemSchema: unknown, what: string) => {
 
 export const repairResolutionTool: ToolSpec = {
   name: "repair_resolution",
+  // See submitResolutionTool: 67 optional parameters against a limit of 24.
+  strict: false,
   description:
     "Fix ONLY the elements named in the errors. Everything you do not mention stays exactly as you submitted it — do not re-send correct parts, and do not re-send the whole resolution.",
   inputSchema: {
@@ -612,11 +831,17 @@ export const repairResolutionTool: ToolSpec = {
         ])
       ),
       characterChanges: repairable(
-        sourcedDelta("characterId", true),
+        sourcedDelta("characterId", true, CHARACTER_OPS),
         "Character changes"
       ),
-      sceneChanges: repairable(sourcedDelta("sceneId", true), "Scene changes"),
-      itemChanges: repairable(sourcedDelta("itemId", false), "Item changes"),
+      sceneChanges: repairable(
+        sourcedDelta("sceneId", true, SCENE_OPS),
+        "Scene changes"
+      ),
+      itemChanges: repairable(
+        sourcedDelta("itemId", false, ITEM_OPS),
+        "Item changes"
+      ),
       occurrences: repairable(
         (
           submitResolutionTool.inputSchema as {
@@ -633,51 +858,41 @@ export const repairResolutionTool: ToolSpec = {
 
 // ==================== Code-tool schemas for the session ====================
 
-/** LLM-facing declarations of the deterministic code tools. Execution runs
- *  through the CodeToolRegistry; results are trusted and recorded. */
+/**
+ * LLM-facing declarations of the deterministic code tools. Execution runs
+ * through the CodeToolRegistry; results are trusted and recorded.
+ *
+ * One tool, because a turn is not cheap. Every tool call spends a round trip
+ * of the whole world context — measured at ~60k tokens on a full town — so a
+ * tool only earns its place by answering something the request cannot say.
+ * Four did not, and were removed:
+ *
+ *   `pathfinding` / `movementCost` — the World Graph section already renders
+ *     every top-level place with its exits and each road's walking minutes,
+ *     so both answered from data the model was holding. Worse, neither could
+ *     change an outcome: the actor's stated route is the only route, and code
+ *     (`placesAdjacent`) is the authority on whether a stated hop exists. In
+ *     one measured ten-tick run they took 11 of 14 tool calls and about a
+ *     third of the run's entire prompt budget, checking a route hop by hop, a
+ *     turn at a time.
+ *   `inventoryValidation` — replaced by putting the answer in the request:
+ *     a command that names a person, or an item a person holds, now pulls
+ *     that person's pockets into the Items section (contextBuilder).
+ *   `sanityCheck` — a roll is still code's to make, but it did not have to be
+ *     a TOOL. Stateless and non-idempotent, it returned a fresh d100 and
+ *     `ok: true` to every repeat, so nothing in the payload ever signalled
+ *     that an exposure was settled. Over 30 full-injection ticks, five spent
+ *     the entire session budget re-rolling the same (actionId, characterId)
+ *     and never submitted — the whole tick dropped, five times. It is now
+ *     DECLARED on the occurrence that caused it (`sanityChecks`) and rolled
+ *     during finalization, which makes the loop structurally impossible: the
+ *     model submits once.
+ *
+ * `damageRoll` stays. A roll is the one thing the model must never do itself,
+ * and damage — unlike sanity — is asked for mid-resolution, after the Engine
+ * has decided a blow landed.
+ */
 export const CODE_TOOL_SPECS: ToolSpec[] = [
-  {
-    name: "pathfinding",
-    description:
-      "Plan the route from a character's current position to a destination id (scene/road). Returns reachability, leg summary and total WALKING minutes. Advisory only — a movement action's clock is derived by code from its route (drive speeds included); you never need this number for a duration.",
-    inputSchema: {
-      type: "object",
-      properties: {
-        characterId: { type: "string" },
-        destinationId: { type: "string" },
-      },
-      required: ["characterId", "destinationId"],
-      additionalProperties: false,
-    },
-  },
-  {
-    name: "movementCost",
-    description:
-      "Estimate WALKING time (minutes/ticks) from a character's current position to a destination id. Advisory only — never needed for a movement action's duration, which code derives from the route (drive speeds included).",
-    inputSchema: {
-      type: "object",
-      properties: {
-        characterId: { type: "string" },
-        destinationId: { type: "string" },
-      },
-      required: ["characterId", "destinationId"],
-      additionalProperties: false,
-    },
-  },
-  {
-    name: "inventoryValidation",
-    description:
-      "Locate an item (scene or inventory), check unique ownership, and optionally whether an actor holds/can reach it.",
-    inputSchema: {
-      type: "object",
-      properties: {
-        itemId: { type: "string" },
-        actorId: { type: "string" },
-      },
-      required: ["itemId"],
-      additionalProperties: false,
-    },
-  },
   {
     name: "damageRoll",
     description:

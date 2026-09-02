@@ -49,9 +49,10 @@ for what actually happened — a one-off descriptive result is an occurrence
 fact, not a state change.
 
 - `character.hp` — recovered, in the small amounts field treatment allows.
-- `character.removeCondition` — bleeding stopped, a break splinted, a panic
-  talked down; `character.addCondition` when treatment goes wrong and adds
-  infection, shock, or worse.
+- `character.removeCondition` — bleeding stopped or a break splinted;
+  `character.addCondition` when treatment goes wrong and adds an objective,
+  major impairment such as infection, circulatory shock, loss of limb use, or
+  severe disorientation. Anxiety or feeling calmer is not a condition.
 - `character.san` — steadied by a session, or shaken by what it opened.
 - `item.modify` / `item.destroy` — bandages, drugs, and supplies consumed
   whether or not the treatment worked.

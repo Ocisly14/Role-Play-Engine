@@ -43,32 +43,17 @@
   },
   "inventory": [
     {
-      "id": "marisol-apron-pencil",
+      "id": "item.marisol.apron_pencil",
       "name": "围裙口袋里的铅笔",
       "properties": {
         "note": "削得很短的木铅笔，Marisol 用它在围裙口袋里随手记赊账和订货。"
       }
     },
     {
-      "id": "marisol-ledger",
-      "name": "杂货店账本",
-      "properties": {
-        "note": "杂货店收支账本，夹着邮政柜台的便笺与几笔她不愿解释的差额。"
-      }
-    },
-    {
-      "id": "marisol-store-keys",
+      "id": "item.marisol.store_keys",
       "name": "杂货店与邮政柜台钥匙",
       "properties": {
         "note": "一串黄铜钥匙，分别打开杂货店前门、仓库和邮政柜台的抽屉。"
-      }
-    },
-    {
-      "id": "marisol-duplicate-banknotes",
-      "name": "两张序列号相同的十美元钞票",
-      "properties": {
-        "hidden": true,
-        "note": "两张序列号完全相同的十美元钞票，被她折好藏起，尚未告诉任何人。"
       }
     }
   ],

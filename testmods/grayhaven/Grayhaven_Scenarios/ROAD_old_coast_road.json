@@ -2,20 +2,50 @@
   "schemaVersion": 2,
   "id": "ROAD_old_coast_road",
   "name": "旧海岸公路",
-  "description": "高速改线前的旧海岸公路,如今路面开裂,黄色中线褪成了灰白,步行二十五分钟。南头接着主街北口 [SCN_main_north],向北的尽头是汽车旅馆的院子 [SCN_motel]。偶尔有一辆车驶过,引擎声在雾里传得很远,然后是更长的安静。",
+  "description": "高速改线前的旧海岸公路,如今路面开裂,黄色中线褪成了灰白,步行二十五分钟。南头接着主街北口 [SCN_main_north],向北的尽头是汽车旅馆的院子 [SCN_motel]。出镇不远,路东一间钉了木板的路边货摊 [item.old_coast_road.shuttered_stand] 塌了半边顶,招牌上「鲜鱼 · 樱桃」的字还认得出来;再往北,路肩上立着一根水泥里程碑 [item.old_coast_road.mile_post],刻的英里数是照着改线前的路算的,如今哪儿也对不上。中段路东那块高木架广告牌 [item.old_coast_road.motel_billboard] 是旅馆当年立的,油漆晒得只剩个轮廓;快到旅馆时,野草里歪着一块从没竖起来过的绿底高速指示牌 [item.old_coast_road.freeway_sign]——那条高速最终没有从这儿过。整条路的西侧路肩下走着一道排水沟 [item.old_coast_road.drainage_ditch],雨季过水,平时半干。偶尔有一辆车驶过,引擎声在雾里传得很远,然后是更长的安静。",
   "parentLocationId": "OUTDOOR",
   "travelTimeMinutes": 25,
   "references": {
-    "items": [],
+    "items": [
+      {
+        "id": "item.old_coast_road.shuttered_stand",
+        "name": "钉死的路边货摊",
+        "description": "出镇不远的路东一间路边货摊,木板钉死了窗口,半边顶塌进去。褪色的招牌上还认得出「鲜鱼 · 樱桃」几个字,台面下堆着散架的空板条箱。夏天这里曾经天天有人停车。",
+        "position": 0.2
+      },
+      {
+        "id": "item.old_coast_road.mile_post",
+        "name": "水泥里程碑",
+        "description": "路肩上一根半人高的水泥里程碑,顶面刻着英里数,刻痕里积满了黑泥。它算的是改线前那条路的里程,如今和任何一块公路牌子都对不上。",
+        "position": 0.35
+      },
+      {
+        "id": "item.old_coast_road.motel_billboard",
+        "name": "旅馆广告牌",
+        "description": "路东一块架在木杆上的高广告牌,是汽车旅馆当年立的:「前方一英里 · 有电视 · 有制冰机」。油漆晒得只剩个轮廓,底下的木架被海风吹得发灰,一块板已经掉了。",
+        "position": 0.5
+      },
+      {
+        "id": "item.old_coast_road.freeway_sign",
+        "name": "废弃的高速指示牌",
+        "description": "野草里歪着一块绿底白字的高速指示牌,螺栓孔崭新,从来没有被竖起来过——它是为那条最终改道走了内陆的高速做的。牌面上的地名和箭头指着一个不存在的出口。",
+        "position": 0.8
+      },
+      {
+        "id": "item.old_coast_road.drainage_ditch",
+        "name": "路肩排水沟",
+        "description": "沿着西侧路肩走的一道浅排水沟,雨季过水,平时半干,沟底铺着一层松针和碎玻璃。二十年份的空瓶、掉下来的保险杠碎片和被雨冲下来的东西都停在这里,风大的时候沟里比路面安静。"
+      }
+    ],
     "connections": [
       {
-        "id": "exit.old_coast_road.town_end",
+        "id": "connection.old_coast_road.town_end",
         "targetId": "SCN_main_north",
         "name": "公路南头(镇端)",
         "role": "endpointA"
       },
       {
-        "id": "exit.old_coast_road.motel_end",
+        "id": "connection.old_coast_road.motel_end",
         "targetId": "SCN_motel",
         "name": "公路北头(旅馆)",
         "role": "endpointB"

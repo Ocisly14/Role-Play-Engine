@@ -514,24 +514,6 @@ for (const [juncId, scnId] of Object.entries(junctionScenes)) {
   scnToJunction.set(scnId, juncId);
 }
 
-/** Find the position of a scene on a given road. Returns null if not on that road. */
-function findScenePositionOnRoad(scnId: string, roadId: string): number | null {
-  // Check projections first
-  const proj = scnRoadPos.get(scnId);
-  if (proj && proj.roadId === roadId) return proj.position;
-
-  // Check if scene is at a junction endpoint of this road
-  const ep = ROAD_ENDPOINTS[roadId];
-  if (!ep) return null;
-
-  const juncId = scnToJunction.get(scnId);
-  if (!juncId) return null;
-
-  if (juncId === ep.a) return 0.0;
-  if (juncId === ep.b) return 1.0;
-  return null;
-}
-
 // ── Build a junction graph for shortest-path calculation ────────────────
 // Each edge in the graph is a road segment between two junctions with a time cost.
 interface JuncEdge {
@@ -573,33 +555,6 @@ function shortestJunctionPath(from: string, to: string): number {
     }
   }
   return Number.POSITIVE_INFINITY;
-}
-
-/** Get the time from a scene to a specific junction, via its road. */
-function sceneToJunctionTime(scnId: string, targetJunc: string): number | null {
-  // Scene on a road
-  const info = scnRoadPos.get(scnId);
-  if (info) {
-    const ep = ROAD_ENDPOINTS[info.roadId];
-    const roadTime = newTravelTimes.get(info.roadId) ?? 5;
-    // Time to endpointA and endpointB
-    const timeToA = info.position * roadTime;
-    const timeToB = (1 - info.position) * roadTime;
-    // If target is one of this road's endpoints, return directly
-    if (targetJunc === ep.a) return timeToA;
-    if (targetJunc === ep.b) return timeToB;
-    // Otherwise, go to nearest endpoint then Dijkstra to target
-    const viaA = timeToA + shortestJunctionPath(ep.a, targetJunc);
-    const viaB = timeToB + shortestJunctionPath(ep.b, targetJunc);
-    return Math.min(viaA, viaB);
-  }
-  // Scene at a junction
-  const junc = scnToJunction.get(scnId);
-  if (junc) {
-    if (junc === targetJunc) return 0;
-    return shortestJunctionPath(junc, targetJunc);
-  }
-  return null;
 }
 
 /** Compute travel time between two scenes via the road graph. */

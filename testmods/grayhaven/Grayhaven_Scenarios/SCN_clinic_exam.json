@@ -2,15 +2,52 @@
   "schemaVersion": 2,
   "id": "SCN_clinic_exam",
   "name": "诊所·诊室",
-  "description": "诊室里消毒水味压过一切:诊查床铺着换新的白纸,视力表和体重秤靠墙,窗子磨砂,雾天里透进一片均匀的灰光。玻璃门药柜[item.clinic_exam.medicine_cabinet]上着锁,药瓶按字母排列。书桌上摊着 Weaver 的病例记录本[item.clinic_exam.case_notes],处方式的短句一行一个病人——他不声张,只是把最近的条目越写越细。桌角立着他用了二十二年没换过的听诊器架[item.clinic_exam.stethoscope]。磨砂玻璃门通回候诊室[SCN_clinic_waiting],门一关,这里说的话就只属于医生和病人。",
-  "parentLocationId": "LOC_clinic",
+  "description": "诊室里消毒水味压过一切:正中的诊查床[item.clinic_exam.exam_table]铺着换新的白纸,床头上方吊着可以扳动的诊察灯[item.clinic_exam.exam_lamp];靠墙立着视力表[item.clinic_exam.eye_chart]和一台砝码式体重秤[item.clinic_exam.scale],秤砣被拨得发亮。窗子磨砂,雾天里透进一片均匀的灰光。玻璃门药柜[item.clinic_exam.medicine_cabinet]上着锁,药瓶按字母排列;紧挨着的换药车[item.clinic_exam.dressing_cart]上分格码着纱布、绷带和碘酒,推起来有一只轮子会卡。不锈钢器械盘[item.clinic_exam.instrument_tray]里镊子和缝合针摆得像餐具,用过的都进角落那台煮沸消毒器[item.clinic_exam.sterilizer],水开的时候整间屋子都听得见。墙上那具台式水银血压计[item.clinic_exam.bp_cuff]是坐诊专用的,袖带边缘磨白了——Ray 每次来都要跟它较一次劲。搪瓷洗手池[item.clinic_exam.sink]上方挂着毛巾和皂盒,水龙头拧到底才不滴水;里墙停着那台老 X 光机[item.clinic_exam.xray_unit],一年也开不了几回。窗前的书桌[item.clinic_exam.desk]上摊着 Weaver 的病例记录本[item.clinic_exam.case_notes],处方式的短句一行一个病人——他不声张,只是把最近的条目越写越细。桌角立着他用了二十二年没换过的听诊器架[item.clinic_exam.stethoscope]。磨砂玻璃门通回候诊室[SCN_clinic_waiting],门一关,这里说的话就只属于医生和病人。",
+  "parentLocationId": "clinic",
   "indoor": true,
   "references": {
     "items": [
       {
+        "id": "item.clinic_exam.bp_cuff",
+        "name": "台式水银血压计",
+        "description": "固定在墙上的水银柱血压计,袖带边缘磨得发白,打气球的橡皮有点硬。这具是坐诊用的,和 Weaver 出诊包里那只便携的不是同一台。"
+      },
+      {
         "id": "item.clinic_exam.case_notes",
         "name": "病例记录本",
-        "description": "Weaver 的病例记录本,处方式短句,字迹瘦而稳。最近几个月,失眠与耳鸣的条目多得画出了一条他不愿承认的曲线——他开始在页边记下日期与天气。"
+        "description": "常年摊在书桌上的硬皮记录本,处方式短句,字迹瘦而稳,每天看完诊才收进抽屉。最近几个月,失眠与耳鸣的条目多得画出了一条他不愿承认的曲线——他开始在页边记下日期与天气。"
+      },
+      {
+        "id": "item.clinic_exam.desk",
+        "name": "书桌",
+        "description": "窗前一张深色木书桌,漆面被手肘磨出两块亮斑。抽屉里是处方笺、空白病历纸、备用钢笔和一小盒回形针,最下一格锁着,钥匙在他自己身上。"
+      },
+      {
+        "id": "item.clinic_exam.dressing_cart",
+        "name": "换药车",
+        "description": "药柜旁的两层铁皮小车,上层分格码着纱布、绷带、胶布和碘酒,下层是弯盘和废料桶。推起来有一只轮子会卡,声音一响 Susan 就知道该来搭手了。"
+      },
+      {
+        "id": "item.clinic_exam.exam_lamp",
+        "name": "诊察灯",
+        "description": "吊在诊查床床头的可扳动灯臂,灯罩是搪瓷的,拧开时嗡一声。灯光白得刺眼,查伤口和喉咙全靠它。",
+        "isLightSource": true,
+        "lightLevel": 3
+      },
+      {
+        "id": "item.clinic_exam.exam_table",
+        "name": "诊查床",
+        "description": "铺着一卷白纸的皮面诊查床,床尾能摇起来,踩脚凳收在底下。每看完一个病人,纸就往前拉一段撕掉——这动作 Susan 一天要做十几次。"
+      },
+      {
+        "id": "item.clinic_exam.eye_chart",
+        "name": "视力表",
+        "description": "钉在墙上的标准视力表,地板上用胶带贴出站立的位置。表纸边角发黄,底下两行几乎没人读到过。"
+      },
+      {
+        "id": "item.clinic_exam.instrument_tray",
+        "name": "器械盘",
+        "description": "不锈钢托盘,镊子、剪刀、止血钳和缝合针在纱布上摆得像餐具,一律头朝同一个方向。摆不齐 Weaver 会自己动手重摆。"
       },
       {
         "id": "item.clinic_exam.medicine_cabinet",
@@ -18,14 +55,34 @@
         "description": "带玻璃门的药柜,上着锁,药瓶按字母排列,账目分毫不差。"
       },
       {
+        "id": "item.clinic_exam.scale",
+        "name": "体重秤",
+        "description": "带身高尺的砝码式磅秤,秤砣被拨得发亮,踩上去先咣一声。Susan 记的数字一律精确到半磅。"
+      },
+      {
+        "id": "item.clinic_exam.sink",
+        "name": "洗手池",
+        "description": "白搪瓷洗手池,上方的钉子挂着毛巾和皂盒,水龙头拧到底才不滴水。看一个病人洗一次手,二十二年没破过例。"
+      },
+      {
+        "id": "item.clinic_exam.sterilizer",
+        "name": "煮沸消毒器",
+        "description": "角落里的电热煮沸消毒器,长方形的镀铬盖子扣着一层水汽。烧开时咕嘟声传遍整间诊室,候诊室里也听得见。"
+      },
+      {
         "id": "item.clinic_exam.stethoscope",
         "name": "听诊器",
-        "description": "挂在架上的老式听诊器,金属听头磨得发亮,胶管有些发硬。他说换新的反而听不惯,这具体的手感用了二十二年。"
+        "description": "挂在桌角支架上的老式听诊器,金属听头磨得发亮,胶管有些发硬。他说换新的反而听不惯,这具体的手感用了二十二年——这一具是诊室的,和 Susan 包里那支不是同一具。"
+      },
+      {
+        "id": "item.clinic_exam.xray_unit",
+        "name": "X 光机",
+        "description": "里墙那台老式 X 光机,配一只观片灯箱,机身笨重,一年开不了几回。1967 年它坏过一次,从 Fort Anne 叫来修它的年轻技工姓 Holt——诊所里没人会忘记那次故障是怎么收场的。"
       }
     ],
     "connections": [
       {
-        "id": "exit.clinic_exam.waiting_door",
+        "id": "connection.clinic_exam.waiting_door",
         "targetId": "SCN_clinic_waiting",
         "name": "诊室门",
         "description": "磨砂玻璃门,通回候诊室。"

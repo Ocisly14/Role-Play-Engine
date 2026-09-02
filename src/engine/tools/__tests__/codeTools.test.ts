@@ -1,22 +1,15 @@
-// Phase 5 code-tool tests: registry invocation recording, inventory
-// location/uniqueness/reach facts, damage-formula parsing, opposed-roll
-// penalty application, and the pathfinding/movementCost delegation to the
-// movement subsystem's route planner (mocked — route mechanics themselves
-// are covered by the movement subsystem's own tests).
-
-import { describe, expect, it, vi } from "vitest";
+// Code-tool tests: registry invocation recording and trusted dice.
+//
+// The session offers only dice tools now. `pathfinding`, `movementCost` and
+// `inventoryValidation` were removed — the first two answered from the World
+// Graph the request already carries, and the third was replaced by putting
+// the named person's pockets into the request itself. Their tests went with
+// them; the route planner they delegated to is covered by the movement
+// subsystem's own tests.
+import { describe, expect, it } from "vitest";
 import type { CodeToolContext, EngineCodeTool } from "../codeTool.js";
 import { CodeToolRegistry } from "../codeTool.js";
-import { clampValue, damageRollTool, opposedRollTool } from "../diceTools.js";
-import { inventoryValidationTool } from "../inventoryValidationTool.js";
-
-const planMovementRoute = vi.fn();
-vi.mock("../../subsystem/movement.js", () => ({
-  planMovementRoute: (...args: unknown[]) => planMovementRoute(...args),
-}));
-
-const { pathfindingTool } = await import("../pathfindingTool.js");
-const { movementCostTool } = await import("../movementCostTool.js");
+import { clampValue, damageRollTool } from "../diceTools.js";
 
 function makeDgsm(overrides: Record<string, unknown> = {}) {
   return {
@@ -95,66 +88,6 @@ describe("CodeToolRegistry", () => {
   });
 });
 
-describe("inventoryValidationTool", () => {
-  const dgsm = makeDgsm({
-    getState: () => ({
-      scenes: new Map([
-        ["SCN_1", { id: "SCN_1", items: [{ id: "lamp" }] }],
-        ["SCN_2", { id: "SCN_2", items: [{ id: "dup" }] }],
-      ]),
-      npcInventories: {
-        npc_1: [{ id: "ledger" }],
-        npc_2: [{ id: "dup" }],
-      },
-      npcCharacters: [],
-    }),
-  });
-
-  it("locates a scene item and answers actor reach", async () => {
-    const out = await inventoryValidationTool.execute(
-      { itemId: "lamp", actorId: "npc_1" },
-      ctx(dgsm)
-    );
-    expect(out).toEqual({
-      exists: true,
-      locations: [{ kind: "scene", id: "SCN_1" }],
-      uniqueOwnership: true,
-      actor: { holdsItem: false, canReach: true },
-    });
-  });
-
-  it("locates an inventory item held by the actor", async () => {
-    const out = await inventoryValidationTool.execute(
-      { itemId: "ledger", actorId: "npc_1" },
-      ctx(dgsm)
-    );
-    expect(out.actor).toEqual({ holdsItem: true, canReach: true });
-  });
-
-  it("flags duplicate ownership as a violation", async () => {
-    const out = await inventoryValidationTool.execute(
-      { itemId: "dup" },
-      ctx(dgsm)
-    );
-    expect(out.exists).toBe(true);
-    expect(out.uniqueOwnership).toBe(false);
-    expect(out.locations).toHaveLength(2);
-  });
-
-  it("reports a nonexistent item", async () => {
-    const out = await inventoryValidationTool.execute(
-      { itemId: "ghost", actorId: "npc_1" },
-      ctx(dgsm)
-    );
-    expect(out).toMatchObject({
-      exists: false,
-      locations: [],
-      uniqueOwnership: true,
-      actor: { holdsItem: false, canReach: false },
-    });
-  });
-});
-
 describe("damageRollTool", () => {
   it("rolls NdM+K with pinned dice", async () => {
     const out = await damageRollTool.execute(
@@ -207,110 +140,24 @@ describe("damageRollTool", () => {
       });
     }
   );
-});
 
-describe("opposedRollTool", () => {
-  it("rolls the defender's penalty-adjusted trained value", async () => {
-    const dgsm = makeDgsm({
-      getNpcProfile: () => ({
-        skills: { Athletics: 50 },
-        status: {
-          conditions: [
-            {
-              id: "c1",
-              description: "sprained ankle",
-              mechanicalEffect: { skillPenalty: { Athletics: -20 } },
-            },
-          ],
-        },
-      }),
+  // Seen live as a stall on a forced first turn: `damageRoll("0")`, answered
+  // with `total: 0` as if something had been rolled. A constant zero is not
+  // a roll and gets the reason the model should read next turn.
+  it.each(["0", " 0 ", "+0"])("refuses the empty roll %j", async (formula) => {
+    expect(await damageRollTool.execute({ formula }, ctx())).toEqual({
+      ok: false,
+      reason: "nothing_to_roll",
     });
-    const out = await opposedRollTool.execute(
-      { characterId: "npc_1", skillId: "Athletics", fixedRoll: 30 },
-      ctx(dgsm)
-    );
-    expect(out.ok).toBe(true);
-    if (!out.ok) return;
-    expect(out.record.skillValue).toBe(30);
-    expect(out.record.roll).toBe(30);
-    expect(out.record.successLevel).toBe("regular");
   });
 
-  it("rejects an unknown defense skill", async () => {
-    expect(
-      await opposedRollTool.execute(
-        { characterId: "npc_1", skillId: "Not A Skill" },
-        ctx()
-      )
-    ).toEqual({ ok: false, reason: "unknown_skill" });
-  });
-});
-
-describe("pathfinding/movementCost delegation", () => {
-  it("summarizes a planned route", async () => {
-    planMovementRoute.mockReturnValue({
-      ok: true,
-      totalMinutes: 7,
-      targetPosition: { type: "scene", sceneId: "SCN_2" },
-      steps: [
-        {
-          kind: "to_junction",
-          from: { type: "scene", sceneId: "SCN_1" },
-          to: { type: "junction", junctionId: "J1" },
-          durationMinutes: 2,
-        },
-        {
-          kind: "along_road",
-          from: { type: "junction", junctionId: "J1" },
-          to: { type: "junction", junctionId: "J2" },
-          durationMinutes: 5,
-          roadId: "ROAD_1",
-        },
-      ],
-    });
-
-    const out = await pathfindingTool.execute(
-      { characterId: "npc_1", destinationId: "SCN_2" },
-      ctx()
+  it("still rolls a flat non-zero constant", async () => {
+    expect(await damageRollTool.execute({ formula: "3" }, ctx())).toMatchObject(
+      {
+        ok: true,
+        total: 3,
+      }
     );
-    expect(out).toEqual({
-      reachable: true,
-      totalMinutes: 7,
-      targetPosition: { type: "scene", sceneId: "SCN_2" },
-      steps: [
-        { kind: "to_junction", durationMinutes: 2 },
-        { kind: "along_road", durationMinutes: 5, roadId: "ROAD_1" },
-      ],
-      alreadyThere: false,
-    });
-    expect(planMovementRoute).toHaveBeenCalledWith(
-      expect.anything(),
-      "npc_1",
-      "SCN_2"
-    );
-  });
-
-  it("propagates unreachability and converts minutes to ticks", async () => {
-    planMovementRoute.mockReturnValue({ ok: false, reason: "no_path" });
-    expect(
-      await pathfindingTool.execute(
-        { characterId: "npc_1", destinationId: "SCN_X" },
-        ctx()
-      )
-    ).toEqual({ reachable: false, reason: "no_path" });
-
-    planMovementRoute.mockReturnValue({
-      ok: true,
-      totalMinutes: 7.5,
-      targetPosition: { type: "scene", sceneId: "SCN_2" },
-      steps: [],
-    });
-    expect(
-      await movementCostTool.execute(
-        { characterId: "npc_1", destinationId: "SCN_2" },
-        ctx()
-      )
-    ).toEqual({ reachable: true, totalMinutes: 7.5, totalTicks: 8 });
   });
 });
 

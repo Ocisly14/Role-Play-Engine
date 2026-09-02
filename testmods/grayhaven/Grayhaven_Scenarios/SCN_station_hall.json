@@ -3,7 +3,7 @@
   "id": "SCN_station_hall",
   "name": "雷德利站·控制大厅",
   "description": "内门之后不再是 1985 年。大厅里立着一排排齐整的黑色机柜 [item.station_hall.compute_racks],柜身上细小的灯以某种节律明灭,低沉的运转声和恒定的冷风充满整个空间。这里没有椅子,没有桌子,没有一个按钮或把手——没有任何东西是为一双手设计的。一整面墙是无缝的玻璃 [item.station_hall.status_wall],上面无声地流动着灰港的一切:风、潮位、气温、雾。一束比树干还粗的线缆从机柜群汇出,钻进地板,朝着镇子的方向 [item.station_hall.cable_trunk]。三个出口:回到装卸区的内门 [SCN_station_dock],标着「ARCHIVE」的一扇 [SCN_station_archive],和一扇没有任何标识的窄门 [SCN_station_maintenance]。",
-  "parentLocationId": "LOC_station",
+  "parentLocationId": "station",
   "indoor": true,
   "references": {
     "items": [
@@ -25,19 +25,19 @@
     ],
     "connections": [
       {
-        "id": "exit.station_hall.inner_door",
+        "id": "connection.station_hall.inner_door",
         "targetId": "SCN_station_dock",
         "name": "内门(装卸区侧)",
         "description": "回到装卸区的灰色钢门。这一侧同样没有把手。"
       },
       {
-        "id": "exit.station_hall.archive_door",
+        "id": "connection.station_hall.archive_door",
         "targetId": "SCN_station_archive",
         "name": "档案室门",
         "description": "标着「ARCHIVE」的门。"
       },
       {
-        "id": "exit.station_hall.maintenance_door",
+        "id": "connection.station_hall.maintenance_door",
         "targetId": "SCN_station_maintenance",
         "name": "无标识窄门",
         "description": "一扇没有任何标识的窄门。"

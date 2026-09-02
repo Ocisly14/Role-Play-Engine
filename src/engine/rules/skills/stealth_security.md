@@ -59,7 +59,5 @@ fact, not a state change.
   ruined.
 - `item.move` / `item.create` — something taken, planted, or forged into
   existence.
-- `character.addCondition` — the actor is now recognized, or a target is
-  suspicious.
 - A clean unseen passage often produces NO delta: that nobody noticed is an
   occurrence with an empty or narrow perceiver list, not a state change.

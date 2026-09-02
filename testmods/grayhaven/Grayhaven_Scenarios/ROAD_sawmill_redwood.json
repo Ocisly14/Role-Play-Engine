@@ -2,20 +2,44 @@
   "schemaVersion": 2,
   "id": "ROAD_sawmill_redwood",
   "name": "锯木厂北径",
-  "description": "从锯木厂后场向北的林径,一小时十分钟。起点在废墟边缘 [SCN_sawmill],尽头钻进那圈环生的老红杉 [SCN_redwood_ring]。越往北树越粗,林子越静,人声在这里显得又小又多余。",
+  "description": "从锯木厂后场向北的林径,一小时十分钟。起点在废墟边缘 [SCN_sawmill],尽头钻进那圈环生的老红杉 [SCN_redwood_ring]。这条路本身就是当年拖原木的集材道,路面下每隔一步埋着一根横铺的圆木,朽得只剩轮廓,雨后踩上去会翻 [item.sawmill_redwood.skid_road]。出废墟不远,一台蒸汽集材机的残骸卡在路边,锅炉锈穿了,绞盘上还缠着最后一圈钢缆,搬不走,也没人来搬 [item.sawmill_redwood.donkey_engine]。半路一棵树上钉着一块铁牌,只剩三角形的一角,号码磨得只认得出一个「7」 [item.sawmill_redwood.tin_marker]。快到北头时有一道小沟,沟上并排搭着两块木板,板子换过,新的那块颜色浅得多 [item.sawmill_redwood.plank_bridge]。越往北树越粗,林子越静,人声在这里显得又小又多余。",
   "parentLocationId": "OUTDOOR",
   "travelTimeMinutes": 70,
   "references": {
-    "items": [],
+    "items": [
+      {
+        "id": "item.sawmill_redwood.skid_road",
+        "name": "旧集材道的圆木路面",
+        "description": "这条路本身就是伐木年代拖原木的集材道,路面下每隔一步埋着一根横铺的圆木,朽得只剩轮廓,湿的时候一脚踩上去会翻。"
+      },
+      {
+        "id": "item.sawmill_redwood.donkey_engine",
+        "name": "废弃的蒸汽集材机",
+        "description": "卡在路边的一台蒸汽集材机残骸,锅炉锈穿了洞,底座的木橇烂进土里,绞盘上还缠着最后一圈钢缆。太重,没人搬得动。",
+        "position": 0.2
+      },
+      {
+        "id": "item.sawmill_redwood.tin_marker",
+        "name": "钉在树上的铁牌残角",
+        "description": "钉在路边一棵树上的铁牌,只剩三角形的一角还挂着,漆全脱了,号码磨得只认得出一个「7」。",
+        "position": 0.45
+      },
+      {
+        "id": "item.sawmill_redwood.plank_bridge",
+        "name": "木板小桥",
+        "description": "跨过一道小沟的两块并排木板,没有扶手;其中一块明显是后来换的,颜色比另一块浅得多。",
+        "position": 0.75
+      }
+    ],
     "connections": [
       {
-        "id": "exit.sawmill_redwood.sawmill_end",
+        "id": "connection.sawmill_redwood.sawmill_end",
         "targetId": "SCN_sawmill",
         "name": "南端(锯木厂)",
         "role": "endpointA"
       },
       {
-        "id": "exit.sawmill_redwood.redwood_end",
+        "id": "connection.sawmill_redwood.redwood_end",
         "targetId": "SCN_redwood_ring",
         "name": "北端(红杉环)",
         "role": "endpointB"

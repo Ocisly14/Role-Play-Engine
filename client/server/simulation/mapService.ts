@@ -63,10 +63,7 @@ export async function getTopology(
       description: s.description,
       parentLocationId: s.parentLocationId,
       conditions: s.conditions ?? [],
-      connections: (s.connections ?? []).map((c) => ({
-        targetId: typeof c === "string" ? c : c.targetId,
-        description: typeof c === "string" ? undefined : c.description,
-      })),
+      connections: s.connections ?? [],
     };
   });
   // Viewer-only building groups, derived from the parentLocationId labels
@@ -142,7 +139,6 @@ export async function getNpcStatuses(
   const statuses: NpcStatusInfo[] = [];
 
   for (const npc of state.npcCharacters ?? []) {
-    const stats = state.npcStats?.[npc.id];
     const inventory = state.npcInventories?.[npc.id] ?? [];
     const position = state.characterPositions?.[npc.id];
     let locationName = "Unknown";
@@ -151,14 +147,14 @@ export async function getNpcStatuses(
     statuses.push({
       npcId: npc.id,
       name: npc.name,
-      hp: stats?.hp ?? 0,
+      hp: npc.status?.hp ?? 0,
       maxHp: npc.status?.maxHp ?? 0,
-      san: stats?.san ?? 0,
+      san: npc.status?.san ?? 0,
       maxSan: npc.status?.maxSan ?? 0,
       currentAction: currentActions[npc.id] ?? null,
       location: locationName,
       inventory,
-      isAlive: (stats?.hp ?? 0) > 0,
+      isAlive: (npc.status?.hp ?? 0) > 0,
       occupation: npc.occupation,
       age: npc.age,
       gender: npc.gender,

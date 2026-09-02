@@ -2,7 +2,7 @@
   "schemaVersion": 2,
   "id": "SCN_truck_cab",
   "name": "货车驾驶室",
-  "description": "Frank 那辆雪佛兰平板货车的驾驶室:座椅的弹簧从八年前就开始抱怨,仪表盘擦得和他的账一样干净。方向盘上缠着一段磨旧的皮条 [item.truck_cab.wheel_wrap],挡位杆头被一只手掌磨得发亮。遮阳板背后夹着一沓复写纸 [item.truck_cab.carbon_copies],边角整整齐齐。座椅之间立着一只军绿色保温杯 [item.truck_cab.thermos],杯身的漆磕掉了一圈。收音机坏了三年,没修——开车的时候他哼歌,总是同一首走调的《Blue Bayou》。",
+  "description": "Frank 那辆雪佛兰平板货车的驾驶室:长条座椅 [item.truck_cab.bench_seat] 的弹簧从八年前就开始抱怨,裂口用银胶带补过一道;仪表盘 [item.truck_cab.dashboard] 擦得和他的账一样干净,中间那台收音机坏了三年——他修得了整辆车,偏偏没修它。方向盘上缠着一段磨旧的皮条 [item.truck_cab.wheel_wrap],仪表台下面另挂着一台 CB 电台 [item.truck_cab.cb_radio],上了山没信号,大半时候只有一片底噪。遮阳板背后夹着一沓复写纸 [item.truck_cab.carbon_copies],边角整整齐齐;手套箱 [item.truck_cab.glovebox] 里是行车证、备用保险丝、一把螺丝刀和一小盒薄荷糖。座椅之间立着一只军绿色保温杯 [item.truck_cab.thermos],杯身的漆磕掉了一圈;座位底下摸得到一卷电工胶带、一双旧手套和一根撬棍 [item.truck_cab.under_seat_junk],还有一支橡胶壳的手电 [item.truck_cab.flashlight],电池是新换的。仪表台上用胶带贴着一张全家福 [item.truck_cab.family_photo],照片里最高的那个孩子去年参了海军。开车的时候他哼歌,总是同一首走调的《Blue Bayou》。",
   "parentLocationId": "VEH_frank_truck",
   "indoor": true,
   "references": {
@@ -21,6 +21,43 @@
         "id": "item.truck_cab.thermos",
         "name": "军绿色保温杯",
         "description": "座椅之间立着的军绿色保温杯,漆磕掉了一圈,是 Susan 每天清早灌满咖啡塞给他的那只。杯底的咖啡渍比杯子的年纪还老。"
+      },
+      {
+        "id": "item.truck_cab.bench_seat",
+        "name": "长条座椅",
+        "description": "整幅的乙烯基长座椅,弹簧压塌了驾驶位那一侧,人一坐就叫一声。靠背的裂口用银胶带横着补了一道,补得平整,和这辆车上所有的修补一样——不好看,但八年没再裂。"
+      },
+      {
+        "id": "item.truck_cab.dashboard",
+        "name": "仪表盘",
+        "description": "擦得干净的铁皮仪表台:油表、水温表、里程表都读得清,中间那台 AM 收音机三年前哑了,旋钮还在,拧起来只有咔哒声。仪表照明的灯泡换过新的——夜里下山那段路,他要看得见表。"
+      },
+      {
+        "id": "item.truck_cab.cb_radio",
+        "name": "CB 电台",
+        "description": "仪表台底下用铁架挂着的一台 CB 电台,天线夹在车斗围板上。原是跑长途的司机装的,他留着了;镇上一路还能听见几句闲话,一上车行道信号就没了,只剩一片底噪——有时那底噪会自己起伏一阵,他把音量拧小,不去想它。"
+      },
+      {
+        "id": "item.truck_cab.glovebox",
+        "name": "手套箱",
+        "description": "扣得很紧的手套箱:行车证和保险单用橡皮筋捆着,一板备用保险丝、一把十字螺丝刀、一小盒薄荷糖,还有一张北岸的旧公路图——图上他走的那条车行道被铅笔描过一遍,别处干干净净。"
+      },
+      {
+        "id": "item.truck_cab.under_seat_junk",
+        "name": "座位下的杂物",
+        "description": "座椅底下摸得到的一堆东西:一卷电工胶带、一双磨破指头的皮手套、一根短撬棍、几张揉皱的加油单,还有一块擦车用的旧毛巾。都在伸手够得着的位置,八年下来各归各位。"
+      },
+      {
+        "id": "item.truck_cab.flashlight",
+        "name": "橡胶壳手电",
+        "description": "座位底下卡着的一支橡胶外壳手电,壳上全是划痕,开关用胶布缠过一圈防水。电池是新换的——他从不让这支灯亏着电。",
+        "isLightSource": true,
+        "lightLevel": 1
+      },
+      {
+        "id": "item.truck_cab.family_photo",
+        "name": "全家福照片",
+        "description": "用胶带贴在仪表台上方的一张小照片,边角被太阳晒得发黄卷起:一家人挤在后院台阶上,最高的那个孩子去年参了海军。照片贴的位置正对着驾驶位,开车的人一抬眼就看得见。"
       }
     ],
     "connections": [],

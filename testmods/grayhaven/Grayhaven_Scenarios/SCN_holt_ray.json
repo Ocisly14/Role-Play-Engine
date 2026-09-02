@@ -2,8 +2,8 @@
   "schemaVersion": 2,
   "id": "SCN_holt_ray",
   "name": "Ray 的房间",
-  "description": "老警长的房间有一种懒得体面、又懒得不体面的气味:烟斗丝、旧皮革、晒过的报纸。窗边一把陷出人形的扶手椅,椅子扶手上摊着一摞填了一半的填字游戏册 [item.holt_ray.crossword_stack],铅笔头就卡在页缝里。衣柜顶上横着一副落了灰的钓具箱 [item.holt_ray.tackle_box]——他嘴上总说退休了就天天去钓鱼,箱子却好几年没开过。制服外套 [item.holt_ray.uniform_jacket] 挂在门后,警徽擦得很亮,和屋里其余的一切格格不入。房门 [SCN_holt_common] 通向起居的大开间。",
-  "parentLocationId": "LOC_holt_house",
+  "description": "老警长的房间有一种懒得体面、又懒得不体面的气味:烟斗丝、旧皮革、晒过的报纸。窗边一把陷出人形的扶手椅 [item.holt_ray.armchair],扶手上摊着一摞填了一半的填字游戏册 [item.holt_ray.crossword_stack],铅笔头就卡在页缝里;椅子边的矮几上搁着他的烟斗和烟丝罐 [item.holt_ray.pipe_and_tin],烟丝只在镇上那家杂货店买。靠墙一张铺着军毯的单人床 [item.holt_ray.bed],床头一台旧电子管收音机 [item.holt_ray.tube_radio] 常年调在同一个台上,他听的是天气和潮汐;床底下拖出半摞晒脆了的旧报纸 [item.holt_ray.newspaper_stack],他嘴上说是留着引火。衣柜顶上横着一只钓具箱 [item.holt_ray.tackle_box],搭扣被手摸得发亮,潮水好的傍晚他就提着它、拎上门后那根钓竿 [item.holt_ray.fishing_rod] 去码头;衣柜脚下那口 1949 年跟他一起退伍回来的旧行李箱 [item.holt_ray.footlocker] 倒是好些年没打开过。制服外套 [item.holt_ray.uniform_jacket] 挂在门后,肩章洗得有点发白,和屋里其余的一切格格不入;外套上方的墙上钉着一张 1930 年代伐木班组的合影 [item.holt_ray.logging_photo],最边上那个扛着双人大锯的年轻人是他父亲。房门 [SCN_holt_common] 通向起居的大开间。",
+  "parentLocationId": "holt_house",
   "indoor": true,
   "references": {
     "items": [
@@ -15,17 +15,57 @@
       {
         "id": "item.holt_ray.tackle_box",
         "name": "钓具箱",
-        "description": "落了灰的旧钓具箱,搭扣锈住了,好几年没被打开过。"
+        "description": "分层的旧铁皮钓具箱,搭扣被手摸得发亮,里头假饵按颜色归格、线卷缠得整齐——这屋里唯一一件他还认真收拾的东西。他总说等退休了就天天去钓,可眼下也没耽误几个傍晚。"
       },
       {
         "id": "item.holt_ray.uniform_jacket",
         "name": "警长制服外套",
-        "description": "挂在门后的深蓝色制服外套,肩章洗得有点发白,只有别在胸前的警徽擦得锃亮。"
+        "description": "挂在门后的深蓝色制服外套,肩章洗得有点发白,胸前别徽章的地方留着两个小针眼——徽章从不留在外套上,每晚都被摘下来擦。"
+      },
+      {
+        "id": "item.holt_ray.armchair",
+        "name": "扶手椅",
+        "description": "窗边一把蒙着旧绒布的扶手椅,坐垫陷出了一个人的形状,椅背向后仰出固定的弧度。他在这儿填字、打盹、看巷子里有没有车进来——这把椅子和办公室那把是一个姿势。"
+      },
+      {
+        "id": "item.holt_ray.bed",
+        "name": "单人床",
+        "description": "靠墙的窄单人床,铺着一条起球的旧军毯,床头那侧塌得比另一侧低。被子早上照旧掀开摊着——这屋里没人来查铺。"
+      },
+      {
+        "id": "item.holt_ray.pipe_and_tin",
+        "name": "烟斗与烟丝罐",
+        "description": "一只用了多年的石楠木烟斗,斗柄咬痕很深,配一只带铰链盖的烟丝铁罐和一盒火柴。烟丝只在镇上那家杂货店买,老板娘替他记着账。"
+      },
+      {
+        "id": "item.holt_ray.tube_radio",
+        "name": "旧电子管收音机",
+        "description": "床头那台木壳电子管收音机,开机要等半分钟才出声。他听天气、听潮汐表、听点老歌;近来夜里偶尔有一段说不清的杂音压过人声,他伸手把旋钮拨开就是了。"
+      },
+      {
+        "id": "item.holt_ray.newspaper_stack",
+        "name": "旧报纸",
+        "description": "床底下拖出来的半摞旧报纸,晒得发脆发黄,最上面几份的填字游戏被撕走了。他说是留着引火,可这一摞的日期跨了好些年,谁也没数过。"
+      },
+      {
+        "id": "item.holt_ray.fishing_rod",
+        "name": "钓竿",
+        "description": "靠在门后的一根旧玻璃纤维海钓竿,导环上缠着修过的胶布,握把被手汗浸成深色。潮水好的傍晚它就跟着钓具箱一起下码头。"
+      },
+      {
+        "id": "item.holt_ray.footlocker",
+        "name": "旧行李箱",
+        "description": "衣柜脚下一口帆布包角的军用行李箱,1949 年跟他一起退伍回的乡,盖上还留着模糊的名字缩写。搭扣压得很死,箱盖上落的灰是屋里最厚的。"
+      },
+      {
+        "id": "item.holt_ray.logging_photo",
+        "name": "伐木班组合影",
+        "description": "钉在墙上的一张 1930 年代黑白合影:十几个伐木工站在一截刚放倒的红杉桩上,人显得很小。最边上扛着双人大锯的年轻人是他父亲。相框歪着,几十年没扶正过。"
       }
     ],
     "connections": [
       {
-        "id": "exit.holt_ray.door",
+        "id": "connection.holt_ray.door",
         "targetId": "SCN_holt_common",
         "name": "房门",
         "description": "通向起居大开间的房门。"

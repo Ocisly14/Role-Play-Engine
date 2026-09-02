@@ -1,422 +1,437 @@
 # LLM World Engine
 
-> A tick-based world simulation where every NPC is an LLM agent with memory,
-> perception, and goals — inspired by the open-endedness of tabletop RPGs.
+`role-play-engine` is a tick-based world simulation in TypeScript. Every
+non-player character is an LLM agent with its own memory, perception and
+goals; the world itself is advanced by a deterministic code engine and an
+LLM engine that resolves open-ended actions into typed state changes.
 
-```
-        World state ──▶ Render Layer ──▶ Role-Play Agent ──▶ Task Processor
-              ▲                                                     │
-              └─────────  Code Engine  ◀──┴──▶  LLM Engine  ◀───────┘
-                              (deterministic)      (open-ended)
-```
+One tick is one in-world minute. There is no turn-based chat loop, no
+central scheduler and no planning agent: each character perceives a
+rendered narrative, decides for itself, and its decision is validated and
+queued for the next tick.
 
-A traditional game engine updates the world deterministically when events
-fire. **An LLM world engine adds a second engine** that can handle
-open-ended state changes — characters disassembling items, reshaping scenes,
-having social interactions whose outcome depends on context. The two engines
-run side by side, fed by a task processor that routes each atomic step to
-whichever engine is right for the job.
+The checkout directory is still named `CoC-AI-agent` for historical
+reasons; the package and the code carry no named-setting terminology.
 
-This repository is a working implementation of that idea.
+## Contents
 
----
-
-## Why I built this
-
-A TTRPG session, when you watch it carefully, is the act of *re-creating
-a world*. Players input actions; the world changes according to rules,
-environment, and events; NPCs react out of memory, relationships, and
-goals; scenes, items, weather, and storylines keep evolving. That made me
-ask: if a TTRPG is already a dynamic world, could I build a **game engine
-driven by LLMs**?
-
-A traditional engine is great at the deterministic core — math, physics,
-time, probability. It is not great at "the player just used the lamp oil
-to bribe the watchman, taking advantage of the rain." LLMs are the
-opposite. So the engine is a **hybrid**:
-
-- **Code engine** — deterministic outcomes (movement, time, weather,
-  item damage, stamina).
-- **LLM engine** — open-ended outcomes, constrained by per-skill schemas
-  so the result is still typed state changes.
-- **Task processor** — interprets free-form action text into atomic
-  steps and routes each to the right engine.
-
-One engine brings determinism, the other open-endedness; one brings
-efficiency, the other imagination. The skill layer itself borrows a
-pattern from Claude Code's Skill mechanism: every action category
-(electrical repair, driving, diving, climbing, investigation, social,
-combat…) declares what world state to read, what rules to honor, what it
-can change, and how the result writes back.
-
-Once the engine ran, the harder question was: **how does a character
-actually live inside this world?** An LLM is a blank super-brain. Give
-it a name, age, profession, history, personality, goal, and secret and
-it starts behaving like a *character*. But what shapes a person's
-behavior isn't the profile — it's the **memory**. So every NPC has
-short-term and long-term memory, a known-map of places, a relationship
-graph, and a forgetting curve. Recall is fuzzy on purpose: humans
-forget, misremember, and remember selectively too.
-
-And then: **how does the character perceive the world?** Not by reading
-the structured state. The way you read a paper — inline citations plus
-a reference block. The **render layer** does that, in words instead of
-pixels. If a 2D / 3D engine is wired in later, the same seam becomes
-"render a frame, attach it to the prompt, the NPC sees multimodally."
-
-The three pieces — hybrid engine, role-play agent, render layer — close
-the loop: world state → perception → decision → action → state.
-
----
-
-## Design decisions I'd point at
-
-Four choices in this codebase that I thought about hard and want a
-reader to notice:
-
-- **Hybrid LLM / code engine routing.** Every `ActionStep` declares
-  `engine: "llm"` or `engine: "code"`. Open-ended outcomes (item
-  disassembly, social interaction, ambiguous reasoning) go to the LLM,
-  constrained by per-skill schemas. Deterministic outcomes (movement,
-  time, weather, math) go to code. Probability and rules to code;
-  narrative and semantics to the model. One queue, one applier.
-- **Citation contract.** A single `[Name]` syntax in `actionText`
-  carries through renderer → agent → interpreter → engine, replacing
-  parallel `targetCharacterIds` fields. Characters, items, and scenes
-  share one surface; the format aligns with how LLMs were pre-trained
-  to read references; persisted memories stay self-describing.
-- **Render-as-perception.** The render layer turns world state into the
-  words the NPC would perceive — first person, sensory only,
-  citation-annotated. Wire in a 2D / 3D engine later and the same seam
-  becomes "render a frame, attach it to the prompt, the NPC perceives
-  multimodally."
-- **Memory shaped like a human's, not a database's.** Seven memory
-  types with a decay curve, embedding-based recall, a daily
-  summarization pass. Retrieval is fuzzy *by design* — people forget,
-  misremember, and selectively recall. An NPC that remembers perfectly
-  stops feeling like a person.
-
----
+- [How it works](#how-it-works)
+- [Runtime flow](#runtime-flow)
+- [The two LLM seams](#the-two-llm-seams)
+- [Trust boundary and citations](#trust-boundary-and-citations)
+- [Perception and rendering](#perception-and-rendering)
+- [Memory](#memory)
+- [Skills](#skills)
+- [Modules (world data)](#modules-world-data)
+- [Getting started](#getting-started)
+- [Simulation API](#simulation-api)
+- [Configuration](#configuration)
+- [Scripts](#scripts)
+- [Repository layout](#repository-layout)
+- [Testing](#testing)
+- [Further reading](#further-reading)
+- [License](#license)
 
 ## How it works
 
-```mermaid
-flowchart LR
-    World[("World State<br/>(DGSM)")]
-    Render["Render Layer<br/>perception → narrative"]
-    Agent["Role-Play Agent<br/>memory + tools"]
-    Intake["Task Processor<br/>actionText → atomic steps"]
-    LLM["LLM Engine<br/>open-ended outcomes"]
-    Code["Code Engine<br/>deterministic outcomes"]
-    Apply["Applier"]
+Two engines share one world state:
 
-    World -- TickReport --> Render
-    Render --> Agent
-    Agent -- "act / continue" --> Intake
-    Intake -- "engine: llm" --> LLM
-    Intake -- "engine: code" --> Code
-    LLM --> Apply
-    Code --> Apply
-    Apply --> World
-    World -. next tick .-> World
-```
+- **Code engine** — deterministic transitions: movement along the place
+  graph, the clock, weather, sunlight, stamina, fire, item damage,
+  condition expiry, dice.
+- **LLM engine** — open-ended outcomes. A single model session reads the
+  full world context, resolves every action that triggered this tick, and
+  emits typed `WorldDelta`s that the code validates and applies.
 
-Each tick is one in-world minute (configurable). One round trip per tick:
-
-1. The engine emits a `TickReport`.
-2. The controller picks the NPCs that need to act this tick — those whose
-   action ended, those affected by propagated events, and idle alive NPCs.
-3. The render layer turns each NPC's perceivable slice of the world into a
-   first-person narrative.
-4. The agent runs a short tool loop and returns one decision.
-5. `act` flows through the task processor, lands in the engine queue, and
-   the next tick consumes it.
-
-There is no central scheduler. The pipeline is one-way:
-**NPC AI → translation → queue → engine.**
-
----
-
-## Citations: how actions pick their targets
-
-In academic writing, you cite works inline by marker and define them in a
-reference block. The same pattern threads through this engine — and not
-by accident.
-
-### The contract
-
-**Renderer → Agent.** The perception narrative cites named entities
-inline as `[N]`, with a `[references]` block listing each one. The agent
-reads the narrative the way you read a paper:
+Characters never see structured state. Each tick, what a character can
+perceive is rendered into one first-person paragraph, and the character's
+agent answers with a single tool call. The pipeline for every NPC is:
 
 ```
-[narrative]
-I step into the lantern light spilling from the doorway. Smith[1] is
-hunched at the table, turning over the bound ledger[2] in his hands.
-
-[references]
-[1] Smith: gaunt, soot-stained coat
-[2] the bound ledger: thick leather, brass clasp
+perception → NPC agent → trust boundary → command inbox → engine
 ```
 
-**Agent → Engine.** When the agent acts it calls the single structured
-`act` tool — intent only, never outcomes:
+Seen as a loop, each character's tick closes on itself:
 
-```jsonc
-act({
-  "description": "I kneel at the cabinet and work the lock with my picks.",
-  "objectRefs": [
-    { "kind": "item", "id": "cabinet_lock", "role": "target" },
-    { "kind": "item", "id": "ITEM_SCN2_7", "role": "tool" }
-  ],
-  "proposedDurationTicks": 3,
-  "skillId": "Locksmith"        // optional; utterance? carries exact speech
-})
+```
+        ┌─────────────────┐   act / continue    ┌─────────────────┐
+        │  Character acts │ ───────────────────▶│  Trust boundary │
+        │  (RoleSimAgent) │   intent only       │  validate + wrap│
+        └─────────────────┘                     └────────┬────────┘
+                 ▲                                       │ ActionCommand
+                 │ first-person paragraph                │ (command inbox)
+                 │ next tick                             ▼
+        ┌────────┴────────┐                     ┌─────────────────┐
+        │  Render scene   │ ◀──── TickReport ───│  Engine resolves│
+        │  (renderer)     │   what this         │  code + LLM,    │
+        │  [citation tags]│   character sees    │  applies deltas │
+        └─────────────────┘                     └─────────────────┘
 ```
 
-**Trusted Action Intake.** The controller validates every ref against the
-actor's per-tick perceivable directory, stamps the trusted envelope
-(commandId / actorId / issuedAt / issuedSceneId / replacesActionId — the
-model can forge none of them), and if a skill was declared rolls it
-IMMEDIATELY from the real character value into an immutable
-`SkillRollRecord`. The result is an `ActionCommand` — the single action
-boundary between RoleSim and the Engine.
+The character declares intent; the boundary checks that the intent points
+at real things; the engine decides what actually happens and changes the
+world; the renderer turns the part of that the character can perceive into
+prose; the character reads it and decides again. No step sees more than it
+should: the character never reads state, and the engine never reads the
+character's private reasoning.
 
-**Engine resolution.** Commands queue in the Engine's inbox. On a tick with
-a resolution trigger (new command, an active action reaching its
-`nextWakeAt`, a replacement, or an interruption) the Engine builds ONE
-full-world `EngineResolutionContext` and runs ONE World Action Engine
-session for ALL new and in-flight actions together. The session may call
-deterministic code tools (pathfinding, movement cost, inventory
-validation, opposed roll, damage dice) and must submit a single
-`TickResolution`: per-action transitions with Engine-owned
-`resolvedDurationTicks` + timing reasons, sourced `WorldDelta`s grouped by
-character/scene/item, and objective `Occurrence`s with perceiver character
-ids. A code validator enforces references, invariants, single transitions
-and roll consistency; one corrective retry, then invalid output is dropped
-and the affected actions fail. Idle clock ticks make ZERO model calls —
-deterministic subsystems (movement interpolation, weather, fire, stamina)
-still advance.
+Nothing above the characters owns their actions. The engine reports what
+happened; what a character makes of it is theirs to record.
 
-**Per-character rendering.** Occurrences route to each listed perceiver;
-the Renderer combines them with that character's own state to decide what
-they actually perceive (sight vs sound-only per signals, unknown identities
-by description) and produces the first-person narrative the agent reads.
-Subjective event/witness memories are written from this rendered
-perception — never from god-eye engine text.
+## Runtime flow
 
----
+```
+SimulationRunner
+   └─▶ TickEngine / tickOrchestrator (advances 1 in-world minute per tick)
+          1. clock  2. movement runtimes  3. drain + validate command inbox
+          4. collect resolution triggers
+          5-7. ONE World Action Engine session (skipped when no triggers → 0 model calls)
+          8. anchor subsystems + scripted events
+          11. single Applier flush (StateChanges + WorldDeltas)
+          12. commit action lifecycle, emit TickReport
+                 │
+                 ├─▶ SimulationEventEmitter ──▶ WebSocket broadcast
+                 └─▶ NpcActionController
+                        ├─ buildPerceivedBundle → renderer (MEDIUM model)
+                        │     → first-person, citation-tagged narrative
+                        ├─ RoleSimAgent.decide()  → act | continue | writeMemory
+                        └─ trust boundary (commandValidator + commandBuilder)
+                              → CommandInbox → next tick
+```
 
-## The three pillars
+`SimulationRunner` (`src/simulation/`) drives the tick engine, persists
+runtime state, and broadcasts each `TickReport` over WebSocket. The tick
+engine (`src/engine/core/`) owns every world-state transition and flushes
+them through one `Applier` per tick.
 
-### 1. The Hybrid World Engine — `src/engine/`
+## The two LLM seams
 
-The engine is the source of truth for world state. One `tick()` advances
-every in-flight action, runs passive systems, fires scripted/emergent
-events, applies state changes, and emits a `TickReport`. The `Applier` is
-the only writer to world state.
+### World Action Engine
 
-**Composition** (`core/tickEngine.ts`):
+`src/engine/resolution/worldActionEngine.ts` runs one agentic session per
+tick that has resolution triggers, over the full world context built by
+the context builder. A tick with no triggers makes no model calls.
 
-| Component              | Role                                                                  |
-| ---------------------- | --------------------------------------------------------------------- |
-| `CommandInbox`         | Pending `ActionCommand`s between submit and first resolution          |
-| `ActionStore`          | Persisted `EngineAction` lifecycle (idempotent per commandId)         |
-| `WorldActionEngine`    | One global semantic resolution session per triggered tick             |
-| `worldDeltaValidator`  | Code-side contract enforcement + finalization                         |
-| `CodeToolRegistry`     | Deterministic capabilities (pathfinding, rolls, inventory…), audited  |
-| `movementRuntime`      | Per-tick deterministic route execution on `EngineAction.runtime`      |
-| `ScriptedEventRunner`  | Module-defined events that match on world state                       |
-| `Applier`              | Sole writer to `DynamicGameStateManager`; consumes WorldDeltas natively |
-| `TickOrchestrator`     | Drives the tick phases and assembles `TickReport`                     |
+- **No action types, no per-action prompts.** One rule document,
+  `src/engine/rules/world-action-resolution.md`, governs every action;
+  `src/engine/rules/session-protocol.md` is the session contract.
+- **Validated output.** The session ends with exactly one
+  `submit_resolution` call. Its payload is checked in code by
+  `worldDeltaValidator.ts`; invalid parts get up to `MAX_REPAIR_ROUNDS` (3)
+  corrective rounds through `repair_resolution`, and whatever is still
+  invalid is dropped with the originating action marked failed.
+- **One code tool.** `damageRoll` (`src/engine/tools/diceTools.ts`) is the
+  only tool the session can call, because a roll must never be the
+  model's. The request already carries the place graph, the places and the
+  items, so pathfinding, movement cost and inventory lookups are read from
+  the context rather than queried.
+- **Bounded turns.** Every turn re-sends the whole request, so a turn
+  costs about what the resolution costs. `MAX_ITERATIONS` caps the
+  session; after the force point the tools are withdrawn and a submission
+  is demanded.
+- **Sanity is judgement, not a tool.** `src/engine/rules/sanity-check.md`
+  tells the session when a check is warranted (rarely) and it is reported
+  as part of the resolution.
 
-**One rule set, no action types:** there are no per-action definitions and
-no natural-language interpreter. Every open-ended or composite action is
-resolved under the single rule document
-`src/engine/rules/world-action-resolution.md` (causality, state
-constraints, locality, engine-owned timing, conservation, roll-first
-assessment, concurrency consistency, minimal change, fact/perception
-separation, action-driven triggering) and one `WorldDelta` schema.
+### RoleSimAgent
 
----
+`src/roleSim/llmAgent.ts` is the per-character persona loop. It receives
+the system prompt (profile, skill reference, tool guidance), the
+character's memories and the perception stream, and answers with one of
+three tools:
 
-### 2. The Role-Play Agent — `src/roleSim/`
+| Tool | Kind | Effect |
+|---|---|---|
+| `act` | terminal | Declares the one thing the character sets out to do. Consumes the tick. |
+| `continue` | terminal | Keeps the in-flight action running. Consumes the tick. |
+| `writeMemory` | instant | Records a memory; dispatched by `toolDispatcher.ts` in the same turn. |
 
-A bare LLM is a blank super-brain. Give it a name, age, profession,
-history, personality, goal, and secret, and it becomes a *character*. But
-what really shapes a person's behavior is **memory** — and that is what
-turns the character into a continuing one.
+`act` carries intent only, never outcome: a one- or two-sentence
+`description`, `objectRefs` (`{id, role}` with `role` in
+`target | tool | destination | recipient`), `proposedDurationTicks`, an
+optional `skillId` from the catalog, `language` (for the Languages skill)
+and an optional verbatim `utterance`. The engine decides what happens and
+how long it takes. There is no recall tool; see [Memory](#memory).
 
-**Memory** (`src/memory/`) — seven types of memory plus a decay engine, a
-known-map memory, an embedding-based retriever (FastEmbed), and a daily
-summarization pass (`roleSim/dailySummarization.ts`). Recall is fuzzy by
-design: humans forget, misremember, and rationalize too.
+## Trust boundary and citations
 
-**`LLMRoleSimAgent.decideNext(ctx)`** — a bounded agent loop (≤14
-iterations per call):
+Agent output is untrusted. `src/engine/actions/commandValidator.ts` checks
+shape, enums, duration bounds, and that every `objectRef` names something
+real; `commandBuilder.ts` then wraps the result in a trusted
+`ActionCommand` whose envelope (`commandId`, `actorId`, `issuedAt`,
+`issuedSceneId`) the model can never write. Rejections carry one of six
+structured codes (`invalid_description`, `invalid_object_refs`,
+`unknown_ref`, `invalid_duration`, `invalid_skill`, `invalid_utterance`)
+that the character reads as feedback on its next decision.
 
-1. Build the prompt from the full `RoleSimContext` (profile, current scene,
-   current action, recent memory, long-term intent, the rendered
-   `perception.narrative` — whose bracketed tags are the ids the NPC may
-   cite).
-2. One `generateToolCalls` round-trip on `ModelClass.MEDIUM` returns native
-   tool calls (`toolChoice: "any"` — the model must call something).
-3. Dispatch:
-   - **Terminal tools** (`act`, `continue`) end the loop and return a
-     decision to the controller.
-   - **`writeMemory`** is the only non-terminal tool. It returns nothing the
-     agent must read back, so it rides along in the terminal turn and the
-     decision normally costs a single request. A turn with no terminal call
-     is answered and looped back.
-4. Per-tool budgets cap re-entry; the iteration cap is a hard fallback that
-   forces `continue`.
+The boundary makes no semantic judgement. Reachability, feasibility, skill
+fit and resistance are decided by the World Action Engine in full context,
+where a stale reference can be answered as something the character
+perceives instead of a rejection it never sees.
 
-The agent never sees engine handles or in-flight queue state. The engine is
-the source of truth; the controller queries it on demand.
+**What a character may point at** is defined by
+`src/state/perceivableDirectory.ts`:
 
-**`NpcActionController`** subscribes to one channel — `tickCompleted` —
-and per tick computes the NPCs that need a `decide()` call:
+- Known people, items and scenes keep their real ids.
+- Unknown people appear under a per-viewer alias such as `stranger_a`. The
+  alias is derived from (viewer, target), so it is stable for as long as
+  the person stays unknown; the boundary swaps in the real id before the
+  engine sees the command.
+- Connections are never citable. A passage is topology bookkeeping; prose
+  cites the place it leads to, and a door that matters as an object is
+  authored as an item.
+- Road items may carry a `position` along the road; perception applies a
+  reach radius (`ROAD_ITEM_REACH_MINUTES`, in `src/state/perceivedLocation.ts`)
+  around the walker, and the boundary and the renderer share the resolver
+  so the citable set and the rendered set never diverge.
 
-1. Impact propagation via `findAffectedCharacters` for any in-flight action
-   that overlaps a `FeatureEvent`.
-2. NPCs whose action ended this tick (commit / interrupt / cancel).
-3. Alive NPCs with no in-flight step.
+Travel is stated, not computed by the model. The actor names
+`movement.route` (and `vehicleId` when driving); code derives the duration.
+A hop that does not exist fails back to the actor naming both places.
 
-Each affected NPC gets exactly one `decide()` per tick.
+## Perception and rendering
 
-**Tool surface:**
+`src/roleSim/renderer/` turns a `PerceivedBundle` (scene, own conditions,
+own action posture, the occurrences this character perceives this tick)
+into one first-person paragraph with a MEDIUM-class model call. Entities
+carry bracketed citation tags (`[stranger_a]`, `[ITEM_7]`,
+`[SCN_LIBRARY]`), and citing a tag is the only way a character can refer
+to anything.
 
-| Tool          | Kind     | Effect                                                        |
-| ------------- | -------- | ------------------------------------------------------------- |
-| `act`         | terminal | Submitted to the engine via `ActionIntake`                    |
-| `continue`    | terminal | Keep doing the in-flight action; no submission                |
-| `writeMemory` | free     | Append a typed memory through `NpcMemoryManager` (≤3/decision) |
+A paragraph that carries a tag the actor could not cite is sent back once,
+quoting the exact string; `stripUncitableTags` drops whatever is still
+uncitable before the paragraph reaches the actor. If the renderer fails the
+character gets nothing for that tick. There is deliberately no god-eye
+fallback.
 
----
+The perception stream is append-only and injected whole, so it has a
+ceiling. `src/roleSim/perceptionCompactor.ts` hands the character its own
+prompt back and asks it to condense the early part into the account it
+could still give, keeping recent paragraphs verbatim.
+`src/roleSim/promptBudget.ts` measures per-block token spend (counting CJK
+and Latin separately) and evicts nothing.
 
-### 3. The Render Layer — `src/roleSim/renderer/`
+## Memory
 
-In a traditional engine, the renderer turns world state into pixels. In an
-LLM world, it turns world state into **the words the NPC perceives** — the
-NPC's camera. Same role, different output.
+`src/memory/` stores six memory types (`NpcMemoryType` in
+`prisma/schema.prisma`): `general`, `plan`, `secret`, `relationship`, `map`,
+`long_term_intent`. All of them are character-authored:
 
-The agent never reads the structured world. It reads what its character
-*could see, hear, smell, and feel right now*. That is what the render layer
-produces.
+- A module seeds them through each NPC profile's `memory` array, including
+  geographic knowledge as `map` memories in the character's own voice.
+- In play, `writeMemory` writes the same types with an `op` of `add`
+  (default), `replace` or `delete`. `replace` and `delete` address a memory
+  by the tag `memoryFormatter.ts` renders at the head of each line; the tag
+  resolves only against memories that were in that decision's prompt.
+- Nothing is generated on the character's behalf: no bootstrap gazetteer,
+  no end-of-day diary. A place absent from both profile and written
+  memories does not exist for that character.
 
-**`buildPerceivedBundle`** gathers the per-NPC slice:
+Memories are injected whole into the user prompt, which is why there is no
+recall tool. Decay lives in `DecayEngine`; embeddings come from FastEmbed
+via `src/rag/localEmbeddingManager.ts`.
 
-- `scene` — id, name, description, active scene conditions
-- `ownConditions` — the NPC's own character conditions (proprioceptive)
-- `ownAction` — `ongoing` / `ended { committed | interrupted | cancelled }` /
-  `idle`
-- `events` — the controller-filtered `FeatureEvent`s that propagated to
-  this NPC
+A character's view of another is a `relationship` memory it writes itself;
+writing one also updates `npcRelationshipGraph`. Knowing *who* someone is
+is a separate fact: the graph node's `knownAs`, set when a name is said in
+the character's hearing, is the only thing `isKnownTo` reads. The engine
+has no relationship operation of its own.
 
-**`render`** runs one LLM round-trip on `ModelClass.SMALL` (Haiku-tier).
-The system prompt enforces:
+## Skills
 
-- **Format** — a `[narrative]` paragraph (first person, present tense,
-  sensory only) followed by a `[references]` block.
-- **Perception only** — render only what the viewpoint can sense right
-  now. No memory, no plot secrets, no hidden allegiances, no future plans.
-- **Citations** — `[N]` after named people, items, and scenes the first
-  time they appear; reuse the same `N` thereafter. Sub-locations, weather,
-  and generic nouns stay inline as plain prose.
-- **Identity** — for unknown people, use the description-based identifier
-  given in the input (`"the gaunt man"`); never invent canonical names.
+Skills are 17 broad ability domains defined in
+`src/engine/rules/skillCatalog.ts`, each with a guidance document under
+`src/engine/rules/skills/`:
 
-If the LLM call fails or returns empty, `render` falls back to
-`buildGodEyeFallback` — a deterministic, synchronous god-eye prose render
-of the same bundle. Tests exercise the deterministic path directly via
-`renderFallback`.
+Social · Knowledge & Craft · Science & Nature · Investigation · Athletics ·
+Swimming · Stealth & Security · Repair & Engineering · Land Vehicle
+Operation · Watercraft Operation · Aircraft Operation · Survival &
+Navigation · Medicine & Psychology · Melee Combat · Ranged Combat ·
+Languages · Occult
 
-If a 2D / 3D engine is wired in later, the render layer is the natural
-seam: replace the textual narrative with rendered pixels and feed both into
-a multimodal prompt.
+Specific approaches, tools and weapon types are judged from the action
+description by the engine rather than tracked as separate stats.
+`skillReference.ts` renders the catalog into both the character system
+prompt and the engine session.
 
----
+## Modules (world data)
 
-## Tick = frame rate
+A module is a directory of JSON files loaded by `src/state/moduleLoader.ts`
+and validated by `src/state/moduleSchemaV2.ts`. Every rule in the authoring
+contract, `testmods/DYNAMIC_WORLD_SCENE_SCHEMA.md`, is enforced at load
+time; violations are collected into one `ModuleSchemaError`.
 
-The world advances one tick at a time. A tick can be one in-world minute,
-five, or longer.
+```
+<module>/
+  module_setup.json            optional: startDate + introduction + weather presets
+  npc_injection_policy.json    optional: which NPCs simulate, by tier
+  <scenes-dir>/                SCN_*.json (scenes), ROAD_*.json (roads), VEH_*.json (vehicles)
+  <npc-dir>/*.json             NPC profiles (placement, stats, seeded memories)
+  scripted-events/*.json       optional: event definitions
+```
 
-In a traditional game, frame rate is bounded by how fast you can rasterize
-triangles. In an LLM world, the bound is **how fast the engines and the
-agents can think** — state-update throughput, inference latency, token
-generation speed. The faster the two engines and the agent loop run, the
-shorter each tick can be, and the smoother the world flows.
+Schema v2 is prose-first: a scene's `description` is the complete text a
+character perceives, every visible object, passage and condition is cited
+inline as `[reference-id]`, and the matching machine-readable rows live in
+the same file under `references`. Files without `schemaVersion: 2` are
+rejected. There are two place kinds only — top-level scenes are geography
+nodes and roads connect them; interiors attach to a scene through
+`parentLocationId`.
 
-GPUs once raced to draw triangles. In an LLM world, token throughput
-becomes its own kind of rendering budget.
+`testmods/grayhaven/` is the reference module (about 70 places, around ten
+NPCs). Runtime modules live under `data/Mods/`.
 
----
+## Getting started
 
-## Quick start
-
-Prerequisites: **Node ≥ 18**, **pnpm** (enforced via `only-allow`),
-**PostgreSQL**, and an LLM API key (Anthropic / OpenAI / Google) configured
-via env vars.
+Prerequisites: Node >= 18, pnpm (enforced through `only-allow`), a
+PostgreSQL database, and an API key for at least one model provider.
 
 ```bash
-pnpm install                # also runs prisma generate
-pnpm prisma db push         # use db push, not migrate dev (see Notes)
-pnpm chat:dev               # API + WebSocket server + Vite frontend
+pnpm install                      # also runs prisma generate
+cp .env.example .env              # set MODEL_PROVIDER, the matching *_API_KEY, DATABASE_URL, JWT_SECRET
+pnpm prisma db push               # create the schema (see note below)
+pnpm chat                         # API + WebSocket server on PORT (default 3000)
+pnpm chat:frontend                # Vite dev server for the React viewer in client/
+pnpm chat:dev                     # both at once
 ```
 
-Other useful commands:
+Use `prisma db push`, not `prisma migrate dev`: the `reminder_embeddings`
+table has schema drift that makes `migrate dev` unsafe.
+
+The React app in `client/src/` creates, inspects and controls simulations.
+`godot-client/` is a separate GDScript client that consumes the same
+WebSocket event stream.
+
+## Simulation API
+
+The server (`client/server.ts`) mounts everything under `/api`. Simulation
+control requires a logged-in user (`/api/auth/register`, `/api/auth/login`);
+the viewer reads are public.
+
+| Method | Path | Notes |
+|---|---|---|
+| `POST` | `/api/simulation` | body `{ moduleName, language?, config? }` |
+| `POST` | `/api/simulation/:id/start` | |
+| `POST` | `/api/simulation/:id/pause` | |
+| `POST` | `/api/simulation/:id/resume` | |
+| `POST` | `/api/simulation/:id/step` | body `{ ticks? }`, default 1 |
+| `POST` | `/api/simulation/:id/stop` | |
+| `DELETE` | `/api/simulation/:id` | |
+| `GET` | `/api/simulations` | list the caller's simulations |
+| `PUT` | `/api/simulation/:id/config` | |
+| `POST` | `/api/simulation/:id/characters` | inject a character into a running world |
+| `GET` | `/api/simulation/:id/status` | public |
+| `GET` | `/api/simulation/:id/events` | public |
+| `GET` | `/api/simulation/:id/topology` | public |
+| `GET` | `/api/simulation/:id/map-layout` | public |
+| `GET` | `/api/simulation/:id/positions` | public |
+| `GET` | `/api/simulation/:id/npc-statuses` | public |
+
+Live tick events are broadcast on the WebSocket endpoint at `/ws`.
+
+## Configuration
+
+`.env.example` is the reference. The variables that shape a run:
+
+| Variable | Purpose |
+|---|---|
+| `MODEL_PROVIDER` | `anthropic`, `openai`, `google` or `deepseek` |
+| `ANTHROPIC_API_KEY`, `OPENAI_API_KEY`, `GOOGLE_API_KEY`, `DEEPSEEK_API_KEY` | credentials per vendor |
+| `{SMALL,MEDIUM,LARGE}_{ANTHROPIC,OPENAI,GOOGLE,DEEPSEEK}_MODEL` | model per class and vendor |
+| `EMBEDDING_OPENAI_MODEL`, `EMBEDDING_GOOGLE_MODEL`, `IMAGE_OPENAI_MODEL` | embedding and image models |
+| `DATABASE_URL` | PostgreSQL connection string |
+| `PORT`, `API_URL` | server port and base URL |
+| `JWT_SECRET` | token signing secret |
+| `LLM_TRACE_DIR` | dump every model call (prompt and answer) to disk |
+| `NPC_DECIDE_CONCURRENCY` | parallel NPC decisions per tick |
+| `SKIP_EMBEDDING_WARMUP` | skip loading the embedding model at boot |
+| `PRISMA_LOG_QUERIES` | log SQL |
+
+The model layer in `src/models/` has one adapter per vendor under
+`providers/`; retries, model-class fallback and usage accounting live in
+`generator.ts`. Native tool calls and provider prompt-cache breakpoints are
+supported.
+
+## Scripts
+
+Free (no model calls):
 
 ```bash
-pnpm chat                   # backend only
-pnpm chat:frontend          # frontend only
-pnpm build                  # swc src -> dist
-pnpm build:tsc              # tsc -p tsconfig.json
-pnpm check                  # biome check --apply
-pnpm test                   # vitest (-- path/to/file or -t name to filter)
+pnpm test                   # vitest
+pnpm check                  # biome lint + format + organize imports
+pnpm build                  # swc build src -> dist
+pnpm build:tsc              # type-check + emit with tsc
+pnpm smoke:module           # load a module, report schema errors
+pnpm lint:agent-cases       # structural check of the decision case table
 ```
 
-Path alias `@/*` → `src/*` is configured for vitest.
+Paid (every one of these calls real models; nothing is stubbed):
 
----
+```bash
+pnpm test:agent-decisions   # stage each case in its own session, run the pipeline a few in-world minutes
+pnpm sim:full               # whole reference town, one session, resumable from the last completed tick
+pnpm prompt:budget          # per-block token accounting for the character prompt
+```
 
-## Repo layout
+`test-agent-decisions.ts` accepts `--list`, `--only <case>`,
+`--module grayhaven`, `--drop-sessions` and `--dump-prompts`. It records an
+objective per-actor trace and does no grading. Set `LLM_TRACE_DIR` to keep
+every prompt and answer from any run.
 
-```text
+## Repository layout
+
+```
 src/
-  engine/      Tick engine: actions, resolution, tools, subsystems, rules
-  roleSim/     Role-play agent, controller, render layer, tool dispatcher
-  simulation/  SimulationRunner, persistence, event emitter
-  state/       DynamicGameState, topology, gameClock, module loading
-  memory/      7-type NPC memory + decay + retriever
-  models/      LLM wrapper (ChatAnthropic / OpenAI / Google)
-  rag/         Discovery retrieval
-  i18n/        en / zh
-
-client/
-  server/      Express + WebSocket entry and route modules
-  src/         React + Vite + Tailwind admin UI
-
-prisma/
-  schema.prisma
-  migrations/
+  engine/       tick runtime: core/ (tickEngine, applier, eventBus, scriptedEventRunner),
+                actions/ (command intake, validator/builder, movement runtime),
+                resolution/ (World Action Engine, context builder, WorldDelta schema/validator),
+                tools/ (damageRoll), subsystem/ (fire, weather, sun, stamina, item damage,
+                condition expiry), scriptedEvents/, rules/, shared/ (dice, pathfinding, topology)
+  roleSim/      character agent: llmAgent, npcActionController, renderer/, systemPrompt,
+                userPromptBuilder, memoryFormatter, perceptionCompactor, promptBudget, tools/
+  simulation/   SimulationRunner, SimulationEventEmitter, runtimePersistence, characterInjection
+  state/        DynamicGameState + loader, moduleLoader/moduleSchemaV2, gameClock,
+                perceivableDirectory, perceivedLocation, connectionRegistry, characterSpot
+  memory/       MemoryStore, MemoryRetriever, NpcMemoryManager, DecayEngine, handlers/
+  models/       LLM layer: providers/ (anthropic, openai, google, deepseek), generator, trace
+  rag/          local embedding manager
+  i18n/         en / zh
+  shared/       Prisma client, module scoping, seed data
+  planning/     residual (sceneMapFormatter and a few types); being retired
+client/         Express + WebSocket server (server.ts, server/) and React + Vite viewer (src/)
+godot-client/   GDScript client for the WebSocket event stream
+testmods/       reference module and the authoring schema
+data/Mods/      runtime modules
+prisma/         schema
+scripts/        simulation harness, module smoke test, prompt budget, image generation
+docs/           operations notes
 ```
 
----
+Time is carried as a single ISO 8601 `gameDateTime` string everywhere
+(`src/state/gameClock.ts`).
 
-## Notes
+## Testing
 
-- Use `pnpm prisma db push` rather than `migrate dev`. The
-  `reminder_embeddings` table has drift that makes `migrate dev` unsafe.
-  Scenarios use a compound unique key `(moduleId, scenarioId)`; query with
-  `findFirst`, not `findUnique`.
-- A single `gameDateTime` ISO 8601 string is the only time field. New code
-  must not split it back into separate day/time fields. See
-  `src/state/gameClock.ts`.
-- `CLAUDE.md` is the canonical developer reference for contributors.
-- Legacy single-player chat, turn polling, and memo paths have been
-  removed; only the simulation surface is active.
+Tests use vitest and live in `__tests__/` directories beside the source
+they cover (`src/engine/**/__tests__`, `src/state/__tests__`,
+`src/memory/__tests__`, `src/models/__tests__`, `src/roleSim/__tests__`,
+`src/simulation/__tests__`). Engine integration tests build a world through
+`src/engine/__tests__/integration/makeIntegrationEngine.ts`. The `@/*`
+alias maps to `src/*`.
 
----
+```bash
+pnpm test                                # everything
+pnpm test -- src/state/__tests__/x.test.ts
+pnpm test -- -t "name pattern"
+```
 
-> Bring GPUs back to games. **Make Games Great Again.**
+## Further reading
+
+- `CLAUDE.md` — architecture notes and constraints kept current with the code.
+- `docs/engine-operations.md` — the four operation layers of the engine (Chinese).
+- `testmods/DYNAMIC_WORLD_SCENE_SCHEMA.md` — the module authoring contract.
+- `src/engine/rules/*.md` — the rule documents the World Action Engine reads.
+
+## License
+
+MIT. See `LICENSE`.

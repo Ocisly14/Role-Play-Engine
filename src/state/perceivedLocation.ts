@@ -53,9 +53,30 @@ const ROAD_PROXIMITY_MINUTES = 1;
  *  is citable stay one set. */
 export const ROAD_ITEM_REACH_MINUTES = 5;
 
+/** True when this passage is open to everyone, or this viewer has found it.
+ *  `hidden` is the world's answer, `discoveredBy` this viewer's. */
+function passageVisible(
+  connection: { hidden?: boolean; discoveredBy?: string[] },
+  viewerId: string | undefined
+): boolean {
+  if (!connection.hidden) return true;
+  return (
+    viewerId !== undefined && !!connection.discoveredBy?.includes(viewerId)
+  );
+}
+
+/**
+ * @param viewerId Whose eyes. Omit only where nobody is looking — resolving a
+ *   place by id to print its NAME, say. A concealed passage one character has
+ *   found is visible to them and to nobody else, so the viewer has to come
+ *   with the position: the trust boundary and the renderer both read this
+ *   resolver, and they must be given the same one or the citable set and the
+ *   rendered set stop agreeing.
+ */
 export function resolvePerceivedLocation(
   position: CharacterPosition | null | undefined,
-  dgsm: DynamicGameStateManager
+  dgsm: DynamicGameStateManager,
+  viewerId?: string
 ): PerceivedLocation | null {
   if (!position) return null;
   const topology = dgsm.getTopology();
@@ -92,7 +113,7 @@ export function resolvePerceivedLocation(
       // its incident roads — a road has no hidden flag of its own.
       adjacentIds: [
         ...(scene.connections ?? [])
-          .filter((c) => !c.hidden)
+          .filter((c) => passageVisible(c, viewerId))
           .map((c) => c.targetId)
           .filter((id) => dgsm.getScene(id) != null),
         ...(topology.sceneToRoads.get(scene.id) ?? []).map((r) => r.id),
@@ -118,7 +139,7 @@ export function resolvePerceivedLocation(
   // leads even before you have found every doorway along it.
   const hiddenAccessIds = new Set(
     (road.connections ?? [])
-      .filter((c) => c.role === "access" && c.hidden)
+      .filter((c) => c.role === "access" && !passageVisible(c, viewerId))
       .map((c) => c.targetId)
   );
   return {

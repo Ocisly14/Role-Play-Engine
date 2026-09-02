@@ -24,7 +24,7 @@ function makeDgsm(): DynamicGameStateManager {
           id === "SCN_1"
             ? [
                 {
-                  id: "exit.scn1.door",
+                  id: "connection.scn1.door",
                   targetId: "SCN_2",
                   description: "a door",
                 },
@@ -42,7 +42,10 @@ function makeDgsm(): DynamicGameStateManager {
     getState: () => ({
       scenes,
       npcCharacters: npcs,
-      npcInventories: { npc_1: [{ id: "pick", name: "lockpicks" }] },
+      npcInventories: {
+        npc_1: [{ id: "pick", name: "lockpicks" }],
+        npc_far: [{ id: "ledger", name: "the ledger" }],
+      },
     }),
     getEnvironmentReading: () => ({
       temperature: 20,
@@ -65,7 +68,11 @@ function makeDgsm(): DynamicGameStateManager {
     resolveLocationId: (p: { sceneId: string }) => p.sceneId,
     isNpcAlive: () => true,
     getNpcInventory: (id: string) =>
-      id === "npc_1" ? [{ id: "pick", name: "lockpicks" }] : [],
+      id === "npc_1"
+        ? [{ id: "pick", name: "lockpicks" }]
+        : id === "npc_far"
+          ? [{ id: "ledger", name: "the ledger" }]
+          : [],
   } as unknown as DynamicGameStateManager;
 }
 
@@ -129,17 +136,19 @@ describe("buildEngineResolutionContext", () => {
       SCN_2: "scene",
       SCN_FAR: "scene",
     });
-    expect(context.state.connectionIds).toEqual(["exit.scn1.door"]);
+    expect(context.state.connectionIds).toEqual(["connection.scn1.door"]);
     // The far-away idle character is present too.
     expect(context.state.characters.map((c) => c.id).sort()).toEqual([
       "npc_1",
       "npc_2",
       "npc_far",
     ]);
-    // The full-world holder map is never trimmed.
+    // The full-world holder map is never trimmed — npc_far's ledger is in it
+    // even though nothing this tick involves him.
     expect(context.state.itemHolders).toEqual({
       lamp: "scene:SCN_1",
       pick: "npc_1",
+      ledger: "npc_far",
     });
   });
 
@@ -163,7 +172,7 @@ describe("buildEngineResolutionContext", () => {
     const scn1 = context.state.places.find((s) => s.id === "SCN_1");
     expect(scn1?.kind).toBe("scene");
     expect(scn1?.connections[0]).toMatchObject({
-      connectionId: "exit.scn1.door",
+      connectionId: "connection.scn1.door",
       targetId: "SCN_2",
       blockedReason: "rubble",
     });
@@ -174,7 +183,7 @@ describe("buildEngineResolutionContext", () => {
     expect(context.state.graph.edges).toEqual([]);
     expect(context.state.blockedEdges).toEqual([
       {
-        connectionId: "exit.scn1.door",
+        connectionId: "connection.scn1.door",
         from: "SCN_1",
         to: "SCN_2",
         reason: "rubble",
@@ -195,5 +204,47 @@ describe("buildEngineResolutionContext", () => {
     expect(context.rules.worldInvariants.length).toBeGreaterThan(0);
     expect(context.actions.newCommands).toEqual([cmd]);
     expect(context.actions.activeActions).toEqual([active]);
+  });
+});
+
+// `inventoryValidation` used to answer "who holds this, can the actor reach
+// it" — one full-world round trip per question. The answer is put in the
+// request instead, which costs a few hundred tokens and arrives before the
+// question.
+describe("a command that names a person brings their pockets", () => {
+  function build(objectRefs: ActionCommand["objectRefs"]) {
+    return buildEngineResolutionContext({
+      dgsm: makeDgsm(),
+      tickId: "tick_9",
+      tickStartTime: "1923-04-02T09:15:00",
+      durationMinutes: 1,
+      triggers: [{ actionIds: ["action_c1"], reason: "new_action" }],
+      newCommands: [{ ...cmd, objectRefs }],
+      activeActions: [],
+    });
+  }
+
+  it("snapshots the inventory of a character the command points at", () => {
+    const context = build([
+      { kind: "character", id: "npc_far", role: "target" },
+    ]);
+    expect(context.state.items).toContainEqual(
+      expect.objectContaining({ id: "ledger", holder: "npc_far" })
+    );
+  });
+
+  it("snapshots an item held by someone the tick does not otherwise involve", () => {
+    // The id passes the citation boundary because it names something real,
+    // and until the holder was pulled in it appeared in no rendered section
+    // of the request at all.
+    const context = build([{ kind: "item", id: "ledger", role: "target" }]);
+    expect(context.state.items).toContainEqual(
+      expect.objectContaining({ id: "ledger", holder: "npc_far" })
+    );
+  });
+
+  it("leaves an uninvolved person's pockets out", () => {
+    const context = build([]);
+    expect(context.state.items.map((i) => i.id)).not.toContain("ledger");
   });
 });

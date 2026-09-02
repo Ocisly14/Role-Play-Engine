@@ -45,35 +45,56 @@
   },
   "inventory": [
     {
-      "id": "weaver_medical_bag",
+      "id": "item.weaver.medical_bag",
       "name": "黑色出诊包",
       "properties": {
-        "note": "内有听诊器、血压计、基本药品和急救用品。"
+        "note": "黑色皮面出诊包,提手磨得发亮。装出诊要用的东西:听诊器、便携血压计、常用药和急救用品各有各的位置。"
       }
     },
     {
-      "id": "weaver_case_ledger",
+      "id": "item.weaver.stethoscope",
+      "name": "出诊用听诊器",
+      "properties": {
+        "note": "用了二十年不换的那具听诊器,胶管发黄,耳件换过两回。与诊室挂架上那具不是同一件。"
+      }
+    },
+    {
+      "id": "item.weaver.bp_cuff",
+      "name": "便携血压计",
+      "properties": {
+        "note": "出诊包里的手泵式血压计,表盘边缘有一道裂纹但走得准。与诊室墙上的水银台式机不是同一件。"
+      }
+    },
+    {
+      "id": "item.weaver.basic_medicines",
+      "name": "常用药",
+      "properties": {
+        "note": "出诊包里的小药盒:退烧药、止痛片、抗生素、几支镇静剂,按药名贴着他自己写的标签。"
+      }
+    },
+    {
+      "id": "item.weaver.first_aid_supplies",
+      "name": "急救用品",
+      "properties": {
+        "note": "绷带、纱布、碘酒、缝合针线和一把剪刀,卷在一块油布里塞在出诊包底层。"
+      }
+    },
+    {
+      "id": "item.weaver.case_ledger",
       "name": "病例统计本",
       "properties": {
         "note": "正式病历之外按周统计失眠和耳鸣主诉，封皮没有标题。"
       }
     },
     {
-      "id": "weaver_patient_charts",
+      "id": "item.weaver.patient_charts",
       "name": "病历夹",
       "properties": {
         "note": "诊所日常病历，按姓名和复查日期分类。"
       }
     },
     {
-      "id": "weaver_chess_set",
-      "name": "木制国际象棋",
-      "properties": {
-        "note": "周日下午他会独自摆开棋局，边听 KGRV 的歌剧转播边走棋。"
-      }
-    },
-    {
-      "id": "weaver_gray_sweater",
+      "id": "item.weaver.gray_sweater",
       "name": "灰毛衣",
       "properties": {
         "note": "穿在白大褂下的旧毛衣，几乎成了他的制服。"

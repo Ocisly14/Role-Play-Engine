@@ -21,6 +21,7 @@ export enum ModelProviderName {
   OPENAI = "openai",
   ANTHROPIC = "anthropic",
   GOOGLE = "google",
+  DEEPSEEK = "deepseek",
 }
 
 /**
@@ -137,6 +138,11 @@ export interface GenerationOptions {
   userId?: string;
   operation?: string;
   temperature?: number;
+  /** Per-call ceiling on generated tokens. Overrides the model class's
+   *  configured `maxOutputTokens` for this request only. Set it when a caller
+   *  knows the answer's shape — a summary that must stay small — rather than
+   *  leaving the class default to bound it. */
+  maxOutputTokens?: number;
 }
 
 /**

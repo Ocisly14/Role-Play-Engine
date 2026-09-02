@@ -38,7 +38,7 @@ function rawScene(overrides: Record<string, unknown> = {}) {
       ],
       connections: [
         {
-          id: "exit.library.stacks",
+          id: "connection.library.stacks",
           targetId: "SCN_library_stacks",
           name: "Stairway to stacks",
           description: "A narrow stairway behind the desk.",
@@ -67,9 +67,9 @@ function rawNodeScene(overrides: Record<string, unknown> = {}) {
       "A cellar hatch hides under leaves.",
     references: {
       connections: [
-        { id: "exit.main_north.library", targetId: "SCN_library" },
+        { id: "connection.main_north.library", targetId: "SCN_library" },
         {
-          id: "exit.main_north.cellar",
+          id: "connection.main_north.cellar",
           targetId: "SCN_cellar",
           hidden: true,
         },
@@ -93,17 +93,17 @@ function rawRoad(overrides: Record<string, unknown> = {}) {
     references: {
       connections: [
         {
-          id: "exit.main_street.north",
+          id: "connection.main_street.north",
           targetId: "SCN_main_north",
           role: "endpointA",
         },
         {
-          id: "exit.main_street.south",
+          id: "connection.main_street.south",
           targetId: "SCN_main_south",
           role: "endpointB",
         },
         {
-          id: "exit.main_street.diner",
+          id: "connection.main_street.diner",
           targetId: "SCN_diner",
           role: "access",
           position: 0.4,
@@ -145,7 +145,9 @@ function builtModule(
         name: "Stacks",
         description: "Rows of shelves, and the stairway down [SCN_library].",
         references: {
-          connections: [{ id: "exit.stacks.down", targetId: "SCN_library" }],
+          connections: [
+            { id: "connection.stacks.down", targetId: "SCN_library" },
+          ],
         },
       })
     )
@@ -235,7 +237,7 @@ describe("parsePlaceFileV2", () => {
       parentLocationId: 7,
       references: {
         items: [{ id: "item.x" }], // missing name
-        connections: [{ id: "exit.x" }], // missing targetId
+        connections: [{ id: "connection.x" }], // missing targetId
       },
     });
     const error = expectSchemaError(() => parsePlaceFileV2("SCN_bad", bad));
@@ -269,7 +271,7 @@ describe("buildSceneV2", () => {
     const scene = buildSceneV2(parsePlaceFileV2("SCN_library", rawScene()));
     expect(scene.connections).toEqual([
       {
-        id: "exit.library.stacks",
+        id: "connection.library.stacks",
         targetId: "SCN_library_stacks",
         name: "Stairway to stacks",
         description: "A narrow stairway behind the desk.",
@@ -284,7 +286,7 @@ describe("buildSceneV2", () => {
     (bad.references as { connections: Record<string, unknown>[] }).connections =
       [
         {
-          id: "exit.library.stacks",
+          id: "connection.library.stacks",
           targetId: "SCN_library_stacks",
           role: "access",
           position: 0.5,
@@ -328,7 +330,7 @@ describe("buildRoadV2", () => {
           "ROAD_main_street",
           roadWithConnections([
             {
-              id: "exit.main_street.south",
+              id: "connection.main_street.south",
               targetId: "SCN_main_south",
               role: "endpointB",
             },
@@ -346,17 +348,17 @@ describe("buildRoadV2", () => {
           "ROAD_main_street",
           roadWithConnections([
             {
-              id: "exit.main_street.north",
+              id: "connection.main_street.north",
               targetId: "SCN_main_north",
               role: "endpointA",
             },
             {
-              id: "exit.main_street.north2",
+              id: "connection.main_street.north2",
               targetId: "SCN_main_south",
               role: "endpointA",
             },
             {
-              id: "exit.main_street.south",
+              id: "connection.main_street.south",
               targetId: "SCN_main_south",
               role: "endpointB",
             },
@@ -374,12 +376,12 @@ describe("buildRoadV2", () => {
           "ROAD_main_street",
           roadWithConnections([
             {
-              id: "exit.main_street.north",
+              id: "connection.main_street.north",
               targetId: "ROAD_other",
               role: "endpointA",
             },
             {
-              id: "exit.main_street.south",
+              id: "connection.main_street.south",
               targetId: "SCN_main_south",
               role: "endpointB",
             },
@@ -397,7 +399,7 @@ describe("buildRoadV2", () => {
     (
       road.references as { connections: Record<string, unknown>[] }
     ).connections[2] = {
-      id: "exit.main_street.diner",
+      id: "connection.main_street.diner",
       targetId: "SCN_diner",
       role: "access",
     };
@@ -412,7 +414,7 @@ describe("buildRoadV2", () => {
     (
       road.references as { connections: Record<string, unknown>[] }
     ).connections[2] = {
-      id: "exit.main_street.diner",
+      id: "connection.main_street.diner",
       targetId: "SCN_diner",
       role: "access",
       position: 1.4,
@@ -429,9 +431,9 @@ describe("buildRoadV2", () => {
         parsePlaceFileV2(
           "ROAD_main_street",
           roadWithConnections([
-            { id: "exit.main_street.north", targetId: "SCN_main_north" },
+            { id: "connection.main_street.north", targetId: "SCN_main_north" },
             {
-              id: "exit.main_street.south",
+              id: "connection.main_street.south",
               targetId: "SCN_main_south",
               role: "endpointB",
             },
@@ -535,7 +537,9 @@ describe("validateModuleReferences", () => {
     const module = builtModule((m) => {
       const cellar = m.scenes.get("SCN_cellar");
       if (!cellar) throw new Error("fixture broke");
-      cellar.connections = [{ id: "exit.cellar.up", targetId: "SCN_library" }];
+      cellar.connections = [
+        { id: "connection.cellar.up", targetId: "SCN_library" },
+      ];
     });
     const error = expectSchemaError(() => validateModuleReferences(module));
     expect(error.problems.join("\n")).toContain(
@@ -548,11 +552,13 @@ describe("validateModuleReferences", () => {
       const stacks = m.scenes.get("SCN_library_stacks");
       if (!stacks) throw new Error("fixture broke");
       stacks.description =
-        "Rows of shelves, and the stairway down [exit.stacks.down].";
+        "Rows of shelves, and the stairway down [connection.stacks.down].";
     });
     const error = expectSchemaError(() => validateModuleReferences(module));
     const text = error.problems.join("\n");
-    expect(text).toContain("cites [exit.stacks.down], which is not declared");
+    expect(text).toContain(
+      "cites [connection.stacks.down], which is not declared"
+    );
     expect(text).toContain('connection target "SCN_library" is never cited');
   });
 
@@ -659,10 +665,14 @@ describe("validateModuleReferences", () => {
         id: "ROAD_main_street",
         name: "Main Street",
         description:
-          "North to the corner [exit.ms.n], south into the library [exit.ms.s].",
+          "North to the corner [connection.ms.n], south into the library [connection.ms.s].",
         connections: [
-          { id: "exit.ms.n", targetId: "SCN_main_north", role: "endpointA" },
-          { id: "exit.ms.s", targetId: "SCN_library", role: "endpointB" },
+          {
+            id: "connection.ms.n",
+            targetId: "SCN_main_north",
+            role: "endpointA",
+          },
+          { id: "connection.ms.s", targetId: "SCN_library", role: "endpointB" },
         ],
         endpointA: "SCN_main_north",
         endpointB: "SCN_library",
@@ -678,7 +688,7 @@ describe("validateModuleReferences", () => {
 
   it("does not require exits to be bidirectional", () => {
     const module = builtModule((m) => {
-      // SCN_library → SCN_library_stacks exists; remove the reverse exit.
+      // SCN_library → SCN_library_stacks exists; remove the reverse connection.
       const stacks = m.scenes.get("SCN_library_stacks");
       if (!stacks) throw new Error("fixture broke");
       stacks.description = "Rows of shelves.";

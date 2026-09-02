@@ -2,7 +2,7 @@
   "schemaVersion": 2,
   "id": "SCN_station_yard",
   "name": "雷德利站场院",
-  "description": "铁丝网围出的一片水泥场院,属于山里的这座海军气象观测站。场院扫得很干净,却看不见一个人影,只有屋顶的天线阵在雾里发出轻微的嗡鸣 [item.station_yard.antenna_array]。场院一角立着一只标准的白色气象百叶箱 [item.station_yard.instrument_shelter],旁边的雨量计擦得锃亮;旗杆上没有旗 [item.station_yard.flagpole],升降索在风里一下一下拍着杆身。装卸区的卷帘门开在主楼一侧,门轴上了新油 [SCN_station_dock]。进出场院的只有一条路,通向山下的自动大门。",
+  "description": "铁丝网围出的一片水泥场院,属于山里的这座海军气象观测站。场院扫得很干净,却看不见一个人影,只有屋顶的天线阵在雾里发出轻微的嗡鸣 [item.station_yard.antenna_array]。场院一角立着一只标准的白色气象百叶箱 [item.station_yard.instrument_shelter],旁边的雨量计擦得锃亮;不远处一座半圆顶的铁皮小棚是放探空气球用的 [item.station_yard.sonde_shed],门开着一半,里头一排气瓶按高矮码着。旗杆上没有旗 [item.station_yard.flagpole],升降索在风里一下一下拍着杆身。主楼背风的一侧砌着一间发电机房 [item.station_yard.generator_house],外墙贴着的柴油罐液位计指着满格;墙根下一排空油桶 [item.station_yard.fuel_drums] 摆得比新桶还齐,等着谁带下山。卷帘门边的墙上挂着一块玻璃面的公告栏 [item.station_yard.notice_board],里头的表格空着,只有安全天数那一栏每天都在长。靠场院门的一侧划着四个停车位 [item.station_yard.parking_stalls],白漆新得刺眼,一辆车也没有。装卸区的卷帘门开在主楼一侧,门轴上了新油 [SCN_station_dock]。进出场院的只有一条路,通向山下的自动大门。",
   "references": {
     "items": [
       {
@@ -19,11 +19,36 @@
         "id": "item.station_yard.flagpole",
         "name": "旗杆",
         "description": "一根漆成银灰色的旗杆,顶上空着,没有旗。升降索没有收紧,风一过就一下一下拍在杆身上,哐、哐、哐——整个场院唯一的声音,除了天线的嗡鸣。"
+      },
+      {
+        "id": "item.station_yard.sonde_shed",
+        "name": "探空气球棚",
+        "description": "场院边一座半圆顶的铁皮小棚,顶上开着一道朝天的活门——探空气球就是在这里充灌放飞的。门开着一半,看得见里头一排氦气瓶按高矮码着,阀门盖齐全,瓶身上的标签一张都没褪色;地上还有一小卷没用完的白色气球皮。气瓶是货车年年往上运的东西之一,可谁也没见过这儿放过一只球。"
+      },
+      {
+        "id": "item.station_yard.generator_house",
+        "name": "备用发电机房",
+        "description": "主楼背风一侧的水泥小屋,铁门上刷着「发电机房」四个字,门锁着。屋里是静的——备用机组平时不转。外墙贴着一只圆柱形柴油罐,玻璃管液位计里的油面几乎顶到满格,不管哪一天来看都在同一个刻度上。"
+      },
+      {
+        "id": "item.station_yard.fuel_drums",
+        "name": "空油桶",
+        "description": "墙根下一排五十五加仑的空油桶,桶口封盖朝上,间距一个不差,像有人拿尺子量过。桶身上的编号是连着的,中间没有断号。空桶照合同该由货车带下山,可从来没人交代过是谁把它们搬出来、又摆成这样的。"
+      },
+      {
+        "id": "item.station_yard.notice_board",
+        "name": "站务公告栏",
+        "description": "卷帘门边墙上一块玻璃面的公告栏,锁着,钥匙不知在谁手里。玻璃后面钉着一张空白的值班轮换表、一张褪了色的安全须知,和一块可以翻数字的牌子:「本站已连续 4 0 6 2 天无事故」。那串数字每天都往上翻一位,翻牌子的人却从来没露过面。"
+      },
+      {
+        "id": "item.station_yard.parking_stalls",
+        "name": "空停车位",
+        "description": "靠场院门一侧划出的四个停车位,白漆新得刺眼,连车挡的水泥墩都找不出一处磕掉的角。位子上从没停过车——地上一滴机油印子都没有,连轮胎压出的黑痕都只有装卸区那一头才有。"
       }
     ],
     "connections": [
       {
-        "id": "exit.station_yard.dock_rollup",
+        "id": "connection.station_yard.dock_rollup",
         "targetId": "SCN_station_dock",
         "name": "装卸区卷帘门",
         "description": "主楼一侧的卷帘门,通向装卸区。"

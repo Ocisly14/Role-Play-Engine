@@ -27,7 +27,7 @@ export type Unsubscribe = () => void;
 
 /** Kind of entity referenced by an action. Downstream routing
  *  (scriptedEventRunner.matchTarget, impactPropagation level-1) filters by
- *  kind === "character". `connection` names an authored exit (`exit.*`). */
+ *  kind === "character". `connection` names an authored exit (`connection.*`). */
 export type EntityKind = "character" | "item" | "scene" | "connection";
 
 /** A typed entity reference (id + kind) carried on CharacterAction. */
@@ -43,7 +43,9 @@ export interface ReferencedEntity {
 export interface CharacterCondition {
   id: string; // unique per character; targeted by character.removeCondition
   featureId?: string; // owner feature (for observability / cleanup by featureId)
-  description: string; // human/LLM-readable
+  /** Objective, externally observable or independently verifiable state,
+   *  including the major mental or physical function it impairs. */
+  description: string;
   data?: Record<string, unknown>; // feature-private metadata
   mechanicalEffect?: {
     skillPenalty?: Record<string, number>;
@@ -122,6 +124,11 @@ export const DEFAULT_ENVIRONMENT_READING: EnvironmentReading = Object.freeze({
 export interface PlannedOutcome {
   stateChanges: StateChange[];
   elapsedMinutes: number;
+  /** Why the action ended the way it did, in the engine's words. Read by
+   *  SimulationEventEmitter into the persisted event's `outcome` field, which
+   *  was `""` on every row until this was carried: a run could be replayed
+   *  from the log and still not say why anything failed. */
+  narrative?: string;
 }
 
 export type StateChange =
@@ -170,7 +177,17 @@ export type StateChange =
       reason: string;
     }
   | {
-      /** Reveal/hide a connection by its authored id (`exit.*`). Routed to
+      /** These characters have found a concealed connection: each of them
+       *  perceives it from now on, and nobody else does. Recorded on the
+       *  passage itself (`SceneConnection.discoveredBy`), beside `hidden`.
+       *  `connection.setHidden` is the other half — that one opens it for the
+       *  whole world at once. */
+      kind: "connection.discovered";
+      connectionId: string;
+      characterIds: string[];
+    }
+  | {
+      /** Reveal/hide a connection by its authored id (`connection.*`). Routed to
        *  DGSM.setConnectionHiddenById, which mutates the owning place's
        *  SceneConnection in place. */
       kind: "connection.setHidden";

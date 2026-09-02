@@ -1,0 +1,119 @@
+[
+  {
+    "id": "evt_blizzard_closes_pass",
+    "label": "暴风雪 · 下山的路被封",
+    "fireDelayTicks": 20,
+    "fireWhen": {
+      "op": "and",
+      "children": [
+        { "op": "timeOfDay", "cmp": "gte", "value": "15:10" },
+        {
+          "op": "not",
+          "child": {
+            "op": "sceneHasConditionFromFeature",
+            "sceneId": "SCN_pine_hollow",
+            "featureId": "blizzard"
+          }
+        }
+      ]
+    },
+    "onComplete": [
+      {
+        "kind": "scene.addCondition",
+        "sceneFilter": { "op": "is", "sceneId": "SCN_pine_hollow" },
+        "condition": {
+          "id": "cond.pine_hollow.blizzard_wall",
+          "featureId": "blizzard",
+          "description": "风向变了,雪墙从山谷口压进洼地:洼地东侧的林道整个被填平,雪深过腰,人和马都过不去。往县道那个方向今天走不通了。"
+        }
+      },
+      {
+        "kind": "scene.addCondition",
+        "sceneFilter": { "op": "is", "sceneId": "SCN_lodge_drive" },
+        "condition": {
+          "id": "cond.lodge_drive.blizzard_wall",
+          "featureId": "blizzard",
+          "description": "车行道下山的那一段被雪整个埋了,路基和两侧的白桦连成一片白,看不出哪里是路。今天下不去了。"
+        }
+      },
+      {
+        "kind": "connection.setBlock",
+        "connectionId": "connection.hollow_county.hollow_end",
+        "blocked": true,
+        "reason": "暴雪封路:雪深过腰,看不见十步外的路",
+        "featureId": "blizzard"
+      },
+      {
+        "kind": "connection.setBlock",
+        "connectionId": "connection.hollow_county.county_end",
+        "blocked": true,
+        "reason": "暴雪封路:雪深过腰,看不见十步外的路",
+        "featureId": "blizzard"
+      },
+      {
+        "kind": "connection.setBlock",
+        "connectionId": "connection.lodge_county.lodge_end",
+        "blocked": true,
+        "reason": "暴雪封路:雪深过腰,看不见十步外的路",
+        "featureId": "blizzard"
+      },
+      {
+        "kind": "connection.setBlock",
+        "connectionId": "connection.lodge_county.county_end",
+        "blocked": true,
+        "reason": "暴雪封路:雪深过腰,看不见十步外的路",
+        "featureId": "blizzard"
+      }
+    ]
+  },
+  {
+    "id": "evt_blizzard_eases",
+    "label": "暴风雪 · 风势转小",
+    "fireDelayTicks": 260,
+    "fireWhen": {
+      "op": "eventStatus",
+      "otherEventId": "evt_blizzard_closes_pass",
+      "isStatus": "completed"
+    },
+    "onComplete": [
+      {
+        "kind": "scene.removeCondition",
+        "sceneFilter": { "op": "is", "sceneId": "SCN_pine_hollow" },
+        "predicate": { "featureId": "blizzard" }
+      },
+      {
+        "kind": "scene.removeCondition",
+        "sceneFilter": { "op": "is", "sceneId": "SCN_lodge_drive" },
+        "predicate": { "featureId": "blizzard" }
+      },
+      {
+        "kind": "connection.setBlock",
+        "connectionId": "connection.hollow_county.hollow_end",
+        "blocked": false,
+        "reason": "暴雪封路:雪深过腰,看不见十步外的路",
+        "featureId": "blizzard"
+      },
+      {
+        "kind": "connection.setBlock",
+        "connectionId": "connection.hollow_county.county_end",
+        "blocked": false,
+        "reason": "暴雪封路:雪深过腰,看不见十步外的路",
+        "featureId": "blizzard"
+      },
+      {
+        "kind": "connection.setBlock",
+        "connectionId": "connection.lodge_county.lodge_end",
+        "blocked": false,
+        "reason": "暴雪封路:雪深过腰,看不见十步外的路",
+        "featureId": "blizzard"
+      },
+      {
+        "kind": "connection.setBlock",
+        "connectionId": "connection.lodge_county.county_end",
+        "blocked": false,
+        "reason": "暴雪封路:雪深过腰,看不见十步外的路",
+        "featureId": "blizzard"
+      }
+    ]
+  }
+]

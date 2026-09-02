@@ -16,8 +16,12 @@ import type {
   RawTickResolution,
 } from "../worldDeltaSchema.js";
 import {
+  MAX_SANITY_CHECKS,
   applyRepair,
   finalizeResolution,
+  normalizeList,
+  normalizeRawResolution,
+  resolutionWorklist,
   validateRawResolution,
 } from "../worldDeltaValidator.js";
 
@@ -58,18 +62,26 @@ function makeContext(opts: {
   newCommands?: ActionCommand[];
   activeActions?: EngineAction[];
   triggerActionIds?: string[];
+  /** Ids the trigger also lists under reason "replacement". */
+  replacedActionIds?: string[];
 }): EngineResolutionContext {
   const newCommands = opts.newCommands ?? [command()];
   const activeActions = opts.activeActions ?? [];
+  const triggerIds = opts.triggerActionIds ?? [ACTION_ID];
   return {
     trigger: {
       triggers: [
-        {
-          actionIds: opts.triggerActionIds ?? [ACTION_ID],
-          reason: "new_action",
-        },
+        { actionIds: triggerIds, reason: "new_action" },
+        ...(opts.replacedActionIds?.length
+          ? [
+              {
+                actionIds: opts.replacedActionIds,
+                reason: "replacement" as const,
+              },
+            ]
+          : []),
       ],
-      actionIds: opts.triggerActionIds ?? [ACTION_ID],
+      actionIds: triggerIds,
     },
     tick: {
       tickId: "tick_1",
@@ -184,26 +196,48 @@ function end(overrides: Partial<RawActionEnd> = {}): RawActionEnd {
   };
 }
 
-/** A standalone occurrence, for the cases that are about the array itself. */
-function trace(actionId: string = ACTION_ID): RawTickResolution["occurrences"] {
-  return [{ ...occurrence(), sourceActionIds: [actionId] }];
-}
-
 describe("validateRawResolution — the three moments", () => {
   it("accepts a well-formed start", () => {
     const errors = validateRawResolution(
       { starting: [start()] },
-      makeContext({}),
-      []
+      makeContext({})
     );
     expect(errors).toEqual([]);
+  });
+
+  // Nothing at runtime reads `timingReason`; demanding it cost a full repair
+  // round whenever the model left it off. It is a note for the log now.
+  it("accepts a start and a revised duration without a timingReason", () => {
+    const errors = validateRawResolution(
+      { starting: [start({ timingReason: undefined })] },
+      makeContext({})
+    );
+    expect(errors).toEqual([]);
+
+    const live = activeAction({
+      command: command({ commandId: "live", actorId: "npc_1" }),
+    });
+    const revised = validateRawResolution(
+      {
+        ending: [
+          {
+            actionId: "action_live",
+            outcome: "success",
+            reason: "done sooner",
+            occurrence: occurrence(),
+            resolvedDurationTicks: 2,
+          },
+        ],
+      },
+      makeContext({ activeActions: [live], triggerActionIds: ["action_live"] })
+    );
+    expect(revised).toEqual([]);
   });
 
   it("rejects an unknown actionId and reports the unanswered trigger", () => {
     const errors = validateRawResolution(
       { starting: [start({ actionId: "action_ghost" })] },
-      makeContext({}),
-      []
+      makeContext({})
     );
     expect(text(errors)).toContain("unknown actionId");
     expect(text(errors)).toContain("was not answered");
@@ -217,8 +251,7 @@ describe("validateRawResolution — the three moments", () => {
         starting: [start()],
         ending: [end({ actionId: ACTION_ID })],
       },
-      makeContext({}),
-      []
+      makeContext({})
     );
     expect(text(errors)).toContain("appears more than once");
   });
@@ -229,8 +262,7 @@ describe("validateRawResolution — the three moments", () => {
     // list, and the error says which list it belongs in.
     const errors = validateRawResolution(
       { ending: [end({ actionId: ACTION_ID })] },
-      makeContext({}),
-      []
+      makeContext({})
     );
     expect(text(errors)).toContain("has not started yet");
     expect(text(errors)).toContain('"starting"');
@@ -243,8 +275,7 @@ describe("validateRawResolution — the three moments", () => {
         newCommands: [],
         activeActions: [activeAction()],
         triggerActionIds: ["action_live"],
-      }),
-      []
+      })
     );
     expect(text(errors)).toContain("already running");
   });
@@ -256,8 +287,7 @@ describe("validateRawResolution — the three moments", () => {
         newCommands: [],
         activeActions: [{ ...activeAction(), status: "completed" as const }],
         triggerActionIds: ["action_live"],
-      }),
-      []
+      })
     );
     expect(text(errors)).toContain("cannot be resolved again");
   });
@@ -272,7 +302,25 @@ describe("validateRawResolution — the three moments", () => {
       activeActions: [activeAction()],
       triggerActionIds: ["action_live"],
     });
-    expect(validateRawResolution({}, stillRunning, [])).toEqual([]);
+    expect(validateRawResolution({}, stillRunning)).toEqual([]);
+  });
+
+  it("demands an ending for an action its own actor has replaced, however much time it had left", () => {
+    // Replacement used to be a trigger reason and nothing else: the old
+    // action landed under `stillRunning`, the Engine was told silence keeps
+    // it running, and both it and its successor ran to completion side by
+    // side. Measured: a notebook handed over twice, in consecutive minutes.
+    const ctx = makeContext({
+      newCommands: [],
+      activeActions: [activeAction()], // 5 of 10 minutes
+      triggerActionIds: ["action_live"],
+      replacedActionIds: ["action_live"],
+    });
+    const worklist = resolutionWorklist(ctx);
+    expect(worklist.ending).toEqual(["action_live"]);
+    expect(worklist.replaced).toEqual(["action_live"]);
+    expect(worklist.stillRunning).toEqual([]);
+    expect(text(validateRawResolution({}, ctx))).toContain("action_live");
   });
 
   it("still demands an answer for an action whose time is spent", () => {
@@ -281,12 +329,10 @@ describe("validateRawResolution — the three moments", () => {
       activeActions: [activeAction({ progressMinutes: 10 })],
       triggerActionIds: ["action_live"],
     });
-    expect(text(validateRawResolution({}, due, []))).toContain(
-      "was not answered"
-    );
+    expect(text(validateRawResolution({}, due))).toContain("was not answered");
     // The duration was set once, when it began. There is no list to move it
     // to and no way to ask for more time: the only answer is what happened.
-    expect(validateRawResolution({ ending: [end()] }, due, [])).toEqual([]);
+    expect(validateRawResolution({ ending: [end()] }, due)).toEqual([]);
   });
 
   it("checks the occurrence carried by an ending", () => {
@@ -307,8 +353,7 @@ describe("validateRawResolution — the three moments", () => {
         newCommands: [],
         activeActions: [activeAction()],
         triggerActionIds: ["action_live"],
-      }),
-      []
+      })
     );
     expect(text(errors)).toContain("action:action_live");
   });
@@ -329,8 +374,7 @@ describe("validateRawResolution — outcome and the bar", () => {
     // field was optional while the validator required it.
     const errors = validateRawResolution(
       { ending: [end({ outcome: undefined })] },
-      runningContext(),
-      []
+      runningContext()
     );
     expect(text(errors)).toContain("carried no check");
     expect(text(errors)).toContain("endingNeedsOutcome");
@@ -345,8 +389,7 @@ describe("validateRawResolution — outcome and the bar", () => {
           requiredLevel: "regular",
           basis: "…",
         },
-      }),
-      []
+      })
     );
     expect(text(errors)).toContain("code decides success from the roll");
   });
@@ -360,8 +403,23 @@ describe("validateRawResolution — outcome and the bar", () => {
           requiredLevel: "regular",
           basis: "…",
         },
-      }),
-      []
+      })
+    );
+    expect(errors).toEqual([]);
+  });
+
+  it("reads an explicit null outcome as no outcome", () => {
+    // Seen live: `"outcome": null` on a checked ending, refused as if a
+    // verdict had been written, and a repair round spent on nothing.
+    const errors = validateRawResolution(
+      { ending: [end({ outcome: null as unknown as undefined })] },
+      runningContext({
+        check: {
+          skillId: "Stealth & Security",
+          requiredLevel: "regular",
+          basis: "…",
+        },
+      })
     );
     expect(errors).toEqual([]);
   });
@@ -378,8 +436,7 @@ describe("validateRawResolution — outcome and the bar", () => {
           }),
         ],
       },
-      makeContext({ newCommands: [skillCommand] }),
-      []
+      makeContext({ newCommands: [skillCommand] })
     );
     expect(errors).toEqual([]);
   });
@@ -391,8 +448,7 @@ describe("validateRawResolution — outcome and the bar", () => {
           start({ check: { requiredLevel: "hard", basis: "invented" } }),
         ],
       },
-      makeContext({}),
-      []
+      makeContext({})
     );
     expect(text(errors)).toContain("nothing to check");
   });
@@ -407,8 +463,7 @@ describe("validateRawResolution — outcome and the bar", () => {
           }),
         ],
       },
-      makeContext({ newCommands: [skillCommand] }),
-      []
+      makeContext({ newCommands: [skillCommand] })
     );
     expect(text(unknown)).toContain("does not exist");
 
@@ -418,8 +473,7 @@ describe("validateRawResolution — outcome and the bar", () => {
           start({ opposedBy: [{ characterId: "npc_2", skillId: "Social" }] }),
         ],
       },
-      makeContext({ newCommands: [skillCommand] }),
-      []
+      makeContext({ newCommands: [skillCommand] })
     );
     expect(text(noBar)).toContain("needs a check");
   });
@@ -439,8 +493,7 @@ describe("validateRawResolution — deltas and occurrences", () => {
           },
         ],
       },
-      makeContext({}),
-      []
+      makeContext({})
     );
     const joined = text(errors);
     expect(joined).toContain('sourceActionId "action_ghost" is unknown');
@@ -457,8 +510,7 @@ describe("validateRawResolution — deltas and occurrences", () => {
     });
     const wrongFrom = validateRawResolution(
       { starting: [start()], itemChanges: [move("npc_2")] },
-      makeContext({}),
-      []
+      makeContext({})
     );
     expect(text(wrongFrom)).toContain(
       "does not match the item's actual holder"
@@ -469,8 +521,7 @@ describe("validateRawResolution — deltas and occurrences", () => {
         starting: [start()],
         itemChanges: [move("scene:SCN_1"), move("scene:SCN_1")],
       },
-      makeContext({}),
-      []
+      makeContext({})
     );
     expect(text(doubleMove)).toContain("unique-ownership conflict");
   });
@@ -489,8 +540,7 @@ describe("validateRawResolution — deltas and occurrences", () => {
           },
         ],
       },
-      makeContext({}),
-      []
+      makeContext({})
     );
     const joined = text(errors);
     expect(joined).toContain("character-perspective wording");
@@ -502,6 +552,26 @@ describe("finalizeResolution", () => {
   // finalize no longer validates, drops or synthesizes anything: by the time
   // it runs, the resolution has already passed validation. A resolution that
   // could not be repaired never reaches it — the tick applies nothing.
+
+  it("places an unlocated occurrence where its actor stands", () => {
+    // The Engine leaves `locationId` blank far more often than not, and the
+    // renderer reads a placeless participant as "here". Measured: a doorway
+    // conversation rendered, for fifty minutes, as everyone in one room.
+    const raw: RawTickResolution = {
+      starting: [start({ resolvedDurationTicks: 1 })],
+      occurrences: [
+        {
+          sourceActionIds: [ACTION_ID],
+          facts: [{ type: "speech", content: "a question through the door" }],
+          participants: [{ characterId: "npc_1", role: "actor" }],
+          perceiverCharacterIds: ["npc_1"],
+          signals: [{ channel: "sound" }],
+        },
+      ],
+    };
+    const { resolution } = finalizeResolution(raw, makeContext({}));
+    expect(resolution.occurrences[0].locationId).toBe("SCN_1");
+  });
 
   it("derives the lifecycle and the wake time, and assigns ids", () => {
     const raw: RawTickResolution = {
@@ -716,8 +786,7 @@ describe("prose coherence — a cited item cannot leave silently", () => {
     const errors = text(
       validateRawResolution(
         { starting: [start()], itemChanges: [moveOut] },
-        proseContext(),
-        []
+        proseContext()
       )
     );
     expect(errors).toContain('cited in the description of "SCN_1"');
@@ -742,8 +811,7 @@ describe("prose coherence — a cited item cannot leave silently", () => {
             },
           ],
         },
-        proseContext(),
-        []
+        proseContext()
       )
     );
     expect(errors).not.toContain("cited in the description");
@@ -753,8 +821,7 @@ describe("prose coherence — a cited item cannot leave silently", () => {
     const errors = text(
       validateRawResolution(
         { starting: [start()], itemChanges: [moveOut] },
-        makeContext({}),
-        []
+        makeContext({})
       )
     );
     expect(errors).not.toContain("cited in the description");
@@ -776,36 +843,35 @@ describe("operations are checked against the fields they advertise", () => {
     text(
       validateRawResolution(
         { starting: [start()], characterChanges: [delta(operation)] },
-        makeContext({}),
-        []
+        makeContext({})
       )
     );
 
-  it("rejects a position type outside the two real kinds", () => {
+  it("rejects a position type that is not a scene", () => {
     expect(
       errorsFor({ kind: "position", position: { type: "teleport" } })
-    ).toContain('position.type must be "scene" or "road"');
+    ).toContain('position.type must be "scene"');
     // The junction kind is gone: geography nodes are scenes now.
     expect(
       errorsFor({ kind: "position", position: { type: "junction" } })
-    ).toContain('position.type must be "scene" or "road"');
+    ).toContain('position.type must be "scene"');
   });
 
-  it("rejects a position whose id field is missing for its type", () => {
+  it("rejects a scene position with no sceneId", () => {
     expect(
-      errorsFor({ kind: "position", position: { type: "road" } })
-    ).toContain("requires roadId");
+      errorsFor({ kind: "position", position: { type: "scene" } })
+    ).toContain("requires sceneId");
   });
 
-  it("rejects a road nobody was shown", () => {
-    // Only scenes used to be checked, so any road id at all was accepted
-    // and the character was stood somewhere that does not exist.
+  it("rejects a road, shown or not — roads are walked, never assigned", () => {
+    // A road position carries a fraction only the movement runtime sets;
+    // one assigned here had none, and the next route planned from it was NaN.
     expect(
       errorsFor({
         kind: "position",
         position: { type: "road", roadId: "ROAD_NOWHERE" },
       })
-    ).toContain("is not a place you were shown");
+    ).toContain("cannot put a character on a road");
   });
 
   it("accepts a spot, and accepts the empty string as the clear", () => {
@@ -825,6 +891,27 @@ describe("operations are checked against the fields they advertise", () => {
     expect(errorsFor({ kind: "spot", spot: "a".repeat(500) })).toContain(
       "it is a phrase, not a description"
     );
+  });
+
+  it("keeps character condition validation structural", () => {
+    const missingDescription = errorsFor({
+      kind: "addCondition",
+      condition: {
+        id: "broken_forearm",
+      },
+    });
+    expect(missingDescription).toContain("description");
+
+    expect(
+      errorsFor({
+        kind: "addCondition",
+        condition: {
+          id: "broken_forearm",
+          description:
+            "the left forearm is visibly deformed; the left arm cannot lift, grip, or brace",
+        },
+      })
+    ).toBe("");
   });
 
   it("has no relationship operation to check", () => {
@@ -852,8 +939,7 @@ describe("operations are checked against the fields they advertise", () => {
             },
           ],
         },
-        makeContext({}),
-        []
+        makeContext({})
       )
     );
     expect(errors).toContain('environmentHazard needs "add" or "remove"');
@@ -863,10 +949,337 @@ describe("operations are checked against the fields they advertise", () => {
     const errors = text(
       validateRawResolution(
         { starting: [start({ movement: { route: ["SCN_ATLANTIS"] } })] },
-        makeContext({}),
-        []
+        makeContext({})
       )
     );
     expect(errors).toContain("is not a place in this world");
+  });
+});
+
+// `input_schema` is a description the provider does not enforce — `strict` is
+// off everywhere and cannot be turned on for `submit_resolution` (every
+// top-level field is optional and `operation` is deliberately open). So the
+// contents can arrive in shapes the schema does not describe, and dropping a
+// whole list takes a resolution with it: observed once as `starting` arriving
+// as an array and `ending`, in the same call, as its own JSON text.
+describe("normalizeRawResolution reads what the schema did not guarantee", () => {
+  const entry = {
+    actionId: "action_c1",
+    reason: "the lock gives",
+    occurrence: {
+      facts: [{ type: "action_result", content: "it opened" }],
+      participants: [{ characterId: "npc_1", role: "actor" }],
+      perceiverCharacterIds: ["npc_1"],
+    },
+  };
+
+  /** The shapes below are exactly what the schema does NOT describe, so they
+   *  are cast in: the parameter is typed as if the provider had honoured it. */
+  const asRaw = (v: unknown) =>
+    v as Parameters<typeof normalizeRawResolution>[0];
+
+  it("parses a list that arrived as its own JSON text", () => {
+    const raw = normalizeRawResolution(
+      asRaw({ starting: [], ending: JSON.stringify([entry]) })
+    );
+    expect(raw.ending).toHaveLength(1);
+    expect(raw.ending?.[0]).toMatchObject({ actionId: "action_c1" });
+  });
+
+  it("still reads the index-keyed object form", () => {
+    const raw = normalizeRawResolution(asRaw({ ending: { 0: entry } }));
+    expect(raw.ending).toHaveLength(1);
+  });
+
+  it("drops a string that is not a list, rather than guessing", () => {
+    const raw = normalizeRawResolution(
+      asRaw({ ending: "nothing ended this tick" })
+    );
+    expect(raw.ending).toEqual([]);
+  });
+
+  it("drops a JSON string that parses to something other than a list", () => {
+    const raw = normalizeRawResolution(
+      asRaw({ ending: JSON.stringify(entry) })
+    );
+    expect(raw.ending).toEqual([]);
+  });
+});
+
+describe("declared sanity checks", () => {
+  const consequence = {
+    description:
+      "speech is incoherent and the person cannot remain oriented to place, so they cannot communicate a coherent plan or act safely without guidance",
+    durationMinutes: 30,
+  };
+  const sane = {
+    characterId: "npc_1",
+    failureLoss: "1d4",
+    consequence,
+  };
+
+  /** A standalone occurrence carrying whatever declarations a case needs. */
+  const occ = (
+    sanityChecks: unknown[],
+    over: Record<string, unknown> = {}
+  ) => ({
+    sourceActionIds: [ACTION_ID],
+    facts: [{ type: "action_result", content: "the body is in the water" }],
+    participants: [{ characterId: "npc_1", role: "actor" as const }],
+    perceiverCharacterIds: ["npc_1", "npc_2"],
+    sanityChecks,
+    ...over,
+  });
+
+  const check = (raw: RawTickResolution): string =>
+    text(validateRawResolution(raw, makeContext({})));
+
+  it("accepts a well-formed declaration", () => {
+    expect(
+      check({ starting: [start()], occurrences: [occ([sane]) as never] })
+    ).toBe("");
+  });
+
+  it("caps the declarations per occurrence — the bound the schema used to carry", () => {
+    // `maxItems` is outside the strict subset, so the count moved here. (The
+    // per-character duplicate rule fires too on this fixture; the cap is the
+    // line under test.)
+    const many = Array.from({ length: MAX_SANITY_CHECKS + 1 }, () => sane);
+    expect(
+      check({ starting: [start()], occurrences: [occ(many) as never] })
+    ).toContain(`at most ${MAX_SANITY_CHECKS}`);
+    expect(
+      check({ starting: [start()], occurrences: [occ([sane]) as never] })
+    ).not.toContain("at most");
+  });
+
+  it("rejects a character who did not perceive the occurrence", () => {
+    // Exposure is perception. The same evidence that decided the perceiver
+    // list decides who can be shocked — a set membership test, not a
+    // judgement about whether the sight was upsetting enough.
+    const errs = check({
+      starting: [start()],
+      occurrences: [occ([sane], { perceiverCharacterIds: ["npc_2"] }) as never],
+    });
+    expect(errs).toContain(
+      "is not among this occurrence's perceiverCharacterIds"
+    );
+  });
+
+  it("rejects an unknown or dead character, and one with no sanity capacity", () => {
+    expect(
+      check({
+        starting: [start()],
+        occurrences: [occ([{ ...sane, characterId: "nobody" }]) as never],
+      })
+    ).toContain('character "nobody" does not exist');
+  });
+
+  it("rejects the same character twice in one occurrence", () => {
+    expect(
+      check({ starting: [start()], occurrences: [occ([sane, sane]) as never] })
+    ).toContain("is already checked in this occurrence");
+  });
+
+  it("rejects the same character across two occurrences of one submission", () => {
+    // The structural replacement for the deleted session ledger: the model
+    // cannot loop, because the whole submission is judged at once.
+    const errs = check({
+      starting: [start()],
+      occurrences: [occ([sane]) as never, occ([sane]) as never],
+    });
+    expect(errs).toContain("is already checked elsewhere in this submission");
+  });
+
+  it("rejects a loss formula that is not dice, and one that cannot cost anything", () => {
+    expect(
+      check({
+        starting: [start()],
+        occurrences: [occ([{ ...sane, failureLoss: "terror" }]) as never],
+      })
+    ).toContain("is not a dice formula");
+
+    // A passed check already costs nothing, so a zero failure loss is a check
+    // that cannot cost anything at all.
+    expect(
+      check({
+        starting: [start()],
+        occurrences: [occ([{ ...sane, failureLoss: "0" }]) as never],
+      })
+    ).toContain("cannot cost anything");
+  });
+
+  it("rejects a duration that is fractional, too short, or too long", () => {
+    // Crash prevention, not hygiene: finalization hands this to `addMinutes`,
+    // which throws on a non-integer, and a throw there loses the whole tick.
+    for (const durationMinutes of [2.5, 1, 5000]) {
+      expect(
+        check({
+          starting: [start()],
+          occurrences: [
+            occ([
+              { ...sane, consequence: { ...consequence, durationMinutes } },
+            ]) as never,
+          ],
+        })
+      ).toContain("must be a whole number of minutes");
+    }
+  });
+
+  it("requires a consequence description", () => {
+    expect(
+      check({
+        starting: [start()],
+        occurrences: [
+          occ([
+            { ...sane, consequence: { ...consequence, description: "  " } },
+          ]) as never,
+        ],
+      })
+    ).toContain("consequence.description is required");
+  });
+
+  it("allows no condition candidate", () => {
+    expect(
+      check({
+        starting: [start()],
+        occurrences: [
+          occ([{ characterId: "npc_1", failureLoss: "1d4" }]) as never,
+        ],
+      })
+    ).toBe("");
+  });
+
+  it("requires an action to attribute the loss to", () => {
+    expect(
+      check({
+        starting: [start()],
+        occurrences: [occ([sane], { sourceActionIds: [] }) as never],
+      })
+    ).toContain("must name at least one sourceActionId");
+  });
+
+  it("checks an ending's own occurrence identically, addressed at its action", () => {
+    // Proof that the shared OCCURRENCE_BODY wiring holds: one declaration,
+    // two places it can live, one rule — but the address follows the shape.
+    const errors = validateRawResolution(
+      {
+        starting: [start()],
+        ending: [
+          end({
+            occurrence: {
+              ...occurrence(),
+              perceiverCharacterIds: ["npc_2"],
+              sanityChecks: [sane],
+            } as never,
+          }),
+        ],
+      },
+      makeContext({ activeActions: [activeAction()] })
+    );
+    const failure = errors.find((e) =>
+      e.message.includes("perceiverCharacterIds")
+    );
+    expect(failure?.target).toEqual({
+      kind: "action",
+      actionId: "action_live",
+    });
+  });
+
+  it("rolls the declaration into ordinary character deltas at finalization", () => {
+    const finalized = finalizeResolution(
+      {
+        starting: [start()],
+        occurrences: [occ([{ ...sane, failureLoss: "1d6" }]) as never],
+      },
+      makeContext({}),
+      { rng: () => 0.99 } // fails the check; then a 1d6 face of 6
+    );
+
+    const kinds = finalized.resolution.characterChanges.map(
+      (d) => (d.delta as { operation: { kind: string } }).operation.kind
+    );
+    expect(kinds).toEqual(["san", "addCondition"]);
+    expect(finalized.sanityOutcomes[0]).toMatchObject({
+      characterId: "npc_1",
+      passed: false,
+    });
+  });
+});
+
+describe("bounds the schema no longer carries (strict subset)", () => {
+  it("rejects a zero or fractional resolvedDurationTicks on a start", () => {
+    for (const bad of [0, -2, 1.5]) {
+      const errors = validateRawResolution(
+        { starting: [start({ resolvedDurationTicks: bad })] },
+        makeContext({})
+      );
+      expect(text(errors)).toContain("at least 1");
+    }
+    expect(
+      validateRawResolution(
+        { starting: [start({ resolvedDurationTicks: 1 })] },
+        makeContext({})
+      )
+    ).toEqual([]);
+  });
+});
+
+describe("position places a character in a scene, never on a road", () => {
+  const change = (position: unknown) => ({
+    starting: [start()],
+    characterChanges: [
+      {
+        sourceActionId: ACTION_ID,
+        causalBasis: "carried through the door",
+        characterId: "npc_1",
+        operation: { kind: "position", position },
+      },
+    ],
+  });
+
+  it("accepts a scene the world has", () => {
+    expect(
+      validateRawResolution(
+        change({ type: "scene", sceneId: "SCN_1" }) as never,
+        makeContext({})
+      )
+    ).toEqual([]);
+  });
+
+  it("refuses a road — that is what movement.route is for", () => {
+    // The op that produced the tick-67 NaN: a road with no fraction, planned
+    // from next tick.
+    const errors = validateRawResolution(
+      change({ type: "road", roadId: "ROAD_main_street" }) as never,
+      makeContext({})
+    );
+    expect(text(errors)).toContain("cannot put a character on a road");
+    expect(text(errors)).toContain("movement.route");
+  });
+});
+
+describe("normalizeList reads a list the model wrapped in a string", () => {
+  // Shapes measured on a provider without strict mode. Both parse; the
+  // second is the list wrapped in an object under its own name — or a name
+  // the model made up.
+  it("parses a serialized array", () => {
+    expect(normalizeList<unknown>('[{"actionId":"a"}]', "starting")).toEqual([
+      { actionId: "a" },
+    ]);
+  });
+
+  it("unwraps a serialized {name: [...]} object", () => {
+    expect(
+      normalizeList<unknown>('{"starting": [{"actionId":"a"}]}', "starting")
+    ).toEqual([{ actionId: "a" }]);
+    expect(
+      normalizeList<unknown>('{"actions": [{"actionId":"b"}]}', "starting")
+    ).toEqual([{ actionId: "b" }]);
+  });
+
+  it("still drops what it cannot read", () => {
+    expect(normalizeList<unknown>("not json", "starting")).toEqual([]);
+    expect(normalizeList<unknown>('{"a": 1}', "starting")).toEqual([]);
   });
 });

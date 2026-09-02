@@ -2,8 +2,8 @@
   "schemaVersion": 2,
   "id": "SCN_holt_common",
   "name": "Holt 家起居餐厨",
-  "description": "老房子的心脏:起居、吃饭、做饭挤在一个大开间里,一张能坐下六个人的橡木长桌 [item.holt_common.dining_table] 占了中间——如今常坐的只有四个。壁炉台上摆着一张镶框的海军新兵照 [item.holt_common.glen_photo],Glen 穿着水兵服笑得拘谨,相框前搁着他寄回来的明信片。角落里一台木壳电视机 [item.holt_common.television] 顶上搭着蕾丝罩布,屏幕最近偶尔会无缘无故起雪花。屋里有四扇内门:Ray 的房间 [SCN_holt_ray]、Frank 和 Susan 的主卧 [SCN_holt_master]、Denny 的小房间 [SCN_holt_denny],以及通后院的纱门 [SCN_holt_backyard]。正对院门的前门 [SCN_holt_gate] 出去是带栅栏的前院和 Holt 家的院门。",
-  "parentLocationId": "LOC_holt_house",
+  "description": "老房子的心脏:起居、吃饭、做饭挤在一个大开间里,一张能坐下六个人的橡木长桌 [item.holt_common.dining_table] 占了中间——如今常坐的只有四个。靠墙的砖砌壁炉 [item.holt_common.fireplace] 一起雾就烧上,壁炉台上摆着一张镶框的海军新兵照 [item.holt_common.glen_photo],Glen 穿着水兵服笑得拘谨,相框前搁着他寄回来的明信片;炉子对面一张塌了弹簧的旧沙发 [item.holt_common.sofa] 正对着角落里的木壳电视机 [item.holt_common.television],电视顶上搭着蕾丝罩布,屏幕最近偶尔会无缘无故起雪花。厨房那半边先亮起来:白搪瓷面的煤气灶 [item.holt_common.stove] 上常年蹲着一只熏黑的咖啡壶 [item.holt_common.coffee_pot],天没亮就有人烧上第一壶;灶边是水槽和木案台 [item.holt_common.sink_counter],沥水架上永远有几只没收的碗。墙角那台圆肩冰箱 [item.holt_common.refrigerator] 嗡嗡地响,屋子一静就只剩它的声音;旁边的食品柜 [item.holt_common.pantry] 里码着罐头、面粉和一只铁皮面包箱。窗台上一台塑料壳收音机 [item.holt_common.kitchen_radio] 做饭时开着,这两年时不时串进一种说不出的杂音。门框边的墙上挂着一部黑色转盘电话 [item.holt_common.wall_telephone],电话旁边钉着一本家庭日历 [item.holt_common.family_calendar],格子里挤着门诊预约和轮班时间,Susan 的字迹占了大半;线绳被拉长到能绕过桌角接;电话底下那只餐具柜 [item.holt_common.sideboard] 的抽屉里,一支应急手电筒 [item.holt_common.flashlight] 和一盒保险丝就放在最上层。屋里有四扇内门:Ray 的房间 [SCN_holt_ray]、Frank 和 Susan 的主卧 [SCN_holt_master]、Denny 的小房间 [SCN_holt_denny],以及通后院的纱门 [SCN_holt_backyard]。正对院门的前门 [SCN_holt_gate] 出去是带栅栏的前院和 Holt 家的院门。",
+  "parentLocationId": "holt_house",
   "indoor": true,
   "references": {
     "items": [
@@ -21,35 +21,97 @@
         "id": "item.holt_common.television",
         "name": "木壳电视机",
         "description": "1970 年代的木壳电视机,顶上搭着蕾丝罩布,最近偶尔无缘无故起雪花。"
+      },
+      {
+        "id": "item.holt_common.fireplace",
+        "name": "砖砌壁炉",
+        "description": "客厅那面墙上的砖砌壁炉,炉膛熏得漆黑,炉栅边靠着火钳和一只装引火木片的柳条筐。海雾一上来这屋里就阴,烧上火才坐得住人;柴从后院那垛里抱进来。"
+      },
+      {
+        "id": "item.holt_common.sofa",
+        "name": "塌了弹簧的沙发",
+        "description": "格纹布面的三人沙发,中间那个位子的弹簧早塌了,坐下去要陷半尺。扶手上搭着一条钩针毯,靠垫底下常年夹着掉进去的硬币和别人的袜子。"
+      },
+      {
+        "id": "item.holt_common.stove",
+        "name": "煤气灶",
+        "description": "白搪瓷面的四眼煤气灶带一个烤箱,点火要先划火柴。灶面被擦得发亮,只有靠墙那圈油垢擦不动了;上头的挂杆吊着煎锅、汤锅和两把用得发黑的木铲。"
+      },
+      {
+        "id": "item.holt_common.coffee_pot",
+        "name": "搪瓷咖啡壶",
+        "description": "一只熏黑了底的搪瓷渗滤咖啡壶,常年蹲在灶上。天没亮它就响起来——这屋里最早的动静,通常也是全镇最早的一壶咖啡。"
+      },
+      {
+        "id": "item.holt_common.sink_counter",
+        "name": "水槽与木案台",
+        "description": "灶边的白瓷水槽和一段被切菜刀口划花的木案台,水龙头拧到底还会滴。案台上摆着沥水架、一罐洗洁精和一块拧干搭好的抹布;这家人一天里最多的对话就发生在洗碗的这几分钟。"
+      },
+      {
+        "id": "item.holt_common.refrigerator",
+        "name": "圆肩冰箱",
+        "description": "1950 年代那种圆肩白冰箱,把手是铬的,门缝的胶条硬了。压缩机嗡嗡地响,一到夜里屋子安静下来,整栋房子就只剩它的声音。里头有牛奶、鸡蛋、一盘剩菜和给夜里回来的人留的一份。"
+      },
+      {
+        "id": "item.holt_common.pantry",
+        "name": "食品柜",
+        "description": "厨房角落的木食品柜,门轴吱呀。里头按层码着罐头、面粉、糖和咖啡豆,最下层是土豆和洋葱的柳条筐,上层立着一只铁皮面包箱——采买是一周一趟杂货店的量。"
+      },
+      {
+        "id": "item.holt_common.kitchen_radio",
+        "name": "厨房收音机",
+        "description": "窗台上一台奶油色塑料壳的台式收音机,旋钮松了,要用指甲卡着才停在 KGRV。做饭和吃早饭时开着;这两年时不时串进一种说不出的杂音,查过线路,查不出毛病。"
+      },
+      {
+        "id": "item.holt_common.wall_telephone",
+        "name": "墙上的转盘电话",
+        "description": "门框边挂着的黑色转盘电话,拨号盘转起来咔咔响。螺旋线被拉长成了直的——警长家的电话半夜也会响,接的人习惯边听边绕到桌角坐下。电话旁的墙上用铅笔记着几个号码,记了几十年,有的人早不在了。"
+      },
+      {
+        "id": "item.holt_common.sideboard",
+        "name": "餐具柜",
+        "description": "电话底下的旧餐具柜,上层玻璃门里是逢年过节才拿出来的一套瓷盘。抽屉是这家的杂物窝:电池、保险丝、拆信刀、缠成一团的麻绳,还有一叠没人扔的旧收据。"
+      },
+      {
+        "id": "item.holt_common.flashlight",
+        "name": "应急手电筒",
+        "description": "餐具柜抽屉最上层那支银色铁壳手电筒,家里公用的:停电、检修保险丝、夜里去后院抱柴都靠它。开关要拨两下才亮,电池是上个月换的。",
+        "isLightSource": true,
+        "lightLevel": 2
+      },
+      {
+        "id": "item.holt_common.family_calendar",
+        "name": "家庭日历与约诊便笺",
+        "description": "挂在电话旁边的家庭日历,夹着门诊预约单、诊所轮班表和几张便笺。正面是 Susan 写给全家看的;背面另有一列她没告诉任何人的小字——Frank 每晚醒着的钟点,Denny 哮喘发作的日期。"
       }
     ],
     "connections": [
       {
-        "id": "exit.holt_common.ray_door",
+        "id": "connection.holt_common.ray_door",
         "targetId": "SCN_holt_ray",
         "name": "Ray 的房间门",
         "description": "走廊尽头的门,门后是老警长的房间。"
       },
       {
-        "id": "exit.holt_common.master_door",
+        "id": "connection.holt_common.master_door",
         "targetId": "SCN_holt_master",
         "name": "主卧门",
         "description": "Frank 和 Susan 的主卧房门。"
       },
       {
-        "id": "exit.holt_common.denny_door",
+        "id": "connection.holt_common.denny_door",
         "targetId": "SCN_holt_denny",
         "name": "Denny 的房间门",
         "description": "贴着火箭贴纸的小房间门。"
       },
       {
-        "id": "exit.holt_common.backyard_door",
+        "id": "connection.holt_common.backyard_door",
         "targetId": "SCN_holt_backyard",
         "name": "后院纱门",
         "description": "厨房一侧的纱门,弹簧一松就砰的一声,通向后院。"
       },
       {
-        "id": "exit.holt_common.front_door",
+        "id": "connection.holt_common.front_door",
         "targetId": "SCN_holt_gate",
         "name": "前门",
         "description": "正对院门的前门,出去穿过前院就是 Holt 家的院门。"

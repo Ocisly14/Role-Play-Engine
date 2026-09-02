@@ -2,20 +2,50 @@
   "schemaVersion": 2,
   "id": "ROAD_station_drive",
   "name": "车行道",
-  "description": "从旅馆旁的岔路口爬向北山的车行道,碎石铺面,坡度是为卡车修的。步行走完要四个半小时——这条路从来不是为脚修的,走在上面的人只会觉得它没有尽头。路边每隔一段就立着一块白底黑字的告示牌:「美国政府财产 · 禁止入内」,一块比一块新 [cond.station_drive.no_trespass_signs]。山下的一头接着旧海岸公路的岔口 [SCN_motel],山上的尽头横着一道自动大门 [SCN_gate]。车行道与林子平行,却从头到尾不与任何林径相通;全程只有风声,和自己的脚步声。",
+  "description": "从旅馆旁的岔路口爬向北山的车行道,碎石铺面,坡度是为卡车修的。步行走完要四个半小时——这条路从来不是为脚修的,走在上面的人只会觉得它没有尽头。路边每隔一段就立着一块白底黑字的告示牌:「美国政府财产 · 禁止入内」,一块比一块新 [cond.station_drive.no_trespass_signs]。碎石面上从头到尾压着两道固定的车辙 [item.station_drive.tire_grooves],轮距永远是同一个宽度。起坡不久,路基底下穿过一段水泥涵洞 [item.station_drive.culvert],洞口的蕨长得比人高;再往上,路东一片被灌木吞掉的平台是伐木时代留下的装车台 [item.station_drive.log_landing],枕木还嵌在土里。半山腰的岩壁上渗出一股山泉,底下接着一截锈铁管 [item.station_drive.spring_pipe],常年滴水;过了泉眼不远,路西甩出一小片碎石回车台 [item.station_drive.overlook],站在那儿整个镇子、海和海上压过来的雾都在脚下。山下的一头接着旧海岸公路的岔口 [SCN_motel],山上的尽头横着一道自动大门 [SCN_gate]。车行道与林子平行,却从头到尾不与任何林径相通;全程只有风声,和自己的脚步声。",
   "parentLocationId": "OUTDOOR",
   "travelTimeMinutes": 270,
   "references": {
-    "items": [],
+    "items": [
+      {
+        "id": "item.station_drive.tire_grooves",
+        "name": "碎石路面上的车辙",
+        "description": "碎石面上压出的两道浅车辙,从山下一直到山上,轮距永远是同一个宽度,深浅也一样。碾碎的石子被压成了两条硬带,雨后积水就沿着它们流。这条路上跑的车不多,而且只有一种。"
+      },
+      {
+        "id": "item.station_drive.culvert",
+        "name": "水泥涵洞",
+        "description": "起坡不久,一段水泥涵洞从路基底下横穿过去,洞口两边的蕨长得比人高。雨后里面有水声,干燥时钻进去能避风避雨,洞壁上有早年施工队用油漆写的一串编号。",
+        "position": 0.2
+      },
+      {
+        "id": "item.station_drive.log_landing",
+        "name": "废弃的装车台",
+        "description": "路东一片被灌木吞掉的平台,是伐木时代把原木装上卡车的地方。枕木还嵌在土里,边上躺着一段锈成褐色的钢缆和半只滑轮。从这里能看出这条路比雷德利站老得多。",
+        "position": 0.4
+      },
+      {
+        "id": "item.station_drive.spring_pipe",
+        "name": "山泉与锈铁管",
+        "description": "半山腰的岩壁上渗出一股山泉,不知哪年有人在下面接了一截锈铁管,水就常年顺着管口滴进一个天然的石窝。水凉,能喝,是这条四个半小时的路上唯一能喝的东西。",
+        "position": 0.55
+      },
+      {
+        "id": "item.station_drive.overlook",
+        "name": "碎石回车台",
+        "description": "路西甩出的一小片碎石平地,原是给卡车调头用的,边缘压满车辙。站在那儿,整个镇子、海,和海上压过来的雾都在脚下;镇里哪家亮着灯,从这儿数得清。",
+        "position": 0.65
+      }
+    ],
     "connections": [
       {
-        "id": "exit.station_drive.motel_end",
+        "id": "connection.station_drive.motel_end",
         "targetId": "SCN_motel",
         "name": "车行道下端(公路岔口)",
         "role": "endpointA"
       },
       {
-        "id": "exit.station_drive.gate_end",
+        "id": "connection.station_drive.gate_end",
         "targetId": "SCN_gate",
         "name": "车行道上端(自动大门)",
         "role": "endpointB"

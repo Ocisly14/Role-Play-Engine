@@ -43,31 +43,24 @@
   },
   "inventory": [
     {
-      "id": "susan-nurse-bag",
+      "id": "item.susan.nurse_bag",
       "name": "护士包",
       "properties": {
         "note": "旧皮质护士包，分格放着常用护理用品与家庭出诊记录。"
       }
     },
     {
-      "id": "susan-stethoscope",
+      "id": "item.susan.stethoscope",
       "name": "听诊器",
       "properties": {
         "note": "她在诊所和家中都会使用的听诊器，金属听头始终擦得干净。"
       }
     },
     {
-      "id": "susan-first-aid-kit",
+      "id": "item.susan.first_aid_kit",
       "name": "急救包",
       "properties": {
         "note": "按伤口、止痛和呼吸急救分类补充的急救包，药品标签清晰。"
-      }
-    },
-    {
-      "id": "susan-family-calendar",
-      "name": "家庭日历与约诊便笺",
-      "properties": {
-        "note": "挂在厨房的家庭日历，夹着门诊预约、轮班时间和她没说出口的观察。"
       }
     }
   ],

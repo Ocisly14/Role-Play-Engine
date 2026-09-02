@@ -53,12 +53,20 @@ export interface ToolSpec {
   description: string;
   inputSchema: Record<string, unknown>;
   /**
-   * Ask the provider to validate arguments against the schema exactly.
+   * Ask the provider to constrain arguments to the schema (Anthropic
+   * semantics: grammar-constrained sampling; optional properties allowed;
+   * the schema must stay inside the strict subset — every object closed with
+   * `additionalProperties: false`, no `minimum`/`maximum`/`maxItems`/
+   * `pattern`, `minItems` only 0 or 1).
    *
-   * Off by default: OpenAI's strict mode requires EVERY property to appear in
-   * `required`, so any tool with a genuinely optional field cannot use it.
-   * Enable only on schemas where all properties are required. The envelope
-   * guarantee comes from `toolChoice`, not from this.
+   * Anthropic also caps the OPTIONAL parameters across all strict tools in a
+   * request at 24, counted through every nesting level (measured: a 400 for
+   * 111). A schema with many genuinely optional fields cannot be strict there.
+   *
+   * OpenAI's strict mode additionally demands that every property be
+   * required, so its adapter forwards the flag only when that holds. DeepSeek
+   * has no strict mode and drops it. The envelope guarantee comes from
+   * `toolChoice`, not from this.
    */
   strict?: boolean;
 }

@@ -60,7 +60,7 @@ export async function authenticate(
 // Optional authentication middleware (doesn't require login)
 export async function optionalAuthenticate(
   req: Request,
-  res: Response,
+  _res: Response,
   next: NextFunction
 ) {
   try {

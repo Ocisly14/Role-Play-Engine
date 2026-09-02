@@ -2,8 +2,8 @@
   "schemaVersion": 2,
   "id": "SCN_arcade",
   "name": "街机厅「星港」",
-  "description": "「星港」占着一间空置多年的假立面店面,是二十年来主街上开张的第一家新店。十来台机柜沿墙排开,墙角那台弹珠台[item.arcade.pinball_machine]的玻璃台面被无数只手肘磨得发亮,屏幕的辉光把昏暗的大厅染成深蓝,电子音效、按键声和孩子们的喊叫终日轰鸣不歇[cond.arcade.din]——在这儿说话得凑到耳边喊,这正是它的好处:谁来了,全场都看得见。正中的招牌机台《星港巡逻》[item.arcade.starport_cabinet]滚动着高分榜,榜首的三组缩写常年是同三个孩子换着排。门边立着换币机[item.arcade.change_machine],吞两毛五,吐出一把铜色代币。临街的玻璃门蒙着一层机柜辉光,推开就是主街[ROAD_main_street]。",
-  "parentLocationId": "LOC_arcade",
+  "description": "「星港」占着一间空置多年的假立面店面,是二十年来主街上开张的第一家新店。十来台机柜沿墙排成一列[item.arcade.cabinet_row],屏幕的辉光把昏暗的大厅染成深蓝;电子音效、按键声和孩子们的喊叫终日轰鸣不歇[cond.arcade.din]——在这儿说话得凑到耳边喊,这正是它的好处:谁来了,全场都看得见。正中的招牌机台《星港巡逻》[item.arcade.starport_cabinet]滚动着高分榜,榜首的三组缩写常年是同三个孩子换着排。墙角那台弹珠台[item.arcade.pinball_machine]的玻璃台面被无数只手肘磨得发亮;队尾一台机柜屏幕上却只跳着雪花,投币口贴着手写的「故障」纸条[item.arcade.broken_cabinet],已经贴了两个多星期。门边立着换币机[item.arcade.change_machine],吞两毛五,吐出一把铜色代币;旁边一台汽水机[item.arcade.soda_machine]的取瓶口边总积着几个瓶盖。柜台[item.arcade.counter]的玻璃面下压着代币卷和几张宝丽来照片,后头那把高脚凳空着的时候居多;柜台侧墙上一部投币电话[item.arcade.payphone],是孩子们跟家里报「马上就回」的地方。进门那面墙糊满了海报和手写告示[item.arcade.poster_wall],边角翘起来又被按回去。最里头的角落留着旧店面的一张卡座[item.arcade.corner_bench],人造革坐垫裂了口——那是全厅唯一能听清彼此说话的位置,也是那三个孩子固定的座位。临街的玻璃门蒙着一层机柜辉光,推开就是主街[ROAD_main_street]。",
+  "parentLocationId": "arcade",
   "indoor": true,
   "references": {
     "items": [
@@ -21,11 +21,48 @@
         "id": "item.arcade.change_machine",
         "name": "换币机",
         "description": "门边的换币机,吞两毛五硬币,吐铜色代币,偶尔要拍一下才肯干活。"
+      },
+      {
+        "id": "item.arcade.cabinet_row",
+        "name": "沿墙机柜",
+        "description": "沿墙排开的十来台立式机柜,侧板贴纸卷了边,操纵杆多半被摇松了。整排屏幕是这间厅里主要的光源,深蓝的辉光落在每张脸上。",
+        "isLightSource": true,
+        "lightLevel": 2
+      },
+      {
+        "id": "item.arcade.broken_cabinet",
+        "name": "贴着「故障」纸条的机柜",
+        "description": "队尾那台机柜,屏幕只剩跳动的雪花,喇叭里是一片沙沙声。投币口上贴着手写的「故障」纸条,贴了两个多星期还没人来修——想修的人其实就在两个门面之外。"
+      },
+      {
+        "id": "item.arcade.counter",
+        "name": "柜台",
+        "description": "进门侧的柜台,玻璃面下压着代币卷、几张创纪录时拍的宝丽来照片和一张手写价目。柜台后一把高脚凳,空着的时候比坐着人的时候多;台面上一只按铃,按下去要等上好一会儿才有人从后头出来。"
+      },
+      {
+        "id": "item.arcade.soda_machine",
+        "name": "汽水机",
+        "description": "换币机旁一台瓶装汽水机,机身嗡嗡响,取瓶口边总积着几个撬掉的瓶盖。有一格常年卖空,牌子却一直没换。"
+      },
+      {
+        "id": "item.arcade.payphone",
+        "name": "投币电话",
+        "description": "柜台侧墙上一部投币电话,听筒被摔过,话线拧成了一团。墙上用铅笔写满了号码,大多已经划掉——孩子们在这儿跟家里说「马上就回」。"
+      },
+      {
+        "id": "item.arcade.poster_wall",
+        "name": "海报墙",
+        "description": "进门那面墙糊满了电影海报、新机台的宣传画和手写告示:高分挑战的规则、寻找暑期帮工的条子、一张卷了边的渔汛节传单。层层叠叠,底下那几张已经没人记得内容。"
+      },
+      {
+        "id": "item.arcade.corner_bench",
+        "name": "角落卡座",
+        "description": "最里头的角落留着旧店面的一张卡座:固定的木桌和两条人造革长凳,坐垫裂了口,填料从缝里冒出来。这里离机柜最远,是全厅唯一能听清彼此说话的地方。"
       }
     ],
     "connections": [
       {
-        "id": "exit.arcade.street_door",
+        "id": "connection.arcade.street_door",
         "targetId": "ROAD_main_street",
         "name": "临街玻璃门",
         "description": "蒙着屏幕辉光的玻璃门,通向主街南段。"

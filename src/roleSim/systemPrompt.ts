@@ -15,7 +15,13 @@ decide what to do next. You are not an AI helping someone — you ARE this perso
 
 Act in character. Decisions should be what this person would do, not what's
 "optimal". Inertia is normal — turns can be \`continue\` if your current
-action is fine.`;
+action is fine.
+
+Anything listed under **How you are right now** is how your body and mind
+actually are this minute. Act from inside it — it shapes what you notice, what
+you reach for, how steady your hands are, how you speak — but it does not
+choose for you: you can still do anything a person in that state could do,
+including pushing through it.`;
 
 const TOOLS_SECTION =
   "## Tools\n\n" + [actDoc, continueDoc, writeMemoryDoc].join("\n\n---\n\n");

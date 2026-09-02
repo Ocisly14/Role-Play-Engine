@@ -1,0 +1,50 @@
+{
+  "schemaVersion": 2,
+  "id": "SCN_lodge_drive",
+  "name": "旅馆前车道",
+  "description": "一条环形车道绕着旅馆的正面兜了半圈,积雪底下能用脚尖摸出碎石的棱 [item.lodge_drive.gravel_loop]。车道边歪着一台老式扫雪车,铲刀锈成褐色,驾驶室缺了一块玻璃 [item.lodge_drive.snowplow]。再往里停着三辆报废的轿车,轮胎全瘪,车顶的雪堆成了圆包 [item.lodge_drive.dead_cars]。一块木头招牌吊在两根铁链上,风一吹就撞柱子,上面的字被雪糊得只剩几个笔画 [item.lodge_drive.lodge_sign]。雪把整栋楼的轮廓抹得很淡 [cond.lodge_drive.whiteout],可门廊底下的黑暗里,有一点橙色的光在晃 [SCN_lodge_porch]。",
+  "references": {
+    "items": [
+      {
+        "id": "item.lodge_drive.gravel_loop",
+        "name": "环形车道",
+        "description": "绕着旅馆正面的一圈碎石车道,雪下得再厚也能用脚尖摸出路基的棱。雪面上没有新的车辙,只有靠近门廊的一段被人踩实过。"
+      },
+      {
+        "id": "item.lodge_drive.snowplow",
+        "name": "废弃的扫雪车",
+        "description": "一台老式的农用扫雪车歪在车道边,铲刀锈成了褐色,液压杆断了一根,驾驶室缺一块玻璃。雪从那个缺口灌进去,座椅上积了厚厚一层。"
+      },
+      {
+        "id": "item.lodge_drive.dead_cars",
+        "name": "三辆报废轿车",
+        "description": "停在车道内圈的三辆轿车,轮胎全瘪,漆面被三十年的风雪磨成了灰。车顶的积雪堆成圆包,看得出很久没人动过它们。"
+      },
+      {
+        "id": "item.lodge_drive.lodge_sign",
+        "name": "吊着的木招牌",
+        "description": "两根铁链吊着的一块厚木招牌,风一大就撞到柱子上,发出闷响。正面的字被雪糊住,只剩几个笔画,认不出这地方原来叫什么。"
+      }
+    ],
+    "connections": [
+      {
+        "id": "connection.lodge_drive.porch",
+        "targetId": "SCN_lodge_porch",
+        "name": "通往门廊的台阶",
+        "description": "从车道上去三级木台阶,就是旅馆正面那条带顶的门廊。"
+      }
+    ],
+    "conditions": [
+      {
+        "id": "cond.lodge_drive.whiteout",
+        "description": "暴雪白幕:整栋楼的轮廓被雪抹淡,站在车道外圈只能看见一团更黑的影子。",
+        "mechanicalEffect": {
+          "skillPenalty": {
+            "Survival & Navigation": -15,
+            "Ranged Combat": -15
+          }
+        }
+      }
+    ]
+  }
+}

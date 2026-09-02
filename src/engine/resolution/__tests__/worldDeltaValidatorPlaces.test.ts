@@ -60,10 +60,10 @@ function makeContext(): EngineResolutionContext {
           },
         ],
         edges: [
-          { connectionId: "exit.home.junc", from: "LOC_TOWN", to: "J_A" },
-          { connectionId: "exit.junc.home", from: "J_A", to: "LOC_TOWN" },
+          { connectionId: "connection.home.junc", from: "LOC_TOWN", to: "J_A" },
+          { connectionId: "connection.junc.home", from: "J_A", to: "LOC_TOWN" },
           {
-            connectionId: "exit.rmain.a",
+            connectionId: "connection.rmain.a",
             from: "R_MAIN",
             to: "J_A",
             travelTimeMinutes: 10,
@@ -72,7 +72,11 @@ function makeContext(): EngineResolutionContext {
       },
       blockedEdges: [],
       placeKinds: { SCN_1: "scene", J_A: "scene", R_MAIN: "road" },
-      connectionIds: ["exit.home.junc", "exit.junc.home", "exit.rmain.a"],
+      connectionIds: [
+        "connection.home.junc",
+        "connection.junc.home",
+        "connection.rmain.a",
+      ],
       places: [],
       items: [],
       itemHolders: {
@@ -117,7 +121,7 @@ const text = (errors: ResolutionError[]): string =>
 
 function validate(partial: Partial<RawTickResolution>): string {
   return text(
-    validateRawResolution({ starting: [start], ...partial }, makeContext(), [])
+    validateRawResolution({ starting: [start], ...partial }, makeContext())
   );
 }
 
@@ -243,7 +247,7 @@ describe("connectionBlock / connectionHidden take registry ids", () => {
           sceneId: "J_A",
           operation: {
             kind: "connectionBlock",
-            connectionId: "exit.nowhere.door",
+            connectionId: "connection.nowhere.door",
             blocked: true,
             reason: "rubble",
           },
@@ -263,7 +267,7 @@ describe("connectionBlock / connectionHidden take registry ids", () => {
             sceneId: "J_A",
             operation: {
               kind: "connectionBlock",
-              connectionId: "exit.junc.home",
+              connectionId: "connection.junc.home",
               blocked: true,
               reason: "rubble",
             },
@@ -273,7 +277,7 @@ describe("connectionBlock / connectionHidden take registry ids", () => {
             sceneId: "SCN_1",
             operation: {
               kind: "connectionHidden",
-              connectionId: "exit.home.junc",
+              connectionId: "connection.home.junc",
               hidden: false,
             },
           },
@@ -291,7 +295,7 @@ describe("connectionBlock / connectionHidden take registry ids", () => {
             sceneId: "SCN_1",
             operation: {
               kind: "connectionHidden",
-              connectionId: "exit.home.junc",
+              connectionId: "connection.home.junc",
             },
           },
         ],
@@ -305,7 +309,7 @@ describe("connectionBlock / connectionHidden take registry ids", () => {
             sceneId: "SCN_1",
             operation: {
               kind: "connectionHidden",
-              connectionId: "exit.ghost",
+              connectionId: "connection.ghost",
               hidden: true,
             },
           },

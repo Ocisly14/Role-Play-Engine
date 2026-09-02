@@ -56,7 +56,7 @@ function makeContext(): EngineResolutionContext {
       },
       blockedEdges: [],
       placeKinds: { SCN_1: "scene", SCN_FAR: "scene" },
-      connectionIds: ["exit.scn1.far"],
+      connectionIds: ["connection.scn1.far"],
       places: [
         {
           id: "SCN_1",
@@ -68,7 +68,7 @@ function makeContext(): EngineResolutionContext {
           itemIds: [],
           connections: [
             {
-              connectionId: "exit.scn1.far",
+              connectionId: "connection.scn1.far",
               targetId: "SCN_FAR",
               description: "a far door",
             },
@@ -131,10 +131,14 @@ const validSubmission = {
 
 function makeDeps() {
   const codeTools = new CodeToolRegistry();
+  // The session offers only dice tools. (pathfinding,
+  // movementCost and inventoryValidation were removed — a tool call costs a
+  // full-context round trip, and those three answered from data the request
+  // already carries.)
   codeTools.register({
-    name: "movementCost",
+    name: "damageRoll",
     description: "stub",
-    execute: () => ({ reachable: true, totalMinutes: 5, totalTicks: 5 }),
+    execute: () => ({ ok: true, total: 5, dice: [4, 1] }),
   });
   return { dgsm: {} as DynamicGameStateManager, codeTools };
 }
@@ -154,8 +158,8 @@ describe("resolveTick session loop", () => {
         turn([
           {
             id: "t1",
-            name: "movementCost",
-            args: { characterId: "npc_1", destinationId: "SCN_FAR" },
+            name: "damageRoll",
+            args: { formula: "1d6+1" },
           },
         ])
       )
@@ -180,8 +184,8 @@ describe("resolveTick session loop", () => {
     });
     expect(result.codeToolInvocations).toHaveLength(1);
     expect(result.codeToolInvocations[0]).toMatchObject({
-      toolName: "movementCost",
-      output: { reachable: true, totalMinutes: 5, totalTicks: 5 },
+      toolName: "damageRoll",
+      output: { ok: true, total: 5 },
     });
 
     // The second request carried the tool result back to the model.
@@ -189,14 +193,43 @@ describe("resolveTick session loop", () => {
     const toolMsg = secondCall.messages.find(
       (m: { role: string }) => m.role === "tool"
     );
-    expect(toolMsg.results[0].content).toContain("reachable");
+    expect(toolMsg.results[0].content).toContain("total");
+  });
+
+  it("attributes code-tool invocations to their causing action", async () => {
+    generateToolCalls
+      .mockResolvedValueOnce(
+        turn([
+          {
+            id: "dmg",
+            name: "damageRoll",
+            args: { actionId: "action_c1", formula: "1d4" },
+          },
+        ])
+      )
+      .mockResolvedValueOnce(
+        turn([
+          { id: "submit", name: "submit_resolution", args: validSubmission },
+        ])
+      );
+
+    const result = await resolveTick(makeContext(), makeDeps());
+
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.codeToolInvocations).toContainEqual(
+      expect.objectContaining({
+        toolName: "damageRoll",
+        actionId: "action_c1",
+      })
+    );
   });
 
   it("rejects a mixed submit+tool turn without losing the session", async () => {
     generateToolCalls
       .mockResolvedValueOnce(
         turn([
-          { id: "t1", name: "movementCost", args: {} },
+          { id: "t1", name: "damageRoll", args: { formula: "1d6" } },
           { id: "t2", name: "submit_resolution", args: validSubmission },
         ])
       )
@@ -365,6 +398,63 @@ describe("renderContext addressing", () => {
     expect(prompt).not.toContain('"c1"');
     expect(prompt).not.toContain('"c0"');
   });
+
+  // Rendered as `checkOutcome`, the roll was echoed back as the ending's
+  // `outcome` — the one field a checked ending must not carry — in a third
+  // of checked solo endings over a measured 30-tick run. The name now says
+  // dice, the verdict bit stays, and the derivable/bookkeeping fields go.
+  it("renders the roll as diceRoll with the verdict and without outcome words", () => {
+    const context = makeContext();
+    context.actions.activeActions = [
+      {
+        id: "action_c0",
+        status: "active",
+        command: { ...cmd, commandId: "c0" },
+        progressMinutes: 10,
+        resolvedDurationTicks: 10,
+        check: {
+          skillId: "Repair & Engineering",
+          requiredLevel: "regular",
+          basis: "routine",
+        },
+        checkOutcome: {
+          actor: {
+            rollId: "roll-1",
+            skillId: "Repair & Engineering",
+            skillValue: 65,
+            roll: 4,
+            successLevel: "extreme",
+          },
+          requiredLevel: "regular",
+          defenders: [
+            {
+              characterId: "npc_2",
+              record: {
+                rollId: "roll-2",
+                skillId: "Stealth",
+                skillValue: 40,
+                roll: 60,
+                successLevel: "failure",
+              },
+              actorWon: true,
+            },
+          ],
+          met: true,
+          fumble: false,
+        },
+      } as EngineResolutionContext["actions"]["activeActions"][number],
+    ];
+
+    const prompt = renderContext(context);
+
+    expect(prompt).toContain('"diceRoll"');
+    expect(prompt).not.toContain("checkOutcome");
+    expect(prompt).toContain('"successLevel": "extreme"');
+    expect(prompt).toContain('"actorWon": true');
+    expect(prompt).toContain('"met": true');
+    expect(prompt).not.toContain('"fumble"');
+    expect(prompt).not.toContain("rollId");
+  });
 });
 
 describe("renderContextSegments caching layout", () => {
@@ -425,13 +515,13 @@ describe("renderWorldGraph", () => {
       ],
       edges: [
         {
-          connectionId: "exit.home.secret",
+          connectionId: "connection.home.secret",
           from: "J_A",
           to: "R_MAIN",
           hidden: true,
         },
         {
-          connectionId: "exit.road.a",
+          connectionId: "connection.road.a",
           from: "R_MAIN",
           to: "J_A",
           travelTimeMinutes: 15,
@@ -442,11 +532,101 @@ describe("renderWorldGraph", () => {
       "Outdoor node scenes:",
       // Authored prose rides along, newlines flattened.
       "- J_A (Crossing): A windswept crossing.",
-      "  connections: [exit.home.secret] -> R_MAIN (hidden)",
+      "  connections: [connection.home.secret] -> R_MAIN (hidden)",
       "Roads:",
       // No description and no prose — the node line stands alone.
       "- R_MAIN (Star Avenue)",
-      "  connections: [exit.road.a] -> J_A 15min",
+      "  connections: [connection.road.a] -> J_A 15min",
     ]);
+  });
+});
+
+describe("the turn budget", () => {
+  beforeEach(() => {
+    generateToolCalls.mockReset();
+  });
+
+  it("stops offering parallel calls once one tool is demanded", async () => {
+    // Repair is the one moment `toolChoice` still names a single tool. On that
+    // turn a parallel call can add nothing but a second copy of it — and the
+    // intake takes a patch ONLY when it arrives alone. Measured live: both
+    // copies refused, another full-world round trip spent sending the same
+    // thing again by itself.
+    generateToolCalls
+      .mockResolvedValueOnce(
+        turn([{ id: "t0", name: "damageRoll", args: { formula: "1d6" } }])
+      )
+      .mockResolvedValueOnce(
+        // Ending an action that is still queued — rejected, so repair opens.
+        turn([
+          {
+            id: "t1",
+            name: "submit_resolution",
+            args: {
+              ending: [
+                {
+                  actionId: "action_c1",
+                  outcome: "success",
+                  reason: "done already",
+                  occurrence: {
+                    facts: [
+                      { type: "action_result", content: "the door opens" },
+                    ],
+                    participants: [{ characterId: "npc_1", role: "actor" }],
+                    perceiverCharacterIds: ["npc_1"],
+                  },
+                },
+              ],
+            },
+          },
+        ])
+      )
+      .mockResolvedValueOnce(
+        turn([
+          {
+            id: "t2",
+            name: "repair_resolution",
+            args: { starting: validSubmission.starting },
+          },
+        ])
+      );
+
+    const result = await resolveTick(makeContext(), makeDeps());
+    expect(result.ok).toBe(true);
+
+    const calls = generateToolCalls.mock.calls.map((c) => c[0]);
+    // While it still had a choice of tool, batching stayed available.
+    for (const call of calls.slice(0, 2)) {
+      expect(call.toolChoice).toBe("any");
+      expect(call.allowParallelCalls).toBe(true);
+    }
+    // On the demanded patch it does not.
+    expect(calls[2].toolChoice).toEqual({ name: "repair_resolution" });
+    expect(calls[2].allowParallelCalls).toBe(false);
+  });
+
+  it("tells the model the budget it is spending, with the real numbers", async () => {
+    generateToolCalls.mockResolvedValueOnce(
+      turn([{ id: "sub", name: "submit_resolution", args: validSubmission }])
+    );
+    await resolveTick(makeContext(), makeDeps());
+
+    const prompt = generateToolCalls.mock.calls[0][0]
+      .customSystemPrompt as string;
+    // The budget is a code constant and a prompt sentence at once; the
+    // document names it with a placeholder so the two cannot drift.
+    expect(prompt).not.toContain("{{");
+    expect(prompt).toMatch(/\b5 turns in all\b/);
+    // And why there is nothing to spend those turns on but the resolution.
+    expect(prompt).toContain("there is nothing to look up");
+    expect(prompt).toContain("A turn is expensive");
+    expect(prompt).toContain("# Sanity Check Guidance");
+    expect(prompt).toContain("strict objective threshold");
+    expect(prompt).toContain("Inner activity is never a condition");
+    // Sanity is DECLARED on an occurrence, not called as a tool. The negative
+    // assertion is the load-bearing half: it is what stops the tool — and its
+    // loop — creeping back into the prompt.
+    expect(prompt).toContain("sanityChecks");
+    expect(prompt).not.toMatch(/Call `sanityCheck`|the `sanityCheck` tool/);
   });
 });

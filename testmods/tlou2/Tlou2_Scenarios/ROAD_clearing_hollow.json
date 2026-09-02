@@ -1,0 +1,26 @@
+{
+  "schemaVersion": 2,
+  "id": "ROAD_clearing_hollow",
+  "name": "南向兽径",
+  "description": "从山脊往南的一条兽径,穿过越来越密的松林,十五分钟到那片洼地。北头是空地 [SCN_ridge_clearing],南头是被松林围死的洼地 [SCN_pine_hollow]。走到后半段回头看,来路的脚印已经被新雪填上了。",
+  "parentLocationId": "OUTDOOR",
+  "travelTimeMinutes": 15,
+  "references": {
+    "items": [],
+    "connections": [
+      {
+        "id": "connection.clearing_hollow.ridge_end",
+        "targetId": "SCN_ridge_clearing",
+        "name": "北端",
+        "role": "endpointA"
+      },
+      {
+        "id": "connection.clearing_hollow.hollow_end",
+        "targetId": "SCN_pine_hollow",
+        "name": "南端",
+        "role": "endpointB"
+      }
+    ],
+    "conditions": []
+  }
+}

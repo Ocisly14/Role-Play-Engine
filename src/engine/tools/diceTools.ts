@@ -1,85 +1,24 @@
 // src/engine/tools/diceTools.ts
 //
-// Trusted randomness for the unified Engine: opponent/defender skill rolls
-// for opposed checks, and damage dice. The actor's own roll is NEVER made
-// here — it already exists as the command's immutable SkillRollRecord
-// (rolled at intake) and must not be re-rolled. Both tools accept explicit
-// roll values so a replay can pin recorded outcomes.
+// Trusted randomness for the unified Engine. `damageRoll` is the one code
+// tool the resolution session can call; it accepts explicit roll values so a
+// replay can pin recorded outcomes.
+//
+// The actor's declared-skill roll is NEVER made here — it already exists as
+// the command's immutable SkillRollRecord (rolled at intake) and must not be
+// re-rolled. Sanity is not a tool either: it is declared on an occurrence and
+// settled by `resolution/sanityResolver.ts`, which reuses the formula helpers
+// exported below.
 
-import {
-  resolveSkillValue,
-  rollSkill,
-  successLevelFor,
-} from "../actions/skillRollService.js";
-import type { SkillRollRecord } from "../actions/types.js";
-import {
-  applyPenalties,
-  getCharacterConditionPenalties,
-  getScenePenalties,
-  rollD100,
-} from "../shared/index.js";
-import type { CodeToolContext, EngineCodeTool } from "./codeTool.js";
+import { successLevelFor } from "../actions/skillRollService.js";
+import { rollD100 } from "../shared/index.js";
+import type { EngineCodeTool } from "./codeTool.js";
 
 /** Clamp helper shared by numeric aggregation paths. Exported as a plain
  *  function — clamping is arithmetic, not a tool invocation. */
 export function clampValue(value: number, min: number, max: number): number {
   return Math.max(min, Math.min(max, value));
 }
-
-// ==================== Opposed / defender roll ====================
-
-export interface OpposedRollInput {
-  characterId: string;
-  /** Defense skill the ENGINE chose for this defender (the Engine judges
-   *  which defense applies; this tool only executes the roll). */
-  skillId: string;
-  /** Replay only: pin the d100 result instead of rolling. */
-  fixedRoll?: number;
-}
-
-export type OpposedRollOutput =
-  | { ok: true; record: SkillRollRecord }
-  | { ok: false; reason: "unknown_skill" };
-
-export const opposedRollTool: EngineCodeTool<
-  OpposedRollInput,
-  OpposedRollOutput
-> = {
-  name: "opposedRoll",
-  description:
-    "Roll a defender's skill (real value from character state, scene/condition penalties applied) for an opposed check. Never re-rolls the actor.",
-  execute(input: OpposedRollInput, ctx: CodeToolContext): OpposedRollOutput {
-    const profileSkills =
-      ctx.dgsm.getNpcProfile(input.characterId)?.skills ?? {};
-    const resolved = resolveSkillValue(input.skillId, profileSkills);
-    if (!resolved) return { ok: false, reason: "unknown_skill" };
-
-    // Same penalty stack the legacy skill-check path applied: scene
-    // conditions at the defender's location plus their own conditions.
-    const position = ctx.dgsm.getCharacterPosition(input.characterId);
-    const locationId = position ? ctx.dgsm.resolveLocationId(position) : "";
-    const scenePenalties = locationId
-      ? getScenePenalties(locationId, ctx.dgsm)
-      : new Map<string, number>();
-    const charPenalties = getCharacterConditionPenalties(
-      input.characterId,
-      ctx.dgsm
-    );
-    const adjusted = applyPenalties(
-      applyPenalties(
-        { [resolved.canonicalSkillId]: resolved.value },
-        scenePenalties
-      ),
-      charPenalties
-    );
-    const value = adjusted[resolved.canonicalSkillId] ?? resolved.value;
-
-    return {
-      ok: true,
-      record: rollSkill(resolved.canonicalSkillId, value, input.fixedRoll),
-    };
-  },
-};
 
 // ==================== Damage dice ====================
 
@@ -100,7 +39,7 @@ export type DamageRollOutput =
       formulaTotal: number;
       bonusTotal: number;
     }
-  | { ok: false; reason: "invalid_formula" };
+  | { ok: false; reason: "invalid_formula" | "nothing_to_roll" };
 
 const FORMULA_RE =
   /^\s*(?:(\d+)[dD](\d+)\s*(?:([+-])\s*(\d+))?|([+-]?\d+))\s*$/;
@@ -110,10 +49,17 @@ export const damageRollTool: EngineCodeTool<DamageRollInput, DamageRollOutput> =
   {
     name: "damageRoll",
     description:
-      "Roll a damage formula (e.g. 1d6+1) plus an optional CoC damage-bonus string; returns total and individual dice.",
+      "Roll a damage formula (e.g. 1d6+1) plus an optional CoC damage-bonus string; returns total and individual dice. Send EVERY roll this tick needs as separate calls in the SAME turn — one call per turn spends the session's whole budget before the resolution is written.",
     execute(input: DamageRollInput): DamageRollOutput {
       const match = FORMULA_RE.exec(input.formula ?? "");
       if (!match) return { ok: false, reason: "invalid_formula" };
+      // A constant with no die in it is not a roll. Seen live as a stall:
+      // `damageRoll("0")` to occupy a forced first turn, answered with a
+      // cheerful `total: 0` that taught nothing. Refuse it with the reason
+      // the model should read next turn.
+      if (match[5] !== undefined && Number.parseInt(match[5], 10) === 0) {
+        return { ok: false, reason: "nothing_to_roll" };
+      }
 
       const fixed = input.fixedRolls ? [...input.fixedRolls] : undefined;
       const rolls: number[] = [];
@@ -166,6 +112,75 @@ export const damageRollTool: EngineCodeTool<DamageRollInput, DamageRollOutput> =
       };
     },
   };
+
+// ==================== Sanity loss formulas ====================
+//
+// No `sanityCheck` tool lives here any more. It was a stateless, non-idempotent
+// roll the model started mid-session: every repeat returned a fresh d100 and
+// `ok: true`, so nothing in the payload ever said "this exposure is settled".
+// Measured over 30 full-injection ticks, five of them burned the entire
+// session budget re-rolling the SAME (actionId, characterId) and never
+// submitted, dropping the whole tick. Sanity is now DECLARED on the occurrence
+// that caused it and rolled in code, which makes the loop structurally
+// impossible — one submission, one roll.
+//
+// These helpers survive because the declaration still carries a dice formula.
+
+/** A loss formula the world will accept: "1", "1d4", "2d6+1". */
+export function validSanityLossFormula(formula: string): boolean {
+  const match = FORMULA_RE.exec(formula ?? "");
+  if (!match) return false;
+  if (match[5] !== undefined) {
+    return Number.parseInt(match[5], 10) >= 0;
+  }
+  const count = Number.parseInt(match[1], 10);
+  const sides = Number.parseInt(match[2], 10);
+  return count >= 1 && count <= 100 && sides >= 1;
+}
+
+/** True for a formula that cannot ever cost a point — a flat integer <= 0.
+ *  Dice formulas are never guaranteed-zero (`rollSanityLoss` floors at 0, but
+ *  `1d4` can still land above it), so only the flat case counts.
+ *
+ *  Since a PASSED check now costs nothing, a guaranteed-zero failure loss is a
+ *  check that cannot cost anything at all — which is a check that should not
+ *  happen. The validator refuses it. */
+export function isGuaranteedZeroLoss(formula: string): boolean {
+  const match = FORMULA_RE.exec(formula ?? "");
+  if (!match || match[5] === undefined) return false;
+  return Number.parseInt(match[5], 10) <= 0;
+}
+
+/** Roll a loss formula. `rng` returns a uniform [0,1) and is injectable so a
+ *  whole resolution's dice — the d100 and every loss die — can be pinned from
+ *  one source in tests and replays. */
+export function rollSanityLoss(
+  formula: string,
+  rng: () => number = Math.random
+): { total: number; rolls: number[] } {
+  const match = FORMULA_RE.exec(formula);
+  // The caller validates the formula before rolling it. Keep this guard so the
+  // rolling helper remains total if that invariant ever changes.
+  if (!match) return { total: 0, rolls: [] };
+  if (match[5] !== undefined) {
+    return { total: Number.parseInt(match[5], 10), rolls: [] };
+  }
+
+  const count = Number.parseInt(match[1], 10);
+  const sides = Number.parseInt(match[2], 10);
+  const rolls: number[] = [];
+  let total = 0;
+  for (let i = 0; i < count; i++) {
+    const value = Math.floor(rng() * sides) + 1;
+    rolls.push(value);
+    total += value;
+  }
+  if (match[3] !== undefined) {
+    const modifier = Number.parseInt(match[4], 10);
+    total += match[3] === "-" ? -modifier : modifier;
+  }
+  return { total: Math.max(0, total), rolls };
+}
 
 // rollD100 / successLevelFor are re-exported for the Engine's direct use in
 // deterministic aggregation (they are pure functions, not tool invocations).

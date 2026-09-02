@@ -367,7 +367,6 @@ export class MemoryStore {
   }
 
   async batchUpdateImportance(
-    sessionId: string,
     updates: Array<{ id: string; importance: number }>
   ): Promise<void> {
     await this.prisma.$transaction(

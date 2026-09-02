@@ -20,6 +20,23 @@ import {
 export interface BuildUserPromptOptions {
   language: string;
   dgsm: DynamicGameStateManager;
+  /**
+   * What the prompt asks for at the end. Everything above it is identical
+   * either way, which is the point: the character who compacts their own
+   * stream is the same character, reading the same profile, memories and
+   * present minute they read when they act. Only the closing instruction
+   * differs, so the two cannot drift apart.
+   *
+   * `compact` also needs the cutoff — the stamp of the last paragraph that
+   * gets folded into the summary. Everything after it stays verbatim.
+   *
+   * `consolidate` names the other end: the timestamp from which memories are
+   * too recent to touch. Everything stamped there or later stays as it is.
+   */
+  closing?:
+    | { kind: "decide" }
+    | { kind: "compact"; coversThrough: string; targetTokens: number }
+    | { kind: "consolidate"; protectedFrom: string; targetTokens: number };
 }
 
 /**
@@ -68,8 +85,32 @@ export function buildUserPromptSegments(
   frozen.push(`## Who you are\n${formatProfile(ctx.npcProfile)}`);
   frozen.push(`## What you can do\n${formatSkills(ctx.npcProfile)}`);
 
+  // The standing over memory, said once where the memories are.
+  //
+  // The second sentence is the one that was paid for. Two characters in two
+  // runs walked into the same wall: each held several memories that were all
+  // CORRECT, and joined two of them into a way that does not exist — the lane
+  // to Denny's house continued as the path to the trailhead; the gap in the
+  // back fence became a shortcut to the far end of Main Street. Told only
+  // that their action "did not go on", both read it as their own head going
+  // vague and re-stated the same impossible route, more carefully. Telling
+  // them their memory might be wrong would be a lie in both cases and would
+  // point them at the wrong doubt: the memories were right, the joining was
+  // invented.
   if (ctx.memories.length > 0) {
-    growing.push(`## What you remember\n${formatMemories(ctx.memories)}`);
+    growing.push(
+      `## What you remember
+This is your own record, in your own words — not the world's. It can be out
+of date, and it is about places you are not standing in; where it disagrees
+with what you perceive right now, what you perceive is what is true.
+
+And two things you remember separately do not join into one way just because
+you remember both. You know that one place leads to another only if you
+remember it leading there, or you can see that it does. A way you assembled
+out of two true memories is not a way you know.
+
+${formatMemories(ctx.memories)}`
+    );
   }
 
   // The character's day as they lived it, not a sensor log: this is the whole
@@ -134,14 +175,91 @@ a positive tick count, a real skill name) or choose a different action.`
   }
 
   const langName = opts.language?.startsWith("zh") ? "Chinese" : "English";
-  // `act` output is structured fields — prose goes in `description`, ids in
-  // `objectRefs`. The envelope itself is enforced by the API (a tool call is
-  // required), so this doesn't have to describe JSON.
-  volatile.push(
-    `## Decide
+  const closing = opts.closing ?? { kind: "decide" };
+
+  if (closing.kind === "compact") {
+    // No tools on this call: the answer is the paragraph itself. What the
+    // character keeps is their judgement, made from their own standpoint —
+    // the same standpoint every other line of this prompt establishes.
+    volatile.push(
+      `## Condense what you have lived through
+Your own record of what you have lived through has grown too long to carry
+whole. Rewrite the
+early part of it, in your own voice, as the account you would still be able
+to give of it.
+
+Everything in **What you have lived through so far** up to and including
+\`${closing.coversThrough}\` is what you are condensing. The entries after
+that stamp stay exactly as they are — do not summarize, repeat or mention
+them.
+
+Keep what you would still know: who you dealt with and how it stands
+between you, what you learned, what you promised or were promised, what you
+carried, what changed and what it cost. Drop the minute-by-minute — the
+walking, the waiting, the weather that mattered to nobody. Where a thing
+matters because of when or where it happened, keep the when and the where.
+
+Anything in square brackets — \`[item.clinic_upstairs.gramophone]\`,
+\`[stranger_a]\`, \`[SCN_clinic_waiting]\` — is a handle, not a word. Carry every one you keep
+through into your account EXACTLY as it appears, brackets included, attached
+to the same thing it was attached to above. A handle is how you reach for a
+thing later: drop a thing and its handle goes with it, but keep the thing
+and lose the handle and you will remember the brass key with no way left to
+reach for it. Never write a bracket you did not read above, and never put
+one on something that had none.
+
+Write it as one continuous first-person account, past tense, in
+${langName}. No headings, no bullet list, no commentary about the act of
+summarizing. Aim for about ${closing.targetTokens} tokens; shorter is fine
+if there was little worth keeping. Write the account now — nothing else.`
+    );
+  } else if (closing.kind === "consolidate") {
+    // One tool on this call, `writeMemory`, and nothing terminal: the answer
+    // is the batch of corrections itself. The character is the only one who
+    // knows which of these lines still say something — the same standpoint
+    // the compact closing takes over the perception stream.
+    volatile.push(
+      `## Bring what you remember down to what you can carry
+Your own record has grown too long to carry whole. Using \`writeMemory\`,
+bring **What you remember** down to about ${closing.targetTokens} tokens:
+\`replace\` to fold several lines about one thing into one line that says
+it all; \`delete\` for what no longer matters; \`add\` only for a merged
+line that stands in for several you are deleting.
+
+Lines stamped \`[${closing.protectedFrom}]\` or later are what you are in
+the middle of — leave every one of them exactly as it is.
+
+How to judge each kind:
+- \`relationship\`: one line per person, saying how it stands between you
+  now. Fold the history of a person into that line; do not keep a trail.
+- \`plan\`: a plan that is done, or that events have overtaken, is deleted.
+- \`map\`: lines about one area may be folded together, but **never lose a
+  place name** — a place you no longer have a line for is a place you no
+  longer know how to reach.
+- \`secret\`: keep each one on its own; never fold a secret into another
+  line.
+- \`long_term_intent\`: the newest one stays. Older ones may go.
+- \`general\`: keep what you would still know a week from now — who you
+  dealt with and what it came to, what you learned, what you promised.
+  Drop the minute-by-minute.
+
+\`ref\` is the \`#M…\` tag at the head of the line, copied exactly. Never
+cite a tag you did not read above. A tag you get wrong is one line left as
+it was — the rest of your calls still land.
+
+Make every call now, in this one turn, and nothing else. Write content in
+${langName}.`
+    );
+  } else {
+    // `act` output is structured fields — prose goes in `description`, ids in
+    // `objectRefs`. The envelope itself is enforced by the API (a tool call is
+    // required), so this doesn't have to describe JSON.
+    volatile.push(
+      `## Decide
 Everything above is INPUT you have read — the world describing itself TO
 you. The bracketed tags in what you perceive — \`[stranger_a]\`,
-\`[ITEM_7]\`, \`[SCN_LIBRARY]\` — are the ONLY ids you may put in
+\`[item.clinic_upstairs.gramophone]\`, \`[SCN_clinic_waiting]\` — are the
+ONLY ids you may put in
 \`objectRefs\`; copy one exactly, without its brackets. Something you
 perceive with no tag is something you cannot act on this minute. Your
 in-character prose goes in \`description\` (and the exact words you speak
@@ -149,7 +267,8 @@ in \`utterance\`) — never the tags.
 
 Call one tool now — \`act\` or \`continue\`, plus any \`writeMemory\`
 worth keeping from what you just perceived. Write content in ${langName}.`
-  );
+    );
+  }
 
   // Drop empty groups before joining so the separator layout matches a plain
   // `sections.join("\n\n")` over the same non-empty sections. The trailing
@@ -172,8 +291,12 @@ worth keeping from what you just perceived. Write content in ${langName}.`
 
 /** `--- 1923-04-02 09:15 · Miskatonic Library ---`: when and where this
  *  reached the character. The scene id is shown only if the module has no
- *  name for it — this line is read as prose, not cited as an id. */
-function stamp(
+ *  name for it — this line is read as prose, not cited as an id.
+ *
+ *  Exported because compaction names its cutoff with one: the instruction
+ *  points at a line the character can actually find in the block above it,
+ *  rather than asking them to count entries from the end. */
+export function stamp(
   gameDateTime: string,
   sceneId: string | undefined,
   dgsm: DynamicGameStateManager

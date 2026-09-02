@@ -1,0 +1,26 @@
+{
+  "schemaVersion": 2,
+  "id": "ROAD_hollow_county",
+  "name": "东出林道",
+  "description": "洼地往东出去的一段林道,坡缓但长,二十分钟能走到县道上。西头是那片洼地 [SCN_pine_hollow],东头是县道拐弯的地方 [SCN_county_road]。这一段没有任何遮挡,风从侧面推人,雪大的时候连脚下的路面都要靠猜。",
+  "parentLocationId": "OUTDOOR",
+  "travelTimeMinutes": 20,
+  "references": {
+    "items": [],
+    "connections": [
+      {
+        "id": "connection.hollow_county.hollow_end",
+        "targetId": "SCN_pine_hollow",
+        "name": "西端",
+        "role": "endpointA"
+      },
+      {
+        "id": "connection.hollow_county.county_end",
+        "targetId": "SCN_county_road",
+        "name": "东端",
+        "role": "endpointB"
+      }
+    ],
+    "conditions": []
+  }
+}

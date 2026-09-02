@@ -2,8 +2,8 @@
   "schemaVersion": 2,
   "id": "SCN_holt_backyard",
   "name": "Holt 家后院",
-  "description": "被海雾泡了几十年的后院:草长得随性,晾衣绳 [item.holt_backyard.clothesline] 在两根歪柱子之间松松地荡着,Frank 的格子衬衫和 Susan 的护士服一起在雾气里半干不干。墙根码着一垛劈好的柴火 [item.holt_backyard.firewood_pile],码得横平竖直,是 Frank 的手笔;柴堆边一张旧工作台 [item.holt_backyard.workbench] 上,斧头还插在木墩里。厨房一侧的纱门 [SCN_holt_common] 通回屋里的起居餐厨。院子尽头的旧木栅栏缺了两块板,豁口 [SCN_trailhead] 后面就是往林道口去的小径——草被踩出了一条浅浅的道,不知道被这家的哪一代人踩出来的。",
-  "parentLocationId": "LOC_holt_house",
+  "description": "被海雾泡了几十年的后院:草长得随性,晾衣绳 [item.holt_backyard.clothesline] 在两根歪柱子之间松松地荡着,Frank 的格子衬衫和 Susan 的护士服一起在雾气里半干不干。厨房一侧的纱门 [SCN_holt_common] 通回屋里的起居餐厨,门外三级水泥台阶 [item.holt_backyard.back_steps] 被坐得发亮——抽一斗烟、剥一盆豆子、等谁先开口,都在这三级台阶上。墙根码着一垛劈好的柴火 [item.holt_backyard.firewood_pile],码得横平竖直,是 Frank 的手笔;柴堆边一截齐膝的木墩 [item.holt_backyard.chopping_block] 上插着斧头 [item.holt_backyard.axe],再过去一张旧工作台 [item.holt_backyard.workbench] 上钳着虎钳,摊着拆到一半的东西。台子底下盘着一卷胶皮水管 [item.holt_backyard.garden_hose],接在墙上的水龙头上;管子那头是 Susan 的一小畦菜地 [item.holt_backyard.vegetable_patch],西红柿架在雾里长得赌气。后檐下挂着一辆自行车 [item.holt_backyard.glen_bicycle],链条上过了油,谁也没再骑过。院子尽头的旧木栅栏缺了两块板,豁口 [SCN_trailhead] 后面就是往林道口去的小径——草被踩出了一条浅浅的道,不知道被这家的哪一代人踩出来的。",
+  "parentLocationId": "holt_house",
   "references": {
     "items": [
       {
@@ -14,23 +14,53 @@
       {
         "id": "item.holt_backyard.clothesline",
         "name": "晾衣绳",
-        "description": "拴在两根有点歪的木柱之间的晾衣绳,常年挂着没收进屋的衣裳,风一吹啪啪响。"
+        "description": "拴在两根有点歪的木柱之间的晾衣绳,常年挂着没收进屋的衣裳——衬衫、护士服、孩子的球袜,雾天要晾两三天才干,风一吹啪啪响。"
       },
       {
         "id": "item.holt_backyard.workbench",
-        "name": "劈柴工作台",
-        "description": "墙角一张用锯木条钉成的旧工作台,斧头插在木墩上,边上搭着一卷浇花用的胶皮管。"
+        "name": "工作台",
+        "description": "墙角一张用锯木条钉成的旧工作台,台边钳着一只虎钳,台面被油和锉屑浸成黑色。上面常年摊着拆到一半的东西:化油器、割草机的刀盘、一只等着换垫圈的水龙头,配一盒按尺寸分格的螺丝和一把打亮了的活扳手。"
+      },
+      {
+        "id": "item.holt_backyard.chopping_block",
+        "name": "劈柴木墩",
+        "description": "柴堆边一截齐膝高的红杉木墩,面上被斧子啃出一圈一圈的白茬,四周散着劈飞的木片和树皮。"
+      },
+      {
+        "id": "item.holt_backyard.axe",
+        "name": "斧头",
+        "description": "插在木墩上的长柄劈斧,斧刃磨得亮,木柄靠手的那一截被汗浸成深色。下雨前有人会把它收进工作台底下——多半没人记得收。"
+      },
+      {
+        "id": "item.holt_backyard.garden_hose",
+        "name": "胶皮水管",
+        "description": "盘在工作台底下的一卷绿色胶皮水管,接在墙上的水龙头上,接头处缠着胶布还在渗水。浇菜、冲车、洗靴子都是它。"
+      },
+      {
+        "id": "item.holt_backyard.vegetable_patch",
+        "name": "菜畦",
+        "description": "篱笆边一小畦翻过的地:西红柿架、几行豆子和一丛长疯了的薄荷。海雾太重,西红柿年年红得很勉强,Susan 还是年年种。"
+      },
+      {
+        "id": "item.holt_backyard.back_steps",
+        "name": "后门台阶",
+        "description": "纱门外三级水泥台阶,边沿磕掉了角,坐面被坐得发亮。晾衣服的间隙、饭前饭后、话说不下去的时候,这家人一个接一个坐到这儿来。"
+      },
+      {
+        "id": "item.holt_backyard.glen_bicycle",
+        "name": "挂在后檐下的自行车",
+        "description": "一辆蓝色的旧自行车,车座调得比现在这个家里任何人都高。Glen 走的那天它被修好、上了油、挂到后檐的钩子上,轮胎至今是满的,谁也没提过要不要放下来。"
       }
     ],
     "connections": [
       {
-        "id": "exit.holt_backyard.house_door",
+        "id": "connection.holt_backyard.house_door",
         "targetId": "SCN_holt_common",
         "name": "后院纱门",
         "description": "通回起居餐厨的纱门。"
       },
       {
-        "id": "exit.holt_backyard.fence_gap",
+        "id": "connection.holt_backyard.fence_gap",
         "targetId": "SCN_trailhead",
         "name": "院墙豁口",
         "description": "栅栏缺了两块板的豁口,草被踩出一条浅道,汇入通往林道口的小径。"

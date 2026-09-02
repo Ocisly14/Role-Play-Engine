@@ -2,7 +2,7 @@
   "schemaVersion": 2,
   "id": "SCN_creek_ford",
   "name": "灰溪渡口",
-  "description": "灰溪在这里变宽变浅,一排被磨圆的踏石排到对岸,是过溪的唯一办法 [cond.creek_ford.stepping_stones]。溪水平时只到脚踝,暴雨之后会涨到没过踏石,湍得站不住人。近岸的浅滩上堆着一片卵石,被水磨得又圆又滑,顺手捡一颗贴着水面甩出去,能连着跳出好几个水漂 [item.creek_ford.smooth_pebbles]。岸边一截倒伏的浮木架在两块石头之间,树皮早被水泡得发黑发软 [item.creek_ford.driftwood_snag]。石缝里钻出一丛水薄荷,踩过去就是一股清凉的气味 [item.creek_ford.wild_mint]。两岸的林子长得一模一样,过了溪回头看一眼,来路和去路几乎分不出彼此。",
+  "description": "灰溪在这里变宽变浅,一排被磨圆的踏石排到对岸,是过溪的唯一办法 [cond.creek_ford.stepping_stones]。溪水平时只到脚踝,暴雨之后会涨到没过踏石,湍得站不住人——对岸的桤木干上齐头高的地方留着一道褐色的水痕,枯草和塑料碎片还卡在枝桠之间 [item.creek_ford.high_water_line],那是这条溪涨起来能够到的高度。近岸的浅滩上堆着一片卵石,被水磨得又圆又滑,顺手捡一颗贴着水面甩出去,能连着跳出好几个水漂 [item.creek_ford.smooth_pebbles];卵石滩中间垒着一圈石头砌的火塘 [item.creek_ford.fire_ring],灰烬被雨水泡实了,边上还剩几截烧黑的柴头。入水的头一块踏石旁靠着一根磨得发亮的探水棍 [item.creek_ford.wading_pole],过溪的人拿它探深浅,过完了照例给下一个人留在原处。岸边一截倒伏的浮木架在两块石头之间,树皮早被水泡得发黑发软 [item.creek_ford.driftwood_snag];再往上游几步,一整棵树被水掏倒,翻起来的根盘立得比人还高 [item.creek_ford.root_wad],背风的凹处是干的,历年发大水冲下来的枝条都堆在它上游那一侧。溪床里还横着一根锈死的钢缆 [item.creek_ford.logging_cable],一头锁在岸上的老树桩里,是伐木年代往对岸拖原木留下的。石缝里钻出一丛水薄荷,踩过去就是一股清凉的气味 [item.creek_ford.wild_mint]。两岸的林子长得一模一样,过了溪回头看一眼,来路和去路几乎分不出彼此。",
   "references": {
     "items": [
       {
@@ -19,6 +19,31 @@
         "id": "item.creek_ford.wild_mint",
         "name": "水薄荷",
         "description": "石缝里钻出的一丛野生薄荷,踩过去会散出一股清凉的气味。"
+      },
+      {
+        "id": "item.creek_ford.high_water_line",
+        "name": "涨水痕迹",
+        "description": "对岸桤木树干上齐头高的一道褐色水痕,一圈枯草、树叶和塑料碎片卡在那个高度的枝桠之间,风吹不掉。看一眼就知道这条溪涨起来能有多高——也知道踏石被淹时人站在哪儿都不安全。"
+      },
+      {
+        "id": "item.creek_ford.fire_ring",
+        "name": "卵石火塘",
+        "description": "卵石滩中间用溪石垒起来的一圈火塘,直径不到一臂。灰烬被雨水泡实成了硬饼,边缘还剩几截烧黑的柴头和一只压扁的空罐头。每年涨水都会把它冲散,每年又有人重新垒起来。"
+      },
+      {
+        "id": "item.creek_ford.wading_pole",
+        "name": "探水棍",
+        "description": "靠在入水第一块踏石旁的一根杉木棍,比人略高,手握的地方磨得发亮,下端被溪水泡出了毛边。过溪的人拿它探水深、稳身子,过完了立回原处留给下一个——这是走这条路的人不成文的规矩。"
+      },
+      {
+        "id": "item.creek_ford.root_wad",
+        "name": "倒树的根盘",
+        "description": "上游几步处一整棵被水掏倒的树,翻起来的根盘立得比人还高,盘根里嵌满了石头和干泥。背风的凹处终年是干的,勉强蹲得下两三个人;上游一侧堆着历年发大水冲下来的枝条,越堆越高。"
+      },
+      {
+        "id": "item.creek_ford.logging_cable",
+        "name": "锈死的钢缆",
+        "description": "横在溪床里的一根粗钢缆,一头还锁在岸上的老树桩里,另一头没入对岸的乱石。伐木年代用它把原木拖过溪,如今锈成一整根,水小的时候露出来,能当扶手也能绊人。"
       }
     ],
     "connections": [],

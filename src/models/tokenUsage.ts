@@ -129,15 +129,16 @@ export function normalizeUsageMetadata(payload: any): TokenUsageTotals | null {
   // Prompt-cache counters. Adapters hand us each provider's raw usage object,
   // so the raw shapes are the primary path: Anthropic reports
   // `cache_read_input_tokens` / `cache_creation_input_tokens`, OpenAI reports
-  // `prompt_tokens_details.cached_tokens`. The normalized
-  // `input_token_details` form is still accepted for any caller that passes
-  // an already-normalized payload.
+  // `prompt_tokens_details.cached_tokens`, DeepSeek reports
+  // `prompt_cache_hit_tokens`. The normalized `input_token_details` form is
+  // still accepted for any caller that passes an already-normalized payload.
   const details = payload.input_token_details ?? payload.inputTokenDetails;
   const cacheRead =
     toNumber(
       details?.cache_read ??
         payload.cache_read_input_tokens ??
         payload.prompt_tokens_details?.cached_tokens ??
+        payload.prompt_cache_hit_tokens ??
         payload.promptTokensDetails?.cachedTokens ??
         payload.cached_content_token_count ??
         payload.cachedContentTokenCount
@@ -280,15 +281,22 @@ export async function measureUsage<T>(
  *     cache_creation are reported as separate counters alongside it.
  *   - OpenAI: `prompt_tokens` INCLUDES `cached_tokens`, so the cached portion
  *     must be subtracted. (OpenAI reports no cache-write counter.)
+ *   - DeepSeek: same as OpenAI — `prompt_cache_hit_tokens` and
+ *     `prompt_cache_miss_tokens` sum to `prompt_tokens`, so the hit must be
+ *     subtracted. (No cache-write counter either.)
  *
- * Getting this wrong silently doubles Anthropic's input or understates
- * OpenAI's cache benefit, so every report must go through this helper.
+ * Getting this wrong silently doubles Anthropic's input or understates the
+ * cache benefit on the two providers that fold it in, so every report must go
+ * through this helper.
  */
 export function uncachedInputTokens(
   totals: Pick<UsageAggregate, "input_tokens" | "cache_read_tokens">,
   provider: ModelProviderName
 ): number {
-  if (provider === ModelProviderName.OPENAI) {
+  if (
+    provider === ModelProviderName.OPENAI ||
+    provider === ModelProviderName.DEEPSEEK
+  ) {
     return Math.max(0, totals.input_tokens - totals.cache_read_tokens);
   }
   return totals.input_tokens;

@@ -5,6 +5,16 @@
 
 import { ModelClass, ModelProviderName, type Models } from "./types.js";
 
+/**
+ * DeepSeek's context window, overridable because DeepSeek has raised it more
+ * than once. A non-numeric or non-positive value falls back rather than
+ * propagating NaN into every prompt-budget decision downstream.
+ */
+const DEEPSEEK_MAX_INPUT_TOKENS = (() => {
+  const raw = Number(process.env.DEEPSEEK_MAX_TOKENS);
+  return Number.isFinite(raw) && raw > 0 ? raw : 64000;
+})();
+
 export const models: Models = {
   [ModelProviderName.OPENAI]: {
     endpoint: process.env.OPENAI_API_URL || "https://api.openai.com/v1",
@@ -109,6 +119,55 @@ export const models: Models = {
       },
       [ModelClass.EMBEDDING]: {
         name: process.env.EMBEDDING_GOOGLE_MODEL || "text-embedding-004",
+      },
+    },
+  },
+  /**
+   * DeepSeek. `deepseek-chat` fills all three classes: it is the only model
+   * here with function calling, and every seam in this codebase forces a tool
+   * call. `deepseek-reasoner` is deliberately absent — a class that cannot
+   * satisfy `tool_choice` would fail the World Action Engine's
+   * `submit_resolution` on the LARGE fallback, which is the worst place to
+   * discover it. Override per class if that changes.
+   *
+   * No EMBEDDING entry: DeepSeek serves no embeddings endpoint, and
+   * `rag/embedding.ts` already routes any non-Google remote fallback to
+   * OpenAI. No IMAGE entry for the same reason.
+   *
+   * `DEEPSEEK_MAX_TOKENS` sets the INPUT budget (context window), not the
+   * output cap — the two are separate fields here and only the input one is
+   * plausibly six digits. It is read once at module load, like every other
+   * provider's env.
+   */
+  [ModelProviderName.DEEPSEEK]: {
+    endpoint: process.env.DEEPSEEK_API_URL || "https://api.deepseek.com/v1",
+    model: {
+      [ModelClass.SMALL]: {
+        name: process.env.SMALL_DEEPSEEK_MODEL || "deepseek-chat",
+        stop: [],
+        maxInputTokens: DEEPSEEK_MAX_INPUT_TOKENS,
+        maxOutputTokens: 8192,
+        frequency_penalty: 0.0,
+        presence_penalty: 0.0,
+        temperature: 0.7,
+      },
+      [ModelClass.MEDIUM]: {
+        name: process.env.MEDIUM_DEEPSEEK_MODEL || "deepseek-chat",
+        stop: [],
+        maxInputTokens: DEEPSEEK_MAX_INPUT_TOKENS,
+        maxOutputTokens: 8192,
+        frequency_penalty: 0.0,
+        presence_penalty: 0.0,
+        temperature: 0.7,
+      },
+      [ModelClass.LARGE]: {
+        name: process.env.LARGE_DEEPSEEK_MODEL || "deepseek-chat",
+        stop: [],
+        maxInputTokens: DEEPSEEK_MAX_INPUT_TOKENS,
+        maxOutputTokens: 8192,
+        frequency_penalty: 0.0,
+        presence_penalty: 0.0,
+        temperature: 0.7,
       },
     },
   },

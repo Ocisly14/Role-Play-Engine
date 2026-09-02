@@ -1,8 +1,8 @@
 import "dotenv/config";
-import fs from "fs";
-import http from "http";
-import path from "path";
-import { fileURLToPath } from "url";
+import fs from "node:fs";
+import http from "node:http";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
 import cookieParser from "cookie-parser";
 import cors from "cors";
 import express from "express";
@@ -10,13 +10,10 @@ import express from "express";
 import analyticsRoutes from "./server/analytics/routes.js";
 // Import all route modules
 import authRoutes from "./server/auth/routes.js";
-import characterRoutes from "./server/character/routes.js";
 import dataRoutes from "./server/data/routes.js";
 import mapRoutes from "./server/maps/routes.js";
-import modRoutes from "./server/mod/routes.js";
 import simulationMapRoutes from "./server/simulation/mapRoutes.js";
 import simulationRoutes from "./server/simulation/routes.js";
-import skillRoutes from "./server/skills/routes.js";
 
 import { LocalEmbeddingManager } from "../src/rag/localEmbeddingManager.js";
 import {
@@ -70,10 +67,7 @@ app.use("/api/maps", mapRoutes); // /api/maps/* - Map image serving (MUST be fir
 app.use("/api/auth", authRoutes); // /api/auth/* - Authentication routes
 app.use("/api", simulationMapRoutes); // /api/simulation/:id/* public viewer reads (no auth, MUST be before authenticated routers)
 app.use("/api", analyticsRoutes); // /api/analytics/* (visitor routes are public, MUST be before authenticated routers)
-app.use("/api", dataRoutes); // /api/occupations, /api/weapons, /api/mods
-app.use("/api", characterRoutes); // /api/character*, /api/characters
-app.use("/api", modRoutes); // /api/mod/*, /api/module/*
-app.use("/api", skillRoutes); // /api/skills/*
+app.use("/api", dataRoutes); // /api/mods
 app.use("/api", simulationRoutes); // /api/simulation*, /api/simulations
 
 // SPA fallback (must be after API routes)
@@ -85,7 +79,7 @@ app.get("*", (_req, res) => {
     res
       .status(500)
       .send(
-        "Frontend not built. Run `pnpm --filter coc-investigator-sheet build` to generate dist/."
+        "Frontend not built. Run `pnpm --dir client build` to generate dist/."
       );
   }
 });

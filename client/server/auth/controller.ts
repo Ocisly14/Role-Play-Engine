@@ -44,7 +44,7 @@ export const authController = {
   },
 
   // Logout
-  async logout(req: Request, res: Response) {
+  async logout(_req: Request, res: Response) {
     try {
       // Clear cookie
       res.clearCookie("refreshToken");

@@ -1,6 +1,6 @@
 import type React from "react";
 import { Suspense, lazy, useEffect } from "react";
-import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
+import { BrowserRouter, Route, Routes } from "react-router-dom";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 import { MainLayout } from "./components/layout/MainLayout";
 import { AppSettingsProvider } from "./contexts/AppSettingsContext";
@@ -8,9 +8,7 @@ import { AuthProvider } from "./contexts/AuthContext";
 import { useVisitorTracking } from "./hooks/useVisitorTracking";
 import { setBackgroundWithTransition } from "./utils/backgroundTransition";
 import { findAvailableImage } from "./utils/imageLoader";
-import { CharacterCreationPage } from "./views/CharacterCreationPage";
 import { HomePage } from "./views/HomePage";
-import { StoryCreatorPage } from "./views/StoryCreatorPage";
 import ForgotPassword from "./views/auth/ForgotPassword";
 import Login from "./views/auth/Login";
 import Register from "./views/auth/Register";
@@ -91,12 +89,6 @@ const AppRoutes: React.FC = () => {
           }
         />
 
-        {/* Legacy route redirects */}
-        <Route
-          path="/charactercreate"
-          element={<Navigate to="/character/create" replace />}
-        />
-
         {/* Protected app routes */}
         <Route
           path="/simulation/:sessionId"
@@ -112,7 +104,6 @@ const AppRoutes: React.FC = () => {
           }
         >
           <Route path="/" element={<HomePage />} />
-          <Route path="/character/create" element={<CharacterCreationPage />} />
           <Route
             path="/simulation/select"
             element={
@@ -127,7 +118,6 @@ const AppRoutes: React.FC = () => {
               </Suspense>
             }
           />
-          <Route path="/story/create" element={<StoryCreatorPage />} />
         </Route>
       </Routes>
     </>

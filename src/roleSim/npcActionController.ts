@@ -20,6 +20,11 @@ import { findAffectedCharacters } from "../engine/shared/impactPropagation.js";
 import type { NpcMemoryManager } from "../memory/NpcMemoryManager.js";
 import type { DynamicGameStateManager } from "../state/DynamicGameState.js";
 import type { RoleSimAgent, RoleSimContext } from "./agent.js";
+import {
+  consolidateMemories,
+  needsConsolidation,
+} from "./memoryConsolidator.js";
+import { compactPerceptions, needsCompaction } from "./perceptionCompactor.js";
 import { buildPerceivedBundle, render } from "./renderer/index.js";
 
 export interface NpcActionControllerDeps {
@@ -28,10 +33,13 @@ export interface NpcActionControllerDeps {
   memory: NpcMemoryManager;
   dgsm: DynamicGameStateManager;
   sessionId: string;
-  /** Module id required by NpcMemoryManager.add when writing memories. */
+  /** Stamped onto memories the character writes while consolidating. */
   moduleId: string;
   /** Module language ("en" | "zh"). Drives renderer output language. */
   language?: string;
+  /** Maximum per-character render/decide pipelines in flight. Defaults to
+   *  NPC_DECIDE_CONCURRENCY (8 when unset); injectable for deterministic tests. */
+  decideConcurrency?: number;
   /** Called for every paragraph rendered, in order. The controller keeps the
    *  stream in memory because both prompts need all of it; whoever owns
    *  durability subscribes here rather than reaching into the buffer. Left
@@ -42,6 +50,18 @@ export interface NpcActionControllerDeps {
     location: string;
     narrative: string;
   }) => void;
+  /** Called when a character has condensed their own stream. The summary
+   *  speaks for every paragraph up to and including
+   *  `coversThroughGameDateTime`, so a subscriber that stores it can serve the
+   *  short stream back on reload without deleting the long one — the event log
+   *  keeps every paragraph; only the prompt gets the shorter view. */
+  onPerceptionCompacted?: (entry: {
+    npcId: string;
+    gameDateTime: string;
+    location: string;
+    narrative: string;
+    coversThroughGameDateTime: string;
+  }) => void;
 }
 
 interface DecideOpts {
@@ -51,32 +71,11 @@ interface DecideOpts {
   occurrencesForNpc?: Occurrence[];
 }
 
-/** Max location groups deciding concurrently. Overridable for tuning. */
-const DECIDE_GROUP_CONCURRENCY = (() => {
+/** Max NPC pipelines deciding concurrently. Overridable for tuning. */
+const DEFAULT_DECIDE_CONCURRENCY = (() => {
   const raw = Number(process.env.NPC_DECIDE_CONCURRENCY);
   return Number.isInteger(raw) && raw > 0 ? raw : 8;
 })();
-
-/**
- * Group ids by resolved location. Ids resolving to the same non-empty
- * location share a group (order preserved); ids with no resolvable location
- * each get their own group. Ids resolving to `null` are dropped (dead NPCs).
- */
-export function groupByLocation(
-  ids: string[],
-  resolve: (id: string) => string | null
-): string[][] {
-  const byLocation = new Map<string, string[]>();
-  for (const id of ids) {
-    const location = resolve(id);
-    if (location === null) continue;
-    const key = location === "" ? `__solo:${id}` : location;
-    const group = byLocation.get(key);
-    if (group) group.push(id);
-    else byLocation.set(key, [id]);
-  }
-  return [...byLocation.values()];
-}
 
 /** Run `worker` over `items` with at most `limit` in flight. Rejections
  *  propagate after all in-flight workers settle. */
@@ -95,7 +94,11 @@ export async function runWithConcurrency<T>(
       }
     }
   );
-  await Promise.all(lanes);
+  const settled = await Promise.allSettled(lanes);
+  const failed = settled.find(
+    (result): result is PromiseRejectedResult => result.status === "rejected"
+  );
+  if (failed) throw failed.reason;
 }
 
 interface PerceptionHistoryEntry {
@@ -113,6 +116,7 @@ export class NpcActionController {
   private readonly sessionId: string;
   private readonly moduleId: string;
   private readonly language: string;
+  private readonly decideConcurrency: number;
   /** Per-NPC log of every renderer narrative this session, oldest first —
    *  injected whole, so nothing the character perceived scrolls out of reach.
    *  Only successful renders enter; failed renders leave the log untouched.
@@ -122,6 +126,7 @@ export class NpcActionController {
     PerceptionHistoryEntry[]
   >();
   private readonly onPerception?: NpcActionControllerDeps["onPerception"];
+  private readonly onPerceptionCompacted?: NpcActionControllerDeps["onPerceptionCompacted"];
 
   constructor(deps: NpcActionControllerDeps) {
     this.engine = deps.engine;
@@ -129,9 +134,16 @@ export class NpcActionController {
     this.memory = deps.memory;
     this.dgsm = deps.dgsm;
     this.sessionId = deps.sessionId;
-    this.onPerception = deps.onPerception;
     this.moduleId = deps.moduleId;
+    this.onPerception = deps.onPerception;
+    this.onPerceptionCompacted = deps.onPerceptionCompacted;
     this.language = deps.language ?? "en";
+    this.decideConcurrency =
+      deps.decideConcurrency !== undefined &&
+      Number.isInteger(deps.decideConcurrency) &&
+      deps.decideConcurrency > 0
+        ? deps.decideConcurrency
+        : DEFAULT_DECIDE_CONCURRENCY;
 
     this.engine.on("tickCompleted", (report: TickReport) =>
       this.processTickReport(report)
@@ -144,9 +156,9 @@ export class NpcActionController {
     const alive = this.dgsm
       .getState()
       .npcCharacters.filter((n) => this.dgsm.isNpcAlive(n.id));
-    for (const npc of alive) {
-      await this.decide(npc.id);
-    }
+    await runWithConcurrency(alive, this.decideConcurrency, (npc) =>
+      this.decide(npc.id)
+    );
   }
 
   private async processTickReport(report: TickReport): Promise<void> {
@@ -218,29 +230,24 @@ export class NpcActionController {
       ...idleAlive,
     ]);
 
-    // 5. Location-grouped decide(). NPCs at the same location decide
-    //    sequentially so later deciders see earlier deciders' submissions;
-    //    groups at different locations run concurrently (capped).
-    const groups = groupByLocation([...allTargets], (npcId) =>
-      this.dgsm.isNpcAlive(npcId) ? this.resolveCurrentSceneId(npcId) : null
+    // 5. Every target decides independently from the same completed-tick
+    //    snapshot. A submitted command is intent, not an observable event, so
+    //    even co-located characters must not learn it through process order.
+    //    The next Engine tick resolves every submitted command together.
+    const targets = [...allTargets].filter((npcId) =>
+      this.dgsm.isNpcAlive(npcId)
     );
-    await runWithConcurrency(
-      groups,
-      DECIDE_GROUP_CONCURRENCY,
-      async (npcIds) => {
-        for (const npcId of npcIds) {
-          if (!this.dgsm.isNpcAlive(npcId)) continue;
-          const occurrencesForNpc = occByNpc.get(npcId);
-          await this.decide(npcId, {
-            report,
-            occurrencesForNpc:
-              occurrencesForNpc && occurrencesForNpc.length > 0
-                ? occurrencesForNpc
-                : undefined,
-          });
-        }
-      }
-    );
+    await runWithConcurrency(targets, this.decideConcurrency, async (npcId) => {
+      if (!this.dgsm.isNpcAlive(npcId)) return;
+      const occurrencesForNpc = occByNpc.get(npcId);
+      await this.decide(npcId, {
+        report,
+        occurrencesForNpc:
+          occurrencesForNpc && occurrencesForNpc.length > 0
+            ? occurrencesForNpc
+            : undefined,
+      });
+    });
   }
 
   /** Adapt one legacy FeatureEvent into occurrence form (migration shim). */
@@ -315,6 +322,9 @@ export class NpcActionController {
           ...(decision.skillId !== undefined
             ? { skillId: decision.skillId }
             : {}),
+          ...(decision.language !== undefined
+            ? { language: decision.language }
+            : {}),
           ...(decision.utterance !== undefined
             ? { utterance: decision.utterance }
             : {}),
@@ -374,11 +384,6 @@ export class NpcActionController {
     return this.liveActionFor(npcId) !== undefined;
   }
 
-  private resolveCurrentSceneId(npcId: string): string {
-    const position = this.dgsm.getCharacterPosition(npcId);
-    return position ? this.dgsm.resolveLocationId(position) : "";
-  }
-
   private async buildContext(
     npcId: string,
     opts?: DecideOpts
@@ -390,7 +395,7 @@ export class NpcActionController {
     const position = this.dgsm.getCharacterPosition(npcId);
     const currentScene = position ? this.dgsm.resolveLocationId(position) : "";
 
-    const memories = await this.loadAllMemories(npcId);
+    let memories = await this.loadAllMemories(npcId);
 
     // Intent, progress and timing only — never engine runtime internals.
     const live = this.liveActionFor(npcId);
@@ -442,15 +447,7 @@ export class NpcActionController {
 
     // Snapshot every prior perception (excludes current tick); push current
     // after.
-    const recentPerceptions = priorPerceptions;
-    this.recordPerception(
-      npcId,
-      gameDateTime,
-      currentScene,
-      rendered.narrative
-    );
-
-    return {
+    const baseCtx: RoleSimContext = {
       npcId,
       currentTime: gameDateTime,
       npcProfile: profile,
@@ -458,8 +455,83 @@ export class NpcActionController {
       memories,
       currentAction,
       perception: { narrative: rendered.narrative, location: currentScene },
-      recentPerceptions,
+      recentPerceptions: priorPerceptions,
     };
+
+    // Over the ceiling, the character brings their own memories down before
+    // they decide under them. The list is reloaded afterwards so the decision
+    // reads the rows that now exist — and so its `ref`s cannot name a line
+    // this pass just deleted.
+    if (needsConsolidation(memories)) {
+      const result = await consolidateMemories({
+        ctx: baseCtx,
+        dgsm: this.dgsm,
+        memory: this.memory,
+        sessionId: this.sessionId,
+        moduleId: this.moduleId,
+        language: this.language,
+      });
+      if (result) {
+        memories = await this.loadAllMemories(npcId);
+        baseCtx.memories = memories;
+        console.log(
+          `[NpcActionController] ${npcId}: consolidated memories — ${result.applied} applied, ${result.skipped} skipped, ${memories.length} rows remain`
+        );
+      }
+    }
+
+    // Over the ceiling, the character condenses their own stream before they
+    // decide under it — with this same context, so what they keep is judged
+    // from where they are standing. Ordered before `recordPerception` so the
+    // paragraph they have not yet been told about does not land inside the
+    // part they are summarizing.
+    const recentPerceptions = await this.compactIfOverBudget(
+      npcId,
+      baseCtx,
+      priorPerceptions
+    );
+
+    this.recordPerception(
+      npcId,
+      gameDateTime,
+      currentScene,
+      rendered.narrative
+    );
+
+    return { ...baseCtx, recentPerceptions };
+  }
+
+  /** Returns the stream the decision should read: the compacted one when the
+   *  ceiling was passed and the call produced something, the original
+   *  otherwise. A failed compaction is not a failed tick — the long stream is
+   *  still correct, and the attempt simply repeats next decision. */
+  private async compactIfOverBudget(
+    npcId: string,
+    ctx: RoleSimContext,
+    priorPerceptions: PerceptionHistoryEntry[]
+  ): Promise<PerceptionHistoryEntry[]> {
+    if (!needsCompaction(priorPerceptions)) return priorPerceptions;
+
+    const compacted = await compactPerceptions({
+      ctx,
+      dgsm: this.dgsm,
+      language: this.language,
+    });
+    if (!compacted) return priorPerceptions;
+
+    this.perceptionHistory.set(npcId, [...compacted.entries]);
+    const summaryEntry = compacted.entries[0];
+    this.onPerceptionCompacted?.({
+      npcId,
+      gameDateTime: summaryEntry.gameDateTime,
+      location: summaryEntry.location,
+      narrative: summaryEntry.narrative,
+      coversThroughGameDateTime: compacted.coversThroughGameDateTime,
+    });
+    console.log(
+      `[NpcActionController] ${npcId}: condensed ${priorPerceptions.length} paragraphs into a summary + ${compacted.entries.length - 1}`
+    );
+    return compacted.entries;
   }
 
   private recordPerception(

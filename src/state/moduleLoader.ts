@@ -355,11 +355,10 @@ export function filterNpcsByPolicy(
  * Step 3: Build DynamicGameState with runtime fields. Pure, no DB access.
  */
 export function initRuntime(params: {
-  sessionId: string;
   moduleData: ModuleData;
   gameDateTime: string;
 }): DynamicGameState {
-  const { sessionId, moduleData, gameDateTime } = params;
+  const { moduleData, gameDateTime } = params;
 
   // Filter NPCs by injection policy (only daily_sim + investigator_sim)
   const simulatedNpcs = filterNpcsByPolicy(
@@ -383,13 +382,11 @@ export function initRuntime(params: {
   const defaultSceneId = moduleData.scenes.keys().next().value ?? "unknown";
 
   // Initialize runtime NPC state
-  const npcStats: Record<string, { hp: number; san: number }> = {};
   const npcInventories: Record<string, any[]> = {};
   const npcRelationshipGraph: Record<
     string,
     Record<string, { score: number; note: string }>
   > = {};
-  const npcResidences: Record<string, string> = {};
   const characterPositions: Record<string, CharacterPosition> = {};
   const characterSpots: Record<string, string> = {};
 
@@ -410,8 +407,6 @@ export function initRuntime(params: {
       );
       resolvedLocation = defaultSceneId;
     }
-    if (npc.residence) npcResidences[npc.id] = npc.residence;
-
     // A sheet that says nothing about languages means "speaks what everyone
     // here speaks" — not "has no tongue at all". Without this every character
     // would be unable to name a language they obviously have.
@@ -443,8 +438,6 @@ export function initRuntime(params: {
       luck: rawStatus.luck ?? 50,
       conditions: rawStatus.conditions ?? [],
     };
-    npcStats[npc.id] = { hp, san };
-
     // Inventory — normalize once so both npcInventories (runtime Item[]) and
     // npc.inventory (profile InventoryItem[]) carry a stable `id`. The id is
     // the id used by PerceivableDirectory + the trust boundary.
@@ -533,29 +526,22 @@ export function initRuntime(params: {
   }
 
   return {
-    sessionId,
     scenes: moduleData.scenes,
     roads: moduleData.roads,
     vehicles: moduleData.vehicles ?? [],
     gameDateTime,
     npcCharacters: simulatedNpcs,
-    moduleName: moduleData.moduleName,
     moduleSetup: moduleSetupWithInit,
     scopedFeatureStates: { scene: {}, region: {}, character: {}, global: {} },
     scriptedEventStates: {},
     environmentReadings: {},
-    npcStats,
     npcInventories,
     npcRelationshipGraph,
     blockedConnections: new Map(),
-    npcResidences,
     transportEdges: moduleData.transportEdges,
     topology,
     characterPositions,
     characterSpots,
-    npcInjectionPolicy: moduleData.npcInjectionPolicy,
-    loadedAt: new Date(),
-    lastUpdated: new Date(),
   };
 }
 

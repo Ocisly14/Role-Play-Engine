@@ -45,6 +45,7 @@ const bundle = {
     description: "A platform.",
     activeConditions: [],
     items: [],
+    adjacentPlaces: [],
   },
   ownConditions: [],
   ownAction: { kind: "idle" },

@@ -46,28 +46,14 @@
   },
   "inventory": [
     {
-      "id": "priya_modified_radio",
-      "name": "改装收音机",
-      "properties": {
-        "note": "她从父亲的报废机箱里拆零件拼出的便携收音机，专门守听 KGRV。"
-      }
-    },
-    {
-      "id": "priya_evidence_log",
-      "name": "证据登记簿",
-      "properties": {
-        "note": "把怪事按 A、B、C 级分类；A 级需要记录，B 级需要旁证，C 级仅是 Tommy 的说法。"
-      }
-    },
-    {
-      "id": "priya_tool_roll",
+      "id": "item.priya.tool_roll",
       "name": "小型工具卷",
       "properties": {
         "note": "含螺丝刀、钳子、万用表和绝缘胶带。"
       }
     },
     {
-      "id": "priya_schoolbag",
+      "id": "item.priya.schoolbag",
       "name": "旧书包",
       "properties": {
         "note": "装着她的设备、笔记和暑假里不肯告诉大人的计划。"

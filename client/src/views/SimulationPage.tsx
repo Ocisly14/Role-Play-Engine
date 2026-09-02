@@ -759,7 +759,6 @@ export default function SimulationPage({
         eventLog={state.eventLog}
         onSelectNpc={setSelectedNpc}
         onZoomToNpc={handleZoomToNpc}
-        isMobile={false}
         isOpen={isSidebarOpen}
         onClose={closeSidebar}
       />

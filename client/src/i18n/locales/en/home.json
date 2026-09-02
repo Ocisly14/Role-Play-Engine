@@ -1,37 +1,7 @@
 {
   "menu": {
-    "manageModules": "Manage Modules",
-    "createCharacter": "Create Character",
-    "viewCharacters": "View Characters",
     "newSimulation": "New Simulation",
     "continueSimulation": "Continue Simulation"
-  },
-  "characters": {
-    "title": "Your Characters",
-    "count": "{{count}} investigator",
-    "count_plural": "{{count}} investigators",
-    "ready": "ready",
-    "loading": "Loading characters...",
-    "empty": "No characters created yet",
-    "emptyDescription": "Create your first investigator to begin your journey",
-    "viewSheet": "View Sheet",
-    "unknownOccupation": "Unknown Occupation"
-  },
-  "selector": {
-    "title": "Select Investigator",
-    "processing": "Processing...",
-    "importWait": "Please wait, this may take a few seconds...",
-    "retry": "Retry",
-    "createFirst": "Create First Investigator",
-    "age": "Age:",
-    "createNew": "Create New Character",
-    "done": "Done",
-    "importing": "Importing data...",
-    "startGame": "Start Game with This Character",
-    "loadError": "Failed to load characters",
-    "networkError": "Network error: Unable to connect to server",
-    "moduleLoading": "Loading module...",
-    "importFailed": "Data import failed"
   },
   "analytics": {
     "title": "Analytics Dashboard",

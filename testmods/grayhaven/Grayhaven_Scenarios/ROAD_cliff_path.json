@@ -2,26 +2,68 @@
   "schemaVersion": 2,
   "id": "ROAD_cliff_path",
   "name": "崖间小径",
-  "description": "沿海崖蜿蜒的小径,是码头与灯塔崖之间唯一的通路,单程半个钟头。北端起于码头 [SCN_dock];走出没几分钟,一条岔路拐向海边那间独居的小屋,烟囱里常有若有若无的烟 [SCN_earl_cabin];此后小径贴着崖缘一路爬升,南端止于灯塔崖顶 [SCN_lighthouse_cliff]。一侧始终是崖下的浪声,雾天走这条路,得用脚记住每一个弯。",
+  "description": "沿海崖蜿蜒的小径,是码头与灯塔崖之间唯一的通路,单程半个钟头。北端起于码头 [SCN_dock];脚下是几代人踩出来的一条窄径 [item.cliff_path.trodden_track],硬土里压着碎贝壳,雨后留得住脚印。出码头没几步,路边岩壁上凿出一个小神龛 [item.cliff_path.wayside_shrine],里头的圣像被海风吹得没了颜色,底下常年有蜡烛头和贝壳;再走出没几分钟,一条岔路拐向海边那间独居的小屋,烟囱里常有若有若无的烟 [SCN_earl_cabin]。此后小径贴着崖缘一路爬升:先过一丛被风梳成一边倒的柏树 [item.cliff_path.wind_bent_cypress],然后是第三个弯——外侧的路肩塌了一角,土是酥的 [item.cliff_path.crumbling_edge],有人在最险的那几步打了铁桩,拉起一段旧缆绳当扶手 [item.cliff_path.rope_rail]。弯过去不远有一块被坐平的大石头 [item.cliff_path.rest_stone],正对海面,上下这条路上下了三十年的人都在这儿歇一口气。快到崖顶时,一排歪斜的旧线杆 [item.cliff_path.cable_posts] 从路边伸向塔基,瓷绝缘子还在,线早断了;南端止于灯塔崖顶 [SCN_lighthouse_cliff]。一侧始终是崖下的浪声,雾天走这条路,得用脚记住每一个弯。",
   "parentLocationId": "OUTDOOR",
   "travelTimeMinutes": 30,
   "references": {
-    "items": [],
+    "items": [
+      {
+        "id": "item.cliff_path.trodden_track",
+        "name": "踩出来的窄径",
+        "description": "只容一人走的硬土小径,土里压着几代人带上来的碎贝壳,踩上去沙沙响。雨后一路留得住脚印,谁上过崖、往哪个方向去,看一眼就知道。"
+      },
+      {
+        "id": "item.cliff_path.wayside_shrine",
+        "name": "路边小神龛",
+        "description": "岩壁上凿出的一个浅龛,里头一尊巴掌高的石膏圣像,漆被海风吹得只剩底色,面目模糊。龛底常年积着烧剩的蜡烛头、几枚贝壳和一两枚硬币——出海前搁一样东西,是老渔民的规矩,如今照做的没几个了。",
+        "position": 0.06
+      },
+      {
+        "id": "item.cliff_path.wind_bent_cypress",
+        "name": "被风梳歪的柏树",
+        "description": "崖径边一丛柏树,树冠被常年的西北风梳成整齐的一边倒,枝子全朝着内陆。树干背风的一侧刻着几组名字缩写和年份,最早的一组已经被树皮长得快合上了。",
+        "position": 0.3
+      },
+      {
+        "id": "item.cliff_path.crumbling_edge",
+        "name": "塌了一角的路肩",
+        "description": "第三个弯外侧,路肩塌下去一角,断面露着松散的沙土和草根,底下是直落到浪里的崖壁。这一段的土是酥的,雨后更酥——本地人走到这儿都自动靠里让半步。",
+        "position": 0.45
+      },
+      {
+        "id": "item.cliff_path.rope_rail",
+        "name": "缆绳扶手",
+        "description": "最险的那十几步上,有人往岩里打了几根铁桩,拉起一段旧船缆当扶手。缆绳被手掌磨得起毛,盐蚀过的地方硬得像铁丝,桩脚有几处松了,拽的时候会晃一下。",
+        "position": 0.48
+      },
+      {
+        "id": "item.cliff_path.rest_stone",
+        "name": "歇脚的大石头",
+        "description": "崖径内侧一块半人高的礁岩,顶面被坐得又平又亮,正对海面。坐上去看得见整片湾口和码头那头的桅杆;石缝里塞着几个锈烂的烟盒和一小截铅笔头。",
+        "position": 0.6
+      },
+      {
+        "id": "item.cliff_path.cable_posts",
+        "name": "旧线杆",
+        "description": "从崖径边一路歪歪斜斜伸向塔基的一排木线杆,当年灯塔与镇上通电话、通电的线就架在上头。瓷绝缘子还在杆顶,线早断了,断头垂下来在风里晃。自动化那年之后没人再爬过它们。",
+        "position": 0.9
+      }
+    ],
     "connections": [
       {
-        "id": "exit.cliff_path.dock_end",
+        "id": "connection.cliff_path.dock_end",
         "targetId": "SCN_dock",
         "name": "小径北端(码头)",
         "role": "endpointA"
       },
       {
-        "id": "exit.cliff_path.cliff_end",
+        "id": "connection.cliff_path.cliff_end",
         "targetId": "SCN_lighthouse_cliff",
         "name": "小径南端(灯塔崖)",
         "role": "endpointB"
       },
       {
-        "id": "exit.cliff_path.cabin_turnoff",
+        "id": "connection.cliff_path.cabin_turnoff",
         "targetId": "SCN_earl_cabin",
         "name": "通往小屋的岔路",
         "description": "拐向码头边独居小屋的岔路。",

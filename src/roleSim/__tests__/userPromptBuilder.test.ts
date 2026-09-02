@@ -384,9 +384,7 @@ describe("memory handles stay stable", () => {
 
   it("prints each stored handle distinctly", () => {
     const text = buildUserPrompt(makeCtx({ memories: colliding }), opts);
-    const handles = [...text.matchAll(/^- #(M[0-9a-f]+)/gm)].map(
-      (m) => m[1]
-    );
+    const handles = [...text.matchAll(/^- #(M[0-9a-f]+)/gm)].map((m) => m[1]);
 
     expect(handles).toEqual(["Maaaaaaaa", "Maaaaaaaa00"]);
     const cached = buildUserPromptSegments(
@@ -398,5 +396,90 @@ describe("memory handles stay stable", () => {
       .join("");
     expect(cached).not.toContain("#Maaaaaaaa ");
     expect(cached).not.toContain("Maaaaaaaa00");
+  });
+});
+
+describe("the standing over memory", () => {
+  // Two characters in two runs held only CORRECT memories and joined two of
+  // them into a way that does not exist. Both then doubted their own heads.
+  // The block has to say the memories may be stale AND that joining two of
+  // them invents nothing.
+  it("qualifies the memory block against live perception and against joining", () => {
+    const text = buildUserPrompt(
+      makeCtx({
+        memories: [
+          {
+            id: "m1",
+            handle: "M1",
+            type: "map",
+            content:
+              "the lane from my gate reaches Main Street in twenty minutes",
+            gameDateTime: "1923-04-01T09:00:00",
+          },
+        ],
+      }),
+      { language: "en", dgsm }
+    );
+
+    expect(text).toContain("## What you remember");
+    expect(text).toContain("what you perceive is what is true");
+    expect(text).toContain(
+      "two things you remember separately do not join into one way"
+    );
+    // The memories themselves still follow the heading.
+    expect(text).toContain("reaches Main Street in twenty minutes");
+  });
+
+  it("says nothing about memory when the character holds none", () => {
+    const text = buildUserPrompt(makeCtx({ memories: [] }), {
+      language: "en",
+      dgsm,
+    });
+    expect(text).not.toContain("## What you remember");
+    expect(text).not.toContain("do not join into one way");
+  });
+});
+
+describe("the consolidate closing", () => {
+  const memories = [
+    {
+      id: "a",
+      handle: "Ma1",
+      type: "map",
+      content: "The bakery is on Mill Street.",
+      gameDateTime: "1923-04-01T08:00:00",
+    },
+    {
+      id: "b",
+      handle: "Mb2",
+      type: "general",
+      content: "Hollins came by.",
+      gameDateTime: "1923-04-02T09:00:00",
+    },
+  ];
+
+  it("swaps only the closing and names the protected stamp", () => {
+    const decide = buildUserPrompt(makeCtx({ memories }), {
+      language: "en",
+      dgsm,
+    });
+    const consolidate = buildUserPrompt(makeCtx({ memories }), {
+      language: "en",
+      dgsm,
+      closing: {
+        kind: "consolidate",
+        protectedFrom: "1923-04-02 09:00",
+        targetTokens: 50_000,
+      },
+    });
+    const cut = (s: string) => s.slice(0, s.lastIndexOf("\n\n## "));
+    expect(cut(consolidate)).toBe(cut(decide));
+    expect(consolidate).toContain(
+      "## Bring what you remember down to what you can carry"
+    );
+    expect(consolidate).not.toContain("## Decide");
+    expect(consolidate).toContain("`[1923-04-02 09:00]` or later");
+    expect(consolidate).toContain("about 50000 tokens");
+    expect(consolidate).toMatch(/never lose a\s+place name/);
   });
 });

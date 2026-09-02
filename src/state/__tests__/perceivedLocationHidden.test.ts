@@ -41,8 +41,8 @@ function makeWorld(): World {
     ],
     conditions: [],
     connections: [
-      { id: "exit.parlor.shop", targetId: "S_SHOP" },
-      { id: "exit.parlor.cellar", targetId: "S_CELLAR", hidden: true },
+      { id: "connection.parlor.shop", targetId: "S_SHOP" },
+      { id: "connection.parlor.cellar", targetId: "S_CELLAR", hidden: true },
     ],
   };
   const otherScenes: DynamicScene[] = ["S_SHOP", "S_CELLAR", "S_HUT"].map(
@@ -68,8 +68,8 @@ function makeWorld(): World {
     ],
     conditions: [],
     connections: [
-      { id: "exit.junc_x.shop", targetId: "S_SHOP" },
-      { id: "exit.junc_x.cellar", targetId: "S_CELLAR", hidden: true },
+      { id: "connection.junc_x.shop", targetId: "S_SHOP" },
+      { id: "connection.junc_x.cellar", targetId: "S_CELLAR", hidden: true },
     ],
   };
 
@@ -78,16 +78,16 @@ function makeWorld(): World {
     name: "Star Avenue",
     description: "A long avenue.",
     connections: [
-      { id: "exit.r_main.a", targetId: "J_X", role: "endpointA" },
-      { id: "exit.r_main.b", targetId: "J_Y", role: "endpointB" },
+      { id: "connection.r_main.a", targetId: "J_X", role: "endpointA" },
+      { id: "connection.r_main.b", targetId: "J_Y", role: "endpointB" },
       {
-        id: "exit.r_main.shop",
+        id: "connection.r_main.shop",
         targetId: "S_SHOP",
         role: "access",
         position: 0.3,
       },
       {
-        id: "exit.r_main.hut",
+        id: "connection.r_main.hut",
         targetId: "S_HUT",
         role: "access",
         position: 0.7,
@@ -128,6 +128,7 @@ function makeWorld(): World {
     getState: () => ({
       npcCharacters: [{ id: "actor" }],
       npcRelationshipGraph: {},
+      scenes: scenesById,
     }),
     isNpcAlive: () => true,
   } as unknown as DynamicGameStateManager;
@@ -168,20 +169,29 @@ describe("hidden items stay out of perception", () => {
   it("keeps hidden items out of the perceivable directory's citable set", () => {
     const { dgsm, setActorPosition } = makeWorld();
 
-    setActorPosition({ type: "scene", sceneId: "S_PARLOR" });
-    expect(buildPerceivableDirectory("actor", dgsm).items).toEqual(
-      new Set(["ITEM_CHAIR"])
-    );
-
-    setActorPosition({ type: "scene", sceneId: "J_X" });
-    expect(buildPerceivableDirectory("actor", dgsm).items).toEqual(
-      new Set(["ITEM_LAMP"])
-    );
+    // Citability is world-wide now — it asks only whether a name is real, and
+    // reach is the Engine's question. So the set does NOT vary with position;
+    // what it must still never contain is a hidden thing, because that is not
+    // "can you get to it" but "do you know it is there".
+    const everywhere = new Set(["ITEM_CHAIR", "ITEM_LAMP", "ITEM_GLOVE"]);
+    for (const at of [
+      { type: "scene", sceneId: "S_PARLOR" },
+      { type: "scene", sceneId: "J_X" },
+    ] as const) {
+      setActorPosition(at);
+      const set = buildPerceivableDirectory("actor", dgsm).items;
+      expect(set).toEqual(everywhere);
+      expect(set.has("ITEM_DAGGER")).toBe(false);
+      expect(set.has("ITEM_COIN")).toBe(false);
+    }
 
     setActorPosition({ type: "road", roadId: "R_MAIN", position: 0.5 });
-    expect(buildPerceivableDirectory("actor", dgsm).items).toEqual(
-      new Set(["ITEM_GLOVE"])
-    );
+    // ITEM_LAMP rides along from the adjacent node scene: the renderer prints
+    // J_X's whole description to anyone one hop away, tags and all, so the
+    // boundary has to accept what that paragraph just showed them. The hidden
+    // ITEM_COIN in the same scene still does not come with it — which is what
+    // this test is actually guarding.
+    expect(buildPerceivableDirectory("actor", dgsm).items).toEqual(everywhere);
   });
 });
 
@@ -218,7 +228,15 @@ describe("hidden connections stay out of adjacency", () => {
     const { dgsm, setActorPosition } = makeWorld();
     setActorPosition({ type: "scene", sceneId: "S_PARLOR" });
     const directory = buildPerceivableDirectory("actor", dgsm);
-    expect(directory.scenes).toEqual(new Set(["S_PARLOR", "S_SHOP"]));
+    // World-wide: every real place is a real name.
+    expect(directory.scenes.has("S_PARLOR")).toBe(true);
+    expect(directory.scenes.has("S_SHOP")).toBe(true);
+    // Adjacency — what the RENDERER shows — still drops the unfound door, so
+    // the actor is never handed the cellar's id in the first place.
+    expect(
+      resolvePerceivedLocation({ type: "scene", sceneId: "S_PARLOR" }, dgsm)
+        ?.adjacentIds
+    ).toEqual(["S_SHOP"]);
   });
 
   it("resolveLocationById agrees with resolvePerceivedLocation", () => {
@@ -263,23 +281,27 @@ describe("revealing (flipping the hidden flag) restores visibility", () => {
     ).toEqual(["ITEM_GLOVE", "ITEM_KNIFE"]);
 
     setActorPosition({ type: "scene", sceneId: "S_PARLOR" });
-    expect(buildPerceivableDirectory("actor", dgsm).items).toEqual(
-      new Set(["ITEM_CHAIR", "ITEM_DAGGER"])
-    );
+    // All three were flipped visible above; revealing is what puts them in.
+    const revealed = buildPerceivableDirectory("actor", dgsm).items;
+    expect(revealed.has("ITEM_DAGGER")).toBe(true);
+    expect(revealed.has("ITEM_COIN")).toBe(true);
+    expect(revealed.has("ITEM_KNIFE")).toBe(true);
   });
 
   it("a revealed connection joins adjacency and the directory", () => {
     const { dgsm, scene, junction, road, setActorPosition } = makeWorld();
 
     const cellarExit = scene.connections.find(
-      (c) => c.id === "exit.parlor.cellar"
+      (c) => c.id === "connection.parlor.cellar"
     );
     if (cellarExit) cellarExit.hidden = false;
     const junctionCellar = junction.connections.find(
-      (c) => c.id === "exit.junc_x.cellar"
+      (c) => c.id === "connection.junc_x.cellar"
     );
     if (junctionCellar) junctionCellar.hidden = false;
-    const hutAccess = road.connections.find((c) => c.id === "exit.r_main.hut");
+    const hutAccess = road.connections.find(
+      (c) => c.id === "connection.r_main.hut"
+    );
     if (hutAccess) hutAccess.hidden = false;
 
     expect(
@@ -300,8 +322,76 @@ describe("revealing (flipping the hidden flag) restores visibility", () => {
     ).toEqual(["J_X", "J_Y", "S_HUT", "S_SHOP"]);
 
     setActorPosition({ type: "scene", sceneId: "S_PARLOR" });
-    expect(buildPerceivableDirectory("actor", dgsm).scenes).toEqual(
-      new Set(["S_PARLOR", "S_SHOP", "S_CELLAR"])
-    );
+    expect(
+      buildPerceivableDirectory("actor", dgsm).scenes.has("S_CELLAR")
+    ).toBe(true);
+  });
+});
+
+// `hidden` is the world's answer to "can anyone see this"; `discoveredBy` is
+// this viewer's answer to "have I found it". One passage, both facts on it —
+// so nothing has to be kept in step with anything else.
+describe("a passage one character has found", () => {
+  function world() {
+    const scenes = new Map<string, DynamicScene>([
+      [
+        "SCN_A",
+        {
+          id: "SCN_A",
+          name: "Dock",
+          description: "d",
+          conditions: [],
+          items: [],
+          connections: [
+            {
+              id: "connection.a.inner",
+              targetId: "SCN_B",
+              hidden: true,
+              discoveredBy: ["npc_finder"],
+            },
+          ],
+        } as unknown as DynamicScene,
+      ],
+      [
+        "SCN_B",
+        {
+          id: "SCN_B",
+          name: "Hall",
+          description: "d",
+          conditions: [],
+          items: [],
+          connections: [],
+        } as unknown as DynamicScene,
+      ],
+    ]);
+    return {
+      getScene: (id: string) => scenes.get(id) ?? null,
+      getState: () => ({ scenes, roads: new Map(), characterPositions: {} }),
+      getSceneConditions: () => [],
+      getTopology: () => ({
+        nodeSceneIds: new Set(),
+        roads: new Map(),
+        sceneToRoads: new Map(),
+        sceneToParent: new Map(),
+      }),
+      getVehicleByInterior: () => null,
+      getVehicles: () => [],
+    } as unknown as DynamicGameStateManager;
+  }
+  const at = { type: "scene" as const, sceneId: "SCN_A" };
+
+  it("is in the finder's perception", () => {
+    const loc = resolvePerceivedLocation(at, world(), "npc_finder");
+    expect(loc?.adjacentIds).toContain("SCN_B");
+  });
+
+  it("is not in anyone else's", () => {
+    const loc = resolvePerceivedLocation(at, world(), "npc_other");
+    expect(loc?.adjacentIds).not.toContain("SCN_B");
+  });
+
+  it("is not there for a viewerless read — naming a place is not looking", () => {
+    const loc = resolvePerceivedLocation(at, world());
+    expect(loc?.adjacentIds).not.toContain("SCN_B");
   });
 });

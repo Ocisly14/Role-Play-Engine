@@ -45,6 +45,10 @@ import {
   type WorldActionEngineDeps,
   resolveTick,
 } from "../resolution/worldActionEngine.js";
+import {
+  effectiveSkillValue,
+  getCharacterConditionPenalties,
+} from "../shared/characterConditionPenalties.js";
 import type { SubsystemRegistry } from "../subsystem/registry.js";
 import type { AnchorSubsystem } from "../subsystem/types.js";
 import type { CodeToolRegistry } from "../tools/codeTool.js";
@@ -74,7 +78,6 @@ export interface OrchestratorDeps {
   /** Injectable for tests; defaults to the real World Action Engine. */
   resolveTickFn?: ResolveTickFn;
   tickDurationMinutes: number;
-  hasInitialized: boolean;
 }
 
 interface PendingInterruption {
@@ -83,15 +86,12 @@ interface PendingInterruption {
 }
 
 export class TickOrchestrator {
-  private hasInitialized: boolean;
   private pendingInterruptions: PendingInterruption[] = [];
   private tickCounter = 0;
   private activeAnchorInstances = new Set<string>();
   private anchorInstancesRehydrated = false;
 
-  constructor(private deps: OrchestratorDeps) {
-    this.hasInitialized = deps.hasInitialized;
-  }
+  constructor(private deps: OrchestratorDeps) {}
 
   /** External interruption signal (e.g. actor died mid-action). The action
    *  is resolved — not silently dropped — on the next tick. */
@@ -304,6 +304,9 @@ export class TickOrchestrator {
         if (!planned.ok && transition.to === "active") {
           transition.to = "failed";
           transition.reason = planned.reason;
+          if (planned.unstatedHop) {
+            transition.unstatedHop = planned.unstatedHop;
+          }
           transition.nextWakeAt = undefined;
           continue;
         }
@@ -320,7 +323,18 @@ export class TickOrchestrator {
           );
           transition.timingReason =
             transition.timingReason ?? "movement time derived from the route";
-          transition.nextWakeAt = addMinutes(nextTickTime, minutes);
+          // Wake at the duration we just RESOLVED, not at the raw estimate.
+          // A leg that begins or ends partway along a road costs a fractional
+          // number of minutes (|0 - 0.1| * 15 = 1.5), which the movement
+          // runtime handles by advancing a minute per tick and clamping — so
+          // the leg really does take `resolvedDurationTicks`. Deriving the
+          // wake time from the same number keeps the two from describing the
+          // same action differently, and keeps a fraction off the clock,
+          // which rejects one outright.
+          transition.nextWakeAt = addMinutes(
+            nextTickTime,
+            transition.resolvedDurationTicks * this.deps.tickDurationMinutes
+          );
         }
       }
     }
@@ -356,9 +370,7 @@ export class TickOrchestrator {
           {
             id: `${occurrenceId}#f0`,
             type: "action_result",
-            content: `${t.actorId} 的行动「${action.command.description}」${
-              t.to === "completed" ? "结束了" : `没有进行下去（${t.to}）`
-            }${t.reason ? `：${t.reason}` : "，没有留下可见的变化"}`,
+            content: this.fallbackFact(t, action),
             entityRefs: [{ kind: "character", id: t.actorId }],
           },
         ],
@@ -422,7 +434,7 @@ export class TickOrchestrator {
     for (const t of transitions) {
       const action = this.deps.actionStore.get(t.actionId);
       if (!action) continue;
-      this.applyTransition(action, t, nextTickTime, engineResult);
+      this.applyTransition(action, t, nextTickTime);
       const planned = movementStates.get(t.actionId);
       if (planned?.ok && action.status === "active") {
         action.runtime = { ...(action.runtime ?? {}), movement: planned.state };
@@ -448,6 +460,29 @@ export class TickOrchestrator {
     const { dgsm } = this.deps;
     const skillsOf = (characterId: string): Record<string, number> =>
       dgsm.getNpcProfile(characterId)?.skills ?? {};
+    // A character's active conditions handicap the roll. Applied to the
+    // RESOLVED value, not to the skills record, so an untrained domain (base
+    // value) and a Languages check (learned tongues) cannot escape it.
+    //
+    // This is the deterministic code engine's dice, NOT the trust boundary:
+    // a shaken character may still declare anything anyone could declare.
+    // `commandValidator` and `commandBuilder` never read conditions and must
+    // not start.
+    const rollFor = (
+      characterId: string,
+      canonicalSkillId: string,
+      rawValue: number
+    ) => {
+      const penalized = effectiveSkillValue(
+        canonicalSkillId,
+        rawValue,
+        getCharacterConditionPenalties(characterId, dgsm)
+      );
+      const record = rollSkill(canonicalSkillId, penalized);
+      return penalized === rawValue
+        ? record
+        : { ...record, skillValueBase: rawValue };
+    };
 
     for (const actionId of new Set(actionIds)) {
       const action = this.deps.actionStore.get(actionId);
@@ -462,7 +497,11 @@ export class TickOrchestrator {
       if (!actorSkill) continue;
 
       const outcome = resolveCheck({
-        actorRoll: rollSkill(actorSkill.canonicalSkillId, actorSkill.value),
+        actorRoll: rollFor(
+          action.command.actorId,
+          actorSkill.canonicalSkillId,
+          actorSkill.value
+        ),
         requiredLevel: action.check.requiredLevel,
         ...(action.check.opposedBy
           ? { opposedBy: action.check.opposedBy }
@@ -474,7 +513,11 @@ export class TickOrchestrator {
           return defense
             ? {
                 ok: true,
-                record: rollSkill(defense.canonicalSkillId, defense.value),
+                record: rollFor(
+                  characterId,
+                  defense.canonicalSkillId,
+                  defense.value
+                ),
               }
             : { ok: false, reason: `unknown defense skill "${skillId}"` };
         },
@@ -488,8 +531,7 @@ export class TickOrchestrator {
   private applyTransition(
     action: EngineAction,
     t: ActionTransition,
-    now: GameTime,
-    engineResult: (WorldActionEngineResult & { ok: true }) | undefined
+    now: GameTime
   ): void {
     if (action.status === "queued" && t.to !== "queued") {
       action.startedAt = now;
@@ -504,6 +546,45 @@ export class TickOrchestrator {
     } else {
       action.nextWakeAt = undefined;
     }
+  }
+
+  /** A place as the person standing in it would name it. */
+  private placeName(id: string): string {
+    const { dgsm } = this.deps;
+    return (
+      dgsm.getScene(id)?.name ?? dgsm.getTopology?.()?.roads.get(id)?.name ?? id
+    );
+  }
+
+  /**
+   * What the actor is told when an action ended without the Engine narrating
+   * it. This is the only account they will get, so it has to be an account —
+   * something that happened to them, in words about the world.
+   *
+   * The route case earns its own sentence. Handed the engine's own diagnostic
+   * ("route hop … is not a single stretch"), the renderer had nothing
+   * experiential to work with and rendered a dizzy spell; the character read
+   * that as his own confusion and re-stated the SAME wrong route twice more.
+   * The truth is narrower and far more useful to him: the way he had in mind
+   * runs between two places that are not joined, and he never set off.
+   */
+  private fallbackFact(t: ActionTransition, action: EngineAction): string {
+    const what = `「${action.command.description}」`;
+    if (t.unstatedHop) {
+      const from = this.placeName(t.unstatedHop.fromId);
+      const to = this.placeName(t.unstatedHop.toId);
+      // Not "you misremembered": in both observed cases every memory the
+      // actor held was correct and they had joined two of them. Saying the
+      // memory was wrong sends them to doubt their own head — which is
+      // exactly what both of them then did.
+      return `${t.actorId} 没有出发。他心里那条路要从「${from}」接到「${to}」，可这两处之间并没有一条路——不是他记错了什么，是这两段本来就接不上。他还在原地，${what} 一步也没有开始，时间也没有花掉；要去别处，得走一条他确实知道通向那里的路。`;
+    }
+    if (t.to === "completed") {
+      return `${t.actorId} 的行动${what}结束了${t.reason ? `：${t.reason}` : "，没有留下可见的变化"}`;
+    }
+    return `${t.actorId} 的行动${what}没有进行下去（${t.to}）${
+      t.reason ? `：${t.reason}` : "，没有留下可见的变化"
+    }`;
   }
 
   private toCharacterAction(
@@ -530,6 +611,11 @@ export class TickOrchestrator {
       outcome: {
         stateChanges: [],
         elapsedMinutes: action.progressMinutes,
+        // The emitter has always read `narrative` into the persisted event's
+        // `outcome`; nothing ever wrote it, so every failed row in the log
+        // said only that something ended. The reason is the whole value of
+        // the row.
+        ...(t.reason ? { narrative: t.reason } : {}),
       },
     };
   }

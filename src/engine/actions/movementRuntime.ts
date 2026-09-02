@@ -73,7 +73,32 @@ export function getMovementRuntime(
 
 export type MovementInitResult =
   | { ok: true; state: MovementRuntimeState; totalMinutes: number }
-  | { ok: false; reason: string };
+  | {
+      ok: false;
+      reason: string;
+      /**
+       * Set when the route broke because two named places are not one stretch
+       * apart. Carried as ids rather than as prose because the actor's own
+       * account of it is written upstream, where the words a character reads
+       * are chosen — this half only says WHICH two places failed to join.
+       *
+       * The distinction earned itself: a character whose remembered route
+       * merged two real lanes into one ("north gate, then Holt Lane, then ten
+       * minutes to the trailhead" — Holt Lane goes to the Holt gate) was told
+       * only that his action "did not go on", read it as a dizzy spell, and
+       * re-stated the SAME wrong route twice more with more conviction. Three
+       * ticks and ~200k tokens on a mistake he could have corrected in one.
+       */
+      unstatedHop?: { fromId: string; toId: string };
+    };
+
+/** A place's name for a message a person will read, with the id kept for the
+ *  log line beside it. Roads and scenes both answer. */
+function placeLabel(dgsm: DynamicGameStateManager, id: string): string {
+  const name =
+    dgsm.getScene(id)?.name ?? dgsm.getTopology().roads.get(id)?.name;
+  return name ? `${name} (${id})` : id;
+}
 
 /** Are two places one stated hop apart? Adjacency is the grain of a spoken
  *  route: a door between scenes, a scene on a road (endpoint or access), or
@@ -203,7 +228,8 @@ export function initMovementRuntime(
   ) {
     return {
       ok: false,
-      reason: `movement init failed: route hop "${startId}" → "${route[0]}" is not a single stretch — the way between them was never stated`,
+      reason: `movement init failed: route hop "${placeLabel(dgsm, startId)}" → "${placeLabel(dgsm, route[0])}" is not a single stretch — the way between them was never stated`,
+      unstatedHop: { fromId: startId, toId: route[0] },
     };
   }
   if (vehicleId !== undefined && dgsm.getVehicle(vehicleId) === null) {
@@ -219,7 +245,8 @@ export function initMovementRuntime(
     if (!placesAdjacent(dgsm, route[i], route[i + 1])) {
       return {
         ok: false,
-        reason: `movement init failed: route hop "${route[i]}" → "${route[i + 1]}" is not a single stretch — the way between them was never stated`,
+        reason: `movement init failed: route hop "${placeLabel(dgsm, route[i])}" → "${placeLabel(dgsm, route[i + 1])}" is not a single stretch — the way between them was never stated`,
+        unstatedHop: { fromId: route[i], toId: route[i + 1] },
       };
     }
   }

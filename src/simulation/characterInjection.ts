@@ -80,25 +80,12 @@ export function injectCharacterIntoState(
 
   // Cast readonly away for the shallow Record maps (Readonly is shallow in TypeScript)
   const state = dgsm.getState() as ReturnType<typeof dgsm.getState> & {
-    npcStats: Record<string, { hp: number; san: number }>;
-    npcResidences: Record<string, string>;
     npcInventories: Record<string, import("../state/types.js").Item[]>;
     npcRelationshipGraph: Record<
       string,
       Record<string, { score: number; note: string }>
     >;
   };
-
-  // Initialise npcStats (uses `san` not `sanity`)
-  state.npcStats[profile.id] = {
-    hp: profile.status.hp,
-    san: profile.status.san,
-  };
-
-  // Initialise residence
-  if (profile.residence) {
-    state.npcResidences[profile.id] = profile.residence;
-  }
 
   // Initialise empty inventory record
   state.npcInventories[profile.id] = [];
@@ -130,12 +117,8 @@ export async function removeCharacterFromState(
   sessionId: string,
   characterId: string
 ): Promise<void> {
-  dgsm.setCharacterHidden(characterId, false);
-
   const state = dgsm.getState() as ReturnType<typeof dgsm.getState> & {
     npcCharacters: DynamicNPCProfile[];
-    npcStats: Record<string, { hp: number; san: number }>;
-    npcResidences: Record<string, string>;
     npcInventories: Record<string, import("../state/types.js").Item[]>;
     npcRelationshipGraph: Record<
       string,
@@ -153,8 +136,6 @@ export async function removeCharacterFromState(
     state.npcCharacters.filter((npc) => npc.id !== characterId);
 
   // Delete from all per-NPC Record maps
-  delete state.npcStats[characterId];
-  delete state.npcResidences[characterId];
   delete state.npcInventories[characterId];
   delete state.characterPositions[characterId];
   // Otherwise a removed id leaves a spot behind that a later reuse of the

@@ -85,9 +85,13 @@ function resolveScene(
 ): PerceivedBundle["scene"] {
   // Roads are places too — a traveller mid-route perceives the
   // street they are on, not "an indistinct place".
+  // Same resolver AND same viewer as the trust boundary reads: a passage this
+  // character has found is rendered for them and citable by them, and one they
+  // have not is neither.
   const location = resolvePerceivedLocation(
     dgsm.getCharacterPosition(npcId),
-    dgsm
+    dgsm,
+    npcId
   );
   if (location) {
     return {
@@ -95,6 +99,12 @@ function resolveScene(
       name: location.name,
       description: location.description,
       activeConditions: location.conditions,
+      // Already free of hidden passages: `adjacentIds` is built with
+      // `.filter((c) => !c.hidden)`, so an unfound door never reaches here.
+      adjacentPlaces: location.adjacentIds.map((id) => ({
+        id,
+        name: placeName(id, dgsm),
+      })),
       // The same items the trust boundary lets this actor cite — resolved
       // from the ACTUAL position, so a road item beyond reach is neither
       // rendered nor citable. Distance rides along for the renderer to
@@ -125,7 +135,15 @@ function resolveScene(
     description: "",
     activeConditions: [],
     items: [],
+    adjacentPlaces: [],
   };
+}
+
+/** A neighbouring place by the name a person standing here would use. */
+function placeName(id: string, dgsm: DynamicGameStateManager): string {
+  return (
+    dgsm.getScene(id)?.name ?? dgsm.getTopology?.()?.roads.get(id)?.name ?? id
+  );
 }
 
 const ENDED_STATUSES = new Set([

@@ -43,6 +43,16 @@ export function planMovementRoute(
   const currentPosition =
     fromPosition ?? dgsm.getCharacterPosition(characterId);
   if (!currentPosition) return { ok: false, reason: "no_current_position" };
+  // A road position without its fraction cannot be planned from: every leg
+  // cost is |fraction - end| * minutes, and NaN here used to travel all the
+  // way to the clock and throw the tick away. The validator now refuses the
+  // op that produced one; this catches whatever else might.
+  if (
+    currentPosition.type === "road" &&
+    !Number.isFinite(currentPosition.position)
+  ) {
+    return { ok: false, reason: "no_road_position" };
+  }
 
   // Same-building shortcut: scene → scene within the same parent location.
   const state = dgsm.getState();
@@ -80,7 +90,7 @@ export function planMovementRoute(
   }
 
   const topology = dgsm.getTopology();
-  let targetPosition = resolveTargetPosition(destination, topology, dgsm);
+  let targetPosition = resolveTargetPosition(destination, topology);
   if (!targetPosition) return { ok: false, reason: "no_path" };
   // A road destination with no explicit "@position" ("去那条街" / an outline
   // whose entry is a road) means "get onto that road" — snap to the end
@@ -91,8 +101,7 @@ export function planMovementRoute(
       position: nearestRoadPosition(
         currentPosition,
         targetPosition.roadId,
-        topology,
-        dgsm
+        topology
       ),
     };
   }
@@ -100,8 +109,7 @@ export function planMovementRoute(
   const route = buildMovementRouteIgnoringBlocks(
     currentPosition,
     targetPosition,
-    topology,
-    dgsm
+    topology
   );
   if (!route) return { ok: false, reason: "no_path" };
 

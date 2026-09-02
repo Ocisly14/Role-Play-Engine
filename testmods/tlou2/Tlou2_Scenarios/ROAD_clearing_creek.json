@@ -1,0 +1,26 @@
+{
+  "schemaVersion": 2,
+  "id": "ROAD_clearing_creek",
+  "name": "下溪坡道",
+  "description": "从山脊缓坡下到溪谷的一段林间坡道,雪深到小腿,顺坡下去八分钟,反过来爬上去要久得多。坡顶是那片被踩烂的空地 [SCN_ridge_clearing],坡底是冻实的溪谷 [SCN_frozen_creek]。松枝被雪压得很低,人得弓着腰过去,过一棵抖一身雪。",
+  "parentLocationId": "OUTDOOR",
+  "travelTimeMinutes": 8,
+  "references": {
+    "items": [],
+    "connections": [
+      {
+        "id": "connection.clearing_creek.ridge_end",
+        "targetId": "SCN_ridge_clearing",
+        "name": "坡顶端",
+        "role": "endpointA"
+      },
+      {
+        "id": "connection.clearing_creek.creek_end",
+        "targetId": "SCN_frozen_creek",
+        "name": "坡底端",
+        "role": "endpointB"
+      }
+    ],
+    "conditions": []
+  }
+}

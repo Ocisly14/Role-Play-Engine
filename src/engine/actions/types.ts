@@ -126,7 +126,13 @@ export type SkillSuccessLevel = (typeof SKILL_SUCCESS_LEVELS)[number];
 export interface SkillRollRecord {
   rollId: string;
   skillId: string;
+  /** The value actually rolled against — after any condition penalties. */
   skillValue: number;
+  /** The value before those penalties, present only when they changed it.
+   *  `skillValue` is rendered to the Engine inside the action's `diceRoll`,
+   *  so carrying the unpenalized number alongside is what makes a surprising
+   *  roll explicable in the log and in the Engine's context. */
+  skillValueBase?: number;
   roll: number;
   successLevel: SkillSuccessLevel;
 }
@@ -241,6 +247,11 @@ export interface ActionTransition {
   timingReason?: string;
   nextWakeAt?: GameTime;
   reason?: string;
+  /** Set when this transition is a movement that never started because the
+   *  stated route did not join up. `reason` says it in the engine's words for
+   *  the log; these two ids let the actor be told which pair of places their
+   *  remembered way ran between, in theirs. */
+  unstatedHop?: { fromId: string; toId: string };
 }
 
 // ==================== World deltas ====================
@@ -273,6 +284,16 @@ export type SceneStateOperation =
       connectionId: string;
       blocked: boolean;
       reason: string;
+    }
+  | {
+      /** These characters have found a concealed passage. Addressed at the
+       *  connection because that is where the fact lives — `discoveredBy`
+       *  sits beside `hidden` on the passage itself — and it takes a list
+       *  because finding is not private: everyone who watched the bookcase
+       *  swing out learned the same thing at the same moment. */
+      kind: "connectionDiscovered";
+      connectionId: string;
+      characterIds: string[];
     }
   | {
       /** Reveal (`hidden: false`) or conceal a connection by its authored id. */

@@ -53,14 +53,14 @@
       },
       {
         "kind": "connection.setBlock",
-        "connectionId": "exit.creek_sawmill.creek_end",
+        "connectionId": "connection.creek_sawmill.creek_end",
         "blocked": true,
         "reason": "洪水没过踏石",
         "featureId": "creek_flood"
       },
       {
         "kind": "connection.setBlock",
-        "connectionId": "exit.fog_creek.creek_end",
+        "connectionId": "connection.fog_creek.creek_end",
         "blocked": true,
         "reason": "洪水没过踏石",
         "featureId": "creek_flood"
@@ -116,14 +116,14 @@
       },
       {
         "kind": "connection.setBlock",
-        "connectionId": "exit.creek_sawmill.creek_end",
+        "connectionId": "connection.creek_sawmill.creek_end",
         "blocked": false,
         "reason": "洪水没过踏石",
         "featureId": "creek_flood"
       },
       {
         "kind": "connection.setBlock",
-        "connectionId": "exit.fog_creek.creek_end",
+        "connectionId": "connection.fog_creek.creek_end",
         "blocked": false,
         "reason": "洪水没过踏石",
         "featureId": "creek_flood"

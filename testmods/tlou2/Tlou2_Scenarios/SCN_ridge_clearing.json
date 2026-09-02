@@ -1,0 +1,44 @@
+{
+  "schemaVersion": 2,
+  "id": "SCN_ridge_clearing",
+  "name": "山脊空地",
+  "description": "风雪把这片山脊缓坡压成了一块白色的凹陷,能见度不到十步,人影过了那个距离就只剩一团影子 [cond.ridge_clearing.whiteout]。雪面被踩得稀烂,一圈杂乱的脚印和拖痕从坡下一直甩到坡顶,看得出有人是一路退上来的 [item.ridge_clearing.trampled_snow]。三具刚倒下的感染者横在雪里,伤口还冒着白气,雪在它们身下化成了红色的泥 [item.ridge_clearing.infected_corpses]。一把猎刀甩脱在两步开外,刀柄上缠的胶带被血浸透,刀尖朝下扎在雪壳里 [item.ridge_clearing.hunting_knife]。坡顶的松树下拴着两匹马,鼻息在风里连成一片白雾,鞍上挂着卷好的毛毯和空着的鞍囊 [item.ridge_clearing.two_horses]。风声压过一切,可更远的林子里,像是还有别的东西在叫。",
+  "references": {
+    "items": [
+      {
+        "id": "item.ridge_clearing.trampled_snow",
+        "name": "被踩烂的雪面",
+        "description": "从坡下一直延到坡顶的一片乱雪,脚印互相覆盖,中间夹着几道拖行的沟痕。看得出追的人多,被追的只有一个。"
+      },
+      {
+        "id": "item.ridge_clearing.infected_corpses",
+        "name": "三具感染者尸体",
+        "description": "三具刚被打倒的感染者,身上的衣服烂成了条,菌丝从脸颊和肩膀上长出来。伤口还冒热气,雪在它们身下化开又冻上,结成了红褐色的壳。"
+      },
+      {
+        "id": "item.ridge_clearing.hunting_knife",
+        "name": "脱手的猎刀",
+        "description": "一把刃口有豁的猎刀,木柄上缠了几圈防滑胶带,胶带被血浸透了。它插在雪壳里,离最近的那具尸体两步远。"
+      },
+      {
+        "id": "item.ridge_clearing.two_horses",
+        "name": "两匹备鞍的马",
+        "description": "两匹裹着防寒毯的马拴在坡顶的松树下,一匹栗色一匹灰的,都还喘得很急。鞍具保养得好,鞍囊是空的,鞍后卷着毛毯和一捆绳子——是长途巡逻的配置,不是逃难的配置。"
+      }
+    ],
+    "connections": [],
+    "conditions": [
+      {
+        "id": "cond.ridge_clearing.whiteout",
+        "description": "暴雪白幕:能见度不到十步,风声压过说话声,远处的动静只能靠猜。",
+        "mechanicalEffect": {
+          "skillPenalty": {
+            "Survival & Navigation": -20,
+            "Ranged Combat": -15,
+            "Investigation": -10
+          }
+        }
+      }
+    ]
+  }
+}

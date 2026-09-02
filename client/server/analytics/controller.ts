@@ -46,7 +46,7 @@ export async function getDailyAnalytics(req: Request, res: Response) {
  * POST /api/analytics/refresh
  * Manually refresh today's statistics
  */
-export async function refreshAnalytics(req: Request, res: Response) {
+export async function refreshAnalytics(_req: Request, res: Response) {
   try {
     const today = new Date().toISOString().split("T")[0];
 

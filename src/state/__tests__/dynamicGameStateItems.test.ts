@@ -13,10 +13,7 @@ import type { DynamicScene } from "../types.js";
 // id-space of holders.
 
 function makeFixture() {
-  const state = initialDynamicGameState({
-    sessionId: "test-session",
-    moduleName: "test-module",
-  });
+  const state = initialDynamicGameState();
 
   const scene: DynamicScene = {
     id: "S_HOME",
@@ -26,8 +23,8 @@ function makeFixture() {
     items: [{ id: "item_chair", name: "a chair" }],
     conditions: [],
     connections: [
-      { id: "exit.home.junc", targetId: "J_A" },
-      { id: "exit.home.secret", targetId: "R_MAIN", hidden: true },
+      { id: "connection.home.junc", targetId: "J_A" },
+      { id: "connection.home.secret", targetId: "R_MAIN", hidden: true },
     ],
   };
 
@@ -39,8 +36,8 @@ function makeFixture() {
     items: [{ id: "item_lamppost", name: "a lamppost" }],
     conditions: [],
     connections: [
-      { id: "exit.junc.home", targetId: "S_HOME" },
-      { id: "exit.junc.road", targetId: "R_MAIN" },
+      { id: "connection.junc.home", targetId: "S_HOME" },
+      { id: "connection.junc.road", targetId: "R_MAIN" },
     ],
   };
 
@@ -58,8 +55,8 @@ function makeFixture() {
     name: "Star Avenue",
     description: "A long avenue.",
     connections: [
-      { id: "exit.road.a", targetId: "J_A", role: "endpointA" },
-      { id: "exit.road.b", targetId: "J_B", role: "endpointB" },
+      { id: "connection.road.a", targetId: "J_A", role: "endpointA" },
+      { id: "connection.road.b", targetId: "J_B", role: "endpointB" },
     ],
     endpointA: "J_A",
     endpointB: "J_B",
@@ -269,36 +266,48 @@ describe("scene condition ids", () => {
 
 describe("setConnectionHiddenById", () => {
   it("reveals a hidden scene connection in place", () => {
-    expect(dgsm.setConnectionHiddenById("exit.home.secret", false)).toBe(true);
-    const conn = scene.connections.find((c) => c.id === "exit.home.secret");
+    expect(dgsm.setConnectionHiddenById("connection.home.secret", false)).toBe(
+      true
+    );
+    const conn = scene.connections.find(
+      (c) => c.id === "connection.home.secret"
+    );
     expect(conn?.hidden).toBe(false);
   });
 
   it("hides a node-scene connection", () => {
-    expect(dgsm.setConnectionHiddenById("exit.junc.road", true)).toBe(true);
-    const conn = junction.connections.find((c) => c.id === "exit.junc.road");
+    expect(dgsm.setConnectionHiddenById("connection.junc.road", true)).toBe(
+      true
+    );
+    const conn = junction.connections.find(
+      (c) => c.id === "connection.junc.road"
+    );
     expect(conn?.hidden).toBe(true);
   });
 
   it("hides a road connection", () => {
-    expect(dgsm.setConnectionHiddenById("exit.road.a", true)).toBe(true);
-    const conn = road.connections.find((c) => c.id === "exit.road.a");
+    expect(dgsm.setConnectionHiddenById("connection.road.a", true)).toBe(true);
+    const conn = road.connections.find((c) => c.id === "connection.road.a");
     expect(conn?.hidden).toBe(true);
   });
 
   it("returns false and warns for an unknown connection id", () => {
-    expect(dgsm.setConnectionHiddenById("exit.nowhere.door", true)).toBe(false);
+    expect(dgsm.setConnectionHiddenById("connection.nowhere.door", true)).toBe(
+      false
+    );
     expect(warnSpy).toHaveBeenCalledWith(
-      expect.stringContaining('unknown connection id "exit.nowhere.door"')
+      expect.stringContaining('unknown connection id "connection.nowhere.door"')
     );
   });
 
   it("resolves two directions of the same passage onto one edge", () => {
-    const there = dgsm.resolveConnectionEdgeById("exit.home.junc");
-    const back = dgsm.resolveConnectionEdgeById("exit.junc.home");
+    const there = dgsm.resolveConnectionEdgeById("connection.home.junc");
+    const back = dgsm.resolveConnectionEdgeById("connection.junc.home");
     expect(there?.key).toBeDefined();
     expect(there?.key).toBe(back?.key);
-    expect(dgsm.resolveConnectionEdgeById("exit.nowhere.door")).toBeNull();
+    expect(
+      dgsm.resolveConnectionEdgeById("connection.nowhere.door")
+    ).toBeNull();
   });
 });
 

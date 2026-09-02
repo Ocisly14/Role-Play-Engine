@@ -2,8 +2,8 @@
 //
 // The unified World Action Engine session (plan Phase 7). Called once per
 // triggered tick with the full EngineResolutionContext. Runs an agentic loop:
-// the model may consult the deterministic code tools (pathfinding, movement
-// cost, inventory validation, opposed roll, damage dice) and must finish with
+// the model may consult the deterministic damage dice (a roll must never be
+// the model's) and must finish with
 // one terminal `submit_resolution` call. Output is validated in code; one
 // corrective retry, then whatever is still invalid is dropped and the
 // affected actions are failed. No action types, no per-definition prompts —
@@ -17,7 +17,11 @@ import type {
 } from "../../models/providers/types.js";
 import type { DynamicGameStateManager } from "../../state/DynamicGameState.js";
 import { actionIdForCommand } from "../actions/actionStore.js";
-import type { ActionCommand } from "../actions/types.js";
+import type {
+  ActionCommand,
+  ResolvedCheck,
+  SkillRollRecord,
+} from "../actions/types.js";
 import {
   buildSkillCatalogPrompt,
   renderSkillGuidance,
@@ -45,15 +49,22 @@ import {
   validateRawResolution,
 } from "./worldDeltaValidator.js";
 
-const MAX_ITERATIONS = 8;
 /**
- * After this many turns the session stops offering the code tools and demands
- * the terminal submission. Without it a model that keeps consulting tools —
- * or keeps re-submitting alongside them — burns every iteration and every
- * triggering action fails, at full-world context cost per turn. Observed
- * live before this guard existed.
+ * Hard ceiling on turns in one session — repair rounds included, since they
+ * run in the same loop.
+ *
+ * 5, down from 8. Measured over two 30-tick full-town runs: at 8 the failing
+ * sessions spent every turn fanning out optional tool calls and applied
+ * nothing, at ~65k of full-world context per wasted turn — four such ticks
+ * were half of that run's entire token spend. Cutting to 3 removed that waste
+ * but starved two ticks that needed a fourth turn, so the failure count did
+ * not move: 5 either way, for opposite reasons.
+ *
+ * 5 is the worst honest path — one turn of tools, one submission, three
+ * repairs — and costs nothing on the common path, where the median session
+ * still finishes in under two turns.
  */
-const FORCE_SUBMIT_AFTER = 4;
+const MAX_ITERATIONS = 5;
 /**
  * How many repair rounds a submission gets before the session gives up.
  *
@@ -88,10 +99,18 @@ const RULES_DOC = loadRuleFile(
   "world-action-resolution.md",
   "Resolve all actions under strict causality, state constraints, locality, engine-owned timing, conservation, roll-first assessment, concurrency consistency, minimal change, and fact/perception separation."
 );
+const SANITY_RULES_DOC = loadRuleFile(
+  "sanity-check.md",
+  "Sanity checks are involuntary and rare. Declare one under an occurrence's `sanityChecks` naming a character who perceived a concrete horror, with the failure loss and the consequence they will carry. Code rolls it; a passed check costs nothing."
+);
+/** The turn budget is a code constant and a prompt sentence at once. The
+ *  document names it with a placeholder so the two cannot drift: a model told
+ *  it has four turns when the guard fires at three would spend the difference
+ *  every tick, and nobody would see it in either place alone. */
 const SESSION_PROTOCOL = loadRuleFile(
   "session-protocol.md",
   "Ground the resolution with the deterministic tools where needed; finish with exactly one submit_resolution answering every worklist id."
-);
+).replaceAll("{{MAX_ITERATIONS}}", String(MAX_ITERATIONS));
 
 const SYSTEM_PROMPT = `You are the World Action Engine of a tick-based Call of Cthulhu world
 simulation. You are the sole authority on what actually happens: characters
@@ -102,6 +121,8 @@ time passed, whether an action is finished, or whether a check was passed:
 code owns the clock and the dice, and hands you their results.
 
 ${RULES_DOC}
+
+${SANITY_RULES_DOC}
 
 ${SESSION_PROTOCOL}
 
@@ -130,6 +151,32 @@ export interface WorldActionEngineDeps {
  * actionId" and burns every repair round on a mismatch it cannot see. So the
  * commandId never reaches the prompt.
  */
+/** The roll code made, as the Engine reads it. Named for what it is — dice —
+ *  and not for what it decides: rendered as `checkOutcome`, the Engine kept
+ *  echoing it back as the ending's `outcome`, the one field an ending with a
+ *  check must not carry (a third of checked solo endings in a measured run).
+ *  `met` stays because it is the one bit the Engine cannot safely derive
+ *  itself — the success ladder and the tie-to-defender rule live in code.
+ *  `fumble` goes: it is `actor.successLevel === "fumble"`, already visible.
+ *  Roll ids are bookkeeping and mean nothing to the reader. */
+function diceRollForPrompt(check: ResolvedCheck) {
+  const strip = ({ rollId: _, ...record }: SkillRollRecord) => record;
+  return {
+    actor: strip(check.actor),
+    requiredLevel: check.requiredLevel,
+    ...(check.defenders
+      ? {
+          defenders: check.defenders.map((d) => ({
+            characterId: d.characterId,
+            record: strip(d.record),
+            actorWon: d.actorWon,
+          })),
+        }
+      : {}),
+    met: check.met,
+  };
+}
+
 function commandForPrompt(command: ActionCommand): Record<string, unknown> {
   const { commandId: _commandId, ...rest } = command;
   return rest;
@@ -163,7 +210,7 @@ function commandForPrompt(command: ActionCommand): Record<string, unknown> {
  * prose description plus a `connections:` reference line — the same
  * description-and-references format as the v2 place files and the Tier-2
  * snapshots, so the Engine reads one format everywhere. Junction/road prose
- * is the authored text and already cites its `[exit.*]` ids; the reference
+ * is the authored text and already cites its `[connection.*]` ids; the reference
  * line resolves each id to its (lifted) target and travel time.
  */
 export function renderWorldGraph(graph: WorldGraph): string {
@@ -216,8 +263,13 @@ export function renderContextSegments(context: EngineResolutionContext): {
     ...commandForPrompt(command),
   }));
   const activeActions = context.actions.activeActions.map((action) => {
-    const { id, command, ...rest } = action;
-    return { actionId: id, ...rest, command: commandForPrompt(command) };
+    const { id, command, checkOutcome, ...rest } = action;
+    return {
+      actionId: id,
+      ...rest,
+      ...(checkOutcome ? { diceRoll: diceRollForPrompt(checkOutcome) } : {}),
+      command: commandForPrompt(command),
+    };
   });
 
   // Full guidance for exactly the skills declared this tick (deduplicated):
@@ -270,7 +322,7 @@ export function renderContextSegments(context: EngineResolutionContext): {
       ...context.trigger,
       resolve: {
         ...worklist,
-        note: "`starting` and `ending` are the ids you must answer, in those lists, and they are the only ones. `stillRunning` is FYI: those actions keep running by themselves and take no entry. `endingNeedsOutcome` lists in-flight actions that carried no check — if one ends, you supply `outcome`. `startingWithoutSkill` lists actors who declared no skill: those actions take no `check` at all, however obviously one seems called for — the actor chose to stake nothing, and it is settled on its own merits.",
+        note: "`starting` and `ending` are the ids you must answer, in those lists, and they are the only ones. `stillRunning` is FYI: those actions keep running by themselves and take no entry. `endingNeedsOutcome` lists in-flight actions that carried no check — if one ends, you supply `outcome`. Every other ending carries a `diceRoll` on its action row: that is what code rolled, and it is INPUT — never copy it into an `outcome` field. `startingWithoutSkill` lists actors who declared no skill: those actions take no `check` at all, however obviously one seems called for — the actor chose to stake nothing, and it is settled on its own merits. `replaced` lists endings the actor themselves cut short by issuing a new command this tick (the one in `starting` with a matching `replacesActionId`): account for what was done up to this minute and stop there — never narrate how it would have finished, and never let it and its successor both happen in full.",
       },
     }),
     section("Tick", context.tick),
@@ -280,7 +332,13 @@ export function renderContextSegments(context: EngineResolutionContext): {
     ...(skillGuidance.length > 0
       ? [`## Declared Skill Guidance\n\n${skillGuidance.join("\n\n---\n\n")}`]
       : []),
-    "Resolve now. Consult tools as needed, then call submit_resolution once — every id under the trigger's `resolve.starting` and `resolve.ending` placed in that list.",
+    // The old closing — "consult tools as needed, then submit" — read as
+    // "first a tool turn, then the submission". About one session in fourteen
+    // took it literally: a `damageRoll("0")` that rolled nothing, and then a
+    // submission written with that turn in its history, which arrived
+    // malformed three times out of four. Nearly every tick has no damage to
+    // roll, so the first call is the submission.
+    "Resolve now. Unless a blow lands this tick, your FIRST and ONLY call is submit_resolution — every id under the trigger's `resolve.starting` and `resolve.ending` placed in that list. Call damageRoll only for damage that is actually being dealt, with a real formula; there is nothing else to look up.",
   ].join("\n\n");
 
   return { stable: `${stable}\n\n`, volatile };
@@ -353,8 +411,6 @@ export async function resolveTick(
     submitResolutionTool,
     repairResolutionTool,
   ];
-  const correctiveRetryUsed = false;
-
   // The submission under repair, and how many repair rounds it has had.
   let pending: RawTickResolution | undefined;
   let repairRounds = 0;
@@ -364,24 +420,21 @@ export async function resolveTick(
     let toolCalls: Awaited<ReturnType<typeof generateToolCalls>>["toolCalls"];
     let assistantMessage: ModelMessage;
     try {
-      // Once a submission exists, the only move left is to patch it.
-      const mustSubmit = !repairing && i >= FORCE_SUBMIT_AFTER;
-      if (mustSubmit && i === FORCE_SUBMIT_AFTER) {
-        console.warn(
-          `[WorldActionEngine] ${context.tick.tickId}: ${i} turns without a ` +
-            "submission — withdrawing the code tools and demanding one now"
-        );
-      }
       const res = await generateToolCalls({
         customSystemPrompt: SYSTEM_PROMPT,
         cacheSystemPrompt: true,
         messages,
         tools,
-        toolChoice: repairing
-          ? { name: "repair_resolution" }
-          : mustSubmit
-            ? { name: "submit_resolution" }
-            : "any",
+        // Once a submission exists, the only move left is to patch it.
+        toolChoice: repairing ? { name: "repair_resolution" } : "any",
+        // Parallel calls only while the model still has a choice of tool.
+        // Once `toolChoice` names one, a second copy of it is the only other
+        // thing a parallel turn can produce — and the intake below takes a
+        // submission ONLY when it arrives alone, so both copies were
+        // rejected and the turn was spent for nothing. Measured live: the
+        // demanded submission came back twice, both refused, and the tick
+        // paid another full-world round trip (~65k tokens) to send the same
+        // thing again by itself.
         allowParallelCalls: !repairing,
         modelClass: ModelClass.MEDIUM,
         operation: "world-action-engine",
@@ -415,7 +468,7 @@ export async function resolveTick(
         repairCall.args as unknown as RawResolutionRepair
       );
       const invocationsSoFar = deps.codeTools.drainInvocations();
-      const errors = validateRawResolution(pending, context, invocationsSoFar);
+      const errors = validateRawResolution(pending, context);
       requeueInvocations(deps.codeTools, invocationsSoFar);
       if (errors.length === 0) {
         const finalized = finalizeResolution(pending, context);
@@ -452,7 +505,7 @@ export async function resolveTick(
         submits[0].args as unknown as RawTickResolution
       );
       const invocationsSoFar = deps.codeTools.drainInvocations();
-      const errors = validateRawResolution(raw, context, invocationsSoFar);
+      const errors = validateRawResolution(raw, context);
       requeueInvocations(deps.codeTools, invocationsSoFar);
       if (errors.length === 0) {
         const finalized = finalizeResolution(raw, context);
@@ -505,8 +558,13 @@ export async function resolveTick(
         continue;
       }
       try {
+        const actionId =
+          typeof call.args.actionId === "string"
+            ? call.args.actionId
+            : undefined;
         const output = await deps.codeTools.run(call.name, call.args, {
           dgsm: deps.dgsm,
+          ...(actionId !== undefined ? { actionId } : {}),
         });
         results.push({ toolCallId: call.id, content: JSON.stringify(output) });
       } catch (err) {

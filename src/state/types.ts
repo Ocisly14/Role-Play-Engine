@@ -263,13 +263,29 @@ export interface DynamicNPCProfile {
 // ─── Scene types ───────────────────────────────────────────────────
 
 export interface SceneConnection {
-  /** Stable module-unique connection id (authoring convention: `exit.<place>.<slug>`). */
+  /** Stable module-unique connection id (authoring convention: `connection.<place>.<slug>`). */
   id: string;
   targetId: string;
   name?: string;
   description?: string;
   /** When true, this connection is not visible to NPCs until revealed */
   hidden?: boolean;
+  /**
+   * Who has found it while it was hidden.
+   *
+   * `hidden` is the world's answer to "can anyone see this"; this is the
+   * per-viewer answer to "has this one found it", and it lives here rather
+   * than in an index of its own because it is a fact about this passage. A
+   * character in the list perceives the connection exactly as if it were
+   * open; everyone else still does not know it is there. An action that
+   * exposes the passage for good sets `hidden: false` instead, and this list
+   * stops mattering.
+   *
+   * Written by the Engine — finding a door is an objective outcome of an
+   * action, not a reading of anyone's mind. What the character makes of it
+   * is theirs to write down.
+   */
+  discoveredBy?: string[];
 }
 
 export interface DynamicScene {

@@ -83,9 +83,6 @@ const BUBBLE_ARROW_H = 8;
 const BUBBLE_LABEL_GAP = 32;
 export class TownScene extends Phaser.Scene {
   private scenarioOutlines: ScenarioOutlineData[] = [];
-  private transportEdges: TransportEdgeData[] = [];
-  private scenes: SceneData[] = [];
-  private junctions: JunctionData[] = [];
   private nodePositions: Map<string, { x: number; y: number }> = new Map();
   private nodeContainers: Map<string, Phaser.GameObjects.Container> = new Map();
   private npcDots: Map<string, NpcDotData> = new Map();
@@ -249,9 +246,6 @@ export class TownScene extends Phaser.Scene {
     junctions: JunctionData[];
   }) {
     this.scenarioOutlines = data.scenarioOutlines ?? [];
-    this.transportEdges = data.transportEdges ?? [];
-    this.scenes = data.scenes ?? [];
-    this.junctions = data.junctions ?? [];
     this.baseUrl = data.baseUrl;
 
     if (this.isBuilt) return;
@@ -775,7 +769,7 @@ export class TownScene extends Phaser.Scene {
       if (!npcData) continue;
       const currentAction = npcActionMap.get(npcId) ?? null;
       if (currentAction) {
-        this.upsertBubble(npcId, npcData, currentAction);
+        this.upsertBubble(npcData, currentAction);
       } else {
         this.clearBubble(npcData);
       }
@@ -959,7 +953,7 @@ export class TownScene extends Phaser.Scene {
   private handleNpcActionUpdate(data: { npcId: string; action: string }) {
     const npcData = this.npcDots.get(data.npcId);
     if (!npcData) return;
-    this.upsertBubble(data.npcId, npcData, data.action);
+    this.upsertBubble(npcData, data.action);
   }
 
   private clearBubble(npcData: NpcDotData) {
@@ -969,7 +963,7 @@ export class TownScene extends Phaser.Scene {
     npcData.bubbleText = null;
   }
 
-  private upsertBubble(npcId: string, npcData: NpcDotData, action: string) {
+  private upsertBubble(npcData: NpcDotData, action: string) {
     const truncated = action.length > 30 ? action.slice(0, 28) + "…" : action;
 
     if (npcData.bubbleText) {
@@ -1022,8 +1016,6 @@ export class TownScene extends Phaser.Scene {
 
   private positionBubble(npcData: NpcDotData, cx: number, bottomY: number) {
     const text = npcData.bubbleText!;
-    const bg = npcData.bubbleBg!;
-
     text.setPosition(cx, bottomY);
 
     // Redraw background around text

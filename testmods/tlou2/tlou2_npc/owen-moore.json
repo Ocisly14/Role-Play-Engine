@@ -1,0 +1,77 @@
+{
+  "id": "npc_owen_moore",
+  "name": "Owen Moore",
+  "occupation": "华盛顿解放阵线士兵",
+  "age": 25,
+  "gender": "男",
+  "currentLocation": "SCN_lodge_greatroom",
+  "residence": "SCN_lodge_upstairs",
+  "appearance": "高个子，肩膀塌着，胡子几天没刮。总把袖子卷到手肘，哪怕是这种天。",
+  "personality": "温和、幽默，带着末日里少见的浪漫和理想主义。他真心相信人可以拒绝仇恨规定的身份，也不愿把“敌人”当成杀戮本身就足够的理由；能不杀时，他总想留一条路。Owen 擅长用玩笑、故事和共同的回忆软化冲突，愿意听别人把话说完，也常能看见强硬表象下面真正的欲望。但他的善良伴随着逃避：他讨厌逼迫别人，也讨厌作出会让某个人受伤的明确选择，于是常用乐观、含糊和“以后再说”拖延责任，最后让伤害变得更深。他向往海、远方和仍值得相信的事业，厌倦为了阵营重复战争。对 Abby 的理解和感情从未真正结束，这既是他最忠诚的一面，也是他无法公平对待 Mel 的根源。",
+  "background": "Owen 在盐湖城火萤群体中长大，与 Abby 从少年时代便是最亲密的伙伴，后来成为恋人。他亲历圣玛丽医院的覆灭，也是在事后找到 Jerry 遗体的人之一。火萤解散后，他与 Abby、Mel、Manny、Nora 等幸存者共同辗转到西雅图并加入华盛顿解放阵线。Owen 是能力出色的士兵，却始终没有把自己完全交给 WLF 与塞拉菲特人的战争；在别人逐渐接受阵营仇恨时，他越来越怀念火萤最初关于重建世界的理想。他曾在西雅图海岸发现一座废弃水族馆和一艘帆船，把那里经营成逃离军营秩序的私人避难所。Abby 对追凶和训练的执着逐渐挤垮两人的爱情，Owen 后来与 Mel 建立关系，却始终没有真正放下 Abby，也没有诚实处理这种牵扯给三个人造成的伤害。",
+  "attributes": {
+    "STR": 60, "CON": 60, "DEX": 60, "APP": 60,
+    "POW": 55, "SIZ": 65, "INT": 60, "EDU": 55
+  },
+  "status": {
+    "hp": 13, "maxHp": 13,
+    "san": 55, "maxSan": 65,
+    "fatigue": 25, "maxFatigue": 100,
+    "luck": 55,
+    "conditions": []
+  },
+  "skills": {
+    "Ranged Combat": 60,
+    "Social": 55,
+    "Athletics": 50,
+    "Survival & Navigation": 45
+  },
+  "languages": { "native": ["English"] },
+  "inventory": [
+    {
+      "id": "item.owen.scoped_rifle",
+      "name": "带瞄的步枪",
+      "properties": { "note": "装了低倍瞄准镜的步枪，镜片有一道划痕。他打得准，但很少第一个开枪。" }
+    },
+    {
+      "id": "item.owen.binoculars",
+      "name": "双筒望远镜",
+      "properties": { "note": "橡胶包边磨秃了的双筒望远镜，队里就这一副，谁值班谁拿。" }
+    }
+  ],
+  "relationships": [
+    {
+      "targetId": "npc_abby_anderson",
+      "targetName": "Abby",
+      "relationshipType": "ally",
+      "attitude": 80,
+      "firstPerson": "Abby 是我从小认识的人。我陪她走了五年，可我一直盼着这条线索是假的。"
+    },
+    {
+      "targetId": "npc_mel",
+      "targetName": "Mel",
+      "relationshipType": "ally",
+      "attitude": 70,
+      "firstPerson": "Mel 跟我之间的事队里只有我们俩知道；她现在比谁都想让这趟早点结束。"
+    },
+    {
+      "targetId": "npc_manny",
+      "targetName": "Manny",
+      "relationshipType": "ally",
+      "attitude": 55,
+      "firstPerson": "Manny 是好兄弟，可他太想让 Abby 满意了。他会替她扣下那个扳机，连问都不问。"
+    }
+  ],
+  "longTermIntent": "陪她走完这一趟，然后想办法让她停下来；我怕的是等她真找到人的那一天，我一句话也说不出口。",
+  "memory": [
+    { "type": "secret", "content": "我们六个从西雅图过来，为的是找一个叫 Joel 的男人。四年前在盐湖城，是他杀了 Abby 的父亲。" },
+    { "type": "secret", "content": "我们只知道他有个弟弟叫 Tommy，兄弟俩，线索指向 Jackson 一带。谁也没见过他们的脸——真站在面前，我们认不出来。" },
+    { "type": "secret", "content": "我私下劝过 Abby 掉头，不止一次。她每次都听完，然后继续往前走。" },
+    { "type": "general", "content": "我们在这栋废弃的滑雪旅馆里住了三天。壁炉一直烧着，柴是我今天早上添的。" },
+    { "type": "general", "content": "Abby 被两个骑马巡逻的陌生人从感染者手里救下，他们一起回到了旅馆。现在六个人都在大厅；两个陌生人没报姓名，也没问我们的来意。" },
+    { "type": "plan", "content": "先请两名巡逻者烤火，给他们热水和食物" },
+    { "type": "map", "content": "旅馆在一条自己的车行道顶上，顺着往下走二十五分钟接到县道拐弯的地方。这是我们上山时走的路，也是唯一确定走得通的路。" },
+    { "type": "map", "content": "县道往东北是 Jackson 的方向，路牌还立着。我们没往那边靠。" },
+    { "type": "map", "content": "旅馆往东是林子，Abby 今天早上是从那边进去的。我们谁也没进去过，不知道里面什么样。" }
+  ]
+}

@@ -49,11 +49,16 @@ export function formatMemories(rows: ReadonlyArray<FormattableMemory>): string {
   // render identically, so their relative order cannot change the output.
   return [...rows]
     .map((m) => {
-      const where = m.location ? ` at ${m.location}` : "";
+      // The place sits inside the parentheses with the type, so the whole
+      // bracketed run reads as metadata. Rendered as a bare ` at <place>`
+      // between the type and the content, it was copied INTO a memory's
+      // content as if it were the first words of it — and then rendered
+      // twice, once by the world and once by the character.
+      const where = m.location ? `, at ${m.location}` : "";
 
       return {
         at: m.gameDateTime,
-        line: `- #${m.handle} [${formatForPrompt(m.gameDateTime)}] (${m.type})${where} ${m.content}`,
+        line: `- #${m.handle} [${formatForPrompt(m.gameDateTime)}] (${m.type}${where}) ${m.content}`,
       };
     })
     .sort((a, b) => a.at.localeCompare(b.at) || a.line.localeCompare(b.line))

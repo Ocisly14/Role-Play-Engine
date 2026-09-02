@@ -7,6 +7,7 @@ import { getEndpoint, models } from "./configuration.js";
 import { getAdapter } from "./providers/index.js";
 import type { ContentPart, SystemBlock } from "./providers/types.js";
 import { type TokenUsageTotals, recordTokenUsage } from "./tokenUsage.js";
+import { traceModelCall } from "./trace.js";
 import {
   type GenerationOptions,
   type ImageInput,
@@ -17,7 +18,6 @@ import {
   type ToolCallOptions,
   type ToolCallResult,
 } from "./types.js";
-import { traceModelCall } from "./trace.js";
 
 /**
  * Model class usage guidelines:
@@ -193,8 +193,15 @@ function toErrorMessage(error: unknown): string {
 
 /**
  * Runs `attempt` under the shared generation policy: primary model class with
- * retries and exponential backoff, an optional LARGE-class second phase, and
- * a final whole-provider fallback to OpenAI.
+ * retries and exponential backoff, plus an optional LARGE-class second phase.
+ *
+ * There is deliberately NO cross-provider fallback. It existed and was
+ * removed: when the configured provider was exhausted it silently reran the
+ * call on OpenAI, so a run that looked like it measured one provider had in
+ * fact billed another for its most expensive calls — and a switch made to cut
+ * cost quietly spent more. The retries below already absorb the transient
+ * failures worth absorbing; a provider that is genuinely down should surface
+ * as a failed action, not as someone else's answer.
  *
  * Kept generic over the result so text generation and tool calling share one
  * copy of this policy instead of two that drift apart.
@@ -288,30 +295,7 @@ async function runWithPolicy<T>(
     );
   };
 
-  try {
-    return await runWithProvider(provider);
-  } catch (primaryError) {
-    const primaryErrorMessage = toErrorMessage(primaryError);
-    const canFallbackToOpenAI =
-      provider !== ModelProviderName.OPENAI &&
-      Boolean(process.env.OPENAI_API_KEY?.trim());
-
-    if (!canFallbackToOpenAI) {
-      throw primaryError;
-    }
-
-    console.warn(
-      `⚠️ ${provider} exhausted retry limits. Switching provider fallback to openai...`
-    );
-
-    try {
-      return await runWithProvider(ModelProviderName.OPENAI);
-    } catch (openaiError) {
-      throw new Error(
-        `Primary provider failed (${provider}): ${primaryErrorMessage}; OpenAI fallback failed: ${toErrorMessage(openaiError)}`
-      );
-    }
-  }
+  return runWithProvider(provider);
 }
 
 /** Records usage for one completed call. Shared by both entry points. */
@@ -345,6 +329,7 @@ export async function generateText(
     temperature,
     contextSegments,
     cacheSystemPrompt,
+    maxOutputTokens,
   } = options;
 
   // Adapters that lack explicit breakpoints ignore `cacheControl`, so this is
@@ -389,7 +374,7 @@ export async function generateText(
       modelName: ctx.settings.name,
       system,
       content,
-      maxOutputTokens: ctx.settings.maxOutputTokens,
+      maxOutputTokens: maxOutputTokens ?? ctx.settings.maxOutputTokens,
       temperature,
       // Streaming exists only to feed onToken, and only Google wired it up.
       onToken:

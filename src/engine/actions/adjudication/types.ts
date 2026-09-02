@@ -5,7 +5,7 @@
 // code rolls against that bar when the action's time is spent. Nothing
 // semantic lives here.
 
-import type { SkillRollRecord, SkillSuccessLevel } from "../types.js";
+import type { SkillRollRecord } from "../types.js";
 
 export type RequiredLevel = "regular" | "hard" | "extreme";
 

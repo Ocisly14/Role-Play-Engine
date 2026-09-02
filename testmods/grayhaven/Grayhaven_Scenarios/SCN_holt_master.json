@@ -2,8 +2,8 @@
   "schemaVersion": 2,
   "id": "SCN_holt_master",
   "name": "Holt 家主卧",
-  "description": "Frank 和 Susan 的卧室干净得像两个人在各自值班:床铺是 Susan 的整齐,衣柜是 Frank 的整齐——衬衫按颜色码好,像装箱清单。房门后的小鞋架上,Susan 的护士鞋 [item.holt_master.nurse_shoes] 摆在最上层。五斗柜最底层的抽屉里放着一只上了小挂锁的铁皮文件盒 [item.holt_master.document_box],Frank 说那是『合同和税单』,说完就不再说了。Susan 那侧的床头柜上放着她的毛线篮 [item.holt_master.knitting_basket],毛线底下压着一本翻旧的护理手册,页边有她随手记的小字。窗子朝着后院,起雾的夜里能听见远处的雾号。房门 [SCN_holt_common] 通向起居的大开间。",
-  "parentLocationId": "LOC_holt_house",
+  "description": "Frank 和 Susan 的卧室干净得像两个人在各自值班:双人床 [item.holt_master.bed] 铺得平整,被角掖成病房的样子,那是 Susan 的整齐;靠墙的衣柜 [item.holt_master.wardrobe] 里衬衫按颜色码好,像一份装箱清单,那是 Frank 的整齐。房门后的小鞋架上,Susan 的护士鞋 [item.holt_master.nurse_shoes] 摆在最上层。五斗柜 [item.holt_master.dresser] 最底层的抽屉里放着一只上了小挂锁的铁皮文件盒 [item.holt_master.document_box],Frank 说那是『合同和税单』,说完就不再说了;柜面上立着一张褪了色的结婚照 [item.holt_master.wedding_photo],照片里两个人都比现在瘦。Susan 那侧的床头柜上放着她的毛线篮 [item.holt_master.knitting_basket],毛线底下压着一本翻旧的护理手册,页边有她随手记的小字;篮子边一盏床头灯 [item.holt_master.bedside_lamp] 常常亮到很晚,旁边一只上发条的旧闹钟 [item.holt_master.alarm_clock] 每晚都被拨到五点四十。窗子朝着后院,起雾的夜里能听见远处的雾号。房门 [SCN_holt_common] 通向起居的大开间。",
+  "parentLocationId": "holt_house",
   "indoor": true,
   "references": {
     "items": [
@@ -21,11 +21,43 @@
         "id": "item.holt_master.nurse_shoes",
         "name": "Susan 的护士鞋",
         "description": "一双白色胶底护士鞋,鞋头蹭得发白,鞋跟踩出常年快走的痕迹。"
+      },
+      {
+        "id": "item.holt_master.bed",
+        "name": "双人床",
+        "description": "铺着素色床罩的旧双人床,床头是漆过的铁架。Susan 每天早上把被角掖得像病房,可靠窗那一侧的枕头总是压得太深——躺着不睡的人,枕头是另一种样子。"
+      },
+      {
+        "id": "item.holt_master.wardrobe",
+        "name": "衣柜",
+        "description": "靠墙的双门木衣柜,一边是 Susan 的护士服和几件毛衣,另一边是 Frank 的格子绒衬衫,按颜色深浅码好,袖口都朝同一个方向。柜底整整齐齐排着鞋,和一只叠好的空帆布包。"
+      },
+      {
+        "id": "item.holt_master.dresser",
+        "name": "五斗柜",
+        "description": "五个抽屉的老柜子,上面三层是袜子、内衣和换季的毛线,第四层塞着旧信和孩子们的成绩单。最底层那格总是关得最严,里头只放着一只铁皮盒。"
+      },
+      {
+        "id": "item.holt_master.wedding_photo",
+        "name": "结婚照",
+        "description": "五斗柜上立着的一张褪色结婚照,黑白的,Susan 抱着一小把花,Frank 的衬衫领子紧得他不敢转头。相框玻璃擦得很干净——擦它的一直是同一个人。"
+      },
+      {
+        "id": "item.holt_master.bedside_lamp",
+        "name": "床头灯",
+        "description": "Susan 那侧床头柜上的一盏罩着布灯罩的小台灯,开关是拉绳的。夜里她常开着它坐一会儿,看不进书,也不叫醒身边的人。",
+        "isLightSource": true,
+        "lightLevel": 1
+      },
+      {
+        "id": "item.holt_master.alarm_clock",
+        "name": "上发条闹钟",
+        "description": "圆脸的双铃发条闹钟,走针声在夜里听得很清楚。指针每晚被拨到五点四十——真正听见它响的人只有一个,另一个多半那时候已经醒着了。"
       }
     ],
     "connections": [
       {
-        "id": "exit.holt_master.door",
+        "id": "connection.holt_master.door",
         "targetId": "SCN_holt_common",
         "name": "主卧门",
         "description": "通向起居大开间的房门。"

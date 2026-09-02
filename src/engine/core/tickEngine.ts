@@ -101,7 +101,6 @@ export function createTickEngine(opts: CreateTickEngineOptions): TickEngine {
     codeTools,
     resolveTickFn: opts.resolveTickFn,
     tickDurationMinutes: opts.tickDurationMinutes,
-    hasInitialized: opts.persistedState !== undefined,
   });
 
   return {

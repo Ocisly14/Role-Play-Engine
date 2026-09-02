@@ -2,20 +2,50 @@
   "schemaVersion": 2,
   "id": "ROAD_sawmill_fog",
   "name": "雾谷东径",
-  "description": "从锯木厂向西北下行的一小时林径。一头在废墟空地 [SCN_sawmill],另一头沉进雾谷 [SCN_fog_hollow]。走到后半段,雾会先于谷地出现:先漫过脚踝,然后是膝盖,最后是整个人。",
+  "description": "从锯木厂向西北下行的一小时林径。一头在废墟空地 [SCN_sawmill],另一头沉进雾谷 [SCN_fog_hollow]。沿途每隔几十步,树皮上就有一道砍出来的旧斧记,是伐木年代留下的路标,越往西越浅、越难找 [item.sawmill_fog.axe_blazes]。出废墟不久,一段锈死的索道钢缆从土里翻出来,挂在两棵树之间,人得弯腰从下面钻过去 [item.sawmill_fog.cable_remnant]。半路上横着一棵倒下的大树,树身比人还高,绕不过去,只能爬 [item.sawmill_fog.fallen_log]。再往前有一条兽径从左边分出去,岔口上有人垒了一小堆石头 [item.sawmill_fog.fork_cairn]——垒石头的人多半自己也拿不准哪条才是正路。走到后半段,雾会先于谷地出现:先漫过脚踝,然后是膝盖,最后是整个人;这一段最后一根路标只剩半截方桩立在路边,牌子早断了,断口朝天 [item.sawmill_fog.broken_signpost]。",
   "parentLocationId": "OUTDOOR",
   "travelTimeMinutes": 60,
   "references": {
-    "items": [],
+    "items": [
+      {
+        "id": "item.sawmill_fog.axe_blazes",
+        "name": "树上的旧斧记",
+        "description": "沿这条林径每隔几十步砍在树皮上的旧斧痕,伐木年代的路标,愈合后只剩浅浅一道,靠雾谷那头几乎看不出来。"
+      },
+      {
+        "id": "item.sawmill_fog.cable_remnant",
+        "name": "索道钢缆残段",
+        "description": "从土里翻出来、横挂在两棵树之间的一段旧集材索道钢缆,锈成褐色,一碰就掉铁屑,高度刚好挡在人胸口。",
+        "position": 0.15
+      },
+      {
+        "id": "item.sawmill_fog.fallen_log",
+        "name": "横路的倒木",
+        "description": "一棵倒下横在路中间的大树,树身比人高,树皮上已经踩出光滑的凹槽,过路的人都是从这儿翻过去的。",
+        "position": 0.45
+      },
+      {
+        "id": "item.sawmill_fog.fork_cairn",
+        "name": "岔口的石堆",
+        "description": "兽径分岔处有人垒的一小堆石头,不到膝盖高,顶上那块被雨水冲得歪了。",
+        "position": 0.7
+      },
+      {
+        "id": "item.sawmill_fog.broken_signpost",
+        "name": "断掉的路标",
+        "description": "路边只剩半截的方木桩,上面的牌子从钉眼处断掉了,断口朝天,风吹雨打得发灰。",
+        "position": 0.9
+      }
+    ],
     "connections": [
       {
-        "id": "exit.sawmill_fog.sawmill_end",
+        "id": "connection.sawmill_fog.sawmill_end",
         "targetId": "SCN_sawmill",
         "name": "东端(锯木厂)",
         "role": "endpointA"
       },
       {
-        "id": "exit.sawmill_fog.hollow_end",
+        "id": "connection.sawmill_fog.hollow_end",
         "targetId": "SCN_fog_hollow",
         "name": "西端(雾谷)",
         "role": "endpointB"

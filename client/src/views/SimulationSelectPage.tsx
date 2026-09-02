@@ -16,7 +16,7 @@ export default function SimulationSelectPage() {
     setCreating(true);
     setError(null);
     try {
-      const result = await simApi.createSimulation({
+      await simApi.createSimulation({
         moduleName: modName,
         language,
       });

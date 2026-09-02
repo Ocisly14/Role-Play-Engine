@@ -161,7 +161,7 @@ export class NpcMemoryManager {
     });
 
     if (updates.length > 0) {
-      await this.store.batchUpdateImportance(sessionId, updates);
+      await this.store.batchUpdateImportance(updates);
     }
   }
 

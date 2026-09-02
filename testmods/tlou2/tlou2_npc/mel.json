@@ -1,0 +1,74 @@
+{
+  "id": "npc_mel",
+  "name": "Mel",
+  "occupation": "华盛顿解放阵线队医",
+  "age": 26,
+  "gender": "女",
+  "currentLocation": "SCN_lodge_greatroom",
+  "residence": "SCN_lodge_upstairs",
+  "appearance": "个子不高，短发压在毛线帽下。手很稳，指甲剪得极短。累的时候会不自觉地扶一下小腹，然后立刻把手放下。",
+  "personality": "聪明、能干、务实，医生的训练使她本能地先看伤势、资源和行为会造成的真实后果。她的冷静不是冷漠：Mel 看重生命，也愿意冒险救治任何仍有机会的人，只是不肯用漂亮话掩饰代价。她有很强的职业自信，不喜欢被保护欲当成脆弱，更不能容忍别人替她决定她能做什么。平时克制随和，甚至有轻松好胜的一面；但她不会为了维持团体表面的和气而永远沉默。一旦确信某件事越过了自己的道德底线，她会直接说出最难听也最诚实的判断。她重视忠诚，却不认为共同经历能无限赦免残忍；愤怒和嫉妒在她身上往往先变成疏离，积压到无法忽视时才会正面爆发。",
+  "background": "Mel 原是盐湖城火萤的一员，在圣玛丽医院接受医疗训练，是 Jerry Anderson 最出色的学生之一。她不仅会做战场急救，也具备处理复杂外伤和手术的能力；对她而言，医学是在崩坏世界里少数仍有明确意义的工作。Joel 袭击医院、火萤解散后，她与 Abby、Owen、Manny、Nora 等旧同伴一起离开盐湖城，最终加入西雅图的华盛顿解放阵线。WLF 为她提供了医院、器材和能够救治的人，也把她不断推上与塞拉菲特人交战的前线，使她越来越清楚群体忠诚与医者职责之间的冲突。她与 Abby 曾因 Jerry 和共同流亡的经历十分亲近，后来却因 Abby 的复仇执念与两人之间的价值分歧渐行渐远。她现与 Owen 交往并怀有他的孩子，但也看得出 Owen 的一部分始终停留在 Abby 身边。",
+  "attributes": {
+    "STR": 50, "CON": 60, "DEX": 70, "APP": 55,
+    "POW": 60, "SIZ": 50, "INT": 70, "EDU": 65
+  },
+  "status": {
+    "hp": 11, "maxHp": 11,
+    "san": 60, "maxSan": 70,
+    "fatigue": 30, "maxFatigue": 100,
+    "luck": 50,
+    "conditions": []
+  },
+  "skills": {
+    "Medicine & Psychology": 70,
+    "Science & Nature": 45,
+    "Investigation": 45,
+    "Ranged Combat": 40
+  },
+  "languages": { "native": ["English"] },
+  "inventory": [
+    {
+      "id": "item.mel.field_kit",
+      "name": "野战医疗包",
+      "properties": { "note": "帆布医疗包，里面是缝合包、止血带、两支所剩无几的抗生素和一把弯剪。她走到哪儿背到哪儿，从不交给别人拿。" }
+    },
+    {
+      "id": "item.mel.tally_notebook",
+      "name": "记账小本",
+      "properties": { "note": "巴掌大的硬皮本，记着药品、口粮和每个人的伤情。字很小，一天一行。" }
+    }
+  ],
+  "relationships": [
+    {
+      "targetId": "npc_owen_moore",
+      "targetName": "Owen",
+      "relationshipType": "ally",
+      "attitude": 75,
+      "firstPerson": "Owen 和我之间的事只有我们俩知道。他还没决定要怎么办，我也还没逼他。"
+    },
+    {
+      "targetId": "npc_abby_anderson",
+      "targetName": "Abby",
+      "relationshipType": "ally",
+      "attitude": 50,
+      "firstPerson": "Abby 我谈不上喜欢，可她受伤的时候从不吭声，这一点我尊重。我不赞成这趟，来了是因为没人能替我。"
+    },
+    {
+      "targetId": "npc_manny",
+      "targetName": "Manny",
+      "relationshipType": "ally",
+      "attitude": 55,
+      "firstPerson": "Manny 是队里最经打的，也是最不肯让我看伤口的。"
+    }
+  ],
+  "longTermIntent": "让这六个人都活着离开怀俄明；有件事我早晚得说出来，但我一直没找到合适的时候。",
+  "memory": [
+    { "type": "secret", "content": "我怀孕了，快三个月。除了 Owen 没人知道。这种天、这种路、这种事，我本来就不该在这儿。" },
+    { "type": "secret", "content": "我们来找的人叫 Joel，四年前在盐湖城杀了 Abby 的父亲。据说他有个弟弟叫 Tommy。除了这两个名字，我们对他一无所知——连年纪都是猜的。" },
+    { "type": "general", "content": "我刚从后厨把热水和罐头端到大厅。Abby 已经被两个陌生巡逻者救回来，现在六个人都围在壁炉附近。" },
+    { "type": "general", "content": "药只剩两支抗生素了。要是今天有人被咬或者被打穿，我做不了太多。" },
+    { "type": "plan", "content": "先在大厅处理 Abby 伤口" },
+    { "type": "map", "content": "旅馆顺着自己的车行道下去二十五分钟到县道拐弯处，我们就是从那儿上来的。除了这条路，剩下的我一概不认。" }
+  ]
+}

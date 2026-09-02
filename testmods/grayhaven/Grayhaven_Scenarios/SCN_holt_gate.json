@@ -2,7 +2,7 @@
   "schemaVersion": 2,
   "id": "SCN_holt_gate",
   "name": "霍尔特家院门",
-  "description": "霍尔特家老宅前的院门和一小片院子。木栅栏刷过太多遍漆,院里的草地上压着两道深深的货车车辙 [item.holt_gate.truck_ruts],晾衣绳 [item.holt_gate.clothesline] 从门廊拉到苹果树 [item.holt_gate.apple_tree]。纱门后面就是这家人的起居空间 [SCN_holt_common]。一条安静的小巷从院门口通回主街北口,巷子里多半只有这家人自己的脚印。",
+  "description": "霍尔特家老宅前的院门和一小片院子。木栅栏刷过太多遍漆,院里的草地上压着两道深深的货车车辙 [item.holt_gate.truck_ruts],一直通到栅栏根下码着的旧机油桶和废轮胎 [item.holt_gate.oil_drums]——货车的保养全在这块空地上做。晾衣绳 [item.holt_gate.clothesline] 从门廊拉到苹果树 [item.holt_gate.apple_tree],这一根向阳,晒的是被褥和地毯,天好的日子上午就挂出来。院门柱上钉着一只铁皮信箱 [item.holt_gate.mailbox],箱侧的小红旗歪着没人扳正过。门廊上一条老木长椅 [item.holt_gate.porch_bench] 正对巷口,傍晚常有人坐在那儿装一斗烟看巷子;长椅边一双沾着干泥的工作靴 [item.holt_gate.mud_boots] 倒扣着靠墙——这家的规矩是泥不进屋。门廊顶上那盏灯 [item.holt_gate.porch_light] 天一黑就亮着,谁最后回家谁关。纱门后面就是这家人的起居空间 [SCN_holt_common]。一条安静的小巷从院门口通回主街北口,巷子里多半只有这家人自己的脚印。",
   "references": {
     "items": [
       {
@@ -13,17 +13,44 @@
       {
         "id": "item.holt_gate.clothesline",
         "name": "晾衣绳",
-        "description": "一根从门廊拉到苹果树的晾衣绳,常年绷得笔直,几个衣夹留在绳上没摘,风一吹哗啦响。"
+        "description": "一根从门廊拉到苹果树的晾衣绳,前院向阳,晒的是被褥、地毯这类大件,几个衣夹留在绳上没摘,风一吹哗啦响。"
       },
       {
         "id": "item.holt_gate.truck_ruts",
         "name": "货车车辙",
         "description": "草地上压出的两道深辙,常年被同一辆车轧过,车轮印硬得踩不塌,雨后也总积着水。"
+      },
+      {
+        "id": "item.holt_gate.mailbox",
+        "name": "铁皮信箱",
+        "description": "钉在院门柱上的白铁皮信箱,漆皮翻卷,箱侧的小红旗歪着。镇上的邮件一周来一趟,这家人真正等的是圣迭戈寄来的信,信封上是海军的地址。"
+      },
+      {
+        "id": "item.holt_gate.porch_bench",
+        "name": "门廊长椅",
+        "description": "门廊上一条没漆过的木长椅,正对巷口,坐面被磨出两块浅坑。谁在这儿坐着,巷子里来了车、来了人,一眼就看得见。"
+      },
+      {
+        "id": "item.holt_gate.mud_boots",
+        "name": "门廊上的工作靴",
+        "description": "两三双倒扣着靠墙的橡胶工作靴,鞋帮上干泥一层压一层——有装卸区的水泥灰,也有林子里那种发红的泥。这家的规矩:泥不进屋。"
+      },
+      {
+        "id": "item.holt_gate.porch_light",
+        "name": "门廊灯",
+        "description": "门廊顶上一盏罩着玻璃的黄灯泡,天黑就开,留给最后回家的那个人关。去年冬天起它偶尔会毫无来由地闪一下,家里都说是线路老了。",
+        "isLightSource": true,
+        "lightLevel": 1
+      },
+      {
+        "id": "item.holt_gate.oil_drums",
+        "name": "机油桶与废轮胎",
+        "description": "栅栏根下码着两只旧机油桶和一摞磨秃了的备用轮胎,桶盖上搁着漏斗和一叠揉皱的抹布。换机油、补胎、拧紧松掉的东西,都在这块空地上做。"
       }
     ],
     "connections": [
       {
-        "id": "exit.holt_gate.front_door",
+        "id": "connection.holt_gate.front_door",
         "targetId": "SCN_holt_common",
         "name": "霍尔特家纱门",
         "description": "门廊尽头的纱门,通向起居餐厨。"

@@ -1,0 +1,38 @@
+{
+  "schemaVersion": 2,
+  "id": "SCN_pine_hollow",
+  "name": "松林洼地",
+  "description": "一片被松林围死的洼地,风在里面打转,雪从四个方向同时扑过来,站定十秒就分不清自己是从哪边进来的 [cond.pine_hollow.whiteout]。一棵老松从半腰折断,横在洼地中央,断口是新的,树皮下的木头白得刺眼 [item.pine_hollow.fallen_pine]。背风的那一侧堆起了齐腰的雪垄,一脚踩下去能陷到大腿根 [item.pine_hollow.deep_drift]。几棵树干上钉着褪色的橙色路标,箭头指着四个不同的方向,其中两块已经被雪糊死了 [item.pine_hollow.trail_markers]。走进来容易。",
+  "references": {
+    "items": [
+      {
+        "id": "item.pine_hollow.fallen_pine",
+        "name": "折断的老松",
+        "description": "一棵合抱粗的老松从半腰断了,横在洼地中央,断口的木茬还是新的白色。树干背风的一侧能坐人,雪落不到。"
+      },
+      {
+        "id": "item.pine_hollow.deep_drift",
+        "name": "齐腰的雪垄",
+        "description": "背风侧堆起的一道雪垄,表面结了层硬壳,踩上去会突然塌陷到大腿根。绕过去要多花不少力气,直接趟过去更费。"
+      },
+      {
+        "id": "item.pine_hollow.trail_markers",
+        "name": "褪色的橙色路标",
+        "description": "钉在树干上的几块橙色铁皮路标,是林业局早年留下的,漆掉得只剩底色。箭头指向四个方向,其中两块被雪糊得完全看不出指哪儿。"
+      }
+    ],
+    "connections": [],
+    "conditions": [
+      {
+        "id": "cond.pine_hollow.whiteout",
+        "description": "暴雪白幕:风在洼地里打转,四个方向的林子看上去没有区别,最容易在这里转向。",
+        "mechanicalEffect": {
+          "skillPenalty": {
+            "Survival & Navigation": -25,
+            "Investigation": -10
+          }
+        }
+      }
+    ]
+  }
+}

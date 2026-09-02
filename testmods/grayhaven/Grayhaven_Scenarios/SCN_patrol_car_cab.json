@@ -1,0 +1,71 @@
+{
+  "schemaVersion": 2,
+  "id": "SCN_patrol_car_cab",
+  "name": "巡逻车车内",
+  "description": "福特 LTD 的车厢里有一股旧烟味和皮革晒过的味道。前排是一整条乙烯革长座 [item.patrol_car_cab.front_seat],驾驶位那一侧凹得很深,是同一个人坐了二十多年坐出来的;仪表盘 [item.patrol_car_cab.dashboard] 上的里程表早就转过一圈回到零,油表指针有点粘,得敲两下才准。仪表台下面装着一台县警局配的车载电台 [item.patrol_car_cab.police_radio],开机要先暖上半分钟,进了旧海岸公路的树影里就只剩沙沙声;电台旁边卡着一只手持探照灯 [item.patrol_car_cab.spotlight],线绳缠着胶带。前后排之间立着一道铁网隔板 [item.patrol_car_cab.partition],后座 [item.patrol_car_cab.rear_seat] 的革面上没有一道刮痕——这些年真正坐过后面的人屈指可数。仪表台前夹着一块写字夹板 [item.patrol_car_cab.clipboard],上面是空白的巡逻记录表,最上面一张的日期栏填了一半;座椅头顶的枪架 [item.patrol_car_cab.gun_rack] 空着,霰弹枪锁在办公室的枪柜里。手套箱 [item.patrol_car_cab.glovebox] 里是行车证、一叠交通传票簿和一盒从没拆封的润喉糖;遮阳板背后夹着一张镇区地图 [item.patrol_car_cab.road_map],主街被铅笔描过无数遍,林道口以北一片空白。车顶那盏警灯的开关 [item.patrol_car_cab.light_switch] 在方向盘左下方,红罩子裂了,打开时光是斜的。",
+  "parentLocationId": "VEH_patrol_car",
+  "indoor": true,
+  "references": {
+    "items": [
+      {
+        "id": "item.patrol_car_cab.front_seat",
+        "name": "前排长座",
+        "description": "一整条黑色乙烯革长座,驾驶位陷得很深,副驾那边几乎是新的。座缝里能摸到硬币和烟丝。"
+      },
+      {
+        "id": "item.patrol_car_cab.dashboard",
+        "name": "仪表盘",
+        "description": "里程表转过一圈回到零,油表指针发粘,敲两下才走。仪表台上贴着一张褪色的县警局徽章贴纸。"
+      },
+      {
+        "id": "item.patrol_car_cab.police_radio",
+        "name": "车载电台",
+        "description": "县警局配发的车载无线电台,开机要暖半分钟。镇内通话清楚,一进旧海岸公路的树影或上山的车行道就断断续续,只剩沙沙声。频道旋钮上贴着值班室的频率。"
+      },
+      {
+        "id": "item.patrol_car_cab.spotlight",
+        "name": "手持探照灯",
+        "description": "插在点烟器上的手持探照灯,线绳缠着胶带。光很硬,能照出半条街。"
+      },
+      {
+        "id": "item.patrol_car_cab.partition",
+        "name": "铁网隔板",
+        "description": "前后排之间的铁网隔板,后排的车门从里面打不开。铁网上一处被人用手指抠弯过。"
+      },
+      {
+        "id": "item.patrol_car_cab.rear_seat",
+        "name": "后座",
+        "description": "革面上没有一道刮痕的后座。这些年真正坐过后面的人屈指可数,大多是喝多了的渔工。"
+      },
+      {
+        "id": "item.patrol_car_cab.clipboard",
+        "name": "巡逻记录夹板",
+        "description": "夹着空白巡逻记录表的写字夹板,一支圆珠笔用绳拴在夹子上。最上面一张的日期栏填了一半,签名栏空着。"
+      },
+      {
+        "id": "item.patrol_car_cab.gun_rack",
+        "name": "枪架",
+        "description": "头顶的立式枪架,锁扣完好,架上是空的——霰弹枪锁在办公室的枪柜里,Ray 嫌带着它太招摇。"
+      },
+      {
+        "id": "item.patrol_car_cab.glovebox",
+        "name": "手套箱",
+        "description": "行车证、一叠交通传票簿(存根只撕过几张)、一盒没拆封的润喉糖和一把备用手电的电池。"
+      },
+      {
+        "id": "item.patrol_car_cab.road_map",
+        "name": "镇区地图",
+        "description": "夹在遮阳板背后的镇区地图,主街和旧海岸公路被铅笔描过无数遍,林道口以北一片空白,车行道那一段被人用红笔画了个问号。"
+      },
+      {
+        "id": "item.patrol_car_cab.light_switch",
+        "name": "警灯开关",
+        "description": "方向盘左下方的拨杆开关,带动车顶那盏红罩子裂了的警灯。打开时光是斜的,街上的人一眼就知道是这辆车。",
+        "isLightSource": true,
+        "lightLevel": 2
+      }
+    ],
+    "connections": [],
+    "conditions": []
+  }
+}

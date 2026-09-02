@@ -12,10 +12,29 @@
 // run reads top to bottom: 0001-phase-g-perception-render, 0002-role-sim-agent,
 // 0003-world-action-engine, …
 
-import { mkdirSync, writeFileSync } from "node:fs";
+import { mkdirSync, readdirSync, writeFileSync } from "node:fs";
 import path from "node:path";
 
+/** Next file index. Starts from what is already in the directory: a resumed
+ *  run traces into the same directory as the run it resumes, and a counter
+ *  that restarted at 1 overwrote the first run's files from 0001 upward. */
 let sequence = 0;
+
+/** The highest `NNNN-` prefix already in `dir`, or 0 for an empty one. */
+export function highestTraceIndex(dir: string): number {
+  let max = 0;
+  let names: string[];
+  try {
+    names = readdirSync(dir);
+  } catch {
+    return 0;
+  }
+  for (const name of names) {
+    const m = /^(\d+)-/.exec(name);
+    if (m) max = Math.max(max, Number.parseInt(m[1], 10));
+  }
+  return max;
+}
 /** `undefined` = not resolved yet, `null` = tracing off. */
 let resolvedDir: string | null | undefined;
 
@@ -25,6 +44,7 @@ function traceDir(): string | null {
     if (raw) {
       mkdirSync(raw, { recursive: true });
       resolvedDir = raw;
+      sequence = highestTraceIndex(raw);
     } else {
       resolvedDir = null;
     }
@@ -60,7 +80,10 @@ export function traceModelCall(entry: ModelCallTrace): void {
 
   const index = ++sequence;
   const label = (entry.operation ?? "call").replace(/[^\w.-]+/g, "_");
-  const file = path.join(dir, `${String(index).padStart(4, "0")}-${label}.json`);
+  const file = path.join(
+    dir,
+    `${String(index).padStart(4, "0")}-${label}.json`
+  );
   try {
     writeFileSync(file, JSON.stringify(entry, null, 2));
   } catch (error) {

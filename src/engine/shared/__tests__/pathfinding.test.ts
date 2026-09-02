@@ -1,5 +1,4 @@
 import { describe, expect, it } from "vitest";
-import type { DynamicGameStateManager } from "../../../state/DynamicGameState.js";
 import { type RoadNode, buildTopology } from "../../../state/topologyTypes.js";
 import type { DynamicScene } from "../../../state/types.js";
 import { nearestRoadPosition, resolveTargetPosition } from "../pathfinding.js";
@@ -15,7 +14,7 @@ const scenes = new Map<string, DynamicScene>([
     "J_A",
     {
       id: "J_A",
-      connections: [{ id: "exit.ja.home", targetId: "S_HOME" }],
+      connections: [{ id: "connection.ja.home", targetId: "S_HOME" }],
     } as unknown as DynamicScene,
   ],
   ["J_B", { id: "J_B", connections: [] } as unknown as DynamicScene],
@@ -42,23 +41,12 @@ const roads = new Map<string, RoadNode>([
 ]);
 const topology = buildTopology(scenes, roads);
 
-const dgsm = {
-  getState: () => ({
-    scenarioOutlines: [
-      { id: "OUTDOOR", name: "街道", entrySceneId: "R_MAIN" },
-      { id: "B_SHOP", name: "商铺", entrySceneId: "S_HOME" },
-      { id: "LOOP", name: "自指", entrySceneId: "LOOP" },
-    ],
-    scenes,
-  }),
-} as unknown as DynamicGameStateManager;
-
 describe("resolveTargetPosition — retired macro-location ids", () => {
   it("answers null for an id that names no scene or road", () => {
     // Outline indirection is gone: a movement target must name a place in
     // the topology directly.
-    expect(resolveTargetPosition("OUTDOOR", topology, dgsm)).toBeNull();
-    expect(resolveTargetPosition("B_SHOP", topology, dgsm)).toBeNull();
+    expect(resolveTargetPosition("OUTDOOR", topology)).toBeNull();
+    expect(resolveTargetPosition("B_SHOP", topology)).toBeNull();
   });
 });
 
@@ -68,8 +56,7 @@ describe("nearestRoadPosition", () => {
       nearestRoadPosition(
         { type: "scene", sceneId: "S_HOME" },
         "R_MAIN",
-        topology,
-        dgsm
+        topology
       )
     ).toBe(0);
   });
@@ -79,8 +66,7 @@ describe("nearestRoadPosition", () => {
       nearestRoadPosition(
         { type: "road", roadId: "R_MAIN", position: 0.7 },
         "R_MAIN",
-        topology,
-        dgsm
+        topology
       )
     ).toBe(0.7);
   });

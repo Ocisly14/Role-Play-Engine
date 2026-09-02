@@ -19,10 +19,7 @@ import { Applier } from "../applier.js";
 // Topology: J_A —R_MAIN(10')— J_B, with a two-road detour J_A —R_A_C(5')—
 // J_C —R_C_B(9')— J_B. S_HOME hangs off J_A with a two-way pair of exit ids.
 function makeFixture() {
-  const state = initialDynamicGameState({
-    sessionId: "test-session",
-    moduleName: "test-module",
-  });
+  const state = initialDynamicGameState();
 
   const scene: DynamicScene = {
     id: "S_HOME",
@@ -31,7 +28,7 @@ function makeFixture() {
     parentLocationId: "LOC_TOWN",
     items: [],
     conditions: [],
-    connections: [{ id: "exit.home.junc", targetId: "J_A" }],
+    connections: [{ id: "connection.home.junc", targetId: "J_A" }],
   };
 
   // Top-level scenes (no parentLocationId) are the geography nodes.
@@ -58,8 +55,8 @@ function makeFixture() {
     description: `${id} road`,
     parentLocationId: "OUTDOOR",
     connections: [
-      { id: `exit.${id}.a`, targetId: a, role: "endpointA" },
-      { id: `exit.${id}.b`, targetId: b, role: "endpointB" },
+      { id: `connection.${id}.a`, targetId: a, role: "endpointA" },
+      { id: `connection.${id}.b`, targetId: b, role: "endpointB" },
     ],
     endpointA: a,
     endpointB: b,
@@ -70,17 +67,17 @@ function makeFixture() {
   });
 
   const jA = junction("J_A", [
-    { id: "exit.junc.home", targetId: "S_HOME" },
-    { id: "exit.ja.rmain", targetId: "R_MAIN" },
-    { id: "exit.ja.rac", targetId: "R_A_C" },
+    { id: "connection.junc.home", targetId: "S_HOME" },
+    { id: "connection.ja.rmain", targetId: "R_MAIN" },
+    { id: "connection.ja.rac", targetId: "R_A_C" },
   ]);
   const jB = junction("J_B", [
-    { id: "exit.jb.rmain", targetId: "R_MAIN" },
-    { id: "exit.jb.rcb", targetId: "R_C_B" },
+    { id: "connection.jb.rmain", targetId: "R_MAIN" },
+    { id: "connection.jb.rcb", targetId: "R_C_B" },
   ]);
   const jC = junction("J_C", [
-    { id: "exit.jc.rac", targetId: "R_A_C" },
-    { id: "exit.jc.rcb", targetId: "R_C_B" },
+    { id: "connection.jc.rac", targetId: "R_A_C" },
+    { id: "connection.jc.rcb", targetId: "R_C_B" },
   ]);
   const rMain = road("R_MAIN", "J_A", "J_B", 10);
   const rAC = road("R_A_C", "J_A", "J_C", 5);
@@ -132,7 +129,7 @@ describe("connectionBlock lands in state.blockedConnections", () => {
   it("writes the canonical edge key with the reason", () => {
     const { dgsm, applier, state } = fixture;
     applier.flush([], T, [
-      blockDelta("a1", "exit.ja.rmain", true, "a felled tree"),
+      blockDelta("a1", "connection.ja.rmain", true, "a felled tree"),
     ]);
 
     expect(state.blockedConnections.get("road:R_MAIN::scene:J_A")).toBe(
@@ -141,19 +138,19 @@ describe("connectionBlock lands in state.blockedConnections", () => {
     expect(dgsm.getConnectionBlockReason("J_A", "R_MAIN")).toBe(
       "a felled tree"
     );
-    expect(dgsm.isConnectionBlocked("R_MAIN", "J_A")).toBe(true);
+    expect(dgsm.getConnectionBlockReason("R_MAIN", "J_A")).toBeDefined();
   });
 
   it("drops (warn, no throw) a vote whose connection id resolves to no edge", () => {
     const { applier, state } = fixture;
     expect(() =>
       applier.flush([], T, [
-        blockDelta("a1", "exit.nowhere.door", true, "ghost"),
+        blockDelta("a1", "connection.nowhere.door", true, "ghost"),
       ])
     ).not.toThrow();
     expect(state.blockedConnections.size).toBe(0);
     expect(warnSpy).toHaveBeenCalledWith(
-      expect.stringContaining('"exit.nowhere.door" resolves to no edge')
+      expect.stringContaining('"connection.nowhere.door" resolves to no edge')
     );
   });
 });
@@ -163,31 +160,19 @@ describe("pathfinding refuses the blocked edge and detours", () => {
   const to = { type: "scene", sceneId: "J_B" } as const;
 
   it("takes the direct road while it is open", () => {
-    const { topology, state, dgsm } = fixture;
-    const path = findTopologyPath(
-      from,
-      to,
-      topology,
-      state.blockedConnections,
-      dgsm
-    );
+    const { topology, state } = fixture;
+    const path = findTopologyPath(from, to, topology, state.blockedConnections);
     expect(path?.steps.map((s) => s.id)).toEqual(["R_MAIN"]);
     expect(path?.totalMinutes).toBe(10);
   });
 
   it("detours once the Engine blocks the direct road", () => {
-    const { applier, topology, state, dgsm } = fixture;
+    const { applier, topology, state } = fixture;
     applier.flush([], T, [
-      blockDelta("a1", "exit.ja.rmain", true, "a felled tree"),
+      blockDelta("a1", "connection.ja.rmain", true, "a felled tree"),
     ]);
 
-    const path = findTopologyPath(
-      from,
-      to,
-      topology,
-      state.blockedConnections,
-      dgsm
-    );
+    const path = findTopologyPath(from, to, topology, state.blockedConnections);
     expect(path).not.toBeNull();
     expect(path?.steps.map((s) => s.id)).toEqual(["R_A_C", "R_C_B"]);
     expect(path?.totalMinutes).toBe(14);
@@ -198,8 +183,8 @@ describe("refcounted votes from several sources", () => {
   it("stays blocked until every voter withdraws", () => {
     const { dgsm, applier } = fixture;
     applier.flush([], T, [
-      blockDelta("a1", "exit.ja.rmain", true, "a felled tree"),
-      blockDelta("a2", "exit.ja.rmain", true, "a mudslide"),
+      blockDelta("a1", "connection.ja.rmain", true, "a felled tree"),
+      blockDelta("a2", "connection.ja.rmain", true, "a mudslide"),
     ]);
     expect(dgsm.getConnectionBlockReason("J_A", "R_MAIN")).toBe(
       "a felled tree; a mudslide"
@@ -207,31 +192,31 @@ describe("refcounted votes from several sources", () => {
 
     // One voter withdraws — the other's block stands, reason updated.
     applier.flush([], T, [
-      blockDelta("a1", "exit.ja.rmain", false, "a felled tree"),
+      blockDelta("a1", "connection.ja.rmain", false, "a felled tree"),
     ]);
     expect(dgsm.getConnectionBlockReason("J_A", "R_MAIN")).toBe("a mudslide");
 
     // The last voter withdraws — the edge opens.
     applier.flush([], T, [
-      blockDelta("a2", "exit.ja.rmain", false, "a mudslide"),
+      blockDelta("a2", "connection.ja.rmain", false, "a mudslide"),
     ]);
-    expect(dgsm.isConnectionBlocked("J_A", "R_MAIN")).toBe(false);
+    expect(dgsm.getConnectionBlockReason("J_A", "R_MAIN")).toBeUndefined();
   });
 
   it("collapses the two directions' exit ids onto one edge", () => {
     const { dgsm, applier } = fixture;
     // Block through the scene's own exit id...
     applier.flush([], T, [
-      blockDelta("a1", "exit.home.junc", true, "door jammed"),
+      blockDelta("a1", "connection.home.junc", true, "door jammed"),
     ]);
-    expect(dgsm.isConnectionBlocked("S_HOME", "J_A")).toBe(true);
+    expect(dgsm.getConnectionBlockReason("S_HOME", "J_A")).toBeDefined();
 
     // ...and lift it through the junction's opposite-direction exit id: same
     // edge, same vote table entry.
     applier.flush([], T, [
-      blockDelta("a1", "exit.junc.home", false, "door jammed"),
+      blockDelta("a1", "connection.junc.home", false, "door jammed"),
     ]);
-    expect(dgsm.isConnectionBlocked("S_HOME", "J_A")).toBe(false);
+    expect(dgsm.getConnectionBlockReason("S_HOME", "J_A")).toBeUndefined();
   });
 });
 
@@ -239,8 +224,8 @@ describe("vote table serialization", () => {
   it("round-trips votes keyed by edge so a rehydrated applier can unblock", () => {
     const { dgsm, applier } = fixture;
     applier.flush([], T, [
-      blockDelta("a1", "exit.ja.rmain", true, "a felled tree"),
-      blockDelta("a2", "exit.ja.rmain", true, "a mudslide"),
+      blockDelta("a1", "connection.ja.rmain", true, "a felled tree"),
+      blockDelta("a2", "connection.ja.rmain", true, "a mudslide"),
     ]);
 
     const serialized = applier.serializeConnectionVotes();
@@ -251,12 +236,72 @@ describe("vote table serialization", () => {
     const revived = new Applier(dgsm, new Map());
     revived.rehydrateConnectionVotes(JSON.parse(JSON.stringify(serialized)));
     revived.flush([], T, [
-      blockDelta("a1", "exit.ja.rmain", false, "a felled tree"),
+      blockDelta("a1", "connection.ja.rmain", false, "a felled tree"),
     ]);
     expect(dgsm.getConnectionBlockReason("J_A", "R_MAIN")).toBe("a mudslide");
     revived.flush([], T, [
-      blockDelta("a2", "exit.ja.rmain", false, "a mudslide"),
+      blockDelta("a2", "connection.ja.rmain", false, "a mudslide"),
     ]);
-    expect(dgsm.isConnectionBlocked("J_A", "R_MAIN")).toBe(false);
+    expect(dgsm.getConnectionBlockReason("J_A", "R_MAIN")).toBeUndefined();
+  });
+});
+
+// `hidden` is the world's answer to "can anyone see this"; `discoveredBy` is
+// each viewer's answer to "have I found it". Both live on the passage, so
+// nothing has to be kept in step with anything else — and finding is not
+// private, so the operation carries a list.
+describe("connectionDiscovered", () => {
+  const CONN = "connection.home.junc";
+
+  function discovery(characterIds: string[]): SourcedWorldDelta {
+    return {
+      source: { kind: "action", actionId: "a1" },
+      causalBasis: "he prised the panel away and they all saw it",
+      delta: {
+        domain: "scene",
+        sceneId: "S_HOME",
+        operation: {
+          kind: "connectionDiscovered",
+          connectionId: CONN,
+          characterIds,
+        },
+      },
+    };
+  }
+
+  /** The character-ref guard drops a change naming nobody, so the fixture has
+   *  to contain the people who are supposed to find the door. */
+  function withCast() {
+    const f = makeFixture();
+    f.state.npcCharacters.push(
+      ...["npc_1", "npc_2", "npc_3"].map(
+        (id) => ({ id, name: id, status: { conditions: [] } }) as never
+      )
+    );
+    return f;
+  }
+
+  it("records everyone named, on the connection itself", () => {
+    const { applier, state } = withCast();
+    applier.flush([], T, [discovery(["npc_1", "npc_2"])]);
+
+    const discoveredBy = state.scenes
+      .get("S_HOME")
+      ?.connections?.find((c) => c.id === CONN)?.discoveredBy;
+    expect(discoveredBy).toContain("npc_1");
+    expect(discoveredBy).toContain("npc_2");
+    // The one who was not in the room learns nothing.
+    expect(discoveredBy).not.toContain("npc_3");
+  });
+
+  it("is idempotent — finding the same door twice is one discovery", () => {
+    const { applier, state } = withCast();
+    applier.flush([], T, [discovery(["npc_1"])]);
+    applier.flush([], T, [discovery(["npc_1"])]);
+
+    const connection = state.scenes
+      .get("S_HOME")
+      ?.connections?.find((c) => c.id === CONN);
+    expect(connection?.discoveredBy).toEqual(["npc_1"]);
   });
 });

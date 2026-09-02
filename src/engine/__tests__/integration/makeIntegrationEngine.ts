@@ -1,7 +1,12 @@
-import { DynamicGameStateManager } from "../../../state/DynamicGameState.js";
+import {
+  DynamicGameStateManager,
+  initialDynamicGameState,
+} from "../../../state/DynamicGameState.js";
 import type { ModuleSetup } from "../../../state/types.js";
 import { type TickEngine, createTickEngine } from "../../core/tickEngine.js";
 import { createDefaultSubsystemRegistry } from "../../registerDefaults.js";
+import type { EngineResolutionContext } from "../../resolution/types.js";
+import type { RawTickResolution } from "../../resolution/worldDeltaSchema.js";
 import type { SubsystemRegistry } from "../../subsystem/registry.js";
 
 /**
@@ -31,15 +36,20 @@ export interface IntegrationEngineOptions {
   initialTime?: string;
   /** Tick duration in minutes (default 1). */
   tickDurationMinutes?: number;
+  /** What the stub Engine submits for a triggered tick. Defaults to nothing.
+   *  The submission runs through the REAL `finalizeResolution`, which is the
+   *  seam sanity settlement lands on. */
+  resolveWith?: (context: EngineResolutionContext) => RawTickResolution;
+  /** Uniform [0,1) driving every sanity roll finalization makes. */
+  sanityRng?: () => number;
 }
 
 export function makeIntegrationEngine(
   opts: IntegrationEngineOptions = {}
 ): IntegrationEngineSetup {
-  const dgsm = new DynamicGameStateManager();
-  if (opts.moduleSetup) {
-    dgsm.loadWorldData({ moduleSetup: opts.moduleSetup });
-  }
+  const state = initialDynamicGameState();
+  if (opts.moduleSetup) state.moduleSetup = opts.moduleSetup;
+  const dgsm = new DynamicGameStateManager(state);
   const initial = opts.initialTime ?? "1923-10-17T08:00:00";
   dgsm.setGameDateTime(initial);
 
@@ -55,15 +65,17 @@ export function makeIntegrationEngine(
       const { finalizeResolution } = await import(
         "../../resolution/worldDeltaValidator.js"
       );
+      const raw = opts.resolveWith?.(context) ?? { starting: [], ending: [] };
       const finalized = finalizeResolution(
-        { starting: [], ending: [] },
-        context
+        raw,
+        context,
+        opts.sanityRng ? { rng: opts.sanityRng } : undefined
       );
       return {
         ok: true as const,
         resolution: finalized.resolution,
-        movementInits: {},
-        checkInits: {},
+        movementInits: finalized.movementInits,
+        checkInits: finalized.checkInits,
         codeToolInvocations: [],
       };
     },
@@ -86,7 +98,7 @@ export function seedNpc(
   id: string,
   sceneId: string
 ): void {
-  dgsm.registerNpcProfile({
+  dgsm.getState().npcCharacters.push({
     id,
     name: id,
     attributes: {
@@ -119,8 +131,8 @@ export function seedNpc(
 
 /**
  * Insert a scene with the given fields. Mirrors the shape produced by
- * dgsm.ensureScene() but lets callers populate items / parentLocationId /
- * indoor without round-tripping through later setters.
+ * the runtime scene shape while letting callers populate items /
+ * parentLocationId / indoor in one write.
  */
 export function seedScene(
   dgsm: DynamicGameStateManager,
@@ -131,7 +143,7 @@ export function seedScene(
     items?: Array<{ id: string; name: string }>;
   } = {}
 ): void {
-  dgsm.updateScene(sceneId, {
+  dgsm.getState().scenes.set(sceneId, {
     id: sceneId,
     name: sceneId,
     description: "",

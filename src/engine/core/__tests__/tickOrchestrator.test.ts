@@ -5,6 +5,9 @@
 
 import { describe, expect, it, vi } from "vitest";
 import type { DynamicGameStateManager } from "../../../state/DynamicGameState.js";
+import { buildTopology } from "../../../state/topologyTypes.js";
+import type { RoadNode } from "../../../state/topologyTypes.js";
+import type { DynamicScene } from "../../../state/types.js";
 import type { ActionCommand } from "../../actions/types.js";
 import type { EngineResolutionContext } from "../../resolution/types.js";
 import type { RawTickResolution } from "../../resolution/worldDeltaSchema.js";
@@ -12,15 +15,22 @@ import { finalizeResolution } from "../../resolution/worldDeltaValidator.js";
 import { SubsystemRegistry } from "../../subsystem/registry.js";
 import { CodeToolRegistry } from "../../tools/codeTool.js";
 import { type TickEngine, createTickEngine } from "../tickEngine.js";
+import type { CharacterCondition } from "../types.js";
 
-function makeDgsm(opts: { aliveIds?: string[] } = {}) {
+function makeDgsm(
+  opts: {
+    aliveIds?: string[];
+    skills?: Record<string, number>;
+    conditions?: CharacterCondition[];
+  } = {}
+) {
   let clock = "1923-04-02T09:00:00";
   const alive = new Set(opts.aliveIds ?? ["npc_1", "npc_2"]);
   const npc = (id: string) => ({
     id,
     name: id,
     attributes: { STR: 50 },
-    skills: {},
+    skills: opts.skills ?? {},
     status: {
       hp: 10,
       maxHp: 10,
@@ -28,7 +38,7 @@ function makeDgsm(opts: { aliveIds?: string[] } = {}) {
       maxSan: 60,
       fatigue: 0,
       maxFatigue: 10,
-      conditions: [],
+      conditions: opts.conditions ?? [],
     },
     relationships: [],
   });
@@ -413,5 +423,320 @@ describe("persistence", () => {
     const third = await engine.submitCommand(command());
     expect(third.actionId).toBe(first.actionId);
     expect(engine.getActorActions("npc_1")).toHaveLength(1);
+  });
+});
+
+describe("a route that does not join up", () => {
+  // Observed live: Tommy's remembered way merged two real lanes into one
+  // ("north gate, then Holt Lane, then ten minutes to the trailhead" — Holt
+  // Lane goes to the Holt gate). The Engine refused to invent the missing
+  // stretch, which is correct; but all the actor was told is that his action
+  // "did not go on", so he read it as a dizzy spell and re-stated the SAME
+  // wrong route twice more. Three ticks on a mistake one sentence could fix.
+  function makeMapDgsm() {
+    const base = makeDgsm();
+    const named = new Map([
+      ["SCN_1", { id: "SCN_1", name: "家门口", connections: [] }],
+      [
+        "SCN_TRAILHEAD",
+        { id: "SCN_TRAILHEAD", name: "林道口", connections: [] },
+      ],
+    ]);
+    return {
+      ...base,
+      getScene: (id: string) => named.get(id) ?? null,
+      getTopology: () => ({
+        roads: new Map(),
+        nodeSceneIds: new Set(["SCN_1", "SCN_TRAILHEAD"]),
+        sceneToParent: new Map(),
+        sceneToRoads: new Map(),
+      }),
+    } as unknown as DynamicGameStateManager;
+  }
+
+  /** Starts the action with a movement leg whose single hop is not a stretch. */
+  function stubResolveWithBadRoute() {
+    const fn = vi.fn(async (context: EngineResolutionContext) => {
+      const raw: RawTickResolution = { starting: [], ending: [] };
+      for (const t of context.trigger.triggers) {
+        for (const actionId of t.actionIds) {
+          if (t.reason === "new_action") {
+            raw.starting?.push({
+              actionId,
+              resolvedDurationTicks: 10,
+              timingReason: "stub: a ride across town",
+              movement: { route: ["SCN_TRAILHEAD"] },
+            });
+          }
+        }
+      }
+      const finalized = finalizeResolution(raw, context);
+      return {
+        ok: true as const,
+        resolution: finalized.resolution,
+        movementInits: finalized.movementInits,
+        checkInits: finalized.checkInits,
+        codeToolInvocations: [],
+      };
+    });
+    return { fn, calls: [] as EngineResolutionContext[] };
+  }
+
+  it("tells the actor which two places their way ran between, in words about the world", async () => {
+    const { engine } = makeEngine(makeMapDgsm(), stubResolveWithBadRoute());
+    await engine.submitCommand(
+      command({ description: "我骑车往北去林道口找他们。" })
+    );
+
+    const reports: import("../types.js").TickReport[] = [];
+    engine.on("tickCompleted", (r) => {
+      reports.push(r);
+    });
+    await engine.tick();
+
+    const transition = reports[0].transitions[0];
+    expect(transition.to).toBe("failed");
+    expect(transition.unstatedHop).toEqual({
+      fromId: "SCN_1",
+      toId: "SCN_TRAILHEAD",
+    });
+
+    const fact = reports[0].occurrences[0].facts[0].content;
+    // Both places by name — this is the whole point: he can correct the route.
+    expect(fact).toContain("家门口");
+    expect(fact).toContain("林道口");
+    expect(fact).toContain("没有出发");
+    // And NOT the engine's own diagnostic, which has no experience in it and
+    // got rendered as a dizzy spell.
+    expect(fact).not.toContain("not a single stretch");
+    expect(fact).not.toContain("movement init failed");
+  });
+
+  it("carries the reason into the persisted outcome instead of an empty string", async () => {
+    const { engine } = makeEngine(makeMapDgsm(), stubResolveWithBadRoute());
+    await engine.submitCommand(command());
+
+    const reports: import("../types.js").TickReport[] = [];
+    engine.on("tickCompleted", (r) => {
+      reports.push(r);
+    });
+    await engine.tick();
+
+    // SimulationEventEmitter reads `outcome.narrative` into the event row.
+    // Nothing wrote it before, so every failed row in the log said only that
+    // something had ended.
+    const narrative = reports[0].cancellations[0].outcome?.narrative;
+    expect(narrative).toContain("not a single stretch");
+    expect(narrative).toContain("林道口 (SCN_TRAILHEAD)");
+  });
+});
+
+describe("a walk that starts partway along a road", () => {
+  // Observed live (grayhaven gh-cross-town, DeepSeek run 2026-09-01):
+  // "addMinutes expects an integer minute delta, got 2.5."
+  //
+  // Road positions are fractions of the road's length, so a leg that begins
+  // or ends between the endpoints costs a FRACTIONAL number of minutes:
+  // |0 - 0.1| * 15 = 1.5. The movement runtime handles that correctly — it
+  // advances one minute per tick and clamps progress at 1, so the leg simply
+  // takes 2 ticks. `resolvedDurationTicks` agreed (ceil(1.5) = 2). Only
+  // `nextWakeAt` disagreed, being handed the raw 1.5, and the clock refused
+  // it. The two numbers describe the same thing and must not diverge.
+  function makeRoadDgsm() {
+    const base = makeDgsm();
+    const scenes = new Map([
+      ["J_A", { id: "J_A", name: "主街北口", connections: [] }],
+      ["J_B", { id: "J_B", name: "主街南口", connections: [] }],
+    ]);
+    const roads = new Map([
+      [
+        "R_MAIN",
+        {
+          id: "R_MAIN",
+          name: "主街",
+          endpointA: "J_A",
+          endpointB: "J_B",
+          travelTimeMinutes: 15,
+          alongConnections: [],
+          connections: [],
+        },
+      ],
+    ]);
+    return {
+      ...base,
+      getState: () => ({
+        ...base.getState(),
+        scenes,
+      }),
+      getScene: (id: string) => scenes.get(id) ?? null,
+      getTopology: () =>
+        buildTopology(
+          scenes as unknown as Map<string, DynamicScene>,
+          roads as unknown as Map<string, RoadNode>
+        ),
+      // Standing one tenth of the way down the road, walking back to J_A.
+      getCharacterPosition: () => ({
+        type: "road",
+        roadId: "R_MAIN",
+        position: 0.1,
+      }),
+      getBlockedConnections: () => new Map<string, string>(),
+      getConnectionBlockReason: () => undefined,
+    } as unknown as DynamicGameStateManager;
+  }
+
+  function stubResolveWithWalk() {
+    const fn = vi.fn(async (context: EngineResolutionContext) => {
+      const raw: RawTickResolution = { starting: [], ending: [] };
+      for (const t of context.trigger.triggers) {
+        for (const actionId of t.actionIds) {
+          if (t.reason === "new_action") {
+            raw.starting?.push({
+              actionId,
+              resolvedDurationTicks: 4,
+              timingReason: "stub: she walks back up the street",
+              movement: { route: ["J_A"] },
+            });
+          }
+        }
+      }
+      const finalized = finalizeResolution(raw, context);
+      return {
+        ok: true as const,
+        resolution: finalized.resolution,
+        movementInits: finalized.movementInits,
+        checkInits: finalized.checkInits,
+        codeToolInvocations: [],
+      };
+    });
+    return { fn, calls: [] as EngineResolutionContext[] };
+  }
+
+  it("does not hand the clock a fractional minute", async () => {
+    const { engine } = makeEngine(makeRoadDgsm(), stubResolveWithWalk());
+    await engine.submitCommand(
+      command({ description: "我沿主街往回走到北口。" })
+    );
+    // Before the fix this threw: addMinutes got 1.5.
+    await expect(engine.tick()).resolves.toBeUndefined();
+  });
+
+  it("wakes at exactly the duration it resolved, not the raw estimate", async () => {
+    const { engine } = makeEngine(makeRoadDgsm(), stubResolveWithWalk());
+    await engine.submitCommand(
+      command({ description: "我沿主街往回走到北口。" })
+    );
+    const reports: import("../types.js").TickReport[] = [];
+    engine.on("tickCompleted", (r) => {
+      reports.push(r);
+    });
+    await engine.tick();
+
+    const started = reports[0].transitions.find((t) => t.to === "active");
+    expect(started?.resolvedDurationTicks).toBe(2); // ceil(1.5 / 1)
+    // The clock is at 09:01 when the action starts, plus its own 2 ticks.
+    expect(started?.nextWakeAt).toBe("1923-04-02T09:03:00");
+  });
+});
+
+describe("conditions reach the dice", () => {
+  /** A stub that sets a bar when the action starts, so code rolls when its
+   *  time is spent — the only place in the engine a skill is actually rolled. */
+  function stubResolveWithCheck() {
+    const fn = vi.fn(async (context: EngineResolutionContext) => {
+      const raw: RawTickResolution = { starting: [], ending: [] };
+      for (const t of context.trigger.triggers) {
+        for (const actionId of t.actionIds) {
+          if (t.reason === "new_action") {
+            raw.starting?.push({
+              actionId,
+              resolvedDurationTicks: 1,
+              timingReason: "stub",
+              check: { requiredLevel: "regular", basis: "stub bar" },
+            });
+          }
+        }
+      }
+      const finalized = finalizeResolution(raw, context);
+      return {
+        ok: true as const,
+        resolution: finalized.resolution,
+        movementInits: finalized.movementInits,
+        checkInits: finalized.checkInits,
+        codeToolInvocations: [],
+      };
+    });
+    return { fn, calls: [] as EngineResolutionContext[] };
+  }
+
+  const shaken: CharacterCondition = {
+    id: "sanity_tick_1_0",
+    featureId: "sanity",
+    description: "my hands will not stop shaking",
+    mechanicalEffect: { globalSkillPenalty: -20 },
+  };
+
+  it("rolls the actor against a value their conditions lowered", async () => {
+    // The handicap lives in the deterministic dice, NOT in the trust boundary:
+    // the command was accepted exactly as it would have been for a steady
+    // character, and only the roll knows the difference.
+    const { engine } = makeEngine(
+      makeDgsm({ skills: { Social: 60 }, conditions: [shaken] }),
+      stubResolveWithCheck()
+    );
+    const receipt = await engine.submitCommand(
+      command({ declaredSkillId: "Social" })
+    );
+    expect(receipt.accepted).toBe(true);
+
+    await engine.tick(); // starts, sets the bar
+    await engine.tick(); // time spent, code rolls
+
+    const action = engine.getAction(receipt.actionId!);
+    expect(action?.checkOutcome?.actor).toMatchObject({
+      skillId: "Social",
+      skillValue: 40,
+      skillValueBase: 60,
+    });
+  });
+
+  it("leaves a steady character's roll untouched, and says so by omission", async () => {
+    const { engine } = makeEngine(
+      makeDgsm({ skills: { Social: 60 } }),
+      stubResolveWithCheck()
+    );
+    const receipt = await engine.submitCommand(
+      command({ declaredSkillId: "Social" })
+    );
+    await engine.tick();
+    await engine.tick();
+
+    const roll = engine.getAction(receipt.actionId!)?.checkOutcome?.actor;
+    expect(roll?.skillValue).toBe(60);
+    expect(roll?.skillValueBase).toBeUndefined();
+  });
+
+  it("applies stamina's fatigue penalties, which never reached a roll before", async () => {
+    // Wiring this path turns on penalties the stamina subsystem has authored
+    // all along. Pinned here so the change is a test, not a surprise in a sim.
+    const exhausted: CharacterCondition = {
+      id: "stamina:exhausted",
+      featureId: "stamina",
+      description: "exhausted",
+      mechanicalEffect: { globalSkillPenalty: -20 },
+    };
+    const { engine } = makeEngine(
+      makeDgsm({ skills: { Social: 55 }, conditions: [exhausted] }),
+      stubResolveWithCheck()
+    );
+    const receipt = await engine.submitCommand(
+      command({ declaredSkillId: "Social" })
+    );
+    await engine.tick();
+    await engine.tick();
+
+    expect(
+      engine.getAction(receipt.actionId!)?.checkOutcome?.actor?.skillValue
+    ).toBe(35);
   });
 });

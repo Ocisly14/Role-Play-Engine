@@ -2,8 +2,8 @@
   "schemaVersion": 2,
   "id": "SCN_holt_denny",
   "name": "Denny 的房间",
-  "description": "小房间被书占领了:床头、窗台、椅子上全是卷了角的科幻平装书 [item.holt_denny.scifi_paperbacks],书脊按他自己的一套体系排序——入侵类、地底类、政府隐瞒类各归各摞。墙上用图钉别着他手画的星图和一张从杂志剪下的雷达站照片。书桌上一盏歪脖子台灯 [item.holt_denny.desk_lamp] 亮着,灯罩上贴着几张卡通贴纸;抽屉半开着,里面放着一支备用的哮喘吸入器 [item.holt_denny.spare_inhaler],压在一叠写满小字的活页纸上。哥哥 Glen 的旧夹克没在——他穿着呢。房门 [SCN_holt_common] 通向起居的大开间,门缝底下塞了条毛巾,挡光,也挡听。",
-  "parentLocationId": "LOC_holt_house",
+  "description": "小房间被书占领了:窄床 [item.holt_denny.bed] 上、窗台上、椅子上全是卷了角的科幻平装书 [item.holt_denny.scifi_paperbacks],书脊按他自己的一套体系排序——入侵类、地底类、政府隐瞒类各归各摞。墙上用图钉别着他手画的星图和一张从杂志上剪下的雷达站照片 [item.holt_denny.star_chart]。书桌 [item.holt_denny.desk] 上一盏歪脖子台灯 [item.holt_denny.desk_lamp] 亮着,灯罩上贴着几张卡通贴纸;桌面摊着一叠写满小字的活页纸 [item.holt_denny.notes_sheaf],抽屉半开着,里面放着一支备用的哮喘吸入器 [item.holt_denny.spare_inhaler]。枕头底下压着一支小手电 [item.holt_denny.pocket_flashlight]——熄灯之后照的还是书。朝后院的那扇窗 [item.holt_denny.window] 关不严,窗闩早松了,夜里躺着能听见柴堆那边的动静。哥哥 Glen 的旧夹克没在——他穿着呢。房门 [SCN_holt_common] 通向起居的大开间,门缝底下塞了条毛巾,挡光,也挡听。",
+  "parentLocationId": "holt_house",
   "indoor": true,
   "references": {
     "items": [
@@ -15,17 +15,51 @@
       {
         "id": "item.holt_denny.spare_inhaler",
         "name": "备用哮喘吸入器",
-        "description": "备用的哮喘吸入器,压在一叠写满小字的活页纸上。"
+        "description": "书桌抽屉里那支备用的蓝色哮喘吸入器,是妈妈按诊所的规矩给他备的第二支——出门那支在夹克口袋里,这一支从不离开这间屋子。"
       },
       {
         "id": "item.holt_denny.desk_lamp",
         "name": "台灯",
-        "description": "书桌上一盏歪脖子台灯,灯罩上贴着几张卡通贴纸,常常亮到很晚——他看书习惯不开顶灯。"
+        "description": "书桌上一盏歪脖子台灯,灯罩上贴着几张卡通贴纸,常常亮到很晚——他看书习惯不开顶灯。",
+        "isLightSource": true,
+        "lightLevel": 1
+      },
+      {
+        "id": "item.holt_denny.bed",
+        "name": "窄床",
+        "description": "靠墙的单人窄床,床罩是哥哥用过的那条印着火箭的旧床罩。被子永远只掀开一角,因为另外三面都摞着书;床底下是他的球鞋,鞋底缝里有洗不掉的红泥。"
+      },
+      {
+        "id": "item.holt_denny.desk",
+        "name": "书桌",
+        "description": "靠窗一张漆掉了一半的小书桌,桌沿被圆珠笔划满了字。桌面归他自己管:摊开的纸、削好的铅笔、一把塑料尺和一枚当镇纸用的螺母。抽屉只有一格,半开着。"
+      },
+      {
+        "id": "item.holt_denny.star_chart",
+        "name": "手画星图与剪报",
+        "description": "用图钉别在墙上的一大张手画星图,格子是他自己画的,标注写得极小极工整;旁边压着一张从旧杂志上剪下的雷达站照片,天线的部分被他用红笔圈了一圈。"
+      },
+      {
+        "id": "item.holt_denny.notes_sheaf",
+        "name": "活页纸",
+        "description": "桌上一叠写满小字的活页纸:抄下来的书里段落、他自己画的推论图表、一栏栏画着箭头的『如果……那么……』。摊在桌面上没收起来,写的都是书里的事,谁看见了也只当这孩子书读得多。"
+      },
+      {
+        "id": "item.holt_denny.pocket_flashlight",
+        "name": "小手电",
+        "description": "枕头底下压着的一支塑料壳小手电,灯头蒙着一层胶带,光被挡成一小圈——熄灯以后在被子里看书用的,电池永远不够。",
+        "isLightSource": true,
+        "lightLevel": 1
+      },
+      {
+        "id": "item.holt_denny.window",
+        "name": "朝后院的窗",
+        "description": "朝后院开的一扇木框推拉窗,窗台被书占满,窗闩松了,关不严实。夜里躺着能听见柴堆和晾衣绳那边的动静,雾大的时候玻璃上会凝一层水。"
       }
     ],
     "connections": [
       {
-        "id": "exit.holt_denny.door",
+        "id": "connection.holt_denny.door",
         "targetId": "SCN_holt_common",
         "name": "房门",
         "description": "通向起居大开间的门,门缝底下塞着一条毛巾。"

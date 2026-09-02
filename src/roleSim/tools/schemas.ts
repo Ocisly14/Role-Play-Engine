@@ -114,7 +114,7 @@ export const continueTool: ToolSpec = {
 export const writeMemoryTool: ToolSpec = {
   name: "writeMemory",
   description:
-    "Keep, correct or retract a long-term memory — nothing is recorded for you. Free: may be called in the same turn as act/continue.",
+    "Keep, correct or retract a long-term memory — nothing is recorded for you. Free: may be called in the same turn as act/continue, and once per memory when this minute left you several worth keeping — write them all in this turn, since the turn ends when you act.",
   inputSchema: {
     type: "object",
     properties: {

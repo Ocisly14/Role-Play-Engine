@@ -30,7 +30,13 @@ import type {
   TickResolution,
   WorldDelta,
 } from "../actions/types.js";
-import type { CodeToolInvocation } from "../tools/codeTool.js";
+import { parseJsonResponse } from "../shared/jsonParse.js";
+import {
+  isGuaranteedZeroLoss,
+  validSanityLossFormula,
+} from "../tools/diceTools.js";
+import type { SanityOutcome, SanityRollOptions } from "./sanityResolver.js";
+import { resolveSanityDeclarations } from "./sanityResolver.js";
 import type { EngineResolutionContext, ResolutionError } from "./types.js";
 import {
   CHARACTER_OPS,
@@ -60,6 +66,10 @@ export interface KnownAction {
 interface Lookup {
   characterIds: Set<string>;
   aliveCharacterIds: Set<string>;
+  /** Characters with real sanity capacity, by id. A being with `maxSan: 0`
+   *  (a Mythos entity, say) cannot be shocked, and the resolver reads the
+   *  tick-start `san` from here rather than taking a second pass over state. */
+  sanById: Map<string, { san: number; maxSan: number }>;
   /** Every scene (interior and top-level node scenes alike). */
   sceneIds: Set<string>;
   /** EVERY place in the world — scene or road — from
@@ -70,7 +80,7 @@ interface Lookup {
   /** placeIds plus wherever a character actually stands (defensive: a
    *  position outside the graph is still a real location). */
   locationIds: Set<string>;
-  /** Every authored connection id (`exit.*`), from `state.connectionIds`. */
+  /** Every authored connection id (`connection.*`), from `state.connectionIds`. */
   connectionIds: Set<string>;
   vehicleIds: Set<string>;
   vehicleInteriors: Map<string, string>;
@@ -113,6 +123,14 @@ export interface ResolutionWorklist {
   /** Triggered but still running. Informational only — the Engine owes these
    *  nothing. Listed so every id in the trigger is accounted for. */
   stillRunning: string[];
+  /** The actor has issued a new command over this one. It is in `ending`
+   *  too: it stops at THIS minute, whatever its duration said, and the Engine
+   *  accounts for what was done up to now — never for how it would have
+   *  ended. Measured before this list existed: the old action sat under
+   *  `stillRunning`, nothing ever ended it, and both ran to completion side
+   *  by side — a notebook handed over twice, a couple leaving through a door
+   *  one of them had already slammed. */
+  replaced: string[];
   /** In-flight actions that carried no check, so nothing rolled. If one of
    *  these ends, the Engine supplies `outcome`. */
   endingNeedsOutcome: string[];
@@ -134,9 +152,15 @@ export function resolutionWorklist(
     stillRunning: [],
     endingNeedsOutcome: [],
     startingWithoutSkill: [],
+    replaced: [],
   };
   const queued = new Set(
     context.actions.newCommands.map((c) => actionIdForCommand(c.commandId))
+  );
+  const replaced = new Set(
+    context.trigger.triggers
+      .filter((t) => t.reason === "replacement")
+      .flatMap((t) => t.actionIds)
   );
   const commandById = new Map(
     context.actions.newCommands.map((c) => [actionIdForCommand(c.commandId), c])
@@ -156,7 +180,13 @@ export function resolutionWorklist(
       durationTicks !== undefined &&
       action.progressMinutes >= durationTicks * context.tick.durationMinutes;
     if (due) worklist.ending.push(id);
-    else worklist.stillRunning.push(id);
+    else if (replaced.has(id)) {
+      // Cut short by its own actor: an entry is owed now, and the clock
+      // (not the Engine) will record it as interrupted, since its time was
+      // not spent.
+      worklist.ending.push(id);
+      worklist.replaced.push(id);
+    } else worklist.stillRunning.push(id);
     // Listed for every in-flight action, not just the due ones, because a
     // still-running action may still be cut short here.
     if (action.check === undefined) worklist.endingNeedsOutcome.push(id);
@@ -170,6 +200,12 @@ export function buildLookup(context: EngineResolutionContext): Lookup {
   const aliveCharacterIds = new Set(
     context.state.characters.filter((c) => c.alive).map((c) => c.id)
   );
+  const sanById = new Map<string, { san: number; maxSan: number }>();
+  for (const c of context.state.characters) {
+    if (Number.isFinite(c.san) && Number.isFinite(c.maxSan) && c.maxSan > 0) {
+      sanById.set(c.id, { san: c.san, maxSan: c.maxSan });
+    }
+  }
   const placeKinds = Object.entries(context.state.placeKinds);
   const sceneIds = new Set(
     placeKinds.filter(([, kind]) => kind === "scene").map(([id]) => id)
@@ -225,6 +261,7 @@ export function buildLookup(context: EngineResolutionContext): Lookup {
   return {
     characterIds,
     aliveCharacterIds,
+    sanById,
     sceneIds,
     placeIds,
     locationIds,
@@ -341,17 +378,19 @@ function validateStart(entry: RawActionStart, lookup: Lookup): string[] {
     }
   }
   // Duration is conditionally required: a non-travel action must say how
-  // long it takes (and why); a travel action must NOT be clocked by hand —
-  // code derives its time from the route.
-  if (entry.movement === undefined) {
-    if (entry.resolvedDurationTicks === undefined) {
-      errs.push(
-        `a non-travel action needs resolvedDurationTicks (with a timingReason); only movement actions derive their clock from the route`
-      );
-    } else if (!entry.timingReason?.trim()) {
-      errs.push(`resolvedDurationTicks requires a timingReason`);
-    }
+  // long it takes; a travel action must NOT be clocked by hand — code derives
+  // its time from the route. `timingReason` is not required: nothing at
+  // runtime reads it, and demanding it bought a repair round (a full re-send)
+  // every time the model left it off, for a sentence only the harness prints.
+  if (
+    entry.movement === undefined &&
+    entry.resolvedDurationTicks === undefined
+  ) {
+    errs.push(
+      "a non-travel action needs resolvedDurationTicks; only movement actions derive their clock from the route"
+    );
   }
+  errs.push(...validateDuration(entry.resolvedDurationTicks));
   return errs;
 }
 
@@ -371,8 +410,10 @@ function validateEnd(entry: RawActionEnd, lookup: Lookup): string[] {
   }
   // With a check, code already decided success from the roll against the bar;
   // restating it is how the two can disagree.
+  // `null` is the model saying "none" — the same answer as leaving the field
+  // out, and it was being refused as if a verdict had been written.
   const hadCheck = known.check !== undefined;
-  if (hadCheck && entry.outcome !== undefined) {
+  if (hadCheck && entry.outcome != null) {
     errs.push(
       `this action was checked — code decides success from the roll against your bar; drop "outcome"`
     );
@@ -382,13 +423,20 @@ function validateEnd(entry: RawActionEnd, lookup: Lookup): string[] {
       `this action carried no check, so nothing rolled — "outcome" is required (the trigger section lists it under endingNeedsOutcome)`
     );
   }
-  if (
-    entry.resolvedDurationTicks !== undefined &&
-    !entry.timingReason?.trim()
-  ) {
-    errs.push(`revising resolvedDurationTicks requires a timingReason`);
-  }
+  errs.push(...validateDuration(entry.resolvedDurationTicks));
   return errs;
+}
+
+/** The bound the schema used to carry as `minimum: 1`. Strict mode has no
+ *  numeric keywords, so the description says it and this enforces it. */
+function validateDuration(ticks: unknown): string[] {
+  if (ticks === undefined) return [];
+  if (!Number.isInteger(ticks) || (ticks as number) < 1) {
+    return [
+      `resolvedDurationTicks must be a whole number of minutes, at least 1 — got ${JSON.stringify(ticks)}`,
+    ];
+  }
+  return [];
 }
 
 // Same rows the model is shown: the accepted kinds and the advertised field
@@ -421,7 +469,6 @@ function validHolder(holder: string, lookup: Lookup): boolean {
 }
 
 export function validateCharacterChange(
-  index: number,
   delta: RawSourcedDelta & { characterId?: string },
   lookup: Lookup
 ): string[] {
@@ -449,38 +496,34 @@ export function validateCharacterChange(
       break;
     }
     case "position": {
-      // Only `type: "scene"` used to be checked, so a road id was accepted
-      // unseen and reached the applier, which would happily stand the
-      // character on a place that does not exist.
+      // Scene only. A road position carries a fraction along the road that
+      // only the movement runtime sets; the Engine once stood a character on
+      // a road with no fraction, and the next route planned from there came
+      // out NaN and took the whole tick down.
       const p = op.position as
         | {
             type?: string;
             sceneId?: string;
-            roadId?: string;
           }
         | undefined;
-      const idField = {
-        scene: "sceneId",
-        road: "roadId",
-      } as const;
       if (!p || typeof p !== "object") {
-        errs.push(`position.position must be an object {type, <id>}`);
-      } else if (!p.type || !(p.type in idField)) {
         errs.push(
-          `position.type must be "scene" or "road" — got ${JSON.stringify(p.type)}`
+          `position.position must be an object {type:"scene", sceneId}`
         );
-      } else {
-        const field = idField[p.type as keyof typeof idField];
-        const id = p[field];
-        if (typeof id !== "string" || !id) {
-          errs.push(`position of type "${p.type}" requires ${field}`);
-        } else if (
-          p.type === "scene"
-            ? !lookup.sceneIds.has(id)
-            : !lookup.locationIds.has(id)
-        ) {
-          errs.push(`position ${field} "${id}" is not a place you were shown`);
-        }
+      } else if (p.type === "road") {
+        errs.push(
+          `position cannot put a character on a road — a road is walked, never assigned; give the action a movement.route instead`
+        );
+      } else if (p.type !== "scene") {
+        errs.push(
+          `position.type must be "scene" — got ${JSON.stringify(p.type)}`
+        );
+      } else if (typeof p.sceneId !== "string" || !p.sceneId) {
+        errs.push(`position of type "scene" requires sceneId`);
+      } else if (!lookup.sceneIds.has(p.sceneId)) {
+        errs.push(
+          `position sceneId "${p.sceneId}" is not a place you were shown`
+        );
       }
       break;
     }
@@ -524,7 +567,6 @@ export function validateCharacterChange(
 }
 
 export function validateSceneChange(
-  index: number,
   delta: RawSourcedDelta & { sceneId?: string },
   lookup: Lookup
 ): string[] {
@@ -545,7 +587,7 @@ export function validateSceneChange(
       errs.push(`${kind} requires connectionId`);
     } else if (!lookup.connectionIds.has(op.connectionId)) {
       errs.push(
-        `${kind}.connectionId "${op.connectionId}" names nothing real — cite an exit id (\`exit.*\`) from the graph edges or a place snapshot's connections`
+        `${kind}.connectionId "${op.connectionId}" names nothing real — cite an exit id (\`connection.*\`) from the graph edges or a place snapshot's connections`
       );
     }
   };
@@ -583,6 +625,24 @@ export function validateSceneChange(
         errs.push(`connectionBlock requires a reason`);
       }
       break;
+    case "connectionDiscovered": {
+      checkConnectionId("connectionDiscovered");
+      const ids = op.characterIds;
+      if (!Array.isArray(ids) || ids.length === 0) {
+        errs.push(
+          "connectionDiscovered requires characterIds — everyone who could see it happen, and at least one of them"
+        );
+        break;
+      }
+      for (const id of ids) {
+        if (typeof id !== "string" || !lookup.characterIds.has(id)) {
+          errs.push(
+            `connectionDiscovered.characterIds contains "${String(id)}", which names no character`
+          );
+        }
+      }
+      break;
+    }
     case "connectionHidden":
       checkConnectionId("connectionHidden");
       if (typeof op.hidden !== "boolean") {
@@ -629,7 +689,6 @@ export function validateSceneChange(
 }
 
 export function validateItemChange(
-  index: number,
   delta: RawSourcedDelta & { itemId?: string },
   lookup: Lookup,
   movedItemIds: Set<string>,
@@ -737,8 +796,121 @@ const PERSPECTIVE_PATTERNS = [
   /我(看见|听见|认出|感到)/,
 ];
 
+/** Shortest and longest a declared consequence may last, in in-world minutes.
+ *  The expiry sweep is the ONLY thing that removes one of these conditions,
+ *  and it is injected into two prompts every tick it is alive — so an
+ *  unbounded duration is both a permanent prompt cost and a handicap the
+ *  Engine can never revoke. One in-world day is long enough for "shaken for
+ *  the rest of the day" and short enough to heal itself. */
+export const MIN_CONSEQUENCE_MINUTES = 5;
+export const MAX_CONSEQUENCE_MINUTES = 1440;
+
+/**
+ * Structural validation of an occurrence's declared sanity checks. Nothing
+ * here judges whether the exposure DESERVES a check — that is the rule
+ * document's job, in full context. These are shape and reference rules only,
+ * the same bargain the action trust boundary strikes.
+ */
+export const MAX_SANITY_CHECKS = 8;
+
+export function validateSanityChecks(
+  occ: RawOccurrence,
+  lookup: Lookup
+): string[] {
+  const declarations = occ.sanityChecks ?? [];
+  if (declarations.length === 0) return [];
+
+  const errs: string[] = [];
+  // Was `maxItems: 8` on the schema; strict mode has no array-length
+  // keywords, so the description says it and this enforces it.
+  if (declarations.length > MAX_SANITY_CHECKS) {
+    errs.push(
+      `sanityChecks: at most ${MAX_SANITY_CHECKS} per occurrence — got ${declarations.length}`
+    );
+  }
+  // Every produced delta needs a real `sourceActionId`, and the schema sets no
+  // `minItems` on sourceActionIds — an empty array is wire-legal, and would
+  // leave the resolver with nothing to attribute the SAN loss to.
+  if ((occ.sourceActionIds ?? []).length === 0) {
+    errs.push(
+      "sanityChecks: an occurrence that declares a sanity check must name at least one sourceActionId"
+    );
+  }
+  const perceivers = new Set(occ.perceiverCharacterIds ?? []);
+  const seen = new Set<string>();
+
+  for (const [i, decl] of declarations.entries()) {
+    const at = `sanityChecks[${i}]`;
+    const id = decl?.characterId;
+    if (typeof id !== "string" || id.length === 0) {
+      errs.push(`${at}: characterId is required`);
+    } else if (!lookup.characterIds.has(id)) {
+      errs.push(`${at}: character "${id}" does not exist`);
+    } else {
+      if (!lookup.aliveCharacterIds.has(id)) {
+        errs.push(`${at}: character "${id}" is not alive`);
+      }
+      if (!lookup.sanById.has(id)) {
+        errs.push(
+          `${at}: character "${id}" has no sanity capacity and cannot be checked`
+        );
+      }
+      // Exposure is perception: the same evidence that decided who perceived
+      // this occurrence decides who can be shocked by it. A set membership
+      // test, not a judgement.
+      if (!perceivers.has(id)) {
+        errs.push(
+          `${at}: character "${id}" is not among this occurrence's perceiverCharacterIds — only someone who perceived it can be shocked by it`
+        );
+      }
+      if (seen.has(id)) {
+        errs.push(
+          `${at}: character "${id}" is already checked in this occurrence — one roll per character per exposure`
+        );
+      }
+      seen.add(id);
+    }
+
+    if (!validSanityLossFormula(decl?.failureLoss)) {
+      errs.push(
+        `${at}: failureLoss "${decl?.failureLoss}" is not a dice formula`
+      );
+    } else if (isGuaranteedZeroLoss(decl.failureLoss)) {
+      errs.push(
+        `${at}: failureLoss "${decl.failureLoss}" cannot cost anything, and a passed check already costs nothing — a check that cannot cost anything is one that should not happen. Resolve the action without it.`
+      );
+    }
+
+    const consequence = decl?.consequence;
+    if (consequence === undefined) continue;
+    if (typeof consequence !== "object" || consequence === null) {
+      errs.push(`${at}: consequence must be an object when provided`);
+      continue;
+    }
+    if (!consequence.description?.trim()) {
+      errs.push(
+        `${at}: consequence.description is required and must describe objective observable or independently verifiable signs, not inner activity`
+      );
+    }
+    const minutes = consequence.durationMinutes;
+    // Not hygiene — crash prevention. `finalizeResolution` runs after this and
+    // hands the number to `addMinutes`, which THROWS on a non-integer, and a
+    // throw there takes the whole tick down. A malformed submission must be a
+    // repairable error, never a crash.
+    if (
+      !Number.isInteger(minutes) ||
+      minutes < MIN_CONSEQUENCE_MINUTES ||
+      minutes > MAX_CONSEQUENCE_MINUTES
+    ) {
+      errs.push(
+        `${at}: consequence.durationMinutes must be a whole number of minutes between ${MIN_CONSEQUENCE_MINUTES} and ${MAX_CONSEQUENCE_MINUTES}, got ${String(minutes)}`
+      );
+    }
+  }
+  return errs;
+}
+
 export function validateOccurrence(
-  index: number,
   occ: RawOccurrence,
   lookup: Lookup,
   /** Item ids minted by this submission's own `create` operations: an
@@ -802,6 +974,10 @@ export function validateOccurrence(
       }
     }
   }
+  // One call site covers both places an occurrence can appear — standalone in
+  // `occurrences[]` and embedded in an ending — and each inherits the right
+  // error address for free.
+  errs.push(...validateSanityChecks(occ, lookup));
   return errs;
 }
 
@@ -809,8 +985,7 @@ export function validateOccurrence(
 
 export function validateRawResolution(
   raw: RawTickResolution,
-  context: EngineResolutionContext,
-  invocations: CodeToolInvocation[]
+  context: EngineResolutionContext
 ): ResolutionError[] {
   const lookup = buildLookup(context);
   const errors: ResolutionError[] = [];
@@ -899,18 +1074,18 @@ export function validateRawResolution(
     if (d === null) return;
     at(
       { kind: "characterChange", index: i },
-      validateCharacterChange(i, d, lookup)
+      validateCharacterChange(d, lookup)
     );
   });
   (raw.sceneChanges ?? []).forEach((d, i) => {
     if (d === null) return;
-    at({ kind: "sceneChange", index: i }, validateSceneChange(i, d, lookup));
+    at({ kind: "sceneChange", index: i }, validateSceneChange(d, lookup));
   });
   (raw.itemChanges ?? []).forEach((d, i) => {
     if (d === null) return;
     at(
       { kind: "itemChange", index: i },
-      validateItemChange(i, d, lookup, movedItemIds, createdItemIds)
+      validateItemChange(d, lookup, movedItemIds, createdItemIds)
     );
   });
   // Prose-coherence: an item CITED by its holder place's description cannot
@@ -945,7 +1120,7 @@ export function validateRawResolution(
     if (o === null) return;
     at(
       { kind: "occurrence", index: i },
-      validateOccurrence(i, o, lookup, createdItemIds)
+      validateOccurrence(o, lookup, createdItemIds)
     );
   });
   // An ending's own occurrence gets the same checks, addressed at the action
@@ -956,12 +1131,44 @@ export function validateRawResolution(
     at(
       { kind: "action", actionId: entry.actionId },
       validateOccurrence(
-        0,
         { ...entry.occurrence, sourceActionIds: [entry.actionId] },
         lookup,
         createdItemIds
       )
     );
+  }
+
+  // One shock per character per tick, across the WHOLE submission.
+  // `validateSanityChecks` sees a single occurrence and cannot catch the same
+  // person being checked in two of them. This is the structural replacement
+  // for the deleted session ledger, and it is what makes the old loop
+  // impossible: not "the tool refuses" but "the submission is rejected at an
+  // address, and the repair is one targeted edit".
+  const shocked = new Set<string>();
+  const noteShocks = (
+    occ: Pick<RawOccurrence, "sanityChecks"> | null | undefined,
+    target: ResolutionError["target"]
+  ): void => {
+    for (const decl of occ?.sanityChecks ?? []) {
+      const id = decl?.characterId;
+      if (typeof id !== "string" || id.length === 0) continue;
+      if (shocked.has(id)) {
+        at(target, [
+          `sanityChecks: "${id}" is already checked elsewhere in this submission — one roll per character per tick, however many occurrences they appear in. Keep the exposure that actually shocked them and drop the other.`,
+        ]);
+        continue;
+      }
+      shocked.add(id);
+    }
+  };
+  (raw.occurrences ?? []).forEach((o, i) => {
+    noteShocks(o, { kind: "occurrence", index: i });
+  });
+  for (const entry of raw.ending ?? []) {
+    noteShocks(entry?.occurrence, {
+      kind: "action",
+      actionId: entry?.actionId ?? "",
+    });
   }
 
   return errors;
@@ -998,8 +1205,45 @@ export function normalizeList<T>(value: unknown, field = "field"): T[] {
       .sort(([a], [b]) => Number(a) - Number(b))
       .map(([, item]) => item);
   }
+  if (typeof value === "string") {
+    // The whole list, serialized. The engine tools are `strict` now, and a
+    // provider that honours it (Anthropic, OpenAI) cannot produce this shape.
+    // DeepSeek has no strict mode, so the tolerance stays for that path.
+    //
+    // Two shapes were measured before strict went on. The list as its own
+    // JSON text — `"[{...}]"` — and the list wrapped in an object under its
+    // own name, or a name the model made up: `"{\"starting\": [...]}"`,
+    // `"{\"actions\": [...]}"`. Dropping either took a whole resolution with
+    // it — the transition, the reason, an occurrence two characters were
+    // meant to perceive — and left one line of warning behind.
+    try {
+      const parsed = parseJsonResponse<unknown>(value);
+      if (Array.isArray(parsed)) {
+        console.warn(
+          `[WorldActionEngine] ${field} arrived as a JSON string — parsed back into an array of ${parsed.length}`
+        );
+        return parsed as T[];
+      }
+      if (parsed && typeof parsed === "object") {
+        const arrays = Object.entries(parsed as Record<string, unknown>).filter(
+          ([, v]) => Array.isArray(v)
+        );
+        const inner =
+          arrays.find(([k]) => k === field) ??
+          (arrays.length === 1 ? arrays[0] : undefined);
+        if (inner) {
+          console.warn(
+            `[WorldActionEngine] ${field} arrived as a JSON string wrapping {"${inner[0]}": [...]} — unwrapped into an array of ${(inner[1] as unknown[]).length}`
+          );
+          return inner[1] as T[];
+        }
+      }
+    } catch {
+      // Falls through to the drop below, which says so.
+    }
+  }
   console.warn(
-    `[WorldActionEngine] ${field} arrived as ${typeof value} — ignored`
+    `[WorldActionEngine] ${field} arrived as ${typeof value} and could not be read — ignored`
   );
   return [];
 }
@@ -1132,6 +1376,9 @@ export interface FinalizedResolution {
       opposedBy?: Array<{ characterId: string; skillId: string }>;
     }
   >;
+  /** What each declared sanity check actually rolled. The resulting deltas are
+   *  already folded into `resolution.characterChanges`; this is the trace. */
+  sanityOutcomes: SanityOutcome[];
 }
 
 /**
@@ -1145,9 +1392,33 @@ export interface FinalizedResolution {
  * ids, how much time passed, and whether an action is now finished — the
  * Engine says what happened, code says when and whether it is over.
  */
+/** Where an occurrence happened when the Engine left `locationId` blank:
+ *  wherever its actor stands. The Engine leaves it blank most of the time
+ *  (measured: every occurrence of a 50-minute doorway conversation), and a
+ *  blank location is what let the renderer put a mother at a bedside two
+ *  rooms from where she stood — a participant with no place reads as "here".
+ *  Only scene positions resolve; a road walker's occurrence stays unplaced. */
+function occurrenceLocationFromActor(
+  o: {
+    participants?: Array<{ characterId: string; role: string }>;
+    sourceActionIds?: string[];
+  },
+  lookup: Lookup
+): string | undefined {
+  const actor =
+    o.participants?.find((p) => p.role === "actor")?.characterId ??
+    o.sourceActionIds
+      ?.map((id) => lookup.actionById.get(id)?.command.actorId)
+      .find((id): id is string => id !== undefined);
+  return actor ? lookup.characterSceneIds.get(actor) : undefined;
+}
+
 export function finalizeResolution(
   raw: RawTickResolution,
-  context: EngineResolutionContext
+  context: EngineResolutionContext,
+  /** Injectable dice, so a replay or a test can pin every sanity roll this
+   *  resolution makes from one source. */
+  sanityOpts?: SanityRollOptions
 ): FinalizedResolution {
   const lookup = buildLookup(context);
   const transitions: ActionTransition[] = [];
@@ -1274,16 +1545,29 @@ export function finalizeResolution(
       .map((e) => ({ ...e.occurrence, sourceActionIds: [e.actionId] })),
   ];
 
+  // Settled here, after the fold, so standalone occurrences and endings' own
+  // occurrences are both covered by construction. Finalization runs exactly
+  // once per session and only on a clean submission, which is what guarantees
+  // one roll per declaration.
+  const sanity = resolveSanityDeclarations(
+    rawOccurrences,
+    lookup,
+    context.tick,
+    sanityOpts
+  );
+  characterChanges.push(...sanity.deltas);
+
   const occurrences: Occurrence[] = [];
   rawOccurrences.forEach((o, i) => {
     if (o == null) return;
     const occurrenceId = `occ_${context.tick.tickId}_${i}`;
     const factIds = (o.facts ?? []).map((_, fi) => `${occurrenceId}#f${fi}`);
+    const locationId = o.locationId ?? occurrenceLocationFromActor(o, lookup);
     occurrences.push({
       id: occurrenceId,
       tickId: context.tick.tickId,
       sourceActionIds: o.sourceActionIds ?? [],
-      ...(o.locationId !== undefined ? { locationId: o.locationId } : {}),
+      ...(locationId !== undefined ? { locationId } : {}),
       facts: (o.facts ?? []).map((f, fi) => ({
         id: factIds[fi],
         type: f.type,
@@ -1315,6 +1599,7 @@ export function finalizeResolution(
     },
     movementInits,
     checkInits,
+    sanityOutcomes: sanity.outcomes,
   };
 }
 

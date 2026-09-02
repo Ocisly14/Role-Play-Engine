@@ -2,7 +2,7 @@
   "schemaVersion": 2,
   "id": "SCN_lighthouse_cliff",
   "name": "灯塔崖",
-  "description": "镇南海崖的顶端,俯瞰全镇与海面的制高点,风从不停歇——崖边一张风蚀长椅 [item.lighthouse_cliff.weathered_bench] 常年被吹得发凉,漆早磨光,木纹翘起。老灯塔立在崖缘,白漆剥落成斑;塔基旁竖着一截锈蚀的旧旗杆座 [item.lighthouse_cliff.flagpole_base],旗子不知哪年就没了,螺栓仍死死锚在岩石里。1982 年自动化之后,塔身那扇铁门 [item.lighthouse_cliff.iron_door] 就一直锁着,锁是那年新换的。门后是守了三十年灯的塔内 [SCN_lighthouse_interior]。灯还亮,只是不再需要人。唯一的下山路是通回码头的崖间小径。",
+  "description": "镇南海崖的顶端,俯瞰全镇与海面的制高点,风从不停歇——崖边一张风蚀长椅 [item.lighthouse_cliff.weathered_bench] 常年被吹得发凉,漆早磨光,木纹翘起;椅子外侧一圈铁管护栏 [item.lighthouse_cliff.cliff_railing] 锈穿了一段,再过去就是直落到浪里的崖壁。老灯塔立在崖缘,白漆剥落成斑,塔基上嵌着的建塔铜牌 [item.lighthouse_cliff.build_plaque] 刻着 1892;塔基旁竖着一截锈蚀的旧旗杆座 [item.lighthouse_cliff.flagpole_base],旗子不知哪年就没了,螺栓仍死死锚在岩石里。朝海一侧的铁架上架着一只雾号 [item.lighthouse_cliff.fog_horn],雾一厚它就自己叫起来,那声音全镇都听得见。塔身背后是守塔人住过的小屋 [item.lighthouse_cliff.keeper_quarters],1982 年之后窗板钉死、门用木条封上;墙根那只海岸警卫队的配电箱 [item.lighthouse_cliff.service_box] 倒是上着新锁,箱门上贴着检修记录卡。同一年换的锁至今锁着塔身那扇铁门 [item.lighthouse_cliff.iron_door],门后是守了三十年灯的塔内 [SCN_lighthouse_interior]。灯还亮,只是不再需要人。唯一的下山路是通回码头的崖间小径。",
   "references": {
     "items": [
       {
@@ -19,11 +19,36 @@
         "id": "item.lighthouse_cliff.flagpole_base",
         "name": "旧旗杆座",
         "description": "崖顶一截空的旗杆座,锈迹斑斑,旗子不知哪年就没了,底座的螺栓仍死死锚在岩石里。"
+      },
+      {
+        "id": "item.lighthouse_cliff.cliff_railing",
+        "name": "崖缘铁护栏",
+        "description": "沿崖缘拉过去的一圈铁管护栏,漆下面全是锈,有一段被海风蚀穿了,管子一按就晃,底下用两根木杆勉强顶着。护栏外侧只有一步宽的草沿,再过去是三十多米直落到礁石和浪里。"
+      },
+      {
+        "id": "item.lighthouse_cliff.build_plaque",
+        "name": "建塔铜牌",
+        "description": "嵌在塔基石上的一小块铜牌,刻着建成年份 1892 与工程局的字样,边缘被海风蚀出绿锈。镇上的老人会跟你说,这个年份得从三年前那个雾夜算起。"
+      },
+      {
+        "id": "item.lighthouse_cliff.fog_horn",
+        "name": "雾号",
+        "description": "架在朝海铁架上的一只方形雾号喇叭,漆成褪了色的红,喇叭口朝着湾外。自动化以后由塔里的机器控制:雾一厚就自己叫,两长一短,间隔分秒不差。近处听震得胸口发麻,镇上听则像有人在雾里慢慢数数。"
+      },
+      {
+        "id": "item.lighthouse_cliff.keeper_quarters",
+        "name": "封住的守塔人小屋",
+        "description": "紧挨着塔身的一间白墙小屋,守塔人一家住了几十年的地方。1982 年撤守之后窗板钉死,门上钉了两道木条,台阶缝里长出了草。绕到背面还能看见晾衣绳的两根铁桩,和一小块被石头围出来的、如今只剩野草的菜地。"
+      },
+      {
+        "id": "item.lighthouse_cliff.service_box",
+        "name": "海岸警卫队配电箱",
+        "description": "钉在小屋墙根的一只灰色铁箱,是自动化那年装的,门上一把新锁,漆着编号与警告字样。箱门内侧插着一张检修记录卡,最后一次签字停在去年——一年来一趟,车停在崖顶,人不进塔。"
       }
     ],
     "connections": [
       {
-        "id": "exit.lighthouse_cliff.lighthouse_door",
+        "id": "connection.lighthouse_cliff.lighthouse_door",
         "targetId": "SCN_lighthouse_interior",
         "name": "灯塔铁门",
         "description": "1982 年换过锁的铁门,通向灯塔内部的螺旋梯。"

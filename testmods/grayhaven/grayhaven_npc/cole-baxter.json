@@ -8,70 +8,226 @@
   "appearance": "制服熨得棱角分明，皮鞋一尘不染；喝咖啡固定加三块糖。",
   "personality": "认真得近乎僵硬，信奉程序，也真心想把事情做好。他说话时总夹着书面语和犹豫的停顿；笔记跟不上时，会请对方从头再说一遍。",
   "background": "Cole 在 Modesto 郊区长大，警校毕业后主动申请了没人想来的 Grayhaven 副警长职位。他没有告诉别人：童年时全家曾在这里露营，那是他记忆里唯一一次所有人都快乐的日子。到任后，他把每一件异常报案都归档，悄悄积起全镇最完整的时间线。",
-  "attributes": { "STR": 55, "CON": 55, "DEX": 65, "APP": 60, "POW": 55, "SIZ": 60, "INT": 70, "EDU": 65 },
-  "status": { "hp": 11, "maxHp": 11, "san": 60, "maxSan": 60, "fatigue": 5, "maxFatigue": 70, "luck": 55, "conditions": [] },
-  "skills": { "Social": 40, "Knowledge & Craft": 40, "Science & Nature": 15, "Investigation": 65, "Athletics": 60, "Swimming": 30, "Stealth & Security": 35, "Repair & Engineering": 20, "Land Vehicle Operation": 55, "Watercraft Operation": 5, "Aircraft Operation": 1, "Survival & Navigation": 25, "Medicine & Psychology": 15, "Melee Combat": 50, "Ranged Combat": 65, "Occult": 5 },
-  "languages": { "native": ["English"] },
+  "attributes": {
+    "STR": 55,
+    "CON": 55,
+    "DEX": 65,
+    "APP": 60,
+    "POW": 55,
+    "SIZ": 60,
+    "INT": 70,
+    "EDU": 65
+  },
+  "status": {
+    "hp": 11,
+    "maxHp": 11,
+    "san": 60,
+    "maxSan": 60,
+    "fatigue": 5,
+    "maxFatigue": 70,
+    "luck": 55,
+    "conditions": []
+  },
+  "skills": {
+    "Social": 40,
+    "Knowledge & Craft": 40,
+    "Science & Nature": 15,
+    "Investigation": 65,
+    "Athletics": 60,
+    "Swimming": 30,
+    "Stealth & Security": 35,
+    "Repair & Engineering": 20,
+    "Land Vehicle Operation": 55,
+    "Watercraft Operation": 5,
+    "Aircraft Operation": 1,
+    "Survival & Navigation": 25,
+    "Medicine & Psychology": 15,
+    "Melee Combat": 50,
+    "Ranged Combat": 65,
+    "Occult": 5
+  },
+  "languages": {
+    "native": [
+      "English"
+    ]
+  },
   "inventory": [
     {
-      "id": "item_cole_field_notebook",
+      "id": "item.cole.field_notebook",
       "name": "副警长现场笔记本",
       "properties": {
         "note": "按时间、方位和证词逐项记录；Cole 不信任模糊的记忆。"
       }
     },
     {
-      "id": "item_cole_ghx_index",
+      "id": "item.cole.ghx_index",
       "name": "GH-X 异常案件索引卡",
       "properties": {
         "note": "Cole 私下给闪灯、串台、死鱼和雾中灯光建立的索引。"
       }
     },
     {
-      "id": "item_cole_service_revolver",
+      "id": "item.cole.service_revolver",
       "name": "配发左轮手枪",
       "properties": {
         "note": "警署配发的左轮手枪，枪套边缘被日常巡逻磨得发白。"
       }
     },
     {
-      "id": "item_cole_handcuffs",
+      "id": "item.cole.handcuffs",
       "name": "配发手铐",
       "properties": {
         "note": "标准配发的钢制手铐，钥匙另收在制服内袋。"
       }
     }
   ],
- "relationships": [
-    { "targetId": "npc_ray_holt", "targetName": "Ray Holt", "relationshipType": "employer", "attitude": 35, "firstPerson": "Ray 是我的警长。他对案件太随意，却有我还没学会的人望；只要提到山上，他就把话题拨得过分熟练。" },
-    { "targetId": "npc_earl_pruitt", "targetName": "Earl Pruitt", "relationshipType": "friend", "attitude": 40, "firstPerson": "Earl 的报案精确到方位和分钟数，值得记下来；那不是胡言乱语。" },
-    { "targetId": "npc_dolores_medeiros", "targetName": "Dolores Medeiros", "relationshipType": "friend", "attitude": 45, "firstPerson": "Dolores 知道的本地事实比我的档案柜还快；我不喜欢这一点，但确实如此。" },
-    { "targetId": "npc_doc_weaver", "targetName": "Doc Weaver", "relationshipType": "neutral", "attitude": 30, "firstPerson": "Weaver 医生精确又配合，做笔录时从不让我重复问话。" },
-    { "targetId": "npc_susan_holt", "targetName": "Susan Holt", "relationshipType": "friend", "attitude": 30, "firstPerson": "Susan 总在我加班时照顾我；她的医疗记录和我希望所有报案都一样整齐。" },
-    { "targetId": "npc_frank_holt", "targetName": "Frank Holt", "relationshipType": "neutral", "attitude": 20, "firstPerson": "Frank 的货车保养得无可挑剔，也是唯一常过自动大门的人；他不谈山上，想必有合同约束。" },
-    { "targetId": "npc_denny_holt", "targetName": "Denny Holt", "relationshipType": "neutral", "attitude": 30, "firstPerson": "Denny 见到我总站得笔直，还会问科幻问题；他是孩子里最守规矩的一个。" },
-    { "targetId": "npc_marisol_reyes", "targetName": "Marisol Reyes", "relationshipType": "neutral", "attitude": 25, "firstPerson": "Marisol 问 Tommy 晚归是否该报失踪；我先讲了流程，后来才明白她要的是安慰。" },
-    { "targetId": "npc_tommy_reyes", "targetName": "Tommy Reyes", "relationshipType": "neutral", "attitude": 10, "firstPerson": "Tommy 的 BMX 骑得太快；我已经提醒他和朋友天黑前回家。" },
-    { "targetId": "npc_priya_batra", "targetName": "Priya Batra", "relationshipType": "neutral", "attitude": 30, "firstPerson": "Priya 纠正过我：那不是静电，而是扫频。十三岁的她比许多成年人更准确。" },
-    { "targetId": "npc_dev_batra", "targetName": "Dev Batra", "relationshipType": "neutral", "attitude": 35, "firstPerson": "Dev 留着异常报修的书面记录；愿意记事的镇民让我的工作变得可能。" },
-    { "targetId": "npc_anita_batra", "targetName": "Anita Batra", "relationshipType": "friend", "attitude": 30, "firstPerson": "Anita 在我夜班时常塞给我糕点，拒绝收钱的次数多到我已经不再争。" }
+  "relationships": [
+    {
+      "targetId": "npc_ray_holt",
+      "targetName": "Ray Holt",
+      "relationshipType": "employer",
+      "attitude": 35,
+      "firstPerson": "Ray 是我的警长。他对案件太随意，却有我还没学会的人望；只要提到山上，他就把话题拨得过分熟练。"
+    },
+    {
+      "targetId": "npc_earl_pruitt",
+      "targetName": "Earl Pruitt",
+      "relationshipType": "friend",
+      "attitude": 40,
+      "firstPerson": "Earl 的报案精确到方位和分钟数，值得记下来；那不是胡言乱语。"
+    },
+    {
+      "targetId": "npc_dolores_medeiros",
+      "targetName": "Dolores Medeiros",
+      "relationshipType": "friend",
+      "attitude": 45,
+      "firstPerson": "Dolores 知道的本地事实比我的档案柜还快；我不喜欢这一点，但确实如此。"
+    },
+    {
+      "targetId": "npc_doc_weaver",
+      "targetName": "Doc Weaver",
+      "relationshipType": "neutral",
+      "attitude": 30,
+      "firstPerson": "Weaver 医生精确又配合，做笔录时从不让我重复问话。"
+    },
+    {
+      "targetId": "npc_susan_holt",
+      "targetName": "Susan Holt",
+      "relationshipType": "friend",
+      "attitude": 30,
+      "firstPerson": "Susan 总在我加班时照顾我；她的医疗记录和我希望所有报案都一样整齐。"
+    },
+    {
+      "targetId": "npc_frank_holt",
+      "targetName": "Frank Holt",
+      "relationshipType": "neutral",
+      "attitude": 20,
+      "firstPerson": "Frank 的货车保养得无可挑剔，也是唯一常过自动大门的人；他不谈山上，想必有合同约束。"
+    },
+    {
+      "targetId": "npc_denny_holt",
+      "targetName": "Denny Holt",
+      "relationshipType": "neutral",
+      "attitude": 30,
+      "firstPerson": "Denny 见到我总站得笔直，还会问科幻问题；他是孩子里最守规矩的一个。"
+    },
+    {
+      "targetId": "npc_marisol_reyes",
+      "targetName": "Marisol Reyes",
+      "relationshipType": "neutral",
+      "attitude": 25,
+      "firstPerson": "Marisol 问 Tommy 晚归是否该报失踪；我先讲了流程，后来才明白她要的是安慰。"
+    },
+    {
+      "targetId": "npc_tommy_reyes",
+      "targetName": "Tommy Reyes",
+      "relationshipType": "neutral",
+      "attitude": 10,
+      "firstPerson": "Tommy 的 BMX 骑得太快；我已经提醒他和朋友天黑前回家。"
+    },
+    {
+      "targetId": "npc_priya_batra",
+      "targetName": "Priya Batra",
+      "relationshipType": "neutral",
+      "attitude": 30,
+      "firstPerson": "Priya 纠正过我：那不是静电，而是扫频。十三岁的她比许多成年人更准确。"
+    },
+    {
+      "targetId": "npc_dev_batra",
+      "targetName": "Dev Batra",
+      "relationshipType": "neutral",
+      "attitude": 35,
+      "firstPerson": "Dev 留着异常报修的书面记录；愿意记事的镇民让我的工作变得可能。"
+    },
+    {
+      "targetId": "npc_anita_batra",
+      "targetName": "Anita Batra",
+      "relationshipType": "friend",
+      "attitude": 30,
+      "firstPerson": "Anita 在我夜班时常塞给我糕点，拒绝收钱的次数多到我已经不再争。"
+    }
   ],
   "longTermIntent": "把这份工作做成真正的警务：每一件报案都有编号、记录和跟进；总有一天证明我选择这个没人想来的镇子是对的。",
   "memory": [
-    { "type": "secret", "content": "我没告诉任何人为什么申请 Grayhaven。小时候全家来这里露营过一次，那是我唯一记得所有人都快乐的日子。" },
-    { "type": "general", "content": "1984 年第一天，Ray 指着一张桌子和半盒没削的铅笔，说镇上没什么事。我第一个月都在重贴档案柜标签和编案号。" },
-    { "type": "general", "content": "异常报案有条时间线：1984 年十二月起灯光闪烁，三月起电视和收音机串台，五月海滩死鱼，六月 Earl 三次报告雾中灯光。" },
-    { "type": "general", "content": "异常档案从去年冬天开始变厚；我建了 GH-X 类别只是为了方便检索，正式流程里没有这一项。" },
-    { "type": "general", "content": "Ray 从不打开前厅档案柜。上次我提起 Earl 的灯光报案，他停了一瞬，然后说雾大时别看得太仔细。" },
-    { "type": "general", "content": "Dolores 说 Marisol 问 Tommy 的事，是希望我巡逻时留意孩子，不是想听失踪程序。我记下了。" },
-    { "type": "plan", "content": "本周完成 1985 年上半年 GH-X 案件的编号和索引卡，再做一份按日期排列的清单。" },
-    { "type": "plan", "content": "等 Ray 心情合适时，请他读一遍 GH-X 摘要；我还得找到不会让他立刻岔开话题的说法。" },
-    { "type": "map", "content": "主街是一条街，我从头巡到尾：靠北口那头是蓝鸟餐馆、杂货店兼邮局、警长办公室门口，靠南口那头是街机厅、巴特拉维修铺楼下、诊所——南北口走到底，我拿表测过，整条十五分钟，雾大脚下放慢能多出一两分钟。" },
-    { "type": "map", "content": "主街北口往外三条岔路我记得清楚：旧海岸公路到汽车旅馆二十五分钟，霍尔特巷到 Holt 家院门二十分钟，林道走到林道口十分钟；南口往外，下坡道到码头海滩十五分钟，后巷抄近路到雷耶斯家门口八分钟——都是我巡逻表上的固定项。" },
-    { "type": "map", "content": "巡逻车开到旧海岸公路靠汽车旅馆那一段，树影挡得手台信号断断续续，我跟前台约好了，联系不上就等我回程再报平安，不算出事。" },
-    { "type": "map", "content": "一年巡逻下来，主街沿街每家店铺的后门和堆货口我都摸熟了，哪几盏路灯总在夜里闪也认得是哪几根杆。镇子以外说不上熟——林子我只到过林道口，没进去过深处，听说旧锯木厂废墟在林子深处，是孩子们爱去的地方。" },
-    { "type": "map", "content": "码头往灯塔崖那条崖间小径是唯一的路，巡逻走过来回，路上有条岔路通向 Earl 老爷子的小屋。灯塔从八二年起锁着，我没必要进去。" },
-    { "type": "map", "content": "汽车旅馆旁那条车行道往山上去，尽头是一道自动大门，过了那儿就是雷德利站——镇上人都叫它气象观测站。普通人到大门为止，我巡逻从没往那条车道上走过，知道的都是镇上人闲聊来的。" },
-    { "type": "map", "content": "档案柜里几份林区报案记的是方位，不是路线——大致说是林道口往里某个方向、多远，我按规程归了档，但从没照着这些方位走进去核实过。" }
+    {
+      "type": "secret",
+      "content": "我没告诉任何人为什么申请 Grayhaven。小时候全家来这里露营过一次，那是我唯一记得所有人都快乐的日子。"
+    },
+    {
+      "type": "general",
+      "content": "1984 年第一天，Ray 指着一张桌子和半盒没削的铅笔，说镇上没什么事。我第一个月都在重贴档案柜标签和编案号。"
+    },
+    {
+      "type": "general",
+      "content": "异常报案有条时间线：1984 年十二月起灯光闪烁，三月起电视和收音机串台，五月海滩死鱼，六月 Earl 三次报告雾中灯光。"
+    },
+    {
+      "type": "general",
+      "content": "异常档案从去年冬天开始变厚；我建了 GH-X 类别只是为了方便检索，正式流程里没有这一项。"
+    },
+    {
+      "type": "general",
+      "content": "Ray 从不打开前厅档案柜。上次我提起 Earl 的灯光报案，他停了一瞬，然后说雾大时别看得太仔细。"
+    },
+    {
+      "type": "general",
+      "content": "Dolores 说 Marisol 问 Tommy 的事，是希望我巡逻时留意孩子，不是想听失踪程序。我记下了。"
+    },
+    {
+      "type": "plan",
+      "content": "本周完成 1985 年上半年 GH-X 案件的编号和索引卡，再做一份按日期排列的清单。"
+    },
+    {
+      "type": "plan",
+      "content": "等 Ray 心情合适时，请他读一遍 GH-X 摘要；我还得找到不会让他立刻岔开话题的说法。"
+    },
+    {
+      "type": "map",
+      "content": "主街是一条街，我从头巡到尾：靠北口那头是蓝鸟餐馆、杂货店兼邮局、警长办公室门口，靠南口那头是街机厅、巴特拉维修铺楼下、诊所——南北口走到底，我拿表测过，整条十五分钟，雾大脚下放慢能多出一两分钟。"
+    },
+    {
+      "type": "map",
+      "content": "主街北口往外三条岔路我记得清楚：旧海岸公路到汽车旅馆二十五分钟，霍尔特巷到 Holt 家院门二十分钟，林道走到林道口十分钟；南口往外，下坡道到码头海滩十五分钟，后巷抄近路到雷耶斯家门口八分钟——都是我巡逻表上的固定项。"
+    },
+    {
+      "type": "map",
+      "content": "巡逻车开到旧海岸公路靠汽车旅馆那一段，树影挡得手台信号断断续续，我跟前台约好了，联系不上就等我回程再报平安，不算出事。"
+    },
+    {
+      "type": "map",
+      "content": "一年巡逻下来，主街沿街每家店铺的后门和堆货口我都摸熟了，哪几盏路灯总在夜里闪也认得是哪几根杆。镇子以外说不上熟——林子我只到过林道口，没进去过深处，听说旧锯木厂废墟在林子深处，是孩子们爱去的地方。"
+    },
+    {
+      "type": "map",
+      "content": "码头往灯塔崖那条崖间小径是唯一的路，巡逻走过来回，路上有条岔路通向 Earl 老爷子的小屋。灯塔从八二年起锁着，我没必要进去。"
+    },
+    {
+      "type": "map",
+      "content": "汽车旅馆旁那条车行道往山上去，尽头是一道自动大门，过了那儿就是雷德利站——镇上人都叫它气象观测站。普通人到大门为止，我巡逻从没往那条车道上走过，知道的都是镇上人闲聊来的。"
+    },
+    {
+      "type": "map",
+      "content": "档案柜里几份林区报案记的是方位，不是路线——大致说是林道口往里某个方向、多远，我按规程归了档，但从没照着这些方位走进去核实过。"
+    }
   ]
 }
