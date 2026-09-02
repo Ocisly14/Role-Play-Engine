@@ -2,15 +2,15 @@
   "schemaVersion": 2,
   "id": "SCN_earl_cabin",
   "name": "Earl 的小屋",
-  "description": "一间屋就是他的一生:行军床叠得像船铺,铸铁炉子上坐着咖啡壶,灶台边一排腌货架 [item.earl_cabin.pantry_shelf] 码着自家腌的鱼和腌菜罐头,标签是他一笔一划写的日期。油布雨衣挂在门后滴着水汽。靠窗的桌子擦得最干净——桌上按日期码着一摞学生练习本 [item.earl_cabin.log_notebooks],一天一页,天气、潮位、船只、以及他看见的那些光,字迹克制得像仍在当班。搁板上立着一张镶银边的相片 [item.earl_cabin.nora_photo],Nora 在灯塔平台上迎风按着帽子。屋里常年带着一股海雾渗进木头的潮气 [cond.earl_cabin.sea_damp],纸页都有点发软。唯一的门 [ROAD_cliff_path] 开出去就是崖径,往上走是灯塔崖,往下几分钟就到码头。",
-  "parentLocationId": "LOC_earl_cabin",
+  "description": "一间屋就是他的一生:行军床 [item.earl_cabin.cot] 叠得像船铺,床底下塞着一只旧海员木箱 [item.earl_cabin.sea_chest];铸铁炉子 [item.earl_cabin.iron_stove] 烧的是海滩上捡回来的浮木,劈好的柴在炉边码得整整齐齐,炉上永远坐着那只珐琅咖啡壶 [item.earl_cabin.coffee_pot]。灶台边一排腌货架 [item.earl_cabin.pantry_shelf] 码着自家腌的鱼和腌菜罐头,标签是他一笔一划写的日期;门后一排铁钩 [item.earl_cabin.coat_hooks],只有他在屋里的时候上头才挂得住那件油布雨衣,钩子底下立着海竿、木饵箱和几卷线 [item.earl_cabin.fishing_tackle],钩子全是他自己绑的。靠窗的桌子 [item.earl_cabin.window_table] 擦得最干净,正对着海,窗框上挂着一副磨掉了漆的双筒望远镜 [item.earl_cabin.binoculars];桌角按年份码着一摞写满的旧练习本 [item.earl_cabin.log_notebooks],1982 年退休至今一天一页,一本不缺——今年在用的那本不在桌上,跟着人走。桌上还有一台旧收音机 [item.earl_cabin.radio],白天调着 KGRV,夜里常自己串进别的声音;窗台上一盏煤油灯 [item.earl_cabin.oil_lamp] 留着停电的时候用,灯罩擦得发亮。搁板上立着一张镶银边的相片 [item.earl_cabin.nora_photo],Nora 在灯塔平台上迎风按着帽子。屋里常年带着一股海雾渗进木头的潮气 [cond.earl_cabin.sea_damp],纸页都有点发软。唯一的门 [ROAD_cliff_path] 开出去就是崖径,往上走是灯塔崖,往下几分钟就到码头。",
+  "parentLocationId": "earl_cabin",
   "indoor": true,
   "references": {
     "items": [
       {
         "id": "item.earl_cabin.log_notebooks",
-        "name": "Earl 的日志练习本",
-        "description": "按日期码放的学生练习本,退休后的航海日志:一天一页,记着天气、潮位、船只,和他在雾里看见的光。记录克制而精确。"
+        "name": "写满的旧日志本",
+        "description": "桌角按年份码着的一摞学生练习本,是他退休以后写满的那些航海日志——1982 年至今,一天一页,风向、能见度、潮位、进出的船,还有他在雾里看见的光。字迹克制精确,一本不缺;今年在用的那一本从不留在屋里。"
       },
       {
         "id": "item.earl_cabin.nora_photo",
@@ -21,6 +21,58 @@
         "id": "item.earl_cabin.pantry_shelf",
         "name": "腌货架",
         "description": "灶台边一排搁板,码着自家腌的鱼罐头和腌菜坛子,玻璃罐上贴着手写的日期标签,最老的一批比退休还早。"
+      },
+      {
+        "id": "item.earl_cabin.cot",
+        "name": "行军床",
+        "description": "靠墙的一张铁架行军床,军毯掖得四角笔挺,叠法是船上学来的。枕头下压着一把小折刀,床头钉子上挂着一只走了三十年的怀表——他上床前照例上一次弦。"
+      },
+      {
+        "id": "item.earl_cabin.sea_chest",
+        "name": "旧海员木箱",
+        "description": "床底下拖出来的一只硬木箱,铜包角磨得发亮,盖内侧还留着船名的印子。里头是绳结样品、旧海图、一件叠好的深蓝制服、Nora 的几样东西,和一沓用麻线捆好的信。箱子没上锁——这屋里也没别人。"
+      },
+      {
+        "id": "item.earl_cabin.iron_stove",
+        "name": "铸铁炉子",
+        "description": "屋子正中的一台矮铸铁炉,烟囱从屋顶穿出去,炉门合页松了,一开就吱一声。烧的全是海滩上捡的浮木,劈好的柴在炉边码成整齐一垛,盐分让火苗偶尔窜出一点蓝。做饭、取暖、烤干雨衣,都靠它。"
+      },
+      {
+        "id": "item.earl_cabin.coffee_pot",
+        "name": "珐琅咖啡壶",
+        "description": "常年坐在炉子上的一只蓝白珐琅咖啡壶,磕掉了几块漆,壶嘴积着洗不掉的褐渍。里头的咖啡从早温到晚,浓得发苦——他喝了三十年夜班,改不掉。"
+      },
+      {
+        "id": "item.earl_cabin.window_table",
+        "name": "靠窗的桌子",
+        "description": "正对海面的一张木桌,是屋里擦得最干净的地方:一支钢笔、一瓶墨水、一把削铅笔的小刀,和一张压在玻璃板下的旧潮汐表。他每天回来第一件事就是坐在这儿,把当天写完。"
+      },
+      {
+        "id": "item.earl_cabin.radio",
+        "name": "旧收音机",
+        "description": "桌上一台木壳台式收音机,旋钮的刻度早被磨平,背后的散热孔积着盐灰。前年 Batra 修好过它,收本地的 KGRV 一向清楚;可近来到了夜里,台与台之间总有别的声音挤进来,一阵一阵,像有节奏。"
+      },
+      {
+        "id": "item.earl_cabin.binoculars",
+        "name": "双筒望远镜",
+        "description": "挂在窗框钉子上的一副旧军用双筒镜,漆磨掉大半,镜身上还认得出海岸警卫队的编号。镜片干净,目镜的间距一直固定在同一个位置——这屋里只有一双眼睛用它。"
+      },
+      {
+        "id": "item.earl_cabin.fishing_tackle",
+        "name": "渔具",
+        "description": "门边立着的一根旧海竿、一只木饵箱和几卷不同粗细的线。饵箱分格里码着他自己绑的钩:每一枚的线头收法都一样,平整得像一个人写了一辈子的同一个字。"
+      },
+      {
+        "id": "item.earl_cabin.coat_hooks",
+        "name": "门后的铁钩",
+        "description": "门后钉着的一排铁钩,漆下面全是锈。他在屋里的时候,油布雨衣就挂在最外面那只钩上滴水,底下的地板被滴出一小片深色;他一出门,钩子就全空着。"
+      },
+      {
+        "id": "item.earl_cabin.oil_lamp",
+        "name": "煤油灯",
+        "description": "窗台上一盏玻璃罩煤油灯,罩子擦得透亮,灯芯剪得平。海边一起风就停电,这灯比屋里的电灯泡靠得住——他也习惯了写日志的时候把它点上,不为亮,为手边有一点火。",
+        "isLightSource": true,
+        "lightLevel": 1
       }
     ],
     "connections": [

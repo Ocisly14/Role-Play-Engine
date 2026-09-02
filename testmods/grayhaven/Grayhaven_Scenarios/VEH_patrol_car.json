@@ -1,0 +1,7 @@
+{
+  "id": "VEH_patrol_car",
+  "name": "警长办公室的巡逻车",
+  "description": "一辆 1979 年的福特 LTD,县里配发时刷的黑白两色如今都褪成了灰,车门上「灰港镇警长办公室」的字样掉了两个字母,车顶那盏警灯的红罩子裂了一道,用透明胶带粘着。它大多数时候停在主街北口警长办公室这一头的路边,车头冲着旧海岸公路。发动机声全镇人都认得:Ray 开它二十多年,换过三台变速箱,没换过车。",
+  "interiorSceneId": "SCN_patrol_car_cab",
+  "initialLocation": "SCN_main_north"
+}

@@ -1,0 +1,45 @@
+{
+  "schemaVersion": 2,
+  "id": "SCN_county_road",
+  "name": "县道拐弯处",
+  "description": "县道在这里拐了个大弯,路面被雪盖平了,只有两侧断续的护栏还能标出路基在哪儿 [item.county_road.guardrail]。一块钉在铁杆上的路牌歪向路面,漆掉了大半,箭头还认得出是指向东北 [item.county_road.road_sign]。路肩上停着一辆早锈死的皮卡,车门大开着,车斗里的积雪堆得比车厢还高 [item.county_road.dead_pickup]。风从山谷口直灌上来,雪是横着走的 [cond.county_road.whiteout]。沿县道继续向东北,就是杰克逊镇 [SCN_jackson_town]。",
+  "references": {
+    "items": [
+      {
+        "id": "item.county_road.guardrail",
+        "name": "断续的护栏",
+        "description": "县道两侧的镀锌护栏,断了好几节,剩下的部分被雪埋到只露出顶沿。在这种天气里,它是唯一能告诉人路在哪儿的东西。"
+      },
+      {
+        "id": "item.county_road.road_sign",
+        "name": "歪掉的路牌",
+        "description": "一块钉在铁杆上的绿底路牌,被撞歪了,朝下指着路面。漆皮剥落得只剩底色,但箭头的方向还认得出来,指向东北。"
+      },
+      {
+        "id": "item.county_road.dead_pickup",
+        "name": "锈死的皮卡",
+        "description": "停在路肩上的一辆皮卡,轮胎全瘪,车门大开,座椅的填充物被老鼠掏空了。车斗里积了半人高的雪。它在这儿停了很多年,谁都从它旁边走过。"
+      }
+    ],
+    "connections": [
+      {
+        "id": "connection.county_road.jackson_town",
+        "targetId": "SCN_jackson_town",
+        "name": "通往杰克逊的县道",
+        "description": "沿护栏向东北继续走，越过最后一道山坳便能看见杰克逊的围墙和灯火。"
+      }
+    ],
+    "conditions": [
+      {
+        "id": "cond.county_road.whiteout",
+        "description": "暴雪白幕:风从山谷口直灌上来,雪横着走,路基和路肩完全分不出来。",
+        "mechanicalEffect": {
+          "skillPenalty": {
+            "Survival & Navigation": -20,
+            "Ranged Combat": -15
+          }
+        }
+      }
+    ]
+  }
+}

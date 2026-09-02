@@ -2,11 +2,46 @@
   "schemaVersion": 2,
   "id": "SCN_sheriff_front",
   "name": "警长办公室·前厅",
-  "description": "前厅一半是公务,一半是习惯:布告板上钉着褪色的通缉照和渔汛节的旧海报,墙边挂钩上一件备用制服熨出笔直的棱线——不用问也知道是谁的。Cole 的办公桌收拾得像检阅前的营房,笔按长短排列,咖啡壶[item.sheriff_front.coffee_pot]续着新一壶,他杯里三块糖正在化。桌后的调度电台[item.sheriff_front.dispatch_radio]大多数时候只应之以杂音。靠墙立着一组档案柜[item.sheriff_front.incident_files],抽屉标签写着「事件报告」——Cole 按规程归档的每一起「怪事报案」都在里面,按日期码得整整齐齐,全镇没有第二个人翻过。临街门通向主街[ROAD_main_street];里间的门后是警长办公室[SCN_sheriff_office];走廊尽头是拘留室[SCN_sheriff_cell]。",
-  "parentLocationId": "LOC_sheriff_office",
+  "description": "前厅一半是公务,一半是习惯:临街那面墙上钉着布告板[item.sheriff_front.bulletin_board],褪色的通缉照和渔汛节的旧海报叠在一起,谁也没心思揭;板子底下一条木长椅[item.sheriff_front.visitor_bench]是镇上来报案的人坐的位置,座面磨掉了两块漆。墙边挂钩上一件备用制服[item.sheriff_front.spare_uniform]熨出笔直的棱线——不用问也知道是谁的;旁边挂钟[item.sheriff_front.wall_clock]的秒针有点粘,交接班的时间还是从它上头看。Cole 的办公桌[item.sheriff_front.cole_desk]收拾得像检阅前的营房,笔按长短排列,桌角一台老打字机[item.sheriff_front.typewriter]压着一沓空白报案表,黑色转盘电话[item.sheriff_front.telephone]就搁在手边——全镇出了事打的是这个号码。咖啡壶[item.sheriff_front.coffee_pot]续着新一壶,他杯里三块糖正在化。桌后的调度电台[item.sheriff_front.dispatch_radio]大多数时候只应之以杂音,旁边摊开的值班记录簿[item.sheriff_front.duty_log]一栏一栏签到今天上午。靠墙立着一组档案柜[item.sheriff_front.incident_files],抽屉标签写着「事件报告」——Cole 按规程归档的每一起「怪事报案」都在里面,按日期码得整整齐齐,全镇没有第二个人翻过。另一面墙上挂着镇区巡逻地图[item.sheriff_front.town_map],主街两段被铅笔描过许多遍,林道口往北就是一片空白;地图底下是玻璃门的枪柜[item.sheriff_front.gun_cabinet],里头锁着一支署里的老霰弹枪[item.sheriff_front.shotgun],柜边钥匙板[item.sheriff_front.key_board]上每把钥匙底下都贴着标签。临街门通向主街[ROAD_main_street];里间的门后是警长办公室[SCN_sheriff_office];走廊尽头是拘留室[SCN_sheriff_cell]。",
+  "parentLocationId": "sheriff_office",
   "indoor": true,
   "references": {
     "items": [
+      {
+        "id": "item.sheriff_front.bulletin_board",
+        "name": "布告板",
+        "description": "临街墙上的软木布告板,层层叠叠钉着县里发下来的通缉照、两张多年没人问过的失踪告示、渔汛节的旧海报和一张镇公所的休渔通告。最上面一层永远是最近钉的,底下那几层的图钉早锈进了木头。"
+      },
+      {
+        "id": "item.sheriff_front.visitor_bench",
+        "name": "来访长椅",
+        "description": "布告板底下靠墙的一条木长椅,给来报案、来交罚款、来等人的镇民坐。座面被磨掉两块漆,谁坐在这儿说话,前厅整间屋子都听得见。"
+      },
+      {
+        "id": "item.sheriff_front.spare_uniform",
+        "name": "备用制服",
+        "description": "挂钩上罩着塑料袋的一套备用制服,棱线熨得笔直,袖口的警徽章缝得一丝不苟。值夜或是淋了雨,换的就是这一套。"
+      },
+      {
+        "id": "item.sheriff_front.wall_clock",
+        "name": "挂钟",
+        "description": "圆盘挂钟,白面黑针,秒针走到十一那格会粘一下再跳过去。交接班、出勤时间、笔录上写的钟点,记的都是它。"
+      },
+      {
+        "id": "item.sheriff_front.cole_desk",
+        "name": "Cole 的办公桌",
+        "description": "靠窗的钢制办公桌,桌面擦得能照见人:铅笔按长短排成一列,回形针盒摆正,抽屉里是编好号的空白表格和一把削笔刀。桌上没有一样东西是随手放的。"
+      },
+      {
+        "id": "item.sheriff_front.typewriter",
+        "name": "打字机",
+        "description": "桌角一台黑漆的手动打字机,e 键的字锤敲下去偏左半格,所以所有笔录里的 e 都比别的字母低一点。压在机身下的是一沓空白报案表。"
+      },
+      {
+        "id": "item.sheriff_front.telephone",
+        "name": "转盘电话",
+        "description": "黑色转盘电话,全镇报警打的就是这个号码。机身侧面贴着手写的号码条:诊所、蓝鸟餐馆、县警局值班室、Holt 家——字迹一笔一划,是新贴上去不到一年的。"
+      },
       {
         "id": "item.sheriff_front.coffee_pot",
         "name": "咖啡壶",
@@ -18,9 +53,34 @@
         "description": "警用调度电台,天线擦得锃亮。灰港的频道大多数时候只有杂音——最近的杂音似乎比往常多。"
       },
       {
+        "id": "item.sheriff_front.duty_log",
+        "name": "值班记录簿",
+        "description": "摊在电台边的硬壳记录簿,一栏日期一栏时间一栏事由:巡逻出勤、接到的电话、谁的猫又上了谁家屋顶。签名栏里近一年几乎全是同一个人的笔迹。"
+      },
+      {
         "id": "item.sheriff_front.incident_files",
         "name": "事件报告档案柜",
         "description": "Cole 的档案柜:一年来全镇每一起「怪事报案」——闪灯、串台、死鱼、雾里的光——都按日期与报案人归档在案。他自己还没意识到这摞纸连起来是什么。"
+      },
+      {
+        "id": "item.sheriff_front.town_map",
+        "name": "镇区巡逻地图",
+        "description": "钉在墙上的镇区地图,主街两段被铅笔描过许多遍,几处路灯杆上画了小圈。林道口以北是印刷厂留下的一片空白绿色,上头一个铅笔记号也没有。"
+      },
+      {
+        "id": "item.sheriff_front.gun_cabinet",
+        "name": "枪柜",
+        "description": "玻璃门的钢制枪柜,锁着,柜底一格摆着纸盒装的霰弹和几副护耳。钥匙不在钥匙板上——那把归警长收着。"
+      },
+      {
+        "id": "item.sheriff_front.shotgun",
+        "name": "署里的霰弹枪",
+        "description": "锁在枪柜里的泵动霰弹枪,枪管上了油,木托被人擦了很多年。灰港上一回把它拿出来是为了一头闯进镇子的病鹿。"
+      },
+      {
+        "id": "item.sheriff_front.key_board",
+        "name": "钥匙板",
+        "description": "枪柜边墙上一块钉着挂钩的木板:拘留室、后门、档案柜、巡逻车,每把钥匙底下贴着打字机打出来的标签,空钩子说明钥匙在谁手上。"
       }
     ],
     "connections": [

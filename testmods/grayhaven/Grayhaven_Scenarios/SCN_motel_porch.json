@@ -2,14 +2,21 @@
   "schemaVersion": 2,
   "id": "SCN_motel_porch",
   "name": "汽车旅馆外廊",
-  "description": "一条带顶的水泥外廊沿着客房一字排开,漆皮剥落的立柱数过去有八根,其中一根钉着一块生锈的广告温度计 [item.motel_porch.thermometer],印着一个早停产的啤酒牌子,指针早锈死不动了;大多数房门后面是拉死的窗帘。廊下摆着几把褪色的折叠躺椅 [item.motel_porch.deck_chairs],旁边一只立式铁皮烟灰缸 [item.motel_porch.ashtray] 里积着经年的烟蒂,结成了硬壳;帆布躺椅被海风吹得发脆——偶尔有人在雾夜里坐在那儿,朝公路岔口的方向望着。整条外廊常年挂着海雾的湿气 [cond.motel_porch.sea_damp],栏杆摸上去总是潮的,水泥地上一圈圈返着盐霜。一头的木门 [SCN_motel_lobby] 通回前台;4 号房的房门 [SCN_motel_room4] 在外廊中段,正对着前台方向的视线。",
-  "parentLocationId": "LOC_motel",
+  "description": "一条带顶的水泥外廊沿着客房一字排开,漆皮剥落的立柱数过去有八根,其中一根钉着一块生锈的广告温度计 [item.motel_porch.thermometer],印着一个早停产的啤酒牌子,指针早锈死不动了;每两扇房门之间垂着一盏廊灯 [item.motel_porch.porch_lights],八盏里只剩三盏还亮,入夜后把水泥地照出一段一段的黄。大多数房门后面是拉死的窗帘。廊下摆着几把褪色的折叠躺椅 [item.motel_porch.deck_chairs],旁边一只立式铁皮烟灰缸 [item.motel_porch.ashtray] 里积着经年的烟蒂,结成了硬壳;帆布躺椅被海风吹得发脆——偶尔有人在雾夜里坐在那儿,朝公路岔口的方向望着。廊子尽头停着一辆保洁推车 [item.motel_porch.housekeeping_cart],叠好的毛巾上落了灰,轮子早锈住了;墙根一个铜水龙头 [item.motel_porch.hose_bib] 上接着一盘晒硬的胶皮水管。整条外廊常年挂着海雾的湿气 [cond.motel_porch.sea_damp],栏杆摸上去总是潮的,水泥地上一圈圈返着盐霜。一头的木门 [SCN_motel_lobby] 通回前台;4 号房的房门 [SCN_motel_room4] 在外廊中段,正对着前台方向的视线。",
+  "parentLocationId": "motel",
   "references": {
     "items": [
       {
         "id": "item.motel_porch.thermometer",
         "name": "广告温度计",
         "description": "钉在廊柱上的铁皮广告温度计,印着一个早停产的啤酒牌子,指针早锈死不动了。"
+      },
+      {
+        "id": "item.motel_porch.porch_lights",
+        "name": "外廊灯",
+        "description": "每两扇房门之间垂下一盏带铁皮罩的灯泡,八盏里只剩三盏还亮。天黑随前台的总闸一起开,把湿漉漉的水泥地照出一段一段的黄,亮着的那几盏底下总有一圈打转的蛾子。",
+        "isLightSource": true,
+        "lightLevel": 1
       },
       {
         "id": "item.motel_porch.deck_chairs",
@@ -20,6 +27,16 @@
         "id": "item.motel_porch.ashtray",
         "name": "立式烟灰缸",
         "description": "摆在躺椅旁的立式铁皮烟灰缸,里面积着经年的烟蒂,结成了硬壳。"
+      },
+      {
+        "id": "item.motel_porch.housekeeping_cart",
+        "name": "保洁推车",
+        "description": "停在外廊尽头的铁架保洁推车,上层叠着洗旧的毛巾和小块肥皂,下层是拖把桶和一瓶漂白水。毛巾上落了一层灰,轮子锈住了——一排客房里只住着一位客人,车子已经很久没推动过。"
+      },
+      {
+        "id": "item.motel_porch.hose_bib",
+        "name": "水龙头与胶皮水管",
+        "description": "墙根一个铜水龙头,拧开先出锈水,再出凉的井水;龙头上接着一盘被太阳晒硬的胶皮水管,早年是用来冲游泳池和洗车的,如今偶尔有人用它冲一冲廊下的盐霜。"
       }
     ],
     "connections": [

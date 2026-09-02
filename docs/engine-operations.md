@@ -121,7 +121,7 @@ engine 处理的「操作」分四层，彼此不共享枚举：**演员发出�
 | kind | 字段 |
 |---|---|
 | `hp` `san` `fatigue` | `delta: number, reason: string` |
-| `position` | `position: {type: "scene", sceneId}` —— 只能放进场景（上车、被抬进门）。路是走出来的，只由动作的 `movement.route` 产生；直接放到路上会缺沿路分数，曾让下一次规划算出 NaN 炸掉整个 tick |
+| `position` | `position: {type: "scene", sceneId}` —— 只用于"不是走过去"的位移：上下载具（进出其内部场景），或动作后果造成的无路线位移（翻窗跳到院子、昏迷被抬走、被拖走、摔穿地板）。凡是走、跑、潜行、骑车到另一个地方，一律用动作上的 `movement.route`，由代码按拓扑和路程推进；实测一晚上三次角色被这条操作"送"过没进过的房间、绕过没看见的人。路是走出来的，直接放到路上会缺沿路分数，曾让下一次规划算出 NaN 炸掉整个 tick |
 | `spot` | `spot: string` —— 在这个地方的哪儿，一句短语；`""` 清空（换地点时代码自动清） |
 | `addCondition` | `condition: {id, description}` |
 | `removeCondition` | `conditionId: string` |

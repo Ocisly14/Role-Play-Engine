@@ -2,15 +2,45 @@
   "schemaVersion": 2,
   "id": "SCN_clinic_waiting",
   "name": "诊所·候诊室",
-  "description": "候诊室不大,却是主街南口又一个闲聊的去处:靠墙两条长椅,坐垫凹陷的位置说明常客都有各自的座,长椅一端摆着个旧木箱[item.clinic_waiting.toy_box],装着掉漆的玩具车和缺角的积木,是留给候诊孩子的老古董。Susan 的护士台正对着门,台面一尘不染,台上摊着预约簿[item.clinic_waiting.appointment_book],她的圆体字排得像药品标签一样清楚。茶几上一摞旧杂志[item.clinic_waiting.magazine_stack],最新的一本也是去年的。墙上的体检宣传画从六十年代挂到今天。临街门通向主街[ROAD_main_street];诊室的门[SCN_clinic_exam]关着时,候诊的人自觉压低声音;楼梯口挂着「私人」的小木牌,通向楼上 Weaver 医生的住处[SCN_clinic_upstairs]。",
-  "parentLocationId": "LOC_clinic",
+  "description": "候诊室不大,却是主街南口又一个闲聊的去处:靠墙两条长椅[item.clinic_waiting.benches],坐垫凹陷的位置说明常客都有各自的座,长椅一端摆着个旧木箱[item.clinic_waiting.toy_box],装着掉漆的玩具车和缺角的积木,是留给候诊孩子的老古董;中间的茶几上一摞旧杂志[item.clinic_waiting.magazine_stack],最新的一本也是去年的。Susan 的护士台[item.clinic_waiting.nurse_desk]正对着门,台面一尘不染,台上摊着预约簿[item.clinic_waiting.appointment_book],她的圆体字排得像药品标签一样清楚;旁边那台黑色转盘电话[item.clinic_waiting.telephone]是全镇叫医生的唯一号码,进药、叫车、跟 Fort Anne 的药房对单子,都从这只听筒里出去。台子背后立着按姓氏分格的病历柜[item.clinic_waiting.file_cabinet],抽屉推起来吱一声,这镇上大半个人一生的纸都在里面。墙上的体检宣传画[item.clinic_waiting.health_poster]从六十年代挂到今天,旁边的软木告示板[item.clinic_waiting.bulletin]钉着当季的疫苗接种日程和几个用粗笔写下的电话号码;告示板下的挂钟[item.clinic_waiting.wall_clock]走得比谁都准,是 Susan 每天早上第一件要对的东西。门边的衣帽架[item.clinic_waiting.coat_rack]底下带个伞桶,雾天里总在滴水;墙角的冷水机[item.clinic_waiting.water_cooler]旁摞着一叠尖底纸杯,孩子们最爱按那个按钮。临街门通向主街[ROAD_main_street],门楣上的铜铃[item.clinic_waiting.door_bell]一响,楼上楼下都知道有人来了;诊室的门[SCN_clinic_exam]关着时,候诊的人自觉压低声音;楼梯口挂着「私人」的小木牌,通向楼上 Weaver 医生的住处[SCN_clinic_upstairs]。",
+  "parentLocationId": "clinic",
   "indoor": true,
   "references": {
     "items": [
       {
         "id": "item.clinic_waiting.appointment_book",
         "name": "预约簿",
-        "description": "护士台上的预约簿,Susan 的圆体字工整清楚。最近几周,「睡不好」和「耳朵嗡嗡响」出现的频率高得她自己都皱眉。"
+        "description": "护士台上的预约簿,Susan 的圆体字工整清楚,当天的号码按上下午分栏,来人先在末行签自己的名字。最近几周,「睡不好」和「耳朵嗡嗡响」出现的频率高得她自己都皱眉。"
+      },
+      {
+        "id": "item.clinic_waiting.benches",
+        "name": "候诊长椅",
+        "description": "靠墙的两条木长椅,坐垫是后来钉上去的人造革,凹陷的位置说明常客都有各自的座。坐满六个人就得有人站着,而这镇子已经很久没坐满过了。"
+      },
+      {
+        "id": "item.clinic_waiting.bulletin",
+        "name": "软木告示板",
+        "description": "护士台旁的软木板,钉着当季的疫苗接种日程、一张卡片写着 Fort Anne 医院的急诊电话和警长办公室的号码,还有一张劝人少抽烟的县卫生局传单,角上被图钉扎出了一圈眼。"
+      },
+      {
+        "id": "item.clinic_waiting.coat_rack",
+        "name": "衣帽架",
+        "description": "门边的木衣帽架,几个钩子上常挂着病人的外套,底座连着一只铁皮伞桶。雾天里桶底总积一层水,Susan 每天要倒一次。"
+      },
+      {
+        "id": "item.clinic_waiting.door_bell",
+        "name": "门楣铜铃",
+        "description": "装在临街门门楣上的黄铜小铃,门一开就响。楼板薄,这一声连楼上都听得见——Weaver 不在诊室的时候,靠的就是它。"
+      },
+      {
+        "id": "item.clinic_waiting.file_cabinet",
+        "name": "病历柜",
+        "description": "护士台背后的四屉钢制文件柜,按姓氏字母分格,抽屉推起来吱一声。最旧的几格还是 Silveira 老医生留下的纸,墨水都褪成了褐色。"
+      },
+      {
+        "id": "item.clinic_waiting.health_poster",
+        "name": "体检宣传画",
+        "description": "墙上一张六十年代的公共卫生宣传画,画着一家四口和一句「每年查一次」。纸边卷起,颜色晒得发白,没人想起来要换。"
       },
       {
         "id": "item.clinic_waiting.magazine_stack",
@@ -18,9 +48,29 @@
         "description": "茶几上的一摞杂志:钓鱼月刊、读者文摘、一本缺了封面的电视指南。最新的一本也是去年的。"
       },
       {
+        "id": "item.clinic_waiting.nurse_desk",
+        "name": "护士台",
+        "description": "正对着门的一张漆成白色的木台子,台面一尘不染。抽屉里是体温计、收据本、印着诊所抬头的便笺和一盒备用的图钉——Susan 一天里大半时间站在它后面。"
+      },
+      {
+        "id": "item.clinic_waiting.telephone",
+        "name": "黑色转盘电话",
+        "description": "护士台上的黑色转盘电话,听筒线被拉长得打了卷。诊所的号码全镇都会背;半夜里响一次,就意味着有人出事了。"
+      },
+      {
         "id": "item.clinic_waiting.toy_box",
         "name": "玩具箱",
         "description": "长椅角落的一只旧木箱,装着掉漆的玩具车和缺了角的积木——常客小孩候诊时的固定去处,边角都被摸得发亮。"
+      },
+      {
+        "id": "item.clinic_waiting.wall_clock",
+        "name": "挂钟",
+        "description": "告示板下方的圆形挂钟,白底黑针,秒针走得有点响。Susan 每天开门第一件事就是拿它对表,诊所的时间因此比镇上任何一处都准。"
+      },
+      {
+        "id": "item.clinic_waiting.water_cooler",
+        "name": "冷水机",
+        "description": "墙角一台倒装玻璃瓶的冷水机,旁边的铁皮筒里摞着尖底纸杯。水瓶空了得从后面搬一只新的上去,这活儿通常轮不到 Susan 以外的人。"
       }
     ],
     "connections": [

@@ -78,6 +78,18 @@ they cannot touch, address or walk toward this minute.
   thing already described in an earlier paragraph and unchanged since is
   left out, and the character can still cite it from before.
 
+# IDENTITY FIREWALL — STRANGER MEANS NAME UNKNOWN
+
+A tag beginning with \`stranger_\` is a hard information boundary. The
+viewpoint does NOT know that person's canonical name.
+
+- NEVER attach a canonical name to a \`stranger_*\` tag.
+- Refer to the person only by the description printed on their \`Person
+  (UNKNOWN)\` line: for example, \`the lean, taller man [stranger_abc123]\`.
+- If a name is audibly spoken, you may render the spoken word as dialogue,
+  but it still does not become the stranger's label unless the input marks
+  that person KNOWN.
+
 # Hard rules
 
 - Narrative is ONE paragraph (2-5 sentences). First person ("I"), present tense.
@@ -190,6 +202,78 @@ interface CitationTags {
   allowed: Set<string>;
 }
 
+export interface StrangerIdentity {
+  alias: string;
+  canonicalName: string;
+  description: string;
+}
+
+function canonicalNameVariants(name: string): string[] {
+  const whole = name.trim();
+  if (!whole) return [];
+  return [
+    ...new Set([
+      whole,
+      ...whole.split(/[\s\u00b7\u30fb]+/u).filter((part) => part.length > 1),
+    ]),
+  ].sort((a, b) => b.length - a.length);
+}
+
+function escapeRegExp(value: string): string {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+/**
+ * Canonical names used as the label for a stranger, e.g.
+ * `Tommy [stranger_a1b2c3]`. A spoken name elsewhere in the sentence is not
+ * a binding and remains audible; the forbidden part is asserting that the
+ * unknown face carrying this alias IS that named person.
+ */
+export function strangerCanonicalLabelViolations(
+  narrative: string,
+  identities: ReadonlyArray<StrangerIdentity>
+): string[] {
+  const violations: string[] = [];
+  for (const identity of identities) {
+    const alias = escapeRegExp(identity.alias);
+    for (const name of canonicalNameVariants(identity.canonicalName)) {
+      const pattern = new RegExp(
+        `(^|[^\\p{L}\\p{N}_])${escapeRegExp(name)}(?=\\s*\\[${alias}\\])`,
+        "gu"
+      );
+      if (pattern.test(narrative)) {
+        violations.push(`${name} [${identity.alias}]`);
+      }
+    }
+  }
+  return [...new Set(violations)];
+}
+
+/** Deterministic last line of defence when a renderer ignores the identity
+ * firewall even after corrective feedback. It changes only a canonical name
+ * directly bound to that stranger's alias; dialogue mentioning the same name
+ * elsewhere is preserved. */
+export function scrubStrangerCanonicalLabels(
+  narrative: string,
+  identities: ReadonlyArray<StrangerIdentity>
+): string {
+  let scrubbed = narrative;
+  for (const identity of identities) {
+    const alias = escapeRegExp(identity.alias);
+    for (const name of canonicalNameVariants(identity.canonicalName)) {
+      const pattern = new RegExp(
+        `(^|[^\\p{L}\\p{N}_])${escapeRegExp(name)}(?=\\s*\\[${alias}\\])`,
+        "gu"
+      );
+      scrubbed = scrubbed.replace(
+        pattern,
+        (_match, prefix: string) => `${prefix}${identity.description}`
+      );
+    }
+  }
+  return scrubbed;
+}
+
 function buildCitationTags(
   npcId: string,
   dgsm: DynamicGameStateManager
@@ -209,6 +293,24 @@ function buildCitationTags(
       ...directory.scenes,
     ]),
   };
+}
+
+function buildStrangerIdentities(
+  dgsm: DynamicGameStateManager,
+  tags: CitationTags
+): StrangerIdentity[] {
+  const identities: StrangerIdentity[] = [];
+  for (const [realId, handle] of tags.characters) {
+    if (!handle.startsWith("stranger_")) continue;
+    const profile = dgsm.getNpcProfile(realId);
+    if (!profile?.name) continue;
+    identities.push({
+      alias: handle,
+      canonicalName: profile.name,
+      description: descriptionIdentifier(profile),
+    });
+  }
+  return identities;
 }
 
 /** `  [tag]` when the entity is citable, nothing when it is not — an
@@ -381,6 +483,7 @@ export async function renderViaLLM(
   params: RenderViaLLMParams
 ): Promise<string> {
   const tags = buildCitationTags(params.npcId, params.dgsm);
+  const strangerIdentities = buildStrangerIdentities(params.dgsm, tags);
   const segments = buildUserPromptSegments(params, tags);
   const langName = params.language?.startsWith("zh") ? "Chinese" : "English";
 
@@ -419,6 +522,10 @@ export async function renderViaLLM(
     params.npcId
   );
   const bad = uncitableTags(narrative, tags.allowed);
+  const identityViolations = strangerCanonicalLabelViolations(
+    narrative,
+    strangerIdentities
+  );
 
   // One corrective pass before falling back to stripping. A stripped tag is
   // not a broken tick — the prose survives — but it silently costs the
@@ -427,21 +534,39 @@ export async function renderViaLLM(
   // it invented. Observed: `[ITEM_SCN21_3旁的同伴]`, an id with a phrase of
   // narrative welded onto it, which no amount of re-reading the rules would
   // have caught but naming it plainly does.
-  if (bad.length > 0) {
+  if (bad.length > 0 || identityViolations.length > 0) {
     console.warn(
-      `[renderer] ${params.npcId}: uncitable ${bad.map((t) => `"${t}"`).join(", ")} — asking again`
+      `[renderer] ${params.npcId}: rejected output${
+        bad.length > 0
+          ? `; uncitable ${bad.map((t) => `"${t}"`).join(", ")}`
+          : ""
+      }${
+        identityViolations.length > 0
+          ? `; stranger-name binding ${identityViolations.map((v) => `"${v}"`).join(", ")}`
+          : ""
+      } — asking again`
     );
     narrative = repairNearMissTags(
       await ask(
         [
           "\n\n# Your last attempt was rejected",
-          "You wrote " +
-            bad.map((t) => `[${t}]`).join(", ") +
-            " — not a citable id. A bracket holds an id and NOTHING else: no",
-          "description, no punctuation, no words of your own, in any language.",
-          "Name the thing in your prose and put the bare id in the bracket after",
-          "it, copied exactly from the address book above — or, if none of them",
-          "is the thing you mean, write it with no bracket at all.",
+          ...(bad.length > 0
+            ? [
+                `You wrote ${bad.map((t) => `[${t}]`).join(", ")} — not a citable id. A bracket holds an id and NOTHING else: no`,
+                "description, no punctuation, no words of your own, in any language.",
+                "Name the thing in your prose and put the bare id in the bracket after",
+                "it, copied exactly from the address book above — or, if none of them",
+                "is the thing you mean, write it with no bracket at all.",
+              ]
+            : []),
+          ...(identityViolations.length > 0
+            ? [
+                `You attached a canonical name to a stranger alias: ${identityViolations.join(", ")}. This crosses the IDENTITY FIREWALL.`,
+                "A stranger_* tag means the viewpoint does not know that person's name.",
+                "Replace the name with the description on the Person (UNKNOWN) line.",
+                "Do not infer identity from event text, action text, or prior paragraphs.",
+              ]
+            : []),
           "Rewrite the whole paragraph.",
         ].join("\n")
       ).then((t) => normalizeTagBrackets(t.trim())),
@@ -450,7 +575,14 @@ export async function renderViaLLM(
     );
   }
 
-  return stripUncitableTags(narrative, tags.allowed, params.npcId);
+  const citable = stripUncitableTags(narrative, tags.allowed, params.npcId);
+  const scrubbed = scrubStrangerCanonicalLabels(citable, strangerIdentities);
+  if (scrubbed !== citable) {
+    console.warn(
+      `[renderer] ${params.npcId}: scrubbed canonical name bound to stranger alias`
+    );
+  }
+  return scrubbed;
 }
 
 /** Three tiers, cut by whether they MOVE — which is not the same as whether

@@ -2,11 +2,42 @@
   "schemaVersion": 2,
   "id": "ROAD_creek_sawmill",
   "name": "渡口北径",
-  "description": "过了灰溪之后继续向北深入的林径,一个半小时的路。一头起于渡口对岸 [SCN_creek_ford],另一头钻出林子,正对旧锯木厂的废墟 [SCN_sawmill]。途中要翻两道长满倒木的浅沟;雾大的时候,沟这边和沟那边看起来像同一个地方。",
+  "description": "过了灰溪之后继续向北深入的林径,一个半小时的路。一头起于渡口对岸 [SCN_creek_ford],另一头钻出林子,正对旧锯木厂的废墟 [SCN_sawmill]。离开溪岸不久,路边有一只木板围起的泉眼水箱 [item.creek_sawmill.spring_box],板缝里长满青苔,水却清得见底。途中要翻两道长满倒木的浅沟:头一道沟底堆着一层交错的倒木,得手脚并用地爬过去 [item.creek_sawmill.first_gully];两沟之间的路侧有一棵被人弯下来别成拱形的小树,长歪了也就那么定了形 [item.creek_sawmill.bent_sapling],除了它,这段路上再没有第二个记号;第二道沟更深更暗,沟底常年积着一汪浑水 [item.creek_sawmill.second_gully]。快出林子时,一棵大冷杉上钉着几块木板搭成的旧猎人踏板 [item.creek_sawmill.hunter_stand],钉上去的横档朽了一半。雾大的时候,沟这边和沟那边看起来像同一个地方。",
   "parentLocationId": "OUTDOOR",
   "travelTimeMinutes": 90,
   "references": {
-    "items": [],
+    "items": [
+      {
+        "id": "item.creek_sawmill.spring_box",
+        "name": "泉眼水箱",
+        "description": "离开溪岸不久,路边一只木板围起来的方形水箱,伐木年代给工棚取水用的。板缝里长满青苔,箱里的泉水却清得见底,常年满到溢出来顺着路边流走。这是这条路上唯一能喝的水。",
+        "position": 0.15
+      },
+      {
+        "id": "item.creek_sawmill.first_gully",
+        "name": "头一道倒木沟",
+        "description": "路上横着的头一道浅沟,沟底堆着一层交错的倒木,朽的和没朽的压在一起,得手脚并用地爬下去再爬上来。沟里比路上暗一档,潮气重,倒木上的苔藓踩上去很滑。",
+        "position": 0.35
+      },
+      {
+        "id": "item.creek_sawmill.bent_sapling",
+        "name": "别成拱形的小树",
+        "description": "两道沟之间的路侧,一棵被人弯下来别在另一棵树杈里的小树,年头久了就这么定了形,弯成一道齐腰高的拱。整段路上再没有第二个人为的记号——分得清两道沟,靠的就是它在哪一边。",
+        "position": 0.5
+      },
+      {
+        "id": "item.creek_sawmill.second_gully",
+        "name": "第二道倒木沟",
+        "description": "第二道沟比头一道更深更暗,两壁陡,倒木架得更乱。沟底常年积着一汪浑水,深浅看不出来,爬下去的人多半贴着一侧的树根绕过去。爬出来那面的土被抓得没了草。",
+        "position": 0.62
+      },
+      {
+        "id": "item.creek_sawmill.hunter_stand",
+        "name": "旧猎人踏板",
+        "description": "快出林子时一棵大冷杉上钉着的几块木板,搭成一个仅够坐一个人的踏板,离地三四米。钉在树干上当梯子的横档朽了一半,踩哪根得挑。爬上去能越过树梢看见锯木厂那片空地和那只锈铁炉子。",
+        "position": 0.85
+      }
+    ],
     "connections": [
       {
         "id": "connection.creek_sawmill.creek_end",

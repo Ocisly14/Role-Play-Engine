@@ -2,7 +2,7 @@
   "schemaVersion": 2,
   "id": "SCN_railbed",
   "name": "旧铁路路基",
-  "description": "伐木铁路拆走铁轨后留下的路基,笔直地切过林子,枕木的印子还嵌在道砟里。几根朽得发黑的枕木残段横在路基边缘,踩上去一脚就能陷进去,散出一股腐木的潮气 [item.railbed.rotted_tie]。这是林区里唯一不会让人迷路的地形——只要沿着它走,总能走到头。路基两侧的排水沟里积着黑色的落叶水,道砟缝里偶尔能踢到一枚锈成一团的道钉,捡起来揣进兜里也不嫌沉 [item.railbed.rusted_spike]。道砟本身棱角还没磨圆,一脚踩上去硌得人龇牙 [item.railbed.sharp_ballast]。",
+  "description": "伐木铁路拆走铁轨后留下的路基,笔直地切过林子,枕木的印子还嵌在道砟里。几根朽得发黑的枕木残段横在路基边缘,踩上去一脚就能陷进去,散出一股腐木的潮气 [item.railbed.rotted_tie]。这是林区里唯一不会让人迷路的地形——只要沿着它走,总能走到头;何况路侧还歪着一块水泥里程碑 [item.railbed.mile_post],正面凿的「14」被苔藓填了个满,是整片林子里唯一说得出数字的地方。道砟本身棱角还没磨圆,一脚踩上去硌得人龇牙 [item.railbed.sharp_ballast],缝里偶尔能踢到一枚锈成一团的道钉,捡起来揣进兜里也不嫌沉 [item.railbed.rusted_spike]——它们的来处就在几步之外:一只翻倒的铁皮钉桶烂在路肩上 [item.railbed.spike_keg],半桶道钉锈成了一整块。拆轨的人还留下了一截没运走的钢轨,半埋在道砟里,太沉,谁也懒得管 [item.railbed.abandoned_rail]。路基两侧的排水沟里积着黑色的落叶水 [item.railbed.drainage_ditch],沟壁被雨水啃出一道道小塌方。沿线剩着几根电报木杆 [item.railbed.telegraph_pole],铜线早被人剪走了,横担上倒还挂着一只完好的绿玻璃绝缘子,太阳好的时候亮得扎眼。",
   "references": {
     "items": [
       {
@@ -19,6 +19,31 @@
         "id": "item.railbed.sharp_ballast",
         "name": "棱角道砟",
         "description": "铺在路基上的碎石道砟,棱角还没被磨圆,踩上去硌脚。"
+      },
+      {
+        "id": "item.railbed.mile_post",
+        "name": "水泥里程碑",
+        "description": "歪在路基侧的一块水泥里程碑,一人小腿高,正面凿出的「14」被苔藓填满,得用指甲抠才认得出。整片林子里只有它给得出一个数字——沿路基走的人都拿它对自己走了多远。"
+      },
+      {
+        "id": "item.railbed.spike_keg",
+        "name": "翻倒的道钉桶",
+        "description": "烂在路肩上的一只铁皮钉桶,桶身裂开,半桶道钉连着锈在一起成了一整块,倒出来的那半散在道砟里。桶底还印着模糊的厂名和一个年份。"
+      },
+      {
+        "id": "item.railbed.abandoned_rail",
+        "name": "没运走的钢轨",
+        "description": "半埋在道砟里的一截钢轨,两米出头,断口参差。拆轨那年谁也懒得把它抬走,如今锈成暗红色,雨后摸上去一手锈渣;沉得两个人也未必抬得动,但撬点什么正合适。"
+      },
+      {
+        "id": "item.railbed.drainage_ditch",
+        "name": "路基排水沟",
+        "description": "路基两侧顺着走向挖出来的排水沟,积着黑色的落叶水,水面浮着一层油光似的膜。沟壁被雨水啃出一道道小塌方,底下的烂叶踩下去会冒气泡。"
+      },
+      {
+        "id": "item.railbed.telegraph_pole",
+        "name": "旧电报木杆",
+        "description": "沿路基剩下的几根木头电报杆,顶上的铜线早被人剪走了,只剩横担和几枚断掉的螺栓。其中一根的横担上还挂着一只完好的绿玻璃绝缘子,拧得很紧,太阳一照亮得扎眼。"
       }
     ],
     "connections": [],

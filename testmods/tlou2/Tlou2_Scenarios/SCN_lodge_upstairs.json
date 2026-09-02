@@ -1,0 +1,36 @@
+{
+  "schemaVersion": 2,
+  "id": "SCN_lodge_upstairs",
+  "name": "旅馆二楼走廊",
+  "description": "二楼走廊两侧的客房门全敞着,床垫早被搬空了,东西都挪到了走廊上。地板上一字排开六套睡袋,都摊着没卷,枕头的位置压出了人形——数一数,是六个人的铺位 [item.lodge_upstairs.six_bedrolls]。走廊尽头的窗户被人擦出了一块干净的圆,正对着楼下的车道,窗台上落着一小堆烟灰 [item.lodge_upstairs.drive_window]。窗边搁着一只弹药箱,盖子开着,里面的纸盒按口径码得整整齐齐 [item.lodge_upstairs.ammo_crate]。楼梯下去是大厅 [SCN_lodge_greatroom]。",
+  "parentLocationId": "LOC_lodge",
+  "indoor": true,
+  "references": {
+    "items": [
+      {
+        "id": "item.lodge_upstairs.six_bedrolls",
+        "name": "六套睡袋",
+        "description": "沿走廊一字排开的六套睡袋,全都摊着没收。枕头的位置各自压出了人形,深浅不一,说明这些铺位都睡了不止一晚。六套,一套不多一套不少。"
+      },
+      {
+        "id": "item.lodge_upstairs.drive_window",
+        "name": "望着车道的窗",
+        "description": "走廊尽头的窗,玻璃上的霜被人用手掌擦出了一块干净的圆,高度正好是站着看出去的高度。圆窗正对楼下的环形车道和进山的方向。窗台上一小堆烟灰,还没被穿堂风吹散。"
+      },
+      {
+        "id": "item.lodge_upstairs.ammo_crate",
+        "name": "敞开的弹药箱",
+        "description": "窗边一只木制弹药箱,盖子敞着,里面的纸盒按口径分门别类码好,标签是新写的。数量不多,但每一种都还剩着——是省着用的队伍,不是打光了的队伍。"
+      }
+    ],
+    "connections": [
+      {
+        "id": "connection.lodge_upstairs.greatroom",
+        "targetId": "SCN_lodge_greatroom",
+        "name": "木楼梯",
+        "description": "踩上去会响的木楼梯,下去是大厅。"
+      }
+    ],
+    "conditions": []
+  }
+}

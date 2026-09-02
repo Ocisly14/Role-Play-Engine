@@ -2,7 +2,7 @@
   "schemaVersion": 2,
   "id": "SCN_main_south",
   "name": "主街南口",
-  "description": "主街南端的路口。铺装到这里戛然而止,剩下的是几年前铺路工程没了下文、堆在路边长了草的一堆碎石 [item.main_south.gravel_pile];下坡道折向码头,咸腥味和柴油味顺着坡爬上来,坡口那根电线杆终年落满海鸥,杆身被鸟粪染成灰白色 [item.main_south.gull_pole]。一条窄窄的后巷从两栋房子之间拐进去,墙脚还嵌着一只锈死的拴狗铁环 [item.main_south.tether_ring],通向雷耶斯家。站在口上能听见海——雾天听得更清楚,像整个镇子都被推到了水边。",
+  "description": "主街南端的路口。铺装到这里戛然而止,剩下的是几年前铺路工程没了下文、堆在路边长了草的一堆碎石 [item.main_south.gravel_pile];下坡道折向码头,坡口一块褪色的木牌 [item.main_south.harbor_sign] 上还看得出朝下的箭头和「码头」两个字,咸腥味和柴油味顺着坡爬上来。坡口那根电线杆终年落满海鸥,杆身被鸟粪染成灰白色 [item.main_south.gull_pole];杆下一道锈了的铁护栏 [item.main_south.guardrail] 拦在坡沿上,漆皮翻起,扶手顶上被手掌磨出一段发亮的地方——站在这儿看海的人不少。护栏边码着一摞空鱼箱 [item.main_south.fish_crates],木条上结着盐霜,谁要用谁拿。一条窄窄的后巷从两栋房子之间拐进去,墙脚还嵌着一只锈死的拴狗铁环 [item.main_south.tether_ring],通向雷耶斯家;巷口那盏路灯 [item.main_south.dead_lamp] 的灯泡不知哪年坏的,一直没人换,天黑之后这一拐是全街最暗的地方。站在口上能听见海——雾天听得更清楚,像整个镇子都被推到了水边。",
   "references": {
     "items": [
       {
@@ -19,6 +19,26 @@
         "id": "item.main_south.tether_ring",
         "name": "墙脚的拴狗铁环",
         "description": "后巷口一块石头里嵌着一只锈死的铁环,是运货马车年代拴牲口留下的。铁环早锈得转不动,倒偶尔还有谁把狗绳顺手往上一挂。"
+      },
+      {
+        "id": "item.main_south.harbor_sign",
+        "name": "指向码头的木牌",
+        "description": "坡口一块褪色的木牌,朝下的箭头和「码头」两个字还认得出,底下小一号的一行字被海风蚀平了,大概是当年的渔业公司名。牌子的立柱歪向海那边。"
+      },
+      {
+        "id": "item.main_south.guardrail",
+        "name": "坡沿的铁护栏",
+        "description": "拦在下坡道口的一道锈铁护栏,漆皮一块块翻起,扶手顶上被手掌磨出一段发亮的地方。镇上的人路过总要在这儿停一下,朝海的方向看两眼再走。"
+      },
+      {
+        "id": "item.main_south.fish_crates",
+        "name": "空鱼箱",
+        "description": "护栏边码着的一摞木鱼箱,箱板上结着白色的盐霜,缝里还嵌着干透的鱼鳞。船上带回来就随手撂在这儿,谁要用谁拿,数目一年比一年少。"
+      },
+      {
+        "id": "item.main_south.dead_lamp",
+        "name": "坏掉的路灯",
+        "description": "后巷口那盏路灯,灯泡不知哪年坏的,灯罩里积了一层虫壳,报修的条子递上去也没了下文。入夜以后,这一拐是整条主街上最暗的地方。"
       }
     ],
     "connections": [],

@@ -2,8 +2,8 @@
   "schemaVersion": 2,
   "id": "SCN_reyes_living",
   "name": "Reyes 家客厅",
-  "description": "客厅和厨房挤在同一间屋里:一张吃饭兼记账的木桌,两把不成对的椅子,灶台上一把铝壶 [item.reyes_living.kettle] 擦得发亮。桌角摊着一本用橡皮筋捆住的账本 [item.reyes_living.account_ledger],铅笔就别在封皮里——打烊后的深夜,Marisol 常在这盏灯下把数字一遍遍重新加。窗台上一台老收音机 [item.reyes_living.radio] 调在 KGRV 的频段,音量拧得很小。墙上挂着渔村老照片和一枚褪色的圣像。屋子有三扇门:一扇贴着车辙贴纸的门通向 Tommy 的房间 [SCN_reyes_tommy],另一扇虚掩的门是 Marisol 的卧室 [SCN_reyes_marisol],临后巷的小门 [SCN_reyes_gate] 出去就是自家门口的空地,门边钉着一排挂钥匙和围裙的挂钩。",
-  "parentLocationId": "LOC_reyes_house",
+  "description": "客厅和厨房挤在同一间屋里。屋子当中是一张吃饭兼记账的木桌 [item.reyes_living.table],配两把不成对的椅子;桌角摊着一本用橡皮筋捆住的账本 [item.reyes_living.account_ledger],铅笔就别在封皮里——打烊后的深夜,Marisol 常坐在这儿,只开头顶那盏吊灯 [item.reyes_living.ceiling_lamp],把数字一遍遍重新加。靠墙一侧是厨房:两眼的搪瓷煤气灶 [item.reyes_living.stove] 上永远坐着一把擦得发亮的铝壶 [item.reyes_living.kettle],灶边墙钉上挂着一口铸铁锅和一把长柄木勺 [item.reyes_living.cookware],旁边圆角的旧冰箱 [item.reyes_living.refrigerator] 隔一会儿嗡一阵,门上用磁贴压着进货单和一张成绩单。窗下那只搪瓷水槽 [item.reyes_living.sink] 的龙头关不严,滴水的节奏听久了就听不见了。窗台上一台老收音机 [item.reyes_living.radio] 调在 KGRV 的频段,音量拧得很小;门边墙上装着一部黑色转盘电话 [item.reyes_living.telephone],旁边的墙皮上用铅笔写满了号码,批发商那个描得最深。墙上挂着一组渔村老照片 [item.reyes_living.family_photos],最新的一张也有七八年了;照片底下的小木架上立着一尊褪色的圣安东尼像 [item.reyes_living.saint_figure]。屋子有三扇门:一扇贴着车辙贴纸的门通向 Tommy 的房间 [SCN_reyes_tommy],另一扇虚掩的门是 Marisol 的卧室 [SCN_reyes_marisol],临后巷的小门 [SCN_reyes_gate] 出去就是自家门口的空地,门边一排挂钩 [item.reyes_living.key_hooks] 上挂着围裙、雨衣和一把总是空着的钩子。",
+  "parentLocationId": "reyes_house",
   "indoor": true,
   "references": {
     "items": [
@@ -21,6 +21,58 @@
         "id": "item.reyes_living.radio",
         "name": "老收音机",
         "description": "一台木壳台式收音机,旋钮停在 KGRV 的位置,机身侧面贴着杂货店的价签残角。"
+      },
+      {
+        "id": "item.reyes_living.table",
+        "name": "木桌",
+        "description": "一张四方的旧木桌,桌面被刀口和杯底烫痕划得斑驳,一条腿底下垫着折起来的纸板才不晃。白天在这儿吃饭,夜里在这儿算账,两把椅子不成对——高的那把是 Tommy 的,矮的那把从 Rafael 那时候就在。"
+      },
+      {
+        "id": "item.reyes_living.ceiling_lamp",
+        "name": "吊灯",
+        "description": "从天花板垂下来的一只搪瓷灯罩,灯泡瓦数不高,只把桌面照亮一圈,屋角始终是暗的。深夜里全屋常常只剩这一盏亮着。",
+        "isLightSource": true,
+        "lightLevel": 2
+      },
+      {
+        "id": "item.reyes_living.stove",
+        "name": "煤气灶",
+        "description": "两眼的白搪瓷煤气灶,面板边角磕掉了瓷,露出底下的黑铁。左边那个灶眼点火要划火柴,火柴盒就搁在旁边的瓷砖台面上。"
+      },
+      {
+        "id": "item.reyes_living.cookware",
+        "name": "铸铁锅与长柄木勺",
+        "description": "挂在灶边墙钉上的一口厚底铸铁锅和一把柄被磨圆的木勺。锅是嫁过来那年就有的,锅底养出了一层黑亮的油膜,煮鱼汤和炒豆子都用它。"
+      },
+      {
+        "id": "item.reyes_living.refrigerator",
+        "name": "旧冰箱",
+        "description": "圆角的白色单门冰箱,压缩机隔一阵嗡一阵,门封条有一处翘起来了。门上磁贴压着杂货店的进货单、剪下来的优惠券和一张学期成绩单;里面永远是牛奶、鸡蛋和店里卖不动的那几样。"
+      },
+      {
+        "id": "item.reyes_living.sink",
+        "name": "搪瓷水槽",
+        "description": "窗下的白搪瓷水槽,槽沿磕出一道锈口,龙头拧到底还会滴。旁边搭着抹布,沥水架上倒扣着两只碗、两只杯子——从来都是两副。"
+      },
+      {
+        "id": "item.reyes_living.telephone",
+        "name": "转盘电话",
+        "description": "门边墙上一部黑色转盘电话,听筒线卷得死紧。旁边墙皮上用铅笔写了一层又一层号码:批发商、诊所、蓝鸟餐馆、杂货店自己那部——批发商那个被描得最深。"
+      },
+      {
+        "id": "item.reyes_living.family_photos",
+        "name": "渔村老照片",
+        "description": "一组大小不一的镜框:码头上晒网的男人们、一艘挂满旗的渔船、Reis 家几代人挤在一起眯眼冲镜头笑。最新的一张是 1978 年的合影,再往后就没有新的了。"
+      },
+      {
+        "id": "item.reyes_living.saint_figure",
+        "name": "圣安东尼像",
+        "description": "照片底下小木架上的一尊石膏彩绘圣像,颜色褪得只剩淡淡的蓝和肉色,底座压着一张边缘磨毛的追思卡。渔民家的老规矩:出海的人由他看着。"
+      },
+      {
+        "id": "item.reyes_living.key_hooks",
+        "name": "门边挂钩",
+        "description": "钉在后门边墙上的一排木挂钩,挂着两条围裙、一件塑料雨衣和一把伞。最边上那只钩子总是空的——钥匙挂上了,就是人回来了。"
       }
     ],
     "connections": [

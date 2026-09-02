@@ -1,0 +1,38 @@
+{
+  "schemaVersion": 2,
+  "id": "SCN_frozen_creek",
+  "name": "冻溪谷",
+  "description": "一道冻实的溪谷从林子里穿过去,冰面上覆着新雪,踩上去先是硬的,再往下就是空的 [item.frozen_creek.ice_shelf]。靠西岸有一段冰塌了,黑水从裂口涌上来,边缘又结出一圈新的壳。雪上一串血点从冰面一直甩到东岸的灌木丛里,已经被新雪盖住了一半 [item.frozen_creek.blood_trail]。一只灰绿色的登山包挂在岸边的树根上,一条肩带断了,拉链没合严 [item.frozen_creek.abandoned_pack]。雪下得太急,溪谷两头看上去一模一样,来路和去路分不出彼此 [cond.frozen_creek.whiteout]。",
+  "references": {
+    "items": [
+      {
+        "id": "item.frozen_creek.ice_shelf",
+        "name": "塌了一段的冰面",
+        "description": "溪面冻了厚厚一层,新雪盖在上头看不出虚实。靠西岸塌了一块,黑水从裂口里涌上来,离岸三步之内都不能踩。"
+      },
+      {
+        "id": "item.frozen_creek.blood_trail",
+        "name": "雪上的血点",
+        "description": "一串间距很大的血点,从冰面一路甩到东岸的灌木丛。间距说明流血的人一直在跑,没有停下来处理。新雪正在盖住它,再过一个钟头就看不见了。"
+      },
+      {
+        "id": "item.frozen_creek.abandoned_pack",
+        "name": "丢下的登山包",
+        "description": "灰绿色的旧登山包,挂在岸边一截外露的树根上,一条肩带从缝处整齐地断了——是被扯断的。里面有压缩饼干、一卷绷带、几个空水壶,和一张画在硬纸板背面的手绘路线图。没有任何写着名字的东西。"
+      }
+    ],
+    "connections": [],
+    "conditions": [
+      {
+        "id": "cond.frozen_creek.whiteout",
+        "description": "暴雪白幕:溪谷上下游看上去一模一样,新雪正在抹掉所有痕迹。",
+        "mechanicalEffect": {
+          "skillPenalty": {
+            "Survival & Navigation": -20,
+            "Investigation": -10
+          }
+        }
+      }
+    ]
+  }
+}

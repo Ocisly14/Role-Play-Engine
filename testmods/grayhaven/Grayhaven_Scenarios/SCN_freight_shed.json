@@ -2,8 +2,8 @@
   "schemaVersion": 2,
   "id": "SCN_freight_shed",
   "name": "货运中转棚",
-  "description": "公路岔路口旁的铁皮棚,海风把波纹铁皮吹得嗡嗡作响。棚里靠墙码着几只待运的板条箱 [item.freight_shed.crates],封条完好,唛头只有编号没有发货人;门边的钉子上挂着一块提单夹板 [item.freight_shed.manifest],单据打得工整,抬头是萨克拉门托的一个邮政信箱。墙角一台老式台秤 [item.freight_shed.scale] 的指针锈死在刻度中间,秤盘边缘掉漆见了底铁。地面的轮胎印只有一种花纹——Frank 那辆货车的。棚里只有门缝和铁皮接缝透进来的光,昏暗得看不清箱子背面的字 [cond.freight_shed.dim]。唯一的门 [SCN_motel] 开向旅馆旁的公路岔路口,挂锁扣着,但锁从来没锁上过。",
-  "parentLocationId": "LOC_motel",
+  "description": "公路岔路口旁的铁皮棚,海风把波纹铁皮吹得嗡嗡作响。棚里靠墙码着几只待运的板条箱 [item.freight_shed.crates],封条完好,唛头只有编号没有发货人;箱子底下垫着一摞木托盘 [item.freight_shed.pallets],边角被叉齿啃出了毛茬。门边的钉子上挂着一块提单夹板 [item.freight_shed.manifest],单据打得工整,抬头是萨克拉门托的一个邮政信箱;旁边靠着一辆两轮手推车 [item.freight_shed.hand_truck],铁鼻子磨得发亮,是这棚里唯一天天有人用的东西。墙钉上挂着一根撬棍 [item.freight_shed.pry_bar],漆掉了一半;墙角一台老式台秤 [item.freight_shed.scale] 的指针锈死在刻度中间,秤盘边缘掉漆见了底铁。头顶垂下一盏带铁罩的工作灯 [item.freight_shed.work_light],灯口空着,灯泡不知去向。地面的轮胎印只有一种花纹——Frank 那辆货车的。棚里只有门缝和铁皮接缝透进来的光,昏暗得看不清箱子背面的字 [cond.freight_shed.dim]。唯一的门 [SCN_motel] 开向旅馆旁的公路岔路口,挂锁扣着,但锁从来没锁上过。",
+  "parentLocationId": "motel",
   "indoor": true,
   "references": {
     "items": [
@@ -13,14 +13,34 @@
         "description": "几只钉好的板条箱,封条完好,唛头只有编号没有发货人,等着 Frank 的货车。"
       },
       {
-        "id": "item.freight_shed.scale",
-        "name": "老式台秤",
-        "description": "墙角一台老式台秤,指针锈死在刻度中间,秤盘边缘掉漆见了底铁。"
+        "id": "item.freight_shed.pallets",
+        "name": "木托盘",
+        "description": "靠墙码着的一摞木托盘,板条被叉齿啃出毛茬,几块换过新板。提货的人把箱子垫在上面,免得棚里返潮的水泥地把箱底泡软。"
       },
       {
         "id": "item.freight_shed.manifest",
         "name": "提单夹板",
         "description": "挂在钉子上的夹板,打字工整的提货单,抬头是萨克拉门托的一个邮政信箱,签收栏永远空着。"
+      },
+      {
+        "id": "item.freight_shed.hand_truck",
+        "name": "两轮手推车",
+        "description": "靠在门边的一辆铁架两轮手推车,铲鼻磨得发亮,轮胎打足了气,把手上缠的胶布换过不止一次。棚里所有东西都在生锈,只有它天天被人推出推进。"
+      },
+      {
+        "id": "item.freight_shed.pry_bar",
+        "name": "撬棍",
+        "description": "挂在墙钉上的一根撬棍,漆掉了一半,末端有几处敲扁的痕迹。它属于这个棚子,而不属于谁——钉子上的挂痕说明它一直挂在那儿。"
+      },
+      {
+        "id": "item.freight_shed.scale",
+        "name": "老式台秤",
+        "description": "墙角一台老式台秤,指针锈死在刻度中间,秤盘边缘掉漆见了底铁。"
+      },
+      {
+        "id": "item.freight_shed.work_light",
+        "name": "工作灯",
+        "description": "从棚顶横梁上垂下来的一盏带铁罩工作灯,拉绳的瓷头还在,灯口却空着,灯泡不知去向。换一只灯泡,这棚里就不会这么难看清东西。"
       }
     ],
     "connections": [

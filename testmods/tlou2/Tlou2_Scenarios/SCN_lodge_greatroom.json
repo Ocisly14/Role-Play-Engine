@@ -1,0 +1,55 @@
+{
+  "schemaVersion": 2,
+  "id": "SCN_lodge_greatroom",
+  "name": "旅馆大厅",
+  "description": "大厅比外面暖得多,空气里是烟、湿毛料和煮过头的咖啡味。石砌壁炉里烧着大块的木柴,火光把整面墙的鹿头标本照得忽明忽暗 [item.lodge_greatroom.fireplace]。壁炉前拖着一张长条木桌,一条桌腿垫着两本书才不晃 [item.lodge_greatroom.long_table]。桌面上摊着一张手绘的地图,纸边卷起来了,上面用铅笔圈过好几个点,又被橡皮擦掉重画 [item.lodge_greatroom.hand_map]。角落里立着一台老式无线电,旋钮上落了灰,指示灯是黑的 [item.lodge_greatroom.dead_radio]。厚木门通回门廊 [SCN_lodge_porch];右手一道窄门进后厨 [SCN_lodge_kitchen];左手的木楼梯上二楼 [SCN_lodge_upstairs]。",
+  "parentLocationId": "LOC_lodge",
+  "indoor": true,
+  "references": {
+    "items": [
+      {
+        "id": "item.lodge_greatroom.fireplace",
+        "name": "石砌壁炉",
+        "description": "占了半面墙的石砌壁炉,烧的是大块的干木柴,火势很旺——不是刚生起来的,是有人看了一整天的火。炉台上摆着一排熏黑的搪瓷杯。",
+        "isLightSource": true,
+        "lightLevel": 4
+      },
+      {
+        "id": "item.lodge_greatroom.long_table",
+        "name": "长条木桌",
+        "description": "壁炉前的一张长条木桌,能坐八个人。一条桌腿短了,底下垫着两本旅游手册。桌面上有新的划痕和几圈没擦的杯底印。"
+      },
+      {
+        "id": "item.lodge_greatroom.hand_map",
+        "name": "手绘地图",
+        "description": "摊在桌面上的一张手绘地图,画在拆开的纸箱背面。上面画着一条从西边过来的路线,末端圈着一片山谷,圈了又擦、擦了又圈,铅笔印叠了好几层。地图上没有写任何地名。"
+      },
+      {
+        "id": "item.lodge_greatroom.dead_radio",
+        "name": "报废的无线电",
+        "description": "角落里一台落满灰的老式无线电,旋钮转得动但指示灯不亮。背后的电源线被人齐根剪断了,断口很旧。"
+      }
+    ],
+    "connections": [
+      {
+        "id": "connection.lodge_greatroom.porch",
+        "targetId": "SCN_lodge_porch",
+        "name": "旅馆正门",
+        "description": "厚重的木门,推开就是带顶的门廊和外面的风雪。"
+      },
+      {
+        "id": "connection.lodge_greatroom.kitchen",
+        "targetId": "SCN_lodge_kitchen",
+        "name": "后厨窄门",
+        "description": "壁炉右手的一道窄门,门后有煤油炉的味道。"
+      },
+      {
+        "id": "connection.lodge_greatroom.upstairs",
+        "targetId": "SCN_lodge_upstairs",
+        "name": "木楼梯",
+        "description": "左手一道踩上去会响的木楼梯,通往二楼走廊。"
+      }
+    ],
+    "conditions": []
+  }
+}

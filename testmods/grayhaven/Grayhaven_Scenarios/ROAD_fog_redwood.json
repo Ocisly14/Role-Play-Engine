@@ -2,11 +2,36 @@
   "schemaVersion": 2,
   "id": "ROAD_fog_redwood",
   "name": "雾谷北径",
-  "description": "雾谷通往红杉环的五十分钟上坡。谷底的一头常年泡在雾里 [SCN_fog_hollow],爬出雾线之后,红杉环的树冠就在前方合拢 [SCN_redwood_ring]。回头望,来路只是一片白——很多人就是在这里开始怀疑自己刚才走的方向。",
+  "description": "雾谷通往红杉环的五十分钟上坡。谷底的一头常年泡在雾里 [SCN_fog_hollow],爬出雾线之后,红杉环的树冠就在前方合拢 [SCN_redwood_ring]。出谷不到十分钟,路边立着一根方木桩,顶上钉牌子的两个钉眼还在,牌子不知丢在哪一年 [item.fog_redwood.post_stub]——从雾里出来的人往往指望它确认方向,而它什么也不说。上坡最陡的一段被人垫过石头,大小不一,踩上去还算稳,是伐木工留下的手笔 [item.fog_redwood.stone_steps]。再往上,一线细流从岩缝里渗出来,顺着石面淌成一条湿痕,是这条路上唯一喝得着的水 [item.fog_redwood.seep_spring]。快到坡顶时,一只锈死的钢缆卷盘半陷在腐叶里,盘上还剩几圈缆,朝北的一头断在林子里 [item.fog_redwood.cable_spool]。回头望,来路只是一片白——很多人就是在这里开始怀疑自己刚才走的方向。",
   "parentLocationId": "OUTDOOR",
   "travelTimeMinutes": 50,
   "references": {
-    "items": [],
+    "items": [
+      {
+        "id": "item.fog_redwood.post_stub",
+        "name": "只剩方桩的路标",
+        "description": "靠雾谷这头路边的一根方木桩,顶上钉过牌子的两个钉眼还在,牌子早没了。它是出谷后第一件人造的东西,却什么方向也指不出来。",
+        "position": 0.12
+      },
+      {
+        "id": "item.fog_redwood.stone_steps",
+        "name": "垫在陡坡上的石头",
+        "description": "上坡最陡的一段被人垫进去的一串石头,大小不一,嵌得很实,是伐木年代留下的手笔,雨天也不太滑。",
+        "position": 0.4
+      },
+      {
+        "id": "item.fog_redwood.seep_spring",
+        "name": "岩缝里的渗水",
+        "description": "从岩缝里渗出来的一线细流,顺着石面淌成一条常年不干的湿痕,水凉、清,是这条上坡路上唯一喝得着的水。",
+        "position": 0.55
+      },
+      {
+        "id": "item.fog_redwood.cable_spool",
+        "name": "锈死的钢缆卷盘",
+        "description": "半陷在腐叶里的一只铁质钢缆卷盘,轴锈死了,盘上还剩几圈缆,伸向北面的一头断在林子里。",
+        "position": 0.7
+      }
+    ],
     "connections": [
       {
         "id": "connection.fog_redwood.hollow_end",

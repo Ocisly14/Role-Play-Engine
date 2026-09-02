@@ -2,7 +2,7 @@
   "schemaVersion": 2,
   "id": "SCN_reyes_gate",
   "name": "雷耶斯家门口",
-  "description": "后巷尽头的一小片门前空地。木门漆成早已褪色的蓝,门边一小畦香草 [item.reyes_gate.herb_bed] 长得倒精神,一辆 BMX 单车 [item.reyes_gate.bmx] 斜靠在墙根,车把上缠着褪色的红胶带。墙角一根钉子上挂着一只旧蟹笼 [item.reyes_gate.crab_trap],藤条早就发脆,多年没再下过水。小门后就是母子俩的客厅兼厨房 [SCN_reyes_living]。巷子里安静,主街的声音传到这里只剩个底子。",
+  "description": "后巷尽头的一小片门前空地。木门漆成早已褪色的蓝,门楣上镶着一块蓝白瓷砖 [item.reyes_gate.azulejo_tile],上头画的那条船比这家现在活着的任何一个人都老。门边一小畦香草 [item.reyes_gate.herb_bed] 长得倒精神,墙上一只黄铜水龙头 [item.reyes_gate.spigot] 接着半截皮管,浇菜、冲车、洗手全靠它。一辆 BMX 单车 [item.reyes_gate.bmx] 斜靠在墙根,车把上缠着褪色的红胶带;单车旁的窗下摞着三只木条箱 [item.reyes_gate.crates],最上面那只箱面被踩得发亮,谁也没问过是被谁踩的。两根柱子之间拉着一条晾衣绳 [item.reyes_gate.laundry_line],风一起,店里的围裙和洗白的衬衫就一块儿摆。墙角一根钉子上挂着一只旧蟹笼 [item.reyes_gate.crab_trap],藤条早就发脆,多年没再下过水;门框上方钉着一盏铁皮罩的门廊灯 [item.reyes_gate.porch_light],从天黑亮到天亮,是这条巷子里唯一整夜不灭的灯。小门后就是母子俩的客厅兼厨房 [SCN_reyes_living]。巷子里安静,主街的声音传到这里只剩个底子。",
   "references": {
     "items": [
       {
@@ -19,6 +19,33 @@
         "id": "item.reyes_gate.crab_trap",
         "name": "旧蟹笼",
         "description": "藤条编的蟹笼,挂在墙钉上晒了不知多少个夏天,藤条早已发脆掉渣——Rafael 出海前常用的家什,如今再没人碰过。"
+      },
+      {
+        "id": "item.reyes_gate.azulejo_tile",
+        "name": "门楣瓷砖",
+        "description": "嵌在门楣上的一块蓝白釉瓷砖,画着一条单桅渔船和底下一行看不懂的葡文,边角被海风蚀出细小的缺口。Reis 家从老铺子那边带过来的东西,比这栋房子还老。"
+      },
+      {
+        "id": "item.reyes_gate.spigot",
+        "name": "墙上的水龙头",
+        "description": "钉在砖墙上的黄铜水龙头,接着半截发硬的橡皮管,管口滴出来的水在地上洇出一小片常年不干的暗色。浇香草、冲单车上的泥、干完活洗手,都在这儿。"
+      },
+      {
+        "id": "item.reyes_gate.crates",
+        "name": "窗下的木条箱",
+        "description": "三只叠起来的空木条箱,原是杂货店拆完货剩下的,堆在窗下墙根当矮凳使。最上面那只的箱面被鞋底磨得发亮,钉子有一颗已经松了。"
+      },
+      {
+        "id": "item.reyes_gate.laundry_line",
+        "name": "晾衣绳",
+        "description": "两根柱子之间拉起来的一条尼龙晾衣绳,绳上别着一排木夹子。上面常年晾着店里的围裙、洗到发白的衬衫和男孩的球袜,潮天里一整天也干不透。"
+      },
+      {
+        "id": "item.reyes_gate.porch_light",
+        "name": "门廊灯",
+        "description": "门框上方一盏铁皮罩的黄灯泡,灯罩里积着几层飞蛾。开关在门内侧,可它整夜不灭——Marisol 说是省得摸黑找锁眼,其实是留给晚归的人的。",
+        "isLightSource": true,
+        "lightLevel": 1
       }
     ],
     "connections": [

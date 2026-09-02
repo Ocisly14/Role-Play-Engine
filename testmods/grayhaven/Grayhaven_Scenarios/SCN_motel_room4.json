@@ -2,8 +2,8 @@
   "schemaVersion": 2,
   "id": "SCN_motel_room4",
   "name": "4 号房",
-  "description": "一间过分整洁的旅馆客房——整洁得不像住了人:床铺得一丝不苟 [item.motel_room4.made_bed],床罩折角是军毯式的;烟灰缸干净,垃圾篓空着,连肥皂都摆回了出厂的角度。墙角立着一根崭新的钓竿 [item.motel_room4.fishing_rod],卷线器上连一点盐渍都没有。行李架上放着一只硬壳行李箱 [item.motel_room4.suitcase],锁扣是好东西,和这间九块钱一晚的房间不太相称。窗帘拉开一道两指宽的缝,正好看得见外廊和公路岔口的方向。房门 [SCN_motel_porch] 开向外廊。",
-  "parentLocationId": "LOC_motel",
+  "description": "一间过分整洁的旅馆客房——整洁得不像住了人:床铺得一丝不苟 [item.motel_room4.made_bed],床罩折角是军毯式的;床头柜上那盏罩子歪了的台灯 [item.motel_room4.bedside_lamp] 是屋里唯一的光,柜子抽屉里躺着旅馆放的一本圣经,书页齐得像没被翻开过。烟灰缸干净,垃圾篓空着。墙边的行李架 [item.motel_room4.luggage_rack] 上正正放着一只硬壳行李箱 [item.motel_room4.suitcase],锁扣是好东西,和这间九块钱一晚的房间不太相称。靠墙一张窄写字台和一把木椅 [item.motel_room4.writing_desk],台面上只有旅馆的信纸和一支圆珠笔,笔和纸边缘平行地摆着。五斗柜上一台用铁带箍死在柜面的电视机 [item.motel_room4.tv_set],旋钮拧到哪一档都带着一层沙沙的雪花,偶尔还串进别的台的说话声。里侧的卫浴间 [item.motel_room4.bath_alcove] 窄得只放得下一个搪瓷洗手台和一格淋浴,肥皂摆回了出厂的角度,浴帘杆上从没晾过什么湿东西。窗帘 [item.motel_room4.window_curtain] 拉开一道两指宽的缝,正好看得见外廊和公路岔口的方向。房门 [SCN_motel_porch] 开向外廊。",
+  "parentLocationId": "motel",
   "indoor": true,
   "references": {
     "items": [
@@ -13,9 +13,16 @@
         "description": "床罩绷得能弹起硬币,四角折成标准的军毯角。清洁工都铺不出这种床——这是每天早晨自己动手、几十年改不掉的手法。"
       },
       {
-        "id": "item.motel_room4.fishing_rod",
-        "name": "崭新的钓竿",
-        "description": "一根几乎没下过水的钓竿,卷线器上没有盐渍,线结绑得教科书般标准——却是左撇子的绑法换了手。"
+        "id": "item.motel_room4.bedside_lamp",
+        "name": "床头台灯",
+        "description": "床头柜上一盏底座沉重的台灯,灯罩歪着,谁也没去扶正过——它是这间屋子唯一的光。柜子抽屉里躺着旅馆放的一本圣经,书页齐得像从没被翻开过。",
+        "isLightSource": true,
+        "lightLevel": 2
+      },
+      {
+        "id": "item.motel_room4.luggage_rack",
+        "name": "行李架",
+        "description": "墙边一副木条帆布带的折叠行李架,带子松了。箱子在上面摆得正对墙线,架脚在地毯上压出的四个凹坑一直没挪过位置。"
       },
       {
         "id": "item.motel_room4.suitcase",
@@ -23,9 +30,29 @@
         "description": "旅行磨痕分布得过分均匀的硬壳行李箱,锁扣的做工和这间客房不太相称。"
       },
       {
+        "id": "item.motel_room4.writing_desk",
+        "name": "写字台与木椅",
+        "description": "靠墙一张窄写字台,配一把硬木椅。台面空着,只有旅馆信纸、一个信封和一支圆珠笔,笔和纸的边缘互相平行;抽屉拉开是空的,连灰都被擦过。椅子摆的角度朝着窗,不是朝着桌面。"
+      },
+      {
+        "id": "item.motel_room4.tv_set",
+        "name": "客房电视机",
+        "description": "用两根铁带箍死在五斗柜上的一台旧电视,防人搬走。旋钮拧到哪一档都带着一层沙沙的雪花,近来常有别的台的说话声串进画面,过一会儿又自己安静下去。"
+      },
+      {
+        "id": "item.motel_room4.bath_alcove",
+        "name": "卫浴间",
+        "description": "里侧一个窄得转不开身的卫浴间:搪瓷洗手台、一面起雾斑的镜子、一格铺着旧瓷砖的淋浴。肥皂摆回了出厂的角度,毛巾按对折线挂着,浴帘杆上从没晾过什么湿东西。"
+      },
+      {
+        "id": "item.motel_room4.window_curtain",
+        "name": "窗帘",
+        "description": "临外廊那扇窗上的厚窗帘,常年拉着,只留一道两指宽的缝。缝的位置正对外廊和公路岔口的方向;窗台的灰在那道缝底下被手肘蹭出了两块印子。"
+      },
+      {
         "id": "item.motel_room4.suitcase_liner",
         "name": "行李箱夹层",
-        "description": "行李箱底衬下的暗层:几台没有厂牌的仪表,一册用速记符号写的笔记,一沓不同名字的证件。",
+        "description": "行李箱底衬下的暗层,缝线比出厂的粗一号。里头压出几处方方正正的凹痕,大小正合几台仪表和一沓信封;衬布上留着机油和纸的气味。他出门时把那些东西带在身上,回来就收回这里——夹层本身空着的时候,也比整只箱子的其余部分更像他。",
         "hidden": true
       }
     ],

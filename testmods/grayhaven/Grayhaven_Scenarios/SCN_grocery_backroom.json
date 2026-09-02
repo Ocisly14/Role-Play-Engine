@@ -2,8 +2,8 @@
   "schemaVersion": 2,
   "id": "SCN_grocery_backroom",
   "name": "杂货店兼邮局·后仓",
-  "description": "后仓只有一扇小高窗透光,白天也昏暗[cond.grocery_backroom.dim],空气里是纸箱、陈年木架和墙钉上那卷粗麻绳[item.grocery_backroom.twine_spool]混着的味道。成箱的存货靠墙码到齐肩高,每摞箱子侧面都用粉笔标着到货日期——Tommy 暑假在这里帮工,搬箱和偷懒各占一半。门边挂着盘点夹板[item.grocery_backroom.inventory_clipboard],纸页翻卷,是母子俩交接的凭据。最里面单独搁着一箱罐头[item.grocery_backroom.unordered_crate]:Marisol 翻遍了订货单也对不上它的来路,便让它一直单独搁在那儿,谁也没动。仓门通回店堂[SCN_grocery_store]。",
-  "parentLocationId": "LOC_grocery_store",
+  "description": "后仓只有一扇小高窗透光,顶上那只落满灰的拉线灯泡[item.grocery_backroom.ceiling_bulb]开着也照不到墙角,白天也昏暗[cond.grocery_backroom.dim],空气里是纸箱、陈年木架和墙钉上那卷粗麻绳[item.grocery_backroom.twine_spool]混着的味道。靠墙一排铁货架[item.grocery_backroom.steel_shelving]从地面顶到房梁,备货按店堂的顺序摆着;成箱的存货码到齐肩高,每摞箱子侧面都用粉笔标着到货日期——Tommy 暑假在这里帮工,搬箱和偷懒各占一半,墙角那两只翻过来的木箱[item.grocery_backroom.tommy_corner]是他的地盘,箱面上压着卷了边的漫画。屋子正中是打包台[item.grocery_backroom.packing_table],台面被裁纸刀划出一道道浅痕,拆箱、捆邮包都在这儿;台边一台铸铁台秤[item.grocery_backroom.platform_scale]的指针停在零位偏左一点,称包裹之前得先敲它一下。墙边靠着一辆两轮手推车[item.grocery_backroom.handcart],轮胎瘪了一半,整箱的罐头全靠它挪。门边挂着盘点夹板[item.grocery_backroom.inventory_clipboard],纸页翻卷,是母子俩交接的凭据;夹板下那只桶[item.grocery_backroom.waste_bin]里全是拆下来的纸板和碎木条,每周清一次。通向屋后小巷的卸货门[item.grocery_backroom.alley_door]插着两道插销,门后还堆着空箱,好些年没开过——货一向是从店堂一趟趟搬进来的。最里面单独搁着一箱罐头[item.grocery_backroom.unordered_crate]:Marisol 翻遍了订货单也对不上它的来路,便让它一直单独搁在那儿,谁也没动。仓门通回店堂[SCN_grocery_store]。",
+  "parentLocationId": "grocery_store",
   "indoor": true,
   "references": {
     "items": [
@@ -21,6 +21,48 @@
         "id": "item.grocery_backroom.unordered_crate",
         "name": "来路不明的罐头箱",
         "description": "一箱包装完好的沙丁鱼罐头,封条没拆过。订货单、提单、进货簿上都找不到它——Marisol 核了三遍。"
+      },
+      {
+        "id": "item.grocery_backroom.ceiling_bulb",
+        "name": "拉线灯泡",
+        "description": "房梁下吊着的一只低瓦数灯泡,灯罩落满灰,拉线的末端接了一小段麻绳好够得着。开着的时候光晕只够照亮打包台一圈,墙角照旧是黑的。",
+        "isLightSource": true,
+        "lightLevel": 1
+      },
+      {
+        "id": "item.grocery_backroom.steel_shelving",
+        "name": "铁货架",
+        "description": "靠墙一排刷成灰绿色的铁货架,从地面顶到房梁,备货按店堂货架的顺序摆放——罐头一层、干货一层、灯油和火柴单独一层。最上层要踩箱子才够得到。"
+      },
+      {
+        "id": "item.grocery_backroom.packing_table",
+        "name": "打包台",
+        "description": "屋子正中一张厚木台,台面被裁纸刀划出一道道浅痕。拆箱、点数、给邮包缠绳打结都在这儿,台角常年压着一叠折好的旧牛皮纸。"
+      },
+      {
+        "id": "item.grocery_backroom.platform_scale",
+        "name": "铸铁台秤",
+        "description": "打包台边一台带砝码横杆的落地铸铁台秤,秤盘够放下一整箱罐头。指针停在零位偏左一点,称重之前得用手掌敲一下秤身——Marisol 知道该敲哪儿。"
+      },
+      {
+        "id": "item.grocery_backroom.handcart",
+        "name": "两轮手推车",
+        "description": "墙边靠着的一辆铁架两轮手推车,一侧轮胎瘪了一半,推起来一颠一颠。整箱的罐头和面粉全靠它从店堂挪进来。"
+      },
+      {
+        "id": "item.grocery_backroom.tommy_corner",
+        "name": "Tommy 的木箱角落",
+        "description": "墙角两只翻过来的木箱,一只当凳子一只当桌子,箱面上压着卷了边的漫画和一只空汽水瓶。Marisol 每次进来都说要收拾,又每次都没收。"
+      },
+      {
+        "id": "item.grocery_backroom.waste_bin",
+        "name": "废料桶",
+        "description": "盘点夹板下面那只镀锌铁皮桶,装着拆下来的纸板、碎木条和撕碎的旧标签,每周清一次。桶沿上搭着一副磨破了的线手套。"
+      },
+      {
+        "id": "item.grocery_backroom.alley_door",
+        "name": "卸货门",
+        "description": "通向屋后小巷的一扇宽木门,上下插着两道插销,门轴锈成了一块。门后还顺手堆了空箱,好些年没开过——货车到了,货一向是从店堂正门一趟趟搬进来的。"
       }
     ],
     "connections": [

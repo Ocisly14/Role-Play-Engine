@@ -2,11 +2,28 @@
   "schemaVersion": 2,
   "id": "SCN_motel_lobby",
   "name": "汽车旅馆前台",
-  "description": "1959 年的乐观主义在这间前台里慢慢褪色:霓虹字样的『VACANCY』常年亮着,柜台的福米卡贴面磨出了白边,墙上的加州公路地图还印着改线前的旧路。墙边一个旋转明信片架 [item.motel_lobby.postcard_rack] 上插着改线前的旧海岸公路风景照,边角卷了毛,少说二十年没人抽走过一张。柜台上摊着一本住客登记簿 [item.motel_lobby.guest_register],一页能翻过一个月;柜台后的钉板 [item.motel_lobby.key_board] 上挂着一排黄铜房门钥匙,只有 4 号的挂钩是空的。临街的玻璃门 [SCN_motel] 出去是旧海岸公路旁的旅馆路口,门上的铃铛很久才响一次;侧面的木门 [SCN_motel_porch] 通向连着客房的外廊。",
-  "parentLocationId": "LOC_motel",
+  "description": "1959 年的乐观主义在这间前台里慢慢褪色:临街窗上那管『VACANCY』的霓虹 [item.motel_lobby.vacancy_neon] 常年亮着,把柜台 [item.motel_lobby.front_desk] 的福米卡贴面照出一圈青白,台面边角磨出了白边;墙上那张加州公路地图 [item.motel_lobby.wall_map] 还印着改线前的旧路,图钉锈在了纸里。墙边一个旋转明信片架 [item.motel_lobby.postcard_rack] 上插着改线前的旧海岸公路风景照,边角卷了毛,少说二十年没人抽走过一张。柜台上摊着一本住客登记簿 [item.motel_lobby.guest_register],一页能翻过一个月,旁边一只按铃 [item.motel_lobby.desk_bell] 供没人在时招呼,再旁边是一部黑色转盘电话 [item.motel_lobby.desk_phone],线从柜台底下绕出去;柜台后的钉板 [item.motel_lobby.key_board] 上挂着一排黄铜房门钥匙,只有 4 号的挂钩是空的。后墙架子上一台小黑白电视 [item.motel_lobby.tv_set] 整天开着,音量拧到最小,画面时不时自己抖一下,也没人抬头看。临街的玻璃门 [SCN_motel] 出去是旧海岸公路旁的旅馆路口,门上的铃铛很久才响一次;侧面的木门 [SCN_motel_porch] 通向连着客房的外廊。",
+  "parentLocationId": "motel",
   "indoor": true,
   "references": {
     "items": [
+      {
+        "id": "item.motel_lobby.vacancy_neon",
+        "name": "『VACANCY』霓虹管",
+        "description": "挂在临街窗内侧的一管小霓虹,『VACANCY』四个字常年亮着——三十年里几乎没有理由关过。变压器嗡嗡响,天冷时要闪上一阵才稳住。",
+        "isLightSource": true,
+        "lightLevel": 1
+      },
+      {
+        "id": "item.motel_lobby.front_desk",
+        "name": "前台柜台",
+        "description": "齐胸高的木柜台,台面覆着福米卡贴面,边角磨出了白边,靠客人那一侧被手肘蹭得发亮。台下的格子里塞着房卡、圆珠笔、一本翻烂的电话簿和一盒备用保险丝。"
+      },
+      {
+        "id": "item.motel_lobby.wall_map",
+        "name": "加州公路地图",
+        "description": "钉在柜台后墙上的一张加州公路地图,纸已经发黄,印的还是改线前的路网:旧海岸公路仍是主干道,新高速那条线根本不在图上。有人用铅笔在旅馆的位置画过一个圈。"
+      },
       {
         "id": "item.motel_lobby.postcard_rack",
         "name": "明信片架",
@@ -18,9 +35,24 @@
         "description": "硬皮登记簿,一页能翻过一个月。最近的一行写着:W. Vance,弗雷斯诺,4 号房,钓鱼。"
       },
       {
+        "id": "item.motel_lobby.desk_bell",
+        "name": "柜台按铃",
+        "description": "柜台上一只镀镍的圆顶按铃,底座压着一张手写卡片:「按铃即到」。多数时候按了也要等上一会儿。"
+      },
+      {
+        "id": "item.motel_lobby.desk_phone",
+        "name": "转盘电话",
+        "description": "柜台上的黑色转盘电话,旅馆唯一一部对内对外的正经电话;旁边压着一张写满号码的纸板,上面有镇上诊所、警长办公室和一个长途接线员的号码。"
+      },
+      {
         "id": "item.motel_lobby.key_board",
         "name": "钥匙钉板",
         "description": "柜台后的钉板,挂着一排黄铜房门钥匙,只有 4 号的挂钩空着。"
+      },
+      {
+        "id": "item.motel_lobby.tv_set",
+        "name": "前台的小黑白电视",
+        "description": "架在后墙搁板上的一台小黑白电视,天线上缠着锡纸,整天开着,音量拧到最小。近来画面时不时自己抖一下、横过几道杠,过一会儿又好了——前台的人早懒得去拍它。"
       }
     ],
     "connections": [

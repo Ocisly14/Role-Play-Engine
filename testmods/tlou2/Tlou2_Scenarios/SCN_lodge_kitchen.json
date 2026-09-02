@@ -1,0 +1,38 @@
+{
+  "schemaVersion": 2,
+  "id": "SCN_lodge_kitchen",
+  "name": "旅馆后厨",
+  "description": "后厨很窄,一条操作台从头顶的吊柜到脚下的箱子堆满了东西。一只煤油炉在台面中央烧着,上头架的铝锅里,雪正在化成水 [item.lodge_kitchen.camp_stove]。锅边摆着一排开了盖的罐头和几袋压缩饼干,摊开的份量比三个人一顿要多得多 [item.lodge_kitchen.opened_rations]。水槽早就不出水了,底下垫着一只塑料桶接漏,桶里的水结了一层薄冰 [item.lodge_kitchen.drip_bucket]。门通回大厅 [SCN_lodge_greatroom]。",
+  "parentLocationId": "LOC_lodge",
+  "indoor": true,
+  "references": {
+    "items": [
+      {
+        "id": "item.lodge_kitchen.camp_stove",
+        "name": "煤油炉与铝锅",
+        "description": "台面中央一只黄铜煤油炉,火调得很小,上头架着一口大铝锅,锅里塞满了雪,正在慢慢化成水。旁边搁着一叠洗干净倒扣的碗——不止三只。",
+        "isLightSource": true,
+        "lightLevel": 1
+      },
+      {
+        "id": "item.lodge_kitchen.opened_rations",
+        "name": "摊开的口粮",
+        "description": "一排开了盖的罐头和几袋拆封的压缩饼干,按人份分好摊在台面上。分出来的份数比屋里现在的人多。有人是按队伍的人头准备的,而且在等人回来。"
+      },
+      {
+        "id": "item.lodge_kitchen.drip_bucket",
+        "name": "接漏的塑料桶",
+        "description": "水槽下面垫着的一只塑料桶,接从锈管里渗下来的水。桶里的水面结了一层薄冰,冰下能看见沉底的铁锈。"
+      }
+    ],
+    "connections": [
+      {
+        "id": "connection.lodge_kitchen.greatroom",
+        "targetId": "SCN_lodge_greatroom",
+        "name": "后厨窄门",
+        "description": "回到大厅的窄门,门框上磕出了很多年的印子。"
+      }
+    ],
+    "conditions": []
+  }
+}

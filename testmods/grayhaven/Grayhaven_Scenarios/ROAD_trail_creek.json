@@ -2,11 +2,46 @@
   "schemaVersion": 2,
   "id": "ROAD_trail_creek",
   "name": "灰溪林径",
-  "description": "林道口进山后偏西的一条林径,顺着地势缓缓下行,单程一小时十分钟。起点在林道口 [SCN_trailhead],尽头是灰溪的渡口 [SCN_creek_ford]。蕨丛没过小腿,相似的树干一根接一根向后退,走到一半就很难说清自己究竟走了多远。",
+  "description": "林道口进山后偏西的一条林径,顺着地势缓缓下行,单程一小时十分钟。起点在林道口 [SCN_trailhead],尽头是灰溪的渡口 [SCN_creek_ford]。蕨丛没过小腿,路面只剩一道被踩瘪的浅痕 [item.trail_creek.fern_choked_tread],一不留神就跟丢了;沿途的树枝上隔一段系着一条褪色的红胶带 [item.trail_creek.tape_blazes],有的还在,有的掉进了蕨丛里。进山不久,一棵大树上砍出的方形老刻痕还在 [item.trail_creek.survey_blaze],痕上钉着一枚锈成褐色的金属牌,号码认不出来了。走到一半,一根倒木横断整条路 [item.trail_creek.blowdown],树皮被历年翻过去的人磨得发亮。倒木过后偏出路侧几步,蕨丛里陷着一台废弃的蒸汽集材机 [item.trail_creek.donkey_engine],滚筒上还缠着锈成一坨的钢缆。快到溪谷时,一道细流从坡上淌下来横过路面 [item.trail_creek.trickle_crossing],泥里全是靴印和鹿蹄印——听见水声,渡口就不远了。相似的树干一根接一根向后退,走到一半就很难说清自己究竟走了多远。",
   "parentLocationId": "OUTDOOR",
   "travelTimeMinutes": 70,
   "references": {
-    "items": [],
+    "items": [
+      {
+        "id": "item.trail_creek.fern_choked_tread",
+        "name": "蕨丛里的路面",
+        "description": "整条林径的路面:没过小腿的蕨丛里一道被踩瘪的浅痕,宽不过一只脚。落叶一盖就看不出来,走神几步就得回头找;泥软的地方留得住脚印,干的地方什么也留不下。"
+      },
+      {
+        "id": "item.trail_creek.tape_blazes",
+        "name": "红胶带路标",
+        "description": "隔一段系在齐眼高树枝上的一条褪色红胶带,一路都有,颜色晒得快分不出红白。有的被风吹落在蕨丛里,有的连着树枝一起断掉——系的人显然不是林业局,打的结很业余,间距也时密时疏。"
+      },
+      {
+        "id": "item.trail_creek.survey_blaze",
+        "name": "老刻痕与铁牌",
+        "description": "路侧一棵大树齐胸高处砍出来的方形刻痕,边缘早已愈合成一圈厚厚的疤。刻痕中间钉着一枚锈成褐色的方形金属牌,压出来的号码只剩几道凸痕,认不出是什么。",
+        "position": 0.2
+      },
+      {
+        "id": "item.trail_creek.blowdown",
+        "name": "横路的倒木",
+        "description": "一根横断整条路的倒木,腰粗,悬空的一段刚好卡在能翻过去又钻不过去的高度。树皮被历年翻过去的人磨得发亮,两侧的蕨丛也被踩出了绕行的岔道。",
+        "position": 0.5
+      },
+      {
+        "id": "item.trail_creek.donkey_engine",
+        "name": "废弃的蒸汽集材机",
+        "description": "偏出路侧几步、陷在蕨丛里的一台蒸汽集材机:铁皮锅炉鼓满了锈泡,底下的木橇烂进了土里,绞盘滚筒上缠着锈成一坨的钢缆。铭牌还在,字被锈啃平了。整台机器沉得像座小山,谁也没想过把它运出去。",
+        "position": 0.6
+      },
+      {
+        "id": "item.trail_creek.trickle_crossing",
+        "name": "横路的细流",
+        "description": "从坡上淌下来横过路面的一道细流,窄得一步能跨过去,水凉且清。两侧的泥被踩成了浆,印满靴印和鹿蹄印;水声是这条路上第一个能听见的溪谷信号。",
+        "position": 0.85
+      }
+    ],
     "connections": [
       {
         "id": "connection.trail_creek.trailhead_end",

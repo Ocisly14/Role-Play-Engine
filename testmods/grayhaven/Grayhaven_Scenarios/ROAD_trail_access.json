@@ -2,11 +2,47 @@
   "schemaVersion": 2,
   "id": "ROAD_trail_access",
   "name": "林道",
-  "description": "从主街北口走到林道口的十分钟土路,穿过镇边最后几户人家的后栅栏。镇子的一头接在主街北口 [SCN_main_north],另一头是林道口那块歪掉的木牌 [SCN_trailhead]。路的后半段,红杉的影子已经盖过来了,镇上的声音一步步退到身后。",
+  "description": "从主街北口走到林道口的十分钟土路,穿过镇边最后几户人家的后栅栏。镇子的一头接在主街北口 [SCN_main_north],另一头是林道口那块歪掉的木牌 [SCN_trailhead]。路面是常年压出来的两道车辙 [item.trail_access.rutted_track],中间的草蹭着裤腿,低处的水洼一年到头不干。出镇不远,最后一户人家的铁皮邮箱斜在木桩上 [item.trail_access.rural_mailbox],箱门锈得关不严,姓氏的贴字掉得只剩半个;再往前是那家人歪斜的后院木栅栏 [item.trail_access.leaning_fence],缺板的地方用铁丝草草缠了两道。路过一处涵洞时脚下会突然发空 [item.trail_access.culvert],波纹铁管里常年淌着一线水,雨后能听见响。半路的蕨丛里扔着一台旧洗衣机 [item.trail_access.dumped_washer],滚筒里长出了蕨叶,谁扔的没人认领。最后一根电线杆立在路的将尽处 [item.trail_access.last_utility_pole],电线到此为止,再往前就只有树。路的后半段,红杉的影子已经盖过来了,镇上的声音一步步退到身后。",
   "parentLocationId": "OUTDOOR",
   "travelTimeMinutes": 10,
   "references": {
-    "items": [],
+    "items": [
+      {
+        "id": "item.trail_access.rutted_track",
+        "name": "土路车辙",
+        "description": "整条林道的路面:常年碾出来的两道车辙,中间留着一垄没被压死的草。低处的水洼一年到头不干,雨后一脚下去能没到鞋帮,泥里印满进出的靴印和自行车胎印。"
+      },
+      {
+        "id": "item.trail_access.rural_mailbox",
+        "name": "路边的铁皮邮箱",
+        "description": "镇边最后一户人家的邮箱,斜插在一根开裂的木桩上。箱门锈得关不严,靠一截铁丝别着;箱身上原本贴着的姓氏字母掉得只剩半个,红色的信号小旗永远竖着,没人放下来过。",
+        "position": 0.15
+      },
+      {
+        "id": "item.trail_access.leaning_fence",
+        "name": "歪斜的后院栅栏",
+        "description": "那户人家后院朝路的一段木栅栏,柱子被雨水泡软了,整片朝路歪出一个角度。缺了板的地方用铁丝草草缠了两道,缝里看得见院子里晾的衣服和一辆没气的手推车。",
+        "position": 0.3
+      },
+      {
+        "id": "item.trail_access.culvert",
+        "name": "路下的涵洞",
+        "description": "一截穿过路基的波纹铁管涵洞,两头的洞口埋在半人高的草里。管里常年淌着一线水,走到上面脚下的土会发空;雨后水声大得从路上就听得见,洞口卡着一堆冲下来的枯枝。",
+        "position": 0.55
+      },
+      {
+        "id": "item.trail_access.dumped_washer",
+        "name": "扔掉的旧洗衣机",
+        "description": "半路的蕨丛里躺倒的一台旧洗衣机,搪瓷面上锈出一道道褐痕,机门早没了。滚筒里积了土,长出几片蕨叶;谁扔的没人认领,也没人来收。",
+        "position": 0.7
+      },
+      {
+        "id": "item.trail_access.last_utility_pole",
+        "name": "最后一根电线杆",
+        "description": "路将尽处的一根木头电线杆,横担上的电线到这里为止,朝林子那边是空的。杆上钉着一块褪成白色的铝牌和几枚生锈的攀爬钉,底部被啄木鸟凿出一排洞。",
+        "position": 0.9
+      }
+    ],
     "connections": [
       {
         "id": "connection.trail_access.street_end",

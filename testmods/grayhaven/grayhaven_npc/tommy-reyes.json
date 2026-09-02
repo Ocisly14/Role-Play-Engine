@@ -50,13 +50,6 @@
       }
     },
     {
-      "id": "item.tommy.glen_jacket",
-      "name": "Glen 的旧夹克",
-      "properties": {
-        "note": "Glen 以前穿过的旧夹克，Tommy 借来挡风，口袋里常塞着零食和纸条。"
-      }
-    },
-    {
       "id": "item.tommy.cigar_box",
       "name": "装着 23.75 美元的雪茄盒",
       "properties": {

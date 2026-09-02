@@ -2,8 +2,8 @@
   "schemaVersion": 2,
   "id": "SCN_batra_shop",
   "name": "电视维修铺·店堂工作台",
-  "description": "店堂还留着老五金行的骨架:通顶的木架、柜台上的黄铜秤痕,只是如今架上摆的全是显像管和真空管。工作台占了半间屋,台面上示波器、烙铁架、万用表各归其位——Dev 的秩序不容商量。台面正中摊着他的维修记录本[item.batra_shop.repair_ledger],三色笔迹分记日期、机型、症状与根因,近几个月的页数厚得反常。靠墙的架子上排着待修的电视机[item.batra_shop.tv_wall],每台贴着写有户主姓氏的纸签。窗台上一台收音机开着 KGRV[item.batra_shop.shop_radio],陪着烙铁的松香味从早响到晚。临街门通向主街[ROAD_main_street];店堂后侧一段室内楼梯通向楼上的住家[SCN_batra_living]。",
-  "parentLocationId": "LOC_batra_shop",
+  "description": "店堂还留着老五金行的骨架:通顶的木架、一段深色的木柜台[item.batra_shop.counter],台面上还留着当年黄铜秤压出的浅痕,如今压在玻璃下的是一叠工单;柜台角上立着一枚单据钉[item.batra_shop.ticket_spike],取机器的人在这儿签字,复写的那一联留下。临街门的玻璃上挂着手写的营业时间牌[item.batra_shop.hours_sign],朝外的一面十三年没重写过。工作台占了半间屋[item.batra_shop.workbench],台面上每样东西都有自己的位置——Dev 的秩序不容商量;一盏鹅颈台灯[item.batra_shop.bench_lamp]低低压向台面,灯下是烙铁架和一卷松香焊锡[item.batra_shop.soldering_iron],那股味道从早飘到晚。台前一只高脚凳[item.batra_shop.stool],坐面正中磨出一块亮斑。台面正中摊着他的维修记录本[item.batra_shop.repair_ledger],三色笔迹分记日期、机型、症状与根因,近几个月的页数厚得反常。台边一整柜分格零件抽屉[item.batra_shop.parts_drawers],每格贴着手写的型号标签;柜顶上蹲着一台真空管测试仪[item.batra_shop.tube_tester],表针一颤就知道管子还能不能用。靠墙的架子上排着待修的电视机[item.batra_shop.tv_wall],每台贴着写有户主姓氏的纸签;架子底下堆着拆空的报废机箱[item.batra_shop.scrap_chassis],挨着的备件角里立着兔耳天线、扁馈线卷和一摞纸盒[item.batra_shop.spare_stock]。柜台后的墙上挂着一部黑色电话[item.batra_shop.shop_phone],听筒线抻得够得着工作台。窗台上一台收音机开着 KGRV[item.batra_shop.shop_radio],从开门响到打烊。临街门通向主街[ROAD_main_street];店堂后侧一段室内楼梯通向楼上的住家[SCN_batra_living]。",
+  "parentLocationId": "batra_shop",
   "indoor": true,
   "references": {
     "items": [
@@ -21,6 +21,68 @@
         "id": "item.batra_shop.shop_radio",
         "name": "窗台收音机",
         "description": "一台被拆修过多次的收音机,机壳螺丝都换成了不配套的新件,常年调在 KGRV。"
+      },
+      {
+        "id": "item.batra_shop.workbench",
+        "name": "工作台",
+        "description": "占了半间屋的厚木工作台,台面钉了一层白铁皮,烫痕和焊锡珠嵌在缝里。台沿贴着一条描了刻度的胶带,量线长短用了十三年。所有的活都在这张台子上做完。"
+      },
+      {
+        "id": "item.batra_shop.bench_lamp",
+        "name": "工作台鹅颈灯",
+        "description": "夹在台沿上的鹅颈台灯,灯罩烤得发黄,压得很低——Dev 干活时整间店堂只有这一圈光是亮的。",
+        "isLightSource": true,
+        "lightLevel": 3
+      },
+      {
+        "id": "item.batra_shop.soldering_iron",
+        "name": "烙铁架与松香焊锡",
+        "description": "台灯底下的烙铁架,烙铁头修得干净,旁边一卷松香芯焊锡和一块吸锡铜网。铺子里那股味道就是从这儿来的。"
+      },
+      {
+        "id": "item.batra_shop.parts_drawers",
+        "name": "分格零件抽屉柜",
+        "description": "工作台旁一整柜浅抽屉,电阻、电容、二极管、中周变压器分格收着,每格前脸贴着手写型号标签。有几格最近见了底,标签上被红笔圈了一道。"
+      },
+      {
+        "id": "item.batra_shop.tube_tester",
+        "name": "真空管测试仪",
+        "description": "抽屉柜顶上的一台老式真空管测试仪,面板上密密麻麻的插座和一张对照表。插上管子扳一下开关,表针会告诉你这管子还剩多少寿命——Dev 只信这种回答。"
+      },
+      {
+        "id": "item.batra_shop.spare_stock",
+        "name": "备件角",
+        "description": "墙角堆着的备件:两副兔耳天线、几卷扁馈线、一摞装着变压器和旋钮的纸盒。存货按 Dev 的进货单摆放,最近走得比往年快。"
+      },
+      {
+        "id": "item.batra_shop.scrap_chassis",
+        "name": "报废机箱堆",
+        "description": "架子底下摞着的报废机箱,喇叭、变压器、旋钮多半还在上面。修不好的机器最后都归到这儿,当零件库用——上头的螺丝时不时少几颗,Dev 从没提过。"
+      },
+      {
+        "id": "item.batra_shop.counter",
+        "name": "老柜台",
+        "description": "老五金行传下来的深色木柜台,台面被黄铜秤压出两道浅痕。玻璃底下压着一叠空白工单和一张手写的收费标准,柜台里侧的格子里是零钱盒。"
+      },
+      {
+        "id": "item.batra_shop.ticket_spike",
+        "name": "单据钉",
+        "description": "柜台角上一枚铁质单据钉,穿着一沓复写工单:上头写着日期、机型、症状,取机器的人签字,底下那联留在店里。Cole 副警长取警局的机器时,一定要另抄一份副本。"
+      },
+      {
+        "id": "item.batra_shop.stool",
+        "name": "高脚凳",
+        "description": "工作台前一只木高脚凳,横档被鞋跟蹭得发白,坐面正中磨出一块亮斑。等着取机器的街坊也常坐在上面聊两句。"
+      },
+      {
+        "id": "item.batra_shop.hours_sign",
+        "name": "手写营业时间牌",
+        "description": "挂在临街门玻璃上的一块硬纸牌,正面手写营业时间,背面是「打烊·请按门铃」。字迹是 1972 年写的,后来只描过一遍。"
+      },
+      {
+        "id": "item.batra_shop.shop_phone",
+        "name": "挂式电话",
+        "description": "柜台后墙上的黑色挂式电话,听筒线抻长过,够得着工作台。旁边钉着一块小板子,记着 Fort Anne 供应商和几家老主顾的号码。"
       }
     ],
     "connections": [

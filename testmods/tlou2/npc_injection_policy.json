@@ -1,0 +1,15 @@
+{
+  "moduleId": "tlou2",
+  "moduleStartDate": "2038-12-06",
+  "description": "All six characters begin together in the lodge greatroom. Joel and Tommy have rescued Abby, identities remain hidden, and both groups cooperate through the blizzard before parting ways.",
+  "tiers": {
+    "daily_sim": [
+      "npc_abby_anderson",
+      "npc_joel_miller",
+      "npc_tommy_miller",
+      "npc_owen_moore",
+      "npc_mel",
+      "npc_manny"
+    ]
+  }
+}

@@ -2,20 +2,70 @@
   "schemaVersion": 2,
   "id": "SCN_sheriff_office",
   "name": "警长办公室·里间",
-  "description": "里间是 Ray 的地盘:办公椅向后仰出固定的弧度,窗台上摆着钓具目录和一座钓鱼奖杯[item.sheriff_office.fishing_trophy],百叶窗把雾天的光切成一条条。桌上摊着填了一半的填字游戏[item.sheriff_office.crossword],杯垫上的咖啡渍叠着咖啡渍,警徽倒是擦得很亮。墙角立着一组旧档案柜[item.sheriff_office.old_case_cabinet],柜顶落着薄灰——灰港三十多年的旧案卷宗锁在里面,钥匙就在抽屉里,Ray 从不去开。门通回前厅[SCN_sheriff_front],门轴的吱呀声足够提前两秒通报来人。",
-  "parentLocationId": "LOC_sheriff_office",
+  "description": "里间是 Ray 的地盘:办公桌[item.sheriff_office.ray_desk]的漆面被三十六年的手肘磨出两片浅亮,桌后那把办公椅[item.sheriff_office.desk_chair]向后仰出固定的弧度,一坐就知道该仰到哪儿。窗台上摆着一座钓鱼奖杯[item.sheriff_office.fishing_trophy],墙角靠着一根钓竿[item.sheriff_office.fishing_rod],线轮上的线是上个潮期才换的;百叶窗[item.sheriff_office.blinds]把雾天的光切成一条条,叶片压下去就能看见半条主街。桌上摊着填了一半的填字游戏[item.sheriff_office.crossword],边上咖啡杯[item.sheriff_office.coffee_mug]底下的杯垫上咖啡渍叠着咖啡渍,烟灰缸[item.sheriff_office.ashtray]里是杂货店那个牌子的烟头;桌角另码着一摞待签的巡逻记录[item.sheriff_office.patrol_logs],是前厅那位每天早上搬进来的。分机电话[item.sheriff_office.telephone]搁在手边,铃声比前厅那台闷。墙上一张褪色的合影[item.sheriff_office.wall_photo]挂了很多年,门边一只上锁的证物柜[item.sheriff_office.evidence_locker]里是这些年没人来认领的零碎。墙角立着一组旧档案柜[item.sheriff_office.old_case_cabinet],柜顶落着薄灰——灰港三十多年的旧案卷宗锁在里面,钥匙就在抽屉里,Ray 从不去开。门通回前厅[SCN_sheriff_front],门轴的吱呀声足够提前两秒通报来人。",
+  "parentLocationId": "sheriff_office",
   "indoor": true,
   "references": {
     "items": [
+      {
+        "id": "item.sheriff_office.ray_desk",
+        "name": "Ray 的办公桌",
+        "description": "木面办公桌,两片手肘磨出来的浅亮,抽屉一拉就卡半寸。抽屉里是回形针、钓钩、一把没削的铅笔、旧案档案柜的钥匙,还有一小罐擦徽章的膏。"
+      },
+      {
+        "id": "item.sheriff_office.desk_chair",
+        "name": "办公椅",
+        "description": "皮面早裂了的转椅,弹簧被三十六年的体重压出固定的弧度,往后一仰会「咯」的一声。全镇没有第二个人坐得惯它。"
+      },
       {
         "id": "item.sheriff_office.fishing_trophy",
         "name": "钓鱼奖杯",
         "description": "窗台一角摆着座小奖杯,底座刻着某年渔汛节钓鱼赛的名次,杯身早氧化发暗。有人问起,Ray 只说一句「运气好」。"
       },
       {
+        "id": "item.sheriff_office.fishing_rod",
+        "name": "钓竿",
+        "description": "靠在墙角的一根玻璃钢钓竿,线轮上的线上个潮期刚换过,竿梢缠着一截防勾的胶布。潮水好的傍晚它不在这儿。"
+      },
+      {
+        "id": "item.sheriff_office.blinds",
+        "name": "百叶窗",
+        "description": "临街那扇窗上的金属百叶窗,叶片有几片压弯了。拉绳一收,雾天的光就切成一条条;用手指压下一片,能看见半条主街和谁站在警局门口。"
+      },
+      {
         "id": "item.sheriff_office.crossword",
         "name": "填字游戏",
         "description": "报纸上撕下的填字游戏,填了一半,铅笔搁在格子上。Ray 的进度和他的退休一样,不紧不慢。"
+      },
+      {
+        "id": "item.sheriff_office.coffee_mug",
+        "name": "咖啡杯",
+        "description": "缺了个口的白瓷杯,杯底一圈永远洗不净的褐痕,杯垫上的咖啡渍叠着咖啡渍。杯子里的咖啡从来不放糖。"
+      },
+      {
+        "id": "item.sheriff_office.ashtray",
+        "name": "烟灰缸",
+        "description": "厚玻璃的方烟灰缸,底上压着一层洗不掉的黄。烟头都是杂货店那个牌子——这镇上他的烟只在一个地方买。"
+      },
+      {
+        "id": "item.sheriff_office.patrol_logs",
+        "name": "待签的巡逻记录",
+        "description": "码在桌角的一摞巡逻记录表,每张右下角空着警长的签名栏,日期从上个月排到本周。码得整整齐齐,一看就不是这屋子里的人放的。"
+      },
+      {
+        "id": "item.sheriff_office.telephone",
+        "name": "分机电话",
+        "description": "里间的分机电话,前厅接进来的线,铃声闷一点。听筒线绕成死结,谁在这台上打过长电话一看就知道。"
+      },
+      {
+        "id": "item.sheriff_office.wall_photo",
+        "name": "褪色的合影",
+        "description": "镜框里一张褪了色的黑白合影:某年渔汛节,镇上的警员和船主挤在码头栈桥上,背景是还没停摆的鱼罐头厂。照片里最边上那个瘦小伙子如今坐在这张桌子后面。"
+      },
+      {
+        "id": "item.sheriff_office.evidence_locker",
+        "name": "证物柜",
+        "description": "门边一只绿漆铁柜,上着挂锁,标签是打字机打的。里头东西不多:醉汉手里没收的折刀、海滩上拾到没人认领的钱包、一台泡坏的手电。灰港的证物少到警长记得每一件的来历。"
       },
       {
         "id": "item.sheriff_office.old_case_cabinet",

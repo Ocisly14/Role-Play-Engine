@@ -2,8 +2,8 @@
   "schemaVersion": 2,
   "id": "SCN_reyes_marisol",
   "name": "Marisol 的卧室",
-  "description": "一间收拾得一丝不苟的小卧室:床罩绷得平整,窗帘洗得发白,梳妆台上的东西按大小排成一列,只有一把木背梳子 [item.reyes_marisol.hairbrush] 梳齿里绞着几根白发,显得不那么听话。床头柜上立着一张相框 [item.reyes_marisol.rafael_photo]——Rafael 站在渔船甲板上眯眼笑着,相框每天都被擦过。柜子最上层放着一只针线盒 [item.reyes_marisol.sewing_box],里面除了线轴还压着几张按月份叠好的收据。整间屋子唯一的门通回客厅 [SCN_reyes_living],门轴上了油,推起来没有声音。",
-  "parentLocationId": "LOC_reyes_house",
+  "description": "一间收拾得一丝不苟的小卧室:床 [item.reyes_marisol.bed] 罩绷得平整,只有靠门这一侧的枕头压出了印子;窗帘洗得发白,拉开就是朝后巷的那扇窗 [item.reyes_marisol.lane_window]——夜里巷子里过一辆自行车,她躺着都听得出来是谁的车。梳妆台 [item.reyes_marisol.vanity] 上的东西按大小排成一列,只有一把木背梳子 [item.reyes_marisol.hairbrush] 梳齿里绞着几根白发,显得不那么听话。床头柜上立着一张相框 [item.reyes_marisol.rafael_photo]——Rafael 站在渔船甲板上眯眼笑着,相框每天都被擦过;挨着它是一盏布罩床头灯 [item.reyes_marisol.bedside_lamp] 和一只上发条的闹钟 [item.reyes_marisol.alarm_clock],铃针每晚都拨到五点四十。衣柜 [item.reyes_marisol.wardrobe] 里她自己的衣服只占了一半,最里头还挂着一件不是她尺码的呢外套。柜子最上层放着一只针线盒 [item.reyes_marisol.sewing_box],里面除了线轴还压着几张按月份叠好的收据;盒盖底下压着一叠信纸、信封和一卷邮票 [item.reyes_marisol.letter_set],最上面那一封已经写好了地址,还没封口。整间屋子唯一的门通回客厅 [SCN_reyes_living],门轴上了油,推起来没有声音。",
+  "parentLocationId": "reyes_house",
   "indoor": true,
   "references": {
     "items": [
@@ -21,6 +21,43 @@
         "id": "item.reyes_marisol.sewing_box",
         "name": "针线盒",
         "description": "铁皮饼干盒改的针线盒,线轴底下压着按月份叠好的店铺收据。"
+      },
+      {
+        "id": "item.reyes_marisol.bed",
+        "name": "床",
+        "description": "一张双人床,床罩绷得没有一道褶。八年了,她还是只睡靠门那一侧,另半边的枕头每天照样拍松、照样铺平。"
+      },
+      {
+        "id": "item.reyes_marisol.lane_window",
+        "name": "朝后巷的窗",
+        "description": "一扇朝后巷开的旧木窗,插销上过油,推开时能看见自家门口那片空地和晾衣绳。夜里她关灯躺着,听得见巷子里的脚步声、链条声,和儿子推车经过时刻意放轻的动静。"
+      },
+      {
+        "id": "item.reyes_marisol.vanity",
+        "name": "梳妆台",
+        "description": "一张漆面开裂的老式梳妆台,镜子边缘起了雾。台面上的东西按大小排成一列;抽屉里是发卡、一瓶只在葬礼和渔汛节用的香水,和一个装着结婚戒指的小绒盒。"
+      },
+      {
+        "id": "item.reyes_marisol.bedside_lamp",
+        "name": "床头灯",
+        "description": "床头柜上一盏布灯罩的小台灯,灯泡昏黄,拉绳末端系着一颗木珠。她常留着它读几行东西就睡着,醒来发现灯还亮着。",
+        "isLightSource": true,
+        "lightLevel": 1
+      },
+      {
+        "id": "item.reyes_marisol.alarm_clock",
+        "name": "上发条的闹钟",
+        "description": "一只双铃机械闹钟,发条要每晚上紧,走时快一分半。铃针常年拨在五点四十——够她生火、做好早饭、赶在六点半前把店门打开。"
+      },
+      {
+        "id": "item.reyes_marisol.wardrobe",
+        "name": "衣柜",
+        "description": "两扇门的旧衣柜,合页一开就响。她的衣服只占一半:店里穿的裙子、两件外套、一双留着不常穿的鞋;另一半最里头挂着一件不是她尺码的呢外套,肩上还有一层没拍干净的旧灰。"
+      },
+      {
+        "id": "item.reyes_marisol.letter_set",
+        "name": "信纸与邮票",
+        "description": "一叠横格信纸、几只素面信封和一卷邮票——邮局柜台后面的人自然不缺这些。最上面那一封已经写好了 Fort Anne 的收信地址,压在针线盒底下,还没封口,也还没投出去。"
       }
     ],
     "connections": [

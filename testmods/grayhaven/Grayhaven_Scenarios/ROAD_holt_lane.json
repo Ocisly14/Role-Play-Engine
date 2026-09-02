@@ -2,11 +2,52 @@
   "schemaVersion": 2,
   "id": "ROAD_holt_lane",
   "name": "霍尔特巷",
-  "description": "从主街北口通往镇边的一条小巷,两侧是荒了一半的果园和歪斜的栅栏,步行二十分钟。一头接在主街北口 [SCN_main_north],另一头止于霍尔特家的院门 [SCN_holt_gate]。巷子里常年只有这一家人的脚印和车辙,清晨有时能听见一辆货车低沉地驶出去。",
+  "description": "从主街北口通往镇边的一条小巷,步行二十分钟。路面是压实的碎石,中间让同一辆车轧出了两道浅辙 [item.holt_lane.gravel_ruts],雨后一路积水;两侧是荒了一半的老果园,歪斜的木栅栏 [item.holt_lane.orchard_fence] 断断续续地跟着路走,断了的地方就用铁丝随便拉一道。一头接在主街北口 [SCN_main_north],离开路口没走几分钟,左手边是果园那座塌了半边的包装棚 [item.holt_lane.packing_shed],当年装苹果的木箱还烂在里头。再往前,草里歪着一块褪色的『出售』木牌 [item.holt_lane.for_sale_sign],上面的电话号码是外县的,插在那儿好几年没人问过;巷子中段,路基底下横穿一截水泥涵洞 [item.holt_lane.culvert],雨季里水声大得整条巷子都听得见。快到头的荒草里陷着一辆锈穿了的旧皮卡 [item.holt_lane.dead_pickup],轮子早被人拆走了;最后一段路肩被一大片黑莓丛 [item.holt_lane.blackberry_thicket] 挤窄了一半,八月里结满黑果子,也挂人的衣裳。巷尾止于霍尔特家的院门 [SCN_holt_gate]。巷子里常年只有这一家人的脚印和车辙,清晨有时能听见一辆货车低沉地驶出去。",
   "parentLocationId": "OUTDOOR",
   "travelTimeMinutes": 20,
   "references": {
-    "items": [],
+    "items": [
+      {
+        "id": "item.holt_lane.gravel_ruts",
+        "name": "碎石路面与车辙",
+        "description": "压实的碎石路面,中间被同一辆重车年复一年轧出两道浅辙,雨后积成一线一线的水洼。辙里的胎印新的压着旧的,方向永远是早上出去、晌午前回来。"
+      },
+      {
+        "id": "item.holt_lane.orchard_fence",
+        "name": "歪斜的木栅栏",
+        "description": "沿巷断断续续的老果园木栅栏,柱子朝各个方向歪,横板缺一块少一块,断处用铁丝随手拉过一道。栅栏那边的苹果树没人剪了,枝子压得很低。"
+      },
+      {
+        "id": "item.holt_lane.packing_shed",
+        "name": "塌了半边的包装棚",
+        "description": "果园早年的苹果包装棚,一半屋顶塌进去了,剩下的一半还立着。里头堆着散架的木箱、一台锈死的分级机和几只发霉的麻袋;下雨时进去躲一阵是干的,风一大整个架子都吱呀。",
+        "position": 0.2
+      },
+      {
+        "id": "item.holt_lane.for_sale_sign",
+        "name": "『出售』木牌",
+        "description": "插在路边草里的一块木牌,白漆写着『出售』和一个外县的电话号码,数字被雨泡得发涨。牌子歪着,底下的木桩已经被草长过去了——这几年镇上这样的牌子越来越多。",
+        "position": 0.4
+      },
+      {
+        "id": "item.holt_lane.culvert",
+        "name": "水泥涵洞",
+        "description": "巷子中段从路基底下横穿的一截水泥涵管,管口齐一个孩子高,里头终年潮湿,长着青苔。旱季只有一线细流,雨季水声大得隔着路面都听得见;管口的干草窝说明有别的东西也在用它。",
+        "position": 0.55
+      },
+      {
+        "id": "item.holt_lane.dead_pickup",
+        "name": "锈掉的旧皮卡",
+        "description": "陷在路边荒草里的一辆五十年代旧皮卡,轮子和挡风玻璃早被人拆走,车斗里积着雨水和落叶,草从驾驶室的地板洞里长出来。车门上还看得出一行漆掉的字,认不全了。",
+        "position": 0.8
+      },
+      {
+        "id": "item.holt_lane.blackberry_thicket",
+        "name": "黑莓丛",
+        "description": "把最后一段路肩挤窄了一半的一大片黑莓丛,藤蔓翻过栅栏往路上探。八月里结满黑果子,伸手够得着的那几串总是先没的;藤上的刺挂衣裳,也挂过不止一条裤腿。",
+        "position": 0.9
+      }
+    ],
     "connections": [
       {
         "id": "connection.holt_lane.street_end",

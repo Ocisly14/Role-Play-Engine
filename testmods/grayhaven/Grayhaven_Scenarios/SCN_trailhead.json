@@ -2,7 +2,7 @@
   "schemaVersion": 2,
   "id": "SCN_trailhead",
   "name": "林道口",
-  "description": "主街北口尽头的步道口,全镇人人知道的进山入口。一块褪色的州立公园木牌 [item.trailhead.park_sign] 歪在草里,玻璃框里的地图早被撕走,只剩几个晒白的图钉印;林道从这里扎进红杉的阴影,气温立刻低了几度。牌子脚下一截老树桩上倒钉着一只马蹄铁 [item.trailhead.boot_scraper],进山出山的人习惯在这儿蹭掉靴底的泥。霍尔特家后院的树篱上有一道豁口,正好在林道起点旁汇入 [SCN_holt_backyard]。再往里,林径分向灰溪和旧铁路路基两个方向,岔口没有任何路标,只有路边一只掉漆的木头登记箱 [item.trailhead.log_box],箱里拴着一支啃出牙印的铅笔和一叠被雨水泡皱的登记表,多半没人认真填。",
+  "description": "主街北口尽头的步道口,全镇人人知道的进山入口。路边一片压实的碎石地是唯一停得下车的地方 [item.trailhead.gravel_turnout],轮胎印和一小摊陈年机油说明夏天偶尔还有人开车上来。一块褪色的州立公园木牌 [item.trailhead.park_sign] 歪在草里,玻璃框里的地图早被撕走,只剩几个晒白的图钉印;旁边另立着一块防火警示铁牌 [item.trailhead.fire_danger_sign],可转的指针卡在「高」上,已经卡了整个夏天。牌子脚下一截老树桩上倒钉着一只马蹄铁 [item.trailhead.boot_scraper],进山出山的人习惯在这儿蹭掉靴底的泥;再过去一只半锈的油桶用铁丝拴在木桩上当垃圾筒 [item.trailhead.trash_barrel],桶盖不知去向,黄蜂绕着桶口打转。林道从这里扎进红杉的阴影,气温立刻低了几度。霍尔特家后院的树篱上有一道豁口,正好在林道起点旁汇入 [SCN_holt_backyard]。再往里,林径分向灰溪和旧铁路路基两个方向,岔口没有任何路标,只有一棵早年被雷劈开树顶的老雪松杵在中间 [item.trailhead.split_cedar],和路边一只掉漆的木头登记箱 [item.trailhead.log_box],箱里拴着一支啃出牙印的铅笔和一叠被雨水泡皱的登记表,多半没人认真填。",
   "references": {
     "items": [
       {
@@ -19,6 +19,26 @@
         "id": "item.trailhead.log_box",
         "name": "步道登记箱",
         "description": "钉在岔路口树干上的木头登记箱,盖子掉漆卷边。箱里拴着一支啃出牙印的铅笔和一叠被雨水泡皱又晒干的登记表,大多数人路过看一眼,懒得填。"
+      },
+      {
+        "id": "item.trailhead.gravel_turnout",
+        "name": "碎石停车带",
+        "description": "土路尽头压实出来的一小片碎石地,勉强停得下两三辆车。地上叠着深浅不一的轮胎印,靠里的位置有一摊渗进石子里的陈年机油;雨后积水会在低处存成一个浅坑。"
+      },
+      {
+        "id": "item.trailhead.fire_danger_sign",
+        "name": "防火警示铁牌",
+        "description": "立在木牌旁边的一块搪瓷铁牌,画着一圈火险等级的刻度和一根可以转的红指针。指针卡在「高」字上,轴锈死了,整个夏天没人来动过它。牌角还印着一行小字:林内禁火。"
+      },
+      {
+        "id": "item.trailhead.trash_barrel",
+        "name": "油桶垃圾筒",
+        "description": "半锈的五十五加仑油桶,用铁丝拴在一根木桩上当垃圾筒。桶盖早不见了,里面沤着一层压扁的罐头盒、烟盒和发黑的雨水,黄蜂一直绕着桶口打转。"
+      },
+      {
+        "id": "item.trailhead.split_cedar",
+        "name": "裂顶老雪松",
+        "description": "杵在林径岔口正中的一棵老雪松,树顶早年被雷劈开成两叉,离老远就认得出来。岔口没有任何路标,进山的人报路时说的都是它——「在裂顶那棵树那儿往西」。树身朝西一面的树皮被手摸得发亮。"
       }
     ],
     "connections": [

@@ -2,11 +2,41 @@
   "schemaVersion": 2,
   "id": "ROAD_trail_railbed",
   "name": "路基接径",
-  "description": "从林道口偏东走一小时,可以接上旧铁路的路基。起点在林道口 [SCN_trailhead],与路基相接的地方还留着一截烂枕木 [SCN_railbed]。这条林径本身并不好认——好认的是它的尽头,那条笔直得不像林子里该有的路基。",
+  "description": "从林道口偏东走一小时,可以接上旧铁路的路基。起点在林道口 [SCN_trailhead],与路基相接的地方还留着一截烂枕木 [SCN_railbed]。这条林径本身并不好认——沿途不断有鹿径岔进岔出 [item.trail_railbed.deer_trails],每一条看上去都和正路一样理直气壮。走出二十来分钟,林子豁然稀疏,一片齐胸高的老伐木桩铺开在坡上 [item.trail_railbed.stump_field],桩面上还留着当年插跳板的方口。半途立着一棵烧焦的枯立木 [item.trail_railbed.fire_snag],根部烧出一个能蹲进去的空腔,顶上吊着一根断枝,风一来就晃。再往前,蕨丛里盘着一卷锈死的钢缆 [item.trail_railbed.cable_coil],一半已经陷进土里。快到路基前有一块孤零零的大砾石 [item.trail_railbed.boulder_marker],满身厚苔——看见它,就说明那条笔直得不像林子里该有的路基快到了。",
   "parentLocationId": "OUTDOOR",
   "travelTimeMinutes": 60,
   "references": {
-    "items": [],
+    "items": [
+      {
+        "id": "item.trail_railbed.deer_trails",
+        "name": "岔进岔出的鹿径",
+        "description": "一路上不断从两侧岔进岔出的鹿径,宽窄、踩实的程度都和正路差不多,常常比正路还清楚。跟错一条走上十分钟才发现不对是这条林径的常态——它们最后都通向蕨丛深处。"
+      },
+      {
+        "id": "item.trail_railbed.stump_field",
+        "name": "老伐木桩地",
+        "description": "坡上一片齐胸高的老伐木桩,几十个,间距整齐得不像林子里该有的东西。桩面上还留着当年插跳板的一对方口,年轮被雨水泡得发黑,缝里长出了小树苗。站在桩上能看出去很远,是这条路上视野最开的地方。",
+        "position": 0.3
+      },
+      {
+        "id": "item.trail_railbed.fire_snag",
+        "name": "烧焦的枯立木",
+        "description": "半途路边一棵烧焦的枯立木,树皮全掉了,黑得发亮。根部烧出一个能蹲进去避雨的空腔,里面积着炭灰和干松针;顶上吊着一根没断彻底的枯枝,风一来就晃,响声在安静的林子里格外扎耳朵。",
+        "position": 0.5
+      },
+      {
+        "id": "item.trail_railbed.cable_coil",
+        "name": "盘着的锈钢缆",
+        "description": "蕨丛里盘成一圈的一卷伐木钢缆,一半陷进了土里,露出来的一半锈成暗红,毛刺扎手。谁也说不清当年为什么把它丢在这儿。",
+        "position": 0.65
+      },
+      {
+        "id": "item.trail_railbed.boulder_marker",
+        "name": "苔藓大砾石",
+        "description": "路边孤零零的一块大砾石,比人还高,满身厚苔,四周没有第二块同样的石头。朝路的一面还剩一点当年测线队刷的橙漆,淡得几乎看不出来。走这条路的人都拿它当「快到路基了」的记号。",
+        "position": 0.85
+      }
+    ],
     "connections": [
       {
         "id": "connection.trail_railbed.trailhead_end",

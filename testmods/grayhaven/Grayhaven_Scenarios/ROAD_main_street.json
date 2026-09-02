@@ -2,7 +2,7 @@
   "schemaVersion": 2,
   "id": "ROAD_main_street",
   "name": "主街",
-  "description": "贯穿灰港的主街,从北口走到南口要一刻钟。街两侧是繁荣年代留下的假立面商铺楼,一半橱窗钉着木板,电线在雾里下垂。北端是几条路交汇的主街北口 [SCN_main_north],口上那盏最老的铸铁路灯 [item.main_street.street_lamp] 入夜自己亮起来——最近它亮得不太稳。街的北半热闹些:蓝鸟餐馆的玻璃门里飘出咖啡和烤面包的气味 [SCN_bluebird_dining],门口那条被几代人磨亮的木长椅是镇上看街的老位置 [item.main_street.diner_bench];隔壁杂货店兼邮局的纱门后传出收音机声 [SCN_grocery_store],门口立着掉漆的蓝色邮筒,筒身钉着邮件车时刻表 [item.main_street.mailbox];街对面警长办公室的大门上嵌着擦得发亮的铜星 [SCN_sheriff_front],门旁的镇公告栏钉满层层叠叠的纸 [item.main_street.notice_board]。过了中段,人行道的裂缝里长出草,南半冷清下来:街机厅「星港」的霓虹白天也亮着 [SCN_arcade],巴特拉电视维修铺的橱窗里摞着待修的电视机 [SCN_batra_shop],再往南是诊所的磨砂玻璃门 [SCN_clinic_waiting]。南端止于主街南口 [SCN_main_south],风里已经闻得到海。",
+  "description": "贯穿灰港的主街,从北口走到南口要一刻钟。街两侧是繁荣年代留下的假立面商铺楼,一半橱窗钉着木板,电线在雾里一路下垂 [item.main_street.overhead_wires],风大的时候整条街都跟着轻轻嗡。北端是几条路交汇的主街北口 [SCN_main_north],口上那盏最老的铸铁路灯 [item.main_street.street_lamp] 入夜自己亮起来——最近它亮得不太稳。街的北半热闹些:蓝鸟餐馆的玻璃门里飘出咖啡和烤面包的气味 [SCN_bluebird_dining],门口那条被几代人磨亮的木长椅是镇上看街的老位置 [item.main_street.diner_bench];隔壁杂货店兼邮局的纱门后传出收音机声 [SCN_grocery_store],门口立着掉漆的蓝色邮筒,筒身钉着邮件车时刻表 [item.main_street.mailbox];街对面警长办公室的大门上嵌着擦得发亮的铜星 [SCN_sheriff_front],门旁的镇公告栏钉满层层叠叠的纸 [item.main_street.notice_board],再过去半个门脸,一座玻璃缺了一块的投币电话亭 [item.main_street.phone_booth] 立在街沿上,那是街上唯一一部谁都能用的电话。过了中段,人行道的裂缝里长出草,南半冷清下来:街沿上一只矮胖的消防栓 [item.main_street.fire_hydrant] 被漆了一遍又一遍,红漆下面还压着更旧的黄漆;正对着它的一排空店面,橱窗整个钉死了木板 [item.main_street.boarded_storefront],木板缝里塞着经年的传单。木板墙的南头贴着一张 KGRV 的海报 [item.main_street.kgrv_poster],边角卷起,晒得只剩下淡淡的台号和频率。再往南,街机厅「星港」的霓虹白天也亮着 [SCN_arcade],门口那排歪斜的自行车架 [item.main_street.bike_rack] 一到下午就插满车把;巴特拉电视维修铺的橱窗里摞着待修的电视机 [SCN_batra_shop];诊所的磨砂玻璃门 [SCN_clinic_waiting] 前立着一棵歪脖子的老树 [item.main_street.street_tree],树根把人行道顶得拱起来,树坑边缘是这条街上仅有的一点绿。南端止于主街南口 [SCN_main_south],风里已经闻得到海。",
   "parentLocationId": "OUTDOOR",
   "travelTimeMinutes": 15,
   "references": {
@@ -32,6 +32,47 @@
         "name": "镇公告栏",
         "description": "警长办公室门旁的木框公告栏,玻璃碎了一角一直没换。里面钉着层层叠叠的纸:九月渔汛节的游行路线、州立公园的林火警示、招人手的手写条、丢猫的启事——最上面一层压着最下面一层,谁也没清理过。",
         "position": 0.25
+      },
+      {
+        "id": "item.main_street.phone_booth",
+        "name": "投币电话亭",
+        "description": "警长办公室再过去半个门脸的街沿上,一座折叠门的投币电话亭,一块玻璃缺了很久没补,雨天里面会积水。话机上压着一本被翻烂的电话簿,长途要先投够硬币。这是街上唯一一部谁都能用的电话——想说的话,半条街都听得见你在这儿站了多久。",
+        "position": 0.3
+      },
+      {
+        "id": "item.main_street.fire_hydrant",
+        "name": "消防栓",
+        "description": "街沿上一只矮胖的铸铁消防栓,漆了一遍又一遍,红漆磕掉的地方压着更旧的黄漆。顶盖上的六角螺母有磨亮的痕迹,镇上的义务消防队每年夏天来放一次水试压。",
+        "position": 0.45
+      },
+      {
+        "id": "item.main_street.boarded_storefront",
+        "name": "钉着木板的空店面",
+        "description": "主街中段一整排空下来的店面,橱窗整个钉死了木板,木板缝里塞满经年的传单。玻璃上还留着上一任店主的金漆字,被木板挡去了一半,只认得出几个字母。门槛上积的灰厚得能看出有没有人来过。",
+        "position": 0.5
+      },
+      {
+        "id": "item.main_street.kgrv_poster",
+        "name": "KGRV 的海报",
+        "description": "钉在空店面木板上的一张 KGRV 电台海报,边角卷起,晒得只剩下淡淡的台号和频率,底下一行小字写着「灰港的声音」。角上有人用圆珠笔描过频率的数字,描了两遍。",
+        "position": 0.58
+      },
+      {
+        "id": "item.main_street.bike_rack",
+        "name": "自行车架",
+        "description": "街机厅门口那排歪斜的铁管自行车架,水泥底座裂了,几根管子被撞弯之后就没扶正过。一到下午插满车把,谁的车在不在架上,街上的人一眼就知道。",
+        "position": 0.62
+      },
+      {
+        "id": "item.main_street.street_tree",
+        "name": "人行道上的老树",
+        "description": "诊所门前一棵歪脖子的老树,树根把人行道顶得拱起来,砖缝里挤出细草。树坑边缘是这条街上仅有的一点绿,夏天几张长椅般宽的树荫底下总有人靠着抽完一支烟再进门。",
+        "position": 0.84
+      },
+      {
+        "id": "item.main_street.overhead_wires",
+        "name": "下垂的架空电线",
+        "description": "从北口一路挂到南口的电话线和电力线,在雾里下垂成一道道弧,电线杆之间的距离参差不齐。风大的时候整条街都跟着轻轻嗡;去年冬天起,夜里偶尔会听见一阵不该有的低鸣,查过线路的人说不出所以然。"
       }
     ],
     "connections": [

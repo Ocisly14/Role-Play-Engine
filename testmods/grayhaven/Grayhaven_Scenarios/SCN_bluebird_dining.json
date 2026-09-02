@@ -2,8 +2,8 @@
   "schemaVersion": 2,
   "id": "SCN_bluebird_dining",
   "name": "蓝鸟餐馆·堂座",
-  "description": "堂座还留着繁荣年代的底子:绿皮卡座磨得发亮,柜台前一排转凳,柜台角落一台镀铬咖啡机[item.bluebird_dining.espresso_machine]嘶嘶吐着蒸汽,咖啡和烤面包的香气从清早一直暖到打烊。玻璃点心柜里摆着每天现烤的葡式蛋挞[item.bluebird_dining.pastry_case],旁边的小黑板用粉笔写着今日的炖鱼汤。收银机旁一只贴着手写标签的小费罐[item.bluebird_dining.tip_jar]总是叮当作响,零钱和皱巴巴的角票混在一起。柜台尽头那台旧收音机永远调在 KGRV 频道[item.bluebird_dining.counter_radio],音量不大,正好垫在满堂闲谈的底下。临街的玻璃门上挂着手写的营业木牌,推开就是雾气未散的主街[ROAD_main_street];柜台后一扇弹簧双开门通向后厨[SCN_bluebird_kitchen],Dolores 端盘进出时,那扇门总要咣当两声。",
-  "parentLocationId": "LOC_bluebird_diner",
+  "description": "堂座还留着繁荣年代的底子:临窗一排绿皮卡座,人造革磨得发亮[item.bluebird_dining.booths];屋子当中一条长条柜台,前头一溜转凳,坐满了就是半个镇子[item.bluebird_dining.lunch_counter]。柜台角落一台镀铬咖啡机[item.bluebird_dining.espresso_machine]嘶嘶吐着蒸汽,咖啡和烤面包的香气从清早一直暖到打烊。玻璃点心柜里摆着每天现烤的葡式蛋挞[item.bluebird_dining.pastry_case],旁边一块小黑板用粉笔写着今日的炖鱼汤和价钱[item.bluebird_dining.menu_board]。柜台尽头是那台按键沉甸甸的老收银机[item.bluebird_dining.cash_register],机身旁一只贴着手写标签的小费罐总是叮当作响[item.bluebird_dining.tip_jar],零钱和皱巴巴的角票混在一起。再过去一台旧收音机永远调在 KGRV 频道[item.bluebird_dining.counter_radio],音量不大,正好垫在满堂闲谈的底下;它上方墙上挂着一只圆盘挂钟[item.bluebird_dining.wall_clock],走时比镇上任何一块表都准。每张桌上都杵着成套的玻璃糖罐和调料架[item.bluebird_dining.sugar_shakers]——谁往咖啡里放几块糖,Dolores 心里都有本账。门边一只木头报纸架插着几份卷了边的县报[item.bluebird_dining.newspaper_rack],填字游戏那一版总是最先被抽走。柜台里侧的墙上装着一部黑色壁挂电话[item.bluebird_dining.wall_phone],线拉得够长,一直能牵到后厨门口。天花板上两排乳白灯罩把整间屋子照得暖黄[item.bluebird_dining.ceiling_lights],可从去年冬天起,它们时不时会没来由地闪一下。临街的玻璃门上挂着手写的营业木牌[item.bluebird_dining.door_sign],推开就是雾气未散的主街[ROAD_main_street];柜台后一扇弹簧双开门通向后厨[SCN_bluebird_kitchen],Dolores 端盘进出时,那扇门总要咣当两声。",
+  "parentLocationId": "bluebird_diner",
   "indoor": true,
   "references": {
     "items": [
@@ -15,7 +15,7 @@
       {
         "id": "item.bluebird_dining.counter_radio",
         "name": "柜台收音机",
-        "description": "一台木壳旧收音机,旋钮常年停在 KGRV 的频率上,机身被咖啡蒸汽熏出一层温润的包浆。"
+        "description": "一台木壳旧收音机,旋钮常年停在 KGRV 的频率上,机身被咖啡蒸汽熏出一层温润的包浆。近一年常串台,Dev 来修过两回。"
       },
       {
         "id": "item.bluebird_dining.espresso_machine",
@@ -26,6 +26,58 @@
         "id": "item.bluebird_dining.tip_jar",
         "name": "小费罐",
         "description": "收银机旁的一只玻璃罐,贴着褪色的手写标签,里面是常年攒下的零钱和皱巴巴的角票,罐口边缘磕出了缺口。"
+      },
+      {
+        "id": "item.bluebird_dining.lunch_counter",
+        "name": "长条柜台",
+        "description": "一条从店门口伸到后厨门的长柜台,枫木台面被几十年的手肘磨出温润的凹痕,前头一溜固定转凳,红皮坐垫补过好几回。柜台是这镇子真正的会议桌:独自来吃饭的人都坐这儿。"
+      },
+      {
+        "id": "item.bluebird_dining.booths",
+        "name": "绿皮卡座",
+        "description": "临窗一排四人卡座,墨绿人造革靠背裂了细纹,桌面是仿大理石的美耐板。最里那个角落的卡座看不见街,却看得见整个堂座——Earl 下午来喝咖啡就坐那儿。"
+      },
+      {
+        "id": "item.bluebird_dining.cash_register",
+        "name": "老收银机",
+        "description": "柜台尽头一台黄铜面板的机械收银机,按键要用力砸,抽屉弹开时叮一声,全店都听得见。抽屉里分格放着零钱、赊账的纸条和几张陈年的旧账单。"
+      },
+      {
+        "id": "item.bluebird_dining.menu_board",
+        "name": "黑板菜单",
+        "description": "挂在点心柜旁的一块小黑板,粉笔写着今日的炖鱼汤、蛋挞和三样例菜,价钱擦了又改,底下一层永远擦不干净的白痕。"
+      },
+      {
+        "id": "item.bluebird_dining.wall_clock",
+        "name": "圆盘挂钟",
+        "description": "收音机上方的白面圆钟,黑指针,秒针走得有点响。Dolores 每周三对一次时,全镇的作息其实是照着它走的。"
+      },
+      {
+        "id": "item.bluebird_dining.sugar_shakers",
+        "name": "糖罐调料架",
+        "description": "每张桌上一套:玻璃糖罐带金属倒盖,盐罐胡椒罐配一瓶番茄酱,底下垫着叠成三角的纸巾。糖罐总有一只是空的。"
+      },
+      {
+        "id": "item.bluebird_dining.newspaper_rack",
+        "name": "报纸架",
+        "description": "门边一只木条报纸架,插着几份卷了边的县报和一本过期的钓鱼月刊。填字游戏那一版最抢手,常常被人带走再也不还。"
+      },
+      {
+        "id": "item.bluebird_dining.wall_phone",
+        "name": "壁挂电话",
+        "description": "柜台里侧墙上的黑色转盘壁挂电话,螺旋线被拉得松垮变形。旁边墙皮上用铅笔记着一串号码:诊所、警长办公室、杂货店、还有几个划掉的。"
+      },
+      {
+        "id": "item.bluebird_dining.ceiling_lights",
+        "name": "堂座吊灯",
+        "description": "两排乳白玻璃灯罩吊在天花板下,灯罩里积着几代飞虫。从去年冬天起,它们会毫无征兆地闪一下再稳住——Dolores 说是线路老了,自己都不太信。",
+        "isLightSource": true,
+        "lightLevel": 3
+      },
+      {
+        "id": "item.bluebird_dining.door_sign",
+        "name": "营业木牌",
+        "description": "玻璃门上挂的一块两面木牌,一面手写「营业中」,一面「打烊了,明早七点见」,漆是 Dolores 自己描的,葡语和英语各写了一遍。"
       }
     ],
     "connections": [

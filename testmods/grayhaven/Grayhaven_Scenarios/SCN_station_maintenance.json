@@ -3,7 +3,7 @@
   "id": "SCN_station_maintenance",
   "name": "雷德利站·维护间",
   "description": "一个窄小的房间,像一间更衣室,又像一条传送线的末端。一根金属轨道横贯左右、一端没入墙上的方口 [item.station_maintenance.rail_hatch],轨道上挂着一排黑西装 [item.station_maintenance.black_suits],尺寸各异,从瘦小到魁梧,其间散着几只空衣架。西装下方,一排同款黑皮鞋沿墙根摆开 [item.station_maintenance.black_shoes],鞋号对着上方每一套衣服。没有镜子,没有长凳,没有别的。门在身后,通回控制大厅 [SCN_station_hall]。",
-  "parentLocationId": "LOC_station",
+  "parentLocationId": "station",
   "indoor": true,
   "references": {
     "items": [

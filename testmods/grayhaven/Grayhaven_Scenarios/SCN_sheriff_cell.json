@@ -2,20 +2,52 @@
   "schemaVersion": 2,
   "id": "SCN_sheriff_cell",
   "name": "警长办公室·拘留室",
-  "description": "拘留室里一张铁架铺位[item.sheriff_cell.bunk]、一只水槽[item.sheriff_cell.sink],铁栅栏的漆有些年头了。这间屋子闲置已久[cond.sheriff_cell.disused]——灰港上一回真正关过人,还是多年前一个醉酒闹事的外地渔工。铺位上卷着的旧毯子落了灰,墙角堆着几只纸箱[item.sheriff_cell.storage_boxes],装着圣诞游行的彩灯和用不上的路障牌:牢房成了镇公所的储藏间。铁框门通回前厅走廊[SCN_sheriff_front],钥匙挂在前厅,从来没人惦记。",
-  "parentLocationId": "LOC_sheriff_office",
+  "description": "拘留室里一张铁架铺位[item.sheriff_cell.bunk],上头卷着一条军绿的旧毛毯[item.sheriff_cell.wool_blanket],折角硬成了死褶;墙角一只水槽[item.sheriff_cell.sink]、一只搪瓷坐便[item.sheriff_cell.toilet],铁栅栏[item.sheriff_cell.cell_bars]的漆有些年头了,栅栏门上那把挂锁常年虚扣着。这间屋子闲置已久[cond.sheriff_cell.disused]——灰港上一回真正关过人,还是多年前一个醉酒闹事的外地渔工;栅栏里侧的墙皮上还留着那辈人刻的名字和正字[item.sheriff_cell.wall_scratches]。高处一扇带铁条的小窗[item.sheriff_cell.barred_window]漏进一块朝北的天光,顶上一盏铁丝罩的顶灯[item.sheriff_cell.caged_light]的拉绳就在门内侧。墙角堆着几只纸箱[item.sheriff_cell.storage_boxes],装着圣诞游行的彩灯和用不上的路障牌:牢房成了镇公所的储藏间。铁框门通回前厅走廊[SCN_sheriff_front],钥匙挂在前厅的钥匙板上,从来没人惦记。",
+  "parentLocationId": "sheriff_office",
   "indoor": true,
   "references": {
     "items": [
       {
         "id": "item.sheriff_cell.bunk",
         "name": "铁架铺位",
-        "description": "焊死在墙上的铁架床,网格床板的漆早剥落见锈;铺位上卷着的旧毯子常年没人碰过,折角都硬成了死褶。"
+        "description": "焊死在墙上的铁架床,网格床板的漆早剥落见锈,躺上去每翻一次身整面墙都跟着响。床头一块钉着的木板,是给人搁鞋和口袋里东西的。"
+      },
+      {
+        "id": "item.sheriff_cell.wool_blanket",
+        "name": "旧毛毯",
+        "description": "卷在铺位一头的军绿毛毯,边上织着署里的编号,常年没人碰过,折角都硬成了死褶。真要给谁盖上,得先在门口抖上一阵灰。"
       },
       {
         "id": "item.sheriff_cell.sink",
         "name": "水槽",
         "description": "墙角一只搪瓷水槽,龙头拧不紧,滴水声是这屋子唯一没停过的动静;瓷面裂了几道锈黄的纹。"
+      },
+      {
+        "id": "item.sheriff_cell.toilet",
+        "name": "搪瓷坐便",
+        "description": "无盖的搪瓷坐便,水箱高高吊在墙上,拉链换过一截麻绳。冲一次水,整条走廊都听得见。"
+      },
+      {
+        "id": "item.sheriff_cell.cell_bars",
+        "name": "铁栅栏",
+        "description": "把屋子隔成两半的铁栅栏和栅栏门,漆下面是几层更旧的漆。门上一把黄铜挂锁常年虚扣着,没扣死——这些年也没有扣死的必要。"
+      },
+      {
+        "id": "item.sheriff_cell.wall_scratches",
+        "name": "墙上的刻痕",
+        "description": "栅栏里侧的墙皮被人用硬币和皮带扣刻过:几个名字、一串正字、一条船的船名,还有句骂人的话被后来的人划掉了。最新的一道刻痕也有好些年了。"
+      },
+      {
+        "id": "item.sheriff_cell.barred_window",
+        "name": "带铁条的小窗",
+        "description": "靠近天花板的一扇小窗,外头是三根竖铁条和后巷的墙。朝北,一天里只有中午那阵子能在地上落一块亮斑;玻璃上糊着经年的盐雾。"
+      },
+      {
+        "id": "item.sheriff_cell.caged_light",
+        "name": "铁丝罩顶灯",
+        "description": "顶上一只嵌在铁丝罩里的灯泡,拉绳开关在门内侧,亮起来是那种把人脸照得发青的白。开关拉起来「啪」的一声,整间屋子都跟着一震。",
+        "isLightSource": true,
+        "lightLevel": 2
       },
       {
         "id": "item.sheriff_cell.storage_boxes",

@@ -2,11 +2,26 @@
   "schemaVersion": 2,
   "id": "SCN_clinic_upstairs",
   "name": "诊所·楼上住处",
-  "description": "楼上是 Weaver 的住处,一目了然的单身汉整洁:一把扶手椅、一架读了半辈子的书、灰毛衣搭在椅背上,和白大褂下那件是同一款。窗台上搁着一支从没点燃过的烟斗[item.clinic_upstairs.pipe],烟丝原封未拆——他跟病人说「少烟」时,自己先领受了这句话。窗边小桌上摆着一副国际象棋[item.clinic_upstairs.chess_set],棋局下到一半——执黑执白都是他自己,周日下午的老习惯。角落的留声机[item.clinic_upstairs.gramophone]旁码着歌剧唱片,它和 KGRV 的歌剧转播轮着占据这间屋子的安静。窗外是主街南口的屋顶和更远处灰白的海。楼梯下去是候诊室[SCN_clinic_waiting],楼板薄,楼下门铃一响他就听得见。",
-  "parentLocationId": "LOC_clinic",
+  "description": "楼上是 Weaver 的住处,一目了然的单身汉整洁:单人床[item.clinic_upstairs.bed]的被角掖得像病房里的,床头没有床头柜,顶替它的是一只旧行李箱[item.clinic_upstairs.suitcase]——1963 年拎来的,本来只打算用五年;箱面上一盏台灯[item.clinic_upstairs.reading_lamp]和窗边那把扶手椅[item.clinic_upstairs.armchair],构成他入夜后全部的活动范围。靠墙一架书[item.clinic_upstairs.bookshelf],医学院的旧课本和按年份摞起的期刊挤在同一层;衣柜[item.clinic_upstairs.wardrobe]里挂着几件同一款的灰毛衣和熨过的衬衫,选衣服在这间屋子里从来不是个问题。窗台上搁着一支从没点燃过的烟斗[item.clinic_upstairs.pipe],烟丝原封未拆——他跟病人说「少烟」时,自己先领受了这句话。窗边小桌上摆着一副国际象棋[item.clinic_upstairs.chess_set],棋局下到一半——执黑执白都是他自己,周日下午的老习惯;桌角那台收音机[item.clinic_upstairs.radio]到点就拨到 KGRV。角落的留声机[item.clinic_upstairs.gramophone]旁码着歌剧唱片,它和收音机轮着占据这间屋子的安静。门边隔出一个厨房角[item.clinic_upstairs.kitchenette],双眼煤气灶上常年坐着一把水壶,底下的小冰箱[item.clinic_upstairs.refrigerator]夜里嗡嗡响得比钟还清楚;墙上钉着一张加油站送的镇区地图[item.clinic_upstairs.town_map],纸面干干净净,一个记号也没有。窗外是主街南口的屋顶和更远处灰白的海。楼梯下去是候诊室[SCN_clinic_waiting],楼板薄,楼下门铃一响他就听得见。",
+  "parentLocationId": "clinic",
   "indoor": true,
   "references": {
     "items": [
+      {
+        "id": "item.clinic_upstairs.armchair",
+        "name": "扶手椅",
+        "description": "窗边一把旧扶手椅,扶手的皮面裂了细纹,坐垫塌出一个人的形状。他读期刊、听唱片、犯困,都在这把椅子上。"
+      },
+      {
+        "id": "item.clinic_upstairs.bed",
+        "name": "单人床",
+        "description": "一张窄单人床,被角掖得像病房里的,枕头下压着一副老花镜。二十二年只换过两次床垫。"
+      },
+      {
+        "id": "item.clinic_upstairs.bookshelf",
+        "name": "书架",
+        "description": "一架读了半辈子的书:医学院的旧课本、按年份摞起的医学期刊、几本流行病学和公共卫生的小册子,还有一排硬壳的歌剧曲谱。哪一本第几页有什么,他闭着眼也摸得到。"
+      },
       {
         "id": "item.clinic_upstairs.chess_set",
         "name": "国际象棋",
@@ -18,9 +33,46 @@
         "description": "一台保养极好的老留声机,旁边的歌剧唱片按作曲家排列。唱针是 Dev 帮他配的。"
       },
       {
+        "id": "item.clinic_upstairs.kitchenette",
+        "name": "厨房角",
+        "description": "门边隔出来的一小块:双眼煤气灶、一只搪瓷水槽、一把常年坐在灶上的水壶,碗碟架上两只盘子两只杯——第二副是给下棋对手预备的,一直没派上用场。"
+      },
+      {
         "id": "item.clinic_upstairs.pipe",
         "name": "烟斗",
         "description": "窗台上一支从没被点着过的烟斗,烟丝原封未拆。买它纯粹是手指偶尔想有个东西可拿——他劝病人少烟,自己先戒了这一口。"
+      },
+      {
+        "id": "item.clinic_upstairs.radio",
+        "name": "收音机",
+        "description": "小桌角上的台式收音机,木壳,旋钮上的漆掉了一半,常年停在 KGRV。周日下午的歌剧转播是他一周的定点——最近转播里总混进一阵沙沙声,而同一间屋子里的留声机干干净净。"
+      },
+      {
+        "id": "item.clinic_upstairs.reading_lamp",
+        "name": "台灯",
+        "description": "搁在行李箱面上的铁皮台灯,灯罩歪了一点没人扶正。灯泡瓦数不高,只够照亮一把椅子和一本摊开的书。",
+        "isLightSource": true,
+        "lightLevel": 1
+      },
+      {
+        "id": "item.clinic_upstairs.refrigerator",
+        "name": "小冰箱",
+        "description": "厨房角底下的圆角小冰箱,里面是鸡蛋、咖啡罐、餐馆打包回来的剩菜和一格没怎么动过的冰。夜里它嗡嗡响得比钟还清楚。"
+      },
+      {
+        "id": "item.clinic_upstairs.suitcase",
+        "name": "旧行李箱",
+        "description": "1963 年从旧金山拎来的硬壳行李箱,如今立在床头当床头柜用,箱面被杯底烫出几个圈。里头还留着搬来时没拆的东西——他自己也很久没打开过了。"
+      },
+      {
+        "id": "item.clinic_upstairs.town_map",
+        "name": "镇区地图",
+        "description": "墙上钉着的一张镇区地图,加油站免费送的那种,边角卷起,纸面干干净净,一个记号也没有。"
+      },
+      {
+        "id": "item.clinic_upstairs.wardrobe",
+        "name": "衣柜",
+        "description": "一只单门木衣柜,挂着几件同一款的灰毛衣、熨过的衬衫和一件冬天的呢外套,底下一双擦过的皮鞋。柜门内侧贴着一张 1963 年的旧金山医院合影。"
       }
     ],
     "connections": [

@@ -230,9 +230,10 @@ is already what keeps it running, and the trigger lists those under
   catatonia, or disorientation so severe the person cannot recognize people or
   act coherently. 
 - **Inner activity is never a condition:** regret, worry shouldn't be a condition, but extreme fear of spider for a period could be one.
-- The `position` character change puts someone IN a scene — boarding a
-  vehicle's interior, being carried through a door. It never puts anyone on a
-  road: a road is walked, and only an action's `movement.route` does that.
+- The `position` character change is for displacement that is NOT a walk: boarding or leaving a vehicle (its interior scene),
+  or the consequence of an act that moves a body without a route — jump out
+  through a window into the yard, carried off unconscious, dragged, thrown,
+  fallen through a floor. A character who walks, runs, sneaks, rides or crawls to another place travels by `movement.route` on their action, through the ways that exist.
 - Where someone is INSIDE a place is the `spot` character change — one short
   phrase, in the world's own language: "at the workbench, back to the door",
   "in the corner armchair". Set one when an action leaves the actor somewhere

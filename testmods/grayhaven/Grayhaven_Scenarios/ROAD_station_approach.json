@@ -2,11 +2,54 @@
   "schemaVersion": 2,
   "id": "ROAD_station_approach",
   "name": "站前引道",
-  "description": "自动大门之后的最后一段路,十五分钟的缓坡,碎石在这里换成了平整的水泥。一头是那道大门 [SCN_gate],另一头进入铁丝网围着的站区场院 [SCN_station_yard]。这段路修得比镇里任何一条街都好,却见不到一个用它的人。",
+  "description": "自动大门 [SCN_gate] 之后的最后一段路,十五分钟的缓坡,碎石在这里换成了平整的水泥,另一头进入铁丝网围着的站区场院 [SCN_station_yard]。这段路修得比镇里任何一条街都好,却见不到一个用它的人:路侧一条水泥明沟 [item.station_approach.roadside_ditch] 从头通到尾,沟里连一片落叶都留不住;沟外每隔百来步立着一根灯杆 [item.station_approach.lamp_standards],天一黑就自己亮起来,照着一条没有人走的路。上坡不远处横着一道减速带,旁边立着「限速 15 英里」的白牌 [item.station_approach.speed_sign];再往上,路肩上蹲着一只镀锌砂石斗 [item.station_approach.gravel_bin],盖子扣得严实。半路的右侧有一个被土埂封住的岔口 [item.station_approach.old_logging_spur],那是伐木年代留下的便道,车辙早被蕨类填平了。再上去,路边的山脊上立着一根风速风向杆 [item.station_approach.weather_mast],风杯转个不停,杆底的小铁柜锁着。快到场院时,路右一块蓝底白字的牌子连着一根混凝土界桩 [item.station_approach.boundary_marker],标出站区的边界。",
   "parentLocationId": "OUTDOOR",
   "travelTimeMinutes": 15,
   "references": {
-    "items": [],
+    "items": [
+      {
+        "id": "item.station_approach.roadside_ditch",
+        "name": "路侧排水明沟",
+        "description": "沿路一整条水泥浇的明沟,断面整齐,坡度一路顺下去。沟底干净得反常——山里的沟到夏天都该积着松针和泥,这一条连一片落叶都留不住。下雨时水在里面走得又快又直,一点声音都不多余。"
+      },
+      {
+        "id": "item.station_approach.lamp_standards",
+        "name": "路灯杆",
+        "description": "每隔百来步一根的镀锌灯杆,灯头朝路心低着。天一黑整排一起亮,天一亮整排一起灭,从来没有哪一根先坏。灯下的水泥路面上照不出一个人影,只有雾在光里翻。",
+        "isLightSource": true,
+        "lightLevel": 2
+      },
+      {
+        "id": "item.station_approach.speed_sign",
+        "name": "限速牌与减速带",
+        "description": "一道橡胶减速带横在路上,旁边立着白底黑字的「限速 15 英里」。牌面没有弹孔,没有涂鸦,连锈线都没有——镇里没有一块路牌能保持成这样。",
+        "position": 0.12
+      },
+      {
+        "id": "item.station_approach.gravel_bin",
+        "name": "养路砂石斗",
+        "description": "路肩上一只镀锌铁皮的砂石斗,盖子扣得严实,搭扣上挂着一把没锁的挂锁。掀开来,里面是干燥的粗砂和一把插着的铁锹,锹柄光滑,锹头没有一点泥。冬天路面结霜时该用得上,可这砂子看上去从没被撒出去过。",
+        "position": 0.3
+      },
+      {
+        "id": "item.station_approach.old_logging_spur",
+        "name": "旧伐木便道岔口",
+        "description": "路右一个被土埂封死的岔口,土埂上长满了蕨,后面隐约还看得出两道并行的车辙往树林里去。伐木年代这样的便道满山都是,厂子一关就没人走了。土埂是后来堆的,堆得很实,不像临时的活儿。",
+        "position": 0.5
+      },
+      {
+        "id": "item.station_approach.weather_mast",
+        "name": "风速风向杆",
+        "description": "路边山脊上立着的一根白色测风杆,顶上三只风杯转个不停,旁边的风向标咬住风一动不动。杆底一只灰色小铁柜锁着,柜子里有极轻的、间隔均匀的咔哒声——像有什么每隔一会儿就把风记下一笔。",
+        "position": 0.7
+      },
+      {
+        "id": "item.station_approach.boundary_marker",
+        "name": "站区界牌与界桩",
+        "description": "路右一块蓝底白字的牌子:「站区范围 · 授权人员方可入内」,底下连着一根齐膝的混凝土界桩,桩顶嵌着一枚铜标,刻着一串编号和一个看不懂的缩写。牌子和桩都是新的,新到看不出立了多少年。",
+        "position": 0.88
+      }
+    ],
     "connections": [
       {
         "id": "connection.station_approach.gate_end",

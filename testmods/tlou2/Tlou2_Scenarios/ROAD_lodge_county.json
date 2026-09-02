@@ -1,0 +1,26 @@
+{
+  "schemaVersion": 2,
+  "id": "ROAD_lodge_county",
+  "name": "旅馆车行道",
+  "description": "旅馆自己的车行道,从环形车道一路下到县道。当年是给客人的车走的,如今雪深得只剩马和人能过,走完要二十五分钟。上头是旅馆前的车道 [SCN_lodge_drive],下头接在县道上 [SCN_county_road]。路面比林道宽,两侧是断续的白桦,雪大的时候连路基和路肩都分不出来。",
+  "parentLocationId": "OUTDOOR",
+  "travelTimeMinutes": 25,
+  "references": {
+    "items": [],
+    "connections": [
+      {
+        "id": "connection.lodge_county.lodge_end",
+        "targetId": "SCN_lodge_drive",
+        "name": "旅馆端",
+        "role": "endpointA"
+      },
+      {
+        "id": "connection.lodge_county.county_end",
+        "targetId": "SCN_county_road",
+        "name": "县道端",
+        "role": "endpointB"
+      }
+    ],
+    "conditions": []
+  }
+}

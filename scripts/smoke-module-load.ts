@@ -119,9 +119,15 @@ async function main(): Promise<void> {
       if (!known(c.targetId))
         problem(`场景 ${sceneId} 的出口 ${c.id} 指向不存在的 ${c.targetId}`);
     }
+    // A vehicle's interior has no static parent: it is wherever the vehicle
+    // stands, so it is reachable by definition.
+    const isVehicleInterior = (state.vehicles ?? []).some(
+      (v) => v.interiorSceneId === sceneId
+    );
     if (
       !topology.nodeSceneIds.has(sceneId) &&
-      !topology.sceneToParent.has(sceneId)
+      !topology.sceneToParent.has(sceneId) &&
+      !isVehicleInterior
     )
       problem(
         `场景 ${sceneId} 既不是顶层节点，也没挂到任何节点/道路上 —— 走不到`

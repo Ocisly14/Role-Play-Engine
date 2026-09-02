@@ -2,11 +2,41 @@
   "schemaVersion": 2,
   "id": "ROAD_railbed_sawmill",
   "name": "路基北段",
-  "description": "沿旧路基向北的两小时,是林区里最远、也最稳妥的一条路:笔直,不分岔,迷不了路。南端从路基的接入点算起 [SCN_railbed],北端在锯木厂废墟的装料场收尾 [SCN_sawmill]。当年运原木的铁轨就铺在这条线上,如今只剩碎道砟硌脚,和两旁一动不动的红杉。",
+  "description": "沿旧路基向北的两小时,是林区里最远、也最稳妥的一条路:笔直,不分岔,迷不了路。南端从路基的接入点算起 [SCN_railbed],北端在锯木厂废墟的装料场收尾 [SCN_sawmill]。当年运原木的铁轨就铺在这条线上,如今只剩碎道砟硌脚,和两旁一动不动的红杉;枕木抽走后留下的凹痕等距地排在脚下 [item.railbed_sawmill.tie_impressions],踩着走能一直踩到头。前段有一截劈开山肩的开挖段 [item.railbed_sawmill.rock_cut],两侧的岩壁上还看得见当年打的炮眼,渗水顺着石缝淌下来,人在里面说话有回声。中途路基断在一道沟上——木栈桥早烧塌了,只剩几根焦黑的桥桩杵在沟里 [item.railbed_sawmill.trestle_gully],得下到沟底再爬上来,这是全程唯一要费点力气的地方。再往北,路侧躺着第二块水泥里程碑 [item.railbed_sawmill.mile_post],凿的「16」还认得出。快到废墟时,一副运材车的锈铁转向架翻在路基下的坡上 [item.railbed_sawmill.log_car_wreck],车轮锈死在轴上,谁也没想过把它弄上来。",
   "parentLocationId": "OUTDOOR",
   "travelTimeMinutes": 120,
   "references": {
-    "items": [],
+    "items": [
+      {
+        "id": "item.railbed_sawmill.tie_impressions",
+        "name": "枕木凹痕",
+        "description": "整条路基的路面:枕木抽走后留下的一道道等距凹痕,压在道砟里几十年也没被填平。踩着凹痕走能自动踩出一个固定的步幅,一路踩到头;数它们是这条路上唯一算得清距离的办法。"
+      },
+      {
+        "id": "item.railbed_sawmill.rock_cut",
+        "name": "石方开挖段",
+        "description": "路基前段劈开一道山肩的开挖段,两侧岩壁比人高出许多,壁上还看得见当年一排排打的炮眼。渗水顺着石缝往下淌,壁根长满水淋淋的蕨;人在里面说话有回声,雨天也淋不着。",
+        "position": 0.25
+      },
+      {
+        "id": "item.railbed_sawmill.trestle_gully",
+        "name": "烧塌的栈桥沟",
+        "description": "路基被一道沟拦腰截断的地方:当年跨沟的木栈桥烧塌了,只剩五六根焦黑的桥桩杵在沟里,顶上还留着搭梁的缺口。过路的人得下到沟底再从对面爬上去,两侧的土坡被踩出了固定的下脚点。这是全程唯一要费点力气、也是唯一认得出的地标。",
+        "position": 0.45
+      },
+      {
+        "id": "item.railbed_sawmill.mile_post",
+        "name": "第二块里程碑",
+        "description": "路侧躺倒的一块水泥里程碑,和南边那块是同一批货,凿的「16」还认得出来,朝天的一面被雨水冲得发白。它躺着而不是立着,所以走过去很容易看漏。",
+        "position": 0.6
+      },
+      {
+        "id": "item.railbed_sawmill.log_car_wreck",
+        "name": "运材车转向架残骸",
+        "description": "翻在路基下坡上的一副运材车转向架,四个铁轮锈死在轴上,弹簧板断了一半,整个陷进腐叶里。拆轨那年它就在这儿了,谁也没想过把它弄上来。从路基上望下去黑黢黢一坨,离锯木厂已经不远。",
+        "position": 0.85
+      }
+    ],
     "connections": [
       {
         "id": "connection.railbed_sawmill.railbed_end",

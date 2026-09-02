@@ -2,11 +2,54 @@
   "schemaVersion": 2,
   "id": "ROAD_dock_slope",
   "name": "下坡道",
-  "description": "从主街南端下到海边的坡道,路面被盐雾蚀得发白,一刻钟的下坡。上坡的一头接着主街南口 [SCN_main_south],下坡的尽头是码头和海滩 [SCN_dock]。走下去的时候,咸腥味一步比一步重,雾大的日子走到一半就听得见浪。",
+  "description": "从主街南端下到海边的坡道,一刻钟的下坡。上坡的一头接着主街南口 [SCN_main_south],坡口那块指着码头的旧铁牌 [item.dock_slope.harbor_sign] 漆掉了一半,箭头下面有人用粉笔写过又擦过;再往下十几步是这条坡上唯一的一盏路灯 [item.dock_slope.lone_lamp],天黑以后,整段路的光就全指着它。路面被盐雾蚀得发白起砂 [item.dock_slope.salted_paving],下坡的脚步总得刹着走;路两边是齐腰的野茴香和荆棘 [item.dock_slope.fennel_scrub],风一过满坡都是茴香味,谁走过谁裤腿上带一层籽。半坡拐弯的地方,路肩下埋着一个水泥排水涵洞 [item.dock_slope.storm_drain],雨天整条坡的水从这儿灌进海;弯外侧一段锈护栏 [item.dock_slope.guardrail] 早年被车撞歪过,没人来修。快到底下,坡侧的荆棘丛里躺着一台被人从上头推下来的旧冰柜 [item.dock_slope.dumped_freezer],门早不知去向。下坡的尽头是码头和海滩 [SCN_dock]。走下去的时候,咸腥味一步比一步重,雾大的日子走到一半就听得见浪。",
   "parentLocationId": "OUTDOOR",
   "travelTimeMinutes": 15,
   "references": {
-    "items": [],
+    "items": [
+      {
+        "id": "item.dock_slope.salted_paving",
+        "name": "盐蚀的路面",
+        "description": "坡道的沥青被几十年的盐雾蚀得发白、起砂,一层细碎的石粒浮在面上,下坡走快了容易打滑,雨天更滑。裂缝里长着耐盐的矮草,补丁一块压着一块,都是很多年前补的。"
+      },
+      {
+        "id": "item.dock_slope.fennel_scrub",
+        "name": "野茴香与荆棘丛",
+        "description": "坡道两侧齐腰高的野茴香、黑莓藤和一丛丛荆棘,风一过整坡都是茴香的甜腥味。丛子够密,人蹲进去从路上看不见——孩子们知道这一点。"
+      },
+      {
+        "id": "item.dock_slope.harbor_sign",
+        "name": "指向码头的旧铁牌",
+        "description": "坡口一根铁管上挂着的方牌,白底黑字写着码头与海滩的方向,漆剥了一半,箭头底下的空白处一茬又一茬有人用粉笔写字,又被雨冲掉。",
+        "position": 0.04
+      },
+      {
+        "id": "item.dock_slope.lone_lamp",
+        "name": "坡上的路灯",
+        "description": "坡道上唯一的一盏路灯,水泥杆,铁罩子里一只钠灯,罩沿锈出黄痕。天黑以后走这条坡的人都朝它走;近来它偶尔会闪,闪完又稳住,没人报修。",
+        "isLightSource": true,
+        "lightLevel": 2,
+        "position": 0.12
+      },
+      {
+        "id": "item.dock_slope.storm_drain",
+        "name": "排水涵洞",
+        "description": "半坡路肩下的一个水泥涵洞,洞口比人矮半截,铁栅栏缺了两根。雨天整条坡的水从这儿灌下去,直排进海;不下雨的时候里头干着,积着落叶、烂纸和几个空瓶。",
+        "position": 0.45
+      },
+      {
+        "id": "item.dock_slope.guardrail",
+        "name": "锈护栏",
+        "description": "拐弯外侧一段钢管护栏,锈得一层层起皮,中间十来尺被车撞得朝海侧凹进去,立柱歪着。撞的是哪年哪辆车镇上还有人记得,修没修过则没人提起。",
+        "position": 0.6
+      },
+      {
+        "id": "item.dock_slope.dumped_freezer",
+        "name": "被丢弃的旧冰柜",
+        "description": "坡下荆棘丛里侧躺着一台白色的旧冰柜,门早没了,内胆锈成褐色,底下积着雨水和烂叶。谁半夜从坡上推下来的没人认领,推的时候压塌了一片藤,那道印子如今又长满了。",
+        "position": 0.8
+      }
+    ],
     "connections": [
       {
         "id": "connection.dock_slope.street_end",

@@ -2,11 +2,53 @@
   "schemaVersion": 2,
   "id": "ROAD_backstreet",
   "name": "后巷",
-  "description": "从主街南口 [SCN_main_south] 拐进来的窄巷,两侧是商铺楼的背面:后门、垃圾桶、一段爬满牵牛花的破篱笆。巷子只容两人并肩,走到头是雷耶斯家的门口 [SCN_reyes_gate]。晚归的 Tommy 摸黑也能骑车穿过这条巷——每一道坑他闭着眼都记得。",
+  "description": "从主街南口 [SCN_main_south] 拐进来的窄巷,两侧是商铺楼的背面:后门、雨水管、糊了报纸的窗。路面是压实的煤渣和碎石 [item.backstreet.cinder_surface],被一年年的雨泡出一串坑——晚归的 Tommy 摸黑也能骑车穿过这条巷,每一道坑他闭着眼都记得。巷口不远处并排立着几只商铺的铁皮垃圾桶 [item.backstreet.trash_cans],盖子从来盖不严,天热的时候半条巷子都是那个味儿;再往里,一盏铁皮罩的巷灯 [item.backstreet.alley_lamp] 吊在两墙之间,灯泡坏了不知多少年,入夜后整条巷子只剩两头有光。巷子中段的地面上嵌着一块排水铁篦子 [item.backstreet.drain_grate],雨天呼呼地灌水,掉下去的东西没人捞得上来;贴着墙根摆着一只豁了口的搪瓷碗 [item.backstreet.cat_bowl],不知是谁给野猫添的,水总是满的。过了中段,一段爬满牵牛花的破篱笆 [item.backstreet.morning_glory_fence] 歪在墙外,花早上开、正午就蔫。快到头的砖墙上有一片粉笔道道 [item.backstreet.chalk_marks]:箭头、名字缩写,和几个只有那三个孩子看得懂的记号,雨一淋淡一层,总有人再描回来。巷子只容两人并肩,走到头就是雷耶斯家的门口 [SCN_reyes_gate]。",
   "parentLocationId": "OUTDOOR",
   "travelTimeMinutes": 8,
   "references": {
-    "items": [],
+    "items": [
+      {
+        "id": "item.backstreet.cinder_surface",
+        "name": "煤渣路面",
+        "description": "整条巷子的路面:压实的煤渣拌碎石,从没铺过柏油。雨水冲出一串深浅不一的坑,轮胎压过会甩起细石子;下过雨之后,谁进出过这条巷子,鞋印和车辙都留在上面。"
+      },
+      {
+        "id": "item.backstreet.trash_cans",
+        "name": "铁皮垃圾桶",
+        "description": "商铺后门外并排立着的四五只镀锌铁皮桶,盖子都不严实,桶身被撞得凹凸不平。里面是菜叶、纸箱和空瓶;夜里野猫掀盖子的动静,半条巷子都听得见。",
+        "position": 0.15
+      },
+      {
+        "id": "item.backstreet.alley_lamp",
+        "name": "坏掉的巷灯",
+        "description": "两墙之间用铁丝吊着的一盏铁皮罩巷灯,灯罩锈穿了一个洞,灯泡不知哪年就不亮了,镇上也没人来换。天黑以后这一段是全巷最黑的地方。",
+        "position": 0.3
+      },
+      {
+        "id": "item.backstreet.drain_grate",
+        "name": "排水铁篦子",
+        "description": "嵌在巷子中段路面上的一块生锈铸铁篦子,缝隙里塞着烟头、玻璃纸和几片干树叶。雨天底下呼呼地灌水,声音空得像有个洞;掉进去的硬币和钥匙,谁也没捞上来过。",
+        "position": 0.45
+      },
+      {
+        "id": "item.backstreet.cat_bowl",
+        "name": "野猫的水碗",
+        "description": "贴着墙根放的一只豁了口的旧搪瓷碗,边上还有半张压在砖头下的报纸。没人承认是自己放的,可水总是满的,碗边的煤渣也总被踩得干干净净。",
+        "position": 0.55
+      },
+      {
+        "id": "item.backstreet.morning_glory_fence",
+        "name": "爬满牵牛花的破篱笆",
+        "description": "一段歪出来的木板篱笆,板条断了几根没补,整面爬满了牵牛花藤。花早上开得一墙都是紫蓝色,正午就全蔫了。篱笆缺口后面是别家的后院,从缺口挤过去比走到巷口近得多。",
+        "position": 0.7
+      },
+      {
+        "id": "item.backstreet.chalk_marks",
+        "name": "墙上的粉笔记号",
+        "description": "快到巷尾那面砖墙上画着一片粉笔道道:箭头、名字缩写、跳房子的格子,还有几个外人看不懂的符号——三下横杠、一个圈里打叉。雨一淋就淡一层,过几天又被人描回来。",
+        "position": 0.85
+      }
+    ],
     "connections": [
       {
         "id": "connection.backstreet.street_end",

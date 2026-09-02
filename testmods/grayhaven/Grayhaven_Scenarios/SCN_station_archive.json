@@ -3,7 +3,7 @@
   "id": "SCN_station_archive",
   "name": "雷德利站·档案室",
   "description": "一间狭长的房间,两侧是低声运转的存储阵列 [item.station_archive.storage_array],整齐的插槽从地面排到天花板,每一格上亮着一个名字——灰港每一个人的名字,按字母排,没有遗漏。其中一格与众不同:外壳比别的旧了不止一轮,格沿环着一圈红色的标记 [item.station_archive.earl_slot]。房间中央悬着一方平置的玻璃台面 [item.station_archive.reading_surface],走近时它会自己亮起来。只有一扇门,回到控制大厅 [SCN_station_hall]。",
-  "parentLocationId": "LOC_station",
+  "parentLocationId": "station",
   "indoor": true,
   "references": {
     "items": [

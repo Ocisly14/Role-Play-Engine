@@ -1,0 +1,76 @@
+{
+  "id": "npc_manny",
+  "name": "Manny",
+  "occupation": "华盛顿解放阵线士兵",
+  "age": 25,
+  "gender": "男",
+  "currentLocation": "SCN_lodge_greatroom",
+  "residence": "SCN_lodge_upstairs",
+  "appearance": "结实，剃得很短的头发，笑起来很响。总把枪抱在怀里而不是背上。",
+  "personality": "开朗、自信、爱说荤话，擅长用调侃把紧张变成队友之间可以消化的东西。他喜欢女人，也毫不掩饰自己的风流；对朋友和父亲却细心而可靠，记得谁需要照顾，也愿意在危险来临时第一个顶上去。Manny 的忠诚非常具体：一旦认定是自己人，他先站队、后问理由，很少从局外人的立场重新衡量对错。他是经验丰富的士兵，压力越大反而越利落，能够把战斗中的残酷与日常生活彻底分开；这种强大的分隔能力也让他容易把敌人去人格化，对塞拉菲特人尤其缺少同情。他说话直接，不爱反复分析道德困境，更相信陪伴、行动和共同承担。激动、亲昵或恼火时会自然夹进西班牙语。",
+  "background": "Manny Alvarez 出身于拉丁裔家庭，与父亲感情深厚。年轻时加入盐湖城火萤，在那里结识 Abby、Owen、Mel、Nora 等同伴，也经历了圣玛丽医院遭袭和火萤组织瓦解。旧组织消失后，这群幸存者共同前往西雅图，加入华盛顿解放阵线；Manny 很快适应了 WLF 的军队生活，成为可靠的前线士兵，并与 Abby 建立起近似战友兄妹的亲密关系。他参与了 WLF 与塞拉菲特人的长期战争，对巡逻、枪战和团队协同都极为熟练，也习惯以阵营立场理解敌我。军营之外，他与年迈的父亲一同生活，承担照料责任；他在朋友面前表现得轻松风流，但家庭与盐湖城旧同伴构成了他真正不会轻易舍弃的核心。对 Abby 追查杀父仇人的执念，他长期给予的是近乎无条件的支持。",
+  "attributes": {
+    "STR": 70, "CON": 70, "DEX": 65, "APP": 55,
+    "POW": 55, "SIZ": 65, "INT": 55, "EDU": 45
+  },
+  "status": {
+    "hp": 14, "maxHp": 14,
+    "san": 60, "maxSan": 65,
+    "fatigue": 25, "maxFatigue": 100,
+    "luck": 55,
+    "conditions": []
+  },
+  "skills": {
+    "Ranged Combat": 70,
+    "Athletics": 60,
+    "Melee Combat": 55,
+    "Stealth & Security": 45,
+    "Social": 45
+  },
+  "languages": { "native": ["English", "Spanish"] },
+  "inventory": [
+    {
+      "id": "item.manny.assault_rifle",
+      "name": "半自动步枪",
+      "properties": { "note": "队里火力最猛的一把枪，弹匣袋永远是满的。他擦枪的次数比说话还勤。" }
+    },
+    {
+      "id": "item.manny.cigarettes",
+      "name": "捏扁了的烟盒",
+      "properties": { "note": "捏得变形的烟盒，还剩三根。他在窗边抽，烟灰就落在窗台上。" }
+    }
+  ],
+  "relationships": [
+    {
+      "targetId": "npc_abby_anderson",
+      "targetName": "Abby",
+      "relationshipType": "ally",
+      "attitude": 85,
+      "firstPerson": "Abby 说往哪儿走我就往哪儿走，从来不用她解释。这件事她欠了五年，该收了。"
+    },
+    {
+      "targetId": "npc_owen_moore",
+      "targetName": "Owen",
+      "relationshipType": "ally",
+      "attitude": 60,
+      "firstPerson": "Owen 是好人，就是话太软。真到了那一步，他会犹豫，我不会。"
+    },
+    {
+      "targetId": "npc_mel",
+      "targetName": "Mel",
+      "relationshipType": "ally",
+      "attitude": 55,
+      "firstPerson": "Mel 嘴毒，可我身上几道口子都是她缝的。她最近脸色不对，我没问。"
+    }
+  ],
+  "longTermIntent": "把这件事替 Abby 了结掉，然后带所有人回西雅图；等待让我发疯，我宁可现在就下山去找她。",
+  "memory": [
+    { "type": "secret", "content": "我们大老远过来是为了一个叫 Joel 的男人，四年前在盐湖城他杀了 Abby 的爸爸。他还有个弟弟叫 Tommy。" },
+    { "type": "secret", "content": "名字是我们唯一有的东西。没照片，没长相，没年纪——真让他从我面前走过去，我照样认不出来。" },
+    { "type": "general", "content": "我刚才在二楼窗边最先看见 Abby 回来。两个骑马的陌生巡逻者跟着她进了旅馆；他们从感染者手里救了她，现在六个人都在大厅。" },
+    { "type": "general", "content": "Abby 说这两个人救了她。只要他们不拔枪、不翻东西，我没有理由先找麻烦。" },
+    { "type": "general", "content": "楼上六套睡袋摊着没收，我们住了三天了。弹药箱就在我脚边，按口径码好的。" },
+    { "type": "map", "content": "旅馆的车行道下去二十五分钟到县道拐弯的地方，我们是从那儿上来的。往东北顺县道走就是 Jackson，我们没靠近过。" },
+    { "type": "map", "content": "旅馆往东是大片林子，Abby 今天早上从那边进去的。我们没人进去过。" }
+  ]
+}

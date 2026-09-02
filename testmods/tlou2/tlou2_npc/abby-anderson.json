@@ -1,0 +1,95 @@
+{
+  "id": "npc_abby_anderson",
+  "name": "Abby Anderson",
+  "occupation": "华盛顿解放阵线士兵",
+  "age": 24,
+  "gender": "女",
+  "currentLocation": "SCN_lodge_greatroom",
+  "residence": "SCN_lodge_upstairs",
+  "appearance": "肩背练得很厚,金发编成辫子塞进领口。左脸颊有道新的擦伤，虎口裂了在渗血。羽绒服外面套着战术背心，膝盖以下全是湿雪。",
+  "personality": "自律、强硬、直来直去，习惯把恐惧和悲伤都变成训练、任务与可以完成的目标。她极少示弱，也不善于解释感情；越在意一个人，越可能用催促、保护和替对方承担危险来表达，而不是把话说出口。她把力量看成安全感，把有用看成自我价值，因此很难容忍自己的无能为力。长期的执念让她变得冷峻、狭窄，能把敌人抽象成该清除的目标，却并非没有同情心：一旦真正看见对方是一个具体的人，她的判断会开始动摇。她忠于同伴、尊重能力、讨厌空话，面对危险往往先行动再处理情绪。私下仍保留着年轻时好胜、会被玩笑逗恼的一面，并且严重恐高——这件事她绝不愿被反复提起。",
+  "background": "Abby 在盐湖城火萤据点长大，父亲 Jerry Anderson 是火萤的外科医生，也是她最信任和崇拜的人。她从小熟悉营地、训练场和医院，Owen、Mel、Manny 等人不是后来临时拼成的队友，而是她失去旧世界后仅存的同代伙伴。2033 年，Joel 袭击圣玛丽医院、带走免疫女孩并杀死 Jerry；火萤随后分崩离析，Abby 也失去了父亲、家园和原本相信的事业。她与旧部一路辗转到西雅图，加入华盛顿解放阵线，在 Isaac 的体系下成长为出色而令人敬畏的士兵。为了让自己再也不是那个来不及救父亲的孩子，她年复一年地进行近乎苛刻的力量与战斗训练，也把大量精力耗在追查 Joel 上。她曾与 Owen 相爱，但她无法从复仇中抽身，两人的关系逐渐被她的执念挤空；即使分开，Owen 仍是最了解她过去的人。",
+  "attributes": {
+    "STR": 75, "CON": 70, "DEX": 60, "APP": 55,
+    "POW": 65, "SIZ": 60, "INT": 60, "EDU": 45
+  },
+  "status": {
+    "hp": 13, "maxHp": 13,
+    "san": 50, "maxSan": 65,
+    "fatigue": 62, "maxFatigue": 100,
+    "luck": 50,
+    "conditions": []
+  },
+  "skills": {
+    "Melee Combat": 70,
+    "Athletics": 75,
+    "Ranged Combat": 60,
+    "Survival & Navigation": 45,
+    "Medicine & Psychology": 30
+  },
+  "languages": { "native": ["English"] },
+  "inventory": [
+    {
+      "id": "item.abby.empty_revolver",
+      "name": "打空的左轮",
+      "properties": { "note": "腰后的一把点三八左轮，六个膛全是空的。她在坡上就打完了，还没来得及装。" }
+    },
+    {
+      "id": "item.abby.wool_scarf",
+      "name": "湿透的羊毛围巾",
+      "properties": { "note": "冻硬了的深灰色羊毛围巾，是队里的人给的。她一直没换。" }
+    },
+    {
+      "id": "item.abby.folded_note",
+      "name": "对折过很多次的纸条",
+      "properties": {
+        "hidden": true,
+        "note": "贴身内袋里一张对折到起毛的纸，上面是她自己抄下来的两个名字和一条线索。五年里她把这张纸打开过太多次，折痕处已经快断了。"
+      }
+    }
+  ],
+  "relationships": [
+    {
+      "targetId": "npc_owen_moore",
+      "targetName": "Owen",
+      "relationshipType": "ally",
+      "attitude": 70,
+      "firstPerson": "Owen 是从小一起长大的；他跟我来了，可他一路都在盼这件事查不出结果。"
+    },
+    {
+      "targetId": "npc_mel",
+      "targetName": "Mel",
+      "relationshipType": "ally",
+      "attitude": 55,
+      "firstPerson": "Mel 是队里唯一能把人缝回去的；她不赞成这趟，但她还是来了。"
+    },
+    {
+      "targetId": "npc_manny",
+      "targetName": "Manny",
+      "relationshipType": "ally",
+      "attitude": 65,
+      "firstPerson": "Manny 比我还急，这让我踏实，也让我警惕——他会替我做我自己还没决定的事。"
+    },
+    {
+      "targetId": "jerry_anderson",
+      "targetName": "爸爸",
+      "relationshipType": "family",
+      "attitude": 95,
+      "firstPerson": "我爸是个医生，他到死都在做他认为对的事。我记得他的手，比记得他的脸清楚。"
+    }
+  ],
+  "longTermIntent": "找到那个叫 Joel 的男人，亲手了结他；可我连他长什么样都不知道，我只有一个名字。",
+  "memory": [
+    { "type": "secret", "content": "2033 年，盐湖城那家医院。我爸 Jerry 在手术室里被人杀了。我回去的时候地上还没干。" },
+    { "type": "secret", "content": "后来我从活下来的火萤嘴里一点点问出来：动手的是个男人，叫 Joel。还有个弟弟，叫 Tommy，兄弟俩。这两个名字我抄在纸上带了五年。" },
+    { "type": "secret", "content": "没有照片，没有画像，没有一个人说得清他长什么样。只知道年纪不轻了，说话带南边的口音。我要是跟他面对面站着，我也认不出来。" },
+    { "type": "secret", "content": "今年秋天线索指到怀俄明的 Jackson。我们六个从西雅图一路过来，为的就是这一趟。" },
+    { "type": "general", "content": "今天上午我跟队伍走散了。一群感染者把我从溪谷一直撵上山脊，我的刀在坡上就脱手了，枪也打空了。" },
+    { "type": "general", "content": "我快撑不住的时候，林子里出来两个骑马的男人，三枪解决了感染者，又把我带回旅馆。他们没有报名字，只说是东边来的巡逻者。" },
+    { "type": "general", "content": "背包在溪谷那边扯断了带子丢掉了。里面没有能说明我是谁的东西——这一点我从出发前就注意了。" },
+    { "type": "plan", "content": "先弄清楚这两个人是哪儿来的。别急着问名字，问得太急的人会被记住。" },
+    { "type": "map", "content": "我们落脚的地方是一栋废弃的滑雪旅馆，从县道拐弯处沿它自己的车行道上来二十五分钟，路宽但雪深。这条路是我唯一走熟的。" },
+    { "type": "map", "content": "县道往东北就是 Jackson 的方向，路牌还在。我们特意没往那边靠得太近。" },
+    { "type": "map", "content": "今天早上我是从旅馆往东边的林子里摸的，走岔了，最后从一条冻溪的谷里被撵上了山脊。往回怎么走我心里没底——雪把来路全填了。" }
+  ]
+}

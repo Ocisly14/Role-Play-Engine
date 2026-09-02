@@ -2,8 +2,8 @@
   "schemaVersion": 2,
   "id": "SCN_station_dock",
   "name": "雷德利站装卸区",
-  "description": "水泥地平得反常,划着褪色的黄色装卸线,顶棚的日光灯管一根不坏。这里安静得不像一个装卸区——没有叉车声,没有人声,只有月台内侧那条传送轨道 [item.station_dock.conveyor_track] 偶尔自己动起来,把货从月台一件件收进去,再从墙上的铁盒里推出一张已经盖好章的签收单。靠墙的板条箱堆了好几层,有些落着经年的灰,从没被拆过;其中一只的唛头喷着 1979 年的日期 [item.station_dock.old_crate_1979],封条和昨天钉上去的一样新。签收用的铁盒 [item.station_dock.receipt_box] 嵌在月台内侧的墙上,投进回执,咔哒一声,再无下文。装卸区的尽头是一扇灰色的内门 [item.station_dock.inner_door],门上没有把手侧的磨痕,门缝里没有光——八年来没人见它开过。身后的卷帘门 [SCN_station_yard] 是这里唯一会为人打开的门,升起时露出站前场地和铁丝网外的车行道。",
-  "parentLocationId": "LOC_station",
+  "description": "水泥地平得反常,划着褪色的黄色装卸线,顶棚的日光灯管一根不坏 [item.station_dock.ceiling_lights],不分昼夜地亮着。这里安静得不像一个装卸区——没有叉车声,没有人声,只有月台内侧那条传送轨道 [item.station_dock.conveyor_track] 偶尔自己动起来,把货从月台一件件收进去,再从墙上的铁盒里推出一张已经盖好章的签收单。靠墙的板条箱堆了好几层 [item.station_dock.stacked_crates],有些落着经年的灰,从没被拆过;其中一只的唛头喷着 1979 年的日期 [item.station_dock.old_crate_1979],封条和昨天钉上去的一样新。月台边上停着一台液压托盘车 [item.station_dock.pallet_jack],把手上包的胶带是自己缠的;旁边码着一摞空托盘 [item.station_dock.empty_pallets],边角磨得发白,是这间屋里唯一被用旧的东西。签收用的铁盒 [item.station_dock.receipt_box] 嵌在月台内侧的墙上,投进回执,咔哒一声,再无下文;铁盒下面接着一张斜面的铁皮签收台 [item.station_dock.sign_off_ledge],台沿拴着一支圆珠笔。台子上方的墙上挂着一只电钟 [item.station_dock.wall_clock],秒针走得一丝不乱。装卸区的尽头是一扇灰色的内门 [item.station_dock.inner_door],门上没有把手侧的磨痕,门缝里没有光——八年来没人见它开过。身后的卷帘门 [SCN_station_yard] 是这里唯一会为人打开的门,升起时露出站前场地和铁丝网外的车行道。",
+  "parentLocationId": "station",
   "indoor": true,
   "references": {
     "items": [
@@ -26,6 +26,38 @@
         "id": "item.station_dock.inner_door",
         "name": "灰色内门",
         "description": "装卸区尽头的一扇灰色钢门,没有门牌,没有锁孔,门框严丝合缝到塞不进一张纸。把手那一侧没有任何磨痕——门是新的,或者,从来没有人从这一侧碰过它。贴上耳朵,听不见门后有任何声音。"
+      },
+      {
+        "id": "item.station_dock.ceiling_lights",
+        "name": "顶棚日光灯",
+        "description": "顶棚一整排日光灯管,亮得均匀,不闪也不响,昼夜都开着。八年没换过一根,也没有一根两头发黑;灯罩里干净得连虫尸都没有。",
+        "isLightSource": true,
+        "lightLevel": 4
+      },
+      {
+        "id": "item.station_dock.stacked_crates",
+        "name": "堆放的板条箱",
+        "description": "靠墙码到齐胸高的板条箱,一层压一层,唛头一律朝外。前排的灰是新的,后排的灰厚得能写字。所有封条都完好,没有一只被拆开过——送上来的东西进了这间屋子,就再没有下一步了。"
+      },
+      {
+        "id": "item.station_dock.pallet_jack",
+        "name": "手动托盘车",
+        "description": "一台手动液压托盘车,漆掉了一半,把手上包着自己缠的胶带,泵杆压下去有点发涩,起落还算利索。这是屋里唯一一件明显被人手用旧的工具。"
+      },
+      {
+        "id": "item.station_dock.empty_pallets",
+        "name": "空托盘",
+        "description": "一摞叠得整整齐齐的木托盘,边角被叉齿磕得发白,有几块板裂了缝。卸完货的空托盘照合同要带回去,所以这一摞的高度隔几天就变一次。"
+      },
+      {
+        "id": "item.station_dock.sign_off_ledge",
+        "name": "签收台",
+        "description": "接在铁盒下方的一张斜面铁皮台,台面被手肘磨出两块亮斑,台沿拴着一支圆珠笔,链子的长度刚好够写完一行字。台面下有个铁夹,夹着一沓空白回执——不管抽走几张,下次来看还是满的。"
+      },
+      {
+        "id": "item.station_dock.wall_clock",
+        "name": "电钟",
+        "description": "月台上方一只圆形电钟,白面黑针,玻璃罩上没有灰。它从不快也不慢,连秋天的雷雨停电也没让它慢过一分钟。屋里静下来的时候,秒针一格一格的响是唯一的动静。"
       }
     ],
     "connections": [

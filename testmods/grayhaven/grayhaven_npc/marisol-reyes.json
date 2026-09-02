@@ -55,14 +55,6 @@
       "properties": {
         "note": "一串黄铜钥匙，分别打开杂货店前门、仓库和邮政柜台的抽屉。"
       }
-    },
-    {
-      "id": "item.marisol.duplicate_banknotes",
-      "name": "两张序列号相同的十美元钞票",
-      "properties": {
-        "hidden": true,
-        "note": "两张序列号完全相同的十美元钞票，被她折好藏起，尚未告诉任何人。"
-      }
     }
   ],
   "relationships": [

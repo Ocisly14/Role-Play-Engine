@@ -198,7 +198,7 @@ export const CHARACTER_OPS: OperationSpec[] = [
     // from there was NaN and took the whole tick down with it.
     kinds: ["position"],
     fields:
-      'position:{type:"scene", sceneId:string} — puts them IN a place (boarding a vehicle, being carried). A road is walked, never assigned: travel is `movement.route` on the action',
+      'position:{type:"scene", sceneId:string} — a displacement that is NOT a walk: boarding or leaving a vehicle (its interior scene), or the consequence of an act that moves a body without a route — out through a window, carried off, dragged, thrown, fallen through. NEVER for going somewhere: a character who walks, runs, sneaks, rides or crawls to another place gets `movement.route` on the action, and this op is refused in your head before it is written. A road is walked, never assigned',
     schema: {
       properties: {
         position: {
