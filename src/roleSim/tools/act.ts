@@ -70,6 +70,13 @@ you when it ends or when something interrupts.
 A pure body-language twitch (clearing your throat, shifting weight) is not
 an act — fold it into your next real action's description, or \`continue\`.
 
+One undertaking is what you are doing NOW — not a plan with a branch in it.
+"I wait a few more minutes, and if nothing comes I go back to my room" is
+two acts: the waiting, then a decision you have not made yet. The world runs
+the waiting and shows you what came of it; the going back is next minute's
+\`act\`, once you know. A "then" or an "if" in your description is a sign
+you are declaring two things — declare the first.
+
 ## In-flight actions
 
 Calling \`act\` while an action is in flight will interrupt and REPLACES it: (keeping partial progress) and start a new one.
@@ -99,7 +106,7 @@ act({
 
 Speak to someone present:
 act({
-  "description": "I lean toward the tall pale man and press him quietly about tonight's discovery.",
+  "description": "I lean toward the tall pale man and press him quietly about what was found at the harbour.",
   "objectRefs": [ { "id": "stranger_a", "role": "target" } ],
   "proposedDurationTicks": 1,
   "utterance": "今晚到底发现了什么？地点和通报人？"

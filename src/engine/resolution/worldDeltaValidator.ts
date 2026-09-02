@@ -123,6 +123,14 @@ export interface ResolutionWorklist {
   /** Triggered but still running. Informational only — the Engine owes these
    *  nothing. Listed so every id in the trigger is accounted for. */
   stillRunning: string[];
+  /** The actor has issued a new command over this one. It is in `ending`
+   *  too: it stops at THIS minute, whatever its duration said, and the Engine
+   *  accounts for what was done up to now — never for how it would have
+   *  ended. Measured before this list existed: the old action sat under
+   *  `stillRunning`, nothing ever ended it, and both ran to completion side
+   *  by side — a notebook handed over twice, a couple leaving through a door
+   *  one of them had already slammed. */
+  replaced: string[];
   /** In-flight actions that carried no check, so nothing rolled. If one of
    *  these ends, the Engine supplies `outcome`. */
   endingNeedsOutcome: string[];
@@ -144,9 +152,15 @@ export function resolutionWorklist(
     stillRunning: [],
     endingNeedsOutcome: [],
     startingWithoutSkill: [],
+    replaced: [],
   };
   const queued = new Set(
     context.actions.newCommands.map((c) => actionIdForCommand(c.commandId))
+  );
+  const replaced = new Set(
+    context.trigger.triggers
+      .filter((t) => t.reason === "replacement")
+      .flatMap((t) => t.actionIds)
   );
   const commandById = new Map(
     context.actions.newCommands.map((c) => [actionIdForCommand(c.commandId), c])
@@ -166,7 +180,13 @@ export function resolutionWorklist(
       durationTicks !== undefined &&
       action.progressMinutes >= durationTicks * context.tick.durationMinutes;
     if (due) worklist.ending.push(id);
-    else worklist.stillRunning.push(id);
+    else if (replaced.has(id)) {
+      // Cut short by its own actor: an entry is owed now, and the clock
+      // (not the Engine) will record it as interrupted, since its time was
+      // not spent.
+      worklist.ending.push(id);
+      worklist.replaced.push(id);
+    } else worklist.stillRunning.push(id);
     // Listed for every in-flight action, not just the due ones, because a
     // still-running action may still be cut short here.
     if (action.check === undefined) worklist.endingNeedsOutcome.push(id);
@@ -1372,6 +1392,27 @@ export interface FinalizedResolution {
  * ids, how much time passed, and whether an action is now finished — the
  * Engine says what happened, code says when and whether it is over.
  */
+/** Where an occurrence happened when the Engine left `locationId` blank:
+ *  wherever its actor stands. The Engine leaves it blank most of the time
+ *  (measured: every occurrence of a 50-minute doorway conversation), and a
+ *  blank location is what let the renderer put a mother at a bedside two
+ *  rooms from where she stood — a participant with no place reads as "here".
+ *  Only scene positions resolve; a road walker's occurrence stays unplaced. */
+function occurrenceLocationFromActor(
+  o: {
+    participants?: Array<{ characterId: string; role: string }>;
+    sourceActionIds?: string[];
+  },
+  lookup: Lookup
+): string | undefined {
+  const actor =
+    o.participants?.find((p) => p.role === "actor")?.characterId ??
+    o.sourceActionIds
+      ?.map((id) => lookup.actionById.get(id)?.command.actorId)
+      .find((id): id is string => id !== undefined);
+  return actor ? lookup.characterSceneIds.get(actor) : undefined;
+}
+
 export function finalizeResolution(
   raw: RawTickResolution,
   context: EngineResolutionContext,
@@ -1521,11 +1562,12 @@ export function finalizeResolution(
     if (o == null) return;
     const occurrenceId = `occ_${context.tick.tickId}_${i}`;
     const factIds = (o.facts ?? []).map((_, fi) => `${occurrenceId}#f${fi}`);
+    const locationId = o.locationId ?? occurrenceLocationFromActor(o, lookup);
     occurrences.push({
       id: occurrenceId,
       tickId: context.tick.tickId,
       sourceActionIds: o.sourceActionIds ?? [],
-      ...(o.locationId !== undefined ? { locationId: o.locationId } : {}),
+      ...(locationId !== undefined ? { locationId } : {}),
       facts: (o.facts ?? []).map((f, fi) => ({
         id: factIds[fi],
         type: f.type,

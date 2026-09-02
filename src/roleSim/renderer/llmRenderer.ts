@@ -71,6 +71,12 @@ they cannot touch, address or walk toward this minute.
   words of your own, in any language.
 - Tag the things the character could plausibly act on this minute — the
   people present, the items within reach, and the ways out.
+- Tagging is not inventory. An item the character could act on is citable
+  whether or not this paragraph names it; you do not owe every item a
+  mention every minute. Name a thing when it is NEW to the character, when
+  it CHANGED, or when they act on or look at it now — and then tag it. A
+  thing already described in an earlier paragraph and unchanged since is
+  left out, and the character can still cite it from before.
 
 # Hard rules
 
@@ -113,6 +119,18 @@ they cannot touch, address or walk toward this minute.
   the corner armchair", "he is still bent over the workbench"), never as a
   restated label, and never contradict it — do not put someone at the window
   who is at the workbench. It carries no bracket and never gets one.
+- **Where a person is decides how they can be rendered.** "People present in
+  your scene" are in the room with the viewpoint. Anyone listed under "Other
+  entities involved in events" is NOT — their \`Where they are\` line says
+  where, and the place's description below it says what lies between. A
+  person in the next place along reaches the viewpoint only as what crosses
+  the way between them: a voice through a door, a shape in a doorway, a
+  light under it. Never put them at the viewpoint's side, never let hands
+  cross — an object "handed over" between two places is passed at the
+  threshold, and a blanket in the next room is not tucked from this one. An
+  occurrence marked "NOT here" happened over there: render what of it
+  carries, not the scene itself. Get this wrong and the character will act
+  on a room they are not in.
 - For non-self entities, only render conditions that have an external sensory
   manifestation. Do not leak plot secrets, hidden allegiances, or any condition
   the viewpoint cannot perceive.
@@ -518,8 +536,10 @@ ONLY.They are not evidence about now.
 
 Tag only what appears in THIS minute's input.
 
-Write what CHANGED, what is new, and what they are doing now — do not
-re-introduce what is unchanged.`
+Write what CHANGED, what is new, and what they are doing now. An item these
+paragraphs already name stays off the page this minute unless it changed,
+moved, or the viewpoint's hands or eyes are on it now. A paragraph that
+re-lists the furniture is a paragraph that says nothing happened.`
     );
   }
 
@@ -702,6 +722,17 @@ function collectOtherEntities(
       `Person (${knownTag}): ${identifier}${tag(charId, tags, "character")}`
     );
     if (profile.appearance) lines.push(`  Appearance: ${profile.appearance}`);
+    // They are in this section and not the one above BECAUSE they are not
+    // here. Say where, and how that place stands to this one, or the
+    // renderer reads a placeless participant as "in the room": measured as a
+    // mother kneeling at a bedside two rooms from where she stood.
+    const placeId = characterPlaceId(dgsm, charId);
+    if (placeId) {
+      lines.push(`  ${whereRelativeToHere(placeId, bundle, dgsm, tags)}`);
+      sceneIds.add(placeId);
+    } else {
+      lines.push("  Where they are: NOT here — somewhere you cannot see.");
+    }
     const conds = profile.status?.conditions ?? [];
     if (conds.length > 0) {
       lines.push("  Active conditions (render only externally perceivable):");
@@ -714,7 +745,13 @@ function collectOtherEntities(
   for (const sceneId of sceneIds) {
     const scene = dgsm.getScene(sceneId);
     if (!scene) continue;
-    lines.push(`Adjacent scene: ${scene.name}${tag(scene.id, tags, "other")}`);
+    const adjacent = bundle.scene.adjacentPlaces.some((p) => p.id === sceneId);
+    lines.push(
+      `${adjacent ? "Neighbouring place" : "Distant place"} (NOT where you are): ${scene.name}${tag(scene.id, tags, "other")}`
+    );
+    // The description is what lets the renderer reason about the geometry —
+    // a door with a towel under it, a porch open to the road — and so about
+    // what carries through and what does not.
     if (scene.description) lines.push(`  Description: ${scene.description}`);
   }
 
@@ -758,6 +795,39 @@ function formatOccurrences(
     .join("\n");
 }
 
+/** The place a character stands in: a scene id, or the road they walk. */
+function characterPlaceId(
+  dgsm: DynamicGameStateManager,
+  characterId: string
+): string | undefined {
+  const position = dgsm.getCharacterPosition(characterId) as
+    | { type: "scene"; sceneId: string }
+    | { type: "road"; roadId: string }
+    | null;
+  if (!position) return undefined;
+  return position.type === "scene" ? position.sceneId : position.roadId;
+}
+
+/** One line placing another place against the viewpoint's: the same place,
+ *  the next one along (with the way that joins them), or out of reach. */
+function whereRelativeToHere(
+  placeId: string,
+  bundle: PerceivedBundle,
+  dgsm: DynamicGameStateManager,
+  tags: CitationTags
+): string {
+  const name =
+    dgsm.getScene(placeId)?.name ??
+    dgsm.getTopology?.()?.roads.get(placeId)?.name ??
+    placeId;
+  if (placeId === bundle.scene.id) return "Where they are: here, with you.";
+  const adjacent = bundle.scene.adjacentPlaces.some((p) => p.id === placeId);
+  if (adjacent) {
+    return `Where they are: NOT here — in ${name}${tag(placeId, tags, "other")}, the next place along; only what carries through the way between (a voice, a light under the door, a figure in the doorway) reaches you, and nobody's hands cross it.`;
+  }
+  return `Where they are: NOT here — in ${name}${tag(placeId, tags, "other")}, out of sight and beyond earshot unless a signal below says otherwise.`;
+}
+
 function formatOccurrence(
   occ: Occurrence,
   bundle: PerceivedBundle,
@@ -769,7 +839,11 @@ function formatOccurrence(
     occ.locationId === bundle.scene.id
       ? "here"
       : occ.locationId
-        ? `at ${occ.locationId} (not your location)`
+        ? `NOT here — ${
+            bundle.scene.adjacentPlaces.some((p) => p.id === occ.locationId)
+              ? "in the next place along"
+              : "somewhere else"
+          } (${occ.locationId})`
         : "location unspecified";
   // By tag, never by real id: a participant the viewpoint does not know must
   // reach the narrative as `stranger_a`, not as the name behind it.

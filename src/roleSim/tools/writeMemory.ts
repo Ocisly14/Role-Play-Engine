@@ -16,6 +16,9 @@ So each turn, decide: is anything here worth carrying? Most minutes are
 not. A stranger's name, a lie you caught, a door you found locked, a route
 you learned, the fact that you finally got the drawer open — those are. Remember the important thing to you.
 
+Before you add a memory, look at what you remember: if one related memory is already there,
+you can \`replace\`it with the fuller account instead of adding a new one.
+
 If a minute left you several things worth keeping, write them ALL in this
 turn — one \`writeMemory\` call each, side by side in the same turn. There is
 no next turn for them: the turn ends when you act, and whatever you did not
@@ -25,14 +28,15 @@ write down is gone.
 
 - \`op: "add"\` (the default) — keep something new. Needs \`type\` and
   \`content\`.
-- \`op: "replace"\` — you were wrong, and now you know better. Needs
-  \`ref\` and \`content\`.
+- \`op: "replace"\` — the memory is out of date: you were wrong and now know
+  better, or the matter moved on and the old line no longer tells the whole
+  of it. Needs \`ref\` and \`content\`.
 - \`op: "delete"\` — retract something you recorded that turned out to be
   false or worthless. Needs \`ref\`.
 
 \`ref\` is the tag at the start of the line in **what you remember**:
 
-    - #M3f9a2c [12-01 09:20] (general) Hollins said he was at the harbour all evening.
+    - #M3f9a2c [12-01 09:20] (general, at the boarding house) Hollins said he was at the harbour all evening.
 
 Copy \`M3f9a2c\` exactly, without the \`#\`. Only your own memories carry a tag
 you can use — what you already knew.
@@ -41,8 +45,10 @@ you can use — what you already knew.
 
 If you learn that something you recorded is wrong, **replace it**. Adding a
 second, contradicting memory leaves both in your head, and later you will not
-know which one you believe. \`content\` on a replace is the whole corrected
-memory, not a note about what changed:
+know which one you believe. The same goes for a matter that is still
+unfolding: the memory of it is one line that grows, not a line per minute.
+\`content\` on a replace is the whole corrected memory, not a note about what
+changed:
 
     writeMemory({ "op": "replace", "ref": "M3f9a2c",
       "content": "Hollins lied about the harbour — he was covering for his sister, who was at the house." })
@@ -64,8 +70,10 @@ together.
   learned. One memory = one thing worth recalling later; do not dump a
   whole minute of scenery into it.
 - \`plan\` — An intention you mean to hold beyond this minute:
-  "tomorrow morning, get to the harbour before anyone notices". Not your
-  next action — that is \`act\`.
+  "get to the harbour before the Friday boat leaves, before anyone notices".
+  Say WHEN by date or event, never "tonight" or "tomorrow": the line will be
+  read long after the day it was written, when those words point nowhere.
+  Not your next action — that is \`act\`.
 - \`secret\` —  Something hidden you worked out and would not say
   aloud. These fade slowly; you will still be carrying them days later.
 - \`relationship\` — What you now think of a specific person.
@@ -93,7 +101,14 @@ together.
 
 - First person, past tense, self-contained. "Hollins claimed he was at the
   harbor all evening, but his coat was dry." — readable months later
-  without the surrounding scene.
+  without the surrounding scene. That rules out "today", "tonight",
+  "just now": the world stamps each line with its date, and a memory that
+  needs to know what day it is being read on has already lost its meaning.
+- Write in the language this prompt asks you to decide in. A memory in
+  another tongue is one you will read as a stranger's later.
+- \`content\` is the memory only. The time and the place in front of each
+  line under **what you remember** are put there by the world when it shows
+  you the line — do not write them into the content yourself.
 - One fact per call. Two unrelated things = two calls (max 3 per decision).
 - Write what it MEANS to you, not a transcript of what was said.
 

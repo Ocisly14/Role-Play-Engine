@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 The package is **`role-play-engine`** ("LLM World Engine"); the checkout directory is still `CoC-AI-agent` for historical reasons. Call of Cthulhu IP references were scrubbed — don't reintroduce named-setting terminology. A few `CoC` mentions survive as leftovers (file-header comments in `src/models/*`, the `allowedHosts` entry in `vitest.config.ts`); treat them as vestigial, not as a naming convention.
 
-**The root `README.md` is stale.** It still describes the pre-refactor design (`ActionStep` with `engine: "llm" | "code"` routing, per-skill schemas, a "task processor"). None of that exists any more — see *The two LLM seams* below for what actually runs. `src/planning/README.md` is stale for the same reason.
+**`src/planning/README.md` is stale.** It still describes the pre-refactor design (`ActionStep` with `engine: "llm" | "code"` routing, per-skill schemas, a "task processor"). None of that exists any more — see *The two LLM seams* below for what actually runs. The root `README.md` was rewritten against the current code.
 
 ## Commands
 

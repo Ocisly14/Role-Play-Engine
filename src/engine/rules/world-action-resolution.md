@@ -156,6 +156,13 @@ beaten. Now say what happened to the world.
   and narrated back to the actor as something they perceive, so it must not
   contain reasoning, corrections, or second thoughts.
   Work out who did what BEFORE you write, then write only the outcome.
+  It covers what was RESOLVED and nothing past it. An action described as
+  "wait, then go back to my room" ends where the waiting ends: what the
+  actor decides next is theirs to declare next minute, not yours to narrate.
+  In particular, nobody leaves a place in your prose unless this submission
+  also moves them: a departure without `movement.route` is displacement the
+  code never applied, and the actor now remembers a room they never reached.
+  Either carry the route, or end the account with them still standing there.
 - Shade the consequence to the level code handed you, and no further:
   - **extreme / hard / regular** — it worked, with the margin showing in how
     cleanly. Read the skill's `## Success levels`.
@@ -176,6 +183,18 @@ beaten. Now say what happened to the world.
   `perceiverCharacterIds`.
 - Emit the world changes that follow in `characterChanges` / `sceneChanges` /
   `itemChanges`. This is the only moment an action produces state.
+
+### `replaced` — the actor moved on before it was done
+
+An id under `replaced` is in `ending` because its own actor issued a new
+command this tick (the `starting` entry whose `replacesActionId` names it),
+not because its time was spent. It stops at THIS minute. Its ending says what
+was actually done up to now — the sentence half-spoken, the drawer half
+searched, the hand still on the knob — and nothing past that: never how it
+would have finished, never a success it had not yet earned. Code records it
+as interrupted, whatever you write. Then resolve the successor on the world as
+the cut-off left it. The two never both happen in full: the successor is the
+actor's revision of the first, not a second copy of it.
 
 ### Nothing else
 

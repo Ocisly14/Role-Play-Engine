@@ -140,6 +140,6 @@ describe("what the history block is for", () => {
     expect(context).toContain("not evidence about now");
     expect(context).toContain("Tag only what appears in THIS");
     // And the original job of the block survives.
-    expect(context).toContain("do not\nre-introduce what is unchanged");
+    expect(context).toContain("says nothing happened");
   });
 });

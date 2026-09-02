@@ -21,6 +21,7 @@ import {
   finalizeResolution,
   normalizeList,
   normalizeRawResolution,
+  resolutionWorklist,
   validateRawResolution,
 } from "../worldDeltaValidator.js";
 
@@ -61,18 +62,26 @@ function makeContext(opts: {
   newCommands?: ActionCommand[];
   activeActions?: EngineAction[];
   triggerActionIds?: string[];
+  /** Ids the trigger also lists under reason "replacement". */
+  replacedActionIds?: string[];
 }): EngineResolutionContext {
   const newCommands = opts.newCommands ?? [command()];
   const activeActions = opts.activeActions ?? [];
+  const triggerIds = opts.triggerActionIds ?? [ACTION_ID];
   return {
     trigger: {
       triggers: [
-        {
-          actionIds: opts.triggerActionIds ?? [ACTION_ID],
-          reason: "new_action",
-        },
+        { actionIds: triggerIds, reason: "new_action" },
+        ...(opts.replacedActionIds?.length
+          ? [
+              {
+                actionIds: opts.replacedActionIds,
+                reason: "replacement" as const,
+              },
+            ]
+          : []),
       ],
-      actionIds: opts.triggerActionIds ?? [ACTION_ID],
+      actionIds: triggerIds,
     },
     tick: {
       tickId: "tick_1",
@@ -294,6 +303,24 @@ describe("validateRawResolution — the three moments", () => {
       triggerActionIds: ["action_live"],
     });
     expect(validateRawResolution({}, stillRunning)).toEqual([]);
+  });
+
+  it("demands an ending for an action its own actor has replaced, however much time it had left", () => {
+    // Replacement used to be a trigger reason and nothing else: the old
+    // action landed under `stillRunning`, the Engine was told silence keeps
+    // it running, and both it and its successor ran to completion side by
+    // side. Measured: a notebook handed over twice, in consecutive minutes.
+    const ctx = makeContext({
+      newCommands: [],
+      activeActions: [activeAction()], // 5 of 10 minutes
+      triggerActionIds: ["action_live"],
+      replacedActionIds: ["action_live"],
+    });
+    const worklist = resolutionWorklist(ctx);
+    expect(worklist.ending).toEqual(["action_live"]);
+    expect(worklist.replaced).toEqual(["action_live"]);
+    expect(worklist.stillRunning).toEqual([]);
+    expect(text(validateRawResolution({}, ctx))).toContain("action_live");
   });
 
   it("still demands an answer for an action whose time is spent", () => {
@@ -525,6 +552,26 @@ describe("finalizeResolution", () => {
   // finalize no longer validates, drops or synthesizes anything: by the time
   // it runs, the resolution has already passed validation. A resolution that
   // could not be repaired never reaches it — the tick applies nothing.
+
+  it("places an unlocated occurrence where its actor stands", () => {
+    // The Engine leaves `locationId` blank far more often than not, and the
+    // renderer reads a placeless participant as "here". Measured: a doorway
+    // conversation rendered, for fifty minutes, as everyone in one room.
+    const raw: RawTickResolution = {
+      starting: [start({ resolvedDurationTicks: 1 })],
+      occurrences: [
+        {
+          sourceActionIds: [ACTION_ID],
+          facts: [{ type: "speech", content: "a question through the door" }],
+          participants: [{ characterId: "npc_1", role: "actor" }],
+          perceiverCharacterIds: ["npc_1"],
+          signals: [{ channel: "sound" }],
+        },
+      ],
+    };
+    const { resolution } = finalizeResolution(raw, makeContext({}));
+    expect(resolution.occurrences[0].locationId).toBe("SCN_1");
+  });
 
   it("derives the lifecycle and the wake time, and assigns ids", () => {
     const raw: RawTickResolution = {

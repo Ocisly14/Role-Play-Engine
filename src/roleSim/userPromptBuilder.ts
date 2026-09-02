@@ -183,7 +183,8 @@ a positive tick count, a real skill name) or choose a different action.`
     // the same standpoint every other line of this prompt establishes.
     volatile.push(
       `## Condense what you have lived through
-Your own record of the day has grown too long to carry whole. Rewrite the
+Your own record of what you have lived through has grown too long to carry
+whole. Rewrite the
 early part of it, in your own voice, as the account you would still be able
 to give of it.
 
@@ -210,7 +211,7 @@ one on something that had none.
 Write it as one continuous first-person account, past tense, in
 ${langName}. No headings, no bullet list, no commentary about the act of
 summarizing. Aim for about ${closing.targetTokens} tokens; shorter is fine
-if your day was thin. Write the account now — nothing else.`
+if there was little worth keeping. Write the account now — nothing else.`
     );
   } else if (closing.kind === "consolidate") {
     // One tool on this call, `writeMemory`, and nothing terminal: the answer

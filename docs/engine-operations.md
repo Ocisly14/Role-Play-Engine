@@ -39,7 +39,7 @@ engine 处理的「操作」分四层，彼此不共享枚举：**演员发出�
 |---|---|
 | `new_action` | 本 tick 收到了新命令 |
 | `duration_reached` | 动作跑满了 `resolvedDurationTicks`，或移动腿已到达 |
-| `replacement` | 新命令带 `replacesActionId`，且旧动作仍 active/queued |
+| `replacement` | 新命令带 `replacesActionId`，且旧动作仍 active/queued。worklist 把旧动作列进 `ending` 和 `replaced`：它在本分钟被截断，Engine 只结算已做到的部分，代码按时长未满记为 interrupted |
 | `interrupted` | 路线被堵、演员死亡等挂起的中断 |
 
 **无触发 = 0 次模型调用**，这一 tick 只跑确定性部分。会话失败时，drain 掉的命令会退回 inbox、中断重新挂起——「这一 tick 什么也没发生」必须是真的，而不是「悄悄吃掉了两条命令」。
