@@ -30,10 +30,7 @@
 
 import { createHash } from "node:crypto";
 import type { DynamicGameStateManager } from "./DynamicGameState.js";
-import {
-  charactersAtSameLocation,
-  resolvePerceivedLocation,
-} from "./perceivedLocation.js";
+import { charactersAtSameLocation } from "./perceivedLocation.js";
 import type { DynamicNPCProfile } from "./types.js";
 
 export interface PerceivableDirectory {
@@ -138,24 +135,45 @@ export function buildPerceivableDirectory(
   // whoever is walking beside them.
   for (const id of charactersAtSameLocation(actorId, dgsm)) characters.add(id);
 
-  // ── Items: items at the current location ∪ actor inventory ──────
-  const location = resolvePerceivedLocation(
-    dgsm.getCharacterPosition(actorId),
-    dgsm,
-    actorId
-  );
-  for (const item of location?.items ?? []) items.add(item.id);
+  // ── Items & places: every real id in the world ──────────────────
+  //
+  // Citability asks ONE thing: does this name something real. It does not ask
+  // whether the thing is within reach — that is the Engine's question,
+  // answered in full context, and better answered as something the actor
+  // perceives ("you would have to go down to the kitchen first") than as a
+  // rejection they never see.
+  //
+  // Scoping this to the current location used to make the renderer and the
+  // boundary disagree about the same paragraph: the renderer prints an
+  // adjacent scene's WHOLE description (llmRenderer's `Adjacent scene: … /
+  // Description: …`) and a v2 description is prose with `[item.*]` tags
+  // written inline, so the actor was SHOWN ids the boundary then refused.
+  // Measured live: Dolores upstairs smelled the kitchen below, named the oven
+  // the prose had just handed her, and the citation was rejected.
+  //
+  // Two exclusions survive, because neither is about reach:
+  //   - `hidden` items stay out. That is not "can you get to it" but "do you
+  //     know it is there" — citing an undiscovered thing leaks the secret
+  //     whichever way the Engine then rules.
+  //   - Strangers keep their per-tick alias (below). A canonical name must
+  //     never enter the actor's context.
+  for (const scene of dgsm.getState().scenes?.values() ?? []) {
+    scenes.add(scene.id);
+    for (const item of scene.items ?? []) {
+      if (!item.hidden) items.add(item.id);
+    }
+  }
+  for (const road of dgsm.getTopology()?.roads?.values() ?? []) {
+    scenes.add(road.id);
+    for (const item of road.items ?? []) {
+      if (!item.hidden) items.add(item.id);
+    }
+  }
   // Read inventory from runtime npcInventories (mutated by item.move /
   // item.create / item.destroy). The static profile.inventory is loaded once
   // from JSON and never updated by Applier paths — perception MUST reflect
   // runtime state.
   for (const item of dgsm.getNpcInventory(actorId)) items.add(item.id);
-
-  // ── Places: current + one hop ───────────────────────────────────
-  if (location) {
-    scenes.add(location.id);
-    for (const id of location.adjacentIds) scenes.add(id);
-  }
 
   // ── What the actor may cite, per character in scope ─────────────
   // Sorted by real id so the address book is byte-stable for the same cast.

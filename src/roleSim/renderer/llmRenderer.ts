@@ -204,6 +204,92 @@ function tag(id: string, tags: CitationTags, kind: "character" | "other") {
 
 const TAG_PATTERN = /\s*\[([^\]\n]{1,64})\]/g;
 
+/** Levenshtein distance, iterative two-row. Tag ids are short (< 64 chars),
+ *  so the quadratic cost is nothing. */
+function editDistance(a: string, b: string): number {
+  if (a === b) return 0;
+  let prev = Array.from({ length: b.length + 1 }, (_, i) => i);
+  for (let i = 1; i <= a.length; i++) {
+    const row = [i];
+    for (let j = 1; j <= b.length; j++) {
+      row[j] = Math.min(
+        prev[j] + 1,
+        row[j - 1] + 1,
+        prev[j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1)
+      );
+    }
+    prev = row;
+  }
+  return prev[b.length];
+}
+
+/** How close a near miss must be before we treat it as the same id. */
+const NEAR_MISS_SIMILARITY = 0.9;
+/** ...and how much better than the runner-up, so an ambiguous pair is left
+ *  alone rather than resolved by a coin flip. */
+const NEAR_MISS_MARGIN = 0.05;
+
+/**
+ * Resolve a mistyped tag onto the id the renderer meant, or null.
+ *
+ * The renderer copies ids by hand and slips: `SCM_motel_porch` for
+ * `SCN_motel_porch` is one key away, and costs a whole corrective round trip
+ * to fix by asking. Matching it back is free.
+ *
+ * What this must NOT do is repair a tag into a DIFFERENT thing. Measured
+ * live: the renderer wrote `item.reyes_tommy_radio` for what the module calls
+ * `item.reyes_living.radio` — the living-room set, not Tommy's. That pair
+ * scores ~0.74 and is correctly refused; the one-key slip scores ~0.93 and is
+ * accepted. The margin check refuses anything with two plausible answers, so
+ * a near-tie is dropped the old way instead of guessed.
+ *
+ * Only ids the actor may actually cite are candidates, so this can never
+ * invent reach the boundary would not have granted.
+ */
+export function resolveNearMissTag(
+  candidate: string,
+  allowed: ReadonlySet<string>
+): string | null {
+  let best: { id: string; score: number } | null = null;
+  let runnerUp = 0;
+
+  for (const id of allowed) {
+    const longer = Math.max(candidate.length, id.length);
+    if (longer === 0) continue;
+    const score = 1 - editDistance(candidate, id) / longer;
+    if (!best || score > best.score) {
+      if (best) runnerUp = best.score;
+      best = { id, score };
+    } else if (score > runnerUp) {
+      runnerUp = score;
+    }
+  }
+
+  if (!best || best.score < NEAR_MISS_SIMILARITY) return null;
+  if (best.score - runnerUp < NEAR_MISS_MARGIN) return null;
+  return best.id;
+}
+
+/** Rewrite tags that are one slip away from a real id, before anyone counts
+ *  them as uncitable. Saves the corrective round trip the mistake would
+ *  otherwise cost, and leaves genuinely wrong tags untouched for it. */
+export function repairNearMissTags(
+  narrative: string,
+  allowed: ReadonlySet<string>,
+  npcId: string
+): string {
+  return narrative.replace(TAG_PATTERN, (match, raw: string) => {
+    const candidate = raw.trim();
+    if (allowed.has(candidate)) return match;
+    const resolved = resolveNearMissTag(candidate, allowed);
+    if (!resolved) return match;
+    console.warn(
+      `[renderer] ${npcId}: repaired near-miss tag "${candidate}" -> "${resolved}"`
+    );
+    return ` [${resolved}]`;
+  });
+}
+
 /** Drop any bracketed tag the actor could not legally cite. The renderer is a
  *  SMALL model copying ids by hand: an invented or mistyped tag would sail
  *  through here and die at the trust boundary a turn later, as a rejection
@@ -292,7 +378,11 @@ export async function renderViaLLM(
       maxRetries: 2,
     });
 
-  let narrative = (await ask()).trim();
+  let narrative = repairNearMissTags(
+    (await ask()).trim(),
+    tags.allowed,
+    params.npcId
+  );
   const bad = uncitableTags(narrative, tags.allowed);
 
   // One corrective pass before falling back to stripping. A stripped tag is
@@ -306,7 +396,7 @@ export async function renderViaLLM(
     console.warn(
       `[renderer] ${params.npcId}: uncitable ${bad.map((t) => `"${t}"`).join(", ")} — asking again`
     );
-    narrative = (
+    narrative = repairNearMissTags(
       await ask(
         [
           "\n\n# Your last attempt was rejected",
@@ -319,8 +409,10 @@ export async function renderViaLLM(
           "is the thing you mean, write it with no bracket at all.",
           "Rewrite the whole paragraph.",
         ].join("\n")
-      )
-    ).trim();
+      ).then((t) => t.trim()),
+      tags.allowed,
+      params.npcId
+    );
   }
 
   return stripUncitableTags(narrative, tags.allowed, params.npcId);
