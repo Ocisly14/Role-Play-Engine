@@ -45,6 +45,14 @@ export function formatCondition(
 ): string {
   const lines: string[] = [formatStatusLine(npc)];
 
+  // Conditions get their own line rather than trailing the numbers. They are
+  // sentences the character is meant to act through, and the tail of a stat
+  // line is a weak place to read one.
+  const conditions = npc.status.conditions ?? [];
+  if (conditions.length > 0) {
+    lines.push(...conditions.map((c) => `- ${c.description}`));
+  }
+
   // Proprioception: you always know where you put yourself, before you know
   // anything about the room. It sits here and not in `formatProfile` because
   // it moves — a spot in the cached frozen block would be a place the
@@ -70,12 +78,7 @@ function formatStatusLine(npc: DynamicNPCProfile): string {
     `SAN ${s.san}/${s.maxSan}`,
     `Fatigue ${s.fatigue}/${s.maxFatigue}`,
   ];
-  let line = `Status: ${parts.join(", ")}`;
-  if (s.conditions && s.conditions.length > 0) {
-    const condDescs = s.conditions.map((c) => c.description).join(", ");
-    line += `, Conditions: ${condDescs}`;
-  }
-  return line;
+  return `Status: ${parts.join(", ")}`;
 }
 
 function formatInventoryLine(

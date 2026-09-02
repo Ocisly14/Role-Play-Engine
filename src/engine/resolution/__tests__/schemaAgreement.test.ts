@@ -18,6 +18,7 @@ import {
   type RawCharacterChange,
   type RawOccurrence,
   type RawResolutionRepair,
+  type RawSanityCheck,
   type RawTickResolution,
   SCENE_OPS,
   opKinds,
@@ -86,7 +87,13 @@ const OCCURRENCE = fields<RawOccurrence>()(
   "facts",
   "participants",
   "perceiverCharacterIds",
-  "signals"
+  "signals",
+  "sanityChecks"
+);
+const SANITY_CHECK = fields<RawSanityCheck>()(
+  "characterId",
+  "failureLoss",
+  "consequence"
 );
 const DELTA = fields<RawCharacterChange>()(
   "sourceActionId",
@@ -144,6 +151,29 @@ describe("the tool schema and the TS types describe the same thing", () => {
     expect(propsOf(submit.properties.occurrences.items)).toEqual(
       sorted(OCCURRENCE)
     );
+  });
+
+  it("a declared sanity check matches RawSanityCheck, wherever the occurrence sits", () => {
+    // The declaration lives on the SHARED occurrence body, so a standalone
+    // occurrence and an ending's own occurrence offer it identically — which
+    // is what lets one validation call site cover both.
+    const standalone = submit.properties.occurrences.items?.properties
+      .sanityChecks as Schema & { items?: Schema };
+    const embedded = submit.properties.ending.items?.properties.occurrence
+      ?.properties.sanityChecks as Schema & { items?: Schema };
+
+    expect(propsOf(standalone.items)).toEqual(sorted(SANITY_CHECK));
+    expect(propsOf(embedded.items)).toEqual(sorted(SANITY_CHECK));
+    // There is no success loss: passing costs nothing, so there is no pair.
+    expect(propsOf(standalone.items?.properties.consequence)).toEqual([
+      "description",
+      "durationMinutes",
+    ]);
+    expect(standalone.items?.required).toEqual(["characterId", "failureLoss"]);
+    expect(standalone.items?.properties.consequence.required).toEqual([
+      "description",
+      "durationMinutes",
+    ]);
   });
 
   it("every delta array shares one shape", () => {
@@ -248,6 +278,16 @@ describe("operation kinds have one source", () => {
         expect(op.fields).not.toBe("");
       }
     }
+  });
+
+  it("makes character conditions objective major impairments in the advertised contract", () => {
+    const addCondition = CHARACTER_OPS.find((op) =>
+      op.kinds.includes("addCondition")
+    );
+    expect(addCondition?.fields).toContain("description:string");
+    expect(addCondition?.fields).toContain("objective");
+    expect(addCondition?.fields).toContain("severely impairs");
+    expect(addCondition?.fields).toContain("never a thought, feeling");
   });
 });
 

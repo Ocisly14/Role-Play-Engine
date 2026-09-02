@@ -9,8 +9,8 @@ import { catalogSkillName } from "../rules/skillCatalog.js";
  * - Per-skill entries come from `mechanicalEffect.skillPenalty[<skill>]`
  * - `"*"` entry sums all `mechanicalEffect.globalSkillPenalty` values
  *
- * Callers typically compose this with `getScenePenalties` before calling
- * `applyPenalties(npcSkills, map)`.
+ * Apply the result with `effectiveSkillValue` below, NOT with
+ * `applyPenalties` — see that function's comment for why.
  */
 export function getCharacterConditionPenalties(
   characterId: string,
@@ -41,4 +41,35 @@ export function getCharacterConditionPenalties(
     }
   }
   return penalties;
+}
+
+/**
+ * Floor on the TOTAL handicap conditions may stack onto one roll. Penalties
+ * sum, so "exhausted" (-20) plus a shattering shock (-25) is -45, which drags
+ * a 60 skill down to 15. `Math.max(1, …)` alone prevents the absurd but not
+ * the futile; this keeps a stacked handicap severe rather than structurally
+ * impossible.
+ */
+export const MAX_AGGREGATE_SKILL_PENALTY = -40;
+
+/**
+ * The actor's skill value for THIS roll, after their active conditions.
+ *
+ * Applied to an already-RESOLVED value rather than to the skills record,
+ * because `resolveSkillValue` answers from two places the record does not
+ * contain: `SKILL_BASE_VALUES` when the domain is untrained, and
+ * `languages.learned` for a Languages check. Penalizing the record first (the
+ * shape `applyPenalties` offers) would let every untrained and every language
+ * roll escape the handicap entirely.
+ */
+export function effectiveSkillValue(
+  canonicalSkillId: string,
+  rawValue: number,
+  penalties: Map<string, number>
+): number {
+  const total = Math.max(
+    MAX_AGGREGATE_SKILL_PENALTY,
+    (penalties.get("*") ?? 0) + (penalties.get(canonicalSkillId) ?? 0)
+  );
+  return Math.max(1, rawValue + total);
 }

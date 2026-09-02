@@ -15,15 +15,22 @@ import { finalizeResolution } from "../../resolution/worldDeltaValidator.js";
 import { SubsystemRegistry } from "../../subsystem/registry.js";
 import { CodeToolRegistry } from "../../tools/codeTool.js";
 import { type TickEngine, createTickEngine } from "../tickEngine.js";
+import type { CharacterCondition } from "../types.js";
 
-function makeDgsm(opts: { aliveIds?: string[] } = {}) {
+function makeDgsm(
+  opts: {
+    aliveIds?: string[];
+    skills?: Record<string, number>;
+    conditions?: CharacterCondition[];
+  } = {}
+) {
   let clock = "1923-04-02T09:00:00";
   const alive = new Set(opts.aliveIds ?? ["npc_1", "npc_2"]);
   const npc = (id: string) => ({
     id,
     name: id,
     attributes: { STR: 50 },
-    skills: {},
+    skills: opts.skills ?? {},
     status: {
       hp: 10,
       maxHp: 10,
@@ -31,7 +38,7 @@ function makeDgsm(opts: { aliveIds?: string[] } = {}) {
       maxSan: 60,
       fatigue: 0,
       maxFatigue: 10,
-      conditions: [],
+      conditions: opts.conditions ?? [],
     },
     relationships: [],
   });
@@ -629,5 +636,107 @@ describe("a walk that starts partway along a road", () => {
     expect(started?.resolvedDurationTicks).toBe(2); // ceil(1.5 / 1)
     // The clock is at 09:01 when the action starts, plus its own 2 ticks.
     expect(started?.nextWakeAt).toBe("1923-04-02T09:03:00");
+  });
+});
+
+describe("conditions reach the dice", () => {
+  /** A stub that sets a bar when the action starts, so code rolls when its
+   *  time is spent — the only place in the engine a skill is actually rolled. */
+  function stubResolveWithCheck() {
+    const fn = vi.fn(async (context: EngineResolutionContext) => {
+      const raw: RawTickResolution = { starting: [], ending: [] };
+      for (const t of context.trigger.triggers) {
+        for (const actionId of t.actionIds) {
+          if (t.reason === "new_action") {
+            raw.starting?.push({
+              actionId,
+              resolvedDurationTicks: 1,
+              timingReason: "stub",
+              check: { requiredLevel: "regular", basis: "stub bar" },
+            });
+          }
+        }
+      }
+      const finalized = finalizeResolution(raw, context);
+      return {
+        ok: true as const,
+        resolution: finalized.resolution,
+        movementInits: finalized.movementInits,
+        checkInits: finalized.checkInits,
+        codeToolInvocations: [],
+      };
+    });
+    return { fn, calls: [] as EngineResolutionContext[] };
+  }
+
+  const shaken: CharacterCondition = {
+    id: "sanity_tick_1_0",
+    featureId: "sanity",
+    description: "my hands will not stop shaking",
+    mechanicalEffect: { globalSkillPenalty: -20 },
+  };
+
+  it("rolls the actor against a value their conditions lowered", async () => {
+    // The handicap lives in the deterministic dice, NOT in the trust boundary:
+    // the command was accepted exactly as it would have been for a steady
+    // character, and only the roll knows the difference.
+    const { engine } = makeEngine(
+      makeDgsm({ skills: { Social: 60 }, conditions: [shaken] }),
+      stubResolveWithCheck()
+    );
+    const receipt = await engine.submitCommand(
+      command({ declaredSkillId: "Social" })
+    );
+    expect(receipt.accepted).toBe(true);
+
+    await engine.tick(); // starts, sets the bar
+    await engine.tick(); // time spent, code rolls
+
+    const action = engine.getAction(receipt.actionId!);
+    expect(action?.checkOutcome?.actor).toMatchObject({
+      skillId: "Social",
+      skillValue: 40,
+      skillValueBase: 60,
+    });
+  });
+
+  it("leaves a steady character's roll untouched, and says so by omission", async () => {
+    const { engine } = makeEngine(
+      makeDgsm({ skills: { Social: 60 } }),
+      stubResolveWithCheck()
+    );
+    const receipt = await engine.submitCommand(
+      command({ declaredSkillId: "Social" })
+    );
+    await engine.tick();
+    await engine.tick();
+
+    const roll = engine.getAction(receipt.actionId!)?.checkOutcome?.actor;
+    expect(roll?.skillValue).toBe(60);
+    expect(roll?.skillValueBase).toBeUndefined();
+  });
+
+  it("applies stamina's fatigue penalties, which never reached a roll before", async () => {
+    // Wiring this path turns on penalties the stamina subsystem has authored
+    // all along. Pinned here so the change is a test, not a surprise in a sim.
+    const exhausted: CharacterCondition = {
+      id: "stamina:exhausted",
+      featureId: "stamina",
+      description: "exhausted",
+      mechanicalEffect: { globalSkillPenalty: -20 },
+    };
+    const { engine } = makeEngine(
+      makeDgsm({ skills: { Social: 55 }, conditions: [exhausted] }),
+      stubResolveWithCheck()
+    );
+    const receipt = await engine.submitCommand(
+      command({ declaredSkillId: "Social" })
+    );
+    await engine.tick();
+    await engine.tick();
+
+    expect(
+      engine.getAction(receipt.actionId!)?.checkOutcome?.actor?.skillValue
+    ).toBe(35);
   });
 });

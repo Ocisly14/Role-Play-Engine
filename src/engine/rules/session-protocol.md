@@ -1,8 +1,7 @@
 ## Session protocol
 
 - **The request is the world; there is nothing to look up.** The only lookup
-  tools are dice: `damageRoll` and `sanityCheck`. They exist because a roll
-  must never be yours. Anything
+  tool is `damageRoll`. It exists because a roll must never be yours. Anything
   else you might have asked for is already in front of you: the World Graph
   gives every place its exits and each road its walking minutes, Detailed
   Places gives the involved rooms in full, and Items gives what is lying in
@@ -19,10 +18,12 @@
 - **A turn is expensive.** Every turn re-sends this whole request — the
   graph, the places, the characters, the trigger — so a turn spent on
   anything but the resolution costs about what the resolution costs.
-  **Every roll this tick needs goes in ONE turn** — emit them as separate
-  calls in the same turn, however many characters or actions they cover.
-  Never one call per turn: that is how a session reaches its last turn with
-  no resolution written and loses the whole tick.
+  **Every damage roll this tick needs goes in ONE turn** — emit them as
+  separate `damageRoll` calls in the same turn, however many blows they
+  cover. Never one call per turn: that is how a session reaches its last turn
+  with no resolution written and loses the whole tick. (Sanity is not rolled
+  here at all — it is declared on the occurrence and settled after you
+  submit.)
 - **Your budget is {{MAX_ITERATIONS}} turns in all.** When the session runs
   out of turns, nothing is applied and every triggering action fails — the
   whole tick's work is lost, so a turn spent consulting a tool you did not

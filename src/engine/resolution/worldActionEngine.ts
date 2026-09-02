@@ -2,8 +2,8 @@
 //
 // The unified World Action Engine session (plan Phase 7). Called once per
 // triggered tick with the full EngineResolutionContext. Runs an agentic loop:
-// the model may consult deterministic dice tools (damage and sanity checks —
-// a roll must never be the model's) and must finish with
+// the model may consult the deterministic damage dice (a roll must never be
+// the model's) and must finish with
 // one terminal `submit_resolution` call. Output is validated in code; one
 // corrective retry, then whatever is still invalid is dropped and the
 // affected actions are failed. No action types, no per-definition prompts —
@@ -97,7 +97,7 @@ const RULES_DOC = loadRuleFile(
 );
 const SANITY_RULES_DOC = loadRuleFile(
   "sanity-check.md",
-  "Sanity checks are involuntary, apply only to characters who perceived a concrete horror, and must use the sanityCheck tool. Apply exactly the loss code returns as a negative character.san delta."
+  "Sanity checks are involuntary and rare. Declare one under an occurrence's `sanityChecks` naming a character who perceived a concrete horror, with the failure loss and the consequence they will carry. Code rolls it; a passed check costs nothing."
 );
 /** The turn budget is a code constant and a prompt sentence at once. The
  *  document names it with a placeholder so the two cannot drift: a model told

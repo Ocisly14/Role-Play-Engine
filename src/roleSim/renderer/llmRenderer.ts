@@ -87,6 +87,9 @@ they cannot touch, address or walk toward this minute.
 - Render only what the viewpoint can perceive RIGHT NOW: external sights, sounds,
   smells, touches, plus your own body/mind state. Do NOT mention memory,
   relationships, prior knowledge, or future plans.
+- The viewpoint's OWN conditions are always felt. Let them colour the whole
+  paragraph — what draws the eye, how the hands behave, what the body will not
+  do — never state them as a label, a diagnosis or a status line.
 - **When "Own action this tick" is present, the narrative MUST render it.**
   It is the one thing the viewpoint cannot fail to notice — their own hands.
   \`Ongoing:\` renders as what they are doing at this moment of it ("my knife

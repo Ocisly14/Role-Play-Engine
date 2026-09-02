@@ -43,7 +43,9 @@ export interface ReferencedEntity {
 export interface CharacterCondition {
   id: string; // unique per character; targeted by character.removeCondition
   featureId?: string; // owner feature (for observability / cleanup by featureId)
-  description: string; // human/LLM-readable
+  /** Objective, externally observable or independently verifiable state,
+   *  including the major mental or physical function it impairs. */
+  description: string;
   data?: Record<string, unknown>; // feature-private metadata
   mechanicalEffect?: {
     skillPenalty?: Record<string, number>;

@@ -45,6 +45,10 @@ import {
   type WorldActionEngineDeps,
   resolveTick,
 } from "../resolution/worldActionEngine.js";
+import {
+  effectiveSkillValue,
+  getCharacterConditionPenalties,
+} from "../shared/characterConditionPenalties.js";
 import type { SubsystemRegistry } from "../subsystem/registry.js";
 import type { AnchorSubsystem } from "../subsystem/types.js";
 import type { CodeToolRegistry } from "../tools/codeTool.js";
@@ -456,6 +460,29 @@ export class TickOrchestrator {
     const { dgsm } = this.deps;
     const skillsOf = (characterId: string): Record<string, number> =>
       dgsm.getNpcProfile(characterId)?.skills ?? {};
+    // A character's active conditions handicap the roll. Applied to the
+    // RESOLVED value, not to the skills record, so an untrained domain (base
+    // value) and a Languages check (learned tongues) cannot escape it.
+    //
+    // This is the deterministic code engine's dice, NOT the trust boundary:
+    // a shaken character may still declare anything anyone could declare.
+    // `commandValidator` and `commandBuilder` never read conditions and must
+    // not start.
+    const rollFor = (
+      characterId: string,
+      canonicalSkillId: string,
+      rawValue: number
+    ) => {
+      const penalized = effectiveSkillValue(
+        canonicalSkillId,
+        rawValue,
+        getCharacterConditionPenalties(characterId, dgsm)
+      );
+      const record = rollSkill(canonicalSkillId, penalized);
+      return penalized === rawValue
+        ? record
+        : { ...record, skillValueBase: rawValue };
+    };
 
     for (const actionId of new Set(actionIds)) {
       const action = this.deps.actionStore.get(actionId);
@@ -470,7 +497,11 @@ export class TickOrchestrator {
       if (!actorSkill) continue;
 
       const outcome = resolveCheck({
-        actorRoll: rollSkill(actorSkill.canonicalSkillId, actorSkill.value),
+        actorRoll: rollFor(
+          action.command.actorId,
+          actorSkill.canonicalSkillId,
+          actorSkill.value
+        ),
         requiredLevel: action.check.requiredLevel,
         ...(action.check.opposedBy
           ? { opposedBy: action.check.opposedBy }
@@ -482,7 +513,11 @@ export class TickOrchestrator {
           return defense
             ? {
                 ok: true,
-                record: rollSkill(defense.canonicalSkillId, defense.value),
+                record: rollFor(
+                  characterId,
+                  defense.canonicalSkillId,
+                  defense.value
+                ),
               }
             : { ok: false, reason: `unknown defense skill "${skillId}"` };
         },

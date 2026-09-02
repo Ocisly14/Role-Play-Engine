@@ -35,57 +35,99 @@ Further limits, all of which still apply on top of the list:
 - A sight that belongs to the character's own trade is not a shock: a doctor
   or nurse at a bedside, an undertaker at a body, a sheriff at a known death.
   The rule bites when the thing is outside what their work prepared them for.
-- Roll once per character for one source in one tick. A continuing sight does
-  not cause another check until it materially escalates or reveals something
-  new.
+- One check per character per tick, however many occurrences they appear in.
+  A submission that checks the same person twice is rejected; keep the
+  exposure that actually shocked them. A continuing sight does not cause
+  another check until it materially escalates or reveals something new.
 - If an objective event already contains an explicit SAN result or SAN delta,
   it has already been resolved. Apply/report it; do not roll it again.
 - A character whose sheet has no sanity capacity (for example a Mythos entity
   with `maxSan: 0`) does not make sanity checks.
 
-## How to check
+## How to declare
 
-Call `sanityCheck` with the resolving `actionId`, exposed `characterId`,
-and the success/failure loss formulas. Code reads the character's current SAN,
-rolls d100, chooses the correct formula, and rolls the loss. Never invent,
-estimate, or reroll any of those numbers.
+Put a `sanityChecks` entry on the occurrence in which that character
+perceived the thing, in this same submission. Name the `characterId` and the
+`failureLoss`. Code reads their current SAN, rolls d100 and settles it. Never
+invent, estimate or reroll any of those numbers, and never call a tool for
+this — there is none.
 
-**Both formulas may not be zero.** `0/0` is not a loss pair — it is a check
-that cannot cost anything, and calling it wastes a turn the resolution needs.
-If the lowest pair below (`0/1`) already feels too heavy for what happened,
-that is the answer: **do not check at all.** There is no such thing as a
-formality check.
+**A passed check costs nothing at all**: no SAN, no consequence. So a
+declaration is not a way to hang a mood on someone who merely saw something
+unpleasant. It is a coin the world flips on whether this broke them a little.
 
-**Send them all in one turn.** If several characters are exposed to the same
-revelation, call `sanityCheck` once for each of them in a SINGLE turn. One
-call per turn spends the whole session's budget before the resolution is
-written, and the tick is then lost entirely.
+**Do not also write a `character` `san` change for the same exposure.** Code
+emits it from the roll; writing your own charges the character twice.
 
-An authored module/event loss pair is authoritative. When the fiction clearly
-warrants a check but supplies none, use the lowest fitting pair:
+## The loss
 
-- **0/1** — an exceptionally disturbing but human-scale shock.
-- **0/1d4** — credible indirect Mythos evidence or a brief minor
+There is only a failure loss now — passing is free, so there is nothing to
+pair it with. An authored module or event loss is authoritative. Otherwise
+take the lowest one that fits:
+
+- **1** — an exceptionally disturbing but human-scale shock.
+- **1d4** — credible indirect Mythos evidence, or a brief minor
   manifestation.
-- **1/1d6** — direct contact with a dangerous supernatural phenomenon.
-- **1d4/1d10** — an overwhelming entity or reality-breaking revelation;
-  reserve this for genuinely extreme exposure.
+- **1d6** — direct contact with a dangerous supernatural phenomenon.
+- **1d10** — an overwhelming entity or a reality-breaking revelation; reserve
+  it for genuinely extreme exposure.
 
-The left formula is loss on a passed check; the right formula is loss on a
-failed check.
+A flat zero is refused. A check that cannot cost anything is a check that
+should not happen: resolve the action without one.
 
-## Applying the result
+## The optional severe consequence
 
-- If the tool returns `loss > 0`, emit exactly one `character.san` change
-  for that character with `delta: -loss`, sourced to the same action and a
-  reason naming the exposure. If loss is zero, emit no zero delta.
-- The objective occurrence states what was perceived, not “they lose SAN” and
-  not subjective fear prose. The Renderer turns the result into experience.
-- SAN loss alone does not authorize an invented diagnosis or bout. Add a
-  persistent mental condition only when the authored event specifies it or
-  the current state provides a concrete rule for it. This Engine does not
-  track daily SAN-loss totals, so it must not guess an indefinite-insanity
-  threshold.
-- Recovery is not a sanity check. Genuine treatment or recovery uses a
-  positive `character.san` delta under its own causal rules and never calls
-  `sanityCheck`.
+A failed check normally changes SAN only. It does **not** automatically turn
+fear, distress, or other inner activity into a world-state condition. Code
+applies a consequence only when the actual loss is at least 5 SAN. That is the
+boundary for a major impairment rather than an ordinary reaction.
+
+Include `consequence` only when a sufficiently severe failure could leave an
+objective state that radically impairs mental or physical function. It has
+two fields:
+
+- `description`: one present-tense description combining signs another
+  observer could see or a clinician could independently verify with the major
+  impairment, for example: "Speech is incoherent and the person cannot remain
+  oriented to place, so they cannot communicate a coherent plan or act safely
+  without guidance."
+- `durationMinutes`: how long that objective impairment persists.
+
+Do not write first-person narration or an inner state. "I am terrified," "she
+feels watched," "he keeps thinking about the body," regret, suspicion, grief,
+unease, resolve, and vigilance are not conditions. Do not write a mere
+diagnostic label, a numerical mechanic, or an instruction. If you cannot name
+a major functional impairment that a third party could verify, omit the whole
+`consequence`.
+
+## How long
+
+When a severe consequence is present, use whole minutes from 5 to 1440. A
+short-lived major disorientation may be minutes; a profound break may be an
+hour or two. The rest of the day belongs to something that broke the world.
+
+Nothing but the clock revokes it — there is no path by which you, or anyone,
+lift it early. **A consequence that outlives the reason for it is worse than
+no consequence at all**, so choose the shorter duration when you are unsure.
+
+## Two different SAN paths
+
+This document governs **involuntary horror exposure only**, and it is the
+only path that rolls dice.
+
+Everything else that moves SAN — treatment and recovery, a scripted event's
+authored cost, the cases described in the Occult, Medicine & Psychology and
+Social skill documents — stays a direct `character` `san` change under its
+own causal rules, and never goes through `sanityChecks`. Recovery is not a
+sanity check.
+
+## What you still write yourself
+
+- The objective occurrence states what was perceived — not "they lose SAN",
+  and not subjective fear prose. The Renderer turns the result into
+  experience.
+- SAN loss does not authorize an invented diagnosis or subjective mood. The
+  optional consequence above is only an objective, major functional
+  impairment; anything else remains an occurrence and character-authored
+  memory. This Engine does not track daily SAN-loss totals, so it must not
+  guess an indefinite-insanity threshold.

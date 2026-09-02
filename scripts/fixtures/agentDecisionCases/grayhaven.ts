@@ -2,7 +2,7 @@
 //
 // Grayhaven (灰港镇) case table — a COMPACT smoke suite for the current
 // engine architecture on the new module, selected by `--module grayhaven`.
-// Seven scenarios, one case each, ~42 ticks total. Each case aims at one
+// Eight scenarios, one case each, ~50 ticks total. Each case aims at one
 // thing the new architecture does differently:
 //
 //   gh-street-node    顶层街面场景：可站立、可感知、可相遇（junction 已并入场景）
@@ -13,6 +13,7 @@
 //   gh-write-memory   异常刺激 → writeMemory（opening event 走 scripted-event 路径）
 //   gh-drive-truck    载具日常：上车（position→驾驶室）→ 说出路线 → Engine 标注
 //                     movement.vehicleId → 车按 driveTimeMinutes 走、人不动
+//   gh-sanity-check   恐怖揭示 → Engine 声明 sanityChecks → 代码掷骰并结算
 //
 // 技能层（grayhavenSkill*.ts，每域一景三人设：老手/无训练硬上/情境召唤）：
 //   荒野 Survival & Navigation / Watercraft Operation / Occult
@@ -204,6 +205,32 @@ export const GRAYHAVEN_SCENARIOS: SimScenario[] = [
             "桌上的收音机毫无征兆地自己响了一声，窜出一段不像任何电台的规律性杂音——嗒、嗒嗒、嗒——持续了几秒，又恢复成正常的播报，好像什么都没发生过。",
           impact: 2,
         },
+      },
+    ],
+  },
+  {
+    id: "gh-sanity-check",
+    group: "world",
+    title: "Sanity：Earl 发现雷德利站保存了他的整个人生",
+    targetDefs: [],
+    cases: [
+      {
+        // 这不是 openingEvent.harm：固定扣 SAN 会绕过正在测试的正式链路。
+        // Earl 必须先主动读取检索台，World Action Engine 才能在揭示事实的
+        // occurrence 上声明 sanityChecks；随后由代码掷 d100、计算损失并
+        // 写入有时限的精神状态。SAN 压到 1 是测试夹具：99% 的掷骰会失败，
+        // 让摘要稳定显示 SAN 变化和 condition；若恰好掷出 1，可从专用脚本
+        // 自动保存的原始 Engine 输出核对 sanityChecks 确实已经声明。
+        label: "Earl｜检索台展开一份不可能存在的完整人生记录",
+        ticks: 8,
+        scene: "雷德利站·档案室",
+        actors: [
+          {
+            npc: "npc_earl_pruitt",
+            san: 1,
+            goal: "你已经闯进雷德利站档案室。带红环的旧插槽刻着你的名字，中央检索台也在等你靠近。走到台前，亲手调出 Earl Pruitt 的记录并读清楚；无论机器亮出什么，都要确认它究竟保存了你的什么。",
+          },
+        ],
       },
     ],
   },

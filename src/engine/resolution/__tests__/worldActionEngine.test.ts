@@ -140,11 +140,6 @@ function makeDeps() {
     description: "stub",
     execute: () => ({ ok: true, total: 5, dice: [4, 1] }),
   });
-  codeTools.register({
-    name: "sanityCheck",
-    description: "stub",
-    execute: () => ({ ok: true, passed: false, loss: 4 }),
-  });
   return { dgsm: {} as DynamicGameStateManager, codeTools };
 }
 
@@ -201,19 +196,14 @@ describe("resolveTick session loop", () => {
     expect(toolMsg.results[0].content).toContain("total");
   });
 
-  it("attributes sanity-check invocations to their causing action", async () => {
+  it("attributes code-tool invocations to their causing action", async () => {
     generateToolCalls
       .mockResolvedValueOnce(
         turn([
           {
-            id: "san",
-            name: "sanityCheck",
-            args: {
-              actionId: "action_c1",
-              characterId: "npc_1",
-              successLoss: "0",
-              failureLoss: "1d4",
-            },
+            id: "dmg",
+            name: "damageRoll",
+            args: { actionId: "action_c1", formula: "1d4" },
           },
         ])
       )
@@ -229,7 +219,7 @@ describe("resolveTick session loop", () => {
     if (!result.ok) return;
     expect(result.codeToolInvocations).toContainEqual(
       expect.objectContaining({
-        toolName: "sanityCheck",
+        toolName: "damageRoll",
         actionId: "action_c1",
       })
     );
@@ -569,11 +559,17 @@ describe("the turn budget", () => {
     // The budget is a code constant and a prompt sentence at once; the
     // document names it with a placeholder so the two cannot drift.
     expect(prompt).not.toContain("{{");
-    expect(prompt).toMatch(/\b3 turns in all\b/);
+    expect(prompt).toMatch(/\b5 turns in all\b/);
     // And why there is nothing to spend those turns on but the resolution.
     expect(prompt).toContain("there is nothing to look up");
     expect(prompt).toContain("A turn is expensive");
     expect(prompt).toContain("# Sanity Check Guidance");
-    expect(prompt).toContain("sanityCheck");
+    expect(prompt).toContain("strict objective threshold");
+    expect(prompt).toContain("Inner activity is never a condition");
+    // Sanity is DECLARED on an occurrence, not called as a tool. The negative
+    // assertion is the load-bearing half: it is what stops the tool — and its
+    // loop — creeping back into the prompt.
+    expect(prompt).toContain("sanityChecks");
+    expect(prompt).not.toMatch(/Call `sanityCheck`|the `sanityCheck` tool/);
   });
 });

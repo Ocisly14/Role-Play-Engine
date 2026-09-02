@@ -1,10 +1,14 @@
 // src/engine/tools/diceTools.ts
 //
-// Trusted randomness for the unified Engine: damage dice and involuntary
-// sanity checks. The actor's declared-skill roll is NEVER made here — it
-// already exists as the command's immutable SkillRollRecord (rolled at
-// intake) and must not be re-rolled. Both tools accept explicit roll values
-// so a replay can pin recorded outcomes.
+// Trusted randomness for the unified Engine. `damageRoll` is the one code
+// tool the resolution session can call; it accepts explicit roll values so a
+// replay can pin recorded outcomes.
+//
+// The actor's declared-skill roll is NEVER made here — it already exists as
+// the command's immutable SkillRollRecord (rolled at intake) and must not be
+// re-rolled. Sanity is not a tool either: it is declared on an occurrence and
+// settled by `resolution/sanityResolver.ts`, which reuses the formula helpers
+// exported below.
 
 import { successLevelFor } from "../actions/skillRollService.js";
 import { rollD100 } from "../shared/index.js";
@@ -102,44 +106,21 @@ export const damageRollTool: EngineCodeTool<DamageRollInput, DamageRollOutput> =
     },
   };
 
-// ==================== Sanity checks ====================
+// ==================== Sanity loss formulas ====================
+//
+// No `sanityCheck` tool lives here any more. It was a stateless, non-idempotent
+// roll the model started mid-session: every repeat returned a fresh d100 and
+// `ok: true`, so nothing in the payload ever said "this exposure is settled".
+// Measured over 30 full-injection ticks, five of them burned the entire
+// session budget re-rolling the SAME (actionId, characterId) and never
+// submitted, dropping the whole tick. Sanity is now DECLARED on the occurrence
+// that caused it and rolled in code, which makes the loop structurally
+// impossible — one submission, one roll.
+//
+// These helpers survive because the declaration still carries a dice formula.
 
-export interface SanityCheckInput {
-  /** Action whose consequence exposed the character; retained in the audit output. */
-  actionId: string;
-  characterId: string;
-  /** SAN loss formula when d100 <= current SAN. */
-  successLoss: string;
-  /** SAN loss formula when d100 > current SAN. */
-  failureLoss: string;
-  /** Replay/test only; omitted from the model-facing schema. */
-  fixedRoll?: number;
-  /** Replay/test only; omitted from the model-facing schema. */
-  fixedLossRolls?: number[];
-}
-
-export type SanityCheckOutput =
-  | {
-      ok: true;
-      actionId: string;
-      characterId: string;
-      currentSan: number;
-      roll: number;
-      passed: boolean;
-      lossFormula: string;
-      lossRolls: number[];
-      loss: number;
-    }
-  | {
-      ok: false;
-      reason:
-        | "unknown_character"
-        | "sanity_not_applicable"
-        | "invalid_loss_formula"
-        | "invalid_fixed_roll";
-    };
-
-function validSanityLossFormula(formula: string): boolean {
+/** A loss formula the world will accept: "1", "1d4", "2d6+1". */
+export function validSanityLossFormula(formula: string): boolean {
   const match = FORMULA_RE.exec(formula ?? "");
   if (!match) return false;
   if (match[5] !== undefined) {
@@ -150,13 +131,29 @@ function validSanityLossFormula(formula: string): boolean {
   return count >= 1 && count <= 100 && sides >= 1;
 }
 
-function rollSanityLoss(
+/** True for a formula that cannot ever cost a point — a flat integer <= 0.
+ *  Dice formulas are never guaranteed-zero (`rollSanityLoss` floors at 0, but
+ *  `1d4` can still land above it), so only the flat case counts.
+ *
+ *  Since a PASSED check now costs nothing, a guaranteed-zero failure loss is a
+ *  check that cannot cost anything at all — which is a check that should not
+ *  happen. The validator refuses it. */
+export function isGuaranteedZeroLoss(formula: string): boolean {
+  const match = FORMULA_RE.exec(formula ?? "");
+  if (!match || match[5] === undefined) return false;
+  return Number.parseInt(match[5], 10) <= 0;
+}
+
+/** Roll a loss formula. `rng` returns a uniform [0,1) and is injectable so a
+ *  whole resolution's dice — the d100 and every loss die — can be pinned from
+ *  one source in tests and replays. */
+export function rollSanityLoss(
   formula: string,
-  fixedRolls?: number[]
+  rng: () => number = Math.random
 ): { total: number; rolls: number[] } {
   const match = FORMULA_RE.exec(formula);
-  // The caller validates both formulas before selecting one. Keep this guard
-  // so the rolling helper remains total if that invariant ever changes.
+  // The caller validates the formula before rolling it. Keep this guard so the
+  // rolling helper remains total if that invariant ever changes.
   if (!match) return { total: 0, rolls: [] };
   if (match[5] !== undefined) {
     return { total: Number.parseInt(match[5], 10), rolls: [] };
@@ -164,11 +161,10 @@ function rollSanityLoss(
 
   const count = Number.parseInt(match[1], 10);
   const sides = Number.parseInt(match[2], 10);
-  const fixed = fixedRolls ? [...fixedRolls] : [];
   const rolls: number[] = [];
   let total = 0;
   for (let i = 0; i < count; i++) {
-    const value = fixed.shift() ?? Math.floor(Math.random() * sides) + 1;
+    const value = Math.floor(rng() * sides) + 1;
     rolls.push(value);
     total += value;
   }
@@ -178,57 +174,6 @@ function rollSanityLoss(
   }
   return { total: Math.max(0, total), rolls };
 }
-
-export const sanityCheckTool: EngineCodeTool<
-  SanityCheckInput,
-  SanityCheckOutput
-> = {
-  name: "sanityCheck",
-  description:
-    "Roll d100 against a character's current SAN and roll the matching success/failure SAN-loss formula. One call per exposed character, and ALL of them in the SAME turn — one call per turn spends the session's whole budget before the resolution is written. Rare: see the sanity-check guidance for the short list of things that warrant one at all.",
-  execute(input, ctx): SanityCheckOutput {
-    const profile = ctx.dgsm.getNpcProfile(input.characterId);
-    if (!profile) return { ok: false, reason: "unknown_character" };
-
-    const currentSan = profile.status?.san;
-    const maxSan = profile.status?.maxSan;
-    if (
-      typeof currentSan !== "number" ||
-      !Number.isFinite(currentSan) ||
-      typeof maxSan !== "number" ||
-      !Number.isFinite(maxSan) ||
-      maxSan <= 0
-    ) {
-      return { ok: false, reason: "sanity_not_applicable" };
-    }
-    if (
-      !validSanityLossFormula(input.successLoss) ||
-      !validSanityLossFormula(input.failureLoss)
-    ) {
-      return { ok: false, reason: "invalid_loss_formula" };
-    }
-
-    const roll = input.fixedRoll ?? rollD100();
-    if (!Number.isInteger(roll) || roll < 1 || roll > 100) {
-      return { ok: false, reason: "invalid_fixed_roll" };
-    }
-    const passed = roll <= clampValue(currentSan, 0, 99);
-    const lossFormula = passed ? input.successLoss : input.failureLoss;
-    const rolledLoss = rollSanityLoss(lossFormula, input.fixedLossRolls);
-
-    return {
-      ok: true,
-      actionId: input.actionId,
-      characterId: input.characterId,
-      currentSan,
-      roll,
-      passed,
-      lossFormula,
-      lossRolls: rolledLoss.rolls,
-      loss: rolledLoss.total,
-    };
-  },
-};
 
 // rollD100 / successLevelFor are re-exported for the Engine's direct use in
 // deterministic aggregation (they are pure functions, not tool invocations).

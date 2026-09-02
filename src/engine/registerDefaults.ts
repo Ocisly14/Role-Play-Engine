@@ -9,7 +9,7 @@ import { staminaSubsystem } from "./subsystem/stamina.js";
 import { sunSubsystem } from "./subsystem/sun.js";
 import { weatherSubsystem } from "./subsystem/weather.js";
 import { CodeToolRegistry } from "./tools/codeTool.js";
-import { damageRollTool, sanityCheckTool } from "./tools/diceTools.js";
+import { damageRollTool } from "./tools/diceTools.js";
 
 export function createDefaultSubsystemRegistry(): SubsystemRegistry {
   const reg = new SubsystemRegistry();
@@ -30,6 +30,5 @@ export function createDefaultSubsystemRegistry(): SubsystemRegistry {
 export function createDefaultCodeToolRegistry(): CodeToolRegistry {
   const reg = new CodeToolRegistry();
   reg.register(damageRollTool);
-  reg.register(sanityCheckTool);
   return reg;
 }

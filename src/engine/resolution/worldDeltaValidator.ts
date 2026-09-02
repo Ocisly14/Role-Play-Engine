@@ -31,6 +31,12 @@ import type {
   WorldDelta,
 } from "../actions/types.js";
 import { parseJsonResponse } from "../shared/jsonParse.js";
+import {
+  isGuaranteedZeroLoss,
+  validSanityLossFormula,
+} from "../tools/diceTools.js";
+import type { SanityOutcome, SanityRollOptions } from "./sanityResolver.js";
+import { resolveSanityDeclarations } from "./sanityResolver.js";
 import type { EngineResolutionContext, ResolutionError } from "./types.js";
 import {
   CHARACTER_OPS,
@@ -60,6 +66,10 @@ export interface KnownAction {
 interface Lookup {
   characterIds: Set<string>;
   aliveCharacterIds: Set<string>;
+  /** Characters with real sanity capacity, by id. A being with `maxSan: 0`
+   *  (a Mythos entity, say) cannot be shocked, and the resolver reads the
+   *  tick-start `san` from here rather than taking a second pass over state. */
+  sanById: Map<string, { san: number; maxSan: number }>;
   /** Every scene (interior and top-level node scenes alike). */
   sceneIds: Set<string>;
   /** EVERY place in the world — scene or road — from
@@ -170,6 +180,12 @@ export function buildLookup(context: EngineResolutionContext): Lookup {
   const aliveCharacterIds = new Set(
     context.state.characters.filter((c) => c.alive).map((c) => c.id)
   );
+  const sanById = new Map<string, { san: number; maxSan: number }>();
+  for (const c of context.state.characters) {
+    if (Number.isFinite(c.san) && Number.isFinite(c.maxSan) && c.maxSan > 0) {
+      sanById.set(c.id, { san: c.san, maxSan: c.maxSan });
+    }
+  }
   const placeKinds = Object.entries(context.state.placeKinds);
   const sceneIds = new Set(
     placeKinds.filter(([, kind]) => kind === "scene").map(([id]) => id)
@@ -225,6 +241,7 @@ export function buildLookup(context: EngineResolutionContext): Lookup {
   return {
     characterIds,
     aliveCharacterIds,
+    sanById,
     sceneIds,
     placeIds,
     locationIds,
@@ -752,6 +769,111 @@ const PERSPECTIVE_PATTERNS = [
   /我(看见|听见|认出|感到)/,
 ];
 
+/** Shortest and longest a declared consequence may last, in in-world minutes.
+ *  The expiry sweep is the ONLY thing that removes one of these conditions,
+ *  and it is injected into two prompts every tick it is alive — so an
+ *  unbounded duration is both a permanent prompt cost and a handicap the
+ *  Engine can never revoke. One in-world day is long enough for "shaken for
+ *  the rest of the day" and short enough to heal itself. */
+export const MIN_CONSEQUENCE_MINUTES = 5;
+export const MAX_CONSEQUENCE_MINUTES = 1440;
+
+/**
+ * Structural validation of an occurrence's declared sanity checks. Nothing
+ * here judges whether the exposure DESERVES a check — that is the rule
+ * document's job, in full context. These are shape and reference rules only,
+ * the same bargain the action trust boundary strikes.
+ */
+export function validateSanityChecks(
+  occ: RawOccurrence,
+  lookup: Lookup
+): string[] {
+  const declarations = occ.sanityChecks ?? [];
+  if (declarations.length === 0) return [];
+
+  const errs: string[] = [];
+  // Every produced delta needs a real `sourceActionId`, and the schema sets no
+  // `minItems` on sourceActionIds — an empty array is wire-legal, and would
+  // leave the resolver with nothing to attribute the SAN loss to.
+  if ((occ.sourceActionIds ?? []).length === 0) {
+    errs.push(
+      "sanityChecks: an occurrence that declares a sanity check must name at least one sourceActionId"
+    );
+  }
+  const perceivers = new Set(occ.perceiverCharacterIds ?? []);
+  const seen = new Set<string>();
+
+  for (const [i, decl] of declarations.entries()) {
+    const at = `sanityChecks[${i}]`;
+    const id = decl?.characterId;
+    if (typeof id !== "string" || id.length === 0) {
+      errs.push(`${at}: characterId is required`);
+    } else if (!lookup.characterIds.has(id)) {
+      errs.push(`${at}: character "${id}" does not exist`);
+    } else {
+      if (!lookup.aliveCharacterIds.has(id)) {
+        errs.push(`${at}: character "${id}" is not alive`);
+      }
+      if (!lookup.sanById.has(id)) {
+        errs.push(
+          `${at}: character "${id}" has no sanity capacity and cannot be checked`
+        );
+      }
+      // Exposure is perception: the same evidence that decided who perceived
+      // this occurrence decides who can be shocked by it. A set membership
+      // test, not a judgement.
+      if (!perceivers.has(id)) {
+        errs.push(
+          `${at}: character "${id}" is not among this occurrence's perceiverCharacterIds — only someone who perceived it can be shocked by it`
+        );
+      }
+      if (seen.has(id)) {
+        errs.push(
+          `${at}: character "${id}" is already checked in this occurrence — one roll per character per exposure`
+        );
+      }
+      seen.add(id);
+    }
+
+    if (!validSanityLossFormula(decl?.failureLoss)) {
+      errs.push(
+        `${at}: failureLoss "${decl?.failureLoss}" is not a dice formula`
+      );
+    } else if (isGuaranteedZeroLoss(decl.failureLoss)) {
+      errs.push(
+        `${at}: failureLoss "${decl.failureLoss}" cannot cost anything, and a passed check already costs nothing — a check that cannot cost anything is one that should not happen. Resolve the action without it.`
+      );
+    }
+
+    const consequence = decl?.consequence;
+    if (consequence === undefined) continue;
+    if (typeof consequence !== "object" || consequence === null) {
+      errs.push(`${at}: consequence must be an object when provided`);
+      continue;
+    }
+    if (!consequence.description?.trim()) {
+      errs.push(
+        `${at}: consequence.description is required and must describe objective observable or independently verifiable signs, not inner activity`
+      );
+    }
+    const minutes = consequence.durationMinutes;
+    // Not hygiene — crash prevention. `finalizeResolution` runs after this and
+    // hands the number to `addMinutes`, which THROWS on a non-integer, and a
+    // throw there takes the whole tick down. A malformed submission must be a
+    // repairable error, never a crash.
+    if (
+      !Number.isInteger(minutes) ||
+      minutes < MIN_CONSEQUENCE_MINUTES ||
+      minutes > MAX_CONSEQUENCE_MINUTES
+    ) {
+      errs.push(
+        `${at}: consequence.durationMinutes must be a whole number of minutes between ${MIN_CONSEQUENCE_MINUTES} and ${MAX_CONSEQUENCE_MINUTES}, got ${String(minutes)}`
+      );
+    }
+  }
+  return errs;
+}
+
 export function validateOccurrence(
   occ: RawOccurrence,
   lookup: Lookup,
@@ -816,6 +938,10 @@ export function validateOccurrence(
       }
     }
   }
+  // One call site covers both places an occurrence can appear — standalone in
+  // `occurrences[]` and embedded in an ending — and each inherits the right
+  // error address for free.
+  errs.push(...validateSanityChecks(occ, lookup));
   return errs;
 }
 
@@ -974,6 +1100,39 @@ export function validateRawResolution(
         createdItemIds
       )
     );
+  }
+
+  // One shock per character per tick, across the WHOLE submission.
+  // `validateSanityChecks` sees a single occurrence and cannot catch the same
+  // person being checked in two of them. This is the structural replacement
+  // for the deleted session ledger, and it is what makes the old loop
+  // impossible: not "the tool refuses" but "the submission is rejected at an
+  // address, and the repair is one targeted edit".
+  const shocked = new Set<string>();
+  const noteShocks = (
+    occ: Pick<RawOccurrence, "sanityChecks"> | null | undefined,
+    target: ResolutionError["target"]
+  ): void => {
+    for (const decl of occ?.sanityChecks ?? []) {
+      const id = decl?.characterId;
+      if (typeof id !== "string" || id.length === 0) continue;
+      if (shocked.has(id)) {
+        at(target, [
+          `sanityChecks: "${id}" is already checked elsewhere in this submission — one roll per character per tick, however many occurrences they appear in. Keep the exposure that actually shocked them and drop the other.`,
+        ]);
+        continue;
+      }
+      shocked.add(id);
+    }
+  };
+  (raw.occurrences ?? []).forEach((o, i) => {
+    noteShocks(o, { kind: "occurrence", index: i });
+  });
+  for (const entry of raw.ending ?? []) {
+    noteShocks(entry?.occurrence, {
+      kind: "action",
+      actionId: entry?.actionId ?? "",
+    });
   }
 
   return errors;
@@ -1172,6 +1331,9 @@ export interface FinalizedResolution {
       opposedBy?: Array<{ characterId: string; skillId: string }>;
     }
   >;
+  /** What each declared sanity check actually rolled. The resulting deltas are
+   *  already folded into `resolution.characterChanges`; this is the trace. */
+  sanityOutcomes: SanityOutcome[];
 }
 
 /**
@@ -1187,7 +1349,10 @@ export interface FinalizedResolution {
  */
 export function finalizeResolution(
   raw: RawTickResolution,
-  context: EngineResolutionContext
+  context: EngineResolutionContext,
+  /** Injectable dice, so a replay or a test can pin every sanity roll this
+   *  resolution makes from one source. */
+  sanityOpts?: SanityRollOptions
 ): FinalizedResolution {
   const lookup = buildLookup(context);
   const transitions: ActionTransition[] = [];
@@ -1314,6 +1479,18 @@ export function finalizeResolution(
       .map((e) => ({ ...e.occurrence, sourceActionIds: [e.actionId] })),
   ];
 
+  // Settled here, after the fold, so standalone occurrences and endings' own
+  // occurrences are both covered by construction. Finalization runs exactly
+  // once per session and only on a clean submission, which is what guarantees
+  // one roll per declaration.
+  const sanity = resolveSanityDeclarations(
+    rawOccurrences,
+    lookup,
+    context.tick,
+    sanityOpts
+  );
+  characterChanges.push(...sanity.deltas);
+
   const occurrences: Occurrence[] = [];
   rawOccurrences.forEach((o, i) => {
     if (o == null) return;
@@ -1355,6 +1532,7 @@ export function finalizeResolution(
     },
     movementInits,
     checkInits,
+    sanityOutcomes: sanity.outcomes,
   };
 }
 

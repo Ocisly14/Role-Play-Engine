@@ -91,6 +91,23 @@ export interface RawItemChange extends RawSourcedDelta {
   itemId?: string;
 }
 
+/** One declared sanity check, riding on the occurrence whose perception
+ *  caused it. The model declares; code rolls. A PASSED check costs nothing at
+ *  all, so there is only a failure loss — no success/failure pair. */
+export interface RawSanityCheck {
+  characterId: string;
+  /** Dice formula for the loss on a FAILED check, e.g. "1", "1d4", "1d10". */
+  failureLoss: string;
+  /** Candidate severe impairment if the failed roll actually loses at least
+   *  5 SAN. Lesser losses change SAN but do not create a condition. */
+  consequence?: {
+    /** Objective signs and the major impairment they cause. */
+    description: string;
+    /** Whole in-world minutes; becomes the condition's `expiresAt`. */
+    durationMinutes: number;
+  };
+}
+
 export interface RawOccurrence {
   sourceActionIds: string[];
   locationId?: string;
@@ -114,6 +131,7 @@ export interface RawOccurrence {
     originLocationId?: string;
     intensity?: number;
   }>;
+  sanityChecks?: RawSanityCheck[];
 }
 
 export interface RawTickResolution {
@@ -164,7 +182,8 @@ export const CHARACTER_OPS: OperationSpec[] = [
   },
   {
     kinds: ["addCondition"],
-    fields: "condition:{id:string, description:string}",
+    fields:
+      "condition:{id:string, description:string} — description must state an objective, persistent, independently observable/verifiable state and the important mental or physical function it makes impossible or severely impairs; never a thought, feeling, mood, attitude, opinion, suspicion, relationship stance, or recognition",
   },
   { kinds: ["removeCondition"], fields: "conditionId:string" },
   // No `relationship`. What one character thinks of another is theirs to
@@ -364,6 +383,53 @@ const OCCURRENCE_BODY = {
         intensity: { type: "number" },
       },
       required: ["channel"],
+      additionalProperties: false,
+    },
+  },
+  // Declared here, rolled by code. The bounds are duplicated in the validator
+  // on purpose: several providers enforce them during structured output, which
+  // turns a repair round — a whole-world round trip — into a non-event.
+  sanityChecks: {
+    type: "array",
+    maxItems: 8,
+    description:
+      "Involuntary sanity checks caused by perceiving THIS occurrence. Rare — see the sanity guidance for the closed list of things that warrant one. Code reads the character's SAN, rolls d100 and settles it; a passed check costs nothing at all. Do not also write a character `san` change for the same exposure.",
+    items: {
+      type: "object",
+      properties: {
+        characterId: {
+          type: "string",
+          description:
+            "Must be one of this occurrence's perceiverCharacterIds — exposure is perception.",
+        },
+        failureLoss: {
+          type: "string",
+          description:
+            'SAN lost when the check FAILS: "1", "1d4", "1d6" or "1d10". There is no success loss — passing is free. A flat zero is refused.',
+        },
+        consequence: {
+          type: "object",
+          description:
+            "Optional candidate condition for a severe failed reaction. Code applies it only when actual SAN loss is at least 5. Omit it for a reaction that would only be fear, distress, unease, or another inner feeling.",
+          properties: {
+            description: {
+              type: "string",
+              description:
+                "One objective present-tense description combining signs another observer could see or independently verify with the important mental or physical function now impossible or severely impaired. Never first-person inner narration, thoughts, feelings, mood, attitude, or opinion. If no major impairment exists, omit the whole consequence.",
+            },
+            durationMinutes: {
+              type: "integer",
+              minimum: 5,
+              maximum: 1440,
+              description:
+                "Whole in-world minutes it lasts. Nothing but the clock can revoke it.",
+            },
+          },
+          required: ["description", "durationMinutes"],
+          additionalProperties: false,
+        },
+      },
+      required: ["characterId", "failureLoss"],
       additionalProperties: false,
     },
   },
@@ -642,10 +708,10 @@ export const repairResolutionTool: ToolSpec = {
  * LLM-facing declarations of the deterministic code tools. Execution runs
  * through the CodeToolRegistry; results are trusted and recorded.
  *
- * Only dice tools, because a turn is not cheap. Every tool call spends a round trip
+ * One tool, because a turn is not cheap. Every tool call spends a round trip
  * of the whole world context — measured at ~60k tokens on a full town — so a
  * tool only earns its place by answering something the request cannot say.
- * Three did not, and were removed:
+ * Four did not, and were removed:
  *
  *   `pathfinding` / `movementCost` — the World Graph section already renders
  *     every top-level place with its exits and each road's walking minutes,
@@ -658,8 +724,19 @@ export const repairResolutionTool: ToolSpec = {
  *   `inventoryValidation` — replaced by putting the answer in the request:
  *     a command that names a person, or an item a person holds, now pulls
  *     that person's pockets into the Items section (contextBuilder).
+ *   `sanityCheck` — a roll is still code's to make, but it did not have to be
+ *     a TOOL. Stateless and non-idempotent, it returned a fresh d100 and
+ *     `ok: true` to every repeat, so nothing in the payload ever signalled
+ *     that an exposure was settled. Over 30 full-injection ticks, five spent
+ *     the entire session budget re-rolling the same (actionId, characterId)
+ *     and never submitted — the whole tick dropped, five times. It is now
+ *     DECLARED on the occurrence that caused it (`sanityChecks`) and rolled
+ *     during finalization, which makes the loop structurally impossible: the
+ *     model submits once.
  *
- * Dice stay. A roll is the one thing the model must never do itself.
+ * `damageRoll` stays. A roll is the one thing the model must never do itself,
+ * and damage — unlike sanity — is asked for mid-resolution, after the Engine
+ * has decided a blow landed.
  */
 export const CODE_TOOL_SPECS: ToolSpec[] = [
   {
@@ -673,31 +750,6 @@ export const CODE_TOOL_SPECS: ToolSpec[] = [
         damageBonus: { type: "string" },
       },
       required: ["formula"],
-      additionalProperties: false,
-    },
-  },
-  {
-    name: "sanityCheck",
-    description:
-      "Roll an involuntary sanity check against a character's current SAN, then roll the authored success/failure loss formula. Use only for a character who perceived the horror.",
-    inputSchema: {
-      type: "object",
-      properties: {
-        actionId: {
-          type: "string",
-          description: "The action whose consequence caused this exposure.",
-        },
-        characterId: { type: "string" },
-        successLoss: {
-          type: "string",
-          description: 'SAN loss formula on success, such as "0" or "1".',
-        },
-        failureLoss: {
-          type: "string",
-          description: 'SAN loss formula on failure, such as "1d4" or "1d10".',
-        },
-      },
-      required: ["actionId", "characterId", "successLoss", "failureLoss"],
       additionalProperties: false,
     },
   },

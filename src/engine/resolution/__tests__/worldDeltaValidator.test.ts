@@ -799,6 +799,27 @@ describe("operations are checked against the fields they advertise", () => {
     );
   });
 
+  it("keeps character condition validation structural", () => {
+    const missingDescription = errorsFor({
+      kind: "addCondition",
+      condition: {
+        id: "broken_forearm",
+      },
+    });
+    expect(missingDescription).toContain("description");
+
+    expect(
+      errorsFor({
+        kind: "addCondition",
+        condition: {
+          id: "broken_forearm",
+          description:
+            "the left forearm is visibly deformed; the left arm cannot lift, grip, or brace",
+        },
+      })
+    ).toBe("");
+  });
+
   it("has no relationship operation to check", () => {
     // What one character thinks of another is theirs to write, through
     // `writeMemory`. The Engine used to have an operation for it, and it did
@@ -888,5 +909,193 @@ describe("normalizeRawResolution reads what the schema did not guarantee", () =>
       asRaw({ ending: JSON.stringify(entry) })
     );
     expect(raw.ending).toEqual([]);
+  });
+});
+
+describe("declared sanity checks", () => {
+  const consequence = {
+    description:
+      "speech is incoherent and the person cannot remain oriented to place, so they cannot communicate a coherent plan or act safely without guidance",
+    durationMinutes: 30,
+  };
+  const sane = {
+    characterId: "npc_1",
+    failureLoss: "1d4",
+    consequence,
+  };
+
+  /** A standalone occurrence carrying whatever declarations a case needs. */
+  const occ = (
+    sanityChecks: unknown[],
+    over: Record<string, unknown> = {}
+  ) => ({
+    sourceActionIds: [ACTION_ID],
+    facts: [{ type: "action_result", content: "the body is in the water" }],
+    participants: [{ characterId: "npc_1", role: "actor" as const }],
+    perceiverCharacterIds: ["npc_1", "npc_2"],
+    sanityChecks,
+    ...over,
+  });
+
+  const check = (raw: RawTickResolution): string =>
+    text(validateRawResolution(raw, makeContext({})));
+
+  it("accepts a well-formed declaration", () => {
+    expect(
+      check({ starting: [start()], occurrences: [occ([sane]) as never] })
+    ).toBe("");
+  });
+
+  it("rejects a character who did not perceive the occurrence", () => {
+    // Exposure is perception. The same evidence that decided the perceiver
+    // list decides who can be shocked — a set membership test, not a
+    // judgement about whether the sight was upsetting enough.
+    const errs = check({
+      starting: [start()],
+      occurrences: [occ([sane], { perceiverCharacterIds: ["npc_2"] }) as never],
+    });
+    expect(errs).toContain(
+      "is not among this occurrence's perceiverCharacterIds"
+    );
+  });
+
+  it("rejects an unknown or dead character, and one with no sanity capacity", () => {
+    expect(
+      check({
+        starting: [start()],
+        occurrences: [occ([{ ...sane, characterId: "nobody" }]) as never],
+      })
+    ).toContain('character "nobody" does not exist');
+  });
+
+  it("rejects the same character twice in one occurrence", () => {
+    expect(
+      check({ starting: [start()], occurrences: [occ([sane, sane]) as never] })
+    ).toContain("is already checked in this occurrence");
+  });
+
+  it("rejects the same character across two occurrences of one submission", () => {
+    // The structural replacement for the deleted session ledger: the model
+    // cannot loop, because the whole submission is judged at once.
+    const errs = check({
+      starting: [start()],
+      occurrences: [occ([sane]) as never, occ([sane]) as never],
+    });
+    expect(errs).toContain("is already checked elsewhere in this submission");
+  });
+
+  it("rejects a loss formula that is not dice, and one that cannot cost anything", () => {
+    expect(
+      check({
+        starting: [start()],
+        occurrences: [occ([{ ...sane, failureLoss: "terror" }]) as never],
+      })
+    ).toContain("is not a dice formula");
+
+    // A passed check already costs nothing, so a zero failure loss is a check
+    // that cannot cost anything at all.
+    expect(
+      check({
+        starting: [start()],
+        occurrences: [occ([{ ...sane, failureLoss: "0" }]) as never],
+      })
+    ).toContain("cannot cost anything");
+  });
+
+  it("rejects a duration that is fractional, too short, or too long", () => {
+    // Crash prevention, not hygiene: finalization hands this to `addMinutes`,
+    // which throws on a non-integer, and a throw there loses the whole tick.
+    for (const durationMinutes of [2.5, 1, 5000]) {
+      expect(
+        check({
+          starting: [start()],
+          occurrences: [
+            occ([
+              { ...sane, consequence: { ...consequence, durationMinutes } },
+            ]) as never,
+          ],
+        })
+      ).toContain("must be a whole number of minutes");
+    }
+  });
+
+  it("requires a consequence description", () => {
+    expect(
+      check({
+        starting: [start()],
+        occurrences: [
+          occ([
+            { ...sane, consequence: { ...consequence, description: "  " } },
+          ]) as never,
+        ],
+      })
+    ).toContain("consequence.description is required");
+  });
+
+  it("allows no condition candidate", () => {
+    expect(
+      check({
+        starting: [start()],
+        occurrences: [
+          occ([{ characterId: "npc_1", failureLoss: "1d4" }]) as never,
+        ],
+      })
+    ).toBe("");
+  });
+
+  it("requires an action to attribute the loss to", () => {
+    expect(
+      check({
+        starting: [start()],
+        occurrences: [occ([sane], { sourceActionIds: [] }) as never],
+      })
+    ).toContain("must name at least one sourceActionId");
+  });
+
+  it("checks an ending's own occurrence identically, addressed at its action", () => {
+    // Proof that the shared OCCURRENCE_BODY wiring holds: one declaration,
+    // two places it can live, one rule — but the address follows the shape.
+    const errors = validateRawResolution(
+      {
+        starting: [start()],
+        ending: [
+          end({
+            occurrence: {
+              ...occurrence(),
+              perceiverCharacterIds: ["npc_2"],
+              sanityChecks: [sane],
+            } as never,
+          }),
+        ],
+      },
+      makeContext({ activeActions: [activeAction()] })
+    );
+    const failure = errors.find((e) =>
+      e.message.includes("perceiverCharacterIds")
+    );
+    expect(failure?.target).toEqual({
+      kind: "action",
+      actionId: "action_live",
+    });
+  });
+
+  it("rolls the declaration into ordinary character deltas at finalization", () => {
+    const finalized = finalizeResolution(
+      {
+        starting: [start()],
+        occurrences: [occ([{ ...sane, failureLoss: "1d6" }]) as never],
+      },
+      makeContext({}),
+      { rng: () => 0.99 } // fails the check; then a 1d6 face of 6
+    );
+
+    const kinds = finalized.resolution.characterChanges.map(
+      (d) => (d.delta as { operation: { kind: string } }).operation.kind
+    );
+    expect(kinds).toEqual(["san", "addCondition"]);
+    expect(finalized.sanityOutcomes[0]).toMatchObject({
+      characterId: "npc_1",
+      passed: false,
+    });
   });
 });

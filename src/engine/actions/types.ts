@@ -126,7 +126,13 @@ export type SkillSuccessLevel = (typeof SKILL_SUCCESS_LEVELS)[number];
 export interface SkillRollRecord {
   rollId: string;
   skillId: string;
+  /** The value actually rolled against — after any condition penalties. */
   skillValue: number;
+  /** The value before those penalties, present only when they changed it.
+   *  `skillValue` is rendered to the Engine inside the action's checkOutcome,
+   *  so carrying the unpenalized number alongside is what makes a surprising
+   *  roll explicable in the log and in the Engine's context. */
+  skillValueBase?: number;
   roll: number;
   successLevel: SkillSuccessLevel;
 }

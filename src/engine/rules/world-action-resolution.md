@@ -196,6 +196,15 @@ is already what keeps it running, and the trigger lists those under
   `Occurrence` fact (`type: "action_result"`), NOT a character change. Only a
   real persistent state shift — injury, position, posture, a condition —
   becomes a `CharacterChange`.
+- **`character.addCondition` has a strict objective threshold.** A condition
+  must (1) persist across ticks, (2) be externally observable or independently
+  verifiable, and (3) make an important mental or physical function impossible
+  or severely impaired. The single `description` states both the objective
+  state and its functional impact. Examples: unconsciousness; a fracture that
+  prevents use of a limb; severe bleeding, poisoning, hypothermia, delirium,
+  catatonia, or disorientation so severe the person cannot recognize people or
+  act coherently. 
+- **Inner activity is never a condition:** regret, worry shouldn't be a condition, but extreme fear of spider for a period could be one.
 - Where someone is INSIDE a place is the `spot` character change — one short
   phrase, in the world's own language: "at the workbench, back to the door",
   "in the corner armchair". Set one when an action leaves the actor somewhere

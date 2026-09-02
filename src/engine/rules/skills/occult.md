@@ -38,8 +38,9 @@ was for.
 - No placement. Superstition and the real thing look the same from here.
 - **Fumble** — A confident misreading — the protective sign read as a summons,
   the hoax taken as genuine. Where the material is genuinely dangerous,
-  handling it on a fumble applies the real consequence, including a sanity
-  condition.
+  handling it on a fumble applies the real consequence, including SAN loss
+  where warranted. Add a condition only for an objective, major functional
+  impairment — never for fear, dread, obsession, or belief.
 
 ## Sanity
 
@@ -54,7 +55,9 @@ for what actually happened — a one-off descriptive result is an occurrence
 fact, not a state change.
 
 - `character.san` — genuine Mythos material extracts a cost at any success
-  level; `character.addCondition` for what that leaves behind.
+  level. `character.addCondition` is reserved for an objective, independently
+  verifiable state that severely impairs function, not the character's inner
+  reaction to what they learned.
 - `item.modify` / `item.destroy` — a ritual layout disturbed, a component
   taken, a text damaged in handling.
 - `scene.removeCondition` / `scene.addCondition` — a ward broken, a rite
