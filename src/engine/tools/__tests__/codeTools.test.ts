@@ -140,6 +140,25 @@ describe("damageRollTool", () => {
       });
     }
   );
+
+  // Seen live as a stall on a forced first turn: `damageRoll("0")`, answered
+  // with `total: 0` as if something had been rolled. A constant zero is not
+  // a roll and gets the reason the model should read next turn.
+  it.each(["0", " 0 ", "+0"])("refuses the empty roll %j", async (formula) => {
+    expect(await damageRollTool.execute({ formula }, ctx())).toEqual({
+      ok: false,
+      reason: "nothing_to_roll",
+    });
+  });
+
+  it("still rolls a flat non-zero constant", async () => {
+    expect(await damageRollTool.execute({ formula: "3" }, ctx())).toMatchObject(
+      {
+        ok: true,
+        total: 3,
+      }
+    );
+  });
 });
 
 describe("clampValue", () => {

@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import {
+  normalizeTagBrackets,
   repairNearMissTags,
   resolveNearMissTag,
   stripUncitableTags,
@@ -112,5 +113,36 @@ describe("repairNearMissTags", () => {
   it("leaves a genuinely wrong tag for the caller to drop", () => {
     const text = "He clips the walkie [item.reyes_tommy_walkie] to his belt.";
     expect(repairNearMissTags(text, allowed2, "npc_1")).toBe(text);
+  });
+});
+
+describe("normalizeTagBrackets", () => {
+  it("folds a full-width bracket into the ASCII tag", () => {
+    // Measured live: `妈妈【npc_susan_holt】` — the id copied exactly, the
+    // bracket taken from the input method. Left alone it is not a tag, so
+    // the strip never sees it and the actor reads an id they cannot cite.
+    expect(normalizeTagBrackets("妈妈【npc_susan_holt】跪在床边")).toBe(
+      "妈妈[npc_susan_holt]跪在床边"
+    );
+    expect(normalizeTagBrackets("台灯［item.holt_denny.desk_lamp］亮着")).toBe(
+      "台灯[item.holt_denny.desk_lamp]亮着"
+    );
+  });
+
+  it("leaves ASCII tags and bracketless prose untouched", () => {
+    const text = "The tall pale man [stranger_a] says nothing.";
+    expect(normalizeTagBrackets(text)).toBe(text);
+  });
+
+  it("feeds the strip, so a wide-bracketed real id survives and a fake one is dropped", () => {
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    const out = stripUncitableTags(
+      normalizeTagBrackets("妈妈【stranger_a】把书【Hollins】递过来"),
+      allowed,
+      "npc_1"
+    );
+    expect(out).toBe("妈妈 [stranger_a]把书递过来");
+    expect(warn).toHaveBeenCalledOnce();
+    warn.mockRestore();
   });
 });

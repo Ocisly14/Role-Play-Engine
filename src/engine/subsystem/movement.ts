@@ -43,6 +43,16 @@ export function planMovementRoute(
   const currentPosition =
     fromPosition ?? dgsm.getCharacterPosition(characterId);
   if (!currentPosition) return { ok: false, reason: "no_current_position" };
+  // A road position without its fraction cannot be planned from: every leg
+  // cost is |fraction - end| * minutes, and NaN here used to travel all the
+  // way to the clock and throw the tick away. The validator now refuses the
+  // op that produced one; this catches whatever else might.
+  if (
+    currentPosition.type === "road" &&
+    !Number.isFinite(currentPosition.position)
+  ) {
+    return { ok: false, reason: "no_road_position" };
+  }
 
   // Same-building shortcut: scene → scene within the same parent location.
   const state = dgsm.getState();

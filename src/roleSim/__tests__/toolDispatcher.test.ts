@@ -6,7 +6,7 @@
 
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { memoryHandle } from "../../memory/memoryHandle.js";
-import { dispatchInstantTool } from "../toolDispatcher.js";
+import { dispatchInstantTool, isDispatchError } from "../toolDispatcher.js";
 
 const MINE = "11111111-1111-1111-1111-111111111111";
 const MAP = "22222222-2222-2222-2222-222222222222";
@@ -259,5 +259,15 @@ describe("writeMemory type=relationship", () => {
       deps()
     );
     expect(updateRelationship).not.toHaveBeenCalled();
+  });
+});
+
+describe("isDispatchError", () => {
+  it("recognises the dispatcher's rejection prefix and nothing else", () => {
+    expect(isDispatchError("Error: writeMemory requires arguments.")).toBe(
+      true
+    );
+    expect(isDispatchError('Remembered (general): "x"')).toBe(false);
+    expect(isDispatchError('Forgotten: "x"')).toBe(false);
   });
 });

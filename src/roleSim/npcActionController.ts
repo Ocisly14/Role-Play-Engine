@@ -20,6 +20,10 @@ import { findAffectedCharacters } from "../engine/shared/impactPropagation.js";
 import type { NpcMemoryManager } from "../memory/NpcMemoryManager.js";
 import type { DynamicGameStateManager } from "../state/DynamicGameState.js";
 import type { RoleSimAgent, RoleSimContext } from "./agent.js";
+import {
+  consolidateMemories,
+  needsConsolidation,
+} from "./memoryConsolidator.js";
 import { compactPerceptions, needsCompaction } from "./perceptionCompactor.js";
 import { buildPerceivedBundle, render } from "./renderer/index.js";
 
@@ -29,6 +33,8 @@ export interface NpcActionControllerDeps {
   memory: NpcMemoryManager;
   dgsm: DynamicGameStateManager;
   sessionId: string;
+  /** Stamped onto memories the character writes while consolidating. */
+  moduleId: string;
   /** Module language ("en" | "zh"). Drives renderer output language. */
   language?: string;
   /** Maximum per-character render/decide pipelines in flight. Defaults to
@@ -108,6 +114,7 @@ export class NpcActionController {
   private readonly memory: NpcMemoryManager;
   private readonly dgsm: DynamicGameStateManager;
   private readonly sessionId: string;
+  private readonly moduleId: string;
   private readonly language: string;
   private readonly decideConcurrency: number;
   /** Per-NPC log of every renderer narrative this session, oldest first —
@@ -127,6 +134,7 @@ export class NpcActionController {
     this.memory = deps.memory;
     this.dgsm = deps.dgsm;
     this.sessionId = deps.sessionId;
+    this.moduleId = deps.moduleId;
     this.onPerception = deps.onPerception;
     this.onPerceptionCompacted = deps.onPerceptionCompacted;
     this.language = deps.language ?? "en";
@@ -387,7 +395,7 @@ export class NpcActionController {
     const position = this.dgsm.getCharacterPosition(npcId);
     const currentScene = position ? this.dgsm.resolveLocationId(position) : "";
 
-    const memories = await this.loadAllMemories(npcId);
+    let memories = await this.loadAllMemories(npcId);
 
     // Intent, progress and timing only — never engine runtime internals.
     const live = this.liveActionFor(npcId);
@@ -449,6 +457,28 @@ export class NpcActionController {
       perception: { narrative: rendered.narrative, location: currentScene },
       recentPerceptions: priorPerceptions,
     };
+
+    // Over the ceiling, the character brings their own memories down before
+    // they decide under them. The list is reloaded afterwards so the decision
+    // reads the rows that now exist — and so its `ref`s cannot name a line
+    // this pass just deleted.
+    if (needsConsolidation(memories)) {
+      const result = await consolidateMemories({
+        ctx: baseCtx,
+        dgsm: this.dgsm,
+        memory: this.memory,
+        sessionId: this.sessionId,
+        moduleId: this.moduleId,
+        language: this.language,
+      });
+      if (result) {
+        memories = await this.loadAllMemories(npcId);
+        baseCtx.memories = memories;
+        console.log(
+          `[NpcActionController] ${npcId}: consolidated memories — ${result.applied} applied, ${result.skipped} skipped, ${memories.length} rows remain`
+        );
+      }
+    }
 
     // Over the ceiling, the character condenses their own stream before they
     // decide under it — with this same context, so what they keep is judged

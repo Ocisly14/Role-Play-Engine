@@ -207,6 +207,20 @@ function tag(id: string, tags: CitationTags, kind: "character" | "other") {
 
 const TAG_PATTERN = /\s*\[([^\]\n]{1,64})\]/g;
 
+/** Full-width brackets around something that reads as an id. Measured live in
+ *  a Chinese paragraph: `妈妈【npc_susan_holt】`. The renderer had copied the id
+ *  perfectly and only reached for the bracket its input method offered. */
+const WIDE_TAG_PATTERN = /[【［]([^】］\]\n]{1,64})[】］]/g;
+
+/** Fold `【id】` / `［id］` into `[id]`, so a tag written with a full-width
+ *  bracket is a tag and not prose. Runs before any tag is inspected: an
+ *  uninspected wide bracket sails past the strip and lands in the perception
+ *  stream as a tag the actor can read but never cite. The id inside is left
+ *  as written — whether it is real is the next stage's question. */
+export function normalizeTagBrackets(narrative: string): string {
+  return narrative.replace(WIDE_TAG_PATTERN, (_m, raw: string) => `[${raw}]`);
+}
+
 /** Levenshtein distance, iterative two-row. Tag ids are short (< 64 chars),
  *  so the quadratic cost is nothing. */
 function editDistance(a: string, b: string): number {
@@ -382,7 +396,7 @@ export async function renderViaLLM(
     });
 
   let narrative = repairNearMissTags(
-    (await ask()).trim(),
+    normalizeTagBrackets((await ask()).trim()),
     tags.allowed,
     params.npcId
   );
@@ -412,7 +426,7 @@ export async function renderViaLLM(
           "is the thing you mean, write it with no bracket at all.",
           "Rewrite the whole paragraph.",
         ].join("\n")
-      ).then((t) => t.trim()),
+      ).then((t) => normalizeTagBrackets(t.trim())),
       tags.allowed,
       params.npcId
     );

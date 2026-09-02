@@ -962,6 +962,7 @@ export async function runStagedCase(
     memory,
     dgsm,
     sessionId,
+    moduleId,
     language: lang,
   });
   void controller; // subscribes to tickCompleted in its constructor

@@ -17,7 +17,11 @@ import type {
 } from "../../models/providers/types.js";
 import type { DynamicGameStateManager } from "../../state/DynamicGameState.js";
 import { actionIdForCommand } from "../actions/actionStore.js";
-import type { ActionCommand } from "../actions/types.js";
+import type {
+  ActionCommand,
+  ResolvedCheck,
+  SkillRollRecord,
+} from "../actions/types.js";
 import {
   buildSkillCatalogPrompt,
   renderSkillGuidance,
@@ -147,6 +151,32 @@ export interface WorldActionEngineDeps {
  * actionId" and burns every repair round on a mismatch it cannot see. So the
  * commandId never reaches the prompt.
  */
+/** The roll code made, as the Engine reads it. Named for what it is — dice —
+ *  and not for what it decides: rendered as `checkOutcome`, the Engine kept
+ *  echoing it back as the ending's `outcome`, the one field an ending with a
+ *  check must not carry (a third of checked solo endings in a measured run).
+ *  `met` stays because it is the one bit the Engine cannot safely derive
+ *  itself — the success ladder and the tie-to-defender rule live in code.
+ *  `fumble` goes: it is `actor.successLevel === "fumble"`, already visible.
+ *  Roll ids are bookkeeping and mean nothing to the reader. */
+function diceRollForPrompt(check: ResolvedCheck) {
+  const strip = ({ rollId: _, ...record }: SkillRollRecord) => record;
+  return {
+    actor: strip(check.actor),
+    requiredLevel: check.requiredLevel,
+    ...(check.defenders
+      ? {
+          defenders: check.defenders.map((d) => ({
+            characterId: d.characterId,
+            record: strip(d.record),
+            actorWon: d.actorWon,
+          })),
+        }
+      : {}),
+    met: check.met,
+  };
+}
+
 function commandForPrompt(command: ActionCommand): Record<string, unknown> {
   const { commandId: _commandId, ...rest } = command;
   return rest;
@@ -233,8 +263,13 @@ export function renderContextSegments(context: EngineResolutionContext): {
     ...commandForPrompt(command),
   }));
   const activeActions = context.actions.activeActions.map((action) => {
-    const { id, command, ...rest } = action;
-    return { actionId: id, ...rest, command: commandForPrompt(command) };
+    const { id, command, checkOutcome, ...rest } = action;
+    return {
+      actionId: id,
+      ...rest,
+      ...(checkOutcome ? { diceRoll: diceRollForPrompt(checkOutcome) } : {}),
+      command: commandForPrompt(command),
+    };
   });
 
   // Full guidance for exactly the skills declared this tick (deduplicated):
@@ -287,7 +322,7 @@ export function renderContextSegments(context: EngineResolutionContext): {
       ...context.trigger,
       resolve: {
         ...worklist,
-        note: "`starting` and `ending` are the ids you must answer, in those lists, and they are the only ones. `stillRunning` is FYI: those actions keep running by themselves and take no entry. `endingNeedsOutcome` lists in-flight actions that carried no check — if one ends, you supply `outcome`. `startingWithoutSkill` lists actors who declared no skill: those actions take no `check` at all, however obviously one seems called for — the actor chose to stake nothing, and it is settled on its own merits.",
+        note: "`starting` and `ending` are the ids you must answer, in those lists, and they are the only ones. `stillRunning` is FYI: those actions keep running by themselves and take no entry. `endingNeedsOutcome` lists in-flight actions that carried no check — if one ends, you supply `outcome`. Every other ending carries a `diceRoll` on its action row: that is what code rolled, and it is INPUT — never copy it into an `outcome` field. `startingWithoutSkill` lists actors who declared no skill: those actions take no `check` at all, however obviously one seems called for — the actor chose to stake nothing, and it is settled on its own merits.",
       },
     }),
     section("Tick", context.tick),
@@ -297,7 +332,13 @@ export function renderContextSegments(context: EngineResolutionContext): {
     ...(skillGuidance.length > 0
       ? [`## Declared Skill Guidance\n\n${skillGuidance.join("\n\n---\n\n")}`]
       : []),
-    "Resolve now. Consult tools as needed, then call submit_resolution once — every id under the trigger's `resolve.starting` and `resolve.ending` placed in that list.",
+    // The old closing — "consult tools as needed, then submit" — read as
+    // "first a tool turn, then the submission". About one session in fourteen
+    // took it literally: a `damageRoll("0")` that rolled nothing, and then a
+    // submission written with that turn in its history, which arrived
+    // malformed three times out of four. Nearly every tick has no damage to
+    // roll, so the first call is the submission.
+    "Resolve now. Unless a blow lands this tick, your FIRST and ONLY call is submit_resolution — every id under the trigger's `resolve.starting` and `resolve.ending` placed in that list. Call damageRoll only for damage that is actually being dealt, with a real formula; there is nothing else to look up.",
   ].join("\n\n");
 
   return { stable: `${stable}\n\n`, volatile };

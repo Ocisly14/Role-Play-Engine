@@ -112,28 +112,29 @@ engine 处理的「操作」分四层，彼此不共享枚举：**演员发出�
 
 ---
 
-## 5. WorldDelta operation 全表（18 个 kind）
+## 5. WorldDelta operation 全表（19 个 kind）
 
-来源：`worldDeltaSchema.ts` 的 `CHARACTER_OPS` / `SCENE_OPS` / `ITEM_OPS`。**同一张表既渲染给模型看，又生成 validator 的接受集合（`opKinds`），所以两者不可能对不上。**
+来源：`worldDeltaSchema.ts` 的 `CHARACTER_OPS` / `SCENE_OPS` / `ITEM_OPS`。**同一张表既渲染给模型看（`renderOps`），又生成 validator 的接受集合（`opKinds`），还生成提供方强制的 `anyOf` 语法（`opSchema`），所以三者不可能对不上。** 两个引擎工具都是 `strict: true`，schema 保持在 Anthropic strict 子集内（每个对象 `additionalProperties: false`，不用 `minimum`/`maximum`/`maxItems`）；数值上下界写在描述里并由 validator 执行。
 
 ### character（7）
 
 | kind | 字段 |
 |---|---|
 | `hp` `san` `fatigue` | `delta: number, reason: string` |
-| `position` | `position: {type: "scene"\|"road", sceneId\|roadId}` |
+| `position` | `position: {type: "scene", sceneId}` —— 只能放进场景（上车、被抬进门）。路是走出来的，只由动作的 `movement.route` 产生；直接放到路上会缺沿路分数，曾让下一次规划算出 NaN 炸掉整个 tick |
 | `spot` | `spot: string` —— 在这个地方的哪儿，一句短语；`""` 清空（换地点时代码自动清） |
 | `addCondition` | `condition: {id, description}` |
 | `removeCondition` | `conditionId: string` |
 
-### scene（7）
+### scene（8）
 
 | kind | 字段 |
 |---|---|
-| `addCondition` | `condition: {description, featureId?, mechanicalEffect?}` |
+| `addCondition` | `condition: {description, featureId?}`（`mechanicalEffect` 是技能减值映射，strict 语法表达不了，也从不由引擎写，只有 fire/sun/stamina 子系统在代码里设） |
 | `removeCondition` | `predicate: {id?, featureId?}` —— 至少给一个；`featureId` 删掉该 feature 拥有的全部条件 |
 | `setDescription` | `description: string` —— **整段替换**；保留所有仍然为真的 `[reference-id]` 引用，删掉已不在场之物的引用 |
 | `connectionBlock` | `connectionId, blocked: boolean, reason` |
+| `connectionDiscovered` | `connectionId, characterIds: string[]` —— 这些人发现了暗道；列出所有能看到的人。只对 hidden 的连接有效 |
 | `connectionHidden` | `connectionId, hidden: boolean`（`false` 是揭示） |
 | `environmentContribute` | `quantity: temperature\|illumination\|oxygen\|noise, value: number` |
 | `environmentHazard` | `add?: string[], remove?: string[]` |

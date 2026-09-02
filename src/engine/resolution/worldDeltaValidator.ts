@@ -358,17 +358,19 @@ function validateStart(entry: RawActionStart, lookup: Lookup): string[] {
     }
   }
   // Duration is conditionally required: a non-travel action must say how
-  // long it takes (and why); a travel action must NOT be clocked by hand —
-  // code derives its time from the route.
-  if (entry.movement === undefined) {
-    if (entry.resolvedDurationTicks === undefined) {
-      errs.push(
-        `a non-travel action needs resolvedDurationTicks (with a timingReason); only movement actions derive their clock from the route`
-      );
-    } else if (!entry.timingReason?.trim()) {
-      errs.push(`resolvedDurationTicks requires a timingReason`);
-    }
+  // long it takes; a travel action must NOT be clocked by hand — code derives
+  // its time from the route. `timingReason` is not required: nothing at
+  // runtime reads it, and demanding it bought a repair round (a full re-send)
+  // every time the model left it off, for a sentence only the harness prints.
+  if (
+    entry.movement === undefined &&
+    entry.resolvedDurationTicks === undefined
+  ) {
+    errs.push(
+      "a non-travel action needs resolvedDurationTicks; only movement actions derive their clock from the route"
+    );
   }
+  errs.push(...validateDuration(entry.resolvedDurationTicks));
   return errs;
 }
 
@@ -388,8 +390,10 @@ function validateEnd(entry: RawActionEnd, lookup: Lookup): string[] {
   }
   // With a check, code already decided success from the roll against the bar;
   // restating it is how the two can disagree.
+  // `null` is the model saying "none" — the same answer as leaving the field
+  // out, and it was being refused as if a verdict had been written.
   const hadCheck = known.check !== undefined;
-  if (hadCheck && entry.outcome !== undefined) {
+  if (hadCheck && entry.outcome != null) {
     errs.push(
       `this action was checked — code decides success from the roll against your bar; drop "outcome"`
     );
@@ -399,13 +403,20 @@ function validateEnd(entry: RawActionEnd, lookup: Lookup): string[] {
       `this action carried no check, so nothing rolled — "outcome" is required (the trigger section lists it under endingNeedsOutcome)`
     );
   }
-  if (
-    entry.resolvedDurationTicks !== undefined &&
-    !entry.timingReason?.trim()
-  ) {
-    errs.push(`revising resolvedDurationTicks requires a timingReason`);
-  }
+  errs.push(...validateDuration(entry.resolvedDurationTicks));
   return errs;
+}
+
+/** The bound the schema used to carry as `minimum: 1`. Strict mode has no
+ *  numeric keywords, so the description says it and this enforces it. */
+function validateDuration(ticks: unknown): string[] {
+  if (ticks === undefined) return [];
+  if (!Number.isInteger(ticks) || (ticks as number) < 1) {
+    return [
+      `resolvedDurationTicks must be a whole number of minutes, at least 1 — got ${JSON.stringify(ticks)}`,
+    ];
+  }
+  return [];
 }
 
 // Same rows the model is shown: the accepted kinds and the advertised field
@@ -465,38 +476,34 @@ export function validateCharacterChange(
       break;
     }
     case "position": {
-      // Only `type: "scene"` used to be checked, so a road id was accepted
-      // unseen and reached the applier, which would happily stand the
-      // character on a place that does not exist.
+      // Scene only. A road position carries a fraction along the road that
+      // only the movement runtime sets; the Engine once stood a character on
+      // a road with no fraction, and the next route planned from there came
+      // out NaN and took the whole tick down.
       const p = op.position as
         | {
             type?: string;
             sceneId?: string;
-            roadId?: string;
           }
         | undefined;
-      const idField = {
-        scene: "sceneId",
-        road: "roadId",
-      } as const;
       if (!p || typeof p !== "object") {
-        errs.push(`position.position must be an object {type, <id>}`);
-      } else if (!p.type || !(p.type in idField)) {
         errs.push(
-          `position.type must be "scene" or "road" — got ${JSON.stringify(p.type)}`
+          `position.position must be an object {type:"scene", sceneId}`
         );
-      } else {
-        const field = idField[p.type as keyof typeof idField];
-        const id = p[field];
-        if (typeof id !== "string" || !id) {
-          errs.push(`position of type "${p.type}" requires ${field}`);
-        } else if (
-          p.type === "scene"
-            ? !lookup.sceneIds.has(id)
-            : !lookup.locationIds.has(id)
-        ) {
-          errs.push(`position ${field} "${id}" is not a place you were shown`);
-        }
+      } else if (p.type === "road") {
+        errs.push(
+          `position cannot put a character on a road — a road is walked, never assigned; give the action a movement.route instead`
+        );
+      } else if (p.type !== "scene") {
+        errs.push(
+          `position.type must be "scene" — got ${JSON.stringify(p.type)}`
+        );
+      } else if (typeof p.sceneId !== "string" || !p.sceneId) {
+        errs.push(`position of type "scene" requires sceneId`);
+      } else if (!lookup.sceneIds.has(p.sceneId)) {
+        errs.push(
+          `position sceneId "${p.sceneId}" is not a place you were shown`
+        );
       }
       break;
     }
@@ -784,6 +791,8 @@ export const MAX_CONSEQUENCE_MINUTES = 1440;
  * document's job, in full context. These are shape and reference rules only,
  * the same bargain the action trust boundary strikes.
  */
+export const MAX_SANITY_CHECKS = 8;
+
 export function validateSanityChecks(
   occ: RawOccurrence,
   lookup: Lookup
@@ -792,6 +801,13 @@ export function validateSanityChecks(
   if (declarations.length === 0) return [];
 
   const errs: string[] = [];
+  // Was `maxItems: 8` on the schema; strict mode has no array-length
+  // keywords, so the description says it and this enforces it.
+  if (declarations.length > MAX_SANITY_CHECKS) {
+    errs.push(
+      `sanityChecks: at most ${MAX_SANITY_CHECKS} per occurrence — got ${declarations.length}`
+    );
+  }
   // Every produced delta needs a real `sourceActionId`, and the schema sets no
   // `minItems` on sourceActionIds — an empty array is wire-legal, and would
   // leave the resolver with nothing to attribute the SAN loss to.
@@ -1170,21 +1186,16 @@ export function normalizeList<T>(value: unknown, field = "field"): T[] {
       .map(([, item]) => item);
   }
   if (typeof value === "string") {
-    // The whole list, serialized. `input_schema` is a description the model
-    // usually honours, not a contract the provider enforces: `strict` is off
-    // everywhere here and cannot be turned on for this tool (every top-level
-    // field is genuinely optional, and `operation` is deliberately open so
-    // one schema can carry eighteen kinds). The envelope is guaranteed by
-    // `toolChoice`; the contents are not.
+    // The whole list, serialized. The engine tools are `strict` now, and a
+    // provider that honours it (Anthropic, OpenAI) cannot produce this shape.
+    // DeepSeek has no strict mode, so the tolerance stays for that path.
     //
-    // Observed once in a measured run: `starting` came back a proper array
-    // and `ending` came back as its own JSON text, in the same call. Dropping
-    // it took a whole resolution with it — the transition, the reason, and an
-    // occurrence two characters were meant to perceive — and left one line of
-    // warning behind. Nothing else caught it: the action had ended early
-    // rather than on its duration, so it was not on the worklist and no
-    // "unanswered" check applied, and with no transition there was nothing
-    // for the fallback occurrence to attach to.
+    // Two shapes were measured before strict went on. The list as its own
+    // JSON text — `"[{...}]"` — and the list wrapped in an object under its
+    // own name, or a name the model made up: `"{\"starting\": [...]}"`,
+    // `"{\"actions\": [...]}"`. Dropping either took a whole resolution with
+    // it — the transition, the reason, an occurrence two characters were
+    // meant to perceive — and left one line of warning behind.
     try {
       const parsed = parseJsonResponse<unknown>(value);
       if (Array.isArray(parsed)) {
@@ -1192,6 +1203,20 @@ export function normalizeList<T>(value: unknown, field = "field"): T[] {
           `[WorldActionEngine] ${field} arrived as a JSON string — parsed back into an array of ${parsed.length}`
         );
         return parsed as T[];
+      }
+      if (parsed && typeof parsed === "object") {
+        const arrays = Object.entries(parsed as Record<string, unknown>).filter(
+          ([, v]) => Array.isArray(v)
+        );
+        const inner =
+          arrays.find(([k]) => k === field) ??
+          (arrays.length === 1 ? arrays[0] : undefined);
+        if (inner) {
+          console.warn(
+            `[WorldActionEngine] ${field} arrived as a JSON string wrapping {"${inner[0]}": [...]} — unwrapped into an array of ${(inner[1] as unknown[]).length}`
+          );
+          return inner[1] as T[];
+        }
       }
     } catch {
       // Falls through to the drop below, which says so.

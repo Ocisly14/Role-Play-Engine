@@ -39,7 +39,7 @@ export type DamageRollOutput =
       formulaTotal: number;
       bonusTotal: number;
     }
-  | { ok: false; reason: "invalid_formula" };
+  | { ok: false; reason: "invalid_formula" | "nothing_to_roll" };
 
 const FORMULA_RE =
   /^\s*(?:(\d+)[dD](\d+)\s*(?:([+-])\s*(\d+))?|([+-]?\d+))\s*$/;
@@ -53,6 +53,13 @@ export const damageRollTool: EngineCodeTool<DamageRollInput, DamageRollOutput> =
     execute(input: DamageRollInput): DamageRollOutput {
       const match = FORMULA_RE.exec(input.formula ?? "");
       if (!match) return { ok: false, reason: "invalid_formula" };
+      // A constant with no die in it is not a roll. Seen live as a stall:
+      // `damageRoll("0")` to occupy a forced first turn, answered with a
+      // cheerful `total: 0` that taught nothing. Refuse it with the reason
+      // the model should read next turn.
+      if (match[5] !== undefined && Number.parseInt(match[5], 10) === 0) {
+        return { ok: false, reason: "nothing_to_roll" };
+      }
 
       const fixed = input.fixedRolls ? [...input.fixedRolls] : undefined;
       const rolls: number[] = [];

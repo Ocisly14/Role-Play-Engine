@@ -67,6 +67,12 @@ interface WriteMemoryInput {
   knownAs?: string;
 }
 
+/** Every rejection the dispatcher hands back starts this way; callers that
+ *  count skips read it here instead of each spelling the prefix. */
+export function isDispatchError(result: string): boolean {
+  return result.startsWith("Error:");
+}
+
 export async function dispatchInstantTool(
   toolName: string,
   input: unknown,

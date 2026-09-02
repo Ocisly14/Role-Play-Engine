@@ -154,7 +154,12 @@ export class OpenAIAdapter implements ProviderAdapter {
           name: tool.name,
           description: tool.description,
           parameters: tool.inputSchema,
-          ...(tool.strict ? { strict: true } : {}),
+          // OpenAI's strict mode is narrower than Anthropic's: every property
+          // must be required. A tool that asks for strict but has optional
+          // fields (the engine tools) is sent unstrict rather than 400ing.
+          ...(tool.strict && allPropertiesRequired(tool.inputSchema)
+            ? { strict: true }
+            : {}),
         },
       })),
       // See the Anthropic adapter: opt-in, and the caller must then answer
@@ -214,4 +219,18 @@ export class OpenAIAdapter implements ProviderAdapter {
     });
     return response.data[0]?.embedding ?? [];
   }
+}
+
+/** OpenAI's strict-mode precondition: in every object of the schema, every
+ *  property is listed under `required`. Anthropic has no such rule. */
+export function allPropertiesRequired(schema: unknown): boolean {
+  if (!schema || typeof schema !== "object") return true;
+  if (Array.isArray(schema)) return schema.every(allPropertiesRequired);
+  const o = schema as Record<string, unknown>;
+  if (o.type === "object" && o.properties && typeof o.properties === "object") {
+    const props = Object.keys(o.properties as Record<string, unknown>);
+    const required = new Set((o.required as string[] | undefined) ?? []);
+    if (!props.every((p) => required.has(p))) return false;
+  }
+  return Object.values(o).every(allPropertiesRequired);
 }

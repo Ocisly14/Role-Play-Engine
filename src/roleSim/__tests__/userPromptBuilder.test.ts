@@ -439,3 +439,47 @@ describe("the standing over memory", () => {
     expect(text).not.toContain("do not join into one way");
   });
 });
+
+describe("the consolidate closing", () => {
+  const memories = [
+    {
+      id: "a",
+      handle: "Ma1",
+      type: "map",
+      content: "The bakery is on Mill Street.",
+      gameDateTime: "1923-04-01T08:00:00",
+    },
+    {
+      id: "b",
+      handle: "Mb2",
+      type: "general",
+      content: "Hollins came by.",
+      gameDateTime: "1923-04-02T09:00:00",
+    },
+  ];
+
+  it("swaps only the closing and names the protected stamp", () => {
+    const decide = buildUserPrompt(makeCtx({ memories }), {
+      language: "en",
+      dgsm,
+    });
+    const consolidate = buildUserPrompt(makeCtx({ memories }), {
+      language: "en",
+      dgsm,
+      closing: {
+        kind: "consolidate",
+        protectedFrom: "1923-04-02 09:00",
+        targetTokens: 50_000,
+      },
+    });
+    const cut = (s: string) => s.slice(0, s.lastIndexOf("\n\n## "));
+    expect(cut(consolidate)).toBe(cut(decide));
+    expect(consolidate).toContain(
+      "## Bring what you remember down to what you can carry"
+    );
+    expect(consolidate).not.toContain("## Decide");
+    expect(consolidate).toContain("`[1923-04-02 09:00]` or later");
+    expect(consolidate).toContain("about 50000 tokens");
+    expect(consolidate).toMatch(/never lose a\s+place name/);
+  });
+});

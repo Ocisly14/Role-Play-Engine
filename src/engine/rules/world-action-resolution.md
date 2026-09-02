@@ -123,9 +123,10 @@ to send are the fields that exist there.
 Say how long it takes and how hard it is. Nothing has happened yet, so there
 is no outcome to report and no world change to make.
 
-- `resolvedDurationTicks` + `timingReason` — REQUIRED. The actor's
-  `proposedDurationTicks` is advisory; you decide, from the action, the tools,
-  the conditions and the world.
+- `resolvedDurationTicks` — REQUIRED. The actor's `proposedDurationTicks`
+  is advisory; you decide, from the action, the tools, the conditions and the
+  world. `timingReason` is optional: a note for the log, not a field anyone
+  acts on.
 - `check` — the difficulty for the skill the actor declared:
   `requiredLevel` (regular / hard / extreme) plus a factual `basis`. No roll
   exists yet; you are setting the bar blind, which is the point.
@@ -142,9 +143,12 @@ is no outcome to report and no world change to make.
 ### `ending` — its time is spent, or the world reached it first
 
 Code has already rolled every check you declared, compared it to your bar, and
-handed you the result. Now say what happened to the world.
+handed you the result: the action's row carries a `diceRoll` — the actor's
+roll and success level, the defenders' rolls where there were any, and `met`,
+which is code's verdict on whether the bar was cleared and every defender
+beaten. Now say what happened to the world.
 
-- `reason` — what happened, objectively. The check result is INPUT, not
+- `reason` — what happened, objectively. The `diceRoll` is INPUT, not
   something to restate or contradict. A check that was not met cannot produce
   the outcome of one that was.
 
@@ -163,7 +167,9 @@ handed you the result. Now say what happened to the world.
     comes up; do not reach for it when it did not.
 - `outcome` — REQUIRED for the ids listed under `endingNeedsOutcome`, and
   refused for every other ending. Those actions carried no check, so nothing
-  rolled and there is no result to derive: you decide.
+  rolled and there is no result to derive: you decide. An action that has a
+  `diceRoll` never takes an `outcome`: `met` already is the verdict, and
+  writing it again is how the two come to disagree.
 - `occurrence` — REQUIRED, on the ending itself. Without one the actor
   perceives nothing, concludes nothing happened, and re-issues the same action
   next minute — the loop this rule exists to prevent. List the actor among
@@ -178,8 +184,8 @@ is already what keeps it running, and the trigger lists those under
 `stillRunning` only so that every id is accounted for.
 
  To let an in-flight action keep running, say nothing about it. To change how
-  long it will take, send a revised `resolvedDurationTicks` with a new
-  `timingReason` and no result block.
+  long it will take, send a revised `resolvedDurationTicks` and no result
+  block.
 
 ## Output rules
 
@@ -205,6 +211,9 @@ is already what keeps it running, and the trigger lists those under
   catatonia, or disorientation so severe the person cannot recognize people or
   act coherently. 
 - **Inner activity is never a condition:** regret, worry shouldn't be a condition, but extreme fear of spider for a period could be one.
+- The `position` character change puts someone IN a scene — boarding a
+  vehicle's interior, being carried through a door. It never puts anyone on a
+  road: a road is walked, and only an action's `movement.route` does that.
 - Where someone is INSIDE a place is the `spot` character change — one short
   phrase, in the world's own language: "at the workbench, back to the door",
   "in the corner armchair". Set one when an action leaves the actor somewhere

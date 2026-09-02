@@ -340,3 +340,135 @@ describe("the trigger worklist answers what the Engine would otherwise infer", (
     expect(worklist.startingWithoutSkill).toEqual(["action_bare"]);
   });
 });
+
+describe("the operation grammar is the same table as the prose", () => {
+  // The `anyOf` the provider enforces and the `{kind:...}` list the model
+  // reads are both generated from CHARACTER_OPS / SCENE_OPS / ITEM_OPS. This
+  // pins the generation on the grammar side, as the test above does for the
+  // prose side.
+  type OpBranch = {
+    properties: { kind: { const: string } };
+    additionalProperties: boolean;
+    required: string[];
+  };
+  const branchesOf = (tool: Schema, field: string): OpBranch[] =>
+    (
+      (tool.properties[field] as unknown as { items: Schema }).items.properties
+        .operation as unknown as { anyOf: OpBranch[] }
+    ).anyOf;
+
+  it.each([
+    ["characterChanges", CHARACTER_OPS],
+    ["sceneChanges", SCENE_OPS],
+    ["itemChanges", ITEM_OPS],
+  ])("%s: one closed branch per kind, in submit and repair", (field, ops) => {
+    for (const tool of [submit, repair]) {
+      const branches = branchesOf(tool, field);
+      expect(branches.map((b) => b.properties.kind.const).sort()).toEqual(
+        [...opKinds(ops)].sort()
+      );
+      for (const b of branches) {
+        expect(b.additionalProperties).toBe(false);
+        expect(b.required).toContain("kind");
+      }
+    }
+  });
+
+  it("offers position as a scene placement only", () => {
+    const position = branchesOf(submit, "characterChanges").find(
+      (b) => b.properties.kind.const === "position"
+    ) as unknown as {
+      properties: { position: { properties: { type: { const: string } } } };
+    };
+    expect(position.properties.position.properties.type.const).toBe("scene");
+  });
+});
+
+describe("both engine tools stay inside the strict subset", () => {
+  // Anthropic compiles a strict tool's schema into a grammar and 400s the
+  // whole request on any keyword outside its subset. Measured before strict
+  // went on: `starting` returned as a JSON string, a submission shattered
+  // into seven parallel calls — each a full-world repair round.
+  const FORBIDDEN = [
+    "minimum",
+    "maximum",
+    "multipleOf",
+    "minLength",
+    "maxLength",
+    "pattern",
+    "maxItems",
+    "oneOf",
+    "patternProperties",
+  ];
+  const violations = (node: unknown, path: string, out: string[]): void => {
+    if (!node || typeof node !== "object") return;
+    if (Array.isArray(node)) {
+      node.forEach((v, i) => violations(v, `${path}[${i}]`, out));
+      return;
+    }
+    const o = node as Record<string, unknown>;
+    if (o.type === "object" && o.additionalProperties !== false) {
+      out.push(`${path}: object without additionalProperties:false`);
+    }
+    for (const k of FORBIDDEN) if (k in o) out.push(`${path}: ${k}`);
+    if ("minItems" in o && ![0, 1].includes(o.minItems as number)) {
+      out.push(`${path}: minItems=${o.minItems}`);
+    }
+    for (const [k, v] of Object.entries(o)) {
+      if (k === "enum" || k === "required" || k === "const") continue;
+      violations(v, `${path}.${k}`, out);
+    }
+  };
+
+  it.each([
+    ["submit_resolution", submitResolutionTool],
+    ["repair_resolution", repairResolutionTool],
+  ])("%s stays strict-compatible", (_name, tool) => {
+    const out: string[] = [];
+    violations(tool.inputSchema, "schema", out);
+    expect(out).toEqual([]);
+  });
+
+  // The limit the docs do not mention and the API enforces: at most 24
+  // optional parameters across every strict tool in one request, counted
+  // through every nesting level. Measured live: 111 → 400. A tool may only
+  // ask for strict when it fits; today neither does, and this says by how
+  // much, so the flag can be flipped the day it does.
+  const ANTHROPIC_OPTIONAL_LIMIT = 24;
+  const optionals = (node: unknown, out: string[], path = ""): void => {
+    if (!node || typeof node !== "object") return;
+    if (Array.isArray(node)) {
+      node.forEach((v, i) => optionals(v, out, `${path}[${i}]`));
+      return;
+    }
+    const o = node as Record<string, unknown>;
+    if (o.type === "object" && o.properties) {
+      const required = new Set((o.required as string[] | undefined) ?? []);
+      for (const k of Object.keys(o.properties as Record<string, unknown>)) {
+        if (!required.has(k)) out.push(`${path}.${k}`);
+      }
+    }
+    for (const [k, v] of Object.entries(o)) {
+      if (k === "enum" || k === "required" || k === "const") continue;
+      optionals(v, out, `${path}.${k}`);
+    }
+  };
+
+  it("asks for strict only within Anthropic's optional-parameter budget", () => {
+    let total = 0;
+    for (const tool of [submitResolutionTool, repairResolutionTool]) {
+      const out: string[] = [];
+      optionals(tool.inputSchema, out);
+      if (tool.strict) total += out.length;
+    }
+    expect(total).toBeLessThanOrEqual(ANTHROPIC_OPTIONAL_LIMIT);
+  });
+
+  it("documents why the engine tools are not strict today", () => {
+    const out: string[] = [];
+    optionals(submitResolutionTool.inputSchema, out);
+    expect(out.length).toBeGreaterThan(ANTHROPIC_OPTIONAL_LIMIT);
+    expect(submitResolutionTool.strict).toBe(false);
+    expect(repairResolutionTool.strict).toBe(false);
+  });
+});

@@ -108,6 +108,7 @@ function harness(opts: { liveActions?: EngineAction[] } = {}) {
     memory: memory as never,
     dgsm: dgsm as never,
     sessionId: "s1",
+    moduleId: "mod_1",
     language: "en",
     decideConcurrency: 3,
   });

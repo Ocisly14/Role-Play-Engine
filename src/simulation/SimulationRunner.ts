@@ -524,6 +524,7 @@ export class SimulationRunner {
       memory: this.memoryManager as NpcMemoryManager,
       dgsm: this.dgsm,
       sessionId: this.sessionId,
+      moduleId: this.config.moduleId,
       language: this.language,
       // Buffered here and flushed once per tick: one row per character per
       // tick, written in a single createMany rather than a query per paragraph.

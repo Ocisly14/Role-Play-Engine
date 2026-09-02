@@ -398,6 +398,63 @@ describe("renderContext addressing", () => {
     expect(prompt).not.toContain('"c1"');
     expect(prompt).not.toContain('"c0"');
   });
+
+  // Rendered as `checkOutcome`, the roll was echoed back as the ending's
+  // `outcome` — the one field a checked ending must not carry — in a third
+  // of checked solo endings over a measured 30-tick run. The name now says
+  // dice, the verdict bit stays, and the derivable/bookkeeping fields go.
+  it("renders the roll as diceRoll with the verdict and without outcome words", () => {
+    const context = makeContext();
+    context.actions.activeActions = [
+      {
+        id: "action_c0",
+        status: "active",
+        command: { ...cmd, commandId: "c0" },
+        progressMinutes: 10,
+        resolvedDurationTicks: 10,
+        check: {
+          skillId: "Repair & Engineering",
+          requiredLevel: "regular",
+          basis: "routine",
+        },
+        checkOutcome: {
+          actor: {
+            rollId: "roll-1",
+            skillId: "Repair & Engineering",
+            skillValue: 65,
+            roll: 4,
+            successLevel: "extreme",
+          },
+          requiredLevel: "regular",
+          defenders: [
+            {
+              characterId: "npc_2",
+              record: {
+                rollId: "roll-2",
+                skillId: "Stealth",
+                skillValue: 40,
+                roll: 60,
+                successLevel: "failure",
+              },
+              actorWon: true,
+            },
+          ],
+          met: true,
+          fumble: false,
+        },
+      } as EngineResolutionContext["actions"]["activeActions"][number],
+    ];
+
+    const prompt = renderContext(context);
+
+    expect(prompt).toContain('"diceRoll"');
+    expect(prompt).not.toContain("checkOutcome");
+    expect(prompt).toContain('"successLevel": "extreme"');
+    expect(prompt).toContain('"actorWon": true');
+    expect(prompt).toContain('"met": true');
+    expect(prompt).not.toContain('"fumble"');
+    expect(prompt).not.toContain("rollId");
+  });
 });
 
 describe("renderContextSegments caching layout", () => {

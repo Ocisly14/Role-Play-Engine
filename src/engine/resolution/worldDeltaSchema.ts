@@ -167,25 +167,77 @@ export interface OperationSpec {
   kinds: string[];
   /** Field list exactly as the model should write it, `kind` excluded. */
   fields: string;
+  /** The same fields as a strict-compatible JSON Schema fragment, `kind`
+   *  excluded. `opSchema` turns each row into one `anyOf` branch, so the
+   *  prose the model reads and the grammar the provider enforces come from
+   *  one table and cannot disagree. Every nested object must close with
+   *  `additionalProperties: false`; no `minimum`/`maximum`/`pattern`. */
+  schema: {
+    properties: Record<string, unknown>;
+    required?: string[];
+  };
 }
 
+const STR = { type: "string" } as const;
+const BOOL = { type: "boolean" } as const;
+const STR_LIST = { type: "array", items: STR } as const;
+
 export const CHARACTER_OPS: OperationSpec[] = [
-  { kinds: ["hp", "san", "fatigue"], fields: "delta:number, reason:string" },
   {
+    kinds: ["hp", "san", "fatigue"],
+    fields: "delta:number, reason:string",
+    schema: {
+      properties: { delta: { type: "integer" }, reason: STR },
+      required: ["delta", "reason"],
+    },
+  },
+  {
+    // Scene only. A road position carries a fraction along the road that only
+    // the movement runtime knows how to set; a `position` op that stood a
+    // character on a road left the fraction out, and the next route planned
+    // from there was NaN and took the whole tick down with it.
     kinds: ["position"],
-    fields: 'position:{type:"scene"|"road", sceneId|roadId}',
+    fields:
+      'position:{type:"scene", sceneId:string} — puts them IN a place (boarding a vehicle, being carried). A road is walked, never assigned: travel is `movement.route` on the action',
+    schema: {
+      properties: {
+        position: {
+          type: "object",
+          properties: { type: { const: "scene" }, sceneId: STR },
+          required: ["type", "sceneId"],
+          additionalProperties: false,
+        },
+      },
+      required: ["position"],
+    },
   },
   {
     kinds: ["spot"],
     fields:
       'spot:string — where in the place they now are, one short phrase; "" clears it',
+    schema: { properties: { spot: STR }, required: ["spot"] },
   },
   {
     kinds: ["addCondition"],
     fields:
       "condition:{id:string, description:string} — description must state an objective, persistent, independently observable/verifiable state and the important mental or physical function it makes impossible or severely impairs; never a thought, feeling, mood, attitude, opinion, suspicion, relationship stance, or recognition",
+    schema: {
+      properties: {
+        condition: {
+          type: "object",
+          properties: { id: STR, description: STR },
+          required: ["id", "description"],
+          additionalProperties: false,
+        },
+      },
+      required: ["condition"],
+    },
   },
-  { kinds: ["removeCondition"], fields: "conditionId:string" },
+  {
+    kinds: ["removeCondition"],
+    fields: "conditionId:string",
+    schema: { properties: { conditionId: STR }, required: ["conditionId"] },
+  },
   // No `relationship`. What one character thinks of another is theirs to
   // write, through `writeMemory`, and nothing is recorded on their behalf.
   // The Engine had an operation for it, and it did exactly the damage that
@@ -196,42 +248,89 @@ export const CHARACTER_OPS: OperationSpec[] = [
 
 export const SCENE_OPS: OperationSpec[] = [
   {
+    // `mechanicalEffect` is not offered: it is a skill-penalty MAP, which a
+    // strict schema cannot express, the validator never read it, and only
+    // subsystems (fire, sun, stamina) set one — in code.
     kinds: ["addCondition"],
-    fields:
-      "condition:{description:string, featureId?:string, mechanicalEffect?:object}",
+    fields: "condition:{description:string, featureId?:string}",
+    schema: {
+      properties: {
+        condition: {
+          type: "object",
+          properties: { description: STR, featureId: STR },
+          required: ["description"],
+          additionalProperties: false,
+        },
+      },
+      required: ["condition"],
+    },
   },
   {
     kinds: ["removeCondition"],
     fields:
       "predicate:{id?:string, featureId?:string} — at least one; id removes that one condition, featureId removes every condition that feature owns",
+    schema: {
+      properties: {
+        predicate: {
+          type: "object",
+          properties: { id: STR, featureId: STR },
+          additionalProperties: false,
+        },
+      },
+      required: ["predicate"],
+    },
   },
   {
     kinds: ["setDescription"],
     fields:
       "description:string — REPLACES the place's whole prose; keep every still-true [reference-id] citation, drop citations to things no longer visibly here",
+    schema: { properties: { description: STR }, required: ["description"] },
   },
   {
     kinds: ["connectionBlock"],
     fields: "connectionId:string, blocked:boolean, reason:string",
+    schema: {
+      properties: { connectionId: STR, blocked: BOOL, reason: STR },
+      required: ["connectionId", "blocked", "reason"],
+    },
   },
   {
     kinds: ["connectionDiscovered"],
     fields:
       "connectionId:string, characterIds:string[] — these characters have FOUND a concealed passage. List EVERYONE who could see it happen, not just whoever acted: from now each of them perceives it and may use it, and it stays shut for everyone else. Only for a connection that is hidden. To open it for the whole world instead (a door forced, a wall broken) use connectionHidden with hidden:false",
+    schema: {
+      properties: { connectionId: STR, characterIds: STR_LIST },
+      required: ["connectionId", "characterIds"],
+    },
   },
   {
     kinds: ["connectionHidden"],
     fields:
       "connectionId:string, hidden:boolean — false reveals a concealed exit, true conceals one",
+    schema: {
+      properties: { connectionId: STR, hidden: BOOL },
+      required: ["connectionId", "hidden"],
+    },
   },
   {
     kinds: ["environmentContribute"],
     fields:
       'quantity:"temperature"|"illumination"|"oxygen"|"noise", value:number',
+    schema: {
+      properties: {
+        quantity: {
+          type: "string",
+          enum: ["temperature", "illumination", "oxygen", "noise"],
+        },
+        value: { type: "number" },
+      },
+      required: ["quantity", "value"],
+    },
   },
   {
     kinds: ["environmentHazard"],
     fields: "add?:string[], remove?:string[]",
+    schema: { properties: { add: STR_LIST, remove: STR_LIST } },
   },
 ];
 
@@ -252,21 +351,36 @@ export const ITEM_OPS: OperationSpec[] = [
     kinds: ["create"],
     fields:
       'name:string, location:<"scene:<placeId>" or characterId>, description?:string, id?:string — stable id; must be unused; omit to auto-generate; ALWAYS pass one for non-Latin names',
+    schema: {
+      properties: { name: STR, location: STR, description: STR, id: STR },
+      required: ["name", "location"],
+    },
   },
   {
     kinds: ["move"],
     fields:
       'from:<current holder, exactly as the Items section shows it>, to:<"scene:<placeId>" for a place — a vehicle interior scene included — or a bare characterId> (one holder grammar, same as create.location). If the FROM place\'s prose cites this item, the same submission must rewrite that description (scene setDescription) — the prose must not keep pointing at what left',
+    schema: { properties: { from: STR, to: STR }, required: ["from", "to"] },
   },
   {
     kinds: ["destroy"],
     fields:
       "(no fields). If the holder place's prose cites this item, the same submission must rewrite that description (scene setDescription)",
+    schema: { properties: {} },
   },
   {
     kinds: ["set"],
     fields:
       "any of — description:string (REPLACES the whole description; write everything still true of the thing) · appendDescription:string (adds one sentence to what is there; how damage is recorded — say who or what did it, and do not repeat what the description already says) · hidden:boolean (false REVEALS a concealed item to characters, true conceals it) · isLightSource:boolean (false when it no longer lights the room, e.g. smashed) · lightLevel:number",
+    schema: {
+      properties: {
+        description: STR,
+        appendDescription: STR,
+        hidden: BOOL,
+        isLightSource: BOOL,
+        lightLevel: { type: "number" },
+      },
+    },
   },
 ];
 
@@ -287,6 +401,23 @@ export function opKinds(ops: OperationSpec[]): ReadonlySet<string> {
   return new Set(ops.flatMap((op) => op.kinds));
 }
 
+/** The grammar the provider enforces: one closed object per kind, chosen by
+ *  `kind`'s constant. Replaces the open `additionalProperties: true` object
+ *  that strict mode refuses — and that let a misspelt field through to the
+ *  validator, a repair round later. */
+export function opSchema(ops: OperationSpec[]): { anyOf: unknown[] } {
+  return {
+    anyOf: ops.flatMap((op) =>
+      op.kinds.map((kind) => ({
+        type: "object",
+        properties: { kind: { const: kind }, ...op.schema.properties },
+        required: ["kind", ...(op.schema.required ?? [])],
+        additionalProperties: false,
+      }))
+    ),
+  };
+}
+
 const ENTITY_REF = {
   type: "object",
   properties: {
@@ -300,7 +431,11 @@ const ENTITY_REF = {
   additionalProperties: false,
 } as const;
 
-const sourcedDelta = (idField: string, idRequired: boolean) => ({
+const sourcedDelta = (
+  idField: string,
+  idRequired: boolean,
+  ops: OperationSpec[]
+) => ({
   type: "object",
   properties: {
     sourceActionId: { type: "string" },
@@ -309,14 +444,10 @@ const sourcedDelta = (idField: string, idRequired: boolean) => ({
       description: "Short factual statement of why this change follows.",
     },
     [idField]: { type: "string" },
-    operation: {
-      type: "object",
-      description:
-        "Shape depends on `kind` — see the exact field list on the array this delta belongs to. Field names are literal: a wrong one is a rejection, not a synonym.",
-      properties: { kind: { type: "string" } },
-      required: ["kind"],
-      additionalProperties: true,
-    },
+    // No `description` beside the `anyOf`: the array's description already
+    // spells out every kind's fields, and a sibling keyword on a union is
+    // the kind of thing a strict grammar compiler may refuse.
+    operation: opSchema(ops),
   },
   required: [
     "sourceActionId",
@@ -386,14 +517,13 @@ const OCCURRENCE_BODY = {
       additionalProperties: false,
     },
   },
-  // Declared here, rolled by code. The bounds are duplicated in the validator
-  // on purpose: several providers enforce them during structured output, which
-  // turns a repair round — a whole-world round trip — into a non-event.
+  // Declared here, rolled by code. The count and minute bounds live in the
+  // validator and in these descriptions, not as schema keywords: strict mode
+  // supports neither `maxItems` nor `minimum`/`maximum`.
   sanityChecks: {
     type: "array",
-    maxItems: 8,
     description:
-      "Involuntary sanity checks caused by perceiving THIS occurrence. Rare — see the sanity guidance for the closed list of things that warrant one. Code reads the character's SAN, rolls d100 and settles it; a passed check costs nothing at all. Do not also write a character `san` change for the same exposure.",
+      "Involuntary sanity checks caused by perceiving THIS occurrence — at most 8. Rare — see the sanity guidance for the closed list of things that warrant one. Code reads the character's SAN, rolls d100 and settles it; a passed check costs nothing at all. Do not also write a character `san` change for the same exposure.",
     items: {
       type: "object",
       properties: {
@@ -419,10 +549,8 @@ const OCCURRENCE_BODY = {
             },
             durationMinutes: {
               type: "integer",
-              minimum: 5,
-              maximum: 1440,
               description:
-                "Whole in-world minutes it lasts. Nothing but the clock can revoke it.",
+                "Whole in-world minutes it lasts, from 5 to 1440. Nothing but the clock can revoke it.",
             },
           },
           required: ["description", "durationMinutes"],
@@ -439,6 +567,22 @@ const OCCURRENCE_REQUIRED = ["facts", "participants", "perceiverCharacterIds"];
 
 export const submitResolutionTool: ToolSpec = {
   name: "submit_resolution",
+  // NOT strict, and not for want of trying. Without a grammar the model has
+  // handed back `starting` as a JSON string, a whole submission as one
+  // string, and once a submission shattered into seven parallel calls — each
+  // a repair round, a full re-send of the world. The schema was brought
+  // inside Anthropic's strict subset for exactly that (closed objects, an
+  // `anyOf` per operation kind, no numeric keywords — kept, because the
+  // model reads it either way), and the API refused it on a limit the docs
+  // do not mention: at most 24 OPTIONAL parameters across every strict tool
+  // in the request, counted through every nesting level. This tool alone has
+  // 44 — six top-level lists, a dozen genuinely optional fields on starts
+  // and endings, the occurrence body twice — and repair has 67. Squeezing
+  // under 24 means "required but nullable" on most of them, which is a
+  // dozen `null`s per entry. The lint in schemaAgreement.test.ts keeps the
+  // subset and counts the optionals, so the day the limit moves this is one
+  // flag flip. Until then `normalizeList` reads the string shapes back.
+  strict: false,
   description:
     "Terminal: submit the complete resolution of this tick — one entry per triggering action (its duration and difficulty when it starts, its result when it resolves), sourced world deltas grouped by domain, and objective occurrences with perceiver character ids.",
   inputSchema: {
@@ -454,13 +598,13 @@ export const submitResolutionTool: ToolSpec = {
             actionId: { type: "string" },
             resolvedDurationTicks: {
               type: "integer",
-              minimum: 1,
               description:
-                "How long the action SHOULD take. REQUIRED for a non-travel action; OMIT when `movement` is set — travel time is derived from the route and anything you write here is overridden. You never state elapsed time — code advances progress from the clock.",
+                "How long the action SHOULD take, a whole number of minutes, at least 1. REQUIRED for a non-travel action; OMIT when `movement` is set — travel time is derived from the route and anything you write here is overridden. You never state elapsed time — code advances progress from the clock.",
             },
             timingReason: {
               type: "string",
-              description: "Objective reason for the chosen duration.",
+              description:
+                "Optional: the objective reason for the chosen duration, for the log.",
             },
             check: {
               type: "object",
@@ -547,11 +691,13 @@ export const submitResolutionTool: ToolSpec = {
             },
             resolvedDurationTicks: {
               type: "integer",
-              minimum: 1,
               description:
-                "Only to revise the estimate — say so in timingReason.",
+                "Only to revise the estimate — a whole number of minutes, at least 1.",
             },
-            timingReason: { type: "string" },
+            timingReason: {
+              type: "string",
+              description: "Optional: why the estimate changed, for the log.",
+            },
           },
           required: ["actionId", "reason", "occurrence"],
           additionalProperties: false,
@@ -560,17 +706,17 @@ export const submitResolutionTool: ToolSpec = {
       characterChanges: {
         type: "array",
         description: `Persistent character-state changes only; descriptive results belong in occurrences. \`operation\` is one of, with exactly these fields: ${renderOps(CHARACTER_OPS)}.`,
-        items: sourcedDelta("characterId", true),
+        items: sourcedDelta("characterId", true, CHARACTER_OPS),
       },
       sceneChanges: {
         type: "array",
         description: `Scene-state changes. \`operation\` is one of, with exactly these fields: ${renderOps(SCENE_OPS)}.`,
-        items: sourcedDelta("sceneId", true),
+        items: sourcedDelta("sceneId", true, SCENE_OPS),
       },
       itemChanges: {
         type: "array",
         description: `Item changes; itemId is required except for create. \`operation\` is one of, with exactly these fields: ${renderOps(ITEM_OPS)}.`,
-        items: sourcedDelta("itemId", false),
+        items: sourcedDelta("itemId", false, ITEM_OPS),
       },
       occurrences: {
         type: "array",
@@ -647,8 +793,8 @@ const repairable = (itemSchema: unknown, what: string) => {
         ...item.properties,
         index: {
           type: "integer",
-          minimum: 0,
-          description: "The index quoted in the error. Omit to append.",
+          description:
+            "The index quoted in the error (0 or more). Omit to append.",
         },
         remove: {
           type: "boolean",
@@ -663,6 +809,8 @@ const repairable = (itemSchema: unknown, what: string) => {
 
 export const repairResolutionTool: ToolSpec = {
   name: "repair_resolution",
+  // See submitResolutionTool: 67 optional parameters against a limit of 24.
+  strict: false,
   description:
     "Fix ONLY the elements named in the errors. Everything you do not mention stays exactly as you submitted it — do not re-send correct parts, and do not re-send the whole resolution.",
   inputSchema: {
@@ -683,11 +831,17 @@ export const repairResolutionTool: ToolSpec = {
         ])
       ),
       characterChanges: repairable(
-        sourcedDelta("characterId", true),
+        sourcedDelta("characterId", true, CHARACTER_OPS),
         "Character changes"
       ),
-      sceneChanges: repairable(sourcedDelta("sceneId", true), "Scene changes"),
-      itemChanges: repairable(sourcedDelta("itemId", false), "Item changes"),
+      sceneChanges: repairable(
+        sourcedDelta("sceneId", true, SCENE_OPS),
+        "Scene changes"
+      ),
+      itemChanges: repairable(
+        sourcedDelta("itemId", false, ITEM_OPS),
+        "Item changes"
+      ),
       occurrences: repairable(
         (
           submitResolutionTool.inputSchema as {

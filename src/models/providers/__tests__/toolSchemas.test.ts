@@ -1,6 +1,11 @@
 import { describe, expect, it } from "vitest";
+import {
+  repairResolutionTool,
+  submitResolutionTool,
+} from "../../../engine/resolution/worldDeltaSchema.js";
 import { TOOL_CAPS, VALID_TOOLS } from "../../../roleSim/toolDispatcher.js";
 import { AGENT_TOOLS } from "../../../roleSim/tools/schemas.js";
+import { allPropertiesRequired } from "../openai.js";
 import type { ToolSpec } from "../types.js";
 
 /**
@@ -88,5 +93,50 @@ describe("agent tool schemas", () => {
     ]) {
       expect(props).not.toContain(forbidden);
     }
+  });
+});
+
+describe("strict across providers", () => {
+  // `strict` means Anthropic semantics (optional fields allowed). OpenAI's
+  // strict mode also demands every property be required, so its adapter
+  // forwards the flag only where `allPropertiesRequired` holds.
+  it("agent tools that ask for strict satisfy OpenAI's stricter rule", () => {
+    for (const tool of AGENT_TOOLS) {
+      if (tool.strict)
+        expect(allPropertiesRequired(tool.inputSchema)).toBe(true);
+    }
+  });
+
+  it("engine tools have optional fields, so even if strict they would go to OpenAI unstrict", () => {
+    for (const tool of [submitResolutionTool, repairResolutionTool]) {
+      expect(allPropertiesRequired(tool.inputSchema)).toBe(false);
+    }
+  });
+
+  it("allPropertiesRequired looks into nested objects and arrays", () => {
+    expect(
+      allPropertiesRequired({
+        type: "object",
+        properties: {
+          a: { type: "string" },
+          b: {
+            type: "array",
+            items: {
+              type: "object",
+              properties: { c: { type: "string" } },
+              required: ["c"],
+            },
+          },
+        },
+        required: ["a", "b"],
+      })
+    ).toBe(true);
+    expect(
+      allPropertiesRequired({
+        type: "object",
+        properties: { a: { type: "string" }, b: { type: "string" } },
+        required: ["a"],
+      })
+    ).toBe(false);
   });
 });

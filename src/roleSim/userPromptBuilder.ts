@@ -29,10 +29,14 @@ export interface BuildUserPromptOptions {
    *
    * `compact` also needs the cutoff — the stamp of the last paragraph that
    * gets folded into the summary. Everything after it stays verbatim.
+   *
+   * `consolidate` names the other end: the timestamp from which memories are
+   * too recent to touch. Everything stamped there or later stays as it is.
    */
   closing?:
     | { kind: "decide" }
-    | { kind: "compact"; coversThrough: string; targetTokens: number };
+    | { kind: "compact"; coversThrough: string; targetTokens: number }
+    | { kind: "consolidate"; protectedFrom: string; targetTokens: number };
 }
 
 /**
@@ -207,6 +211,43 @@ Write it as one continuous first-person account, past tense, in
 ${langName}. No headings, no bullet list, no commentary about the act of
 summarizing. Aim for about ${closing.targetTokens} tokens; shorter is fine
 if your day was thin. Write the account now — nothing else.`
+    );
+  } else if (closing.kind === "consolidate") {
+    // One tool on this call, `writeMemory`, and nothing terminal: the answer
+    // is the batch of corrections itself. The character is the only one who
+    // knows which of these lines still say something — the same standpoint
+    // the compact closing takes over the perception stream.
+    volatile.push(
+      `## Bring what you remember down to what you can carry
+Your own record has grown too long to carry whole. Using \`writeMemory\`,
+bring **What you remember** down to about ${closing.targetTokens} tokens:
+\`replace\` to fold several lines about one thing into one line that says
+it all; \`delete\` for what no longer matters; \`add\` only for a merged
+line that stands in for several you are deleting.
+
+Lines stamped \`[${closing.protectedFrom}]\` or later are what you are in
+the middle of — leave every one of them exactly as it is.
+
+How to judge each kind:
+- \`relationship\`: one line per person, saying how it stands between you
+  now. Fold the history of a person into that line; do not keep a trail.
+- \`plan\`: a plan that is done, or that events have overtaken, is deleted.
+- \`map\`: lines about one area may be folded together, but **never lose a
+  place name** — a place you no longer have a line for is a place you no
+  longer know how to reach.
+- \`secret\`: keep each one on its own; never fold a secret into another
+  line.
+- \`long_term_intent\`: the newest one stays. Older ones may go.
+- \`general\`: keep what you would still know a week from now — who you
+  dealt with and what it came to, what you learned, what you promised.
+  Drop the minute-by-minute.
+
+\`ref\` is the \`#M…\` tag at the head of the line, copied exactly. Never
+cite a tag you did not read above. A tag you get wrong is one line left as
+it was — the rest of your calls still land.
+
+Make every call now, in this one turn, and nothing else. Write content in
+${langName}.`
     );
   } else {
     // `act` output is structured fields — prose goes in `description`, ids in
