@@ -404,13 +404,33 @@ function validateStart(entry: RawActionStart, lookup: Lookup): string[] {
  * question: fact types are already its judgement about what happened, so a
  * second field saying "this was conversation" could only ever contradict them.
  */
-function isSpeechOnly(occurrence: RawActionEnd["occurrence"]): boolean {
-  const facts = occurrence?.facts;
-  if (!Array.isArray(facts) || facts.length === 0) return false;
+function isSpeechOnly(occurrences: RawOccurrence[]): boolean {
+  const facts = occurrences.flatMap((o) =>
+    Array.isArray(o?.facts) ? o.facts : []
+  );
+  if (facts.length === 0) return false;
   return facts.every((f) => f?.type === "speech");
 }
 
-function validateEnd(entry: RawActionEnd, lookup: Lookup): string[] {
+/** The occurrences that cite an action — its trace. Null rows (withdrawn in
+ *  a repair) are skipped. */
+export function occurrencesCiting(
+  actionId: string,
+  occurrences: ReadonlyArray<RawOccurrence | null | undefined> | undefined
+): RawOccurrence[] {
+  return (occurrences ?? []).filter(
+    (o): o is RawOccurrence =>
+      o != null && (o.actionIds ?? []).includes(actionId)
+  );
+}
+
+function validateEnd(
+  entry: RawActionEnd,
+  lookup: Lookup,
+  /** The whole submission's occurrences: the trace of this ending lives
+   *  there now, and whether it is nothing but talk is read off it. */
+  occurrences: ReadonlyArray<RawOccurrence | null | undefined> = []
+): string[] {
   const resolvable = resolvableAction(entry.actionId, lookup);
   if ("error" in resolvable) return [resolvable.error];
   const { known } = resolvable;
@@ -438,7 +458,17 @@ function validateEnd(entry: RawActionEnd, lookup: Lookup): string[] {
   // `null` is the model saying "none" — the same answer as leaving the field
   // out, and it was being refused as if a verdict had been written.
   const hadCheck = known.check !== undefined;
-  const spokenOnly = isSpeechOnly(entry.occurrence);
+  const trace = occurrencesCiting(entry.actionId, occurrences);
+  if (trace.length === 0) {
+    // The guarantee the nested `occurrence` slot used to give, now a check.
+    // Without a trace the actor perceives nothing, concludes nothing
+    // happened, and re-issues the same action next minute — the loop the
+    // old required field existed to prevent.
+    errs.push(
+      `no occurrence cites this ending — the actor perceives nothing, concludes nothing happened, and re-issues the same action next minute. Add an entry to "occurrences" with this actionId in its "actionIds"`
+    );
+  }
+  const spokenOnly = isSpeechOnly(trace);
   if (hadCheck && entry.outcome != null) {
     errs.push(
       `this action was checked — code decides success from the roll against your bar; drop "outcome"`
@@ -471,7 +501,6 @@ function validateEnd(entry: RawActionEnd, lookup: Lookup): string[] {
       );
     }
   }
-  errs.push(...validateDuration(entry.resolvedDurationTicks));
   return errs;
 }
 
@@ -877,11 +906,11 @@ export function validateSanityChecks(
     );
   }
   // Every produced delta needs a real `sourceActionId`, and the schema sets no
-  // `minItems` on sourceActionIds — an empty array is wire-legal, and would
-  // leave the resolver with nothing to attribute the SAN loss to.
-  if ((occ.sourceActionIds ?? []).length === 0) {
+  // `minItems` on actionIds — an empty array is wire-legal, and would leave
+  // the resolver with nothing to attribute the SAN loss to.
+  if ((occ.actionIds ?? []).length === 0) {
     errs.push(
-      "sanityChecks: an occurrence that declares a sanity check must name at least one sourceActionId"
+      "sanityChecks: an occurrence that declares a sanity check must name at least one actionId"
     );
   }
   const perceivers = new Set(occ.perceiverCharacterIds ?? []);
@@ -966,9 +995,14 @@ export function validateOccurrence(
   createdItemIds: Set<string> = new Set()
 ): string[] {
   const errs: string[] = [];
-  for (const id of occ.sourceActionIds ?? []) {
+  if (!Array.isArray(occ.actionIds) || occ.actionIds.length === 0) {
+    errs.push(
+      "actionIds is required — name the action(s) this is the trace of"
+    );
+  }
+  for (const id of occ.actionIds ?? []) {
     if (!lookup.actionById.has(id)) {
-      errs.push(`sourceActionId "${id}" is unknown`);
+      errs.push(`actionIds: "${id}" is unknown`);
     }
   }
   if (occ.locationId && !lookup.locationIds.has(occ.locationId)) {
@@ -995,29 +1029,23 @@ export function validateOccurrence(
         `facts[${fi}]: character-perspective wording detected — facts must be objective and third-person`
       );
     }
-    for (const ref of fact.entityRefs ?? []) {
-      const exists =
-        ref.kind === "item"
-          ? lookup.itemHolders.has(ref.id) ||
-            createdItemIds.has(ref.id) ||
-            // A vehicle's exterior is item-like: an occurrence may point at
-            // the truck itself.
-            lookup.vehicleIds.has(ref.id)
-          : ref.kind === "character"
-            ? lookup.characterIds.has(ref.id)
-            : ref.kind === "connection"
-              ? lookup.connectionIds.has(ref.id)
-              : lookup.locationIds.has(ref.id);
-      if (!exists) {
-        errs.push(
-          `facts[${fi}]: entityRef ${ref.kind} "${ref.id}" does not exist`
-        );
+    for (const id of fact.refIds ?? []) {
+      if (resolveRefKind(id, lookup, createdItemIds) === undefined) {
+        errs.push(`facts[${fi}]: ref "${id}" does not exist`);
       }
     }
   }
-  for (const p of occ.participants ?? []) {
-    if (!lookup.characterIds.has(p.characterId)) {
-      errs.push(`participant "${p.characterId}" does not exist`);
+  if (occ.actorId !== undefined && !lookup.characterIds.has(occ.actorId)) {
+    errs.push(`actorId "${occ.actorId}" does not exist`);
+  }
+  for (const [field, ids] of [
+    ["targetIds", occ.targetIds],
+    ["affectedIds", occ.affectedIds],
+  ] as const) {
+    for (const id of ids ?? []) {
+      if (!lookup.characterIds.has(id)) {
+        errs.push(`${field}: "${id}" does not exist`);
+      }
     }
   }
   for (const id of occ.perceiverCharacterIds ?? []) {
@@ -1032,11 +1060,45 @@ export function validateOccurrence(
       }
     }
   }
-  // One call site covers both places an occurrence can appear — standalone in
-  // `occurrences[]` and embedded in an ending — and each inherits the right
-  // error address for free.
   errs.push(...validateSanityChecks(occ, lookup));
   return errs;
+}
+
+type EntityKind = Occurrence["facts"][number]["entityRefs"][number]["kind"];
+
+/** Item ids this submission mints with `create` operations — an occurrence
+ *  may cite the thing the same tick brings into being. */
+export function createdItemIdsOf(raw: RawTickResolution): Set<string> {
+  const ids = new Set<string>();
+  for (const d of raw.itemChanges ?? []) {
+    const op = d?.operation as { kind?: string; id?: unknown } | undefined;
+    if (op?.kind === "create" && typeof op.id === "string" && op.id) {
+      ids.add(op.id);
+    }
+  }
+  return ids;
+}
+
+/** Which kind of thing a bare id names. Id spaces do not overlap, so the
+ *  first space that knows the id is the answer; `undefined` means no space
+ *  does. A vehicle's exterior is item-like — an occurrence may point at the
+ *  truck itself — and an item this same submission creates already counts. */
+export function resolveRefKind(
+  id: string,
+  lookup: Lookup,
+  createdItemIds: Set<string> = new Set()
+): EntityKind | undefined {
+  if (lookup.characterIds.has(id)) return "character";
+  if (
+    lookup.itemHolders.has(id) ||
+    createdItemIds.has(id) ||
+    lookup.vehicleIds.has(id)
+  ) {
+    return "item";
+  }
+  if (lookup.connectionIds.has(id)) return "connection";
+  if (lookup.locationIds.has(id)) return "scene";
+  return undefined;
 }
 
 // ==================== Whole-resolution validation ====================
@@ -1079,7 +1141,12 @@ export function validateRawResolution(
         continue;
       }
       seen.add(entry.actionId);
-      at(target, validate(entry as never, lookup));
+      at(
+        target,
+        moment === "ending"
+          ? validateEnd(entry as RawActionEnd, lookup, raw.occurrences)
+          : validate(entry as never, lookup)
+      );
     }
     if (moment === "starting") {
       // The wheels will not turn for someone standing beside the vehicle:
@@ -1181,20 +1248,6 @@ export function validateRawResolution(
       validateOccurrence(o, lookup, createdItemIds)
     );
   });
-  // An ending's own occurrence gets the same checks, addressed at the action
-  // it belongs to. "Every ending leaves a trace" needs no rule any more: the
-  // occurrence is a required field of the ending.
-  for (const entry of raw.ending ?? []) {
-    if (!entry?.occurrence) continue;
-    at(
-      { kind: "action", actionId: entry.actionId },
-      validateOccurrence(
-        { ...entry.occurrence, sourceActionIds: [entry.actionId] },
-        lookup,
-        createdItemIds
-      )
-    );
-  }
 
   // One shock per character per tick, across the WHOLE submission.
   // `validateSanityChecks` sees a single occurrence and cannot catch the same
@@ -1222,12 +1275,6 @@ export function validateRawResolution(
   (raw.occurrences ?? []).forEach((o, i) => {
     noteShocks(o, { kind: "occurrence", index: i });
   });
-  for (const entry of raw.ending ?? []) {
-    noteShocks(entry?.occurrence, {
-      kind: "action",
-      actionId: entry?.actionId ?? "",
-    });
-  }
 
   return errors;
 }
@@ -1537,43 +1584,69 @@ export interface FinalizedResolution {
  *  rooms from where she stood — a participant with no place reads as "here".
  *  Only scene positions resolve; a road walker's occurrence stays unplaced. */
 function occurrenceLocationFromActor(
-  o: {
-    participants?: Array<{ characterId: string; role: string }>;
-    sourceActionIds?: string[];
-  },
+  o: { actorId?: string; actionIds?: string[] },
   lookup: Lookup
 ): string | undefined {
   const actor =
-    o.participants?.find((p) => p.role === "actor")?.characterId ??
-    o.sourceActionIds
+    o.actorId ??
+    o.actionIds
       ?.map((id) => lookup.actionById.get(id)?.command.actorId)
       .find((id): id is string => id !== undefined);
   return actor ? lookup.characterSceneIds.get(actor) : undefined;
 }
 
-/** The ending's facts with the actor's verbatim line placed first, when the
- *  command carried one. The Engine's own facts describe everything else the
- *  moment contained — how it was said, what the body did, what followed. */
+/** The finalized participant rows, rebuilt from the three flat fields. */
+function participantsOf(o: RawOccurrence): Occurrence["participants"] {
+  return [
+    ...(o.actorId ? [{ characterId: o.actorId, role: "actor" as const }] : []),
+    ...(o.targetIds ?? []).map((characterId) => ({
+      characterId,
+      role: "target" as const,
+    })),
+    ...(o.affectedIds ?? []).map((characterId) => ({
+      characterId,
+      role: "directly_affected" as const,
+    })),
+  ];
+}
+
+/**
+ * The spoken lines of the actions an occurrence cites, placed ahead of the
+ * Engine's own facts — but only on the FIRST occurrence citing each action,
+ * in list order: that row's perceivers are the people who made out the
+ * words. `utterance` is the one part of a command that is already objective
+ * — it is what anyone in earshot hears, character for character — so nothing
+ * gets to restate it. Before this, the Engine wrote a third-person summary of
+ * the line and the renderer then re-imagined that summary for each listener:
+ * two rewrites, and the actor's own diction never reached anyone.
+ */
 function withSpokenWords(
-  entry: RawActionEnd,
+  o: RawOccurrence,
+  index: number,
+  all: ReadonlyArray<RawOccurrence | null | undefined>,
   lookup: Lookup
 ): RawOccurrence["facts"] {
-  const facts = entry.occurrence?.facts ?? [];
-  const command = lookup.actionById.get(entry.actionId)?.command;
-  const spoken = command?.utterance?.trim();
-  if (!command || !spoken) return facts;
-  return [
-    {
+  const facts = o.facts ?? [];
+  const spokenFacts: RawOccurrence["facts"] = [];
+  for (const actionId of o.actionIds ?? []) {
+    const first = all.findIndex(
+      (other) => other != null && (other.actionIds ?? []).includes(actionId)
+    );
+    if (first !== index) continue;
+    const command = lookup.actionById.get(actionId)?.command;
+    const spoken = command?.utterance?.trim();
+    if (!command || !spoken) continue;
+    spokenFacts.push({
       // Typed apart from `speech` on purpose: `speech` is the Engine writing
       // ABOUT what was said, `utterance` is the words themselves, and the
       // renderer has to treat the two differently — one it retells, one it
       // may only quote.
       type: "utterance",
       content: spoken,
-      entityRefs: [{ kind: "character" as const, id: command.actorId }],
-    },
-    ...facts,
-  ];
+      refIds: [command.actorId],
+    });
+  }
+  return [...spokenFacts, ...facts];
 }
 
 export function finalizeResolution(
@@ -1642,8 +1715,7 @@ export function finalizeResolution(
   for (const entry of raw.ending ?? []) {
     const known = lookup.actionById.get(entry.actionId);
     if (!known) continue;
-    const durationTicks =
-      entry.resolvedDurationTicks ?? known.resolvedDurationTicks;
+    const durationTicks = known.resolvedDurationTicks;
     // Completed only if its time was actually spent; otherwise the world
     // reached it first and it was cut short.
     const spent =
@@ -1655,12 +1727,6 @@ export function finalizeResolution(
       from: known.status,
       to: spent ? "completed" : "interrupted",
       progressDeltaMinutes: 0,
-      ...(entry.resolvedDurationTicks !== undefined
-        ? { resolvedDurationTicks: entry.resolvedDurationTicks }
-        : {}),
-      ...(entry.timingReason !== undefined
-        ? { timingReason: entry.timingReason }
-        : {}),
       ...(entry.reason !== undefined ? { reason: entry.reason } : {}),
     });
   }
@@ -1698,31 +1764,18 @@ export function finalizeResolution(
         }) as SourcedWorldDelta<ItemChange>
     );
 
-  // An ending's own occurrence is the same thing as a standalone one, just
-  // authored where it cannot be forgotten. Fold them in before building, with
-  // the ending's action as their source.
-  const rawOccurrences: RawOccurrence[] = [
-    ...(raw.occurrences ?? []).filter((o): o is RawOccurrence => o != null),
-    ...(raw.ending ?? [])
-      .filter((e) => e?.occurrence)
-      .map((e) => ({
-        ...e.occurrence,
-        // The words the actor CHOSE, carried through verbatim. `utterance` is
-        // the one part of a command that is already objective — it is what
-        // anyone in earshot hears, character for character — so nothing gets
-        // to restate it. Before this, the Engine wrote a third-person summary
-        // of the line ("Manny's opening question hangs in the air") and the
-        // renderer then re-imagined that summary for each listener: two
-        // rewrites, and the actor's own diction never reached anyone.
-        facts: withSpokenWords(e, lookup),
-        sourceActionIds: [e.actionId],
-      })),
-  ];
+  // Every occurrence is a standalone row now; the actor's spoken line is
+  // placed on the first row citing its action. Withdrawn (null) rows are
+  // dropped here, so ids below count only real occurrences.
+  const listed = raw.occurrences ?? [];
+  const rawOccurrences: RawOccurrence[] = listed
+    .map((o, i) =>
+      o == null ? null : { ...o, facts: withSpokenWords(o, i, listed, lookup) }
+    )
+    .filter((o): o is RawOccurrence => o != null);
 
-  // Settled here, after the fold, so standalone occurrences and endings' own
-  // occurrences are both covered by construction. Finalization runs exactly
-  // once per session and only on a clean submission, which is what guarantees
-  // one roll per declaration.
+  // Finalization runs exactly once per session and only on a clean
+  // submission, which is what guarantees one roll per declaration.
   const sanity = resolveSanityDeclarations(
     rawOccurrences,
     lookup,
@@ -1732,6 +1785,7 @@ export function finalizeResolution(
   characterChanges.push(...sanity.deltas);
 
   const occurrences: Occurrence[] = [];
+  const createdItemIds = createdItemIdsOf(raw);
   rawOccurrences.forEach((o, i) => {
     if (o == null) return;
     const occurrenceId = `occ_${context.tick.tickId}_${i}`;
@@ -1740,15 +1794,21 @@ export function finalizeResolution(
     occurrences.push({
       id: occurrenceId,
       tickId: context.tick.tickId,
-      sourceActionIds: o.sourceActionIds ?? [],
+      sourceActionIds: o.actionIds ?? [],
       ...(locationId !== undefined ? { locationId } : {}),
       facts: (o.facts ?? []).map((f, fi) => ({
         id: factIds[fi],
         type: f.type,
         content: f.content,
-        entityRefs: f.entityRefs ?? [],
+        // Bare ids on the wire; the kind is code's to know. An id that
+        // resolves to nothing was refused by validation, so `scene` here is
+        // only a type-level fallback.
+        entityRefs: (f.refIds ?? []).map((id) => ({
+          kind: resolveRefKind(id, lookup, createdItemIds) ?? "scene",
+          id,
+        })),
       })),
-      participants: o.participants ?? [],
+      participants: participantsOf(o),
       perceiverCharacterIds: [...new Set(o.perceiverCharacterIds ?? [])],
       signals: (o.signals ?? []).map((sig) => ({
         factIds: (sig.factIndexes ?? o.facts.map((_, fi) => fi)).map(

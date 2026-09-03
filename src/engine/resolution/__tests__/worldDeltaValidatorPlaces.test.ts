@@ -392,17 +392,17 @@ describe("item.create with an explicit id", () => {
         ],
         occurrences: [
           {
-            sourceActionIds: [ACTION_ID],
+            actionIds: [ACTION_ID],
             locationId: "SCN_1",
+            actorId: "npc_1",
+            perceiverCharacterIds: ["npc_1"],
             facts: [
               {
                 type: "action_result",
                 content: "a ledger tumbles from the shelf",
-                entityRefs: [{ kind: "item", id: "item.home.ledger" }],
+                refIds: ["item.home.ledger"],
               },
             ],
-            participants: [{ characterId: "npc_1", role: "actor" }],
-            perceiverCharacterIds: ["npc_1"],
           },
         ],
       })
@@ -414,20 +414,20 @@ describe("item.create with an explicit id", () => {
       validate({
         occurrences: [
           {
-            sourceActionIds: [ACTION_ID],
+            actionIds: [ACTION_ID],
+            actorId: "npc_1",
+            perceiverCharacterIds: ["npc_1"],
             facts: [
               {
                 type: "action_result",
                 content: "something glints",
-                entityRefs: [{ kind: "item", id: "item.ghost" }],
+                refIds: ["item.ghost"],
               },
             ],
-            participants: [{ characterId: "npc_1", role: "actor" }],
-            perceiverCharacterIds: ["npc_1"],
           },
         ],
       })
-    ).toContain('entityRef item "item.ghost" does not exist');
+    ).toContain('facts[0]: ref "item.ghost" does not exist');
   });
 });
 

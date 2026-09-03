@@ -23,6 +23,11 @@ is limited to what is actually there.
 - Nothing is found that the world does not hold. A success against an empty
   room correctly returns the absence, and the absence is itself a fact worth
   emitting.
+- When the search is a QUESTION put to a person — reading how much they saw,
+  drawing out what they know — the finding is not yours to write. A met
+  check is carried to that person by code as pressure before they decide;
+  what they let slip, if anything, is their own next command. Your facts
+  describe the asking, never the answer.
 
 ## Success levels
 

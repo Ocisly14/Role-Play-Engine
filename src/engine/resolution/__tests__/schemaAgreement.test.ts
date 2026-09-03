@@ -73,23 +73,24 @@ const START = fields<RawActionStart>()(
   "opposedBy",
   "movement"
 );
+// Written in wire order, not alphabetical: the flat shape relies on it (see
+// "an occurrence row cites its actions via actionIds and carries facts last").
 const END = fields<RawActionEnd>()(
   "actionId",
+  "replacedBy",
   "outcome",
-  "reason",
-  "occurrence",
-  "resolvedDurationTicks",
-  "timingReason",
-  "replacedBy"
+  "reason"
 );
 const OCCURRENCE = fields<RawOccurrence>()(
-  "sourceActionIds",
+  "actionIds",
   "locationId",
-  "facts",
-  "participants",
+  "actorId",
+  "targetIds",
+  "affectedIds",
   "perceiverCharacterIds",
   "signals",
-  "sanityChecks"
+  "sanityChecks",
+  "facts"
 );
 const SANITY_CHECK = fields<RawSanityCheck>()(
   "characterId",
@@ -143,28 +144,34 @@ describe("the tool schema and the TS types describe the same thing", () => {
     expect(propsOf(submit.properties.ending.items)).toEqual(sorted(END));
   });
 
-  it("an ending's occurrence is an occurrence minus its source", () => {
-    // The source IS the action it hangs off, so restating it would be a second
-    // place for the same fact to be wrong.
-    expect(
-      propsOf(submit.properties.ending.items?.properties.occurrence)
-    ).toEqual(sorted(OCCURRENCE.filter((k) => k !== "sourceActionIds")));
+  it("an occurrence row cites its actions via actionIds and carries facts last", () => {
+    // The trace of an ending no longer hangs off the ending: it is a flat
+    // row here, tied back by `actionIds`. The row is scalars and string
+    // arrays with its one array of objects LAST, and the ending entry is four
+    // scalars with the longest string last — generation is left-to-right, so
+    // the order is the design, not a style: the model never has to close a
+    // deep object and then come back for a sibling scalar (the brace slip
+    // every unreadable DeepSeek submission made in two measured runs).
     expect(propsOf(submit.properties.occurrences.items)).toEqual(
       sorted(OCCURRENCE)
     );
+    const occurrenceOrder = Object.keys(
+      submit.properties.occurrences.items?.properties ?? {}
+    );
+    expect(occurrenceOrder).toEqual([...OCCURRENCE]);
+    expect(occurrenceOrder.at(-1)).toBe("facts");
+    expect(
+      Object.keys(submit.properties.ending.items?.properties ?? {})
+    ).toEqual(["actionId", "replacedBy", "outcome", "reason"]);
   });
 
-  it("a declared sanity check matches RawSanityCheck, wherever the occurrence sits", () => {
-    // The declaration lives on the SHARED occurrence body, so a standalone
-    // occurrence and an ending's own occurrence offer it identically — which
-    // is what lets one validation call site cover both.
+  it("a declared sanity check matches RawSanityCheck", () => {
+    // One placement only: the occurrence row. An ending has no occurrence of
+    // its own any more, so there is no second copy to keep in step.
     const standalone = submit.properties.occurrences.items?.properties
       .sanityChecks as Schema & { items?: Schema };
-    const embedded = submit.properties.ending.items?.properties.occurrence
-      ?.properties.sanityChecks as Schema & { items?: Schema };
 
     expect(propsOf(standalone.items)).toEqual(sorted(SANITY_CHECK));
-    expect(propsOf(embedded.items)).toEqual(sorted(SANITY_CHECK));
     // There is no success loss: passing costs nothing, so there is no pair.
     expect(propsOf(standalone.items?.properties.consequence)).toEqual([
       "description",
@@ -227,9 +234,23 @@ describe("repair_resolution cannot drift from what it repairs", () => {
 });
 
 describe("what the schema marks required", () => {
-  it("makes an ending carry its trace, so the rule needs no validator", () => {
-    expect(submit.properties.ending.items?.required).toContain("occurrence");
-    expect(submit.properties.ending.items?.required).toContain("reason");
+  it("keeps an ending flat: no nested occurrence, only actionId and reason required", () => {
+    // The trace used to be a required `occurrence` object on the entry, so
+    // the rule needed no validator; now it is the validator's job (every
+    // ending must be cited by an occurrence's `actionIds`), and the entry
+    // carries nothing the model has to close.
+    expect(
+      submit.properties.ending.items?.properties.occurrence
+    ).toBeUndefined();
+    expect(submit.properties.ending.items?.required).toEqual([
+      "actionId",
+      "reason",
+    ]);
+    expect(submit.properties.occurrences.items?.required).toEqual([
+      "actionIds",
+      "perceiverCharacterIds",
+      "facts",
+    ]);
   });
 
   it("leaves duration optional in shape — travel derives its clock from the route", () => {
@@ -474,9 +495,20 @@ describe("both engine tools stay inside the strict subset", () => {
   });
 
   it("documents why the engine tools are not strict today", () => {
-    const out: string[] = [];
-    optionals(submitResolutionTool.inputSchema, out);
-    expect(out.length).toBeGreaterThan(ANTHROPIC_OPTIONAL_LIMIT);
+    // The exact totals, so a schema change that moves them is noticed here
+    // rather than in a 400 from the API. Flat shape (2026-09): the ending
+    // entry lost its nested occurrence (and two duration fields), the
+    // occurrence row traded `participants`/`entityRefs` objects for
+    // `actorId`/`targetIds`/`affectedIds`/`refIds` — 38 for submit, 63 for
+    // repair (every item field goes optional there, plus the address
+    // fields). Both still well over the limit of 24.
+    const submitOptionals: string[] = [];
+    optionals(submitResolutionTool.inputSchema, submitOptionals);
+    const repairOptionals: string[] = [];
+    optionals(repairResolutionTool.inputSchema, repairOptionals);
+    expect(submitOptionals.length).toBe(38);
+    expect(repairOptionals.length).toBe(63);
+    expect(submitOptionals.length).toBeGreaterThan(ANTHROPIC_OPTIONAL_LIMIT);
     expect(submitResolutionTool.strict).toBe(false);
     expect(repairResolutionTool.strict).toBe(false);
   });

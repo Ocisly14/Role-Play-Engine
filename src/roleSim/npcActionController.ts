@@ -20,6 +20,7 @@ import { findAffectedCharacters } from "../engine/shared/impactPropagation.js";
 import type { NpcMemoryManager } from "../memory/NpcMemoryManager.js";
 import type { DynamicGameStateManager } from "../state/DynamicGameState.js";
 import type { RoleSimAgent, RoleSimContext } from "./agent.js";
+import { collectLandedChecks, formatLandedCheck } from "./landedChecks.js";
 import {
   consolidateMemories,
   needsConsolidation,
@@ -69,6 +70,9 @@ interface DecideOpts {
   report?: TickReport;
   /** Occurrences this NPC was listed as perceiver of (plan Phase 9). */
   occurrencesForNpc?: Occurrence[];
+  /** Met Social / Investigation checks aimed at this NPC that ended this
+   *  tick, already worded for them (see `landedChecks.ts`). */
+  landedChecks?: string[];
 }
 
 /** Max NPC pipelines deciding concurrently. Overridable for tuning. */
@@ -222,11 +226,23 @@ export class NpcActionController {
       .filter((n) => !this.npcHasActiveStep(n.id))
       .map((n) => n.id);
 
+    // 3b. People a met Social / Investigation check was aimed at this tick.
+    //     The check's verdict reaches them as pressure in their own prompt —
+    //     the Engine no longer writes their reply — so they must decide now,
+    //     whether or not anything else woke them.
+    const landedByNpc = new Map<string, string[]>();
+    for (const landed of collectLandedChecks(report, this.engine)) {
+      const list = landedByNpc.get(landed.targetId) ?? [];
+      list.push(formatLandedCheck(landed, this.dgsm, this.language));
+      landedByNpc.set(landed.targetId, list);
+    }
+
     // 4. Union of all NPCs that need decide() this tick. Perceivers, ended
-    //    actors and idle characters, deduplicated.
+    //    actors, pressured targets and idle characters, deduplicated.
     const allTargets = new Set<string>([
       ...occByNpc.keys(),
       ...endedActors,
+      ...landedByNpc.keys(),
       ...idleAlive,
     ]);
 
@@ -240,12 +256,14 @@ export class NpcActionController {
     await runWithConcurrency(targets, this.decideConcurrency, async (npcId) => {
       if (!this.dgsm.isNpcAlive(npcId)) return;
       const occurrencesForNpc = occByNpc.get(npcId);
+      const landedChecks = landedByNpc.get(npcId);
       await this.decide(npcId, {
         report,
         occurrencesForNpc:
           occurrencesForNpc && occurrencesForNpc.length > 0
             ? occurrencesForNpc
             : undefined,
+        ...(landedChecks && landedChecks.length > 0 ? { landedChecks } : {}),
       });
     });
   }
@@ -456,6 +474,7 @@ export class NpcActionController {
       currentAction,
       perception: { narrative: rendered.narrative, location: currentScene },
       recentPerceptions: priorPerceptions,
+      ...(opts?.landedChecks ? { landedChecks: opts.landedChecks } : {}),
     };
 
     // Over the ceiling, the character brings their own memories down before

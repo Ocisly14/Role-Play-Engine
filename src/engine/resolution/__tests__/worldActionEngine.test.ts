@@ -357,15 +357,15 @@ describe("resolveTick session loop", () => {
     // The action is queued, so ending it is the wrong moment entirely.
     const invalid = {
       ending: [
+        { actionId: "action_c1", outcome: "success", reason: "done already" },
+      ],
+      // The ending's trace is a flat row citing it, not a nested object.
+      occurrences: [
         {
-          actionId: "action_c1",
-          outcome: "success",
-          reason: "done already",
-          occurrence: {
-            facts: [{ type: "action_result", content: "the door opens" }],
-            participants: [{ characterId: "npc_1", role: "actor" }],
-            perceiverCharacterIds: ["npc_1"],
-          },
+          actionIds: ["action_c1"],
+          actorId: "npc_1",
+          perceiverCharacterIds: ["npc_1"],
+          facts: [{ type: "action_result", content: "the door opens" }],
         },
       ],
     };
@@ -378,7 +378,11 @@ describe("resolveTick session loop", () => {
           {
             id: "t2",
             name: "repair_resolution",
-            // Only the transition, moved into the moment it belongs in.
+            // Only the transition, moved into the moment it belongs in. The
+            // patch is addressed by actionId: sending action_c1 under
+            // `starting` is what withdraws the flagged `ending` entry. The
+            // occurrence row that cites it is not flagged and stands — a
+            // visible attempt in progress is a legal trace of a start.
             args: { starting: validSubmission.starting },
           },
         ])
@@ -419,15 +423,15 @@ describe("resolveTick session loop", () => {
   it("applies nothing when repair cannot converge", async () => {
     const invalid = {
       ending: [
+        { actionId: "action_c1", outcome: "success", reason: "done already" },
+      ],
+      // The ending's trace is a flat row citing it, not a nested object.
+      occurrences: [
         {
-          actionId: "action_c1",
-          outcome: "success",
-          reason: "done already",
-          occurrence: {
-            facts: [{ type: "action_result", content: "the door opens" }],
-            participants: [{ characterId: "npc_1", role: "actor" }],
-            perceiverCharacterIds: ["npc_1"],
-          },
+          actionIds: ["action_c1"],
+          actorId: "npc_1",
+          perceiverCharacterIds: ["npc_1"],
+          facts: [{ type: "action_result", content: "the door opens" }],
         },
       ],
     };
@@ -657,13 +661,14 @@ describe("the turn budget", () => {
                   actionId: "action_c1",
                   outcome: "success",
                   reason: "done already",
-                  occurrence: {
-                    facts: [
-                      { type: "action_result", content: "the door opens" },
-                    ],
-                    participants: [{ characterId: "npc_1", role: "actor" }],
-                    perceiverCharacterIds: ["npc_1"],
-                  },
+                },
+              ],
+              occurrences: [
+                {
+                  actionIds: ["action_c1"],
+                  actorId: "npc_1",
+                  perceiverCharacterIds: ["npc_1"],
+                  facts: [{ type: "action_result", content: "the door opens" }],
                 },
               ],
             },

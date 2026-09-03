@@ -483,3 +483,30 @@ describe("the consolidate closing", () => {
     expect(consolidate).toMatch(/never lose a\s+place name/);
   });
 });
+
+describe("landed checks", () => {
+  it("adds a section between perception and the decision when something landed", () => {
+    const text = buildUserPrompt(
+      makeCtx({
+        perception: { narrative: "He asks where the patrol turns back." },
+        landedChecks: [
+          "What the person [stranger_ab12cd] just said leaves you no way around it: you have to answer.",
+        ],
+      }),
+      opts
+    );
+    const headings = [...text.matchAll(/^## .+$/gm)].map((m) => m[0]);
+    expect(headings.indexOf("## What just landed on you")).toBe(
+      headings.indexOf("## What you perceive now") + 1
+    );
+    expect(text).toContain("- What the person [stranger_ab12cd] just said");
+    expect(text).toContain("is up to you in your next action");
+  });
+
+  it("is absent when nothing landed", () => {
+    expect(buildUserPrompt(makeCtx({ landedChecks: [] }), opts)).not.toContain(
+      "## What just landed on you"
+    );
+    expect(buildUserPrompt(makeCtx(), opts)).not.toContain("landed on you");
+  });
+});

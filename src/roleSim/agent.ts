@@ -87,6 +87,12 @@ export interface RoleSimContext {
    *  command with this structured reason (invalid ref, bad duration, unknown
    *  skill, …). Rendered as factual feedback so the agent can re-decide. */
   rejectionFeedback?: string;
+  /** Met Social / Investigation checks that were aimed at this character
+   *  and ended this tick, already worded for them by `landedChecks.ts`: the
+   *  other person's words could not be turned aside and an answer is owed.
+   *  Which answer is not in here — that is the decision this prompt asks
+   *  for. Absent when nothing landed. */
+  landedChecks?: ReadonlyArray<string>;
 }
 
 export interface RoleSimAgent {

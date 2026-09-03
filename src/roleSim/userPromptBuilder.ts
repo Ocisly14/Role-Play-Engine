@@ -162,6 +162,17 @@ ${block}`
     );
   }
 
+  if (ctx.landedChecks && ctx.landedChecks.length > 0) {
+    volatile.push(
+      `## What just landed on you
+${ctx.landedChecks.map((line) => `- ${line}`).join("\n")}
+
+Someone just said something to you and you cannot brush it off: you have to
+answer them. This is how you feel right now, not a record of anything you
+did. What you say, and how much you say, is up to you in your next action.`
+    );
+  }
+
   if (ctx.rejectionFeedback) {
     volatile.push(
       `## Your previous action was REJECTED

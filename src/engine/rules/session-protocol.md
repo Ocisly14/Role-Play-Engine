@@ -50,6 +50,8 @@
 - Facts and reasons are objective and third-person. Perceiver lists follow
   physical/sensory reach (same location; adjacent for loud signals).
 - The actor's proposedDurationTicks is advisory. You output
-  resolvedDurationTicks when the action starts, and again only if you revise
-  the estimate. There is no status field and no progress field:
+  resolvedDurationTicks when the action starts, and never again: an ending
+  carries no duration. There is no status field and no progress field:
   saying nothing about an in-flight action leaves it running.
+- Every `ending` is cited by at least one row in `occurrences` (its
+  `actionIds`). Rows are flat: ids and perceivers first, `facts` last.

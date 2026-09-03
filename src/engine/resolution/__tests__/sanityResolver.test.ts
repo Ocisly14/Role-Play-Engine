@@ -40,9 +40,9 @@ function tape(...values: number[]): () => number {
 
 function occurrence(
   sanityChecks: RawOccurrence["sanityChecks"],
-  sourceActionIds = ["action_1"]
-): Pick<RawOccurrence, "sourceActionIds" | "sanityChecks"> {
-  return { sourceActionIds, ...(sanityChecks ? { sanityChecks } : {}) };
+  actionIds = ["action_1"]
+): Pick<RawOccurrence, "actionIds" | "sanityChecks"> {
+  return { actionIds, ...(sanityChecks ? { sanityChecks } : {}) };
 }
 
 const decl = (

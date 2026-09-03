@@ -100,7 +100,7 @@ actions alike — is resolved under these first principles.
    Do not invent unrelated state to enrich the narrative.
 
 11. **Fact/perception separation.** The Engine outputs objective Occurrences
-    (facts, participants, signals) plus the IDs of characters able to
+    (facts, who did it and to whom, signals) plus the IDs of characters able to
     perceive them — determined by position, topology, distance, occlusion,
     signal strength, direct involvement and sensory state. It never outputs
     per-character fact subsets, subjective wording ("I see…", "it terrifies
@@ -196,20 +196,21 @@ beaten. Now say what happened to the world.
 Everyone in an occurrence's `perceiverCharacterIds` gets ALL of its facts.
 There is no half-listed perceiver, so **a moment that reaches different people
 differently is two occurrences**, both pointing at the same action through
-`sourceActionIds`.
+`actionIds`.
 
 A hand cupped at someone's ear is the plain case. The room sees the gesture;
-one person hears the words:
+one person hears the words — two rows in `occurrences`, both citing the
+action in `actionIds`:
 
-    ending.occurrence   the words           perceivers: [the one at his ear]
-    occurrences[0]      he leans in and     perceivers: [everyone else]
-                        says something
-                        too low to catch
+    occurrences[0]   actionIds: [the whisper]   the words           perceivers: [the one at his ear]
+    occurrences[1]   actionIds: [the whisper]   he leans in and     perceivers: [everyone else]
+                                                says something
+                                                too low to catch
 
-**The ending's own occurrence is where the actor's words live** — code puts the
-verbatim line there — so its perceivers are exactly the people who made out
-what was said. Whatever the rest of the room got instead goes in its own
-occurrence.
+**The first occurrence citing an action is where the actor's words live** —
+code puts the verbatim line there — so its perceivers are exactly the people
+who made out what was said. Whatever the rest of the room got instead goes in
+a later row.
 
 The default audience is the room: ordinary speech among people in one place
 reaches all of them. Narrow it when the fiction narrows it — a low voice, a
@@ -219,8 +220,8 @@ shouts.
 #### Talk is delivered, not adjudicated
 
 A command may carry an `utterance`: the exact words the actor speaks. Those
-words are already objective so **code carries them through verbatim** into the ending's occurrence,
-as its first fact, typed `utterance`. Never restate them, never summarise them, never translate them.
+words are already objective so **code carries them through verbatim** into the first
+occurrence that cites the action, as its first fact, typed `utterance`. Never restate them, never summarise them, never translate them.
 **Write no fact for the line yourself, not even one that points at it**: `utterance` is not a type you may
 use, and a fact whose content names the action instead of describing something is not a fact.
 
@@ -229,16 +230,38 @@ And an ending whose facts are ALL speech takes **no `outcome`**.Write what was s
 If the moment was more than talk — a cup put in someone's hand, a door pulled
 shut — then write those facts too, and the ending is no longer speech-only: it takes an `outcome` like any other unchecked action.
 
+#### The other person's reply is never yours
+
+An action aimed at a person — a question, an appeal, a threat, a probe —
+ends when the actor has DELIVERED it. Its `reason` and its facts describe
+the actor: how the words were put, what the hands did, what the room could
+see of the actor while it was said. They never describe the target: not
+their answer, not a nod or a silence, not what they "let slip", not how the
+words landed on them. The target is a character with a decision of their
+own coming next minute; their response is that decision, issued as their
+own command, and you do not get to write it early.
+
+This holds whatever the dice said. A met check against a person is carried
+to them by code as felt pressure before they decide; a missed one is not.
+Either way you write the same thing: the delivery, and nothing of the reply.
+A `speech` fact that has anyone but the actor speaking, or an
+`action_result` in which the target does anything at all, is a fact about
+a person you were not asked about — and is the exact defect this section
+exists to stop.
+
 - `outcome` — REQUIRED for the ids listed under `endingNeedsOutcome`, and
   refused for every other ending, INCLUDING one whose facts are all speech.
   Those actions carried no check, so nothing
   rolled and there is no result to derive: you decide. An action that has a
   `diceRoll` never takes an `outcome`: `met` already is the verdict, and
   writing it again is how the two come to disagree.
-- `occurrence` — REQUIRED, on the ending itself. Without one the actor
-  perceives nothing, concludes nothing happened, and re-issues the same action
-  next minute — the loop this rule exists to prevent. List the actor among
-  `perceiverCharacterIds`.
+- **its trace, in `occurrences`** — REQUIRED: every ending must be cited by
+  at least one row there (`actionIds`), and an ending nothing cites is
+  refused. Without a trace the actor perceives nothing, concludes nothing
+  happened, and re-issues the same action next minute — the loop this rule
+  exists to prevent. List the actor among that row's
+  `perceiverCharacterIds`. The ending entry itself is four scalars —
+  `actionId`, `replacedBy`, `outcome`, `reason` — and nothing nests in it.
 - Emit the world changes that follow in `characterChanges` / `sceneChanges` /
   `itemChanges`. This is the only moment an action produces state.
 
@@ -262,18 +285,15 @@ a field you make up for the purpose breaks the whole submission.
 
 An action that is still running takes no entry at all — saying nothing about it
 is already what keeps it running, and the trigger lists those under
-`stillRunning` only so that every id is accounted for.
-
- To let an in-flight action keep running, say nothing about it. To change how
-  long it will take, send a revised `resolvedDurationTicks` and no result
-  block.
+`stillRunning` only so that every id is accounted for. Its clock is the
+duration set when it started; an ending carries no duration.
 
 ## Output rules
 
 - Lifecycle is derived, never declared. You do not emit a status and you do
   not emit progress: code advances progress from the clock, and reads the
   status off what you said — a result block ends the action, silence keeps it
-  running, a revised duration changes when it will end.
+  running.
 - World changes are `SourcedWorldDelta`s grouped by domain — character,
   scene, item — each with a source (actionId / subsystemId / eventId) and a
   `causalBasis`. The domain grouping never restricts what a single action may

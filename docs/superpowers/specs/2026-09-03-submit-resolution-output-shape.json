@@ -1,0 +1,293 @@
+{
+  "_about": {
+    "tool": "submit_resolution（repair_resolution 是同一形状加寻址）",
+    "source": "src/engine/resolution/worldDeltaSchema.ts @ grayhaven_1.1 未提交工作区",
+    "legend": {
+      "req": "true = required；'cond' = 校验器按条件要求",
+      "consumers": "校验通过后谁真的读它。engine / renderer-prompt / actor / web+godot / log / none",
+      "run9": "第 9 次 30 tick 运行里该字段直接引发的 repair 报错行数（共 188 行）",
+      "decision": "本轮已定：keep / drop / rename / new；OPEN = 还差一个判断"
+    },
+    "status": "讨论稿 v4。全部 OPEN 已定，可据此写实施方案",
+    "round1_decisions": [
+      "starting: 删 timingReason、删 check.basis",
+      "ending: 删 reason、删 replacedBy、删 outcome 枚举；只剩一个字段 outcome:string = 原 reason 的内容（动作结果，一段客观叙述）",
+      "三组 delta: 删 causalBasis；characterChanges 新增外貌描述性改动",
+      "occurrences: 按 id 寻址；删 locationId、删 signals、删 facts 数组；一条 occurrence 一段 content",
+      "OPEN: 是否需要 speech 标记；无行动者的 occurrence 怎么定位；纯台词行 content 是否必填；无动作引用的行怎么寻址",
+      "第 2 轮：occurrence 带 speech:boolean。纯对话动作 = 一条 speech occurrence 就是它的全部回答：给谁说的、谁听见、台词代码原文引；不写 outcome，不写 content，ending 里不需要条目",
+      "第 3 轮：perceiverCharacterIds 由引擎（模型）自己填，代码不自动加行动者；setAppearance 整段替换"
+    ]
+  },
+  "starting": {
+    "_what": "本 tick 开始的动作，一行一个，id 来自触发块的 starting 列表",
+    "actionId": {
+      "type": "string",
+      "req": true,
+      "consumers": [
+        "engine"
+      ],
+      "decision": "keep"
+    },
+    "resolvedDurationTicks": {
+      "type": "integer >= 1",
+      "req": "cond（非移动动作必填；移动动作被代码覆盖）",
+      "consumers": [
+        "engine: 动作时钟、nextWakeAt"
+      ],
+      "decision": "keep"
+    },
+    "check": {
+      "_what": "行动者声明了技能时的门槛，掷骰前定下；无技能时不得写",
+      "req": "cond",
+      "requiredLevel": {
+        "type": "enum regular|hard|extreme",
+        "req": true,
+        "consumers": [
+          "engine: 掷骰比对"
+        ],
+        "decision": "keep"
+      },
+      "opposedBy": {
+        "type": "[{characterId, skillId}]",
+        "req": false,
+        "consumers": [
+          "engine: 对抗掷骰"
+        ],
+        "decision": "keep"
+      },
+      "_dropped": {
+        "basis": "string, was required, log only → drop"
+      }
+    },
+    "movement": {
+      "_what": "跨场景的动作必填；route 是行动者说的路，落到 place id",
+      "req": "cond",
+      "route": {
+        "type": "string[] 相邻路点，最后一个是目的地",
+        "req": true,
+        "consumers": [
+          "engine: movementRuntime 推时长"
+        ],
+        "decision": "keep"
+      },
+      "vehicleId": {
+        "type": "string",
+        "req": false,
+        "consumers": [
+          "engine"
+        ],
+        "decision": "keep"
+      }
+    },
+    "_dropped": {
+      "timingReason": "string, optional, log only → drop"
+    }
+  },
+  "ending": {
+    "_what": "本 tick 结束的动作里，需要交代结果的那些。纯对话动作不在这里出现：它的回答是一条 speech occurrence",
+    "_run9_before": "旧形状相关报错 135 行（72%）：无 occurrence 引用 50、outcome 枚举相关 81、reason 缺 2、replacedBy 错 1、重复 1。新形状下 outcome 枚举的 81 行和 replacedBy 的 1 行不再存在",
+    "actionId": {
+      "type": "string",
+      "req": true,
+      "consumers": [
+        "engine: transition（completed/interrupted 由时间是否耗完决定）"
+      ],
+      "decision": "keep"
+    },
+    "outcome": {
+      "type": "string — 动作结果的客观完成态叙述：做到了哪一步、什么没成、行动者自己能知道的部分。不写推理，不写目标的反应",
+      "req": "cond — 该动作有非 speech 的 occurrence 引用时必填；纯对话动作不写、也不出现在 ending 列表里",
+      "consumers": [
+        "renderer-prompt: 行动者感知里的 'Result:' 行",
+        "web+godot: 事件日志正文（transition.reason → outcome.narrative，字段名跟着改）"
+      ],
+      "decision": "rename（原 reason 的内容与消费者不变；原 outcome 枚举删除，isSpeechOnly 与 endingNeedsOutcome 随之删除）"
+    },
+    "_dropped": {
+      "reason": "合并进 outcome",
+      "replacedBy": "替换由命令的 replacesActionId 驱动，编排器已知 → drop",
+      "outcome(enum)": "无任何读者 → drop"
+    },
+    "_speech_rule": "校验：触发块 ending 里的每个 id，要么有一条 ending 条目（带 outcome），要么被至少一条 speech:true 的 occurrence 引用。两者都没有才报「未回答」。既有 ending 条目又全是 speech 引用，报「纯对话不写 outcome」（保留这条，因为它是模型把对话当成事的信号）"
+  },
+  "characterChanges": {
+    "_what": "持久的人物状态变化",
+    "_item": {
+      "sourceActionId": {
+        "type": "string",
+        "req": true,
+        "consumers": [
+          "engine: 归因"
+        ],
+        "decision": "keep"
+      },
+      "characterId": {
+        "type": "string",
+        "req": true,
+        "decision": "keep"
+      },
+      "operation": {
+        "hp|san|fatigue": "delta:number, reason:string",
+        "position": "position:{type:'scene', sceneId} — 非行走的位移",
+        "spot": "spot:string — 场景内位置",
+        "addCondition": "condition:{id, description}",
+        "removeCondition": "conditionId:string",
+        "setAppearance (new)": {
+          "fields": "appearance:string — 整段替换 profile.appearance；保留仍成立的部分，只改真的变了的相貌。暂时状态（血污、湿衣、绷带）仍走 addCondition，不写进外貌",
+          "why": "profile.appearance 现在被三处读：同场景他人的渲染（People present / Other entities）、本人 profile、引擎上下文、以及陌生人描述（perceivableDirectory）。但没有任何 operation 能改它：脸上挨了一刀、衣服湿透、剃了胡子都无处落。",
+          "decision": "new — 整段替换"
+        },
+        "decision": "keep + new"
+      },
+      "_dropped": {
+        "causalBasis": "log only → drop"
+      }
+    }
+  },
+  "sceneChanges": {
+    "_item": {
+      "sourceActionId": {
+        "req": true,
+        "decision": "keep"
+      },
+      "sceneId": {
+        "req": true,
+        "decision": "keep"
+      },
+      "operation": {
+        "addCondition": "condition:{description, featureId?}",
+        "removeCondition": "predicate:{id?, featureId?}",
+        "setDescription": "description:string — 整段替换场景散文，保留仍成立的 [reference-id]",
+        "connectionBlock": "connectionId, blocked:boolean, reason",
+        "connectionDiscovered": "connectionId, characterIds[]",
+        "connectionHidden": "connectionId, hidden:boolean",
+        "environmentContribute": "quantity:temperature|illumination|oxygen|noise, value:number",
+        "environmentHazard": "add?:string[], remove?:string[]",
+        "decision": "keep"
+      },
+      "_dropped": {
+        "causalBasis": "drop"
+      }
+    }
+  },
+  "itemChanges": {
+    "_item": {
+      "sourceActionId": {
+        "req": true,
+        "decision": "keep"
+      },
+      "itemId": {
+        "req": "cond（create 时不填）",
+        "decision": "keep"
+      },
+      "operation": {
+        "create": "name, location, description?, id?",
+        "move": "from, to",
+        "destroy": "(无字段；持有场景的散文若引用了它，同一提交里要 setDescription)",
+        "set": "description?, appendDescription?, hidden?, isLightSource?, lightLevel?",
+        "decision": "keep"
+      },
+      "_dropped": {
+        "causalBasis": "drop"
+      }
+    }
+  },
+  "occurrences": {
+    "_what": "本 tick 每件客观发生的事，一行一条。每个 ending 必须被至少一条引用。是角色感知的唯一来源；不持久化。speech:true 的行是一次发言的全部记录",
+    "_run9_before": "occurrence 级报错 44 行：facts 类型写成 utterance 29、facts 为空 6、repair 行缺 actionIds 9。新形状下 type 字段不存在，29 行消失",
+    "_item": {
+      "actionIds": {
+        "type": "string[]",
+        "req": "true，且非空",
+        "consumers": [
+          "engine: ending 有无痕迹；代码把被引用动作的台词附到这条上"
+        ],
+        "decision": "keep；同时是 repair 的寻址键（见 _repair）"
+      },
+      "speech": {
+        "type": "boolean",
+        "req": true,
+        "consumers": [
+          "engine: true → 该动作的 ending 不需要 outcome，且不需要 ending 条目；content 可空；代码把命令的 utterance 附上",
+          "renderer-prompt: 这条是说话，utterance 逐字引，content（若有）是怎么说的"
+        ],
+        "decision": "keep（第 2 轮定）",
+        "rule": "true 只能用于被引用的命令带 utterance 的行。一次既说了话又动了手（递杯子、拉门）是两条：一条 speech:true 承载台词，一条 speech:false 承载动作并让 ending 写 outcome。这样「说了话就不用交代动作结果」的漏洞堵在结构上，而不靠校验器猜"
+      },
+      "actorId": {
+        "type": "string",
+        "req": "cond（无动作引用的行才需要写；有引用时代码从命令取）",
+        "consumers": [
+          "engine: 定位；renderer-prompt: involved (actor)"
+        ],
+        "decision": "keep（可派生时派生）"
+      },
+      "targetIds": {
+        "type": "string[]",
+        "req": "cond — speech:true 时必填（给谁说的：全屋、一个人、耳语对象）；speech:false 时可省，代码从命令 objectRefs(role=target) 推",
+        "consumers": [
+          "renderer-prompt: involved (target)、不在场相关者段",
+          "engine: 对人的社交/调查检定落在谁身上（landedChecks 现在读命令 objectRefs，可改读这里）"
+        ],
+        "decision": "keep（speech 行必填，其余派生）"
+      },
+      "perceiverCharacterIds": {
+        "type": "string[]",
+        "req": true,
+        "consumers": [
+          "engine: 感知路由 — 整个输出里最关键的字段"
+        ],
+        "decision": "keep — 引擎填，代码不补。行动者要不要感知到自己动作的痕迹，是引擎按场面判断的事（昏迷、背对、被拖走的人不感知）。schema 描述里「把行动者列进去」的那句保留为提示，不做校验",
+        "note": "speech 行：听见的人。耳语 = perceivers 只有对象；同一句话屋里其他人听到的是「他低声说了句什么」，那是另一条 speech:false 的 content 行"
+      },
+      "content": {
+        "type": "string — 这件事的客观第三人称描述，世界为真，无角色视角措辞。若引用的动作带台词，写台词之外的部分：怎么说的、手在做什么、谁转头看了",
+        "req": "cond — speech:false 必填；speech:true 可选（怎么说的、手在哪、谁转头）",
+        "consumers": [
+          "renderer-prompt → 感知者"
+        ],
+        "decision": "new（替代 facts[] 数组；PERSPECTIVE_PATTERNS 校验落到这里）",
+        "note": "纯台词行 content 为空不再是错误：这是第 9 次 2 个死 tick 的出处，现在由 speech:true 合法化"
+      },
+      "utterance (code-filled)": {
+        "type": "string，代码从被引用命令的 utterance 原文附上，模型不写、不可写",
+        "consumers": [
+          "renderer-prompt: 逐字加引号引用"
+        ],
+        "decision": "机制不变，从 facts[0] type=utterance 变成 occurrence 自己的字段；'utterance is not a type you write' 这类错误没有了产生的位置"
+      },
+      "sanityChecks": {
+        "type": "[{characterId ∈ perceivers, failureLoss:'1'|'1d4'|'1d6'|'1d10', consequence?:{description, durationMinutes 5..1440}}] 至多 8",
+        "req": false,
+        "consumers": [
+          "engine: 代码掷 SAN"
+        ],
+        "decision": "keep"
+      },
+      "_dropped": {
+        "locationId": {
+          "decision": "drop — actionIds 必填非空，位置 = 行动者所在场景由代码推。第 9 次 132 条 occurrence 全部引用了动作；天气、火、剧本事件由子系统发 occurrence，不经模型"
+        },
+        "signals": "drop — 渲染器的听/看判断改为只看位置（here / NOT here）和 content 文字本身",
+        "affectedIds": "drop — 一段 content 里已写明谁受了影响",
+        "facts[]": "drop — 换成单段 content；type 与 refIds 随之消失",
+        "facts[].type": "drop — 消费者只剩渲染器一句 speech 转述规则，改为不依赖类型",
+        "facts[].refIds": "drop — 无消费者"
+      }
+    },
+    "_repair": {
+      "current": "occurrence 按数组下标寻址（index 替换 / 无 index 追加）。第 9 次里模型 59 行不带 index 被追加、旧行原地不动，30 行带 index 中 9 行只带了要改的字段。4 个死 tick 全在这里。",
+      "decision": "改为按 actionIds 寻址：repair 里一条 occurrence 行带 actionIds，就替换掉原提交里引用了同一动作的行。actionIds 必填非空，所以每一行都可寻址；错误也按 actionId 报，不再报 occurrence:N"
+    }
+  },
+  "_not_in_schema_but_enforced_by_validator": [
+    "触发块 starting 里的每个 id 都必须有 starting 条目",
+    "触发块 ending 里的每个 id 都必须被回答：一条带 outcome 的 ending 条目，或至少一条 speech:true 的 occurrence",
+    "speech:true 只能引用带 utterance 的命令；全 speech 引用的动作不得有 ending 条目",
+    "一个 id 不能同时出现在 starting 和 ending",
+    "无技能的动作不得带 check；有 check 的动作 ending 不得改门槛",
+    "content 不得含角色视角措辞（PERSPECTIVE_PATTERNS）",
+    "每个 id 字段都必须指向真实存在的实体"
+  ]
+}

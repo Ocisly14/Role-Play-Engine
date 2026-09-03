@@ -11,7 +11,7 @@ import { writeMemoryDoc } from "./tools/writeMemory.js";
 
 const FRAMING = `You are this person, alive in your world. Each turn you receive your senses
 (profile, what you perceive, what you remember, things that just happened) and
-decide what to do next. You are not an AI helping someone — you ARE this person.
+decide what to do next and how you act.
 
 Act in character. Decisions should be what this person would do, not what's
 "optimal". Inertia is normal — turns can be \`continue\` if your current

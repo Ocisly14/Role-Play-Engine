@@ -56,23 +56,18 @@ export interface RawCheck {
  * the type it was allowed to fill in. Six of sixteen rejections in one
  * measured run were that lookup going wrong.
  */
+/**
+ * Four scalars, longest last. The trace an ending leaves is NOT here: it is
+ * an entry in `occurrences` whose `actionIds` cite this action, and the
+ * validator refuses an ending nothing cites. It used to be a nested
+ * `occurrence` object on this entry — required, so the trace could not be
+ * forgotten — and that nesting was where DeepSeek lost count of its braces:
+ * every unreadable submission in two measured runs broke at the close of an
+ * ending's occurrence, the model writing `}}` and then carrying on with the
+ * entry's remaining fields. A flat entry has nothing to climb back out of.
+ */
 export interface RawActionEnd {
   actionId: string;
-  /** REQUIRED when the action carried no check. When it did, code has already
-   *  decided success from the roll and this field is refused. The trigger
-   *  section names exactly which ids need it. */
-  outcome?: "success" | "partial" | "failure" | "blocked";
-  /** What happened, objectively. */
-  reason: string;
-  /** The trace this ending leaves in the world. Required here rather than
-   *  cross-referenced from the `occurrences` array: "every action that ends
-   *  leaves an occurrence" is unenforceable in a schema when the two live in
-   *  different arrays, and it was the third-most-common rejection. The source
-   *  is this action, so it is not restated. */
-  occurrence: Omit<RawOccurrence, "sourceActionIds">;
-  /** Revised estimate, when the Engine now knows it ran longer or shorter. */
-  resolvedDurationTicks?: number;
-  timingReason?: string;
   /** For an id the trigger lists under `replaced`: the action that cut it
    *  short — the `starting` entry whose command names this one as
    *  `replacesActionId`. Optional, and informational: code already knows the
@@ -81,6 +76,12 @@ export interface RawActionEnd {
    *  in the trigger and had nowhere legal to write it back, and on DeepSeek,
    *  which enforces no schema, the invention became a syntax error. */
   replacedBy?: string;
+  /** REQUIRED when the action carried no check. When it did, code has already
+   *  decided success from the roll and this field is refused. The trigger
+   *  section names exactly which ids need it. */
+  outcome?: "success" | "partial" | "failure" | "blocked";
+  /** What happened, objectively. */
+  reason: string;
 }
 
 export interface RawSourcedDelta {
@@ -116,21 +117,24 @@ export interface RawSanityCheck {
   };
 }
 
+/**
+ * One flat row per moment: scalars and string arrays, then the one array of
+ * objects (`facts`) last. Participants are three fields rather than a list of
+ * `{characterId, role}` objects, and a fact points at things by bare id
+ * (`refIds`) rather than `{kind, id}` pairs — id spaces do not overlap, so
+ * code resolves the kind. Both are the same information at one nesting level
+ * less, which is the whole point of this shape.
+ */
 export interface RawOccurrence {
-  sourceActionIds: string[];
+  /** The actions this is the trace of. Every ending must be cited by at
+   *  least one occurrence; a moment that reaches two audiences differently
+   *  is two rows with the same `actionIds`. */
+  actionIds: string[];
   locationId?: string;
-  facts: Array<{
-    type: string;
-    content: string;
-    entityRefs?: Array<{
-      kind: "character" | "item" | "scene" | "connection";
-      id: string;
-    }>;
-  }>;
-  participants: Array<{
-    characterId: string;
-    role: "actor" | "target" | "directly_affected";
-  }>;
+  /** Who did it, who it was done to, who else it directly affected. */
+  actorId?: string;
+  targetIds?: string[];
+  affectedIds?: string[];
   perceiverCharacterIds: string[];
   signals?: Array<{
     /** Indexes into `facts` this signal carries. Omitted = all facts. */
@@ -140,6 +144,12 @@ export interface RawOccurrence {
     intensity?: number;
   }>;
   sanityChecks?: RawSanityCheck[];
+  facts: Array<{
+    type: string;
+    content: string;
+    /** Ids of the characters, items, places or passages the fact is about. */
+    refIds?: string[];
+  }>;
 }
 
 export interface RawTickResolution {
@@ -426,19 +436,6 @@ export function opSchema(ops: OperationSpec[]): { anyOf: unknown[] } {
   };
 }
 
-const ENTITY_REF = {
-  type: "object",
-  properties: {
-    kind: {
-      type: "string",
-      enum: ["character", "item", "scene", "connection"],
-    },
-    id: { type: "string" },
-  },
-  required: ["kind", "id"],
-  additionalProperties: false,
-} as const;
-
 const sourcedDelta = (
   idField: string,
   idRequired: boolean,
@@ -466,112 +463,134 @@ const sourcedDelta = (
   additionalProperties: false,
 });
 
-/** Everything an occurrence is, minus who caused it. Hoisted so the same
- *  shape can be embedded in an ending (where the cause is the action itself)
- *  and listed standalone (where it has to be named). */
-const OCCURRENCE_BODY = {
-  locationId: { type: "string" },
-  facts: {
-    type: "array",
-    minItems: 1,
-    items: {
-      type: "object",
-      properties: {
-        type: {
-          type: "string",
-          description: 'e.g. "speech", "sound", "movement", "action_result"',
-        },
-        content: {
-          type: "string",
-          description:
-            "The finished fact, third person and world-true. Read by characters, so it carries no reasoning and no corrections — settle who did what before writing it.",
-        },
-        entityRefs: { type: "array", items: ENTITY_REF },
-      },
-      required: ["type", "content"],
-      additionalProperties: false,
+/** One occurrence row. Scalars and string arrays first, the single array of
+ *  objects (`facts`) last, so the model never has to close a deep object and
+ *  then return to a sibling scalar — the exact place DeepSeek miscounted
+ *  braces when the occurrence was nested inside an ending entry. */
+const OCCURRENCE_ITEM = {
+  type: "object",
+  properties: {
+    actionIds: {
+      type: "array",
+      items: { type: "string" },
+      description:
+        "The action(s) this is the trace of. Every id under the trigger's `ending` MUST be cited by at least one occurrence — an ending nothing cites is refused. Two rows may cite the same action when a moment reaches two audiences differently.",
     },
-  },
-  participants: {
-    type: "array",
-    items: {
-      type: "object",
-      properties: {
-        characterId: { type: "string" },
-        role: {
-          type: "string",
-          enum: ["actor", "target", "directly_affected"],
-        },
-      },
-      required: ["characterId", "role"],
-      additionalProperties: false,
+    locationId: { type: "string" },
+    actorId: {
+      type: "string",
+      description:
+        "Who did it. Omit for a moment nobody caused (weather, a collapse).",
     },
-  },
-  perceiverCharacterIds: { type: "array", items: { type: "string" } },
-  signals: {
-    type: "array",
-    items: {
-      type: "object",
-      properties: {
-        factIndexes: { type: "array", items: { type: "integer" } },
-        channel: {
-          type: "string",
-          enum: ["visual", "sound", "smell", "touch", "direct"],
-        },
-        originLocationId: { type: "string" },
-        intensity: { type: "number" },
-      },
-      required: ["channel"],
-      additionalProperties: false,
+    targetIds: {
+      type: "array",
+      items: { type: "string" },
+      description: "Who it was done to.",
     },
-  },
-  // Declared here, rolled by code. The count and minute bounds live in the
-  // validator and in these descriptions, not as schema keywords: strict mode
-  // supports neither `maxItems` nor `minimum`/`maximum`.
-  sanityChecks: {
-    type: "array",
-    description:
-      "Involuntary sanity checks caused by perceiving THIS occurrence — at most 8. Rare — see the sanity guidance for the closed list of things that warrant one. Code reads the character's SAN, rolls d100 and settles it; a passed check costs nothing at all. Do not also write a character `san` change for the same exposure.",
-    items: {
-      type: "object",
-      properties: {
-        characterId: {
-          type: "string",
-          description:
-            "Must be one of this occurrence's perceiverCharacterIds — exposure is perception.",
-        },
-        failureLoss: {
-          type: "string",
-          description:
-            'SAN lost when the check FAILS: "1", "1d4", "1d6" or "1d10". There is no success loss — passing is free. A flat zero is refused.',
-        },
-        consequence: {
-          type: "object",
-          description:
-            "Optional candidate condition for a severe failed reaction. Code applies it only when actual SAN loss is at least 5. Omit it for a reaction that would only be fear, distress, unease, or another inner feeling.",
-          properties: {
-            description: {
-              type: "string",
-              description:
-                "One objective present-tense description combining signs another observer could see or independently verify with the important mental or physical function now impossible or severely impaired. Never first-person inner narration, thoughts, feelings, mood, attitude, or opinion. If no major impairment exists, omit the whole consequence.",
-            },
-            durationMinutes: {
-              type: "integer",
-              description:
-                "Whole in-world minutes it lasts, from 5 to 1440. Nothing but the clock can revoke it.",
-            },
+    affectedIds: {
+      type: "array",
+      items: { type: "string" },
+      description: "Anyone else directly affected.",
+    },
+    perceiverCharacterIds: {
+      type: "array",
+      items: { type: "string" },
+      description:
+        "Every character physically/sensorially able to perceive it. List the actor of a cited action among them.",
+    },
+    signals: {
+      type: "array",
+      items: {
+        type: "object",
+        properties: {
+          factIndexes: { type: "array", items: { type: "integer" } },
+          channel: {
+            type: "string",
+            enum: ["visual", "sound", "smell", "touch", "direct"],
           },
-          required: ["description", "durationMinutes"],
-          additionalProperties: false,
+          originLocationId: { type: "string" },
+          intensity: { type: "number" },
         },
+        required: ["channel"],
+        additionalProperties: false,
       },
-      required: ["characterId", "failureLoss"],
-      additionalProperties: false,
+    },
+    // Declared here, rolled by code. The count and minute bounds live in the
+    // validator and in these descriptions, not as schema keywords: strict mode
+    // supports neither `maxItems` nor `minimum`/`maximum`.
+    sanityChecks: {
+      type: "array",
+      description:
+        "Involuntary sanity checks caused by perceiving THIS occurrence — at most 8. Rare — see the sanity guidance for the closed list of things that warrant one. Code reads the character's SAN, rolls d100 and settles it; a passed check costs nothing at all. Do not also write a character `san` change for the same exposure.",
+      items: {
+        type: "object",
+        properties: {
+          characterId: {
+            type: "string",
+            description:
+              "Must be one of this occurrence's perceiverCharacterIds — exposure is perception.",
+          },
+          failureLoss: {
+            type: "string",
+            description:
+              'SAN lost when the check FAILS: "1", "1d4", "1d6" or "1d10". There is no success loss — passing is free. A flat zero is refused.',
+          },
+          consequence: {
+            type: "object",
+            description:
+              "Optional candidate condition for a severe failed reaction. Code applies it only when actual SAN loss is at least 5. Omit it for a reaction that would only be fear, distress, unease, or another inner feeling.",
+            properties: {
+              description: {
+                type: "string",
+                description:
+                  "One objective present-tense description combining signs another observer could see or independently verify with the important mental or physical function now impossible or severely impaired. Never first-person inner narration, thoughts, feelings, mood, attitude, or opinion. If no major impairment exists, omit the whole consequence.",
+              },
+              durationMinutes: {
+                type: "integer",
+                description:
+                  "Whole in-world minutes it lasts, from 5 to 1440. Nothing but the clock can revoke it.",
+              },
+            },
+            required: ["description", "durationMinutes"],
+            additionalProperties: false,
+          },
+        },
+        required: ["characterId", "failureLoss"],
+        additionalProperties: false,
+      },
+    },
+    facts: {
+      type: "array",
+      minItems: 1,
+      description:
+        "Write this LAST. World-true, third-person facts; no character-perspective wording.",
+      items: {
+        type: "object",
+        properties: {
+          type: {
+            type: "string",
+            description: 'e.g. "speech", "sound", "movement", "action_result"',
+          },
+          content: {
+            type: "string",
+            description:
+              "The finished fact, third person and world-true. Read by characters, so it carries no reasoning and no corrections — settle who did what before writing it.",
+          },
+          refIds: {
+            type: "array",
+            items: { type: "string" },
+            description:
+              "Ids of the characters, items, places or passages this fact is about. Bare ids — code knows which kind each one is.",
+          },
+        },
+        required: ["type", "content"],
+        additionalProperties: false,
+      },
     },
   },
+  required: ["actionIds", "perceiverCharacterIds", "facts"],
+  additionalProperties: false,
 } as const;
-
-const OCCURRENCE_REQUIRED = ["facts", "participants", "perceiverCharacterIds"];
 
 export const submitResolutionTool: ToolSpec = {
   name: "submit_resolution",
@@ -584,8 +603,8 @@ export const submitResolutionTool: ToolSpec = {
   // model reads it either way), and the API refused it on a limit the docs
   // do not mention: at most 24 OPTIONAL parameters across every strict tool
   // in the request, counted through every nesting level. This tool alone has
-  // 44 — six top-level lists, a dozen genuinely optional fields on starts
-  // and endings, the occurrence body twice — and repair has 67. Squeezing
+  // 38 — six top-level lists, the genuinely optional fields on starts,
+  // endings and occurrences — and repair has 63. Squeezing
   // under 24 means "required but nullable" on most of them, which is a
   // dozen `null`s per entry. The lint in schemaAgreement.test.ts keeps the
   // subset and counts the optionals, so the day the limit moves this is one
@@ -673,11 +692,16 @@ export const submitResolutionTool: ToolSpec = {
       ending: {
         type: "array",
         description:
-          "Actions that FINISH this tick — the ids the trigger section lists under `ending`. What happened, and the trace it leaves. The bar was set when the action started and cannot be revisited here.",
+          "Actions that FINISH this tick — the ids the trigger section lists under `ending`. Four scalars: what happened. The trace it leaves goes in `occurrences`, citing this actionId — every ending must be cited there. The bar was set when the action started and cannot be revisited here.",
         items: {
           type: "object",
           properties: {
             actionId: { type: "string" },
+            replacedBy: {
+              type: "string",
+              description:
+                "Optional, only for an id the trigger lists under `replaced`: the actionId of the `starting` entry that cut it short. Nothing else marks a replaced ending — do not invent a field for it.",
+            },
             outcome: {
               type: "string",
               enum: ["success", "partial", "failure", "blocked"],
@@ -689,30 +713,8 @@ export const submitResolutionTool: ToolSpec = {
               description:
                 'What happened, objectively — the FINISHED account, not your working. It is read downstream and narrated to the actor, so it carries no reasoning, no corrections, no second thoughts, no addressing yourself: never "wait", "actually", "let me reconsider", or a note about which character is which. Settle all of that before you write, then write only the outcome. The check result you were given is input: never restate or contradict it.',
             },
-            occurrence: {
-              type: "object",
-              description:
-                "The objective trace this ending leaves. Every action that ends leaves one — that is why it lives here rather than in the `occurrences` array.",
-              properties: { ...OCCURRENCE_BODY },
-              required: OCCURRENCE_REQUIRED,
-              additionalProperties: false,
-            },
-            resolvedDurationTicks: {
-              type: "integer",
-              description:
-                "Only to revise the estimate — a whole number of minutes, at least 1.",
-            },
-            timingReason: {
-              type: "string",
-              description: "Optional: why the estimate changed, for the log.",
-            },
-            replacedBy: {
-              type: "string",
-              description:
-                "Optional, only for an id the trigger lists under `replaced`: the actionId of the `starting` entry that cut it short. Nothing else marks a replaced ending — do not invent a field for it.",
-            },
           },
-          required: ["actionId", "reason", "occurrence"],
+          required: ["actionId", "reason"],
           additionalProperties: false,
         },
       },
@@ -734,16 +736,8 @@ export const submitResolutionTool: ToolSpec = {
       occurrences: {
         type: "array",
         description:
-          "Objective things that happened this tick that are NOT an action ending — speech, noises, a visible attempt in progress. An ending's trace goes on the ending itself. Facts are world-true, third-person, no character-perspective wording. perceiverCharacterIds = every character physically/sensorially able to perceive it.",
-        items: {
-          type: "object",
-          properties: {
-            sourceActionIds: { type: "array", items: { type: "string" } },
-            ...OCCURRENCE_BODY,
-          },
-          required: ["sourceActionIds", ...OCCURRENCE_REQUIRED],
-          additionalProperties: false,
-        },
+          "Every objective thing that happened this tick, one flat row each: the trace of every ending (cite it in `actionIds` — an ending nothing cites is refused), and anything else — speech, noises, a visible attempt in progress. Write each row's `facts` last. Facts are world-true, third-person, no character-perspective wording.",
+        items: OCCURRENCE_ITEM,
       },
     },
     additionalProperties: false,
@@ -855,7 +849,7 @@ const repairableAction = (itemSchema: unknown) => {
 
 export const repairResolutionTool: ToolSpec = {
   name: "repair_resolution",
-  // See submitResolutionTool: 67 optional parameters against a limit of 24.
+  // See submitResolutionTool: 63 optional parameters against a limit of 24.
   strict: false,
   description:
     "Fix ONLY the elements named in the errors. Everything you do not mention stays exactly as you submitted it — do not re-send correct parts, and do not re-send the whole resolution.",

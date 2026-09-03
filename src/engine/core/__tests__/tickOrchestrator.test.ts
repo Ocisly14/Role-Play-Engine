@@ -82,12 +82,19 @@ function stubResolve() {
   const calls: EngineResolutionContext[] = [];
   const fn = vi.fn(async (context: EngineResolutionContext) => {
     calls.push(context);
-    const raw: Required<Pick<RawTickResolution, "starting" | "ending">> &
-      RawTickResolution = { starting: [], ending: [] };
-    const stubOccurrence = {
-      facts: [{ type: "action_result", content: "stub fact" }],
-      participants: [{ characterId: "npc_1", role: "actor" as const }],
-      perceiverCharacterIds: ["npc_1"],
+    const raw: Required<
+      Pick<RawTickResolution, "starting" | "ending" | "occurrences">
+    > &
+      RawTickResolution = { starting: [], ending: [], occurrences: [] };
+    // An ending is four scalars; its trace is a flat `occurrences` row that
+    // cites the action in `actionIds`.
+    const cite = (actionId: string) => {
+      raw.occurrences.push({
+        actionIds: [actionId],
+        actorId: "npc_1",
+        perceiverCharacterIds: ["npc_1"],
+        facts: [{ type: "action_result", content: "stub fact" }],
+      });
     };
     for (const t of context.trigger.triggers) {
       for (const actionId of t.actionIds) {
@@ -102,15 +109,15 @@ function stubResolve() {
             actionId,
             outcome: "success",
             reason: "stub done",
-            occurrence: stubOccurrence,
           });
+          cite(actionId);
         } else if (t.reason === "replacement" || t.reason === "interrupted") {
           raw.ending.push({
             actionId,
             outcome: "blocked",
             reason: "stub interruption",
-            occurrence: stubOccurrence,
           });
+          cite(actionId);
         }
       }
     }
@@ -325,9 +332,10 @@ describe("an ended action always leaves something to perceive", () => {
   });
 
   it("leaves the Engine's own occurrence alone rather than doubling up", async () => {
-    // Every ending now carries its occurrence as a required field, so the
-    // fallback below should never fire for an Engine-resolved ending. It still
-    // exists for terminal transitions that never reach the Engine at all.
+    // Every ending is cited by at least one `occurrences` row (the validator
+    // refuses one nothing cites), so the fallback below should never fire for
+    // an Engine-resolved ending. It still exists for terminal transitions that
+    // never reach the Engine at all.
     const resolve = stubResolve();
     const { engine } = makeEngine(makeDgsm(), resolve);
     await engine.submitCommand(command());

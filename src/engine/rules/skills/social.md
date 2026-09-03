@@ -28,24 +28,30 @@ already wants — not the label on the approach.
 
 ## Success levels
 
-- **Regular** — The target gives ground on the specific thing asked: they
-  answer, they concede a point, they hesitate. Their underlying stance is
-  unchanged and they may revisit it later.
-- **Hard** — The target acts on it now and volunteers a little more than was
-  asked. A lie is believed without reservation; a threat lands hard enough to
-  change what they do next.
-- **Extreme** — The target's stance itself moves. They cooperate beyond the
-  immediate request, or take the actor into confidence. Record it as a
-  relationship change on the target, not merely as a one-off answer.
+A met check means the approach REACHED the target: code carries it to them
+as pressure before they next decide, and what they do under it is theirs.
+The levels shade how the delivery itself reads, never what the target does.
+
+- **Regular** — The words land squarely; nothing in the delivery gives the
+  target an easy way around them.
+- **Hard** — The delivery is clean enough that even a wary listener has no
+  purchase to dismiss it — no tell, no overreach.
+- **Extreme** — The approach is pitched exactly to the person in front of
+  the actor; whatever they do next, it will not be because the words missed.
+
+You do not write the target answering, conceding, hesitating, believing, or
+volunteering anything. Describe the actor's side of the exchange and stop.
 
 ## Failure
 
-- The target does not give ground. They deflect, stall, or answer narrowly and
-  truthfully-uselessly. Time is spent and the approach is now used up: a second
-  attempt at the same angle is harder, not equal.
-- **Fumble** — The attempt reads as what it is. A lie is caught, a threat
-  breeds resolve or a report, flattery insults. The target's disposition
-  worsens persistently and they may warn someone else.
+- The approach does not reach: the words are put badly, the angle is wrong
+  for this listener, or the moment was against it. Time is spent and the
+  angle is now used up: a second attempt at the same one is harder, not
+  equal. The target simply hears a question; nothing is carried to them.
+- **Fumble** — The attempt reads as what it is: the delivery itself betrays
+  the lie, the threat, the flattery. Write that betrayal on the actor's side
+  — the stumble, the overplayed tone — and nothing of what the target makes
+  of it. That is theirs to record.
 
 ## State surface
 
@@ -53,9 +59,11 @@ Typical deltas this domain produces. Not a requirement and never a substitute
 for what actually happened — a one-off descriptive result is an occurrence
 fact, not a state change.
 
-- A moved disposition is NOT yours to write. Emit what the target saw and
-  heard as an occurrence; what they now think of the speaker is a memory only
-  they can author. This is the domain where that temptation is strongest.
+- A moved disposition is NOT yours to write, and neither is the target's
+  answer. Emit what the target saw and heard as an occurrence; what they now
+  think of the speaker is a memory only they can author, and what they say
+  back is their own next command. This is the domain where both temptations
+  are strongest.
 - `character.san` — only where what was said genuinely breaks something.
 - Most exchanges produce NO delta at all: what was said, and how it landed,
   is an occurrence with the participants as perceivers. Talking someone into

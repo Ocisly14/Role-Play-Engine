@@ -84,9 +84,7 @@ interface SanityLookup {
  * declaration: validation runs every round, finalization does not.
  */
 export function resolveSanityDeclarations(
-  occurrences: ReadonlyArray<
-    Pick<RawOccurrence, "sourceActionIds" | "sanityChecks">
-  >,
+  occurrences: ReadonlyArray<Pick<RawOccurrence, "actionIds" | "sanityChecks">>,
   lookup: SanityLookup,
   tick: EngineResolutionContext["tick"],
   opts: SanityRollOptions = {}
@@ -100,7 +98,7 @@ export function resolveSanityDeclarations(
   let minted = 0;
 
   for (const occ of occurrences) {
-    const sourceActionId = occ.sourceActionIds?.[0];
+    const sourceActionId = occ.actionIds?.[0];
     if (!sourceActionId) continue; // validation rule 1; keeps types honest
     for (const decl of occ.sanityChecks ?? []) {
       const capacity = lookup.sanById.get(decl.characterId);

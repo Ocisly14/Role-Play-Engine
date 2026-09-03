@@ -13,6 +13,7 @@ import {
 import type {
   RawActionEnd,
   RawActionStart,
+  RawOccurrence,
   RawTickResolution,
 } from "../worldDeltaSchema.js";
 import {
@@ -175,25 +176,42 @@ function start(overrides: Partial<RawActionStart> = {}): RawActionStart {
   };
 }
 
-/** The objective trace every ending carries. It is a required field of the
- *  ending now, not a separate array to cross-reference — which is why the old
- *  "an ended action left no trace" rule has no test any more: it cannot be
- *  expressed. */
-function occurrence(): RawActionEnd["occurrence"] {
+/** The objective trace every ending leaves. It used to be a required field
+ *  OF the ending; now it is a flat row in `occurrences`, and the validator
+ *  checks that every ending is cited by one (`actionIds`) — the same
+ *  guarantee, as a check rather than a nested slot the model had to close. */
+function occurrence(overrides: Partial<RawOccurrence> = {}): RawOccurrence {
   return {
-    facts: [{ type: "action_result", content: "the latch gives" }],
-    participants: [{ characterId: "npc_1", role: "actor" }],
+    actionIds: ["action_live"],
+    actorId: "npc_1",
     perceiverCharacterIds: ["npc_1"],
+    facts: [{ type: "action_result", content: "the latch gives" }],
+    ...overrides,
   };
 }
 
+/** Four scalars. The trace is not here — see `ended` for the pair. */
 function end(overrides: Partial<RawActionEnd> = {}): RawActionEnd {
   return {
     actionId: "action_live",
     outcome: "success",
     reason: "the latch gives",
-    occurrence: occurrence(),
     ...overrides,
+  };
+}
+
+/** An ending together with the row that cites it — what most ending tests
+ *  need, since an uncited ending is itself an error. */
+function ended(
+  endOverrides: Partial<RawActionEnd> = {},
+  occurrenceOverrides: Partial<RawOccurrence> = {}
+): Pick<RawTickResolution, "ending" | "occurrences"> {
+  const entry = end(endOverrides);
+  return {
+    ending: [entry],
+    occurrences: [
+      occurrence({ actionIds: [entry.actionId], ...occurrenceOverrides }),
+    ],
   };
 }
 
@@ -208,31 +226,12 @@ describe("validateRawResolution — the three moments", () => {
 
   // Nothing at runtime reads `timingReason`; demanding it cost a full repair
   // round whenever the model left it off. It is a note for the log now.
-  it("accepts a start and a revised duration without a timingReason", () => {
+  it("accepts a start without a timingReason", () => {
     const errors = validateRawResolution(
       { starting: [start({ timingReason: undefined })] },
       makeContext({})
     );
     expect(errors).toEqual([]);
-
-    const live = activeAction({
-      command: command({ commandId: "live", actorId: "npc_1" }),
-    });
-    const revised = validateRawResolution(
-      {
-        ending: [
-          {
-            actionId: "action_live",
-            outcome: "success",
-            reason: "done sooner",
-            occurrence: occurrence(),
-            resolvedDurationTicks: 2,
-          },
-        ],
-      },
-      makeContext({ activeActions: [live], triggerActionIds: ["action_live"] })
-    );
-    expect(revised).toEqual([]);
   });
 
   it("rejects an unknown actionId and reports the unanswered trigger", () => {
@@ -333,30 +332,49 @@ describe("validateRawResolution — the three moments", () => {
     expect(text(validateRawResolution({}, due))).toContain("was not answered");
     // The duration was set once, when it began. There is no list to move it
     // to and no way to ask for more time: the only answer is what happened.
-    expect(validateRawResolution({ ending: [end()] }, due)).toEqual([]);
+    expect(validateRawResolution(ended(), due)).toEqual([]);
   });
 
-  it("checks the occurrence carried by an ending", () => {
-    // It is a field of the ending rather than a cross-referenced array entry,
-    // but it is the same thing and gets the same objectivity rules.
+  it("checks the occurrence that cites an ending, addressed at the occurrence", () => {
+    // The trace used to be a field of the ending and its errors were
+    // addressed at the action; it is a row of its own now, so the address is
+    // the row's index — the same objectivity rules either way.
     const errors = validateRawResolution(
-      {
-        ending: [
-          end({
-            occurrence: {
-              ...occurrence(),
-              facts: [{ type: "action_result", content: "I feel it give" }],
-            },
-          }),
-        ],
-      },
+      ended(
+        {},
+        { facts: [{ type: "action_result", content: "I feel it give" }] }
+      ),
       makeContext({
         newCommands: [],
         activeActions: [activeAction()],
         triggerActionIds: ["action_live"],
       })
     );
-    expect(text(errors)).toContain("action:action_live");
+    expect(text(errors)).toContain(
+      "occurrence:0 facts[0]: character-perspective wording"
+    );
+    expect(text(errors)).not.toContain("action:action_live");
+  });
+
+  it("refuses an ending no occurrence cites, and accepts one that is", () => {
+    // The guarantee the nested `occurrence` slot used to give, now a check:
+    // without a trace the actor perceives nothing, concludes nothing
+    // happened, and re-issues the same action next minute.
+    const context = makeContext({
+      newCommands: [],
+      activeActions: [activeAction()],
+      triggerActionIds: ["action_live"],
+    });
+    const uncited = validateRawResolution({ ending: [end()] }, context);
+    expect(uncited).toEqual([
+      {
+        target: { kind: "action", actionId: "action_live" },
+        message: expect.stringContaining("no occurrence cites this ending"),
+      },
+    ]);
+    expect(text(uncited)).toContain('"actionIds"');
+
+    expect(validateRawResolution(ended(), context)).toEqual([]);
   });
 });
 
@@ -374,7 +392,7 @@ describe("validateRawResolution — outcome and the bar", () => {
     // single most common rejection in a measured run — the schema said the
     // field was optional while the validator required it.
     const errors = validateRawResolution(
-      { ending: [end({ outcome: undefined })] },
+      ended({ outcome: undefined }),
       runningContext()
     );
     expect(text(errors)).toContain("carried no check");
@@ -402,7 +420,7 @@ describe("validateRawResolution — outcome and the bar", () => {
         starting: [
           start({ actionId: "action_next", resolvedDurationTicks: 1 }),
         ],
-        ending: [end({ replacedBy: "action_next" })],
+        ...ended({ replacedBy: "action_next" }),
       },
       context
     );
@@ -413,7 +431,7 @@ describe("validateRawResolution — outcome and the bar", () => {
         starting: [
           start({ actionId: "action_next", resolvedDurationTicks: 1 }),
         ],
-        ending: [end({ replacedBy: "action_elsewhere" })],
+        ...ended({ replacedBy: "action_elsewhere" }),
       },
       context
     );
@@ -424,7 +442,7 @@ describe("validateRawResolution — outcome and the bar", () => {
 
   it("refuses replacedBy on an action nothing replaced", () => {
     const errors = validateRawResolution(
-      { ending: [end({ replacedBy: "action_c1" })] },
+      ended({ replacedBy: "action_c1" }),
       runningContext()
     );
     expect(text(errors)).toContain("was not cut short by a new command");
@@ -435,19 +453,12 @@ describe("validateRawResolution — outcome and the bar", () => {
     // POINTER at the line — content "action_e2de4d90_utterance" — and four
     // characters were handed that as the thing they heard.
     const errors = validateRawResolution(
-      {
-        ending: [
-          end({
-            occurrence: {
-              facts: [
-                { type: "utterance", content: "action_e2de4d90_utterance" },
-              ],
-              participants: [{ characterId: "npc_1", role: "actor" }],
-              perceiverCharacterIds: ["npc_1"],
-            },
-          }),
-        ],
-      },
+      ended(
+        {},
+        {
+          facts: [{ type: "utterance", content: "action_e2de4d90_utterance" }],
+        }
+      ),
       runningContext()
     );
     expect(text(errors)).toContain('"utterance" is not a type you write');
@@ -456,20 +467,18 @@ describe("validateRawResolution — outcome and the bar", () => {
   it("takes no outcome when every fact is speech", () => {
     // Talk is not an attempt. A question asked is a question asked, and
     // whether it gets answered belongs to whoever answers it — next tick, as
-    // their own action.
-    const spoken = (): RawActionEnd["occurrence"] => ({
+    // their own action. Read off the facts of the occurrences citing it.
+    const spoken: Partial<RawOccurrence> = {
       facts: [{ type: "speech", content: "he asks where they came from" }],
-      participants: [{ characterId: "npc_1", role: "actor" }],
-      perceiverCharacterIds: ["npc_1"],
-    });
+    };
     const clean = validateRawResolution(
-      { ending: [end({ outcome: undefined, occurrence: spoken() })] },
+      ended({ outcome: undefined }, spoken),
       runningContext()
     );
     expect(text(clean)).not.toContain("outcome");
 
     const withOutcome = validateRawResolution(
-      { ending: [end({ outcome: "failure", occurrence: spoken() })] },
+      ended({ outcome: "failure" }, spoken),
       runningContext()
     );
     expect(text(withOutcome)).toContain("nothing can have failed");
@@ -477,21 +486,15 @@ describe("validateRawResolution — outcome and the bar", () => {
 
   it("still requires outcome when the moment was more than talk", () => {
     const errors = validateRawResolution(
-      {
-        ending: [
-          end({
-            outcome: undefined,
-            occurrence: {
-              facts: [
-                { type: "speech", content: "he asks for the cup" },
-                { type: "action_result", content: "the cup changes hands" },
-              ],
-              participants: [{ characterId: "npc_1", role: "actor" }],
-              perceiverCharacterIds: ["npc_1"],
-            },
-          }),
-        ],
-      },
+      ended(
+        { outcome: undefined },
+        {
+          facts: [
+            { type: "speech", content: "he asks for the cup" },
+            { type: "action_result", content: "the cup changes hands" },
+          ],
+        }
+      ),
       runningContext()
     );
     expect(text(errors)).toContain("carried no check");
@@ -499,7 +502,7 @@ describe("validateRawResolution — outcome and the bar", () => {
 
   it("refuses outcome when a check already decided it", () => {
     const errors = validateRawResolution(
-      { ending: [end({ outcome: "success" })] },
+      ended({ outcome: "success" }),
       runningContext({
         check: {
           skillId: "Stealth & Security",
@@ -513,7 +516,7 @@ describe("validateRawResolution — outcome and the bar", () => {
 
   it("accepts an ending that leaves the checked outcome to code", () => {
     const errors = validateRawResolution(
-      { ending: [end({ outcome: undefined })] },
+      ended({ outcome: undefined }),
       runningContext({
         check: {
           skillId: "Stealth & Security",
@@ -529,7 +532,7 @@ describe("validateRawResolution — outcome and the bar", () => {
     // Seen live: `"outcome": null` on a checked ending, refused as if a
     // verdict had been written, and a repair round spent on nothing.
     const errors = validateRawResolution(
-      { ending: [end({ outcome: null as unknown as undefined })] },
+      ended({ outcome: null as unknown as undefined }),
       runningContext({
         check: {
           skillId: "Stealth & Security",
@@ -649,11 +652,11 @@ describe("validateRawResolution — deltas and occurrences", () => {
         starting: [start()],
         occurrences: [
           {
-            sourceActionIds: [ACTION_ID],
+            actionIds: [ACTION_ID],
             locationId: "SCN_1",
-            facts: [{ type: "action_result", content: "I see the lock slip" }],
-            participants: [{ characterId: "npc_1", role: "actor" }],
+            actorId: "npc_1",
             perceiverCharacterIds: ["npc_ghost"],
+            facts: [{ type: "action_result", content: "I see the lock slip" }],
           },
         ],
       },
@@ -678,11 +681,11 @@ describe("finalizeResolution", () => {
       starting: [start({ resolvedDurationTicks: 1 })],
       occurrences: [
         {
-          sourceActionIds: [ACTION_ID],
-          facts: [{ type: "speech", content: "a question through the door" }],
-          participants: [{ characterId: "npc_1", role: "actor" }],
+          actionIds: [ACTION_ID],
+          actorId: "npc_1",
           perceiverCharacterIds: ["npc_1"],
           signals: [{ channel: "sound" }],
+          facts: [{ type: "speech", content: "a question through the door" }],
         },
       ],
     };
@@ -714,14 +717,14 @@ describe("finalizeResolution", () => {
         {
           actionId: "action_live",
           reason: "he puts the question to the room",
-          occurrence: {
-            facts: [
-              { type: "speech", content: "he asks it lightly, grinning" },
-            ],
-            participants: [{ characterId: "npc_2", role: "actor" }],
-            perceiverCharacterIds: ["npc_2"],
-          },
         },
+      ],
+      occurrences: [
+        occurrence({
+          actorId: "npc_2",
+          perceiverCharacterIds: ["npc_2"],
+          facts: [{ type: "speech", content: "he asks it lightly, grinning" }],
+        }),
       ],
     };
     const { resolution } = finalizeResolution(raw, context);
@@ -730,8 +733,83 @@ describe("finalizeResolution", () => {
     // Typed apart from the Engine's own `speech` fact: one is quoted, the
     // other is retold.
     expect(facts[0].type).toBe("utterance");
+    // The line points at whoever said it, and code knows that is a person.
+    expect(facts[0].entityRefs).toEqual([{ kind: "character", id: "npc_2" }]);
     expect(facts[1].type).toBe("speech");
     expect(facts[1].content).toContain("grinning");
+  });
+
+  it("places the words on the first occurrence citing the action only, and rebuilds participants and refs", () => {
+    // A moment that reaches two audiences differently is two rows with the
+    // same `actionIds`. The words live on the first, in list order: its
+    // perceivers are the people who made them out. The three flat participant
+    // fields and the bare `refIds` come back as the rows the finalized
+    // `Occurrence` still carries, the kind of each ref resolved by code.
+    const spoken = "把手举起来。";
+    const context = makeContext({
+      newCommands: [],
+      activeActions: [
+        activeAction({
+          command: command({
+            commandId: "live",
+            actorId: "npc_2",
+            utterance: spoken,
+          }),
+        }),
+      ],
+      triggerActionIds: ["action_live"],
+    });
+    context.state.connectionIds = ["connection.study.hall"];
+    const raw: RawTickResolution = {
+      ending: [
+        {
+          actionId: "action_live",
+          outcome: "success",
+          reason: "the order is given",
+        },
+      ],
+      occurrences: [
+        occurrence({
+          actorId: "npc_2",
+          targetIds: ["npc_1"],
+          perceiverCharacterIds: ["npc_1", "npc_2"],
+          facts: [
+            {
+              type: "speech",
+              content: "he says it to the man at the desk",
+              refIds: ["npc_1", "lock_1", "SCN_1", "connection.study.hall"],
+            },
+          ],
+        }),
+        {
+          actionIds: ["action_live"],
+          affectedIds: ["npc_1"],
+          perceiverCharacterIds: ["npc_1"],
+          facts: [
+            { type: "sound", content: "a raised voice through the door" },
+          ],
+        },
+      ],
+    };
+    const { resolution } = finalizeResolution(raw, context);
+    const [first, second] = resolution.occurrences;
+    expect(first.facts.map((f) => f.type)).toEqual(["utterance", "speech"]);
+    expect(second.facts.map((f) => f.type)).toEqual(["sound"]);
+    expect(first.sourceActionIds).toEqual(["action_live"]);
+    expect(second.sourceActionIds).toEqual(["action_live"]);
+    expect(first.participants).toEqual([
+      { characterId: "npc_2", role: "actor" },
+      { characterId: "npc_1", role: "target" },
+    ]);
+    expect(second.participants).toEqual([
+      { characterId: "npc_1", role: "directly_affected" },
+    ]);
+    expect(first.facts[1].entityRefs).toEqual([
+      { kind: "character", id: "npc_1" },
+      { kind: "item", id: "lock_1" },
+      { kind: "scene", id: "SCN_1" },
+      { kind: "connection", id: "connection.study.hall" },
+    ]);
   });
 
   it("adds nothing when the command carried no words", () => {
@@ -739,10 +817,10 @@ describe("finalizeResolution", () => {
       starting: [start({ resolvedDurationTicks: 1 })],
       occurrences: [
         {
-          sourceActionIds: [ACTION_ID],
-          facts: [{ type: "action_result", content: "the latch gives" }],
-          participants: [{ characterId: "npc_1", role: "actor" }],
+          actionIds: [ACTION_ID],
+          actorId: "npc_1",
           perceiverCharacterIds: ["npc_1"],
+          facts: [{ type: "action_result", content: "the latch gives" }],
         },
       ],
     };
@@ -761,8 +839,11 @@ describe("finalizeResolution", () => {
       ],
       occurrences: [
         {
-          sourceActionIds: [ACTION_ID],
+          actionIds: [ACTION_ID],
           locationId: "SCN_1",
+          actorId: "npc_1",
+          perceiverCharacterIds: ["npc_1", "npc_2", "npc_2"],
+          signals: [{ channel: "sound", factIndexes: [0] }],
           facts: [
             { type: "sound", content: "metal scraping inside the lock" },
             {
@@ -770,9 +851,6 @@ describe("finalizeResolution", () => {
               content: "the pick slips out of the keyway",
             },
           ],
-          participants: [{ characterId: "npc_1", role: "actor" }],
-          perceiverCharacterIds: ["npc_1", "npc_2", "npc_2"],
-          signals: [{ channel: "sound", factIndexes: [0] }],
         },
       ],
     };
@@ -816,9 +894,9 @@ describe("finalizeResolution", () => {
           actionId: "action_live",
           outcome: "blocked",
           reason: "abandoned for a new undertaking",
-          occurrence: occurrence(),
         },
       ],
+      occurrences: [occurrence()],
     };
     const { resolution } = finalizeResolution(raw, context);
     expect(resolution.transitions).toHaveLength(2);
@@ -841,13 +919,8 @@ describe("an entry in the wrong list gets one instruction, not a review", () => 
     // its whole resolution.
     const errors = validateRawResolution(
       {
-        ending: [
-          {
-            actionId: ACTION_ID,
-            reason: "",
-            occurrence: occurrence(),
-          } as never,
-        ],
+        ending: [{ actionId: ACTION_ID, reason: "" } as never],
+        occurrences: [occurrence({ actionIds: [ACTION_ID] })],
       },
       makeContext({})
     );
@@ -966,7 +1039,6 @@ describe("applyRepair — one shape for every field", () => {
           actionId: ACTION_ID,
           outcome: "failure",
           reason: "it was over before it began",
-          occurrence: occurrence(),
         },
       ],
     });
@@ -985,13 +1057,11 @@ describe("applyRepair — one shape for every field", () => {
           actionId: ACTION_ID,
           outcome: "partial",
           reason: "the real ending",
-          occurrence: occurrence(),
         },
         {
           actionId: ACTION_ID,
           outcome: "failure",
           reason: "replaced by successor",
-          occurrence: occurrence(),
         },
       ],
     };
@@ -1001,7 +1071,6 @@ describe("applyRepair — one shape for every field", () => {
           actionId: ACTION_ID,
           outcome: "partial",
           reason: "the one that stands",
-          occurrence: occurrence(),
         },
       ],
     });
@@ -1025,7 +1094,6 @@ describe("applyRepair — one shape for every field", () => {
           actionId: "action_other",
           outcome: "success",
           reason: "untouched",
-          occurrence: occurrence(),
         },
       ],
     };
@@ -1050,7 +1118,6 @@ describe("applyRepair — one shape for every field", () => {
           actionId: ACTION_ID,
           outcome: "success",
           reason: "and also ending",
-          occurrence: occurrence(),
         },
       ],
     };
@@ -1076,7 +1143,6 @@ describe("applyRepair — one shape for every field", () => {
           actionId: ACTION_ID,
           outcome: "success",
           reason: "and also ending",
-          occurrence: occurrence(),
         },
       ],
     };
@@ -1089,7 +1155,6 @@ describe("applyRepair — one shape for every field", () => {
             actionId: ACTION_ID,
             outcome: "partial",
             reason: "the one that stands",
-            occurrence: occurrence(),
           },
         ],
       } as never,
@@ -1317,12 +1382,8 @@ describe("operations are checked against the fields they advertise", () => {
 describe("normalizeRawResolution reads what the schema did not guarantee", () => {
   const entry = {
     actionId: "action_c1",
+    outcome: "success",
     reason: "the lock gives",
-    occurrence: {
-      facts: [{ type: "action_result", content: "it opened" }],
-      participants: [{ characterId: "npc_1", role: "actor" }],
-      perceiverCharacterIds: ["npc_1"],
-    },
   };
 
   /** The shapes below are exactly what the schema does NOT describe, so they
@@ -1375,11 +1436,11 @@ describe("declared sanity checks", () => {
     sanityChecks: unknown[],
     over: Record<string, unknown> = {}
   ) => ({
-    sourceActionIds: [ACTION_ID],
-    facts: [{ type: "action_result", content: "the body is in the water" }],
-    participants: [{ characterId: "npc_1", role: "actor" as const }],
+    actionIds: [ACTION_ID],
+    actorId: "npc_1",
     perceiverCharacterIds: ["npc_1", "npc_2"],
     sanityChecks,
+    facts: [{ type: "action_result", content: "the body is in the water" }],
     ...over,
   });
 
@@ -1506,36 +1567,29 @@ describe("declared sanity checks", () => {
     expect(
       check({
         starting: [start()],
-        occurrences: [occ([sane], { sourceActionIds: [] }) as never],
+        occurrences: [occ([sane], { actionIds: [] }) as never],
       })
-    ).toContain("must name at least one sourceActionId");
+    ).toContain("must name at least one actionId");
   });
 
-  it("checks an ending's own occurrence identically, addressed at its action", () => {
-    // Proof that the shared OCCURRENCE_BODY wiring holds: one declaration,
-    // two places it can live, one rule — but the address follows the shape.
+  it("addresses a declaration on an ending's trace at the occurrence, not the action", () => {
+    // The trace is a top-level row now, so there is one place a declaration
+    // can live and one kind of address for it — the row's index, even when
+    // the row is the trace of an ending.
     const errors = validateRawResolution(
       {
         starting: [start()],
-        ending: [
-          end({
-            occurrence: {
-              ...occurrence(),
-              perceiverCharacterIds: ["npc_2"],
-              sanityChecks: [sane],
-            } as never,
-          }),
-        ],
+        ...ended(
+          {},
+          { perceiverCharacterIds: ["npc_2"], sanityChecks: [sane] }
+        ),
       },
       makeContext({ activeActions: [activeAction()] })
     );
     const failure = errors.find((e) =>
       e.message.includes("perceiverCharacterIds")
     );
-    expect(failure?.target).toEqual({
-      kind: "action",
-      actionId: "action_live",
-    });
+    expect(failure?.target).toEqual({ kind: "occurrence", index: 0 });
   });
 
   it("rolls the declaration into ordinary character deltas at finalization", () => {

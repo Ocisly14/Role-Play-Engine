@@ -21,34 +21,32 @@ const DISORIENTED =
   "speech is incoherent and the person cannot remain oriented to place, so they cannot communicate a coherent plan or act safely without guidance";
 const START = "1923-10-17T08:00:00";
 
-/** Answers the triggering action AND hangs a sanity check on its occurrence. */
+/** Answers the triggering action AND hangs a sanity check on the occurrence
+ *  that cites it. */
 function resolveWithShock(context: EngineResolutionContext): RawTickResolution {
   const actionId = context.trigger.actionIds[0];
   if (!actionId) return { starting: [], ending: [] };
   return {
     starting: [],
-    ending: [
+    ending: [{ actionId, outcome: "success", reason: "the tarp comes away" }],
+    occurrences: [
       {
-        actionId,
-        outcome: "success",
-        reason: "the tarp comes away",
-        occurrence: {
-          facts: [
-            { type: "action_result", content: "a body lies under the tarp" },
-          ],
-          participants: [{ characterId: "npc_1", role: "actor" }],
-          perceiverCharacterIds: ["npc_1"],
-          sanityChecks: [
-            {
-              characterId: "npc_1",
-              failureLoss: "1d6",
-              consequence: {
-                description: DISORIENTED,
-                durationMinutes: 30,
-              },
+        actionIds: [actionId],
+        actorId: "npc_1",
+        perceiverCharacterIds: ["npc_1"],
+        sanityChecks: [
+          {
+            characterId: "npc_1",
+            failureLoss: "1d6",
+            consequence: {
+              description: DISORIENTED,
+              durationMinutes: 30,
             },
-          ],
-        },
+          },
+        ],
+        facts: [
+          { type: "action_result", content: "a body lies under the tarp" },
+        ],
       },
     ],
   };
