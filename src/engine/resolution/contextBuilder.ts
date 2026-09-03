@@ -61,7 +61,7 @@ export const WORLD_INVARIANTS: WorldInvariant[] = [
   {
     id: "sourced-changes",
     description:
-      "Every delta names its source action/event and a causal basis explaining it.",
+      "Every model-authored delta names the source action that caused it.",
   },
   {
     id: "single-transition",
@@ -70,7 +70,7 @@ export const WORLD_INVARIANTS: WorldInvariant[] = [
   {
     id: "engine-owned-timing",
     description:
-      "resolvedDurationTicks/nextWakeAt come only from the Engine with a timing reason; the actor's proposal is advisory.",
+      "The Engine sets resolvedDurationTicks only for a non-movement action when it starts; code derives movement duration and every nextWakeAt. The actor's proposal is advisory.",
   },
 ];
 

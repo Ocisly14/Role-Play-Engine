@@ -170,7 +170,9 @@ export interface EngineAction {
      *  "Languages" is a domain, not a number. */
     language?: string;
     requiredLevel: "regular" | "hard" | "extreme";
-    basis: string;
+    /** A justification sentence older snapshots carry. The Engine no longer
+     *  writes one — nothing at runtime read it. */
+    basis?: string;
     /** Who resists and with what, when the Engine named an opposition. */
     opposedBy?: Array<{ characterId: string; skillId: string }>;
   };
@@ -237,6 +239,12 @@ export type CharacterStateOperation =
    * it; a location change clears it in code, without being asked.
    */
   | { kind: "spot"; spot: string }
+  /**
+   * Rewrite the character's whole appearance prose — what anyone looking at
+   * them sees. For what really changed and stays changed (a beard gone, a
+   * scar); a passing state is a condition.
+   */
+  | { kind: "setAppearance"; appearance: string }
   | { kind: "addCondition"; condition: CharacterCondition }
   | { kind: "removeCondition"; conditionId: string };
 
@@ -338,15 +346,34 @@ export type WorldDeltaSource =
 
 export interface SourcedWorldDelta<T extends WorldDelta = WorldDelta> {
   source: WorldDeltaSource;
-  /** Short statement of why this action/event produces this change. Audited;
-   *  the validator rejects deltas it cannot causally tie to an input. */
-  causalBasis: string;
+  /** Why this change follows. Code-emitted deltas (sanity rolls) still say;
+   *  the Engine no longer writes one — it was a required sentence that only
+   *  ever reached the log, and `source` already names the cause. */
+  causalBasis?: string;
   delta: T;
 }
 
 // ==================== Occurrences ====================
 
 export type SignalChannel = "visual" | "sound" | "smell" | "touch" | "direct";
+
+/** How much of an occurrence reaches one perceiver. The Engine grades each
+ *  listed character separately; the row's facts are written once, at full
+ *  objective detail, and the renderer lets through only what the grade
+ *  allows. `full`: the event and its relevant detail — bodily contact, a
+ *  clear nearby view, intelligible words. `limited`: the kind of event and
+ *  its immediate result, no fine detail — a struggle through a dirty window,
+ *  a speaker seen whose words do not carry. `trace`: only that something
+ *  happened — a muffled impact, a flash beyond the fog, an indistinct voice
+ *  whose source cannot be placed — with no source, cause, actor or words.
+ *  Someone who receives nothing is not listed at all. */
+export const PERCEPTION_CLARITIES = ["full", "limited", "trace"] as const;
+export type PerceptionClarity = (typeof PERCEPTION_CLARITIES)[number];
+
+export interface OccurrencePerceiver {
+  characterId: string;
+  clarity: PerceptionClarity;
+}
 
 /** Objective thing that happened this tick — not necessarily persisted as
  *  state (speech, a gunshot, a failed lockpick slipping). Facts use world-true
@@ -369,10 +396,11 @@ export interface Occurrence {
     characterId: string;
     role: "actor" | "target" | "directly_affected";
   }>;
-  /** Characters physically/sensorially able to perceive this occurrence.
-   *  The Engine lists IDs only; what each one actually perceives is the
-   *  Renderer's job. */
-  perceiverCharacterIds: string[];
+  /** Everyone who receives any evidence of this occurrence, each at the
+   *  clarity the Engine judged the evidence supports. One entry per
+   *  character. The facts above are the same for all of them; the renderer
+   *  degrades them to each viewer's grade. */
+  perceivers: OccurrencePerceiver[];
   signals: Array<{
     factIds: string[];
     channel: SignalChannel;

@@ -44,14 +44,15 @@ or heat. Terrain, season and equipment set the required level.
 ## State surface
 
 Typical deltas this domain produces. Not a requirement and never a substitute
-for what actually happened — a one-off descriptive result is an occurrence
-fact, not a state change.
+for what actually happened — a one-off descriptive result is occurrence
+`content`, not a state change.
 
-- `character.position` — arrived, or committed in the wrong direction.
+- `movement.route` — ordinary travel along the actor-stated route;
+  `character.position` only for discontinuous displacement.
 - `character.fatigue` — always, and exposure accelerates it.
 - `character.hp` and `character.addCondition` — dehydration, hypothermia,
   sickness from bad water; `removeCondition` when shelter, fire, or clean
   water actually resolves one.
 - `item.create` — foraged food, gathered water, a made fire or shelter;
   `scene.addCondition` when the camp is the thing that persists.
-- Knowing where they are is an occurrence fact, not a delta.
+- Knowing where they are is occurrence `content`, not a delta.

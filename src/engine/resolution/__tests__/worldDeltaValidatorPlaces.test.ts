@@ -110,11 +110,7 @@ function makeContext(): EngineResolutionContext {
   };
 }
 
-const start = {
-  actionId: ACTION_ID,
-  resolvedDurationTicks: 1,
-  timingReason: "a minute suffices",
-};
+const start = { actionId: ACTION_ID, resolvedDurationTicks: 1 };
 
 const text = (errors: ResolutionError[]): string =>
   errors.map((e) => `${formatErrorTarget(e.target)} ${e.message}`).join("\n");
@@ -125,7 +121,7 @@ function validate(partial: Partial<RawTickResolution>): string {
   );
 }
 
-const sourced = { sourceActionId: ACTION_ID, causalBasis: "it follows" };
+const sourced = { sourceActionId: ACTION_ID };
 
 describe("node scenes and roads are first-class item holders", () => {
   it("accepts moving an item off a node scene and off a road", () => {
@@ -393,41 +389,13 @@ describe("item.create with an explicit id", () => {
         occurrences: [
           {
             actionIds: [ACTION_ID],
-            locationId: "SCN_1",
-            actorId: "npc_1",
-            perceiverCharacterIds: ["npc_1"],
-            facts: [
-              {
-                type: "action_result",
-                content: "a ledger tumbles from the shelf",
-                refIds: ["item.home.ledger"],
-              },
-            ],
+            speech: false,
+            perceivers: [{ characterId: "npc_1", clarity: "full" }],
+            content: "a ledger tumbles from the shelf",
           },
         ],
       })
     ).toBe("");
-  });
-
-  it("still rejects an occurrence citing an item nothing created", () => {
-    expect(
-      validate({
-        occurrences: [
-          {
-            actionIds: [ACTION_ID],
-            actorId: "npc_1",
-            perceiverCharacterIds: ["npc_1"],
-            facts: [
-              {
-                type: "action_result",
-                content: "something glints",
-                refIds: ["item.ghost"],
-              },
-            ],
-          },
-        ],
-      })
-    ).toContain('facts[0]: ref "item.ghost" does not exist');
   });
 });
 

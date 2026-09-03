@@ -48,15 +48,16 @@ ties. Damage comes from the damage-roll tool, never from estimation.
 ## State surface
 
 Typical deltas this domain produces. Not a requirement and never a substitute
-for what actually happened — a one-off descriptive result is an occurrence
-fact, not a state change.
+for what actually happened — a one-off descriptive result is occurrence
+`content`, not a state change.
 
 - `character.hp` — the damage from the damage-roll tool, never estimated.
 - `character.addCondition` — bleeding, stunned, pinned, unconscious, a limb
   that will not work; `removeCondition` when a hold is broken.
-- `character.position` — driven back, dragged, or grappled into place.
-- `item.move` — a weapon knocked away; `item.damage` / `item.destroy` when it
-  breaks in the exchange.
+- `character.spot` — driven back or grappled elsewhere in the same scene;
+  `character.position` when a throw or drag truly crosses into another scene.
+- `item.move` — a weapon knocked away; `item.set` when damaged but still in
+  play, or `item.destroy` when irreversibly broken.
 - `character.fatigue` — every exchange costs it.
 - Being attacked is an occurrence the target perceives, vividly. What it does
   to their view of the attacker is theirs to write.

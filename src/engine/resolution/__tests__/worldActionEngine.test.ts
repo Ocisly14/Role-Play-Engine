@@ -128,7 +128,6 @@ const validSubmission = {
     {
       actionId: "action_c1",
       resolvedDurationTicks: 5,
-      timingReason: "route takes five minutes",
       movement: { route: ["SCN_FAR"] },
     },
   ],
@@ -356,16 +355,14 @@ describe("resolveTick session loop", () => {
   it("repairs incrementally: only the flagged element is re-sent", async () => {
     // The action is queued, so ending it is the wrong moment entirely.
     const invalid = {
-      ending: [
-        { actionId: "action_c1", outcome: "success", reason: "done already" },
-      ],
+      ending: [{ actionId: "action_c1", outcome: "done already" }],
       // The ending's trace is a flat row citing it, not a nested object.
       occurrences: [
         {
           actionIds: ["action_c1"],
-          actorId: "npc_1",
-          perceiverCharacterIds: ["npc_1"],
-          facts: [{ type: "action_result", content: "the door opens" }],
+          speech: false,
+          perceivers: [{ characterId: "npc_1", clarity: "full" }],
+          content: "the door opens",
         },
       ],
     };
@@ -422,16 +419,14 @@ describe("resolveTick session loop", () => {
 
   it("applies nothing when repair cannot converge", async () => {
     const invalid = {
-      ending: [
-        { actionId: "action_c1", outcome: "success", reason: "done already" },
-      ],
+      ending: [{ actionId: "action_c1", outcome: "done already" }],
       // The ending's trace is a flat row citing it, not a nested object.
       occurrences: [
         {
           actionIds: ["action_c1"],
-          actorId: "npc_1",
-          perceiverCharacterIds: ["npc_1"],
-          facts: [{ type: "action_result", content: "the door opens" }],
+          speech: false,
+          perceivers: [{ characterId: "npc_1", clarity: "full" }],
+          content: "the door opens",
         },
       ],
     };
@@ -508,7 +503,6 @@ describe("renderContext addressing", () => {
         check: {
           skillId: "Repair & Engineering",
           requiredLevel: "regular",
-          basis: "routine",
         },
         checkOutcome: {
           actor: {
@@ -656,19 +650,13 @@ describe("the turn budget", () => {
             id: "t1",
             name: "submit_resolution",
             args: {
-              ending: [
-                {
-                  actionId: "action_c1",
-                  outcome: "success",
-                  reason: "done already",
-                },
-              ],
+              ending: [{ actionId: "action_c1", outcome: "done already" }],
               occurrences: [
                 {
                   actionIds: ["action_c1"],
-                  actorId: "npc_1",
-                  perceiverCharacterIds: ["npc_1"],
-                  facts: [{ type: "action_result", content: "the door opens" }],
+                  speech: false,
+                  perceivers: [{ characterId: "npc_1", clarity: "full" }],
+                  content: "the door opens",
                 },
               ],
             },
@@ -714,6 +702,8 @@ describe("the turn budget", () => {
     // And why there is nothing to spend those turns on but the resolution.
     expect(prompt).toContain("there is nothing to look up");
     expect(prompt).toContain("A turn is expensive");
+    expect(prompt).toContain("# Perception and Audience Resolution");
+    expect(prompt).toContain("Assign an information grade");
     expect(prompt).toContain("# Sanity Check Guidance");
     expect(prompt).toContain("strict objective threshold");
     expect(prompt).toContain("Inner activity is never a condition");

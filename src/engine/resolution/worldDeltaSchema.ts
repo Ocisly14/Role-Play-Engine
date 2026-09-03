@@ -9,6 +9,8 @@
 // contract in code.
 
 import type { ToolSpec } from "../../models/providers/types.js";
+import { PERCEPTION_CLARITIES } from "../actions/types.js";
+import type { PerceptionClarity } from "../actions/types.js";
 
 // ==================== Raw (model-shaped) resolution ====================
 
@@ -23,7 +25,6 @@ export interface RawActionStart {
   /** Set when the action starts, or when the Engine revises how long it will
    *  take. The actor's proposedDurationTicks is advisory. */
   resolvedDurationTicks?: number;
-  timingReason?: string;
   /** The bar for the skill the actor declared, set BEFORE any roll exists.
    *  Omitted when the declared skill does not fit, or no check is needed. */
   check?: RawCheck;
@@ -39,9 +40,11 @@ export interface RawActionStart {
   movement?: { route: string[]; vehicleId?: string };
 }
 
+/** The bar alone. It used to carry a `basis` sentence too — a justification
+ *  nothing at runtime read, required all the same, and paid for on every
+ *  start. The level is the whole decision. */
 export interface RawCheck {
   requiredLevel: "regular" | "hard" | "extreme";
-  basis: string;
 }
 
 /**
@@ -57,36 +60,33 @@ export interface RawCheck {
  * measured run were that lookup going wrong.
  */
 /**
- * Four scalars, longest last. The trace an ending leaves is NOT here: it is
- * an entry in `occurrences` whose `actionIds` cite this action, and the
- * validator refuses an ending nothing cites. It used to be a nested
- * `occurrence` object on this entry — required, so the trace could not be
- * forgotten — and that nesting was where DeepSeek lost count of its braces:
- * every unreadable submission in two measured runs broke at the close of an
- * ending's occurrence, the model writing `}}` and then carrying on with the
- * entry's remaining fields. A flat entry has nothing to climb back out of.
+ * Two scalars. The trace an ending leaves is NOT here: it is an entry in
+ * `occurrences` whose `actionIds` cite this action, and the validator refuses
+ * an ending nothing cites. It used to be a nested `occurrence` object on this
+ * entry, and that nesting was where DeepSeek lost count of its braces.
+ *
+ * What the entry lost since (measured over a 30-tick run, 188 repair lines):
+ * an `outcome` ENUM (success/partial/failure/blocked) that nothing downstream
+ * read — the clock decides completed vs interrupted, the prose decides what
+ * the actor learns — and whose conditional rules (required without a check,
+ * refused with one, waived for talk) were 81 of those lines; a `replacedBy`
+ * id that code already knew from the command's `replacesActionId`; and a
+ * `reason` beside the enum. `outcome` is now that prose, and the only thing
+ * an ending says.
+ *
+ * A pure-speech action has NO ending entry at all: its `speech: true`
+ * occurrence is the whole answer (who was addressed, who heard, and code
+ * carries the words). Talk is delivered, not judged.
  */
 export interface RawActionEnd {
   actionId: string;
-  /** For an id the trigger lists under `replaced`: the action that cut it
-   *  short — the `starting` entry whose command names this one as
-   *  `replacesActionId`. Optional, and informational: code already knows the
-   *  pair. It exists because the model kept inventing a field to say this
-   *  (`replaces: true`, `replacesActionIds: []`) — it had read the pairing
-   *  in the trigger and had nowhere legal to write it back, and on DeepSeek,
-   *  which enforces no schema, the invention became a syntax error. */
-  replacedBy?: string;
-  /** REQUIRED when the action carried no check. When it did, code has already
-   *  decided success from the roll and this field is refused. The trigger
-   *  section names exactly which ids need it. */
-  outcome?: "success" | "partial" | "failure" | "blocked";
-  /** What happened, objectively. */
-  reason: string;
+  /** What came of it, objectively — the finished account the actor is told
+   *  and the log keeps. Never the target's reaction. */
+  outcome: string;
 }
 
 export interface RawSourcedDelta {
   sourceActionId: string;
-  causalBasis: string;
   operation: Record<string, unknown> & { kind: string };
 }
 
@@ -118,38 +118,59 @@ export interface RawSanityCheck {
 }
 
 /**
- * One flat row per moment: scalars and string arrays, then the one array of
- * objects (`facts`) last. Participants are three fields rather than a list of
- * `{characterId, role}` objects, and a fact points at things by bare id
- * (`refIds`) rather than `{kind, id}` pairs — id spaces do not overlap, so
- * code resolves the kind. Both are the same information at one nesting level
- * less, which is the whole point of this shape.
+ * One flat row per moment, and one paragraph per row.
+ *
+ * Everything on it either routes perception or IS perception. What it lost
+ * (measured over a 30-tick run): `locationId` — every row cited an action, so
+ * the actor's place is the row's place and code fills it; `actorId`, same
+ * reason; `affectedIds` and `signals` — a paragraph already says who was hit
+ * and whether it was heard or seen; a `facts[]` array of typed rows with
+ * `refIds` — the type's one consumer was the outcome-waiver rule that no
+ * longer exists, and the model kept typing rows `utterance` to hand-copy the
+ * line (29 rejections) or left the array empty when the line was all there
+ * was (2 dead ticks). Now the line is code's, the paragraph is the model's,
+ * and `speech` says which kind of row this is. What came back is one narrow
+ * field: a per-perceiver `clarity` grade — not a channel and not a
+ * per-character subset of the facts. The paragraph stays single and
+ * objective; the grade tells the renderer how much of it to let through.
  */
+export interface RawPerceiver {
+  characterId: string;
+  /** How much of the row reaches this character: `full` — the event and its
+   *  relevant detail; `limited` — the kind of event and its immediate result,
+   *  no fine detail; `trace` — only that something happened, with no source,
+   *  cause, actor or words. */
+  clarity: PerceptionClarity;
+}
+
 export interface RawOccurrence {
-  /** The actions this is the trace of. Every ending must be cited by at
-   *  least one occurrence; a moment that reaches two audiences differently
-   *  is two rows with the same `actionIds`. */
+  /** The actions this is the trace of — at least one. Every ending must be
+   *  cited by at least one occurrence. Two rows cite the same action only when
+   *  the audiences receive different FACTS in different places (the departure
+   *  in one room, the landing in the courtyard); different degrees of one
+   *  fact are ONE row with a per-perceiver clarity. Also the address a repair
+   *  uses: a row re-sent with these ids replaces every row citing them. */
   actionIds: string[];
-  locationId?: string;
-  /** Who did it, who it was done to, who else it directly affected. */
-  actorId?: string;
+  /** `true`: this row IS a spoken line being delivered. Code attaches the
+   *  cited command's `utterance` verbatim; `content` is optional (how it was
+   *  said); the action needs no `ending` entry. Only for an action whose
+   *  command carries an utterance, and only when that action ends this tick.
+   *  `false`: something happened — `content` is required, and if the row is
+   *  the trace of an ending, that ending carries an `outcome`. A moment that
+   *  is both (a line spoken while a cup changes hands) is two rows. */
+  speech: boolean;
+  /** Who it was said or done to. Required on a speech row (an empty list =
+   *  the room); on any other row code derives it from the command's target
+   *  refs when omitted. */
   targetIds?: string[];
-  affectedIds?: string[];
-  perceiverCharacterIds: string[];
-  signals?: Array<{
-    /** Indexes into `facts` this signal carries. Omitted = all facts. */
-    factIndexes?: number[];
-    channel: "visual" | "sound" | "smell" | "touch" | "direct";
-    originLocationId?: string;
-    intensity?: number;
-  }>;
+  /** Everyone who receives any evidence of this row, one entry per character,
+   *  each with the single clarity they actually reach. `content` is written
+   *  at full objective detail regardless; the renderer degrades per grade. */
+  perceivers: RawPerceiver[];
   sanityChecks?: RawSanityCheck[];
-  facts: Array<{
-    type: string;
-    content: string;
-    /** Ids of the characters, items, places or passages the fact is about. */
-    refIds?: string[];
-  }>;
+  /** The objective, third-person paragraph. On a speech row: what the words
+   *  were NOT — how they were said, what the hands did, who turned. */
+  content?: string;
 }
 
 export interface RawTickResolution {
@@ -170,12 +191,9 @@ export interface RawTickResolution {
 /**
  * The `operation` contract, per domain, in one place.
  *
- * `operation` cannot be a proper discriminated union in the tool schema — it is
- * declared `additionalProperties: true` with only `kind` required — so the
- * field names reach the model as prose. That prose and the validator's list of
- * accepted kinds used to be written out separately, which is the same
- * arrangement that let `result.outcome` be optional in one place and mandatory
- * in the other. Both now come from these rows.
+ * `operation` is generated as a closed discriminated union by `opSchema`.
+ * These rows also generate the prose field list and the validator's accepted
+ * kinds, so all three surfaces share one source of truth.
  *
  * The per-field checks stay in the validator: those are judgements about the
  * world (does this character exist, does the holder match), not declarations.
@@ -234,6 +252,12 @@ export const CHARACTER_OPS: OperationSpec[] = [
     fields:
       'spot:string — where in the place they now are, one short phrase; "" clears it',
     schema: { properties: { spot: STR }, required: ["spot"] },
+  },
+  {
+    kinds: ["setAppearance"],
+    fields:
+      "appearance:string — REPLACES the character's whole appearance prose (what anyone looking at them sees: build, face, hair, clothes, marks). Keep every part still true, change only what really changed — a shaved beard, a scar that will stay, a coat they now wear. A passing state (blood on the hands, soaked clothes, a bandage) is a condition, not an appearance",
+    schema: { properties: { appearance: STR }, required: ["appearance"] },
   },
   {
     kinds: ["addCondition"],
@@ -444,76 +468,65 @@ const sourcedDelta = (
   type: "object",
   properties: {
     sourceActionId: { type: "string" },
-    causalBasis: {
-      type: "string",
-      description: "Short factual statement of why this change follows.",
-    },
     [idField]: { type: "string" },
     // No `description` beside the `anyOf`: the array's description already
     // spells out every kind's fields, and a sibling keyword on a union is
     // the kind of thing a strict grammar compiler may refuse.
     operation: opSchema(ops),
   },
-  required: [
-    "sourceActionId",
-    "causalBasis",
-    ...(idRequired ? [idField] : []),
-    "operation",
-  ],
+  // No `causalBasis`: a required sentence of justification that only ever
+  // reached the log, and the source action already says what caused this.
+  required: ["sourceActionId", ...(idRequired ? [idField] : []), "operation"],
   additionalProperties: false,
 });
 
-/** One occurrence row. Scalars and string arrays first, the single array of
- *  objects (`facts`) last, so the model never has to close a deep object and
- *  then return to a sibling scalar — the exact place DeepSeek miscounted
- *  braces when the occurrence was nested inside an ending entry. */
+/** One occurrence row: ids and flags first, the paragraph last, so the model
+ *  never has to close a deep object and then return to a sibling scalar —
+ *  the exact place DeepSeek miscounted braces when the occurrence was nested
+ *  inside an ending entry. */
 const OCCURRENCE_ITEM = {
   type: "object",
   properties: {
     actionIds: {
       type: "array",
       items: { type: "string" },
+      minItems: 1,
       description:
-        "The action(s) this is the trace of. Every id under the trigger's `ending` MUST be cited by at least one occurrence — an ending nothing cites is refused. Two rows may cite the same action when a moment reaches two audiences differently.",
+        "The action(s) this is the trace of — at least one. Every id under the trigger's `ending` MUST be cited by at least one occurrence — an ending nothing cites is refused. Two rows cite the same action only when the audiences receive different FACTS in different places (the shove in one room, the landing in the courtyard); different degrees of one fact are ONE row with a per-perceiver clarity. In a repair, a row carrying these ids replaces every row that cites any of them.",
     },
-    locationId: { type: "string" },
-    actorId: {
-      type: "string",
+    speech: {
+      type: "boolean",
       description:
-        "Who did it. Omit for a moment nobody caused (weather, a collapse).",
+        "true = this row IS a spoken line being delivered: code attaches the cited command's `utterance` word for word, `content` is optional (how it was said), and the action needs no `ending` entry — talk is delivered, not judged. Only for an action whose command carries an utterance, and only when that action ends this tick. false = something happened: `content` is required, and an ending it traces carries an `outcome`. A line spoken while a hand does something is TWO rows, one of each.",
     },
     targetIds: {
       type: "array",
       items: { type: "string" },
-      description: "Who it was done to.",
-    },
-    affectedIds: {
-      type: "array",
-      items: { type: "string" },
-      description: "Anyone else directly affected.",
-    },
-    perceiverCharacterIds: {
-      type: "array",
-      items: { type: "string" },
       description:
-        "Every character physically/sensorially able to perceive it. List the actor of a cited action among them.",
+        "Who it was said or done to. REQUIRED on a speech row — the people addressed; an empty list means the room. Elsewhere optional: omitted, code takes the command's target refs.",
     },
-    signals: {
+    perceivers: {
       type: "array",
+      minItems: 1,
       items: {
         type: "object",
         properties: {
-          factIndexes: { type: "array", items: { type: "integer" } },
-          channel: {
+          characterId: {
             type: "string",
-            enum: ["visual", "sound", "smell", "touch", "direct"],
+            description: "A character who receives some evidence of this row.",
           },
-          originLocationId: { type: "string" },
-          intensity: { type: "number" },
+          clarity: {
+            type: "string",
+            enum: [...PERCEPTION_CLARITIES],
+            description:
+              "How much of the row reaches them. full: the event and its relevant detail — bodily contact, a clear nearby view, intelligible words. limited: the kind of event and its immediate result, no fine detail — a struggle through a dirty window, a machine heard starting through a wall, a speaker seen or recognised whose words do not carry. trace: only that something happened — a muffled impact, a flash beyond the fog, an indistinct voice whose source cannot be placed — with no source, cause, actor or words.",
+          },
         },
-        required: ["channel"],
+        required: ["characterId", "clarity"],
         additionalProperties: false,
       },
+      description:
+        "Everyone who receives ANY evidence of this row, one entry per character, each with their grade. Geography, environment, barriers, the concrete action and observer conditions decide both the list and the grade; target and participant do not imply perceiver. Write `content` at FULL objective detail regardless of who is listed — the renderer degrades it per grade. Never split a row by degree: rows are split only when audiences receive different FACTS (the shove in one room, the landing in the courtyard). On a speech row, list everyone who heard or saw the speaking at all: words made out → full; knows who spoke but not the words (a watched whisper) → limited; an indistinct voice through a wall → trace.",
     },
     // Declared here, rolled by code. The count and minute bounds live in the
     // validator and in these descriptions, not as schema keywords: strict mode
@@ -528,7 +541,7 @@ const OCCURRENCE_ITEM = {
           characterId: {
             type: "string",
             description:
-              "Must be one of this occurrence's perceiverCharacterIds — exposure is perception.",
+              "Must be one of this occurrence's `perceivers` at clarity full or limited — exposure is perception, and a trace (a sound with no source) cannot shock.",
           },
           failureLoss: {
             type: "string",
@@ -559,36 +572,13 @@ const OCCURRENCE_ITEM = {
         additionalProperties: false,
       },
     },
-    facts: {
-      type: "array",
-      minItems: 1,
+    content: {
+      type: "string",
       description:
-        "Write this LAST. World-true, third-person facts; no character-perspective wording.",
-      items: {
-        type: "object",
-        properties: {
-          type: {
-            type: "string",
-            description: 'e.g. "speech", "sound", "movement", "action_result"',
-          },
-          content: {
-            type: "string",
-            description:
-              "The finished fact, third person and world-true. Read by characters, so it carries no reasoning and no corrections — settle who did what before writing it.",
-          },
-          refIds: {
-            type: "array",
-            items: { type: "string" },
-            description:
-              "Ids of the characters, items, places or passages this fact is about. Bare ids — code knows which kind each one is.",
-          },
-        },
-        required: ["type", "content"],
-        additionalProperties: false,
-      },
+        "Write this LAST. One objective, third-person paragraph of what happened — world-true, no character-perspective wording, no reasoning, no corrections: settle who did what before writing it. REQUIRED when speech is false. On a speech row, optional: what the words were NOT — how they were said, what the hands did, who turned to look. Never the words themselves: code adds them, and never anyone else's reply.",
     },
   },
-  required: ["actionIds", "perceiverCharacterIds", "facts"],
+  required: ["actionIds", "speech", "perceivers"],
   additionalProperties: false,
 } as const;
 
@@ -603,15 +593,15 @@ export const submitResolutionTool: ToolSpec = {
   // model reads it either way), and the API refused it on a limit the docs
   // do not mention: at most 24 OPTIONAL parameters across every strict tool
   // in the request, counted through every nesting level. This tool alone has
-  // 38 — six top-level lists, the genuinely optional fields on starts,
-  // endings and occurrences — and repair has 63. Squeezing
+  // 28 — six top-level lists plus the genuinely optional nested fields — and
+  // repair has 48. Squeezing
   // under 24 means "required but nullable" on most of them, which is a
   // dozen `null`s per entry. The lint in schemaAgreement.test.ts keeps the
   // subset and counts the optionals, so the day the limit moves this is one
   // flag flip. Until then `normalizeList` reads the string shapes back.
   strict: false,
   description:
-    "Terminal: submit the complete resolution of this tick — one entry per triggering action (its duration and difficulty when it starts, its result when it resolves), sourced world deltas grouped by domain, and objective occurrences with perceiver character ids.",
+    "Terminal: submit the complete resolution of this tick — one starting entry per action that begins; for each action that ends, either an ending outcome plus a non-speech occurrence or a speech occurrence alone for pure talk; and any sourced world changes grouped by domain.",
   inputSchema: {
     type: "object",
     properties: {
@@ -628,11 +618,6 @@ export const submitResolutionTool: ToolSpec = {
               description:
                 "How long the action SHOULD take, a whole number of minutes, at least 1. REQUIRED for a non-travel action; OMIT when `movement` is set — travel time is derived from the route and anything you write here is overridden. You never state elapsed time — code advances progress from the clock.",
             },
-            timingReason: {
-              type: "string",
-              description:
-                "Optional: the objective reason for the chosen duration, for the log.",
-            },
             check: {
               type: "object",
               description:
@@ -642,13 +627,8 @@ export const submitResolutionTool: ToolSpec = {
                   type: "string",
                   enum: ["regular", "hard", "extreme"],
                 },
-                basis: {
-                  type: "string",
-                  description:
-                    "Factual reason this situation demands that level. No roll exists yet.",
-                },
               },
-              required: ["requiredLevel", "basis"],
+              required: ["requiredLevel"],
               additionalProperties: false,
             },
             opposedBy: {
@@ -668,7 +648,7 @@ export const submitResolutionTool: ToolSpec = {
             movement: {
               type: "object",
               description:
-                "REQUIRED whenever the action crosses a scene boundary — a 40-minute haul or one step into the next room alike; a single adjacent waypoint is a complete route. A duration alone moves nobody, and facts must not put hands on what the position cannot reach. `route` = the path the ACTOR STATED, grounded to place ids: ordered waypoints, each adjacent to the previous, last = destination. Ground only what their words carry (stepping out of the current room onto its street is an implied first hop). NEVER invent an unstated leg — a character who did not say how to get somewhere walks only as far as their words go, and re-decides there. Code derives the travel time from the route (walk or drive) and sets the clock itself: omit resolvedDurationTicks for pure travel.",
+                "REQUIRED whenever the actor deliberately travels along the world's connected ways — a 40-minute haul or one step into the next room alike; a single adjacent waypoint is a complete route. Forced or discontinuous displacement (thrown, dragged, knocked through an opening, falling, jumping directly through a window) uses a character position change instead. A duration alone moves nobody, and no outcome or occurrence may put hands on what the applied position cannot reach. `route` = the path the ACTOR STATED, grounded to place ids: ordered waypoints, each adjacent to the previous, last = destination. Ground only what their words carry (stepping out of the current room onto its street is an implied first hop). NEVER invent an unstated leg — a character who did not say how to get somewhere walks only as far as their words go, and re-decides there. Code derives travel time from the route (walk or drive): omit resolvedDurationTicks for pure travel.",
               properties: {
                 route: {
                   type: "array",
@@ -692,29 +672,18 @@ export const submitResolutionTool: ToolSpec = {
       ending: {
         type: "array",
         description:
-          "Actions that FINISH this tick — the ids the trigger section lists under `ending`. Four scalars: what happened. The trace it leaves goes in `occurrences`, citing this actionId — every ending must be cited there. The bar was set when the action started and cannot be revisited here.",
+          "Actions that FINISH this tick with something to account for — ids the trigger lists under `ending`, a pure-speech action, whose whole answer is a `speech: true` occurrence, needs no entry here. Two scalars: the id and what came of it. The trace goes in `occurrences`, citing this actionId — every entry here must be cited there. Whether it is `replaced`, `duration_reached` or interrupted is code's knowledge; do not mark it.",
         items: {
           type: "object",
           properties: {
             actionId: { type: "string" },
-            replacedBy: {
-              type: "string",
-              description:
-                "Optional, only for an id the trigger lists under `replaced`: the actionId of the `starting` entry that cut it short. Nothing else marks a replaced ending — do not invent a field for it.",
-            },
             outcome: {
               type: "string",
-              enum: ["success", "partial", "failure", "blocked"],
               description:
-                "REQUIRED for every id the trigger section lists under `endingNeedsOutcome` — those actions carried no check, so there is no roll to derive success from and you decide it. For any other ending, code has already decided success from the roll against your bar and this field is refused.",
-            },
-            reason: {
-              type: "string",
-              description:
-                'What happened, objectively — the FINISHED account, not your working. It is read downstream and narrated to the actor, so it carries no reasoning, no corrections, no second thoughts, no addressing yourself: never "wait", "actually", "let me reconsider", or a note about which character is which. Settle all of that before you write, then write only the outcome. The check result you were given is input: never restate or contradict it.',
+                'What came of it, objectively — the FINISHED account, not your working. It is narrated to the actor and kept in the log, so it carries no reasoning, no corrections, no second thoughts, no addressing yourself: never "wait", "actually", "let me reconsider", or a note about which character is which. Settle all of that before you write, then write only the result. A `diceRoll` you were given is input: never restate or contradict it. Never the target\'s reply or reaction — that is theirs, next minute.',
             },
           },
-          required: ["actionId", "reason"],
+          required: ["actionId", "outcome"],
           additionalProperties: false,
         },
       },
@@ -736,7 +705,7 @@ export const submitResolutionTool: ToolSpec = {
       occurrences: {
         type: "array",
         description:
-          "Every objective thing that happened this tick, one flat row each: the trace of every ending (cite it in `actionIds` — an ending nothing cites is refused), and anything else — speech, noises, a visible attempt in progress. Write each row's `facts` last. Facts are world-true, third-person, no character-perspective wording.",
+          "Every objective thing that happened this tick, one flat row and one paragraph each: the trace of every ending (cite it in `actionIds` — an ending nothing cites is refused), every spoken line being delivered (`speech: true` — the row IS the answer for that action, code adds the words), and anything else worth perceiving — a noise, a visible attempt in progress. Write each row's `content` last. Content is world-true, third-person, no character-perspective wording.",
         items: OCCURRENCE_ITEM,
       },
     },
@@ -750,10 +719,9 @@ export const submitResolutionTool: ToolSpec = {
  * A patch over the previous submission, addressed by the same targets the
  * errors used. Only the flagged elements are re-sent; everything else stands.
  *
- * Deltas and occurrences are addressed by index, and indexes stay stable
- * across repair rounds — a withdrawn element leaves a hole rather than
- * compacting the array, so an address quoted in round 1 still means the same
- * element in round 2.
+ * Actions are addressed by actionId, occurrences by the actionIds they cite,
+ * and deltas by index. Indexed withdrawals leave holes rather than compacting
+ * the array, so an address quoted in round 1 remains stable in later rounds.
  */
 /** Where a repair item lands. Carried INSIDE the item, so every field of the
  *  repair tool is a plain array exactly like the submission it repairs —
@@ -778,6 +746,18 @@ export type ActionRepairItem<T> = Partial<T> & {
   remove?: boolean;
 };
 
+/** Occurrences are addressed by the actions they cite, never by index. A row
+ *  sent here replaces every row of the submission that cites any of its
+ *  `actionIds`; `remove: true` withdraws those rows instead. Measured before
+ *  this: told `occurrence:0` was wrong, the model appended a corrected row
+ *  without an index 59 times out of 89 and the wrong row stood — four ticks
+ *  died with the same error three rounds running. An actionId is an address
+ *  it already uses correctly for the action lists. */
+export type OccurrenceRepairItem = Partial<RawOccurrence> & {
+  actionIds: string[];
+  remove?: boolean;
+};
+
 export interface RawResolutionRepair {
   /** Each replaces the entry with the same actionId in its own list; a new
    *  actionId appends. Moving an action between lists is done by sending it
@@ -790,7 +770,7 @@ export interface RawResolutionRepair {
   characterChanges?: Array<RepairItem<RawCharacterChange>>;
   sceneChanges?: Array<RepairItem<RawSceneChange>>;
   itemChanges?: Array<RepairItem<RawItemChange>>;
-  occurrences?: Array<RepairItem<RawOccurrence>>;
+  occurrences?: OccurrenceRepairItem[];
 }
 
 /** Same array shape as the submission, plus the address fields. `required` is
@@ -847,9 +827,32 @@ const repairableAction = (itemSchema: unknown) => {
   };
 };
 
+/** An occurrence repair item: the row's own shape plus `remove`, with only
+ *  `actionIds` required — that is the address, and a withdrawal carries
+ *  nothing else. */
+const repairableOccurrence = (itemSchema: unknown) => {
+  const item = itemSchema as {
+    type: string;
+    properties: Record<string, unknown>;
+  };
+  return {
+    ...item,
+    properties: {
+      ...item.properties,
+      remove: {
+        type: "boolean",
+        description:
+          "Withdraw every row citing these actionIds. Send nothing else with it.",
+      },
+    },
+    required: ["actionIds"],
+    additionalProperties: false,
+  };
+};
+
 export const repairResolutionTool: ToolSpec = {
   name: "repair_resolution",
-  // See submitResolutionTool: 63 optional parameters against a limit of 24.
+  // See submitResolutionTool: 48 optional parameters against a limit of 24.
   strict: false,
   description:
     "Fix ONLY the elements named in the errors. Everything you do not mention stays exactly as you submitted it — do not re-send correct parts, and do not re-send the whole resolution.",
@@ -884,14 +887,18 @@ export const repairResolutionTool: ToolSpec = {
         sourcedDelta("itemId", false, ITEM_OPS),
         "Item changes"
       ),
-      occurrences: repairable(
-        (
-          submitResolutionTool.inputSchema as {
-            properties: { occurrences: { items: unknown } };
-          }
-        ).properties.occurrences.items,
-        "Occurrences"
-      ),
+      occurrences: {
+        type: "array",
+        description:
+          'Corrected occurrence rows, addressed by the actions they cite: a row sent here REPLACES every row of your submission that cites any of its `actionIds` (so re-send the whole row, not just the field that was wrong). `"remove": true` beside `actionIds` withdraws those rows instead. A row citing actions no existing row cites is appended.',
+        items: repairableOccurrence(
+          (
+            submitResolutionTool.inputSchema as {
+              properties: { occurrences: { items: unknown } };
+            }
+          ).properties.occurrences.items
+        ),
+      },
     },
     required: [],
     additionalProperties: false,

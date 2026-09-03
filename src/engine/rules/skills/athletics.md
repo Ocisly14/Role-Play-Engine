@@ -44,12 +44,15 @@ attempt as much as skill does — say which one is binding.
 ## State surface
 
 Typical deltas this domain produces. Not a requirement and never a substitute
-for what actually happened — a one-off descriptive result is an occurrence
-fact, not a state change.
+for what actually happened — a one-off descriptive result is occurrence
+`content`, not a state change.
 
-- `character.position` — the actor got where they were going.
+- `movement.route` — ordinary running or climbing along connected places;
+  `character.position` only for a direct jump, fall or vault that bypasses the
+  route, and `character.spot` for displacement within one scene.
 - `character.fatigue` — spent on every attempt, success or not.
 - `character.hp` and `character.addCondition` — a fall, a wrench, a broken
   bone. Put the actor where the fall leaves them.
-- `item.move` — a thrown or dropped object; `item.damage` when it lands hard.
+- `item.move` — a thrown or dropped object; pair it with `item.set` when the
+  impact damages it but leaves it in play.
 - `scene.addCondition` — a rope left hanging, a railing broken through.

@@ -181,7 +181,7 @@ describe("buildPerceivedBundle", () => {
         { id: "occ_1#f0", type: "sound", content: "a crash", entityRefs: [] },
       ],
       participants: [],
-      perceiverCharacterIds: ["npc_1"],
+      perceivers: [{ characterId: "npc_1", clarity: "full" }],
       signals: [{ factIds: ["occ_1#f0"], channel: "sound" }],
     };
     const bundle = buildPerceivedBundle({

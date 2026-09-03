@@ -23,8 +23,8 @@ already wants — not the label on the approach.
   cannot hear or understand the actor (that is Languages), and when nothing
   is actually asked of anyone.
 - A target with a standing reason to refuse is not persuaded by a good roll
-  alone: say so in the check's `basis` and let the required level carry the
-  difficulty.
+  alone. Let `requiredLevel` reflect the difficulty, and do not let a met roll
+  erase constraints the target still has.
 
 ## Success levels
 
@@ -56,8 +56,8 @@ volunteering anything. Describe the actor's side of the exchange and stop.
 ## State surface
 
 Typical deltas this domain produces. Not a requirement and never a substitute
-for what actually happened — a one-off descriptive result is an occurrence
-fact, not a state change.
+for what actually happened — a one-off descriptive result is occurrence
+`content`, not a state change.
 
 - A moved disposition is NOT yours to write, and neither is the target's
   answer. Emit what the target saw and heard as an occurrence; what they now

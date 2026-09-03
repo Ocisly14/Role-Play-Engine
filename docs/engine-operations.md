@@ -106,7 +106,7 @@ engine 处理的「操作」分四层，彼此不共享枚举：**演员发出�
 
 ### 4.4 `occurrences[]`
 
-`{locationId?, facts[{type, content, entityRefs}], participants[{characterId, role: actor|target|directly_affected}], perceiverCharacterIds[], signals[{factIndexes?, channel, originLocationId?, intensity?}]}`
+`{locationId?, facts[{type, content, entityRefs}], participants[{characterId, role: actor|target|directly_affected}], perceivers[{characterId, clarity: full|limited|trace}], signals[{factIndexes?, channel, originLocationId?, intensity?}]}`
 
 `channel` ∈ `visual` / `sound` / `smell` / `touch` / `direct`。Engine 只列出「谁在感官上够得着」，**每个人实际感知到什么是 Renderer 的事**。fact 的 `entityRefs` 用 engine 词汇，可以引用 connection（演员不能引用它，渲染时不打标签）。
 

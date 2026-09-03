@@ -45,22 +45,22 @@ was for.
 ## Sanity
 
 Sustained study of genuine Mythos material is not free: where the fiction
-warrants it, apply a sanity cost as a real character change with a stated
-basis, at any success level.
+warrants it, apply a sanity cost as a real character change with an objective
+`reason`, at any success level.
 
 ## State surface
 
 Typical deltas this domain produces. Not a requirement and never a substitute
-for what actually happened — a one-off descriptive result is an occurrence
-fact, not a state change.
+for what actually happened — a one-off descriptive result is occurrence
+`content`, not a state change.
 
 - `character.san` — genuine Mythos material extracts a cost at any success
   level. `character.addCondition` is reserved for an objective, independently
   verifiable state that severely impairs function, not the character's inner
   reaction to what they learned.
-- `item.modify` / `item.destroy` — a ritual layout disturbed, a component
+- `item.set` / `item.destroy` — a ritual layout disturbed, a component
   taken, a text damaged in handling.
 - `scene.removeCondition` / `scene.addCondition` — a ward broken, a rite
   interrupted or completed, a place that is now different for it.
-- Recognizing what something is changes nothing by itself: that is an
-  occurrence fact.
+- Recognizing what something is changes nothing by itself: put it in
+  occurrence `content`.

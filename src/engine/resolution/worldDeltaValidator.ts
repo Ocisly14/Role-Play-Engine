@@ -3,12 +3,10 @@
 // Code-side contract enforcement for the World Action Engine's output
 // (plan Phase 7 / rules "Output rules"). Two entry points:
 //
-//   validateRawResolution — returns every violation found (fed back to the
-//     model for ONE corrective retry).
-//   finalizeResolution — converts the (possibly still imperfect) raw output
-//     into a typed TickResolution: invalid deltas/occurrences are dropped
-//     with recorded violations, actions whose transition is missing or
-//     illegal are marked failed, ids and nextWakeAt are code-assigned.
+//   validateRawResolution — returns every violation found for an incremental
+//     repair round.
+//   finalizeResolution — converts a fully validated raw output into a typed
+//     TickResolution; ids and nextWakeAt are code-assigned.
 //
 // The validator never re-judges semantics; it enforces structure, real
 // references, invariants, transition legality, timing ownership and
@@ -25,11 +23,13 @@ import type {
   EngineActionStatus,
   ItemChange,
   Occurrence,
+  PerceptionClarity,
   SceneChange,
   SourcedWorldDelta,
   TickResolution,
   WorldDelta,
 } from "../actions/types.js";
+import { PERCEPTION_CLARITIES } from "../actions/types.js";
 import { parseJsonResponse } from "../shared/jsonParse.js";
 import {
   isGuaranteedZeroLoss,
@@ -94,9 +94,11 @@ interface Lookup {
    *  code-owned facts the entry rules read. */
   actionById: Map<string, KnownAction>;
   /** Actions the Engine is obliged to answer: the ones that have not begun,
-   *  and the ones whose time is spent. A triggered action that is merely
-   *  still running is not here — silence already means "keeps running". */
+   *  and the ones that are due or forced to stop. A triggered action that is
+   *  merely still running is not here — silence means "keeps running". */
   requiredActionIds: Set<string>;
+  /** Active actions that this trigger actually ends. */
+  endingActionIds: Set<string>;
 }
 
 /**
@@ -108,17 +110,17 @@ interface Lookup {
  * the Engine being told one thing and judged by another is what this whole
  * split exists to stop.
  *
- * Only `starting` and `ending` are obligations, and they are the only two
- * lists a submission has. An action that is merely still running takes no
- * entry at all: "keeps running" is already what silence means, so an entry
- * for it would be a sentence carrying no information.
+ * `starting` and `ending` identify the two moments that require answers. A
+ * start is answered in `starting`; an end is answered either in `ending` or,
+ * for pure talk, by a speech occurrence alone. An action that is merely still
+ * running takes no entry at all: silence already means "keeps running".
  */
 export interface ResolutionWorklist {
   /** Queued: has not begun. Must appear in `starting`. */
   starting: string[];
-  /** Its time is spent. Must appear in `ending`. The duration was set once,
-   *  when the action began; there is no way to ask for more time here, or the
-   *  Engine could postpone committing to an outcome indefinitely. */
+  /** It is due or forced to stop. Must be answered by an `ending` entry,
+   *  except that a pure-speech action is answered by its speech occurrence
+   *  alone. The duration was set once when the action began. */
   ending: string[];
   /** Triggered but still running. Informational only — the Engine owes these
    *  nothing. Listed so every id in the trigger is accounted for. */
@@ -131,9 +133,11 @@ export interface ResolutionWorklist {
    *  by side — a notebook handed over twice, a couple leaving through a door
    *  one of them had already slammed. */
   replaced: string[];
-  /** In-flight actions that carried no check, so nothing rolled. If one of
-   *  these ends, the Engine supplies `outcome`. */
-  endingNeedsOutcome: string[];
+  /** Ending actions whose command carries an `utterance`. If the whole of
+   *  what happened is that the words were said, the answer is a `speech`
+   *  occurrence and no `ending` entry; if hands did something too, that part
+   *  is a second row and the entry carries the outcome. */
+  endingWithUtterance: string[];
   /** Starting actions whose actor declared NO skill. There is nothing to
    *  check, so `check` is refused on these — and the Engine should not have to
    *  go find `declaredSkillId` in another section to work that out. Every
@@ -150,7 +154,7 @@ export function resolutionWorklist(
     starting: [],
     ending: [],
     stillRunning: [],
-    endingNeedsOutcome: [],
+    endingWithUtterance: [],
     startingWithoutSkill: [],
     replaced: [],
   };
@@ -160,6 +164,13 @@ export function resolutionWorklist(
   const replaced = new Set(
     context.trigger.triggers
       .filter((t) => t.reason === "replacement")
+      .flatMap((t) => t.actionIds)
+  );
+  const explicitlyEnding = new Set(
+    context.trigger.triggers
+      .filter((t) =>
+        ["duration_reached", "replacement", "interrupted"].includes(t.reason)
+      )
       .flatMap((t) => t.actionIds)
   );
   const commandById = new Map(
@@ -179,17 +190,18 @@ export function resolutionWorklist(
     const due =
       durationTicks !== undefined &&
       action.progressMinutes >= durationTicks * context.tick.durationMinutes;
-    if (due) worklist.ending.push(id);
-    else if (replaced.has(id)) {
+    if (due || explicitlyEnding.has(id)) {
+      worklist.ending.push(id);
       // Cut short by its own actor: an entry is owed now, and the clock
       // (not the Engine) will record it as interrupted, since its time was
       // not spent.
-      worklist.ending.push(id);
-      worklist.replaced.push(id);
+      if (replaced.has(id)) worklist.replaced.push(id);
     } else worklist.stillRunning.push(id);
-    // Listed for every in-flight action, not just the due ones, because a
-    // still-running action may still be cut short here.
-    if (action.check === undefined) worklist.endingNeedsOutcome.push(id);
+  }
+  for (const id of worklist.ending) {
+    const action = context.actions.activeActions.find((a) => a.id === id);
+    if (action?.command.utterance?.trim())
+      worklist.endingWithUtterance.push(id);
   }
   return worklist;
 }
@@ -273,6 +285,7 @@ export function buildLookup(context: EngineResolutionContext): Lookup {
     itemHolders,
     actionById,
     requiredActionIds: new Set([...worklist.starting, ...worklist.ending]),
+    endingActionIds: new Set(worklist.ending),
   };
 }
 
@@ -344,7 +357,7 @@ function validateStart(entry: RawActionStart, lookup: Lookup): string[] {
   }
   if (entry.opposedBy && !entry.check) {
     errs.push(
-      `opposedBy needs a check — name the bar the opposition is against`
+      "opposedBy needs a check — name the bar the opposition is against"
     );
   }
   // The route goes straight to the movement runtime, which walks the
@@ -355,7 +368,7 @@ function validateStart(entry: RawActionStart, lookup: Lookup): string[] {
     const route = entry.movement.route;
     if (!Array.isArray(route) || route.length === 0) {
       errs.push(
-        `movement requires a non-empty route array (the waypoints the actor stated, grounded to place ids)`
+        "movement requires a non-empty route array (the waypoints the actor stated, grounded to place ids)"
       );
     } else {
       for (const waypoint of route) {
@@ -379,9 +392,7 @@ function validateStart(entry: RawActionStart, lookup: Lookup): string[] {
   }
   // Duration is conditionally required: a non-travel action must say how
   // long it takes; a travel action must NOT be clocked by hand — code derives
-  // its time from the route. `timingReason` is not required: nothing at
-  // runtime reads it, and demanding it bought a repair round (a full re-send)
-  // every time the model left it off, for a sentence only the harness prints.
+  // its time from the route.
   if (
     entry.movement === undefined &&
     entry.resolvedDurationTicks === undefined
@@ -392,24 +403,6 @@ function validateStart(entry: RawActionStart, lookup: Lookup): string[] {
   }
   errs.push(...validateDuration(entry.resolvedDurationTicks));
   return errs;
-}
-
-/**
- * An ending the Engine has judged to be nothing but talk: every fact it wrote
- * is speech. Talk is not an attempt — it neither succeeds nor fails, it is
- * simply heard — so these endings carry no `outcome`, the same way a checked
- * ending carries none because code already decided it.
- *
- * The test reads what the Engine WROTE rather than asking it a separate
- * question: fact types are already its judgement about what happened, so a
- * second field saying "this was conversation" could only ever contradict them.
- */
-function isSpeechOnly(occurrences: RawOccurrence[]): boolean {
-  const facts = occurrences.flatMap((o) =>
-    Array.isArray(o?.facts) ? o.facts : []
-  );
-  if (facts.length === 0) return false;
-  return facts.every((f) => f?.type === "speech");
 }
 
 /** The occurrences that cite an action — its trace. Null rows (withdrawn in
@@ -424,11 +417,47 @@ export function occurrencesCiting(
   );
 }
 
+/** True when the row is a spoken line being delivered. Read as a boolean and
+ *  nothing else: `"true"` is not a flag, and a missing flag is `false` only
+ *  because the row then has to carry `content`, which is the safer failure. */
+export function isSpeechRow(o: RawOccurrence | null | undefined): boolean {
+  return o?.speech === true;
+}
+
+const CLARITY_SET: ReadonlySet<string> = new Set(PERCEPTION_CLARITIES);
+
+function isClarity(v: unknown): v is PerceptionClarity {
+  return typeof v === "string" && CLARITY_SET.has(v);
+}
+
+/** The row's perceivers as `characterId → clarity`, over well-formed entries
+ *  only; malformed ones are reported by `validateOccurrence` and skipped
+ *  here. On a duplicate id the first entry wins — the validator refuses the
+ *  row anyway. */
+function perceiverClarities(
+  o: RawOccurrence | null | undefined
+): Map<string, PerceptionClarity> {
+  const out = new Map<string, PerceptionClarity>();
+  if (!Array.isArray(o?.perceivers)) return out;
+  for (const p of o.perceivers) {
+    if (
+      p != null &&
+      typeof p.characterId === "string" &&
+      p.characterId.length > 0 &&
+      isClarity(p.clarity) &&
+      !out.has(p.characterId)
+    ) {
+      out.set(p.characterId, p.clarity);
+    }
+  }
+  return out;
+}
+
 function validateEnd(
   entry: RawActionEnd,
   lookup: Lookup,
   /** The whole submission's occurrences: the trace of this ending lives
-   *  there now, and whether it is nothing but talk is read off it. */
+   *  there now. */
   occurrences: ReadonlyArray<RawOccurrence | null | undefined> = []
 ): string[] {
   const resolvable = resolvableAction(entry.actionId, lookup);
@@ -450,14 +479,11 @@ function validateEnd(
       `this action has not started yet — put it in "starting" with a duration and a bar, and send it ONLY there; its outcome comes on a later tick, when its time is spent`,
     ];
   }
-  if (!entry.reason?.trim()) {
-    errs.push(`an ending requires a reason`);
+  if (!lookup.endingActionIds.has(entry.actionId)) {
+    return [
+      `this action does not end this tick — drop this ending entry; the trigger's \`stillRunning\` list says it continues without an entry`,
+    ];
   }
-  // With a check, code already decided success from the roll against the bar;
-  // restating it is how the two can disagree.
-  // `null` is the model saying "none" — the same answer as leaving the field
-  // out, and it was being refused as if a verdict had been written.
-  const hadCheck = known.check !== undefined;
   const trace = occurrencesCiting(entry.actionId, occurrences);
   if (trace.length === 0) {
     // The guarantee the nested `occurrence` slot used to give, now a check.
@@ -467,39 +493,14 @@ function validateEnd(
     errs.push(
       `no occurrence cites this ending — the actor perceives nothing, concludes nothing happened, and re-issues the same action next minute. Add an entry to "occurrences" with this actionId in its "actionIds"`
     );
+    // Nothing else is worth saying about an ending nobody can see: the
+    // outcome check below would only pile a second correction on the first.
+    return errs;
   }
-  const spokenOnly = isSpeechOnly(trace);
-  if (hadCheck && entry.outcome != null) {
+  if (typeof entry.outcome !== "string" || !entry.outcome.trim()) {
     errs.push(
-      `this action was checked — code decides success from the roll against your bar; drop "outcome"`
+      "an ending requires an outcome — one objective paragraph of what came of it, which the actor is told"
     );
-  }
-  if (!hadCheck && spokenOnly && entry.outcome != null) {
-    errs.push(
-      `every fact here is speech, so nothing was staked and nothing can have failed — drop "outcome". The words reach whoever could hear them; that is the whole result`
-    );
-  }
-  if (!hadCheck && !spokenOnly && !entry.outcome) {
-    errs.push(
-      `this action carried no check, so nothing rolled — "outcome" is required (the trigger section lists it under endingNeedsOutcome), unless every fact you write is speech`
-    );
-  }
-  if (entry.replacedBy !== undefined) {
-    // Informational, but it must point at the real successor: the one new
-    // command whose `replacesActionId` is this action. Anything else is the
-    // model misreading the trigger, and naming the right id costs nothing.
-    const successor = [...lookup.actionById.entries()].find(
-      ([, a]) => a.command.replacesActionId === entry.actionId
-    );
-    if (!successor) {
-      errs.push(
-        `"replacedBy" is only for an id the trigger lists under \`replaced\` — this action was not cut short by a new command; drop the field`
-      );
-    } else if (successor[0] !== entry.replacedBy) {
-      errs.push(
-        `"replacedBy" names "${entry.replacedBy}", but the command that replaced this action is "${successor[0]}"`
-      );
-    }
   }
   return errs;
 }
@@ -528,11 +529,8 @@ function validateCommonDelta(delta: RawSourcedDelta, lookup: Lookup): string[] {
   if (!lookup.actionById.has(delta.sourceActionId)) {
     errs.push(`sourceActionId "${delta.sourceActionId}" is unknown`);
   }
-  if (!delta.causalBasis?.trim()) {
-    errs.push(`causalBasis is required`);
-  }
   if (!delta.operation || typeof delta.operation.kind !== "string") {
-    errs.push(`operation.kind is required`);
+    errs.push("operation.kind is required");
   }
   return errs;
 }
@@ -589,7 +587,7 @@ export function validateCharacterChange(
         );
       } else if (p.type === "road") {
         errs.push(
-          `position cannot put a character on a road — a road is walked, never assigned; give the action a movement.route instead`
+          "position cannot put a character on a road — a road is walked, never assigned; give the action a movement.route instead"
         );
       } else if (p.type !== "scene") {
         errs.push(
@@ -619,6 +617,16 @@ export function validateCharacterChange(
       }
       break;
     }
+    case "setAppearance": {
+      // Whole-prose replacement, like a scene's setDescription. Emptiness is
+      // the one thing code can judge: a blank face is never the intent.
+      if (typeof op.appearance !== "string" || !op.appearance.trim()) {
+        errs.push(
+          `setAppearance requires a non-empty appearance string — the character's whole appearance prose, rewritten`
+        );
+      }
+      break;
+    }
     case "addCondition": {
       const c = op.condition as
         | { description?: string; id?: string }
@@ -636,7 +644,7 @@ export function validateCharacterChange(
     }
     case "removeCondition":
       if (typeof op.conditionId !== "string" || !op.conditionId) {
-        errs.push(`removeCondition requires conditionId`);
+        errs.push("removeCondition requires conditionId");
       }
       break;
   }
@@ -672,7 +680,7 @@ export function validateSceneChange(
     case "addCondition": {
       const c = op.condition as { description?: string } | undefined;
       if (!c?.description) {
-        errs.push(`addCondition requires condition.description`);
+        errs.push("addCondition requires condition.description");
       }
       break;
     }
@@ -696,10 +704,10 @@ export function validateSceneChange(
     case "connectionBlock":
       checkConnectionId("connectionBlock");
       if (typeof op.blocked !== "boolean") {
-        errs.push(`connectionBlock requires blocked boolean`);
+        errs.push("connectionBlock requires blocked boolean");
       }
       if (typeof op.reason !== "string" || !op.reason.trim()) {
-        errs.push(`connectionBlock requires a reason`);
+        errs.push("connectionBlock requires a reason");
       }
       break;
     case "connectionDiscovered": {
@@ -732,10 +740,10 @@ export function validateSceneChange(
           op.quantity as string
         )
       ) {
-        errs.push(`environmentContribute has invalid quantity`);
+        errs.push("environmentContribute has invalid quantity");
       }
       if (typeof op.value !== "number" || !Number.isFinite(op.value)) {
-        errs.push(`environmentContribute requires numeric value`);
+        errs.push("environmentContribute requires numeric value");
       }
       break;
     case "environmentHazard": {
@@ -779,7 +787,7 @@ export function validateItemChange(
   }
   if (op.kind === "create") {
     if (typeof op.name !== "string" || !op.name.trim()) {
-      errs.push(`create requires a name`);
+      errs.push("create requires a name");
     }
     if (typeof op.location !== "string" || !validHolder(op.location, lookup)) {
       errs.push(
@@ -851,14 +859,14 @@ export function validateItemChange(
         typeof op.lightLevel === "number";
       if (!hasDescription && !hasAppend && !hasHidden && !hasLight) {
         errs.push(
-          `set needs at least one of description, appendDescription, hidden, isLightSource, lightLevel`
+          "set needs at least one of description, appendDescription, hidden, isLightSource, lightLevel"
         );
       }
       // Replacing and appending in the same breath does not say which text
       // wins, and the two orders give different results.
       if (hasDescription && hasAppend) {
         errs.push(
-          `set cannot carry both description and appendDescription — replace or append, not both`
+          "set cannot carry both description and appendDescription — replace or append, not both"
         );
       }
       break;
@@ -913,7 +921,7 @@ export function validateSanityChecks(
       "sanityChecks: an occurrence that declares a sanity check must name at least one actionId"
     );
   }
-  const perceivers = new Set(occ.perceiverCharacterIds ?? []);
+  const perceivers = perceiverClarities(occ);
   const seen = new Set<string>();
 
   for (const [i, decl] of declarations.entries()) {
@@ -933,11 +941,16 @@ export function validateSanityChecks(
         );
       }
       // Exposure is perception: the same evidence that decided who perceived
-      // this occurrence decides who can be shocked by it. A set membership
-      // test, not a judgement.
-      if (!perceivers.has(id)) {
+      // this occurrence decides who can be shocked by it. A map lookup, not a
+      // judgement — except that a trace carries no source to be shocked by.
+      const clarity = perceivers.get(id);
+      if (clarity === undefined) {
         errs.push(
-          `${at}: character "${id}" is not among this occurrence's perceiverCharacterIds — only someone who perceived it can be shocked by it`
+          `${at}: character "${id}" is not among this occurrence's perceivers — only someone who perceived it can be shocked by it`
+        );
+      } else if (clarity === "trace") {
+        errs.push(
+          `${at}: character "${id}" perceives this occurrence only as a trace — a sound or movement with no source cannot be a horror exposure. Raise their clarity if they actually saw or heard the thing, or drop the check`
         );
       }
       if (seen.has(id)) {
@@ -990,9 +1003,9 @@ export function validateSanityChecks(
 export function validateOccurrence(
   occ: RawOccurrence,
   lookup: Lookup,
-  /** Item ids minted by this submission's own `create` operations: an
-   *  occurrence may cite the thing the same tick brings into being. */
-  createdItemIds: Set<string> = new Set()
+  /** Actions whose time is spent this tick — the only ones a speech row may
+   *  cite, since the words are delivered when the action ends. */
+  endingIds: ReadonlySet<string> = new Set()
 ): string[] {
   const errs: string[] = [];
   if (!Array.isArray(occ.actionIds) || occ.actionIds.length === 0) {
@@ -1005,59 +1018,76 @@ export function validateOccurrence(
       errs.push(`actionIds: "${id}" is unknown`);
     }
   }
-  if (occ.locationId && !lookup.locationIds.has(occ.locationId)) {
-    errs.push(`locationId "${occ.locationId}" does not exist`);
+  if (typeof occ.speech !== "boolean") {
+    errs.push(
+      "speech is required, true or false — true when this row is a spoken line being delivered (code adds the words), false when something happened"
+    );
   }
-  if (!occ.facts || occ.facts.length === 0) {
-    errs.push(`at least one fact is required`);
-  }
-  for (const [fi, fact] of (occ.facts ?? []).entries()) {
-    if (fact.type === "utterance") {
-      // Told that code carries the spoken line in for it, the model reached
-      // for a POINTER at the line instead — a fact whose entire content was
-      // "action_e2de4d90_utterance", handed on to four characters as the
-      // thing they heard. The line is added after validation and is not the
-      // Engine's to write, to name, or to refer to.
-      errs.push(
-        `facts[${fi}]: "utterance" is not a type you write — code adds the spoken line itself. Describe what the words were NOT (how it was said, what the hands did, who turned to look), and never write a fact standing in for the line`
-      );
-    }
-    if (!fact.content?.trim()) {
-      errs.push(`facts[${fi}]: content is required`);
-    } else if (PERSPECTIVE_PATTERNS.some((re) => re.test(fact.content))) {
-      errs.push(
-        `facts[${fi}]: character-perspective wording detected — facts must be objective and third-person`
-      );
-    }
-    for (const id of fact.refIds ?? []) {
-      if (resolveRefKind(id, lookup, createdItemIds) === undefined) {
-        errs.push(`facts[${fi}]: ref "${id}" does not exist`);
+  const speech = isSpeechRow(occ);
+  if (speech) {
+    for (const id of occ.actionIds ?? []) {
+      const known = lookup.actionById.get(id);
+      if (!known) continue;
+      if (!known.command.utterance?.trim()) {
+        errs.push(
+          `speech is true, but "${id}" carries no utterance — there are no words to deliver. Set speech false and write what happened in content`
+        );
+      } else if (!endingIds.has(id)) {
+        errs.push(
+          `speech is true, but "${id}" does not end this tick — words are delivered when the action ends. Drop this row; the trigger's \`ending\` list says when`
+        );
       }
     }
-  }
-  if (occ.actorId !== undefined && !lookup.characterIds.has(occ.actorId)) {
-    errs.push(`actorId "${occ.actorId}" does not exist`);
-  }
-  for (const [field, ids] of [
-    ["targetIds", occ.targetIds],
-    ["affectedIds", occ.affectedIds],
-  ] as const) {
-    for (const id of ids ?? []) {
-      if (!lookup.characterIds.has(id)) {
-        errs.push(`${field}: "${id}" does not exist`);
-      }
+    if (!Array.isArray(occ.targetIds)) {
+      errs.push(
+        "a speech row requires targetIds — who the words were addressed to (an empty list means the room)"
+      );
     }
+  } else if (typeof occ.content !== "string" || !occ.content.trim()) {
+    errs.push(
+      "content is required when speech is false — one objective paragraph of what happened"
+    );
   }
-  for (const id of occ.perceiverCharacterIds ?? []) {
+  if (
+    typeof occ.content === "string" &&
+    PERSPECTIVE_PATTERNS.some((re) => re.test(occ.content as string))
+  ) {
+    errs.push(
+      "content: character-perspective wording detected — it must be objective and third-person"
+    );
+  }
+  for (const id of occ.targetIds ?? []) {
     if (!lookup.characterIds.has(id)) {
-      errs.push(`perceiver "${id}" does not exist`);
+      errs.push(`targetIds: "${id}" does not exist`);
     }
   }
-  for (const [si, signal] of (occ.signals ?? []).entries()) {
-    for (const fi of signal.factIndexes ?? []) {
-      if (!Number.isInteger(fi) || fi < 0 || fi >= (occ.facts?.length ?? 0)) {
-        errs.push(`signals[${si}]: factIndex ${fi} out of range`);
-      }
+  if (!Array.isArray(occ.perceivers) || occ.perceivers.length === 0) {
+    errs.push(
+      "perceivers is required — who could perceive this, each with a clarity (full, limited or trace); an occurrence nobody perceives changes nothing"
+    );
+  }
+  const listed = new Set<string>();
+  for (const [i, p] of (Array.isArray(occ.perceivers)
+    ? occ.perceivers
+    : []
+  ).entries()) {
+    const at = `perceivers[${i}]`;
+    const id = p?.characterId;
+    if (typeof id !== "string" || id.length === 0) {
+      errs.push(`${at}: characterId is required`);
+    } else if (!lookup.characterIds.has(id)) {
+      errs.push(`${at}: character "${id}" does not exist`);
+    } else if (listed.has(id)) {
+      errs.push(
+        `perceivers: character "${id}" is listed twice — one entry per character, at the single clarity they actually reach`
+      );
+    } else {
+      listed.add(id);
+    }
+    if (!isClarity(p?.clarity)) {
+      errs.push(
+        `${at}: clarity "${String(p?.clarity)}" is not one of ${PERCEPTION_CLARITIES.join(", ")}`
+      );
     }
   }
   errs.push(...validateSanityChecks(occ, lookup));
@@ -1183,12 +1213,23 @@ export function validateRawResolution(
       }
     }
   }
+  // An ending answered by talk alone has no entry: its speech row is the
+  // answer. Anything else in the trigger's two lists needs an entry.
+  const endingIds = new Set(resolutionWorklist(context).ending);
+  const pureSpeechAnswer = (actionId: string): boolean => {
+    const trace = occurrencesCiting(actionId, raw.occurrences);
+    if (trace.length === 0 || !trace.every(isSpeechRow)) return false;
+    const command = lookup.actionById.get(actionId)?.command;
+    return Boolean(command?.utterance?.trim());
+  };
   for (const required of lookup.requiredActionIds) {
-    if (!seen.has(required)) {
-      at({ kind: "resolution" }, [
-        `triggering action "${required}" was not answered — it is either starting or ending this tick, and needs an entry in that list`,
-      ]);
-    }
+    if (seen.has(required)) continue;
+    if (endingIds.has(required) && pureSpeechAnswer(required)) continue;
+    at({ kind: "resolution" }, [
+      endingIds.has(required)
+        ? `triggering action "${required}" was not answered — it ends this tick: give it an "ending" entry with an outcome, or, if the whole of it was words said, one occurrence with speech true citing it`
+        : `triggering action "${required}" was not answered — it starts this tick and needs a "starting" entry`,
+    ]);
   }
 
   const movedItemIds = new Set<string>();
@@ -1241,13 +1282,13 @@ export function validateRawResolution(
       ]);
     }
   });
-  (raw.occurrences ?? []).forEach((o, i) => {
-    if (o === null) return;
+  for (const o of raw.occurrences ?? []) {
+    if (o == null) continue;
     at(
-      { kind: "occurrence", index: i },
-      validateOccurrence(o, lookup, createdItemIds)
+      { kind: "occurrence", actionIds: o.actionIds ?? [] },
+      validateOccurrence(o, lookup, endingIds)
     );
-  });
+  }
 
   // One shock per character per tick, across the WHOLE submission.
   // `validateSanityChecks` sees a single occurrence and cannot catch the same
@@ -1272,9 +1313,10 @@ export function validateRawResolution(
       shocked.add(id);
     }
   };
-  (raw.occurrences ?? []).forEach((o, i) => {
-    noteShocks(o, { kind: "occurrence", index: i });
-  });
+  for (const o of raw.occurrences ?? []) {
+    if (o == null) continue;
+    noteShocks(o, { kind: "occurrence", actionIds: o.actionIds ?? [] });
+  }
 
   return errors;
 }
@@ -1538,11 +1580,59 @@ export function applyRepair(
       raw.itemChanges,
       repair.itemChanges
     ) as RawTickResolution["itemChanges"],
-    occurrences: patchList(
+    occurrences: patchOccurrences(
       raw.occurrences,
       repair.occurrences
     ) as RawTickResolution["occurrences"],
   };
+}
+
+/**
+ * Occurrence rows are addressed by the actions they cite. A repair row
+ * replaces every existing row that cites any of its `actionIds`; `remove`
+ * withdraws those rows; a row citing actions nothing cites yet is appended.
+ * Withdrawn rows leave `null` holes like the indexed lists do, so the shape
+ * downstream readers expect is unchanged.
+ *
+ * Coarser than index addressing on purpose. Measured: told `occurrence:0`
+ * was wrong, the model appended a corrected row without an index 59 times out
+ * of 89 and the wrong row stood — four ticks died with the same error three
+ * rounds running. It uses an actionId as an address correctly every time.
+ */
+function patchOccurrences(
+  list: Array<RawOccurrence | null> | undefined,
+  patches: unknown
+): Array<RawOccurrence | null> {
+  const out: Array<RawOccurrence | null> = [...(list ?? [])];
+  const items = normalizeList<Record<string, unknown>>(
+    patches,
+    "repair.occurrences"
+  );
+  for (const raw of items) {
+    if (!raw || typeof raw !== "object") continue;
+    const {
+      remove,
+      index: _index,
+      ...value
+    } = raw as {
+      remove?: boolean;
+      index?: unknown;
+      actionIds?: unknown;
+    } & Record<string, unknown>;
+    const ids = Array.isArray(value.actionIds)
+      ? (value.actionIds as unknown[]).filter(
+          (id): id is string => typeof id === "string"
+        )
+      : [];
+    if (ids.length === 0) continue; // unaddressed: nothing it could replace
+    const cites = (row: RawOccurrence | null): boolean =>
+      row != null && (row.actionIds ?? []).some((id) => ids.includes(id));
+    for (let i = 0; i < out.length; i += 1) {
+      if (cites(out[i])) out[i] = null;
+    }
+    if (remove !== true) out.push(value as unknown as RawOccurrence);
+  }
+  return out;
 }
 
 // ==================== Finalization ====================
@@ -1557,7 +1647,6 @@ export interface FinalizedResolution {
     string,
     {
       requiredLevel: "regular" | "hard" | "extreme";
-      basis: string;
       opposedBy?: Array<{ characterId: string; skillId: string }>;
     }
   >;
@@ -1577,76 +1666,67 @@ export interface FinalizedResolution {
  * ids, how much time passed, and whether an action is now finished — the
  * Engine says what happened, code says when and whether it is over.
  */
-/** Where an occurrence happened when the Engine left `locationId` blank:
- *  wherever its actor stands. The Engine leaves it blank most of the time
- *  (measured: every occurrence of a 50-minute doorway conversation), and a
- *  blank location is what let the renderer put a mother at a bedside two
- *  rooms from where she stood — a participant with no place reads as "here".
- *  Only scene positions resolve; a road walker's occurrence stays unplaced. */
-function occurrenceLocationFromActor(
-  o: { actorId?: string; actionIds?: string[] },
-  lookup: Lookup
-): string | undefined {
-  const actor =
-    o.actorId ??
-    o.actionIds
-      ?.map((id) => lookup.actionById.get(id)?.command.actorId)
-      .find((id): id is string => id !== undefined);
-  return actor ? lookup.characterSceneIds.get(actor) : undefined;
+/** Where an occurrence happened: wherever the actor of the first action it
+ *  cites stands. Every row cites an action (validated), so this always has
+ *  an answer for a character in a scene; a road walker's row stays unplaced.
+ *  It used to be an optional field the Engine left blank most of the time,
+ *  and a blank location is what let the renderer put a mother at a bedside
+ *  two rooms from where she stood. */
+function occurrenceActor(o: RawOccurrence, lookup: Lookup): string | undefined {
+  return (o.actionIds ?? [])
+    .map((id) => lookup.actionById.get(id)?.command.actorId)
+    .find((id): id is string => id !== undefined);
 }
 
-/** The finalized participant rows, rebuilt from the three flat fields. */
-function participantsOf(o: RawOccurrence): Occurrence["participants"] {
-  return [
-    ...(o.actorId ? [{ characterId: o.actorId, role: "actor" as const }] : []),
-    ...(o.targetIds ?? []).map((characterId) => ({
-      characterId,
-      role: "target" as const,
-    })),
-    ...(o.affectedIds ?? []).map((characterId) => ({
-      characterId,
-      role: "directly_affected" as const,
-    })),
-  ];
+/** The people a row was aimed at: what the Engine wrote, or — when it wrote
+ *  nothing — whoever the cited commands named as target or recipient. */
+function occurrenceTargets(o: RawOccurrence, lookup: Lookup): string[] {
+  if (Array.isArray(o.targetIds)) return [...new Set(o.targetIds)];
+  const out = new Set<string>();
+  for (const id of o.actionIds ?? []) {
+    for (const ref of lookup.actionById.get(id)?.command.objectRefs ?? []) {
+      if (ref.kind !== "character") continue;
+      if (ref.role === "target" || ref.role === "recipient") out.add(ref.id);
+    }
+  }
+  return [...out];
 }
 
 /**
- * The spoken lines of the actions an occurrence cites, placed ahead of the
- * Engine's own facts — but only on the FIRST occurrence citing each action,
- * in list order: that row's perceivers are the people who made out the
- * words. `utterance` is the one part of a command that is already objective
- * — it is what anyone in earshot hears, character for character — so nothing
- * gets to restate it. Before this, the Engine wrote a third-person summary of
- * the line and the renderer then re-imagined that summary for each listener:
- * two rewrites, and the actor's own diction never reached anyone.
+ * The finalized facts of a row. On a speech row the spoken line of each cited
+ * command comes first, verbatim — `utterance` is the one part of a command
+ * that is already objective, what anyone in earshot hears character for
+ * character, so nothing gets to restate it. Before this, the Engine wrote a
+ * third-person summary of the line and the renderer then re-imagined that
+ * summary for each listener: two rewrites, and the actor's own diction never
+ * reached anyone. The Engine's paragraph, when there is one, follows as a
+ * `speech` fact (how it was said) or an `action_result` fact (what happened).
  */
-function withSpokenWords(
+function factsOf(
   o: RawOccurrence,
-  index: number,
-  all: ReadonlyArray<RawOccurrence | null | undefined>,
   lookup: Lookup
-): RawOccurrence["facts"] {
-  const facts = o.facts ?? [];
-  const spokenFacts: RawOccurrence["facts"] = [];
-  for (const actionId of o.actionIds ?? []) {
-    const first = all.findIndex(
-      (other) => other != null && (other.actionIds ?? []).includes(actionId)
-    );
-    if (first !== index) continue;
-    const command = lookup.actionById.get(actionId)?.command;
-    const spoken = command?.utterance?.trim();
-    if (!command || !spoken) continue;
-    spokenFacts.push({
-      // Typed apart from `speech` on purpose: `speech` is the Engine writing
-      // ABOUT what was said, `utterance` is the words themselves, and the
-      // renderer has to treat the two differently — one it retells, one it
-      // may only quote.
-      type: "utterance",
-      content: spoken,
-      refIds: [command.actorId],
+): Array<{ type: string; content: string; actorId?: string }> {
+  const facts: Array<{ type: string; content: string; actorId?: string }> = [];
+  if (isSpeechRow(o)) {
+    for (const actionId of o.actionIds ?? []) {
+      const command = lookup.actionById.get(actionId)?.command;
+      const spoken = command?.utterance?.trim();
+      if (!command || !spoken) continue;
+      facts.push({
+        type: "utterance",
+        content: spoken,
+        actorId: command.actorId,
+      });
+    }
+  }
+  const content = o.content?.trim();
+  if (content) {
+    facts.push({
+      type: isSpeechRow(o) ? "speech" : "action_result",
+      content,
     });
   }
-  return [...spokenFacts, ...facts];
+  return facts;
 }
 
 export function finalizeResolution(
@@ -1681,7 +1761,6 @@ export function finalizeResolution(
     if (entry.check) {
       checkInits[entry.actionId] = {
         requiredLevel: entry.check.requiredLevel,
-        basis: entry.check.basis,
         ...(entry.opposedBy ? { opposedBy: entry.opposedBy } : {}),
       };
     }
@@ -1693,9 +1772,6 @@ export function finalizeResolution(
       progressDeltaMinutes: 0,
       ...(entry.resolvedDurationTicks !== undefined
         ? { resolvedDurationTicks: entry.resolvedDurationTicks }
-        : {}),
-      ...(entry.timingReason !== undefined
-        ? { timingReason: entry.timingReason }
         : {}),
       ...(entry.resolvedDurationTicks !== undefined
         ? {
@@ -1727,7 +1803,32 @@ export function finalizeResolution(
       from: known.status,
       to: spent ? "completed" : "interrupted",
       progressDeltaMinutes: 0,
-      ...(entry.reason !== undefined ? { reason: entry.reason } : {}),
+      // The one thing an ending says. It travels as the transition's reason:
+      // the renderer's "Result:" line and the event log both read it there.
+      ...(typeof entry.outcome === "string" ? { reason: entry.outcome } : {}),
+    });
+  }
+  // A pure-speech action has no ending entry: its speech row ended it. The
+  // clock still has to close the action, so the transition is written here,
+  // with no reason — what came of it is the words, which every perceiver of
+  // the row (the actor included, when listed) receives as the row itself.
+  const answered = new Set((raw.ending ?? []).map((e) => e.actionId));
+  for (const id of resolutionWorklist(context).ending) {
+    if (answered.has(id)) continue;
+    const spoken = occurrencesCiting(id, raw.occurrences).some(isSpeechRow);
+    if (!spoken) continue;
+    const known = lookup.actionById.get(id);
+    if (!known) continue;
+    const durationTicks = known.resolvedDurationTicks;
+    const spent =
+      durationTicks !== undefined &&
+      known.progressMinutes >= durationTicks * tickMinutes;
+    transitions.push({
+      actionId: id,
+      actorId: known.command.actorId,
+      from: known.status,
+      to: spent ? "completed" : "interrupted",
+      progressDeltaMinutes: 0,
     });
   }
 
@@ -1764,15 +1865,13 @@ export function finalizeResolution(
         }) as SourcedWorldDelta<ItemChange>
     );
 
-  // Every occurrence is a standalone row now; the actor's spoken line is
-  // placed on the first row citing its action. Withdrawn (null) rows are
-  // dropped here, so ids below count only real occurrences.
-  const listed = raw.occurrences ?? [];
-  const rawOccurrences: RawOccurrence[] = listed
-    .map((o, i) =>
-      o == null ? null : { ...o, facts: withSpokenWords(o, i, listed, lookup) }
-    )
-    .filter((o): o is RawOccurrence => o != null);
+  // Withdrawn (null) rows are dropped here, so ids below count only real
+  // occurrences. Every row cites an action (validated), so the actor, the
+  // place and — failing an explicit list — the targets all come from the
+  // command; the spoken line, on a speech row, comes from it too.
+  const rawOccurrences: RawOccurrence[] = (raw.occurrences ?? []).filter(
+    (o): o is RawOccurrence => o != null
+  );
 
   // Finalization runs exactly once per session and only on a clean
   // submission, which is what guarantees one roll per declaration.
@@ -1785,41 +1884,39 @@ export function finalizeResolution(
   characterChanges.push(...sanity.deltas);
 
   const occurrences: Occurrence[] = [];
-  const createdItemIds = createdItemIdsOf(raw);
   rawOccurrences.forEach((o, i) => {
-    if (o == null) return;
     const occurrenceId = `occ_${context.tick.tickId}_${i}`;
-    const factIds = (o.facts ?? []).map((_, fi) => `${occurrenceId}#f${fi}`);
-    const locationId = o.locationId ?? occurrenceLocationFromActor(o, lookup);
+    const actorId = occurrenceActor(o, lookup);
+    const locationId = actorId
+      ? lookup.characterSceneIds.get(actorId)
+      : undefined;
     occurrences.push({
       id: occurrenceId,
       tickId: context.tick.tickId,
       sourceActionIds: o.actionIds ?? [],
       ...(locationId !== undefined ? { locationId } : {}),
-      facts: (o.facts ?? []).map((f, fi) => ({
-        id: factIds[fi],
+      facts: factsOf(o, lookup).map((f, fi) => ({
+        id: `${occurrenceId}#f${fi}`,
         type: f.type,
         content: f.content,
-        // Bare ids on the wire; the kind is code's to know. An id that
-        // resolves to nothing was refused by validation, so `scene` here is
-        // only a type-level fallback.
-        entityRefs: (f.refIds ?? []).map((id) => ({
-          kind: resolveRefKind(id, lookup, createdItemIds) ?? "scene",
-          id,
-        })),
+        // The line points at whoever said it; the paragraph points at
+        // nothing — its names are in the prose.
+        entityRefs:
+          f.actorId !== undefined
+            ? [{ kind: "character" as const, id: f.actorId }]
+            : [],
       })),
-      participants: participantsOf(o),
-      perceiverCharacterIds: [...new Set(o.perceiverCharacterIds ?? [])],
-      signals: (o.signals ?? []).map((sig) => ({
-        factIds: (sig.factIndexes ?? o.facts.map((_, fi) => fi)).map(
-          (fi) => factIds[fi]
-        ),
-        channel: sig.channel,
-        ...(sig.originLocationId !== undefined
-          ? { originLocationId: sig.originLocationId }
-          : {}),
-        ...(sig.intensity !== undefined ? { intensity: sig.intensity } : {}),
+      participants: [
+        ...(actorId ? [{ characterId: actorId, role: "actor" as const }] : []),
+        ...occurrenceTargets(o, lookup)
+          .filter((id) => id !== actorId)
+          .map((characterId) => ({ characterId, role: "target" as const })),
+      ],
+      perceivers: (o.perceivers ?? []).map((p) => ({
+        characterId: p.characterId,
+        clarity: p.clarity,
       })),
+      signals: [],
     });
   });
 
@@ -1843,7 +1940,6 @@ function makeSourced<T extends WorldDelta>(
 ): SourcedWorldDelta<T> {
   return {
     source: { kind: "action", actionId: raw.sourceActionId },
-    causalBasis: raw.causalBasis,
     delta,
   };
 }

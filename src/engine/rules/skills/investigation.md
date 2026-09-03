@@ -49,17 +49,18 @@ is limited to what is actually there.
 
 ## Output shape
 
-Findings are objective occurrence facts with real ids. Do NOT write what the
-character concluded or remembered — the character decides that for itself.
+Put findings in objective occurrence `content` and cite the source action in
+`actionIds`. Do NOT write what the character concluded or remembered — the
+character decides that for itself.
 
 ## State surface
 
 Typical deltas this domain produces. Not a requirement and never a substitute
-for what actually happened — a one-off descriptive result is an occurrence
-fact, not a state change.
+for what actually happened — a one-off descriptive result is occurrence
+`content`, not a state change.
 
-- Usually NOTHING. What was found is an occurrence fact with real ids and the
-  searcher as perceiver — that is the whole output of a successful search.
+- Usually NOTHING. What was found is occurrence `content` with the searcher in
+  `perceivers` at `full` — that is the whole output of a successful search.
 - `item.move` — something picked up, pocketed, or shifted while looking.
 - `scene.addCondition` — the room is visibly searched, the trail is trampled,
   a drawer is left open for the next person to notice.

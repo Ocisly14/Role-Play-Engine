@@ -10,6 +10,7 @@
 // either side alone — so it gets a test.
 
 import { describe, expect, it } from "vitest";
+import { PERCEPTION_CLARITIES } from "../../actions/types.js";
 import {
   CHARACTER_OPS,
   ITEM_OPS,
@@ -17,6 +18,7 @@ import {
   type RawActionStart,
   type RawCharacterChange,
   type RawOccurrence,
+  type RawPerceiver,
   type RawResolutionRepair,
   type RawSanityCheck,
   type RawTickResolution,
@@ -68,30 +70,22 @@ const sorted = (keys: ReadonlyArray<string>): string[] => [...keys].sort();
 const START = fields<RawActionStart>()(
   "actionId",
   "resolvedDurationTicks",
-  "timingReason",
   "check",
   "opposedBy",
   "movement"
 );
 // Written in wire order, not alphabetical: the flat shape relies on it (see
-// "an occurrence row cites its actions via actionIds and carries facts last").
-const END = fields<RawActionEnd>()(
-  "actionId",
-  "replacedBy",
-  "outcome",
-  "reason"
-);
+// "an occurrence row cites its actions via actionIds and carries content last").
+const END = fields<RawActionEnd>()("actionId", "outcome");
 const OCCURRENCE = fields<RawOccurrence>()(
   "actionIds",
-  "locationId",
-  "actorId",
+  "speech",
   "targetIds",
-  "affectedIds",
-  "perceiverCharacterIds",
-  "signals",
+  "perceivers",
   "sanityChecks",
-  "facts"
+  "content"
 );
+const PERCEIVER = fields<RawPerceiver>()("characterId", "clarity");
 const SANITY_CHECK = fields<RawSanityCheck>()(
   "characterId",
   "failureLoss",
@@ -99,7 +93,6 @@ const SANITY_CHECK = fields<RawSanityCheck>()(
 );
 const DELTA = fields<RawCharacterChange>()(
   "sourceActionId",
-  "causalBasis",
   "characterId",
   "operation"
 );
@@ -125,10 +118,11 @@ const _covers: [
   Covers<RawActionStart, (typeof START)[number]>,
   Covers<RawActionEnd, (typeof END)[number]>,
   Covers<RawOccurrence, (typeof OCCURRENCE)[number]>,
+  Covers<RawPerceiver, (typeof PERCEIVER)[number]>,
   Covers<RawCharacterChange, (typeof DELTA)[number]>,
   Covers<RawTickResolution, (typeof RESOLUTION)[number]>,
   Covers<RawResolutionRepair, (typeof REPAIR)[number]>,
-] = [true, true, true, true, true, true];
+] = [true, true, true, true, true, true, true];
 void _covers;
 
 describe("the tool schema and the TS types describe the same thing", () => {
@@ -144,14 +138,14 @@ describe("the tool schema and the TS types describe the same thing", () => {
     expect(propsOf(submit.properties.ending.items)).toEqual(sorted(END));
   });
 
-  it("an occurrence row cites its actions via actionIds and carries facts last", () => {
+  it("an occurrence row cites its actions via actionIds and carries content last", () => {
     // The trace of an ending no longer hangs off the ending: it is a flat
-    // row here, tied back by `actionIds`. The row is scalars and string
-    // arrays with its one array of objects LAST, and the ending entry is four
-    // scalars with the longest string last — generation is left-to-right, so
-    // the order is the design, not a style: the model never has to close a
-    // deep object and then come back for a sibling scalar (the brace slip
-    // every unreadable DeepSeek submission made in two measured runs).
+    // row here, tied back by `actionIds`. Ids and flags first, the one long
+    // string LAST, and the ending entry is two scalars with the paragraph
+    // last — generation is left-to-right, so the order is the design, not a
+    // style: the model never has to close a deep object and then come back
+    // for a sibling scalar (the brace slip every unreadable DeepSeek
+    // submission made in two measured runs).
     expect(propsOf(submit.properties.occurrences.items)).toEqual(
       sorted(OCCURRENCE)
     );
@@ -159,10 +153,30 @@ describe("the tool schema and the TS types describe the same thing", () => {
       submit.properties.occurrences.items?.properties ?? {}
     );
     expect(occurrenceOrder).toEqual([...OCCURRENCE]);
-    expect(occurrenceOrder.at(-1)).toBe("facts");
+    expect(occurrenceOrder.at(-1)).toBe("content");
     expect(
       Object.keys(submit.properties.ending.items?.properties ?? {})
-    ).toEqual(["actionId", "replacedBy", "outcome", "reason"]);
+    ).toEqual(["actionId", "outcome"]);
+  });
+
+  it("a perceiver entry matches RawPerceiver, and its clarity is the shared enum", () => {
+    // The list used to be bare ids; what came back is one narrow field, the
+    // per-perceiver grade. The enum the model is shown and the one the
+    // validator accepts are the same constant, not two hand-kept lists.
+    const perceivers = submit.properties.occurrences.items?.properties
+      .perceivers as Schema & { items?: Schema; minItems?: number };
+    expect(propsOf(perceivers.items)).toEqual(sorted(PERCEIVER));
+    expect(perceivers.items?.required).toEqual(["characterId", "clarity"]);
+    expect(perceivers.minItems).toBe(1);
+    const clarity = perceivers.items?.properties.clarity as
+      | { type?: string; enum?: unknown }
+      | undefined;
+    expect(clarity?.type).toBe("string");
+    expect(clarity?.enum).toEqual([...PERCEPTION_CLARITIES]);
+    // The repair tool spreads the same row, so it carries the same grade.
+    expect(repair.properties.occurrences.items?.properties.perceivers).toEqual(
+      perceivers
+    );
   });
 
   it("a declared sanity check matches RawSanityCheck", () => {
@@ -188,7 +202,7 @@ describe("the tool schema and the TS types describe the same thing", () => {
     for (const field of ["characterChanges", "sceneChanges", "itemChanges"]) {
       const props = propsOf(submit.properties[field].items);
       expect(props).toContain("sourceActionId");
-      expect(props).toContain("causalBasis");
+      expect(props).not.toContain("causalBasis");
       expect(props).toContain("operation");
     }
     expect(propsOf(submit.properties.characterChanges.items)).toEqual(
@@ -219,22 +233,31 @@ describe("repair_resolution cannot drift from what it repairs", () => {
   });
 
   it("adds the address fields, and only those, to the indexed lists", () => {
-    for (const field of [
-      "characterChanges",
-      "sceneChanges",
-      "itemChanges",
-      "occurrences",
-    ]) {
+    for (const field of ["characterChanges", "sceneChanges", "itemChanges"]) {
       const added = propsOf(repair.properties[field].items).filter(
         (k) => !propsOf(submit.properties[field].items).includes(k)
       );
       expect(added).toEqual(["index", "remove"]);
     }
   });
+
+  it("addresses occurrence rows by the actions they cite, never by index", () => {
+    // Measured with index addressing: 59 of 89 repair rows arrived without an
+    // index and were appended beside the row they were meant to replace; four
+    // ticks died on the same occurrence error three rounds running. The
+    // model uses an actionId as an address correctly every time.
+    const added = propsOf(repair.properties.occurrences.items).filter(
+      (k) => !propsOf(submit.properties.occurrences.items).includes(k)
+    );
+    expect(added).toEqual(["remove"]);
+    expect(repair.properties.occurrences.items?.required).toEqual([
+      "actionIds",
+    ]);
+  });
 });
 
 describe("what the schema marks required", () => {
-  it("keeps an ending flat: no nested occurrence, only actionId and reason required", () => {
+  it("keeps an ending flat: no nested occurrence, actionId and outcome both required", () => {
     // The trace used to be a required `occurrence` object on the entry, so
     // the rule needed no validator; now it is the validator's job (every
     // ending must be cited by an occurrence's `actionIds`), and the entry
@@ -244,13 +267,19 @@ describe("what the schema marks required", () => {
     ).toBeUndefined();
     expect(submit.properties.ending.items?.required).toEqual([
       "actionId",
-      "reason",
+      "outcome",
     ]);
+    // `content` is conditionally required (speech false), so it stays out of
+    // `required` and the condition lives in its description and the validator.
     expect(submit.properties.occurrences.items?.required).toEqual([
       "actionIds",
-      "perceiverCharacterIds",
-      "facts",
+      "speech",
+      "perceivers",
     ]);
+    const content = submit.properties.occurrences.items?.properties.content as
+      | { description?: string }
+      | undefined;
+    expect(content?.description).toContain("REQUIRED when speech is false");
   });
 
   it("leaves duration optional in shape — travel derives its clock from the route", () => {
@@ -265,16 +294,25 @@ describe("what the schema marks required", () => {
     expect(duration?.description).toContain("OMIT when `movement` is set");
   });
 
-  it("leaves outcome optional in shape but says when it is required", () => {
-    // It cannot be `required` — it is refused for checked actions. So the
-    // conditional lives in the description, and the trigger worklist names the
-    // exact ids. Both halves have to be present or we are back to the bug.
+  it("makes outcome a paragraph, not a verdict", () => {
+    // The enum (success/partial/failure/blocked) is gone: nothing downstream
+    // read it, and its conditional rules were 81 of 188 repair lines in one
+    // measured run. What remains is the account the actor is told.
     const outcome = submit.properties.ending.items?.properties.outcome as
-      | { description?: string }
+      | { type?: string; enum?: unknown; description?: string }
       | undefined;
-    expect(submit.properties.ending.items?.required).not.toContain("outcome");
-    expect(outcome?.description).toContain("REQUIRED");
-    expect(outcome?.description).toContain("endingNeedsOutcome");
+    expect(outcome?.type).toBe("string");
+    expect(outcome?.enum).toBeUndefined();
+    expect(outcome?.description).not.toContain("endingNeedsOutcome");
+  });
+
+  it("says what a speech row is and what it waives", () => {
+    const speech = submit.properties.occurrences.items?.properties.speech as
+      | { type?: string; description?: string }
+      | undefined;
+    expect(speech?.type).toBe("boolean");
+    expect(speech?.description).toContain("needs no `ending` entry");
+    expect(speech?.description).toContain("TWO rows");
   });
 });
 
@@ -496,18 +534,18 @@ describe("both engine tools stay inside the strict subset", () => {
 
   it("documents why the engine tools are not strict today", () => {
     // The exact totals, so a schema change that moves them is noticed here
-    // rather than in a 400 from the API. Flat shape (2026-09): the ending
-    // entry lost its nested occurrence (and two duration fields), the
-    // occurrence row traded `participants`/`entityRefs` objects for
-    // `actorId`/`targetIds`/`affectedIds`/`refIds` — 38 for submit, 63 for
-    // repair (every item field goes optional there, plus the address
-    // fields). Both still well over the limit of 24.
+    // rather than in a 400 from the API. Lean shape (2026-09-03): the ending
+    // entry is two required scalars, deltas lost `causalBasis`, the
+    // occurrence row lost `locationId`/`actorId`/`affectedIds`/`signals`/
+    // `facts` for `speech`/`content` — 28 for submit, 48 for repair (every
+    // item field goes optional there, plus the address fields). Both still
+    // over the limit of 24.
     const submitOptionals: string[] = [];
     optionals(submitResolutionTool.inputSchema, submitOptionals);
     const repairOptionals: string[] = [];
     optionals(repairResolutionTool.inputSchema, repairOptionals);
-    expect(submitOptionals.length).toBe(38);
-    expect(repairOptionals.length).toBe(63);
+    expect(submitOptionals.length).toBe(28);
+    expect(repairOptionals.length).toBe(48);
     expect(submitOptionals.length).toBeGreaterThan(ANTHROPIC_OPTIONAL_LIMIT);
     expect(submitResolutionTool.strict).toBe(false);
     expect(repairResolutionTool.strict).toBe(false);

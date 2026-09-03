@@ -283,7 +283,6 @@ export class TickOrchestrator {
             ? { language: action.command.declaredLanguage }
             : {}),
           requiredLevel: bar.requiredLevel,
-          basis: bar.basis,
           ...(bar.opposedBy ? { opposedBy: bar.opposedBy } : {}),
         };
       }
@@ -376,7 +375,7 @@ export class TickOrchestrator {
         ],
         participants: [{ characterId: t.actorId, role: "actor" }],
         // Only the actor: a failure nobody else could see stays private.
-        perceiverCharacterIds: [t.actorId],
+        perceivers: [{ characterId: t.actorId, clarity: "full" }],
         signals: [{ factIds: [`${occurrenceId}#f0`], channel: "direct" }],
       });
     }

@@ -8,7 +8,10 @@
 // retries are `generateText`'s `maxRetries` (2 = initial + 1, per G11). On
 // failure the wrapper in index.ts returns null (D6 — no god-eye fallback).
 
-import type { Occurrence } from "../../engine/actions/types.js";
+import type {
+  Occurrence,
+  PerceptionClarity,
+} from "../../engine/actions/types.js";
 import { ModelClass, generateText } from "../../models/index.js";
 import type { PromptSegment } from "../../models/types.js";
 import type { DynamicGameStateManager } from "../../state/DynamicGameState.js";
@@ -34,13 +37,15 @@ const RENDER_HISTORY_WINDOW = 5;
 
 const SYSTEM_PROMPT = `You are the perception renderer for a tick-based simulation.
 
-Your only job: turn the events of one game tick into a first-person, sensory
-narrative for a single viewpoint character.
+Turn one game tick into a first-person sensory narrative for one viewpoint
+character. The Engine has already decided which objective facts reached this
+character. You decide only how those facts are experienced and described.
 
 # Output format
 
-One short paragraph. Nothing else — no heading, no label, no list, no
-commentary before or after it.
+Write exactly one short paragraph of 2-5 sentences. Use first person ("I") and
+present tense. Quoted speech does not count toward the sentence limit. Output
+only the paragraph: no heading, label, list, analysis, or commentary.
 
 # Citation tags
 
@@ -51,32 +56,25 @@ tag into the narrative, right after the words that name the thing:
   The tall pale man [stranger_a] winds the gramophone
   [item.clinic_upstairs.gramophone] in the corner.
 
-A tag is a machine handle: **copy it character by character from
-your input.** 
-
-This is the ONLY way the character can point at anything: they act by citing
-a tag they read in your paragraph. An entity you leave untagged is an entity
-they cannot touch, address or walk toward this minute.
+A tag is a machine handle. Copy it character for character from this minute's
+input.
 
 - Copy a tag EXACTLY as given. Never invent one, never guess at an id you
   were not given, never reuse a tag for a different thing.
-- A tag belongs to the ONE entity it was issued for, and to nothing else. A
+- A tag belongs to the one entity it was issued for, and nothing else. A
   door, a shelf, a window, a stairway — a part or fixture of the room is not
   the room, so it never wears the room's tag. Nor does a lamp wear the tag of
   the street it stands on, or a wheel the tag of the cart.
-- An entity with no tag in your input is written with no tag.
+- An entity with no tag in this minute's input is written with no tag.
 - A tag follows the prose, it does not replace it: the words name the thing,
   the bracket comes after them.
 - A bracket holds an id and nothing else — no description, no punctuation, no
   words of your own, in any language.
-- Tag the things the character could plausibly act on this minute — the
-  people present, the items within reach, and the ways out.
-- Tagging is not inventory. An item the character could act on is citable
-  whether or not this paragraph names it; you do not owe every item a
-  mention every minute. Name a thing when it is NEW to the character, when
-  it CHANGED, or when they act on or look at it now — and then tag it. A
-  thing already described in an earlier paragraph and unchanged since is
-  left out, and the character can still cite it from before.
+- Whenever you mention an entity that has a tag in this minute's input, copy
+  that tag after its name. You do not need to list every tagged item.
+- Prefer mentioning entities that are new, changed, involved in an occurrence,
+  or receiving the viewpoint's attention. Leave unchanged background objects
+  out. Omitting an entity now does not revoke a tag learned earlier.
 
 # IDENTITY FIREWALL — STRANGER MEANS NAME UNKNOWN
 
@@ -90,32 +88,51 @@ viewpoint does NOT know that person's canonical name.
   but it still does not become the stranger's label unless the input marks
   that person KNOWN.
 
-# Hard rules
+Wrong: Tommy [stranger_abc123] stands by the door.
+Right: The lean, taller man [stranger_abc123] stands by the door.
 
-- Narrative is ONE paragraph (2-5 sentences). First person ("I"), present tense.
-  Quoted speech does not count against that: a paragraph carrying two spoken
-  lines verbatim is doing its job, not overrunning.
-- The "Occurrences" input lists OBJECTIVE facts of this tick with sensory
-  signals (visual/sound/smell/touch/direct). YOU decide what of each the
-  viewpoint actually perceives, from the signals, the viewpoint's location
-  and their senses: a sound-only signal from elsewhere renders as a heard
-  impression ("a sharp crack from the street"), never as if seen; a visual
-  signal in the same place renders as sight. When uncertain, stay vague.
-- Never add facts: no entities, actions, outcomes or causes that are not in
-  the occurrence facts or scene input. Facts you leave out are simply not
-  perceived — that is allowed; inventing is not.
-- **A \`fact (utterance)\` is the exact words someone said. Quote them.**
-  Reproduce the line character for character inside quotation marks, in the
-  language it was spoken — never summarise it, never translate it, never smooth it. 
-  You may leave a whole utterance out if the viewpoint's attention is
-  elsewhere, but what you keep, you keep verbatim.
-  A \`fact (speech)\` is different — that is the Engine describing HOW it was
-  said, and you retell it in your own words like any other fact.
-- **Who heard what is already decided.** An occurrence reaches this viewpoint
-  or it does not; you are only given the ones they perceived. So never write
-  that they missed, half-heard or could not make out something you were given
-  — if they were meant to catch only a murmur, you were handed a fact that
-  says so, and nothing else.
+# Scene and action rules
+
+- The "Occurrences" input lists objective facts already routed to this
+  viewpoint. Cover every supplied occurrence. You decide only its sensory
+  presentation from where it happened (\`here\` or \`NOT here\`), the
+  viewpoint's location, and the stated geometry. A remote occurrence renders
+  only as what can cross the way between — a raised voice through a door, a
+  shape in a doorway, or a sharp crack from the street — never as if watched
+  directly. Combine overlapping facts naturally instead of repeating them.
+- Never add facts: no entities, actions, outcomes, causes, motives, or sensory
+  details unsupported by the occurrence facts or scene input. Never discard
+  or contradict a supplied fact. When uncertain, stay equally uncertain.
+- **A \`fact (utterance)\` is the exact words someone said. When your clarity
+  on that occurrence is \`full\`, quote them.** Reproduce the line character
+  for character inside quotation marks, in the language it was spoken — never
+  summarize it, never translate it, never correct it, and never smooth it.
+  Include every supplied utterance. Every other fact — including the one that
+  sits beside an utterance and describes HOW it was said — is the Engine's
+  account, and you retell it in your own words like any other fact. At
+  \`limited\` or \`trace\` the utterance is NOT quoted; the clarity rule below
+  says what becomes of it.
+- **Clarity decides how much of an occurrence this viewpoint gets.** Every
+  occurrence line carries \`your clarity: full | limited | trace\` — the
+  Engine's judgement of what crossed the distance, the dark, the wall or the
+  noise to THIS person. The facts under it are written at full objective
+  detail for everyone who perceived anything; you are the one who degrades
+  them to the grade.
+    - \`full\`: render the event and its relevant detail; an utterance is
+      quoted character for character.
+    - \`limited\`: render the KIND of event and its immediate result, without
+      fine detail — no small objects, no faces or expressions, no exact words.
+      An utterance becomes at most its gist or a caught fragment ("something
+      about the harbour"), never the whole line and never inside quotation
+      marks as if heard verbatim.
+    - \`trace\`: render only that something happened — a sound, a movement, a
+      light, a smell — and at most the direction it came from. No source, no
+      cause, no actor, no words, no result. The people involved are withheld
+      from that line on purpose; do not supply them from another line, from
+      the people present, or from earlier paragraphs.
+  Never write that the viewpoint missed, half-heard or could not make out
+  something given at \`full\`; never explain or quote something given at
+  \`trace\`. Stay exactly as certain as the grade allows — no more, no less.
 - Render only what the viewpoint can perceive RIGHT NOW: external sights, sounds,
   smells, touches, plus your own body/mind state. Do NOT mention memory,
   relationships, prior knowledge, or future plans.
@@ -172,49 +189,68 @@ viewpoint does NOT know that person's canonical name.
   they have no way to begin. A way out that is NOT in your input is one they
   have not found: it does not exist for this paragraph, however plainly the
   place seems to need one.
-- Do not invent new entities, items, or details that are not in the input.
 - If there are no events, describe scene + own state only.
 
-# Example
+# Example — entities and tags
 
 Input gives you:
   Person (UNKNOWN): the tall pale man  [stranger_a]
     Appearance: Tall, pale, with a long black overcoat and an ivory-handled cane.
     Where they are in this place: by the door, hat still on
   Items perceivable here:
-    - 留声机  [item.clinic_upstairs.gramophone]: 角落里的留声机，旁边码着歌剧唱片。
-    - 烟斗  [item.clinic_upstairs.pipe]: 窗台上一支从没点燃过的烟斗。
+    - Gramophone  [item.clinic_upstairs.gramophone]: A gramophone in the corner, with opera records stacked beside it.
+    - Pipe  [item.clinic_upstairs.pipe]: An unlit pipe on the windowsill.
 
 Write:
-  The tall pale man [stranger_a] is still by the door with his hat on, and I
-  cannot place him. The gramophone [item.clinic_upstairs.gramophone] in the
-  corner has run to the end of its side; the pipe on the sill
-  [item.clinic_upstairs.pipe] has not been touched since I set it there.
+  I see the tall pale man [stranger_a] standing by the door, his hat still on
+  and his ivory-handled cane with him. The gramophone
+  [item.clinic_upstairs.gramophone] sits in the corner beside a stack of opera
+  records, while an unlit pipe [item.clinic_upstairs.pipe] rests on the
+  windowsill.
 
 Every bracket in that paragraph was copied from the input character for
 character, sits directly after the words that name its thing, and holds
 nothing but the id. The man is "the tall pale man" because that is what the
 input calls him — a name would be one the viewpoint has not been told.
 
-Right: name the thing in your prose, then the bare id in a bracket after it.
-Nothing to cite? Then write it with no bracket — an entity the actor can see
-but not act on is a normal thing, and inventing a tag for it is not.
-
 # Example — spoken words
 
 Input gives you:
+  Person (UNKNOWN): the man holding the rifle  [stranger_c]
   Occurrence:
-    fact (utterance): 你们哪边的，兄弟？这鬼天气还骑马巡逻，胆子不小啊。
-    fact (speech): he asks it lightly, grinning, the rifle still in his arms
-    signal: sound
+    fact (utterance): Which outfit are you with, friend?
+    fact (speech): He asks lightly, grinning, with the rifle still in his arms.
 
 Write:
-  抱枪那个 [stranger_c] 咧着嘴，枪没离怀，冲我们扬了扬下巴:"你们哪边的，
-  兄弟？这鬼天气还骑马巡逻，胆子不小啊。"火在他脸上跳。
+  The man holding the rifle [stranger_c] grins, keeping the weapon in his arms.
+  "Which outfit are you with, friend?"
 
 The utterance came through character for character, inside quotes, in the
-language it was spoken. The \`speech\` fact — how he said it — was retold in
-the viewpoint's own perception. Never the other way round.`;
+language it was spoken. The fact beside it — how he said it — was retold in
+the viewpoint's own perception. Never the other way round.
+
+# Example — one moment, three grades
+
+The same occurrence reaches three viewpoints. Its facts are identical for
+all of them; only the grade differs:
+  fact (utterance): Give me the key.
+  fact (speech): She leans close to the man beside her and speaks under the room's noise.
+
+your clarity: full — write:
+  The woman in grey [stranger_b] leans in to the man at the bar and says,
+  low, "Give me the key."
+
+your clarity: limited — write:
+  The woman in grey [stranger_b] leans in to the man at the bar and says
+  something low; I catch nothing but the word "key".
+
+your clarity: trace — write:
+  Under the talk at the bar someone murmurs something I cannot place.
+
+At \`full\` the line is quoted whole. At \`limited\` the exchange is seen and a
+fragment is caught, but the sentence is never quoted as if heard. At \`trace\`
+there is a murmur and a direction, and no one is named — not even from the
+people present in the room.`;
 
 /** What the actor can see right now, in the shape the renderer needs: real
  *  entity id → the tag to print. Characters go through `characterHandles`, so
@@ -343,6 +379,18 @@ function buildStrangerIdentities(
   return identities;
 }
 
+/** The grade the Engine gave THIS viewpoint on one occurrence. Defaults to
+ *  `full`: the controller routes a row to a character only because that
+ *  character is listed in `perceivers`, so a missing entry cannot happen on
+ *  the production path — and if a caller hands the renderer a row directly
+ *  (tests, a future subsystem adapter), reading it whole is the behaviour
+ *  every row had before grades existed. */
+function clarityFor(occ: Occurrence, viewpointId: string): PerceptionClarity {
+  return (
+    occ.perceivers.find((p) => p.characterId === viewpointId)?.clarity ?? "full"
+  );
+}
+
 /** `  [tag]` when the entity is citable, nothing when it is not — an
  *  untagged entity is one the actor can perceive but not act on. */
 function tag(id: string, tags: CitationTags, kind: "character" | "other") {
@@ -358,7 +406,7 @@ function tag(id: string, tags: CitationTags, kind: "character" | "other") {
 const TAG_PATTERN = /\s*\[([^\]\n]{1,64})\]/g;
 
 /** Full-width brackets around something that reads as an id. Measured live in
- *  a Chinese paragraph: `妈妈【npc_susan_holt】`. The renderer had copied the id
+ *  a Chinese paragraph: `Mother【npc_susan_holt】`. The renderer had copied the id
  *  perfectly and only reached for the bracket its input method offered. */
 const WIDE_TAG_PATTERN = /[【［]([^】］\]\n]{1,64})[】］]/g;
 
@@ -517,7 +565,7 @@ export async function renderViaLLM(
   const segments = buildUserPromptSegments(params, tags);
   const langName = params.language?.startsWith("zh") ? "Chinese" : "English";
 
-  const decide = `\n\n# Decide\nWrite the paragraph now, in ${langName}.`;
+  const renderInstruction = `\n\n# Render\nWrite the paragraph now, in ${langName}.`;
   const ask = (extra = "") =>
     generateText({
       customSystemPrompt: SYSTEM_PROMPT,
@@ -528,13 +576,16 @@ export async function renderViaLLM(
       // price for its own instructions. MEDIUM's floor is 1024.
       cacheSystemPrompt: true,
       // Segmented so the breakpoint can sit at the end of the history. `extra`
-      // is retry feedback and `decide` the instruction — both belong after
-      // everything cacheable.
+      // is retry feedback and `renderInstruction` the instruction — both
+      // belong after everything cacheable.
       contextSegments: [
         ...segments,
-        { text: `${extra}${decide}`, cache: false },
+        { text: `${extra}${renderInstruction}`, cache: false },
       ],
-      context: segments.map((seg) => seg.text).join("\n\n") + extra + decide,
+      context:
+        segments.map((seg) => seg.text).join("\n\n") +
+        extra +
+        renderInstruction,
       // MEDIUM, not SMALL. The small model kept citing the right KIND of
       // thing with the wrong id — street lamps tagged with the scene's id,
       // a train whistle tagged as a place — which is well-formed and passes
@@ -561,9 +612,9 @@ export async function renderViaLLM(
   // not a broken tick — the prose survives — but it silently costs the
   // character an entity they can see and now cannot act on, and the mistake
   // is one a small model corrects readily once it is shown the exact string
-  // it invented. Observed: `[ITEM_SCN21_3旁的同伴]`, an id with a phrase of
-  // narrative welded onto it, which no amount of re-reading the rules would
-  // have caught but naming it plainly does.
+  // it invented. Observed: a valid item id with "the nearby companion"
+  // welded onto it, which no amount of re-reading the rules would
+  // have caught but naming the malformed tag plainly does.
   // A name bound to a stranger's alias is NOT re-asked. The scrub below fixes
   // it exactly — the label goes back to the description, the quoted words
   // stay — and a second model call could only do the same thing worse:
@@ -586,7 +637,7 @@ export async function renderViaLLM(
           `You wrote ${bad.map((t) => `[${t}]`).join(", ")} — not a citable id. A bracket holds an id and NOTHING else: no`,
           "description, no punctuation, no words of your own, in any language.",
           "Name the thing in your prose and put the bare id in the bracket after",
-          "it, copied exactly from the address book above — or, if none of them",
+          "it, copied exactly from this minute's input above — or, if none of them",
           "is the thing you mean, write it with no bracket at all.",
           "Keep every quoted line exactly as it was. Rewrite the whole paragraph.",
         ].join("\n")
@@ -622,7 +673,7 @@ export async function renderViaLLM(
  * segment holding it carries no breakpoint: bounded content at 1.0x beats
  * unbounded content at 1.35x after about four ticks, and the gap only widens.
  */
-/** `--- 12-01 19:05 · 教堂主殿 ---`, the same stamp the character's own prompt
+/** `--- 12-01 19:05 · Cathedral Nave ---`, the same stamp the character's own prompt
  *  uses, so a paragraph reads the same in both places. */
 function stamp(
   gameDateTime: string,
@@ -679,7 +730,7 @@ ${block}
 
 These are paragraphs you wrote in earlier minutes, and some of them are
 about places this character has since left. They are here for CONTINUITY
-ONLY.They are not evidence about now.
+ONLY. They are not evidence about now.
 
 Tag only what appears in THIS minute's input.
 
@@ -719,7 +770,7 @@ re-lists the furniture is a paragraph that says nothing happened.`
 
   if (bundle.occurrences.length > 0) {
     volatileParts.push(
-      "# Occurrences this tick (objective facts + signals — YOU decide what the viewpoint perceives of each)"
+      "# Occurrences this tick (objective facts already routed to this viewpoint)"
     );
     volatileParts.push(formatOccurrences(bundle, npcId, tags));
   } else {
@@ -832,14 +883,23 @@ function collectOtherEntities(
     if (occ.locationId && occ.locationId !== bundle.scene.id) {
       sceneIds.add(occ.locationId);
     }
-    for (const p of occ.participants) {
-      if (p.characterId !== viewpointId && !scenePresent.has(p.characterId)) {
-        characterIds.add(p.characterId);
+    // A trace has no source. The places are legitimate — "roughly where
+    // from" is the one thing a trace may carry, so scene ids are still
+    // collected — but the people are not: a participant printed here would
+    // arrive with a name, an appearance and a `Where they are` line, and the
+    // renderer would have the actor it was told to withhold.
+    const trace = clarityFor(occ, viewpointId) === "trace";
+    if (!trace) {
+      for (const p of occ.participants) {
+        if (p.characterId !== viewpointId && !scenePresent.has(p.characterId)) {
+          characterIds.add(p.characterId);
+        }
       }
     }
     for (const fact of occ.facts) {
       for (const ref of fact.entityRefs) {
         if (
+          !trace &&
           ref.kind === "character" &&
           ref.id !== viewpointId &&
           !scenePresent.has(ref.id)
@@ -971,7 +1031,7 @@ function whereRelativeToHere(
   if (adjacent) {
     return `Where they are: NOT here — in ${name}${tag(placeId, tags, "other")}, the next place along; only what carries through the way between (a voice, a light under the door, a figure in the doorway) reaches you, and nobody's hands cross it.`;
   }
-  return `Where they are: NOT here — in ${name}${tag(placeId, tags, "other")}, out of sight and beyond earshot unless a signal below says otherwise.`;
+  return `Where they are: NOT here — in ${name}${tag(placeId, tags, "other")}, out of sight and beyond earshot; render only supplied facts that explicitly reach the viewpoint.`;
 }
 
 function formatOccurrence(
@@ -991,17 +1051,28 @@ function formatOccurrence(
               : "somewhere else"
           } (${occ.locationId})`
         : "location unspecified";
+  const clarity = clarityFor(occ, viewpointId);
   // By tag, never by real id: a participant the viewpoint does not know must
-  // reach the narrative as `stranger_a`, not as the name behind it.
+  // reach the narrative as `stranger_a`, not as the name behind it. At
+  // `trace` only the viewpoint's own involvement survives — a trace has no
+  // actor, and a handle on this line would be one the renderer was told not
+  // to have.
   const involved = occ.participants
+    .filter((p) => clarity !== "trace" || p.characterId === viewpointId)
     .map((p) => {
       if (p.characterId === viewpointId) return `you (${p.role})`;
       const handle = tags.characters.get(p.characterId);
       return `${handle ?? "someone"} (${p.role})`;
     })
     .join(", ");
+  const reminder =
+    clarity === "limited"
+      ? " (kind of event and immediate result only — no small objects, faces or exact words)"
+      : clarity === "trace"
+        ? " (render only that something happened and roughly where from — no source, actor, cause or words)"
+        : "";
   lines.push(
-    `- Occurrence ${where}${involved ? `; involved: ${involved}` : ""}`
+    `- Occurrence ${where}; your clarity: ${clarity}${reminder}${involved ? `; involved: ${involved}` : ""}`
   );
   const selfInvolved = occ.participants.some(
     (p) => p.characterId === viewpointId
@@ -1012,13 +1083,13 @@ function formatOccurrence(
   for (const fact of occ.facts) {
     lines.push(`  fact (${fact.type}): ${fact.content}`);
   }
-  for (const signal of occ.signals) {
-    const bits = [`signal: ${signal.channel}`];
-    if (signal.originLocationId) bits.push(`from ${signal.originLocationId}`);
-    if (signal.intensity !== undefined)
-      bits.push(`intensity ${signal.intensity}`);
-    lines.push(`  ${bits.join(", ")}`);
-  }
+  // The facts print unchanged for every grade: the row is one objective
+  // record shared by everyone who perceived it, and the per-perceiver grade
+  // on the first line is the ONE perception knob the Engine writes. No
+  // signal lines — the Engine no longer writes channels: where a thing
+  // happened (`here` / `NOT here`), the grade, and what the fact says are what
+  // the renderer reads to decide heard versus seen and how much of it.
+  // Subsystem events still carry a channel internally; nothing here prints it.
   return lines.join("\n");
 }
 

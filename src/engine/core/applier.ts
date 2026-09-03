@@ -159,6 +159,7 @@ export class Applier {
       case "character.removeCondition":
       case "character.position":
       case "character.spot":
+      case "character.appearance":
       case "memory.event":
       case "memory.witness":
         return known(c.characterId);
@@ -199,7 +200,9 @@ export class Applier {
               characterId,
               delta: op.delta,
               sourceFeatureId: source,
-              reason: `${sourced.causalBasis} — ${op.reason}`,
+              reason: sourced.causalBasis
+                ? `${sourced.causalBasis} — ${op.reason}`
+                : op.reason,
             },
           ];
         case "position":
@@ -217,6 +220,14 @@ export class Applier {
               kind: "character.spot",
               characterId,
               spot: op.spot,
+            },
+          ];
+        case "setAppearance":
+          return [
+            {
+              kind: "character.appearance",
+              characterId,
+              appearance: op.appearance,
             },
           ];
         case "addCondition":
@@ -406,8 +417,10 @@ export class Applier {
       reason: string;
     }> = [];
     const featureEmissions: FeatureEvent[] = [];
-    // Last write wins: a spot is one slot, not an accumulation.
+    // Last write wins: a spot is one slot, not an accumulation. Same for the
+    // appearance prose.
     const spotWrites = new Map<string, string>();
+    const appearanceWrites = new Map<string, string>();
     const envBuckets = new Map<string, EnvBucket>();
     const ensureEnvBucket = (locationId: string): EnvBucket => {
       let b = envBuckets.get(locationId);
@@ -439,6 +452,9 @@ export class Applier {
           break;
         case "character.spot":
           spotWrites.set(c.characterId, c.spot);
+          break;
+        case "character.appearance":
+          appearanceWrites.set(c.characterId, c.appearance);
           break;
         case "event.emit":
           featureEmissions.push(c.event);
@@ -629,6 +645,9 @@ export class Applier {
     // finished moving.
     for (const [characterId, spot] of spotWrites) {
       this.dgsm.setCharacterSpot(characterId, spot);
+    }
+    for (const [characterId, appearance] of appearanceWrites) {
+      this.dgsm.setCharacterAppearance(characterId, appearance);
     }
 
     const synthesizedDeaths: FeatureEvent[] = damageReports

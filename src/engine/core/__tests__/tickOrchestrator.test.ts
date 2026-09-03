@@ -86,37 +86,25 @@ function stubResolve() {
       Pick<RawTickResolution, "starting" | "ending" | "occurrences">
     > &
       RawTickResolution = { starting: [], ending: [], occurrences: [] };
-    // An ending is four scalars; its trace is a flat `occurrences` row that
+    // An ending is two scalars; its trace is a flat `occurrences` row that
     // cites the action in `actionIds`.
     const cite = (actionId: string) => {
       raw.occurrences.push({
         actionIds: [actionId],
-        actorId: "npc_1",
-        perceiverCharacterIds: ["npc_1"],
-        facts: [{ type: "action_result", content: "stub fact" }],
+        speech: false,
+        perceivers: [{ characterId: "npc_1", clarity: "full" }],
+        content: "stub fact",
       });
     };
     for (const t of context.trigger.triggers) {
       for (const actionId of t.actionIds) {
         if (t.reason === "new_action") {
-          raw.starting.push({
-            actionId,
-            resolvedDurationTicks: 2,
-            timingReason: "stub: two minutes of work",
-          });
+          raw.starting.push({ actionId, resolvedDurationTicks: 2 });
         } else if (t.reason === "duration_reached") {
-          raw.ending.push({
-            actionId,
-            outcome: "success",
-            reason: "stub done",
-          });
+          raw.ending.push({ actionId, outcome: "stub done" });
           cite(actionId);
         } else if (t.reason === "replacement" || t.reason === "interrupted") {
-          raw.ending.push({
-            actionId,
-            outcome: "blocked",
-            reason: "stub interruption",
-          });
+          raw.ending.push({ actionId, outcome: "stub interruption" });
           cite(actionId);
         }
       }
@@ -326,7 +314,9 @@ describe("an ended action always leaves something to perceive", () => {
     expect(occurrences).toHaveLength(1);
     expect(occurrences[0].sourceActionIds).toEqual([receipt.actionId]);
     // The actor perceives their own failure; nobody else necessarily could.
-    expect(occurrences[0].perceiverCharacterIds).toEqual(["npc_1"]);
+    expect(occurrences[0].perceivers).toEqual([
+      { characterId: "npc_1", clarity: "full" },
+    ]);
     expect(occurrences[0].facts[0].type).toBe("action_result");
     expect(occurrences[0].facts[0].content).toContain("actor is dead");
   });
@@ -472,7 +462,6 @@ describe("a route that does not join up", () => {
             raw.starting?.push({
               actionId,
               resolvedDurationTicks: 10,
-              timingReason: "stub: a ride across town",
               movement: { route: ["SCN_TRAILHEAD"] },
             });
           }
@@ -602,7 +591,6 @@ describe("a walk that starts partway along a road", () => {
             raw.starting?.push({
               actionId,
               resolvedDurationTicks: 4,
-              timingReason: "stub: she walks back up the street",
               movement: { route: ["J_A"] },
             });
           }
@@ -659,8 +647,7 @@ describe("conditions reach the dice", () => {
             raw.starting?.push({
               actionId,
               resolvedDurationTicks: 1,
-              timingReason: "stub",
-              check: { requiredLevel: "regular", basis: "stub bar" },
+              check: { requiredLevel: "regular" },
             });
           }
         }

@@ -4,10 +4,10 @@
 // triggered tick with the full EngineResolutionContext. Runs an agentic loop:
 // the model may consult the deterministic damage dice (a roll must never be
 // the model's) and must finish with
-// one terminal `submit_resolution` call. Output is validated in code; one
-// corrective retry, then whatever is still invalid is dropped and the
-// affected actions are failed. No action types, no per-definition prompts —
-// one rule document governs everything.
+// one terminal `submit_resolution` call. Output is validated in code and gets
+// up to three incremental repair rounds; if it remains invalid, the whole tick
+// is rejected without partial application. No action types or per-action
+// prompts — one ordered set of world-rule modules governs everything.
 
 import { readFileSync } from "node:fs";
 import { ModelClass, generateToolCalls } from "../../models/index.js";
@@ -96,10 +96,28 @@ function loadRuleFile(name: string, fallback: string): string {
   return fallback;
 }
 
-const RULES_DOC = loadRuleFile(
-  "world-action-resolution.md",
-  "Resolve all actions under strict causality, state constraints, locality, engine-owned timing, conservation, roll-first assessment, concurrency consistency, minimal change, and fact/perception separation."
-);
+/** The root contract, followed by its rule modules in the order the root
+ *  names them. The root says "load these documents in this order"; this is
+ *  the code that does. A module that is missing is a fault worth a warning,
+ *  not a silent gap — the root's list and this list are one contract. */
+const RULE_MODULES = [
+  "world/action-adjudication.md",
+  "world/movement-and-position.md",
+  "world/character-changes.md",
+  "world/item-changes.md",
+  "world/scene-changes.md",
+  "world/perception.md",
+  "world/occurrences-and-dialogue.md",
+] as const;
+const RULES_DOC = [
+  loadRuleFile(
+    "world-action-resolution.md",
+    "Resolve all actions under strict causality, state constraints, locality, engine-owned timing, conservation, roll-first assessment, concurrency consistency, minimal change, and fact/perception separation."
+  ),
+  ...RULE_MODULES.map((name) => loadRuleFile(name, "")),
+]
+  .filter((doc) => doc.trim().length > 0)
+  .join("\n\n");
 const SANITY_RULES_DOC = loadRuleFile(
   "sanity-check.md",
   "Sanity checks are involuntary and rare. Declare one under an occurrence's `sanityChecks` naming a character who perceived a concrete horror, with the failure loss and the consequence they will carry. Code rolls it; a passed check costs nothing."
@@ -365,7 +383,7 @@ export function renderContextSegments(context: EngineResolutionContext): {
       ...context.trigger,
       resolve: {
         ...worklist,
-        note: "`starting` and `ending` are the ids you must answer, in those lists, and they are the only ones. `stillRunning` is FYI: those actions keep running by themselves and take no entry. `endingNeedsOutcome` lists in-flight actions that carried no check — if one ends, you supply `outcome`, UNLESS every fact you write for it is speech: talk is delivered, not judged, and a spoken line takes no outcome. An action's `utterance` is carried verbatim by code into the first occurrence that cites the action — do not restate the words, write what the words were not. Every ending must be cited by an entry in `occurrences` (its `actionIds`); an ending nothing cites is refused. Every other ending carries a `diceRoll` on its action row: that is what code rolled, and it is INPUT — never copy it into an `outcome` field. `startingWithoutSkill` lists actors who declared no skill: those actions take no `check` at all, however obviously one seems called for — the actor chose to stake nothing, and it is settled on its own merits. `replaced` lists endings the actor themselves cut short by issuing a new command this tick (the one in `starting` with a matching `replacesActionId`): account for what was done up to this minute and stop there — never narrate how it would have finished, and never let it and its successor both happen in full.",
+        note: "`starting` and `ending` are the ids you must answer, and they are the only ones. `stillRunning` is FYI: those actions keep running by themselves and take no entry. Every id under `starting` gets a `starting` entry. Every id under `ending` is answered ONE of two ways: (a) an `ending` entry with an `outcome` paragraph, cited by at least one occurrence — for anything that was done; or (b) no ending entry, just one occurrence with speech true citing it — for an action that was nothing but words said. `endingWithUtterance` lists the ending actions whose command carries an `utterance`: for these, code attaches the words to your speech row verbatim — never restate them, write in `content` what the words were NOT. If such an action also did something with its hands, that is a second row with speech false, and then it takes an ending entry too. A `diceRoll` on an action row is what code rolled, and it is INPUT — write the outcome consistent with it, never contradict it. `startingWithoutSkill` lists actors who declared no skill: those actions take no `check` at all, however obviously one seems called for — the actor chose to stake nothing, and it is settled on its own merits. `replaced` lists endings the actor themselves cut short by issuing a new command this tick (the one in `starting` with a matching `replacesActionId`): account for what was done up to this minute and stop there — never narrate how it would have finished, and never let it and its successor both happen in full.",
       },
     }),
     section("Tick", context.tick),
@@ -381,7 +399,7 @@ export function renderContextSegments(context: EngineResolutionContext): {
     // submission written with that turn in its history, which arrived
     // malformed three times out of four. Nearly every tick has no damage to
     // roll, so the first call is the submission.
-    "Resolve now. Unless a blow lands this tick, your FIRST and ONLY call is submit_resolution — every id under the trigger's `resolve.starting` and `resolve.ending` placed in that list. Call damageRoll only for damage that is actually being dealt, with a real formula; there is nothing else to look up.",
+    "Resolve now. Unless a blow lands this tick, your FIRST and ONLY call is submit_resolution. Give every `resolve.starting` id a starting entry. Answer every `resolve.ending` id either with an ending entry plus a speech-false occurrence, or, for pure talk, with a speech-true occurrence and no ending entry. Call damageRoll only for damage that is actually being dealt, with a real formula; there is nothing else to look up.",
   ].join("\n\n");
 
   return { stable: `${stable}\n\n`, volatile };
@@ -438,7 +456,7 @@ function renderEmpty(toolName: string): string {
     "",
     toolName === "repair_resolution"
       ? "A repair that changes nothing cannot fix anything. Send the elements the last rejection named."
-      : "Send the full resolution: every id under the trigger's `starting` and `ending`, in its list.",
+      : "Send the full resolution: every starting id in `starting`; every ending id answered by an ending plus a speech-false occurrence, or by a speech-true occurrence alone when it was pure talk.",
   ].join("\n");
 }
 
@@ -465,12 +483,14 @@ function renderErrors(errors: ResolutionError[], notes: string[] = []): string {
     ...errors.map((e) => `- ${formatErrorTarget(e.target)} — ${e.message}`),
     ...notes.map((n) => `- ${n}`),
     "",
-    "Send only the elements listed above, as arrays in the same shape you",
-    "submitted — each item carrying the `index` quoted above (an action",
-    "carries its actionId instead). Everything you do not mention stays as",
-    "you submitted it: do not re-send correct parts or the whole resolution.",
-    "An action sent once replaces every copy of that actionId, so a duplicate",
-    "is fixed by sending it once in the list it belongs in.",
+    "Send only the elements listed above, as arrays in the same shape you submitted.",
+    "An action carries its actionId; an occurrence row carries its",
+    "actionIds and REPLACES every row of yours that cites any of them, so",
+    "re-send the whole corrected row; a delta carries the `index` quoted",
+    "above. Everything you do not mention stays as you submitted it: do not re-send correct parts or the whole resolution.",
+    "An action sent once",
+    "replaces every copy of that actionId, so a duplicate is fixed by sending",
+    "it once in the list it belongs in.",
     ...(withdrawable
       ? [
           "To take an element back rather than fix it, send `remove: true` with",

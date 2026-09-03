@@ -29,9 +29,11 @@ Renderer's job, not SAN's.
 
 Further limits, all of which still apply on top of the list:
 
-- Check only a character who actually perceives it. Use the same physical and
-  sensory evidence that determines the occurrence's `perceiverCharacterIds`;
-  omniscient Engine knowledge is not exposure.
+- Check only a character who actually perceives it. The same physical and
+  sensory evidence sets the character's `clarity` on the occurrence's
+  `perceivers`; a checked character must be listed at `full` or `limited`. A
+  `trace` perceiver cannot be checked — a sound with no source is not exposure,
+  and omniscient Engine knowledge is not exposure either.
 - A sight that belongs to the character's own trade is not a shock: a doctor
   or nurse at a bedside, an undertaker at a body, a sheriff at a known death.
   The rule bites when the thing is outside what their work prepared them for.

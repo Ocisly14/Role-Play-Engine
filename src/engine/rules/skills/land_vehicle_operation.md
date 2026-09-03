@@ -44,11 +44,13 @@ vehicle's condition are inputs to the required level.
 ## State surface
 
 Typical deltas this domain produces. Not a requirement and never a substitute
-for what actually happened — a one-off descriptive result is an occurrence
-fact, not a state change.
+for what actually happened — a one-off descriptive result is occurrence
+`content`, not a state change.
 
-- `character.position` — the vehicle moved, and everyone aboard moved with it.
-- `item.damage` / `item.destroy` — the vehicle itself, and its cargo.
+- `movement.route` with `vehicleId` — ordinary travel by the vehicle;
+  occupants remain in its interior scene. Use `character.position` only for
+  boarding, leaving or discontinuous displacement.
+- `item.set` / `item.destroy` — the vehicle itself, and its cargo.
 - `character.hp` and `character.addCondition` — a collision injures occupants
   in proportion to speed.
 - `scene.addCondition` and `scene.connectionBlock` — a wreck that blocks the

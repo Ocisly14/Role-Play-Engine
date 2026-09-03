@@ -250,7 +250,9 @@ export interface ResolutionError {
     | { kind: "characterChange"; index: number }
     | { kind: "sceneChange"; index: number }
     | { kind: "itemChange"; index: number }
-    | { kind: "occurrence"; index: number }
+    /** Addressed by the actions the row cites, never by index — see
+     *  `OccurrenceRepairItem` for why. */
+    | { kind: "occurrence"; actionIds: string[] }
     /** Wrong about the submission as a whole — a triggering action with no
      *  transition, an ended action with no occurrence citing it. */
     | { kind: "resolution" };
@@ -265,6 +267,8 @@ export function formatErrorTarget(target: ResolutionError["target"]): string {
       return `action:${target.actionId}`;
     case "resolution":
       return "resolution";
+    case "occurrence":
+      return `occurrence:${target.actionIds.join("+")}`;
     default:
       return `${target.kind}:${target.index}`;
   }
@@ -293,7 +297,6 @@ export type WorldActionEngineResult =
         string,
         {
           requiredLevel: "regular" | "hard" | "extreme";
-          basis: string;
           opposedBy?: Array<{ characterId: string; skillId: string }>;
         }
       >;

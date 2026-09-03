@@ -544,7 +544,7 @@ function summarize(
         .filter((t) => t.npcId === id && t.judgement)
         .map((t) => `${t.to}/${t.judgement?.outcome}`),
       perceived: obs.occurrences.filter((o) =>
-        o.perceiverCharacterIds.includes(id)
+        o.perceivers.some((p) => p.characterId === id)
       ).length,
       memoriesWritten: obs.memoryWrites.filter((m) => m.npcId === id).length,
       cancelled: obs.ticks.reduce(
@@ -949,7 +949,11 @@ async function main(): Promise<void> {
       lines.push(
         `      事实 : t${o.tick} [${o.facts.map((f) => f.type).join(",")}] ` +
           `${o.facts[0]?.content.replace(/\s+/g, " ").slice(0, 50) ?? ""} ` +
-          `→ 感知者 [${o.perceiverCharacterIds.join(",") || "无"}]`
+          `→ 感知者 [${
+            o.perceivers
+              .map((p) => `${p.characterId}:${p.clarity}`)
+              .join(",") || "无"
+          }]`
       );
     }
     for (const [npcId, a] of Object.entries(result.actors)) {

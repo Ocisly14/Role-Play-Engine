@@ -20,8 +20,8 @@ darkness are the binding inputs.
   flying, and emergency handling.
 - Rejected for navigation as route-finding (Survival & Navigation) and for
   repairs (Repair & Engineering).
-- An aircraft the actor has no type experience with is a higher required
-  level, not an automatic rejection — say so in the basis.
+- An aircraft the actor has no type experience with calls for a higher
+  `requiredLevel`, not an automatic rejection.
 
 ## Success levels
 
@@ -40,12 +40,13 @@ darkness are the binding inputs.
 ## State surface
 
 Typical deltas this domain produces. Not a requirement and never a substitute
-for what actually happened — a one-off descriptive result is an occurrence
-fact, not a state change.
+for what actually happened — a one-off descriptive result is occurrence
+`content`, not a state change.
 
-- `character.position` — the aircraft and everyone aboard; a landing is a
-  position change to a real place.
-- `item.damage` / `item.destroy` — airframe, engine, cargo, and fuel spent.
+- `movement.route` with `vehicleId` — ordinary travel by the aircraft;
+  occupants remain in its interior scene. Use `character.position` only for
+  boarding, leaving or discontinuous displacement.
+- `item.set` / `item.destroy` — airframe, engine, cargo, and fuel spent.
 - `character.hp` and `character.addCondition` — a hard landing or a crash.
 - `scene.addCondition` and `scene.environmentHazard` — where it comes down:
   wreckage, fire, a field no longer crossable.

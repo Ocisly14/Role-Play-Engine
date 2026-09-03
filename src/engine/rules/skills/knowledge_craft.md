@@ -23,7 +23,7 @@ knows or can build is bounded by their background and what is in front of them.
   source in the first place (Investigation), for reading a language the actor
   does not have (Languages), and for repairing machinery (Repair & Engineering).
 - Knowledge the setting has no record of cannot be recalled at any success
-  level. Say so in the check's `basis` rather than inventing a source.
+  level. Treat that absence as a real limit rather than inventing a source.
 
 ## Success levels
 
@@ -34,7 +34,7 @@ knows or can build is bounded by their background and what is in front of them.
   the discrepancy in the ledger, a piece made well enough to pass inspection.
 - **Extreme** — The actor sees what the object or record implies beyond
   itself: who wrote it and why, what is deliberately missing, a piece of work
-  that is genuinely superior. Surface it as an occurrence fact.
+  that is genuinely superior. Surface it as occurrence `content`.
 
 ## Failure
 
@@ -47,11 +47,12 @@ knows or can build is bounded by their background and what is in front of them.
 ## State surface
 
 Typical deltas this domain produces. Not a requirement and never a substitute
-for what actually happened — a one-off descriptive result is an occurrence
-fact, not a state change.
+for what actually happened — a one-off descriptive result is occurrence
+`content`, not a state change.
 
 - `item.create` — a made, forged, or restored object that now exists.
-- `item.modify` — an object worked on and still in play; `item.damage` /
+- `item.set` — an object worked on, damaged or altered but still in play;
   `item.destroy` when the work ruins it or consumes the material.
-- Knowing something is NOT a state change. The conclusion is an occurrence
-  fact with the actor as perceiver; the character records it or does not.
+- Knowing something is NOT a state change. Put the conclusion in occurrence
+  `content` with the actor in `perceivers` at `full`; the character records it
+  or does not.

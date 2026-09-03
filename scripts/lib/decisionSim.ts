@@ -194,7 +194,7 @@ export interface OccurrenceRecord {
   locationId?: string;
   facts: Array<{ type: string; content: string }>;
   participants: Array<{ characterId: string; role: string }>;
-  perceiverCharacterIds: string[];
+  perceivers: Array<{ characterId: string; clarity: string }>;
   signals: Array<{ channel: string; originLocationId?: string }>;
 }
 
@@ -754,7 +754,10 @@ export async function runStagedCase(
           characterId: p.characterId,
           role: p.role,
         })),
-        perceiverCharacterIds: [...occ.perceiverCharacterIds],
+        perceivers: occ.perceivers.map((p) => ({
+          characterId: p.characterId,
+          clarity: p.clarity,
+        })),
         signals: occ.signals.map((sig) => ({
           channel: sig.channel,
           ...(sig.originLocationId
@@ -764,7 +767,9 @@ export async function runStagedCase(
       });
       log(
         `   [occurrence] ${occ.facts.map((f) => f.type).join(",")} → ` +
-          `perceivers=[${occ.perceiverCharacterIds.join(",")}]`
+          `perceivers=[${occ.perceivers
+            .map((p) => `${p.characterId}:${p.clarity}`)
+            .join(",")}]`
       );
     }
 

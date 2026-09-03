@@ -42,10 +42,12 @@ or carrying decide the difficulty far more than distance does.
 ## State surface
 
 Typical deltas this domain produces. Not a requirement and never a substitute
-for what actually happened — a one-off descriptive result is an occurrence
-fact, not a state change.
+for what actually happened — a one-off descriptive result is occurrence
+`content`, not a state change.
 
-- `character.position` — the far bank, the deck, the bottom.
+- `movement.route` — ordinary swimming through connected places;
+  `character.position` only for discontinuous displacement, and
+  `character.spot` for a different place within the same scene.
 - `character.fatigue` — always, and faster in cold or current.
 - `character.hp` and `character.addCondition` — water inhaled, hypothermia,
   exhaustion. These persist until something resolves them.

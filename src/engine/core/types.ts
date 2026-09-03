@@ -260,6 +260,13 @@ export type StateChange =
       characterId: string;
       spot: string;
     }
+  | {
+      /** Replace the character's appearance prose wholesale. Narrative only,
+       *  like `spot`: three prompts read it, nothing computes from it. */
+      kind: "character.appearance";
+      characterId: string;
+      appearance: string;
+    }
   // ── Resolver-emitted variants (flattened from resolver schemaTypes) ──
   | {
       /** Everything about an item that can change while it exists. Its
@@ -349,7 +356,7 @@ export interface TickReport {
    *  migration window (event emitter, renderer) until Phase 9 consumers
    *  switch to transitions + occurrences. */
   transitions: import("../actions/types.js").ActionTransition[];
-  /** Objective occurrences with perceiver character ids (plan D6). */
+  /** Objective occurrences, each with its graded perceiver list (plan D6). */
   occurrences: import("../actions/types.js").Occurrence[];
   /** Derived from transitions with to="completed". */
   commits: CharacterAction[];

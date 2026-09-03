@@ -41,11 +41,13 @@ state, and the vessel's condition set the difficulty.
 ## State surface
 
 Typical deltas this domain produces. Not a requirement and never a substitute
-for what actually happened — a one-off descriptive result is an occurrence
-fact, not a state change.
+for what actually happened — a one-off descriptive result is occurrence
+`content`, not a state change.
 
-- `character.position` — the vessel and everyone aboard.
-- `item.damage` / `item.destroy` — hull, rigging, engine, cargo.
+- `movement.route` with `vehicleId` — ordinary travel by the vessel;
+  occupants remain in its interior scene. Use `character.position` only for
+  boarding, leaving or discontinuous displacement.
+- `item.set` / `item.destroy` — hull, rigging, engine, cargo.
 - `character.hp` and `character.addCondition` — people put in the water, and
   what the water then does to them.
 - `scene.addCondition` — a grounded vessel, a blocked channel, a wreck.

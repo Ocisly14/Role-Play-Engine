@@ -94,7 +94,10 @@ function bundleWith(adjacent: boolean) {
           },
         ],
         participants: [{ characterId: "npc_2", role: "actor" }],
-        perceiverCharacterIds: ["npc_1", "npc_2"],
+        perceivers: [
+          { characterId: "npc_1", clarity: "full" },
+          { characterId: "npc_2", clarity: "full" },
+        ],
         signals: [{ factIds: ["occ_1#f0"], channel: "sound" }],
       },
     ],

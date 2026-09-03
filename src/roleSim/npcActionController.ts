@@ -13,7 +13,11 @@
 // instead of mirroring it.
 
 import { buildActionCommand } from "../engine/actions/commandBuilder.js";
-import type { EngineAction, Occurrence } from "../engine/actions/types.js";
+import type {
+  EngineAction,
+  Occurrence,
+  OccurrencePerceiver,
+} from "../engine/actions/types.js";
 import type { TickEngine } from "../engine/core/tickEngine.js";
 import type { FeatureEvent, TickReport } from "../engine/core/types.js";
 import { findAffectedCharacters } from "../engine/shared/impactPropagation.js";
@@ -167,8 +171,10 @@ export class NpcActionController {
 
   private async processTickReport(report: TickReport): Promise<void> {
     // 1. Route occurrences by the Engine's perceiver lists (plan Phase 9).
-    //    The Engine already decided WHO can perceive each occurrence; the
-    //    renderer downstream decides WHAT each perceiver makes of it.
+    //    The Engine already decided WHO perceives each occurrence and HOW
+    //    CLEARLY (the per-perceiver `clarity`); the same row object goes to
+    //    every listed character, and the renderer downstream degrades its
+    //    facts to that viewer's grade.
     const occByNpc = new Map<string, Occurrence[]>();
     const route = (npcId: string, occ: Occurrence): void => {
       const list = occByNpc.get(npcId) ?? [];
@@ -176,7 +182,7 @@ export class NpcActionController {
       occByNpc.set(npcId, list);
     };
     for (const occ of report.occurrences) {
-      for (const npcId of occ.perceiverCharacterIds) route(npcId, occ);
+      for (const { characterId } of occ.perceivers) route(characterId, occ);
     }
 
     // 1b. Migration shim: subsystem/scripted FeatureEvents are adapted into
@@ -186,16 +192,31 @@ export class NpcActionController {
     let syntheticCounter = 0;
     for (const event of report.featureEvents) {
       if (!event.characterId && !event.sceneId) continue;
-      const affected = findAffectedCharacters(
-        {
-          characterId: event.characterId ?? "system",
-          referencedEntities: [],
-          location: event.sceneId ?? "",
-        },
-        event.impact,
+      const action = {
+        characterId: event.characterId ?? "system",
+        referencedEntities: [],
+        location: event.sceneId ?? "",
+      };
+      // Two rings, not the map's level. `findAffectedCharacters` returns
+      // Map<id, level>, but its `addChar` keeps the HIGHEST ring that admits
+      // a character (1 targeted, 2 same scene, 3 same macro location, 4
+      // neighbourhood, 5 global), so at impact 5 everyone — the person in the
+      // room included — reads 5. The value is "widest ring admitting them",
+      // not distance, and cannot grade anyone. So: ask once capped at ring 2
+      // (targeted or co-located = `full`), once at the event's own impact
+      // (everyone it reaches), and anyone in the second set but not the first
+      // is `trace`. The shim never emits `limited`; that grade is the World
+      // Action Engine's judgement and this path has none to offer.
+      const near = findAffectedCharacters(
+        action,
+        Math.min(event.impact, 2),
         this.dgsm
       );
-      const perceivers = [...affected.keys()];
+      const all = findAffectedCharacters(action, event.impact, this.dgsm);
+      const perceivers: OccurrencePerceiver[] = [...all.keys()].map((id) => ({
+        characterId: id,
+        clarity: near.has(id) ? "full" : "trace",
+      }));
       if (perceivers.length === 0) continue;
       const occ = this.featureEventToOccurrence(
         event,
@@ -203,7 +224,7 @@ export class NpcActionController {
         report.gameDateTime,
         syntheticCounter++
       );
-      for (const npcId of perceivers) route(npcId, occ);
+      for (const { characterId } of perceivers) route(characterId, occ);
     }
 
     // 2. NPCs whose action reached a terminal status this tick.
@@ -271,7 +292,7 @@ export class NpcActionController {
   /** Adapt one legacy FeatureEvent into occurrence form (migration shim). */
   private featureEventToOccurrence(
     event: FeatureEvent,
-    perceivers: string[],
+    perceivers: OccurrencePerceiver[],
     tickId: string,
     n: number
   ): Occurrence {
@@ -294,7 +315,7 @@ export class NpcActionController {
       participants: event.characterId
         ? [{ characterId: event.characterId, role: "actor" }]
         : [],
-      perceiverCharacterIds: perceivers,
+      perceivers,
       signals: [{ factIds: [`${id}#f0`], channel: "visual" }],
     };
   }

@@ -28,12 +28,12 @@ function resolveWithShock(context: EngineResolutionContext): RawTickResolution {
   if (!actionId) return { starting: [], ending: [] };
   return {
     starting: [],
-    ending: [{ actionId, outcome: "success", reason: "the tarp comes away" }],
+    ending: [{ actionId, outcome: "the tarp comes away" }],
     occurrences: [
       {
         actionIds: [actionId],
-        actorId: "npc_1",
-        perceiverCharacterIds: ["npc_1"],
+        speech: false,
+        perceivers: [{ characterId: "npc_1", clarity: "full" }],
         sanityChecks: [
           {
             characterId: "npc_1",
@@ -44,9 +44,7 @@ function resolveWithShock(context: EngineResolutionContext): RawTickResolution {
             },
           },
         ],
-        facts: [
-          { type: "action_result", content: "a body lies under the tarp" },
-        ],
+        content: "a body lies under the tarp",
       },
     ],
   };

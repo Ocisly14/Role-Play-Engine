@@ -1,352 +1,74 @@
-# World Action Resolution Rules
+# World Action Resolution
 
-Single rule document for the unified World Action Engine. Every `act` command
-— movement, speech, manipulation, exchange, waiting, open-ended and composite
-actions alike — is resolved under these first principles.
+This is the root contract for the World Action Engine. Every `act` command is
+resolved under these invariants. Domain-specific judgement lives in the
+companion documents below; they are parts of one contract, not optional
+recipes.
 
-## First principles
+## Rule modules
 
-1. **Causality.** Every change must be directly explainable by a current
-   action, an in-flight action, or an event of this tick. A change that
-   cannot be causally tied to an input is invalid. Every WorldDelta carries a
-   short `causalBasis` stating that link.
+Load these documents in this order after this root contract:
 
-2. **State constraints.** Outcomes must obey the actor's abilities and bodily
-   state, their tools, item state, scene conditions, and the target's
-   resistance. A locked door does not open because the prose was confident.
+1. `world/action-adjudication.md` — action timing, checks, outcomes and
+   concurrency.
+2. `world/movement-and-position.md` — routes, reachability, vehicles and spots.
+3. `world/character-changes.md` — health, fatigue, conditions and appearance.
+4. `world/item-changes.md` — ownership, transfer, damage, breakage and
+   destruction.
+5. `world/scene-changes.md` — place descriptions, conditions, passages and the
+   environment.
+6. `world/perception.md` — sensory reach, observer capability and
+   per-perceiver clarity.
+7. `world/occurrences-and-dialogue.md` — occurrence encoding, speech and
+   character agency.
+8. `sanity-check.md` — involuntary horror exposure and SAN loss.
 
-3. **Spatio-temporal locality.** An actor can only affect entities they can
-   currently reach, or influence through a real propagation chain (sound,
-   fire, a thrown object). Movement obeys topology and costs real time.
-   **The route is the actor's, not yours**: `movement.route` grounds the path
-   the actor STATED into place ids — ordered waypoints, each one stretch from
-   the previous. You never invent an unstated leg. 
-   You do not check the route and you cannot repair it: the World Graph in
-   front of you says which places join, and code is the judge when the action
-   starts. **Whether a route can be WALKED is also code's**: the movement
-   runtime follows the stated route and interrupts it with a `blocked:`
-   reason the moment a closed edge is actually reached — only then do you
-   write what happened. You never refuse, shorten or end a movement because
-   of a block you read in the Blocked Connections table. That table lists
-   EDGES, for narrating consequences: `lodge_drive ↔ porch` closed does not
-   close the porch — the greatroom's door onto it is another edge. Each new
-   command carries `exitsFromHere`, code's own open/closed verdict on every
-   way out of where the actor stands; if you need to know, read that, not the
-   table. A hop that was never a way fails back to the actor with both
-   places named — that is how they find out their remembered way was wrong,
-   and it is theirs to correct, not yours to substitute. **Any resolution that has a character
-   cross a scene boundary MUST carry `movement.route`** — a long haul or one
-   step through the next door, no exception: a single adjacent waypoint
-   (`route: ["SCN_x"]`) is a complete route. A duration alone moves nobody:
-   time passing is not displacement, and the walker stands exactly where
-   their position says. The mirror rule binds your facts: **an occurrence
-   must not put a character's hands on what their position cannot reach** —
-   perceiving something far (a light, a sound) is legitimate; handling it is
-   not. Move them first, in the same submission. Movement needs no duration
-   from you at all: code derives the time from the route (walking, or
-   driving where `vehicleId` is set) and overrides whatever you wrote. A board-and-drive composite is one submission: a
-   `position` change into the vehicle's interior scene plus `movement` with
-   `vehicleId`; the driver check runs when the wheels first turn, after your
-   deltas have applied.
-   **Vehicles** are movable perception boundaries: outside, an item-like
-   presence where they stand; inside, a normal scene whose occupants ride
-   along for free. To drive, annotate `movement.vehicleId` — the vehicle
-   walks the route at road drive speeds (a road without a drive time takes
-   no vehicles), and the driver must be sitting inside it. Whether they MAY
-   drive it — keys, ownership, skill — is yours to judge, in full context.
-   Boarding and leaving are ordinary `character.position` deltas into and
-   out of the interior scene.
+`session-protocol.md` is the transport contract for tool use and submission;
+it is not a world-rule module.
 
-4. **Time is code's, not yours.** The global tick unit is fixed (1 tick = 1
-   in-world minute) and progress is advanced by the deterministic engine from
-   the clock alone.What you decide is how long the action SHOULD take: `resolvedDurationTicks`, once, with a
-   stated timing reason. 
-   (Travel is the exception in the other direction: with `movement.route`
-   set, even the duration is code's — derived from the route, your number
-   overridden.)
+## Cross-domain invariants
 
-5. **Conservation and ownership.** An item cannot be in two places at once.
-   Consumption, transfer, creation and destruction need a plausible source
-   and destination. Duplicate ownership is an invariant violation.
+1. **Causality.** Every change and occurrence must follow directly from a
+   current action or an objective event supplied in this tick. Every model-made
+   change names its `sourceActionId`. A source is attribution, not permission to
+   invent an unrelated consequence.
 
-6. **Difficulty before dice.** You set the bar when the action starts, when
-   no roll exists yet: a `requiredLevel` for the skill the actor declared,
-   with a factual basis. Code rolls that skill against that bar only when the
-   duration is spent, and hands you the result. 
+2. **State constraints.** Outcomes obey bodies, abilities, tools, item state,
+   scene conditions, topology and active resistance. Confident prose cannot
+   open a locked door or put a hand on an unreachable object.
 
-7. **Ability internalization.** The actor declares only a skill id, and that
-   is the skill that gets checked — you set its difficulty, you do not
-   substitute another.
+3. **Code owns mechanics.** Code owns elapsed time, lifecycle status, route
+   traversal and every dice result. The Engine sets only the judgement the
+   schema asks it to set, then accepts deterministic results as facts.
 
-8. **Only a fumble costs more than the attempt.** A plain miss means the
-   attempt did not work: the door stayed shut, the lie was not believed, the
-   shot went wide. Time is spent and that particular approach is now used up
-   — a second try at the same angle is harder, not equal — but nothing
-   lasting is taken away. Injury, exposure, a broken tool, a ruined
-   relationship, a raised alarm: those belong to a FUMBLE, and only to a
-   fumble.
+4. **Declared ability only.** A check may use only the skill the actor
+   declared. If no skill was declared, or that skill does not cover the
+   attempt, omit the check; never substitute another skill or raise the bar to
+   punish the choice.
 
-   Read the declared skill's
-   `## Failure` section: it tells you what a miss costs in that domain, and
-   separately what a fumble costs. Do not promote one to the other because
-   the moment felt dramatic.
+5. **Failure is bounded.** A plain failed check means the attempt did not work
+   and its time was spent. Only a fumble licenses an additional lasting cost
+   such as injury, a broken tool or an alarm, unless the input already contains
+   an independent cause for that cost. Follow the declared skill document's
+   success and failure guidance.
 
-9. **Concurrency consistency.** Conflicting actions on the same snapshot are
-   judged jointly. An exclusive resource (one item, one doorway, one victim
-   of a grab) cannot yield mutually contradictory results. One atomic winner,
-   or an explicit conflict outcome.
+6. **Concurrency is atomic.** Resolve actions on the shared snapshot together.
+   One exclusive item, passage or target cannot produce contradictory winners.
+   Choose one consistent world result.
 
-10. **Minimal sufficient change.** Output only fields that actually changed.
-   Do not invent unrelated state to enrich the narrative.
+7. **Conservation.** A character or item occupies one valid place at a time.
+   Transfer, creation, destruction and displacement need a real source and a
+   valid destination where applicable.
 
-11. **Fact/perception separation.** The Engine outputs objective Occurrences
-    (facts, who did it and to whom, signals) plus the IDs of characters able to
-    perceive them — determined by position, topology, distance, occlusion,
-    signal strength, direct involvement and sensory state. It never outputs
-    per-character fact subsets, subjective wording ("I see…", "it terrifies
-    me"), or interpretation; that is the Renderer's job downstream.
+8. **Minimal sufficient change.** Emit only persistent fields that actually
+   changed. A descriptive moment belongs in an occurrence, not in state merely
+   to make the result feel richer.
 
-12. **Action-driven triggering.** With no new action, no due in-flight
-    action, and no replacement/interruption, the Engine is not called. A
-    plain clock tick is not a semantic resolution trigger.
+9. **The request is the evidence.** Report what the supplied world and this
+   tick's actions support. Absence is a valid finding. Introducing an object or
+   a lasting mark requires the corresponding create or state-change operation;
+   atmosphere is not evidence.
 
-13. **You report the world; you do not add to it.** Every fact you state must
-    trace to something in the state you were given, or to what this tick's
-    actions actually did. Describe those, weigh them, draw conclusions from
-    them **The action is the whole of your evidence** 
-
-    **Absence is a finding, not a gap to fill.** 
-
-    Introducing a thing means CREATING it, with a cause from this tick: an
-    object is `item.create`, a lasting mark on a place is a scene condition or
-    a `setDescription`. A fact describing something no delta brought into
-    being is invention, however well it fits the mood.
-
-## The moments you are called
-the trigger section lists every action under `starting` or `ending`, and the submission has one
-array per moment. Put each action in its list, and the fields you are allowed
-to send are the fields that exist there.
-
-**An action is in ONE list, never both.** Starting and ending are two
-different minutes, and the shortest action there is still takes a whole one:
-`resolvedDurationTicks` is at least 1, so an action that starts now ends at
-the earliest on the next tick, and you will be called again to end it. This
-holds for the briefest things people do — a spoken line, a glance, a hand
-put out. It reads as though it begins and finishes inside the same minute,
-and it does not: you open it now and close it when its time is spent. An
-action listed under `starting` that also appears under `ending` is refused,
-and the fix is always to send it once, under `starting`, and wait.
-
-### `starting` — the action begins (a queued command)
-
-Say how long it takes and how hard it is. Nothing has happened yet, so there
-is no outcome to report and no world change to make.
-
-- `resolvedDurationTicks` — REQUIRED. The actor's `proposedDurationTicks`
-  is advisory; you decide, from the action, the tools, the conditions and the
-  world. `timingReason` is optional: a note for the log, not a field anyone
-  acts on.
-- `check` — the difficulty for the skill the actor declared:
-  `requiredLevel` (regular / hard / extreme) plus a factual `basis`. No roll
-  exists yet; you are setting the bar blind, which is the point.
-  - There is a check ONLY when the actor declared a skill. If they declared
-    none, there is nothing to check and you must omit `check` — you do not
-    get to decide that an action "obviously needs" one and invent it.
-  - OMIT `check` too when the declared skill does not fit what is being
-    attempted.
-    Never raise the bar to punish a bad skill choice; simply do not check it.
-- `opposedBy` — when someone actively resists: the character and the defense
-  skill they resist with. Code rolls both sides and compares; you choose who
-  defends and with what, not who wins.
-
-### `ending` — its time is spent, or the world reached it first
-
-Code has already rolled every check you declared, compared it to your bar, and
-handed you the result: the action's row carries a `diceRoll` — the actor's
-roll and success level, the defenders' rolls where there were any, and `met`,
-which is code's verdict on whether the bar was cleared and every defender
-beaten. Now say what happened to the world.
-
-- `reason` — what happened, objectively. The `diceRoll` is INPUT, not
-  something to restate or contradict. A check that was not met cannot produce
-  the outcome of one that was.
-
-  It is the FINISHED account, not your working. This text is read downstream
-  and narrated back to the actor as something they perceive, so it must not
-  contain reasoning, corrections, or second thoughts.
-  Work out who did what BEFORE you write, then write only the outcome.
-  It covers what was RESOLVED and nothing past it. An action described as
-  "wait, then go back to my room" ends where the waiting ends: what the
-  actor decides next is theirs to declare next minute, not yours to narrate.
-  In particular, nobody leaves a place in your prose unless this submission
-  also moves them: a departure without `movement.route` is displacement the
-  code never applied, and the actor now remembers a room they never reached.
-  Either carry the route, or end the account with them still standing there.
-- Shade the consequence to the level code handed you, and no further:
-  - **extreme / hard / regular** — it worked, with the margin showing in how
-    cleanly. Read the skill's `## Success levels`.
-  - **failure** — it did not work. Spend the time, close off that approach,
-    and stop there. Do not add an injury, an alarm, a broken tool or a
-    soured relationship to a plain miss.
-  - **fumble** — this is the only level that takes something lasting away,
-    and the skill's `## Failure` section says what. Use it fully when it
-    comes up; do not reach for it when it did not.
-#### One occurrence, one audience
-
-Everyone in an occurrence's `perceiverCharacterIds` gets ALL of its facts.
-There is no half-listed perceiver, so **a moment that reaches different people
-differently is two occurrences**, both pointing at the same action through
-`actionIds`.
-
-A hand cupped at someone's ear is the plain case. The room sees the gesture;
-one person hears the words — two rows in `occurrences`, both citing the
-action in `actionIds`:
-
-    occurrences[0]   actionIds: [the whisper]   the words           perceivers: [the one at his ear]
-    occurrences[1]   actionIds: [the whisper]   he leans in and     perceivers: [everyone else]
-                                                says something
-                                                too low to catch
-
-**The first occurrence citing an action is where the actor's words live** —
-code puts the verbatim line there — so its perceivers are exactly the people
-who made out what was said. Whatever the rest of the room got instead goes in
-a later row.
-
-The default audience is the room: ordinary speech among people in one place
-reaches all of them. Narrow it when the fiction narrows it — a low voice, a
-hand at the ear, wind, distance, a closed door — and widen it when someone
-shouts.
-
-#### Talk is delivered, not adjudicated
-
-A command may carry an `utterance`: the exact words the actor speaks. Those
-words are already objective so **code carries them through verbatim** into the first
-occurrence that cites the action, as its first fact, typed `utterance`. Never restate them, never summarise them, never translate them.
-**Write no fact for the line yourself, not even one that points at it**: `utterance` is not a type you may
-use, and a fact whose content names the action instead of describing something is not a fact.
-
-And an ending whose facts are ALL speech takes **no `outcome`**.Write what was said and who heard it; that is the entire result.
-
-If the moment was more than talk — a cup put in someone's hand, a door pulled
-shut — then write those facts too, and the ending is no longer speech-only: it takes an `outcome` like any other unchecked action.
-
-#### The other person's reply is never yours
-
-An action aimed at a person — a question, an appeal, a threat, a probe —
-ends when the actor has DELIVERED it. Its `reason` and its facts describe
-the actor: how the words were put, what the hands did, what the room could
-see of the actor while it was said. They never describe the target: not
-their answer, not a nod or a silence, not what they "let slip", not how the
-words landed on them. The target is a character with a decision of their
-own coming next minute; their response is that decision, issued as their
-own command, and you do not get to write it early.
-
-This holds whatever the dice said. A met check against a person is carried
-to them by code as felt pressure before they decide; a missed one is not.
-Either way you write the same thing: the delivery, and nothing of the reply.
-A `speech` fact that has anyone but the actor speaking, or an
-`action_result` in which the target does anything at all, is a fact about
-a person you were not asked about — and is the exact defect this section
-exists to stop.
-
-- `outcome` — REQUIRED for the ids listed under `endingNeedsOutcome`, and
-  refused for every other ending, INCLUDING one whose facts are all speech.
-  Those actions carried no check, so nothing
-  rolled and there is no result to derive: you decide. An action that has a
-  `diceRoll` never takes an `outcome`: `met` already is the verdict, and
-  writing it again is how the two come to disagree.
-- **its trace, in `occurrences`** — REQUIRED: every ending must be cited by
-  at least one row there (`actionIds`), and an ending nothing cites is
-  refused. Without a trace the actor perceives nothing, concludes nothing
-  happened, and re-issues the same action next minute — the loop this rule
-  exists to prevent. List the actor among that row's
-  `perceiverCharacterIds`. The ending entry itself is four scalars —
-  `actionId`, `replacedBy`, `outcome`, `reason` — and nothing nests in it.
-- Emit the world changes that follow in `characterChanges` / `sceneChanges` /
-  `itemChanges`. This is the only moment an action produces state.
-
-### `replaced` — the actor moved on before it was done
-
-An id under `replaced` is in `ending` because its own actor issued a new
-command this tick (the `starting` entry whose `replacesActionId` names it),
-not because its time was spent. It stops at THIS minute. Its ending says what
-was actually done up to now — the sentence half-spoken, the drawer half
-searched, the hand still on the knob — and nothing past that: never how it
-would have finished, never a success it had not yet earned. Code records it
-as interrupted, whatever you write. Then resolve the successor on the world as
-the cut-off left it. The two never both happen in full: the successor is the
-actor's revision of the first, not a second copy of it.
-
-You may name the successor on the ending as `replacedBy: <its actionId>`. That
-is the only field for it — nothing else on an ending marks a replacement, and
-a field you make up for the purpose breaks the whole submission.
-
-### Nothing else
-
-An action that is still running takes no entry at all — saying nothing about it
-is already what keeps it running, and the trigger lists those under
-`stillRunning` only so that every id is accounted for. Its clock is the
-duration set when it started; an ending carries no duration.
-
-## Output rules
-
-- Lifecycle is derived, never declared. You do not emit a status and you do
-  not emit progress: code advances progress from the clock, and reads the
-  status off what you said — a result block ends the action, silence keeps it
-  running.
-- World changes are `SourcedWorldDelta`s grouped by domain — character,
-  scene, item — each with a source (actionId / subsystemId / eventId) and a
-  `causalBasis`. The domain grouping never restricts what a single action may
-  touch: one shoulder-charge may legitimately produce actor fatigue, door
-  damage and scene noise together.
-- A one-off descriptive result ("the pick slips out of the lock") is an
-  `Occurrence` fact (`type: "action_result"`), NOT a character change. Only a
-  real persistent state shift — injury, position, posture, a condition —
-  becomes a `CharacterChange`.
-- **`character.addCondition` has a strict objective threshold.** A condition
-  must (1) persist across ticks, (2) be externally observable or independently
-  verifiable, and (3) make an important mental or physical function impossible
-  or severely impaired. The single `description` states both the objective
-  state and its functional impact. Examples: unconsciousness; a fracture that
-  prevents use of a limb; severe bleeding, poisoning, hypothermia, delirium,
-  catatonia, or disorientation so severe the person cannot recognize people or
-  act coherently. 
-- **Inner activity is never a condition:** regret, worry shouldn't be a condition, but extreme fear of spider for a period could be one.
-- The `position` character change is for displacement that is NOT a walk: boarding or leaving a vehicle (its interior scene),
-  or the consequence of an act that moves a body without a route — jump out
-  through a window into the yard, carried off unconscious, dragged, thrown,
-  fallen through a floor. A character who walks, runs, sneaks, rides or crawls to another place travels by `movement.route` on their action, through the ways that exist.
-- Where someone is INSIDE a place is the `spot` character change — one short
-  phrase, in the world's own language: "at the workbench, back to the door",
-  "in the corner armchair". Set one when an action leaves the actor somewhere
-  the room can tell apart: they sit down, take cover, cross to the window, put
-  themselves between two people.
-- A spot persists until it is replaced. **You place the arrivers**: when an
-  ending you resolve leaves a character in a new place, say where in it they
-  come to rest, in the same resolution ("just inside the door, dripping",
-  "at the counter's near end") — the spot lands after every position change
-  applies, so the arrival cannot wipe it.
-- A place's description need to be rewrite if the place is changed. Ovrewrite it in the same resolution
-  with the scene `setDescription` operation — it REPLACES the whole prose, so
-  keep every still-true `[reference-id]` citation and drop citations to
-  things no longer visibly there. **For CITED things it is a
-  machine rule**: moving or destroying an item whose `[id]` the holder
-  place's prose cites REQUIRES the rewrite in the same submission.
-- Occurrence facts use world-true references (real ids, real names); no
-  character-perspective phrasing, no invented entities.
-
-## Concealed passages
-
-A connection marked `hidden` is not in anyone's perception.
-You decide if one can find out based on the actions and situations.
-
-- `scene.connectionDiscovered { connectionId, characterIds }` — these
-  characters now know the passage is there. Emit it when the action actually
-  uncovered the passage.
-- `scene.connectionHidden { connectionId, hidden: false }` — it is open to
-  the world now. The boards are off, the bookcase is swung wide, the wall is
-  down. Everyone who comes here sees it.
-
-**Finding is not private.** `characterIds` is a LIST, and the actor is only
-its first entry: put in everyone who could find out — those at the spot, and
-those told by someone who was.
+10. **Fact and perception stay separate.** The Engine states objective events
+    and identifies who could perceive each one. It never writes a character's
+    subjective interpretation, memory, opinion or emotional conclusion.

@@ -4,7 +4,11 @@
 // rendered perception (event for the actor, witness for perceivers).
 
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import type { EngineAction, Occurrence } from "../../engine/actions/types.js";
+import type {
+  EngineAction,
+  Occurrence,
+  OccurrencePerceiver,
+} from "../../engine/actions/types.js";
 import type { TickReport } from "../../engine/core/types.js";
 
 const render = vi.fn();
@@ -30,7 +34,10 @@ function makeReport(overrides: Partial<TickReport> = {}): TickReport {
   };
 }
 
-function occurrence(perceivers: string[]): Occurrence {
+/** A bare id is a `full` perceiver; pass an object to grade one. */
+function occurrence(
+  perceivers: ReadonlyArray<string | OccurrencePerceiver>
+): Occurrence {
   return {
     id: "occ_1",
     tickId: "t",
@@ -45,12 +52,20 @@ function occurrence(perceivers: string[]): Occurrence {
       },
     ],
     participants: [{ characterId: "npc_1", role: "actor" }],
-    perceiverCharacterIds: perceivers,
+    perceivers: perceivers.map((p) =>
+      typeof p === "string" ? { characterId: p, clarity: "full" } : p
+    ),
     signals: [{ factIds: ["occ_1#f0"], channel: "sound" }],
   };
 }
 
-function harness(opts: { liveActions?: EngineAction[] } = {}) {
+function harness(
+  opts: {
+    liveActions?: EngineAction[];
+    /** Scene per NPC; anyone unlisted stands in SCN_1. */
+    positions?: Record<string, string>;
+  } = {}
+) {
   let tickHandler: ((r: TickReport) => Promise<void>) | undefined;
   const engine = {
     on: (ev: string, cb: (r: TickReport) => Promise<void>) => {
@@ -91,9 +106,12 @@ function harness(opts: { liveActions?: EngineAction[] } = {}) {
       status: { conditions: [] },
     }),
     getGameDateTime: () => "1923-04-02T09:05:00",
-    getCharacterPosition: () => ({ type: "scene", sceneId: "SCN_1" }),
-    resolveLocationId: () => "SCN_1",
-    getScene: () => ({ id: "SCN_1", name: "Study" }),
+    getCharacterPosition: (id: string) => ({
+      type: "scene",
+      sceneId: opts.positions?.[id] ?? "SCN_1",
+    }),
+    resolveLocationId: (pos: { sceneId: string }) => pos.sceneId,
+    getScene: (id: string) => ({ id, name: id === "SCN_1" ? "Study" : id }),
   };
   const decisions: string[] = [];
   const agent = {
@@ -201,6 +219,24 @@ describe("occurrence routing", () => {
     await pending;
   });
 
+  it("a perceiver graded `trace` is still woken, with the same shared row", async () => {
+    // The grade is the renderer's business; routing asks only whether the
+    // character is listed. One row object reaches every perceiver — the
+    // Engine writes no per-viewer copies.
+    const h = harness({ liveActions: [liveAction("npc_3")] });
+    const occ = occurrence([
+      "npc_1",
+      { characterId: "npc_2", clarity: "trace" },
+    ]);
+    await h.fire(makeReport({ occurrences: [occ] }));
+
+    expect(h.decisions.sort()).toEqual(["npc_1", "npc_2"]);
+    const forNpc2 = buildPerceivedBundle.mock.calls
+      .map((c) => c[0] as { npcId: string; occurrencesForNpc?: Occurrence[] })
+      .find((c) => c.npcId === "npc_2");
+    expect(forNpc2?.occurrencesForNpc?.[0]).toBe(occ);
+  });
+
   it("a busy NPC listed as perceiver IS woken (chance to replace its action)", async () => {
     const h = harness({ liveActions: [liveAction("npc_3")] });
     await h.fire(makeReport({ occurrences: [occurrence(["npc_3"])] }));
@@ -258,5 +294,40 @@ describe("occurrence routing", () => {
     expect(withOcc[0].occurrencesForNpc?.[0].facts[0].content).toBe(
       "npc_2 died"
     );
+  });
+
+  it("shim grades a co-located NPC `full` and a remote one `trace`", async () => {
+    // npc_3 is in another scene; a global (impact 5) event still reaches
+    // them, but only as a trace. npc_1 shares the room with the event's
+    // character and gets it whole.
+    const h = harness({ positions: { npc_3: "SCN_far" } });
+    await h.fire(
+      makeReport({
+        featureEvents: [
+          {
+            type: "character.died",
+            impact: 5,
+            description: "npc_2 died",
+            characterId: "npc_2",
+            sceneId: "SCN_1",
+          },
+        ],
+      })
+    );
+    const withOcc = buildPerceivedBundle.mock.calls
+      .map((c) => c[0] as { npcId: string; occurrencesForNpc?: Occurrence[] })
+      .filter((c) => (c.occurrencesForNpc?.length ?? 0) > 0);
+    expect(withOcc.map((c) => c.npcId).sort()).toEqual(["npc_1", "npc_3"]);
+    const perceivers = withOcc[0].occurrencesForNpc?.[0].perceivers ?? [];
+    expect(perceivers).toContainEqual({
+      characterId: "npc_1",
+      clarity: "full",
+    });
+    expect(perceivers).toContainEqual({
+      characterId: "npc_3",
+      clarity: "trace",
+    });
+    // The shim has no `limited` to offer — that is the Engine's judgement.
+    expect(perceivers.some((p) => p.clarity === "limited")).toBe(false);
   });
 });

@@ -45,11 +45,11 @@ binding as skill: name what is missing when something is.
 ## State surface
 
 Typical deltas this domain produces. Not a requirement and never a substitute
-for what actually happened — a one-off descriptive result is an occurrence
-fact, not a state change.
+for what actually happened — a one-off descriptive result is occurrence
+`content`, not a state change.
 
-- `item.modify` — repaired, adjusted, or jury-rigged with its stated
-  limitation; `item.damage` / `item.destroy` when the attempt makes it worse.
+- `item.set` — repaired, adjusted, jury-rigged or damaged while still in play;
+  `item.destroy` when the attempt ruins it beyond use.
 - `item.create` — an improvised part made from what was at hand.
 - `scene.removeCondition` / `scene.addCondition` — power restored and the dark
   lifted, or a machine now running and audible.

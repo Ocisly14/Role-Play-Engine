@@ -126,18 +126,22 @@ describe("skill guidance documents", () => {
         "san",
         "fatigue",
         "position",
+        "spot",
         "addCondition",
         "removeCondition",
-        "relationship",
+        "setAppearance",
       ],
       scene: [
         "addCondition",
         "removeCondition",
+        "setDescription",
         "connectionBlock",
+        "connectionDiscovered",
+        "connectionHidden",
         "environmentContribute",
         "environmentHazard",
       ],
-      item: ["create", "move", "modify", "damage", "destroy"],
+      item: ["create", "move", "destroy", "set"],
     };
 
     for (const ref of refs) {

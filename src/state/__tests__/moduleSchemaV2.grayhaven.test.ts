@@ -56,9 +56,10 @@ describe("grayhaven module data", () => {
   const topology = buildTopology(module.scenes, module.roads);
 
   it("has the designed place counts", () => {
-    // 35 interior scenes (incl. the three closed truth-space rooms and the
-    // truck cab, whose "parent" is the vehicle) + 16 top-level node scenes.
-    expect(module.scenes.size).toBe(51);
+    // 36 interior scenes (incl. the three closed truth-space rooms and the
+    // two vehicle cabs, whose "parent" is the vehicle) + 16 top-level node
+    // scenes.
+    expect(module.scenes.size).toBe(52);
     expect(topology.nodeSceneIds.size).toBe(16);
     expect(module.roads.size).toBe(19);
   });
@@ -166,9 +167,13 @@ describe("grayhaven module data", () => {
   });
 
   it("Frank's truck parses: cab off-topology, parked at the Holt gate", () => {
-    expect(module.vehicles).toHaveLength(1);
-    const truck = module.vehicles[0];
-    expect(truck.id).toBe("VEH_frank_truck");
+    // Two vehicles: Frank's truck and Ray's patrol car, each with its own cab.
+    expect(module.vehicles.map((v) => v.id).sort()).toEqual([
+      "VEH_frank_truck",
+      "VEH_patrol_car",
+    ]);
+    const truck = module.vehicles.find((v) => v.id === "VEH_frank_truck");
+    if (!truck) throw new Error("VEH_frank_truck missing");
     expect(truck.interiorSceneId).toBe("SCN_truck_cab");
     expect(truck.position).toEqual({ type: "scene", sceneId: "SCN_holt_gate" });
     // The cab is interior (parent = the vehicle) and NOT statically attached:

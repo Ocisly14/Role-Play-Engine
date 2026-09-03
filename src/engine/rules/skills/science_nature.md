@@ -45,13 +45,13 @@ sample quality bound the result as hard as the roll does.
 ## State surface
 
 Typical deltas this domain produces. Not a requirement and never a substitute
-for what actually happened — a one-off descriptive result is an occurrence
-fact, not a state change.
+for what actually happened — a one-off descriptive result is occurrence
+`content`, not a state change.
 
-- `item.modify` / `item.destroy` — reagents and samples consumed by the
+- `item.set` / `item.destroy` — reagents and samples altered or consumed by the
   procedure, and equipment used up.
 - `item.create` — a synthesized or isolated substance.
 - `scene.environmentHazard` — a spill, fumes, or a fire the procedure starts;
   `scene.addCondition` for the lasting mess.
 - `character.hp` / `character.addCondition` — exposure, burns, poisoning.
-- The finding itself is an occurrence fact, not a delta.
+- The finding itself is occurrence `content`, not a delta.

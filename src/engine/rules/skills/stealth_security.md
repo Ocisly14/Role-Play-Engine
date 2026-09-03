@@ -48,15 +48,14 @@ is exposed, bypassed, or left behind on failure.
 ## State surface
 
 Typical deltas this domain produces. Not a requirement and never a substitute
-for what actually happened — a one-off descriptive result is an occurrence
-fact, not a state change.
+for what actually happened — a one-off descriptive result is occurrence
+`content`, not a state change.
 
 - `scene.addCondition` / `scene.removeCondition` — a door or container now
   open, jammed, or permanently blocked; `scene.connectionBlock` when a way
   through is opened or sealed.
-- `item.modify` — a lock, latch, or keyway altered but still in play;
-  `item.damage` / `item.destroy` when a pick shears off or a mechanism is
-  ruined.
+- `item.set` — a lock, latch, keyway or pick altered or damaged but still in
+  play; `item.destroy` when a pick or mechanism is irreversibly ruined.
 - `item.move` / `item.create` — something taken, planted, or forged into
   existence.
 - A clean unseen passage often produces NO delta: that nobody noticed is an

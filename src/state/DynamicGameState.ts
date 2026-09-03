@@ -1099,6 +1099,21 @@ export class DynamicGameStateManager {
     }
   }
 
+  /**
+   * Replace a character's appearance prose wholesale. Every reader (the
+   * renderer for onlookers and for the person themselves, the Engine's
+   * character snapshot, the stranger description) takes it from the profile,
+   * so one write reaches them all. An empty string is refused upstream by
+   * the validator; here it is simply ignored rather than blanking a face.
+   */
+  setCharacterAppearance(characterId: string, appearance: string): void {
+    const trimmed = appearance.trim();
+    if (!trimmed) return;
+    const profile = this.getNpcProfile(characterId);
+    if (!profile) return;
+    profile.appearance = trimmed;
+  }
+
   getCharactersOnRoad(
     roadId: string
   ): Array<{ characterId: string; position: number }> {

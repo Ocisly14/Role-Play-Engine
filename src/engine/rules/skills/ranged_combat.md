@@ -48,13 +48,13 @@ ties. Damage comes from the damage-roll tool, never from estimation.
 ## State surface
 
 Typical deltas this domain produces. Not a requirement and never a substitute
-for what actually happened — a one-off descriptive result is an occurrence
-fact, not a state change.
+for what actually happened — a one-off descriptive result is occurrence
+`content`, not a state change.
 
 - `character.hp` — the damage from the damage-roll tool, never estimated.
 - `character.addCondition` — bleeding, pinned, unconscious, a limb disabled.
-- `item.modify` — rounds and arrows spent, magazines emptied; `item.damage` /
-  `item.destroy` on a jam, a misfire, or a broken bow.
+- `item.set` — rounds and arrows spent, magazines emptied, or a weapon jammed
+  or damaged but still in play; `item.destroy` for irreversible breakage.
 - `scene.addCondition` — what the misses hit: a shattered lamp that leaves the
   room dark, a holed wall; `scene.environmentHazard` when the round finds fuel
   or lamp oil.

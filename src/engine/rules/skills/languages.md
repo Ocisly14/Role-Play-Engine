@@ -63,13 +63,13 @@ if the actor declared it.
 ## State surface
 
 Typical deltas this domain produces. Not a requirement and never a substitute
-for what actually happened — a one-off descriptive result is an occurrence
-fact, not a state change.
+for what actually happened — a one-off descriptive result is occurrence
+`content`, not a state change.
 
-- Usually NOTHING. Understanding is an occurrence fact with the reader or
-  listener as perceiver.
+- Usually NOTHING. Understanding is occurrence `content`, with the reader or
+  listener in `perceivers` at `full`.
 - `item.create` — a written translation or transcription that now exists;
-  `item.modify` when the actor annotates the original.
+  `item.set` when the actor annotates the original.
 - A register that offends, or a fluency that opens someone up, is an
   OCCURRENCE the other party perceives — what they now make of the speaker is
   theirs to write, not yours to assert.

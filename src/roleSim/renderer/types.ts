@@ -1,11 +1,12 @@
 // src/roleSim/renderer/types.ts
 //
-// Renderer contracts (plan Phase 9). The Engine emits objective Occurrences
-// with perceiver character ids; the controller groups them per character; the
+// Renderer contracts (plan Phase 9). The Engine emits ONE objective
+// Occurrence row per fact, with a per-perceiver clarity grade (`full` /
+// `limited` / `trace`); the controller groups the rows per character; the
 // renderer turns one character's occurrences + their own state into a
-// first-person sensory narrative. The renderer decides WHAT of
-// each occurrence this character actually perceives (per signals, location,
-// senses) — the Engine never provides per-character fact subsets.
+// first-person sensory narrative, degrading the shared facts to the
+// viewpoint's grade. The Engine never provides per-character fact subsets —
+// the grade is the only per-viewer thing it writes.
 
 import type { Occurrence } from "../../engine/actions/types.js";
 import type {
@@ -90,9 +91,11 @@ export interface PerceivedBundle {
   ownConditions: CharacterCondition[];
   /** Action posture this tick. */
   ownAction: OwnActionState;
-  /** The tick's objective occurrences this character was listed as able to
-   *  perceive (plus subsystem/scripted events adapted into occurrence form).
-   *  The renderer decides what of each is actually perceived. May be empty. */
+  /** The tick's objective occurrences this character is listed under
+   *  `perceivers` on (plus subsystem/scripted events adapted into occurrence
+   *  form). Each row is shared with every other perceiver, facts at full
+   *  detail; the viewpoint's own clarity entry says how much of it the
+   *  renderer lets through. May be empty. */
   occurrences: Occurrence[];
   /** Every other alive character standing in the viewpoint's scene right now,
    *  whether or not they did anything this tick. Default perception: presence,
