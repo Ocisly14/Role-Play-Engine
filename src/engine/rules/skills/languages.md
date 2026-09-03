@@ -5,7 +5,7 @@ description: "Read, write, speak, translate, or interpret languages and speciali
 durationGuidance:
   default: 10
   range: "2-120"
-  notes: "a short passage or a brief spoken translation 2-5 min; a conversation or a dense archaic text 15-30 min; a full document or book-length translation 60-120 min"
+  notes: "a short passage or a brief spoken translation 2-5 min; a conversation or a dense archaic text 15-30 min; a full document or book-length translation 60-120 min; a spoken line itself is one minute by code — these ranges are for the wordless work of a reading or a written translation"
 ---
 
 # Languages guidance

@@ -493,6 +493,32 @@ describe("validateRawResolution — outcome, talk and the bar", () => {
       makeContext({ newCommands: [command({ utterance: "喂。" })] })
     );
     expect(text(errors)).toContain("does not end this tick");
+    // The rejection says when the words WILL land and how to take the row
+    // back: "drop this row" alone left the model re-sending it.
+    expect(text(errors)).toContain("endingWithUtterance");
+    expect(text(errors)).toContain('"remove": true');
+  });
+
+  it("lets a spoken line start without a duration — code clocks it at one minute", () => {
+    const errors = validateRawResolution(
+      { starting: [start({ resolvedDurationTicks: undefined })] },
+      makeContext({ newCommands: [command({ utterance: "喂。" })] })
+    );
+    expect(errors).toEqual([]);
+    // A silent action still has to say how long it takes.
+    const silent = validateRawResolution(
+      { starting: [start({ resolvedDurationTicks: undefined })] },
+      makeContext({ newCommands: [command()] })
+    );
+    expect(text(silent)).toContain("needs resolvedDurationTicks");
+  });
+
+  it("lists a starting action's utterance under startingWithUtterance, not endingWithUtterance", () => {
+    const worklist = resolutionWorklist(
+      makeContext({ newCommands: [command({ utterance: "喂。" })] })
+    );
+    expect(worklist.startingWithUtterance).toEqual([ACTION_ID]);
+    expect(worklist.endingWithUtterance).toEqual([]);
   });
 
   it("requires targetIds on a speech row, and lets the list be empty for the room", () => {
@@ -642,6 +668,30 @@ describe("validateRawResolution — deltas and occurrences", () => {
 });
 
 describe("finalizeResolution", () => {
+  it("clocks a spoken line at one minute whatever the Engine wrote", () => {
+    // Words are delivered when the action ends. A line the Engine gave three
+    // minutes was three minutes of nobody hearing it — and of the Engine
+    // trying to deliver it early. Measured: 26 rejected speech rows in one
+    // run cited an id the Engine had just placed under `starting`.
+    const { resolution } = finalizeResolution(
+      { starting: [start({ resolvedDurationTicks: 3 })] },
+      makeContext({ newCommands: [command({ utterance: "喂。" })] })
+    );
+    const t = resolution.transitions.find((x) => x.actionId === ACTION_ID);
+    expect(t?.resolvedDurationTicks).toBe(1);
+    expect(t?.timingReason).toBe("a spoken line takes one minute");
+    expect(t?.nextWakeAt).toBe("1923-04-02T09:16:00");
+    // A silent action keeps the Engine's clock.
+    const silent = finalizeResolution(
+      { starting: [start({ resolvedDurationTicks: 3 })] },
+      makeContext({ newCommands: [command()] })
+    );
+    expect(
+      silent.resolution.transitions.find((x) => x.actionId === ACTION_ID)
+        ?.resolvedDurationTicks
+    ).toBe(3);
+  });
+
   // finalize no longer validates, drops or synthesizes anything: by the time
   // it runs, the resolution has already passed validation. A resolution that
   // could not be repaired never reaches it — the tick applies nothing.

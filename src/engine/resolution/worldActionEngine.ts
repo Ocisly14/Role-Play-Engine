@@ -383,11 +383,14 @@ export function renderContextSegments(context: EngineResolutionContext): {
       ...context.trigger,
       resolve: {
         ...worklist,
-        note: "`starting` and `ending` are the ids you must answer, and they are the only ones. `stillRunning` is FYI: those actions keep running by themselves and take no entry. Every id under `starting` gets a `starting` entry. Every id under `ending` is answered ONE of two ways: (a) an `ending` entry with an `outcome` paragraph, cited by at least one occurrence — for anything that was done; or (b) no ending entry, just one occurrence with speech true citing it — for an action that was nothing but words said. `endingWithUtterance` lists the ending actions whose command carries an `utterance`: for these, code attaches the words to your speech row verbatim — never restate them, write in `content` what the words were NOT. If such an action also did something with its hands, that is a second row with speech false, and then it takes an ending entry too. A `diceRoll` on an action row is what code rolled, and it is INPUT — write the outcome consistent with it, never contradict it. `startingWithoutSkill` lists actors who declared no skill: those actions take no `check` at all, however obviously one seems called for — the actor chose to stake nothing, and it is settled on its own merits. `replaced` lists endings the actor themselves cut short by issuing a new command this tick (the one in `starting` with a matching `replacesActionId`): account for what was done up to this minute and stop there — never narrate how it would have finished, and never let it and its successor both happen in full.",
+        note: "`starting` and `ending` are the ids you must answer, and they are the only ones. `stillRunning` is FYI: those actions keep running by themselves and take no entry. Every id under `starting` gets a `starting` entry. Every id under `ending` is answered ONE of two ways: (a) an `ending` entry with an `outcome` paragraph, cited by at least one occurrence — for anything that was done; or (b) no ending entry, just one occurrence with speech true citing it — for an action that was nothing but words said. `endingWithUtterance` lists the ending actions whose command carries an `utterance`: for these, code attaches the words to your speech row verbatim — never restate them, write in `content` what the words were NOT. If such an action also did something with its hands, that is a second row with speech false, and then it takes an ending entry too. `startingWithUtterance` lists starting actions whose command carries an `utterance`: those words are NOT said yet — code clocks the action at one minute and it returns under `endingWithUtterance` next tick, which is when its speech row is written. Never write a speech row for a `starting` id. A `diceRoll` on an action row is what code rolled, and it is INPUT — write the outcome consistent with it, never contradict it. `startingWithoutSkill` lists actors who declared no skill: those actions take no `check` at all, however obviously one seems called for — the actor chose to stake nothing, and it is settled on its own merits. `replaced` lists endings the actor themselves cut short by issuing a new command this tick (the one in `starting` with a matching `replacesActionId`): account for what was done up to this minute and stop there — never narrate how it would have finished, and never let it and its successor both happen in full.",
       },
     }),
     section("Tick", context.tick),
-    section("New Commands (this tick)", newCommands),
+    section(
+      "New Commands (this tick — `utterance` is what the actor will have said when the action ends: it is spoken next minute, not now, and gets no occurrence yet; `proposedDurationTicks` is advisory)",
+      newCommands
+    ),
     section("Active Actions (in flight)", activeActions),
     section("Objective Events (already effective)", context.events),
     ...(skillGuidance.length > 0
@@ -399,7 +402,7 @@ export function renderContextSegments(context: EngineResolutionContext): {
     // submission written with that turn in its history, which arrived
     // malformed three times out of four. Nearly every tick has no damage to
     // roll, so the first call is the submission.
-    "Resolve now. Unless a blow lands this tick, your FIRST and ONLY call is submit_resolution. Give every `resolve.starting` id a starting entry. Answer every `resolve.ending` id either with an ending entry plus a speech-false occurrence, or, for pure talk, with a speech-true occurrence and no ending entry. Call damageRoll only for damage that is actually being dealt, with a real formula; there is nothing else to look up.",
+    "Resolve now. Unless a blow lands this tick, your FIRST and ONLY call is submit_resolution. Give every `resolve.starting` id a starting entry. Answer every `resolve.ending` id either with an ending entry plus a speech-false occurrence, or, for pure talk, with a speech-true occurrence and no ending entry. No speech row for a `starting` id: its words come next minute. Call damageRoll only for damage that is actually being dealt, with a real formula; there is nothing else to look up.",
   ].join("\n\n");
 
   return { stable: `${stable}\n\n`, volatile };
@@ -456,7 +459,7 @@ function renderEmpty(toolName: string): string {
     "",
     toolName === "repair_resolution"
       ? "A repair that changes nothing cannot fix anything. Send the elements the last rejection named."
-      : "Send the full resolution: every starting id in `starting`; every ending id answered by an ending plus a speech-false occurrence, or by a speech-true occurrence alone when it was pure talk.",
+      : "Send the full resolution: every starting id in `starting`; every ending id answered by an ending plus a speech-false occurrence, or by a speech-true occurrence alone when it was pure talk; no speech row for a starting id.",
   ].join("\n");
 }
 

@@ -56,17 +56,16 @@ export function resolveBlockedConnectionNodeRef(
 
 /**
  * A subsystem votes to block the PASSAGE BETWEEN TWO PLACES, not one authored
- * exit: weather closes a mountain road in both directions at once, and fire
- * blocks a doorway whichever side you stand on. So weather and fire address an
- * edge by its endpoints rather than by a connection id, in this form —
+ * exit: weather closes a mountain road in both directions at once. So weather
+ * addresses an edge by its endpoints rather than by a connection id, in this form —
  * `<featureId>:<a>|<b>`, endpoints sorted so the two directions mint the same
  * string.
  *
  * Minting and reading live here together on purpose. They used to be a
  * hand-rolled template in each subsystem, and when the Applier moved to
- * resolving votes through the connection REGISTRY, nothing in weather or fire
- * had to change to keep compiling — so nothing did, and every block either
- * subsystem cast was dropped as "resolves to no edge" for as long as that went
+ * resolving votes through the connection REGISTRY, nothing in weather
+ * had to change to keep compiling — so nothing did, and every block it
+ * cast was dropped as "resolves to no edge" for as long as that went
  * unnoticed.
  */
 export function makeFeatureEdgeId(

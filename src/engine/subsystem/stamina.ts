@@ -30,10 +30,9 @@ const MAX_FAIL_CHANCE = 0.6;
 // Default baseline temperature (DEFAULT_ENVIRONMENT_READING) is 20 °C, comfortably
 // inside [10, 30]. Outside that band counts as a hostile thermal environment
 // (cold or hot) and adds +1x fatigue accumulation. Outside the more extreme
-// [-10, 60] band (e.g. snow stacked on extreme_cold, or fire stacked on
-// extreme_heat) adds another +1x, giving max 3x — matching the prior
-// fire-AND-weather stacking behavior without coupling to either feature's
-// internal state.
+// [-10, 60] band (e.g. snow stacked on extreme_cold) adds another +1x,
+// giving max 3x — read from the aggregated temperature rather than any one
+// feature's internal state.
 const TEMP_HOSTILE_LOW_C = 10;
 const TEMP_HOSTILE_HIGH_C = 30;
 const TEMP_EXTREME_LOW_C = -10;

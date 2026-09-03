@@ -23,7 +23,9 @@ import type { PerceptionClarity } from "../actions/types.js";
 export interface RawActionStart {
   actionId: string;
   /** Set when the action starts, or when the Engine revises how long it will
-   *  take. The actor's proposedDurationTicks is advisory. */
+   *  take. The actor's proposedDurationTicks is advisory. Optional for an
+   *  action whose command carries an `utterance`: code clocks a spoken line
+   *  at one minute and overrides whatever is written here. */
   resolvedDurationTicks?: number;
   /** The bar for the skill the actor declared, set BEFORE any roll exists.
    *  Omitted when the declared skill does not fit, or no check is needed. */
@@ -292,7 +294,7 @@ export const SCENE_OPS: OperationSpec[] = [
   {
     // `mechanicalEffect` is not offered: it is a skill-penalty MAP, which a
     // strict schema cannot express, the validator never read it, and only
-    // subsystems (fire, sun, stamina) set one — in code.
+    // subsystems (sun, stamina) set one — in code.
     kinds: ["addCondition"],
     fields: "condition:{description:string, featureId?:string}",
     schema: {
@@ -497,7 +499,7 @@ const OCCURRENCE_ITEM = {
     speech: {
       type: "boolean",
       description:
-        "true = this row IS a spoken line being delivered: code attaches the cited command's `utterance` word for word, `content` is optional (how it was said), and the action needs no `ending` entry — talk is delivered, not judged. Only for an action whose command carries an utterance, and only when that action ends this tick. false = something happened: `content` is required, and an ending it traces carries an `outcome`. A line spoken while a hand does something is TWO rows, one of each.",
+        "true = a spoken line delivered THIS tick — only for an id under the trigger's `endingWithUtterance` (its command carries the words and it ends now; a starting action's words are not said yet). Code attaches the cited command's `utterance` word for word, `content` is optional (how it was said), and the action needs no `ending` entry — talk is delivered, not judged. false = something happened: `content` is required, and an ending it traces carries an `outcome`. A line spoken while a hand does something is TWO rows, one of each.",
     },
     targetIds: {
       type: "array",
@@ -608,7 +610,7 @@ export const submitResolutionTool: ToolSpec = {
       starting: {
         type: "array",
         description:
-          "Actions that BEGIN this tick — the ids the trigger section lists under `starting`. For a non-travel action: how long it should take and how hard it is. For travel: only the route (and vehicle) — the clock is derived from it. Never an outcome: its time has not been spent yet.",
+          "Actions that BEGIN this tick — the ids the trigger section lists under `starting`. For a non-travel action: how long it should take and how hard it is. For travel: only the route (and vehicle) — the clock is derived from it. Never an outcome: its time has not been spent yet. A starting action's `utterance` is not spoken yet either: it is delivered next minute, when the id returns under `endingWithUtterance`. Write no occurrence for a starting id.",
         items: {
           type: "object",
           properties: {
@@ -616,7 +618,7 @@ export const submitResolutionTool: ToolSpec = {
             resolvedDurationTicks: {
               type: "integer",
               description:
-                "How long the action SHOULD take, a whole number of minutes, at least 1. REQUIRED for a non-travel action; OMIT when `movement` is set — travel time is derived from the route and anything you write here is overridden. You never state elapsed time — code advances progress from the clock.",
+                "How long the action SHOULD take, a whole number of minutes, at least 1. REQUIRED for a non-travel action whose command carries no `utterance`. A spoken line takes one minute — code clocks it, so omit this (or send 1) for an action with an `utterance`. OMIT when `movement` is set — travel time is derived from the route and anything you write here is overridden. You never state elapsed time — code advances progress from the clock.",
             },
             check: {
               type: "object",
@@ -705,7 +707,7 @@ export const submitResolutionTool: ToolSpec = {
       occurrences: {
         type: "array",
         description:
-          "Every objective thing that happened this tick, one flat row and one paragraph each: the trace of every ending (cite it in `actionIds` — an ending nothing cites is refused), every spoken line being delivered (`speech: true` — the row IS the answer for that action, code adds the words), and anything else worth perceiving — a noise, a visible attempt in progress. Write each row's `content` last. Content is world-true, third-person, no character-perspective wording.",
+          "Every objective thing that happened this tick, one flat row and one paragraph each: the trace of every ending (cite it in `actionIds` — an ending nothing cites is refused), one `speech: true` row for each id under `endingWithUtterance` (those are the only spoken lines delivered this tick — the row IS the answer for that action, code adds the words; a starting action's utterance is not said yet and gets no row), and anything else worth perceiving (speech false) — a noise, a visible attempt in progress. Write each row's `content` last. Content is world-true, third-person, no character-perspective wording.",
         items: OCCURRENCE_ITEM,
       },
     },

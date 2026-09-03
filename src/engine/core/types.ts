@@ -96,7 +96,7 @@ export interface FeatureEvent {
 /**
  * Per-location aggregated environmental reading, computed each tick by the
  * Applier from `environment.contribute` / `environment.cap` / `environment.hazard`
- * StateChanges. Features (fire, weather, lighting, sanity, etc.) read this via
+ * StateChanges. Features (weather, lighting, stamina, etc.) read this via
  * FeatureReadContext.getEnvironmentReading(locationId) instead of cross-querying
  * each other's scoped state.
  */

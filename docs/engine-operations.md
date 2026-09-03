@@ -130,7 +130,7 @@ engine 处理的「操作」分四层，彼此不共享枚举：**演员发出�
 
 | kind | 字段 |
 |---|---|
-| `addCondition` | `condition: {description, featureId?}`（`mechanicalEffect` 是技能减值映射，strict 语法表达不了，也从不由引擎写，只有 fire/sun/stamina 子系统在代码里设） |
+| `addCondition` | `condition: {description, featureId?}`（`mechanicalEffect` 是技能减值映射，strict 语法表达不了，也从不由引擎写，只有 sun/stamina 子系统在代码里设） |
 | `removeCondition` | `predicate: {id?, featureId?}` —— 至少给一个；`featureId` 删掉该 feature 拥有的全部条件 |
 | `setDescription` | `description: string` —— **整段替换**；保留所有仍然为真的 `[reference-id]` 引用，删掉已不在场之物的引用 |
 | `connectionBlock` | `connectionId, blocked: boolean, reason` |
@@ -174,7 +174,7 @@ engine 处理的「操作」分四层，彼此不共享枚举：**演员发出�
 
 **注册的子系统**（`registerDefaults.ts:createDefaultSubsystemRegistry`，anchor 按 priority 升序跑）：
 
-`weather` · `sun` · `stamina` · `itemDamage` · `fire` · `characterConditionExpiry` · `sceneConditionExpiry`
+`weather` · `sun` · `stamina` · `itemDamage` · `characterConditionExpiry` · `sceneConditionExpiry`
 
 > `subsystem/movement.ts` **不是**注册的子系统，它是纯路线库（`planMovementRoute` / `interpolateMovementPosition`），被 `actions/movementRuntime.ts` 调用。
 

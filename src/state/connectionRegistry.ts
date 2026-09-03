@@ -98,7 +98,7 @@ export interface ConnectionEdge {
  * Two id languages arrive here, because an edge has two kinds of author. A
  * `connection.*` id is a passage someone WROTE, and the registry knows where
  * it leads. A `<featureId>:<a>|<b>` id is a subsystem naming the pair itself
- * (see `makeFeatureEdgeId`) — weather closing a road, fire closing a doorway —
+ * (see `makeFeatureEdgeId`) — weather closing a road —
  * and there is no authored exit to look up, only two places. Both land on the
  * same key, which is the point: a road the module authored one exit for is
  * still one edge when the snow closes it from the other side.

@@ -207,8 +207,10 @@ everyone who received any evidence of it:
 
 ### Speech encoding
 
-- One `speech:true` row per utterance. Code copies the command's utterance
-  verbatim onto it; never restate the words in `content`.
+- One `speech:true` row per utterance delivered this tick — an id under
+  `endingWithUtterance`, and no other. A starting action's words are not yet
+  said: it takes no occurrence. Code copies the command's utterance verbatim
+  onto the row; never restate the words in `content`.
 - Everyone who heard or saw the speaking at all is listed on that one row:
   - made out the words → `full`;
   - knows who spoke but not the words (the watched whisper, the recognised
@@ -255,7 +257,8 @@ everyone who received any evidence of it:
 
 ### Whisper in a crowded room
 
-The intended listener beside the speaker makes out the words; two people across
+The whisper's action ends this tick (it is under `endingWithUtterance`). The
+intended listener beside the speaker makes out the words; two people across
 the noisy room see the speaker lean close but cannot hear them; someone in the
 next room catches a voice through the wall without placing it.
 
@@ -306,4 +309,6 @@ Before submitting each occurrence, verify:
 8. Are target, participant and perceiver sets being kept distinct?
 9. Is the content objective, with no hidden fact, unsupported identity claim,
    private interpretation, emotion or unissued reaction?
-10. On a speech row, is `full` given only to those who made out the words?
+10. On a speech row, is the cited action under `endingWithUtterance` — does it
+    end this tick? A starting action's words are not said yet.
+11. On a speech row, is `full` given only to those who made out the words?

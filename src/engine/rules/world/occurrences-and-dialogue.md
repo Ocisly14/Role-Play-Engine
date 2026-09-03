@@ -11,7 +11,8 @@ person. Determine sensory reach and each perceiver's grade under
 Every occurrence has:
 
 - `actionIds`: the non-empty set of actions whose trace this is;
-- `speech`: whether this row carries an actor's verbatim utterance;
+- `speech`: whether this row delivers an utterance whose action ends this
+  tick; code copies the words verbatim from the command;
 - `perceivers`: one entry per character who received any evidence of this
   row, each `{ characterId, clarity }` with `clarity` one of `full` (the event
   and its relevant detail), `limited` (the kind of event and its immediate
@@ -52,8 +53,11 @@ someone unable to perceive their own action's consequence.
 
 ## Speech
 
-A `speech:true` occurrence may cite only an action whose command contains an
-`utterance`.
+A `speech:true` occurrence may cite only an action listed under
+`endingWithUtterance` this tick: its command carries the words and it ends
+now. A starting action's utterance is not delivered yet and takes no
+occurrence; code clocks a spoken line at one minute, so it returns under
+`endingWithUtterance` next tick.
 
 - Code copies that utterance verbatim onto the occurrence. Never restate,
   summarize, translate or quote it in `content`.
@@ -67,16 +71,17 @@ A `speech:true` occurrence may cite only an action whose command contains an
 - A pure speech action is answered entirely by its `speech:true` occurrence
   and has no `ending` entry or outcome prose.
 
-If one command both speaks and changes the world—handing over a cup while
-speaking, for example—emit a speech occurrence for the words and a separate
-`speech:false` occurrence for the physical result. The action then also needs
-its non-speech ending outcome.
+If a command that both speaks and changes the world—handing over a cup while
+speaking, for example—ENDS this tick, emit a speech occurrence for the words
+and a separate `speech:false` occurrence for the physical result. The action
+then also needs its non-speech ending outcome. While it is still under
+`starting`, neither occurrence exists yet.
 
 ## Other characters retain agency
 
-An action aimed at another person ends when the actor delivers their attempt.
-Describe the actor's words and conduct, never the target's unissued reply, nod,
-silence, concession, belief or emotional reaction. The target responds on
+An action aimed at another person is complete once the actor's attempt is
+delivered — describe the actor's words and conduct, never the target's
+unissued reply, nod, silence, concession, belief or emotional reaction. The target responds on
 their own next command.
 
 A successful social check may be delivered downstream as pressure or evidence

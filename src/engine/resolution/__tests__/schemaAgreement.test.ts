@@ -367,7 +367,11 @@ describe("the trigger worklist answers what the Engine would otherwise infer", (
     // run was it going wrong, always on a described deception where a bar
     // feels obviously right and is not allowed.
     const { resolutionWorklist } = await import("../worldDeltaValidator.js");
-    const command = (commandId: string, declaredSkillId?: string) => ({
+    const command = (
+      commandId: string,
+      declaredSkillId?: string,
+      utterance?: string
+    ) => ({
       commandId,
       actorId: "npc_1",
       issuedAt: "1923-04-02T09:15:00",
@@ -376,10 +380,14 @@ describe("the trigger worklist answers what the Engine would otherwise infer", (
       objectRefs: [],
       proposedDurationTicks: 2,
       ...(declaredSkillId ? { declaredSkillId } : {}),
+      ...(utterance ? { utterance } : {}),
     });
 
     const worklist = resolutionWorklist({
-      trigger: { triggers: [], actionIds: ["action_bare", "action_skilled"] },
+      trigger: {
+        triggers: [],
+        actionIds: ["action_bare", "action_skilled", "action_spoken"],
+      },
       tick: {
         tickId: "t",
         tickStartTime: "1923-04-02T09:15:00",
@@ -398,14 +406,28 @@ describe("the trigger worklist answers what the Engine would otherwise infer", (
         characters: [],
       },
       actions: {
-        newCommands: [command("bare"), command("skilled", "Social")],
+        newCommands: [
+          command("bare"),
+          command("skilled", "Social"),
+          command("spoken", undefined, "喂。"),
+        ],
         activeActions: [],
       },
       events: { objectiveWorldEvents: [], deterministicResults: [] },
     } as never);
 
-    expect(worklist.starting).toEqual(["action_bare", "action_skilled"]);
-    expect(worklist.startingWithoutSkill).toEqual(["action_bare"]);
+    expect(worklist.starting).toEqual([
+      "action_bare",
+      "action_skilled",
+      "action_spoken",
+    ]);
+    expect(worklist.startingWithoutSkill).toEqual([
+      "action_bare",
+      "action_spoken",
+    ]);
+    // The words are not said yet: the id is flagged, and not as ending.
+    expect(worklist.startingWithUtterance).toEqual(["action_spoken"]);
+    expect(worklist.endingWithUtterance).toEqual([]);
   });
 });
 

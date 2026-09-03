@@ -131,7 +131,7 @@ export const sunSubsystem: AnchorSubsystem = {
   priority: 150,
   planningPrompt: `## Lighting
 Current lighting conditions are shown in the state description below.
-Lighting changes automatically with time of day, weather, fire, and light-source items.
+Lighting changes automatically with time of day, weather, and light-source items.
 Dark environments impose skill penalties; blinding light also impairs vision.`,
 
   shouldExist(_anchorId: string, _ctx: FeatureReadContext): boolean {

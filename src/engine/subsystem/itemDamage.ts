@@ -26,7 +26,7 @@ export const itemDamageSubsystem: AnchorSubsystem = {
   description:
     "Damages items in scenes exposed to extreme heat (env.temperature > 200°C).",
   effectSummary:
-    "20% of undamaged items per tick take fire damage when scene env.temperature > 200°C.",
+    "20% of undamaged items per tick take heat damage when scene env.temperature > 200°C.",
   affectedKinds: ["item.set"],
   priority: 350,
 

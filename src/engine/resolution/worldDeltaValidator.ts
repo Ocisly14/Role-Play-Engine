@@ -138,6 +138,14 @@ export interface ResolutionWorklist {
    *  occurrence and no `ending` entry; if hands did something too, that part
    *  is a second row and the entry carries the outcome. */
   endingWithUtterance: string[];
+  /** Starting actions whose command carries an `utterance`. The words are
+   *  NOT said yet: code clocks a spoken line at one minute, so the id comes
+   *  back under `endingWithUtterance` next tick, and only then does a speech
+   *  row cite it. Listed so the Engine is told, beside the utterance it can
+   *  read in New Commands, that the line is still in the actor's mouth —
+   *  measured: 26 speech rows in one run cited an id the Engine had itself
+   *  just placed under `starting`. */
+  startingWithUtterance: string[];
   /** Starting actions whose actor declared NO skill. There is nothing to
    *  check, so `check` is refused on these — and the Engine should not have to
    *  go find `declaredSkillId` in another section to work that out. Every
@@ -155,6 +163,7 @@ export function resolutionWorklist(
     ending: [],
     stillRunning: [],
     endingWithUtterance: [],
+    startingWithUtterance: [],
     startingWithoutSkill: [],
     replaced: [],
   };
@@ -181,6 +190,9 @@ export function resolutionWorklist(
       worklist.starting.push(id);
       if (commandById.get(id)?.declaredSkillId === undefined) {
         worklist.startingWithoutSkill.push(id);
+      }
+      if (commandById.get(id)?.utterance?.trim()) {
+        worklist.startingWithUtterance.push(id);
       }
       continue;
     }
@@ -392,10 +404,13 @@ function validateStart(entry: RawActionStart, lookup: Lookup): string[] {
   }
   // Duration is conditionally required: a non-travel action must say how
   // long it takes; a travel action must NOT be clocked by hand — code derives
-  // its time from the route.
+  // its time from the route. A spoken line is clocked by code too (one
+  // minute, see finalizeResolution), so an utterance-bearing action may omit
+  // it.
   if (
     entry.movement === undefined &&
-    entry.resolvedDurationTicks === undefined
+    entry.resolvedDurationTicks === undefined &&
+    !known.command.utterance?.trim()
   ) {
     errs.push(
       "a non-travel action needs resolvedDurationTicks; only movement actions derive their clock from the route"
@@ -1020,7 +1035,7 @@ export function validateOccurrence(
   }
   if (typeof occ.speech !== "boolean") {
     errs.push(
-      "speech is required, true or false — true when this row is a spoken line being delivered (code adds the words), false when something happened"
+      "speech is required, true or false — true when this row delivers a spoken line for an id under `endingWithUtterance` (code adds the words), false when something happened"
     );
   }
   const speech = isSpeechRow(occ);
@@ -1034,7 +1049,7 @@ export function validateOccurrence(
         );
       } else if (!endingIds.has(id)) {
         errs.push(
-          `speech is true, but "${id}" does not end this tick — words are delivered when the action ends. Drop this row; the trigger's \`ending\` list says when`
+          `speech is true, but "${id}" does not end this tick — its words are delivered next minute, when it appears under \`endingWithUtterance\`. Withdraw this row ("remove": true beside its actionIds); the starting entry is all it needs now`
         );
       }
     }
@@ -1764,23 +1779,33 @@ export function finalizeResolution(
         ...(entry.opposedBy ? { opposedBy: entry.opposedBy } : {}),
       };
     }
+    // A spoken line takes one minute, whatever the Engine wrote: the words
+    // are delivered when the action ends, and a line that "takes" three
+    // minutes is three minutes in which the listener hears nothing and the
+    // Engine keeps trying to deliver it early. Movement keeps its
+    // route-derived clock (the orchestrator overrides it); the words land on
+    // arrival.
+    const spoken =
+      !entry.movement?.route?.length &&
+      Boolean(known.command.utterance?.trim());
+    const durationTicks = spoken ? 1 : entry.resolvedDurationTicks;
     transitions.push({
       actionId: entry.actionId,
       actorId: known.command.actorId,
       from: known.status,
       to: "active",
       progressDeltaMinutes: 0,
-      ...(entry.resolvedDurationTicks !== undefined
-        ? { resolvedDurationTicks: entry.resolvedDurationTicks }
+      ...(durationTicks !== undefined
+        ? { resolvedDurationTicks: durationTicks }
         : {}),
-      ...(entry.resolvedDurationTicks !== undefined
+      ...(spoken ? { timingReason: "a spoken line takes one minute" } : {}),
+      ...(durationTicks !== undefined
         ? {
             nextWakeAt: addMinutes(
               context.tick.tickStartTime,
               Math.max(
                 tickMinutes,
-                entry.resolvedDurationTicks * tickMinutes -
-                  known.progressMinutes
+                durationTicks * tickMinutes - known.progressMinutes
               )
             ),
           }

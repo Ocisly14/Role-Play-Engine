@@ -50,6 +50,11 @@ A starting entry establishes duration, movement and any check permitted by the
 schema. Nothing starts and ends in the same minute. An id under
 `startingWithoutSkill` must not carry a check.
 
+A starting entry has no occurrence. If the command carries an `utterance`, the
+words are not spoken yet: code clocks the action at one minute and it returns
+under `endingWithUtterance` next tick, which is when its speech row is written.
+`startingWithUtterance` lists these ids.
+
 ### Ending
 
 Every id under `ending` must be answered exactly one of two ways:
@@ -62,10 +67,11 @@ Every id under `ending` must be answered exactly one of two ways:
    exact words.
 
 `endingWithUtterance` identifies ending actions whose commands contain spoken
-words. It does not automatically make an action pure speech. If the action both
-speaks and does something physical, emit two occurrences—one `speech:true` for
-the words and one `speech:false` for the physical event—and provide the normal
-ending outcome.
+words — the only ids a `speech:true` occurrence may cite. It does not
+automatically make an action pure speech. If an action that both speaks and
+does something physical ends this tick, emit two occurrences—one `speech:true`
+for the words and one `speech:false` for the physical event—and provide the
+normal ending outcome.
 
 An id under `replaced` stops this minute because its actor issued a successor
 command. Account only for what was completed before the interruption. Do not

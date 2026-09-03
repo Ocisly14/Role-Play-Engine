@@ -669,7 +669,7 @@ export class DynamicGameStateManager {
     if (!place.conditions) place.conditions = [];
     let toAppend = condition;
     if (toAppend.id === undefined) {
-      // Single choke point for condition ids: subsystems (fire/weather/sun)
+      // Single choke point for condition ids: subsystems (weather/sun)
       // omit them, so mint `cond_<featureId ?? "engine">_<n>` here, unique
       // within the place.
       const prefix = `cond_${toAppend.featureId ?? "engine"}_`;

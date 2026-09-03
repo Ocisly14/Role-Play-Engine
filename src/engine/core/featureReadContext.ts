@@ -52,8 +52,8 @@ export interface FeatureReadContext {
    * Read a scene's conditions — the module-loaded baseline and everything
    * added since via the `scene.addCondition` StateChange, which are the same
    * list: conditions have one home, `conditions` on the place object.
-   * AnchorSubsystem.shouldExist predicates that key off conditions (e.g. fire
-   * watching for `burning`) read through this method. Returns `[]` for a
+   * AnchorSubsystem.shouldExist predicates that key off conditions (e.g. a subsystem
+   * watching for a condition it owns) read through this method. Returns `[]` for a
    * scene with none.
    */
   getSceneConditions(sceneId: string): SceneCondition[];
@@ -83,7 +83,7 @@ export interface FeatureReadContext {
   /**
    * Read the precomputed topology index (node scenes/roads/sceneToParent).
    * Used by features whose propagation rules depend on outdoor topology, e.g.
-   * fire spreading scene → road → adjacent scenes. Returns undefined
+   * a hazard spreading scene → road → adjacent scenes. Returns undefined
    * when no topology has been loaded (legacy modules / pure-scene worlds).
    */
   getTopology(): TownTopology | undefined;

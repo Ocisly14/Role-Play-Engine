@@ -5,7 +5,7 @@ description: "Influence, deceive, intimidate, negotiate with, or read people. Th
 durationGuidance:
   default: 5
   range: "1-20"
-  notes: "a quick read of someone or a single demand 1-2 min; a cover story or substantive appeal 5-10 min; a negotiation or courtship-level rapport 15-20 min"
+  notes: "a quick read of someone or a single demand 1-2 min; a cover story or substantive appeal 5-10 min; a negotiation or courtship-level rapport 15-20 min; a spoken line itself is one minute by code — these ranges are for the wordless work of an approach or a reading"
 ---
 
 # Social guidance
@@ -60,10 +60,10 @@ for what actually happened — a one-off descriptive result is occurrence
 `content`, not a state change.
 
 - A moved disposition is NOT yours to write, and neither is the target's
-  answer. Emit what the target saw and heard as an occurrence; what they now
-  think of the speaker is a memory only they can author, and what they say
-  back is their own next command. This is the domain where both temptations
-  are strongest.
+  answer. Emit what the target saw and heard as an occurrence on the tick the
+  action ends; what they now think of the speaker is a memory only they can
+  author, and what they say back is their own next command. This is the
+  domain where both temptations are strongest.
 - `character.san` — only where what was said genuinely breaks something.
 - Most exchanges produce NO delta at all: what was said, and how it landed,
   is an occurrence with the participants as perceivers. Talking someone into

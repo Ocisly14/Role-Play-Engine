@@ -37,7 +37,7 @@ reasons; the package and the code carry no named-setting terminology.
 Two engines share one world state:
 
 - **Code engine** — deterministic transitions: movement along the place
-  graph, the clock, weather, sunlight, stamina, fire, item damage,
+  graph, the clock, weather, sunlight, stamina, item damage,
   condition expiry, dice.
 - **LLM engine** — open-ended outcomes. A single model session reads the
   full world context, resolves every action that triggered this tick, and
@@ -385,7 +385,7 @@ src/
   engine/       tick runtime: core/ (tickEngine, applier, eventBus, scriptedEventRunner),
                 actions/ (command intake, validator/builder, movement runtime),
                 resolution/ (World Action Engine, context builder, WorldDelta schema/validator),
-                tools/ (damageRoll), subsystem/ (fire, weather, sun, stamina, item damage,
+                tools/ (damageRoll), subsystem/ (weather, sun, stamina, item damage,
                 condition expiry), scriptedEvents/, rules/, shared/ (dice, pathfinding, topology)
   roleSim/      character agent: llmAgent, npcActionController, renderer/, systemPrompt,
                 userPromptBuilder, memoryFormatter, perceptionCompactor, promptBudget, tools/

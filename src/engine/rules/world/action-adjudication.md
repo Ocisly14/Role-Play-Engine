@@ -12,7 +12,9 @@ takes at least one minute and resolves on a later tick.
 
 - Always write `actionId`.
 - For a non-movement action, write `resolvedDurationTicks` as a whole number of
-  minutes, at least 1. The actor's proposal is advisory.
+  minutes, at least 1. The actor's proposal is advisory. An action whose
+  command carries an `utterance` takes one minute — code sets it, so the value
+  is optional there.
 - For movement, provide `movement` as described in
   `movement-and-position.md`; code derives its duration from the route.
 - When the declared skill applies and uncertainty warrants a roll, write a
@@ -24,7 +26,9 @@ takes at least one minute and resolves on a later tick.
   attempt, omit `check`. Set no substitute skill.
 
 Starting establishes an action's clock and check. It does not declare success,
-failure, elapsed time, progress or lifecycle status.
+failure, elapsed time, progress or lifecycle status. It does not deliver
+words: an utterance on a starting command is spoken when the action ends, and
+its speech row is written on that later tick.
 
 ## Ending an action
 
