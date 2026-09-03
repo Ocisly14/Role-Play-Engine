@@ -911,10 +911,15 @@ export class DynamicGameStateManager {
 
   /**
    * Resolve a connection id to its canonical symmetric edge (the same key
-   * scheme `state.blockedConnections` uses). Null for unknown ids.
+   * scheme `state.blockedConnections` uses). Null for unknown ids. The lookup
+   * is what lets a subsystem's `<featureId>:<a>|<b>` vote resolve too — those
+   * name two places rather than an authored exit.
    */
   resolveConnectionEdgeById(connectionId: string): ConnectionEdge | null {
-    return resolveConnectionEdge(connectionId, this.getConnectionRegistry());
+    return resolveConnectionEdge(connectionId, this.getConnectionRegistry(), {
+      scenes: this.state.scenes,
+      roads: this.state.roads,
+    });
   }
 
   /**

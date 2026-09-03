@@ -79,7 +79,8 @@ const END = fields<RawActionEnd>()(
   "reason",
   "occurrence",
   "resolvedDurationTicks",
-  "timingReason"
+  "timingReason",
+  "replacedBy"
 );
 const OCCURRENCE = fields<RawOccurrence>()(
   "sourceActionIds",
@@ -195,11 +196,19 @@ describe("repair_resolution cannot drift from what it repairs", () => {
     expect(propsOf(repair)).toEqual(propsOf(submit));
   });
 
-  it("takes action entries in the submission's own shape", () => {
+  it("takes action entries in the submission's own shape, plus remove", () => {
     // Addressed by actionId, so they need no index — and re-declaring the
-    // fields here is what let the two shapes diverge before.
-    expect(propsOf(repair.properties.starting.items)).toEqual(sorted(START));
-    expect(propsOf(repair.properties.ending.items)).toEqual(sorted(END));
+    // fields here is what let the two shapes diverge before. `remove` is the
+    // one addition: withdrawing an entry is a gesture the submission has no
+    // use for.
+    expect(propsOf(repair.properties.starting.items)).toEqual(
+      sorted([...START, "remove"])
+    );
+    expect(propsOf(repair.properties.ending.items)).toEqual(
+      sorted([...END, "remove"])
+    );
+    expect(repair.properties.starting.items?.required).toEqual(["actionId"]);
+    expect(repair.properties.ending.items?.required).toEqual(["actionId"]);
   });
 
   it("adds the address fields, and only those, to the indexed lists", () => {

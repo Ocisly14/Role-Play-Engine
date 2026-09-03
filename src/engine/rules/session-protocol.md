@@ -36,11 +36,17 @@
   other tool calls. A submission that does not arrive alone is refused, and
   the turn is gone.
 - Answer every id the trigger's `resolve` worklist puts under
-  `starting` and `ending`, in that list. The list an action goes in IS the
-  decision about what happens to it, and each list carries only the fields
-  that moment allows. Ids under `stillRunning` need nothing from you.
+  `starting` and `ending`, in that list — once, in one list, never in both.
+  The list an action goes in IS the decision about what happens to it, and
+  each list carries only the fields that moment allows. Nothing starts and
+  ends in the same minute, however brief it looks: an action that begins now
+  is ended on a later tick, when its time is spent. Ids under `stillRunning`
+  need nothing from you.
 - `repair_resolution` is listed for the whole session but is only valid
-  AFTER a submission comes back rejected. Never open with it.
+  AFTER a submission comes back rejected. Never open with it. It carries
+  only what the errors named: a fixed element replaces the one it addresses
+  (an action replaces every copy of its actionId), and `remove: true` beside
+  an address withdraws that element instead of fixing it.
 - Facts and reasons are objective and third-person. Perceiver lists follow
   physical/sensory reach (same location; adjacent for loud signals).
 - The actor's proposedDurationTicks is advisory. You output

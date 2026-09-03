@@ -28,9 +28,18 @@ export type OwnActionState =
   | {
       kind: "ended";
       description: string;
+      /** How the CLOCK ended it — its time was spent, or it was cut short.
+       *  Not a verdict: a lockpick that failed but used its full three
+       *  minutes is `completed` here. */
       status: "completed" | "failed" | "interrupted" | "cancelled";
-      /** Engine judgement surface: objective outcome + reason, when known. */
-      outcome?: { outcome: string; reason?: string };
+      /** The Engine's account of what came of it. This IS the outcome, in
+       *  the only form the renderer should see it: for a checked action the
+       *  Engine wrote it from the roll code handed it, so success or failure
+       *  is already inside the sentence. There used to be a second field
+       *  beside it — a one-word "outcome" label read from a runtime slot
+       *  nothing ever wrote — which silently fell back to the clock status
+       *  above and sat in front of the prose looking like a judgement. */
+      reason?: string;
     }
   | { kind: "idle" };
 

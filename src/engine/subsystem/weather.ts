@@ -5,7 +5,12 @@
 // src/engine/features/weatherFeature.ts — no logic changes.
 // Task 11 will delete the original; until then both files coexist.
 
-import type { FeatureReadContext } from "../core/featureReadContext.js";
+import type { DynamicGameStateManager } from "../../state/DynamicGameState.js";
+import { makeFeatureEdgeId } from "../../state/blockedConnections.js";
+import {
+  type FeatureReadContext,
+  makeDGSMFeatureReadContext,
+} from "../core/featureReadContext.js";
 import type { SceneCondition, StateChange } from "../core/types.js";
 import type { AnchorSubsystem } from "./types.js";
 
@@ -36,6 +41,8 @@ export interface WeatherInitConfigEntry {
 // ===== Constants =====
 
 const FEATURE_ID = "weather";
+/** Region-scoped state, so a read context for this subsystem must say so. */
+const ANCHOR_KIND = "region" as const;
 const TRANSITION_CHECK_INTERVAL_MINUTES = 120;
 const MAX_INTENSITY = 5;
 const BLOCKING_INTENSITY_THRESHOLD = 4;
@@ -216,12 +223,13 @@ export function evolveIntensity(current: number): number {
 // ===== Internal emit helpers =====
 
 /**
- * Stable, order-independent connection vote id for a scene pair. Matches the
- * Applier's single-id vote table — reason strings are still attached so the
- * applier can deduplicate votes by (featureId, reason).
+ * Stable, order-independent connection vote id for a scene pair. Minted by the
+ * shared helper the Applier's resolver reads, so the two cannot drift apart
+ * again — reason strings are still attached so the applier can deduplicate
+ * votes by (featureId, reason).
  */
 function connectionIdFor(a: string, b: string): string {
-  return a <= b ? `weather:${a}|${b}` : `weather:${b}|${a}`;
+  return makeFeatureEdgeId(FEATURE_ID, a, b);
 }
 
 function buildWeatherSceneCondition(
@@ -347,12 +355,81 @@ function makeRegionState(
   };
 }
 
+/**
+ * The changes that put a region into a given weather, as a real transition
+ * would leave it. Exported for the scripted-event effect `weather.set`.
+ *
+ * Setting the state bucket alone is not enough, and that is the whole reason
+ * this exists: `onTick` refreshes the `[Weather]` scene conditions and re-casts
+ * the connection votes ONLY when it decides a transition happened, and its
+ * transition check runs every 120 in-world minutes. A script that wrote the
+ * bucket by itself would leave "[Weather] 暴雪" hanging over a light snowfall,
+ * and every road it had closed still closed, for up to two hours.
+ *
+ * Returns [] for an unknown region: a script naming a region no preset created
+ * has nothing to set, and inventing the bucket here would create a weather
+ * region with no scenes in it.
+ */
+export function buildWeatherSetChanges(
+  regionId: string,
+  weatherType: WeatherType,
+  intensity: number,
+  dgsm: DynamicGameStateManager
+): StateChange[] {
+  // Built here rather than handed in: the feature id and the region scope are
+  // this subsystem's own facts, and a caller that had to know them would be a
+  // second place to keep them right.
+  const ctx = makeDGSMFeatureReadContext(dgsm, {
+    callerFeatureId: FEATURE_ID,
+    callerScope: ANCHOR_KIND,
+  });
+  const current = ctx.getFeatureState<WeatherRegionState>(regionId);
+  if (!current) return [];
+
+  const clamped =
+    weatherType === "clear"
+      ? 0
+      : Math.max(1, Math.min(Math.trunc(intensity), MAX_INTENSITY));
+  const next: WeatherRegionState = {
+    weatherType,
+    intensity: clamped,
+    // The clock on the next natural transition restarts here: the script has
+    // just decided what the weather is, so the region has been in it 0 minutes.
+    minutesInState: 0,
+    affectedSceneIds: [...current.affectedSceneIds],
+  };
+
+  const out: StateChange[] = [
+    {
+      kind: "feature.setState",
+      featureId: FEATURE_ID,
+      key: regionId,
+      state: next,
+    },
+  ];
+  for (const sceneId of next.affectedSceneIds) {
+    out.push({
+      kind: "scene.removeCondition",
+      sceneId,
+      predicate: { featureId: FEATURE_ID },
+    });
+    if (next.weatherType !== "clear" && next.intensity > 0) {
+      out.push(buildWeatherSceneCondition(sceneId, next));
+    }
+  }
+  // Casts `blocked: false` on its own once the new intensity is under the
+  // threshold — which is how "the wind eased" reopens the roads the storm shut.
+  out.push(...emitConnectionBlocks(next, ctx));
+  out.push(...emitEnvContributions(next));
+  return out;
+}
+
 // ===== Exported AnchorSubsystem =====
 
 export const weatherSubsystem: AnchorSubsystem = {
   id: FEATURE_ID,
   kind: "anchor",
-  anchorKind: "region",
+  anchorKind: ANCHOR_KIND,
   description:
     "Regional weather — Markov evolution with env contributions and scene conditions",
   effectSummary:

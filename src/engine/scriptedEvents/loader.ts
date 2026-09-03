@@ -13,6 +13,7 @@
  * full list in one go, not fix-and-rerun.
  */
 
+import { WEATHER_TYPES, type WeatherType } from "../subsystem/weather.js";
 import type {
   ActionMatch,
   CharacterPredicate,
@@ -187,6 +188,7 @@ const EFFECT_KINDS = [
   "scene.removeCondition",
   "connection.setBlock",
   "connection.setHidden",
+  "weather.set",
   "item.create",
   "item.move",
   "event.emit",
@@ -810,6 +812,31 @@ function validateEffect(
       }
       return;
     }
+    case "weather.set": {
+      if (!isString(item.regionId)) {
+        pushErr(errors, file, `${path}.regionId`, "required string");
+      }
+      if (
+        !isString(item.weatherType) ||
+        !WEATHER_TYPES.includes(item.weatherType as WeatherType)
+      ) {
+        pushErr(
+          errors,
+          file,
+          `${path}.weatherType`,
+          `one of ${WEATHER_TYPES.join(", ")}`
+        );
+      }
+      if (
+        typeof item.intensity !== "number" ||
+        !Number.isInteger(item.intensity) ||
+        item.intensity < 0 ||
+        item.intensity > 5
+      ) {
+        pushErr(errors, file, `${path}.intensity`, "integer 0-5");
+      }
+      return;
+    }
     case "connection.setBlock": {
       if (!isString(item.connectionId)) {
         pushErr(errors, file, `${path}.connectionId`, "required string");
@@ -1309,6 +1336,10 @@ export function validateScriptedEventReferences(
       case "connection.setBlock":
       case "connection.setHidden":
         connection(eventId, `${path}.connectionId`, effect.connectionId);
+        return;
+      // weather.set names a weather REGION, which module_setup declares and
+      // no place file references — there is no id here to cross-check.
+      case "weather.set":
         return;
       case "item.create":
         place(eventId, `${path}.location`, effect.location);

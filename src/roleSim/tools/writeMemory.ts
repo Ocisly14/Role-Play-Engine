@@ -82,9 +82,11 @@ together.
   someone changes: they lied, they helped, they frightened you, you decided
   to trust them.
   Set \`knownAs\` the first time you learn what to CALL them: a name they
-  gave, or that someone used in front of you. Until you do, they stay a
-  description to you — "the thin young man" — however sure you are of what
-  they are. That is not a formality: **you do not know a name nobody has said
+  gave, or that someone used in front of you — including a name given for a
+  THIRD person ("that's my brother Tommy" names the brother). Record it in
+  the same decision you heard it, or next minute they are a stranger to you
+  again. Until you do, they stay a description to you — "the thin young man"
+  — however sure you are of what they are. That is not a formality: **you do not know a name nobody has said
   in your hearing**, and writing one down would be inventing it.
 - \`map\` —  A place or route you learned — a door you
   had never noticed, a shortcut, where someone actually lives or a new house you've never saw before or has changed.

@@ -3,6 +3,8 @@ import {
   normalizeTagBrackets,
   repairNearMissTags,
   resolveNearMissTag,
+  scrubStrangerCanonicalLabels,
+  strangerCanonicalLabelViolations,
   stripUncitableTags,
 } from "../llmRenderer.js";
 
@@ -144,5 +146,45 @@ describe("normalizeTagBrackets", () => {
     expect(out).toBe("妈妈 [stranger_a]把书递过来");
     expect(warn).toHaveBeenCalledOnce();
     warn.mockRestore();
+  });
+});
+
+describe("stranger identity firewall", () => {
+  const identities = [
+    {
+      alias: "stranger_a",
+      canonicalName: "Tommy Miller",
+      description: "the lean, taller man",
+    },
+  ];
+
+  it("detects a first or full canonical name bound to a stranger alias", () => {
+    expect(
+      strangerCanonicalLabelViolations(
+        "Tommy [stranger_a] watches the door.",
+        identities
+      )
+    ).toEqual(["Tommy [stranger_a]"]);
+    expect(
+      strangerCanonicalLabelViolations(
+        "Tommy Miller [stranger_a] watches the door.",
+        identities
+      )
+    ).toContain("Tommy Miller [stranger_a]");
+  });
+
+  it("replaces the forbidden name-label binding with the unknown description", () => {
+    expect(
+      scrubStrangerCanonicalLabels(
+        "Tommy [stranger_a] watches the door.",
+        identities
+      )
+    ).toBe("the lean, taller man [stranger_a] watches the door.");
+  });
+
+  it("preserves an audibly spoken name that is not asserted as the stranger's label", () => {
+    const text =
+      'Someone says "Tommy"; the lean, taller man [stranger_a] watches the door.';
+    expect(scrubStrangerCanonicalLabels(text, identities)).toBe(text);
   });
 });

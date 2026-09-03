@@ -74,6 +74,21 @@ describe("uncitableTags", () => {
 });
 
 describe("renderViaLLM", () => {
+  it("puts the stranger identity firewall in the renderer system prompt", async () => {
+    generateText.mockReset();
+    generateText.mockResolvedValueOnce("平台上空无一人。");
+
+    await render();
+
+    const systemPrompt = generateText.mock.calls[0][0]
+      .customSystemPrompt as string;
+    expect(systemPrompt).toContain(
+      "IDENTITY FIREWALL — STRANGER MEANS NAME UNKNOWN"
+    );
+    expect(systemPrompt).toContain("NEVER attach a canonical name");
+    expect(systemPrompt).toContain("Tommy [stranger_abc123]");
+  });
+
   it("asks again, naming the exact string that was invented", async () => {
     generateText.mockReset();
     generateText

@@ -1,5 +1,5 @@
 // Phase 9 bundle assembly: ownAction derived from EngineAction lifecycle
-// (transitions → ended + judgement surface; live action → ongoing with
+// (transitions → ended, with the transition's reason; live action → ongoing with
 // progress; neither → idle) and occurrence passthrough.
 
 import { describe, expect, it } from "vitest";
@@ -109,17 +109,13 @@ describe("resolveOwnAction", () => {
     });
   });
 
-  it("derives ended state from this tick's transition plus the judgement", () => {
-    const done = action({
-      status: "completed",
-      runtime: {
-        judgement: {
-          kind: "direct",
-          outcome: "success",
-          reason: "the drawer yields a ledger",
-        },
-      },
-    });
+  it("derives ended state from this tick's transition alone", () => {
+    // Nothing writes a verdict onto the action: the Engine's account of what
+    // came of it arrives as the transition's `reason`, and that is the whole
+    // outcome surface. (A `runtime.judgement` slot used to be read here — it
+    // never had a writer, so its fallback, the clock status, was what the
+    // renderer got, dressed up as a result.)
+    const done = action({ status: "completed" });
     const own = resolveOwnAction(
       "npc_1",
       report({
@@ -139,11 +135,10 @@ describe("resolveOwnAction", () => {
       kind: "ended",
       description: "I search the desk.",
       status: "completed",
-      outcome: { outcome: "success", reason: "the drawer yields a ledger" },
     });
   });
 
-  it("falls back to the transition reason when no judgement exists", () => {
+  it("carries the transition's reason as the account of what came of it", () => {
     const failed = action({ status: "failed" });
     const own = resolveOwnAction(
       "npc_1",
@@ -164,8 +159,9 @@ describe("resolveOwnAction", () => {
     expect(own).toMatchObject({
       kind: "ended",
       status: "failed",
-      outcome: { outcome: "failed", reason: "actor is dead" },
+      reason: "actor is dead",
     });
+    expect(own).not.toHaveProperty("outcome");
   });
 
   it("is idle with no report and no live action", () => {

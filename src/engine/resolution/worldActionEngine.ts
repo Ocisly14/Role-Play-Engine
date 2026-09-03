@@ -45,6 +45,7 @@ import {
   applyRepair,
   finalizeResolution,
   normalizeRawResolution,
+  refusedWithdrawals,
   resolutionWorklist,
   validateRawResolution,
 } from "./worldDeltaValidator.js";
@@ -183,6 +184,44 @@ function commandForPrompt(command: ActionCommand): Record<string, unknown> {
 }
 
 /**
+ * The ways out of the place the actor is standing in, each marked open or
+ * closed — code's answer, put beside the command that might need it.
+ *
+ * Passability is never the model's call: the movement runtime walks the
+ * stated route and interrupts it with a `blocked:` reason the moment a closed
+ * edge is actually reached. But with the Blocked Connections table in front
+ * of it and nothing saying what the table was FOR, the model cross-referenced
+ * routes against it by place name — read "lodge_drive ↔ porch is closed" as
+ * "the porch is closed", and ended a walk from the greatroom to the porch as
+ * weather-blocked when that door was open. Listing the actor's own exits with
+ * their state removes the lookup, and with it the misreading.
+ */
+export function exitsFromHere(
+  context: Pick<EngineResolutionContext, "state">,
+  actorId: string
+): Array<{ to: string; open: boolean; reason?: string }> | undefined {
+  const here = context.state.characters.find(
+    (c) => c.id === actorId
+  )?.locationId;
+  if (!here) return undefined;
+  const place = context.state.places.find((p) => p.id === here);
+  if (!place) return undefined;
+  const blocked = new Map<string, string>();
+  for (const e of context.state.blockedEdges) {
+    blocked.set(`${e.from}|${e.to}`, e.reason);
+    blocked.set(`${e.to}|${e.from}`, e.reason);
+  }
+  return place.connections
+    .filter((c) => !c.hidden)
+    .map((c) => {
+      const reason = c.blockedReason ?? blocked.get(`${here}|${c.targetId}`);
+      return reason
+        ? { to: c.targetId, open: false, reason }
+        : { to: c.targetId, open: true };
+    });
+}
+
+/**
  * The context split at the point where its stability changes.
  *
  * Prompt caching matches a prefix from the first byte of the request, so the
@@ -258,10 +297,14 @@ export function renderContextSegments(context: EngineResolutionContext): {
   const section = (title: string, data: unknown): string =>
     `## ${title}\n${JSON.stringify(data, null, 1)}`;
 
-  const newCommands = context.actions.newCommands.map((command) => ({
-    actionId: actionIdForCommand(command.commandId),
-    ...commandForPrompt(command),
-  }));
+  const newCommands = context.actions.newCommands.map((command) => {
+    const exits = exitsFromHere(context, command.actorId);
+    return {
+      actionId: actionIdForCommand(command.commandId),
+      ...commandForPrompt(command),
+      ...(exits ? { exitsFromHere: exits } : {}),
+    };
+  });
   const activeActions = context.actions.activeActions.map((action) => {
     const { id, command, checkOutcome, ...rest } = action;
     return {
@@ -302,7 +345,7 @@ export function renderContextSegments(context: EngineResolutionContext): {
 
   const volatile = [
     section(
-      "Blocked Connections (currently impassable edges, world-wide; empty means everything is passable)",
+      "Blocked Connections (exact passages only, world-wide, for narrating consequences — a place named here is NOT itself closed, only the one edge between the two named places is; every edge not listed is open; whether a stated route can be walked is code's call, see exitsFromHere on each command)",
       context.state.blockedEdges
     ),
     section(
@@ -322,7 +365,7 @@ export function renderContextSegments(context: EngineResolutionContext): {
       ...context.trigger,
       resolve: {
         ...worklist,
-        note: "`starting` and `ending` are the ids you must answer, in those lists, and they are the only ones. `stillRunning` is FYI: those actions keep running by themselves and take no entry. `endingNeedsOutcome` lists in-flight actions that carried no check — if one ends, you supply `outcome`. Every other ending carries a `diceRoll` on its action row: that is what code rolled, and it is INPUT — never copy it into an `outcome` field. `startingWithoutSkill` lists actors who declared no skill: those actions take no `check` at all, however obviously one seems called for — the actor chose to stake nothing, and it is settled on its own merits. `replaced` lists endings the actor themselves cut short by issuing a new command this tick (the one in `starting` with a matching `replacesActionId`): account for what was done up to this minute and stop there — never narrate how it would have finished, and never let it and its successor both happen in full.",
+        note: "`starting` and `ending` are the ids you must answer, in those lists, and they are the only ones. `stillRunning` is FYI: those actions keep running by themselves and take no entry. `endingNeedsOutcome` lists in-flight actions that carried no check — if one ends, you supply `outcome`, UNLESS every fact you write for it is speech: talk is delivered, not judged, and a spoken line takes no outcome. An action's `utterance` is carried into its occurrence verbatim by code — do not restate the words, write what the words were not. Every other ending carries a `diceRoll` on its action row: that is what code rolled, and it is INPUT — never copy it into an `outcome` field. `startingWithoutSkill` lists actors who declared no skill: those actions take no `check` at all, however obviously one seems called for — the actor chose to stake nothing, and it is settled on its own merits. `replaced` lists endings the actor themselves cut short by issuing a new command this tick (the one in `starting` with a matching `replacesActionId`): account for what was done up to this minute and stop there — never narrate how it would have finished, and never let it and its successor both happen in full.",
       },
     }),
     section("Tick", context.tick),
@@ -364,16 +407,76 @@ function unusable(
   return { ok: false, failure, errors, codeToolInvocations: invocations };
 }
 
+/**
+ * What the model is told when its own arguments did not survive the wire. The
+ * alternative was worse than useless: an unreadable call reached the validator
+ * as an EMPTY submission, which answered back "you did not answer any of these
+ * seven actions" — seven corrections for a mistake the model had not made,
+ * pointing it away from the only thing wrong (the JSON it wrote).
+ */
+function renderUnreadable(toolName: string, rawLength: number): string {
+  return [
+    `REJECTED. Your \`${toolName}\` arguments (${rawLength} characters) did not arrive as readable JSON — nothing of what you wrote could be applied.`,
+    "",
+    "Send the same call again. Keep it well-formed: no trailing commas, no raw",
+    "newlines inside strings, and every bracket closed. If it was long, say the",
+    "same thing more briefly rather than risking the same break.",
+  ].join("\n");
+}
+
+/**
+ * An argument object with no keys at all. Legal JSON, so it slipped past the
+ * unreadable-args check and into the validator, which answered "you did not
+ * answer any of these seven actions" — the same misleading correction the
+ * unreadable case used to produce, for a call that in truth carried nothing.
+ * Measured: DeepSeek sends `{}` most often on the turn right after a
+ * rejection, and two ticks died in five-round streaks of it.
+ */
+function renderEmpty(toolName: string): string {
+  return [
+    `REJECTED. Your \`${toolName}\` call arrived with NO arguments — an empty object, every field missing.`,
+    "",
+    toolName === "repair_resolution"
+      ? "A repair that changes nothing cannot fix anything. Send the elements the last rejection named."
+      : "Send the full resolution: every id under the trigger's `starting` and `ending`, in its list.",
+  ].join("\n");
+}
+
+/** True when the provider handed back readable JSON that holds nothing. */
+function hasNoArgs(call: { args: Record<string, unknown> }): boolean {
+  return Object.keys(call.args).length === 0;
+}
+
 /** The errors, addressed, plus the instruction that repair is incremental. */
-function renderErrors(errors: ResolutionError[]): string {
+function renderErrors(errors: ResolutionError[], notes: string[] = []): string {
+  // Withdrawal is offered only where it is the right move — an element that
+  // should not have been sent at all. Advertised under every rejection, it
+  // reads as a general escape hatch, and the model reached for it to fix a
+  // DUPLICATED triggering action: the copy went away, the answer went with
+  // it, and three rounds later the tick was dropped for an action nobody had
+  // answered. An error about an action the trigger requires is never one that
+  // `remove` fixes.
+  const withdrawable = errors.some(
+    (e) =>
+      e.target.kind !== "action" || e.message.startsWith("unknown actionId")
+  );
   return [
     "REJECTED. Fix ONLY these, with repair_resolution:",
     ...errors.map((e) => `- ${formatErrorTarget(e.target)} — ${e.message}`),
+    ...notes.map((n) => `- ${n}`),
     "",
     "Send only the elements listed above, as arrays in the same shape you",
     "submitted — each item carrying the `index` quoted above (an action",
     "carries its actionId instead). Everything you do not mention stays as",
     "you submitted it: do not re-send correct parts or the whole resolution.",
+    "An action sent once replaces every copy of that actionId, so a duplicate",
+    "is fixed by sending it once in the list it belongs in.",
+    ...(withdrawable
+      ? [
+          "To take an element back rather than fix it, send `remove: true` with",
+          "its address and nothing else.",
+        ]
+      : []),
   ].join("\n");
 }
 
@@ -411,6 +514,10 @@ export async function resolveTick(
     submitResolutionTool,
     repairResolutionTool,
   ];
+  // Every action the trigger demands an answer for. Held here because a repair
+  // round has to know which withdrawals it must refuse.
+  const worklist = resolutionWorklist(context);
+  const requiredActionIds = new Set([...worklist.starting, ...worklist.ending]);
   // The submission under repair, and how many repair rounds it has had.
   let pending: RawTickResolution | undefined;
   let repairRounds = 0;
@@ -455,7 +562,16 @@ export async function resolveTick(
 
     // ---- repair round ----------------------------------------------------
     if (repairing && pending) {
-      const repairCall = toolCalls.find((c) => c.name === "repair_resolution");
+      // A repair round demands `repair_resolution` through toolChoice, and
+      // gets it from a provider that honours toolChoice. DeepSeek does not
+      // always: measured, it answered two repair rounds with a full
+      // `submit_resolution` — carrying, both times, exactly the corrections
+      // that had been asked for. Dropping the tick over the envelope threw
+      // away a right answer. A whole submission IS a repair, of the widest
+      // kind: it replaces everything.
+      const repairCall =
+        toolCalls.find((c) => c.name === "repair_resolution") ??
+        toolCalls.find((c) => c.name === "submit_resolution");
       if (!repairCall) {
         return unusable(
           `${context.tick.tickId}: expected a repair, got none — nothing applied`,
@@ -463,10 +579,35 @@ export async function resolveTick(
           deps.codeTools.drainInvocations()
         );
       }
-      pending = applyRepair(
-        pending,
-        repairCall.args as unknown as RawResolutionRepair
-      );
+      if (repairCall.unreadableArgs || hasNoArgs(repairCall)) {
+        messages.push(assistantMessage);
+        messages.push({
+          role: "tool",
+          results: [
+            {
+              toolCallId: repairCall.id,
+              content: repairCall.unreadableArgs
+                ? renderUnreadable(
+                    repairCall.name,
+                    repairCall.unreadableArgs.rawLength
+                  )
+                : renderEmpty(repairCall.name),
+            },
+          ],
+        });
+        continue;
+      }
+      const repairArgs = repairCall.args as unknown as RawResolutionRepair;
+      const refused =
+        repairCall.name === "submit_resolution"
+          ? []
+          : refusedWithdrawals(repairArgs, requiredActionIds);
+      pending =
+        repairCall.name === "submit_resolution"
+          ? normalizeRawResolution(
+              repairCall.args as unknown as RawTickResolution
+            )
+          : applyRepair(pending, repairArgs, requiredActionIds);
       const invocationsSoFar = deps.codeTools.drainInvocations();
       const errors = validateRawResolution(pending, context);
       requeueInvocations(deps.codeTools, invocationsSoFar);
@@ -491,7 +632,18 @@ export async function resolveTick(
       messages.push(assistantMessage);
       messages.push({
         role: "tool",
-        results: [{ toolCallId: repairCall.id, content: renderErrors(errors) }],
+        results: [
+          {
+            toolCallId: repairCall.id,
+            content: renderErrors(
+              errors,
+              refused.map(
+                (id) =>
+                  `action:${id} — your withdrawal was refused: the trigger requires an answer for this action. Send it once, in the list it belongs in.`
+              )
+            ),
+          },
+        ],
       });
       continue;
     }
@@ -501,6 +653,24 @@ export async function resolveTick(
 
     // ---- first clean submission -----------------------------------------
     if (submits.length === 1 && codeCalls.length === 0) {
+      if (submits[0].unreadableArgs || hasNoArgs(submits[0])) {
+        messages.push(assistantMessage);
+        messages.push({
+          role: "tool",
+          results: [
+            {
+              toolCallId: submits[0].id,
+              content: submits[0].unreadableArgs
+                ? renderUnreadable(
+                    submits[0].name,
+                    submits[0].unreadableArgs.rawLength
+                  )
+                : renderEmpty(submits[0].name),
+            },
+          ],
+        });
+        continue;
+      }
       const raw = normalizeRawResolution(
         submits[0].args as unknown as RawTickResolution
       );

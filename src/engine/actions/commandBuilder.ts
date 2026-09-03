@@ -7,7 +7,7 @@
 // actor's trained value or the base value) and rolled immediately; semantic
 // applicability is judged later by the Engine with the roll in hand.
 
-import { randomUUID } from "node:crypto";
+import { randomBytes } from "node:crypto";
 import type { DynamicGameStateManager } from "../../state/DynamicGameState.js";
 import { aliasFor } from "../../state/perceivableDirectory.js";
 import type { CommandRejectionCode } from "./commandValidator.js";
@@ -45,7 +45,12 @@ export function buildActionCommand(
   const issuedSceneId = position ? dgsm.resolveLocationId(position) : "";
 
   const command: ActionCommand = {
-    commandId: randomUUID(),
+    // Short on purpose: the derived `action_<commandId>` is the id the Engine
+    // must echo back verbatim, in the trigger worklist and again in every
+    // repair round. A uuid spent ~20 tokens a mention and gave the model 36
+    // characters to miscopy; 8 hex characters are unique enough for a
+    // session's few hundred commands and readable in a log line.
+    commandId: randomBytes(4).toString("hex"),
     actorId,
     issuedAt: dgsm.getGameDateTime(),
     issuedSceneId,

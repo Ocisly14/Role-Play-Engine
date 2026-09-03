@@ -310,7 +310,7 @@ function resolvableAction(
     // Name the addressable ids: a bare "unknown actionId" gives the repair
     // round nothing to correct toward, so every round re-sends the same id.
     return {
-      error: `unknown actionId — address one of: ${[...lookup.actionById.keys()].join(", ")}`,
+      error: `unknown actionId — address one of: ${[...lookup.actionById.keys()].join(", ")}, or withdraw this entry with {"actionId": "<the id you sent>", "remove": true}`,
     };
   }
   if (TERMINAL_STATUSES.has(known.status)) {
@@ -394,6 +394,22 @@ function validateStart(entry: RawActionStart, lookup: Lookup): string[] {
   return errs;
 }
 
+/**
+ * An ending the Engine has judged to be nothing but talk: every fact it wrote
+ * is speech. Talk is not an attempt — it neither succeeds nor fails, it is
+ * simply heard — so these endings carry no `outcome`, the same way a checked
+ * ending carries none because code already decided it.
+ *
+ * The test reads what the Engine WROTE rather than asking it a separate
+ * question: fact types are already its judgement about what happened, so a
+ * second field saying "this was conversation" could only ever contradict them.
+ */
+function isSpeechOnly(occurrence: RawActionEnd["occurrence"]): boolean {
+  const facts = occurrence?.facts;
+  if (!Array.isArray(facts) || facts.length === 0) return false;
+  return facts.every((f) => f?.type === "speech");
+}
+
 function validateEnd(entry: RawActionEnd, lookup: Lookup): string[] {
   const resolvable = resolvableAction(entry.actionId, lookup);
   if ("error" in resolvable) return [resolvable.error];
@@ -401,9 +417,18 @@ function validateEnd(entry: RawActionEnd, lookup: Lookup): string[] {
   const errs: string[] = [];
 
   if (known.status === "queued") {
-    errs.push(
-      `this action has not started yet — put it in "starting" with a duration and a bar; its outcome comes when its time is spent`
-    );
+    // The ONLY error worth reporting: this entry is in the wrong list, so
+    // every field on it is beside the point. Reported alongside the field
+    // checks below, it contradicted them — "this ending should not exist" in
+    // the same breath as "your ending is missing its outcome" — and the model
+    // obeyed both, putting the action in `starting` AND completing the ending
+    // it had just been told to withdraw. That is a duplicate, which is where
+    // it came from, and the tick died three rounds later going round it. Same
+    // reasoning as the addressing failure above: a misfiled entry gets one
+    // instruction, not a field-by-field review of a form it should not be on.
+    return [
+      `this action has not started yet — put it in "starting" with a duration and a bar, and send it ONLY there; its outcome comes on a later tick, when its time is spent`,
+    ];
   }
   if (!entry.reason?.trim()) {
     errs.push(`an ending requires a reason`);
@@ -413,15 +438,38 @@ function validateEnd(entry: RawActionEnd, lookup: Lookup): string[] {
   // `null` is the model saying "none" — the same answer as leaving the field
   // out, and it was being refused as if a verdict had been written.
   const hadCheck = known.check !== undefined;
+  const spokenOnly = isSpeechOnly(entry.occurrence);
   if (hadCheck && entry.outcome != null) {
     errs.push(
       `this action was checked — code decides success from the roll against your bar; drop "outcome"`
     );
   }
-  if (!hadCheck && !entry.outcome) {
+  if (!hadCheck && spokenOnly && entry.outcome != null) {
     errs.push(
-      `this action carried no check, so nothing rolled — "outcome" is required (the trigger section lists it under endingNeedsOutcome)`
+      `every fact here is speech, so nothing was staked and nothing can have failed — drop "outcome". The words reach whoever could hear them; that is the whole result`
     );
+  }
+  if (!hadCheck && !spokenOnly && !entry.outcome) {
+    errs.push(
+      `this action carried no check, so nothing rolled — "outcome" is required (the trigger section lists it under endingNeedsOutcome), unless every fact you write is speech`
+    );
+  }
+  if (entry.replacedBy !== undefined) {
+    // Informational, but it must point at the real successor: the one new
+    // command whose `replacesActionId` is this action. Anything else is the
+    // model misreading the trigger, and naming the right id costs nothing.
+    const successor = [...lookup.actionById.entries()].find(
+      ([, a]) => a.command.replacesActionId === entry.actionId
+    );
+    if (!successor) {
+      errs.push(
+        `"replacedBy" is only for an id the trigger lists under \`replaced\` — this action was not cut short by a new command; drop the field`
+      );
+    } else if (successor[0] !== entry.replacedBy) {
+      errs.push(
+        `"replacedBy" names "${entry.replacedBy}", but the command that replaced this action is "${successor[0]}"`
+      );
+    }
   }
   errs.push(...validateDuration(entry.resolvedDurationTicks));
   return errs;
@@ -930,6 +978,16 @@ export function validateOccurrence(
     errs.push(`at least one fact is required`);
   }
   for (const [fi, fact] of (occ.facts ?? []).entries()) {
+    if (fact.type === "utterance") {
+      // Told that code carries the spoken line in for it, the model reached
+      // for a POINTER at the line instead — a fact whose entire content was
+      // "action_e2de4d90_utterance", handed on to four characters as the
+      // thing they heard. The line is added after validation and is not the
+      // Engine's to write, to name, or to refer to.
+      errs.push(
+        `facts[${fi}]: "utterance" is not a type you write — code adds the spoken line itself. Describe what the words were NOT (how it was said, what the hands did, who turned to look), and never write a fact standing in for the line`
+      );
+    }
     if (!fact.content?.trim()) {
       errs.push(`facts[${fi}]: content is required`);
     } else if (PERSPECTIVE_PATTERNS.some((re) => re.test(fact.content))) {
@@ -1016,7 +1074,7 @@ export function validateRawResolution(
       };
       if (seen.has(entry.actionId)) {
         at(target, [
-          `appears more than once — an action is either starting or ending, not both (found again in "${moment}")`,
+          `appears more than once — an action is either starting or ending, not both (found again in "${moment}"). Send it ONCE in the list it belongs in: a repaired action replaces every copy of its id. Do NOT withdraw it — this action must be answered this tick`,
         ]);
         continue;
       }
@@ -1265,9 +1323,40 @@ export function normalizeRawResolution(
   } as RawTickResolution;
 }
 
+/**
+ * The withdrawals in this repair that {@link applyRepair} will refuse, because
+ * the action must be answered this tick. Separate from the merge so the caller
+ * can SAY so in the next round's feedback: a refusal the model is not told
+ * about is a correction it will make again.
+ */
+export function refusedWithdrawals(
+  repair: RawResolutionRepair,
+  protectedActionIds: ReadonlySet<string>
+): string[] {
+  const out = new Set<string>();
+  for (const moment of ["starting", "ending"] as const) {
+    for (const item of normalizeList<{ actionId?: string; remove?: boolean }>(
+      repair[moment],
+      `repair.${moment}`
+    )) {
+      if (
+        item?.remove === true &&
+        typeof item.actionId === "string" &&
+        protectedActionIds.has(item.actionId)
+      ) {
+        out.add(item.actionId);
+      }
+    }
+  }
+  return [...out];
+}
+
 export function applyRepair(
   raw: RawTickResolution,
-  repair: RawResolutionRepair
+  repair: RawResolutionRepair,
+  /** Actions the trigger requires an answer for. A withdrawal aimed at one of
+   *  these is refused rather than obeyed — see the note in the action merge. */
+  protectedActionIds: ReadonlySet<string> = new Set()
 ): RawTickResolution {
   // One shape for everything: an array whose items carry their own address.
   const patchList = <T>(
@@ -1310,33 +1399,82 @@ export function applyRepair(
   // in is itself the decision, so a repair that moves one between moments has
   // to drop it from the other. Otherwise "this belongs in ending" would
   // leave the wrong entry behind and the next round would reject both.
+  //
+  // Two rules make the id the whole address. A replacement collapses EVERY
+  // copy of that id into the one sent: a submission that answered the same
+  // action twice used to be unrepairable, because replacing hit the first
+  // copy and the second went on being the duplicate the error complained
+  // about — three rounds of correct-looking repairs in one measured tick, and
+  // the resolution dropped anyway. And `remove: true` withdraws the id from
+  // both lists, which is the only way to take back an answer to something the
+  // trigger never asked about.
   const base = normalizeRawResolution(raw);
-  const moved = new Set<string>();
   const repaired = {
     starting: [...(base.starting ?? [])],
     ending: [...(base.ending ?? [])],
   };
+  const touched = new Set<string>();
+  const withdrawn = new Set<string>();
+  /** actionId → the entry that survives, and the list it belongs in. */
+  const kept = new Map<
+    string,
+    { moment: "starting" | "ending"; entry: unknown }
+  >();
   for (const moment of ["starting", "ending"] as const) {
-    for (const replacement of normalizeList<{ actionId: string }>(
+    for (const item of normalizeList<{ actionId: string; remove?: boolean }>(
       repair[moment],
       `repair.${moment}`
     )) {
-      moved.add(replacement.actionId);
-      const list = repaired[moment] as Array<{ actionId: string }>;
-      const index = list.findIndex((a) => a.actionId === replacement.actionId);
-      if (index >= 0) list[index] = replacement;
-      else list.push(replacement as never);
+      if (typeof item?.actionId !== "string") continue;
+      touched.add(item.actionId);
+      if (item.remove === true) {
+        // Withdrawal is for an entry that should never have been sent — an
+        // answer to something the trigger is not resolving. A TRIGGERING
+        // action cannot be withdrawn: it must be answered this tick, and
+        // obeying the removal only turns "you answered this twice" into "you
+        // did not answer this at all". Measured: told an action appeared in
+        // both lists, the model withdrew it, was told it was unanswered, put
+        // it back in both, and the tick died three rounds later.
+        if (protectedActionIds.has(item.actionId)) {
+          // Refuse the withdrawal — but only forget that the id was touched
+          // when this repair offered nothing else for it. A repair that sends
+          // BOTH a replacement and a removal for one action used to leave the
+          // id untouched while its replacement still waited in `kept`: the
+          // copies already in the lists were kept as-is AND the replacement
+          // was appended, so every round added one more copy of the very
+          // action the errors were complaining about.
+          if (!kept.has(item.actionId)) touched.delete(item.actionId);
+          continue;
+        }
+        withdrawn.add(item.actionId);
+        kept.delete(item.actionId);
+        continue;
+      }
+      withdrawn.delete(item.actionId);
+      const { remove: _remove, ...entry } = item;
+      kept.set(item.actionId, { moment, entry });
     }
   }
   for (const moment of ["starting", "ending"] as const) {
-    const sentHere = new Set(
-      normalizeList<{ actionId: string }>(repair[moment], moment).map(
-        (a) => a.actionId
-      )
-    );
-    repaired[moment] = (repaired[moment] as Array<{ actionId: string }>).filter(
-      (a) => !moved.has(a.actionId) || sentHere.has(a.actionId)
-    ) as never;
+    const list = repaired[moment] as Array<{ actionId: string }>;
+    const seen = new Set<string>();
+    repaired[moment] = list.flatMap((existing) => {
+      const id = existing.actionId;
+      if (!touched.has(id)) return [existing];
+      const replacement = kept.get(id);
+      // Withdrawn, moved to the other list, or a second copy of an id whose
+      // replacement has already landed: all three leave nothing here.
+      if (replacement?.moment !== moment || seen.has(id)) return [];
+      seen.add(id);
+      return [replacement.entry as typeof existing];
+    }) as never;
+    // An id the submission never carried in this list appends here.
+    for (const [id, { moment: target, entry }] of kept) {
+      if (target === moment && !seen.has(id)) {
+        seen.add(id);
+        (repaired[moment] as unknown[]).push(entry);
+      }
+    }
   }
 
   return {
@@ -1411,6 +1549,31 @@ function occurrenceLocationFromActor(
       ?.map((id) => lookup.actionById.get(id)?.command.actorId)
       .find((id): id is string => id !== undefined);
   return actor ? lookup.characterSceneIds.get(actor) : undefined;
+}
+
+/** The ending's facts with the actor's verbatim line placed first, when the
+ *  command carried one. The Engine's own facts describe everything else the
+ *  moment contained — how it was said, what the body did, what followed. */
+function withSpokenWords(
+  entry: RawActionEnd,
+  lookup: Lookup
+): RawOccurrence["facts"] {
+  const facts = entry.occurrence?.facts ?? [];
+  const command = lookup.actionById.get(entry.actionId)?.command;
+  const spoken = command?.utterance?.trim();
+  if (!command || !spoken) return facts;
+  return [
+    {
+      // Typed apart from `speech` on purpose: `speech` is the Engine writing
+      // ABOUT what was said, `utterance` is the words themselves, and the
+      // renderer has to treat the two differently — one it retells, one it
+      // may only quote.
+      type: "utterance",
+      content: spoken,
+      entityRefs: [{ kind: "character" as const, id: command.actorId }],
+    },
+    ...facts,
+  ];
 }
 
 export function finalizeResolution(
@@ -1542,7 +1705,18 @@ export function finalizeResolution(
     ...(raw.occurrences ?? []).filter((o): o is RawOccurrence => o != null),
     ...(raw.ending ?? [])
       .filter((e) => e?.occurrence)
-      .map((e) => ({ ...e.occurrence, sourceActionIds: [e.actionId] })),
+      .map((e) => ({
+        ...e.occurrence,
+        // The words the actor CHOSE, carried through verbatim. `utterance` is
+        // the one part of a command that is already objective — it is what
+        // anyone in earshot hears, character for character — so nothing gets
+        // to restate it. Before this, the Engine wrote a third-person summary
+        // of the line ("Manny's opening question hangs in the air") and the
+        // renderer then re-imagined that summary for each listener: two
+        // rewrites, and the actor's own diction never reached anyone.
+        facts: withSpokenWords(e, lookup),
+        sourceActionIds: [e.actionId],
+      })),
   ];
 
   // Settled here, after the fold, so standalone occurrences and endings' own

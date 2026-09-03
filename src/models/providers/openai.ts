@@ -1,6 +1,7 @@
 // src/models/providers/openai.ts
 
 import OpenAI from "openai";
+import { parseJsonResponse } from "../../engine/shared/jsonParse.js";
 import { getEndpoint } from "../configuration.js";
 import { normalizeUsageMetadata } from "../tokenUsage.js";
 import { ModelProviderName } from "../types.js";
@@ -71,6 +72,36 @@ function toOpenAIMessage(
       .map((p) => (p.kind === "text" ? p.text : ""))
       .join(""),
   };
+}
+
+/**
+ * Read a provider's tool-call argument string. A bare `JSON.parse` is not
+ * enough: models emit trailing commas, bare newlines inside strings and, when
+ * a generation stops early, an unclosed object — `parseJsonResponse` repairs
+ * all three, and the engine already reads model JSON through it elsewhere.
+ *
+ * A string that survives none of that is reported, never swallowed: `args`
+ * stays empty but `unreadableArgs` says so, and the warning carries enough of
+ * the raw text to see what the provider actually sent.
+ */
+function readToolCallArgs(
+  toolName: string,
+  raw: string | undefined
+): { args: Record<string, unknown>; unreadableArgs?: { rawLength: number } } {
+  const text = raw ?? "";
+  if (text.trim() === "") return { args: {} };
+  try {
+    const parsed = parseJsonResponse<unknown>(text);
+    if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) {
+      return { args: parsed as Record<string, unknown> };
+    }
+  } catch {
+    // Fall through to the report below.
+  }
+  console.warn(
+    `[openai] tool call "${toolName}": ${text.length} characters of arguments could not be read as JSON — head: ${JSON.stringify(text.slice(0, 200))} … tail: ${JSON.stringify(text.slice(-200))}`
+  );
+  return { args: {}, unreadableArgs: { rawLength: text.length } };
 }
 
 export class OpenAIAdapter implements ProviderAdapter {
@@ -189,15 +220,13 @@ export class OpenAIAdapter implements ProviderAdapter {
     const choice = response.choices[0]?.message;
     const toolCalls = (choice?.tool_calls ?? []).flatMap((call) => {
       if (call.type !== "function") return [];
-      let args: Record<string, unknown> = {};
-      try {
-        args = JSON.parse(call.function.arguments || "{}");
-      } catch {
-        // `strict: true` makes this near-impossible, but a malformed argument
-        // string must not take down the whole turn.
-        args = {};
-      }
-      return [{ id: call.id, name: call.function.name, args }];
+      return [
+        {
+          id: call.id,
+          name: call.function.name,
+          ...readToolCallArgs(call.function.name, call.function.arguments),
+        },
+      ];
     });
 
     return {

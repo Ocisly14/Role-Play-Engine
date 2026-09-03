@@ -5,7 +5,7 @@
 // tick's transitions first, live action otherwise), and packages the
 // occurrence slice the controller routed to this perceiver.
 
-import type { EngineAction, Occurrence } from "../../engine/actions/types.js";
+import type { Occurrence } from "../../engine/actions/types.js";
 import type { TickEngine } from "../../engine/core/tickEngine.js";
 import type { TickReport } from "../../engine/core/types.js";
 import type { DynamicGameStateManager } from "../../state/DynamicGameState.js";
@@ -165,21 +165,11 @@ export function resolveOwnAction(
     );
     if (ended) {
       const action = engine.getAction(ended.actionId);
-      const judgement = readJudgement(action);
       return {
         kind: "ended",
         description: action?.command.description ?? "",
         status: ended.to as EndedStatus,
-        ...(judgement || ended.reason
-          ? {
-              outcome: {
-                outcome: judgement?.outcome ?? ended.to,
-                ...((judgement?.reason ?? ended.reason)
-                  ? { reason: judgement?.reason ?? ended.reason }
-                  : {}),
-              },
-            }
-          : {}),
+        ...(ended.reason ? { reason: ended.reason } : {}),
       };
     }
   }
@@ -202,17 +192,4 @@ export function resolveOwnAction(
   }
 
   return { kind: "idle" };
-}
-
-function readJudgement(
-  action: EngineAction | undefined
-): { outcome: string; reason?: string } | undefined {
-  const j = action?.runtime?.judgement as
-    | { outcome?: string; reason?: string }
-    | undefined;
-  if (!j || typeof j.outcome !== "string") return undefined;
-  return {
-    outcome: j.outcome,
-    ...(typeof j.reason === "string" ? { reason: j.reason } : {}),
-  };
 }

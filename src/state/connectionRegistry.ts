@@ -9,8 +9,11 @@
  */
 
 import {
+  type BlockedConnectionLookup,
   type BlockedConnectionNodeRef,
   makeBlockedConnectionKey,
+  parseFeatureEdgeId,
+  resolveBlockedConnectionNodeRef,
 } from "./blockedConnections.js";
 import type { RoadNode } from "./topologyTypes.js";
 import type { DynamicScene } from "./types.js";
@@ -91,13 +94,37 @@ export interface ConnectionEdge {
  * Resolve a connection id to its canonical symmetric edge. Two exit ids that
  * describe the same pair of places (one authored in each direction) resolve
  * to the same `key`.
+ *
+ * Two id languages arrive here, because an edge has two kinds of author. A
+ * `connection.*` id is a passage someone WROTE, and the registry knows where
+ * it leads. A `<featureId>:<a>|<b>` id is a subsystem naming the pair itself
+ * (see `makeFeatureEdgeId`) — weather closing a road, fire closing a doorway —
+ * and there is no authored exit to look up, only two places. Both land on the
+ * same key, which is the point: a road the module authored one exit for is
+ * still one edge when the snow closes it from the other side.
  */
 export function resolveConnectionEdge(
   connectionId: string,
-  registry: ConnectionRegistry
+  registry: ConnectionRegistry,
+  lookup?: BlockedConnectionLookup
 ): ConnectionEdge | null {
   const entry = registry.get(connectionId);
-  if (!entry) return null;
+  if (!entry) {
+    const pair = lookup ? parseFeatureEdgeId(connectionId) : null;
+    if (!pair) return null;
+    // Both ends must be real places. An unknown id is a bug in the voter, and
+    // inventing an edge for it would put a block on a key nothing can lift.
+    const a = resolveBlockedConnectionNodeRef(
+      pair.a,
+      lookup as BlockedConnectionLookup
+    );
+    const b = resolveBlockedConnectionNodeRef(
+      pair.b,
+      lookup as BlockedConnectionLookup
+    );
+    if (!a || !b) return null;
+    return { key: makeBlockedConnectionKey(a, b), a, b };
+  }
   const a: BlockedConnectionNodeRef = {
     type: entry.ownerKind,
     id: entry.ownerId,

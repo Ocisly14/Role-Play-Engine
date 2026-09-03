@@ -11,6 +11,7 @@
 //   4. `initialState` seeds the DGSM bucket with default values.
 // Task 11 will delete fireFeature.ts; until then both files coexist.
 
+import { makeFeatureEdgeId } from "../../state/blockedConnections.js";
 import type { FeatureReadContext } from "../core/featureReadContext.js";
 import type { SceneCondition, StateChange } from "../core/types.js";
 import type { AnchorSubsystem } from "./types.js";
@@ -160,9 +161,10 @@ function buildAftermathCondition(totalBurnMinutes: number): SceneCondition {
 
 /**
  * Stable, order-independent connection vote id for a scene/topology pair.
+ * Minted by the shared helper the Applier's resolver reads.
  */
 function fireConnectionIdFor(a: string, b: string): string {
-  return a <= b ? `fire:${a}|${b}` : `fire:${b}|${a}`;
+  return makeFeatureEdgeId(FEATURE_ID, a, b);
 }
 
 /**

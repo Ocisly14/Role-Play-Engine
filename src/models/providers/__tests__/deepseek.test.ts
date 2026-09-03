@@ -82,11 +82,64 @@ describe("DeepSeek wire mapping", () => {
     expect(JSON.stringify(toWireTool(tool))).not.toContain("strict");
   });
 
-  it("survives a malformed argument string instead of losing the turn", () => {
+  it("repairs an argument string the model left broken", () => {
+    // Cut off mid-object, trailing comma, raw newline in a string: the three
+    // ways a long tool call actually breaks. All three are readable.
+    expect(
+      readToolCalls([
+        {
+          id: "c1",
+          type: "function",
+          function: { name: "act", arguments: "{" },
+        },
+      ])
+    ).toEqual([{ id: "c1", name: "act", args: {} }]);
+    expect(
+      readToolCalls([
+        {
+          id: "c2",
+          type: "function",
+          function: { name: "act", arguments: '{"a": 1, "b": [2, 3,],}' },
+        },
+      ])[0].args
+    ).toEqual({ a: 1, b: [2, 3] });
+    expect(
+      readToolCalls([
+        {
+          id: "c3",
+          type: "function",
+          function: { name: "act", arguments: '{"reason": "line\nbreak"}' },
+        },
+      ])[0].args
+    ).toEqual({ reason: "line\nbreak" });
+  });
+
+  it("reports an argument string it cannot read, rather than passing off {}", () => {
+    // Silently swallowing this is what let a quarter of one run's engine calls
+    // arrive as empty submissions: the model was told it had answered nothing,
+    // when what had actually happened was that nobody could read its answer.
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
     const calls = readToolCalls([
-      { id: "c1", type: "function", function: { name: "act", arguments: "{" } },
+      {
+        id: "c1",
+        type: "function",
+        function: { name: "submit_resolution", arguments: "I'll submit now." },
+      },
     ]);
-    expect(calls).toEqual([{ id: "c1", name: "act", args: {} }]);
+    expect(calls[0].args).toEqual({});
+    expect(calls[0].unreadableArgs).toEqual({ rawLength: 16 });
+    expect(warn).toHaveBeenCalledWith(
+      expect.stringContaining("could not be read as JSON")
+    );
+    warn.mockRestore();
+  });
+
+  it("treats an empty argument string as an empty call, not a broken one", () => {
+    const calls = readToolCalls([
+      { id: "c1", type: "function", function: { name: "act", arguments: "" } },
+    ]);
+    expect(calls[0].args).toEqual({});
+    expect(calls[0].unreadableArgs).toBeUndefined();
   });
 
   it("joins a gateway base onto the path without doubling the slash", () => {
@@ -100,6 +153,14 @@ describe("DeepSeek wire mapping", () => {
     );
     expect(completionsUrl(undefined)).toBe(
       "https://api.deepseek.com/v1/chat/completions"
+    );
+    // A base given without the version segment gets one rather than 404ing on
+    // every call.
+    expect(completionsUrl("https://gateway.internal")).toBe(
+      "https://gateway.internal/v1/chat/completions"
+    );
+    expect(completionsUrl("https://gateway.internal/v2")).toBe(
+      "https://gateway.internal/v2/chat/completions"
     );
   });
 
@@ -242,6 +303,54 @@ describe("DeepSeekAdapter", () => {
         content: [{ kind: "text", text: "x" }],
       })
     ).rejects.toThrow(/DEEPSEEK_API_KEY/);
+  });
+
+  it("sends a max_tokens even when the caller names none", async () => {
+    // DeepSeek's own default is 4096 — a full world resolution runs off the
+    // end of it and comes back as half-written JSON.
+    const calls = stubFetch({ choices: [{ message: { content: "hi" } }] });
+    await adapter.chat({
+      modelName: "deepseek-chat",
+      content: [{ kind: "text", text: "hello" }],
+    });
+    expect(calls[0].body.max_tokens).toBe(8192);
+  });
+
+  it("says so when the answer was cut at the output limit", async () => {
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    stubFetch({
+      choices: [{ message: { content: "half a th" }, finish_reason: "length" }],
+    });
+    await adapter.chat({
+      modelName: "deepseek-chat",
+      content: [{ kind: "text", text: "hello" }],
+      maxOutputTokens: 64,
+    });
+    expect(warn).toHaveBeenCalledWith(expect.stringContaining("cut off"));
+    warn.mockRestore();
+  });
+
+  it("throws on a 200 that carries no completion at all", async () => {
+    stubFetch({ choices: [] });
+    await expect(
+      adapter.chat({
+        modelName: "deepseek-chat",
+        content: [{ kind: "text", text: "hello" }],
+      })
+    ).rejects.toThrow(/no completion/);
+  });
+
+  it("names an image input instead of dropping it", async () => {
+    stubFetch({ choices: [{ message: { content: "hi" } }] });
+    await expect(
+      adapter.chat({
+        modelName: "deepseek-chat",
+        content: [
+          { kind: "text", text: "what is this" },
+          { kind: "image", data: "x", mimeType: "image/png" } as never,
+        ],
+      })
+    ).rejects.toThrow(/Image inputs/);
   });
 
   it("refuses to embed instead of returning an empty vector", async () => {

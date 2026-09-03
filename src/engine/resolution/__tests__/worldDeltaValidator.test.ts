@@ -21,6 +21,7 @@ import {
   finalizeResolution,
   normalizeList,
   normalizeRawResolution,
+  refusedWithdrawals,
   resolutionWorklist,
   validateRawResolution,
 } from "../worldDeltaValidator.js";
@@ -380,6 +381,122 @@ describe("validateRawResolution — outcome and the bar", () => {
     expect(text(errors)).toContain("endingNeedsOutcome");
   });
 
+  it("accepts replacedBy when it names the command that cut the action short", () => {
+    // The model kept inventing a field for this (`replaces: true`,
+    // `replacesActionIds: []`) and, with no schema enforcement on DeepSeek,
+    // the invention broke the whole submission's JSON. Now there is one
+    // legal field, and it must point at the real successor.
+    const context = makeContext({
+      newCommands: [
+        command({
+          commandId: "next",
+          actorId: "npc_2",
+          replacesActionId: "action_live",
+        }),
+      ],
+      activeActions: [activeAction()],
+      triggerActionIds: ["action_live", "action_next"],
+    });
+    const right = validateRawResolution(
+      {
+        starting: [
+          start({ actionId: "action_next", resolvedDurationTicks: 1 }),
+        ],
+        ending: [end({ replacedBy: "action_next" })],
+      },
+      context
+    );
+    expect(text(right)).not.toContain("replacedBy");
+
+    const wrong = validateRawResolution(
+      {
+        starting: [
+          start({ actionId: "action_next", resolvedDurationTicks: 1 }),
+        ],
+        ending: [end({ replacedBy: "action_elsewhere" })],
+      },
+      context
+    );
+    expect(text(wrong)).toContain(
+      'the command that replaced this action is "action_next"'
+    );
+  });
+
+  it("refuses replacedBy on an action nothing replaced", () => {
+    const errors = validateRawResolution(
+      { ending: [end({ replacedBy: "action_c1" })] },
+      runningContext()
+    );
+    expect(text(errors)).toContain("was not cut short by a new command");
+  });
+
+  it("refuses a fact the model typed as an utterance", () => {
+    // Told that code carries the spoken line in for it, the model wrote a
+    // POINTER at the line — content "action_e2de4d90_utterance" — and four
+    // characters were handed that as the thing they heard.
+    const errors = validateRawResolution(
+      {
+        ending: [
+          end({
+            occurrence: {
+              facts: [
+                { type: "utterance", content: "action_e2de4d90_utterance" },
+              ],
+              participants: [{ characterId: "npc_1", role: "actor" }],
+              perceiverCharacterIds: ["npc_1"],
+            },
+          }),
+        ],
+      },
+      runningContext()
+    );
+    expect(text(errors)).toContain('"utterance" is not a type you write');
+  });
+
+  it("takes no outcome when every fact is speech", () => {
+    // Talk is not an attempt. A question asked is a question asked, and
+    // whether it gets answered belongs to whoever answers it — next tick, as
+    // their own action.
+    const spoken = (): RawActionEnd["occurrence"] => ({
+      facts: [{ type: "speech", content: "he asks where they came from" }],
+      participants: [{ characterId: "npc_1", role: "actor" }],
+      perceiverCharacterIds: ["npc_1"],
+    });
+    const clean = validateRawResolution(
+      { ending: [end({ outcome: undefined, occurrence: spoken() })] },
+      runningContext()
+    );
+    expect(text(clean)).not.toContain("outcome");
+
+    const withOutcome = validateRawResolution(
+      { ending: [end({ outcome: "failure", occurrence: spoken() })] },
+      runningContext()
+    );
+    expect(text(withOutcome)).toContain("nothing can have failed");
+  });
+
+  it("still requires outcome when the moment was more than talk", () => {
+    const errors = validateRawResolution(
+      {
+        ending: [
+          end({
+            outcome: undefined,
+            occurrence: {
+              facts: [
+                { type: "speech", content: "he asks for the cup" },
+                { type: "action_result", content: "the cup changes hands" },
+              ],
+              participants: [{ characterId: "npc_1", role: "actor" }],
+              perceiverCharacterIds: ["npc_1"],
+            },
+          }),
+        ],
+      },
+      runningContext()
+    );
+    expect(text(errors)).toContain("carried no check");
+  });
+
   it("refuses outcome when a check already decided it", () => {
     const errors = validateRawResolution(
       { ending: [end({ outcome: "success" })] },
@@ -573,6 +690,66 @@ describe("finalizeResolution", () => {
     expect(resolution.occurrences[0].locationId).toBe("SCN_1");
   });
 
+  it("carries the actor's own words through verbatim, ahead of the Engine's facts", () => {
+    // The words a character chose are the one part of a command that is
+    // already objective. Before this they were summarised by the Engine and
+    // then re-imagined by the renderer, and the actor's own diction reached
+    // nobody.
+    const spoken = "Eh——你们哪边的，兄弟？";
+    const context = makeContext({
+      newCommands: [],
+      activeActions: [
+        activeAction({
+          command: command({
+            commandId: "live",
+            actorId: "npc_2",
+            utterance: spoken,
+          }),
+        }),
+      ],
+      triggerActionIds: ["action_live"],
+    });
+    const raw: RawTickResolution = {
+      ending: [
+        {
+          actionId: "action_live",
+          reason: "he puts the question to the room",
+          occurrence: {
+            facts: [
+              { type: "speech", content: "he asks it lightly, grinning" },
+            ],
+            participants: [{ characterId: "npc_2", role: "actor" }],
+            perceiverCharacterIds: ["npc_2"],
+          },
+        },
+      ],
+    };
+    const { resolution } = finalizeResolution(raw, context);
+    const facts = resolution.occurrences[0].facts;
+    expect(facts[0].content).toBe(spoken);
+    // Typed apart from the Engine's own `speech` fact: one is quoted, the
+    // other is retold.
+    expect(facts[0].type).toBe("utterance");
+    expect(facts[1].type).toBe("speech");
+    expect(facts[1].content).toContain("grinning");
+  });
+
+  it("adds nothing when the command carried no words", () => {
+    const raw: RawTickResolution = {
+      starting: [start({ resolvedDurationTicks: 1 })],
+      occurrences: [
+        {
+          sourceActionIds: [ACTION_ID],
+          facts: [{ type: "action_result", content: "the latch gives" }],
+          participants: [{ characterId: "npc_1", role: "actor" }],
+          perceiverCharacterIds: ["npc_1"],
+        },
+      ],
+    };
+    const { resolution } = finalizeResolution(raw, makeContext({}));
+    expect(resolution.occurrences[0].facts).toHaveLength(1);
+  });
+
   it("derives the lifecycle and the wake time, and assigns ids", () => {
     const raw: RawTickResolution = {
       starting: [
@@ -652,6 +829,38 @@ describe("finalizeResolution", () => {
       [ACTION_ID]: "active",
       action_live: "interrupted",
     });
+  });
+});
+
+describe("an entry in the wrong list gets one instruction, not a review", () => {
+  it("reports only the misfiling when a queued action is sent as an ending", () => {
+    // Reported alongside the field checks, "this should not be in ending" and
+    // "your ending is missing its outcome" are both obeyed — which puts the
+    // action in starting AND leaves the ending in place. That is the
+    // duplicate it started as, and it cost a measured tick three rounds and
+    // its whole resolution.
+    const errors = validateRawResolution(
+      {
+        ending: [
+          {
+            actionId: ACTION_ID,
+            reason: "",
+            occurrence: occurrence(),
+          } as never,
+        ],
+      },
+      makeContext({})
+    );
+    const aboutTheAction = errors.filter(
+      (e) => e.target.kind === "action" && e.target.actionId === ACTION_ID
+    );
+    expect(aboutTheAction).toHaveLength(1);
+    expect(aboutTheAction[0].message).toContain("has not started yet");
+    // The two that contradicted it: both demand the misfiled ending be
+    // completed rather than moved.
+    const all = text(errors);
+    expect(all).not.toContain('"outcome" is required');
+    expect(all).not.toContain("an ending requires a reason");
   });
 });
 
@@ -764,6 +973,149 @@ describe("applyRepair — one shape for every field", () => {
     expect(out.starting).toHaveLength(0);
     expect(out.ending).toHaveLength(1);
     expect(out.ending?.[0].actionId).toBe(ACTION_ID);
+  });
+
+  it("collapses every copy of an action the repair replaces", () => {
+    // A submission that answered one action twice used to be unrepairable:
+    // the replacement hit the first copy and the second went on being the
+    // duplicate the error complained about, round after round.
+    const twice: RawTickResolution = {
+      ending: [
+        {
+          actionId: ACTION_ID,
+          outcome: "partial",
+          reason: "the real ending",
+          occurrence: occurrence(),
+        },
+        {
+          actionId: ACTION_ID,
+          outcome: "failure",
+          reason: "replaced by successor",
+          occurrence: occurrence(),
+        },
+      ],
+    };
+    const out = applyRepair(twice, {
+      ending: [
+        {
+          actionId: ACTION_ID,
+          outcome: "partial",
+          reason: "the one that stands",
+          occurrence: occurrence(),
+        },
+      ],
+    });
+    expect(out.ending).toHaveLength(1);
+    expect(out.ending?.[0].reason).toBe("the one that stands");
+  });
+
+  it("withdraws an action from both lists with remove", () => {
+    const out = applyRepair(base(), {
+      starting: [{ actionId: ACTION_ID, remove: true }],
+    });
+    expect(out.starting).toHaveLength(0);
+    expect(out.ending ?? []).toHaveLength(0);
+  });
+
+  it("withdraws every copy, and carries no remove flag into what stays", () => {
+    const twice: RawTickResolution = {
+      starting: [start(), start()],
+      ending: [
+        {
+          actionId: "action_other",
+          outcome: "success",
+          reason: "untouched",
+          occurrence: occurrence(),
+        },
+      ],
+    };
+    const out = applyRepair(twice, {
+      ending: [{ actionId: ACTION_ID, remove: true }],
+      starting: [{ actionId: ACTION_ID, remove: true }],
+    });
+    expect(out.starting).toHaveLength(0);
+    expect(out.ending).toHaveLength(1);
+    expect(out.ending?.[0].actionId).toBe("action_other");
+    expect(out.ending?.[0]).not.toHaveProperty("remove");
+  });
+
+  it("refuses to withdraw an action the trigger requires an answer for", () => {
+    // Told its action appeared in both lists, the model withdrew it — and the
+    // next round said the action was unanswered. Obeying that removal turns a
+    // duplicate into a hole; the duplicate is the better error to keep.
+    const twice: RawTickResolution = {
+      starting: [start()],
+      ending: [
+        {
+          actionId: ACTION_ID,
+          outcome: "success",
+          reason: "and also ending",
+          occurrence: occurrence(),
+        },
+      ],
+    };
+    const repair = { ending: [{ actionId: ACTION_ID, remove: true }] } as never;
+    const required = new Set([ACTION_ID]);
+
+    expect(refusedWithdrawals(repair, required)).toEqual([ACTION_ID]);
+    const out = applyRepair(twice, repair, required);
+    expect(out.starting).toHaveLength(1);
+    expect(out.ending).toHaveLength(1);
+  });
+
+  it("does not multiply an action when a repair both replaces and withdraws it", () => {
+    // Measured: the model sent a replacement AND a `remove` for the same id.
+    // The removal was refused (the trigger needs an answer), which un-marked
+    // the id as touched — so the copies already in the lists survived and the
+    // replacement was appended on top. Each round added one more copy of the
+    // action whose duplication was the complaint.
+    const twice: RawTickResolution = {
+      starting: [start()],
+      ending: [
+        {
+          actionId: ACTION_ID,
+          outcome: "success",
+          reason: "and also ending",
+          occurrence: occurrence(),
+        },
+      ],
+    };
+    const out = applyRepair(
+      twice,
+      {
+        starting: [{ actionId: ACTION_ID, remove: true }],
+        ending: [
+          {
+            actionId: ACTION_ID,
+            outcome: "partial",
+            reason: "the one that stands",
+            occurrence: occurrence(),
+          },
+        ],
+      } as never,
+      new Set([ACTION_ID])
+    );
+    expect(out.starting).toHaveLength(0);
+    expect(out.ending).toHaveLength(1);
+    expect(out.ending?.[0].reason).toBe("the one that stands");
+  });
+
+  it("still withdraws an action the trigger does not require", () => {
+    const out = applyRepair(
+      base(),
+      { starting: [{ actionId: ACTION_ID, remove: true }] } as never,
+      new Set(["action_someone_else"])
+    );
+    expect(out.starting).toHaveLength(0);
+  });
+
+  it("removing an action the submission never sent changes nothing", () => {
+    const out = applyRepair(base(), {
+      ending: [{ actionId: "action_never_sent", remove: true }],
+    });
+    expect(out.starting).toHaveLength(1);
+    expect(out.starting?.[0].actionId).toBe(ACTION_ID);
+    expect(out.ending ?? []).toHaveLength(0);
   });
 });
 

@@ -17,8 +17,13 @@ vi.mock("../../../models/index.js", async () => {
   return { ...actual, generateToolCalls };
 });
 
-const { renderContext, renderContextSegments, renderWorldGraph, resolveTick } =
-  await import("../worldActionEngine.js");
+const {
+  exitsFromHere,
+  renderContext,
+  renderContextSegments,
+  renderWorldGraph,
+  resolveTick,
+} = await import("../worldActionEngine.js");
 
 const cmd: ActionCommand = {
   commandId: "c1",
@@ -143,6 +148,65 @@ function makeDeps() {
   return { dgsm: {} as DynamicGameStateManager, codeTools };
 }
 
+describe("exitsFromHere — code's passability verdict beside the command", () => {
+  // The model read "lodge_drive ↔ porch is closed" as "the porch is closed"
+  // and ended a walk from the greatroom to the porch as weather-blocked. The
+  // greatroom's door onto the porch was open; only the drive's was shut.
+  const state = {
+    characters: [{ id: "npc_joel", locationId: "SCN_greatroom" }],
+    places: [
+      {
+        id: "SCN_greatroom",
+        connections: [
+          { connectionId: "connection.greatroom.porch", targetId: "SCN_porch" },
+          {
+            connectionId: "connection.greatroom.upstairs",
+            targetId: "SCN_upstairs",
+            hidden: true,
+          },
+        ],
+      },
+      {
+        id: "SCN_drive",
+        connections: [
+          { connectionId: "connection.drive.porch", targetId: "SCN_porch" },
+        ],
+      },
+    ],
+    blockedEdges: [
+      {
+        connectionId: "connection.drive.porch",
+        from: "SCN_drive",
+        to: "SCN_porch",
+        reason: "weather-block",
+      },
+    ],
+  };
+  const ctx = { state } as never;
+
+  it("marks the greatroom's own door open even though the porch appears in a blocked edge", () => {
+    expect(exitsFromHere(ctx, "npc_joel")).toEqual([
+      { to: "SCN_porch", open: true },
+    ]);
+  });
+
+  it("marks the drive's door closed, with the reason, in either direction", () => {
+    const fromDrive = {
+      state: {
+        ...state,
+        characters: [{ id: "npc_x", locationId: "SCN_drive" }],
+      },
+    } as never;
+    expect(exitsFromHere(fromDrive, "npc_x")).toEqual([
+      { to: "SCN_porch", open: false, reason: "weather-block" },
+    ]);
+  });
+
+  it("returns nothing for an actor whose place is not in the snapshot", () => {
+    expect(exitsFromHere(ctx, "npc_nobody")).toBeUndefined();
+  });
+});
+
 describe("resolveTick session loop", () => {
   // Braces matter: `() => generateToolCalls.mockReset()` implicitly returns
   // the mock, and vitest treats a function returned from a hook as a teardown
@@ -150,6 +214,31 @@ describe("resolveTick session loop", () => {
   // implementation the test installed.
   beforeEach(() => {
     generateToolCalls.mockReset();
+  });
+
+  it("tells the model it sent nothing when the submission is an empty object", async () => {
+    // `{}` is legal JSON, so it used to reach the validator and come back as
+    // "you did not answer any of these actions" — a correction for a mistake
+    // the model had not made. The empty call gets its own answer.
+    generateToolCalls
+      .mockResolvedValueOnce(
+        turn([{ id: "t1", name: "submit_resolution", args: {} }])
+      )
+      .mockResolvedValueOnce(
+        turn([{ id: "t2", name: "submit_resolution", args: validSubmission }])
+      );
+
+    const result = await resolveTick(makeContext(), makeDeps());
+    expect(result.ok).toBe(true);
+
+    const secondRequest = generateToolCalls.mock.calls[1][0];
+    const feedback = [...secondRequest.messages]
+      .reverse()
+      .find((m) => m.role === "tool");
+    const content =
+      feedback && feedback.role === "tool" ? feedback.results[0].content : "";
+    expect(content).toContain("NO arguments");
+    expect(content).not.toContain("was not answered");
   });
 
   it("answers code-tool calls, then accepts the lone submission", async () => {

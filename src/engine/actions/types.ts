@@ -108,7 +108,7 @@ export interface ActionReceipt {
   reason?: string;
 }
 
-// ==================== Skill roll & judgement ====================
+// ==================== Skill roll & check ====================
 
 export const SKILL_SUCCESS_LEVELS = [
   "critical",
@@ -136,35 +136,6 @@ export interface SkillRollRecord {
   roll: number;
   successLevel: SkillSuccessLevel;
 }
-
-export type ActionOutcome =
-  | "success"
-  | "partial"
-  | "failure"
-  | "blocked"
-  | "continue";
-
-/** Engine-owned verdict on one action. `direct` when no skill was declared
- *  (no hidden roll ever happens); `skill_assessed` when a roll already exists
- *  and the Engine judges applicability, required level and final outcome. */
-export type ActionJudgement =
-  | {
-      kind: "direct";
-      outcome: ActionOutcome;
-      reason: string;
-    }
-  | {
-      kind: "skill_assessed";
-      skillId: string;
-      rollId: string;
-      applicability: "accepted" | "rejected";
-      requiredLevel?: "regular" | "hard" | "extreme";
-      checkType?: "single" | "opposed";
-      targetIds: string[];
-      opposedDefenseIds?: string[];
-      outcome: ActionOutcome;
-      reason: string;
-    };
 
 // ==================== Engine action lifecycle ====================
 

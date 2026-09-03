@@ -3,6 +3,7 @@ import type {
   FeatureEvent,
   SceneCondition,
 } from "../core/types.js";
+import type { WeatherType } from "../subsystem/weather.js";
 
 // ─── Top-level Event ────────────────────────────────────────────
 export interface ScriptedEvent {
@@ -160,6 +161,17 @@ export type Effect =
       predicate: { featureId: string };
     }
   // Direct (no filter)
+  | {
+      /** Put a weather region into a given state, as a natural transition
+       *  would leave it: the `[Weather]` conditions are rewritten and the
+       *  connection votes re-cast, so easing a storm reopens the roads it
+       *  closed rather than waiting on the next 120-minute transition check.
+       *  `regionId` is the one the module's weatherPresets named. */
+      kind: "weather.set";
+      regionId: string;
+      weatherType: WeatherType;
+      intensity: number;
+    }
   | {
       kind: "connection.setBlock";
       connectionId: string;

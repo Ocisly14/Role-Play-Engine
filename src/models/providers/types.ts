@@ -76,6 +76,17 @@ export interface ToolCallRecord {
   id: string;
   name: string;
   args: Record<string, unknown>;
+  /**
+   * Set when the provider sent an argument string that could not be read as
+   * JSON, even after repair. `args` is then `{}` — an EMPTY CALL AND AN
+   * UNREADABLE ONE ARE DIFFERENT EVENTS and a caller that cannot tell them
+   * apart will answer the wrong one. Measured on DeepSeek: a quarter of one
+   * run's engine calls arrived unreadable after spending 500-2700 output
+   * tokens on their arguments, and every one was silently answered as though
+   * the model had submitted an empty resolution — so the model was told it
+   * had failed to answer seven actions it had in fact answered.
+   */
+  unreadableArgs?: { rawLength: number };
 }
 
 /**

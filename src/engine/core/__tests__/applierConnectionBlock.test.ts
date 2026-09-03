@@ -10,11 +10,16 @@ import {
   DynamicGameStateManager,
   initialDynamicGameState,
 } from "../../../state/DynamicGameState.js";
+import {
+  makeFeatureEdgeId,
+  parseFeatureEdgeId,
+} from "../../../state/blockedConnections.js";
 import { type RoadNode, buildTopology } from "../../../state/topologyTypes.js";
 import type { DynamicScene, SceneConnection } from "../../../state/types.js";
 import type { SourcedWorldDelta } from "../../actions/types.js";
 import { findTopologyPath } from "../../shared/pathfinding.js";
 import { Applier } from "../applier.js";
+import type { StateChange } from "../types.js";
 
 // Topology: J_A —R_MAIN(10')— J_B, with a two-road detour J_A —R_A_C(5')—
 // J_C —R_C_B(9')— J_B. S_HOME hangs off J_A with a two-way pair of exit ids.
@@ -152,6 +157,78 @@ describe("connectionBlock lands in state.blockedConnections", () => {
     expect(warnSpy).toHaveBeenCalledWith(
       expect.stringContaining('"connection.nowhere.door" resolves to no edge')
     );
+  });
+});
+
+describe("a subsystem votes on the pair of places, not an authored exit", () => {
+  // Weather closes a road in both directions at once, so it has no authored
+  // exit id to name — it mints `<featureId>:<a>|<b>`. The Applier resolved
+  // votes through the connection registry only, so every one of these was
+  // dropped as "resolves to no edge": snow never closed a road, and nobody
+  // noticed until a run's warnings were counted.
+  const weatherVote = (
+    connectionId: string,
+    blocked: boolean
+  ): StateChange => ({
+    kind: "connection.setBlock",
+    connectionId,
+    blocked,
+    sourceFeatureId: "weather",
+    reason: "weather-block",
+  });
+
+  it("lands on the same canonical edge an authored exit resolves to", () => {
+    const { applier, state, dgsm } = fixture;
+    applier.flush(
+      [weatherVote(makeFeatureEdgeId("weather", "J_A", "R_MAIN"), true)],
+      T,
+      []
+    );
+
+    expect(state.blockedConnections.get("road:R_MAIN::scene:J_A")).toBe(
+      "weather-block"
+    );
+    expect(dgsm.getConnectionBlockReason("J_A", "R_MAIN")).toBe(
+      "weather-block"
+    );
+  });
+
+  it("lifts the block it cast, from either endpoint order", () => {
+    const { applier, state } = fixture;
+    applier.flush(
+      [weatherVote(makeFeatureEdgeId("weather", "R_MAIN", "J_A"), true)],
+      T,
+      []
+    );
+    expect(state.blockedConnections.size).toBe(1);
+
+    applier.flush(
+      [weatherVote(makeFeatureEdgeId("weather", "J_A", "R_MAIN"), false)],
+      T,
+      []
+    );
+    expect(state.blockedConnections.size).toBe(0);
+  });
+
+  it("still drops a pair naming a place that does not exist", () => {
+    const { applier, state } = fixture;
+    applier.flush([weatherVote("weather:J_A|R_NOWHERE", true)], T, []);
+
+    expect(state.blockedConnections.size).toBe(0);
+    expect(warnSpy).toHaveBeenCalledWith(
+      expect.stringContaining('"weather:J_A|R_NOWHERE" resolves to no edge')
+    );
+  });
+
+  it("does not read an authored connection id as a pair", () => {
+    // `connection.ja.rmain` has no "|", so it can only resolve through the
+    // registry — the two id languages never collide.
+    expect(parseFeatureEdgeId("connection.ja.rmain")).toBeNull();
+    expect(parseFeatureEdgeId("weather:J_A|R_MAIN")).toEqual({
+      featureId: "weather",
+      a: "J_A",
+      b: "R_MAIN",
+    });
   });
 });
 

@@ -77,6 +77,12 @@
     },
     "onComplete": [
       {
+        "kind": "weather.set",
+        "regionId": "OUTDOOR",
+        "weatherType": "snow",
+        "intensity": 2
+      },
+      {
         "kind": "scene.removeCondition",
         "sceneFilter": { "op": "is", "sceneId": "SCN_pine_hollow" },
         "predicate": { "featureId": "blizzard" }

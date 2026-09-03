@@ -325,3 +325,127 @@ describe("recurring scripted events", () => {
     expect(run(runner, dgsm, 180 + 1440, "1985-07-09T03:00:00")).toEqual([]);
   });
 });
+
+describe("weather.set — a script easing the storm it raised", () => {
+  // Writing the state bucket alone would leave the "[Weather]" condition and
+  // every road the storm closed exactly as they were until the subsystem's
+  // own transition check came round, 120 in-world minutes later. The effect
+  // therefore goes through the subsystem's own set path.
+  function makeWeatherDgsm(intensity: number) {
+    const dgsm = makeDgsm();
+    dgsm.__scenes.set("SCN_ridge", {
+      items: [],
+      conditions: [],
+      connections: [{ id: "connection.ridge.hollow", targetId: "SCN_hollow" }],
+    } as never);
+    dgsm.__scenes.set("SCN_hollow", {
+      items: [],
+      conditions: [],
+      connections: [{ id: "connection.hollow.ridge", targetId: "SCN_ridge" }],
+    } as never);
+    dgsm.__weather.set("OUTDOOR", {
+      weatherType: "snow",
+      intensity,
+      minutesInState: 40,
+      affectedSceneIds: ["SCN_ridge", "SCN_hollow"],
+    } as never);
+    return dgsm;
+  }
+
+  const eases: ScriptedEvent = {
+    id: "evt_eases",
+    label: "风势转小",
+    fireWhen: { op: "timeOfDay", cmp: "gte", value: "00:00" },
+    onComplete: [
+      {
+        kind: "weather.set",
+        regionId: "OUTDOOR",
+        weatherType: "snow",
+        intensity: 2,
+      },
+    ],
+  };
+
+  it("reopens the roads the blizzard closed, and rewrites the condition", () => {
+    const dgsm = makeWeatherDgsm(5);
+    const out = run(
+      new ScriptedEventRunner([eases]),
+      dgsm,
+      1,
+      "2038-12-06T19:00:00"
+    );
+
+    const set = out.find((c) => c.kind === "feature.setState");
+    expect(set).toMatchObject({
+      featureId: "weather",
+      key: "OUTDOOR",
+      state: { weatherType: "snow", intensity: 2, minutesInState: 0 },
+    });
+    // Every block it casts is a withdrawal: intensity 2 is under the
+    // blocking threshold, so the same vote that shut the road lifts it.
+    const blocks = out.filter((c) => c.kind === "connection.setBlock");
+    expect(blocks.length).toBeGreaterThan(0);
+    expect(blocks.every((b) => (b as { blocked: boolean }).blocked)).toBe(
+      false
+    );
+    // The stale "[Weather] 暴雪" line goes before the new one lands.
+    expect(out.filter((c) => c.kind === "scene.removeCondition")).toHaveLength(
+      2
+    );
+    expect(
+      out.filter(
+        (c) =>
+          c.kind === "scene.addCondition" &&
+          (c as { condition: { featureId: string } }).condition.featureId ===
+            "weather"
+      )
+    ).toHaveLength(2);
+  });
+
+  it("closes them again when a script sets the snow back over the threshold", () => {
+    const dgsm = makeWeatherDgsm(1);
+    const heavier: ScriptedEvent = {
+      ...eases,
+      onComplete: [
+        {
+          kind: "weather.set",
+          regionId: "OUTDOOR",
+          weatherType: "snow",
+          intensity: 5,
+        },
+      ],
+    };
+    const out = run(
+      new ScriptedEventRunner([heavier]),
+      dgsm,
+      1,
+      "2038-12-06T19:00:00"
+    );
+    const blocks = out.filter((c) => c.kind === "connection.setBlock");
+    expect(blocks.length).toBeGreaterThan(0);
+    expect(blocks.every((b) => (b as { blocked: boolean }).blocked)).toBe(true);
+  });
+
+  it("does nothing for a region no preset created", () => {
+    const dgsm = makeWeatherDgsm(5);
+    const elsewhere: ScriptedEvent = {
+      ...eases,
+      onComplete: [
+        {
+          kind: "weather.set",
+          regionId: "UNDERGROUND",
+          weatherType: "snow",
+          intensity: 2,
+        },
+      ],
+    };
+    const out = run(
+      new ScriptedEventRunner([elsewhere]),
+      dgsm,
+      1,
+      "2038-12-06T19:00:00"
+    );
+    expect(out.filter((c) => c.kind === "feature.setState")).toHaveLength(0);
+    expect(out.filter((c) => c.kind === "connection.setBlock")).toHaveLength(0);
+  });
+});

@@ -73,6 +73,14 @@ export interface RawActionEnd {
   /** Revised estimate, when the Engine now knows it ran longer or shorter. */
   resolvedDurationTicks?: number;
   timingReason?: string;
+  /** For an id the trigger lists under `replaced`: the action that cut it
+   *  short — the `starting` entry whose command names this one as
+   *  `replacesActionId`. Optional, and informational: code already knows the
+   *  pair. It exists because the model kept inventing a field to say this
+   *  (`replaces: true`, `replacesActionIds: []`) — it had read the pairing
+   *  in the trigger and had nowhere legal to write it back, and on DeepSeek,
+   *  which enforces no schema, the invention became a syntax error. */
+  replacedBy?: string;
 }
 
 export interface RawSourcedDelta {
@@ -698,6 +706,11 @@ export const submitResolutionTool: ToolSpec = {
               type: "string",
               description: "Optional: why the estimate changed, for the log.",
             },
+            replacedBy: {
+              type: "string",
+              description:
+                "Optional, only for an id the trigger lists under `replaced`: the actionId of the `starting` entry that cut it short. Nothing else marks a replaced ending — do not invent a field for it.",
+            },
           },
           required: ["actionId", "reason", "occurrence"],
           additionalProperties: false,
@@ -764,12 +777,22 @@ export interface RepairAddress {
  *  replacement is re-validated against the real contract after the merge. */
 export type RepairItem<T> = Partial<T> & RepairAddress;
 
+/** Actions are addressed by actionId, never by index, so the only address
+ *  field an action repair item carries is the withdrawal flag. */
+export type ActionRepairItem<T> = Partial<T> & {
+  actionId: string;
+  remove?: boolean;
+};
+
 export interface RawResolutionRepair {
   /** Each replaces the entry with the same actionId in its own list; a new
    *  actionId appends. Moving an action between lists is done by sending it
-   *  in the list it belongs in — the merge drops it from the others. */
-  starting?: RawActionStart[];
-  ending?: RawActionEnd[];
+   *  in the list it belongs in — the merge drops it from the others. An item
+   *  carrying `remove: true` withdraws that actionId from BOTH lists instead:
+   *  the gesture for an entry that should never have been sent, such as an
+   *  answer to an action the trigger is not resolving this tick. */
+  starting?: Array<ActionRepairItem<RawActionStart>>;
+  ending?: Array<ActionRepairItem<RawActionEnd>>;
   characterChanges?: Array<RepairItem<RawCharacterChange>>;
   sceneChanges?: Array<RepairItem<RawSceneChange>>;
   itemChanges?: Array<RepairItem<RawItemChange>>;
@@ -807,6 +830,29 @@ const repairable = (itemSchema: unknown, what: string) => {
   };
 };
 
+/** An action repair item: the submission's shape plus `remove`, with only
+ *  `actionId` required — a withdrawal carries nothing else, and a replacement
+ *  is re-validated against the real contract after the merge. */
+const repairableAction = (itemSchema: unknown) => {
+  const item = itemSchema as {
+    type: string;
+    properties: Record<string, unknown>;
+  };
+  return {
+    ...item,
+    properties: {
+      ...item.properties,
+      remove: {
+        type: "boolean",
+        description:
+          "Withdraw this actionId from both lists. Send nothing else with it.",
+      },
+    },
+    required: ["actionId"],
+    additionalProperties: false,
+  };
+};
+
 export const repairResolutionTool: ToolSpec = {
   name: "repair_resolution",
   // See submitResolutionTool: 67 optional parameters against a limit of 24.
@@ -821,12 +867,14 @@ export const repairResolutionTool: ToolSpec = {
           moment,
           {
             type: "array",
-            description: `Corrected \`${moment}\` entries. Each replaces the one with the same actionId; sending an action here also removes it from the other list, which is how an action moves between moments.`,
-            items: (
-              submitResolutionTool.inputSchema as {
-                properties: Record<string, { items: unknown }>;
-              }
-            ).properties[moment].items,
+            description: `Corrected \`${moment}\` entries. Each replaces the one with the same actionId (every copy of it, if you sent more than one); sending an action here also removes it from the other list, which is how an action moves between moments. \`"remove": true\` beside an actionId withdraws it from both lists instead — use it for an entry that should not have been sent at all.`,
+            items: repairableAction(
+              (
+                submitResolutionTool.inputSchema as {
+                  properties: Record<string, { items: unknown }>;
+                }
+              ).properties[moment].items
+            ),
           },
         ])
       ),

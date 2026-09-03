@@ -12,6 +12,7 @@ import type {
   ScriptedEventStatus,
   TrackerState,
 } from "../scriptedEvents/types.js";
+import { buildWeatherSetChanges } from "../subsystem/weather.js";
 import type { CharacterAction, GameTime, StateChange } from "./types.js";
 
 /**
@@ -434,6 +435,20 @@ export class ScriptedEventRunner {
               });
             }
           }
+          break;
+        }
+        case "weather.set": {
+          // The weather subsystem owns what "being in this weather" means —
+          // the conditions it hangs and the roads it shuts. The runner only
+          // says which weather.
+          out.push(
+            ...buildWeatherSetChanges(
+              effect.regionId,
+              effect.weatherType,
+              effect.intensity,
+              ctx.dgsm
+            )
+          );
           break;
         }
         case "connection.setBlock": {

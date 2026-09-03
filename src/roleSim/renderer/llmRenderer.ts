@@ -93,6 +93,8 @@ viewpoint does NOT know that person's canonical name.
 # Hard rules
 
 - Narrative is ONE paragraph (2-5 sentences). First person ("I"), present tense.
+  Quoted speech does not count against that: a paragraph carrying two spoken
+  lines verbatim is doing its job, not overrunning.
 - The "Occurrences" input lists OBJECTIVE facts of this tick with sensory
   signals (visual/sound/smell/touch/direct). YOU decide what of each the
   viewpoint actually perceives, from the signals, the viewpoint's location
@@ -102,6 +104,18 @@ viewpoint does NOT know that person's canonical name.
 - Never add facts: no entities, actions, outcomes or causes that are not in
   the occurrence facts or scene input. Facts you leave out are simply not
   perceived — that is allowed; inventing is not.
+- **A \`fact (utterance)\` is the exact words someone said. Quote them.**
+  Reproduce the line character for character inside quotation marks, in the
+  language it was spoken — never summarise it, never translate it, never smooth it. 
+  You may leave a whole utterance out if the viewpoint's attention is
+  elsewhere, but what you keep, you keep verbatim.
+  A \`fact (speech)\` is different — that is the Engine describing HOW it was
+  said, and you retell it in your own words like any other fact.
+- **Who heard what is already decided.** An occurrence reaches this viewpoint
+  or it does not; you are only given the ones they perceived. So never write
+  that they missed, half-heard or could not make out something you were given
+  — if they were meant to catch only a murmur, you were handed a fact that
+  says so, and nothing else.
 - Render only what the viewpoint can perceive RIGHT NOW: external sights, sounds,
   smells, touches, plus your own body/mind state. Do NOT mention memory,
   relationships, prior knowledge, or future plans.
@@ -184,7 +198,23 @@ input calls him — a name would be one the viewpoint has not been told.
 
 Right: name the thing in your prose, then the bare id in a bracket after it.
 Nothing to cite? Then write it with no bracket — an entity the actor can see
-but not act on is a normal thing, and inventing a tag for it is not.`;
+but not act on is a normal thing, and inventing a tag for it is not.
+
+# Example — spoken words
+
+Input gives you:
+  Occurrence:
+    fact (utterance): 你们哪边的，兄弟？这鬼天气还骑马巡逻，胆子不小啊。
+    fact (speech): he asks it lightly, grinning, the rifle still in his arms
+    signal: sound
+
+Write:
+  抱枪那个 [stranger_c] 咧着嘴，枪没离怀，冲我们扬了扬下巴:"你们哪边的，
+  兄弟？这鬼天气还骑马巡逻，胆子不小啊。"火在他脸上跳。
+
+The utterance came through character for character, inside quotes, in the
+language it was spoken. The \`speech\` fact — how he said it — was retold in
+the viewpoint's own perception. Never the other way round.`;
 
 /** What the actor can see right now, in the shape the renderer needs: real
  *  entity id → the tag to print. Characters go through `characterHandles`, so
@@ -534,40 +564,31 @@ export async function renderViaLLM(
   // it invented. Observed: `[ITEM_SCN21_3旁的同伴]`, an id with a phrase of
   // narrative welded onto it, which no amount of re-reading the rules would
   // have caught but naming it plainly does.
-  if (bad.length > 0 || identityViolations.length > 0) {
+  // A name bound to a stranger's alias is NOT re-asked. The scrub below fixes
+  // it exactly — the label goes back to the description, the quoted words
+  // stay — and a second model call could only do the same thing worse:
+  // measured, sixteen re-asks in one run (~93k tokens) for a correction the
+  // scrub makes for free, and the re-ask's "replace the name" instruction
+  // pulled against the rule that spoken words are quoted verbatim.
+  if (identityViolations.length > 0) {
     console.warn(
-      `[renderer] ${params.npcId}: rejected output${
-        bad.length > 0
-          ? `; uncitable ${bad.map((t) => `"${t}"`).join(", ")}`
-          : ""
-      }${
-        identityViolations.length > 0
-          ? `; stranger-name binding ${identityViolations.map((v) => `"${v}"`).join(", ")}`
-          : ""
-      } — asking again`
+      `[renderer] ${params.npcId}: stranger-name binding ${identityViolations.map((v) => `"${v}"`).join(", ")} — scrubbing`
+    );
+  }
+  if (bad.length > 0) {
+    console.warn(
+      `[renderer] ${params.npcId}: rejected output; uncitable ${bad.map((t) => `"${t}"`).join(", ")} — asking again`
     );
     narrative = repairNearMissTags(
       await ask(
         [
           "\n\n# Your last attempt was rejected",
-          ...(bad.length > 0
-            ? [
-                `You wrote ${bad.map((t) => `[${t}]`).join(", ")} — not a citable id. A bracket holds an id and NOTHING else: no`,
-                "description, no punctuation, no words of your own, in any language.",
-                "Name the thing in your prose and put the bare id in the bracket after",
-                "it, copied exactly from the address book above — or, if none of them",
-                "is the thing you mean, write it with no bracket at all.",
-              ]
-            : []),
-          ...(identityViolations.length > 0
-            ? [
-                `You attached a canonical name to a stranger alias: ${identityViolations.join(", ")}. This crosses the IDENTITY FIREWALL.`,
-                "A stranger_* tag means the viewpoint does not know that person's name.",
-                "Replace the name with the description on the Person (UNKNOWN) line.",
-                "Do not infer identity from event text, action text, or prior paragraphs.",
-              ]
-            : []),
-          "Rewrite the whole paragraph.",
+          `You wrote ${bad.map((t) => `[${t}]`).join(", ")} — not a citable id. A bracket holds an id and NOTHING else: no`,
+          "description, no punctuation, no words of your own, in any language.",
+          "Name the thing in your prose and put the bare id in the bracket after",
+          "it, copied exactly from the address book above — or, if none of them",
+          "is the thing you mean, write it with no bracket at all.",
+          "Keep every quoted line exactly as it was. Rewrite the whole paragraph.",
         ].join("\n")
       ).then((t) => normalizeTagBrackets(t.trim())),
       tags.allowed,
@@ -576,13 +597,7 @@ export async function renderViaLLM(
   }
 
   const citable = stripUncitableTags(narrative, tags.allowed, params.npcId);
-  const scrubbed = scrubStrangerCanonicalLabels(citable, strangerIdentities);
-  if (scrubbed !== citable) {
-    console.warn(
-      `[renderer] ${params.npcId}: scrubbed canonical name bound to stranger alias`
-    );
-  }
-  return scrubbed;
+  return scrubStrangerCanonicalLabels(citable, strangerIdentities);
 }
 
 /** Three tiers, cut by whether they MOVE — which is not the same as whether
@@ -904,10 +919,9 @@ function formatOwnAction(bundle: PerceivedBundle): string {
     }
     case "ended": {
       const lines = [`Just ${own.status}: "${own.description}"`];
-      if (own.outcome) {
-        const reason = own.outcome.reason ? ` — ${own.outcome.reason}` : "";
+      if (own.reason) {
         lines.push(
-          `Result (objective; render as what the viewpoint experiences): ${own.outcome.outcome}${reason}`
+          `Result (objective; render as what the viewpoint experiences): ${own.reason}`
         );
       }
       return lines.join("\n");
