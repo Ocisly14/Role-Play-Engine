@@ -185,7 +185,11 @@ describe("exitsFromHere — code's passability verdict beside the command", () =
 
   it("marks the greatroom's own door open even though the porch appears in a blocked edge", () => {
     expect(exitsFromHere(ctx, "npc_joel")).toEqual([
-      { to: "SCN_porch", open: true },
+      {
+        connectionId: "connection.greatroom.porch",
+        to: "SCN_porch",
+        open: true,
+      },
     ]);
   });
 
@@ -197,7 +201,12 @@ describe("exitsFromHere — code's passability verdict beside the command", () =
       },
     } as never;
     expect(exitsFromHere(fromDrive, "npc_x")).toEqual([
-      { to: "SCN_porch", open: false, reason: "weather-block" },
+      {
+        connectionId: "connection.drive.porch",
+        to: "SCN_porch",
+        open: false,
+        reason: "weather-block",
+      },
     ]);
   });
 

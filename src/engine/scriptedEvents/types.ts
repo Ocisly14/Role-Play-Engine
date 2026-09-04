@@ -163,9 +163,9 @@ export type Effect =
   // Direct (no filter)
   | {
       /** Put a weather region into a given state, as a natural transition
-       *  would leave it: the `[Weather]` conditions are rewritten and the
-       *  connection votes re-cast, so easing a storm reopens the roads it
-       *  closed rather than waiting on the next 120-minute transition check.
+       *  would leave it: the weather engine re-judges `[Weather]` conditions
+       *  and diffs the passages it previously closed, so easing a storm does
+       *  not wait on the next 120-minute transition check.
        *  `regionId` is the one the module's weatherPresets named. */
       kind: "weather.set";
       regionId: string;
@@ -177,11 +177,9 @@ export type Effect =
       connectionId: string;
       blocked: boolean;
       reason: string;
-      /** Vote identity override. The Applier's block table refcounts on
-       *  (featureId, reason); by default a scripted effect votes as
-       *  `scripted:<event id>`, which a DIFFERENT event cannot withdraw.
-       *  Give the raise-event and the lift-event the same featureId so a
-       *  flood laid by one event can recede by another. */
+      /** Optional source attribution for logs/diagnostics. Connection blocks
+       *  are a single last-writer-wins flag, so this is not ownership and
+       *  does not restrict which later effect may clear the passage. */
       featureId?: string;
     }
   | {

@@ -18,7 +18,7 @@ import type {
 /** Bumped whenever a persisted ActionCommand / EngineAction shape changes
  *  incompatibly. Snapshots carrying a different version are rejected outright
  *  (decision 2026-08-26: no legacy-snapshot compatibility). */
-export const ACTION_SCHEMA_VERSION = 1;
+export const ACTION_SCHEMA_VERSION = 2;
 
 // ==================== Agent-facing references ====================
 

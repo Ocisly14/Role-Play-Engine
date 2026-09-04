@@ -94,6 +94,19 @@ function makeDgsm() {
       const key = [fromId, toId].sort().join("::");
       return blocked.get(key);
     },
+    resolveConnectionEdgeById: (connectionId: string) => {
+      if (
+        connectionId !== "connection.home.ja" &&
+        connectionId !== "connection.ja.home"
+      ) {
+        return null;
+      }
+      return {
+        key: "scene:J_A::scene:S_HOME",
+        a: { type: "scene", id: "S_HOME" },
+        b: { type: "scene", id: "J_A" },
+      };
+    },
     __positions: positions,
     __blocked: blocked,
   } as unknown as DynamicGameStateManager & {
@@ -203,12 +216,12 @@ describe("route-of-waypoints movement", () => {
   });
 });
 
-describe("passBlocked", () => {
+describe("passBlockedConnectionId", () => {
   // A blocked passage is a world fact the runtime enforces at the step that
   // reaches it. The Engine may let ONE walk through — the character climbs
   // the fallen tree, wades the ford — without opening the passage for anyone
-  // else: that is `passBlocked` on this movement, and only this movement.
-  it("stops at a blocked passage unless the Engine let this walk through", () => {
+  // else: that is one exact `passBlockedConnectionId`, consumed at that edge.
+  it("lets one walk cross only the named blocked passage", () => {
     const dgsm = makeDgsm();
     dgsm.__positions.set("npc_1", { type: "scene", sceneId: "S_HOME" });
     dgsm.__blocked.set(["S_HOME", "J_A"].sort().join("::"), "snowdrifts");
@@ -221,15 +234,43 @@ describe("passBlocked", () => {
       blockedReason: "blocked: snowdrifts",
     });
 
-    const through = initMovementRuntime(dgsm, "npc_1", ["J_A"], undefined, true);
+    const through = initMovementRuntime(
+      dgsm,
+      "npc_1",
+      ["J_A"],
+      undefined,
+      "connection.home.ja"
+    );
     expect(through.ok).toBe(true);
     if (!through.ok) return;
-    expect(through.state.passBlocked).toBe(true);
+    expect(through.state.passBlockedConnectionId).toBe("connection.home.ja");
     const advanced = advanceMovement(dgsm, "npc_1", through.state);
     expect(advanced.status).toBe("arrived");
+    expect(through.state.passBlockedConnectionId).toBeUndefined();
     expect(advanced.stateChanges.at(-1)).toMatchObject({
       kind: "character.position",
       position: { type: "scene", sceneId: "J_A" },
     });
+  });
+
+  it("does not bypass a different blocked passage", () => {
+    const dgsm = makeDgsm();
+    dgsm.__blocked.set(["J_A", "R_MAIN"].sort().join("::"), "washed out");
+
+    const through = initMovementRuntime(
+      dgsm,
+      "npc_1",
+      ["J_B"],
+      undefined,
+      "connection.home.ja"
+    );
+    expect(through.ok).toBe(true);
+    if (!through.ok) return;
+    const advanced = advanceMovement(dgsm, "npc_1", through.state);
+    expect(advanced).toMatchObject({
+      status: "blocked",
+      blockedReason: "blocked: washed out",
+    });
+    expect(through.state.passBlockedConnectionId).toBe("connection.home.ja");
   });
 });

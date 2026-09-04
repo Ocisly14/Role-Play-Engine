@@ -21,7 +21,12 @@ describe("subsystem state scope", () => {
       affectedKinds: ["feature.setState"],
       shouldExist: () => true,
       initialState: (anchorId) => [
-        { kind: "feature.setState", featureId: "counter", key: anchorId, state: { n: 0 } },
+        {
+          kind: "feature.setState",
+          featureId: "counter",
+          key: anchorId,
+          state: { n: 0 },
+        },
       ],
       onTick: (anchorId, ctx) => {
         const prev = ctx.getFeatureState<{ n: number }>(anchorId);
@@ -70,7 +75,12 @@ function weatherStub(state: WeatherRegionState): AnchorSubsystem {
     initialState: (anchorId) =>
       anchorId === "OUTDOOR"
         ? [
-            { kind: "feature.setState", featureId: "weather", key: anchorId, state },
+            {
+              kind: "feature.setState",
+              featureId: "weather",
+              key: anchorId,
+              state,
+            },
             {
               kind: "event.emit",
               event: {
@@ -91,18 +101,32 @@ const AFFECTED = ["SCN_ridge", "SCN_hollow", "ROAD_pass"];
 describe("weather judgement (Phase 8b)", () => {
   it("asks the weather engine on a transition and applies its judgement in the same tick", async () => {
     const dgsm = makeOutdoorDgsm();
-    const judge = vi.fn<WeatherJudgeFn>(async (request) => ({
+    const judge = vi.fn<WeatherJudgeFn>(async (_request) => ({
       ok: true,
       judgement: {
-        blocks: [{ connectionId: "weather:ROAD_pass|SCN_ridge", reason: "雪堆没过膝盖" }],
+        blocks: [
+          {
+            connectionId: "weather:ROAD_pass|SCN_ridge",
+            reason: "雪堆没过膝盖",
+          },
+        ],
         conditions: [{ placeId: "SCN_ridge", description: "风雪横扫山脊" }],
       },
     }));
     const engine = makeEngine(
       dgsm,
-      [weatherStub({ weatherType: "snow", intensity: 5, minutesInState: 0, affectedSceneIds: AFFECTED })],
+      [
+        weatherStub({
+          weatherType: "snow",
+          intensity: 5,
+          minutesInState: 0,
+          affectedSceneIds: AFFECTED,
+        }),
+      ],
       { weatherJudgeFn: judge }
     );
+    const publicFeatureEvents: string[] = [];
+    engine.on("featureEvent", (event) => publicFeatureEvents.push(event.type));
     await engine.tick();
 
     expect(judge).toHaveBeenCalledTimes(1);
@@ -112,14 +136,24 @@ describe("weather judgement (Phase 8b)", () => {
       "weather:ROAD_pass|SCN_hollow",
       "weather:ROAD_pass|SCN_ridge",
     ]);
-    expect(dgsm.getConnectionBlockReason("SCN_ridge", "ROAD_pass")).toBe("雪堆没过膝盖");
-    expect(dgsm.getConnectionBlockReason("SCN_hollow", "ROAD_pass")).toBeUndefined();
+    expect(dgsm.getConnectionBlockReason("SCN_ridge", "ROAD_pass")).toBe(
+      "雪堆没过膝盖"
+    );
+    expect(
+      dgsm.getConnectionBlockReason("SCN_hollow", "ROAD_pass")
+    ).toBeUndefined();
     expect(dgsm.getSceneConditions("SCN_ridge")).toEqual([
-      expect.objectContaining({ featureId: "weather", description: "[Weather] 风雪横扫山脊" }),
+      expect.objectContaining({
+        featureId: "weather",
+        description: "[Weather] 风雪横扫山脊",
+      }),
     ]);
-    expect(dgsm.getScopedFeatureState("weather", "region", "OUTDOOR")).toMatchObject({
+    expect(
+      dgsm.getScopedFeatureState("weather", "region", "OUTDOOR")
+    ).toMatchObject({
       judgedBlockIds: ["weather:ROAD_pass|SCN_ridge"],
     });
+    expect(publicFeatureEvents).not.toContain("weather.transition");
 
     // The only region in the world got exactly one judgement; a second tick
     // with no transition asks for none.
@@ -130,7 +164,10 @@ describe("weather judgement (Phase 8b)", () => {
   it("clears without asking: everything the last judgement closed reopens", async () => {
     const dgsm = makeOutdoorDgsm();
     dgsm.setConnectionBlocked("SCN_ridge", "ROAD_pass", true, "雪堆没过膝盖");
-    dgsm.appendSceneCondition("SCN_ridge", { featureId: "weather", description: "[Weather] 旧的" });
+    dgsm.appendSceneCondition("SCN_ridge", {
+      featureId: "weather",
+      description: "[Weather] 旧的",
+    });
     const judge = vi.fn<WeatherJudgeFn>();
     const engine = makeEngine(
       dgsm,
@@ -147,7 +184,9 @@ describe("weather judgement (Phase 8b)", () => {
     );
     await engine.tick();
     expect(judge).not.toHaveBeenCalled();
-    expect(dgsm.getConnectionBlockReason("SCN_ridge", "ROAD_pass")).toBeUndefined();
+    expect(
+      dgsm.getConnectionBlockReason("SCN_ridge", "ROAD_pass")
+    ).toBeUndefined();
     expect(dgsm.getSceneConditions("SCN_ridge")).toEqual([]);
   });
 
@@ -155,15 +194,30 @@ describe("weather judgement (Phase 8b)", () => {
     const dgsm = makeOutdoorDgsm();
     dgsm.setConnectionBlocked("SCN_ridge", "ROAD_pass", true, "雪堆没过膝盖");
     const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
-    const judge = vi.fn<WeatherJudgeFn>(async () => ({ ok: false, failure: "model error: boom" }));
+    const judge = vi.fn<WeatherJudgeFn>(async () => ({
+      ok: false,
+      failure: "model error: boom",
+    }));
     const engine = makeEngine(
       dgsm,
-      [weatherStub({ weatherType: "snow", intensity: 3, minutesInState: 0, affectedSceneIds: AFFECTED, judgedBlockIds: ["weather:ROAD_pass|SCN_ridge"] })],
+      [
+        weatherStub({
+          weatherType: "snow",
+          intensity: 3,
+          minutesInState: 0,
+          affectedSceneIds: AFFECTED,
+          judgedBlockIds: ["weather:ROAD_pass|SCN_ridge"],
+        }),
+      ],
       { weatherJudgeFn: judge }
     );
     await engine.tick();
-    expect(dgsm.getConnectionBlockReason("SCN_ridge", "ROAD_pass")).toBe("雪堆没过膝盖");
-    expect(warn).toHaveBeenCalledWith(expect.stringContaining("weather judgement for OUTDOOR failed"));
+    expect(dgsm.getConnectionBlockReason("SCN_ridge", "ROAD_pass")).toBe(
+      "雪堆没过膝盖"
+    );
+    expect(warn).toHaveBeenCalledWith(
+      expect.stringContaining("weather judgement for OUTDOOR failed")
+    );
     warn.mockRestore();
   });
 });

@@ -401,11 +401,20 @@ function validateStart(entry: RawActionStart, lookup: Lookup): string[] {
         `movement.vehicleId "${entry.movement.vehicleId}" is not a vehicle in this world`
       );
     }
-    if (
-      entry.movement.passBlocked !== undefined &&
-      typeof entry.movement.passBlocked !== "boolean"
-    ) {
-      errs.push("movement.passBlocked must be true or false");
+    if (entry.movement.passBlockedConnectionId !== undefined) {
+      if (
+        typeof entry.movement.passBlockedConnectionId !== "string" ||
+        !lookup.connectionIds.has(entry.movement.passBlockedConnectionId)
+      ) {
+        errs.push(
+          "movement.passBlockedConnectionId must be an exact connection id from exitsFromHere"
+        );
+      }
+      if (entry.check !== undefined) {
+        errs.push(
+          "movement.passBlockedConnectionId cannot accompany a check: a passage cannot be crossed before that unresolved check is rolled"
+        );
+      }
     }
   }
   // Duration is conditionally required: a non-travel action must say how
@@ -1663,7 +1672,11 @@ export interface FinalizedResolution {
   /** Movement-leg annotations per action (Engine-owned runtime init). */
   movementInits: Record<
     string,
-    { route: string[]; vehicleId?: string; passBlocked?: boolean }
+    {
+      route: string[];
+      vehicleId?: string;
+      passBlockedConnectionId?: string;
+    }
   >;
   /** The bar set for an action as it starts, per actionId. Written onto the
    *  action once and never revised — code rolls against it later. */
@@ -1764,7 +1777,11 @@ export function finalizeResolution(
   const transitions: ActionTransition[] = [];
   const movementInits: Record<
     string,
-    { route: string[]; vehicleId?: string; passBlocked?: boolean }
+    {
+      route: string[];
+      vehicleId?: string;
+      passBlockedConnectionId?: string;
+    }
   > = {};
   const checkInits: FinalizedResolution["checkInits"] = {};
   const tickMinutes = context.tick.durationMinutes;
@@ -1782,7 +1799,11 @@ export function finalizeResolution(
         ...(entry.movement.vehicleId !== undefined
           ? { vehicleId: entry.movement.vehicleId }
           : {}),
-        ...(entry.movement.passBlocked === true ? { passBlocked: true } : {}),
+        ...(entry.movement.passBlockedConnectionId !== undefined
+          ? {
+              passBlockedConnectionId: entry.movement.passBlockedConnectionId,
+            }
+          : {}),
       };
     }
     if (entry.check) {

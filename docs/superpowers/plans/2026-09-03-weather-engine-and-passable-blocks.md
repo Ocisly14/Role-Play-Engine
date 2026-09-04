@@ -4,7 +4,7 @@
 
 **Goal:** 封锁（connection block）改成三个来源各写各的、最后写的人说了算；天气不再按代码规则盖全区封锁，而由一个独立的 LLM「天气 engine」在天气变化时判断哪些通道不通、每个户外地点是什么样；World Action Engine（WAE）可以按动作放行一条被封的通道。
 
-**Architecture:** (1) Applier 删掉 `(featureId, reason)` 投票表，`connection.setBlock` 直接写 DGSM 的 `blockedConnections` 标志。(2) `weather.ts` 只保留状态机和数值贡献；转换时发一条 `weather.transition` FeatureEvent，orchestrator 在脚本事件之后读到它，调用天气 engine，把判断转成 StateChange 塞进同一次 flush；晴天不调模型，直接撤销上次的封锁和条件。(3) `movement.passBlocked` 贯穿 schema → validator → finalize → orchestrator → movement runtime，runtime 对带放行标记的这一次行走跳过封锁检查。
+**Architecture:** (1) Applier 删掉 `(featureId, reason)` 投票表，`connection.setBlock` 直接写 DGSM 的 `blockedConnections` 标志。(2) `weather.ts` 只保留状态机和数值贡献；转换时发一条内部 `weather.transition` 信号，orchestrator 在脚本事件之后读到它，调用天气 engine，把判断转成 StateChange 塞进同一次 flush；该内部信号不会进入公开事件流，晴天不调模型。(3) `movement.passBlockedConnectionId` 贯穿 schema → validator → finalize → orchestrator → movement runtime，值是具体通道 id，只在匹配的封锁边消费一次。
 
 **Tech Stack:** TypeScript, vitest, 自研 `models/` LLM 层（`generateToolCalls`）, biome。
 
@@ -17,7 +17,7 @@
 - **不自动跑测试。** 每个任务写好测试即可；统一在最后一个任务由用户说「跑」之后再跑。
 - 世界文字是中文；代码、标识符、规则文档是英文。不引入任何具名设定的术语。
 - 不引入调度器、不引入 LangChain。
-- 快照兼容：旧快照里的 `connectionVotes` 字段被忽略即可，不需要迁移。
+- 快照兼容：本次改变持久化 movement 状态语义，提升 `ACTION_SCHEMA_VERSION`；按既有策略拒绝旧快照，不迁移旧投票或布尔放行状态。
 
 ## 设计决定（来自讨论）
 
@@ -26,7 +26,7 @@
 3. **撤销靠差分。** 模型每次输出完整集合；代码和 `WeatherRegionState.judgedBlockIds` 做差，多出的设、少掉的撤。条件按 `featureId: "weather"` 整体替换。技能减值由代码按类型和强度算好挂在条件上，模型只写文字。
 4. **晴天不调模型。** `weatherType === "clear"` 走空判断：撤掉上次的封锁、清掉天气条件。
 5. **失败兜底。** 一轮修补；仍不合法或模型报错就 `console.warn`，本次转换只落状态机和数值，封锁和条件保持上次的。
-6. **WAE 保留 `connectionBlock`**（它是三个来源之一），新增 `movement.passBlocked`：障碍被清除 → `connectionBlock {blocked:false}`；只是这个人过去了 → 新命令的移动上 `passBlocked: true`。runtime 仍在每段起步时查封锁，只对带放行标记的行走跳过。
+6. **WAE 保留 `connectionBlock`**（它是三个来源之一），新增 `movement.passBlockedConnectionId`：障碍被清除 → `connectionBlock {blocked:false}`；只是这个人过去了 → 填 `exitsFromHere` 给出的具体封锁通道 id。runtime 只在该边消费一次放行，后续边照常检查；不能和尚未掷骰的 `check` 同时出现。
 7. **顺带修两个让天气从未跑起来的 bug**（本次核对中发现，用户尚未确认，见任务 2 的说明）：
    - `createTickEngine` 给 Applier 的 `featureScopes` 是空 Map，所有 `feature.setState` 都写到 `scene` 作用域，而 orchestrator 和读上下文按子系统自己的 `anchorKind` 读；region 作用域的天气状态写了没人读，天气停在预设上不动。
    - `anchorIdsFor("region")` 只扫场景的 `parentLocationId`，顶层场景没有父级、道路不被扫描，`OUTDOOR` 永远不是锚点；grayhaven 的天气预设写的正是 `regionId: "OUTDOOR"`。
@@ -36,11 +36,11 @@
 - Modify `src/engine/core/applier.ts` — 删投票表，`connection.setBlock` 直写。
 - Modify `src/engine/core/tickEngine.ts` — 去掉 `connectionVotes` 持久化；按注册表建 `featureScopes`；新增 `weatherJudgeFn` 选项。
 - Modify `client/server/simulation/service.ts` — 持久化类型去掉 `connectionVotes`。
-- Modify `src/engine/core/tickOrchestrator.ts` — `anchorIdsFor("region")` 含 `OUTDOOR`；新增 Phase 8b 天气判断；`initMovementRuntime` 传 `passBlocked`。
+- Modify `src/engine/core/tickOrchestrator.ts` — `anchorIdsFor("region")` 含 `OUTDOOR`；新增 Phase 8b 天气判断；`initMovementRuntime` 传 `passBlockedConnectionId`。
 - Modify `src/engine/core/featureReadContext.ts` — `getAllRegionIds` 与 orchestrator 同一规则。
-- Modify `src/engine/actions/movementRuntime.ts` — `passBlocked` 状态与跳过检查。
-- Modify `src/engine/resolution/worldDeltaSchema.ts` / `worldDeltaValidator.ts` / `types.ts` — `movement.passBlocked`。
-- Modify `src/engine/subsystem/weather.ts` — 不再写封锁和条件，改发 `weather.transition` 事件；`judgedBlockIds`。
+- Modify `src/engine/actions/movementRuntime.ts` — `passBlockedConnectionId` 状态与跳过检查。
+- Modify `src/engine/resolution/worldDeltaSchema.ts` / `worldDeltaValidator.ts` / `types.ts` — `movement.passBlockedConnectionId`。
+- Modify `src/engine/subsystem/weather.ts` — 不再写封锁和条件，改发内部 `weather.transition` 信号；`judgedBlockIds`。
 - Create `src/engine/weather/weatherJudgement.ts` — 纯函数：请求构建、校验、判断 → StateChange。
 - Create `src/engine/weather/weatherEngine.ts` — LLM 调用、一轮修补。
 - Create `src/engine/rules/weather-judgement.md` — 天气 engine 的规则文档。
@@ -442,25 +442,25 @@ describe("subsystem state scope", () => {
 
 ---
 
-### Task 3: movement runtime — `passBlocked`
+### Task 3: movement runtime — `passBlockedConnectionId`
 
 **Files:**
 - Modify: `src/engine/actions/movementRuntime.ts:48-64`（状态）、`:194-200`（签名）、`:278-297`（返回的 state）、`:373`、`:426`
 - Test: `src/engine/actions/__tests__/movementRuntime.test.ts`
 
 **Interfaces:**
-- Produces: `initMovementRuntime(dgsm, actorId, route, vehicleId?, passBlocked = false)`；`MovementRuntimeState.passBlocked?: boolean`。
+- Produces: `initMovementRuntime(dgsm, actorId, route, vehicleId?, passBlockedConnectionId?)`；`MovementRuntimeState.passBlockedConnectionId?: string`，匹配具体边后删除。
 
 - [ ] **Step 1: 写测试**
 
 在 `movementRuntime.test.ts` 末尾追加：
 
 ```ts
-describe("passBlocked", () => {
+describe("passBlockedConnectionId", () => {
   // A blocked passage is a world fact the runtime enforces at the step that
   // reaches it. The Engine may let ONE walk through — the character climbs
   // the fallen tree, wades the ford — without opening the passage for anyone
-  // else: that is `passBlocked` on this movement, and only this movement.
+  // else: that is `passBlockedConnectionId` on this movement, and only this movement.
   it("stops at a blocked passage unless the Engine let this walk through", () => {
     const dgsm = makeDgsm();
     dgsm.__positions.set("npc_1", { type: "scene", sceneId: "S_HOME" });
@@ -474,10 +474,10 @@ describe("passBlocked", () => {
       blockedReason: "blocked: snowdrifts",
     });
 
-    const through = initMovementRuntime(dgsm, "npc_1", ["J_A"], undefined, true);
+    const through = initMovementRuntime(dgsm, "npc_1", ["J_A"], undefined, "connection.home.ja");
     expect(through.ok).toBe(true);
     if (!through.ok) return;
-    expect(through.state.passBlocked).toBe(true);
+    expect(through.state.passBlockedConnectionId).toBe("connection.home.ja");
     const advanced = advanceMovement(dgsm, "npc_1", through.state);
     expect(advanced.status).toBe("arrived");
     expect(advanced.stateChanges.at(-1)).toMatchObject({
@@ -493,20 +493,18 @@ describe("passBlocked", () => {
 `MovementRuntimeState` 加字段（放在 `vehicleId` 之后）：
 
 ```ts
-  /** The Engine judged that THIS walk gets past whatever blocks its way —
-   *  the fallen tree climbed, the ford waded — while the passage stays
-   *  blocked for everyone else. The runtime skips its block checks for this
-   *  movement and no other. Absent = the runtime stops at a blocked edge. */
-  passBlocked?: boolean;
+  /** The exact authored passage this walk may cross while its obstacle stays.
+   *  Consumed only at the matching edge; all other checks still run. */
+  passBlockedConnectionId?: string;
 ```
 
-`initMovementRuntime` 签名加第五个参数 `passBlocked = false`，返回的 `state` 里加 `...(passBlocked ? { passBlocked: true } : {}),`（放在 `vehicleId` 展开之后）。
+`initMovementRuntime` 签名加第五个可选字符串参数 `passBlockedConnectionId`，原样存入 state。封锁检查解析该 id 的对称边；只在当前 `blockCheck` 匹配时放行并删除字段，其他边照常阻断。
 
-`advanceMovement` 第 373 行改为 `if (state.minutesIntoStep === 0 && stepEntry.blockCheck && !state.passBlocked) {`；`drainImmediate` 第 426 行改为 `if (entry.blockCheck && !state.passBlocked) {`。
+`advanceMovement` 与 `drainImmediate` 都先读取当前边的封锁原因；存在封锁时仅由一次性的精确边匹配放行。
 
 ---
 
-### Task 4: WAE — `movement.passBlocked` 从 schema 到 orchestrator，加规则文档
+### Task 4: WAE — `movement.passBlockedConnectionId` 从 schema 到 orchestrator，加规则文档
 
 **Files:**
 - Modify: `src/engine/resolution/worldDeltaSchema.ts:42`、`:650-668`
@@ -517,21 +515,21 @@ describe("passBlocked", () => {
 - Test: `src/engine/resolution/__tests__/worldDeltaValidator.test.ts`、`src/engine/resolution/__tests__/schemaAgreement.test.ts:562-570`
 
 **Interfaces:**
-- Consumes: Task 3 的 `initMovementRuntime(..., passBlocked)`。
-- Produces: `RawActionStart.movement: { route: string[]; vehicleId?: string; passBlocked?: boolean }`；`movementInits[id]: { route; vehicleId?; passBlocked?: boolean }`。
+- Consumes: Task 3 的 `initMovementRuntime(..., passBlockedConnectionId)`。
+- Produces: `RawActionStart.movement: { route: string[]; vehicleId?: string; passBlockedConnectionId?: string }`；`movementInits[id]` 同形。
 
 - [ ] **Step 1: 写测试**
 
 `worldDeltaValidator.test.ts` 的 `describe("finalizeResolution")` 里追加：
 
 ```ts
-  it("carries movement.passBlocked into the movement init, and only as a boolean", () => {
+  it("carries one exact movement.passBlockedConnectionId into the movement init", () => {
     const finalized = finalizeResolution(
       {
         starting: [
           start({
             resolvedDurationTicks: undefined,
-            movement: { route: ["SCN_1"], passBlocked: true },
+            movement: { route: ["SCN_1"], passBlockedConnectionId: "connection.scn1.door" },
           }),
         ],
       },
@@ -539,36 +537,36 @@ describe("passBlocked", () => {
     );
     expect(finalized.movementInits[ACTION_ID]).toEqual({
       route: ["SCN_1"],
-      passBlocked: true,
+      passBlockedConnectionId: "connection.scn1.door",
     });
 
     const errors = validateRawResolution(
       {
         starting: [
           start({
-            movement: { route: ["SCN_1"], passBlocked: "yes" as never },
+            movement: { route: ["SCN_1"], passBlockedConnectionId: "yes" as never },
           }),
         ],
       },
       makeContext({})
     );
-    expect(text(errors)).toContain("passBlocked");
+    expect(text(errors)).toContain("passBlockedConnectionId");
   });
 ```
 
-`schemaAgreement.test.ts:569-570` 的期望改为 `29` 和 `49`，第 562-564 行注释里的数字同步改（`movement.passBlocked` 各加一个可选项）。
+`schemaAgreement.test.ts:569-570` 的期望改为 `29` 和 `49`，第 562-564 行注释里的数字同步改（`movement.passBlockedConnectionId` 各加一个可选项）。
 
 - [ ] **Step 2: schema**
 
-`worldDeltaSchema.ts:42` 改为 `movement?: { route: string[]; vehicleId?: string; passBlocked?: boolean };`，并在其注释末尾加一句：`passBlocked` is the Engine's grant that THIS walk gets past a blocked passage without opening it.
+`worldDeltaSchema.ts` 的 movement 增加 `passBlockedConnectionId?: string`：它必须引用 `exitsFromHere` 中的精确连接 id。
 
 `submitResolutionTool` 的 `movement.properties` 在 `vehicleId` 之后加：
 
 ```ts
-                passBlocked: {
-                  type: "boolean",
+                passBlockedConnectionId: {
+                  type: "string",
                   description:
-                    "true when the actor GETS PAST a passage that is blocked right now — climbs the fallen tree, wades the flooded ford, pushes on through the blizzard — without removing what blocks it: the passage stays blocked for everyone else and the runtime lets only this walk through. Judge it from the act, the obstacle's reason (see exitsFromHere) and the character. Omit it when the obstacle stops them: the runtime then interrupts the walk and tells them why. When the act REMOVES the obstacle (a barricade broken, a tree dragged aside) write a sceneChanges connectionBlock blocked:false instead, and no passBlocked.",
+                    "true when the actor GETS PAST a passage that is blocked right now — climbs the fallen tree, wades the flooded ford, pushes on through the blizzard — without removing what blocks it: the passage stays blocked for everyone else and the runtime lets only this walk through. Judge it from the act, the obstacle's reason (see exitsFromHere) and the character. Omit it when the obstacle stops them: the runtime then interrupts the walk and tells them why. When the act REMOVES the obstacle (a barricade broken, a tree dragged aside) write a sceneChanges connectionBlock blocked:false instead, and no passBlockedConnectionId.",
                 },
 ```
 
@@ -578,16 +576,16 @@ describe("passBlocked", () => {
 
 ```ts
     if (
-      entry.movement.passBlocked !== undefined &&
-      typeof entry.movement.passBlocked !== "boolean"
+      entry.movement.passBlockedConnectionId !== undefined &&
+      typeof entry.movement.passBlockedConnectionId !== "string"
     ) {
-      errs.push("movement.passBlocked must be true or false");
+      errs.push("movement.passBlockedConnectionId must be an exact connection id from exitsFromHere");
     }
 ```
 
-`FinalizedResolution.movementInits` 与 `resolution/types.ts:293-294` 的 `movementInits` 类型都改为 `Record<string, { route: string[]; vehicleId?: string; passBlocked?: boolean }>`。
+`FinalizedResolution.movementInits` 与 `resolution/types.ts` 的字段类型均为 `passBlockedConnectionId?: string`；validator 还拒绝它与 `check` 同时出现。
 
-`finalizeResolution` 里 `movementInits[entry.actionId] = {...}` 加 `...(entry.movement.passBlocked === true ? { passBlocked: true } : {}),`。
+`finalizeResolution` 把精确的 `passBlockedConnectionId` 原样带入 movement init。
 
 - [ ] **Step 4: orchestrator**
 
@@ -601,7 +599,7 @@ describe("passBlocked", () => {
             actorId,
             init.route,
             init.vehicleId,
-            init.passBlocked === true
+            init.passBlockedConnectionId
           )
         );
 ```
@@ -626,17 +624,17 @@ where the judgement happens:
 
 - The act REMOVES the obstacle (the barricade broken down, the tree dragged
   aside): emit `sceneChanges connectionBlock {blocked:false}` and no
-  `passBlocked`. The passage is open for everyone.
+  `passBlockedConnectionId`. The passage is open for everyone.
 - The act GETS THIS PERSON THROUGH while the obstacle stays (climbing the
   tree, wading the ford, pushing on through the blizzard): set
-  `movement.passBlocked: true` on that movement. The passage stays blocked
-  for everyone else; the runtime lets only this walk through. Judge it from
-  the act, the obstacle's reason and the character's condition.
+  `movement.passBlockedConnectionId` to the exact blocked id from
+  `exitsFromHere`. The passage stays blocked for everyone else; the runtime
+  consumes the grant at that edge only. Never combine it with a `check`.
 - The obstacle stops them: neither. The runtime interrupts the walk again and
   the actor is told why.
 
-Never both for one passage in one resolution. `passBlocked` grants a route
-the actor stated; it never invents one.
+Never both for one passage in one resolution. `passBlockedConnectionId`
+grants no route; it only applies to a matching edge in the stated route.
 ```
 
 `scene-changes.md` 的 Passages 段第一条改为：
@@ -647,7 +645,7 @@ the actor stated; it never invents one.
   weather engine, scripted events and you — and the last write wins: clearing
   it opens the passage whoever shut it. Use `blocked:false` only when an act
   actually removes the obstacle; a person getting past an obstacle that stays
-  is `movement.passBlocked` on their movement (see
+  is `movement.passBlockedConnectionId` on their movement (see
   `movement-and-position.md`).
 ```
 
@@ -830,7 +828,7 @@ function transitionEvent(
   ];
 ```
 
-其注释里关于「re-casts the connection votes」的句子改为「emits the transition event that has the weather engine re-judge the region」。
+其注释里关于「re-casts the connection votes」的句子改为「emits the internal transition signal that has the weather engine re-judge the region」。
 
 `initialState` 的尾部改为：
 
@@ -1958,13 +1956,13 @@ import `import type { WeatherJudgeFn } from "../weather/weatherEngine.js";`，`n
 ```markdown
 ### 2.1 天气 engine：第二个会话，另一个触发源
 
-天气子系统只跑状态机和数值。区域的天气类型或强度一变（子系统每 120 分钟一次的转换、初始化、脚本 `weather.set`），它在 buffer 里放一条 `weather.transition` 事件；orchestrator 在脚本事件之后读到它，调用 `engine/weather/weatherEngine.ts`：输入是该区域所有户外地点的 prose、候选通道（两端都在户外，id 形如 `weather:<a>|<b>`）和新天气，输出「关哪些通道、哪些地点挂什么条件」。代码做记账：模型给完整集合，和 `WeatherRegionState.judgedBlockIds` 做差，多出的设、少掉的撤；条件按 `featureId: "weather"` 整体替换，技能减值由代码按类型和强度挂上。晴天不调模型，直接撤掉上次的封锁和条件。失败（模型报错或一轮修补后仍不合法）只打警告，封锁和条件保持上次的。
+天气子系统只跑状态机和数值。区域的天气类型或强度一变（子系统每 120 分钟一次的转换、初始化、脚本 `weather.set`），它在 buffer 里放一条内部 `weather.transition` 信号；orchestrator 在脚本事件之后消费它，再调用 `engine/weather/weatherEngine.ts`。输入是该区域所有户外地点的 prose、候选通道（两端都在户外，id 形如 `weather:<a>|<b>`）和新天气，输出「关哪些通道、哪些地点挂什么条件」。该信号在 flush 前移除，不进入公开事件流。代码把模型给出的完整集合与 `WeatherRegionState.judgedBlockIds` 做差，多出的设、少掉的撤；条件按 `featureId: "weather"` 整体替换，技能减值由代码按类型和强度挂上。晴天不调模型。失败时只打警告，封锁和条件保持上次的。
 ```
 
 §4.1 表格 `movement` 一行改为：
 
 ```markdown
-| `movement` | `{route: string[], vehicleId?, passBlocked?}` —— **演员自己说出的**路线，逐段拓扑相邻。Engine 从不替他补一段没说过的腿。`passBlocked: true` 是"这个人过得去、但障碍还在"的放行：runtime 只对这一次行走跳过封锁检查，通道对其他人照旧是封的；障碍被清除则用 `connectionBlock {blocked:false}` |
+| `movement` | `{route: string[], vehicleId?, passBlockedConnectionId?}` —— **演员自己说出的**路线，逐段拓扑相邻。Engine 从不替他补一段没说过的腿。`passBlockedConnectionId` 是具体封锁通道 id，只在匹配边消费一次，不能和未决 `check` 同时出现；障碍被清除则用 `connectionBlock {blocked:false}`。 |
 ```
 
 §6 的映射段落之后加一句：
@@ -1982,7 +1980,7 @@ import `import type { WeatherJudgeFn } from "../weather/weatherEngine.js";`，`n
 ```markdown
 **Weather engine** (`engine/weather/weatherEngine.ts`) — one small session per region per weather change. The weather subsystem keeps the state machine and the numbers; on a change it raises a `weather.transition` event, and the orchestrator (Phase 8b, after scripted events) asks this engine which passages the weather closes and what each outdoor place is like, from the places' own prose. Code diffs the answer against the last one (`judgedBlockIds`), attaches the skill penalties, and folds it into the same flush. Clear weather is deterministic; a failed judgement leaves passages and conditions as they were.
 
-Connection blocks are one flag per edge with a reason. Three writers — the weather engine, scripted events and the World Action Engine — and the last write wins; any of them may clear what another set. There is no refcount. A character getting past an obstacle that stays is `movement.passBlocked` on that one walk, not a cleared block.
+Connection blocks are one flag per edge with a reason. Three writers — the weather engine, scripted events and the World Action Engine — and the last write wins; any of them may clear what another set. There is no refcount. A character getting past an obstacle that stays uses the exact blocked edge's one-shot `movement.passBlockedConnectionId`, not a cleared block; it cannot accompany an unresolved check.
 ```
 
 - [ ] **Step 3: `README.md`**

@@ -38,10 +38,14 @@ export interface RawActionStart {
    *  ordered waypoints, each topologically adjacent to the previous, the
    *  last being the destination. The Engine never invents an unstated leg:
    *  a character who did not say how to get somewhere has not chosen a way,
-   *  and their walk ends where their words end. `passBlocked` is the
-   *  Engine's grant that THIS walk gets past a blocked passage without
-   *  opening it. */
-  movement?: { route: string[]; vehicleId?: string; passBlocked?: boolean };
+   *  and their walk ends where their words end. `passBlockedConnectionId`
+   *  is the Engine's one-use grant for THIS walk to cross one specifically
+   *  named blocked passage without opening it. */
+  movement?: {
+    route: string[];
+    vehicleId?: string;
+    passBlockedConnectionId?: string;
+  };
 }
 
 /** The bar alone. It used to carry a `basis` sentence too — a justification
@@ -664,10 +668,10 @@ export const submitResolutionTool: ToolSpec = {
                   description:
                     "Set when the actor DRIVES: the vehicle moves along the route (drivable roads only) and everyone in its interior scene rides along. The driver must be inside the vehicle; whether they may drive it is yours to judge.",
                 },
-                passBlocked: {
-                  type: "boolean",
+                passBlockedConnectionId: {
+                  type: "string",
                   description:
-                    "true when the actor GETS PAST a passage that is blocked right now — climbs the fallen tree, wades the flooded ford, pushes on through the blizzard — without removing what blocks it: the passage stays blocked for everyone else and the runtime lets only this walk through. Judge it from the act, the obstacle's reason (see exitsFromHere) and the character. Omit it when the obstacle stops them: the runtime then interrupts the walk and tells them why. When the act REMOVES the obstacle (a barricade broken, a tree dragged aside) write a sceneChanges connectionBlock blocked:false instead, and no passBlocked.",
+                    "The exact connectionId from exitsFromHere when the actor GETS PAST that blocked passage — climbs the fallen tree, wades the flooded ford, pushes on through the blizzard — without removing what blocks it. This one-use grant is consumed at that edge; later blocked edges still stop the route. Use it only when you can decide passage directly, with no check on this starting entry. Omit it when the obstacle stops them. When the act REMOVES the obstacle, write connectionBlock blocked:false instead.",
                 },
               },
               required: ["route"],

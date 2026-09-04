@@ -682,10 +682,16 @@ export class Applier {
     id: string,
     c: T
   ): void {
-    if (!buckets.has(id)) buckets.set(id, []);
-    buckets
-      .get(id)!
-      .push({ featureId: c.sourceFeatureId, delta: c.delta, reason: c.reason });
+    let bucket = buckets.get(id);
+    if (!bucket) {
+      bucket = [];
+      buckets.set(id, bucket);
+    }
+    bucket.push({
+      featureId: c.sourceFeatureId,
+      delta: c.delta,
+      reason: c.reason,
+    });
   }
 
   private applyDelta(

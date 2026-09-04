@@ -559,7 +559,7 @@ describe("both engine tools stay inside the strict subset", () => {
     // rather than in a 400 from the API. Lean shape (2026-09-03): the ending
     // entry is two required scalars, deltas lost `causalBasis`, the
     // occurrence row lost `locationId`/`actorId`/`affectedIds`/`signals`/
-    // `facts` for `speech`/`content`, movement gained `passBlocked` — 29 for
+    // `facts` for `speech`/`content`, movement gained a one-edge pass id — 29 for
     // submit, 49 for repair (every item field goes optional there, plus the
     // address fields). Both still over the limit of 24.
     const submitOptionals: string[] = [];

@@ -5,7 +5,7 @@
 // (temperature, an illumination cap). What the weather DOES to a region —
 // which passages it closes, what each outdoor place is like under it — is
 // not a rule here: on every change this subsystem emits a
-// `weather.transition` event, and the orchestrator asks the weather engine
+// internal `weather.transition` signal, and the orchestrator asks the weather engine
 // (src/engine/weather/) to judge it from the places' own prose.
 
 import type { DynamicGameStateManager } from "../../state/DynamicGameState.js";
@@ -234,9 +234,8 @@ export function evolveIntensity(current: number): number {
 /**
  * The orchestrator's cue that this region's weather changed and the weather
  * engine must judge what it does. A subsystem returns StateChanges and
- * nothing else, so the cue rides as a FeatureEvent: impact 0 and no scene or
- * character, which is what keeps the perception shim from routing it to
- * anyone.
+ * nothing else, so the cue temporarily rides as a FeatureEvent-shaped change;
+ * the orchestrator consumes it before the Applier/public event stream.
  */
 function transitionEvent(
   regionId: string,
@@ -331,15 +330,16 @@ function makeRegionState(
  * bucket by itself would leave "[Weather] 暴雪" hanging over a light snowfall,
  * and every road it had closed still closed, for up to two hours.
  *
- * Returns [] for an unknown region: a script naming a region no preset created
- * has nothing to set, and inventing the bucket here would create a weather
- * region with no scenes in it.
+ * Scripts keep the module contract and cannot invent a region no preset
+ * created. An explicit external override may opt into seeding a real region;
+ * a truly unknown/indoor-only region still returns [].
  */
 export function buildWeatherSetChanges(
   regionId: string,
   weatherType: WeatherType,
   intensity: number,
-  dgsm: DynamicGameStateManager
+  dgsm: DynamicGameStateManager,
+  seedIfMissing = false
 ): StateChange[] {
   // Built here rather than handed in: the feature id and the region scope are
   // this subsystem's own facts, and a caller that had to know them would be a
@@ -349,7 +349,10 @@ export function buildWeatherSetChanges(
     callerScope: ANCHOR_KIND,
   });
   const current = ctx.getFeatureState<WeatherRegionState>(regionId);
-  if (!current) return [];
+  if (!current && !seedIfMissing) return [];
+  const affectedSceneIds =
+    current?.affectedSceneIds ?? ctx.getOutdoorLocationIdsInRegion(regionId);
+  if (affectedSceneIds.length === 0) return [];
 
   const clamped =
     weatherType === "clear"
@@ -359,13 +362,18 @@ export function buildWeatherSetChanges(
   // a script's change of weather, or the engine's next diff could not lift
   // what it closed.
   const next: WeatherRegionState = {
-    ...current,
+    ...(current ?? {
+      weatherType: "clear" as const,
+      intensity: 0,
+      minutesInState: 0,
+      affectedSceneIds,
+    }),
     weatherType,
     intensity: clamped,
     // The clock on the next natural transition restarts here: the script has
     // just decided what the weather is, so the region has been in it 0 minutes.
     minutesInState: 0,
-    affectedSceneIds: [...current.affectedSceneIds],
+    affectedSceneIds: [...affectedSceneIds],
   };
 
   return [

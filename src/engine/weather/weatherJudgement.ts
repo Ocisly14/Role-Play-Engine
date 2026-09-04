@@ -140,8 +140,8 @@ export function validateWeatherJudgement(
   const outBlocks: WeatherJudgement["blocks"] = [];
   const outConditions: WeatherJudgement["conditions"] = [];
 
-  if (blocks !== undefined && !Array.isArray(blocks)) {
-    errors.push("`blocks` must be an array");
+  if (!Array.isArray(blocks)) {
+    errors.push("`blocks` is required and must be an array (use [] for none)");
   }
   const seenBlocks = new Set<string>();
   for (const [i, b] of (Array.isArray(blocks) ? blocks : []).entries()) {
@@ -177,11 +177,16 @@ export function validateWeatherJudgement(
     });
   }
 
-  if (conditions !== undefined && !Array.isArray(conditions)) {
-    errors.push("`conditions` must be an array");
+  if (!Array.isArray(conditions)) {
+    errors.push(
+      "`conditions` is required and must be an array (use [] for none)"
+    );
   }
   const seenPlaces = new Set<string>();
-  for (const [i, c] of (Array.isArray(conditions) ? conditions : []).entries()) {
+  for (const [i, c] of (Array.isArray(conditions)
+    ? conditions
+    : []
+  ).entries()) {
     const at = `conditions[${i}]`;
     const entry = c as { placeId?: unknown; description?: unknown } | null;
     if (!entry || typeof entry !== "object") {
@@ -212,7 +217,10 @@ export function validateWeatherJudgement(
   }
 
   if (errors.length > 0) return { ok: false, errors };
-  return { ok: true, judgement: { blocks: outBlocks, conditions: outConditions } };
+  return {
+    ok: true,
+    judgement: { blocks: outBlocks, conditions: outConditions },
+  };
 }
 
 /** The condition the weather engine's sentence becomes: the subsystem's

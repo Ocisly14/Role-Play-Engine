@@ -99,7 +99,7 @@ function makeContext(opts: {
       graph: { places: [], edges: [] },
       blockedEdges: [],
       placeKinds: { SCN_1: "scene" },
-      connectionIds: [],
+      connectionIds: ["connection.scn1.door"],
       places: [
         {
           id: "SCN_1",
@@ -990,13 +990,16 @@ describe("finalizeResolution", () => {
     });
   });
 
-  it("carries movement.passBlocked into the movement init, and only as a boolean", () => {
+  it("carries one exact passBlockedConnectionId into the movement init", () => {
     const finalized = finalizeResolution(
       {
         starting: [
           start({
             resolvedDurationTicks: undefined,
-            movement: { route: ["SCN_1"], passBlocked: true },
+            movement: {
+              route: ["SCN_1"],
+              passBlockedConnectionId: "connection.scn1.door",
+            },
           }),
         ],
       },
@@ -1004,20 +1007,41 @@ describe("finalizeResolution", () => {
     );
     expect(finalized.movementInits[ACTION_ID]).toEqual({
       route: ["SCN_1"],
-      passBlocked: true,
+      passBlockedConnectionId: "connection.scn1.door",
     });
 
     const errors = validateRawResolution(
       {
         starting: [
           start({
-            movement: { route: ["SCN_1"], passBlocked: "yes" as never },
+            movement: {
+              route: ["SCN_1"],
+              passBlockedConnectionId: "connection.unknown",
+            },
           }),
         ],
       },
       makeContext({})
     );
-    expect(text(errors)).toContain("passBlocked");
+    expect(text(errors)).toContain("passBlockedConnectionId");
+  });
+
+  it("rejects passage before an unresolved check can be rolled", () => {
+    const errors = validateRawResolution(
+      {
+        starting: [
+          start({
+            check: { requiredLevel: "hard" },
+            movement: {
+              route: ["SCN_1"],
+              passBlockedConnectionId: "connection.scn1.door",
+            },
+          }),
+        ],
+      },
+      makeContext({})
+    );
+    expect(text(errors)).toContain("cannot accompany a check");
   });
 });
 

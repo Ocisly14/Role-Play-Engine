@@ -50,11 +50,10 @@ export interface MovementRuntimeState {
   /** Driving: the vehicle this movement advances. The actor sits in its
    *  interior scene and never changes position; only the vehicle moves. */
   vehicleId?: string;
-  /** The Engine judged that THIS walk gets past whatever blocks its way —
-   *  the fallen tree climbed, the ford waded — while the passage stays
-   *  blocked for everyone else. The runtime skips its block checks for this
-   *  movement and no other. Absent = the runtime stops at a blocked edge. */
-  passBlocked?: boolean;
+  /** The one authored passage this walk may cross while its obstacle stays.
+   *  Consumed when the matching blocked edge is reached; every other edge,
+   *  including later edges in the same route, is checked normally. */
+  passBlockedConnectionId?: string;
   /** The actor's stated waypoints (place ids, adjacent hops); the last one
    *  is the destination. Legs are planned lazily on arrival at each
    *  waypoint, so a mid-route block interrupts exactly where it stands. */
@@ -201,7 +200,7 @@ export function initMovementRuntime(
   actorId: string,
   routeInput: string[],
   vehicleId?: string,
-  passBlocked = false
+  passBlockedConnectionId?: string
 ): MovementInitResult {
   let route = routeInput;
   if (route.length === 0) {
@@ -288,7 +287,9 @@ export function initMovementRuntime(
     ok: true,
     state: {
       ...(vehicleId !== undefined ? { vehicleId } : {}),
-      ...(passBlocked ? { passBlocked: true } : {}),
+      ...(passBlockedConnectionId !== undefined
+        ? { passBlockedConnectionId }
+        : {}),
       route: [...route],
       currentLegIndex: 0,
       destinationId: route[route.length - 1],
@@ -377,16 +378,13 @@ export function advanceMovement(
   const stepEntry = state.routeSnapshot[state.currentStepIndex];
   if (!stepEntry) return { stateChanges, status: "arrived" };
 
-  if (
-    state.minutesIntoStep === 0 &&
-    stepEntry.blockCheck &&
-    !state.passBlocked
-  ) {
+  if (state.minutesIntoStep === 0 && stepEntry.blockCheck) {
     const reason = dgsm.getConnectionBlockReason(
       stepEntry.blockCheck.fromId,
       stepEntry.blockCheck.toId
     );
-    if (reason) {
+    const granted = consumePassForStep(dgsm, state, stepEntry.blockCheck);
+    if (reason && !granted) {
       return {
         stateChanges,
         status: "blocked",
@@ -434,16 +432,37 @@ function drainImmediate(
     const entry = state.routeSnapshot[state.currentStepIndex];
     if (!entry || entry.durationMinutes > 0) return undefined;
 
-    if (entry.blockCheck && !state.passBlocked) {
+    if (entry.blockCheck) {
       const reason = dgsm.getConnectionBlockReason(
         entry.blockCheck.fromId,
         entry.blockCheck.toId
       );
-      if (reason) return `blocked: ${reason}`;
+      const granted = consumePassForStep(dgsm, state, entry.blockCheck);
+      if (reason && !granted) {
+        return `blocked: ${reason}`;
+      }
     }
 
     stateChanges.push(positionChange(actorId, state, entry.to));
     state.currentStepIndex += 1;
     state.minutesIntoStep = 0;
   }
+}
+
+/** Consume the one-shot grant only when it names this exact symmetric edge. */
+function consumePassForStep(
+  dgsm: DynamicGameStateManager,
+  state: MovementRuntimeState,
+  blockCheck: { fromId: string; toId: string }
+): boolean {
+  const connectionId = state.passBlockedConnectionId;
+  if (!connectionId) return false;
+  const edge = dgsm.resolveConnectionEdgeById(connectionId);
+  if (!edge) return false;
+  const matches =
+    (edge.a.id === blockCheck.fromId && edge.b.id === blockCheck.toId) ||
+    (edge.a.id === blockCheck.toId && edge.b.id === blockCheck.fromId);
+  if (!matches) return false;
+  state.passBlockedConnectionId = undefined;
+  return true;
 }

@@ -41,17 +41,19 @@ where the judgement happens:
 
 - The act REMOVES the obstacle (the barricade broken down, the tree dragged
   aside): emit `sceneChanges connectionBlock {blocked:false}` and no
-  `passBlocked`. The passage is open for everyone.
+  `passBlockedConnectionId`. The passage is open for everyone.
 - The act GETS THIS PERSON THROUGH while the obstacle stays (climbing the
   tree, wading the ford, pushing on through the blizzard): set
-  `movement.passBlocked: true` on that movement. The passage stays blocked
-  for everyone else; the runtime lets only this walk through. Judge it from
-  the act, the obstacle's reason and the character's condition.
+  `movement.passBlockedConnectionId` to the exact blocked `connectionId` from
+  `exitsFromHere`. The passage stays blocked for everyone else; the runtime
+  consumes this grant at that edge only, and checks every later edge normally.
+  Use this only when passage can be decided directly; never combine it with
+  a `check`, whose result is not known while the action is starting.
 - The obstacle stops them: neither. The runtime interrupts the walk again and
   the actor is told why.
 
-Never both for one passage in one resolution. `passBlocked` grants a route
-the actor stated; it never invents one.
+Never both for one passage in one resolution. `passBlockedConnectionId`
+grants no route; it only applies to a matching edge in the actor-stated route.
 
 ## Non-travel displacement
 

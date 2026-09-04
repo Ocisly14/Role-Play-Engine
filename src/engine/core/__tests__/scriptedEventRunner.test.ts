@@ -24,6 +24,8 @@ function makeDgsm() {
     setScriptedEventState: (id: string, s: unknown) => states.set(id, s),
     getState: () => ({
       npcCharacters: [...positions.keys()].map((id) => ({ id })),
+      scenes,
+      roads: new Map(),
     }),
     getScene: (id: string) => scenes.get(id) ?? null,
     getAllSceneIds: () => [...scenes.keys()],
@@ -278,7 +280,7 @@ describe("recurring scripted events", () => {
       featureId: "creek_flood",
     });
 
-    // Rain stops — recede goes pending; the lift, when it completes, votes
+    // Rain stops — recede goes pending; the lift, when it completes, writes
     // under the SAME featureId, so a different event can withdraw the block.
     clear();
     run(runner, dgsm, 200, "1985-07-08T03:20:00");

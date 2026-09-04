@@ -217,7 +217,14 @@ function commandForPrompt(command: ActionCommand): Record<string, unknown> {
 export function exitsFromHere(
   context: Pick<EngineResolutionContext, "state">,
   actorId: string
-): Array<{ to: string; open: boolean; reason?: string }> | undefined {
+):
+  | Array<{
+      connectionId: string;
+      to: string;
+      open: boolean;
+      reason?: string;
+    }>
+  | undefined {
   const here = context.state.characters.find(
     (c) => c.id === actorId
   )?.locationId;
@@ -234,8 +241,13 @@ export function exitsFromHere(
     .map((c) => {
       const reason = c.blockedReason ?? blocked.get(`${here}|${c.targetId}`);
       return reason
-        ? { to: c.targetId, open: false, reason }
-        : { to: c.targetId, open: true };
+        ? {
+            connectionId: c.connectionId,
+            to: c.targetId,
+            open: false,
+            reason,
+          }
+        : { connectionId: c.connectionId, to: c.targetId, open: true };
     });
 }
 

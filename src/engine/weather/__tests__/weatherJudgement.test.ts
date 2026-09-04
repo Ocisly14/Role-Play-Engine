@@ -16,7 +16,10 @@ import {
 const RIDGE_PASS = "weather:ROAD_pass|SCN_ridge";
 const HOLLOW_PASS = "weather:ROAD_pass|SCN_hollow";
 
-function snow(intensity: number, judgedBlockIds?: string[]): WeatherRegionState {
+function snow(
+  intensity: number,
+  judgedBlockIds?: string[]
+): WeatherRegionState {
   return {
     weatherType: "snow",
     intensity,
@@ -30,9 +33,17 @@ describe("buildWeatherJudgementRequest", () => {
   it("lists the outdoor places and the outdoor-to-outdoor passages once each", () => {
     const dgsm = makeOutdoorDgsm();
     dgsm.setConnectionBlocked("SCN_ridge", "ROAD_pass", true, "a landslide");
-    const request = buildWeatherJudgementRequest(dgsm, "OUTDOOR", snow(4, [RIDGE_PASS]));
+    const request = buildWeatherJudgementRequest(
+      dgsm,
+      "OUTDOOR",
+      snow(4, [RIDGE_PASS])
+    );
 
-    expect(request.weather).toEqual({ type: "snow", intensity: 4, label: "Blizzard" });
+    expect(request.weather).toEqual({
+      type: "snow",
+      intensity: 4,
+      label: "Blizzard",
+    });
     expect(request.places.map((p) => [p.id, p.kind])).toEqual([
       ["SCN_ridge", "scene"],
       ["SCN_hollow", "scene"],
@@ -45,7 +56,10 @@ describe("buildWeatherJudgementRequest", () => {
       [HOLLOW_PASS, RIDGE_PASS].sort()
     );
     const ridge = request.passages.find((p) => p.connectionId === RIDGE_PASS);
-    expect(ridge).toMatchObject({ travelTimeMinutes: 20, blockedNow: "a landslide" });
+    expect(ridge).toMatchObject({
+      travelTimeMinutes: 20,
+      blockedNow: "a landslide",
+    });
     expect(request.previouslyClosed).toEqual([RIDGE_PASS]);
   });
 });
@@ -71,8 +85,15 @@ describe("validateWeatherJudgement", () => {
     });
   });
 
-  it("treats missing lists as empty", () => {
-    expect(validateWeatherJudgement({}, request)).toEqual({
+  it("requires explicit empty lists so malformed output cannot clear weather", () => {
+    const missing = validateWeatherJudgement({}, request);
+    expect(missing.ok).toBe(false);
+    if (missing.ok) return;
+    expect(missing.errors.join("\n")).toContain("`blocks` is required");
+    expect(missing.errors.join("\n")).toContain("`conditions` is required");
+    expect(
+      validateWeatherJudgement({ blocks: [], conditions: [] }, request)
+    ).toEqual({
       ok: true,
       judgement: { blocks: [], conditions: [] },
     });
@@ -136,9 +157,21 @@ describe("weatherJudgementChanges", () => {
     // Every affected place sheds its old weather condition; only the judged
     // ones get a new one, carrying the code-computed skill penalties.
     expect(changes.filter((c) => c.kind === "scene.removeCondition")).toEqual([
-      { kind: "scene.removeCondition", sceneId: "SCN_ridge", predicate: { featureId: "weather" } },
-      { kind: "scene.removeCondition", sceneId: "SCN_hollow", predicate: { featureId: "weather" } },
-      { kind: "scene.removeCondition", sceneId: "ROAD_pass", predicate: { featureId: "weather" } },
+      {
+        kind: "scene.removeCondition",
+        sceneId: "SCN_ridge",
+        predicate: { featureId: "weather" },
+      },
+      {
+        kind: "scene.removeCondition",
+        sceneId: "SCN_hollow",
+        predicate: { featureId: "weather" },
+      },
+      {
+        kind: "scene.removeCondition",
+        sceneId: "ROAD_pass",
+        predicate: { featureId: "weather" },
+      },
     ]);
     expect(changes.filter((c) => c.kind === "scene.addCondition")).toEqual([
       {
@@ -167,7 +200,11 @@ describe("weatherJudgementChanges", () => {
   });
 
   it("the empty judgement lifts everything and hangs nothing", () => {
-    const changes = weatherJudgementChanges("OUTDOOR", snow(0, [RIDGE_PASS]), EMPTY_WEATHER_JUDGEMENT);
+    const changes = weatherJudgementChanges(
+      "OUTDOOR",
+      snow(0, [RIDGE_PASS]),
+      EMPTY_WEATHER_JUDGEMENT
+    );
     expect(changes.filter((c) => c.kind === "connection.setBlock")).toEqual([
       {
         kind: "connection.setBlock",
@@ -177,7 +214,9 @@ describe("weatherJudgementChanges", () => {
         reason: "weather cleared",
       },
     ]);
-    expect(changes.filter((c) => c.kind === "scene.addCondition")).toHaveLength(0);
+    expect(changes.filter((c) => c.kind === "scene.addCondition")).toHaveLength(
+      0
+    );
     expect(changes.at(-1)).toMatchObject({
       kind: "feature.setState",
       state: { judgedBlockIds: [] },

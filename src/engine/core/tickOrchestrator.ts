@@ -315,7 +315,7 @@ export class TickOrchestrator {
             actorId,
             init.route,
             init.vehicleId,
-            init.passBlocked === true
+            init.passBlockedConnectionId
           )
         );
       }
@@ -447,10 +447,15 @@ export class TickOrchestrator {
     // needs no judgement: everything the last one closed or hung goes.
     const weatherTransitions = new Map<string, WeatherRegionState>();
     for (const c of buffer) {
-      if (c.kind !== "event.emit" || c.event.type !== WEATHER_TRANSITION_EVENT) {
+      if (
+        c.kind !== "event.emit" ||
+        c.event.type !== WEATHER_TRANSITION_EVENT
+      ) {
         continue;
       }
-      const data = c.event.data as unknown as WeatherTransitionEventData | undefined;
+      const data = c.event.data as unknown as
+        | WeatherTransitionEventData
+        | undefined;
       if (data?.regionId && data.state) {
         weatherTransitions.set(data.regionId, data.state);
       }
@@ -467,8 +472,19 @@ export class TickOrchestrator {
         );
         continue;
       }
-      buffer.push(...weatherJudgementChanges(regionId, state, judged.judgement));
+      buffer.push(
+        ...weatherJudgementChanges(regionId, state, judged.judgement)
+      );
     }
+
+    // `weather.transition` is an internal hand-off from the deterministic
+    // subsystem to the weather judge, not an occurrence in the world. Remove
+    // it before the Applier builds the public TickReport/event stream.
+    const flushBuffer = buffer.filter(
+      (change) =>
+        change.kind !== "event.emit" ||
+        change.event.type !== WEATHER_TRANSITION_EVENT
+    );
 
     // Phase 11 — single flush. Engine WorldDeltas are consumed natively by
     // the Applier and apply ahead of the buffered StateChanges, so semantic
@@ -481,7 +497,7 @@ export class TickOrchestrator {
           ...engineResult.resolution.itemChanges,
         ]
       : [];
-    const applied = applier.flush(buffer, nextTickTime, engineDeltas);
+    const applied = applier.flush(flushBuffer, nextTickTime, engineDeltas);
 
     // Phase 12 — lifecycle commit AFTER a successful flush.
     for (const t of transitions) {

@@ -68,7 +68,7 @@ export async function updateConfig(req: Request, res: Response) {
       typeof weather === "string" &&
       WEATHER_TYPES.has(weather as WeatherType)
     ) {
-      applyGlobalWeather(runner.getDgsm(), weather as WeatherType);
+      await applyGlobalWeather(runner.getDgsm(), weather as WeatherType);
       didUpdate = true;
     }
     if (syncRealTime === true) {

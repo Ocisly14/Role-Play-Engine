@@ -8,7 +8,10 @@ import type { DynamicGameStateManager } from "../../../state/DynamicGameState.js
 import { buildTopology } from "../../../state/topologyTypes.js";
 import type { RoadNode } from "../../../state/topologyTypes.js";
 import type { DynamicScene } from "../../../state/types.js";
-import type { ActionCommand } from "../../actions/types.js";
+import {
+  ACTION_SCHEMA_VERSION,
+  type ActionCommand,
+} from "../../actions/types.js";
 import type { EngineResolutionContext } from "../../resolution/types.js";
 import type { RawTickResolution } from "../../resolution/worldDeltaSchema.js";
 import { finalizeResolution } from "../../resolution/worldDeltaValidator.js";
@@ -72,6 +75,11 @@ function makeDgsm(
     getNpcInventory: () => [],
     getNpcProfile: (id: string) => (alive.has(id) ? npc(id) : npc(id)),
   } as unknown as DynamicGameStateManager;
+}
+
+function receiptActionId(receipt: { actionId?: string }): string {
+  if (!receipt.actionId) throw new Error("expected an accepted action receipt");
+  return receipt.actionId;
 }
 
 /** Honest stub engine, speaking the two-moment contract: a starting action
@@ -174,7 +182,7 @@ describe("action-driven trigger gate", () => {
     expect(context.actions.newCommands).toHaveLength(1);
     expect(context.trigger.triggers[0].reason).toBe("new_action");
 
-    const action = engine.getAction(receipt.actionId!);
+    const action = engine.getAction(receiptActionId(receipt));
     expect(action).toMatchObject({
       status: "active",
       resolvedDurationTicks: 2,
@@ -197,7 +205,7 @@ describe("action-driven trigger gate", () => {
     expect(resolve.calls[1].trigger.triggers[0].reason).toBe(
       "duration_reached"
     );
-    expect(engine.getAction(receipt.actionId!)).toMatchObject({
+    expect(engine.getAction(receiptActionId(receipt))).toMatchObject({
       status: "completed",
       progressMinutes: 2,
     });
@@ -248,7 +256,9 @@ describe("replacement and interruption", () => {
     expect(reasons).toContain("new_action");
     expect(reasons).toContain("replacement");
 
-    expect(engine.getAction(first.actionId!)?.status).toBe("interrupted");
+    expect(engine.getAction(receiptActionId(first))?.status).toBe(
+      "interrupted"
+    );
     const second = engine
       .getActorActions("npc_1")
       .find((a) => a.status === "active");
@@ -260,11 +270,13 @@ describe("replacement and interruption", () => {
     const receipt = await engine.submitCommand(command());
     await engine.tick();
 
-    engine.requestInterruption(receipt.actionId!, "scripted force-stop");
+    engine.requestInterruption(receiptActionId(receipt), "scripted force-stop");
     await engine.tick();
 
     expect(resolve.calls[1].trigger.triggers[0].reason).toBe("interrupted");
-    expect(engine.getAction(receipt.actionId!)?.status).toBe("interrupted");
+    expect(engine.getAction(receiptActionId(receipt))?.status).toBe(
+      "interrupted"
+    );
   });
 
   it("a dead actor's command fails without an engine call", async () => {
@@ -280,7 +292,7 @@ describe("replacement and interruption", () => {
     await engine.tick();
 
     expect(resolve.fn).not.toHaveBeenCalled();
-    expect(engine.getAction(receipt.actionId!)?.status).toBe("failed");
+    expect(engine.getAction(receiptActionId(receipt))?.status).toBe("failed");
     expect(reports[0].transitions[0]).toMatchObject({
       to: "failed",
       reason: "actor is dead",
@@ -380,7 +392,7 @@ describe("persistence", () => {
       persistedState: snapshot,
     });
 
-    const restored = engine2.getAction(receipt.actionId!);
+    const restored = engine2.getAction(receiptActionId(receipt));
     expect(restored).toMatchObject({
       status: "active",
       nextWakeAt: "1923-04-02T09:03:00",
@@ -390,11 +402,13 @@ describe("persistence", () => {
     expect(resolve2.fn).not.toHaveBeenCalled();
     await engine2.tick(); // 09:03 — due
     expect(resolve2.fn).toHaveBeenCalledTimes(1);
-    expect(engine2.getAction(receipt.actionId!)?.status).toBe("completed");
+    expect(engine2.getAction(receiptActionId(receipt))?.status).toBe(
+      "completed"
+    );
     expect(resolve.fn).toHaveBeenCalledTimes(1);
   });
 
-  it("rejects a snapshot with a foreign schema version", () => {
+  it("rejects the immediately previous snapshot schema", () => {
     expect(() =>
       createTickEngine({
         dgsm: makeDgsm(),
@@ -403,7 +417,7 @@ describe("persistence", () => {
         tickDurationMinutes: 1,
         codeTools: new CodeToolRegistry(),
         persistedState: {
-          actionSchemaVersion: 999,
+          actionSchemaVersion: ACTION_SCHEMA_VERSION - 1,
           inbox: [],
           actions: [],
         },
@@ -686,7 +700,7 @@ describe("conditions reach the dice", () => {
     await engine.tick(); // starts, sets the bar
     await engine.tick(); // time spent, code rolls
 
-    const action = engine.getAction(receipt.actionId!);
+    const action = engine.getAction(receiptActionId(receipt));
     expect(action?.checkOutcome?.actor).toMatchObject({
       skillId: "Social",
       skillValue: 40,
@@ -705,7 +719,8 @@ describe("conditions reach the dice", () => {
     await engine.tick();
     await engine.tick();
 
-    const roll = engine.getAction(receipt.actionId!)?.checkOutcome?.actor;
+    const roll = engine.getAction(receiptActionId(receipt))?.checkOutcome
+      ?.actor;
     expect(roll?.skillValue).toBe(60);
     expect(roll?.skillValueBase).toBeUndefined();
   });
@@ -730,7 +745,8 @@ describe("conditions reach the dice", () => {
     await engine.tick();
 
     expect(
-      engine.getAction(receipt.actionId!)?.checkOutcome?.actor?.skillValue
+      engine.getAction(receiptActionId(receipt))?.checkOutcome?.actor
+        ?.skillValue
     ).toBe(35);
   });
 });

@@ -145,7 +145,7 @@ describe("connectionBlock lands in state.blockedConnections", () => {
     expect(dgsm.getConnectionBlockReason("R_MAIN", "J_A")).toBeDefined();
   });
 
-  it("drops (warn, no throw) a vote whose connection id resolves to no edge", () => {
+  it("drops (warn, no throw) a block whose connection id resolves to no edge", () => {
     const { applier, state } = fixture;
     expect(() =>
       applier.flush([], T, [
@@ -159,10 +159,10 @@ describe("connectionBlock lands in state.blockedConnections", () => {
   });
 });
 
-describe("a subsystem votes on the pair of places, not an authored exit", () => {
+describe("a subsystem addresses a pair of places, not an authored exit", () => {
   // Weather closes a road in both directions at once, so it has no authored
   // exit id to name — it mints `<featureId>:<a>|<b>`. The Applier resolved
-  // votes through the connection registry only, so every one of these was
+  // block ids through the connection registry only, so every one of these was
   // dropped as "resolves to no edge": snow never closed a road, and nobody
   // noticed until a run's warnings were counted.
   const weatherVote = (
