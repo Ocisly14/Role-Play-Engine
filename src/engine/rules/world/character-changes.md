@@ -7,8 +7,6 @@ Momentary description belongs in an occurrence.
 ## Available operations
 
 - `hp {delta, reason}` — physical injury or healing.
-- `san {delta, reason}` — direct SAN change that is not an involuntary horror
-  check. Horror exposure follows `sanity-check.md` instead.
 - `fatigue {delta, reason}` — persistent exertion or recovery not already owned
   by a deterministic subsystem.
 - `position {position:{type:"scene", sceneId}}` — non-travel displacement only;
@@ -52,9 +50,11 @@ Temporary visible states—wet clothing, fresh blood, a bandage—remain
 conditions when they satisfy the persistence and functional rules. Do not turn
 a one-tick visual detail into permanent appearance.
 
-## SAN paths
+## SAN
 
-Do not emit a direct `san` operation for the same exposure declared under an
-occurrence's `sanityChecks`; code rolls and creates that loss. Direct `san`
-changes remain valid for treatment, recovery and explicit authored effects
-that do not call for an involuntary horror check.
+There is no `san` operation. SAN changes only through an occurrence's
+`sanityChecks` (see `sanity-check.md`): declare the exposure, and code rolls
+and writes the loss. Nothing else you write moves SAN — not treatment, not
+recovery, not what a conversation or a text did to someone. Record what
+happened as an occurrence and, where it meets the threshold above, as a
+condition.

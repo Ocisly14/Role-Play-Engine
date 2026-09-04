@@ -123,7 +123,6 @@ describe("skill guidance documents", () => {
     const OPERATIONS: Record<string, string[]> = {
       character: [
         "hp",
-        "san",
         "fatigue",
         "position",
         "spot",

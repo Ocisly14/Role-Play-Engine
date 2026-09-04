@@ -444,7 +444,10 @@ export class TickOrchestrator {
     // which passages that weather closes and what each outdoor place is
     // like, and its answer joins this same flush. After the scripted events,
     // so a script's weather.set is judged in the tick it lands. Clear weather
-    // needs no judgement: everything the last one closed or hung goes.
+    // is asked too: a clear sky closes nothing, but it still changes what an
+    // outdoor place is like — light, long shadows, dry footing, sound that
+    // carries — and the storm's own conditions have to be replaced by
+    // something rather than merely deleted.
     const weatherTransitions = new Map<string, WeatherRegionState>();
     for (const c of buffer) {
       if (
@@ -461,20 +464,27 @@ export class TickOrchestrator {
       }
     }
     for (const [regionId, state] of weatherTransitions) {
-      const clear = state.weatherType === "clear" || state.intensity <= 0;
       const request = buildWeatherJudgementRequest(dgsm, regionId, state);
-      const judged = clear
-        ? { ok: true as const, judgement: EMPTY_WEATHER_JUDGEMENT }
-        : await (this.deps.weatherJudgeFn ?? judgeWeather)(request);
+      const judged = await (this.deps.weatherJudgeFn ?? judgeWeather)(request);
+      let judgement = judged.ok ? judged.judgement : undefined;
       if (!judged.ok) {
+        const clear = state.weatherType === "clear" || state.intensity <= 0;
+        // Failing back to "leave it as it was" is right while the weather
+        // still justifies what stands. Under a clear sky it is not: the
+        // storm is over, and its closures and conditions would outlive it.
+        // So a failed clear judgement still applies the empty one, which is
+        // exactly what this phase did for every clear transition before.
+        judgement = clear ? EMPTY_WEATHER_JUDGEMENT : undefined;
         console.warn(
-          `[TickOrchestrator] weather judgement for ${regionId} failed: ${judged.failure} — passages and conditions left as they were`
+          `[TickOrchestrator] weather judgement for ${regionId} failed: ${judged.failure} — ${
+            clear
+              ? "sky is clear, so its passages and conditions are lifted anyway"
+              : "passages and conditions left as they were"
+          }`
         );
-        continue;
       }
-      buffer.push(
-        ...weatherJudgementChanges(regionId, state, judged.judgement)
-      );
+      if (!judgement) continue;
+      buffer.push(...weatherJudgementChanges(regionId, state, judgement));
     }
 
     // `weather.transition` is an internal hand-off from the deterministic
@@ -591,7 +601,18 @@ export class TickOrchestrator {
             : { ok: false, reason: `unknown defense skill "${skillId}"` };
         },
       });
-      if (outcome.ok) action.checkOutcome = outcome.check;
+      if (outcome.ok) {
+        action.checkOutcome = outcome.check;
+      } else {
+        // Never silent. A check that cannot be rolled discards BOTH sides'
+        // dice and leaves the Engine judging the ending with no roll in
+        // front of it; the validator refuses the known cause (a defense
+        // skill outside the catalog), and anything that still reaches here
+        // is a fault worth seeing.
+        console.warn(
+          `[TickEngine] ${actionId}: check not rolled — ${outcome.error}`
+        );
+      }
     }
   }
 

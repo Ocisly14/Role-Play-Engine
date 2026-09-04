@@ -53,7 +53,6 @@ for what actually happened — a one-off descriptive result is occurrence
   `character.addCondition` when treatment goes wrong and adds an objective,
   major impairment such as infection, circulatory shock, loss of limb use, or
   severe disorientation. Anxiety or feeling calmer is not a condition.
-- `character.san` — steadied by a session, or shaken by what it opened.
 - `item.set` / `item.destroy` — bandages, drugs, and supplies consumed
   whether or not the treatment worked.
 - The diagnosis itself is occurrence `content`, with the patient and the medic

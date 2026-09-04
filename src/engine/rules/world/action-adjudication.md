@@ -21,7 +21,9 @@ takes at least one minute and resolves on a later tick.
   `check` with `requiredLevel`: `regular`, `hard` or `extreme`.
 - When someone actively resists, list them in `opposedBy` with the skill they
   use to defend. `opposedBy` requires a `check`. Code rolls and compares both
-  sides; ties go to the defender.
+  sides; ties go to the defender. The defense `skillId` must be one of the
+  ability domains named in the skill reference, and never `Languages` — a
+  defender is not asked to defend in a tongue.
 - If the actor declared no skill, or the declared skill does not cover the
   attempt, omit `check`. Set no substitute skill.
 

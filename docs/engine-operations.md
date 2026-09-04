@@ -54,13 +54,13 @@ engine 处理的「操作」分四层，彼此不共享枚举：**演员发出�
 6. `rollDueChecks` —— 骰子在这里掷，此时难度早已在动作开始时定好
 7. 一次 World Action Engine 会话
 8. anchor 子系统 + 脚本事件
-9. 天气判断：读并消费 buffer 里的内部 `weather.transition` 信号，晴天走空判断，否则调用天气 engine，把结果并入同一次 flush（见 §2.1）；该信号不进入公开事件流
+9. 天气判断：读并消费 buffer 里的内部 `weather.transition` 信号，调用天气 engine（晴天同样调用），把结果并入同一次 flush（见 §2.1）；该信号不进入公开事件流
 10. 单次 Applier flush
 11. 提交动作生命周期，发 `TickReport`
 
 ### 2.1 天气 engine：第二个会话，另一个触发源
 
-天气子系统只跑状态机和数值。区域的天气类型或强度一变（子系统每 120 分钟一次的转换、初始化、脚本 `weather.set`），它在 buffer 里放一条内部 `weather.transition` 信号；orchestrator 在脚本事件之后消费它，再调用 `engine/weather/weatherEngine.ts`。输入是该区域所有户外地点的 prose、候选通道（两端都在户外，id 形如 `weather:<a>|<b>`）和新天气，输出「关哪些通道、哪些地点挂什么条件」。代码做记账：模型给完整集合，和 `WeatherRegionState.judgedBlockIds` 做差，多出的设、少掉的撤；条件按 `featureId: "weather"` 整体替换，技能减值由代码按类型和强度挂上。晴天不调模型，直接撤掉上次的封锁和条件。失败（模型报错或一轮修补后仍不合法）只打警告，封锁和条件保持上次的。
+天气子系统只跑状态机和数值。区域的天气类型或强度一变（子系统每 120 分钟一次的转换、初始化、脚本 `weather.set`），它在 buffer 里放一条内部 `weather.transition` 信号；orchestrator 在脚本事件之后消费它，再调用 `engine/weather/weatherEngine.ts`。输入是该区域所有户外地点的 prose、候选通道（两端都在户外，id 形如 `weather:<a>|<b>`）和新天气，输出「关哪些通道、哪些地点挂什么条件」。代码做记账：模型给完整集合，和 `WeatherRegionState.judgedBlockIds` 做差，多出的设、少掉的撤；条件按 `featureId: "weather"` 整体替换，技能减值由代码按类型和强度挂上。晴天同样调模型：晴天不封路，但它仍然改变户外地点的样子（光线、影子、干燥的地面、传得远的声音），上一次的天气条件是被替换而不是被删掉。失败（模型报错或一轮修补后仍不合法）只打警告，封锁和条件保持上次的；唯一例外是晴天——晴天判定失败时仍然套用空判定，否则暴风雪的封路和条件会活得比暴风雪还久。
 
 ---
 
@@ -78,7 +78,7 @@ engine 处理的「操作」分四层，彼此不共享枚举：**演员发出�
 - `inventoryValidation`：改成把答案直接放进请求——命令点名了谁、或点名了谁手里的东西，`contextBuilder` 就把那个人的口袋一并注入 Items 段。几百 token，而且在问题被提出之前就答完了。
 - `opposedRoll`：定义了但从未注册，也没有任何代码调用。对抗掷骰的真实路径是 Engine 在 `starting` 里声明 `opposedBy`，`skillRollService` 到期时掷两边。已连同上面三个一起删除。
 
-**终止工具**：`submit_resolution`。输出经 `worldDeltaValidator` 校验，最多 `MAX_REPAIR_ROUNDS = 3` 轮定向修补；仍不合法的条目被丢弃，对应动作判 failed。
+**终止工具**：`submit_resolution`。输出经 `worldDeltaValidator` 校验，最多 `MAX_CORRECTION_ROUNDS = 3` 轮完整重提（没有独立的 patch 工具，修正轮仍调用 `submit_resolution` 提交整份结果）；仍不合法则整个 tick 不应用任何结果。
 
 ---
 
@@ -125,7 +125,7 @@ engine 处理的「操作」分四层，彼此不共享枚举：**演员发出�
 
 | kind | 字段 |
 |---|---|
-| `hp` `san` `fatigue` | `delta: number, reason: string` |
+| `hp` `fatigue` | `delta: number, reason: string` —— 没有 `san`：SAN 只经 occurrence 的 `sanityChecks` 由代码掷骰写入 |
 | `position` | `position: {type: "scene", sceneId}` —— 只用于"不是走过去"的位移：上下载具（进出其内部场景），或动作后果造成的无路线位移（翻窗跳到院子、昏迷被抬走、被拖走、摔穿地板）。凡是走、跑、潜行、骑车到另一个地方，一律用动作上的 `movement.route`，由代码按拓扑和路程推进；实测一晚上三次角色被这条操作"送"过没进过的房间、绕过没看见的人。路是走出来的，直接放到路上会缺沿路分数，曾让下一次规划算出 NaN 炸掉整个 tick |
 | `spot` | `spot: string` —— 在这个地方的哪儿，一句短语；`""` 清空（换地点时代码自动清） |
 | `addCondition` | `condition: {id, description}` |

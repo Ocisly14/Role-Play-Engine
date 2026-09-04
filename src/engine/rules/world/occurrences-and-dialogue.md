@@ -53,11 +53,13 @@ someone unable to perceive their own action's consequence.
 
 ## Speech
 
-A `speech:true` occurrence may cite only an action listed under
-`endingWithUtterance` this tick: its command carries the words and it ends
-now. A starting action's utterance is not delivered yet and takes no
-occurrence; code clocks a spoken line at one minute, so it returns under
-`endingWithUtterance` next tick.
+A `speech:true` occurrence cites exactly ONE action, and only one listed
+under `endingWithUtterance` this tick: its command carries the words and it
+ends now. Two people speaking are two rows, each with its own `targetIds` and
+`perceivers` — code places a row where its cited actor stands. A starting
+action's utterance is not delivered yet and takes no speech row; code clocks a
+spoken line at one minute, so it returns under `endingWithUtterance` next
+tick.
 
 - Code copies that utterance verbatim onto the occurrence. Never restate,
   summarize, translate or quote it in `content`.
@@ -74,8 +76,10 @@ occurrence; code clocks a spoken line at one minute, so it returns under
 If a command that both speaks and changes the world—handing over a cup while
 speaking, for example—ENDS this tick, emit a speech occurrence for the words
 and a separate `speech:false` occurrence for the physical result. The action
-then also needs its non-speech ending outcome. While it is still under
-`starting`, neither occurrence exists yet.
+then also needs its non-speech ending outcome; an ending entry cited only by a
+speech row is rejected. While it is still under `starting`, the words are not
+delivered and no speech row exists; a `speech:false` row may record the
+visible attempt.
 
 ## Other characters retain agency
 

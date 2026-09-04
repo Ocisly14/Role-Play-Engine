@@ -104,9 +104,9 @@ export function resolveSanityDeclarations(
       const capacity = lookup.sanById.get(decl.characterId);
       if (!capacity) continue; // validated; a being with maxSan 0 is not shocked
 
-      // The TICK-START SAN. Correct even when the Engine also wrote its own
-      // `san` delta this tick: the applier aggregates a tick's contributions
-      // and applies them as one simultaneous change.
+      // The TICK-START SAN. The roll here is the only SAN change a tick can
+      // carry — the Engine has no `san` operation — so nothing else in this
+      // submission has to be read first.
       const san = capacity.san;
       const roll = Math.floor(rng() * 100) + 1;
       // The 0..99 cap is deliberate — a roll of 100 always fails, however

@@ -124,32 +124,8 @@ export const damageRollTool: EngineCodeTool<DamageRollInput, DamageRollOutput> =
 // that caused it and rolled in code, which makes the loop structurally
 // impossible — one submission, one roll.
 //
-// These helpers survive because the declaration still carries a dice formula.
-
-/** A loss formula the world will accept: "1", "1d4", "2d6+1". */
-export function validSanityLossFormula(formula: string): boolean {
-  const match = FORMULA_RE.exec(formula ?? "");
-  if (!match) return false;
-  if (match[5] !== undefined) {
-    return Number.parseInt(match[5], 10) >= 0;
-  }
-  const count = Number.parseInt(match[1], 10);
-  const sides = Number.parseInt(match[2], 10);
-  return count >= 1 && count <= 100 && sides >= 1;
-}
-
-/** True for a formula that cannot ever cost a point — a flat integer <= 0.
- *  Dice formulas are never guaranteed-zero (`rollSanityLoss` floors at 0, but
- *  `1d4` can still land above it), so only the flat case counts.
- *
- *  Since a PASSED check now costs nothing, a guaranteed-zero failure loss is a
- *  check that cannot cost anything at all — which is a check that should not
- *  happen. The validator refuses it. */
-export function isGuaranteedZeroLoss(formula: string): boolean {
-  const match = FORMULA_RE.exec(formula ?? "");
-  if (!match || match[5] === undefined) return false;
-  return Number.parseInt(match[5], 10) <= 0;
-}
+// The roller survives because the declaration still carries a dice formula;
+// which formulas are allowed is the schema's list (`SANITY_LOSS_FORMULAS`).
 
 /** Roll a loss formula. `rng` returns a uniform [0,1) and is injectable so a
  *  whole resolution's dice — the d100 and every loss die — can be pinned from

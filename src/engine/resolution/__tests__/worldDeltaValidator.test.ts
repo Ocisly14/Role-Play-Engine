@@ -1,6 +1,6 @@
 // Phase 7 validator: transition legality, first-resolution timing ownership,
 // speech rows versus ending entries, delta reference/invariant checks,
-// occurrence objectivity, repair merging, and finalization (id assignment,
+// occurrence objectivity, and finalization (id assignment,
 // nextWakeAt computation, spoken lines carried in by code).
 
 import { describe, expect, it } from "vitest";
@@ -18,11 +18,9 @@ import type {
 } from "../worldDeltaSchema.js";
 import {
   MAX_SANITY_CHECKS,
-  applyRepair,
   finalizeResolution,
   normalizeList,
   normalizeRawResolution,
-  refusedWithdrawals,
   resolutionWorklist,
   validateRawResolution,
 } from "../worldDeltaValidator.js";
@@ -98,8 +96,12 @@ function makeContext(opts: {
     state: {
       graph: { places: [], edges: [] },
       blockedEdges: [],
-      placeKinds: { SCN_1: "scene" },
-      connectionIds: ["connection.scn1.door"],
+      placeKinds: { SCN_1: "scene", SCN_2: "scene", SCN_3: "scene" },
+      connectionIds: [
+        "connection.scn1.door",
+        "connection.scn1.hall",
+        "connection.scn2.back",
+      ],
       places: [
         {
           id: "SCN_1",
@@ -109,7 +111,16 @@ function makeContext(opts: {
           parentLocationId: "L1",
           conditions: [],
           itemIds: ["lock_1"],
-          connections: [],
+          // One barred door and one open hall — the actor's `exitsFromHere`.
+          // `connection.scn2.back` is real but leaves from somewhere else.
+          connections: [
+            {
+              connectionId: "connection.scn1.door",
+              targetId: "SCN_2",
+              blockedReason: "the door is barred from the other side",
+            },
+            { connectionId: "connection.scn1.hall", targetId: "SCN_3" },
+          ],
           environment: {
             temperature: 20,
             illumination: 3,
@@ -439,16 +450,73 @@ describe("validateRawResolution — outcome, talk and the bar", () => {
     expect(errors).toEqual([]);
   });
 
-  it("also accepts an ending entry beside the speech row", () => {
-    // The speech row alone answers pure talk, but an ending entry with an
-    // outcome next to it is not refused: a triggering action can never be
-    // withdrawn in repair, so refusing the entry left the model no legal
-    // move and the tick died three rounds later (measured on DeepSeek).
+  it("refuses an ending entry whose only trace is the speech row", () => {
+    // Pure talk has no ending entry; a physical result has a speech:false
+    // row. An entry cited only by speech rows is neither. It used to be
+    // tolerated because a bare refusal once left the model no legal move
+    // (measured on DeepSeek); the refusal now names both moves.
     const errors = validateRawResolution(
       { ending: [end()], occurrences: [speechRow()] },
       talking()
     );
-    expect(errors).toEqual([]);
+    const all = text(errors);
+    expect(all).toContain(
+      "action:action_live only a speech row cites this ending"
+    );
+    expect(all).toContain('drop this "ending" entry');
+    expect(all).toContain("add a speech:false occurrence");
+    // One instruction, not a field-by-field review on top of it.
+    expect(errors).toHaveLength(1);
+  });
+
+  it("delivers one utterance per speech row", () => {
+    // Two speakers in one row: code places the row where the FIRST cited
+    // actor stands, so the second one's words land in the wrong room.
+    const second = activeAction({
+      id: "action_other",
+      command: command({
+        commandId: "other",
+        actorId: "npc_1",
+        utterance: "这边的。",
+      }),
+      progressMinutes: 10,
+    });
+    const ctx = makeContext({
+      newCommands: [],
+      activeActions: [
+        activeAction({
+          progressMinutes: 10,
+          command: command({
+            commandId: "live",
+            actorId: "npc_2",
+            utterance: "你们哪边的，兄弟？",
+          }),
+        }),
+        second,
+      ],
+      triggerActionIds: ["action_live", "action_other"],
+    });
+    const merged = validateRawResolution(
+      {
+        occurrences: [
+          speechRow({ actionIds: ["action_live", "action_other"] }),
+        ],
+      },
+      ctx
+    );
+    expect(text(merged)).toContain("a speech row delivers ONE utterance");
+    expect(text(merged)).toContain("cites 2 actions");
+
+    const split = validateRawResolution(
+      {
+        occurrences: [
+          speechRow({ actionIds: ["action_live"] }),
+          speechRow({ actionIds: ["action_other"], targetIds: ["npc_2"] }),
+        ],
+      },
+      ctx
+    );
+    expect(split).toEqual([]);
   });
 
   it("still requires the ending entry when hands did something besides talking", () => {
@@ -494,9 +562,10 @@ describe("validateRawResolution — outcome, talk and the bar", () => {
     );
     expect(text(errors)).toContain("does not end this tick");
     // The rejection says when the words WILL land and how to take the row
-    // back: "drop this row" alone left the model re-sending it.
+    // back: the correction must omit the premature row from the complete
+    // resubmission rather than trying to patch it in place.
     expect(text(errors)).toContain("endingWithUtterance");
-    expect(text(errors)).toContain('"remove": true');
+    expect(text(errors)).toContain("Leave this row out of the resubmission");
   });
 
   it("lets a spoken line start without a duration — code clocks it at one minute", () => {
@@ -694,7 +763,7 @@ describe("finalizeResolution", () => {
 
   // finalize no longer validates, drops or synthesizes anything: by the time
   // it runs, the resolution has already passed validation. A resolution that
-  // could not be repaired never reaches it — the tick applies nothing.
+  // could not be corrected never reaches it — the tick applies nothing.
 
   const talkingContext = (spoken: string) =>
     makeContext({
@@ -1031,9 +1100,10 @@ describe("finalizeResolution", () => {
       {
         starting: [
           start({
+            resolvedDurationTicks: undefined,
             check: { requiredLevel: "hard" },
             movement: {
-              route: ["SCN_1"],
+              route: ["SCN_2"],
               passBlockedConnectionId: "connection.scn1.door",
             },
           }),
@@ -1042,6 +1112,125 @@ describe("finalizeResolution", () => {
       makeContext({})
     );
     expect(text(errors)).toContain("cannot accompany a check");
+  });
+
+  describe("a defender resists with a real ability domain", () => {
+    // Unchecked, a name outside the catalog was a SILENT failure: the
+    // defender roll does not resolve, the orchestrator writes no outcome,
+    // and both sides' dice are discarded — the action runs its full duration
+    // and the Engine judges its ending with no roll in front of it.
+    const opposed = (skillId: unknown) =>
+      text(
+        validateRawResolution(
+          {
+            starting: [
+              start({
+                check: { requiredLevel: "regular" },
+                opposedBy: [{ characterId: "npc_2", skillId }] as never,
+              }),
+            ],
+          },
+          // The actor declared a skill, so the bar itself is legal and the
+          // only thing left to be wrong is the defender's domain.
+          makeContext({
+            newCommands: [command({ declaredSkillId: "Stealth & Security" })],
+          })
+        )
+      );
+
+    it("accepts a catalog domain, case-insensitively", () => {
+      expect(opposed("Athletics")).toBe("");
+      expect(opposed("stealth & security")).toBe("");
+    });
+
+    it("refuses a name outside the catalog and lists the domains", () => {
+      for (const bad of ["Locksmith", "lockpicking", "  ", 7, undefined]) {
+        const out = opposed(bad);
+        expect(out).toContain("opposedBy[0].skillId");
+        expect(out).not.toContain("does not exist");
+      }
+      expect(opposed("Locksmith")).toContain("Melee Combat");
+    });
+
+    it("refuses Languages, which no defender is asked to roll", () => {
+      expect(opposed("Languages")).toContain("never resisted with Languages");
+      // It IS a catalog name, so the generic message must not be the one.
+      expect(opposed("Languages")).not.toContain("is not one of the ability");
+    });
+  });
+
+  describe("a grant names one of the actor's OWN blocked exits", () => {
+    // Checked against the same `exitsFromHere` list the prompt shows beside
+    // the command. It used to be "any connection id in the world", and a
+    // wrong grant was silently ignored by the runtime: the walker was
+    // interrupted again with the same reason, and nobody learned why.
+    const walk = (passBlockedConnectionId: string, route = ["SCN_2"]) =>
+      text(
+        validateRawResolution(
+          {
+            starting: [
+              start({
+                resolvedDurationTicks: undefined,
+                movement: { route, passBlockedConnectionId },
+              }),
+            ],
+          },
+          makeContext({})
+        )
+      );
+
+    it("accepts the barred door on the route's first step", () => {
+      expect(walk("connection.scn1.door")).toBe("");
+    });
+
+    it("refuses a real passage that does not leave from here, naming the ones that do", () => {
+      const out = walk("connection.scn2.back");
+      expect(out).toContain("is not an exit of where npc_1 stands");
+      expect(out).toContain("connection.scn1.door");
+      expect(out).not.toContain("connection.scn1.hall");
+    });
+
+    it("refuses a grant for an open passage", () => {
+      expect(walk("connection.scn1.hall", ["SCN_3"])).toContain(
+        "that passage is open"
+      );
+    });
+
+    it("refuses a grant for a passage the route does not take", () => {
+      expect(walk("connection.scn1.door", ["SCN_3"])).toContain(
+        'the route\'s first step is "SCN_3"'
+      );
+    });
+
+    it("refuses clearing the obstacle AND granting passage through it", () => {
+      const errors = validateRawResolution(
+        {
+          starting: [
+            start({
+              resolvedDurationTicks: undefined,
+              movement: {
+                route: ["SCN_2"],
+                passBlockedConnectionId: "connection.scn1.door",
+              },
+            }),
+          ],
+          sceneChanges: [
+            {
+              sourceActionId: ACTION_ID,
+              sceneId: "SCN_1",
+              operation: {
+                kind: "connectionBlock",
+                connectionId: "connection.scn1.door",
+                blocked: false,
+                reason: "the bar is broken",
+              },
+            } as never,
+          ],
+        },
+        makeContext({})
+      );
+      expect(text(errors)).toContain("never both for one passage");
+    });
   });
 });
 
@@ -1068,241 +1257,6 @@ describe("an entry in the wrong list gets one instruction, not a review", () => 
     // completed rather than moved.
     const all = text(errors);
     expect(all).not.toContain("an ending requires an outcome");
-  });
-});
-
-describe("applyRepair — one shape for every field", () => {
-  // The repair tool used to take index-keyed OBJECTS for deltas and an ARRAY
-  // for actions. The model mixed them up and sent an object where the
-  // submission's array belonged, which reached `.filter` and took the tick
-  // down. Now every field is an array whose items carry their own address.
-  const base = (): RawTickResolution => ({
-    starting: [start()],
-    characterChanges: [
-      {
-        sourceActionId: ACTION_ID,
-        characterId: "npc_1",
-        operation: { kind: "hp", delta: -1, reason: "first" },
-      },
-      {
-        sourceActionId: ACTION_ID,
-        characterId: "npc_2",
-        operation: { kind: "hp", delta: -2, reason: "second" },
-      },
-    ],
-  });
-  const reasonOf = (d: unknown): unknown =>
-    (d as { operation?: { reason?: unknown } } | null)?.operation?.reason;
-
-  it("replaces the element at the quoted index", () => {
-    const out = applyRepair(base(), {
-      characterChanges: [
-        {
-          index: 1,
-          sourceActionId: ACTION_ID,
-          characterId: "npc_2",
-          operation: { kind: "hp", delta: -5, reason: "fixed" },
-        },
-      ],
-    });
-    expect(reasonOf(out.characterChanges?.[0])).toBe("first");
-    expect(reasonOf(out.characterChanges?.[1])).toBe("fixed");
-    expect(out.characterChanges?.[1]).not.toHaveProperty("index");
-  });
-  it("appends an item that carries no index", () => {
-    const out = applyRepair(base(), {
-      characterChanges: [
-        {
-          sourceActionId: ACTION_ID,
-          characterId: "npc_1",
-          operation: { kind: "fatigue", delta: 2, reason: "the missing one" },
-        },
-      ],
-    });
-    expect(out.characterChanges).toHaveLength(3);
-    expect(reasonOf(out.characterChanges?.[2])).toBe("the missing one");
-  });
-  it("withdraws with remove, and never resurrects it as an addition", () => {
-    const out = applyRepair(base(), {
-      characterChanges: [{ index: 0, remove: true }],
-    });
-    expect(out.characterChanges?.[0]).toBeNull();
-    expect(out.characterChanges).toHaveLength(2);
-  });
-
-  it("still reads a stale index-keyed object rather than throwing", () => {
-    const out = applyRepair(base(), {
-      characterChanges: {
-        "1": {
-          sourceActionId: ACTION_ID,
-          characterId: "npc_2",
-          operation: { kind: "hp", delta: -3, reason: "old shape" },
-        },
-      } as never,
-    });
-    expect(reasonOf(out.characterChanges?.[1])).toBe("old shape");
-  });
-  it("replaces an action by its own id, within its own moment", () => {
-    const out = applyRepair(base(), {
-      starting: [{ actionId: ACTION_ID, resolvedDurationTicks: 9 }],
-    });
-    expect(out.starting).toHaveLength(1);
-    expect(out.starting?.[0].resolvedDurationTicks).toBe(9);
-  });
-  it("moves an action between moments, leaving nothing behind", () => {
-    // "this belongs in ending, not starting" has to remove it from starting as
-    // well, or the next round rejects both copies as one action in two moments.
-    const out = applyRepair(base(), {
-      ending: [{ actionId: ACTION_ID, outcome: "it was over before it began" }],
-    });
-    expect(out.starting).toHaveLength(0);
-    expect(out.ending).toHaveLength(1);
-    expect(out.ending?.[0].actionId).toBe(ACTION_ID);
-  });
-  it("collapses every copy of an action the repair replaces", () => {
-    // A submission that answered one action twice used to be unrepairable:
-    // the replacement hit the first copy and the second went on being the
-    // duplicate the error complained about, round after round.
-    const twice: RawTickResolution = {
-      ending: [
-        { actionId: ACTION_ID, outcome: "the real ending" },
-        { actionId: ACTION_ID, outcome: "replaced by successor" },
-      ],
-    };
-    const out = applyRepair(twice, {
-      ending: [{ actionId: ACTION_ID, outcome: "the one that stands" }],
-    });
-    expect(out.ending).toHaveLength(1);
-    expect(out.ending?.[0].outcome).toBe("the one that stands");
-  });
-  it("withdraws an action from both lists with remove", () => {
-    const out = applyRepair(base(), {
-      starting: [{ actionId: ACTION_ID, remove: true }],
-    });
-    expect(out.starting).toHaveLength(0);
-    expect(out.ending ?? []).toHaveLength(0);
-  });
-
-  it("withdraws every copy, and carries no remove flag into what stays", () => {
-    const twice: RawTickResolution = {
-      starting: [start(), start()],
-      ending: [{ actionId: "action_other", outcome: "untouched" }],
-    };
-    const out = applyRepair(twice, {
-      ending: [{ actionId: ACTION_ID, remove: true }],
-      starting: [{ actionId: ACTION_ID, remove: true }],
-    });
-    expect(out.starting).toHaveLength(0);
-    expect(out.ending).toHaveLength(1);
-    expect(out.ending?.[0].actionId).toBe("action_other");
-    expect(out.ending?.[0]).not.toHaveProperty("remove");
-  });
-  it("refuses to withdraw an action the trigger requires an answer for", () => {
-    // Told its action appeared in both lists, the model withdrew it — and the
-    // next round said the action was unanswered. Obeying that removal turns a
-    // duplicate into a hole; the duplicate is the better error to keep.
-    const twice: RawTickResolution = {
-      starting: [start()],
-      ending: [{ actionId: ACTION_ID, outcome: "and also ending" }],
-    };
-    const repair = { ending: [{ actionId: ACTION_ID, remove: true }] } as never;
-    const required = new Set([ACTION_ID]);
-
-    expect(refusedWithdrawals(repair, required)).toEqual([ACTION_ID]);
-    const out = applyRepair(twice, repair, required);
-    expect(out.starting).toHaveLength(1);
-    expect(out.ending).toHaveLength(1);
-  });
-  it("does not multiply an action when a repair both replaces and withdraws it", () => {
-    // Measured: the model sent a replacement AND a `remove` for the same id.
-    // The removal was refused (the trigger needs an answer), which un-marked
-    // the id as touched — so the copies already in the lists survived and the
-    // replacement was appended on top. Each round added one more copy of the
-    // action whose duplication was the complaint.
-    const twice: RawTickResolution = {
-      starting: [start()],
-      ending: [{ actionId: ACTION_ID, outcome: "and also ending" }],
-    };
-    const out = applyRepair(
-      twice,
-      {
-        starting: [{ actionId: ACTION_ID, remove: true }],
-        ending: [{ actionId: ACTION_ID, outcome: "the one that stands" }],
-      } as never,
-      new Set([ACTION_ID])
-    );
-    expect(out.starting).toHaveLength(0);
-    expect(out.ending).toHaveLength(1);
-    expect(out.ending?.[0].outcome).toBe("the one that stands");
-  });
-  it("still withdraws an action the trigger does not require", () => {
-    const out = applyRepair(
-      base(),
-      { starting: [{ actionId: ACTION_ID, remove: true }] } as never,
-      new Set(["action_someone_else"])
-    );
-    expect(out.starting).toHaveLength(0);
-  });
-
-  it("removing an action the submission never sent changes nothing", () => {
-    const out = applyRepair(base(), {
-      ending: [{ actionId: "action_never_sent", remove: true }],
-    });
-    expect(out.starting).toHaveLength(1);
-    expect(out.starting?.[0].actionId).toBe(ACTION_ID);
-    expect(out.ending ?? []).toHaveLength(0);
-  });
-
-  // Occurrence rows are addressed by the actions they cite. Measured with
-  // index addressing: 59 of 89 repair rows arrived without an index and were
-  // appended beside the row they were meant to replace; four ticks died on
-  // the same occurrence error three rounds running.
-  const withRows = (): RawTickResolution => ({
-    starting: [start()],
-    occurrences: [
-      occurrence({ actionIds: ["action_a"], content: "a, wrong" }),
-      occurrence({ actionIds: ["action_a", "action_b"], content: "a and b" }),
-      occurrence({ actionIds: ["action_c"], content: "c, untouched" }),
-    ],
-  });
-  const contents = (out: RawTickResolution): Array<string | null> =>
-    (out.occurrences ?? []).map((o) => (o == null ? null : (o.content ?? "")));
-
-  it("replaces every occurrence row citing any of the repair row's actions", () => {
-    const out = applyRepair(withRows(), {
-      occurrences: [
-        occurrence({ actionIds: ["action_a"], content: "a, corrected" }),
-      ],
-    });
-    // Both rows that cited action_a are gone (holes, so nothing shifts); the
-    // corrected row is appended; action_c's row stands.
-    expect(contents(out)).toEqual([null, null, "c, untouched", "a, corrected"]);
-  });
-
-  it("withdraws the rows citing an action with remove", () => {
-    const out = applyRepair(withRows(), {
-      occurrences: [{ actionIds: ["action_c"], remove: true }],
-    });
-    expect(contents(out)).toEqual(["a, wrong", "a and b", null]);
-  });
-
-  it("appends a row citing actions nothing cited yet", () => {
-    const out = applyRepair(withRows(), {
-      occurrences: [occurrence({ actionIds: ["action_d"], content: "d, new" })],
-    });
-    expect(contents(out)).toEqual([
-      "a, wrong",
-      "a and b",
-      "c, untouched",
-      "d, new",
-    ]);
-  });
-
-  it("ignores an occurrence repair row that names no action — it addresses nothing", () => {
-    const out = applyRepair(withRows(), {
-      occurrences: [{ actionIds: [], content: "unaddressed" } as never],
-    });
-    expect(contents(out)).toEqual(["a, wrong", "a and b", "c, untouched"]);
   });
 });
 
@@ -1658,22 +1612,39 @@ describe("declared sanity checks", () => {
     expect(errs).toContain("is already checked elsewhere in this submission");
   });
 
-  it("rejects a loss formula that is not dice, and one that cannot cost anything", () => {
-    expect(
-      check({
-        starting: [start()],
-        occurrences: [occ([{ ...sane, failureLoss: "terror" }]) as never],
-      })
-    ).toContain("is not a dice formula");
+  it("accepts only the four rungs of the loss ladder", () => {
+    // The guidance offers 1, 1d4, 1d6, 1d10 and nothing else. The validator
+    // used to take any dice formula, and the model took the offer.
+    for (const bad of ["terror", "0", "2d6+1", "1d100", "1d3", 4, null]) {
+      expect(
+        check({
+          starting: [start()],
+          occurrences: [occ([{ ...sane, failureLoss: bad }]) as never],
+        })
+      ).toContain("must be exactly one of 1, 1d4, 1d6, 1d10");
+    }
+    for (const good of ["1", "1d4", "1d6", "1d10"]) {
+      expect(
+        check({
+          starting: [start()],
+          occurrences: [occ([{ ...sane, failureLoss: good }]) as never],
+        })
+      ).not.toContain("failureLoss");
+    }
+  });
 
-    // A passed check already costs nothing, so a zero failure loss is a check
-    // that cannot cost anything at all.
-    expect(
-      check({
-        starting: [start()],
-        occurrences: [occ([{ ...sane, failureLoss: "0" }]) as never],
-      })
-    ).toContain("cannot cost anything");
+  it("refuses a direct san delta — the roll is the only thing that moves SAN", () => {
+    const errs = check({
+      starting: [start()],
+      characterChanges: [
+        {
+          sourceActionId: ACTION_ID,
+          characterId: "npc_1",
+          operation: { kind: "san", delta: -3, reason: "shaken" },
+        } as never,
+      ],
+    });
+    expect(errs).toContain('unknown character operation kind "san"');
   });
 
   it("rejects a duration that is fractional, too short, or too long", () => {
@@ -1845,5 +1816,179 @@ describe("normalizeList reads a list the model wrapped in a string", () => {
   it("still drops what it cannot read", () => {
     expect(normalizeList<unknown>("not json", "starting")).toEqual([]);
     expect(normalizeList<unknown>('{"a": 1}', "starting")).toEqual([]);
+  });
+});
+
+describe("the validator is a total function over model output", () => {
+  // `submit_resolution` is strict, so Anthropic and OpenAI cannot send any of
+  // these shapes; DeepSeek has no strict mode and can. Every one of them used
+  // to reach a `.entries()`, a `for…of` or a `.trim()` and take the tick down
+  // with a TypeError instead of coming back as an error the Engine can fix.
+  const noThrow = (raw: unknown): ResolutionError[] => {
+    let errors: ResolutionError[] = [];
+    expect(() => {
+      errors = validateRawResolution(raw as RawTickResolution, makeContext({}));
+    }).not.toThrow();
+    return errors;
+  };
+
+  it("names a null or non-object action entry by list and index", () => {
+    for (const bad of [null, "action_c1", 7, ["action_c1"]]) {
+      const errors = noThrow({ starting: [bad] });
+      expect(text(errors)).toContain("resolution starting[0] is not an entry");
+      // The trigger still wants its answer — said separately, addressed.
+      expect(text(errors)).toContain(`"${ACTION_ID}" was not answered`);
+    }
+    expect(text(noThrow({ ending: [{}] }))).toContain(
+      "ending[0] is not an entry"
+    );
+    expect(text(noThrow({ starting: [{ actionId: "  " }] }))).toContain(
+      "starting[0] is not an entry"
+    );
+  });
+
+  it("reports a misshapen check, opposedBy or movement instead of reading into it", () => {
+    const errors = noThrow({
+      starting: [
+        start({
+          check: "hard" as never,
+          opposedBy: {} as never,
+          movement: "SCN_1" as never,
+          resolvedDurationTicks: undefined,
+        }),
+      ],
+    });
+    const all = text(errors);
+    expect(all).toContain("check must be");
+    expect(all).toContain("opposedBy must be an array");
+    expect(all).toContain("movement must be an object");
+
+    const items = text(
+      noThrow({
+        starting: [
+          start({
+            check: { requiredLevel: "impossible" } as never,
+            opposedBy: [null, "npc_2", { skillId: "x" }] as never,
+          }),
+        ],
+      })
+    );
+    expect(items).toContain("check must be");
+    expect(items).toContain("opposedBy[0] must be");
+    expect(items).toContain("opposedBy[1] must be");
+    expect(items).toContain("opposedBy[2] must be");
+  });
+
+  it("names a null or non-object change by its index", () => {
+    const errors = noThrow({
+      starting: [start()],
+      characterChanges: [null],
+      sceneChanges: ["SCN_1"],
+      itemChanges: [5],
+    });
+    const all = text(errors);
+    expect(all).toContain("characterChange:0 is not a change");
+    expect(all).toContain("sceneChange:0 is not a change");
+    expect(all).toContain("itemChange:0 is not a change");
+  });
+
+  it("names a null or non-object occurrence row by its index", () => {
+    const errors = noThrow({
+      starting: [start()],
+      occurrences: [null, "the door opens"],
+    });
+    const all = text(errors);
+    expect(all).toContain("occurrences[0] is not a row");
+    expect(all).toContain("occurrences[1] is not a row");
+  });
+
+  it("reads an occurrence whose list fields are objects, and says which", () => {
+    const errors = noThrow({
+      starting: [start()],
+      occurrences: [
+        {
+          actionIds: { 0: ACTION_ID },
+          speech: false,
+          content: "the lock clicks",
+          perceivers: { npc_1: "full" },
+          targetIds: {},
+          sanityChecks: {},
+        },
+      ],
+    });
+    const all = text(errors);
+    expect(all).toContain("actionIds is required");
+    expect(all).toContain("perceivers is required");
+    expect(all).toContain("targetIds must be an array");
+    expect(all).toContain("sanityChecks must be an array");
+    // The address is still readable even though `actionIds` was not a list.
+    expect(
+      errors.every(
+        (e) =>
+          e.target.kind !== "occurrence" || Array.isArray(e.target.actionIds)
+      )
+    ).toBe(true);
+  });
+
+  it("reads a sanity declaration whose fields are the wrong type", () => {
+    const errors = noThrow({
+      starting: [start()],
+      occurrences: [
+        {
+          actionIds: [ACTION_ID],
+          speech: false,
+          content: "something moves in the dark",
+          perceivers: [{ characterId: "npc_1", clarity: "full" }],
+          sanityChecks: [
+            null,
+            {
+              characterId: "npc_1",
+              failureLoss: "1d4",
+              consequence: { description: 5, durationMinutes: "ten" },
+            },
+          ],
+        },
+      ],
+    });
+    const all = text(errors);
+    expect(all).toContain("sanityChecks[0]: characterId is required");
+    expect(all).toContain(
+      "sanityChecks[1]: consequence.description is required"
+    );
+    expect(all).toContain(
+      "sanityChecks[1]: consequence.durationMinutes must be"
+    );
+  });
+});
+
+describe("movement time belongs to code", () => {
+  // The rules and the schema both say to omit `resolvedDurationTicks` on a
+  // movement action. The validator used to accept it anyway (the runtime
+  // overrides it), which taught the model the sentence was optional.
+  it("rejects resolvedDurationTicks on a movement action", () => {
+    const errors = validateRawResolution(
+      {
+        starting: [
+          start({ resolvedDurationTicks: 5, movement: { route: ["SCN_1"] } }),
+        ],
+      },
+      makeContext({})
+    );
+    expect(text(errors)).toContain("must omit resolvedDurationTicks");
+  });
+
+  it("accepts a movement action that leaves the clock to the route", () => {
+    const errors = validateRawResolution(
+      {
+        starting: [
+          start({
+            resolvedDurationTicks: undefined,
+            movement: { route: ["SCN_1"] },
+          }),
+        ],
+      },
+      makeContext({})
+    );
+    expect(errors).toEqual([]);
   });
 });

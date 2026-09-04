@@ -20,7 +20,10 @@ character id.
 ## Available operations
 
 - `create {name, location, description?, id?}` — create a genuinely new,
-  persistent item. Supply a stable unused id for a non-Latin name.
+  persistent item. `id` is REQUIRED when the name has no Latin letters or
+  digits: code derives an id from those, and a name it can derive nothing
+  from yields ids that tell the items apart in no readable way. Supply a
+  short, stable, unused ascii id.
 - `move {from, to}` — relocate an existing item from its exact current holder,
   whether by transfer, deliberate placement or external force.
 - `destroy {}` — remove an item that no longer exists as a meaningful object.

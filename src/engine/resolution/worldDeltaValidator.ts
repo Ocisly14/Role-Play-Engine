@@ -3,8 +3,8 @@
 // Code-side contract enforcement for the World Action Engine's output
 // (plan Phase 7 / rules "Output rules"). Two entry points:
 //
-//   validateRawResolution — returns every violation found for an incremental
-//     repair round.
+//   validateRawResolution — returns every violation found, addressed, so the
+//     Engine can resubmit a corrected resolution.
 //   finalizeResolution — converts a fully validated raw output into a typed
 //     TickResolution; ids and nextWakeAt are code-assigned.
 //
@@ -14,6 +14,7 @@
 
 import { MAX_SPOT_LENGTH } from "../../state/characterSpot.js";
 import { addMinutes } from "../../state/gameClock.js";
+import { needsExplicitItemId } from "../../state/itemId.js";
 import { actionIdForCommand } from "../actions/actionStore.js";
 import type {
   ActionCommand,
@@ -30,17 +31,16 @@ import type {
   WorldDelta,
 } from "../actions/types.js";
 import { PERCEPTION_CLARITIES } from "../actions/types.js";
+import { SKILL_CATALOG, catalogSkillName } from "../rules/skillCatalog.js";
 import { parseJsonResponse } from "../shared/jsonParse.js";
-import {
-  isGuaranteedZeroLoss,
-  validSanityLossFormula,
-} from "../tools/diceTools.js";
 import type { SanityOutcome, SanityRollOptions } from "./sanityResolver.js";
 import { resolveSanityDeclarations } from "./sanityResolver.js";
 import type { EngineResolutionContext, ResolutionError } from "./types.js";
 import {
   CHARACTER_OPS,
+  CHECK_LEVELS,
   ITEM_OPS,
+  SANITY_LOSS_FORMULAS,
   SCENE_OPS,
   opKinds,
 } from "./worldDeltaSchema.js";
@@ -48,10 +48,99 @@ import type {
   RawActionEnd,
   RawActionStart,
   RawOccurrence,
-  RawResolutionRepair,
   RawSourcedDelta,
   RawTickResolution,
 } from "./worldDeltaSchema.js";
+
+// ==================== Shape guards ====================
+//
+// The validator is a TOTAL function over whatever the model sent. The Engine
+// submission schema is intentionally non-strict: Anthropic cannot compile its
+// current operation grammar, OpenAI cannot express its nested optional fields
+// in strict mode, and DeepSeek has no strict mode. Every read below that would
+// throw on the wrong shape goes through these, and the wrong shape becomes an
+// addressed error the Engine can correct — never a TypeError that takes the
+// whole tick down.
+
+/** A JSON object and nothing else — not null, not an array. */
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+/** A field that must be a list, read safely: anything else reads as empty.
+ *  The caller reports the shape; this only keeps the read from throwing. */
+function listOf<T>(value: unknown): T[] {
+  return Array.isArray(value) ? (value as T[]) : [];
+}
+
+/** The action ids a row cites, as strings — the address of every error
+ *  about it, so it has to be readable whatever the row's shape. */
+function citedActionIds(occ: unknown): string[] {
+  return listOf<unknown>(isRecord(occ) ? occ.actionIds : undefined).filter(
+    (id): id is string => typeof id === "string"
+  );
+}
+
+const CHECK_LEVEL_SET: ReadonlySet<string> = new Set(CHECK_LEVELS);
+const SANITY_LOSS_SET: ReadonlySet<unknown> = new Set(SANITY_LOSS_FORMULAS);
+/** Every domain a defender may resist with — the catalog minus `Languages`,
+ *  which has no single value and is never rolled in defense. */
+const OPPOSABLE_SKILL_NAMES = SKILL_CATALOG.map((s) => s.name).filter(
+  (name) => name !== "Languages"
+);
+
+/**
+ * The ways out of the place the actor is standing in, each marked open or
+ * closed — code's answer, put beside the command that might need it.
+ *
+ * Passability is never the model's call: the movement runtime walks the
+ * stated route and interrupts it with a `blocked:` reason the moment a closed
+ * edge is actually reached. But with the Blocked Connections table in front
+ * of it and nothing saying what the table was FOR, the model cross-referenced
+ * routes against it by place name — read "lodge_drive ↔ porch is closed" as
+ * "the porch is closed", and ended a walk from the greatroom to the porch as
+ * weather-blocked when that door was open. Listing the actor's own exits with
+ * their state removes the lookup, and with it the misreading.
+ */
+export function exitsFromHere(
+  context: Pick<EngineResolutionContext, "state">,
+  actorId: string
+):
+  | Array<{
+      connectionId: string;
+      to: string;
+      open: boolean;
+      reason?: string;
+    }>
+  | undefined {
+  const here = context.state.characters.find(
+    (c) => c.id === actorId
+  )?.locationId;
+  if (!here) return undefined;
+  const place = context.state.places.find((p) => p.id === here);
+  if (!place) return undefined;
+  const blocked = new Map<string, string>();
+  for (const e of context.state.blockedEdges) {
+    blocked.set(`${e.from}|${e.to}`, e.reason);
+    blocked.set(`${e.to}|${e.from}`, e.reason);
+  }
+  return place.connections
+    .filter((c) => !c.hidden)
+    .map((c) => {
+      const reason = c.blockedReason ?? blocked.get(`${here}|${c.targetId}`);
+      return reason
+        ? {
+            connectionId: c.connectionId,
+            to: c.targetId,
+            open: false,
+            reason,
+          }
+        : { connectionId: c.connectionId, to: c.targetId, open: true };
+    });
+}
+
+/** One exit as `exitsFromHere` lists it. */
+export type Exit = NonNullable<ReturnType<typeof exitsFromHere>>[number];
 
 // ==================== Shared lookup tables ====================
 
@@ -82,6 +171,15 @@ interface Lookup {
   locationIds: Set<string>;
   /** Every authored connection id (`connection.*`), from `state.connectionIds`. */
   connectionIds: Set<string>;
+  /** The actor's own exits, open or closed — the SAME list the prompt puts
+   *  beside their command as `exitsFromHere`, so a grant is checked against
+   *  what the model was shown. Undefined when the actor's place is not in
+   *  the involved set. */
+  exitsFor: (actorId: string) => Exit[] | undefined;
+  /** connectionId → the two places it joins, from every involved place's
+   *  connections and the world-wide blocked list. Used to tell when two
+   *  different ids name the same passage (a two-way exit is two ids). */
+  edgeByConnectionId: Map<string, { from: string; to: string }>;
   vehicleIds: Set<string>;
   vehicleInteriors: Map<string, string>;
   characterSceneIds: Map<string, string | undefined>;
@@ -262,6 +360,27 @@ export function buildLookup(context: EngineResolutionContext): Lookup {
   const itemHolders = new Map<string, string>(
     Object.entries(context.state.itemHolders)
   );
+  const exitsCache = new Map<string, Exit[] | undefined>();
+  const exitsFor = (actorId: string): Exit[] | undefined => {
+    if (!exitsCache.has(actorId)) {
+      exitsCache.set(actorId, exitsFromHere(context, actorId));
+    }
+    return exitsCache.get(actorId);
+  };
+  const edgeByConnectionId = new Map<string, { from: string; to: string }>();
+  for (const place of context.state.places) {
+    for (const c of place.connections ?? []) {
+      edgeByConnectionId.set(c.connectionId, {
+        from: place.id,
+        to: c.targetId,
+      });
+    }
+  }
+  for (const e of context.state.blockedEdges) {
+    if (!edgeByConnectionId.has(e.connectionId)) {
+      edgeByConnectionId.set(e.connectionId, { from: e.from, to: e.to });
+    }
+  }
 
   const actionById = new Map<string, KnownAction>();
   for (const action of context.actions.activeActions) {
@@ -290,6 +409,8 @@ export function buildLookup(context: EngineResolutionContext): Lookup {
     placeIds,
     locationIds,
     connectionIds,
+    exitsFor,
+    edgeByConnectionId,
     vehicleIds,
     vehicleInteriors,
     characterSceneIds,
@@ -332,10 +453,11 @@ function resolvableAction(
 ): { known: KnownAction } | { error: string } {
   const known = lookup.actionById.get(actionId);
   if (!known) {
-    // Name the addressable ids: a bare "unknown actionId" gives the repair
-    // round nothing to correct toward, so every round re-sends the same id.
+    // Name the addressable ids: a bare "unknown actionId" gives the
+    // correction round nothing to correct toward, so every round re-sends
+    // the same id.
     return {
-      error: `unknown actionId — address one of: ${[...lookup.actionById.keys()].join(", ")}, or withdraw this entry with {"actionId": "<the id you sent>", "remove": true}`,
+      error: `unknown actionId — address one of: ${[...lookup.actionById.keys()].join(", ")}, or leave this entry out of the resubmission`,
     };
   }
   if (TERMINAL_STATUSES.has(known.status)) {
@@ -357,26 +479,52 @@ function validateStart(entry: RawActionStart, lookup: Lookup): string[] {
       `this action is already running — it belongs in "ending" if its time is spent, and needs no entry at all if it does not`
     );
   }
-  if (entry.check && known.command.declaredSkillId === undefined) {
-    errs.push(
-      `the actor declared no skill, so there is nothing to check — omit "check"`
-    );
-  }
-  for (const defender of entry.opposedBy ?? []) {
-    if (!lookup.characterIds.has(defender.characterId)) {
-      errs.push(`opposedBy character "${defender.characterId}" does not exist`);
+  if (entry.check !== undefined) {
+    if (
+      !isRecord(entry.check) ||
+      !CHECK_LEVEL_SET.has(entry.check.requiredLevel as string)
+    ) {
+      errs.push(
+        `check must be {"requiredLevel": one of ${CHECK_LEVELS.join(", ")}}`
+      );
+    } else if (known.command.declaredSkillId === undefined) {
+      errs.push(
+        `the actor declared no skill, so there is nothing to check — omit "check"`
+      );
     }
   }
-  if (entry.opposedBy && !entry.check) {
-    errs.push(
-      "opposedBy needs a check — name the bar the opposition is against"
-    );
+  if (entry.opposedBy !== undefined) {
+    if (!Array.isArray(entry.opposedBy)) {
+      errs.push("opposedBy must be an array of {characterId, skillId}");
+    } else {
+      for (const [i, defender] of entry.opposedBy.entries()) {
+        if (!isRecord(defender) || typeof defender.characterId !== "string") {
+          errs.push(`opposedBy[${i}] must be {characterId, skillId}`);
+          continue;
+        }
+        if (!lookup.characterIds.has(defender.characterId)) {
+          errs.push(
+            `opposedBy character "${defender.characterId}" does not exist`
+          );
+        }
+        errs.push(...validateDefenseSkill(defender.skillId, i));
+      }
+    }
+    if (!entry.check) {
+      errs.push(
+        "opposedBy needs a check — name the bar the opposition is against"
+      );
+    }
   }
   // The route goes straight to the movement runtime, which walks the
   // character leg by leg. Every waypoint must name a real place; adjacency
   // between consecutive waypoints is enforced at movement init, which fails
   // the action with a route-shaped reason the actor can learn from.
-  if (entry.movement !== undefined) {
+  if (entry.movement !== undefined && !isRecord(entry.movement)) {
+    errs.push(
+      'movement must be an object {"route": [place ids], "vehicleId"?, "passBlockedConnectionId"?}'
+    );
+  } else if (entry.movement !== undefined) {
     const route = entry.movement.route;
     if (!Array.isArray(route) || route.length === 0) {
       errs.push(
@@ -402,14 +550,14 @@ function validateStart(entry: RawActionStart, lookup: Lookup): string[] {
       );
     }
     if (entry.movement.passBlockedConnectionId !== undefined) {
-      if (
-        typeof entry.movement.passBlockedConnectionId !== "string" ||
-        !lookup.connectionIds.has(entry.movement.passBlockedConnectionId)
-      ) {
-        errs.push(
-          "movement.passBlockedConnectionId must be an exact connection id from exitsFromHere"
-        );
-      }
+      errs.push(
+        ...validatePassGrant(
+          entry.movement.passBlockedConnectionId,
+          Array.isArray(route) ? route : [],
+          known.command.actorId,
+          lookup
+        )
+      );
       if (entry.check !== undefined) {
         errs.push(
           "movement.passBlockedConnectionId cannot accompany a check: a passage cannot be crossed before that unresolved check is rolled"
@@ -419,31 +567,125 @@ function validateStart(entry: RawActionStart, lookup: Lookup): string[] {
   }
   // Duration is conditionally required: a non-travel action must say how
   // long it takes; a travel action must NOT be clocked by hand — code derives
-  // its time from the route. A spoken line is clocked by code too (one
-  // minute, see finalizeResolution), so an utterance-bearing action may omit
-  // it.
-  if (
-    entry.movement === undefined &&
-    entry.resolvedDurationTicks === undefined &&
-    !known.command.utterance?.trim()
-  ) {
-    errs.push(
-      "a non-travel action needs resolvedDurationTicks; only movement actions derive their clock from the route"
-    );
+  // its time from the route, and the rules and the schema both say to omit
+  // the field. Accepting it anyway (the runtime overrides it) taught the
+  // model the sentence was optional. A spoken line is clocked by code too
+  // (one minute, see finalizeResolution), so an utterance-bearing action may
+  // omit it.
+  if (entry.movement !== undefined) {
+    if (entry.resolvedDurationTicks !== undefined) {
+      errs.push(
+        "a movement action must omit resolvedDurationTicks — travel time is derived from the route and the mode of travel; drop the field"
+      );
+    }
+  } else {
+    if (
+      entry.resolvedDurationTicks === undefined &&
+      !known.command.utterance?.trim()
+    ) {
+      errs.push(
+        "a non-travel action needs resolvedDurationTicks; only movement actions derive their clock from the route"
+      );
+    }
+    errs.push(...validateDuration(entry.resolvedDurationTicks));
   }
-  errs.push(...validateDuration(entry.resolvedDurationTicks));
   return errs;
 }
 
-/** The occurrences that cite an action — its trace. Null rows (withdrawn in
- *  a repair) are skipped. */
+/**
+ * The defense skill in an `opposedBy` entry, against the same 17-domain
+ * catalog the Engine's own prompt renders.
+ *
+ * Unchecked, a name outside the catalog was not a loud failure but a silent
+ * one: the defender roll fails to resolve, `resolveCheck` returns not-ok, and
+ * the orchestrator's `if (outcome.ok)` writes nothing — so BOTH sides' dice
+ * are discarded, the action runs its full duration, and the Engine judges its
+ * ending with no roll in front of it and no error explaining why.
+ * `Languages` is in the catalog but is refused here for the same reason: a
+ * defender is never asked to defend in a tongue, so the roller passes no
+ * language and the domain never resolves to a value.
+ */
+function validateDefenseSkill(skillId: unknown, index: number): string[] {
+  const at = `opposedBy[${index}].skillId`;
+  if (typeof skillId !== "string" || !skillId.trim()) {
+    return [`${at} is required — the domain this defender resists with`];
+  }
+  const canonical = catalogSkillName(skillId);
+  if (canonical === undefined) {
+    return [
+      `${at} "${skillId}" is not one of the ability domains — use one of: ${OPPOSABLE_SKILL_NAMES.join(", ")}`,
+    ];
+  }
+  if (canonical === "Languages") {
+    return [
+      `${at}: an opposed check is never resisted with Languages — a defender is not asked to defend in a tongue. Name the domain they actually resist with, or drop this defender`,
+    ];
+  }
+  return [];
+}
+
+/**
+ * A one-shot grant to cross a blocked passage is checked against the list the
+ * model was shown: the actor's own `exitsFromHere`. It used to be checked
+ * against every connection id in the world, so a grant for a far-off, open
+ * or off-route passage passed here and was silently ignored by the movement
+ * runtime — the walker was interrupted again with the same reason, and
+ * nobody learned the id was wrong.
+ */
+function validatePassGrant(
+  passId: unknown,
+  route: unknown[],
+  actorId: string,
+  lookup: Lookup
+): string[] {
+  if (typeof passId !== "string" || !passId) {
+    return [
+      "movement.passBlockedConnectionId must be an exact connection id from exitsFromHere",
+    ];
+  }
+  const exits = lookup.exitsFor(actorId);
+  if (exits === undefined) {
+    // The actor's place is not in the involved set, so there is no exit list
+    // to hold the grant against: fall back to "names something real".
+    return lookup.connectionIds.has(passId)
+      ? []
+      : [
+          `movement.passBlockedConnectionId "${passId}" names no connection in this world`,
+        ];
+  }
+  const exit = exits.find((e) => e.connectionId === passId);
+  if (!exit) {
+    const closed = exits.filter((e) => !e.open).map((e) => e.connectionId);
+    return [
+      `movement.passBlockedConnectionId "${passId}" is not an exit of where ${actorId} stands — a grant names one of THEIR blocked exits from exitsFromHere${
+        closed.length > 0
+          ? `: ${closed.join(", ")}`
+          : ", and none of them is blocked, so no grant applies"
+      }`,
+    ];
+  }
+  if (exit.open) {
+    return [
+      `movement.passBlockedConnectionId "${passId}" leads to "${exit.to}" and that passage is open — a grant is only for a blocked passage; drop it`,
+    ];
+  }
+  if (route.length > 0 && route[0] !== exit.to) {
+    return [
+      `movement.passBlockedConnectionId "${passId}" leads to "${exit.to}", but the route's first step is "${String(route[0])}" — the grant applies only to the passage the route actually takes out of here`,
+    ];
+  }
+  return [];
+}
+
+/** The occurrences that cite an action — its trace. Null rows (a model
+ *  artefact on the non-strict path) are skipped. */
 export function occurrencesCiting(
   actionId: string,
   occurrences: ReadonlyArray<RawOccurrence | null | undefined> | undefined
 ): RawOccurrence[] {
   return (occurrences ?? []).filter(
     (o): o is RawOccurrence =>
-      o != null && (o.actionIds ?? []).includes(actionId)
+      isRecord(o) && citedActionIds(o).includes(actionId)
   );
 }
 
@@ -521,10 +763,23 @@ function validateEnd(
     // happened, and re-issues the same action next minute — the loop the
     // old required field existed to prevent.
     errs.push(
-      `no occurrence cites this ending — the actor perceives nothing, concludes nothing happened, and re-issues the same action next minute. Add an entry to "occurrences" with this actionId in its "actionIds"`
+      `no occurrence cites this ending — the actor perceives nothing, concludes nothing happened, and re-issues the same action next minute. Add a speech:false entry to "occurrences" with this actionId in its "actionIds"`
     );
     // Nothing else is worth saying about an ending nobody can see: the
     // outcome check below would only pile a second correction on the first.
+    return errs;
+  }
+  if (trace.every(isSpeechRow)) {
+    // The trace of an ENDING is what happened, and a speech row carries only
+    // the words. Pure talk is answered by its speech row alone and has no
+    // ending entry; an action that also did something physical owes a
+    // speech:false row for the physical part. Either way this entry, as
+    // sent, is wrong — and the two legal moves are named, because the last
+    // time this was refused without them the model had no move left and the
+    // tick died three rounds later.
+    errs.push(
+      `only a speech row cites this ending. If the whole of it was words said, drop this "ending" entry — the speech row alone answers pure talk. If something physical also happened, keep it and add a speech:false occurrence citing this actionId that states what happened`
+    );
     return errs;
   }
   if (typeof entry.outcome !== "string" || !entry.outcome.trim()) {
@@ -589,7 +844,6 @@ export function validateCharacterChange(
   }
   switch (op.kind) {
     case "hp":
-    case "san":
     case "fatigue": {
       const d = op.delta;
       if (typeof d !== "number" || !Number.isFinite(d) || Math.abs(d) > 500) {
@@ -818,6 +1072,15 @@ export function validateItemChange(
   if (op.kind === "create") {
     if (typeof op.name !== "string" || !op.name.trim()) {
       errs.push("create requires a name");
+    } else if (op.id === undefined && needsExplicitItemId(op.name)) {
+      // Code derives an id from the Latin letters and digits in the name.
+      // A name with none — the norm in this world — derives nothing, and the
+      // minting falls back to `item_`, `item__2`, `item__3`: unique, and
+      // telling nothing apart in the prose where `[id]` is the only handle a
+      // character has on the thing.
+      errs.push(
+        `create "${op.name}" needs an explicit id: no id can be derived from a name with no Latin letters or digits. Supply a short unused ascii id, e.g. "item_bronze_key"`
+      );
     }
     if (typeof op.location !== "string" || !validHolder(op.location, lookup)) {
       errs.push(
@@ -859,6 +1122,13 @@ export function validateItemChange(
       if (typeof op.to !== "string" || !validHolder(op.to, lookup)) {
         errs.push(
           `move.to "${op.to}" is not a valid holder — write "scene:<placeId>" for a place (a vehicle interior scene included) or a bare characterId for a person`
+        );
+      } else if (op.to === op.from) {
+        // Applies cleanly and changes nothing: the state model has no
+        // item-level spot, so "moved within the same scene" is not a move at
+        // all. The actor perceives no consequence and tries it again.
+        errs.push(
+          `move.from and move.to are both "${op.to}" — there is no item-level position within a holder, so this changes nothing. Say where it came to rest in the occurrence, and rewrite the place's description only if the new resting place is a lasting, materially relevant part of it`
         );
       }
       if (movedItemIds.has(delta.itemId)) {
@@ -932,7 +1202,13 @@ export function validateSanityChecks(
   occ: RawOccurrence,
   lookup: Lookup
 ): string[] {
-  const declarations = occ.sanityChecks ?? [];
+  if (occ.sanityChecks === undefined) return [];
+  if (!Array.isArray(occ.sanityChecks)) {
+    return [
+      "sanityChecks must be an array of {characterId, failureLoss, consequence?}",
+    ];
+  }
+  const declarations = occ.sanityChecks;
   if (declarations.length === 0) return [];
 
   const errs: string[] = [];
@@ -991,13 +1267,12 @@ export function validateSanityChecks(
       seen.add(id);
     }
 
-    if (!validSanityLossFormula(decl?.failureLoss)) {
+    // The closed ladder from the guidance, not "any dice formula": the
+    // validator used to accept `2d6+1` and `1d100` against a document that
+    // offers four rungs, and the model took the offer.
+    if (!SANITY_LOSS_SET.has(decl?.failureLoss)) {
       errs.push(
-        `${at}: failureLoss "${decl?.failureLoss}" is not a dice formula`
-      );
-    } else if (isGuaranteedZeroLoss(decl.failureLoss)) {
-      errs.push(
-        `${at}: failureLoss "${decl.failureLoss}" cannot cost anything, and a passed check already costs nothing — a check that cannot cost anything is one that should not happen. Resolve the action without it.`
+        `${at}: failureLoss "${String(decl?.failureLoss)}" must be exactly one of ${SANITY_LOSS_FORMULAS.join(", ")} — the lowest rung that fits`
       );
     }
 
@@ -1007,7 +1282,10 @@ export function validateSanityChecks(
       errs.push(`${at}: consequence must be an object when provided`);
       continue;
     }
-    if (!consequence.description?.trim()) {
+    if (
+      typeof consequence.description !== "string" ||
+      !consequence.description.trim()
+    ) {
       errs.push(
         `${at}: consequence.description is required and must describe objective observable or independently verifiable signs, not inner activity`
       );
@@ -1016,7 +1294,7 @@ export function validateSanityChecks(
     // Not hygiene — crash prevention. `finalizeResolution` runs after this and
     // hands the number to `addMinutes`, which THROWS on a non-integer, and a
     // throw there takes the whole tick down. A malformed submission must be a
-    // repairable error, never a crash.
+    // correctable error, never a crash.
     if (
       !Number.isInteger(minutes) ||
       minutes < MIN_CONSEQUENCE_MINUTES ||
@@ -1043,8 +1321,10 @@ export function validateOccurrence(
       "actionIds is required — name the action(s) this is the trace of"
     );
   }
-  for (const id of occ.actionIds ?? []) {
-    if (!lookup.actionById.has(id)) {
+  for (const id of listOf<unknown>(occ.actionIds)) {
+    if (typeof id !== "string") {
+      errs.push("actionIds: every entry must be an action id string");
+    } else if (!lookup.actionById.has(id)) {
       errs.push(`actionIds: "${id}" is unknown`);
     }
   }
@@ -1055,7 +1335,17 @@ export function validateOccurrence(
   }
   const speech = isSpeechRow(occ);
   if (speech) {
-    for (const id of occ.actionIds ?? []) {
+    const cited = citedActionIds(occ);
+    if (cited.length > 1) {
+      // One row, one utterance. Code places a row where the actor of its
+      // FIRST cited action stands and copies every cited utterance onto it,
+      // so two speakers in one row put the second one's words in the first
+      // one's room.
+      errs.push(
+        `a speech row delivers ONE utterance, but this row cites ${cited.length} actions. Send one speech:true row per speaking action, each with its own targetIds and perceivers`
+      );
+    }
+    for (const id of cited) {
       const known = lookup.actionById.get(id);
       if (!known) continue;
       if (!known.command.utterance?.trim()) {
@@ -1064,7 +1354,7 @@ export function validateOccurrence(
         );
       } else if (!endingIds.has(id)) {
         errs.push(
-          `speech is true, but "${id}" does not end this tick — its words are delivered next minute, when it appears under \`endingWithUtterance\`. Withdraw this row ("remove": true beside its actionIds); the starting entry is all it needs now`
+          `speech is true, but "${id}" does not end this tick — its words are delivered next minute, when it appears under \`endingWithUtterance\`. Leave this row out of the resubmission; the starting entry is all it needs now`
         );
       }
     }
@@ -1073,10 +1363,15 @@ export function validateOccurrence(
         "a speech row requires targetIds — who the words were addressed to (an empty list means the room)"
       );
     }
-  } else if (typeof occ.content !== "string" || !occ.content.trim()) {
-    errs.push(
-      "content is required when speech is false — one objective paragraph of what happened"
-    );
+  } else {
+    if (typeof occ.content !== "string" || !occ.content.trim()) {
+      errs.push(
+        "content is required when speech is false — one objective paragraph of what happened"
+      );
+    }
+    if (occ.targetIds !== undefined && !Array.isArray(occ.targetIds)) {
+      errs.push("targetIds must be an array of character ids");
+    }
   }
   if (
     typeof occ.content === "string" &&
@@ -1086,9 +1381,9 @@ export function validateOccurrence(
       "content: character-perspective wording detected — it must be objective and third-person"
     );
   }
-  for (const id of occ.targetIds ?? []) {
-    if (!lookup.characterIds.has(id)) {
-      errs.push(`targetIds: "${id}" does not exist`);
+  for (const id of listOf<unknown>(occ.targetIds)) {
+    if (typeof id !== "string" || !lookup.characterIds.has(id)) {
+      errs.push(`targetIds: "${String(id)}" does not exist`);
     }
   }
   if (!Array.isArray(occ.perceivers) || occ.perceivers.length === 0) {
@@ -1172,8 +1467,8 @@ export function validateRawResolution(
 
   // The per-piece validators return plain messages; the address comes from
   // here, which is the only place that knows WHICH element is being checked.
-  // That address is what lets the Engine repair one element instead of
-  // rewriting the whole resolution.
+  // That address is what lets the Engine correct one element and keep the
+  // rest of the resolution as it was.
   const at = (target: ResolutionError["target"], messages: string[]): void => {
     for (const message of messages) errors.push({ target, message });
   };
@@ -1189,14 +1484,24 @@ export function validateRawResolution(
     ["ending", raw.ending ?? [], validateEnd as never],
   ];
   for (const [moment, entries, validate] of moments) {
-    for (const entry of entries) {
+    for (const [i, entry] of (entries as unknown[]).entries()) {
+      if (
+        !isRecord(entry) ||
+        typeof entry.actionId !== "string" ||
+        !entry.actionId.trim()
+      ) {
+        at({ kind: "resolution" }, [
+          `${moment}[${i}] is not an entry — every element of "${moment}" is an object naming the action it answers: {"actionId": "<id>", ...}. Send it as one, or leave it out`,
+        ]);
+        continue;
+      }
       const target: ResolutionError["target"] = {
         kind: "action",
         actionId: entry.actionId,
       };
       if (seen.has(entry.actionId)) {
         at(target, [
-          `appears more than once — an action is either starting or ending, not both (found again in "${moment}"). Send it ONCE in the list it belongs in: a repaired action replaces every copy of its id. Do NOT withdraw it — this action must be answered this tick`,
+          `appears more than once — an action is either starting or ending, not both (found again in "${moment}"). Send it ONCE in the list it belongs in. Do NOT drop it — this action must be answered this tick`,
         ]);
         continue;
       }
@@ -1204,7 +1509,11 @@ export function validateRawResolution(
       at(
         target,
         moment === "ending"
-          ? validateEnd(entry as RawActionEnd, lookup, raw.occurrences)
+          ? validateEnd(
+              entry as unknown as RawActionEnd,
+              lookup,
+              raw.occurrences
+            )
           : validate(entry as never, lookup)
       );
     }
@@ -1214,9 +1523,11 @@ export function validateRawResolution(
       // already, or moved there by a position change in this same
       // submission. Mechanical (position vs scene id), so it can live here
       // rather than in the rules prose alone.
-      for (const entry of entries as RawActionStart[]) {
-        const vehicleId = entry.movement?.vehicleId;
-        if (vehicleId === undefined) continue;
+      for (const entry of entries as unknown[]) {
+        if (!isRecord(entry) || typeof entry.actionId !== "string") continue;
+        const movement = entry.movement;
+        const vehicleId = isRecord(movement) ? movement.vehicleId : undefined;
+        if (typeof vehicleId !== "string") continue;
         const interior = lookup.vehicleInteriors.get(vehicleId);
         if (interior === undefined) continue; // unknown vehicle already reported
         const actorId = lookup.actionById.get(entry.actionId)?.command.actorId;
@@ -1225,6 +1536,7 @@ export function validateRawResolution(
           lookup.characterSceneIds.get(actorId) === interior;
         const boardedThisSubmission = (raw.characterChanges ?? []).some(
           (change) =>
+            isRecord(change) &&
             change.characterId === actorId &&
             (
               change.operation as {
@@ -1238,6 +1550,43 @@ export function validateRawResolution(
         if (!alreadyInside && !boardedThisSubmission) {
           at({ kind: "action", actionId: entry.actionId }, [
             `movement.vehicleId "${vehicleId}": the driver ${actorId} is not in its interior scene "${interior}" — add a characterChange position into "${interior}" in this submission (boarding), or drop the vehicle and walk`,
+          ]);
+        }
+      }
+      // Never both for one passage: an obstacle is either removed for
+      // everyone (`connectionBlock blocked:false`) or got past by this one
+      // walker (`passBlockedConnectionId`). Compared on the passage, not the
+      // id — a two-way exit is two ids.
+      const passageKey = (connectionId: string): string => {
+        const edge = lookup.edgeByConnectionId.get(connectionId);
+        return edge ? [edge.from, edge.to].sort().join("::") : connectionId;
+      };
+      const unblocked = new Map<string, string>();
+      for (const sc of raw.sceneChanges ?? []) {
+        if (!isRecord(sc)) continue;
+        const op = sc.operation as
+          | { kind?: string; connectionId?: unknown; blocked?: unknown }
+          | undefined;
+        if (
+          op?.kind === "connectionBlock" &&
+          op.blocked === false &&
+          typeof op.connectionId === "string"
+        ) {
+          unblocked.set(passageKey(op.connectionId), op.connectionId);
+        }
+      }
+      if (unblocked.size > 0) {
+        for (const entry of entries as unknown[]) {
+          if (!isRecord(entry) || typeof entry.actionId !== "string") continue;
+          const movement = entry.movement;
+          const passId = isRecord(movement)
+            ? movement.passBlockedConnectionId
+            : undefined;
+          if (typeof passId !== "string") continue;
+          const clearedAs = unblocked.get(passageKey(passId));
+          if (clearedAs === undefined) continue;
+          at({ kind: "action", actionId: entry.actionId }, [
+            `movement.passBlockedConnectionId "${passId}" and a sceneChanges connectionBlock blocked:false on "${clearedAs}" name the same passage — never both for one passage. If the act REMOVED the obstacle, keep the unblock and drop the grant; if the obstacle STAYS and only this walker got past, keep the grant and drop the unblock`,
           ]);
         }
       }
@@ -1257,7 +1606,7 @@ export function validateRawResolution(
     if (endingIds.has(required) && pureSpeechAnswer(required)) continue;
     at({ kind: "resolution" }, [
       endingIds.has(required)
-        ? `triggering action "${required}" was not answered — it ends this tick: give it an "ending" entry with an outcome, or, if the whole of it was words said, one occurrence with speech true citing it`
+        ? `triggering action "${required}" was not answered — it ends this tick: give it an "ending" entry with an outcome plus a speech:false occurrence citing it, or, if the whole of it was words said, one occurrence with speech true citing it and no ending entry`
         : `triggering action "${required}" was not answered — it starts this tick and needs a "starting" entry`,
     ]);
   }
@@ -1266,22 +1615,29 @@ export function validateRawResolution(
   // Ids minted by this submission's `create` operations: occurrences may cite
   // them, so item changes are validated (and the set filled) first.
   const createdItemIds = new Set<string>();
+  const notAChange = (idField: string): string[] => [
+    `is not a change — every element is an object {"sourceActionId", "${idField}", "operation": {"kind", ...}}. Send it as one, or leave it out`,
+  ];
   (raw.characterChanges ?? []).forEach((d, i) => {
-    if (d === null) return;
     at(
       { kind: "characterChange", index: i },
-      validateCharacterChange(d, lookup)
+      isRecord(d)
+        ? validateCharacterChange(d, lookup)
+        : notAChange("characterId")
     );
   });
   (raw.sceneChanges ?? []).forEach((d, i) => {
-    if (d === null) return;
-    at({ kind: "sceneChange", index: i }, validateSceneChange(d, lookup));
+    at(
+      { kind: "sceneChange", index: i },
+      isRecord(d) ? validateSceneChange(d, lookup) : notAChange("sceneId")
+    );
   });
   (raw.itemChanges ?? []).forEach((d, i) => {
-    if (d === null) return;
     at(
       { kind: "itemChange", index: i },
-      validateItemChange(d, lookup, movedItemIds, createdItemIds)
+      isRecord(d)
+        ? validateItemChange(d, lookup, movedItemIds, createdItemIds)
+        : notAChange("itemId")
     );
   });
   // Prose-coherence: an item CITED by its holder place's description cannot
@@ -1290,7 +1646,7 @@ export function validateRawResolution(
   // string containment vs the Tier-2 snapshot; places outside the involved
   // set are skipped (their prose is not at hand to check).
   (raw.itemChanges ?? []).forEach((d, i) => {
-    if (d === null) return;
+    if (!isRecord(d)) return;
     const op = d.operation as { kind?: string; from?: string };
     if (op?.kind !== "move" && op?.kind !== "destroy") return;
     if (!d.itemId) return;
@@ -1302,7 +1658,7 @@ export function validateRawResolution(
     if (prose === undefined || !prose.includes(`[${d.itemId}]`)) return;
     const rewritten = (raw.sceneChanges ?? []).some(
       (sc) =>
-        sc !== null &&
+        isRecord(sc) &&
         (sc as { sceneId?: string }).sceneId === placeId &&
         (sc.operation as { kind?: string })?.kind === "setDescription"
     );
@@ -1312,11 +1668,16 @@ export function validateRawResolution(
       ]);
     }
   });
-  for (const o of raw.occurrences ?? []) {
-    if (o == null) continue;
+  for (const [i, o] of (raw.occurrences ?? []).entries()) {
+    if (!isRecord(o)) {
+      at({ kind: "resolution" }, [
+        `occurrences[${i}] is not a row — every element is an object {"actionIds", "speech", "perceivers", ...}. Send it as one, or leave it out`,
+      ]);
+      continue;
+    }
     at(
-      { kind: "occurrence", actionIds: o.actionIds ?? [] },
-      validateOccurrence(o, lookup, endingIds)
+      { kind: "occurrence", actionIds: citedActionIds(o) },
+      validateOccurrence(o as unknown as RawOccurrence, lookup, endingIds)
     );
   }
 
@@ -1325,13 +1686,15 @@ export function validateRawResolution(
   // person being checked in two of them. This is the structural replacement
   // for the deleted session ledger, and it is what makes the old loop
   // impossible: not "the tool refuses" but "the submission is rejected at an
-  // address, and the repair is one targeted edit".
+  // address, and the correction is one targeted edit".
   const shocked = new Set<string>();
   const noteShocks = (
     occ: Pick<RawOccurrence, "sanityChecks"> | null | undefined,
     target: ResolutionError["target"]
   ): void => {
-    for (const decl of occ?.sanityChecks ?? []) {
+    for (const decl of listOf<{ characterId?: unknown } | null | undefined>(
+      occ?.sanityChecks
+    )) {
       const id = decl?.characterId;
       if (typeof id !== "string" || id.length === 0) continue;
       if (shocked.has(id)) {
@@ -1344,30 +1707,27 @@ export function validateRawResolution(
     }
   };
   for (const o of raw.occurrences ?? []) {
-    if (o == null) continue;
-    noteShocks(o, { kind: "occurrence", actionIds: o.actionIds ?? [] });
+    if (!isRecord(o)) continue;
+    noteShocks(o as unknown as RawOccurrence, {
+      kind: "occurrence",
+      actionIds: citedActionIds(o),
+    });
   }
 
   return errors;
 }
 
 /**
- * Merge a repair over the previous submission. Only the addressed elements
- * change; everything else stands exactly as it was, which is the whole point
- * — a model asked to re-send a correct delta will sometimes "improve" it.
- *
- * Withdrawn elements become holes rather than being spliced out, so an index
- * quoted in one round still addresses the same element in the next.
- */
-/**
  * Make a model-shaped resolution safe to read.
  *
- * Every list here is declared as an array in the schema, but the repair tool
- * next door takes index-keyed OBJECTS for the same fields, and the model
- * mixes them up. A `{"0": {...}}` where an array belongs used to reach
- * `.filter` and take the whole tick down with a TypeError — a malformed
- * submission must be a repairable error, never a crash. Object form means
- * exactly what the array form means, so read it and move on.
+ * Every list here is declared as an array in the schema. A provider that
+ * honours `strict` cannot send anything else; DeepSeek has no strict mode,
+ * and the retired patch tool used to take index-keyed OBJECTS for the same
+ * fields, so the model was measured sending `{"0": {...}}` where an array
+ * belonged. That used to reach `.filter` and take the whole tick down with a
+ * TypeError — a malformed submission must be a correctable error, never a
+ * crash. Object form means exactly what the array form means, so read it and
+ * move on.
  */
 export function normalizeList<T>(value: unknown, field = "field"): T[] {
   if (value === undefined || value === null) return [];
@@ -1442,229 +1802,6 @@ export function normalizeRawResolution(
   } as RawTickResolution;
 }
 
-/**
- * The withdrawals in this repair that {@link applyRepair} will refuse, because
- * the action must be answered this tick. Separate from the merge so the caller
- * can SAY so in the next round's feedback: a refusal the model is not told
- * about is a correction it will make again.
- */
-export function refusedWithdrawals(
-  repair: RawResolutionRepair,
-  protectedActionIds: ReadonlySet<string>
-): string[] {
-  const out = new Set<string>();
-  for (const moment of ["starting", "ending"] as const) {
-    for (const item of normalizeList<{ actionId?: string; remove?: boolean }>(
-      repair[moment],
-      `repair.${moment}`
-    )) {
-      if (
-        item?.remove === true &&
-        typeof item.actionId === "string" &&
-        protectedActionIds.has(item.actionId)
-      ) {
-        out.add(item.actionId);
-      }
-    }
-  }
-  return [...out];
-}
-
-export function applyRepair(
-  raw: RawTickResolution,
-  repair: RawResolutionRepair,
-  /** Actions the trigger requires an answer for. A withdrawal aimed at one of
-   *  these is refused rather than obeyed — see the note in the action merge. */
-  protectedActionIds: ReadonlySet<string> = new Set()
-): RawTickResolution {
-  // One shape for everything: an array whose items carry their own address.
-  const patchList = <T>(
-    list: Array<T | null> | undefined,
-    patches: unknown
-  ): Array<T | null> => {
-    const out = [...(list ?? [])];
-    // In the retired shape the KEY was the address, so keep it when reading
-    // one: dropping it would turn a replacement into an append.
-    const items: Array<Record<string, unknown>> =
-      patches && typeof patches === "object" && !Array.isArray(patches)
-        ? Object.entries(patches as Record<string, unknown>).map(
-            ([key, value]) =>
-              value === null
-                ? { index: Number(key), remove: true }
-                : { index: Number(key), ...(value as Record<string, unknown>) }
-          )
-        : normalizeList<Record<string, unknown>>(patches);
-    for (const raw of items) {
-      if (!raw || typeof raw !== "object") continue;
-      const { index, remove, ...value } = raw as {
-        index?: number;
-        remove?: boolean;
-      } & Record<string, unknown>;
-      const addressed =
-        typeof index === "number" &&
-        Number.isInteger(index) &&
-        index >= 0 &&
-        index < out.length;
-      if (addressed) {
-        out[index as number] = remove === true ? null : (value as T);
-      } else if (remove !== true) {
-        out.push(value as T);
-      }
-    }
-    return out;
-  };
-
-  // Actions are addressed by id, not by index — and the list an action sits
-  // in is itself the decision, so a repair that moves one between moments has
-  // to drop it from the other. Otherwise "this belongs in ending" would
-  // leave the wrong entry behind and the next round would reject both.
-  //
-  // Two rules make the id the whole address. A replacement collapses EVERY
-  // copy of that id into the one sent: a submission that answered the same
-  // action twice used to be unrepairable, because replacing hit the first
-  // copy and the second went on being the duplicate the error complained
-  // about — three rounds of correct-looking repairs in one measured tick, and
-  // the resolution dropped anyway. And `remove: true` withdraws the id from
-  // both lists, which is the only way to take back an answer to something the
-  // trigger never asked about.
-  const base = normalizeRawResolution(raw);
-  const repaired = {
-    starting: [...(base.starting ?? [])],
-    ending: [...(base.ending ?? [])],
-  };
-  const touched = new Set<string>();
-  const withdrawn = new Set<string>();
-  /** actionId → the entry that survives, and the list it belongs in. */
-  const kept = new Map<
-    string,
-    { moment: "starting" | "ending"; entry: unknown }
-  >();
-  for (const moment of ["starting", "ending"] as const) {
-    for (const item of normalizeList<{ actionId: string; remove?: boolean }>(
-      repair[moment],
-      `repair.${moment}`
-    )) {
-      if (typeof item?.actionId !== "string") continue;
-      touched.add(item.actionId);
-      if (item.remove === true) {
-        // Withdrawal is for an entry that should never have been sent — an
-        // answer to something the trigger is not resolving. A TRIGGERING
-        // action cannot be withdrawn: it must be answered this tick, and
-        // obeying the removal only turns "you answered this twice" into "you
-        // did not answer this at all". Measured: told an action appeared in
-        // both lists, the model withdrew it, was told it was unanswered, put
-        // it back in both, and the tick died three rounds later.
-        if (protectedActionIds.has(item.actionId)) {
-          // Refuse the withdrawal — but only forget that the id was touched
-          // when this repair offered nothing else for it. A repair that sends
-          // BOTH a replacement and a removal for one action used to leave the
-          // id untouched while its replacement still waited in `kept`: the
-          // copies already in the lists were kept as-is AND the replacement
-          // was appended, so every round added one more copy of the very
-          // action the errors were complaining about.
-          if (!kept.has(item.actionId)) touched.delete(item.actionId);
-          continue;
-        }
-        withdrawn.add(item.actionId);
-        kept.delete(item.actionId);
-        continue;
-      }
-      withdrawn.delete(item.actionId);
-      const { remove: _remove, ...entry } = item;
-      kept.set(item.actionId, { moment, entry });
-    }
-  }
-  for (const moment of ["starting", "ending"] as const) {
-    const list = repaired[moment] as Array<{ actionId: string }>;
-    const seen = new Set<string>();
-    repaired[moment] = list.flatMap((existing) => {
-      const id = existing.actionId;
-      if (!touched.has(id)) return [existing];
-      const replacement = kept.get(id);
-      // Withdrawn, moved to the other list, or a second copy of an id whose
-      // replacement has already landed: all three leave nothing here.
-      if (replacement?.moment !== moment || seen.has(id)) return [];
-      seen.add(id);
-      return [replacement.entry as typeof existing];
-    }) as never;
-    // An id the submission never carried in this list appends here.
-    for (const [id, { moment: target, entry }] of kept) {
-      if (target === moment && !seen.has(id)) {
-        seen.add(id);
-        (repaired[moment] as unknown[]).push(entry);
-      }
-    }
-  }
-
-  return {
-    ...repaired,
-    characterChanges: patchList(
-      raw.characterChanges,
-      repair.characterChanges
-    ) as RawTickResolution["characterChanges"],
-    sceneChanges: patchList(
-      raw.sceneChanges,
-      repair.sceneChanges
-    ) as RawTickResolution["sceneChanges"],
-    itemChanges: patchList(
-      raw.itemChanges,
-      repair.itemChanges
-    ) as RawTickResolution["itemChanges"],
-    occurrences: patchOccurrences(
-      raw.occurrences,
-      repair.occurrences
-    ) as RawTickResolution["occurrences"],
-  };
-}
-
-/**
- * Occurrence rows are addressed by the actions they cite. A repair row
- * replaces every existing row that cites any of its `actionIds`; `remove`
- * withdraws those rows; a row citing actions nothing cites yet is appended.
- * Withdrawn rows leave `null` holes like the indexed lists do, so the shape
- * downstream readers expect is unchanged.
- *
- * Coarser than index addressing on purpose. Measured: told `occurrence:0`
- * was wrong, the model appended a corrected row without an index 59 times out
- * of 89 and the wrong row stood — four ticks died with the same error three
- * rounds running. It uses an actionId as an address correctly every time.
- */
-function patchOccurrences(
-  list: Array<RawOccurrence | null> | undefined,
-  patches: unknown
-): Array<RawOccurrence | null> {
-  const out: Array<RawOccurrence | null> = [...(list ?? [])];
-  const items = normalizeList<Record<string, unknown>>(
-    patches,
-    "repair.occurrences"
-  );
-  for (const raw of items) {
-    if (!raw || typeof raw !== "object") continue;
-    const {
-      remove,
-      index: _index,
-      ...value
-    } = raw as {
-      remove?: boolean;
-      index?: unknown;
-      actionIds?: unknown;
-    } & Record<string, unknown>;
-    const ids = Array.isArray(value.actionIds)
-      ? (value.actionIds as unknown[]).filter(
-          (id): id is string => typeof id === "string"
-        )
-      : [];
-    if (ids.length === 0) continue; // unaddressed: nothing it could replace
-    const cites = (row: RawOccurrence | null): boolean =>
-      row != null && (row.actionIds ?? []).some((id) => ids.includes(id));
-    for (let i = 0; i < out.length; i += 1) {
-      if (cites(out[i])) out[i] = null;
-    }
-    if (remove !== true) out.push(value as unknown as RawOccurrence);
-  }
-  return out;
-}
-
 // ==================== Finalization ====================
 
 export interface FinalizedResolution {
@@ -1696,7 +1833,7 @@ export interface FinalizedResolution {
  * Convert a resolution that has ALREADY passed validation into its typed
  * form. It drops nothing and invents nothing: by the time this runs, every
  * transition is legal, every reference is real and every ended action has its
- * trace. Anything that could not be repaired never reaches here — the tick
+ * trace. Anything that could not be corrected never reaches here — the tick
  * applies nothing instead.
  *
  * What code still owns rather than trusting the model: occurrence and fact

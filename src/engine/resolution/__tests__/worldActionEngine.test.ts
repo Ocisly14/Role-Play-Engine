@@ -1,7 +1,8 @@
 // Phase 7 session loop: code tools answered mid-session, terminal
-// submit_resolution accepted alone, addressed errors repaired INCREMENTALLY
-// via repair_resolution, and — when repair cannot converge or the model
-// fails — a result that applies nothing at all.
+// submit_resolution accepted alone, addressed errors answered by a COMPLETE
+// resubmission through the same tool (there is no patch tool), and — when
+// correction cannot converge or the model fails — a result that applies
+// nothing at all.
 
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { DynamicGameStateManager } from "../../../state/DynamicGameState.js";
@@ -123,14 +124,10 @@ function turn(calls: Array<{ id: string; name: string; args?: object }>) {
   };
 }
 
+// A movement action leaves the clock to the route: `resolvedDurationTicks`
+// on it is refused by the validator, and the runtime derives the time.
 const validSubmission = {
-  starting: [
-    {
-      actionId: "action_c1",
-      resolvedDurationTicks: 5,
-      movement: { route: ["SCN_FAR"] },
-    },
-  ],
+  starting: [{ actionId: "action_c1", movement: { route: ["SCN_FAR"] } }],
 };
 
 function makeDeps() {
@@ -269,13 +266,12 @@ describe("resolveTick session loop", () => {
     expect(result.ok).toBe(true);
     if (!result.ok) return;
     expect(result.resolution.transitions).toEqual([
-      expect.objectContaining({
-        actionId: "action_c1",
-        to: "active",
-        resolvedDurationTicks: 5,
-        nextWakeAt: "1923-04-02T09:20:00",
-      }),
+      expect.objectContaining({ actionId: "action_c1", to: "active" }),
     ]);
+    // Travel time is the movement runtime's: nothing is clocked here.
+    expect(result.resolution.transitions[0].resolvedDurationTicks).toBe(
+      undefined
+    );
     expect(result.movementInits.action_c1).toEqual({
       route: ["SCN_FAR"],
     });
@@ -361,7 +357,7 @@ describe("resolveTick session loop", () => {
     expect(result.failure).toContain("model error");
   });
 
-  it("repairs incrementally: only the flagged element is re-sent", async () => {
+  it("corrects by resubmitting the complete resolution through submit_resolution", async () => {
     // The action is queued, so ending it is the wrong moment entirely.
     const invalid = {
       ending: [{ actionId: "action_c1", outcome: "done already" }],
@@ -380,18 +376,10 @@ describe("resolveTick session loop", () => {
         turn([{ id: "t1", name: "submit_resolution", args: invalid }])
       )
       .mockResolvedValueOnce(
-        turn([
-          {
-            id: "t2",
-            name: "repair_resolution",
-            // Only the transition, moved into the moment it belongs in. The
-            // patch is addressed by actionId: sending action_c1 under
-            // `starting` is what withdraws the flagged `ending` entry. The
-            // occurrence row that cites it is not flagged and stands — a
-            // visible attempt in progress is a legal trace of a start.
-            args: { starting: validSubmission.starting },
-          },
-        ])
+        // The whole resolution again, corrected: the transition moved into
+        // the moment it belongs in. Nothing of the rejected submission is
+        // kept on the Engine's side.
+        turn([{ id: "t2", name: "submit_resolution", args: validSubmission }])
       );
 
     const result = await resolveTick(makeContext(), makeDeps());
@@ -401,32 +389,33 @@ describe("resolveTick session loop", () => {
     expect(result.resolution.transitions[0]).toMatchObject({
       actionId: "action_c1",
       to: "active",
-      resolvedDurationTicks: 5,
     });
 
-    // The rejection addressed the element, and demanded a patch not a rewrite.
-    const repairCall = generateToolCalls.mock.calls[1][0];
-    const rejection = repairCall.messages.find(
+    // The rejection addressed the element and demanded a complete resubmission.
+    const correctionCall = generateToolCalls.mock.calls[1][0];
+    const rejection = correctionCall.messages.find(
       (m: { role: string }) => m.role === "tool"
     );
     expect(rejection.results[0].content).toContain("action:action_c1");
     expect(rejection.results[0].content).toContain("has not started yet");
     expect(rejection.results[0].content).toContain(
-      "do not re-send correct parts or the whole resolution"
+      "submit_resolution again with the COMPLETE resolution"
     );
+    expect(rejection.results[0].content).not.toContain("repair_resolution");
     // The tool LIST is identical to the opening round's — tools render ahead
     // of the system prompt in the cached prefix, so swapping the array would
-    // discard the system-prompt cache on every repair. Repair is forced by
-    // toolChoice instead.
+    // discard the system-prompt cache on every correction. The resubmission
+    // is forced by toolChoice instead.
     const openingCall = generateToolCalls.mock.calls[0][0];
-    expect(repairCall.tools).toEqual(openingCall.tools);
-    expect(repairCall.tools.map((t: { name: string }) => t.name)).toContain(
-      "repair_resolution"
-    );
-    expect(repairCall.toolChoice).toEqual({ name: "repair_resolution" });
+    expect(correctionCall.tools).toEqual(openingCall.tools);
+    expect(correctionCall.tools.map((t: { name: string }) => t.name)).toEqual([
+      "damageRoll",
+      "submit_resolution",
+    ]);
+    expect(correctionCall.toolChoice).toEqual({ name: "submit_resolution" });
   });
 
-  it("applies nothing when repair cannot converge", async () => {
+  it("applies nothing when correction cannot converge", async () => {
     const invalid = {
       ending: [{ actionId: "action_c1", outcome: "done already" }],
       // The ending's trace is a flat row citing it, not a nested object.
@@ -439,39 +428,56 @@ describe("resolveTick session loop", () => {
         },
       ],
     };
+    // Every round re-sends the same broken resolution.
     generateToolCalls.mockResolvedValue(
       turn([{ id: "t1", name: "submit_resolution", args: invalid }])
     );
-    // Every repair round re-sends the same broken transition.
-    generateToolCalls.mockResolvedValueOnce(
-      turn([{ id: "t0", name: "submit_resolution", args: invalid }])
-    );
-    for (let i = 0; i < 5; i++) {
-      generateToolCalls.mockResolvedValueOnce(
-        turn([
-          {
-            id: `r${i}`,
-            name: "repair_resolution",
-            args: { ending: invalid.ending },
-          },
-        ])
-      );
-    }
 
     const result = await resolveTick(makeContext(), makeDeps());
 
     expect(result.ok).toBe(false);
     if (result.ok) return;
-    expect(result.failure).toContain("repair round");
+    expect(result.failure).toContain("correction round");
+    // One opening submission plus three corrections, then the session gives up.
+    expect(generateToolCalls).toHaveBeenCalledTimes(4);
     // The errors still name what was wrong, addressed.
     expect(result.errors.some((e) => e.target.kind === "action")).toBe(true);
+  });
+
+  it("applies nothing when the demanded resubmission does not arrive alone", async () => {
+    const invalid = {
+      ending: [{ actionId: "action_c1", outcome: "done already" }],
+      occurrences: [
+        {
+          actionIds: ["action_c1"],
+          speech: false,
+          perceivers: [{ characterId: "npc_1", clarity: "full" }],
+          content: "the door opens",
+        },
+      ],
+    };
+    generateToolCalls
+      .mockResolvedValueOnce(
+        turn([{ id: "t1", name: "submit_resolution", args: invalid }])
+      )
+      // A provider that ignores toolChoice answers with a lookup instead.
+      .mockResolvedValueOnce(
+        turn([{ id: "t2", name: "damageRoll", args: { formula: "1d6" } }])
+      );
+
+    const result = await resolveTick(makeContext(), makeDeps());
+
+    expect(result.ok).toBe(false);
+    if (result.ok) return;
+    expect(result.failure).toContain("expected a corrected submission");
+    expect(generateToolCalls).toHaveBeenCalledTimes(2);
   });
 });
 
 describe("renderContext addressing", () => {
   // A prompt that shows both `commandId` and `action_<commandId>` gives the
   // model two ids for one action; it echoed the commandId, every entry failed
-  // lookup as "unknown actionId", and all three repair rounds re-sent the same
+  // lookup as "unknown actionId", and all three correction rounds re-sent the same
   // mismatch. The prompt now carries only the id the schema addresses.
   it("prints the actionId and never the raw commandId", () => {
     const context = makeContext();
@@ -643,17 +649,17 @@ describe("the turn budget", () => {
   });
 
   it("stops offering parallel calls once one tool is demanded", async () => {
-    // Repair is the one moment `toolChoice` still names a single tool. On that
-    // turn a parallel call can add nothing but a second copy of it — and the
-    // intake takes a patch ONLY when it arrives alone. Measured live: both
-    // copies refused, another full-world round trip spent sending the same
-    // thing again by itself.
+    // Correction is the one moment `toolChoice` still names a single tool.
+    // On that turn a parallel call can add nothing but a second copy of it —
+    // and the intake takes a submission ONLY when it arrives alone. Measured
+    // live: both copies refused, another full-world round trip spent sending
+    // the same thing again by itself.
     generateToolCalls
       .mockResolvedValueOnce(
         turn([{ id: "t0", name: "damageRoll", args: { formula: "1d6" } }])
       )
       .mockResolvedValueOnce(
-        // Ending an action that is still queued — rejected, so repair opens.
+        // Ending an action that is still queued — rejected, so correction opens.
         turn([
           {
             id: "t1",
@@ -673,13 +679,7 @@ describe("the turn budget", () => {
         ])
       )
       .mockResolvedValueOnce(
-        turn([
-          {
-            id: "t2",
-            name: "repair_resolution",
-            args: { starting: validSubmission.starting },
-          },
-        ])
+        turn([{ id: "t2", name: "submit_resolution", args: validSubmission }])
       );
 
     const result = await resolveTick(makeContext(), makeDeps());
@@ -691,8 +691,8 @@ describe("the turn budget", () => {
       expect(call.toolChoice).toBe("any");
       expect(call.allowParallelCalls).toBe(true);
     }
-    // On the demanded patch it does not.
-    expect(calls[2].toolChoice).toEqual({ name: "repair_resolution" });
+    // On the demanded resubmission it does not.
+    expect(calls[2].toolChoice).toEqual({ name: "submit_resolution" });
     expect(calls[2].allowParallelCalls).toBe(false);
   });
 

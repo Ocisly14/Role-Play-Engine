@@ -42,8 +42,9 @@ Two engines share one world state:
 - **LLM engines** — open-ended outcomes. The World Action Engine reads the
   full world context, resolves every action that triggered this tick, and
   emits typed `WorldDelta`s that the code validates and applies. A smaller
-  weather engine judges, on each weather change, which passages the weather
-  closes and what each outdoor place is like.
+  weather engine judges, on each weather change including a return to clear
+  skies, which passages the weather closes and what each outdoor place is
+  like.
 
 Characters never see structured state. Each tick, what a character can
 perceive is rendered into one first-person paragraph, and the character's
@@ -119,9 +120,10 @@ the context builder. A tick with no triggers makes no model calls.
   `src/engine/rules/session-protocol.md` is the session contract.
 - **Validated output.** The session ends with exactly one
   `submit_resolution` call. Its payload is checked in code by
-  `worldDeltaValidator.ts`; invalid parts get up to `MAX_REPAIR_ROUNDS` (3)
-  corrective rounds through `repair_resolution`, and whatever is still
-  invalid is dropped with the originating action marked failed.
+  `worldDeltaValidator.ts`; a rejected payload gets up to
+  `MAX_CORRECTION_ROUNDS` (3) corrective rounds, each a complete resubmission
+  through the same `submit_resolution` tool (there is no patch tool), and a
+  tick still invalid after that applies nothing.
 - **One code tool.** `damageRoll` (`src/engine/tools/diceTools.ts`) is the
   only tool the session can call, because a roll must never be the
   model's. The request already carries the place graph, the places and the

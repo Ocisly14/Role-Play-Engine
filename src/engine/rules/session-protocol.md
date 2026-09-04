@@ -2,7 +2,7 @@
 
 This document governs how to use the Engine tools and submit one complete tick
 resolution. Domain judgement belongs to the world-rule modules; this protocol
-defines the envelope, worklist coverage and repair behavior.
+defines the envelope, worklist coverage and what a rejection asks for.
 
 ## Read the request; do not look it up again
 
@@ -32,7 +32,8 @@ unnecessary turn is expensive.
 - Never call `damageRoll` with a placeholder or zero formula.
 - Finish with exactly one `submit_resolution` call, alone in its turn. Do not
   send two submissions or mix the submission with damage calls.
-- `repair_resolution` is valid only after a submission has been rejected.
+- After a rejection, the only valid call is another complete
+  `submit_resolution`, alone in its turn.
 
 If the turn budget expires without a valid submission, nothing from this
 session is applied.
@@ -50,10 +51,14 @@ A starting entry establishes duration, movement and any check permitted by the
 schema. Nothing starts and ends in the same minute. An id under
 `startingWithoutSkill` must not carry a check.
 
-A starting entry has no occurrence. If the command carries an `utterance`, the
-words are not spoken yet: code clocks the action at one minute and it returns
-under `endingWithUtterance` next tick, which is when its speech row is written.
-`startingWithUtterance` lists these ids.
+A starting entry needs no occurrence: nothing has come of the action yet. A
+`speech:false` occurrence MAY cite it when the attempt itself is visible as it
+begins — the pick going into the lock, a hand reaching for the door — so that
+bystanders perceive the attempt; its result belongs to the tick it ends. If
+the command carries an `utterance`, the words are not spoken yet: code clocks
+the action at one minute and it returns under `endingWithUtterance` next tick,
+which is when its speech row is written. `startingWithUtterance` lists these
+ids; no `speech:true` row may cite them.
 
 ### Ending
 
@@ -61,10 +66,11 @@ Every id under `ending` must be answered exactly one of two ways:
 
 1. **A non-speech result:** write one `ending` entry containing `actionId` and
    an objective `outcome` paragraph. At least one occurrence with
-   `speech:false` must cite that action id.
+   `speech:false` must cite that action id — a speech row is not the trace of
+   an ending, and an entry cited only by speech rows is rejected.
 2. **Pure speech:** write no `ending` entry. Write one `speech:true` occurrence
    citing the action. The command must carry an `utterance`; code attaches its
-   exact words.
+   exact words. An `ending` entry beside it is rejected.
 
 `endingWithUtterance` identifies ending actions whose commands contain spoken
 words — the only ids a `speech:true` occurrence may cite. It does not
@@ -84,9 +90,9 @@ continue. Silence leaves them active.
 
 ## Submission content
 
-The submission may contain `starting`, `ending`, `characterChanges`,
-`sceneChanges`, `itemChanges` and `occurrences`. Omit empty groups when there
-is nothing to say.
+The submission always carries all six arrays: `starting`, `ending`,
+`characterChanges`, `sceneChanges`, `itemChanges` and `occurrences`. A group
+with nothing to say is an empty array `[]`, never omitted.
 
 - Do not emit lifecycle status, progress, elapsed time or `nextWakeAt`.
 - `resolvedDurationTicks` belongs only on a non-movement starting action.
@@ -108,19 +114,19 @@ Do not output occurrence locations, actors, signals, fact arrays, fact types,
 reference-id arrays or affected-character arrays. Code derives what remains
 from the cited actions and converts each occurrence into the downstream shape.
 
-## Incremental repair
+## Correcting a rejected submission
 
-After rejection, call `repair_resolution` with only the elements named by the
-errors. Everything not mentioned remains exactly as submitted.
+A rejection lists every error, each addressed to the element it is about:
+`action:<id>`, `occurrence:<actionIds>`, `characterChange:<index>`,
+`sceneChange:<index>`, `itemChange:<index>`, or the resolution as a whole.
 
-- A starting or ending repair is addressed by `actionId` and replaces every
-  copy of that action in the action lists.
-- An occurrence repair is addressed by its non-empty `actionIds`. It replaces
-  every existing occurrence that cites any of those ids, so resend the whole
-  corrected occurrence rather than only the faulty field.
-- A character, scene or item change is addressed by the `index` reported in
-  the error.
-- `remove:true` withdraws the addressed element when it should not have been
-  submitted. Do not use removal to evade an action the worklist requires you
-  to answer.
-- Do not resend correct parts or the full resolution.
+There is no patch tool. Correct the listed elements and call
+`submit_resolution` again with the COMPLETE resolution, all six arrays:
+
+- Keep every element that was not named unchanged.
+- Fix or drop each element that was named. An element that should not have
+  been sent at all is simply left out.
+- An action the worklist requires must still be answered exactly once, in
+  the list it belongs in. Dropping it does not fix an error about it.
+- The resubmission is validated whole; nothing from the rejected submission
+  is kept on the Engine's side.

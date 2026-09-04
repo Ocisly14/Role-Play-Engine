@@ -239,10 +239,9 @@ export interface EngineResolutionContext {
 /**
  * One thing the Engine got wrong, addressed at the element that must change.
  *
- * The address is what makes repair incremental: the Engine is told "fix
- * characterChanges[2]" rather than "this submission is bad, write the whole
- * thing again". Re-emitting a whole resolution wastes the parts that were
- * already correct and invites the model to break them.
+ * The address keeps corrective feedback precise: the Engine is told "fix
+ * characterChanges[2]" rather than only "this submission is bad". The model
+ * still resubmits the complete resolution, preserving every correct element.
  */
 export interface ResolutionError {
   target:
@@ -250,8 +249,9 @@ export interface ResolutionError {
     | { kind: "characterChange"; index: number }
     | { kind: "sceneChange"; index: number }
     | { kind: "itemChange"; index: number }
-    /** Addressed by the actions the row cites, never by index — see
-     *  `OccurrenceRepairItem` for why. */
+    /** Addressed by the actions the row cites, never by index. Measured:
+     *  told `occurrence:0` was wrong, the model corrected a different row
+     *  59 times out of 89; it uses an actionId as an address correctly. */
     | { kind: "occurrence"; actionIds: string[] }
     /** Wrong about the submission as a whole — a triggering action with no
      *  transition, an ended action with no occurrence citing it. */
@@ -260,7 +260,7 @@ export interface ResolutionError {
   message: string;
 }
 
-/** How a ResolutionError is addressed in the repair call. */
+/** How a ResolutionError is addressed in corrective feedback. */
 export function formatErrorTarget(target: ResolutionError["target"]): string {
   switch (target.kind) {
     case "action":
@@ -281,7 +281,7 @@ export function formatErrorTarget(target: ResolutionError["target"]): string {
  * it produced nothing at all.
  *
  * There is no partial application. A resolution that still violates the
- * contract after repair is an ENGINE fault, not an event in the world:
+ * contract after corrective resubmissions is an ENGINE fault, not an event in the world:
  * dropping the invalid parts and keeping the rest writes a half-true world
  * and hides the fault. The tick applies nothing instead, the actions keep the
  * state they had, and the failure stays loud.
@@ -314,7 +314,7 @@ export type WorldActionEngineResult =
       ok: false;
       /** Why the session produced nothing usable. */
       failure: string;
-      /** Whatever was still wrong when the repair budget ran out; empty when
+      /** Whatever was still wrong when the correction budget ran out; empty when
        *  the session failed before any submission (model error). */
       errors: ResolutionError[];
       codeToolInvocations: import("../tools/codeTool.js").CodeToolInvocation[];

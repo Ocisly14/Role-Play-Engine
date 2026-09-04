@@ -111,9 +111,17 @@ export interface RawItemChange extends RawSourcedDelta {
 /** One declared sanity check, riding on the occurrence whose perception
  *  caused it. The model declares; code rolls. A PASSED check costs nothing at
  *  all, so there is only a failure loss — no success/failure pair. */
+/** The bars a starting check may set. One list for the schema enum and the
+ *  validator, so the two cannot drift. */
+export const CHECK_LEVELS = ["regular", "hard", "extreme"] as const;
+
+/** The only failure losses a sanity check may declare — the closed ladder in
+ *  `sanity-check.md`. One list for the description and the validator. */
+export const SANITY_LOSS_FORMULAS = ["1", "1d4", "1d6", "1d10"] as const;
+
 export interface RawSanityCheck {
   characterId: string;
-  /** Dice formula for the loss on a FAILED check, e.g. "1", "1d4", "1d10". */
+  /** The loss on a FAILED check — one of `SANITY_LOSS_FORMULAS`. */
   failureLoss: string;
   /** Candidate severe impairment if the failed roll actually loses at least
    *  5 SAN. Lesser losses change SAN but do not create a condition. */
@@ -156,8 +164,8 @@ export interface RawOccurrence {
    *  cited by at least one occurrence. Two rows cite the same action only when
    *  the audiences receive different FACTS in different places (the departure
    *  in one room, the landing in the courtyard); different degrees of one
-   *  fact are ONE row with a per-perceiver clarity. Also the address a repair
-   *  uses: a row re-sent with these ids replaces every row citing them. */
+   *  fact are ONE row with a per-perceiver clarity. These ids also address
+   *  precise validation feedback about the row. */
   actionIds: string[];
   /** `true`: this row IS a spoken line being delivered. Code attaches the
    *  cited command's `utterance` verbatim; `content` is optional (how it was
@@ -228,7 +236,11 @@ const STR_LIST = { type: "array", items: STR } as const;
 
 export const CHARACTER_OPS: OperationSpec[] = [
   {
-    kinds: ["hp", "san", "fatigue"],
+    // No `san` here. SAN moves through an occurrence's `sanityChecks` and
+    // nowhere else: code rolls and writes the loss. A direct delta beside the
+    // declaration charged the character twice for one exposure, and there is
+    // no other SAN change the Engine is entitled to write.
+    kinds: ["hp", "fatigue"],
     fields: "delta:number, reason:string",
     schema: {
       properties: { delta: { type: "integer" }, reason: STR },
@@ -379,7 +391,7 @@ export const SCENE_OPS: OperationSpec[] = [
   },
   {
     kinds: ["environmentHazard"],
-    fields: "add?:string[], remove?:string[]",
+    fields: "add?:string[], remove?:string[] — at least one of them",
     schema: { properties: { add: STR_LIST, remove: STR_LIST } },
   },
 ];
@@ -454,7 +466,7 @@ export function opKinds(ops: OperationSpec[]): ReadonlySet<string> {
 /** The grammar the provider enforces: one closed object per kind, chosen by
  *  `kind`'s constant. Replaces the open `additionalProperties: true` object
  *  that strict mode refuses — and that let a misspelt field through to the
- *  validator, a repair round later. */
+ *  validator, a correction round later. */
 export function opSchema(ops: OperationSpec[]): { anyOf: unknown[] } {
   return {
     anyOf: ops.flatMap((op) =>
@@ -500,7 +512,7 @@ const OCCURRENCE_ITEM = {
       items: { type: "string" },
       minItems: 1,
       description:
-        "The action(s) this is the trace of — at least one. Every id under the trigger's `ending` MUST be cited by at least one occurrence — an ending nothing cites is refused. Two rows cite the same action only when the audiences receive different FACTS in different places (the shove in one room, the landing in the courtyard); different degrees of one fact are ONE row with a per-perceiver clarity. In a repair, a row carrying these ids replaces every row that cites any of them.",
+        "The action(s) this is the trace of — at least one. Every id under the trigger's `ending` MUST be cited by at least one occurrence — an ending nothing cites is refused. Two rows cite the same action only when the audiences receive different FACTS in different places (the shove in one room, the landing in the courtyard); different degrees of one fact are ONE row with a per-perceiver clarity.",
     },
     speech: {
       type: "boolean",
@@ -542,7 +554,7 @@ const OCCURRENCE_ITEM = {
     sanityChecks: {
       type: "array",
       description:
-        "Involuntary sanity checks caused by perceiving THIS occurrence — at most 8. Rare — see the sanity guidance for the closed list of things that warrant one. Code reads the character's SAN, rolls d100 and settles it; a passed check costs nothing at all. Do not also write a character `san` change for the same exposure.",
+        "Involuntary sanity checks caused by perceiving THIS occurrence — at most 8. Rare — see the sanity guidance for the closed list of things that warrant one. Code reads the character's SAN, rolls d100 and settles it; a passed check costs nothing at all. This is the ONLY way SAN changes — there is no `san` character operation.",
       items: {
         type: "object",
         properties: {
@@ -553,8 +565,7 @@ const OCCURRENCE_ITEM = {
           },
           failureLoss: {
             type: "string",
-            description:
-              'SAN lost when the check FAILS: "1", "1d4", "1d6" or "1d10". There is no success loss — passing is free. A flat zero is refused.',
+            description: `SAN lost when the check FAILS — exactly one of ${SANITY_LOSS_FORMULAS.map((f) => `"${f}"`).join(", ")}, nothing else. There is no success loss — passing is free.`,
           },
           consequence: {
             type: "object",
@@ -592,21 +603,13 @@ const OCCURRENCE_ITEM = {
 
 export const submitResolutionTool: ToolSpec = {
   name: "submit_resolution",
-  // NOT strict, and not for want of trying. Without a grammar the model has
-  // handed back `starting` as a JSON string, a whole submission as one
-  // string, and once a submission shattered into seven parallel calls — each
-  // a repair round, a full re-send of the world. The schema was brought
-  // inside Anthropic's strict subset for exactly that (closed objects, an
-  // `anyOf` per operation kind, no numeric keywords — kept, because the
-  // model reads it either way), and the API refused it on a limit the docs
-  // do not mention: at most 24 OPTIONAL parameters across every strict tool
-  // in the request, counted through every nesting level. This tool alone has
-  // 28 — six top-level lists plus the genuinely optional nested fields — and
-  // repair has 48. Squeezing
-  // under 24 means "required but nullable" on most of them, which is a
-  // dozen `null`s per entry. The lint in schemaAgreement.test.ts keeps the
-  // subset and counts the optionals, so the day the limit moves this is one
-  // flag flip. Until then `normalizeList` reads the string shapes back.
+  // All six top-level lists are required (empty domains use `[]`), leaving 23
+  // optional parameters — inside Anthropic's documented limit of 24. That is
+  // still not enough: a live Claude Sonnet 5 Grayhaven run on 2026-09-03
+  // rejected this schema before generation because its compiled grammar was
+  // too large. The three operation unions currently contain 19 branches.
+  // Keep the wire contract and code validation, but do not ask Anthropic to
+  // compile this particular schema until its operation grammar is simplified.
   strict: false,
   description:
     "Terminal: submit the complete resolution of this tick — one starting entry per action that begins; for each action that ends, either an ending outcome plus a non-speech occurrence or a speech occurrence alone for pure talk; and any sourced world changes grouped by domain.",
@@ -633,7 +636,7 @@ export const submitResolutionTool: ToolSpec = {
               properties: {
                 requiredLevel: {
                   type: "string",
-                  enum: ["regular", "hard", "extreme"],
+                  enum: [...CHECK_LEVELS],
                 },
               },
               required: ["requiredLevel"],
@@ -642,7 +645,7 @@ export const submitResolutionTool: ToolSpec = {
             opposedBy: {
               type: "array",
               description:
-                "Set when someone actively resists: the character and the defense skill they resist with. Code rolls both sides and compares levels; you choose who defends and with what, never who wins. Needs `check`.",
+                "Set when someone actively resists: the character and the defense skill they resist with. `skillId` must be one of the ability domains from the skill reference (never `Languages` — nobody defends in a tongue). Code rolls both sides and compares levels; you choose who defends and with what, never who wins. Needs `check`.",
               items: {
                 type: "object",
                 properties: {
@@ -722,198 +725,14 @@ export const submitResolutionTool: ToolSpec = {
         items: OCCURRENCE_ITEM,
       },
     },
-    additionalProperties: false,
-  },
-};
-
-// ==================== Incremental repair ====================
-
-/**
- * A patch over the previous submission, addressed by the same targets the
- * errors used. Only the flagged elements are re-sent; everything else stands.
- *
- * Actions are addressed by actionId, occurrences by the actionIds they cite,
- * and deltas by index. Indexed withdrawals leave holes rather than compacting
- * the array, so an address quoted in round 1 remains stable in later rounds.
- */
-/** Where a repair item lands. Carried INSIDE the item, so every field of the
- *  repair tool is a plain array exactly like the submission it repairs —
- *  index-keyed objects next to arrays is what made the model send one where
- *  the other belonged. */
-export interface RepairAddress {
-  /** Replaces the element the error quoted (`characterChange:2` → 2). Absent
-   *  means this is a new element to append. */
-  index?: number;
-  /** With `index`, withdraws that element instead of replacing it. */
-  remove?: boolean;
-}
-
-/** Partial: a withdrawal carries only `index` and `remove`, and every
- *  replacement is re-validated against the real contract after the merge. */
-export type RepairItem<T> = Partial<T> & RepairAddress;
-
-/** Actions are addressed by actionId, never by index, so the only address
- *  field an action repair item carries is the withdrawal flag. */
-export type ActionRepairItem<T> = Partial<T> & {
-  actionId: string;
-  remove?: boolean;
-};
-
-/** Occurrences are addressed by the actions they cite, never by index. A row
- *  sent here replaces every row of the submission that cites any of its
- *  `actionIds`; `remove: true` withdraws those rows instead. Measured before
- *  this: told `occurrence:0` was wrong, the model appended a corrected row
- *  without an index 59 times out of 89 and the wrong row stood — four ticks
- *  died with the same error three rounds running. An actionId is an address
- *  it already uses correctly for the action lists. */
-export type OccurrenceRepairItem = Partial<RawOccurrence> & {
-  actionIds: string[];
-  remove?: boolean;
-};
-
-export interface RawResolutionRepair {
-  /** Each replaces the entry with the same actionId in its own list; a new
-   *  actionId appends. Moving an action between lists is done by sending it
-   *  in the list it belongs in — the merge drops it from the others. An item
-   *  carrying `remove: true` withdraws that actionId from BOTH lists instead:
-   *  the gesture for an entry that should never have been sent, such as an
-   *  answer to an action the trigger is not resolving this tick. */
-  starting?: Array<ActionRepairItem<RawActionStart>>;
-  ending?: Array<ActionRepairItem<RawActionEnd>>;
-  characterChanges?: Array<RepairItem<RawCharacterChange>>;
-  sceneChanges?: Array<RepairItem<RawSceneChange>>;
-  itemChanges?: Array<RepairItem<RawItemChange>>;
-  occurrences?: OccurrenceRepairItem[];
-}
-
-/** Same array shape as the submission, plus the address fields. `required` is
- *  dropped: a withdrawal carries only `index` and `remove`, and every
- *  replacement is re-validated against the real contract anyway. */
-const repairable = (itemSchema: unknown, what: string) => {
-  const item = itemSchema as {
-    type: string;
-    properties: Record<string, unknown>;
-  };
-  return {
-    type: "array",
-    description: `${what} to fix. Each item says where it goes: "index" replaces the element the error quoted (characterChange:2 → index 2); no "index" appends a new element; "remove": true withdraws the one at "index".`,
-    items: {
-      ...item,
-      properties: {
-        ...item.properties,
-        index: {
-          type: "integer",
-          description:
-            "The index quoted in the error (0 or more). Omit to append.",
-        },
-        remove: {
-          type: "boolean",
-          description: "With index: withdraw that element.",
-        },
-      },
-      required: [],
-      additionalProperties: false,
-    },
-  };
-};
-
-/** An action repair item: the submission's shape plus `remove`, with only
- *  `actionId` required — a withdrawal carries nothing else, and a replacement
- *  is re-validated against the real contract after the merge. */
-const repairableAction = (itemSchema: unknown) => {
-  const item = itemSchema as {
-    type: string;
-    properties: Record<string, unknown>;
-  };
-  return {
-    ...item,
-    properties: {
-      ...item.properties,
-      remove: {
-        type: "boolean",
-        description:
-          "Withdraw this actionId from both lists. Send nothing else with it.",
-      },
-    },
-    required: ["actionId"],
-    additionalProperties: false,
-  };
-};
-
-/** An occurrence repair item: the row's own shape plus `remove`, with only
- *  `actionIds` required — that is the address, and a withdrawal carries
- *  nothing else. */
-const repairableOccurrence = (itemSchema: unknown) => {
-  const item = itemSchema as {
-    type: string;
-    properties: Record<string, unknown>;
-  };
-  return {
-    ...item,
-    properties: {
-      ...item.properties,
-      remove: {
-        type: "boolean",
-        description:
-          "Withdraw every row citing these actionIds. Send nothing else with it.",
-      },
-    },
-    required: ["actionIds"],
-    additionalProperties: false,
-  };
-};
-
-export const repairResolutionTool: ToolSpec = {
-  name: "repair_resolution",
-  // See submitResolutionTool: 48 optional parameters against a limit of 24.
-  strict: false,
-  description:
-    "Fix ONLY the elements named in the errors. Everything you do not mention stays exactly as you submitted it — do not re-send correct parts, and do not re-send the whole resolution.",
-  inputSchema: {
-    type: "object",
-    properties: {
-      ...Object.fromEntries(
-        (["starting", "ending"] as const).map((moment) => [
-          moment,
-          {
-            type: "array",
-            description: `Corrected \`${moment}\` entries. Each replaces the one with the same actionId (every copy of it, if you sent more than one); sending an action here also removes it from the other list, which is how an action moves between moments. \`"remove": true\` beside an actionId withdraws it from both lists instead — use it for an entry that should not have been sent at all.`,
-            items: repairableAction(
-              (
-                submitResolutionTool.inputSchema as {
-                  properties: Record<string, { items: unknown }>;
-                }
-              ).properties[moment].items
-            ),
-          },
-        ])
-      ),
-      characterChanges: repairable(
-        sourcedDelta("characterId", true, CHARACTER_OPS),
-        "Character changes"
-      ),
-      sceneChanges: repairable(
-        sourcedDelta("sceneId", true, SCENE_OPS),
-        "Scene changes"
-      ),
-      itemChanges: repairable(
-        sourcedDelta("itemId", false, ITEM_OPS),
-        "Item changes"
-      ),
-      occurrences: {
-        type: "array",
-        description:
-          'Corrected occurrence rows, addressed by the actions they cite: a row sent here REPLACES every row of your submission that cites any of its `actionIds` (so re-send the whole row, not just the field that was wrong). `"remove": true` beside `actionIds` withdraws those rows instead. A row citing actions no existing row cites is appended.',
-        items: repairableOccurrence(
-          (
-            submitResolutionTool.inputSchema as {
-              properties: { occurrences: { items: unknown } };
-            }
-          ).properties.occurrences.items
-        ),
-      },
-    },
-    required: [],
+    required: [
+      "starting",
+      "ending",
+      "characterChanges",
+      "sceneChanges",
+      "itemChanges",
+      "occurrences",
+    ],
     additionalProperties: false,
   },
 };

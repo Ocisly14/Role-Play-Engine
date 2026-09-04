@@ -161,14 +161,23 @@ describe("weather judgement (Phase 8b)", () => {
     expect(judge).toHaveBeenCalledTimes(1);
   });
 
-  it("clears without asking: everything the last judgement closed reopens", async () => {
+  it("asks on a clear sky too: it closes nothing, but it still describes the place", async () => {
+    // A clear sky is weather. It used to skip the call entirely, which
+    // reopened everything and left every outdoor place with no weather
+    // condition at all — the storm was deleted rather than replaced.
     const dgsm = makeOutdoorDgsm();
     dgsm.setConnectionBlocked("SCN_ridge", "ROAD_pass", true, "雪堆没过膝盖");
     dgsm.appendSceneCondition("SCN_ridge", {
       featureId: "weather",
       description: "[Weather] 旧的",
     });
-    const judge = vi.fn<WeatherJudgeFn>();
+    const judge = vi.fn<WeatherJudgeFn>(async () => ({
+      ok: true,
+      judgement: {
+        blocks: [],
+        conditions: [{ placeId: "SCN_ridge", description: "山脊一览无余" }],
+      },
+    }));
     const engine = makeEngine(
       dgsm,
       [
@@ -183,11 +192,52 @@ describe("weather judgement (Phase 8b)", () => {
       { weatherJudgeFn: judge }
     );
     await engine.tick();
-    expect(judge).not.toHaveBeenCalled();
+    expect(judge).toHaveBeenCalledTimes(1);
+    expect(judge.mock.calls[0][0].weather.type).toBe("clear");
+    // Empty `blocks` still reopens what the last judgement shut.
+    expect(
+      dgsm.getConnectionBlockReason("SCN_ridge", "ROAD_pass")
+    ).toBeUndefined();
+    expect(dgsm.getSceneConditions("SCN_ridge")).toEqual([
+      expect.objectContaining({ description: "[Weather] 山脊一览无余" }),
+    ]);
+  });
+
+  it("lifts a clear sky's inherited closures even when its judgement fails", async () => {
+    // "Leave it as it was" is right while the weather still justifies what
+    // stands. Under a clear sky it is not: the storm is over, and its
+    // closures would outlive it.
+    const dgsm = makeOutdoorDgsm();
+    dgsm.setConnectionBlocked("SCN_ridge", "ROAD_pass", true, "雪堆没过膝盖");
+    dgsm.appendSceneCondition("SCN_ridge", {
+      featureId: "weather",
+      description: "[Weather] 旧的",
+    });
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    const judge = vi.fn<WeatherJudgeFn>(async () => ({
+      ok: false,
+      failure: "model error: boom",
+    }));
+    const engine = makeEngine(
+      dgsm,
+      [
+        weatherStub({
+          weatherType: "clear",
+          intensity: 0,
+          minutesInState: 0,
+          affectedSceneIds: AFFECTED,
+          judgedBlockIds: ["weather:ROAD_pass|SCN_ridge"],
+        }),
+      ],
+      { weatherJudgeFn: judge }
+    );
+    await engine.tick();
     expect(
       dgsm.getConnectionBlockReason("SCN_ridge", "ROAD_pass")
     ).toBeUndefined();
     expect(dgsm.getSceneConditions("SCN_ridge")).toEqual([]);
+    expect(warn).toHaveBeenCalledWith(expect.stringContaining("sky is clear"));
+    warn.mockRestore();
   });
 
   it("leaves passages and conditions as they were when the judgement fails", async () => {

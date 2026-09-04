@@ -1,8 +1,5 @@
 import { describe, expect, it } from "vitest";
-import {
-  repairResolutionTool,
-  submitResolutionTool,
-} from "../../../engine/resolution/worldDeltaSchema.js";
+import { submitResolutionTool } from "../../../engine/resolution/worldDeltaSchema.js";
 import { TOOL_CAPS, VALID_TOOLS } from "../../../roleSim/toolDispatcher.js";
 import { AGENT_TOOLS } from "../../../roleSim/tools/schemas.js";
 import { allPropertiesRequired } from "../openai.js";
@@ -107,10 +104,12 @@ describe("strict across providers", () => {
     }
   });
 
-  it("engine tools have optional fields, so even if strict they would go to OpenAI unstrict", () => {
-    for (const tool of [submitResolutionTool, repairResolutionTool]) {
-      expect(allPropertiesRequired(tool.inputSchema)).toBe(false);
-    }
+  it("keeps submit_resolution unstrict across providers", () => {
+    // OpenAI cannot express its optional nested fields. Anthropic permits
+    // those fields, but rejects the compiled 19-branch operation grammar as
+    // too large before generation.
+    expect(submitResolutionTool.strict).toBe(false);
+    expect(allPropertiesRequired(submitResolutionTool.inputSchema)).toBe(false);
   });
 
   it("allPropertiesRequired looks into nested objects and arrays", () => {

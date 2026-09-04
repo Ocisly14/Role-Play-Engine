@@ -398,8 +398,8 @@ export class DeepSeekAdapter implements ProviderAdapter {
       parallel_tool_calls: req.allowParallelCalls === true,
       // Asked for, not relied on: DeepSeek honours `tool_choice` most of the
       // time and ignores it the rest — measured, it answered a round that
-      // demanded `repair_resolution` with `submit_resolution` instead. A
-      // caller that must have one specific tool has to tolerate the other.
+      // demanded one named tool with a different one. A caller that must
+      // have one specific tool has to tolerate the other.
       ...(toolChoice ? { tool_choice: toolChoice } : {}),
       max_tokens: req.maxOutputTokens ?? DEFAULT_MAX_OUTPUT_TOKENS,
       ...(req.temperature !== undefined

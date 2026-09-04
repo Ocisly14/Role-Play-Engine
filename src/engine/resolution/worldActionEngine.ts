@@ -5,8 +5,8 @@
 // the model may consult the deterministic damage dice (a roll must never be
 // the model's) and must finish with
 // one terminal `submit_resolution` call. Output is validated in code and gets
-// up to three incremental repair rounds; if it remains invalid, the whole tick
-// is rejected without partial application. No action types or per-action
+// up to three complete corrective resubmissions; if it remains invalid, the
+// whole tick is rejected without partial application. No action types or per-action
 // prompts — one ordered set of world-rule modules governs everything.
 
 import { readFileSync } from "node:fs";
@@ -36,22 +36,23 @@ import {
 } from "./types.js";
 import {
   CODE_TOOL_SPECS,
-  type RawResolutionRepair,
   type RawTickResolution,
-  repairResolutionTool,
   submitResolutionTool,
 } from "./worldDeltaSchema.js";
 import {
-  applyRepair,
+  exitsFromHere,
   finalizeResolution,
   normalizeRawResolution,
-  refusedWithdrawals,
   resolutionWorklist,
   validateRawResolution,
 } from "./worldDeltaValidator.js";
 
+// Lives with the validator now, which checks a `passBlockedConnectionId`
+// against the same list the prompt shows; re-exported so callers keep it.
+export { exitsFromHere };
+
 /**
- * Hard ceiling on turns in one session — repair rounds included, since they
+ * Hard ceiling on turns in one session — correction rounds included, since they
  * run in the same loop.
  *
  * 5, down from 8. Measured over two 30-tick full-town runs: at 8 the failing
@@ -62,18 +63,19 @@ import {
  * not move: 5 either way, for opposite reasons.
  *
  * 5 is the worst honest path — one turn of tools, one submission, three
- * repairs — and costs nothing on the common path, where the median session
- * still finishes in under two turns.
+ * corrective resubmissions — and costs nothing on the common path, where the
+ * median session still finishes in under two turns.
  */
 const MAX_ITERATIONS = 5;
 /**
- * How many repair rounds a submission gets before the session gives up.
+ * How many corrective resubmissions a submission gets before the session
+ * gives up.
  *
  * Each round is a full-world request, so this is a real cost ceiling — but a
  * contract the Engine cannot satisfy in a few targeted fixes is a fault to
  * surface, not something to grind at.
  */
-const MAX_REPAIR_ROUNDS = 3;
+const MAX_CORRECTION_ROUNDS = 3;
 const CODE_TOOL_NAMES = new Set(CODE_TOOL_SPECS.map((t) => t.name));
 
 // ── Rule documents: loaded once. Instructional prose lives in
@@ -167,7 +169,7 @@ export interface WorldActionEngineDeps {
  * those. Printing the raw `commandId` alongside puts a SECOND id for the same
  * action in the same prompt — and the model reasonably echoes the one printed
  * next to the action it is resolving, which then fails lookup as "unknown
- * actionId" and burns every repair round on a mismatch it cannot see. So the
+ * actionId" and burns every correction round on a mismatch it cannot see. So the
  * commandId never reaches the prompt.
  */
 /** The roll code made, as the Engine reads it. Named for what it is — dice —
@@ -199,56 +201,6 @@ function diceRollForPrompt(check: ResolvedCheck) {
 function commandForPrompt(command: ActionCommand): Record<string, unknown> {
   const { commandId: _commandId, ...rest } = command;
   return rest;
-}
-
-/**
- * The ways out of the place the actor is standing in, each marked open or
- * closed — code's answer, put beside the command that might need it.
- *
- * Passability is never the model's call: the movement runtime walks the
- * stated route and interrupts it with a `blocked:` reason the moment a closed
- * edge is actually reached. But with the Blocked Connections table in front
- * of it and nothing saying what the table was FOR, the model cross-referenced
- * routes against it by place name — read "lodge_drive ↔ porch is closed" as
- * "the porch is closed", and ended a walk from the greatroom to the porch as
- * weather-blocked when that door was open. Listing the actor's own exits with
- * their state removes the lookup, and with it the misreading.
- */
-export function exitsFromHere(
-  context: Pick<EngineResolutionContext, "state">,
-  actorId: string
-):
-  | Array<{
-      connectionId: string;
-      to: string;
-      open: boolean;
-      reason?: string;
-    }>
-  | undefined {
-  const here = context.state.characters.find(
-    (c) => c.id === actorId
-  )?.locationId;
-  if (!here) return undefined;
-  const place = context.state.places.find((p) => p.id === here);
-  if (!place) return undefined;
-  const blocked = new Map<string, string>();
-  for (const e of context.state.blockedEdges) {
-    blocked.set(`${e.from}|${e.to}`, e.reason);
-    blocked.set(`${e.to}|${e.from}`, e.reason);
-  }
-  return place.connections
-    .filter((c) => !c.hidden)
-    .map((c) => {
-      const reason = c.blockedReason ?? blocked.get(`${here}|${c.targetId}`);
-      return reason
-        ? {
-            connectionId: c.connectionId,
-            to: c.targetId,
-            open: false,
-            reason,
-          }
-        : { connectionId: c.connectionId, to: c.targetId, open: true };
-    });
 }
 
 /**
@@ -469,9 +421,7 @@ function renderEmpty(toolName: string): string {
   return [
     `REJECTED. Your \`${toolName}\` call arrived with NO arguments — an empty object, every field missing.`,
     "",
-    toolName === "repair_resolution"
-      ? "A repair that changes nothing cannot fix anything. Send the elements the last rejection named."
-      : "Send the full resolution: every starting id in `starting`; every ending id answered by an ending plus a speech-false occurrence, or by a speech-true occurrence alone when it was pure talk; no speech row for a starting id.",
+    "Send the complete resolution with all six arrays: every starting id in `starting`; every ending id answered by an ending plus a speech-false occurrence, or by a speech-true occurrence alone when it was pure talk; no speech row for a starting id. Use `[]` for every empty array.",
   ].join("\n");
 }
 
@@ -480,38 +430,13 @@ function hasNoArgs(call: { args: Record<string, unknown> }): boolean {
   return Object.keys(call.args).length === 0;
 }
 
-/** The errors, addressed, plus the instruction that repair is incremental. */
-function renderErrors(errors: ResolutionError[], notes: string[] = []): string {
-  // Withdrawal is offered only where it is the right move — an element that
-  // should not have been sent at all. Advertised under every rejection, it
-  // reads as a general escape hatch, and the model reached for it to fix a
-  // DUPLICATED triggering action: the copy went away, the answer went with
-  // it, and three rounds later the tick was dropped for an action nobody had
-  // answered. An error about an action the trigger requires is never one that
-  // `remove` fixes.
-  const withdrawable = errors.some(
-    (e) =>
-      e.target.kind !== "action" || e.message.startsWith("unknown actionId")
-  );
+/** Addressed errors plus the contract for a complete corrective submission. */
+function renderErrors(errors: ResolutionError[]): string {
   return [
-    "REJECTED. Fix ONLY these, with repair_resolution:",
+    "REJECTED. Correct these errors and call submit_resolution again with the COMPLETE resolution:",
     ...errors.map((e) => `- ${formatErrorTarget(e.target)} — ${e.message}`),
-    ...notes.map((n) => `- ${n}`),
     "",
-    "Send only the elements listed above, as arrays in the same shape you submitted.",
-    "An action carries its actionId; an occurrence row carries its",
-    "actionIds and REPLACES every row of yours that cites any of them, so",
-    "re-send the whole corrected row; a delta carries the `index` quoted",
-    "above. Everything you do not mention stays as you submitted it: do not re-send correct parts or the whole resolution.",
-    "An action sent once",
-    "replaces every copy of that actionId, so a duplicate is fixed by sending",
-    "it once in the list it belongs in.",
-    ...(withdrawable
-      ? [
-          "To take an element back rather than fix it, send `remove: true` with",
-          "its address and nothing else.",
-        ]
-      : []),
+    "Send all six arrays, using `[]` for empty arrays. Keep every correct element unchanged, correct or omit the invalid elements, and include every action the trigger requires exactly once in the list where it belongs.",
   ].join("\n");
 }
 
@@ -524,7 +449,7 @@ export async function resolveTick(
   //   - after the world description: read by the NEXT tick, whose world is
   //     usually the same one.
   //   - after the whole turn: read by every later round of THIS session. A
-  //     tick that needs a repair round or a tool lookup re-sends this same
+  //     tick that needs a correction round or a tool lookup re-sends this same
   //     116k-character turn verbatim, and used to re-pay for it in full.
   // The growing tail (assistant turns + tool results) is left uncached: it is
   // ~1.5k characters a round against a 116k prefix, and the tool-result path
@@ -540,25 +465,14 @@ export async function resolveTick(
     },
   ];
   // ONE tool list for the whole session. Tools render ahead of the system
-  // prompt in the cached prefix, so swapping the array between rounds threw
-  // away the system-prompt cache as well — `cacheSystemPrompt` was doing
-  // nothing from the first repair round on. Which tool the model MUST call is
-  // steered by toolChoice below, which is what was actually doing the work.
-  const tools = [
-    ...CODE_TOOL_SPECS,
-    submitResolutionTool,
-    repairResolutionTool,
-  ];
-  // Every action the trigger demands an answer for. Held here because a repair
-  // round has to know which withdrawals it must refuse.
-  const worklist = resolutionWorklist(context);
-  const requiredActionIds = new Set([...worklist.starting, ...worklist.ending]);
-  // The submission under repair, and how many repair rounds it has had.
-  let pending: RawTickResolution | undefined;
-  let repairRounds = 0;
+  // prompt in the cached prefix, so keeping this array stable preserves the
+  // system-prompt cache across tool lookups and corrective submissions.
+  const tools = [...CODE_TOOL_SPECS, submitResolutionTool];
+  let awaitingCorrection = false;
+  let correctionRounds = 0;
 
   for (let i = 0; i < MAX_ITERATIONS; i++) {
-    const repairing = pending !== undefined;
+    const correcting = awaitingCorrection;
     let toolCalls: Awaited<ReturnType<typeof generateToolCalls>>["toolCalls"];
     let assistantMessage: ModelMessage;
     try {
@@ -567,8 +481,8 @@ export async function resolveTick(
         cacheSystemPrompt: true,
         messages,
         tools,
-        // Once a submission exists, the only move left is to patch it.
-        toolChoice: repairing ? { name: "repair_resolution" } : "any",
+        // After rejection the only move left is a complete corrected submission.
+        toolChoice: correcting ? { name: "submit_resolution" } : "any",
         // Parallel calls only while the model still has a choice of tool.
         // Once `toolChoice` names one, a second copy of it is the only other
         // thing a parallel turn can produce — and the intake below takes a
@@ -577,7 +491,7 @@ export async function resolveTick(
         // demanded submission came back twice, both refused, and the tick
         // paid another full-world round trip (~65k tokens) to send the same
         // thing again by itself.
-        allowParallelCalls: !repairing,
+        allowParallelCalls: !correcting,
         modelClass: ModelClass.MEDIUM,
         operation: "world-action-engine",
       });
@@ -595,119 +509,35 @@ export async function resolveTick(
       );
     }
 
-    // ---- repair round ----------------------------------------------------
-    if (repairing && pending) {
-      // A repair round demands `repair_resolution` through toolChoice, and
-      // gets it from a provider that honours toolChoice. DeepSeek does not
-      // always: measured, it answered two repair rounds with a full
-      // `submit_resolution` — carrying, both times, exactly the corrections
-      // that had been asked for. Dropping the tick over the envelope threw
-      // away a right answer. A whole submission IS a repair, of the widest
-      // kind: it replaces everything.
-      const repairCall =
-        toolCalls.find((c) => c.name === "repair_resolution") ??
-        toolCalls.find((c) => c.name === "submit_resolution");
-      if (!repairCall) {
-        return unusable(
-          `${context.tick.tickId}: expected a repair, got none — nothing applied`,
-          [],
-          deps.codeTools.drainInvocations()
-        );
-      }
-      if (repairCall.unreadableArgs || hasNoArgs(repairCall)) {
-        messages.push(assistantMessage);
-        messages.push({
-          role: "tool",
-          results: [
-            {
-              toolCallId: repairCall.id,
-              content: repairCall.unreadableArgs
-                ? renderUnreadable(
-                    repairCall.name,
-                    repairCall.unreadableArgs.rawLength
-                  )
-                : renderEmpty(repairCall.name),
-            },
-          ],
-        });
-        continue;
-      }
-      const repairArgs = repairCall.args as unknown as RawResolutionRepair;
-      const refused =
-        repairCall.name === "submit_resolution"
-          ? []
-          : refusedWithdrawals(repairArgs, requiredActionIds);
-      pending =
-        repairCall.name === "submit_resolution"
-          ? normalizeRawResolution(
-              repairCall.args as unknown as RawTickResolution
-            )
-          : applyRepair(pending, repairArgs, requiredActionIds);
-      const invocationsSoFar = deps.codeTools.drainInvocations();
-      const errors = validateRawResolution(pending, context);
-      requeueInvocations(deps.codeTools, invocationsSoFar);
-      if (errors.length === 0) {
-        const finalized = finalizeResolution(pending, context);
-        return {
-          ok: true,
-          resolution: finalized.resolution,
-          movementInits: finalized.movementInits,
-          checkInits: finalized.checkInits,
-          codeToolInvocations: deps.codeTools.drainInvocations(),
-        };
-      }
-      repairRounds += 1;
-      if (repairRounds >= MAX_REPAIR_ROUNDS) {
-        return unusable(
-          `${context.tick.tickId}: still invalid after ${repairRounds} repair round(s), nothing applied`,
-          errors,
-          deps.codeTools.drainInvocations()
-        );
-      }
-      messages.push(assistantMessage);
-      messages.push({
-        role: "tool",
-        results: [
-          {
-            toolCallId: repairCall.id,
-            content: renderErrors(
-              errors,
-              refused.map(
-                (id) =>
-                  `action:${id} — your withdrawal was refused: the trigger requires an answer for this action. Send it once, in the list it belongs in.`
-              )
-            ),
-          },
-        ],
-      });
-      continue;
-    }
-
     const submits = toolCalls.filter((c) => c.name === "submit_resolution");
     const codeCalls = toolCalls.filter((c) => CODE_TOOL_NAMES.has(c.name));
 
-    // ---- first clean submission -----------------------------------------
+    // ---- a submission, first or corrected --------------------------------
+    // A correction round demands `submit_resolution` through toolChoice and
+    // forbids parallel calls, so what arrives is either that one call or a
+    // provider ignoring toolChoice (DeepSeek does, measured). Either way the
+    // intake is the same as a first submission: the whole resolution,
+    // validated whole. There is no patch protocol — the previous submission
+    // is not kept, and a corrected one replaces it entirely.
     if (submits.length === 1 && codeCalls.length === 0) {
-      if (submits[0].unreadableArgs || hasNoArgs(submits[0])) {
+      const submit = submits[0];
+      if (submit.unreadableArgs || hasNoArgs(submit)) {
         messages.push(assistantMessage);
         messages.push({
           role: "tool",
           results: [
             {
-              toolCallId: submits[0].id,
-              content: submits[0].unreadableArgs
-                ? renderUnreadable(
-                    submits[0].name,
-                    submits[0].unreadableArgs.rawLength
-                  )
-                : renderEmpty(submits[0].name),
+              toolCallId: submit.id,
+              content: submit.unreadableArgs
+                ? renderUnreadable(submit.name, submit.unreadableArgs.rawLength)
+                : renderEmpty(submit.name),
             },
           ],
         });
         continue;
       }
       const raw = normalizeRawResolution(
-        submits[0].args as unknown as RawTickResolution
+        submit.args as unknown as RawTickResolution
       );
       const invocationsSoFar = deps.codeTools.drainInvocations();
       const errors = validateRawResolution(raw, context);
@@ -722,13 +552,39 @@ export async function resolveTick(
           codeToolInvocations: deps.codeTools.drainInvocations(),
         };
       }
-      pending = raw;
+      if (correcting) {
+        correctionRounds += 1;
+        if (correctionRounds >= MAX_CORRECTION_ROUNDS) {
+          return unusable(
+            `${context.tick.tickId}: still invalid after ${correctionRounds} correction round(s), nothing applied`,
+            errors,
+            deps.codeTools.drainInvocations()
+          );
+        }
+      }
+      awaitingCorrection = true;
       messages.push(assistantMessage);
       messages.push({
         role: "tool",
-        results: [{ toolCallId: submits[0].id, content: renderErrors(errors) }],
+        results: [{ toolCallId: submit.id, content: renderErrors(errors) }],
       });
       continue;
+    }
+
+    if (correcting) {
+      // The corrected submission was demanded by name and did not come alone
+      // (or at all). There is nothing to answer that would help — a tool
+      // lookup now is a turn spent on a resolution that has already been
+      // written — so the session ends here.
+      return unusable(
+        `${context.tick.tickId}: expected a corrected submission alone, got ${
+          toolCalls.length === 0
+            ? "none"
+            : toolCalls.map((c) => c.name).join(", ")
+        } — nothing applied`,
+        [],
+        deps.codeTools.drainInvocations()
+      );
     }
 
     // Otherwise: answer every call; code tools execute, a mixed-in submit is
@@ -741,17 +597,6 @@ export async function resolveTick(
           toolCallId: call.id,
           content:
             "Error: submit_resolution was NOT accepted — it must be the only tool call in its turn. Finish tool lookups first, then submit alone.",
-        });
-        continue;
-      }
-      if (call.name === "repair_resolution") {
-        // Present in every round's tool list so the list stays cacheable, but
-        // only meaningful once a submission has been rejected.
-        results.push({
-          toolCallId: call.id,
-          content:
-            "Error: repair_resolution only applies to a submission that was " +
-            "rejected. Nothing has been submitted yet — call submit_resolution.",
         });
         continue;
       }

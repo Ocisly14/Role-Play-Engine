@@ -64,7 +64,6 @@ for what actually happened — a one-off descriptive result is occurrence
   action ends; what they now think of the speaker is a memory only they can
   author, and what they say back is their own next command. This is the
   domain where both temptations are strongest.
-- `character.san` — only where what was said genuinely breaks something.
 - Most exchanges produce NO delta at all: what was said, and how it landed,
   is an occurrence with the participants as perceivers. Talking someone into
   a future act does not move their state — they decide their own next action.

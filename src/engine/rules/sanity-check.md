@@ -41,8 +41,8 @@ Further limits, all of which still apply on top of the list:
   A submission that checks the same person twice is rejected; keep the
   exposure that actually shocked them. A continuing sight does not cause
   another check until it materially escalates or reveals something new.
-- If an objective event already contains an explicit SAN result or SAN delta,
-  it has already been resolved. Apply/report it; do not roll it again.
+- If an objective event already carries an explicit SAN result, it has
+  already been resolved by code. Do not declare a check for it again.
 - A character whose sheet has no sanity capacity (for example a Mythos entity
   with `maxSan: 0`) does not make sanity checks.
 
@@ -58,8 +58,8 @@ this — there is none.
 declaration is not a way to hang a mood on someone who merely saw something
 unpleasant. It is a coin the world flips on whether this broke them a little.
 
-**Do not also write a `character` `san` change for the same exposure.** Code
-emits it from the roll; writing your own charges the character twice.
+**This is the only way SAN changes.** There is no `san` character operation:
+code writes the loss from the roll, and nothing you write moves SAN directly.
 
 ## The loss
 
@@ -112,16 +112,17 @@ Nothing but the clock revokes it — there is no path by which you, or anyone,
 lift it early. **A consequence that outlives the reason for it is worse than
 no consequence at all**, so choose the shorter duration when you are unsure.
 
-## Two different SAN paths
+## The only SAN path
 
-This document governs **involuntary horror exposure only**, and it is the
-only path that rolls dice.
+This document governs **involuntary horror exposure**, and that is the only
+thing that moves SAN through you. A declaration is made only for something on
+the list above; nothing else is a reason to declare one.
 
-Everything else that moves SAN — treatment and recovery, a scripted event's
-authored cost, the cases described in the Occult, Medicine & Psychology and
-Social skill documents — stays a direct `character` `san` change under its
-own causal rules, and never goes through `sanityChecks`. Recovery is not a
-sanity check.
+What is not on the list has no SAN number to write. A treatment session, a
+disturbing conversation, an unsettling text: record what objectively happened
+as an occurrence, and a persistent major impairment as a condition. Recovery
+is not a sanity check and is not yours to write either. A scripted event's
+authored cost is applied by code, not declared here.
 
 ## What you still write yourself
 

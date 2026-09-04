@@ -13,7 +13,8 @@ Each entry names the causing `sourceActionId` and its `sceneId`.
 - `connectionHidden {connectionId, hidden}`
 - `environmentContribute {quantity, value}`, where quantity is `temperature`,
   `illumination`, `oxygen` or `noise`
-- `environmentHazard {add?, remove?}`
+- `environmentHazard {add?, remove?}` — at least one of the two; an
+  operation that adds and removes nothing changes nothing
 
 ## Conditions and environment
 

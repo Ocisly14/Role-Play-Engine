@@ -13,18 +13,17 @@ import { describe, expect, it } from "vitest";
 import { PERCEPTION_CLARITIES } from "../../actions/types.js";
 import {
   CHARACTER_OPS,
+  CODE_TOOL_SPECS,
   ITEM_OPS,
   type RawActionEnd,
   type RawActionStart,
   type RawCharacterChange,
   type RawOccurrence,
   type RawPerceiver,
-  type RawResolutionRepair,
   type RawSanityCheck,
   type RawTickResolution,
   SCENE_OPS,
   opKinds,
-  repairResolutionTool,
   submitResolutionTool,
 } from "../worldDeltaSchema.js";
 
@@ -34,7 +33,6 @@ type Schema = {
 };
 
 const submit = submitResolutionTool.inputSchema as unknown as Schema;
-const repair = repairResolutionTool.inputSchema as unknown as Schema;
 
 const propsOf = (s: Schema | undefined): string[] =>
   Object.keys(s?.properties ?? {}).sort();
@@ -104,14 +102,6 @@ const RESOLUTION = fields<RawTickResolution>()(
   "itemChanges",
   "occurrences"
 );
-const REPAIR = fields<RawResolutionRepair>()(
-  "starting",
-  "ending",
-  "characterChanges",
-  "sceneChanges",
-  "itemChanges",
-  "occurrences"
-);
 
 // Adding a field to any of these interfaces stops the build here, by name.
 const _covers: [
@@ -121,8 +111,7 @@ const _covers: [
   Covers<RawPerceiver, (typeof PERCEIVER)[number]>,
   Covers<RawCharacterChange, (typeof DELTA)[number]>,
   Covers<RawTickResolution, (typeof RESOLUTION)[number]>,
-  Covers<RawResolutionRepair, (typeof REPAIR)[number]>,
-] = [true, true, true, true, true, true, true];
+] = [true, true, true, true, true, true];
 void _covers;
 
 describe("the tool schema and the TS types describe the same thing", () => {
@@ -173,10 +162,6 @@ describe("the tool schema and the TS types describe the same thing", () => {
       | undefined;
     expect(clarity?.type).toBe("string");
     expect(clarity?.enum).toEqual([...PERCEPTION_CLARITIES]);
-    // The repair tool spreads the same row, so it carries the same grade.
-    expect(repair.properties.occurrences.items?.properties.perceivers).toEqual(
-      perceivers
-    );
   });
 
   it("a declared sanity check matches RawSanityCheck", () => {
@@ -208,51 +193,6 @@ describe("the tool schema and the TS types describe the same thing", () => {
     expect(propsOf(submit.properties.characterChanges.items)).toEqual(
       sorted(DELTA)
     );
-  });
-});
-
-describe("repair_resolution cannot drift from what it repairs", () => {
-  it("repairs exactly the lists a submission has", () => {
-    expect(propsOf(repair)).toEqual(sorted(REPAIR));
-    expect(propsOf(repair)).toEqual(propsOf(submit));
-  });
-
-  it("takes action entries in the submission's own shape, plus remove", () => {
-    // Addressed by actionId, so they need no index — and re-declaring the
-    // fields here is what let the two shapes diverge before. `remove` is the
-    // one addition: withdrawing an entry is a gesture the submission has no
-    // use for.
-    expect(propsOf(repair.properties.starting.items)).toEqual(
-      sorted([...START, "remove"])
-    );
-    expect(propsOf(repair.properties.ending.items)).toEqual(
-      sorted([...END, "remove"])
-    );
-    expect(repair.properties.starting.items?.required).toEqual(["actionId"]);
-    expect(repair.properties.ending.items?.required).toEqual(["actionId"]);
-  });
-
-  it("adds the address fields, and only those, to the indexed lists", () => {
-    for (const field of ["characterChanges", "sceneChanges", "itemChanges"]) {
-      const added = propsOf(repair.properties[field].items).filter(
-        (k) => !propsOf(submit.properties[field].items).includes(k)
-      );
-      expect(added).toEqual(["index", "remove"]);
-    }
-  });
-
-  it("addresses occurrence rows by the actions they cite, never by index", () => {
-    // Measured with index addressing: 59 of 89 repair rows arrived without an
-    // index and were appended beside the row they were meant to replace; four
-    // ticks died on the same occurrence error three rounds running. The
-    // model uses an actionId as an address correctly every time.
-    const added = propsOf(repair.properties.occurrences.items).filter(
-      (k) => !propsOf(submit.properties.occurrences.items).includes(k)
-    );
-    expect(added).toEqual(["remove"]);
-    expect(repair.properties.occurrences.items?.required).toEqual([
-      "actionIds",
-    ]);
   });
 });
 
@@ -451,16 +391,14 @@ describe("the operation grammar is the same table as the prose", () => {
     ["characterChanges", CHARACTER_OPS],
     ["sceneChanges", SCENE_OPS],
     ["itemChanges", ITEM_OPS],
-  ])("%s: one closed branch per kind, in submit and repair", (field, ops) => {
-    for (const tool of [submit, repair]) {
-      const branches = branchesOf(tool, field);
-      expect(branches.map((b) => b.properties.kind.const).sort()).toEqual(
-        [...opKinds(ops)].sort()
-      );
-      for (const b of branches) {
-        expect(b.additionalProperties).toBe(false);
-        expect(b.required).toContain("kind");
-      }
+  ])("%s: one closed branch per kind", (field, ops) => {
+    const branches = branchesOf(submit, field);
+    expect(branches.map((b) => b.properties.kind.const).sort()).toEqual(
+      [...opKinds(ops)].sort()
+    );
+    for (const b of branches) {
+      expect(b.additionalProperties).toBe(false);
+      expect(b.required).toContain("kind");
     }
   });
 
@@ -474,11 +412,11 @@ describe("the operation grammar is the same table as the prose", () => {
   });
 });
 
-describe("both engine tools stay inside the strict subset", () => {
+describe("the Engine submission schema and provider limits", () => {
   // Anthropic compiles a strict tool's schema into a grammar and 400s the
   // whole request on any keyword outside its subset. Measured before strict
   // went on: `starting` returned as a JSON string, a submission shattered
-  // into seven parallel calls — each a full-world repair round.
+  // into seven parallel calls — each a full-world correction round.
   const FORBIDDEN = [
     "minimum",
     "maximum",
@@ -510,20 +448,16 @@ describe("both engine tools stay inside the strict subset", () => {
     }
   };
 
-  it.each([
-    ["submit_resolution", submitResolutionTool],
-    ["repair_resolution", repairResolutionTool],
-  ])("%s stays strict-compatible", (_name, tool) => {
+  it("submit_resolution stays strict-compatible", () => {
     const out: string[] = [];
-    violations(tool.inputSchema, "schema", out);
+    violations(submitResolutionTool.inputSchema, "schema", out);
     expect(out).toEqual([]);
   });
 
-  // The limit the docs do not mention and the API enforces: at most 24
-  // optional parameters across every strict tool in one request, counted
-  // through every nesting level. Measured live: 111 → 400. A tool may only
-  // ask for strict when it fits; today neither does, and this says by how
-  // much, so the flag can be flipped the day it does.
+  // The limit the API enforces (now documented): at most 24 optional
+  // parameters across every strict tool in one request, counted through
+  // every nesting level. Measured live: 111 → 400. A tool may only ask for
+  // strict when it fits, and this says by how much.
   const ANTHROPIC_OPTIONAL_LIMIT = 24;
   const optionals = (node: unknown, out: string[], path = ""): void => {
     if (!node || typeof node !== "object") return;
@@ -546,7 +480,7 @@ describe("both engine tools stay inside the strict subset", () => {
 
   it("asks for strict only within Anthropic's optional-parameter budget", () => {
     let total = 0;
-    for (const tool of [submitResolutionTool, repairResolutionTool]) {
+    for (const tool of [...CODE_TOOL_SPECS, submitResolutionTool]) {
       const out: string[] = [];
       optionals(tool.inputSchema, out);
       if (tool.strict) total += out.length;
@@ -554,22 +488,34 @@ describe("both engine tools stay inside the strict subset", () => {
     expect(total).toBeLessThanOrEqual(ANTHROPIC_OPTIONAL_LIMIT);
   });
 
-  it("documents why the engine tools are not strict today", () => {
-    // The exact totals, so a schema change that moves them is noticed here
-    // rather than in a 400 from the API. Lean shape (2026-09-03): the ending
+  it("pins the optional count but keeps submit_resolution non-strict", () => {
+    // The exact total, so a schema change that moves it is noticed here
+    // rather than in a 400 from the API. Lean shape (2026-09-03): the six
+    // top-level lists are required (an empty domain is `[]`), the ending
     // entry is two required scalars, deltas lost `causalBasis`, the
     // occurrence row lost `locationId`/`actorId`/`affectedIds`/`signals`/
-    // `facts` for `speech`/`content`, movement gained a one-edge pass id — 29 for
-    // submit, 49 for repair (every item field goes optional there, plus the
-    // address fields). Both still over the limit of 24.
+    // `facts` for `speech`/`content`, movement gained a one-edge pass id —
+    // 23 optionals, one under the limit of 24. The patch tool that used to
+    // sit beside it (49 optionals) is gone: a correction is a complete
+    // resubmission through this same tool. Optional count is not the only
+    // ceiling, though: Claude Sonnet 5 rejected the current 19-branch
+    // operation grammar as too large in a live Grayhaven run on 2026-09-03.
     const submitOptionals: string[] = [];
     optionals(submitResolutionTool.inputSchema, submitOptionals);
-    const repairOptionals: string[] = [];
-    optionals(repairResolutionTool.inputSchema, repairOptionals);
-    expect(submitOptionals.length).toBe(29);
-    expect(repairOptionals.length).toBe(49);
-    expect(submitOptionals.length).toBeGreaterThan(ANTHROPIC_OPTIONAL_LIMIT);
+    expect(submitOptionals.length).toBe(23);
+    expect(submitOptionals.length).toBeLessThanOrEqual(
+      ANTHROPIC_OPTIONAL_LIMIT
+    );
     expect(submitResolutionTool.strict).toBe(false);
-    expect(repairResolutionTool.strict).toBe(false);
+    expect(
+      (submitResolutionTool.inputSchema as { required?: string[] }).required
+    ).toEqual([
+      "starting",
+      "ending",
+      "characterChanges",
+      "sceneChanges",
+      "itemChanges",
+      "occurrences",
+    ]);
   });
 });

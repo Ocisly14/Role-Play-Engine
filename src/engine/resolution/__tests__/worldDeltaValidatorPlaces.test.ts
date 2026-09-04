@@ -315,6 +315,72 @@ describe("connectionBlock / connectionHidden take registry ids", () => {
   });
 });
 
+describe("a move that changes no holder is not a move", () => {
+  // There is no item-level position within a holder, so `from === to` applies
+  // cleanly and changes the world not at all: the actor perceives nothing and
+  // tries it again.
+  it("rejects a no-op move and points at the occurrence instead", () => {
+    const out = validate({
+      itemChanges: [
+        {
+          ...sourced,
+          itemId: "item_lamppost",
+          operation: { kind: "move", from: "scene:J_A", to: "scene:J_A" },
+        },
+      ],
+    });
+    expect(out).toContain("there is no item-level position within a holder");
+    expect(out).toContain("occurrence");
+  });
+
+  it("still accepts a move that actually changes holder", () => {
+    expect(
+      validate({
+        itemChanges: [
+          {
+            ...sourced,
+            itemId: "item_lamppost",
+            operation: { kind: "move", from: "scene:J_A", to: "npc_1" },
+          },
+        ],
+      })
+    ).toBe("");
+  });
+});
+
+describe("a name code cannot derive an id from must bring its own", () => {
+  // The derivation keeps `[a-z0-9]`; a name with none of either yields "",
+  // and the minting falls back to `item_`, `item__2`, `item__3`. This world
+  // runs in Chinese, so that is the common case.
+  const created = (name: string, id?: string) =>
+    validate({
+      itemChanges: [
+        {
+          ...sourced,
+          operation: {
+            kind: "create",
+            name,
+            location: "scene:SCN_1",
+            ...(id !== undefined ? { id } : {}),
+          },
+        },
+      ],
+    });
+
+  it("requires an id for a name with no Latin letters or digits", () => {
+    const out = created("青铜钥匙");
+    expect(out).toContain("needs an explicit id");
+    expect(created("青铜钥匙", "item_bronze_key")).toBe("");
+  });
+
+  it("leaves a name code CAN derive from alone", () => {
+    expect(created("a milestone")).toBe("");
+    // One Latin character is enough to derive something that tells items
+    // apart, so the requirement does not reach a mixed name.
+    expect(created("钥匙 A")).toBe("");
+  });
+});
+
 describe("item.create with an explicit id", () => {
   const create = (id: string) =>
     validate({

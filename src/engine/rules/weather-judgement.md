@@ -21,8 +21,11 @@ what each outdoor place is like under it. Nothing else.
 
 ## Closing a passage
 
-Close a passage only when a person on foot could not reasonably get through
-it under this weather: a ridge road in a severe blizzard, a ford under storm
+A clear sky closes nothing: send `blocks: []` and let everything the last
+judgement closed reopen.
+
+Otherwise close a passage only when a person on foot could not reasonably get
+through it under this weather: a ridge road in a severe blizzard, a ford under storm
 flood, an exposed causeway in hurricane winds, a mountain track in zero
 visibility fog. Sheltered lanes between houses, short walks across a yard,
 covered ways stay open. Rain, heat, cold and light fog close nothing by
@@ -42,6 +45,13 @@ what the weather does THERE — visibility, footing, sound, exposure, what
 can and cannot be seen or heard. Omit a place the weather does not visibly
 touch. No mood, no character reactions, no numbers; code attaches the
 mechanical penalties itself.
+
+A clear sky is weather too, and it gets the same treatment: where the light,
+the drying ground or the distance a sound carries visibly changes a place,
+say so in one sentence. Where it does not, omit the place — a clear day over
+a sheltered yard usually needs nothing. Every condition the last judgement
+hung is replaced by this one, so a place you omit simply has no weather
+condition.
 
 ## Consistency
 

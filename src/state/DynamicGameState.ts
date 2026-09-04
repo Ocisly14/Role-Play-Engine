@@ -24,6 +24,7 @@ import {
   resolveConnectionEdge,
 } from "./connectionRegistry.js";
 import { makeDateTime } from "./gameClock.js";
+import { itemIdSlug } from "./itemId.js";
 import type {
   CharacterPosition,
   RoadNode,
@@ -552,13 +553,7 @@ export class DynamicGameStateManager {
 
   /** Internal: deterministic item-id generator from a display name. */
   private makeItemId(name: string): string {
-    const base =
-      "item_" +
-      name
-        .toLowerCase()
-        .replace(/[^a-z0-9]+/g, "_")
-        .replace(/^_+|_+$/g, "")
-        .slice(0, 32);
+    const base = `item_${itemIdSlug(name)}`;
     if (!this.itemIdExists(base)) return base;
     // Disambiguate via numeric suffix.
     let i = 2;
